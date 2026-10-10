@@ -3,20 +3,22 @@ package aidocumentservice
 import (
 	"slices"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 )
 
-var _ serviceports.ExtractionContract = Contract{}
+var _ aicorrectionports.ExtractionContract = Contract{}
 
 type Contract struct{}
 
-func NewContract() serviceports.ExtractionContract { return Contract{} }
+func NewContract() aicorrectionports.ExtractionContract { return Contract{} }
 
 func (Contract) CompletionRequest(
 	fileName string,
-	pages []serviceports.AIDocumentPage,
-) *serviceports.StructuredCompletionRequest {
-	return newExtractCall(&serviceports.AIExtractRequest{
+	pages []documentaiextractionports.AIDocumentPage,
+) *agentports.StructuredCompletionRequest {
+	return newExtractCall(&documentaiextractionports.AIExtractRequest{
 		FileName: fileName,
 		Pages:    pages,
 	}).request()
@@ -26,7 +28,7 @@ func (Contract) PageLimit() int { return extractPageLimit }
 
 func (Contract) FieldKeys() []string { return slices.Clone(extractFieldKeys) }
 
-func (Contract) ParseReply(text string) (*serviceports.AIExtractResult, error) {
+func (Contract) ParseReply(text string) (*documentaiextractionports.AIExtractResult, error) {
 	parsed := new(extractResponse)
 	if err := decodeStructured(text, parsed); err != nil {
 		return nil, err

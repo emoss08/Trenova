@@ -667,7 +667,7 @@ models:
         resolver: true
   DQFRetentionCandidate:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/repositories.DQFRetentionCandidate
+      - github.com/emoss08/trenova/internal/modules/workforce/ports/workerports.DQFRetentionCandidate
   WorkerEmploymentVerification:
     model:
       - github.com/emoss08/trenova/internal/core/domain/worker.WorkerEmploymentVerification
@@ -1159,7 +1159,7 @@ models:
       - github.com/emoss08/trenova/internal/core/domain/carrierintel.SyncPlan
   CarrierIntelSuggestion:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.CarrierIntelSuggestion
+      - github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports.CarrierIntelSuggestion
   CarrierSourcingResult:
     model:
       - github.com/emoss08/trenova/internal/core/services/carrierintelservice.SourcingResult
@@ -1283,7 +1283,7 @@ models:
         resolver: true
   BenefitCostRow:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/repositories.BenefitCostRow
+      - github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports.BenefitCostRow
   TotalCompensation:
     model:
       - github.com/emoss08/trenova/internal/core/services/benefitsservice.TotalCompensation
@@ -1310,7 +1310,7 @@ models:
         resolver: true
   HeadcountRow:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/repositories.HeadcountRow
+      - github.com/emoss08/trenova/internal/modules/workforce/ports/workerports.HeadcountRow
   Headcount:
     model:
       - github.com/emoss08/trenova/internal/core/services/orgstructureservice.Headcount
@@ -1557,7 +1557,7 @@ models:
         resolver: true
   PTOBalanceSummary:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/repositories.PTOBalanceSummary
+      - github.com/emoss08/trenova/internal/modules/workforce/ports/workerports.PTOBalanceSummary
     fields:
       totalBalanceDays:
         resolver: true
@@ -1575,13 +1575,13 @@ models:
       - github.com/emoss08/trenova/internal/core/services/ptopolicyservice.AssignWorkersResult
   WorkerPTOBulkAction:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.PTOBulkActionType
+      - github.com/emoss08/trenova/internal/modules/workforce/ports/workerports.PTOBulkActionType
   BulkWorkerPTOActionResult:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.PTOBulkActionResult
+      - github.com/emoss08/trenova/internal/modules/workforce/ports/workerports.PTOBulkActionResult
   BulkWorkerPTOActionPayload:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.PTOBulkActionPayload
+      - github.com/emoss08/trenova/internal/modules/workforce/ports/workerports.PTOBulkActionPayload
   WorkerType:
     model:
       - github.com/emoss08/trenova/internal/core/domain/worker.WorkerType
@@ -1608,7 +1608,7 @@ models:
       - github.com/emoss08/trenova/internal/core/domain/worker.PTOType
   PTOChartDataPoint:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/repositories.PTOChartDataPoint
+      - github.com/emoss08/trenova/internal/modules/workforce/ports/workerports.PTOChartDataPoint
   BillingQueueStatus:
     model:
       - github.com/emoss08/trenova/internal/core/domain/billingqueue.Status
@@ -1649,7 +1649,7 @@ models:
         resolver: true
   CreateInvoicesResult:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.CreateInvoicesResult
+      - github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports.CreateInvoicesResult
   ShipmentBillingTransferFailureCode:
     model:
       - github.com/emoss08/trenova/internal/core/domain/billingtransfer.FailureCode
@@ -1688,7 +1688,7 @@ models:
       - github.com/emoss08/trenova/internal/core/domain/invoice.EDISendStatus
   VoidInvoiceResult:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.VoidInvoiceResult
+      - github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports.VoidInvoiceResult
   InvoiceDisputeCaseStatus:
     model:
       - github.com/emoss08/trenova/internal/core/domain/invoice.DisputeCaseStatus
@@ -1751,7 +1751,7 @@ models:
         resolver: true
   InvoiceAdjustmentApprovalQueueItem:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/repositories.InvoiceAdjustmentApprovalQueueItem
+      - github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem
     fields:
       rebillStrategy:
         resolver: true
@@ -1765,28 +1765,28 @@ models:
         resolver: true
   InvoiceAdjustmentSummaryCount:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/repositories.InvoiceAdjustmentSummaryCount
+      - github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports.InvoiceAdjustmentSummaryCount
   InvoiceAdjustmentRepeatedSummary:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/repositories.InvoiceAdjustmentRepeatedSummary
+      - github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports.InvoiceAdjustmentRepeatedSummary
   InvoiceAdjustmentOperationsSummary:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/repositories.InvoiceAdjustmentOperationsSummary
+      - github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports.InvoiceAdjustmentOperationsSummary
   LateChargeAssessmentMode:
     model:
       - github.com/emoss08/trenova/internal/core/domain/tenant.LateChargeAssessmentMode
   LateChargeLine:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.LateChargeLine
+      - github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports.LateChargeLine
     fields:
       ratePercent:
         resolver: true
   LateChargeCustomerResult:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.LateChargeCustomerResult
+      - github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports.LateChargeCustomerResult
   LateChargeAssessmentResult:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.LateChargeAssessmentResult
+      - github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports.LateChargeAssessmentResult
   LateChargeAssessment:
     model:
       - github.com/emoss08/trenova/internal/core/domain/latecharge.LateChargeAssessment
@@ -1795,10 +1795,10 @@ models:
         resolver: true
   InvoiceEDISendPlan:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.InvoiceEDISendPlan
+      - github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports.InvoiceEDISendPlan
   InvoiceEDISendResult:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.InvoiceEDISendResult
+      - github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports.InvoiceEDISendResult
   CreditMemoApplicationStatus:
     model:
       - github.com/emoss08/trenova/internal/core/domain/customerpayment.CreditApplicationStatus
@@ -1920,7 +1920,7 @@ models:
       - github.com/emoss08/trenova/internal/core/domain/agent.MemoryEvidence
   AgentMemoryUsage:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AgentMemoryUsage
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentMemoryUsage
   AgentReflection:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.Reflection
@@ -1992,25 +1992,25 @@ models:
       - github.com/emoss08/trenova/internal/core/domain/extractioneval.ResultStatus
   ExtractionAccuracy:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.ExtractionAccuracy
+      - github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports.ExtractionAccuracy
   ExtractionWeekAccuracy:
     model:
       - github.com/emoss08/trenova/internal/core/domain/aicorrection.WeekAccuracy
   ExtractionProviderTrend:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.ExtractionProviderTrend
+      - github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports.ExtractionProviderTrend
   ExtractionProviderTrends:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.ExtractionProviderTrends
+      - github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports.ExtractionProviderTrends
   ExtractionAccuracyGroup:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.ExtractionAccuracyGroup
+      - github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports.ExtractionAccuracyGroup
   AITrainingExportHistoryEntry:
     model:
       - github.com/emoss08/trenova/internal/core/domain/aitraining.ExportHistoryEntry
   ExtractionEvalCaseCounts:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/repositories.ExtractionEvalCaseCounts
+      - github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports.ExtractionEvalCaseCounts
   ExtractionRollout:
     model:
       - github.com/emoss08/trenova/internal/core/domain/extractionrollout.ExtractionRollout
@@ -2024,13 +2024,13 @@ models:
       - github.com/emoss08/trenova/internal/core/domain/extractionrollout.HaltReason
   ExtractionRolloutArm:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.ExtractionRolloutArmReport
+      - github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports.ExtractionRolloutArmReport
   ExtractionRolloutAccuracy:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.ExtractionRolloutAccuracy
+      - github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports.ExtractionRolloutAccuracy
   ExtractionRolloutReport:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.ExtractionRolloutReport
+      - github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports.ExtractionRolloutReport
   ExtractionShadowSettings:
     model:
       - github.com/emoss08/trenova/internal/core/domain/extractionshadow.ShadowSettings
@@ -2048,10 +2048,10 @@ models:
       - github.com/emoss08/trenova/internal/core/domain/extractionshadow.Verdict
   ExtractionShadowReport:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.ExtractionShadowReport
+      - github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports.ExtractionShadowReport
   ExtractionShadowSide:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.ExtractionShadowSide
+      - github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports.ExtractionShadowSide
   ExtractionShadowFieldComparison:
     model:
       - github.com/emoss08/trenova/internal/core/domain/aicorrection.FieldComparison
@@ -2078,13 +2078,13 @@ models:
       - github.com/emoss08/trenova/internal/core/domain/aifeedback.ToolLine
   AgentFeedbackSummary:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AgentFeedbackSummary
+      - github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports.AgentFeedbackSummary
   AgentFeedbackDay:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AgentFeedbackDay
+      - github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports.AgentFeedbackDay
   AgentFeedbackWorstRated:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AgentFeedbackWorstRated
+      - github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports.AgentFeedbackWorstRated
   AgentEvaluationStatus:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.EvaluationStatus
@@ -2122,22 +2122,22 @@ models:
         resolver: true
   AgentQualityPoint:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AgentQualityPoint
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports.AgentQualityPoint
   AgentQualityOverview:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AgentQualityOverview
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports.AgentQualityOverview
   AgentWorstRatedAnswer:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AgentWorstRatedAnswer
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports.AgentWorstRatedAnswer
     fields:
       id:
         resolver: true
   AgentQuality:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AgentQualityDetail
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports.AgentQualityDetail
   AgentQualityAgent:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AgentQualityAgent
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports.AgentQualityAgent
     fields:
       id:
         resolver: true
@@ -2146,7 +2146,7 @@ models:
       - github.com/emoss08/trenova/internal/core/domain/agent.AutonomyTier
   AgentToolPromotion:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.ToolPromotion
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.ToolPromotion
   AgentRunEvent:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.AgentRunEvent
@@ -2197,7 +2197,7 @@ models:
       - github.com/emoss08/trenova/internal/core/domain/aiaudit.VerificationStatus
   AIAuditChainStatus:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AIAuditChainStatus
+      - github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports.AIAuditChainStatus
     fields:
       lastVerificationStatus:
         resolver: true
@@ -2213,7 +2213,7 @@ models:
         resolver: true
   AIAuditDownload:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AIAuditExportDownload
+      - github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports.AIAuditExportDownload
   AgentScorecardWindow:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.ScorecardWindow
@@ -2288,7 +2288,7 @@ models:
         resolver: true
   AIProviderDraftTestResult:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.TestAIProviderResult
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.TestAIProviderResult
   AIProviderKind:
     model:
       - github.com/emoss08/trenova/internal/core/domain/aiprovider.Kind
@@ -2330,25 +2330,25 @@ models:
       - github.com/emoss08/trenova/internal/core/domain/airetrieval.PauseReason
   AIRetrievalAvailability:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AIRetrievalAvailability
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AIRetrievalAvailability
   AIRetrievalSettings:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AIRetrievalSettings
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AIRetrievalSettings
   AIRetrievalSourceStatus:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AIRetrievalSourceStatus
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AIRetrievalSourceStatus
   AIRetrievalModelChange:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AIRetrievalModelChange
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AIRetrievalModelChange
   AIRetrievalStatus:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AIRetrievalStatus
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AIRetrievalStatus
   AIRetrievalReindexEstimate:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AIRetrievalReindexEstimate
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AIRetrievalReindexEstimate
   AIRetrievalFailedEntry:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AIRetrievalFailedEntry
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AIRetrievalFailedEntry
   AgentStarter:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agentdefinition.Starter
@@ -2392,28 +2392,28 @@ models:
       - github.com/emoss08/trenova/internal/core/domain/agentlint.Finding
   AgentCapabilityMode:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AgentCapabilityMode
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentCapabilityMode
   AgentCapabilityTool:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AgentCapabilityTool
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentCapabilityTool
   AgentCapabilityHandoff:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AgentCapabilityHandoff
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentCapabilityHandoff
   AgentCapabilityLimits:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AgentCapabilityLimits
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentCapabilityLimits
   AgentCapabilities:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AgentCapabilities
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentCapabilities
   AgentDraft:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AgentDraft
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentDraft
   AgentDraftNote:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AgentDraftNote
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentDraftNote
   AgentInstructionsTightened:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.TightenedAgentInstructions
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.TightenedAgentInstructions
   AgentAccessMode:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agentdefinition.AccessMode
@@ -2532,13 +2532,13 @@ models:
       - github.com/emoss08/trenova/internal/core/domain/agentdefinition.ReachWarningKind
   AgentReachWarning:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AgentReachWarning
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentReachWarning
   AgentToolAutonomy:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.ToolAutonomy
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.ToolAutonomy
   AgentToolSafety:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AgentToolSafety
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentToolSafety
     fields:
       id:
         resolver: true
@@ -2546,7 +2546,7 @@ models:
         resolver: true
   AgentSafetySummary:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AgentSafetySummary
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentSafetySummary
     fields:
       openSensitiveAgentIds:
         resolver: true
@@ -2562,19 +2562,19 @@ models:
         resolver: true
   AgentToolRuleImpact:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AgentToolRuleImpact
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentToolRuleImpact
   AgentToolHolders:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AgentToolHolders
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentToolHolders
     fields:
       agentIds:
         resolver: true
   AgentEgressCount:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AgentEgressCount
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentEgressCount
   AgentSafety:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AgentSafetySubject
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentSafetySubject
     fields:
       agentId:
         resolver: true
@@ -2684,7 +2684,7 @@ models:
       - github.com/emoss08/trenova/internal/core/domain/capture.CaptureProfile
   CaptureRecordRef:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/repositories.CaptureRecordLabel
+      - github.com/emoss08/trenova/internal/modules/documents/ports/captureports.CaptureRecordLabel
   CaptureRequest:
     model:
       - github.com/emoss08/trenova/internal/core/domain/capture.CaptureRequest
@@ -2767,7 +2767,7 @@ models:
         fieldName: SHA256
   CaptureQRCode:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.CaptureQRCode
+      - github.com/emoss08/trenova/internal/modules/documents/ports/captureports.CaptureQRCode
   CaptureItemFailure:
     model:
       - github.com/emoss08/trenova/internal/core/services/captureservice.FileItemFailure
@@ -2854,7 +2854,7 @@ models:
         resolver: true
   InboundShipmentRef:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/repositories.ShipmentSummary
+      - github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports.ShipmentSummary
     fields:
       id:
         fieldName: ShipmentID
@@ -4080,7 +4080,7 @@ models:
       - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalComment
   PortalStopAction:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/repositories.StopActualAction
+      - github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports.StopActualAction
   PortalComplianceProfile:
     model:
       - github.com/emoss08/trenova/internal/core/services/driverportalservice.PortalComplianceProfile
@@ -4203,7 +4203,7 @@ models:
       - github.com/emoss08/trenova/internal/core/services/driversettlementservice.WorkspaceSummary
   UnsettledWorkerSummary:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/repositories.UnsettledWorkerSummary
+      - github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports.UnsettledWorkerSummary
   BulkSettlementActionType:
     model:
       - github.com/emoss08/trenova/internal/core/services/driversettlementservice.BulkActionType
@@ -4284,16 +4284,16 @@ models:
         resolver: true
   ARAgingBucketTotals:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/repositories.ARAgingBucketTotals
+      - github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports.ARAgingBucketTotals
   ARCustomerAgingRow:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/repositories.ARCustomerAgingRow
+      - github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports.ARCustomerAgingRow
   ARAgingSummary:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.ARAgingSummary
+      - github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports.ARAgingSummary
   AIUsageSummary:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AIUsageSummary
+      - github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports.AIUsageSummary
   AIControlTab:
     model:
       - github.com/emoss08/trenova/internal/core/domain/aicontrolsummary.Tab
@@ -4338,76 +4338,76 @@ models:
         resolver: true
   AITuneUpAgent:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AITuneUpAgent
+      - github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports.AITuneUpAgent
   AITuneUpProvider:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AITuneUpProvider
+      - github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports.AITuneUpProvider
   AIUsageDay:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AIUsageDay
+      - github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports.AIUsageDay
   AIUsageProviderSlice:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AIUsageProviderSlice
+      - github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports.AIUsageProviderSlice
   AIUsageFailure:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AIUsageFailure
+      - github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports.AIUsageFailure
   AIUsageFeatureSlice:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AIUsageFeatureSlice
+      - github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports.AIUsageFeatureSlice
   AIUsageFeature:
     model:
       - github.com/emoss08/trenova/internal/core/domain/aiusage.Feature
   AROpenItem:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/repositories.AROpenItem
+      - github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports.AROpenItem
   ARLedgerEntry:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/repositories.ARLedgerEntry
+      - github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports.ARLedgerEntry
   ARStatementTransaction:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.ARStatementTransaction
+      - github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports.ARStatementTransaction
   ARCustomerStatement:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.ARCustomerStatement
+      - github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports.ARCustomerStatement
   ARBalanceOverview:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/repositories.ARBalanceOverview
+      - github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports.ARBalanceOverview
   ARDashboardKPIs:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.ARDashboardKPIs
+      - github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports.ARDashboardKPIs
   ARDSOTrendPoint:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.ARDSOTrendPoint
+      - github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports.ARDSOTrendPoint
   ARAgingTrendPoint:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/repositories.ARAgingTrendPoint
+      - github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports.ARAgingTrendPoint
   ARCashFlowPoint:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/repositories.ARCashFlowPoint
+      - github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports.ARCashFlowPoint
   ARCollectionTotals:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/repositories.ARCollectionTotals
+      - github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports.ARCollectionTotals
   ARCollectionPerformance:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.ARCollectionPerformance
+      - github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports.ARCollectionPerformance
   ARTopOverdueCustomer:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/repositories.ARTopOverdueCustomer
+      - github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports.ARTopOverdueCustomer
   ARCollectionsWorklistItem:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/repositories.ARCollectionsWorklistItem
+      - github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports.ARCollectionsWorklistItem
   ARMonthlyCollectionPoint:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/repositories.ARMonthlyCollectionPoint
+      - github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports.ARMonthlyCollectionPoint
   ARCustomerSnapshot:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/repositories.ARCustomerSnapshot
+      - github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports.ARCustomerSnapshot
   ARCustomerProfile:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.ARCustomerProfile
+      - github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports.ARCustomerProfile
   ARPaymentStats:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/repositories.ARPaymentStats
+      - github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports.ARPaymentStats
   ConfigurationVisibility:
     model:
       - github.com/emoss08/trenova/internal/core/domain/tableconfiguration.Visibility
@@ -4440,7 +4440,7 @@ models:
         resolver: true
   AccountingSyncStatus:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AccountingSyncStatus
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingSyncStatus
   AccountingProviderProfile:
     model:
       - github.com/emoss08/trenova/internal/core/domain/accountingsync.ProviderProfile
@@ -4449,10 +4449,10 @@ models:
         fieldName: Ledger
   AccountingCompany:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AccountingCompany
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingCompany
   CompleteAccountingAuthorizationPayload:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AccountingAuthorizationCompletion
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingAuthorizationCompletion
   AccountingSyncObjectType:
     model:
       - github.com/emoss08/trenova/internal/core/domain/accountingsync.SyncObjectType
@@ -4482,7 +4482,7 @@ models:
       - github.com/emoss08/trenova/internal/core/domain/accountingsync.BackfillStatus
   AccountingBackfillAction:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AccountingBackfillAction
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingBackfillAction
   AccountingSyncRecord:
     model:
       - github.com/emoss08/trenova/internal/core/domain/accountingsync.AccountingSyncRecord
@@ -4553,16 +4553,16 @@ models:
         resolver: true
   AccountingInboundSummary:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/repositories.AccountingInboundSummary
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingInboundSummary
   AccountingInboundOverview:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AccountingInboundOverview
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingInboundOverview
   AccountingInboundPostingLine:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AccountingInboundPostingLine
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingInboundPostingLine
   AccountingInboundApplyPreview:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AccountingInboundApplyPreview
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingInboundApplyPreview
   AccountingDriftKind:
     model:
       - github.com/emoss08/trenova/internal/core/domain/accountingsync.DriftKind
@@ -4607,22 +4607,22 @@ models:
         resolver: true
   AccountingDriftSummary:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/repositories.AccountingDriftSummary
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingDriftSummary
   AccountingDriftOverview:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AccountingDriftOverview
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingDriftOverview
   JournalReviewSummary:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.JournalReviewSummary
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports.JournalReviewSummary
   JournalReviewResult:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.JournalReviewResult
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports.JournalReviewResult
   JournalReviewOutcome:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.JournalReviewOutcome
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports.JournalReviewOutcome
   AccountingDriftFixPreview:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AccountingDriftFixPreview
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingDriftFixPreview
     fields:
       direction:
         resolver: true
@@ -4632,19 +4632,19 @@ models:
         resolver: true
   AccountingSyncStatusCount:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/repositories.AccountingSyncStatusCount
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingSyncStatusCount
   AccountingSyncAttentionGroup:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/repositories.AccountingSyncAttentionGroup
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingSyncAttentionGroup
     fields:
       errorCategory:
         resolver: true
   AccountingSyncSummary:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AccountingSyncSummary
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingSyncSummary
   AccountingSyncObjectState:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AccountingSyncObjectState
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingSyncObjectState
   AccountingAppSource:
     model:
       - github.com/emoss08/trenova/internal/core/domain/accountingsync.AppSource
@@ -4659,7 +4659,7 @@ models:
         resolver: true
   AccountingAppSettings:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AccountingAppSettings
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingAppSettings
     fields:
       activeSource:
         resolver: true
@@ -4716,10 +4716,10 @@ models:
         resolver: true
   AccountingMappingGroup:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AccountingMappingGroup
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingMappingGroup
   AccountingMappingSummary:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AccountingMappingSummary
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingMappingSummary
   AccountingAuthorizationStart:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.AccountingAuthorizationStart
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingAuthorizationStart

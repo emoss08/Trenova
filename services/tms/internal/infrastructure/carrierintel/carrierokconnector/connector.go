@@ -6,10 +6,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/carrierintel/hostguard"
 	"github.com/emoss08/trenova/internal/infrastructure/carrierintel/intelkit"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/shared/carrierok"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/shopspring/decimal"
@@ -28,7 +28,7 @@ const (
 )
 
 var (
-	_ services.CarrierIntelConnector = (*Connector)(nil)
+	_ carrierintelports.CarrierIntelConnector = (*Connector)(nil)
 
 	errorMapper = intelkit.ErrorMapper{
 		Provider:        integration.TypeCarrierOK,
@@ -115,8 +115,8 @@ func (c *Connector) TestConnection(ctx context.Context, cfg map[string]string) e
 }
 
 func (c *Connector) Bind(
-	params *services.CarrierIntelBindParams,
-) (services.CarrierIntelClient, error) {
+	params *carrierintelports.CarrierIntelBindParams,
+) (carrierintelports.CarrierIntelClient, error) {
 	if params == nil {
 		return nil, intelkit.NewUserError(messageAPIKeyRequired, nil)
 	}

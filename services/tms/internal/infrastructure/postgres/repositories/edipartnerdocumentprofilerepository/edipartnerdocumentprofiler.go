@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -31,7 +31,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.EDIPartnerDocumentProfileRepository {
+func New(p Params) ediports.EDIPartnerDocumentProfileRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.edi-partner-document-profile-repository"),
@@ -40,7 +40,7 @@ func New(p Params) repositories.EDIPartnerDocumentProfileRepository {
 
 func (r *repository) ListPartnerDocumentProfiles(
 	ctx context.Context,
-	req *repositories.ListEDIPartnerDocumentProfilesRequest,
+	req *ediports.ListEDIPartnerDocumentProfilesRequest,
 ) (*pagination.ListResult[*edi.EDIPartnerDocumentProfile], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDIPartnerDocumentProfile], error) {
 		entities := make([]*edi.EDIPartnerDocumentProfile, 0, req.Filter.Pagination.SafeLimit())
@@ -94,7 +94,7 @@ func (r *repository) ListPartnerDocumentProfiles(
 
 func (r *repository) SelectPartnerDocumentProfileOptions(
 	ctx context.Context,
-	req *repositories.EDIPartnerDocumentProfileSelectOptionsRequest,
+	req *ediports.EDIPartnerDocumentProfileSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDIPartnerDocumentProfile], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDIPartnerDocumentProfile], error) {
 		entities := make(
@@ -152,7 +152,7 @@ func (r *repository) SelectPartnerDocumentProfileOptions(
 
 func (r *repository) GetPartnerDocumentProfileByID(
 	ctx context.Context,
-	req repositories.GetEDIPartnerDocumentProfileByIDRequest,
+	req ediports.GetEDIPartnerDocumentProfileByIDRequest,
 ) (*edi.EDIPartnerDocumentProfile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIPartnerDocumentProfile, error) {
 		entity := new(edi.EDIPartnerDocumentProfile)
@@ -181,7 +181,7 @@ func (r *repository) GetPartnerDocumentProfileByID(
 
 func (r *repository) GetActivePartnerDocumentProfile(
 	ctx context.Context,
-	req repositories.GetActiveEDIPartnerDocumentProfileRequest,
+	req ediports.GetActiveEDIPartnerDocumentProfileRequest,
 ) (*edi.EDIPartnerDocumentProfile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIPartnerDocumentProfile, error) {
 		entities := make([]*edi.EDIPartnerDocumentProfile, 0, 2)

@@ -8,9 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -29,7 +30,7 @@ var transferPreviewLabels = map[string]string{
 
 func (t *ediTransferDecisionTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	call, outcome, err := t.outcome(ctx, &params)
 	if err != nil {
@@ -70,7 +71,7 @@ func tenderDecisionChanges(outcome *tenderOutcome, orgID pulid.ID) ([]*agent.Rec
 
 	changes := []*agent.RecordChange{status}
 	if outcome.approval != nil && outcome.approval.Shipment != nil {
-		created, cErr := enteredShipmentChanges(&serviceports.ShipmentCreatePlan{
+		created, cErr := enteredShipmentChanges(&shipmentports.ShipmentCreatePlan{
 			Shipment: outcome.approval.Shipment,
 		})
 		if cErr != nil {

@@ -1,6 +1,9 @@
 package authservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -9,10 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/session"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/rbactest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -25,18 +27,18 @@ import (
 )
 
 type testDeps struct {
-	userRepo    *mocks.MockUserRepository
-	sessionRepo *mocks.MockSessionRepository
-	portalRepo  *mocks.MockPortalAccessRepository
+	userRepo    *tenantportsmock.MockUserRepository
+	sessionRepo *sessionportsmock.MockSessionRepository
+	portalRepo  *workerportsmock.MockPortalAccessRepository
 	authEvents  *recordingAuthEvents
 	svc         *Service
 }
 
 func setupTest(t *testing.T) *testDeps {
 	t.Helper()
-	ur := mocks.NewMockUserRepository(t)
-	sr := mocks.NewMockSessionRepository(t)
-	pr := mocks.NewMockPortalAccessRepository(t)
+	ur := tenantportsmock.NewMockUserRepository(t)
+	sr := sessionportsmock.NewMockSessionRepository(t)
+	pr := workerportsmock.NewMockPortalAccessRepository(t)
 	events := &recordingAuthEvents{}
 	svc := &Service{
 		ur:         ur,
@@ -108,7 +110,7 @@ func TestLogin_Success(t *testing.T) {
 	ctx := t.Context()
 	usr := newTestUser(t)
 
-	req := services.LoginRequest{
+	req := tenantports.LoginRequest{
 		EmailAddress: "test@example.com",
 		Password:     "password123",
 	}
@@ -147,7 +149,7 @@ func TestLogin_IncludesAuthorizedRoleSummaries(t *testing.T) {
 		},
 	}
 
-	req := services.LoginRequest{
+	req := tenantports.LoginRequest{
 		EmailAddress: "test@example.com",
 		Password:     "password123",
 	}
@@ -176,7 +178,7 @@ func TestLogin_ValidationError(t *testing.T) {
 	deps := setupTest(t)
 	ctx := t.Context()
 
-	req := services.LoginRequest{
+	req := tenantports.LoginRequest{
 		EmailAddress: "",
 		Password:     "",
 	}
@@ -194,7 +196,7 @@ func TestLogin_UserNotFound(t *testing.T) {
 	deps := setupTest(t)
 	ctx := t.Context()
 
-	req := services.LoginRequest{
+	req := tenantports.LoginRequest{
 		EmailAddress: "notfound@example.com",
 		Password:     "password123",
 	}
@@ -217,7 +219,7 @@ func TestLogin_InvalidCredentials(t *testing.T) {
 	ctx := t.Context()
 	usr := newTestUser(t)
 
-	req := services.LoginRequest{
+	req := tenantports.LoginRequest{
 		EmailAddress: "test@example.com",
 		Password:     "wrongpassword",
 	}
@@ -238,7 +240,7 @@ func TestLogin_SessionCreateError(t *testing.T) {
 	ctx := t.Context()
 	usr := newTestUser(t)
 
-	req := services.LoginRequest{
+	req := tenantports.LoginRequest{
 		EmailAddress: "test@example.com",
 		Password:     "password123",
 	}
@@ -309,7 +311,7 @@ func TestActivateSessionRoles_IncludesRoleSummaries(t *testing.T) {
 	})).
 		Return(nil)
 
-	result, err := deps.svc.ActivateSessionRoles(ctx, services.ActivateSessionRolesRequest{
+	result, err := deps.svc.ActivateSessionRoles(ctx, tenantports.ActivateSessionRolesRequest{
 		SessionID: sessionID,
 		RoleIDs:   []pulid.ID{roleID},
 	})
@@ -348,7 +350,7 @@ func TestActivateSessionRoles_RejectsUnauthorizedRoleIDs(t *testing.T) {
 
 	deps.sessionRepo.On("Get", mock.Anything, sessionID).Return(sess, nil)
 
-	result, err := deps.svc.ActivateSessionRoles(ctx, services.ActivateSessionRolesRequest{
+	result, err := deps.svc.ActivateSessionRoles(ctx, tenantports.ActivateSessionRolesRequest{
 		SessionID: sessionID,
 		RoleIDs:   []pulid.ID{unauthorizedRoleID},
 	})
@@ -434,7 +436,7 @@ func TestLogin_UpdateLastLoginAtError_StillSucceeds(t *testing.T) {
 	ctx := t.Context()
 	usr := newTestUser(t)
 
-	req := services.LoginRequest{
+	req := tenantports.LoginRequest{
 		EmailAddress: "test@example.com",
 		Password:     "password123",
 	}
@@ -464,9 +466,9 @@ func TestStartSSOLogin_StoresProviderIDInState(t *testing.T) {
 	providerID := pulid.MustNew("sso_")
 	providerServer := newOIDCDiscoveryServer(t)
 
-	orgRepo := mocks.NewMockOrganizationRepository(t)
-	ssoRepo := mocks.NewMockSSOConfigRepository(t)
-	stateRepo := mocks.NewMockSSOLoginStateRepository(t)
+	orgRepo := tenantportsmock.NewMockOrganizationRepository(t)
+	ssoRepo := tenantportsmock.NewMockSSOConfigRepository(t)
+	stateRepo := tenantportsmock.NewMockSSOLoginStateRepository(t)
 	svc := &Service{
 		or:        orgRepo,
 		ssoRepo:   ssoRepo,
@@ -505,7 +507,7 @@ func TestStartSSOLogin_StoresProviderIDInState(t *testing.T) {
 	stateRepo.On(
 		"Save",
 		mock.Anything,
-		mock.MatchedBy(func(state *repositories.SSOLoginState) bool {
+		mock.MatchedBy(func(state *tenantports.SSOLoginState) bool {
 			return state.ProviderID == providerID &&
 				state.Provider == tenant.SSOProviderOkta &&
 				state.OrganizationID == orgID &&
@@ -518,7 +520,7 @@ func TestStartSSOLogin_StoresProviderIDInState(t *testing.T) {
 		ssoLoginStateTTL,
 	).Return(nil)
 
-	redirectURL, err := svc.StartSSOLogin(ctx, services.StartSSOLoginRequest{
+	redirectURL, err := svc.StartSSOLogin(ctx, tenantports.StartSSOLoginRequest{
 		ProviderID:       providerID,
 		OrganizationSlug: "acme",
 		ReturnTo:         "https://app.test/home",
@@ -537,7 +539,7 @@ func TestResolveSSOConfigForCallback_UsesProviderID(t *testing.T) {
 	ctx := t.Context()
 	orgID := pulid.MustNew("org_")
 	providerID := pulid.MustNew("sso_")
-	ssoRepo := mocks.NewMockSSOConfigRepository(t)
+	ssoRepo := tenantportsmock.NewMockSSOConfigRepository(t)
 	svc := &Service{ssoRepo: ssoRepo}
 	expectedConfig := &tenant.SSOConfig{
 		ID:             providerID,
@@ -547,7 +549,7 @@ func TestResolveSSOConfigForCallback_UsesProviderID(t *testing.T) {
 
 	ssoRepo.On("GetEnabledByID", ctx, providerID).Return(expectedConfig, nil)
 
-	cfg, err := svc.resolveSSOConfigForCallback(ctx, &repositories.SSOLoginState{
+	cfg, err := svc.resolveSSOConfigForCallback(ctx, &tenantports.SSOLoginState{
 		Provider:       tenant.SSOProviderAzureAD,
 		ProviderID:     providerID,
 		OrganizationID: orgID,
@@ -588,7 +590,7 @@ func TestLogin_InactiveUser(t *testing.T) {
 	usr := newTestUser(t)
 	usr.Status = domaintypes.StatusInactive
 
-	req := services.LoginRequest{
+	req := tenantports.LoginRequest{
 		EmailAddress: "test@example.com",
 		Password:     "password123",
 	}
@@ -606,8 +608,8 @@ func TestLogin_InactiveUser(t *testing.T) {
 func TestNew(t *testing.T) {
 	t.Parallel()
 
-	userRepo := mocks.NewMockUserRepository(t)
-	sessionRepo := mocks.NewMockSessionRepository(t)
+	userRepo := tenantportsmock.NewMockUserRepository(t)
+	sessionRepo := sessionportsmock.NewMockSessionRepository(t)
 
 	svc := New(Params{
 		UserRepository:    userRepo,

@@ -6,15 +6,15 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 func (s *Service) ListEmailAttempts(
 	ctx context.Context,
-	req repositories.ListInvoiceEmailAttemptsRequest,
+	req invoiceports.ListInvoiceEmailAttemptsRequest,
 ) (*pagination.ListResult[*invoice.EmailAttempt], error) {
 	return s.repo.ListEmailAttempts(ctx, req)
 }
@@ -45,7 +45,7 @@ func moneyString(currency, amount string) string {
 	return currency + " " + amount
 }
 
-func actorUserID(actor *servicesports.RequestActor, tenantInfo pagination.TenantInfo) pulid.ID {
+func actorUserID(actor *permissionports.RequestActor, tenantInfo pagination.TenantInfo) pulid.ID {
 	if actor != nil && actor.UserID.IsNotNil() {
 		return actor.UserID
 	}

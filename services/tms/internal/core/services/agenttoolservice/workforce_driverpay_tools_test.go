@@ -8,8 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -63,7 +64,7 @@ func (f *fakeDriverPayReviews) PlanStartDisputeReview(
 	context.Context,
 	pagination.TenantInfo,
 	pulid.ID,
-	*serviceports.RequestActor,
+	*permissionports.RequestActor,
 ) (*driversettlementservice.DisputeChange, error) {
 	if f.dispute.Status != driversettlement.DisputeStatusOpen {
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalidOperation,
@@ -78,7 +79,7 @@ func (f *fakeDriverPayReviews) StartDisputeReview(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	id pulid.ID,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*driversettlement.Dispute, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -90,7 +91,7 @@ func (f *fakeDriverPayReviews) StartDisputeReview(
 func (f *fakeDriverPayReviews) PlanResolveDispute(
 	_ context.Context,
 	req *driversettlementservice.ResolveDisputeRequest,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driversettlementservice.ResolveDisputePlan, error) {
 	if !req.Approve && req.Adjustment != nil {
 		return nil, errortypes.NewValidationError("adjustment", errortypes.ErrInvalid,
@@ -115,7 +116,7 @@ func (f *fakeDriverPayReviews) PlanResolveDispute(
 func (f *fakeDriverPayReviews) ResolveDispute(
 	_ context.Context,
 	req *driversettlementservice.ResolveDisputeRequest,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*driversettlement.Dispute, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -129,7 +130,7 @@ func (f *fakeDriverPayReviews) ResolveDispute(
 func (f *fakeDriverPayReviews) PlanReviewExpense(
 	_ context.Context,
 	req *driversettlementservice.ReviewExpenseRequest,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*driversettlementservice.ReviewExpensePlan, error) {
 	if !req.Approve && req.Note == "" {
 		return nil, errortypes.NewValidationError("note", errortypes.ErrRequired,
@@ -149,7 +150,7 @@ func (f *fakeDriverPayReviews) PlanReviewExpense(
 func (f *fakeDriverPayReviews) ReviewExpense(
 	_ context.Context,
 	req *driversettlementservice.ReviewExpenseRequest,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*driverpay.Expense, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -166,7 +167,7 @@ func TestStartSettlementDisputeReview_OnlyAnOpenDispute(t *testing.T) {
 	params := executeParams(map[string]any{paramDisputeID: reviews.dispute.ID.String()})
 
 	preview := previewWithoutWrites(t, reviews.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, string(driversettlement.DisputeStatusInReview),
 		fieldByPath(t, previewChange(t, preview, 0), fieldStatus).After)
@@ -176,7 +177,7 @@ func TestStartSettlementDisputeReview_OnlyAnOpenDispute(t *testing.T) {
 	assert.Equal(t, permission.OpUpdate, tool.Policy().Operation)
 
 	reviews.dispute.Status = driversettlement.DisputeStatusInReview
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
 }
 
 func TestResolveSettlementDispute_ClassifiesByWhetherPayMoves(t *testing.T) {
@@ -193,7 +194,7 @@ func TestResolveSettlementDispute_ClassifiesByWhetherPayMoves(t *testing.T) {
 	}
 
 	preview := previewWithoutWrites(t, reviews.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), executeParams(approve))
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), executeParams(approve))
 	})
 	assert.Contains(t, preview.Summary, "approve the pay dispute and tell the driver")
 	assert.Contains(t, preview.Summary, "settlement DS-2026-0412")
@@ -226,9 +227,9 @@ func TestResolveSettlementDispute_ClassifiesByWhetherPayMoves(t *testing.T) {
 		paramAdjustmentAmountMoney: "10.00",
 		paramAdjustmentLabel:       "x",
 	}
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 		executeParams(deniedWithPay)), "validation runs the service's plan")
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 		executeParams(map[string]any{
 			paramDisputeID:             reviews.dispute.ID.String(),
 			paramDecision:              "Approve",
@@ -248,7 +249,7 @@ func TestReviewDriverExpense_ARejectionSaysWhy(t *testing.T) {
 	}
 
 	preview := previewWithoutWrites(t, reviews.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), executeParams(approve))
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), executeParams(approve))
 	})
 	assert.Contains(
 		t,
@@ -261,11 +262,11 @@ func TestReviewDriverExpense_ARejectionSaysWhy(t *testing.T) {
 		paramExpenseID: reviews.expense.ID.String(),
 		paramDecision:  "Reject",
 	}
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 		executeParams(reject)))
 	reject[fieldNote] = "No receipt attached"
 	preview = previewWithoutWrites(t, reviews.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), executeParams(reject))
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), executeParams(reject))
 	})
 	assert.Contains(t, preview.Summary, "reject the 42.50 USD expense")
 	assert.Len(t, preview.Changes, 1)

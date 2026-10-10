@@ -16,10 +16,13 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -38,11 +41,11 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.WorkerCredentialRepository
-	WorkerRepo   repositories.WorkerRepository
-	DocumentRepo repositories.DocumentRepository
-	AuditService services.AuditService
-	Realtime     services.RealtimeService `optional:"true"`
+	Repo         workerports.WorkerCredentialRepository
+	WorkerRepo   workerports.WorkerRepository
+	DocumentRepo documentports.DocumentRepository
+	AuditService auditports.AuditService
+	Realtime     agentports.RealtimeService `optional:"true"`
 	// DriverNotify carries a renewal ask to the driver, in the wording the
 	// organization's own template gives it.
 	DriverNotify *drivernotificationservice.Service `optional:"true"`
@@ -50,11 +53,11 @@ type Params struct {
 
 type Service struct {
 	l             *zap.Logger
-	repo          repositories.WorkerCredentialRepository
-	workerRepo    repositories.WorkerRepository
-	documentRepo  repositories.DocumentRepository
-	auditService  services.AuditService
-	realtime      services.RealtimeService
+	repo          workerports.WorkerCredentialRepository
+	workerRepo    workerports.WorkerRepository
+	documentRepo  documentports.DocumentRepository
+	auditService  auditports.AuditService
+	realtime      agentports.RealtimeService
 	driverNotify  *drivernotificationservice.Service
 	seededTenants sync.Map
 }
@@ -127,7 +130,7 @@ func (s *Service) audit(p *auditParams) {
 	if p.userID.IsNil() {
 		return
 	}
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       p.resource,
 		ResourceID:     p.resourceID,
 		Operation:      p.operation,
@@ -136,7 +139,7 @@ func (s *Service) audit(p *auditParams) {
 		OrganizationID: p.tenant.OrgID,
 		BusinessUnitID: p.tenant.BuID,
 	}
-	opts := []services.LogOption{auditservice.WithComment(p.comment)}
+	opts := []auditports.LogOption{auditservice.WithComment(p.comment)}
 	if p.previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(p.previous)
 		opts = append(opts, auditservice.WithDiff(p.previous, p.current))
@@ -157,9 +160,9 @@ func (s *Service) publish(
 	if s.realtime == nil {
 		return
 	}
-	actorType := services.PrincipalTypeUser
+	actorType := permissionports.PrincipalTypeUser
 	if userID.IsNil() {
-		actorType = services.PrincipalTypeSystem
+		actorType = permissionports.PrincipalTypeSystem
 	}
 	if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
 		OrganizationID: tenantInfo.OrgID,

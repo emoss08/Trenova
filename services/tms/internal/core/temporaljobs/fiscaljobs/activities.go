@@ -6,11 +6,13 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/fiscalperiodservice"
 	"github.com/emoss08/trenova/internal/core/services/fiscalyearservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -21,23 +23,23 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	AccountingControlRepo repositories.AccountingControlRepository
-	FiscalYearRepo        repositories.FiscalYearRepository
-	FiscalPeriodRepo      repositories.FiscalPeriodRepository
+	AccountingControlRepo tenantports.AccountingControlRepository
+	FiscalYearRepo        fiscalyearports.FiscalYearRepository
+	FiscalPeriodRepo      fiscalperiodports.FiscalPeriodRepository
 	FiscalPeriodService   *fiscalperiodservice.Service
 	FiscalYearService     *fiscalyearservice.Service
 	NotificationService   *notificationservice.Service
-	UserRepo              repositories.UserRepository
+	UserRepo              tenantports.UserRepository
 }
 
 type Activities struct {
-	acRepo       repositories.AccountingControlRepository
-	fyRepo       repositories.FiscalYearRepository
-	fpRepo       repositories.FiscalPeriodRepository
+	acRepo       tenantports.AccountingControlRepository
+	fyRepo       fiscalyearports.FiscalYearRepository
+	fpRepo       fiscalperiodports.FiscalPeriodRepository
 	fpSvc        *fiscalperiodservice.Service
 	fySvc        *fiscalyearservice.Service
 	notification *notificationservice.Service
-	userRepo     repositories.UserRepository
+	userRepo     tenantports.UserRepository
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -127,7 +129,7 @@ func (a *Activities) CloseExpiredPeriodsActivity(
 
 	periods, err := a.fpRepo.GetExpiredUnclosedPeriods(
 		ctx,
-		repositories.GetExpiredUnclosedPeriodsRequest{
+		fiscalperiodports.GetExpiredUnclosedPeriodsRequest{
 			OrgID:      payload.OrganizationID,
 			BuID:       payload.BusinessUnitID,
 			BeforeDate: now,
@@ -154,7 +156,7 @@ func (a *Activities) CloseExpiredPeriodsActivity(
 	}
 
 	for _, period := range periods {
-		_, closeErr := a.fpSvc.Close(ctx, repositories.CloseFiscalPeriodRequest{
+		_, closeErr := a.fpSvc.Close(ctx, fiscalperiodports.CloseFiscalPeriodRequest{
 			ID: period.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: payload.OrganizationID,
@@ -196,7 +198,7 @@ func (a *Activities) CheckAndCreateNextFiscalYearActivity(
 
 	result := &AutoCreateFiscalYearResult{}
 
-	currentFY, err := a.fyRepo.GetCurrentFiscalYear(ctx, repositories.GetCurrentFiscalYearRequest{
+	currentFY, err := a.fyRepo.GetCurrentFiscalYear(ctx, fiscalyearports.GetCurrentFiscalYearRequest{
 		OrgID: payload.OrganizationID,
 		BuID:  payload.BusinessUnitID,
 	})
@@ -243,7 +245,7 @@ func (a *Activities) CheckAndCreateNextFiscalYearActivity(
 	}
 
 	periods := createdFY.GenerateMonthlyPeriods()
-	bulkErr := a.fpRepo.BulkCreate(ctx, &repositories.BulkCreateFiscalPeriodsRequest{
+	bulkErr := a.fpRepo.BulkCreate(ctx, &fiscalperiodports.BulkCreateFiscalPeriodsRequest{
 		Periods: periods,
 	})
 	if bulkErr != nil {

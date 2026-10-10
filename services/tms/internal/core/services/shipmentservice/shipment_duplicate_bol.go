@@ -5,14 +5,14 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
 func (s *service) checkDuplicateBOLsWithControl(
 	ctx context.Context,
 	control *tenant.ShipmentControl,
-	req *repositories.DuplicateBOLCheckRequest,
+	req *shipmentports.DuplicateBOLCheckRequest,
 ) error {
 	if !control.CheckForDuplicateBOLs {
 		return nil

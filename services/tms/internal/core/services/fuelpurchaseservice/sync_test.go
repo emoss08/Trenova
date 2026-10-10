@@ -7,9 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/fuelpurchaseservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/pkg/fuelimport"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/rateimport"
@@ -17,28 +16,28 @@ import (
 )
 
 type fakeConnector struct {
-	capability services.FuelFeedCapability
-	result     *services.FetchFuelTransactionsResult
+	capability fuelpurchaseports.FuelFeedCapability
+	result     *fuelpurchaseports.FetchFuelTransactionsResult
 	err        error
 	calls      int
-	lastReq    *services.FetchFuelTransactionsRequest
+	lastReq    *fuelpurchaseports.FetchFuelTransactionsRequest
 }
 
 func (c *fakeConnector) IntegrationType() integration.Type {
 	return integration.TypeComdataFuel
 }
 
-func (c *fakeConnector) Capability() services.FuelFeedCapability {
+func (c *fakeConnector) Capability() fuelpurchaseports.FuelFeedCapability {
 	if c.capability == "" {
-		return services.FuelFeedCapabilityIFTAGrade
+		return fuelpurchaseports.FuelFeedCapabilityIFTAGrade
 	}
 	return c.capability
 }
 
 func (c *fakeConnector) FetchTransactions(
 	_ context.Context,
-	req *services.FetchFuelTransactionsRequest,
-) (*services.FetchFuelTransactionsResult, error) {
+	req *fuelpurchaseports.FetchFuelTransactionsRequest,
+) (*fuelpurchaseports.FetchFuelTransactionsResult, error) {
 	c.calls++
 	c.lastReq = req
 	if c.err != nil {
@@ -51,19 +50,19 @@ func (c *fakeConnector) FetchTransactions(
 func (c *fakeConnector) TestConnection(context.Context, map[string]string) error { return nil }
 
 type fakeFeedResolver struct {
-	feeds map[fuelpurchase.CardProvider]*services.ResolvedFuelFeed
+	feeds map[fuelpurchase.CardProvider]*fuelpurchaseports.ResolvedFuelFeed
 }
 
 func newFakeFeedResolver() *fakeFeedResolver {
-	return &fakeFeedResolver{feeds: map[fuelpurchase.CardProvider]*services.ResolvedFuelFeed{}}
+	return &fakeFeedResolver{feeds: map[fuelpurchase.CardProvider]*fuelpurchaseports.ResolvedFuelFeed{}}
 }
 
 func (f *fakeFeedResolver) install(
 	provider fuelpurchase.CardProvider,
-	connector services.FuelCardProvider,
+	connector fuelpurchaseports.FuelCardProvider,
 	discoverCards bool,
 ) {
-	f.feeds[provider] = &services.ResolvedFuelFeed{
+	f.feeds[provider] = &fuelpurchaseports.ResolvedFuelFeed{
 		Connector:       connector,
 		IntegrationType: integration.TypeComdataFuel,
 		Provider:        provider,
@@ -76,15 +75,15 @@ func (f *fakeFeedResolver) ResolveFuelFeed(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	provider fuelpurchase.CardProvider,
-) (*services.ResolvedFuelFeed, error) {
+) (*fuelpurchaseports.ResolvedFuelFeed, error) {
 	return f.feeds[provider], nil
 }
 
 func (f *fakeFeedResolver) ListFuelFeeds(
 	_ context.Context,
 	_ pagination.TenantInfo,
-) ([]*services.ResolvedFuelFeed, error) {
-	feeds := make([]*services.ResolvedFuelFeed, 0, len(f.feeds))
+) ([]*fuelpurchaseports.ResolvedFuelFeed, error) {
+	feeds := make([]*fuelpurchaseports.ResolvedFuelFeed, 0, len(f.feeds))
 	for _, feed := range f.feeds {
 		feeds = append(feeds, feed)
 	}
@@ -120,7 +119,7 @@ func feedRow(reference, unit, lastFour string) []string {
 
 func installFeed(
 	h *harness,
-	result *services.FetchFuelTransactionsResult,
+	result *fuelpurchaseports.FetchFuelTransactionsResult,
 	discoverCards bool,
 ) *fakeConnector {
 	connector := &fakeConnector{result: result}
@@ -146,7 +145,7 @@ func TestSyncFeedPostsRowsThatResolve(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	installFeed(h, &services.FetchFuelTransactionsResult{
+	installFeed(h, &fuelpurchaseports.FetchFuelTransactionsResult{
 		Staged:    stagedFrom(feedHeaders, feedRow("C-1001", "TRC-001", "4411")),
 		Reference: "/outbound/AC00029",
 		Format:    fuelpurchase.SourceFormatCSV,
@@ -171,7 +170,7 @@ func TestSyncFeedHoldsARowWhoseTractorIsUnknown(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	installFeed(h, &services.FetchFuelTransactionsResult{
+	installFeed(h, &fuelpurchaseports.FetchFuelTransactionsResult{
 		Staged: stagedFrom(feedHeaders, feedRow("C-1001", "TRC-NOPE", "4411")),
 	}, false)
 
@@ -192,7 +191,7 @@ func TestSyncFeedKeepsABatchOpenWhenAnythingIsQueued(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	installFeed(h, &services.FetchFuelTransactionsResult{
+	installFeed(h, &fuelpurchaseports.FetchFuelTransactionsResult{
 		Staged: stagedFrom(
 			feedHeaders,
 			feedRow("C-1001", "TRC-001", "4411"),
@@ -215,7 +214,7 @@ func TestSyncFeedClosesABatchWhenEverythingPosted(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	installFeed(h, &services.FetchFuelTransactionsResult{
+	installFeed(h, &fuelpurchaseports.FetchFuelTransactionsResult{
 		Staged: stagedFrom(feedHeaders, feedRow("C-1001", "TRC-001", "4411")),
 	}, false)
 
@@ -228,9 +227,9 @@ func TestSyncFeedDiscoversAnUnknownCardUnassignedAndSuspended(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	installFeed(h, &services.FetchFuelTransactionsResult{
+	installFeed(h, &fuelpurchaseports.FetchFuelTransactionsResult{
 		Staged: stagedFrom(feedHeaders, feedRow("C-1001", "TRC-001", "4411")),
-		Cards: []services.ProviderCard{
+		Cards: []fuelpurchaseports.ProviderCard{
 			{LastFour: "4411", Provider: fuelpurchase.CardProviderComdata},
 		},
 	}, true)
@@ -250,9 +249,9 @@ func TestSyncFeedDoesNotDiscoverCardsWhenTheConnectionSaysNotTo(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	installFeed(h, &services.FetchFuelTransactionsResult{
+	installFeed(h, &fuelpurchaseports.FetchFuelTransactionsResult{
 		Staged: stagedFrom(feedHeaders, feedRow("C-1001", "TRC-001", "4411")),
-		Cards: []services.ProviderCard{
+		Cards: []fuelpurchaseports.ProviderCard{
 			{LastFour: "4411", Provider: fuelpurchase.CardProviderComdata},
 		},
 	}, false)
@@ -269,9 +268,9 @@ func TestSyncFeedLeavesAnAlreadyRegisteredCardAlone(t *testing.T) {
 	_, err := h.repo.CreateCard(t.Context(), existing)
 	require.NoError(t, err)
 
-	installFeed(h, &services.FetchFuelTransactionsResult{
+	installFeed(h, &fuelpurchaseports.FetchFuelTransactionsResult{
 		Staged: stagedFrom(feedHeaders, feedRow("C-1001", "TRC-001", "4411")),
-		Cards: []services.ProviderCard{
+		Cards: []fuelpurchaseports.ProviderCard{
 			{LastFour: "4411", Provider: fuelpurchase.CardProviderComdata},
 		},
 	}, true)
@@ -286,7 +285,7 @@ func TestSyncFeedPostsNothingTwiceAcrossOverlappingRuns(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	installFeed(h, &services.FetchFuelTransactionsResult{
+	installFeed(h, &fuelpurchaseports.FetchFuelTransactionsResult{
 		Staged: stagedFrom(feedHeaders, feedRow("C-1001", "TRC-001", "4411")),
 	}, false)
 
@@ -301,7 +300,7 @@ func TestSyncFeedAdvancesTheWatermarkOnlyOnSuccess(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	connector := installFeed(h, &services.FetchFuelTransactionsResult{
+	connector := installFeed(h, &fuelpurchaseports.FetchFuelTransactionsResult{
 		Staged: stagedFrom(feedHeaders, feedRow("C-1001", "TRC-001", "4411")),
 		Cursor: "cursor-1",
 	}, false)
@@ -335,7 +334,7 @@ func TestSyncFeedReReadsAnOverlappingWindow(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	connector := installFeed(h, &services.FetchFuelTransactionsResult{
+	connector := installFeed(h, &fuelpurchaseports.FetchFuelTransactionsResult{
 		Staged: stagedFrom(feedHeaders, feedRow("C-1001", "TRC-001", "4411")),
 	}, false)
 
@@ -352,7 +351,7 @@ func TestSyncFeedHoldsARowWithNoGallons(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	installFeed(h, &services.FetchFuelTransactionsResult{
+	installFeed(h, &fuelpurchaseports.FetchFuelTransactionsResult{
 		Staged: stagedFrom(feedHeaders, []string{
 			"01/05/2026", "4411", "TRC-001", "TX",
 			"Diesel", "", "501.60", "C-1001",
@@ -370,7 +369,7 @@ func TestSyncFeedRecordsNothingWhenTheFeedIsQuiet(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	installFeed(h, &services.FetchFuelTransactionsResult{
+	installFeed(h, &fuelpurchaseports.FetchFuelTransactionsResult{
 		Staged: &fuelimport.StageResult{},
 	}, true)
 
@@ -398,7 +397,7 @@ func TestSyncAllFeedsKeepsGoingWhenOneProviderFails(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	installFeed(h, &services.FetchFuelTransactionsResult{
+	installFeed(h, &fuelpurchaseports.FetchFuelTransactionsResult{
 		Staged: stagedFrom(feedHeaders, feedRow("C-1001", "TRC-001", "4411")),
 	}, false)
 	h.feeds.install(
@@ -418,9 +417,9 @@ func TestSyncFeedScopesEverythingItWritesToTheTenant(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	installFeed(h, &services.FetchFuelTransactionsResult{
+	installFeed(h, &fuelpurchaseports.FetchFuelTransactionsResult{
 		Staged: stagedFrom(feedHeaders, feedRow("C-1001", "TRC-001", "4411")),
-		Cards: []services.ProviderCard{
+		Cards: []fuelpurchaseports.ProviderCard{
 			{LastFour: "4411", Provider: fuelpurchase.CardProviderComdata},
 		},
 	}, true)
@@ -441,4 +440,4 @@ func TestSyncFeedScopesEverythingItWritesToTheTenant(t *testing.T) {
 	}
 }
 
-var _ repositories.FuelPurchaseRepository = (*fakeRepo)(nil)
+var _ fuelpurchaseports.FuelPurchaseRepository = (*fakeRepo)(nil)

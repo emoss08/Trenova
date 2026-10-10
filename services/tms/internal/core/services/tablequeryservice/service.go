@@ -23,8 +23,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -49,18 +51,18 @@ type ServiceParams struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Completion    serviceports.StructuredCompleter
-	Permissions   serviceports.PermissionEngine
+	Completion    agentports.StructuredCompleter
+	Permissions   permissionports.PermissionEngine
 	Catalog       *filtercatalog.Catalog
-	Organizations repositories.OrganizationRepository
+	Organizations tenantports.OrganizationRepository
 }
 
 type Service struct {
 	logger        *zap.Logger
-	completion    serviceports.StructuredCompleter
-	permissions   serviceports.PermissionEngine
+	completion    agentports.StructuredCompleter
+	permissions   permissionports.PermissionEngine
 	catalog       *filtercatalog.Catalog
-	organizations repositories.OrganizationRepository
+	organizations tenantports.OrganizationRepository
 }
 
 func NewService(p ServiceParams) *Service {
@@ -83,7 +85,7 @@ type CurrentView struct {
 
 type ComposeRequest struct {
 	TenantInfo pagination.TenantInfo
-	Actor      *serviceports.RequestActor
+	Actor      *permissionports.RequestActor
 	Resource   permission.Resource
 	Prompt     string
 	Current    CurrentView
@@ -139,7 +141,7 @@ func (s *Service) Compose(ctx context.Context, req *ComposeRequest) (*ComposeRes
 
 	completion, err := s.completion.CompleteStructured(
 		ctx,
-		&serviceports.StructuredCompletionRequest{
+		&agentports.StructuredCompletionRequest{
 			TenantInfo:   req.TenantInfo,
 			Task:         aiprovider.TaskQueryCompose,
 			System:       systemPrompt,
@@ -147,7 +149,7 @@ func (s *Service) Compose(ctx context.Context, req *ComposeRequest) (*ComposeRes
 			OutputSchema: outputSchema(resource),
 			SchemaName:   "table_query",
 			MaxTokens:    maxOutputTokens,
-			Attribution: serviceports.AIUsageAttribution{
+			Attribution: aiusageports.AIUsageAttribution{
 				UserID:  req.Actor.UserID,
 				Feature: aiusage.FeatureTableQuery,
 			},
@@ -182,7 +184,7 @@ func (s *Service) timezone(ctx context.Context, req *ComposeRequest) string {
 		return req.Timezone
 	}
 
-	org, err := s.organizations.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+	org, err := s.organizations.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: req.TenantInfo,
 	})
 	if err != nil {
@@ -221,7 +223,7 @@ func (s *Service) authorize(
 		)
 	}
 
-	result, err := s.permissions.Check(ctx, &serviceports.PermissionCheckRequest{
+	result, err := s.permissions.Check(ctx, &permissionports.PermissionCheckRequest{
 		PrincipalType:  req.Actor.PrincipalType,
 		PrincipalID:    req.Actor.PrincipalID,
 		UserID:         req.Actor.UserID,

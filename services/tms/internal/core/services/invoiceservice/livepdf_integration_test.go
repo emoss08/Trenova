@@ -11,9 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate/starters"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/pdfrender/gotenberg"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/testutil/pdftest"
 	"github.com/emoss08/trenova/pkg/templateengine"
 	"github.com/shopspring/decimal"
@@ -102,7 +102,7 @@ func TestLiveInvoicePDFRendersThroughTheSidecar(t *testing.T) {
 		Logger: zap.NewNop(),
 	})
 
-	pdf, err := renderer.Render(t.Context(), &services.PDFRenderRequest{
+	pdf, err := renderer.Render(t.Context(), &documenttemplateports.PDFRenderRequest{
 		HTML:        document,
 		Title:       "Invoice " + entity.Number,
 		PageSize:    starter.PageSize,

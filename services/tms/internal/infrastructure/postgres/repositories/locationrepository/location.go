@@ -8,12 +8,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/geofence"
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/quotaservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/quotatx"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -32,16 +32,16 @@ type Params struct {
 
 	DB     *postgres.Connection
 	Logger *zap.Logger
-	Quota  services.QuotaGuard `optional:"true"`
+	Quota  platformplanports.QuotaGuard `optional:"true"`
 }
 
 type repository struct {
 	db    *postgres.Connection
 	l     *zap.Logger
-	quota services.QuotaGuard
+	quota platformplanports.QuotaGuard
 }
 
-func New(p Params) repositories.LocationRepository {
+func New(p Params) locationports.LocationRepository {
 	return &repository{
 		db:    p.DB,
 		l:     p.Logger.Named("postgres.location-repository"),
@@ -55,7 +55,7 @@ func WithGeofenceGeometry(q *bun.SelectQuery) *bun.SelectQuery {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListLocationRequest,
+	req *locationports.ListLocationRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
@@ -74,7 +74,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListLocationRequest,
+	req *locationports.ListLocationRequest,
 ) (*pagination.ListResult[*location.Location], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*location.Location], error) {
 		log := r.l.With(
@@ -107,7 +107,7 @@ func (r *repository) List(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListLocationConnectionRequest,
+	req *locationports.ListLocationConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -120,7 +120,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListLocationConnectionRequest,
+	req *locationports.ListLocationConnectionRequest,
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -140,7 +140,7 @@ func applyLocationColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListLocationConnectionRequest,
+	req *locationports.ListLocationConnectionRequest,
 ) (*pagination.CursorListResult[*location.Location], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*location.Location], error) {
 		log := r.l.With(
@@ -279,7 +279,7 @@ var locationWritableColumns = []string{
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetLocationByIDRequest,
+	req locationports.GetLocationByIDRequest,
 ) (*location.Location, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*location.Location, error) {
 		log := r.l.With(
@@ -336,7 +336,7 @@ func (r *repository) Create(
 			}
 
 			return nil
-		}, services.QuotaRequest{
+		}, platformplanports.QuotaRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
 				BuID:  entity.BusinessUnitID,
@@ -348,7 +348,7 @@ func (r *repository) Create(
 			return nil, err
 		}
 
-		return r.GetByID(ctx, repositories.GetLocationByIDRequest{
+		return r.GetByID(ctx, locationports.GetLocationByIDRequest{
 			ID: entity.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
@@ -393,7 +393,7 @@ func (r *repository) Update(
 			return nil, err
 		}
 
-		return r.GetByID(ctx, repositories.GetLocationByIDRequest{
+		return r.GetByID(ctx, locationports.GetLocationByIDRequest{
 			ID: entity.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
@@ -405,7 +405,7 @@ func (r *repository) Update(
 
 func (r *repository) BulkUpdateStatus(
 	ctx context.Context,
-	req *repositories.BulkUpdateLocationStatusRequest,
+	req *locationports.BulkUpdateLocationStatusRequest,
 ) ([]*location.Location, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*location.Location, error) {
 		log := r.l.With(
@@ -443,7 +443,7 @@ func (r *repository) BulkUpdateStatus(
 
 func (r *repository) GetByIDs(
 	ctx context.Context,
-	req repositories.GetLocationsByIDsRequest,
+	req locationports.GetLocationsByIDsRequest,
 ) ([]*location.Location, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*location.Location, error) {
 		log := r.l.With(
@@ -476,7 +476,7 @@ func (r *repository) GetByIDs(
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
-	req *repositories.LocationSelectOptionsRequest,
+	req *locationports.LocationSelectOptionsRequest,
 ) (*pagination.ListResult[*location.Location], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*location.Location], error) {
 		cols := buncolgen.LocationColumns

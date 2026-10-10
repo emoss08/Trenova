@@ -6,9 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -25,8 +25,8 @@ type change struct {
 
 func (s *Service) Reorder(
 	ctx context.Context,
-	req *services.ReorderAIProvidersRequest,
-	actor *services.RequestActor,
+	req *agentports.ReorderAIProvidersRequest,
+	actor *permissionports.RequestActor,
 ) ([]*aiprovider.Provider, error) {
 	current, err := s.repo.ListOrdered(ctx, req.TenantInfo)
 	if err != nil {
@@ -45,7 +45,7 @@ func (s *Service) Reorder(
 	}
 
 	changes := make([]change, 0, len(current))
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		for _, provider := range current {
 			next := priorities[provider.ID]
 			if provider.Priority == next {
@@ -83,8 +83,8 @@ func (s *Service) Reorder(
 
 func (s *Service) AssignTask(
 	ctx context.Context,
-	req *services.AssignAIProviderTaskRequest,
-	actor *services.RequestActor,
+	req *agentports.AssignAIProviderTaskRequest,
+	actor *permissionports.RequestActor,
 ) (*aiprovider.Provider, error) {
 	if !req.Task.IsValid() {
 		return nil, errortypes.NewValidationError("task", errortypes.ErrInvalid, "Unknown task")
@@ -120,7 +120,7 @@ type modifyRequest struct {
 	providerID pulid.ID
 	// version is the version the editor loaded; nil takes the stored one.
 	version *int64
-	actor   *services.RequestActor
+	actor   *permissionports.RequestActor
 	edit    func(*aiprovider.Provider)
 }
 
@@ -128,7 +128,7 @@ func (s *Service) modify(
 	ctx context.Context,
 	req *modifyRequest,
 ) (*aiprovider.Provider, *aiprovider.Provider, error) {
-	existing, err := s.repo.GetByID(ctx, repositories.GetAIProviderByIDRequest{
+	existing, err := s.repo.GetByID(ctx, agentports.GetAIProviderByIDRequest{
 		ID:         req.providerID,
 		TenantInfo: req.tenantInfo,
 	})

@@ -4,7 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 )
 
@@ -191,7 +191,7 @@ func finish(event *aiaudit.AIAuditEvent, found *lookups) {
 		event.OwnerKind = ""
 	}
 	if event.PrincipalType == aiaudit.PrincipalSystem && event.PrincipalID == "" {
-		event.PrincipalID = serviceports.SystemPrincipalID.String()
+		event.PrincipalID = permissionports.SystemPrincipalID.String()
 	}
 }
 

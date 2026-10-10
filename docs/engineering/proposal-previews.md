@@ -102,7 +102,7 @@ repeatable-read transaction of its own (`toolsimulation.InSnapshot`).
 
 ## The preview service
 
-`internal/core/services/proposalpreviewservice`, behind `services.ProposalPreviewService`.
+`internal/core/services/proposalpreviewservice`, behind `agentports.ProposalPreviewService`.
 
 `ForProposal(ctx, {Proposal, Modifications, Viewer})`, in order:
 
@@ -235,7 +235,7 @@ the box says how many were not previewed before such an approval records them un
 An approver's changes can never point the write at another record: `refuseRetarget`
 compares `Target(proposed)` with `Target(merged)` in `CheckModifications` and again where it
 runs. The parameter holding the target's id is `readOnly` in `parameterFields` and in the
-chat's editable fields (`services.ProposalFields`).
+chat's editable fields (`agentports.ProposalFields`).
 
 ## Record subsets
 
@@ -256,7 +256,7 @@ array-of-ids parameter as a subset of one permission resource's records with
   a list of strings, back as the parameter's modification.
 - **Labels.** GraphQL reads them through the `SubsetLabels` loader: each subset field asks
   once for all of its ids, and a request's fields are labelled together, one query per
-  resource for each `services.MaxRecordLabelsPerResource` (5000) records. The chat's
+  resource for each `agentports.MaxRecordLabelsPerResource` (5000) records. The chat's
   `/assistant/threads/{id}/proposals/` labels every pending proposal in a thread in one
   `Labels` read. Both check the reader's read permission on the resource first and read
   nothing without it.
@@ -417,7 +417,7 @@ unstable digest shows itself.
 | Piece | Path (under `services/tms`) |
 |---|---|
 | Model, bounds, digest | `internal/core/domain/agent/preview.go`, `proposalbaseline.go` |
-| Ports | `internal/core/ports/services/{agenttool.go,proposalpreview.go}`, `ports/repositories/agentproposalbaseline.go` |
+| Ports | `internal/modules/agent/ports/agentports/agenttool.go`, `internal/modules/agent/ports/agentports/proposalpreview.go`, `internal/modules/agent/ports/agentports/agentproposalbaseline.go` |
 | Builder | `internal/core/services/toolpreview/` |
 | Service | `internal/core/services/proposalpreviewservice/` |
 | Labels, baselines | `internal/infrastructure/postgres/repositories/{recordlabelrepository,agentproposalbaselinerepository}/` |
@@ -438,7 +438,7 @@ unstable digest shows itself.
   the same proposal; each approves what they saw.
 - **Calls outside the database are guarded by the read-only mark and by tests.** The
   read-only transaction stops a preview writing to the database. `WithTx` also marks a
-  read-only transaction's context (`ports.IsReadOnly`), and after-commit callbacks queued
+  read-only transaction's context (`kernelports.IsReadOnly`), and after-commit callbacks queued
   in it are dropped, since nothing was committed. Work a service hands off outside its
   transaction must check the mark. Distance resolution does: it counts no stored-mileage
   hit and buffers no stored-mileage candidate, though it still asks PC*Miler, as the

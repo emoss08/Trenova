@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/homelayout"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/homelayoutports"
 	"go.uber.org/zap"
 )
 
@@ -102,7 +102,7 @@ func (s *Service) loadPresetContext(
 
 	presets, err := s.repo.ListPresets(
 		ctx,
-		&repositories.ListHomeLayoutPresetsRequest{TenantInfo: req.TenantInfo},
+		&homelayoutports.ListHomeLayoutPresetsRequest{TenantInfo: req.TenantInfo},
 	)
 	if err != nil {
 		s.l.Error("failed to list home layout presets", zap.Error(err))
@@ -282,15 +282,15 @@ func (s *Service) checkCatalogPermissions(
 		addPair(metric.Resource, metric.Operation)
 	}
 
-	checks := make([]services.ResourceOperationCheck, 0, len(pairs))
+	checks := make([]permissionports.ResourceOperationCheck, 0, len(pairs))
 	for _, pair := range pairs {
-		checks = append(checks, services.ResourceOperationCheck{
+		checks = append(checks, permissionports.ResourceOperationCheck{
 			Resource:  pair.resource,
 			Operation: pair.operation,
 		})
 	}
 
-	result, err := s.permissions.CheckBatch(ctx, &services.BatchPermissionCheckRequest{
+	result, err := s.permissions.CheckBatch(ctx, &permissionports.BatchPermissionCheckRequest{
 		PrincipalType:  req.Principal.Type,
 		PrincipalID:    req.Principal.ID,
 		UserID:         req.Principal.UserID,

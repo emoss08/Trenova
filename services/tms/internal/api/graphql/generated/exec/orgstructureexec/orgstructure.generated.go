@@ -11,8 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/orgstructureservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -285,7 +285,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.HeadcountRow)
+					obj := o.(*workerports.HeadcountRow)
 					return obj.Key, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -295,7 +295,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.HeadcountRow)
+					obj := o.(*workerports.HeadcountRow)
 					return obj.Label, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -305,7 +305,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.HeadcountRow)
+					obj := o.(*workerports.HeadcountRow)
 					return obj.Code, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -315,7 +315,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.HeadcountRow)
+					obj := o.(*workerports.HeadcountRow)
 					return obj.Color, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -325,7 +325,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.HeadcountRow)
+					obj := o.(*workerports.HeadcountRow)
 					return obj.Workers, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -335,7 +335,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.HeadcountRow)
+					obj := o.(*workerports.HeadcountRow)
 					return obj.Drivers, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -345,7 +345,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.HeadcountRow)
+					obj := o.(*workerports.HeadcountRow)
 					return obj.Terminated, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -355,7 +355,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.HeadcountRow)
+					obj := o.(*workerports.HeadcountRow)
 					return obj.Staff, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1487,12 +1487,12 @@ func marshalNHeadcount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋs
 	return ec.MarshalType(ctx, sel, "Headcount", v)
 }
 
-func marshalNHeadcountRow2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐHeadcountRow(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v repositories.HeadcountRow) graphql.Marshaler {
+func marshalNHeadcountRow2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐHeadcountRow(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workerports.HeadcountRow) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "HeadcountRow", &v)
 }
 
-func marshalNHeadcountRow2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐHeadcountRowᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []repositories.HeadcountRow) graphql.Marshaler {
-	return gqlexec.List[repositories.HeadcountRow]{
+func marshalNHeadcountRow2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐHeadcountRowᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []workerports.HeadcountRow) graphql.Marshaler {
+	return gqlexec.List[workerports.HeadcountRow]{
 		Elem:        marshalNHeadcountRow2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐHeadcountRow,
 		NonNull:     true,
 		NonNullElem: true,

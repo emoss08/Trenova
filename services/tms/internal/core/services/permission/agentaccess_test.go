@@ -1,14 +1,14 @@
 package permission
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"context"
 	"testing"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -17,15 +17,15 @@ import (
 )
 
 type fakeAgentGrants struct {
-	repositories.RoleAgentGrantRepository
+	permissionports.RoleAgentGrantRepository
 
 	byRole map[pulid.ID][]pulid.ID
-	asked  []repositories.ListGrantedAgentIDsRequest
+	asked  []permissionports.ListGrantedAgentIDsRequest
 }
 
 func (f *fakeAgentGrants) ListGrantedAgentIDs(
 	_ context.Context,
-	req repositories.ListGrantedAgentIDsRequest,
+	req permissionports.ListGrantedAgentIDsRequest,
 ) ([]pulid.ID, error) {
 	f.asked = append(f.asked, req)
 
@@ -40,7 +40,7 @@ func (f *fakeAgentGrants) ListGrantedAgentIDs(
 type agentAccessFixture struct {
 	engine *engine
 	grants *fakeAgentGrants
-	actor  *services.RequestActor
+	actor  *permissionports.RequestActor
 	child  pulid.ID
 	parent pulid.ID
 }
@@ -64,7 +64,7 @@ func newAgentAccessFixture(t *testing.T, parentOps ...permission.Operation) *age
 
 func agentAccessClosure(
 	eng *engine,
-	roleRepo *mocks.MockRoleRepository,
+	roleRepo *permissionportsmock.MockRoleRepository,
 	parentOps ...permission.Operation,
 ) *agentAccessFixture {
 	grants := &fakeAgentGrants{byRole: map[pulid.ID][]pulid.ID{}}
@@ -107,8 +107,8 @@ func agentAccessClosure(
 		grants: grants,
 		child:  child,
 		parent: parent,
-		actor: &services.RequestActor{
-			PrincipalType:  services.PrincipalTypeUser,
+		actor: &permissionports.RequestActor{
+			PrincipalType:  permissionports.PrincipalTypeUser,
 			PrincipalID:    userID,
 			UserID:         userID,
 			OrganizationID: orgID,
@@ -118,22 +118,22 @@ func agentAccessClosure(
 }
 
 type memoryPermissionCache struct {
-	repositories.PermissionCacheRepository
+	permissionports.PermissionCacheRepository
 
-	entries map[repositories.PermissionCacheKey]*repositories.CachedPermissions
+	entries map[permissionports.PermissionCacheKey]*permissionports.CachedPermissions
 }
 
 func (c *memoryPermissionCache) Get(
 	_ context.Context,
-	key repositories.PermissionCacheKey,
-) (*repositories.CachedPermissions, error) {
+	key permissionports.PermissionCacheKey,
+) (*permissionports.CachedPermissions, error) {
 	return c.entries[key], nil
 }
 
 func (c *memoryPermissionCache) Set(
 	_ context.Context,
-	key repositories.PermissionCacheKey,
-	perms *repositories.CachedPermissions,
+	key permissionports.PermissionCacheKey,
+	perms *permissionports.CachedPermissions,
 	_ time.Duration,
 ) error {
 	c.entries[key] = perms
@@ -184,7 +184,7 @@ func TestAgentsUsable_ReadsAGrantAgainOnceTheCacheIsInvalidated(t *testing.T) {
 
 	eng, roleRepo, _, _ := setupTestEngine(t)
 	cache := &memoryPermissionCache{
-		entries: map[repositories.PermissionCacheKey]*repositories.CachedPermissions{},
+		entries: map[permissionports.PermissionCacheKey]*permissionports.CachedPermissions{},
 	}
 	eng.cacheRepo = cache
 	f := agentAccessClosure(eng, roleRepo)
@@ -332,10 +332,10 @@ func TestRoleCoverage_FullPartialAndNone(t *testing.T) {
 		{ID: elsewhere, OrganizationID: pulid.MustNew("org_"), ParentRoleIDs: []pulid.ID{base}},
 	}, nil)
 
-	coverage, err := eng.RoleCoverage(t.Context(), &services.RoleCoverageRequest{
+	coverage, err := eng.RoleCoverage(t.Context(), &permissionports.RoleCoverageRequest{
 		OrganizationID: orgID,
 		RoleIDs:        requested,
-		Required: []services.RequiredGrant{
+		Required: []permissionports.RequiredGrant{
 			{
 				Tool:      "get_shipment",
 				Resource:  permission.ResourceShipment,
@@ -352,7 +352,7 @@ func TestRoleCoverage_FullPartialAndNone(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, coverage, 3, "a role of another organization is not covered")
 
-	byRole := make(map[pulid.ID]services.RoleCoverage, len(coverage))
+	byRole := make(map[pulid.ID]permissionports.RoleCoverage, len(coverage))
 	for _, entry := range coverage {
 		byRole[entry.RoleID] = entry
 	}

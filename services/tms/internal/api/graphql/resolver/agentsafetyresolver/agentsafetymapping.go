@@ -3,8 +3,8 @@ package agentsafetyresolver
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentsafetyservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/memtable"
@@ -12,7 +12,7 @@ import (
 )
 
 func toolPolicyViewsToModel(
-	views []services.AgentToolPolicyView,
+	views []agentports.AgentToolPolicyView,
 ) []*gqlmodel.AgentToolPolicy {
 	out := make([]*gqlmodel.AgentToolPolicy, 0, len(views))
 	for idx := range views {
@@ -63,7 +63,7 @@ func toolPolicyConnectionRequest(
 }
 
 func agentToolSafetyPageToModel(
-	page *services.AgentToolSafetyPage,
+	page *agentports.AgentToolSafetyPage,
 ) *gqlmodel.AgentToolSafetyConnection {
 	out := &gqlmodel.AgentToolSafetyConnection{
 		Edges:      make([]*gqlmodel.AgentToolSafetyEdge, 0, len(page.Edges)),
@@ -86,7 +86,7 @@ func agentToolSafetyPageToModel(
 }
 
 func toolPolicyPageToModel(
-	page *services.AgentToolPolicyPage,
+	page *agentports.AgentToolPolicyPage,
 ) *gqlmodel.AgentToolPolicyConnection {
 	out := &gqlmodel.AgentToolPolicyConnection{
 		Edges:      make([]*gqlmodel.AgentToolPolicyEdge, 0, len(page.Edges)),

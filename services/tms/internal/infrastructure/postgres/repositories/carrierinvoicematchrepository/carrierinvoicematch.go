@@ -8,9 +8,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -32,7 +32,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.CarrierInvoiceMatchRepository {
+func New(p Params) carriersettlementports.CarrierInvoiceMatchRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.carrier-invoice-match-repository"),
@@ -41,7 +41,7 @@ func New(p Params) repositories.CarrierInvoiceMatchRepository {
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListCarrierInvoiceMatchesRequest,
+	req *carriersettlementports.ListCarrierInvoiceMatchesRequest,
 ) (*pagination.ListResult[*carriersettlement.InvoiceMatch], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*carriersettlement.InvoiceMatch], error) {
 		cols := buncolgen.InvoiceMatchColumns
@@ -83,7 +83,7 @@ func (r *repository) List(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetCarrierInvoiceMatchByIDRequest,
+	req carriersettlementports.GetCarrierInvoiceMatchByIDRequest,
 ) (*carriersettlement.InvoiceMatch, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carriersettlement.InvoiceMatch, error) {
 		cols := buncolgen.InvoiceMatchColumns
@@ -137,7 +137,7 @@ func (r *repository) GetOpenByEDIInvoiceID(
 
 func (r *repository) GetLiveByCarrierInvoiceNumber(
 	ctx context.Context,
-	req *repositories.GetLiveCarrierInvoiceMatchByNumberRequest,
+	req *carriersettlementports.GetLiveCarrierInvoiceMatchByNumberRequest,
 ) (*carriersettlement.InvoiceMatch, error) {
 	key := edi.InvoiceNumberKey(req.InvoiceNumber)
 	if key == "" {
@@ -171,7 +171,7 @@ func (r *repository) GetLiveByCarrierInvoiceNumber(
 
 func (r *repository) ListLiveByAssignment(
 	ctx context.Context,
-	req repositories.ListLiveCarrierInvoiceMatchesByAssignmentRequest,
+	req carriersettlementports.ListLiveCarrierInvoiceMatchesByAssignmentRequest,
 ) ([]*carriersettlement.InvoiceMatch, error) {
 	return dbtx.Read(
 		ctx,
@@ -199,7 +199,7 @@ func (r *repository) ListLiveByAssignment(
 
 func (r *repository) ListResolvedAssignmentIDs(
 	ctx context.Context,
-	req repositories.ListResolvedMatchAssignmentsRequest,
+	req carriersettlementports.ListResolvedMatchAssignmentsRequest,
 ) ([]pulid.ID, error) {
 	if len(req.AssignmentIDs) == 0 {
 		return []pulid.ID{}, nil
@@ -297,7 +297,7 @@ func (r *repository) Create(
 		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
 			return nil, fmt.Errorf("create carrier invoice match: %w", err)
 		}
-		return r.GetByID(ctx, repositories.GetCarrierInvoiceMatchByIDRequest{
+		return r.GetByID(ctx, carriersettlementports.GetCarrierInvoiceMatchByIDRequest{
 			ID: entity.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
@@ -341,7 +341,7 @@ func (r *repository) Update(
 		if err = dberror.CheckRowsAffected(res, "CarrierInvoiceMatch", entity.ID.String()); err != nil {
 			return nil, err
 		}
-		return r.GetByID(ctx, repositories.GetCarrierInvoiceMatchByIDRequest{
+		return r.GetByID(ctx, carriersettlementports.GetCarrierInvoiceMatchByIDRequest{
 			ID: entity.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,

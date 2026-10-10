@@ -1,13 +1,16 @@
 package workerchecklistservice_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/workerchecklistservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -37,7 +40,7 @@ func newFakeRepo() *fakeRepo {
 
 func (f *fakeRepo) ListTemplates(
 	context.Context,
-	*repositories.ListChecklistTemplatesRequest,
+	*workerports.ListChecklistTemplatesRequest,
 ) (*pagination.CursorListResult[*worker.WorkerChecklistTemplate], error) {
 	return &pagination.CursorListResult[*worker.WorkerChecklistTemplate]{}, nil
 }
@@ -55,7 +58,7 @@ func (f *fakeRepo) ListActiveTemplates(
 
 func (f *fakeRepo) GetTemplateByID(
 	_ context.Context,
-	req *repositories.GetChecklistTemplateByIDRequest,
+	req *workerports.GetChecklistTemplateByIDRequest,
 ) (*worker.WorkerChecklistTemplate, error) {
 	t, ok := f.templates[req.ID]
 	if !ok {
@@ -66,7 +69,7 @@ func (f *fakeRepo) GetTemplateByID(
 
 func (f *fakeRepo) GetDefaultTemplate(
 	_ context.Context,
-	req *repositories.GetDefaultChecklistTemplateRequest,
+	req *workerports.GetDefaultChecklistTemplateRequest,
 ) (*worker.WorkerChecklistTemplate, error) {
 	for _, t := range f.templates {
 		if t.IsDefault && t.Trigger == req.Trigger && t.Status == domaintypes.StatusActive {
@@ -78,7 +81,7 @@ func (f *fakeRepo) GetDefaultTemplate(
 
 func (f *fakeRepo) TemplateCodeExists(
 	context.Context,
-	*repositories.ChecklistTemplateCodeExistsRequest,
+	*workerports.ChecklistTemplateCodeExistsRequest,
 ) (bool, error) {
 	return false, nil
 }
@@ -106,28 +109,28 @@ func (f *fakeRepo) UpdateTemplate(
 
 func (f *fakeRepo) ClearDefaultTemplate(
 	context.Context,
-	*repositories.ClearDefaultChecklistTemplateRequest,
+	*workerports.ClearDefaultChecklistTemplateRequest,
 ) error {
 	return nil
 }
 
 func (f *fakeRepo) CountOpenChecklists(
 	context.Context,
-	*repositories.CountOpenChecklistsRequest,
+	*workerports.CountOpenChecklistsRequest,
 ) (int, error) {
 	return 0, nil
 }
 
 func (f *fakeRepo) CountOpenChecklistsByTemplateIDs(
 	context.Context,
-	*repositories.CountOpenChecklistsByTemplateIDsRequest,
+	*workerports.CountOpenChecklistsByTemplateIDsRequest,
 ) (map[pulid.ID]int, error) {
 	return map[pulid.ID]int{}, nil
 }
 
 func (f *fakeRepo) ListForWorker(
 	_ context.Context,
-	req *repositories.ListWorkerChecklistsRequest,
+	req *workerports.ListWorkerChecklistsRequest,
 ) ([]*worker.WorkerChecklist, error) {
 	out := make([]*worker.WorkerChecklist, 0, len(f.checklists))
 	for _, c := range f.checklists {
@@ -144,7 +147,7 @@ func (f *fakeRepo) ListForWorker(
 
 func (f *fakeRepo) GetByID(
 	_ context.Context,
-	req *repositories.GetWorkerChecklistByIDRequest,
+	req *workerports.GetWorkerChecklistByIDRequest,
 ) (*worker.WorkerChecklist, error) {
 	c, ok := f.checklists[req.ID]
 	if !ok {
@@ -155,7 +158,7 @@ func (f *fakeRepo) GetByID(
 
 func (f *fakeRepo) GetItemByID(
 	_ context.Context,
-	req *repositories.GetWorkerChecklistItemByIDRequest,
+	req *workerports.GetWorkerChecklistItemByIDRequest,
 ) (*worker.WorkerChecklistItem, error) {
 	item, ok := f.items[req.ID]
 	if !ok {
@@ -196,13 +199,13 @@ func (f *fakeRepo) UpdateItems(_ context.Context, items []*worker.WorkerChecklis
 }
 
 type fakeCredentialRepo struct {
-	repositories.WorkerCredentialRepository
+	workerports.WorkerCredentialRepository
 	credentials []*worker.WorkerCredential
 }
 
 func (f *fakeCredentialRepo) ListForWorker(
 	context.Context,
-	*repositories.ListWorkerCredentialsRequest,
+	*workerports.ListWorkerCredentialsRequest,
 ) ([]*worker.WorkerCredential, error) {
 	return f.credentials, nil
 }
@@ -211,8 +214,8 @@ type harness struct {
 	svc        *workerchecklistservice.Service
 	repo       *fakeRepo
 	creds      *fakeCredentialRepo
-	docs       *mocks.MockDocumentRepository
-	workerRepo *mocks.MockWorkerRepository
+	docs       *documentportsmock.MockDocumentRepository
+	workerRepo *workerportsmock.MockWorkerRepository
 	tenant     pagination.TenantInfo
 	wrk        *worker.Worker
 	template   *worker.WorkerChecklistTemplate
@@ -242,18 +245,18 @@ func newHarness(t *testing.T) *harness {
 		userID:   pulid.MustNew("usr_"),
 	}
 
-	h.workerRepo = mocks.NewMockWorkerRepository(t)
+	h.workerRepo = workerportsmock.NewMockWorkerRepository(t)
 	h.workerRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(wrk, nil).Maybe()
 	h.workerRepo.EXPECT().
 		UpdateProfileQualification(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req *repositories.UpdateProfileQualificationRequest) error {
+		RunAndReturn(func(_ context.Context, req *workerports.UpdateProfileQualificationRequest) error {
 			h.qualified = append(h.qualified, req.Qualified)
 			return nil
 		}).
 		Maybe()
-	h.docs = mocks.NewMockDocumentRepository(t)
+	h.docs = documentportsmock.NewMockDocumentRepository(t)
 	h.docs.EXPECT().GetByResourceID(mock.Anything, mock.Anything).Return(nil, nil).Maybe()
-	audit := mocks.NewMockAuditService(t)
+	audit := auditportsmock.NewMockAuditService(t)
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Maybe()
 
 	h.template = &worker.WorkerChecklistTemplate{

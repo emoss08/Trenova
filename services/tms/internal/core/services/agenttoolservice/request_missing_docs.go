@@ -6,33 +6,35 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/customerupdateservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 )
 
 type requestMissingDocsTool struct {
-	email     serviceports.EmailService
-	templates serviceports.DocumentTemplateResolver
-	orgRepo   repositories.OrganizationRepository
-	inliner   serviceports.AssetInliner
-	senders   serviceports.EmailSenderResolver
+	email     emailports.EmailService
+	templates documenttemplateports.DocumentTemplateResolver
+	orgRepo   tenantports.OrganizationRepository
+	inliner   documenttemplateports.AssetInliner
+	senders   emailports.EmailSenderResolver
 }
 
 type requestMissingDocsParams struct {
 	fx.In
 
-	Email     serviceports.EmailService
-	Templates serviceports.DocumentTemplateResolver
-	OrgRepo   repositories.OrganizationRepository
-	Inliner   serviceports.AssetInliner
-	Senders   serviceports.EmailSenderResolver `optional:"true"`
+	Email     emailports.EmailService
+	Templates documenttemplateports.DocumentTemplateResolver
+	OrgRepo   tenantports.OrganizationRepository
+	Inliner   documenttemplateports.AssetInliner
+	Senders   emailports.EmailSenderResolver `optional:"true"`
 }
 
-func newRequestMissingDocsTool(p requestMissingDocsParams) serviceports.AgentTool {
+func newRequestMissingDocsTool(p requestMissingDocsParams) agentports.AgentTool {
 	return &requestMissingDocsTool{
 		email:     p.Email,
 		templates: p.Templates,
@@ -96,8 +98,8 @@ func (t *requestMissingDocsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *requestMissingDocsTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *requestMissingDocsTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceCustomerCommunication,
@@ -115,7 +117,7 @@ func (t *requestMissingDocsTool) Policy() serviceports.ToolPolicy {
 
 func (t *requestMissingDocsTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	composed, err := t.compose(ctx, &params)
 	if err != nil {

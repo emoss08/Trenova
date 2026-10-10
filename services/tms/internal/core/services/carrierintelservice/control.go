@@ -8,8 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -140,12 +142,12 @@ func (s *Service) UpdateControl(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceCarrierIntelligence,
 		ResourceID:     updated.ID.String(),
 		Operation:      permission.OpManage,
 		UserID:         tenantInfo.UserID,
-		PrincipalType:  services.PrincipalTypeUser,
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    tenantInfo.UserID,
 		CurrentState:   jsonutils.MustToJSON(updated),
 		PreviousState:  jsonutils.MustToJSON(original),
@@ -260,12 +262,12 @@ func (s *Service) SwitchPrimaryProvider(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceCarrierIntelligence,
 		ResourceID:     updated.ID.String(),
 		Operation:      permission.OpManage,
 		UserID:         tenantInfo.UserID,
-		PrincipalType:  services.PrincipalTypeUser,
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    tenantInfo.UserID,
 		CurrentState:   jsonutils.MustToJSON(updated),
 		PreviousState:  jsonutils.MustToJSON(&original),
@@ -321,7 +323,7 @@ func (s *Service) releaseWatchlist(
 		s.l.Warn("previous provider cannot be reached to release its watchlist", zap.Error(err))
 		return
 	}
-	monitor, ok := bound.client.(services.CarrierIntelNativeMonitor)
+	monitor, ok := bound.client.(carrierintelports.CarrierIntelNativeMonitor)
 	if !ok {
 		return
 	}

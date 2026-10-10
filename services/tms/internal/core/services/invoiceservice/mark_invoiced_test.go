@@ -1,12 +1,15 @@
 package invoiceservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -48,8 +51,8 @@ func TestMarkInvoicedLegsKeepsEachShipmentsAdditionalCharges(t *testing.T) {
 		AdditionalCharges: charges,
 	}
 
-	repo := mocks.NewMockShipmentRepository(t)
-	repo.On("GetByID", mock.Anything, mock.MatchedBy(func(req *repositories.GetShipmentByIDRequest) bool {
+	repo := shipmentportsmock.NewMockShipmentRepository(t)
+	repo.On("GetByID", mock.Anything, mock.MatchedBy(func(req *shipmentports.GetShipmentByIDRequest) bool {
 		return req.ID == shipmentID && req.ShipmentOptions.ExpandShipmentDetails
 	})).
 		Return(loaded, nil).
@@ -65,9 +68,9 @@ func TestMarkInvoicedLegsKeepsEachShipmentsAdditionalCharges(t *testing.T) {
 		Return(loaded, nil).
 		Once()
 
-	billingQueueRepo := mocks.NewMockBillingQueueRepository(t)
+	billingQueueRepo := billingqueueportsmock.NewMockBillingQueueRepository(t)
 	billingQueueRepo.EXPECT().
-		ListActiveInvoiceItemsByShipmentIDs(mock.Anything, &repositories.ListActiveInvoiceItemsRequest{
+		ListActiveInvoiceItemsByShipmentIDs(mock.Anything, &billingqueueports.ListActiveInvoiceItemsRequest{
 			TenantInfo:  tenantInfo,
 			ShipmentIDs: []pulid.ID{shipmentID},
 		}).

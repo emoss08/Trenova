@@ -10,9 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/settlementshared"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -44,7 +45,7 @@ func (f *fakeDriverSettlementBatch) PlanAction(
 func (f *fakeDriverSettlementBatch) Perform(
 	ctx context.Context,
 	req *settlementshared.ActionRequest,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*driversettlement.Settlement, error) {
 	if f.locked {
 		return nil, errPerformedDuringPreview
@@ -164,7 +165,7 @@ func TestSettlementBulkTools_CopyTheirSingleToolsPolicy(t *testing.T) {
 		assert.Equal(t, []string{paramSettlementIDs},
 			tool.ParamSchema()[toolschema.KeyRequired], name)
 
-		_, targeted := tool.(serviceports.TargetedTool)
+		_, targeted := tool.(agentports.TargetedTool)
 		assert.False(t, targeted, "%s acts on a set, not one record", name)
 		assert.Contains(t, single.Description(), name,
 			"%s points to its bulk twin", singleName)
@@ -174,7 +175,7 @@ func TestSettlementBulkTools_CopyTheirSingleToolsPolicy(t *testing.T) {
 	driverPost := buildTool(t, providePostDriverSettlementsTool).Policy()
 	assert.True(t, driverPost.HasEgress(agent.EgressDriverVisible))
 	require.NotNil(t, driverPost.Classify)
-	assert.Equal(t, agent.EgressMoney, driverPost.Classify(serviceports.ToolExecuteParams{}).Egress)
+	assert.Equal(t, agent.EgressMoney, driverPost.Classify(agentports.ToolExecuteParams{}).Egress)
 }
 
 func TestApproveDriverSettlements_PreviewsEachWithRefusalsFirst(t *testing.T) {
@@ -300,7 +301,7 @@ func TestSettlementBulk_RunsOnlyFromAPersonsApproval(t *testing.T) {
 	assert.Empty(t, book.performed)
 
 	agentParams := approvedParams(map[string]any{paramSettlementIDs: idList(ids)})
-	agentParams.Actor.PrincipalType = serviceports.PrincipalTypeAgent
+	agentParams.Actor.PrincipalType = permissionports.PrincipalTypeAgent
 	_, err = tool.ExecuteWithResult(t.Context(), agentParams)
 	require.ErrorIs(t, err, ErrAgentCannotApprove)
 	_, err = tool.Preview(t.Context(), agentParams)
@@ -381,7 +382,7 @@ func (f *fakeCarrierSettlementBatch) PlanAction(
 func (f *fakeCarrierSettlementBatch) Perform(
 	ctx context.Context,
 	req *settlementshared.ActionRequest,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*carriersettlement.CarrierSettlement, error) {
 	plan, err := f.PlanAction(ctx, req)
 	if err != nil {

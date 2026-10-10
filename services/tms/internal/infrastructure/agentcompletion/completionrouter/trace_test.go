@@ -8,9 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace/aitracetest"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,15 +20,15 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-func turnAttribution() serviceports.AIUsageAttribution {
+func turnAttribution() aiusageports.AIUsageAttribution {
 	version := int64(7)
 
-	return serviceports.AIUsageAttribution{
+	return aiusageports.AIUsageAttribution{
 		UserID:            pulid.MustNew("usr_"),
 		AgentDefinitionID: pulid.MustNew("agdef_"),
 		ThreadID:          pulid.MustNew("athr_"),
 		Feature:           aiusage.FeatureAgentTurn,
-		OwnerKind:         serviceports.RunStepOwnerAssistantTurn,
+		OwnerKind:         agentports.RunStepOwnerAssistantTurn,
 		OwnerID:           pulid.MustNew("atrn_"),
 		DefinitionVersion: &version,
 	}

@@ -7,9 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/ptoledgerservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -45,7 +46,7 @@ func newFakePTORequests() *fakePTORequests {
 
 func (f *fakePTORequests) Get(
 	context.Context,
-	*repositories.GetPTOByIDRequest,
+	*workerports.GetPTOByIDRequest,
 ) (*worker.WorkerPTO, error) {
 	copied := *f.pto
 	return &copied, nil
@@ -90,12 +91,12 @@ func (f *fakePTORequests) Create(
 func (f *fakePTORequests) PlanUpdate(
 	_ context.Context,
 	entity *worker.WorkerPTO,
-) (*serviceports.RecordChange[worker.WorkerPTO], error) {
+) (*kernelports.RecordChange[worker.WorkerPTO], error) {
 	if f.pto.Status != worker.PTOStatusRequested {
 		return nil, errortypes.NewValidationError("status", errortypes.ErrInvalidOperation,
 			"PTO is approved and can no longer be edited")
 	}
-	return &serviceports.RecordChange[worker.WorkerPTO]{Before: f.pto, After: entity}, nil
+	return &kernelports.RecordChange[worker.WorkerPTO]{Before: f.pto, After: entity}, nil
 }
 
 func (f *fakePTORequests) Update(
@@ -159,14 +160,14 @@ func TestRequestWorkerPTO_SaysWhenThePolicyBooksItAtOnce(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, requests.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would request 3 days of Vacation")
 	assert.NotContains(t, preview.Summary, "booked at once")
 
 	requests.autoApprove = true
 	preview = previewWithoutWrites(t, requests.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "booked at once and the driver is told")
 
@@ -184,8 +185,8 @@ func TestRequestWorkerPTO_SaysWhenThePolicyBooksItAtOnce(t *testing.T) {
 		paramPTOEnd:   "2026-10-05",
 		fieldReason:   "Wedding",
 	})
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), backwards))
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), backwards))
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 		executeParams(map[string]any{
 			paramWorkerID: requests.pto.WorkerID.String(),
 			paramPTOType:  "Sabbatical",
@@ -209,7 +210,7 @@ func TestUpdateWorkerPTO_OnlyAPendingRequest(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, requests.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, "Would change the time-off request.", preview.Summary)
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -226,7 +227,7 @@ func TestUpdateWorkerPTO_OnlyAPendingRequest(t *testing.T) {
 	assert.Equal(t, requests.pto.StartDate, requests.updated.StartDate)
 
 	requests.pto.Status = worker.PTOStatusApproved
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), partial))
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), partial))
 }
 
 func TestAdjustWorkerPTOBalance_IsAPersonsDecision(t *testing.T) {
@@ -242,7 +243,7 @@ func TestAdjustWorkerPTOBalance_IsAPersonsDecision(t *testing.T) {
 	}
 
 	preview := previewWithoutWrites(t, ledger.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), executeParams(raw))
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), executeParams(raw))
 	})
 	assert.Contains(t, preview.Summary, "from 5 to 7.5")
 
@@ -267,7 +268,7 @@ func TestAdjustWorkerPTOBalance_IsAPersonsDecision(t *testing.T) {
 			paramAmountDays: "1",
 		},
 	} {
-		require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+		require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 			executeParams(params)), name)
 	}
 }

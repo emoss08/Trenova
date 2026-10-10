@@ -13,9 +13,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/ports/storage"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -29,7 +28,7 @@ import (
 // that answered the rest would be noise around the four calls that matter.
 
 type stubMailboxRepo struct {
-	repositories.InboundMailboxRepository
+	inboundmessageports.InboundMailboxRepository
 
 	mailbox *inboundmessage.Mailbox
 	err     error
@@ -39,7 +38,7 @@ type stubMailboxRepo struct {
 }
 
 func (s *stubMailboxRepo) GetByTokenHash(
-	_ context.Context, req repositories.GetMailboxByTokenHashRequest,
+	_ context.Context, req inboundmessageports.GetMailboxByTokenHashRequest,
 ) (*inboundmessage.Mailbox, error) {
 	s.asked = req.TokenHash
 	if s.err != nil {
@@ -50,7 +49,7 @@ func (s *stubMailboxRepo) GetByTokenHash(
 }
 
 type stubMessageRepo struct {
-	repositories.InboundMessageRepository
+	inboundmessageports.InboundMessageRepository
 
 	existing *inboundmessage.InboundMessage
 	created  *inboundmessage.InboundMessage
@@ -59,7 +58,7 @@ type stubMessageRepo struct {
 }
 
 func (s *stubMessageRepo) GetByProviderID(
-	_ context.Context, _ repositories.GetInboundMessageByProviderIDRequest,
+	_ context.Context, _ inboundmessageports.GetInboundMessageByProviderIDRequest,
 ) (*inboundmessage.InboundMessage, error) {
 	if s.existing == nil {
 		return nil, errortypes.NewNotFoundError("InboundMessage not found")
@@ -82,7 +81,7 @@ func (s *stubMessageRepo) Create(
 }
 
 type stubStorage struct {
-	storage.Client
+	kernelports.Client
 
 	uploaded string
 	body     []byte
@@ -90,15 +89,15 @@ type stubStorage struct {
 }
 
 func (s *stubStorage) Upload(
-	_ context.Context, params *storage.UploadParams,
-) (*storage.FileInfo, error) {
+	_ context.Context, params *kernelports.UploadParams,
+) (*kernelports.FileInfo, error) {
 	if s.err != nil {
 		return nil, s.err
 	}
 	s.uploaded = params.Key
 	s.body, _ = io.ReadAll(params.Body)
 
-	return &storage.FileInfo{Key: params.Key}, nil
+	return &kernelports.FileInfo{Key: params.Key}, nil
 }
 
 const (
@@ -191,7 +190,7 @@ func (plainSecrets) DecryptString(value string) (string, error) {
 // stubWorkflows is a worker that is there, so a staged message is handed to
 // the workflow rather than read on the request path.
 type stubWorkflows struct {
-	services.WorkflowStarter
+	kernelports.WorkflowStarter
 
 	started []client.StartWorkflowOptions
 }

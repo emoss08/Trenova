@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/capture"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -19,7 +19,7 @@ type pairingRepository struct {
 	l  *zap.Logger
 }
 
-func NewPairingRepository(p Params) repositories.CapturePairingRepository {
+func NewPairingRepository(p Params) captureports.CapturePairingRepository {
 	return &pairingRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.capture-pairing-repository"),

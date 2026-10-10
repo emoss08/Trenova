@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/sftp"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -52,16 +52,16 @@ func (t *SFTPTransport) Method() edi.ConnectionMethod {
 
 func (t *SFTPTransport) Deliver(
 	ctx context.Context,
-	req *services.EDITransportRequest,
-) (*services.EDITransportResult, error) {
+	req *ediports.EDITransportRequest,
+) (*ediports.EDITransportResult, error) {
 	return deliverOverSFTP(ctx, req, defaultOutboundDirectory)
 }
 
 func deliverOverSFTP(
 	ctx context.Context,
-	req *services.EDITransportRequest,
+	req *ediports.EDITransportRequest,
 	fallbackOutboundDirectory string,
-) (*services.EDITransportResult, error) {
+) (*ediports.EDITransportResult, error) {
 	if req == nil || req.Profile == nil {
 		return nil, errors.New("EDI communication profile is required for delivery")
 	}
@@ -75,9 +75,9 @@ func deliverOverSFTP(
 	directory := stringutils.WithDefault(cfg.outboundDirectory, fallbackOutboundDirectory)
 	remotePath := path.Join(directory, req.FileName)
 	if err := uploadFile(ctx, cfg.Config, remotePath, req.Contents); err != nil {
-		return &services.EDITransportResult{RemotePath: remotePath}, err
+		return &ediports.EDITransportResult{RemotePath: remotePath}, err
 	}
-	return &services.EDITransportResult{RemotePath: remotePath}, nil
+	return &ediports.EDITransportResult{RemotePath: remotePath}, nil
 }
 
 func endpointConfigFromProfile(

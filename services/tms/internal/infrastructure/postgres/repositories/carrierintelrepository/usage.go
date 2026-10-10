@@ -6,9 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -32,7 +32,7 @@ type usageRepository struct {
 	l  *zap.Logger
 }
 
-func NewUsageRepository(p Params) repositories.CarrierIntelUsageRepository {
+func NewUsageRepository(p Params) carrierintelports.CarrierIntelUsageRepository {
 	return &usageRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.carrier-intel-usage-repository"),
@@ -118,7 +118,7 @@ func (r *usageRepository) CostSince(
 
 func (r *usageRepository) CountBillableSince(
 	ctx context.Context,
-	req *repositories.CountBillableUsageRequest,
+	req *carrierintelports.CountBillableUsageRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		cols := buncolgen.CarrierIntelUsageRecordColumns
@@ -144,12 +144,12 @@ func (r *usageRepository) CountBillableSince(
 
 func (r *usageRepository) Summary(
 	ctx context.Context,
-	req *repositories.ListCarrierIntelUsageRequest,
-) ([]repositories.CarrierIntelUsageSummaryRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.CarrierIntelUsageSummaryRow, error) {
+	req *carrierintelports.ListCarrierIntelUsageRequest,
+) ([]carrierintelports.CarrierIntelUsageSummaryRow, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]carrierintelports.CarrierIntelUsageSummaryRow, error) {
 		cols := buncolgen.CarrierIntelUsageRecordColumns
 		daily := buncolgen.CarrierIntelUsageDailyColumns
-		rows := make([]repositories.CarrierIntelUsageSummaryRow, 0, usageSummaryCapacity)
+		rows := make([]carrierintelports.CarrierIntelUsageSummaryRow, 0, usageSummaryCapacity)
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
@@ -179,7 +179,7 @@ func (r *usageRepository) Summary(
 
 func (r *usageRepository) ListDaily(
 	ctx context.Context,
-	req *repositories.ListCarrierIntelUsageDailyRequest,
+	req *carrierintelports.ListCarrierIntelUsageDailyRequest,
 ) ([]*carrierintel.CarrierIntelUsageDaily, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carrierintel.CarrierIntelUsageDaily, error) {
 		cols := buncolgen.CarrierIntelUsageDailyColumns

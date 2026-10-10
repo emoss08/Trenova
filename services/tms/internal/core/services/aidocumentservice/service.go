@@ -13,9 +13,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -29,19 +31,19 @@ type Params struct {
 	Logger     *zap.Logger
 	Config     *config.Config
 	Metrics    *metrics.Registry
-	Completion serviceports.CompletionService
-	Plans      serviceports.PlanService `optional:"true"`
+	Completion agentports.CompletionService
+	Plans      platformplanports.PlanService `optional:"true"`
 }
 
 type Service struct {
 	logger     *zap.Logger
 	cfg        *config.AIConfig
 	metrics    *metrics.Registry
-	completion serviceports.CompletionService
-	plans      serviceports.PlanService
+	completion agentports.CompletionService
+	plans      platformplanports.PlanService
 }
 
-func New(p Params) serviceports.AIDocumentService {
+func New(p Params) documentaiextractionports.AIDocumentService {
 	return &Service{
 		logger:     p.Logger.Named("service.ai-document"),
 		cfg:        p.Config.GetAIConfig(),
@@ -55,8 +57,8 @@ var errDisabled = errortypes.NewBusinessError("AI document intelligence is disab
 
 func (s *Service) RouteDocument(
 	ctx context.Context,
-	req *serviceports.AIRouteRequest,
-) (*serviceports.AIRouteResult, error) {
+	req *documentaiextractionports.AIRouteRequest,
+) (*documentaiextractionports.AIRouteResult, error) {
 	if !s.cfg.DocumentExtractionEnabled() {
 		return nil, errDisabled
 	}
@@ -78,7 +80,7 @@ func (s *Service) RouteDocument(
 
 	s.recordAIUsage("route", true, "success")
 
-	return &serviceports.AIRouteResult{
+	return &documentaiextractionports.AIRouteResult{
 		ShouldExtract:       parsed.ShouldExtract,
 		DocumentKind:        strings.TrimSpace(parsed.DocumentKind),
 		Confidence:          clampAIConfidence(parsed.Confidence),
@@ -92,8 +94,8 @@ func (s *Service) RouteDocument(
 
 func (s *Service) ExtractRateConfirmation(
 	ctx context.Context,
-	req *serviceports.AIExtractRequest,
-) (*serviceports.AIExtractResult, error) {
+	req *documentaiextractionports.AIExtractRequest,
+) (*documentaiextractionports.AIExtractResult, error) {
 	if !s.cfg.DocumentExtractionEnabled() {
 		return nil, errDisabled
 	}
@@ -110,9 +112,9 @@ func (s *Service) ExtractRateConfirmation(
 
 func (s *Service) ExtractRateConfirmationForEvaluation(
 	ctx context.Context,
-	req *serviceports.AIEvaluationExtractRequest,
-) (*serviceports.AIEvaluationExtractResult, error) {
-	return s.pinnedExtract(ctx, &serviceports.AIExtractRequest{
+	req *documentaiextractionports.AIEvaluationExtractRequest,
+) (*documentaiextractionports.AIEvaluationExtractResult, error) {
+	return s.pinnedExtract(ctx, &documentaiextractionports.AIExtractRequest{
 		TenantInfo: req.TenantInfo,
 		FileName:   req.FileName,
 		Pages:      req.Pages,
@@ -121,9 +123,9 @@ func (s *Service) ExtractRateConfirmationForEvaluation(
 
 func (s *Service) ExtractRateConfirmationForShadow(
 	ctx context.Context,
-	req *serviceports.AIShadowExtractRequest,
-) (*serviceports.AIEvaluationExtractResult, error) {
-	return s.pinnedExtract(ctx, &serviceports.AIExtractRequest{
+	req *documentaiextractionports.AIShadowExtractRequest,
+) (*documentaiextractionports.AIEvaluationExtractResult, error) {
+	return s.pinnedExtract(ctx, &documentaiextractionports.AIExtractRequest{
 		TenantInfo: req.TenantInfo,
 		DocumentID: req.DocumentID,
 		FileName:   req.FileName,
@@ -134,10 +136,10 @@ func (s *Service) ExtractRateConfirmationForShadow(
 
 func (s *Service) pinnedExtract(
 	ctx context.Context,
-	req *serviceports.AIExtractRequest,
+	req *documentaiextractionports.AIExtractRequest,
 	providerID pulid.ID,
 	metric string,
-) (*serviceports.AIEvaluationExtractResult, error) {
+) (*documentaiextractionports.AIEvaluationExtractResult, error) {
 	if !s.cfg.DocumentExtractionEnabled() {
 		return nil, errDisabled
 	}
@@ -160,7 +162,7 @@ func (s *Service) pinnedExtract(
 
 	s.recordAIUsage(call.metric, true, "success")
 
-	return &serviceports.AIEvaluationExtractResult{
+	return &documentaiextractionports.AIEvaluationExtractResult{
 		Extract:      convertExtractResponse(parsed),
 		Model:        result.ModelIdentifier,
 		ProviderID:   result.ProviderID,
@@ -171,11 +173,11 @@ func (s *Service) pinnedExtract(
 	}, nil
 }
 
-func (s *Service) extractCall(req *serviceports.AIExtractRequest) *structuredCall {
+func (s *Service) extractCall(req *documentaiextractionports.AIExtractRequest) *structuredCall {
 	return newExtractCall(req)
 }
 
-func newExtractCall(req *serviceports.AIExtractRequest) *structuredCall {
+func newExtractCall(req *documentaiextractionports.AIExtractRequest) *structuredCall {
 	return &structuredCall{
 		tenant:     req.TenantInfo,
 		documentID: req.DocumentID,
@@ -204,8 +206,8 @@ feature they do not have.
 */
 func (s *Service) SubmitRateConfirmationBackgroundExtraction(
 	ctx context.Context,
-	req *serviceports.AIExtractRequest,
-) (*serviceports.AIBackgroundExtractSubmission, error) {
+	req *documentaiextractionports.AIExtractRequest,
+) (*documentaiextractionports.AIBackgroundExtractSubmission, error) {
 	if !s.cfg.DocumentExtractionEnabled() {
 		return nil, errDisabled
 	}
@@ -225,7 +227,7 @@ func (s *Service) SubmitRateConfirmationBackgroundExtraction(
 		return nil, err
 	}
 
-	result := &serviceports.AIBackgroundExtractSubmission{
+	result := &documentaiextractionports.AIBackgroundExtractSubmission{
 		ResponseID: submission.Handle,
 		ProviderID: submission.ProviderID,
 		Model:      submission.ModelIdentifier,
@@ -253,7 +255,7 @@ func (s *Service) SubmitRateConfirmationBackgroundExtraction(
 	s.recordAIUsage(call.metric, true, "inline")
 
 	result.Model = submission.Result.ModelIdentifier
-	result.Status = string(serviceports.AIBackgroundExtractionStatusCompleted)
+	result.Status = string(documentaiextractionports.AIBackgroundExtractionStatusCompleted)
 	result.ExtractResult = convertExtractResponse(parsed)
 
 	return result, nil
@@ -261,8 +263,8 @@ func (s *Service) SubmitRateConfirmationBackgroundExtraction(
 
 func (s *Service) PollRateConfirmationBackgroundExtraction(
 	ctx context.Context,
-	req *serviceports.AIBackgroundExtractPollRequest,
-) (*serviceports.AIBackgroundExtractPollResult, error) {
+	req *documentaiextractionports.AIBackgroundExtractPollRequest,
+) (*documentaiextractionports.AIBackgroundExtractPollResult, error) {
 	if !s.cfg.DocumentExtractionEnabled() {
 		return nil, errDisabled
 	}
@@ -277,7 +279,7 @@ func (s *Service) PollRateConfirmationBackgroundExtraction(
 		)
 	}
 
-	outcome, err := s.completion.PollBackground(ctx, &serviceports.BackgroundPollRequest{
+	outcome, err := s.completion.PollBackground(ctx, &agentports.BackgroundPollRequest{
 		TenantInfo:  req.TenantInfo,
 		ProviderID:  req.ProviderID,
 		Handle:      req.ResponseID,
@@ -298,23 +300,23 @@ func (s *Service) PollRateConfirmationBackgroundExtraction(
 }
 
 func (s *Service) describePoll(
-	req *serviceports.AIBackgroundExtractPollRequest,
-	outcome *serviceports.BackgroundOutcome,
-) *serviceports.AIBackgroundExtractPollResult {
-	result := &serviceports.AIBackgroundExtractPollResult{
+	req *documentaiextractionports.AIBackgroundExtractPollRequest,
+	outcome *agentports.BackgroundOutcome,
+) *documentaiextractionports.AIBackgroundExtractPollResult {
+	result := &documentaiextractionports.AIBackgroundExtractPollResult{
 		ResponseID: req.ResponseID,
 		Model:      outcome.ModelIdentifier,
 		RawStatus:  strings.TrimSpace(outcome.RawStatus),
 	}
 
 	switch outcome.State {
-	case serviceports.BackgroundPending:
-		result.Status = serviceports.AIBackgroundExtractionStatusPending
+	case agentports.BackgroundPending:
+		result.Status = documentaiextractionports.AIBackgroundExtractionStatusPending
 		s.recordAIUsage("extract_background_poll", true, "pending")
 
 		return result
-	case serviceports.BackgroundFailed:
-		result.Status = serviceports.AIBackgroundExtractionStatusFailed
+	case agentports.BackgroundFailed:
+		result.Status = documentaiextractionports.AIBackgroundExtractionStatusFailed
 		result.FailureCode = stringutils.FirstNonEmptyTrimmed(
 			outcome.FailureCode,
 			result.RawStatus,
@@ -327,11 +329,11 @@ func (s *Service) describePoll(
 		s.recordAIUsage("extract_background_poll", true, "terminal_failure")
 
 		return result
-	case serviceports.BackgroundCompleted:
+	case agentports.BackgroundCompleted:
 	}
 
 	if outcome.Result == nil || strings.TrimSpace(outcome.Result.Text) == "" {
-		result.Status = serviceports.AIBackgroundExtractionStatusFailed
+		result.Status = documentaiextractionports.AIBackgroundExtractionStatusFailed
 		result.FailureCode = "empty_output"
 		result.FailureMessage = "AI background extraction completed without structured output"
 		s.recordAIUsage("extract_background_poll", false, "empty_output")
@@ -341,7 +343,7 @@ func (s *Service) describePoll(
 
 	parsed := new(extractResponse)
 	if err := decodeStructured(outcome.Result.Text, parsed); err != nil {
-		result.Status = serviceports.AIBackgroundExtractionStatusFailed
+		result.Status = documentaiextractionports.AIBackgroundExtractionStatusFailed
 		result.FailureCode = "invalid_output"
 		result.FailureMessage = err.Error()
 		s.recordAIUsage("extract_background_poll", false, "invalid_output")
@@ -349,7 +351,7 @@ func (s *Service) describePoll(
 		return result
 	}
 
-	result.Status = serviceports.AIBackgroundExtractionStatusCompleted
+	result.Status = documentaiextractionports.AIBackgroundExtractionStatusCompleted
 	result.ExtractResult = convertExtractResponse(parsed)
 	s.recordAIUsage("extract_background_poll", true, "completed")
 

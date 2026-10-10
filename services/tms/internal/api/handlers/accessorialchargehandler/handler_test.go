@@ -1,6 +1,7 @@
 package accessorialchargehandler_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
 	"context"
 	"errors"
 	"fmt"
@@ -11,9 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/accessorialchargeservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -30,7 +31,7 @@ var errNotFound = errors.New("accessorial charge not found")
 
 func setupAccessorialChargeHandler(
 	t *testing.T,
-	repo *mocks.MockAccessorialChargeRepository,
+	repo *accessorialchargeportsmock.MockAccessorialChargeRepository,
 ) *accessorialchargehandler.Handler {
 	t.Helper()
 
@@ -71,7 +72,7 @@ func TestAccessorialChargeHandler_List_Success(t *testing.T) {
 	t.Parallel()
 
 	accID := pulid.MustNew("acc_")
-	repo := mocks.NewMockAccessorialChargeRepository(t)
+	repo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
 	repo.On("List", mock.Anything, mock.Anything).
 		Return(&pagination.ListResult[*accessorialcharge.AccessorialCharge]{
 			Items: []*accessorialcharge.AccessorialCharge{
@@ -124,9 +125,9 @@ func TestAccessorialChargeHandler_List_WithPagination(t *testing.T) {
 		})
 	}
 
-	repo := mocks.NewMockAccessorialChargeRepository(t)
+	repo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
 	repo.On("List", mock.Anything, mock.MatchedBy(
-		func(req *repositories.ListAccessorialChargeRequest) bool {
+		func(req *accessorialchargeports.ListAccessorialChargeRequest) bool {
 			return req.Filter.Pagination.Limit == requestedLimit+1
 		},
 	)).Return(&pagination.ListResult[*accessorialcharge.AccessorialCharge]{
@@ -158,7 +159,7 @@ func TestAccessorialChargeHandler_List_WithPagination(t *testing.T) {
 func TestAccessorialChargeHandler_List_RejectsOffset(t *testing.T) {
 	t.Parallel()
 
-	handler := setupAccessorialChargeHandler(t, mocks.NewMockAccessorialChargeRepository(t))
+	handler := setupAccessorialChargeHandler(t, accessorialchargeportsmock.NewMockAccessorialChargeRepository(t))
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
@@ -176,7 +177,7 @@ func TestAccessorialChargeHandler_Get_Success(t *testing.T) {
 	t.Parallel()
 
 	accID := pulid.MustNew("acc_")
-	repo := mocks.NewMockAccessorialChargeRepository(t)
+	repo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(&accessorialcharge.AccessorialCharge{
 		ID:             accID,
 		OrganizationID: testutil.TestOrgID,
@@ -208,7 +209,7 @@ func TestAccessorialChargeHandler_Get_NotFound(t *testing.T) {
 	t.Parallel()
 
 	accID := pulid.MustNew("acc_")
-	repo := mocks.NewMockAccessorialChargeRepository(t)
+	repo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(nil, errNotFound)
 
 	handler := setupAccessorialChargeHandler(t, repo)
@@ -227,7 +228,7 @@ func TestAccessorialChargeHandler_Get_NotFound(t *testing.T) {
 func TestAccessorialChargeHandler_Get_InvalidID(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockAccessorialChargeRepository(t)
+	repo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
 	handler := setupAccessorialChargeHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -244,7 +245,7 @@ func TestAccessorialChargeHandler_Get_InvalidID(t *testing.T) {
 func TestAccessorialChargeHandler_Create_Success(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockAccessorialChargeRepository(t)
+	repo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
 	repo.On("Create", mock.Anything, mock.Anything).
 		Return(func(_ context.Context, entity *accessorialcharge.AccessorialCharge) *accessorialcharge.AccessorialCharge {
 			entity.ID = pulid.MustNew("acc_")
@@ -278,7 +279,7 @@ func TestAccessorialChargeHandler_Create_Success(t *testing.T) {
 func TestAccessorialChargeHandler_Create_BadJSON(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockAccessorialChargeRepository(t)
+	repo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
 	handler := setupAccessorialChargeHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -297,7 +298,7 @@ func TestAccessorialChargeHandler_Update_Success(t *testing.T) {
 	t.Parallel()
 
 	accID := pulid.MustNew("acc_")
-	repo := mocks.NewMockAccessorialChargeRepository(t)
+	repo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(&accessorialcharge.AccessorialCharge{
 		ID:             accID,
 		OrganizationID: testutil.TestOrgID,
@@ -340,7 +341,7 @@ func TestAccessorialChargeHandler_Update_NotFound(t *testing.T) {
 	t.Parallel()
 
 	accID := pulid.MustNew("acc_")
-	repo := mocks.NewMockAccessorialChargeRepository(t)
+	repo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(nil, errNotFound)
 
 	handler := setupAccessorialChargeHandler(t, repo)
@@ -367,7 +368,7 @@ func TestAccessorialChargeHandler_Patch_Success(t *testing.T) {
 	t.Parallel()
 
 	accID := pulid.MustNew("acc_")
-	repo := mocks.NewMockAccessorialChargeRepository(t)
+	repo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(&accessorialcharge.AccessorialCharge{
 		ID:             accID,
 		OrganizationID: testutil.TestOrgID,
@@ -404,7 +405,7 @@ func TestAccessorialChargeHandler_Patch_Success(t *testing.T) {
 func TestAccessorialChargeHandler_Patch_InvalidID(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockAccessorialChargeRepository(t)
+	repo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
 	handler := setupAccessorialChargeHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -425,7 +426,7 @@ func TestAccessorialChargeHandler_SelectOptions_Success(t *testing.T) {
 	t.Parallel()
 
 	accID := pulid.MustNew("acc_")
-	repo := mocks.NewMockAccessorialChargeRepository(t)
+	repo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
 	repo.On("SelectOptions", mock.Anything, mock.Anything).
 		Return(&pagination.ListResult[*accessorialcharge.AccessorialCharge]{
 			Items: []*accessorialcharge.AccessorialCharge{
@@ -454,7 +455,7 @@ func TestAccessorialChargeHandler_GetOption_Success(t *testing.T) {
 	t.Parallel()
 
 	accID := pulid.MustNew("acc_")
-	repo := mocks.NewMockAccessorialChargeRepository(t)
+	repo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(&accessorialcharge.AccessorialCharge{
 		ID:             accID,
 		OrganizationID: testutil.TestOrgID,
@@ -480,7 +481,7 @@ func TestAccessorialChargeHandler_GetOption_Success(t *testing.T) {
 func TestAccessorialChargeHandler_GetOption_InvalidID(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockAccessorialChargeRepository(t)
+	repo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
 	handler := setupAccessorialChargeHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -497,7 +498,7 @@ func TestAccessorialChargeHandler_GetOption_InvalidID(t *testing.T) {
 func TestAccessorialChargeHandler_Create_ServiceError(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockAccessorialChargeRepository(t)
+	repo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
 	repo.On("Create", mock.Anything, mock.Anything).Return(nil, errors.New("service error"))
 
 	handler := setupAccessorialChargeHandler(t, repo)
@@ -523,7 +524,7 @@ func TestAccessorialChargeHandler_Create_ServiceError(t *testing.T) {
 func TestAccessorialChargeHandler_Update_InvalidID(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockAccessorialChargeRepository(t)
+	repo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
 	handler := setupAccessorialChargeHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -547,7 +548,7 @@ func TestAccessorialChargeHandler_Patch_ServiceError(t *testing.T) {
 	t.Parallel()
 
 	accID := pulid.MustNew("acc_")
-	repo := mocks.NewMockAccessorialChargeRepository(t)
+	repo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(&accessorialcharge.AccessorialCharge{
 		ID:             accID,
 		OrganizationID: testutil.TestOrgID,
@@ -582,7 +583,7 @@ func TestAccessorialChargeHandler_GetOption_NotFound(t *testing.T) {
 	t.Parallel()
 
 	accID := pulid.MustNew("acc_")
-	repo := mocks.NewMockAccessorialChargeRepository(t)
+	repo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(nil, errNotFound)
 
 	handler := setupAccessorialChargeHandler(t, repo)

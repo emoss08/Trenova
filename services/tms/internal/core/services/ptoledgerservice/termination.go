@@ -7,7 +7,7 @@ import (
 	"sort"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -87,7 +87,7 @@ func (s *Service) SettleOnTermination(
 	if resolved == nil {
 		return result, nil
 	}
-	balances, err := s.ledgerRepo.ListBalances(ctx, &repositories.ListPTOBalancesRequest{
+	balances, err := s.ledgerRepo.ListBalances(ctx, &workerports.ListPTOBalancesRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
 	})
@@ -106,7 +106,7 @@ func (s *Service) SettleOnTermination(
 			Note:         "Employment ended",
 		}
 		posted, postErr := s.post(ctx, postParams{
-			key: repositories.PTOBalanceKey{
+			key: workerports.PTOBalanceKey{
 				TenantInfo: tenantInfo,
 				WorkerID:   workerID,
 				PTOType:    planned.PTOType,
@@ -128,7 +128,7 @@ func (s *Service) SettleOnTermination(
 			} else {
 				result.ForfeitedDays = result.ForfeitedDays.Add(posted.AmountDays.Neg())
 			}
-		case errors.Is(postErr, repositories.ErrDuplicatePTOLedgerEntry):
+		case errors.Is(postErr, workerports.ErrDuplicatePTOLedgerEntry):
 			log.Info(
 				"termination settlement already posted",
 				zap.String("ptoType", string(planned.PTOType)),

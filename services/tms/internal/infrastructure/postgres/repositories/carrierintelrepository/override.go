@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -26,7 +26,7 @@ type overrideRepository struct {
 	l  *zap.Logger
 }
 
-func NewOverrideRepository(p Params) repositories.CarrierIntelOverrideRepository {
+func NewOverrideRepository(p Params) carrierintelports.CarrierIntelOverrideRepository {
 	return &overrideRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.carrier-intel-override-repository"),

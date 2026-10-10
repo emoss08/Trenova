@@ -16,8 +16,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/journalentry"
 	"github.com/emoss08/trenova/internal/core/domain/journalsource"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -44,7 +44,7 @@ func (r *JournalEntryLineResolver) GlAccount(ctx context.Context, obj *journalen
 	if l, ok := loaders.FromContext(ctx); ok && l != nil {
 		account, err = l.GLAccountByID.Load(ctx, obj.GLAccountID.String())
 	} else {
-		account, err = r.GlAccountRepo.GetByID(ctx, repositories.GetGLAccountByIDRequest{
+		account, err = r.GlAccountRepo.GetByID(ctx, glaccountports.GetGLAccountByIDRequest{
 			ID:         obj.GLAccountID,
 			TenantInfo: base.TenantInfo(authCtx),
 		})
@@ -60,11 +60,11 @@ func (r *JournalEntryLineResolver) GlAccount(ctx context.Context, obj *journalen
 	}, nil
 }
 
-func (r *JournalReviewSummaryResolver) PostingMode(ctx context.Context, obj *services.JournalReviewSummary) (string, error) {
+func (r *JournalReviewSummaryResolver) PostingMode(ctx context.Context, obj *journalentryports.JournalReviewSummary) (string, error) {
 	return string(obj.PostingMode), nil
 }
 
-func (r *MutationResolver) ApproveJournalEntries(ctx context.Context, input gqlmodel.JournalReviewInput) (*services.JournalReviewResult, error) {
+func (r *MutationResolver) ApproveJournalEntries(ctx context.Context, input gqlmodel.JournalReviewInput) (*journalentryports.JournalReviewResult, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceJournalEntry, permission.OpApprove)
 	if err != nil {
 		return nil, err
@@ -77,7 +77,7 @@ func (r *MutationResolver) ApproveJournalEntries(ctx context.Context, input gqlm
 	return r.JournalReview.Approve(ctx, req, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *MutationResolver) PostJournalEntries(ctx context.Context, input gqlmodel.JournalReviewInput) (*services.JournalReviewResult, error) {
+func (r *MutationResolver) PostJournalEntries(ctx context.Context, input gqlmodel.JournalReviewInput) (*journalentryports.JournalReviewResult, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceJournalEntry, permission.OpApprove)
 	if err != nil {
 		return nil, err
@@ -151,7 +151,7 @@ func (r *QueryResolver) JournalReviewTable(ctx context.Context, input gqlmodel.D
 		return nil, err
 	}
 
-	result, err := r.JournalReview.List(ctx, &services.ListJournalReviewRequest{
+	result, err := r.JournalReview.List(ctx, &journalentryports.ListJournalReviewRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		Filter:     tableInput.Filter,
 		Cursor:     tableInput.Cursor,
@@ -163,7 +163,7 @@ func (r *QueryResolver) JournalReviewTable(ctx context.Context, input gqlmodel.D
 	return journalEntryConnectionToModel(result)
 }
 
-func (r *QueryResolver) JournalReviewSummary(ctx context.Context) (*services.JournalReviewSummary, error) {
+func (r *QueryResolver) JournalReviewSummary(ctx context.Context) (*journalentryports.JournalReviewSummary, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceJournalEntry, permission.OpRead)
 	if err != nil {
 		return nil, err

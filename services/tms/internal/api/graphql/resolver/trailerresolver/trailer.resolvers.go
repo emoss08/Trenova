@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -74,7 +74,7 @@ func (r *MutationResolver) PatchTrailer(ctx context.Context, id string, input gq
 		return nil, err
 	}
 
-	existing, err := r.TrailerService.Get(ctx, repositories.GetTrailerByIDRequest{
+	existing, err := r.TrailerService.Get(ctx, trailerports.GetTrailerByIDRequest{
 		ID:         trailerID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})
@@ -107,7 +107,7 @@ func (r *MutationResolver) BulkUpdateTrailerStatus(ctx context.Context, input gq
 
 	entities, err := r.TrailerService.BulkUpdateStatus(
 		ctx,
-		&repositories.BulkUpdateTrailerStatusRequest{
+		&trailerports.BulkUpdateTrailerStatusRequest{
 			TenantInfo: base.TenantInfo(authCtx),
 			TrailerIDs: trailerIDs,
 			Status:     input.Status,
@@ -137,7 +137,7 @@ func (r *MutationResolver) LocateTrailer(ctx context.Context, input gqlmodel.Loc
 
 	result, err := r.TrailerService.Locate(
 		ctx,
-		&repositories.LocateTrailerRequest{
+		&trailerports.LocateTrailerRequest{
 			TenantInfo:    base.TenantInfo(authCtx),
 			TrailerID:     trailerID,
 			NewLocationID: newLocationID,
@@ -181,7 +181,7 @@ func (r *QueryResolver) Trailers(ctx context.Context, input gqlmodel.DataTableCo
 		&includeEquipment,
 		&includeFleet,
 	)
-	result, err := r.TrailerService.List(ctx, &repositories.ListTrailersRequest{
+	result, err := r.TrailerService.List(ctx, &trailerports.ListTrailersRequest{
 		Filter:                  connection.Filter,
 		Cursor:                  connection.Cursor,
 		TrailerRelationIncludes: includes,
@@ -205,7 +205,7 @@ func (r *QueryResolver) Trailer(ctx context.Context, id string) (*trailer.Traile
 		return nil, err
 	}
 
-	return r.TrailerService.Get(ctx, repositories.GetTrailerByIDRequest{
+	return r.TrailerService.Get(ctx, trailerports.GetTrailerByIDRequest{
 		ID:         trailerID,
 		TenantInfo: base.TenantInfo(authCtx),
 		TrailerRelationIncludes: trailerRelationIncludes(

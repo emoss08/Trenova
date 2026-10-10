@@ -4,9 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -14,22 +18,22 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	Corrections services.AICorrectionService
-	Evaluations services.ExtractionEvalRunner       `optional:"true"`
-	Shadows     services.ExtractionShadowRetention  `optional:"true"`
-	Rollout     services.ExtractionRolloutRetention `optional:"true"`
-	Drift       services.ExtractionDriftChecker     `optional:"true"`
-	Tenants     repositories.TenantSyncRepository
+	Corrections aicorrectionports.AICorrectionService
+	Evaluations extractionevalports.ExtractionEvalRunner          `optional:"true"`
+	Shadows     extractionshadowports.ExtractionShadowRetention   `optional:"true"`
+	Rollout     extractionrolloutports.ExtractionRolloutRetention `optional:"true"`
+	Drift       extractionevalports.ExtractionDriftChecker        `optional:"true"`
+	Tenants     tenantports.TenantSyncRepository
 	Logger      *zap.Logger
 }
 
 type Activities struct {
-	corrections services.AICorrectionService
-	evaluations services.ExtractionEvalRunner
-	shadows     services.ExtractionShadowRetention
-	rollout     services.ExtractionRolloutRetention
-	drift       services.ExtractionDriftChecker
-	tenants     repositories.TenantSyncRepository
+	corrections aicorrectionports.AICorrectionService
+	evaluations extractionevalports.ExtractionEvalRunner
+	shadows     extractionshadowports.ExtractionShadowRetention
+	rollout     extractionrolloutports.ExtractionRolloutRetention
+	drift       extractionevalports.ExtractionDriftChecker
+	tenants     tenantports.TenantSyncRepository
 	l           *zap.Logger
 }
 
@@ -63,7 +67,7 @@ func (a *Activities) PurgeOrganizationAICorrectionsActivity(
 ) (*OrganizationAICorrectionResult, error) {
 	tenant := input.TenantInfo()
 
-	purged, err := a.corrections.PurgeExpired(ctx, services.PurgeExpiredAICorrectionsRequest{
+	purged, err := a.corrections.PurgeExpired(ctx, kernelports.PurgeExpiredAICorrectionsRequest{
 		TenantInfo: tenant,
 		Now:        input.Now,
 	})
@@ -74,7 +78,7 @@ func (a *Activities) PurgeOrganizationAICorrectionsActivity(
 	if a.evaluations != nil {
 		runs, runErr := a.evaluations.PurgeExpiredRuns(
 			ctx,
-			services.PurgeExpiredAICorrectionsRequest{
+			kernelports.PurgeExpiredAICorrectionsRequest{
 				TenantInfo: tenant,
 				Now:        input.Now,
 			},
@@ -88,7 +92,7 @@ func (a *Activities) PurgeOrganizationAICorrectionsActivity(
 	if a.shadows != nil {
 		shadows, shadowErr := a.shadows.PurgeExpiredShadows(
 			ctx,
-			services.PurgeExpiredAICorrectionsRequest{
+			kernelports.PurgeExpiredAICorrectionsRequest{
 				TenantInfo: tenant,
 				Now:        input.Now,
 			},
@@ -102,7 +106,7 @@ func (a *Activities) PurgeOrganizationAICorrectionsActivity(
 	if a.rollout != nil {
 		assignments, rolloutErr := a.rollout.PurgeExpiredAssignments(
 			ctx,
-			services.PurgeExpiredAICorrectionsRequest{
+			kernelports.PurgeExpiredAICorrectionsRequest{
 				TenantInfo: tenant,
 				Now:        input.Now,
 			},

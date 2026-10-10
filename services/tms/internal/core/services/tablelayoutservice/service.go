@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/tablelayout"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/tablelayoutports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
@@ -16,12 +16,12 @@ type Params struct {
 	fx.In
 
 	Logger *zap.Logger
-	Repo   repositories.TableLayoutRepository
+	Repo   tablelayoutports.TableLayoutRepository
 }
 
 type Service struct {
 	l    *zap.Logger
-	repo repositories.TableLayoutRepository
+	repo tablelayoutports.TableLayoutRepository
 }
 
 func New(p Params) *Service {
@@ -47,7 +47,7 @@ func (s *Service) Get(ctx context.Context, req *Request) (*tablelayout.TableLayo
 		return nil, err
 	}
 
-	entity, found, err := s.repo.Get(ctx, &repositories.TableLayoutRequest{
+	entity, found, err := s.repo.Get(ctx, &tablelayoutports.TableLayoutRequest{
 		TenantInfo: req.TenantInfo,
 		Resource:   req.Resource,
 	})
@@ -101,14 +101,14 @@ func (s *Service) Reset(ctx context.Context, req *Request) error {
 		return err
 	}
 
-	return s.repo.Delete(ctx, &repositories.TableLayoutRequest{
+	return s.repo.Delete(ctx, &tablelayoutports.TableLayoutRequest{
 		TenantInfo: req.TenantInfo,
 		Resource:   req.Resource,
 	})
 }
 
 func (s *Service) ensureRoomFor(ctx context.Context, req *Request) error {
-	_, found, err := s.repo.Get(ctx, &repositories.TableLayoutRequest{
+	_, found, err := s.repo.Get(ctx, &tablelayoutports.TableLayoutRequest{
 		TenantInfo: req.TenantInfo,
 		Resource:   req.Resource,
 	})

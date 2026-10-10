@@ -10,8 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/rateimport"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/rateimportservice"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateimportports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -98,7 +98,7 @@ func (h *Handler) list(c *gin.Context) {
 		req,
 		h.eh,
 		func() (*pagination.ListResult[*rateimport.RateImportBatch], error) {
-			return h.service.List(c.Request.Context(), &repositories.ListRateImportBatchesRequest{
+			return h.service.List(c.Request.Context(), &rateimportports.ListRateImportBatchesRequest{
 				Filter:          req,
 				RateAgreementID: agreementID,
 			})
@@ -152,7 +152,7 @@ func (h *Handler) get(c *gin.Context) {
 
 	entity, err := h.service.GetByID(
 		c.Request.Context(),
-		&repositories.GetRateImportBatchByIDRequest{
+		&rateimportports.GetRateImportBatchByIDRequest{
 			RateImportBatchID: importID,
 			TenantInfo:        tenantOf(authCtx),
 		},
@@ -196,7 +196,7 @@ func (h *Handler) rows(c *gin.Context) {
 		func() (*pagination.ListResult[*rateimport.RateImportRow], error) {
 			return h.service.ListRows(
 				c.Request.Context(),
-				&repositories.ListRateImportRowsRequest{
+				&rateimportports.ListRateImportRowsRequest{
 					RateImportBatchID: importID,
 					TenantInfo:        tenantOf(authCtx),
 					Filter:            req,

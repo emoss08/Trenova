@@ -7,9 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/distanceprofile"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/places/ports/distancecontrolports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/distanceprofileports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -22,19 +23,19 @@ type Params struct {
 	fx.In
 
 	Logger              *zap.Logger
-	Repo                repositories.DistanceControlRepository
-	DistanceProfileRepo repositories.DistanceProfileRepository
-	AuditService        services.AuditService
+	Repo                distancecontrolports.DistanceControlRepository
+	DistanceProfileRepo distanceprofileports.DistanceProfileRepository
+	AuditService        auditports.AuditService
 }
 
 type Service struct {
 	l                   *zap.Logger
-	repo                repositories.DistanceControlRepository
-	distanceProfileRepo repositories.DistanceProfileRepository
-	auditService        services.AuditService
+	repo                distancecontrolports.DistanceControlRepository
+	distanceProfileRepo distanceprofileports.DistanceProfileRepository
+	auditService        auditports.AuditService
 }
 
-func New(p Params) services.DistanceControlService {
+func New(p Params) distancecontrolports.DistanceControlService {
 	return &Service{
 		l:                   p.Logger.Named("service.distance-control"),
 		repo:                p.Repo,
@@ -98,7 +99,7 @@ func (s *Service) validate(
 		}
 		profile, err := s.distanceProfileRepo.GetByID(
 			ctx,
-			repositories.GetDistanceProfileByIDRequest{
+			distanceprofileports.GetDistanceProfileByIDRequest{
 				ID: id,
 				TenantInfo: pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
@@ -137,7 +138,7 @@ func (s *Service) logAudit(
 	if current == nil {
 		return
 	}
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceDistanceControl,
 		ResourceID:     current.ID.String(),
 		Operation:      permission.OpUpdate,
@@ -149,7 +150,7 @@ func (s *Service) logAudit(
 	if previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(previous)
 	}
-	opts := []services.LogOption{auditservice.WithComment("Distance control updated")}
+	opts := []auditports.LogOption{auditservice.WithComment("Distance control updated")}
 	if previous != nil {
 		opts = append(opts, auditservice.WithDiff(previous, current))
 	}

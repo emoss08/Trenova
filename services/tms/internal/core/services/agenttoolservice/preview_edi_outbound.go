@@ -9,9 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -19,7 +19,7 @@ const shipmentFieldTenderStatus = "tenderStatus"
 
 func (t *sendEDILoadTenderTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	req, err := t.request(&params)
 	if err != nil {
@@ -101,7 +101,7 @@ func tenderBody(payload *edi.LoadTenderPayload) string {
 
 func (t *sendEDIStatusUpdateTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	req, err := t.request(&params)
 	if err != nil {

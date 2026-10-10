@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/sidebarpreference"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/sidebarpreferenceports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -25,7 +25,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.SidebarPreferenceRepository {
+func New(p Params) sidebarpreferenceports.SidebarPreferenceRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.sidebar-preference-repository"),
@@ -34,7 +34,7 @@ func New(p Params) repositories.SidebarPreferenceRepository {
 
 func (r *repository) Get(
 	ctx context.Context,
-	req *repositories.GetSidebarPreferenceRequest,
+	req *sidebarpreferenceports.GetSidebarPreferenceRequest,
 ) (*sidebarpreference.SidebarPreference, bool, error) {
 	return dbtx.Read2(ctx, r.db, func(ctx context.Context) (*sidebarpreference.SidebarPreference, bool, error) {
 		log := r.l.With(

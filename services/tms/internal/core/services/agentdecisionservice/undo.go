@@ -4,13 +4,14 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/decisioncommitjobs/decisioncommitcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/decisioncommitjobs/decisioncommitcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -56,10 +57,10 @@ func (s *Service) Defers(decision agent.DecisionType) bool {
 // approval recorded here is taken back and the call fails.
 func (s *Service) ApproveDeferred(
 	ctx context.Context,
-	reqs []*services.DecideAgentProposalRequest,
-	actor *services.RequestActor,
-) ([]services.DeferredApproval, error) {
-	results := make([]services.DeferredApproval, len(reqs))
+	reqs []*agentports.DecideAgentProposalRequest,
+	actor *permissionports.RequestActor,
+) ([]agentports.DeferredApproval, error) {
+	results := make([]agentports.DeferredApproval, len(reqs))
 	if len(reqs) == 0 {
 		return results, nil
 	}
@@ -98,7 +99,7 @@ func (s *Service) ApproveDeferred(
 	}
 
 	for _, proposal := range recordedProposals {
-		s.announce(ctx, proposal, tenant, actor.AuditActor(), services.ActivityApproving)
+		s.announce(ctx, proposal, tenant, actor.AuditActor(), agentports.ActivityApproving)
 	}
 
 	return results, nil
@@ -108,7 +109,7 @@ func (s *Service) startCommit(
 	ctx context.Context,
 	window *undoWindow,
 	tenant pagination.TenantInfo,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) error {
 	_, err := s.workflows.StartWorkflow(ctx, client.StartWorkflowOptions{
 		ID:        window.workflowID,
@@ -119,7 +120,7 @@ func (s *Service) startCommit(
 		WorkflowIDReusePolicy:    enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE,
 		WorkflowIDConflictPolicy: enums.WORKFLOW_ID_CONFLICT_POLICY_TERMINATE_EXISTING,
 		StaticSummary:            "Approval undo window",
-	}, decisioncommitcontract.ProposalCommitWorkflowName, &services.CommitApprovalRequest{
+	}, decisioncommitcontract.ProposalCommitWorkflowName, &agentports.CommitApprovalRequest{
 		OrganizationID:  tenant.OrgID,
 		BusinessUnitID:  tenant.BuID,
 		DecidedByUserID: actor.UserID,
@@ -137,9 +138,9 @@ func (s *Service) takeBack(
 	tenant pagination.TenantInfo,
 	decisions []pulid.ID,
 	proposals []*agent.AgentProposal,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) {
-	if _, err := s.decisionRepo.MarkUndone(ctx, repositories.SettleAgentDecisionsRequest{
+	if _, err := s.decisionRepo.MarkUndone(ctx, agentports.SettleAgentDecisionsRequest{
 		IDs:            decisions,
 		TenantInfo:     tenant,
 		At:             timeutils.NowUnix(),
@@ -154,7 +155,7 @@ func (s *Service) takeBack(
 
 // reopen moves a proposal from Approving back to Pending.
 func (s *Service) reopen(ctx context.Context, tenant pagination.TenantInfo, proposalID pulid.ID) {
-	if _, err := s.proposalRepo.UpdateStatus(ctx, repositories.UpdateAgentProposalStatusRequest{
+	if _, err := s.proposalRepo.UpdateStatus(ctx, agentports.UpdateAgentProposalStatusRequest{
 		ID:         proposalID,
 		Status:     agent.ProposalStatusPending,
 		FromStatus: agent.ProposalStatusApproving,
@@ -173,9 +174,9 @@ func (s *Service) reopen(ctx context.Context, tenant pagination.TenantInfo, prop
 // proposal is still Approving is one an earlier attempt claimed and did not
 // finish; it is finished now, and the guarded status change keeps it from
 // running twice.
-func (s *Service) CommitApproval(ctx context.Context, req *services.CommitApprovalRequest) error {
+func (s *Service) CommitApproval(ctx context.Context, req *agentports.CommitApprovalRequest) error {
 	tenant := req.TenantInfo()
-	actor := services.UserActor(tenant)
+	actor := permissionports.UserActor(tenant)
 	ctx = dbscope.WithTenant(ctx, actor.DBTenant())
 
 	group, err := s.windowDecisions(ctx, tenant, req.WorkflowID, req.CommitsAt)
@@ -189,7 +190,7 @@ func (s *Service) CommitApproval(ctx context.Context, req *services.CommitApprov
 			open = append(open, decision.ID)
 		}
 	}
-	claimed, err := s.decisionRepo.MarkCommitted(ctx, repositories.SettleAgentDecisionsRequest{
+	claimed, err := s.decisionRepo.MarkCommitted(ctx, agentports.SettleAgentDecisionsRequest{
 		IDs:        open,
 		TenantInfo: tenant,
 		At:         timeutils.NowUnix(),
@@ -223,7 +224,7 @@ func (s *Service) windowDecisions(
 	commitsAt int64,
 ) ([]*agent.AgentDecision, error) {
 	all, err := s.decisionRepo.ListByCommitWorkflow(ctx,
-		repositories.ListAgentDecisionsByCommitWorkflowRequest{
+		agentports.ListAgentDecisionsByCommitWorkflowRequest{
 			WorkflowID: workflowID,
 			TenantInfo: tenant,
 		})
@@ -249,13 +250,13 @@ func (s *Service) commitOne(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	decision *agent.AgentDecision,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) {
 	if decision.ProposalID == nil {
 		return
 	}
 
-	if _, err := s.proposalRepo.UpdateStatus(ctx, repositories.UpdateAgentProposalStatusRequest{
+	if _, err := s.proposalRepo.UpdateStatus(ctx, agentports.UpdateAgentProposalStatusRequest{
 		ID:         *decision.ProposalID,
 		Status:     proposalStatusFor(decision.Decision),
 		FromStatus: agent.ProposalStatusApproving,
@@ -271,7 +272,7 @@ func (s *Service) commitOne(
 		return
 	}
 
-	proposal, err := s.proposalRepo.GetByID(ctx, repositories.GetAgentProposalByIDRequest{
+	proposal, err := s.proposalRepo.GetByID(ctx, agentports.GetAgentProposalByIDRequest{
 		ID:         *decision.ProposalID,
 		TenantInfo: &tenant,
 	})
@@ -285,7 +286,7 @@ func (s *Service) commitOne(
 	s.carryOut(ctx, &recorded{
 		proposal: proposal,
 		decision: decision,
-		req: &services.DecideAgentProposalRequest{
+		req: &agentports.DecideAgentProposalRequest{
 			ProposalID:    proposal.ID,
 			Decision:      decision.Decision,
 			Modifications: decision.Modifications,
@@ -302,8 +303,8 @@ func (s *Service) commitOne(
 // batch, waits on them again. Once the window has closed it is a conflict.
 func (s *Service) UndoOwnApproval(
 	ctx context.Context,
-	req *services.SettleApprovalRequest,
-	actor *services.RequestActor,
+	req *agentports.SettleApprovalRequest,
+	actor *permissionports.RequestActor,
 ) error {
 	window, err := s.ownWindow(ctx, req, actor)
 	if err != nil {
@@ -316,7 +317,7 @@ func (s *Service) UndoOwnApproval(
 			open = append(open, decision.ID)
 		}
 	}
-	undone, err := s.decisionRepo.MarkUndone(ctx, repositories.SettleAgentDecisionsRequest{
+	undone, err := s.decisionRepo.MarkUndone(ctx, agentports.SettleAgentDecisionsRequest{
 		IDs:            open,
 		TenantInfo:     req.TenantInfo,
 		At:             timeutils.NowUnix(),
@@ -350,11 +351,11 @@ func (s *Service) UndoOwnApproval(
 		}
 		s.reopen(ctx, req.TenantInfo, *decision.ProposalID)
 		s.logUndo(decision, auditActor)
-		if proposal, getErr := s.proposalRepo.GetByID(ctx, repositories.GetAgentProposalByIDRequest{
+		if proposal, getErr := s.proposalRepo.GetByID(ctx, agentports.GetAgentProposalByIDRequest{
 			ID:         *decision.ProposalID,
 			TenantInfo: &req.TenantInfo,
 		}); getErr == nil {
-			s.announce(ctx, proposal, req.TenantInfo, auditActor, services.ActivityUndone)
+			s.announce(ctx, proposal, req.TenantInfo, auditActor, agentports.ActivityUndone)
 		}
 	}
 
@@ -365,8 +366,8 @@ func (s *Service) UndoOwnApproval(
 // already went through is left as it is; one that was undone is a conflict.
 func (s *Service) CommitOwnApprovalNow(
 	ctx context.Context,
-	req *services.SettleApprovalRequest,
-	actor *services.RequestActor,
+	req *agentports.SettleApprovalRequest,
+	actor *permissionports.RequestActor,
 ) error {
 	window, err := s.ownWindow(ctx, req, actor)
 	if err != nil {
@@ -397,7 +398,7 @@ func (s *Service) CommitOwnApprovalNow(
 	s.l.Warn("commit-now could not reach its workflow; committing here",
 		zap.String("workflow", workflowID), zap.Error(err))
 
-	return s.CommitApproval(ctx, &services.CommitApprovalRequest{
+	return s.CommitApproval(ctx, &agentports.CommitApprovalRequest{
 		OrganizationID:  req.TenantInfo.OrgID,
 		BusinessUnitID:  req.TenantInfo.BuID,
 		DecidedByUserID: window[0].DecidedByUserID,
@@ -411,8 +412,8 @@ func (s *Service) CommitOwnApprovalNow(
 // ones deciding takes, so a person can undo exactly what they could approve.
 func (s *Service) ownWindow(
 	ctx context.Context,
-	req *services.SettleApprovalRequest,
-	actor *services.RequestActor,
+	req *agentports.SettleApprovalRequest,
+	actor *permissionports.RequestActor,
 ) ([]*agent.AgentDecision, error) {
 	if req.ProposalID.IsNil() {
 		return nil, errortypes.NewValidationError(
@@ -430,7 +431,7 @@ func (s *Service) ownWindow(
 		return nil, err
 	}
 
-	decisions, err := s.decisionRepo.ListByProposals(ctx, repositories.ListAgentDecisionsByProposalsRequest{
+	decisions, err := s.decisionRepo.ListByProposals(ctx, agentports.ListAgentDecisionsByProposalsRequest{
 		ProposalIDs: []pulid.ID{req.ProposalID},
 		TenantInfo:  req.TenantInfo,
 	})
@@ -465,12 +466,12 @@ func errAlreadyCommitted() error {
 	)
 }
 
-func (s *Service) logUndo(decision *agent.AgentDecision, actor services.AuditActor) {
+func (s *Service) logUndo(decision *agent.AgentDecision, actor kernelports.AuditActor) {
 	if s.audit == nil || decision.ProposalID == nil {
 		return
 	}
 
-	if err := s.audit.LogAction(&services.LogActionParams{
+	if err := s.audit.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceAgentProposal,
 		ResourceID:     decision.ProposalID.String(),
 		Operation:      permission.OpUpdate,

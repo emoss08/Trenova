@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/holdreason"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/holdreasonports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,16 +19,16 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.HoldReasonRepository
+	Repo         holdreasonports.HoldReasonRepository
 	Validator    *Validator
-	AuditService services.AuditService
+	AuditService auditports.AuditService
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.HoldReasonRepository
+	repo         holdreasonports.HoldReasonRepository
 	validator    *Validator
-	auditService services.AuditService
+	auditService auditports.AuditService
 }
 
 func New(p Params) *Service {
@@ -42,28 +42,28 @@ func New(p Params) *Service {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListHoldReasonRequest,
+	req *holdreasonports.ListHoldReasonRequest,
 ) (*pagination.ListResult[*holdreason.HoldReason], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListHoldReasonConnectionRequest,
+	req *holdreasonports.ListHoldReasonConnectionRequest,
 ) (*pagination.CursorListResult[*holdreason.HoldReason], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	req repositories.GetHoldReasonByIDRequest,
+	req holdreasonports.GetHoldReasonByIDRequest,
 ) (*holdreason.HoldReason, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) SelectOptions(
 	ctx context.Context,
-	req *repositories.HoldReasonSelectOptionsRequest,
+	req *holdreasonports.HoldReasonSelectOptionsRequest,
 ) (*pagination.ListResult[*holdreason.HoldReason], error) {
 	return s.repo.SelectOptions(ctx, req)
 }
@@ -88,7 +88,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceHoldReason,
 		ResourceID:     createdEntity.GetID().String(),
 		Operation:      permission.OpCreate,
@@ -119,7 +119,7 @@ func (s *Service) Update(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetByID(ctx, repositories.GetHoldReasonByIDRequest{
+	original, err := s.repo.GetByID(ctx, holdreasonports.GetHoldReasonByIDRequest{
 		ID: entity.GetID(),
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.GetOrganizationID(),
@@ -137,7 +137,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceHoldReason,
 		ResourceID:     updatedEntity.GetID().String(),
 		Operation:      permission.OpUpdate,

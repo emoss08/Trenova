@@ -11,9 +11,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/locationcategory"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationcategoryports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -29,16 +30,16 @@ const (
 )
 
 var (
-	_ serviceports.ToolResultReporter = (*createLocationTool)(nil)
-	_ serviceports.ToolValidator      = (*createLocationTool)(nil)
-	_ serviceports.ToolPreviewer      = (*createLocationTool)(nil)
+	_ agentports.ToolResultReporter = (*createLocationTool)(nil)
+	_ agentports.ToolValidator      = (*createLocationTool)(nil)
+	_ agentports.ToolPreviewer      = (*createLocationTool)(nil)
 )
 
 type locationCreator interface {
 	Create(
 		ctx context.Context,
 		entity *location.Location,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*location.Location, error)
 }
 
@@ -49,7 +50,7 @@ type stateReader interface {
 type locationCategoryReader interface {
 	GetByID(
 		ctx context.Context,
-		req repositories.GetLocationCategoryByIDRequest,
+		req locationcategoryports.GetLocationCategoryByIDRequest,
 	) (*locationcategory.LocationCategory, error)
 }
 
@@ -63,7 +64,7 @@ func newCreateLocationTool(
 	locations locationCreator,
 	states stateReader,
 	categories locationCategoryReader,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return &createLocationTool{locations: locations, states: states, categories: categories}
 }
 
@@ -105,8 +106,8 @@ func (t *createLocationTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *createLocationTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *createLocationTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceLocation,
@@ -186,7 +187,7 @@ func readLocationDraft(params map[string]any) (*locationDraft, error) {
 
 func (t *createLocationTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -195,7 +196,7 @@ func (t *createLocationTool) Execute(
 
 func (t *createLocationTool) ExecuteWithResult(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) (*agent.ToolExecutionResult, error) {
 	if err := guardExecute(t, params); err != nil {
 		return nil, err
@@ -230,7 +231,7 @@ type locationPlan struct {
 
 func (t *createLocationTool) plan(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*locationPlan, error) {
 	draft, err := readLocationDraft(params.Params)
 	if err != nil {
@@ -253,7 +254,7 @@ func (t *createLocationTool) build(
 		)
 	}
 
-	category, err := t.categories.GetByID(ctx, repositories.GetLocationCategoryByIDRequest{
+	category, err := t.categories.GetByID(ctx, locationcategoryports.GetLocationCategoryByIDRequest{
 		ID:         draft.categoryID,
 		TenantInfo: tenant,
 	})
@@ -285,7 +286,7 @@ func (t *createLocationTool) build(
 
 func (t *createLocationTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	if params.Actor == nil {
 		return ErrMissingActor

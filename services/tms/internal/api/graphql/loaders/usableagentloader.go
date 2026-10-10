@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -16,16 +16,16 @@ import (
 type usableAgentsReader interface {
 	AgentsUsable(
 		ctx context.Context,
-		actor *services.RequestActor,
+		actor *permissionports.RequestActor,
 		operation permission.Operation,
-	) (*services.UsableAgents, error)
+	) (*permissionports.UsableAgents, error)
 }
 
 type UsableAgentByIDLoaderFactoryParams struct {
 	fx.In
 
-	Definitions repositories.AgentDefinitionRepository
-	Permissions services.PermissionEngine
+	Definitions agentdefinitionports.AgentDefinitionRepository
+	Permissions permissionports.PermissionEngine
 }
 
 // UsableAgentByIDLoaderFactory reads, for the person making the request, the
@@ -67,7 +67,7 @@ func (f *UsableAgentByIDLoaderFactory) usable(
 
 	usable, err := f.permissions.AgentsUsable(
 		ctx,
-		services.UserActor(tenantInfo),
+		permissionports.UserActor(tenantInfo),
 		permission.OpCreate,
 	)
 	if err != nil {
@@ -77,7 +77,7 @@ func (f *UsableAgentByIDLoaderFactory) usable(
 		return []*agentdefinition.Definition{}, nil
 	}
 
-	found, err := f.definitions.ListByIDs(ctx, repositories.ListAgentDefinitionsByIDsRequest{
+	found, err := f.definitions.ListByIDs(ctx, agentdefinitionports.ListAgentDefinitionsByIDsRequest{
 		IDs:        ids,
 		TenantInfo: tenantInfo,
 	})

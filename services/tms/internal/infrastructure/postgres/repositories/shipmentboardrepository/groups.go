@@ -5,8 +5,8 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
@@ -25,12 +25,12 @@ const (
 
 func (r *Repository) GroupSummary(
 	ctx context.Context,
-	req *repositories.SummarizeShipmentBoardGroupsRequest,
-) ([]*repositories.ShipmentBoardGroupRow, error) {
+	req *shipmentports.SummarizeShipmentBoardGroupsQuery,
+) ([]*shipmentports.ShipmentBoardGroupRow, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*repositories.ShipmentBoardGroupRow, error) {
+		func(ctx context.Context) ([]*shipmentports.ShipmentBoardGroupRow, error) {
 			if req == nil {
 				return nil, ErrScopeMissing
 			}
@@ -45,7 +45,7 @@ func (r *Repository) GroupSummary(
 				return nil, err
 			}
 
-			rows := make([]*repositories.ShipmentBoardGroupRow, 0)
+			rows := make([]*shipmentports.ShipmentBoardGroupRow, 0)
 			if err = q.Scan(ctx, &rows); err != nil {
 				r.l.Error(
 					"failed to summarize shipment board groups",

@@ -1,12 +1,15 @@
 package journalentryservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/journalsourceportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/journalentry"
 	"github.com/emoss08/trenova/internal/core/domain/journalsource"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalsourceports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,8 +24,8 @@ func TestNewCreatesService(t *testing.T) {
 
 	svc := New(Params{
 		Logger:     zap.NewNop(),
-		EntryRepo:  mocks.NewMockJournalEntryRepository(t),
-		SourceRepo: mocks.NewMockJournalSourceRepository(t),
+		EntryRepo:  journalentryportsmock.NewMockJournalEntryRepository(t),
+		SourceRepo: journalsourceportsmock.NewMockJournalSourceRepository(t),
 	})
 
 	require.NotNil(t, svc)
@@ -32,11 +35,11 @@ func TestGetEntryDelegatesToRepository(t *testing.T) {
 	t.Parallel()
 
 	entry := &journalentry.JournalEntry{ID: pulid.MustNew("je_")}
-	repo := mocks.NewMockJournalEntryRepository(t)
-	var actualReq repositories.GetJournalEntryByIDRequest
+	repo := journalentryportsmock.NewMockJournalEntryRepository(t)
+	var actualReq journalentryports.GetJournalEntryByIDRequest
 	repo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req repositories.GetJournalEntryByIDRequest) (*journalentry.JournalEntry, error) {
+		RunAndReturn(func(_ context.Context, req journalentryports.GetJournalEntryByIDRequest) (*journalentry.JournalEntry, error) {
 			actualReq = req
 			return entry, nil
 		})
@@ -57,11 +60,11 @@ func TestGetSourceByObjectDelegatesToRepository(t *testing.T) {
 	t.Parallel()
 
 	source := &journalsource.Source{ID: pulid.MustNew("jsrc_")}
-	repo := mocks.NewMockJournalSourceRepository(t)
-	var actualReq repositories.GetJournalSourceByObjectRequest
+	repo := journalsourceportsmock.NewMockJournalSourceRepository(t)
+	var actualReq journalsourceports.GetJournalSourceByObjectRequest
 	repo.EXPECT().
 		GetByObject(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req repositories.GetJournalSourceByObjectRequest) (*journalsource.Source, error) {
+		RunAndReturn(func(_ context.Context, req journalsourceports.GetJournalSourceByObjectRequest) (*journalsource.Source, error) {
 			actualReq = req
 			return source, nil
 		})
@@ -83,8 +86,8 @@ func TestGetSourceByObjectDelegatesToRepository(t *testing.T) {
 func TestListEntriesDelegatesToRepository(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockJournalEntryRepository(t)
-	req := &repositories.ListJournalEntriesRequest{
+	repo := journalentryportsmock.NewMockJournalEntryRepository(t)
+	req := &journalentryports.ListJournalEntriesRequest{
 		Filter: &pagination.QueryOptions{Pagination: pagination.Info{Limit: 10}},
 	}
 	expected := &pagination.ListResult[*journalentry.JournalEntry]{

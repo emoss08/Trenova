@@ -1,6 +1,7 @@
 package agenttoolservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
 	"context"
 	"testing"
 
@@ -9,7 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -55,17 +58,17 @@ func TestCorrectChargeCodePreview_ShowsEachChargeAndTheTotal(t *testing.T) {
 	after.OtherChargeAmount = decimal.NewNullDecimal(decimal.NewFromInt(200))
 	after.TotalChargeAmount = decimal.NewNullDecimal(decimal.NewFromInt(2200))
 
-	billing := mocks.NewMockBillingQueueService(t)
-	var previewed, updated *serviceports.UpdateChargesRequest
+	billing := billingqueueportsmock.NewMockBillingQueueService(t)
+	var previewed, updated *billingqueueports.UpdateChargesRequest
 	billing.EXPECT().
 		PreviewUpdateCharges(mock.Anything, mock.Anything, mock.Anything).
 		RunAndReturn(func(
 			_ context.Context,
-			req *serviceports.UpdateChargesRequest,
-			_ *serviceports.RequestActor,
-		) (*serviceports.ChargeUpdatePreview, error) {
+			req *billingqueueports.UpdateChargesRequest,
+			_ *permissionports.RequestActor,
+		) (*billingqueueports.ChargeUpdatePreview, error) {
 			previewed = req
-			return &serviceports.ChargeUpdatePreview{
+			return &billingqueueports.ChargeUpdatePreview{
 				Item:   &billingqueue.BillingQueueItem{Number: "BQ-10"},
 				Before: before,
 				After:  &after,
@@ -85,7 +88,7 @@ func TestCorrectChargeCodePreview_ShowsEachChargeAndTheTotal(t *testing.T) {
 		}},
 	})
 
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	assert.Contains(t, preview.Summary, "BQ-10")
 	assert.Contains(t, preview.Summary, "from 2150.00 to 2200.00")
@@ -107,8 +110,8 @@ func TestCorrectChargeCodePreview_ShowsEachChargeAndTheTotal(t *testing.T) {
 		UpdateCharges(mock.Anything, mock.Anything, mock.Anything).
 		RunAndReturn(func(
 			_ context.Context,
-			req *serviceports.UpdateChargesRequest,
-			_ *serviceports.RequestActor,
+			req *billingqueueports.UpdateChargesRequest,
+			_ *permissionports.RequestActor,
 		) (*billingqueue.BillingQueueItem, error) {
 			updated = req
 			return &billingqueue.BillingQueueItem{}, nil

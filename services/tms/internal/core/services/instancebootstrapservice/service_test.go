@@ -1,6 +1,7 @@
 package instancebootstrapservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"errors"
 	"testing"
@@ -8,9 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/instancebootstrap"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/instancebootstrapports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/securityaudittest"
@@ -30,15 +32,15 @@ const (
 )
 
 type fakeRepo struct {
-	state        *repositories.InstanceBootstrapState
+	state        *instancebootstrapports.InstanceBootstrapState
 	stateErr     error
-	finalizeReq  *repositories.FinalizeInstanceBootstrapRequest
+	finalizeReq  *instancebootstrapports.FinalizeInstanceBootstrapRequest
 	finalizeErr  error
 	systemCreate bool
 	getCalls     int
 }
 
-func (f *fakeRepo) GetState(context.Context) (*repositories.InstanceBootstrapState, error) {
+func (f *fakeRepo) GetState(context.Context) (*instancebootstrapports.InstanceBootstrapState, error) {
 	f.getCalls++
 	if f.stateErr != nil {
 		return nil, f.stateErr
@@ -48,14 +50,14 @@ func (f *fakeRepo) GetState(context.Context) (*repositories.InstanceBootstrapSta
 
 func (f *fakeRepo) Finalize(
 	_ context.Context,
-	req *repositories.FinalizeInstanceBootstrapRequest,
-) (*repositories.FinalizeInstanceBootstrapResult, error) {
+	req *instancebootstrapports.FinalizeInstanceBootstrapRequest,
+) (*instancebootstrapports.FinalizeInstanceBootstrapResult, error) {
 	f.finalizeReq = req
 	if f.finalizeErr != nil {
 		return nil, f.finalizeErr
 	}
 
-	return &repositories.FinalizeInstanceBootstrapResult{
+	return &instancebootstrapports.FinalizeInstanceBootstrapResult{
 		Record: &instancebootstrap.InstanceBootstrap{
 			ID:             pulid.MustNew(instancebootstrap.IDPrefix),
 			OrganizationID: req.OrganizationID,
@@ -71,17 +73,17 @@ func (f *fakeRepo) Finalize(
 
 type deps struct {
 	repo    *fakeRepo
-	tenants *mocks.MockTenantBootstrapRepository
+	tenants *tenantportsmock.MockTenantBootstrapRepository
 	auditor *securityaudittest.Recorder
 	svc     *Service
 }
 
-func newDeps(t *testing.T, state *repositories.InstanceBootstrapState) *deps {
+func newDeps(t *testing.T, state *instancebootstrapports.InstanceBootstrapState) *deps {
 	t.Helper()
 
 	d := &deps{
 		repo:    &fakeRepo{state: state, systemCreate: true},
-		tenants: mocks.NewMockTenantBootstrapRepository(t),
+		tenants: tenantportsmock.NewMockTenantBootstrapRepository(t),
 		auditor: &securityaudittest.Recorder{},
 	}
 	d.svc = New(Params{
@@ -99,8 +101,8 @@ func newDeps(t *testing.T, state *repositories.InstanceBootstrapState) *deps {
 	return d
 }
 
-func emptyState() *repositories.InstanceBootstrapState {
-	return &repositories.InstanceBootstrapState{}
+func emptyState() *instancebootstrapports.InstanceBootstrapState {
+	return &instancebootstrapports.InstanceBootstrapState{}
 }
 
 func validInputs() *instancebootstrap.Inputs {
@@ -116,8 +118,8 @@ func validInputs() *instancebootstrap.Inputs {
 	}
 }
 
-func completedState() *repositories.InstanceBootstrapState {
-	return &repositories.InstanceBootstrapState{
+func completedState() *instancebootstrapports.InstanceBootstrapState {
+	return &instancebootstrapports.InstanceBootstrapState{
 		UserCount: 4,
 		Record: &instancebootstrap.InstanceBootstrap{
 			ID:             pulid.MustNew(instancebootstrap.IDPrefix),
@@ -130,14 +132,14 @@ func completedState() *repositories.InstanceBootstrapState {
 	}
 }
 
-func expectBootstrap(d *deps) *repositories.BootstrapTenantRequest {
-	var captured repositories.BootstrapTenantRequest
+func expectBootstrap(d *deps) *tenantports.BootstrapTenantRequest {
+	var captured tenantports.BootstrapTenantRequest
 	d.tenants.EXPECT().LockProvisioning(mock.Anything).Return(nil)
 	d.tenants.EXPECT().Bootstrap(mock.Anything, mock.Anything).RunAndReturn(
 		func(
 			_ context.Context,
-			req *repositories.BootstrapTenantRequest,
-		) (*repositories.BootstrapTenantResult, error) {
+			req *tenantports.BootstrapTenantRequest,
+		) (*tenantports.BootstrapTenantResult, error) {
 			captured = *req
 			bu := &tenant.BusinessUnit{ID: pulid.MustNew("bu_"), Name: req.BusinessUnitName}
 			org := req.Organization
@@ -149,7 +151,7 @@ func expectBootstrap(d *deps) *repositories.BootstrapTenantRequest {
 			owner.Username = req.UsernameBase
 			owner.BusinessUnitID = bu.ID
 			owner.CurrentOrganizationID = org.ID
-			return &repositories.BootstrapTenantResult{
+			return &tenantports.BootstrapTenantResult{
 				BusinessUnit: bu,
 				Organization: org,
 				Owner:        owner,
@@ -168,7 +170,7 @@ func TestPlanReportsReadyOnAnEmptyInstance(t *testing.T) {
 	plan, err := d.svc.Plan(t.Context(), validInputs())
 	require.NoError(t, err)
 
-	assert.Equal(t, services.InstanceBootstrapReady, plan.Status)
+	assert.Equal(t, instancebootstrapports.InstanceBootstrapReady, plan.Status)
 	assert.Equal(t, "Acme Freight", plan.Inputs.OrganizationName)
 	assert.Equal(t, "dana.whitfield@acme.example", plan.Inputs.AdminEmail)
 }
@@ -183,7 +185,7 @@ func TestPlanReportsCompletedForIdenticalInputs(t *testing.T) {
 
 	plan, err := d.svc.Plan(t.Context(), inputs)
 	require.NoError(t, err)
-	assert.Equal(t, services.InstanceBootstrapCompleted, plan.Status)
+	assert.Equal(t, instancebootstrapports.InstanceBootstrapCompleted, plan.Status)
 }
 
 func TestPlanRefusesDifferentInputsAfterCompletion(t *testing.T) {
@@ -201,7 +203,7 @@ func TestPlanRefusesDifferentInputsAfterCompletion(t *testing.T) {
 func TestPlanRefusesWhenUsersAlreadyExist(t *testing.T) {
 	t.Parallel()
 
-	d := newDeps(t, &repositories.InstanceBootstrapState{UserCount: 3})
+	d := newDeps(t, &instancebootstrapports.InstanceBootstrapState{UserCount: 3})
 	_, err := d.svc.Plan(t.Context(), validInputs())
 	require.ErrorIs(t, err, ErrAlreadyInitialized)
 	assert.Contains(t, err.Error(), "3 user(s)")
@@ -243,7 +245,7 @@ func TestBootstrapRejectsAPasswordOutsideThePolicy(t *testing.T) {
 			t.Parallel()
 
 			d := newDeps(t, emptyState())
-			_, err := d.svc.Bootstrap(t.Context(), &services.InstanceBootstrapRequest{
+			_, err := d.svc.Bootstrap(t.Context(), &instancebootstrapports.InstanceBootstrapRequest{
 				Inputs:   *validInputs(),
 				Password: password,
 			})
@@ -271,13 +273,13 @@ func TestBootstrapCreatesTheOrganizationAndAdministrator(t *testing.T) {
 	d := newDeps(t, emptyState())
 	captured := expectBootstrap(d)
 
-	result, err := d.svc.Bootstrap(t.Context(), &services.InstanceBootstrapRequest{
+	result, err := d.svc.Bootstrap(t.Context(), &instancebootstrapports.InstanceBootstrapRequest{
 		Inputs:   *validInputs(),
 		Password: testPassword,
 	})
 	require.NoError(t, err)
 
-	assert.Equal(t, services.InstanceBootstrapCreated, result.Status)
+	assert.Equal(t, instancebootstrapports.InstanceBootstrapCreated, result.Status)
 	assert.True(t, result.SystemUserCreated)
 	assert.Equal(t, "dana.whitfield", result.AdminUsername)
 	assert.Equal(t, "dana.whitfield@acme.example", result.AdminEmail)
@@ -314,7 +316,7 @@ func TestBootstrapCreatesTheOrganizationAndAdministrator(t *testing.T) {
 	assert.Equal(t, permission.OpAssign, changes[2].Operation)
 	assert.Equal(t, permission.ResourceUser, changes[3].Resource)
 	for _, change := range changes {
-		assert.Equal(t, services.SystemAuditActor(), change.Actor)
+		assert.Equal(t, permissionports.SystemAuditActor(), change.Actor)
 		assert.Equal(t, result.OrganizationID, change.OrganizationID)
 		assert.Equal(t, auditSource, change.Metadata["source"])
 	}
@@ -327,7 +329,7 @@ func TestBootstrapSkipsTheSystemUserAuditWhenItAlreadyExisted(t *testing.T) {
 	d.repo.systemCreate = false
 	expectBootstrap(d)
 
-	result, err := d.svc.Bootstrap(t.Context(), &services.InstanceBootstrapRequest{
+	result, err := d.svc.Bootstrap(t.Context(), &instancebootstrapports.InstanceBootstrapRequest{
 		Inputs:   *validInputs(),
 		Password: testPassword,
 	})
@@ -343,13 +345,13 @@ func TestBootstrapIsANoOpForIdenticalInputsAfterCompletion(t *testing.T) {
 	d := newDeps(t, state)
 	d.tenants.EXPECT().LockProvisioning(mock.Anything).Return(nil)
 
-	result, err := d.svc.Bootstrap(t.Context(), &services.InstanceBootstrapRequest{
+	result, err := d.svc.Bootstrap(t.Context(), &instancebootstrapports.InstanceBootstrapRequest{
 		Inputs:   *validInputs(),
 		Password: testPassword,
 	})
 	require.NoError(t, err)
 
-	assert.Equal(t, services.InstanceBootstrapCompleted, result.Status)
+	assert.Equal(t, instancebootstrapports.InstanceBootstrapCompleted, result.Status)
 	assert.Equal(t, state.Record.OrganizationID, result.OrganizationID)
 	assert.Equal(t, state.Record.AdminUserID, result.AdminUserID)
 	assert.Nil(t, d.repo.finalizeReq)
@@ -359,10 +361,10 @@ func TestBootstrapIsANoOpForIdenticalInputsAfterCompletion(t *testing.T) {
 func TestBootstrapRefusesUnderTheLockWhenUsersAppeared(t *testing.T) {
 	t.Parallel()
 
-	d := newDeps(t, &repositories.InstanceBootstrapState{UserCount: 1})
+	d := newDeps(t, &instancebootstrapports.InstanceBootstrapState{UserCount: 1})
 	d.tenants.EXPECT().LockProvisioning(mock.Anything).Return(nil)
 
-	_, err := d.svc.Bootstrap(t.Context(), &services.InstanceBootstrapRequest{
+	_, err := d.svc.Bootstrap(t.Context(), &instancebootstrapports.InstanceBootstrapRequest{
 		Inputs:   *validInputs(),
 		Password: testPassword,
 	})
@@ -379,7 +381,7 @@ func TestBootstrapRecordsNothingWhenFinalizingFails(t *testing.T) {
 	d.repo.finalizeErr = boom
 	expectBootstrap(d)
 
-	_, err := d.svc.Bootstrap(t.Context(), &services.InstanceBootstrapRequest{
+	_, err := d.svc.Bootstrap(t.Context(), &instancebootstrapports.InstanceBootstrapRequest{
 		Inputs:   *validInputs(),
 		Password: testPassword,
 	})

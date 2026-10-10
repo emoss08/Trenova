@@ -8,13 +8,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
-var _ serviceports.ToolPreviewer = (*evaluateServiceFailuresTool)(nil)
+var _ agentports.ToolPreviewer = (*evaluateServiceFailuresTool)(nil)
 
 var detectedFailureFields = []string{
 	fieldType,
@@ -48,7 +49,7 @@ func detectedFailureOptions() []toolpreview.Option {
 
 func (t *evaluateServiceFailuresTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	plans, err := t.plans(ctx, &params)
 	if err != nil {
@@ -78,7 +79,7 @@ func (t *evaluateServiceFailuresTool) Preview(
 
 func (t *evaluateServiceFailuresTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	_, err := t.plans(ctx, &params)
 
@@ -87,8 +88,8 @@ func (t *evaluateServiceFailuresTool) Validate(
 
 func (t *evaluateServiceFailuresTool) plans(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
-) ([]*serviceports.ServiceFailureDetectionPlan, error) {
+	params *agentports.ToolExecuteParams,
+) ([]*servicefailureports.ServiceFailureDetectionPlan, error) {
 	if err := guardPreview(t, params); err != nil {
 		return nil, err
 	}
@@ -103,7 +104,7 @@ func (t *evaluateServiceFailuresTool) plans(
 		shipmentIDs = []pulid.ID{scope.shipmentID}
 	}
 
-	plans := make([]*serviceports.ServiceFailureDetectionPlan, 0, len(shipmentIDs))
+	plans := make([]*servicefailureports.ServiceFailureDetectionPlan, 0, len(shipmentIDs))
 	for _, shipmentID := range shipmentIDs {
 		plan, planErr := t.failures.PreviewEvaluateShipment(ctx, scope.shipmentRequest(shipmentID))
 		if planErr != nil {
@@ -119,13 +120,13 @@ func (t *evaluateServiceFailuresTool) plans(
 }
 
 func restrictDetectionToStop(
-	plan *serviceports.ServiceFailureDetectionPlan,
+	plan *servicefailureports.ServiceFailureDetectionPlan,
 	stopID pulid.ID,
-) *serviceports.ServiceFailureDetectionPlan {
-	restricted := &serviceports.ServiceFailureDetectionPlan{
+) *servicefailureports.ServiceFailureDetectionPlan {
+	restricted := &servicefailureports.ServiceFailureDetectionPlan{
 		Shipment:     plan.Shipment,
-		Detected:     make([]serviceports.DetectedServiceFailure, 0, 1),
-		SkippedStops: make([]serviceports.ServiceFailureSkippedStop, 0, 1),
+		Detected:     make([]servicefailureports.DetectedServiceFailure, 0, 1),
+		SkippedStops: make([]servicefailureports.ServiceFailureSkippedStop, 0, 1),
 		MarksDelayed: false,
 	}
 	for idx := range plan.Detected {
@@ -144,7 +145,7 @@ func restrictDetectionToStop(
 }
 
 func detectedFailureChanges(
-	plan *serviceports.ServiceFailureDetectionPlan,
+	plan *servicefailureports.ServiceFailureDetectionPlan,
 ) ([]*agent.RecordChange, error) {
 	changes := make([]*agent.RecordChange, 0, len(plan.Detected)+1)
 	for idx := range plan.Detected {
@@ -175,7 +176,7 @@ func detectedFailureChanges(
 
 func detectedFailureChange(
 	source *shipment.Shipment,
-	detected *serviceports.DetectedServiceFailure,
+	detected *servicefailureports.DetectedServiceFailure,
 ) (*agent.RecordChange, error) {
 	label := fmt.Sprintf(
 		"%s, %s",
@@ -213,7 +214,7 @@ func shipmentStop(source *shipment.Shipment, stopID pulid.ID) *shipment.Stop {
 	return nil
 }
 
-func detectionSummary(plan *serviceports.ServiceFailureDetectionPlan) string {
+func detectionSummary(plan *servicefailureports.ServiceFailureDetectionPlan) string {
 	shipmentLabel := "this shipment"
 	if plan.Shipment != nil && plan.Shipment.ProNumber != "" {
 		shipmentLabel = "shipment " + plan.Shipment.ProNumber
@@ -251,7 +252,7 @@ func detectionSummary(plan *serviceports.ServiceFailureDetectionPlan) string {
 	return summary + ". Nobody outside Trenova is told."
 }
 
-func countDetected(detected []serviceports.DetectedServiceFailure) (opened, refreshed int) {
+func countDetected(detected []servicefailureports.DetectedServiceFailure) (opened, refreshed int) {
 	for idx := range detected {
 		if detected[idx].Existing == nil {
 			opened++

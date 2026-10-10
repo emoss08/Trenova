@@ -9,9 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -25,7 +26,7 @@ type fakePartnerNotices struct {
 func (f *fakePartnerNotices) PreviewTenderChanges(
 	_ context.Context,
 	original, updated *shipment.Shipment,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) ([]*ediservice.PartnerNotice, error) {
 	f.original, f.updated = original, updated
 
@@ -77,9 +78,9 @@ func (fakeLiveTenders) PreviewLiveTenders(
 
 func (f *fakeShipmentService) PreviewCancel(
 	_ context.Context,
-	req *repositories.CancelShipmentRequest,
-	_ *serviceports.RequestActor,
-) (*serviceports.ShipmentCancelPreview, error) {
+	req *shipmentports.CancelShipmentRequest,
+	_ *permissionports.RequestActor,
+) (*shipmentports.ShipmentCancelPreview, error) {
 	before := &shipment.Shipment{
 		ID:        req.ShipmentID,
 		ProNumber: "SHP-3001",
@@ -89,7 +90,7 @@ func (f *fakeShipmentService) PreviewCancel(
 	after := *before
 	after.ApplyCancel(req.CanceledByID, req.CanceledAt, req.CancelReason)
 
-	return &serviceports.ShipmentCancelPreview{Before: before, After: &after}, nil
+	return &shipmentports.ShipmentCancelPreview{Before: before, After: &after}, nil
 }
 
 func TestUpdateShipmentPreview_IsThePatchExecuteSaves(t *testing.T) {
@@ -114,7 +115,7 @@ func TestUpdateShipmentPreview_IsThePatchExecuteSaves(t *testing.T) {
 		"customerId": customerID.String(),
 	})
 
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.Nil(t, writer.updated, "a preview must not save")
 	assert.Equal(t, "BOL-1", writer.existing.BOL, "a preview must not touch what it read")
@@ -152,7 +153,7 @@ func TestCancelShipmentPreview_ShowsWhoIsToldAndWhatIsWithdrawn(t *testing.T) {
 		"cancelReason": "Customer pulled the load",
 	})
 
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.Nil(t, shipments.canceled, "a preview must not cancel")
 	assert.Contains(t, preview.Summary, "SHP-3001")
@@ -190,7 +191,7 @@ func TestAddShipmentCommentPreview_ShowsTheNoteAndWhoReadsIt(t *testing.T) {
 		"visibility": "Customer",
 	})
 
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.Nil(t, comments.created, "a preview must not comment")
 

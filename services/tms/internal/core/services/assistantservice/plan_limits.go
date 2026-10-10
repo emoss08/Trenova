@@ -4,13 +4,13 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/quotaservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
 func (s *Service) assertWithinPlan(ctx context.Context, tenantInfo pagination.TenantInfo) error {
-	if err := quotaservice.Preflight(ctx, s.quota, &serviceports.QuotaRequest{
+	if err := quotaservice.Preflight(ctx, s.quota, &platformplanports.QuotaRequest{
 		TenantInfo: tenantInfo,
 		Meter:      platformcatalog.MeterAIAssistantMessages,
 		Quantity:   0,
@@ -18,7 +18,7 @@ func (s *Service) assertWithinPlan(ctx context.Context, tenantInfo pagination.Te
 		return err
 	}
 
-	return quotaservice.Preflight(ctx, s.quota, &serviceports.QuotaRequest{
+	return quotaservice.Preflight(ctx, s.quota, &platformplanports.QuotaRequest{
 		TenantInfo: tenantInfo,
 		Meter:      platformcatalog.MeterAISpendCents,
 		Quantity:   1,

@@ -6,8 +6,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/aituneup"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -16,9 +18,9 @@ import (
 
 func (s *Service) Apply(
 	ctx context.Context,
-	req *services.AITuneUpDecisionRequest,
-	actor *services.RequestActor,
-) (*services.AITuneUpView, error) {
+	req *aituneupports.AITuneUpDecisionRequest,
+	actor *permissionports.RequestActor,
+) (*aituneupports.AITuneUpView, error) {
 	tuneUp, err := s.offered(ctx, req)
 	if err != nil {
 		return nil, err
@@ -37,9 +39,9 @@ func (s *Service) Apply(
 
 func (s *Service) Dismiss(
 	ctx context.Context,
-	req *services.AITuneUpDecisionRequest,
-	actor *services.RequestActor,
-) (*services.AITuneUpView, error) {
+	req *aituneupports.AITuneUpDecisionRequest,
+	actor *permissionports.RequestActor,
+) (*aituneupports.AITuneUpView, error) {
 	if _, err := s.offered(ctx, req); err != nil {
 		return nil, err
 	}
@@ -54,10 +56,10 @@ func (s *Service) Dismiss(
 
 func (s *Service) Restore(
 	ctx context.Context,
-	req *services.AITuneUpDecisionRequest,
-	_ *services.RequestActor,
-) (*services.AITuneUpView, error) {
-	restored, err := s.repo.Reopen(ctx, &repositories.ReopenAITuneUpRequest{
+	req *aituneupports.AITuneUpDecisionRequest,
+	_ *permissionports.RequestActor,
+) (*aituneupports.AITuneUpView, error) {
+	restored, err := s.repo.Reopen(ctx, &aituneupports.ReopenAITuneUpRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.ID,
 		Version:    req.Version,
@@ -70,9 +72,9 @@ func (s *Service) Restore(
 
 func (s *Service) offered(
 	ctx context.Context,
-	req *services.AITuneUpDecisionRequest,
+	req *aituneupports.AITuneUpDecisionRequest,
 ) (*aituneup.TuneUp, error) {
-	tuneUp, err := s.repo.GetByID(ctx, repositories.GetAITuneUpRequest{TenantInfo: req.TenantInfo, ID: req.ID})
+	tuneUp, err := s.repo.GetByID(ctx, aituneupports.GetAITuneUpRequest{TenantInfo: req.TenantInfo, ID: req.ID})
 	if err != nil {
 		return nil, err
 	}
@@ -87,12 +89,12 @@ func (s *Service) offered(
 
 func (s *Service) decide(
 	ctx context.Context,
-	req *services.AITuneUpDecisionRequest,
-	actor *services.RequestActor,
+	req *aituneupports.AITuneUpDecisionRequest,
+	actor *permissionports.RequestActor,
 	status aituneup.Status,
 	dismissedUntil *int64,
 ) (*aituneup.TuneUp, error) {
-	decision := &repositories.DecideAITuneUpRequest{
+	decision := &aituneupports.DecideAITuneUpRequest{
 		TenantInfo:     req.TenantInfo,
 		ID:             req.ID,
 		Version:        req.Version,
@@ -106,7 +108,7 @@ func (s *Service) decide(
 		return decided, err
 	}
 
-	current, getErr := s.repo.GetByID(ctx, repositories.GetAITuneUpRequest{TenantInfo: req.TenantInfo, ID: req.ID})
+	current, getErr := s.repo.GetByID(ctx, aituneupports.GetAITuneUpRequest{TenantInfo: req.TenantInfo, ID: req.ID})
 	if getErr != nil {
 		return nil, getErr
 	}
@@ -118,13 +120,13 @@ func (s *Service) single(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	tuneUp *aituneup.TuneUp,
-) (*services.AITuneUpView, error) {
+) (*aituneupports.AITuneUpView, error) {
 	views, err := s.describe(ctx, tenantInfo, []*aituneup.TuneUp{tuneUp})
 	if err != nil {
 		return nil, err
 	}
 	if len(views) == 0 {
-		return &services.AITuneUpView{TuneUp: tuneUp}, nil
+		return &aituneupports.AITuneUpView{TuneUp: tuneUp}, nil
 	}
 	return views[0], nil
 }
@@ -133,7 +135,7 @@ func (s *Service) act(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	tuneUp *aituneup.TuneUp,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) error {
 	switch tuneUp.Kind {
 	case aituneup.KindRaiseToolTier:
@@ -155,7 +157,7 @@ func (s *Service) act(
 	case aituneup.KindReorderProviders:
 		return s.putAhead(ctx, tenantInfo, tuneUp.ProviderID, tuneUp.OtherProviderID, actor)
 	case aituneup.KindAssignTask:
-		_, err := s.providerService.AssignTask(ctx, &services.AssignAIProviderTaskRequest{
+		_, err := s.providerService.AssignTask(ctx, &agentports.AssignAIProviderTaskRequest{
 			TenantInfo: tenantInfo,
 			ProviderID: tuneUp.ProviderID,
 			Task:       tuneUp.Task,
@@ -170,14 +172,14 @@ func (s *Service) raiseToolTier(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	tuneUp *aituneup.TuneUp,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) error {
 	control, err := s.control.GetOrCreate(ctx, tenantInfo)
 	if err != nil {
 		return err
 	}
-	_, err = s.trust.PromoteTool(ctx, &services.PromoteToolRequest{
-		PromoteReadyRequest: services.PromoteReadyRequest{
+	_, err = s.trust.PromoteTool(ctx, &agentports.PromoteToolRequest{
+		PromoteReadyRequest: agentports.PromoteReadyRequest{
 			TenantInfo: tenantInfo,
 			Threshold:  control.PromotionThreshold,
 			DecidedBy:  actor.AuditActor().UserID,
@@ -192,11 +194,11 @@ func (s *Service) patchAgent(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	agentID pulid.ID,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	comment string,
 	edit func(*agentdefinition.Definition) error,
 ) error {
-	_, err := s.agentDefinitions.Patch(ctx, &services.PatchAgentDefinitionRequest{
+	_, err := s.agentDefinitions.Patch(ctx, &agentdefinitionports.PatchAgentDefinitionRequest{
 		ID:         agentID,
 		TenantInfo: tenantInfo,
 		Comment:    comment,
@@ -209,7 +211,7 @@ func (s *Service) putAhead(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	moving, ahead pulid.ID,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) error {
 	providers, err := s.providers.ListOrdered(ctx, tenantInfo)
 	if err != nil {
@@ -223,7 +225,7 @@ func (s *Service) putAhead(
 	if !ok {
 		return errortypes.NewBusinessError("A provider in this tune-up no longer exists")
 	}
-	_, err = s.providerService.Reorder(ctx, &services.ReorderAIProvidersRequest{
+	_, err = s.providerService.Reorder(ctx, &agentports.ReorderAIProvidersRequest{
 		TenantInfo:  tenantInfo,
 		ProviderIDs: next,
 	}, actor)

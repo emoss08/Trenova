@@ -5,8 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,10 +21,10 @@ import (
 // dependency on *Service, which depends on the template resolver and would
 // therefore close an fx cycle.
 type deliveryProfileRepos struct {
-	customerRepo     repositories.CustomerRepository
-	shipmentRepo     repositories.ShipmentRepository
-	billingRepo      repositories.BillingControlRepository
-	organizationRepo repositories.OrganizationRepository
+	customerRepo     customerports.CustomerRepository
+	shipmentRepo     shipmentports.ShipmentRepository
+	billingRepo      tenantports.BillingControlRepository
+	organizationRepo tenantports.OrganizationRepository
 }
 
 func (s *Service) resolveDeliveryProfile(
@@ -53,7 +55,7 @@ func (s *Service) resolveDeliveryProfile(
 // away.
 func resolveDeliveryShipments(
 	ctx context.Context,
-	shipmentRepo repositories.ShipmentRepository,
+	shipmentRepo shipmentports.ShipmentRepository,
 	result *invoiceDeliveryProfile,
 	params resolveDeliveryProfileParams,
 ) error {
@@ -79,7 +81,7 @@ func resolveDeliveryShipments(
 	default:
 		summaries, err := shipmentRepo.ListSummariesByIDs(
 			ctx,
-			&repositories.ListShipmentSummariesRequest{
+			&shipmentports.ListShipmentSummariesRequest{
 				TenantInfo:  params.TenantInfo,
 				ShipmentIDs: legIDs,
 			},
@@ -114,10 +116,10 @@ func resolveDeliveryProfileWith(
 		result.Shipment = entity.Shipment
 	}
 	if params.IncludeCustomer && repos.customerRepo != nil && entity.CustomerID.IsNotNil() {
-		cus, err := repos.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
+		cus, err := repos.customerRepo.GetByID(ctx, customerports.GetCustomerByIDRequest{
 			ID:         entity.CustomerID,
 			TenantInfo: params.TenantInfo,
-			CustomerFilterOptions: repositories.CustomerFilterOptions{
+			CustomerFilterOptions: customerports.CustomerFilterOptions{
 				IncludeState:          params.IncludeCustomerState,
 				IncludeBillingProfile: params.IncludeCustomerBillingProfile,
 				IncludeEmailProfile:   params.IncludeCustomerEmailProfile,
@@ -156,14 +158,14 @@ func resolveDeliveryProfileWith(
 func basicShipmentByIDRequest(
 	id pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) *repositories.GetShipmentByIDRequest {
+) *shipmentports.GetShipmentByIDRequest {
 	return shipmentByIDRequest(id, tenantInfo, false)
 }
 
 func expandedShipmentByIDRequest(
 	id pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) *repositories.GetShipmentByIDRequest {
+) *shipmentports.GetShipmentByIDRequest {
 	return shipmentByIDRequest(id, tenantInfo, true)
 }
 
@@ -171,11 +173,11 @@ func shipmentByIDRequest(
 	id pulid.ID,
 	tenantInfo pagination.TenantInfo,
 	expandShipmentDetails bool,
-) *repositories.GetShipmentByIDRequest {
-	return &repositories.GetShipmentByIDRequest{
+) *shipmentports.GetShipmentByIDRequest {
+	return &shipmentports.GetShipmentByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: expandShipmentDetails,
 		},
 	}
@@ -191,14 +193,14 @@ func (s *Service) resolveDeliveryOrganization(
 
 func resolveDeliveryOrganizationWith(
 	ctx context.Context,
-	organizationRepo repositories.OrganizationRepository,
+	organizationRepo tenantports.OrganizationRepository,
 	deliveryProfile *invoiceDeliveryProfile,
 	tenantInfo pagination.TenantInfo,
 ) error {
 	if deliveryProfile == nil || deliveryProfile.Organization != nil || organizationRepo == nil {
 		return nil
 	}
-	org, err := organizationRepo.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+	org, err := organizationRepo.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: tenantInfo,
 	})
 	if err != nil && !errortypes.IsNotFoundError(err) {
@@ -213,8 +215,8 @@ func resolveDeliveryOrganizationWith(
 func resolveRecipients(
 	entity *invoice.Invoice,
 	emailProfile *customer.CustomerEmailProfile,
-) servicesports.InvoiceSendRecipients {
-	recipients := servicesports.InvoiceSendRecipients{
+) invoiceports.InvoiceSendRecipients {
+	recipients := invoiceports.InvoiceSendRecipients{
 		To:  stringutils.NormalizeEmailList(entity.EmailToSnapshot),
 		CC:  stringutils.NormalizeEmailList(entity.EmailCCSnapshot),
 		BCC: stringutils.NormalizeEmailList(entity.EmailBCCSnapshot),

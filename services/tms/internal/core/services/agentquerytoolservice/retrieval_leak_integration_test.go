@@ -13,8 +13,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentevalgate"
 	"github.com/emoss08/trenova/internal/core/services/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/core/services/retrievalservice"
@@ -22,6 +20,9 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/airetrievalrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/conversationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/retrievalsourcerepository"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/retrievaltest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -94,7 +95,7 @@ func TestSearchToolsNeverLeakAndMarkEveryRecord(t *testing.T) {
 		Logger: zap.NewNop(),
 	})
 
-	var vectorizer serviceports.QueryVectorizer
+	var vectorizer agentports.QueryVectorizer
 	fixture, fixtureErr := agentevalgate.LoadEmbeddingFixture(retrievaltest.FixturePath)
 	availability, err := repo.VectorAvailability(ctx)
 	require.NoError(t, err)
@@ -148,13 +149,13 @@ func TestSearchToolsNeverLeakAndMarkEveryRecord(t *testing.T) {
 	}
 
 	params := func(
-		principal serviceports.PrincipalType,
+		principal kernelports.PrincipalType,
 		query string,
-	) *serviceports.QueryToolParams {
-		return &serviceports.QueryToolParams{
+	) *agentports.QueryToolParams {
+		return &agentports.QueryToolParams{
 			OrganizationID: tenant.OrgID,
 			BusinessUnitID: tenant.BuID,
-			Actor: &serviceports.RequestActor{
+			Actor: &permissionports.RequestActor{
 				PrincipalType:  principal,
 				PrincipalID:    data.User.ID,
 				UserID:         data.User.ID,
@@ -177,7 +178,7 @@ func TestSearchToolsNeverLeakAndMarkEveryRecord(t *testing.T) {
 	for _, query := range queries {
 		assertNoLeak(t, leakCheck{
 			tool:      tools["search_documents"],
-			params:    params(serviceports.PrincipalTypeUser, query),
+			params:    params(permissionports.PrincipalTypeUser, query),
 			idField:   "documentId",
 			entity:    agent.TaintEntityDocument,
 			own:       personDocs,
@@ -185,7 +186,7 @@ func TestSearchToolsNeverLeakAndMarkEveryRecord(t *testing.T) {
 		})
 		assertNoLeak(t, leakCheck{
 			tool:      tools["search_documents"],
-			params:    params(serviceports.PrincipalTypeAgent, query),
+			params:    params(permissionports.PrincipalTypeAgent, query),
 			idField:   "documentId",
 			entity:    agent.TaintEntityDocument,
 			own:       own,
@@ -193,7 +194,7 @@ func TestSearchToolsNeverLeakAndMarkEveryRecord(t *testing.T) {
 		})
 		assertNoLeak(t, leakCheck{
 			tool:      tools["search_inbound_messages"],
-			params:    params(serviceports.PrincipalTypeUser, query),
+			params:    params(permissionports.PrincipalTypeUser, query),
 			idField:   "id",
 			entity:    agent.TaintEntityInboundMessage,
 			own:       ownMail,
@@ -226,22 +227,22 @@ func merged(corpora ...*retrievaltest.Corpus) map[pulid.ID]string {
 
 func searchTools(
 	t *testing.T,
-	searcher serviceports.RetrievalSearcher,
-	permissions serviceports.PermissionEngine,
-	threads repositories.ThreadOwnerRepository,
-) map[string]serviceports.AgentQueryTool {
+	searcher agentports.RetrievalSearcher,
+	permissions permissionports.PermissionEngine,
+	threads agentports.ThreadOwnerRepository,
+) map[string]agentports.AgentQueryTool {
 	t.Helper()
 
 	supplied := map[reflect.Type]reflect.Value{
-		reflect.TypeFor[serviceports.RetrievalSearcher]():     reflect.ValueOf(searcher),
-		reflect.TypeFor[serviceports.PermissionEngine]():      reflect.ValueOf(permissions),
-		reflect.TypeFor[repositories.ThreadOwnerRepository](): reflect.ValueOf(threads),
+		reflect.TypeFor[agentports.RetrievalSearcher]():     reflect.ValueOf(searcher),
+		reflect.TypeFor[permissionports.PermissionEngine](): reflect.ValueOf(permissions),
+		reflect.TypeFor[agentports.ThreadOwnerRepository](): reflect.ValueOf(threads),
 	}
-	tools := make(map[string]serviceports.AgentQueryTool, 2)
+	tools := make(map[string]agentports.AgentQueryTool, 2)
 	for _, provider := range agentquerytoolservice.ToolProviders() {
 		built, err := reflectutils.Construct(provider, supplied)
 		require.NoError(t, err)
-		tool, ok := built.(serviceports.AgentQueryTool)
+		tool, ok := built.(agentports.AgentQueryTool)
 		if !ok {
 			continue
 		}
@@ -255,8 +256,8 @@ func searchTools(
 }
 
 type leakCheck struct {
-	tool      serviceports.AgentQueryTool
-	params    *serviceports.QueryToolParams
+	tool      agentports.AgentQueryTool
+	params    *agentports.QueryToolParams
 	idField   string
 	entity    string
 	own       *retrievaltest.Corpus
@@ -302,16 +303,16 @@ func taintedIDs(refs []agent.RecordRef, entity string) map[string]struct{} {
 }
 
 type readPermissions struct {
-	serviceports.PermissionEngine
+	permissionports.PermissionEngine
 
 	readable map[permission.Resource]bool
 }
 
 func (p *readPermissions) Check(
 	_ context.Context,
-	req *serviceports.PermissionCheckRequest,
-) (*serviceports.PermissionCheckResult, error) {
-	return &serviceports.PermissionCheckResult{
+	req *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
+	return &permissionports.PermissionCheckResult{
 		Allowed: req.Operation == permission.OpRead &&
 			p.readable[permission.Resource(req.Resource)],
 	}, nil
@@ -321,8 +322,8 @@ func (p *readPermissions) GetResourcePermissions(
 	_ context.Context,
 	_, _ pulid.ID,
 	resource string,
-) (*serviceports.ResourcePermissionDetail, error) {
-	detail := &serviceports.ResourcePermissionDetail{Resource: resource}
+) (*permissionports.ResourcePermissionDetail, error) {
+	detail := &permissionports.ResourcePermissionDetail{Resource: resource}
 	if p.readable[permission.Resource(resource)] {
 		detail.Operations = []permission.Operation{permission.OpRead}
 		detail.MaxSensitivity = permission.SensitivityRestricted

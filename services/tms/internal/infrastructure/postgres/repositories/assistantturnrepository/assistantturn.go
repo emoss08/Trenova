@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -30,7 +30,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.AssistantTurnRepository {
+func New(p Params) agentports.AssistantTurnRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.assistantturn-repository"),
@@ -51,7 +51,7 @@ func (r *repository) Start(
 		_, err := r.db.DBForContext(ctx).NewInsert().Model(turn).Exec(ctx)
 		if err != nil {
 			if dberror.IsUniqueConstraintViolation(err) {
-				return nil, repositories.ErrTurnAlreadyRunning
+				return nil, agentports.ErrTurnAlreadyRunning
 			}
 
 			r.l.Error("failed to start an assistant turn",
@@ -68,7 +68,7 @@ func (r *repository) Start(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetAssistantTurnRequest,
+	req agentports.GetAssistantTurnRequest,
 ) (*conversation.AssistantTurn, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversation.AssistantTurn, error) {
 		cols := buncolgen.AssistantTurnColumns
@@ -103,7 +103,7 @@ var liveStatuses = []conversation.AssistantTurnStatus{
 
 func (r *repository) Active(
 	ctx context.Context,
-	req repositories.ActiveAssistantTurnRequest,
+	req agentports.ActiveAssistantTurnRequest,
 ) (*conversation.AssistantTurn, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversation.AssistantTurn, error) {
 		cols := buncolgen.AssistantTurnColumns
@@ -149,11 +149,11 @@ func threadJoin() string {
 
 func (r *repository) ListLive(
 	ctx context.Context,
-	req repositories.ListLiveAssistantTurnsRequest,
-) ([]*repositories.LiveAssistantTurn, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.LiveAssistantTurn, error) {
+	req agentports.ListLiveAssistantTurnsRequest,
+) ([]*agentports.LiveAssistantTurn, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentports.LiveAssistantTurn, error) {
 		cols := buncolgen.AssistantTurnColumns
-		turns := make([]*repositories.LiveAssistantTurn, 0)
+		turns := make([]*agentports.LiveAssistantTurn, 0)
 
 		q := r.db.DBForContext(ctx).NewSelect().
 			Model(&turns).
@@ -183,7 +183,7 @@ func (r *repository) ListLive(
 
 func (r *repository) RecordFingerprint(
 	ctx context.Context,
-	req repositories.RecordAssistantTurnFingerprintRequest,
+	req agentports.RecordAssistantTurnFingerprintRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if req.Fingerprint == nil {
@@ -205,7 +205,7 @@ func (r *repository) RecordFingerprint(
 
 func (r *repository) Complete(
 	ctx context.Context,
-	req repositories.CompleteAssistantTurnRequest,
+	req agentports.CompleteAssistantTurnRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.AssistantTurnColumns

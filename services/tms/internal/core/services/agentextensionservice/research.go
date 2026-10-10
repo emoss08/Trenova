@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentextension"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/exa"
@@ -54,8 +54,8 @@ type settledCall struct {
 func (s *Service) SearchWeb(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	query serviceports.WebSearchQuery,
-) (*serviceports.WebSearchOutcome, error) {
+	query agentextensionports.WebSearchQuery,
+) (*agentextensionports.WebSearchOutcome, error) {
 	text := strings.TrimSpace(query.Query)
 	if err := agentextension.CheckSearchQuery(text); err != nil {
 		return nil, &ToolError{Message: stringutils.CapitalizeFirst(err.Error())}
@@ -71,7 +71,7 @@ func (s *Service) SearchWeb(
 		numResults = min(query.ResultLimit, settings.ResultsPerSearch)
 	}
 
-	request := serviceports.WebSearchProviderRequest{
+	request := agentextensionports.WebSearchProviderRequest{
 		APIKey:            settings.APIKey,
 		Query:             text,
 		SearchType:        settings.SearchType,
@@ -103,15 +103,15 @@ func (s *Service) SearchWeb(
 	}
 
 	key := refKey(settings.APIKey)
-	hits := make([]serviceports.WebSearchHit, 0, len(resp.Results))
-	official := make([]serviceports.WebSearchHit, 0, len(resp.Results))
+	hits := make([]agentextensionports.WebSearchHit, 0, len(resp.Results))
+	official := make([]agentextensionports.WebSearchHit, 0, len(resp.Results))
 	for idx := range resp.Results {
 		result := &resp.Results[idx]
 		if _, parseErr := agentextension.ParsePageURL(result.URL); parseErr != nil {
 			continue
 		}
 		site := agentextension.SiteOf(result.URL)
-		hit := serviceports.WebSearchHit{
+		hit := agentextensionports.WebSearchHit{
 			Ref:           resultRef(key, tenantInfo, result.URL),
 			Title:         result.Title,
 			URL:           result.URL,
@@ -128,7 +128,7 @@ func (s *Service) SearchWeb(
 		hits = append(hits, hit)
 	}
 
-	return &serviceports.WebSearchOutcome{
+	return &agentextensionports.WebSearchOutcome{
 		Hits:        append(official, hits...),
 		RetrievedAt: now,
 	}, nil
@@ -137,8 +137,8 @@ func (s *Service) SearchWeb(
 func (s *Service) ReadWebPage(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	query serviceports.WebPageQuery,
-) (*serviceports.WebPage, error) {
+	query agentextensionports.WebPageQuery,
+) (*agentextensionports.WebPage, error) {
 	target := strings.TrimSpace(query.URL)
 	if _, err := agentextension.ParsePageURL(target); err != nil {
 		return nil, &ToolError{Message: stringutils.CapitalizeFirst(err.Error()) + "."}
@@ -168,7 +168,7 @@ func (s *Service) ReadWebPage(
 		return nil, err
 	}
 
-	resp, err := s.webSearch.Read(ctx, serviceports.WebPageProviderRequest{
+	resp, err := s.webSearch.Read(ctx, agentextensionports.WebPageProviderRequest{
 		APIKey:        settings.APIKey,
 		URL:           target,
 		MaxCharacters: part*PagePartCharacters + 1,
@@ -197,7 +197,7 @@ func (s *Service) ReadWebPage(
 	}
 	site := agentextension.SiteOf(address)
 
-	return &serviceports.WebPage{
+	return &agentextensionports.WebPage{
 		Title:         resp.Title,
 		URL:           address,
 		Site:          site,
@@ -215,7 +215,7 @@ func (s *Service) TestConnection(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	typ agentextension.Type,
-) (*serviceports.AgentExtensionTestResponse, error) {
+) (*agentextensionports.AgentExtensionTestResponse, error) {
 	spec, def, err := lookup(typ)
 	if err != nil {
 		return nil, err
@@ -243,7 +243,7 @@ func (s *Service) TestConnection(
 	}
 
 	started := time.Now()
-	resp, err := s.webSearch.Search(ctx, serviceports.WebSearchProviderRequest{
+	resp, err := s.webSearch.Search(ctx, agentextensionports.WebSearchProviderRequest{
 		APIKey:     settings.APIKey,
 		Query:      testQuery,
 		SearchType: agentextension.ExaSearchTypeFast,
@@ -264,7 +264,7 @@ func (s *Service) TestConnection(
 		message += " The test search returned no pages, which can happen; the key works."
 	}
 
-	return &serviceports.AgentExtensionTestResponse{
+	return &agentextensionports.AgentExtensionTestResponse{
 		Type:      typ,
 		Success:   true,
 		CheckedAt: s.now(),

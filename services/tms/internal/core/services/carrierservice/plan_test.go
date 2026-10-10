@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -51,7 +51,7 @@ func TestPlanBulkUpdateStatus_RefusesACarrierThatIsNotHere(t *testing.T) {
 		[]*carrier.Carrier{entity}, nil,
 	)
 
-	_, err := deps.svc.PlanBulkUpdateStatus(t.Context(), &repositories.BulkUpdateCarrierStatusRequest{
+	_, err := deps.svc.PlanBulkUpdateStatus(t.Context(), &carrierports.BulkUpdateCarrierStatusRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
 		CarrierIDs: []pulid.ID{entity.ID, pulid.MustNew("car_")},
 		Status:     carrier.StatusInactive,

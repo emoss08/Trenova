@@ -1,12 +1,14 @@
 package exchangeratestamp
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/exchangerateportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"testing"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/accountingcontrolpolicyservice"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/exchangerateports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -25,9 +27,9 @@ const (
 func newStamper(
 	t *testing.T,
 	control *tenant.AccountingControl,
-) (*Stamper, *mocks.MockExchangeRateService) {
+) (*Stamper, *exchangerateportsmock.MockExchangeRateService) {
 	t.Helper()
-	controls := mocks.NewMockAccountingControlRepository(t)
+	controls := tenantportsmock.NewMockAccountingControlRepository(t)
 	if control == nil {
 		controls.EXPECT().
 			GetByOrgID(mock.Anything, mock.Anything).
@@ -35,7 +37,7 @@ func newStamper(
 	} else {
 		controls.EXPECT().GetByOrgID(mock.Anything, mock.Anything).Return(control, nil)
 	}
-	rates := mocks.NewMockExchangeRateService(t)
+	rates := exchangerateportsmock.NewMockExchangeRateService(t)
 	return New(Params{
 		Logger:   zap.NewNop(),
 		Controls: controls,
@@ -62,7 +64,7 @@ func TestStampRecordsTheCachedRateOnTheDayThePolicyNames(t *testing.T) {
 	})
 	rates.EXPECT().
 		CachedRate(mock.Anything, mock.Anything, "CAD", "USD", time.Unix(1_775_952_000, 0).UTC()).
-		Return(&services.RateConversionResult{Rate: decimal.RequireFromString("0.7312")}, nil)
+		Return(&exchangerateports.RateConversionResult{Rate: decimal.RequireFromString("0.7312")}, nil)
 
 	stamp, err := stamper.Stamp(t.Context(), request("cad"))
 	require.NoError(t, err)
@@ -87,7 +89,7 @@ func TestStampUsesTheDocumentDateUnderThatPolicy(t *testing.T) {
 	})
 	rates.EXPECT().
 		CachedRate(mock.Anything, mock.Anything, "EUR", "USD", time.Unix(1_775_779_200, 0).UTC()).
-		Return(&services.RateConversionResult{Rate: decimal.RequireFromString("1.08")}, nil)
+		Return(&exchangerateports.RateConversionResult{Rate: decimal.RequireFromString("1.08")}, nil)
 
 	stamp, err := stamper.Stamp(t.Context(), request("EUR"))
 	require.NoError(t, err)
@@ -111,7 +113,7 @@ func TestStampIsNothingWhenNoRateIsCached(t *testing.T) {
 	stamper, rates := newStamper(t, &tenant.AccountingControl{FunctionalCurrencyCode: "USD"})
 	rates.EXPECT().
 		CachedRate(mock.Anything, mock.Anything, "CAD", "USD", mock.Anything).
-		Return(nil, services.ErrExchangeRateNotCached)
+		Return(nil, exchangerateports.ErrExchangeRateNotCached)
 
 	stamp, err := stamper.Stamp(t.Context(), request("CAD"))
 	require.NoError(t, err)

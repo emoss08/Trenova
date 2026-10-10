@@ -7,9 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/tenderservice"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -107,7 +106,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.Get(c.Request.Context(), repositories.GetTenderByIDRequest{
+	entity, err := h.service.Get(c.Request.Context(), tenderports.GetTenderByIDRequest{
 		TenantInfo:    tenantInfoFor(c),
 		TenderID:      tenderID,
 		IncludeOffers: true,
@@ -255,7 +254,7 @@ func (h *Handler) recordResponse(c *gin.Context) {
 		return
 	}
 
-	if err = h.service.RecordResponse(c.Request.Context(), &portservices.TenderResponseRequest{
+	if err = h.service.RecordResponse(c.Request.Context(), &tenderports.TenderResponseRequest{
 		TenantInfo:    tenantInfoFor(c),
 		OfferID:       offerID,
 		Action:        req.Action,
@@ -290,7 +289,7 @@ func (h *Handler) listByShipment(c *gin.Context) {
 
 	entities, err := h.service.ListByShipment(
 		c.Request.Context(),
-		repositories.ListTendersByShipmentRequest{
+		tenderports.ListTendersByShipmentRequest{
 			TenantInfo: tenantInfoFor(c),
 			ShipmentID: shipmentID,
 		},
@@ -324,7 +323,7 @@ func (h *Handler) getLiveByMove(c *gin.Context) {
 
 	entity, err := h.service.GetLiveByMoveID(
 		c.Request.Context(),
-		repositories.GetLiveTenderByMoveRequest{
+		tenderports.GetLiveTenderByMoveRequest{
 			TenantInfo: tenantInfoFor(c),
 			MoveID:     moveID,
 		},

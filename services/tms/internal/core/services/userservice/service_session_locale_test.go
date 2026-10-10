@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/session"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,7 +21,7 @@ func expectSettingsSave(deps *testDeps, user *tenant.User) pagination.TenantInfo
 		UserID: user.ID,
 	}
 	deps.expectAuditLog()
-	deps.repo.On("GetByID", mock.Anything, repositories.GetUserByIDRequest{
+	deps.repo.On("GetByID", mock.Anything, tenantports.GetUserByIDRequest{
 		TenantInfo:         tenantInfo,
 		IncludeMemberships: true,
 	}).Return(user, nil)

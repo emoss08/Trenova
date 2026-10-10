@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -38,7 +38,7 @@ func (r *QueryResolver) Commodities(ctx context.Context, input gqlmodel.DataTabl
 
 	result, err := r.CommodityService.ListConnection(
 		ctx,
-		&repositories.ListCommodityConnectionRequest{
+		&commodityports.ListCommodityConnectionRequest{
 			Filter:           tableInput.Filter,
 			Cursor:           tableInput.Cursor,
 			CommodityColumns: commodityColumns(ctx, "edges.node"),
@@ -62,7 +62,7 @@ func (r *QueryResolver) Commodity(ctx context.Context, id string) (*commodity.Co
 		return nil, err
 	}
 
-	return r.CommodityService.Get(ctx, repositories.GetCommodityByIDRequest{
+	return r.CommodityService.Get(ctx, commodityports.GetCommodityByIDRequest{
 		ID:         commodityID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})

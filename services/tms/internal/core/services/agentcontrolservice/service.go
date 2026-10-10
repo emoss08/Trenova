@@ -3,22 +3,25 @@ package agentcontrolservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/settingversion"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/services/editconflict"
-	"github.com/uptrace/bun"
-
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/settingversion"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/services/editconflict"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/settingversionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -29,28 +32,28 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	DB           ports.DBConnection
-	Repo         repositories.AgentControlRepository
-	Versions     repositories.SettingVersionRepository
-	Definitions  repositories.AgentDefinitionRepository
-	AuditService services.AuditService
+	DB           kernelports.DBConnection
+	Repo         tenantports.AgentControlRepository
+	Versions     settingversionports.SettingVersionRepository
+	Definitions  agentdefinitionports.AgentDefinitionRepository
+	AuditService auditports.AuditService
 	// Trust promotes the tools that had already earned it when earned
 	// autonomy is turned on or its threshold lowered.
-	Trust services.AgentTrustService `optional:"true"`
+	Trust agentports.AgentTrustService `optional:"true"`
 }
 
 type Service struct {
 	l           *zap.Logger
-	db          ports.DBConnection
-	repo        repositories.AgentControlRepository
-	versions    repositories.SettingVersionRepository
-	definitions repositories.AgentDefinitionRepository
-	audit       services.AuditService
-	trust       services.AgentTrustService
+	db          kernelports.DBConnection
+	repo        tenantports.AgentControlRepository
+	versions    settingversionports.SettingVersionRepository
+	definitions agentdefinitionports.AgentDefinitionRepository
+	audit       auditports.AuditService
+	trust       agentports.AgentTrustService
 	now         func() int64
 }
 
-func New(p Params) services.AgentControlService {
+func New(p Params) agentports.AgentControlService {
 	return &Service{
 		l:           p.Logger.Named("service.agentcontrol"),
 		db:          p.DB,
@@ -83,8 +86,8 @@ func (s *Service) Get(
 
 func (s *Service) Update(
 	ctx context.Context,
-	req *services.UpdateAgentControlRequest,
-	actor *services.RequestActor,
+	req *agentports.UpdateAgentControlRequest,
+	actor *permissionports.RequestActor,
 ) (*tenant.AgentControl, error) {
 	control, err := s.repo.GetOrCreate(ctx, req.TenantInfo)
 	if err != nil {
@@ -130,7 +133,7 @@ func (s *Service) Update(
 	applyLegacyFields(updated, definition)
 
 	auditActor := actor.AuditActor()
-	if err = s.audit.LogAction(&services.LogActionParams{
+	if err = s.audit.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceAgentControl,
 		ResourceID:     updated.GetID().String(),
 		Operation:      permission.OpUpdate,
@@ -167,7 +170,7 @@ func (s *Service) promoteEarned(
 		return
 	}
 
-	promoted, err := s.trust.PromoteReady(ctx, &services.PromoteReadyRequest{
+	promoted, err := s.trust.PromoteReady(ctx, &agentports.PromoteReadyRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: updated.OrganizationID, BuID: updated.BusinessUnitID},
 		Threshold:  updated.PromotionThreshold,
 		DecidedBy:  decidedBy,
@@ -185,10 +188,10 @@ func (s *Service) promoteEarned(
 func (s *Service) save(
 	ctx context.Context,
 	control *tenant.AgentControl,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*tenant.AgentControl, error) {
 	var updated *tenant.AgentControl
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		var txErr error
 		updated, txErr = s.repo.Update(txCtx, control)
 		if txErr != nil {
@@ -239,7 +242,7 @@ func (s *Service) explainConflict(
 func (s *Service) applyTrainingConsent(
 	control *tenant.AgentControl,
 	consent *bool,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	me *errortypes.MultiError,
 ) bool {
 	if consent == nil || *consent == control.AITrainingConsent {
@@ -276,7 +279,7 @@ func (s *Service) billingDefinition(
 ) (*agentdefinition.Definition, error) {
 	definition, err := s.definitions.GetBySystemKey(
 		ctx,
-		repositories.GetAgentDefinitionBySystemKeyRequest{
+		agentdefinitionports.GetAgentDefinitionBySystemKeyRequest{
 			SystemKey:  SystemKeyBillingException,
 			TenantInfo: tenantInfo,
 		},
@@ -294,7 +297,7 @@ func (s *Service) billingDefinition(
 
 func (s *Service) applyLegacyUpdate(
 	ctx context.Context,
-	req *services.UpdateAgentControlRequest,
+	req *agentports.UpdateAgentControlRequest,
 ) (*agentdefinition.Definition, error) {
 	definition, err := s.billingDefinition(ctx, req.TenantInfo)
 	if err != nil || definition == nil {

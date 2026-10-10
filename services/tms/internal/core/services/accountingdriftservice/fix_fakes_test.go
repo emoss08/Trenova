@@ -11,8 +11,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,10 +26,10 @@ import (
 func (f *fakeRecords) Enqueue(
 	_ context.Context,
 	records []*accountingsync.AccountingSyncRecord,
-) (*repositories.EnqueueAccountingSyncRecordsResult, error) {
+) (*accountingsyncports.EnqueueAccountingSyncRecordsResult, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	result := &repositories.EnqueueAccountingSyncRecordsResult{}
+	result := &accountingsyncports.EnqueueAccountingSyncRecordsResult{}
 	for _, record := range records {
 		duplicate := slices.ContainsFunc(f.rows, func(row *accountingsync.AccountingSyncRecord) bool {
 			return row.ConnectionID == record.ConnectionID && row.IdempotencyKey == record.IdempotencyKey
@@ -43,7 +47,7 @@ func (f *fakeRecords) Enqueue(
 
 func (f *fakeRecords) SupersedeOlder(
 	_ context.Context,
-	req *repositories.SupersedeAccountingSyncRecordsRequest,
+	req *accountingsyncports.SupersedeAccountingSyncRecordsRequest,
 ) (int64, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -59,7 +63,7 @@ func (f *fakeRecords) SupersedeOlder(
 
 func (f *fakeRecords) GetByIDs(
 	_ context.Context,
-	req repositories.GetAccountingSyncRecordsByIDsRequest,
+	req accountingsyncports.GetAccountingSyncRecordsByIDsRequest,
 ) ([]*accountingsync.AccountingSyncRecord, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -109,7 +113,7 @@ func (f *fakeRecords) forObject(objectID pulid.ID) []*accountingsync.AccountingS
 }
 
 type fakePermissions struct {
-	services.PermissionEngine
+	permissionports.PermissionEngine
 	mu     sync.Mutex
 	denied map[string]bool
 	checks []string
@@ -117,22 +121,22 @@ type fakePermissions struct {
 
 func (f *fakePermissions) Check(
 	_ context.Context,
-	req *services.PermissionCheckRequest,
-) (*services.PermissionCheckResult, error) {
+	req *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.checks = append(f.checks, req.Resource)
-	return &services.PermissionCheckResult{Allowed: !f.denied[req.Resource]}, nil
+	return &permissionports.PermissionCheckResult{Allowed: !f.denied[req.Resource]}, nil
 }
 
 type fakeInvoiceRepo struct {
-	repositories.InvoiceRepository
+	invoiceports.InvoiceRepository
 	rows map[pulid.ID]*invoice.Invoice
 }
 
 func (f *fakeInvoiceRepo) GetByID(
 	_ context.Context,
-	req repositories.GetInvoiceByIDRequest,
+	req invoiceports.GetInvoiceByIDRequest,
 ) (*invoice.Invoice, error) {
 	inv, ok := f.rows[req.ID]
 	if !ok {
@@ -173,28 +177,28 @@ func (b *bookEnqueuer) enqueue(
 		b.records.add(record)
 		inserted = append(inserted, record)
 	}
-	services.NoteAccountingSyncEnqueued(ctx, inserted)
+	accountingsyncports.NoteAccountingSyncEnqueued(ctx, inserted)
 }
 
 type createdMemo struct {
-	req   services.CreateMemoRequest
-	actor *services.RequestActor
+	req   invoiceports.CreateMemoRequest
+	actor *permissionports.RequestActor
 	memo  *invoice.Invoice
 }
 
 type fakeInvoices struct {
-	services.InvoiceService
+	invoiceports.InvoiceService
 	book            *bookEnqueuer
 	memos           []createdMemo
-	voids           []services.VoidInvoiceRequest
+	voids           []invoiceports.VoidInvoiceRequest
 	pendingApproval bool
 	failWith        error
 }
 
 func (f *fakeInvoices) CreateMemo(
 	ctx context.Context,
-	req *services.CreateMemoRequest,
-	actor *services.RequestActor,
+	req *invoiceports.CreateMemoRequest,
+	actor *permissionports.RequestActor,
 ) (*invoice.Invoice, error) {
 	if f.failWith != nil {
 		return nil, f.failWith
@@ -219,31 +223,31 @@ func (f *fakeInvoices) CreateMemo(
 
 func (f *fakeInvoices) VoidInvoice(
 	ctx context.Context,
-	req *services.VoidInvoiceRequest,
-	_ *services.RequestActor,
-) (*services.VoidInvoiceResult, error) {
+	req *invoiceports.VoidInvoiceRequest,
+	_ *permissionports.RequestActor,
+) (*invoiceports.VoidInvoiceResult, error) {
 	f.voids = append(f.voids, *req)
 	if f.pendingApproval {
-		return &services.VoidInvoiceResult{PendingApproval: true}, nil
+		return &invoiceports.VoidInvoiceResult{PendingApproval: true}, nil
 	}
 	f.book.enqueue(ctx, accountingsync.SyncObjectCreditMemo, pulid.MustNew("inv_"),
 		accountingsync.SyncOperationCreate, accountingsync.SyncSourceAdjustmentCreditMemo)
 	f.book.enqueue(ctx, accountingsync.SyncObjectInvoice, req.InvoiceID,
 		accountingsync.SyncOperationVoid, accountingsync.SyncSourceAdjustmentCreditMemo)
-	return &services.VoidInvoiceResult{Invoice: &invoice.Invoice{ID: req.InvoiceID}}, nil
+	return &invoiceports.VoidInvoiceResult{Invoice: &invoice.Invoice{ID: req.InvoiceID}}, nil
 }
 
 type fakePayments struct {
-	services.CustomerPaymentService
+	customerpaymentports.CustomerPaymentService
 	book     *bookEnqueuer
 	rows     map[pulid.ID]*customerpayment.Payment
-	reversed []services.ReverseCustomerPaymentRequest
-	applied  []services.ApplyCreditMemoRequest
+	reversed []customerpaymentports.ReverseCustomerPaymentRequest
+	applied  []customerpaymentports.ApplyCreditMemoRequest
 }
 
 func (f *fakePayments) Get(
 	_ context.Context,
-	req *services.GetCustomerPaymentRequest,
+	req *customerpaymentports.GetCustomerPaymentRequest,
 ) (*customerpayment.Payment, error) {
 	payment, ok := f.rows[req.PaymentID]
 	if !ok {
@@ -255,8 +259,8 @@ func (f *fakePayments) Get(
 
 func (f *fakePayments) Reverse(
 	ctx context.Context,
-	req *services.ReverseCustomerPaymentRequest,
-	_ *services.RequestActor,
+	req *customerpaymentports.ReverseCustomerPaymentRequest,
+	_ *permissionports.RequestActor,
 ) (*customerpayment.Payment, error) {
 	f.reversed = append(f.reversed, *req)
 	f.book.enqueue(ctx, accountingsync.SyncObjectCustomerPayment, req.PaymentID,
@@ -266,8 +270,8 @@ func (f *fakePayments) Reverse(
 
 func (f *fakePayments) ApplyCreditMemo(
 	ctx context.Context,
-	req *services.ApplyCreditMemoRequest,
-	_ *services.RequestActor,
+	req *customerpaymentports.ApplyCreditMemoRequest,
+	_ *permissionports.RequestActor,
 ) ([]*customerpayment.CreditMemoApplication, error) {
 	f.applied = append(f.applied, *req)
 	applicationID := pulid.MustNew("cma_")
@@ -277,7 +281,7 @@ func (f *fakePayments) ApplyCreditMemo(
 }
 
 type fakeControls struct {
-	repositories.AccountingControlRepository
+	tenantports.AccountingControlRepository
 	tolerance  string
 	functional string
 	cash       pulid.ID
@@ -292,12 +296,12 @@ func (f *fakeControls) GetByOrgID(context.Context, pulid.ID) (*tenant.Accounting
 }
 
 type fakeAudit struct {
-	services.AuditService
+	auditports.AuditService
 	mu      sync.Mutex
-	entries []*services.LogActionParams
+	entries []*auditports.LogActionParams
 }
 
-func (f *fakeAudit) LogAction(params *services.LogActionParams, _ ...services.LogOption) error {
+func (f *fakeAudit) LogAction(params *auditports.LogActionParams, _ ...auditports.LogOption) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.entries = append(f.entries, params)
@@ -305,7 +309,7 @@ func (f *fakeAudit) LogAction(params *services.LogActionParams, _ ...services.Lo
 }
 
 type fakeDispatcher struct {
-	services.AccountingSyncDispatcher
+	accountingsyncports.AccountingSyncDispatcher
 	mu    sync.Mutex
 	kicks int
 }

@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/detention"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -31,7 +31,7 @@ type policyRepository struct {
 	l  *zap.Logger
 }
 
-func NewPolicyRepository(p PolicyParams) repositories.DetentionPolicyRepository {
+func NewPolicyRepository(p PolicyParams) detentionports.DetentionPolicyRepository {
 	return &policyRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.detention-policy-repository"),
@@ -45,7 +45,7 @@ func orderTiers(sq *bun.SelectQuery) *bun.SelectQuery {
 
 func (r *policyRepository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListDetentionPoliciesRequest,
+	req *detentionports.ListDetentionPoliciesRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
@@ -73,7 +73,7 @@ func (r *policyRepository) filterQuery(
 
 func (r *policyRepository) List(
 	ctx context.Context,
-	req *repositories.ListDetentionPoliciesRequest,
+	req *detentionports.ListDetentionPoliciesRequest,
 ) (*pagination.ListResult[*detention.DetentionPolicy], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*detention.DetentionPolicy], error) {
 		log := r.l.With(zap.String("operation", "List"))
@@ -100,7 +100,7 @@ func (r *policyRepository) List(
 
 func (r *policyRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListDetentionPolicyConnectionRequest,
+	req *detentionports.ListDetentionPolicyConnectionRequest,
 ) (*pagination.CursorListResult[*detention.DetentionPolicy], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*detention.DetentionPolicy], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -164,7 +164,7 @@ func (r *policyRepository) ListConnection(
 
 func (r *policyRepository) GetByID(
 	ctx context.Context,
-	req *repositories.GetDetentionPolicyByIDRequest,
+	req *detentionports.GetDetentionPolicyByIDRequest,
 ) (*detention.DetentionPolicy, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*detention.DetentionPolicy, error) {
 		log := r.l.With(
@@ -202,7 +202,7 @@ func (r *policyRepository) GetByID(
 // explainer needs to show.
 func (r *policyRepository) GetResolutionCandidates(
 	ctx context.Context,
-	req *repositories.GetResolutionCandidatesRequest,
+	req *detentionports.GetResolutionCandidatesRequest,
 ) ([]*detention.DetentionPolicy, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detention.DetentionPolicy, error) {
 		log := r.l.With(zap.String("operation", "GetResolutionCandidates"))
@@ -284,7 +284,7 @@ func (r *policyRepository) Create(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*detention.DetentionPolicy, error) {
 		log := r.l.With(zap.String("operation", "Create"))
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			if _, iErr := r.db.DBForContext(c).
 				NewInsert().
 				Model(entity).
@@ -323,7 +323,7 @@ func (r *policyRepository) Update(
 		entity.Version++
 
 		tierCols := buncolgen.DetentionPolicyTierColumns
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			results, uErr := r.db.DBForContext(c).
 				NewUpdate().
 				Model(entity).
@@ -373,7 +373,7 @@ func (r *policyRepository) Update(
 
 func (r *policyRepository) Delete(
 	ctx context.Context,
-	req *repositories.GetDetentionPolicyByIDRequest,
+	req *detentionports.GetDetentionPolicyByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		log := r.l.With(
@@ -403,7 +403,7 @@ func (r *policyRepository) Delete(
 
 func (r *policyRepository) CodeExists(
 	ctx context.Context,
-	req *repositories.DetentionPolicyCodeExistsRequest,
+	req *detentionports.DetentionPolicyCodeExistsRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
 		cols := buncolgen.DetentionPolicyColumns
@@ -434,7 +434,7 @@ func (r *policyRepository) CodeExists(
 // effective windows intersect. Two of those make resolution a coin flip.
 func (r *policyRepository) FindOverlapping(
 	ctx context.Context,
-	req *repositories.FindOverlappingDetentionPoliciesRequest,
+	req *detentionports.FindOverlappingDetentionPoliciesRequest,
 ) ([]*detention.DetentionPolicy, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detention.DetentionPolicy, error) {
 		cols := buncolgen.DetentionPolicyColumns
@@ -492,7 +492,7 @@ func (r *policyRepository) FindOverlapping(
 
 func (r *policyRepository) SelectOptions(
 	ctx context.Context,
-	req *repositories.DetentionPolicySelectOptionsRequest,
+	req *detentionports.DetentionPolicySelectOptionsRequest,
 ) (*pagination.ListResult[*detention.DetentionPolicy], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*detention.DetentionPolicy], error) {
 		cols := buncolgen.DetentionPolicyColumns

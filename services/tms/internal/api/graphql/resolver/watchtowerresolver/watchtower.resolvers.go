@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -72,7 +72,7 @@ func (r *MutationResolver) HandOffWatchtowerItem(ctx context.Context, id string,
 		return nil, err
 	}
 
-	req := services.HandOffWatchtowerItemRequest{
+	req := watchtowerports.HandOffWatchtowerItemRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		ItemID:     itemID,
 	}
@@ -98,7 +98,7 @@ func (r *QueryResolver) WatchtowerItems(ctx context.Context, input gqlmodel.Watc
 		return nil, err
 	}
 
-	req := services.ListWatchtowerItemsRequest{
+	req := watchtowerports.ListWatchtowerItemsRequest{
 		TenantInfo:     base.TenantInfo(authCtx),
 		Kinds:          input.Kinds,
 		Severities:     input.Severities,

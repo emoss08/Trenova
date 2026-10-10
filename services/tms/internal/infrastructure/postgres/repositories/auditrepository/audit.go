@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/audit"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -32,7 +32,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.AuditRepository {
+func New(p Params) auditports.AuditRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.audit-repository"),
@@ -58,7 +58,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListAuditEntriesRequest,
+	req *auditports.ListAuditEntriesRequest,
 ) (*pagination.ListResult[*audit.Entry], error) {
 	return dbtx.Read(
 		ctx,
@@ -89,7 +89,7 @@ func (r *repository) List(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListAuditEntriesConnectionRequest,
+	req *auditports.ListAuditEntriesConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	if !req.ResourceID.IsNil() {
 		q = q.Where("ae.resource_id = ?", req.ResourceID)
@@ -106,7 +106,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListAuditEntriesConnectionRequest,
+	req *auditports.ListAuditEntriesConnectionRequest,
 ) *bun.SelectQuery {
 	if !req.ResourceID.IsNil() {
 		q = q.Where("ae.resource_id = ?", req.ResourceID)
@@ -122,7 +122,7 @@ func (r *repository) applyTotalCountFilters(
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListAuditEntriesConnectionRequest,
+	req *auditports.ListAuditEntriesConnectionRequest,
 ) (*pagination.CursorListResult[*audit.Entry], error) {
 	return dbtx.Write(
 		ctx,
@@ -184,7 +184,7 @@ func (r *repository) ListConnection(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetAuditEntryByIDOptions,
+	req auditports.GetAuditEntryByIDOptions,
 ) (*audit.Entry, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*audit.Entry, error) {
 		log := r.l.With(
@@ -215,7 +215,7 @@ func (r *repository) GetByID(
 
 func (r *repository) ListByResourceID(
 	ctx context.Context,
-	req *repositories.ListByResourceIDRequest,
+	req *auditports.ListByResourceIDRequest,
 ) (*pagination.ListResult[*audit.Entry], error) {
 	return dbtx.Read(
 		ctx,
@@ -270,7 +270,7 @@ func (r *repository) InsertAuditEntries(ctx context.Context, entries []*audit.En
 
 func (r *repository) GetByResourceAndOperation(
 	ctx context.Context,
-	req *repositories.GetAuditByResourceRequest,
+	req *auditports.GetAuditByResourceRequest,
 ) ([]*audit.Entry, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*audit.Entry, error) {
 		log := r.l.With(zap.String("operation", "GetByResourceAndOperation"))
@@ -304,7 +304,7 @@ func (r *repository) GetByResourceAndOperation(
 
 func (r *repository) GetRecentEntries(
 	ctx context.Context,
-	req *repositories.GetRecentEntriesRequest,
+	req *auditports.GetRecentEntriesRequest,
 ) ([]*audit.Entry, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*audit.Entry, error) {
 		log := r.l.With(zap.String("operation", "GetRecentEntries"))
@@ -336,7 +336,7 @@ func (r *repository) GetRecentEntries(
 
 func (r *repository) DeleteAuditEntries(
 	ctx context.Context,
-	req repositories.DeleteAuditEntriesRequest,
+	req auditports.DeleteAuditEntriesRequest,
 ) (int64, error) {
 	ctx = dbscope.WithSystem(
 		ctx,

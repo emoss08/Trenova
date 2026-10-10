@@ -10,11 +10,11 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -282,7 +282,7 @@ func TestEveryRecipeNamesRegisteredTools(t *testing.T) {
 	queries := make(map[string]struct{})
 	for _, tool := range buildTools(t) {
 		known[tool.Name()] = struct{}{}
-		if _, ok := tool.(serviceports.AgentQueryTool); ok {
+		if _, ok := tool.(agentports.AgentQueryTool); ok {
 			queries[tool.Name()] = struct{}{}
 		}
 	}
@@ -293,12 +293,12 @@ func TestEveryRecipeNamesRegisteredTools(t *testing.T) {
 	var problems []string
 	for _, tool := range buildTools(t) {
 		steps := make([]string, 0, 8)
-		if recipe, ok := tool.(serviceports.RecipeTool); ok {
+		if recipe, ok := tool.(agentports.RecipeTool); ok {
 			steps = append(steps, recipe.Recipe()...)
 			problems = append(problems, recipeOrderProblems(
 				tool.Name(), recipe.Recipe(), queries)...)
 		}
-		if needs, ok := tool.(serviceports.PrerequisiteTool); ok {
+		if needs, ok := tool.(agentports.PrerequisiteTool); ok {
 			steps = append(steps, needs.Prerequisites()...)
 			for _, need := range needs.Prerequisites() {
 				if _, ok := queries[need]; !ok {
@@ -373,7 +373,7 @@ func TestEveryWriteWhoseOmissionWidensKeepsAnEmptyList(t *testing.T) {
 
 	var problems []string
 	for _, tool := range buildTools(t) {
-		if _, read := tool.(serviceports.AgentQueryTool); read {
+		if _, read := tool.(agentports.AgentQueryTool); read {
 			continue
 		}
 		properties, _ := tool.ParamSchema()[toolschema.KeyProperties].(map[string]any)

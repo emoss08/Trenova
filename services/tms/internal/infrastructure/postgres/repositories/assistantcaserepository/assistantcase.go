@@ -16,9 +16,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -40,7 +40,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.AssistantCaseRepository {
+func New(p Params) deskcaseports.AssistantCaseRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.assistant-case-repository")}
 }
 
@@ -103,7 +103,7 @@ WHERE sp.organization_id = ?
 
 func (r *repository) ListRecords(
 	ctx context.Context,
-	req *repositories.ListCaseRecordsRequest,
+	req *deskcaseports.ListCaseRecordsRequest,
 ) (map[pulid.ID]*deskcase.Record, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]*deskcase.Record, error) {
 		out := make(map[pulid.ID]*deskcase.Record, len(req.Refs))
@@ -432,7 +432,7 @@ WHERE sp.organization_id = ?
 
 func (r *repository) ShipmentFacts(
 	ctx context.Context,
-	req *repositories.GetShipmentCaseFactsRequest,
+	req *deskcaseports.GetShipmentCaseFactsRequest,
 ) (*deskcase.ShipmentFacts, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*deskcase.ShipmentFacts, error) {
 		rows := make([]shipmentFactsRow, 0, 1)
@@ -497,7 +497,7 @@ func (r *repository) ShipmentFacts(
 
 func (r *repository) InvoiceFacts(
 	ctx context.Context,
-	req *repositories.GetInvoiceCaseFactsRequest,
+	req *deskcaseports.GetInvoiceCaseFactsRequest,
 ) (*deskcase.InvoiceFacts, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*deskcase.InvoiceFacts, error) {
 		cols := buncolgen.InvoiceColumns
@@ -530,7 +530,7 @@ func (r *repository) InvoiceFacts(
 
 func (r *repository) Parties(
 	ctx context.Context,
-	req *repositories.ListCasePartiesRequest,
+	req *deskcaseports.ListCasePartiesRequest,
 ) ([]deskcase.Party, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]deskcase.Party, error) {
 		db := r.db.DBForContext(ctx)

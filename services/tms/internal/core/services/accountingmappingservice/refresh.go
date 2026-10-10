@@ -6,8 +6,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -28,7 +27,7 @@ func (s *Service) PullReference(
 	tenantInfo pagination.TenantInfo,
 	connectionID pulid.ID,
 	kind accountingsync.ReferenceKind,
-) (*services.AccountingReferencePull, error) {
+) (*accountingsyncports.AccountingReferencePull, error) {
 	if !kind.IsValid() {
 		return nil, fmt.Errorf("unknown reference kind %q", kind)
 	}
@@ -36,23 +35,23 @@ func (s *Service) PullReference(
 	if err != nil {
 		return nil, err
 	}
-	reader, ok := session.Connector.(services.AccountingReferenceReader)
+	reader, ok := session.Connector.(accountingsyncports.AccountingReferenceReader)
 	if !ok {
 		return nil, errReferenceUnsupported
 	}
 	profile := accountingsync.MustProfile(session.Connection.IntegrationType)
 	if !profile.Has(kind) {
-		return &services.AccountingReferencePull{Kind: kind}, nil
+		return &accountingsyncports.AccountingReferencePull{Kind: kind}, nil
 	}
 
 	seenAt := timeutils.NowUnix()
-	pull := &services.AccountingReferencePull{Kind: kind}
+	pull := &accountingsyncports.AccountingReferencePull{Kind: kind}
 	start := 1
 	for pages := 0; start > 0; pages++ {
 		if pages >= maxReferencePagesGuard {
 			return nil, fmt.Errorf("stopped after %d pages of %s records", pages, kind)
 		}
-		page, listErr := reader.ListReference(ctx, &services.AccountingReferencePageRequest{
+		page, listErr := reader.ListReference(ctx, &accountingsyncports.AccountingReferencePageRequest{
 			RealmID:       session.Connection.ExternalRealmID,
 			AccessToken:   session.AccessToken,
 			Kind:          kind,
@@ -63,7 +62,7 @@ func (s *Service) PullReference(
 			s.connectionService.ReportCallFailure(ctx, tenantInfo, connectionID, listErr)
 			return nil, listErr
 		}
-		if err = s.references.Upsert(ctx, &repositories.UpsertAccountingReferenceObjectsRequest{
+		if err = s.references.Upsert(ctx, &accountingsyncports.UpsertAccountingReferenceObjectsRequest{
 			TenantInfo:   tenantInfo,
 			ConnectionID: connectionID,
 			Objects:      page.Objects,
@@ -77,7 +76,7 @@ func (s *Service) PullReference(
 
 	removed, err := s.references.MarkRemovedUnseen(
 		ctx,
-		&repositories.MarkAccountingReferenceRemovedRequest{
+		&accountingsyncports.MarkAccountingReferenceRemovedRequest{
 			TenantInfo:   tenantInfo,
 			ConnectionID: connectionID,
 			Kind:         kind,
@@ -96,8 +95,8 @@ func (s *Service) Rescore(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	connectionID pulid.ID,
-) (*services.AccountingRescoreResult, error) {
-	conn, err := s.connections.GetByID(ctx, repositories.GetAccountingConnectionByIDRequest{
+) (*accountingsyncports.AccountingRescoreResult, error) {
+	conn, err := s.connections.GetByID(ctx, accountingsyncports.GetAccountingConnectionByIDRequest{
 		TenantInfo: tenantInfo,
 		ID:         connectionID,
 	})
@@ -108,7 +107,7 @@ func (s *Service) Rescore(
 	if err != nil {
 		return nil, err
 	}
-	result := &services.AccountingRescoreResult{Targets: len(targets)}
+	result := &accountingsyncports.AccountingRescoreResult{Targets: len(targets)}
 
 	fresh := make([]*accountingsync.AccountingMapping, 0, len(targets))
 	for _, t := range targets {
@@ -129,7 +128,7 @@ func (s *Service) Rescore(
 		return nil, err
 	}
 
-	rows, err := s.mappings.ListByConnection(ctx, &repositories.ListAccountingMappingsRequest{
+	rows, err := s.mappings.ListByConnection(ctx, &accountingsyncports.ListAccountingMappingsQuery{
 		TenantInfo:   tenantInfo,
 		ConnectionID: connectionID,
 	})
@@ -173,7 +172,7 @@ func (s *Service) Rescore(
 	return result, nil
 }
 
-func tallyRow(result *services.AccountingRescoreResult, row *accountingsync.AccountingMapping) {
+func tallyRow(result *accountingsyncports.AccountingRescoreResult, row *accountingsync.AccountingMapping) {
 	if row.State == accountingsync.MappingStateProposed {
 		result.Proposed++
 	}
@@ -199,7 +198,7 @@ func (s *Service) loadReferences(
 	for _, kind := range accountingsync.AllReferenceKinds() {
 		refs, err := s.references.ListByKind(
 			ctx,
-			&repositories.ListAccountingReferenceObjectsRequest{
+			&accountingsyncports.ListAccountingReferenceObjectsRequest{
 				TenantInfo:   tenantInfo,
 				ConnectionID: connectionID,
 				Kind:         kind,
@@ -254,7 +253,7 @@ func (s *Service) MarkRefreshStarted(
 	now := timeutils.NowUnix()
 	return s.connections.MarkReferenceRefresh(
 		ctx,
-		repositories.MarkAccountingReferenceRefreshRequest{
+		accountingsyncports.MarkAccountingReferenceRefreshRequest{
 			TenantInfo: tenantInfo,
 			ID:         connectionID,
 			StartedAt:  &now,
@@ -268,7 +267,7 @@ func (s *Service) MarkRefreshFinished(
 	connectionID pulid.ID,
 	failure string,
 ) error {
-	req := repositories.MarkAccountingReferenceRefreshRequest{
+	req := accountingsyncports.MarkAccountingReferenceRefreshRequest{
 		TenantInfo: tenantInfo,
 		ID:         connectionID,
 		Error:      stringutils.TruncateRunes(failure, maxRefreshErrorLength),
@@ -281,7 +280,7 @@ func (s *Service) MarkRefreshFinished(
 		return err
 	}
 
-	conn, err := s.connections.GetByID(ctx, repositories.GetAccountingConnectionByIDRequest{
+	conn, err := s.connections.GetByID(ctx, accountingsyncports.GetAccountingConnectionByIDRequest{
 		TenantInfo: tenantInfo,
 		ID:         connectionID,
 	})

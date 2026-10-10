@@ -5,9 +5,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -31,7 +31,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.EDIInboundFileRepository {
+func New(p Params) ediports.EDIInboundFileRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.edi-inbound-file-repository"),
@@ -40,7 +40,7 @@ func New(p Params) repositories.EDIInboundFileRepository {
 
 func (r *repository) ListInboundFiles(
 	ctx context.Context,
-	req *repositories.ListEDIInboundFilesRequest,
+	req *ediports.ListEDIInboundFilesRequest,
 ) (*pagination.ListResult[*edi.EDIInboundFile], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDIInboundFile], error) {
 		entities := make([]*edi.EDIInboundFile, 0, req.Filter.Pagination.SafeLimit())
@@ -72,7 +72,7 @@ func (r *repository) ListInboundFiles(
 
 func (r *repository) GetInboundFileByID(
 	ctx context.Context,
-	req repositories.GetEDIInboundFileByIDRequest,
+	req ediports.GetEDIInboundFileByIDRequest,
 ) (*edi.EDIInboundFile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIInboundFile, error) {
 		entity := new(edi.EDIInboundFile)
@@ -138,7 +138,7 @@ func (r *repository) UpdateInboundFile(
 
 func (r *repository) PurgeRawContentBefore(
 	ctx context.Context,
-	req repositories.PurgeEDIRawPayloadsRequest,
+	req ediports.PurgeEDIRawPayloadsRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
 		cols := buncolgen.EDIInboundFileColumns
@@ -191,7 +191,7 @@ func (r *repository) CountQuarantinedSince(ctx context.Context, since int64) (in
 
 func (r *repository) ExistsByChecksum(
 	ctx context.Context,
-	req repositories.ExistsEDIInboundFileByChecksumRequest,
+	req ediports.ExistsEDIInboundFileByChecksumRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
 		cols := buncolgen.EDIInboundFileColumns
@@ -207,7 +207,7 @@ func (r *repository) ExistsByChecksum(
 
 func (r *repository) GetInboundFileStatusCounts(
 	ctx context.Context,
-	req repositories.GetEDIInboundFileStatusCountsRequest,
+	req ediports.GetEDIInboundFileStatusCountsRequest,
 ) (map[edi.InboundFileStatus]int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[edi.InboundFileStatus]int, error) {
 		cols := buncolgen.EDIInboundFileColumns
@@ -238,7 +238,7 @@ func (r *repository) GetInboundFileStatusCounts(
 
 func (r *repository) ListRecentQuarantined(
 	ctx context.Context,
-	req repositories.ListRecentQuarantinedEDIInboundFilesRequest,
+	req ediports.ListRecentQuarantinedEDIInboundFilesRequest,
 ) ([]*edi.EDIInboundFile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDIInboundFile, error) {
 		cols := buncolgen.EDIInboundFileColumns
@@ -265,7 +265,7 @@ func (r *repository) ListRecentQuarantined(
 
 func (r *repository) ListInboundFilesCursor(
 	ctx context.Context,
-	req *repositories.ListEDIInboundFilesRequest,
+	req *ediports.ListEDIInboundFilesRequest,
 ) (*pagination.CursorListResult[*edi.EDIInboundFile], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*edi.EDIInboundFile], error) {
 		dba := r.db.DBForContext(ctx)

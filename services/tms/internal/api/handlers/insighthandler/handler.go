@@ -10,8 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/insight"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/insightservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -91,7 +91,7 @@ func tenantFromAuthContext(authCtx *authctx.AuthContext) pagination.TenantInfo {
 func (h *Handler) list(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	found, err := h.service.ListActive(c.Request.Context(), serviceports.ListInsightsRequest{
+	found, err := h.service.ListActive(c.Request.Context(), insightports.ListInsightsRequest{
 		TenantInfo: tenantFromAuthContext(authCtx),
 		UserID:     authCtx.UserID,
 		Categories: parseCategories(c.QueryArray("category")),
@@ -110,7 +110,7 @@ func (h *Handler) list(c *gin.Context) {
 func (h *Handler) browse(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	result, err := h.service.List(c.Request.Context(), serviceports.BrowseInsightsRequest{
+	result, err := h.service.List(c.Request.Context(), insightports.BrowseInsightsRequest{
 		TenantInfo: tenantFromAuthContext(authCtx),
 		UserID:     authCtx.UserID,
 		Categories: parseCategories(c.QueryArray("category")),
@@ -144,7 +144,7 @@ func (h *Handler) detail(c *gin.Context) {
 		return
 	}
 
-	found, err := h.service.GetDetail(c.Request.Context(), serviceports.GetInsightDetailRequest{
+	found, err := h.service.GetDetail(c.Request.Context(), insightports.GetInsightDetailRequest{
 		ID:         insightID,
 		UserID:     authCtx.UserID,
 		TenantInfo: tenantFromAuthContext(authCtx),
@@ -174,7 +174,7 @@ func (h *Handler) restore(c *gin.Context) {
 		return
 	}
 
-	restored, err := h.service.Restore(c.Request.Context(), serviceports.RestoreInsightRequest{
+	restored, err := h.service.Restore(c.Request.Context(), insightports.RestoreInsightRequest{
 		ID:         insightID,
 		TenantInfo: tenantFromAuthContext(authCtx),
 	})
@@ -211,7 +211,7 @@ func (h *Handler) dismiss(c *gin.Context) {
 		return
 	}
 
-	dismissed, err := h.service.Dismiss(c.Request.Context(), serviceports.DismissInsightRequest{
+	dismissed, err := h.service.Dismiss(c.Request.Context(), insightports.DismissInsightRequest{
 		ID:         insightID,
 		UserID:     authCtx.UserID,
 		Reason:     body.Reason,

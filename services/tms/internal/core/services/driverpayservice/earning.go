@@ -5,9 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,21 +17,21 @@ import (
 
 func (s *Service) ListEarnings(
 	ctx context.Context,
-	req *repositories.ListRecurringEarningsRequest,
+	req *driverpayports.ListRecurringEarningsRequest,
 ) (*pagination.ListResult[*driverpay.RecurringEarning], error) {
 	return s.earningRepo.List(ctx, req)
 }
 
 func (s *Service) ListEarningsConnection(
 	ctx context.Context,
-	req *repositories.ListRecurringEarningConnectionRequest,
+	req *driverpayports.ListRecurringEarningConnectionRequest,
 ) (*pagination.CursorListResult[*driverpay.RecurringEarning], error) {
 	return s.earningRepo.ListConnection(ctx, req)
 }
 
 func (s *Service) GetEarning(
 	ctx context.Context,
-	req repositories.GetRecurringEarningByIDRequest,
+	req driverpayports.GetRecurringEarningByIDRequest,
 ) (*driverpay.RecurringEarning, error) {
 	return s.earningRepo.GetByID(ctx, req)
 }
@@ -38,7 +39,7 @@ func (s *Service) GetEarning(
 func (s *Service) CreateEarning(
 	ctx context.Context,
 	entity *driverpay.RecurringEarning,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driverpay.RecurringEarning, error) {
 	if err := requireActor(actor, "Recurring earning creation"); err != nil {
 		return nil, err
@@ -60,7 +61,7 @@ func (s *Service) CreateEarning(
 func (s *Service) UpdateEarning(
 	ctx context.Context,
 	entity *driverpay.RecurringEarning,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driverpay.RecurringEarning, error) {
 	if err := requireActor(actor, "Recurring earning update"); err != nil {
 		return nil, err
@@ -69,7 +70,7 @@ func (s *Service) UpdateEarning(
 		return nil, err
 	}
 
-	previous, err := s.earningRepo.GetByID(ctx, repositories.GetRecurringEarningByIDRequest{
+	previous, err := s.earningRepo.GetByID(ctx, driverpayports.GetRecurringEarningByIDRequest{
 		ID: entity.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -96,7 +97,7 @@ func (s *Service) logEarningAudit(
 	operation permission.Operation,
 	comment string,
 ) {
-	params := &serviceports.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceRecurringEarning,
 		ResourceID:     current.ID.String(),
 		Operation:      operation,
@@ -105,7 +106,7 @@ func (s *Service) logEarningAudit(
 		OrganizationID: current.OrganizationID,
 		BusinessUnitID: current.BusinessUnitID,
 	}
-	options := []serviceports.LogOption{auditservice.WithComment(comment)}
+	options := []auditports.LogOption{auditservice.WithComment(comment)}
 	if previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(previous)
 		options = append(options, auditservice.WithDiff(previous, current))

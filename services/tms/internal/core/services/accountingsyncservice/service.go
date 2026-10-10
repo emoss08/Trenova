@@ -6,11 +6,19 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/accountingconnlookup"
 	"github.com/emoss08/trenova/internal/core/services/accountingcontrolpolicyservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/exchangerateports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -36,59 +44,59 @@ type Params struct {
 	fx.In
 
 	Logger            *zap.Logger
-	DB                ports.DBConnection
-	Connections       repositories.AccountingConnectionRepository
-	Records           repositories.AccountingSyncRecordRepository
-	Backfills         repositories.AccountingBackfillRepository
-	Mappings          repositories.AccountingMappingRepository
-	MappingService    services.AccountingMappingService
-	ConnectionService services.AccountingConnectionService
-	Invoices          repositories.InvoiceRepository
-	Adjustments       repositories.InvoiceAdjustmentRepository
-	Payments          repositories.CustomerPaymentRepository
-	Organizations     repositories.OrganizationRepository
-	Controls          repositories.AccountingControlRepository
-	Payables          repositories.AccountingPayablesSource
-	Ledger            repositories.AccountingLedgerSource
-	References        repositories.AccountingReferenceObjectRepository
-	Rates             services.ExchangeRateService
+	DB                kernelports.DBConnection
+	Connections       accountingsyncports.AccountingConnectionRepository
+	Records           accountingsyncports.AccountingSyncRecordRepository
+	Backfills         accountingsyncports.AccountingBackfillRepository
+	Mappings          accountingsyncports.AccountingMappingRepository
+	MappingService    accountingsyncports.AccountingMappingService
+	ConnectionService accountingsyncports.AccountingConnectionService
+	Invoices          invoiceports.InvoiceRepository
+	Adjustments       invoiceadjustmentports.InvoiceAdjustmentRepository
+	Payments          customerpaymentports.CustomerPaymentRepository
+	Organizations     tenantports.OrganizationRepository
+	Controls          tenantports.AccountingControlRepository
+	Payables          accountingsyncports.AccountingPayablesSource
+	Ledger            journalentryports.AccountingLedgerSource
+	References        accountingsyncports.AccountingReferenceObjectRepository
+	Rates             exchangerateports.ExchangeRateService
 	Policy            *accountingcontrolpolicyservice.Service
-	AuditService      services.AuditService
+	AuditService      auditports.AuditService
 	Enqueuer          *Enqueuer
-	Dispatcher        services.AccountingSyncDispatcher `optional:"true"`
-	Publisher         services.AgentEventPublisher      `optional:"true"`
-	Watchtower        services.WatchtowerProjector      `optional:"true"`
-	Realtime          services.RealtimeService          `optional:"true"`
+	Dispatcher        accountingsyncports.AccountingSyncDispatcher `optional:"true"`
+	Publisher         agentports.AgentEventPublisher               `optional:"true"`
+	Watchtower        watchtowerports.WatchtowerProjector          `optional:"true"`
+	Realtime          agentports.RealtimeService                   `optional:"true"`
 }
 
 type Service struct {
 	l              *zap.Logger
-	db             ports.DBConnection
-	connections    repositories.AccountingConnectionRepository
-	records        repositories.AccountingSyncRecordRepository
-	backfills      repositories.AccountingBackfillRepository
-	mappings       repositories.AccountingMappingRepository
-	mappingService services.AccountingMappingService
-	connService    services.AccountingConnectionService
-	invoices       repositories.InvoiceRepository
-	adjustments    repositories.InvoiceAdjustmentRepository
-	payments       repositories.CustomerPaymentRepository
-	organizations  repositories.OrganizationRepository
-	controls       repositories.AccountingControlRepository
-	payables       repositories.AccountingPayablesSource
-	ledger         repositories.AccountingLedgerSource
-	references     repositories.AccountingReferenceObjectRepository
-	rates          services.ExchangeRateService
+	db             kernelports.DBConnection
+	connections    accountingsyncports.AccountingConnectionRepository
+	records        accountingsyncports.AccountingSyncRecordRepository
+	backfills      accountingsyncports.AccountingBackfillRepository
+	mappings       accountingsyncports.AccountingMappingRepository
+	mappingService accountingsyncports.AccountingMappingService
+	connService    accountingsyncports.AccountingConnectionService
+	invoices       invoiceports.InvoiceRepository
+	adjustments    invoiceadjustmentports.InvoiceAdjustmentRepository
+	payments       customerpaymentports.CustomerPaymentRepository
+	organizations  tenantports.OrganizationRepository
+	controls       tenantports.AccountingControlRepository
+	payables       accountingsyncports.AccountingPayablesSource
+	ledger         journalentryports.AccountingLedgerSource
+	references     accountingsyncports.AccountingReferenceObjectRepository
+	rates          exchangerateports.ExchangeRateService
 	policy         *accountingcontrolpolicyservice.Service
-	audit          services.AuditService
+	audit          auditports.AuditService
 	enqueuer       *Enqueuer
-	dispatcher     services.AccountingSyncDispatcher
-	publisher      services.AgentEventPublisher
-	watchtower     services.WatchtowerProjector
-	realtime       services.RealtimeService
+	dispatcher     accountingsyncports.AccountingSyncDispatcher
+	publisher      agentports.AgentEventPublisher
+	watchtower     watchtowerports.WatchtowerProjector
+	realtime       agentports.RealtimeService
 }
 
-var _ services.AccountingSyncService = (*Service)(nil)
+var _ accountingsyncports.AccountingSyncService = (*Service)(nil)
 
 //nolint:gocritic // dependency injection
 func New(p Params) *Service {
@@ -133,7 +141,7 @@ func (s *Service) connectionByID(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*accountingsync.AccountingConnection, error) {
-	return s.connections.GetByID(ctx, repositories.GetAccountingConnectionByIDRequest{
+	return s.connections.GetByID(ctx, accountingsyncports.GetAccountingConnectionByIDRequest{
 		TenantInfo: tenantInfo,
 		ID:         id,
 	})
@@ -147,7 +155,7 @@ func (s *Service) kick(
 	if s.dispatcher == nil {
 		return
 	}
-	ports.AfterCommit(ctx, func(committedCtx context.Context) {
+	kernelports.AfterCommit(ctx, func(committedCtx context.Context) {
 		if err := s.dispatcher.Kick(committedCtx, tenantInfo, connectionID); err != nil {
 			s.l.Warn("failed to wake the accounting dispatcher; the schedule will pick it up",
 				zap.String("connectionId", connectionID.String()), zap.Error(err))

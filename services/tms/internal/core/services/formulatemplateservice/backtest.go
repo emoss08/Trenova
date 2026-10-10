@@ -3,13 +3,13 @@ package formulatemplateservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/services/formula/contextvariablecache"
-
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/formula"
+	"github.com/emoss08/trenova/internal/core/services/formula/contextvariablecache"
 	"github.com/emoss08/trenova/internal/core/services/formula/effectiveversioncache"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -110,7 +110,7 @@ func (s *Service) Backtest(
 
 	shipments, err := s.shipmentRepo.ListRatedByFormulaTemplate(
 		ctx,
-		&repositories.ListRatedByFormulaTemplateRequest{
+		&shipmentports.ListRatedByFormulaTemplateRequest{
 			TemplateID: req.TemplateID,
 			TenantInfo: req.TenantInfo,
 			Limit:      limit,
@@ -184,7 +184,7 @@ func (s *Service) resolveBacktestCandidate(
 	template *formulatemplate.FormulaTemplate,
 ) (*formulatemplate.FormulaTemplate, error) {
 	if req.VersionNumber != nil {
-		version, err := s.versionRepo.GetByTemplateAndVersion(ctx, &repositories.GetVersionRequest{
+		version, err := s.versionRepo.GetByTemplateAndVersion(ctx, &formulatemplateports.GetVersionRequest{
 			TenantInfo:    req.TenantInfo,
 			TemplateID:    req.TemplateID,
 			VersionNumber: *req.VersionNumber,
@@ -306,7 +306,7 @@ func (s *Service) resolveCurrentForShipment(
 		func(loadCtx context.Context) (*formulatemplate.FormulaTemplateVersion, error) {
 			return s.versionRepo.GetLatestByStatus(
 				loadCtx,
-				&repositories.GetLatestVersionByStatusRequest{
+				&formulatemplateports.GetLatestVersionByStatusRequest{
 					TenantInfo: tenantInfo,
 					TemplateID: template.ID,
 					Status:     formulatemplate.StatusActive,
@@ -333,7 +333,7 @@ func (s *Service) lookupVersion(
 	versionNumber int64,
 	tenantInfo pagination.TenantInfo,
 ) (*formulatemplate.FormulaTemplateVersion, error) {
-	version, err := s.versionRepo.GetByTemplateAndVersion(ctx, &repositories.GetVersionRequest{
+	version, err := s.versionRepo.GetByTemplateAndVersion(ctx, &formulatemplateports.GetVersionRequest{
 		TenantInfo:    tenantInfo,
 		TemplateID:    templateID,
 		VersionNumber: versionNumber,

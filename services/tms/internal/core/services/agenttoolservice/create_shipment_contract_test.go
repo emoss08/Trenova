@@ -9,8 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -32,7 +34,7 @@ func errorFields(t *testing.T, err error) []string {
 	return fields
 }
 
-func schemaCheck(tool serviceports.AgentTool, args map[string]any) error {
+func schemaCheck(tool agentports.AgentTool, args map[string]any) error {
 	return toolschema.NewValidator().ValidateFor(tool.Name(), tool.ParamSchema(), args)
 }
 
@@ -64,7 +66,7 @@ func TestCreateShipment_TheSchemaAsksForWhatTheDomainNeeds(t *testing.T) {
 }
 
 type fakeContractRates struct {
-	priced *serviceports.ContractRateApplication
+	priced *shipmentports.ContractRateApplication
 	err    error
 	calls  int
 }
@@ -72,8 +74,8 @@ type fakeContractRates struct {
 func (f *fakeContractRates) PreviewContractRate(
 	context.Context,
 	*shipment.Shipment,
-	*serviceports.RequestActor,
-) (*serviceports.ContractRateApplication, error) {
+	*permissionports.RequestActor,
+) (*shipmentports.ContractRateApplication, error) {
 	f.calls++
 
 	return f.priced, f.err
@@ -89,7 +91,7 @@ func TestCreateShipment_UsesTheContractsRatingWhenNoneIsGiven(t *testing.T) {
 	t.Parallel()
 
 	template := pulid.MustNew("ft_")
-	contracts := &fakeContractRates{priced: &serviceports.ContractRateApplication{
+	contracts := &fakeContractRates{priced: &shipmentports.ContractRateApplication{
 		Applied:           true,
 		Outcome:           ratequote.OutcomeRated,
 		FormulaTemplateID: &template,
@@ -119,7 +121,7 @@ func TestCreateShipment_AsksForARatingWhenNoAgreementPricesTheLane(t *testing.T)
 
 	tool := newCreateShipmentTool(createShipmentDeps{
 		Shipments: &fakeShipmentWriter{},
-		Contracts: &fakeContractRates{priced: &serviceports.ContractRateApplication{
+		Contracts: &fakeContractRates{priced: &shipmentports.ContractRateApplication{
 			Outcome: ratequote.OutcomeNoRateFound,
 		}},
 	}).(*createShipmentTool)
@@ -200,7 +202,7 @@ func TestCreateShipment_ReplaysTheCallThatWasCreatedUnrated(t *testing.T) {
 	stops[1].(map[string]any)["scheduledWindowStart"] = "2026-10-02T08:00"
 	require.NoError(t, schemaCheck(tool, sent), "what is left fits the schema")
 
-	err = tool.(serviceports.ToolValidator).Validate(t.Context(), executeParams(sent))
+	err = tool.(agentports.ToolValidator).Validate(t.Context(), executeParams(sent))
 	require.Error(t, err, "stops numbered from 1 are refused before anything is filed")
 	assert.Contains(t, err.Error(),
 		"moves[0].stops[0].sequence: Sequences count from 0 in travel order, so this one is 0, not 1")
@@ -348,7 +350,7 @@ func TestCreateShipment_SaysWhatItCreated(t *testing.T) {
 	)})
 	params.IdempotencyKey = "idem-result"
 
-	result, err := tool.(serviceports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 
 	id := writer.created.ID.String()
@@ -370,8 +372,8 @@ type ratedShipments struct {
 func (f *ratedShipments) PreviewCreate(
 	ctx context.Context,
 	entity *shipment.Shipment,
-	actor *serviceports.RequestActor,
-) (*serviceports.ShipmentCreatePlan, error) {
+	actor *permissionports.RequestActor,
+) (*shipmentports.ShipmentCreatePlan, error) {
 	plan, err := f.pricingShipments.PreviewCreate(ctx, entity, actor)
 	if err != nil {
 		return nil, err

@@ -6,9 +6,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/core/domain/manualjournal"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalreversalports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/manualjournalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/typeutils"
@@ -96,9 +98,9 @@ func manualJournalRowFrom(entity *manualjournal.Request, gate *fieldGate) manual
 }
 
 func newListManualJournalsTool(
-	repo repositories.ManualJournalRepository,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	repo manualjournalports.ManualJournalRepository,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "list_manual_journals",
 		entityPlural: "manual journals",
@@ -126,7 +128,7 @@ func newListManualJournalsTool(
 			opts *pagination.QueryOptions,
 			gate *fieldGate,
 		) ([]any, error) {
-			result, err := repo.List(ctx, &repositories.ListManualJournalRequest{Filter: opts})
+			result, err := repo.List(ctx, &manualjournalports.ListManualJournalRequest{Filter: opts})
 			if err != nil {
 				return nil, err
 			}
@@ -162,7 +164,7 @@ type manualJournalView struct {
 type manualJournalReader interface {
 	GetByID(
 		ctx context.Context,
-		req repositories.GetManualJournalByIDRequest,
+		req manualjournalports.GetManualJournalByIDRequest,
 	) (*manualjournal.Request, error)
 }
 
@@ -172,9 +174,9 @@ type getManualJournalTool struct {
 }
 
 func newGetManualJournalTool(
-	repo repositories.ManualJournalRepository,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	repo manualjournalports.ManualJournalRepository,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &getManualJournalTool{journals: repo, access: newFieldAccess(permissions)}
 }
 
@@ -193,13 +195,13 @@ func (t *getManualJournalTool) ParamSchema() map[string]any {
 	))
 }
 
-func (t *getManualJournalTool) Policy() serviceports.ToolPolicy {
+func (t *getManualJournalTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceManualJournal})
 }
 
 func (t *getManualJournalTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -210,7 +212,7 @@ func (t *getManualJournalTool) Query(
 		return nil, err
 	}
 
-	entity, err := t.journals.GetByID(ctx, repositories.GetManualJournalByIDRequest{
+	entity, err := t.journals.GetByID(ctx, manualjournalports.GetManualJournalByIDRequest{
 		ID:         id,
 		TenantInfo: tenantOf(params),
 	})
@@ -272,9 +274,9 @@ type journalReversalRow struct {
 }
 
 func newListJournalReversalsTool(
-	repo repositories.JournalReversalRepository,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	repo journalreversalports.JournalReversalRepository,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "list_journal_reversals",
 		entityPlural: "journal reversals",
@@ -301,7 +303,7 @@ func newListJournalReversalsTool(
 			opts *pagination.QueryOptions,
 			gate *fieldGate,
 		) ([]any, error) {
-			result, err := repo.List(ctx, &repositories.ListJournalReversalsRequest{Filter: opts})
+			result, err := repo.List(ctx, &journalreversalports.ListJournalReversalsRequest{Filter: opts})
 			if err != nil {
 				return nil, err
 			}

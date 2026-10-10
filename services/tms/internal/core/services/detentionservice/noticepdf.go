@@ -5,13 +5,15 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/detentionjobs/detentioncontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/detentionjobs/detentioncontract"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -39,7 +41,7 @@ type NoticePDF struct {
 	// stripped out. RecordGeneratedDocument wants exactly this, and the workflow
 	// that files the document carries it through a Temporal payload where
 	// megabytes of PDF have no business being.
-	Provenance *services.RenderedDocument
+	Provenance *documenttemplateports.RenderedDocument
 }
 
 // renderNoticePDF prints the notice against the context its email was rendered
@@ -57,7 +59,7 @@ func (s *Service) renderNoticePDF(
 	customerID *pulid.ID,
 	data any,
 ) (*NoticePDF, error) {
-	rendered, err := s.templates.RenderDocument(ctx, &services.RenderDocumentRequest{
+	rendered, err := s.templates.RenderDocument(ctx, &documenttemplateports.RenderDocumentRequest{
 		TenantInfo:  tenantInfo,
 		Kind:        documenttemplate.KindDetentionNoticePDF,
 		CustomerID:  customerID,
@@ -161,10 +163,10 @@ type noticePDFFiling struct {
 
 // actor attributes the upload. An automatic notice has no sender, so the system
 // owns it either way.
-func (f *noticePDFFiling) actor() services.RequestActor {
-	return services.RequestActor{
-		PrincipalType:  services.PrincipalTypeSystem,
-		PrincipalID:    services.SystemPrincipalID,
+func (f *noticePDFFiling) actor() permissionports.RequestActor {
+	return permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeSystem,
+		PrincipalID:    permissionports.SystemPrincipalID,
 		UserID:         f.TenantInfo.UserID,
 		OrganizationID: f.Notice.OrganizationID,
 		BusinessUnitID: f.Notice.BusinessUnitID,
@@ -182,7 +184,7 @@ func (s *Service) uploadNoticePDF(
 	ctx context.Context,
 	f *noticePDFFiling,
 ) (pulid.ID, error) {
-	docType, err := s.documentTypeRepo.GetByCode(ctx, repositories.GetDocumentTypeByCodeRequest{
+	docType, err := s.documentTypeRepo.GetByCode(ctx, documenttypeports.GetDocumentTypeByCodeRequest{
 		Code:       documenttype.CodeDetentionNotice,
 		TenantInfo: f.TenantInfo,
 	})
@@ -190,7 +192,7 @@ func (s *Service) uploadNoticePDF(
 		return pulid.Nil, err
 	}
 
-	session, err := s.uploadService.CreateSession(ctx, &services.CreateSessionRequest{
+	session, err := s.uploadService.CreateSession(ctx, &documentuploadports.CreateSessionRequest{
 		TenantInfo:     f.TenantInfo,
 		Actor:          f.actor(),
 		ResourceID:     f.Occurrence.ShipmentID.String(),
@@ -206,7 +208,7 @@ func (s *Service) uploadNoticePDF(
 		return pulid.Nil, err
 	}
 
-	if _, err = s.uploadService.UploadPart(ctx, &services.UploadPartRequest{
+	if _, err = s.uploadService.UploadPart(ctx, &documentuploadports.UploadPartRequest{
 		TenantInfo: f.TenantInfo,
 		SessionID:  session.ID,
 		PartNumber: 1,
@@ -231,7 +233,7 @@ func (s *Service) startNoticePDFStorage(
 	sessionID pulid.ID,
 ) error {
 	if s.workflowStarter == nil || !s.workflowStarter.Enabled() {
-		session, err := s.uploadService.Complete(ctx, &services.CompletionRequest{
+		session, err := s.uploadService.Complete(ctx, &documentuploadports.CompletionRequest{
 			TenantInfo: f.TenantInfo,
 			Actor:      f.actor(),
 			SessionID:  sessionID,
@@ -245,7 +247,7 @@ func (s *Service) startNoticePDFStorage(
 			)
 		}
 
-		return s.AttachNoticePDFDocument(ctx, &services.AttachNoticePDFDocumentParams{
+		return s.AttachNoticePDFDocument(ctx, &detentionports.AttachNoticePDFDocumentParams{
 			TenantInfo:   f.TenantInfo,
 			NoticeID:     f.Notice.ID,
 			OccurrenceID: f.Occurrence.ID,
@@ -282,8 +284,8 @@ func (s *Service) startNoticePDFStorage(
 			FileName:      f.PDF.FileName,
 			FileSize:      f.size(),
 			Provenance:    f.PDF.Provenance,
-			PrincipalType: services.PrincipalTypeSystem,
-			PrincipalID:   services.SystemPrincipalID,
+			PrincipalType: permissionports.PrincipalTypeSystem,
+			PrincipalID:   permissionports.SystemPrincipalID,
 		},
 	)
 
@@ -309,7 +311,7 @@ func noticeActorUserID(notice *detention.DetentionNotice) pulid.ID {
 // names the template version behind it even after the template has been edited.
 func (s *Service) AttachNoticePDFDocument(
 	ctx context.Context,
-	p *services.AttachNoticePDFDocumentParams,
+	p *detentionports.AttachNoticePDFDocumentParams,
 ) error {
 	if p == nil || p.NoticeID.IsNil() || p.DocumentID.IsNil() {
 		return errortypes.NewValidationError(
@@ -319,7 +321,7 @@ func (s *Service) AttachNoticePDFDocument(
 
 	if err := s.noticeRepo.AttachPDFDocument(
 		ctx,
-		&repositories.AttachNoticePDFDocumentRequest{
+		&detentionports.AttachNoticePDFDocumentRequest{
 			TenantInfo: p.TenantInfo,
 			NoticeID:   p.NoticeID,
 			DocumentID: p.DocumentID,
@@ -335,7 +337,7 @@ func (s *Service) AttachNoticePDFDocument(
 	documentID := p.DocumentID
 	if _, err := s.templates.RecordGeneratedDocument(
 		ctx,
-		&services.RecordGeneratedDocumentRequest{
+		&documenttemplateports.RecordGeneratedDocumentRequest{
 			TenantInfo:    p.TenantInfo,
 			Kind:          documenttemplate.KindDetentionNoticePDF,
 			Rendered:      p.Provenance,

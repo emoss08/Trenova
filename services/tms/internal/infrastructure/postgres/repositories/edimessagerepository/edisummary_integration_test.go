@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
@@ -16,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ediinboundfilerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/edimessagerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/editransferrepository"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -136,7 +136,7 @@ func TestEDISummaryCounts(t *testing.T) {
 
 	deliveryCounts, err := messageRepo.GetDeliveryStatusCounts(
 		ctx,
-		repositories.GetEDIMessageStatusCountsRequest{TenantInfo: tenantInfo},
+		ediports.GetEDIMessageStatusCountsRequest{TenantInfo: tenantInfo},
 	)
 	require.NoError(t, err)
 	require.Equal(t, 2, deliveryCounts[edi.MessageDeliveryStatusSent])
@@ -145,7 +145,7 @@ func TestEDISummaryCounts(t *testing.T) {
 
 	ackCounts, err := messageRepo.GetAckStatusCounts(
 		ctx,
-		repositories.GetEDIMessageStatusCountsRequest{TenantInfo: tenantInfo},
+		ediports.GetEDIMessageStatusCountsRequest{TenantInfo: tenantInfo},
 	)
 	require.NoError(t, err)
 	require.Equal(t, 1, ackCounts[edi.MessageAcknowledgmentStatusAccepted])
@@ -154,7 +154,7 @@ func TestEDISummaryCounts(t *testing.T) {
 
 	overdue, err := messageRepo.GetOverdueAckCount(
 		ctx,
-		repositories.GetEDIOverdueAckCountRequest{
+		ediports.GetEDIOverdueAckCountRequest{
 			TenantInfo:   tenantInfo,
 			PendingSince: now - 4*60*60,
 		},
@@ -164,7 +164,7 @@ func TestEDISummaryCounts(t *testing.T) {
 
 	deadLettered, err := messageRepo.ListRecentDeadLettered(
 		ctx,
-		&repositories.ListRecentEDIMessageFailuresRequest{TenantInfo: tenantInfo, Limit: 5},
+		&ediports.ListRecentEDIMessageFailuresRequest{TenantInfo: tenantInfo, Limit: 5},
 	)
 	require.NoError(t, err)
 	require.Len(t, deadLettered, 2)
@@ -202,7 +202,7 @@ func TestEDISummaryCounts(t *testing.T) {
 	})
 	fileCounts, err := fileRepo.GetInboundFileStatusCounts(
 		ctx,
-		repositories.GetEDIInboundFileStatusCountsRequest{TenantInfo: tenantInfo},
+		ediports.GetEDIInboundFileStatusCountsRequest{TenantInfo: tenantInfo},
 	)
 	require.NoError(t, err)
 	require.Equal(t, 1, fileCounts[edi.InboundFileStatusProcessed])
@@ -211,7 +211,7 @@ func TestEDISummaryCounts(t *testing.T) {
 
 	quarantined, err := fileRepo.ListRecentQuarantined(
 		ctx,
-		repositories.ListRecentQuarantinedEDIInboundFilesRequest{TenantInfo: tenantInfo, Limit: 5},
+		ediports.ListRecentQuarantinedEDIInboundFilesRequest{TenantInfo: tenantInfo, Limit: 5},
 	)
 	require.NoError(t, err)
 	require.Len(t, quarantined, 2)
@@ -244,7 +244,7 @@ func TestEDISummaryCounts(t *testing.T) {
 	})
 	transferCounts, err := transferRepo.GetInboundStatusCounts(
 		ctx,
-		repositories.GetEDITransferStatusCountsRequest{TenantInfo: tenantInfo},
+		ediports.GetEDITransferStatusCountsRequest{TenantInfo: tenantInfo},
 	)
 	require.NoError(t, err)
 	require.Equal(t, 2, transferCounts[edi.TransferStatusMappingRequired])

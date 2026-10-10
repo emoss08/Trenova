@@ -10,7 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -19,12 +20,12 @@ import (
 
 type fakeTenderLister struct {
 	tenders []*tender.Tender
-	listed  repositories.ListTendersByShipmentRequest
+	listed  tenderports.ListTendersByShipmentRequest
 }
 
 func (f *fakeTenderLister) ListByShipment(
 	_ context.Context,
-	req repositories.ListTendersByShipmentRequest,
+	req tenderports.ListTendersByShipmentRequest,
 ) ([]*tender.Tender, error) {
 	f.listed = req
 
@@ -33,12 +34,12 @@ func (f *fakeTenderLister) ListByShipment(
 
 type fakeRateConLister struct {
 	revisions []*rateconfirmation.RateConfirmation
-	listed    *repositories.ListRateConfirmationsByMoveRequest
+	listed    *rateconfirmationports.ListRateConfirmationsByMoveRequest
 }
 
 func (f *fakeRateConLister) ListByMoveID(
 	_ context.Context,
-	req *repositories.ListRateConfirmationsByMoveRequest,
+	req *rateconfirmationports.ListRateConfirmationsByMoveRequest,
 ) ([]*rateconfirmation.RateConfirmation, error) {
 	f.listed = req
 

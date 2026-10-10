@@ -7,9 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/rateconfirmationservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -27,13 +28,13 @@ type rateConfirmations interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		moveID pulid.ID,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*rateconfirmation.RateConfirmation, error)
 	PreviewGenerate(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		moveID pulid.ID,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*rateconfirmationservice.GeneratePreview, error)
 	Send(
 		ctx context.Context,
@@ -78,7 +79,7 @@ type generateRateConfirmationTool struct {
 	rateCons rateConfirmations
 }
 
-func newGenerateRateConfirmationTool(rateCons rateConfirmations) serviceports.AgentTool {
+func newGenerateRateConfirmationTool(rateCons rateConfirmations) agentports.AgentTool {
 	return &generateRateConfirmationTool{rateCons: rateCons}
 }
 
@@ -107,8 +108,8 @@ func (t *generateRateConfirmationTool) ParamSchema() map[string]any {
 	}, previewFieldShipmentMoveID)
 }
 
-func (t *generateRateConfirmationTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *generateRateConfirmationTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceRateConfirmation,
@@ -120,7 +121,7 @@ func (t *generateRateConfirmationTool) Policy() serviceports.ToolPolicy {
 		Effect:        agent.ToolEffectChange,
 		Reversible:    true,
 		ReadsExternal: agent.ExternalReadNever,
-		Condition: &serviceports.TierCondition{
+		Condition: &agentports.TierCondition{
 			Description: "A first revision is generated as far as the agent allows; one " +
 				"that would void a revision already standing, which the carrier may hold " +
 				"or have signed, is a proposal a person decides, as is one the service " +
@@ -134,7 +135,7 @@ func (t *generateRateConfirmationTool) Policy() serviceports.ToolPolicy {
 
 func (t *generateRateConfirmationTool) tierLimit(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
 ) agent.AutonomyTier {
 	moveID, err := t.moveID(&params)
 	if err != nil {
@@ -151,7 +152,7 @@ func (t *generateRateConfirmationTool) tierLimit(
 
 func (t *generateRateConfirmationTool) Validate(
 	_ context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	_, err := t.moveID(&params)
 
@@ -160,7 +161,7 @@ func (t *generateRateConfirmationTool) Validate(
 
 func (t *generateRateConfirmationTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -177,7 +178,7 @@ func (t *generateRateConfirmationTool) Execute(
 }
 
 func (t *generateRateConfirmationTool) moveID(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (pulid.ID, error) {
 	if err := guardPreview(t, params); err != nil {
 		return pulid.Nil, err
@@ -188,7 +189,7 @@ func (t *generateRateConfirmationTool) moveID(
 
 func (t *generateRateConfirmationTool) Target(
 	params map[string]any,
-) (serviceports.ToolTarget, bool) {
+) (agentports.ToolTarget, bool) {
 	return targetOf(params, previewFieldShipmentMoveID, permission.ResourceShipmentMove)
 }
 
@@ -199,7 +200,7 @@ type sendRateConfirmationTool struct {
 	rateCons rateConfirmations
 }
 
-func newSendRateConfirmationTool(rateCons rateConfirmations) serviceports.AgentTool {
+func newSendRateConfirmationTool(rateCons rateConfirmations) agentports.AgentTool {
 	return &sendRateConfirmationTool{rateCons: rateCons}
 }
 
@@ -227,8 +228,8 @@ func (t *sendRateConfirmationTool) ParamSchema() map[string]any {
 	}, fieldRateConfirmationID)
 }
 
-func (t *sendRateConfirmationTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *sendRateConfirmationTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceRateConfirmation,
@@ -247,7 +248,7 @@ func (t *sendRateConfirmationTool) Policy() serviceports.ToolPolicy {
 
 func (t *sendRateConfirmationTool) Validate(
 	_ context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	_, err := rateConfirmationArg(t, &params)
 
@@ -256,7 +257,7 @@ func (t *sendRateConfirmationTool) Validate(
 
 func (t *sendRateConfirmationTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -272,7 +273,7 @@ func (t *sendRateConfirmationTool) Execute(
 	return err
 }
 
-func (t *sendRateConfirmationTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *sendRateConfirmationTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, fieldRateConfirmationID, permission.ResourceRateConfirmation)
 }
 
@@ -281,7 +282,7 @@ type voidRateConfirmationTool struct {
 	rateCons rateConfirmations
 }
 
-func newVoidRateConfirmationTool(rateCons rateConfirmations) serviceports.AgentTool {
+func newVoidRateConfirmationTool(rateCons rateConfirmations) agentports.AgentTool {
 	return &voidRateConfirmationTool{rateCons: rateCons}
 }
 
@@ -307,8 +308,8 @@ func (t *voidRateConfirmationTool) ParamSchema() map[string]any {
 	}, fieldRateConfirmationID, fieldReason)
 }
 
-func (t *voidRateConfirmationTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *voidRateConfirmationTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceRateConfirmation,
@@ -319,7 +320,7 @@ func (t *voidRateConfirmationTool) Policy() serviceports.ToolPolicy {
 		Egress:        []agent.EgressClass{agent.EgressMoney},
 		Effect:        agent.ToolEffectChange,
 		ReadsExternal: agent.ExternalReadNever,
-		Condition: &serviceports.TierCondition{
+		Condition: &agentports.TierCondition{
 			Description: "A revision the carrier has been sent or has signed is voided only " +
 				"as a proposal a person decides, as is one that cannot be read; one never " +
 				"sent is voided once a person approves it.",
@@ -333,7 +334,7 @@ func (t *voidRateConfirmationTool) Policy() serviceports.ToolPolicy {
 
 func (t *voidRateConfirmationTool) tierLimit(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
 ) agent.AutonomyTier {
 	id, reason, err := t.arguments(&params)
 	if err != nil {
@@ -350,7 +351,7 @@ func (t *voidRateConfirmationTool) tierLimit(
 
 func (t *voidRateConfirmationTool) Validate(
 	_ context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	_, _, err := t.arguments(&params)
 
@@ -359,7 +360,7 @@ func (t *voidRateConfirmationTool) Validate(
 
 func (t *voidRateConfirmationTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -376,7 +377,7 @@ func (t *voidRateConfirmationTool) Execute(
 }
 
 func (t *voidRateConfirmationTool) arguments(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (pulid.ID, string, error) {
 	id, err := rateConfirmationArg(t, params)
 	if err != nil {
@@ -390,7 +391,7 @@ func (t *voidRateConfirmationTool) arguments(
 	return id, strings.TrimSpace(reason), nil
 }
 
-func (t *voidRateConfirmationTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *voidRateConfirmationTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, fieldRateConfirmationID, permission.ResourceRateConfirmation)
 }
 
@@ -400,7 +401,7 @@ type recordRateConfirmationConfirmedTool struct {
 	rateCons rateConfirmations
 }
 
-func newRecordRateConfirmationConfirmedTool(rateCons rateConfirmations) serviceports.AgentTool {
+func newRecordRateConfirmationConfirmedTool(rateCons rateConfirmations) agentports.AgentTool {
 	return &recordRateConfirmationConfirmedTool{rateCons: rateCons}
 }
 
@@ -433,8 +434,8 @@ func (t *recordRateConfirmationConfirmedTool) ParamSchema() map[string]any {
 	}, fieldRateConfirmationID, fieldConfirmedByName)
 }
 
-func (t *recordRateConfirmationConfirmedTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *recordRateConfirmationConfirmedTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceRateConfirmation,
@@ -453,7 +454,7 @@ func (t *recordRateConfirmationConfirmedTool) Policy() serviceports.ToolPolicy {
 
 func (t *recordRateConfirmationConfirmedTool) Validate(
 	_ context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	_, _, err := t.arguments(&params)
 
@@ -462,7 +463,7 @@ func (t *recordRateConfirmationConfirmedTool) Validate(
 
 func (t *recordRateConfirmationConfirmedTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -479,7 +480,7 @@ func (t *recordRateConfirmationConfirmedTool) Execute(
 }
 
 func (t *recordRateConfirmationConfirmedTool) arguments(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (pulid.ID, string, error) {
 	id, err := rateConfirmationArg(t, params)
 	if err != nil {
@@ -495,13 +496,13 @@ func (t *recordRateConfirmationConfirmedTool) arguments(
 
 func (t *recordRateConfirmationConfirmedTool) Target(
 	params map[string]any,
-) (serviceports.ToolTarget, bool) {
+) (agentports.ToolTarget, bool) {
 	return targetOf(params, fieldRateConfirmationID, permission.ResourceRateConfirmation)
 }
 
 func rateConfirmationArg(
-	tool serviceports.AgentTool,
-	params *serviceports.ToolExecuteParams,
+	tool agentports.AgentTool,
+	params *agentports.ToolExecuteParams,
 ) (pulid.ID, error) {
 	if err := guardPreview(tool, params); err != nil {
 		return pulid.Nil, err

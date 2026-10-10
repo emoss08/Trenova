@@ -9,7 +9,8 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -57,7 +58,7 @@ func parseDraftReply(text string) (*draftReply, error) {
 
 type sanitizeInput struct {
 	reply       *draftReply
-	catalog     []serviceports.ToolCatalogEntry
+	catalog     []agentdefinitionports.ToolCatalogEntry
 	timezone    string
 	description string
 	tenantInfo  pagination.TenantInfo
@@ -65,11 +66,11 @@ type sanitizeInput struct {
 
 type sanitizer struct {
 	in    *sanitizeInput
-	notes []serviceports.AgentDraftNote
+	notes []agentports.AgentDraftNote
 }
 
 func (s *sanitizer) drop(field, value, reason string) {
-	s.notes = append(s.notes, serviceports.AgentDraftNote{
+	s.notes = append(s.notes, agentports.AgentDraftNote{
 		Field:  field,
 		Value:  stringutils.OneLine(value, agentdefinition.MaxGuardrailRunes),
 		Reason: reason,
@@ -78,8 +79,8 @@ func (s *sanitizer) drop(field, value, reason string) {
 
 func sanitizeDraft(
 	in *sanitizeInput,
-) (*serviceports.SaveAgentDefinitionRequest, []serviceports.AgentDraftNote, error) {
-	s := &sanitizer{in: in, notes: make([]serviceports.AgentDraftNote, 0, 4)}
+) (*agentdefinitionports.SaveAgentDefinitionRequest, []agentports.AgentDraftNote, error) {
+	s := &sanitizer{in: in, notes: make([]agentports.AgentDraftNote, 0, 4)}
 	reply := in.reply
 
 	instructions := stringutils.TruncateRunes(
@@ -96,7 +97,7 @@ func sanitizeDraft(
 	}
 
 	trigger := s.trigger()
-	req := &serviceports.SaveAgentDefinitionRequest{
+	req := &agentdefinitionports.SaveAgentDefinitionRequest{
 		Name:              s.name(),
 		Description:       stringutils.OneLine(reply.Description, agentdefinition.MaxDescriptionLength),
 		Instructions:      instructions,
@@ -187,7 +188,7 @@ func (s *sanitizer) ceiling() agent.AutonomyTier {
 func (s *sanitizer) tools(
 	ceiling agent.AutonomyTier,
 ) ([]string, map[string]agent.AutonomyTier) {
-	offered := make(map[string]*serviceports.ToolCatalogEntry, len(s.in.catalog))
+	offered := make(map[string]*agentdefinitionports.ToolCatalogEntry, len(s.in.catalog))
 	for idx := range s.in.catalog {
 		offered[s.in.catalog[idx].Name] = &s.in.catalog[idx]
 	}
@@ -220,7 +221,7 @@ func (s *sanitizer) tools(
 		}
 		names = append(names, name)
 
-		if entry.Kind != serviceports.ToolCatalogKindAction {
+		if entry.Kind != agentdefinitionports.ToolCatalogKindAction {
 			continue
 		}
 		if tier, set := s.tier(entry, picked.Tier, ceiling); set {
@@ -236,7 +237,7 @@ func (s *sanitizer) tools(
 }
 
 func (s *sanitizer) tier(
-	entry *serviceports.ToolCatalogEntry,
+	entry *agentdefinitionports.ToolCatalogEntry,
 	value string,
 	ceiling agent.AutonomyTier,
 ) (agent.AutonomyTier, bool) {

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,9 +16,9 @@ var (
 )
 
 func candidate(
-	mutate func(*repositories.ConsolidationCandidate),
-) *repositories.ConsolidationCandidate {
-	c := &repositories.ConsolidationCandidate{
+	mutate func(*billingqueueports.ConsolidationCandidate),
+) *billingqueueports.ConsolidationCandidate {
+	c := &billingqueueports.ConsolidationCandidate{
 		CustomerID:   custA,
 		CustomerName: "Acme Foods",
 	}
@@ -35,7 +35,7 @@ func TestGroupKeyCustomerNeverSpansCustomers(t *testing.T) {
 	a := GroupKeyFor(customer.InvoiceSplitKeyCustomer, candidate(nil))
 	b := GroupKeyFor(
 		customer.InvoiceSplitKeyCustomer,
-		candidate(func(c *repositories.ConsolidationCandidate) {
+		candidate(func(c *billingqueueports.ConsolidationCandidate) {
 			c.CustomerID = custB
 		}),
 	)
@@ -50,7 +50,7 @@ func TestGroupKeyPONumber(t *testing.T) {
 	withPO := func(po string) GroupKeyResult {
 		return GroupKeyFor(
 			customer.InvoiceSplitKeyCustomerAndPONumber,
-			candidate(func(c *repositories.ConsolidationCandidate) { c.OrderPONumber = po }),
+			candidate(func(c *billingqueueports.ConsolidationCandidate) { c.OrderPONumber = po }),
 		)
 	}
 
@@ -73,11 +73,11 @@ func TestGroupKeySeparatorCannotBeForged(t *testing.T) {
 	// With a printable separator, "PO-1" + "|2" and "PO-1|2" would collide.
 	split := GroupKeyFor(
 		customer.InvoiceSplitKeyCustomerAndPONumber,
-		candidate(func(c *repositories.ConsolidationCandidate) { c.OrderPONumber = "PO-1|2" }),
+		candidate(func(c *billingqueueports.ConsolidationCandidate) { c.OrderPONumber = "PO-1|2" }),
 	)
 	plain := GroupKeyFor(
 		customer.InvoiceSplitKeyCustomerAndPONumber,
-		candidate(func(c *repositories.ConsolidationCandidate) { c.OrderPONumber = "PO-1" }),
+		candidate(func(c *billingqueueports.ConsolidationCandidate) { c.OrderPONumber = "PO-1" }),
 	)
 	assert.NotEqual(t, split.Key, plain.Key)
 }
@@ -87,7 +87,7 @@ func TestGroupKeyBOLAndLocations(t *testing.T) {
 
 	bol := GroupKeyFor(
 		customer.InvoiceSplitKeyCustomerAndShipmentBOL,
-		candidate(func(c *repositories.ConsolidationCandidate) { c.ShipmentBOL = "BOL-7" }),
+		candidate(func(c *billingqueueports.ConsolidationCandidate) { c.ShipmentBOL = "BOL-7" }),
 	)
 	assert.Equal(t, "BOL BOL-7", bol.Label)
 
@@ -96,11 +96,11 @@ func TestGroupKeyBOLAndLocations(t *testing.T) {
 
 	origin := GroupKeyFor(
 		customer.InvoiceSplitKeyCustomerAndOrigin,
-		candidate(func(c *repositories.ConsolidationCandidate) { c.OriginKey = "loc_1" }),
+		candidate(func(c *billingqueueports.ConsolidationCandidate) { c.OriginKey = "loc_1" }),
 	)
 	dest := GroupKeyFor(
 		customer.InvoiceSplitKeyCustomerAndDestination,
-		candidate(func(c *repositories.ConsolidationCandidate) { c.DestinationKey = "loc_1" }),
+		candidate(func(c *billingqueueports.ConsolidationCandidate) { c.DestinationKey = "loc_1" }),
 	)
 	// Same location, different question — these must not share a key.
 	assert.NotEqual(t, origin.Label, dest.Label)
@@ -115,7 +115,7 @@ func TestGroupKeyOrder(t *testing.T) {
 	orderID := pulid.MustNew("ord_")
 	withOrder := GroupKeyFor(
 		customer.InvoiceSplitKeyCustomerAndOrder,
-		candidate(func(c *repositories.ConsolidationCandidate) {
+		candidate(func(c *billingqueueports.ConsolidationCandidate) {
 			c.OrderID = orderID
 			c.OrderNumber = "ORD-9"
 		}),
@@ -125,7 +125,7 @@ func TestGroupKeyOrder(t *testing.T) {
 	// A shipment with no order is its own group, not merged with a real order.
 	orphan := GroupKeyFor(
 		customer.InvoiceSplitKeyCustomerAndOrder,
-		candidate(func(c *repositories.ConsolidationCandidate) {
+		candidate(func(c *billingqueueports.ConsolidationCandidate) {
 			c.ShipmentID = pulid.MustNew("shp_")
 			c.ProNumber = "PRO-1"
 		}),
@@ -145,14 +145,14 @@ func TestOrderSplitNeverMergesStandaloneShipments(t *testing.T) {
 
 	first := GroupKeyFor(
 		customer.InvoiceSplitKeyCustomerAndOrder,
-		candidate(func(c *repositories.ConsolidationCandidate) {
+		candidate(func(c *billingqueueports.ConsolidationCandidate) {
 			c.ShipmentID = pulid.MustNew("shp_")
 			c.ProNumber = "PRO-1001"
 		}),
 	)
 	second := GroupKeyFor(
 		customer.InvoiceSplitKeyCustomerAndOrder,
-		candidate(func(c *repositories.ConsolidationCandidate) {
+		candidate(func(c *billingqueueports.ConsolidationCandidate) {
 			c.ShipmentID = pulid.MustNew("shp_")
 			c.ProNumber = "PRO-1002"
 		}),
@@ -172,7 +172,7 @@ func TestStandaloneShipmentGroupIsStable(t *testing.T) {
 	build := func() GroupKeyResult {
 		return GroupKeyFor(
 			customer.InvoiceSplitKeyCustomerAndOrder,
-			candidate(func(c *repositories.ConsolidationCandidate) {
+			candidate(func(c *billingqueueports.ConsolidationCandidate) {
 				c.ShipmentID = shipmentID
 				c.ProNumber = "PRO-1001"
 			}),
@@ -189,7 +189,7 @@ func TestStandaloneShipmentWithoutAProNumberStillHasALabel(t *testing.T) {
 
 	result := GroupKeyFor(
 		customer.InvoiceSplitKeyCustomerAndOrder,
-		candidate(func(c *repositories.ConsolidationCandidate) {
+		candidate(func(c *billingqueueports.ConsolidationCandidate) {
 			c.ShipmentID = pulid.MustNew("shp_")
 		}),
 	)

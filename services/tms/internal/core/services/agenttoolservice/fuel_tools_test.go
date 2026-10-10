@@ -10,9 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/core/domain/ifta"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/fuelpurchaseservice"
 	"github.com/emoss08/trenova/internal/core/services/fuelsurchargeservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -273,14 +273,14 @@ func TestRecordFuelPurchase_PreviewsTheReceiptAndRecordsIt(t *testing.T) {
 	params := executeParams(purchaseParams())
 
 	preview := previewWithoutWrites(t, fuel.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would record 100.500 gallons of Diesel bought in TX")
 	change := previewChange(t, preview, 0)
 	assert.Equal(t, agent.PreviewOperationCreate, change.Operation)
 	assert.Equal(t, "TX (Texas)", fieldByPath(t, change, "jurisdiction").After)
 
-	result, err := tool.(serviceports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	require.NotNil(t, fuel.created)
 	assert.Equal(t, int64(39_185), fuel.created.Purchase.TotalAmountMinor)
@@ -311,7 +311,7 @@ func TestRecordFuelPurchase_RefusesWhatItCannotRecord(t *testing.T) {
 			t.Parallel()
 			params := purchaseParams()
 			change(params)
-			require.Error(t, tool.(serviceports.ToolValidator).Validate(
+			require.Error(t, tool.(agentports.ToolValidator).Validate(
 				t.Context(),
 				executeParams(params),
 			))
@@ -321,7 +321,7 @@ func TestRecordFuelPurchase_RefusesWhatItCannotRecord(t *testing.T) {
 	refused := newRecordFuelPurchaseTool(&fakeFuel{refusal: errortypes.NewValidationError(
 		"transactionReference", errortypes.ErrDuplicate, "Already on file",
 	)}, fakeJurisdictions{})
-	preview, err := refused.(serviceports.ToolPreviewer).Preview(
+	preview, err := refused.(agentports.ToolPreviewer).Preview(
 		t.Context(),
 		executeParams(purchaseParams()),
 	)
@@ -340,22 +340,22 @@ func TestCorrectFuelPurchase_KeepsWhatItIsNotGiven(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, fuel.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, "120.000", fieldByPath(t, previewChange(t, preview, 0), "gallons").After)
 
-	_, err := tool.(serviceports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	_, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	require.NotNil(t, fuel.updated)
 	assert.Equal(t, "120", fuel.updated.Purchase.Quantity.String())
 	assert.Equal(t, fuel.stored.TotalAmountMinor, fuel.updated.Purchase.TotalAmountMinor)
 	assert.Equal(t, fuel.stored.Version, fuel.updated.Purchase.Version)
 
-	target, ok := tool.(serviceports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, permission.ResourceFuelPurchase, target.Resource)
 
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), executeParams(
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), executeParams(
 		map[string]any{paramFuelPurchaseID: fuel.stored.ID.String()},
 	)))
 }
@@ -368,7 +368,7 @@ func TestDeleteFuelPurchase_StopsAtAProposalWithTheVersionItRead(t *testing.T) {
 	params := executeParams(map[string]any{paramFuelPurchaseID: fuel.stored.ID.String()})
 
 	preview := previewWithoutWrites(t, fuel.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, agent.PreviewOperationDelete, previewChange(t, preview, 0).Operation)
 
@@ -397,7 +397,7 @@ func TestAssignFuelCard_SaysWhenItActivatesTheCard(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, fuel.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "and make it active")
 
@@ -406,7 +406,7 @@ func TestAssignFuelCard_SaysWhenItActivatesTheCard(t *testing.T) {
 	assert.Equal(t, int64(1), fuel.assigned.Version)
 	assert.Equal(t, tractorID, *fuel.assigned.AssignedTractorID)
 
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), executeParams(
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), executeParams(
 		map[string]any{paramFuelCardID: fuel.card.ID.String()},
 	)))
 }
@@ -435,7 +435,7 @@ func TestFuelImportTools_PlanWithTheVersionTheyReadAndWriteOnlyOnExecute(t *test
 
 	commit := newCommitFuelPurchaseImportTool(fuel)
 	preview := previewWithoutWrites(t, fuel.guard, func() (*agent.ToolPreview, error) {
-		return commit.(serviceports.ToolPreviewer).Preview(t.Context(),
+		return commit.(agentports.ToolPreviewer).Preview(t.Context(),
 			executeParams(map[string]any{paramFuelImportID: fuel.batch.ID.String()}))
 	})
 	assert.Contains(t, preview.Summary, "Would commit 2 fuel purchases from september.csv")
@@ -445,14 +445,14 @@ func TestFuelImportTools_PlanWithTheVersionTheyReadAndWriteOnlyOnExecute(t *test
 
 	resolve := newResolveFuelPurchaseImportRowsTool(fuel)
 	preview = previewWithoutWrites(t, fuel.guard, func() (*agent.ToolPreview, error) {
-		return resolve.(serviceports.ToolPreviewer).Preview(t.Context(),
+		return resolve.(agentports.ToolPreviewer).Preview(t.Context(),
 			executeParams(map[string]any{paramFuelImportID: fuel.batch.ID.String()}))
 	})
 	assert.Contains(t, preview.Summary, "2 now resolve and 1 still wait")
 
 	discard := newDiscardFuelPurchaseImportTool(fuel)
 	preview = previewWithoutWrites(t, fuel.guard, func() (*agent.ToolPreview, error) {
-		return discard.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return discard.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, "Discarded", fieldByPath(t, previewChange(t, preview, 0), "status").After)
 	require.NoError(t, discard.Execute(t.Context(), params))
@@ -462,7 +462,7 @@ func TestFuelImportTools_PlanWithTheVersionTheyReadAndWriteOnlyOnExecute(t *test
 		batch:   fuelBatch(),
 		refusal: errortypes.NewValidationError("status", errortypes.ErrInvalid, "Committed"),
 	})
-	require.Error(t, refused.(serviceports.ToolValidator).Validate(t.Context(),
+	require.Error(t, refused.(agentports.ToolValidator).Validate(t.Context(),
 		executeParams(map[string]any{paramFuelImportID: fuel.batch.ID.String()})))
 }
 
@@ -539,7 +539,7 @@ func TestFuelIndexPriceTools_OnlyAPersonMovesAPrice(t *testing.T) {
 		paramPrice:       "3.899",
 	})
 	preview := previewWithoutWrites(t, prices.guard, func() (*agent.ToolPreview, error) {
-		return record.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return record.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would record 3.899 USD a gallon for 2026-09-28")
 	require.ErrorIs(t, record.Execute(t.Context(), params), ErrNeedsAPersonsApproval)
@@ -555,11 +555,11 @@ func TestFuelIndexPriceTools_OnlyAPersonMovesAPrice(t *testing.T) {
 		paramPrice:            "3.829",
 	})
 	preview = previewWithoutWrites(t, prices.guard, func() (*agent.ToolPreview, error) {
-		return correct.(serviceports.ToolPreviewer).Preview(t.Context(), fix)
+		return correct.(agentports.ToolPreviewer).Preview(t.Context(), fix)
 	})
 	assert.Contains(t, preview.Summary, "from 3.799 to 3.829")
 
-	require.Error(t, correct.(serviceports.ToolValidator).Validate(t.Context(), executeParams(
+	require.Error(t, correct.(agentports.ToolValidator).Validate(t.Context(), executeParams(
 		map[string]any{
 			paramFuelIndexPriceID: prices.stored.ID.String(),
 			paramPriceDate:        "Sept 21",
@@ -567,7 +567,7 @@ func TestFuelIndexPriceTools_OnlyAPersonMovesAPrice(t *testing.T) {
 		},
 	)))
 
-	for _, tool := range []serviceports.AgentTool{record, correct} {
+	for _, tool := range []agentports.AgentTool{record, correct} {
 		policy := tool.Policy()
 		assert.Equal(t, []agent.EgressClass{agent.EgressMoney}, policy.Egress, policy.Name)
 		assert.Equal(t, agent.TierPropose, policy.MaxTier, policy.Name)
@@ -585,13 +585,13 @@ func TestRecordFuelPurchase_WorksOutTheTotalFromTheUnitPrice(t *testing.T) {
 	params[paramQuantity] = "112"
 	params[paramUnitPrice] = "3.89"
 
-	_, err := tool.(serviceports.ToolResultReporter).ExecuteWithResult(t.Context(), executeParams(params))
+	_, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), executeParams(params))
 	require.NoError(t, err)
 	require.NotNil(t, fuel.created)
 	assert.Equal(t, int64(43_568), fuel.created.Purchase.TotalAmountMinor)
 
 	delete(params, paramUnitPrice)
-	err = tool.(serviceports.ToolValidator).Validate(t.Context(), executeParams(params))
+	err = tool.(agentports.ToolValidator).Validate(t.Context(), executeParams(params))
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), paramTotalAmount)
 }
@@ -606,7 +606,7 @@ func TestRecordFuelPurchase_RecordsADayAloneAtNoonInTheOrganizationsZone(t *test
 	execute := executeParams(params)
 	execute.Timezone = "America/Chicago"
 
-	_, err := tool.(serviceports.ToolResultReporter).ExecuteWithResult(t.Context(), execute)
+	_, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), execute)
 	require.NoError(t, err)
 	require.NotNil(t, fuel.created)
 

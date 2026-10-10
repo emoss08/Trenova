@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/workersafetyservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -286,13 +286,13 @@ func TestOpenWorkerSafetyEvent_TakesTheHouseScaleForPoints(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, events.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, agent.PreviewOperationCreate, previewChange(t, preview, 0).Operation)
 	assert.Contains(t, preview.Summary, "major accident")
 
-	require.NoError(t, tool.(serviceports.ToolValidator).Validate(t.Context(), params))
-	result, err := tool.(serviceports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	require.NoError(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
+	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	require.NotNil(t, events.created)
 	assert.Equal(t, worker.DefaultSafetyPoints(worker.SafetyEventAccident,
@@ -321,7 +321,7 @@ func TestOpenWorkerSafetyEvent_TakesTheHouseScaleForPoints(t *testing.T) {
 			fieldDescription: "x",
 		},
 	} {
-		require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+		require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 			executeParams(raw)), name)
 	}
 }
@@ -337,7 +337,7 @@ func TestUpdateWorkerSafetyEvent_ChangesOnlyWhatIsNamed(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, events.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.InDelta(t, 5, fieldByPath(t, previewChange(t, preview, 0), paramPoints).After, 0)
 
@@ -345,7 +345,7 @@ func TestUpdateWorkerSafetyEvent_ChangesOnlyWhatIsNamed(t *testing.T) {
 	require.NotNil(t, events.updated)
 	assert.Equal(t, int32(5), events.updated.Points)
 	assert.Equal(t, events.event.Description, events.updated.Description)
-	target, ok := tool.(serviceports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, permission.ResourceWorkerSafetyEvent, target.Resource)
 }
@@ -355,7 +355,7 @@ func TestChangeWorkerSafetyEventStatus_ClosingNeedsAResolution(t *testing.T) {
 
 	events := newFakeSafety()
 	tool := newChangeWorkerSafetyEventStatusTool(events)
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 		executeParams(map[string]any{
 			paramSafetyEventID: events.event.ID.String(),
 			paramEventMove:     "Close",
@@ -367,7 +367,7 @@ func TestChangeWorkerSafetyEventStatus_ClosingNeedsAResolution(t *testing.T) {
 		paramResolutionText: "Brakes adjusted and re-inspected",
 	})
 	preview := previewWithoutWrites(t, events.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, string(worker.SafetyEventStatusClosed),
 		fieldByPath(t, previewChange(t, preview, 0), fieldStatus).After)
@@ -390,14 +390,14 @@ func TestDeleteWorkerSafetyEvent_RefusesAClosedEvent(t *testing.T) {
 	params := executeParams(map[string]any{paramSafetyEventID: events.event.ID.String()})
 
 	preview := previewWithoutWrites(t, events.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, agent.PreviewOperationDelete, previewChange(t, preview, 0).Operation)
 	assert.Equal(t, agent.TierPropose, tool.Policy().MaxTier)
 	assert.False(t, tool.Policy().Reversible)
 
 	events.event.Status = worker.SafetyEventStatusClosed
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
 	assert.Empty(t, events.deleted)
 }
 
@@ -414,7 +414,7 @@ func TestGiveWorkerRecognition_TellsTheDriver(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, events.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "told in Dash")
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -435,7 +435,7 @@ func TestSafetyViolationTools_KeepWhatIsNotNamed(t *testing.T) {
 		paramSeverityWeight: float64(2),
 	})
 	preview := previewWithoutWrites(t, events.guard, func() (*agent.ToolPreview, error) {
-		return record.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return record.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "severity weight 2")
 	require.NoError(t, record.Execute(t.Context(), params))
@@ -452,7 +452,7 @@ func TestSafetyViolationTools_KeepWhatIsNotNamed(t *testing.T) {
 	assert.Equal(t, events.violation.Description, events.corrected.Description)
 	assert.Equal(t, events.violation.Code, events.corrected.Code)
 
-	require.Error(t, record.(serviceports.ToolValidator).Validate(t.Context(),
+	require.Error(t, record.(agentports.ToolValidator).Validate(t.Context(),
 		executeParams(map[string]any{
 			paramSafetyEventID:  events.event.ID.String(),
 			fieldDescription:    "x",

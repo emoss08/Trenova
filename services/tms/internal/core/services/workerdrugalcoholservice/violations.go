@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,7 +19,7 @@ func (s *Service) ListViolations(
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 ) ([]*worker.WorkerDOTViolation, error) {
-	return s.repo.ListViolations(ctx, &repositories.ListWorkerDOTViolationsRequest{
+	return s.repo.ListViolations(ctx, &workerports.ListWorkerDOTViolationsRequest{
 		TenantInfo:   tenantInfo,
 		WorkerID:     workerID,
 		IncludeTests: true,
@@ -45,7 +45,7 @@ func (s *Service) RecordViolation(
 ) (*worker.WorkerDOTViolation, error) {
 	tenantInfo := violationTenant(entity)
 
-	if _, err := s.workerRepo.GetByID(ctx, repositories.GetWorkerByIDRequest{
+	if _, err := s.workerRepo.GetByID(ctx, workerports.GetWorkerByIDRequest{
 		ID:         entity.WorkerID,
 		TenantInfo: tenantInfo,
 	}); err != nil {
@@ -119,7 +119,7 @@ func (s *Service) UpdateViolation(
 	ctx context.Context,
 	req *UpdateViolationRequest,
 ) (*worker.WorkerDOTViolation, error) {
-	entity, err := s.repo.GetViolationByID(ctx, &repositories.GetWorkerDOTViolationByIDRequest{
+	entity, err := s.repo.GetViolationByID(ctx, &workerports.GetWorkerDOTViolationByIDRequest{
 		ID:         req.ViolationID,
 		TenantInfo: req.TenantInfo,
 	})

@@ -11,10 +11,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -28,9 +31,9 @@ import (
 type ingestInput struct {
 	tenant  pagination.TenantInfo
 	control *carrierintel.CarrierIntelControl
-	subject repositories.CarrierIntelSubject
+	subject carrierintelports.CarrierIntelSubject
 	bound   *boundProvider
-	result  *services.CarrierIntelLookupResult
+	result  *carrierintelports.CarrierIntelLookupResult
 	current *carrierintel.CarrierIntelSnapshot
 	source  carrierintel.EventSource
 	purpose carrierintel.Purpose
@@ -40,7 +43,7 @@ func (s *Service) evaluateSubject(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	control *carrierintel.CarrierIntelControl,
-	subject repositories.CarrierIntelSubject,
+	subject carrierintelports.CarrierIntelSubject,
 	profile *carrierintel.Profile,
 	notFound bool,
 ) ([]carrierintel.Finding, error) {
@@ -160,7 +163,7 @@ func (s *Service) ingest(ctx context.Context, in *ingestInput) (*FetchResult, er
 	raised := carrierintel.NewlyRaised(priorFindings, findings)
 	events := s.buildEvents(in, snapshot, changes, raised, current, now)
 
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		if len(result.Raw) > 0 {
 			raw, rawErr := s.rawRepo.Insert(txCtx, &carrierintel.CarrierIntelRawPayload{
 				OrganizationID: in.tenant.OrgID,
@@ -225,7 +228,7 @@ func (s *Service) confirmUnchanged(
 		event.SnapshotID = current.ID
 	}
 
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		if txErr := s.snapshotRepo.UpdateEvaluation(txCtx, current); txErr != nil {
 			return txErr
 		}
@@ -338,14 +341,14 @@ func nextReviewState(
 	return carrierintel.ReviewStateNeedsReview
 }
 
-func docketOf(profile *carrierintel.Profile, subject repositories.CarrierIntelSubject) string {
+func docketOf(profile *carrierintel.Profile, subject carrierintelports.CarrierIntelSubject) string {
 	if profile != nil && profile.Identity != nil && profile.Identity.DocketNumber != "" {
 		return profile.Identity.DocketNumber
 	}
 	return subject.DocketNumber
 }
 
-func subjectLabel(subject repositories.CarrierIntelSubject, profile *carrierintel.Profile) string {
+func subjectLabel(subject carrierintelports.CarrierIntelSubject, profile *carrierintel.Profile) string {
 	name := subject.Name
 	if name == "" && profile != nil && profile.Identity != nil {
 		name = profile.Identity.LegalName
@@ -464,7 +467,7 @@ func (s *Service) buildEvents(
 func (s *Service) updateCarrierSummary(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	subject repositories.CarrierIntelSubject,
+	subject carrierintelports.CarrierIntelSubject,
 	snapshot *carrierintel.CarrierIntelSnapshot,
 ) error {
 	if subject.SubjectType != carrierintel.SubjectTypeCarrier || subject.CarrierID.IsNil() {
@@ -474,7 +477,7 @@ func (s *Service) updateCarrierSummary(
 	if snapshot.RiskLevel == carrierintel.RiskLevelUnknown {
 		risk = ""
 	}
-	return s.snapshotRepo.UpdateCarrierSummary(ctx, &repositories.UpdateCarrierIntelSummaryRequest{
+	return s.snapshotRepo.UpdateCarrierSummary(ctx, &carrierintelports.UpdateCarrierIntelSummaryRequest{
 		TenantInfo:     tenantInfo,
 		CarrierID:      subject.CarrierID,
 		RiskLevel:      risk,
@@ -500,12 +503,12 @@ func (s *Service) afterIngest(
 	}
 
 	if in.purpose.IsInteractive() {
-		if err := s.auditService.LogAction(&services.LogActionParams{
+		if err := s.auditService.LogAction(&auditports.LogActionParams{
 			Resource:       permission.ResourceCarrierIntelligence,
 			ResourceID:     snapshot.ID.String(),
 			Operation:      permission.OpUpdate,
 			UserID:         in.tenant.UserID,
-			PrincipalType:  services.PrincipalTypeUser,
+			PrincipalType:  permissionports.PrincipalTypeUser,
 			PrincipalID:    in.tenant.UserID,
 			CurrentState:   jsonutils.MustToJSON(snapshotAuditView(snapshot)),
 			OrganizationID: in.tenant.OrgID,
@@ -561,7 +564,7 @@ func (s *Service) publishEventsToAgents(
 		if !watchtowersources.CarrierIntelEventOnTower(event) {
 			continue
 		}
-		services.PublishAgentEvent(ctx, s.publisher, services.AgentEvent{
+		agentports.PublishAgentEvent(ctx, s.publisher, agentports.AgentEvent{
 			Kind:       agent.EventCarrierIntelEventOpened,
 			SubjectID:  event.ID,
 			TenantInfo: tenant,
@@ -593,10 +596,10 @@ func (s *Service) publish(
 	if s.realtime == nil {
 		return
 	}
-	actorType := services.PrincipalTypeSystem
-	actorID := services.SystemPrincipalID
+	actorType := permissionports.PrincipalTypeSystem
+	actorID := permissionports.SystemPrincipalID
 	if tenantInfo.UserID.IsNotNil() {
-		actorType = services.PrincipalTypeUser
+		actorType = permissionports.PrincipalTypeUser
 		actorID = tenantInfo.UserID
 	}
 	if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
@@ -682,10 +685,10 @@ func (s *Service) syncCarrierRecord(
 	}
 
 	for attempt := range 2 {
-		entity, err := s.carrierRepo.GetByID(ctx, repositories.GetCarrierByIDRequest{
+		entity, err := s.carrierRepo.GetByID(ctx, carrierports.GetCarrierByIDRequest{
 			ID:         in.subject.CarrierID,
 			TenantInfo: in.tenant,
-			CarrierFilterOptions: repositories.CarrierFilterOptions{
+			CarrierFilterOptions: carrierports.CarrierFilterOptions{
 				IncludeContacts:          true,
 				IncludeInsurancePolicies: true,
 				IncludeEDIChannels:       true,
@@ -716,9 +719,9 @@ func (s *Service) syncCarrierRecord(
 			return
 		}
 
-		_, err = s.carrierService.Update(ctx, entity, &services.RequestActor{
-			PrincipalType:  services.PrincipalTypeSystem,
-			PrincipalID:    services.SystemPrincipalID,
+		_, err = s.carrierService.Update(ctx, entity, &permissionports.RequestActor{
+			PrincipalType:  permissionports.PrincipalTypeSystem,
+			PrincipalID:    permissionports.SystemPrincipalID,
 			OrganizationID: in.tenant.OrgID,
 			BusinessUnitID: in.tenant.BuID,
 		})

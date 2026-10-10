@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"go.temporal.io/sdk/activity"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -77,7 +77,7 @@ func (a *Activities) ListTenantsActivity(
 	payload *ListTenantsPayload,
 ) (*temporaljobs.TenantPage, error) {
 	limit := temporaljobs.NormalizeLimit(payload.Limit, tenantPageSize)
-	after := repositories.CarrierIntelTenantCursor{}
+	after := carrierintelports.CarrierIntelTenantCursor{}
 	if payload.After != nil {
 		after.OrganizationID = payload.After.OrganizationID
 		after.BusinessUnitID = payload.After.BusinessUnitID

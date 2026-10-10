@@ -1,12 +1,13 @@
 package fiscalyearservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
 	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -134,12 +135,12 @@ func TestPreserveLifecycleIgnoresWorkflowFieldsFromThePayload(t *testing.T) {
 func TestValidateCloseCountsLockedPeriodsAsUnclosed(t *testing.T) {
 	t.Parallel()
 
-	fpRepo := mocks.NewMockFiscalPeriodRepository(t)
+	fpRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	service := &Service{l: zap.NewNop(), fiscalPeriodRepo: fpRepo}
 	year := openYear()
 
 	fpRepo.EXPECT().
-		CountUnclosedPeriodsByFiscalYear(t.Context(), repositories.CountUnclosedPeriodsByFiscalYearRequest{
+		CountUnclosedPeriodsByFiscalYear(t.Context(), fiscalperiodports.CountUnclosedPeriodsByFiscalYearRequest{
 			FiscalYearID: year.ID,
 			OrgID:        year.OrganizationID,
 			BuID:         year.BusinessUnitID,

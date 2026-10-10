@@ -16,8 +16,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/edix12"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
@@ -451,7 +451,7 @@ func TestParseServiceFailure214SettingsDefaultsDisabled(t *testing.T) {
 	require.False(t, settings.MandatoryOnResolved)
 	require.Empty(t, settings.StatusCode)
 	require.Empty(t, settings.AcceptedReasonCodes)
-	require.False(t, settings.enabledForTrigger(services.ServiceFailureEDITriggerReviewed))
+	require.False(t, settings.enabledForTrigger(servicefailureports.ServiceFailureEDITriggerReviewed))
 }
 
 func TestParseServiceFailure214SettingsMalformedDisabled(t *testing.T) {
@@ -463,7 +463,7 @@ func TestParseServiceFailure214SettingsMalformedDisabled(t *testing.T) {
 
 	require.False(t, settings.Enabled)
 	require.NotEmpty(t, diagnostics)
-	require.False(t, settings.enabledForTrigger(services.ServiceFailureEDITriggerReviewed))
+	require.False(t, settings.enabledForTrigger(servicefailureports.ServiceFailureEDITriggerReviewed))
 }
 
 func TestParseServiceFailure214SettingsNormalizesAcceptedReasonCodes(t *testing.T) {
@@ -506,9 +506,9 @@ func TestParseServiceFailure214SettingsNormalizesAcceptedReasonCodes(t *testing.
 	require.Equal(t, "LT", settings.TimeCode)
 	require.Contains(t, settings.AcceptedReasonCodes, "NS")
 	require.Contains(t, settings.AcceptedReasonCodes, "CA")
-	require.True(t, settings.enabledForTrigger(services.ServiceFailureEDITriggerReviewed))
-	require.True(t, settings.enabledForTrigger(services.ServiceFailureEDITriggerResolved))
-	require.True(t, settings.mandatory(services.ServiceFailureEDITriggerResolved))
+	require.True(t, settings.enabledForTrigger(servicefailureports.ServiceFailureEDITriggerReviewed))
+	require.True(t, settings.enabledForTrigger(servicefailureports.ServiceFailureEDITriggerResolved))
+	require.True(t, settings.mandatory(servicefailureports.ServiceFailureEDITriggerResolved))
 }
 
 func TestBuildServiceFailure214LifecyclePayloadStatusPrecedence(t *testing.T) {
@@ -534,7 +534,7 @@ func TestBuildServiceFailure214LifecyclePayloadStatusPrecedence(t *testing.T) {
 		base,
 		nil,
 		serviceFailure214Settings{StatusCode: "AF"},
-		services.ServiceFailureEDITriggerReviewed,
+		servicefailureports.ServiceFailureEDITriggerReviewed,
 	)
 	require.Equal(t, "AF", payload.ShipmentStatus.StatusCode)
 	require.Equal(t, "CA", payload.ShipmentStatus.StatusReasonCode)
@@ -544,7 +544,7 @@ func TestBuildServiceFailure214LifecyclePayloadStatusPrecedence(t *testing.T) {
 		base,
 		nil,
 		serviceFailure214Settings{StatusCode: "AF"},
-		services.ServiceFailureEDITriggerReviewed,
+		servicefailureports.ServiceFailureEDITriggerReviewed,
 	)
 	require.Equal(t, "SD", payload.ShipmentStatus.StatusCode)
 
@@ -553,7 +553,7 @@ func TestBuildServiceFailure214LifecyclePayloadStatusPrecedence(t *testing.T) {
 		base,
 		nil,
 		serviceFailure214Settings{},
-		services.ServiceFailureEDITriggerReviewed,
+		servicefailureports.ServiceFailureEDITriggerReviewed,
 	)
 	require.Equal(t, "A3", payload.ShipmentStatus.StatusCode)
 
@@ -562,7 +562,7 @@ func TestBuildServiceFailure214LifecyclePayloadStatusPrecedence(t *testing.T) {
 		base,
 		nil,
 		serviceFailure214Settings{},
-		services.ServiceFailureEDITriggerReviewed,
+		servicefailureports.ServiceFailureEDITriggerReviewed,
 	)
 	require.Equal(t, "SD", payload.ShipmentStatus.StatusCode)
 }

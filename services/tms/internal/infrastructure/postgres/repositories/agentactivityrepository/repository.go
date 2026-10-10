@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -23,7 +23,7 @@ type repository struct {
 	db *postgres.Connection
 }
 
-func New(p Params) repositories.AgentActivityRepository {
+func New(p Params) agentports.AgentActivityRepository {
 	return &repository{db: p.DB}
 }
 
@@ -41,10 +41,10 @@ func openResolutionStates() []agent.ResolutionState {
 
 func (r *repository) Totals(
 	ctx context.Context,
-	req repositories.AgentActivityTotalsRequest,
-) (*repositories.AgentActivityTotals, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.AgentActivityTotals, error) {
-		totals := new(repositories.AgentActivityTotals)
+	req agentports.AgentActivityTotalsRequest,
+) (*agentports.AgentActivityTotals, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentports.AgentActivityTotals, error) {
+		totals := new(agentports.AgentActivityTotals)
 		dba := r.db.DBForContext(ctx)
 
 		runs := buncolgen.AgentRunColumns

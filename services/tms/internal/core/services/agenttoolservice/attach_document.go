@@ -6,9 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -37,7 +37,7 @@ type attachDocumentTool struct {
 	documents documentAttacher
 }
 
-func newAttachDocumentTool(documents documentAttacher) serviceports.AgentTool {
+func newAttachDocumentTool(documents documentAttacher) agentports.AgentTool {
 	return &attachDocumentTool{documents: documents}
 }
 
@@ -75,8 +75,8 @@ func (t *attachDocumentTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *attachDocumentTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *attachDocumentTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceDocument,
@@ -95,13 +95,13 @@ func (t *attachDocumentTool) Policy() serviceports.ToolPolicy {
 // Target names the record this changes, so the proposal is pinned to the
 // document's version and a file somebody moved in the meantime cannot be moved
 // again on stale information.
-func (t *attachDocumentTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *attachDocumentTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, "documentId", permission.ResourceDocument)
 }
 
 func (t *attachDocumentTool) Validate(
 	_ context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	return t.validateArgs(params.Params)
 }
@@ -119,7 +119,7 @@ func (t *attachDocumentTool) validateArgs(params map[string]any) error {
 
 func (t *attachDocumentTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -143,7 +143,7 @@ func (t *attachDocumentTool) Execute(
 }
 
 func (t *attachDocumentTool) request(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*documentservice.AttachLineageRequest, error) {
 	documentID, err := requirePulid(params.Params, "documentId")
 	if err != nil {

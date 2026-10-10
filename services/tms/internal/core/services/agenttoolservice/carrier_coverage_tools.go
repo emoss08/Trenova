@@ -8,10 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/carrierassignmentservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -42,16 +42,16 @@ const (
 type carrierCoverage interface {
 	AssignToMove(
 		ctx context.Context,
-		req *repositories.AssignMoveToCarrierRequest,
+		req *shipmentports.AssignMoveToCarrierRequest,
 	) (*shipment.CarrierAssignment, error)
 	PreviewAssignToMove(
 		ctx context.Context,
-		req *repositories.AssignMoveToCarrierRequest,
+		req *shipmentports.AssignMoveToCarrierRequest,
 	) (*carrierassignmentservice.CoveragePlan, error)
-	Cancel(ctx context.Context, req *repositories.CancelCarrierAssignmentRequest) error
+	Cancel(ctx context.Context, req *shipmentports.CancelCarrierAssignmentRequest) error
 	PreviewCancel(
 		ctx context.Context,
-		req *repositories.CancelCarrierAssignmentRequest,
+		req *shipmentports.CancelCarrierAssignmentRequest,
 	) (*carrierassignmentservice.CoveragePlan, error)
 }
 
@@ -62,7 +62,7 @@ type assignMoveToCarrierTool struct {
 	carriers carrierCoverage
 }
 
-func newAssignMoveToCarrierTool(carriers carrierCoverage) serviceports.AgentTool {
+func newAssignMoveToCarrierTool(carriers carrierCoverage) agentports.AgentTool {
 	return &assignMoveToCarrierTool{carriers: carriers}
 }
 
@@ -144,8 +144,8 @@ func (t *assignMoveToCarrierTool) ParamSchema() map[string]any {
 	}, previewFieldShipmentMoveID, fieldCarrierID, fieldRateMethod, fieldBaseRate)
 }
 
-func (t *assignMoveToCarrierTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *assignMoveToCarrierTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceShipmentMove,
@@ -157,7 +157,7 @@ func (t *assignMoveToCarrierTool) Policy() serviceports.ToolPolicy {
 		Effect:        agent.ToolEffectChange,
 		Reversible:    true,
 		ReadsExternal: agent.ExternalReadNever,
-		Condition: &serviceports.TierCondition{
+		Condition: &agentports.TierCondition{
 			Description: "Replacing a carrier already on the move, or overriding the new " +
 				"carrier's insurance warning, is a proposal a person decides; any other " +
 				"assignment runs once a person approves it.",
@@ -171,7 +171,7 @@ func (t *assignMoveToCarrierTool) Policy() serviceports.ToolPolicy {
 
 func carrierAssignmentTierLimit(
 	_ context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
 ) agent.AutonomyTier {
 	if optionalBool(params.Params, fieldReplace) ||
 		optionalBool(params.Params, fieldOverrideInsuranceWarning) {
@@ -183,7 +183,7 @@ func carrierAssignmentTierLimit(
 
 func (t *assignMoveToCarrierTool) Validate(
 	_ context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	request, err := t.request(&params)
 	if err != nil {
@@ -198,7 +198,7 @@ func (t *assignMoveToCarrierTool) Validate(
 
 func (t *assignMoveToCarrierTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -224,8 +224,8 @@ type carrierAccessorialParam struct {
 // carrier's contract here: contract pricing saves a quote as it prices, so a
 // proposal could not show the pay a person is approving.
 func (t *assignMoveToCarrierTool) request(
-	params *serviceports.ToolExecuteParams,
-) (*repositories.AssignMoveToCarrierRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*shipmentports.AssignMoveToCarrierRequest, error) {
 	if err := guardPreview(t, params); err != nil {
 		return nil, err
 	}
@@ -259,7 +259,7 @@ func (t *assignMoveToCarrierTool) request(
 		return nil, err
 	}
 
-	return &repositories.AssignMoveToCarrierRequest{
+	return &shipmentports.AssignMoveToCarrierRequest{
 		TenantInfo:     tenantFrom(*params),
 		ShipmentMoveID: moveID,
 		CarrierID:      carrierID,
@@ -285,7 +285,7 @@ func (t *assignMoveToCarrierTool) request(
 	}, nil
 }
 
-func (t *assignMoveToCarrierTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *assignMoveToCarrierTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, previewFieldShipmentMoveID, permission.ResourceShipmentMove)
 }
 
@@ -295,7 +295,7 @@ type cancelCarrierAssignmentTool struct {
 	carriers carrierCoverage
 }
 
-func newCancelCarrierAssignmentTool(carriers carrierCoverage) serviceports.AgentTool {
+func newCancelCarrierAssignmentTool(carriers carrierCoverage) agentports.AgentTool {
 	return &cancelCarrierAssignmentTool{carriers: carriers}
 }
 
@@ -325,8 +325,8 @@ func (t *cancelCarrierAssignmentTool) ParamSchema() map[string]any {
 	}, previewFieldShipmentMoveID, fieldReason)
 }
 
-func (t *cancelCarrierAssignmentTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *cancelCarrierAssignmentTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceShipmentMove,
@@ -337,7 +337,7 @@ func (t *cancelCarrierAssignmentTool) Policy() serviceports.ToolPolicy {
 		Egress:        []agent.EgressClass{agent.EgressMoney},
 		Effect:        agent.ToolEffectChange,
 		ReadsExternal: agent.ExternalReadNever,
-		Condition: &serviceports.TierCondition{
+		Condition: &agentports.TierCondition{
 			Description: "Taking off a carrier who has confirmed the rate breaks an executed " +
 				"agreement, so it is a proposal a person decides, as is one the service " +
 				"would refuse or that cannot be read; a carrier who has not confirmed comes " +
@@ -352,7 +352,7 @@ func (t *cancelCarrierAssignmentTool) Policy() serviceports.ToolPolicy {
 
 func (t *cancelCarrierAssignmentTool) tierLimit(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
 ) agent.AutonomyTier {
 	request, err := t.request(&params)
 	if err != nil {
@@ -370,7 +370,7 @@ func (t *cancelCarrierAssignmentTool) tierLimit(
 
 func (t *cancelCarrierAssignmentTool) Validate(
 	_ context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	request, err := t.request(&params)
 	if err != nil {
@@ -385,7 +385,7 @@ func (t *cancelCarrierAssignmentTool) Validate(
 
 func (t *cancelCarrierAssignmentTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -400,8 +400,8 @@ func (t *cancelCarrierAssignmentTool) Execute(
 }
 
 func (t *cancelCarrierAssignmentTool) request(
-	params *serviceports.ToolExecuteParams,
-) (*repositories.CancelCarrierAssignmentRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*shipmentports.CancelCarrierAssignmentRequest, error) {
 	if err := guardPreview(t, params); err != nil {
 		return nil, err
 	}
@@ -415,7 +415,7 @@ func (t *cancelCarrierAssignmentTool) request(
 		return nil, err
 	}
 
-	return &repositories.CancelCarrierAssignmentRequest{
+	return &shipmentports.CancelCarrierAssignmentRequest{
 		TenantInfo:     tenantFrom(*params),
 		ShipmentMoveID: moveID,
 		Reason:         strings.TrimSpace(reason),
@@ -424,7 +424,7 @@ func (t *cancelCarrierAssignmentTool) request(
 
 func (t *cancelCarrierAssignmentTool) Target(
 	params map[string]any,
-) (serviceports.ToolTarget, bool) {
+) (agentports.ToolTarget, bool) {
 	return targetOf(params, previewFieldShipmentMoveID, permission.ResourceShipmentMove)
 }
 
@@ -466,7 +466,7 @@ func decimalArg(params map[string]any, key string, required bool) (decimal.Decim
 	return value, nil
 }
 
-func carrierAccessorialsArg(params map[string]any) ([]repositories.CarrierAccessorialInput, error) {
+func carrierAccessorialsArg(params map[string]any) ([]shipmentports.CarrierAccessorialInput, error) {
 	if _, present := params[fieldAccessorials]; !present {
 		return nil, nil
 	}
@@ -482,13 +482,13 @@ func carrierAccessorialsArg(params map[string]any) ([]repositories.CarrierAccess
 		)
 	}
 
-	out := make([]repositories.CarrierAccessorialInput, 0, len(lines))
+	out := make([]shipmentports.CarrierAccessorialInput, 0, len(lines))
 	for idx, line := range lines {
 		amount, err := decimalArg(map[string]any{fieldAmount: line.Amount}, fieldAmount, true)
 		if err != nil {
 			return nil, fmt.Errorf("accessorials[%d]: %w", idx, err)
 		}
-		input := repositories.CarrierAccessorialInput{
+		input := shipmentports.CarrierAccessorialInput{
 			Description: strings.TrimSpace(line.Description),
 			Amount:      amount,
 		}

@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/distancecontrol"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/places/ports/distancecontrolports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/gin-gonic/gin"
@@ -17,13 +17,13 @@ import (
 type Params struct {
 	fx.In
 
-	Service              services.DistanceControlService
+	Service              distancecontrolports.DistanceControlService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	service services.DistanceControlService
+	service distancecontrolports.DistanceControlService
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
 }

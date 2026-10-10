@@ -4,12 +4,11 @@ import (
 	"errors"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs/documentuploadcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs/documentuploadcontract"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/sdk/temporal"
@@ -295,7 +294,7 @@ func finalizeAttachment(
 		&documentuploadcontract.FinalizeUploadPayload{
 			BasePayload:   payload.BasePayload,
 			SessionID:     ref.SessionID,
-			PrincipalType: services.PrincipalTypeSystem,
+			PrincipalType: permissionports.PrincipalTypeSystem,
 		},
 	).Get(ctx, finalized); err != nil {
 		return pulid.Nil, err

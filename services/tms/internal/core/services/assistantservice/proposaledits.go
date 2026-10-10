@@ -5,8 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,7 +15,7 @@ import (
 type proposalEditStore interface {
 	SetPendingModifications(
 		ctx context.Context,
-		req repositories.SetPendingModificationsRequest,
+		req agentports.SetPendingModificationsRequest,
 	) (*agent.AgentProposal, error)
 }
 
@@ -30,10 +29,10 @@ type proposalEditStore interface {
 // agent's own values is kept, and an empty set clears what was saved.
 func (s *Service) SaveProposalEdits(
 	ctx context.Context,
-	req repositories.GetThreadRequest,
+	req agentports.GetThreadRequest,
 	proposalID pulid.ID,
 	modifications map[string]any,
-) (*services.ProposalEdits, error) {
+) (*agentports.ProposalEdits, error) {
 	if _, err := s.conversations.GetThread(ctx, req); err != nil {
 		return nil, err
 	}
@@ -41,7 +40,7 @@ func (s *Service) SaveProposalEdits(
 		return nil, errortypes.NewNotFoundError("Proposal not found in this conversation")
 	}
 
-	stored, err := s.proposals.ListByThread(ctx, repositories.ListAgentProposalsByThreadRequest{
+	stored, err := s.proposals.ListByThread(ctx, agentports.ListAgentProposalsByThreadRequest{
 		ThreadID:   req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -73,7 +72,7 @@ func (s *Service) SaveProposalEdits(
 
 	saved, err := s.proposalEdits.SetPendingModifications(
 		ctx,
-		repositories.SetPendingModificationsRequest{
+		agentports.SetPendingModificationsRequest{
 			ID:            proposal.ID,
 			TenantInfo:    req.TenantInfo,
 			Modifications: changed,
@@ -83,7 +82,7 @@ func (s *Service) SaveProposalEdits(
 		return nil, err
 	}
 
-	return &services.ProposalEdits{
+	return &agentports.ProposalEdits{
 		ProposalID:           saved.ID,
 		PendingModifications: saved.PendingModifications,
 	}, nil

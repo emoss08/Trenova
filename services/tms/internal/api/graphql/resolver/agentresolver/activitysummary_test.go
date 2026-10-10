@@ -3,16 +3,16 @@ package agentresolver
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func activitySummary() *services.AgentActivitySummary {
+func activitySummary() *agentports.AgentActivitySummary {
 	oldest := int64(1_799_996_400)
 	share := 0.75
 
-	return &services.AgentActivitySummary{
+	return &agentports.AgentActivitySummary{
 		Since:              1_799_967_600,
 		Runs:               14,
 		RunsFailed:         2,

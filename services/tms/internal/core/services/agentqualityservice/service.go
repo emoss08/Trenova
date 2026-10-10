@@ -8,12 +8,19 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -43,44 +50,44 @@ type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	DB            ports.DBConnection
-	SuiteRuns     repositories.AgentSuiteRunRepository
-	Controls      repositories.AgentQualityControlRepository
-	Definitions   repositories.AgentDefinitionRepository
-	Cases         repositories.AgentEvalCaseRepository
-	Evaluations   repositories.AgentEvaluationRepository
-	Usage         repositories.AIUsageRepository
-	Feedback      repositories.AIFeedbackRepository
-	Providers     repositories.AIProviderRepository
-	Organizations repositories.OrganizationRepository
+	DB            kernelports.DBConnection
+	SuiteRuns     agentqualityports.AgentSuiteRunRepository
+	Controls      agentqualityports.AgentQualityControlRepository
+	Definitions   agentdefinitionports.AgentDefinitionRepository
+	Cases         agentqualityports.AgentEvalCaseRepository
+	Evaluations   agentports.AgentEvaluationRepository
+	Usage         aiusageports.AIUsageRepository
+	Feedback      aifeedbackports.AIFeedbackRepository
+	Providers     agentports.AIProviderRepository
+	Organizations tenantports.OrganizationRepository
 	Runtime       *agentruntime.Service
-	Audit         services.AuditService
-	Completion    services.CompletionService     `optional:"true"`
-	Watchtower    services.WatchtowerProjector   `optional:"true"`
-	Notifications *notificationservice.Service   `optional:"true"`
-	Scheduler     services.AgentQualityScheduler `optional:"true"`
-	Starter       services.AgentSuiteStarter     `optional:"true"`
+	Audit         auditports.AuditService
+	Completion    agentports.CompletionService            `optional:"true"`
+	Watchtower    watchtowerports.WatchtowerProjector     `optional:"true"`
+	Notifications *notificationservice.Service            `optional:"true"`
+	Scheduler     agentqualityports.AgentQualityScheduler `optional:"true"`
+	Starter       agentqualityports.AgentSuiteStarter     `optional:"true"`
 }
 
 type Service struct {
 	l             *zap.Logger
-	db            ports.DBConnection
-	suiteRuns     repositories.AgentSuiteRunRepository
-	controls      repositories.AgentQualityControlRepository
-	definitions   repositories.AgentDefinitionRepository
-	cases         repositories.AgentEvalCaseRepository
-	evaluations   repositories.AgentEvaluationRepository
-	usage         repositories.AIUsageRepository
-	feedback      repositories.AIFeedbackRepository
-	providers     repositories.AIProviderRepository
-	organizations repositories.OrganizationRepository
+	db            kernelports.DBConnection
+	suiteRuns     agentqualityports.AgentSuiteRunRepository
+	controls      agentqualityports.AgentQualityControlRepository
+	definitions   agentdefinitionports.AgentDefinitionRepository
+	cases         agentqualityports.AgentEvalCaseRepository
+	evaluations   agentports.AgentEvaluationRepository
+	usage         aiusageports.AIUsageRepository
+	feedback      aifeedbackports.AIFeedbackRepository
+	providers     agentports.AIProviderRepository
+	organizations tenantports.OrganizationRepository
 	runtime       fingerprinter
-	audit         services.AuditService
-	completion    services.CompletionService
-	watchtower    services.WatchtowerProjector
+	audit         auditports.AuditService
+	completion    agentports.CompletionService
+	watchtower    watchtowerports.WatchtowerProjector
 	notifier      regressionNotifier
-	scheduler     services.AgentQualityScheduler
-	starter       services.AgentSuiteStarter
+	scheduler     agentqualityports.AgentQualityScheduler
+	starter       agentqualityports.AgentSuiteStarter
 	now           func() int64
 }
 
@@ -117,11 +124,11 @@ func New(p Params) *Service {
 	}
 }
 
-func AsService(s *Service) services.AgentQualityService { return s }
+func AsService(s *Service) agentqualityports.AgentQualityService { return s }
 
-func AsEvaluationBudget(s *Service) services.EvaluationBudget { return s }
+func AsEvaluationBudget(s *Service) agentqualityports.EvaluationBudget { return s }
 
-var _ services.AgentQualityService = (*Service)(nil)
+var _ agentqualityports.AgentQualityService = (*Service)(nil)
 
 func (s *Service) control(
 	ctx context.Context,
@@ -148,7 +155,7 @@ func (s *Service) GetControl(
 func (s *Service) UpdateControl(
 	ctx context.Context,
 	entity *agentquality.Control,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*agentquality.Control, error) {
 	tenant := pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 	previous, err := s.control(ctx, tenant)
@@ -177,10 +184,10 @@ func (s *Service) UpdateControl(
 
 func (s *Service) logControl(
 	saved, previous *agentquality.Control,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) {
 	auditActor := actor.AuditActorOrSystem()
-	if err := s.audit.LogAction(&services.LogActionParams{
+	if err := s.audit.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceAgentEvalSuite,
 		ResourceID:     saved.ID.String(),
 		Operation:      permission.OpUpdate,
@@ -204,7 +211,7 @@ func (s *Service) timezoneOf(
 ) string {
 	organizationTimezone := ""
 	if s.organizations != nil {
-		organization, err := s.organizations.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+		organization, err := s.organizations.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 			TenantInfo: tenant,
 		})
 		if err != nil {

@@ -1,14 +1,17 @@
 package invoicerunservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/invoicerun"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -22,7 +25,7 @@ import (
 
 type runPlanFixture struct {
 	tenantInfo pagination.TenantInfo
-	actor      *servicesports.RequestActor
+	actor      *permissionports.RequestActor
 	run        *invoicerun.InvoiceRun
 	first      *invoicerun.InvoiceRunGroup
 	second     *invoicerun.InvoiceRunGroup
@@ -30,7 +33,7 @@ type runPlanFixture struct {
 }
 
 type readOnlyRunRepo struct {
-	repositories.InvoiceRunRepository
+	invoicerunports.InvoiceRunRepository
 	t          *testing.T
 	run        *invoicerun.InvoiceRun
 	tenantInfo pagination.TenantInfo
@@ -38,7 +41,7 @@ type readOnlyRunRepo struct {
 
 func (r *readOnlyRunRepo) GetByID(
 	_ context.Context,
-	req repositories.GetInvoiceRunByIDRequest,
+	req invoicerunports.GetInvoiceRunByIDRequest,
 ) (*invoicerun.InvoiceRun, error) {
 	require.Equal(r.t, r.run.ID, req.ID)
 	require.Equal(r.t, r.tenantInfo, req.TenantInfo)
@@ -109,11 +112,11 @@ func TestPreviewMembershipMovesAndExcludesWithoutWriting(t *testing.T) {
 	excluded := f.first.Items[0]
 	moved := f.first.Items[1]
 
-	preview, err := f.svc.PreviewMembership(t.Context(), &servicesports.AdjustInvoiceRunMembershipRequest{
+	preview, err := f.svc.PreviewMembership(t.Context(), &invoicerunports.AdjustInvoiceRunMembershipRequest{
 		TenantInfo: f.tenantInfo,
 		RunID:      f.run.ID,
-		Exclude:    []servicesports.ItemExclusion{{ItemID: excluded.ID, Reason: "Short on the POD"}},
-		Moves:      []servicesports.ItemMove{{ItemID: moved.ID, TargetGroupID: f.second.ID}},
+		Exclude:    []invoicerunports.ItemExclusion{{ItemID: excluded.ID, Reason: "Short on the POD"}},
+		Moves:      []invoicerunports.ItemMove{{ItemID: moved.ID, TargetGroupID: f.second.ID}},
 	})
 	require.NoError(t, err)
 
@@ -131,7 +134,7 @@ func TestPreviewMembershipRefusesAnUnknownItem(t *testing.T) {
 	t.Parallel()
 
 	f := newRunPlanFixture(t)
-	_, err := f.svc.PreviewMembership(t.Context(), &servicesports.AdjustInvoiceRunMembershipRequest{
+	_, err := f.svc.PreviewMembership(t.Context(), &invoicerunports.AdjustInvoiceRunMembershipRequest{
 		TenantInfo: f.tenantInfo,
 		RunID:      f.run.ID,
 		Include:    []pulid.ID{pulid.MustNew("invrgi_")},
@@ -145,13 +148,13 @@ func TestPreviewCancelRefusesACommittedRun(t *testing.T) {
 
 	f := newRunPlanFixture(t)
 	f.run.Status = invoicerun.StatusCommitted
-	_, err := f.svc.PreviewCancel(t.Context(), &servicesports.CancelInvoiceRunRequest{
+	_, err := f.svc.PreviewCancel(t.Context(), &invoicerunports.CancelInvoiceRunRequest{
 		TenantInfo: f.tenantInfo, RunID: f.run.ID, Reason: "Wrong period",
 	}, f.actor)
 	require.Error(t, err)
 
 	ready := newRunPlanFixture(t)
-	preview, err := ready.svc.PreviewCancel(t.Context(), &servicesports.CancelInvoiceRunRequest{
+	preview, err := ready.svc.PreviewCancel(t.Context(), &invoicerunports.CancelInvoiceRunRequest{
 		TenantInfo: ready.tenantInfo, RunID: ready.run.ID, Reason: "Wrong period",
 	}, ready.actor)
 	require.NoError(t, err)
@@ -165,10 +168,10 @@ func TestPreviewCommitSaysWhichGroupsBillAndWhichSkip(t *testing.T) {
 
 	f := newRunPlanFixture(t)
 	f.second.MinimumAmount = decimal.NewNullDecimal(decimal.RequireFromString("500"))
-	billingQueueRepo := mocks.NewMockBillingQueueRepository(t)
+	billingQueueRepo := billingqueueportsmock.NewMockBillingQueueRepository(t)
 	for _, item := range f.first.Items {
 		billingQueueRepo.EXPECT().
-			GetByID(mock.Anything, &repositories.GetBillingQueueItemByIDRequest{
+			GetByID(mock.Anything, &billingqueueports.GetBillingQueueItemByIDRequest{
 				ItemID:     item.BillingQueueItemID,
 				TenantInfo: f.tenantInfo,
 			}).
@@ -179,7 +182,7 @@ func TestPreviewCommitSaysWhichGroupsBillAndWhichSkip(t *testing.T) {
 			}, nil).
 			Once()
 	}
-	shipmentRepo := mocks.NewMockShipmentRepository(t)
+	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
 		Return(&shipment.Shipment{ID: pulid.MustNew("shp_")}, nil).
@@ -187,15 +190,15 @@ func TestPreviewCommitSaysWhichGroupsBillAndWhichSkip(t *testing.T) {
 	f.svc.billingQueueRepo = billingQueueRepo
 	f.svc.shipmentRepo = shipmentRepo
 
-	plan, err := f.svc.PreviewCommit(t.Context(), &servicesports.CommitInvoiceRunRequest{
+	plan, err := f.svc.PreviewCommit(t.Context(), &invoicerunports.CommitInvoiceRunRequest{
 		TenantInfo: f.tenantInfo,
 		RunID:      f.run.ID,
 	})
 	require.NoError(t, err)
 	require.Len(t, plan.Groups, 2)
-	assert.Equal(t, servicesports.InvoiceRunGroupBills, plan.Groups[0].Outcome)
+	assert.Equal(t, invoicerunports.InvoiceRunGroupBills, plan.Groups[0].Outcome)
 	assert.True(t, decimal.RequireFromString("1000").Equal(plan.Groups[0].Total))
-	assert.Equal(t, servicesports.InvoiceRunGroupSkips, plan.Groups[1].Outcome)
+	assert.Equal(t, invoicerunports.InvoiceRunGroupSkips, plan.Groups[1].Outcome)
 	assert.Contains(t, plan.Groups[1].Reason, "minimum")
 }
 
@@ -204,7 +207,7 @@ func TestPreviewCommitOfACommittedRunChangesNothing(t *testing.T) {
 
 	f := newRunPlanFixture(t)
 	f.run.Status = invoicerun.StatusCommitted
-	plan, err := f.svc.PreviewCommit(t.Context(), &servicesports.CommitInvoiceRunRequest{
+	plan, err := f.svc.PreviewCommit(t.Context(), &invoicerunports.CommitInvoiceRunRequest{
 		TenantInfo: f.tenantInfo,
 		RunID:      f.run.ID,
 	})
@@ -217,7 +220,7 @@ func TestPreviewBuildGroupsTheCandidatesWithoutNumberingOrSaving(t *testing.T) {
 	t.Parallel()
 
 	customerID := pulid.MustNew("cus_")
-	svc := serviceWithCandidates(t, []*repositories.ConsolidationCandidate{
+	svc := serviceWithCandidates(t, []*billingqueueports.ConsolidationCandidate{
 		buildCandidate(customerID, "PRO-1", "100.00", nil),
 		buildCandidate(customerID, "PRO-2", "150.00", nil),
 	})
@@ -225,7 +228,7 @@ func TestPreviewBuildGroupsTheCandidatesWithoutNumberingOrSaving(t *testing.T) {
 	svc.validator = NewValidator(ValidatorParams{})
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 
-	run, err := svc.PreviewBuild(t.Context(), &servicesports.PreviewInvoiceRunRequest{
+	run, err := svc.PreviewBuild(t.Context(), &invoicerunports.PreviewInvoiceRunRequest{
 		TenantInfo:  tenantInfo,
 		CustomerIDs: []pulid.ID{customerID},
 		PeriodStart: 1_700_000_000,
@@ -244,7 +247,7 @@ func TestPreviewBuildRefusesARunWithNoCustomers(t *testing.T) {
 	t.Parallel()
 
 	svc := &Service{validator: NewValidator(ValidatorParams{})}
-	_, err := svc.PreviewBuild(t.Context(), &servicesports.PreviewInvoiceRunRequest{
+	_, err := svc.PreviewBuild(t.Context(), &invoicerunports.PreviewInvoiceRunRequest{
 		PeriodStart: 1, PeriodEnd: 2,
 	}, testutil.NewSessionActor(pulid.MustNew("usr_"), pulid.MustNew("org_"), pulid.MustNew("bu_")))
 	require.Error(t, err)

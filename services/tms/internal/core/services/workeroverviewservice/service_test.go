@@ -1,14 +1,15 @@
 package workeroverviewservice_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"context"
 	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/core/services/workeroverviewservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -71,7 +72,7 @@ func (f *fakeChecklists) ListForWorker(
 type fakeBalances struct {
 	calls    int
 	balances []*ptoledgerservice.BalanceView
-	summary  *repositories.PTOBalanceSummary
+	summary  *workerports.PTOBalanceSummary
 }
 
 func (f *fakeBalances) GetBalances(
@@ -83,9 +84,9 @@ func (f *fakeBalances) GetBalances(
 
 func (f *fakeBalances) Summary(
 	_ context.Context, _ pagination.TenantInfo,
-) (*repositories.PTOBalanceSummary, error) {
+) (*workerports.PTOBalanceSummary, error) {
 	if f.summary == nil {
-		return &repositories.PTOBalanceSummary{}, nil
+		return &workerports.PTOBalanceSummary{}, nil
 	}
 	return f.summary, nil
 }
@@ -110,7 +111,7 @@ type fakeReviewCounter struct {
 
 func (f *fakeReviewCounter) CountReviews(
 	_ context.Context,
-	req *repositories.CountPerformanceReviewsRequest,
+	req *workerports.CountPerformanceReviewsRequest,
 ) (int, error) {
 	f.statuses = req.Statuses
 	return f.count, f.err
@@ -125,7 +126,7 @@ type overviewHarness struct {
 	pto          *fakeBalances
 	reviews      *fakeReviews
 	reviewCounts *fakeReviewCounter
-	workerRepo   *mocks.MockWorkerRepository
+	workerRepo   *workerportsmock.MockWorkerRepository
 	tenant       pagination.TenantInfo
 	wrk          *worker.Worker
 }
@@ -141,7 +142,7 @@ func newOverviewHarness(t *testing.T) *overviewHarness {
 		CanBeAssigned:  true,
 	}
 
-	workerRepo := mocks.NewMockWorkerRepository(t)
+	workerRepo := workerportsmock.NewMockWorkerRepository(t)
 	workerRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(wrk, nil).Maybe()
 
 	h := &overviewHarness{
@@ -306,7 +307,7 @@ func TestRosterAttention_GathersEveryArea(t *testing.T) {
 	h := newOverviewHarness(t)
 	h.workerRepo.EXPECT().
 		CountRosterAttention(mock.Anything, mock.Anything).
-		Return(&repositories.RosterAttention{
+		Return(&workerports.RosterAttention{
 			ActiveWorkers:   40,
 			NonCompliant:    3,
 			TrainingOverdue: 7,
@@ -315,7 +316,7 @@ func TestRosterAttention_GathersEveryArea(t *testing.T) {
 		}, nil).
 		Once()
 	h.reviewCounts.count = 4
-	h.pto.summary = &repositories.PTOBalanceSummary{
+	h.pto.summary = &workerports.PTOBalanceSummary{
 		TotalBalanceDays: decimal.NewFromInt(312),
 	}
 
@@ -338,7 +339,7 @@ func TestRosterAttention_CountsOnlySubmittedReviews(t *testing.T) {
 	h := newOverviewHarness(t)
 	h.workerRepo.EXPECT().
 		CountRosterAttention(mock.Anything, mock.Anything).
-		Return(&repositories.RosterAttention{}, nil).
+		Return(&workerports.RosterAttention{}, nil).
 		Once()
 
 	_, err := h.svc.RosterAttention(t.Context(), h.tenant)

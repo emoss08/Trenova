@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/glaccount"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/glaccountservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -122,7 +122,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*glaccount.GLAccount], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListGLAccountsRequest{
+				&glaccountports.ListGLAccountsRequest{
 					Filter: req,
 				},
 			)
@@ -146,7 +146,7 @@ func (h *Handler) list(c *gin.Context) {
 func (h *Handler) bulkUpdateStatus(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	req := new(repositories.BulkUpdateGLAccountStatusRequest)
+	req := new(glaccountports.BulkUpdateGLAccountStatusRequest)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -188,7 +188,7 @@ func (h *Handler) getOption(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.Get(c.Request.Context(), repositories.GetGLAccountByIDRequest{
+	entity, err := h.service.Get(c.Request.Context(), glaccountports.GetGLAccountByIDRequest{
 		ID:         glAccountID,
 		TenantInfo: pagination.FromAuth(authCtx),
 	})
@@ -223,7 +223,7 @@ func (h *Handler) selectOptions(c *gin.Context) {
 		func() (*pagination.ListResult[*glaccount.GLAccount], error) {
 			return h.service.SelectOptions(
 				c.Request.Context(),
-				&repositories.GLAccountSelectOptionsRequest{
+				&glaccountports.GLAccountSelectOptionsRequest{
 					SelectQueryRequest: req,
 				},
 			)
@@ -253,7 +253,7 @@ func (h *Handler) get(c *gin.Context) {
 
 	entity, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetGLAccountByIDRequest{
+		glaccountports.GetGLAccountByIDRequest{
 			ID:         glAccountID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -322,7 +322,7 @@ func (h *Handler) patch(c *gin.Context) {
 
 	existing, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetGLAccountByIDRequest{
+		glaccountports.GetGLAccountByIDRequest{
 			ID:         glAccountID,
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 		},
@@ -404,7 +404,7 @@ func (h *Handler) delete(c *gin.Context) {
 		return
 	}
 
-	if err = h.service.Delete(c.Request.Context(), repositories.DeleteGLAccountRequest{
+	if err = h.service.Delete(c.Request.Context(), glaccountports.DeleteGLAccountRequest{
 		ID:         glAccountID,
 		TenantInfo: pagination.FromAuthAsUser(authCtx),
 	}, authCtx.UserID); err != nil {

@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/costingcontrol"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/costingcontrolports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -42,7 +42,7 @@ func (s *Service) resolveGLActualRates(
 		return result, nil
 	}
 
-	miles, err := s.actualsRepo.FleetMiles(ctx, &repositories.FleetMilesRequest{
+	miles, err := s.actualsRepo.FleetMiles(ctx, &costingcontrolports.FleetMilesRequest{
 		TenantInfo: tenantInfo,
 		FromDate:   window.FromDate,
 		ToDate:     window.ToDate,
@@ -53,7 +53,7 @@ func (s *Service) resolveGLActualRates(
 	}
 	window.FleetMiles = miles.TotalMiles
 
-	sums, err := s.actualsRepo.SumExpenseByAccounts(ctx, &repositories.SumExpenseByAccountsRequest{
+	sums, err := s.actualsRepo.SumExpenseByAccounts(ctx, &costingcontrolports.SumExpenseByAccountsRequest{
 		TenantInfo:   tenantInfo,
 		GLAccountIDs: accountIDs,
 		FromDate:     window.FromDate,
@@ -135,7 +135,7 @@ func sumExpensesByCategory(
 func (s *Service) glDivisorMiles(
 	control *costingcontrol.CostingControl,
 	category *costingcontrol.CostCategory,
-	miles *repositories.FleetMilesResult,
+	miles *costingcontrolports.FleetMilesResult,
 	months int,
 ) decimal.Decimal {
 	fleetMiles := decimal.NewFromFloat(miles.TotalMiles)

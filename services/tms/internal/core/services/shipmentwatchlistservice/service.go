@@ -5,11 +5,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentboardcache"
 	"github.com/emoss08/trenova/internal/core/services/shipmentquickfilterservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -28,52 +29,52 @@ type DetentionDesk interface {
 type BoardMoveLister interface {
 	ListBoardMoves(
 		ctx context.Context,
-		filter *repositories.DispatchBoardFilter,
-	) ([]*repositories.BoardMove, error)
+		filter *shipmentports.DispatchBoardFilter,
+	) ([]*shipmentports.BoardMove, error)
 }
 
 type Params struct {
 	fx.In
 
-	Board        repositories.ShipmentBoardRepository
-	Watchlist    repositories.ShipmentWatchlistRepository
-	QuickFilters services.ShipmentQuickFilterBasisResolver
-	Controls     repositories.ShipmentControlRepository
-	Accessorials repositories.AccessorialChargeRepository
-	Console      repositories.DispatchConsoleRepository
+	Board        shipmentports.ShipmentBoardRepository
+	Watchlist    shipmentports.ShipmentWatchlistRepository
+	QuickFilters shipmentports.ShipmentQuickFilterBasisResolver
+	Controls     tenantports.ShipmentControlRepository
+	Accessorials accessorialchargeports.AccessorialChargeRepository
+	Console      shipmentports.DispatchConsoleRepository
 	Detention    *detentionservice.Service
-	Cache        repositories.ShipmentBoardCache
+	Cache        shipmentports.ShipmentBoardCache
 	Logger       *zap.Logger
 }
 
 type Dependencies struct {
-	Board        repositories.ShipmentBoardRepository
-	Watchlist    repositories.ShipmentWatchlistRepository
-	QuickFilters services.ShipmentQuickFilterBasisResolver
-	Controls     repositories.ShipmentControlRepository
-	Accessorials repositories.AccessorialChargeRepository
+	Board        shipmentports.ShipmentBoardRepository
+	Watchlist    shipmentports.ShipmentWatchlistRepository
+	QuickFilters shipmentports.ShipmentQuickFilterBasisResolver
+	Controls     tenantports.ShipmentControlRepository
+	Accessorials accessorialchargeports.AccessorialChargeRepository
 	Moves        BoardMoveLister
 	Detention    DetentionDesk
-	Cache        repositories.ShipmentBoardCache
+	Cache        shipmentports.ShipmentBoardCache
 	Logger       *zap.Logger
 }
 
 type Service struct {
-	board        repositories.ShipmentBoardRepository
-	watchlist    repositories.ShipmentWatchlistRepository
-	quickFilters services.ShipmentQuickFilterBasisResolver
-	controls     repositories.ShipmentControlRepository
-	accessorials repositories.AccessorialChargeRepository
+	board        shipmentports.ShipmentBoardRepository
+	watchlist    shipmentports.ShipmentWatchlistRepository
+	quickFilters shipmentports.ShipmentQuickFilterBasisResolver
+	controls     tenantports.ShipmentControlRepository
+	accessorials accessorialchargeports.AccessorialChargeRepository
 	moves        BoardMoveLister
 	detention    DetentionDesk
-	cache        repositories.ShipmentBoardCache
+	cache        shipmentports.ShipmentBoardCache
 	l            *zap.Logger
 }
 
-var _ services.ShipmentWatchlistReader = (*Service)(nil)
+var _ shipmentports.ShipmentWatchlistReader = (*Service)(nil)
 
 //nolint:gocritic // dependency injection
-func New(p Params) services.ShipmentWatchlistReader {
+func New(p Params) shipmentports.ShipmentWatchlistReader {
 	return NewWithDependencies(&Dependencies{
 		Board:        p.Board,
 		Watchlist:    p.Watchlist,
@@ -105,31 +106,31 @@ func (s *Service) Watchlist(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	timezone string,
-) (*services.ShipmentWatchlist, error) {
+) (*shipmentports.ShipmentWatchlist, error) {
 	return shipmentboardcache.GetOrCompute(
 		ctx,
 		s.cache,
 		s.l,
 		&shipmentboardcache.Request{
-			Section:    repositories.ShipmentBoardSectionWatchlist,
+			Section:    shipmentports.ShipmentBoardSectionWatchlist,
 			TenantInfo: tenantInfo,
 			Timezone:   timezone,
 		},
-		func(ctx context.Context) (*services.ShipmentWatchlist, error) {
+		func(ctx context.Context) (*shipmentports.ShipmentWatchlist, error) {
 			return s.compute(ctx, tenantInfo, timezone)
 		},
 	)
 }
 
 type watchlistInputs struct {
-	basis     *repositories.ShipmentQuickFilterBasis
+	basis     *shipmentports.ShipmentQuickFilterBasis
 	control   *tenant.ShipmentControl
 	windows   []shipment.PickupWindowBounds
-	totals    []repositories.ShipmentQuickFilterTotal
-	rows      []*repositories.ShipmentDeliveryRow
-	next      *repositories.ShipmentPickupRow
-	customers []*repositories.ShipmentBillingCustomerRow
-	detention services.ShipmentDetentionWatch
+	totals    []shipmentports.ShipmentQuickFilterTotal
+	rows      []*shipmentports.ShipmentDeliveryRow
+	next      *shipmentports.ShipmentPickupRow
+	customers []*shipmentports.ShipmentBillingCustomerRow
+	detention shipmentports.ShipmentDetentionWatch
 }
 
 const (
@@ -142,8 +143,8 @@ func (s *Service) compute(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	timezone string,
-) (*services.ShipmentWatchlist, error) {
-	basis, err := s.quickFilters.Resolve(ctx, &services.ResolveShipmentQuickFilterBasisRequest{
+) (*shipmentports.ShipmentWatchlist, error) {
+	basis, err := s.quickFilters.Resolve(ctx, &shipmentports.ResolveShipmentQuickFilterBasisRequest{
 		TenantInfo: tenantInfo,
 		Timezone:   timezone,
 	})
@@ -153,7 +154,7 @@ func (s *Service) compute(
 
 	control, err := s.controls.Get(
 		ctx,
-		repositories.GetShipmentControlRequest{TenantInfo: tenantInfo},
+		tenantports.GetShipmentControlRequest{TenantInfo: tenantInfo},
 	)
 	if err != nil {
 		return nil, err
@@ -168,16 +169,16 @@ func (s *Service) compute(
 		control: control,
 		windows: shipment.PickupWindowsAt(basis.Now, basis.Location),
 	}
-	req := &repositories.ShipmentWatchlistRequest{TenantInfo: tenantInfo, Basis: basis}
+	req := &shipmentports.ShipmentWatchlistRequest{TenantInfo: tenantInfo, Basis: basis}
 
 	g, gctx := errgroup.WithContext(ctx)
 	g.Go(func() error {
 		totals, tErr := s.board.QuickFilterTotals(
 			gctx,
-			&repositories.CountShipmentQuickFiltersRequest{
-				Scope: &repositories.ShipmentBoardScope{
+			&shipmentports.CountShipmentQuickFiltersRequest{
+				Scope: &shipmentports.ShipmentBoardScope{
 					Filter:  &pagination.QueryOptions{TenantInfo: tenantInfo},
-					Options: repositories.ShipmentOptions{QuickFilterBasis: basis},
+					Options: shipmentports.ShipmentOptions{QuickFilterBasis: basis},
 				},
 				Filters: totalSpecs(in.windows),
 			},
@@ -198,7 +199,7 @@ func (s *Service) compute(
 	g.Go(func() error {
 		customers, cErr := s.watchlist.ListReadyToBillCustomers(
 			gctx,
-			&repositories.ListReadyToBillCustomersRequest{
+			&shipmentports.ListReadyToBillCustomersRequest{
 				TenantInfo: tenantInfo,
 				Limit:      billingCustomerLimit,
 			},
@@ -215,7 +216,7 @@ func (s *Service) compute(
 		return nil, err
 	}
 
-	return &services.ShipmentWatchlist{
+	return &shipmentports.ShipmentWatchlist{
 		Deliveries: BuildDeliveryWatch(in.rows, basis.Now.Unix(), basis.Location),
 		Uncovered:  buildUncoveredWatch(in),
 		Detention:  in.detention,
@@ -233,15 +234,15 @@ func totalSpecs(windows []shipment.PickupWindowBounds) []shipment.QuickFilterSpe
 	return specs
 }
 
-func buildUncoveredWatch(in *watchlistInputs) services.ShipmentUncoveredWatch {
-	watch := services.ShipmentUncoveredWatch{
+func buildUncoveredWatch(in *watchlistInputs) shipmentports.ShipmentUncoveredWatch {
+	watch := shipmentports.ShipmentUncoveredWatch{
 		Count:   in.totals[totalUncovered].Count,
 		Revenue: in.totals[totalUncovered].Revenue,
-		Windows: make([]services.UncoveredWindowSummary, 0, len(in.windows)),
+		Windows: make([]shipmentports.UncoveredWindowSummary, 0, len(in.windows)),
 	}
 	for i, window := range in.windows {
 		total := in.totals[totalWindowsOffset+i]
-		watch.Windows = append(watch.Windows, services.UncoveredWindowSummary{
+		watch.Windows = append(watch.Windows, shipmentports.UncoveredWindowSummary{
 			Window:       window.Window,
 			StartMinutes: window.StartMinutes,
 			EndMinutes:   window.EndMinutes,
@@ -250,7 +251,7 @@ func buildUncoveredWatch(in *watchlistInputs) services.ShipmentUncoveredWatch {
 		})
 	}
 	if in.next != nil {
-		watch.Next = &services.NextUncoveredPickup{
+		watch.Next = &shipmentports.NextUncoveredPickup{
 			ShipmentID:      in.next.ShipmentID,
 			PickupAt:        in.next.PickupAt,
 			OriginCity:      in.next.OriginCity,
@@ -260,14 +261,14 @@ func buildUncoveredWatch(in *watchlistInputs) services.ShipmentUncoveredWatch {
 	return watch
 }
 
-func buildBillingWatch(in *watchlistInputs) services.ShipmentBillingWatch {
-	watch := services.ShipmentBillingWatch{
+func buildBillingWatch(in *watchlistInputs) shipmentports.ShipmentBillingWatch {
+	watch := shipmentports.ShipmentBillingWatch{
 		Count:     in.totals[totalReadyToBill].Count,
 		Total:     in.totals[totalReadyToBill].Revenue,
-		Customers: make([]services.ReadyToBillCustomer, 0, len(in.customers)),
+		Customers: make([]shipmentports.ReadyToBillCustomer, 0, len(in.customers)),
 	}
 	for _, row := range in.customers {
-		watch.Customers = append(watch.Customers, services.ReadyToBillCustomer{
+		watch.Customers = append(watch.Customers, shipmentports.ReadyToBillCustomer{
 			CustomerID: row.CustomerID,
 			Name:       row.Name,
 			Count:      row.Count,

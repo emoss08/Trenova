@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/fuelpurchaseservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.temporal.io/sdk/activity"
 	"go.uber.org/fx"
@@ -36,13 +36,13 @@ type SyncTenantResult struct {
 type ActivitiesParams struct {
 	fx.In
 
-	IntegrationRepo repositories.IntegrationRepository
+	IntegrationRepo integrationports.IntegrationRepository
 	Service         *fuelpurchaseservice.Service
 	Logger          *zap.Logger
 }
 
 type Activities struct {
-	integrationRepo repositories.IntegrationRepository
+	integrationRepo integrationports.IntegrationRepository
 	service         *fuelpurchaseservice.Service
 	logger          *zap.Logger
 }

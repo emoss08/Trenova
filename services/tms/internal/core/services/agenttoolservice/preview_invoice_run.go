@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/invoicerun"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
@@ -89,7 +89,7 @@ func runTotalMoney(change *agent.RecordChange, before, after *invoicerun.Invoice
 }
 
 func proposedInvoiceChange(
-	plan *serviceports.InvoiceRunGroupPlan,
+	plan *invoicerunports.InvoiceRunGroupPlan,
 	operation agent.PreviewOperation,
 	before decimal.NullDecimal,
 ) (*agent.RecordChange, error) {
@@ -102,7 +102,7 @@ func proposedInvoiceChange(
 	}
 	resource := permission.ResourceInvoice
 	label := "New invoice: " + plan.GroupLabel
-	if plan.Outcome != serviceports.InvoiceRunGroupBills {
+	if plan.Outcome != invoicerunports.InvoiceRunGroupBills {
 		resource = permission.ResourceInvoiceRun
 		label = "Not invoiced: " + plan.GroupLabel
 	}
@@ -125,20 +125,20 @@ func proposedInvoiceChange(
 	return change, nil
 }
 
-func groupPlansFromRun(run *invoicerun.InvoiceRun) []serviceports.InvoiceRunGroupPlan {
-	plans := make([]serviceports.InvoiceRunGroupPlan, 0, len(run.Groups))
+func groupPlansFromRun(run *invoicerun.InvoiceRun) []invoicerunports.InvoiceRunGroupPlan {
+	plans := make([]invoicerunports.InvoiceRunGroupPlan, 0, len(run.Groups))
 	for _, group := range run.Groups {
 		if group == nil {
 			continue
 		}
-		plans = append(plans, serviceports.InvoiceRunGroupPlan{
+		plans = append(plans, invoicerunports.InvoiceRunGroupPlan{
 			GroupID:       group.ID,
 			GroupLabel:    group.GroupLabel,
 			CustomerID:    group.CustomerID,
 			ShipmentCount: group.ItemCount,
 			Total:         group.TotalAmount,
 			CurrencyCode:  group.CurrencyCode,
-			Outcome:       serviceports.InvoiceRunGroupBills,
+			Outcome:       invoicerunports.InvoiceRunGroupBills,
 		})
 	}
 
@@ -146,7 +146,7 @@ func groupPlansFromRun(run *invoicerun.InvoiceRun) []serviceports.InvoiceRunGrou
 }
 
 func renderBuiltRun(
-	_ *serviceports.PreviewInvoiceRunRequest,
+	_ *invoicerunports.PreviewInvoiceRunRequest,
 	run *invoicerun.InvoiceRun,
 ) (*agent.ToolPreview, error) {
 	header, err := toolpreview.Create(runRecord(run), viewOfRun(run),
@@ -180,8 +180,8 @@ func renderBuiltRun(
 }
 
 func renderMembership(
-	_ *serviceports.AdjustInvoiceRunMembershipRequest,
-	plan *serviceports.InvoiceRunChangePreview,
+	_ *invoicerunports.AdjustInvoiceRunMembershipRequest,
+	plan *invoicerunports.InvoiceRunChangePreview,
 ) (*agent.ToolPreview, error) {
 	header, err := toolpreview.Changed(runRecord(plan.Before), viewOfRun(plan.Before),
 		viewOfRun(plan.After), toolpreview.Types(runDateTypes))
@@ -221,19 +221,19 @@ func renderMembership(
 }
 
 func outcomeSummary(
-	plans []serviceports.InvoiceRunGroupPlan,
+	plans []invoicerunports.InvoiceRunGroupPlan,
 ) (billed int, total decimal.Decimal, notes []string) {
 	total = decimal.Zero
 	notes = make([]string, 0, len(plans))
 	for idx := range plans {
 		plan := &plans[idx]
 		switch plan.Outcome {
-		case serviceports.InvoiceRunGroupBills:
+		case invoicerunports.InvoiceRunGroupBills:
 			billed++
 			total = total.Add(plan.Total)
-		case serviceports.InvoiceRunGroupSkips, serviceports.InvoiceRunGroupAlreadySkipped:
+		case invoicerunports.InvoiceRunGroupSkips, invoicerunports.InvoiceRunGroupAlreadySkipped:
 			notes = append(notes, fmt.Sprintf("%s is skipped: %s", plan.GroupLabel, plan.Reason))
-		case serviceports.InvoiceRunGroupAlreadyCommitted:
+		case invoicerunports.InvoiceRunGroupAlreadyCommitted:
 			notes = append(notes, plan.GroupLabel+" was already invoiced")
 		}
 	}
@@ -241,12 +241,12 @@ func outcomeSummary(
 	return billed, total, notes
 }
 
-func groupChanges(plans []serviceports.InvoiceRunGroupPlan) ([]*agent.RecordChange, error) {
+func groupChanges(plans []invoicerunports.InvoiceRunGroupPlan) ([]*agent.RecordChange, error) {
 	changes := make([]*agent.RecordChange, 0, len(plans))
 	for idx := range plans {
 		plan := &plans[idx]
 		operation := agent.PreviewOperationCreate
-		if plan.Outcome != serviceports.InvoiceRunGroupBills {
+		if plan.Outcome != invoicerunports.InvoiceRunGroupBills {
 			operation = agent.PreviewOperationRun
 		}
 		change, err := proposedInvoiceChange(plan, operation, decimal.NullDecimal{})
@@ -268,8 +268,8 @@ func withNotes(summary string, notes []string) string {
 }
 
 func renderCommit(
-	_ *serviceports.CommitInvoiceRunRequest,
-	plan *serviceports.InvoiceRunCommitPlan,
+	_ *invoicerunports.CommitInvoiceRunRequest,
+	plan *invoicerunports.InvoiceRunCommitPlan,
 ) (*agent.ToolPreview, error) {
 	if plan.AlreadyCommitted {
 		return toolpreview.Build(runLabel(plan.Run) + " is already committed; committing it " +
@@ -297,8 +297,8 @@ func renderCommit(
 }
 
 func renderCancel(
-	_ *serviceports.CancelInvoiceRunRequest,
-	plan *serviceports.InvoiceRunChangePreview,
+	_ *invoicerunports.CancelInvoiceRunRequest,
+	plan *invoicerunports.InvoiceRunChangePreview,
 ) (*agent.ToolPreview, error) {
 	change, err := toolpreview.Changed(
 		runRecord(plan.Before),
@@ -322,8 +322,8 @@ func renderCancel(
 }
 
 func renderStatementBill(
-	req *serviceports.BillStatementNowRequest,
-	plan *serviceports.StatementBillPlan,
+	req *invoicerunports.BillStatementNowRequest,
+	plan *invoicerunports.StatementBillPlan,
 ) (*agent.ToolPreview, error) {
 	header, err := toolpreview.Create(runRecord(plan.Run), viewOfRun(plan.Run),
 		toolpreview.Types(runDateTypes))

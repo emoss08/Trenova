@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -85,7 +85,7 @@ func (s *Service) planUpdate(ctx context.Context, entity *order.Order) (*order.O
 		OrgID: entity.GetOrganizationID(),
 		BuID:  entity.GetBusinessUnitID(),
 	}
-	original, err := s.repo.GetByID(ctx, repositories.GetOrderByIDRequest{
+	original, err := s.repo.GetByID(ctx, orderports.GetOrderByIDRequest{
 		ID:         entity.GetID(),
 		TenantInfo: tenantInfo,
 	})
@@ -128,7 +128,7 @@ func (s *Service) PlanAttachShipments(
 	orderID pulid.ID,
 	shipmentIDs []pulid.ID,
 ) (*MembershipPlan, error) {
-	ord, err := s.repo.GetByID(ctx, repositories.GetOrderByIDRequest{
+	ord, err := s.repo.GetByID(ctx, orderports.GetOrderByIDRequest{
 		ID:         orderID,
 		TenantInfo: tenantInfo,
 	})
@@ -166,7 +166,7 @@ func (s *Service) PlanDetachShipment(
 	orderID pulid.ID,
 	shipmentID pulid.ID,
 ) (*DetachPlan, error) {
-	ord, err := s.repo.GetByID(ctx, repositories.GetOrderByIDRequest{
+	ord, err := s.repo.GetByID(ctx, orderports.GetOrderByIDRequest{
 		ID:              orderID,
 		TenantInfo:      tenantInfo,
 		IncludeShipment: true,
@@ -224,7 +224,7 @@ func (s *Service) PlanAddCharge(
 		)
 	}
 
-	ord, err := s.repo.GetByID(ctx, repositories.GetOrderByIDRequest{
+	ord, err := s.repo.GetByID(ctx, orderports.GetOrderByIDRequest{
 		ID:         req.OrderID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -373,7 +373,7 @@ func (s *Service) loadCharge(
 	orderID pulid.ID,
 	chargeID pulid.ID,
 ) (*order.Order, *order.OrderCharge, error) {
-	ord, err := s.repo.GetByID(ctx, repositories.GetOrderByIDRequest{
+	ord, err := s.repo.GetByID(ctx, orderports.GetOrderByIDRequest{
 		ID:         orderID,
 		TenantInfo: tenantInfo,
 	})
@@ -402,7 +402,7 @@ func (s *Service) PlanClose(
 	tenantInfo pagination.TenantInfo,
 	orderID pulid.ID,
 ) (*OrderChange, error) {
-	ord, err := s.repo.GetByID(ctx, repositories.GetOrderByIDRequest{
+	ord, err := s.repo.GetByID(ctx, orderports.GetOrderByIDRequest{
 		ID:         orderID,
 		TenantInfo: tenantInfo,
 	})
@@ -435,7 +435,7 @@ func (s *Service) PlanCancel(
 	tenantInfo pagination.TenantInfo,
 	orderID pulid.ID,
 ) (*CancelPlan, error) {
-	ord, err := s.repo.GetByID(ctx, repositories.GetOrderByIDRequest{
+	ord, err := s.repo.GetByID(ctx, orderports.GetOrderByIDRequest{
 		ID:              orderID,
 		TenantInfo:      tenantInfo,
 		IncludeShipment: true,

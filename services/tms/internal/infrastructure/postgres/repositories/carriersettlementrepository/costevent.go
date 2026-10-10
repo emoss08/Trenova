@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -24,7 +24,7 @@ type costEventRepository struct {
 	l  *zap.Logger
 }
 
-func NewCostEvent(p Params) repositories.CarrierCostEventRepository {
+func NewCostEvent(p Params) carriersettlementports.CarrierCostEventRepository {
 	return &costEventRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.carrier-cost-event-repository"),
@@ -33,7 +33,7 @@ func NewCostEvent(p Params) repositories.CarrierCostEventRepository {
 
 func (r *costEventRepository) List(
 	ctx context.Context,
-	req *repositories.ListCarrierCostEventsRequest,
+	req *carriersettlementports.ListCarrierCostEventsRequest,
 ) (*pagination.ListResult[*carriersettlement.CostEvent], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*carriersettlement.CostEvent], error) {
 		cols := buncolgen.CostEventColumns
@@ -73,7 +73,7 @@ func (r *costEventRepository) List(
 
 func (r *costEventRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListCarrierCostEventConnectionRequest,
+	req *carriersettlementports.ListCarrierCostEventConnectionRequest,
 ) (*pagination.CursorListResult[*carriersettlement.CostEvent], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*carriersettlement.CostEvent], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -134,7 +134,7 @@ func (r *costEventRepository) ListConnection(
 
 func (r *costEventRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetCarrierCostEventByIDRequest,
+	req carriersettlementports.GetCarrierCostEventByIDRequest,
 ) (*carriersettlement.CostEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carriersettlement.CostEvent, error) {
 		cols := buncolgen.CostEventColumns
@@ -184,7 +184,7 @@ func (r *costEventRepository) GetByIdempotencyKey(
 // the driver settlement repository.
 func (r *costEventRepository) ListPendingByCarrier(
 	ctx context.Context,
-	req *repositories.ListPendingCostEventsRequest,
+	req *carriersettlementports.ListPendingCostEventsRequest,
 ) ([]*carriersettlement.CostEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carriersettlement.CostEvent, error) {
 		cols := buncolgen.CostEventColumns
@@ -294,7 +294,7 @@ func (r *costEventRepository) CountAwaitingInvoiceMatch(
 
 func (r *costEventRepository) ListCarrierIDsWithPendingEvents(
 	ctx context.Context,
-	req repositories.ListCarriersWithPendingEventsRequest,
+	req carriersettlementports.ListCarriersWithPendingEventsRequest,
 ) ([]pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
 		cols := buncolgen.CostEventColumns
@@ -371,9 +371,9 @@ func (r *costEventRepository) ListByMove(
 func (r *costEventRepository) GetPendingSummary(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*repositories.CarrierCostEventSummary, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.CarrierCostEventSummary, error) {
-		summary := new(repositories.CarrierCostEventSummary)
+) (*carriersettlementports.CarrierCostEventSummary, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carriersettlementports.CarrierCostEventSummary, error) {
+		summary := new(carriersettlementports.CarrierCostEventSummary)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*carriersettlement.CostEvent)(nil)).

@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -83,7 +83,7 @@ func TestRoleRepository_DeletesAndUpdatesStayInsideTheTenant(t *testing.T) {
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 
 	t.Run("an assignment cannot be deleted from another organization", func(t *testing.T) {
-		_, err := repo.DeleteAssignment(ctx, repositories.DeleteRoleAssignmentRequest{
+		_, err := repo.DeleteAssignment(ctx, permissionports.DeleteRoleAssignmentRequest{
 			AssignmentID:   fixtureB.assignment.ID,
 			OrganizationID: tenantA.Organization.ID,
 		})
@@ -99,7 +99,7 @@ func TestRoleRepository_DeletesAndUpdatesStayInsideTheTenant(t *testing.T) {
 	})
 
 	t.Run("a permission cannot be deleted through another tenant's role", func(t *testing.T) {
-		err := repo.DeleteResourcePermission(ctx, repositories.DeleteResourcePermissionRequest{
+		err := repo.DeleteResourcePermission(ctx, permissionports.DeleteResourcePermissionRequest{
 			PermissionID: fixtureB.permission.ID,
 			RoleID:       fixtureA.role.ID,
 		})
@@ -136,7 +136,7 @@ func TestRoleRepository_DeletesAndUpdatesStayInsideTheTenant(t *testing.T) {
 	})
 
 	t.Run("the owning organization can still delete its own rows", func(t *testing.T) {
-		deleted, err := repo.DeleteAssignment(ctx, repositories.DeleteRoleAssignmentRequest{
+		deleted, err := repo.DeleteAssignment(ctx, permissionports.DeleteRoleAssignmentRequest{
 			AssignmentID:   fixtureA.assignment.ID,
 			OrganizationID: tenantA.Organization.ID,
 		})
@@ -144,7 +144,7 @@ func TestRoleRepository_DeletesAndUpdatesStayInsideTheTenant(t *testing.T) {
 		assert.Equal(t, tenantA.User.ID, deleted.UserID)
 
 		require.NoError(t, repo.DeleteResourcePermission(ctx,
-			repositories.DeleteResourcePermissionRequest{
+			permissionports.DeleteResourcePermissionRequest{
 				PermissionID: fixtureA.permission.ID,
 				RoleID:       fixtureA.role.ID,
 			}))

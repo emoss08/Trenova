@@ -4,17 +4,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/invoiceservice"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -30,8 +31,8 @@ type fakeBatchPoster struct {
 
 func (f *fakeBatchPoster) Post(
 	_ context.Context,
-	req *serviceports.PostInvoiceRequest,
-	_ *serviceports.RequestActor,
+	req *invoiceports.PostInvoiceRequest,
+	_ *permissionports.RequestActor,
 ) (*invoice.Invoice, error) {
 	if f.locked {
 		return nil, errPostedDuringPreview
@@ -50,8 +51,8 @@ func (f *fakeBatchPoster) Post(
 
 func (f *fakeBatchPoster) PreviewPost(
 	_ context.Context,
-	req *serviceports.PostInvoiceRequest,
-	_ *serviceports.RequestActor,
+	req *invoiceports.PostInvoiceRequest,
+	_ *permissionports.RequestActor,
 ) (*invoiceservice.PostPreview, error) {
 	preview, ok := f.previews[req.InvoiceID]
 	if !ok {
@@ -67,7 +68,7 @@ type fakeInvoiceNumbers struct {
 
 func (f fakeInvoiceNumbers) GetByIDs(
 	_ context.Context,
-	req repositories.GetInvoicesByIDsRequest,
+	req invoiceports.GetInvoicesByIDsRequest,
 ) ([]*invoice.Invoice, error) {
 	out := make([]*invoice.Invoice, 0, len(req.InvoiceIDs))
 	for _, id := range req.InvoiceIDs {
@@ -276,14 +277,14 @@ func TestPostInvoices_ABatchThatPostsNothingFails(t *testing.T) {
 }
 
 type fakeBatchSender struct {
-	plans map[pulid.ID]*serviceports.InvoiceSendPlan
+	plans map[pulid.ID]*invoiceports.InvoiceSendPlan
 	sent  []pulid.ID
 }
 
 func (f *fakeBatchSender) PlanSend(
 	_ context.Context,
-	req *serviceports.InvoiceSendPlanRequest,
-) (*serviceports.InvoiceSendPlan, error) {
+	req *invoiceports.InvoiceSendPlanRequest,
+) (*invoiceports.InvoiceSendPlan, error) {
 	plan, ok := f.plans[req.InvoiceID]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("Invoice not found")
@@ -294,25 +295,25 @@ func (f *fakeBatchSender) PlanSend(
 
 func (f *fakeBatchSender) Send(
 	_ context.Context,
-	req *serviceports.InvoiceSendRequest,
-	_ *serviceports.RequestActor,
-) (*serviceports.InvoiceSendResult, error) {
+	req *invoiceports.InvoiceSendRequest,
+	_ *permissionports.RequestActor,
+) (*invoiceports.InvoiceSendResult, error) {
 	f.sent = append(f.sent, req.InvoiceID)
 
-	return &serviceports.InvoiceSendResult{}, nil
+	return &invoiceports.InvoiceSendResult{}, nil
 }
 
 func TestSendInvoices_ShowsEveryEmailAndStaysAPersonsSend(t *testing.T) {
 	t.Parallel()
 
-	sender := &fakeBatchSender{plans: map[pulid.ID]*serviceports.InvoiceSendPlan{}}
+	sender := &fakeBatchSender{plans: map[pulid.ID]*invoiceports.InvoiceSendPlan{}}
 	ids := make([]pulid.ID, 0, 3)
 	for range 3 {
 		plan := sendPlanFixture()
 		sender.plans[plan.InvoiceID] = plan
 		ids = append(ids, plan.InvoiceID)
 	}
-	sender.plans[ids[1]].Parts[0].Links = []*serviceports.InvoiceSendPlanDocumentLink{
+	sender.plans[ids[1]].Parts[0].Links = []*invoiceports.InvoiceSendPlanDocumentLink{
 		{FileName: "POD.pdf"},
 	}
 	tool := newSendInvoicesTool(sender, fakeInvoiceNumbers{}).(*sendInvoicesTool)
@@ -353,7 +354,7 @@ func (f *fakeQueueItems) CheckBiller(context.Context, pagination.TenantInfo, pul
 
 func (f *fakeQueueItems) GetByID(
 	_ context.Context,
-	req *repositories.GetBillingQueueItemByIDRequest,
+	req *billingqueueports.GetBillingQueueItemByIDRequest,
 ) (*billingqueue.BillingQueueItem, error) {
 	item, ok := f.items[req.ItemID]
 	if !ok {
@@ -366,8 +367,8 @@ func (f *fakeQueueItems) GetByID(
 
 func (f *fakeQueueItems) UpdateStatus(
 	_ context.Context,
-	req *serviceports.UpdateBillingQueueStatusRequest,
-	_ *serviceports.RequestActor,
+	req *billingqueueports.UpdateBillingQueueStatusRequest,
+	_ *permissionports.RequestActor,
 ) (*billingqueue.BillingQueueItem, error) {
 	f.updated = append(f.updated, req.ItemID)
 
@@ -376,8 +377,8 @@ func (f *fakeQueueItems) UpdateStatus(
 
 func (f *fakeQueueItems) AssignBiller(
 	context.Context,
-	*serviceports.AssignBillerRequest,
-	*serviceports.RequestActor,
+	*billingqueueports.AssignBillerRequest,
+	*permissionports.RequestActor,
 ) (*billingqueue.BillingQueueItem, error) {
 	return nil, errors.New("not used")
 }
@@ -394,7 +395,7 @@ func TestApproveBillingQueueItems_ApprovesEachAsTheSingleToolWould(t *testing.T)
 	}
 	queue.items[ids[0]].DetentionHolds = []*billingqueue.DetentionHold{{}}
 	tool := newApproveBillingQueueItemsTool(
-		queue, &fakeApprovalInvoices{result: &serviceports.CreateInvoiceFromBillingQueueResult{}},
+		queue, &fakeApprovalInvoices{result: &invoiceports.CreateInvoiceFromBillingQueueResult{}},
 	).(*approveBillingQueueItemsTool)
 
 	properties := tool.ParamSchema()[toolschema.KeyProperties].(map[string]any)

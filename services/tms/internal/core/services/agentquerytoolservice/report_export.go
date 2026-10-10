@@ -5,8 +5,9 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 )
 
 // PreviewedReport is the report a preview_report call ran, read again from
@@ -24,11 +25,11 @@ type PreviewedReport struct {
 func ReportOfPreview(
 	ctx context.Context,
 	reports *reporting.Service,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 	arguments map[string]any,
 ) (*PreviewedReport, error) {
 	tool := &previewReportTool{reports: reports}
-	params := &serviceports.QueryToolParams{
+	params := &agentports.QueryToolParams{
 		OrganizationID: actor.OrganizationID,
 		BusinessUnitID: actor.BusinessUnitID,
 		Actor:          actor,
@@ -52,8 +53,8 @@ func ReportOfPreview(
 }
 
 // ReportingRequestFor is the reporting request a person's actor makes.
-func ReportingRequestFor(actor *serviceports.RequestActor) reporting.Request {
-	return reportingRequestFor(&serviceports.QueryToolParams{
+func ReportingRequestFor(actor *permissionports.RequestActor) reporting.Request {
+	return reportingRequestFor(&agentports.QueryToolParams{
 		OrganizationID: actor.OrganizationID,
 		BusinessUnitID: actor.BusinessUnitID,
 		Actor:          actor,

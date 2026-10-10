@@ -1,14 +1,15 @@
 package emailservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -119,7 +120,7 @@ func TestUpsertAssignmentsReplacesAssignmentSet(t *testing.T) {
 }
 
 type assignmentRepo struct {
-	repositories.EmailRepository
+	emailports.EmailRepository
 
 	profiles           map[pulid.ID]*email.Profile
 	updatedAssignments []*email.ProfileAssignment
@@ -127,7 +128,7 @@ type assignmentRepo struct {
 
 func (r *assignmentRepo) GetProfile(
 	_ context.Context,
-	req repositories.GetEmailEntityRequest,
+	req emailports.GetEmailEntityRequest,
 ) (*email.Profile, error) {
 	profile, ok := r.profiles[req.ID]
 	if !ok {
@@ -149,40 +150,40 @@ func (r *assignmentRepo) UpsertAssignments(
 	return r.updatedAssignments, nil
 }
 
-type noopAuditService struct{ *mocks.MockAuditService }
+type noopAuditService struct{ *auditportsmock.MockAuditService }
 
 func (noopAuditService) List(
 	context.Context,
-	*repositories.ListAuditEntriesRequest,
+	*auditports.ListAuditEntriesRequest,
 ) (*pagination.ListResult[*audit.Entry], error) {
 	return &pagination.ListResult[*audit.Entry]{Items: []*audit.Entry{}, Total: 0}, nil
 }
 
 func (noopAuditService) ListByResourceID(
 	context.Context,
-	*repositories.ListByResourceIDRequest,
+	*auditports.ListByResourceIDRequest,
 ) (*pagination.ListResult[*audit.Entry], error) {
 	return &pagination.ListResult[*audit.Entry]{Items: []*audit.Entry{}, Total: 0}, nil
 }
 
 func (noopAuditService) GetByID(
 	context.Context,
-	repositories.GetAuditEntryByIDOptions,
+	auditports.GetAuditEntryByIDOptions,
 ) (*audit.Entry, error) {
 	return nil, errortypes.NewNotFoundError("AuditEntry not found")
 }
 
-func (noopAuditService) LogAction(*services.LogActionParams, ...services.LogOption) error {
+func (noopAuditService) LogAction(*auditports.LogActionParams, ...auditports.LogOption) error {
 	return nil
 }
 
-func (noopAuditService) LogActions([]services.BulkLogEntry) error {
+func (noopAuditService) LogActions([]auditports.BulkLogEntry) error {
 	return nil
 }
 
 func (noopAuditService) RegisterSensitiveFields(
 	permission.Resource,
-	[]services.SensitiveField,
+	[]auditports.SensitiveField,
 ) error {
 	return nil
 }
@@ -249,7 +250,7 @@ func TestHandleProviderEventCreatesSuppressionOnlyWithReason(t *testing.T) {
 }
 
 type handleProviderEventRepo struct {
-	repositories.EmailRepository
+	emailports.EmailRepository
 
 	message                 *email.Message
 	updatedMessage          *email.Message
@@ -259,7 +260,7 @@ type handleProviderEventRepo struct {
 
 func (r *handleProviderEventRepo) GetMessage(
 	_ context.Context,
-	req repositories.GetEmailEntityRequest,
+	req emailports.GetEmailEntityRequest,
 ) (*email.Message, error) {
 	if r.message == nil || r.message.ID != req.ID {
 		return nil, errortypes.NewNotFoundError("EmailMessage not found")
@@ -269,7 +270,7 @@ func (r *handleProviderEventRepo) GetMessage(
 
 func (r *handleProviderEventRepo) GetMessageByProviderID(
 	_ context.Context,
-	req repositories.GetEmailMessageByProviderIDRequest,
+	req emailports.GetEmailMessageByProviderIDRequest,
 ) (*email.Message, error) {
 	r.providerMessageIDLookup = req.ProviderMessageID
 	if r.message == nil || r.message.ProviderMessageID != req.ProviderMessageID {

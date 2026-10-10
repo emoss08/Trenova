@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/selfserviceservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -97,7 +97,7 @@ func (s *Service) UpdateMyContactInfo(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	req *UpdateMyContactInfoRequest,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*PortalComplianceProfile, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(

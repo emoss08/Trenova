@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -69,7 +69,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.DispatchConsoleRepository {
+func New(p Params) shipmentports.DispatchConsoleRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.dispatch-console-repository"),
@@ -89,15 +89,15 @@ func boardLimit(requested int) int {
 
 func (r *repository) ListBoardMoves(
 	ctx context.Context,
-	filter *repositories.DispatchBoardFilter,
-) ([]*repositories.BoardMove, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.BoardMove, error) {
+	filter *shipmentports.DispatchBoardFilter,
+) ([]*shipmentports.BoardMove, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipmentports.BoardMove, error) {
 		moveCols := buncolgen.ShipmentMoveColumns
 		shipCols := buncolgen.ShipmentColumns
 		asnCols := buncolgen.AssignmentColumns
 		casnCols := buncolgen.CarrierAssignmentColumns
 
-		entities := make([]*repositories.BoardMove, 0, boardLimit(filter.Limit))
+		entities := make([]*shipmentports.BoardMove, 0, boardLimit(filter.Limit))
 
 		q := r.db.DBForContext(ctx).NewSelect().
 			Model((*shipment.ShipmentMove)(nil)).

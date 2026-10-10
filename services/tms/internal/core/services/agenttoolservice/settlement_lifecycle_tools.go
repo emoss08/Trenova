@@ -7,11 +7,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/settlementshared"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 )
 
@@ -429,21 +429,21 @@ func newSettlementDecisionTool[E any](
 	ledger settlementLedger[E],
 	decision *settlementDecision,
 	book settlementBook[E],
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return &settlementDecisionTool[E]{decision: *decision, ledger: ledger, book: book}
 }
 
 func driverDecisionTool(
 	decision func(*lifecycleText) *settlementDecision,
 	book settlementBook[driversettlement.Settlement],
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newSettlementDecisionTool(driverSettlementLedger(), decision(driverLifecycle()), book)
 }
 
 func carrierDecisionTool(
 	decision func(*lifecycleText) *settlementDecision,
 	book settlementBook[carriersettlement.CarrierSettlement],
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newSettlementDecisionTool(
 		carrierSettlementLedger(),
 		decision(carrierLifecycle()),
@@ -451,97 +451,97 @@ func carrierDecisionTool(
 	)
 }
 
-func provideSubmitDriverSettlementTool(s *driversettlementservice.Service) serviceports.AgentTool {
+func provideSubmitDriverSettlementTool(s *driversettlementservice.Service) agentports.AgentTool {
 	return driverDecisionTool(submitDecision, s)
 }
 
-func provideApproveDriverSettlementTool(s *driversettlementservice.Service) serviceports.AgentTool {
+func provideApproveDriverSettlementTool(s *driversettlementservice.Service) agentports.AgentTool {
 	return driverDecisionTool(approveDecision, s)
 }
 
-func provideRejectDriverSettlementTool(s *driversettlementservice.Service) serviceports.AgentTool {
+func provideRejectDriverSettlementTool(s *driversettlementservice.Service) agentports.AgentTool {
 	return driverDecisionTool(rejectDecision, s)
 }
 
-func providePostDriverSettlementTool(s *driversettlementservice.Service) serviceports.AgentTool {
+func providePostDriverSettlementTool(s *driversettlementservice.Service) agentports.AgentTool {
 	return driverDecisionTool(postDecision, s)
 }
 
 func provideMarkDriverSettlementPaidTool(
 	s *driversettlementservice.Service,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return driverDecisionTool(markPaidDecision, s)
 }
 
-func provideVoidDriverSettlementTool(s *driversettlementservice.Service) serviceports.AgentTool {
+func provideVoidDriverSettlementTool(s *driversettlementservice.Service) agentports.AgentTool {
 	return driverDecisionTool(voidDecision, s)
 }
 
 func provideRecalculateDriverSettlementTool(
 	s *driversettlementservice.Service,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return driverDecisionTool(recalculateDecision, s)
 }
 
 func provideAddDriverSettlementAdjustmentTool(
 	s *driversettlementservice.Service,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return driverDecisionTool(addAdjustmentDecision, s)
 }
 
 func provideRemoveDriverSettlementAdjustmentTool(
 	s *driversettlementservice.Service,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return driverDecisionTool(removeAdjustmentDecision, s)
 }
 
 func provideSubmitCarrierSettlementTool(
 	s *carriersettlementservice.Service,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return carrierDecisionTool(submitDecision, s)
 }
 
 func provideApproveCarrierSettlementTool(
 	s *carriersettlementservice.Service,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return carrierDecisionTool(approveDecision, s)
 }
 
 func provideRejectCarrierSettlementTool(
 	s *carriersettlementservice.Service,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return carrierDecisionTool(rejectDecision, s)
 }
 
-func providePostCarrierSettlementTool(s *carriersettlementservice.Service) serviceports.AgentTool {
+func providePostCarrierSettlementTool(s *carriersettlementservice.Service) agentports.AgentTool {
 	return carrierDecisionTool(postDecision, s)
 }
 
 func provideMarkCarrierSettlementPaidTool(
 	s *carriersettlementservice.Service,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return carrierDecisionTool(markPaidDecision, s)
 }
 
-func provideVoidCarrierSettlementTool(s *carriersettlementservice.Service) serviceports.AgentTool {
+func provideVoidCarrierSettlementTool(s *carriersettlementservice.Service) agentports.AgentTool {
 	return carrierDecisionTool(voidDecision, s)
 }
 
 func provideRecalculateCarrierSettlementTool(
 	s *carriersettlementservice.Service,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return carrierDecisionTool(recalculateDecision, s)
 }
 
 func provideAddCarrierSettlementAdjustmentTool(
 	s *carriersettlementservice.Service,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return carrierDecisionTool(addAdjustmentDecision, s)
 }
 
 func provideRemoveCarrierSettlementAdjustmentTool(
 	s *carriersettlementservice.Service,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return carrierDecisionTool(removeAdjustmentDecision, s)
 }
 
@@ -571,13 +571,13 @@ func settlementDecisionProviders() []any {
 var (
 	_ settlementBook[driversettlement.Settlement]         = (*driversettlementservice.Service)(nil)
 	_ settlementBook[carriersettlement.CarrierSettlement] = (*carriersettlementservice.Service)(nil)
-	_ serviceports.ToolPreviewer                          = (*settlementDecisionTool[driversettlement.Settlement])(
+	_ agentports.ToolPreviewer                            = (*settlementDecisionTool[driversettlement.Settlement])(
 		nil,
 	)
-	_ serviceports.ToolValidator = (*settlementDecisionTool[driversettlement.Settlement])(
+	_ agentports.ToolValidator = (*settlementDecisionTool[driversettlement.Settlement])(
 		nil,
 	)
-	_ serviceports.TargetedTool = (*settlementDecisionTool[driversettlement.Settlement])(
+	_ agentports.TargetedTool = (*settlementDecisionTool[driversettlement.Settlement])(
 		nil,
 	)
 )

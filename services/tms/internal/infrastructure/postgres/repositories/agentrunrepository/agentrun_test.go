@@ -8,8 +8,8 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -63,14 +63,14 @@ func TestRunReads_LeaveTheTranscriptBehind(t *testing.T) {
 	runID := pulid.MustNew("arun_")
 
 	sqlMock.ExpectQuery("").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(runID.String()))
-	_, err := repo.GetByID(t.Context(), repositories.GetAgentRunByIDRequest{
+	_, err := repo.GetByID(t.Context(), agentports.GetAgentRunByIDRequest{
 		ID:         runID,
 		TenantInfo: &tenant,
 	})
 	require.NoError(t, err)
 
 	sqlMock.ExpectQuery("").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(runID.String()))
-	_, err = repo.ListByIDs(t.Context(), repositories.ListAgentRunsByIDsRequest{
+	_, err = repo.ListByIDs(t.Context(), agentports.ListAgentRunsByIDsRequest{
 		IDs:        []pulid.ID{runID},
 		TenantInfo: tenant,
 	})
@@ -79,7 +79,7 @@ func TestRunReads_LeaveTheTranscriptBehind(t *testing.T) {
 	sqlMock.ExpectQuery(`"ar"."summary"`).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(runID.String()))
 	sqlMock.ExpectQuery("count(").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
-	_, err = repo.List(t.Context(), &repositories.ListAgentRunRequest{
+	_, err = repo.List(t.Context(), &agentports.ListAgentRunRequest{
 		Filter: &pagination.QueryOptions{TenantInfo: tenant},
 	})
 	require.NoError(t, err)
@@ -109,7 +109,7 @@ func TestListTranscriptsByIDs_ReadsOnlyTheTranscriptOfTheTenantsRuns(t *testing.
 			),
 	)
 
-	runs, err := repo.ListTranscriptsByIDs(t.Context(), repositories.ListAgentRunsByIDsRequest{
+	runs, err := repo.ListTranscriptsByIDs(t.Context(), agentports.ListAgentRunsByIDsRequest{
 		IDs:        []pulid.ID{runID},
 		TenantInfo: tenant,
 	})
@@ -137,7 +137,7 @@ func TestListTranscriptsByIDs_AsksNothingForNoRuns(t *testing.T) {
 
 	repo, _, log := newRunRepository(t)
 
-	runs, err := repo.ListTranscriptsByIDs(t.Context(), repositories.ListAgentRunsByIDsRequest{
+	runs, err := repo.ListTranscriptsByIDs(t.Context(), agentports.ListAgentRunsByIDsRequest{
 		TenantInfo: runTenant(),
 	})
 	require.NoError(t, err)
@@ -153,7 +153,7 @@ func TestListConnection_WithoutAProjectionLeavesTheTranscriptBehind(t *testing.T
 
 	sqlMock.ExpectQuery(`"ar"."summary"`).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(pulid.MustNew("arun_").String()))
-	_, err := repo.ListConnection(t.Context(), &repositories.ListAgentRunConnectionRequest{
+	_, err := repo.ListConnection(t.Context(), &agentports.ListAgentRunConnectionRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenant,
 			Pagination: pagination.Info{Limit: 10},

@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -27,7 +27,7 @@ type runRepository struct {
 	l  *zap.Logger
 }
 
-func NewRunRepository(p RunParams) repositories.ReportRunRepository {
+func NewRunRepository(p RunParams) reportports.ReportRunRepository {
 	return &runRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.report-run-repository"),
@@ -80,7 +80,7 @@ func (r *runRepository) Update(
 
 func (r *runRepository) GetByID(
 	ctx context.Context,
-	req *repositories.GetReportRunRequest,
+	req *reportports.GetReportRunRequest,
 ) (*report.ReportRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*report.ReportRun, error) {
 		entity := new(report.ReportRun)
@@ -102,7 +102,7 @@ func (r *runRepository) GetByID(
 
 func (r *runRepository) List(
 	ctx context.Context,
-	req *repositories.ListReportRunsRequest,
+	req *reportports.ListReportRunsRequest,
 ) ([]*report.ReportRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.ReportRun, error) {
 		cols := buncolgen.ReportRunColumns
@@ -140,12 +140,12 @@ func (r *runRepository) List(
 
 func (r *runRepository) CountActive(
 	ctx context.Context,
-	req *repositories.CountActiveReportRunsRequest,
-) (*repositories.ActiveReportRunCounts, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.ActiveReportRunCounts, error) {
+	req *reportports.CountActiveReportRunsRequest,
+) (*reportports.ActiveReportRunCounts, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*reportports.ActiveReportRunCounts, error) {
 		cols := buncolgen.ReportRunColumns
 
-		var counts repositories.ActiveReportRunCounts
+		var counts reportports.ActiveReportRunCounts
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*report.ReportRun)(nil)).
@@ -170,7 +170,7 @@ func (r *runRepository) CountActive(
 
 func (r *runRepository) ListStale(
 	ctx context.Context,
-	req *repositories.ListStaleReportRunsRequest,
+	req *reportports.ListStaleReportRunsRequest,
 ) ([]*report.ReportRun, error) {
 	ctx = dbscope.WithSystem(ctx, "list stalled report runs across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.ReportRun, error) {
@@ -199,7 +199,7 @@ func (r *runRepository) ListStale(
 
 func (r *runRepository) ListExpired(
 	ctx context.Context,
-	req *repositories.ListExpiredReportRunsRequest,
+	req *reportports.ListExpiredReportRunsRequest,
 ) ([]*report.ReportRun, error) {
 	ctx = dbscope.WithSystem(ctx, "list expired report artifacts across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.ReportRun, error) {

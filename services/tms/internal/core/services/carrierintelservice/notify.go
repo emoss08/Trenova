@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/notification"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
@@ -46,7 +46,7 @@ func (s *Service) sendNotification(ctx context.Context, req *notificationRequest
 	if req.correlation != "" {
 		exists, err := s.notifications.ExistsRecent(
 			ctx,
-			repositories.ExistsRecentNotificationRequest{
+			notificationports.ExistsRecentNotificationRequest{
 				OrganizationID: req.tenant.OrgID,
 				BusinessUnitID: req.tenant.BuID,
 				EventType:      req.eventType,

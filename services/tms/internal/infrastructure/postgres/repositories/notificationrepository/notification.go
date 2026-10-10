@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/notification"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -30,7 +30,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.NotificationRepository {
+func New(p Params) notificationports.NotificationRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.notification-repository"),
@@ -85,7 +85,7 @@ func (r *repository) scopeActionQuery(
 
 func (r *repository) ExistsRecent(
 	ctx context.Context,
-	req repositories.ExistsRecentNotificationRequest,
+	req notificationports.ExistsRecentNotificationRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
 		return r.db.DBForContext(ctx).
@@ -119,7 +119,7 @@ func (r *repository) Create(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListNotificationsRequest,
+	req *notificationports.ListNotificationsRequest,
 ) (*pagination.ListResult[*notification.Notification], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*notification.Notification], error) {
 		log := r.l.With(zap.String("operation", "List"))
@@ -164,7 +164,7 @@ func applyNotificationColumns(q *bun.SelectQuery, columns []string) *bun.SelectQ
 
 func stateFilter(
 	q *bun.SelectQuery,
-	req *repositories.ListNotificationConnectionRequest,
+	req *notificationports.ListNotificationConnectionRequest,
 ) *bun.SelectQuery {
 	if req.State == notification.StateArchived {
 		q = q.Where(cols.DismissedAt.IsNotNull())
@@ -181,7 +181,7 @@ func stateFilter(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListNotificationConnectionRequest,
+	req *notificationports.ListNotificationConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	q, err := querybuilder.ApplyCursorFilters(
 		q,
@@ -201,7 +201,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListNotificationConnectionRequest,
+	req *notificationports.ListNotificationConnectionRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -217,7 +217,7 @@ func (r *repository) applyTotalCountFilters(
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListNotificationConnectionRequest,
+	req *notificationports.ListNotificationConnectionRequest,
 ) (*pagination.CursorListResult[*notification.Notification], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*notification.Notification], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -268,7 +268,7 @@ func (r *repository) ListConnection(
 
 func (r *repository) actionQuery(
 	ctx context.Context,
-	req repositories.NotificationActionRequest,
+	req notificationports.NotificationActionRequest,
 ) *bun.UpdateQuery {
 	q := r.db.DBForContext(ctx).
 		NewUpdate().
@@ -280,7 +280,7 @@ func (r *repository) actionQuery(
 
 func (r *repository) MarkAsRead(
 	ctx context.Context,
-	req repositories.NotificationActionRequest,
+	req notificationports.NotificationActionRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		log := r.l.With(zap.String("operation", "MarkAsRead"))
@@ -300,7 +300,7 @@ func (r *repository) MarkAsRead(
 
 func (r *repository) MarkAsUnread(
 	ctx context.Context,
-	req repositories.NotificationActionRequest,
+	req notificationports.NotificationActionRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		log := r.l.With(zap.String("operation", "MarkAsUnread"))
@@ -320,7 +320,7 @@ func (r *repository) MarkAsUnread(
 
 func (r *repository) Dismiss(
 	ctx context.Context,
-	req repositories.NotificationActionRequest,
+	req notificationports.NotificationActionRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		log := r.l.With(zap.String("operation", "Dismiss"))
@@ -342,7 +342,7 @@ func (r *repository) Dismiss(
 
 func (r *repository) Restore(
 	ctx context.Context,
-	req repositories.NotificationActionRequest,
+	req notificationports.NotificationActionRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		log := r.l.With(zap.String("operation", "Restore"))

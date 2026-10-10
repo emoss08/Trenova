@@ -3,13 +3,13 @@ package agenttoolcatalog
 import (
 	"testing"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func descriptor(name, description string) serviceports.AgentToolDescriptor {
-	return serviceports.AgentToolDescriptor{
+func descriptor(name, description string) agentports.AgentToolDescriptor {
+	return agentports.AgentToolDescriptor{
 		Name:        name,
 		Description: description,
 		Parameters:  map[string]any{"type": "object"},
@@ -17,7 +17,7 @@ func descriptor(name, description string) serviceports.AgentToolDescriptor {
 }
 
 func testCatalog() *Catalog {
-	return New([]serviceports.AgentToolDescriptor{
+	return New([]agentports.AgentToolDescriptor{
 		descriptor(
 			"list_workers",
 			"List workers (drivers) narrowed by status, employment type or fleet.",
@@ -45,7 +45,7 @@ func testCatalog() *Catalog {
 	})
 }
 
-func names(entries []serviceports.AgentToolDescriptor) []string {
+func names(entries []agentports.AgentToolDescriptor) []string {
 	out := make([]string, 0, len(entries))
 	for _, entry := range entries {
 		out = append(out, entry.Name)
@@ -221,7 +221,7 @@ on the word "list", and a small model picked from all of them.
 func TestFind_KeepsOnlyTheToolsThatMatchedAboutAsWellAsTheBest(t *testing.T) {
 	t.Parallel()
 
-	catalog := New([]serviceports.AgentToolDescriptor{
+	catalog := New([]agentports.AgentToolDescriptor{
 		descriptor("list_trailers", "List trailers by status or inspection date."),
 		descriptor("list_workers", "List workers by status."),
 		descriptor("list_tractors", "List tractors by status."),
@@ -241,7 +241,7 @@ func TestFind_MatchesAToolsSearchTermsAsItsName(t *testing.T) {
 
 	home := descriptor("get_my_home_layout", "Read the widgets on the person's home page.")
 	home.SearchTerms = []string{"homepage", "landing page", "widgets"}
-	catalog := New([]serviceports.AgentToolDescriptor{
+	catalog := New([]agentports.AgentToolDescriptor{
 		home,
 		descriptor("list_dashboards", "List the report dashboards on the Reports page."),
 		descriptor("list_workers", "List workers by status."),
@@ -269,7 +269,7 @@ func TestFind_ReachesAToolThroughItsParameters(t *testing.T) {
 			},
 		},
 	}
-	catalog := New([]serviceports.AgentToolDescriptor{
+	catalog := New([]agentports.AgentToolDescriptor{
 		shipments,
 		descriptor("list_customers", "List customers by status or city."),
 		descriptor("list_workers", "List workers by status."),
@@ -287,7 +287,7 @@ func TestPrerequisitesAndQuery_ComeFromTheDescriptor(t *testing.T) {
 	dashboard.Prerequisites = []string{"list_reports"}
 	reports := descriptor("list_reports", "List reports.")
 	reports.Query = true
-	catalog := New([]serviceports.AgentToolDescriptor{dashboard, reports})
+	catalog := New([]agentports.AgentToolDescriptor{dashboard, reports})
 
 	assert.Equal(t, []string{"list_reports"}, catalog.Prerequisites("create_dashboard"))
 	assert.Nil(t, catalog.Prerequisites("missing"))
@@ -296,7 +296,7 @@ func TestPrerequisitesAndQuery_ComeFromTheDescriptor(t *testing.T) {
 }
 
 func reportFamilyCatalog() *Catalog {
-	return New([]serviceports.AgentToolDescriptor{
+	return New([]agentports.AgentToolDescriptor{
 		descriptor("run_report", "Start a report run."),
 		descriptor("list_reports", "List the reports this organization can run."),
 		descriptor("describe_report", "Show what a report contains."),
@@ -354,7 +354,7 @@ func TestRank_DoesNotBringAlongFamilies(t *testing.T) {
 }
 
 func parameterOnlyCatalog() *Catalog {
-	return New([]serviceports.AgentToolDescriptor{
+	return New([]agentports.AgentToolDescriptor{
 		{
 			Name:        "list_shipments",
 			Description: "List shipments narrowed by status or dates.",

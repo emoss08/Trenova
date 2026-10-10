@@ -9,8 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/glaccount"
 	"github.com/emoss08/trenova/internal/core/domain/journalentry"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,20 +21,20 @@ import (
 )
 
 type fakeReceivables struct {
-	aging     *serviceports.ARAgingSummary
-	openItems []*repositories.AROpenItem
-	statement *serviceports.ARCustomerStatement
-	worklist  []*repositories.ARCollectionsWorklistItem
+	aging     *customerledgerports.ARAgingSummary
+	openItems []*customerledgerports.AROpenItem
+	statement *customerledgerports.ARCustomerStatement
+	worklist  []*customerledgerports.ARCollectionsWorklistItem
 
 	openCustomer pulid.ID
-	worklistReq  repositories.ListARCollectionsWorklistRequest
+	worklistReq  customerledgerports.ListARCollectionsWorklistRequest
 }
 
 func (f *fakeReceivables) GetAgingSummary(
 	context.Context,
 	pagination.TenantInfo,
 	int64,
-) (*serviceports.ARAgingSummary, error) {
+) (*customerledgerports.ARAgingSummary, error) {
 	return f.aging, nil
 }
 
@@ -41,7 +43,7 @@ func (f *fakeReceivables) ListOpenItems(
 	_ pagination.TenantInfo,
 	customerID pulid.ID,
 	_ int64,
-) ([]*repositories.AROpenItem, error) {
+) ([]*customerledgerports.AROpenItem, error) {
 	f.openCustomer = customerID
 
 	return f.openItems, nil
@@ -52,40 +54,40 @@ func (f *fakeReceivables) GetCustomerStatement(
 	pagination.TenantInfo,
 	pulid.ID,
 	int64, int64,
-) (*serviceports.ARCustomerStatement, error) {
+) (*customerledgerports.ARCustomerStatement, error) {
 	return f.statement, nil
 }
 
 func (f *fakeReceivables) GetCollectionsWorklist(
 	_ context.Context,
-	req repositories.ListARCollectionsWorklistRequest,
-) ([]*repositories.ARCollectionsWorklistItem, error) {
+	req customerledgerports.ListARCollectionsWorklistRequest,
+) ([]*customerledgerports.ARCollectionsWorklistItem, error) {
 	f.worklistReq = req
 
 	return f.worklist, nil
 }
 
-func agingRow(name string, buckets repositories.ARAgingBucketTotals) *repositories.ARCustomerAgingRow {
-	return &repositories.ARCustomerAgingRow{
+func agingRow(name string, buckets customerledgerports.ARAgingBucketTotals) *customerledgerports.ARCustomerAgingRow {
+	return &customerledgerports.ARCustomerAgingRow{
 		CustomerID:   pulid.MustNew("cus_"),
 		CustomerName: name,
 		Buckets:      buckets,
 	}
 }
 
-func agingSummary() *serviceports.ARAgingSummary {
-	return &serviceports.ARAgingSummary{
+func agingSummary() *customerledgerports.ARAgingSummary {
+	return &customerledgerports.ARAgingSummary{
 		AsOfDate: 1_700_000_000,
-		Totals:   repositories.ARAgingBucketTotals{TotalOpenMinor: 160000, DaysOver90Minor: 50000},
-		Rows: []*repositories.ARCustomerAgingRow{
-			agingRow("Current Co", repositories.ARAgingBucketTotals{
+		Totals:   customerledgerports.ARAgingBucketTotals{TotalOpenMinor: 160000, DaysOver90Minor: 50000},
+		Rows: []*customerledgerports.ARCustomerAgingRow{
+			agingRow("Current Co", customerledgerports.ARAgingBucketTotals{
 				CurrentMinor: 100000, TotalOpenMinor: 100000,
 			}),
-			agingRow("Slow Payer", repositories.ARAgingBucketTotals{
+			agingRow("Slow Payer", customerledgerports.ARAgingBucketTotals{
 				DaysOver90Minor: 50000, TotalOpenMinor: 50000,
 			}),
-			agingRow("Paid Up", repositories.ARAgingBucketTotals{}),
-			agingRow("Month Late", repositories.ARAgingBucketTotals{
+			agingRow("Paid Up", customerledgerports.ARAgingBucketTotals{}),
+			agingRow("Month Late", customerledgerports.ARAgingBucketTotals{
 				Days31To60Minor: 10000, TotalOpenMinor: 10000,
 			}),
 		},
@@ -135,7 +137,7 @@ func TestListAROpenItems_FiltersAndPages(t *testing.T) {
 	t.Parallel()
 
 	customer := pulid.MustNew("cus_")
-	fake := &fakeReceivables{openItems: []*repositories.AROpenItem{
+	fake := &fakeReceivables{openItems: []*customerledgerports.AROpenItem{
 		{InvoiceID: pulid.MustNew("inv_"), InvoiceNumber: "A", DaysPastDue: 5},
 		{InvoiceID: pulid.MustNew("inv_"), InvoiceNumber: "B", DaysPastDue: 45,
 			DisputeStatus: "Disputed", OpenAmountMinor: 1234},
@@ -169,16 +171,16 @@ func TestListAROpenItems_FiltersAndPages(t *testing.T) {
 func TestGetCustomerStatement_KeepsTheLatestTransactions(t *testing.T) {
 	t.Parallel()
 
-	transactions := make([]*serviceports.ARStatementTransaction, 0, 60)
+	transactions := make([]*customerledgerports.ARStatementTransaction, 0, 60)
 	for idx := range 60 {
-		transactions = append(transactions, &serviceports.ARStatementTransaction{
+		transactions = append(transactions, &customerledgerports.ARStatementTransaction{
 			TransactionDate: int64(1_700_000_000 + idx),
 			EventType:       "Invoice",
 			ChargeMinor:     100,
 		})
 	}
 	customer := pulid.MustNew("cus_")
-	tool := newGetCustomerStatementTool(&fakeReceivables{statement: &serviceports.ARCustomerStatement{
+	tool := newGetCustomerStatementTool(&fakeReceivables{statement: &customerledgerports.ARCustomerStatement{
 		CustomerID:   customer,
 		CustomerName: "Acme",
 		Transactions: transactions,
@@ -202,7 +204,7 @@ func TestGetCustomerStatement_KeepsTheLatestTransactions(t *testing.T) {
 func TestListCollectionsWorklist_NarrowsToASeverity(t *testing.T) {
 	t.Parallel()
 
-	fake := &fakeReceivables{worklist: []*repositories.ARCollectionsWorklistItem{
+	fake := &fakeReceivables{worklist: []*customerledgerports.ARCollectionsWorklistItem{
 		{InvoiceID: pulid.MustNew("inv_"), Severity: "Critical", DaysPastDue: 40},
 		{InvoiceID: pulid.MustNew("inv_"), Severity: "Watch", DaysPastDue: 2},
 	}}
@@ -224,12 +226,12 @@ func TestListCollectionsWorklist_NarrowsToASeverity(t *testing.T) {
 
 type fakeJournalEntries struct {
 	entries  []*journalentry.JournalEntry
-	captured *repositories.ListJournalEntriesRequest
+	captured *journalentryports.ListJournalEntriesRequest
 }
 
 func (f *fakeJournalEntries) List(
 	_ context.Context,
-	req *repositories.ListJournalEntriesRequest,
+	req *journalentryports.ListJournalEntriesRequest,
 ) (*pagination.ListResult[*journalentry.JournalEntry], error) {
 	f.captured = req
 
@@ -238,7 +240,7 @@ func (f *fakeJournalEntries) List(
 
 func (f *fakeJournalEntries) GetByID(
 	_ context.Context,
-	req repositories.GetJournalEntryByIDRequest,
+	req journalentryports.GetJournalEntryByIDRequest,
 ) (*journalentry.JournalEntry, error) {
 	for _, entry := range f.entries {
 		if entry.ID == req.ID {
@@ -255,7 +257,7 @@ type fakeGLAccounts struct {
 
 func (f *fakeGLAccounts) GetByIDs(
 	context.Context,
-	repositories.GetGLAccountsByIDsRequest,
+	glaccountports.GetGLAccountsByIDsRequest,
 ) ([]*glaccount.GLAccount, error) {
 	return f.accounts, nil
 }
@@ -329,14 +331,14 @@ type fakeCloseBlockers struct {
 
 func (f *fakeCloseBlockers) Get(
 	context.Context,
-	repositories.GetFiscalPeriodByIDRequest,
+	fiscalperiodports.GetFiscalPeriodByIDRequest,
 ) (*fiscalperiod.FiscalPeriod, error) {
 	return f.period, nil
 }
 
 func (f *fakeCloseBlockers) GetCloseBlockers(
 	context.Context,
-	repositories.GetFiscalPeriodByIDRequest,
+	fiscalperiodports.GetFiscalPeriodByIDRequest,
 ) (*fiscalclose.Result, error) {
 	return f.result, nil
 }

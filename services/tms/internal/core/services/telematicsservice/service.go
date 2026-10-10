@@ -4,13 +4,17 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/integrationservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -27,42 +31,42 @@ const (
 type Params struct {
 	fx.In
 
-	Repo                repositories.TelematicsRepository
-	ProviderFactory     services.TelematicsProviderFactory
+	Repo                telematicsports.TelematicsRepository
+	ProviderFactory     telematicsports.TelematicsProviderFactory
 	IntegrationService  *integrationservice.Service
 	EncryptionService   *encryptionservice.Service
-	RealtimeService     services.RealtimeService
+	RealtimeService     agentports.RealtimeService
 	Notifications       *notificationservice.Service
 	DriverNotify        *drivernotificationservice.Service `optional:"true"`
-	AssignmentRepo      repositories.AssignmentRepository
-	ShipmentRepo        repositories.ShipmentRepository
-	ShipmentMoveRepo    repositories.ShipmentMoveRepository
-	ShipmentMoveService services.ShipmentMoveService
-	DispatchControlRepo repositories.DispatchControlRepository
+	AssignmentRepo      shipmentports.AssignmentRepository
+	ShipmentRepo        shipmentports.ShipmentRepository
+	ShipmentMoveRepo    shipmentports.ShipmentMoveRepository
+	ShipmentMoveService shipmentports.ShipmentMoveService
+	DispatchControlRepo dispatchcontrolports.DispatchControlRepository
 	CustomFieldValues   *customfieldservice.ValuesService
 	Logger              *zap.Logger
-	ProviderOverride    services.TelematicsProvider  `optional:"true"`
-	Watchtower          services.WatchtowerProjector `optional:"true"`
-	Waits               services.AgentWaitNotifier   `optional:"true"`
+	ProviderOverride    telematicsports.TelematicsProvider  `optional:"true"`
+	Watchtower          watchtowerports.WatchtowerProjector `optional:"true"`
+	Waits               agentwaitports.AgentWaitNotifier    `optional:"true"`
 }
 
 type Service struct {
-	repo                repositories.TelematicsRepository
-	providerFactory     services.TelematicsProviderFactory
+	repo                telematicsports.TelematicsRepository
+	providerFactory     telematicsports.TelematicsProviderFactory
 	integrationService  *integrationservice.Service
 	encryptionService   *encryptionservice.Service
-	realtimeService     services.RealtimeService
+	realtimeService     agentports.RealtimeService
 	notifications       *notificationservice.Service
 	driverNotify        *drivernotificationservice.Service
-	assignmentRepo      repositories.AssignmentRepository
-	shipmentRepo        repositories.ShipmentRepository
-	shipmentMoveRepo    repositories.ShipmentMoveRepository
-	shipmentMoveService services.ShipmentMoveService
-	dispatchControlRepo repositories.DispatchControlRepository
+	assignmentRepo      shipmentports.AssignmentRepository
+	shipmentRepo        shipmentports.ShipmentRepository
+	shipmentMoveRepo    shipmentports.ShipmentMoveRepository
+	shipmentMoveService shipmentports.ShipmentMoveService
+	dispatchControlRepo dispatchcontrolports.DispatchControlRepository
 	customFieldValues   *customfieldservice.ValuesService
-	providerOverride    services.TelematicsProvider
-	watchtower          services.WatchtowerProjector
-	waits               services.AgentWaitNotifier
+	providerOverride    telematicsports.TelematicsProvider
+	watchtower          watchtowerports.WatchtowerProjector
+	waits               agentwaitports.AgentWaitNotifier
 	l                   *zap.Logger
 }
 
@@ -91,7 +95,7 @@ func New(p Params) *Service { //nolint:gocritic // dependency injection
 func (s *Service) resolveProvider(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (services.TelematicsProvider, error) {
+) (telematicsports.TelematicsProvider, error) {
 	if s.providerOverride != nil {
 		return s.providerOverride, nil
 	}
@@ -108,7 +112,7 @@ func (s *Service) publishInvalidation(
 	}
 	err := s.realtimeService.PublishResourceInvalidation(
 		ctx,
-		&services.PublishResourceInvalidationRequest{
+		&agentports.PublishResourceInvalidationRequest{
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
 			Resource:       resource,

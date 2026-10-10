@@ -15,11 +15,14 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/insight"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/insightservice/detector"
 	"github.com/emoss08/trenova/internal/core/services/insightservice/narrator"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -44,17 +47,17 @@ type Params struct {
 	fx.In
 
 	Logger      *zap.Logger
-	Repo        repositories.InsightRepository
+	Repo        insightports.InsightRepository
 	Detectors   *detector.Registry
 	Narrator    *narrator.Service
-	Permissions services.PermissionEngine
+	Permissions permissionports.PermissionEngine
 	// Events is told about each finding the first time it appears, so an
 	// agent subscribed to insight.detected can act on it. It is optional
 	// because the refresh is worth running with no agent to hear about it.
-	Events services.AgentEventPublisher `optional:"true"`
+	Events agentports.AgentEventPublisher `optional:"true"`
 	// Watchtower puts each finding on the one feed a person reads. Optional
 	// for the same reason: the refresh is worth running without it.
-	Watchtower services.WatchtowerProjector `optional:"true"`
+	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
 }
 
 // permissionChecker is the slice of PermissionEngine this service uses. It asks
@@ -62,18 +65,18 @@ type Params struct {
 type permissionChecker interface {
 	Check(
 		ctx context.Context,
-		req *services.PermissionCheckRequest,
-	) (*services.PermissionCheckResult, error)
+		req *permissionports.PermissionCheckRequest,
+	) (*permissionports.PermissionCheckResult, error)
 }
 
 type Service struct {
 	l           *zap.Logger
-	repo        repositories.InsightRepository
+	repo        insightports.InsightRepository
 	detectors   *detector.Registry
 	narrator    *narrator.Service
 	permissions permissionChecker
-	events      services.AgentEventPublisher
-	watchtower  services.WatchtowerProjector
+	events      agentports.AgentEventPublisher
+	watchtower  watchtowerports.WatchtowerProjector
 }
 
 func New(p Params) *Service {
@@ -197,7 +200,7 @@ func (s *Service) refreshDetector(ctx context.Context, p refreshParams) {
 
 	stored, err := s.repo.ReplaceDetectorFindings(
 		ctx,
-		repositories.ReplaceDetectorFindingsRequest{
+		insightports.ReplaceDetectorFindingsRequest{
 			TenantInfo:       p.params.TenantInfo,
 			DetectorKey:      p.detector.Key(),
 			Insights:         entities,
@@ -237,7 +240,7 @@ func (s *Service) announce(
 			continue
 		}
 
-		services.PublishAgentEvent(ctx, s.events, services.AgentEvent{
+		agentports.PublishAgentEvent(ctx, s.events, agentports.AgentEvent{
 			Kind:       agent.EventInsightDetected,
 			SubjectID:  entity.ID,
 			TenantInfo: tenant,
@@ -321,7 +324,7 @@ func (s *Service) buildInsights(
 // ListActive returns the home screen's slice of what a reader may see.
 func (s *Service) ListActive(
 	ctx context.Context,
-	req services.ListInsightsRequest,
+	req insightports.ListInsightsRequest,
 ) ([]*insight.Insight, error) {
 	limit := req.Limit
 	if limit <= 0 {
@@ -333,7 +336,7 @@ func (s *Service) ListActive(
 		allowed = s.restrictToSurface(allowed, req.Surface)
 	}
 
-	return s.repo.ListActive(ctx, repositories.ListActiveInsightsRequest{
+	return s.repo.ListActive(ctx, insightports.ListActiveInsightsRequest{
 		TenantInfo:          req.TenantInfo,
 		AllowedDetectorKeys: allowed,
 		Categories:          req.Categories,
@@ -348,15 +351,15 @@ func (s *Service) ListActive(
 // claims yields an empty set, which the repository reads as nothing to show —
 // the same shape as a reader with no permissions, and for the same reason.
 func (s *Service) restrictToSurface(
-	allowed repositories.AllowedDetectorKeys,
+	allowed insightports.AllowedDetectorKeys,
 	surface insight.Surface,
-) repositories.AllowedDetectorKeys {
+) insightports.AllowedDetectorKeys {
 	onSurface := make(map[string]struct{}, len(allowed))
 	for _, key := range s.detectors.KeysForSurface(surface) {
 		onSurface[key] = struct{}{}
 	}
 
-	restricted := make(repositories.AllowedDetectorKeys, 0, len(allowed))
+	restricted := make(insightports.AllowedDetectorKeys, 0, len(allowed))
 	for _, key := range allowed {
 		if _, ok := onSurface[key]; ok {
 			restricted = append(restricted, key)
@@ -369,11 +372,11 @@ func (s *Service) restrictToSurface(
 // List browses the history a page at a time.
 func (s *Service) List(
 	ctx context.Context,
-	req services.BrowseInsightsRequest,
+	req insightports.BrowseInsightsRequest,
 ) (*pagination.ListResult[*insight.Insight], error) {
-	return s.repo.List(ctx, repositories.ListInsightsRequest{
+	return s.repo.List(ctx, insightports.ListInsightsQuery{
 		TenantInfo: req.TenantInfo,
-		AllowedDetectorKeys: s.allowedDetectorKeys(ctx, services.ListInsightsRequest{
+		AllowedDetectorKeys: s.allowedDetectorKeys(ctx, insightports.ListInsightsRequest{
 			TenantInfo: req.TenantInfo,
 			UserID:     req.UserID,
 			Actor:      req.Actor,
@@ -399,10 +402,10 @@ func (s *Service) List(
 // merely be prevented from clicking through to it.
 func (s *Service) allowedDetectorKeys(
 	ctx context.Context,
-	req services.ListInsightsRequest,
-) repositories.AllowedDetectorKeys {
+	req insightports.ListInsightsRequest,
+) insightports.AllowedDetectorKeys {
 	detectors := s.detectors.All()
-	allowed := make(repositories.AllowedDetectorKeys, 0, len(detectors))
+	allowed := make(insightports.AllowedDetectorKeys, 0, len(detectors))
 
 	for _, d := range detectors {
 		if s.readerMaySee(ctx, req, d) {
@@ -423,11 +426,11 @@ func (s *Service) allowedDetectorKeys(
 // outlive the check that guarded them.
 func (s *Service) readerMaySee(
 	ctx context.Context,
-	req services.ListInsightsRequest,
+	req insightports.ListInsightsRequest,
 	d detector.Detector,
 ) bool {
-	check := &services.PermissionCheckRequest{
-		PrincipalType:  services.PrincipalTypeUser,
+	check := &permissionports.PermissionCheckRequest{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    req.UserID,
 		UserID:         req.UserID,
 		OrganizationID: req.TenantInfo.OrgID,
@@ -472,9 +475,9 @@ var ErrInsightNotVisible = errors.New("insight is not visible to this reader")
 // their permissions exclude.
 func (s *Service) GetDetail(
 	ctx context.Context,
-	req services.GetInsightDetailRequest,
-) (*services.InsightDetail, error) {
-	found, err := s.repo.GetByID(ctx, repositories.GetInsightByIDRequest{
+	req insightports.GetInsightDetailRequest,
+) (*insightports.InsightDetail, error) {
+	found, err := s.repo.GetByID(ctx, insightports.GetInsightByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -489,7 +492,7 @@ func (s *Service) GetDetail(
 		return nil, ErrInsightNotVisible
 	}
 
-	visible := s.readerMaySee(ctx, services.ListInsightsRequest{
+	visible := s.readerMaySee(ctx, insightports.ListInsightsRequest{
 		TenantInfo: req.TenantInfo,
 		UserID:     req.UserID,
 		Actor:      req.Actor,
@@ -498,7 +501,7 @@ func (s *Service) GetDetail(
 		return nil, ErrInsightNotVisible
 	}
 
-	history, err := s.repo.ListHistory(ctx, repositories.ListInsightHistoryRequest{
+	history, err := s.repo.ListHistory(ctx, insightports.ListInsightHistoryRequest{
 		DedupeKey:  found.DedupeKey,
 		TenantInfo: req.TenantInfo,
 		ExcludeID:  found.ID,
@@ -515,10 +518,10 @@ func (s *Service) GetDetail(
 
 	explanation := d.Explain()
 
-	return &services.InsightDetail{
+	return &insightports.InsightDetail{
 		Insight: found,
 		History: history,
-		Explanation: services.InsightExplanation{
+		Explanation: insightports.InsightExplanation{
 			Measures:  explanation.Measures,
 			Threshold: explanation.Threshold,
 			Excludes:  explanation.Excludes,
@@ -529,9 +532,9 @@ func (s *Service) GetDetail(
 // Dismiss records that a person judged a finding not worth acting on.
 func (s *Service) Dismiss(
 	ctx context.Context,
-	req services.DismissInsightRequest,
+	req insightports.DismissInsightRequest,
 ) (*insight.Insight, error) {
-	return s.repo.Dismiss(ctx, repositories.DismissInsightRequest{
+	return s.repo.Dismiss(ctx, insightports.DismissInsightQuery{
 		ID:         req.ID,
 		UserID:     req.UserID,
 		Reason:     req.Reason,
@@ -542,13 +545,13 @@ func (s *Service) Dismiss(
 // Restore undoes a dismissal.
 func (s *Service) Restore(
 	ctx context.Context,
-	req services.RestoreInsightRequest,
+	req insightports.RestoreInsightRequest,
 ) (*insight.Insight, error) {
 	if _, err := s.PlanRestore(ctx, req); err != nil {
 		return nil, err
 	}
 
-	return s.repo.Restore(ctx, repositories.RestoreInsightRequest{
+	return s.repo.Restore(ctx, insightports.RestoreInsightQuery{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -556,9 +559,9 @@ func (s *Service) Restore(
 
 func (s *Service) PlanRestore(
 	ctx context.Context,
-	req services.RestoreInsightRequest,
-) (*services.RecordChange[insight.Insight], error) {
-	found, err := s.repo.GetByID(ctx, repositories.GetInsightByIDRequest{
+	req insightports.RestoreInsightRequest,
+) (*kernelports.RecordChange[insight.Insight], error) {
+	found, err := s.repo.GetByID(ctx, insightports.GetInsightByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -571,5 +574,5 @@ func (s *Service) PlanRestore(
 		return nil, err
 	}
 
-	return &services.RecordChange[insight.Insight]{Before: found, After: &restored}, nil
+	return &kernelports.RecordChange[insight.Insight]{Before: found, After: &restored}, nil
 }

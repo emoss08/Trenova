@@ -8,8 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,13 +19,13 @@ import (
 type Params struct {
 	fx.In
 
-	Service              services.InvoiceShareService
+	Service              invoiceports.InvoiceShareService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	service services.InvoiceShareService
+	service invoiceports.InvoiceShareService
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
 }
@@ -81,7 +80,7 @@ func (h *Handler) list(c *gin.Context) {
 		return
 	}
 
-	shares, err := h.service.List(c.Request.Context(), &repositories.ListInvoiceSharesRequest{
+	shares, err := h.service.List(c.Request.Context(), &invoiceports.ListInvoiceSharesRequest{
 		TenantInfo: tenantInfo(authCtx),
 		InvoiceID:  invoiceID,
 	})
@@ -109,7 +108,7 @@ func (h *Handler) share(c *gin.Context) {
 
 	result, err := h.service.Share(
 		c.Request.Context(),
-		&services.ShareInvoiceRequest{
+		&invoiceports.ShareInvoiceRequest{
 			TenantInfo: tenantInfo(authCtx),
 			InvoiceID:  invoiceID,
 			UserIDs:    req.UserIDs,
@@ -139,10 +138,10 @@ func (h *Handler) candidates(c *gin.Context) {
 		c,
 		req,
 		h.eh,
-		func() (*pagination.ListResult[*services.ShareCandidate], error) {
+		func() (*pagination.ListResult[*invoiceports.ShareCandidate], error) {
 			return h.service.ListCandidates(
 				c.Request.Context(),
-				&services.ListShareCandidatesRequest{
+				&invoiceports.ListShareCandidatesRequest{
 					TenantInfo: req.TenantInfo,
 					InvoiceID:  invoiceID,
 					Query:      req.Query,
@@ -168,7 +167,7 @@ func (h *Handler) candidate(c *gin.Context) {
 
 	candidate, err := h.service.GetCandidate(
 		c.Request.Context(),
-		&services.GetShareCandidateRequest{
+		&invoiceports.GetShareCandidateRequest{
 			TenantInfo: tenantInfo(authCtx),
 			InvoiceID:  invoiceID,
 			UserID:     userID,

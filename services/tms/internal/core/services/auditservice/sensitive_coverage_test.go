@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -19,7 +19,7 @@ func TestSanitizeMapInArray_RegisteredGenericFieldPath(t *testing.T) {
 	sdm.SetMaskStrategy(MaskStrategyStrict)
 
 	registeredFields := map[string]SensitiveFieldConfig{
-		"items.secret": {Path: "items", Name: "secret", Action: services.SensitiveFieldOmit},
+		"items.secret": {Path: "items", Name: "secret", Action: auditports.SensitiveFieldOmit},
 	}
 
 	data := map[string]any{
@@ -41,7 +41,7 @@ func TestSanitizeMapInArray_RegisteredSpecificFieldPath(t *testing.T) {
 	sdm.SetMaskStrategy(MaskStrategyStrict)
 
 	registeredFields := map[string]SensitiveFieldConfig{
-		"items[0].token": {Path: "items[0]", Name: "token", Action: services.SensitiveFieldMask},
+		"items[0].token": {Path: "items[0]", Name: "token", Action: auditports.SensitiveFieldMask},
 	}
 
 	data := map[string]any{
@@ -63,7 +63,7 @@ func TestSanitizeMapInArray_RegisteredArrayNotationPath(t *testing.T) {
 	sdm.SetMaskStrategy(MaskStrategyStrict)
 
 	registeredFields := map[string]SensitiveFieldConfig{
-		"moves[].apiKey": {Path: "moves[]", Name: "apiKey", Action: services.SensitiveFieldOmit},
+		"moves[].apiKey": {Path: "moves[]", Name: "apiKey", Action: auditports.SensitiveFieldOmit},
 	}
 
 	data := map[string]any{
@@ -85,7 +85,7 @@ func TestSanitizeMapInArray_RegisteredKeyOnlyNoPath(t *testing.T) {
 	sdm.SetMaskStrategy(MaskStrategyStrict)
 
 	registeredFields := map[string]SensitiveFieldConfig{
-		"credential": {Path: "", Name: "credential", Action: services.SensitiveFieldOmit},
+		"credential": {Path: "", Name: "credential", Action: auditports.SensitiveFieldOmit},
 	}
 
 	data := map[string]any{
@@ -145,7 +145,7 @@ func TestSanitizeMapInArray_NestedMap(t *testing.T) {
 		"items[0].nested.secret": {
 			Path:   "items[0].nested",
 			Name:   "secret",
-			Action: services.SensitiveFieldOmit,
+			Action: auditports.SensitiveFieldOmit,
 		},
 	}
 
@@ -309,8 +309,8 @@ func TestSanitizeEntry_WithRegisteredFieldsInArray(t *testing.T) {
 	sdm.SetAutoDetect(false)
 	sdm.SetMaskStrategy(MaskStrategyStrict)
 
-	err := sdm.RegisterSensitiveFields(permission.Resource("shipment"), []services.SensitiveField{
-		{Name: "driverSSN", Path: "shipmentMoves", Action: services.SensitiveFieldOmit},
+	err := sdm.RegisterSensitiveFields(permission.Resource("shipment"), []auditports.SensitiveField{
+		{Name: "driverSSN", Path: "shipmentMoves", Action: auditports.SensitiveFieldOmit},
 	})
 	require.NoError(t, err)
 

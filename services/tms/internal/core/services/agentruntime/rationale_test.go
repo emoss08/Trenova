@@ -4,7 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -12,7 +13,7 @@ import (
 func TestWithRationale_OffersItOnEveryToolWithoutChangingTheToolset(t *testing.T) {
 	t.Parallel()
 
-	specs := []serviceports.ToolSpec{{
+	specs := []kernelports.ToolSpec{{
 		Name: "list_shipments",
 		Parameters: map[string]any{
 			"type":       "object",
@@ -40,7 +41,7 @@ func TestLiftRationales_TakesTheReasonOffTheArguments(t *testing.T) {
 			"insteadOf": strings.Repeat("x", 300),
 		},
 	}
-	calls := []serviceports.ToolCall{
+	calls := []agentports.ToolCall{
 		{Name: "list_billing_queue_items", Arguments: original},
 		{Name: "get_time", Arguments: map[string]any{}},
 	}
@@ -58,7 +59,7 @@ func TestLiftRationales_TakesTheReasonOffTheArguments(t *testing.T) {
 func TestLiftRationales_DropsAnEmptyOrMalformedReason(t *testing.T) {
 	t.Parallel()
 
-	calls := []serviceports.ToolCall{
+	calls := []agentports.ToolCall{
 		{Name: "a", Arguments: map[string]any{StepRationaleParam: "not an object"}},
 		{Name: "b", Arguments: map[string]any{StepRationaleParam: map[string]any{"saw": " "}}},
 	}

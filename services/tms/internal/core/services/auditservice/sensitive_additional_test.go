@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,8 +19,8 @@ func TestSanitizeEntry_CurrentAndPreviousState(t *testing.T) {
 	sdm := NewSensitiveDataManager(config.EncryptionConfig{Key: "test-key"})
 	sdm.SetAutoDetect(false)
 
-	err := sdm.RegisterSensitiveFields(permission.Resource("users"), []services.SensitiveField{
-		{Name: "password", Action: services.SensitiveFieldOmit},
+	err := sdm.RegisterSensitiveFields(permission.Resource("users"), []auditports.SensitiveField{
+		{Name: "password", Action: auditports.SensitiveFieldOmit},
 	})
 	require.NoError(t, err)
 
@@ -55,8 +55,8 @@ func TestSanitizeEntry_WithChanges(t *testing.T) {
 	sdm := NewSensitiveDataManager(config.EncryptionConfig{Key: "test-key"})
 	sdm.SetAutoDetect(false)
 
-	err := sdm.RegisterSensitiveFields(permission.Resource("users"), []services.SensitiveField{
-		{Name: "password", Action: services.SensitiveFieldMask},
+	err := sdm.RegisterSensitiveFields(permission.Resource("users"), []auditports.SensitiveField{
+		{Name: "password", Action: auditports.SensitiveFieldMask},
 	})
 	require.NoError(t, err)
 
@@ -134,8 +134,8 @@ func TestSanitizeEntry_NestedMap(t *testing.T) {
 	sdm := NewSensitiveDataManager(config.EncryptionConfig{Key: "test-key"})
 	sdm.SetAutoDetect(false)
 
-	err := sdm.RegisterSensitiveFields(permission.Resource("test"), []services.SensitiveField{
-		{Name: "ssn", Path: "profile", Action: services.SensitiveFieldOmit},
+	err := sdm.RegisterSensitiveFields(permission.Resource("test"), []auditports.SensitiveField{
+		{Name: "ssn", Path: "profile", Action: auditports.SensitiveFieldOmit},
 	})
 	require.NoError(t, err)
 
@@ -454,7 +454,7 @@ func TestMaskValue_Omit(t *testing.T) {
 
 	sdm := NewSensitiveDataManager(config.EncryptionConfig{Key: "test-key"})
 
-	result := sdm.maskValue("secret", services.SensitiveFieldOmit)
+	result := sdm.maskValue("secret", auditports.SensitiveFieldOmit)
 	assert.Nil(t, result)
 }
 
@@ -463,7 +463,7 @@ func TestMaskValue_Hash(t *testing.T) {
 
 	sdm := NewSensitiveDataManager(config.EncryptionConfig{Key: "test-key"})
 
-	result := sdm.maskValue("secret", services.SensitiveFieldHash)
+	result := sdm.maskValue("secret", auditports.SensitiveFieldHash)
 	str := result.(string)
 	assert.Contains(t, str, "SHA256:")
 }
@@ -473,7 +473,7 @@ func TestMaskValue_Encrypt(t *testing.T) {
 
 	sdm := NewSensitiveDataManager(config.EncryptionConfig{Key: "test-key"})
 
-	result := sdm.maskValue("secret", services.SensitiveFieldEncrypt)
+	result := sdm.maskValue("secret", auditports.SensitiveFieldEncrypt)
 	str := result.(string)
 	assert.Contains(t, str, "ENC:")
 }
@@ -483,7 +483,7 @@ func TestMaskValue_UnknownAction(t *testing.T) {
 
 	sdm := NewSensitiveDataManager(config.EncryptionConfig{Key: "test-key"})
 
-	result := sdm.maskValue("secret", services.SensitiveFieldAction(99))
+	result := sdm.maskValue("secret", auditports.SensitiveFieldAction(99))
 	assert.Equal(t, "secret", result)
 }
 
@@ -739,8 +739,8 @@ func TestRegisterSensitiveFields_NoPath(t *testing.T) {
 
 	sdm := NewSensitiveDataManager(config.EncryptionConfig{Key: "test-key"})
 
-	err := sdm.RegisterSensitiveFields(permission.Resource("test"), []services.SensitiveField{
-		{Name: "token", Path: "", Action: services.SensitiveFieldOmit},
+	err := sdm.RegisterSensitiveFields(permission.Resource("test"), []auditports.SensitiveField{
+		{Name: "token", Path: "", Action: auditports.SensitiveFieldOmit},
 	})
 	require.NoError(t, err)
 
@@ -755,13 +755,13 @@ func TestRegisterSensitiveFields_MergesExisting(t *testing.T) {
 
 	sdm := NewSensitiveDataManager(config.EncryptionConfig{Key: "test-key"})
 
-	err := sdm.RegisterSensitiveFields(permission.Resource("test"), []services.SensitiveField{
-		{Name: "field1", Action: services.SensitiveFieldOmit},
+	err := sdm.RegisterSensitiveFields(permission.Resource("test"), []auditports.SensitiveField{
+		{Name: "field1", Action: auditports.SensitiveFieldOmit},
 	})
 	require.NoError(t, err)
 
-	err = sdm.RegisterSensitiveFields(permission.Resource("test"), []services.SensitiveField{
-		{Name: "field2", Action: services.SensitiveFieldMask},
+	err = sdm.RegisterSensitiveFields(permission.Resource("test"), []auditports.SensitiveField{
+		{Name: "field2", Action: auditports.SensitiveFieldMask},
 	})
 	require.NoError(t, err)
 
@@ -821,7 +821,7 @@ func TestSanitizeChangesMap_NilValues(t *testing.T) {
 	sdm.SetAutoDetect(false)
 
 	registered := map[string]SensitiveFieldConfig{
-		"secret": {Name: "secret", Action: services.SensitiveFieldMask},
+		"secret": {Name: "secret", Action: auditports.SensitiveFieldMask},
 	}
 
 	changes := map[string]any{

@@ -1,13 +1,18 @@
 package bankreceiptbatchservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/bankreceiptbatchportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/bankreceiptportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/core/domain/bankreceiptbatch"
-	"github.com/emoss08/trenova/internal/core/ports"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptbatchports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -25,11 +30,11 @@ func TestImportBatchAggregatesReceiptOutcomes(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 	userID := pulid.MustNew("usr_")
-	repo := mocks.NewMockBankReceiptBatchRepository(t)
-	receiptRepo := mocks.NewMockBankReceiptRepository(t)
+	repo := bankreceiptbatchportsmock.NewMockBankReceiptBatchRepository(t)
+	receiptRepo := bankreceiptportsmock.NewMockBankReceiptRepository(t)
 	db := fakeBatchDB{}
-	auditSvc := mocks.NewMockAuditService(t)
-	bankSvc := mocks.NewMockBankReceiptService(t)
+	auditSvc := auditportsmock.NewMockAuditService(t)
+	bankSvc := bankreceiptportsmock.NewMockBankReceiptService(t)
 	repo.EXPECT().
 		Create(mock.Anything, mock.Anything).
 		RunAndReturn(func(
@@ -71,7 +76,7 @@ func TestImportBatchAggregatesReceiptOutcomes(t *testing.T) {
 	}
 	bankSvc.EXPECT().
 		Import(mock.Anything, mock.Anything, actor).
-		RunAndReturn(func(_ context.Context, req *serviceports.ImportBankReceiptRequest, _ *serviceports.RequestActor) (*bankreceipt.BankReceipt, error) {
+		RunAndReturn(func(_ context.Context, req *bankreceiptports.ImportBankReceiptRequest, _ *permissionports.RequestActor) (*bankreceipt.BankReceipt, error) {
 			require.False(t, req.BatchID.IsNil())
 			require.True(t, req.SkipAudit)
 			receipt := *returnedReceipts[0]
@@ -84,10 +89,10 @@ func TestImportBatchAggregatesReceiptOutcomes(t *testing.T) {
 
 	result, err := svc.Import(
 		t.Context(),
-		&serviceports.ImportBankReceiptBatchRequest{
+		&bankreceiptbatchports.ImportBankReceiptBatchRequest{
 			Source:    "csv",
 			Reference: "BATCH-1",
-			Receipts: []*serviceports.ImportBankReceiptBatchLine{
+			Receipts: []*bankreceiptbatchports.ImportBankReceiptBatchLine{
 				{ReceiptDate: 1, AmountMinor: 10000, ReferenceNumber: "A"},
 				{ReceiptDate: 2, AmountMinor: 5000, ReferenceNumber: "B"},
 			},
@@ -117,11 +122,11 @@ func TestImportBatchReturnsErrorWhenReceiptImportFails(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 	userID := pulid.MustNew("usr_")
-	repo := mocks.NewMockBankReceiptBatchRepository(t)
-	receiptRepo := mocks.NewMockBankReceiptRepository(t)
+	repo := bankreceiptbatchportsmock.NewMockBankReceiptBatchRepository(t)
+	receiptRepo := bankreceiptportsmock.NewMockBankReceiptRepository(t)
 	db := fakeBatchDB{}
-	auditSvc := mocks.NewMockAuditService(t)
-	bankSvc := mocks.NewMockBankReceiptService(t)
+	auditSvc := auditportsmock.NewMockAuditService(t)
+	bankSvc := bankreceiptportsmock.NewMockBankReceiptService(t)
 	repo.EXPECT().
 		Create(mock.Anything, mock.Anything).
 		RunAndReturn(func(
@@ -151,10 +156,10 @@ func TestImportBatchReturnsErrorWhenReceiptImportFails(t *testing.T) {
 
 	result, err := svc.Import(
 		t.Context(),
-		&serviceports.ImportBankReceiptBatchRequest{
+		&bankreceiptbatchports.ImportBankReceiptBatchRequest{
 			Source:    "csv",
 			Reference: "BATCH-ERR",
-			Receipts: []*serviceports.ImportBankReceiptBatchLine{
+			Receipts: []*bankreceiptbatchports.ImportBankReceiptBatchLine{
 				{ReceiptDate: 1, AmountMinor: 10000, ReferenceNumber: "A"},
 			},
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
@@ -175,7 +180,7 @@ func (fakeBatchDB) DBForContext(context.Context) bun.IDB { return nil }
 
 func (fakeBatchDB) WithTx(
 	ctx context.Context,
-	_ ports.TxOptions,
+	_ kernelports.TxOptions,
 	fn func(context.Context, bun.Tx) error,
 ) error {
 	return fn(ctx, bun.Tx{})

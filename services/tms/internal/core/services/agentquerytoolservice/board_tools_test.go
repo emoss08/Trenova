@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/dispatchconsoleservice"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -29,7 +29,7 @@ func TestBoardView_SaysWhatEachLateMoveIsLateFor(t *testing.T) {
 	arrived := now - 86_400
 	move := func(pro string, status shipment.Status, originArrive *int64, destEnd int64) *dispatchconsoleservice.BoardMove {
 		return &dispatchconsoleservice.BoardMove{
-			BoardMove: &repositories.BoardMove{
+			BoardMove: &shipmentports.BoardMove{
 				MoveID:                 pulid.MustNew("sm_"),
 				ShipmentID:             pulid.MustNew("shp_"),
 				ProNumber:              pro,

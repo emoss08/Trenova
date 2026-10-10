@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/journalreversal"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalreversalports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -30,7 +30,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.JournalReversalRepository {
+func New(p Params) journalreversalports.JournalReversalRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.journal-reversal-repository")}
 }
 
@@ -67,7 +67,7 @@ type reversalRecord struct {
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListJournalReversalsRequest,
+	req *journalreversalports.ListJournalReversalsRequest,
 ) (*pagination.ListResult[*journalreversal.Reversal], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*journalreversal.Reversal], error) {
 		records := make([]*reversalRecord, 0, req.Filter.Pagination.SafeLimit())
@@ -101,7 +101,7 @@ func (r *repository) List(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListJournalReversalConnectionRequest,
+	req *journalreversalports.ListJournalReversalConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -114,7 +114,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListJournalReversalConnectionRequest,
+	req *journalreversalports.ListJournalReversalConnectionRequest,
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -126,7 +126,7 @@ func (r *repository) applyTotalCountFilters(
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListJournalReversalConnectionRequest,
+	req *journalreversalports.ListJournalReversalConnectionRequest,
 ) (*pagination.CursorListResult[*journalreversal.Reversal], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*journalreversal.Reversal], error) {
 		log := r.l.With(
@@ -173,7 +173,7 @@ func (r *repository) ListConnection(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetJournalReversalByIDRequest,
+	req journalreversalports.GetJournalReversalByIDRequest,
 ) (*journalreversal.Reversal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*journalreversal.Reversal, error) {
 		rec := new(reversalRecord)
@@ -204,7 +204,7 @@ func (r *repository) Create(
 		}
 		return r.GetByID(
 			ctx,
-			repositories.GetJournalReversalByIDRequest{
+			journalreversalports.GetJournalReversalByIDRequest{
 				ID: entity.ID,
 				TenantInfo: pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
@@ -249,7 +249,7 @@ func (r *repository) Update(
 		}
 		return r.GetByID(
 			ctx,
-			repositories.GetJournalReversalByIDRequest{
+			journalreversalports.GetJournalReversalByIDRequest{
 				ID: entity.ID,
 				TenantInfo: pagination.TenantInfo{
 					OrgID: entity.OrganizationID,

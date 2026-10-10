@@ -1,14 +1,15 @@
 package carriersettlementservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/carriersettlementportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/settlementshared"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,7 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func withoutDuplicateDefaults(matches *mocks.MockCarrierInvoiceMatchRepository) {
+func withoutDuplicateDefaults(matches *carriersettlementportsmock.MockCarrierInvoiceMatchRepository) {
 	kept := matches.ExpectedCalls[:0]
 	for _, call := range matches.ExpectedCalls {
 		if call.Method == "GetLiveByCarrierInvoiceNumber" || call.Method == "ListLiveByAssignment" {
@@ -61,7 +62,7 @@ func TestCreateMatch_RefusesAnInvoiceNumberTheCarrierAlreadyHasMatched(t *testin
 	req, _ := documentMatchRequest(deps, " inv 9001 ")
 
 	deps.matches.On("GetLiveByCarrierInvoiceNumber", mock.Anything,
-		&repositories.GetLiveCarrierInvoiceMatchByNumberRequest{
+		&carriersettlementports.GetLiveCarrierInvoiceMatchByNumberRequest{
 			TenantInfo:    req.TenantInfo,
 			CarrierID:     req.CarrierID,
 			InvoiceNumber: " inv 9001 ",
@@ -86,7 +87,7 @@ func TestCreateMatch_FlagsASecondInvoiceOnTheSameLoad(t *testing.T) {
 
 	deps.matches.On("GetLiveByCarrierInvoiceNumber", mock.Anything, mock.Anything).Return(nil, nil)
 	deps.matches.On("ListLiveByAssignment", mock.Anything,
-		repositories.ListLiveCarrierInvoiceMatchesByAssignmentRequest{
+		carriersettlementports.ListLiveCarrierInvoiceMatchesByAssignmentRequest{
 			TenantInfo:   req.TenantInfo,
 			AssignmentID: assignmentID,
 		}).Return([]*carriersettlement.InvoiceMatch{earlier}, nil)
@@ -161,10 +162,10 @@ func TestAcceptMatch_RefusesAMatchRepeatingALiveOne(t *testing.T) {
 		DuplicateOfMatchID: &originalID,
 	}
 	deps.matches.On("GetByID", mock.Anything,
-		repositories.GetCarrierInvoiceMatchByIDRequest{ID: repeat.ID, TenantInfo: tenantInfo}).
+		carriersettlementports.GetCarrierInvoiceMatchByIDRequest{ID: repeat.ID, TenantInfo: tenantInfo}).
 		Return(repeat, nil)
 	deps.matches.On("GetByID", mock.Anything,
-		repositories.GetCarrierInvoiceMatchByIDRequest{ID: originalID, TenantInfo: tenantInfo}).
+		carriersettlementports.GetCarrierInvoiceMatchByIDRequest{ID: originalID, TenantInfo: tenantInfo}).
 		Return(&carriersettlement.InvoiceMatch{
 			ID:     originalID,
 			Status: carriersettlement.InvoiceMatchStatusResolved,
@@ -225,7 +226,7 @@ func TestAutoMatch_LeavesAPossibleDuplicateForReview(t *testing.T) {
 
 	result, err := deps.svc.AutoMatchInboundInvoice(
 		t.Context(),
-		&serviceports.AutoMatchInboundInvoiceRequest{
+		&carrierports.AutoMatchInboundInvoiceRequest{
 			TenantInfo:          tenantInfo,
 			EDICarrierInvoiceID: invoice.ID,
 		},
@@ -257,7 +258,7 @@ func TestAutoMatch_SkipsAnInvoiceNumberAlreadyMatched(t *testing.T) {
 
 	result, err := deps.svc.AutoMatchInboundInvoice(
 		t.Context(),
-		&serviceports.AutoMatchInboundInvoiceRequest{
+		&carrierports.AutoMatchInboundInvoiceRequest{
 			TenantInfo:          tenantInfo,
 			EDICarrierInvoiceID: invoice.ID,
 		},
@@ -284,7 +285,7 @@ func TestAutoMatch_SkipsARepeatedPartnerInvoice(t *testing.T) {
 
 	result, err := deps.svc.AutoMatchInboundInvoice(
 		t.Context(),
-		&serviceports.AutoMatchInboundInvoiceRequest{
+		&carrierports.AutoMatchInboundInvoiceRequest{
 			TenantInfo:          tenantInfo,
 			EDICarrierInvoiceID: invoice.ID,
 		},

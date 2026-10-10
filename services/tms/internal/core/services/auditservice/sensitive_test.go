@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -29,9 +29,9 @@ func TestRegisterSensitiveFields(t *testing.T) {
 
 	sdm := NewSensitiveDataManager(config.EncryptionConfig{Key: "test-encryption-key-for-testing"})
 
-	fields := []services.SensitiveField{
-		{Name: "ssn", Path: "user", Action: services.SensitiveFieldOmit},
-		{Name: "email", Path: "user", Action: services.SensitiveFieldMask},
+	fields := []auditports.SensitiveField{
+		{Name: "ssn", Path: "user", Action: auditports.SensitiveFieldOmit},
+		{Name: "email", Path: "user", Action: auditports.SensitiveFieldMask},
 	}
 
 	err := sdm.RegisterSensitiveFields(permission.Resource("test_resource"), fields)
@@ -93,8 +93,8 @@ func TestSanitizeEntry_WithRegisteredFields(t *testing.T) {
 	sdm := NewSensitiveDataManager(config.EncryptionConfig{Key: "test-encryption-key-for-testing"})
 	sdm.SetAutoDetect(false)
 
-	fields := []services.SensitiveField{
-		{Name: "secret", Path: "", Action: services.SensitiveFieldOmit},
+	fields := []auditports.SensitiveField{
+		{Name: "secret", Path: "", Action: auditports.SensitiveFieldOmit},
 	}
 
 	err := sdm.RegisterSensitiveFields(permission.Resource("test_resource"), fields)

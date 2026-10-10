@@ -16,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/journalentry"
 	"github.com/emoss08/trenova/internal/core/domain/journalsource"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
@@ -24,6 +23,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fiscalyearrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -312,18 +313,18 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 		lines: []ledgerFixtureLine{{account: acctC, debit: 300}, {account: acctA, credit: 300}},
 	})
 
-	carrierParty := repositories.LedgerParty{
-		Kind: repositories.LedgerPartyCarrier, ID: carrier.ID, Name: carrier.Name,
+	carrierParty := journalentryports.LedgerParty{
+		Kind: journalentryports.LedgerPartyCarrier, ID: carrier.ID, Name: carrier.Name,
 	}
-	customerParty := repositories.LedgerParty{
-		Kind: repositories.LedgerPartyCustomer, ID: customer.ID, Name: customer.Name,
+	customerParty := journalentryports.LedgerParty{
+		Kind: journalentryports.LedgerPartyCustomer, ID: customer.ID, Name: customer.Name,
 	}
-	driverParty := repositories.LedgerParty{
-		Kind: repositories.LedgerPartyDriver, ID: driver.ID, Name: driver.FirstName + " " + driver.LastName,
+	driverParty := journalentryports.LedgerParty{
+		Kind: journalentryports.LedgerPartyDriver, ID: driver.ID, Name: driver.FirstName + " " + driver.LastName,
 	}
 
 	t.Run("a reversal carries the party and number of the entry it reverses", func(t *testing.T) {
-		journal, getErr := source.GetJournal(ctx, &repositories.GetLedgerJournalRequest{TenantInfo: tenant, ID: reversed})
+		journal, getErr := source.GetJournal(ctx, &journalentryports.GetLedgerJournalRequest{TenantInfo: tenant, ID: reversed})
 		require.NoError(t, getErr)
 		assert.True(t, journal.IsReversal)
 		assert.Equal(t, "JE-LEDGER-1", journal.ReversalOfNumber)
@@ -341,14 +342,14 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 	})
 
 	t.Run("an unposted entry or another tenant's is not found", func(t *testing.T) {
-		_, getErr := source.GetJournal(ctx, &repositories.GetLedgerJournalRequest{TenantInfo: tenant, ID: pending})
+		_, getErr := source.GetJournal(ctx, &journalentryports.GetLedgerJournalRequest{TenantInfo: tenant, ID: pending})
 		assert.True(t, errortypes.IsNotFoundError(getErr))
-		_, getErr = source.GetJournal(ctx, &repositories.GetLedgerJournalRequest{TenantInfo: other, ID: paid})
+		_, getErr = source.GetJournal(ctx, &journalentryports.GetLedgerJournalRequest{TenantInfo: other, ID: paid})
 		assert.True(t, errortypes.IsNotFoundError(getErr))
 	})
 
 	t.Run("a day lists its posted entries, never closing ones", func(t *testing.T) {
-		journals, listErr := source.ListJournals(ctx, &repositories.ListLedgerJournalsRequest{
+		journals, listErr := source.ListJournals(ctx, &journalentryports.ListLedgerJournalsRequest{
 			TenantInfo: tenant, From: day, Before: next,
 		})
 		require.NoError(t, listErr)
@@ -361,7 +362,7 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 		assert.Equal(t, customerParty, journals[1].Lines[1].Party)
 		assert.True(t, journals[1].Lines[0].Party.IsZero())
 
-		journals, listErr = source.ListJournals(ctx, &repositories.ListLedgerJournalsRequest{
+		journals, listErr = source.ListJournals(ctx, &journalentryports.ListLedgerJournalsRequest{
 			TenantInfo: other, From: day, Before: next,
 		})
 		require.NoError(t, listErr)
@@ -370,13 +371,13 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 
 	t.Run("sums split party accounts by who the line belongs to", func(t *testing.T) {
 		from := day
-		balances, sumErr := source.SumLines(ctx, &repositories.SumLedgerRequest{
+		balances, sumErr := source.SumLines(ctx, &journalentryports.SumLedgerRequest{
 			TenantInfo: tenant, From: &from, Before: next + 86_400, PartyAccountIDs: []pulid.ID{acctA},
 		})
 		require.NoError(t, sumErr)
 		type sum struct {
 			account pulid.ID
-			party   repositories.LedgerParty
+			party   journalentryports.LedgerParty
 			debit   int64
 			credit  int64
 		}
@@ -398,7 +399,7 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 			{account: acctC, debit: 300},
 		}, got)
 
-		balances, sumErr = source.SumLines(ctx, &repositories.SumLedgerRequest{
+		balances, sumErr = source.SumLines(ctx, &journalentryports.SumLedgerRequest{
 			TenantInfo: tenant, From: &from, Before: next + 86_400,
 		})
 		require.NoError(t, sumErr)
@@ -407,7 +408,7 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 		assert.True(t, balances[0].Party.IsZero())
 		assert.Equal(t, int64(-800), balances[0].NetMinor())
 
-		balances, sumErr = source.SumLines(ctx, &repositories.SumLedgerRequest{
+		balances, sumErr = source.SumLines(ctx, &journalentryports.SumLedgerRequest{
 			TenantInfo: tenant, From: &from, Before: next + 86_400, IncludeClosing: true,
 		})
 		require.NoError(t, sumErr)
@@ -417,7 +418,7 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 		assert.Equal(t, int64(9_300), balances[2].NetMinor())
 
 		later := next
-		balances, sumErr = source.SumLines(ctx, &repositories.SumLedgerRequest{
+		balances, sumErr = source.SumLines(ctx, &journalentryports.SumLedgerRequest{
 			TenantInfo: tenant, From: &later, Before: next + 86_400,
 		})
 		require.NoError(t, sumErr)
@@ -428,7 +429,7 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 
 	t.Run("active accounts are those with posted lines since the date", func(t *testing.T) {
 		since := next
-		active, activeErr := source.ListActiveAccounts(ctx, &repositories.ListLedgerAccountsRequest{
+		active, activeErr := source.ListActiveAccounts(ctx, &journalentryports.ListLedgerAccountsRequest{
 			TenantInfo: tenant, Since: &since,
 		})
 		require.NoError(t, activeErr)
@@ -438,7 +439,7 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 		}
 		assert.Equal(t, []pulid.ID{acctA, acctC}, ids)
 
-		active, activeErr = source.ListActiveAccounts(ctx, &repositories.ListLedgerAccountsRequest{TenantInfo: tenant})
+		active, activeErr = source.ListActiveAccounts(ctx, &journalentryports.ListLedgerAccountsRequest{TenantInfo: tenant})
 		require.NoError(t, activeErr)
 		ids = ids[:0]
 		for idx := range active {
@@ -454,7 +455,7 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 		require.NoError(t, connErr)
 		list := func(objectType accountingsync.SyncObjectType) []pulid.ID {
 			t.Helper()
-			found, listErr := records.ListCandidates(ctx, &repositories.ListAccountingSyncCandidatesRequest{
+			found, listErr := records.ListCandidates(ctx, &accountingsyncports.ListAccountingSyncCandidatesRequest{
 				TenantInfo:   tenant,
 				ConnectionID: connection.ID,
 				ObjectType:   objectType,
@@ -533,23 +534,23 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 			lines:      []ledgerFixtureLine{{account: acctA, debit: 500}, {account: acctB, credit: 500}},
 		})
 
-		entryType, typeErr := source.GetEntryType(ctx, &repositories.GetLedgerJournalRequest{
+		entryType, typeErr := source.GetEntryType(ctx, &journalentryports.GetLedgerJournalRequest{
 			TenantInfo: tenant, ID: closing,
 		})
 		require.NoError(t, typeErr)
 		assert.Equal(t, journalentry.EntryTypeClosing, entryType)
-		_, typeErr = source.GetEntryType(ctx, &repositories.GetLedgerJournalRequest{
+		_, typeErr = source.GetEntryType(ctx, &journalentryports.GetLedgerJournalRequest{
 			TenantInfo: other, ID: closing,
 		})
 		assert.True(t, errortypes.IsNotFoundError(typeErr))
-		reopenedJournal, getErr := source.GetJournal(ctx, &repositories.GetLedgerJournalRequest{
+		reopenedJournal, getErr := source.GetJournal(ctx, &journalentryports.GetLedgerJournalRequest{
 			TenantInfo: tenant, ID: reopened,
 		})
 		require.NoError(t, getErr)
 		assert.Equal(t, journalentry.EntryTypeClosing.String(), reopenedJournal.ReversesEntryType)
 		assert.Equal(t, "JE-FY-CLOSE", reopenedJournal.ReversalOfNumber)
 
-		journals, listErr := source.ListJournals(ctx, &repositories.ListLedgerJournalsRequest{
+		journals, listErr := source.ListJournals(ctx, &journalentryports.ListLedgerJournalsRequest{
 			TenantInfo: tenant, From: closeDay, Before: closeDay + 86_400,
 		})
 		require.NoError(t, listErr)
@@ -560,7 +561,7 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 		net := func(includeClosing bool, days int64) map[pulid.ID]int64 {
 			t.Helper()
 			from := closeDay
-			balances, sumErr := source.SumLines(ctx, &repositories.SumLedgerRequest{
+			balances, sumErr := source.SumLines(ctx, &journalentryports.SumLedgerRequest{
 				TenantInfo: tenant, From: &from, Before: closeDay + days*86_400, IncludeClosing: includeClosing,
 			})
 			require.NoError(t, sumErr)
@@ -578,7 +579,7 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 			"undoing the carried-forward entry is left out with it")
 
 		connections := NewConnectionRepository(ConnectionParams{DB: conn, Logger: zap.NewNop()})
-		connection, connErr := connections.GetByType(ctx, repositories.GetAccountingConnectionRequest{
+		connection, connErr := connections.GetByType(ctx, accountingsyncports.GetAccountingConnectionRequest{
 			TenantInfo:      tenant,
 			IntegrationType: integration.TypeQuickBooksOnline,
 		})
@@ -588,7 +589,7 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 		require.NoError(t, connErr)
 		connectionID := connection.ID
 		found, candErr := NewSyncRecordRepository(SyncRecordParams{DB: conn, Logger: zap.NewNop()}).
-			ListCandidates(ctx, &repositories.ListAccountingSyncCandidatesRequest{
+			ListCandidates(ctx, &accountingsyncports.ListAccountingSyncCandidatesRequest{
 				TenantInfo:   tenant,
 				ConnectionID: connectionID,
 				ObjectType:   accountingsync.SyncObjectJournalEntry,

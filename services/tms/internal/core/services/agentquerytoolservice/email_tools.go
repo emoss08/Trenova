@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -14,7 +14,7 @@ import (
 type emailProfileSelector interface {
 	SelectProfileOptions(
 		ctx context.Context,
-		req *repositories.EmailProfileSelectOptionsRequest,
+		req *emailports.EmailProfileSelectOptionsRequest,
 	) (*pagination.ListResult[*email.Profile], error)
 }
 
@@ -31,7 +31,7 @@ type listEmailProfilesTool struct {
 	profiles emailProfileSelector
 }
 
-func newListEmailProfilesTool(profiles emailProfileSelector) serviceports.AgentQueryTool {
+func newListEmailProfilesTool(profiles emailProfileSelector) agentports.AgentQueryTool {
 	return &listEmailProfilesTool{profiles: profiles}
 }
 
@@ -58,7 +58,7 @@ func (t *listEmailProfilesTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listEmailProfilesTool) Policy() serviceports.ToolPolicy {
+func (t *listEmailProfilesTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceEmailProfile,
 	})
@@ -66,7 +66,7 @@ func (t *listEmailProfilesTool) Policy() serviceports.ToolPolicy {
 
 func (t *listEmailProfilesTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -78,7 +78,7 @@ func (t *listEmailProfilesTool) Query(
 
 	result, err := t.profiles.SelectProfileOptions(
 		ctx,
-		&repositories.EmailProfileSelectOptionsRequest{
+		&emailports.EmailProfileSelectOptionsRequest{
 			SelectQueryRequest: &pagination.SelectQueryRequest{
 				TenantInfo: tenantOf(params),
 				Pagination: pagination.Info{Limit: maxListLimit},

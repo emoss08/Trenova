@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/services/formula/contextvariablecache"
-
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/services/formula/contextvariablecache"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -46,7 +45,7 @@ type UpdateTestCaseRequest struct {
 
 func (s *Service) ListTestCases(
 	ctx context.Context,
-	req repositories.ListTestCasesRequest,
+	req formulatemplateports.ListTestCasesRequest,
 ) ([]*formulatemplate.TestCase, error) {
 	return s.testCaseRepo.ListByTemplate(ctx, req)
 }
@@ -99,7 +98,7 @@ func (s *Service) UpdateTestCase(
 		zap.String("testCaseID", req.TestCaseID.String()),
 	)
 
-	existing, err := s.testCaseRepo.GetByID(ctx, repositories.GetTestCaseByIDRequest{
+	existing, err := s.testCaseRepo.GetByID(ctx, formulatemplateports.GetTestCaseByIDRequest{
 		TenantInfo: req.TenantInfo,
 		TestCaseID: req.TestCaseID,
 		TemplateID: req.TemplateID,
@@ -137,7 +136,7 @@ func (s *Service) UpdateTestCase(
 
 func (s *Service) DeleteTestCase(
 	ctx context.Context,
-	req repositories.GetTestCaseByIDRequest,
+	req formulatemplateports.GetTestCaseByIDRequest,
 ) error {
 	log := s.l.With(
 		zap.String("operation", "DeleteTestCase"),
@@ -242,7 +241,7 @@ func (s *Service) RunTestCases(
 		return nil, err
 	}
 
-	cases, err := s.testCaseRepo.ListByTemplate(ctx, repositories.ListTestCasesRequest{
+	cases, err := s.testCaseRepo.ListByTemplate(ctx, formulatemplateports.ListTestCasesRequest{
 		TenantInfo: req.TenantInfo,
 		TemplateID: req.TemplateID,
 	})
@@ -364,7 +363,7 @@ func (s *Service) requirePassingTestCases(
 	template *formulatemplate.FormulaTemplate,
 	tenantInfo pagination.TenantInfo,
 ) error {
-	cases, err := s.testCaseRepo.ListByTemplate(ctx, repositories.ListTestCasesRequest{
+	cases, err := s.testCaseRepo.ListByTemplate(ctx, formulatemplateports.ListTestCasesRequest{
 		TenantInfo: tenantInfo,
 		TemplateID: template.ID,
 	})

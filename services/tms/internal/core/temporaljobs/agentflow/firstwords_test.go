@@ -3,7 +3,8 @@ package agentflow
 import (
 	"testing"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,9 +18,9 @@ func TestFirstWords_FlushesOnlyTheFirstPieceOfTheReply(t *testing.T) {
 	t.Parallel()
 
 	var first firstWords
-	tool := serviceports.StreamEvent{Event: serviceports.AssistantEventToolStarted}
-	thinking := serviceports.StreamEvent{Event: serviceports.AssistantEventReasoning}
-	text := serviceports.StreamEvent{Event: serviceports.AssistantEventDelta}
+	tool := kernelports.StreamEvent{Event: agentports.AssistantEventToolStarted}
+	thinking := kernelports.StreamEvent{Event: agentports.AssistantEventReasoning}
+	text := kernelports.StreamEvent{Event: agentports.AssistantEventDelta}
 
 	assert.False(t, first.flush(tool), "only the reply's own words are hurried")
 	assert.True(t, first.flush(thinking))

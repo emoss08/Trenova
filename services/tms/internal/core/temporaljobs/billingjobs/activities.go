@@ -5,14 +5,22 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs/billingcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs/billingcontract"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -28,37 +36,37 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	InvoiceService    services.InvoiceService
-	Templates         services.DocumentTemplateResolver
-	InvoiceRepo       repositories.InvoiceRepository
-	DocumentService   services.InvoiceDocumentService
-	UploadService     services.DocumentUploadService
-	DocumentTypeRepo  repositories.DocumentTypeRepository
-	AuditService      services.AuditService
-	InvoiceRunSweeper services.InvoiceRunSweeper
+	InvoiceService    invoiceports.InvoiceService
+	Templates         documenttemplateports.DocumentTemplateResolver
+	InvoiceRepo       invoiceports.InvoiceRepository
+	DocumentService   documentports.InvoiceDocumentService
+	UploadService     documentuploadports.DocumentUploadService
+	DocumentTypeRepo  documenttypeports.DocumentTypeRepository
+	AuditService      auditports.AuditService
+	InvoiceRunSweeper invoicerunports.InvoiceRunSweeper
 	Logger            *zap.Logger
 
-	LateChargeService  services.LateChargeService        `optional:"true"`
-	LateChargeRepo     repositories.LateChargeRepository `optional:"true"`
-	BillingControlRepo repositories.BillingControlRepository
-	EDIService         services.EDIService `optional:"true"`
+	LateChargeService  latechargeports.LateChargeService    `optional:"true"`
+	LateChargeRepo     latechargeports.LateChargeRepository `optional:"true"`
+	BillingControlRepo tenantports.BillingControlRepository
+	EDIService         ediports.EDIService `optional:"true"`
 }
 
 type Activities struct {
-	invoiceService    services.InvoiceService
-	templates         services.DocumentTemplateResolver
-	invoiceRepo       repositories.InvoiceRepository
-	documentService   services.InvoiceDocumentService
-	uploadService     services.DocumentUploadService
-	documentTypeRepo  repositories.DocumentTypeRepository
-	auditService      services.AuditService
-	invoiceRunSweeper services.InvoiceRunSweeper
+	invoiceService    invoiceports.InvoiceService
+	templates         documenttemplateports.DocumentTemplateResolver
+	invoiceRepo       invoiceports.InvoiceRepository
+	documentService   documentports.InvoiceDocumentService
+	uploadService     documentuploadports.DocumentUploadService
+	documentTypeRepo  documenttypeports.DocumentTypeRepository
+	auditService      auditports.AuditService
+	invoiceRunSweeper invoicerunports.InvoiceRunSweeper
 	logger            *zap.Logger
 
-	lateChargeService  services.LateChargeService
-	lateChargeRepo     repositories.LateChargeRepository
-	billingControlRepo repositories.BillingControlRepository
-	ediService         services.EDIService
+	lateChargeService  latechargeports.LateChargeService
+	lateChargeRepo     latechargeports.LateChargeRepository
+	billingControlRepo tenantports.BillingControlRepository
+	ediService         ediports.EDIService
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -90,7 +98,7 @@ func (a *Activities) AutoPostInvoiceActivity(
 		UserID: payload.UserID,
 	}
 
-	current, err := a.invoiceService.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+	current, err := a.invoiceService.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         payload.InvoiceID,
 		TenantInfo: tenantInfo,
 	})
@@ -108,11 +116,11 @@ func (a *Activities) AutoPostInvoiceActivity(
 		}, nil
 	}
 
-	posted, err := a.invoiceService.Post(ctx, &services.PostInvoiceRequest{
+	posted, err := a.invoiceService.Post(ctx, &invoiceports.PostInvoiceRequest{
 		InvoiceID:   payload.InvoiceID,
 		TenantInfo:  tenantInfo,
 		TriggeredBy: "auto-post-workflow",
-	}, &services.RequestActor{
+	}, &permissionports.RequestActor{
 		PrincipalType:  payload.PrincipalType,
 		PrincipalID:    payload.PrincipalID,
 		UserID:         payload.UserID,
@@ -141,11 +149,11 @@ func (a *Activities) SendInvoiceEmailActivity(
 		UserID: payload.UserID,
 	}
 
-	result, err := a.invoiceService.SendFromWorkflow(ctx, &services.InvoiceSendRequest{
+	result, err := a.invoiceService.SendFromWorkflow(ctx, &invoiceports.InvoiceSendRequest{
 		InvoiceID:  payload.InvoiceID,
 		TenantInfo: tenantInfo,
 		BaseURL:    payload.BaseURL,
-	}, &services.RequestActor{
+	}, &permissionports.RequestActor{
 		PrincipalType:  payload.PrincipalType,
 		PrincipalID:    payload.PrincipalID,
 		UserID:         payload.UserID,
@@ -175,7 +183,7 @@ func (a *Activities) PrepareInvoicePDFUploadActivity(
 		UserID: payload.UserID,
 	}
 
-	current, err := a.invoiceService.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+	current, err := a.invoiceService.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         payload.InvoiceID,
 		TenantInfo: tenantInfo,
 	})
@@ -187,14 +195,14 @@ func (a *Activities) PrepareInvoicePDFUploadActivity(
 		return nil, err
 	}
 
-	preview, err := a.invoiceService.RenderPreview(ctx, &services.InvoicePreviewRequest{
+	preview, err := a.invoiceService.RenderPreview(ctx, &invoiceports.InvoicePreviewRequest{
 		InvoiceID:  payload.InvoiceID,
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {
 		return nil, classifyInvoiceRenderError(err)
 	}
-	docType, err := a.documentTypeRepo.GetByCode(ctx, repositories.GetDocumentTypeByCodeRequest{
+	docType, err := a.documentTypeRepo.GetByCode(ctx, documenttypeports.GetDocumentTypeByCodeRequest{
 		Code:       "INVOICE",
 		TenantInfo: tenantInfo,
 	})
@@ -207,7 +215,7 @@ func (a *Activities) PrepareInvoicePDFUploadActivity(
 		return nil, err
 	}
 	actor := invoicePDFActor(payload)
-	session, err := a.uploadService.CreateSession(ctx, &services.CreateSessionRequest{
+	session, err := a.uploadService.CreateSession(ctx, &documentuploadports.CreateSessionRequest{
 		TenantInfo:     tenantInfo,
 		Actor:          actor,
 		ResourceID:     resource.ID,
@@ -224,7 +232,7 @@ func (a *Activities) PrepareInvoicePDFUploadActivity(
 		return nil, err
 	}
 
-	if _, err = a.uploadService.UploadPart(ctx, &services.UploadPartRequest{
+	if _, err = a.uploadService.UploadPart(ctx, &documentuploadports.UploadPartRequest{
 		TenantInfo: tenantInfo,
 		SessionID:  session.ID,
 		PartNumber: 1,
@@ -257,7 +265,7 @@ func (a *Activities) CompleteInvoicePDFGenerationActivity(
 		BuID:   payload.BusinessUnitID,
 		UserID: payload.UserID,
 	}
-	current, err := a.invoiceService.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+	current, err := a.invoiceService.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         payload.InvoiceID,
 		TenantInfo: tenantInfo,
 	})
@@ -272,7 +280,7 @@ func (a *Activities) CompleteInvoicePDFGenerationActivity(
 		return nil, err
 	}
 
-	if auditErr := a.auditService.LogAction(&services.LogActionParams{
+	if auditErr := a.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceInvoice,
 		ResourceID:     updated.ID.String(),
 		Operation:      permission.OpUpdate,
@@ -293,12 +301,12 @@ func (a *Activities) CompleteInvoicePDFGenerationActivity(
 
 	if _, err = a.invoiceService.AutoSendInvoiceAfterPDFGeneration(
 		ctx,
-		&services.AutoSendInvoiceAfterPDFGenerationRequest{
+		&invoiceports.AutoSendInvoiceAfterPDFGenerationRequest{
 			InvoiceID:  payload.InvoiceID,
 			TenantInfo: tenantInfo,
 			BaseURL:    payload.BaseURL,
 		},
-		&services.RequestActor{
+		&permissionports.RequestActor{
 			PrincipalType:  payload.PrincipalType,
 			PrincipalID:    payload.PrincipalID,
 			UserID:         payload.UserID,
@@ -330,7 +338,7 @@ func (a *Activities) invoicePDFLineageID(
 		return "", nil
 	}
 
-	currentPDF, err := a.documentService.Get(ctx, repositories.GetDocumentByIDRequest{
+	currentPDF, err := a.documentService.Get(ctx, documentports.GetDocumentByIDRequest{
 		ID:         entity.PDFDocumentID,
 		TenantInfo: tenantInfo,
 	})
@@ -350,8 +358,8 @@ func (a *Activities) invoicePDFLineageID(
 	return currentPDF.LineageID.String(), nil
 }
 
-func invoicePDFActor(payload *billingcontract.GenerateInvoicePDFPayload) services.RequestActor {
-	return services.RequestActor{
+func invoicePDFActor(payload *billingcontract.GenerateInvoicePDFPayload) permissionports.RequestActor {
+	return permissionports.RequestActor{
 		PrincipalType:  payload.PrincipalType,
 		PrincipalID:    payload.PrincipalID,
 		UserID:         payload.UserID,
@@ -373,7 +381,7 @@ func classifyInvoiceRenderError(err error) error {
 	}
 
 	// The sidecar is down or unconfigured. That is exactly what retries are for.
-	if errors.Is(err, services.ErrPDFRendererUnavailable) {
+	if errors.Is(err, documenttemplateports.ErrPDFRendererUnavailable) {
 		return temporaltype.NewRetryableError(
 			"the PDF renderer was unavailable while generating an invoice", err,
 		)
@@ -395,7 +403,7 @@ func classifyInvoiceRenderError(err error) error {
 type recordInvoicePDFParams struct {
 	TenantInfo pagination.TenantInfo
 	Invoice    *invoice.Invoice
-	Preview    *services.InvoicePreviewResult
+	Preview    *invoiceports.InvoicePreviewResult
 	UserID     pulid.ID
 }
 
@@ -417,7 +425,7 @@ func (a *Activities) recordGeneratedInvoicePDF(
 
 	if _, err := a.templates.RecordGeneratedDocument(
 		ctx,
-		&services.RecordGeneratedDocumentRequest{
+		&documenttemplateports.RecordGeneratedDocumentRequest{
 			TenantInfo:    p.TenantInfo,
 			Kind:          documenttemplate.KindInvoicePDF,
 			Rendered:      p.Preview.Rendered,

@@ -8,8 +8,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -19,15 +19,15 @@ import (
 
 func (s *Service) DownloadSharedDocument(
 	ctx context.Context,
-	req *servicesports.DownloadInvoiceDocumentRequest,
-) (*servicesports.DownloadInvoiceDocumentResult, error) {
+	req *invoiceports.DownloadInvoiceDocumentRequest,
+) (*invoiceports.DownloadInvoiceDocumentResult, error) {
 	if s.documentService == nil {
 		return nil, errortypes.NewBusinessError("Document service is not configured")
 	}
 	tokenHash := tokenHash(req.Token)
 	share, err := s.repo.GetDocumentShareToken(
 		ctx,
-		repositories.GetInvoiceDocumentShareTokenRequest{
+		invoiceports.GetInvoiceDocumentShareTokenRequest{
 			TokenHash: tokenHash,
 		},
 	)
@@ -42,7 +42,7 @@ func (s *Service) DownloadSharedDocument(
 		OrganizationID: share.OrganizationID,
 		BusinessUnitID: share.BusinessUnitID,
 	})
-	content, err := s.documentService.GetDownloadContent(ctx, repositories.GetDocumentByIDRequest{
+	content, err := s.documentService.GetDownloadContent(ctx, documentports.GetDocumentByIDRequest{
 		ID: share.DocumentID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: share.OrganizationID,
@@ -62,7 +62,7 @@ func (s *Service) DownloadSharedDocument(
 		return nil, err
 	}
 
-	return &servicesports.DownloadInvoiceDocumentResult{
+	return &invoiceports.DownloadInvoiceDocumentResult{
 		FileName:      content.Document.OriginalName,
 		ContentType:   content.ContentType,
 		ContentLength: int64(len(body)),

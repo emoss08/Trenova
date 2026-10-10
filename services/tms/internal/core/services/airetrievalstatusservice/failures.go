@@ -6,8 +6,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/memtable"
 )
 
@@ -17,7 +16,7 @@ const (
 )
 
 type failedEntryRow struct {
-	entry *serviceports.AIRetrievalFailedEntry
+	entry *agentports.AIRetrievalFailedEntry
 	rank  int
 }
 
@@ -104,8 +103,8 @@ func FailedEntryID(entry *airetrieval.IndexEntry) string {
 	return entry.SourceType.String() + ":" + entry.SourceID.String() + "@" + entry.ModelKey
 }
 
-func failedEntryView(entry *airetrieval.IndexEntry) *serviceports.AIRetrievalFailedEntry {
-	return &serviceports.AIRetrievalFailedEntry{
+func failedEntryView(entry *airetrieval.IndexEntry) *agentports.AIRetrievalFailedEntry {
+	return &agentports.AIRetrievalFailedEntry{
 		ID:            FailedEntryID(entry),
 		SourceType:    entry.SourceType,
 		SourceID:      entry.SourceID,
@@ -120,10 +119,10 @@ func failedEntryView(entry *airetrieval.IndexEntry) *serviceports.AIRetrievalFai
 
 func (s *Service) ListFailedEntries(
 	ctx context.Context,
-	req *serviceports.ListAIRetrievalFailedEntriesRequest,
-) (*serviceports.AIRetrievalFailedEntryPage, error) {
+	req *agentports.ListAIRetrievalFailedEntriesRequest,
+) (*agentports.AIRetrievalFailedEntryPage, error) {
 	if req == nil {
-		req = &serviceports.ListAIRetrievalFailedEntriesRequest{}
+		req = &agentports.ListAIRetrievalFailedEntriesRequest{}
 	}
 	if err := validateTenant(req.TenantInfo); err != nil {
 		return nil, err
@@ -143,7 +142,7 @@ func (s *Service) ListFailedEntries(
 	if keys := settings.IndexedModelKeys(); len(keys) > 0 {
 		entries, lerr := s.repo.ListErroredIndexEntries(
 			ctx,
-			&repositories.ListErroredIndexEntriesRequest{
+			&agentports.ListErroredIndexEntriesRequest{
 				TenantInfo: req.TenantInfo,
 				SourceType: req.SourceType,
 				ModelKeys:  keys,
@@ -164,13 +163,13 @@ func (s *Service) ListFailedEntries(
 		return nil, err
 	}
 
-	out := &serviceports.AIRetrievalFailedEntryPage{
-		Edges:       make([]*serviceports.AIRetrievalFailedEntryEdge, 0, len(page.Items)),
+	out := &agentports.AIRetrievalFailedEntryPage{
+		Edges:       make([]*agentports.AIRetrievalFailedEntryEdge, 0, len(page.Items)),
 		HasNextPage: page.HasNextPage,
 		TotalCount:  page.TotalCount,
 	}
 	for idx, row := range page.Items {
-		out.Edges = append(out.Edges, &serviceports.AIRetrievalFailedEntryEdge{
+		out.Edges = append(out.Edges, &agentports.AIRetrievalFailedEntryEdge{
 			Node:   row.entry,
 			Cursor: page.Cursors[idx],
 		})

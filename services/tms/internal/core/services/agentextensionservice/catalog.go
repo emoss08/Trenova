@@ -2,7 +2,7 @@ package agentextensionservice
 
 import (
 	"github.com/emoss08/trenova/internal/core/domain/agentextension"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 )
 
 var categoryLabels = map[agentextension.Category]string{
@@ -21,7 +21,7 @@ type definition struct {
 	WebsiteURL   string
 	PricingURL   string
 	Capabilities []string
-	Tools        []serviceports.AgentExtensionTool
+	Tools        []agentextensionports.AgentExtensionTool
 	DataNotice   string
 	Featured     bool
 	SortOrder    int
@@ -49,7 +49,7 @@ var definitions = []definition{
 			"Reads a full page the search returned, in parts for long documents",
 			"Answers cite the page and its publication date",
 		},
-		Tools: []serviceports.AgentExtensionTool{
+		Tools: []agentextensionports.AgentExtensionTool{
 			{
 				Name:        agentextension.ToolWebSearch,
 				Label:       "Search the web",
@@ -81,11 +81,11 @@ func definitionFor(typ agentextension.Type) (definition, bool) {
 	return definition{}, false
 }
 
-func categoryOptions() []serviceports.AgentExtensionCategoryOption {
+func categoryOptions() []agentextensionports.AgentExtensionCategoryOption {
 	categories := agentextension.AllCategories()
-	options := make([]serviceports.AgentExtensionCategoryOption, 0, len(categories))
+	options := make([]agentextensionports.AgentExtensionCategoryOption, 0, len(categories))
 	for _, category := range categories {
-		options = append(options, serviceports.AgentExtensionCategoryOption{
+		options = append(options, agentextensionports.AgentExtensionCategoryOption{
 			Value: category,
 			Label: categoryLabels[category],
 		})

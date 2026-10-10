@@ -5,8 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -23,7 +24,7 @@ func (s *Service) GetControl(
 func (s *Service) UpdateControl(
 	ctx context.Context,
 	entity *tenant.CarrierSettlementControl,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*tenant.CarrierSettlementControl, error) {
 	if err := requireActor(actor, "Carrier settlement control update"); err != nil {
 		return nil, err
@@ -59,7 +60,7 @@ func (s *Service) UpdateControl(
 		updated.BusinessUnitID,
 		actor.UserID,
 	)
-	if err = s.auditService.LogAction(&serviceports.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceCarrierSettlementControl,
 		ResourceID:     updated.ID.String(),
 		Operation:      permission.OpUpdate,

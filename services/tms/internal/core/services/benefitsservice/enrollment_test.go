@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/benefitsservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -15,14 +15,14 @@ import (
 )
 
 type fakeBenefitRepo struct {
-	repositories.BenefitRepository
+	driverpayports.BenefitRepository
 	plan        *driverpay.BenefitPlan
 	enrollments []*driverpay.WorkerBenefitEnrollment
 }
 
 func (r *fakeBenefitRepo) GetPlanByID(
 	_ context.Context,
-	_ *repositories.GetBenefitPlanByIDRequest,
+	_ *driverpayports.GetBenefitPlanByIDRequest,
 ) (*driverpay.BenefitPlan, error) {
 	return r.plan, nil
 }
@@ -38,7 +38,7 @@ func (r *fakeBenefitRepo) CreateEnrollment(
 
 func (r *fakeBenefitRepo) GetEnrollmentByID(
 	_ context.Context,
-	req *repositories.GetBenefitEnrollmentByIDRequest,
+	req *driverpayports.GetBenefitEnrollmentByIDRequest,
 ) (*driverpay.WorkerBenefitEnrollment, error) {
 	for _, row := range r.enrollments {
 		if row.ID == req.ID {
@@ -57,7 +57,7 @@ func (r *fakeBenefitRepo) UpdateEnrollment(
 
 func (r *fakeBenefitRepo) ListEnrollments(
 	_ context.Context,
-	_ *repositories.ListBenefitEnrollmentsRequest,
+	_ *driverpayports.ListBenefitEnrollmentsRequest,
 ) ([]*driverpay.WorkerBenefitEnrollment, error) {
 	return r.enrollments, nil
 }
@@ -67,7 +67,7 @@ type assertNotFound struct{}
 func (assertNotFound) Error() string { return "not found" }
 
 type fakeDeductionRepo struct {
-	repositories.RecurringDeductionRepository
+	driverpayports.RecurringDeductionRepository
 	created []*driverpay.RecurringDeduction
 	updated []*driverpay.RecurringDeduction
 }
@@ -83,7 +83,7 @@ func (r *fakeDeductionRepo) Create(
 
 func (r *fakeDeductionRepo) GetByID(
 	_ context.Context,
-	req repositories.GetRecurringDeductionByIDRequest,
+	req driverpayports.GetRecurringDeductionByIDRequest,
 ) (*driverpay.RecurringDeduction, error) {
 	for _, row := range r.created {
 		if row.ID == req.ID {

@@ -3,7 +3,7 @@ package aiauditjobs
 import (
 	"time"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
@@ -14,9 +14,9 @@ const (
 	ProjectAIAuditWorkflowName         = "ProjectAIAuditWorkflow"
 	PruneAIAuditWorkflowName           = "PruneAIAuditWorkflow"
 	CleanupAIAuditExportsWorkflowName  = "CleanupAIAuditExportsWorkflow"
-	VerifyAIAuditChainWorkflowName     = serviceports.AIAuditVerifyWorkflowName
+	VerifyAIAuditChainWorkflowName     = aiauditports.AIAuditVerifyWorkflowName
 	VerifyAIAuditTenantsWorkflowName   = "VerifyAIAuditTenantsWorkflow"
-	AIAuditExportWorkflowName          = serviceports.AIAuditExportWorkflowName
+	AIAuditExportWorkflowName          = aiauditports.AIAuditExportWorkflowName
 	verifyTenantsPerRun                = 200
 	projectorActivityTimeout           = 15 * time.Minute
 	verifyActivityTimeout              = 2 * time.Hour
@@ -115,7 +115,7 @@ func ProjectAIAuditWorkflow(ctx workflow.Context) (*ProjectResult, error) {
 // every so many tenants so its history stays small.
 func VerifyAIAuditChainWorkflow(
 	ctx workflow.Context,
-	payload *serviceports.AIAuditVerifyPayload,
+	payload *aiauditports.AIAuditVerifyPayload,
 ) (*VerifyResult, error) {
 	ctx = workflow.WithActivityOptions(
 		ctx,
@@ -123,7 +123,7 @@ func VerifyAIAuditChainWorkflow(
 	)
 	var a *Activities
 	if payload == nil {
-		payload = &serviceports.AIAuditVerifyPayload{}
+		payload = &aiauditports.AIAuditVerifyPayload{}
 	}
 
 	if payload.OrganizationID.IsNotNil() {
@@ -221,7 +221,7 @@ func CleanupAIAuditExportsWorkflow(ctx workflow.Context) (*CleanupResult, error)
 // requester waits.
 func AIAuditExportWorkflow(
 	ctx workflow.Context,
-	payload *serviceports.AIAuditExportPayload,
+	payload *aiauditports.AIAuditExportPayload,
 ) (*ExportResult, error) {
 	ctx = workflow.WithActivityOptions(
 		ctx,

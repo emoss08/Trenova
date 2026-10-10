@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/ifta"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -49,7 +49,7 @@ func (r *repository) allJurisdictions(ctx context.Context) ([]*ifta.Jurisdiction
 
 func (r *repository) ListJurisdictions(
 	ctx context.Context,
-	req *repositories.ListJurisdictionsRequest,
+	req *iftaports.ListJurisdictionsRequest,
 ) ([]*ifta.Jurisdiction, error) {
 	all, err := r.allJurisdictions(ctx)
 	if err != nil {

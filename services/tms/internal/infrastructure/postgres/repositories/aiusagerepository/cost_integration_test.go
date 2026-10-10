@@ -7,12 +7,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -74,7 +74,7 @@ func TestCostByDefinition_LeavesEvaluationSpendOut(t *testing.T) {
 	record(aiusage.SurfaceBackground, "0.25", "ar_")
 	record(aiusage.SurfaceEvaluation, "7.00", "aeval_")
 
-	cost, err := repo.CostByDefinition(ctx, repositories.AIUsageCostRequest{
+	cost, err := repo.CostByDefinition(ctx, aiusageports.AIUsageCostRequest{
 		TenantInfo:   pagination.TenantInfo{OrgID: row.OrganizationID, BuID: row.BusinessUnitID},
 		DefinitionID: row.ID,
 		Since:        since,

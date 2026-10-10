@@ -10,10 +10,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/instancebootstrap"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/instancebootstrapports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -45,25 +46,25 @@ var (
 )
 
 type transactor interface {
-	WithTx(ctx context.Context, opts ports.TxOptions, fn func(context.Context, bun.Tx) error) error
+	WithTx(ctx context.Context, opts kernelports.TxOptions, fn func(context.Context, bun.Tx) error) error
 }
 
 type Params struct {
 	fx.In
 
-	DB      ports.DBConnection
-	Tenants repositories.TenantBootstrapRepository
-	Repo    repositories.InstanceBootstrapRepository
-	Auditor services.SecurityAuditor
+	DB      kernelports.DBConnection
+	Tenants tenantports.TenantBootstrapRepository
+	Repo    instancebootstrapports.InstanceBootstrapRepository
+	Auditor permissionports.SecurityAuditor
 	Config  *config.Config
 	Logger  *zap.Logger
 }
 
 type Service struct {
 	db                 transactor
-	tenants            repositories.TenantBootstrapRepository
-	repo               repositories.InstanceBootstrapRepository
-	auditor            services.SecurityAuditor
+	tenants            tenantports.TenantBootstrapRepository
+	repo               instancebootstrapports.InstanceBootstrapRepository
+	auditor            permissionports.SecurityAuditor
 	systemUserPassword string
 	now                func() int64
 	l                  *zap.Logger
@@ -87,12 +88,12 @@ func New(p Params) *Service {
 	}
 }
 
-var _ services.InstanceBootstrapService = (*Service)(nil)
+var _ instancebootstrapports.InstanceBootstrapService = (*Service)(nil)
 
 func (s *Service) Plan(
 	ctx context.Context,
 	inputs *instancebootstrap.Inputs,
-) (*services.InstanceBootstrapPlan, error) {
+) (*instancebootstrapports.InstanceBootstrapPlan, error) {
 	normalized, err := validateInputs(inputs)
 	if err != nil {
 		return nil, err
@@ -108,7 +109,7 @@ func (s *Service) Plan(
 		return nil, err
 	}
 
-	return &services.InstanceBootstrapPlan{
+	return &instancebootstrapports.InstanceBootstrapPlan{
 		Status: status,
 		Inputs: normalized,
 		Record: state.Record,
@@ -117,8 +118,8 @@ func (s *Service) Plan(
 
 func (s *Service) Bootstrap(
 	ctx context.Context,
-	req *services.InstanceBootstrapRequest,
-) (*services.InstanceBootstrapResult, error) {
+	req *instancebootstrapports.InstanceBootstrapRequest,
+) (*instancebootstrapports.InstanceBootstrapResult, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			instancebootstrap.FieldOrganizationName,
@@ -134,7 +135,7 @@ func (s *Service) Bootstrap(
 
 	var out *created
 	sysCtx := dbscope.WithSystem(ctx, bootstrapScopeReason)
-	err = s.db.WithTx(sysCtx, ports.TxOptions{LockTimeout: lockTimeout}, func(
+	err = s.db.WithTx(sysCtx, kernelports.TxOptions{LockTimeout: lockTimeout}, func(
 		txCtx context.Context,
 		_ bun.Tx,
 	) error {
@@ -151,7 +152,7 @@ func (s *Service) Bootstrap(
 		if decideErr != nil {
 			return decideErr
 		}
-		if status == services.InstanceBootstrapCompleted {
+		if status == instancebootstrapports.InstanceBootstrapCompleted {
 			out = &created{record: state.Record}
 			return nil
 		}
@@ -176,8 +177,8 @@ func (s *Service) Bootstrap(
 		zap.Bool("systemUserCreated", out.finalized.SystemUserCreated),
 	)
 
-	return &services.InstanceBootstrapResult{
-		Status:            services.InstanceBootstrapCreated,
+	return &instancebootstrapports.InstanceBootstrapResult{
+		Status:            instancebootstrapports.InstanceBootstrapCreated,
 		OrganizationID:    out.tenant.Organization.ID,
 		BusinessUnitID:    out.tenant.BusinessUnit.ID,
 		AdminUserID:       out.tenant.Owner.ID,
@@ -190,8 +191,8 @@ func (s *Service) Bootstrap(
 }
 
 type created struct {
-	tenant    *repositories.BootstrapTenantResult
-	finalized *repositories.FinalizeInstanceBootstrapResult
+	tenant    *tenantports.BootstrapTenantResult
+	finalized *instancebootstrapports.FinalizeInstanceBootstrapResult
 	record    *instancebootstrap.InstanceBootstrap
 }
 
@@ -216,7 +217,7 @@ func (s *Service) create(
 	owner.Password = hashed
 
 	now := s.now()
-	result, err := s.tenants.Bootstrap(ctx, &repositories.BootstrapTenantRequest{
+	result, err := s.tenants.Bootstrap(ctx, &tenantports.BootstrapTenantRequest{
 		BusinessUnitName:  inputs.OrganizationName,
 		Organization:      organizationFor(inputs),
 		LoginSlugBase:     stringutils.SlugifyASCII(inputs.OrganizationName, loginSlugBaseLength),
@@ -229,7 +230,7 @@ func (s *Service) create(
 		return nil, err
 	}
 
-	finalized, err := s.repo.Finalize(ctx, &repositories.FinalizeInstanceBootstrapRequest{
+	finalized, err := s.repo.Finalize(ctx, &instancebootstrapports.FinalizeInstanceBootstrapRequest{
 		OrganizationID:     result.Organization.ID,
 		BusinessUnitID:     result.BusinessUnit.ID,
 		AdminUserID:        result.Owner.ID,
@@ -266,13 +267,13 @@ func (s *Service) audit(ctx context.Context, out *created) {
 
 	org := out.tenant.Organization
 	owner := out.tenant.Owner
-	actor := services.SystemAuditActor()
+	actor := permissionports.SystemAuditActor()
 	metadata := map[string]any{
 		"source":              auditSource,
 		"instanceBootstrapId": out.record.ID.String(),
 	}
 
-	s.auditor.RecordChange(ctx, &services.SecurityChange{
+	s.auditor.RecordChange(ctx, &permissionports.SecurityChange{
 		Resource:       permission.ResourceUser,
 		ResourceID:     owner.ID.String(),
 		Operation:      permission.OpCreate,
@@ -292,7 +293,7 @@ func (s *Service) audit(ctx context.Context, out *created) {
 		Metadata: metadata,
 	})
 
-	s.auditor.RecordChange(ctx, &services.SecurityChange{
+	s.auditor.RecordChange(ctx, &permissionports.SecurityChange{
 		Resource:       permission.ResourceRole,
 		ResourceID:     out.tenant.AdminRoleID.String(),
 		Operation:      permission.OpCreate,
@@ -308,7 +309,7 @@ func (s *Service) audit(ctx context.Context, out *created) {
 		Metadata: metadata,
 	})
 
-	s.auditor.RecordChange(ctx, &services.SecurityChange{
+	s.auditor.RecordChange(ctx, &permissionports.SecurityChange{
 		Resource:       permission.ResourceRole,
 		ResourceID:     out.tenant.AdminRoleID.String(),
 		Operation:      permission.OpAssign,
@@ -328,7 +329,7 @@ func (s *Service) audit(ctx context.Context, out *created) {
 		return
 	}
 
-	s.auditor.RecordChange(ctx, &services.SecurityChange{
+	s.auditor.RecordChange(ctx, &permissionports.SecurityChange{
 		Resource:       permission.ResourceUser,
 		ResourceID:     out.finalized.SystemUserID.String(),
 		Operation:      permission.OpCreate,
@@ -348,9 +349,9 @@ func (s *Service) audit(ctx context.Context, out *created) {
 func completedResult(
 	inputs *instancebootstrap.Inputs,
 	record *instancebootstrap.InstanceBootstrap,
-) *services.InstanceBootstrapResult {
-	return &services.InstanceBootstrapResult{
-		Status:         services.InstanceBootstrapCompleted,
+) *instancebootstrapports.InstanceBootstrapResult {
+	return &instancebootstrapports.InstanceBootstrapResult{
+		Status:         instancebootstrapports.InstanceBootstrapCompleted,
 		OrganizationID: record.OrganizationID,
 		BusinessUnitID: record.BusinessUnitID,
 		AdminUserID:    record.AdminUserID,
@@ -360,13 +361,13 @@ func completedResult(
 }
 
 func decide(
-	state *repositories.InstanceBootstrapState,
+	state *instancebootstrapports.InstanceBootstrapState,
 	inputs *instancebootstrap.Inputs,
-) (services.InstanceBootstrapStatus, error) {
+) (instancebootstrapports.InstanceBootstrapStatus, error) {
 	if state.Record != nil {
 		differences := state.Record.Inputs.IdentityDifferences(inputs)
 		if len(differences) == 0 {
-			return services.InstanceBootstrapCompleted, nil
+			return instancebootstrapports.InstanceBootstrapCompleted, nil
 		}
 
 		return "", fmt.Errorf(
@@ -387,7 +388,7 @@ func decide(
 		)
 	}
 
-	return services.InstanceBootstrapReady, nil
+	return instancebootstrapports.InstanceBootstrapReady, nil
 }
 
 func validateInputs(inputs *instancebootstrap.Inputs) (instancebootstrap.Inputs, error) {
@@ -402,7 +403,7 @@ func validateInputs(inputs *instancebootstrap.Inputs) (instancebootstrap.Inputs,
 	return normalized, nil
 }
 
-func validateRequest(req *services.InstanceBootstrapRequest) (instancebootstrap.Inputs, error) {
+func validateRequest(req *instancebootstrapports.InstanceBootstrapRequest) (instancebootstrap.Inputs, error) {
 	normalized := req.Inputs.Normalize()
 
 	multiErr := errortypes.NewMultiError()

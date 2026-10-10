@@ -6,9 +6,9 @@ import (
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/pgvector/pgvector-go"
@@ -40,7 +40,7 @@ type storedChunk struct {
 }
 
 func embeddingSourceScope(
-	source *repositories.AIRetrievalSourceRef,
+	source *agentports.AIRetrievalSourceRef,
 	modelKey string,
 ) func(*bun.SelectQuery) *bun.SelectQuery {
 	cols := buncolgen.EmbeddingColumns
@@ -55,9 +55,9 @@ func embeddingSourceScope(
 
 func (r *repository) ListChunkHashes(
 	ctx context.Context,
-	req *repositories.ListEmbeddingChunkHashesRequest,
-) ([]repositories.EmbeddingChunkHash, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]repositories.EmbeddingChunkHash, error) {
+	req *agentports.ListEmbeddingChunkHashesRequest,
+) ([]agentports.EmbeddingChunkHash, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]agentports.EmbeddingChunkHash, error) {
 		if req == nil {
 			return nil, invalid("listing chunk hashes needs a request")
 		}
@@ -72,7 +72,7 @@ func (r *repository) ListChunkHashes(
 		}
 
 		cols := buncolgen.EmbeddingColumns
-		hashes := make([]repositories.EmbeddingChunkHash, 0)
+		hashes := make([]agentports.EmbeddingChunkHash, 0)
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*airetrieval.Embedding)(nil)).
@@ -87,7 +87,7 @@ func (r *repository) ListChunkHashes(
 	})
 }
 
-func validateReplace(req *repositories.ReplaceEmbeddingChunksRequest) error {
+func validateReplace(req *agentports.ReplaceEmbeddingChunksRequest) error {
 	if req == nil {
 		return invalid("replacing chunks needs a request")
 	}
@@ -129,10 +129,10 @@ func validateReplace(req *repositories.ReplaceEmbeddingChunksRequest) error {
 
 func (r *repository) ReplaceChunks(
 	ctx context.Context,
-	req *repositories.ReplaceEmbeddingChunksRequest,
-) (repositories.ReplaceEmbeddingChunksResult, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (repositories.ReplaceEmbeddingChunksResult, error) {
-		var result repositories.ReplaceEmbeddingChunksResult
+	req *agentports.ReplaceEmbeddingChunksRequest,
+) (agentports.ReplaceEmbeddingChunksResult, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (agentports.ReplaceEmbeddingChunksResult, error) {
+		var result agentports.ReplaceEmbeddingChunksResult
 
 		if err := validateReplace(req); err != nil {
 			return result, err
@@ -141,7 +141,7 @@ func (r *repository) ReplaceChunks(
 			return result, err
 		}
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
 			stored, err := r.storedChunks(ctx, tx, req)
 			if err != nil {
 				return err
@@ -165,7 +165,7 @@ func (r *repository) ReplaceChunks(
 			return err
 		})
 		if err != nil {
-			return repositories.ReplaceEmbeddingChunksResult{}, err
+			return agentports.ReplaceEmbeddingChunksResult{}, err
 		}
 
 		return result, nil
@@ -175,7 +175,7 @@ func (r *repository) ReplaceChunks(
 func (r *repository) storedChunks(
 	ctx context.Context,
 	tx bun.Tx,
-	req *repositories.ReplaceEmbeddingChunksRequest,
+	req *agentports.ReplaceEmbeddingChunksRequest,
 ) (map[int]storedChunk, error) {
 	cols := buncolgen.EmbeddingColumns
 	rows := make([]storedChunk, 0, len(req.Chunks))
@@ -197,7 +197,7 @@ func (r *repository) storedChunks(
 }
 
 func planChunkWrites(
-	req *repositories.ReplaceEmbeddingChunksRequest,
+	req *agentports.ReplaceEmbeddingChunksRequest,
 	stored map[int]storedChunk,
 	now int64,
 ) ([]*airetrieval.Embedding, int, error) {
@@ -244,7 +244,7 @@ func planChunkWrites(
 func (r *repository) removeChunksNotIn(
 	ctx context.Context,
 	tx bun.Tx,
-	req *repositories.ReplaceEmbeddingChunksRequest,
+	req *agentports.ReplaceEmbeddingChunksRequest,
 ) (int, error) {
 	cols := buncolgen.EmbeddingColumns
 	indexes := make([]int, 0, len(req.Chunks))
@@ -309,10 +309,10 @@ var excludedEmbeddingColumns = struct {
 
 func (r *repository) DeleteSource(
 	ctx context.Context,
-	source *repositories.AIRetrievalSourceRef,
-) (repositories.DeleteAIRetrievalSourceResult, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (repositories.DeleteAIRetrievalSourceResult, error) {
-		var result repositories.DeleteAIRetrievalSourceResult
+	source *agentports.AIRetrievalSourceRef,
+) (agentports.DeleteAIRetrievalSourceResult, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (agentports.DeleteAIRetrievalSourceResult, error) {
+		var result agentports.DeleteAIRetrievalSourceResult
 
 		if err := validateSource(source); err != nil {
 			return result, err
@@ -323,7 +323,7 @@ func (r *repository) DeleteSource(
 			return result, err
 		}
 
-		err = r.db.WithTx(ctx, ports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+		err = r.db.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
 			entries := buncolgen.IndexEntryColumns
 			res, txErr := tx.NewDelete().
 				Model((*airetrieval.IndexEntry)(nil)).
@@ -361,7 +361,7 @@ func (r *repository) DeleteSource(
 			return txErr
 		})
 		if err != nil {
-			return repositories.DeleteAIRetrievalSourceResult{}, err
+			return agentports.DeleteAIRetrievalSourceResult{}, err
 		}
 
 		return result, nil
@@ -376,7 +376,7 @@ type searchPlan struct {
 	dimensions  string
 }
 
-func planSearch(req *repositories.VectorSearchRequest) (searchPlan, error) {
+func planSearch(req *agentports.VectorSearchRequest) (searchPlan, error) {
 	if req == nil {
 		return searchPlan{}, invalid("a vector search needs a request")
 	}
@@ -424,9 +424,9 @@ func planSearch(req *repositories.VectorSearchRequest) (searchPlan, error) {
 
 func (r *repository) Search(
 	ctx context.Context,
-	req *repositories.VectorSearchRequest,
-) ([]repositories.VectorSearchHit, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]repositories.VectorSearchHit, error) {
+	req *agentports.VectorSearchRequest,
+) ([]agentports.VectorSearchHit, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]agentports.VectorSearchHit, error) {
 		plan, err := planSearch(req)
 		if err != nil {
 			return nil, err
@@ -435,10 +435,10 @@ func (r *repository) Search(
 			return nil, err
 		}
 
-		hits := make([]repositories.VectorSearchHit, 0, plan.limit)
+		hits := make([]agentports.VectorSearchHit, 0, plan.limit)
 		err = r.db.WithTx(
 			ctx,
-			ports.TxOptions{ReadOnly: true},
+			kernelports.TxOptions{ReadOnly: true},
 			func(ctx context.Context, tx bun.Tx) error {
 				if _, txErr := tx.ExecContext(ctx, setIterativeScan); txErr != nil {
 					return fmt.Errorf("enable iterative index scan: %w", txErr)
@@ -467,7 +467,7 @@ func (r *repository) Search(
 
 func searchQuery(
 	tx bun.Tx,
-	req *repositories.VectorSearchRequest,
+	req *agentports.VectorSearchRequest,
 	plan searchPlan,
 ) *bun.SelectQuery {
 	cols := buncolgen.EmbeddingColumns

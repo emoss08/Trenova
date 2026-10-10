@@ -3,17 +3,18 @@ package servicefailuretrigger
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-func ActorFromTenant(tenantInfo pagination.TenantInfo) *services.RequestActor {
+func ActorFromTenant(tenantInfo pagination.TenantInfo) *permissionports.RequestActor {
 	if tenantInfo.UserID.IsNil() {
 		return nil
 	}
-	return &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeUser,
+	return &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    tenantInfo.UserID,
 		UserID:         tenantInfo.UserID,
 		BusinessUnitID: tenantInfo.BuID,
@@ -23,15 +24,15 @@ func ActorFromTenant(tenantInfo pagination.TenantInfo) *services.RequestActor {
 
 func EvaluateShipment(
 	ctx context.Context,
-	evaluator services.ServiceFailureEvaluator,
+	evaluator servicefailureports.ServiceFailureEvaluator,
 	shipmentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) error {
 	if evaluator == nil || shipmentID.IsNil() {
 		return nil
 	}
-	_, err := evaluator.EvaluateShipment(ctx, &services.EvaluateShipmentServiceFailuresRequest{
+	_, err := evaluator.EvaluateShipment(ctx, &servicefailureports.EvaluateShipmentServiceFailuresRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: tenantInfo.OrgID,
 			BuID:  tenantInfo.BuID,

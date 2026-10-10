@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -30,7 +30,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.FormulaTemplateVersionRepository {
+func New(p Params) formulatemplateports.FormulaTemplateVersionRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.formula-template-version-repository"),
@@ -60,7 +60,7 @@ func (r *repository) Create(
 
 func (r *repository) GetByTemplateAndVersion(
 	ctx context.Context,
-	req *repositories.GetVersionRequest,
+	req *formulatemplateports.GetVersionRequest,
 ) (*formulatemplate.FormulaTemplateVersion, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*formulatemplate.FormulaTemplateVersion, error) {
 		log := r.l.With(
@@ -95,7 +95,7 @@ func (r *repository) GetByTemplateAndVersion(
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListVersionsRequest,
+	req *formulatemplateports.ListVersionsRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
@@ -112,7 +112,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListVersionsRequest,
+	req *formulatemplateports.ListVersionsRequest,
 ) (*pagination.ListResult[*formulatemplate.FormulaTemplateVersion], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*formulatemplate.FormulaTemplateVersion], error) {
 		log := r.l.With(
@@ -147,7 +147,7 @@ func (r *repository) List(
 
 func (r *repository) GetVersionRange(
 	ctx context.Context,
-	req *repositories.GetVersionRangeRequest,
+	req *formulatemplateports.GetVersionRangeRequest,
 ) ([]*formulatemplate.FormulaTemplateVersion, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*formulatemplate.FormulaTemplateVersion, error) {
 		log := r.l.With(
@@ -214,7 +214,7 @@ func (r *repository) GetLatestVersion(
 
 func (r *repository) GetForkedTemplates(
 	ctx context.Context,
-	req *repositories.GetForkedTemplatesRequest,
+	req *formulatemplateports.GetForkedTemplatesRequest,
 ) ([]*formulatemplate.FormulaTemplate, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*formulatemplate.FormulaTemplate, error) {
 		log := r.l.With(
@@ -242,7 +242,7 @@ func (r *repository) GetForkedTemplates(
 
 func (r *repository) UpdateTags(
 	ctx context.Context,
-	req *repositories.UpdateVersionTagsRequest,
+	req *formulatemplateports.UpdateVersionTagsRequest,
 ) (*formulatemplate.FormulaTemplateVersion, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*formulatemplate.FormulaTemplateVersion, error) {
 		log := r.l.With(
@@ -284,7 +284,7 @@ func (r *repository) UpdateTags(
 
 func (r *repository) GetEffectiveVersion(
 	ctx context.Context,
-	req *repositories.GetEffectiveVersionRequest,
+	req *formulatemplateports.GetEffectiveVersionRequest,
 ) (*formulatemplate.FormulaTemplateVersion, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*formulatemplate.FormulaTemplateVersion, error) {
 		log := r.l.With(
@@ -323,7 +323,7 @@ func (r *repository) GetEffectiveVersion(
 
 func (r *repository) UpdateEffectiveDate(
 	ctx context.Context,
-	req *repositories.UpdateEffectiveDateRequest,
+	req *formulatemplateports.UpdateEffectiveDateRequest,
 ) (*formulatemplate.FormulaTemplateVersion, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*formulatemplate.FormulaTemplateVersion, error) {
 		log := r.l.With(
@@ -360,7 +360,7 @@ func (r *repository) UpdateEffectiveDate(
 
 func (r *repository) ListScheduled(
 	ctx context.Context,
-	req *repositories.ListScheduledVersionsRequest,
+	req *formulatemplateports.ListScheduledVersionsRequest,
 ) ([]*formulatemplate.FormulaTemplateVersion, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*formulatemplate.FormulaTemplateVersion, error) {
 		log := r.l.With(
@@ -392,7 +392,7 @@ func (r *repository) ListScheduled(
 
 func (r *repository) GetLatestByStatus(
 	ctx context.Context,
-	req *repositories.GetLatestVersionByStatusRequest,
+	req *formulatemplateports.GetLatestVersionByStatusRequest,
 ) (*formulatemplate.FormulaTemplateVersion, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*formulatemplate.FormulaTemplateVersion, error) {
 		log := r.l.With(
@@ -429,7 +429,7 @@ func (r *repository) GetLatestByStatus(
 
 func (r *repository) ClearScheduled(
 	ctx context.Context,
-	req *repositories.ListScheduledVersionsRequest,
+	req *formulatemplateports.ListScheduledVersionsRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
 		log := r.l.With(

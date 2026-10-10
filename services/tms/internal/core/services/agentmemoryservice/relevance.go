@@ -4,14 +4,14 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentsearch"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 const minRelevantTermLen = 3
 
-func Relevance(text string, ranked services.RankedMemories) agent.MemoryRelevance {
+func Relevance(text string, ranked agentports.RankedMemories) agent.MemoryRelevance {
 	terms := queryTerms(text)
 	if !ranked.Semantic && len(terms) == 0 {
 		return agent.MemoryRelevance{}

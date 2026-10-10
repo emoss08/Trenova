@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -16,14 +16,14 @@ import (
 
 func (s *Service) ListCourses(
 	ctx context.Context,
-	req *repositories.ListTrainingCoursesRequest,
+	req *workerports.ListTrainingCoursesRequest,
 ) (*pagination.CursorListResult[*worker.TrainingCourse], error) {
 	return s.repo.ListCourses(ctx, req)
 }
 
 func (s *Service) GetCourse(
 	ctx context.Context,
-	req *repositories.GetTrainingCourseByIDRequest,
+	req *workerports.GetTrainingCourseByIDRequest,
 ) (*worker.TrainingCourse, error) {
 	return s.repo.GetCourseByID(ctx, req)
 }
@@ -37,7 +37,7 @@ func (s *Service) ActiveCourses(
 
 func (s *Service) CourseSelectOptions(
 	ctx context.Context,
-	req *repositories.TrainingCourseSelectOptionsRequest,
+	req *workerports.TrainingCourseSelectOptionsRequest,
 ) (*pagination.ListResult[*worker.TrainingCourse], error) {
 	return s.repo.CourseSelectOptions(ctx, req)
 }
@@ -48,7 +48,7 @@ func (s *Service) validateCourse(ctx context.Context, entity *worker.TrainingCou
 	entity.Validate(multiErr)
 
 	if entity.Code != "" {
-		exists, err := s.repo.CourseCodeExists(ctx, &repositories.TrainingCourseCodeExistsRequest{
+		exists, err := s.repo.CourseCodeExists(ctx, &workerports.TrainingCourseCodeExistsRequest{
 			TenantInfo: courseTenant(entity),
 			Code:       entity.Code,
 			ExcludeID:  entity.ID,
@@ -104,7 +104,7 @@ func (s *Service) UpdateCourse(
 ) (*worker.TrainingCourse, error) {
 	log := s.l.With(zap.String("operation", "UpdateCourse"), zap.String("id", entity.ID.String()))
 
-	original, err := s.repo.GetCourseByID(ctx, &repositories.GetTrainingCourseByIDRequest{
+	original, err := s.repo.GetCourseByID(ctx, &workerports.GetTrainingCourseByIDRequest{
 		ID:         entity.ID,
 		TenantInfo: courseTenant(entity),
 	})
@@ -168,7 +168,7 @@ func (s *Service) changeCourseStatus(
 ) (*worker.TrainingCourse, error) {
 	log := s.l.With(zap.String("operation", string(operation)), zap.String("id", req.ID.String()))
 
-	original, err := s.repo.GetCourseByID(ctx, &repositories.GetTrainingCourseByIDRequest{
+	original, err := s.repo.GetCourseByID(ctx, &workerports.GetTrainingCourseByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -215,7 +215,7 @@ func (s *Service) changeCourseStatus(
 // requireCourseRetirable keeps a course with open assignments from being
 // switched off underneath the workers still taking it.
 func (s *Service) requireCourseRetirable(ctx context.Context, entity *worker.TrainingCourse) error {
-	count, err := s.repo.CountRecordsByCourse(ctx, &repositories.CountTrainingRecordsRequest{
+	count, err := s.repo.CountRecordsByCourse(ctx, &workerports.CountTrainingRecordsRequest{
 		TenantInfo: courseTenant(entity),
 		CourseID:   entity.ID,
 		OpenOnly:   true,
@@ -240,7 +240,7 @@ func (s *Service) CountOpenRecords(
 	ctx context.Context,
 	entity *worker.TrainingCourse,
 ) (int, error) {
-	return s.repo.CountRecordsByCourse(ctx, &repositories.CountTrainingRecordsRequest{
+	return s.repo.CountRecordsByCourse(ctx, &workerports.CountTrainingRecordsRequest{
 		TenantInfo: courseTenant(entity),
 		CourseID:   entity.ID,
 		OpenOnly:   true,
@@ -252,7 +252,7 @@ func (s *Service) CountOpenRecordsByCourses(
 	tenantInfo pagination.TenantInfo,
 	courseIDs []pulid.ID,
 ) (map[pulid.ID]int, error) {
-	return s.repo.CountRecordsByCourseIDs(ctx, &repositories.CountTrainingRecordsByCourseIDsRequest{
+	return s.repo.CountRecordsByCourseIDs(ctx, &workerports.CountTrainingRecordsByCourseIDsRequest{
 		TenantInfo: tenantInfo,
 		CourseIDs:  courseIDs,
 		OpenOnly:   true,

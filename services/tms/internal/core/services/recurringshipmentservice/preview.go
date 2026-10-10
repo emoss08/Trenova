@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/recurringshipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/recurringshipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -71,7 +71,7 @@ func (s *Service) planUpdate(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetByID(ctx, &repositories.GetRecurringShipmentByIDRequest{
+	original, err := s.repo.GetByID(ctx, &recurringshipmentports.GetRecurringShipmentByIDRequest{
 		ID: entity.GetID(),
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.GetOrganizationID(),
@@ -91,9 +91,9 @@ func (s *Service) planUpdate(
 
 func (s *Service) PreviewUpdateStatus(
 	ctx context.Context,
-	req *repositories.UpdateRecurringShipmentStatusRequest,
+	req *recurringshipmentports.UpdateRecurringShipmentStatusRequest,
 ) (*SeriesChange, error) {
-	original, err := s.repo.GetByID(ctx, &repositories.GetRecurringShipmentByIDRequest{
+	original, err := s.repo.GetByID(ctx, &recurringshipmentports.GetRecurringShipmentByIDRequest{
 		ID:         req.RecurringShipmentID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -112,8 +112,8 @@ func (s *Service) PreviewUpdateStatus(
 
 func (s *Service) PreviewGenerate(
 	ctx context.Context,
-	req *repositories.GenerateRecurringShipmentRequest,
-) (*repositories.RecurringShipmentGenerationPlan, error) {
+	req *recurringshipmentports.GenerateRecurringShipmentRequest,
+) (*recurringshipmentports.RecurringShipmentGenerationPlan, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}

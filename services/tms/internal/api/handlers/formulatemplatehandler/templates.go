@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -39,7 +39,7 @@ func (h *Handler) list(c *gin.Context) {
 		req,
 		h.eh,
 		func() (*pagination.ListResult[*formulatemplate.FormulaTemplate], error) {
-			return h.service.List(c.Request.Context(), &repositories.ListFormulaTemplatesRequest{
+			return h.service.List(c.Request.Context(), &formulatemplateports.ListFormulaTemplatesRequest{
 				Filter: req,
 				Type:   helpers.QueryString(c, "type"),
 				Status: helpers.QueryString(c, "status"),
@@ -70,7 +70,7 @@ func (h *Handler) get(c *gin.Context) {
 
 	entity, err := h.service.GetByID(
 		c.Request.Context(),
-		repositories.GetFormulaTemplateByIDRequest{
+		formulatemplateports.GetFormulaTemplateByIDRequest{
 			TemplateID: id,
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 		},
@@ -105,7 +105,7 @@ func (h *Handler) getOption(c *gin.Context) {
 
 	entity, err := h.service.GetByID(
 		c.Request.Context(),
-		repositories.GetFormulaTemplateByIDRequest{
+		formulatemplateports.GetFormulaTemplateByIDRequest{
 			TemplateID: templateID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -141,7 +141,7 @@ func (h *Handler) selectOptions(c *gin.Context) {
 		func() (*pagination.ListResult[*formulatemplate.FormulaTemplate], error) {
 			return h.service.SelectOptions(
 				c.Request.Context(),
-				&repositories.FormulaTemplateSelectOptionsRequest{
+				&formulatemplateports.FormulaTemplateSelectOptionsRequest{
 					SelectQueryRequest: req,
 				},
 			)
@@ -171,7 +171,7 @@ func (h *Handler) getUsage(c *gin.Context) {
 
 	usage, err := h.service.GetUsage(
 		c.Request.Context(),
-		&repositories.GetTemplateUsageRequest{
+		&formulatemplateports.GetTemplateUsageRequest{
 			TemplateID: id,
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 		},
@@ -273,7 +273,7 @@ func (h *Handler) update(c *gin.Context) {
 func (h *Handler) duplicate(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	req := new(repositories.BulkDuplicateFormulaTemplateRequest)
+	req := new(formulatemplateports.BulkDuplicateFormulaTemplateRequest)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -309,7 +309,7 @@ func (h *Handler) duplicate(c *gin.Context) {
 func (h *Handler) bulkUpdateStatus(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	req := new(repositories.BulkUpdateFormulaTemplateStatusRequest)
+	req := new(formulatemplateports.BulkUpdateFormulaTemplateStatusRequest)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -354,7 +354,7 @@ func (h *Handler) patch(c *gin.Context) {
 
 	existing, err := h.service.GetByID(
 		c.Request.Context(),
-		repositories.GetFormulaTemplateByIDRequest{
+		formulatemplateports.GetFormulaTemplateByIDRequest{
 			TemplateID: templateID,
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 		},

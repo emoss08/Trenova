@@ -8,20 +8,24 @@ import (
 	"slices"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs/documentuploadcontract"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs/thumbnailcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentupload"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
 	"github.com/emoss08/trenova/internal/core/services/usageservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs/documentuploadcontract"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs/thumbnailcontract"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentsearchprojectionports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -41,33 +45,33 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	SessionRepository    repositories.DocumentUploadSessionRepository
-	DocumentRepository   repositories.DocumentRepository
-	Storage              storage.Client
-	AuditService         services.AuditService
-	SearchProjection     services.DocumentSearchProjectionService
+	SessionRepository    documentuploadports.DocumentUploadSessionRepository
+	DocumentRepository   documentports.DocumentRepository
+	Storage              kernelports.Client
+	AuditService         auditports.AuditService
+	SearchProjection     documentsearchprojectionports.DocumentSearchProjectionService
 	ThumbnailGenerator   *thumbnailservice.Generator
 	Encryption           *encryptionservice.Service
-	WorkflowStarter      services.WorkflowStarter
-	UsageProvider        services.UsageProvider `optional:"true"`
-	Redis                *goredis.Client        `optional:"true"`
-	DocumentIntelligence services.DocumentContentService
-	ShipmentService      services.ShipmentService `optional:"true"`
+	WorkflowStarter      kernelports.WorkflowStarter
+	UsageProvider        platformcatalogports.UsageProvider `optional:"true"`
+	Redis                *goredis.Client                    `optional:"true"`
+	DocumentIntelligence documentports.DocumentContentService
+	ShipmentService      shipmentports.ShipmentService `optional:"true"`
 }
 
 type Activities struct {
-	sessionRepo          repositories.DocumentUploadSessionRepository
-	documentRepo         repositories.DocumentRepository
-	storage              storage.Client
-	auditService         services.AuditService
-	searchProjection     services.DocumentSearchProjectionService
+	sessionRepo          documentuploadports.DocumentUploadSessionRepository
+	documentRepo         documentports.DocumentRepository
+	storage              kernelports.Client
+	auditService         auditports.AuditService
+	searchProjection     documentsearchprojectionports.DocumentSearchProjectionService
 	thumbnailGenerator   *thumbnailservice.Generator
 	encryption           *encryptionservice.Service
-	workflowStarter      services.WorkflowStarter
-	usageProvider        services.UsageProvider
+	workflowStarter      kernelports.WorkflowStarter
+	usageProvider        platformcatalogports.UsageProvider
 	redis                *goredis.Client
-	documentIntelligence services.DocumentContentService
-	shipmentService      services.ShipmentService
+	documentIntelligence documentports.DocumentContentService
+	shipmentService      shipmentports.ShipmentService
 }
 
 //nolint:gocritic // dependency injection param
@@ -113,7 +117,7 @@ func (a *Activities) FinalizeUploadActivity(
 		UserID: payload.UserID,
 	}
 
-	session, err := a.sessionRepo.GetByID(ctx, repositories.GetDocumentUploadSessionByIDRequest{
+	session, err := a.sessionRepo.GetByID(ctx, documentuploadports.GetDocumentUploadSessionByIDRequest{
 		ID:         payload.SessionID,
 		TenantInfo: tenantInfo,
 	})
@@ -226,7 +230,7 @@ func (a *Activities) finalizeUploadEarlyOutcomes(
 func (a *Activities) finalizeValidateStoredObject(
 	ctx context.Context,
 	session *documentupload.DocumentUploadSession,
-	parts []storage.UploadedPart,
+	parts []kernelports.UploadedPart,
 ) error {
 	if session.Strategy == documentupload.StrategyMultipart {
 		if len(parts) == 0 {
@@ -238,11 +242,11 @@ func (a *Activities) finalizeValidateStoredObject(
 			)
 		}
 
-		if err := a.storage.CompleteMultipartUpload(ctx, &storage.CompleteMultipartUploadParams{
+		if err := a.storage.CompleteMultipartUpload(ctx, &kernelports.CompleteMultipartUploadParams{
 			Key:      session.StoragePath,
 			UploadID: session.StorageProviderUploadID,
 			Parts:    parts,
-		}); err != nil && !storage.IsMissingMultipartUploadError(err) {
+		}); err != nil && !kernelports.IsMissingMultipartUploadError(err) {
 			return a.failSession(
 				ctx,
 				session,
@@ -284,7 +288,7 @@ func (a *Activities) finalizeValidateStoredObject(
 func (a *Activities) finalizeUploadPersistDocument(
 	ctx context.Context,
 	session *documentupload.DocumentUploadSession,
-	parts []storage.UploadedPart,
+	parts []kernelports.UploadedPart,
 	doc *document.Document,
 	payload *documentuploadcontract.FinalizeUploadPayload,
 ) (*FinalizeUploadResult, error) {
@@ -339,7 +343,7 @@ func (a *Activities) recordDocumentUploadUsage(
 	doc *document.Document,
 	payload *documentuploadcontract.FinalizeUploadPayload,
 ) {
-	actor := services.RequestActor{
+	actor := permissionports.RequestActor{
 		PrincipalType:  payload.PrincipalType,
 		PrincipalID:    payload.PrincipalID,
 		UserID:         payload.UserID,
@@ -417,7 +421,7 @@ func (a *Activities) ReconcileUploadsActivity(
 
 	sessions, err := a.sessionRepo.ListForReconciliation(
 		ctx,
-		&repositories.ListDocumentUploadReconciliationRequest{
+		&documentuploadports.ListDocumentUploadReconciliationRequest{
 			TenantInfo:    documentUploadReconcileTenantInfo(payload),
 			StaleBefore:   staleBefore,
 			ExpiresBefore: expiresBefore,
@@ -449,7 +453,7 @@ func (a *Activities) ReconcileUploadsActivity(
 
 	docs, err := a.documentRepo.ListPendingPreviewReconciliation(
 		ctx,
-		&repositories.ListPendingPreviewReconciliationRequest{
+		&documentports.ListPendingPreviewReconciliationRequest{
 			TenantInfo: documentUploadReconcileTenantInfo(payload),
 			OlderThan:  previewBefore,
 			Limit:      payload.Limit,
@@ -482,7 +486,7 @@ func (a *Activities) ListReconcileUploadsTenantsActivity(
 	seen := make(map[string]pagination.TenantInfo, limit)
 	sessionTenants, err := a.sessionRepo.ListReconciliationTenants(
 		ctx,
-		&repositories.ListDocumentUploadReconciliationRequest{
+		&documentuploadports.ListDocumentUploadReconciliationRequest{
 			StaleBefore:   staleBefore,
 			ExpiresBefore: expiresBefore,
 			Limit:         limit,
@@ -497,7 +501,7 @@ func (a *Activities) ListReconcileUploadsTenantsActivity(
 
 	previewTenants, err := a.documentRepo.ListPendingPreviewReconciliationTenants(
 		ctx,
-		&repositories.ListPendingPreviewReconciliationRequest{
+		&documentports.ListPendingPreviewReconciliationRequest{
 			OlderThan: previewBefore,
 			Limit:     limit,
 		},
@@ -564,7 +568,7 @@ func (a *Activities) deleteStoredObject(ctx context.Context, key string) error {
 		return err
 	}
 
-	return a.storage.DeleteObject(ctx, &storage.DeleteObjectParams{
+	return a.storage.DeleteObject(ctx, &kernelports.DeleteObjectParams{
 		Key:       key,
 		VersionID: fileInfo.VersionID,
 	})
@@ -620,7 +624,7 @@ func (a *Activities) ensureDocument(
 	userID pulid.ID,
 ) (*document.Document, error) {
 	if session.DocumentID != nil {
-		return a.documentRepo.GetByID(ctx, repositories.GetDocumentByIDRequest{
+		return a.documentRepo.GetByID(ctx, documentports.GetDocumentByIDRequest{
 			ID: *session.DocumentID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: session.OrganizationID,
@@ -631,7 +635,7 @@ func (a *Activities) ensureDocument(
 
 	existing, err := a.documentRepo.GetByStoragePath(
 		ctx,
-		repositories.GetDocumentByStoragePathRequest{
+		documentports.GetDocumentByStoragePathRequest{
 			StoragePath: session.StoragePath,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: session.OrganizationID,
@@ -658,7 +662,7 @@ func (a *Activities) createDocumentWithRetryLoop(
 	ctx context.Context,
 	session *documentupload.DocumentUploadSession,
 	userID pulid.ID,
-	fileInfo *storage.FileInfo,
+	fileInfo *kernelports.FileInfo,
 ) (*document.Document, error) {
 	const maxCreateAttempts = 3
 	for attempt := range maxCreateAttempts {
@@ -719,7 +723,7 @@ func (a *Activities) createDocumentWithRetryLoop(
 
 func (a *Activities) newDocumentForUpload(
 	session *documentupload.DocumentUploadSession,
-	fileInfo *storage.FileInfo,
+	fileInfo *kernelports.FileInfo,
 	lineageID pulid.ID,
 	versionNumber int64,
 	previousDoc *document.Document,
@@ -762,7 +766,7 @@ func (a *Activities) finalizeCreatedDocumentUpload(
 	lineageID pulid.ID,
 ) error {
 	if previousDoc != nil {
-		if err := a.documentRepo.PromoteVersion(ctx, &repositories.PromoteDocumentVersionRequest{
+		if err := a.documentRepo.PromoteVersion(ctx, &documentports.PromoteDocumentVersionRequest{
 			LineageID:         lineageID,
 			CurrentDocumentID: createdDoc.ID,
 			TenantInfo: pagination.TenantInfo{
@@ -787,7 +791,7 @@ func (a *Activities) finalizeCreatedDocumentUpload(
 	}
 	createdDoc.IsCurrentVersion = true
 
-	if auditErr := a.auditService.LogAction(&services.LogActionParams{
+	if auditErr := a.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceDocument,
 		ResourceID:     createdDoc.GetID().String(),
 		Operation:      permission.OpCreate,
@@ -820,7 +824,7 @@ func (a *Activities) recoverDocumentCreateAfterUniqueConflict(
 
 	existingDoc, getErr := a.documentRepo.GetByStoragePath(
 		ctx,
-		repositories.GetDocumentByStoragePathRequest{
+		documentports.GetDocumentByStoragePathRequest{
 			StoragePath: session.StoragePath,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: session.OrganizationID,
@@ -851,7 +855,7 @@ func (a *Activities) resolveLineageState(
 
 	if session.LineageID != nil && !session.LineageID.IsNil() {
 		lineageID = *session.LineageID
-		versions, err := a.documentRepo.ListVersions(ctx, repositories.ListDocumentVersionsRequest{
+		versions, err := a.documentRepo.ListVersions(ctx, documentports.ListDocumentVersionsRequest{
 			LineageID: lineageID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: session.OrganizationID,
@@ -941,7 +945,7 @@ func (a *Activities) isSessionReadyToFinalize(
 ) (bool, error) {
 	if session.Strategy == documentupload.StrategySingle {
 		if len(session.UploadedParts) > 0 {
-			return storage.SumUploadedPartSizes(storage.ToDomainParts(session.UploadedParts)) ==
+			return kernelports.SumUploadedPartSizes(kernelports.ToDomainParts(session.UploadedParts)) ==
 				session.FileSize, nil
 		}
 
@@ -955,7 +959,7 @@ func (a *Activities) isSessionReadyToFinalize(
 
 	parts, err := a.getUploadedParts(ctx, session)
 	if err != nil {
-		if storage.IsMissingMultipartUploadError(err) {
+		if kernelports.IsMissingMultipartUploadError(err) {
 			return false, nil
 		}
 		return false, err
@@ -984,7 +988,7 @@ func (a *Activities) expireSession(
 ) error {
 	if session.Strategy == documentupload.StrategyMultipart &&
 		session.StorageProviderUploadID != "" {
-		_ = a.storage.AbortMultipartUpload(ctx, &storage.AbortMultipartUploadParams{
+		_ = a.storage.AbortMultipartUpload(ctx, &kernelports.AbortMultipartUploadParams{
 			Key:      session.StoragePath,
 			UploadID: session.StorageProviderUploadID,
 		})
@@ -1001,9 +1005,9 @@ func (a *Activities) expireSession(
 func (a *Activities) getUploadedParts(
 	ctx context.Context,
 	session *documentupload.DocumentUploadSession,
-) ([]storage.UploadedPart, error) {
+) ([]kernelports.UploadedPart, error) {
 	if len(session.UploadedParts) > 0 {
-		return storage.ToDomainParts(session.UploadedParts), nil
+		return kernelports.ToDomainParts(session.UploadedParts), nil
 	}
 
 	if session.Strategy == documentupload.StrategySingle {
@@ -1011,10 +1015,10 @@ func (a *Activities) getUploadedParts(
 		if err != nil {
 			return nil, err
 		}
-		return []storage.UploadedPart{{PartNumber: 1, Size: fileInfo.Size}}, nil
+		return []kernelports.UploadedPart{{PartNumber: 1, Size: fileInfo.Size}}, nil
 	}
 
-	return a.storage.ListMultipartUploadParts(ctx, &storage.ListMultipartUploadPartsParams{
+	return a.storage.ListMultipartUploadParts(ctx, &kernelports.ListMultipartUploadPartsParams{
 		Key:      session.StoragePath,
 		UploadID: session.StorageProviderUploadID,
 	})
@@ -1068,7 +1072,7 @@ func (a *Activities) startThumbnailWorkflow(ctx context.Context, doc *document.D
 	if doc.PreviewStatus != document.PreviewStatusPending || doc.PreviewStoragePath != "" {
 		doc.PreviewStatus = document.PreviewStatusPending
 		doc.PreviewStoragePath = ""
-		if err := a.documentRepo.UpdatePreview(ctx, &repositories.UpdateDocumentPreviewRequest{
+		if err := a.documentRepo.UpdatePreview(ctx, &documentports.UpdateDocumentPreviewRequest{
 			ID: doc.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: doc.OrganizationID,
@@ -1118,7 +1122,7 @@ func (a *Activities) startThumbnailWorkflow(ctx context.Context, doc *document.D
 			"error",
 			err,
 		)
-		updateErr := a.documentRepo.UpdatePreview(ctx, &repositories.UpdateDocumentPreviewRequest{
+		updateErr := a.documentRepo.UpdatePreview(ctx, &documentports.UpdateDocumentPreviewRequest{
 			ID: doc.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: doc.OrganizationID,
@@ -1170,7 +1174,7 @@ func (a *Activities) isSupersededByNewerVersion(
 ) (bool, error) {
 	activeSessions, err := a.sessionRepo.ListActive(
 		ctx,
-		&repositories.ListActiveDocumentUploadSessionsRequest{
+		&documentuploadports.ListActiveDocumentUploadSessionsRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: session.OrganizationID,
 				BuID:  session.BusinessUnitID,
@@ -1183,7 +1187,7 @@ func (a *Activities) isSupersededByNewerVersion(
 		return false, err
 	}
 
-	versions, err := a.documentRepo.ListVersions(ctx, repositories.ListDocumentVersionsRequest{
+	versions, err := a.documentRepo.ListVersions(ctx, documentports.ListDocumentVersionsRequest{
 		LineageID: *session.LineageID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: session.OrganizationID,
@@ -1205,7 +1209,7 @@ func (a *Activities) getDocumentForSession(
 		return nil
 	}
 
-	doc, err := a.documentRepo.GetByID(ctx, repositories.GetDocumentByIDRequest{
+	doc, err := a.documentRepo.GetByID(ctx, documentports.GetDocumentByIDRequest{
 		ID: *session.DocumentID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: session.OrganizationID,
@@ -1265,10 +1269,10 @@ func completionLeaseKey(sessionID string) string {
 	return "document-upload:completion:" + sessionID
 }
 
-func toDomainUploadedParts(parts []storage.UploadedPart) []storage.UploadedPart {
-	result := storage.ToDomainParts(parts)
+func toDomainUploadedParts(parts []kernelports.UploadedPart) []kernelports.UploadedPart {
+	result := kernelports.ToDomainParts(parts)
 
-	slices.SortFunc(result, func(a, b storage.UploadedPart) int {
+	slices.SortFunc(result, func(a, b kernelports.UploadedPart) int {
 		return a.PartNumber - b.PartNumber
 	})
 

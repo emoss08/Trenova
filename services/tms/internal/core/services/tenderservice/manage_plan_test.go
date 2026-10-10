@@ -6,8 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	portservices "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -19,21 +18,21 @@ import (
 // readingTenderRepo answers the reads a preview makes. Every write reaches
 // the nil repository it embeds and panics, so a preview that wrote fails.
 type readingTenderRepo struct {
-	repositories.TenderRepository
+	tenderports.TenderRepository
 
 	entity *tender.Tender
 }
 
 func (r *readingTenderRepo) GetByID(
 	_ context.Context,
-	_ repositories.GetTenderByIDRequest,
+	_ tenderports.GetTenderByIDRequest,
 ) (*tender.Tender, error) {
 	return r.entity, nil
 }
 
 func (r *readingTenderRepo) GetOfferByID(
 	_ context.Context,
-	req repositories.GetTenderOfferByIDRequest,
+	req tenderports.GetTenderOfferByIDRequest,
 ) (*tender.TenderOffer, error) {
 	offer := r.entity.FindOffer(req.OfferID)
 	if offer == nil {
@@ -129,7 +128,7 @@ func TestPreviewResponse_AcceptCloseOutTheRestOfThePlan(t *testing.T) {
 		tender.OfferStatusSent, tender.OfferStatusPending)
 	svc := managedService(entity, &fakeWorkflowStarter{})
 
-	plan, err := svc.PreviewResponse(t.Context(), &portservices.TenderResponseRequest{
+	plan, err := svc.PreviewResponse(t.Context(), &tenderports.TenderResponseRequest{
 		TenantInfo: createTestTenant(),
 		OfferID:    entity.Offers[0].ID,
 		Action:     tender.ResponseActionAccept,
@@ -155,7 +154,7 @@ func TestPreviewResponse_DeclineOffersTheNextCarrierInAWaterfall(t *testing.T) {
 		tender.OfferStatusSent, tender.OfferStatusPending)
 	svc := managedService(entity, &fakeWorkflowStarter{})
 
-	plan, err := svc.PreviewResponse(t.Context(), &portservices.TenderResponseRequest{
+	plan, err := svc.PreviewResponse(t.Context(), &tenderports.TenderResponseRequest{
 		TenantInfo:    createTestTenant(),
 		OfferID:       entity.Offers[0].ID,
 		Action:        tender.ResponseActionDecline,
@@ -179,7 +178,7 @@ func TestPreviewResponse_DeclineOfTheLastCarrierExhaustsTheTender(t *testing.T) 
 		tender.OfferStatusDeclined, tender.OfferStatusSent)
 	svc := managedService(entity, &fakeWorkflowStarter{})
 
-	plan, err := svc.PreviewResponse(t.Context(), &portservices.TenderResponseRequest{
+	plan, err := svc.PreviewResponse(t.Context(), &tenderports.TenderResponseRequest{
 		TenantInfo: createTestTenant(),
 		OfferID:    entity.Offers[1].ID,
 		Action:     tender.ResponseActionDecline,
@@ -202,7 +201,7 @@ func TestPreviewResponse_RefusesAnOfferNoLongerOpen(t *testing.T) {
 		tender.OfferStatusExpired, tender.OfferStatusSent)
 	svc := managedService(entity, &fakeWorkflowStarter{})
 
-	_, err := svc.PreviewResponse(t.Context(), &portservices.TenderResponseRequest{
+	_, err := svc.PreviewResponse(t.Context(), &tenderports.TenderResponseRequest{
 		TenantInfo: createTestTenant(),
 		OfferID:    entity.Offers[0].ID,
 		Action:     tender.ResponseActionAccept,
@@ -217,7 +216,7 @@ func TestPreviewResponse_RefusesAnUnknownAction(t *testing.T) {
 	entity := sequentialTender(tender.StatusActive, tender.OfferStatusSent)
 	svc := managedService(entity, &fakeWorkflowStarter{})
 
-	_, err := svc.PreviewResponse(t.Context(), &portservices.TenderResponseRequest{
+	_, err := svc.PreviewResponse(t.Context(), &tenderports.TenderResponseRequest{
 		TenantInfo: createTestTenant(),
 		OfferID:    entity.Offers[0].ID,
 		Action:     tender.ResponseAction("Maybe"),

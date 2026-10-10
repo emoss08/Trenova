@@ -8,14 +8,15 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func documentAttribution() serviceports.AIUsageAttribution {
-	return serviceports.AIUsageAttribution{
+func documentAttribution() aiusageports.AIUsageAttribution {
+	return aiusageports.AIUsageAttribution{
 		UserID:  pulid.MustNew("usr_"),
 		Feature: aiusage.FeatureDocumentIntelligenceExtract,
 		Subject: aiusage.Subject{
@@ -34,7 +35,7 @@ func TestCompleteStructured_RecordsTheFeatureAndSubject(t *testing.T) {
 	svc.usage = usage
 
 	req := generalRequest()
-	req.Attribution = serviceports.AIUsageAttribution{
+	req.Attribution = aiusageports.AIUsageAttribution{
 		UserID:  pulid.MustNew("usr_"),
 		Feature: aiusage.FeatureFormulaGenerate,
 		Subject: aiusage.Subject{Type: aiusage.SubjectTypeFormulaSchema, ID: "shipment"},
@@ -58,7 +59,7 @@ func TestCompleteChat_RecordsTheFeatureAndSubject(t *testing.T) {
 	svc := newTestService(t, chatProvider("only", healthy.URL, 10))
 	svc.usage = usage
 
-	attribution := serviceports.AIUsageAttribution{
+	attribution := aiusageports.AIUsageAttribution{
 		UserID:  pulid.MustNew("usr_"),
 		Feature: aiusage.FeatureShipmentImportChat,
 		Subject: aiusage.Subject{
@@ -98,7 +99,7 @@ func TestRecord_LeavesOutASubjectTheTableCannotHold(t *testing.T) {
 			svc.usage = usage
 
 			req := generalRequest()
-			req.Attribution = serviceports.AIUsageAttribution{
+			req.Attribution = aiusageports.AIUsageAttribution{
 				Feature: aiusage.FeatureTableQuery,
 				Subject: subject,
 			}
@@ -215,7 +216,7 @@ func TestPollBackground_RecordsNothingWhileTheCallRuns(t *testing.T) {
 
 	outcome, err := svc.PollBackground(t.Context(), pollRequest(provider))
 	require.NoError(t, err)
-	require.Equal(t, serviceports.BackgroundPending, outcome.State)
+	require.Equal(t, agentports.BackgroundPending, outcome.State)
 
 	usage.mu.Lock()
 	defer usage.mu.Unlock()

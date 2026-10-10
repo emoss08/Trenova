@@ -13,8 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -26,13 +26,13 @@ var permissionResource = permission.ResourceAccountingSync.String()
 type pushSession struct {
 	tenant            pagination.TenantInfo
 	conn              *accountingsync.AccountingConnection
-	writer            services.AccountingDocumentWriter
-	journals          services.AccountingJournalWriter
-	auth              services.AccountingDocumentAuth
+	writer            accountingsyncports.AccountingDocumentWriter
+	journals          accountingsyncports.AccountingJournalWriter
+	auth              accountingsyncports.AccountingDocumentAuth
 	loc               *time.Location
 	providerName      string
 	profile           accountingsync.ProviderProfile
-	limits            services.AccountingDocumentLimits
+	limits            accountingsyncports.AccountingDocumentLimits
 	control           *tenant.AccountingControl
 	redatesToNextOpen bool
 }
@@ -87,7 +87,7 @@ func (s *Service) openSession(
 	if err != nil {
 		return nil, err
 	}
-	writer, ok := session.Connector.(services.AccountingDocumentWriter)
+	writer, ok := session.Connector.(accountingsyncports.AccountingDocumentWriter)
 	if !ok {
 		return nil, fmt.Errorf(
 			"%s cannot receive documents from Trenova",
@@ -95,7 +95,7 @@ func (s *Service) openSession(
 		)
 	}
 
-	journals, _ := session.Connector.(services.AccountingJournalWriter)
+	journals, _ := session.Connector.(accountingsyncports.AccountingJournalWriter)
 
 	loc, err := s.orgLocation(ctx, tenantInfo)
 	if err != nil {
@@ -111,7 +111,7 @@ func (s *Service) openSession(
 		conn:              session.Connection,
 		writer:            writer,
 		journals:          journals,
-		auth:              services.DocumentAuthFor(session.Connection, session.AccessToken),
+		auth:              accountingsyncports.DocumentAuthFor(session.Connection, session.AccessToken),
 		loc:               loc,
 		providerName:      accountingsync.ProviderName(conn.IntegrationType),
 		profile:           accountingsync.MustProfile(conn.IntegrationType),
@@ -125,7 +125,7 @@ func (s *Service) orgLocation(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*time.Location, error) {
-	org, err := s.organizations.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+	org, err := s.organizations.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {
@@ -150,9 +150,9 @@ func (s *Service) redatesToNextOpen(
 
 func (s *Service) Drain(
 	ctx context.Context,
-	req *services.DrainAccountingSyncRequest,
-) (*services.AccountingSyncDrainResult, error) {
-	result := new(services.AccountingSyncDrainResult)
+	req *accountingsyncports.DrainAccountingSyncRequest,
+) (*accountingsyncports.AccountingSyncDrainResult, error) {
+	result := new(accountingsyncports.AccountingSyncDrainResult)
 	conn, err := s.connectionByID(ctx, req.TenantInfo, req.ConnectionID)
 	if err != nil {
 		return nil, err
@@ -174,7 +174,7 @@ func (s *Service) Drain(
 	if limit <= 0 {
 		limit = defaultDrainLimit
 	}
-	claimed, err := s.records.Claim(ctx, &repositories.ClaimAccountingSyncRecordsRequest{
+	claimed, err := s.records.Claim(ctx, &accountingsyncports.ClaimAccountingSyncRecordsRequest{
 		TenantInfo:   req.TenantInfo,
 		ConnectionID: conn.ID,
 		Now:          timeutils.NowUnix(),
@@ -196,7 +196,7 @@ func (s *Service) Drain(
 		}
 		outcome, finishErr := s.pushRecord(ctx, sess, record)
 		if finishErr != nil {
-			if errors.Is(finishErr, repositories.ErrAccountingSyncLeaseLost) {
+			if errors.Is(finishErr, accountingsyncports.ErrAccountingSyncLeaseLost) {
 				result.LeaseLost++
 				continue
 			}
@@ -215,7 +215,7 @@ func (s *Service) Drain(
 	return result, nil
 }
 
-func tally(result *services.AccountingSyncDrainResult, outcome accountingsync.SyncAttemptOutcome) {
+func tally(result *accountingsyncports.AccountingSyncDrainResult, outcome accountingsync.SyncAttemptOutcome) {
 	switch outcome {
 	case accountingsync.SyncAttemptSynced:
 		result.Synced++
@@ -290,7 +290,7 @@ func (s *Service) pushRecord(
 			FinishedAt:    finished,
 		})
 	}
-	if err := s.records.Finish(ctx, &repositories.FinishAccountingSyncRecordRequest{
+	if err := s.records.Finish(ctx, &accountingsyncports.FinishAccountingSyncRecordRequest{
 		Record:  record,
 		Attempt: attempt,
 	}); err != nil {
@@ -348,7 +348,7 @@ func (s *Service) pushOne(
 func finishedResult(
 	sess *pushSession,
 	record *accountingsync.AccountingSyncRecord,
-	written *services.AccountingDocumentResult,
+	written *accountingsyncports.AccountingDocumentResult,
 	document any,
 	mappingIDs []string,
 ) (*pushResult, error) {
@@ -378,7 +378,7 @@ func finishedResult(
 	return &pushResult{result: result, refs: refs}, nil
 }
 
-func partial(written *services.AccountingDocumentResult) *pushResult {
+func partial(written *accountingsyncports.AccountingDocumentResult) *pushResult {
 	if written == nil || len(written.Refs) == 0 {
 		return nil
 	}
@@ -412,7 +412,7 @@ func (s *Service) objectRecords(
 	objectType accountingsync.SyncObjectType,
 	objectID pulid.ID,
 ) ([]*accountingsync.AccountingSyncRecord, error) {
-	return s.records.ListByObjects(ctx, &repositories.ListAccountingSyncRecordsByObjectsRequest{
+	return s.records.ListByObjects(ctx, &accountingsyncports.ListAccountingSyncRecordsByObjectsRequest{
 		TenantInfo:   sess.tenant,
 		ConnectionID: sess.conn.ID,
 		ObjectTypes:  []accountingsync.SyncObjectType{objectType},
@@ -494,7 +494,7 @@ func mergedRefs(records []*accountingsync.AccountingSyncRecord) map[string]strin
 func (s *Service) enqueueDependency(
 	ctx context.Context,
 	sess *pushSession,
-	req *services.AccountingSyncEnqueueRequest,
+	req *accountingsyncports.AccountingSyncEnqueueRequest,
 ) (*accountingsync.AccountingSyncRecord, error) {
 	req.TenantInfo = sess.tenant
 	req.SourceEvent = accountingsync.SyncSourceDependencyOf

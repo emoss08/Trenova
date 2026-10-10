@@ -9,9 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -98,7 +99,7 @@ func TestRenderTranscript_NamesADeletedDelegatePlainly(t *testing.T) {
 }
 
 type delegateDefinitions struct {
-	repositories.AgentDefinitionRepository
+	agentdefinitionports.AgentDefinitionRepository
 
 	byID   map[pulid.ID]*agentdefinition.Definition
 	listed int
@@ -106,7 +107,7 @@ type delegateDefinitions struct {
 
 func (s *delegateDefinitions) ListByIDs(
 	_ context.Context,
-	req repositories.ListAgentDefinitionsByIDsRequest,
+	req agentdefinitionports.ListAgentDefinitionsByIDsRequest,
 ) ([]*agentdefinition.Definition, error) {
 	s.listed++
 	found := make([]*agentdefinition.Definition, 0, len(req.IDs))
@@ -121,7 +122,7 @@ func (s *delegateDefinitions) ListByIDs(
 
 func (s *delegateDefinitions) GetByID(
 	_ context.Context,
-	req repositories.GetAgentDefinitionByIDRequest,
+	req agentdefinitionports.GetAgentDefinitionByIDRequest,
 ) (*agentdefinition.Definition, error) {
 	if definition, ok := s.byID[req.ID]; ok {
 		return definition, nil
@@ -162,8 +163,8 @@ func newDelegateFixture() *delegateFixture {
 		delegate.ID: delegate,
 	}}
 
-	actor := &serviceports.RequestActor{
-		PrincipalType:  serviceports.PrincipalTypeUser,
+	actor := &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    pulid.MustNew("usr_"),
 		UserID:         pulid.MustNew("usr_"),
 		OrganizationID: pulid.MustNew("org_"),
@@ -179,12 +180,12 @@ func newDelegateFixture() *delegateFixture {
 			Parent:   parent,
 			Actor:    actor,
 			ThreadID: pulid.MustNew("athr_"),
-			StepOwner: serviceports.RunStepOwner{
-				Kind: serviceports.RunStepOwnerAssistantTurn,
+			StepOwner: agentports.RunStepOwner{
+				Kind: agentports.RunStepOwnerAssistantTurn,
 				ID:   pulid.MustNew("atrn_"),
 			},
 			Call: agentruntime.DelegateCall{
-				Call:      serviceports.ToolCall{ID: "call_1", Name: "delegate_task"},
+				Call:      agentports.ToolCall{ID: "call_1", Name: "delegate_task"},
 				Delegate:  agentdefinition.RuntimeDelegate{ID: delegate.ID, Name: delegate.Name},
 				Task:      "Create the on-time report and return its id.",
 				StepScope: "scope-1",
@@ -341,13 +342,13 @@ func TestOpenDelegate_ADirectedTaskNeedsNoPlaceOnTheAllowlist(t *testing.T) {
 func TestDirectedTask_ChecksTheChosenAgentAsThePersonsOwn(t *testing.T) {
 	t.Parallel()
 
-	send := func(f *delegateFixture, agentID pulid.ID) (*serviceports.DirectedTask, error) {
+	send := func(f *delegateFixture, agentID pulid.ID) (*agentports.DirectedTask, error) {
 		thread := &conversation.Thread{
 			ID:                f.request.ThreadID,
 			AgentDefinitionID: f.parent.ID,
 		}
 		return f.svc.directedTask(t.Context(), thread, f.request.Actor,
-			&serviceports.SendMessageRequest{
+			&agentports.SendMessageRequest{
 				ThreadID:        thread.ID,
 				Content:         "  Mark shipment SEED-PAY-001 ready to invoice.  ",
 				TenantInfo:      f.request.Actor.TenantInfo(),
@@ -505,12 +506,12 @@ func TestNameDelegatedSteps_ServesTheDelegatesMarkInOneQuery(t *testing.T) {
 }
 
 type capturingContexts struct {
-	asked *serviceports.RuntimeContextRequest
+	asked *agentports.RuntimeContextRequest
 }
 
 func (c *capturingContexts) Build(
 	_ context.Context,
-	req *serviceports.RuntimeContextRequest,
+	req *agentports.RuntimeContextRequest,
 ) (agentdefinition.RuntimeContext, error) {
 	c.asked = req
 

@@ -6,8 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -29,7 +30,7 @@ const (
 type invoiceNumberReader interface {
 	GetByIDs(
 		ctx context.Context,
-		req repositories.GetInvoicesByIDsRequest,
+		req invoiceports.GetInvoicesByIDsRequest,
 	) ([]*invoice.Invoice, error)
 }
 
@@ -42,7 +43,7 @@ func invoiceNumbers(reader invoiceNumberReader) recordLabels {
 		if reader == nil {
 			return nil
 		}
-		invoices, err := reader.GetByIDs(ctx, repositories.GetInvoicesByIDsRequest{
+		invoices, err := reader.GetByIDs(ctx, invoiceports.GetInvoicesByIDsRequest{
 			TenantInfo: tenant,
 			InvoiceIDs: ids,
 		})
@@ -69,7 +70,7 @@ func queueItemNumbers(billing billingQueueDecider) recordLabels {
 		}
 		labels := make(map[pulid.ID]string, len(ids))
 		for _, id := range ids {
-			item, err := billing.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
+			item, err := billing.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
 				ItemID:     id,
 				TenantInfo: tenant,
 			})
@@ -102,15 +103,15 @@ type postInvoicesTool struct {
 }
 
 var (
-	_ serviceports.ToolPreviewer      = (*postInvoicesTool)(nil)
-	_ serviceports.ToolValidator      = (*postInvoicesTool)(nil)
-	_ serviceports.ToolResultReporter = (*postInvoicesTool)(nil)
+	_ agentports.ToolPreviewer      = (*postInvoicesTool)(nil)
+	_ agentports.ToolValidator      = (*postInvoicesTool)(nil)
+	_ agentports.ToolResultReporter = (*postInvoicesTool)(nil)
 )
 
 func newPostInvoicesTool(
 	invoices invoicePoster,
 	numbers invoiceNumberReader,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	single := &postInvoiceTool{invoices: invoices}
 
 	return &postInvoicesTool{
@@ -145,7 +146,7 @@ func (t *postInvoicesTool) ParamSchema() map[string]any {
 	return bulkIDsSchema(t.batch, bulkInvoiceIDsDescription, nil)
 }
 
-func (t *postInvoicesTool) Policy() serviceports.ToolPolicy {
+func (t *postInvoicesTool) Policy() agentports.ToolPolicy {
 	policy := t.single.Policy()
 	policy.Name = t.Name()
 	policy.Artifact = invoiceRecordEntity
@@ -158,21 +159,21 @@ func (t *postInvoicesTool) Policy() serviceports.ToolPolicy {
 
 func (t *postInvoicesTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	return t.batch.Preview(ctx, t, &params)
 }
 
 func (t *postInvoicesTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	return t.batch.Validate(ctx, t, &params)
 }
 
 func (t *postInvoicesTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -181,7 +182,7 @@ func (t *postInvoicesTool) Execute(
 
 func (t *postInvoicesTool) ExecuteWithResult(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
 	return t.batch.Execute(ctx, t, &params, t.single.Execute)
 }
@@ -192,15 +193,15 @@ type sendInvoicesTool struct {
 }
 
 var (
-	_ serviceports.ToolPreviewer      = (*sendInvoicesTool)(nil)
-	_ serviceports.ToolValidator      = (*sendInvoicesTool)(nil)
-	_ serviceports.ToolResultReporter = (*sendInvoicesTool)(nil)
+	_ agentports.ToolPreviewer      = (*sendInvoicesTool)(nil)
+	_ agentports.ToolValidator      = (*sendInvoicesTool)(nil)
+	_ agentports.ToolResultReporter = (*sendInvoicesTool)(nil)
 )
 
 func newSendInvoicesTool(
 	invoices invoiceSender,
 	numbers invoiceNumberReader,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	single := &sendInvoiceTool{invoices: invoices}
 
 	return &sendInvoicesTool{
@@ -230,7 +231,7 @@ func (t *sendInvoicesTool) ParamSchema() map[string]any {
 	return bulkIDsSchema(t.batch, bulkInvoiceIDsDescription, nil)
 }
 
-func (t *sendInvoicesTool) Policy() serviceports.ToolPolicy {
+func (t *sendInvoicesTool) Policy() agentports.ToolPolicy {
 	policy := t.single.Policy()
 	policy.Name = t.Name()
 	policy.Artifact = invoiceRecordEntity
@@ -242,21 +243,21 @@ func (t *sendInvoicesTool) Policy() serviceports.ToolPolicy {
 
 func (t *sendInvoicesTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	return t.batch.Preview(ctx, t, &params)
 }
 
 func (t *sendInvoicesTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	return t.batch.Validate(ctx, t, &params)
 }
 
 func (t *sendInvoicesTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -265,7 +266,7 @@ func (t *sendInvoicesTool) Execute(
 
 func (t *sendInvoicesTool) ExecuteWithResult(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
 	return t.batch.Execute(ctx, t, &params, t.single.Execute)
 }
@@ -276,15 +277,15 @@ type approveBillingQueueItemsTool struct {
 }
 
 var (
-	_ serviceports.ToolPreviewer      = (*approveBillingQueueItemsTool)(nil)
-	_ serviceports.ToolValidator      = (*approveBillingQueueItemsTool)(nil)
-	_ serviceports.ToolResultReporter = (*approveBillingQueueItemsTool)(nil)
+	_ agentports.ToolPreviewer      = (*approveBillingQueueItemsTool)(nil)
+	_ agentports.ToolValidator      = (*approveBillingQueueItemsTool)(nil)
+	_ agentports.ToolResultReporter = (*approveBillingQueueItemsTool)(nil)
 )
 
 func newApproveBillingQueueItemsTool(
 	billing billingQueueDecider,
 	invoices approvalInvoicePlanner,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	single, _ := newApproveBillingQueueItemTool(billing, invoices).(*approveBillingQueueItemTool)
 
 	return &approveBillingQueueItemsTool{
@@ -334,7 +335,7 @@ func (t *approveBillingQueueItemsTool) ParamSchema() map[string]any {
 		})
 }
 
-func (t *approveBillingQueueItemsTool) Policy() serviceports.ToolPolicy {
+func (t *approveBillingQueueItemsTool) Policy() agentports.ToolPolicy {
 	policy := t.single.Policy()
 	policy.Name = t.Name()
 	policy.Rationale = "Approving creates the invoices customers are billed on, so only a " +
@@ -346,21 +347,21 @@ func (t *approveBillingQueueItemsTool) Policy() serviceports.ToolPolicy {
 
 func (t *approveBillingQueueItemsTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	return t.batch.Preview(ctx, t, &params)
 }
 
 func (t *approveBillingQueueItemsTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	return t.batch.Validate(ctx, t, &params)
 }
 
 func (t *approveBillingQueueItemsTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -369,7 +370,7 @@ func (t *approveBillingQueueItemsTool) Execute(
 
 func (t *approveBillingQueueItemsTool) ExecuteWithResult(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
 	return t.batch.Execute(ctx, t, &params, t.single.Execute)
 }

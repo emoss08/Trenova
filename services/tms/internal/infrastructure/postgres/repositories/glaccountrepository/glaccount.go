@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/glaccount"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -29,7 +29,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.GLAccountRepository {
+func New(p Params) glaccountports.GLAccountRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.glaccount-repository"),
@@ -38,7 +38,7 @@ func New(p Params) repositories.GLAccountRepository {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListGLAccountsRequest,
+	req *glaccountports.ListGLAccountsRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
@@ -52,7 +52,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListGLAccountsRequest,
+	req *glaccountports.ListGLAccountsRequest,
 ) (*pagination.ListResult[*glaccount.GLAccount], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*glaccount.GLAccount], error) {
 		log := r.l.With(
@@ -82,7 +82,7 @@ func (r *repository) List(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetGLAccountByIDRequest,
+	req glaccountports.GetGLAccountByIDRequest,
 ) (*glaccount.GLAccount, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*glaccount.GLAccount, error) {
 		log := r.l.With(
@@ -165,7 +165,7 @@ func (r *repository) Update(
 
 func (r *repository) BulkUpdateStatus(
 	ctx context.Context,
-	req *repositories.BulkUpdateGLAccountStatusRequest,
+	req *glaccountports.BulkUpdateGLAccountStatusRequest,
 ) ([]*glaccount.GLAccount, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*glaccount.GLAccount, error) {
 		log := r.l.With(
@@ -200,7 +200,7 @@ func (r *repository) BulkUpdateStatus(
 
 func (r *repository) GetByIDs(
 	ctx context.Context,
-	req repositories.GetGLAccountsByIDsRequest,
+	req glaccountports.GetGLAccountsByIDsRequest,
 ) ([]*glaccount.GLAccount, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*glaccount.GLAccount, error) {
 		log := r.l.With(
@@ -229,7 +229,7 @@ func (r *repository) GetByIDs(
 
 func (r *repository) Delete(
 	ctx context.Context,
-	req repositories.DeleteGLAccountRequest,
+	req glaccountports.DeleteGLAccountRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		log := r.l.With(
@@ -257,7 +257,7 @@ func (r *repository) Delete(
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
-	req *repositories.GLAccountSelectOptionsRequest,
+	req *glaccountports.GLAccountSelectOptionsRequest,
 ) (*pagination.ListResult[*glaccount.GLAccount], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*glaccount.GLAccount], error) {
 		return dbhelper.SelectOptions[*glaccount.GLAccount](

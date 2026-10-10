@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/driverpayservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -50,7 +50,7 @@ func (f *fakeAssigner) PlanAssignment(
 func (f *fakeAssigner) AssignProfileToWorker(
 	_ context.Context,
 	entity *driverpay.WorkerPayAssignment,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*driverpay.WorkerPayAssignment, error) {
 	f.assigned = entity
 
@@ -117,7 +117,7 @@ func (f *fakeAssignmentEnder) EndAssignment(
 	_ pagination.TenantInfo,
 	assignmentID pulid.ID,
 	endDate int64,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*driverpay.WorkerPayAssignment, error) {
 	f.ended, f.endDate = assignmentID, endDate
 
@@ -187,7 +187,7 @@ func (f *fakeRecurringBook) create(
 	_ context.Context,
 	entity *driverpay.RecurringDeduction,
 	_ bool,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*driverpay.RecurringDeduction, error) {
 	f.created = entity
 
@@ -197,7 +197,7 @@ func (f *fakeRecurringBook) create(
 func (f *fakeRecurringBook) update(
 	_ context.Context,
 	entity *driverpay.RecurringDeduction,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*driverpay.RecurringDeduction, error) {
 	f.updated = entity
 

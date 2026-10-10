@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,21 +24,21 @@ const (
 	queryCacheTTL  = 15 * time.Minute
 )
 
-var _ serviceports.QueryVectorizer = (*Service)(nil)
+var _ agentports.QueryVectorizer = (*Service)(nil)
 
 type Params struct {
 	fx.In
 
 	Logger     *zap.Logger
-	Repository repositories.AIRetrievalRepository
-	Embeddings serviceports.EmbeddingService `optional:"true"`
+	Repository agentports.AIRetrievalRepository
+	Embeddings aiusageports.EmbeddingService `optional:"true"`
 }
 
 type Service struct {
 	l          *zap.Logger
-	repo       repositories.AIRetrievalRepository
-	embeddings serviceports.EmbeddingService
-	vectors    *expirable.LRU[queryKey, serviceports.QueryVector]
+	repo       agentports.AIRetrievalRepository
+	embeddings aiusageports.EmbeddingService
+	vectors    *expirable.LRU[queryKey, agentports.QueryVector]
 }
 
 type queryKey struct {
@@ -53,7 +53,7 @@ func New(p Params) *Service {
 		l:          p.Logger.Named("service.retrievalquery"),
 		repo:       p.Repository,
 		embeddings: p.Embeddings,
-		vectors: expirable.NewLRU[queryKey, serviceports.QueryVector](
+		vectors: expirable.NewLRU[queryKey, agentports.QueryVector](
 			queryCacheSize,
 			nil,
 			queryCacheTTL,
@@ -63,26 +63,26 @@ func New(p Params) *Service {
 
 func (s *Service) Vectorize(
 	ctx context.Context,
-	req *serviceports.QueryVectorRequest,
-) (serviceports.QueryVector, error) {
+	req *agentports.QueryVectorRequest,
+) (agentports.QueryVector, error) {
 	if req == nil {
-		return serviceports.QueryVector{}, serviceports.ErrQueryTextRequired
+		return agentports.QueryVector{}, agentports.ErrQueryTextRequired
 	}
 
 	text := QueryText(req.Text)
 	if text == "" {
-		return serviceports.QueryVector{}, serviceports.ErrQueryTextRequired
+		return agentports.QueryVector{}, agentports.ErrQueryTextRequired
 	}
 	if err := validateTenant(req.TenantInfo); err != nil {
-		return serviceports.QueryVector{}, err
+		return agentports.QueryVector{}, err
 	}
 
 	settings, reason, err := s.searchable(ctx, req.TenantInfo)
 	if err != nil {
-		return serviceports.QueryVector{}, err
+		return agentports.QueryVector{}, err
 	}
 	if reason != "" {
-		return serviceports.UnavailableQueryVector(reason), nil
+		return agentports.UnavailableQueryVector(reason), nil
 	}
 
 	key := queryKey{
@@ -95,9 +95,9 @@ func (s *Service) Vectorize(
 		return cached, nil
 	}
 
-	result, err := s.embeddings.Embed(ctx, &serviceports.EmbedRequest{
+	result, err := s.embeddings.Embed(ctx, &aiusageports.EmbedRequest{
 		TenantInfo:  req.TenantInfo,
-		Purpose:     serviceports.EmbeddingPurposeQuery,
+		Purpose:     aiusageports.EmbeddingPurposeQuery,
 		Inputs:      []string{text},
 		ModelKey:    settings.ActiveModelKey,
 		Attribution: req.Attribution,
@@ -115,7 +115,7 @@ func (s *Service) Vectorize(
 			zap.Error(err),
 		)
 
-		return serviceports.UnavailableQueryVector(airetrieval.UnavailableReasonProviderFailed), nil
+		return agentports.UnavailableQueryVector(airetrieval.UnavailableReasonProviderFailed), nil
 	}
 
 	s.vectors.Add(key, vector)
@@ -215,7 +215,7 @@ func (s *Service) hasProvider(ctx context.Context, tenant pagination.TenantInfo)
 	switch {
 	case err == nil:
 		return true, nil
-	case errors.Is(err, serviceports.ErrNoProviderConfigured):
+	case errors.Is(err, agentports.ErrNoProviderConfigured):
 		return false, nil
 	default:
 		return false, fmt.Errorf("read the embedding provider: %w", err)
@@ -227,9 +227,9 @@ func (s *Service) embedFailed(
 	tenant pagination.TenantInfo,
 	modelKey string,
 	err error,
-) (serviceports.QueryVector, error) {
+) (agentports.QueryVector, error) {
 	if ctxErr := ctx.Err(); ctxErr != nil {
-		return serviceports.QueryVector{}, ctxErr
+		return agentports.QueryVector{}, ctxErr
 	}
 
 	reason := EmbedFailureReason(err)
@@ -255,12 +255,12 @@ func (s *Service) embedFailed(
 		s.l.Warn("embedding a search query failed; searching by keyword", fields...)
 	}
 
-	return serviceports.UnavailableQueryVector(reason), nil
+	return agentports.UnavailableQueryVector(reason), nil
 }
 
 func EmbedFailureReason(err error) airetrieval.UnavailableReason {
 	switch {
-	case errors.Is(err, serviceports.ErrNoProviderConfigured):
+	case errors.Is(err, agentports.ErrNoProviderConfigured):
 		return airetrieval.UnavailableReasonNoProvider
 	case errors.Is(err, context.DeadlineExceeded):
 		return airetrieval.UnavailableReasonQueryTimeout
@@ -270,16 +270,16 @@ func EmbedFailureReason(err error) airetrieval.UnavailableReason {
 }
 
 func queryVectorFrom(
-	result *serviceports.EmbedResult,
+	result *aiusageports.EmbedResult,
 	settings *airetrieval.Settings,
-) (serviceports.QueryVector, error) {
+) (agentports.QueryVector, error) {
 	if len(result.Vectors) != 1 {
-		return serviceports.QueryVector{}, fmt.Errorf(
+		return agentports.QueryVector{}, fmt.Errorf(
 			"expected one vector, got %d", len(result.Vectors),
 		)
 	}
 	if result.ModelKey != "" && result.ModelKey != settings.ActiveModelKey {
-		return serviceports.QueryVector{}, fmt.Errorf(
+		return agentports.QueryVector{}, fmt.Errorf(
 			"embedded with %q, the index is built with %q",
 			result.ModelKey, settings.ActiveModelKey,
 		)
@@ -287,12 +287,12 @@ func queryVectorFrom(
 
 	vector := result.Vectors[0]
 	if len(vector) != settings.Dimensions {
-		return serviceports.QueryVector{}, fmt.Errorf(
+		return agentports.QueryVector{}, fmt.Errorf(
 			"expected %d dimensions, got %d", settings.Dimensions, len(vector),
 		)
 	}
 
-	return serviceports.QueryVector{
+	return agentports.QueryVector{
 		Available:  true,
 		Vector:     vector,
 		ModelKey:   settings.ActiveModelKey,
@@ -313,13 +313,13 @@ func pausedReason(settings *airetrieval.Settings) airetrieval.UnavailableReason 
 
 func QueryText(text string) string {
 	return strings.TrimSpace(
-		stringutils.TruncateRunes(strings.TrimSpace(text), serviceports.MaxQueryTextRunes),
+		stringutils.TruncateRunes(strings.TrimSpace(text), agentports.MaxQueryTextRunes),
 	)
 }
 
 func validateTenant(tenant pagination.TenantInfo) error {
 	if tenant.OrgID.IsNil() || tenant.BuID.IsNil() {
-		return serviceports.ErrQueryTenantRequired
+		return agentports.ErrQueryTenantRequired
 	}
 
 	return nil

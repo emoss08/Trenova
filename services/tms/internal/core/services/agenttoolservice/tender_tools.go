@@ -9,9 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/tenderservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -49,7 +49,7 @@ type tenderToRoutingGuideTool struct {
 	tenders tenderStarter
 }
 
-func newTenderToRoutingGuideTool(tenders tenderStarter) serviceports.AgentTool {
+func newTenderToRoutingGuideTool(tenders tenderStarter) agentports.AgentTool {
 	return &tenderToRoutingGuideTool{tenders: tenders}
 }
 
@@ -80,8 +80,8 @@ func (t *tenderToRoutingGuideTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *tenderToRoutingGuideTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *tenderToRoutingGuideTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceTender,
@@ -100,7 +100,7 @@ func (t *tenderToRoutingGuideTool) Policy() serviceports.ToolPolicy {
 
 func (t *tenderToRoutingGuideTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	req, err := t.request(&params)
 	if err != nil {
@@ -113,7 +113,7 @@ func (t *tenderToRoutingGuideTool) Execute(
 }
 
 func (t *tenderToRoutingGuideTool) request(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*tenderservice.CreateWaterfallTenderRequest, error) {
 	if err := guardExecute(t, *params); err != nil {
 		return nil, err
@@ -137,7 +137,7 @@ func (t *tenderToRoutingGuideTool) request(
 	return req, nil
 }
 
-func (t *tenderToRoutingGuideTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *tenderToRoutingGuideTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, "shipmentMoveId", permission.ResourceShipmentMove)
 }
 
@@ -148,7 +148,7 @@ type tenderToCarriersTool struct {
 	tenders tenderStarter
 }
 
-func newTenderToCarriersTool(tenders tenderStarter) serviceports.AgentTool {
+func newTenderToCarriersTool(tenders tenderStarter) agentports.AgentTool {
 	return &tenderToCarriersTool{tenders: tenders}
 }
 
@@ -219,8 +219,8 @@ func (t *tenderToCarriersTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *tenderToCarriersTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *tenderToCarriersTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceTender,
@@ -248,7 +248,7 @@ type tenderLineParam struct {
 
 func (t *tenderToCarriersTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	req, err := t.request(&params)
 	if err != nil {
@@ -261,7 +261,7 @@ func (t *tenderToCarriersTool) Execute(
 }
 
 func (t *tenderToCarriersTool) request(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*tenderservice.CreateSpotTenderRequest, error) {
 	if err := guardExecute(t, *params); err != nil {
 		return nil, err
@@ -364,6 +364,6 @@ func lineEnum[T ~string](
 	return value, nil
 }
 
-func (t *tenderToCarriersTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *tenderToCarriersTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, "shipmentMoveId", permission.ResourceShipmentMove)
 }

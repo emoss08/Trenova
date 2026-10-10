@@ -5,7 +5,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
 
 /*
@@ -56,12 +57,12 @@ var rationaleSchema = map[string]any{
 
 // withRationale offers the rationale argument on every tool. The specs are
 // copied: the toolset's own stay as the tools declare them.
-func withRationale(specs []serviceports.ToolSpec) []serviceports.ToolSpec {
+func withRationale(specs []kernelports.ToolSpec) []kernelports.ToolSpec {
 	if len(specs) == 0 {
 		return specs
 	}
 
-	out := make([]serviceports.ToolSpec, len(specs))
+	out := make([]kernelports.ToolSpec, len(specs))
 	for idx, spec := range specs {
 		out[idx] = spec
 		properties, _ := spec.Parameters["properties"].(map[string]any)
@@ -86,7 +87,7 @@ func withRationale(specs []serviceports.ToolSpec) []serviceports.ToolSpec {
 
 // liftRationales takes each call's rationale out of its arguments and onto
 // the call. The arguments are copied, never edited in place.
-func liftRationales(calls []serviceports.ToolCall) {
+func liftRationales(calls []agentports.ToolCall) {
 	for idx := range calls {
 		raw, present := calls[idx].Arguments[StepRationaleParam]
 		if !present {

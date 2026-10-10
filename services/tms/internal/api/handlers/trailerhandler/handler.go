@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/trailerservice"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -112,10 +112,10 @@ func (h *Handler) list(c *gin.Context) {
 		func(cursor pagination.CursorInfo) (*pagination.CursorListResult[*trailer.Trailer], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListTrailersRequest{
+				&trailerports.ListTrailersRequest{
 					Filter: req,
 					Cursor: cursor,
-					TrailerRelationIncludes: repositories.TrailerRelationIncludes{
+					TrailerRelationIncludes: trailerports.TrailerRelationIncludes{
 						IncludeEquipmentDetails: helpers.QueryBool(
 							c,
 							"includeEquipmentDetails",
@@ -155,10 +155,10 @@ func (h *Handler) getOption(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	entity, err := h.service.Get(c.Request.Context(), repositories.GetTrailerByIDRequest{
+	entity, err := h.service.Get(c.Request.Context(), trailerports.GetTrailerByIDRequest{
 		ID:         trailerID,
 		TenantInfo: pagination.FromAuth(authCtx),
-		TrailerRelationIncludes: repositories.TrailerRelationIncludes{
+		TrailerRelationIncludes: trailerports.TrailerRelationIncludes{
 			IncludeLastKnownLocation: true,
 			IncludeCustomFields:      true,
 		},
@@ -218,10 +218,10 @@ func (h *Handler) get(c *gin.Context) {
 
 	entity, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetTrailerByIDRequest{
+		trailerports.GetTrailerByIDRequest{
 			ID:         id,
 			TenantInfo: pagination.FromAuth(authCtx),
-			TrailerRelationIncludes: repositories.TrailerRelationIncludes{
+			TrailerRelationIncludes: trailerports.TrailerRelationIncludes{
 				IncludeLastKnownLocation: true,
 				IncludeCustomFields:      true,
 			},
@@ -329,10 +329,10 @@ func (h *Handler) patch(c *gin.Context) {
 		return
 	}
 
-	existing, err := h.service.Get(c.Request.Context(), repositories.GetTrailerByIDRequest{
+	existing, err := h.service.Get(c.Request.Context(), trailerports.GetTrailerByIDRequest{
 		ID:         trailerID,
 		TenantInfo: pagination.FromAuthAsUser(authCtx),
-		TrailerRelationIncludes: repositories.TrailerRelationIncludes{
+		TrailerRelationIncludes: trailerports.TrailerRelationIncludes{
 			IncludeLastKnownLocation: true,
 			IncludeCustomFields:      true,
 		},
@@ -380,7 +380,7 @@ func (h *Handler) bulkUpdateStatus(c *gin.Context) {
 		return
 	}
 
-	req := new(repositories.BulkUpdateTrailerStatusRequest)
+	req := new(trailerports.BulkUpdateTrailerStatusRequest)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -409,7 +409,7 @@ func (h *Handler) locate(c *gin.Context) {
 		return
 	}
 
-	req := new(repositories.LocateTrailerRequest)
+	req := new(trailerports.LocateTrailerRequest)
 	if err = c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return

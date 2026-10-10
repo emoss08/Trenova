@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -23,7 +23,7 @@ func policyWithRules(sq *bun.SelectQuery) *bun.SelectQuery {
 
 func (r *repository) ListAssignments(
 	ctx context.Context,
-	req *repositories.ListPTOAssignmentsRequest,
+	req *workerports.ListPTOAssignmentsRequest,
 ) ([]*worker.WorkerPTOPolicyAssignment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerPTOPolicyAssignment, error) {
 		cols := buncolgen.WorkerPTOPolicyAssignmentColumns
@@ -51,7 +51,7 @@ func (r *repository) ListAssignments(
 
 func (r *repository) GetAssignmentByID(
 	ctx context.Context,
-	req *repositories.GetPTOAssignmentByIDRequest,
+	req *workerports.GetPTOAssignmentByIDRequest,
 ) (*worker.WorkerPTOPolicyAssignment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerPTOPolicyAssignment, error) {
 		entity := new(worker.WorkerPTOPolicyAssignment)
@@ -74,7 +74,7 @@ func (r *repository) GetAssignmentByID(
 
 func (r *repository) GetActiveAssignment(
 	ctx context.Context,
-	req *repositories.GetPTOAssignmentRequest,
+	req *workerports.GetPTOAssignmentRequest,
 ) (*worker.WorkerPTOPolicyAssignment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerPTOPolicyAssignment, error) {
 		cols := buncolgen.WorkerPTOPolicyAssignmentColumns
@@ -157,7 +157,7 @@ func (r *repository) UpdateAssignment(
 
 func (r *repository) ListOpenAssignments(
 	ctx context.Context,
-	req *repositories.ListOpenPTOAssignmentsRequest,
+	req *workerports.ListOpenPTOAssignmentsRequest,
 ) ([]*worker.WorkerPTOPolicyAssignment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerPTOPolicyAssignment, error) {
 		limit := req.Limit

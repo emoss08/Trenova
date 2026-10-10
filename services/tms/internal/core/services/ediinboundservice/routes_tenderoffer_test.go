@@ -1,15 +1,16 @@
 package ediinboundservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
 	"context"
 	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,22 +20,22 @@ import (
 )
 
 type fakeTenderRepository struct {
-	repositories.TenderRepository
+	tenderports.TenderRepository
 
 	offer   *tender.TenderOffer
 	err     error
-	lastReq repositories.GetTenderOfferByIDRequest
+	lastReq tenderports.GetTenderOfferByIDRequest
 	calls   int
 
 	acceptedOffer   *tender.TenderOffer
 	acceptedErr     error
-	lastAcceptedReq repositories.GetAcceptedOfferForPartnerReferenceRequest
+	lastAcceptedReq tenderports.GetAcceptedOfferForPartnerReferenceRequest
 	acceptedCalls   int
 }
 
 func (f *fakeTenderRepository) GetOfferByID(
 	_ context.Context,
-	req repositories.GetTenderOfferByIDRequest,
+	req tenderports.GetTenderOfferByIDRequest,
 ) (*tender.TenderOffer, error) {
 	f.calls++
 	f.lastReq = req
@@ -46,7 +47,7 @@ func (f *fakeTenderRepository) GetOfferByID(
 
 func (f *fakeTenderRepository) GetAcceptedOfferForPartnerReference(
 	_ context.Context,
-	req repositories.GetAcceptedOfferForPartnerReferenceRequest,
+	req tenderports.GetAcceptedOfferForPartnerReferenceRequest,
 ) (*tender.TenderOffer, error) {
 	f.acceptedCalls++
 	f.lastAcceptedReq = req
@@ -61,12 +62,12 @@ func (f *fakeTenderRepository) GetAcceptedOfferForPartnerReference(
 
 type fakeTenderResponseRecorder struct {
 	err      error
-	requests []*services.TenderResponseRequest
+	requests []*tenderports.TenderResponseRequest
 }
 
 func (f *fakeTenderResponseRecorder) RecordResponse(
 	_ context.Context,
-	req *services.TenderResponseRequest,
+	req *tenderports.TenderResponseRequest,
 ) error {
 	f.requests = append(f.requests, req)
 	return f.err
@@ -78,7 +79,7 @@ type tenderOfferRouteFixture struct {
 	partner       *edi.EDIPartner
 	tenderRepo    *fakeTenderRepository
 	recorder      *fakeTenderResponseRecorder
-	recipientRepo *mocks.MockEDITenderRecipientRepository
+	recipientRepo *ediportsmock.MockEDITenderRecipientRepository
 }
 
 func newTenderOfferRouteFixture(t *testing.T) *tenderOfferRouteFixture {
@@ -103,7 +104,7 @@ func newTenderOfferRouteFixture(t *testing.T) *tenderOfferRouteFixture {
 		},
 		tenderRepo:    &fakeTenderRepository{},
 		recorder:      &fakeTenderResponseRecorder{},
-		recipientRepo: mocks.NewMockEDITenderRecipientRepository(t),
+		recipientRepo: ediportsmock.NewMockEDITenderRecipientRepository(t),
 	}
 	fixture.service = &Service{
 		l:                   zap.NewNop(),
@@ -359,7 +360,7 @@ func TestRouteTenderResponse_NoOfferReferenceFallsThroughToLegacy(t *testing.T) 
 		GetActiveExternalRecipientByShipmentReference(
 			mock.Anything,
 			mock.MatchedBy(
-				func(req repositories.GetActiveExternalEDITenderRecipientByReferenceRequest) bool {
+				func(req ediports.GetActiveExternalEDITenderRecipientByReferenceRequest) bool {
 					return req.Reference == "SHIP-1001" && req.PartnerID == fixture.partner.ID
 				},
 			),

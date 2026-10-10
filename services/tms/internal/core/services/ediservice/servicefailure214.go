@@ -9,9 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/edix12"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -49,30 +50,30 @@ type serviceFailure214Candidate struct {
 
 func (s *Service) PreviewServiceFailure214ForLifecycle(
 	ctx context.Context,
-	req *services.ServiceFailure214LifecycleRequest,
-) (*services.ServiceFailure214LifecycleResult, error) {
+	req *ediports.ServiceFailure214LifecycleRequest,
+) (*servicefailureports.ServiceFailure214LifecycleResult, error) {
 	return s.serviceFailure214Lifecycle(ctx, req, false)
 }
 
 func (s *Service) GenerateServiceFailure214ForLifecycle(
 	ctx context.Context,
-	req *services.ServiceFailure214LifecycleRequest,
-) (*services.ServiceFailure214LifecycleResult, error) {
+	req *ediports.ServiceFailure214LifecycleRequest,
+) (*servicefailureports.ServiceFailure214LifecycleResult, error) {
 	return s.serviceFailure214Lifecycle(ctx, req, true)
 }
 
 func (s *Service) serviceFailure214Lifecycle(
 	ctx context.Context,
-	req *services.ServiceFailure214LifecycleRequest,
+	req *ediports.ServiceFailure214LifecycleRequest,
 	generate bool,
-) (*services.ServiceFailure214LifecycleResult, error) {
+) (*servicefailureports.ServiceFailure214LifecycleResult, error) {
 	if err := validateServiceFailure214LifecycleRequest(req); err != nil {
 		return nil, err
 	}
 
 	existing, err := s.messageRepo.GetServiceFailure214LifecycleMessage(
 		ctx,
-		repositories.GetServiceFailure214LifecycleMessageRequest{
+		ediports.GetServiceFailure214LifecycleMessageRequest{
 			TenantInfo:       req.TenantInfo,
 			ServiceFailureID: req.ServiceFailureID,
 			Trigger:          string(req.Trigger),
@@ -110,26 +111,26 @@ func (s *Service) serviceFailure214Lifecycle(
 		return nil, err
 	}
 	diagnostics := serviceFailurePayloadDiagnostics(payload.ShipmentStatus, candidate.settings)
-	result = &services.ServiceFailure214LifecycleResult{
+	result = &servicefailureports.ServiceFailure214LifecycleResult{
 		Trigger:                  req.Trigger,
-		Action:                   services.ServiceFailureEDIActionSkipped,
+		Action:                   ediports.ServiceFailureEDIActionSkipped,
 		EDIPartnerID:             candidate.partner.ID,
 		PartnerDocumentProfileID: candidate.profile.ID,
 		Mandatory:                candidate.settings.mandatory(req.Trigger),
 		Diagnostics:              diagnostics,
 	}
 	if hasErrorDiagnostics(diagnostics) {
-		result.Action = services.ServiceFailureEDIActionBlocked
+		result.Action = ediports.ServiceFailureEDIActionBlocked
 		result.SkippedReason = "service failure 214 payload has blocking diagnostics"
 		return result, nil
 	}
 	if !generate {
-		result.Action = services.ServiceFailureEDIActionSkipped
+		result.Action = ediports.ServiceFailureEDIActionSkipped
 		result.SkippedReason = "ready_for_generation"
 		return result, nil
 	}
 
-	message, err := s.GenerateDocument(ctx, &services.GenerateEDIDocumentRequest{
+	message, err := s.GenerateDocument(ctx, &ediports.GenerateEDIDocumentRequest{
 		TenantInfo:               req.TenantInfo,
 		PartnerDocumentProfileID: candidate.profile.ID,
 		EDIPartnerID:             candidate.partner.ID,
@@ -143,7 +144,7 @@ func (s *Service) serviceFailure214Lifecycle(
 	if err != nil {
 		return nil, err
 	}
-	result.Action = services.ServiceFailureEDIActionGenerated
+	result.Action = ediports.ServiceFailureEDIActionGenerated
 	result.SkippedReason = ""
 	result.MessageID = message.ID
 	return result, nil
@@ -151,8 +152,8 @@ func (s *Service) serviceFailure214Lifecycle(
 
 func (s *Service) GetServiceFailure214Status(
 	ctx context.Context,
-	req repositories.GetServiceFailure214StatusRequest,
-) (*services.ServiceFailure214Status, error) {
+	req ediports.GetServiceFailure214StatusRequest,
+) (*ediports.ServiceFailure214Status, error) {
 	return s.messageRepo.GetServiceFailure214Status(ctx, req)
 }
 
@@ -170,7 +171,7 @@ func (s *Service) applyServiceFailure214ReasonMapping(
 		failure.ReasonCodeID.IsNil() {
 		return nil
 	}
-	items, err := s.mappingProfileRepo.GetMappingItems(ctx, repositories.GetMappingItemsRequest{
+	items, err := s.mappingProfileRepo.GetMappingItems(ctx, ediports.GetMappingItemsRequest{
 		PartnerID:   partnerID,
 		TenantInfo:  tenantInfo,
 		EntityTypes: []edi.MappingEntityType{edi.MappingEntityTypeServiceFailureReasonCode},
@@ -198,7 +199,7 @@ func (s *Service) applyServiceFailure214ReasonMapping(
 }
 
 func validateServiceFailure214LifecycleRequest(
-	req *services.ServiceFailure214LifecycleRequest,
+	req *ediports.ServiceFailure214LifecycleRequest,
 ) error {
 	multiErr := errortypes.NewMultiError()
 	if req == nil {
@@ -232,12 +233,12 @@ func validateServiceFailure214LifecycleRequest(
 
 func (s *Service) serviceFailure214Source(
 	ctx context.Context,
-	req *services.ServiceFailure214LifecycleRequest,
+	req *ediports.ServiceFailure214LifecycleRequest,
 ) (*servicefailure.ServiceFailure, *shipment.Shipment, error) {
 	failure := req.ServiceFailure
 	if failure == nil {
 		var err error
-		failure, err = s.serviceFailureRepo.GetByID(ctx, &repositories.GetServiceFailureByIDRequest{
+		failure, err = s.serviceFailureRepo.GetByID(ctx, &servicefailureports.GetServiceFailureByIDRequest{
 			ID:         req.ServiceFailureID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -252,10 +253,10 @@ func (s *Service) serviceFailure214Source(
 			"Shipment ID must match the service failure",
 		)
 	}
-	source, err := s.shipmentSvc.Get(ctx, &repositories.GetShipmentByIDRequest{
+	source, err := s.shipmentSvc.Get(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         failure.ShipmentID,
 		TenantInfo: req.TenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -267,16 +268,16 @@ func (s *Service) serviceFailure214Source(
 
 func (s *Service) resolveServiceFailure214Candidate(
 	ctx context.Context,
-	req *services.ServiceFailure214LifecycleRequest,
+	req *ediports.ServiceFailure214LifecycleRequest,
 	source *shipment.Shipment,
-) (*serviceFailure214Candidate, *services.ServiceFailure214LifecycleResult, error) {
+) (*serviceFailure214Candidate, *servicefailureports.ServiceFailure214LifecycleResult, error) {
 	if source == nil || source.CustomerID.IsNil() {
 		return nil, skippedServiceFailure214Result(
 			req.Trigger,
 			"shipment customer is not linked to an EDI partner",
 		), nil
 	}
-	partners, err := s.partnerRepo.List(ctx, &repositories.ListEDIPartnersRequest{
+	partners, err := s.partnerRepo.List(ctx, &ediports.ListEDIPartnersRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: req.TenantInfo,
 			Pagination: pagination.Info{Limit: pagination.MaxLimit},
@@ -316,7 +317,7 @@ func (s *Service) resolveServiceFailure214Candidate(
 		}
 		profiles, profileErr := s.documentProfileRepo.ListPartnerDocumentProfiles(
 			ctx,
-			&repositories.ListEDIPartnerDocumentProfilesRequest{
+			&ediports.ListEDIPartnerDocumentProfilesRequest{
 				Filter: &pagination.QueryOptions{
 					TenantInfo: req.TenantInfo,
 					Pagination: pagination.Info{Limit: pagination.MaxLimit},
@@ -340,9 +341,9 @@ func (s *Service) resolveServiceFailure214Candidate(
 			}
 			settings, settingDiagnostics := parseServiceFailure214Settings(profile.PartnerSettings)
 			if hasErrorDiagnostics(settingDiagnostics) {
-				result := &services.ServiceFailure214LifecycleResult{
+				result := &servicefailureports.ServiceFailure214LifecycleResult{
 					Trigger:                  req.Trigger,
-					Action:                   services.ServiceFailureEDIActionBlocked,
+					Action:                   ediports.ServiceFailureEDIActionBlocked,
 					EDIPartnerID:             partner.ID,
 					PartnerDocumentProfileID: profile.ID,
 					Mandatory:                true,
@@ -383,7 +384,7 @@ func (s *Service) resolveServiceFailure214Candidate(
 			"ambiguous service failure 214 partner document profile",
 		)
 		if hasMandatoryServiceFailure214Candidate(candidates, req.Trigger) {
-			result.Action = services.ServiceFailureEDIActionBlocked
+			result.Action = ediports.ServiceFailureEDIActionBlocked
 			result.Mandatory = true
 		}
 		return nil, result, nil
@@ -400,7 +401,7 @@ func (s *Service) shipmentStatusCapabilityEnabled(
 		var err error
 		connection, err = s.connectionRepo.GetConnectionByID(
 			ctx,
-			repositories.GetEDIConnectionByIDRequest{
+			ediports.GetEDIConnectionByIDRequest{
 				ID:         partner.EDIConnectionID,
 				TenantInfo: tenantInfo,
 			},
@@ -422,7 +423,7 @@ func buildServiceFailure214LifecyclePayload(
 	failure *servicefailure.ServiceFailure,
 	source *shipment.Shipment,
 	settings serviceFailure214Settings,
-	trigger services.ServiceFailureEDITrigger,
+	trigger servicefailureports.ServiceFailureEDITrigger,
 ) edi.DocumentPayload {
 	payload := buildServiceFailureShipmentStatusPayload(failure, source)
 	if payload.ShipmentStatus == nil {
@@ -541,26 +542,26 @@ func normalizedX12Code(value string) string {
 }
 
 func (s serviceFailure214Settings) enabledForTrigger(
-	trigger services.ServiceFailureEDITrigger,
+	trigger servicefailureports.ServiceFailureEDITrigger,
 ) bool {
 	if !s.Enabled {
 		return false
 	}
 	switch trigger {
-	case services.ServiceFailureEDITriggerReviewed:
+	case servicefailureports.ServiceFailureEDITriggerReviewed:
 		return s.SendOnReviewed || s.MandatoryOnReviewed
-	case services.ServiceFailureEDITriggerResolved:
+	case servicefailureports.ServiceFailureEDITriggerResolved:
 		return s.SendOnResolved || s.MandatoryOnResolved
 	default:
 		return false
 	}
 }
 
-func (s serviceFailure214Settings) mandatory(trigger services.ServiceFailureEDITrigger) bool {
+func (s serviceFailure214Settings) mandatory(trigger servicefailureports.ServiceFailureEDITrigger) bool {
 	switch trigger {
-	case services.ServiceFailureEDITriggerReviewed:
+	case servicefailureports.ServiceFailureEDITriggerReviewed:
 		return s.MandatoryOnReviewed
-	case services.ServiceFailureEDITriggerResolved:
+	case servicefailureports.ServiceFailureEDITriggerResolved:
 		return s.MandatoryOnResolved
 	default:
 		return false
@@ -735,7 +736,7 @@ func hasErrorDiagnostics(diagnostics []edix12.Diagnostic) bool {
 
 func hasMandatoryServiceFailure214Candidate(
 	candidates []serviceFailure214Candidate,
-	trigger services.ServiceFailureEDITrigger,
+	trigger servicefailureports.ServiceFailureEDITrigger,
 ) bool {
 	for _, candidate := range candidates {
 		if candidate.settings.mandatory(trigger) {
@@ -746,24 +747,24 @@ func hasMandatoryServiceFailure214Candidate(
 }
 
 func skippedServiceFailure214Result(
-	trigger services.ServiceFailureEDITrigger,
+	trigger servicefailureports.ServiceFailureEDITrigger,
 	reason string,
-) *services.ServiceFailure214LifecycleResult {
-	return &services.ServiceFailure214LifecycleResult{
+) *servicefailureports.ServiceFailure214LifecycleResult {
+	return &servicefailureports.ServiceFailure214LifecycleResult{
 		Trigger:       trigger,
-		Action:        services.ServiceFailureEDIActionSkipped,
+		Action:        ediports.ServiceFailureEDIActionSkipped,
 		SkippedReason: reason,
 		Diagnostics:   []edix12.Diagnostic{},
 	}
 }
 
 func duplicateServiceFailure214Result(
-	trigger services.ServiceFailureEDITrigger,
+	trigger servicefailureports.ServiceFailureEDITrigger,
 	message *edi.EDIMessage,
-) *services.ServiceFailure214LifecycleResult {
-	return &services.ServiceFailure214LifecycleResult{
+) *servicefailureports.ServiceFailure214LifecycleResult {
+	return &servicefailureports.ServiceFailure214LifecycleResult{
 		Trigger:                  trigger,
-		Action:                   services.ServiceFailureEDIActionDuplicate,
+		Action:                   ediports.ServiceFailureEDIActionDuplicate,
 		MessageID:                message.ID,
 		EDIPartnerID:             message.EDIPartnerID,
 		PartnerDocumentProfileID: message.PartnerDocumentProfileID,

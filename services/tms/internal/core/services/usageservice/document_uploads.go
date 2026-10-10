@@ -6,7 +6,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -14,7 +15,7 @@ import (
 
 type DocumentUploadUsageParams struct {
 	TenantInfo     pagination.TenantInfo
-	Actor          services.RequestActor
+	Actor          permissionports.RequestActor
 	DocumentID     pulid.ID
 	IdempotencyKey string
 	Quantity       int64
@@ -24,7 +25,7 @@ type DocumentUploadUsageParams struct {
 
 func CheckDocumentUploadLimit(
 	ctx context.Context,
-	provider services.UsageProvider,
+	provider platformcatalogports.UsageProvider,
 	params DocumentUploadUsageParams,
 ) error {
 	if provider == nil {
@@ -38,7 +39,7 @@ func CheckDocumentUploadLimit(
 	}
 
 	actor := normalizeActor(params.TenantInfo, params.Actor)
-	result, err := provider.CheckLimit(ctx, &services.UsageLimitCheckRequest{
+	result, err := provider.CheckLimit(ctx, &platformcatalogports.UsageLimitCheckRequest{
 		OrganizationID: actor.OrganizationID,
 		BusinessUnitID: actor.BusinessUnitID,
 		PrincipalType:  actor.PrincipalType,
@@ -62,14 +63,14 @@ func CheckDocumentUploadLimit(
 
 type DocumentBytesUsageParams struct {
 	TenantInfo pagination.TenantInfo
-	Actor      services.RequestActor
+	Actor      permissionports.RequestActor
 	Bytes      int64
 	CheckedAt  int64
 }
 
 func CheckDocumentBytesLimit(
 	ctx context.Context,
-	provider services.UsageProvider,
+	provider platformcatalogports.UsageProvider,
 	params DocumentBytesUsageParams,
 ) error {
 	if provider == nil || params.Bytes <= 0 {
@@ -86,7 +87,7 @@ func CheckDocumentBytesLimit(
 		platformcatalog.MeterDocumentFileBytes,
 		platformcatalog.MeterDocumentStorageBytes,
 	} {
-		result, err := provider.CheckLimit(ctx, &services.UsageLimitCheckRequest{
+		result, err := provider.CheckLimit(ctx, &platformcatalogports.UsageLimitCheckRequest{
 			OrganizationID: actor.OrganizationID,
 			BusinessUnitID: actor.BusinessUnitID,
 			PrincipalType:  actor.PrincipalType,
@@ -108,7 +109,7 @@ func CheckDocumentBytesLimit(
 	return nil
 }
 
-func LimitError(result *services.UsageLimitCheckResult) error {
+func LimitError(result *platformcatalogports.UsageLimitCheckResult) error {
 	if result.Reason == ReasonQuotaExceeded {
 		return errortypes.NewQuotaExceededError(
 			string(result.MeterKey),
@@ -123,9 +124,9 @@ func LimitError(result *services.UsageLimitCheckResult) error {
 
 func RecordDocumentUpload(
 	ctx context.Context,
-	provider services.UsageProvider,
+	provider platformcatalogports.UsageProvider,
 	params DocumentUploadUsageParams,
-) (*services.UsageRecordResult, error) {
+) (*platformcatalogports.UsageRecordResult, error) {
 	if provider == nil {
 		return nil, nil
 	}
@@ -136,7 +137,7 @@ func RecordDocumentUpload(
 	}
 
 	actor := normalizeActor(params.TenantInfo, params.Actor)
-	return provider.RecordUsage(ctx, &services.UsageRecordRequest{
+	return provider.RecordUsage(ctx, &platformcatalogports.UsageRecordRequest{
 		OrganizationID: actor.OrganizationID,
 		BusinessUnitID: actor.BusinessUnitID,
 		PrincipalType:  actor.PrincipalType,
@@ -171,8 +172,8 @@ func documentUploadIdempotencyKey(params DocumentUploadUsageParams) string {
 
 func normalizeActor(
 	tenantInfo pagination.TenantInfo,
-	actor services.RequestActor,
-) services.RequestActor {
+	actor permissionports.RequestActor,
+) permissionports.RequestActor {
 	if actor.OrganizationID.IsNil() {
 		actor.OrganizationID = tenantInfo.OrgID
 	}
@@ -183,17 +184,17 @@ func normalizeActor(
 		actor.UserID = tenantInfo.UserID
 	}
 	if actor.PrincipalType == "" {
-		actor.PrincipalType = services.PrincipalTypeUser
+		actor.PrincipalType = permissionports.PrincipalTypeUser
 	}
 	if actor.PrincipalID.IsNil() {
 		switch actor.PrincipalType {
-		case services.PrincipalTypeAPIKey:
+		case permissionports.PrincipalTypeAPIKey:
 			actor.PrincipalID = actor.APIKeyID
 		default:
 			actor.PrincipalID = actor.UserID
 		}
 	}
-	if actor.PrincipalType == services.PrincipalTypeAPIKey && actor.APIKeyID.IsNil() {
+	if actor.PrincipalType == permissionports.PrincipalTypeAPIKey && actor.APIKeyID.IsNil() {
 		actor.APIKeyID = actor.PrincipalID
 	}
 

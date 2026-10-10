@@ -8,8 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
@@ -27,21 +29,21 @@ type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Completion    serviceports.StructuredCompleter
-	Definitions   serviceports.AgentDefinitionService
-	Providers     repositories.AIProviderRepository
-	Organizations repositories.OrganizationRepository
+	Completion    agentports.StructuredCompleter
+	Definitions   agentdefinitionports.AgentDefinitionService
+	Providers     agentports.AIProviderRepository
+	Organizations tenantports.OrganizationRepository
 }
 
 type Service struct {
 	l             *zap.Logger
-	completion    serviceports.StructuredCompleter
-	definitions   serviceports.AgentDefinitionService
-	providers     repositories.AIProviderRepository
-	organizations repositories.OrganizationRepository
+	completion    agentports.StructuredCompleter
+	definitions   agentdefinitionports.AgentDefinitionService
+	providers     agentports.AIProviderRepository
+	organizations tenantports.OrganizationRepository
 }
 
-var _ serviceports.AgentDraftingService = (*Service)(nil)
+var _ agentports.AgentDraftingService = (*Service)(nil)
 
 func New(p Params) *Service {
 	return &Service{
@@ -54,7 +56,7 @@ func New(p Params) *Service {
 }
 
 func (s *Service) Available(ctx context.Context, tenantInfo pagination.TenantInfo) (bool, error) {
-	providers, err := s.providers.ListForTask(ctx, repositories.ListAIProvidersForTaskRequest{
+	providers, err := s.providers.ListForTask(ctx, agentports.ListAIProvidersForTaskRequest{
 		Task:       draftingTask,
 		TenantInfo: tenantInfo,
 	})
@@ -67,8 +69,8 @@ func (s *Service) Available(ctx context.Context, tenantInfo pagination.TenantInf
 
 func (s *Service) DraftFromDescription(
 	ctx context.Context,
-	req *serviceports.DraftAgentRequest,
-) (*serviceports.AgentDraft, error) {
+	req *agentports.DraftAgentRequest,
+) (*agentports.AgentDraft, error) {
 	description, err := checkDescription(req.Description)
 	if err != nil {
 		return nil, err
@@ -82,7 +84,7 @@ func (s *Service) DraftFromDescription(
 
 	completion, err := s.completion.CompleteStructured(
 		ctx,
-		&serviceports.StructuredCompletionRequest{
+		&agentports.StructuredCompletionRequest{
 			TenantInfo: req.TenantInfo,
 			Task:       draftingTask,
 			System:     draftSystemPrompt,
@@ -141,8 +143,8 @@ func (s *Service) DraftFromDescription(
 
 func (s *Service) TightenInstructions(
 	ctx context.Context,
-	req *serviceports.TightenAgentInstructionsRequest,
-) (*serviceports.TightenedAgentInstructions, error) {
+	req *agentports.TightenAgentInstructionsRequest,
+) (*agentports.TightenedAgentInstructions, error) {
 	instructions, err := checkInstructions(req.Instructions)
 	if err != nil {
 		return nil, err
@@ -150,7 +152,7 @@ func (s *Service) TightenInstructions(
 
 	completion, err := s.completion.CompleteStructured(
 		ctx,
-		&serviceports.StructuredCompletionRequest{
+		&agentports.StructuredCompletionRequest{
 			TenantInfo:   req.TenantInfo,
 			Task:         draftingTask,
 			System:       tightenSystemPrompt,
@@ -185,7 +187,7 @@ func (s *Service) timezone(ctx context.Context, tenantInfo pagination.TenantInfo
 		return agentdefinition.DefaultCronTimezone
 	}
 
-	org, err := s.organizations.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+	org, err := s.organizations.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {
@@ -203,8 +205,8 @@ func (s *Service) timezone(ctx context.Context, tenantInfo pagination.TenantInfo
 	return strings.TrimSpace(org.Timezone)
 }
 
-func attribution(tenantInfo pagination.TenantInfo) serviceports.AIUsageAttribution {
-	return serviceports.AIUsageAttribution{
+func attribution(tenantInfo pagination.TenantInfo) aiusageports.AIUsageAttribution {
+	return aiusageports.AIUsageAttribution{
 		UserID:  tenantInfo.UserID,
 		Feature: aiusage.FeatureAgentDrafting,
 	}
@@ -247,9 +249,9 @@ func checkInstructions(text string) (string, error) {
 
 func draftOf(
 	definition *agentdefinition.Definition,
-	notes []serviceports.AgentDraftNote,
-) *serviceports.AgentDraft {
-	return &serviceports.AgentDraft{
+	notes []agentports.AgentDraftNote,
+) *agentports.AgentDraft {
+	return &agentports.AgentDraft{
 		Name:                   definition.Name,
 		Description:            definition.Description,
 		Icon:                   definition.Icon,

@@ -4,10 +4,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/shared/jsonschemautils"
-
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
+	"github.com/emoss08/trenova/shared/jsonschemautils"
 )
 
 const systemPrompt = `You write the brief at the top of a dispatcher's shipment board: the first thing they read when they sit down.
@@ -23,8 +23,8 @@ Rules:
 
 func buildContext(
 	facts *Facts,
-	plain []services.ShipmentBriefingSegment,
-) services.DelimitedContext {
+	plain []shipmentbriefports.ShipmentBriefingSegment,
+) agentports.DelimitedContext {
 	var builder strings.Builder
 
 	writeFact(&builder, "Loads delivering today", facts.DeliveringToday,
@@ -52,8 +52,8 @@ func buildContext(
 	}
 	builder.WriteString("\n")
 
-	return services.DelimitedContext{
-		Sections: []services.ContextSection{{
+	return agentports.DelimitedContext{
+		Sections: []agentports.ContextSection{{
 			Title:   "Shipment board",
 			Trusted: false,
 			Content: builder.String(),

@@ -12,12 +12,19 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/customerupdateservice"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -54,32 +61,32 @@ var (
 type serviceFailureDecider interface {
 	EvaluateShipment(
 		ctx context.Context,
-		req *serviceports.EvaluateShipmentServiceFailuresRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.ServiceFailureEvaluationResult, error)
+		req *servicefailureports.EvaluateShipmentServiceFailuresRequest,
+		actor *permissionports.RequestActor,
+	) (*servicefailureports.ServiceFailureEvaluationResult, error)
 	EvaluateStop(
 		ctx context.Context,
-		req *serviceports.EvaluateStopServiceFailuresRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.ServiceFailureEvaluationResult, error)
+		req *servicefailureports.EvaluateStopServiceFailuresRequest,
+		actor *permissionports.RequestActor,
+	) (*servicefailureports.ServiceFailureEvaluationResult, error)
 	BulkEvaluate(
 		ctx context.Context,
-		req *serviceports.BulkEvaluateServiceFailuresRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.ServiceFailureEvaluationResult, error)
+		req *servicefailureports.BulkEvaluateServiceFailuresRequest,
+		actor *permissionports.RequestActor,
+	) (*servicefailureports.ServiceFailureEvaluationResult, error)
 	GetByID(
 		ctx context.Context,
-		req *repositories.GetServiceFailureByIDRequest,
+		req *servicefailureports.GetServiceFailureByIDRequest,
 	) (*servicefailure.ServiceFailure, error)
 	Resolve(
 		ctx context.Context,
-		req *serviceports.ServiceFailureLifecycleRequest,
-		actor *serviceports.RequestActor,
+		req *servicefailureports.ServiceFailureLifecycleRequest,
+		actor *permissionports.RequestActor,
 	) (*servicefailure.ServiceFailure, error)
 	PreviewEvaluateShipment(
 		ctx context.Context,
-		req *serviceports.EvaluateShipmentServiceFailuresRequest,
-	) (*serviceports.ServiceFailureDetectionPlan, error)
+		req *servicefailureports.EvaluateShipmentServiceFailuresRequest,
+	) (*servicefailureports.ServiceFailureDetectionPlan, error)
 }
 
 // errBothEvaluationScopes answers a call whose shipmentId and shipmentIds name
@@ -94,13 +101,13 @@ var errBothEvaluationScopes = errors.New(
 		`{"shipmentIds": ["shp_…", "shp_…"]}`,
 )
 
-var _ serviceports.ToolSelectionResolver = (*evaluateServiceFailuresTool)(nil)
+var _ agentports.ToolSelectionResolver = (*evaluateServiceFailuresTool)(nil)
 
 type evaluateServiceFailuresTool struct {
 	failures serviceFailureDecider
 }
 
-func newEvaluateServiceFailuresTool(failures serviceFailureDecider) serviceports.AgentTool {
+func newEvaluateServiceFailuresTool(failures serviceFailureDecider) agentports.AgentTool {
 	return &evaluateServiceFailuresTool{failures: failures}
 }
 
@@ -152,8 +159,8 @@ func (t *evaluateServiceFailuresTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *evaluateServiceFailuresTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *evaluateServiceFailuresTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceServiceFailure,
@@ -172,13 +179,13 @@ func (t *evaluateServiceFailuresTool) Policy() serviceports.ToolPolicy {
 
 func (t *evaluateServiceFailuresTool) Target(
 	params map[string]any,
-) (serviceports.ToolTarget, bool) {
+) (agentports.ToolTarget, bool) {
 	return targetOf(params, "shipmentId", permission.ResourceShipment)
 }
 
 func (t *evaluateServiceFailuresTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -191,13 +198,13 @@ func (t *evaluateServiceFailuresTool) Execute(
 
 	switch {
 	case len(scope.shipmentIDs) > 0:
-		_, err = t.failures.BulkEvaluate(ctx, &serviceports.BulkEvaluateServiceFailuresRequest{
+		_, err = t.failures.BulkEvaluate(ctx, &servicefailureports.BulkEvaluateServiceFailuresRequest{
 			TenantInfo:  scope.tenant,
 			ShipmentIDs: scope.shipmentIDs,
 			Force:       scope.force,
 		}, params.Actor)
 	case scope.stopID.IsNotNil():
-		_, err = t.failures.EvaluateStop(ctx, &serviceports.EvaluateStopServiceFailuresRequest{
+		_, err = t.failures.EvaluateStop(ctx, &servicefailureports.EvaluateStopServiceFailuresRequest{
 			TenantInfo: scope.tenant,
 			ShipmentID: scope.shipmentID,
 			StopID:     scope.stopID,
@@ -223,8 +230,8 @@ type evaluationScope struct {
 
 func (s *evaluationScope) shipmentRequest(
 	shipmentID pulid.ID,
-) *serviceports.EvaluateShipmentServiceFailuresRequest {
-	return &serviceports.EvaluateShipmentServiceFailuresRequest{
+) *servicefailureports.EvaluateShipmentServiceFailuresRequest {
+	return &servicefailureports.EvaluateShipmentServiceFailuresRequest{
 		TenantInfo: s.tenant,
 		ShipmentID: shipmentID,
 		Force:      s.force,
@@ -232,7 +239,7 @@ func (s *evaluationScope) shipmentRequest(
 }
 
 func (t *evaluateServiceFailuresTool) request(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*evaluationScope, error) {
 	scope := &evaluationScope{
 		tenant: tenantFrom(*params),
@@ -294,7 +301,7 @@ func (s *evaluationScope) oneListed() {
 // Validate to refuse by name.
 func (t *evaluateServiceFailuresTool) ResolveSelection(
 	_ context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolSelectionResolver interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolSelectionResolver interface passes params by value
 ) (map[string]any, error) {
 	if _, listed := params.Params["shipmentIds"]; !listed {
 		return params.Params, nil
@@ -314,7 +321,7 @@ type resolveServiceFailureTool struct {
 	failures serviceFailureResolver
 }
 
-func newResolveServiceFailureTool(failures serviceFailureResolver) serviceports.AgentTool {
+func newResolveServiceFailureTool(failures serviceFailureResolver) agentports.AgentTool {
 	return &resolveServiceFailureTool{failures: failures}
 }
 
@@ -365,8 +372,8 @@ func (t *resolveServiceFailureTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *resolveServiceFailureTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *resolveServiceFailureTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceServiceFailure,
@@ -382,13 +389,13 @@ func (t *resolveServiceFailureTool) Policy() serviceports.ToolPolicy {
 	}
 }
 
-func (t *resolveServiceFailureTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *resolveServiceFailureTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, "serviceFailureId", permission.ResourceServiceFailure)
 }
 
 func (t *resolveServiceFailureTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	request, _, err := t.request(ctx, &params)
 	if err != nil {
@@ -405,8 +412,8 @@ func (t *resolveServiceFailureTool) Execute(
 // or the one already on file.
 func (t *resolveServiceFailureTool) request(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.ServiceFailureLifecycleRequest, *servicefailure.ServiceFailure, error) {
+	params *agentports.ToolExecuteParams,
+) (*servicefailureports.ServiceFailureLifecycleRequest, *servicefailure.ServiceFailure, error) {
 	if err := guardExecute(t, *params); err != nil {
 		return nil, nil, err
 	}
@@ -421,7 +428,7 @@ func (t *resolveServiceFailureTool) request(
 	}
 
 	tenant := tenantFrom(*params)
-	existing, err := t.failures.GetByID(ctx, &repositories.GetServiceFailureByIDRequest{
+	existing, err := t.failures.GetByID(ctx, &servicefailureports.GetServiceFailureByIDRequest{
 		ID:         failureID,
 		TenantInfo: tenant,
 	})
@@ -435,7 +442,7 @@ func (t *resolveServiceFailureTool) request(
 		)
 	}
 
-	request := &serviceports.ServiceFailureLifecycleRequest{
+	request := &servicefailureports.ServiceFailureLifecycleRequest{
 		TenantInfo: tenant,
 		ID:         existing.ID,
 		ShipmentID: existing.ShipmentID,
@@ -468,7 +475,7 @@ type driverNotifier interface {
 	Preview(
 		ctx context.Context,
 		req *drivernotificationservice.DriverNotification,
-	) (*serviceports.DriverNotificationPreview, error)
+	) (*notificationports.DriverNotificationPreview, error)
 }
 
 const (
@@ -480,7 +487,7 @@ type notifyDriverTool struct {
 	drivers driverNotifier
 }
 
-func newNotifyDriverTool(drivers driverNotifier) serviceports.AgentTool {
+func newNotifyDriverTool(drivers driverNotifier) agentports.AgentTool {
 	return &notifyDriverTool{drivers: drivers}
 }
 
@@ -534,8 +541,8 @@ func (t *notifyDriverTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *notifyDriverTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *notifyDriverTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceDriverMessage,
@@ -552,7 +559,7 @@ func (t *notifyDriverTool) Policy() serviceports.ToolPolicy {
 
 func (t *notifyDriverTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	request, err := t.request(&params)
 	if err != nil {
@@ -567,7 +574,7 @@ func (t *notifyDriverTool) Execute(
 // request is the message the preview renders and the write sends: the
 // dispatch template, the model's title and text, and the shipment it opens.
 func (t *notifyDriverTool) request(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*drivernotificationservice.DriverNotification, error) {
 	if err := guardExecute(t, *params); err != nil {
 		return nil, err
@@ -628,34 +635,34 @@ func (t *notifyDriverTool) request(
 // and PRO, the customer for its recipients, the template to dress the prose,
 // the mailer to send it, and the comment thread to record that it went.
 type customerMailer struct {
-	email     serviceports.EmailService
-	templates serviceports.DocumentTemplateResolver
-	orgRepo   repositories.OrganizationRepository
-	inliner   serviceports.AssetInliner
-	customers repositories.CustomerRepository
-	shipments repositories.ShipmentRepository
-	comments  serviceports.ShipmentCommentService
-	senders   serviceports.EmailSenderResolver
+	email     emailports.EmailService
+	templates documenttemplateports.DocumentTemplateResolver
+	orgRepo   tenantports.OrganizationRepository
+	inliner   documenttemplateports.AssetInliner
+	customers customerports.CustomerRepository
+	shipments shipmentports.ShipmentRepository
+	comments  shipmentports.ShipmentCommentService
+	senders   emailports.EmailSenderResolver
 }
 
 type emailCustomerParams struct {
 	fx.In
 
-	Email     serviceports.EmailService
-	Templates serviceports.DocumentTemplateResolver
-	OrgRepo   repositories.OrganizationRepository
-	Inliner   serviceports.AssetInliner
-	Customers repositories.CustomerRepository
-	Shipments repositories.ShipmentRepository
-	Comments  serviceports.ShipmentCommentService
-	Senders   serviceports.EmailSenderResolver `optional:"true"`
+	Email     emailports.EmailService
+	Templates documenttemplateports.DocumentTemplateResolver
+	OrgRepo   tenantports.OrganizationRepository
+	Inliner   documenttemplateports.AssetInliner
+	Customers customerports.CustomerRepository
+	Shipments shipmentports.ShipmentRepository
+	Comments  shipmentports.ShipmentCommentService
+	Senders   emailports.EmailSenderResolver `optional:"true"`
 }
 
 type emailCustomerTool struct {
 	deps customerMailer
 }
 
-func newEmailCustomerTool(p emailCustomerParams) serviceports.AgentTool {
+func newEmailCustomerTool(p emailCustomerParams) agentports.AgentTool {
 	return &emailCustomerTool{deps: customerMailer{
 		email:     p.Email,
 		templates: p.Templates,
@@ -717,8 +724,8 @@ func (t *emailCustomerTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *emailCustomerTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *emailCustomerTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceCustomerCommunication,
@@ -734,13 +741,13 @@ func (t *emailCustomerTool) Policy() serviceports.ToolPolicy {
 	}
 }
 
-func (t *emailCustomerTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *emailCustomerTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, "shipmentId", permission.ResourceShipment)
 }
 
 func (t *emailCustomerTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	composed, err := t.compose(ctx, &params)
 	if err != nil {
@@ -798,7 +805,7 @@ type sendDetentionNoticeTool struct {
 	detention detentionActor
 }
 
-func newSendDetentionNoticeTool(detention detentionActor) serviceports.AgentTool {
+func newSendDetentionNoticeTool(detention detentionActor) agentports.AgentTool {
 	return &sendDetentionNoticeTool{detention: detention}
 }
 
@@ -835,8 +842,8 @@ func (t *sendDetentionNoticeTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *sendDetentionNoticeTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *sendDetentionNoticeTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceCustomerCommunication,
@@ -853,7 +860,7 @@ func (t *sendDetentionNoticeTool) Policy() serviceports.ToolPolicy {
 
 func (t *sendDetentionNoticeTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	request, err := t.request(&params)
 	if err != nil {
@@ -866,7 +873,7 @@ func (t *sendDetentionNoticeTool) Execute(
 }
 
 func (t *sendDetentionNoticeTool) request(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (detentionservice.SendOccurrenceNoticeParams, error) {
 	if err := guardExecute(t, *params); err != nil {
 		return detentionservice.SendOccurrenceNoticeParams{}, err
@@ -888,7 +895,7 @@ type waiveDetentionTool struct {
 	detention detentionActor
 }
 
-func newWaiveDetentionTool(detention detentionActor) serviceports.AgentTool {
+func newWaiveDetentionTool(detention detentionActor) agentports.AgentTool {
 	return &waiveDetentionTool{detention: detention}
 }
 
@@ -924,8 +931,8 @@ func (t *waiveDetentionTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *waiveDetentionTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *waiveDetentionTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceDetentionPolicy,
@@ -943,7 +950,7 @@ func (t *waiveDetentionTool) Policy() serviceports.ToolPolicy {
 
 func (t *waiveDetentionTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -963,7 +970,7 @@ func (t *waiveDetentionTool) Execute(
 }
 
 func (t *waiveDetentionTool) request(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (detentionservice.WaiveParams, error) {
 	if err := guardExecute(t, *params); err != nil {
 		return detentionservice.WaiveParams{}, err

@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/shopspring/decimal"
 )
@@ -39,7 +39,7 @@ func (s *Service) PlanAdjust(ctx context.Context, req *AdjustRequest) (*AdjustPl
 		return nil, err
 	}
 
-	balances, err := s.ledgerRepo.ListBalances(ctx, &repositories.ListPTOBalancesRequest{
+	balances, err := s.ledgerRepo.ListBalances(ctx, &workerports.ListPTOBalancesRequest{
 		TenantInfo: req.TenantInfo,
 		WorkerID:   req.WorkerID,
 	})

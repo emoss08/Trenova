@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -17,13 +17,13 @@ type fakeInboundMessages struct {
 	message *inboundmessage.InboundMessage
 	items   []*inboundmessage.InboundMessage
 
-	gotGet  *repositories.GetInboundMessageByIDRequest
-	gotList *repositories.ListInboundMessagesRequest
+	gotGet  *inboundmessageports.GetInboundMessageByIDRequest
+	gotList *inboundmessageports.ListInboundMessagesRequest
 }
 
 func (f *fakeInboundMessages) GetByID(
 	_ context.Context,
-	req repositories.GetInboundMessageByIDRequest,
+	req inboundmessageports.GetInboundMessageByIDRequest,
 ) (*inboundmessage.InboundMessage, error) {
 	f.gotGet = &req
 	return f.message, nil
@@ -31,7 +31,7 @@ func (f *fakeInboundMessages) GetByID(
 
 func (f *fakeInboundMessages) List(
 	_ context.Context,
-	req *repositories.ListInboundMessagesRequest,
+	req *inboundmessageports.ListInboundMessagesRequest,
 ) (*pagination.CursorListResult[*inboundmessage.InboundMessage], error) {
 	f.gotList = req
 	return &pagination.CursorListResult[*inboundmessage.InboundMessage]{Items: f.items}, nil

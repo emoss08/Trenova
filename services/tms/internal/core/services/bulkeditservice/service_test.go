@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/bulkedit"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/bulkeditports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,22 +16,22 @@ import (
 )
 
 type recordingEditor struct {
-	calls   []services.BulkEditApplyRequest
-	outcome func(id pulid.ID, value string) services.BulkEditOutcome
+	calls   []bulkeditports.BulkEditApplyRequest
+	outcome func(id pulid.ID, value string) bulkeditports.BulkEditOutcome
 }
 
 func (e *recordingEditor) Resource() permission.Resource { return permission.ResourceCustomer }
 
-func (e *recordingEditor) Fields() []services.BulkEditField {
-	return []services.BulkEditField{{Name: "status"}}
+func (e *recordingEditor) Fields() []bulkeditports.BulkEditField {
+	return []bulkeditports.BulkEditField{{Name: "status"}}
 }
 
 func (e *recordingEditor) Apply(
 	_ context.Context,
-	req *services.BulkEditApplyRequest,
-) ([]services.BulkEditOutcome, error) {
+	req *bulkeditports.BulkEditApplyRequest,
+) ([]bulkeditports.BulkEditOutcome, error) {
 	e.calls = append(e.calls, *req)
-	outcomes := make([]services.BulkEditOutcome, 0, len(req.IDs))
+	outcomes := make([]bulkeditports.BulkEditOutcome, 0, len(req.IDs))
 	for _, id := range req.IDs {
 		outcomes = append(outcomes, e.outcome(id, req.Value))
 	}
@@ -55,7 +55,7 @@ func TestStatusEditor_ChangesOnlyRowsThatDifferAndReportsMissingOnes(t *testing.
 		},
 	}
 
-	outcomes, err := editor.Apply(t.Context(), &services.BulkEditApplyRequest{
+	outcomes, err := editor.Apply(t.Context(), &bulkeditports.BulkEditApplyRequest{
 		IDs:   []pulid.ID{"cus_active", "cus_inactive", "cus_gone"},
 		Field: "status",
 		Value: string(domaintypes.StatusInactive),
@@ -63,7 +63,7 @@ func TestStatusEditor_ChangesOnlyRowsThatDifferAndReportsMissingOnes(t *testing.
 
 	require.NoError(t, err)
 	assert.Equal(t, []pulid.ID{"cus_active"}, applied)
-	byID := map[pulid.ID]services.BulkEditOutcome{}
+	byID := map[pulid.ID]bulkeditports.BulkEditOutcome{}
 	for _, outcome := range outcomes {
 		byID[outcome.ID] = outcome
 	}
@@ -77,7 +77,7 @@ func TestStatusEditor_ChangesOnlyRowsThatDifferAndReportsMissingOnes(t *testing.
 func TestStatusEditor_RefusesAStatusTheRecordCannotHave(t *testing.T) {
 	editor := &statusEditor[domaintypes.Status]{valid: domaintypes.Status.IsValid}
 
-	_, err := editor.Apply(t.Context(), &services.BulkEditApplyRequest{Field: "status", Value: "Archived"})
+	_, err := editor.Apply(t.Context(), &bulkeditports.BulkEditApplyRequest{Field: "status", Value: "Archived"})
 
 	require.Error(t, err)
 }
@@ -98,7 +98,7 @@ func TestStatusEditor_MarksEveryRowOfAFailedChunk(t *testing.T) {
 		},
 	}
 
-	outcomes, err := editor.Apply(t.Context(), &services.BulkEditApplyRequest{
+	outcomes, err := editor.Apply(t.Context(), &bulkeditports.BulkEditApplyRequest{
 		IDs:   []pulid.ID{"cus_1", "cus_2"},
 		Field: "status",
 		Value: string(domaintypes.StatusInactive),
@@ -112,8 +112,8 @@ func TestStatusEditor_MarksEveryRowOfAFailedChunk(t *testing.T) {
 }
 
 func TestService_UndoPutsEachRowBackToItsOwnPreviousValue(t *testing.T) {
-	editor := &recordingEditor{outcome: func(id pulid.ID, _ string) services.BulkEditOutcome {
-		return services.BulkEditOutcome{ID: id, Changed: true}
+	editor := &recordingEditor{outcome: func(id pulid.ID, _ string) bulkeditports.BulkEditOutcome {
+		return bulkeditports.BulkEditOutcome{ID: id, Changed: true}
 	}}
 	edit := &bulkedit.BulkEdit{
 		Field:  "status",
@@ -144,7 +144,7 @@ func TestRecordOutcomes_CountsChangesAndFailuresAndKeepsPreviousValues(t *testin
 		Targets: []bulkedit.Target{{ID: "cus_1"}, {ID: "cus_2"}, {ID: "cus_3"}, {ID: "cus_4"}},
 	}
 
-	recordOutcomes(edit, edit.Targets, []services.BulkEditOutcome{
+	recordOutcomes(edit, edit.Targets, []bulkeditports.BulkEditOutcome{
 		{ID: "cus_1", Previous: "Active", Changed: true},
 		{ID: "cus_2", Previous: "Inactive"},
 		{ID: "cus_3", Err: errors.New("locked")},

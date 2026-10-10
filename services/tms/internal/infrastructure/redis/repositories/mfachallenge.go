@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	corerepositories "github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/redishelpers"
 	"github.com/redis/go-redis/v9"
@@ -30,14 +30,14 @@ type mfaChallengeRepository struct {
 
 func NewMFAChallengeRepository(
 	p MFAChallengeRepositoryParams,
-) corerepositories.MFAChallengeRepository {
+) iamports.MFAChallengeRepository {
 	return &mfaChallengeRepository{client: p.Client}
 }
 
 func (r *mfaChallengeRepository) Save(
 	ctx context.Context,
 	tokenHash string,
-	challenge *corerepositories.MFAChallenge,
+	challenge *iamports.MFAChallenge,
 	ttl time.Duration,
 ) error {
 	return redishelpers.SetJSON(ctx, r.client, challengeKey(tokenHash), challenge, ttl)
@@ -46,8 +46,8 @@ func (r *mfaChallengeRepository) Save(
 func (r *mfaChallengeRepository) Get(
 	ctx context.Context,
 	tokenHash string,
-) (*corerepositories.MFAChallenge, error) {
-	entity := new(corerepositories.MFAChallenge)
+) (*iamports.MFAChallenge, error) {
+	entity := new(iamports.MFAChallenge)
 	if err := redishelpers.GetJSON(ctx, r.client, challengeKey(tokenHash), entity); err != nil {
 		if errors.Is(err, redis.Nil) {
 			return nil, errortypes.NewNotFoundError("Sign-in challenge not found")

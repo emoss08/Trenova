@@ -5,8 +5,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -15,10 +16,10 @@ type groundingEffects struct {
 	*localEffects
 
 	supports bool
-	events   []serviceports.StreamEvent
+	events   []kernelports.StreamEvent
 }
 
-func (fx *groundingEffects) Emit(event serviceports.StreamEvent) {
+func (fx *groundingEffects) Emit(event kernelports.StreamEvent) {
 	fx.events = append(fx.events, event)
 }
 
@@ -30,13 +31,13 @@ func (fx *groundingEffects) Supports(change string) bool {
 	return true
 }
 
-func (fx *groundingEffects) regrounded() []serviceports.AssistantReplyRegroundedEvent {
-	out := make([]serviceports.AssistantReplyRegroundedEvent, 0, 2)
+func (fx *groundingEffects) regrounded() []agentports.AssistantReplyRegroundedEvent {
+	out := make([]agentports.AssistantReplyRegroundedEvent, 0, 2)
 	for _, event := range fx.events {
-		if event.Event != serviceports.AssistantEventReplyRegrounded {
+		if event.Event != agentports.AssistantEventReplyRegrounded {
 			continue
 		}
-		if data, ok := event.Data.(serviceports.AssistantReplyRegroundedEvent); ok {
+		if data, ok := event.Data.(agentports.AssistantReplyRegroundedEvent); ok {
 			out = append(out, data)
 		}
 	}
@@ -70,7 +71,7 @@ func groundedShipmentSchema() map[string]any {
 }
 
 type groundingRun struct {
-	result     *serviceports.RunResult
+	result     *agentports.RunResult
 	completion *scriptedCompletion
 	fx         *groundingEffects
 }
@@ -83,7 +84,7 @@ func runGrounded(
 ) groundingRun {
 	t.Helper()
 
-	turns := []*serviceports.ChatCompletionResult{toolTurn("create_shipment", filed)}
+	turns := []*agentports.ChatCompletionResult{toolTurn("create_shipment", filed)}
 	for _, reply := range replies {
 		turns = append(turns, textTurn(reply))
 	}
@@ -94,9 +95,9 @@ func runGrounded(
 		Schema:   groundedShipmentSchema(),
 	}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
-		Tools: []serviceports.AgentTool{tool},
+		Tools: []agentports.AgentTool{tool},
 	}, nil)
-	req := &serviceports.RunRequest{
+	req := &agentports.RunRequest{
 		Definition: testDefinition("create_shipment"),
 		Actor:      testActor(),
 		Input:      "Copy shipment PRO-100 for customer cus_1, same lane, for Tuesday.",
@@ -105,7 +106,7 @@ func runGrounded(
 	fx.localEffects = &localEffects{
 		s:    rt,
 		ctx:  t.Context(),
-		emit: func(serviceports.StreamEvent) {},
+		emit: func(kernelports.StreamEvent) {},
 	}
 
 	result, err := rt.Drive(rt.OpenTurn(t.Context(), req), fx)
@@ -114,9 +115,9 @@ func runGrounded(
 	return groundingRun{result: result, completion: completion, fx: fx}
 }
 
-func lastUserMessage(req *serviceports.ChatCompletionRequest) string {
+func lastUserMessage(req *agentports.ChatCompletionRequest) string {
 	for idx := len(req.Messages) - 1; idx >= 0; idx-- {
-		if req.Messages[idx].Role == serviceports.RoleUser {
+		if req.Messages[idx].Role == agentports.RoleUser {
 			return req.Messages[idx].Content
 		}
 	}
@@ -142,9 +143,9 @@ func TestGroundingGuard_RewritesAReplyThatClaimsWhatWasNotFiled(t *testing.T) {
 
 	regrounded := run.fx.regrounded()
 	require.Len(t, regrounded, 1)
-	assert.Equal(t, serviceports.RegroundRewrite, regrounded[0].Action)
+	assert.Equal(t, agentports.RegroundRewrite, regrounded[0].Action)
 	assert.Equal(t, []string{"commodities"}, regrounded[0].Fields)
-	assert.Contains(t, eventNames(run.fx.events), serviceports.AssistantEventRetrying,
+	assert.Contains(t, eventNames(run.fx.events), agentports.AssistantEventRetrying,
 		"the reader drops the draft it was shown")
 }
 
@@ -163,8 +164,8 @@ func TestGroundingGuard_NotesTheCardWhenTheRewriteStillDrifts(t *testing.T) {
 
 	regrounded := run.fx.regrounded()
 	require.Len(t, regrounded, 2)
-	assert.Equal(t, serviceports.RegroundRewrite, regrounded[0].Action)
-	assert.Equal(t, serviceports.RegroundNote, regrounded[1].Action)
+	assert.Equal(t, agentports.RegroundRewrite, regrounded[0].Action)
+	assert.Equal(t, agentports.RegroundNote, regrounded[1].Action)
 }
 
 func TestGroundingGuard_CatchesAFigureNothingReturnedOrFiled(t *testing.T) {
@@ -225,14 +226,14 @@ func TestGroundingGuard_LeavesAnExecutionStartedBeforeItAlone(t *testing.T) {
 func TestGroundingGuard_ATurnThatFiledNothingIsNotChecked(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		textTurn("Your fleet ran 4,812 loads last year and every one had commodities."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 	fx := &groundingEffects{supports: true}
-	fx.localEffects = &localEffects{s: rt, ctx: t.Context(), emit: func(serviceports.StreamEvent) {}}
+	fx.localEffects = &localEffects{s: rt, ctx: t.Context(), emit: func(kernelports.StreamEvent) {}}
 
-	_, err := rt.Drive(rt.OpenTurn(t.Context(), &serviceports.RunRequest{
+	_, err := rt.Drive(rt.OpenTurn(t.Context(), &agentports.RunRequest{
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Input:      "how busy were we?",
@@ -258,7 +259,7 @@ func TestFiledLabels_ComeFromTheToolsSchema(t *testing.T) {
 	}
 }
 
-func eventNames(events []serviceports.StreamEvent) []string {
+func eventNames(events []kernelports.StreamEvent) []string {
 	names := make([]string, 0, len(events))
 	for _, event := range events {
 		names = append(names, event.Event)

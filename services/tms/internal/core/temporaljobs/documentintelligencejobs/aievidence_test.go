@@ -5,12 +5,12 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
-	services "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-var evidencePages = []services.AIDocumentPage{
+var evidencePages = []documentaiextractionports.AIDocumentPage{
 	{
 		PageNumber: 1,
 		Text: "RATE CONFIRMATION   Load # OUG-8393964\n" +
@@ -70,7 +70,7 @@ func TestLocateEvidenceHoldsExcerptsToTheirLimit(t *testing.T) {
 
 	long := strings.Repeat("word ", 200) + "TARGET-1" + strings.Repeat(" word", 200)
 	value := strings.Repeat("x", 250)
-	pages := []services.AIDocumentPage{{PageNumber: 1, Text: long + " " + value}}
+	pages := []documentaiextractionports.AIDocumentPage{{PageNumber: 1, Text: long + " " + value}}
 
 	_, excerpt := locateEvidence("TARGET-1", 0, pages)
 	assert.Contains(t, excerpt, "TARGET-1")
@@ -83,8 +83,8 @@ func TestLocateEvidenceHoldsExcerptsToTheirLimit(t *testing.T) {
 func TestWithFieldEvidenceFillsOnlyWhatIsMissing(t *testing.T) {
 	t.Parallel()
 
-	result := &services.AIExtractResult{
-		Fields: map[string]services.AIDocumentField{
+	result := &documentaiextractionports.AIExtractResult{
+		Fields: map[string]documentaiextractionports.AIDocumentField{
 			"rate":      {Value: "2563.12", PageNumber: 2},
 			"poNumber":  {Value: "4500123345"},
 			"shipper":   {Value: "Juniper Manufacturing", PageNumber: 1, EvidenceExcerpt: "kept"},
@@ -110,8 +110,8 @@ func TestWithFieldEvidenceFillsOnlyWhatIsMissing(t *testing.T) {
 func TestWithFieldEvidenceWithoutPagesLeavesTheResultAlone(t *testing.T) {
 	t.Parallel()
 
-	result := &services.AIExtractResult{
-		Fields: map[string]services.AIDocumentField{"rate": {Value: "1"}},
+	result := &documentaiextractionports.AIExtractResult{
+		Fields: map[string]documentaiextractionports.AIDocumentField{"rate": {Value: "1"}},
 	}
 	assert.Same(t, result, withFieldEvidence(result, nil))
 	assert.Nil(t, withFieldEvidence(nil, evidencePages))
@@ -120,15 +120,15 @@ func TestWithFieldEvidenceWithoutPagesLeavesTheResultAlone(t *testing.T) {
 func TestAnAcceptedExtractionCarriesEvidenceFromThePages(t *testing.T) {
 	t.Parallel()
 
-	extract := &services.AIExtractResult{
+	extract := &documentaiextractionports.AIExtractResult{
 		DocumentKind:      "RateConfirmation",
 		OverallConfidence: 0.9,
 		ReviewStatus:      "Ready",
-		Fields: map[string]services.AIDocumentField{
+		Fields: map[string]documentaiextractionports.AIDocumentField{
 			"rate":     {Label: "Rate", Value: "2563.12", Confidence: 0.9, PageNumber: 2},
 			"poNumber": {Label: "PO Number", Value: "4500123345", Confidence: 0.9},
 		},
-		Stops: []*services.AIDocumentStop{
+		Stops: []*documentaiextractionports.AIDocumentStop{
 			{
 				Sequence:        1,
 				Role:            "pickup",
@@ -149,7 +149,7 @@ func TestAnAcceptedExtractionCarriesEvidenceFromThePages(t *testing.T) {
 	}
 	payload := &ApplyDocumentAIExtractionPayload{
 		Completion: &AsyncAIExtractionCompletion{
-			Status:        services.AIBackgroundExtractionStatusCompleted,
+			Status:        documentaiextractionports.AIBackgroundExtractionStatusCompleted,
 			ExtractResult: extract,
 		},
 	}

@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/productguide"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,14 +22,14 @@ const (
 )
 
 type stubVectorizer struct {
-	vector   serviceports.QueryVector
-	requests []serviceports.QueryVectorRequest
+	vector   agentports.QueryVector
+	requests []agentports.QueryVectorRequest
 }
 
 func (v *stubVectorizer) Vectorize(
 	_ context.Context,
-	req *serviceports.QueryVectorRequest,
-) (serviceports.QueryVector, error) {
+	req *agentports.QueryVectorRequest,
+) (agentports.QueryVector, error) {
 	v.requests = append(v.requests, *req)
 
 	return v.vector, nil
@@ -43,23 +44,23 @@ func (v *stubVectorizer) Availability(
 
 type stubVectors struct {
 	similarity map[string]float64
-	requests   []serviceports.CatalogSimilarityRequest
+	requests   []agentports.CatalogSimilarityRequest
 }
 
 func (s *stubVectors) Similarities(
 	_ context.Context,
-	req *serviceports.CatalogSimilarityRequest,
-) (serviceports.CatalogSimilarities, error) {
+	req *agentports.CatalogSimilarityRequest,
+) (agentports.CatalogSimilarities, error) {
 	s.requests = append(s.requests, *req)
 
-	return serviceports.CatalogSimilarities{Available: true, ByKey: s.similarity}, nil
+	return agentports.CatalogSimilarities{Available: true, ByKey: s.similarity}, nil
 }
 
-func guideQueryVector() serviceports.QueryVector {
+func guideQueryVector() agentports.QueryVector {
 	vector := make([]float32, airetrieval.Dimensions768)
 	vector[5] = 1
 
-	return serviceports.QueryVector{
+	return agentports.QueryVector{
 		Available:  true,
 		Vector:     vector,
 		ModelKey:   "localhost/nomic-embed-text@768",
@@ -69,7 +70,7 @@ func guideQueryVector() serviceports.QueryVector {
 
 func semanticHarness(
 	t *testing.T,
-	query serviceports.QueryVector,
+	query agentports.QueryVector,
 	similarity map[string]float64,
 ) (*harness, *stubVectorizer, *stubVectors) {
 	t.Helper()
@@ -87,12 +88,12 @@ func tenantSearch(
 	t *testing.T,
 	h *harness,
 	query string,
-	attribution serviceports.AIUsageAttribution,
-) []serviceports.ProductGuideMatch {
+	attribution aiusageports.AIUsageAttribution,
+) []agentports.ProductGuideMatch {
 	t.Helper()
 
 	requester := actor()
-	matches, err := h.service.Search(t.Context(), &serviceports.ProductGuideSearchRequest{
+	matches, err := h.service.Search(t.Context(), &agentports.ProductGuideSearchRequest{
 		Actor:       requester,
 		TenantInfo:  requester.TenantInfo(),
 		Query:       query,
@@ -103,7 +104,7 @@ func tenantSearch(
 	return matches
 }
 
-func paths(matches []serviceports.ProductGuideMatch) []string {
+func paths(matches []agentports.ProductGuideMatch) []string {
 	out := make([]string, 0, len(matches))
 	for _, match := range matches {
 		out = append(out, match.Page.Path)
@@ -123,12 +124,12 @@ func TestSearch_KeywordAnswersAreUnchangedWithoutAVector(t *testing.T) {
 	} {
 		keyword := newHarness(t, "rate_matrix:read", "shipment:read")
 		unavailable, vectorizer, vectors := semanticHarness(t,
-			serviceports.UnavailableQueryVector(airetrieval.UnavailableReasonNoProvider),
+			agentports.UnavailableQueryVector(airetrieval.UnavailableReasonNoProvider),
 			map[string]float64{carriersPath: 0.99},
 		)
 
-		want := tenantSearch(t, keyword, query, serviceports.AIUsageAttribution{})
-		got := tenantSearch(t, unavailable, query, serviceports.AIUsageAttribution{})
+		want := tenantSearch(t, keyword, query, aiusageports.AIUsageAttribution{})
+		got := tenantSearch(t, unavailable, query, aiusageports.AIUsageAttribution{})
 
 		assert.Equal(t, want, got, "query %q", query)
 		assert.Empty(t, vectors.requests, "an unavailable vector is never compared")
@@ -141,7 +142,7 @@ func TestSearch_KeywordAnswersAreUnchangedWithoutAVector(t *testing.T) {
 func TestSearch_FindsAPageByMeaning(t *testing.T) {
 	t.Parallel()
 
-	attribution := serviceports.AIUsageAttribution{
+	attribution := aiusageports.AIUsageAttribution{
 		UserID:            pulid.MustNew("usr_"),
 		AgentDefinitionID: pulid.MustNew("agd_"),
 	}
@@ -171,7 +172,7 @@ func TestSearch_FusesWordsAndMeaning(t *testing.T) {
 		rateMatricesPath: 0.3,
 	})
 
-	matches := tenantSearch(t, h, "how do I add a rate matrix", serviceports.AIUsageAttribution{})
+	matches := tenantSearch(t, h, "how do I add a rate matrix", aiusageports.AIUsageAttribution{})
 
 	require.Len(t, matches, 2)
 	assert.Equal(t, rateMatricesPath, matches[0].Page.Path,
@@ -186,12 +187,12 @@ func TestSearch_NonsenseStillFindsNothing(t *testing.T) {
 	t.Parallel()
 
 	h, _, _ := semanticHarness(t, guideQueryVector(), map[string]float64{
-		carriersPath:     serviceports.DefaultCatalogSimilarityFloor - 0.01,
+		carriersPath:     agentports.DefaultCatalogSimilarityFloor - 0.01,
 		shipmentsPath:    0.3,
 		rateMatricesPath: 0.1,
 	})
 
-	assert.Empty(t, tenantSearch(t, h, "quantum banana", serviceports.AIUsageAttribution{}))
+	assert.Empty(t, tenantSearch(t, h, "quantum banana", aiusageports.AIUsageAttribution{}))
 }
 
 func TestSearch_OnePageQuestionIgnoresMeaning(t *testing.T) {
@@ -201,7 +202,7 @@ func TestSearch_OnePageQuestionIgnoresMeaning(t *testing.T) {
 		carriersPath: 0.99,
 	})
 	requester := actor()
-	matches, err := h.service.Search(t.Context(), &serviceports.ProductGuideSearchRequest{
+	matches, err := h.service.Search(t.Context(), &agentports.ProductGuideSearchRequest{
 		Actor:      requester,
 		TenantInfo: requester.TenantInfo(),
 		Query:      "retire it",

@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/extractioneval"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -39,7 +39,7 @@ type caseRepository struct {
 	l  *zap.Logger
 }
 
-func NewCases(p Params) repositories.ExtractionEvalCaseRepository {
+func NewCases(p Params) extractionevalports.ExtractionEvalCaseRepository {
 	return &caseRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.extractioneval-case-repository"),
@@ -68,7 +68,7 @@ func (r *caseRepository) Create(
 
 func (r *caseRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetExtractionEvalCaseRequest,
+	req extractionevalports.GetExtractionEvalCaseRequest,
 ) (*extractioneval.ExtractionCase, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*extractioneval.ExtractionCase, error) {
 		entity := new(extractioneval.ExtractionCase)
@@ -155,7 +155,7 @@ func (r *caseRepository) Update(
 
 func (r *caseRepository) Delete(
 	ctx context.Context,
-	req repositories.GetExtractionEvalCaseRequest,
+	req extractionevalports.GetExtractionEvalCaseRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		res, err := r.db.DBForContext(ctx).
@@ -178,7 +178,7 @@ func (r *caseRepository) Delete(
 
 func (r *caseRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListExtractionEvalCaseConnectionRequest,
+	req *extractionevalports.ListExtractionEvalCaseConnectionRequest,
 ) (*pagination.CursorListResult[*extractioneval.ExtractionCase], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*extractioneval.ExtractionCase], error) {
 		dba := r.db.DBForContext(ctx)
@@ -240,7 +240,7 @@ func (r *caseRepository) ListConnection(
 
 func (r *caseRepository) ListActive(
 	ctx context.Context,
-	req repositories.ListActiveExtractionEvalCasesRequest,
+	req extractionevalports.ListActiveExtractionEvalCasesRequest,
 ) ([]*extractioneval.ExtractionCase, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*extractioneval.ExtractionCase, error) {
 		cols := buncolgen.ExtractionCaseColumns
@@ -275,9 +275,9 @@ func (r *caseRepository) ListActive(
 
 func (r *caseRepository) Counts(
 	ctx context.Context,
-	req repositories.CountExtractionEvalCasesRequest,
-) (*repositories.ExtractionEvalCaseCounts, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.ExtractionEvalCaseCounts, error) {
+	req extractionevalports.CountExtractionEvalCasesRequest,
+) (*extractionevalports.ExtractionEvalCaseCounts, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*extractionevalports.ExtractionEvalCaseCounts, error) {
 		cols := buncolgen.ExtractionCaseColumns
 		var row struct {
 			Candidate int `bun:"candidate"`
@@ -302,7 +302,7 @@ func (r *caseRepository) Counts(
 			return nil, fmt.Errorf("count extraction eval cases: %w", err)
 		}
 
-		return &repositories.ExtractionEvalCaseCounts{
+		return &extractionevalports.ExtractionEvalCaseCounts{
 			Candidate: row.Candidate,
 			Active:    row.Active,
 			Retired:   row.Retired,

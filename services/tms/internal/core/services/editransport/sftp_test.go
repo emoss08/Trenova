@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sftp"
 	"github.com/stretchr/testify/require"
@@ -148,7 +148,7 @@ func TestVANTransportRequiresMailboxID(t *testing.T) {
 	t.Parallel()
 
 	transport := NewVANTransport()
-	_, err := transport.Deliver(t.Context(), &services.EDITransportRequest{
+	_, err := transport.Deliver(t.Context(), &ediports.EDITransportRequest{
 		Profile:  &edi.EDICommunicationProfile{Config: map[string]any{}},
 		FileName: "file.x12",
 	})
@@ -159,12 +159,12 @@ func TestDispatcherRejectsUnsupportedMethod(t *testing.T) {
 	t.Parallel()
 
 	dispatcher := NewDispatcher(DispatcherParams{
-		Transports: []services.EDITransport{NewSFTPTransport(), NewVANTransport()},
+		Transports: []ediports.EDITransport{NewSFTPTransport(), NewVANTransport()},
 	})
 	_, err := dispatcher.Deliver(
 		t.Context(),
 		edi.ConnectionMethodAS2,
-		&services.EDITransportRequest{},
+		&ediports.EDITransportRequest{},
 	)
 	require.ErrorContains(t, err, "not supported")
 }

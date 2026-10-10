@@ -6,8 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesport "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -16,11 +17,11 @@ import (
 )
 
 type recordingNotificationRepo struct {
-	repositories.NotificationRepository
+	notificationports.NotificationRepository
 
 	created []*notification.Notification
 	recent  bool
-	asked   *repositories.ExistsRecentNotificationRequest
+	asked   *notificationports.ExistsRecentNotificationRequest
 }
 
 func (r *recordingNotificationRepo) Create(
@@ -33,34 +34,34 @@ func (r *recordingNotificationRepo) Create(
 
 func (r *recordingNotificationRepo) ExistsRecent(
 	_ context.Context,
-	req repositories.ExistsRecentNotificationRequest,
+	req notificationports.ExistsRecentNotificationRequest,
 ) (bool, error) {
 	r.asked = &req
 	return r.recent, nil
 }
 
 type permittedRoles struct {
-	repositories.RoleRepository
+	permissionports.RoleRepository
 
-	users []repositories.PermittedUser
-	asked *repositories.ListUsersWithPermissionRequest
+	users []permissionports.PermittedUser
+	asked *permissionports.ListUsersWithPermissionRequest
 }
 
 func (r *permittedRoles) ListUsersWithPermission(
 	_ context.Context,
-	req repositories.ListUsersWithPermissionRequest,
-) ([]repositories.PermittedUser, error) {
+	req permissionports.ListUsersWithPermissionRequest,
+) ([]permissionports.PermittedUser, error) {
 	r.asked = &req
 	return r.users, nil
 }
 
 type silentRealtime struct {
-	servicesport.RealtimeService
+	agentports.RealtimeService
 }
 
 func (silentRealtime) PublishResourceInvalidation(
 	context.Context,
-	*servicesport.PublishResourceInvalidationRequest,
+	*agentports.PublishResourceInvalidationRequest,
 ) error {
 	return nil
 }
@@ -91,7 +92,7 @@ func TestNotifyPermitted_TellsEachPermittedUserOnceWithinTheLimit(t *testing.T) 
 	t.Parallel()
 
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	roles := &permittedRoles{users: []repositories.PermittedUser{
+	roles := &permittedRoles{users: []permissionports.PermittedUser{
 		{UserID: pulid.MustNew("usr_")},
 		{UserID: pulid.MustNew("usr_")},
 		{UserID: pulid.MustNew("usr_")},
@@ -125,7 +126,7 @@ func TestNotifyPermitted_SaysNothingWhenTheSameThingWasJustSaid(t *testing.T) {
 	t.Parallel()
 
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	roles := &permittedRoles{users: []repositories.PermittedUser{{UserID: pulid.MustNew("usr_")}}}
+	roles := &permittedRoles{users: []permissionports.PermittedUser{{UserID: pulid.MustNew("usr_")}}}
 	repo := &recordingNotificationRepo{recent: true}
 	req := permittedRequest(tenant)
 	req.DedupeSince = req.Now - 3600

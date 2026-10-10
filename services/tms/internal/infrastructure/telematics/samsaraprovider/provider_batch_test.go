@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	sharedsamsara "github.com/emoss08/trenova/shared/samsara"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -187,7 +187,7 @@ func TestListHOSLogsReportsOnlyTheFailedChunk(t *testing.T) {
 	logsByDriver, err := provider.ListHOSLogs(t.Context(), drivers, 1772300000, 1772400000)
 	require.Error(t, err)
 
-	batchErr, ok := errors.AsType[*services.ProviderDriverBatchError](err)
+	batchErr, ok := errors.AsType[*telematicsports.ProviderDriverBatchError](err)
 	require.True(t, ok)
 	assert.Equal(t, drivers[100:200], batchErr.DriverIDs)
 	apiErr, ok := errors.AsType[*sharedsamsara.APIError](err)
@@ -229,7 +229,7 @@ func TestListHOSLogsReturnsContextErrorWithoutPartialResults(t *testing.T) {
 	logsByDriver, err := provider.ListHOSLogs(ctx, batchDriverIDs(10), 1, 2)
 	require.Error(t, err)
 	assert.Nil(t, logsByDriver)
-	_, isBatch := errors.AsType[*services.ProviderDriverBatchError](err)
+	_, isBatch := errors.AsType[*telematicsports.ProviderDriverBatchError](err)
 	assert.False(t, isBatch)
 }
 
@@ -354,7 +354,7 @@ func TestListFormSubmissionsChunksToSpecLimitAndAttributesPerDriver(t *testing.T
 	assert.Len(t, recorder.forPath("/form-templates"), 1)
 
 	require.Len(t, submissions, len(drivers))
-	byDriver := make(map[string]services.ProviderFormSubmission, len(submissions))
+	byDriver := make(map[string]telematicsports.ProviderFormSubmission, len(submissions))
 	for _, submission := range submissions {
 		byDriver[submission.DriverID] = submission
 	}

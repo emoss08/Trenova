@@ -13,8 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/workerchecklistservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -201,7 +201,7 @@ func (r *QueryResolver) WorkerChecklistTemplates(ctx context.Context, input gqlm
 	if input.Status != nil {
 		status = string(*input.Status)
 	}
-	result, err := r.WorkerChecklistService.ListTemplates(ctx, &repositories.ListChecklistTemplatesRequest{
+	result, err := r.WorkerChecklistService.ListTemplates(ctx, &workerports.ListChecklistTemplatesRequest{
 		Filter:       connection.Filter,
 		Cursor:       connection.Cursor,
 		Status:       status,
@@ -227,7 +227,7 @@ func (r *QueryResolver) WorkerChecklistTemplate(ctx context.Context, id string) 
 		return nil, err
 	}
 
-	return r.WorkerChecklistService.GetTemplate(ctx, &repositories.GetChecklistTemplateByIDRequest{
+	return r.WorkerChecklistService.GetTemplate(ctx, &workerports.GetChecklistTemplateByIDRequest{
 		ID:           templateID,
 		TenantInfo:   base.TenantInfo(authCtx),
 		IncludeItems: true,

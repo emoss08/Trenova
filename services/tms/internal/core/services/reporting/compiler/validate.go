@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
@@ -90,7 +90,7 @@ func (c *Compiler) validateEnvelope(
 }
 
 func (c *Compiler) validate(
-	req *services.ReportCompileRequest,
+	req *reportports.ReportCompileRequest,
 ) (*validatedDef, error) {
 	multiErr := errortypes.NewMultiError()
 	def := req.Definition

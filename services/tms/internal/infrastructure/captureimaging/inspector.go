@@ -12,7 +12,8 @@ import (
 	"image/jpeg"
 
 	"github.com/disintegration/imaging"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/makiuchi-d/gozxing"
 	multiqr "github.com/makiuchi-d/gozxing/multi/qrcode"
 )
@@ -40,17 +41,17 @@ const (
 var ErrNoPages = errors.New("the PDF has no pages")
 
 type Inspector struct {
-	pdfReader services.PDFReader
+	pdfReader kernelports.PDFReader
 }
 
-func New(pdfReader services.PDFReader) services.CapturePageInspector {
+func New(pdfReader kernelports.PDFReader) captureports.CapturePageInspector {
 	return &Inspector{pdfReader: pdfReader}
 }
 
 func (i *Inspector) Inspect(
 	ctx context.Context,
 	pdf []byte,
-) (*services.CapturePageInspection, error) {
+) (*captureports.CapturePageInspection, error) {
 	doc, err := i.pdfReader.Open(ctx, pdf)
 	if err != nil {
 		return nil, err
@@ -75,7 +76,7 @@ func (i *Inspector) Inspect(
 
 // InspectImage reads an already rendered page. It is separate so the reading
 // can be tested without a PDF renderer.
-func InspectImage(ctx context.Context, img image.Image) (*services.CapturePageInspection, error) {
+func InspectImage(ctx context.Context, img image.Image) (*captureports.CapturePageInspection, error) {
 	bounds := img.Bounds()
 
 	thumbnail, err := encodeThumbnail(img)
@@ -87,7 +88,7 @@ func InspectImage(ctx context.Context, img image.Image) (*services.CapturePageIn
 		return nil, err
 	}
 
-	return &services.CapturePageInspection{
+	return &captureports.CapturePageInspection{
 		WidthPx:     bounds.Dx(),
 		HeightPx:    bounds.Dy(),
 		Thumbnail:   thumbnail,

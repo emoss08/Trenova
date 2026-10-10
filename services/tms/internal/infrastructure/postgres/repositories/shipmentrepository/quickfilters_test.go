@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -14,28 +14,28 @@ import (
 	"github.com/uptrace/bun"
 )
 
-func quickFilterTestBasis(t *testing.T) *repositories.ShipmentQuickFilterBasis {
+func quickFilterTestBasis(t *testing.T) *shipmentports.ShipmentQuickFilterBasis {
 	t.Helper()
 
 	loc, err := time.LoadLocation("America/Chicago")
 	require.NoError(t, err)
 
-	return &repositories.ShipmentQuickFilterBasis{
+	return &shipmentports.ShipmentQuickFilterBasis{
 		Now:      time.Date(2026, 10, 6, 15, 30, 0, 0, loc),
 		Location: loc,
-		Margin: &repositories.ShipmentMarginBasis{
+		Margin: &shipmentports.ShipmentMarginBasis{
 			CostPerMile:          decimal.RequireFromString("1.85"),
 			IncludeDeadheadMiles: true,
 			TargetMarginPercent:  decimal.NewFromInt(12),
 		},
-		Detention: &repositories.ShipmentDetentionBasis{ThresholdMinutes: 30},
+		Detention: &shipmentports.ShipmentDetentionBasis{ThresholdMinutes: 30},
 	}
 }
 
 func renderQuickFilter(
 	t *testing.T,
 	dba bun.IDB,
-	basis *repositories.ShipmentQuickFilterBasis,
+	basis *shipmentports.ShipmentQuickFilterBasis,
 	spec shipment.QuickFilterSpec,
 ) string {
 	t.Helper()
@@ -208,7 +208,7 @@ func TestApplyAggregateScope_AndsEveryQuickFilter(t *testing.T) {
 				BuID:  pulid.MustNew("bu_"),
 			},
 		},
-		&repositories.ShipmentOptions{
+		&shipmentports.ShipmentOptions{
 			IncludeCustomer: true,
 			QuickFilters: []shipment.QuickFilterSpec{
 				shipment.Quick(shipment.QuickFilterLate),
@@ -225,7 +225,7 @@ func TestApplyAggregateScope_AndsEveryQuickFilter(t *testing.T) {
 	assert.NotContains(t, sql, `"customers"`)
 	assert.Contains(t, sql, "sp.organization_id = ")
 
-	_, err = ApplyAggregateScope(dba.NewSelect(), dba, nil, &repositories.ShipmentOptions{})
+	_, err = ApplyAggregateScope(dba.NewSelect(), dba, nil, &shipmentports.ShipmentOptions{})
 	require.ErrorIs(t, err, ErrShipmentScopeFilterMissing)
 }
 

@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documentcontentrepository"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -14,7 +14,6 @@ import (
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 	"go.uber.org/zap"
-
 	_ "modernc.org/sqlite"
 )
 
@@ -40,7 +39,7 @@ CREATE TABLE document_contents (
 
 type searchFixture struct {
 	db     *bun.DB
-	repo   repositories.DocumentContentRepository
+	repo   documentcontentports.DocumentContentRepository
 	tenant pagination.TenantInfo
 }
 
@@ -86,7 +85,7 @@ func (f *searchFixture) insert(t *testing.T, name, text string) pulid.ID {
 func (f *searchFixture) search(t *testing.T, query string) []pulid.ID {
 	t.Helper()
 
-	docs, err := f.repo.SearchByResource(t.Context(), &repositories.DocumentContentSearchRequest{
+	docs, err := f.repo.SearchByResource(t.Context(), &documentcontentports.DocumentContentSearchRequest{
 		TenantInfo:   f.tenant,
 		ResourceID:   "shp_1",
 		ResourceType: "shipment",

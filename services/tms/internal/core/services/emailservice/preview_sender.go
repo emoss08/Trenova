@@ -5,18 +5,18 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/email"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
-var _ services.EmailSenderResolver = (*Service)(nil)
+var _ emailports.EmailSenderResolver = (*Service)(nil)
 
 // ResolveSender reads the profile Send would use and the recipients it would
 // refuse, and sends nothing.
 func (s *Service) ResolveSender(
 	ctx context.Context,
-	req *services.SendEmailRequest,
-) (*services.EmailSender, error) {
+	req *emailports.SendEmailRequest,
+) (*emailports.EmailSender, error) {
 	profile, err := s.resolveProfile(ctx, req)
 	if err != nil {
 		return nil, err
@@ -27,7 +27,7 @@ func (s *Service) ResolveSender(
 		return nil, err
 	}
 
-	return &services.EmailSender{
+	return &emailports.EmailSender{
 		ProfileID:  profile.ID,
 		Email:      senderEmail(req, profile),
 		Name:       profile.SenderName,
@@ -36,7 +36,7 @@ func (s *Service) ResolveSender(
 	}, nil
 }
 
-func senderEmail(req *services.SendEmailRequest, profile *email.Profile) string {
+func senderEmail(req *emailports.SendEmailRequest, profile *email.Profile) string {
 	if from := strings.TrimSpace(req.FromEmail); from != "" {
 		return from
 	}

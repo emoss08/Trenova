@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/insight"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/insightservice/detector"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/shopspring/decimal"
 )
 
@@ -40,10 +40,10 @@ var (
 // signed bill of lading, a rate that never got agreed, a portal nobody has
 // access to — which is a fixable thing rather than a hundred separate ones.
 type UnbilledAging struct {
-	metrics repositories.InsightMetricsRepository
+	metrics insightports.InsightMetricsRepository
 }
 
-func NewUnbilledAging(metrics repositories.InsightMetricsRepository) *UnbilledAging {
+func NewUnbilledAging(metrics insightports.InsightMetricsRepository) *UnbilledAging {
 	return &UnbilledAging{metrics: metrics}
 }
 
@@ -75,7 +75,7 @@ func (d *UnbilledAging) Detect(
 ) ([]detector.Finding, error) {
 	cutoff := params.WindowEnd - int64(unbilledAgeDays)*secondsPerDay
 
-	rows, err := d.metrics.UnbilledDeliveredShipments(ctx, repositories.UnbilledShipmentsRequest{
+	rows, err := d.metrics.UnbilledDeliveredShipments(ctx, insightports.UnbilledShipmentsRequest{
 		TenantInfo:      params.TenantInfo,
 		DeliveredBefore: cutoff,
 	})
@@ -94,7 +94,7 @@ func (d *UnbilledAging) Detect(
 }
 
 func (d *UnbilledAging) findingFor(
-	row repositories.UnbilledShipmentRow,
+	row insightports.UnbilledShipmentRow,
 	params detector.Params,
 ) (detector.Finding, bool) {
 	if row.ShipmentCount < minUnbilledShipments {

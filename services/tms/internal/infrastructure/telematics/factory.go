@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/integrationservice"
 	"github.com/emoss08/trenova/internal/infrastructure/telematics/samsaraprovider"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
@@ -17,18 +17,18 @@ import (
 type FactoryParams struct {
 	fx.In
 
-	IntegrationRepo    repositories.IntegrationRepository
+	IntegrationRepo    integrationports.IntegrationRepository
 	IntegrationService *integrationservice.Service
 	Logger             *zap.Logger
 }
 
 type Factory struct {
-	integrationRepo    repositories.IntegrationRepository
+	integrationRepo    integrationports.IntegrationRepository
 	integrationService *integrationservice.Service
 	l                  *zap.Logger
 }
 
-func NewFactory(p FactoryParams) services.TelematicsProviderFactory {
+func NewFactory(p FactoryParams) telematicsports.TelematicsProviderFactory {
 	return &Factory{
 		integrationRepo:    p.IntegrationRepo,
 		integrationService: p.IntegrationService,
@@ -39,7 +39,7 @@ func NewFactory(p FactoryParams) services.TelematicsProviderFactory {
 func (f *Factory) ProviderFor(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (services.TelematicsProvider, error) {
+) (telematicsports.TelematicsProvider, error) {
 	integrations, err := f.integrationRepo.ListByTenant(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -64,7 +64,7 @@ func (f *Factory) ProviderOfType(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	typ integration.Type,
-) (services.TelematicsProvider, error) {
+) (telematicsports.TelematicsProvider, error) {
 	switch typ { //nolint:exhaustive // only telematics-category providers supported; others hit default
 	case integration.TypeSamsara:
 		client, err := f.integrationService.SamsaraClient(ctx, tenantInfo)

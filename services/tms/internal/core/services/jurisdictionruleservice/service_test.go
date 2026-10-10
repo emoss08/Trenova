@@ -1,16 +1,19 @@
 package jurisdictionruleservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/jurisdictionrule"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/editioninfo"
 	"github.com/emoss08/trenova/internal/core/services/referencedataguard"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/jurisdictionruleports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,16 +24,16 @@ import (
 )
 
 type repoStub struct {
-	repositories.JurisdictionRuleRepository
+	permitports.JurisdictionRuleRepository
 
 	stored  *jurisdictionrule.JurisdictionRule
 	created *jurisdictionrule.JurisdictionRule
 	updated *jurisdictionrule.JurisdictionRule
-	verify  *repositories.VerifyJurisdictionRuleRequest
+	verify  *permitports.VerifyJurisdictionRuleRequest
 }
 
 func (s *repoStub) GetByID(
-	_ context.Context, _ *repositories.GetJurisdictionRuleByIDRequest,
+	_ context.Context, _ *permitports.GetJurisdictionRuleByIDRequest,
 ) (*jurisdictionrule.JurisdictionRule, error) {
 	return s.stored, nil
 }
@@ -50,7 +53,7 @@ func (s *repoStub) Update(
 }
 
 func (s *repoStub) Verify(
-	_ context.Context, req *repositories.VerifyJurisdictionRuleRequest,
+	_ context.Context, req *permitports.VerifyJurisdictionRuleRequest,
 ) (*jurisdictionrule.JurisdictionRule, error) {
 	s.verify = req
 	return s.stored, nil
@@ -74,10 +77,10 @@ func validRule() *jurisdictionrule.JurisdictionRule {
 	}
 }
 
-func newService(t *testing.T, repo repositories.JurisdictionRuleRepository) *service {
+func newService(t *testing.T, repo permitports.JurisdictionRuleRepository) *service {
 	t.Helper()
 
-	auditService := mocks.NewMockAuditService(t)
+	auditService := auditportsmock.NewMockAuditService(t)
 	auditService.EXPECT().
 		LogAction(mock.Anything, mock.Anything).
 		Return(nil).
@@ -102,9 +105,9 @@ func selfHostedGuard(t *testing.T) *referencedataguard.Guard {
 	return guard
 }
 
-func operatorActor() *services.RequestActor {
-	return &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeUser,
+func operatorActor() *permissionports.RequestActor {
+	return &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		UserID:         pulid.MustNew("usr_"),
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
@@ -203,7 +206,7 @@ func TestUpdate_EveryGovernedFieldResetsVerification(t *testing.T) {
 func TestVerify_RequiresATraceableNote(t *testing.T) {
 	svc := newService(t, &repoStub{stored: validRule()})
 
-	_, err := svc.Verify(t.Context(), &services.VerifyJurisdictionRuleRequest{
+	_, err := svc.Verify(t.Context(), &jurisdictionruleports.VerifyJurisdictionRuleRequest{
 		RuleID:     pulid.MustNew("jrl_"),
 		Actor:      operatorActor(),
 		State:      jurisdictionrule.VerificationVerified,
@@ -219,7 +222,7 @@ func TestVerify_RequiresATraceableNote(t *testing.T) {
 func TestVerify_RejectsMarkingARowUnverified(t *testing.T) {
 	svc := newService(t, &repoStub{stored: validRule()})
 
-	_, err := svc.Verify(t.Context(), &services.VerifyJurisdictionRuleRequest{
+	_, err := svc.Verify(t.Context(), &jurisdictionruleports.VerifyJurisdictionRuleRequest{
 		RuleID:     pulid.MustNew("jrl_"),
 		Actor:      operatorActor(),
 		State:      jurisdictionrule.VerificationUnverified,
@@ -233,7 +236,7 @@ func TestVerify_AcceptsDisputed(t *testing.T) {
 	repo := &repoStub{stored: validRule()}
 	svc := newService(t, repo)
 
-	_, err := svc.Verify(t.Context(), &services.VerifyJurisdictionRuleRequest{
+	_, err := svc.Verify(t.Context(), &jurisdictionruleports.VerifyJurisdictionRuleRequest{
 		RuleID:     pulid.MustNew("jrl_"),
 		Actor:      operatorActor(),
 		State:      jurisdictionrule.VerificationDisputed,
@@ -249,12 +252,12 @@ func TestVerify_AcceptsDisputed(t *testing.T) {
 // The audit entry for global reference data must not claim a tenant scope the
 // table does not have.
 func TestLogAction_LeavesTenantUnsetForGlobalData(t *testing.T) {
-	auditService := mocks.NewMockAuditService(t)
+	auditService := auditportsmock.NewMockAuditService(t)
 
-	var captured *services.LogActionParams
+	var captured *auditports.LogActionParams
 	auditService.EXPECT().
 		LogAction(mock.Anything, mock.Anything).
-		RunAndReturn(func(p *services.LogActionParams, _ ...services.LogOption) error {
+		RunAndReturn(func(p *auditports.LogActionParams, _ ...auditports.LogOption) error {
 			captured = p
 			return nil
 		})
@@ -298,7 +301,7 @@ func TestWrites_AreRefusedForATenantThatIsNotAStewardInCloudMode(t *testing.T) {
 	require.Error(t, err)
 	assert.True(t, errortypes.IsAuthorizationError(err))
 
-	_, err = svc.Verify(t.Context(), &services.VerifyJurisdictionRuleRequest{
+	_, err = svc.Verify(t.Context(), &jurisdictionruleports.VerifyJurisdictionRuleRequest{
 		RuleID:     pulid.MustNew("jrl_"),
 		Actor:      tenant,
 		State:      jurisdictionrule.VerificationVerified,

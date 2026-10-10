@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -15,21 +15,21 @@ import (
 
 func (s *Service) ListPartners(
 	ctx context.Context,
-	req *repositories.ListEDIPartnersRequest,
+	req *ediports.ListEDIPartnersRequest,
 ) (*pagination.ListResult[*edi.EDIPartner], error) {
 	return s.partnerRepo.List(ctx, req)
 }
 
 func (s *Service) SelectPartnerOptions(
 	ctx context.Context,
-	req *repositories.EDIPartnerSelectOptionsRequest,
+	req *ediports.EDIPartnerSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDIPartner], error) {
 	return s.partnerRepo.SelectOptions(ctx, req)
 }
 
 func (s *Service) GetPartner(
 	ctx context.Context,
-	req repositories.GetEDIPartnerByIDRequest,
+	req ediports.GetEDIPartnerByIDRequest,
 ) (*edi.EDIPartner, error) {
 	return s.partnerRepo.GetByID(ctx, req)
 }
@@ -37,7 +37,7 @@ func (s *Service) GetPartner(
 func (s *Service) CreatePartner(
 	ctx context.Context,
 	entity *edi.EDIPartner,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*edi.EDIPartner, error) {
 	if err := s.requireIntegrations(ctx, pagination.TenantInfo{
 		OrgID: entity.OrganizationID,
@@ -62,13 +62,13 @@ func (s *Service) CreatePartner(
 func (s *Service) UpdatePartner(
 	ctx context.Context,
 	entity *edi.EDIPartner,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*edi.EDIPartner, error) {
 	if multiErr := s.validator.ValidatePartner(entity); multiErr != nil {
 		return nil, multiErr
 	}
 
-	original, err := s.partnerRepo.GetByID(ctx, repositories.GetEDIPartnerByIDRequest{
+	original, err := s.partnerRepo.GetByID(ctx, ediports.GetEDIPartnerByIDRequest{
 		ID: entity.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -91,7 +91,7 @@ func (s *Service) UpdatePartner(
 func (s *Service) CreateInternalPartnerPair(
 	ctx context.Context,
 	req *CreateInternalPartnerPairRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*edi.InternalPartnerPair, error) {
 	if req == nil || req.TargetOrganizationID.IsNil() {
 		return nil, errortypes.NewValidationError(

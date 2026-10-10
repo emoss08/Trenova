@@ -4,8 +4,7 @@ import (
 	"context"
 	"math"
 
-	repositoryports "github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -28,8 +27,8 @@ const (
 
 func (s *Service) GetDashboardKPIs(
 	ctx context.Context,
-	req repositoryports.GetARAnalyticsRequest,
-) (*serviceports.ARDashboardKPIs, error) {
+	req customerledgerports.GetARAnalyticsRequest,
+) (*customerledgerports.ARDashboardKPIs, error) {
 	req.AsOfDate = normalizeAsOf(req.AsOfDate)
 
 	overview, err := s.analyticsRepo.GetBalanceOverview(ctx, req)
@@ -37,7 +36,7 @@ func (s *Service) GetDashboardKPIs(
 		return nil, err
 	}
 
-	series, err := s.analyticsRepo.ListBalanceSeries(ctx, repositoryports.ListARSeriesRequest{
+	series, err := s.analyticsRepo.ListBalanceSeries(ctx, customerledgerports.ListARSeriesRequest{
 		TenantInfo: req.TenantInfo,
 		AsOfDate:   req.AsOfDate,
 		Weeks:      kpiDeltaWeeks,
@@ -48,7 +47,7 @@ func (s *Service) GetDashboardKPIs(
 
 	totals, err := s.analyticsRepo.GetCollectionTotals(
 		ctx,
-		repositoryports.GetARCollectionMetricsRequest{
+		customerledgerports.GetARCollectionMetricsRequest{
 			TenantInfo: req.TenantInfo,
 			AsOfDate:   req.AsOfDate,
 			PeriodDays: collectionPeriodDays,
@@ -58,7 +57,7 @@ func (s *Service) GetDashboardKPIs(
 		return nil, err
 	}
 
-	kpis := &serviceports.ARDashboardKPIs{
+	kpis := &customerledgerports.ARDashboardKPIs{
 		AsOfDate:       req.AsOfDate,
 		Overview:       overview,
 		CEI:            computeCEI(totals),
@@ -87,16 +86,16 @@ func (s *Service) GetDashboardKPIs(
 
 func (s *Service) GetPaymentStats(
 	ctx context.Context,
-	req repositoryports.GetARAnalyticsRequest,
-) (*repositoryports.ARPaymentStats, error) {
+	req customerledgerports.GetARAnalyticsRequest,
+) (*customerledgerports.ARPaymentStats, error) {
 	req.AsOfDate = normalizeAsOf(req.AsOfDate)
 	return s.analyticsRepo.GetPaymentStats(ctx, req)
 }
 
 func (s *Service) GetDSOTrend(
 	ctx context.Context,
-	req repositoryports.ListARSeriesRequest,
-) ([]*serviceports.ARDSOTrendPoint, error) {
+	req customerledgerports.ListARSeriesRequest,
+) ([]*customerledgerports.ARDSOTrendPoint, error) {
 	req.AsOfDate = normalizeAsOf(req.AsOfDate)
 	req.Weeks = clampWeeks(req.Weeks)
 
@@ -105,9 +104,9 @@ func (s *Service) GetDSOTrend(
 		return nil, err
 	}
 
-	points := make([]*serviceports.ARDSOTrendPoint, 0, len(series))
+	points := make([]*customerledgerports.ARDSOTrendPoint, 0, len(series))
 	for _, p := range series {
-		points = append(points, &serviceports.ARDSOTrendPoint{
+		points = append(points, &customerledgerports.ARDSOTrendPoint{
 			PeriodEnd:      p.PeriodEnd,
 			DSODays:        computeDSODays(p.ARBalanceMinor, p.BilledMinor),
 			ARBalanceMinor: p.ARBalanceMinor,
@@ -119,8 +118,8 @@ func (s *Service) GetDSOTrend(
 
 func (s *Service) GetAgingTrend(
 	ctx context.Context,
-	req repositoryports.ListARSeriesRequest,
-) ([]*repositoryports.ARAgingTrendPoint, error) {
+	req customerledgerports.ListARSeriesRequest,
+) ([]*customerledgerports.ARAgingTrendPoint, error) {
 	req.AsOfDate = normalizeAsOf(req.AsOfDate)
 	req.Weeks = clampWeeks(req.Weeks)
 	return s.analyticsRepo.ListAgingTrend(ctx, req)
@@ -128,8 +127,8 @@ func (s *Service) GetAgingTrend(
 
 func (s *Service) GetCashFlowForecast(
 	ctx context.Context,
-	req repositoryports.ListARCashFlowRequest,
-) ([]*repositoryports.ARCashFlowPoint, error) {
+	req customerledgerports.ListARCashFlowRequest,
+) ([]*customerledgerports.ARCashFlowPoint, error) {
 	req.AsOfDate = normalizeAsOf(req.AsOfDate)
 	if req.PastWeeks <= 0 {
 		req.PastWeeks = defaultCashFlowPast
@@ -144,8 +143,8 @@ func (s *Service) GetCashFlowForecast(
 
 func (s *Service) GetCollectionPerformance(
 	ctx context.Context,
-	req repositoryports.GetARCollectionMetricsRequest,
-) (*serviceports.ARCollectionPerformance, error) {
+	req customerledgerports.GetARCollectionMetricsRequest,
+) (*customerledgerports.ARCollectionPerformance, error) {
 	req.AsOfDate = normalizeAsOf(req.AsOfDate)
 	if req.PeriodDays <= 0 {
 		req.PeriodDays = collectionPeriodDays
@@ -156,7 +155,7 @@ func (s *Service) GetCollectionPerformance(
 		return nil, err
 	}
 
-	return &serviceports.ARCollectionPerformance{
+	return &customerledgerports.ARCollectionPerformance{
 		Totals:        totals,
 		CEI:           computeCEI(totals),
 		WriteOffRatio: ratioOf(totals.ShortPayMinor, totals.CreditSalesMinor),
@@ -173,8 +172,8 @@ func (s *Service) GetCollectionPerformance(
 
 func (s *Service) ListTopOverdueCustomers(
 	ctx context.Context,
-	req repositoryports.ListARTopOverdueCustomersRequest,
-) ([]*repositoryports.ARTopOverdueCustomer, error) {
+	req customerledgerports.ListARTopOverdueCustomersRequest,
+) ([]*customerledgerports.ARTopOverdueCustomer, error) {
 	req.AsOfDate = normalizeAsOf(req.AsOfDate)
 	req.Limit = clampLimit(req.Limit, defaultTopOverdueLimit)
 	return s.analyticsRepo.ListTopOverdueCustomers(ctx, req)
@@ -182,8 +181,8 @@ func (s *Service) ListTopOverdueCustomers(
 
 func (s *Service) GetCollectionsWorklist(
 	ctx context.Context,
-	req repositoryports.ListARCollectionsWorklistRequest,
-) ([]*repositoryports.ARCollectionsWorklistItem, error) {
+	req customerledgerports.ListARCollectionsWorklistRequest,
+) ([]*customerledgerports.ARCollectionsWorklistItem, error) {
 	req.AsOfDate = normalizeAsOf(req.AsOfDate)
 	req.Limit = clampLimit(req.Limit, defaultWorklistLimit)
 
@@ -199,8 +198,8 @@ func (s *Service) GetCollectionsWorklist(
 
 func (s *Service) GetCustomerProfile(
 	ctx context.Context,
-	req repositoryports.GetARCustomerSnapshotRequest,
-) (*serviceports.ARCustomerProfile, error) {
+	req customerledgerports.GetARCustomerSnapshotRequest,
+) (*customerledgerports.ARCustomerProfile, error) {
 	req.AsOfDate = normalizeAsOf(req.AsOfDate)
 
 	snapshot, err := s.analyticsRepo.GetCustomerSnapshot(ctx, req)
@@ -208,7 +207,7 @@ func (s *Service) GetCustomerProfile(
 		return nil, err
 	}
 
-	profile := &serviceports.ARCustomerProfile{
+	profile := &customerledgerports.ARCustomerProfile{
 		Snapshot: snapshot,
 		DSODays:  computeDSODays(snapshot.TotalOpenMinor, snapshot.BilledTrailing91Minor),
 	}
@@ -249,7 +248,7 @@ func computeDSODays(balanceMinor, billedMinor int64) float64 {
 	return float64(balanceMinor) / float64(billedMinor) * dsoWindowDays
 }
 
-func computeCEI(totals *repositoryports.ARCollectionTotals) float64 {
+func computeCEI(totals *customerledgerports.ARCollectionTotals) float64 {
 	if totals == nil {
 		return 0
 	}
@@ -276,7 +275,7 @@ func ratioOf(part, whole int64) float64 {
 	return float64(part) / float64(whole)
 }
 
-func worklistSeverity(item *repositoryports.ARCollectionsWorklistItem) string {
+func worklistSeverity(item *customerledgerports.ARCollectionsWorklistItem) string {
 	switch {
 	case item.DaysPastDue >= 30:
 		return worklistSeverityCritical
@@ -287,7 +286,7 @@ func worklistSeverity(item *repositoryports.ARCollectionsWorklistItem) string {
 	}
 }
 
-func computeDelinquencyScore(snapshot *repositoryports.ARCustomerSnapshot) float64 {
+func computeDelinquencyScore(snapshot *customerledgerports.ARCustomerSnapshot) float64 {
 	if snapshot == nil || snapshot.TotalOpenMinor <= 0 {
 		return 0
 	}

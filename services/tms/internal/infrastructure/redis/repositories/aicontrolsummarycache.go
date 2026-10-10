@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/aicontrolsummary"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aicontrolsummaryports"
 	"github.com/emoss08/trenova/pkg/redishelpers"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/redis/go-redis/v9"
@@ -33,11 +33,11 @@ type aiControlSummaryCache struct {
 	now    func() time.Time
 }
 
-func NewAIControlSummaryCache(p AIControlSummaryCacheParams) repositories.AIControlSummaryCache {
+func NewAIControlSummaryCache(p AIControlSummaryCacheParams) aicontrolsummaryports.AIControlSummaryCache {
 	return &aiControlSummaryCache{client: p.Client, now: time.Now}
 }
 
-func AIControlSummaryKey(key *repositories.AIControlSummaryKey) string {
+func AIControlSummaryKey(key *aicontrolsummaryports.AIControlSummaryKey) string {
 	return strings.Join([]string{
 		aiControlSummaryPrefix,
 		key.TenantInfo.OrgID.String(),
@@ -47,7 +47,7 @@ func AIControlSummaryKey(key *repositories.AIControlSummaryKey) string {
 	}, ":")
 }
 
-func aiControlClaimKey(key *repositories.AIControlSummaryKey, day string) string {
+func aiControlClaimKey(key *aicontrolsummaryports.AIControlSummaryKey, day string) string {
 	return strings.Join([]string{
 		aiControlSummaryPrefix,
 		aiControlClaimPart,
@@ -60,7 +60,7 @@ func aiControlClaimKey(key *repositories.AIControlSummaryKey, day string) string
 
 func (c *aiControlSummaryCache) Get(
 	ctx context.Context,
-	key *repositories.AIControlSummaryKey,
+	key *aicontrolsummaryports.AIControlSummaryKey,
 	dest *aicontrolsummary.Summary,
 ) (bool, error) {
 	err := redishelpers.GetStringJSON(ctx, c.client, AIControlSummaryKey(key), dest)
@@ -75,7 +75,7 @@ func (c *aiControlSummaryCache) Get(
 
 func (c *aiControlSummaryCache) Set(
 	ctx context.Context,
-	key *repositories.AIControlSummaryKey,
+	key *aicontrolsummaryports.AIControlSummaryKey,
 	value *aicontrolsummary.Summary,
 	ttl time.Duration,
 ) error {
@@ -91,7 +91,7 @@ func (c *aiControlSummaryCache) Set(
 
 func (c *aiControlSummaryCache) ClaimNarration(
 	ctx context.Context,
-	key *repositories.AIControlSummaryKey,
+	key *aicontrolsummaryports.AIControlSummaryKey,
 	perDay int,
 ) (bool, error) {
 	claim := aiControlClaimKey(key, c.now().UTC().Format(claimDayLayout))

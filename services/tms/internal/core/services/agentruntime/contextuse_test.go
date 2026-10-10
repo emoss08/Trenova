@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -56,7 +56,7 @@ func TestReplayHistory_StartsFromTheLatestSummary(t *testing.T) {
 	messages, _ := replayHistory(history, nil)
 
 	require.Len(t, messages, 5)
-	assert.Equal(t, serviceports.RoleUser, messages[0].Role)
+	assert.Equal(t, agentports.RoleUser, messages[0].Role)
 	assert.True(t, strings.HasPrefix(messages[0].Content, compactionPreamble),
 		"the model is told the message is a summary standing in for what was compacted")
 	assert.True(t, strings.HasSuffix(messages[0].Content, summary.Content))
@@ -65,7 +65,7 @@ func TestReplayHistory_StartsFromTheLatestSummary(t *testing.T) {
 	assert.Equal(t, "And the late ones?", messages[3].Content)
 	assert.Equal(t, "Two are late.", messages[4].Content)
 	for _, message := range messages {
-		assert.NotEqual(t, serviceports.RoleTool, message.Role,
+		assert.NotEqual(t, agentports.RoleTool, message.Role,
 			"the compacted tool result is not replayed")
 	}
 }

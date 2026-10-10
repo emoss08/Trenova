@@ -8,9 +8,11 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/shipmentimportassistantservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -41,22 +43,22 @@ const (
 // TurnPayload is one message to the import assistant. The request's own JSON
 // leaves the tenant out, so it travels beside it.
 type TurnPayload struct {
-	TenantInfo pagination.TenantInfo                   `json:"tenantInfo"`
-	Request    *serviceports.ShipmentImportChatRequest `json:"request"`
+	TenantInfo pagination.TenantInfo                    `json:"tenantInfo"`
+	Request    *shipmentports.ShipmentImportChatRequest `json:"request"`
 	// Stream says somebody is reading the reply as it is written.
 	Stream bool `json:"stream"`
 }
 
 // request is the message as the service reads it, tenant included.
-func (p *TurnPayload) request() *serviceports.ShipmentImportChatRequest {
+func (p *TurnPayload) request() *shipmentports.ShipmentImportChatRequest {
 	req := *p.Request
 	req.TenantInfo = p.TenantInfo
 
 	return &req
 }
 
-func (p *TurnPayload) attribution() serviceports.AIUsageAttribution {
-	attribution := serviceports.AIUsageAttribution{
+func (p *TurnPayload) attribution() aiusageports.AIUsageAttribution {
+	attribution := aiusageports.AIUsageAttribution{
 		UserID:  p.TenantInfo.UserID,
 		Feature: aiusage.FeatureShipmentImportChat,
 	}
@@ -72,14 +74,14 @@ func (p *TurnPayload) attribution() serviceports.AIUsageAttribution {
 
 // ModelInput is one model call of a turn.
 type ModelInput struct {
-	Request *serviceports.ChatCompletionRequest `json:"request"`
-	Stream  bool                                `json:"stream"`
+	Request *agentports.ChatCompletionRequest `json:"request"`
+	Stream  bool                              `json:"stream"`
 }
 
 // ToolInput is one tool call of a turn.
 type ToolInput struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
-	Call       serviceports.ToolCall `json:"call"`
+	Call       agentports.ToolCall   `json:"call"`
 }
 
 // FinishInput is what a turn came to, for saving.

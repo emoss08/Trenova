@@ -16,8 +16,8 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/insight"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/insightservice/detector"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/numberguard"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -43,12 +43,12 @@ type Params struct {
 	fx.In
 
 	Logger     *zap.Logger
-	Completion services.CompletionService
+	Completion agentports.CompletionService
 }
 
 type Service struct {
 	l          *zap.Logger
-	completion services.CompletionService
+	completion agentports.CompletionService
 }
 
 func New(p Params) *Service {
@@ -107,7 +107,7 @@ func (s *Service) narrateBatch(
 	batch []detector.Finding,
 	into map[string]Narration,
 ) {
-	completion, err := s.completion.CompleteStructured(ctx, &services.StructuredCompletionRequest{
+	completion, err := s.completion.CompleteStructured(ctx, &agentports.StructuredCompletionRequest{
 		TenantInfo:   req.TenantInfo,
 		Task:         aiprovider.TaskOperationalInsights,
 		System:       systemPrompt,
@@ -148,7 +148,7 @@ func (s *Service) narrateBatch(
 type applyParams struct {
 	batch      []detector.Finding
 	narrations map[string]narratedFinding
-	completion *services.StructuredCompletionResult
+	completion *agentports.StructuredCompletionResult
 	windowDays int
 	into       map[string]Narration
 }

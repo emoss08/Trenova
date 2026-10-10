@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/assert"
@@ -47,7 +47,7 @@ func TestGetOrCreate_AReadOnlyCallerGetsTheDefaultWithoutAWrite(t *testing.T) {
 	t.Parallel()
 
 	table := &fakeControlTable{}
-	got, err := GetOrCreate(ports.WithReadOnly(t.Context()), outsideTx{}, table.spec())
+	got, err := GetOrCreate(kernelports.WithReadOnly(t.Context()), outsideTx{}, table.spec())
 
 	require.NoError(t, err)
 	assert.Equal(t, "default", got.name)

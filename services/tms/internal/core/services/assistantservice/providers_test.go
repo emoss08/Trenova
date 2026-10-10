@@ -5,32 +5,32 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type fakeProviderRepo struct {
-	repositories.AIProviderRepository
+	agentports.AIProviderRepository
 
-	captured repositories.ListAIProvidersForTaskRequest
+	captured agentports.ListAIProvidersForTaskRequest
 	items    []*aiprovider.Provider
 	err      error
 }
 
 func (f *fakeProviderRepo) ListForTask(
 	_ context.Context,
-	req repositories.ListAIProvidersForTaskRequest,
+	req agentports.ListAIProvidersForTaskRequest,
 ) ([]*aiprovider.Provider, error) {
 	f.captured = req
 
 	return f.items, f.err
 }
 
-func providerActor() serviceports.RequestActor {
-	return serviceports.RequestActor{
+func providerActor() permissionports.RequestActor {
+	return permissionports.RequestActor{
 		UserID:         pulid.MustNew("usr_"),
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),

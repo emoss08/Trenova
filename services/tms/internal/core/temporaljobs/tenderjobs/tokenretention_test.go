@@ -5,7 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -37,13 +38,13 @@ func (r tokenRow) deadAt() int64 {
 
 type tokenStore struct {
 	rows     []tokenRow
-	requests []repositories.PurgeDeadTokensRequest
+	requests []tenderports.PurgeDeadTokensRequest
 	err      error
 }
 
 func (s *tokenStore) purge(
 	_ context.Context,
-	req repositories.PurgeDeadTokensRequest,
+	req tenderports.PurgeDeadTokensRequest,
 ) (int64, error) {
 	s.requests = append(s.requests, req)
 	if s.err != nil {
@@ -72,27 +73,27 @@ func (s *tokenStore) names() []string {
 }
 
 type fakeTokenTenderRepo struct {
-	repositories.TenderRepository
+	tenderports.TenderRepository
 
 	store *tokenStore
 }
 
 func (f *fakeTokenTenderRepo) PurgeDeadOfferTokens(
 	ctx context.Context,
-	req repositories.PurgeDeadTokensRequest,
+	req tenderports.PurgeDeadTokensRequest,
 ) (int64, error) {
 	return f.store.purge(ctx, req)
 }
 
 type fakeTokenRateConRepo struct {
-	repositories.RateConfirmationRepository
+	rateconfirmationports.RateConfirmationRepository
 
 	store *tokenStore
 }
 
 func (f *fakeTokenRateConRepo) PurgeDeadSignTokens(
 	ctx context.Context,
-	req repositories.PurgeDeadTokensRequest,
+	req tenderports.PurgeDeadTokensRequest,
 ) (int64, error) {
 	return f.store.purge(ctx, req)
 }

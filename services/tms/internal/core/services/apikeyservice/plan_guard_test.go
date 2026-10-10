@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,9 +17,9 @@ func TestCreateAPIKeyRefusesWhenThePlanRestrictsAPIKeys(t *testing.T) {
 
 	svc := &Service{plans: plantest.Restricting(t, platformplan.CapabilityAPIKeys)}
 
-	resp, err := svc.CreateAPIKey(t.Context(), plantest.Tenant(), &services.CreateAPIKeyRequest{
+	resp, err := svc.CreateAPIKey(t.Context(), plantest.Tenant(), &apikeyports.CreateAPIKeyRequest{
 		Name: "integration",
-		Permissions: []services.APIKeyPermissionInput{{
+		Permissions: []apikeyports.APIKeyPermissionInput{{
 			Resource:   "shipment",
 			Operations: []permission.Operation{permission.OpRead},
 		}},

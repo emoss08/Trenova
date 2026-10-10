@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/dataentrycontrol"
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/dataentrycontrolports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -22,7 +22,7 @@ type mockDataEntryControlRepo struct {
 
 func (m *mockDataEntryControlRepo) GetByOrgID(
 	ctx context.Context,
-	req repositories.GetDataEntryControlRequest,
+	req dataentrycontrolports.GetDataEntryControlRequest,
 ) (*dataentrycontrol.DataEntryControl, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {

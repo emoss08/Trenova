@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/accounttype"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accounttypeports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -30,7 +30,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.AccountTypeRepository {
+func New(p Params) accounttypeports.AccountTypeRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.accounttype-repository"),
@@ -39,7 +39,7 @@ func New(p Params) repositories.AccountTypeRepository {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListAccountTypesRequest,
+	req *accounttypeports.ListAccountTypesRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.AccountTypeColumns
 	q = querybuilder.ApplyFilters(
@@ -57,7 +57,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListAccountTypesRequest,
+	req *accounttypeports.ListAccountTypesRequest,
 ) (*pagination.ListResult[*accounttype.AccountType], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*accounttype.AccountType], error) {
 		log := r.l.With(
@@ -86,7 +86,7 @@ func (r *repository) List(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetAccountTypeByIDRequest,
+	req accounttypeports.GetAccountTypeByIDRequest,
 ) (*accounttype.AccountType, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*accounttype.AccountType, error) {
 		log := r.l.With(
@@ -115,7 +115,7 @@ func (r *repository) GetByID(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListAccountTypesConnectionRequest,
+	req *accounttypeports.ListAccountTypesConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -128,7 +128,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListAccountTypesConnectionRequest,
+	req *accounttypeports.ListAccountTypesConnectionRequest,
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -148,7 +148,7 @@ func applyAccountTypeColumns(q *bun.SelectQuery, columns []string) *bun.SelectQu
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListAccountTypesConnectionRequest,
+	req *accounttypeports.ListAccountTypesConnectionRequest,
 ) (*pagination.CursorListResult[*accounttype.AccountType], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*accounttype.AccountType], error) {
 		log := r.l.With(
@@ -256,7 +256,7 @@ func (r *repository) Update(
 
 func (r *repository) BulkUpdateStatus(
 	ctx context.Context,
-	req *repositories.BulkUpdateAccountTypeStatusRequest,
+	req *accounttypeports.BulkUpdateAccountTypeStatusRequest,
 ) ([]*accounttype.AccountType, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*accounttype.AccountType, error) {
 		log := r.l.With(
@@ -291,7 +291,7 @@ func (r *repository) BulkUpdateStatus(
 
 func (r *repository) GetByIDs(
 	ctx context.Context,
-	req repositories.GetAccountTypesByIDsRequest,
+	req accounttypeports.GetAccountTypesByIDsRequest,
 ) ([]*accounttype.AccountType, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*accounttype.AccountType, error) {
 		log := r.l.With(
@@ -320,7 +320,7 @@ func (r *repository) GetByIDs(
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
-	req *repositories.AccountTypeSelectOptionsRequest,
+	req *accounttypeports.AccountTypeSelectOptionsRequest,
 ) (*pagination.ListResult[*accounttype.AccountType], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*accounttype.AccountType], error) {
 		cols := buncolgen.AccountTypeColumns

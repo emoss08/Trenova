@@ -12,9 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -52,8 +52,8 @@ type PassResult struct {
 // source past its watermark, derives the rows each source row stands for,
 // and appends them per tenant under the tenant's chain lock.
 type Projector struct {
-	ledger   repositories.AIAuditRepository
-	source   repositories.AIAuditSourceRepository
+	ledger   aiauditports.AIAuditRepository
+	source   aiauditports.AIAuditSourceRepository
 	keyring  *Keyring
 	deriver  *deriver
 	metrics  *metrics.AIAudit
@@ -66,8 +66,8 @@ type Projector struct {
 }
 
 type ProjectorParams struct {
-	Ledger    repositories.AIAuditRepository
-	Source    repositories.AIAuditSourceRepository
+	Ledger    aiauditports.AIAuditRepository
+	Source    aiauditports.AIAuditSourceRepository
 	Keyring   *Keyring
 	Redactor  *Redactor
 	Metrics   *metrics.AIAudit
@@ -247,7 +247,7 @@ func (p *Projector) readSource(
 	caughtUp := false
 
 	for range p.maxPages {
-		n, last, err := p.readPage(ctx, current, source, repositories.AIAuditSourcePage{
+		n, last, err := p.readPage(ctx, current, source, aiauditports.AIAuditSourcePage{
 			AfterTS: reached.ts,
 			AfterID: reached.id,
 			UntilTS: until,
@@ -272,7 +272,7 @@ func (p *Projector) readSource(
 
 	overlapFrom := cursor{ts: max(from.ts-int64(p.overlap.Seconds()), 0)}
 	for range p.maxPages {
-		n, last, err := p.readPage(ctx, current, source, repositories.AIAuditSourcePage{
+		n, last, err := p.readPage(ctx, current, source, aiauditports.AIAuditSourcePage{
 			AfterTS: overlapFrom.ts,
 			AfterID: overlapFrom.id,
 			UntilTS: from.ts,
@@ -294,7 +294,7 @@ func (p *Projector) readPage(
 	ctx context.Context,
 	current *pass,
 	source aiaudit.Source,
-	page repositories.AIAuditSourcePage,
+	page aiauditports.AIAuditSourcePage,
 ) (int, cursor, error) {
 	switch source {
 	case aiaudit.SourceAgentRuns:
@@ -407,7 +407,7 @@ func (p *Projector) project(
 			continue
 		}
 
-		appended, err := p.ledger.Append(ctx, &repositories.AppendAIAuditEventsRequest{
+		appended, err := p.ledger.Append(ctx, &aiauditports.AppendAIAuditEventsRequest{
 			TenantInfo: rows.tenant,
 			Events:     events,
 			Sign:       sign,
@@ -503,8 +503,8 @@ func collectNeeds(need *needs, rows *tenantRows) {
 	}
 	for _, event := range rows.events {
 		need.owner(event.OwnerKind, event.OwnerID)
-		if event.Kind == serviceports.AssistantEventToolFinished && event.CallID != "" {
-			need.calls = append(need.calls, repositories.OwnerCall{
+		if event.Kind == agentports.AssistantEventToolFinished && event.CallID != "" {
+			need.calls = append(need.calls, aiauditports.OwnerCall{
 				OwnerID: event.OwnerID,
 				CallID:  event.CallID,
 			})
@@ -537,7 +537,7 @@ func (p *Projector) derive(found *lookups, rows *tenantRows) ([]*aiaudit.AIAudit
 		events = append(events, p.deriver.usageEvent(found, record))
 	}
 	for _, step := range rows.steps {
-		if step.Status == string(serviceports.RunStepStarted) {
+		if step.Status == string(agentports.RunStepStarted) {
 			owner := found.ownerOf(step.OwnerKind, step.OwnerID)
 			if !owner.terminal {
 				continue

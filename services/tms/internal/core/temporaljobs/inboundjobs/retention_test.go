@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
@@ -18,7 +18,7 @@ import (
 )
 
 type listedTenants struct {
-	repositories.TenantSyncRepository
+	tenantports.TenantSyncRepository
 
 	organizations []tenant.SyncOrganization
 }

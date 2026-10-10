@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,12 +17,12 @@ import (
 )
 
 type fakePTORepo struct {
-	repositories.WorkerPTORepository
+	workerports.WorkerPTORepository
 	create       func(ctx context.Context, entity *worker.WorkerPTO) (*worker.WorkerPTO, error)
-	hasOverlap   func(ctx context.Context, req *repositories.PTOOverlapRequest) (bool, error)
-	getByID      func(ctx context.Context, req *repositories.GetPTOByIDRequest) (*worker.WorkerPTO, error)
-	getByIDs     func(ctx context.Context, req *repositories.GetPTOsByIDsRequest) ([]*worker.WorkerPTO, error)
-	updateStatus func(ctx context.Context, req *repositories.UpdatePTOStatusRequest) (*worker.WorkerPTO, error)
+	hasOverlap   func(ctx context.Context, req *workerports.PTOOverlapRequest) (bool, error)
+	getByID      func(ctx context.Context, req *workerports.GetPTOByIDRequest) (*worker.WorkerPTO, error)
+	getByIDs     func(ctx context.Context, req *workerports.GetPTOsByIDsRequest) ([]*worker.WorkerPTO, error)
+	updateStatus func(ctx context.Context, req *workerports.UpdatePTOStatusRequest) (*worker.WorkerPTO, error)
 	update       func(ctx context.Context, entity *worker.WorkerPTO) (*worker.WorkerPTO, error)
 }
 
@@ -42,7 +42,7 @@ func (f *fakePTORepo) Create(
 
 func (f *fakePTORepo) HasOverlap(
 	ctx context.Context,
-	req *repositories.PTOOverlapRequest,
+	req *workerports.PTOOverlapRequest,
 ) (bool, error) {
 	if f.hasOverlap == nil {
 		return false, nil
@@ -52,33 +52,33 @@ func (f *fakePTORepo) HasOverlap(
 
 func (f *fakePTORepo) GetByID(
 	ctx context.Context,
-	req *repositories.GetPTOByIDRequest,
+	req *workerports.GetPTOByIDRequest,
 ) (*worker.WorkerPTO, error) {
 	return f.getByID(ctx, req)
 }
 
 func (f *fakePTORepo) GetByIDs(
 	ctx context.Context,
-	req *repositories.GetPTOsByIDsRequest,
+	req *workerports.GetPTOsByIDsRequest,
 ) ([]*worker.WorkerPTO, error) {
 	return f.getByIDs(ctx, req)
 }
 
 func (f *fakePTORepo) UpdateStatus(
 	ctx context.Context,
-	req *repositories.UpdatePTOStatusRequest,
+	req *workerports.UpdatePTOStatusRequest,
 ) (*worker.WorkerPTO, error) {
 	return f.updateStatus(ctx, req)
 }
 
 type fakeAuditService struct {
-	serviceports.AuditService
-	logged []*serviceports.LogActionParams
+	auditports.AuditService
+	logged []*auditports.LogActionParams
 }
 
 func (f *fakeAuditService) LogAction(
-	params *serviceports.LogActionParams,
-	_ ...serviceports.LogOption,
+	params *auditports.LogActionParams,
+	_ ...auditports.LogOption,
 ) error {
 	f.logged = append(f.logged, params)
 	return nil
@@ -157,7 +157,7 @@ func TestCreatePersistsValidPTO(t *testing.T) {
 func TestValidateChartRequest(t *testing.T) {
 	t.Run("valid request", func(t *testing.T) {
 		svc := &Service{}
-		err := svc.validateChartRequest(&repositories.PTOChartRequest{
+		err := svc.validateChartRequest(&workerports.PTOChartRequest{
 			Filter:        &pagination.QueryOptions{},
 			StartDateFrom: 1735689600,
 			StartDateTo:   1736294400,
@@ -168,7 +168,7 @@ func TestValidateChartRequest(t *testing.T) {
 
 	t.Run("rejects invalid range and invalid type", func(t *testing.T) {
 		svc := &Service{}
-		err := svc.validateChartRequest(&repositories.PTOChartRequest{
+		err := svc.validateChartRequest(&workerports.PTOChartRequest{
 			Filter:        &pagination.QueryOptions{},
 			StartDateFrom: 1736294400,
 			StartDateTo:   1735689600,
@@ -185,7 +185,7 @@ func TestValidateChartRequest(t *testing.T) {
 
 	t.Run("rejects range over 366 days", func(t *testing.T) {
 		svc := &Service{}
-		err := svc.validateChartRequest(&repositories.PTOChartRequest{
+		err := svc.validateChartRequest(&workerports.PTOChartRequest{
 			Filter:        &pagination.QueryOptions{},
 			StartDateFrom: 1704067200,
 			StartDateTo:   1735776002,
@@ -196,7 +196,7 @@ func TestValidateChartRequest(t *testing.T) {
 
 	t.Run("rejects invalid worker ID", func(t *testing.T) {
 		svc := &Service{}
-		err := svc.validateChartRequest(&repositories.PTOChartRequest{
+		err := svc.validateChartRequest(&workerports.PTOChartRequest{
 			Filter:        &pagination.QueryOptions{},
 			StartDateFrom: 1735689600,
 			StartDateTo:   1736294400,
@@ -223,7 +223,7 @@ func tenantFor(pto *worker.WorkerPTO) pagination.TenantInfo {
 }
 
 func applyStatus(
-	req *repositories.UpdatePTOStatusRequest,
+	req *workerports.UpdatePTOStatusRequest,
 	current *worker.WorkerPTO,
 ) *worker.WorkerPTO {
 	updated := *current
@@ -251,7 +251,7 @@ func TestCreateRejectsOverlappingPTO(t *testing.T) {
 		repo: &fakePTORepo{
 			hasOverlap: func(
 				_ context.Context,
-				req *repositories.PTOOverlapRequest,
+				req *workerports.PTOOverlapRequest,
 			) (bool, error) {
 				assert.Equal(t, int64(1767225600), req.StartDate)
 				assert.Equal(t, int64(1767398400), req.EndDate)
@@ -285,7 +285,7 @@ func TestRejectRequiresReason(t *testing.T) {
 		repo: &fakePTORepo{
 			getByID: func(
 				_ context.Context,
-				_ *repositories.GetPTOByIDRequest,
+				_ *workerports.GetPTOByIDRequest,
 			) (*worker.WorkerPTO, error) {
 				t.Fatal("reject without a reason must not read the repository")
 				return nil, nil
@@ -294,7 +294,7 @@ func TestRejectRequiresReason(t *testing.T) {
 	}
 
 	current := storedPTO(worker.PTOStatusRequested)
-	_, err := svc.Reject(t.Context(), &repositories.UpdatePTOStatusRequest{
+	_, err := svc.Reject(t.Context(), &workerports.UpdatePTOStatusRequest{
 		ID:         current.ID,
 		TenantInfo: tenantFor(current),
 		UserID:     pulid.MustNew("usr_"),
@@ -313,7 +313,7 @@ func TestTransitionRefusesInvalidSourceStatus(t *testing.T) {
 	cases := []struct {
 		name   string
 		from   worker.PTOStatus
-		action func(*Service, context.Context, *repositories.UpdatePTOStatusRequest) (*worker.WorkerPTO, error)
+		action func(*Service, context.Context, *workerports.UpdatePTOStatusRequest) (*worker.WorkerPTO, error)
 	}{
 		{"approve rejected", worker.PTOStatusRejected, (*Service).Approve},
 		{"approve cancelled", worker.PTOStatusCancelled, (*Service).Approve},
@@ -334,13 +334,13 @@ func TestTransitionRefusesInvalidSourceStatus(t *testing.T) {
 				repo: &fakePTORepo{
 					getByID: func(
 						_ context.Context,
-						_ *repositories.GetPTOByIDRequest,
+						_ *workerports.GetPTOByIDRequest,
 					) (*worker.WorkerPTO, error) {
 						return current, nil
 					},
 					updateStatus: func(
 						_ context.Context,
-						_ *repositories.UpdatePTOStatusRequest,
+						_ *workerports.UpdatePTOStatusRequest,
 					) (*worker.WorkerPTO, error) {
 						updateCalled = true
 						return nil, nil
@@ -348,7 +348,7 @@ func TestTransitionRefusesInvalidSourceStatus(t *testing.T) {
 				},
 			}
 
-			_, err := tc.action(svc, t.Context(), &repositories.UpdatePTOStatusRequest{
+			_, err := tc.action(svc, t.Context(), &workerports.UpdatePTOStatusRequest{
 				ID:         current.ID,
 				TenantInfo: tenantFor(current),
 				UserID:     pulid.MustNew("usr_"),
@@ -370,19 +370,19 @@ func TestTransitionCarriesReasonVersionAndAudit(t *testing.T) {
 
 	current := storedPTO(worker.PTOStatusRequested)
 	audit := &fakeAuditService{}
-	var captured *repositories.UpdatePTOStatusRequest
+	var captured *workerports.UpdatePTOStatusRequest
 	svc := &Service{
 		l: zap.NewNop(),
 		repo: &fakePTORepo{
 			getByID: func(
 				_ context.Context,
-				_ *repositories.GetPTOByIDRequest,
+				_ *workerports.GetPTOByIDRequest,
 			) (*worker.WorkerPTO, error) {
 				return current, nil
 			},
 			updateStatus: func(
 				_ context.Context,
-				req *repositories.UpdatePTOStatusRequest,
+				req *workerports.UpdatePTOStatusRequest,
 			) (*worker.WorkerPTO, error) {
 				captured = req
 				return applyStatus(req, current), nil
@@ -392,7 +392,7 @@ func TestTransitionCarriesReasonVersionAndAudit(t *testing.T) {
 	}
 
 	actor := pulid.MustNew("usr_")
-	updated, err := svc.Reject(t.Context(), &repositories.UpdatePTOStatusRequest{
+	updated, err := svc.Reject(t.Context(), &workerports.UpdatePTOStatusRequest{
 		ID:         current.ID,
 		TenantInfo: tenantFor(current),
 		UserID:     actor,
@@ -423,13 +423,13 @@ func TestCancelApprovedPTO(t *testing.T) {
 		repo: &fakePTORepo{
 			getByID: func(
 				_ context.Context,
-				_ *repositories.GetPTOByIDRequest,
+				_ *workerports.GetPTOByIDRequest,
 			) (*worker.WorkerPTO, error) {
 				return current, nil
 			},
 			updateStatus: func(
 				_ context.Context,
-				req *repositories.UpdatePTOStatusRequest,
+				req *workerports.UpdatePTOStatusRequest,
 			) (*worker.WorkerPTO, error) {
 				return applyStatus(req, current), nil
 			},
@@ -437,7 +437,7 @@ func TestCancelApprovedPTO(t *testing.T) {
 		auditService: audit,
 	}
 
-	updated, err := svc.Cancel(t.Context(), &repositories.UpdatePTOStatusRequest{
+	updated, err := svc.Cancel(t.Context(), &workerports.UpdatePTOStatusRequest{
 		ID:         current.ID,
 		TenantInfo: tenantFor(current),
 		UserID:     pulid.MustNew("usr_"),
@@ -455,23 +455,23 @@ func TestBulkActionValidation(t *testing.T) {
 	svc := &Service{l: zap.NewNop(), repo: &fakePTORepo{}}
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 
-	_, err := svc.BulkAction(t.Context(), &serviceports.PTOBulkActionRequest{
+	_, err := svc.BulkAction(t.Context(), &workerports.PTOBulkActionRequest{
 		TenantInfo: tenant,
-		Action:     serviceports.PTOBulkActionApprove,
+		Action:     workerports.PTOBulkActionApprove,
 	})
 	require.Error(t, err, "empty selection")
 
-	_, err = svc.BulkAction(t.Context(), &serviceports.PTOBulkActionRequest{
+	_, err = svc.BulkAction(t.Context(), &workerports.PTOBulkActionRequest{
 		TenantInfo: tenant,
 		PTOIDs:     []pulid.ID{pulid.MustNew("wrkpto_")},
-		Action:     serviceports.PTOBulkActionType("Archive"),
+		Action:     workerports.PTOBulkActionType("Archive"),
 	})
 	require.Error(t, err, "unknown action")
 
-	_, err = svc.BulkAction(t.Context(), &serviceports.PTOBulkActionRequest{
+	_, err = svc.BulkAction(t.Context(), &workerports.PTOBulkActionRequest{
 		TenantInfo: tenant,
 		PTOIDs:     []pulid.ID{pulid.MustNew("wrkpto_")},
-		Action:     serviceports.PTOBulkActionReject,
+		Action:     workerports.PTOBulkActionReject,
 	})
 	require.Error(t, err, "reject without reason")
 
@@ -491,27 +491,27 @@ func TestBulkActionReportsPerItemOutcomes(t *testing.T) {
 	alreadyRejected.BusinessUnitID = requested.BusinessUnitID
 
 	audit := &fakeAuditService{}
-	var updates []*repositories.UpdatePTOStatusRequest
+	var updates []*workerports.UpdatePTOStatusRequest
 	svc := &Service{
 		l: zap.NewNop(),
 		repo: &fakePTORepo{
 			getByIDs: func(
 				_ context.Context,
-				req *repositories.GetPTOsByIDsRequest,
+				req *workerports.GetPTOsByIDsRequest,
 			) ([]*worker.WorkerPTO, error) {
 				assert.Len(t, req.IDs, 3)
 				return []*worker.WorkerPTO{requested, alreadyRejected}, nil
 			},
 			getByID: func(
 				_ context.Context,
-				_ *repositories.GetPTOByIDRequest,
+				_ *workerports.GetPTOByIDRequest,
 			) (*worker.WorkerPTO, error) {
 				t.Fatal("bulk actions must reuse the batch lookup")
 				return nil, nil
 			},
 			updateStatus: func(
 				_ context.Context,
-				req *repositories.UpdatePTOStatusRequest,
+				req *workerports.UpdatePTOStatusRequest,
 			) (*worker.WorkerPTO, error) {
 				updates = append(updates, req)
 				return applyStatus(req, requested), nil
@@ -520,10 +520,10 @@ func TestBulkActionReportsPerItemOutcomes(t *testing.T) {
 		auditService: audit,
 	}
 
-	payload, err := svc.BulkAction(t.Context(), &serviceports.PTOBulkActionRequest{
+	payload, err := svc.BulkAction(t.Context(), &workerports.PTOBulkActionRequest{
 		TenantInfo: tenant,
 		PTOIDs:     []pulid.ID{requested.ID, alreadyRejected.ID, missing},
-		Action:     serviceports.PTOBulkActionApprove,
+		Action:     workerports.PTOBulkActionApprove,
 		UserID:     tenant.UserID,
 	})
 	require.NoError(t, err)
@@ -578,7 +578,7 @@ func TestUpdateRefusesNonRequestedPTO(t *testing.T) {
 		repo: &fakePTORepo{
 			getByID: func(
 				_ context.Context,
-				_ *repositories.GetPTOByIDRequest,
+				_ *workerports.GetPTOByIDRequest,
 			) (*worker.WorkerPTO, error) {
 				return current, nil
 			},
@@ -608,20 +608,20 @@ func TestUpdateExcludesItselfFromOverlapAndAudits(t *testing.T) {
 
 	current := storedPTO(worker.PTOStatusRequested)
 	audit := &fakeAuditService{}
-	var overlapReq *repositories.PTOOverlapRequest
+	var overlapReq *workerports.PTOOverlapRequest
 	var persisted *worker.WorkerPTO
 	svc := &Service{
 		l: zap.NewNop(),
 		repo: &fakePTORepo{
 			getByID: func(
 				_ context.Context,
-				_ *repositories.GetPTOByIDRequest,
+				_ *workerports.GetPTOByIDRequest,
 			) (*worker.WorkerPTO, error) {
 				return current, nil
 			},
 			hasOverlap: func(
 				_ context.Context,
-				req *repositories.PTOOverlapRequest,
+				req *workerports.PTOOverlapRequest,
 			) (bool, error) {
 				overlapReq = req
 				return false, nil
@@ -674,13 +674,13 @@ func TestUpdateRejectsOverlap(t *testing.T) {
 		repo: &fakePTORepo{
 			getByID: func(
 				_ context.Context,
-				_ *repositories.GetPTOByIDRequest,
+				_ *workerports.GetPTOByIDRequest,
 			) (*worker.WorkerPTO, error) {
 				return current, nil
 			},
 			hasOverlap: func(
 				_ context.Context,
-				_ *repositories.PTOOverlapRequest,
+				_ *workerports.PTOOverlapRequest,
 			) (bool, error) {
 				return true, nil
 			},

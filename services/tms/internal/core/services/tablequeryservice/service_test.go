@@ -6,7 +6,8 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
@@ -32,37 +33,37 @@ one condition the person cared about is the one that went missing.
 */
 
 type stubCompletion struct {
-	serviceports.CompletionService
+	agentports.CompletionService
 	reply string
 	err   error
-	saw   *serviceports.StructuredCompletionRequest
+	saw   *agentports.StructuredCompletionRequest
 }
 
 func (s *stubCompletion) CompleteStructured(
 	_ context.Context,
-	req *serviceports.StructuredCompletionRequest,
-) (*serviceports.StructuredCompletionResult, error) {
+	req *agentports.StructuredCompletionRequest,
+) (*agentports.StructuredCompletionResult, error) {
 	s.saw = req
 	if s.err != nil {
 		return nil, s.err
 	}
 
-	return &serviceports.StructuredCompletionResult{Text: s.reply, ModelIdentifier: "stub"}, nil
+	return &agentports.StructuredCompletionResult{Text: s.reply, ModelIdentifier: "stub"}, nil
 }
 
 type stubPermissions struct {
-	serviceports.PermissionEngine
+	permissionports.PermissionEngine
 	allowed bool
 	asked   string
 }
 
 func (s *stubPermissions) Check(
 	_ context.Context,
-	req *serviceports.PermissionCheckRequest,
-) (*serviceports.PermissionCheckResult, error) {
+	req *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
 	s.asked = req.Resource
 
-	return &serviceports.PermissionCheckResult{Allowed: s.allowed}, nil
+	return &permissionports.PermissionCheckResult{Allowed: s.allowed}, nil
 }
 
 func shipmentCatalog() *filtercatalog.Catalog {
@@ -97,7 +98,7 @@ func newService(reply string, allowed bool) (*Service, *stubCompletion, *stubPer
 
 func request(prompt string) *ComposeRequest {
 	return &ComposeRequest{
-		Actor:    &serviceports.RequestActor{},
+		Actor:    &permissionports.RequestActor{},
 		Resource: permission.ResourceShipment,
 		Prompt:   prompt,
 		Timezone: "UTC",
@@ -316,7 +317,7 @@ func TestCompose_ShowsTheModelTheCatalogueAndFencesTheQuestion(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, completion.saw)
 
-	sections := map[string]serviceports.ContextSection{}
+	sections := map[string]agentports.ContextSection{}
 	for _, section := range completion.saw.Context.Sections {
 		sections[section.Title] = section
 	}

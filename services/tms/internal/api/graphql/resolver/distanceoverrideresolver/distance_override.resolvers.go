@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/distanceoverride"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/places/ports/distanceoverrideports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -29,7 +29,7 @@ func (r *QueryResolver) DistanceOverrides(ctx context.Context, input gqlmodel.Da
 
 	result, err := r.DistanceOverrideService.ListConnection(
 		ctx,
-		&repositories.ListDistanceOverrideConnectionRequest{
+		&distanceoverrideports.ListDistanceOverrideConnectionRequest{
 			Filter: tableInput.Filter,
 			Cursor: tableInput.Cursor,
 		},
@@ -52,7 +52,7 @@ func (r *QueryResolver) DistanceOverride(ctx context.Context, id string) (*dista
 		return nil, err
 	}
 
-	return r.DistanceOverrideService.Get(ctx, repositories.GetDistanceOverrideByIDRequest{
+	return r.DistanceOverrideService.Get(ctx, distanceoverrideports.GetDistanceOverrideByIDRequest{
 		ID:         overrideID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})

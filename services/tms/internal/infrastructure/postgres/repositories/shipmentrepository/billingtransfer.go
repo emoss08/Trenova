@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,12 +20,12 @@ func billingTransferCandidatePredicate(q *bun.SelectQuery) *bun.SelectQuery {
 
 func (r *repository) ListBillingTransferCandidateIDs(
 	ctx context.Context,
-	req *repositories.ListBillingTransferCandidateIDsRequest,
-) (*repositories.BillingTransferCandidateIDsResult, error) {
+	req *shipmentports.ListBillingTransferCandidateIDsQuery,
+) (*shipmentports.BillingTransferCandidateIDsResult, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*repositories.BillingTransferCandidateIDsResult, error) {
+		func(ctx context.Context) (*shipmentports.BillingTransferCandidateIDsResult, error) {
 			dba := r.db.DBForContext(ctx)
 			sp := buncolgen.ShipmentColumns
 
@@ -51,7 +51,7 @@ func (r *repository) ListBillingTransferCandidateIDs(
 				return nil, err
 			}
 
-			result := &repositories.BillingTransferCandidateIDsResult{
+			result := &shipmentports.BillingTransferCandidateIDsResult{
 				IDs:        make([]pulid.ID, 0, min(total, req.Limit)),
 				TotalCount: total,
 			}

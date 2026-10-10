@@ -10,13 +10,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/fiscalcloseblockers"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -33,20 +34,20 @@ type Params struct {
 
 	Logger         *zap.Logger
 	DB             *postgres.Connection
-	Repo           repositories.FiscalPeriodRepository
-	FiscalYearRepo repositories.FiscalYearRepository
+	Repo           fiscalperiodports.FiscalPeriodRepository
+	FiscalYearRepo fiscalyearports.FiscalYearRepository
 	Validator      *Validator
-	AuditService   services.AuditService
+	AuditService   auditports.AuditService
 	Policy         *accountingcontrolpolicyservice.Service
 }
 
 type Service struct {
 	l              *zap.Logger
 	db             *postgres.Connection
-	repo           repositories.FiscalPeriodRepository
-	fiscalYearRepo repositories.FiscalYearRepository
+	repo           fiscalperiodports.FiscalPeriodRepository
+	fiscalYearRepo fiscalyearports.FiscalYearRepository
 	validator      *Validator
-	auditService   services.AuditService
+	auditService   auditports.AuditService
 	policy         *accountingcontrolpolicyservice.Service
 }
 
@@ -66,21 +67,21 @@ func New(p Params) *Service {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListFiscalPeriodsRequest,
+	req *fiscalperiodports.ListFiscalPeriodsRequest,
 ) (*pagination.ListResult[*fiscalperiod.FiscalPeriod], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	req repositories.GetFiscalPeriodByIDRequest,
+	req fiscalperiodports.GetFiscalPeriodByIDRequest,
 ) (*fiscalperiod.FiscalPeriod, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) GetCloseBlockers(
 	ctx context.Context,
-	req repositories.GetFiscalPeriodByIDRequest,
+	req fiscalperiodports.GetFiscalPeriodByIDRequest,
 ) (*fiscalclose.Result, error) {
 	entity, err := s.repo.GetByID(ctx, req)
 	if err != nil {
@@ -89,7 +90,7 @@ func (s *Service) GetCloseBlockers(
 
 	periods, err := s.repo.ListByFiscalYearID(
 		ctx,
-		repositories.ListByFiscalYearIDRequest{
+		fiscalperiodports.ListByFiscalYearIDRequest{
 			FiscalYearID: entity.FiscalYearID,
 			OrgID:        entity.OrganizationID,
 			BuID:         entity.BusinessUnitID,
@@ -142,7 +143,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceFiscalPeriod,
 		ResourceID:     createdEntity.GetID().String(),
 		Operation:      permission.OpCreate,
@@ -169,7 +170,7 @@ func (s *Service) Update(
 		zap.String("userID", userID.String()),
 	)
 
-	original, err := s.repo.GetByID(ctx, repositories.GetFiscalPeriodByIDRequest{
+	original, err := s.repo.GetByID(ctx, fiscalperiodports.GetFiscalPeriodByIDRequest{
 		ID: entity.GetID(),
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.GetOrganizationID(),
@@ -197,7 +198,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceFiscalPeriod,
 		ResourceID:     updatedEntity.GetID().String(),
 		Operation:      permission.OpUpdate,
@@ -218,7 +219,7 @@ func (s *Service) Update(
 
 func (s *Service) Delete(
 	ctx context.Context,
-	req repositories.DeleteFiscalPeriodRequest,
+	req fiscalperiodports.DeleteFiscalPeriodRequest,
 	userID pulid.ID,
 ) error {
 	log := s.l.With(
@@ -227,7 +228,7 @@ func (s *Service) Delete(
 		zap.String("userID", userID.String()),
 	)
 
-	existing, err := s.repo.GetByID(ctx, repositories.GetFiscalPeriodByIDRequest(req))
+	existing, err := s.repo.GetByID(ctx, fiscalperiodports.GetFiscalPeriodByIDRequest(req))
 	if err != nil {
 		log.Error("failed to get fiscal period for delete", zap.Error(err))
 		return err
@@ -242,7 +243,7 @@ func (s *Service) Delete(
 		return err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceFiscalPeriod,
 		ResourceID:     existing.GetID().String(),
 		Operation:      permission.OpDelete,
@@ -387,7 +388,7 @@ func activateTransition() transition {
 
 func (s *Service) Close(
 	ctx context.Context,
-	req repositories.CloseFiscalPeriodRequest, //nolint:gocritic // stable API shape
+	req fiscalperiodports.CloseFiscalPeriodRequest, //nolint:gocritic // stable API shape
 	userID pulid.ID,
 ) (*fiscalperiod.FiscalPeriod, error) {
 	t := s.closeTransition()
@@ -402,7 +403,7 @@ func (s *Service) Close(
 
 func (s *Service) Reopen(
 	ctx context.Context,
-	req repositories.ReopenFiscalPeriodRequest, //nolint:gocritic // stable API shape
+	req fiscalperiodports.ReopenFiscalPeriodRequest, //nolint:gocritic // stable API shape
 	userID pulid.ID,
 ) (*fiscalperiod.FiscalPeriod, error) {
 	t := reopenTransition(req.ReopenReason)
@@ -418,7 +419,7 @@ func (s *Service) Reopen(
 
 func (s *Service) Lock(
 	ctx context.Context,
-	req *repositories.LockFiscalPeriodRequest,
+	req *fiscalperiodports.LockFiscalPeriodRequest,
 	userID pulid.ID,
 ) (*fiscalperiod.FiscalPeriod, error) {
 	t := lockTransition()
@@ -433,7 +434,7 @@ func (s *Service) Lock(
 
 func (s *Service) Unlock(
 	ctx context.Context,
-	req repositories.UnlockFiscalPeriodRequest,
+	req fiscalperiodports.UnlockFiscalPeriodRequest,
 	userID pulid.ID,
 ) (*fiscalperiod.FiscalPeriod, error) {
 	t := unlockTransition()
@@ -446,7 +447,7 @@ func (s *Service) Unlock(
 
 func (s *Service) Activate(
 	ctx context.Context,
-	req repositories.ActivateFiscalPeriodRequest,
+	req fiscalperiodports.ActivateFiscalPeriodRequest,
 	userID pulid.ID,
 ) (*fiscalperiod.FiscalPeriod, error) {
 	t := activateTransition()
@@ -494,7 +495,7 @@ func (s *Service) runTransition(
 	} else {
 		err = s.db.WithTx(
 			ctx,
-			ports.TxOptions{LockTimeout: fiscalPeriodLockTimeout},
+			kernelports.TxOptions{LockTimeout: fiscalPeriodLockTimeout},
 			func(txCtx context.Context, _ bun.Tx) error {
 				return run(txCtx, true)
 			},
@@ -511,7 +512,7 @@ func (s *Service) runTransition(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceFiscalPeriod,
 		ResourceID:     updated.GetID().String(),
 		Operation:      t.operation,
@@ -536,18 +537,18 @@ func (s *Service) loadTransitionState(
 	tenantInfo pagination.TenantInfo,
 	forUpdate bool,
 ) (transitionState, error) {
-	periodReq := repositories.GetFiscalPeriodByIDRequest{ID: id, TenantInfo: tenantInfo}
+	periodReq := fiscalperiodports.GetFiscalPeriodByIDRequest{ID: id, TenantInfo: tenantInfo}
 
 	probe, err := s.repo.GetByID(ctx, periodReq)
 	if err != nil {
 		return transitionState{}, err
 	}
 
-	yearReq := repositories.GetFiscalYearByIDRequest{
+	yearReq := fiscalyearports.GetFiscalYearByIDRequest{
 		ID:         probe.FiscalYearID,
 		TenantInfo: tenantInfo,
 	}
-	periodsReq := repositories.ListByFiscalYearIDRequest{
+	periodsReq := fiscalperiodports.ListByFiscalYearIDRequest{
 		FiscalYearID: probe.FiscalYearID,
 		OrgID:        tenantInfo.OrgID,
 		BuID:         tenantInfo.BuID,

@@ -9,10 +9,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/reporting/canned"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -46,13 +47,13 @@ type reportDefinitionWriter interface {
 	ValidateDefinition(ctx context.Context, req *reporting.SaveDefinitionRequest) error
 }
 
-func reportingRequestFrom(params serviceports.ToolExecuteParams) reporting.Request {
+func reportingRequestFrom(params agentports.ToolExecuteParams) reporting.Request {
 	tenant := tenantFrom(params)
 	tenant.UserID = params.Actor.PersonUserID()
 
 	return reporting.Request{
 		TenantInfo: tenant,
-		Principal: serviceports.PrincipalInfo{
+		Principal: kernelports.PrincipalInfo{
 			Type:     params.Actor.PrincipalType,
 			ID:       params.Actor.PrincipalID,
 			UserID:   params.Actor.UserID,
@@ -235,7 +236,7 @@ type createReportTool struct {
 	reports reportDefinitionWriter
 }
 
-func newCreateReportTool(reports reportDefinitionWriter) serviceports.AgentTool {
+func newCreateReportTool(reports reportDefinitionWriter) agentports.AgentTool {
 	return &createReportTool{reports: reports}
 }
 
@@ -307,8 +308,8 @@ func (t *createReportTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *createReportTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *createReportTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:                t.Name(),
 		Kind:                agent.ToolKindAction,
 		Resource:            permission.ResourceReport,
@@ -330,7 +331,7 @@ func (t *createReportTool) Policy() serviceports.ToolPolicy {
 
 func (t *createReportTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -343,7 +344,7 @@ func (t *createReportTool) Execute(
 // person approved it.
 func (t *createReportTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	save, err := t.prepare(params)
 	if err != nil {
@@ -354,7 +355,7 @@ func (t *createReportTool) Validate(
 }
 
 func (t *createReportTool) prepare(
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) (*reporting.SaveDefinitionRequest, error) {
 	if err := guardExecute(t, params); err != nil {
 		return nil, err
@@ -392,7 +393,7 @@ type updateReportTool struct {
 	reports reportDefinitionWriter
 }
 
-func newUpdateReportTool(reports reportDefinitionWriter) serviceports.AgentTool {
+func newUpdateReportTool(reports reportDefinitionWriter) agentports.AgentTool {
 	return &updateReportTool{reports: reports}
 }
 
@@ -434,8 +435,8 @@ func (t *updateReportTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *updateReportTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *updateReportTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceReport,
@@ -452,13 +453,13 @@ func (t *updateReportTool) Policy() serviceports.ToolPolicy {
 	}
 }
 
-func (t *updateReportTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *updateReportTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, "definitionId", permission.ResourceReport)
 }
 
 func (t *updateReportTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	save, _, err := t.prepare(ctx, params)
 	if err != nil {
@@ -475,7 +476,7 @@ func (t *updateReportTool) Execute(
 // to approve it.
 func (t *updateReportTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	save, _, err := t.prepare(ctx, params)
 	if err != nil {
@@ -490,7 +491,7 @@ func (t *updateReportTool) Validate(
 
 func (t *updateReportTool) prepare(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) (*reporting.SaveDefinitionRequest, *report.ReportDefinition, error) {
 	if err := guardExecute(t, params); err != nil {
 		return nil, nil, err
@@ -612,7 +613,7 @@ type forkReportTool struct {
 	reports reportDefinitionWriter
 }
 
-func newForkReportTool(reports reportDefinitionWriter) serviceports.AgentTool {
+func newForkReportTool(reports reportDefinitionWriter) agentports.AgentTool {
 	return &forkReportTool{reports: reports}
 }
 
@@ -644,8 +645,8 @@ func (t *forkReportTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *forkReportTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *forkReportTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceReport,
@@ -664,7 +665,7 @@ func (t *forkReportTool) Policy() serviceports.ToolPolicy {
 
 func (t *forkReportTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -675,7 +676,7 @@ func (t *forkReportTool) Execute(
 // describe_report, run_report and update_report take.
 func (t *forkReportTool) ExecuteWithResult(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) (*agent.ToolExecutionResult, error) {
 	if err := guardExecute(t, params); err != nil {
 		return nil, err

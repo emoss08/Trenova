@@ -8,16 +8,16 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-type fakePolicies map[string]serviceports.ToolPolicy
+type fakePolicies map[string]agentports.ToolPolicy
 
-func (f fakePolicies) Get(name string) (serviceports.ToolPolicy, bool) {
+func (f fakePolicies) Get(name string) (agentports.ToolPolicy, bool) {
 	policy, ok := f[name]
 
 	return policy, ok
@@ -90,12 +90,12 @@ func TestRedactor_DropsTheSelfScopeOwner(t *testing.T) {
 	t.Parallel()
 
 	redacted, err := testRedactor().Arguments("pin_my_home", map[string]any{
-		serviceports.SelfScopeOwnerParam: "usr_01J9AAAAAAAAAAAAAAAAAAAAAA",
-		"widget":                         "shipments",
+		agentports.SelfScopeOwnerParam: "usr_01J9AAAAAAAAAAAAAAAAAAAAAA",
+		"widget":                       "shipments",
 	})
 	require.NoError(t, err)
 
-	assert.NotContains(t, redacted.Values, serviceports.SelfScopeOwnerParam)
+	assert.NotContains(t, redacted.Values, agentports.SelfScopeOwnerParam)
 	assert.Equal(t, "shipments", redacted.Values["widget"])
 }
 

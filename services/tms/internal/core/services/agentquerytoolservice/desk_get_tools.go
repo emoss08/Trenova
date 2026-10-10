@@ -7,10 +7,15 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -47,18 +52,18 @@ type currentlyBillable struct {
 }
 
 func provideGetDetentionOccurrenceTool(
-	repo repositories.DetentionOccurrenceRepository,
-	permissions serviceports.PermissionEngine,
+	repo detentionports.DetentionOccurrenceRepository,
+	permissions permissionports.PermissionEngine,
 	detentions *detentionservice.Service,
-) serviceports.AgentQueryTool {
+) agentports.AgentQueryTool {
 	return newGetDetentionOccurrenceTool(repo, permissions, detentions)
 }
 
 func newGetDetentionOccurrenceTool(
-	repo repositories.DetentionOccurrenceRepository,
-	permissions serviceports.PermissionEngine,
+	repo detentionports.DetentionOccurrenceRepository,
+	permissions permissionports.PermissionEngine,
 	pricer openClockPricer,
-) serviceports.AgentQueryTool {
+) agentports.AgentQueryTool {
 	return newGetTool(&getSpec{
 		name:     "get_detention_occurrence",
 		entity:   "detention occurrence",
@@ -72,7 +77,7 @@ func newGetDetentionOccurrenceTool(
 		paramName: "occurrenceId",
 		idSource:  "from list_detention_desk, the page you are on, or this run's subject",
 		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
-			occurrence, err := repo.GetByID(ctx, &repositories.GetDetentionOccurrenceByIDRequest{
+			occurrence, err := repo.GetByID(ctx, &detentionports.GetDetentionOccurrenceByIDRequest{
 				OccurrenceID:    id,
 				TenantInfo:      tenant,
 				IncludeEvidence: true,
@@ -103,9 +108,9 @@ func newGetDetentionOccurrenceTool(
 }
 
 func newGetCarrierIntelEventTool(
-	repo repositories.CarrierIntelEventRepository,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	repo carrierintelports.CarrierIntelEventRepository,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newGetTool(&getSpec{
 		name:   "get_carrier_intel_event",
 		entity: "carrier intelligence event",
@@ -136,9 +141,9 @@ func newGetCarrierIntelEventTool(
 }
 
 func newGetServiceFailureTool(
-	repo repositories.ServiceFailureRepository,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	repo servicefailureports.ServiceFailureRepository,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newGetTool(&getSpec{
 		name:     "get_service_failure",
 		entity:   "service failure",
@@ -149,7 +154,7 @@ func newGetServiceFailureTool(
 		paramName: "serviceFailureId",
 		idSource:  "from list_service_failures or the page you are on",
 		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
-			return repo.GetByID(ctx, &repositories.GetServiceFailureByIDRequest{
+			return repo.GetByID(ctx, &servicefailureports.GetServiceFailureByIDRequest{
 				ID:         id,
 				TenantInfo: tenant,
 			})
@@ -162,14 +167,14 @@ func newGetServiceFailureTool(
 // resource keeps at the Restricted tier: it reaches a model only for a person
 // whose role reaches it, and an agent principal never sees it.
 type getWorkerCredentialTool struct {
-	repo   repositories.WorkerCredentialRepository
+	repo   workerports.WorkerCredentialRepository
 	access fieldAccess
 }
 
 func newGetWorkerCredentialTool(
-	repo repositories.WorkerCredentialRepository,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	repo workerports.WorkerCredentialRepository,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &getWorkerCredentialTool{repo: repo, access: newFieldAccess(permissions)}
 }
 
@@ -197,7 +202,7 @@ func (t *getWorkerCredentialTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *getWorkerCredentialTool) Policy() serviceports.ToolPolicy {
+func (t *getWorkerCredentialTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceWorkerCredential,
 	})
@@ -205,7 +210,7 @@ func (t *getWorkerCredentialTool) Policy() serviceports.ToolPolicy {
 
 func (t *getWorkerCredentialTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -216,7 +221,7 @@ func (t *getWorkerCredentialTool) Query(
 		return nil, err
 	}
 
-	entity, err := t.repo.GetByID(ctx, &repositories.GetWorkerCredentialByIDRequest{
+	entity, err := t.repo.GetByID(ctx, &workerports.GetWorkerCredentialByIDRequest{
 		ID: credentialID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  params.OrganizationID,
@@ -325,9 +330,9 @@ func updatePreferenceWarning(preference customer.StatusUpdatePreference) string 
 // does not need — including the billing addresses, which are not who asked
 // for status updates.
 func newGetCustomerUpdatePreferencesTool(
-	repo repositories.CustomerRepository,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	repo customerports.CustomerRepository,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newGetTool(&getSpec{
 		name:     "get_customer_update_preferences",
 		entity:   "customer",
@@ -343,10 +348,10 @@ func newGetCustomerUpdatePreferencesTool(
 		paramName: "customerId",
 		idSource:  "from list_customers or the customerId on get_shipment",
 		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
-			entity, err := repo.GetByID(ctx, repositories.GetCustomerByIDRequest{
+			entity, err := repo.GetByID(ctx, customerports.GetCustomerByIDRequest{
 				ID:         id,
 				TenantInfo: tenant,
-				CustomerFilterOptions: repositories.CustomerFilterOptions{
+				CustomerFilterOptions: customerports.CustomerFilterOptions{
 					IncludeEmailProfile: true,
 				},
 			})

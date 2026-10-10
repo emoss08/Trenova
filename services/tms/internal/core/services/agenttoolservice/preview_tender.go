@@ -10,21 +10,21 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/tenderservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/shopspring/decimal"
 )
 
 var (
-	_ serviceports.ToolPreviewer = (*tenderToRoutingGuideTool)(nil)
-	_ serviceports.ToolPreviewer = (*tenderToCarriersTool)(nil)
+	_ agentports.ToolPreviewer = (*tenderToRoutingGuideTool)(nil)
+	_ agentports.ToolPreviewer = (*tenderToCarriersTool)(nil)
 )
 
 func (t *tenderToRoutingGuideTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	request, err := t.request(&params)
 	if err != nil {
@@ -51,7 +51,7 @@ func (t *tenderToRoutingGuideTool) Preview(
 
 func (t *tenderToCarriersTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	request, err := t.request(&params)
 	if err != nil {

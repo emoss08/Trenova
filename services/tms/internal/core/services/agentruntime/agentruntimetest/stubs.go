@@ -8,29 +8,30 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 type ScriptedCompletion struct {
-	Turns []*serviceports.ChatCompletionResult
+	Turns []*agentports.ChatCompletionResult
 	// Errors fails the completion at that call index instead of answering, so
 	// a test can make the model die after a tool has already run.
 	Errors    map[int]error
 	CallCount int
-	LastReq   *serviceports.ChatCompletionRequest
+	LastReq   *agentports.ChatCompletionRequest
 	// Requests is every request, oldest first, so a test can see what a
 	// turn sent before the one that answered it.
-	Requests       []*serviceports.ChatCompletionRequest
+	Requests       []*agentports.ChatCompletionRequest
 	Classification string
 	StructuredText string
 }
 
 func (s *ScriptedCompletion) CompleteChat(
 	_ context.Context,
-	req *serviceports.ChatCompletionRequest,
-) (*serviceports.ChatCompletionResult, error) {
+	req *agentports.ChatCompletionRequest,
+) (*agentports.ChatCompletionResult, error) {
 	s.LastReq = req
 	s.Requests = append(s.Requests, req)
 	idx := s.CallCount
@@ -50,9 +51,9 @@ func (s *ScriptedCompletion) CompleteChat(
 
 func (s *ScriptedCompletion) StreamChat(
 	ctx context.Context,
-	req *serviceports.ChatCompletionRequest,
-	sink serviceports.ChatStreamSink,
-) (*serviceports.ChatCompletionResult, error) {
+	req *agentports.ChatCompletionRequest,
+	sink agentports.ChatStreamSink,
+) (*agentports.ChatCompletionResult, error) {
 	result, err := s.CompleteChat(ctx, req)
 	if err != nil {
 		return nil, err
@@ -71,17 +72,17 @@ func (s *ScriptedCompletion) StreamChat(
 
 func (s *ScriptedCompletion) CompleteStructured(
 	_ context.Context,
-	_ *serviceports.StructuredCompletionRequest,
-) (*serviceports.StructuredCompletionResult, error) {
+	_ *agentports.StructuredCompletionRequest,
+) (*agentports.StructuredCompletionResult, error) {
 	if s.StructuredText != "" {
-		return &serviceports.StructuredCompletionResult{Text: s.StructuredText}, nil
+		return &agentports.StructuredCompletionResult{Text: s.StructuredText}, nil
 	}
 	category := s.Classification
 	if category == "" {
 		category = "TransportationOperations"
 	}
 
-	return &serviceports.StructuredCompletionResult{
+	return &agentports.StructuredCompletionResult{
 		Text: `{"category":"` + category + `"}`,
 	}, nil
 }
@@ -92,20 +93,20 @@ func (s *ScriptedCompletion) CompleteStructured(
 // really produce rather than a handle that never resolves.
 func (s *ScriptedCompletion) SubmitBackground(
 	ctx context.Context,
-	req *serviceports.StructuredCompletionRequest,
-) (*serviceports.BackgroundSubmission, error) {
+	req *agentports.StructuredCompletionRequest,
+) (*agentports.BackgroundSubmission, error) {
 	result, err := s.CompleteStructured(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	return &serviceports.BackgroundSubmission{Result: result}, nil
+	return &agentports.BackgroundSubmission{Result: result}, nil
 }
 
 func (s *ScriptedCompletion) PollBackground(
 	_ context.Context,
-	_ *serviceports.BackgroundPollRequest,
-) (*serviceports.BackgroundOutcome, error) {
+	_ *agentports.BackgroundPollRequest,
+) (*agentports.BackgroundOutcome, error) {
 	return nil, errors.New("scripted completion runs inline and issues no handle to poll")
 }
 
@@ -117,7 +118,7 @@ type StubQueryTool struct {
 	Result     any
 	Err        error
 	Calls      int
-	LastParams serviceports.QueryToolParams
+	LastParams agentports.QueryToolParams
 	LastTenant dbscope.Tenant
 	Resource   permission.Resource
 	// Reads and Source declare the tool as one that reads outside content.
@@ -144,7 +145,7 @@ func (t *StubQueryTool) ParamSchema() map[string]any {
 
 	return map[string]any{"type": "object"}
 }
-func (t *StubQueryTool) Policy() serviceports.ToolPolicy {
+func (t *StubQueryTool) Policy() agentports.ToolPolicy {
 	resource := t.Resource
 	if resource == "" {
 		resource = permission.ResourceShipment
@@ -155,7 +156,7 @@ func (t *StubQueryTool) Policy() serviceports.ToolPolicy {
 		reads = agent.ExternalReadNever
 	}
 
-	return serviceports.ToolPolicy{
+	return agentports.ToolPolicy{
 		Name:          t.ToolName,
 		Kind:          agent.ToolKindQuery,
 		Resource:      resource,
@@ -176,7 +177,7 @@ func (t *StubQueryTool) Policy() serviceports.ToolPolicy {
 
 func (t *StubQueryTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	t.Calls++
 	t.LastParams = *params
@@ -185,9 +186,9 @@ func (t *StubQueryTool) Query(
 	return t.Result, t.Err
 }
 
-type StubQueryRegistry struct{ Tools []serviceports.AgentQueryTool }
+type StubQueryRegistry struct{ Tools []agentports.AgentQueryTool }
 
-func (r *StubQueryRegistry) Get(name string) (serviceports.AgentQueryTool, bool) {
+func (r *StubQueryRegistry) Get(name string) (agentports.AgentQueryTool, bool) {
 	for _, tool := range r.Tools {
 		if tool.Name() == name {
 			return tool, true
@@ -197,12 +198,12 @@ func (r *StubQueryRegistry) Get(name string) (serviceports.AgentQueryTool, bool)
 	return nil, false
 }
 
-func (r *StubQueryRegistry) All() []serviceports.AgentQueryTool { return r.Tools }
+func (r *StubQueryRegistry) All() []agentports.AgentQueryTool { return r.Tools }
 
-func (r *StubQueryRegistry) Descriptors() []serviceports.AgentToolDescriptor {
-	out := make([]serviceports.AgentToolDescriptor, 0, len(r.Tools))
+func (r *StubQueryRegistry) Descriptors() []agentports.AgentToolDescriptor {
+	out := make([]agentports.AgentToolDescriptor, 0, len(r.Tools))
 	for _, tool := range r.Tools {
-		out = append(out, serviceports.DescribeTool(tool, "", true))
+		out = append(out, agentports.DescribeTool(tool, "", true))
 	}
 
 	return out
@@ -213,7 +214,7 @@ type StubActionTool struct {
 	Tier       agent.AutonomyTier
 	Err        error
 	Calls      int
-	LastParams serviceports.ToolExecuteParams
+	LastParams agentports.ToolExecuteParams
 	Resource   permission.Resource
 	// Schema stands in for the tool's declared parameters when set.
 	Schema map[string]any
@@ -232,7 +233,7 @@ func (t *StubActionTool) ParamSchema() map[string]any {
 
 	return map[string]any{"type": "object"}
 }
-func (t *StubActionTool) Policy() serviceports.ToolPolicy {
+func (t *StubActionTool) Policy() agentports.ToolPolicy {
 	resource := t.Resource
 	if resource == "" {
 		resource = permission.ResourceShipmentMove
@@ -246,7 +247,7 @@ func (t *StubActionTool) Policy() serviceports.ToolPolicy {
 		egress = agent.EgressInternal
 	}
 
-	return serviceports.ToolPolicy{
+	return agentports.ToolPolicy{
 		Name:          t.ToolName,
 		Kind:          agent.ToolKindAction,
 		Resource:      resource,
@@ -266,7 +267,7 @@ func (t *StubActionTool) Policy() serviceports.ToolPolicy {
 
 func (t *StubActionTool) Execute(
 	_ context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	t.Calls++
 	t.LastParams = params
@@ -274,9 +275,9 @@ func (t *StubActionTool) Execute(
 	return t.Err
 }
 
-type StubActionRegistry struct{ Tools []serviceports.AgentTool }
+type StubActionRegistry struct{ Tools []agentports.AgentTool }
 
-func (r *StubActionRegistry) Get(name string) (serviceports.AgentTool, bool) {
+func (r *StubActionRegistry) Get(name string) (agentports.AgentTool, bool) {
 	for _, tool := range r.Tools {
 		if tool.Name() == name {
 			return tool, true
@@ -286,25 +287,25 @@ func (r *StubActionRegistry) Get(name string) (serviceports.AgentTool, bool) {
 	return nil, false
 }
 
-func (r *StubActionRegistry) All() []serviceports.AgentTool { return r.Tools }
+func (r *StubActionRegistry) All() []agentports.AgentTool { return r.Tools }
 
-func (r *StubActionRegistry) Descriptors() []serviceports.AgentToolDescriptor {
-	out := make([]serviceports.AgentToolDescriptor, 0, len(r.Tools))
+func (r *StubActionRegistry) Descriptors() []agentports.AgentToolDescriptor {
+	out := make([]agentports.AgentToolDescriptor, 0, len(r.Tools))
 	for _, tool := range r.Tools {
-		out = append(out, serviceports.DescribeTool(tool, tool.Policy().DefaultTier, false))
+		out = append(out, agentports.DescribeTool(tool, tool.Policy().DefaultTier, false))
 	}
 
 	return out
 }
 
 type StubPermissions struct {
-	serviceports.PermissionEngine
+	permissionports.PermissionEngine
 
 	// mu guards Requests: a turn asks its tool checks side by side.
 	mu sync.Mutex
 
 	Denied   map[string]bool
-	Requests []*serviceports.PermissionCheckRequest
+	Requests []*permissionports.PermissionCheckRequest
 	// GrantedAgents are the agents restricted to roles that the person's
 	// roles grant.
 	GrantedAgents []pulid.ID
@@ -312,10 +313,10 @@ type StubPermissions struct {
 
 func (p *StubPermissions) AgentsUsable(
 	_ context.Context,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 	operation permission.Operation,
-) (*serviceports.UsableAgents, error) {
-	return &serviceports.UsableAgents{
+) (*permissionports.UsableAgents, error) {
+	return &permissionports.UsableAgents{
 		Assistant:  !p.Denied[permission.ResourceAssistant.String()+":"+string(operation)],
 		GrantedIDs: p.GrantedAgents,
 	}, nil
@@ -323,7 +324,7 @@ func (p *StubPermissions) AgentsUsable(
 
 func (p *StubPermissions) MayUseAgent(
 	ctx context.Context,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 	definition *agentdefinition.Definition,
 ) (bool, error) {
 	usable, err := p.AgentsUsable(ctx, actor, permission.OpCreate)
@@ -336,14 +337,14 @@ func (p *StubPermissions) MayUseAgent(
 
 func (p *StubPermissions) Check(
 	_ context.Context,
-	req *serviceports.PermissionCheckRequest,
-) (*serviceports.PermissionCheckResult, error) {
+	req *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
 	p.mu.Lock()
 	p.Requests = append(p.Requests, req)
 	p.mu.Unlock()
 	if p.Denied[req.Resource+":"+string(req.Operation)] {
-		return &serviceports.PermissionCheckResult{Allowed: false, Reason: "denied"}, nil
+		return &permissionports.PermissionCheckResult{Allowed: false, Reason: "denied"}, nil
 	}
 
-	return &serviceports.PermissionCheckResult{Allowed: true}, nil
+	return &permissionports.PermissionCheckResult{Allowed: true}, nil
 }

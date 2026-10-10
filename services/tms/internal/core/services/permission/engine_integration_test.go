@@ -3,6 +3,8 @@
 package permission
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"encoding/json"
 	"testing"
@@ -10,10 +12,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -41,11 +43,11 @@ func (i *integrationTestDB) userRepo() *testUserRepo {
 
 type testRoleRepo struct {
 	db *bun.DB
-	*mocks.MockRoleRepository
+	*permissionportsmock.MockRoleRepository
 }
 
 func newTestRoleRepo(db *bun.DB) *testRoleRepo {
-	mockRoleRepo := &mocks.MockRoleRepository{}
+	mockRoleRepo := &permissionportsmock.MockRoleRepository{}
 	mockRoleRepo.On(
 		mock.Anything,
 		mock.Anything,
@@ -92,7 +94,7 @@ func (r *testRoleRepo) Update(ctx context.Context, role *permission.Role) error 
 
 func (r *testRoleRepo) GetByID(
 	ctx context.Context,
-	req repositories.GetRoleByIDRequest,
+	req permissionports.GetRoleByIDRequest,
 ) (*permission.Role, error) {
 	role := new(permission.Role)
 	err := r.db.NewSelect().Model(role).
@@ -111,7 +113,7 @@ func (r *testRoleRepo) GetByID(
 
 func (r *testRoleRepo) List(
 	_ context.Context,
-	_ *repositories.ListRolesRequest,
+	_ *permissionports.ListRolesRequest,
 ) (*pagination.ListResult[*permission.Role], error) {
 	return nil, nil
 }
@@ -134,8 +136,8 @@ func (r *testRoleRepo) GetRolesWithInheritance(
 func (r *testRoleRepo) GetUsersWithRole(
 	ctx context.Context,
 	roleID pulid.ID,
-) ([]repositories.ImpactedUser, error) {
-	var users []repositories.ImpactedUser
+) ([]permissionports.ImpactedUser, error) {
+	var users []permissionports.ImpactedUser
 	err := r.db.NewSelect().
 		TableExpr("user_role_assignments AS ura").
 		Join("JOIN users AS u ON u.id = ura.user_id").
@@ -177,7 +179,7 @@ func (r *testRoleRepo) CreateAssignment(
 
 func (r *testRoleRepo) DeleteAssignment(
 	ctx context.Context,
-	req repositories.DeleteRoleAssignmentRequest,
+	req permissionports.DeleteRoleAssignmentRequest,
 ) (*permission.UserRoleAssignment, error) {
 	deleted := new(permission.UserRoleAssignment)
 	_, err := r.db.NewDelete().
@@ -214,7 +216,7 @@ func (r *testRoleRepo) UpdateResourcePermission(
 
 func (r *testRoleRepo) DeleteResourcePermission(
 	ctx context.Context,
-	req repositories.DeleteResourcePermissionRequest,
+	req permissionports.DeleteResourcePermissionRequest,
 ) error {
 	_, err := r.db.NewDelete().
 		Model((*permission.ResourcePermission)(nil)).
@@ -235,19 +237,19 @@ func (r *testRoleRepo) GetResourcePermissionsByRoleID(
 
 type testUserRepo struct {
 	db *bun.DB
-	*mocks.MockUserRepository
+	*tenantportsmock.MockUserRepository
 }
 
 func newTestUserRepo(db *bun.DB) *testUserRepo {
 	return &testUserRepo{
 		db:                 db,
-		MockUserRepository: &mocks.MockUserRepository{},
+		MockUserRepository: &tenantportsmock.MockUserRepository{},
 	}
 }
 
 func (u *testUserRepo) GetByID(
 	_ context.Context,
-	_ repositories.GetUserByIDRequest,
+	_ tenantports.GetUserByIDRequest,
 ) (*tenant.User, error) {
 	return nil, nil
 }
@@ -276,7 +278,7 @@ func (u *testUserRepo) GetOrganizations(
 
 func (u *testUserRepo) List(
 	_ context.Context,
-	_ *repositories.ListUsersRequest,
+	_ *tenantports.ListUsersRequest,
 ) (*pagination.ListResult[*tenant.User], error) {
 	return nil, nil
 }
@@ -288,8 +290,8 @@ func (u *testUserRepo) UpdateCurrentOrganization(_ context.Context, _, _, _ puli
 func (u *testUserRepo) GetUserOrganizationSummaries(
 	ctx context.Context,
 	userID pulid.ID,
-) ([]repositories.OrgSummary, error) {
-	var summaries []repositories.OrgSummary
+) ([]tenantports.OrgSummary, error) {
+	var summaries []tenantports.OrgSummary
 	err := u.db.NewSelect().
 		TableExpr("organizations AS o").
 		Join("JOIN users AS u ON u.organization_id = o.id").
@@ -306,14 +308,14 @@ func (u *testUserRepo) Update(_ context.Context, _ *tenant.User) (*tenant.User, 
 
 func (u *testUserRepo) BulkUpdateStatus(
 	_ context.Context,
-	_ *repositories.BulkUpdateUserStatusRequest,
+	_ *tenantports.BulkUpdateUserStatusRequest,
 ) ([]*tenant.User, error) {
 	return nil, nil
 }
 
 func (u *testUserRepo) GetByIDs(
 	_ context.Context,
-	_ repositories.GetUsersByIDsRequest,
+	_ tenantports.GetUsersByIDsRequest,
 ) ([]*tenant.User, error) {
 	return nil, nil
 }
@@ -324,8 +326,8 @@ type testPermCacheRepo struct {
 
 func (p *testPermCacheRepo) Get(
 	ctx context.Context,
-	key repositories.PermissionCacheKey,
-) (*repositories.CachedPermissions, error) {
+	key permissionports.PermissionCacheKey,
+) (*permissionports.CachedPermissions, error) {
 	redisKey := "perms:" + key.UserID.String() + ":" + key.OrgID.String()
 	data, err := p.client.HGet(ctx, redisKey, key.Variant).Bytes()
 	if err == redis.Nil {
@@ -334,7 +336,7 @@ func (p *testPermCacheRepo) Get(
 	if err != nil {
 		return nil, err
 	}
-	var perms repositories.CachedPermissions
+	var perms permissionports.CachedPermissions
 	if err := json.Unmarshal(data, &perms); err != nil {
 		return nil, err
 	}
@@ -343,8 +345,8 @@ func (p *testPermCacheRepo) Get(
 
 func (p *testPermCacheRepo) Set(
 	ctx context.Context,
-	key repositories.PermissionCacheKey,
-	perms *repositories.CachedPermissions,
+	key permissionports.PermissionCacheKey,
+	perms *permissionports.CachedPermissions,
 	ttl time.Duration,
 ) error {
 	redisKey := "perms:" + key.UserID.String() + ":" + key.OrgID.String()
@@ -366,7 +368,7 @@ func (p *testPermCacheRepo) Delete(ctx context.Context, userID, orgID pulid.ID) 
 func (p *testPermCacheRepo) InvalidateByRole(
 	ctx context.Context,
 	roleID pulid.ID,
-	roleRepo repositories.RoleRepository,
+	roleRepo permissionports.RoleRepository,
 ) error {
 	users, err := roleRepo.GetUsersWithRole(ctx, roleID)
 	if err != nil {
@@ -556,7 +558,7 @@ func TestIntegration_RegularUserPermissionCheck(t *testing.T) {
 	data := seedIntegrationData(t, db)
 	ctx := t.Context()
 
-	result, err := eng.Check(ctx, &services.PermissionCheckRequest{
+	result, err := eng.Check(ctx, &permissionports.PermissionCheckRequest{
 		UserID:         data.userID,
 		OrganizationID: data.orgID,
 		Resource:       "shipment",
@@ -576,7 +578,7 @@ func TestIntegration_CacheHitPath(t *testing.T) {
 	data := seedIntegrationData(t, db)
 	ctx := t.Context()
 
-	_, err := eng.Check(ctx, &services.PermissionCheckRequest{
+	_, err := eng.Check(ctx, &permissionports.PermissionCheckRequest{
 		UserID:         data.userID,
 		OrganizationID: data.orgID,
 		Resource:       "shipment",
@@ -584,7 +586,7 @@ func TestIntegration_CacheHitPath(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	result, err := eng.Check(ctx, &services.PermissionCheckRequest{
+	result, err := eng.Check(ctx, &permissionports.PermissionCheckRequest{
 		UserID:         data.userID,
 		OrganizationID: data.orgID,
 		Resource:       "shipment",
@@ -602,7 +604,7 @@ func TestIntegration_NoPermissionDenied(t *testing.T) {
 	data := seedIntegrationData(t, db)
 	ctx := t.Context()
 
-	result, err := eng.Check(ctx, &services.PermissionCheckRequest{
+	result, err := eng.Check(ctx, &permissionports.PermissionCheckRequest{
 		UserID:         data.userID,
 		OrganizationID: data.orgID,
 		Resource:       "billing",
@@ -620,10 +622,10 @@ func TestIntegration_BatchPermissionCheck(t *testing.T) {
 
 	ctx := t.Context()
 
-	result, err := eng.CheckBatch(ctx, &services.BatchPermissionCheckRequest{
+	result, err := eng.CheckBatch(ctx, &permissionports.BatchPermissionCheckRequest{
 		UserID:         data.userID,
 		OrganizationID: data.orgID,
-		Checks: []services.ResourceOperationCheck{
+		Checks: []permissionports.ResourceOperationCheck{
 			{Resource: "shipment", Operation: permission.OpRead},
 			{Resource: "shipment", Operation: permission.OpCreate},
 			{Resource: "shipment", Operation: permission.OpDelete},
@@ -643,7 +645,7 @@ func TestIntegration_InvalidateUser(t *testing.T) {
 	data := seedIntegrationData(t, db)
 	ctx := t.Context()
 
-	_, err := eng.Check(ctx, &services.PermissionCheckRequest{
+	_, err := eng.Check(ctx, &permissionports.PermissionCheckRequest{
 		UserID:         data.userID,
 		OrganizationID: data.orgID,
 		Resource:       "shipment",
@@ -654,7 +656,7 @@ func TestIntegration_InvalidateUser(t *testing.T) {
 	err = eng.InvalidateUser(ctx, data.userID, data.orgID)
 	require.NoError(t, err)
 
-	result, err := eng.Check(ctx, &services.PermissionCheckRequest{
+	result, err := eng.Check(ctx, &permissionports.PermissionCheckRequest{
 		UserID:         data.userID,
 		OrganizationID: data.orgID,
 		Resource:       "shipment",

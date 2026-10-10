@@ -6,8 +6,8 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/planservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/vektah/gqlparser/v2/ast"
 	"github.com/vektah/gqlparser/v2/gqlerror"
@@ -20,12 +20,12 @@ const readOnlyExtensionName = "PlanReadOnlyGuard"
 type ReadOnlyParams struct {
 	fx.In
 
-	Plans  services.PlanService
+	Plans  platformplanports.PlanService
 	Logger *zap.Logger
 }
 
 type ReadOnlyExtension struct {
-	plans services.PlanService
+	plans platformplanports.PlanService
 	l     *zap.Logger
 }
 

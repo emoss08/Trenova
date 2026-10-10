@@ -3,8 +3,8 @@ package shipmentinvalidation
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -15,26 +15,26 @@ const Resource = "shipments"
 type Params struct {
 	fx.In
 
-	Realtime services.RealtimeService
-	Epochs   repositories.ShipmentBoardEpochBumper
+	Realtime agentports.RealtimeService
+	Epochs   shipmentports.ShipmentBoardEpochBumper
 	Logger   *zap.Logger
 }
 
 type Service struct {
-	realtime services.RealtimeService
-	epochs   repositories.ShipmentBoardEpochBumper
+	realtime agentports.RealtimeService
+	epochs   shipmentports.ShipmentBoardEpochBumper
 	l        *zap.Logger
 }
 
-var _ services.ShipmentInvalidator = (*Service)(nil)
+var _ shipmentports.ShipmentInvalidator = (*Service)(nil)
 
-func New(p Params) services.ShipmentInvalidator {
+func New(p Params) shipmentports.ShipmentInvalidator {
 	return NewWithDependencies(p.Realtime, p.Epochs, p.Logger)
 }
 
 func NewWithDependencies(
-	realtime services.RealtimeService,
-	epochs repositories.ShipmentBoardEpochBumper,
+	realtime agentports.RealtimeService,
+	epochs shipmentports.ShipmentBoardEpochBumper,
 	logger *zap.Logger,
 ) *Service {
 	return &Service{
@@ -46,7 +46,7 @@ func NewWithDependencies(
 
 func (s *Service) InvalidateShipments(
 	ctx context.Context,
-	req *services.ShipmentInvalidation,
+	req *shipmentports.ShipmentInvalidation,
 ) {
 	if req == nil || req.OrganizationID.IsNil() || req.BusinessUnitID.IsNil() {
 		s.l.Warn("dropping shipment invalidation without a tenant")

@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 )
 
 type NoopUsageProvider struct{}
@@ -15,14 +15,14 @@ func NewNoopUsageProvider() *NoopUsageProvider {
 
 func (p *NoopUsageProvider) CheckLimit(
 	_ context.Context,
-	req *services.UsageLimitCheckRequest,
-) (*services.UsageLimitCheckResult, error) {
+	req *platformcatalogports.UsageLimitCheckRequest,
+) (*platformcatalogports.UsageLimitCheckResult, error) {
 	checkedAt := req.CheckedAt
 	if checkedAt == 0 {
 		checkedAt = time.Now().Unix()
 	}
 
-	return &services.UsageLimitCheckResult{
+	return &platformcatalogports.UsageLimitCheckResult{
 		MeterKey:  req.MeterKey,
 		Allowed:   true,
 		Reason:    "noop_usage_provider",
@@ -32,14 +32,14 @@ func (p *NoopUsageProvider) CheckLimit(
 
 func (p *NoopUsageProvider) RecordUsage(
 	_ context.Context,
-	req *services.UsageRecordRequest,
-) (*services.UsageRecordResult, error) {
+	req *platformcatalogports.UsageRecordRequest,
+) (*platformcatalogports.UsageRecordResult, error) {
 	recordedAt := req.RecordedAt
 	if recordedAt == 0 {
 		recordedAt = time.Now().Unix()
 	}
 
-	return &services.UsageRecordResult{
+	return &platformcatalogports.UsageRecordResult{
 		MeterKey:       req.MeterKey,
 		Recorded:       false,
 		Quantity:       req.Quantity,

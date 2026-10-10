@@ -7,10 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/settlementshared"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -44,7 +44,7 @@ func ResolveCurrentPeriod(control *tenant.CarrierSettlementControl, now int64) P
 func (s *Service) GenerateBatch(
 	ctx context.Context,
 	req *GenerateBatchRequest,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*carriersettlement.CarrierSettlementBatch, error) {
 	if err := requireActor(actor, "Carrier settlement batch generation"); err != nil {
 		return nil, err
@@ -67,7 +67,7 @@ func (s *Service) GenerateBatch(
 
 	carrierIDs, err := s.costEventRepo.ListCarrierIDsWithPendingEvents(
 		ctx,
-		repositories.ListCarriersWithPendingEventsRequest{
+		carriersettlementports.ListCarriersWithPendingEventsRequest{
 			TenantInfo:              req.TenantInfo,
 			PeriodEnd:               bounds.PeriodEnd,
 			HoldUntilInvoiceMatched: control.HoldUntilInvoiceMatched,
@@ -113,7 +113,7 @@ func (s *Service) resolveOpenBatch(
 	ctx context.Context,
 	req *GenerateBatchRequest,
 	bounds PeriodBounds,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 	now int64,
 ) (*carriersettlement.CarrierSettlementBatch, error) {
 	existing, err := s.batchRepo.GetForPeriod(
@@ -179,7 +179,7 @@ type GenerateForCarrierRequest struct {
 func (s *Service) GenerateForCarrier(
 	ctx context.Context,
 	req *GenerateForCarrierRequest,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*carriersettlement.CarrierSettlement, error) {
 	if err := requireActor(actor, "Carrier settlement generation"); err != nil {
 		return nil, err
@@ -199,7 +199,7 @@ func (s *Service) GenerateForCarrier(
 	}
 
 	var created *carriersettlement.CarrierSettlement
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		settlement, events, buildErr := s.buildSettlement(txCtx, req)
 		if buildErr != nil {
 			return buildErr
@@ -270,7 +270,7 @@ func (s *Service) buildSettlement(
 	}
 	events, err := s.costEventRepo.ListPendingByCarrier(
 		ctx,
-		&repositories.ListPendingCostEventsRequest{
+		&carriersettlementports.ListPendingCostEventsRequest{
 			TenantInfo:              req.TenantInfo,
 			CarrierID:               req.CarrierID,
 			PeriodEnd:               req.PeriodEnd,

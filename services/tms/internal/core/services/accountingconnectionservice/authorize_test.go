@@ -6,24 +6,24 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-var twoCompanies = []services.AccountingCompany{
+var twoCompanies = []accountingsyncports.AccountingCompany{
 	{ID: "1111", Name: "Acme East", ConnectionID: "conn-east"},
 	{ID: "2222", Name: "Acme West", ConnectionID: "conn-west"},
 }
 
-func (h *harness) completeWithChoice(t *testing.T) *services.AccountingAuthorizationCompletion {
+func (h *harness) completeWithChoice(t *testing.T) *accountingsyncports.AccountingAuthorizationCompletion {
 	t.Helper()
 	h.connector.companies = twoCompanies
 	completion, err := h.svc.CompleteAuthorization(
 		t.Context(),
-		&services.CompleteAccountingAuthorizationRequest{
+		&accountingsyncports.CompleteAccountingAuthorizationRequest{
 			TenantInfo:      h.tenant,
 			UserID:          h.userID,
 			IntegrationType: integration.TypeQuickBooksOnline,
@@ -41,7 +41,7 @@ func (h *harness) choose(
 	token, companyID string,
 ) (*accountingsync.AccountingConnection, error) {
 	t.Helper()
-	return h.svc.ChooseCompany(t.Context(), &services.ChooseAccountingCompanyRequest{
+	return h.svc.ChooseCompany(t.Context(), &accountingsyncports.ChooseAccountingCompanyRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: integration.TypeQuickBooksOnline,
@@ -91,7 +91,7 @@ func TestChoosingACompanyConnectsItAndReleasesTheOthers(t *testing.T) {
 	assert.Equal(t, "2222", conn.ExternalRealmID)
 	assert.Equal(t, accountingsync.ConnectionStatusConnected, conn.Status)
 	assert.Equal(t, "refresh-1", h.decrypt(t, conn, refreshTokenField, h.connections.tokens[conn.ID].refresh))
-	assert.Equal(t, []services.AccountingCompany{twoCompanies[0]}, h.connector.released)
+	assert.Equal(t, []accountingsyncports.AccountingCompany{twoCompanies[0]}, h.connector.released)
 	assert.Empty(t, h.connector.revoked)
 
 	_, err = h.choose(t, completion.ChoiceToken, "2222")
@@ -118,7 +118,7 @@ func TestOnlyThePersonWhoSignedInCanChoose(t *testing.T) {
 	h := newHarness(t)
 	completion := h.completeWithChoice(t)
 
-	_, err := h.svc.ChooseCompany(t.Context(), &services.ChooseAccountingCompanyRequest{
+	_, err := h.svc.ChooseCompany(t.Context(), &accountingsyncports.ChooseAccountingCompanyRequest{
 		TenantInfo:      h.tenant,
 		UserID:          pulid.MustNew("usr_"),
 		IntegrationType: integration.TypeQuickBooksOnline,
@@ -154,7 +154,7 @@ func TestASignInThatAuthorizedNoCompanyIsRevoked(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	h.connector.companies = []services.AccountingCompany{}
+	h.connector.companies = []accountingsyncports.AccountingCompany{}
 
 	_, err := h.complete(t, h.start(t))
 	require.Error(t, err)
@@ -166,7 +166,7 @@ func TestCompaniesWithUnusableIDsAreDropped(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	h.connector.companies = []services.AccountingCompany{
+	h.connector.companies = []accountingsyncports.AccountingCompany{
 		{ID: "not valid/id", Name: "Broken"},
 		{ID: "4444", Name: "Acme"},
 	}
@@ -190,7 +190,7 @@ func TestConnectingASecondAccountingSystemIsRefused(t *testing.T) {
 	}
 	h.connections.rows[other.ID] = other
 
-	_, err := h.svc.StartAuthorization(t.Context(), &services.StartAccountingAuthorizationRequest{
+	_, err := h.svc.StartAuthorization(t.Context(), &accountingsyncports.StartAccountingAuthorizationRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: integration.TypeQuickBooksOnline,
@@ -211,7 +211,7 @@ func TestAWebhookNamingATenantAppIsCheckedAgainstThatApp(t *testing.T) {
 	h.connector.webhookRealms = []string{testRealm}
 	appID := status.App.TenantApp.ID.String()
 
-	err := h.svc.ReceiveWebhook(t.Context(), &services.ReceiveAccountingWebhookRequest{
+	err := h.svc.ReceiveWebhook(t.Context(), &accountingsyncports.ReceiveAccountingWebhookRequest{
 		IntegrationType: integration.TypeQuickBooksOnline,
 		AppID:           appID,
 		Signature:       instanceVerifier,
@@ -221,7 +221,7 @@ func TestAWebhookNamingATenantAppIsCheckedAgainstThatApp(t *testing.T) {
 	assert.True(t, errortypes.IsAuthenticationError(err))
 	assert.Nil(t, h.connections.rows[conn.ID].LastWebhookAt)
 
-	require.NoError(t, h.svc.ReceiveWebhook(t.Context(), &services.ReceiveAccountingWebhookRequest{
+	require.NoError(t, h.svc.ReceiveWebhook(t.Context(), &accountingsyncports.ReceiveAccountingWebhookRequest{
 		IntegrationType: integration.TypeQuickBooksOnline,
 		AppID:           appID,
 		Signature:       tenantVerifier,
@@ -235,7 +235,7 @@ func TestAWebhookNamingAnUnknownAppIsRefused(t *testing.T) {
 
 	h := newHarness(t)
 	for _, appID := range []string{"acctapp_01J00000000000000000000000", "not-an-id", "acctc_01J00000000000000000000000"} {
-		err := h.svc.ReceiveWebhook(t.Context(), &services.ReceiveAccountingWebhookRequest{
+		err := h.svc.ReceiveWebhook(t.Context(), &accountingsyncports.ReceiveAccountingWebhookRequest{
 			IntegrationType: integration.TypeQuickBooksOnline,
 			AppID:           appID,
 			Signature:       tenantVerifier,
@@ -253,19 +253,19 @@ func TestAVerifiedWebhookNamingNoCompanyIsAccepted(t *testing.T) {
 	status := h.saveTenantApp(t)
 	h.connector.webhookRealms = nil
 
-	require.NoError(t, h.svc.ReceiveWebhook(t.Context(), &services.ReceiveAccountingWebhookRequest{
+	require.NoError(t, h.svc.ReceiveWebhook(t.Context(), &accountingsyncports.ReceiveAccountingWebhookRequest{
 		IntegrationType: integration.TypeQuickBooksOnline,
 		AppID:           status.App.TenantApp.ID.String(),
 		Signature:       tenantVerifier,
 		Body:            []byte("{}"),
 	}))
-	require.NoError(t, h.svc.ReceiveWebhook(t.Context(), &services.ReceiveAccountingWebhookRequest{
+	require.NoError(t, h.svc.ReceiveWebhook(t.Context(), &accountingsyncports.ReceiveAccountingWebhookRequest{
 		IntegrationType: integration.TypeQuickBooksOnline,
 		Signature:       instanceVerifier,
 		Body:            []byte("{}"),
 	}))
 
-	err := h.svc.ReceiveWebhook(t.Context(), &services.ReceiveAccountingWebhookRequest{
+	err := h.svc.ReceiveWebhook(t.Context(), &accountingsyncports.ReceiveAccountingWebhookRequest{
 		IntegrationType: integration.TypeQuickBooksOnline,
 		Signature:       "forged",
 		Body:            []byte("{}"),

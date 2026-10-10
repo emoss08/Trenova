@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -102,8 +102,8 @@ func (s *resendStub) fetcher() *Fetcher {
 	})
 }
 
-func request() *services.InboundContentRequest {
-	return &services.InboundContentRequest{
+func request() *inboundmessageports.InboundContentRequest {
+	return &inboundmessageports.InboundContentRequest{
 		Provider:          inboundmessage.ProviderResend,
 		APIKey:            testAPIKey,
 		ProviderMessageID: testEmailID,
@@ -159,14 +159,14 @@ func TestFetchResendClassifiesFailures(t *testing.T) {
 	tests := []struct {
 		name     string
 		mutate   func(*resendStub)
-		req      func(*services.InboundContentRequest)
+		req      func(*inboundmessageports.InboundContentRequest)
 		sentinel error
 		contains string
 	}{
 		{
 			name:     "missing key",
-			req:      func(r *services.InboundContentRequest) { r.APIKey = "  " },
-			sentinel: services.ErrInboundContentRejected,
+			req:      func(r *inboundmessageports.InboundContentRequest) { r.APIKey = "  " },
+			sentinel: inboundmessageports.ErrInboundContentRejected,
 			contains: "no Resend API key",
 		},
 		{
@@ -175,7 +175,7 @@ func TestFetchResendClassifiesFailures(t *testing.T) {
 				s.emailStatus = http.StatusUnauthorized
 				s.emailBody = `{"statusCode":401,"message":"This API key is restricted to only send emails","name":"restricted_api_key"}`
 			},
-			sentinel: services.ErrInboundContentRejected,
+			sentinel: inboundmessageports.ErrInboundContentRejected,
 			contains: "full access key",
 		},
 		{
@@ -184,39 +184,39 @@ func TestFetchResendClassifiesFailures(t *testing.T) {
 				s.emailStatus = http.StatusNotFound
 				s.emailBody = `{"statusCode":404,"message":"Email not found"}`
 			},
-			sentinel: services.ErrInboundContentRejected,
+			sentinel: inboundmessageports.ErrInboundContentRejected,
 			contains: "Email not found",
 		},
 		{
 			name:     "rate limited",
 			mutate:   func(s *resendStub) { s.emailStatus = http.StatusTooManyRequests; s.emailBody = `{}` },
-			sentinel: services.ErrInboundContentUnavailable,
+			sentinel: inboundmessageports.ErrInboundContentUnavailable,
 			contains: "429",
 		},
 		{
 			name:     "server error listing files",
 			mutate:   func(s *resendStub) { s.listStatus = http.StatusBadGateway },
-			sentinel: services.ErrInboundContentUnavailable,
+			sentinel: inboundmessageports.ErrInboundContentUnavailable,
 			contains: "502",
 		},
 		{
 			name:     "download server error",
 			mutate:   func(s *resendStub) { s.fileStatus = http.StatusServiceUnavailable },
-			sentinel: services.ErrInboundContentUnavailable,
+			sentinel: inboundmessageports.ErrInboundContentUnavailable,
 			contains: "tender.pdf",
 		},
 		{
 			name:     "download rate limited",
 			mutate:   func(s *resendStub) { s.fileStatus = http.StatusTooManyRequests },
-			sentinel: services.ErrInboundContentUnavailable,
+			sentinel: inboundmessageports.ErrInboundContentUnavailable,
 			contains: "429",
 		},
 		{
 			name: "unsupported provider",
-			req: func(r *services.InboundContentRequest) {
+			req: func(r *inboundmessageports.InboundContentRequest) {
 				r.Provider = inboundmessage.ProviderPostmark
 			},
-			sentinel: services.ErrInboundContentRejected,
+			sentinel: inboundmessageports.ErrInboundContentRejected,
 			contains: "Postmark",
 		},
 	}

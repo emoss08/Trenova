@@ -3,11 +3,9 @@ package reporting
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/reportjobs/reportcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/reportjobs/reportcontract"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -90,7 +88,7 @@ func (s *Service) RunReport(ctx context.Context, req *RunReportRequest) (*report
 }
 
 func (s *Service) enforceEnqueueGate(ctx context.Context, req *RunReportRequest) error {
-	counts, err := s.runRepo.CountActive(ctx, &repositories.CountActiveReportRunsRequest{
+	counts, err := s.runRepo.CountActive(ctx, &reportports.CountActiveReportRunsRequest{
 		TenantInfo: req.TenantInfo,
 	})
 	if err != nil {
@@ -171,7 +169,7 @@ func (s *Service) buildRun(
 		if err != nil {
 			return nil, err
 		}
-		if _, err = s.compiler.ValidateAndAuthorize(ctx, &services.ReportCompileRequest{
+		if _, err = s.compiler.ValidateAndAuthorize(ctx, &reportports.ReportCompileRequest{
 			Definition:  entry.Definition,
 			Tenant:      req.TenantInfo,
 			Params:      req.Params,
@@ -202,7 +200,7 @@ type GetRunRequest struct {
 }
 
 func (s *Service) GetRun(ctx context.Context, req *GetRunRequest) (*report.ReportRun, error) {
-	return s.runRepo.GetByID(ctx, &repositories.GetReportRunRequest{
+	return s.runRepo.GetByID(ctx, &reportports.GetReportRunRequest{
 		TenantInfo: req.TenantInfo,
 		RunID:      req.RunID,
 	})
@@ -222,7 +220,7 @@ func (s *Service) ListRuns(
 	ctx context.Context,
 	req *ListRunsRequest,
 ) ([]*report.ReportRun, error) {
-	listReq := &repositories.ListReportRunsRequest{
+	listReq := &reportports.ListReportRunsRequest{
 		TenantInfo:   req.TenantInfo,
 		DefinitionID: req.DefinitionID,
 		Statuses:     req.Statuses,

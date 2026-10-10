@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -94,10 +94,10 @@ func formulaTemplateBreakdownDefinitionsToModel(
 func formulaTemplateStats(
 	ctx context.Context,
 	obj *formulatemplate.FormulaTemplate,
-) (repositories.TemplateStats, error) {
+) (formulatemplateports.TemplateStats, error) {
 	loadersForRequest, ok := loaders.FromContext(ctx)
 	if !ok || loadersForRequest == nil {
-		return repositories.TemplateStats{}, errortypes.NewDatabaseError(
+		return formulatemplateports.TemplateStats{}, errortypes.NewDatabaseError(
 			"Formula template stats loader is not configured",
 		)
 	}

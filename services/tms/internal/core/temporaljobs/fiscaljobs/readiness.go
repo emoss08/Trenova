@@ -9,7 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fiscalclose"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -43,7 +44,7 @@ func (a *Activities) NotifyCloseReadinessActivity(
 
 	years, err := a.fyRepo.GetExpiredOpenFiscalYears(
 		ctx,
-		repositories.GetExpiredOpenFiscalYearsRequest{
+		fiscalyearports.GetExpiredOpenFiscalYearsRequest{
 			OrgID:      payload.OrganizationID,
 			BuID:       payload.BusinessUnitID,
 			BeforeDate: now,
@@ -88,7 +89,7 @@ func (a *Activities) reportCloseReadiness(
 
 	exists, err := a.notification.ExistsRecent(
 		ctx,
-		repositories.ExistsRecentNotificationRequest{
+		notificationports.ExistsRecentNotificationRequest{
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
 			EventType:      eventFiscalYearCloseReadiness,
@@ -100,7 +101,7 @@ func (a *Activities) reportCloseReadiness(
 		return false, err
 	}
 
-	blockers, err := a.fySvc.GetCloseBlockers(ctx, repositories.GetFiscalYearByIDRequest{
+	blockers, err := a.fySvc.GetCloseBlockers(ctx, fiscalyearports.GetFiscalYearByIDRequest{
 		ID:         fy.ID,
 		TenantInfo: tenantInfo,
 	})

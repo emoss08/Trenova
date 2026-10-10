@@ -6,12 +6,14 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/reporting/canned"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,39 +26,39 @@ type Params struct {
 	fx.In
 
 	Logger           *zap.Logger
-	DefinitionRepo   repositories.ReportDefinitionRepository
-	DashboardRepo    repositories.ReportDashboardRepository
-	RunRepo          repositories.ReportRunRepository
-	ScheduleRepo     repositories.ReportScheduleRepository
-	ViewRepo         repositories.ReportViewRepository
-	OrganizationRepo repositories.OrganizationRepository
-	UserRepo         repositories.UserRepository
-	Compiler         services.ReportCompiler
-	Executor         services.ReportDatasetExecutor
-	PermissionEngine services.PermissionEngine
-	WorkflowStarter  services.WorkflowStarter
-	Storage          storage.Client
-	AuditService     services.AuditService `optional:"true"`
-	Metrics          *metrics.Registry     `optional:"true"`
+	DefinitionRepo   reportports.ReportDefinitionRepository
+	DashboardRepo    reportports.ReportDashboardRepository
+	RunRepo          reportports.ReportRunRepository
+	ScheduleRepo     reportports.ReportScheduleRepository
+	ViewRepo         reportports.ReportViewRepository
+	OrganizationRepo tenantports.OrganizationRepository
+	UserRepo         tenantports.UserRepository
+	Compiler         reportports.ReportCompiler
+	Executor         reportports.ReportDatasetExecutor
+	PermissionEngine permissionports.PermissionEngine
+	WorkflowStarter  kernelports.WorkflowStarter
+	Storage          kernelports.Client
+	AuditService     auditports.AuditService `optional:"true"`
+	Metrics          *metrics.Registry       `optional:"true"`
 	Config           *config.Config
 }
 
 type Service struct {
 	l             *zap.Logger
-	defRepo       repositories.ReportDefinitionRepository
-	dashboardRepo repositories.ReportDashboardRepository
-	runRepo       repositories.ReportRunRepository
-	scheduleRepo  repositories.ReportScheduleRepository
-	viewRepo      repositories.ReportViewRepository
-	orgRepo       repositories.OrganizationRepository
-	userRepo      repositories.UserRepository
-	compiler      services.ReportCompiler
-	executor      services.ReportDatasetExecutor
-	perms         services.PermissionEngine
+	defRepo       reportports.ReportDefinitionRepository
+	dashboardRepo reportports.ReportDashboardRepository
+	runRepo       reportports.ReportRunRepository
+	scheduleRepo  reportports.ReportScheduleRepository
+	viewRepo      reportports.ReportViewRepository
+	orgRepo       tenantports.OrganizationRepository
+	userRepo      tenantports.UserRepository
+	compiler      reportports.ReportCompiler
+	executor      reportports.ReportDatasetExecutor
+	perms         permissionports.PermissionEngine
 	permRegistry  *permission.Registry
-	workflows     services.WorkflowStarter
-	storage       storage.Client
-	audit         services.AuditService
+	workflows     kernelports.WorkflowStarter
+	storage       kernelports.Client
+	audit         auditports.AuditService
 	metrics       *metrics.Report
 	cfg           *config.ReportingConfig
 	previews      *previewLimiter
@@ -95,7 +97,7 @@ func New(p Params) *Service {
 
 type Request struct {
 	TenantInfo pagination.TenantInfo
-	Principal  services.PrincipalInfo
+	Principal  kernelports.PrincipalInfo
 }
 
 type SaveDefinitionRequest struct {
@@ -114,7 +116,7 @@ type SaveDefinitionRequest struct {
 }
 
 func (s *Service) orgTimezone(ctx context.Context, tenant pagination.TenantInfo) string {
-	org, err := s.orgRepo.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+	org, err := s.orgRepo.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: tenant,
 	})
 	if err != nil || org.Timezone == "" {
@@ -137,7 +139,7 @@ func (s *Service) validateDefinition(
 	ctx context.Context,
 	req *SaveDefinitionRequest,
 ) error {
-	_, err := s.compiler.ValidateAndAuthorize(ctx, &services.ReportCompileRequest{
+	_, err := s.compiler.ValidateAndAuthorize(ctx, &reportports.ReportCompileRequest{
 		Definition:  req.Definition,
 		Tenant:      req.TenantInfo,
 		OrgTimezone: s.orgTimezone(ctx, req.TenantInfo),
@@ -188,7 +190,7 @@ func (s *Service) UpdateDefinition(
 		zap.String("id", req.DefinitionID.String()),
 	)
 
-	existing, err := s.defRepo.GetByID(ctx, &repositories.GetReportDefinitionRequest{
+	existing, err := s.defRepo.GetByID(ctx, &reportports.GetReportDefinitionRequest{
 		TenantInfo:   req.TenantInfo,
 		DefinitionID: req.DefinitionID,
 	})
@@ -232,7 +234,7 @@ func (s *Service) GetDefinition(
 	ctx context.Context,
 	req *GetDefinitionRequest,
 ) (*report.ReportDefinition, error) {
-	entity, err := s.defRepo.GetByID(ctx, &repositories.GetReportDefinitionRequest{
+	entity, err := s.defRepo.GetByID(ctx, &reportports.GetReportDefinitionRequest{
 		TenantInfo:   req.TenantInfo,
 		DefinitionID: req.DefinitionID,
 	})
@@ -269,7 +271,7 @@ func (s *Service) ListDefinitions(
 	ctx context.Context,
 	req *ListDefinitionsRequest,
 ) ([]*report.ReportDefinition, error) {
-	entities, err := s.defRepo.List(ctx, &repositories.ListReportDefinitionsRequest{
+	entities, err := s.defRepo.List(ctx, &reportports.ListReportDefinitionsRequest{
 		TenantInfo: req.TenantInfo,
 		Statuses:   req.Statuses,
 		Limit:      req.Limit,
@@ -294,7 +296,7 @@ func (s *Service) DeleteDefinition(ctx context.Context, req *GetDefinitionReques
 		return err
 	}
 
-	return s.defRepo.Delete(ctx, &repositories.DeleteReportDefinitionRequest{
+	return s.defRepo.Delete(ctx, &reportports.DeleteReportDefinitionRequest{
 		TenantInfo:   req.TenantInfo,
 		DefinitionID: req.DefinitionID,
 	})
@@ -318,7 +320,7 @@ func (s *Service) ListRevisions(
 		return nil, err
 	}
 
-	return s.defRepo.ListRevisions(ctx, &repositories.ListReportRevisionsRequest{
+	return s.defRepo.ListRevisions(ctx, &reportports.ListReportRevisionsRequest{
 		TenantInfo:   req.TenantInfo,
 		DefinitionID: req.DefinitionID,
 		Limit:        req.Limit,
@@ -330,7 +332,7 @@ func (s *Service) headRevision(
 	tenant pagination.TenantInfo,
 	definitionID pulid.ID,
 ) (*report.ReportDefinitionRevision, error) {
-	revisions, err := s.defRepo.ListRevisions(ctx, &repositories.ListReportRevisionsRequest{
+	revisions, err := s.defRepo.ListRevisions(ctx, &reportports.ListReportRevisionsRequest{
 		TenantInfo:   tenant,
 		DefinitionID: definitionID,
 		Limit:        1,
@@ -367,14 +369,14 @@ func defaultFormat(f report.Format) report.Format {
 
 func (s *Service) ListDefinitionsConnection(
 	ctx context.Context,
-	req *repositories.ListReportDefinitionConnectionRequest,
+	req *reportports.ListReportDefinitionConnectionRequest,
 ) (*pagination.CursorListResult[*report.ReportDefinition], error) {
 	return s.defRepo.ListConnection(ctx, req)
 }
 
 func (s *Service) ListRunsConnection(
 	ctx context.Context,
-	req *repositories.ListReportRunConnectionRequest,
+	req *reportports.ListReportRunConnectionRequest,
 ) (*pagination.CursorListResult[*report.ReportRun], error) {
 	return s.runRepo.ListConnection(ctx, req)
 }

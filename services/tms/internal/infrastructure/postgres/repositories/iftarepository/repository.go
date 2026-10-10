@@ -1,8 +1,8 @@
 package iftarepository
 
 import (
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -12,16 +12,16 @@ type Params struct {
 
 	DB                *postgres.Connection
 	Logger            *zap.Logger
-	JurisdictionCache repositories.IFTAJurisdictionCacheRepository
+	JurisdictionCache iftaports.IFTAJurisdictionCacheRepository
 }
 
 type repository struct {
 	db                *postgres.Connection
 	l                 *zap.Logger
-	jurisdictionCache repositories.IFTAJurisdictionCacheRepository
+	jurisdictionCache iftaports.IFTAJurisdictionCacheRepository
 }
 
-func New(p Params) repositories.IFTARepository {
+func New(p Params) iftaports.IFTARepository {
 	return &repository{
 		db:                p.DB,
 		l:                 p.Logger.Named("postgres.ifta-repository"),

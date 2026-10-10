@@ -10,8 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -47,15 +47,15 @@ func (f *fakeNotifier) Create(
 }
 
 type fakeAudit struct {
-	serviceports.AuditService
+	auditports.AuditService
 
 	mu      sync.Mutex
-	entries []*serviceports.LogActionParams
+	entries []*auditports.LogActionParams
 }
 
 func (f *fakeAudit) LogAction(
-	params *serviceports.LogActionParams,
-	_ ...serviceports.LogOption,
+	params *auditports.LogActionParams,
+	_ ...auditports.LogOption,
 ) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()

@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -27,7 +27,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.AgentRunStepRepository {
+func New(p Params) agentports.AgentRunStepRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.agentrunstep-repository"),
@@ -74,10 +74,10 @@ func (r *repository) Claim(
 			// cannot account for, which is what it is.
 			log.Error("a claimed step could not be read back", zap.Error(findErr))
 
-			return nil, repositories.ErrRunStepClaimed
+			return nil, agentports.ErrRunStepClaimed
 		}
 
-		return held, repositories.ErrRunStepClaimed
+		return held, agentports.ErrRunStepClaimed
 	})
 }
 
@@ -105,7 +105,7 @@ func (r *repository) byKey(
 
 func (r *repository) Settle(
 	ctx context.Context,
-	req repositories.SettleAgentRunStepRequest,
+	req agentports.SettleAgentRunStepRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.AgentRunStepColumns
@@ -157,7 +157,7 @@ func (r *repository) Record(ctx context.Context, step *agent.AgentRunStep) error
 
 func (r *repository) List(
 	ctx context.Context,
-	req repositories.ListAgentRunStepsRequest,
+	req agentports.ListAgentRunStepsRequest,
 ) ([]*agent.AgentRunStep, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRunStep, error) {
 		cols := buncolgen.AgentRunStepColumns
@@ -188,7 +188,7 @@ func (r *repository) List(
 // a retry that can no longer happen.
 func (r *repository) Prune(
 	ctx context.Context,
-	req repositories.PruneAgentRunStepsRequest,
+	req agentports.PruneAgentRunStepsRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		cols := buncolgen.AgentRunStepColumns

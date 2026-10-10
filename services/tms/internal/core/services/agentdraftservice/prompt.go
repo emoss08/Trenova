@@ -6,7 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -65,13 +66,13 @@ Rules:
 Return only the object the schema describes.`
 
 type draftContextInput struct {
-	catalog     []serviceports.ToolCatalogEntry
+	catalog     []agentdefinitionports.ToolCatalogEntry
 	timezone    string
 	description string
 }
 
-func draftContext(in *draftContextInput) serviceports.DelimitedContext {
-	return serviceports.DelimitedContext{Sections: []serviceports.ContextSection{
+func draftContext(in *draftContextInput) agentports.DelimitedContext {
+	return agentports.DelimitedContext{Sections: []agentports.ContextSection{
 		{Title: "tools", Trusted: true, Content: describeTools(in.catalog)},
 		{Title: "events", Trusted: true, Content: describeEvents()},
 		{Title: "identity", Trusted: true, Content: describeIdentity()},
@@ -80,23 +81,23 @@ func draftContext(in *draftContextInput) serviceports.DelimitedContext {
 	}}
 }
 
-func tightenContext(instructions string) serviceports.DelimitedContext {
-	sections := make([]serviceports.ContextSection, 0, 2)
+func tightenContext(instructions string) agentports.DelimitedContext {
+	sections := make([]agentports.ContextSection, 0, 2)
 	if variables := agentdefinition.InstructionVariables(instructions); len(variables) > 0 {
-		sections = append(sections, serviceports.ContextSection{
+		sections = append(sections, agentports.ContextSection{
 			Title:   "placeholders",
 			Trusted: true,
 			Content: "Keep each of these exactly: " + strings.Join(variables, " "),
 		})
 	}
 
-	return serviceports.DelimitedContext{Sections: append(sections, serviceports.ContextSection{
+	return agentports.DelimitedContext{Sections: append(sections, agentports.ContextSection{
 		Title:   "instructions",
 		Content: instructions,
 	})}
 }
 
-func describeTools(catalog []serviceports.ToolCatalogEntry) string {
+func describeTools(catalog []agentdefinitionports.ToolCatalogEntry) string {
 	var b strings.Builder
 	for idx := range catalog {
 		entry := &catalog[idx]
@@ -104,7 +105,7 @@ func describeTools(catalog []serviceports.ToolCatalogEntry) string {
 			continue
 		}
 		fmt.Fprintf(&b, "- %s [%s", entry.Name, entry.Resource)
-		if entry.Kind == serviceports.ToolCatalogKindAction {
+		if entry.Kind == agentdefinitionports.ToolCatalogKindAction {
 			fmt.Fprintf(&b, ", change, max %s", maxTierOf(entry))
 		} else {
 			b.WriteString(", read only")
@@ -139,7 +140,7 @@ func describeIdentity() string {
 		"\naccents: " + strings.Join(agentdefinition.KnownAccents(), ", ")
 }
 
-func maxTierOf(entry *serviceports.ToolCatalogEntry) agent.AutonomyTier {
+func maxTierOf(entry *agentdefinitionports.ToolCatalogEntry) agent.AutonomyTier {
 	if entry.MaxAutonomyTier.IsValid() {
 		return entry.MaxAutonomyTier
 	}

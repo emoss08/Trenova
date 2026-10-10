@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -187,7 +187,7 @@ func TestCreateAccountingReferenceRecord_PreviewShowsTheRecordAndTheMapping(t *t
 func TestRefreshAccountingReferenceData_PreviewNamesTheConnection(t *testing.T) {
 	t.Parallel()
 
-	writer := &fakeMappingWriter{summary: &serviceports.AccountingMappingSummary{
+	writer := &fakeMappingWriter{summary: &accountingsyncports.AccountingMappingSummary{
 		ProviderName: "QuickBooks Online",
 		Connection: &accountingsync.AccountingConnection{
 			ID:                  pulid.MustNew("acctc_"),

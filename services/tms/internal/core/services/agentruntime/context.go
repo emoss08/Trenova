@@ -8,8 +8,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -24,31 +26,31 @@ type ContextBuilderParams struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Organizations repositories.OrganizationRepository
-	Users         repositories.UserRepository
-	Runtime       serviceports.AgentRuntime
-	Memories      serviceports.AgentMemoryService `optional:"true"`
-	Guide         serviceports.ProductGuide       `optional:"true"`
+	Organizations tenantports.OrganizationRepository
+	Users         tenantports.UserRepository
+	Runtime       agentports.AgentRuntime
+	Memories      agentports.AgentMemoryService `optional:"true"`
+	Guide         agentports.ProductGuide       `optional:"true"`
 	// Definitions and Permissions name the agents a conversation's agent may
 	// hand work to. Without them it is offered none.
-	Definitions repositories.AgentDefinitionRepository `optional:"true"`
-	Permissions serviceports.PermissionEngine          `optional:"true"`
-	Vectorizer  serviceports.QueryVectorizer           `optional:"true"`
+	Definitions agentdefinitionports.AgentDefinitionRepository `optional:"true"`
+	Permissions permissionports.PermissionEngine               `optional:"true"`
+	Vectorizer  agentports.QueryVectorizer                     `optional:"true"`
 }
 
 type ContextBuilder struct {
 	logger        *zap.Logger
-	organizations repositories.OrganizationRepository
-	users         repositories.UserRepository
-	runtime       serviceports.AgentRuntime
-	memories      serviceports.AgentMemoryService
-	guide         serviceports.ProductGuide
-	definitions   repositories.AgentDefinitionRepository
-	permissions   serviceports.PermissionEngine
-	vectorizer    serviceports.QueryVectorizer
+	organizations tenantports.OrganizationRepository
+	users         tenantports.UserRepository
+	runtime       agentports.AgentRuntime
+	memories      agentports.AgentMemoryService
+	guide         agentports.ProductGuide
+	definitions   agentdefinitionports.AgentDefinitionRepository
+	permissions   permissionports.PermissionEngine
+	vectorizer    agentports.QueryVectorizer
 }
 
-func NewContextBuilder(p ContextBuilderParams) serviceports.RuntimeContextBuilder {
+func NewContextBuilder(p ContextBuilderParams) agentports.RuntimeContextBuilder {
 	return &ContextBuilder{
 		logger:        p.Logger.Named("service.agentruntime.context"),
 		organizations: p.Organizations,
@@ -64,7 +66,7 @@ func NewContextBuilder(p ContextBuilderParams) serviceports.RuntimeContextBuilde
 
 func (b *ContextBuilder) Build(
 	ctx context.Context,
-	req *serviceports.RuntimeContextRequest,
+	req *agentports.RuntimeContextRequest,
 ) (agentdefinition.RuntimeContext, error) {
 	definition := req.Definition
 	rc := agentdefinition.RuntimeContext{
@@ -93,7 +95,7 @@ func (b *ContextBuilder) Build(
 		delegates []agentdefinition.RuntimeDelegate
 		org       organizationContext
 		user      *userContext
-		memories  *serviceports.MemoryContext
+		memories  *agentports.MemoryContext
 	)
 	delegator := strings.TrimSpace(req.DelegatedBy)
 	if delegator == "" {
@@ -156,7 +158,7 @@ func (b *ContextBuilder) describeOrganization(
 ) organizationContext {
 	describe := definition.HasContextProvider(agentdefinition.ContextOrganization) ||
 		definition.HasContextProvider(agentdefinition.ContextClock)
-	org, err := b.organizations.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+	org, err := b.organizations.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: tenant,
 		IncludeBU:  describe,
 	})
@@ -182,11 +184,11 @@ func (b *ContextBuilder) describeOrganization(
 
 func (b *ContextBuilder) readMemories(
 	ctx context.Context,
-	req *serviceports.RuntimeContextRequest,
+	req *agentports.RuntimeContextRequest,
 	records []agent.EntityRef,
 	tenant pagination.TenantInfo,
-) *serviceports.MemoryContext {
-	memories, err := b.memories.ForContext(ctx, serviceports.MemoryContextRequest{
+) *agentports.MemoryContext {
+	memories, err := b.memories.ForContext(ctx, agentports.MemoryContextRequest{
 		TenantInfo:        tenant,
 		AgentDefinitionID: req.Definition.ID,
 		ReaderUserID:      req.Actor.PersonUserID(),
@@ -213,7 +215,7 @@ func (b *ContextBuilder) readMemories(
 // open_page.
 func (b *ContextBuilder) describeTrenova(
 	rc *agentdefinition.RuntimeContext,
-	req *serviceports.RuntimeContextRequest,
+	req *agentports.RuntimeContextRequest,
 ) {
 	if b.guide == nil {
 		return
@@ -221,7 +223,7 @@ func (b *ContextBuilder) describeTrenova(
 
 	rc.Guide = req.Trigger == agent.RunTriggerChat &&
 		req.Actor != nil &&
-		req.Actor.PrincipalType == serviceports.PrincipalTypeUser &&
+		req.Actor.PrincipalType == permissionports.PrincipalTypeUser &&
 		slices.Contains(req.Definition.EffectiveToolNames(), agentdefinition.CoreToolFindInTrenova)
 
 	if req.Surface == agent.SurfaceDesk {
@@ -255,7 +257,7 @@ func (b *ContextBuilder) runtimePage(path string) *agentdefinition.RuntimePage {
 // still answers with its own tools.
 func (b *ContextBuilder) delegates(
 	ctx context.Context,
-	req *serviceports.RuntimeContextRequest,
+	req *agentports.RuntimeContextRequest,
 ) []agentdefinition.RuntimeDelegate {
 	definition := req.Definition
 	if req.Trigger != agent.RunTriggerChat || !definition.Delegates() ||
@@ -267,7 +269,7 @@ func (b *ContextBuilder) delegates(
 		return nil
 	}
 
-	found, err := b.definitions.ListByIDs(ctx, repositories.ListAgentDefinitionsByIDsRequest{
+	found, err := b.definitions.ListByIDs(ctx, agentdefinitionports.ListAgentDefinitionsByIDsRequest{
 		IDs:        definition.DelegateIDs,
 		TenantInfo: req.Actor.TenantInfo(),
 	})
@@ -303,7 +305,7 @@ func (b *ContextBuilder) delegates(
 // agent has, narrowed to those the person may use.
 func (b *ContextBuilder) delegateTools(
 	ctx context.Context,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 	delegate *agentdefinition.Definition,
 ) []string {
 	summaries := b.runtime.ToolSummaries(delegate)
@@ -319,11 +321,11 @@ func (b *ContextBuilder) delegateTools(
 
 func (b *ContextBuilder) memoryQuery(
 	ctx context.Context,
-	req *serviceports.QueryVectorRequest,
-) serviceports.QueryVector {
+	req *agentports.QueryVectorRequest,
+) agentports.QueryVector {
 	if b.vectorizer == nil || req == nil || strings.TrimSpace(req.Text) == "" ||
 		req.TenantInfo.OrgID.IsNil() || req.TenantInfo.BuID.IsNil() {
-		return serviceports.QueryVector{}
+		return agentports.QueryVector{}
 	}
 
 	query, err := b.vectorizer.Vectorize(ctx, req)
@@ -333,7 +335,7 @@ func (b *ContextBuilder) memoryQuery(
 			zap.Error(err),
 		)
 
-		return serviceports.QueryVector{}
+		return agentports.QueryVector{}
 	}
 
 	return query
@@ -355,7 +357,7 @@ func (b *ContextBuilder) describeUser(
 		return nil
 	}
 
-	user, err := b.users.GetByID(ctx, repositories.GetUserByIDRequest{
+	user, err := b.users.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo:   tenant,
 		LookupUserID: person,
 	})

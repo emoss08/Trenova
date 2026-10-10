@@ -6,15 +6,15 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/dispatchcandidateservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/shared/assignmentsolver"
 	"github.com/shopspring/decimal"
 )
 
 type plannedAssignmentParams struct {
-	Move       *repositories.BoardMove
+	Move       *shipmentports.BoardMove
 	Score      *dispatchcandidateservice.CandidateScore
 	Tier       agent.AutonomyTier
 	Threshold  decimal.Decimal
@@ -23,10 +23,10 @@ type plannedAssignmentParams struct {
 
 func plannedAssignmentFor(
 	p *plannedAssignmentParams,
-) *portservices.DispatchPlannedAssignment {
+) *agentports.DispatchPlannedAssignment {
 	confidence := confidenceFor(p.Score)
 
-	planned := &portservices.DispatchPlannedAssignment{
+	planned := &agentports.DispatchPlannedAssignment{
 		MoveID:     p.Move.MoveID,
 		ProNumber:  p.Move.ProNumber,
 		WorkerID:   p.Score.WorkerID,
@@ -92,7 +92,7 @@ func confidenceFor(score *dispatchcandidateservice.CandidateScore) decimal.Decim
 
 func rationaleFor(
 	score *dispatchcandidateservice.CandidateScore,
-	move *repositories.BoardMove,
+	move *shipmentports.BoardMove,
 ) string {
 	if score == nil {
 		return ""
@@ -124,7 +124,7 @@ func rationaleFor(
 
 func evidenceFor(
 	score *dispatchcandidateservice.CandidateScore,
-	move *repositories.BoardMove,
+	move *shipmentports.BoardMove,
 ) []agent.EvidenceRef {
 	evidence := make([]agent.EvidenceRef, 0, 3)
 
@@ -165,22 +165,22 @@ func evidenceFor(
 	return evidence
 }
 
-func originLabel(move *repositories.BoardMove) string {
+func originLabel(move *shipmentports.BoardMove) string {
 	if move.OriginCity == "" {
 		return move.OriginName
 	}
 	return fmt.Sprintf("%s, %s", move.OriginCity, move.OriginState)
 }
 
-func destinationLabel(move *repositories.BoardMove) string {
+func destinationLabel(move *shipmentports.BoardMove) string {
 	if move.DestinationCity == "" {
 		return move.DestinationName
 	}
 	return fmt.Sprintf("%s, %s", move.DestinationCity, move.DestinationState)
 }
 
-func moveStubFor(planned *portservices.DispatchPlannedAssignment) *repositories.BoardMove {
-	return &repositories.BoardMove{
+func moveStubFor(planned *agentports.DispatchPlannedAssignment) *shipmentports.BoardMove {
+	return &shipmentports.BoardMove{
 		MoveID:    planned.MoveID,
 		ProNumber: planned.ProNumber,
 	}

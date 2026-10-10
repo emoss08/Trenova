@@ -5,10 +5,10 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -31,7 +31,7 @@ type templateRepository struct {
 	l  *zap.Logger
 }
 
-func NewTemplateRepository(p TemplateParams) repositories.DocumentTemplateRepository {
+func NewTemplateRepository(p TemplateParams) documenttemplateports.DocumentTemplateRepository {
 	return &templateRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.document-template-repository"),
@@ -46,7 +46,7 @@ func orderVersions(sq *bun.SelectQuery) *bun.SelectQuery {
 
 func (r *templateRepository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListDocumentTemplatesRequest,
+	req *documenttemplateports.ListDocumentTemplatesRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
@@ -64,7 +64,7 @@ func (r *templateRepository) filterQuery(
 
 func (r *templateRepository) List(
 	ctx context.Context,
-	req *repositories.ListDocumentTemplatesRequest,
+	req *documenttemplateports.ListDocumentTemplatesRequest,
 ) (*pagination.ListResult[*documenttemplate.DocumentTemplate], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*documenttemplate.DocumentTemplate], error) {
 		log := r.l.With(zap.String("operation", "List"))
@@ -92,7 +92,7 @@ func (r *templateRepository) List(
 
 func (r *templateRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListDocumentTemplateConnectionRequest,
+	req *documenttemplateports.ListDocumentTemplateConnectionRequest,
 ) (*pagination.CursorListResult[*documenttemplate.DocumentTemplate], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*documenttemplate.DocumentTemplate], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -156,7 +156,7 @@ func (r *templateRepository) ListConnection(
 
 func (r *templateRepository) GetByID(
 	ctx context.Context,
-	req *repositories.GetDocumentTemplateByIDRequest,
+	req *documenttemplateports.GetDocumentTemplateByIDRequest,
 ) (*documenttemplate.DocumentTemplate, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*documenttemplate.DocumentTemplate, error) {
 		log := r.l.With(
@@ -203,7 +203,7 @@ func (r *templateRepository) GetByID(
 
 func (r *templateRepository) GetByIDs(
 	ctx context.Context,
-	req *repositories.GetDocumentTemplatesByIDsRequest,
+	req *documenttemplateports.GetDocumentTemplatesByIDsRequest,
 ) ([]*documenttemplate.DocumentTemplate, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*documenttemplate.DocumentTemplate, error) {
 		entities := make([]*documenttemplate.DocumentTemplate, 0, len(req.DocumentTemplateIDs))
@@ -287,7 +287,7 @@ func (r *templateRepository) Update(
 // what a customer was sent.
 func (r *templateRepository) Delete(
 	ctx context.Context,
-	req *repositories.GetDocumentTemplateByIDRequest,
+	req *documenttemplateports.GetDocumentTemplateByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		log := r.l.With(
@@ -299,7 +299,7 @@ func (r *templateRepository) Delete(
 
 		// The template points at its active version and the version points back, so
 		// the pointer has to be dropped before the cascade can remove the versions.
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			if _, uErr := r.db.DBForContext(c).
 				NewUpdate().
 				Model((*documenttemplate.DocumentTemplate)(nil)).
@@ -339,7 +339,7 @@ func (r *templateRepository) Delete(
 
 func (r *templateRepository) SelectOptions(
 	ctx context.Context,
-	req *repositories.DocumentTemplateSelectOptionsRequest,
+	req *documenttemplateports.DocumentTemplateSelectOptionsRequest,
 ) (*pagination.ListResult[*documenttemplate.DocumentTemplate], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*documenttemplate.DocumentTemplate], error) {
 		cols := buncolgen.DocumentTemplateColumns

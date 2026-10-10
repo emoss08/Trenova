@@ -12,9 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	reportingservice "github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/tableexportservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -466,7 +466,7 @@ func (r *QueryResolver) ReportDefinitions(ctx context.Context, input gqlmodel.Da
 
 	result, err := r.ReportingService.ListDefinitionsConnection(
 		ctx,
-		&repositories.ListReportDefinitionConnectionRequest{
+		&reportports.ListReportDefinitionConnectionRequest{
 			Filter:   tableInput.Filter,
 			Cursor:   tableInput.Cursor,
 			ViewerID: base.TenantInfo(authCtx).UserID,
@@ -548,7 +548,7 @@ func (r *QueryResolver) ReportRuns(ctx context.Context, input gqlmodel.DataTable
 		return nil, err
 	}
 
-	req := &repositories.ListReportRunConnectionRequest{
+	req := &reportports.ListReportRunConnectionRequest{
 		Filter: tableInput.Filter,
 		Cursor: tableInput.Cursor,
 	}

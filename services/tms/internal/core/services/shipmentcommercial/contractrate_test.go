@@ -1,18 +1,19 @@
 package shipmentcommercial
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/rateagreementportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/ratequoteportsmock"
 	"context"
 	"errors"
 	"testing"
-
-	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial/shipmentcommercialtest"
 
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial/shipmentcommercialtest"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -31,18 +32,18 @@ func TestRecalculate_PricesFormulaOnlyAndPersistsNoQuote(t *testing.T) {
 
 	entity := validShipment()
 
-	var captured *services.RateShipmentRequest
+	var captured *ratequoteports.RateShipmentRequest
 
-	engine := mocks.NewMockRateEngine(t)
+	engine := ratequoteportsmock.NewMockRateEngine(t)
 	engine.EXPECT().
 		RateShipment(mock.Anything, mock.AnythingOfType("*services.RateShipmentRequest")).
 		RunAndReturn(func(
 			_ context.Context,
-			req *services.RateShipmentRequest,
-		) (*services.RatedShipment, error) {
+			req *ratequoteports.RateShipmentRequest,
+		) (*ratequoteports.RatedShipment, error) {
 			captured = req
 
-			return &services.RatedShipment{
+			return &ratequoteports.RatedShipment{
 				Amount:   decimal.NewFromInt(1000),
 				Currency: "USD",
 				Outcome:  ratequote.OutcomeFormulaFallback,
@@ -137,7 +138,7 @@ func TestRecalculate_LockedShipmentKeepsItsCharges(t *testing.T) {
 	entity.RateLocked = true
 	entity.FreightChargeAmount = decimal.NewNullDecimal(decimal.NewFromInt(1234))
 
-	engine := mocks.NewMockRateEngine(t)
+	engine := ratequoteportsmock.NewMockRateEngine(t)
 
 	calculator := New(Params{Logger: zap.NewNop(), RateEngine: engine})
 	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
@@ -169,7 +170,7 @@ func TestAdoptContractRate_SeatsTheRatingMethodAndBaseRate(t *testing.T) {
 	calculator := New(Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)})
 	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
-	calculator.AdoptContractRate(t.Context(), entity, &services.RatedShipment{
+	calculator.AdoptContractRate(t.Context(), entity, &ratequoteports.RatedShipment{
 		Amount:            decimal.NewFromInt(1000),
 		Outcome:           ratequote.OutcomeRated,
 		AgreementID:       &agreementID,
@@ -196,7 +197,7 @@ func TestAdoptContractRate_KeepsTheBaseRateWhenTheRuleBindsNone(t *testing.T) {
 	calculator := New(Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)})
 	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
-	calculator.AdoptContractRate(t.Context(), entity, &services.RatedShipment{
+	calculator.AdoptContractRate(t.Context(), entity, &ratequoteports.RatedShipment{
 		Amount:  decimal.NewFromInt(1000),
 		Outcome: ratequote.OutcomeRated,
 	})
@@ -217,7 +218,7 @@ func TestAdoptContractRate_ClearsAPreviousDeparture(t *testing.T) {
 	calculator := New(Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)})
 	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
-	calculator.AdoptContractRate(t.Context(), entity, &services.RatedShipment{
+	calculator.AdoptContractRate(t.Context(), entity, &ratequoteports.RatedShipment{
 		Amount:  decimal.NewFromInt(1000),
 		Outcome: ratequote.OutcomeRated,
 	})
@@ -237,7 +238,7 @@ func TestAdoptContractRate_IgnoresAnUnpricedOutcome(t *testing.T) {
 	calculator := New(Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 0)})
 	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
-	calculator.AdoptContractRate(t.Context(), entity, &services.RatedShipment{
+	calculator.AdoptContractRate(t.Context(), entity, &ratequoteports.RatedShipment{
 		Amount:  decimal.Zero,
 		Outcome: ratequote.OutcomeNoRateFound,
 	})
@@ -254,7 +255,7 @@ func TestContractRateMatches(t *testing.T) {
 	templateID := pulid.MustNew("fmt_")
 	otherTemplateID := pulid.MustNew("fmt_")
 
-	rated := &services.RatedShipment{
+	rated := &ratequoteports.RatedShipment{
 		Outcome:           ratequote.OutcomeRated,
 		FormulaTemplateID: &templateID,
 		BaseRate:          decimal.NewNullDecimal(decimal.NewFromFloat(2.15)),
@@ -275,7 +276,7 @@ func TestContractRateMatches(t *testing.T) {
 	remethoded.BaseRate = decimal.NewNullDecimal(decimal.NewFromFloat(2.15))
 	assert.False(t, ContractRateMatches(remethoded, rated))
 
-	assert.False(t, ContractRateMatches(matching, &services.RatedShipment{
+	assert.False(t, ContractRateMatches(matching, &ratequoteports.RatedShipment{
 		Outcome: ratequote.OutcomeNoRateFound,
 	}))
 }
@@ -303,7 +304,7 @@ func TestRecordRateDeparture_RecordsWhatWasGivenAway(t *testing.T) {
 
 	var recorded *ratequote.RateQuote
 
-	quoteRepo := mocks.NewMockRateQuoteRepository(t)
+	quoteRepo := ratequoteportsmock.NewMockRateQuoteRepository(t)
 	quoteRepo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetRateQuoteByIDRequest")).
 		Return(contractQuote, nil).
@@ -353,7 +354,7 @@ func TestRecordRateDeparture_WritesNoQuoteWhenNothingJustDeparted(t *testing.T) 
 	entity.RateOverrideAmount = decimal.NewNullDecimal(decimal.NewFromInt(900))
 	entity.FreightChargeAmount = decimal.NewNullDecimal(decimal.NewFromInt(850))
 
-	quoteRepo := mocks.NewMockRateQuoteRepository(t)
+	quoteRepo := ratequoteportsmock.NewMockRateQuoteRepository(t)
 
 	calculator := New(Params{
 		Logger:     zap.NewNop(),
@@ -378,7 +379,7 @@ func TestRecordRateDeparture_IgnoresAnAutoRatedShipment(t *testing.T) {
 	entity := validShipment()
 	entity.AutoRated = true
 
-	quoteRepo := mocks.NewMockRateQuoteRepository(t)
+	quoteRepo := ratequoteportsmock.NewMockRateQuoteRepository(t)
 
 	calculator := New(Params{
 		Logger:     zap.NewNop(),
@@ -436,10 +437,10 @@ func TestRateAndAdoptContract_AddsNoAccessorialsWhenNothingPricedTheLane(t *test
 
 	agreement := agreementWithAccessorial(t, decimal.NewFromInt(75))
 
-	engine := mocks.NewMockRateEngine(t)
+	engine := ratequoteportsmock.NewMockRateEngine(t)
 	engine.EXPECT().
 		RateShipment(mock.Anything, mock.AnythingOfType("*services.RateShipmentRequest")).
-		Return(&services.RatedShipment{
+		Return(&ratequoteports.RatedShipment{
 			Amount:   decimal.Zero,
 			Currency: "USD",
 			Outcome:  ratequote.OutcomeNoRateFound,
@@ -476,10 +477,10 @@ func departingCalculator(
 	linehaul := decimal.NewFromInt(100)
 	agreementID := agreement.ID
 
-	engine := mocks.NewMockRateEngine(t)
+	engine := ratequoteportsmock.NewMockRateEngine(t)
 	engine.EXPECT().
 		RateShipment(mock.Anything, mock.AnythingOfType("*services.RateShipmentRequest")).
-		Return(&services.RatedShipment{
+		Return(&ratequoteports.RatedShipment{
 			Amount:      linehaul,
 			Currency:    "USD",
 			Outcome:     ratequote.OutcomeRated,
@@ -508,15 +509,15 @@ func departingCalculator(
 func agreementRepoFor(
 	t *testing.T,
 	agreement *rateagreement.RateAgreement,
-) *mocks.MockRateAgreementRepository {
+) *rateagreementportsmock.MockRateAgreementRepository {
 	t.Helper()
 
-	repo := mocks.NewMockRateAgreementRepository(t)
+	repo := rateagreementportsmock.NewMockRateAgreementRepository(t)
 	repo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetRateAgreementByIDRequest")).
 		RunAndReturn(func(
 			_ context.Context,
-			req *repositories.GetRateAgreementByIDRequest,
+			req *rateagreementports.GetRateAgreementByIDRequest,
 		) (*rateagreement.RateAgreement, error) {
 			if req.RateAgreementID != agreement.ID {
 				return nil, errors.New("unexpected agreement id")

@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/storedmileage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/places/ports/storedmileageports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -29,7 +29,7 @@ func (r *QueryResolver) StoredMileages(ctx context.Context, input gqlmodel.DataT
 
 	result, err := r.StoredMileageService.ListConnection(
 		ctx,
-		&repositories.ListStoredMileageConnectionRequest{
+		&storedmileageports.ListStoredMileageConnectionRequest{
 			Filter:               tableInput.Filter,
 			Cursor:               tableInput.Cursor,
 			StoredMileageColumns: storedMileageColumns(ctx, "edges.node"),
@@ -53,7 +53,7 @@ func (r *QueryResolver) StoredMileage(ctx context.Context, id string) (*storedmi
 		return nil, err
 	}
 
-	return r.StoredMileageService.Get(ctx, repositories.GetStoredMileageByIDRequest{
+	return r.StoredMileageService.Get(ctx, storedmileageports.GetStoredMileageByIDRequest{
 		ID:         mileageID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})

@@ -8,7 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -22,7 +22,7 @@ type reportingTool struct {
 
 func (t *reportingTool) ExecuteWithResult(
 	ctx context.Context,
-	params services.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) (*agent.ToolExecutionResult, error) {
 	if err := t.Execute(ctx, params); err != nil {
 		return nil, err

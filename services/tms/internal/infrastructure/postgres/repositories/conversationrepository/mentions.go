@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 
 const humanizedStatus = `regexp_replace(%s::text, '([a-z])([A-Z])', '\1 \2', 'g')`
@@ -110,14 +110,14 @@ func likeEscape(value string) string {
 
 func (r *repository) SearchMentions(
 	ctx context.Context,
-	req repositories.SearchMentionsRequest,
-) ([]repositories.MentionRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.MentionRow, error) {
+	req agentports.SearchMentionsRequest,
+) ([]agentports.MentionRow, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentports.MentionRow, error) {
 		db := r.db.DBForContext(ctx)
 		term := likeEscape(strings.TrimSpace(req.Query))
 		contains := "%" + term + "%"
 		prefix := term + "%"
-		out := make([]repositories.MentionRow, 0, len(req.Kinds)*req.LimitPerKind)
+		out := make([]agentports.MentionRow, 0, len(req.Kinds)*req.LimitPerKind)
 		for _, kind := range req.Kinds {
 			query, ok := mentionQueries[kind]
 			if !ok {
@@ -128,7 +128,7 @@ func (r *repository) SearchMentions(
 				args = append(args, contains)
 			}
 			args = append(args, prefix, req.LimitPerKind, max(req.Offset, 0))
-			rows := make([]repositories.MentionRow, 0, req.LimitPerKind)
+			rows := make([]agentports.MentionRow, 0, req.LimitPerKind)
 			if err := db.NewRaw(query+"\nOFFSET ?", args...).Scan(ctx, &rows); err != nil {
 				return nil, fmt.Errorf("search %s mentions: %w", kind, err)
 			}

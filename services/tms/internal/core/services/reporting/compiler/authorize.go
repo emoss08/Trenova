@@ -6,7 +6,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -16,7 +17,7 @@ type authzResult struct {
 
 func (c *Compiler) authorize(
 	ctx context.Context,
-	req *services.ReportCompileRequest,
+	req *reportports.ReportCompileRequest,
 	v *validatedDef,
 	requireExport bool,
 ) (*authzResult, error) {
@@ -75,7 +76,7 @@ func (c *Compiler) authorize(
 }
 
 func (c *Compiler) checkFieldAccess(
-	detail *services.ResourcePermissionDetail,
+	detail *permissionports.ResourcePermissionDetail,
 	ref *resolvedRef,
 ) string {
 	sensitivity := c.permissionRegistry.GetFieldSensitivity(
@@ -98,7 +99,7 @@ func (c *Compiler) checkFieldAccess(
 	return ""
 }
 
-func hasOperation(detail *services.ResourcePermissionDetail, op permission.Operation) bool {
+func hasOperation(detail *permissionports.ResourcePermissionDetail, op permission.Operation) bool {
 	for _, allowed := range detail.Operations {
 		if allowed == op {
 			return true

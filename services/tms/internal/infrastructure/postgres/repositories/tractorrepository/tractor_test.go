@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -28,7 +28,7 @@ func TestApplyTractorColumns_UsesSelectedColumns(t *testing.T) {
 		NewSelect().
 		Model(&entities).
 		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return applyTractorColumns(sq, repositories.TractorRelationIncludes{
+			return applyTractorColumns(sq, tractorports.TractorRelationIncludes{
 				TractorColumns: []string{"id", "code", "created_at"},
 			})
 		})
@@ -48,7 +48,7 @@ func TestApplyTractorLastKnownLocationJoin_SelectedOnly(t *testing.T) {
 		NewSelect().
 		Model(&entities).
 		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return applyTractorLastKnownLocationJoin(sq, repositories.TractorRelationIncludes{
+			return applyTractorLastKnownLocationJoin(sq, tractorports.TractorRelationIncludes{
 				IncludeLastKnownLocation: true,
 				TractorColumns:           []string{"id", "created_at"},
 			})
@@ -71,7 +71,7 @@ func TestApplyTractorLastKnownLocationJoin_SkipsWhenUnselected(t *testing.T) {
 		NewSelect().
 		Model(&entities).
 		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return applyTractorLastKnownLocationJoin(sq, repositories.TractorRelationIncludes{})
+			return applyTractorLastKnownLocationJoin(sq, tractorports.TractorRelationIncludes{})
 		})
 
 	sql := query.String()
@@ -109,7 +109,7 @@ func TestApplyTractorListCountFilters_SkipsCursorPredicateAndSort(t *testing.T) 
 	query := newTractorQueryTestDB().
 		NewSelect().
 		Model(&entities)
-	result := repo.applyListCountFilters(query, &repositories.ListTractorsRequest{
+	result := repo.applyListCountFilters(query, &tractorports.ListTractorsRequest{
 		Filter: filter,
 		Status: string(domaintypes.EquipmentStatusAvailable),
 	})

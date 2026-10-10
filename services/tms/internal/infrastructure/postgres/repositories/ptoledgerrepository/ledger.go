@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -30,7 +30,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.PTOLedgerRepository {
+func New(p Params) workerports.PTOLedgerRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.pto-ledger-repository"),
@@ -39,7 +39,7 @@ func New(p Params) repositories.PTOLedgerRepository {
 
 func balanceScope(
 	sq *bun.SelectQuery,
-	key *repositories.PTOBalanceKey,
+	key *workerports.PTOBalanceKey,
 ) *bun.SelectQuery {
 	cols := buncolgen.WorkerPTOBalanceColumns
 	return buncolgen.WorkerPTOBalanceScopeTenant(sq, key.TenantInfo).
@@ -47,7 +47,7 @@ func balanceScope(
 		Where(cols.PTOType.Eq(), key.PTOType)
 }
 
-func (r *repository) EnsureBalance(ctx context.Context, key *repositories.PTOBalanceKey) error {
+func (r *repository) EnsureBalance(ctx context.Context, key *workerports.PTOBalanceKey) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		entity := &worker.WorkerPTOBalance{
 			OrganizationID: key.TenantInfo.OrgID,
@@ -71,7 +71,7 @@ func (r *repository) EnsureBalance(ctx context.Context, key *repositories.PTOBal
 
 func (r *repository) LockBalance(
 	ctx context.Context,
-	key *repositories.PTOBalanceKey,
+	key *workerports.PTOBalanceKey,
 ) (*worker.WorkerPTOBalance, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerPTOBalance, error) {
 		entity := new(worker.WorkerPTOBalance)
@@ -93,7 +93,7 @@ func (r *repository) LockBalance(
 
 func (r *repository) GetBalance(
 	ctx context.Context,
-	key *repositories.PTOBalanceKey,
+	key *workerports.PTOBalanceKey,
 ) (*worker.WorkerPTOBalance, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerPTOBalance, error) {
 		entity := new(worker.WorkerPTOBalance)
@@ -114,7 +114,7 @@ func (r *repository) GetBalance(
 
 func (r *repository) ListBalances(
 	ctx context.Context,
-	req *repositories.ListPTOBalancesRequest,
+	req *workerports.ListPTOBalancesRequest,
 ) ([]*worker.WorkerPTOBalance, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerPTOBalance, error) {
 		cols := buncolgen.WorkerPTOBalanceColumns
@@ -201,7 +201,7 @@ func (r *repository) InsertEntry(
 			Returning("*").
 			Exec(ctx); err != nil {
 			if dberror.IsUniqueConstraintViolation(err) {
-				return nil, repositories.ErrDuplicatePTOLedgerEntry
+				return nil, workerports.ErrDuplicatePTOLedgerEntry
 			}
 			r.l.Error("failed to insert PTO ledger entry", zap.Error(err))
 			return nil, err
@@ -213,7 +213,7 @@ func (r *repository) InsertEntry(
 
 func (r *repository) applyEntryFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListPTOLedgerRequest,
+	req *workerports.ListPTOLedgerRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.WorkerPTOLedgerEntryColumns
 	if !req.WorkerID.IsNil() {
@@ -236,7 +236,7 @@ func (r *repository) applyEntryFilters(
 
 func (r *repository) ListEntries(
 	ctx context.Context,
-	req *repositories.ListPTOLedgerRequest,
+	req *workerports.ListPTOLedgerRequest,
 ) (*pagination.CursorListResult[*worker.WorkerPTOLedgerEntry], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*worker.WorkerPTOLedgerEntry], error) {
 		log := r.l.With(zap.String("operation", "ListEntries"))
@@ -309,7 +309,7 @@ type sumRow struct {
 
 func (r *repository) SumEntries(
 	ctx context.Context,
-	key *repositories.PTOBalanceKey,
+	key *workerports.PTOBalanceKey,
 ) (decimal.Decimal, int64, error) {
 	return dbtx.Read2(ctx, r.db, func(ctx context.Context) (decimal.Decimal, int64, error) {
 		cols := buncolgen.WorkerPTOLedgerEntryColumns
@@ -340,7 +340,7 @@ type pendingRow struct {
 
 func (r *repository) PendingDays(
 	ctx context.Context,
-	req *repositories.PendingPTODaysRequest,
+	req *workerports.PendingPTODaysRequest,
 ) (decimal.Decimal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (decimal.Decimal, error) {
 		cols := buncolgen.WorkerPTOColumns
@@ -370,7 +370,7 @@ func (r *repository) PendingDays(
 
 func (r *repository) HasEntry(
 	ctx context.Context,
-	req *repositories.HasPTOLedgerEntryRequest,
+	req *workerports.HasPTOLedgerEntryRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
 		cols := buncolgen.WorkerPTOLedgerEntryColumns
@@ -406,8 +406,8 @@ type countRow struct {
 func (r *repository) Summary(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*repositories.PTOBalanceSummary, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.PTOBalanceSummary, error) {
+) (*workerports.PTOBalanceSummary, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*workerports.PTOBalanceSummary, error) {
 		dba := r.db.DBForContext(ctx)
 		bal := buncolgen.WorkerPTOBalanceColumns
 
@@ -461,7 +461,7 @@ func (r *repository) Summary(
 			return nil, err
 		}
 
-		return &repositories.PTOBalanceSummary{
+		return &workerports.PTOBalanceSummary{
 			WorkersTracked:    int(balances.WorkersTracked),
 			WorkersUnassigned: int(unassigned.Count),
 			TotalBalanceDays:  balances.TotalBalance,

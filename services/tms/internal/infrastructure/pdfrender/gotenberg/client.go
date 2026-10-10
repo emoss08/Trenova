@@ -14,8 +14,8 @@ import (
 
 	"github.com/cenkalti/backoff/v5"
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 	"golang.org/x/sync/semaphore"
@@ -53,7 +53,7 @@ type Client struct {
 	cfg     *config.RendererConfig
 }
 
-var _ services.PDFRenderer = (*Client)(nil)
+var _ documenttemplateports.PDFRenderer = (*Client)(nil)
 
 func New(p Params) *Client {
 	cfg := p.Config.GetRendererConfig()
@@ -83,7 +83,7 @@ func (c *Client) Enabled() bool { return c.baseURL != "" }
 
 func (c *Client) Healthy(ctx context.Context) error {
 	if !c.Enabled() {
-		return services.ErrPDFRendererUnavailable
+		return documenttemplateports.ErrPDFRendererUnavailable
 	}
 
 	healthCtx, cancel := context.WithTimeout(ctx, c.cfg.GetHealthTimeout())
@@ -101,7 +101,7 @@ func (c *Client) Healthy(ctx context.Context) error {
 
 	resp, err := c.http.Do(req)
 	if err != nil {
-		return fmt.Errorf("%w: %w", services.ErrPDFRendererUnavailable, err)
+		return fmt.Errorf("%w: %w", documenttemplateports.ErrPDFRendererUnavailable, err)
 	}
 	defer func() {
 		_, _ = io.Copy(io.Discard, resp.Body)
@@ -111,7 +111,7 @@ func (c *Client) Healthy(ctx context.Context) error {
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf(
 			"%w: health returned %d",
-			services.ErrPDFRendererUnavailable,
+			documenttemplateports.ErrPDFRendererUnavailable,
 			resp.StatusCode,
 		)
 	}
@@ -119,9 +119,9 @@ func (c *Client) Healthy(ctx context.Context) error {
 	return nil
 }
 
-func (c *Client) Render(ctx context.Context, req *services.PDFRenderRequest) ([]byte, error) {
+func (c *Client) Render(ctx context.Context, req *documenttemplateports.PDFRenderRequest) ([]byte, error) {
 	if !c.Enabled() {
-		return nil, services.ErrPDFRendererUnavailable
+		return nil, documenttemplateports.ErrPDFRendererUnavailable
 	}
 	if req == nil || strings.TrimSpace(req.HTML) == "" {
 		return nil, errors.New("render request has no HTML")
@@ -171,7 +171,7 @@ func (c *Client) postConvert(
 	ctx context.Context,
 	body []byte,
 	contentType string,
-	renderReq *services.PDFRenderRequest,
+	renderReq *documenttemplateports.PDFRenderRequest,
 ) ([]byte, error) {
 	httpReq, err := http.NewRequestWithContext(
 		ctx,
@@ -194,7 +194,7 @@ func (c *Client) postConvert(
 	if err != nil {
 		// Transport failures are the retryable case: a restarting browser, a
 		// dropped keep-alive, a sidecar that has not finished starting.
-		return nil, fmt.Errorf("%w: %w", services.ErrPDFRendererUnavailable, err)
+		return nil, fmt.Errorf("%w: %w", documenttemplateports.ErrPDFRendererUnavailable, err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
@@ -215,7 +215,7 @@ func (c *Client) postConvert(
 	case retryableStatus(resp.StatusCode):
 		return nil, fmt.Errorf(
 			"%w: renderer returned %d: %s",
-			services.ErrPDFRendererUnavailable,
+			documenttemplateports.ErrPDFRendererUnavailable,
 			resp.StatusCode,
 			readErrorBody(resp.Body),
 		)
@@ -260,7 +260,7 @@ func readErrorBody(r io.Reader) string {
 }
 
 func buildMultipartBody(
-	req *services.PDFRenderRequest,
+	req *documenttemplateports.PDFRenderRequest,
 ) (body []byte, contentType string, err error) {
 	var buf bytes.Buffer
 	w := multipart.NewWriter(&buf)

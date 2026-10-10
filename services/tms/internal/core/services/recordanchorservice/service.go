@@ -11,11 +11,18 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/orgzone"
 	"github.com/emoss08/trenova/internal/core/services/subjectaccess"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -41,26 +48,26 @@ type Params struct {
 	fx.In
 
 	Logger      *zap.Logger
-	Permissions services.PermissionEngine
-	Tracking    services.ShipmentTrackingReader
-	Invoices    repositories.InvoiceRepository
-	Tractors    repositories.TractorRepository
-	Trailers    repositories.TrailerRepository
-	Telematics  repositories.TelematicsRepository
-	Detentions  repositories.DetentionOccurrenceRepository
+	Permissions permissionports.PermissionEngine
+	Tracking    shipmentports.ShipmentTrackingReader
+	Invoices    invoiceports.InvoiceRepository
+	Tractors    tractorports.TractorRepository
+	Trailers    trailerports.TrailerRepository
+	Telematics  telematicsports.TelematicsRepository
+	Detentions  detentionports.DetentionOccurrenceRepository
 	Pricer      *detentionservice.Service
-	Orgs        repositories.OrganizationRepository
+	Orgs        tenantports.OrganizationRepository
 }
 
 type Dependencies struct {
 	Logger      *zap.Logger
-	Permissions services.PermissionEngine
-	Tracking    services.ShipmentTrackingReader
-	Invoices    repositories.InvoiceRepository
-	Tractors    repositories.TractorRepository
-	Trailers    repositories.TrailerRepository
-	Telematics  repositories.TelematicsRepository
-	Detentions  repositories.DetentionOccurrenceRepository
+	Permissions permissionports.PermissionEngine
+	Tracking    shipmentports.ShipmentTrackingReader
+	Invoices    invoiceports.InvoiceRepository
+	Tractors    tractorports.TractorRepository
+	Trailers    trailerports.TrailerRepository
+	Telematics  telematicsports.TelematicsRepository
+	Detentions  detentionports.DetentionOccurrenceRepository
 	Pricer      clockPricer
 	Orgs        orgzone.OrganizationReader
 	Now         func() int64
@@ -80,14 +87,14 @@ type kindReader func(ctx context.Context, read *kindRead) (map[pulid.ID]*agentde
 type Service struct {
 	logger      *zap.Logger
 	orgs        orgzone.OrganizationReader
-	permissions services.PermissionEngine
+	permissions permissionports.PermissionEngine
 	readers     map[permission.RecordKind]kindReader
 	now         func() int64
 }
 
-var _ services.RecordAnchorReader = (*Service)(nil)
+var _ agentports.RecordAnchorReader = (*Service)(nil)
 
-func New(p Params) services.RecordAnchorReader {
+func New(p Params) agentports.RecordAnchorReader {
 	return NewWithDependencies(&Dependencies{
 		Logger:      p.Logger,
 		Permissions: p.Permissions,
@@ -149,7 +156,7 @@ type kindBatch struct {
 
 func (s *Service) Anchor(
 	ctx context.Context,
-	req *services.RecordAnchorRequest,
+	req *agentports.RecordAnchorRequest,
 ) []agentdefinition.RuntimeAnchor {
 	if req == nil || len(req.Records) == 0 {
 		return nil
@@ -215,7 +222,7 @@ func (s *Service) Anchor(
 	return anchors
 }
 
-func (s *Service) timezone(ctx context.Context, req *services.RecordAnchorRequest) string {
+func (s *Service) timezone(ctx context.Context, req *agentports.RecordAnchorRequest) string {
 	if req.Timezone != "" || s.orgs == nil {
 		return req.Timezone
 	}
@@ -233,7 +240,7 @@ func (s *Service) readBatch(
 	reader kindReader,
 	batch *kindBatch,
 	read *kindRead,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (map[pulid.ID]*agentdefinition.RuntimeAnchor, string) {
 	allowed, err := s.mayRead(ctx, actor, batch.kind)
 	if err != nil {
@@ -304,7 +311,7 @@ func kindOf(id string) (permission.RecordKind, bool) {
 
 func (s *Service) mayRead(
 	ctx context.Context,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	kind permission.RecordKind,
 ) (bool, error) {
 	return subjectaccess.MayReadResource(ctx, s.permissions, actor, kind.Resource())

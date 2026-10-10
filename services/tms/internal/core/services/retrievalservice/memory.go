@@ -8,9 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentmemoryservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/rankfusion"
 	"go.uber.org/zap"
@@ -21,16 +20,16 @@ const (
 	MaxSimilarMemories     = 200
 )
 
-var _ serviceports.MemoryVectorSearcher = (*Searcher)(nil)
+var _ agentports.MemoryVectorSearcher = (*Searcher)(nil)
 
-func AsMemoryVectorSearcher(s *Searcher) serviceports.MemoryVectorSearcher { return s }
+func AsMemoryVectorSearcher(s *Searcher) agentports.MemoryVectorSearcher { return s }
 
 func (s *Searcher) SimilarMemories(
 	ctx context.Context,
-	req *serviceports.SimilarMemoriesRequest,
-) (serviceports.SimilarMemories, error) {
-	result := serviceports.SimilarMemories{
-		Memories: []serviceports.MemorySimilarity{},
+	req *agentports.SimilarMemoriesRequest,
+) (agentports.SimilarMemories, error) {
+	result := agentports.SimilarMemories{
+		Memories: []agentports.MemorySimilarity{},
 		Floor:    s.tuning.SimilarityFloor,
 	}
 	if req == nil || req.TenantInfo.OrgID.IsNil() || req.TenantInfo.BuID.IsNil() {
@@ -61,7 +60,7 @@ func (s *Searcher) SimilarMemories(
 		limit = DefaultSimilarMemories
 	}
 
-	hits, err := s.repo.Search(ctx, &repositories.VectorSearchRequest{
+	hits, err := s.repo.Search(ctx, &agentports.VectorSearchRequest{
 		TenantInfo:  req.TenantInfo,
 		SourceTypes: []airetrieval.SourceType{airetrieval.SourceTypeMemory},
 		ModelKey:    query.ModelKey,
@@ -83,7 +82,7 @@ func (s *Searcher) SimilarMemories(
 	}
 
 	for _, hit := range hits {
-		result.Memories = append(result.Memories, serviceports.MemorySimilarity{
+		result.Memories = append(result.Memories, agentports.MemorySimilarity{
 			MemoryID:   hit.SourceID,
 			Similarity: hit.Similarity,
 		})
@@ -95,23 +94,23 @@ func (s *Searcher) SimilarMemories(
 
 func (s *Searcher) memoryQuery(
 	ctx context.Context,
-	req *serviceports.SimilarMemoriesRequest,
-) (serviceports.QueryVector, airetrieval.UnavailableReason) {
+	req *agentports.SimilarMemoriesRequest,
+) (agentports.QueryVector, airetrieval.UnavailableReason) {
 	if req.Query.Usable() {
 		return req.Query, ""
 	}
 	if s.vectorizer == nil {
-		return serviceports.QueryVector{}, airetrieval.UnavailableReasonNoProvider
+		return agentports.QueryVector{}, airetrieval.UnavailableReasonNoProvider
 	}
 	if strings.TrimSpace(req.Text) == "" {
 		reason := req.Query.Reason
 		if reason == "" {
 			reason = airetrieval.UnavailableReasonNotIndexed
 		}
-		return serviceports.QueryVector{}, reason
+		return agentports.QueryVector{}, reason
 	}
 
-	query, err := s.vectorizer.Vectorize(ctx, &serviceports.QueryVectorRequest{
+	query, err := s.vectorizer.Vectorize(ctx, &agentports.QueryVectorRequest{
 		TenantInfo:  req.TenantInfo,
 		Text:        req.Text,
 		Attribution: req.Attribution,
@@ -120,31 +119,31 @@ func (s *Searcher) memoryQuery(
 		s.l.Warn("memory query could not be embedded; recalling by words only",
 			zap.String("organizationId", req.TenantInfo.OrgID.String()),
 			zap.Error(err))
-		return serviceports.QueryVector{}, airetrieval.UnavailableReasonProviderFailed
+		return agentports.QueryVector{}, airetrieval.UnavailableReasonProviderFailed
 	}
 	if !query.Usable() {
 		reason := query.Reason
 		if reason == "" {
 			reason = airetrieval.UnavailableReasonNotIndexed
 		}
-		return serviceports.QueryVector{}, reason
+		return agentports.QueryVector{}, reason
 	}
 
 	return query, ""
 }
 
 type MemoryRanker struct {
-	searcher serviceports.MemoryVectorSearcher
+	searcher agentports.MemoryVectorSearcher
 	tuning   SearchTuning
 	l        *zap.Logger
 }
 
-func NewMemoryRanker(searcher *Searcher) serviceports.MemoryRanker {
+func NewMemoryRanker(searcher *Searcher) agentports.MemoryRanker {
 	return &MemoryRanker{searcher: searcher, tuning: searcher.tuning, l: searcher.l}
 }
 
 func NewMemoryRankerFrom(
-	searcher serviceports.MemoryVectorSearcher,
+	searcher agentports.MemoryVectorSearcher,
 	tuning SearchTuning,
 	logger *zap.Logger,
 ) *MemoryRanker {
@@ -153,19 +152,19 @@ func NewMemoryRankerFrom(
 
 func (r *MemoryRanker) RankMemories(
 	ctx context.Context,
-	req *serviceports.RankMemoriesRequest,
-) (serviceports.RankedMemories, error) {
+	req *agentports.RankMemoriesRequest,
+) (agentports.RankedMemories, error) {
 	if req == nil {
-		return serviceports.RankedMemories{Memories: []*agent.Memory{}}, nil
+		return agentports.RankedMemories{Memories: []*agent.Memory{}}, nil
 	}
 
 	recency := agentmemoryservice.RankByRecencyAndUse(req.Memories, req.Now)
-	ranked := serviceports.RankedMemories{Memories: recency}
+	ranked := agentports.RankedMemories{Memories: recency}
 	if !req.Query.Usable() || len(recency) == 0 {
 		return ranked, nil
 	}
 
-	similar, err := r.searcher.SimilarMemories(ctx, &serviceports.SimilarMemoriesRequest{
+	similar, err := r.searcher.SimilarMemories(ctx, &agentports.SimilarMemoriesRequest{
 		TenantInfo: req.TenantInfo,
 		Query:      req.Query,
 		Limit:      MaxSimilarMemories,
@@ -186,7 +185,7 @@ func (r *MemoryRanker) RankMemories(
 
 func similarCandidates(
 	candidates []*agent.Memory,
-	similar []serviceports.MemorySimilarity,
+	similar []agentports.MemorySimilarity,
 	tuning SearchTuning,
 ) []pulid.ID {
 	tuning = tuning.normalized()
@@ -208,7 +207,7 @@ func similarCandidates(
 
 func FuseMemoryRanking(
 	recency []*agent.Memory,
-	similar []serviceports.MemorySimilarity,
+	similar []agentports.MemorySimilarity,
 	tuning SearchTuning,
 ) []*agent.Memory {
 	tuning = tuning.normalized()

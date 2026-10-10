@@ -6,10 +6,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,17 +18,17 @@ import (
 )
 
 type fakeProviderRepo struct {
-	repositories.AIProviderRepository
+	agentports.AIProviderRepository
 
 	provider *aiprovider.Provider
 	getErr   error
-	marked   []repositories.MarkAIProviderTestedRequest
+	marked   []agentports.MarkAIProviderTestedRequest
 	markErr  error
 }
 
 func (f *fakeProviderRepo) GetByID(
 	_ context.Context,
-	_ repositories.GetAIProviderByIDRequest,
+	_ agentports.GetAIProviderByIDRequest,
 ) (*aiprovider.Provider, error) {
 	if f.getErr != nil {
 		return nil, f.getErr
@@ -40,14 +39,14 @@ func (f *fakeProviderRepo) GetByID(
 
 func (f *fakeProviderRepo) MarkTested(
 	_ context.Context,
-	req repositories.MarkAIProviderTestedRequest,
+	req agentports.MarkAIProviderTestedRequest,
 ) error {
 	f.marked = append(f.marked, req)
 	return f.markErr
 }
 
 type fakeProber struct {
-	result *services.TestAIProviderResult
+	result *agentports.TestAIProviderResult
 	seen   string
 }
 
@@ -55,7 +54,7 @@ func (f *fakeProber) Probe(
 	_ context.Context,
 	_ *aiprovider.Provider,
 	apiKey string,
-) *services.TestAIProviderResult {
+) *agentports.TestAIProviderResult {
 	f.seen = apiKey
 	return f.result
 }
@@ -64,7 +63,7 @@ func (f *fakeProber) ListModels(
 	_ context.Context,
 	_ *aiprovider.Provider,
 	apiKey string,
-) ([]services.AIProviderModelOption, error) {
+) ([]agentports.AIProviderModelOption, error) {
 	f.seen = apiKey
 	return nil, nil
 }
@@ -98,7 +97,7 @@ func testProvider(t *testing.T, svc *Service) *aiprovider.Provider {
 
 func TestRunTestRecordsProbeOutcomeOnProvider(t *testing.T) {
 	repo := &fakeProviderRepo{}
-	prober := &fakeProber{result: &services.TestAIProviderResult{
+	prober := &fakeProber{result: &agentports.TestAIProviderResult{
 		Success:         true,
 		Message:         "Connected",
 		ModelIdentifier: "qwen3:32b",
@@ -108,7 +107,7 @@ func TestRunTestRecordsProbeOutcomeOnProvider(t *testing.T) {
 	svc := newTestService(repo, prober)
 	repo.provider = testProvider(t, svc)
 
-	result, err := svc.RunTest(t.Context(), repositories.GetAIProviderByIDRequest{
+	result, err := svc.RunTest(t.Context(), agentports.GetAIProviderByIDRequest{
 		ID: repo.provider.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: repo.provider.OrganizationID,
@@ -134,12 +133,12 @@ func TestRunTestRecordsProbeOutcomeOnProvider(t *testing.T) {
 func TestRunTestStillReturnsProbeResultWhenRecordingFails(t *testing.T) {
 	repo := &fakeProviderRepo{markErr: errors.New("db down")}
 	prober := &fakeProber{
-		result: &services.TestAIProviderResult{Success: false, Message: "Refused"},
+		result: &agentports.TestAIProviderResult{Success: false, Message: "Refused"},
 	}
 	svc := newTestService(repo, prober)
 	repo.provider = testProvider(t, svc)
 
-	result, err := svc.RunTest(t.Context(), repositories.GetAIProviderByIDRequest{
+	result, err := svc.RunTest(t.Context(), agentports.GetAIProviderByIDRequest{
 		ID: repo.provider.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: repo.provider.OrganizationID,
@@ -154,14 +153,14 @@ func TestRunTestStillReturnsProbeResultWhenRecordingFails(t *testing.T) {
 }
 
 type fakeTester struct {
-	asked  []repositories.GetAIProviderByIDRequest
-	result *services.TestAIProviderResult
+	asked  []agentports.GetAIProviderByIDRequest
+	result *agentports.TestAIProviderResult
 }
 
 func (f *fakeTester) Test(
 	_ context.Context,
-	req repositories.GetAIProviderByIDRequest,
-) (*services.TestAIProviderResult, error) {
+	req agentports.GetAIProviderByIDRequest,
+) (*agentports.TestAIProviderResult, error) {
 	f.asked = append(f.asked, req)
 
 	return f.result, nil
@@ -169,15 +168,15 @@ func (f *fakeTester) Test(
 
 func (f *fakeTester) ListModels(
 	_ context.Context,
-	_ *services.ProbeAIProviderModelsRequest,
-) ([]services.AIProviderModelOption, error) {
+	_ *agentports.ProbeAIProviderModelsRequest,
+) ([]agentports.AIProviderModelOption, error) {
 	return nil, nil
 }
 
 func (f *fakeTester) TestDraft(
 	_ context.Context,
-	_ *services.ProbeAIProviderDraftRequest,
-) (*services.AIProviderDraftTestResult, error) {
+	_ *agentports.ProbeAIProviderDraftRequest,
+) (*agentports.AIProviderDraftTestResult, error) {
 	return f.result, nil
 }
 
@@ -185,11 +184,11 @@ func (f *fakeTester) TestDraft(
 // the provider exists and hands it over.
 func TestTestHandsTheProbeToAWorker(t *testing.T) {
 	repo := &fakeProviderRepo{}
-	tester := &fakeTester{result: &services.TestAIProviderResult{Success: true}}
+	tester := &fakeTester{result: &agentports.TestAIProviderResult{Success: true}}
 	svc := newTestService(repo, &fakeProber{})
 	svc.tester = tester
 	repo.provider = testProvider(t, svc)
-	req := repositories.GetAIProviderByIDRequest{
+	req := agentports.GetAIProviderByIDRequest{
 		ID: repo.provider.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: repo.provider.OrganizationID,
@@ -213,7 +212,7 @@ func TestTestOfAMissingProviderStartsNothing(t *testing.T) {
 	svc := newTestService(repo, &fakeProber{})
 	svc.tester = tester
 
-	_, err := svc.Test(t.Context(), repositories.GetAIProviderByIDRequest{
+	_, err := svc.Test(t.Context(), agentports.GetAIProviderByIDRequest{
 		ID: pulid.MustNew("aiprv_"),
 	})
 	require.Error(t, err)
@@ -222,8 +221,8 @@ func TestTestOfAMissingProviderStartsNothing(t *testing.T) {
 
 func strPtr(value string) *string { return &value }
 
-func saveRequest(provider *aiprovider.Provider, baseURL string, key *string) *services.SaveAIProviderRequest {
-	return &services.SaveAIProviderRequest{
+func saveRequest(provider *aiprovider.Provider, baseURL string, key *string) *agentports.SaveAIProviderRequest {
+	return &agentports.SaveAIProviderRequest{
 		ID:      provider.ID,
 		Name:    provider.Name,
 		Kind:    provider.Kind,

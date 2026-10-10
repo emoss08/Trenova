@@ -5,12 +5,13 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/productguide"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -26,12 +27,12 @@ import (
 // found again by its event type and correlation.
 type notices struct {
 	created []*notification.Notification
-	asked   []repositories.ExistsRecentNotificationRequest
+	asked   []notificationports.ExistsRecentNotificationRequest
 }
 
 func (n *notices) ExistsRecent(
 	_ context.Context,
-	req repositories.ExistsRecentNotificationRequest,
+	req notificationports.ExistsRecentNotificationRequest,
 ) (bool, error) {
 	n.asked = append(n.asked, req)
 	for _, created := range n.created {
@@ -57,14 +58,14 @@ func (n *notices) Create(
 type conversations struct {
 	thread  *conversation.Thread
 	err     error
-	read    repositories.GetThreadRequest
-	updated []*serviceports.UpdateThreadRequest
-	actor   *serviceports.RequestActor
+	read    agentports.GetThreadRequest
+	updated []*agentports.UpdateThreadRequest
+	actor   *permissionports.RequestActor
 }
 
 func (c *conversations) GetThread(
 	_ context.Context,
-	req repositories.GetThreadRequest,
+	req agentports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	c.read = req
 	if c.err != nil {
@@ -76,8 +77,8 @@ func (c *conversations) GetThread(
 
 func (c *conversations) UpdateThread(
 	_ context.Context,
-	req *serviceports.UpdateThreadRequest,
-	actor *serviceports.RequestActor,
+	req *agentports.UpdateThreadRequest,
+	actor *permissionports.RequestActor,
 ) (*conversation.Thread, error) {
 	c.updated = append(c.updated, req)
 	c.actor = actor
@@ -101,8 +102,8 @@ func notifyInput(status conversation.AssistantTurnStatus) *NotifyUnseenTurnInput
 			},
 			TurnID:   pulid.MustNew("atrn_"),
 			ThreadID: pulid.MustNew("athr_"),
-			Actor: serviceports.RequestActor{
-				PrincipalType: serviceports.PrincipalTypeUser,
+			Actor: permissionports.RequestActor{
+				PrincipalType: permissionports.PrincipalTypeUser,
 				PrincipalID:   userID,
 				UserID:        userID,
 			},
@@ -343,7 +344,7 @@ func TestThreadLink_ComesFromTheRecordLinkRegistry(t *testing.T) {
 
 // cancels is the engine running turns, as the canceller sees it.
 type cancels struct {
-	serviceports.WorkflowStarter
+	kernelports.WorkflowStarter
 
 	err       error
 	cancelled string
@@ -368,7 +369,7 @@ func TestTurnCanceller_SaysWhenNoExecutionCarriesTheTurn(t *testing.T) {
 
 	err := canceller.CancelTurn(t.Context(), "assistant-turn:atrn_1")
 
-	require.ErrorIs(t, err, serviceports.ErrNoTurnExecution)
+	require.ErrorIs(t, err, agentports.ErrNoTurnExecution)
 	assert.Equal(t, "assistant-turn:atrn_1", workflows.cancelled)
 }
 
@@ -381,7 +382,7 @@ func TestTurnCanceller_PassesOnAnyOtherFailure(t *testing.T) {
 	err := canceller.CancelTurn(t.Context(), "assistant-turn:atrn_1")
 
 	require.ErrorIs(t, err, down)
-	assert.NotErrorIs(t, err, serviceports.ErrNoTurnExecution)
+	assert.NotErrorIs(t, err, agentports.ErrNoTurnExecution)
 }
 
 func TestTurnCanceller_CancelsTheExecution(t *testing.T) {

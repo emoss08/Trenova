@@ -1,6 +1,8 @@
 package accountingmappingservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/glaccountportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"testing"
 
@@ -8,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/glaccount"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -18,16 +20,16 @@ import (
 )
 
 type fakeLedgerAccounts struct {
-	repositories.AccountingLedgerSource
+	journalentryports.AccountingLedgerSource
 
-	accounts []repositories.LedgerAccount
-	asked    []repositories.ListLedgerAccountsRequest
+	accounts []journalentryports.LedgerAccount
+	asked    []journalentryports.ListLedgerAccountsRequest
 }
 
 func (f *fakeLedgerAccounts) ListActiveAccounts(
 	_ context.Context,
-	req *repositories.ListLedgerAccountsRequest,
-) ([]repositories.LedgerAccount, error) {
+	req *journalentryports.ListLedgerAccountsRequest,
+) ([]journalentryports.LedgerAccount, error) {
 	f.asked = append(f.asked, *req)
 	return f.accounts, nil
 }
@@ -58,7 +60,7 @@ func TestRescoreOffersEveryActiveGLAccountInLedgerMode(t *testing.T) {
 	h.ledgerMode(t)
 	cash := &glaccount.GLAccount{ID: pulid.MustNew("gla_"), AccountCode: "1000", Name: "Operating cash"}
 	fuel := &glaccount.GLAccount{ID: pulid.MustNew("gla_"), AccountCode: "5010", Name: "Fuel expense"}
-	accounts := mocks.NewMockGLAccountRepository(t)
+	accounts := glaccountportsmock.NewMockGLAccountRepository(t)
 	accounts.EXPECT().List(mock.Anything, mock.Anything).
 		Return(&pagination.ListResult[*glaccount.GLAccount]{
 			Items: []*glaccount.GLAccount{cash, fuel},
@@ -79,15 +81,15 @@ func TestRescoreOffersAnInactiveAccountThatCarriesEntries(t *testing.T) {
 	h := newHarness(t)
 	h.ledgerMode(t)
 	cash := &glaccount.GLAccount{ID: pulid.MustNew("gla_"), AccountCode: "1000", Name: "Operating cash"}
-	retired := repositories.LedgerAccount{ID: pulid.MustNew("gla_"), Code: "1050", Name: "Old payroll"}
-	accounts := mocks.NewMockGLAccountRepository(t)
+	retired := journalentryports.LedgerAccount{ID: pulid.MustNew("gla_"), Code: "1050", Name: "Old payroll"}
+	accounts := glaccountportsmock.NewMockGLAccountRepository(t)
 	accounts.EXPECT().List(mock.Anything, mock.Anything).
 		Return(&pagination.ListResult[*glaccount.GLAccount]{
 			Items: []*glaccount.GLAccount{cash},
 			Total: 1,
 		}, nil).Once()
 	h.svc.glAccounts = accounts
-	ledger := &fakeLedgerAccounts{accounts: []repositories.LedgerAccount{
+	ledger := &fakeLedgerAccounts{accounts: []journalentryports.LedgerAccount{
 		{ID: cash.ID, Code: "1000", Name: "Operating cash"},
 		retired,
 	}}
@@ -130,11 +132,11 @@ func TestLedgerModeRequiresEveryAccountWithActivity(t *testing.T) {
 	ar := pulid.MustNew("gla_")
 	revenue := pulid.MustNew("gla_")
 	cash := pulid.MustNew("gla_")
-	ledger := &fakeLedgerAccounts{accounts: []repositories.LedgerAccount{
+	ledger := &fakeLedgerAccounts{accounts: []journalentryports.LedgerAccount{
 		{ID: ar, Code: "1100"}, {ID: revenue, Code: "4000"}, {ID: cash, Code: "1000"},
 	}}
 	h.svc.ledger = ledger
-	controls := mocks.NewMockAccountingControlRepository(t)
+	controls := tenantportsmock.NewMockAccountingControlRepository(t)
 	controls.EXPECT().GetByOrgID(mock.Anything, h.tenant.OrgID).
 		Return(&tenant.AccountingControl{DefaultRevenueAccountID: revenue}, nil)
 	h.svc.accountingControls = controls

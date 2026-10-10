@@ -6,8 +6,8 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/core/domain/aicorrection"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -27,8 +27,8 @@ type groupTotals struct {
 
 func (s *Service) Accuracy(
 	ctx context.Context,
-	req *services.ExtractionAccuracyRequest,
-) (*services.ExtractionAccuracy, error) {
+	req *extractionevalports.ExtractionAccuracyRequest,
+) (*extractionevalports.ExtractionAccuracy, error) {
 	window := req.WindowDays
 	if window == 0 {
 		window = defaultAccuracyWindowDays
@@ -43,7 +43,7 @@ func (s *Service) Accuracy(
 
 	task := aicorrection.TaskShipmentDraftExtraction
 	since := s.now() - int64(window)*timeutils.SecondsPerDay
-	corrections, err := s.corrections.ListForAccuracy(ctx, repositories.ListAICorrectionsForAccuracyRequest{
+	corrections, err := s.corrections.ListForAccuracy(ctx, aicorrectionports.ListAICorrectionsForAccuracyRequest{
 		TenantInfo: req.TenantInfo,
 		Task:       task,
 		Since:      since,
@@ -53,7 +53,7 @@ func (s *Service) Accuracy(
 		return nil, err
 	}
 
-	counts, err := s.cases.Counts(ctx, repositories.CountExtractionEvalCasesRequest{
+	counts, err := s.cases.Counts(ctx, extractionevalports.CountExtractionEvalCasesRequest{
 		TenantInfo: req.TenantInfo,
 		Task:       task,
 	})
@@ -66,7 +66,7 @@ func (s *Service) Accuracy(
 		return nil, err
 	}
 
-	report := &services.ExtractionAccuracy{
+	report := &extractionevalports.ExtractionAccuracy{
 		WindowDays:  window,
 		Since:       since,
 		Corrections: len(corrections),
@@ -107,10 +107,10 @@ func addGroup(totals map[string]*groupTotals, key string, correction *aicorrecti
 	entry.correct += correction.CorrectCount
 }
 
-func groups(totals map[string]*groupTotals) []services.ExtractionAccuracyGroup {
-	out := make([]services.ExtractionAccuracyGroup, 0, len(totals))
+func groups(totals map[string]*groupTotals) []extractionevalports.ExtractionAccuracyGroup {
+	out := make([]extractionevalports.ExtractionAccuracyGroup, 0, len(totals))
 	for key, entry := range totals {
-		out = append(out, services.ExtractionAccuracyGroup{
+		out = append(out, extractionevalports.ExtractionAccuracyGroup{
 			Key:         key,
 			Corrections: entry.corrections,
 			Scored:      entry.scored,
@@ -118,7 +118,7 @@ func groups(totals map[string]*groupTotals) []services.ExtractionAccuracyGroup {
 			Accuracy:    aicorrection.Accuracy(entry.correct, entry.scored),
 		})
 	}
-	slices.SortFunc(out, func(a, b services.ExtractionAccuracyGroup) int {
+	slices.SortFunc(out, func(a, b extractionevalports.ExtractionAccuracyGroup) int {
 		if c := cmp.Compare(b.Corrections, a.Corrections); c != 0 {
 			return c
 		}

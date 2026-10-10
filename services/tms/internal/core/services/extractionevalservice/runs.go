@@ -9,8 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/extractioneval"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -24,8 +26,8 @@ var errRunnerUnavailable = errors.New("extraction evaluation runner is not confi
 
 func (s *Service) StartRun(
 	ctx context.Context,
-	req *services.StartExtractionEvalRunRequest,
-	actor *services.RequestActor,
+	req *extractionevalports.StartExtractionEvalRunRequest,
+	actor *permissionports.RequestActor,
 ) (*extractioneval.ExtractionRun, error) {
 	if s.starter == nil {
 		return nil, errortypes.NewBusinessError(
@@ -60,7 +62,7 @@ func (s *Service) StartRun(
 		return nil, multiErr
 	}
 
-	cases, err := s.cases.ListActive(ctx, repositories.ListActiveExtractionEvalCasesRequest{
+	cases, err := s.cases.ListActive(ctx, extractionevalports.ListActiveExtractionEvalCasesRequest{
 		TenantInfo: req.TenantInfo,
 		Task:       run.Task,
 		Limit:      limit,
@@ -90,7 +92,7 @@ func (s *Service) StartRun(
 		return nil, err
 	}
 
-	workflowID, err := s.starter.StartExtractionEvalRun(ctx, &services.ExtractionEvalRunStart{
+	workflowID, err := s.starter.StartExtractionEvalRun(ctx, &extractionevalports.ExtractionEvalRunStart{
 		TenantInfo: req.TenantInfo,
 		RunID:      created.ID,
 	})
@@ -98,7 +100,7 @@ func (s *Service) StartRun(
 		s.l.Error("failed to start extraction evaluation run", zap.Error(err))
 		if failErr := s.FailRun(
 			ctx,
-			repositories.GetExtractionEvalRunRequest{TenantInfo: req.TenantInfo, ID: created.ID},
+			extractionevalports.GetExtractionEvalRunRequest{TenantInfo: req.TenantInfo, ID: created.ID},
 			"The evaluation could not be started",
 		); failErr != nil {
 			s.l.Error("failed to mark unstarted extraction evaluation run", zap.Error(failErr))
@@ -120,7 +122,7 @@ func (s *Service) StartRun(
 
 func (s *Service) evaluatedProvider(
 	ctx context.Context,
-	req *services.StartExtractionEvalRunRequest,
+	req *extractionevalports.StartExtractionEvalRunRequest,
 ) (*aiprovider.Provider, error) {
 	if req.ProviderID.IsNil() {
 		return nil, errortypes.NewValidationError(
@@ -128,7 +130,7 @@ func (s *Service) evaluatedProvider(
 		)
 	}
 
-	provider, err := s.providers.GetByID(ctx, repositories.GetAIProviderByIDRequest{
+	provider, err := s.providers.GetByID(ctx, agentports.GetAIProviderByIDRequest{
 		ID:         req.ProviderID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -150,8 +152,8 @@ func (s *Service) evaluatedProvider(
 
 func (s *Service) CancelRun(
 	ctx context.Context,
-	req repositories.GetExtractionEvalRunRequest,
-	actor *services.RequestActor,
+	req extractionevalports.GetExtractionEvalRunRequest,
+	actor *permissionports.RequestActor,
 ) (*extractioneval.ExtractionRun, error) {
 	run, err := s.runs.GetByID(ctx, req)
 	if err != nil {
@@ -173,23 +175,23 @@ func (s *Service) CancelRun(
 
 func (s *Service) GetRun(
 	ctx context.Context,
-	req repositories.GetExtractionEvalRunRequest,
+	req extractionevalports.GetExtractionEvalRunRequest,
 ) (*extractioneval.ExtractionRun, error) {
 	return s.runs.GetByID(ctx, req)
 }
 
 func (s *Service) ListRuns(
 	ctx context.Context,
-	req *repositories.ListExtractionEvalRunConnectionRequest,
+	req *extractionevalports.ListExtractionEvalRunConnectionRequest,
 ) (*pagination.CursorListResult[*extractioneval.ExtractionRun], error) {
 	return s.runs.ListConnection(ctx, req)
 }
 
 func (s *Service) ListResults(
 	ctx context.Context,
-	req *repositories.ListExtractionEvalResultConnectionRequest,
+	req *extractionevalports.ListExtractionEvalResultConnectionRequest,
 ) (*pagination.CursorListResult[*extractioneval.ExtractionResult], error) {
-	if _, err := s.runs.GetByID(ctx, repositories.GetExtractionEvalRunRequest{
+	if _, err := s.runs.GetByID(ctx, extractionevalports.GetExtractionEvalRunRequest{
 		TenantInfo: req.Filter.TenantInfo,
 		ID:         req.RunID,
 	}); err != nil {
@@ -201,18 +203,18 @@ func (s *Service) ListResults(
 
 func (s *Service) GetResult(
 	ctx context.Context,
-	req repositories.GetExtractionEvalResultRequest,
+	req extractionevalports.GetExtractionEvalResultRequest,
 ) (*extractioneval.ExtractionResult, error) {
 	return s.results.GetByID(ctx, req)
 }
 
 func (s *Service) logRun(
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	run *extractioneval.ExtractionRun,
 	operation permission.Operation,
 	comment string,
 ) {
-	s.logAction(actor, &services.LogActionParams{
+	s.logAction(actor, &auditports.LogActionParams{
 		Resource:   permission.ResourceAgentEvalSuite,
 		ResourceID: run.ID.String(),
 		Operation:  operation,

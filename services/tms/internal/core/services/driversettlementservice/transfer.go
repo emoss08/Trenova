@@ -7,10 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
@@ -23,7 +23,7 @@ func (s *Service) HoldPayEvent(
 	tenantInfo pagination.TenantInfo,
 	eventID pulid.ID,
 	reason string,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driversettlement.PayEvent, error) {
 	if err := requireActor(actor, "Pay event hold"); err != nil {
 		return nil, err
@@ -32,7 +32,7 @@ func (s *Service) HoldPayEvent(
 		return nil, errHoldReasonRequired()
 	}
 
-	event, err := s.payEventRepo.GetByID(ctx, repositories.GetPayEventByIDRequest{
+	event, err := s.payEventRepo.GetByID(ctx, driversettlementports.GetPayEventByIDRequest{
 		ID:         eventID,
 		TenantInfo: tenantInfo,
 	})
@@ -74,12 +74,12 @@ func (s *Service) ReleasePayEvent(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	eventID pulid.ID,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driversettlement.PayEvent, error) {
 	if err := requireActor(actor, "Pay event release"); err != nil {
 		return nil, err
 	}
-	event, err := s.payEventRepo.GetByID(ctx, repositories.GetPayEventByIDRequest{
+	event, err := s.payEventRepo.GetByID(ctx, driversettlementports.GetPayEventByIDRequest{
 		ID:         eventID,
 		TenantInfo: tenantInfo,
 	})
@@ -115,7 +115,7 @@ func (s *Service) AttachPayEvents(
 	tenantInfo pagination.TenantInfo,
 	settlementID pulid.ID,
 	eventIDs []pulid.ID,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driversettlement.Settlement, error) {
 	if err := requireActor(actor, "Pay event attachment"); err != nil {
 		return nil, err
@@ -127,7 +127,7 @@ func (s *Service) AttachPayEvents(
 
 	var updated *driversettlement.Settlement
 	var previous driversettlement.Settlement
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		entity, txErr := s.getForUpdate(txCtx, tenantInfo, settlementID)
 		if txErr != nil {
 			return txErr
@@ -176,7 +176,7 @@ func (s *Service) appendPayEventToSettlement(
 ) error {
 	event, err := s.payEventRepo.GetByID(
 		ctx,
-		repositories.GetPayEventByIDRequest{ID: eventID, TenantInfo: tenantInfo},
+		driversettlementports.GetPayEventByIDRequest{ID: eventID, TenantInfo: tenantInfo},
 	)
 	if err != nil {
 		return err
@@ -199,7 +199,7 @@ func (s *Service) DetachPayEvent(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	settlementID, eventID pulid.ID,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driversettlement.Settlement, error) {
 	if err := requireActor(actor, "Pay event removal"); err != nil {
 		return nil, err
@@ -207,7 +207,7 @@ func (s *Service) DetachPayEvent(
 
 	var updated *driversettlement.Settlement
 	var previous driversettlement.Settlement
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		entity, txErr := s.getForUpdate(txCtx, tenantInfo, settlementID)
 		if txErr != nil {
 			return txErr
@@ -219,7 +219,7 @@ func (s *Service) DetachPayEvent(
 
 		event, txErr := s.payEventRepo.GetByID(
 			txCtx,
-			repositories.GetPayEventByIDRequest{ID: eventID, TenantInfo: tenantInfo},
+			driversettlementports.GetPayEventByIDRequest{ID: eventID, TenantInfo: tenantInfo},
 		)
 		if txErr != nil {
 			return txErr

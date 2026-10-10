@@ -7,14 +7,12 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs/thumbnailcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/document"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs/thumbnailcontract"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/google/uuid"
@@ -25,15 +23,15 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	DocumentRepository repositories.DocumentRepository
-	Storage            storage.Client
+	DocumentRepository documentports.DocumentRepository
+	Storage            kernelports.Client
 	ThumbnailGenerator *thumbnailservice.Generator
 	Encryption         *encryptionservice.Service
 }
 
 type Activities struct {
-	docRepo            repositories.DocumentRepository
-	storage            storage.Client
+	docRepo            documentports.DocumentRepository
+	storage            kernelports.Client
 	thumbnailGenerator *thumbnailservice.Generator
 	encryption         *encryptionservice.Service
 }
@@ -100,7 +98,7 @@ func (a *Activities) getDocument(
 	logger := activity.GetLogger(ctx)
 	activity.RecordHeartbeat(ctx, "loading document record")
 
-	doc, err := a.docRepo.GetByID(ctx, repositories.GetDocumentByIDRequest{
+	doc, err := a.docRepo.GetByID(ctx, documentports.GetDocumentByIDRequest{
 		ID: payload.DocumentID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: payload.OrganizationID,
@@ -245,7 +243,7 @@ func (a *Activities) generateThumbnail(
 					ToTemporalError()
 		}
 
-		if errors.Is(err, services.ErrPDFUnreadable) {
+		if errors.Is(err, kernelports.ErrPDFUnreadable) {
 			return nil, a.failure(
 					payload,
 					"thumbnail generation failed: %v",
@@ -313,7 +311,7 @@ func (a *Activities) uploadThumbnail(
 	}
 	uploadBody := []byte(encryptedThumb)
 
-	_, err = a.storage.Upload(ctx, &storage.UploadParams{
+	_, err = a.storage.Upload(ctx, &kernelports.UploadParams{
 		Key:         previewPath,
 		ContentType: "image/webp",
 		Size:        int64(len(uploadBody)),
@@ -356,7 +354,7 @@ func (a *Activities) updateDocumentPreview(
 	doc.PreviewStoragePath = previewPath
 	doc.PreviewStatus = document.PreviewStatusReady
 
-	err := a.docRepo.UpdatePreview(ctx, &repositories.UpdateDocumentPreviewRequest{
+	err := a.docRepo.UpdatePreview(ctx, &documentports.UpdateDocumentPreviewRequest{
 		ID: doc.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: payload.OrganizationID,
@@ -397,7 +395,7 @@ func (a *Activities) MarkThumbnailFailedActivity(
 	ctx context.Context,
 	payload *thumbnailcontract.GenerateThumbnailPayload,
 ) error {
-	doc, err := a.docRepo.GetByID(ctx, repositories.GetDocumentByIDRequest{
+	doc, err := a.docRepo.GetByID(ctx, documentports.GetDocumentByIDRequest{
 		ID: payload.DocumentID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: payload.OrganizationID,
@@ -414,7 +412,7 @@ func (a *Activities) MarkThumbnailFailedActivity(
 		doc.PreviewStatus = document.PreviewStatusFailed
 	}
 
-	return a.docRepo.UpdatePreview(ctx, &repositories.UpdateDocumentPreviewRequest{
+	return a.docRepo.UpdatePreview(ctx, &documentports.UpdateDocumentPreviewRequest{
 		ID: doc.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: payload.OrganizationID,

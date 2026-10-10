@@ -1,6 +1,9 @@
 package tenderservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/carrierportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/notificationportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"context"
 	"testing"
 
@@ -9,10 +12,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -38,14 +42,14 @@ func (testDBConnection) IsHealthy(context.Context) bool       { return true }
 func (testDBConnection) Close() error                         { return nil }
 func (testDBConnection) WithTx(
 	ctx context.Context,
-	_ ports.TxOptions,
+	_ kernelports.TxOptions,
 	fn func(context.Context, bun.Tx) error,
 ) error {
 	return fn(ctx, bun.Tx{})
 }
 
 type fakeTenderRepo struct {
-	repositories.TenderRepository
+	tenderports.TenderRepository
 
 	liveTender *tender.Tender
 	created    *tender.Tender
@@ -54,7 +58,7 @@ type fakeTenderRepo struct {
 
 func (f *fakeTenderRepo) GetLiveByMoveID(
 	_ context.Context,
-	_ repositories.GetLiveTenderByMoveRequest,
+	_ tenderports.GetLiveTenderByMoveRequest,
 ) (*tender.Tender, error) {
 	return f.liveTender, nil
 }
@@ -79,20 +83,20 @@ func (f *fakeTenderRepo) SetWorkflowID(
 }
 
 type fakeGuideRepo struct {
-	repositories.RoutingGuideRepository
+	tenderports.RoutingGuideRepository
 
 	matched *tender.RoutingGuide
 }
 
 func (f *fakeGuideRepo) MatchLane(
 	_ context.Context,
-	_ *repositories.MatchLaneRequest,
+	_ *tenderports.MatchLaneRequest,
 ) (*tender.RoutingGuide, error) {
 	return f.matched, nil
 }
 
 type fakeWorkflowStarter struct {
-	portservices.WorkflowStarter
+	kernelports.WorkflowStarter
 
 	started []client.StartWorkflowOptions
 	err     error
@@ -112,12 +116,12 @@ func (f *fakeWorkflowStarter) StartWorkflow(
 }
 
 type recordingEventService struct {
-	events []*portservices.RecordShipmentEventParams
+	events []*shipmenteventports.RecordShipmentEventParams
 }
 
 func (r *recordingEventService) Record(
 	_ context.Context,
-	params *portservices.RecordShipmentEventParams,
+	params *shipmenteventports.RecordShipmentEventParams,
 ) error {
 	r.events = append(r.events, params)
 	return nil
@@ -125,15 +129,15 @@ func (r *recordingEventService) Record(
 
 func (r *recordingEventService) List(
 	_ context.Context,
-	_ *repositories.ListShipmentEventsRequest,
+	_ *shipmenteventports.ListShipmentEventsRequest,
 ) ([]*shipmentevent.Event, error) {
 	return nil, nil
 }
 
 func (r *recordingEventService) eventsOfType(
 	eventType shipmentevent.Type,
-) []*portservices.RecordShipmentEventParams {
-	matched := make([]*portservices.RecordShipmentEventParams, 0, len(r.events))
+) []*shipmenteventports.RecordShipmentEventParams {
+	matched := make([]*shipmenteventports.RecordShipmentEventParams, 0, len(r.events))
 	for _, event := range r.events {
 		if event.Type == eventType {
 			matched = append(matched, event)
@@ -145,14 +149,14 @@ func (r *recordingEventService) eventsOfType(
 type createTestDeps struct {
 	tenderRepo            *fakeTenderRepo
 	guideRepo             *fakeGuideRepo
-	carrierRepo           *mocks.MockCarrierRepository
-	assignmentRepo        *mocks.MockAssignmentRepository
-	carrierAssignmentRepo *mocks.MockCarrierAssignmentRepository
-	shipmentRepo          *mocks.MockShipmentRepository
-	holdRepo              *mocks.MockShipmentHoldRepository
+	carrierRepo           *carrierportsmock.MockCarrierRepository
+	assignmentRepo        *shipmentportsmock.MockAssignmentRepository
+	carrierAssignmentRepo *shipmentportsmock.MockCarrierAssignmentRepository
+	shipmentRepo          *shipmentportsmock.MockShipmentRepository
+	holdRepo              *shipmentportsmock.MockShipmentHoldRepository
 	workflows             *fakeWorkflowStarter
 	events                *recordingEventService
-	notifRepo             *mocks.MockNotificationRepository
+	notifRepo             *notificationportsmock.MockNotificationRepository
 	audit                 *recordingAuditService
 	svc                   *Service
 }
@@ -163,14 +167,14 @@ func setupCreateTest(t *testing.T) *createTestDeps {
 	deps := &createTestDeps{
 		tenderRepo:            &fakeTenderRepo{},
 		guideRepo:             &fakeGuideRepo{},
-		carrierRepo:           mocks.NewMockCarrierRepository(t),
-		assignmentRepo:        mocks.NewMockAssignmentRepository(t),
-		carrierAssignmentRepo: mocks.NewMockCarrierAssignmentRepository(t),
-		shipmentRepo:          mocks.NewMockShipmentRepository(t),
-		holdRepo:              mocks.NewMockShipmentHoldRepository(t),
+		carrierRepo:           carrierportsmock.NewMockCarrierRepository(t),
+		assignmentRepo:        shipmentportsmock.NewMockAssignmentRepository(t),
+		carrierAssignmentRepo: shipmentportsmock.NewMockCarrierAssignmentRepository(t),
+		shipmentRepo:          shipmentportsmock.NewMockShipmentRepository(t),
+		holdRepo:              shipmentportsmock.NewMockShipmentHoldRepository(t),
 		workflows:             &fakeWorkflowStarter{},
 		events:                &recordingEventService{},
-		notifRepo:             mocks.NewMockNotificationRepository(t),
+		notifRepo:             notificationportsmock.NewMockNotificationRepository(t),
 		audit:                 &recordingAuditService{},
 	}
 
@@ -305,7 +309,7 @@ func TestCreateSpotBlockedCarrierFailsPerLine(t *testing.T) {
 	blocked := blockedCarrier("lapsed")
 	deps.carrierRepo.On("GetByIDs", mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {
-			req, ok := args.Get(1).(repositories.GetCarriersByIDsRequest)
+			req, ok := args.Get(1).(carrierports.GetCarriersByIDsRequest)
 			require.True(t, ok)
 			assert.True(t, req.IncludeInsurancePolicies)
 		}).
@@ -405,7 +409,7 @@ func TestCreateWaterfallSkipsBlockedEntriesWithAudit(t *testing.T) {
 	}
 	deps.carrierRepo.On("GetByIDs", mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {
-			req, ok := args.Get(1).(repositories.GetCarriersByIDsRequest)
+			req, ok := args.Get(1).(carrierports.GetCarriersByIDsRequest)
 			require.True(t, ok)
 			assert.True(t, req.IncludeInsurancePolicies)
 			assert.Len(t, req.CarrierIDs, 3)
@@ -512,4 +516,3 @@ func TestCreateWaterfallNamesAMissingGuide(t *testing.T) {
 	assert.Contains(t, bizErr.Message, "No routing guide matches this lane")
 	assert.Nil(t, deps.tenderRepo.created)
 }
-

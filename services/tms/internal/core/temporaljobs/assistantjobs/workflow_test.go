@@ -7,19 +7,19 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentguard"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
 	"github.com/emoss08/trenova/internal/core/services/assistantservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
@@ -62,8 +62,8 @@ func (s *AssistantTurnWorkflowTestSuite) SetupTest() {
 		TurnID:   pulid.MustNew("atrn_"),
 		ThreadID: pulid.MustNew("athr_"),
 		Content:  "How many loads are late?",
-		Actor: serviceports.RequestActor{
-			PrincipalType:  serviceports.PrincipalTypeUser,
+		Actor: permissionports.RequestActor{
+			PrincipalType:  permissionports.PrincipalTypeUser,
 			PrincipalID:    pulid.MustNew("usr_"),
 			UserID:         pulid.MustNew("usr_"),
 			OrganizationID: pulid.MustNew("org_"),
@@ -127,7 +127,7 @@ func (s *AssistantTurnWorkflowTestSuite) prepares(plan *assistantservice.TurnPla
 func (s *AssistantTurnWorkflowTestSuite) answers(text string) {
 	var fa *agentflow.Activities
 	s.env.OnActivity(fa.ModelCallActivity, mock.Anything, mock.Anything).Return(
-		&agentruntime.ModelReply{Completion: &serviceports.ChatCompletionResult{
+		&agentruntime.ModelReply{Completion: &agentports.ChatCompletionResult{
 			Text:            text,
 			ModelIdentifier: "test-model",
 		}}, nil,
@@ -150,7 +150,7 @@ func (s *AssistantTurnWorkflowTestSuite) finishes(ending *TurnEnding, err error)
 func doneEnding() *TurnEnding {
 	return &TurnEnding{
 		Result: assistantcontract.AssistantTurnResult{Status: "Completed"},
-		Event:  temporaltype.StreamItem{Event: serviceports.AssistantEventDone},
+		Event:  temporaltype.StreamItem{Event: agentports.AssistantEventDone},
 	}
 }
 
@@ -177,7 +177,7 @@ func (s *AssistantTurnWorkflowTestSuite) TestAnswersTheQuestionAndSavesIt() {
 	s.Require().NotNil(s.finished.Run)
 	s.Equal("Twelve loads are late.", s.finished.Run.Reply)
 	s.Require().NotEmpty(s.finished.Events)
-	s.Equal(serviceports.AssistantEventAccepted, s.finished.Events[0].Event,
+	s.Equal(agentports.AssistantEventAccepted, s.finished.Events[0].Event,
 		"the opening is kept in the turn's account")
 }
 
@@ -194,7 +194,7 @@ func (s *AssistantTurnWorkflowTestSuite) TestSavesARefusalWithoutAskingTheModel(
 	s.NoError(s.env.GetWorkflowError())
 	s.Require().NotNil(s.finished)
 	s.Nil(s.finished.Run)
-	s.Equal(serviceports.AssistantEventRefused, s.finished.Events[0].Event)
+	s.Equal(agentports.AssistantEventRefused, s.finished.Events[0].Event)
 }
 
 // A question turned away for a reason written for the person keeps that
@@ -303,9 +303,9 @@ func answeredEnding(reply string) *TurnEnding {
 	return &TurnEnding{
 		Result: assistantcontract.AssistantTurnResult{
 			Status: "Completed",
-			Result: &serviceports.SendMessageResult{Reply: reply},
+			Result: &agentports.SendMessageResult{Reply: reply},
 		},
-		Event: temporaltype.StreamItem{Event: serviceports.AssistantEventDone},
+		Event: temporaltype.StreamItem{Event: agentports.AssistantEventDone},
 	}
 }
 
@@ -422,12 +422,12 @@ func (s *AssistantTurnWorkflowTestSuite) TestTellsThePersonAboutARefusal() {
 		Result: assistantcontract.AssistantTurnResult{
 			Status:  "Refused",
 			Refused: true,
-			Result: &serviceports.SendMessageResult{
+			Result: &agentports.SendMessageResult{
 				Reply:   "I only help with freight.",
 				Refused: true,
 			},
 		},
-		Event: temporaltype.StreamItem{Event: serviceports.AssistantEventDone},
+		Event: temporaltype.StreamItem{Event: agentports.AssistantEventDone},
 	}, nil)
 
 	s.run()

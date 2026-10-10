@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -89,7 +89,7 @@ func (s *service) payerNames(
 	if len(missing) == 0 || s.customerRepo == nil {
 		return names
 	}
-	found, err := s.customerRepo.GetByIDs(ctx, repositories.GetCustomersByIDsRequest{
+	found, err := s.customerRepo.GetByIDs(ctx, customerports.GetCustomersByIDsRequest{
 		TenantInfo:  tenantInfo,
 		CustomerIDs: missing,
 	})

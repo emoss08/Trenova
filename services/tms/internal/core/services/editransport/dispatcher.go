@@ -5,22 +5,22 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"go.uber.org/fx"
 )
 
 type DispatcherParams struct {
 	fx.In
 
-	Transports []services.EDITransport `group:"edi_transports"`
+	Transports []ediports.EDITransport `group:"edi_transports"`
 }
 
 type Dispatcher struct {
-	transports map[edi.ConnectionMethod]services.EDITransport
+	transports map[edi.ConnectionMethod]ediports.EDITransport
 }
 
 func NewDispatcher(p DispatcherParams) *Dispatcher {
-	transports := make(map[edi.ConnectionMethod]services.EDITransport, len(p.Transports))
+	transports := make(map[edi.ConnectionMethod]ediports.EDITransport, len(p.Transports))
 	for _, transport := range p.Transports {
 		if transport == nil {
 			continue
@@ -39,8 +39,8 @@ func (d *Dispatcher) Supports(method edi.ConnectionMethod) bool {
 func (d *Dispatcher) TestConnection(
 	ctx context.Context,
 	method edi.ConnectionMethod,
-	req *services.EDITransportRequest,
-) ([]services.EDIConnectionCheck, error) {
+	req *ediports.EDITransportRequest,
+) ([]ediports.EDIConnectionCheck, error) {
 	transport, ok := d.transports[method]
 	if !ok {
 		return nil, fmt.Errorf(
@@ -48,7 +48,7 @@ func (d *Dispatcher) TestConnection(
 			method,
 		)
 	}
-	tester, ok := transport.(services.EDIConnectionTester)
+	tester, ok := transport.(ediports.EDIConnectionTester)
 	if !ok {
 		return nil, fmt.Errorf(
 			"EDI connection testing is not supported for connection method %s",
@@ -61,8 +61,8 @@ func (d *Dispatcher) TestConnection(
 func (d *Dispatcher) Deliver(
 	ctx context.Context,
 	method edi.ConnectionMethod,
-	req *services.EDITransportRequest,
-) (*services.EDITransportResult, error) {
+	req *ediports.EDITransportRequest,
+) (*ediports.EDITransportResult, error) {
 	transport, ok := d.transports[method]
 	if !ok {
 		return nil, fmt.Errorf("EDI delivery is not supported for connection method %s", method)
@@ -74,8 +74,8 @@ func (d *Dispatcher) Deliver(
 func (d *Dispatcher) FetchInbound(
 	ctx context.Context,
 	method edi.ConnectionMethod,
-	req *services.EDIInboundFetchRequest,
-) ([]*services.EDIInboundRemoteFile, error) {
+	req *ediports.EDIInboundFetchRequest,
+) ([]*ediports.EDIInboundRemoteFile, error) {
 	fetcher, err := d.fetcherFor(method)
 	if err != nil {
 		return nil, err
@@ -87,7 +87,7 @@ func (d *Dispatcher) FetchInbound(
 func (d *Dispatcher) ArchiveInbound(
 	ctx context.Context,
 	method edi.ConnectionMethod,
-	req *services.EDIInboundFetchRequest,
+	req *ediports.EDIInboundFetchRequest,
 	remotePath string,
 ) error {
 	fetcher, err := d.fetcherFor(method)
@@ -98,7 +98,7 @@ func (d *Dispatcher) ArchiveInbound(
 	return fetcher.ArchiveInboundFile(ctx, req, remotePath)
 }
 
-func (d *Dispatcher) fetcherFor(method edi.ConnectionMethod) (services.EDIMailboxFetcher, error) {
+func (d *Dispatcher) fetcherFor(method edi.ConnectionMethod) (ediports.EDIMailboxFetcher, error) {
 	transport, ok := d.transports[method]
 	if !ok {
 		return nil, fmt.Errorf(
@@ -107,7 +107,7 @@ func (d *Dispatcher) fetcherFor(method edi.ConnectionMethod) (services.EDIMailbo
 		)
 	}
 
-	fetcher, ok := transport.(services.EDIMailboxFetcher)
+	fetcher, ok := transport.(ediports.EDIMailboxFetcher)
 	if !ok {
 		return nil, fmt.Errorf(
 			"EDI inbound polling is not supported for connection method %s",

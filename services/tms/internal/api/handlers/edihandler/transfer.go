@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -65,7 +65,7 @@ func (h *Handler) registerTransferRoutes(transfers *gin.RouterGroup) {
 
 func (h *Handler) resetControlNumber(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
-	req := new(repositories.ResetEDIControlNumberRequest)
+	req := new(ediports.ResetEDIControlNumberRequest)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -169,7 +169,7 @@ func (h *Handler) listInboundTransfers(c *gin.Context) {
 	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*edi.EDITransfer], error) {
 		return h.service.ListInboundTransfers(
 			c.Request.Context(),
-			&repositories.ListEDITransfersRequest{Filter: req},
+			&ediports.ListEDITransfersRequest{Filter: req},
 		)
 	})
 }
@@ -197,7 +197,7 @@ func (h *Handler) listOutboundTransfers(c *gin.Context) {
 	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*edi.EDITransfer], error) {
 		return h.service.ListOutboundTransfers(
 			c.Request.Context(),
-			&repositories.ListEDITransfersRequest{Filter: req},
+			&ediports.ListEDITransfersRequest{Filter: req},
 		)
 	})
 }
@@ -218,7 +218,7 @@ func (h *Handler) mappingPreview(c *gin.Context) {
 
 	preview, err := h.service.MappingPreview(
 		c.Request.Context(),
-		repositories.GetEDITransferByIDRequest{
+		ediports.GetEDITransferByIDRequest{
 			ID:         transferID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},

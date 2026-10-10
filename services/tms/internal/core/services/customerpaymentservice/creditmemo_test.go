@@ -1,6 +1,9 @@
 package customerpaymentservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerpaymentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
 	"context"
 	"testing"
 
@@ -8,8 +11,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -24,11 +29,11 @@ import (
 type creditMemoFixture struct {
 	orgID, buID, userID, customerID pulid.ID
 	tenantInfo                      pagination.TenantInfo
-	actor                           *serviceports.RequestActor
+	actor                           *permissionports.RequestActor
 	memo, target                    *invoice.Invoice
-	invoiceRepo                     *mocks.MockInvoiceRepository
-	paymentRepo                     *mocks.MockCustomerPaymentRepository
-	fiscalRepo                      *mocks.MockFiscalPeriodRepository
+	invoiceRepo                     *invoiceportsmock.MockInvoiceRepository
+	paymentRepo                     *customerpaymentportsmock.MockCustomerPaymentRepository
+	fiscalRepo                      *fiscalperiodportsmock.MockFiscalPeriodRepository
 	svc                             *Service
 }
 
@@ -70,9 +75,9 @@ func newCreditMemoFixture(t *testing.T) *creditMemoFixture {
 		AppliedAmountMinor: 0,
 		SettlementStatus:   invoice.SettlementStatusUnpaid,
 	}
-	f.invoiceRepo = mocks.NewMockInvoiceRepository(t)
-	f.paymentRepo = mocks.NewMockCustomerPaymentRepository(t)
-	f.fiscalRepo = mocks.NewMockFiscalPeriodRepository(t)
+	f.invoiceRepo = invoiceportsmock.NewMockInvoiceRepository(t)
+	f.paymentRepo = customerpaymentportsmock.NewMockCustomerPaymentRepository(t)
+	f.fiscalRepo = fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	f.svc = &Service{
 		l:           zap.NewNop(),
 		db:          fakePaymentDB{},
@@ -89,24 +94,24 @@ func newCreditMemoFixture(t *testing.T) *creditMemoFixture {
 
 func (f *creditMemoFixture) expectPeriod() {
 	f.fiscalRepo.EXPECT().
-		GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{OrgID: f.orgID, BuID: f.buID, Date: 200}).
+		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: f.orgID, BuID: f.buID, Date: 200}).
 		Return(&fiscalperiod.FiscalPeriod{ID: pulid.MustNew("fp_")}, nil).
 		Once()
 }
 
 func (f *creditMemoFixture) lock(inv *invoice.Invoice) {
 	f.invoiceRepo.EXPECT().
-		LockForUpdate(mock.Anything, repositories.GetInvoiceByIDRequest{ID: inv.ID, TenantInfo: f.tenantInfo}).
+		LockForUpdate(mock.Anything, invoiceports.GetInvoiceByIDRequest{ID: inv.ID, TenantInfo: f.tenantInfo}).
 		Return(inv, nil).
 		Once()
 }
 
-func (f *creditMemoFixture) applyRequest(amount int64) *serviceports.ApplyCreditMemoRequest {
-	return &serviceports.ApplyCreditMemoRequest{
+func (f *creditMemoFixture) applyRequest(amount int64) *customerpaymentports.ApplyCreditMemoRequest {
+	return &customerpaymentports.ApplyCreditMemoRequest{
 		CreditMemoID:   f.memo.ID,
 		AccountingDate: 200,
 		TenantInfo:     f.tenantInfo,
-		Applications: []*serviceports.CreditMemoApplicationInput{
+		Applications: []*customerpaymentports.CreditMemoApplicationInput{
 			{InvoiceID: f.target.ID, AppliedAmountMinor: amount},
 		},
 	}
@@ -119,33 +124,33 @@ func TestApplyCreditMemoValidatesTheRequestShape(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		mutate  func(req *serviceports.ApplyCreditMemoRequest)
+		mutate  func(req *customerpaymentports.ApplyCreditMemoRequest)
 		wantErr string
 	}{
 		{
 			"missing memo",
-			func(req *serviceports.ApplyCreditMemoRequest) { req.CreditMemoID = pulid.Nil },
+			func(req *customerpaymentports.ApplyCreditMemoRequest) { req.CreditMemoID = pulid.Nil },
 			"Credit memo is required",
 		},
 		{
 			"missing accounting date",
-			func(req *serviceports.ApplyCreditMemoRequest) { req.AccountingDate = 0 },
+			func(req *customerpaymentports.ApplyCreditMemoRequest) { req.AccountingDate = 0 },
 			"Accounting date is required",
 		},
 		{
 			"no applications",
-			func(req *serviceports.ApplyCreditMemoRequest) { req.Applications = nil },
+			func(req *customerpaymentports.ApplyCreditMemoRequest) { req.Applications = nil },
 			"At least one application",
 		},
 		{
 			"zero amount",
-			func(req *serviceports.ApplyCreditMemoRequest) { req.Applications[0].AppliedAmountMinor = 0 },
+			func(req *customerpaymentports.ApplyCreditMemoRequest) { req.Applications[0].AppliedAmountMinor = 0 },
 			"greater than zero",
 		},
-		{"duplicate invoice", func(req *serviceports.ApplyCreditMemoRequest) {
+		{"duplicate invoice", func(req *customerpaymentports.ApplyCreditMemoRequest) {
 			req.Applications = append(
 				req.Applications,
-				&serviceports.CreditMemoApplicationInput{
+				&customerpaymentports.CreditMemoApplicationInput{
 					InvoiceID:          f.target.ID,
 					AppliedAmountMinor: 100,
 				},
@@ -162,7 +167,7 @@ func TestApplyCreditMemoValidatesTheRequestShape(t *testing.T) {
 		})
 	}
 
-	_, err := f.svc.ApplyCreditMemo(t.Context(), f.applyRequest(1000), &serviceports.RequestActor{})
+	_, err := f.svc.ApplyCreditMemo(t.Context(), f.applyRequest(1000), &permissionports.RequestActor{})
 	require.Error(t, err, "an anonymous actor cannot apply credits")
 }
 
@@ -340,7 +345,7 @@ func TestApplyCreditMemoSettlesInvoicesAndRecordsApplications(t *testing.T) {
 	req := f.applyRequest(5000)
 	req.Applications = append(
 		req.Applications,
-		&serviceports.CreditMemoApplicationInput{InvoiceID: second.ID, AppliedAmountMinor: 3000},
+		&customerpaymentports.CreditMemoApplicationInput{InvoiceID: second.ID, AppliedAmountMinor: 3000},
 	)
 
 	applied, err := f.svc.ApplyCreditMemo(t.Context(), req, f.actor)
@@ -389,7 +394,7 @@ func TestUnapplyCreditMemoApplicationRestoresBothBalances(t *testing.T) {
 	}
 
 	f.paymentRepo.EXPECT().
-		GetCreditMemoApplicationByID(mock.Anything, repositories.GetCreditMemoApplicationRequest{ID: application.ID, TenantInfo: f.tenantInfo}).
+		GetCreditMemoApplicationByID(mock.Anything, customerpaymentports.GetCreditMemoApplicationRequest{ID: application.ID, TenantInfo: f.tenantInfo}).
 		Return(application, nil).
 		Once()
 	f.lock(f.memo)
@@ -418,7 +423,7 @@ func TestUnapplyCreditMemoApplicationRestoresBothBalances(t *testing.T) {
 
 	updated, err := f.svc.UnapplyCreditMemoApplication(
 		t.Context(),
-		&serviceports.UnapplyCreditMemoApplicationRequest{
+		&customerpaymentports.UnapplyCreditMemoApplicationRequest{
 			ApplicationID: application.ID,
 			Reason:        "  Applied to the wrong invoice ",
 			TenantInfo:    f.tenantInfo,
@@ -449,7 +454,7 @@ func TestUnapplyCreditMemoApplicationRefusesAnUnappliedRow(t *testing.T) {
 
 	_, err := f.svc.UnapplyCreditMemoApplication(
 		t.Context(),
-		&serviceports.UnapplyCreditMemoApplicationRequest{
+		&customerpaymentports.UnapplyCreditMemoApplicationRequest{
 			ApplicationID: application.ID,
 			TenantInfo:    f.tenantInfo,
 		},
@@ -481,7 +486,7 @@ func TestUnapplyCreditMemoApplicationRefusesAVoidedTarget(t *testing.T) {
 
 	_, err := f.svc.UnapplyCreditMemoApplication(
 		t.Context(),
-		&serviceports.UnapplyCreditMemoApplicationRequest{
+		&customerpaymentports.UnapplyCreditMemoApplicationRequest{
 			ApplicationID: application.ID,
 			TenantInfo:    f.tenantInfo,
 		},

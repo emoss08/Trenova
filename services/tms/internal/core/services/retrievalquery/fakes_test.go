@@ -5,8 +5,8 @@ import (
 	"sync"
 
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/pgvector/pgvector-go"
@@ -27,7 +27,7 @@ func activeSettings(tenant pagination.TenantInfo) *airetrieval.Settings {
 }
 
 type fakeRepository struct {
-	repositories.AIRetrievalRepository
+	agentports.AIRetrievalRepository
 
 	mu            sync.Mutex
 	availability  airetrieval.Availability
@@ -35,9 +35,9 @@ type fakeRepository struct {
 	settings      *airetrieval.Settings
 	settingsErr   error
 	stored        map[string]*airetrieval.CatalogEmbedding
-	getRequests   []repositories.GetCatalogEmbeddingsRequest
-	putRequests   []repositories.PutCatalogEmbeddingsRequest
-	pruneRequests []repositories.PruneCatalogEmbeddingsRequest
+	getRequests   []agentports.GetCatalogEmbeddingsRequest
+	putRequests   []agentports.PutCatalogEmbeddingsRequest
+	pruneRequests []agentports.PruneCatalogEmbeddingsRequest
 }
 
 func newFakeRepository(settings *airetrieval.Settings) *fakeRepository {
@@ -65,7 +65,7 @@ func (r *fakeRepository) GetSettings(
 
 func (r *fakeRepository) GetCatalogEmbeddings(
 	_ context.Context,
-	req repositories.GetCatalogEmbeddingsRequest,
+	req agentports.GetCatalogEmbeddingsRequest,
 ) ([]*airetrieval.CatalogEmbedding, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -84,7 +84,7 @@ func (r *fakeRepository) GetCatalogEmbeddings(
 
 func (r *fakeRepository) PutCatalogEmbeddings(
 	_ context.Context,
-	req repositories.PutCatalogEmbeddingsRequest,
+	req agentports.PutCatalogEmbeddingsRequest,
 ) (int, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -107,7 +107,7 @@ func (r *fakeRepository) PutCatalogEmbeddings(
 
 func (r *fakeRepository) PruneCatalogEmbeddings(
 	_ context.Context,
-	req repositories.PruneCatalogEmbeddingsRequest,
+	req agentports.PruneCatalogEmbeddingsRequest,
 ) (int, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -119,7 +119,7 @@ func (r *fakeRepository) PruneCatalogEmbeddings(
 
 type fakeEmbeddings struct {
 	mu         sync.Mutex
-	requests   []serviceports.EmbedRequest
+	requests   []aiusageports.EmbedRequest
 	err        error
 	configured error
 	vectorFor  func(input string) []float32
@@ -128,14 +128,14 @@ type fakeEmbeddings struct {
 
 func (e *fakeEmbeddings) Embed(
 	_ context.Context,
-	req *serviceports.EmbedRequest,
-) (serviceports.EmbedResult, error) {
+	req *aiusageports.EmbedRequest,
+) (aiusageports.EmbedResult, error) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
 	e.requests = append(e.requests, *req)
 	if e.err != nil {
-		return serviceports.EmbedResult{}, e.err
+		return aiusageports.EmbedResult{}, e.err
 	}
 
 	vectors := make([][]float32, 0, len(req.Inputs))
@@ -148,7 +148,7 @@ func (e *fakeEmbeddings) Embed(
 		modelKey = req.ModelKey
 	}
 
-	return serviceports.EmbedResult{
+	return aiusageports.EmbedResult{
 		Vectors:    vectors,
 		ModelKey:   modelKey,
 		Dimensions: airetrieval.Dimensions768,
@@ -166,11 +166,11 @@ func (e *fakeEmbeddings) ConfiguredModelKey(
 	return testModelKey, nil
 }
 
-func (e *fakeEmbeddings) calls() []serviceports.EmbedRequest {
+func (e *fakeEmbeddings) calls() []aiusageports.EmbedRequest {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
-	return append([]serviceports.EmbedRequest(nil), e.requests...)
+	return append([]aiusageports.EmbedRequest(nil), e.requests...)
 }
 
 func axis(index int) []float32 {

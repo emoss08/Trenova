@@ -11,8 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -57,7 +58,7 @@ func (f *fakeConnections) withTokens(conn *accountingsync.AccountingConnection) 
 	return &out
 }
 
-func (f *fakeConnections) byType(req repositories.GetAccountingConnectionRequest) *accountingsync.AccountingConnection {
+func (f *fakeConnections) byType(req accountingsyncports.GetAccountingConnectionRequest) *accountingsync.AccountingConnection {
 	for _, row := range f.rows {
 		if sameTenant(row, req.TenantInfo) && row.IntegrationType == req.IntegrationType {
 			return row
@@ -68,7 +69,7 @@ func (f *fakeConnections) byType(req repositories.GetAccountingConnectionRequest
 
 func (f *fakeConnections) GetByType(
 	_ context.Context,
-	req repositories.GetAccountingConnectionRequest,
+	req accountingsyncports.GetAccountingConnectionRequest,
 ) (*accountingsync.AccountingConnection, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -80,7 +81,7 @@ func (f *fakeConnections) GetByType(
 
 func (f *fakeConnections) GetByID(
 	_ context.Context,
-	req repositories.GetAccountingConnectionByIDRequest,
+	req accountingsyncports.GetAccountingConnectionByIDRequest,
 ) (*accountingsync.AccountingConnection, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -107,7 +108,7 @@ func (f *fakeConnections) ListByTenant(
 
 func (f *fakeConnections) ListHoldingRealm(
 	_ context.Context,
-	req repositories.ListAccountingConnectionsByRealmRequest,
+	req accountingsyncports.ListAccountingConnectionsByRealmRequest,
 ) ([]*accountingsync.AccountingConnection, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -128,7 +129,7 @@ func (f *fakeConnections) ListHoldingRealm(
 
 func (f *fakeConnections) ListDueForHealthCheck(
 	_ context.Context,
-	req repositories.ListDueAccountingConnectionsRequest,
+	req accountingsyncports.ListDueAccountingConnectionsRequest,
 ) ([]*accountingsync.AccountingConnection, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -146,7 +147,7 @@ func (f *fakeConnections) ListDueForHealthCheck(
 
 func (f *fakeConnections) LockByTypeWithTokens(
 	_ context.Context,
-	req repositories.GetAccountingConnectionRequest,
+	req accountingsyncports.GetAccountingConnectionRequest,
 ) (*accountingsync.AccountingConnection, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -158,7 +159,7 @@ func (f *fakeConnections) LockByTypeWithTokens(
 
 func (f *fakeConnections) LockWithTokens(
 	_ context.Context,
-	req repositories.GetAccountingConnectionByIDRequest,
+	req accountingsyncports.GetAccountingConnectionByIDRequest,
 ) (*accountingsync.AccountingConnection, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -204,7 +205,7 @@ func (f *fakeConnections) Update(
 
 func (f *fakeConnections) StoreTokens(
 	_ context.Context,
-	req repositories.StoreAccountingTokensRequest,
+	req accountingsyncports.StoreAccountingTokensRequest,
 ) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -226,7 +227,7 @@ func (f *fakeConnections) StoreTokens(
 
 func (f *fakeConnections) MarkWebhookReceived(
 	_ context.Context,
-	req repositories.MarkAccountingWebhookRequest,
+	req accountingsyncports.MarkAccountingWebhookRequest,
 ) (int64, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -246,14 +247,14 @@ func (f *fakeConnections) MarkWebhookReceived(
 
 func (f *fakeConnections) SaveDriftCheck(
 	context.Context,
-	*repositories.SaveAccountingDriftCheckRequest,
+	*accountingsyncports.SaveAccountingDriftCheckRequest,
 ) error {
 	return nil
 }
 
 func (f *fakeConnections) SaveChangeFeed(
 	_ context.Context,
-	req *repositories.SaveAccountingChangeFeedRequest,
+	req *accountingsyncports.SaveAccountingChangeFeedRequest,
 ) (bool, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -275,7 +276,7 @@ func (f *fakeConnections) SaveChangeFeed(
 
 func (f *fakeConnections) MarkReferenceRefresh(
 	_ context.Context,
-	req repositories.MarkAccountingReferenceRefreshRequest,
+	req accountingsyncports.MarkAccountingReferenceRefreshRequest,
 ) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -299,7 +300,7 @@ func (f *fakeConnections) MarkReferenceRefresh(
 
 func (f *fakeConnections) ListActive(
 	_ context.Context,
-	req repositories.ListActiveAccountingConnectionsRequest,
+	req accountingsyncports.ListActiveAccountingConnectionsRequest,
 ) ([]*accountingsync.AccountingConnection, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -321,20 +322,20 @@ func (f *fakeConnections) ListActive(
 
 type fakeStates struct {
 	mu     sync.Mutex
-	states map[string]*repositories.AccountingOAuthState
+	states map[string]*accountingsyncports.AccountingOAuthState
 	ttls   map[string]time.Duration
 }
 
 func newFakeStates() *fakeStates {
 	return &fakeStates{
-		states: map[string]*repositories.AccountingOAuthState{},
+		states: map[string]*accountingsyncports.AccountingOAuthState{},
 		ttls:   map[string]time.Duration{},
 	}
 }
 
 func (f *fakeStates) Save(
 	_ context.Context,
-	state *repositories.AccountingOAuthState,
+	state *accountingsyncports.AccountingOAuthState,
 	ttl time.Duration,
 ) error {
 	f.mu.Lock()
@@ -344,7 +345,7 @@ func (f *fakeStates) Save(
 	return nil
 }
 
-func (f *fakeStates) Take(_ context.Context, state string) (*repositories.AccountingOAuthState, error) {
+func (f *fakeStates) Take(_ context.Context, state string) (*accountingsyncports.AccountingOAuthState, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	found, ok := f.states[state]
@@ -420,9 +421,9 @@ var errProvider = errors.New("provider failure")
 type fakeConnector struct {
 	mu             sync.Mutex
 	available      bool
-	exchangeGrant  *services.AccountingTokenGrant
+	exchangeGrant  *accountingsyncports.AccountingTokenGrant
 	exchangeErr    error
-	refreshGrant   *services.AccountingTokenGrant
+	refreshGrant   *accountingsyncports.AccountingTokenGrant
 	refreshErrs    []error
 	refreshedWith  []string
 	factsErrs      []error
@@ -435,13 +436,13 @@ type fakeConnector struct {
 	errCategories  map[error]accountingsync.ErrorCategory
 	redirectURL    string
 	verifyAppErr   error
-	bound          []*services.AccountingApp
-	companies      []services.AccountingCompany
+	bound          []*accountingsyncports.AccountingApp
+	companies      []accountingsyncports.AccountingCompany
 	companiesErr   error
-	released       []services.AccountingCompany
+	released       []accountingsyncports.AccountingCompany
 }
 
-var testInstanceApp = services.AccountingApp{
+var testInstanceApp = accountingsyncports.AccountingApp{
 	Source:               accountingsync.AppSourceInstance,
 	Environment:          accountingsync.AppEnvironmentSandbox,
 	ClientID:             "instance-client",
@@ -455,13 +456,13 @@ func newFakeConnector() *fakeConnector {
 	return &fakeConnector{
 		available:   true,
 		redirectURL: "https://app.example.com/admin/integrations/quickbooks/callback",
-		exchangeGrant: &services.AccountingTokenGrant{
+		exchangeGrant: &accountingsyncports.AccountingTokenGrant{
 			AccessToken:     "access-1",
 			RefreshToken:    "refresh-1",
 			AccessTokenTTL:  time.Hour,
 			RefreshTokenTTL: 100 * 24 * time.Hour,
 		},
-		refreshGrant: &services.AccountingTokenGrant{
+		refreshGrant: &accountingsyncports.AccountingTokenGrant{
 			AccessToken:     "access-2",
 			RefreshToken:    "refresh-2",
 			AccessTokenTTL:  time.Hour,
@@ -479,7 +480,7 @@ func newFakeConnector() *fakeConnector {
 
 func (f *fakeConnector) IntegrationType() integration.Type { return integration.TypeQuickBooksOnline }
 
-func (f *fakeConnector) InstanceApp() (*services.AccountingApp, bool) {
+func (f *fakeConnector) InstanceApp() (*accountingsyncports.AccountingApp, bool) {
 	if !f.available {
 		return nil, false
 	}
@@ -489,14 +490,14 @@ func (f *fakeConnector) InstanceApp() (*services.AccountingApp, bool) {
 
 func (f *fakeConnector) RedirectURL() string { return f.redirectURL }
 
-func (f *fakeConnector) Bind(app *services.AccountingApp) (services.AccountingConnector, error) {
+func (f *fakeConnector) Bind(app *accountingsyncports.AccountingApp) (accountingsyncports.AccountingConnector, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.bound = append(f.bound, app)
 	return &boundConnector{fakeConnector: f, app: app}, nil
 }
 
-func (f *fakeConnector) lastBound() *services.AccountingApp {
+func (f *fakeConnector) lastBound() *accountingsyncports.AccountingApp {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if len(f.bound) == 0 {
@@ -509,7 +510,7 @@ func (f *fakeConnector) VerifyApp(context.Context) error { return f.verifyAppErr
 
 type boundConnector struct {
 	*fakeConnector
-	app *services.AccountingApp
+	app *accountingsyncports.AccountingApp
 }
 
 func (b *boundConnector) VerifyWebhook(signature string, body []byte) error {
@@ -529,7 +530,7 @@ func (f *fakeConnector) AuthorizeURL(state string) (string, error) {
 func (f *fakeConnector) ExchangeCode(
 	_ context.Context,
 	code string,
-) (*services.AccountingTokenGrant, error) {
+) (*accountingsyncports.AccountingTokenGrant, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.exchangedCodes = append(f.exchangedCodes, code)
@@ -542,7 +543,7 @@ func (f *fakeConnector) ExchangeCode(
 func (f *fakeConnector) Refresh(
 	_ context.Context,
 	refreshToken string,
-) (*services.AccountingTokenGrant, error) {
+) (*accountingsyncports.AccountingTokenGrant, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.refreshedWith = append(f.refreshedWith, refreshToken)
@@ -584,24 +585,24 @@ func (f *fakeConnector) CompanyFacts(
 
 func (f *fakeConnector) Companies(
 	_ context.Context,
-	_ *services.AccountingTokenGrant,
+	_ *accountingsyncports.AccountingTokenGrant,
 	callbackRealmID string,
-) ([]services.AccountingCompany, error) {
+) ([]accountingsyncports.AccountingCompany, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.companiesErr != nil {
 		return nil, f.companiesErr
 	}
 	if f.companies != nil {
-		return append([]services.AccountingCompany(nil), f.companies...), nil
+		return append([]accountingsyncports.AccountingCompany(nil), f.companies...), nil
 	}
-	return []services.AccountingCompany{{ID: callbackRealmID}}, nil
+	return []accountingsyncports.AccountingCompany{{ID: callbackRealmID}}, nil
 }
 
 func (f *fakeConnector) ReleaseCompanies(
 	_ context.Context,
-	_ *services.AccountingTokenGrant,
-	companies []services.AccountingCompany,
+	_ *accountingsyncports.AccountingTokenGrant,
+	companies []accountingsyncports.AccountingCompany,
 ) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -627,7 +628,7 @@ func (f *fakeConnector) ClassifyError(err error) accountingsync.ErrorCategory {
 
 type fakeRegistry struct{ connector *fakeConnector }
 
-func (r fakeRegistry) For(typ integration.Type) (services.AccountingProvider, bool) {
+func (r fakeRegistry) For(typ integration.Type) (accountingsyncports.AccountingProvider, bool) {
 	if typ == integration.TypeQuickBooksOnline {
 		return r.connector, true
 	}
@@ -635,12 +636,12 @@ func (r fakeRegistry) For(typ integration.Type) (services.AccountingProvider, bo
 }
 
 type fakeAudit struct {
-	services.AuditService
+	auditports.AuditService
 	mu      sync.Mutex
-	entries []*services.LogActionParams
+	entries []*auditports.LogActionParams
 }
 
-func (f *fakeAudit) LogAction(params *services.LogActionParams, _ ...services.LogOption) error {
+func (f *fakeAudit) LogAction(params *auditports.LogActionParams, _ ...auditports.LogOption) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.entries = append(f.entries, params)
@@ -649,7 +650,7 @@ func (f *fakeAudit) LogAction(params *services.LogActionParams, _ ...services.Lo
 
 type projection struct {
 	resolved bool
-	item     services.WatchtowerItemInput
+	item     watchtowerports.WatchtowerItemInput
 }
 
 type fakeWatchtower struct {
@@ -661,7 +662,7 @@ func newFakeWatchtower() *fakeWatchtower {
 	return &fakeWatchtower{items: map[string]projection{}}
 }
 
-func (f *fakeWatchtower) Upsert(_ context.Context, input services.WatchtowerItemInput) {
+func (f *fakeWatchtower) Upsert(_ context.Context, input watchtowerports.WatchtowerItemInput) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.items[input.SourceID] = projection{item: input}
@@ -716,7 +717,7 @@ func newFakeApps() *fakeApps {
 
 func (f *fakeApps) GetByType(
 	_ context.Context,
-	req repositories.GetAccountingAppCredentialRequest,
+	req accountingsyncports.GetAccountingAppCredentialRequest,
 ) (*accountingsync.AccountingAppCredential, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -781,7 +782,7 @@ func (f *fakeApps) Update(
 
 func (f *fakeApps) Delete(
 	_ context.Context,
-	req repositories.GetAccountingAppCredentialRequest,
+	req accountingsyncports.GetAccountingAppCredentialRequest,
 ) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()

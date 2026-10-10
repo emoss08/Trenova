@@ -6,7 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -25,7 +26,7 @@ type Params struct {
 	fx.In
 
 	Logger   *zap.Logger
-	Realtime services.RealtimeService `optional:"true"`
+	Realtime agentports.RealtimeService `optional:"true"`
 }
 
 // Publisher announces agent record changes to connected clients. Without a
@@ -33,10 +34,10 @@ type Params struct {
 // still records its work.
 type Publisher struct {
 	l        *zap.Logger
-	realtime services.RealtimeService
+	realtime agentports.RealtimeService
 }
 
-func New(p Params) services.AgentActivityPublisher {
+func New(p Params) agentports.AgentActivityPublisher {
 	return &Publisher{
 		l:        p.Logger.Named("service.agentactivity"),
 		realtime: p.Realtime,
@@ -52,7 +53,7 @@ type change struct {
 	entity   any
 }
 
-func (p *Publisher) publish(ctx context.Context, actor services.AuditActor, c change) {
+func (p *Publisher) publish(ctx context.Context, actor kernelports.AuditActor, c change) {
 	if p == nil || p.realtime == nil {
 		return
 	}
@@ -81,7 +82,7 @@ func (p *Publisher) publish(ctx context.Context, actor services.AuditActor, c ch
 func (p *Publisher) ProposalChanged(
 	ctx context.Context,
 	proposal *agent.AgentProposal,
-	actor services.AuditActor,
+	actor kernelports.AuditActor,
 	action string,
 ) {
 	if proposal == nil {
@@ -100,7 +101,7 @@ func (p *Publisher) ProposalChanged(
 func (p *Publisher) PlanChanged(
 	ctx context.Context,
 	plan *agent.AgentPlan,
-	actor services.AuditActor,
+	actor kernelports.AuditActor,
 	action string,
 ) {
 	if plan == nil {
@@ -119,7 +120,7 @@ func (p *Publisher) PlanChanged(
 func (p *Publisher) RunChanged(
 	ctx context.Context,
 	run *agent.AgentRun,
-	actor services.AuditActor,
+	actor kernelports.AuditActor,
 	action string,
 ) {
 	if run == nil {
@@ -138,7 +139,7 @@ func (p *Publisher) RunChanged(
 func (p *Publisher) ArtifactChanged(
 	ctx context.Context,
 	artifact *assistantartifact.Artifact,
-	actor services.AuditActor,
+	actor kernelports.AuditActor,
 	action string,
 ) {
 	if artifact == nil {

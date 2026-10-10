@@ -11,9 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/agentevalgate"
 	"github.com/emoss08/trenova/internal/core/services/retrievalservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -64,7 +64,7 @@ type DocumentSeed struct {
 func DocumentFor(
 	item agentevalgate.RetrievalItem,
 	owner string,
-) *repositories.RetrievalDocumentSource {
+) *agentports.RetrievalDocumentSource {
 	if owner == "" {
 		owner = item.AttachedTo
 	}
@@ -98,7 +98,7 @@ func DocumentFor(
 		})
 	}
 
-	return &repositories.RetrievalDocumentSource{Document: doc, Content: content, Pages: pages}
+	return &agentports.RetrievalDocumentSource{Document: doc, Content: content, Pages: pages}
 }
 
 func SeedDocuments(t *testing.T, ctx context.Context, db bun.IDB, seed DocumentSeed) *Corpus {
@@ -310,8 +310,8 @@ func SeedMemories(t *testing.T, ctx context.Context, db bun.IDB, seed MemorySeed
 }
 
 type EmbedSeed struct {
-	Repo       repositories.AIRetrievalRepository
-	Sources    repositories.RetrievalSourceRepository
+	Repo       agentports.AIRetrievalRepository
+	Sources    agentports.RetrievalSourceRepository
 	Fixture    *agentevalgate.EmbeddingFixture
 	ModelKey   string
 	SourceType airetrieval.SourceType
@@ -328,20 +328,20 @@ func SeedEmbeddings(t *testing.T, ctx context.Context, seed EmbedSeed) {
 
 	chunksByID := chunkSources(t, ctx, seed, ids)
 	for id, chunks := range chunksByID {
-		embedded := make([]repositories.EmbeddingChunk, 0, len(chunks))
+		embedded := make([]agentports.EmbeddingChunk, 0, len(chunks))
 		for _, chunk := range chunks {
 			vector, ok := seed.Fixture.Document(chunk.Hash)
 			require.Truef(t, ok, "no recorded vector for %s chunk %d; re-record with:\n  %s",
 				seed.Corpus.Keys[id], chunk.Index, RecordCommand)
-			embedded = append(embedded, repositories.EmbeddingChunk{
+			embedded = append(embedded, agentports.EmbeddingChunk{
 				ChunkIndex:  chunk.Index,
 				ContentHash: chunk.Hash,
 				Vector:      vector,
 			})
 		}
 
-		_, err := seed.Repo.ReplaceChunks(ctx, &repositories.ReplaceEmbeddingChunksRequest{
-			Source: repositories.AIRetrievalSourceRef{
+		_, err := seed.Repo.ReplaceChunks(ctx, &agentports.ReplaceEmbeddingChunksRequest{
+			Source: agentports.AIRetrievalSourceRef{
 				TenantInfo: seed.Corpus.Tenant,
 				SourceType: seed.SourceType,
 				SourceID:   id,
@@ -367,7 +367,7 @@ func chunkSources(
 
 	switch seed.SourceType {
 	case airetrieval.SourceTypeDocument:
-		sources, err := seed.Sources.GetDocuments(ctx, &repositories.RetrievalDocumentsRequest{
+		sources, err := seed.Sources.GetDocuments(ctx, &agentports.RetrievalDocumentsRequest{
 			TenantInfo:   tenant,
 			IDs:          ids,
 			IncludePages: true,
@@ -377,7 +377,7 @@ func chunkSources(
 			chunks[source.Document.ID] = retrievalservice.ChunkDocument(source)
 		}
 	case airetrieval.SourceTypeInboundMessage:
-		messages, err := seed.Sources.GetInboundMessages(ctx, repositories.RetrievalSourcesRequest{
+		messages, err := seed.Sources.GetInboundMessages(ctx, agentports.RetrievalSourcesRequest{
 			TenantInfo: tenant,
 			IDs:        ids,
 		})
@@ -386,7 +386,7 @@ func chunkSources(
 			chunks[message.ID] = retrievalservice.ChunkEmail(message)
 		}
 	case airetrieval.SourceTypeMemory:
-		memories, err := seed.Sources.GetMemories(ctx, repositories.RetrievalSourcesRequest{
+		memories, err := seed.Sources.GetMemories(ctx, agentports.RetrievalSourcesRequest{
 			TenantInfo: tenant,
 			IDs:        ids,
 		})

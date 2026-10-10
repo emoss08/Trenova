@@ -1,12 +1,13 @@
 package usstateservice_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/usstateportsmock"
 	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/usstateservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,13 +18,13 @@ import (
 )
 
 type testDeps struct {
-	repo *mocks.MockUsStateRepository
+	repo *usstateportsmock.MockUsStateRepository
 	svc  *usstateservice.Service
 }
 
 func setupTest(t *testing.T) *testDeps {
 	t.Helper()
-	repo := mocks.NewMockUsStateRepository(t)
+	repo := usstateportsmock.NewMockUsStateRepository(t)
 	svc := usstateservice.New(usstateservice.Params{
 		Logger: zap.NewNop(),
 		Repo:   repo,
@@ -45,7 +46,7 @@ func TestService_Get_Success(t *testing.T) {
 		CountryIso3:  "USA",
 	}
 
-	req := repositories.GetUsStateByIDRequest{StateID: ussID}
+	req := usstateports.GetUsStateByIDRequest{StateID: ussID}
 	deps.repo.On("GetByID", mock.Anything, req).Return(expected, nil)
 
 	result, err := deps.svc.Get(ctx, req)
@@ -62,7 +63,7 @@ func TestService_Get_Error(t *testing.T) {
 	ctx := t.Context()
 
 	dbErr := errors.New("database error")
-	req := repositories.GetUsStateByIDRequest{StateID: pulid.MustNew("uss_")}
+	req := usstateports.GetUsStateByIDRequest{StateID: pulid.MustNew("uss_")}
 	deps.repo.On("GetByID", mock.Anything, req).Return(nil, dbErr)
 
 	result, err := deps.svc.Get(ctx, req)

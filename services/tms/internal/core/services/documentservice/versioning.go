@@ -12,10 +12,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documentpacketrule"
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentpacketruleports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -52,7 +56,7 @@ func (s *Service) resolveLineageForUpload(
 	lineageID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) (*document.Document, error) {
-	versions, err := s.repo.ListVersions(ctx, repositories.ListDocumentVersionsRequest{
+	versions, err := s.repo.ListVersions(ctx, documentports.ListDocumentVersionsRequest{
 		LineageID:  lineageID,
 		TenantInfo: tenantInfo,
 	})
@@ -85,7 +89,7 @@ func (s *Service) makeCurrentDocumentVersion(
 	doc *document.Document,
 	lineageInfo *document.Document,
 ) error {
-	return s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	return s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		if lineageInfo != nil {
 			doc.IsCurrentVersion = false
 		}
@@ -94,7 +98,7 @@ func (s *Service) makeCurrentDocumentVersion(
 		}
 
 		if lineageInfo != nil {
-			if err := s.repo.PromoteVersion(txCtx, &repositories.PromoteDocumentVersionRequest{
+			if err := s.repo.PromoteVersion(txCtx, &documentports.PromoteDocumentVersionRequest{
 				LineageID:         doc.LineageID,
 				CurrentDocumentID: doc.ID,
 				TenantInfo: pagination.TenantInfo{
@@ -129,7 +133,7 @@ func (s *Service) ListVersions(
 	documentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) ([]*document.Document, error) {
-	doc, err := s.repo.GetByID(ctx, repositories.GetDocumentByIDRequest{
+	doc, err := s.repo.GetByID(ctx, documentports.GetDocumentByIDRequest{
 		ID:         documentID,
 		TenantInfo: tenantInfo,
 	})
@@ -137,7 +141,7 @@ func (s *Service) ListVersions(
 		return nil, err
 	}
 
-	return s.repo.ListVersions(ctx, repositories.ListDocumentVersionsRequest{
+	return s.repo.ListVersions(ctx, documentports.ListDocumentVersionsRequest{
 		LineageID:  doc.LineageID,
 		TenantInfo: tenantInfo,
 	})
@@ -159,7 +163,7 @@ func (s *Service) RestoreVersion(
 		return target, nil
 	}
 
-	if err := s.repo.PromoteVersion(ctx, &repositories.PromoteDocumentVersionRequest{
+	if err := s.repo.PromoteVersion(ctx, &documentports.PromoteDocumentVersionRequest{
 		LineageID:         target.LineageID,
 		CurrentDocumentID: target.ID,
 		TenantInfo:        tenantInfo,
@@ -181,7 +185,7 @@ func (s *Service) RestoreVersion(
 	}
 	s.syncSearchProjection(ctx, s.l, target, contentText)
 
-	if err := s.auditService.LogAction(&services.LogActionParams{
+	if err := s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceDocument,
 		ResourceID:     target.ID.String(),
 		Operation:      permission.OpUpdate,
@@ -194,7 +198,7 @@ func (s *Service) RestoreVersion(
 		s.l.Warn("failed to log document version restore", zap.Error(err))
 	}
 
-	return s.repo.GetByID(ctx, repositories.GetDocumentByIDRequest{
+	return s.repo.GetByID(ctx, documentports.GetDocumentByIDRequest{
 		ID:         target.ID,
 		TenantInfo: tenantInfo,
 	})
@@ -211,7 +215,7 @@ func (s *Service) GetPacketSummary( //nolint:funlen,gocognit // legacy workflow
 
 	rules, err := s.packetRuleRepo.ListByResourceType(
 		ctx,
-		&repositories.ListDocumentPacketRulesByResourceRequest{
+		&documentpacketruleports.ListDocumentPacketRulesByResourceRequest{
 			TenantInfo:   tenantInfo,
 			ResourceType: normalizedResourceType,
 		},
@@ -220,7 +224,7 @@ func (s *Service) GetPacketSummary( //nolint:funlen,gocognit // legacy workflow
 		return nil, err
 	}
 
-	docs, err := s.repo.GetByResourceID(ctx, &repositories.GetDocumentsByResourceRequest{
+	docs, err := s.repo.GetByResourceID(ctx, &documentports.GetDocumentsByResourceRequest{
 		TenantInfo:   tenantInfo,
 		ResourceID:   resourceID,
 		ResourceType: resourceType,
@@ -231,7 +235,7 @@ func (s *Service) GetPacketSummary( //nolint:funlen,gocognit // legacy workflow
 
 	typeByID := make(map[string]*documenttype.DocumentType, len(rules))
 	for _, rule := range rules {
-		docType, typeErr := s.documentTypeRepo.GetByID(ctx, repositories.GetDocumentTypeByIDRequest{
+		docType, typeErr := s.documentTypeRepo.GetByID(ctx, documenttypeports.GetDocumentTypeByIDRequest{
 			ID:         rule.DocumentTypeID,
 			TenantInfo: tenantInfo,
 		})
@@ -373,7 +377,7 @@ func (s *Service) AttachLineageToResource(
 	current := plan.Current
 	shipmentID := plan.ShipmentID
 	previous := *current
-	if err = s.repo.MoveLineageToResource(ctx, &repositories.MoveDocumentLineageRequest{
+	if err = s.repo.MoveLineageToResource(ctx, &documentports.MoveDocumentLineageRequest{
 		DocumentID:   documentID,
 		ResourceID:   resourceID,
 		ResourceType: resourceType,
@@ -382,7 +386,7 @@ func (s *Service) AttachLineageToResource(
 		return nil, err
 	}
 
-	updated, err := s.repo.GetByID(ctx, repositories.GetDocumentByIDRequest{
+	updated, err := s.repo.GetByID(ctx, documentports.GetDocumentByIDRequest{
 		ID:         documentID,
 		TenantInfo: tenantInfo,
 	})
@@ -401,7 +405,7 @@ func (s *Service) AttachLineageToResource(
 			if _, draftErr = s.draftRepo.Upsert(ctx, draft); draftErr != nil {
 				return nil, draftErr
 			}
-			s.captureDraftCorrection(ctx, &services.CaptureShipmentDraftCorrectionRequest{
+			s.captureDraftCorrection(ctx, &aicorrectionports.CaptureShipmentDraftCorrectionRequest{
 				Draft:        draft,
 				ShipmentID:   shipmentID,
 				CapturedByID: userID,
@@ -424,7 +428,7 @@ func (s *Service) AttachLineageToResource(
 	}
 	s.syncSearchProjection(ctx, s.l, updated, contentText)
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceDocument,
 		ResourceID:     updated.ID.String(),
 		Operation:      permission.OpUpdate,
@@ -442,7 +446,7 @@ func (s *Service) AttachLineageToResource(
 
 func (s *Service) captureDraftCorrection(
 	ctx context.Context,
-	req *services.CaptureShipmentDraftCorrectionRequest,
+	req *aicorrectionports.CaptureShipmentDraftCorrectionRequest,
 ) {
 	if s.aiCorrections == nil {
 		return
@@ -471,7 +475,7 @@ func (s *Service) requireShipment(
 		return errortypes.NewBusinessError("Shipments cannot be verified on this installation")
 	}
 
-	found, err := s.shipments.ListSummariesByIDs(ctx, &repositories.ListShipmentSummariesRequest{
+	found, err := s.shipments.ListSummariesByIDs(ctx, &shipmentports.ListShipmentSummariesRequest{
 		TenantInfo:  tenantInfo,
 		ShipmentIDs: []pulid.ID{shipmentID},
 	})

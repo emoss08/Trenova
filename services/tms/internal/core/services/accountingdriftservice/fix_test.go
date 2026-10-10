@@ -8,16 +8,17 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func (h *harness) person() *services.RequestActor {
-	return &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeUser,
+func (h *harness) person() *permissionports.RequestActor {
+	return &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    pulid.MustNew("usr_"),
 		UserID:         pulid.MustNew("usr_"),
 		OrganizationID: h.tenant.OrgID,
@@ -25,9 +26,9 @@ func (h *harness) person() *services.RequestActor {
 	}
 }
 
-func (h *harness) agent() *services.RequestActor {
+func (h *harness) agent() *permissionports.RequestActor {
 	actor := h.person()
-	actor.PrincipalType = services.PrincipalTypeAgent
+	actor.PrincipalType = permissionports.PrincipalTypeAgent
 	actor.PrincipalID = pulid.MustNew("agt_")
 	return actor
 }
@@ -63,10 +64,10 @@ func (h *harness) resolve(
 	t *testing.T,
 	finding *accountingsync.AccountingDriftFinding,
 	direction accountingsync.DriftDirection,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*accountingsync.AccountingDriftFinding, error) {
 	t.Helper()
-	return h.svc.Resolve(t.Context(), &services.ResolveAccountingDriftRequest{
+	return h.svc.Resolve(t.Context(), &accountingsyncports.ResolveAccountingDriftRequest{
 		TenantInfo: h.tenant,
 		ID:         finding.ID,
 		Direction:  direction,
@@ -360,13 +361,13 @@ func TestPreviewSaysWhatTheFixDoesAndWritesNothing(t *testing.T) {
 	h := newHarness(t)
 	finding, _ := h.invoiceFinding(t, 125_000, "1200.00")
 
-	adjust, err := h.svc.PreviewResolve(t.Context(), &services.ResolveAccountingDriftRequest{
+	adjust, err := h.svc.PreviewResolve(t.Context(), &accountingsyncports.ResolveAccountingDriftRequest{
 		TenantInfo: h.tenant,
 		ID:         finding.ID,
 		Direction:  accountingsync.DriftAdjustTrenova,
 	}, h.person())
 	require.NoError(t, err)
-	push, err := h.svc.PreviewResolve(t.Context(), &services.ResolveAccountingDriftRequest{
+	push, err := h.svc.PreviewResolve(t.Context(), &accountingsyncports.ResolveAccountingDriftRequest{
 		TenantInfo: h.tenant,
 		ID:         finding.ID,
 		Direction:  accountingsync.DriftPushTrenovaValue,
@@ -391,7 +392,7 @@ func TestDismissNeedsANote(t *testing.T) {
 	h := newHarness(t)
 	finding, _ := h.invoiceFinding(t, 125_000, "1200.00")
 
-	_, err := h.svc.Dismiss(t.Context(), &services.DismissAccountingDriftRequest{
+	_, err := h.svc.Dismiss(t.Context(), &accountingsyncports.DismissAccountingDriftRequest{
 		TenantInfo: h.tenant,
 		ID:         finding.ID,
 		Note:       "   ",
@@ -401,7 +402,7 @@ func TestDismissNeedsANote(t *testing.T) {
 	require.ErrorAs(t, err, &validation)
 	assert.Equal(t, "note", validation.Field)
 
-	_, err = h.svc.PreviewDismiss(t.Context(), &services.DismissAccountingDriftRequest{
+	_, err = h.svc.PreviewDismiss(t.Context(), &accountingsyncports.DismissAccountingDriftRequest{
 		TenantInfo: h.tenant,
 		ID:         finding.ID,
 		Note:       "",
@@ -416,7 +417,7 @@ func TestAPersonMayDismissAnyFinding(t *testing.T) {
 	finding, _ := h.invoiceFinding(t, 125_000, "1200.00")
 	actor := h.person()
 
-	updated, err := h.svc.Dismiss(t.Context(), &services.DismissAccountingDriftRequest{
+	updated, err := h.svc.Dismiss(t.Context(), &accountingsyncports.DismissAccountingDriftRequest{
 		TenantInfo: h.tenant,
 		ID:         finding.ID,
 		Note:       "Agreed with the customer; the books keep their figure",
@@ -433,7 +434,7 @@ func TestAnAgentDismissesOnlyWithinTheTolerance(t *testing.T) {
 	h := newHarness(t)
 	finding, _ := h.invoiceFinding(t, 125_000, "1200.00")
 
-	_, err := h.svc.Dismiss(t.Context(), &services.DismissAccountingDriftRequest{
+	_, err := h.svc.Dismiss(t.Context(), &accountingsyncports.DismissAccountingDriftRequest{
 		TenantInfo: h.tenant,
 		ID:         finding.ID,
 		Note:       "Rounding",
@@ -442,7 +443,7 @@ func TestAnAgentDismissesOnlyWithinTheTolerance(t *testing.T) {
 	require.ErrorAs(t, err, &authz)
 	assert.True(t, h.findings.open()[0].IsOpen())
 
-	_, err = h.svc.PreviewDismiss(t.Context(), &services.DismissAccountingDriftRequest{
+	_, err = h.svc.PreviewDismiss(t.Context(), &accountingsyncports.DismissAccountingDriftRequest{
 		TenantInfo: h.tenant,
 		ID:         finding.ID,
 		Note:       "Rounding",
@@ -450,14 +451,14 @@ func TestAnAgentDismissesOnlyWithinTheTolerance(t *testing.T) {
 	require.ErrorAs(t, err, &authz, "the preview refuses what the dismissal would")
 
 	h.controls.tolerance = "50.00"
-	preview, err := h.svc.PreviewDismiss(t.Context(), &services.DismissAccountingDriftRequest{
+	preview, err := h.svc.PreviewDismiss(t.Context(), &accountingsyncports.DismissAccountingDriftRequest{
 		TenantInfo: h.tenant,
 		ID:         finding.ID,
 		Note:       "Rounding",
 	}, h.agent())
 	require.NoError(t, err)
 	assert.True(t, preview.WithinTolerance)
-	updated, err := h.svc.Dismiss(t.Context(), &services.DismissAccountingDriftRequest{
+	updated, err := h.svc.Dismiss(t.Context(), &accountingsyncports.DismissAccountingDriftRequest{
 		TenantInfo: h.tenant,
 		ID:         finding.ID,
 		Note:       "Rounding",
@@ -472,7 +473,7 @@ func TestAnAgentNeverDismissesADeletedDocument(t *testing.T) {
 	h.controls.tolerance = "100000.00"
 	finding, _ := h.invoiceFinding(t, 125_000, "")
 
-	_, err := h.svc.Dismiss(t.Context(), &services.DismissAccountingDriftRequest{
+	_, err := h.svc.Dismiss(t.Context(), &accountingsyncports.DismissAccountingDriftRequest{
 		TenantInfo: h.tenant,
 		ID:         finding.ID,
 		Note:       "Looks fine",

@@ -4,8 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/typeutils"
 	"go.uber.org/fx"
@@ -14,16 +13,16 @@ import (
 type Params struct {
 	fx.In
 
-	Definitions repositories.AgentDefinitionRepository
-	Prompts     repositories.AgentTestPromptRepository
+	Definitions agentdefinitionports.AgentDefinitionRepository
+	Prompts     agentdefinitionports.AgentTestPromptRepository
 }
 
 type Service struct {
-	definitions repositories.AgentDefinitionRepository
-	prompts     repositories.AgentTestPromptRepository
+	definitions agentdefinitionports.AgentDefinitionRepository
+	prompts     agentdefinitionports.AgentTestPromptRepository
 }
 
-var _ services.AgentTestPromptService = (*Service)(nil)
+var _ agentdefinitionports.AgentTestPromptService = (*Service)(nil)
 
 func New(p Params) *Service {
 	return &Service{definitions: p.Definitions, prompts: p.Prompts}
@@ -31,7 +30,7 @@ func New(p Params) *Service {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListAgentTestPromptsRequest,
+	req *agentdefinitionports.ListAgentTestPromptsRequest,
 ) ([]*agentdefinition.TestPrompt, error) {
 	if err := s.agentExists(ctx, req); err != nil {
 		return nil, err
@@ -41,7 +40,7 @@ func (s *Service) List(
 
 func (s *Service) Keep(
 	ctx context.Context,
-	req *services.KeepAgentTestPromptRequest,
+	req *agentdefinitionports.KeepAgentTestPromptRequest,
 ) (*agentdefinition.TestPrompt, error) {
 	prompt := &agentdefinition.TestPrompt{
 		BusinessUnitID:    req.TenantInfo.BuID,
@@ -57,7 +56,7 @@ func (s *Service) Keep(
 		return nil, multiErr
 	}
 
-	scope := &repositories.ListAgentTestPromptsRequest{
+	scope := &agentdefinitionports.ListAgentTestPromptsRequest{
 		TenantInfo:        req.TenantInfo,
 		AgentDefinitionID: req.AgentDefinitionID,
 	}
@@ -80,12 +79,12 @@ func (s *Service) Keep(
 	return prompt, nil
 }
 
-func (s *Service) Delete(ctx context.Context, req *repositories.DeleteAgentTestPromptRequest) error {
+func (s *Service) Delete(ctx context.Context, req *agentdefinitionports.DeleteAgentTestPromptRequest) error {
 	return s.prompts.Delete(ctx, req)
 }
 
-func (s *Service) agentExists(ctx context.Context, req *repositories.ListAgentTestPromptsRequest) error {
-	_, err := s.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+func (s *Service) agentExists(ctx context.Context, req *agentdefinitionports.ListAgentTestPromptsRequest) error {
+	_, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         req.AgentDefinitionID,
 		TenantInfo: req.TenantInfo,
 	})

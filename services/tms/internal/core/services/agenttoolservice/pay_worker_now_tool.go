@@ -7,11 +7,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/settlementshared"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 )
 
@@ -25,7 +26,7 @@ type instantPayer interface {
 	PayWorkerNow(
 		ctx context.Context,
 		req *driversettlementservice.PayWorkerNowRequest,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*driversettlement.Settlement, error)
 }
 
@@ -34,12 +35,12 @@ type payWorkerNowTool struct {
 }
 
 var (
-	_ serviceports.ToolPreviewer      = (*payWorkerNowTool)(nil)
-	_ serviceports.ToolValidator      = (*payWorkerNowTool)(nil)
-	_ serviceports.ToolResultReporter = (*payWorkerNowTool)(nil)
+	_ agentports.ToolPreviewer      = (*payWorkerNowTool)(nil)
+	_ agentports.ToolValidator      = (*payWorkerNowTool)(nil)
+	_ agentports.ToolResultReporter = (*payWorkerNowTool)(nil)
 )
 
-func providePayWorkerNowTool(s *driversettlementservice.Service) serviceports.AgentTool {
+func providePayWorkerNowTool(s *driversettlementservice.Service) agentports.AgentTool {
 	return &payWorkerNowTool{settlements: s}
 }
 
@@ -77,8 +78,8 @@ func (t *payWorkerNowTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *payWorkerNowTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *payWorkerNowTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceDriverSettlement,
@@ -97,7 +98,7 @@ func (t *payWorkerNowTool) Policy() serviceports.ToolPolicy {
 }
 
 func (t *payWorkerNowTool) request(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*driversettlementservice.PayWorkerNowRequest, error) {
 	if err := guardPreview(t, params); err != nil {
 		return nil, err
@@ -132,7 +133,7 @@ func (t *payWorkerNowTool) request(
 
 func (t *payWorkerNowTool) plan(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*driversettlementservice.InstantPayPlan, error) {
 	req, err := t.request(params)
 	if err != nil {
@@ -144,7 +145,7 @@ func (t *payWorkerNowTool) plan(
 
 func (t *payWorkerNowTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
@@ -156,7 +157,7 @@ func (t *payWorkerNowTool) Validate(
 
 func (t *payWorkerNowTool) ExecuteWithResult(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
 	if err := guardExecute(t, params); err != nil {
 		return nil, err
@@ -178,7 +179,7 @@ func (t *payWorkerNowTool) ExecuteWithResult(
 
 func (t *payWorkerNowTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -187,7 +188,7 @@ func (t *payWorkerNowTool) Execute(
 
 func (t *payWorkerNowTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {

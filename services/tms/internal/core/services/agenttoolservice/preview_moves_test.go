@@ -8,8 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,7 +18,7 @@ import (
 )
 
 type savingMoves struct {
-	serviceports.ShipmentMoveService
+	shipmentports.ShipmentMoveService
 
 	move  *shipment.ShipmentMove
 	guard writeGuard
@@ -27,7 +26,7 @@ type savingMoves struct {
 
 func (f *savingMoves) arrive(
 	move *shipment.ShipmentMove,
-	req *repositories.RecordStopActualRequest,
+	req *shipmentports.RecordStopActualRequest,
 ) error {
 	stop := findStop(move, req.StopID)
 	if stop == nil {
@@ -49,8 +48,8 @@ func (f *savingMoves) arrive(
 
 func (f *savingMoves) PreviewStopActual(
 	_ context.Context,
-	req *repositories.RecordStopActualRequest,
-) (*serviceports.StopActualPlan, error) {
+	req *shipmentports.RecordStopActualRequest,
+) (*shipmentports.StopActualPlan, error) {
 	before := new(shipment.ShipmentMove)
 	after := new(shipment.ShipmentMove)
 	if err := jsonutils.Convert(f.move, before); err != nil {
@@ -63,12 +62,12 @@ func (f *savingMoves) PreviewStopActual(
 		return nil, err
 	}
 
-	return &serviceports.StopActualPlan{Before: before, After: after}, nil
+	return &shipmentports.StopActualPlan{Before: before, After: after}, nil
 }
 
 func (f *savingMoves) RecordStopActual(
 	_ context.Context,
-	req *repositories.RecordStopActualRequest,
+	req *shipmentports.RecordStopActualRequest,
 ) (*shipment.ShipmentMove, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err

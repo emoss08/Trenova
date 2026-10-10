@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/bankreceiptbatch"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptbatchports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -26,13 +26,13 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.BankReceiptBatchRepository {
+func New(p Params) bankreceiptbatchports.BankReceiptBatchRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.bank-receipt-batch-repository")}
 }
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetBankReceiptBatchByIDRequest,
+	req bankreceiptbatchports.GetBankReceiptBatchByIDRequest,
 ) (*bankreceiptbatch.BankReceiptBatch, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*bankreceiptbatch.BankReceiptBatch, error) {
 		entity := new(bankreceiptbatch.BankReceiptBatch)
@@ -80,7 +80,7 @@ func (r *repository) Create(
 		}
 		return r.GetByID(
 			ctx,
-			repositories.GetBankReceiptBatchByIDRequest{
+			bankreceiptbatchports.GetBankReceiptBatchByIDRequest{
 				ID: entity.ID,
 				TenantInfo: pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
@@ -94,8 +94,8 @@ func (r *repository) Create(
 func (r *repository) DistinctSources(
 	ctx context.Context,
 	req *pagination.SelectQueryRequest,
-) (*pagination.ListResult[*repositories.BankReceiptBatchSourceOption], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*repositories.BankReceiptBatchSourceOption], error) {
+) (*pagination.ListResult[*bankreceiptbatchports.BankReceiptBatchSourceOption], error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*bankreceiptbatchports.BankReceiptBatchSourceOption], error) {
 		var sources []string
 		q := r.db.DBForContext(ctx).
 			NewSelect().
@@ -115,9 +115,9 @@ func (r *repository) DistinctSources(
 			return nil, fmt.Errorf("distinct sources: %w", err)
 		}
 
-		options := make([]*repositories.BankReceiptBatchSourceOption, len(sources))
+		options := make([]*bankreceiptbatchports.BankReceiptBatchSourceOption, len(sources))
 		for i, s := range sources {
-			options[i] = &repositories.BankReceiptBatchSourceOption{Value: s, Label: s}
+			options[i] = &bankreceiptbatchports.BankReceiptBatchSourceOption{Value: s, Label: s}
 		}
 
 		limit := req.Pagination.SafeLimit()
@@ -129,7 +129,7 @@ func (r *repository) DistinctSources(
 		}
 		end := min(offset+limit, total)
 
-		return &pagination.ListResult[*repositories.BankReceiptBatchSourceOption]{
+		return &pagination.ListResult[*bankreceiptbatchports.BankReceiptBatchSourceOption]{
 			Items: options[offset:end],
 			Total: total,
 		}, nil
@@ -168,7 +168,7 @@ func (r *repository) Update(
 		}
 		return r.GetByID(
 			ctx,
-			repositories.GetBankReceiptBatchByIDRequest{
+			bankreceiptbatchports.GetBankReceiptBatchByIDRequest{
 				ID: entity.ID,
 				TenantInfo: pagination.TenantInfo{
 					OrgID: entity.OrganizationID,

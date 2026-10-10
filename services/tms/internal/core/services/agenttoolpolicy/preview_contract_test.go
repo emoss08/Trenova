@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 
 func TestEveryActionToolPreviewsWhatItWouldDo(t *testing.T) {
@@ -15,7 +15,7 @@ func TestEveryActionToolPreviewsWhatItWouldDo(t *testing.T) {
 			continue
 		}
 
-		if _, previews := tool.(serviceports.ToolPreviewer); !previews {
+		if _, previews := tool.(agentports.ToolPreviewer); !previews {
 			t.Errorf(
 				"%s is an action tool without a previewer; a person would approve it blind",
 				tool.Name(),

@@ -8,11 +8,15 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/journalentry"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/journalposting"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -28,26 +32,26 @@ type Params struct {
 	fx.In
 
 	Logger           *zap.Logger
-	DB               ports.DBConnection
-	Repo             repositories.JournalReviewRepository
-	AccountingRepo   repositories.AccountingControlRepository
-	FiscalPeriodRepo repositories.FiscalPeriodRepository
-	AuditService     serviceports.AuditService
-	Realtime         serviceports.RealtimeService `optional:"true"`
+	DB               kernelports.DBConnection
+	Repo             journalentryports.JournalReviewRepository
+	AccountingRepo   tenantports.AccountingControlRepository
+	FiscalPeriodRepo fiscalperiodports.FiscalPeriodRepository
+	AuditService     auditports.AuditService
+	Realtime         agentports.RealtimeService `optional:"true"`
 }
 
 type Service struct {
 	l        *zap.Logger
-	db       ports.DBConnection
-	repo     repositories.JournalReviewRepository
-	controls repositories.AccountingControlRepository
-	periods  repositories.FiscalPeriodRepository
-	audit    serviceports.AuditService
-	realtime serviceports.RealtimeService
+	db       kernelports.DBConnection
+	repo     journalentryports.JournalReviewRepository
+	controls tenantports.AccountingControlRepository
+	periods  fiscalperiodports.FiscalPeriodRepository
+	audit    auditports.AuditService
+	realtime agentports.RealtimeService
 	now      func() int64
 }
 
-var _ serviceports.JournalReviewService = (*Service)(nil)
+var _ journalentryports.JournalReviewService = (*Service)(nil)
 
 func New(p Params) *Service { //nolint:gocritic // fx params are passed by value
 	return &Service{
@@ -65,41 +69,41 @@ func New(p Params) *Service { //nolint:gocritic // fx params are passed by value
 type reviewStep func(
 	ctx context.Context,
 	entry *journalentry.JournalEntry,
-	req *serviceports.JournalReviewRequest,
+	req *journalentryports.JournalReviewRequest,
 	actorID pulid.ID,
 	now int64,
 ) error
 
 func (s *Service) Approve(
 	ctx context.Context,
-	req *serviceports.JournalReviewRequest,
-	actor *serviceports.RequestActor,
-) (*serviceports.JournalReviewResult, error) {
+	req *journalentryports.JournalReviewRequest,
+	actor *permissionports.RequestActor,
+) (*journalentryports.JournalReviewResult, error) {
 	return s.review(ctx, req, actor, "Approved journal entry", s.approveEntry)
 }
 
 func (s *Service) Post(
 	ctx context.Context,
-	req *serviceports.JournalReviewRequest,
-	actor *serviceports.RequestActor,
-) (*serviceports.JournalReviewResult, error) {
+	req *journalentryports.JournalReviewRequest,
+	actor *permissionports.RequestActor,
+) (*journalentryports.JournalReviewResult, error) {
 	return s.review(ctx, req, actor, "Posted journal entry to the general ledger", s.postEntry)
 }
 
 func (s *Service) review(
 	ctx context.Context,
-	req *serviceports.JournalReviewRequest,
-	actor *serviceports.RequestActor,
+	req *journalentryports.JournalReviewRequest,
+	actor *permissionports.RequestActor,
 	comment string,
 	step reviewStep,
-) (*serviceports.JournalReviewResult, error) {
+) (*journalentryports.JournalReviewResult, error) {
 	entryIDs, err := validateRequest(req, actor)
 	if err != nil {
 		return nil, err
 	}
 
-	result := &serviceports.JournalReviewResult{
-		Outcomes: make([]*serviceports.JournalReviewOutcome, 0, len(entryIDs)),
+	result := &journalentryports.JournalReviewResult{
+		Outcomes: make([]*journalentryports.JournalReviewOutcome, 0, len(entryIDs)),
 	}
 	for _, entryID := range entryIDs {
 		outcome, previous, current, stepErr := s.reviewOne(ctx, req, entryID, actor.UserID, step)
@@ -119,15 +123,15 @@ func (s *Service) review(
 
 func (s *Service) reviewOne(
 	ctx context.Context,
-	req *serviceports.JournalReviewRequest,
+	req *journalentryports.JournalReviewRequest,
 	entryID pulid.ID,
 	actorID pulid.ID,
 	step reviewStep,
-) (outcome *serviceports.JournalReviewOutcome, previous, current *journalentry.JournalEntry, err error) {
-	outcome = &serviceports.JournalReviewOutcome{EntryID: entryID}
+) (outcome *journalentryports.JournalReviewOutcome, previous, current *journalentry.JournalEntry, err error) {
+	outcome = &journalentryports.JournalReviewOutcome{EntryID: entryID}
 
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		entry, lockErr := s.repo.LockEntry(txCtx, repositories.LockJournalEntryRequest{
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		entry, lockErr := s.repo.LockEntry(txCtx, journalentryports.LockJournalEntryRequest{
 			TenantInfo: req.TenantInfo,
 			EntryID:    entryID,
 		})
@@ -164,14 +168,14 @@ func (s *Service) reviewOne(
 func (s *Service) approveEntry(
 	ctx context.Context,
 	entry *journalentry.JournalEntry,
-	req *serviceports.JournalReviewRequest,
+	req *journalentryports.JournalReviewRequest,
 	actorID pulid.ID,
 	now int64,
 ) error {
 	if err := entry.CanApprove(); err != nil {
 		return err
 	}
-	if err := s.repo.ApproveEntry(ctx, &repositories.ApproveJournalEntryParams{
+	if err := s.repo.ApproveEntry(ctx, &journalentryports.ApproveJournalEntryParams{
 		TenantInfo:   req.TenantInfo,
 		EntryID:      entry.ID,
 		BatchID:      entry.BatchID,
@@ -193,7 +197,7 @@ func (s *Service) approveEntry(
 func (s *Service) postEntry(
 	ctx context.Context,
 	entry *journalentry.JournalEntry,
-	req *serviceports.JournalReviewRequest,
+	req *journalentryports.JournalReviewRequest,
 	actorID pulid.ID,
 	now int64,
 ) error {
@@ -220,7 +224,7 @@ func (s *Service) postEntry(
 		return err
 	}
 
-	if err = s.repo.PostEntry(ctx, &repositories.PostJournalEntryParams{
+	if err = s.repo.PostEntry(ctx, &journalentryports.PostJournalEntryParams{
 		TenantInfo:     req.TenantInfo,
 		EntryID:        entry.ID,
 		BatchID:        entry.BatchID,
@@ -246,13 +250,13 @@ func (s *Service) postEntry(
 	return nil
 }
 
-func postingLines(lines []*journalentry.JournalEntryLine) []repositories.JournalPostingLine {
-	out := make([]repositories.JournalPostingLine, 0, len(lines))
+func postingLines(lines []*journalentry.JournalEntryLine) []journalentryports.JournalPostingLine {
+	out := make([]journalentryports.JournalPostingLine, 0, len(lines))
 	for _, line := range lines {
 		if line == nil {
 			continue
 		}
-		out = append(out, repositories.JournalPostingLine{
+		out = append(out, journalentryports.JournalPostingLine{
 			ID:           line.ID,
 			GLAccountID:  line.GLAccountID,
 			LineNumber:   line.LineNumber,
@@ -268,8 +272,8 @@ func postingLines(lines []*journalentry.JournalEntryLine) []repositories.Journal
 }
 
 func validateRequest(
-	req *serviceports.JournalReviewRequest,
-	actor *serviceports.RequestActor,
+	req *journalentryports.JournalReviewRequest,
+	actor *permissionports.RequestActor,
 ) ([]pulid.ID, error) {
 	if actor == nil || actor.UserID.IsNil() {
 		return nil, errortypes.NewAuthorizationError(
@@ -284,7 +288,7 @@ func validateRequest(
 		)
 	}
 
-	limit := min(len(req.EntryIDs), serviceports.MaxJournalReviewEntries+1)
+	limit := min(len(req.EntryIDs), journalentryports.MaxJournalReviewEntries+1)
 	entryIDs := make([]pulid.ID, 0, limit)
 	seen := make(map[pulid.ID]struct{}, limit)
 	for _, id := range req.EntryIDs {
@@ -296,7 +300,7 @@ func validateRequest(
 		}
 		seen[id] = struct{}{}
 		entryIDs = append(entryIDs, id)
-		if len(entryIDs) > serviceports.MaxJournalReviewEntries {
+		if len(entryIDs) > journalentryports.MaxJournalReviewEntries {
 			break
 		}
 	}
@@ -307,12 +311,12 @@ func validateRequest(
 			errortypes.ErrRequired,
 			"Choose at least one journal entry",
 		)
-	case len(entryIDs) > serviceports.MaxJournalReviewEntries:
+	case len(entryIDs) > journalentryports.MaxJournalReviewEntries:
 		return nil, errortypes.NewValidationError(
 			"entryIds",
 			errortypes.ErrInvalid,
 			"Choose at most {0} journal entries at a time",
-			serviceports.MaxJournalReviewEntries,
+			journalentryports.MaxJournalReviewEntries,
 		)
 	}
 	return entryIDs, nil
@@ -369,7 +373,7 @@ func (s *Service) record(
 		return
 	}
 
-	params := &serviceports.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceJournalEntry,
 		ResourceID:     current.ID.String(),
 		Operation:      permission.OpApprove,
@@ -406,13 +410,13 @@ func auditState(entry *journalentry.JournalEntry) map[string]any {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *serviceports.ListJournalReviewRequest,
+	req *journalentryports.ListJournalReviewRequest,
 ) (*pagination.CursorListResult[*journalentry.JournalEntry], error) {
 	if req.Filter == nil {
 		req.Filter = &pagination.QueryOptions{}
 	}
 	req.Filter.TenantInfo = req.TenantInfo
-	return s.repo.ListConnection(ctx, &repositories.ListJournalReviewRequest{
+	return s.repo.ListConnection(ctx, &journalentryports.ListJournalReviewQuery{
 		Filter:   req.Filter,
 		Cursor:   req.Cursor,
 		Statuses: req.Statuses,
@@ -422,12 +426,12 @@ func (s *Service) List(
 func (s *Service) Summary(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*serviceports.JournalReviewSummary, error) {
+) (*journalentryports.JournalReviewSummary, error) {
 	counts, err := s.repo.Summarize(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
-	summary := &serviceports.JournalReviewSummary{
+	summary := &journalentryports.JournalReviewSummary{
 		AwaitingApproval:     counts.AwaitingApproval,
 		ReadyToPost:          counts.ReadyToPost,
 		OldestAccountingDate: counts.OldestAccountingDate,

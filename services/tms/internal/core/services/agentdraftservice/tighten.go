@@ -7,7 +7,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -31,7 +31,7 @@ func parseTightenReply(text string) (string, error) {
 
 func checkTightened(
 	original, rewritten string,
-) (*serviceports.TightenedAgentInstructions, error) {
+) (*agentports.TightenedAgentInstructions, error) {
 	tightened := strings.TrimSpace(rewritten)
 	if tightened == "" {
 		return nil, errortypes.NewBusinessError(
@@ -61,7 +61,7 @@ func checkTightened(
 
 	original = strings.TrimSpace(original)
 
-	return &serviceports.TightenedAgentInstructions{
+	return &agentports.TightenedAgentInstructions{
 		Instructions: tightened,
 		Changed:      tightened != original,
 	}, nil

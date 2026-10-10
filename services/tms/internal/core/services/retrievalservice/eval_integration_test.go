@@ -16,8 +16,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentevalgate"
 	"github.com/emoss08/trenova/internal/core/services/agentmemoryservice"
 	"github.com/emoss08/trenova/internal/core/services/retrievalservice"
@@ -26,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/airetrievalrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/conversationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/retrievalsourcerepository"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/testutil/retrievaltest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -56,10 +55,10 @@ type evalHarness struct {
 	ctx      context.Context
 	db       *bun.DB
 	conn     *postgres.Connection
-	repo     repositories.AIRetrievalRepository
-	sources  repositories.RetrievalSourceRepository
-	memories repositories.AgentMemoryRepository
-	threads  repositories.ThreadOwnerRepository
+	repo     agentports.AIRetrievalRepository
+	sources  agentports.RetrievalSourceRepository
+	memories agentports.AgentMemoryRepository
+	threads  agentports.ThreadOwnerRepository
 	registry *permission.Registry
 	data     *seedtest.TestData
 	tenant   pagination.TenantInfo
@@ -104,7 +103,7 @@ func newEvalHarness(t *testing.T) (*evalHarness, evalSuites) {
 	return h, evalSuites{documents: documents, inbox: inbox, memories: memories}
 }
 
-func (h *evalHarness) searcher(vectorizer serviceports.QueryVectorizer) *retrievalservice.Searcher {
+func (h *evalHarness) searcher(vectorizer agentports.QueryVectorizer) *retrievalservice.Searcher {
 	return retrievalservice.NewSearcher(retrievalservice.SearcherParams{
 		Logger:     zap.NewNop(),
 		Repo:       h.repo,
@@ -115,8 +114,8 @@ func (h *evalHarness) searcher(vectorizer serviceports.QueryVectorizer) *retriev
 }
 
 func (h *evalHarness) memoryService(
-	vectors serviceports.MemoryVectorSearcher,
-) serviceports.AgentMemoryService {
+	vectors agentports.MemoryVectorSearcher,
+) agentports.AgentMemoryService {
 	return agentmemoryservice.New(agentmemoryservice.Params{
 		Logger:  zap.NewNop(),
 		Repo:    h.memories,
@@ -230,11 +229,11 @@ type retrievers struct {
 
 func (h *evalHarness) retrievers(
 	searcher *retrievalservice.Searcher,
-	memories serviceports.AgentMemoryService,
+	memories agentports.AgentMemoryService,
 	corpora seeded,
 ) retrievers {
-	request := func(query string) *serviceports.RetrievalSearchRequest {
-		return &serviceports.RetrievalSearchRequest{
+	request := func(query string) *agentports.RetrievalSearchRequest {
+		return &agentports.RetrievalSearchRequest{
 			TenantInfo: h.tenant,
 			Query:      query,
 			Limit:      evalLimit,
@@ -266,7 +265,7 @@ func (h *evalHarness) retrievers(
 			return corpora.inbox.KeysOf(ids), nil
 		},
 		memories: func(query string) ([]string, error) {
-			recalled, err := memories.Recall(h.ctx, serviceports.RecallAgentMemoriesRequest{
+			recalled, err := memories.Recall(h.ctx, agentports.RecallAgentMemoriesRequest{
 				TenantInfo: h.tenant,
 				Query:      query,
 				Limit:      evalLimit,
@@ -469,7 +468,7 @@ func TestRetrievalNeverLeaks(t *testing.T) {
 	})
 
 	searchers := map[string]*retrievalservice.Searcher{"keyword": h.searcher(nil)}
-	memoryServices := map[string]serviceports.AgentMemoryService{"keyword": h.memoryService(nil)}
+	memoryServices := map[string]agentports.AgentMemoryService{"keyword": h.memoryService(nil)}
 	if fixture, recorded := loadFixture(t); recorded && h.vectorReady(t) {
 		for _, tenant := range []pagination.TenantInfo{h.tenant, otherTenant} {
 			h.activateModel(t, tenant)
@@ -525,7 +524,7 @@ func TestRetrievalNeverLeaks(t *testing.T) {
 				for _, query := range allQueries(suites) {
 					documents, err := searcher.SearchDocuments(
 						h.ctx,
-						&serviceports.RetrievalSearchRequest{
+						&agentports.RetrievalSearchRequest{
 							TenantInfo: h.tenant, Query: query, Limit: 50, Access: caller.access,
 						},
 					)
@@ -538,7 +537,7 @@ func TestRetrievalNeverLeaks(t *testing.T) {
 					}
 
 					messages, err := searcher.SearchInboundMessages(h.ctx,
-						&serviceports.RetrievalSearchRequest{
+						&agentports.RetrievalSearchRequest{
 							TenantInfo: h.tenant, Query: query, Limit: 50, Access: caller.access,
 						})
 					require.NoError(t, err)
@@ -549,7 +548,7 @@ func TestRetrievalNeverLeaks(t *testing.T) {
 					}
 
 					recalled, err := memoryServices[name].Recall(h.ctx,
-						serviceports.RecallAgentMemoriesRequest{
+						agentports.RecallAgentMemoriesRequest{
 							TenantInfo: h.tenant, Query: query, Limit: agent.MaxMemoryRecallLimit,
 						})
 					require.NoError(t, err)
@@ -565,7 +564,7 @@ func TestRetrievalNeverLeaks(t *testing.T) {
 
 				quoted, err := searcher.SearchInboundMessages(
 					h.ctx,
-					&serviceports.RetrievalSearchRequest{
+					&agentports.RetrievalSearchRequest{
 						TenantInfo: h.tenant, Query: "lumber order", Limit: 50, Access: caller.access,
 					},
 				)
@@ -607,18 +606,18 @@ func (h *evalHarness) plantVectors(
 			chunks = retrievalservice.ChunkMemory(retrievaltest.MemoryFor(item))
 		}
 
-		embedded := make([]repositories.EmbeddingChunk, 0, len(chunks))
+		embedded := make([]agentports.EmbeddingChunk, 0, len(chunks))
 		for _, chunk := range chunks {
 			vector, ok := fixture.Document(chunk.Hash)
 			require.True(t, ok, item.Key)
-			embedded = append(embedded, repositories.EmbeddingChunk{
+			embedded = append(embedded, agentports.EmbeddingChunk{
 				ChunkIndex:  chunk.Index,
 				ContentHash: chunk.Hash,
 				Vector:      vector,
 			})
 		}
-		_, err := h.repo.ReplaceChunks(h.ctx, &repositories.ReplaceEmbeddingChunksRequest{
-			Source: repositories.AIRetrievalSourceRef{
+		_, err := h.repo.ReplaceChunks(h.ctx, &agentports.ReplaceEmbeddingChunksRequest{
+			Source: agentports.AIRetrievalSourceRef{
 				TenantInfo: corpus.Tenant,
 				SourceType: sourceType,
 				SourceID:   corpus.IDs[item.Key],

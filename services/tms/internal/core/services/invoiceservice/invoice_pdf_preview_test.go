@@ -22,7 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
-	portstorage "github.com/emoss08/trenova/internal/core/ports/storage"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	storagetest "github.com/emoss08/trenova/shared/testutil/storage"
 	"github.com/shopspring/decimal"
@@ -184,9 +184,9 @@ func previewInvoicePDFStorage(t *testing.T) *storagetest.MockStorageClient {
 
 	logo := previewInvoicePDFLogo(t)
 	storageClient := storagetest.NewMockStorageClient()
-	storageClient.DownloadFunc = func(_ context.Context, key string) (*portstorage.DownloadResult, error) {
+	storageClient.DownloadFunc = func(_ context.Context, key string) (*kernelports.DownloadResult, error) {
 		require.Equal(t, "logos/invoice-preview.png", key)
-		return &portstorage.DownloadResult{
+		return &kernelports.DownloadResult{
 			Body:        io.NopCloser(bytes.NewReader(logo)),
 			ContentType: "image/png",
 			Size:        int64(len(logo)),

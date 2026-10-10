@@ -10,10 +10,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/ifta"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateimportports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
@@ -119,8 +122,8 @@ func cursorOf(opts *pagination.QueryOptions) pagination.CursorInfo {
 }
 
 func newListFuelPurchasesTool(
-	repo repositories.FuelPurchaseRepository,
-) serviceports.AgentQueryTool {
+	repo fuelpurchaseports.FuelPurchaseRepository,
+) agentports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "list_fuel_purchases",
 		entityPlural: "fuel purchases",
@@ -152,7 +155,7 @@ func newListFuelPurchasesTool(
 			{Name: fieldCreatedAt, Kind: filterDate, Sortable: true},
 		},
 		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
-			result, err := repo.ListPurchases(ctx, &repositories.ListFuelPurchasesRequest{
+			result, err := repo.ListPurchases(ctx, &fuelpurchaseports.ListFuelPurchasesRequest{
 				Filter:              opts,
 				Cursor:              cursorOf(opts),
 				IncludeTractor:      true,
@@ -182,7 +185,7 @@ type fuelCardRow struct {
 	ExpiresAt         optionalDate `json:"expiresAt"`
 }
 
-func newListFuelCardsTool(repo repositories.FuelPurchaseRepository) serviceports.AgentQueryTool {
+func newListFuelCardsTool(repo fuelpurchaseports.FuelPurchaseRepository) agentports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "list_fuel_cards",
 		entityPlural: "fuel cards",
@@ -209,7 +212,7 @@ func newListFuelCardsTool(repo repositories.FuelPurchaseRepository) serviceports
 			{Name: fieldCreatedAt, Kind: filterDate, Sortable: true},
 		},
 		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
-			result, err := repo.ListCards(ctx, &repositories.ListFuelCardsRequest{
+			result, err := repo.ListCards(ctx, &fuelpurchaseports.ListFuelCardsRequest{
 				Filter: opts,
 				Cursor: cursorOf(opts),
 			})
@@ -286,8 +289,8 @@ func fuelImportRowFrom(item *fuelpurchase.ImportBatch) fuelImportRow {
 }
 
 func newListFuelPurchaseImportsTool(
-	repo repositories.FuelPurchaseRepository,
-) serviceports.AgentQueryTool {
+	repo fuelpurchaseports.FuelPurchaseRepository,
+) agentports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "list_fuel_purchase_imports",
 		entityPlural: "fuel purchase imports",
@@ -315,7 +318,7 @@ func newListFuelPurchaseImportsTool(
 			{Name: fieldCreatedAt, Kind: filterDate, Sortable: true},
 		},
 		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
-			result, err := repo.ListImportBatches(ctx, &repositories.ListImportBatchesRequest{
+			result, err := repo.ListImportBatches(ctx, &fuelpurchaseports.ListImportBatchesRequest{
 				Filter: opts,
 				Cursor: cursorOf(opts),
 			})
@@ -339,12 +342,12 @@ type fuelIndexPriceRow struct {
 }
 
 type listFuelIndexPricesTool struct {
-	prices repositories.FuelIndexPriceRepository
+	prices fuelsurchargeports.FuelIndexPriceRepository
 }
 
 func newListFuelIndexPricesTool(
-	prices repositories.FuelIndexPriceRepository,
-) serviceports.AgentQueryTool {
+	prices fuelsurchargeports.FuelIndexPriceRepository,
+) agentports.AgentQueryTool {
 	return &listFuelIndexPricesTool{prices: prices}
 }
 
@@ -369,7 +372,7 @@ func (t *listFuelIndexPricesTool) ParamSchema() map[string]any {
 	}, paramFuelIndexID)
 }
 
-func (t *listFuelIndexPricesTool) Policy() serviceports.ToolPolicy {
+func (t *listFuelIndexPricesTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceFuelSurchargeProgram})
 }
 
@@ -387,7 +390,7 @@ func optionalPriceDay(params map[string]any, key string) (string, error) {
 
 func (t *listFuelIndexPricesTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -406,7 +409,7 @@ func (t *listFuelIndexPricesTool) Query(
 		return nil, err
 	}
 
-	prices, err := t.prices.ListByIndex(ctx, &repositories.ListFuelIndexPricesRequest{
+	prices, err := t.prices.ListByIndex(ctx, &fuelsurchargeports.ListFuelIndexPricesRequest{
 		FuelIndexID: indexID,
 		TenantInfo:  tenantOf(params),
 		From:        from,
@@ -443,10 +446,10 @@ type iftaJurisdictionRow struct {
 }
 
 type listIFTAJurisdictionsTool struct {
-	repo repositories.IFTARepository
+	repo iftaports.IFTARepository
 }
 
-func newListIFTAJurisdictionsTool(repo repositories.IFTARepository) serviceports.AgentQueryTool {
+func newListIFTAJurisdictionsTool(repo iftaports.IFTARepository) agentports.AgentQueryTool {
 	return &listIFTAJurisdictionsTool{repo: repo}
 }
 
@@ -466,19 +469,19 @@ func (t *listIFTAJurisdictionsTool) ParamSchema() map[string]any {
 	})
 }
 
-func (t *listIFTAJurisdictionsTool) Policy() serviceports.ToolPolicy {
+func (t *listIFTAJurisdictionsTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceFuelPurchase})
 }
 
 func (t *listIFTAJurisdictionsTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
 	}
 
-	jurisdictions, err := t.repo.ListJurisdictions(ctx, &repositories.ListJurisdictionsRequest{
+	jurisdictions, err := t.repo.ListJurisdictions(ctx, &iftaports.ListJurisdictionsRequest{
 		MembersOnly: optionalBool(params.Params, "membersOnly"),
 		CountryCode: strings.ToUpper(
 			strings.TrimSpace(optionalString(params.Params, "countryCode")),
@@ -519,7 +522,7 @@ type iftaReturnRow struct {
 	FiledAt          optionalDate `json:"filedAt"`
 }
 
-func newListIFTAReturnsTool(repo repositories.IFTARepository) serviceports.AgentQueryTool {
+func newListIFTAReturnsTool(repo iftaports.IFTARepository) agentports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "list_ifta_returns",
 		entityPlural: "IFTA returns",
@@ -540,7 +543,7 @@ func newListIFTAReturnsTool(repo repositories.IFTARepository) serviceports.Agent
 			{Name: fieldCreatedAt, Kind: filterDate, Sortable: true},
 		},
 		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
-			result, err := repo.ListReturns(ctx, &repositories.ListReturnsRequest{
+			result, err := repo.ListReturns(ctx, &iftaports.ListReturnsRequest{
 				Filter: opts,
 				Cursor: cursorOf(opts),
 			})
@@ -585,7 +588,7 @@ type iftaMileageRow struct {
 	Notes          string       `json:"notes,omitempty"`
 }
 
-func newListIFTAMileageEntriesTool(repo repositories.IFTARepository) serviceports.AgentQueryTool {
+func newListIFTAMileageEntriesTool(repo iftaports.IFTARepository) agentports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "list_ifta_mileage_entries",
 		entityPlural: "IFTA mileage entries",
@@ -609,7 +612,7 @@ func newListIFTAMileageEntriesTool(repo repositories.IFTARepository) serviceport
 			{Name: "loaded", Kind: filterBool},
 		},
 		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
-			result, err := repo.ListMileageEntries(ctx, &repositories.ListMileageEntriesRequest{
+			result, err := repo.ListMileageEntries(ctx, &iftaports.ListMileageEntriesRequest{
 				Filter:              opts,
 				Cursor:              cursorOf(opts),
 				IncludeTractor:      true,
@@ -665,10 +668,10 @@ type rateImportRow struct {
 }
 
 type listRateImportsTool struct {
-	imports repositories.RateImportRepository
+	imports rateimportports.RateImportRepository
 }
 
-func newListRateImportsTool(imports repositories.RateImportRepository) serviceports.AgentQueryTool {
+func newListRateImportsTool(imports rateimportports.RateImportRepository) agentports.AgentQueryTool {
 	return &listRateImportsTool{imports: imports}
 }
 
@@ -693,19 +696,19 @@ func (t *listRateImportsTool) ParamSchema() map[string]any {
 	})
 }
 
-func (t *listRateImportsTool) Policy() serviceports.ToolPolicy {
+func (t *listRateImportsTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceRateAgreement})
 }
 
 func (t *listRateImportsTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
 	}
 
-	req := &repositories.ListRateImportBatchesRequest{
+	req := &rateimportports.ListRateImportBatchesRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenantOf(params),
 			Pagination: pagination.Info{Limit: min(
@@ -777,7 +780,7 @@ type listReportSchedulesTool struct {
 	schedules reportScheduleReader
 }
 
-func provideListReportSchedulesTool(schedules *reporting.Service) serviceports.AgentQueryTool {
+func provideListReportSchedulesTool(schedules *reporting.Service) agentports.AgentQueryTool {
 	return &listReportSchedulesTool{schedules: schedules}
 }
 
@@ -804,13 +807,13 @@ func (t *listReportSchedulesTool) ParamSchema() map[string]any {
 	})
 }
 
-func (t *listReportSchedulesTool) Policy() serviceports.ToolPolicy {
+func (t *listReportSchedulesTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceReport})
 }
 
 func (t *listReportSchedulesTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/stretchr/testify/require"
 )
 
@@ -118,8 +118,8 @@ func TestPostmarkSenderClassifiesFailures(t *testing.T) {
 			})
 
 			require.Error(t, err)
-			require.Equal(t, tt.retryable, errors.Is(err, serviceports.ErrRetryableEmailSend))
-			require.Equal(t, !tt.retryable, errors.Is(err, serviceports.ErrNonRetryableEmailSend))
+			require.Equal(t, tt.retryable, errors.Is(err, emailports.ErrRetryableEmailSend))
+			require.Equal(t, !tt.retryable, errors.Is(err, emailports.ErrNonRetryableEmailSend))
 			require.Contains(t, err.Error(), "failure")
 		})
 	}

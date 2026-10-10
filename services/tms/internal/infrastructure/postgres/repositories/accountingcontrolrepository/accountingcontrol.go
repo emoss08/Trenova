@@ -4,9 +4,9 @@ import (
 	"context"
 
 	accountingcontrol "github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -28,7 +28,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.AccountingControlRepository {
+func New(p Params) tenantports.AccountingControlRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.accountingcontrol-repository"),

@@ -7,7 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/core/domain/hazmatsegregationrule"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/hazmatsegregationruleports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -15,9 +17,9 @@ import (
 )
 
 func createHazmatSegregationRule(
-	controlRepo repositories.ShipmentControlRepository,
-	commodityRepo repositories.CommodityRepository,
-	hazmatRuleRepo repositories.HazmatSegregationRuleRepository,
+	controlRepo tenantports.ShipmentControlRepository,
+	commodityRepo commodityports.CommodityRepository,
+	hazmatRuleRepo hazmatsegregationruleports.HazmatSegregationRuleRepository,
 ) validationframework.TenantedRule[*shipment.Shipment] {
 	return validationframework.NewTenantedRule[*shipment.Shipment]("hazmat_segregation").
 		OnBoth().
@@ -29,7 +31,7 @@ func createHazmatSegregationRule(
 			_ *validationframework.TenantedValidationContext,
 			multiErr *errortypes.MultiError,
 		) error {
-			control, err := controlRepo.Get(ctx, repositories.GetShipmentControlRequest{
+			control, err := controlRepo.Get(ctx, tenantports.GetShipmentControlRequest{
 				TenantInfo: pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
 					BuID:  entity.BusinessUnitID,
@@ -53,7 +55,7 @@ func createHazmatSegregationRule(
 				return nil
 			}
 
-			commodities, err := commodityRepo.GetByIDs(ctx, repositories.GetCommoditiesByIDsRequest{
+			commodities, err := commodityRepo.GetByIDs(ctx, commodityports.GetCommoditiesByIDsRequest{
 				TenantInfo: pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
 					BuID:  entity.BusinessUnitID,

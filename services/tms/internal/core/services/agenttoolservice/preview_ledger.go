@@ -11,9 +11,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/core/domain/manualjournal"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalreversalports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/manualjournalports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -72,12 +74,12 @@ type reversedEntryView struct {
 type manualJournalPlan struct {
 	before   *manualjournal.Request
 	after    *manualjournal.Request
-	journal  *serviceports.JournalPreview
+	journal  *kernelports.JournalPreview
 	accounts map[pulid.ID]string
 }
 
 type reversalPlan struct {
-	change   *serviceports.JournalReversalChange
+	change   *journalreversalports.JournalReversalChange
 	accounts map[pulid.ID]string
 }
 
@@ -114,16 +116,16 @@ func reversalViewOf(entity *journalreversal.Reversal) *reversalView {
 	}
 }
 
-func journalLinesOf(entity *manualjournal.Request) []serviceports.JournalLinePreview {
+func journalLinesOf(entity *manualjournal.Request) []kernelports.JournalLinePreview {
 	if entity == nil {
 		return nil
 	}
-	lines := make([]serviceports.JournalLinePreview, 0, len(entity.Lines))
+	lines := make([]kernelports.JournalLinePreview, 0, len(entity.Lines))
 	for _, line := range entity.Lines {
 		if line == nil {
 			continue
 		}
-		lines = append(lines, serviceports.JournalLinePreview{
+		lines = append(lines, kernelports.JournalLinePreview{
 			GLAccountID: line.GLAccountID,
 			Description: line.Description,
 			DebitMinor:  line.DebitAmount,
@@ -138,7 +140,7 @@ func accountLabels(
 	ctx context.Context,
 	accounts ledgerAccounts,
 	tenant pagination.TenantInfo,
-	sets ...[]serviceports.JournalLinePreview,
+	sets ...[]kernelports.JournalLinePreview,
 ) (map[pulid.ID]string, error) {
 	seen := make(map[pulid.ID]struct{})
 	ids := make([]pulid.ID, 0)
@@ -160,7 +162,7 @@ func accountLabels(
 		return labels, nil
 	}
 
-	found, err := accounts.GetByIDs(ctx, repositories.GetGLAccountsByIDsRequest{
+	found, err := accounts.GetByIDs(ctx, glaccountports.GetGLAccountsByIDsRequest{
 		TenantInfo:   tenant,
 		GLAccountIDs: ids,
 	})
@@ -176,7 +178,7 @@ func accountLabels(
 	return labels, nil
 }
 
-func journalLineLabel(labels map[pulid.ID]string, line *serviceports.JournalLinePreview) string {
+func journalLineLabel(labels map[pulid.ID]string, line *kernelports.JournalLinePreview) string {
 	account, ok := labels[line.GLAccountID]
 	if !ok {
 		account = line.GLAccountID.String()
@@ -189,14 +191,14 @@ func journalLineLabel(labels map[pulid.ID]string, line *serviceports.JournalLine
 	return account + " (" + side + ")"
 }
 
-func signedMinor(line *serviceports.JournalLinePreview) decimal.Decimal {
+func signedMinor(line *kernelports.JournalLinePreview) decimal.Decimal {
 	return money.DecimalFromMinor(line.DebitMinor - line.CreditMinor)
 }
 
 func journalMoney(
 	currency string,
 	labels map[pulid.ID]string,
-	before, after []serviceports.JournalLinePreview,
+	before, after []kernelports.JournalLinePreview,
 ) *agent.MoneyPreview {
 	order := make([]string, 0, len(before)+len(after))
 	byLabel := make(map[string]*agent.MoneyLine, len(before)+len(after))
@@ -264,7 +266,7 @@ func balanceSentence(entity *manualjournal.Request) string {
 }
 
 func bookedEntryChange(
-	journal *serviceports.JournalPreview,
+	journal *kernelports.JournalPreview,
 	currency string,
 	label string,
 	labels map[pulid.ID]string,
@@ -305,9 +307,9 @@ func planManualJournalChange(
 	ctx context.Context,
 	accounts ledgerAccounts,
 	tenant pagination.TenantInfo,
-	change *serviceports.ManualJournalChange,
+	change *manualjournalports.ManualJournalChange,
 ) (*manualJournalPlan, error) {
-	sets := [][]serviceports.JournalLinePreview{
+	sets := [][]kernelports.JournalLinePreview{
 		journalLinesOf(change.Before),
 		journalLinesOf(change.After),
 	}
@@ -328,7 +330,7 @@ func planManualJournalChange(
 }
 
 func renderManualJournalDraft(
-	_ *serviceports.CreateManualJournalRequest,
+	_ *manualjournalports.CreateManualJournalRequest,
 	plan *manualJournalPlan,
 ) (*agent.ToolPreview, error) {
 	planned := plan.after
@@ -397,7 +399,7 @@ func renderManualJournalRevision(
 }
 
 func renderManualJournalSubmit(
-	_ *serviceports.GetManualJournalRequest,
+	_ *manualjournalports.GetManualJournalRequest,
 	plan *manualJournalPlan,
 ) (*agent.ToolPreview, error) {
 	change, err := manualJournalChangeOf(plan, false)
@@ -421,7 +423,7 @@ func renderManualJournalSubmit(
 }
 
 func renderManualJournalCancel(
-	_ *serviceports.CancelManualJournalRequest,
+	_ *manualjournalports.CancelManualJournalRequest,
 	plan *manualJournalPlan,
 ) (*agent.ToolPreview, error) {
 	change, err := manualJournalChangeOf(plan, false)
@@ -437,7 +439,7 @@ func renderManualJournalCancel(
 }
 
 func renderManualJournalPost(
-	_ *serviceports.GetManualJournalRequest,
+	_ *manualjournalports.GetManualJournalRequest,
 	plan *manualJournalPlan,
 ) (*agent.ToolPreview, error) {
 	change, err := manualJournalChangeOf(plan, false)
@@ -475,7 +477,7 @@ func planReversal(
 	ctx context.Context,
 	accounts ledgerAccounts,
 	tenant pagination.TenantInfo,
-	change *serviceports.JournalReversalChange,
+	change *journalreversalports.JournalReversalChange,
 ) (*reversalPlan, error) {
 	plan := &reversalPlan{change: change, accounts: map[pulid.ID]string{}}
 	if change.Journal == nil {
@@ -503,7 +505,7 @@ func reversalRecord(entity *journalreversal.Reversal, label string) toolpreview.
 	return rec
 }
 
-func originalEntryNumber(change *serviceports.JournalReversalChange) string {
+func originalEntryNumber(change *journalreversalports.JournalReversalChange) string {
 	if change.OriginalEntry == nil {
 		return "the original entry"
 	}
@@ -512,7 +514,7 @@ func originalEntryNumber(change *serviceports.JournalReversalChange) string {
 }
 
 func renderReversalRequest(
-	_ *serviceports.CreateJournalReversalRequest,
+	_ *journalreversalports.CreateJournalReversalRequest,
 	plan *reversalPlan,
 ) (*agent.ToolPreview, error) {
 	after := plan.change.After
@@ -547,7 +549,7 @@ func renderReversalRequest(
 }
 
 func renderReversalCancel(
-	_ *serviceports.CancelJournalReversalRequest,
+	_ *journalreversalports.CancelJournalReversalRequest,
 	plan *reversalPlan,
 ) (*agent.ToolPreview, error) {
 	before := plan.change.Before
@@ -568,7 +570,7 @@ func renderReversalCancel(
 }
 
 func renderReversalPost(
-	_ *serviceports.GetJournalReversalRequest,
+	_ *journalreversalports.GetJournalReversalRequest,
 	plan *reversalPlan,
 ) (*agent.ToolPreview, error) {
 	before := plan.change.Before

@@ -1,13 +1,16 @@
 package billingqueueservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/agenteventstest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -41,10 +44,10 @@ func statusChangeFixture(
 		item.AssignedBillerID = &billerID
 	}
 
-	repo := mocks.NewMockBillingQueueRepository(t)
+	repo := billingqueueportsmock.NewMockBillingQueueRepository(t)
 	repo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(context.Context, *repositories.GetBillingQueueItemByIDRequest) (*billingqueue.BillingQueueItem, error) {
+		RunAndReturn(func(context.Context, *billingqueueports.GetBillingQueueItemByIDRequest) (*billingqueue.BillingQueueItem, error) {
 			clone := *item
 			return &clone, nil
 		}).
@@ -55,9 +58,9 @@ func statusChangeFixture(
 			return entity, nil
 		}).
 		Once()
-	audit := mocks.NewMockAuditService(t)
+	audit := auditportsmock.NewMockAuditService(t)
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
-	realtime := mocks.NewMockRealtimeService(t)
+	realtime := agentportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Maybe()
 
 	recorder := &agenteventstest.Recorder{}
@@ -74,9 +77,9 @@ func statusChangeFixture(
 	return svc, recorder, item, tenantInfo
 }
 
-func userActor(tenantInfo pagination.TenantInfo) *services.RequestActor {
-	return &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeUser,
+func userActor(tenantInfo pagination.TenantInfo) *permissionports.RequestActor {
+	return &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    tenantInfo.UserID,
 		UserID:         tenantInfo.UserID,
 		OrganizationID: tenantInfo.OrgID,
@@ -90,7 +93,7 @@ func TestUpdateStatus_PublishesExceptionEvent(t *testing.T) {
 	svc, recorder, item, tenantInfo := statusChangeFixture(t, billingqueue.StatusInReview)
 
 	reason := billingqueue.ExceptionMissingDocumentation
-	_, err := svc.UpdateStatus(t.Context(), &services.UpdateBillingQueueStatusRequest{
+	_, err := svc.UpdateStatus(t.Context(), &billingqueueports.UpdateBillingQueueStatusRequest{
 		ItemID:              item.ID,
 		NewStatus:           billingqueue.StatusException,
 		ExceptionReasonCode: &reason,
@@ -112,7 +115,7 @@ func TestUpdateStatus_PublishesOnHoldEvent(t *testing.T) {
 
 	svc, recorder, item, tenantInfo := statusChangeFixture(t, billingqueue.StatusReadyForReview)
 
-	_, err := svc.UpdateStatus(t.Context(), &services.UpdateBillingQueueStatusRequest{
+	_, err := svc.UpdateStatus(t.Context(), &billingqueueports.UpdateBillingQueueStatusRequest{
 		ItemID:     item.ID,
 		NewStatus:  billingqueue.StatusOnHold,
 		TenantInfo: tenantInfo,
@@ -129,7 +132,7 @@ func TestUpdateStatus_DoesNotPublishForOtherTransitions(t *testing.T) {
 
 	svc, recorder, item, tenantInfo := statusChangeFixture(t, billingqueue.StatusOnHold)
 
-	_, err := svc.UpdateStatus(t.Context(), &services.UpdateBillingQueueStatusRequest{
+	_, err := svc.UpdateStatus(t.Context(), &billingqueueports.UpdateBillingQueueStatusRequest{
 		ItemID:     item.ID,
 		NewStatus:  billingqueue.StatusReadyForReview,
 		TenantInfo: tenantInfo,

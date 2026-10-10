@@ -2,7 +2,7 @@ package dispatchconsolerepository
 
 import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -130,7 +130,7 @@ func searchPattern(term string) string {
 
 func applyMoveFilters(
 	sq *bun.SelectQuery,
-	filter *repositories.DispatchBoardFilter,
+	filter *shipmentports.DispatchBoardFilter,
 ) *bun.SelectQuery {
 	moveCols := buncolgen.ShipmentMoveColumns
 	shipCols := buncolgen.ShipmentColumns
@@ -180,7 +180,7 @@ func applyMoveFilters(
 
 func applyDriverFilters(
 	sq *bun.SelectQuery,
-	filter *repositories.DispatchBoardFilter,
+	filter *shipmentports.DispatchBoardFilter,
 ) *bun.SelectQuery {
 	cols := buncolgen.WorkerColumns
 

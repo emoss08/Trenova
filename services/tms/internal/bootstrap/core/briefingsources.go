@@ -1,9 +1,14 @@
 package core
 
 import (
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/briefingservice/briefingfacts"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"go.uber.org/fx"
 )
 
@@ -14,13 +19,13 @@ import (
 type BriefingSourceParams struct {
 	fx.In
 
-	Watchtower  repositories.WatchtowerRepository
-	Decisions   services.AgentDecisionQueueService
-	Board       repositories.DispatchConsoleRepository
-	Credentials repositories.WorkerCredentialRepository
-	Billing     repositories.BillingQueueRepository
-	Payments    repositories.CustomerPaymentRepository
-	Detention   repositories.DetentionOccurrenceRepository
+	Watchtower  watchtowerports.WatchtowerRepository
+	Decisions   agentports.AgentDecisionQueueService
+	Board       shipmentports.DispatchConsoleRepository
+	Credentials workerports.WorkerCredentialRepository
+	Billing     billingqueueports.BillingQueueRepository
+	Payments    customerpaymentports.CustomerPaymentRepository
+	Detention   detentionports.DetentionOccurrenceRepository
 }
 
 func newBriefingSources(p BriefingSourceParams) briefingfacts.Sources {

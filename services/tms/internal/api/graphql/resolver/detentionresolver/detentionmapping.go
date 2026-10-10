@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
@@ -639,7 +639,7 @@ func detentionDisputePacketToModel(
 }
 
 func facilityDetentionStatToModel(
-	stat *repositories.FacilityDetentionStat,
+	stat *detentionports.FacilityDetentionStat,
 ) *gqlmodel.FacilityDetentionStat {
 	if stat == nil {
 		return nil
@@ -663,7 +663,7 @@ func facilityDetentionStatToModel(
 }
 
 func customerDetentionStatToModel(
-	stat *repositories.CustomerDetentionStat,
+	stat *detentionports.CustomerDetentionStat,
 ) *gqlmodel.CustomerDetentionStat {
 	if stat == nil {
 		return nil
@@ -684,7 +684,7 @@ func customerDetentionStatToModel(
 }
 
 func detentionWaiverStatToModel(
-	stat *repositories.WaiverLeakageStat,
+	stat *detentionports.WaiverLeakageStat,
 ) *gqlmodel.DetentionWaiverLeakageStat {
 	if stat == nil {
 		return nil
@@ -837,8 +837,8 @@ func invalidDetentionField(field string) error {
 func detentionStatsRequest(
 	input *gqlmodel.DetentionStatsInput,
 	tenantInfo pagination.TenantInfo,
-) *repositories.DetentionStatsRequest {
-	req := &repositories.DetentionStatsRequest{
+) *detentionports.DetentionStatsRequest {
+	req := &detentionports.DetentionStatsRequest{
 		TenantInfo: tenantInfo,
 		From:       int64(input.From),
 		To:         int64(input.To),

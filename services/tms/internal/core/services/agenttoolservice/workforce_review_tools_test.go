@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/performancereviewservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -145,7 +145,7 @@ func TestStartPerformanceReview_OpensADraft(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, reviews.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, agent.PreviewOperationCreate, previewChange(t, preview, 0).Operation)
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -173,7 +173,7 @@ func TestDraftPerformanceReview_MergesRatingsByKey(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, reviews.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "2026 annual review")
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -209,12 +209,12 @@ func TestDraftPerformanceReview_MergesRatingsByKey(t *testing.T) {
 			}},
 		},
 	} {
-		require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+		require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 			executeParams(raw)), name)
 	}
 
 	reviews.review.Status = worker.ReviewStatusSubmitted
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), params),
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params),
 		"a submitted review is the reviewer's")
 }
 
@@ -226,7 +226,7 @@ func TestDeletePerformanceReview_OnlyADraft(t *testing.T) {
 	params := executeParams(map[string]any{paramReviewID: reviews.review.ID.String()})
 
 	preview := previewWithoutWrites(t, reviews.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, agent.PreviewOperationDelete, previewChange(t, preview, 0).Operation)
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -234,5 +234,5 @@ func TestDeletePerformanceReview_OnlyADraft(t *testing.T) {
 	assert.Equal(t, agent.TierPropose, tool.Policy().MaxTier)
 
 	reviews.review.Status = worker.ReviewStatusClosed
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
 }

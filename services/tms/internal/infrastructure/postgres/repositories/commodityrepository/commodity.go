@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -30,7 +30,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.CommodityRepository {
+func New(p Params) commodityports.CommodityRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.commodity-repository"),
@@ -39,7 +39,7 @@ func New(p Params) repositories.CommodityRepository {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListCommodityRequest,
+	req *commodityports.ListCommodityRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.CommodityColumns
 	q = querybuilder.ApplyFilters(
@@ -57,7 +57,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListCommodityRequest,
+	req *commodityports.ListCommodityRequest,
 ) (*pagination.ListResult[*commodity.Commodity], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*commodity.Commodity], error) {
 		log := r.l.With(
@@ -86,7 +86,7 @@ func (r *repository) List(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetCommodityByIDRequest,
+	req commodityports.GetCommodityByIDRequest,
 ) (*commodity.Commodity, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*commodity.Commodity, error) {
 		log := r.l.With(
@@ -115,7 +115,7 @@ func (r *repository) GetByID(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListCommodityConnectionRequest,
+	req *commodityports.ListCommodityConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -128,7 +128,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListCommodityConnectionRequest,
+	req *commodityports.ListCommodityConnectionRequest,
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -148,7 +148,7 @@ func applyCommodityColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuer
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListCommodityConnectionRequest,
+	req *commodityports.ListCommodityConnectionRequest,
 ) (*pagination.CursorListResult[*commodity.Commodity], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*commodity.Commodity], error) {
 		log := r.l.With(
@@ -256,7 +256,7 @@ func (r *repository) Update(
 
 func (r *repository) BulkUpdateStatus(
 	ctx context.Context,
-	req *repositories.BulkUpdateCommodityStatusRequest,
+	req *commodityports.BulkUpdateCommodityStatusRequest,
 ) ([]*commodity.Commodity, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*commodity.Commodity, error) {
 		log := r.l.With(
@@ -291,7 +291,7 @@ func (r *repository) BulkUpdateStatus(
 
 func (r *repository) GetByIDs(
 	ctx context.Context,
-	req repositories.GetCommoditiesByIDsRequest,
+	req commodityports.GetCommoditiesByIDsRequest,
 ) ([]*commodity.Commodity, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*commodity.Commodity, error) {
 		log := r.l.With(
@@ -321,7 +321,7 @@ func (r *repository) GetByIDs(
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
-	req *repositories.CommoditySelectOptionsRequest,
+	req *commodityports.CommoditySelectOptionsRequest,
 ) (*pagination.ListResult[*commodity.Commodity], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*commodity.Commodity], error) {
 		cols := buncolgen.CommodityColumns

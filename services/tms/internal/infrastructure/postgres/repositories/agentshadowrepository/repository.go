@@ -6,9 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentshadow"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/uptrace/bun"
@@ -25,7 +25,7 @@ type repository struct {
 	db *postgres.Connection
 }
 
-func New(p Params) repositories.AgentShadowRepository {
+func New(p Params) agentshadowports.AgentShadowRepository {
 	return &repository{db: p.DB}
 }
 
@@ -39,7 +39,7 @@ type shadowProposalRow struct {
 
 func (r *repository) ListShadowProposals(
 	ctx context.Context,
-	req *repositories.ListShadowProposalsRequest,
+	req *agentshadowports.ListShadowProposalsRequest,
 ) ([]agentshadow.Proposal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentshadow.Proposal, error) {
 		cols := buncolgen.AgentProposalColumns
@@ -100,7 +100,7 @@ type personChangeRow struct {
 
 func (r *repository) ListPersonChanges(
 	ctx context.Context,
-	req *repositories.ListPersonChangesRequest,
+	req *agentshadowports.ListPersonChangesRequest,
 ) ([]agentshadow.PersonChange, error) {
 	if len(req.ResourceIDs) == 0 {
 		return []agentshadow.PersonChange{}, nil

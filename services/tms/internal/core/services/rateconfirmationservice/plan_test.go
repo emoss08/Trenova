@@ -1,13 +1,17 @@
 package rateconfirmationservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/carrierportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/emailportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,11 +27,11 @@ import (
 // fails the test that runs it.
 type planTestDeps struct {
 	repo                  *fakeRateConRepo
-	carrierAssignmentRepo *mocks.MockCarrierAssignmentRepository
-	carrierRepo           *mocks.MockCarrierRepository
-	shipmentRepo          *mocks.MockShipmentRepository
-	templates             *mocks.MockDocumentTemplateResolver
-	email                 *mocks.MockEmailService
+	carrierAssignmentRepo *shipmentportsmock.MockCarrierAssignmentRepository
+	carrierRepo           *carrierportsmock.MockCarrierRepository
+	shipmentRepo          *shipmentportsmock.MockShipmentRepository
+	templates             *documenttemplateportsmock.MockDocumentTemplateResolver
+	email                 *emailportsmock.MockEmailService
 	svc                   *Service
 }
 
@@ -36,11 +40,11 @@ func setupPlanTest(t *testing.T) *planTestDeps {
 
 	deps := &planTestDeps{
 		repo:                  newFakeRateConRepo(),
-		carrierAssignmentRepo: mocks.NewMockCarrierAssignmentRepository(t),
-		carrierRepo:           mocks.NewMockCarrierRepository(t),
-		shipmentRepo:          mocks.NewMockShipmentRepository(t),
-		templates:             mocks.NewMockDocumentTemplateResolver(t),
-		email:                 mocks.NewMockEmailService(t),
+		carrierAssignmentRepo: shipmentportsmock.NewMockCarrierAssignmentRepository(t),
+		carrierRepo:           carrierportsmock.NewMockCarrierRepository(t),
+		shipmentRepo:          shipmentportsmock.NewMockShipmentRepository(t),
+		templates:             documenttemplateportsmock.NewMockDocumentTemplateResolver(t),
+		email:                 emailportsmock.NewMockEmailService(t),
 	}
 	deps.svc = &Service{
 		l:                     zap.NewNop(),
@@ -152,7 +156,7 @@ func TestPreviewSend_IsTheEmailSendWouldSend(t *testing.T) {
 		Once()
 	deps.templates.EXPECT().
 		RenderMessage(mock.Anything, mock.Anything).
-		Return(&services.RenderedMessage{
+		Return(&documenttemplateports.RenderedMessage{
 			Subject: "Rate confirmation PRO-1001",
 			Text:    "Please sign the attached rate confirmation.",
 		}, nil).

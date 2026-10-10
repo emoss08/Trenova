@@ -7,10 +7,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/reporting/canned"
 	"github.com/emoss08/trenova/internal/core/services/reporting/compiler"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -25,8 +26,8 @@ func (allowAllEngine) GetResourcePermissions(
 	_ context.Context,
 	_, _ pulid.ID,
 	resource string,
-) (*services.ResourcePermissionDetail, error) {
-	return &services.ResourcePermissionDetail{
+) (*permissionports.ResourcePermissionDetail, error) {
+	return &permissionports.ResourcePermissionDetail{
 		Resource:       resource,
 		Operations:     []permission.Operation{permission.OpRead, permission.OpExport},
 		DataScope:      permission.DataScopeOrganization,
@@ -35,20 +36,20 @@ func (allowAllEngine) GetResourcePermissions(
 }
 
 func (allowAllEngine) Check(
-	context.Context, *services.PermissionCheckRequest,
-) (*services.PermissionCheckResult, error) {
+	context.Context, *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
 	panic("not used")
 }
 
 func (allowAllEngine) CheckBatch(
-	context.Context, *services.BatchPermissionCheckRequest,
-) (*services.BatchPermissionCheckResult, error) {
+	context.Context, *permissionports.BatchPermissionCheckRequest,
+) (*permissionports.BatchPermissionCheckResult, error) {
 	panic("not used")
 }
 
 func (allowAllEngine) GetLightManifest(
 	context.Context, pulid.ID, pulid.ID,
-) (*services.LightPermissionManifest, error) {
+) (*permissionports.LightPermissionManifest, error) {
 	panic("not used")
 }
 
@@ -58,31 +59,31 @@ func (allowAllEngine) InvalidateUser(context.Context, pulid.ID, pulid.ID) error 
 
 func (allowAllEngine) GetEffectivePermissions(
 	context.Context, pulid.ID, pulid.ID,
-) (*services.EffectivePermissions, error) {
+) (*permissionports.EffectivePermissions, error) {
 	panic("not used")
 }
 
 func (allowAllEngine) SimulatePermissions(
-	context.Context, *services.SimulatePermissionsRequest,
-) (*services.EffectivePermissions, error) {
+	context.Context, *permissionports.SimulatePermissionsRequest,
+) (*permissionports.EffectivePermissions, error) {
 	panic("not used")
 }
 
 func (allowAllEngine) AgentsUsable(
-	context.Context, *services.RequestActor, permission.Operation,
-) (*services.UsableAgents, error) {
+	context.Context, *permissionports.RequestActor, permission.Operation,
+) (*permissionports.UsableAgents, error) {
 	panic("not used")
 }
 
 func (allowAllEngine) MayUseAgent(
-	context.Context, *services.RequestActor, *agentdefinition.Definition,
+	context.Context, *permissionports.RequestActor, *agentdefinition.Definition,
 ) (bool, error) {
 	panic("not used")
 }
 
 func (allowAllEngine) RoleCoverage(
-	context.Context, *services.RoleCoverageRequest,
-) ([]services.RoleCoverage, error) {
+	context.Context, *permissionports.RoleCoverageRequest,
+) ([]permissionports.RoleCoverage, error) {
 	panic("not used")
 }
 
@@ -115,7 +116,7 @@ func TestEveryCannedReportCompilesAgainstCurrentCatalog(t *testing.T) {
 			require.NotNil(t, entry.Definition)
 			assert.Equal(t, report.CurrentIRVersion, entry.Definition.IRVersion)
 
-			compiled, err := c.Compile(context.Background(), &services.ReportCompileRequest{
+			compiled, err := c.Compile(context.Background(), &reportports.ReportCompileRequest{
 				Definition:  entry.Definition,
 				Tenant:      tenant,
 				OrgTimezone: "America/Chicago",

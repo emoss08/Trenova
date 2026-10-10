@@ -7,7 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -16,15 +18,15 @@ import (
 )
 
 type fakeDisputer struct {
-	preview   *serviceports.InvoiceDisputePreview
+	preview   *invoiceports.InvoiceDisputePreview
 	refusal   error
 	guard     *writeGuard
-	opened    *serviceports.OpenInvoiceDisputeRequest
-	resolved  *serviceports.ResolveInvoiceDisputeRequest
-	withdrawn *serviceports.WithdrawInvoiceDisputeRequest
+	opened    *invoiceports.OpenInvoiceDisputeRequest
+	resolved  *invoiceports.ResolveInvoiceDisputeRequest
+	withdrawn *invoiceports.WithdrawInvoiceDisputeRequest
 }
 
-func (f *fakeDisputer) plan() (*serviceports.InvoiceDisputePreview, error) {
+func (f *fakeDisputer) plan() (*invoiceports.InvoiceDisputePreview, error) {
 	if f.refusal != nil {
 		return nil, f.refusal
 	}
@@ -34,8 +36,8 @@ func (f *fakeDisputer) plan() (*serviceports.InvoiceDisputePreview, error) {
 
 func (f *fakeDisputer) Open(
 	_ context.Context,
-	req *serviceports.OpenInvoiceDisputeRequest,
-	_ *serviceports.RequestActor,
+	req *invoiceports.OpenInvoiceDisputeRequest,
+	_ *permissionports.RequestActor,
 ) (*invoice.InvoiceDispute, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -47,8 +49,8 @@ func (f *fakeDisputer) Open(
 
 func (f *fakeDisputer) Resolve(
 	_ context.Context,
-	req *serviceports.ResolveInvoiceDisputeRequest,
-	_ *serviceports.RequestActor,
+	req *invoiceports.ResolveInvoiceDisputeRequest,
+	_ *permissionports.RequestActor,
 ) (*invoice.InvoiceDispute, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -60,8 +62,8 @@ func (f *fakeDisputer) Resolve(
 
 func (f *fakeDisputer) Withdraw(
 	_ context.Context,
-	req *serviceports.WithdrawInvoiceDisputeRequest,
-	_ *serviceports.RequestActor,
+	req *invoiceports.WithdrawInvoiceDisputeRequest,
+	_ *permissionports.RequestActor,
 ) (*invoice.InvoiceDispute, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -73,25 +75,25 @@ func (f *fakeDisputer) Withdraw(
 
 func (f *fakeDisputer) PreviewOpen(
 	context.Context,
-	*serviceports.OpenInvoiceDisputeRequest,
-	*serviceports.RequestActor,
-) (*serviceports.InvoiceDisputePreview, error) {
+	*invoiceports.OpenInvoiceDisputeRequest,
+	*permissionports.RequestActor,
+) (*invoiceports.InvoiceDisputePreview, error) {
 	return f.plan()
 }
 
 func (f *fakeDisputer) PreviewResolve(
 	context.Context,
-	*serviceports.ResolveInvoiceDisputeRequest,
-	*serviceports.RequestActor,
-) (*serviceports.InvoiceDisputePreview, error) {
+	*invoiceports.ResolveInvoiceDisputeRequest,
+	*permissionports.RequestActor,
+) (*invoiceports.InvoiceDisputePreview, error) {
 	return f.plan()
 }
 
 func (f *fakeDisputer) PreviewWithdraw(
 	context.Context,
-	*serviceports.WithdrawInvoiceDisputeRequest,
-	*serviceports.RequestActor,
-) (*serviceports.InvoiceDisputePreview, error) {
+	*invoiceports.WithdrawInvoiceDisputeRequest,
+	*permissionports.RequestActor,
+) (*invoiceports.InvoiceDisputePreview, error) {
 	return f.plan()
 }
 
@@ -106,12 +108,12 @@ func disputedInvoice() *invoice.Invoice {
 	}
 }
 
-func openDisputePlan() *serviceports.InvoiceDisputePreview {
+func openDisputePlan() *invoiceports.InvoiceDisputePreview {
 	inv := disputedInvoice()
 	after := *inv
 	after.DisputeStatus = invoice.DisputeStatusDisputed
 
-	return &serviceports.InvoiceDisputePreview{
+	return &invoiceports.InvoiceDisputePreview{
 		After: &invoice.InvoiceDispute{
 			InvoiceID:           inv.ID,
 			Status:              invoice.DisputeCaseStatusOpen,
@@ -125,7 +127,7 @@ func openDisputePlan() *serviceports.InvoiceDisputePreview {
 	}
 }
 
-func openDisputeParams(invoiceID pulid.ID) serviceports.ToolExecuteParams {
+func openDisputeParams(invoiceID pulid.ID) agentports.ToolExecuteParams {
 	return executeParams(map[string]any{
 		paramInvoiceID:         invoiceID.String(),
 		paramDisputeReasonCode: string(invoice.DisputeReasonAccessorialDisputed),
@@ -138,7 +140,7 @@ func TestOpenInvoiceDispute_PreviewShowsTheCaseAndTheFlag(t *testing.T) {
 	t.Parallel()
 
 	disputer := &fakeDisputer{preview: openDisputePlan(), guard: &writeGuard{}}
-	tool := newOpenInvoiceDisputeTool(disputer).(serviceports.ToolPreviewer)
+	tool := newOpenInvoiceDisputeTool(disputer).(agentports.ToolPreviewer)
 	params := openDisputeParams(disputer.preview.InvoiceBefore.ID)
 
 	preview := previewWithoutWrites(t, disputer.guard, func() (*agent.ToolPreview, error) {
@@ -172,12 +174,12 @@ func TestOpenInvoiceDispute_ARefusalIsAWouldFail(t *testing.T) {
 	tool := newOpenInvoiceDisputeTool(disputer)
 	params := openDisputeParams(disputer.preview.InvoiceBefore.ID)
 
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	requireWarning(t, preview, agent.PreviewWarningWouldFail)
 	assert.Empty(t, preview.Changes)
 
-	err = tool.(serviceports.ToolValidator).Validate(t.Context(), params)
+	err = tool.(agentports.ToolValidator).Validate(t.Context(), params)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "exceeds the open balance")
 }
@@ -201,7 +203,7 @@ func TestOpenInvoiceDispute_RefusesBadArguments(t *testing.T) {
 	for name, raw := range cases {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+			require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 				executeParams(raw)))
 		})
 	}
@@ -225,12 +227,12 @@ func TestOpenInvoiceDispute_OpensAsTheActorWithTrimmedNotes(t *testing.T) {
 	assert.Equal(t, permission.OpCreate, policy.Operation)
 	assert.Equal(t, agent.TierActWithApproval, policy.MaxTier)
 	assert.NotNil(t, policy.TaintHold)
-	target, ok := tool.(serviceports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, permission.ResourceInvoice, target.Resource)
 }
 
-func resolvedDisputePlan() *serviceports.InvoiceDisputePreview {
+func resolvedDisputePlan() *invoiceports.InvoiceDisputePreview {
 	plan := openDisputePlan()
 	plan.InvoiceBefore.DisputeStatus = invoice.DisputeStatusDisputed
 	plan.InvoiceAfter.DisputeStatus = invoice.DisputeStatusNone
@@ -259,7 +261,7 @@ func TestResolveInvoiceDispute_OnlyAPersonResolves(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, disputer.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	change := previewChange(t, preview, 0)
 	assert.Equal(t, "Resolved", fieldByPath(t, change, "status").After)
@@ -277,7 +279,7 @@ func TestResolveInvoiceDispute_OnlyAPersonResolves(t *testing.T) {
 	policy := tool.Policy()
 	assert.Equal(t, permission.OpApprove, policy.Operation)
 	assert.Equal(t, agent.TierPropose, policy.MaxTier)
-	target, ok := tool.(serviceports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, permission.ResourceInvoiceDispute, target.Resource)
 }
@@ -286,7 +288,7 @@ func TestResolveInvoiceDispute_AnAgentPrincipalCannotEvenPreviewIt(t *testing.T)
 	t.Parallel()
 
 	disputer := &fakeDisputer{preview: resolvedDisputePlan()}
-	tool := newResolveInvoiceDisputeTool(disputer).(serviceports.ToolPreviewer)
+	tool := newResolveInvoiceDisputeTool(disputer).(agentports.ToolPreviewer)
 	params := agentParamsFor(map[string]any{
 		paramDisputeID:         disputer.preview.Before.ID.String(),
 		paramDisputeResolution: string(invoice.DisputeResolutionInvoiceUpheld),
@@ -310,7 +312,7 @@ func TestWithdrawInvoiceDispute_WithdrawsWithItsNotes(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, disputer.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would withdraw")
 	assert.Equal(t, "Withdrawn", fieldByPath(t, previewChange(t, preview, 0), "status").After)

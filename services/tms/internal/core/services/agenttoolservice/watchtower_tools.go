@@ -7,9 +7,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,13 +24,13 @@ type watchtowerDismisser interface {
 		ctx context.Context,
 		tenant pagination.TenantInfo,
 		id pulid.ID,
-		actor *serviceports.RequestActor,
-	) (*serviceports.RecordChange[watchtower.Item], error)
+		actor *permissionports.RequestActor,
+	) (*kernelports.RecordChange[watchtower.Item], error)
 	Dismiss(
 		ctx context.Context,
 		tenant pagination.TenantInfo,
 		id pulid.ID,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*watchtower.Item, error)
 }
 
@@ -48,7 +50,7 @@ func watchtowerItemViewOf(item *watchtower.Item) *watchtowerItemView {
 	}
 }
 
-func newDismissWatchtowerItemTool(items watchtowerDismisser) serviceports.AgentTool {
+func newDismissWatchtowerItemTool(items watchtowerDismisser) agentports.AgentTool {
 	return newReceivableTool(&receivableSpec{
 		name:   "dismiss_watchtower_item",
 		recipe: []string{"list_watchtower_items", "dismiss_watchtower_item"},
@@ -69,14 +71,14 @@ func newDismissWatchtowerItemTool(items watchtowerDismisser) serviceports.AgentT
 		},
 		required:    []string{paramWatchtowerItemID},
 		searchTerms: []string{"dismiss watchtower", "clear feed item", "mark handled"},
-		target: func(params map[string]any) (serviceports.ToolTarget, bool) {
+		target: func(params map[string]any) (agentports.ToolTarget, bool) {
 			return targetOf(params, paramWatchtowerItemID, permission.ResourceWatchtower)
 		},
-	}, receivablePlan[pulid.ID, *serviceports.RecordChange[watchtower.Item]]{
-		request: func(params *serviceports.ToolExecuteParams) (pulid.ID, error) {
+	}, receivablePlan[pulid.ID, *kernelports.RecordChange[watchtower.Item]]{
+		request: func(params *agentports.ToolExecuteParams) (pulid.ID, error) {
 			return requirePulid(params.Params, paramWatchtowerItemID)
 		},
-		settle: func(ctx context.Context, id pulid.ID, params *serviceports.ToolExecuteParams) error {
+		settle: func(ctx context.Context, id pulid.ID, params *agentports.ToolExecuteParams) error {
 			_, err := plannedDismissal(ctx, items, id, params)
 
 			return err
@@ -84,14 +86,14 @@ func newDismissWatchtowerItemTool(items watchtowerDismisser) serviceports.AgentT
 		plan: func(
 			ctx context.Context,
 			id pulid.ID,
-			params *serviceports.ToolExecuteParams,
-		) (*serviceports.RecordChange[watchtower.Item], error) {
+			params *agentports.ToolExecuteParams,
+		) (*kernelports.RecordChange[watchtower.Item], error) {
 			return plannedDismissal(ctx, items, id, params)
 		},
 		refused: func(pulid.ID) string { return "Would take an item off the watchtower feed." },
 		render: func(
 			_ pulid.ID,
-			change *serviceports.RecordChange[watchtower.Item],
+			change *kernelports.RecordChange[watchtower.Item],
 		) (*agent.ToolPreview, error) {
 			built, err := toolpreview.Changed(toolpreview.Record{
 				Resource: permission.ResourceWatchtower,
@@ -113,7 +115,7 @@ func newDismissWatchtowerItemTool(items watchtowerDismisser) serviceports.AgentT
 		run: func(
 			ctx context.Context,
 			id pulid.ID,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			dismissed, err := items.Dismiss(ctx, tenantFrom(*params), id, params.Actor)
 			if err != nil {
@@ -134,8 +136,8 @@ func plannedDismissal(
 	ctx context.Context,
 	items watchtowerDismisser,
 	id pulid.ID,
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.RecordChange[watchtower.Item], error) {
+	params *agentports.ToolExecuteParams,
+) (*kernelports.RecordChange[watchtower.Item], error) {
 	change, err := items.PlanDismiss(ctx, tenantFrom(*params), id, params.Actor)
 	if err != nil {
 		return nil, err

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -277,7 +277,7 @@ func TestDeleteTestCase_Delegates(t *testing.T) {
 	deps := setupTest(t)
 
 	caseID := pulid.MustNew("ftc_")
-	err := deps.svc.DeleteTestCase(t.Context(), repositories.GetTestCaseByIDRequest{
+	err := deps.svc.DeleteTestCase(t.Context(), formulatemplateports.GetTestCaseByIDRequest{
 		TenantInfo: newTenantInfo(),
 		TemplateID: pulid.MustNew("ft_"),
 		TestCaseID: caseID,

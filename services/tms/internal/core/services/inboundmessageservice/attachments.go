@@ -8,8 +8,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -106,13 +107,13 @@ func (s *Service) uploadAttachment(
 	content []byte,
 ) (pulid.ID, error) {
 	size := int64(len(content))
-	actor := services.RequestActor{
-		PrincipalType:  services.PrincipalTypeSystem,
+	actor := permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeSystem,
 		BusinessUnitID: message.BusinessUnitID,
 		OrganizationID: message.OrganizationID,
 	}
 
-	session, err := s.uploads.CreateSession(ctx, &services.CreateSessionRequest{
+	session, err := s.uploads.CreateSession(ctx, &documentuploadports.CreateSessionRequest{
 		TenantInfo:        tenantInfo,
 		Actor:             actor,
 		ResourceID:        message.ID.String(),
@@ -128,7 +129,7 @@ func (s *Service) uploadAttachment(
 		return pulid.Nil, err
 	}
 
-	if _, err = s.uploads.UploadPart(ctx, &services.UploadPartRequest{
+	if _, err = s.uploads.UploadPart(ctx, &documentuploadports.UploadPartRequest{
 		TenantInfo: tenantInfo,
 		SessionID:  session.ID,
 		PartNumber: 1,
@@ -222,7 +223,7 @@ func (s *Service) PollAttachmentExtraction(
 		}, nil
 	}
 
-	doc, err := s.documents.GetByID(ctx, repositories.GetDocumentByIDRequest{
+	doc, err := s.documents.GetByID(ctx, documentports.GetDocumentByIDRequest{
 		ID:         row.DocumentID,
 		TenantInfo: tenantInfo,
 	})

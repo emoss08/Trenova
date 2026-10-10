@@ -1,6 +1,7 @@
 package pagefavoritehandler_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/pagefavoriteportsmock"
 	"context"
 	"errors"
 	"net/http"
@@ -24,7 +25,7 @@ var errRepo = errors.New("repository error")
 
 func setupPageFavoriteHandler(
 	t *testing.T,
-	repo *mocks.MockPageFavoriteRepository,
+	repo *pagefavoriteportsmock.MockPageFavoriteRepository,
 ) *pagefavoritehandler.Handler {
 	t.Helper()
 
@@ -57,7 +58,7 @@ func TestPageFavoriteHandler_List_Success(t *testing.T) {
 
 	pfID := pulid.MustNew("pf_")
 
-	repo := mocks.NewMockPageFavoriteRepository(t)
+	repo := pagefavoriteportsmock.NewMockPageFavoriteRepository(t)
 	repo.On("List", mock.Anything, mock.Anything).Return([]*pagefavorite.PageFavorite{
 		{
 			ID:             pfID,
@@ -90,7 +91,7 @@ func TestPageFavoriteHandler_List_Success(t *testing.T) {
 func TestPageFavoriteHandler_List_Empty(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockPageFavoriteRepository(t)
+	repo := pagefavoriteportsmock.NewMockPageFavoriteRepository(t)
 	repo.On("List", mock.Anything, mock.Anything).Return([]*pagefavorite.PageFavorite{}, nil)
 
 	handler := setupPageFavoriteHandler(t, repo)
@@ -113,7 +114,7 @@ func TestPageFavoriteHandler_List_Empty(t *testing.T) {
 func TestPageFavoriteHandler_List_RepoError(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockPageFavoriteRepository(t)
+	repo := pagefavoriteportsmock.NewMockPageFavoriteRepository(t)
 	repo.On("List", mock.Anything, mock.Anything).Return(nil, errRepo)
 
 	handler := setupPageFavoriteHandler(t, repo)
@@ -132,7 +133,7 @@ func TestPageFavoriteHandler_List_RepoError(t *testing.T) {
 func TestPageFavoriteHandler_Toggle_CreateFavorite(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockPageFavoriteRepository(t)
+	repo := pagefavoriteportsmock.NewMockPageFavoriteRepository(t)
 	repo.On("GetByURL", mock.Anything, mock.Anything).Return(nil, false, nil)
 	repo.EXPECT().Create(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, entity *pagefavorite.PageFavorite) (*pagefavorite.PageFavorite, error) {
@@ -166,7 +167,7 @@ func TestPageFavoriteHandler_Toggle_DeleteFavorite(t *testing.T) {
 
 	pfID := pulid.MustNew("pf_")
 
-	repo := mocks.NewMockPageFavoriteRepository(t)
+	repo := pagefavoriteportsmock.NewMockPageFavoriteRepository(t)
 	repo.On("GetByURL", mock.Anything, mock.Anything).Return(&pagefavorite.PageFavorite{
 		ID:             pfID,
 		OrganizationID: testutil.TestOrgID,
@@ -201,7 +202,7 @@ func TestPageFavoriteHandler_Toggle_DeleteFavorite(t *testing.T) {
 func TestPageFavoriteHandler_Toggle_BadJSON(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockPageFavoriteRepository(t)
+	repo := pagefavoriteportsmock.NewMockPageFavoriteRepository(t)
 	handler := setupPageFavoriteHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -219,7 +220,7 @@ func TestPageFavoriteHandler_Toggle_BadJSON(t *testing.T) {
 func TestPageFavoriteHandler_Check_Favorited(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockPageFavoriteRepository(t)
+	repo := pagefavoriteportsmock.NewMockPageFavoriteRepository(t)
 	repo.On("GetByURL", mock.Anything, mock.Anything).
 		Return(&pagefavorite.PageFavorite{}, true, nil)
 
@@ -244,7 +245,7 @@ func TestPageFavoriteHandler_Check_Favorited(t *testing.T) {
 func TestPageFavoriteHandler_Check_NotFavorited(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockPageFavoriteRepository(t)
+	repo := pagefavoriteportsmock.NewMockPageFavoriteRepository(t)
 	repo.On("GetByURL", mock.Anything, mock.Anything).Return(nil, false, nil)
 
 	handler := setupPageFavoriteHandler(t, repo)
@@ -268,7 +269,7 @@ func TestPageFavoriteHandler_Check_NotFavorited(t *testing.T) {
 func TestPageFavoriteHandler_Check_MissingPageURL(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockPageFavoriteRepository(t)
+	repo := pagefavoriteportsmock.NewMockPageFavoriteRepository(t)
 	handler := setupPageFavoriteHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().

@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -17,8 +17,8 @@ const (
 
 func (s *Service) ListCandidates(
 	ctx context.Context,
-	req *servicesports.ListShareCandidatesRequest,
-) (*pagination.ListResult[*servicesports.ShareCandidate], error) {
+	req *invoiceports.ListShareCandidatesRequest,
+) (*pagination.ListResult[*invoiceports.ShareCandidate], error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"request",
@@ -27,7 +27,7 @@ func (s *Service) ListCandidates(
 		)
 	}
 
-	if _, err := s.invoiceRepo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+	if _, err := s.invoiceRepo.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         req.InvoiceID,
 		TenantInfo: req.TenantInfo,
 	}); err != nil {
@@ -43,7 +43,7 @@ func (s *Service) ListCandidates(
 	offset := min(req.Pagination.SafeOffset(), len(eligible))
 	end := min(offset+limit, len(eligible))
 
-	return &pagination.ListResult[*servicesports.ShareCandidate]{
+	return &pagination.ListResult[*invoiceports.ShareCandidate]{
 		Items: eligible[offset:end],
 		Total: len(eligible),
 	}, nil
@@ -53,8 +53,8 @@ func (s *Service) eligibleCandidates(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	query string,
-) ([]*servicesports.ShareCandidate, error) {
-	eligible := make([]*servicesports.ShareCandidate, 0)
+) ([]*invoiceports.ShareCandidate, error) {
+	eligible := make([]*invoiceports.ShareCandidate, 0)
 
 	for offset := 0; offset < maxCandidateScan; offset += candidateScanPageSize {
 		page, err := s.userRepo.SelectOptions(ctx, &pagination.SelectQueryRequest{
@@ -86,8 +86,8 @@ func (s *Service) eligibleCandidates(
 
 func (s *Service) GetCandidate(
 	ctx context.Context,
-	req *servicesports.GetShareCandidateRequest,
-) (*servicesports.ShareCandidate, error) {
+	req *invoiceports.GetShareCandidateRequest,
+) (*invoiceports.ShareCandidate, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"request",
@@ -96,14 +96,14 @@ func (s *Service) GetCandidate(
 		)
 	}
 
-	if _, err := s.invoiceRepo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+	if _, err := s.invoiceRepo.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         req.InvoiceID,
 		TenantInfo: req.TenantInfo,
 	}); err != nil {
 		return nil, err
 	}
 
-	user, err := s.userRepo.GetByID(ctx, repositories.GetUserByIDRequest{
+	user, err := s.userRepo.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo:   req.TenantInfo,
 		LookupUserID: req.UserID,
 	})
@@ -134,8 +134,8 @@ func (s *Service) isCandidate(
 	return s.canViewInvoices(ctx, tenantInfo, user)
 }
 
-func toShareCandidate(user *tenant.User) *servicesports.ShareCandidate {
-	return &servicesports.ShareCandidate{
+func toShareCandidate(user *tenant.User) *invoiceports.ShareCandidate {
+	return &invoiceports.ShareCandidate{
 		ID:            user.ID,
 		Name:          user.Name,
 		Username:      user.Username,

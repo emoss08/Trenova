@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentwait"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -37,7 +37,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.AgentWaitRepository {
+func New(p Params) agentwaitports.AgentWaitRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.agent-wait-repository")}
 }
 
@@ -76,7 +76,7 @@ func (r *repository) Insert(
 			return nil, fmt.Errorf("count the agent's open waits: %w", err)
 		}
 		if open >= agentwait.MaxOpenPerOwner {
-			return nil, repositories.ErrTooManyWaits
+			return nil, agentwaitports.ErrTooManyWaits
 		}
 
 		if _, err = db.NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
@@ -102,7 +102,7 @@ func ownerKey(entity *agentwait.Wait) string {
 
 func (r *repository) Get(
 	ctx context.Context,
-	req *repositories.GetAgentWaitRequest,
+	req *agentwaitports.GetAgentWaitRequest,
 ) (*agentwait.Wait, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentwait.Wait, error) {
 		cols := buncolgen.WaitColumns
@@ -132,7 +132,7 @@ func (r *repository) Get(
 
 func (r *repository) ListByThread(
 	ctx context.Context,
-	req *repositories.ListThreadWaitsRequest,
+	req *agentwaitports.ListThreadWaitsRequest,
 ) ([]*agentwait.Wait, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentwait.Wait, error) {
 		cols := buncolgen.WaitColumns
@@ -164,7 +164,7 @@ func (r *repository) ListByThread(
 
 func (r *repository) ListOpenWatching(
 	ctx context.Context,
-	req *repositories.ListOpenWaitsWatchingRequest,
+	req *agentwaitports.ListOpenWaitsWatchingRequest,
 ) ([]*agentwait.Wait, error) {
 	if len(req.Kinds) == 0 || len(req.WatchIDs) == 0 {
 		return nil, nil
@@ -193,7 +193,7 @@ func (r *repository) ListOpenWatching(
 
 func (r *repository) ListOpenOfKinds(
 	ctx context.Context,
-	req *repositories.ListOpenWaitsOfKindsRequest,
+	req *agentwaitports.ListOpenWaitsOfKindsRequest,
 ) ([]*agentwait.Wait, error) {
 	if len(req.Kinds) == 0 {
 		return nil, nil
@@ -227,7 +227,7 @@ func (r *repository) ListOpenOfKinds(
 
 func (r *repository) ListOpenByThreads(
 	ctx context.Context,
-	req *repositories.ListOpenWaitsByThreadsRequest,
+	req *agentwaitports.ListOpenWaitsByThreadsRequest,
 ) (map[pulid.ID][]*agentwait.Wait, error) {
 	out := make(map[pulid.ID][]*agentwait.Wait, len(req.ThreadIDs))
 	if len(req.ThreadIDs) == 0 {
@@ -270,7 +270,7 @@ func (r *repository) ListOpenByThreads(
 
 func (r *repository) ListOverdueAcrossTenants(
 	ctx context.Context,
-	req *repositories.ListOverdueWaitsRequest,
+	req *agentwaitports.ListOverdueWaitsRequest,
 ) ([]*agentwait.Wait, error) {
 	ctx = dbscope.WithSystem(ctx, "list open agent waits past their expiry in every organization")
 
@@ -299,7 +299,7 @@ func (r *repository) ListOverdueAcrossTenants(
 
 func (r *repository) UpdateCondition(
 	ctx context.Context,
-	req *repositories.UpdateAgentWaitConditionRequest,
+	req *agentwaitports.UpdateAgentWaitConditionRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.WaitColumns
@@ -319,7 +319,7 @@ func (r *repository) UpdateCondition(
 	})
 }
 
-func (r *repository) SetDue(ctx context.Context, req *repositories.SetAgentWaitDueRequest) error {
+func (r *repository) SetDue(ctx context.Context, req *agentwaitports.SetAgentWaitDueRequest) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.WaitColumns
 		q := r.db.DBForContext(ctx).
@@ -343,7 +343,7 @@ func (r *repository) SetDue(ctx context.Context, req *repositories.SetAgentWaitD
 
 func (r *repository) Resolve(
 	ctx context.Context,
-	req *repositories.ResolveAgentWaitRequest,
+	req *agentwaitports.ResolveAgentWaitRequest,
 ) (*agentwait.Wait, bool, error) {
 	return dbtx.Write2(ctx, r.db, func(ctx context.Context) (*agentwait.Wait, bool, error) {
 		cols := buncolgen.WaitColumns
@@ -374,7 +374,7 @@ func (r *repository) Resolve(
 			return entity, true, nil
 		}
 
-		current, err := r.Get(ctx, &repositories.GetAgentWaitRequest{
+		current, err := r.Get(ctx, &agentwaitports.GetAgentWaitRequest{
 			ID:         req.ID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -385,7 +385,7 @@ func (r *repository) Resolve(
 
 func (r *repository) MarkResumed(
 	ctx context.Context,
-	req *repositories.MarkAgentWaitResumedRequest,
+	req *agentwaitports.MarkAgentWaitResumedRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.WaitColumns

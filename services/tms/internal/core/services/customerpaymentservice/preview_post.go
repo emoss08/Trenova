@@ -7,9 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -18,9 +19,9 @@ import (
 // it pays before and after the payment is applied to it.
 func (s *Service) PreviewPostAndApply(
 	ctx context.Context,
-	req *serviceports.PostCustomerPaymentRequest,
-	actor *serviceports.RequestActor,
-) (*serviceports.CustomerPaymentPostPreview, error) {
+	req *customerpaymentports.PostCustomerPaymentRequest,
+	actor *permissionports.RequestActor,
+) (*customerpaymentports.CustomerPaymentPostPreview, error) {
 	plan, err := s.planPost(ctx, req, actor)
 	if err != nil {
 		return nil, err
@@ -31,7 +32,7 @@ func (s *Service) PreviewPostAndApply(
 		applyPostedApplication(inv, plan.entity.Applications[idx])
 	}
 
-	return &serviceports.CustomerPaymentPostPreview{
+	return &customerpaymentports.CustomerPaymentPostPreview{
 		Payment:        plan.entity,
 		InvoicesBefore: plan.invoices,
 		InvoicesAfter:  after,
@@ -49,8 +50,8 @@ type postPlan struct {
 // the accounting controls, the open period and the invoices it applies to.
 func (s *Service) planPost(
 	ctx context.Context,
-	req *serviceports.PostCustomerPaymentRequest,
-	actor *serviceports.RequestActor,
+	req *customerpaymentports.PostCustomerPaymentRequest,
+	actor *permissionports.RequestActor,
 ) (*postPlan, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
@@ -97,7 +98,7 @@ func (s *Service) planPost(
 	invoices, period, me := s.validator.ValidatePostAndApply(
 		ctx,
 		entity,
-		repositories.GetInvoiceByIDRequest{TenantInfo: req.TenantInfo},
+		invoiceports.GetInvoiceByIDRequest{TenantInfo: req.TenantInfo},
 		control,
 	)
 	if me != nil {

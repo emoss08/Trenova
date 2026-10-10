@@ -8,9 +8,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/invoiceservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -28,7 +31,7 @@ type journalView struct {
 
 func (t *postInvoiceTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	req, err := invoiceRequest(t, &params)
 	if err != nil {
@@ -119,7 +122,7 @@ func postedInvoiceChange(post *invoiceservice.PostPreview) (*agent.RecordChange,
 }
 
 func journalEntryChange(
-	journal *serviceports.JournalPreview,
+	journal *kernelports.JournalPreview,
 	currency string,
 	label string,
 ) (*agent.RecordChange, error) {
@@ -201,7 +204,7 @@ func postSummary(post *invoiceservice.PostPreview, label, total string) string {
 	return strings.Join(slicesNonEmpty(sentences), " ")
 }
 
-func syncSentence(destinations []serviceports.AccountingSyncDestination) string {
+func syncSentence(destinations []accountingsyncports.AccountingSyncDestination) string {
 	if len(destinations) == 0 {
 		return "No accounting connection takes it."
 	}
@@ -221,7 +224,7 @@ func syncSentence(destinations []serviceports.AccountingSyncDestination) string 
 	return "It is queued for the accounting system: " + strings.Join(names, "; ") + "."
 }
 
-func ediSentence(plan *serviceports.InvoiceEDISendPlan) string {
+func ediSentence(plan *invoiceports.InvoiceEDISendPlan) string {
 	switch {
 	case plan == nil || !plan.Enabled:
 		return ""
@@ -247,7 +250,7 @@ func slicesNonEmpty(values []string) []string {
 
 func (t *sendInvoiceTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	send, err := t.plan(ctx, &params)
 	if err != nil {

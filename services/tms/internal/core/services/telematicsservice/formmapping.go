@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -34,7 +34,7 @@ func (s *Service) ListFormMappings(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]*telematics.FormMapping, error) {
-	return s.repo.ListFormMappings(ctx, &repositories.ListFormMappingsRequest{
+	return s.repo.ListFormMappings(ctx, &telematicsports.ListFormMappingsRequest{
 		TenantInfo: tenantInfo,
 	})
 }

@@ -5,14 +5,23 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
-	coreports "github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/internaledilifecycle"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/services/planservice"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -24,95 +33,95 @@ type Params struct {
 	fx.In
 
 	Logger              *zap.Logger
-	PartnerRepo         repositories.EDIPartnerRepository
-	MappingProfileRepo  repositories.EDIMappingProfileRepository
-	ConnectionRepo      repositories.EDIConnectionRepository
-	ProfileRepo         repositories.EDICommunicationProfileRepository
-	TransferRepo        repositories.EDILoadTenderTransferRepository
-	DocumentTypeRepo    repositories.EDIDocumentTypeRepository
-	TransactionSetRepo  repositories.EDITransactionSetRepository
-	SourceContextRepo   repositories.EDISourceContextRepository
-	PartnerSettingRepo  repositories.EDIPartnerSettingRepository
-	TemplateRepo        repositories.EDITemplateRepository
-	DocumentProfileRepo repositories.EDIPartnerDocumentProfileRepository
-	ControlNumberRepo   repositories.EDIControlNumberRepository
-	MessageRepo         repositories.EDIMessageRepository
-	TestCaseRepo        repositories.EDITestCaseRepository
-	CarrierInvoiceRepo  repositories.EDICarrierInvoiceRepository
-	InboundFileRepo     repositories.EDIInboundFileRepository
-	InvoiceRepo         repositories.InvoiceRepository
-	ShipmentEventRepo   repositories.ShipmentEventRepository
-	ServiceFailureRepo  repositories.ServiceFailureRepository
-	ShipmentLinkRepo    repositories.EDIShipmentLinkRepository
-	TransferChangeRepo  repositories.EDITransferChangeRepository
-	TenderRecipientRepo repositories.EDITenderRecipientRepository
-	TenderChangeRepo    repositories.EDITenderChangeRepository
-	ShipmentCommentRepo repositories.ShipmentCommentRepository
-	UserRepo            repositories.UserRepository
-	ShipmentRepo        repositories.ShipmentRepository
-	TenderRepo          repositories.TenderRepository       `optional:"true"`
-	CarrierRepo         repositories.CarrierRepository      `optional:"true"`
-	ShipmentMoveRepo    repositories.ShipmentMoveRepository `optional:"true"`
-	ShipmentMoves       services.ShipmentMoveService        `optional:"true"`
-	ShipmentSvc         services.ShipmentService
-	WorkflowStarter     services.WorkflowStarter
-	AuditService        services.AuditService
+	PartnerRepo         ediports.EDIPartnerRepository
+	MappingProfileRepo  ediports.EDIMappingProfileRepository
+	ConnectionRepo      ediports.EDIConnectionRepository
+	ProfileRepo         ediports.EDICommunicationProfileRepository
+	TransferRepo        ediports.EDILoadTenderTransferRepository
+	DocumentTypeRepo    ediports.EDIDocumentTypeRepository
+	TransactionSetRepo  ediports.EDITransactionSetRepository
+	SourceContextRepo   ediports.EDISourceContextRepository
+	PartnerSettingRepo  ediports.EDIPartnerSettingRepository
+	TemplateRepo        ediports.EDITemplateRepository
+	DocumentProfileRepo ediports.EDIPartnerDocumentProfileRepository
+	ControlNumberRepo   ediports.EDIControlNumberRepository
+	MessageRepo         ediports.EDIMessageRepository
+	TestCaseRepo        ediports.EDITestCaseRepository
+	CarrierInvoiceRepo  ediports.EDICarrierInvoiceRepository
+	InboundFileRepo     ediports.EDIInboundFileRepository
+	InvoiceRepo         invoiceports.InvoiceRepository
+	ShipmentEventRepo   shipmenteventports.ShipmentEventRepository
+	ServiceFailureRepo  servicefailureports.ServiceFailureRepository
+	ShipmentLinkRepo    ediports.EDIShipmentLinkRepository
+	TransferChangeRepo  ediports.EDITransferChangeRepository
+	TenderRecipientRepo ediports.EDITenderRecipientRepository
+	TenderChangeRepo    ediports.EDITenderChangeRepository
+	ShipmentCommentRepo shipmentports.ShipmentCommentRepository
+	UserRepo            tenantports.UserRepository
+	ShipmentRepo        shipmentports.ShipmentRepository
+	TenderRepo          tenderports.TenderRepository         `optional:"true"`
+	CarrierRepo         carrierports.CarrierRepository       `optional:"true"`
+	ShipmentMoveRepo    shipmentports.ShipmentMoveRepository `optional:"true"`
+	ShipmentMoves       shipmentports.ShipmentMoveService    `optional:"true"`
+	ShipmentSvc         shipmentports.ShipmentService
+	WorkflowStarter     kernelports.WorkflowStarter
+	AuditService        auditports.AuditService
 	Notifications       *notificationservice.Service
 	Encryption          *encryptionservice.Service
 	Validator           *Validator
-	DB                  coreports.DBConnection
+	DB                  kernelports.DBConnection
 	Coordinator         *shipmentstate.Coordinator
-	Transport           services.EDITransportDispatcher
-	OrderDerivation     services.OrderDerivationService
-	Metrics             *metrics.Registry    `optional:"true"`
-	Plans               services.PlanService `optional:"true"`
+	Transport           ediports.EDITransportDispatcher
+	OrderDerivation     orderports.OrderDerivationService
+	Metrics             *metrics.Registry             `optional:"true"`
+	Plans               platformplanports.PlanService `optional:"true"`
 }
 
 type Service struct {
 	l                   *zap.Logger
-	partnerRepo         repositories.EDIPartnerRepository
-	mappingProfileRepo  repositories.EDIMappingProfileRepository
-	connectionRepo      repositories.EDIConnectionRepository
-	profileRepo         repositories.EDICommunicationProfileRepository
-	transferRepo        repositories.EDILoadTenderTransferRepository
-	documentTypeRepo    repositories.EDIDocumentTypeRepository
-	transactionSetRepo  repositories.EDITransactionSetRepository
-	sourceContextRepo   repositories.EDISourceContextRepository
-	partnerSettingRepo  repositories.EDIPartnerSettingRepository
-	templateRepo        repositories.EDITemplateRepository
-	documentProfileRepo repositories.EDIPartnerDocumentProfileRepository
-	controlNumberRepo   repositories.EDIControlNumberRepository
-	messageRepo         repositories.EDIMessageRepository
-	testCaseRepo        repositories.EDITestCaseRepository
-	carrierInvoiceRepo  repositories.EDICarrierInvoiceRepository
-	inboundFileRepo     repositories.EDIInboundFileRepository
-	invoiceRepo         repositories.InvoiceRepository
-	shipmentEventRepo   repositories.ShipmentEventRepository
-	serviceFailureRepo  repositories.ServiceFailureRepository
-	shipmentLinkRepo    repositories.EDIShipmentLinkRepository
-	transferChangeRepo  repositories.EDITransferChangeRepository
-	tenderRecipientRepo repositories.EDITenderRecipientRepository
-	tenderChangeRepo    repositories.EDITenderChangeRepository
-	shipmentCommentRepo repositories.ShipmentCommentRepository
-	userRepo            repositories.UserRepository
-	shipmentRepo        repositories.ShipmentRepository
-	tenderRepo          repositories.TenderRepository
-	carrierRepo         repositories.CarrierRepository
-	shipmentMoveRepo    repositories.ShipmentMoveRepository
-	shipmentMoves       services.ShipmentMoveService
-	shipmentSvc         services.ShipmentService
-	workflowStarter     services.WorkflowStarter
-	auditService        services.AuditService
+	partnerRepo         ediports.EDIPartnerRepository
+	mappingProfileRepo  ediports.EDIMappingProfileRepository
+	connectionRepo      ediports.EDIConnectionRepository
+	profileRepo         ediports.EDICommunicationProfileRepository
+	transferRepo        ediports.EDILoadTenderTransferRepository
+	documentTypeRepo    ediports.EDIDocumentTypeRepository
+	transactionSetRepo  ediports.EDITransactionSetRepository
+	sourceContextRepo   ediports.EDISourceContextRepository
+	partnerSettingRepo  ediports.EDIPartnerSettingRepository
+	templateRepo        ediports.EDITemplateRepository
+	documentProfileRepo ediports.EDIPartnerDocumentProfileRepository
+	controlNumberRepo   ediports.EDIControlNumberRepository
+	messageRepo         ediports.EDIMessageRepository
+	testCaseRepo        ediports.EDITestCaseRepository
+	carrierInvoiceRepo  ediports.EDICarrierInvoiceRepository
+	inboundFileRepo     ediports.EDIInboundFileRepository
+	invoiceRepo         invoiceports.InvoiceRepository
+	shipmentEventRepo   shipmenteventports.ShipmentEventRepository
+	serviceFailureRepo  servicefailureports.ServiceFailureRepository
+	shipmentLinkRepo    ediports.EDIShipmentLinkRepository
+	transferChangeRepo  ediports.EDITransferChangeRepository
+	tenderRecipientRepo ediports.EDITenderRecipientRepository
+	tenderChangeRepo    ediports.EDITenderChangeRepository
+	shipmentCommentRepo shipmentports.ShipmentCommentRepository
+	userRepo            tenantports.UserRepository
+	shipmentRepo        shipmentports.ShipmentRepository
+	tenderRepo          tenderports.TenderRepository
+	carrierRepo         carrierports.CarrierRepository
+	shipmentMoveRepo    shipmentports.ShipmentMoveRepository
+	shipmentMoves       shipmentports.ShipmentMoveService
+	shipmentSvc         shipmentports.ShipmentService
+	workflowStarter     kernelports.WorkflowStarter
+	auditService        auditports.AuditService
 	notifications       *notificationservice.Service
 	encryption          *encryptionservice.Service
 	validator           *Validator
-	db                  coreports.DBConnection
+	db                  kernelports.DBConnection
 	coordinator         *shipmentstate.Coordinator
-	transport           services.EDITransportDispatcher
-	orderDerivation     services.OrderDerivationService
+	transport           ediports.EDITransportDispatcher
+	orderDerivation     orderports.OrderDerivationService
 	lifecycleApplier    *internaledilifecycle.Applier
 	metrics             *metrics.EDI
-	plans               services.PlanService
+	plans               platformplanports.PlanService
 }
 
 func New(p Params) *Service {

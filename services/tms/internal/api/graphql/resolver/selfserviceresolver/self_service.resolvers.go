@@ -13,8 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/selfserviceservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -76,7 +76,7 @@ func (r *MutationResolver) DecideProfileChange(ctx context.Context, input gqlmod
 
 	request, err := r.SelfServiceService.GetChangeRequest(
 		ctx,
-		&repositories.GetProfileChangeRequestByIDRequest{
+		&workerports.GetProfileChangeRequestByIDRequest{
 			ID:         requestID,
 			TenantInfo: base.TenantInfo(authCtx),
 		},
@@ -118,7 +118,7 @@ func (r *QueryResolver) WorkerPolicies(ctx context.Context, activeOnly *bool, li
 		return nil, err
 	}
 
-	return r.SelfServiceService.ListPolicies(ctx, &repositories.ListWorkerPoliciesRequest{
+	return r.SelfServiceService.ListPolicies(ctx, &workerports.ListWorkerPoliciesRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		ActiveOnly: base.BoolValue(activeOnly),
 		Limit:      base.IntValue(limit),
@@ -174,7 +174,7 @@ func (r *QueryResolver) WorkerPolicyAcknowledgements(ctx context.Context, worker
 
 	return r.SelfServiceService.ListAcknowledgements(
 		ctx,
-		&repositories.ListPolicyAcknowledgementsRequest{
+		&workerports.ListPolicyAcknowledgementsRequest{
 			TenantInfo: base.TenantInfo(authCtx),
 			WorkerID:   id,
 		},
@@ -192,7 +192,7 @@ func (r *QueryResolver) ProfileChangeRequests(ctx context.Context, filter *gqlmo
 		return nil, err
 	}
 
-	req := &repositories.ListProfileChangeRequestsRequest{
+	req := &workerports.ListProfileChangeRequestsRequest{
 		TenantInfo:    base.TenantInfo(authCtx),
 		IncludeWorker: true,
 	}

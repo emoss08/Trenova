@@ -6,8 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -21,7 +20,7 @@ func followUpService(
 ) (*Service, *stubConversations, *scriptedCompletion) {
 	t.Helper()
 
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		textTurn("The Operations dashboard is ready under Reports."),
 	}}
 	svc, conversations := newConversationService(completion, testDefinition())
@@ -50,7 +49,7 @@ func TestSendMessageStream_AnswersADecision(t *testing.T) {
 	svc, conversations, completion := followUpService(t, proposal)
 	actor := testActor()
 
-	result, err := svc.sendMessage(t.Context(), &serviceports.SendMessageRequest{
+	result, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
 		ThreadID:           conversations.thread.ID,
 		FollowUpProposalID: proposal.ID,
 		TenantInfo:         actor.TenantInfo(),
@@ -86,7 +85,7 @@ func TestSendMessageStream_SaysWhyAnApprovedChangeFailed(t *testing.T) {
 	svc, conversations, _ := followUpService(t, proposal)
 	actor := testActor()
 
-	_, err := svc.sendMessage(t.Context(), &serviceports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
 		ThreadID:           conversations.thread.ID,
 		FollowUpProposalID: proposal.ID,
 		TenantInfo:         actor.TenantInfo(),
@@ -160,7 +159,7 @@ func TestSendMessageStream_RefusesAFollowUpThatCannotBeAnswered(t *testing.T) {
 	}
 	actor := testActor()
 	send := func(svc *Service, threadID, proposalID pulid.ID, content string) error {
-		_, err := svc.sendMessage(t.Context(), &serviceports.SendMessageRequest{
+		_, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
 			ThreadID:           threadID,
 			Content:            content,
 			FollowUpProposalID: proposalID,
@@ -196,7 +195,7 @@ type stubPlanStore struct {
 
 func (s *stubPlanStore) ListByThread(
 	_ context.Context,
-	_ repositories.ListAgentPlansByThreadRequest,
+	_ agentports.ListAgentPlansByThreadRequest,
 ) ([]*agent.AgentPlan, error) {
 	return s.plans, nil
 }
@@ -225,7 +224,7 @@ func TestSendMessageStream_AnswersAPlanDecision(t *testing.T) {
 	svc.plans = &stubPlanStore{plans: []*agent.AgentPlan{plan}}
 	actor := testActor()
 
-	_, err := svc.sendMessage(t.Context(), &serviceports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
 		ThreadID:       conversations.thread.ID,
 		FollowUpPlanID: plan.ID,
 		TenantInfo:     actor.TenantInfo(),
@@ -252,7 +251,7 @@ func TestSendMessageStream_RefusesAPlanFollowUpThatCannotBeAnswered(t *testing.T
 	svc.plans = &stubPlanStore{plans: []*agent.AgentPlan{pending}}
 	actor := testActor()
 
-	_, err := svc.sendMessage(t.Context(), &serviceports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
 		ThreadID:       conversations.thread.ID,
 		FollowUpPlanID: pending.ID,
 		TenantInfo:     actor.TenantInfo(),
@@ -260,7 +259,7 @@ func TestSendMessageStream_RefusesAPlanFollowUpThatCannotBeAnswered(t *testing.T
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
 
-	_, err = svc.sendMessage(t.Context(), &serviceports.SendMessageRequest{
+	_, err = svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
 		ThreadID:           conversations.thread.ID,
 		FollowUpPlanID:     pending.ID,
 		FollowUpProposalID: pulid.MustNew("ap_"),
@@ -280,7 +279,7 @@ func TestFollowUpInstruction_KeepsTheReplyToWhatTheNoteAndTheCardHold(t *testing
 
 func (s *stubPlanStore) ExpirePendingByThread(
 	context.Context,
-	repositories.ExpireAgentPlansByThreadRequest,
+	agentports.ExpireAgentPlansByThreadRequest,
 ) (int, error) {
 	return 0, nil
 }

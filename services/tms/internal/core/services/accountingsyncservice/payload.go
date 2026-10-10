@@ -10,8 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -134,7 +136,7 @@ func (s *Service) salesRef(
 		dependency, enqueueErr := s.enqueueDependency(
 			ctx,
 			sess,
-			&services.AccountingSyncEnqueueRequest{
+			&accountingsyncports.AccountingSyncEnqueueRequest{
 				ObjectType:   objectType,
 				ObjectID:     inv.ID,
 				ObjectNumber: inv.Number,
@@ -152,7 +154,7 @@ func (s *Service) salesRef(
 		}
 	}
 
-	found, ok, err := sess.writer.FindDocument(ctx, &services.AccountingFindDocumentRequest{
+	found, ok, err := sess.writer.FindDocument(ctx, &accountingsyncports.AccountingFindDocumentRequest{
 		Auth:      sess.auth,
 		Kind:      objectType,
 		DocNumber: inv.Number,
@@ -175,7 +177,7 @@ func (s *Service) pushSales(
 	sess *pushSession,
 	record *accountingsync.AccountingSyncRecord,
 ) (*pushResult, error) {
-	inv, err := s.invoices.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+	inv, err := s.invoices.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         record.ObjectID,
 		TenantInfo: sess.tenant,
 	})
@@ -220,18 +222,18 @@ func (s *Service) pushSales(
 	}
 	doc.CustomerExternalID = customerID
 
-	var written *services.AccountingDocumentResult
+	var written *accountingsyncports.AccountingDocumentResult
 	if target != nil {
 		doc.ExternalID = target.ExternalID
 		doc.Refs = target.ExternalRefs
 		written, err = sess.writer.UpdateSalesDocument(ctx, doc)
 	} else {
-		written, err = s.createAdopting(ctx, sess, record, &services.AccountingFindDocumentRequest{
+		written, err = s.createAdopting(ctx, sess, record, &accountingsyncports.AccountingFindDocumentRequest{
 			DocNumber:              doc.DocNumber,
 			CounterpartyExternalID: customerID,
 			TxnDate:                doc.TxnDate,
 			Total:                  salesTotal(doc.Lines),
-		}, func() (*services.AccountingDocumentResult, error) {
+		}, func() (*accountingsyncports.AccountingDocumentResult, error) {
 			return sess.writer.CreateSalesDocument(ctx, doc)
 		})
 	}
@@ -247,7 +249,7 @@ func (s *Service) salesDocument(
 	res *resolver,
 	record *accountingsync.AccountingSyncRecord,
 	inv *invoice.Invoice,
-) (*services.AccountingSalesDocument, error) {
+) (*accountingsyncports.AccountingSalesDocument, error) {
 	sign := decimal.NewFromInt(1)
 	if record.ObjectType == accountingsync.SyncObjectCreditMemo && inv.TotalAmount.IsNegative() {
 		sign = decimal.NewFromInt(-1)
@@ -270,7 +272,7 @@ func (s *Service) salesDocument(
 		return nil, err
 	}
 
-	doc := &services.AccountingSalesDocument{
+	doc := &accountingsyncports.AccountingSalesDocument{
 		Auth:         sess.auth,
 		RequestID:    record.RequestID,
 		Kind:         record.ObjectType,
@@ -280,7 +282,7 @@ func (s *Service) salesDocument(
 		ExchangeRate: rate,
 		PrivateNote:  salesNote(inv) + sentDateNote(record, inv.InvoiceDate, sess.loc),
 		CustomerMemo: customerMemo(inv),
-		Lines:        make([]services.AccountingDocumentLine, 0, len(inv.Lines)),
+		Lines:        make([]accountingsyncports.AccountingDocumentLine, 0, len(inv.Lines)),
 		Refs:         record.ExternalRefs,
 	}
 	if limit := sess.limits.MaxDocNumberLength; limit > 0 && len([]rune(inv.Number)) > limit {
@@ -310,7 +312,7 @@ func (s *Service) salesDocument(
 		if refErr != nil {
 			return nil, refErr
 		}
-		entry := services.AccountingDocumentLine{
+		entry := accountingsyncports.AccountingDocumentLine{
 			Description: line.Description,
 			Quantity:    line.Quantity.Abs(),
 			UnitPrice:   line.UnitPrice.Mul(sign),
@@ -336,7 +338,7 @@ func (s *Service) salesDocument(
 }
 
 func setLineRef(
-	line *services.AccountingDocumentLine,
+	line *accountingsyncports.AccountingDocumentLine,
 	kind accountingsync.ReferenceKind,
 	externalID string,
 ) {
@@ -399,12 +401,12 @@ func (s *Service) applyReversal(
 	ctx context.Context,
 	sess *pushSession,
 	memo *invoice.Invoice,
-	doc *services.AccountingSalesDocument,
+	doc *accountingsyncports.AccountingSalesDocument,
 ) error {
 	if memo.SourceInvoiceAdjustmentID.IsNil() {
 		return nil
 	}
-	adjustment, err := s.adjustments.GetByID(ctx, repositories.GetInvoiceAdjustmentRequest{
+	adjustment, err := s.adjustments.GetByID(ctx, invoiceadjustmentports.GetInvoiceAdjustmentRequest{
 		ID:         memo.SourceInvoiceAdjustmentID,
 		TenantInfo: sess.tenant,
 	})
@@ -414,7 +416,7 @@ func (s *Service) applyReversal(
 	if adjustment.Kind != invoiceadjustment.KindFullReversal {
 		return nil
 	}
-	original, err := s.invoices.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+	original, err := s.invoices.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         adjustment.OriginalInvoiceID,
 		TenantInfo: sess.tenant,
 	})
@@ -452,7 +454,7 @@ func (s *Service) pushSalesVoid(
 	if created.SharesProviderDocument() {
 		return nil, sharedDocumentError(sess, documentLabel(record.ObjectType, record.ObjectNumber))
 	}
-	ref := &services.AccountingDocumentRef{
+	ref := &accountingsyncports.AccountingDocumentRef{
 		Auth:       sess.auth,
 		RequestID:  record.RequestID,
 		Kind:       record.ObjectType,
@@ -486,7 +488,7 @@ func (s *Service) settleUnsent(
 		}
 		if _, err := s.records.SupersedeOlder(
 			ctx,
-			&repositories.SupersedeAccountingSyncRecordsRequest{
+			&accountingsyncports.SupersedeAccountingSyncRecordsRequest{
 				TenantInfo:     record.TenantInfo(),
 				ConnectionID:   record.ConnectionID,
 				ObjectType:     record.ObjectType,
@@ -523,7 +525,7 @@ func (s *Service) pushPayment(
 	sess *pushSession,
 	record *accountingsync.AccountingSyncRecord,
 ) (*pushResult, error) {
-	payment, err := s.payments.GetByID(ctx, repositories.GetCustomerPaymentByIDRequest{
+	payment, err := s.payments.GetByID(ctx, customerpaymentports.GetCustomerPaymentByIDRequest{
 		ID:         record.ObjectID,
 		TenantInfo: sess.tenant,
 	})
@@ -555,7 +557,7 @@ func (s *Service) pushPayment(
 			dependency, enqueueErr := s.enqueueDependency(
 				ctx,
 				sess,
-				&services.AccountingSyncEnqueueRequest{
+				&accountingsyncports.AccountingSyncEnqueueRequest{
 					ObjectType:   record.ObjectType,
 					ObjectID:     record.ObjectID,
 					ObjectNumber: record.ObjectNumber,
@@ -604,7 +606,7 @@ func (s *Service) pushPayment(
 		return nil, err
 	}
 
-	doc := &services.AccountingPaymentDocument{
+	doc := &accountingsyncports.AccountingPaymentDocument{
 		Auth:               sess.auth,
 		RequestID:          record.RequestID,
 		ExternalID:         externalID,
@@ -622,7 +624,7 @@ func (s *Service) pushPayment(
 			sentDateNote(record, payment.AccountingDate, sess.loc),
 		TotalAmount: money.DecimalFromMinor(payment.AmountMinor),
 		Applications: make(
-			[]services.AccountingPaymentApplication,
+			[]accountingsyncports.AccountingPaymentApplication,
 			0,
 			len(payment.Applications),
 		),
@@ -632,12 +634,12 @@ func (s *Service) pushPayment(
 		return nil, err
 	}
 
-	save := func() (*services.AccountingDocumentResult, error) {
+	save := func() (*accountingsyncports.AccountingDocumentResult, error) {
 		return sess.writer.SavePayment(ctx, doc)
 	}
-	var written *services.AccountingDocumentResult
+	var written *accountingsyncports.AccountingDocumentResult
 	if doc.ExternalID == "" {
-		written, err = s.createAdopting(ctx, sess, record, &services.AccountingFindDocumentRequest{
+		written, err = s.createAdopting(ctx, sess, record, &accountingsyncports.AccountingFindDocumentRequest{
 			DocNumber:              doc.ReferenceNumber,
 			CounterpartyExternalID: doc.CustomerExternalID,
 			TxnDate:                doc.TxnDate,
@@ -709,7 +711,7 @@ func (s *Service) paymentApplications(
 	res *resolver,
 	payment *customerpayment.Payment,
 	existing []*accountingsync.AccountingSyncRecord,
-	doc *services.AccountingPaymentDocument,
+	doc *accountingsyncports.AccountingPaymentDocument,
 ) error {
 	if len(payment.Applications) == 0 {
 		return nil
@@ -718,7 +720,7 @@ func (s *Service) paymentApplications(
 	for _, app := range payment.Applications {
 		ids = append(ids, app.InvoiceID)
 	}
-	invoices, err := s.invoices.GetByIDs(ctx, repositories.GetInvoicesByIDsRequest{
+	invoices, err := s.invoices.GetByIDs(ctx, invoiceports.GetInvoicesByIDsRequest{
 		TenantInfo: sess.tenant,
 		InvoiceIDs: ids,
 	})
@@ -742,7 +744,7 @@ func (s *Service) paymentApplications(
 		if refErr != nil {
 			return refErr
 		}
-		entry := services.AccountingPaymentApplication{
+		entry := accountingsyncports.AccountingPaymentApplication{
 			InvoiceExternalID: externalID,
 			InvoiceNumber:     inv.Number,
 			AppliedAmount:     money.DecimalFromMinor(app.AppliedAmountMinor),
@@ -800,7 +802,7 @@ func (s *Service) pushPaymentVoid(
 			return nil, waitFor(other.ID, "Waiting for a change to the payment to finish sending")
 		}
 	}
-	if _, err = s.records.SupersedeOlder(ctx, &repositories.SupersedeAccountingSyncRecordsRequest{
+	if _, err = s.records.SupersedeOlder(ctx, &accountingsyncports.SupersedeAccountingSyncRecordsRequest{
 		TenantInfo:     record.TenantInfo(),
 		ConnectionID:   record.ConnectionID,
 		ObjectType:     record.ObjectType,
@@ -811,7 +813,7 @@ func (s *Service) pushPaymentVoid(
 		return nil, err
 	}
 
-	ref := &services.AccountingDocumentRef{
+	ref := &accountingsyncports.AccountingDocumentRef{
 		Auth:       sess.auth,
 		RequestID:  record.RequestID,
 		Kind:       record.ObjectType,
@@ -832,7 +834,7 @@ func (s *Service) pushCreditApplication(
 ) (*pushResult, error) {
 	app, err := s.payments.GetCreditMemoApplicationByID(
 		ctx,
-		repositories.GetCreditMemoApplicationRequest{
+		customerpaymentports.GetCreditMemoApplicationRequest{
 			ID:         record.ObjectID,
 			TenantInfo: sess.tenant,
 		},
@@ -844,7 +846,7 @@ func (s *Service) pushCreditApplication(
 		}
 		return nil, err
 	}
-	invoices, err := s.invoices.GetByIDs(ctx, repositories.GetInvoicesByIDsRequest{
+	invoices, err := s.invoices.GetByIDs(ctx, invoiceports.GetInvoicesByIDsRequest{
 		TenantInfo: sess.tenant,
 		InvoiceIDs: []pulid.ID{app.InvoiceID, app.CreditMemoInvoiceID},
 	})
@@ -900,7 +902,7 @@ func (s *Service) pushCreditApplication(
 		return nil, err
 	}
 
-	doc := &services.AccountingCreditApplicationDocument{
+	doc := &accountingsyncports.AccountingCreditApplicationDocument{
 		Auth:               sess.auth,
 		RequestID:          record.RequestID,
 		CustomerExternalID: customerID,
@@ -916,13 +918,13 @@ func (s *Service) pushCreditApplication(
 		PrivateNote: "Applies " + memo.Number + " to " + target.Number +
 			sentDateNote(record, app.AccountingDate, sess.loc),
 	}
-	written, err := s.createAdopting(ctx, sess, record, &services.AccountingFindDocumentRequest{
+	written, err := s.createAdopting(ctx, sess, record, &accountingsyncports.AccountingFindDocumentRequest{
 		CounterpartyExternalID: customerID,
 		TxnDate:                doc.TxnDate,
 		Total:                  doc.Amount,
 		AppliesToExternalIDs:   []string{invoiceID},
 		CreditExternalID:       memoID,
-	}, func() (*services.AccountingDocumentResult, error) {
+	}, func() (*accountingsyncports.AccountingDocumentResult, error) {
 		return sess.writer.CreateCreditApplication(ctx, doc)
 	})
 	if err != nil {
@@ -944,7 +946,7 @@ func (s *Service) pushCreditApplicationVoid(
 	if done, voidErr := s.settleUnsent(ctx, created, record); done {
 		return nil, voidErr
 	}
-	ref := &services.AccountingDocumentRef{
+	ref := &accountingsyncports.AccountingDocumentRef{
 		Auth:       sess.auth,
 		RequestID:  record.RequestID,
 		Kind:       record.ObjectType,

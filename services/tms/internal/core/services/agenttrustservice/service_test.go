@@ -9,9 +9,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -25,10 +28,10 @@ import (
 // bumps its version, a tier change is made only against the version it was
 // decided from, and a reader is handed a copy of the row as it stood.
 type fakeTrustRepo struct {
-	repositories.AgentToolTrustRepository
+	agentports.AgentToolTrustRepository
 	row      *agent.ToolTrust
 	recorded []agent.TrustOutcome
-	marks    []repositories.MarkToolTierChangeRequest
+	marks    []agentports.MarkToolTierChangeRequest
 	// beforeMark runs once, as the first tier change is about to be made, so
 	// a test can land another decision in between.
 	beforeMark func()
@@ -36,7 +39,7 @@ type fakeTrustRepo struct {
 
 func (f *fakeTrustRepo) Record(
 	_ context.Context,
-	req repositories.RecordToolTrustRequest,
+	req agentports.RecordToolTrustRequest,
 ) (*agent.ToolTrust, error) {
 	f.recorded = append(f.recorded, req.Outcome)
 	f.row.ToolName = req.ToolName
@@ -64,7 +67,7 @@ func (f *fakeTrustRepo) Record(
 
 func (f *fakeTrustRepo) MarkTierChange(
 	_ context.Context,
-	req repositories.MarkToolTierChangeRequest,
+	req agentports.MarkToolTierChangeRequest,
 ) (*agent.ToolTrust, error) {
 	if hook := f.beforeMark; hook != nil {
 		f.beforeMark = nil
@@ -90,13 +93,13 @@ func (f *fakeTrustRepo) MarkTierChange(
 
 // fakeDB runs a transaction's body in place.
 type fakeDB struct {
-	ports.DBConnection
+	kernelports.DBConnection
 	transactions int
 }
 
 func (f *fakeDB) WithTx(
 	ctx context.Context,
-	_ ports.TxOptions,
+	_ kernelports.TxOptions,
 	fn func(context.Context, bun.Tx) error,
 ) error {
 	f.transactions++
@@ -105,21 +108,21 @@ func (f *fakeDB) WithTx(
 }
 
 type fakeDefinitions struct {
-	repositories.AgentDefinitionRepository
+	agentdefinitionports.AgentDefinitionRepository
 	definition *agentdefinition.Definition
-	tiers      []repositories.SetAgentDefinitionToolTierRequest
+	tiers      []agentdefinitionports.SetAgentDefinitionToolTierRequest
 }
 
 func (f *fakeDefinitions) GetByID(
 	context.Context,
-	repositories.GetAgentDefinitionByIDRequest,
+	agentdefinitionports.GetAgentDefinitionByIDRequest,
 ) (*agentdefinition.Definition, error) {
 	return f.definition, nil
 }
 
 func (f *fakeDefinitions) SetToolTier(
 	_ context.Context,
-	req repositories.SetAgentDefinitionToolTierRequest,
+	req agentdefinitionports.SetAgentDefinitionToolTierRequest,
 ) error {
 	f.tiers = append(f.tiers, req)
 
@@ -127,7 +130,7 @@ func (f *fakeDefinitions) SetToolTier(
 }
 
 type fakeControls struct {
-	repositories.AgentControlRepository
+	tenantports.AgentControlRepository
 	control *tenant.AgentControl
 }
 
@@ -139,31 +142,31 @@ func (f fakeControls) GetOrCreate(
 }
 
 type fakeRuns struct {
-	repositories.AgentRunRepository
+	agentports.AgentRunRepository
 	run *agent.AgentRun
 }
 
 func (f fakeRuns) GetByID(
 	context.Context,
-	repositories.GetAgentRunByIDRequest,
+	agentports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	return f.run, nil
 }
 
 type fakeTool struct {
-	services.AgentTool
+	agentports.AgentTool
 	tier agent.AutonomyTier
 }
 
-func (f fakeTool) Policy() services.ToolPolicy {
+func (f fakeTool) Policy() agentports.ToolPolicy {
 	return trustPolicy(f.tier, agent.TierAutoExecute, agent.EgressInternal)
 }
 
 func trustPolicy(
 	tier, maxTier agent.AutonomyTier,
 	egress agent.EgressClass,
-) services.ToolPolicy {
-	return services.ToolPolicy{
+) agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          "assign_move",
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceShipmentMove,
@@ -179,11 +182,11 @@ func trustPolicy(
 }
 
 type fakeRegistry struct {
-	services.AgentToolRegistry
+	agentports.AgentToolRegistry
 	tools map[string]agent.AutonomyTier
 }
 
-func (f fakeRegistry) Get(name string) (services.AgentTool, bool) {
+func (f fakeRegistry) Get(name string) (agentports.AgentTool, bool) {
 	tier, ok := f.tools[name]
 	if !ok {
 		return nil, false
@@ -192,9 +195,9 @@ func (f fakeRegistry) Get(name string) (services.AgentTool, bool) {
 	return fakeTool{tier: tier}, true
 }
 
-type fakeAudit struct{ entries []*services.LogActionParams }
+type fakeAudit struct{ entries []*auditports.LogActionParams }
 
-func (f *fakeAudit) LogAction(params *services.LogActionParams, _ ...services.LogOption) error {
+func (f *fakeAudit) LogAction(params *auditports.LogActionParams, _ ...auditports.LogOption) error {
 	f.entries = append(f.entries, params)
 
 	return nil
@@ -322,7 +325,7 @@ func TestRecordDecision_PromotesAtThreshold(t *testing.T) {
 
 	require.Len(t, h.audit.entries, 1)
 	assert.Equal(t, permission.ResourceAgentDefinition, h.audit.entries[0].Resource)
-	assert.Equal(t, services.PrincipalTypeUser, h.audit.entries[0].PrincipalType)
+	assert.Equal(t, permissionports.PrincipalTypeUser, h.audit.entries[0].PrincipalType)
 
 	require.Len(t, h.notifier.created, 1)
 	assert.Equal(t, EventToolPromoted, h.notifier.created[0].EventType)
@@ -440,7 +443,7 @@ func TestRecordExecutionFailure_DemotesWithoutAPerson(t *testing.T) {
 	require.Len(t, h.definitions.tiers, 1)
 	assert.Equal(t, agent.TierActWithApproval, h.definitions.tiers[0].Tier)
 	require.Len(t, h.audit.entries, 1)
-	assert.Equal(t, services.PrincipalTypeSystem, h.audit.entries[0].PrincipalType,
+	assert.Equal(t, permissionports.PrincipalTypeSystem, h.audit.entries[0].PrincipalType,
 		"no person decided anything, so the change is the system's")
 }
 
@@ -468,14 +471,14 @@ func TestRecordDecision_NilInputsAreNoOps(t *testing.T) {
 }
 
 type cappedRegistry struct {
-	services.AgentToolRegistry
+	agentports.AgentToolRegistry
 }
 
 type cappedTool struct {
-	services.AgentTool
+	agentports.AgentTool
 }
 
-func (cappedTool) Policy() services.ToolPolicy {
+func (cappedTool) Policy() agentports.ToolPolicy {
 	return trustPolicy(
 		agent.TierActWithApproval,
 		agent.TierActWithApproval,
@@ -483,7 +486,7 @@ func (cappedTool) Policy() services.ToolPolicy {
 	)
 }
 
-func (cappedRegistry) Get(string) (services.AgentTool, bool) { return cappedTool{}, true }
+func (cappedRegistry) Get(string) (agentports.AgentTool, bool) { return cappedTool{}, true }
 
 // A tool that sends work outside the organization is never earned past a
 // person's approval: the streak keeps counting, and nothing is promoted.
@@ -564,20 +567,20 @@ func TestRecordDecision_ARejectionInBetweenStopsThePromotion(t *testing.T) {
 }
 
 type policyTool struct {
-	services.AgentTool
+	agentports.AgentTool
 
-	policy services.ToolPolicy
+	policy agentports.ToolPolicy
 }
 
-func (p policyTool) Policy() services.ToolPolicy { return p.policy }
+func (p policyTool) Policy() agentports.ToolPolicy { return p.policy }
 
 type policyRegistry struct {
-	services.AgentToolRegistry
+	agentports.AgentToolRegistry
 
 	tool policyTool
 }
 
-func (r policyRegistry) Get(string) (services.AgentTool, bool) { return r.tool, true }
+func (r policyRegistry) Get(string) (agentports.AgentTool, bool) { return r.tool, true }
 
 /*
 Promotion stops where the tool's policy says a call may run alone, and not one
@@ -590,7 +593,7 @@ func TestRecordDecision_PromotesNoFurtherThanThePolicyAllows(t *testing.T) {
 
 	cases := []struct {
 		name     string
-		policy   services.ToolPolicy
+		policy   agentports.ToolPolicy
 		promoted bool
 	}{
 		{

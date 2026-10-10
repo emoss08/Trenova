@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -14,10 +14,10 @@ import (
 )
 
 type recordingPublisher struct {
-	events []services.AgentEvent
+	events []agentports.AgentEvent
 }
 
-func (r *recordingPublisher) Publish(_ context.Context, event services.AgentEvent) {
+func (r *recordingPublisher) Publish(_ context.Context, event agentports.AgentEvent) {
 	r.events = append(r.events, event)
 }
 

@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/hazmatsegregationrule"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/hazmatsegregationruleservice"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/hazmatsegregationruleports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -108,7 +108,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*hazmatsegregationrule.HazmatSegregationRule], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListHazmatSegregationRuleRequest{
+				&hazmatsegregationruleports.ListHazmatSegregationRuleRequest{
 					Filter: req,
 				},
 			)
@@ -138,7 +138,7 @@ func (h *Handler) get(c *gin.Context) {
 
 	entity, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetHazmatSegregationRuleByIDRequest{
+		hazmatsegregationruleports.GetHazmatSegregationRuleByIDRequest{
 			ID:         entityID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -244,7 +244,7 @@ func (h *Handler) patch(c *gin.Context) {
 
 	existing, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetHazmatSegregationRuleByIDRequest{
+		hazmatsegregationruleports.GetHazmatSegregationRuleByIDRequest{
 			ID:         entityID,
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 		},

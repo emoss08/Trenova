@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/orderservice"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -83,7 +83,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*order.Order], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListOrdersRequest{
+				&orderports.ListOrdersRequest{
 					Filter: req,
 				},
 			)
@@ -100,7 +100,7 @@ func (h *Handler) getOption(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.Get(c.Request.Context(), repositories.GetOrderByIDRequest{
+	entity, err := h.service.Get(c.Request.Context(), orderports.GetOrderByIDRequest{
 		ID:         orderID,
 		TenantInfo: pagination.FromAuth(authCtx),
 	})
@@ -123,7 +123,7 @@ func (h *Handler) selectOptions(c *gin.Context) {
 		func() (*pagination.ListResult[*order.Order], error) {
 			return h.service.SelectOptions(
 				c.Request.Context(),
-				&repositories.OrderSelectOptionsRequest{
+				&orderports.OrderSelectOptionsRequest{
 					SelectQueryRequest: req,
 				},
 			)
@@ -141,7 +141,7 @@ func (h *Handler) get(c *gin.Context) {
 
 	entity, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetOrderByIDRequest{
+		orderports.GetOrderByIDRequest{
 			ID:              orderID,
 			TenantInfo:      pagination.FromAuth(authCtx),
 			IncludeShipment: true,
@@ -185,7 +185,7 @@ func (h *Handler) patch(c *gin.Context) {
 
 	existing, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetOrderByIDRequest{
+		orderports.GetOrderByIDRequest{
 			ID:         orderID,
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 		},

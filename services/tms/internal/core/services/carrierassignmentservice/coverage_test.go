@@ -1,13 +1,15 @@
 package carrierassignmentservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -56,7 +58,7 @@ func TestApplyCoverageChangeStampsCoverageExplicitly(t *testing.T) {
 			original.Moves[0].CoverageType = tt.initial
 
 			var persisted *shipment.Shipment
-			shipmentRepo := mocks.NewMockShipmentRepository(t)
+			shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 			shipmentRepo.EXPECT().
 				Update(mock.Anything, mock.AnythingOfType("*shipment.Shipment")).
 				RunAndReturn(func(_ context.Context, entity *shipment.Shipment) (*shipment.Shipment, error) {
@@ -65,9 +67,9 @@ func TestApplyCoverageChangeStampsCoverageExplicitly(t *testing.T) {
 				}).
 				Once()
 
-			controlRepo := mocks.NewMockShipmentControlRepository(t)
+			controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
 			controlRepo.EXPECT().
-				Get(mock.Anything, repositories.GetShipmentControlRequest{TenantInfo: tenantInfo}).
+				Get(mock.Anything, tenantports.GetShipmentControlRequest{TenantInfo: tenantInfo}).
 				Return(&tenant.ShipmentControl{}, nil).
 				Once()
 

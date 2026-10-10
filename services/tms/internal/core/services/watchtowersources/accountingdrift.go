@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -73,14 +73,14 @@ func driftAttentionText(
 
 func DescribeAccountingDriftAttention(
 	conn *accountingsync.AccountingConnection,
-	group *repositories.AccountingDriftAttentionGroup,
-) (services.WatchtowerItemInput, bool) {
+	group *accountingsyncports.AccountingDriftAttentionGroup,
+) (watchtowerports.WatchtowerItemInput, bool) {
 	if group == nil || group.Count <= 0 {
-		return services.WatchtowerItemInput{}, false
+		return watchtowerports.WatchtowerItemInput{}, false
 	}
 	provider := accountingsync.ProviderName(conn.IntegrationType)
 	severity, title, summary := driftAttentionText(provider, group.Kind, group.Count)
-	return services.WatchtowerItemInput{
+	return watchtowerports.WatchtowerItemInput{
 		TenantInfo:  tenantOf(conn),
 		SourceKind:  watchtower.SourceAccountingSync,
 		SourceID:    AccountingDriftAttentionSourceID(conn, group.Kind),

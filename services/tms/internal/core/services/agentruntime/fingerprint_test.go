@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -38,8 +38,8 @@ func newFingerprintWorld() *fingerprintWorld {
 func (w *fingerprintWorld) service() *Service {
 	return newRuntime(
 		&scriptedCompletion{},
-		&stubQueryRegistry{Tools: []serviceports.AgentQueryTool{w.lookup}},
-		&stubActionRegistry{Tools: []serviceports.AgentTool{w.write}},
+		&stubQueryRegistry{Tools: []agentports.AgentQueryTool{w.lookup}},
+		&stubActionRegistry{Tools: []agentports.AgentTool{w.write}},
 		nil,
 	)
 }

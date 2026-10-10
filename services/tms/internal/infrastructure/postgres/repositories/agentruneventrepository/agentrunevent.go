@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -30,7 +30,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.AgentRunEventRepository {
+func New(p Params) agentports.AgentRunEventRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.agentrunevent-repository"),
@@ -44,7 +44,7 @@ func New(p Params) repositories.AgentRunEventRepository {
 // absorbing it would leave a trajectory that reads plausibly and is wrong.
 func (r *repository) Append(
 	ctx context.Context,
-	req repositories.AppendAgentRunEventsRequest,
+	req agentports.AppendAgentRunEventsRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if len(req.Events) == 0 {
@@ -104,7 +104,7 @@ func (r *repository) NextSequence(
 
 func (r *repository) List(
 	ctx context.Context,
-	req repositories.ListAgentRunEventsRequest,
+	req agentports.ListAgentRunEventsRequest,
 ) ([]*agent.AgentRunEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRunEvent, error) {
 		cols := buncolgen.AgentRunEventColumns
@@ -140,7 +140,7 @@ func (r *repository) List(
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListAgentRunEventConnectionRequest,
+	req *agentports.ListAgentRunEventConnectionRequest,
 ) (*pagination.CursorListResult[*agent.AgentRunEvent], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*agent.AgentRunEvent], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -217,7 +217,7 @@ func ownedBy(sq *bun.SelectQuery, ownerKind string) *bun.SelectQuery {
 // runs for the whole installation.
 func (r *repository) Prune(
 	ctx context.Context,
-	req repositories.PruneAgentRunEventsRequest,
+	req agentports.PruneAgentRunEventsRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		cols := buncolgen.AgentRunEventColumns

@@ -8,8 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -19,28 +19,28 @@ import (
 
 func (s *Service) ListConnections(
 	ctx context.Context,
-	req *repositories.ListEDIConnectionsRequest,
+	req *ediports.ListEDIConnectionsRequest,
 ) (*pagination.ListResult[*edi.EDIConnection], error) {
 	return s.connectionRepo.ListConnections(ctx, req)
 }
 
 func (s *Service) GetConnection(
 	ctx context.Context,
-	req repositories.GetEDIConnectionByIDRequest,
+	req ediports.GetEDIConnectionByIDRequest,
 ) (*edi.EDIConnection, error) {
 	return s.connectionRepo.GetConnectionByID(ctx, req)
 }
 
 func (s *Service) ConnectionSelectOptions(
 	ctx context.Context,
-	req *repositories.EDIConnectionSelectOptionsRequest,
+	req *ediports.EDIConnectionSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDIConnection], error) {
 	return s.connectionRepo.SelectOptions(ctx, req)
 }
 
 func (s *Service) GetConnectionsByIDs(
 	ctx context.Context,
-	req repositories.GetEDIConnectionsByIDsRequest,
+	req ediports.GetEDIConnectionsByIDsRequest,
 ) ([]*edi.EDIConnection, error) {
 	return s.connectionRepo.GetConnectionsByIDs(ctx, req)
 }
@@ -48,7 +48,7 @@ func (s *Service) GetConnectionsByIDs(
 func (s *Service) CreateConnection(
 	ctx context.Context,
 	req *CreateEDIConnectionRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*edi.EDIConnection, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
@@ -92,11 +92,11 @@ func (s *Service) CreateConnection(
 func (s *Service) AcceptConnection(
 	ctx context.Context,
 	req *EDIConnectionActionRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*edi.EDIConnection, error) {
 	connection, err := s.connectionRepo.GetConnectionForUpdate(
 		ctx,
-		repositories.GetEDIConnectionForUpdateRequest{
+		ediports.GetEDIConnectionForUpdateRequest{
 			ID:         req.ConnectionID,
 			TenantInfo: req.TenantInfo,
 		},
@@ -147,7 +147,7 @@ func (s *Service) AcceptConnection(
 
 	accepted, err := s.connectionRepo.AcceptInternalConnection(
 		ctx,
-		&repositories.CreateInternalEDIConnectionAcceptanceRequest{
+		&ediports.CreateInternalEDIConnectionAcceptanceRequest{
 			Connection:    connection,
 			SourcePartner: sourcePartner,
 			TargetPartner: targetPartner,
@@ -174,7 +174,7 @@ func (s *Service) AcceptConnection(
 func (s *Service) RejectConnection(
 	ctx context.Context,
 	req *EDIConnectionActionRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*edi.EDIConnection, error) {
 	reason := strings.TrimSpace(req.Reason)
 	if reason == "" {
@@ -217,7 +217,7 @@ func (s *Service) RejectConnection(
 func (s *Service) SuspendConnection(
 	ctx context.Context,
 	req *EDIConnectionActionRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*edi.EDIConnection, error) {
 	return s.transitionConnection(
 		ctx,
@@ -243,7 +243,7 @@ func (s *Service) SuspendConnection(
 func (s *Service) RevokeConnection(
 	ctx context.Context,
 	req *EDIConnectionActionRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*edi.EDIConnection, error) {
 	return s.transitionConnection(
 		ctx,
@@ -270,14 +270,14 @@ func (s *Service) RevokeConnection(
 func (s *Service) transitionConnection(
 	ctx context.Context,
 	req *EDIConnectionActionRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	status edi.ConnectionStatus,
 	mutate func(connection *edi.EDIConnection, now int64) error,
 	comment string,
 ) (*edi.EDIConnection, error) {
 	connection, err := s.connectionRepo.GetConnectionForUpdate(
 		ctx,
-		repositories.GetEDIConnectionForUpdateRequest{
+		ediports.GetEDIConnectionForUpdateRequest{
 			ID:         req.ConnectionID,
 			TenantInfo: req.TenantInfo,
 		},
@@ -305,7 +305,7 @@ func (s *Service) transitionConnection(
 func (s *Service) CreateInternalPartnerPairViaConnection(
 	ctx context.Context,
 	req *CreateInternalPartnerPairRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*edi.InternalPartnerPair, error) {
 	connection, err := s.CreateConnection(
 		ctx,

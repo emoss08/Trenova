@@ -7,9 +7,15 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmenttypeports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/hazmatsegregationruleports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/modeprofileports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -21,21 +27,21 @@ type ValidatorParams struct {
 	fx.In
 
 	DB                        *postgres.Connection
-	AssignmentRepo            repositories.AssignmentRepository
-	ControlRepo               repositories.ShipmentControlRepository
-	CustomerRepo              repositories.CustomerRepository
-	CommodityRepo             repositories.CommodityRepository
-	HazmatSegregationRuleRepo repositories.HazmatSegregationRuleRepository
-	ShipmentRepo              repositories.ShipmentRepository
-	EquipmentTypeRepo         repositories.EquipmentTypeRepository
-	BillingRepo               repositories.BillingControlRepository
-	ModeProfileService        services.ModeProfileService
-	PermitService             services.PermitService
+	AssignmentRepo            shipmentports.AssignmentRepository
+	ControlRepo               tenantports.ShipmentControlRepository
+	CustomerRepo              customerports.CustomerRepository
+	CommodityRepo             commodityports.CommodityRepository
+	HazmatSegregationRuleRepo hazmatsegregationruleports.HazmatSegregationRuleRepository
+	ShipmentRepo              shipmentports.ShipmentRepository
+	EquipmentTypeRepo         equipmenttypeports.EquipmentTypeRepository
+	BillingRepo               tenantports.BillingControlRepository
+	ModeProfileService        modeprofileports.ModeProfileService
+	PermitService             permitports.PermitService
 }
 
 type Validator struct {
 	validator      *validationframework.TenantedValidator[*shipment.Shipment]
-	assignmentRepo repositories.AssignmentRepository
+	assignmentRepo shipmentports.AssignmentRepository
 	coverage       rateCoverage
 }
 
@@ -62,15 +68,15 @@ func NewValidator(p ValidatorParams) *Validator {
 
 type validatorDeps struct {
 	DB                *postgres.Connection
-	ControlRepo       repositories.ShipmentControlRepository
-	CustomerRepo      repositories.CustomerRepository
-	CommodityRepo     repositories.CommodityRepository
-	HazmatRuleRepo    repositories.HazmatSegregationRuleRepository
-	ShipmentRepo      repositories.ShipmentRepository
-	EquipmentTypeRepo repositories.EquipmentTypeRepository
-	BillingRepo       repositories.BillingControlRepository
-	ProfileService    services.ModeProfileService
-	PermitService     services.PermitService
+	ControlRepo       tenantports.ShipmentControlRepository
+	CustomerRepo      customerports.CustomerRepository
+	CommodityRepo     commodityports.CommodityRepository
+	HazmatRuleRepo    hazmatsegregationruleports.HazmatSegregationRuleRepository
+	ShipmentRepo      shipmentports.ShipmentRepository
+	EquipmentTypeRepo equipmenttypeports.EquipmentTypeRepository
+	BillingRepo       tenantports.BillingControlRepository
+	ProfileService    modeprofileports.ModeProfileService
+	PermitService     permitports.PermitService
 }
 
 func newValidatorBuilder(
@@ -276,7 +282,7 @@ func (v *Validator) ValidateUpdateWithOriginalAndAdvisories(
 }
 
 func createBOLValidationRule(
-	customerRepo repositories.CustomerRepository,
+	customerRepo customerports.CustomerRepository,
 ) validationframework.TenantedRule[*shipment.Shipment] {
 	return validationframework.NewTenantedRule[*shipment.Shipment]("bol_validation").
 		OnBoth().
@@ -288,13 +294,13 @@ func createBOLValidationRule(
 			valCtx *validationframework.TenantedValidationContext,
 			multiErr *errortypes.MultiError,
 		) error {
-			customer, err := customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
+			customer, err := customerRepo.GetByID(ctx, customerports.GetCustomerByIDRequest{
 				ID: entity.CustomerID,
 				TenantInfo: pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
 					BuID:  entity.BusinessUnitID,
 				},
-				CustomerFilterOptions: repositories.CustomerFilterOptions{
+				CustomerFilterOptions: customerports.CustomerFilterOptions{
 					IncludeBillingProfile: true,
 				},
 			})
@@ -321,10 +327,10 @@ func createBOLValidationRule(
 
 func loadShipmentControlForValidation(
 	ctx context.Context,
-	controlRepo repositories.ShipmentControlRepository,
+	controlRepo tenantports.ShipmentControlRepository,
 	entity *shipment.Shipment,
 ) (*tenant.ShipmentControl, error) {
-	return controlRepo.Get(ctx, repositories.GetShipmentControlRequest{
+	return controlRepo.Get(ctx, tenantports.GetShipmentControlRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -334,16 +340,16 @@ func loadShipmentControlForValidation(
 
 func loadOriginalShipmentForValidation(
 	ctx context.Context,
-	shipmentRepo repositories.ShipmentRepository,
+	shipmentRepo shipmentports.ShipmentRepository,
 	entity *shipment.Shipment,
 ) (*shipment.Shipment, error) {
-	return shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	return shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID: entity.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
 		},
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})

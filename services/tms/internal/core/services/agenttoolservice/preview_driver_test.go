@@ -9,10 +9,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/core/services/workercredentialservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -26,17 +27,17 @@ import (
 func (f *fakeDriverNotifier) Preview(
 	_ context.Context,
 	req *drivernotificationservice.DriverNotification,
-) (*serviceports.DriverNotificationPreview, error) {
+) (*notificationports.DriverNotificationPreview, error) {
 	return renderedDriverNotice(req, true), nil
 }
 
 func renderedDriverNotice(
 	req *drivernotificationservice.DriverNotification,
 	reachable bool,
-) *serviceports.DriverNotificationPreview {
+) *notificationports.DriverNotificationPreview {
 	data, _ := req.Context.(documenttemplate.DriverNotificationContext)
 
-	return &serviceports.DriverNotificationPreview{
+	return &notificationports.DriverNotificationPreview{
 		WorkerID:   req.WorkerID,
 		WorkerName: "Marcus Dell",
 		Reachable:  reachable,
@@ -52,28 +53,28 @@ type unreachableDriverNotifier struct{ fakeDriverNotifier }
 func (f *unreachableDriverNotifier) Preview(
 	_ context.Context,
 	req *drivernotificationservice.DriverNotification,
-) (*serviceports.DriverNotificationPreview, error) {
+) (*notificationports.DriverNotificationPreview, error) {
 	return renderedDriverNotice(req, false), nil
 }
 
 func (f *fakePTODecider) PreviewReject(
 	_ context.Context,
-	req *repositories.UpdatePTOStatusRequest,
-) (*serviceports.WorkerPTOTransitionPreview, error) {
+	req *workerports.UpdatePTOStatusRequest,
+) (*workerports.WorkerPTOTransitionPreview, error) {
 	return decidedPTO(req, worker.PTOStatusRequested, worker.PTOStatusRejected), nil
 }
 
 func (f *fakePTODecider) PreviewCancel(
 	_ context.Context,
-	req *repositories.UpdatePTOStatusRequest,
-) (*serviceports.WorkerPTOTransitionPreview, error) {
+	req *workerports.UpdatePTOStatusRequest,
+) (*workerports.WorkerPTOTransitionPreview, error) {
 	return decidedPTO(req, worker.PTOStatusApproved, worker.PTOStatusCancelled), nil
 }
 
 func decidedPTO(
-	req *repositories.UpdatePTOStatusRequest,
+	req *workerports.UpdatePTOStatusRequest,
 	from, to worker.PTOStatus,
-) *serviceports.WorkerPTOTransitionPreview {
+) *workerports.WorkerPTOTransitionPreview {
 	before := &worker.WorkerPTO{
 		ID:        req.ID,
 		WorkerID:  pulid.MustNew("wrk_"),
@@ -94,17 +95,17 @@ func decidedPTO(
 		after.CancellationReason = req.Reason
 	}
 
-	return &serviceports.WorkerPTOTransitionPreview{
+	return &workerports.WorkerPTOTransitionPreview{
 		Before:        before,
 		After:         &after,
 		ReturnsLedger: from == worker.PTOStatusApproved,
-		Driver: &serviceports.DriverNotificationPreview{
+		Driver: &notificationports.DriverNotificationPreview{
 			WorkerID:   before.WorkerID,
 			WorkerName: "Marcus Dell",
 			Title:      "Your time off was declined",
 			Message:    req.Reason,
 		},
-		SMS: &serviceports.DriverSMSPreview{
+		SMS: &notificationports.DriverSMSPreview{
 			PhoneNumber: "+15555550100",
 			Message:     "Dana Ortiz has rejected your PTO request. Reason: " + req.Reason,
 		},
@@ -123,7 +124,7 @@ func (s *stubCredentialActor) PreviewRenewal(
 			ExpiresAt:      &expires,
 			CredentialType: &worker.WorkerCredentialType{Name: "CDL"},
 		}},
-		Notification: &serviceports.DriverNotificationPreview{
+		Notification: &notificationports.DriverNotificationPreview{
 			WorkerID:   req.WorkerID,
 			WorkerName: "Marcus Dell",
 			Reachable:  false,
@@ -145,7 +146,7 @@ func TestNotifyDriverPreview_ShowsTheDashMessage(t *testing.T) {
 		"priority": "high",
 	})
 
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.Nil(t, drivers.sent, "a preview must not message the driver")
 	assert.Empty(t, preview.Warnings)
@@ -166,7 +167,7 @@ func TestNotifyDriverPreview_WarnsADriverWithoutDash(t *testing.T) {
 	t.Parallel()
 
 	tool := newNotifyDriverTool(&unreachableDriverNotifier{})
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), executeParams(map[string]any{
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), executeParams(map[string]any{
 		"workerId": pulid.MustNew("wrk_").String(),
 		"title":    "Call dispatch",
 		"message":  "Call when you are parked.",
@@ -186,7 +187,7 @@ func TestRejectWorkerPTOPreview_ShowsTheDecisionAndWhatTheDriverIsSent(t *testin
 		"reason": "Coverage gap on that route",
 	})
 
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.Nil(t, pto.rejected, "a preview must not reject")
 	assert.Contains(t, preview.Summary, "Coverage gap on that route")
@@ -214,7 +215,7 @@ func TestCancelWorkerPTOPreview_SaysTheDaysGoBack(t *testing.T) {
 
 	pto := &fakePTODecider{}
 	tool := newCancelWorkerPTOTool(pto)
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), executeParams(map[string]any{
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), executeParams(map[string]any{
 		"ptoId":  pulid.MustNew("wrkpto_").String(),
 		"reason": "Route covered",
 	}))
@@ -234,7 +235,7 @@ func TestRequestCredentialRenewalPreview_ShowsTheAskAndWhoCannotReadIt(t *testin
 		"note":          "Your CDL is due this month.",
 	})
 
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.Nil(t, stub.asked, "a preview must not ask")
 	assert.Contains(t, preview.Summary, "CDL (expires 2026-09-21)")

@@ -10,8 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/billingtransferservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -21,22 +23,22 @@ import (
 var errTransferredDuringPreview = errors.New("a preview transferred shipments")
 
 type fakeTransferPlanner struct {
-	plan       *serviceports.BillingTransferPlan
-	planned    *serviceports.PlanBillingTransfersRequest
-	response   *serviceports.BulkTransferToBillingResponse
-	requested  *serviceports.BulkTransferShipmentToBillingRequest
+	plan       *shipmentports.BillingTransferPlan
+	planned    *shipmentports.PlanBillingTransfersRequest
+	response   *shipmentports.BulkTransferToBillingResponse
+	requested  *shipmentports.BulkTransferShipmentToBillingRequest
 	preview    bool
-	candidates *serviceports.BillingTransferCandidateIDsResponse
-	listed     *serviceports.ListBillingTransferCandidateIDsRequest
+	candidates *shipmentports.BillingTransferCandidateIDsResponse
+	listed     *shipmentports.ListBillingTransferCandidateIDsRequest
 }
 
 func (f *fakeTransferPlanner) ListBillingTransferCandidateIDs(
 	_ context.Context,
-	req *serviceports.ListBillingTransferCandidateIDsRequest,
-) (*serviceports.BillingTransferCandidateIDsResponse, error) {
+	req *shipmentports.ListBillingTransferCandidateIDsRequest,
+) (*shipmentports.BillingTransferCandidateIDsResponse, error) {
 	f.listed = req
 	if f.candidates == nil {
-		return &serviceports.BillingTransferCandidateIDsResponse{}, nil
+		return &shipmentports.BillingTransferCandidateIDsResponse{}, nil
 	}
 
 	return f.candidates, nil
@@ -44,8 +46,8 @@ func (f *fakeTransferPlanner) ListBillingTransferCandidateIDs(
 
 func (f *fakeTransferPlanner) PlanBillingTransfers(
 	_ context.Context,
-	req *serviceports.PlanBillingTransfersRequest,
-) (*serviceports.BillingTransferPlan, error) {
+	req *shipmentports.PlanBillingTransfersRequest,
+) (*shipmentports.BillingTransferPlan, error) {
 	f.planned = req
 
 	return f.plan, nil
@@ -53,9 +55,9 @@ func (f *fakeTransferPlanner) PlanBillingTransfers(
 
 func (f *fakeTransferPlanner) BulkTransferToBilling(
 	_ context.Context,
-	req *serviceports.BulkTransferShipmentToBillingRequest,
-	_ *serviceports.RequestActor,
-) (*serviceports.BulkTransferToBillingResponse, error) {
+	req *shipmentports.BulkTransferShipmentToBillingRequest,
+	_ *permissionports.RequestActor,
+) (*shipmentports.BulkTransferToBillingResponse, error) {
 	if f.preview {
 		return nil, errTransferredDuringPreview
 	}
@@ -94,25 +96,25 @@ func TestTransferToBilling_PreviewSaysWhatHappensToEachShipment(t *testing.T) {
 	t.Parallel()
 
 	ready, completed, blocked := pulid.MustNew("shp_"), pulid.MustNew("shp_"), pulid.MustNew("shp_")
-	planner := &fakeTransferPlanner{preview: true, plan: &serviceports.BillingTransferPlan{
+	planner := &fakeTransferPlanner{preview: true, plan: &shipmentports.BillingTransferPlan{
 		Transfer: 2,
 		Refused:  1,
-		Decisions: []serviceports.BillingTransferDecision{
+		Decisions: []shipmentports.BillingTransferDecision{
 			{
 				ShipmentID: ready, ProNumber: "PRO-1", Status: shipment.StatusReadyToInvoice,
-				Outcome: serviceports.BillingTransferOutcomeTransfer, AutoApprove: true,
+				Outcome: shipmentports.BillingTransferOutcomeTransfer, AutoApprove: true,
 				Version: 4,
 			},
 			{
 				ShipmentID: completed, ProNumber: "PRO-2", Status: shipment.StatusCompleted,
-				Outcome: serviceports.BillingTransferOutcomeMarkReadyAndTransfer,
+				Outcome: shipmentports.BillingTransferOutcomeMarkReadyAndTransfer,
 			},
 			{
 				ShipmentID: blocked, ProNumber: "PRO-3", Status: shipment.StatusReadyToInvoice,
-				Outcome:     serviceports.BillingTransferOutcomeRefused,
-				FailureCode: serviceports.BillingTransferFailureRequirementsUnmet,
+				Outcome:     shipmentports.BillingTransferOutcomeRefused,
+				FailureCode: shipmentports.BillingTransferFailureRequirementsUnmet,
 				Reason:      "Shipment billing requirements must be resolved before transfer",
-				MissingRequirements: []serviceports.ShipmentBillingRequirement{
+				MissingRequirements: []shipmentports.ShipmentBillingRequirement{
 					{DocumentTypeName: "Proof of Delivery"},
 				},
 			},
@@ -160,12 +162,12 @@ func TestTransferToBilling_PreviewWarnsWhenNothingWouldGo(t *testing.T) {
 	t.Parallel()
 
 	id := pulid.MustNew("shp_")
-	planner := &fakeTransferPlanner{preview: true, plan: &serviceports.BillingTransferPlan{
+	planner := &fakeTransferPlanner{preview: true, plan: &shipmentports.BillingTransferPlan{
 		Returned: 1,
-		Decisions: []serviceports.BillingTransferDecision{{
+		Decisions: []shipmentports.BillingTransferDecision{{
 			ShipmentID:  id,
-			Outcome:     serviceports.BillingTransferOutcomeReturnToOperations,
-			FailureCode: serviceports.BillingTransferFailureReturnToOperations,
+			Outcome:     shipmentports.BillingTransferOutcomeReturnToOperations,
+			FailureCode: shipmentports.BillingTransferFailureReturnToOperations,
 			Reason:      "Shipment must be corrected in operations",
 		}},
 	}}
@@ -186,15 +188,15 @@ func TestTransferToBilling_TransfersASmallSetInTheCall(t *testing.T) {
 	t.Parallel()
 
 	first, second := pulid.MustNew("shp_"), pulid.MustNew("shp_")
-	planner := &fakeTransferPlanner{response: &serviceports.BulkTransferToBillingResponse{
+	planner := &fakeTransferPlanner{response: &shipmentports.BulkTransferToBillingResponse{
 		TotalCount:   2,
 		SuccessCount: 1,
-		Results: []serviceports.BulkTransferToBillingResult{
+		Results: []shipmentports.BulkTransferToBillingResult{
 			{ShipmentID: first, ProNumber: "PRO-1", Success: true},
 			{
 				ShipmentID:  second,
 				ProNumber:   "PRO-2",
-				FailureCode: serviceports.BillingTransferFailureRateValidation,
+				FailureCode: shipmentports.BillingTransferFailureRateValidation,
 			},
 		},
 	}}
@@ -223,7 +225,7 @@ func TestTransferToBilling_HandsALargeSetToABackgroundRun(t *testing.T) {
 	runs := &fakeRunStarter{}
 	tool := newTransferToBillingTool(planner, runs).(*transferToBillingTool)
 	params := executeParams(map[string]any{
-		paramShipmentIDs: shipmentIDs(serviceports.MaxBulkTransferToBillingShipments + 1),
+		paramShipmentIDs: shipmentIDs(shipmentports.MaxBulkTransferToBillingShipments + 1),
 	})
 
 	result, err := tool.ExecuteWithResult(t.Context(), params)
@@ -232,7 +234,7 @@ func TestTransferToBilling_HandsALargeSetToABackgroundRun(t *testing.T) {
 	require.NotNil(t, runs.started)
 	assert.Nil(t, planner.requested, "the synchronous transfer is not used")
 	assert.Equal(t, billingtransfer.RunScopeSelected, runs.started.Scope)
-	assert.Len(t, runs.started.ShipmentIDs, serviceports.MaxBulkTransferToBillingShipments+1)
+	assert.Len(t, runs.started.ShipmentIDs, shipmentports.MaxBulkTransferToBillingShipments+1)
 	assert.Equal(t, params.Actor.UserID, runs.started.TenantInfo.UserID)
 	assert.Equal(t, params.OrganizationID, runs.started.TenantInfo.OrgID)
 	assert.NotEmpty(t, result.IDs[resultRunID])
@@ -247,7 +249,7 @@ func TestTransferToBilling_ReportsARunAlreadyGoing(t *testing.T) {
 	tool := newTransferToBillingTool(&fakeTransferPlanner{}, &fakeRunStarter{err: busy})
 
 	err := tool.Execute(t.Context(), executeParams(map[string]any{
-		paramShipmentIDs: shipmentIDs(serviceports.MaxBulkTransferToBillingShipments + 1),
+		paramShipmentIDs: shipmentIDs(shipmentports.MaxBulkTransferToBillingShipments + 1),
 	}))
 	require.ErrorIs(t, err, busy)
 }
@@ -255,7 +257,7 @@ func TestTransferToBilling_ReportsARunAlreadyGoing(t *testing.T) {
 func TestTransferToBilling_PreviewOfALargeSetChecksTheFirstHundred(t *testing.T) {
 	t.Parallel()
 
-	planner := &fakeTransferPlanner{preview: true, plan: &serviceports.BillingTransferPlan{}}
+	planner := &fakeTransferPlanner{preview: true, plan: &shipmentports.BillingTransferPlan{}}
 	tool := newTransferToBillingTool(planner, &fakeRunStarter{}).(*transferToBillingTool)
 
 	preview, err := tool.Preview(t.Context(), executeParams(map[string]any{
@@ -263,7 +265,7 @@ func TestTransferToBilling_PreviewOfALargeSetChecksTheFirstHundred(t *testing.T)
 	}))
 	require.NoError(t, err)
 
-	assert.Len(t, planner.planned.ShipmentIDs, serviceports.MaxBulkTransferToBillingShipments)
+	assert.Len(t, planner.planned.ShipmentIDs, shipmentports.MaxBulkTransferToBillingShipments)
 	assert.True(t, preview.Partial)
 	assert.Contains(t, preview.Summary, "background transfer of 250 shipments")
 }
@@ -278,7 +280,7 @@ func TestTransferToBilling_RefusesArgumentsItCannotRun(t *testing.T) {
 		"not an id":     {paramShipmentIDs: []any{"PRO-1"}},
 		"bad bill type": {paramShipmentIDs: shipmentIDs(1), paramBillType: "Invoices"},
 		"too many": {
-			paramShipmentIDs: shipmentIDs(serviceports.MaxBillingTransferCandidateIDs + 1),
+			paramShipmentIDs: shipmentIDs(shipmentports.MaxBillingTransferCandidateIDs + 1),
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -298,7 +300,7 @@ func TestTransferToBilling_DeclaresItsShipmentsASubsetAPersonMayNarrow(t *testin
 	tool := newTransferToBillingTool(&fakeTransferPlanner{}, &fakeRunStarter{})
 
 	proposed := shipmentIDs(2)
-	fields := serviceports.ProposalFields(tool, map[string]any{paramShipmentIDs: proposed})
+	fields := agentports.ProposalFields(tool, map[string]any{paramShipmentIDs: proposed})
 	var subset *toolschema.Field
 	for idx := range fields {
 		if fields[idx].Name == paramShipmentIDs {
@@ -314,7 +316,7 @@ func TestTransferToBilling_DeclaresItsShipmentsASubsetAPersonMayNarrow(t *testin
 		{ID: proposed[0].(string), Label: proposed[0].(string)},
 		{ID: proposed[1].(string), Label: proposed[1].(string)},
 	}, subset.Choices, "every shipment proposed is listed for the approver to untick")
-	assert.LessOrEqual(t, serviceports.MaxBillingTransferCandidateIDs, toolschema.MaxSubsetChoices,
+	assert.LessOrEqual(t, shipmentports.MaxBillingTransferCandidateIDs, toolschema.MaxSubsetChoices,
 		"a transfer lists every shipment it may hold")
 
 	policy := tool.Policy()

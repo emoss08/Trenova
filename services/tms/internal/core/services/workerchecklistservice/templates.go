@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -16,7 +16,7 @@ import (
 
 func (s *Service) ListTemplates(
 	ctx context.Context,
-	req *repositories.ListChecklistTemplatesRequest,
+	req *workerports.ListChecklistTemplatesRequest,
 ) (*pagination.CursorListResult[*worker.WorkerChecklistTemplate], error) {
 	return s.repo.ListTemplates(ctx, req)
 }
@@ -30,7 +30,7 @@ func (s *Service) ActiveTemplates(
 
 func (s *Service) GetTemplate(
 	ctx context.Context,
-	req *repositories.GetChecklistTemplateByIDRequest,
+	req *workerports.GetChecklistTemplateByIDRequest,
 ) (*worker.WorkerChecklistTemplate, error) {
 	return s.repo.GetTemplateByID(ctx, req)
 }
@@ -46,7 +46,7 @@ func (s *Service) validateTemplate(
 	if entity.Code != "" {
 		exists, err := s.repo.TemplateCodeExists(
 			ctx,
-			&repositories.ChecklistTemplateCodeExistsRequest{
+			&workerports.ChecklistTemplateCodeExistsRequest{
 				TenantInfo: templateTenant(entity),
 				Code:       entity.Code,
 				ExcludeID:  entity.ID,
@@ -116,7 +116,7 @@ func (s *Service) UpdateTemplate(
 ) (*worker.WorkerChecklistTemplate, error) {
 	log := s.l.With(zap.String("operation", "UpdateTemplate"), zap.String("id", entity.ID.String()))
 
-	original, err := s.repo.GetTemplateByID(ctx, &repositories.GetChecklistTemplateByIDRequest{
+	original, err := s.repo.GetTemplateByID(ctx, &workerports.GetChecklistTemplateByIDRequest{
 		ID:           entity.ID,
 		TenantInfo:   templateTenant(entity),
 		IncludeItems: true,
@@ -186,7 +186,7 @@ func (s *Service) changeTemplateStatus(
 ) (*worker.WorkerChecklistTemplate, error) {
 	log := s.l.With(zap.String("operation", string(operation)), zap.String("id", req.ID.String()))
 
-	original, err := s.repo.GetTemplateByID(ctx, &repositories.GetChecklistTemplateByIDRequest{
+	original, err := s.repo.GetTemplateByID(ctx, &workerports.GetChecklistTemplateByIDRequest{
 		ID:           req.ID,
 		TenantInfo:   req.TenantInfo,
 		IncludeItems: true,
@@ -238,7 +238,7 @@ func (s *Service) CountOpenChecklistsForTemplate(
 	ctx context.Context,
 	entity *worker.WorkerChecklistTemplate,
 ) (int, error) {
-	return s.repo.CountOpenChecklists(ctx, &repositories.CountOpenChecklistsRequest{
+	return s.repo.CountOpenChecklists(ctx, &workerports.CountOpenChecklistsRequest{
 		TenantInfo: templateTenant(entity),
 		TemplateID: entity.ID,
 	})
@@ -251,7 +251,7 @@ func (s *Service) CountOpenChecklistsForTemplates(
 ) (map[pulid.ID]int, error) {
 	return s.repo.CountOpenChecklistsByTemplateIDs(
 		ctx,
-		&repositories.CountOpenChecklistsByTemplateIDsRequest{
+		&workerports.CountOpenChecklistsByTemplateIDsRequest{
 			TenantInfo:  tenantInfo,
 			TemplateIDs: templateIDs,
 		},

@@ -3,13 +3,13 @@ package telematicsservice
 import (
 	"context"
 	"fmt"
-	"github.com/emoss08/trenova/shared/intutils"
 	"sort"
 
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/geoutils"
+	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -57,7 +57,7 @@ func (s *Service) EvaluateDriverFeasibility(
 	ctx context.Context,
 	req *FeasibilityRequest,
 ) ([]*DriverFeasibility, error) {
-	states, err := s.repo.ListWorkerHOSStates(ctx, &repositories.ListWorkerHOSStatesRequest{
+	states, err := s.repo.ListWorkerHOSStates(ctx, &telematicsports.ListWorkerHOSStatesRequest{
 		TenantInfo:    req.TenantInfo,
 		IncludeWorker: true,
 	})
@@ -67,7 +67,7 @@ func (s *Service) EvaluateDriverFeasibility(
 
 	positions, err := s.repo.ListVehiclePositions(
 		ctx,
-		&repositories.ListVehiclePositionsRequest{
+		&telematicsports.ListVehiclePositionsRequest{
 			TenantInfo:     req.TenantInfo,
 			MaxAgeSeconds:  feasibilityPositionAgeSec,
 			IncludeTractor: true,

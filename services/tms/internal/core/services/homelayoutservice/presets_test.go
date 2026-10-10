@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/homelayout"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/reporting/canned"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/homelayoutports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -82,7 +82,7 @@ func TestCreatePreset_ClaimsOrgDefault(t *testing.T) {
 		})
 	h.repo.EXPECT().
 		ListRoleUserAssignments(mock.Anything, mock.Anything).
-		Return([]repositories.HomeRoleUserAssignment{
+		Return([]homelayoutports.HomeRoleUserAssignment{
 			{RoleID: roleID, UserID: userA},
 			{RoleID: roleID, UserID: userB},
 			{RoleID: pulid.MustNew("rol_"), UserID: pulid.MustNew("usr_")},
@@ -252,7 +252,7 @@ func TestListPresets_ReportsReachPerPreset(t *testing.T) {
 		}, nil)
 	h.repo.EXPECT().
 		ListRoleUserAssignments(mock.Anything, mock.Anything).
-		Return([]repositories.HomeRoleUserAssignment{
+		Return([]homelayoutports.HomeRoleUserAssignment{
 			{RoleID: roleID, UserID: sharedUser},
 			{RoleID: roleID, UserID: pulid.MustNew("usr_")},
 			// The same user through two matching roles must count once.

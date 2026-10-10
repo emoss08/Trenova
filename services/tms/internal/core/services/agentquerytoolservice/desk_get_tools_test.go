@@ -9,8 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,7 +21,7 @@ import (
 )
 
 type stubCarrierIntelEvents struct {
-	repositories.CarrierIntelEventRepository
+	carrierintelports.CarrierIntelEventRepository
 
 	events []*carrierintel.CarrierIntelEvent
 	asked  []pulid.ID
@@ -58,15 +60,15 @@ func TestGetCarrierIntelEvent_ReadsOneThroughTheBatchReader(t *testing.T) {
 }
 
 type stubWorkerCredentials struct {
-	repositories.WorkerCredentialRepository
+	workerports.WorkerCredentialRepository
 
 	credential *worker.WorkerCredential
-	last       *repositories.GetWorkerCredentialByIDRequest
+	last       *workerports.GetWorkerCredentialByIDRequest
 }
 
 func (s *stubWorkerCredentials) GetByID(
 	_ context.Context,
-	req *repositories.GetWorkerCredentialByIDRequest,
+	req *workerports.GetWorkerCredentialByIDRequest,
 ) (*worker.WorkerCredential, error) {
 	s.last = req
 
@@ -101,7 +103,7 @@ func TestGetWorkerCredential_ShowsTheNumberOnlyUnderAReachingCeiling(t *testing.
 	tool := newGetWorkerCredentialTool(repo, &fakePermissions{})
 
 	params := testParams(map[string]any{"credentialId": repo.credential.ID.String()})
-	params.Actor.PrincipalType = serviceports.PrincipalTypeUser
+	params.Actor.PrincipalType = permissionports.PrincipalTypeUser
 	result, err := tool.Query(t.Context(), params)
 	require.NoError(t, err)
 	detail := result.(workerCredentialDetail)
@@ -113,7 +115,7 @@ func TestGetWorkerCredential_ShowsTheNumberOnlyUnderAReachingCeiling(t *testing.
 	assert.True(t, repo.last.IncludeWorker)
 
 	agentParams := testParams(map[string]any{"credentialId": repo.credential.ID.String()})
-	agentParams.Actor.PrincipalType = serviceports.PrincipalTypeAgent
+	agentParams.Actor.PrincipalType = permissionports.PrincipalTypeAgent
 	result, err = tool.Query(t.Context(), agentParams)
 	require.NoError(t, err)
 	detail = result.(workerCredentialDetail)
@@ -157,14 +159,14 @@ func TestDeskGetTools_AreGatedOnTheirRecordsResource(t *testing.T) {
 }
 
 type stubServiceFailures struct {
-	repositories.ServiceFailureRepository
+	servicefailureports.ServiceFailureRepository
 
 	entity *servicefailure.ServiceFailure
 }
 
 func (s *stubServiceFailures) GetByID(
 	_ context.Context,
-	_ *repositories.GetServiceFailureByIDRequest,
+	_ *servicefailureports.GetServiceFailureByIDRequest,
 ) (*servicefailure.ServiceFailure, error) {
 	return s.entity, nil
 }

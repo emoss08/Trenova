@@ -9,9 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
@@ -30,7 +31,7 @@ func (s *Service) ensureCorrectionGroup(
 ) (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, error) {
 	rootID := entity.ID
 	if entity.CorrectionGroupID.IsNotNil() {
-		group, err := s.repo.GetCorrectionGroup(ctx, repositories.GetCorrectionGroupRequest{
+		group, err := s.repo.GetCorrectionGroup(ctx, invoiceadjustmentports.GetCorrectionGroupRequest{
 			ID: entity.CorrectionGroupID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
@@ -44,7 +45,7 @@ func (s *Service) ensureCorrectionGroup(
 
 	if group, err := s.repo.GetCorrectionGroupByRootInvoice(
 		ctx,
-		repositories.GetCorrectionGroupByRootInvoiceRequest{
+		invoiceadjustmentports.GetCorrectionGroupByRootInvoiceRequest{
 			RootInvoiceID: rootID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
@@ -67,14 +68,14 @@ func (s *Service) ensureCorrectionGroup(
 func (s *Service) executeApprovedAdjustment( //nolint:cyclop,funlen // legacy workflow
 	ctx context.Context,
 	adjustmentID pulid.ID,
-	req *servicesports.InvoiceAdjustmentRequest,
-	actor *servicesports.RequestActor,
+	req *invoiceadjustmentports.InvoiceAdjustmentRequest,
+	actor *permissionports.RequestActor,
 ) (*invoiceadjustment.InvoiceAdjustment, error) {
 	var tenantInfo pagination.TenantInfo
 	if req != nil {
 		tenantInfo = req.TenantInfo
 	}
-	adjustment, err := s.repo.GetByID(ctx, repositories.GetInvoiceAdjustmentRequest{
+	adjustment, err := s.repo.GetByID(ctx, invoiceadjustmentports.GetInvoiceAdjustmentRequest{
 		ID:         adjustmentID,
 		TenantInfo: tenantInfo,
 	})
@@ -107,7 +108,7 @@ func (s *Service) executeApprovedAdjustment( //nolint:cyclop,funlen // legacy wo
 
 	lockedInvoice, err := s.repo.LockInvoiceForUpdate(
 		ctx,
-		repositories.LockInvoiceAdjustmentRequest{
+		invoiceadjustmentports.LockInvoiceAdjustmentRequest{
 			InvoiceID:  adjustment.OriginalInvoiceID,
 			TenantInfo: tenantInfo,
 		},
@@ -117,7 +118,7 @@ func (s *Service) executeApprovedAdjustment( //nolint:cyclop,funlen // legacy wo
 	}
 
 	if req == nil || req.InvoiceID.IsNil() {
-		req = &servicesports.InvoiceAdjustmentRequest{
+		req = &invoiceadjustmentports.InvoiceAdjustmentRequest{
 			InvoiceID:      adjustment.OriginalInvoiceID,
 			Kind:           adjustment.Kind,
 			RebillStrategy: adjustment.RebillStrategy,
@@ -200,10 +201,10 @@ func (s *Service) executeApprovedAdjustment( //nolint:cyclop,funlen // legacy wo
 	); err != nil {
 		return nil, err
 	}
-	if err = servicesports.EnqueueAccountingSync(
+	if err = accountingsyncports.EnqueueAccountingSync(
 		ctx,
 		s.accountingSync,
-		servicesports.InvoiceSyncRequest(
+		accountingsyncports.InvoiceSyncRequest(
 			creditMemoInvoice,
 			accountingsync.SyncSourceAdjustmentCreditMemo,
 		),
@@ -350,7 +351,7 @@ func (s *Service) createCreditMemoQueueItem(
 	ctx context.Context,
 	adjustment *invoiceadjustment.InvoiceAdjustment,
 	sourceInvoice *invoice.Invoice,
-	preview *servicesports.InvoiceAdjustmentPreview,
+	preview *invoiceadjustmentports.InvoiceAdjustmentPreview,
 ) (*billingqueue.BillingQueueItem, error) {
 	number, err := s.generator.GenerateCreditMemoNumber(
 		ctx,
@@ -392,7 +393,7 @@ func (s *Service) createCreditMemoInvoice(
 	adjustment *invoiceadjustment.InvoiceAdjustment,
 	sourceInvoice *invoice.Invoice,
 	lines []*invoice.InvoiceLine,
-	preview *servicesports.InvoiceAdjustmentPreview,
+	preview *invoiceadjustmentports.InvoiceAdjustmentPreview,
 	postedAt int64,
 ) (*invoice.Invoice, error) {
 	subtotal := decimal.Zero
@@ -470,7 +471,7 @@ func (s *Service) createReplacementQueueItem(
 	sourceInvoice *invoice.Invoice,
 	group *invoiceadjustment.InvoiceAdjustmentCorrectionGroup,
 	lines []*invoice.InvoiceLine,
-	preview *servicesports.InvoiceAdjustmentPreview,
+	preview *invoiceadjustmentports.InvoiceAdjustmentPreview,
 ) (*billingqueue.BillingQueueItem, error) {
 	number, err := s.generator.GenerateInvoiceNumber(
 		ctx,

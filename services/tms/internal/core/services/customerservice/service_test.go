@@ -1,11 +1,14 @@
 package customerservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
 	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -27,19 +30,19 @@ func newTestValidator() *Validator {
 }
 
 type testDeps struct {
-	repo        *mocks.MockCustomerRepository
-	cacheRepo   *mocks.MockCustomerCacheRepository
-	audit       *mocks.MockAuditService
-	transformer *mocks.MockDataTransformer
+	repo        *customerportsmock.MockCustomerRepository
+	cacheRepo   *customerportsmock.MockCustomerCacheRepository
+	audit       *auditportsmock.MockAuditService
+	transformer *accessorialchargeportsmock.MockDataTransformer
 	svc         *Service
 }
 
 func setupTest(t *testing.T) *testDeps {
 	t.Helper()
-	repo := mocks.NewMockCustomerRepository(t)
-	cacheRepo := mocks.NewMockCustomerCacheRepository(t)
-	auditSvc := mocks.NewMockAuditService(t)
-	transformer := mocks.NewMockDataTransformer(t)
+	repo := customerportsmock.NewMockCustomerRepository(t)
+	cacheRepo := customerportsmock.NewMockCustomerCacheRepository(t)
+	auditSvc := auditportsmock.NewMockAuditService(t)
+	transformer := accessorialchargeportsmock.NewMockDataTransformer(t)
 	svc := &Service{
 		l:            zap.NewNop(),
 		repo:         repo,
@@ -91,15 +94,15 @@ func newCreateEntity() *customer.Customer {
 func TestNew(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockCustomerRepository(t)
-	auditSvc := mocks.NewMockAuditService(t)
-	transformer := mocks.NewMockDataTransformer(t)
+	repo := customerportsmock.NewMockCustomerRepository(t)
+	auditSvc := auditportsmock.NewMockAuditService(t)
+	transformer := accessorialchargeportsmock.NewMockDataTransformer(t)
 	validator := newTestValidator()
 
 	svc := New(Params{
 		Logger:       zap.NewNop(),
 		Repo:         repo,
-		CacheRepo:    mocks.NewMockCustomerCacheRepository(t),
+		CacheRepo:    customerportsmock.NewMockCustomerCacheRepository(t),
 		Validator:    validator,
 		AuditService: auditSvc,
 		Realtime:     &mocks.NoopRealtimeService{},
@@ -121,7 +124,7 @@ func TestGet_UsesCacheBeforeDatabase(t *testing.T) {
 
 	deps := setupTest(t)
 	entity := newTestEntity()
-	req := repositories.GetCustomerByIDRequest{
+	req := customerports.GetCustomerByIDRequest{
 		ID: entity.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -143,7 +146,7 @@ func TestGet_FallsBackToDatabaseOnCacheMiss(t *testing.T) {
 
 	deps := setupTest(t)
 	entity := newTestEntity()
-	req := repositories.GetCustomerByIDRequest{
+	req := customerports.GetCustomerByIDRequest{
 		ID: entity.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -153,7 +156,7 @@ func TestGet_FallsBackToDatabaseOnCacheMiss(t *testing.T) {
 
 	deps.cacheRepo.EXPECT().
 		GetByID(mock.Anything, req).
-		Return(nil, repositories.ErrCacheMiss).
+		Return(nil, customerports.ErrCacheMiss).
 		Once()
 	deps.repo.On("GetByID", mock.Anything, req).Return(entity, nil)
 
@@ -473,7 +476,7 @@ func TestList_Success(t *testing.T) {
 		Items: []*customer.Customer{newTestEntity()},
 		Total: 1,
 	}
-	req := &repositories.ListCustomerRequest{
+	req := &customerports.ListCustomerRequest{
 		Filter: &pagination.QueryOptions{},
 	}
 
@@ -492,7 +495,7 @@ func TestList_Error(t *testing.T) {
 	deps := setupTest(t)
 	ctx := t.Context()
 	dbErr := errors.New("db error")
-	req := &repositories.ListCustomerRequest{
+	req := &customerports.ListCustomerRequest{
 		Filter: &pagination.QueryOptions{},
 	}
 
@@ -511,7 +514,7 @@ func TestGet_Success(t *testing.T) {
 	ctx := t.Context()
 	entity := newTestEntity()
 
-	req := repositories.GetCustomerByIDRequest{
+	req := customerports.GetCustomerByIDRequest{
 		ID: entity.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -521,7 +524,7 @@ func TestGet_Success(t *testing.T) {
 
 	deps.cacheRepo.EXPECT().
 		GetByID(mock.Anything, req).
-		Return(nil, repositories.ErrCacheMiss).
+		Return(nil, customerports.ErrCacheMiss).
 		Once()
 	deps.repo.On("GetByID", mock.Anything, req).Return(entity, nil)
 
@@ -538,7 +541,7 @@ func TestGet_NotFound(t *testing.T) {
 	ctx := t.Context()
 	notFoundErr := errors.New("not found")
 
-	req := repositories.GetCustomerByIDRequest{
+	req := customerports.GetCustomerByIDRequest{
 		ID: pulid.MustNew("cus_"),
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
@@ -548,7 +551,7 @@ func TestGet_NotFound(t *testing.T) {
 
 	deps.cacheRepo.EXPECT().
 		GetByID(mock.Anything, req).
-		Return(nil, repositories.ErrCacheMiss).
+		Return(nil, customerports.ErrCacheMiss).
 		Once()
 	deps.repo.On("GetByID", mock.Anything, req).Return(nil, notFoundErr)
 
@@ -568,7 +571,7 @@ func TestSelectOptions_Success(t *testing.T) {
 		Items: []*customer.Customer{newTestEntity()},
 		Total: 1,
 	}
-	req := &repositories.CustomerSelectOptionsRequest{
+	req := &customerports.CustomerSelectOptionsRequest{
 		SelectQueryRequest: &pagination.SelectQueryRequest{
 			Query: "CUST001",
 		},
@@ -588,7 +591,7 @@ func TestSelectOptions_Error(t *testing.T) {
 	deps := setupTest(t)
 	ctx := t.Context()
 	dbErr := errors.New("db error")
-	req := &repositories.CustomerSelectOptionsRequest{
+	req := &customerports.CustomerSelectOptionsRequest{
 		SelectQueryRequest: &pagination.SelectQueryRequest{Query: "test"},
 	}
 

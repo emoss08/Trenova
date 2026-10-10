@@ -1,6 +1,11 @@
 package userservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"errors"
 	"testing"
@@ -8,8 +13,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/session"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -30,21 +35,21 @@ func newTestValidator() *Validator {
 }
 
 type testDeps struct {
-	repo        *mocks.MockUserRepository
-	roleRepo    *mocks.MockRoleRepository
-	sessionRepo *mocks.MockSessionRepository
-	storage     *mocks.MockClient
-	audit       *mocks.MockAuditService
+	repo        *tenantportsmock.MockUserRepository
+	roleRepo    *permissionportsmock.MockRoleRepository
+	sessionRepo *sessionportsmock.MockSessionRepository
+	storage     *kernelportsmock.MockClient
+	audit       *auditportsmock.MockAuditService
 	svc         *Service
 }
 
 func setupTest(t *testing.T) *testDeps {
 	t.Helper()
-	repo := mocks.NewMockUserRepository(t)
-	roleRepo := mocks.NewMockRoleRepository(t)
-	sessionRepo := mocks.NewMockSessionRepository(t)
-	storageClient := mocks.NewMockClient(t)
-	auditSvc := mocks.NewMockAuditService(t)
+	repo := tenantportsmock.NewMockUserRepository(t)
+	roleRepo := permissionportsmock.NewMockRoleRepository(t)
+	sessionRepo := sessionportsmock.NewMockSessionRepository(t)
+	storageClient := kernelportsmock.NewMockClient(t)
+	auditSvc := auditportsmock.NewMockAuditService(t)
 	svc := &Service{
 		l:            zap.NewNop(),
 		repo:         repo,
@@ -109,7 +114,7 @@ func TestList_Success(t *testing.T) {
 		Items: []*tenant.User{newTestUser()},
 		Total: 1,
 	}
-	req := &repositories.ListUsersRequest{
+	req := &tenantports.ListUsersRequest{
 		Filter: &pagination.QueryOptions{},
 	}
 
@@ -129,7 +134,7 @@ func TestGetByID_Success(t *testing.T) {
 	ctx := t.Context()
 	entity := newTestUser()
 
-	req := repositories.GetUserByIDRequest{
+	req := tenantports.GetUserByIDRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  entity.CurrentOrganizationID,
 			BuID:   entity.BusinessUnitID,
@@ -182,7 +187,7 @@ func TestBulkUpdateStatus_Success(t *testing.T) {
 		UserID: pulid.MustNew("usr_"),
 	}
 
-	req := &repositories.BulkUpdateUserStatusRequest{
+	req := &tenantports.BulkUpdateUserStatusRequest{
 		TenantInfo: tenantInfo,
 		UserIDs:    userIDs,
 		Status:     domaintypes.StatusInactive,
@@ -204,7 +209,7 @@ func TestBulkUpdateStatus_Success(t *testing.T) {
 		},
 	}
 
-	deps.repo.On("GetByIDs", mock.Anything, repositories.GetUsersByIDsRequest{
+	deps.repo.On("GetByIDs", mock.Anything, tenantports.GetUsersByIDsRequest{
 		TenantInfo: tenantInfo,
 		UserIDs:    userIDs,
 	}).Return(originals, nil)
@@ -231,13 +236,13 @@ func TestBulkUpdateStatus_GetByIDsError(t *testing.T) {
 	}
 	userIDs := []pulid.ID{pulid.MustNew("usr_")}
 
-	req := &repositories.BulkUpdateUserStatusRequest{
+	req := &tenantports.BulkUpdateUserStatusRequest{
 		TenantInfo: tenantInfo,
 		UserIDs:    userIDs,
 		Status:     domaintypes.StatusInactive,
 	}
 
-	deps.repo.On("GetByIDs", mock.Anything, repositories.GetUsersByIDsRequest{
+	deps.repo.On("GetByIDs", mock.Anything, tenantports.GetUsersByIDsRequest{
 		TenantInfo: tenantInfo,
 		UserIDs:    userIDs,
 	}).Return(nil, errors.New("get by ids failed"))
@@ -264,13 +269,13 @@ func TestBulkUpdateStatus_RepoError(t *testing.T) {
 		UserID: pulid.MustNew("usr_"),
 	}
 
-	req := &repositories.BulkUpdateUserStatusRequest{
+	req := &tenantports.BulkUpdateUserStatusRequest{
 		TenantInfo: tenantInfo,
 		UserIDs:    userIDs,
 		Status:     domaintypes.StatusInactive,
 	}
 
-	deps.repo.On("GetByIDs", mock.Anything, repositories.GetUsersByIDsRequest{
+	deps.repo.On("GetByIDs", mock.Anything, tenantports.GetUsersByIDsRequest{
 		TenantInfo: tenantInfo,
 		UserIDs:    userIDs,
 	}).Return([]*tenant.User{user1}, nil)
@@ -361,7 +366,7 @@ func TestSwitchOrganization_Success(t *testing.T) {
 		ExpiresAt: time.Now().Add(24 * time.Hour).Unix(),
 	}
 
-	req := repositories.SwitchOrganizationRequest{
+	req := tenantports.SwitchOrganizationRequest{
 		SessionID:      sessionID,
 		OrganizationID: targetOrgID,
 	}
@@ -385,7 +390,7 @@ func TestSwitchOrganization_Success(t *testing.T) {
 	deps.repo.On("UpdateCurrentOrganization", mock.Anything, userID, targetOrgID, targetBuID).
 		Return(nil)
 	deps.sessionRepo.On("Update", mock.Anything, mock.Anything).Return(nil)
-	deps.repo.On("GetByID", mock.Anything, repositories.GetUserByIDRequest{
+	deps.repo.On("GetByID", mock.Anything, tenantports.GetUserByIDRequest{
 		TenantInfo: pagination.TenantInfo{
 			UserID: userID,
 			OrgID:  targetOrgID,
@@ -411,7 +416,7 @@ func TestSwitchOrganization_InvalidSession(t *testing.T) {
 	sessionID := pulid.MustNew("ses_")
 	targetOrgID := pulid.MustNew("org_")
 
-	req := repositories.SwitchOrganizationRequest{
+	req := tenantports.SwitchOrganizationRequest{
 		SessionID:      sessionID,
 		OrganizationID: targetOrgID,
 	}
@@ -443,7 +448,7 @@ func TestSwitchOrganization_UnauthorizedOrg(t *testing.T) {
 		ExpiresAt: time.Now().Add(24 * time.Hour).Unix(),
 	}
 
-	req := repositories.SwitchOrganizationRequest{
+	req := tenantports.SwitchOrganizationRequest{
 		SessionID:      sessionID,
 		OrganizationID: targetOrgID,
 	}
@@ -573,11 +578,11 @@ func TestUpdateMySettings_Success(t *testing.T) {
 		UserID: user.ID,
 	}
 
-	deps.repo.On("GetByID", mock.Anything, repositories.GetUserByIDRequest{
+	deps.repo.On("GetByID", mock.Anything, tenantports.GetUserByIDRequest{
 		TenantInfo:         tenantInfo,
 		IncludeMemberships: true,
 	}).Return(user, nil).Once()
-	deps.repo.On("GetByID", mock.Anything, repositories.GetUserByIDRequest{
+	deps.repo.On("GetByID", mock.Anything, tenantports.GetUserByIDRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  user.CurrentOrganizationID,
 			BuID:   user.BusinessUnitID,
@@ -628,10 +633,10 @@ func TestChangeMyPassword_Success(t *testing.T) {
 		UserID: user.ID,
 	}
 
-	deps.repo.On("GetByID", mock.Anything, repositories.GetUserByIDRequest{
+	deps.repo.On("GetByID", mock.Anything, tenantports.GetUserByIDRequest{
 		TenantInfo: tenantInfo,
 	}).Return(user, nil).Once()
-	deps.repo.On("UpdatePassword", mock.Anything, mock.MatchedBy(func(req repositories.UpdateUserPasswordRequest) bool {
+	deps.repo.On("UpdatePassword", mock.Anything, mock.MatchedBy(func(req tenantports.UpdateUserPasswordRequest) bool {
 		return req.UserID == user.ID &&
 			req.OrganizationID == user.CurrentOrganizationID &&
 			req.BusinessUnitID == user.BusinessUnitID &&
@@ -641,7 +646,7 @@ func TestChangeMyPassword_Success(t *testing.T) {
 	})).
 		Return(nil).
 		Once()
-	deps.repo.On("GetByID", mock.Anything, repositories.GetUserByIDRequest{
+	deps.repo.On("GetByID", mock.Anything, tenantports.GetUserByIDRequest{
 		TenantInfo:         tenantInfo,
 		IncludeMemberships: true,
 	}).Return(user, nil).Once()
@@ -671,7 +676,7 @@ func TestChangeMyPassword_WrongCurrentPassword(t *testing.T) {
 		UserID: user.ID,
 	}
 
-	deps.repo.On("GetByID", mock.Anything, repositories.GetUserByIDRequest{
+	deps.repo.On("GetByID", mock.Anything, tenantports.GetUserByIDRequest{
 		TenantInfo: tenantInfo,
 	}).Return(user, nil).Once()
 
@@ -711,10 +716,10 @@ func TestChangeMyPassword_ValidationFailure(t *testing.T) {
 func TestNew(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockUserRepository(t)
-	sessionRepo := mocks.NewMockSessionRepository(t)
-	storageClient := mocks.NewMockClient(t)
-	auditSvc := mocks.NewMockAuditService(t)
+	repo := tenantportsmock.NewMockUserRepository(t)
+	sessionRepo := sessionportsmock.NewMockSessionRepository(t)
+	storageClient := kernelportsmock.NewMockClient(t)
+	auditSvc := auditportsmock.NewMockAuditService(t)
 	validator := newTestValidator()
 	cfg := &config.Config{
 		Storage: config.StorageConfig{

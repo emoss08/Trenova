@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -14,9 +14,9 @@ import (
 
 func (s *service) PreviewCancel(
 	ctx context.Context,
-	req *repositories.CancelShipmentRequest,
-	actor *services.RequestActor,
-) (*services.ShipmentCancelPreview, error) {
+	req *shipmentports.CancelShipmentRequest,
+	actor *permissionports.RequestActor,
+) (*shipmentports.ShipmentCancelPreview, error) {
 	if req == nil {
 		return nil, cancelRequestRequired()
 	}
@@ -30,13 +30,13 @@ func (s *service) PreviewCancel(
 	after := *original
 	after.ApplyCancel(request.CanceledByID, request.CanceledAt, request.CancelReason)
 
-	return &services.ShipmentCancelPreview{Before: original, After: &after}, nil
+	return &shipmentports.ShipmentCancelPreview{Before: original, After: &after}, nil
 }
 
 func (s *service) planCancel(
 	ctx context.Context,
-	req *repositories.CancelShipmentRequest,
-	actor *services.RequestActor,
+	req *shipmentports.CancelShipmentRequest,
+	actor *permissionports.RequestActor,
 ) (*shipment.Shipment, error) {
 	if req == nil {
 		return nil, cancelRequestRequired()
@@ -46,7 +46,7 @@ func (s *service) planCancel(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	original, err := s.repo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID: req.ShipmentID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: req.TenantInfo.OrgID,

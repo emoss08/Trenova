@@ -7,10 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/jurisdictionrule"
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/permit"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -34,7 +34,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.PermitRepository {
+func New(p Params) permitports.PermitRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.permit-repository"),
@@ -43,7 +43,7 @@ func New(p Params) repositories.PermitRepository {
 
 func (r *repository) ListByShipment(
 	ctx context.Context,
-	req *repositories.ListPermitsRequest,
+	req *permitports.ListPermitsRequest,
 ) ([]*permit.Permit, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*permit.Permit, error) {
 		cols := buncolgen.PermitColumns
@@ -73,7 +73,7 @@ func (r *repository) ListByShipment(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req *repositories.GetPermitByIDRequest,
+	req *permitports.GetPermitByIDRequest,
 ) (*permit.Permit, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*permit.Permit, error) {
 		entity := new(permit.Permit)
@@ -145,7 +145,7 @@ func (r *repository) Update(
 
 func (r *repository) ListRequirements(
 	ctx context.Context,
-	req *repositories.ListRequirementsRequest,
+	req *permitports.ListRequirementsRequest,
 ) ([]*permit.Requirement, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*permit.Requirement, error) {
 		cols := buncolgen.RequirementColumns
@@ -186,12 +186,12 @@ func (r *repository) ListRequirements(
 // row instead.
 func (r *repository) ReplaceForShipment(
 	ctx context.Context,
-	req *repositories.ReplaceRequirementsRequest,
+	req *permitports.ReplaceRequirementsRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.RequirementColumns
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			if _, dErr := r.db.DBForContext(c).
 				NewUpdate().
 				Model((*permit.Requirement)(nil)).
@@ -238,7 +238,7 @@ func (r *repository) ReplaceForShipment(
 
 func (r *repository) ResolveRouteStates(
 	ctx context.Context,
-	req *repositories.ResolveRouteStatesRequest,
+	req *permitports.ResolveRouteStatesRequest,
 ) (map[pulid.ID]pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]pulid.ID, error) {
 		if len(req.LocationIDs) == 0 {
@@ -275,7 +275,7 @@ func (r *repository) ResolveRouteStates(
 
 func (r *repository) WaiveRequirement(
 	ctx context.Context,
-	req *repositories.WaiveRequirementRepoRequest,
+	req *permitports.WaiveRequirementRepoRequest,
 ) (*permit.Requirement, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*permit.Requirement, error) {
 		cols := buncolgen.RequirementColumns
@@ -346,7 +346,7 @@ type jurisdictionRepository struct {
 
 func NewJurisdictionRuleRepository(
 	p JurisdictionParams,
-) repositories.JurisdictionRuleRepository {
+) permitports.JurisdictionRuleRepository {
 	return &jurisdictionRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.jurisdiction-rule-repository"),
@@ -355,7 +355,7 @@ func NewJurisdictionRuleRepository(
 
 func (r *jurisdictionRepository) GetActiveByStateIDs(
 	ctx context.Context,
-	req *repositories.GetJurisdictionRulesRequest,
+	req *permitports.GetJurisdictionRulesRequest,
 ) ([]*jurisdictionrule.JurisdictionRule, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*jurisdictionrule.JurisdictionRule, error) {
 		if len(req.StateIDs) == 0 {
@@ -407,7 +407,7 @@ func (r *jurisdictionRepository) GetOverrides(
 
 func (r *jurisdictionRepository) List(
 	ctx context.Context,
-	req *repositories.ListJurisdictionRulesRequest,
+	req *permitports.ListJurisdictionRulesRequest,
 ) (*pagination.ListResult[*jurisdictionrule.JurisdictionRule], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*jurisdictionrule.JurisdictionRule], error) {
 		cols := buncolgen.JurisdictionRuleColumns
@@ -443,7 +443,7 @@ func (r *jurisdictionRepository) List(
 
 func (r *jurisdictionRepository) GetByID(
 	ctx context.Context,
-	req *repositories.GetJurisdictionRuleByIDRequest,
+	req *permitports.GetJurisdictionRuleByIDRequest,
 ) (*jurisdictionrule.JurisdictionRule, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*jurisdictionrule.JurisdictionRule, error) {
 		entity := new(jurisdictionrule.JurisdictionRule)
@@ -524,7 +524,7 @@ func (r *jurisdictionRepository) Update(
 // row, which resets it to Unverified.
 func (r *jurisdictionRepository) Verify(
 	ctx context.Context,
-	req *repositories.VerifyJurisdictionRuleRequest,
+	req *permitports.VerifyJurisdictionRuleRequest,
 ) (*jurisdictionrule.JurisdictionRule, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*jurisdictionrule.JurisdictionRule, error) {
 		cols := buncolgen.JurisdictionRuleColumns
@@ -557,7 +557,7 @@ func (r *jurisdictionRepository) Verify(
 			return nil, err
 		}
 
-		return r.GetByID(ctx, &repositories.GetJurisdictionRuleByIDRequest{RuleID: req.RuleID})
+		return r.GetByID(ctx, &permitports.GetJurisdictionRuleByIDRequest{RuleID: req.RuleID})
 	})
 }
 
@@ -567,7 +567,7 @@ func (r *jurisdictionRepository) Verify(
 // reference data, so every organization's admin table shows the same rows.
 func (r *jurisdictionRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListJurisdictionRuleConnectionRequest,
+	req *permitports.ListJurisdictionRuleConnectionRequest,
 ) (*pagination.CursorListResult[*jurisdictionrule.JurisdictionRule], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*jurisdictionrule.JurisdictionRule], error) {
 		dba := r.db.DBForContext(ctx)
@@ -612,7 +612,7 @@ func (r *jurisdictionRepository) ListConnection(
 
 func (r *jurisdictionRepository) ListOverridesConnection(
 	ctx context.Context,
-	req *repositories.ListOverridesRequest,
+	req *permitports.ListOverridesRequest,
 	tenantInfo pagination.TenantInfo,
 ) (*pagination.CursorListResult[*jurisdictionrule.Override], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*jurisdictionrule.Override], error) {
@@ -663,7 +663,7 @@ func (r *jurisdictionRepository) ListOverridesConnection(
 
 func (r *jurisdictionRepository) GetOverrideByID(
 	ctx context.Context,
-	req *repositories.GetOverrideByIDRequest,
+	req *permitports.GetOverrideByIDRequest,
 ) (*jurisdictionrule.Override, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*jurisdictionrule.Override, error) {
 		entity := new(jurisdictionrule.Override)
@@ -739,7 +739,7 @@ func (r *jurisdictionRepository) UpdateOverride(
 
 func (r *jurisdictionRepository) DeleteOverride(
 	ctx context.Context,
-	req *repositories.DeleteOverrideRequest,
+	req *permitports.DeleteOverrideRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		results, err := r.db.DBForContext(ctx).

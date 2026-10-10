@@ -1,6 +1,11 @@
 package passwordresetservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/emailportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"strings"
 	"testing"
 	"time"
@@ -8,7 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
 	"github.com/emoss08/trenova/internal/core/domain/subscription"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/stretchr/testify/assert"
@@ -18,11 +24,11 @@ import (
 
 type platformHarness struct {
 	svc       *Service
-	plans     *mocks.MockPlanService
-	platform  *mocks.MockPlatformEmailService
-	tenantMsg *mocks.MockEmailService
+	plans     *platformplanportsmock.MockPlanService
+	platform  *kernelportsmock.MockPlatformEmailService
+	tenantMsg *emailportsmock.MockEmailService
 	user      *tenant.User
-	rendered  []*services.RenderMessageRequest
+	rendered  []*documenttemplateports.RenderMessageRequest
 }
 
 func newPlatformHarness(t *testing.T) *platformHarness {
@@ -32,22 +38,22 @@ func newPlatformHarness(t *testing.T) *platformHarness {
 	svc := newService(t, &stubUserRepo{user: user}, &stubTokenRepo{}, &stubSessionRepo{})
 	h := &platformHarness{
 		svc:       svc,
-		plans:     mocks.NewMockPlanService(t),
-		platform:  mocks.NewMockPlatformEmailService(t),
-		tenantMsg: mocks.NewMockEmailService(t),
+		plans:     platformplanportsmock.NewMockPlanService(t),
+		platform:  kernelportsmock.NewMockPlatformEmailService(t),
+		tenantMsg: emailportsmock.NewMockEmailService(t),
 		user:      user,
 	}
 
-	templates := mocks.NewMockDocumentTemplateResolver(t)
-	templates.EXPECT().RenderMessage(mock.Anything, mock.MatchedBy(func(req *services.RenderMessageRequest) bool {
+	templates := documenttemplateportsmock.NewMockDocumentTemplateResolver(t)
+	templates.EXPECT().RenderMessage(mock.Anything, mock.MatchedBy(func(req *documenttemplateports.RenderMessageRequest) bool {
 		h.rendered = append(h.rendered, req)
 		return true
-	})).Return(&services.RenderedMessage{
+	})).Return(&documenttemplateports.RenderedMessage{
 		Subject: "Reset your password",
 		HTML:    "<p>reset</p>",
 		Text:    "reset",
 	}, nil).Maybe()
-	orgs := mocks.NewMockOrganizationRepository(t)
+	orgs := tenantportsmock.NewMockOrganizationRepository(t)
 	orgs.EXPECT().GetByID(mock.Anything, mock.Anything).Return(&tenant.Organization{Name: "Acme"}, nil).Maybe()
 
 	svc.templates = templates
@@ -74,7 +80,7 @@ func TestResetEmailForAManagedOrganizationUsesThePlatformSender(t *testing.T) {
 			ReadOnlyUntil:  now + 7_200,
 		}, now), nil,
 	)
-	h.platform.EXPECT().SendPasswordReset(mock.Anything, mock.MatchedBy(func(msg *services.PasswordResetEmail) bool {
+	h.platform.EXPECT().SendPasswordReset(mock.Anything, mock.MatchedBy(func(msg *kernelports.PasswordResetEmail) bool {
 		return msg.To == h.user.EmailAddress &&
 			msg.Locale == i18n.Locale(h.user.Locale) &&
 			msg.Name == h.user.Name &&

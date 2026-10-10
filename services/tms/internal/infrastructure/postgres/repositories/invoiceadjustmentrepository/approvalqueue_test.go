@@ -5,8 +5,8 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -66,7 +66,7 @@ func TestListApprovalQueuePagesByKeysetInsteadOfOffset(t *testing.T) {
 	require.NoError(t, err)
 	firstCursor.IncludeTotalCount = false
 
-	first, err := repo.ListApprovalQueue(t.Context(), &repositories.ListApprovalQueueRequest{
+	first, err := repo.ListApprovalQueue(t.Context(), &invoiceadjustmentports.ListApprovalQueueRequest{
 		Filter: &pagination.QueryOptions{TenantInfo: tenant},
 		Cursor: firstCursor,
 	})
@@ -95,7 +95,7 @@ func TestListApprovalQueuePagesByKeysetInsteadOfOffset(t *testing.T) {
 	require.NoError(t, err)
 	nextCursor.IncludeTotalCount = false
 
-	next, err := repo.ListApprovalQueue(t.Context(), &repositories.ListApprovalQueueRequest{
+	next, err := repo.ListApprovalQueue(t.Context(), &invoiceadjustmentports.ListApprovalQueueRequest{
 		Filter: &pagination.QueryOptions{TenantInfo: tenant},
 		Cursor: nextCursor,
 	})
@@ -124,7 +124,7 @@ func TestListApprovalQueueCountsOnlyWhenAskedWithTheSameFilters(t *testing.T) {
 	cursor, err := pagination.NewCursorInfo(20, "")
 	require.NoError(t, err)
 
-	result, err := repo.ListApprovalQueue(t.Context(), &repositories.ListApprovalQueueRequest{
+	result, err := repo.ListApprovalQueue(t.Context(), &invoiceadjustmentports.ListApprovalQueueRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenant,
 			Query:      "ACME",
@@ -191,7 +191,7 @@ func TestListApprovalQueueRefusesCursorsFromAnotherList(t *testing.T) {
 			cursor, err := pagination.NewCursorInfo(20, encoded)
 			require.NoError(t, err)
 
-			_, err = repo.ListApprovalQueue(t.Context(), &repositories.ListApprovalQueueRequest{
+			_, err = repo.ListApprovalQueue(t.Context(), &invoiceadjustmentports.ListApprovalQueueRequest{
 				Filter: &pagination.QueryOptions{},
 				Cursor: cursor,
 			})

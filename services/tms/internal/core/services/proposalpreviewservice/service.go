@@ -16,12 +16,12 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/proposalexecutor"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -48,21 +48,21 @@ type modificationChecker interface {
 		ctx context.Context,
 		proposal *agent.AgentProposal,
 		modifications map[string]any,
-		actor *services.RequestActor,
+		actor *permissionports.RequestActor,
 	) (map[string]any, error)
 }
 
 type decisionReader interface {
 	ListByProposals(
 		ctx context.Context,
-		req repositories.ListAgentDecisionsByProposalsRequest,
+		req agentports.ListAgentDecisionsByProposalsRequest,
 	) ([]*agent.AgentDecision, error)
 }
 
 type stepReader interface {
 	ListByPlan(
 		ctx context.Context,
-		req repositories.ListAgentProposalsByPlanRequest,
+		req agentports.ListAgentProposalsByPlanRequest,
 	) ([]*agent.AgentProposal, error)
 }
 
@@ -70,7 +70,7 @@ type baselineStore interface {
 	Create(ctx context.Context, baseline *agent.ProposalBaseline) error
 	ListByProposals(
 		ctx context.Context,
-		req repositories.ListProposalBaselinesRequest,
+		req agentports.ListProposalBaselinesRequest,
 	) ([]*agent.ProposalBaseline, error)
 }
 
@@ -78,39 +78,39 @@ type Params struct {
 	fx.In
 
 	Logger      *zap.Logger
-	DB          ports.DBConnection
-	Tools       services.AgentToolRegistry
-	Versions    services.RecordVersionReader `optional:"true"`
-	Labeler     services.RecordLabeler       `optional:"true"`
-	Baselines   repositories.AgentProposalBaselineRepository
-	Decisions   repositories.AgentDecisionRepository
-	Proposals   repositories.AgentProposalRepository
+	DB          kernelports.DBConnection
+	Tools       agentports.AgentToolRegistry
+	Versions    agentports.RecordVersionReader `optional:"true"`
+	Labeler     agentports.RecordLabeler       `optional:"true"`
+	Baselines   agentports.AgentProposalBaselineRepository
+	Decisions   agentports.AgentDecisionRepository
+	Proposals   agentports.AgentProposalRepository
 	Executor    *proposalexecutor.Service
-	Permissions services.PermissionEngine
-	Metrics     *metrics.Registry             `optional:"true"`
-	Zones       services.TenantTimezoneReader `optional:"true"`
+	Permissions permissionports.PermissionEngine
+	Metrics     *metrics.Registry               `optional:"true"`
+	Zones       agentports.TenantTimezoneReader `optional:"true"`
 }
 
 type Service struct {
 	l           *zap.Logger
-	db          ports.DBConnection
-	tools       services.AgentToolRegistry
-	versions    services.RecordVersionReader
-	labeler     services.RecordLabeler
+	db          kernelports.DBConnection
+	tools       agentports.AgentToolRegistry
+	versions    agentports.RecordVersionReader
+	labeler     agentports.RecordLabeler
 	baselines   baselineStore
 	decisions   decisionReader
 	steps       stepReader
 	checker     modificationChecker
-	permissions services.PermissionEngine
+	permissions permissionports.PermissionEngine
 	metrics     *metrics.ProposalPreview
-	zones       services.TenantTimezoneReader
+	zones       agentports.TenantTimezoneReader
 	now         func() int64
 	readTimeout time.Duration
 	fileTimeout time.Duration
 }
 
 //nolint:gocritic // fx.In parameter structs are passed by value
-func New(p Params) services.ProposalPreviewService {
+func New(p Params) agentports.ProposalPreviewService {
 	svc := &Service{
 		l:           p.Logger.Named("service.proposal-preview"),
 		db:          p.DB,
@@ -144,7 +144,7 @@ func New(p Params) services.ProposalPreviewService {
 
 func (s *Service) ForProposal(
 	ctx context.Context,
-	req *services.ProposalPreviewRequest,
+	req *agentports.ProposalPreviewRequest,
 ) (*agent.ProposalPreview, error) {
 	if req == nil || req.Proposal == nil {
 		return nil, errortypes.NewNotFoundError("Proposal not found")
@@ -183,8 +183,8 @@ func (s *Service) ForProposal(
 
 func (s *Service) forProposal(
 	ctx context.Context,
-	req *services.ProposalPreviewRequest,
-	actor *services.RequestActor,
+	req *agentports.ProposalPreviewRequest,
+	actor *permissionports.RequestActor,
 ) (*agent.ProposalPreview, error) {
 	proposal := req.Proposal
 	reader := s.accessFor(req.Viewer)
@@ -210,7 +210,7 @@ func (s *Service) forProposal(
 
 func (s *Service) ForPlan(
 	ctx context.Context,
-	req *services.PlanPreviewRequest,
+	req *agentports.PlanPreviewRequest,
 ) (*agent.PlanPreview, error) {
 	if req == nil || req.Plan == nil {
 		return nil, errortypes.NewNotFoundError("Agent plan not found")
@@ -288,7 +288,7 @@ func (s *Service) ForPlan(
 func (s *Service) draftStep(
 	ctx context.Context,
 	step *agent.AgentProposal,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*draft, error) {
 	ctx, span := aitrace.StartPreview(ctx, &aitrace.PreviewSpec{
 		ToolName:       step.ToolName,
@@ -322,7 +322,7 @@ func (s *Service) planSteps(
 			return nil, errortypes.NewBusinessError("The plan's steps cannot be read")
 		}
 		var err error
-		steps, err = s.steps.ListByPlan(ctx, repositories.ListAgentProposalsByPlanRequest{
+		steps, err = s.steps.ListByPlan(ctx, agentports.ListAgentProposalsByPlanRequest{
 			PlanID:     plan.ID,
 			TenantInfo: tenantOf(plan),
 		})
@@ -350,7 +350,7 @@ func (s *Service) planSteps(
 func (s *Service) ForDecision(
 	ctx context.Context,
 	decision *agent.AgentDecision,
-	viewer *services.PreviewViewer,
+	viewer *agentports.PreviewViewer,
 ) *agent.ProposalPreview {
 	if decision == nil || decision.Preview == nil {
 		return nil
@@ -382,7 +382,7 @@ func (s *Service) observe(
 	s.metrics.RecordPreview(tool, string(preview.Coverage), time.Since(started).Seconds())
 }
 
-func viewerActor(viewer *services.PreviewViewer) *services.RequestActor {
+func viewerActor(viewer *agentports.PreviewViewer) *permissionports.RequestActor {
 	if viewer == nil {
 		return nil
 	}
@@ -390,7 +390,7 @@ func viewerActor(viewer *services.PreviewViewer) *services.RequestActor {
 	return viewer.Actor
 }
 
-func assertTenant(orgID, buID pulid.ID, actor *services.RequestActor) error {
+func assertTenant(orgID, buID pulid.ID, actor *permissionports.RequestActor) error {
 	if actor == nil || actor.OrganizationID != orgID || actor.BusinessUnitID != buID {
 		return ErrTenantMismatch
 	}

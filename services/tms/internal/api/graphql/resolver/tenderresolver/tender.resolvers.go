@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -27,7 +27,7 @@ func (r *QueryResolver) Tender(ctx context.Context, id string) (*tender.Tender, 
 		return nil, err
 	}
 
-	return r.TenderService.Get(ctx, repositories.GetTenderByIDRequest{
+	return r.TenderService.Get(ctx, tenderports.GetTenderByIDRequest{
 		TenantInfo:    base.TenantInfo(authCtx),
 		TenderID:      tenderID,
 		IncludeOffers: true,
@@ -45,7 +45,7 @@ func (r *QueryResolver) TendersByShipment(ctx context.Context, shipmentID string
 		return nil, err
 	}
 
-	return r.TenderService.ListByShipment(ctx, repositories.ListTendersByShipmentRequest{
+	return r.TenderService.ListByShipment(ctx, tenderports.ListTendersByShipmentRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		ShipmentID: parsedShipmentID,
 	})
@@ -62,7 +62,7 @@ func (r *QueryResolver) LiveTenderByMove(ctx context.Context, moveID string) (*t
 		return nil, err
 	}
 
-	return r.TenderService.GetLiveByMoveID(ctx, repositories.GetLiveTenderByMoveRequest{
+	return r.TenderService.GetLiveByMoveID(ctx, tenderports.GetLiveTenderByMoveRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		MoveID:     parsedMoveID,
 	})
@@ -88,10 +88,10 @@ func (r *TenderResolver) RoutingGuide(ctx context.Context, obj *tender.Tender) (
 		return l.RoutingGuideWithEntriesByID.Load(ctx, obj.RoutingGuideID.String())
 	}
 
-	return r.RoutingGuideService.Get(ctx, repositories.GetRoutingGuideByIDRequest{
+	return r.RoutingGuideService.Get(ctx, tenderports.GetRoutingGuideByIDRequest{
 		ID:         *obj.RoutingGuideID,
 		TenantInfo: base.TenantInfo(authCtx),
-		RoutingGuideFilterOptions: repositories.RoutingGuideFilterOptions{
+		RoutingGuideFilterOptions: tenderports.RoutingGuideFilterOptions{
 			IncludeEntries: true,
 		},
 	})

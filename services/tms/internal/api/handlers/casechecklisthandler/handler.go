@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/deskcase"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -18,7 +18,7 @@ import (
 type Params struct {
 	fx.In
 
-	Service              services.CaseChecklistService
+	Service              deskcaseports.CaseChecklistService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
@@ -27,7 +27,7 @@ type Params struct {
 // organization bills, so reading them takes billing control read and
 // changing them billing control update.
 type Handler struct {
-	service services.CaseChecklistService
+	service deskcaseports.CaseChecklistService
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
 }
@@ -65,7 +65,7 @@ func (h *Handler) list(c *gin.Context) {
 		return
 	}
 
-	result, err := h.service.List(c.Request.Context(), &services.ListCaseChecklistTemplatesRequest{
+	result, err := h.service.List(c.Request.Context(), &deskcaseports.ListCaseChecklistTemplatesRequest{
 		TenantInfo: pagination.FromAuthAsUser(authctx.GetAuthContext(c)),
 		Kind:       query.Kind,
 	})
@@ -85,7 +85,7 @@ func (h *Handler) save(c *gin.Context) {
 	}
 	authCtx := authctx.GetAuthContext(c)
 
-	saved, err := h.service.Save(c.Request.Context(), &services.SaveCaseChecklistTemplateRequest{
+	saved, err := h.service.Save(c.Request.Context(), &deskcaseports.SaveCaseChecklistTemplateRequest{
 		TenantInfo: pagination.FromAuthAsUser(authCtx),
 		UserID:     authCtx.UserID,
 		ID:         body.ID,
@@ -110,7 +110,7 @@ func (h *Handler) delete(c *gin.Context) {
 	}
 	authCtx := authctx.GetAuthContext(c)
 
-	if err = h.service.Delete(c.Request.Context(), &services.DeleteCaseChecklistTemplateRequest{
+	if err = h.service.Delete(c.Request.Context(), &deskcaseports.DeleteCaseChecklistTemplateRequest{
 		TenantInfo: pagination.FromAuthAsUser(authCtx),
 		UserID:     authCtx.UserID,
 		ID:         templateID,

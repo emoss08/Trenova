@@ -9,9 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -49,7 +49,7 @@ func newFakeCarrierIntel() *fakeCarrierIntel {
 
 func (f *fakeCarrierIntel) vetPlan() *carrierintelservice.VetPlan {
 	return &carrierintelservice.VetPlan{
-		Subject:  repositories.CarrierIntelSubject{Name: f.carrier.Name, DOTNumber: f.carrier.DOTNumber},
+		Subject:  carrierintelports.CarrierIntelSubject{Name: f.carrier.Name, DOTNumber: f.carrier.DOTNumber},
 		Provider: integration.TypeCarrierOK,
 		Depth:    carrierintel.LookupDepthFull,
 		Current:  &carrierintel.CarrierIntelSnapshot{RiskLevel: carrierintel.RiskLevelLow},
@@ -265,13 +265,13 @@ func TestVetCarrier_PreviewsTheLookupAndIsAMoneyWrite(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, intel.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.True(t, preview.Partial)
 	assert.Equal(t, agent.PreviewOperationRun, previewChange(t, preview, 0).Operation)
 	assert.Contains(t, preview.Summary, "is charged")
 
-	result, err := tool.(serviceports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	assert.Equal(t, carrierintel.LookupDepthLite, intel.vetted.Depth)
 	assert.True(t, intel.vetted.Force)
@@ -280,11 +280,11 @@ func TestVetCarrier_PreviewsTheLookupAndIsAMoneyWrite(t *testing.T) {
 	policy := tool.Policy()
 	assert.Equal(t, permission.ResourceCarrierIntelligence, policy.Resource)
 	assert.Equal(t, []agent.EgressClass{agent.EgressMoney}, policy.Egress)
-	target, ok := tool.(serviceports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, permission.ResourceCarrier, target.Resource)
 
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 		executeParams(map[string]any{paramCarrierID: intel.carrier.ID.String(), paramDepth: "Deep"})))
 }
 
@@ -297,7 +297,7 @@ func TestVetCustomerBroker_ChecksTheCustomer(t *testing.T) {
 	params := executeParams(map[string]any{fieldCustomerID: customerID.String()})
 
 	preview := previewWithoutWrites(t, intel.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, permission.ResourceCustomer, previewChange(t, preview, 0).Resource)
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -315,7 +315,7 @@ func TestSetCarrierMonitoring_ShowsOnlyTheCarriersThatChange(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, intel.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	require.Len(t, preview.Changes, 1)
 	assert.Contains(t, preview.Summary, "1 have no DOT number")
@@ -323,7 +323,7 @@ func TestSetCarrierMonitoring_ShowsOnlyTheCarriersThatChange(t *testing.T) {
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.True(t, intel.enrolled.Enroll)
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 		executeParams(map[string]any{paramCarrierIDs: []any{intel.carrier.ID.String()}})))
 }
 
@@ -338,7 +338,7 @@ func TestMarkCarrierIntelReviewed_IsAPersonsSignOff(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, intel.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, "Insurance lapse was a filing delay; certificate on file",
 		fieldByPath(t, previewChange(t, preview, 0), "reviewNote").After)
@@ -358,7 +358,7 @@ func TestApplyCarrierIntelSuggestions_AppliesEverySuggestionWhenNoneAreNamed(t *
 	params := executeParams(map[string]any{paramCarrierID: intel.carrier.ID.String()})
 
 	preview := previewWithoutWrites(t, intel.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	change := previewChange(t, preview, 0)
 	assert.Equal(t, "MC-2", fieldByPath(t, change, "mcNumber").After)
@@ -380,8 +380,8 @@ func TestApplyCarrierIntelSuggestions_AppliesEverySuggestionWhenNoneAreNamed(t *
 	assert.Equal(t, []carrierintel.SyncField{carrierintel.SyncFieldCity}, intel.applied.Fields)
 
 	refused := newApplyCarrierIntelSuggestionsTool(intel, &fakePermissionCheck{allowed: false})
-	require.Error(t, refused.(serviceports.ToolValidator).Validate(t.Context(), params))
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+	require.Error(t, refused.(agentports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 		executeParams(map[string]any{
 			paramCarrierID:        intel.carrier.ID.String(),
 			paramSuggestionFields: []any{"fax"},
@@ -400,7 +400,7 @@ func TestImportSourcedCarrier_NeedsTheCarrierCreateGrantToo(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, intel.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, agent.PreviewOperationCreate, previewChange(t, preview, 0).Operation)
 
@@ -428,18 +428,18 @@ func TestVerifyCarrierEquipment_RecordsTheCheck(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, intel.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, "1XKWD49X0KJ123456",
 		fieldByPath(t, previewChange(t, preview, 0), paramVIN).After)
 
-	result, err := tool.(serviceports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	assert.Equal(t, assignmentID, intel.verified.CarrierAssignmentID)
 	assert.Equal(t, "Match", result.Name)
 	assert.Equal(t, permission.ResourceEquipmentVerification, tool.Policy().Resource)
 
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 		executeParams(map[string]any{
 			paramCarrierAssignmentID: assignmentID.String(),
 			paramUnitType:            "Van",

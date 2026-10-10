@@ -3,12 +3,11 @@ package smsjobs
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/smsjobs/smscontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/planservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/smsjobs/smscontract"
 	"github.com/emoss08/trenova/internal/infrastructure/sms"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/activity"
@@ -21,13 +20,13 @@ type ActivitiesParams struct {
 
 	SMSClient *sms.Client
 	Logger    *zap.Logger
-	Plans     services.PlanService `optional:"true"`
+	Plans     platformplanports.PlanService `optional:"true"`
 }
 
 type Activities struct {
 	smsClient *sms.Client
 	logger    *zap.Logger
-	plans     services.PlanService
+	plans     platformplanports.PlanService
 }
 
 func NewActivities(p ActivitiesParams) *Activities {

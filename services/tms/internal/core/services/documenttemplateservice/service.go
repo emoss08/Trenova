@@ -8,8 +8,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate/starters"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/templateengine"
 	"github.com/emoss08/trenova/shared/i18n"
@@ -21,43 +22,43 @@ type Params struct {
 	fx.In
 
 	Logger         *zap.Logger
-	Repo           repositories.DocumentTemplateRepository
-	OrgRepo        repositories.OrganizationRepository
-	VersionRepo    repositories.DocumentTemplateVersionRepository
-	AssignmentRepo repositories.DocumentTemplateAssignmentRepository
-	GeneratedRepo  repositories.GeneratedDocumentRepository
+	Repo           documenttemplateports.DocumentTemplateRepository
+	OrgRepo        tenantports.OrganizationRepository
+	VersionRepo    documenttemplateports.DocumentTemplateVersionRepository
+	AssignmentRepo documenttemplateports.DocumentTemplateAssignmentRepository
+	GeneratedRepo  documenttemplateports.GeneratedDocumentRepository
 	Registry       *documenttemplate.Registry
 	Engine         *templateengine.Engine
-	Inliner        services.AssetInliner
-	PDFRenderer    services.PDFRenderer
+	Inliner        documenttemplateports.AssetInliner
+	PDFRenderer    documenttemplateports.PDFRenderer
 	Validator      *Validator
-	AuditService   services.AuditService
+	AuditService   auditports.AuditService
 
-	ContextBuilders []services.ContextBuilder `group:"documenttemplate.contextbuilders"`
+	ContextBuilders []documenttemplateports.ContextBuilder `group:"documenttemplate.contextbuilders"`
 }
 
 type Service struct {
 	l              *zap.Logger
-	repo           repositories.DocumentTemplateRepository
-	orgRepo        repositories.OrganizationRepository
-	versionRepo    repositories.DocumentTemplateVersionRepository
-	assignmentRepo repositories.DocumentTemplateAssignmentRepository
-	generatedRepo  repositories.GeneratedDocumentRepository
+	repo           documenttemplateports.DocumentTemplateRepository
+	orgRepo        tenantports.OrganizationRepository
+	versionRepo    documenttemplateports.DocumentTemplateVersionRepository
+	assignmentRepo documenttemplateports.DocumentTemplateAssignmentRepository
+	generatedRepo  documenttemplateports.GeneratedDocumentRepository
 	registry       *documenttemplate.Registry
 	engine         *templateengine.Engine
-	inliner        services.AssetInliner
-	pdf            services.PDFRenderer
+	inliner        documenttemplateports.AssetInliner
+	pdf            documenttemplateports.PDFRenderer
 	validator      *Validator
-	auditService   services.AuditService
+	auditService   auditports.AuditService
 
-	builders map[documenttemplate.Kind]services.ContextBuilder
+	builders map[documenttemplate.Kind]documenttemplateports.ContextBuilder
 }
 
-var _ services.DocumentTemplateResolver = (*Service)(nil)
+var _ documenttemplateports.DocumentTemplateResolver = (*Service)(nil)
 
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Service {
-	builders := make(map[documenttemplate.Kind]services.ContextBuilder, len(p.ContextBuilders))
+	builders := make(map[documenttemplate.Kind]documenttemplateports.ContextBuilder, len(p.ContextBuilders))
 	for _, builder := range p.ContextBuilders {
 		if builder == nil {
 			continue
@@ -93,8 +94,8 @@ func (s *Service) Registry() *documenttemplate.Registry { return s.registry }
 // render path and no caller ever holds a hardcoded string.
 func (s *Service) Resolve(
 	ctx context.Context,
-	req *services.ResolveTemplateRequest,
-) (*services.ResolvedTemplate, error) {
+	req *documenttemplateports.ResolveTemplateRequest,
+) (*documenttemplateports.ResolvedTemplate, error) {
 	def, ok := s.registry.Get(req.Kind)
 	if !ok {
 		return nil, errortypes.NewBusinessError("Template kind \"{0}\" is not registered", req.Kind)
@@ -108,7 +109,7 @@ func (s *Service) Resolve(
 		customerID = nil
 	}
 
-	row, err := s.repo.Resolve(ctx, &repositories.ResolveDocumentTemplateRequest{
+	row, err := s.repo.Resolve(ctx, &documenttemplateports.ResolveDocumentTemplateRequest{
 		TenantInfo: req.TenantInfo,
 		Kind:       req.Kind,
 		CustomerID: customerID,
@@ -125,7 +126,7 @@ func (s *Service) Resolve(
 
 	content := contentFromVersion(row.Version)
 
-	return &services.ResolvedTemplate{
+	return &documenttemplateports.ResolvedTemplate{
 		Locale:      locale,
 		Kind:        req.Kind,
 		Source:      row.Source,
@@ -150,7 +151,7 @@ func (s *Service) Resolve(
 // any of this existed.
 func (s *Service) localeFor(
 	ctx context.Context,
-	req *services.ResolveTemplateRequest,
+	req *documenttemplateports.ResolveTemplateRequest,
 ) i18n.Locale {
 	if req.Locale.IsValid() {
 		return req.Locale
@@ -160,7 +161,7 @@ func (s *Service) localeFor(
 		return i18n.Default
 	}
 
-	org, err := s.orgRepo.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+	org, err := s.orgRepo.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: req.TenantInfo,
 	})
 	if err != nil {
@@ -181,7 +182,7 @@ func (s *Service) localeFor(
 func (s *Service) builtIn(
 	kind documenttemplate.Kind,
 	locale i18n.Locale,
-) (*services.ResolvedTemplate, error) {
+) (*documenttemplateports.ResolvedTemplate, error) {
 	starter, err := starters.ForLocale(kind, locale)
 	if err != nil {
 		// A missing starter is a packaging fault, not an organization's problem,
@@ -189,7 +190,7 @@ func (s *Service) builtIn(
 		return nil, fmt.Errorf("load built-in template for %s: %w", kind, err)
 	}
 
-	content := services.TemplateContent{
+	content := documenttemplateports.TemplateContent{
 		Subject:     starter.Subject,
 		BodyHTML:    starter.BodyHTML,
 		BodyText:    starter.BodyText,
@@ -199,7 +200,7 @@ func (s *Service) builtIn(
 		Margins:     starter.Margins,
 	}
 
-	return &services.ResolvedTemplate{
+	return &documenttemplateports.ResolvedTemplate{
 		Locale:      locale,
 		Kind:        kind,
 		Source:      documenttemplate.SourceBuiltIn,
@@ -210,8 +211,8 @@ func (s *Service) builtIn(
 
 func contentFromVersion(
 	version *documenttemplate.DocumentTemplateVersion,
-) services.TemplateContent {
-	return services.TemplateContent{
+) documenttemplateports.TemplateContent {
+	return documenttemplateports.TemplateContent{
 		Subject:     version.Subject,
 		BodyHTML:    version.BodyHTML,
 		BodyText:    version.BodyText,
@@ -229,7 +230,7 @@ func contentFromVersion(
 // The separator means moving text from the body to the subject changes the hash
 // rather than producing the same concatenation, which matters because the hash
 // is what a preview cache and a generated document both key on.
-func ContentHash(content *services.TemplateContent) string {
+func ContentHash(content *documenttemplateports.TemplateContent) string {
 	return templateengine.ContentHash(strings.Join([]string{
 		content.Subject,
 		content.BodyHTML,
@@ -240,7 +241,7 @@ func ContentHash(content *services.TemplateContent) string {
 	}, "\x00"))
 }
 
-func contentHashOr(stored string, content *services.TemplateContent) string {
+func contentHashOr(stored string, content *documenttemplateports.TemplateContent) string {
 	if strings.TrimSpace(stored) != "" {
 		return stored
 	}
@@ -282,7 +283,7 @@ type compileOptions struct {
 // compile parses every channel a kind declares and collects the union of paths.
 func (s *Service) compile(
 	def *documenttemplate.KindDefinition,
-	content *services.TemplateContent,
+	content *documenttemplateports.TemplateContent,
 	opts compileOptions,
 ) *compiledVersion {
 	result := &compiledVersion{
@@ -390,7 +391,7 @@ func warningsFrom(diags templateengine.Diagnostics) []documenttemplate.Generated
 func (s *Service) buildContext(
 	ctx context.Context,
 	kind documenttemplate.Kind,
-	req *services.BuildContextRequest,
+	req *documenttemplateports.BuildContextRequest,
 ) (any, error) {
 	builder, ok := s.builders[kind]
 	if !ok {

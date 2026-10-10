@@ -1,10 +1,11 @@
 package tablechangealertservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/tablechangealertportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/tablechangealert"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/tablechangealertports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -37,13 +38,13 @@ func TestPlanUpdateSubscription_ReadsOnlyTheCallersOwnAndChecksTheAllowlist(t *t
 
 	owner := pulid.MustNew("usr_")
 	stored := ownedSubscription(owner)
-	subs := mocks.NewMockTCASubscriptionRepository(t)
+	subs := tablechangealertportsmock.NewMockTCASubscriptionRepository(t)
 	subs.EXPECT().GetByID(mock.Anything, mock.MatchedBy(
-		func(req repositories.GetTCASubscriptionByIDRequest) bool {
+		func(req tablechangealertports.GetTCASubscriptionByIDRequest) bool {
 			return req.SubscriptionID == stored.ID && req.TenantInfo.UserID == owner
 		},
 	)).Return(stored, nil)
-	allowlist := mocks.NewMockTCAAllowlistRepository(t)
+	allowlist := tablechangealertportsmock.NewMockTCAAllowlistRepository(t)
 	allowlist.EXPECT().IsTableAllowed(mock.Anything, "workers", mock.Anything).Return(false, nil)
 	svc := &Service{l: zap.NewNop(), subRepo: subs, allowlistRepo: allowlist}
 
@@ -62,7 +63,7 @@ func TestPlanSetSubscriptionStatus_PausesACopy(t *testing.T) {
 
 	owner := pulid.MustNew("usr_")
 	stored := ownedSubscription(owner)
-	subs := mocks.NewMockTCASubscriptionRepository(t)
+	subs := tablechangealertportsmock.NewMockTCASubscriptionRepository(t)
 	subs.EXPECT().GetByID(mock.Anything, mock.Anything).Return(stored, nil)
 	svc := &Service{l: zap.NewNop(), subRepo: subs}
 

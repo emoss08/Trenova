@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -57,7 +57,7 @@ func (s *Service) GetEDISummary(
 	if feedLimit <= 0 {
 		feedLimit = defaultSummaryFeedLimit
 	}
-	countsReq := repositories.GetEDIMessageStatusCountsRequest{
+	countsReq := ediports.GetEDIMessageStatusCountsRequest{
 		TenantInfo: req.TenantInfo,
 		Since:      req.Since,
 	}
@@ -72,7 +72,7 @@ func (s *Service) GetEDISummary(
 	}
 	overdueAcks, err := s.messageRepo.GetOverdueAckCount(
 		ctx,
-		repositories.GetEDIOverdueAckCountRequest{
+		ediports.GetEDIOverdueAckCountRequest{
 			TenantInfo:   req.TenantInfo,
 			PendingSince: timeutils.NowUnix() - overdueAge,
 		},
@@ -82,7 +82,7 @@ func (s *Service) GetEDISummary(
 	}
 	fileCounts, err := s.inboundFileRepo.GetInboundFileStatusCounts(
 		ctx,
-		repositories.GetEDIInboundFileStatusCountsRequest{
+		ediports.GetEDIInboundFileStatusCountsRequest{
 			TenantInfo: req.TenantInfo,
 			Since:      req.Since,
 		},
@@ -92,7 +92,7 @@ func (s *Service) GetEDISummary(
 	}
 	transferCounts, err := s.transferRepo.GetInboundStatusCounts(
 		ctx,
-		repositories.GetEDITransferStatusCountsRequest{
+		ediports.GetEDITransferStatusCountsRequest{
 			TenantInfo: req.TenantInfo,
 			Since:      req.Since,
 		},
@@ -102,7 +102,7 @@ func (s *Service) GetEDISummary(
 	}
 	deadLettered, err := s.messageRepo.ListRecentDeadLettered(
 		ctx,
-		&repositories.ListRecentEDIMessageFailuresRequest{
+		&ediports.ListRecentEDIMessageFailuresRequest{
 			TenantInfo: req.TenantInfo,
 			Limit:      feedLimit,
 		},
@@ -112,7 +112,7 @@ func (s *Service) GetEDISummary(
 	}
 	quarantined, err := s.inboundFileRepo.ListRecentQuarantined(
 		ctx,
-		repositories.ListRecentQuarantinedEDIInboundFilesRequest{
+		ediports.ListRecentQuarantinedEDIInboundFilesRequest{
 			TenantInfo: req.TenantInfo,
 			Limit:      feedLimit,
 		},
@@ -142,21 +142,21 @@ func (s *Service) GetEDIAttentionCount(
 	}
 	deliveryCounts, err := s.messageRepo.GetDeliveryStatusCounts(
 		ctx,
-		repositories.GetEDIMessageStatusCountsRequest{TenantInfo: req.TenantInfo},
+		ediports.GetEDIMessageStatusCountsRequest{TenantInfo: req.TenantInfo},
 	)
 	if err != nil {
 		return 0, err
 	}
 	fileCounts, err := s.inboundFileRepo.GetInboundFileStatusCounts(
 		ctx,
-		repositories.GetEDIInboundFileStatusCountsRequest{TenantInfo: req.TenantInfo},
+		ediports.GetEDIInboundFileStatusCountsRequest{TenantInfo: req.TenantInfo},
 	)
 	if err != nil {
 		return 0, err
 	}
 	overdueAcks, err := s.messageRepo.GetOverdueAckCount(
 		ctx,
-		repositories.GetEDIOverdueAckCountRequest{
+		ediports.GetEDIOverdueAckCountRequest{
 			TenantInfo:   req.TenantInfo,
 			PendingSince: timeutils.NowUnix() - overdueAge,
 		},
@@ -179,13 +179,13 @@ type GetEDIPartnerScorecardsRequest struct {
 func (s *Service) GetEDIPartnerScorecards(
 	ctx context.Context,
 	req *GetEDIPartnerScorecardsRequest,
-) ([]*repositories.EDIPartnerScorecardRow, error) {
+) ([]*ediports.EDIPartnerScorecardRow, error) {
 	overdueAge := req.OverdueAckAge
 	if overdueAge <= 0 {
 		overdueAge = defaultOverdueAckAgeSeconds
 	}
 	now := timeutils.NowUnix()
-	return s.messageRepo.GetPartnerScorecards(ctx, &repositories.GetEDIPartnerScorecardsRequest{
+	return s.messageRepo.GetPartnerScorecards(ctx, &ediports.GetEDIPartnerScorecardsRequest{
 		TenantInfo:             req.TenantInfo,
 		Since:                  req.Since,
 		OverdueAckPendingSince: now - overdueAge,
@@ -201,7 +201,7 @@ type GetEDIVolumeSeriesRequest struct {
 
 type EDIVolumeSeries struct {
 	BucketSeconds int64
-	Points        []*repositories.EDIVolumePoint
+	Points        []*ediports.EDIVolumePoint
 }
 
 func (s *Service) GetEDIVolumeSeries(
@@ -213,7 +213,7 @@ func (s *Service) GetEDIVolumeSeries(
 		since = timeutils.NowUnix() - defaultVolumeSeriesWindow
 	}
 	bucket := volumeBucketFor(timeutils.NowUnix() - since)
-	points, err := s.messageRepo.GetVolumeSeries(ctx, repositories.GetEDIVolumeSeriesRequest{
+	points, err := s.messageRepo.GetVolumeSeries(ctx, ediports.GetEDIVolumeSeriesRequest{
 		TenantInfo:    req.TenantInfo,
 		Since:         since,
 		BucketSeconds: bucket,

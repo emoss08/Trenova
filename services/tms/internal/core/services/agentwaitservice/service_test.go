@@ -5,8 +5,6 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentwaitjobs/agentwaitcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentwait"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
@@ -14,9 +12,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentwaitjobs/agentwaitcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -30,10 +33,10 @@ import (
 const now int64 = 1_800_000_000
 
 type memoryWaits struct {
-	repositories.AgentWaitRepository
+	agentwaitports.AgentWaitRepository
 
 	items   map[pulid.ID]*agentwait.Wait
-	resumed []repositories.MarkAgentWaitResumedRequest
+	resumed []agentwaitports.MarkAgentWaitResumedRequest
 }
 
 func newMemoryWaits(items ...*agentwait.Wait) *memoryWaits {
@@ -52,7 +55,7 @@ func (m *memoryWaits) Insert(_ context.Context, entity *agentwait.Wait) (*agentw
 	return entity, nil
 }
 
-func (m *memoryWaits) Get(_ context.Context, req *repositories.GetAgentWaitRequest) (*agentwait.Wait, error) {
+func (m *memoryWaits) Get(_ context.Context, req *agentwaitports.GetAgentWaitRequest) (*agentwait.Wait, error) {
 	wait, ok := m.items[req.ID]
 	if !ok || (req.ThreadID.IsNotNil() && wait.ThreadID != req.ThreadID) {
 		return nil, errortypes.NewNotFoundError("Wait not found")
@@ -63,7 +66,7 @@ func (m *memoryWaits) Get(_ context.Context, req *repositories.GetAgentWaitReque
 
 func (m *memoryWaits) ListOpenWatching(
 	_ context.Context,
-	req *repositories.ListOpenWaitsWatchingRequest,
+	req *agentwaitports.ListOpenWaitsWatchingRequest,
 ) ([]*agentwait.Wait, error) {
 	out := make([]*agentwait.Wait, 0, len(m.items))
 	for _, wait := range m.items {
@@ -81,7 +84,7 @@ func (m *memoryWaits) ListOpenWatching(
 
 func (m *memoryWaits) ListOpenOfKinds(
 	_ context.Context,
-	req *repositories.ListOpenWaitsOfKindsRequest,
+	req *agentwaitports.ListOpenWaitsOfKindsRequest,
 ) ([]*agentwait.Wait, error) {
 	out := make([]*agentwait.Wait, 0, len(m.items))
 	for _, wait := range m.items {
@@ -95,7 +98,7 @@ func (m *memoryWaits) ListOpenOfKinds(
 
 func (m *memoryWaits) ListOpenByThreads(
 	_ context.Context,
-	req *repositories.ListOpenWaitsByThreadsRequest,
+	req *agentwaitports.ListOpenWaitsByThreadsRequest,
 ) (map[pulid.ID][]*agentwait.Wait, error) {
 	out := make(map[pulid.ID][]*agentwait.Wait, len(req.ThreadIDs))
 	for _, wait := range m.items {
@@ -109,7 +112,7 @@ func (m *memoryWaits) ListOpenByThreads(
 
 func (m *memoryWaits) ListOverdueAcrossTenants(
 	_ context.Context,
-	req *repositories.ListOverdueWaitsRequest,
+	req *agentwaitports.ListOverdueWaitsRequest,
 ) ([]*agentwait.Wait, error) {
 	out := make([]*agentwait.Wait, 0, len(m.items))
 	for _, wait := range m.items {
@@ -123,14 +126,14 @@ func (m *memoryWaits) ListOverdueAcrossTenants(
 
 func (m *memoryWaits) UpdateCondition(
 	_ context.Context,
-	req *repositories.UpdateAgentWaitConditionRequest,
+	req *agentwaitports.UpdateAgentWaitConditionRequest,
 ) error {
 	m.items[req.ID].Condition = req.Condition
 
 	return nil
 }
 
-func (m *memoryWaits) SetDue(_ context.Context, req *repositories.SetAgentWaitDueRequest) error {
+func (m *memoryWaits) SetDue(_ context.Context, req *agentwaitports.SetAgentWaitDueRequest) error {
 	if wait, ok := m.items[req.ID]; ok {
 		wait.DueAt = req.DueAt
 		if req.WorkflowID != "" {
@@ -143,7 +146,7 @@ func (m *memoryWaits) SetDue(_ context.Context, req *repositories.SetAgentWaitDu
 
 func (m *memoryWaits) Resolve(
 	_ context.Context,
-	req *repositories.ResolveAgentWaitRequest,
+	req *agentwaitports.ResolveAgentWaitRequest,
 ) (*agentwait.Wait, bool, error) {
 	wait := m.items[req.ID]
 	if !wait.Status.Open() {
@@ -155,7 +158,7 @@ func (m *memoryWaits) Resolve(
 	return wait, true, nil
 }
 
-func (m *memoryWaits) MarkResumed(_ context.Context, req *repositories.MarkAgentWaitResumedRequest) error {
+func (m *memoryWaits) MarkResumed(_ context.Context, req *agentwaitports.MarkAgentWaitResumedRequest) error {
 	m.resumed = append(m.resumed, *req)
 	wait := m.items[req.ID]
 	wait.ResumedTurnID = req.TurnID
@@ -165,12 +168,12 @@ func (m *memoryWaits) MarkResumed(_ context.Context, req *repositories.MarkAgent
 }
 
 type fakeMoves struct {
-	repositories.ShipmentMoveRepository
+	shipmentports.ShipmentMoveRepository
 
 	move *shipment.ShipmentMove
 }
 
-func (f *fakeMoves) GetByID(context.Context, *repositories.GetMoveByIDRequest) (*shipment.ShipmentMove, error) {
+func (f *fakeMoves) GetByID(context.Context, *shipmentports.GetMoveByIDRequest) (*shipment.ShipmentMove, error) {
 	if f.move == nil {
 		return nil, errortypes.NewNotFoundError("Move not found")
 	}
@@ -179,14 +182,14 @@ func (f *fakeMoves) GetByID(context.Context, *repositories.GetMoveByIDRequest) (
 }
 
 type fakeHOS struct {
-	repositories.TelematicsRepository
+	telematicsports.TelematicsRepository
 
 	state *telematics.WorkerHOSState
 }
 
 func (f *fakeHOS) GetWorkerHOSState(
 	context.Context,
-	repositories.GetWorkerHOSStateRequest,
+	telematicsports.GetWorkerHOSStateRequest,
 ) (*telematics.WorkerHOSState, error) {
 	if f.state == nil {
 		return nil, errortypes.NewNotFoundError("No clock")
@@ -211,7 +214,7 @@ type signal struct {
 }
 
 type fakeWorkflows struct {
-	serviceports.WorkflowStarter
+	kernelports.WorkflowStarter
 
 	started  []string
 	signals  []signal
@@ -246,7 +249,7 @@ type fakeTurns struct {
 	started []assistantturnservice.StartRequest
 }
 
-func (f *fakeTurns) Active(context.Context, repositories.ActiveAssistantTurnRequest) (*conversation.AssistantTurn, error) {
+func (f *fakeTurns) Active(context.Context, agentports.ActiveAssistantTurnRequest) (*conversation.AssistantTurn, error) {
 	return f.active, nil
 }
 
@@ -265,12 +268,12 @@ func (f *fakeTurns) StartTurn(
 }
 
 type fakeConversations struct {
-	repositories.ConversationRepository
+	agentports.ConversationRepository
 }
 
 func (fakeConversations) GetThreadOwned(
 	_ context.Context,
-	req repositories.GetThreadOwnedRequest,
+	req agentports.GetThreadOwnedRequest,
 ) (*conversation.Thread, error) {
 	return &conversation.Thread{
 		ID:             req.ID,
@@ -281,14 +284,14 @@ func (fakeConversations) GetThreadOwned(
 }
 
 type fakeRuns struct {
-	started []*serviceports.StartAgentRunForDefinitionRequest
+	started []*agentports.StartAgentRunForDefinitionRequest
 	err     error
 }
 
 func (f *fakeRuns) StartForDefinition(
 	_ context.Context,
-	req *serviceports.StartAgentRunForDefinitionRequest,
-	_ *serviceports.RequestActor,
+	req *agentports.StartAgentRunForDefinitionRequest,
+	_ *permissionports.RequestActor,
 ) (*agent.AgentRun, error) {
 	if f.err != nil {
 		return nil, f.err
@@ -306,7 +309,7 @@ type harness struct {
 	workflows *fakeWorkflows
 	turns     *fakeTurns
 	runs      *fakeRuns
-	actor     *serviceports.RequestActor
+	actor     *permissionports.RequestActor
 }
 
 func newHarness(items ...*agentwait.Wait) *harness {
@@ -317,8 +320,8 @@ func newHarness(items ...*agentwait.Wait) *harness {
 		workflows: &fakeWorkflows{},
 		turns:     &fakeTurns{},
 		runs:      &fakeRuns{},
-		actor: &serviceports.RequestActor{
-			PrincipalType:  serviceports.PrincipalTypeUser,
+		actor: &permissionports.RequestActor{
+			PrincipalType:  permissionports.PrincipalTypeUser,
 			UserID:         pulid.MustNew("usr_"),
 			OrganizationID: pulid.MustNew("org_"),
 			BusinessUnitID: pulid.MustNew("bu_"),
@@ -339,7 +342,7 @@ func newHarness(items ...*agentwait.Wait) *harness {
 }
 
 func (h *harness) register(kind agentwait.Kind, condition agentwait.Condition) (*agentwait.Wait, error) {
-	return h.svc.Register(context.Background(), &serviceports.RegisterWaitRequest{
+	return h.svc.Register(context.Background(), &agentwaitports.RegisterWaitRequest{
 		Actor:        h.actor,
 		DefinitionID: pulid.MustNew("agdef_"),
 		ThreadID:     pulid.MustNew("athr_"),
@@ -436,7 +439,7 @@ func TestRegister_ADelegatedTaskCannotPark(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness()
-	_, err := h.svc.Register(context.Background(), &serviceports.RegisterWaitRequest{
+	_, err := h.svc.Register(context.Background(), &agentwaitports.RegisterWaitRequest{
 		Actor:     h.actor,
 		Delegated: true,
 		Kind:      agentwait.KindTime,
@@ -475,7 +478,7 @@ func TestNotifyEvent_EndsOnlyTheWaitOnThatStop(t *testing.T) {
 	leaving := openWait(agentwait.KindStopDeparture, agentwait.Condition{ShipmentMoveID: move})
 	h := newHarness(atHere, atThere, anyStop, leaving)
 
-	h.svc.NotifyEvent(context.Background(), &serviceports.AgentEvent{
+	h.svc.NotifyEvent(context.Background(), &agentports.AgentEvent{
 		Kind:       agent.EventShipmentMoveArrived,
 		SubjectID:  move,
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
@@ -498,7 +501,7 @@ func TestNotifyEvent_AReplyMatchedToTheCarrierEndsItsWait(t *testing.T) {
 	waiting := openWait(agentwait.KindReply, agentwait.Condition{CarrierID: carrier})
 	h := newHarness(waiting)
 
-	h.svc.NotifyEvent(context.Background(), &serviceports.AgentEvent{
+	h.svc.NotifyEvent(context.Background(), &agentports.AgentEvent{
 		Kind:       agent.EventInboundMessageClassified,
 		SubjectID:  pulid.MustNew("inm_"),
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
@@ -607,7 +610,7 @@ func TestCancel_ABackgroundRunReachesOnlyItsOwnAgentsWaits(t *testing.T) {
 	h := newHarness(wait)
 	tenant := pagination.TenantInfo{OrgID: wait.OrganizationID, BuID: wait.BusinessUnitID}
 
-	_, err := h.svc.Cancel(context.Background(), &serviceports.CancelWaitRequest{
+	_, err := h.svc.Cancel(context.Background(), &agentwaitports.CancelWaitRequest{
 		ID:           wait.ID,
 		TenantInfo:   tenant,
 		DefinitionID: pulid.MustNew("agdef_"),
@@ -721,7 +724,7 @@ func krogerDC() *location.Location {
 }
 
 type fakeAssignments struct {
-	repositories.AssignmentRepository
+	shipmentports.AssignmentRepository
 
 	tractor pulid.ID
 }

@@ -7,13 +7,13 @@ import (
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 const maxRationaleChars = 600
 
-func toToolCallRecords(calls []serviceports.ToolCall) []conversation.ToolCallRecord {
+func toToolCallRecords(calls []agentports.ToolCall) []conversation.ToolCallRecord {
 	if len(calls) == 0 {
 		return nil
 	}
@@ -33,14 +33,14 @@ func toToolCallRecords(calls []serviceports.ToolCall) []conversation.ToolCallRec
 	return records
 }
 
-func fromToolCallRecords(records []conversation.ToolCallRecord) []serviceports.ToolCall {
+func fromToolCallRecords(records []conversation.ToolCallRecord) []agentports.ToolCall {
 	if len(records) == 0 {
 		return nil
 	}
 
-	calls := make([]serviceports.ToolCall, 0, len(records))
+	calls := make([]agentports.ToolCall, 0, len(records))
 	for _, record := range records {
-		calls = append(calls, serviceports.ToolCall{
+		calls = append(calls, agentports.ToolCall{
 			ID:           record.ID,
 			Name:         record.Name,
 			Arguments:    record.Arguments,
@@ -70,8 +70,8 @@ const wholeToolResultBudget = 48_000
 
 func toAdapterMessages(
 	history []conversation.Message,
-	outcomes []serviceports.ProposalOutcome,
-) []serviceports.Message {
+	outcomes []agentports.ProposalOutcome,
+) []agentports.Message {
 	messages, _ := replayHistory(history, outcomes)
 
 	return messages
@@ -83,12 +83,12 @@ func toAdapterMessages(
 // out.
 func replayHistory(
 	history []conversation.Message,
-	outcomes []serviceports.ProposalOutcome,
-) (messages []serviceports.Message, shortened []string) {
+	outcomes []agentports.ProposalOutcome,
+) (messages []agentports.Message, shortened []string) {
 	// A compacted conversation is read from its latest summary, which stands
 	// in for everything before the turns it kept whole.
 	history = conversation.ReplayOrder(history)
-	messages = make([]serviceports.Message, 0, len(history)+1)
+	messages = make([]agentports.Message, 0, len(history)+1)
 	ledger := newProposalLedger(outcomes)
 
 	// The history is the newest N messages of the thread, and that cut lands
@@ -131,8 +131,8 @@ func replayHistory(
 			// The ledger counts the calls as they were made, so a proposal's
 			// ordinal is not shifted by a call that was left out.
 			ledger.noteCalls(msg)
-			messages = append(messages, serviceports.Message{
-				Role:      serviceports.RoleAssistant,
+			messages = append(messages, agentports.Message{
+				Role:      agentports.RoleAssistant,
 				Content:   msg.Content,
 				ToolCalls: fromToolCallRecords(calls),
 				Reasoning: msg.Reasoning,
@@ -159,8 +159,8 @@ func replayHistory(
 			case msg.Kind == conversation.MessageKindSteer:
 				content = SteerPrompt(content, msg.Mentions)
 			}
-			messages = append(messages, serviceports.Message{
-				Role:    serviceports.RoleUser,
+			messages = append(messages, agentports.Message{
+				Role:    agentports.RoleUser,
 				Content: content,
 			})
 		}
@@ -185,7 +185,7 @@ func replayToolResult(
 	msg *conversation.Message,
 	ledger *proposalLedger,
 	keep bool,
-) (replayed serviceports.Message, original string) {
+) (replayed agentports.Message, original string) {
 	content, current := ledger.currentContent(*msg)
 	if !current && !keep {
 		if compacted := compactToolResult(content); compacted != content {
@@ -194,8 +194,8 @@ func replayToolResult(
 		}
 	}
 
-	return serviceports.Message{
-		Role:       serviceports.RoleTool,
+	return agentports.Message{
+		Role:       agentports.RoleTool,
 		Content:    content,
 		ToolCallID: msg.ToolCallID,
 		ToolName:   msg.ToolName,

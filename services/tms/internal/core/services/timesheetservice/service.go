@@ -15,9 +15,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -39,23 +39,23 @@ const (
 // WorkerReader is the slice of the roster this service needs: who somebody is,
 // so a contractor is not put on a clock they are not paid by.
 type WorkerReader interface {
-	GetByID(ctx context.Context, req repositories.GetWorkerByIDRequest) (*worker.Worker, error)
+	GetByID(ctx context.Context, req workerports.GetWorkerByIDRequest) (*worker.Worker, error)
 }
 
 type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.TimesheetRepository
-	WorkerRepo   repositories.WorkerRepository
-	AuditService services.AuditService
+	Repo         workerports.TimesheetRepository
+	WorkerRepo   workerports.WorkerRepository
+	AuditService auditports.AuditService
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.TimesheetRepository
+	repo         workerports.TimesheetRepository
 	workerRepo   WorkerReader
-	auditService services.AuditService
+	auditService auditports.AuditService
 }
 
 func New(p Params) *Service {
@@ -70,9 +70,9 @@ func New(p Params) *Service {
 // Deps is the constructor shape tests use to swap in fakes.
 type Deps struct {
 	Logger       *zap.Logger
-	Repo         repositories.TimesheetRepository
+	Repo         workerports.TimesheetRepository
 	WorkerRepo   WorkerReader
-	AuditService services.AuditService
+	AuditService auditports.AuditService
 }
 
 func NewWithDeps(d Deps) *Service {
@@ -103,7 +103,7 @@ func (s *Service) audit(p auditParams) {
 	if s.auditService == nil || p.userID.IsNil() {
 		return
 	}
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       p.resource,
 		ResourceID:     p.resourceID,
 		Operation:      p.operation,
@@ -112,7 +112,7 @@ func (s *Service) audit(p auditParams) {
 		OrganizationID: p.tenantInfo.OrgID,
 		BusinessUnitID: p.tenantInfo.BuID,
 	}
-	opts := []services.LogOption{auditservice.WithComment(p.comment)}
+	opts := []auditports.LogOption{auditservice.WithComment(p.comment)}
 	if p.previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(p.previous)
 		opts = append(opts, auditservice.WithDiff(p.previous, p.current))
@@ -134,7 +134,7 @@ func (s *Service) requireHourlyWorker(
 		return nil
 	}
 
-	wrk, err := s.workerRepo.GetByID(ctx, repositories.GetWorkerByIDRequest{
+	wrk, err := s.workerRepo.GetByID(ctx, workerports.GetWorkerByIDRequest{
 		ID:         workerID,
 		TenantInfo: tenantInfo,
 	})
@@ -154,21 +154,21 @@ func (s *Service) requireHourlyWorker(
 
 func (s *Service) ListEntries(
 	ctx context.Context,
-	req *repositories.ListTimeClockEntriesRequest,
+	req *workerports.ListTimeClockEntriesRequest,
 ) ([]*worker.TimeClockEntry, error) {
 	return s.repo.ListEntries(ctx, req)
 }
 
 func (s *Service) ListTimesheets(
 	ctx context.Context,
-	req *repositories.ListTimesheetsRequest,
+	req *workerports.ListTimesheetsRequest,
 ) ([]*worker.Timesheet, error) {
 	return s.repo.ListTimesheets(ctx, req)
 }
 
 func (s *Service) GetTimesheet(
 	ctx context.Context,
-	req *repositories.GetTimesheetByIDRequest,
+	req *workerports.GetTimesheetByIDRequest,
 ) (*worker.Timesheet, error) {
 	return s.repo.GetTimesheetByID(ctx, req)
 }
@@ -389,7 +389,7 @@ func (s *Service) RecordEntry(
 			Source:         worker.TimeEntrySourceManual,
 		}
 	} else {
-		existing, err := s.repo.GetEntryByID(ctx, &repositories.GetTimeClockEntryByIDRequest{
+		existing, err := s.repo.GetEntryByID(ctx, &workerports.GetTimeClockEntryByIDRequest{
 			ID:         req.ID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -492,7 +492,7 @@ func (s *Service) DeleteEntry(ctx context.Context, req *DeleteEntryRequest) erro
 		)
 	}
 
-	entry, err := s.repo.GetEntryByID(ctx, &repositories.GetTimeClockEntryByIDRequest{
+	entry, err := s.repo.GetEntryByID(ctx, &workerports.GetTimeClockEntryByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -506,7 +506,7 @@ func (s *Service) DeleteEntry(ctx context.Context, req *DeleteEntryRequest) erro
 		}
 	}
 
-	if err = s.repo.DeleteEntry(ctx, &repositories.GetTimeClockEntryByIDRequest{
+	if err = s.repo.DeleteEntry(ctx, &workerports.GetTimeClockEntryByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	}); err != nil {
@@ -537,7 +537,7 @@ func (s *Service) requireEditableSheet(
 	tenantInfo pagination.TenantInfo,
 	timesheetID pulid.ID,
 ) error {
-	sheet, err := s.repo.GetTimesheetByID(ctx, &repositories.GetTimesheetByIDRequest{
+	sheet, err := s.repo.GetTimesheetByID(ctx, &workerports.GetTimesheetByIDRequest{
 		ID:         timesheetID,
 		TenantInfo: tenantInfo,
 	})
@@ -587,7 +587,7 @@ func (s *Service) recalculate(
 		return nil
 	}
 
-	sheet, err := s.repo.GetTimesheetByID(ctx, &repositories.GetTimesheetByIDRequest{
+	sheet, err := s.repo.GetTimesheetByID(ctx, &workerports.GetTimesheetByIDRequest{
 		ID:         timesheetID,
 		TenantInfo: tenantInfo,
 	})
@@ -609,7 +609,7 @@ func (s *Service) recalculate(
 		return err
 	}
 
-	entries, err := s.repo.ListEntries(ctx, &repositories.ListTimeClockEntriesRequest{
+	entries, err := s.repo.ListEntries(ctx, &workerports.ListTimeClockEntriesRequest{
 		TenantInfo:  tenantInfo,
 		TimesheetID: sheet.ID,
 	})

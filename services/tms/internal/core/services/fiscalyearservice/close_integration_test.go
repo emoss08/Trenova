@@ -13,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/core/domain/journalentry"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/fiscalcloseservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
@@ -29,6 +28,10 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/journalentryrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/journalpostingrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/journalsourcerepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/glbalanceports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -66,10 +69,10 @@ func (g *countingSequenceGenerator) GenerateJournalEntryNumber(
 
 type closeFixture struct {
 	conn          *postgres.Connection
-	postingRepo   repositories.JournalPostingRepository
+	postingRepo   journalentryports.JournalPostingRepository
 	svc           *Service
-	balanceRepo   repositories.GLBalanceRepository
-	periodRepo    repositories.FiscalPeriodRepository
+	balanceRepo   glbalanceports.GLBalanceRepository
+	periodRepo    fiscalperiodports.FiscalPeriodRepository
 	orgID         pulid.ID
 	buID          pulid.ID
 	userID        pulid.ID
@@ -94,7 +97,7 @@ func (f closeFixture) postToAccount(
 	amount int64,
 	suffix string,
 ) error {
-	return f.postingRepo.CreatePosting(ctx, repositories.CreateJournalPostingParams{
+	return f.postingRepo.CreatePosting(ctx, journalentryports.CreateJournalPostingParams{
 		BatchID:          pulid.MustNew("jb_"),
 		OrganizationID:   f.orgID,
 		BusinessUnitID:   f.buID,
@@ -116,7 +119,7 @@ func (f closeFixture) postToAccount(
 		TotalDebit:       amount,
 		TotalCredit:      amount,
 		IsPosted:         true,
-		Lines: []repositories.JournalPostingLine{
+		Lines: []journalentryports.JournalPostingLine{
 			{
 				ID:          pulid.MustNew("jel_"),
 				GLAccountID: accountID,
@@ -146,7 +149,7 @@ func (f closeFixture) ytdBalance(
 
 	balances, err := f.balanceRepo.ListYearToDateBalances(
 		ctx,
-		repositories.ListYearToDateBalancesRequest{
+		glbalanceports.ListYearToDateBalancesRequest{
 			TenantInfo:   f.tenant(),
 			FiscalYearID: fiscalYearID,
 		},
@@ -168,7 +171,7 @@ func TestCloseFiscalYearPostsClosingAndOpeningEntries(t *testing.T) {
 
 	f := setupCloseFixture(t, ctx, db)
 
-	closed, err := f.svc.Close(ctx, repositories.CloseFiscalYearRequest{
+	closed, err := f.svc.Close(ctx, fiscalyearports.CloseFiscalYearRequest{
 		ID:         f.closingYear.ID,
 		TenantInfo: f.tenant(),
 	}, f.userID)
@@ -188,7 +191,7 @@ func TestCloseFiscalYearPostsClosingAndOpeningEntries(t *testing.T) {
 
 	// The closing entry goes into a year-end adjusting period, so December keeps
 	// showing December.
-	periods, err := f.periodRepo.ListByFiscalYearID(ctx, repositories.ListByFiscalYearIDRequest{
+	periods, err := f.periodRepo.ListByFiscalYearID(ctx, fiscalperiodports.ListByFiscalYearIDRequest{
 		FiscalYearID: f.closingYear.ID,
 		OrgID:        f.orgID,
 		BuID:         f.buID,
@@ -226,14 +229,14 @@ func TestCloseFiscalYearIsBlockedWithoutARetainedEarningsAccount(t *testing.T) {
 		Exec(ctx)
 	require.NoError(t, err)
 
-	result, err := f.svc.GetCloseBlockers(ctx, repositories.GetFiscalYearByIDRequest{
+	result, err := f.svc.GetCloseBlockers(ctx, fiscalyearports.GetFiscalYearByIDRequest{
 		ID:         f.closingYear.ID,
 		TenantInfo: f.tenant(),
 	})
 	require.NoError(t, err)
 	assert.False(t, result.CanClose)
 
-	_, err = f.svc.Close(ctx, repositories.CloseFiscalYearRequest{
+	_, err = f.svc.Close(ctx, fiscalyearports.CloseFiscalYearRequest{
 		ID:         f.closingYear.ID,
 		TenantInfo: f.tenant(),
 	}, f.userID)
@@ -247,13 +250,13 @@ func TestReopenFiscalYearReversesTheClose(t *testing.T) {
 
 	f := setupCloseFixture(t, ctx, db)
 
-	_, err := f.svc.Close(ctx, repositories.CloseFiscalYearRequest{
+	_, err := f.svc.Close(ctx, fiscalyearports.CloseFiscalYearRequest{
 		ID:         f.closingYear.ID,
 		TenantInfo: f.tenant(),
 	}, f.userID)
 	require.NoError(t, err)
 
-	reopened, err := f.svc.Reopen(ctx, repositories.ReopenFiscalYearRequest{
+	reopened, err := f.svc.Reopen(ctx, fiscalyearports.ReopenFiscalYearRequest{
 		ID:           f.closingYear.ID,
 		TenantInfo:   f.tenant(),
 		ReopenReason: "Auditor found a misclassified accessorial",
@@ -272,7 +275,7 @@ func TestReopenFiscalYearReversesTheClose(t *testing.T) {
 
 	// Closing the year again posts a fresh pair rather than colliding with the
 	// idempotency keys of the first close.
-	_, err = f.svc.Close(ctx, repositories.CloseFiscalYearRequest{
+	_, err = f.svc.Close(ctx, fiscalyearports.CloseFiscalYearRequest{
 		ID:         f.closingYear.ID,
 		TenantInfo: f.tenant(),
 	}, f.userID)
@@ -285,13 +288,13 @@ func TestActivateRejectsAClosedFiscalYear(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	f := setupCloseFixture(t, ctx, db)
-	_, err := f.svc.Close(ctx, repositories.CloseFiscalYearRequest{
+	_, err := f.svc.Close(ctx, fiscalyearports.CloseFiscalYearRequest{
 		ID:         f.closingYear.ID,
 		TenantInfo: f.tenant(),
 	}, f.userID)
 	require.NoError(t, err)
 
-	_, err = f.svc.Activate(ctx, repositories.ActivateFiscalYearRequest{
+	_, err = f.svc.Activate(ctx, fiscalyearports.ActivateFiscalYearRequest{
 		ID:         f.closingYear.ID,
 		TenantInfo: f.tenant(),
 	}, f.userID)
@@ -323,13 +326,13 @@ func TestCloseFiscalYearReusesAnExistingAdjustingPeriod(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	_, err = f.svc.Close(ctx, repositories.CloseFiscalYearRequest{
+	_, err = f.svc.Close(ctx, fiscalyearports.CloseFiscalYearRequest{
 		ID:         f.closingYear.ID,
 		TenantInfo: f.tenant(),
 	}, f.userID)
 	require.NoError(t, err)
 
-	periods, err := f.periodRepo.ListByFiscalYearID(ctx, repositories.ListByFiscalYearIDRequest{
+	periods, err := f.periodRepo.ListByFiscalYearID(ctx, fiscalperiodports.ListByFiscalYearIDRequest{
 		FiscalYearID: f.closingYear.ID,
 		OrgID:        f.orgID,
 		BuID:         f.buID,
@@ -373,7 +376,7 @@ func TestClosePreviewReconcilesTheARControlAccount(t *testing.T) {
 		Scan(ctx, &arAccountID))
 	require.False(t, arAccountID.IsNil(), "the seeded accounting control names an AR account")
 
-	plan, err := f.svc.GetClosePreview(ctx, repositories.GetFiscalYearByIDRequest{
+	plan, err := f.svc.GetClosePreview(ctx, fiscalyearports.GetFiscalYearByIDRequest{
 		ID:         f.closingYear.ID,
 		TenantInfo: f.tenant(),
 	})
@@ -412,7 +415,7 @@ func TestClosePreviewReportsAnARDifference(t *testing.T) {
 	// subledger: the detail no longer substantiates the total.
 	require.NoError(t, f.postToAccount(ctx, arAccountID, 25000, "AR-DRIFT"))
 
-	plan, err := f.svc.GetClosePreview(ctx, repositories.GetFiscalYearByIDRequest{
+	plan, err := f.svc.GetClosePreview(ctx, fiscalyearports.GetFiscalYearByIDRequest{
 		ID:         f.closingYear.ID,
 		TenantInfo: f.tenant(),
 	})
@@ -436,7 +439,7 @@ func TestClosePreviewReportsAnARDifference(t *testing.T) {
 		Exec(ctx)
 	require.NoError(t, err)
 
-	plan, err = f.svc.GetClosePreview(ctx, repositories.GetFiscalYearByIDRequest{
+	plan, err = f.svc.GetClosePreview(ctx, fiscalyearports.GetFiscalYearByIDRequest{
 		ID:         f.closingYear.ID,
 		TenantInfo: f.tenant(),
 	})
@@ -453,7 +456,7 @@ func TestClosePreviewReportsAnARDifference(t *testing.T) {
 	}
 	assert.True(t, reconciliationBlocked, "an enforced mismatch must block the close")
 
-	_, err = f.svc.Close(ctx, repositories.CloseFiscalYearRequest{
+	_, err = f.svc.Close(ctx, fiscalyearports.CloseFiscalYearRequest{
 		ID:         f.closingYear.ID,
 		TenantInfo: f.tenant(),
 	}, f.userID)
@@ -592,7 +595,7 @@ func setupCloseFixture(t *testing.T, ctx context.Context, db *bun.DB) closeFixtu
 	require.NoError(t, err)
 
 	// One posted sale: 50,000 of revenue sitting in an asset account.
-	require.NoError(t, postingRepo.CreatePosting(ctx, repositories.CreateJournalPostingParams{
+	require.NoError(t, postingRepo.CreatePosting(ctx, journalentryports.CreateJournalPostingParams{
 		BatchID:          pulid.MustNew("jb_"),
 		OrganizationID:   orgID,
 		BusinessUnitID:   buID,
@@ -616,7 +619,7 @@ func setupCloseFixture(t *testing.T, ctx context.Context, db *bun.DB) closeFixtu
 		TotalDebit:       50000,
 		TotalCredit:      50000,
 		IsPosted:         true,
-		Lines: []repositories.JournalPostingLine{
+		Lines: []journalentryports.JournalPostingLine{
 			{
 				ID:          pulid.MustNew("jel_"),
 				GLAccountID: assetID,
@@ -636,7 +639,7 @@ func setupCloseFixture(t *testing.T, ctx context.Context, db *bun.DB) closeFixtu
 		},
 	}))
 
-	_, err = fpRepo.Close(ctx, repositories.CloseFiscalPeriodRequest{
+	_, err = fpRepo.Close(ctx, fiscalperiodports.CloseFiscalPeriodRequest{
 		ID:         closingPeriod.ID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		ClosedByID: userID,

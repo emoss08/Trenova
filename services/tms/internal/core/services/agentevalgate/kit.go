@@ -1,26 +1,28 @@
 package agentevalgate
 
 import (
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy/registered"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"go.uber.org/zap"
 )
 
 type Kit struct {
-	Queries serviceports.AgentQueryToolRegistry
-	Actions serviceports.AgentToolRegistry
-	Runtime serviceports.RuntimeToolPolicies
+	Queries agentports.AgentQueryToolRegistry
+	Actions agentports.AgentToolRegistry
+	Runtime agentports.RuntimeToolPolicies
 	Catalog *agenttoolcatalog.Catalog
 }
 
 type RuntimeParams struct {
-	Completion  serviceports.CompletionService
-	Permissions serviceports.PermissionEngine
-	Extensions  serviceports.AgentExtensionGate
+	Completion  agentports.CompletionService
+	Permissions permissionports.PermissionEngine
+	Extensions  agentextensionports.AgentExtensionGate
 }
 
 func NewKit() (*Kit, error) {
@@ -33,9 +35,9 @@ func NewKit() (*Kit, error) {
 }
 
 func FromTools(
-	queries []serviceports.AgentQueryTool,
-	actions []serviceports.AgentTool,
-	runtime serviceports.RuntimeToolPolicies,
+	queries []agentports.AgentQueryTool,
+	actions []agentports.AgentTool,
+	runtime agentports.RuntimeToolPolicies,
 ) *Kit {
 	queryRegistry := agentquerytoolservice.NewRegistry(
 		agentquerytoolservice.RegistryParams{Tools: queries},

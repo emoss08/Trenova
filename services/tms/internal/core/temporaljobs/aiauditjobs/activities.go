@@ -5,8 +5,8 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiaudit"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/aiauditservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.temporal.io/sdk/activity"
@@ -150,7 +150,7 @@ func NewExportActivities(p ExportActivitiesParams) *ExportActivities {
 
 func (a *ExportActivities) RunAIAuditExportActivity(
 	ctx context.Context,
-	payload *serviceports.AIAuditExportPayload,
+	payload *aiauditports.AIAuditExportPayload,
 ) (*ExportResult, error) {
 	export, err := a.exports.Run(ctx, payload.TenantInfo(), payload.ExportID, heartbeat(ctx))
 	if err != nil {

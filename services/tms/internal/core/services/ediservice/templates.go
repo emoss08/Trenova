@@ -10,10 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	editemplates "github.com/emoss08/trenova/internal/core/domain/edi/templates"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/edistarlark"
 	"github.com/emoss08/trenova/internal/core/services/edix12"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -24,7 +24,7 @@ import (
 
 func (s *Service) GetTemplate(
 	ctx context.Context,
-	req repositories.GetEDITemplateByIDRequest,
+	req ediports.GetEDITemplateByIDRequest,
 ) (*edi.EDITemplate, error) {
 	return s.templateRepo.GetTemplateByID(ctx, req)
 }
@@ -32,7 +32,7 @@ func (s *Service) GetTemplate(
 func (s *Service) CreateTemplate(
 	ctx context.Context,
 	req *CreateEDITemplateRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*edi.EDITemplate, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
@@ -86,7 +86,7 @@ func (s *Service) CreateTemplate(
 
 	created, createdVersion, err := s.templateRepo.CreateTemplate(
 		ctx,
-		&repositories.CreateEDITemplateRequest{
+		&ediports.CreateEDITemplateRequest{
 			Template: template,
 			Version:  version,
 			Segments: segments,
@@ -116,7 +116,7 @@ func (s *Service) CreateTemplate(
 func (s *Service) UpdateTemplate(
 	ctx context.Context,
 	req *UpdateEDITemplateRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*edi.EDITemplate, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
@@ -125,7 +125,7 @@ func (s *Service) UpdateTemplate(
 			"EDI template is required",
 		)
 	}
-	current, err := s.templateRepo.GetTemplateByID(ctx, repositories.GetEDITemplateByIDRequest{
+	current, err := s.templateRepo.GetTemplateByID(ctx, ediports.GetEDITemplateByIDRequest{
 		ID:         req.TemplateID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -166,7 +166,7 @@ func (s *Service) UpdateTemplate(
 func (s *Service) CreateDraftVersion(
 	ctx context.Context,
 	req *CreateEDITemplateDraftRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*edi.EDITemplateVersion, error) {
 	source, err := s.sourceTemplateVersion(ctx, req)
 	if err != nil {
@@ -187,7 +187,7 @@ func (s *Service) CreateDraftVersion(
 
 	versions, err := s.templateRepo.ListTemplateVersions(
 		ctx,
-		repositories.ListEDITemplateVersionsRequest{
+		ediports.ListEDITemplateVersionsRequest{
 			TemplateID: req.TemplateID,
 			TenantInfo: req.TenantInfo,
 		},
@@ -222,7 +222,7 @@ func (s *Service) CreateDraftVersion(
 	)
 	created, err := s.templateRepo.CreateTemplateVersion(
 		ctx,
-		&repositories.CreateEDITemplateVersionRequest{
+		&ediports.CreateEDITemplateVersionRequest{
 			Version:         draft,
 			Segments:        segments,
 			ScriptLibraries: libraries,
@@ -238,14 +238,14 @@ func (s *Service) CreateDraftVersion(
 
 func (s *Service) ListTemplateVersions(
 	ctx context.Context,
-	req repositories.ListEDITemplateVersionsRequest,
+	req ediports.ListEDITemplateVersionsRequest,
 ) ([]*edi.EDITemplateVersion, error) {
 	return s.templateRepo.ListTemplateVersions(ctx, req)
 }
 
 func (s *Service) GetTemplateVersion(
 	ctx context.Context,
-	req repositories.GetEDITemplateVersionByIDRequest,
+	req ediports.GetEDITemplateVersionByIDRequest,
 ) (*edi.EDITemplateVersion, error) {
 	version, err := s.templateRepo.GetTemplateVersionByID(ctx, req)
 	if err != nil {
@@ -258,7 +258,7 @@ func (s *Service) GetTemplateVersion(
 func (s *Service) UpdateDraftVersion(
 	ctx context.Context,
 	req *UpdateEDITemplateVersionRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*edi.EDITemplateVersion, error) {
 	version, err := s.editableTemplateVersion(ctx, req.TemplateID, req.VersionID, req.TenantInfo)
 	if err != nil {
@@ -291,7 +291,7 @@ func (s *Service) UpdateDraftVersion(
 func (s *Service) ReplaceDraftSegments(
 	ctx context.Context,
 	req *ReplaceEDITemplateSegmentsRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*edi.EDITemplateVersion, error) {
 	version, err := s.editableTemplateVersion(ctx, req.TemplateID, req.VersionID, req.TenantInfo)
 	if err != nil {
@@ -302,7 +302,7 @@ func (s *Service) ReplaceDraftSegments(
 	segments := cloneTemplateSegments(req.TenantInfo, version.ID, req.Segments)
 	updated, err := s.templateRepo.ReplaceTemplateVersionSegments(
 		ctx,
-		repositories.ReplaceEDITemplateVersionSegmentsRequest{
+		ediports.ReplaceEDITemplateVersionSegmentsRequest{
 			Version:  version,
 			Segments: segments,
 		},
@@ -323,7 +323,7 @@ func (s *Service) ReplaceDraftSegments(
 
 func (s *Service) ListTemplateScriptLibraries(
 	ctx context.Context,
-	req repositories.ListEDITemplateScriptLibrariesRequest,
+	req ediports.ListEDITemplateScriptLibrariesRequest,
 ) ([]*edi.EDITemplateScriptLibrary, error) {
 	libraries, err := s.templateRepo.ListTemplateScriptLibraries(ctx, req)
 	if err != nil {
@@ -336,7 +336,7 @@ func (s *Service) ListTemplateScriptLibraries(
 func (s *Service) ReplaceDraftScriptLibraries(
 	ctx context.Context,
 	req *ReplaceEDITemplateScriptLibrariesRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*edi.EDITemplateVersion, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
@@ -359,7 +359,7 @@ func (s *Service) ReplaceDraftScriptLibraries(
 	)
 	updated, err := s.templateRepo.ReplaceTemplateVersionScriptLibraries(
 		ctx,
-		repositories.ReplaceEDITemplateVersionScriptLibrariesRequest{
+		ediports.ReplaceEDITemplateVersionScriptLibrariesRequest{
 			Version:         version,
 			ScriptLibraries: libraries,
 		},
@@ -392,7 +392,7 @@ func (s *Service) ValidateTemplateVersion(
 	}
 	version, err := s.templateRepo.GetTemplateVersionByID(
 		ctx,
-		repositories.GetEDITemplateVersionByIDRequest{
+		ediports.GetEDITemplateVersionByIDRequest{
 			TemplateID: req.TemplateID,
 			VersionID:  req.VersionID,
 			TenantInfo: req.TenantInfo,
@@ -420,7 +420,7 @@ func (s *Service) ValidateTemplateVersion(
 func (s *Service) CertifyTemplateVersion(
 	ctx context.Context,
 	req *EDIActionNotesRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*edi.EDITemplateVersion, error) {
 	version, err := s.editableTemplateVersion(ctx, req.TemplateID, req.VersionID, req.TenantInfo)
 	if err != nil {
@@ -461,11 +461,11 @@ func (s *Service) CertifyTemplateVersion(
 func (s *Service) ActivateTemplateVersion(
 	ctx context.Context,
 	req *EDIActionNotesRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*edi.EDITemplateVersion, error) {
 	version, err := s.templateRepo.GetTemplateVersionByID(
 		ctx,
-		repositories.GetEDITemplateVersionByIDRequest{
+		ediports.GetEDITemplateVersionByIDRequest{
 			TemplateID: req.TemplateID,
 			VersionID:  req.VersionID,
 			TenantInfo: req.TenantInfo,
@@ -487,11 +487,11 @@ func (s *Service) ActivateTemplateVersion(
 func (s *Service) ArchiveTemplateVersion(
 	ctx context.Context,
 	req *EDIActionNotesRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*edi.EDITemplateVersion, error) {
 	version, err := s.templateRepo.GetTemplateVersionByID(
 		ctx,
-		repositories.GetEDITemplateVersionByIDRequest{
+		ediports.GetEDITemplateVersionByIDRequest{
 			TemplateID: req.TemplateID,
 			VersionID:  req.VersionID,
 			TenantInfo: req.TenantInfo,
@@ -512,7 +512,7 @@ func (s *Service) ArchiveTemplateVersion(
 	}
 	archived, err := s.templateRepo.ArchiveTemplateVersion(
 		ctx,
-		repositories.ArchiveEDITemplateVersionRequest{
+		ediports.ArchiveEDITemplateVersionRequest{
 			VersionID:  req.VersionID,
 			TemplateID: req.TemplateID,
 			TenantInfo: req.TenantInfo,
@@ -530,11 +530,11 @@ func (s *Service) ArchiveTemplateVersion(
 func (s *Service) RollbackTemplateVersion(
 	ctx context.Context,
 	req *EDIActionNotesRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*edi.EDITemplateVersion, error) {
 	version, err := s.templateRepo.GetTemplateVersionByID(
 		ctx,
-		repositories.GetEDITemplateVersionByIDRequest{
+		ediports.GetEDITemplateVersionByIDRequest{
 			TemplateID: req.TemplateID,
 			VersionID:  req.VersionID,
 			TenantInfo: req.TenantInfo,
@@ -558,12 +558,12 @@ func (s *Service) RollbackTemplateVersion(
 func (s *Service) activateTemplateVersion(
 	ctx context.Context,
 	req *EDIActionNotesRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	isRollback bool,
 ) (*edi.EDITemplateVersion, error) {
 	version, err := s.templateRepo.GetTemplateVersionByID(
 		ctx,
-		repositories.GetEDITemplateVersionByIDRequest{
+		ediports.GetEDITemplateVersionByIDRequest{
 			TemplateID: req.TemplateID,
 			VersionID:  req.VersionID,
 			TenantInfo: req.TenantInfo,
@@ -598,7 +598,7 @@ func (s *Service) activateTemplateVersion(
 	}
 	activated, err := s.templateRepo.ActivateTemplateVersion(
 		ctx,
-		repositories.ActivateEDITemplateVersionRequest{
+		ediports.ActivateEDITemplateVersionRequest{
 			VersionID:  req.VersionID,
 			TemplateID: req.TemplateID,
 			TenantInfo: req.TenantInfo,
@@ -632,7 +632,7 @@ func (s *Service) sourceTemplateVersion(
 	if req.SourceVersionID.IsNotNil() {
 		return s.templateRepo.GetTemplateVersionByID(
 			ctx,
-			repositories.GetEDITemplateVersionByIDRequest{
+			ediports.GetEDITemplateVersionByIDRequest{
 				TemplateID: req.TemplateID,
 				VersionID:  req.SourceVersionID,
 				TenantInfo: req.TenantInfo,
@@ -641,7 +641,7 @@ func (s *Service) sourceTemplateVersion(
 	}
 	return s.templateRepo.GetActiveTemplateVersion(
 		ctx,
-		repositories.GetActiveEDITemplateVersionRequest{
+		ediports.GetActiveEDITemplateVersionRequest{
 			TemplateID: req.TemplateID,
 			TenantInfo: req.TenantInfo,
 		},
@@ -656,7 +656,7 @@ func (s *Service) editableTemplateVersion(
 ) (*edi.EDITemplateVersion, error) {
 	version, err := s.templateRepo.GetTemplateVersionByID(
 		ctx,
-		repositories.GetEDITemplateVersionByIDRequest{
+		ediports.GetEDITemplateVersionByIDRequest{
 			TemplateID: templateID,
 			VersionID:  versionID,
 			TenantInfo: tenantInfo,
@@ -689,7 +689,7 @@ func (s *Service) templateSourceContextIndex(
 
 	schema, err := s.sourceContextRepo.GetActiveSourceContextSchema(
 		ctx,
-		repositories.GetActiveEDISourceContextSchemaRequest{
+		ediports.GetActiveEDISourceContextSchemaRequest{
 			TenantInfo:     tenantInfo,
 			Standard:       version.Template.Standard,
 			TransactionSet: version.Template.TransactionSet,
@@ -707,7 +707,7 @@ func (s *Service) templateSourceContextIndex(
 
 	fields, err := s.sourceContextRepo.ListSourceContextFields(
 		ctx,
-		&repositories.ListEDISourceContextFieldsRequest{
+		&ediports.ListEDISourceContextFieldsRequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: tenantInfo,
 				Pagination: pagination.Info{
@@ -734,7 +734,7 @@ func (s *Service) templatePartnerSettingIndex(
 
 	schema, err := s.partnerSettingRepo.GetActivePartnerSettingSchema(
 		ctx,
-		repositories.GetActiveEDIPartnerSettingSchemaRequest{
+		ediports.GetActiveEDIPartnerSettingSchemaRequest{
 			TenantInfo:     tenantInfo,
 			DocumentTypeID: version.Template.DocumentTypeID,
 			Standard:       version.Template.Standard,
@@ -752,7 +752,7 @@ func (s *Service) templatePartnerSettingIndex(
 
 	fields, err := s.partnerSettingRepo.ListPartnerSettingFields(
 		ctx,
-		&repositories.ListEDIPartnerSettingFieldsRequest{
+		&ediports.ListEDIPartnerSettingFieldsRequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: tenantInfo,
 				Pagination: pagination.Info{Limit: 1000},
@@ -791,7 +791,7 @@ func (s *Service) validateTemplateCreateRequest(
 	}
 	documentTypes, err := s.documentTypeRepo.ListDocumentTypes(
 		ctx,
-		repositories.ListEDIDocumentTypesRequest{
+		ediports.ListEDIDocumentTypesRequest{
 			Standard:       req.Standard,
 			TransactionSet: req.TransactionSet,
 			Direction:      req.Direction,
@@ -832,7 +832,7 @@ func (s *Service) validateTemplateStatusTransition(
 
 	versions, err := s.templateRepo.ListTemplateVersions(
 		ctx,
-		repositories.ListEDITemplateVersionsRequest{
+		ediports.ListEDITemplateVersionsRequest{
 			TemplateID: current.ID,
 			TenantInfo: req.TenantInfo,
 		},
@@ -1498,7 +1498,7 @@ func isFunctionReference(value string) bool {
 	return true
 }
 
-func actorID(actor *services.RequestActor) pulid.ID {
+func actorID(actor *permissionports.RequestActor) pulid.ID {
 	if actor == nil {
 		return pulid.Nil
 	}

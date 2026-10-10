@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/iam"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -76,7 +76,7 @@ func (s *Service) recordAuthAttempt(ctx context.Context, attempt *authAttempt, e
 		return
 	}
 
-	rec := services.AuthEventRecord{
+	rec := iamports.AuthEventRecord{
 		Provider:         attempt.provider,
 		Outcome:          authOutcome(err),
 		UserID:           attempt.userID,

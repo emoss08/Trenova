@@ -9,9 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 )
 
 const (
@@ -75,11 +75,11 @@ var (
 		homelayout.CategoryOrientation,
 		homelayout.CategoryComms,
 	})
-	shopStrategies = agenttoolschema.Source("carrierShop.strategy", []serviceports.ShopStrategy{
-		serviceports.ShopStrategyLeastCost,
-		serviceports.ShopStrategyBestMargin,
-		serviceports.ShopStrategyGuideRank,
-		serviceports.ShopStrategyFastestAccept,
+	shopStrategies = agenttoolschema.Source("carrierShop.strategy", []ratequoteports.ShopStrategy{
+		ratequoteports.ShopStrategyLeastCost,
+		ratequoteports.ShopStrategyBestMargin,
+		ratequoteports.ShopStrategyGuideRank,
+		ratequoteports.ShopStrategyFastestAccept,
 	})
 	formulaVariableTypes = agenttoolschema.Source(
 		"formula.variableType",

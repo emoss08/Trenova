@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/insight"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -14,15 +14,15 @@ import (
 )
 
 type fakeInsights struct {
-	browsed  serviceports.BrowseInsightsRequest
-	detailed serviceports.GetInsightDetailRequest
+	browsed  insightports.BrowseInsightsRequest
+	detailed insightports.GetInsightDetailRequest
 	items    []*insight.Insight
-	detail   *serviceports.InsightDetail
+	detail   *insightports.InsightDetail
 }
 
 func (f *fakeInsights) List(
 	_ context.Context,
-	req serviceports.BrowseInsightsRequest,
+	req insightports.BrowseInsightsRequest,
 ) (*pagination.ListResult[*insight.Insight], error) {
 	f.browsed = req
 
@@ -31,8 +31,8 @@ func (f *fakeInsights) List(
 
 func (f *fakeInsights) GetDetail(
 	_ context.Context,
-	req serviceports.GetInsightDetailRequest,
-) (*serviceports.InsightDetail, error) {
+	req insightports.GetInsightDetailRequest,
+) (*insightports.InsightDetail, error) {
 	f.detailed = req
 
 	return f.detail, nil
@@ -135,10 +135,10 @@ func TestGetInsight_ReturnsTheRuleAndTheTrend(t *testing.T) {
 	earlier.DetectedAt = current.DetectedAt - 86_400
 	earlier.Metrics[0].Value = decimal.NewFromInt(78)
 
-	insights := &fakeInsights{detail: &serviceports.InsightDetail{
+	insights := &fakeInsights{detail: &insightports.InsightDetail{
 		Insight: current,
 		History: []*insight.Insight{earlier},
-		Explanation: serviceports.InsightExplanation{
+		Explanation: insightports.InsightExplanation{
 			Measures:  "on-time deliveries over the window",
 			Threshold: "below 80%",
 			Excludes:  "cancelled shipments",

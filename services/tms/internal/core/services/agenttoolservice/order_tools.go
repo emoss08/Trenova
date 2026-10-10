@@ -9,11 +9,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/orderservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -54,17 +55,17 @@ var (
 )
 
 type orderKeeper interface {
-	Get(ctx context.Context, req repositories.GetOrderByIDRequest) (*order.Order, error)
+	Get(ctx context.Context, req orderports.GetOrderByIDRequest) (*order.Order, error)
 	Create(
 		ctx context.Context,
 		entity *order.Order,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*order.Order, error)
 	PlanCreate(ctx context.Context, entity *order.Order) (*orderservice.OrderChange, error)
 	Update(
 		ctx context.Context,
 		entity *order.Order,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*order.Order, error)
 	PlanUpdate(ctx context.Context, entity *order.Order) (*orderservice.OrderChange, error)
 	AttachShipments(
@@ -72,7 +73,7 @@ type orderKeeper interface {
 		tenantInfo pagination.TenantInfo,
 		orderID pulid.ID,
 		shipmentIDs []pulid.ID,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*order.Order, error)
 	PlanAttachShipments(
 		ctx context.Context,
@@ -85,7 +86,7 @@ type orderKeeper interface {
 		tenantInfo pagination.TenantInfo,
 		orderID pulid.ID,
 		shipmentID pulid.ID,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*order.Order, error)
 	PlanDetachShipment(
 		ctx context.Context,
@@ -97,7 +98,7 @@ type orderKeeper interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		orderID pulid.ID,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*order.Order, error)
 	PlanClose(
 		ctx context.Context,
@@ -109,7 +110,7 @@ type orderKeeper interface {
 		tenantInfo pagination.TenantInfo,
 		orderID pulid.ID,
 		cancelReason string,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*order.Order, error)
 	PlanCancel(
 		ctx context.Context,
@@ -123,7 +124,7 @@ func orderIDProperty(what string) map[string]any {
 		"list_orders, get_order or the orderId get_shipment shows")
 }
 
-func targetOrder(params map[string]any) (serviceports.ToolTarget, bool) {
+func targetOrder(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, paramOrderID, permission.ResourceOrder)
 }
 
@@ -290,7 +291,7 @@ func renderOrderChange(verb string) func(
 	}
 }
 
-func newCreateOrderTool(orders orderKeeper) serviceports.AgentTool {
+func newCreateOrderTool(orders orderKeeper) agentports.AgentTool {
 	return newReportingReceivableTool(&receivableSpec{
 		name:     "create_order",
 		artifact: orderRecordEntity,
@@ -310,7 +311,7 @@ func newCreateOrderTool(orders orderKeeper) serviceports.AgentTool {
 		properties: orderProperties(true),
 		required:   []string{fieldCustomerID},
 	}, receivablePlan[*order.Order, *orderservice.OrderChange]{
-		request: func(params *serviceports.ToolExecuteParams) (*order.Order, error) {
+		request: func(params *agentports.ToolExecuteParams) (*order.Order, error) {
 			if _, err := requirePulid(params.Params, fieldCustomerID); err != nil {
 				return nil, err
 			}
@@ -330,7 +331,7 @@ func newCreateOrderTool(orders orderKeeper) serviceports.AgentTool {
 		plan: func(
 			ctx context.Context,
 			entity *order.Order,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*orderservice.OrderChange, error) {
 			probe := *entity
 
@@ -341,7 +342,7 @@ func newCreateOrderTool(orders orderKeeper) serviceports.AgentTool {
 		run: func(
 			ctx context.Context,
 			entity *order.Order,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			created, err := orders.Create(ctx, entity, params.Actor)
 			if err != nil {
@@ -354,7 +355,7 @@ func newCreateOrderTool(orders orderKeeper) serviceports.AgentTool {
 }
 
 type orderEdit struct {
-	get    repositories.GetOrderByIDRequest
+	get    orderports.GetOrderByIDRequest
 	params map[string]any
 }
 
@@ -370,7 +371,7 @@ func (e *orderEdit) entity(ctx context.Context, orders orderKeeper) (*order.Orde
 	return current, nil
 }
 
-func newUpdateOrderTool(orders orderKeeper) serviceports.AgentTool {
+func newUpdateOrderTool(orders orderKeeper) agentports.AgentTool {
 	base := newReportingReceivableTool(&receivableSpec{
 		name:        "update_order",
 		searchTerms: []string{"purchase order", "po", "fix bol", "edit order"},
@@ -390,7 +391,7 @@ func newUpdateOrderTool(orders orderKeeper) serviceports.AgentTool {
 		required:   []string{paramOrderID},
 		target:     targetOrder,
 	}, receivablePlan[*orderEdit, *orderservice.OrderChange]{
-		request: func(params *serviceports.ToolExecuteParams) (*orderEdit, error) {
+		request: func(params *agentports.ToolExecuteParams) (*orderEdit, error) {
 			orderID, err := requirePulid(params.Params, paramOrderID)
 			if err != nil {
 				return nil, err
@@ -404,7 +405,7 @@ func newUpdateOrderTool(orders orderKeeper) serviceports.AgentTool {
 			}
 
 			return &orderEdit{
-				get: repositories.GetOrderByIDRequest{
+				get: orderports.GetOrderByIDRequest{
 					ID:         orderID,
 					TenantInfo: tenantFrom(*params),
 				},
@@ -414,7 +415,7 @@ func newUpdateOrderTool(orders orderKeeper) serviceports.AgentTool {
 		plan: func(
 			ctx context.Context,
 			edit *orderEdit,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*orderservice.OrderChange, error) {
 			entity, err := edit.entity(ctx, orders)
 			if err != nil {
@@ -430,7 +431,7 @@ func newUpdateOrderTool(orders orderKeeper) serviceports.AgentTool {
 		run: func(
 			ctx context.Context,
 			edit *orderEdit,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			entity, err := edit.entity(ctx, orders)
 			if err != nil {
@@ -453,13 +454,13 @@ func newUpdateOrderTool(orders orderKeeper) serviceports.AgentTool {
 }
 
 func classifyOrderAmounts(
-	params serviceports.ToolExecuteParams, //nolint:gocritic // ToolPolicy.Classify passes params by value
-) serviceports.CallPolicy {
+	params agentports.ToolExecuteParams, //nolint:gocritic // ToolPolicy.Classify passes params by value
+) agentports.CallPolicy {
 	if sendsAny(params.Params, paramQuotedAmount, paramBaseAmount) {
-		return serviceports.CallPolicy{Egress: agent.EgressMoney}
+		return agentports.CallPolicy{Egress: agent.EgressMoney}
 	}
 
-	return serviceports.CallPolicy{Egress: agent.EgressInternal}
+	return agentports.CallPolicy{Egress: agent.EgressInternal}
 }
 
 func sendsAny(params map[string]any, keys ...string) bool {
@@ -484,7 +485,7 @@ type orderMembership struct {
 	shipmentIDs []pulid.ID
 }
 
-func newAttachOrderShipmentsTool(orders orderKeeper) serviceports.AgentTool {
+func newAttachOrderShipmentsTool(orders orderKeeper) agentports.AgentTool {
 	return newReportingReceivableTool(&receivableSpec{
 		name:     "attach_order_shipments",
 		artifact: orderRecordEntity,
@@ -513,7 +514,7 @@ func newAttachOrderShipmentsTool(orders orderKeeper) serviceports.AgentTool {
 		required: []string{paramOrderID, paramShipmentIDs},
 		target:   targetOrder,
 	}, receivablePlan[*orderMembership, *orderservice.MembershipPlan]{
-		request: func(params *serviceports.ToolExecuteParams) (*orderMembership, error) {
+		request: func(params *agentports.ToolExecuteParams) (*orderMembership, error) {
 			orderID, err := requirePulid(params.Params, paramOrderID)
 			if err != nil {
 				return nil, err
@@ -533,7 +534,7 @@ func newAttachOrderShipmentsTool(orders orderKeeper) serviceports.AgentTool {
 		plan: func(
 			ctx context.Context,
 			req *orderMembership,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*orderservice.MembershipPlan, error) {
 			return orders.PlanAttachShipments(ctx, req.tenant, req.orderID, req.shipmentIDs)
 		},
@@ -544,7 +545,7 @@ func newAttachOrderShipmentsTool(orders orderKeeper) serviceports.AgentTool {
 		run: func(
 			ctx context.Context,
 			req *orderMembership,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			updated, err := orders.AttachShipments(ctx, req.tenant, req.orderID,
 				req.shipmentIDs, params.Actor)
@@ -607,7 +608,7 @@ type orderLeg struct {
 	shipmentID pulid.ID
 }
 
-func newDetachOrderShipmentTool(orders orderKeeper) serviceports.AgentTool {
+func newDetachOrderShipmentTool(orders orderKeeper) agentports.AgentTool {
 	return newReportingReceivableTool(&receivableSpec{
 		name:     "detach_order_shipment",
 		artifact: orderRecordEntity,
@@ -629,7 +630,7 @@ func newDetachOrderShipmentTool(orders orderKeeper) serviceports.AgentTool {
 		required: []string{paramOrderID, paramShipmentID},
 		target:   targetOrder,
 	}, receivablePlan[*orderLeg, *orderservice.DetachPlan]{
-		request: func(params *serviceports.ToolExecuteParams) (*orderLeg, error) {
+		request: func(params *agentports.ToolExecuteParams) (*orderLeg, error) {
 			orderID, err := requirePulid(params.Params, paramOrderID)
 			if err != nil {
 				return nil, err
@@ -645,7 +646,7 @@ func newDetachOrderShipmentTool(orders orderKeeper) serviceports.AgentTool {
 		plan: func(
 			ctx context.Context,
 			req *orderLeg,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*orderservice.DetachPlan, error) {
 			return orders.PlanDetachShipment(ctx, req.tenant, req.orderID, req.shipmentID)
 		},
@@ -669,7 +670,7 @@ func newDetachOrderShipmentTool(orders orderKeeper) serviceports.AgentTool {
 		run: func(
 			ctx context.Context,
 			req *orderLeg,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			updated, err := orders.DetachShipment(ctx, req.tenant, req.orderID, req.shipmentID,
 				params.Actor)
@@ -689,7 +690,7 @@ type orderOnly struct {
 }
 
 func readOrderOnly(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 	reasonRequired bool,
 ) (*orderOnly, error) {
 	orderID, err := requirePulid(params.Params, paramOrderID)
@@ -707,7 +708,7 @@ func readOrderOnly(
 	return req, nil
 }
 
-func newCloseOrderTool(orders orderKeeper) serviceports.AgentTool {
+func newCloseOrderTool(orders orderKeeper) agentports.AgentTool {
 	return newReportingReceivableTool(&receivableSpec{
 		name:     "close_order",
 		artifact: orderRecordEntity,
@@ -725,13 +726,13 @@ func newCloseOrderTool(orders orderKeeper) serviceports.AgentTool {
 		required:   []string{paramOrderID},
 		target:     targetOrder,
 	}, receivablePlan[*orderOnly, *orderservice.OrderChange]{
-		request: func(params *serviceports.ToolExecuteParams) (*orderOnly, error) {
+		request: func(params *agentports.ToolExecuteParams) (*orderOnly, error) {
 			return readOrderOnly(params, false)
 		},
 		plan: func(
 			ctx context.Context,
 			req *orderOnly,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*orderservice.OrderChange, error) {
 			return orders.PlanClose(ctx, req.tenant, req.orderID)
 		},
@@ -742,7 +743,7 @@ func newCloseOrderTool(orders orderKeeper) serviceports.AgentTool {
 		run: func(
 			ctx context.Context,
 			req *orderOnly,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			closed, err := orders.Close(ctx, req.tenant, req.orderID, params.Actor)
 			if err != nil {
@@ -754,7 +755,7 @@ func newCloseOrderTool(orders orderKeeper) serviceports.AgentTool {
 	})
 }
 
-func newCancelOrderTool(orders orderKeeper) serviceports.AgentTool {
+func newCancelOrderTool(orders orderKeeper) agentports.AgentTool {
 	return newReportingReceivableTool(&receivableSpec{
 		name:     "cancel_order",
 		artifact: orderRecordEntity,
@@ -778,13 +779,13 @@ func newCancelOrderTool(orders orderKeeper) serviceports.AgentTool {
 		required: []string{paramOrderID, paramCancelReason},
 		target:   targetOrder,
 	}, receivablePlan[*orderOnly, *orderservice.CancelPlan]{
-		request: func(params *serviceports.ToolExecuteParams) (*orderOnly, error) {
+		request: func(params *agentports.ToolExecuteParams) (*orderOnly, error) {
 			return readOrderOnly(params, true)
 		},
 		plan: func(
 			ctx context.Context,
 			req *orderOnly,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*orderservice.CancelPlan, error) {
 			return orders.PlanCancel(ctx, req.tenant, req.orderID)
 		},
@@ -793,7 +794,7 @@ func newCancelOrderTool(orders orderKeeper) serviceports.AgentTool {
 		run: func(
 			ctx context.Context,
 			req *orderOnly,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			canceled, err := orders.Cancel(ctx, req.tenant, req.orderID, req.reason, params.Actor)
 			if err != nil {

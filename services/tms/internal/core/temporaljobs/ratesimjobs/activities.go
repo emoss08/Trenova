@@ -4,8 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/temporaljobs/ratesimjobs/ratesimcontract"
-
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratesimulationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/sdk/activity"
@@ -20,12 +19,12 @@ type RunSimulationResult struct {
 type ActivitiesParams struct {
 	fx.In
 
-	Service services.RateSimulationRunner
+	Service ratesimulationports.RateSimulationRunner
 	Logger  *zap.Logger
 }
 
 type Activities struct {
-	service services.RateSimulationRunner
+	service ratesimulationports.RateSimulationRunner
 	logger  *zap.Logger
 }
 
@@ -51,7 +50,7 @@ func (a *Activities) RunSimulationActivity(
 		UserID: payload.UserID,
 	}
 
-	err := a.service.Run(ctx, &services.RunRateSimulationRequest{
+	err := a.service.Run(ctx, &ratesimulationports.RunRateSimulationRequest{
 		TenantInfo:       tenantInfo,
 		RateSimulationID: payload.RateSimulationID,
 		Heartbeat: func(done int) {

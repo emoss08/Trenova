@@ -14,10 +14,17 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/tractorservice"
 	"github.com/emoss08/trenova/internal/core/services/trailerservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/hazardousmaterialports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -53,7 +60,7 @@ func (f *fakeMaster[T]) planCreate(_ context.Context, entity *T) (*T, error) {
 func (f *fakeMaster[T]) create(
 	ctx context.Context,
 	entity *T,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*T, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -71,18 +78,18 @@ func (f *fakeMaster[T]) create(
 func (f *fakeMaster[T]) planUpdate(
 	_ context.Context,
 	entity *T,
-) (*serviceports.RecordChange[T], error) {
+) (*kernelports.RecordChange[T], error) {
 	if f.refusal != nil {
 		return nil, f.refusal
 	}
 
-	return &serviceports.RecordChange[T]{Before: f.stored, After: entity}, nil
+	return &kernelports.RecordChange[T]{Before: f.stored, After: entity}, nil
 }
 
 func (f *fakeMaster[T]) update(
 	_ context.Context,
 	entity *T,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*T, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -96,7 +103,7 @@ type fakeCustomers struct {
 	*fakeMaster[customer.Customer]
 }
 
-func (f fakeCustomers) Get(context.Context, repositories.GetCustomerByIDRequest) (*customer.Customer, error) {
+func (f fakeCustomers) Get(context.Context, customerports.GetCustomerByIDRequest) (*customer.Customer, error) {
 	return f.get()
 }
 
@@ -107,7 +114,7 @@ func (f fakeCustomers) PlanCreate(ctx context.Context, e *customer.Customer) (*c
 func (f fakeCustomers) Create(
 	ctx context.Context,
 	e *customer.Customer,
-	a *serviceports.RequestActor,
+	a *permissionports.RequestActor,
 ) (*customer.Customer, error) {
 	return f.create(ctx, e, a)
 }
@@ -115,31 +122,31 @@ func (f fakeCustomers) Create(
 func (f fakeCustomers) PlanUpdate(
 	ctx context.Context,
 	e *customer.Customer,
-) (*serviceports.RecordChange[customer.Customer], error) {
+) (*kernelports.RecordChange[customer.Customer], error) {
 	return f.planUpdate(ctx, e)
 }
 
 func (f fakeCustomers) Update(
 	ctx context.Context,
 	e *customer.Customer,
-	a *serviceports.RequestActor,
+	a *permissionports.RequestActor,
 ) (*customer.Customer, error) {
 	return f.update(ctx, e, a)
 }
 
 func (f fakeCustomers) PlanBulkUpdateStatus(
 	_ context.Context,
-	req *repositories.BulkUpdateCustomerStatusRequest,
-) ([]serviceports.RecordChange[customer.Customer], error) {
+	req *customerports.BulkUpdateCustomerStatusRequest,
+) ([]kernelports.RecordChange[customer.Customer], error) {
 	after := *f.stored
 	after.Status = req.Status
 
-	return []serviceports.RecordChange[customer.Customer]{{Before: f.stored, After: &after}}, nil
+	return []kernelports.RecordChange[customer.Customer]{{Before: f.stored, After: &after}}, nil
 }
 
 func (f fakeCustomers) BulkUpdateStatus(
 	_ context.Context,
-	req *repositories.BulkUpdateCustomerStatusRequest,
+	req *customerports.BulkUpdateCustomerStatusRequest,
 ) ([]*customer.Customer, error) {
 	f.status = req
 
@@ -165,7 +172,7 @@ func TestCreateCustomer_StatusEmailRecipientsAreHeldAsLeavingTheOrganization(t *
 	}
 
 	preview := previewWithoutWrites(t, customers.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), idempotentParams(args))
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), idempotentParams(args))
 	})
 	assert.Equal(t, "TX", fieldByPath(t, previewChange(t, preview, 0), mdState).After)
 	assert.Equal(t, agent.EgressInternal, tool.Policy().Classify(idempotentParams(args)).Egress)
@@ -175,7 +182,7 @@ func TestCreateCustomer_StatusEmailRecipientsAreHeldAsLeavingTheOrganization(t *
 	assert.Equal(t, agent.EgressExternalRecipient, call.Egress)
 	assert.Equal(t, agent.TierPropose, call.MaxTier)
 
-	result, err := tool.(serviceports.ToolResultReporter).ExecuteWithResult(t.Context(),
+	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(),
 		idempotentParams(args))
 	require.NoError(t, err)
 	assert.Equal(t, states.state.ID, customers.created.StateID)
@@ -183,7 +190,7 @@ func TestCreateCustomer_StatusEmailRecipientsAreHeldAsLeavingTheOrganization(t *
 	assert.Equal(t, customerRecordEntity, result.Record.EntityType)
 
 	delete(args, mdState)
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 		idempotentParams(args)))
 }
 
@@ -214,14 +221,14 @@ func TestUpdateCustomer_LeavesTheBillingProfileAlone(t *testing.T) {
 		"customerIds": []any{stored.ID.String()},
 		fieldStatus:   "Inactive",
 	})))
-	require.IsType(t, &repositories.BulkUpdateCustomerStatusRequest{}, customers.status)
+	require.IsType(t, &customerports.BulkUpdateCustomerStatusRequest{}, customers.status)
 }
 
 type fakeCommodities struct {
 	*fakeMaster[commodity.Commodity]
 }
 
-func (f fakeCommodities) Get(context.Context, repositories.GetCommodityByIDRequest) (*commodity.Commodity, error) {
+func (f fakeCommodities) Get(context.Context, commodityports.GetCommodityByIDRequest) (*commodity.Commodity, error) {
 	return f.get()
 }
 
@@ -232,7 +239,7 @@ func (f fakeCommodities) PlanCreate(ctx context.Context, e *commodity.Commodity)
 func (f fakeCommodities) Create(
 	ctx context.Context,
 	e *commodity.Commodity,
-	a *serviceports.RequestActor,
+	a *permissionports.RequestActor,
 ) (*commodity.Commodity, error) {
 	return f.create(ctx, e, a)
 }
@@ -240,29 +247,29 @@ func (f fakeCommodities) Create(
 func (f fakeCommodities) PlanUpdate(
 	ctx context.Context,
 	e *commodity.Commodity,
-) (*serviceports.RecordChange[commodity.Commodity], error) {
+) (*kernelports.RecordChange[commodity.Commodity], error) {
 	return f.planUpdate(ctx, e)
 }
 
 func (f fakeCommodities) Update(
 	ctx context.Context,
 	e *commodity.Commodity,
-	a *serviceports.RequestActor,
+	a *permissionports.RequestActor,
 ) (*commodity.Commodity, error) {
 	return f.update(ctx, e, a)
 }
 
 func (f fakeCommodities) PlanBulkUpdateStatus(
 	context.Context,
-	*repositories.BulkUpdateCommodityStatusRequest,
-) ([]serviceports.RecordChange[commodity.Commodity], error) {
+	*commodityports.BulkUpdateCommodityStatusRequest,
+) ([]kernelports.RecordChange[commodity.Commodity], error) {
 	return nil, errortypes.NewValidationError("commodityIds", errortypes.ErrInvalid,
 		"These are not commodity records of this organization")
 }
 
 func (f fakeCommodities) BulkUpdateStatus(
 	context.Context,
-	*repositories.BulkUpdateCommodityStatusRequest,
+	*commodityports.BulkUpdateCommodityStatusRequest,
 ) ([]*commodity.Commodity, error) {
 	return nil, f.guard.write()
 }
@@ -286,7 +293,7 @@ func TestCreateCommodity_ReadsDecimalsAndTheFreightClass(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, commodities.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, "42.5", fieldByPath(t, previewChange(t, preview, 0), "weightPerUnit").After)
 
@@ -299,14 +306,14 @@ func TestCreateCommodity_ReadsDecimalsAndTheFreightClass(t *testing.T) {
 	bad := idempotentParams(map[string]any{
 		mdName: "Peas", mdDescription: "Peas", "freightClass": "Class71",
 	})
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), bad))
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), bad))
 
 	status := newUpdateCommodityStatusTool(commodities)
 	statusParams := executeParams(map[string]any{
 		"commodityIds": []any{pulid.MustNew("com_").String()},
 		fieldStatus:    "Inactive",
 	})
-	statusPreview, err := status.(serviceports.ToolPreviewer).Preview(t.Context(), statusParams)
+	statusPreview, err := status.(agentports.ToolPreviewer).Preview(t.Context(), statusParams)
 	require.NoError(t, err)
 	requireWarning(t, statusPreview, agent.PreviewWarningWouldFail)
 }
@@ -317,7 +324,7 @@ type fakeHazmats struct {
 
 func (f fakeHazmats) Get(
 	context.Context,
-	repositories.GetHazardousMaterialByIDRequest,
+	hazardousmaterialports.GetHazardousMaterialByIDRequest,
 ) (*hazardousmaterial.HazardousMaterial, error) {
 	return f.get()
 }
@@ -332,7 +339,7 @@ func (f fakeHazmats) PlanCreate(
 func (f fakeHazmats) Create(
 	ctx context.Context,
 	e *hazardousmaterial.HazardousMaterial,
-	a *serviceports.RequestActor,
+	a *permissionports.RequestActor,
 ) (*hazardousmaterial.HazardousMaterial, error) {
 	return f.create(ctx, e, a)
 }
@@ -340,28 +347,28 @@ func (f fakeHazmats) Create(
 func (f fakeHazmats) PlanUpdate(
 	ctx context.Context,
 	e *hazardousmaterial.HazardousMaterial,
-) (*serviceports.RecordChange[hazardousmaterial.HazardousMaterial], error) {
+) (*kernelports.RecordChange[hazardousmaterial.HazardousMaterial], error) {
 	return f.planUpdate(ctx, e)
 }
 
 func (f fakeHazmats) Update(
 	ctx context.Context,
 	e *hazardousmaterial.HazardousMaterial,
-	a *serviceports.RequestActor,
+	a *permissionports.RequestActor,
 ) (*hazardousmaterial.HazardousMaterial, error) {
 	return f.update(ctx, e, a)
 }
 
 func (f fakeHazmats) PlanBulkUpdateStatus(
 	context.Context,
-	*repositories.BulkUpdateHazardousMaterialStatusRequest,
-) ([]serviceports.RecordChange[hazardousmaterial.HazardousMaterial], error) {
+	*hazardousmaterialports.BulkUpdateHazardousMaterialStatusRequest,
+) ([]kernelports.RecordChange[hazardousmaterial.HazardousMaterial], error) {
 	return nil, nil
 }
 
 func (f fakeHazmats) BulkUpdateStatus(
 	context.Context,
-	*repositories.BulkUpdateHazardousMaterialStatusRequest,
+	*hazardousmaterialports.BulkUpdateHazardousMaterialStatusRequest,
 ) ([]*hazardousmaterial.HazardousMaterial, error) {
 	return nil, f.guard.write()
 }
@@ -383,7 +390,7 @@ func TestHazardousMaterialTools_AlwaysWaitForAPerson(t *testing.T) {
 		stored: stored,
 		setID:  func(h *hazardousmaterial.HazardousMaterial) { h.ID = pulid.MustNew("hm_") },
 	}}
-	for _, tool := range []serviceports.AgentTool{
+	for _, tool := range []agentports.AgentTool{
 		newCreateHazardousMaterialTool(materials),
 		newUpdateHazardousMaterialTool(materials),
 	} {
@@ -398,7 +405,7 @@ func TestHazardousMaterialTools_AlwaysWaitForAPerson(t *testing.T) {
 		"class":           "HazardClass8",
 	})
 	preview := previewWithoutWrites(t, materials.guard, func() (*agent.ToolPreview, error) {
-		return update.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return update.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, "HazardClass8", fieldByPath(t, previewChange(t, preview, 0), "class").After)
 	require.NoError(t, update.Execute(t.Context(), params))
@@ -408,41 +415,41 @@ func TestHazardousMaterialTools_AlwaysWaitForAPerson(t *testing.T) {
 
 type fakeLocations struct {
 	*fakeMaster[location.Location]
-	bulk *repositories.BulkUpdateLocationStatusRequest
+	bulk *locationports.BulkUpdateLocationStatusRequest
 }
 
-func (f *fakeLocations) Get(context.Context, repositories.GetLocationByIDRequest) (*location.Location, error) {
+func (f *fakeLocations) Get(context.Context, locationports.GetLocationByIDRequest) (*location.Location, error) {
 	return f.get()
 }
 
 func (f *fakeLocations) PlanUpdate(
 	ctx context.Context,
 	e *location.Location,
-) (*serviceports.RecordChange[location.Location], error) {
+) (*kernelports.RecordChange[location.Location], error) {
 	return f.planUpdate(ctx, e)
 }
 
 func (f *fakeLocations) Update(
 	ctx context.Context,
 	e *location.Location,
-	a *serviceports.RequestActor,
+	a *permissionports.RequestActor,
 ) (*location.Location, error) {
 	return f.update(ctx, e, a)
 }
 
 func (f *fakeLocations) PlanBulkUpdateStatus(
 	_ context.Context,
-	req *repositories.BulkUpdateLocationStatusRequest,
-) ([]serviceports.RecordChange[location.Location], error) {
+	req *locationports.BulkUpdateLocationStatusRequest,
+) ([]kernelports.RecordChange[location.Location], error) {
 	after := *f.stored
 	after.Status = req.Status
 
-	return []serviceports.RecordChange[location.Location]{{Before: f.stored, After: &after}}, nil
+	return []kernelports.RecordChange[location.Location]{{Before: f.stored, After: &after}}, nil
 }
 
 func (f *fakeLocations) BulkUpdateStatus(
 	_ context.Context,
-	req *repositories.BulkUpdateLocationStatusRequest,
+	req *locationports.BulkUpdateLocationStatusRequest,
 ) ([]*location.Location, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -478,7 +485,7 @@ func TestUpdateLocation_ChangesTheAddressAndKeepsTheCode(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, locations.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, "9 Dock St", fieldByPath(t, previewChange(t, preview, 0), mdAddressLine1).After)
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -496,10 +503,10 @@ func TestUpdateLocation_ChangesTheAddressAndKeepsTheCode(t *testing.T) {
 type fakeTractors struct {
 	*fakeMaster[tractor.Tractor]
 	plan    *tractorservice.LocatePlan
-	located *repositories.LocateTractorRequest
+	located *tractorports.LocateTractorRequest
 }
 
-func (f *fakeTractors) Get(context.Context, repositories.GetTractorByIDRequest) (*tractor.Tractor, error) {
+func (f *fakeTractors) Get(context.Context, tractorports.GetTractorByIDRequest) (*tractor.Tractor, error) {
 	return f.get()
 }
 
@@ -510,7 +517,7 @@ func (f *fakeTractors) PlanCreate(ctx context.Context, e *tractor.Tractor) (*tra
 func (f *fakeTractors) Create(
 	ctx context.Context,
 	e *tractor.Tractor,
-	a *serviceports.RequestActor,
+	a *permissionports.RequestActor,
 ) (*tractor.Tractor, error) {
 	return f.create(ctx, e, a)
 }
@@ -518,21 +525,21 @@ func (f *fakeTractors) Create(
 func (f *fakeTractors) PlanUpdate(
 	ctx context.Context,
 	e *tractor.Tractor,
-) (*serviceports.RecordChange[tractor.Tractor], error) {
+) (*kernelports.RecordChange[tractor.Tractor], error) {
 	return f.planUpdate(ctx, e)
 }
 
 func (f *fakeTractors) Update(
 	ctx context.Context,
 	e *tractor.Tractor,
-	a *serviceports.RequestActor,
+	a *permissionports.RequestActor,
 ) (*tractor.Tractor, error) {
 	return f.update(ctx, e, a)
 }
 
 func (f *fakeTractors) PlanLocate(
 	context.Context,
-	*repositories.LocateTractorRequest,
+	*tractorports.LocateTractorRequest,
 ) (*tractorservice.LocatePlan, error) {
 	if f.refusal != nil {
 		return nil, f.refusal
@@ -543,7 +550,7 @@ func (f *fakeTractors) PlanLocate(
 
 func (f *fakeTractors) Locate(
 	_ context.Context,
-	req *repositories.LocateTractorRequest,
+	req *tractorports.LocateTractorRequest,
 ) (*equipmentcontinuity.EquipmentContinuity, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -571,7 +578,7 @@ func TestCreateTractor_DefaultsWhatTheFormDefaults(t *testing.T) {
 		mdVIN:                "1fuj",
 	})
 
-	result, err := tool.(serviceports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	created := tractors.created
 	assert.Equal(t, domaintypes.EquipmentStatusAvailable, created.Status)
@@ -589,7 +596,7 @@ func TestCreateTractor_DefaultsWhatTheFormDefaults(t *testing.T) {
 		mdManufacturerID:     pulid.MustNew("em_").String(),
 		mdRegistrationExpiry: "03/31/2027",
 	})
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), bad))
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), bad))
 }
 
 func TestLocateTractor_ShowsWhereItWasAndGoes(t *testing.T) {
@@ -613,14 +620,14 @@ func TestLocateTractor_ShowsWhereItWasAndGoes(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, tractors.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would record tractor T-100 at Dallas yard")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.Equal(t, to.ID, tractors.located.NewLocationID)
 
 	tractors.refusal = errortypes.NewBusinessError("Tractor is currently in progress on another move")
-	refused, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	refused, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	requireWarning(t, refused, agent.PreviewWarningWouldFail)
 }
@@ -628,10 +635,10 @@ func TestLocateTractor_ShowsWhereItWasAndGoes(t *testing.T) {
 type fakeTrailers struct {
 	*fakeMaster[trailer.Trailer]
 	plan    *trailerservice.LocatePlan
-	located *repositories.LocateTrailerRequest
+	located *trailerports.LocateTrailerRequest
 }
 
-func (f *fakeTrailers) Get(context.Context, repositories.GetTrailerByIDRequest) (*trailer.Trailer, error) {
+func (f *fakeTrailers) Get(context.Context, trailerports.GetTrailerByIDRequest) (*trailer.Trailer, error) {
 	return f.get()
 }
 
@@ -642,7 +649,7 @@ func (f *fakeTrailers) PlanCreate(ctx context.Context, e *trailer.Trailer) (*tra
 func (f *fakeTrailers) Create(
 	ctx context.Context,
 	e *trailer.Trailer,
-	a *serviceports.RequestActor,
+	a *permissionports.RequestActor,
 ) (*trailer.Trailer, error) {
 	return f.create(ctx, e, a)
 }
@@ -650,30 +657,30 @@ func (f *fakeTrailers) Create(
 func (f *fakeTrailers) PlanUpdate(
 	ctx context.Context,
 	e *trailer.Trailer,
-) (*serviceports.RecordChange[trailer.Trailer], error) {
+) (*kernelports.RecordChange[trailer.Trailer], error) {
 	return f.planUpdate(ctx, e)
 }
 
 func (f *fakeTrailers) Update(
 	ctx context.Context,
 	e *trailer.Trailer,
-	a *serviceports.RequestActor,
+	a *permissionports.RequestActor,
 ) (*trailer.Trailer, error) {
 	return f.update(ctx, e, a)
 }
 
 func (f *fakeTrailers) PlanLocate(
 	context.Context,
-	*repositories.LocateTrailerRequest,
-	*serviceports.RequestActor,
+	*trailerports.LocateTrailerRequest,
+	*permissionports.RequestActor,
 ) (*trailerservice.LocatePlan, error) {
 	return f.plan, nil
 }
 
 func (f *fakeTrailers) Locate(
 	_ context.Context,
-	req *repositories.LocateTrailerRequest,
-	_ *serviceports.RequestActor,
+	req *trailerports.LocateTrailerRequest,
+	_ *permissionports.RequestActor,
 ) (*equipmentcontinuity.EquipmentContinuity, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -712,7 +719,7 @@ func TestLocateTrailer_ShowsTheReRatedShipmentAndWaitsForAPerson(t *testing.T) {
 	}
 
 	preview := previewWithoutWrites(t, trailers.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), executeParams(args))
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), executeParams(args))
 	})
 	assert.Contains(t, preview.Summary, "re-rating it")
 	shipmentChange := previewChange(t, preview, 1)

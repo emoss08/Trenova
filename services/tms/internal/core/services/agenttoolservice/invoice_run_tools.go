@@ -9,8 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/invoicerun"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -39,55 +41,55 @@ var errNoMembershipEdit = errors.New("name at least one shipment to exclude, inc
 type invoiceRunKeeper interface {
 	Preview(
 		ctx context.Context,
-		req *serviceports.PreviewInvoiceRunRequest,
-		actor *serviceports.RequestActor,
+		req *invoicerunports.PreviewInvoiceRunRequest,
+		actor *permissionports.RequestActor,
 	) (*invoicerun.InvoiceRun, error)
 	PreviewBuild(
 		ctx context.Context,
-		req *serviceports.PreviewInvoiceRunRequest,
-		actor *serviceports.RequestActor,
+		req *invoicerunports.PreviewInvoiceRunRequest,
+		actor *permissionports.RequestActor,
 	) (*invoicerun.InvoiceRun, error)
 	AdjustMembership(
 		ctx context.Context,
-		req *serviceports.AdjustInvoiceRunMembershipRequest,
-		actor *serviceports.RequestActor,
+		req *invoicerunports.AdjustInvoiceRunMembershipRequest,
+		actor *permissionports.RequestActor,
 	) (*invoicerun.InvoiceRun, error)
 	PreviewMembership(
 		ctx context.Context,
-		req *serviceports.AdjustInvoiceRunMembershipRequest,
-	) (*serviceports.InvoiceRunChangePreview, error)
+		req *invoicerunports.AdjustInvoiceRunMembershipRequest,
+	) (*invoicerunports.InvoiceRunChangePreview, error)
 	Commit(
 		ctx context.Context,
-		req *serviceports.CommitInvoiceRunRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.CommitInvoiceRunResult, error)
+		req *invoicerunports.CommitInvoiceRunRequest,
+		actor *permissionports.RequestActor,
+	) (*invoicerunports.CommitInvoiceRunResult, error)
 	PreviewCommit(
 		ctx context.Context,
-		req *serviceports.CommitInvoiceRunRequest,
-	) (*serviceports.InvoiceRunCommitPlan, error)
+		req *invoicerunports.CommitInvoiceRunRequest,
+	) (*invoicerunports.InvoiceRunCommitPlan, error)
 	Cancel(
 		ctx context.Context,
-		req *serviceports.CancelInvoiceRunRequest,
-		actor *serviceports.RequestActor,
+		req *invoicerunports.CancelInvoiceRunRequest,
+		actor *permissionports.RequestActor,
 	) (*invoicerun.InvoiceRun, error)
 	PreviewCancel(
 		ctx context.Context,
-		req *serviceports.CancelInvoiceRunRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.InvoiceRunChangePreview, error)
+		req *invoicerunports.CancelInvoiceRunRequest,
+		actor *permissionports.RequestActor,
+	) (*invoicerunports.InvoiceRunChangePreview, error)
 	BillStatementNow(
 		ctx context.Context,
-		req *serviceports.BillStatementNowRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.CommitInvoiceRunResult, error)
+		req *invoicerunports.BillStatementNowRequest,
+		actor *permissionports.RequestActor,
+	) (*invoicerunports.CommitInvoiceRunResult, error)
 	PreviewBillStatement(
 		ctx context.Context,
-		req *serviceports.BillStatementNowRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.StatementBillPlan, error)
+		req *invoicerunports.BillStatementNowRequest,
+		actor *permissionports.RequestActor,
+	) (*invoicerunports.StatementBillPlan, error)
 }
 
-func targetInvoiceRun(params map[string]any) (serviceports.ToolTarget, bool) {
+func targetInvoiceRun(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, paramInvoiceRunID, permission.ResourceInvoiceRun)
 }
 
@@ -109,7 +111,7 @@ func requireUTCDay(params map[string]any, key string) (time.Time, error) {
 	return day, nil
 }
 
-func newBuildInvoiceRunTool(runs invoiceRunKeeper) serviceports.AgentTool {
+func newBuildInvoiceRunTool(runs invoiceRunKeeper) agentports.AgentTool {
 	return newReceivableTool(&receivableSpec{
 		name: "build_invoice_run",
 		description: "Build an invoice run: a reviewable proposal of the consolidated invoices " +
@@ -146,24 +148,24 @@ func newBuildInvoiceRunTool(runs invoiceRunKeeper) serviceports.AgentTool {
 			"get_invoice_run",
 			"commit_invoice_run",
 		},
-	}, receivablePlan[*serviceports.PreviewInvoiceRunRequest, *invoicerun.InvoiceRun]{
+	}, receivablePlan[*invoicerunports.PreviewInvoiceRunRequest, *invoicerun.InvoiceRun]{
 		request: buildRunRequest,
 		plan: func(
 			ctx context.Context,
-			req *serviceports.PreviewInvoiceRunRequest,
-			params *serviceports.ToolExecuteParams,
+			req *invoicerunports.PreviewInvoiceRunRequest,
+			params *agentports.ToolExecuteParams,
 		) (*invoicerun.InvoiceRun, error) {
 			return runs.PreviewBuild(ctx, req, params.Actor)
 		},
-		refused: func(req *serviceports.PreviewInvoiceRunRequest) string {
+		refused: func(req *invoicerunports.PreviewInvoiceRunRequest) string {
 			return fmt.Sprintf("Would build an invoice run for %s.",
 				countOf(len(req.CustomerIDs), "customer"))
 		},
 		render: renderBuiltRun,
 		run: func(
 			ctx context.Context,
-			req *serviceports.PreviewInvoiceRunRequest,
-			params *serviceports.ToolExecuteParams,
+			req *invoicerunports.PreviewInvoiceRunRequest,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := runs.Preview(ctx, req, params.Actor)
 			return nil, err
@@ -172,8 +174,8 @@ func newBuildInvoiceRunTool(runs invoiceRunKeeper) serviceports.AgentTool {
 }
 
 func buildRunRequest(
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.PreviewInvoiceRunRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*invoicerunports.PreviewInvoiceRunRequest, error) {
 	customerIDs, err := requirePulidSlice(params.Params, paramCustomerIDs, maxRunCustomers)
 	if err != nil {
 		return nil, err
@@ -191,7 +193,7 @@ func buildRunRequest(
 			paramPeriodStart, start.Format(dayLayout))
 	}
 
-	req := &serviceports.PreviewInvoiceRunRequest{
+	req := &invoicerunports.PreviewInvoiceRunRequest{
 		TenantInfo:  tenantFrom(*params),
 		CustomerIDs: customerIDs,
 		PeriodStart: start.Unix(),
@@ -209,7 +211,7 @@ func buildRunRequest(
 	return req, nil
 }
 
-func newAdjustInvoiceRunMembershipTool(runs invoiceRunKeeper) serviceports.AgentTool {
+func newAdjustInvoiceRunMembershipTool(runs invoiceRunKeeper) agentports.AgentTool {
 	itemProperty := agenttoolschema.KindID("A shipment on the run, by the item id "+
 		"get_invoice_run lists under each group.", permission.KindInvoiceRunItem)
 
@@ -271,23 +273,23 @@ func newAdjustInvoiceRunMembershipTool(runs invoiceRunKeeper) serviceports.Agent
 		},
 		required: []string{paramInvoiceRunID},
 		target:   targetInvoiceRun,
-	}, receivablePlan[*serviceports.AdjustInvoiceRunMembershipRequest, *serviceports.InvoiceRunChangePreview]{
+	}, receivablePlan[*invoicerunports.AdjustInvoiceRunMembershipRequest, *invoicerunports.InvoiceRunChangePreview]{
 		request: membershipRequest,
 		plan: func(
 			ctx context.Context,
-			req *serviceports.AdjustInvoiceRunMembershipRequest,
-			_ *serviceports.ToolExecuteParams,
-		) (*serviceports.InvoiceRunChangePreview, error) {
+			req *invoicerunports.AdjustInvoiceRunMembershipRequest,
+			_ *agentports.ToolExecuteParams,
+		) (*invoicerunports.InvoiceRunChangePreview, error) {
 			return runs.PreviewMembership(ctx, req)
 		},
-		refused: func(*serviceports.AdjustInvoiceRunMembershipRequest) string {
+		refused: func(*invoicerunports.AdjustInvoiceRunMembershipRequest) string {
 			return "Would change which shipments the invoice run bills."
 		},
 		render: renderMembership,
 		run: func(
 			ctx context.Context,
-			req *serviceports.AdjustInvoiceRunMembershipRequest,
-			params *serviceports.ToolExecuteParams,
+			req *invoicerunports.AdjustInvoiceRunMembershipRequest,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := runs.AdjustMembership(ctx, req, params.Actor)
 			return nil, err
@@ -296,13 +298,13 @@ func newAdjustInvoiceRunMembershipTool(runs invoiceRunKeeper) serviceports.Agent
 }
 
 func membershipRequest(
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.AdjustInvoiceRunMembershipRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*invoicerunports.AdjustInvoiceRunMembershipRequest, error) {
 	runID, err := requirePulid(params.Params, paramInvoiceRunID)
 	if err != nil {
 		return nil, err
 	}
-	req := &serviceports.AdjustInvoiceRunMembershipRequest{
+	req := &invoicerunports.AdjustInvoiceRunMembershipRequest{
 		TenantInfo: tenantFrom(*params),
 		RunID:      runID,
 	}
@@ -354,13 +356,13 @@ func readObjects(params map[string]any, key string, limit int) ([]map[string]any
 	return objects, nil
 }
 
-func readRunExclusions(params map[string]any) ([]serviceports.ItemExclusion, error) {
+func readRunExclusions(params map[string]any) ([]invoicerunports.ItemExclusion, error) {
 	entries, err := readObjects(params, paramExclude, maxRunEdits)
 	if err != nil {
 		return nil, err
 	}
 
-	exclusions := make([]serviceports.ItemExclusion, 0, len(entries))
+	exclusions := make([]invoicerunports.ItemExclusion, 0, len(entries))
 	for idx, fields := range entries {
 		itemID, idErr := requirePulid(fields, paramItemID)
 		if idErr != nil {
@@ -370,19 +372,19 @@ func readRunExclusions(params map[string]any) ([]serviceports.ItemExclusion, err
 		if reasonErr != nil {
 			return nil, fmt.Errorf("%s[%d]: %w", paramExclude, idx, reasonErr)
 		}
-		exclusions = append(exclusions, serviceports.ItemExclusion{ItemID: itemID, Reason: reason})
+		exclusions = append(exclusions, invoicerunports.ItemExclusion{ItemID: itemID, Reason: reason})
 	}
 
 	return exclusions, nil
 }
 
-func readRunMoves(params map[string]any) ([]serviceports.ItemMove, error) {
+func readRunMoves(params map[string]any) ([]invoicerunports.ItemMove, error) {
 	entries, err := readObjects(params, paramMoves, maxRunEdits)
 	if err != nil {
 		return nil, err
 	}
 
-	moves := make([]serviceports.ItemMove, 0, len(entries))
+	moves := make([]invoicerunports.ItemMove, 0, len(entries))
 	for idx, fields := range entries {
 		itemID, idErr := requirePulid(fields, paramItemID)
 		if idErr != nil {
@@ -392,24 +394,24 @@ func readRunMoves(params map[string]any) ([]serviceports.ItemMove, error) {
 		if groupErr != nil {
 			return nil, fmt.Errorf("%s[%d]: %w", paramMoves, idx, groupErr)
 		}
-		moves = append(moves, serviceports.ItemMove{ItemID: itemID, TargetGroupID: groupID})
+		moves = append(moves, invoicerunports.ItemMove{ItemID: itemID, TargetGroupID: groupID})
 	}
 
 	return moves, nil
 }
 
 func commitRunRequest(
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.CommitInvoiceRunRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*invoicerunports.CommitInvoiceRunRequest, error) {
 	runID, err := requirePulid(params.Params, paramInvoiceRunID)
 	if err != nil {
 		return nil, err
 	}
 
-	return &serviceports.CommitInvoiceRunRequest{TenantInfo: tenantFrom(*params), RunID: runID}, nil
+	return &invoicerunports.CommitInvoiceRunRequest{TenantInfo: tenantFrom(*params), RunID: runID}, nil
 }
 
-func newCommitInvoiceRunTool(runs invoiceRunKeeper) serviceports.AgentTool {
+func newCommitInvoiceRunTool(runs invoiceRunKeeper) agentports.AgentTool {
 	return newReceivableTool(&receivableSpec{
 		name: "commit_invoice_run",
 		description: "Propose committing an invoice run, which turns each of its proposed " +
@@ -427,23 +429,23 @@ func newCommitInvoiceRunTool(runs invoiceRunKeeper) serviceports.AgentTool {
 		properties: map[string]any{paramInvoiceRunID: invoiceRunIDProperty()},
 		required:   []string{paramInvoiceRunID},
 		target:     targetInvoiceRun,
-	}, receivablePlan[*serviceports.CommitInvoiceRunRequest, *serviceports.InvoiceRunCommitPlan]{
+	}, receivablePlan[*invoicerunports.CommitInvoiceRunRequest, *invoicerunports.InvoiceRunCommitPlan]{
 		request: commitRunRequest,
 		plan: func(
 			ctx context.Context,
-			req *serviceports.CommitInvoiceRunRequest,
-			_ *serviceports.ToolExecuteParams,
-		) (*serviceports.InvoiceRunCommitPlan, error) {
+			req *invoicerunports.CommitInvoiceRunRequest,
+			_ *agentports.ToolExecuteParams,
+		) (*invoicerunports.InvoiceRunCommitPlan, error) {
 			return runs.PreviewCommit(ctx, req)
 		},
-		refused: func(*serviceports.CommitInvoiceRunRequest) string {
+		refused: func(*invoicerunports.CommitInvoiceRunRequest) string {
 			return "Would commit the invoice run."
 		},
 		render: renderCommit,
 		run: func(
 			ctx context.Context,
-			req *serviceports.CommitInvoiceRunRequest,
-			params *serviceports.ToolExecuteParams,
+			req *invoicerunports.CommitInvoiceRunRequest,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := runs.Commit(ctx, req, params.Actor)
 			return nil, err
@@ -451,7 +453,7 @@ func newCommitInvoiceRunTool(runs invoiceRunKeeper) serviceports.AgentTool {
 	})
 }
 
-func newCancelInvoiceRunTool(runs invoiceRunKeeper) serviceports.AgentTool {
+func newCancelInvoiceRunTool(runs invoiceRunKeeper) agentports.AgentTool {
 	return newReceivableTool(&receivableSpec{
 		name: "cancel_invoice_run",
 		description: "Cancel an invoice run that will never be committed, such as one built " +
@@ -470,8 +472,8 @@ func newCancelInvoiceRunTool(runs invoiceRunKeeper) serviceports.AgentTool {
 		},
 		required: []string{paramInvoiceRunID, paramReason},
 		target:   targetInvoiceRun,
-	}, receivablePlan[*serviceports.CancelInvoiceRunRequest, *serviceports.InvoiceRunChangePreview]{
-		request: func(params *serviceports.ToolExecuteParams) (*serviceports.CancelInvoiceRunRequest, error) {
+	}, receivablePlan[*invoicerunports.CancelInvoiceRunRequest, *invoicerunports.InvoiceRunChangePreview]{
+		request: func(params *agentports.ToolExecuteParams) (*invoicerunports.CancelInvoiceRunRequest, error) {
 			runID, err := requirePulid(params.Params, paramInvoiceRunID)
 			if err != nil {
 				return nil, err
@@ -480,7 +482,7 @@ func newCancelInvoiceRunTool(runs invoiceRunKeeper) serviceports.AgentTool {
 			if err != nil {
 				return nil, err
 			}
-			return &serviceports.CancelInvoiceRunRequest{
+			return &invoicerunports.CancelInvoiceRunRequest{
 				TenantInfo: tenantFrom(*params),
 				RunID:      runID,
 				Reason:     reason,
@@ -488,19 +490,19 @@ func newCancelInvoiceRunTool(runs invoiceRunKeeper) serviceports.AgentTool {
 		},
 		plan: func(
 			ctx context.Context,
-			req *serviceports.CancelInvoiceRunRequest,
-			params *serviceports.ToolExecuteParams,
-		) (*serviceports.InvoiceRunChangePreview, error) {
+			req *invoicerunports.CancelInvoiceRunRequest,
+			params *agentports.ToolExecuteParams,
+		) (*invoicerunports.InvoiceRunChangePreview, error) {
 			return runs.PreviewCancel(ctx, req, params.Actor)
 		},
-		refused: func(*serviceports.CancelInvoiceRunRequest) string {
+		refused: func(*invoicerunports.CancelInvoiceRunRequest) string {
 			return "Would cancel the invoice run."
 		},
 		render: renderCancel,
 		run: func(
 			ctx context.Context,
-			req *serviceports.CancelInvoiceRunRequest,
-			params *serviceports.ToolExecuteParams,
+			req *invoicerunports.CancelInvoiceRunRequest,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := runs.Cancel(ctx, req, params.Actor)
 			return nil, err
@@ -508,7 +510,7 @@ func newCancelInvoiceRunTool(runs invoiceRunKeeper) serviceports.AgentTool {
 	})
 }
 
-func newBillStatementNowTool(runs invoiceRunKeeper) serviceports.AgentTool {
+func newBillStatementNowTool(runs invoiceRunKeeper) agentports.AgentTool {
 	return newReceivableTool(&receivableSpec{
 		name: "bill_statement_now",
 		description: "Propose billing a statement customer's open period now, before its cycle " +
@@ -551,23 +553,23 @@ func newBillStatementNowTool(runs invoiceRunKeeper) serviceports.AgentTool {
 			},
 		},
 		required: []string{paramCustomerID, paramReason},
-	}, receivablePlan[*serviceports.BillStatementNowRequest, *serviceports.StatementBillPlan]{
+	}, receivablePlan[*invoicerunports.BillStatementNowRequest, *invoicerunports.StatementBillPlan]{
 		request: billStatementRequest,
 		plan: func(
 			ctx context.Context,
-			req *serviceports.BillStatementNowRequest,
-			params *serviceports.ToolExecuteParams,
-		) (*serviceports.StatementBillPlan, error) {
+			req *invoicerunports.BillStatementNowRequest,
+			params *agentports.ToolExecuteParams,
+		) (*invoicerunports.StatementBillPlan, error) {
 			return runs.PreviewBillStatement(ctx, req, params.Actor)
 		},
-		refused: func(*serviceports.BillStatementNowRequest) string {
+		refused: func(*invoicerunports.BillStatementNowRequest) string {
 			return "Would bill the customer's open statement now."
 		},
 		render: renderStatementBill,
 		run: func(
 			ctx context.Context,
-			req *serviceports.BillStatementNowRequest,
-			params *serviceports.ToolExecuteParams,
+			req *invoicerunports.BillStatementNowRequest,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := runs.BillStatementNow(ctx, req, params.Actor)
 			return nil, err
@@ -576,8 +578,8 @@ func newBillStatementNowTool(runs invoiceRunKeeper) serviceports.AgentTool {
 }
 
 func billStatementRequest(
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.BillStatementNowRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*invoicerunports.BillStatementNowRequest, error) {
 	customerID, err := requirePulid(params.Params, paramCustomerID)
 	if err != nil {
 		return nil, err
@@ -591,7 +593,7 @@ func billStatementRequest(
 		return nil, err
 	}
 
-	exclusions := make([]serviceports.StatementExclusion, 0, len(entries))
+	exclusions := make([]invoicerunports.StatementExclusion, 0, len(entries))
 	seen := make(map[pulid.ID]struct{}, len(entries))
 	for idx, fields := range entries {
 		itemID, idErr := requirePulid(fields, paramBillingQueueItems)
@@ -606,13 +608,13 @@ func billStatementRequest(
 		if reasonErr != nil {
 			return nil, fmt.Errorf("%s[%d]: %w", paramExclude, idx, reasonErr)
 		}
-		exclusions = append(exclusions, serviceports.StatementExclusion{
+		exclusions = append(exclusions, invoicerunports.StatementExclusion{
 			BillingQueueItemID: itemID,
 			Reason:             why,
 		})
 	}
 
-	return &serviceports.BillStatementNowRequest{
+	return &invoicerunports.BillStatementNowRequest{
 		TenantInfo: tenantFrom(*params),
 		CustomerID: customerID,
 		Reason:     reason,

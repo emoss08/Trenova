@@ -7,10 +7,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -35,7 +35,7 @@ func (m *mockAuditRepository) InsertAuditEntries(
 
 func (m *mockAuditRepository) List(
 	ctx context.Context,
-	req *repositories.ListAuditEntriesRequest,
+	req *auditports.ListAuditEntriesRequest,
 ) (*pagination.ListResult[*audit.Entry], error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
@@ -46,7 +46,7 @@ func (m *mockAuditRepository) List(
 
 func (m *mockAuditRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListAuditEntriesConnectionRequest,
+	req *auditports.ListAuditEntriesConnectionRequest,
 ) (*pagination.CursorListResult[*audit.Entry], error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
@@ -57,7 +57,7 @@ func (m *mockAuditRepository) ListConnection(
 
 func (m *mockAuditRepository) ListByResourceID(
 	ctx context.Context,
-	req *repositories.ListByResourceIDRequest,
+	req *auditports.ListByResourceIDRequest,
 ) (*pagination.ListResult[*audit.Entry], error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
@@ -68,7 +68,7 @@ func (m *mockAuditRepository) ListByResourceID(
 
 func (m *mockAuditRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetAuditEntryByIDOptions,
+	req auditports.GetAuditEntryByIDOptions,
 ) (*audit.Entry, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
@@ -79,7 +79,7 @@ func (m *mockAuditRepository) GetByID(
 
 func (m *mockAuditRepository) GetByResourceAndOperation(
 	ctx context.Context,
-	req *repositories.GetAuditByResourceRequest,
+	req *auditports.GetAuditByResourceRequest,
 ) ([]*audit.Entry, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
@@ -90,7 +90,7 @@ func (m *mockAuditRepository) GetByResourceAndOperation(
 
 func (m *mockAuditRepository) GetRecentEntries(
 	ctx context.Context,
-	req *repositories.GetRecentEntriesRequest,
+	req *auditports.GetRecentEntriesRequest,
 ) ([]*audit.Entry, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
@@ -101,7 +101,7 @@ func (m *mockAuditRepository) GetRecentEntries(
 
 func (m *mockAuditRepository) DeleteAuditEntries(
 	ctx context.Context,
-	req repositories.DeleteAuditEntriesRequest,
+	req auditports.DeleteAuditEntriesRequest,
 ) (int64, error) {
 	args := m.Called(ctx, req)
 	return args.Get(0).(int64), args.Error(1)
@@ -150,7 +150,7 @@ type noopRealtimeService struct{}
 
 func (s *noopRealtimeService) PublishResourceInvalidation(
 	_ context.Context,
-	_ *services.PublishResourceInvalidationRequest,
+	_ *agentports.PublishResourceInvalidationRequest,
 ) error {
 	return nil
 }
@@ -158,7 +158,7 @@ func (s *noopRealtimeService) PublishResourceInvalidation(
 func newTestService(
 	repo *mockAuditRepository,
 	bufferRepo *mockBufferRepository,
-	realtime services.RealtimeService,
+	realtime agentports.RealtimeService,
 ) *service {
 	logger := zap.NewNop()
 	cfg := &config.Config{
@@ -183,8 +183,8 @@ func newTestService(
 	return srv
 }
 
-func validLogActionParams() *services.LogActionParams {
-	return &services.LogActionParams{
+func validLogActionParams() *auditports.LogActionParams {
+	return &auditports.LogActionParams{
 		Resource:       permission.ResourceUser,
 		ResourceID:     "usr_01ABC",
 		Operation:      permission.OpCreate,
@@ -317,7 +317,7 @@ func TestLogAction_InvalidEntry(t *testing.T) {
 	bufferRepo := new(mockBufferRepository)
 	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
 
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:   "",
 		ResourceID: "",
 		Operation:  "",
@@ -391,7 +391,7 @@ func TestLogActions_AllCritical(t *testing.T) {
 	params2 := validLogActionParams()
 	params2.Critical = true
 
-	entries := []services.BulkLogEntry{
+	entries := []auditports.BulkLogEntry{
 		{Params: params1},
 		{Params: params2},
 	}
@@ -414,7 +414,7 @@ func TestLogActions_AllNonCritical_BufferSuccess(t *testing.T) {
 		return len(entries) == 2
 	})).Return(nil)
 
-	entries := []services.BulkLogEntry{
+	entries := []auditports.BulkLogEntry{
 		{Params: validLogActionParams()},
 		{Params: validLogActionParams()},
 	}
@@ -443,7 +443,7 @@ func TestLogActions_MixedCriticalAndNonCritical(t *testing.T) {
 	criticalParams := validLogActionParams()
 	criticalParams.Critical = true
 
-	entries := []services.BulkLogEntry{
+	entries := []auditports.BulkLogEntry{
 		{Params: criticalParams},
 		{Params: validLogActionParams()},
 	}
@@ -466,7 +466,7 @@ func TestLogActions_NonCritical_BufferFails_FallbackSuccess(t *testing.T) {
 		Return(errors.New("redis down"))
 	repo.On("InsertAuditEntries", mock.Anything, mock.Anything).Return(nil)
 
-	entries := []services.BulkLogEntry{
+	entries := []auditports.BulkLogEntry{
 		{Params: validLogActionParams()},
 	}
 
@@ -489,7 +489,7 @@ func TestLogActions_NonCritical_BufferFails_FallbackFails(t *testing.T) {
 	repo.On("InsertAuditEntries", mock.Anything, mock.Anything).
 		Return(errors.New("db also down"))
 
-	entries := []services.BulkLogEntry{
+	entries := []auditports.BulkLogEntry{
 		{Params: validLogActionParams()},
 	}
 
@@ -512,7 +512,7 @@ func TestLogActions_CriticalInsertError_Buffered(t *testing.T) {
 	params := validLogActionParams()
 	params.Critical = true
 
-	require.NoError(t, srv.LogActions([]services.BulkLogEntry{{Params: params}}))
+	require.NoError(t, srv.LogActions([]auditports.BulkLogEntry{{Params: params}}))
 	bufferRepo.AssertExpectations(t)
 }
 
@@ -531,7 +531,7 @@ func TestLogActions_CriticalInsertAndBufferFail(t *testing.T) {
 	params := validLogActionParams()
 	params.Critical = true
 
-	require.Error(t, srv.LogActions([]services.BulkLogEntry{{Params: params}}))
+	require.Error(t, srv.LogActions([]auditports.BulkLogEntry{{Params: params}}))
 }
 
 func TestLogActions_InvalidEntry_Skipped(t *testing.T) {
@@ -545,12 +545,12 @@ func TestLogActions_InvalidEntry_Skipped(t *testing.T) {
 		return len(entries) == 1
 	})).Return(nil)
 
-	invalidParams := &services.LogActionParams{
+	invalidParams := &auditports.LogActionParams{
 		Resource:   "",
 		ResourceID: "",
 	}
 
-	entries := []services.BulkLogEntry{
+	entries := []auditports.BulkLogEntry{
 		{Params: invalidParams},
 		{Params: validLogActionParams()},
 	}
@@ -568,12 +568,12 @@ func TestLogActions_AllInvalid(t *testing.T) {
 	bufferRepo := new(mockBufferRepository)
 	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
 
-	invalidParams := &services.LogActionParams{
+	invalidParams := &auditports.LogActionParams{
 		Resource:   "",
 		ResourceID: "",
 	}
 
-	entries := []services.BulkLogEntry{
+	entries := []auditports.BulkLogEntry{
 		{Params: invalidParams},
 		{Params: invalidParams},
 	}
@@ -599,8 +599,8 @@ func TestLogActions_OptionError_Skipped(t *testing.T) {
 		return errors.New("option failed")
 	}
 
-	entries := []services.BulkLogEntry{
-		{Params: validLogActionParams(), Options: []services.LogOption{badOpt}},
+	entries := []auditports.BulkLogEntry{
+		{Params: validLogActionParams(), Options: []auditports.LogOption{badOpt}},
 		{Params: validLogActionParams()},
 	}
 
@@ -622,7 +622,7 @@ func TestList_Success(t *testing.T) {
 		Total: 1,
 	}
 
-	req := &repositories.ListAuditEntriesRequest{
+	req := &auditports.ListAuditEntriesRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: pagination.TenantInfo{
 				OrgID:  pulid.MustNew("org_"),
@@ -648,7 +648,7 @@ func TestList_Error(t *testing.T) {
 	bufferRepo := new(mockBufferRepository)
 	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
 
-	req := &repositories.ListAuditEntriesRequest{
+	req := &auditports.ListAuditEntriesRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: pagination.TenantInfo{
 				OrgID:  pulid.MustNew("org_"),
@@ -679,7 +679,7 @@ func TestList_NormalizesNumericOperationFilter(t *testing.T) {
 		Total: 1,
 	}
 
-	req := &repositories.ListAuditEntriesRequest{
+	req := &auditports.ListAuditEntriesRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: pagination.TenantInfo{
 				OrgID:  pulid.MustNew("org_"),
@@ -718,7 +718,7 @@ func TestList_NormalizesNumericOperationFilterGroupValues(t *testing.T) {
 		Total: 1,
 	}
 
-	req := &repositories.ListAuditEntriesRequest{
+	req := &auditports.ListAuditEntriesRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: pagination.TenantInfo{
 				OrgID:  pulid.MustNew("org_"),
@@ -769,7 +769,7 @@ func TestListByResourceID_Success(t *testing.T) {
 		Total: 1,
 	}
 
-	req := &repositories.ListByResourceIDRequest{
+	req := &auditports.ListByResourceIDRequest{
 		ResourceID: resourceID,
 		Filter: &pagination.QueryOptions{
 			TenantInfo: pagination.TenantInfo{
@@ -795,7 +795,7 @@ func TestListByResourceID_Error(t *testing.T) {
 	bufferRepo := new(mockBufferRepository)
 	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
 
-	req := &repositories.ListByResourceIDRequest{
+	req := &auditports.ListByResourceIDRequest{
 		ResourceID: pulid.MustNew("res_"),
 		Filter: &pagination.QueryOptions{
 			TenantInfo: pagination.TenantInfo{
@@ -825,7 +825,7 @@ func TestGetByID_Success(t *testing.T) {
 	entryID := pulid.MustNew("ae_")
 	expected := &audit.Entry{ID: entryID}
 
-	req := repositories.GetAuditEntryByIDOptions{
+	req := auditports.GetAuditEntryByIDOptions{
 		EntryID: entryID,
 	}
 
@@ -844,7 +844,7 @@ func TestGetByID_Error(t *testing.T) {
 	bufferRepo := new(mockBufferRepository)
 	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
 
-	req := repositories.GetAuditEntryByIDOptions{
+	req := auditports.GetAuditEntryByIDOptions{
 		EntryID: pulid.MustNew("ae_"),
 	}
 
@@ -864,8 +864,8 @@ func TestService_RegisterSensitiveFields(t *testing.T) {
 	bufferRepo := new(mockBufferRepository)
 	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
 
-	fields := []services.SensitiveField{
-		{Name: "password", Action: services.SensitiveFieldOmit},
+	fields := []auditports.SensitiveField{
+		{Name: "password", Action: auditports.SensitiveFieldOmit},
 	}
 
 	err := srv.RegisterSensitiveFields(permission.ResourceUser, fields)
@@ -1024,10 +1024,10 @@ func TestLogActions_WithOptions(t *testing.T) {
 		return len(entries) == 1 && entries[0].Comment == "bulk comment"
 	})).Return(nil)
 
-	entries := []services.BulkLogEntry{
+	entries := []auditports.BulkLogEntry{
 		{
 			Params:  validLogActionParams(),
-			Options: []services.LogOption{WithComment("bulk comment")},
+			Options: []auditports.LogOption{WithComment("bulk comment")},
 		},
 	}
 
@@ -1214,7 +1214,7 @@ func TestNew(t *testing.T) {
 			Metrics:               metricsRegistry,
 		})
 
-		var _ services.AuditService = svc
+		var _ auditports.AuditService = svc
 	})
 }
 
@@ -1254,19 +1254,19 @@ func TestRegisterDefaultSensitiveFields(t *testing.T) {
 
 		passwordCfg, exists := fields["password"]
 		assert.True(t, exists)
-		assert.Equal(t, services.SensitiveFieldOmit, passwordCfg.Action)
+		assert.Equal(t, auditports.SensitiveFieldOmit, passwordCfg.Action)
 
 		hashedPasswordCfg, exists := fields["hashedPassword"]
 		assert.True(t, exists)
-		assert.Equal(t, services.SensitiveFieldOmit, hashedPasswordCfg.Action)
+		assert.Equal(t, auditports.SensitiveFieldOmit, hashedPasswordCfg.Action)
 
 		emailCfg, exists := fields["emailAddress"]
 		assert.True(t, exists)
-		assert.Equal(t, services.SensitiveFieldMask, emailCfg.Action)
+		assert.Equal(t, auditports.SensitiveFieldMask, emailCfg.Action)
 
 		addressCfg, exists := fields["address"]
 		assert.True(t, exists)
-		assert.Equal(t, services.SensitiveFieldMask, addressCfg.Action)
+		assert.Equal(t, auditports.SensitiveFieldMask, addressCfg.Action)
 	})
 
 	t.Run("registers organization sensitive fields", func(t *testing.T) {
@@ -1302,11 +1302,11 @@ func TestRegisterDefaultSensitiveFields(t *testing.T) {
 
 		logoCfg, exists := fields["logoUrl"]
 		assert.True(t, exists)
-		assert.Equal(t, services.SensitiveFieldMask, logoCfg.Action)
+		assert.Equal(t, auditports.SensitiveFieldMask, logoCfg.Action)
 
 		taxIdCfg, exists := fields["taxId"]
 		assert.True(t, exists)
-		assert.Equal(t, services.SensitiveFieldMask, taxIdCfg.Action)
+		assert.Equal(t, auditports.SensitiveFieldMask, taxIdCfg.Action)
 	})
 
 	t.Run("registers worker sensitive fields", func(t *testing.T) {
@@ -1342,15 +1342,15 @@ func TestRegisterDefaultSensitiveFields(t *testing.T) {
 
 		licenseCfg, exists := fields["licenseNumber"]
 		assert.True(t, exists)
-		assert.Equal(t, services.SensitiveFieldMask, licenseCfg.Action)
+		assert.Equal(t, auditports.SensitiveFieldMask, licenseCfg.Action)
 
 		dobCfg, exists := fields["dateOfBirth"]
 		assert.True(t, exists)
-		assert.Equal(t, services.SensitiveFieldMask, dobCfg.Action)
+		assert.Equal(t, auditports.SensitiveFieldMask, dobCfg.Action)
 
 		profileLicenseCfg, exists := fields["profile.licenseNumber"]
 		assert.True(t, exists)
-		assert.Equal(t, services.SensitiveFieldMask, profileLicenseCfg.Action)
+		assert.Equal(t, auditports.SensitiveFieldMask, profileLicenseCfg.Action)
 		assert.Equal(t, "profile", profileLicenseCfg.Path)
 	})
 

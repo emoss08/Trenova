@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -88,7 +88,7 @@ func (s *Service) resolveToken(
 		OrganizationID: token.OrganizationID,
 		BusinessUnitID: token.BusinessUnitID,
 	})
-	entity, err := s.repo.GetByID(ctx, &repositories.GetRateConfirmationByIDRequest{
+	entity, err := s.repo.GetByID(ctx, &rateconfirmationports.GetRateConfirmationByIDRequest{
 		TenantInfo:         tenantInfo,
 		RateConfirmationID: token.RateConfirmationID,
 	})
@@ -204,7 +204,7 @@ func (s *Service) ConfirmByToken(
 		})
 	}
 
-	if _, err = s.repo.MarkTokenUsed(ctx, &repositories.MarkRateConfirmationTokenUsedRequest{
+	if _, err = s.repo.MarkTokenUsed(ctx, &rateconfirmationports.MarkRateConfirmationTokenUsedRequest{
 		TenantInfo: tenantInfo,
 		TokenID:    token.ID,
 		UsedAt:     timeutils.NowUnix(),

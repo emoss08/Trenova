@@ -1,6 +1,11 @@
 package customerpaymentservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerpaymentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"testing"
 
@@ -10,9 +15,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -30,7 +37,7 @@ func TestValidatorRejectsOverApplication(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 	customerID := pulid.MustNew("cus_")
-	invoiceRepo := mocks.NewMockInvoiceRepository(t)
+	invoiceRepo := invoiceportsmock.NewMockInvoiceRepository(t)
 	storedInvoice := &invoice.Invoice{
 		ID:                 pulid.MustNew("inv_"),
 		OrganizationID:     orgID,
@@ -43,13 +50,13 @@ func TestValidatorRejectsOverApplication(t *testing.T) {
 	}
 	invoiceRepo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, _ repositories.GetInvoiceByIDRequest) (*invoice.Invoice, error) {
+		RunAndReturn(func(_ context.Context, _ invoiceports.GetInvoiceByIDRequest) (*invoice.Invoice, error) {
 			copy := *storedInvoice
 			return &copy, nil
 		})
-	fiscalRepo := mocks.NewMockFiscalPeriodRepository(t)
+	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
-		GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 100}).
+		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 100}).
 		Return(&fiscalperiod.FiscalPeriod{ID: pulid.MustNew("fp_"), FiscalYearID: pulid.MustNew("fy_")}, nil)
 	v := NewValidator(ValidatorParams{InvoiceRepo: invoiceRepo, FiscalPeriodRepo: fiscalRepo})
 
@@ -68,7 +75,7 @@ func TestValidatorRejectsOverApplication(t *testing.T) {
 				{InvoiceID: storedInvoice.ID, AppliedAmountMinor: 12000},
 			},
 		},
-		repositories.GetInvoiceByIDRequest{
+		invoiceports.GetInvoiceByIDRequest{
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		},
 		&tenant.AccountingControl{
@@ -92,8 +99,8 @@ func TestPostAndApplyUsesRevenueForCashBasis(t *testing.T) {
 	invoiceID := pulid.MustNew("inv_")
 	periodID := pulid.MustNew("fp_")
 	fyID := pulid.MustNew("fy_")
-	paymentRepo := mocks.NewMockCustomerPaymentRepository(t)
-	invoiceRepo := mocks.NewMockInvoiceRepository(t)
+	paymentRepo := customerpaymentportsmock.NewMockCustomerPaymentRepository(t)
+	invoiceRepo := invoiceportsmock.NewMockInvoiceRepository(t)
 	storedPayment := (*customerpayment.Payment)(nil)
 	storedInvoice := &invoice.Invoice{
 		ID:                 invoiceID,
@@ -110,7 +117,7 @@ func TestPostAndApplyUsesRevenueForCashBasis(t *testing.T) {
 	}
 	invoiceRepo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, _ repositories.GetInvoiceByIDRequest) (*invoice.Invoice, error) {
+		RunAndReturn(func(_ context.Context, _ invoiceports.GetInvoiceByIDRequest) (*invoice.Invoice, error) {
 			copy := *storedInvoice
 			return &copy, nil
 		})
@@ -140,21 +147,21 @@ func TestPostAndApplyUsesRevenueForCashBasis(t *testing.T) {
 			storedPayment = &copy
 			return &copy, nil
 		})
-	accountingRepo := mocks.NewMockAccountingControlRepository(t)
+	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
 		Return(&tenant.AccountingControl{AccountingBasis: tenant.AccountingBasisCash, RevenueRecognitionPolicy: tenant.RevenueRecognitionOnCashReceipt, JournalPostingMode: tenant.JournalPostingModeAutomatic, DefaultCashAccountID: pulid.MustNew("gla_"), DefaultUnappliedCashAccountID: pulid.MustNew("gla_"), DefaultRevenueAccountID: pulid.MustNew("gla_")}, nil)
-	fiscalRepo := mocks.NewMockFiscalPeriodRepository(t)
+	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
-		GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 100}).
+		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 100}).
 		Return(&fiscalperiod.FiscalPeriod{ID: periodID, FiscalYearID: fyID}, nil)
-	journalRepo := mocks.NewMockJournalPostingRepository(t)
-	var lastPosting repositories.CreateJournalPostingParams
+	journalRepo := journalentryportsmock.NewMockJournalPostingRepository(t)
+	var lastPosting journalentryports.CreateJournalPostingParams
 	journalRepo.EXPECT().
 		CreatePosting(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, params repositories.CreateJournalPostingParams) error {
+		RunAndReturn(func(_ context.Context, params journalentryports.CreateJournalPostingParams) error {
 			lastPosting = params
-			lastPosting.Lines = append([]repositories.JournalPostingLine(nil), params.Lines...)
+			lastPosting.Lines = append([]journalentryports.JournalPostingLine(nil), params.Lines...)
 			return nil
 		})
 	svc := &Service{
@@ -172,14 +179,14 @@ func TestPostAndApplyUsesRevenueForCashBasis(t *testing.T) {
 
 	posted, err := svc.PostAndApply(
 		t.Context(),
-		&serviceports.PostCustomerPaymentRequest{
+		&customerpaymentports.PostCustomerPaymentRequest{
 			CustomerID:     storedInvoice.CustomerID,
 			PaymentDate:    100,
 			AccountingDate: 100,
 			AmountMinor:    10000,
 			PaymentMethod:  customerpayment.MethodACH,
 			CurrencyCode:   "USD",
-			Applications: []*serviceports.CustomerPaymentApplicationInput{
+			Applications: []*customerpaymentports.CustomerPaymentApplicationInput{
 				{InvoiceID: invoiceID, AppliedAmountMinor: 10000},
 			},
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
@@ -209,8 +216,8 @@ func TestPostAndApplyCreatesUnappliedCashLine(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 	periodID := pulid.MustNew("fp_")
 	fyID := pulid.MustNew("fy_")
-	paymentRepo := mocks.NewMockCustomerPaymentRepository(t)
-	invoiceRepo := mocks.NewMockInvoiceRepository(t)
+	paymentRepo := customerpaymentportsmock.NewMockCustomerPaymentRepository(t)
+	invoiceRepo := invoiceportsmock.NewMockInvoiceRepository(t)
 	storedPayment := (*customerpayment.Payment)(nil)
 	paymentRepo.EXPECT().
 		Create(mock.Anything, mock.Anything).
@@ -231,21 +238,21 @@ func TestPostAndApplyCreatesUnappliedCashLine(t *testing.T) {
 			storedPayment = &copy
 			return &copy, nil
 		})
-	accountingRepo := mocks.NewMockAccountingControlRepository(t)
+	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
 		Return(&tenant.AccountingControl{AccountingBasis: tenant.AccountingBasisAccrual, RevenueRecognitionPolicy: tenant.RevenueRecognitionOnInvoicePost, JournalPostingMode: tenant.JournalPostingModeAutomatic, DefaultCashAccountID: pulid.MustNew("gla_"), DefaultUnappliedCashAccountID: pulid.MustNew("gla_"), DefaultARAccountID: pulid.MustNew("gla_")}, nil)
-	fiscalRepo := mocks.NewMockFiscalPeriodRepository(t)
+	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
-		GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 100}).
+		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 100}).
 		Return(&fiscalperiod.FiscalPeriod{ID: periodID, FiscalYearID: fyID}, nil)
-	journalRepo := mocks.NewMockJournalPostingRepository(t)
-	var lastPosting repositories.CreateJournalPostingParams
+	journalRepo := journalentryportsmock.NewMockJournalPostingRepository(t)
+	var lastPosting journalentryports.CreateJournalPostingParams
 	journalRepo.EXPECT().
 		CreatePosting(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, params repositories.CreateJournalPostingParams) error {
+		RunAndReturn(func(_ context.Context, params journalentryports.CreateJournalPostingParams) error {
 			lastPosting = params
-			lastPosting.Lines = append([]repositories.JournalPostingLine(nil), params.Lines...)
+			lastPosting.Lines = append([]journalentryports.JournalPostingLine(nil), params.Lines...)
 			return nil
 		})
 	svc := &Service{
@@ -263,7 +270,7 @@ func TestPostAndApplyCreatesUnappliedCashLine(t *testing.T) {
 
 	posted, err := svc.PostAndApply(
 		t.Context(),
-		&serviceports.PostCustomerPaymentRequest{
+		&customerpaymentports.PostCustomerPaymentRequest{
 			CustomerID:     pulid.MustNew("cus_"),
 			PaymentDate:    100,
 			AccountingDate: 100,
@@ -296,8 +303,8 @@ func TestApplyUnappliedUsesUnappliedCashReclassification(t *testing.T) {
 	invoiceID := pulid.MustNew("inv_")
 	periodID := pulid.MustNew("fp_")
 	fyID := pulid.MustNew("fy_")
-	paymentRepo := mocks.NewMockCustomerPaymentRepository(t)
-	invoiceRepo := mocks.NewMockInvoiceRepository(t)
+	paymentRepo := customerpaymentportsmock.NewMockCustomerPaymentRepository(t)
+	invoiceRepo := invoiceportsmock.NewMockInvoiceRepository(t)
 	storedPayment := &customerpayment.Payment{
 		ID:                   paymentID,
 		OrganizationID:       orgID,
@@ -333,8 +340,8 @@ func TestApplyUnappliedUsesUnappliedCashReclassification(t *testing.T) {
 		},
 	}
 	paymentRepo.EXPECT().
-		GetByID(mock.Anything, repositories.GetCustomerPaymentByIDRequest{ID: paymentID, TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}}).
-		RunAndReturn(func(_ context.Context, _ repositories.GetCustomerPaymentByIDRequest) (*customerpayment.Payment, error) {
+		GetByID(mock.Anything, customerpaymentports.GetCustomerPaymentByIDRequest{ID: paymentID, TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}}).
+		RunAndReturn(func(_ context.Context, _ customerpaymentports.GetCustomerPaymentByIDRequest) (*customerpayment.Payment, error) {
 			copy := *storedPayment
 			return &copy, nil
 		})
@@ -348,7 +355,7 @@ func TestApplyUnappliedUsesUnappliedCashReclassification(t *testing.T) {
 		})
 	invoiceRepo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, _ repositories.GetInvoiceByIDRequest) (*invoice.Invoice, error) {
+		RunAndReturn(func(_ context.Context, _ invoiceports.GetInvoiceByIDRequest) (*invoice.Invoice, error) {
 			copy := *storedInvoices[invoiceID]
 			return &copy, nil
 		})
@@ -359,21 +366,21 @@ func TestApplyUnappliedUsesUnappliedCashReclassification(t *testing.T) {
 			storedInvoices[entity.ID] = &copy
 			return &copy, nil
 		})
-	accountingRepo := mocks.NewMockAccountingControlRepository(t)
+	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
 		Return(&tenant.AccountingControl{AccountingBasis: tenant.AccountingBasisAccrual, RevenueRecognitionPolicy: tenant.RevenueRecognitionOnInvoicePost, JournalPostingMode: tenant.JournalPostingModeAutomatic, DefaultUnappliedCashAccountID: pulid.MustNew("gla_"), DefaultARAccountID: pulid.MustNew("gla_")}, nil)
-	fiscalRepo := mocks.NewMockFiscalPeriodRepository(t)
+	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
-		GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 200}).
+		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 200}).
 		Return(&fiscalperiod.FiscalPeriod{ID: periodID, FiscalYearID: fyID}, nil)
-	journalRepo := mocks.NewMockJournalPostingRepository(t)
-	var lastPosting repositories.CreateJournalPostingParams
+	journalRepo := journalentryportsmock.NewMockJournalPostingRepository(t)
+	var lastPosting journalentryports.CreateJournalPostingParams
 	journalRepo.EXPECT().
 		CreatePosting(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, params repositories.CreateJournalPostingParams) error {
+		RunAndReturn(func(_ context.Context, params journalentryports.CreateJournalPostingParams) error {
 			lastPosting = params
-			lastPosting.Lines = append([]repositories.JournalPostingLine(nil), params.Lines...)
+			lastPosting.Lines = append([]journalentryports.JournalPostingLine(nil), params.Lines...)
 			return nil
 		})
 	svc := &Service{
@@ -391,10 +398,10 @@ func TestApplyUnappliedUsesUnappliedCashReclassification(t *testing.T) {
 
 	updated, err := svc.ApplyUnapplied(
 		t.Context(),
-		&serviceports.ApplyCustomerPaymentRequest{
+		&customerpaymentports.ApplyCustomerPaymentRequest{
 			PaymentID:      paymentID,
 			AccountingDate: 200,
-			Applications: []*serviceports.CustomerPaymentApplicationInput{
+			Applications: []*customerpaymentports.CustomerPaymentApplicationInput{
 				{InvoiceID: invoiceID, AppliedAmountMinor: 5000},
 			},
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
@@ -422,8 +429,8 @@ func TestReverseCreatesReversingPaymentEntry(t *testing.T) {
 	invoiceID := pulid.MustNew("inv_")
 	periodID := pulid.MustNew("fp_")
 	fyID := pulid.MustNew("fy_")
-	paymentRepo := mocks.NewMockCustomerPaymentRepository(t)
-	invoiceRepo := mocks.NewMockInvoiceRepository(t)
+	paymentRepo := customerpaymentportsmock.NewMockCustomerPaymentRepository(t)
+	invoiceRepo := invoiceportsmock.NewMockInvoiceRepository(t)
 	storedPayment := &customerpayment.Payment{
 		ID:                   paymentID,
 		OrganizationID:       orgID,
@@ -455,8 +462,8 @@ func TestReverseCreatesReversingPaymentEntry(t *testing.T) {
 		},
 	}
 	paymentRepo.EXPECT().
-		GetByID(mock.Anything, repositories.GetCustomerPaymentByIDRequest{ID: paymentID, TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}}).
-		RunAndReturn(func(_ context.Context, _ repositories.GetCustomerPaymentByIDRequest) (*customerpayment.Payment, error) {
+		GetByID(mock.Anything, customerpaymentports.GetCustomerPaymentByIDRequest{ID: paymentID, TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}}).
+		RunAndReturn(func(_ context.Context, _ customerpaymentports.GetCustomerPaymentByIDRequest) (*customerpayment.Payment, error) {
 			copy := *storedPayment
 			return &copy, nil
 		})
@@ -470,7 +477,7 @@ func TestReverseCreatesReversingPaymentEntry(t *testing.T) {
 		})
 	invoiceRepo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, _ repositories.GetInvoiceByIDRequest) (*invoice.Invoice, error) {
+		RunAndReturn(func(_ context.Context, _ invoiceports.GetInvoiceByIDRequest) (*invoice.Invoice, error) {
 			copy := *storedInvoices[invoiceID]
 			return &copy, nil
 		})
@@ -481,21 +488,21 @@ func TestReverseCreatesReversingPaymentEntry(t *testing.T) {
 			storedInvoices[entity.ID] = &copy
 			return &copy, nil
 		})
-	accountingRepo := mocks.NewMockAccountingControlRepository(t)
+	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
 		Return(&tenant.AccountingControl{AccountingBasis: tenant.AccountingBasisAccrual, RevenueRecognitionPolicy: tenant.RevenueRecognitionOnInvoicePost, JournalPostingMode: tenant.JournalPostingModeAutomatic, DefaultCashAccountID: pulid.MustNew("gla_"), DefaultUnappliedCashAccountID: pulid.MustNew("gla_"), DefaultARAccountID: pulid.MustNew("gla_")}, nil)
-	fiscalRepo := mocks.NewMockFiscalPeriodRepository(t)
+	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
-		GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 300}).
+		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 300}).
 		Return(&fiscalperiod.FiscalPeriod{ID: periodID, FiscalYearID: fyID}, nil)
-	journalRepo := mocks.NewMockJournalPostingRepository(t)
-	var lastPosting repositories.CreateJournalPostingParams
+	journalRepo := journalentryportsmock.NewMockJournalPostingRepository(t)
+	var lastPosting journalentryports.CreateJournalPostingParams
 	journalRepo.EXPECT().
 		CreatePosting(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, params repositories.CreateJournalPostingParams) error {
+		RunAndReturn(func(_ context.Context, params journalentryports.CreateJournalPostingParams) error {
 			lastPosting = params
-			lastPosting.Lines = append([]repositories.JournalPostingLine(nil), params.Lines...)
+			lastPosting.Lines = append([]journalentryports.JournalPostingLine(nil), params.Lines...)
 			return nil
 		})
 	svc := &Service{
@@ -513,7 +520,7 @@ func TestReverseCreatesReversingPaymentEntry(t *testing.T) {
 
 	reversed, err := svc.Reverse(
 		t.Context(),
-		&serviceports.ReverseCustomerPaymentRequest{
+		&customerpaymentports.ReverseCustomerPaymentRequest{
 			PaymentID:      paymentID,
 			AccountingDate: 300,
 			Reason:         "chargeback",
@@ -546,8 +553,8 @@ func TestPostAndApplyRecognizesShortPay(t *testing.T) {
 	invoiceID := pulid.MustNew("inv_")
 	periodID := pulid.MustNew("fp_")
 	fyID := pulid.MustNew("fy_")
-	paymentRepo := mocks.NewMockCustomerPaymentRepository(t)
-	invoiceRepo := mocks.NewMockInvoiceRepository(t)
+	paymentRepo := customerpaymentportsmock.NewMockCustomerPaymentRepository(t)
+	invoiceRepo := invoiceportsmock.NewMockInvoiceRepository(t)
 	storedPayment := (*customerpayment.Payment)(nil)
 	storedInvoice := &invoice.Invoice{
 		ID:                 invoiceID,
@@ -564,7 +571,7 @@ func TestPostAndApplyRecognizesShortPay(t *testing.T) {
 	}
 	invoiceRepo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, _ repositories.GetInvoiceByIDRequest) (*invoice.Invoice, error) {
+		RunAndReturn(func(_ context.Context, _ invoiceports.GetInvoiceByIDRequest) (*invoice.Invoice, error) {
 			copy := *storedInvoice
 			return &copy, nil
 		})
@@ -594,21 +601,21 @@ func TestPostAndApplyRecognizesShortPay(t *testing.T) {
 			storedPayment = &copy
 			return &copy, nil
 		})
-	accountingRepo := mocks.NewMockAccountingControlRepository(t)
+	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
 		Return(&tenant.AccountingControl{AccountingBasis: tenant.AccountingBasisAccrual, RevenueRecognitionPolicy: tenant.RevenueRecognitionOnInvoicePost, JournalPostingMode: tenant.JournalPostingModeAutomatic, DefaultCashAccountID: pulid.MustNew("gla_"), DefaultUnappliedCashAccountID: pulid.MustNew("gla_"), DefaultARAccountID: pulid.MustNew("gla_"), DefaultWriteOffAccountID: pulid.MustNew("gla_")}, nil)
-	fiscalRepo := mocks.NewMockFiscalPeriodRepository(t)
+	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
-		GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 100}).
+		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 100}).
 		Return(&fiscalperiod.FiscalPeriod{ID: periodID, FiscalYearID: fyID}, nil)
-	journalRepo := mocks.NewMockJournalPostingRepository(t)
-	var lastPosting repositories.CreateJournalPostingParams
+	journalRepo := journalentryportsmock.NewMockJournalPostingRepository(t)
+	var lastPosting journalentryports.CreateJournalPostingParams
 	journalRepo.EXPECT().
 		CreatePosting(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, params repositories.CreateJournalPostingParams) error {
+		RunAndReturn(func(_ context.Context, params journalentryports.CreateJournalPostingParams) error {
 			lastPosting = params
-			lastPosting.Lines = append([]repositories.JournalPostingLine(nil), params.Lines...)
+			lastPosting.Lines = append([]journalentryports.JournalPostingLine(nil), params.Lines...)
 			return nil
 		})
 	svc := &Service{
@@ -626,14 +633,14 @@ func TestPostAndApplyRecognizesShortPay(t *testing.T) {
 
 	posted, err := svc.PostAndApply(
 		t.Context(),
-		&serviceports.PostCustomerPaymentRequest{
+		&customerpaymentports.PostCustomerPaymentRequest{
 			CustomerID:     storedInvoice.CustomerID,
 			PaymentDate:    100,
 			AccountingDate: 100,
 			AmountMinor:    9000,
 			PaymentMethod:  customerpayment.MethodACH,
 			CurrencyCode:   "USD",
-			Applications: []*serviceports.CustomerPaymentApplicationInput{
+			Applications: []*customerpaymentports.CustomerPaymentApplicationInput{
 				{InvoiceID: invoiceID, AppliedAmountMinor: 9000, ShortPayAmountMinor: 1000},
 			},
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
@@ -659,7 +666,7 @@ func (fakePaymentDB) DBForContext(context.Context) bun.IDB { return nil }
 
 func (fakePaymentDB) WithTx(
 	ctx context.Context,
-	_ ports.TxOptions,
+	_ kernelports.TxOptions,
 	fn func(context.Context, bun.Tx) error,
 ) error {
 	return fn(ctx, bun.Tx{})

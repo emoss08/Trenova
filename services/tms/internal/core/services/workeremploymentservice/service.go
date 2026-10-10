@@ -16,13 +16,18 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/driverpayservice"
 	"github.com/emoss08/trenova/internal/core/services/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/core/services/ptopolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/workerservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/fleetcodeports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -46,7 +51,7 @@ type WorkerUpdater interface {
 	UpdateFromEmployment(
 		ctx context.Context,
 		entity *worker.Worker,
-		actor *services.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*worker.Worker, error)
 }
 
@@ -54,7 +59,7 @@ type WorkerUpdater interface {
 type PTOPolicyManager interface {
 	ListAssignments(
 		ctx context.Context,
-		req *repositories.ListPTOAssignmentsRequest,
+		req *workerports.ListPTOAssignmentsRequest,
 	) ([]*worker.WorkerPTOPolicyAssignment, error)
 	EndAssignment(
 		ctx context.Context,
@@ -87,7 +92,7 @@ type PayAssignmentManager interface {
 		tenantInfo pagination.TenantInfo,
 		assignmentID pulid.ID,
 		endDate int64,
-		actor *services.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*driverpay.WorkerPayAssignment, error)
 }
 
@@ -95,39 +100,39 @@ type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Repo          repositories.WorkerEmploymentEventRepository
-	WorkerRepo    repositories.WorkerRepository
-	FleetCodeRepo repositories.FleetCodeRepository
-	DocumentRepo  repositories.DocumentRepository
-	PayAssignRepo repositories.WorkerPayAssignmentRepository
+	Repo          workerports.WorkerEmploymentEventRepository
+	WorkerRepo    workerports.WorkerRepository
+	FleetCodeRepo fleetcodeports.FleetCodeRepository
+	DocumentRepo  documentports.DocumentRepository
+	PayAssignRepo driverpayports.WorkerPayAssignmentRepository
 	Workers       *workerservice.Service
 	PTOPolicies   *ptopolicyservice.Service
-	PTO           services.WorkerPTOService
+	PTO           workerports.WorkerPTOService
 	PTOLedger     *ptoledgerservice.Service
 	DriverPay     *driverpayservice.Service
-	AuditService  services.AuditService
-	Realtime      services.RealtimeService  `optional:"true"`
-	Checklists    services.ChecklistSpawner `optional:"true"`
-	Training      services.TrainingAssigner `optional:"true"`
+	AuditService  auditports.AuditService
+	Realtime      agentports.RealtimeService   `optional:"true"`
+	Checklists    workerports.ChecklistSpawner `optional:"true"`
+	Training      workerports.TrainingAssigner `optional:"true"`
 }
 
 type Service struct {
 	l             *zap.Logger
-	repo          repositories.WorkerEmploymentEventRepository
-	workerRepo    repositories.WorkerRepository
-	fleetCodeRepo repositories.FleetCodeRepository
-	documentRepo  repositories.DocumentRepository
-	payAssignRepo repositories.WorkerPayAssignmentRepository
+	repo          workerports.WorkerEmploymentEventRepository
+	workerRepo    workerports.WorkerRepository
+	fleetCodeRepo fleetcodeports.FleetCodeRepository
+	documentRepo  documentports.DocumentRepository
+	payAssignRepo driverpayports.WorkerPayAssignmentRepository
 	workers       WorkerUpdater
 	ptoPolicies   PTOPolicyManager
-	pto           services.WorkerPTOService
+	pto           workerports.WorkerPTOService
 	ptoLedger     PTOSettler
 	driverPay     PayAssignmentManager
-	auditService  services.AuditService
-	realtime      services.RealtimeService
-	checklists    services.ChecklistSpawner
-	training      services.TrainingAssigner
-	portal        services.PortalAccessRevoker
+	auditService  auditports.AuditService
+	realtime      agentports.RealtimeService
+	checklists    workerports.ChecklistSpawner
+	training      workerports.TrainingAssigner
+	portal        workerports.PortalAccessRevoker
 }
 
 func New(p Params) *Service {
@@ -153,21 +158,21 @@ func New(p Params) *Service {
 // Deps lets tests assemble a service from narrow fakes without Uber FX.
 type Deps struct {
 	Logger        *zap.Logger
-	Repo          repositories.WorkerEmploymentEventRepository
-	WorkerRepo    repositories.WorkerRepository
-	FleetCodeRepo repositories.FleetCodeRepository
-	DocumentRepo  repositories.DocumentRepository
-	PayAssignRepo repositories.WorkerPayAssignmentRepository
+	Repo          workerports.WorkerEmploymentEventRepository
+	WorkerRepo    workerports.WorkerRepository
+	FleetCodeRepo fleetcodeports.FleetCodeRepository
+	DocumentRepo  documentports.DocumentRepository
+	PayAssignRepo driverpayports.WorkerPayAssignmentRepository
 	Workers       WorkerUpdater
 	PTOPolicies   PTOPolicyManager
-	PTO           services.WorkerPTOService
+	PTO           workerports.WorkerPTOService
 	PTOLedger     PTOSettler
 	DriverPay     PayAssignmentManager
-	AuditService  services.AuditService
-	Realtime      services.RealtimeService
-	Checklists    services.ChecklistSpawner
-	Training      services.TrainingAssigner
-	Portal        services.PortalAccessRevoker
+	AuditService  auditports.AuditService
+	Realtime      agentports.RealtimeService
+	Checklists    workerports.ChecklistSpawner
+	Training      workerports.TrainingAssigner
+	Portal        workerports.PortalAccessRevoker
 }
 
 func NewWithDeps(d Deps) *Service {
@@ -198,7 +203,7 @@ func NewWithDeps(d Deps) *Service {
 // SetPortalRevoker breaks the construction cycle between this service and the
 // driver portal service, which reaches back here through the safety service to
 // record a termination. The revoker arrives after both are built.
-func (s *Service) SetPortalRevoker(revoker services.PortalAccessRevoker) {
+func (s *Service) SetPortalRevoker(revoker workerports.PortalAccessRevoker) {
 	s.portal = revoker
 }
 
@@ -208,7 +213,7 @@ func (s *Service) List(
 	workerID pulid.ID,
 	kinds []worker.EmploymentEventKind,
 ) ([]*worker.WorkerEmploymentEvent, error) {
-	return s.repo.List(ctx, &repositories.ListWorkerEmploymentEventsRequest{
+	return s.repo.List(ctx, &workerports.ListWorkerEmploymentEventsRequest{
 		TenantInfo:      tenantInfo,
 		WorkerID:        workerID,
 		Kinds:           kinds,
@@ -222,7 +227,7 @@ func (s *Service) Get(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*worker.WorkerEmploymentEvent, error) {
-	return s.repo.GetByID(ctx, &repositories.GetWorkerEmploymentEventByIDRequest{
+	return s.repo.GetByID(ctx, &workerports.GetWorkerEmploymentEventByIDRequest{
 		ID:              id,
 		TenantInfo:      tenantInfo,
 		IncludeDocument: true,
@@ -285,7 +290,7 @@ func (s *Service) Record(ctx context.Context, req *RecordRequest) (*RecordResult
 		zap.String("kind", req.Kind.String()),
 	)
 
-	wrk, err := s.workerRepo.GetByID(ctx, repositories.GetWorkerByIDRequest{
+	wrk, err := s.workerRepo.GetByID(ctx, workerports.GetWorkerByIDRequest{
 		ID:             req.WorkerID,
 		TenantInfo:     req.TenantInfo,
 		IncludeProfile: true,
@@ -295,7 +300,7 @@ func (s *Service) Record(ctx context.Context, req *RecordRequest) (*RecordResult
 		return nil, err
 	}
 
-	history, err := s.repo.List(ctx, &repositories.ListWorkerEmploymentEventsRequest{
+	history, err := s.repo.List(ctx, &workerports.ListWorkerEmploymentEventsRequest{
 		TenantInfo: req.TenantInfo,
 		WorkerID:   req.WorkerID,
 		Ascending:  true,
@@ -534,7 +539,7 @@ func (s *Service) populateTransfer(
 			event.ToValues[worker.EmploymentValueFleetCodeID] = ""
 		} else {
 			tenantInfo := req.TenantInfo
-			fleet, err := s.fleetCodeRepo.GetByID(ctx, repositories.GetFleetCodeByIDRequest{
+			fleet, err := s.fleetCodeRepo.GetByID(ctx, fleetcodeports.GetFleetCodeByIDRequest{
 				ID:         *req.FleetCodeID,
 				TenantInfo: &tenantInfo,
 			})
@@ -609,7 +614,7 @@ func (s *Service) cascade(
 	ctx context.Context,
 	req *RecordRequest,
 	wrk *worker.Worker,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	log *zap.Logger,
 ) (CascadeSummary, error) {
 	var summary CascadeSummary
@@ -674,7 +679,7 @@ func (s *Service) cascade(
 func (s *Service) revokePortalAccess(
 	ctx context.Context,
 	req *RecordRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	log *zap.Logger,
 ) (bool, string) {
 	if s.portal == nil {
@@ -704,7 +709,7 @@ func (s *Service) assignTraining(ctx context.Context, req *RecordRequest, log *z
 }
 
 func (s *Service) endPTOAssignment(ctx context.Context, req *RecordRequest) (bool, error) {
-	assignments, err := s.ptoPolicies.ListAssignments(ctx, &repositories.ListPTOAssignmentsRequest{
+	assignments, err := s.ptoPolicies.ListAssignments(ctx, &workerports.ListPTOAssignmentsRequest{
 		TenantInfo: req.TenantInfo,
 		WorkerID:   req.WorkerID,
 	})
@@ -736,11 +741,11 @@ func (s *Service) endPTOAssignment(ctx context.Context, req *RecordRequest) (boo
 func (s *Service) endPayAssignment(
 	ctx context.Context,
 	req *RecordRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (bool, error) {
 	assignment, err := s.payAssignRepo.GetEffectiveForWorker(
 		ctx,
-		repositories.GetWorkerPayAssignmentRequest{
+		driverpayports.GetWorkerPayAssignmentRequest{
 			TenantInfo: req.TenantInfo,
 			WorkerID:   req.WorkerID,
 			AsOf:       req.EffectiveAt,
@@ -774,7 +779,7 @@ func (s *Service) cancelUpcomingPTO(
 ) (int, error) {
 	cancelled := 0
 	for _, status := range []worker.PTOStatus{worker.PTOStatusApproved, worker.PTOStatusRequested} {
-		result, err := s.pto.List(ctx, &repositories.ListPTORequest{
+		result, err := s.pto.List(ctx, &workerports.ListPTORequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: req.TenantInfo,
 				Pagination: pagination.Info{Limit: upcomingPTOPageSize},
@@ -787,7 +792,7 @@ func (s *Service) cancelUpcomingPTO(
 			return cancelled, err
 		}
 		for _, pto := range result.Items {
-			if _, err = s.pto.Cancel(ctx, &repositories.UpdatePTOStatusRequest{
+			if _, err = s.pto.Cancel(ctx, &workerports.UpdatePTOStatusRequest{
 				ID:              pto.ID,
 				TenantInfo:      req.TenantInfo,
 				Status:          worker.PTOStatusCancelled,
@@ -827,7 +832,7 @@ func (s *Service) Amend(
 ) (*worker.WorkerEmploymentEvent, error) {
 	log := s.l.With(zap.String("operation", "Amend"), zap.String("id", req.ID.String()))
 
-	original, err := s.repo.GetByID(ctx, &repositories.GetWorkerEmploymentEventByIDRequest{
+	original, err := s.repo.GetByID(ctx, &workerports.GetWorkerEmploymentEventByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -895,7 +900,7 @@ func (s *Service) requireWorkerDocument(
 	tenantInfo pagination.TenantInfo,
 	workerID, documentID pulid.ID,
 ) error {
-	doc, err := s.documentRepo.GetByID(ctx, repositories.GetDocumentByIDRequest{
+	doc, err := s.documentRepo.GetByID(ctx, documentports.GetDocumentByIDRequest{
 		ID:         documentID,
 		TenantInfo: tenantInfo,
 	})
@@ -912,9 +917,9 @@ func (s *Service) requireWorkerDocument(
 	return nil
 }
 
-func (s *Service) actor(tenantInfo pagination.TenantInfo, userID pulid.ID) *services.RequestActor {
-	return &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeUser,
+func (s *Service) actor(tenantInfo pagination.TenantInfo, userID pulid.ID) *permissionports.RequestActor {
+	return &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    userID,
 		UserID:         userID,
 		OrganizationID: tenantInfo.OrgID,
@@ -932,7 +937,7 @@ func (s *Service) audit(
 	if s.auditService == nil || userID.IsNil() {
 		return
 	}
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceWorkerEmploymentEvent,
 		ResourceID:     current.GetResourceID(),
 		Operation:      operation,
@@ -941,7 +946,7 @@ func (s *Service) audit(
 		OrganizationID: current.OrganizationID,
 		BusinessUnitID: current.BusinessUnitID,
 	}
-	opts := []services.LogOption{auditservice.WithComment(comment)}
+	opts := []auditports.LogOption{auditservice.WithComment(comment)}
 	if previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(previous)
 		opts = append(opts, auditservice.WithDiff(previous, current))
@@ -970,7 +975,7 @@ func (s *Service) publish(
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
 			ActorUserID:    userID,
-			ActorType:      services.PrincipalTypeUser,
+			ActorType:      permissionports.PrincipalTypeUser,
 			ActorID:        userID,
 			Resource:       resource,
 			Action:         string(operation),

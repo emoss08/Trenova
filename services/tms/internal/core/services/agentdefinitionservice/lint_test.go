@@ -4,14 +4,14 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestLintRegistryHoldsWhatTheDraftReaches(t *testing.T) {
 	t.Parallel()
 
-	catalog := []services.ToolCatalogEntry{
+	catalog := []agentdefinitionports.ToolCatalogEntry{
 		{Name: "search", Core: true},
 		{Name: "get_invoice", Resource: permission.ResourceInvoice, Operation: permission.OpRead},
 		{
@@ -24,7 +24,7 @@ func TestLintRegistryHoldsWhatTheDraftReaches(t *testing.T) {
 		{Name: "web_search", Resource: permission.ResourceShipment, Operation: permission.OpRead, GrantedToEveryAgent: true},
 	}
 
-	tools := lintRegistry(catalog, &services.LintAgentInstructionsRequest{
+	tools := lintRegistry(catalog, &agentdefinitionports.LintAgentInstructionsRequest{
 		ToolNames:         []string{"update_invoice", "cancel_shipment"},
 		DisabledToolNames: []string{"cancel_shipment"},
 	})

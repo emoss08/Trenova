@@ -1,6 +1,10 @@
 package invoiceservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceadjustmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/latechargeportsmock"
 	"context"
 	"testing"
 
@@ -8,9 +12,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/latecharge"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -33,7 +40,7 @@ func (fakeInvoiceDB) DBForContext(context.Context) bun.IDB { return nil }
 
 func (fakeInvoiceDB) WithTx(
 	ctx context.Context,
-	_ ports.TxOptions,
+	_ kernelports.TxOptions,
 	fn func(context.Context, bun.Tx) error,
 ) error {
 	return fn(ctx, bun.Tx{})
@@ -45,7 +52,7 @@ func (fakeInvoiceDB) Close() error                      { return nil }
 type voidFixture struct {
 	orgID, buID, userID, invoiceID, queueItemID pulid.ID
 	tenantInfo                                  pagination.TenantInfo
-	actor                                       *servicesports.RequestActor
+	actor                                       *permissionports.RequestActor
 }
 
 func newVoidFixture() voidFixture {
@@ -95,8 +102,8 @@ func (f voidFixture) invoice(status invoice.Status) *invoice.Invoice {
 
 func (f voidFixture) request(
 	disposition invoice.VoidDisposition,
-) *servicesports.VoidInvoiceRequest {
-	return &servicesports.VoidInvoiceRequest{
+) *invoiceports.VoidInvoiceRequest {
+	return &invoiceports.VoidInvoiceRequest{
 		InvoiceID:   f.invoiceID,
 		TenantInfo:  f.tenantInfo,
 		Reason:      "Billed the wrong customer",
@@ -105,8 +112,8 @@ func (f voidFixture) request(
 }
 
 func newVoidService(
-	repo *mocks.MockInvoiceRepository,
-	queueRepo *mocks.MockBillingQueueRepository,
+	repo *invoiceportsmock.MockInvoiceRepository,
+	queueRepo *billingqueueportsmock.MockBillingQueueRepository,
 ) *Service {
 	return &Service{
 		l:                zap.NewNop(),
@@ -126,7 +133,7 @@ func TestVoidInvoiceRejectsInvalidRequests(t *testing.T) {
 	t.Parallel()
 
 	f := newVoidFixture()
-	svc := newVoidService(mocks.NewMockInvoiceRepository(t), mocks.NewMockBillingQueueRepository(t))
+	svc := newVoidService(invoiceportsmock.NewMockInvoiceRepository(t), billingqueueportsmock.NewMockBillingQueueRepository(t))
 
 	_, err := svc.VoidInvoice(t.Context(), nil, f.actor)
 	require.Error(t, err)
@@ -149,13 +156,13 @@ func TestVoidInvoiceDraftRebillReleasesQueueItemsForRebilling(t *testing.T) {
 	f := newVoidFixture()
 	draft := f.invoice(invoice.StatusDraft)
 
-	repo := mocks.NewMockInvoiceRepository(t)
+	repo := invoiceportsmock.NewMockInvoiceRepository(t)
 	repo.EXPECT().
-		GetByID(mock.Anything, repositories.GetInvoiceByIDRequest{ID: f.invoiceID, TenantInfo: f.tenantInfo}).
+		GetByID(mock.Anything, invoiceports.GetInvoiceByIDRequest{ID: f.invoiceID, TenantInfo: f.tenantInfo}).
 		Return(draft, nil).
 		Once()
 	repo.EXPECT().
-		LockForUpdate(mock.Anything, repositories.GetInvoiceByIDRequest{ID: f.invoiceID, TenantInfo: f.tenantInfo}).
+		LockForUpdate(mock.Anything, invoiceports.GetInvoiceByIDRequest{ID: f.invoiceID, TenantInfo: f.tenantInfo}).
 		Return(draft, nil).
 		Once()
 	repo.EXPECT().
@@ -175,9 +182,9 @@ func TestVoidInvoiceDraftRebillReleasesQueueItemsForRebilling(t *testing.T) {
 		ID:     f.queueItemID,
 		Status: billingqueue.StatusApproved,
 	}
-	queueRepo := mocks.NewMockBillingQueueRepository(t)
+	queueRepo := billingqueueportsmock.NewMockBillingQueueRepository(t)
 	queueRepo.EXPECT().
-		ReleaseForInvoice(mock.Anything, mock.MatchedBy(func(req *repositories.ReleaseForInvoiceRequest) bool {
+		ReleaseForInvoice(mock.Anything, mock.MatchedBy(func(req *billingqueueports.ReleaseForInvoiceRequest) bool {
 			return req.Rebill &&
 				req.InvoiceID == f.invoiceID &&
 				req.AnchorItemID == f.queueItemID &&
@@ -207,7 +214,7 @@ func TestVoidInvoiceDraftDoNotRebillCancelsQueueItems(t *testing.T) {
 	f := newVoidFixture()
 	draft := f.invoice(invoice.StatusDraft)
 
-	repo := mocks.NewMockInvoiceRepository(t)
+	repo := invoiceportsmock.NewMockInvoiceRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(draft, nil).Once()
 	repo.EXPECT().LockForUpdate(mock.Anything, mock.Anything).Return(draft, nil).Once()
 	repo.EXPECT().Update(mock.Anything, mock.Anything).
@@ -216,9 +223,9 @@ func TestVoidInvoiceDraftDoNotRebillCancelsQueueItems(t *testing.T) {
 		}).
 		Once()
 
-	queueRepo := mocks.NewMockBillingQueueRepository(t)
+	queueRepo := billingqueueportsmock.NewMockBillingQueueRepository(t)
 	queueRepo.EXPECT().
-		ReleaseForInvoice(mock.Anything, mock.MatchedBy(func(req *repositories.ReleaseForInvoiceRequest) bool {
+		ReleaseForInvoice(mock.Anything, mock.MatchedBy(func(req *billingqueueports.ReleaseForInvoiceRequest) bool {
 			return !req.Rebill && req.InvoiceID == f.invoiceID
 		})).
 		Return([]*billingqueue.BillingQueueItem{{ID: f.queueItemID, Status: billingqueue.StatusCanceled}}, nil).
@@ -241,11 +248,11 @@ func TestVoidInvoiceDraftWithAppliedAmountIsRefused(t *testing.T) {
 	draft := f.invoice(invoice.StatusDraft)
 	draft.AppliedAmountMinor = 2500
 
-	repo := mocks.NewMockInvoiceRepository(t)
+	repo := invoiceportsmock.NewMockInvoiceRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(draft, nil).Once()
 	repo.EXPECT().LockForUpdate(mock.Anything, mock.Anything).Return(draft, nil).Once()
 
-	_, err := newVoidService(repo, mocks.NewMockBillingQueueRepository(t)).
+	_, err := newVoidService(repo, billingqueueportsmock.NewMockBillingQueueRepository(t)).
 		VoidInvoice(t.Context(), f.request(invoice.VoidDispositionRebill), f.actor)
 
 	require.Error(t, err)
@@ -259,11 +266,11 @@ func TestVoidInvoicePostedWithPaymentsIsRefusedBeforeAnyReversal(t *testing.T) {
 	posted := f.invoice(invoice.StatusPosted)
 	posted.AppliedAmountMinor = 10000
 
-	repo := mocks.NewMockInvoiceRepository(t)
+	repo := invoiceportsmock.NewMockInvoiceRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(posted, nil).Once()
 
-	adjustments := mocks.NewMockInvoiceAdjustmentService(t)
-	svc := newVoidService(repo, mocks.NewMockBillingQueueRepository(t))
+	adjustments := invoiceadjustmentportsmock.NewMockInvoiceAdjustmentService(t)
+	svc := newVoidService(repo, billingqueueportsmock.NewMockBillingQueueRepository(t))
 	svc.adjustmentService = adjustments
 
 	_, err := svc.VoidInvoice(t.Context(), f.request(invoice.VoidDispositionDoNotRebill), f.actor)
@@ -280,9 +287,9 @@ func TestVoidInvoicePostedSubmitsFullReversalAndReportsPendingApproval(t *testin
 	posted := f.invoice(invoice.StatusPosted)
 	adjustmentID := pulid.MustNew("iadj_")
 
-	repo := mocks.NewMockInvoiceRepository(t)
+	repo := invoiceportsmock.NewMockInvoiceRepository(t)
 	repo.EXPECT().
-		GetByID(mock.Anything, repositories.GetInvoiceByIDRequest{ID: f.invoiceID, TenantInfo: f.tenantInfo}).
+		GetByID(mock.Anything, invoiceports.GetInvoiceByIDRequest{ID: f.invoiceID, TenantInfo: f.tenantInfo}).
 		Return(posted, nil).
 		Twice()
 	repo.EXPECT().
@@ -296,9 +303,9 @@ func TestVoidInvoicePostedSubmitsFullReversalAndReportsPendingApproval(t *testin
 		Return(posted, nil).
 		Once()
 
-	adjustments := mocks.NewMockInvoiceAdjustmentService(t)
+	adjustments := invoiceadjustmentportsmock.NewMockInvoiceAdjustmentService(t)
 	adjustments.EXPECT().
-		Submit(mock.Anything, mock.MatchedBy(func(req *servicesports.InvoiceAdjustmentRequest) bool {
+		Submit(mock.Anything, mock.MatchedBy(func(req *invoiceadjustmentports.InvoiceAdjustmentRequest) bool {
 			return req.InvoiceID == f.invoiceID &&
 				req.Kind == invoiceadjustment.KindFullReversal &&
 				req.IdempotencyKey == "invoice-void:"+f.invoiceID.String() &&
@@ -311,7 +318,7 @@ func TestVoidInvoicePostedSubmitsFullReversalAndReportsPendingApproval(t *testin
 		}, nil).
 		Once()
 
-	svc := newVoidService(repo, mocks.NewMockBillingQueueRepository(t))
+	svc := newVoidService(repo, billingqueueportsmock.NewMockBillingQueueRepository(t))
 	svc.adjustmentService = adjustments
 
 	result, err := svc.VoidInvoice(t.Context(), f.request(invoice.VoidDispositionRebill), f.actor)
@@ -328,11 +335,11 @@ func TestVoidInvoicePostedExecutedReversalIsNotPending(t *testing.T) {
 	f := newVoidFixture()
 	posted := f.invoice(invoice.StatusPosted)
 
-	repo := mocks.NewMockInvoiceRepository(t)
+	repo := invoiceportsmock.NewMockInvoiceRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(posted, nil).Twice()
 	repo.EXPECT().Update(mock.Anything, mock.Anything).Return(posted, nil).Once()
 
-	adjustments := mocks.NewMockInvoiceAdjustmentService(t)
+	adjustments := invoiceadjustmentportsmock.NewMockInvoiceAdjustmentService(t)
 	adjustments.EXPECT().
 		Submit(mock.Anything, mock.Anything, mock.Anything).
 		Return(&invoiceadjustment.InvoiceAdjustment{
@@ -341,7 +348,7 @@ func TestVoidInvoicePostedExecutedReversalIsNotPending(t *testing.T) {
 		}, nil).
 		Once()
 
-	svc := newVoidService(repo, mocks.NewMockBillingQueueRepository(t))
+	svc := newVoidService(repo, billingqueueportsmock.NewMockBillingQueueRepository(t))
 	svc.adjustmentService = adjustments
 
 	result, err := svc.VoidInvoice(
@@ -358,13 +365,13 @@ func TestVoidInvoicePostedWithoutAdjustmentEngineIsRefused(t *testing.T) {
 	t.Parallel()
 
 	f := newVoidFixture()
-	repo := mocks.NewMockInvoiceRepository(t)
+	repo := invoiceportsmock.NewMockInvoiceRepository(t)
 	repo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
 		Return(f.invoice(invoice.StatusPosted), nil).
 		Once()
 
-	_, err := newVoidService(repo, mocks.NewMockBillingQueueRepository(t)).
+	_, err := newVoidService(repo, billingqueueportsmock.NewMockBillingQueueRepository(t)).
 		VoidInvoice(t.Context(), f.request(invoice.VoidDispositionDoNotRebill), f.actor)
 
 	require.Error(t, err)
@@ -375,13 +382,13 @@ func TestVoidInvoiceAlreadyVoidedIsRefused(t *testing.T) {
 	t.Parallel()
 
 	f := newVoidFixture()
-	repo := mocks.NewMockInvoiceRepository(t)
+	repo := invoiceportsmock.NewMockInvoiceRepository(t)
 	repo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
 		Return(f.invoice(invoice.StatusVoided), nil).
 		Once()
 
-	_, err := newVoidService(repo, mocks.NewMockBillingQueueRepository(t)).
+	_, err := newVoidService(repo, billingqueueportsmock.NewMockBillingQueueRepository(t)).
 		VoidInvoice(t.Context(), f.request(invoice.VoidDispositionRebill), f.actor)
 
 	require.Error(t, err)
@@ -392,15 +399,15 @@ func TestPostRefusesAVoidedInvoice(t *testing.T) {
 	t.Parallel()
 
 	f := newVoidFixture()
-	repo := mocks.NewMockInvoiceRepository(t)
+	repo := invoiceportsmock.NewMockInvoiceRepository(t)
 	repo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
 		Return(f.invoice(invoice.StatusVoided), nil).
 		Once()
 
-	_, err := newVoidService(repo, mocks.NewMockBillingQueueRepository(t)).Post(
+	_, err := newVoidService(repo, billingqueueportsmock.NewMockBillingQueueRepository(t)).Post(
 		t.Context(),
-		&servicesports.PostInvoiceRequest{
+		&invoiceports.PostInvoiceRequest{
 			InvoiceID:   f.invoiceID,
 			TenantInfo:  f.tenantInfo,
 			TriggeredBy: "manual",
@@ -418,19 +425,19 @@ func TestVoidInvoiceRefusedWhileALateChargeMemoStands(t *testing.T) {
 	f := newVoidFixture()
 	memoID := pulid.MustNew("inv_")
 
-	repo := mocks.NewMockInvoiceRepository(t)
+	repo := invoiceportsmock.NewMockInvoiceRepository(t)
 	repo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
 		Return(f.invoice(invoice.StatusDraft), nil).
 		Once()
 	repo.EXPECT().
-		GetByIDs(mock.Anything, repositories.GetInvoicesByIDsRequest{TenantInfo: f.tenantInfo, InvoiceIDs: []pulid.ID{memoID}}).
+		GetByIDs(mock.Anything, invoiceports.GetInvoicesByIDsRequest{TenantInfo: f.tenantInfo, InvoiceIDs: []pulid.ID{memoID}}).
 		Return([]*invoice.Invoice{{ID: memoID, Number: "DM-77", Status: invoice.StatusPosted}}, nil).
 		Once()
 
-	lateChargeRepo := mocks.NewMockLateChargeRepository(t)
+	lateChargeRepo := latechargeportsmock.NewMockLateChargeRepository(t)
 	lateChargeRepo.EXPECT().
-		ListBySourceInvoiceIDs(mock.Anything, &repositories.ListLateChargeAssessmentsByInvoiceIDsRequest{
+		ListBySourceInvoiceIDs(mock.Anything, &latechargeports.ListLateChargeAssessmentsByInvoiceIDsRequest{
 			TenantInfo: f.tenantInfo,
 			InvoiceIDs: []pulid.ID{f.invoiceID},
 		}).
@@ -442,7 +449,7 @@ func TestVoidInvoiceRefusedWhileALateChargeMemoStands(t *testing.T) {
 		}, nil).
 		Once()
 
-	svc := newVoidService(repo, mocks.NewMockBillingQueueRepository(t))
+	svc := newVoidService(repo, billingqueueportsmock.NewMockBillingQueueRepository(t))
 	svc.lateChargeRepo = lateChargeRepo
 
 	_, err := svc.VoidInvoice(t.Context(), f.request(invoice.VoidDispositionRebill), f.actor)
@@ -459,7 +466,7 @@ func TestVoidInvoiceProceedsWhenLateChargeMemosAreVoided(t *testing.T) {
 	memoID := pulid.MustNew("inv_")
 	draft := f.invoice(invoice.StatusDraft)
 
-	repo := mocks.NewMockInvoiceRepository(t)
+	repo := invoiceportsmock.NewMockInvoiceRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(draft, nil).Once()
 	repo.EXPECT().
 		GetByIDs(mock.Anything, mock.Anything).
@@ -472,7 +479,7 @@ func TestVoidInvoiceProceedsWhenLateChargeMemosAreVoided(t *testing.T) {
 		}).
 		Once()
 
-	lateChargeRepo := mocks.NewMockLateChargeRepository(t)
+	lateChargeRepo := latechargeportsmock.NewMockLateChargeRepository(t)
 	lateChargeRepo.EXPECT().
 		ListBySourceInvoiceIDs(mock.Anything, mock.Anything).
 		Return(map[pulid.ID][]*latecharge.LateChargeAssessment{
@@ -482,7 +489,7 @@ func TestVoidInvoiceProceedsWhenLateChargeMemosAreVoided(t *testing.T) {
 		}, nil).
 		Once()
 
-	queueRepo := mocks.NewMockBillingQueueRepository(t)
+	queueRepo := billingqueueportsmock.NewMockBillingQueueRepository(t)
 	queueRepo.EXPECT().ReleaseForInvoice(mock.Anything, mock.Anything).
 		Return([]*billingqueue.BillingQueueItem{}, nil).
 		Once()

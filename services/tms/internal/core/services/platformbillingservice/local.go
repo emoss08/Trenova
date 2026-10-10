@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"go.uber.org/fx"
 )
 
@@ -27,7 +27,7 @@ type LocalBillingProvider struct {
 	catalog platformcatalog.FeatureCatalog
 }
 
-var _ services.BillingProvider = (*LocalBillingProvider)(nil)
+var _ platformcatalogports.BillingProvider = (*LocalBillingProvider)(nil)
 
 func NewLocalBillingProvider(p LocalBillingProviderParams) *LocalBillingProvider {
 	return &LocalBillingProvider{
@@ -37,8 +37,8 @@ func NewLocalBillingProvider(p LocalBillingProviderParams) *LocalBillingProvider
 
 func (p *LocalBillingProvider) GetBillingSummary(
 	_ context.Context,
-	req *services.BillingSummaryRequest,
-) (*services.BillingSummaryResult, error) {
+	req *platformcatalogports.BillingSummaryRequest,
+) (*platformcatalogports.BillingSummaryResult, error) {
 	checkedAt := req.CheckedAt
 	if checkedAt == 0 {
 		checkedAt = time.Now().Unix()
@@ -53,34 +53,34 @@ func (p *LocalBillingProvider) GetBillingSummary(
 		meters = p.catalog.ListMeters()
 	}
 
-	featureSummaries := make([]services.BillingFeatureSummary, 0, len(features))
+	featureSummaries := make([]platformcatalogports.BillingFeatureSummary, 0, len(features))
 	for i := range features {
-		featureSummaries = append(featureSummaries, services.BillingFeatureSummary{
+		featureSummaries = append(featureSummaries, platformcatalogports.BillingFeatureSummary{
 			FeatureKey: features[i].Key,
 			Allowed:    true,
 		})
 	}
 
-	usageSummaries := make([]services.BillingUsageSummary, 0, len(meters))
+	usageSummaries := make([]platformcatalogports.BillingUsageSummary, 0, len(meters))
 	for i := range meters {
-		usageSummaries = append(usageSummaries, services.BillingUsageSummary{
+		usageSummaries = append(usageSummaries, platformcatalogports.BillingUsageSummary{
 			MeterKey: meters[i].Key,
 			Unit:     meters[i].Unit,
 		})
 	}
 
-	return &services.BillingSummaryResult{
+	return &platformcatalogports.BillingSummaryResult{
 		BusinessUnitID: req.BusinessUnitID,
 		OrganizationID: req.OrganizationID,
 		Active:         true,
 		Reason:         communityReason,
-		Plan: &services.BillingPlanSummary{
+		Plan: &platformcatalogports.BillingPlanSummary{
 			ID:     communityPlanID,
 			Key:    communityPlanID,
 			Name:   communityName,
 			Status: activeStatus,
 		},
-		Subscription: &services.BillingSubscriptionSummary{
+		Subscription: &platformcatalogports.BillingSubscriptionSummary{
 			ID:     localID,
 			PlanID: communityPlanID,
 			Status: activeStatus,

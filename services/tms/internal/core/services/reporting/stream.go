@@ -5,8 +5,8 @@ import (
 	"io"
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/reporting/render"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -28,9 +28,9 @@ func (s *Service) StreamCSV(
 	ctx context.Context,
 	req *StreamCSVRequest,
 	sink io.Writer,
-) (*services.ReportRenderStats, error) {
+) (*reportports.ReportRenderStats, error) {
 	timezone := s.orgTimezone(ctx, req.TenantInfo)
-	compiled, err := s.compiler.Compile(ctx, &services.ReportCompileRequest{
+	compiled, err := s.compiler.Compile(ctx, &reportports.ReportCompileRequest{
 		Definition:  req.Definition,
 		Tenant:      req.TenantInfo,
 		Principal:   req.Principal,
@@ -42,7 +42,7 @@ func (s *Service) StreamCSV(
 		return nil, err
 	}
 
-	reader, err := s.executor.Open(ctx, &services.OpenReportDatasetRequest{
+	reader, err := s.executor.Open(ctx, &reportports.OpenReportDatasetRequest{
 		Compiled: compiled,
 		MaxRows:  s.cfg.GetMaxRows(),
 		Timeout:  s.cfg.GetStatementTimeout(),
@@ -52,10 +52,10 @@ func (s *Service) StreamCSV(
 	}
 	defer reader.Close()
 
-	return render.NewCSVRenderer(s.cfg.CSVIncludeBOM).Render(ctx, &services.ReportRenderRequest{
+	return render.NewCSVRenderer(s.cfg.CSVIncludeBOM).Render(ctx, &reportports.ReportRenderRequest{
 		Dataset: reader,
 		Sink:    sink,
-		Meta: services.ReportRunMeta{
+		Meta: reportports.ReportRunMeta{
 			Title:           req.Title,
 			GeneratedAtUnix: timeutils.NowUnix(),
 			Timezone:        timezone,

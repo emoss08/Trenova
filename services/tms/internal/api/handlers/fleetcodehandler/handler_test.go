@@ -1,6 +1,7 @@
 package fleetcodehandler_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/fleetcodeportsmock"
 	"context"
 	"errors"
 	"fmt"
@@ -11,9 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/fleetcodeservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/fleetcodeports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -30,7 +31,7 @@ var errNotFound = errors.New("fleet code not found")
 
 func setupFleetCodeHandler(
 	t *testing.T,
-	repo *mocks.MockFleetCodeRepository,
+	repo *fleetcodeportsmock.MockFleetCodeRepository,
 ) *fleetcodehandler.Handler {
 	t.Helper()
 
@@ -71,7 +72,7 @@ func TestFleetCodeHandler_List_Success(t *testing.T) {
 	t.Parallel()
 
 	fcID := pulid.MustNew("fc_")
-	repo := mocks.NewMockFleetCodeRepository(t)
+	repo := fleetcodeportsmock.NewMockFleetCodeRepository(t)
 	repo.On("List", mock.Anything, mock.Anything).
 		Return(&pagination.ListResult[*fleetcode.FleetCode]{
 			Items: []*fleetcode.FleetCode{
@@ -121,9 +122,9 @@ func TestFleetCodeHandler_List_WithPagination(t *testing.T) {
 		})
 	}
 
-	repo := mocks.NewMockFleetCodeRepository(t)
+	repo := fleetcodeportsmock.NewMockFleetCodeRepository(t)
 	repo.On("List", mock.Anything, mock.MatchedBy(
-		func(req *repositories.ListFleetCodesRequest) bool {
+		func(req *fleetcodeports.ListFleetCodesRequest) bool {
 			return req.Filter.Pagination.Limit == requestedLimit+1
 		},
 	)).Return(&pagination.ListResult[*fleetcode.FleetCode]{
@@ -155,7 +156,7 @@ func TestFleetCodeHandler_List_WithPagination(t *testing.T) {
 func TestFleetCodeHandler_List_RejectsOffset(t *testing.T) {
 	t.Parallel()
 
-	handler := setupFleetCodeHandler(t, mocks.NewMockFleetCodeRepository(t))
+	handler := setupFleetCodeHandler(t, fleetcodeportsmock.NewMockFleetCodeRepository(t))
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
@@ -173,7 +174,7 @@ func TestFleetCodeHandler_Get_Success(t *testing.T) {
 	t.Parallel()
 
 	fcID := pulid.MustNew("fc_")
-	repo := mocks.NewMockFleetCodeRepository(t)
+	repo := fleetcodeportsmock.NewMockFleetCodeRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(&fleetcode.FleetCode{
 		ID:             fcID,
 		OrganizationID: testutil.TestOrgID,
@@ -203,7 +204,7 @@ func TestFleetCodeHandler_Get_NotFound(t *testing.T) {
 	t.Parallel()
 
 	fcID := pulid.MustNew("fc_")
-	repo := mocks.NewMockFleetCodeRepository(t)
+	repo := fleetcodeportsmock.NewMockFleetCodeRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(nil, errNotFound)
 
 	handler := setupFleetCodeHandler(t, repo)
@@ -222,7 +223,7 @@ func TestFleetCodeHandler_Get_NotFound(t *testing.T) {
 func TestFleetCodeHandler_Get_InvalidID(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockFleetCodeRepository(t)
+	repo := fleetcodeportsmock.NewMockFleetCodeRepository(t)
 	handler := setupFleetCodeHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -240,7 +241,7 @@ func TestFleetCodeHandler_Create_Success(t *testing.T) {
 	t.Parallel()
 
 	managerID := pulid.MustNew("usr_")
-	repo := mocks.NewMockFleetCodeRepository(t)
+	repo := fleetcodeportsmock.NewMockFleetCodeRepository(t)
 	repo.On("Create", mock.Anything, mock.Anything).
 		Return(func(_ context.Context, entity *fleetcode.FleetCode) *fleetcode.FleetCode {
 			entity.ID = pulid.MustNew("fc_")
@@ -272,7 +273,7 @@ func TestFleetCodeHandler_Create_Success(t *testing.T) {
 func TestFleetCodeHandler_Create_BadJSON(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockFleetCodeRepository(t)
+	repo := fleetcodeportsmock.NewMockFleetCodeRepository(t)
 	handler := setupFleetCodeHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -292,7 +293,7 @@ func TestFleetCodeHandler_Update_Success(t *testing.T) {
 
 	fcID := pulid.MustNew("fc_")
 	managerID := pulid.MustNew("usr_")
-	repo := mocks.NewMockFleetCodeRepository(t)
+	repo := fleetcodeportsmock.NewMockFleetCodeRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(&fleetcode.FleetCode{
 		ID:             fcID,
 		OrganizationID: testutil.TestOrgID,
@@ -333,7 +334,7 @@ func TestFleetCodeHandler_Update_NotFound(t *testing.T) {
 
 	fcID := pulid.MustNew("fc_")
 	managerID := pulid.MustNew("usr_")
-	repo := mocks.NewMockFleetCodeRepository(t)
+	repo := fleetcodeportsmock.NewMockFleetCodeRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(nil, errNotFound)
 
 	handler := setupFleetCodeHandler(t, repo)
@@ -359,7 +360,7 @@ func TestFleetCodeHandler_Patch_Success(t *testing.T) {
 
 	fcID := pulid.MustNew("fc_")
 	managerID := pulid.MustNew("usr_")
-	repo := mocks.NewMockFleetCodeRepository(t)
+	repo := fleetcodeportsmock.NewMockFleetCodeRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(&fleetcode.FleetCode{
 		ID:             fcID,
 		OrganizationID: testutil.TestOrgID,
@@ -393,7 +394,7 @@ func TestFleetCodeHandler_Patch_Success(t *testing.T) {
 func TestFleetCodeHandler_Patch_InvalidID(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockFleetCodeRepository(t)
+	repo := fleetcodeportsmock.NewMockFleetCodeRepository(t)
 	handler := setupFleetCodeHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -413,7 +414,7 @@ func TestFleetCodeHandler_Patch_InvalidID(t *testing.T) {
 func TestFleetCodeHandler_SelectOptions_Success(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockFleetCodeRepository(t)
+	repo := fleetcodeportsmock.NewMockFleetCodeRepository(t)
 	repo.On("SelectOptions", mock.Anything, mock.Anything).
 		Return(&pagination.ListResult[*fleetcode.FleetCode]{
 			Items: []*fleetcode.FleetCode{},
@@ -437,7 +438,7 @@ func TestFleetCodeHandler_GetOption_Success(t *testing.T) {
 	t.Parallel()
 
 	fcID := pulid.MustNew("fc_")
-	repo := mocks.NewMockFleetCodeRepository(t)
+	repo := fleetcodeportsmock.NewMockFleetCodeRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(&fleetcode.FleetCode{
 		ID:             fcID,
 		OrganizationID: testutil.TestOrgID,
@@ -462,7 +463,7 @@ func TestFleetCodeHandler_GetOption_Success(t *testing.T) {
 func TestFleetCodeHandler_GetOption_InvalidID(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockFleetCodeRepository(t)
+	repo := fleetcodeportsmock.NewMockFleetCodeRepository(t)
 	handler := setupFleetCodeHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -479,7 +480,7 @@ func TestFleetCodeHandler_GetOption_InvalidID(t *testing.T) {
 func TestFleetCodeHandler_Create_ServiceError(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockFleetCodeRepository(t)
+	repo := fleetcodeportsmock.NewMockFleetCodeRepository(t)
 	repo.On("Create", mock.Anything, mock.Anything).Return(nil, errors.New("service error"))
 
 	handler := setupFleetCodeHandler(t, repo)
@@ -504,7 +505,7 @@ func TestFleetCodeHandler_Create_ServiceError(t *testing.T) {
 func TestFleetCodeHandler_Update_InvalidID(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockFleetCodeRepository(t)
+	repo := fleetcodeportsmock.NewMockFleetCodeRepository(t)
 	handler := setupFleetCodeHandler(t, repo)
 
 	managerID := pulid.MustNew("usr_")
@@ -529,7 +530,7 @@ func TestFleetCodeHandler_Update_ServiceError(t *testing.T) {
 
 	fcID := pulid.MustNew("fc_")
 	managerID := pulid.MustNew("usr_")
-	repo := mocks.NewMockFleetCodeRepository(t)
+	repo := fleetcodeportsmock.NewMockFleetCodeRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(&fleetcode.FleetCode{
 		ID:             fcID,
 		OrganizationID: testutil.TestOrgID,
@@ -562,7 +563,7 @@ func TestFleetCodeHandler_GetOption_NotFound(t *testing.T) {
 	t.Parallel()
 
 	fcID := pulid.MustNew("fc_")
-	repo := mocks.NewMockFleetCodeRepository(t)
+	repo := fleetcodeportsmock.NewMockFleetCodeRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(nil, errNotFound)
 
 	handler := setupFleetCodeHandler(t, repo)

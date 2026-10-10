@@ -5,21 +5,21 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-type PTOChange = services.RecordChange[worker.WorkerPTO]
+type PTOChange = kernelports.RecordChange[worker.WorkerPTO]
 
 func (s *Service) requireNoOverlap(
 	ctx context.Context,
 	entity *worker.WorkerPTO,
 	excludeID pulid.ID,
 ) error {
-	overlaps, err := s.repo.HasOverlap(ctx, &repositories.PTOOverlapRequest{
+	overlaps, err := s.repo.HasOverlap(ctx, &workerports.PTOOverlapRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -87,7 +87,7 @@ func (s *Service) prepareUpdate(
 	ctx context.Context,
 	entity *worker.WorkerPTO,
 ) (*worker.WorkerPTO, error) {
-	current, err := s.repo.GetByID(ctx, &repositories.GetPTOByIDRequest{
+	current, err := s.repo.GetByID(ctx, &workerports.GetPTOByIDRequest{
 		ID: entity.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,

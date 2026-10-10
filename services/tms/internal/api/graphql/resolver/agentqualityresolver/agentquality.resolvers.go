@@ -14,8 +14,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -65,7 +65,7 @@ func (r *AgentEvalCaseResolver) CapturedFingerprint(ctx context.Context, obj *ag
 	return jsonutils.MustToJSON(obj.CapturedFingerprint), nil
 }
 
-func (r *AgentQualityAgentResolver) ID(ctx context.Context, obj *services.AgentQualityAgent) (string, error) {
+func (r *AgentQualityAgentResolver) ID(ctx context.Context, obj *agentqualityports.AgentQualityAgent) (string, error) {
 	if obj == nil {
 		return "", nil
 	}
@@ -114,7 +114,7 @@ func (r *AgentSuiteRunResolver) CostUsd(ctx context.Context, obj *agentquality.S
 	return obj.CostUSD.StringFixed(6), nil
 }
 
-func (r *AgentWorstRatedAnswerResolver) ID(ctx context.Context, obj *services.AgentWorstRatedAnswer) (string, error) {
+func (r *AgentWorstRatedAnswerResolver) ID(ctx context.Context, obj *agentqualityports.AgentWorstRatedAnswer) (string, error) {
 	if obj == nil {
 		return "", nil
 	}
@@ -130,7 +130,7 @@ func (r *MutationResolver) CreateAgentEvalCase(ctx context.Context, input gqlmod
 
 	tenant := base.TenantInfo(authCtx)
 	actor := actorutil.FromAuthContext(authCtx)
-	var captured *services.EvalCaseCapture
+	var captured *agentports.EvalCaseCapture
 	switch {
 	case evalCaseSources(input) != 1:
 		return nil, errortypes.NewValidationError(
@@ -150,7 +150,7 @@ func (r *MutationResolver) CreateAgentEvalCase(ctx context.Context, input gqlmod
 		if parseErr != nil {
 			return nil, parseErr
 		}
-		captured, err = r.AgentEvalCaseService.CreateFromProposal(ctx, &services.CreateEvalCaseFromProposalRequest{
+		captured, err = r.AgentEvalCaseService.CreateFromProposal(ctx, &agentports.CreateEvalCaseFromProposalRequest{
 			ProposalID: proposalID,
 			Title:      base.DerefString(input.FromProposal.Title),
 			TenantInfo: tenant,
@@ -160,7 +160,7 @@ func (r *MutationResolver) CreateAgentEvalCase(ctx context.Context, input gqlmod
 		if parseErr != nil {
 			return nil, parseErr
 		}
-		captured, err = r.AgentEvalCaseService.CreateFromFeedback(ctx, &services.CreateEvalCaseFromFeedbackRequest{
+		captured, err = r.AgentEvalCaseService.CreateFromFeedback(ctx, &agentports.CreateEvalCaseFromFeedbackRequest{
 			FeedbackID: feedbackID,
 			Title:      base.DerefString(input.FromFeedback.Title),
 			TenantInfo: tenant,
@@ -211,7 +211,7 @@ func (r *MutationResolver) SetAgentEvalCaseStatus(ctx context.Context, id string
 		return nil, err
 	}
 
-	return r.AgentEvalCaseService.SetStatus(ctx, &services.SetEvalCaseStatusRequest{
+	return r.AgentEvalCaseService.SetStatus(ctx, &agentports.SetEvalCaseStatusRequest{
 		ID:         caseID,
 		Status:     status,
 		TenantInfo: base.TenantInfo(authCtx),
@@ -229,7 +229,7 @@ func (r *MutationResolver) ReplayAgentEvalCase(ctx context.Context, id string) (
 		return nil, err
 	}
 
-	return r.AgentEvaluationService.ReplayCase(ctx, &services.ReplayAgentEvalCaseRequest{
+	return r.AgentEvaluationService.ReplayCase(ctx, &agentports.ReplayAgentEvalCaseRequest{
 		CaseID:     caseID,
 		TenantInfo: base.TenantInfo(authCtx),
 	}, actorutil.FromAuthContext(authCtx))
@@ -246,7 +246,7 @@ func (r *MutationResolver) RunAgentSuite(ctx context.Context, agentDefinitionID 
 		return nil, err
 	}
 
-	return r.AgentQualityService.RunSuite(ctx, &services.RunAgentSuiteRequest{
+	return r.AgentQualityService.RunSuite(ctx, &agentqualityports.RunAgentSuiteRequest{
 		TenantInfo:        base.TenantInfo(authCtx),
 		AgentDefinitionID: definitionID,
 	}, actorutil.FromAuthContext(authCtx))
@@ -282,7 +282,7 @@ func (r *QueryResolver) AgentEvalCases(ctx context.Context, input gqlmodel.DataT
 
 	result, err := r.AgentEvalCaseService.ListConnection(
 		ctx,
-		&repositories.ListAgentEvalCaseConnectionRequest{
+		&agentqualityports.ListAgentEvalCaseConnectionRequest{
 			Filter:  tableInput.Filter,
 			Cursor:  tableInput.Cursor,
 			Columns: agentEvalCaseColumns(ctx, "edges.node"),
@@ -306,26 +306,26 @@ func (r *QueryResolver) AgentEvalCase(ctx context.Context, id string) (*agentqua
 		return nil, err
 	}
 
-	return r.AgentEvalCaseService.GetByID(ctx, repositories.GetAgentEvalCaseByIDRequest{
+	return r.AgentEvalCaseService.GetByID(ctx, agentqualityports.GetAgentEvalCaseByIDRequest{
 		ID:         caseID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})
 }
 
-func (r *QueryResolver) AgentQualityOverview(ctx context.Context, window *int) (*services.AgentQualityOverview, error) {
+func (r *QueryResolver) AgentQualityOverview(ctx context.Context, window *int) (*agentqualityports.AgentQualityOverview, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentEvalSuite, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.AgentQualityService.Overview(ctx, &services.AgentQualityOverviewRequest{
+	return r.AgentQualityService.Overview(ctx, &agentqualityports.AgentQualityOverviewRequest{
 		TenantInfo:     base.TenantInfo(authCtx),
 		WindowDays:     qualityWindow(window),
 		IncludeRatings: r.HasPermission(ctx, authCtx, permission.ResourceAgentFeedback, permission.OpRead),
 	})
 }
 
-func (r *QueryResolver) AgentQuality(ctx context.Context, agentDefinitionID string, window *int) (*services.AgentQualityDetail, error) {
+func (r *QueryResolver) AgentQuality(ctx context.Context, agentDefinitionID string, window *int) (*agentqualityports.AgentQualityDetail, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentEvalSuite, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -336,7 +336,7 @@ func (r *QueryResolver) AgentQuality(ctx context.Context, agentDefinitionID stri
 		return nil, err
 	}
 
-	return r.AgentQualityService.AgentQuality(ctx, &services.AgentQualityRequest{
+	return r.AgentQualityService.AgentQuality(ctx, &agentqualityports.AgentQualityRequest{
 		TenantInfo:        base.TenantInfo(authCtx),
 		AgentDefinitionID: definitionID,
 		WindowDays:        qualityWindow(window),
@@ -351,7 +351,7 @@ func (r *QueryResolver) AgentQualityAgents(ctx context.Context, input gqlmodel.A
 		return nil, err
 	}
 
-	page, err := r.AgentQualityService.ListAgents(ctx, &services.ListAgentQualityAgentsRequest{
+	page, err := r.AgentQualityService.ListAgents(ctx, &agentqualityports.ListAgentQualityAgentsRequest{
 		TenantInfo:        base.TenantInfo(authCtx),
 		WindowDays:        qualityWindow(input.Window),
 		IncludeRatings:    r.HasPermission(ctx, authCtx, permission.ResourceAgentFeedback, permission.OpRead),
@@ -372,7 +372,7 @@ func (r *QueryResolver) AgentQualityAgentConnection(ctx context.Context, window 
 		return nil, err
 	}
 
-	page, err := r.AgentQualityService.ListAgentTable(ctx, &services.ListAgentQualityAgentTableRequest{
+	page, err := r.AgentQualityService.ListAgentTable(ctx, &agentqualityports.ListAgentQualityAgentTableRequest{
 		TenantInfo:     base.TenantInfo(authCtx),
 		WindowDays:     qualityWindow(window),
 		IncludeRatings: r.HasPermission(ctx, authCtx, permission.ResourceAgentFeedback, permission.OpRead),
@@ -396,7 +396,7 @@ func (r *QueryResolver) AgentWorstRatedAnswers(ctx context.Context, input gqlmod
 		return nil, err
 	}
 
-	page, err := r.AgentQualityService.ListWorstRated(ctx, &services.ListAgentWorstRatedRequest{
+	page, err := r.AgentQualityService.ListWorstRated(ctx, &agentqualityports.ListAgentWorstRatedRequest{
 		TenantInfo:        base.TenantInfo(authCtx),
 		AgentDefinitionID: agentID,
 		WindowDays:        qualityWindow(input.Window),
@@ -422,7 +422,7 @@ func (r *QueryResolver) AgentWorstRatedAnswerConnection(ctx context.Context, age
 		return nil, err
 	}
 
-	page, err := r.AgentQualityService.ListWorstRatedTable(ctx, &services.ListAgentWorstRatedTableRequest{
+	page, err := r.AgentQualityService.ListWorstRatedTable(ctx, &agentqualityports.ListAgentWorstRatedTableRequest{
 		TenantInfo:        base.TenantInfo(authCtx),
 		AgentDefinitionID: agentID,
 		WindowDays:        qualityWindow(window),
@@ -447,7 +447,7 @@ func (r *QueryResolver) AgentSuiteRuns(ctx context.Context, input gqlmodel.Agent
 		return nil, err
 	}
 
-	page, err := r.AgentQualityService.ListSuiteRuns(ctx, &services.ListAgentSuiteRunsInput{
+	page, err := r.AgentQualityService.ListSuiteRuns(ctx, &agentqualityports.ListAgentSuiteRunsInput{
 		TenantInfo:        base.TenantInfo(authCtx),
 		AgentDefinitionID: agentID,
 		Statuses:          input.Statuses,
@@ -480,7 +480,7 @@ func (r *QueryResolver) AgentSuiteRunConnection(ctx context.Context, agentDefini
 
 	result, err := r.AgentQualityService.ListSuiteRunConnection(
 		ctx,
-		&repositories.ListAgentSuiteRunConnectionRequest{
+		&agentqualityports.ListAgentSuiteRunConnectionRequest{
 			Filter:            tableInput.Filter,
 			Cursor:            tableInput.Cursor,
 			AgentDefinitionID: agentID,
@@ -518,7 +518,7 @@ func (r *QueryResolver) AgentSuiteRunCases(ctx context.Context, input gqlmodel.A
 		return nil, err
 	}
 
-	page, err := r.AgentQualityService.ListSuiteRunCases(ctx, &services.ListAgentSuiteRunCasesRequest{
+	page, err := r.AgentQualityService.ListSuiteRunCases(ctx, &agentqualityports.ListAgentSuiteRunCasesRequest{
 		TenantInfo:        base.TenantInfo(authCtx),
 		SuiteRunID:        runID,
 		First:             base.IntValue(input.First),
@@ -559,7 +559,7 @@ func (r *QueryResolver) AgentSuiteRunCaseConnection(ctx context.Context, suiteRu
 
 	result, err := r.AgentEvaluationService.ListConnection(
 		ctx,
-		&repositories.ListAgentEvaluationConnectionRequest{
+		&agentports.ListAgentEvaluationConnectionRequest{
 			Filter:     tableInput.Filter,
 			Cursor:     tableInput.Cursor,
 			Columns:    base.AgentEvaluationColumns(ctx, "edges.node"),

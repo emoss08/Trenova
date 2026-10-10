@@ -4,12 +4,12 @@ package agentruneventresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	repositories "github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 
 type Deps struct {
 	*base.Core
-	AgentRunEventRepo repositories.AgentRunEventRepository
+	AgentRunEventRepo agentports.AgentRunEventRepository
 }
 
 type AgentRunEventResolver struct{ *Deps }

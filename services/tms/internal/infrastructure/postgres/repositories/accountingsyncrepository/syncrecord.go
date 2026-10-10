@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -55,7 +55,7 @@ type syncRecordRepository struct {
 	l  *zap.Logger
 }
 
-func NewSyncRecordRepository(p SyncRecordParams) repositories.AccountingSyncRecordRepository {
+func NewSyncRecordRepository(p SyncRecordParams) accountingsyncports.AccountingSyncRecordRepository {
 	return &syncRecordRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.accounting-sync-record-repository"),
@@ -104,9 +104,9 @@ func dispatchRankOrder() (string, []any) {
 func (r *syncRecordRepository) Enqueue(
 	ctx context.Context,
 	records []*accountingsync.AccountingSyncRecord,
-) (*repositories.EnqueueAccountingSyncRecordsResult, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.EnqueueAccountingSyncRecordsResult, error) {
-		result := &repositories.EnqueueAccountingSyncRecordsResult{
+) (*accountingsyncports.EnqueueAccountingSyncRecordsResult, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*accountingsyncports.EnqueueAccountingSyncRecordsResult, error) {
+		result := &accountingsyncports.EnqueueAccountingSyncRecordsResult{
 			Inserted: make([]*accountingsync.AccountingSyncRecord, 0, len(records)),
 		}
 		if len(records) == 0 {
@@ -145,7 +145,7 @@ func (r *syncRecordRepository) Enqueue(
 
 func (r *syncRecordRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetAccountingSyncRecordRequest,
+	req accountingsyncports.GetAccountingSyncRecordRequest,
 ) (*accountingsync.AccountingSyncRecord, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingSyncRecord, error) {
 		entity := new(accountingsync.AccountingSyncRecord)
@@ -166,7 +166,7 @@ func (r *syncRecordRepository) GetByID(
 
 func (r *syncRecordRepository) GetByIDs(
 	ctx context.Context,
-	req repositories.GetAccountingSyncRecordsByIDsRequest,
+	req accountingsyncports.GetAccountingSyncRecordsByIDsRequest,
 ) ([]*accountingsync.AccountingSyncRecord, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*accountingsync.AccountingSyncRecord, error) {
 		entities := make([]*accountingsync.AccountingSyncRecord, 0, len(req.IDs))
@@ -190,7 +190,7 @@ func (r *syncRecordRepository) GetByIDs(
 
 func (r *syncRecordRepository) applyListFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListAccountingSyncRecordsConnectionRequest,
+	req *accountingsyncports.ListAccountingSyncRecordsConnectionRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.AccountingSyncRecordColumns
 	q = q.Where(cols.ConnectionID.Eq(), req.ConnectionID)
@@ -219,7 +219,7 @@ func (r *syncRecordRepository) applyListFilters(
 
 func (r *syncRecordRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListAccountingSyncRecordsConnectionRequest,
+	req *accountingsyncports.ListAccountingSyncRecordsConnectionRequest,
 ) (*pagination.CursorListResult[*accountingsync.AccountingSyncRecord], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*accountingsync.AccountingSyncRecord], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -290,7 +290,7 @@ func (r *syncRecordRepository) ListConnection(
 
 func (r *syncRecordRepository) ListByObjects(
 	ctx context.Context,
-	req *repositories.ListAccountingSyncRecordsByObjectsRequest,
+	req *accountingsyncports.ListAccountingSyncRecordsByObjectsRequest,
 ) ([]*accountingsync.AccountingSyncRecord, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*accountingsync.AccountingSyncRecord, error) {
 		entities := make([]*accountingsync.AccountingSyncRecord, 0, len(req.ObjectIDs))
@@ -321,7 +321,7 @@ func (r *syncRecordRepository) ListByObjects(
 
 func (r *syncRecordRepository) ListByExternalIDs(
 	ctx context.Context,
-	req *repositories.ListAccountingSyncRecordsByExternalIDsRequest,
+	req *accountingsyncports.ListAccountingSyncRecordsByExternalIDsRequest,
 ) ([]*accountingsync.AccountingSyncRecord, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*accountingsync.AccountingSyncRecord, error) {
 		entities := make([]*accountingsync.AccountingSyncRecord, 0, len(req.ExternalIDs))
@@ -350,7 +350,7 @@ func (r *syncRecordRepository) ListByExternalIDs(
 
 func (r *syncRecordRepository) CountInFlight(
 	ctx context.Context,
-	req *repositories.CountAccountingSyncInFlightRequest,
+	req *accountingsyncports.CountAccountingSyncInFlightRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		cols := buncolgen.AccountingSyncRecordColumns
@@ -369,7 +369,7 @@ func (r *syncRecordRepository) CountInFlight(
 
 func (r *syncRecordRepository) Claim(
 	ctx context.Context,
-	req *repositories.ClaimAccountingSyncRecordsRequest,
+	req *accountingsyncports.ClaimAccountingSyncRecordsRequest,
 ) ([]*accountingsync.AccountingSyncRecord, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*accountingsync.AccountingSyncRecord, error) {
 		if req == nil || req.ConnectionID.IsNil() {
@@ -431,7 +431,7 @@ func (r *syncRecordRepository) Claim(
 
 func (r *syncRecordRepository) Finish(
 	ctx context.Context,
-	req *repositories.FinishAccountingSyncRecordRequest,
+	req *accountingsyncports.FinishAccountingSyncRecordRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if req == nil || req.Record == nil {
@@ -483,7 +483,7 @@ func (r *syncRecordRepository) Finish(
 			}
 			if affected == 0 {
 				record.Version = claimed
-				return repositories.ErrAccountingSyncLeaseLost
+				return accountingsyncports.ErrAccountingSyncLeaseLost
 			}
 
 			if req.Attempt == nil {
@@ -528,12 +528,12 @@ func (r *syncRecordRepository) Update(
 
 func (r *syncRecordRepository) CountByStatus(
 	ctx context.Context,
-	req repositories.AccountingSyncConnectionRequest,
-) ([]repositories.AccountingSyncStatusCount, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.AccountingSyncStatusCount, error) {
+	req accountingsyncports.AccountingSyncConnectionRequest,
+) ([]accountingsyncports.AccountingSyncStatusCount, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]accountingsyncports.AccountingSyncStatusCount, error) {
 		cols := buncolgen.AccountingSyncRecordColumns
 		counts := make(
-			[]repositories.AccountingSyncStatusCount,
+			[]accountingsyncports.AccountingSyncStatusCount,
 			0,
 			len(accountingsync.AllSyncStatuses()),
 		)
@@ -556,9 +556,9 @@ func (r *syncRecordRepository) CountByStatus(
 
 func (r *syncRecordRepository) ListAttention(
 	ctx context.Context,
-	req repositories.ListAccountingSyncAttentionRequest,
-) ([]repositories.AccountingSyncAttentionGroup, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.AccountingSyncAttentionGroup, error) {
+	req accountingsyncports.ListAccountingSyncAttentionRequest,
+) ([]accountingsyncports.AccountingSyncAttentionGroup, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]accountingsyncports.AccountingSyncAttentionGroup, error) {
 		limit := req.Limit
 		if limit <= 0 {
 			limit = defaultAttentionGroups
@@ -566,7 +566,7 @@ func (r *syncRecordRepository) ListAttention(
 		limit = intutils.Clamp(limit, 1, maxSyncListLimit)
 
 		cols := buncolgen.AccountingSyncRecordColumns
-		groups := make([]repositories.AccountingSyncAttentionGroup, 0, limit)
+		groups := make([]accountingsyncports.AccountingSyncAttentionGroup, 0, limit)
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*accountingsync.AccountingSyncRecord)(nil)).
@@ -598,7 +598,7 @@ func (r *syncRecordRepository) ListAttention(
 
 func (r *syncRecordRepository) MappingUsage(
 	ctx context.Context,
-	req *repositories.AccountingSyncMappingUsageRequest,
+	req *accountingsyncports.AccountingSyncMappingUsageRequest,
 ) (map[pulid.ID]int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]int, error) {
 		usage := make(map[pulid.ID]int, len(req.MappingIDs))
@@ -641,7 +641,7 @@ func (r *syncRecordRepository) MappingUsage(
 
 func (r *syncRecordRepository) Requeue(
 	ctx context.Context,
-	req *repositories.RequeueAccountingSyncRecordsRequest,
+	req *accountingsyncports.RequeueAccountingSyncRecordsRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
 		cols := buncolgen.AccountingSyncRecordColumns
@@ -677,7 +677,7 @@ func (r *syncRecordRepository) Requeue(
 
 func (r *syncRecordRepository) Release(
 	ctx context.Context,
-	req *repositories.ReleaseAccountingSyncRecordsRequest,
+	req *accountingsyncports.ReleaseAccountingSyncRecordsRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
 		cols := buncolgen.AccountingSyncRecordColumns
@@ -708,7 +708,7 @@ func (r *syncRecordRepository) Release(
 
 func (r *syncRecordRepository) SupersedeOlder(
 	ctx context.Context,
-	req *repositories.SupersedeAccountingSyncRecordsRequest,
+	req *accountingsyncports.SupersedeAccountingSyncRecordsRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
 		cols := buncolgen.AccountingSyncRecordColumns
@@ -746,9 +746,9 @@ func (r *syncRecordRepository) SupersedeOlder(
 
 func (r *syncRecordRepository) ListCandidates(
 	ctx context.Context,
-	req *repositories.ListAccountingSyncCandidatesRequest,
-) ([]repositories.AccountingSyncCandidate, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.AccountingSyncCandidate, error) {
+	req *accountingsyncports.ListAccountingSyncCandidatesRequest,
+) ([]accountingsyncports.AccountingSyncCandidate, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]accountingsyncports.AccountingSyncCandidate, error) {
 		source, err := candidateSourceFor(req.ObjectType, req.Operation)
 		if err != nil {
 			return nil, err
@@ -766,9 +766,9 @@ func (r *syncRecordRepository) ListCandidates(
 			return nil, fmt.Errorf("list accounting sync candidates: %w", err)
 		}
 
-		candidates := make([]repositories.AccountingSyncCandidate, 0, len(rows))
+		candidates := make([]accountingsyncports.AccountingSyncCandidate, 0, len(rows))
 		for _, row := range rows {
-			candidates = append(candidates, repositories.AccountingSyncCandidate{
+			candidates = append(candidates, accountingsyncports.AccountingSyncCandidate{
 				ObjectType:   req.ObjectType,
 				ObjectID:     row.ObjectID,
 				ObjectNumber: row.ObjectNumber,
@@ -783,10 +783,10 @@ func (r *syncRecordRepository) ListCandidates(
 
 func (r *syncRecordRepository) ListDueConnections(
 	ctx context.Context,
-	req repositories.ListDueAccountingSyncConnectionsRequest,
-) ([]repositories.AccountingSyncDueConnection, error) {
+	req accountingsyncports.ListDueAccountingSyncConnectionsRequest,
+) ([]accountingsyncports.AccountingSyncDueConnection, error) {
 	ctx = dbscope.WithSystem(ctx, "list accounting connections with sync work due across every organization")
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.AccountingSyncDueConnection, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]accountingsyncports.AccountingSyncDueConnection, error) {
 		limit := req.Limit
 		if limit <= 0 {
 			limit = defaultSyncListLimit
@@ -800,7 +800,7 @@ func (r *syncRecordRepository) ListDueConnections(
 
 		cols := buncolgen.AccountingSyncRecordColumns
 		conn := buncolgen.AccountingConnectionColumns
-		due := make([]repositories.AccountingSyncDueConnection, 0, limit)
+		due := make([]accountingsyncports.AccountingSyncDueConnection, 0, limit)
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*accountingsync.AccountingSyncRecord)(nil)).
@@ -833,16 +833,16 @@ func (r *syncRecordRepository) ListDueConnections(
 
 func (r *syncRecordRepository) PurgeHistory(
 	ctx context.Context,
-	req repositories.PurgeAccountingSyncHistoryRequest,
-) (*repositories.PurgeAccountingSyncHistoryResult, error) {
+	req accountingsyncports.PurgeAccountingSyncHistoryRequest,
+) (*accountingsyncports.PurgeAccountingSyncHistoryResult, error) {
 	ctx = dbscope.WithSystem(ctx, "purge accounting sync history past retention across every organization")
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.PurgeAccountingSyncHistoryResult, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*accountingsyncports.PurgeAccountingSyncHistoryResult, error) {
 		limit := req.Limit
 		if limit <= 0 {
 			limit = defaultPurgeLimit
 		}
 
-		result := new(repositories.PurgeAccountingSyncHistoryResult)
+		result := new(accountingsyncports.PurgeAccountingSyncHistoryResult)
 		dba := r.db.DBForContext(ctx)
 		cols := buncolgen.AccountingSyncRecordColumns
 
@@ -896,7 +896,7 @@ func (r *syncRecordRepository) PurgeHistory(
 
 func (r *syncRecordRepository) ListAttempts(
 	ctx context.Context,
-	req repositories.ListAccountingSyncAttemptsRequest,
+	req accountingsyncports.ListAccountingSyncAttemptsRequest,
 ) ([]*accountingsync.AccountingSyncAttempt, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*accountingsync.AccountingSyncAttempt, error) {
 		limit := req.Limit

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -30,7 +30,7 @@ func TestLocalBillingProvider_WithoutACatalogIsAnActiveCommunityPlan(t *testing.
 	orgID, buID := pulid.MustNew("org_"), pulid.MustNew("bu_")
 	summary, err := NewLocalBillingProvider(LocalBillingProviderParams{}).GetBillingSummary(
 		t.Context(),
-		&services.BillingSummaryRequest{OrganizationID: orgID, BusinessUnitID: buID, CheckedAt: 7},
+		&platformcatalogports.BillingSummaryRequest{OrganizationID: orgID, BusinessUnitID: buID, CheckedAt: 7},
 	)
 	require.NoError(t, err)
 
@@ -49,7 +49,7 @@ func TestLocalBillingProvider_ReportsEveryCatalogFeatureAndMeter(t *testing.T) {
 	t.Parallel()
 
 	summary, err := NewLocalBillingProvider(LocalBillingProviderParams{Catalog: fakeCatalog{}}).
-		GetBillingSummary(t.Context(), &services.BillingSummaryRequest{})
+		GetBillingSummary(t.Context(), &platformcatalogports.BillingSummaryRequest{})
 	require.NoError(t, err)
 
 	require.Len(t, summary.Features, 1)

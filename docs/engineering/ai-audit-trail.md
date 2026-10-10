@@ -315,7 +315,7 @@ operations are in `client/packages/graphql/src/operations/agent/audit.graphql`:
 | Piece | Path (under `services/tms`) |
 |-------|------------------------------|
 | Domain, canonical form, hashing | `internal/core/domain/aiaudit/` |
-| Ports | `internal/core/ports/repositories/aiaudit.go`, `internal/core/ports/services/aiaudit.go` |
+| Ports | `internal/modules/agent/ports/aiauditports/aiaudit.go`, `internal/modules/agent/ports/aiauditports/aiaudit_services.go` |
 | Repositories | `internal/infrastructure/postgres/repositories/aiauditrepository/` |
 | Projector, derivation, redaction, verification, retention, exports | `internal/core/services/aiauditservice/` |
 | Workflows and schedules | `internal/core/temporaljobs/aiauditjobs/` |

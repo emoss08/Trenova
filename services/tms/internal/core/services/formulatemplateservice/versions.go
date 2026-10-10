@@ -7,8 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -26,7 +26,7 @@ func (s *Service) clearScheduledVersions(
 	ctx context.Context,
 	template *formulatemplate.FormulaTemplate,
 ) (int64, error) {
-	return s.versionRepo.ClearScheduled(ctx, &repositories.ListScheduledVersionsRequest{
+	return s.versionRepo.ClearScheduled(ctx, &formulatemplateports.ListScheduledVersionsRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: template.OrganizationID,
 			BuID:  template.BusinessUnitID,
@@ -48,7 +48,7 @@ func withClearedSchedules(comment string, cleared int64) string {
 
 func (s *Service) CreateVersion(
 	ctx context.Context,
-	req *repositories.CreateVersionRequest,
+	req *formulatemplateports.CreateVersionRequest,
 ) (*formulatemplate.FormulaTemplateVersion, error) {
 	log := s.l.With(
 		zap.String("operation", "CreateVersion"),
@@ -69,7 +69,7 @@ func (s *Service) CreateVersion(
 	if template.CurrentVersionNumber >= 1 {
 		prevVersion, verr := s.versionRepo.GetByTemplateAndVersion(
 			ctx,
-			&repositories.GetVersionRequest{
+			&formulatemplateports.GetVersionRequest{
 				TenantInfo:    req.TenantInfo,
 				TemplateID:    req.TemplateID,
 				VersionNumber: template.CurrentVersionNumber,
@@ -95,7 +95,7 @@ func (s *Service) CreateVersion(
 	template.CurrentVersionNumber = newVersionNumber
 
 	var createdVersion *formulatemplate.FormulaTemplateVersion
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		if _, txErr := s.repo.Update(txCtx, template); txErr != nil {
 			log.Error("failed to update template version number", zap.Error(txErr))
 			return txErr
@@ -136,21 +136,21 @@ func (s *Service) CreateVersion(
 
 func (s *Service) ListVersions(
 	ctx context.Context,
-	req *repositories.ListVersionsRequest,
+	req *formulatemplateports.ListVersionsRequest,
 ) (*pagination.ListResult[*formulatemplate.FormulaTemplateVersion], error) {
 	return s.versionRepo.List(ctx, req)
 }
 
 func (s *Service) GetVersion(
 	ctx context.Context,
-	req *repositories.GetVersionRequest,
+	req *formulatemplateports.GetVersionRequest,
 ) (*formulatemplate.FormulaTemplateVersion, error) {
 	return s.versionRepo.GetByTemplateAndVersion(ctx, req)
 }
 
 func (s *Service) Rollback(
 	ctx context.Context,
-	req *repositories.RollbackRequest,
+	req *formulatemplateports.RollbackRequest,
 ) (*formulatemplate.FormulaTemplate, error) {
 	log := s.l.With(
 		zap.String("operation", "Rollback"),
@@ -160,7 +160,7 @@ func (s *Service) Rollback(
 
 	targetVersion, err := s.versionRepo.GetByTemplateAndVersion(
 		ctx,
-		&repositories.GetVersionRequest{
+		&formulatemplateports.GetVersionRequest{
 			TenantInfo:    req.TenantInfo,
 			TemplateID:    req.TemplateID,
 			VersionNumber: req.TargetVersion,
@@ -201,7 +201,7 @@ func (s *Service) Rollback(
 	}
 
 	var updatedTemplate *formulatemplate.FormulaTemplate
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		updated, txErr := s.repo.Update(txCtx, resolved)
 		if txErr != nil {
 			log.Error("failed to update template", zap.Error(txErr))
@@ -241,7 +241,7 @@ func (s *Service) Rollback(
 
 func (s *Service) Fork(
 	ctx context.Context,
-	req *repositories.ForkTemplateRequest,
+	req *formulatemplateports.ForkTemplateRequest,
 ) (*formulatemplate.FormulaTemplate, error) {
 	log := s.l.With(
 		zap.String("operation", "Fork"),
@@ -280,7 +280,7 @@ func (s *Service) Fork(
 	}
 
 	var createdTemplate *formulatemplate.FormulaTemplate
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		created, txErr := s.repo.Create(txCtx, forkedTemplate)
 		if txErr != nil {
 			log.Error("failed to create forked template", zap.Error(txErr))
@@ -315,7 +315,7 @@ func (s *Service) Fork(
 
 func (s *Service) CompareVersions(
 	ctx context.Context,
-	req *repositories.CompareVersionsRequest,
+	req *formulatemplateports.CompareVersionsRequest,
 ) (*formulatemplate.VersionDiff, error) {
 	log := s.l.With(
 		zap.String("operation", "CompareVersions"),
@@ -324,7 +324,7 @@ func (s *Service) CompareVersions(
 		zap.Int64("toVersion", req.ToVersion),
 	)
 
-	versions, err := s.versionRepo.GetVersionRange(ctx, &repositories.GetVersionRangeRequest{
+	versions, err := s.versionRepo.GetVersionRange(ctx, &formulatemplateports.GetVersionRangeRequest{
 		TenantInfo:  req.TenantInfo,
 		TemplateID:  req.TemplateID,
 		FromVersion: req.FromVersion,
@@ -370,7 +370,7 @@ func (s *Service) CompareVersions(
 
 func (s *Service) GetLineage(
 	ctx context.Context,
-	req *repositories.GetLineageRequest,
+	req *formulatemplateports.GetLineageRequest,
 ) (*formulatemplate.ForkLineage, error) {
 	log := s.l.With(
 		zap.String("operation", "GetLineage"),
@@ -385,7 +385,7 @@ func (s *Service) GetLineage(
 
 	forkedTemplates, err := s.versionRepo.GetForkedTemplates(
 		ctx,
-		&repositories.GetForkedTemplatesRequest{
+		&formulatemplateports.GetForkedTemplatesRequest{
 			TenantInfo:       req.TenantInfo,
 			SourceTemplateID: req.TemplateID,
 		},
@@ -400,7 +400,7 @@ func (s *Service) GetLineage(
 
 func (s *Service) UpdateVersionTags(
 	ctx context.Context,
-	req *repositories.UpdateVersionTagsRequest,
+	req *formulatemplateports.UpdateVersionTagsRequest,
 ) (*formulatemplate.FormulaTemplateVersion, error) {
 	log := s.l.With(
 		zap.String("operation", "UpdateVersionTags"),
@@ -480,7 +480,7 @@ func (s *Service) resolveTemplateSnapshot(
 	tenant pagination.TenantInfo,
 ) (formulatemplate.Seed, int64, error) {
 	if requestedVersion != nil {
-		version, err := s.versionRepo.GetByTemplateAndVersion(ctx, &repositories.GetVersionRequest{
+		version, err := s.versionRepo.GetByTemplateAndVersion(ctx, &formulatemplateports.GetVersionRequest{
 			TenantInfo:    tenant,
 			TemplateID:    template.ID,
 			VersionNumber: *requestedVersion,

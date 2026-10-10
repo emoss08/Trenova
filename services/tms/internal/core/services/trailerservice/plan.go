@@ -8,8 +8,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -37,12 +42,12 @@ func (s *Service) PlanCreate(
 func (s *Service) PlanUpdate(
 	ctx context.Context,
 	entity *trailer.Trailer,
-) (*services.RecordChange[trailer.Trailer], error) {
+) (*kernelports.RecordChange[trailer.Trailer], error) {
 	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetByID(ctx, repositories.GetTrailerByIDRequest{
+	original, err := s.repo.GetByID(ctx, trailerports.GetTrailerByIDRequest{
 		ID: entity.GetID(),
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.GetOrganizationID(),
@@ -53,13 +58,13 @@ func (s *Service) PlanUpdate(
 		return nil, err
 	}
 
-	return &services.RecordChange[trailer.Trailer]{Before: original, After: entity}, nil
+	return &kernelports.RecordChange[trailer.Trailer]{Before: original, After: entity}, nil
 }
 
 func (s *Service) PlanLocate(
 	ctx context.Context,
-	req *repositories.LocateTrailerRequest,
-	actor *services.RequestActor,
+	req *trailerports.LocateTrailerRequest,
+	actor *permissionports.RequestActor,
 ) (*LocatePlan, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
@@ -70,7 +75,7 @@ func (s *Service) PlanLocate(
 		return nil, err
 	}
 
-	plan.Location, err = s.locationRepo.GetByID(ctx, repositories.GetLocationByIDRequest{
+	plan.Location, err = s.locationRepo.GetByID(ctx, locationports.GetLocationByIDRequest{
 		ID:         req.NewLocationID,
 		TenantInfo: pagination.TenantInfo{OrgID: req.TenantInfo.OrgID, BuID: req.TenantInfo.BuID},
 	})
@@ -83,10 +88,10 @@ func (s *Service) PlanLocate(
 
 func (s *Service) planLocate(
 	ctx context.Context,
-	req *repositories.LocateTrailerRequest,
+	req *trailerports.LocateTrailerRequest,
 	actorUserID pulid.ID,
 ) (*LocatePlan, error) {
-	trailerEntity, err := s.repo.GetByID(ctx, repositories.GetTrailerByIDRequest{
+	trailerEntity, err := s.repo.GetByID(ctx, trailerports.GetTrailerByIDRequest{
 		ID: req.TrailerID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: req.TenantInfo.OrgID,
@@ -113,7 +118,7 @@ func (s *Service) planLocate(
 
 	current, err := s.continuityRepo.GetEffectiveCurrent(
 		ctx,
-		repositories.GetCurrentEquipmentContinuityRequest{
+		equipmentcontinuityports.GetCurrentEquipmentContinuityRequest{
 			TenantInfo:    req.TenantInfo,
 			EquipmentType: equipmentcontinuity.EquipmentTypeTrailer,
 			EquipmentID:   req.TrailerID,
@@ -152,17 +157,17 @@ func (s *Service) planLocate(
 
 func (s *Service) planLocateMove(
 	ctx context.Context,
-	req *repositories.LocateTrailerRequest,
+	req *trailerports.LocateTrailerRequest,
 	current *equipmentcontinuity.EquipmentContinuity,
 	actorUserID pulid.ID,
 ) (previous, updated *shipment.Shipment, err error) {
-	previousShipment, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	previousShipment, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID: current.SourceShipmentID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: req.TenantInfo.OrgID,
 			BuID:  req.TenantInfo.BuID,
 		},
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -174,7 +179,7 @@ func (s *Service) planLocateMove(
 	timing := locateMoveTiming()
 	appendLocateMove(updatedShipment, current, req, timing)
 
-	control, err := s.controlRepo.Get(ctx, repositories.GetShipmentControlRequest{
+	control, err := s.controlRepo.Get(ctx, tenantports.GetShipmentControlRequest{
 		TenantInfo: req.TenantInfo,
 	})
 	if err != nil {

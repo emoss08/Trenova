@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,16 +19,16 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.DetentionPolicyRepository
+	Repo         detentionports.DetentionPolicyRepository
 	Validator    *Validator
-	AuditService services.AuditService
+	AuditService auditports.AuditService
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.DetentionPolicyRepository
+	repo         detentionports.DetentionPolicyRepository
 	validator    *Validator
-	auditService services.AuditService
+	auditService auditports.AuditService
 }
 
 func New(p Params) *Service {
@@ -42,28 +42,28 @@ func New(p Params) *Service {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListDetentionPoliciesRequest,
+	req *detentionports.ListDetentionPoliciesRequest,
 ) (*pagination.ListResult[*detention.DetentionPolicy], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListDetentionPolicyConnectionRequest,
+	req *detentionports.ListDetentionPolicyConnectionRequest,
 ) (*pagination.CursorListResult[*detention.DetentionPolicy], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) GetByID(
 	ctx context.Context,
-	req *repositories.GetDetentionPolicyByIDRequest,
+	req *detentionports.GetDetentionPolicyByIDRequest,
 ) (*detention.DetentionPolicy, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) SelectOptions(
 	ctx context.Context,
-	req *repositories.DetentionPolicySelectOptionsRequest,
+	req *detentionports.DetentionPolicySelectOptionsRequest,
 ) (*pagination.ListResult[*detention.DetentionPolicy], error) {
 	return s.repo.SelectOptions(ctx, req)
 }
@@ -88,7 +88,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceDetentionPolicy,
 		ResourceID:     createdEntity.GetID().String(),
 		Operation:      permission.OpCreate,
@@ -119,7 +119,7 @@ func (s *Service) Update(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetByID(ctx, &repositories.GetDetentionPolicyByIDRequest{
+	original, err := s.repo.GetByID(ctx, &detentionports.GetDetentionPolicyByIDRequest{
 		DetentionPolicyID: entity.GetID(),
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.GetOrganizationID(),
@@ -138,7 +138,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceDetentionPolicy,
 		ResourceID:     updatedEntity.GetID().String(),
 		Operation:      permission.OpUpdate,
@@ -159,7 +159,7 @@ func (s *Service) Update(
 
 func (s *Service) Delete(
 	ctx context.Context,
-	req *repositories.GetDetentionPolicyByIDRequest,
+	req *detentionports.GetDetentionPolicyByIDRequest,
 	userID pulid.ID,
 ) error {
 	log := s.l.With(
@@ -179,7 +179,7 @@ func (s *Service) Delete(
 		return err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceDetentionPolicy,
 		ResourceID:     existing.GetID().String(),
 		Operation:      permission.OpDelete,

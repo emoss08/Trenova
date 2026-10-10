@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -15,7 +15,7 @@ func (s *Service) ResolveFuelFeed(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	provider fuelpurchase.CardProvider,
-) (*services.ResolvedFuelFeed, error) {
+) (*fuelpurchaseports.ResolvedFuelFeed, error) {
 	for integrationType, connector := range s.fuelCardConnectors {
 		if !carriesProvider(integrationType, provider) {
 			continue
@@ -36,8 +36,8 @@ func (s *Service) ResolveFuelFeed(
 func (s *Service) ListFuelFeeds(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) ([]*services.ResolvedFuelFeed, error) {
-	feeds := make([]*services.ResolvedFuelFeed, 0, len(s.fuelCardConnectors))
+) ([]*fuelpurchaseports.ResolvedFuelFeed, error) {
+	feeds := make([]*fuelpurchaseports.ResolvedFuelFeed, 0, len(s.fuelCardConnectors))
 
 	for integrationType, connector := range s.fuelCardConnectors {
 		feed, err := s.resolveFuelFeed(ctx, tenantInfo, integrationType, connector)
@@ -59,8 +59,8 @@ func (s *Service) resolveFuelFeed(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	integrationType integration.Type,
-	connector services.FuelCardProvider,
-) (*services.ResolvedFuelFeed, error) {
+	connector fuelpurchaseports.FuelCardProvider,
+) (*fuelpurchaseports.ResolvedFuelFeed, error) {
 	runtimeCfg, err := s.GetRuntimeConfig(ctx, tenantInfo, integrationType)
 	if err != nil {
 		return nil, err
@@ -69,7 +69,7 @@ func (s *Service) resolveFuelFeed(
 		return nil, nil
 	}
 
-	return &services.ResolvedFuelFeed{
+	return &fuelpurchaseports.ResolvedFuelFeed{
 		Connector:       connector,
 		IntegrationType: integrationType,
 		Provider:        providerFor(integrationType, runtimeCfg.Config),

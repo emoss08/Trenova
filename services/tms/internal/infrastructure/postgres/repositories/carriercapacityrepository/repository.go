@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/carriercapacity"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carriercapacityports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -35,7 +35,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.CarrierCapacityPostingRepository {
+func New(p Params) carriercapacityports.CarrierCapacityPostingRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.carrier-capacity-posting-repository")}
 }
 
@@ -52,7 +52,7 @@ func withPostingRelations(q *bun.SelectQuery) *bun.SelectQuery {
 
 func applyListOptions(
 	q *bun.SelectQuery,
-	req *repositories.ListCarrierCapacityPostingsRequest,
+	req *carriercapacityports.ListCarrierCapacityPostingsRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.PostingColumns
 	if req.CarrierID.IsNotNil() {
@@ -66,7 +66,7 @@ func applyListOptions(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListCarrierCapacityPostingsRequest,
+	req *carriercapacityports.ListCarrierCapacityPostingsRequest,
 ) (*pagination.ListResult[*carriercapacity.Posting], error) {
 	return dbtx.Read(
 		ctx,
@@ -105,7 +105,7 @@ func (r *repository) List(
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListCarrierCapacityPostingsRequest,
+	req *carriercapacityports.ListCarrierCapacityPostingsRequest,
 ) (*pagination.CursorListResult[*carriercapacity.Posting], error) {
 	return dbtx.Read(
 		ctx,
@@ -172,7 +172,7 @@ func (r *repository) ListConnection(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req *repositories.GetCarrierCapacityPostingRequest,
+	req *carriercapacityports.GetCarrierCapacityPostingRequest,
 ) (*carriercapacity.Posting, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carriercapacity.Posting, error) {
 		entity := new(carriercapacity.Posting)
@@ -240,7 +240,7 @@ func (r *repository) Update(
 
 func (r *repository) Delete(
 	ctx context.Context,
-	req *repositories.DeleteCarrierCapacityPostingRequest,
+	req *carriercapacityports.DeleteCarrierCapacityPostingRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.PostingColumns
@@ -263,7 +263,7 @@ func (r *repository) Delete(
 
 func (r *repository) ListOpen(
 	ctx context.Context,
-	req *repositories.ListOpenCarrierCapacityRequest,
+	req *carriercapacityports.ListOpenCarrierCapacityRequest,
 ) ([]*carriercapacity.Posting, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carriercapacity.Posting, error) {
 		cols := buncolgen.PostingColumns

@@ -6,14 +6,14 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type fakePreviews struct {
-	services.ProposalPreviewService
+	agentports.ProposalPreviewService
 
 	stale bool
 	asked int
@@ -21,7 +21,7 @@ type fakePreviews struct {
 
 func (f *fakePreviews) ForPlan(
 	_ context.Context,
-	req *services.PlanPreviewRequest,
+	req *agentports.PlanPreviewRequest,
 ) (*agent.PlanPreview, error) {
 	f.asked++
 	preview := &agent.PlanPreview{PlanID: req.Plan.ID, Stale: f.stale, Digest: "plan-digest"}

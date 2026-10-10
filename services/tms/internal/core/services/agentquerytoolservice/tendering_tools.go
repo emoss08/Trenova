@@ -7,9 +7,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -30,7 +32,7 @@ func tenderingToolProviders() []any {
 type tenderLister interface {
 	ListByShipment(
 		ctx context.Context,
-		req repositories.ListTendersByShipmentRequest,
+		req tenderports.ListTendersByShipmentRequest,
 	) ([]*tender.Tender, error)
 }
 
@@ -39,7 +41,7 @@ type tenderLister interface {
 type rateConfirmationLister interface {
 	ListByMoveID(
 		ctx context.Context,
-		req *repositories.ListRateConfirmationsByMoveRequest,
+		req *rateconfirmationports.ListRateConfirmationsByMoveRequest,
 	) ([]*rateconfirmation.RateConfirmation, error)
 }
 
@@ -52,9 +54,9 @@ type listShipmentTendersTool struct {
 }
 
 func newListShipmentTendersTool(
-	tenders repositories.TenderRepository,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	tenders tenderports.TenderRepository,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &listShipmentTendersTool{tenders: tenders, access: newFieldAccess(permissions)}
 }
 
@@ -79,7 +81,7 @@ func (t *listShipmentTendersTool) ParamSchema() map[string]any {
 	}, paramShipmentID)
 }
 
-func (t *listShipmentTendersTool) Policy() serviceports.ToolPolicy {
+func (t *listShipmentTendersTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceTender,
 		rationale: "Reads a shipment's tenders and their offers; a carrier's own words, " +
@@ -119,7 +121,7 @@ type tenderRow struct {
 
 func (t *listShipmentTendersTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -134,7 +136,7 @@ func (t *listShipmentTendersTool) Query(
 		return nil, err
 	}
 
-	tenders, err := t.tenders.ListByShipment(ctx, repositories.ListTendersByShipmentRequest{
+	tenders, err := t.tenders.ListByShipment(ctx, tenderports.ListTendersByShipmentRequest{
 		TenantInfo: tenantOf(params),
 		ShipmentID: shipmentID,
 	})
@@ -210,8 +212,8 @@ type listRateConfirmationsTool struct {
 }
 
 func newListRateConfirmationsTool(
-	rateCons repositories.RateConfirmationRepository,
-) serviceports.AgentQueryTool {
+	rateCons rateconfirmationports.RateConfirmationRepository,
+) agentports.AgentQueryTool {
 	return &listRateConfirmationsTool{rateCons: rateCons}
 }
 
@@ -233,7 +235,7 @@ func (t *listRateConfirmationsTool) ParamSchema() map[string]any {
 	}, paramShipmentMoveID)
 }
 
-func (t *listRateConfirmationsTool) Policy() serviceports.ToolPolicy {
+func (t *listRateConfirmationsTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceRateConfirmation,
 		rationale: "Reads a move's rate confirmation revisions; the name a carrier typed " +
@@ -259,7 +261,7 @@ type rateConfirmationRow struct {
 
 func (t *listRateConfirmationsTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -270,7 +272,7 @@ func (t *listRateConfirmationsTool) Query(
 		return nil, err
 	}
 
-	entities, err := t.rateCons.ListByMoveID(ctx, &repositories.ListRateConfirmationsByMoveRequest{
+	entities, err := t.rateCons.ListByMoveID(ctx, &rateconfirmationports.ListRateConfirmationsByMoveRequest{
 		TenantInfo:     tenantOf(params),
 		ShipmentMoveID: moveID,
 	})

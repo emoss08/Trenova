@@ -8,9 +8,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/permit"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,20 +27,20 @@ const PermitRequiredHoldCode = "PERMIT_REQUIRED"
 type ServiceParams struct {
 	fx.In
 
-	PermitRepo       repositories.PermitRepository
-	JurisdictionRepo repositories.JurisdictionRuleRepository
-	HoldRepo         repositories.ShipmentHoldRepository
-	ShipmentRepo     repositories.ShipmentRepository
-	AuditService     services.AuditService
+	PermitRepo       permitports.PermitRepository
+	JurisdictionRepo permitports.JurisdictionRuleRepository
+	HoldRepo         shipmentports.ShipmentHoldRepository
+	ShipmentRepo     shipmentports.ShipmentRepository
+	AuditService     auditports.AuditService
 	Logger           *zap.Logger
 }
 
 type service struct {
-	permitRepo       repositories.PermitRepository
-	jurisdictionRepo repositories.JurisdictionRuleRepository
-	holdRepo         repositories.ShipmentHoldRepository
-	shipmentRepo     repositories.ShipmentRepository
-	auditService     services.AuditService
+	permitRepo       permitports.PermitRepository
+	jurisdictionRepo permitports.JurisdictionRuleRepository
+	holdRepo         shipmentports.ShipmentHoldRepository
+	shipmentRepo     shipmentports.ShipmentRepository
+	auditService     auditports.AuditService
 	l                *zap.Logger
 }
 
@@ -46,7 +49,7 @@ type service struct {
 // constructed once at startup, not per request.
 //
 //nolint:gocritic // fx cannot inject a pointer to a dig.In params object
-func NewService(p ServiceParams) services.PermitService {
+func NewService(p ServiceParams) permitports.PermitService {
 	return &service{
 		permitRepo:       p.PermitRepo,
 		jurisdictionRepo: p.JurisdictionRepo,
@@ -102,7 +105,7 @@ func (s *service) routeJurisdictions(
 
 	states, err := s.permitRepo.ResolveRouteStates(
 		ctx,
-		&repositories.ResolveRouteStatesRequest{
+		&permitports.ResolveRouteStatesRequest{
 			TenantInfo:  tenantOf(entity),
 			LocationIDs: locationIDs,
 		},
@@ -154,7 +157,7 @@ func (s *service) resolveRules(
 
 	rules, err := s.jurisdictionRepo.GetActiveByStateIDs(
 		ctx,
-		&repositories.GetJurisdictionRulesRequest{StateIDs: stateIDs},
+		&permitports.GetJurisdictionRulesRequest{StateIDs: stateIDs},
 	)
 	if err != nil {
 		return nil, err
@@ -241,8 +244,8 @@ func assessJurisdictions(
 	route []permit.RouteJurisdiction,
 	rules map[pulid.ID]*jurisdictionrule.Resolved,
 	measurements jurisdictionrule.Measurements,
-) []services.AssessedJurisdiction {
-	assessed := make([]services.AssessedJurisdiction, 0, len(route))
+) []permitports.AssessedJurisdiction {
+	assessed := make([]permitports.AssessedJurisdiction, 0, len(route))
 
 	for _, jurisdiction := range route {
 		resolved, ok := rules[jurisdiction.StateID]
@@ -250,7 +253,7 @@ func assessJurisdictions(
 			continue
 		}
 
-		assessed = append(assessed, services.AssessedJurisdiction{
+		assessed = append(assessed, permitports.AssessedJurisdiction{
 			StateID:              jurisdiction.StateID,
 			StateCode:            resolved.StateCode,
 			StateName:            resolved.StateName,
@@ -277,15 +280,15 @@ func assessJurisdictions(
 func (s *service) Assess(
 	ctx context.Context,
 	entity *shipment.Shipment,
-) (*services.PermitAssessment, error) {
-	assessment := &services.PermitAssessment{FeeIsBaseOnly: true}
+) (*permitports.PermitAssessment, error) {
+	assessment := &permitports.PermitAssessment{FeeIsBaseOnly: true}
 
 	if entity == nil {
 		return assessment, nil
 	}
 
 	measurements := measurementsFor(entity)
-	assessment.Measurements = services.AssessedMeasurements{
+	assessment.Measurements = permitports.AssessedMeasurements{
 		WidthFeet:    measurements.WidthFeet,
 		HeightFeet:   measurements.HeightFeet,
 		LengthFeet:   measurements.LengthFeet,
@@ -320,7 +323,7 @@ func (s *service) Assess(
 		return assessment, nil
 	}
 
-	permits, err := s.permitRepo.ListByShipment(ctx, &repositories.ListPermitsRequest{
+	permits, err := s.permitRepo.ListByShipment(ctx, &permitports.ListPermitsRequest{
 		TenantInfo: tenantOf(entity),
 		ShipmentID: entity.ID,
 	})
@@ -339,7 +342,7 @@ func (s *service) Assess(
 	if entity.ID.IsNotNil() {
 		existing, lErr := s.permitRepo.ListRequirements(
 			ctx,
-			&repositories.ListRequirementsRequest{
+			&permitports.ListRequirementsRequest{
 				TenantInfo:        tenantOf(entity),
 				ShipmentID:        entity.ID,
 				ExcludeSuperseded: true,
@@ -405,8 +408,8 @@ func carryWaiversForward(derived, existing []*permit.Requirement) {
 func (s *service) Sync(
 	ctx context.Context,
 	entity *shipment.Shipment,
-	actor *services.RequestActor,
-) (*services.PermitAssessment, error) {
+	actor *permissionports.RequestActor,
+) (*permitports.PermitAssessment, error) {
 	// Assess carries live waivers onto the re-derived requirements, so the set
 	// written here already reflects them and the open set the hold is built
 	// from does too.
@@ -415,7 +418,7 @@ func (s *service) Sync(
 		return nil, err
 	}
 
-	if err = s.permitRepo.ReplaceForShipment(ctx, &repositories.ReplaceRequirementsRequest{
+	if err = s.permitRepo.ReplaceForShipment(ctx, &permitports.ReplaceRequirementsRequest{
 		TenantInfo:   tenantOf(entity),
 		ShipmentID:   entity.ID,
 		Requirements: assessment.Requirements,
@@ -433,7 +436,7 @@ func (s *service) ListPermits(
 	shipmentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) ([]*permit.Permit, error) {
-	return s.permitRepo.ListByShipment(ctx, &repositories.ListPermitsRequest{
+	return s.permitRepo.ListByShipment(ctx, &permitports.ListPermitsRequest{
 		TenantInfo: tenantInfo,
 		ShipmentID: shipmentID,
 	})
@@ -444,7 +447,7 @@ func (s *service) ListRequirements(
 	shipmentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) ([]*permit.Requirement, error) {
-	return s.permitRepo.ListRequirements(ctx, &repositories.ListRequirementsRequest{
+	return s.permitRepo.ListRequirements(ctx, &permitports.ListRequirementsRequest{
 		TenantInfo: tenantInfo,
 		ShipmentID: shipmentID,
 		// Rows from prior derivations stay in the table as the audit trail, but
@@ -483,7 +486,7 @@ type permitAuditParams struct {
 	OrganizationID pulid.ID
 	BusinessUnitID pulid.ID
 	Operation      permission.Operation
-	Actor          services.AuditActor
+	Actor          kernelports.AuditActor
 	Previous       any
 	Current        any
 	Comment        string
@@ -500,16 +503,16 @@ func (s *service) resync(
 	ctx context.Context,
 	shipmentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) {
 	if s.shipmentRepo == nil {
 		return
 	}
 
-	entity, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	entity, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         shipmentID,
 		TenantInfo: tenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -528,7 +531,7 @@ func (s *service) resync(
 func (s *service) CreatePermit(
 	ctx context.Context,
 	entity *permit.Permit,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*permit.Permit, error) {
 	if _, err := s.PlanCreatePermit(ctx, entity); err != nil {
 		return nil, err
@@ -561,7 +564,7 @@ func (s *service) CreatePermit(
 func (s *service) UpdatePermit(
 	ctx context.Context,
 	entity *permit.Permit,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*permit.Permit, error) {
 	change, err := s.PlanUpdatePermit(ctx, entity)
 	if err != nil {
@@ -595,7 +598,7 @@ func (s *service) UpdatePermit(
 
 func (s *service) WaiveRequirement(
 	ctx context.Context,
-	req *services.WaiveRequirementRequest,
+	req *permitports.WaiveRequirementRequest,
 ) (*permit.Requirement, error) {
 	multiErr := errortypes.NewMultiError()
 
@@ -610,7 +613,7 @@ func (s *service) WaiveRequirement(
 		return nil, multiErr
 	}
 
-	waived, err := s.permitRepo.WaiveRequirement(ctx, &repositories.WaiveRequirementRepoRequest{
+	waived, err := s.permitRepo.WaiveRequirement(ctx, &permitports.WaiveRequirementRepoRequest{
 		TenantInfo:    req.TenantInfo,
 		RequirementID: req.RequirementID,
 		WaivedByID:    req.WaivedByID,

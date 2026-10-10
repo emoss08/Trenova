@@ -7,11 +7,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -32,7 +33,7 @@ var ptoFields = []string{
 }
 
 type ptoRequester interface {
-	Get(ctx context.Context, req *repositories.GetPTOByIDRequest) (*worker.WorkerPTO, error)
+	Get(ctx context.Context, req *workerports.GetPTOByIDRequest) (*worker.WorkerPTO, error)
 	PlanCreate(
 		ctx context.Context,
 		entity *worker.WorkerPTO,
@@ -46,7 +47,7 @@ type ptoRequester interface {
 	PlanUpdate(
 		ctx context.Context,
 		entity *worker.WorkerPTO,
-	) (*serviceports.RecordChange[worker.WorkerPTO], error)
+	) (*kernelports.RecordChange[worker.WorkerPTO], error)
 	Update(
 		ctx context.Context,
 		entity *worker.WorkerPTO,
@@ -129,7 +130,7 @@ func applyPTODates(pto *worker.WorkerPTO, params map[string]any, required bool) 
 	return nil
 }
 
-func newRequestWorkerPTOTool(pto ptoRequester) serviceports.AgentTool {
+func newRequestWorkerPTOTool(pto ptoRequester) agentports.AgentTool {
 	properties := ptoDatesProperties()
 	properties[paramWorkerID] = workerProperty()
 	spec := withSchema(wfSpec(
@@ -148,7 +149,7 @@ func newRequestWorkerPTOTool(pto ptoRequester) serviceports.AgentTool {
 	spec.searchTerms = []string{"vacation", "time off", "PTO request", "day off"}
 
 	return newReportingReceivableTool(spec, receivablePlan[*worker.WorkerPTO, *worker.WorkerPTO]{
-		request: func(params *serviceports.ToolExecuteParams) (*worker.WorkerPTO, error) {
+		request: func(params *agentports.ToolExecuteParams) (*worker.WorkerPTO, error) {
 			workerID, err := requirePulid(params.Params, paramWorkerID)
 			if err != nil {
 				return nil, err
@@ -164,7 +165,7 @@ func newRequestWorkerPTOTool(pto ptoRequester) serviceports.AgentTool {
 		plan: func(
 			ctx context.Context,
 			entity *worker.WorkerPTO,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*worker.WorkerPTO, error) {
 			return pto.PlanCreate(ctx, entity, params.Actor.UserID)
 		},
@@ -189,7 +190,7 @@ func newRequestWorkerPTOTool(pto ptoRequester) serviceports.AgentTool {
 		run: func(
 			ctx context.Context,
 			entity *worker.WorkerPTO,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			created, err := pto.Create(ctx, entity, params.Actor.UserID)
 			if err != nil {
@@ -202,11 +203,11 @@ func newRequestWorkerPTOTool(pto ptoRequester) serviceports.AgentTool {
 
 type ptoEdit struct {
 	id     pulid.ID
-	params *serviceports.ToolExecuteParams
+	params *agentports.ToolExecuteParams
 }
 
 func (e *ptoEdit) entity(ctx context.Context, pto ptoRequester) (*worker.WorkerPTO, error) {
-	current, err := pto.Get(ctx, &repositories.GetPTOByIDRequest{
+	current, err := pto.Get(ctx, &workerports.GetPTOByIDRequest{
 		ID:         e.id,
 		TenantInfo: tenantFrom(*e.params),
 	})
@@ -218,7 +219,7 @@ func (e *ptoEdit) entity(ctx context.Context, pto ptoRequester) (*worker.WorkerP
 	return &entity, applyPTODates(&entity, e.params.Params, false)
 }
 
-func newUpdateWorkerPTOTool(pto ptoRequester) serviceports.AgentTool {
+func newUpdateWorkerPTOTool(pto ptoRequester) agentports.AgentTool {
 	properties := ptoDatesProperties()
 	properties["ptoId"] = agenttoolschema.RecordIDText(permission.ResourceWorkerPTO, ptoIDNote)
 	spec := targeting(withSchema(wfSpec(
@@ -238,9 +239,9 @@ func newUpdateWorkerPTOTool(pto ptoRequester) serviceports.AgentTool {
 	spec.egress = agent.EgressDriverVisible
 
 	return newReportingReceivableTool(spec, receivablePlan[
-		*ptoEdit, *serviceports.RecordChange[worker.WorkerPTO],
+		*ptoEdit, *kernelports.RecordChange[worker.WorkerPTO],
 	]{
-		request: func(params *serviceports.ToolExecuteParams) (*ptoEdit, error) {
+		request: func(params *agentports.ToolExecuteParams) (*ptoEdit, error) {
 			id, err := requirePulid(params.Params, "ptoId")
 			if err != nil {
 				return nil, err
@@ -250,8 +251,8 @@ func newUpdateWorkerPTOTool(pto ptoRequester) serviceports.AgentTool {
 		plan: func(
 			ctx context.Context,
 			edit *ptoEdit,
-			_ *serviceports.ToolExecuteParams,
-		) (*serviceports.RecordChange[worker.WorkerPTO], error) {
+			_ *agentports.ToolExecuteParams,
+		) (*kernelports.RecordChange[worker.WorkerPTO], error) {
 			entity, err := edit.entity(ctx, pto)
 			if err != nil {
 				return nil, err
@@ -261,7 +262,7 @@ func newUpdateWorkerPTOTool(pto ptoRequester) serviceports.AgentTool {
 		refused: func(*ptoEdit) string { return "Would change a time-off request." },
 		render: func(
 			_ *ptoEdit,
-			change *serviceports.RecordChange[worker.WorkerPTO],
+			change *kernelports.RecordChange[worker.WorkerPTO],
 		) (*agent.ToolPreview, error) {
 			recorded, err := toolpreview.Changed(ptoRecord(change.Before), change.Before,
 				change.After, wfOptions(ptoFields...)...)
@@ -273,7 +274,7 @@ func newUpdateWorkerPTOTool(pto ptoRequester) serviceports.AgentTool {
 		run: func(
 			ctx context.Context,
 			edit *ptoEdit,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			entity, err := edit.entity(ctx, pto)
 			if err != nil {
@@ -289,7 +290,7 @@ func newUpdateWorkerPTOTool(pto ptoRequester) serviceports.AgentTool {
 }
 
 func ptoAdjustmentFrom(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*ptoledgerservice.AdjustRequest, error) {
 	workerID, err := requirePulid(params.Params, paramWorkerID)
 	if err != nil {
@@ -329,7 +330,7 @@ func ptoAdjustmentFrom(
 	return req, nil
 }
 
-func newAdjustWorkerPTOBalanceTool(ledger ptoBalanceAdjuster) serviceports.AgentTool {
+func newAdjustWorkerPTOBalanceTool(ledger ptoBalanceAdjuster) agentports.AgentTool {
 	spec := personOnly(withSchema(wfSpec(
 		"adjust_worker_pto_balance",
 		"Draft a manual adjustment to a worker's time-off balance, in days, for a person to "+
@@ -359,7 +360,7 @@ func newAdjustWorkerPTOBalanceTool(ledger ptoBalanceAdjuster) serviceports.Agent
 		plan: func(
 			ctx context.Context,
 			req *ptoledgerservice.AdjustRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*ptoledgerservice.AdjustPlan, error) {
 			return ledger.PlanAdjust(ctx, req)
 		},
@@ -387,7 +388,7 @@ func newAdjustWorkerPTOBalanceTool(ledger ptoBalanceAdjuster) serviceports.Agent
 		run: func(
 			ctx context.Context,
 			req *ptoledgerservice.AdjustRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			entry, err := ledger.Adjust(ctx, req)
 			if err != nil {
@@ -399,14 +400,14 @@ func newAdjustWorkerPTOBalanceTool(ledger ptoBalanceAdjuster) serviceports.Agent
 	})
 }
 
-func provideRequestWorkerPTOTool(pto serviceports.WorkerPTOService) serviceports.AgentTool {
+func provideRequestWorkerPTOTool(pto workerports.WorkerPTOService) agentports.AgentTool {
 	return newRequestWorkerPTOTool(pto)
 }
 
-func provideUpdateWorkerPTOTool(pto serviceports.WorkerPTOService) serviceports.AgentTool {
+func provideUpdateWorkerPTOTool(pto workerports.WorkerPTOService) agentports.AgentTool {
 	return newUpdateWorkerPTOTool(pto)
 }
 
-func provideAdjustWorkerPTOBalanceTool(ledger *ptoledgerservice.Service) serviceports.AgentTool {
+func provideAdjustWorkerPTOBalanceTool(ledger *ptoledgerservice.Service) agentports.AgentTool {
 	return newAdjustWorkerPTOBalanceTool(ledger)
 }

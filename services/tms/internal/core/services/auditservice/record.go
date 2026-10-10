@@ -2,7 +2,8 @@ package auditservice
 
 import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -18,7 +19,7 @@ type RecordParams struct {
 	Resource   permission.Resource
 	ResourceID string
 	Operation  permission.Operation
-	Actor      services.AuditActor
+	Actor      kernelports.AuditActor
 
 	// OrganizationID and BusinessUnitID stay zero for globally scoped
 	// resources. Stamping the acting user's tenant onto a change every tenant
@@ -49,7 +50,7 @@ type RecordParams struct {
 // has already happened, and failing the caller would report an error for work
 // that succeeded. Callers pass a logger so the failure is attributable.
 func Record(
-	auditService services.AuditService,
+	auditService auditports.AuditService,
 	logger *zap.Logger,
 	params *RecordParams,
 ) {
@@ -57,7 +58,7 @@ func Record(
 		return
 	}
 
-	logParams := &services.LogActionParams{
+	logParams := &auditports.LogActionParams{
 		Resource:       params.Resource,
 		ResourceID:     params.ResourceID,
 		Operation:      params.Operation,
@@ -76,7 +77,7 @@ func Record(
 		logParams.PreviousState = jsonutils.MustToJSON(params.Previous)
 	}
 
-	opts := make([]services.LogOption, 0, 3)
+	opts := make([]auditports.LogOption, 0, 3)
 	if params.Comment != "" {
 		opts = append(opts, WithComment(params.Comment))
 	}

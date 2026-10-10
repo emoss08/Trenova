@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -58,7 +58,7 @@ func TestAssignProfileToWorker_RejectsOverrideForForeignComponent(t *testing.T) 
 	profile := profileForAssignment(entity, pulid.MustNew("dppc_"))
 
 	svc.profileRepo = &fakeProfileRepo{
-		getByID: func(context.Context, repositories.GetPayProfileByIDRequest) (*driverpay.PayProfile, error) {
+		getByID: func(context.Context, driverpayports.GetPayProfileByIDRequest) (*driverpay.PayProfile, error) {
 			return profile, nil
 		},
 	}
@@ -76,7 +76,7 @@ func TestAssignProfileToWorker_RejectsLaterExistingAssignment(t *testing.T) {
 	profile := profileForAssignment(entity)
 
 	svc.profileRepo = &fakeProfileRepo{
-		getByID: func(context.Context, repositories.GetPayProfileByIDRequest) (*driverpay.PayProfile, error) {
+		getByID: func(context.Context, driverpayports.GetPayProfileByIDRequest) (*driverpay.PayProfile, error) {
 			return profile, nil
 		},
 	}
@@ -108,7 +108,7 @@ func TestAssignProfileToWorker_EndsEarlierOpenAssignment(t *testing.T) {
 	var endedAssignment *driverpay.WorkerPayAssignment
 	var created *driverpay.WorkerPayAssignment
 	svc.profileRepo = &fakeProfileRepo{
-		getByID: func(context.Context, repositories.GetPayProfileByIDRequest) (*driverpay.PayProfile, error) {
+		getByID: func(context.Context, driverpayports.GetPayProfileByIDRequest) (*driverpay.PayProfile, error) {
 			return profile, nil
 		},
 	}
@@ -154,7 +154,7 @@ func TestAssignProfileToWorker_SkipsAssignmentsAlreadyEnded(t *testing.T) {
 
 	updateCalls := 0
 	svc.profileRepo = &fakeProfileRepo{
-		getByID: func(context.Context, repositories.GetPayProfileByIDRequest) (*driverpay.PayProfile, error) {
+		getByID: func(context.Context, driverpayports.GetPayProfileByIDRequest) (*driverpay.PayProfile, error) {
 			return profile, nil
 		},
 	}
@@ -292,7 +292,7 @@ func TestUpdateAdvance_RejectsNonOutstandingAdvance(t *testing.T) {
 	previous.RecoveredMinor = 10_000
 
 	svc.advanceRepo = &fakeAdvanceRepo{
-		getByID: func(context.Context, repositories.GetPayAdvanceByIDRequest) (*driverpay.PayAdvance, error) {
+		getByID: func(context.Context, driverpayports.GetPayAdvanceByIDRequest) (*driverpay.PayAdvance, error) {
 			return previous, nil
 		},
 	}
@@ -327,7 +327,7 @@ func TestWriteOffAdvance_RejectsFullyRecoveredAdvance(t *testing.T) {
 	advance.ID = pulid.MustNew("padv_")
 	advance.RecoveredMinor = advance.AmountMinor
 	svc.advanceRepo = &fakeAdvanceRepo{
-		getByID: func(context.Context, repositories.GetPayAdvanceByIDRequest) (*driverpay.PayAdvance, error) {
+		getByID: func(context.Context, driverpayports.GetPayAdvanceByIDRequest) (*driverpay.PayAdvance, error) {
 			return advance, nil
 		},
 	}
@@ -351,7 +351,7 @@ func TestWriteOffAdvance_WritesOffOutstandingBalance(t *testing.T) {
 	advance.ID = pulid.MustNew("padv_")
 	advance.RecoveredMinor = 20_000
 	svc.advanceRepo = &fakeAdvanceRepo{
-		getByID: func(context.Context, repositories.GetPayAdvanceByIDRequest) (*driverpay.PayAdvance, error) {
+		getByID: func(context.Context, driverpayports.GetPayAdvanceByIDRequest) (*driverpay.PayAdvance, error) {
 			return advance, nil
 		},
 		update: func(_ context.Context, entity *driverpay.PayAdvance) (*driverpay.PayAdvance, error) {

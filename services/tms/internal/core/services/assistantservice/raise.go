@@ -7,9 +7,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -36,8 +36,8 @@ const (
 // person about the same agent goes out once a day.
 func (s *Service) RequestMore(
 	ctx context.Context,
-	req services.RequestMoreRequest,
-) (*services.RequestMoreResult, error) {
+	req agentports.RequestMoreRequest,
+) (*agentports.RequestMoreResult, error) {
 	if s.notifier == nil {
 		return nil, errortypes.NewBusinessError("Requests cannot be sent from here yet")
 	}
@@ -45,7 +45,7 @@ func (s *Service) RequestMore(
 	if err != nil {
 		return nil, err
 	}
-	definition, err := s.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	definition, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         thread.AgentDefinitionID,
 		TenantInfo: req.Thread.TenantInfo,
 	})
@@ -91,21 +91,21 @@ func (s *Service) RequestMore(
 		return nil, err
 	}
 
-	return &services.RequestMoreResult{Sent: sent}, nil
+	return &agentports.RequestMoreResult{Sent: sent}, nil
 }
 
 func raiseWording(kind, who, agent string) (title, message string, err error) {
 	switch kind {
-	case services.RequestMoreAccess:
+	case agentports.RequestMoreAccess:
 		return who + " asks for access to " + agent,
 			who + " can no longer use " + agent + " and asked for access in AI Control.", nil
-	case services.RequestMoreAllowance:
+	case agentports.RequestMoreAllowance:
 		return who + " asks for more AI allowance",
 			who + " has used this month's AI allowance and asked for more.", nil
-	case services.RequestMoreBudget:
+	case agentports.RequestMoreBudget:
 		return agent + " has spent its monthly budget",
 			who + " asked for " + agent + "'s monthly budget to be raised.", nil
-	case services.RequestMoreDailyRuns:
+	case agentports.RequestMoreDailyRuns:
 		return agent + " reached its daily request limit",
 			who + " asked for " + agent + "'s daily request limit to be raised.", nil
 	default:

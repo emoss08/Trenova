@@ -5,8 +5,9 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -21,7 +22,7 @@ func startExecute(
 	ctx context.Context,
 	proposal *agent.AgentProposal,
 	modifications map[string]any,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (context.Context, trace.Span) {
 	return aitrace.StartDecide(ctx, &aitrace.DecideSpec{
 		Operation:         aitrace.DecideOperationExecute,
@@ -40,7 +41,7 @@ func startExecute(
 func startTool(
 	ctx context.Context,
 	proposal *agent.AgentProposal,
-	policy *services.ToolPolicy,
+	policy *agentports.ToolPolicy,
 ) (context.Context, trace.Span) {
 	attrs := make([]attribute.KeyValue, 0, 6)
 	attrs = append(attrs,

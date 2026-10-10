@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/tableconfiguration"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	tc "github.com/emoss08/trenova/internal/core/services/tableconfigurationservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/tableconfigurationports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -46,7 +46,7 @@ func (m *mockRepository) Update(
 
 func (m *mockRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetTableConfigurationByIDRequest,
+	req tableconfigurationports.GetTableConfigurationByIDRequest,
 ) (*tableconfiguration.TableConfiguration, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
@@ -57,7 +57,7 @@ func (m *mockRepository) GetByID(
 
 func (m *mockRepository) List(
 	ctx context.Context,
-	req *repositories.ListTableConfigurationsRequest,
+	req *tableconfigurationports.ListTableConfigurationsRequest,
 ) (*pagination.ListResult[*tableconfiguration.TableConfiguration], error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
@@ -70,7 +70,7 @@ func (m *mockRepository) List(
 
 func (m *mockRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListTableConfigurationConnectionRequest,
+	req *tableconfigurationports.ListTableConfigurationConnectionRequest,
 ) (*pagination.CursorListResult[*tableconfiguration.TableConfiguration], error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
@@ -92,7 +92,7 @@ func (m *mockRepository) Delete(
 
 func (m *mockRepository) GetDefaultForResource(
 	ctx context.Context,
-	req repositories.GetDefaultTableConfigurationRequest,
+	req tableconfigurationports.GetDefaultTableConfigurationRequest,
 ) (*tableconfiguration.TableConfiguration, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
@@ -120,7 +120,7 @@ func (m *mockRepository) ClearOrgDefaultForResource(
 	return args.Error(0)
 }
 
-func setupTestService(repo repositories.TableConfigurationRepository) *tc.Service {
+func setupTestService(repo tableconfigurationports.TableConfigurationRepository) *tc.Service {
 	return tc.New(tc.Params{
 		Logger: zap.NewNop(),
 		Repo:   repo,
@@ -238,7 +238,7 @@ func expectGetByID(
 	entity *tableconfiguration.TableConfiguration,
 	tenantInfo pagination.TenantInfo,
 ) {
-	repo.On("GetByID", ctx, repositories.GetTableConfigurationByIDRequest{
+	repo.On("GetByID", ctx, tableconfigurationports.GetTableConfigurationByIDRequest{
 		ConfigurationID: entity.ID,
 		TenantInfo:      tenantInfo,
 	}).Return(entity, nil)
@@ -299,7 +299,7 @@ func TestUpdate_NotOwned(t *testing.T) {
 	incoming := *owner
 	incoming.UserID = tenantInfo.UserID
 
-	repo.On("GetByID", ctx, repositories.GetTableConfigurationByIDRequest{
+	repo.On("GetByID", ctx, tableconfigurationports.GetTableConfigurationByIDRequest{
 		ConfigurationID: owner.ID,
 		TenantInfo:      tenantInfo,
 	}).Return(owner, nil)
@@ -328,7 +328,7 @@ func TestDelete_NotOwned(t *testing.T) {
 		UserID: pulid.MustNew("usr_"),
 	}
 
-	repo.On("GetByID", ctx, repositories.GetTableConfigurationByIDRequest{
+	repo.On("GetByID", ctx, tableconfigurationports.GetTableConfigurationByIDRequest{
 		ConfigurationID: owner.ID,
 		TenantInfo:      tenantInfo,
 	}).Return(owner, nil)
@@ -349,7 +349,7 @@ func TestGetByID_Success(t *testing.T) {
 	ctx := t.Context()
 
 	entity := createValidEntity()
-	req := repositories.GetTableConfigurationByIDRequest{
+	req := tableconfigurationports.GetTableConfigurationByIDRequest{
 		ConfigurationID: entity.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  entity.OrganizationID,
@@ -378,7 +378,7 @@ func TestList_Success(t *testing.T) {
 		Total: 1,
 	}
 
-	req := &repositories.ListTableConfigurationsRequest{
+	req := &tableconfigurationports.ListTableConfigurationsRequest{
 		Resource: "shipments",
 	}
 
@@ -422,7 +422,7 @@ func TestSetDefault_Success(t *testing.T) {
 		UserID: entity.UserID,
 	}
 
-	req := repositories.GetTableConfigurationByIDRequest{
+	req := tableconfigurationports.GetTableConfigurationByIDRequest{
 		ConfigurationID: entity.ID,
 		TenantInfo:      tenantInfo,
 	}
@@ -454,7 +454,7 @@ func TestSetDefault_GetByIDError(t *testing.T) {
 		UserID: entity.UserID,
 	}
 
-	req := repositories.GetTableConfigurationByIDRequest{
+	req := tableconfigurationports.GetTableConfigurationByIDRequest{
 		ConfigurationID: entity.ID,
 		TenantInfo:      tenantInfo,
 	}
@@ -485,7 +485,7 @@ func TestSetDefault_NotOwned(t *testing.T) {
 		UserID: pulid.MustNew("usr_"),
 	}
 
-	req := repositories.GetTableConfigurationByIDRequest{
+	req := tableconfigurationports.GetTableConfigurationByIDRequest{
 		ConfigurationID: entity.ID,
 		TenantInfo:      tenantInfo,
 	}
@@ -519,7 +519,7 @@ func TestSetOrgDefault_Success(t *testing.T) {
 		UserID: entity.UserID,
 	}
 
-	req := repositories.GetTableConfigurationByIDRequest{
+	req := tableconfigurationports.GetTableConfigurationByIDRequest{
 		ConfigurationID: entity.ID,
 		TenantInfo:      tenantInfo,
 	}
@@ -553,7 +553,7 @@ func TestSetOrgDefault_RequiresPublicVisibility(t *testing.T) {
 		UserID: entity.UserID,
 	}
 
-	req := repositories.GetTableConfigurationByIDRequest{
+	req := tableconfigurationports.GetTableConfigurationByIDRequest{
 		ConfigurationID: entity.ID,
 		TenantInfo:      tenantInfo,
 	}
@@ -588,7 +588,7 @@ func TestSetOrgDefault_Disable(t *testing.T) {
 		UserID: entity.UserID,
 	}
 
-	req := repositories.GetTableConfigurationByIDRequest{
+	req := tableconfigurationports.GetTableConfigurationByIDRequest{
 		ConfigurationID: entity.ID,
 		TenantInfo:      tenantInfo,
 	}
@@ -612,7 +612,7 @@ func TestGetDefaultForResource_Success(t *testing.T) {
 	entity := createValidEntity()
 	entity.IsDefault = true
 
-	req := repositories.GetDefaultTableConfigurationRequest{
+	req := tableconfigurationports.GetDefaultTableConfigurationRequest{
 		Resource: "shipments",
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  entity.OrganizationID,
@@ -759,7 +759,7 @@ func TestSetDefault_ClearDefaultError(t *testing.T) {
 		UserID: entity.UserID,
 	}
 
-	req := repositories.GetTableConfigurationByIDRequest{
+	req := tableconfigurationports.GetTableConfigurationByIDRequest{
 		ConfigurationID: entity.ID,
 		TenantInfo:      tenantInfo,
 	}
@@ -791,7 +791,7 @@ func TestSetDefault_UpdateError(t *testing.T) {
 		UserID: entity.UserID,
 	}
 
-	req := repositories.GetTableConfigurationByIDRequest{
+	req := tableconfigurationports.GetTableConfigurationByIDRequest{
 		ConfigurationID: entity.ID,
 		TenantInfo:      tenantInfo,
 	}
@@ -817,7 +817,7 @@ func TestGetByID_Error(t *testing.T) {
 	ctx := t.Context()
 
 	entity := createValidEntity()
-	req := repositories.GetTableConfigurationByIDRequest{
+	req := tableconfigurationports.GetTableConfigurationByIDRequest{
 		ConfigurationID: entity.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  entity.OrganizationID,
@@ -843,7 +843,7 @@ func TestList_Error(t *testing.T) {
 	service := setupTestService(repo)
 	ctx := t.Context()
 
-	req := &repositories.ListTableConfigurationsRequest{
+	req := &tableconfigurationports.ListTableConfigurationsRequest{
 		Resource: "shipments",
 	}
 	dbErr := errors.New("db error")
@@ -864,7 +864,7 @@ func TestGetDefaultForResource_Error(t *testing.T) {
 	service := setupTestService(repo)
 	ctx := t.Context()
 
-	req := repositories.GetDefaultTableConfigurationRequest{
+	req := tableconfigurationports.GetDefaultTableConfigurationRequest{
 		Resource: "shipments",
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  pulid.MustNew("org_"),

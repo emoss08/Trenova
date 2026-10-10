@@ -5,9 +5,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipmentimportchat"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentimportchatports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -29,7 +29,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.ShipmentImportChatRepository {
+func New(p Params) shipmentimportchatports.ShipmentImportChatRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.shipment-import-chat-repository"),
@@ -38,7 +38,7 @@ func New(p Params) repositories.ShipmentImportChatRepository {
 
 func (r *repository) GetConversationByDocument(
 	ctx context.Context,
-	req repositories.GetShipmentImportConversationRequest,
+	req shipmentimportchatports.GetShipmentImportConversationRequest,
 ) (*shipmentimportchat.Conversation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipmentimportchat.Conversation, error) {
 		entity := new(shipmentimportchat.Conversation)
@@ -134,7 +134,7 @@ func (r *repository) AppendTurn(
 
 func (r *repository) ListTurns(
 	ctx context.Context,
-	req repositories.ListShipmentImportTurnsRequest,
+	req shipmentimportchatports.ListShipmentImportTurnsRequest,
 ) ([]*shipmentimportchat.Turn, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipmentimportchat.Turn, error) {
 		items := make([]*shipmentimportchat.Turn, 0)
@@ -177,4 +177,4 @@ func (r *repository) UpdateActiveConversationStatusByDocument(
 	})
 }
 
-var _ repositories.ShipmentImportChatRepository = (*repository)(nil)
+var _ shipmentimportchatports.ShipmentImportChatRepository = (*repository)(nil)

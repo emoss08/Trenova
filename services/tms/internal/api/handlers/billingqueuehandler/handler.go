@@ -10,8 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/billingqueuefilterpreset"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueuefilterpresetports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -24,19 +24,19 @@ import (
 type Params struct {
 	fx.In
 
-	Service              services.BillingQueueService
-	Review               services.BillingQueueReviewService
-	Approval             services.BillingQueueApprovalService
-	PresetRepo           repositories.BillingQueueFilterPresetRepository
+	Service              billingqueueports.BillingQueueService
+	Review               billingqueueports.BillingQueueReviewService
+	Approval             billingqueueports.BillingQueueApprovalService
+	PresetRepo           billingqueuefilterpresetports.BillingQueueFilterPresetRepository
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	service    services.BillingQueueService
-	review     services.BillingQueueReviewService
-	approval   services.BillingQueueApprovalService
-	presetRepo repositories.BillingQueueFilterPresetRepository
+	service    billingqueueports.BillingQueueService
+	review     billingqueueports.BillingQueueReviewService
+	approval   billingqueueports.BillingQueueApprovalService
+	presetRepo billingqueuefilterpresetports.BillingQueueFilterPresetRepository
 	eh         *helpers.ErrorHandler
 	pm         *middleware.PermissionMiddleware
 }
@@ -180,7 +180,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*billingqueue.BillingQueueItem], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListBillingQueueItemsRequest{
+				&billingqueueports.ListBillingQueueItemsRequest{
 					Filter:        req,
 					IncludePosted: helpers.QueryBool(c, "includePosted"),
 				},
@@ -204,7 +204,7 @@ func (h *Handler) stats(c *gin.Context) {
 
 	stats, err := h.service.GetStats(
 		c.Request.Context(),
-		&repositories.GetBillingQueueStatsRequest{
+		&billingqueueports.GetBillingQueueStatsRequest{
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
 	)
@@ -240,7 +240,7 @@ func (h *Handler) get(c *gin.Context) {
 
 	entity, err := h.service.GetByID(
 		c.Request.Context(),
-		&repositories.GetBillingQueueItemByIDRequest{
+		&billingqueueports.GetBillingQueueItemByIDRequest{
 			ItemID:                itemID,
 			TenantInfo:            pagination.FromAuth(authCtx),
 			ExpandShipmentDetails: helpers.QueryBool(c, "expandShipmentDetails"),
@@ -288,7 +288,7 @@ func (h *Handler) transfer(c *gin.Context) {
 
 	created, err := h.service.TransferToBilling(
 		c.Request.Context(),
-		&services.TransferToBillingRequest{
+		&billingqueueports.TransferToBillingRequest{
 			ShipmentID: req.ShipmentID,
 			BillType:   req.BillType,
 			TenantInfo: pagination.FromAuth(authCtx),
@@ -340,7 +340,7 @@ func (h *Handler) assign(c *gin.Context) {
 
 	updated, err := h.service.AssignBiller(
 		c.Request.Context(),
-		&services.AssignBillerRequest{
+		&billingqueueports.AssignBillerRequest{
 			ItemID:     itemID,
 			BillerID:   req.BillerID,
 			TenantInfo: pagination.FromAuth(authCtx),
@@ -418,7 +418,7 @@ func (h *Handler) updateCharges(c *gin.Context) {
 
 	updated, err := h.service.UpdateCharges(
 		c.Request.Context(),
-		&services.UpdateChargesRequest{
+		&billingqueueports.UpdateChargesRequest{
 			ItemID:            itemID,
 			FormulaTemplateID: formulaTemplateID,
 			BaseRate:          baseRate,
@@ -480,7 +480,7 @@ func (h *Handler) updateStatus(c *gin.Context) {
 
 	updated, err := h.service.UpdateStatus(
 		c.Request.Context(),
-		&services.UpdateBillingQueueStatusRequest{
+		&billingqueueports.UpdateBillingQueueStatusRequest{
 			ItemID:              itemID,
 			NewStatus:           req.Status,
 			ExceptionReasonCode: req.ExceptionReasonCode,
@@ -515,7 +515,7 @@ func (h *Handler) listFilterPresets(c *gin.Context) {
 
 	presets, err := h.presetRepo.ListByUserID(
 		c.Request.Context(),
-		&repositories.ListBillingQueueFilterPresetsRequest{
+		&billingqueuefilterpresetports.ListBillingQueueFilterPresetsRequest{
 			UserID:     authCtx.UserID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -665,7 +665,7 @@ func (h *Handler) deleteFilterPreset(c *gin.Context) {
 
 	err = h.presetRepo.Delete(
 		c.Request.Context(),
-		&repositories.DeleteBillingQueueFilterPresetRequest{
+		&billingqueuefilterpresetports.DeleteBillingQueueFilterPresetRequest{
 			PresetID:   presetID,
 			UserID:     authCtx.UserID,
 			TenantInfo: pagination.FromAuth(authCtx),
@@ -720,7 +720,7 @@ func (h *Handler) reassignCharge(c *gin.Context) {
 
 	result, err := h.service.ReassignCharge(
 		c.Request.Context(),
-		&services.ReassignChargeRequest{
+		&billingqueueports.ReassignChargeRequest{
 			ItemID:             itemID,
 			ChargeKind:         req.ChargeKind,
 			AdditionalChargeID: req.AdditionalChargeID,

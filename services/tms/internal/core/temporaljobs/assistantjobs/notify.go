@@ -6,8 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/productguide"
@@ -35,7 +36,7 @@ const deskPath = "/desk"
 type replyNotifications interface {
 	ExistsRecent(
 		ctx context.Context,
-		req repositories.ExistsRecentNotificationRequest,
+		req notificationports.ExistsRecentNotificationRequest,
 	) (bool, error)
 	Create(
 		ctx context.Context,
@@ -46,11 +47,11 @@ type replyNotifications interface {
 // replyThreads is what telling someone their reply is ready needs of their
 // conversations: reading the one the reply is in, and keeping it.
 type replyThreads interface {
-	GetThread(ctx context.Context, req repositories.GetThreadRequest) (*conversation.Thread, error)
+	GetThread(ctx context.Context, req agentports.GetThreadRequest) (*conversation.Thread, error)
 	UpdateThread(
 		ctx context.Context,
-		req *serviceports.UpdateThreadRequest,
-		actor *serviceports.RequestActor,
+		req *agentports.UpdateThreadRequest,
+		actor *permissionports.RequestActor,
 	) (*conversation.Thread, error)
 }
 
@@ -90,7 +91,7 @@ func (a *Activities) NotifyUnseenTurnActivity(
 	tenant := payload.TenantInfo()
 	correlation := payload.TurnID.String()
 
-	sent, err := a.notifications.ExistsRecent(ctx, repositories.ExistsRecentNotificationRequest{
+	sent, err := a.notifications.ExistsRecent(ctx, notificationports.ExistsRecentNotificationRequest{
 		OrganizationID: payload.OrganizationID,
 		BusinessUnitID: payload.BusinessUnitID,
 		EventType:      ReplyReadyKind,
@@ -104,7 +105,7 @@ func (a *Activities) NotifyUnseenTurnActivity(
 		return nil
 	}
 
-	thread, err := a.threads.GetThread(ctx, repositories.GetThreadRequest{
+	thread, err := a.threads.GetThread(ctx, agentports.GetThreadRequest{
 		ID:         payload.ThreadID,
 		UserID:     payload.Actor.UserID,
 		TenantInfo: tenant,
@@ -133,7 +134,7 @@ func (a *Activities) NotifyUnseenTurnActivity(
 	}
 
 	if thread.Origin.Keepable() {
-		thread, err = a.threads.UpdateThread(ctx, &serviceports.UpdateThreadRequest{
+		thread, err = a.threads.UpdateThread(ctx, &agentports.UpdateThreadRequest{
 			ThreadID:   thread.ID,
 			TenantInfo: tenant,
 			Keep:       true,

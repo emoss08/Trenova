@@ -1,10 +1,11 @@
 package ediservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
@@ -59,9 +60,9 @@ func TestBuildMappingPreviewUsesTenderSourceLabelsForUnresolvedRows(t *testing.T
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
-	mappingProfileRepo := mocks.NewMockEDIMappingProfileRepository(t)
+	mappingProfileRepo := ediportsmock.NewMockEDIMappingProfileRepository(t)
 	mappingProfileRepo.EXPECT().
-		GetMappingItems(mock.Anything, mock.MatchedBy(func(req repositories.GetMappingItemsRequest) bool {
+		GetMappingItems(mock.Anything, mock.MatchedBy(func(req ediports.GetMappingItemsRequest) bool {
 			return req.PartnerID == partnerID &&
 				req.TenantInfo.OrgID == orgID &&
 				req.TenantInfo.BuID == buID
@@ -111,7 +112,7 @@ func TestBuildMappingPreviewKeepsSavedTargetLabelForResolvedRows(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
-	mappingProfileRepo := mocks.NewMockEDIMappingProfileRepository(t)
+	mappingProfileRepo := ediportsmock.NewMockEDIMappingProfileRepository(t)
 	mappingProfileRepo.EXPECT().
 		GetMappingItems(mock.Anything, mock.Anything).
 		Return([]*edi.EDIMappingProfileItem{

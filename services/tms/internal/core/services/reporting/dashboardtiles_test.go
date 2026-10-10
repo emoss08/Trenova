@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/reporting/canned"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -33,7 +33,7 @@ func (s *stubDashboardRepo) Update(
 }
 
 func (s *stubDashboardRepo) GetByID(
-	_ context.Context, _ *repositories.GetReportDashboardRequest,
+	_ context.Context, _ *reportports.GetReportDashboardRequest,
 ) (*report.Dashboard, error) {
 	if s.dashboard == nil {
 		return nil, errortypes.NewNotFoundError("Dashboard not found")
@@ -42,13 +42,13 @@ func (s *stubDashboardRepo) GetByID(
 }
 
 func (s *stubDashboardRepo) List(
-	_ context.Context, _ *repositories.ListReportDashboardsRequest,
+	_ context.Context, _ *reportports.ListReportDashboardsRequest,
 ) ([]*report.Dashboard, error) {
 	return nil, nil
 }
 
 func (s *stubDashboardRepo) Delete(
-	_ context.Context, _ *repositories.GetReportDashboardRequest,
+	_ context.Context, _ *reportports.GetReportDashboardRequest,
 ) error {
 	return nil
 }
@@ -58,7 +58,7 @@ type stubDefinitionRepo struct {
 }
 
 func (s *stubDefinitionRepo) GetByID(
-	_ context.Context, req *repositories.GetReportDefinitionRequest,
+	_ context.Context, req *reportports.GetReportDefinitionRequest,
 ) (*report.ReportDefinition, error) {
 	entity, ok := s.definitions[req.DefinitionID]
 	if !ok {
@@ -68,7 +68,7 @@ func (s *stubDefinitionRepo) GetByID(
 }
 
 func (s *stubDefinitionRepo) ListConnection(
-	_ context.Context, _ *repositories.ListReportDefinitionConnectionRequest,
+	_ context.Context, _ *reportports.ListReportDefinitionConnectionRequest,
 ) (*pagination.CursorListResult[*report.ReportDefinition], error) {
 	return nil, nil
 }
@@ -86,32 +86,32 @@ func (s *stubDefinitionRepo) Update(
 }
 
 func (s *stubDefinitionRepo) UpdateStatus(
-	_ context.Context, _ *repositories.GetReportDefinitionRequest,
+	_ context.Context, _ *reportports.GetReportDefinitionRequest,
 	_ report.DefinitionStatus, _ []string,
 ) error {
 	return nil
 }
 
 func (s *stubDefinitionRepo) List(
-	_ context.Context, _ *repositories.ListReportDefinitionsRequest,
+	_ context.Context, _ *reportports.ListReportDefinitionsRequest,
 ) ([]*report.ReportDefinition, error) {
 	return nil, nil
 }
 
 func (s *stubDefinitionRepo) Delete(
-	_ context.Context, _ *repositories.DeleteReportDefinitionRequest,
+	_ context.Context, _ *reportports.DeleteReportDefinitionRequest,
 ) error {
 	return nil
 }
 
 func (s *stubDefinitionRepo) GetRevision(
-	_ context.Context, _ *repositories.GetReportRevisionRequest,
+	_ context.Context, _ *reportports.GetReportRevisionRequest,
 ) (*report.ReportDefinitionRevision, error) {
 	return nil, nil
 }
 
 func (s *stubDefinitionRepo) ListRevisions(
-	_ context.Context, _ *repositories.ListReportRevisionsRequest,
+	_ context.Context, _ *reportports.ListReportRevisionsRequest,
 ) ([]*report.ReportDefinitionRevision, error) {
 	return nil, nil
 }

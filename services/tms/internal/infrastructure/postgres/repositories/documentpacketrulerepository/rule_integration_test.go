@@ -7,9 +7,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/documentpacketrule"
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documenttyperepository"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentpacketruleports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -62,7 +62,7 @@ func TestDocumentPacketRuleRepositoryCRUD_Integration(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, docType.ID, created.DocumentTypeID)
 
-	byID, err := repo.GetByID(ctx, repositories.GetDocumentPacketRuleByIDRequest{
+	byID, err := repo.GetByID(ctx, documentpacketruleports.GetDocumentPacketRuleByIDRequest{
 		ID:         created.ID,
 		TenantInfo: tenantInfo,
 	})
@@ -71,7 +71,7 @@ func TestDocumentPacketRuleRepositoryCRUD_Integration(t *testing.T) {
 
 	listed, err := repo.ListByResourceType(
 		ctx,
-		&repositories.ListDocumentPacketRulesByResourceRequest{
+		&documentpacketruleports.ListDocumentPacketRulesByResourceRequest{
 			TenantInfo:   tenantInfo,
 			ResourceType: "Worker",
 		},
@@ -91,7 +91,7 @@ func TestDocumentPacketRuleRepositoryCRUD_Integration(t *testing.T) {
 
 	otherTenantListed, err := repo.ListByResourceType(
 		ctx,
-		&repositories.ListDocumentPacketRulesByResourceRequest{
+		&documentpacketruleports.ListDocumentPacketRulesByResourceRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: pulid.MustNew("org_"),
 				BuID:  pulid.MustNew("bu_"),
@@ -102,13 +102,13 @@ func TestDocumentPacketRuleRepositoryCRUD_Integration(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, otherTenantListed, 0)
 
-	err = repo.Delete(ctx, repositories.GetDocumentPacketRuleByIDRequest{
+	err = repo.Delete(ctx, documentpacketruleports.GetDocumentPacketRuleByIDRequest{
 		ID:         created.ID,
 		TenantInfo: tenantInfo,
 	})
 	require.NoError(t, err)
 
-	_, err = repo.GetByID(ctx, repositories.GetDocumentPacketRuleByIDRequest{
+	_, err = repo.GetByID(ctx, documentpacketruleports.GetDocumentPacketRuleByIDRequest{
 		ID:         created.ID,
 		TenantInfo: tenantInfo,
 	})

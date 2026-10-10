@@ -11,9 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -34,7 +34,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.AgentMemorySubjectRepository {
+func New(p Params) agentports.AgentMemorySubjectRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.agentmemorysubject-repository"),
@@ -67,17 +67,17 @@ type ownerRow struct {
 
 func (r *repository) ListRecordLinks(
 	ctx context.Context,
-	req *repositories.ListMemoryRecordLinksRequest,
-) ([]repositories.MemoryRecordLink, error) {
+	req *agentports.ListMemoryRecordLinksRequest,
+) ([]agentports.MemoryRecordLink, error) {
 	if req == nil {
 		return nil, errors.New("memory record links request is required")
 	}
 	if len(req.IDs) == 0 {
-		return []repositories.MemoryRecordLink{}, nil
+		return []agentports.MemoryRecordLink{}, nil
 	}
 
 	var (
-		links []repositories.MemoryRecordLink
+		links []agentports.MemoryRecordLink
 		err   error
 	)
 	switch req.Kind {
@@ -97,9 +97,9 @@ func (r *repository) ListRecordLinks(
 		agent.MemoryRecordLocation,
 		agent.MemoryRecordWorker,
 		agent.MemoryRecordCarrier:
-		return []repositories.MemoryRecordLink{}, nil
+		return []agentports.MemoryRecordLink{}, nil
 	default:
-		return []repositories.MemoryRecordLink{}, nil
+		return []agentports.MemoryRecordLink{}, nil
 	}
 	if err != nil {
 		r.l.Error("failed to read the records a memory subject names",
@@ -117,8 +117,8 @@ func (r *repository) shipmentLinks(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	ids []pulid.ID,
-) ([]repositories.MemoryRecordLink, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.MemoryRecordLink, error) {
+) ([]agentports.MemoryRecordLink, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentports.MemoryRecordLink, error) {
 		sp := buncolgen.ShipmentColumns
 		sm := buncolgen.ShipmentMoveColumns
 		stp := buncolgen.StopColumns
@@ -188,7 +188,7 @@ func (r *repository) shipmentLinks(
 		}
 
 		links := make(
-			[]repositories.MemoryRecordLink,
+			[]agentports.MemoryRecordLink,
 			0,
 			len(customers)*2+len(stops)+len(workers)*2+len(carriers),
 		)
@@ -204,8 +204,8 @@ func (r *repository) moveLinks(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	ids []pulid.ID,
-) ([]repositories.MemoryRecordLink, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.MemoryRecordLink, error) {
+) ([]agentports.MemoryRecordLink, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentports.MemoryRecordLink, error) {
 		sm := buncolgen.ShipmentMoveColumns
 
 		rows := make([]linkRow, 0, len(ids))
@@ -221,7 +221,7 @@ func (r *repository) moveLinks(
 		}
 
 		return appendLinks(
-			make([]repositories.MemoryRecordLink, 0, len(rows)),
+			make([]agentports.MemoryRecordLink, 0, len(rows)),
 			rows,
 			agent.MemoryRecordShipment,
 		), nil
@@ -232,8 +232,8 @@ func (r *repository) invoiceLinks(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	ids []pulid.ID,
-) ([]repositories.MemoryRecordLink, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.MemoryRecordLink, error) {
+) ([]agentports.MemoryRecordLink, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentports.MemoryRecordLink, error) {
 		inv := buncolgen.InvoiceColumns
 
 		rows := make([]linkRow, 0, len(ids))
@@ -249,7 +249,7 @@ func (r *repository) invoiceLinks(
 		}
 
 		return appendLinks(
-			make([]repositories.MemoryRecordLink, 0, len(rows)),
+			make([]agentports.MemoryRecordLink, 0, len(rows)),
 			rows,
 			agent.MemoryRecordCustomer,
 		), nil
@@ -260,8 +260,8 @@ func (r *repository) billingQueueLinks(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	ids []pulid.ID,
-) ([]repositories.MemoryRecordLink, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.MemoryRecordLink, error) {
+) ([]agentports.MemoryRecordLink, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentports.MemoryRecordLink, error) {
 		bqi := buncolgen.BillingQueueItemColumns
 
 		rows := make([]linkRow, 0, len(ids))
@@ -278,7 +278,7 @@ func (r *repository) billingQueueLinks(
 		}
 
 		return appendLinks(
-			make([]repositories.MemoryRecordLink, 0, len(rows)),
+			make([]agentports.MemoryRecordLink, 0, len(rows)),
 			rows,
 			agent.MemoryRecordCustomer,
 		), nil
@@ -289,8 +289,8 @@ func (r *repository) inboundMessageLinks(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	ids []pulid.ID,
-) ([]repositories.MemoryRecordLink, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.MemoryRecordLink, error) {
+) ([]agentports.MemoryRecordLink, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentports.MemoryRecordLink, error) {
 		imsg := buncolgen.InboundMessageColumns
 
 		rows := make([]tripleRow, 0, len(ids))
@@ -308,7 +308,7 @@ func (r *repository) inboundMessageLinks(
 			return nil, fmt.Errorf("inbound message matches: %w", err)
 		}
 
-		links := make([]repositories.MemoryRecordLink, 0, len(rows)*3)
+		links := make([]agentports.MemoryRecordLink, 0, len(rows)*3)
 		for _, row := range rows {
 			links = appendLink(links, row.FromID, agent.MemoryRecordCustomer, row.First)
 			links = appendLink(links, row.FromID, agent.MemoryRecordCarrier, row.Second)
@@ -323,8 +323,8 @@ func (r *repository) documentLinks(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	ids []pulid.ID,
-) ([]repositories.MemoryRecordLink, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.MemoryRecordLink, error) {
+) ([]agentports.MemoryRecordLink, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentports.MemoryRecordLink, error) {
 		doc := buncolgen.DocumentColumns
 
 		rows := make([]ownerRow, 0, len(ids))
@@ -340,13 +340,13 @@ func (r *repository) documentLinks(
 			return nil, fmt.Errorf("document owners: %w", err)
 		}
 
-		links := make([]repositories.MemoryRecordLink, 0, len(rows))
+		links := make([]agentports.MemoryRecordLink, 0, len(rows))
 		for _, row := range rows {
 			owner, ok := agent.MemoryRecordRefOf(row.ResourceType, row.ResourceID)
 			if !ok || owner.Kind == agent.MemoryRecordDocument {
 				continue
 			}
-			links = append(links, repositories.MemoryRecordLink{
+			links = append(links, agentports.MemoryRecordLink{
 				From: row.FromID,
 				Kind: owner.Kind,
 				ID:   owner.ID,
@@ -367,23 +367,23 @@ func joinMove(moveID, organizationID, businessUnitID *buncolgen.Column) string {
 }
 
 func appendLink(
-	links []repositories.MemoryRecordLink,
+	links []agentports.MemoryRecordLink,
 	from pulid.ID,
 	kind agent.MemoryRecordKind,
 	id *pulid.ID,
-) []repositories.MemoryRecordLink {
+) []agentports.MemoryRecordLink {
 	if id == nil || id.IsNil() {
 		return links
 	}
 
-	return append(links, repositories.MemoryRecordLink{From: from, Kind: kind, ID: *id})
+	return append(links, agentports.MemoryRecordLink{From: from, Kind: kind, ID: *id})
 }
 
 func appendLinks(
-	links []repositories.MemoryRecordLink,
+	links []agentports.MemoryRecordLink,
 	rows []linkRow,
 	kind agent.MemoryRecordKind,
-) []repositories.MemoryRecordLink {
+) []agentports.MemoryRecordLink {
 	for _, row := range rows {
 		links = appendLink(links, row.FromID, kind, row.LinkedID)
 	}
@@ -392,10 +392,10 @@ func appendLinks(
 }
 
 func appendPairs(
-	links []repositories.MemoryRecordLink,
+	links []agentports.MemoryRecordLink,
 	rows []pairRow,
 	kind agent.MemoryRecordKind,
-) []repositories.MemoryRecordLink {
+) []agentports.MemoryRecordLink {
 	for _, row := range rows {
 		links = appendLink(links, row.FromID, kind, row.First)
 		links = appendLink(links, row.FromID, kind, row.Second)

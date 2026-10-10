@@ -6,8 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -18,9 +19,9 @@ const maxPreviewTools = 200
 
 func (s *Service) SuggestAudience(
 	ctx context.Context,
-	req *services.SuggestAgentAudienceRequest,
-) (*services.AgentAudienceSuggestion, error) {
-	definition, err := s.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	req *agentdefinitionports.SuggestAgentAudienceRequest,
+) (*agentdefinitionports.AgentAudienceSuggestion, error) {
+	definition, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         req.AgentID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -38,8 +39,8 @@ func (s *Service) SuggestAudience(
 // saved agent.
 func (s *Service) PreviewAudience(
 	ctx context.Context,
-	req *services.PreviewAgentAudienceRequest,
-) (*services.AgentAudienceSuggestion, error) {
+	req *agentdefinitionports.PreviewAgentAudienceRequest,
+) (*agentdefinitionports.AgentAudienceSuggestion, error) {
 	toolNames, err := previewToolNames(req.ToolNames)
 	if err != nil {
 		return nil, err
@@ -57,7 +58,7 @@ func (s *Service) PreviewAudience(
 	}
 	saved := req.AgentID.IsNotNil()
 	if saved {
-		existing, getErr := s.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+		existing, getErr := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 			ID:         req.AgentID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -92,9 +93,9 @@ func (s *Service) audience(
 	tenant pagination.TenantInfo,
 	definition *agentdefinition.Definition,
 	withGrants bool,
-) (*services.AgentAudienceSuggestion, error) {
+) (*agentdefinitionports.AgentAudienceSuggestion, error) {
 	held := s.HeldTools(definition)
-	roles, err := s.grants.ListGrantableRoles(ctx, repositories.ListGrantableRolesRequest{
+	roles, err := s.grants.ListGrantableRoles(ctx, permissionports.ListGrantableRolesRequest{
 		TenantInfo: tenant,
 	})
 	if err != nil {
@@ -106,7 +107,7 @@ func (s *Service) audience(
 		roleIDs = append(roleIDs, role.ID)
 	}
 
-	coverage, err := s.permissions.RoleCoverage(ctx, &services.RoleCoverageRequest{
+	coverage, err := s.permissions.RoleCoverage(ctx, &permissionports.RoleCoverageRequest{
 		OrganizationID: tenant.OrgID,
 		RoleIDs:        roleIDs,
 		Required:       requiredGrants(held),
@@ -117,7 +118,7 @@ func (s *Service) audience(
 
 	var granted []*permission.Role
 	if withGrants {
-		byAgent, grantErr := s.grants.ListRolesByAgents(ctx, repositories.ListGrantsByAgentsRequest{
+		byAgent, grantErr := s.grants.ListRolesByAgents(ctx, permissionports.ListGrantsByAgentsRequest{
 			TenantInfo: tenant,
 			AgentIDs:   []pulid.ID{definition.ID},
 		})
@@ -127,7 +128,7 @@ func (s *Service) audience(
 		granted = byAgent[definition.ID]
 	}
 
-	suggestion := &services.AgentAudienceSuggestion{
+	suggestion := &agentdefinitionports.AgentAudienceSuggestion{
 		Agent:          definition,
 		Roles:          audienceRoles(roles, coverage, granted),
 		SensitiveTools: []string{},
@@ -177,7 +178,7 @@ func (s *Service) heldTool(name string) (HeldTool, bool) {
 	return HeldToolOf(policy), true
 }
 
-func HeldToolOf(policy services.ToolPolicy) HeldTool {
+func HeldToolOf(policy agentports.ToolPolicy) HeldTool {
 	held := HeldTool{Name: policy.Name, Egress: policy.Egress}
 	if policy.Scope == agent.ToolScopeSelf || policy.Resource == "" {
 		return held
@@ -192,13 +193,13 @@ func HeldToolOf(policy services.ToolPolicy) HeldTool {
 	return held
 }
 
-func requiredGrants(held []HeldTool) []services.RequiredGrant {
-	required := make([]services.RequiredGrant, 0, len(held))
+func requiredGrants(held []HeldTool) []permissionports.RequiredGrant {
+	required := make([]permissionports.RequiredGrant, 0, len(held))
 	for _, tool := range held {
 		if tool.Resource == "" {
 			continue
 		}
-		required = append(required, services.RequiredGrant{
+		required = append(required, permissionports.RequiredGrant{
 			Tool:      tool.Name,
 			Resource:  tool.Resource,
 			Operation: tool.Operation,
@@ -210,10 +211,10 @@ func requiredGrants(held []HeldTool) []services.RequiredGrant {
 
 func audienceRoles(
 	roles []*permission.Role,
-	coverage []services.RoleCoverage,
+	coverage []permissionports.RoleCoverage,
 	granted []*permission.Role,
-) []services.AgentAudienceRole {
-	byRole := make(map[pulid.ID]services.RoleCoverage, len(coverage))
+) []agentdefinitionports.AgentAudienceRole {
+	byRole := make(map[pulid.ID]permissionports.RoleCoverage, len(coverage))
 	for _, entry := range coverage {
 		byRole[entry.RoleID] = entry
 	}
@@ -223,18 +224,18 @@ func audienceRoles(
 		grantedIDs[role.ID] = struct{}{}
 	}
 
-	out := make([]services.AgentAudienceRole, 0, len(roles))
+	out := make([]agentdefinitionports.AgentAudienceRole, 0, len(roles))
 	for _, role := range roles {
 		entry, ok := byRole[role.ID]
 		if !ok {
-			entry = services.RoleCoverage{
+			entry = permissionports.RoleCoverage{
 				RoleID:           role.ID,
 				Coverage:         agentdefinition.CoverageNone,
 				MissingResources: []permission.Resource{},
 			}
 		}
 		_, isGranted := grantedIDs[role.ID]
-		out = append(out, services.AgentAudienceRole{
+		out = append(out, agentdefinitionports.AgentAudienceRole{
 			Role:             role,
 			Coverage:         entry.Coverage,
 			MissingResources: entry.MissingResources,

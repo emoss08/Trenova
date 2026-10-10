@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	_ "github.com/emoss08/trenova/internal/core/domain/notification"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/webpushservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/gin-gonic/gin"
@@ -87,7 +87,7 @@ func (h *Handler) subscribe(c *gin.Context) {
 
 	subscription, err := h.service.Subscribe(
 		c.Request.Context(),
-		&repositories.SavePushSubscriptionRequest{
+		&notificationports.SavePushSubscriptionRequest{
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 			Endpoint:   req.Endpoint,
 			P256dh:     req.P256dh,

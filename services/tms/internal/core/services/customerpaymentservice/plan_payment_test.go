@@ -1,6 +1,11 @@
 package customerpaymentservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerpaymentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"testing"
 
@@ -9,8 +14,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -24,10 +32,10 @@ import (
 type paymentWorld struct {
 	orgID, buID, userID pulid.ID
 	tenantInfo          pagination.TenantInfo
-	actor               *serviceports.RequestActor
+	actor               *permissionports.RequestActor
 	payment             *customerpayment.Payment
 	invoices            map[pulid.ID]*invoice.Invoice
-	postings            []repositories.CreateJournalPostingParams
+	postings            []journalentryports.CreateJournalPostingParams
 	writes              int
 	svc                 *Service
 }
@@ -52,10 +60,10 @@ func newPaymentWorld(
 		w.invoices[inv.ID] = inv
 	}
 
-	paymentRepo := mocks.NewMockCustomerPaymentRepository(t)
+	paymentRepo := customerpaymentportsmock.NewMockCustomerPaymentRepository(t)
 	paymentRepo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(context.Context, repositories.GetCustomerPaymentByIDRequest) (*customerpayment.Payment, error) {
+		RunAndReturn(func(context.Context, customerpaymentports.GetCustomerPaymentByIDRequest) (*customerpayment.Payment, error) {
 			stored := *w.payment
 			return &stored, nil
 		}).Maybe()
@@ -68,10 +76,10 @@ func newPaymentWorld(
 			w.payment = &stored
 			return &stored, nil
 		}).Maybe()
-	invoiceRepo := mocks.NewMockInvoiceRepository(t)
+	invoiceRepo := invoiceportsmock.NewMockInvoiceRepository(t)
 	invoiceRepo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req repositories.GetInvoiceByIDRequest) (*invoice.Invoice, error) {
+		RunAndReturn(func(_ context.Context, req invoiceports.GetInvoiceByIDRequest) (*invoice.Invoice, error) {
 			stored := *w.invoices[req.ID]
 			return &stored, nil
 		}).Maybe()
@@ -83,7 +91,7 @@ func newPaymentWorld(
 			w.invoices[entity.ID] = &stored
 			return &stored, nil
 		}).Maybe()
-	accountingRepo := mocks.NewMockAccountingControlRepository(t)
+	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, w.orgID).
 		Return(&tenant.AccountingControl{
@@ -95,15 +103,15 @@ func newPaymentWorld(
 			DefaultARAccountID:            pulid.MustNew("gla_"),
 			DefaultWriteOffAccountID:      pulid.MustNew("gla_"),
 		}, nil).Maybe()
-	fiscalRepo := mocks.NewMockFiscalPeriodRepository(t)
+	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
 		GetPeriodByDate(mock.Anything, mock.Anything).
 		Return(&fiscalperiod.FiscalPeriod{ID: pulid.MustNew("fp_"), FiscalYearID: pulid.MustNew("fy_")}, nil).
 		Maybe()
-	journalRepo := mocks.NewMockJournalPostingRepository(t)
+	journalRepo := journalentryportsmock.NewMockJournalPostingRepository(t)
 	journalRepo.EXPECT().
 		CreatePosting(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, params repositories.CreateJournalPostingParams) error {
+		RunAndReturn(func(_ context.Context, params journalentryports.CreateJournalPostingParams) error {
 			w.writes++
 			w.postings = append(w.postings, params)
 			return nil
@@ -160,10 +168,10 @@ func postedPayment(appliedMinor, amountMinor int64, apps ...*customerpayment.App
 	}
 }
 
-func journalLinesOf(posting repositories.CreateJournalPostingParams) []serviceports.JournalLinePreview {
-	lines := make([]serviceports.JournalLinePreview, 0, len(posting.Lines))
+func journalLinesOf(posting journalentryports.CreateJournalPostingParams) []kernelports.JournalLinePreview {
+	lines := make([]kernelports.JournalLinePreview, 0, len(posting.Lines))
 	for _, line := range posting.Lines {
-		lines = append(lines, serviceports.JournalLinePreview{
+		lines = append(lines, kernelports.JournalLinePreview{
 			GLAccountID: line.GLAccountID,
 			Description: line.Description,
 			DebitMinor:  line.DebitAmount,
@@ -182,10 +190,10 @@ func TestPreviewApplyUnapplied_IsWhatApplyUnappliedWrites(t *testing.T) {
 	})
 	target := openInvoiceFor(payment, 6000, 0)
 	w := newPaymentWorld(t, payment, target)
-	req := &serviceports.ApplyCustomerPaymentRequest{
+	req := &customerpaymentports.ApplyCustomerPaymentRequest{
 		PaymentID:      payment.ID,
 		AccountingDate: 200,
-		Applications: []*serviceports.CustomerPaymentApplicationInput{
+		Applications: []*customerpaymentports.CustomerPaymentApplicationInput{
 			{InvoiceID: target.ID, AppliedAmountMinor: 4500, ShortPayAmountMinor: 500},
 		},
 		TenantInfo: w.tenantInfo,
@@ -220,10 +228,10 @@ func TestPreviewApplyUnapplied_RefusesWhatApplyRefuses(t *testing.T) {
 	target := openInvoiceFor(payment, 6000, 0)
 	w := newPaymentWorld(t, payment, target)
 
-	_, err := w.svc.PreviewApplyUnapplied(t.Context(), &serviceports.ApplyCustomerPaymentRequest{
+	_, err := w.svc.PreviewApplyUnapplied(t.Context(), &customerpaymentports.ApplyCustomerPaymentRequest{
 		PaymentID:      payment.ID,
 		AccountingDate: 200,
-		Applications: []*serviceports.CustomerPaymentApplicationInput{
+		Applications: []*customerpaymentports.CustomerPaymentApplicationInput{
 			{InvoiceID: target.ID, AppliedAmountMinor: 100},
 		},
 		TenantInfo: w.tenantInfo,
@@ -244,7 +252,7 @@ func TestPreviewReverse_IsWhatReverseWrites(t *testing.T) {
 	paid.ID = invoiceID
 	paid.SettlementStatus = invoice.SettlementStatusPaid
 	w := newPaymentWorld(t, payment, paid)
-	req := &serviceports.ReverseCustomerPaymentRequest{
+	req := &customerpaymentports.ReverseCustomerPaymentRequest{
 		PaymentID:      payment.ID,
 		AccountingDate: 300,
 		Reason:         "Chargeback from the bank",
@@ -274,7 +282,7 @@ func TestPreviewReverse_RefusesAReversedPayment(t *testing.T) {
 	payment.Status = customerpayment.StatusReversed
 	w := newPaymentWorld(t, payment)
 
-	_, err := w.svc.PreviewReverse(t.Context(), &serviceports.ReverseCustomerPaymentRequest{
+	_, err := w.svc.PreviewReverse(t.Context(), &customerpaymentports.ReverseCustomerPaymentRequest{
 		PaymentID:      payment.ID,
 		AccountingDate: 300,
 		TenantInfo:     w.tenantInfo,
@@ -289,14 +297,14 @@ func TestPreviewApplyCreditMemo_IsWhatApplyCreditMemoWrites(t *testing.T) {
 	f := newCreditMemoFixture(t)
 	f.expectPeriod()
 	f.invoiceRepo.EXPECT().
-		GetByID(mock.Anything, repositories.GetInvoiceByIDRequest{ID: f.memo.ID, TenantInfo: f.tenantInfo}).
-		RunAndReturn(func(context.Context, repositories.GetInvoiceByIDRequest) (*invoice.Invoice, error) {
+		GetByID(mock.Anything, invoiceports.GetInvoiceByIDRequest{ID: f.memo.ID, TenantInfo: f.tenantInfo}).
+		RunAndReturn(func(context.Context, invoiceports.GetInvoiceByIDRequest) (*invoice.Invoice, error) {
 			stored := *f.memo
 			return &stored, nil
 		}).Once()
 	f.invoiceRepo.EXPECT().
-		GetByID(mock.Anything, repositories.GetInvoiceByIDRequest{ID: f.target.ID, TenantInfo: f.tenantInfo}).
-		RunAndReturn(func(context.Context, repositories.GetInvoiceByIDRequest) (*invoice.Invoice, error) {
+		GetByID(mock.Anything, invoiceports.GetInvoiceByIDRequest{ID: f.target.ID, TenantInfo: f.tenantInfo}).
+		RunAndReturn(func(context.Context, invoiceports.GetInvoiceByIDRequest) (*invoice.Invoice, error) {
 			stored := *f.target
 			return &stored, nil
 		}).Once()
@@ -329,18 +337,18 @@ func TestPreviewUnapplyCreditMemoApplication_RestoresBothBalances(t *testing.T) 
 		Status:              customerpayment.CreditApplicationStatusApplied,
 	}
 	f.paymentRepo.EXPECT().
-		GetCreditMemoApplicationByID(mock.Anything, repositories.GetCreditMemoApplicationRequest{ID: application.ID, TenantInfo: f.tenantInfo}).
+		GetCreditMemoApplicationByID(mock.Anything, customerpaymentports.GetCreditMemoApplicationRequest{ID: application.ID, TenantInfo: f.tenantInfo}).
 		Return(application, nil).Once()
 	f.invoiceRepo.EXPECT().
-		GetByID(mock.Anything, repositories.GetInvoiceByIDRequest{ID: f.memo.ID, TenantInfo: f.tenantInfo}).
+		GetByID(mock.Anything, invoiceports.GetInvoiceByIDRequest{ID: f.memo.ID, TenantInfo: f.tenantInfo}).
 		Return(f.memo, nil).Once()
 	f.invoiceRepo.EXPECT().
-		GetByID(mock.Anything, repositories.GetInvoiceByIDRequest{ID: f.target.ID, TenantInfo: f.tenantInfo}).
+		GetByID(mock.Anything, invoiceports.GetInvoiceByIDRequest{ID: f.target.ID, TenantInfo: f.tenantInfo}).
 		Return(f.target, nil).Once()
 
 	preview, err := f.svc.PreviewUnapplyCreditMemoApplication(
 		t.Context(),
-		&serviceports.UnapplyCreditMemoApplicationRequest{
+		&customerpaymentports.UnapplyCreditMemoApplicationRequest{
 			ApplicationID: application.ID,
 			Reason:        " Applied to the wrong invoice ",
 			TenantInfo:    f.tenantInfo,

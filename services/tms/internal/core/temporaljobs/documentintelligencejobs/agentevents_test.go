@@ -1,6 +1,7 @@
 package documentintelligencejobs
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentshipmentdraftportsmock"
 	"context"
 	"testing"
 
@@ -18,7 +19,7 @@ import (
 func TestUpsertDraft_PublishesDocumentExtractedEvent(t *testing.T) {
 	t.Parallel()
 
-	draftRepo := mocks.NewMockDocumentShipmentDraftRepository(t)
+	draftRepo := documentshipmentdraftportsmock.NewMockDocumentShipmentDraftRepository(t)
 	draftRepo.EXPECT().
 		Upsert(mock.Anything, mock.AnythingOfType("*documentshipmentdraft.DocumentShipmentDraft")).
 		RunAndReturn(func(_ context.Context, entity *documentshipmentdraft.DocumentShipmentDraft) (*documentshipmentdraft.DocumentShipmentDraft, error) {

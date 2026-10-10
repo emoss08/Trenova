@@ -6,10 +6,16 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoicerun"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/invoiceservice"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/seqgen"
@@ -24,28 +30,28 @@ type Params struct {
 	fx.In
 
 	Logger            *zap.Logger
-	Repo              repositories.InvoiceRunRepository
-	BillingQueueRepo  repositories.BillingQueueRepository
-	CustomerRepo      repositories.CustomerRepository
-	ShipmentRepo      repositories.ShipmentRepository
-	InvoiceService    servicesports.InvoiceService
+	Repo              invoicerunports.InvoiceRunRepository
+	BillingQueueRepo  billingqueueports.BillingQueueRepository
+	CustomerRepo      customerports.CustomerRepository
+	ShipmentRepo      shipmentports.ShipmentRepository
+	InvoiceService    invoiceports.InvoiceService
 	ConsolidatedMaker *invoiceservice.Service
 	SequenceGenerator seqgen.Generator
-	AuditService      servicesports.AuditService
-	DetentionBilling  servicesports.DetentionBillingService
+	AuditService      auditports.AuditService
+	DetentionBilling  detentionports.DetentionBillingService
 	Validator         *Validator
 }
 
 type Service struct {
 	l                 *zap.Logger
-	repo              repositories.InvoiceRunRepository
-	billingQueueRepo  repositories.BillingQueueRepository
-	customerRepo      repositories.CustomerRepository
-	shipmentRepo      repositories.ShipmentRepository
+	repo              invoicerunports.InvoiceRunRepository
+	billingQueueRepo  billingqueueports.BillingQueueRepository
+	customerRepo      customerports.CustomerRepository
+	shipmentRepo      shipmentports.ShipmentRepository
 	consolidatedMaker *invoiceservice.Service
 	sequenceGenerator seqgen.Generator
-	auditService      servicesports.AuditService
-	detentionBilling  servicesports.DetentionBillingService
+	auditService      auditports.AuditService
+	detentionBilling  detentionports.DetentionBillingService
 	validator         *Validator
 }
 
@@ -66,21 +72,21 @@ func New(p Params) *Service {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListInvoiceRunsRequest,
+	req *invoicerunports.ListInvoiceRunsRequest,
 ) (*pagination.ListResult[*invoicerun.InvoiceRun], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListInvoiceRunConnectionRequest,
+	req *invoicerunports.ListInvoiceRunConnectionRequest,
 ) (*pagination.CursorListResult[*invoicerun.InvoiceRun], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	req repositories.GetInvoiceRunByIDRequest,
+	req invoicerunports.GetInvoiceRunByIDRequest,
 ) (*invoicerun.InvoiceRun, error) {
 	return s.repo.GetByID(ctx, req)
 }
@@ -92,8 +98,8 @@ func (s *Service) Get(
 // leaves a run somebody can look at rather than nothing at all.
 func (s *Service) Preview(
 	ctx context.Context,
-	req *servicesports.PreviewInvoiceRunRequest,
-	actor *servicesports.RequestActor,
+	req *invoicerunports.PreviewInvoiceRunRequest,
+	actor *permissionports.RequestActor,
 ) (*invoicerun.InvoiceRun, error) {
 	if req == nil || actor == nil {
 		return nil, errortypes.NewValidationError(
@@ -132,7 +138,7 @@ func (s *Service) Preview(
 		return nil, s.failRun(ctx, created, err)
 	}
 
-	if err = s.repo.ReplaceGroups(ctx, &repositories.ReplaceGroupsRequest{
+	if err = s.repo.ReplaceGroups(ctx, &invoicerunports.ReplaceGroupsRequest{
 		TenantInfo: req.TenantInfo,
 		RunID:      created.ID,
 		Groups:     groups,
@@ -153,7 +159,7 @@ func (s *Service) Preview(
 
 	s.audit(ctx, updated, actor, permission.OpCreate, "Invoice run built")
 
-	return s.repo.GetByID(ctx, repositories.GetInvoiceRunByIDRequest{
+	return s.repo.GetByID(ctx, invoicerunports.GetInvoiceRunByIDRequest{
 		ID:            updated.ID,
 		TenantInfo:    req.TenantInfo,
 		IncludeGroups: true,
@@ -169,7 +175,7 @@ func (s *Service) buildGroups(
 ) ([]*invoicerun.InvoiceRunGroup, error) {
 	candidates, err := s.billingQueueRepo.ListConsolidationCandidates(
 		ctx,
-		&repositories.ListConsolidationCandidatesRequest{
+		&billingqueueports.ListConsolidationCandidatesRequest{
 			TenantInfo:  pagination.TenantInfo{OrgID: run.OrganizationID, BuID: run.BusinessUnitID},
 			CustomerIDs: customerIDs,
 			PeriodEnd:   run.PeriodEnd,
@@ -236,10 +242,10 @@ func (s *Service) newGroup(
 // Cancel discards a proposal that will never be billed.
 func (s *Service) Cancel(
 	ctx context.Context,
-	req *servicesports.CancelInvoiceRunRequest,
-	actor *servicesports.RequestActor,
+	req *invoicerunports.CancelInvoiceRunRequest,
+	actor *permissionports.RequestActor,
 ) (*invoicerun.InvoiceRun, error) {
-	run, err := s.repo.GetByID(ctx, repositories.GetInvoiceRunByIDRequest{
+	run, err := s.repo.GetByID(ctx, invoicerunports.GetInvoiceRunByIDRequest{
 		ID:         req.RunID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -280,7 +286,7 @@ func (s *Service) failRun(
 func (s *Service) audit(
 	ctx context.Context,
 	run *invoicerun.InvoiceRun,
-	actor *servicesports.RequestActor,
+	actor *permissionports.RequestActor,
 	op permission.Operation,
 	comment string,
 ) {
@@ -289,7 +295,7 @@ func (s *Service) audit(
 	}
 
 	if err := s.auditService.LogAction(
-		&servicesports.LogActionParams{
+		&auditports.LogActionParams{
 			Resource:       permission.ResourceInvoiceRun,
 			ResourceID:     run.ID.String(),
 			Operation:      op,

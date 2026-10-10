@@ -10,7 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,13 +22,13 @@ import (
 type ValidatorParams struct {
 	fx.In
 
-	InvoiceRepo      repositories.InvoiceRepository
-	FiscalPeriodRepo repositories.FiscalPeriodRepository
+	InvoiceRepo      invoiceports.InvoiceRepository
+	FiscalPeriodRepo fiscalperiodports.FiscalPeriodRepository
 }
 
 type Validator struct {
-	invoiceRepo      repositories.InvoiceRepository
-	fiscalPeriodRepo repositories.FiscalPeriodRepository
+	invoiceRepo      invoiceports.InvoiceRepository
+	fiscalPeriodRepo fiscalperiodports.FiscalPeriodRepository
 }
 
 type invoiceKey struct {
@@ -42,7 +43,7 @@ func NewValidator(p ValidatorParams) *Validator {
 func (v *Validator) ValidatePostAndApply( //nolint:cyclop,funlen,gocyclo // legacy workflow
 	ctx context.Context,
 	entity *customerpayment.Payment,
-	tenantInfo repositories.GetInvoiceByIDRequest,
+	tenantInfo invoiceports.GetInvoiceByIDRequest,
 	control *tenant.AccountingControl,
 ) ([]*invoice.Invoice, *fiscalperiod.FiscalPeriod, *errortypes.MultiError) {
 	me := errortypes.NewMultiError()
@@ -115,7 +116,7 @@ func (v *Validator) ValidatePostAndApply( //nolint:cyclop,funlen,gocyclo // lega
 
 	period, err := v.fiscalPeriodRepo.GetPeriodByDate(
 		ctx,
-		repositories.GetPeriodByDateRequest{
+		fiscalperiodports.GetPeriodByDateRequest{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
 			Date:  entity.AccountingDate,
@@ -143,7 +144,7 @@ func (v *Validator) ValidatePostAndApply( //nolint:cyclop,funlen,gocyclo // lega
 		seenInvoices[key] = struct{}{}
 		inv, getErr := v.invoiceRepo.GetByID(
 			ctx,
-			repositories.GetInvoiceByIDRequest{
+			invoiceports.GetInvoiceByIDRequest{
 				ID:         app.InvoiceID,
 				TenantInfo: tenantInfo.TenantInfo,
 			},
@@ -200,7 +201,7 @@ func (v *Validator) ValidateApplyUnapplied( //nolint:cyclop,funlen,gocyclo // le
 	payment *customerpayment.Payment,
 	accountingDate int64,
 	applications []*customerpayment.Application,
-	tenantInfo repositories.GetInvoiceByIDRequest,
+	tenantInfo invoiceports.GetInvoiceByIDRequest,
 	control *tenant.AccountingControl,
 ) ([]*invoice.Invoice, *fiscalperiod.FiscalPeriod, *errortypes.MultiError) {
 	me := errortypes.NewMultiError()
@@ -291,7 +292,7 @@ func (v *Validator) ValidateApplyUnapplied( //nolint:cyclop,funlen,gocyclo // le
 
 	period, err := v.fiscalPeriodRepo.GetPeriodByDate(
 		ctx,
-		repositories.GetPeriodByDateRequest{
+		fiscalperiodports.GetPeriodByDateRequest{
 			OrgID: payment.OrganizationID,
 			BuID:  payment.BusinessUnitID,
 			Date:  accountingDate,
@@ -322,7 +323,7 @@ func (v *Validator) ValidateApplyUnapplied( //nolint:cyclop,funlen,gocyclo // le
 		seenInvoices[key] = struct{}{}
 		inv, getErr := v.invoiceRepo.GetByID(
 			ctx,
-			repositories.GetInvoiceByIDRequest{
+			invoiceports.GetInvoiceByIDRequest{
 				ID:         app.InvoiceID,
 				TenantInfo: tenantInfo.TenantInfo,
 			},
@@ -373,7 +374,7 @@ func (v *Validator) ValidateReverse( //nolint:funlen // legacy workflow
 	payment *customerpayment.Payment,
 	accountingDate int64,
 	control *tenant.AccountingControl,
-	tenantInfo repositories.GetInvoiceByIDRequest,
+	tenantInfo invoiceports.GetInvoiceByIDRequest,
 ) ([]*invoice.Invoice, *fiscalperiod.FiscalPeriod, *errortypes.MultiError) {
 	me := errortypes.NewMultiError()
 	if payment == nil {
@@ -429,7 +430,7 @@ func (v *Validator) ValidateReverse( //nolint:funlen // legacy workflow
 	}
 	period, err := v.fiscalPeriodRepo.GetPeriodByDate(
 		ctx,
-		repositories.GetPeriodByDateRequest{
+		fiscalperiodports.GetPeriodByDateRequest{
 			OrgID: payment.OrganizationID,
 			BuID:  payment.BusinessUnitID,
 			Date:  accountingDate,
@@ -450,7 +451,7 @@ func (v *Validator) ValidateReverse( //nolint:funlen // legacy workflow
 		}
 		inv, getErr := v.invoiceRepo.GetByID(
 			ctx,
-			repositories.GetInvoiceByIDRequest{
+			invoiceports.GetInvoiceByIDRequest{
 				ID:         app.InvoiceID,
 				TenantInfo: tenantInfo.TenantInfo,
 			},

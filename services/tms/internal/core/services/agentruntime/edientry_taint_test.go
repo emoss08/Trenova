@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -28,7 +28,7 @@ func TestOpenTurn_AShipmentEnteredByEDIOpensTainted(t *testing.T) {
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 	shipmentID := pulid.MustNew("shp_").String()
 
-	turn := rt.OpenTurn(t.Context(), &serviceports.RunRequest{
+	turn := rt.OpenTurn(t.Context(), &agentports.RunRequest{
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Input:      "Check the new shipment.",
@@ -57,7 +57,7 @@ func TestOpenTurn_AShipmentEnteredByHandOpensClean(t *testing.T) {
 	subject := ediShipmentSubject(pulid.MustNew("shp_").String())
 	subject.OutsideAuthored = ""
 
-	turn := rt.OpenTurn(t.Context(), &serviceports.RunRequest{
+	turn := rt.OpenTurn(t.Context(), &agentports.RunRequest{
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Input:      "Check the new shipment.",
@@ -73,15 +73,15 @@ func TestRun_AnEDIEnteredShipmentHoldsMoneyForAPerson(t *testing.T) {
 	t.Parallel()
 
 	pay := moneyTool()
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		toolTurn("apply_payment", map[string]any{"invoiceId": "inv_2001"}),
 		textTurn("The payment waits for approval."),
 	}}
 	rt := newRuntime(completion,
 		&stubQueryRegistry{},
-		&stubActionRegistry{Tools: []serviceports.AgentTool{pay}}, nil)
+		&stubActionRegistry{Tools: []agentports.AgentTool{pay}}, nil)
 
-	run := runTainted(t, rt, &serviceports.RunRequest{
+	run := runTainted(t, rt, &agentports.RunRequest{
 		Definition: autoDefinition("apply_payment"),
 		Actor:      testActor(),
 		Input:      "Check the new shipment.",

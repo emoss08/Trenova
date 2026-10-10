@@ -1,6 +1,12 @@
 package servicefailureservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/servicefailureportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"context"
 	"testing"
 
@@ -10,8 +16,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/edix12"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -215,7 +223,7 @@ func TestCreateManualRejectsWithoutTouchingRepositories(t *testing.T) {
 	tenantInfo := pagination.TenantInfo{OrgID: orgID, BuID: buID}
 	svc := &service{l: zap.NewNop()}
 
-	_, err := svc.CreateManual(t.Context(), &serviceports.CreateManualServiceFailureRequest{
+	_, err := svc.CreateManual(t.Context(), &servicefailureports.CreateManualServiceFailureRequest{
 		TenantInfo:     tenantInfo,
 		ShipmentID:     pulid.MustNew("sp_"),
 		ShipmentMoveID: pulid.MustNew("sm_"),
@@ -252,8 +260,8 @@ func TestCreateOrUpdateDetectedUpdatesExistingSnapshotIdempotently(t *testing.T)
 	existing.ReasonCodeID = &reasonID
 	existing.Notes = "existing reason"
 
-	repo := mocks.NewMockServiceFailureRepository(t)
-	reasonRepo := mocks.NewMockServiceFailureReasonCodeRepository(t)
+	repo := servicefailureportsmock.NewMockServiceFailureRepository(t)
+	reasonRepo := servicefailureportsmock.NewMockServiceFailureReasonCodeRepository(t)
 	svc := &service{
 		l:              zap.NewNop(),
 		repo:           repo,
@@ -304,10 +312,10 @@ func TestCreateOrUpdateDetectedCreatesWithGeneratedNumber(t *testing.T) {
 		GracePeriodMinutes: 5,
 		LateMinutes:        1,
 	}
-	repo := mocks.NewMockServiceFailureRepository(t)
-	reasonRepo := mocks.NewMockServiceFailureReasonCodeRepository(t)
-	audit := mocks.NewMockAuditService(t)
-	realtime := mocks.NewMockRealtimeService(t)
+	repo := servicefailureportsmock.NewMockServiceFailureRepository(t)
+	reasonRepo := servicefailureportsmock.NewMockServiceFailureReasonCodeRepository(t)
+	audit := auditportsmock.NewMockAuditService(t)
+	realtime := agentportsmock.NewMockRealtimeService(t)
 	svc := &service{
 		l:              zap.NewNop(),
 		repo:           repo,
@@ -361,12 +369,12 @@ func TestEvaluateShipmentIncludesCreatedStopSummaries(t *testing.T) {
 	)
 	source := serviceFailureShipmentWithStops(orgID, buID, shipmentID, moveID, stop)
 
-	repo := mocks.NewMockServiceFailureRepository(t)
-	reasonRepo := mocks.NewMockServiceFailureReasonCodeRepository(t)
-	shipmentRepo := mocks.NewMockShipmentRepository(t)
-	dispatchRepo := mocks.NewMockDispatchControlRepository(t)
-	audit := mocks.NewMockAuditService(t)
-	realtime := mocks.NewMockRealtimeService(t)
+	repo := servicefailureportsmock.NewMockServiceFailureRepository(t)
+	reasonRepo := servicefailureportsmock.NewMockServiceFailureReasonCodeRepository(t)
+	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
+	dispatchRepo := dispatchcontrolportsmock.NewMockDispatchControlRepository(t)
+	audit := auditportsmock.NewMockAuditService(t)
+	realtime := agentportsmock.NewMockRealtimeService(t)
 	svc := &service{
 		l:              zap.NewNop(),
 		repo:           repo,
@@ -408,12 +416,12 @@ func TestEvaluateShipmentIncludesCreatedStopSummaries(t *testing.T) {
 
 	result, err := svc.EvaluateShipment(
 		t.Context(),
-		&serviceports.EvaluateShipmentServiceFailuresRequest{
+		&servicefailureports.EvaluateShipmentServiceFailuresRequest{
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 			ShipmentID: shipmentID,
 		},
-		&serviceports.RequestActor{
-			PrincipalType:  serviceports.PrincipalTypeUser,
+		&permissionports.RequestActor{
+			PrincipalType:  permissionports.PrincipalTypeUser,
 			PrincipalID:    userID,
 			UserID:         userID,
 			OrganizationID: orgID,
@@ -475,10 +483,10 @@ func TestEvaluateShipmentIncludesUpdatedStopSummaries(t *testing.T) {
 		LateMinutes:        1,
 	}
 
-	repo := mocks.NewMockServiceFailureRepository(t)
-	reasonRepo := mocks.NewMockServiceFailureReasonCodeRepository(t)
-	shipmentRepo := mocks.NewMockShipmentRepository(t)
-	dispatchRepo := mocks.NewMockDispatchControlRepository(t)
+	repo := servicefailureportsmock.NewMockServiceFailureRepository(t)
+	reasonRepo := servicefailureportsmock.NewMockServiceFailureReasonCodeRepository(t)
+	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
+	dispatchRepo := dispatchcontrolportsmock.NewMockDispatchControlRepository(t)
 	svc := &service{
 		l:              zap.NewNop(),
 		repo:           repo,
@@ -516,7 +524,7 @@ func TestEvaluateShipmentIncludesUpdatedStopSummaries(t *testing.T) {
 
 	result, err := svc.EvaluateShipment(
 		t.Context(),
-		&serviceports.EvaluateShipmentServiceFailuresRequest{
+		&servicefailureports.EvaluateShipmentServiceFailuresRequest{
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 			ShipmentID: shipmentID,
 		},
@@ -549,8 +557,8 @@ func TestEvaluateShipmentSkippedStopsIncludeStopContext(t *testing.T) {
 	stop.ActualArrival = nil
 	source := serviceFailureShipmentWithStops(orgID, buID, shipmentID, moveID, stop)
 
-	shipmentRepo := mocks.NewMockShipmentRepository(t)
-	dispatchRepo := mocks.NewMockDispatchControlRepository(t)
+	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
+	dispatchRepo := dispatchcontrolportsmock.NewMockDispatchControlRepository(t)
 	svc := &service{
 		l:            zap.NewNop(),
 		shipmentRepo: shipmentRepo,
@@ -571,7 +579,7 @@ func TestEvaluateShipmentSkippedStopsIncludeStopContext(t *testing.T) {
 
 	result, err := svc.EvaluateShipment(
 		t.Context(),
-		&serviceports.EvaluateShipmentServiceFailuresRequest{
+		&servicefailureports.EvaluateShipmentServiceFailuresRequest{
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 			ShipmentID: shipmentID,
 		},
@@ -620,16 +628,16 @@ func TestLifecycleReviewRequiresUserAndRecordsAudit(t *testing.T) {
 		GracePeriodMinutes: 5,
 		LateMinutes:        1,
 	}
-	repo := mocks.NewMockServiceFailureRepository(t)
-	audit := mocks.NewMockAuditService(t)
-	realtime := mocks.NewMockRealtimeService(t)
+	repo := servicefailureportsmock.NewMockServiceFailureRepository(t)
+	audit := auditportsmock.NewMockAuditService(t)
+	realtime := agentportsmock.NewMockRealtimeService(t)
 	svc := &service{
 		l:            zap.NewNop(),
 		repo:         repo,
 		auditService: audit,
 		realtime:     realtime,
 	}
-	req := &serviceports.ServiceFailureLifecycleRequest{
+	req := &servicefailureports.ServiceFailureLifecycleRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		ID:         entity.ID,
 		ShipmentID: entity.ShipmentID,
@@ -655,8 +663,8 @@ func TestLifecycleReviewRequiresUserAndRecordsAudit(t *testing.T) {
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Once()
 
-	updated, err := svc.Review(t.Context(), req, &serviceports.RequestActor{
-		PrincipalType:  serviceports.PrincipalTypeUser,
+	updated, err := svc.Review(t.Context(), req, &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    userID,
 		UserID:         userID,
 		OrganizationID: orgID,
@@ -692,14 +700,14 @@ func TestPreflightServiceFailure214BlocksMandatoryDiagnostics(t *testing.T) {
 	t.Parallel()
 
 	failure := serviceFailureLifecycleFixture(servicefailure.StatusReviewed)
-	ediSvc := mocks.NewMockEDIService(t)
+	ediSvc := ediportsmock.NewMockEDIService(t)
 	svc := &service{l: zap.NewNop(), ediService: ediSvc}
 
 	ediSvc.EXPECT().
 		PreviewServiceFailure214ForLifecycle(mock.Anything, mock.AnythingOfType("*services.ServiceFailure214LifecycleRequest")).
-		Return(&serviceports.ServiceFailure214LifecycleResult{
-			Trigger:   serviceports.ServiceFailureEDITriggerReviewed,
-			Action:    serviceports.ServiceFailureEDIActionBlocked,
+		Return(&servicefailureports.ServiceFailure214LifecycleResult{
+			Trigger:   servicefailureports.ServiceFailureEDITriggerReviewed,
+			Action:    ediports.ServiceFailureEDIActionBlocked,
 			Mandatory: true,
 			Diagnostics: []edix12.Diagnostic{{
 				Severity: edi.ValidationSeverityError,
@@ -720,20 +728,20 @@ func TestPreflightServiceFailure214AllowsNonMandatoryBlockedAndSkipped(t *testin
 
 	tests := []struct {
 		name   string
-		result *serviceports.ServiceFailure214LifecycleResult
+		result *servicefailureports.ServiceFailure214LifecycleResult
 	}{
 		{
 			name: "non mandatory blocked",
-			result: &serviceports.ServiceFailure214LifecycleResult{
-				Trigger: serviceports.ServiceFailureEDITriggerReviewed,
-				Action:  serviceports.ServiceFailureEDIActionBlocked,
+			result: &servicefailureports.ServiceFailure214LifecycleResult{
+				Trigger: servicefailureports.ServiceFailureEDITriggerReviewed,
+				Action:  ediports.ServiceFailureEDIActionBlocked,
 			},
 		},
 		{
 			name: "skipped disabled",
-			result: &serviceports.ServiceFailure214LifecycleResult{
-				Trigger:       serviceports.ServiceFailureEDITriggerReviewed,
-				Action:        serviceports.ServiceFailureEDIActionSkipped,
+			result: &servicefailureports.ServiceFailure214LifecycleResult{
+				Trigger:       servicefailureports.ServiceFailureEDITriggerReviewed,
+				Action:        ediports.ServiceFailureEDIActionSkipped,
 				SkippedReason: "service failure 214 trigger disabled",
 			},
 		},
@@ -742,7 +750,7 @@ func TestPreflightServiceFailure214AllowsNonMandatoryBlockedAndSkipped(t *testin
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			failure := serviceFailureLifecycleFixture(servicefailure.StatusReviewed)
-			ediSvc := mocks.NewMockEDIService(t)
+			ediSvc := ediportsmock.NewMockEDIService(t)
 			svc := &service{l: zap.NewNop(), ediService: ediSvc}
 			ediSvc.EXPECT().
 				PreviewServiceFailure214ForLifecycle(mock.Anything, mock.Anything).
@@ -764,29 +772,29 @@ func TestGenerateServiceFailure214RecordsGeneratedAndDuplicateOnly(t *testing.T)
 
 	tests := []struct {
 		name        string
-		action      serviceports.ServiceFailureEDIAction
+		action      servicefailureports.ServiceFailureEDIAction
 		wantComment bool
 	}{
 		{
 			name:        "generated",
-			action:      serviceports.ServiceFailureEDIActionGenerated,
+			action:      ediports.ServiceFailureEDIActionGenerated,
 			wantComment: true,
 		},
 		{
 			name:        "duplicate",
-			action:      serviceports.ServiceFailureEDIActionDuplicate,
+			action:      ediports.ServiceFailureEDIActionDuplicate,
 			wantComment: true,
 		},
-		{name: "skipped", action: serviceports.ServiceFailureEDIActionSkipped},
-		{name: "blocked", action: serviceports.ServiceFailureEDIActionBlocked},
+		{name: "skipped", action: ediports.ServiceFailureEDIActionSkipped},
+		{name: "blocked", action: ediports.ServiceFailureEDIActionBlocked},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			failure := serviceFailureLifecycleFixture(servicefailure.StatusReviewed)
-			ediSvc := mocks.NewMockEDIService(t)
-			audit := mocks.NewMockAuditService(t)
-			comments := mocks.NewMockShipmentCommentService(t)
+			ediSvc := ediportsmock.NewMockEDIService(t)
+			audit := auditportsmock.NewMockAuditService(t)
+			comments := shipmentportsmock.NewMockShipmentCommentService(t)
 			svc := &service{
 				l:              zap.NewNop(),
 				ediService:     ediSvc,
@@ -795,8 +803,8 @@ func TestGenerateServiceFailure214RecordsGeneratedAndDuplicateOnly(t *testing.T)
 			}
 			ediSvc.EXPECT().
 				GenerateServiceFailure214ForLifecycle(mock.Anything, mock.Anything).
-				Return(&serviceports.ServiceFailure214LifecycleResult{
-					Trigger:                  serviceports.ServiceFailureEDITriggerReviewed,
+				Return(&servicefailureports.ServiceFailure214LifecycleResult{
+					Trigger:                  servicefailureports.ServiceFailureEDITriggerReviewed,
 					Action:                   tt.action,
 					MessageID:                pulid.MustNew("edimsg_"),
 					EDIPartnerID:             pulid.MustNew("edip_"),

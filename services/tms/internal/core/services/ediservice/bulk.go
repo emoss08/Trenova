@@ -3,7 +3,7 @@ package ediservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -83,7 +83,7 @@ type BulkApproveTransfersRequest struct {
 func (s *Service) BulkApproveTransfers(
 	ctx context.Context,
 	req *BulkApproveTransfersRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*BulkEDIActionResult, error) {
 	if err := ValidateBulkEDIActionIDs("transferIds", req.TransferIDs); err != nil {
 		return nil, err
@@ -114,7 +114,7 @@ type BulkRejectTransfersRequest struct {
 func (s *Service) BulkRejectTransfers(
 	ctx context.Context,
 	req *BulkRejectTransfersRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*BulkEDIActionResult, error) {
 	if err := ValidateBulkEDIActionIDs("transferIds", req.TransferIDs); err != nil {
 		return nil, err

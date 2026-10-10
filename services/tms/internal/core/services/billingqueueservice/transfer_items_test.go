@@ -1,15 +1,22 @@
 package billingqueueservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -25,12 +32,12 @@ import (
 )
 
 type passthroughDB struct {
-	ports.DBConnection
+	kernelports.DBConnection
 }
 
 func (passthroughDB) WithTx(
 	ctx context.Context,
-	_ ports.TxOptions,
+	_ kernelports.TxOptions,
 	fn func(context.Context, bun.Tx) error,
 ) error {
 	return fn(ctx, bun.Tx{})
@@ -99,15 +106,15 @@ func TestTransferToBillingItemsCreatesOneItemPerPayer(t *testing.T) {
 
 	shp, amd, tenantInfo := transferFixture(t)
 
-	shipmentRepo := mocks.NewMockShipmentRepository(t)
+	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
-		GetByID(mock.Anything, mock.MatchedBy(func(req *repositories.GetShipmentByIDRequest) bool {
+		GetByID(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetShipmentByIDRequest) bool {
 			return req.ID == shp.ID && req.ShipmentOptions.ExpandShipmentDetails
 		})).
 		Return(shp, nil).
 		Once()
 
-	repo := mocks.NewMockBillingQueueRepository(t)
+	repo := billingqueueportsmock.NewMockBillingQueueRepository(t)
 	repo.EXPECT().
 		ExistsByShipmentPayerAndType(mock.Anything, tenantInfo, shp.ID, mock.Anything, billingqueue.BillTypeInvoice).
 		Return(false, nil).
@@ -122,10 +129,10 @@ func TestTransferToBillingItemsCreatesOneItemPerPayer(t *testing.T) {
 		}).
 		Twice()
 
-	customerRepo := mocks.NewMockCustomerRepository(t)
+	customerRepo := customerportsmock.NewMockCustomerRepository(t)
 	customerRepo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("repositories.GetCustomerByIDRequest")).
-		RunAndReturn(func(_ context.Context, req repositories.GetCustomerByIDRequest) (*customer.Customer, error) {
+		RunAndReturn(func(_ context.Context, req customerports.GetCustomerByIDRequest) (*customer.Customer, error) {
 			return &customer.Customer{
 				ID:             req.ID,
 				BillingProfile: &customer.CustomerBillingProfile{},
@@ -133,9 +140,9 @@ func TestTransferToBillingItemsCreatesOneItemPerPayer(t *testing.T) {
 		}).
 		Twice()
 
-	audit := mocks.NewMockAuditService(t)
+	audit := auditportsmock.NewMockAuditService(t)
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Twice()
-	realtime := mocks.NewMockRealtimeService(t)
+	realtime := agentportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Twice()
 
 	svc := &service{
@@ -150,12 +157,12 @@ func TestTransferToBillingItemsCreatesOneItemPerPayer(t *testing.T) {
 		validator:    testValidator(),
 	}
 
-	result, err := svc.TransferToBillingItems(t.Context(), &services.TransferToBillingRequest{
+	result, err := svc.TransferToBillingItems(t.Context(), &billingqueueports.TransferToBillingRequest{
 		ShipmentID: shp.ID,
 		BillType:   billingqueue.BillTypeInvoice,
 		TenantInfo: tenantInfo,
-	}, &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeUser,
+	}, &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    pulid.MustNew("usr_"),
 		UserID:         pulid.MustNew("usr_"),
 		OrganizationID: tenantInfo.OrgID,
@@ -201,13 +208,13 @@ func TestTransferToBillingItemsRefusesWhenAPayerIsAlreadyQueued(t *testing.T) {
 
 	shp, amd, tenantInfo := transferFixture(t)
 
-	shipmentRepo := mocks.NewMockShipmentRepository(t)
+	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
 		Return(shp, nil).
 		Once()
 
-	repo := mocks.NewMockBillingQueueRepository(t)
+	repo := billingqueueportsmock.NewMockBillingQueueRepository(t)
 	repo.EXPECT().
 		ExistsByShipmentPayerAndType(mock.Anything, tenantInfo, shp.ID, shp.CustomerID, billingqueue.BillTypeInvoice).
 		Return(false, nil).
@@ -219,11 +226,11 @@ func TestTransferToBillingItemsRefusesWhenAPayerIsAlreadyQueued(t *testing.T) {
 
 	svc := &service{l: zap.NewNop(), repo: repo, shipmentRepo: shipmentRepo}
 
-	result, err := svc.TransferToBillingItems(t.Context(), &services.TransferToBillingRequest{
+	result, err := svc.TransferToBillingItems(t.Context(), &billingqueueports.TransferToBillingRequest{
 		ShipmentID: shp.ID,
 		BillType:   billingqueue.BillTypeInvoice,
 		TenantInfo: tenantInfo,
-	}, &services.RequestActor{})
+	}, &permissionports.RequestActor{})
 	require.Error(t, err)
 	assert.Nil(t, result)
 	assert.True(
@@ -239,19 +246,19 @@ func TestTransferToBillingItemsRequiresAReadyToInvoiceShipment(t *testing.T) {
 	shp, _, tenantInfo := transferFixture(t)
 	shp.Status = shipment.StatusCompleted
 
-	shipmentRepo := mocks.NewMockShipmentRepository(t)
+	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(shp, nil).Once()
 
 	svc := &service{l: zap.NewNop(), shipmentRepo: shipmentRepo}
 
-	_, err := svc.TransferToBillingItems(t.Context(), &services.TransferToBillingRequest{
+	_, err := svc.TransferToBillingItems(t.Context(), &billingqueueports.TransferToBillingRequest{
 		ShipmentID: shp.ID,
 		BillType:   billingqueue.BillTypeInvoice,
 		TenantInfo: tenantInfo,
-	}, &services.RequestActor{})
+	}, &permissionports.RequestActor{})
 	require.Error(t, err)
 
-	_, err = svc.TransferToBillingItems(t.Context(), nil, &services.RequestActor{})
+	_, err = svc.TransferToBillingItems(t.Context(), nil, &permissionports.RequestActor{})
 	require.Error(t, err)
 }
 
@@ -264,23 +271,23 @@ func TestShouldAutoApprove(t *testing.T) {
 
 	assert.True(
 		t,
-		svc.shouldAutoApprove(&services.TransferToBillingRequest{AutoApprove: true}, amd),
+		svc.shouldAutoApprove(&billingqueueports.TransferToBillingRequest{AutoApprove: true}, amd),
 	)
 	assert.True(
 		t,
 		svc.shouldAutoApprove(
-			&services.TransferToBillingRequest{AutoApprovePayerIDs: []pulid.ID{intel, amd}},
+			&billingqueueports.TransferToBillingRequest{AutoApprovePayerIDs: []pulid.ID{intel, amd}},
 			amd,
 		),
 	)
 	assert.False(
 		t,
 		svc.shouldAutoApprove(
-			&services.TransferToBillingRequest{AutoApprovePayerIDs: []pulid.ID{intel}},
+			&billingqueueports.TransferToBillingRequest{AutoApprovePayerIDs: []pulid.ID{intel}},
 			amd,
 		),
 	)
-	assert.False(t, svc.shouldAutoApprove(&services.TransferToBillingRequest{}, amd))
+	assert.False(t, svc.shouldAutoApprove(&billingqueueports.TransferToBillingRequest{}, amd))
 }
 
 // A shipment whose every charge is billed to someone other than its customer
@@ -299,10 +306,10 @@ func TestTransferToBillingItemsSkipsAPayerWhoOwesNothing(t *testing.T) {
 		Percent:          decimal.NewNullDecimal(decimal.NewFromInt(100)),
 	})
 
-	shipmentRepo := mocks.NewMockShipmentRepository(t)
+	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(shp, nil).Once()
 
-	repo := mocks.NewMockBillingQueueRepository(t)
+	repo := billingqueueportsmock.NewMockBillingQueueRepository(t)
 	repo.EXPECT().
 		ExistsByShipmentPayerAndType(mock.Anything, tenantInfo, shp.ID, amd, billingqueue.BillTypeInvoice).
 		Return(false, nil).
@@ -317,19 +324,19 @@ func TestTransferToBillingItemsSkipsAPayerWhoOwesNothing(t *testing.T) {
 		}).
 		Once()
 
-	customerRepo := mocks.NewMockCustomerRepository(t)
+	customerRepo := customerportsmock.NewMockCustomerRepository(t)
 	customerRepo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("repositories.GetCustomerByIDRequest")).
-		RunAndReturn(func(_ context.Context, req repositories.GetCustomerByIDRequest) (*customer.Customer, error) {
+		RunAndReturn(func(_ context.Context, req customerports.GetCustomerByIDRequest) (*customer.Customer, error) {
 			return &customer.Customer{
 				ID:             req.ID,
 				BillingProfile: &customer.CustomerBillingProfile{},
 			}, nil
 		}).
 		Maybe()
-	audit := mocks.NewMockAuditService(t)
+	audit := auditportsmock.NewMockAuditService(t)
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
-	realtime := mocks.NewMockRealtimeService(t)
+	realtime := agentportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Maybe()
 
 	svc := &service{
@@ -344,12 +351,12 @@ func TestTransferToBillingItemsSkipsAPayerWhoOwesNothing(t *testing.T) {
 		validator:    testValidator(),
 	}
 
-	result, err := svc.TransferToBillingItems(t.Context(), &services.TransferToBillingRequest{
+	result, err := svc.TransferToBillingItems(t.Context(), &billingqueueports.TransferToBillingRequest{
 		ShipmentID: shp.ID,
 		BillType:   billingqueue.BillTypeInvoice,
 		TenantInfo: tenantInfo,
-	}, &services.RequestActor{
-		PrincipalType: services.PrincipalTypeUser,
+	}, &permissionports.RequestActor{
+		PrincipalType: permissionports.PrincipalTypeUser,
 		PrincipalID:   pulid.MustNew("usr_"),
 		UserID:        pulid.MustNew("usr_"),
 	})
@@ -366,11 +373,11 @@ func transferringService(
 	t *testing.T,
 	shp *shipment.Shipment,
 	tenantInfo pagination.TenantInfo,
-	shipmentRepo *mocks.MockShipmentRepository,
+	shipmentRepo *shipmentportsmock.MockShipmentRepository,
 ) *service {
 	t.Helper()
 
-	repo := mocks.NewMockBillingQueueRepository(t)
+	repo := billingqueueportsmock.NewMockBillingQueueRepository(t)
 	repo.EXPECT().
 		ExistsByShipmentPayerAndType(mock.Anything, tenantInfo, shp.ID, mock.Anything, billingqueue.BillTypeInvoice).
 		Return(false, nil).
@@ -383,10 +390,10 @@ func transferringService(
 		}).
 		Twice()
 
-	customerRepo := mocks.NewMockCustomerRepository(t)
+	customerRepo := customerportsmock.NewMockCustomerRepository(t)
 	customerRepo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("repositories.GetCustomerByIDRequest")).
-		RunAndReturn(func(_ context.Context, req repositories.GetCustomerByIDRequest) (*customer.Customer, error) {
+		RunAndReturn(func(_ context.Context, req customerports.GetCustomerByIDRequest) (*customer.Customer, error) {
 			return &customer.Customer{ID: req.ID, BillingProfile: &customer.CustomerBillingProfile{}}, nil
 		}).
 		Twice()
@@ -404,10 +411,10 @@ func transferringService(
 	}
 }
 
-func transferActor(tenantInfo pagination.TenantInfo) *services.RequestActor {
+func transferActor(tenantInfo pagination.TenantInfo) *permissionports.RequestActor {
 	userID := pulid.MustNew("usr_")
-	return &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeUser,
+	return &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    userID,
 		UserID:         userID,
 		OrganizationID: tenantInfo.OrgID,
@@ -419,10 +426,10 @@ func TestTransferToBillingItemsReusesTheCallersDetailedShipment(t *testing.T) {
 	t.Parallel()
 
 	shp, _, tenantInfo := transferFixture(t)
-	shipmentRepo := mocks.NewMockShipmentRepository(t)
+	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	svc := transferringService(t, shp, tenantInfo, shipmentRepo)
 
-	result, err := svc.TransferToBillingItems(t.Context(), &services.TransferToBillingRequest{
+	result, err := svc.TransferToBillingItems(t.Context(), &billingqueueports.TransferToBillingRequest{
 		ShipmentID:       shp.ID,
 		BillType:         billingqueue.BillTypeInvoice,
 		TenantInfo:       tenantInfo,
@@ -441,9 +448,9 @@ func TestTransferToBillingItemsReloadsAShipmentFromAnotherTenant(t *testing.T) {
 	foreign := *shp
 	foreign.BusinessUnitID = pulid.MustNew("bu_")
 
-	shipmentRepo := mocks.NewMockShipmentRepository(t)
+	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
-		GetByID(mock.Anything, mock.MatchedBy(func(req *repositories.GetShipmentByIDRequest) bool {
+		GetByID(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetShipmentByIDRequest) bool {
 			return req.ID == shp.ID && req.TenantInfo == tenantInfo &&
 				req.ShipmentOptions.ExpandShipmentDetails
 		})).
@@ -451,7 +458,7 @@ func TestTransferToBillingItemsReloadsAShipmentFromAnotherTenant(t *testing.T) {
 		Once()
 	svc := transferringService(t, shp, tenantInfo, shipmentRepo)
 
-	result, err := svc.TransferToBillingItems(t.Context(), &services.TransferToBillingRequest{
+	result, err := svc.TransferToBillingItems(t.Context(), &billingqueueports.TransferToBillingRequest{
 		ShipmentID:       shp.ID,
 		BillType:         billingqueue.BillTypeInvoice,
 		TenantInfo:       tenantInfo,

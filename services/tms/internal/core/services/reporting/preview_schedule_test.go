@@ -7,7 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -16,20 +17,20 @@ import (
 )
 
 type previewDefinitions struct {
-	repositories.ReportDefinitionRepository
+	reportports.ReportDefinitionRepository
 
 	definition *report.ReportDefinition
 }
 
 func (r *previewDefinitions) GetByID(
 	context.Context,
-	*repositories.GetReportDefinitionRequest,
+	*reportports.GetReportDefinitionRequest,
 ) (*report.ReportDefinition, error) {
 	return r.definition, nil
 }
 
 type previewSchedules struct {
-	repositories.ReportScheduleRepository
+	reportports.ReportScheduleRepository
 
 	created  *report.ReportSchedule
 	writable bool
@@ -48,12 +49,12 @@ func (r *previewSchedules) Create(
 }
 
 type previewOrganizations struct {
-	repositories.OrganizationRepository
+	tenantports.OrganizationRepository
 }
 
 func (previewOrganizations) GetByID(
 	context.Context,
-	repositories.GetOrganizationByIDRequest,
+	tenantports.GetOrganizationByIDRequest,
 ) (*tenant.Organization, error) {
 	return &tenant.Organization{Timezone: "America/Chicago"}, nil
 }

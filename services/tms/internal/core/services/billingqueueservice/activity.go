@@ -5,8 +5,10 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
@@ -33,7 +35,7 @@ func (s *service) newEvent(
 	item *billingqueue.BillingQueueItem,
 	kind billingqueue.EventKind,
 	text string,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	payload map[string]any,
 ) *billingqueue.ItemEvent {
 	event := &billingqueue.ItemEvent{
@@ -63,11 +65,11 @@ func (s *service) newEvent(
 	return event
 }
 
-func (s *service) personName(ctx context.Context, actor *services.RequestActor) string {
+func (s *service) personName(ctx context.Context, actor *permissionports.RequestActor) string {
 	if s.userRepo == nil {
 		return ""
 	}
-	user, err := s.userRepo.GetByID(ctx, repositories.GetUserByIDRequest{
+	user, err := s.userRepo.GetByID(ctx, tenantports.GetUserByIDRequest{
 		LookupUserID: actor.UserID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: actor.OrganizationID,
@@ -88,7 +90,7 @@ func (s *service) recordEvent(
 	item *billingqueue.BillingQueueItem,
 	kind billingqueue.EventKind,
 	text string,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	payload map[string]any,
 ) {
 	if s.reviewRepo == nil || item == nil {
@@ -107,8 +109,8 @@ func (s *service) recordEvent(
 func (s *service) recordStatusEvent(
 	ctx context.Context,
 	previous, updated *billingqueue.BillingQueueItem,
-	created *services.CreateInvoiceFromBillingQueueResult,
-	actor *services.RequestActor,
+	created *invoiceports.CreateInvoiceFromBillingQueueResult,
+	actor *permissionports.RequestActor,
 ) {
 	if previous == nil || updated == nil || previous.Status == updated.Status {
 		return
@@ -158,19 +160,19 @@ func statusWords(status billingqueue.Status) string {
 
 func (s *service) ListActivity(
 	ctx context.Context,
-	req *services.ListBillingQueueActivityRequest,
-) (*repositories.BillingQueueEventPage, error) {
+	req *billingqueueports.ListBillingQueueActivityRequest,
+) (*billingqueueports.BillingQueueEventPage, error) {
 	if s.reviewRepo == nil {
 		return nil, errortypes.NewBusinessError("Billing queue activity is unavailable")
 	}
-	if _, err := s.repo.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
+	if _, err := s.repo.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
 		ItemID:     req.ItemID,
 		TenantInfo: req.TenantInfo,
 	}); err != nil {
 		return nil, err
 	}
 
-	return s.reviewRepo.ListEvents(ctx, &repositories.ListBillingQueueEventsRequest{
+	return s.reviewRepo.ListEvents(ctx, &billingqueueports.ListBillingQueueEventsRequest{
 		TenantInfo: req.TenantInfo,
 		ItemID:     req.ItemID,
 		Limit:      req.Limit,
@@ -181,8 +183,8 @@ func (s *service) ListActivity(
 
 func (s *service) Neighbors(
 	ctx context.Context,
-	req *repositories.GetBillingQueueNeighborsRequest,
-) (*repositories.BillingQueueNeighbors, error) {
+	req *billingqueueports.GetBillingQueueNeighborsRequest,
+) (*billingqueueports.BillingQueueNeighbors, error) {
 	if s.reviewRepo == nil {
 		return nil, errortypes.NewBusinessError("The billing queue's order is unavailable")
 	}
@@ -195,8 +197,8 @@ const maxSummaries = 200
 
 func (s *service) Summaries(
 	ctx context.Context,
-	req *repositories.ListBillingQueueSummariesRequest,
-) ([]*repositories.BillingQueueItemSummary, error) {
+	req *billingqueueports.ListBillingQueueSummariesRequest,
+) ([]*billingqueueports.BillingQueueItemSummary, error) {
 	if s.reviewRepo == nil {
 		return nil, errortypes.NewBusinessError("Billing queue summaries are unavailable")
 	}

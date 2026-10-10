@@ -8,9 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/invoicerun"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/invoicerunservice"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -126,7 +125,7 @@ func (h *Handler) listStatements(c *gin.Context) {
 
 	statements, err := h.service.ListOpenStatements(
 		c.Request.Context(),
-		&services.ListOpenStatementsRequest{TenantInfo: tenantInfoFrom(authCtx)},
+		&invoicerunports.ListOpenStatementsRequest{TenantInfo: tenantInfoFrom(authCtx)},
 	)
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -158,7 +157,7 @@ func (h *Handler) getStatement(c *gin.Context) {
 
 	statement, err := h.service.GetOpenStatement(
 		c.Request.Context(),
-		&services.ListOpenStatementsRequest{
+		&invoicerunports.ListOpenStatementsRequest{
 			TenantInfo: tenantInfoFrom(authCtx),
 			CustomerID: customerID,
 		},
@@ -204,9 +203,9 @@ func (h *Handler) billStatement(c *gin.Context) {
 		return
 	}
 
-	exclusions := make([]services.StatementExclusion, 0, len(req.Exclude))
+	exclusions := make([]invoicerunports.StatementExclusion, 0, len(req.Exclude))
 	for _, exclusion := range req.Exclude {
-		exclusions = append(exclusions, services.StatementExclusion{
+		exclusions = append(exclusions, invoicerunports.StatementExclusion{
 			BillingQueueItemID: exclusion.BillingQueueItemID,
 			Reason:             exclusion.Reason,
 		})
@@ -214,7 +213,7 @@ func (h *Handler) billStatement(c *gin.Context) {
 
 	result, err := h.service.BillStatementNow(
 		c.Request.Context(),
-		&services.BillStatementNowRequest{
+		&invoicerunports.BillStatementNowRequest{
 			TenantInfo: tenantInfoFrom(authCtx),
 			CustomerID: customerID,
 			Reason:     req.Reason,
@@ -284,7 +283,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*invoicerun.InvoiceRun], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListInvoiceRunsRequest{Filter: req},
+				&invoicerunports.ListInvoiceRunsRequest{Filter: req},
 			)
 		},
 	)
@@ -310,7 +309,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	run, err := h.service.Get(c.Request.Context(), repositories.GetInvoiceRunByIDRequest{
+	run, err := h.service.Get(c.Request.Context(), invoicerunports.GetInvoiceRunByIDRequest{
 		ID:            runID,
 		TenantInfo:    tenantInfoFrom(authCtx),
 		IncludeGroups: true,
@@ -352,7 +351,7 @@ func (h *Handler) preview(c *gin.Context) {
 
 	run, err := h.service.Preview(
 		c.Request.Context(),
-		&services.PreviewInvoiceRunRequest{
+		&invoicerunports.PreviewInvoiceRunRequest{
 			TenantInfo:  tenantInfoFrom(authCtx),
 			CustomerIDs: req.CustomerIDs,
 			PeriodStart: req.PeriodStart,
@@ -403,16 +402,16 @@ func (h *Handler) adjustMembership(c *gin.Context) {
 		return
 	}
 
-	exclusions := make([]services.ItemExclusion, 0, len(req.Exclude))
+	exclusions := make([]invoicerunports.ItemExclusion, 0, len(req.Exclude))
 	for _, exclusion := range req.Exclude {
-		exclusions = append(exclusions, services.ItemExclusion{
+		exclusions = append(exclusions, invoicerunports.ItemExclusion{
 			ItemID: exclusion.ItemID,
 			Reason: exclusion.Reason,
 		})
 	}
-	moves := make([]services.ItemMove, 0, len(req.Moves))
+	moves := make([]invoicerunports.ItemMove, 0, len(req.Moves))
 	for _, move := range req.Moves {
-		moves = append(moves, services.ItemMove{
+		moves = append(moves, invoicerunports.ItemMove{
 			ItemID:        move.ItemID,
 			TargetGroupID: move.TargetGroupID,
 		})
@@ -420,7 +419,7 @@ func (h *Handler) adjustMembership(c *gin.Context) {
 
 	run, err := h.service.AdjustMembership(
 		c.Request.Context(),
-		&services.AdjustInvoiceRunMembershipRequest{
+		&invoicerunports.AdjustInvoiceRunMembershipRequest{
 			TenantInfo: tenantInfoFrom(authCtx),
 			RunID:      runID,
 			Exclude:    exclusions,
@@ -459,7 +458,7 @@ func (h *Handler) commit(c *gin.Context) {
 
 	result, err := h.service.Commit(
 		c.Request.Context(),
-		&services.CommitInvoiceRunRequest{
+		&invoicerunports.CommitInvoiceRunRequest{
 			TenantInfo: tenantInfoFrom(authCtx),
 			RunID:      runID,
 		},
@@ -500,7 +499,7 @@ func (h *Handler) cancel(c *gin.Context) {
 
 	run, err := h.service.Cancel(
 		c.Request.Context(),
-		&services.CancelInvoiceRunRequest{
+		&invoicerunports.CancelInvoiceRunRequest{
 			TenantInfo: tenantInfoFrom(authCtx),
 			RunID:      runID,
 			Reason:     req.Reason,

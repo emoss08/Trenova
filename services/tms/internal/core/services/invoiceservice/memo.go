@@ -9,10 +9,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/invoicelines"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -31,8 +32,8 @@ const (
 // ledger treat it like any other bill.
 func (s *Service) CreateMemo(
 	ctx context.Context,
-	req *servicesports.CreateMemoRequest,
-	actor *servicesports.RequestActor,
+	req *invoiceports.CreateMemoRequest,
+	actor *permissionports.RequestActor,
 ) (*invoice.Invoice, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
@@ -60,7 +61,7 @@ func (s *Service) CreateMemo(
 	}
 
 	var created *invoice.Invoice
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		item, txErr := s.billingQueueRepo.Create(txCtx, memoQueueItem(req, cus, number))
 		if txErr != nil {
 			return txErr
@@ -90,7 +91,7 @@ func (s *Service) CreateMemo(
 		if !req.AutoPost {
 			return nil
 		}
-		posted, postErr := s.Post(txCtx, &servicesports.PostInvoiceRequest{
+		posted, postErr := s.Post(txCtx, &invoiceports.PostInvoiceRequest{
 			InvoiceID:   created.ID,
 			TenantInfo:  req.TenantInfo,
 			TriggeredBy: "memo-auto-post",
@@ -108,7 +109,7 @@ func (s *Service) CreateMemo(
 	return created, nil
 }
 
-func validateMemoRequest(req *servicesports.CreateMemoRequest) *errortypes.MultiError {
+func validateMemoRequest(req *invoiceports.CreateMemoRequest) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	if req.CustomerID.IsNil() {
 		multiErr.Add("customerId", errortypes.ErrRequired, "Customer is required")
@@ -178,13 +179,13 @@ func validateMemoRequest(req *servicesports.CreateMemoRequest) *errortypes.Multi
 // never owed.
 func (s *Service) validateMemoReference(
 	ctx context.Context,
-	req *servicesports.CreateMemoRequest,
+	req *invoiceports.CreateMemoRequest,
 	cus *customer.Customer,
 ) error {
 	if req.ReferenceInvoiceID.IsNil() {
 		return nil
 	}
-	reference, err := s.repo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+	reference, err := s.repo.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         req.ReferenceInvoiceID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -238,7 +239,7 @@ func (s *Service) generateMemoNumber(
 // any other line is a plain memo line that counts only toward the total.
 func (s *Service) memoLines(
 	ctx context.Context,
-	req *servicesports.CreateMemoRequest,
+	req *invoiceports.CreateMemoRequest,
 ) ([]*invoice.InvoiceLine, error) {
 	lines := make([]*invoice.InvoiceLine, 0, len(req.Lines))
 	for idx, input := range req.Lines {
@@ -258,7 +259,7 @@ func (s *Service) memoLines(
 		if input.AccessorialChargeID.IsNotNil() && s.accessorialRepo != nil {
 			definition, err := s.accessorialRepo.GetByID(
 				ctx,
-				repositories.GetAccessorialChargeByIDRequest{
+				accessorialchargeports.GetAccessorialChargeByIDRequest{
 					ID:         input.AccessorialChargeID,
 					TenantInfo: &req.TenantInfo,
 				},
@@ -277,7 +278,7 @@ func (s *Service) memoLines(
 }
 
 func (s *Service) buildMemoEntity(
-	req *servicesports.CreateMemoRequest,
+	req *invoiceports.CreateMemoRequest,
 	item *billingqueue.BillingQueueItem,
 	cus *customer.Customer,
 	control *tenant.BillingControl,

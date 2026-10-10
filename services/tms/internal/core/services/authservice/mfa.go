@@ -6,8 +6,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/tokenutils"
@@ -42,7 +43,7 @@ func (s *Service) issueMFAChallenge(
 	usr *tenant.User,
 	targetOrg *tenant.Organization,
 	attempt *authAttempt,
-) (*services.LoginResponse, error) {
+) (*tenantports.LoginResponse, error) {
 	if s.mfa == nil || s.challenges == nil {
 		return nil, nil //nolint:nilnil // no second factor is configured for this process
 	}
@@ -61,7 +62,7 @@ func (s *Service) issueMFAChallenge(
 	}
 
 	now := timeutils.NowUnix()
-	challenge := &repositories.MFAChallenge{
+	challenge := &iamports.MFAChallenge{
 		UserID:       usr.ID,
 		EmailAddress: usr.EmailAddress,
 		IssuedAt:     now,
@@ -79,23 +80,23 @@ func (s *Service) issueMFAChallenge(
 
 	attempt.mfaState = mfaStateChallenged
 
-	return &services.LoginResponse{
+	return &tenantports.LoginResponse{
 		MFARequired:       true,
 		MFAChallengeToken: token,
-		MFAMethods:        []string{services.MFAMethodTOTP, services.MFAMethodRecoveryCode},
+		MFAMethods:        []string{sessionports.MFAMethodTOTP, sessionports.MFAMethodRecoveryCode},
 		ExpiresAt:         challenge.ExpiresAt,
 	}, nil
 }
 
 func (s *Service) VerifyMFAChallenge(
 	ctx context.Context,
-	req services.VerifyMFAChallengeRequest,
-) (resp *services.LoginResponse, err error) {
+	req tenantports.VerifyMFAChallengeRequest,
+) (resp *tenantports.LoginResponse, err error) {
 	if err = req.Validate(); err != nil {
 		return nil, err
 	}
 
-	attempt := newAuthAttempt(services.AuthEventProviderMFA)
+	attempt := newAuthAttempt(iamports.AuthEventProviderMFA)
 	attempt.aal = mfaAssuranceLevel
 	defer func() { s.recordAuthAttempt(ctx, attempt, err) }()
 
@@ -132,7 +133,7 @@ func (s *Service) VerifyMFAChallenge(
 	}
 
 	scoped := userScope(ctx, usr)
-	method, err := s.mfa.VerifySecondFactor(scoped, &services.VerifySecondFactorRequest{
+	method, err := s.mfa.VerifySecondFactor(scoped, &sessionports.VerifySecondFactorRequest{
 		UserID:       usr.ID,
 		Code:         req.Code,
 		RecoveryCode: req.RecoveryCode,
@@ -158,7 +159,7 @@ func (s *Service) VerifyMFAChallenge(
 
 	now := timeutils.NowUnix()
 	return s.finishLogin(scoped, usr, targetOrg, loginSessionContext{
-		AuthProvider:          services.AuthEventProviderPassword,
+		AuthProvider:          iamports.AuthEventProviderPassword,
 		AuthenticatorAAL:      mfaAssuranceLevel,
 		FederationFAL:         1,
 		MFAAuthenticatedAt:    now,
@@ -170,7 +171,7 @@ func (s *Service) VerifyMFAChallenge(
 func (s *Service) rejectMFAAttempt(
 	ctx context.Context,
 	tokenHash string,
-	throttleKey repositories.LoginThrottleKey,
+	throttleKey sessionports.LoginThrottleKey,
 	attempt *authAttempt,
 	cause error,
 ) error {

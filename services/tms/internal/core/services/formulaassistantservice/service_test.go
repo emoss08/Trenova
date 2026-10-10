@@ -7,12 +7,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/pagedraft"
 	"github.com/emoss08/trenova/internal/core/domain/ratematrix"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/formula"
 	"github.com/emoss08/trenova/internal/core/services/formula/engine"
 	"github.com/emoss08/trenova/internal/core/services/formula/resolver"
 	"github.com/emoss08/trenova/internal/core/services/formula/schema"
 	"github.com/emoss08/trenova/internal/core/services/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,25 +23,25 @@ import (
 )
 
 type stubMatrixRepo struct {
-	repositories.RateMatrixRepository
+	ratematrixports.RateMatrixRepository
 
-	data []*repositories.RateMatrixLookupData
+	data []*ratematrixports.RateMatrixLookupData
 }
 
 func (s *stubMatrixRepo) GetLookupData(
 	_ context.Context,
-	_ *repositories.GetRateMatrixLookupDataRequest,
-) ([]*repositories.RateMatrixLookupData, error) {
+	_ *ratematrixports.GetRateMatrixLookupDataRequest,
+) ([]*ratematrixports.RateMatrixLookupData, error) {
 	return s.data, nil
 }
 
 type stubVersionRepo struct {
-	repositories.FormulaTemplateVersionRepository
+	formulatemplateports.FormulaTemplateVersionRepository
 }
 
 func (s *stubVersionRepo) ListScheduled(
 	_ context.Context,
-	_ *repositories.ListScheduledVersionsRequest,
+	_ *formulatemplateports.ListScheduledVersionsRequest,
 ) ([]*formulatemplate.FormulaTemplateVersion, error) {
 	return nil, nil
 }
@@ -62,7 +63,7 @@ const testSchema = `{
 	}
 }`
 
-func newTestService(t *testing.T, matrices ...*repositories.RateMatrixLookupData) *Service {
+func newTestService(t *testing.T, matrices ...*ratematrixports.RateMatrixLookupData) *Service {
 	t.Helper()
 
 	registry := schema.NewRegistry()
@@ -107,13 +108,13 @@ func tenant() pagination.TenantInfo {
 	}
 }
 
-func matrix(code string, axes int) *repositories.RateMatrixLookupData {
+func matrix(code string, axes int) *ratematrixports.RateMatrixLookupData {
 	dimensions := make([]*ratematrix.RateMatrixDimension, axes)
 	for idx := range dimensions {
 		dimensions[idx] = &ratematrix.RateMatrixDimension{}
 	}
 
-	return &repositories.RateMatrixLookupData{
+	return &ratematrixports.RateMatrixLookupData{
 		Matrix: &ratematrix.RateMatrix{Code: code, Name: code + " table", Dimensions: dimensions},
 	}
 }

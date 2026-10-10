@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,7 +25,7 @@ func (d *owningDecider) AssertOwnProposal(
 	_ context.Context,
 	proposalID pulid.ID,
 	_ pagination.TenantInfo,
-	_ *services.RequestActor,
+	_ *permissionports.RequestActor,
 ) error {
 	d.checked = append(d.checked, proposalID)
 	if !d.mine[proposalID] {
@@ -50,7 +51,7 @@ func TestDecideManyOwn_DecidesTheCallersOwnProposalsOfOneTool(t *testing.T) {
 	svc := newService(proposals, &decider.stubDecider)
 	svc.decisions = decider
 
-	results, err := svc.DecideManyOwn(t.Context(), &services.DecideAgentProposalsRequest{
+	results, err := svc.DecideManyOwn(t.Context(), &agentports.DecideAgentProposalsRequest{
 		ProposalIDs:    []pulid.ID{first.ID, second.ID},
 		Decision:       agent.DecisionAccepted,
 		PreviewDigests: map[pulid.ID]string{first.ID: "sha256:first"},
@@ -77,7 +78,7 @@ func TestDecideManyOwn_RefusesTheWholeBatchWhenOneIsNotTheCallers(t *testing.T) 
 	svc := newService(proposals, &decider.stubDecider)
 	svc.decisions = decider
 
-	_, err := svc.DecideManyOwn(t.Context(), &services.DecideAgentProposalsRequest{
+	_, err := svc.DecideManyOwn(t.Context(), &agentports.DecideAgentProposalsRequest{
 		ProposalIDs: []pulid.ID{mine.ID, theirs.ID},
 		Decision:    agent.DecisionAccepted,
 	}, actor())
@@ -98,7 +99,7 @@ func TestDecideManyOwn_KeepsTheBatchRules(t *testing.T) {
 	svc := newService(proposals, &decider.stubDecider)
 	svc.decisions = decider
 
-	_, err := svc.DecideManyOwn(t.Context(), &services.DecideAgentProposalsRequest{
+	_, err := svc.DecideManyOwn(t.Context(), &agentports.DecideAgentProposalsRequest{
 		ProposalIDs: []pulid.ID{first.ID, other.ID},
 		Decision:    agent.DecisionAccepted,
 	}, actor())
@@ -109,7 +110,7 @@ func TestDecideManyOwn_KeepsTheBatchRules(t *testing.T) {
 	for range MaxBatch + 1 {
 		many = append(many, pulid.MustNew("ap_"))
 	}
-	_, err = svc.DecideManyOwn(t.Context(), &services.DecideAgentProposalsRequest{
+	_, err = svc.DecideManyOwn(t.Context(), &agentports.DecideAgentProposalsRequest{
 		ProposalIDs: many,
 		Decision:    agent.DecisionAccepted,
 	}, actor())

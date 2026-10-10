@@ -12,8 +12,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/rateimport"
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateimportports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	pkgrateimport "github.com/emoss08/trenova/pkg/rateimport"
@@ -24,15 +27,15 @@ import (
 )
 
 type fakeFuelPurchases struct {
-	repositories.FuelPurchaseRepository
+	fuelpurchaseports.FuelPurchaseRepository
 
 	purchases []*fuelpurchase.FuelPurchase
-	captured  *repositories.ListFuelPurchasesRequest
+	captured  *fuelpurchaseports.ListFuelPurchasesRequest
 }
 
 func (f *fakeFuelPurchases) ListPurchases(
 	_ context.Context,
-	req *repositories.ListFuelPurchasesRequest,
+	req *fuelpurchaseports.ListFuelPurchasesRequest,
 ) (*pagination.CursorListResult[*fuelpurchase.FuelPurchase], error) {
 	f.captured = req
 
@@ -90,14 +93,14 @@ func TestListFuelPurchases_ReadsTheTractorAndJurisdictionItNames(t *testing.T) {
 }
 
 type fakeFuelIndexPrices struct {
-	repositories.FuelIndexPriceRepository
+	fuelsurchargeports.FuelIndexPriceRepository
 
-	captured *repositories.ListFuelIndexPricesRequest
+	captured *fuelsurchargeports.ListFuelIndexPricesRequest
 }
 
 func (f *fakeFuelIndexPrices) ListByIndex(
 	_ context.Context,
-	req *repositories.ListFuelIndexPricesRequest,
+	req *fuelsurchargeports.ListFuelIndexPricesRequest,
 ) ([]*fuelsurcharge.FuelIndexPrice, error) {
 	f.captured = req
 
@@ -137,14 +140,14 @@ func TestListFuelIndexPrices_BoundsTheWindowAndTheCount(t *testing.T) {
 }
 
 type fakeIFTAJurisdictions struct {
-	repositories.IFTARepository
+	iftaports.IFTARepository
 
-	captured *repositories.ListJurisdictionsRequest
+	captured *iftaports.ListJurisdictionsRequest
 }
 
 func (f *fakeIFTAJurisdictions) ListJurisdictions(
 	_ context.Context,
-	req *repositories.ListJurisdictionsRequest,
+	req *iftaports.ListJurisdictionsRequest,
 ) ([]*ifta.Jurisdiction, error) {
 	f.captured = req
 
@@ -171,14 +174,14 @@ func TestListIFTAJurisdictions_OnlyActiveOnes(t *testing.T) {
 }
 
 type fakeRateImports struct {
-	repositories.RateImportRepository
+	rateimportports.RateImportRepository
 
-	captured *repositories.ListRateImportBatchesRequest
+	captured *rateimportports.ListRateImportBatchesRequest
 }
 
 func (f *fakeRateImports) List(
 	_ context.Context,
-	req *repositories.ListRateImportBatchesRequest,
+	req *rateimportports.ListRateImportBatchesRequest,
 ) (*pagination.ListResult[*rateimport.RateImportBatch], error) {
 	f.captured = req
 

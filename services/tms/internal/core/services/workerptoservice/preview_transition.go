@@ -6,8 +6,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -16,8 +17,8 @@ import (
 // would leave it, and what the driver would be told and texted.
 func (s *Service) PreviewReject(
 	ctx context.Context,
-	req *repositories.UpdatePTOStatusRequest,
-) (*services.WorkerPTOTransitionPreview, error) {
+	req *workerports.UpdatePTOStatusRequest,
+) (*workerports.WorkerPTOTransitionPreview, error) {
 	if err := requireRejectionReason(req); err != nil {
 		return nil, err
 	}
@@ -32,8 +33,8 @@ func (s *Service) PreviewReject(
 // PreviewCancel is Cancel without the write.
 func (s *Service) PreviewCancel(
 	ctx context.Context,
-	req *repositories.UpdatePTOStatusRequest,
-) (*services.WorkerPTOTransitionPreview, error) {
+	req *workerports.UpdatePTOStatusRequest,
+) (*workerports.WorkerPTOTransitionPreview, error) {
 	return s.previewTransition(ctx, transitionParams{
 		req:          req,
 		target:       worker.PTOStatusCancelled,
@@ -41,7 +42,7 @@ func (s *Service) PreviewCancel(
 	})
 }
 
-func requireRejectionReason(req *repositories.UpdatePTOStatusRequest) error {
+func requireRejectionReason(req *workerports.UpdatePTOStatusRequest) error {
 	if strings.TrimSpace(req.Reason) == "" {
 		return errortypes.NewValidationError(
 			"reason",
@@ -56,7 +57,7 @@ func requireRejectionReason(req *repositories.UpdatePTOStatusRequest) error {
 func (s *Service) previewTransition(
 	ctx context.Context,
 	params transitionParams,
-) (*services.WorkerPTOTransitionPreview, error) {
+) (*workerports.WorkerPTOTransitionPreview, error) {
 	request := *params.req
 	params.req = &request
 
@@ -66,7 +67,7 @@ func (s *Service) previewTransition(
 	}
 
 	after := projectTransition(current, params.req)
-	preview := &services.WorkerPTOTransitionPreview{
+	preview := &workerports.WorkerPTOTransitionPreview{
 		Before:        current,
 		After:         after,
 		ReturnsLedger: releasesUsage(current, params.target),
@@ -116,7 +117,7 @@ func (s *Service) planTransition(
 	current := params.current
 	if current == nil {
 		var err error
-		current, err = s.repo.GetByID(ctx, &repositories.GetPTOByIDRequest{
+		current, err = s.repo.GetByID(ctx, &workerports.GetPTOByIDRequest{
 			ID:         req.ID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -154,7 +155,7 @@ func (s *Service) planTransition(
 // who made the decision, and the reason recorded against it.
 func projectTransition(
 	current *worker.WorkerPTO,
-	req *repositories.UpdatePTOStatusRequest,
+	req *workerports.UpdatePTOStatusRequest,
 ) *worker.WorkerPTO {
 	after := *current
 	after.Status = req.Status
@@ -201,11 +202,11 @@ func (s *Service) sendsSMS() bool {
 // sent none, and neither is a decision with no wording.
 func (s *Service) transitionSMS(
 	ctx context.Context,
-	req *repositories.UpdatePTOStatusRequest,
+	req *workerports.UpdatePTOStatusRequest,
 	updated *worker.WorkerPTO,
 	target worker.PTOStatus,
-) (*services.DriverSMSPreview, error) {
-	user, err := s.userRepo.GetByID(ctx, repositories.GetUserByIDRequest{
+) (*notificationports.DriverSMSPreview, error) {
+	user, err := s.userRepo.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  req.TenantInfo.OrgID,
 			BuID:   req.TenantInfo.BuID,
@@ -216,7 +217,7 @@ func (s *Service) transitionSMS(
 		return nil, err
 	}
 
-	wrk, err := s.workerRepo.GetByID(ctx, repositories.GetWorkerByIDRequest{
+	wrk, err := s.workerRepo.GetByID(ctx, workerports.GetWorkerByIDRequest{
 		ID:         updated.WorkerID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -232,5 +233,5 @@ func (s *Service) transitionSMS(
 		return nil, nil //nolint:nilnil // a nil SMS means the driver is not texted
 	}
 
-	return &services.DriverSMSPreview{PhoneNumber: wrk.PhoneNumber, Message: message}, nil
+	return &notificationports.DriverSMSPreview{PhoneNumber: wrk.PhoneNumber, Message: message}, nil
 }

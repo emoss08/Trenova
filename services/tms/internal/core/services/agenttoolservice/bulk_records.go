@@ -10,9 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -34,8 +34,8 @@ type recordLabels func(
 ) map[pulid.ID]string
 
 type singleRecordTool interface {
-	serviceports.AgentTool
-	serviceports.ToolPreviewer
+	agentports.AgentTool
+	agentports.ToolPreviewer
 }
 
 type recordBatch struct {
@@ -86,8 +86,8 @@ func (b *recordBatch) property(description string) map[string]any {
 }
 
 func (b *recordBatch) ids(
-	tool serviceports.AgentTool,
-	params *serviceports.ToolExecuteParams,
+	tool agentports.AgentTool,
+	params *agentports.ToolExecuteParams,
 ) ([]pulid.ID, error) {
 	if err := guardPreview(tool, params); err != nil {
 		return nil, err
@@ -102,9 +102,9 @@ func (b *recordBatch) ids(
 }
 
 func (b *recordBatch) singleParams(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 	id pulid.ID,
-) serviceports.ToolExecuteParams {
+) agentports.ToolExecuteParams {
 	single := *params
 	single.Params = make(map[string]any, len(b.shared)+1)
 	single.Params[b.singleParam] = id.String()
@@ -122,8 +122,8 @@ func (b *recordBatch) singleParams(
 
 func (b *recordBatch) Preview(
 	ctx context.Context,
-	tool serviceports.AgentTool,
-	params *serviceports.ToolExecuteParams,
+	tool agentports.AgentTool,
+	params *agentports.ToolExecuteParams,
 ) (*agent.ToolPreview, error) {
 	ids, err := b.ids(tool, params)
 	if err != nil {
@@ -172,7 +172,7 @@ func (b *recordBatch) Preview(
 
 func (b *recordBatch) previewOne(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 	id pulid.ID,
 ) (batchItem, error) {
 	single, err := b.single.Preview(ctx, b.singleParams(params, id))
@@ -279,8 +279,8 @@ func (b *recordBatch) refusalOf(refused []batchItem) error {
 
 func (b *recordBatch) Validate(
 	ctx context.Context,
-	tool serviceports.AgentTool,
-	params *serviceports.ToolExecuteParams,
+	tool agentports.AgentTool,
+	params *agentports.ToolExecuteParams,
 ) error {
 	preview, err := b.Preview(ctx, tool, params)
 	if err != nil {
@@ -297,9 +297,9 @@ type batchFailure struct {
 
 func (b *recordBatch) Execute(
 	ctx context.Context,
-	tool serviceports.AgentTool,
-	params *serviceports.ToolExecuteParams,
-	run func(ctx context.Context, params serviceports.ToolExecuteParams) error,
+	tool agentports.AgentTool,
+	params *agentports.ToolExecuteParams,
+	run func(ctx context.Context, params agentports.ToolExecuteParams) error,
 ) (*agent.ToolExecutionResult, error) {
 	if err := guardExecute(tool, *params); err != nil {
 		return nil, err
@@ -341,7 +341,7 @@ func (b *recordBatch) Execute(
 // reason, for the card that lists them.
 func (b *recordBatch) failedItems(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 	failures []batchFailure,
 ) []agent.ExecutionItemFail {
 	if len(failures) == 0 {
@@ -362,7 +362,7 @@ func (b *recordBatch) failedItems(
 
 func (b *recordBatch) outcome(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 	total int,
 	failures []batchFailure,
 ) string {
@@ -391,7 +391,7 @@ func (b *recordBatch) outcome(
 
 func (b *recordBatch) failedLabels(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 	failures []batchFailure,
 ) map[pulid.ID]string {
 	if b.labels == nil {

@@ -6,10 +6,10 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -42,7 +42,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.WorkerCredentialRepository {
+func New(p Params) workerports.WorkerCredentialRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.worker-credential-repository"),
@@ -56,7 +56,7 @@ func orderTypes(sq *bun.SelectQuery) *bun.SelectQuery {
 
 func (r *repository) applyTypeFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListCredentialTypesRequest,
+	req *workerports.ListCredentialTypesRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.WorkerCredentialTypeColumns
 	if req.Status != "" {
@@ -70,7 +70,7 @@ func (r *repository) applyTypeFilters(
 
 func (r *repository) ListTypes(
 	ctx context.Context,
-	req *repositories.ListCredentialTypesRequest,
+	req *workerports.ListCredentialTypesRequest,
 ) (*pagination.CursorListResult[*worker.WorkerCredentialType], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*worker.WorkerCredentialType], error) {
 		log := r.l.With(zap.String("operation", "ListTypes"))
@@ -160,7 +160,7 @@ func (r *repository) ListActiveTypes(
 
 func (r *repository) TypeSelectOptions(
 	ctx context.Context,
-	req *repositories.WorkerCredentialTypeSelectOptionsRequest,
+	req *workerports.WorkerCredentialTypeSelectOptionsRequest,
 ) (*pagination.ListResult[*worker.WorkerCredentialType], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*worker.WorkerCredentialType], error) {
 		cols := buncolgen.WorkerCredentialTypeColumns
@@ -201,7 +201,7 @@ func (r *repository) TypeSelectOptions(
 
 func (r *repository) GetTypeByID(
 	ctx context.Context,
-	req *repositories.GetCredentialTypeByIDRequest,
+	req *workerports.GetCredentialTypeByIDRequest,
 ) (*worker.WorkerCredentialType, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerCredentialType, error) {
 		entity := new(worker.WorkerCredentialType)
@@ -223,7 +223,7 @@ func (r *repository) GetTypeByID(
 
 func (r *repository) TypeCodeExists(
 	ctx context.Context,
-	req *repositories.CredentialTypeCodeExistsRequest,
+	req *workerports.CredentialTypeCodeExistsRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
 		cols := buncolgen.WorkerCredentialTypeColumns
@@ -350,7 +350,7 @@ func (r *repository) EnsureSystemTypes(
 
 func (r *repository) CountCredentialsByType(
 	ctx context.Context,
-	req *repositories.CountCredentialsByTypeRequest,
+	req *workerports.CountCredentialsByTypeRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		cols := buncolgen.WorkerCredentialColumns
@@ -377,7 +377,7 @@ func (r *repository) CountCredentialsByType(
 
 func (r *repository) CountCredentialsByTypeIDs(
 	ctx context.Context,
-	req *repositories.CountCredentialsByTypeIDsRequest,
+	req *workerports.CountCredentialsByTypeIDsRequest,
 ) (map[pulid.ID]int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (map[pulid.ID]int, error) {
 		if len(req.TypeIDs) == 0 {
@@ -408,7 +408,7 @@ func (r *repository) CountCredentialsByTypeIDs(
 
 func (r *repository) ListForWorker(
 	ctx context.Context,
-	req *repositories.ListWorkerCredentialsRequest,
+	req *workerports.ListWorkerCredentialsRequest,
 ) ([]*worker.WorkerCredential, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerCredential, error) {
 		cols := buncolgen.WorkerCredentialColumns
@@ -444,7 +444,7 @@ func (r *repository) ListForWorker(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req *repositories.GetWorkerCredentialByIDRequest,
+	req *workerports.GetWorkerCredentialByIDRequest,
 ) (*worker.WorkerCredential, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerCredential, error) {
 		entity := new(worker.WorkerCredential)
@@ -480,14 +480,14 @@ func (r *repository) GetByID(
 
 func (r *repository) Create(
 	ctx context.Context,
-	req *repositories.CreateWorkerCredentialRequest,
+	req *workerports.CreateWorkerCredentialRequest,
 ) (*worker.WorkerCredential, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerCredential, error) {
 		entity := req.Entity
 		cols := buncolgen.WorkerCredentialColumns
 		tenant := pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			if req.SupersedeReason != "" {
 				now := timeutils.NowUnix()
 				if _, uErr := r.db.DBForContext(c).
@@ -572,7 +572,7 @@ func (r *repository) Update(
 
 func (r *repository) ListExpiring(
 	ctx context.Context,
-	req *repositories.ListExpiringWorkerCredentialsRequest,
+	req *workerports.ListExpiringWorkerCredentialsRequest,
 ) ([]*worker.WorkerCredential, error) {
 	if req.TenantInfo.OrgID.IsNil() {
 		ctx = dbscope.WithSystem(ctx, "list expiring credentials across every organization for the expiry sweep")

@@ -8,9 +8,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -71,8 +73,8 @@ type CompactionPlan struct {
 	Kept   []string `json:"kept,omitempty"`
 	// Instructions carries the measure of the agent's prompt to the
 	// measure taken after, which builds no prompt.
-	Instructions int                             `json:"instructions"`
-	Request      *services.ChatCompletionRequest `json:"request"`
+	Instructions int                               `json:"instructions"`
+	Request      *agentports.ChatCompletionRequest `json:"request"`
 }
 
 // CompactionReply is what the model wrote for a compaction.
@@ -103,9 +105,9 @@ type CompactionResult struct {
 func (s *Service) PrepareCompaction(
 	ctx context.Context,
 	req *CompactRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*CompactionPlan, error) {
-	thread, err := s.conversations.GetThread(ctx, repositories.GetThreadRequest{
+	thread, err := s.conversations.GetThread(ctx, agentports.GetThreadRequest{
 		ID:         req.ThreadID,
 		UserID:     actor.UserID,
 		TenantInfo: req.TenantInfo,
@@ -114,7 +116,7 @@ func (s *Service) PrepareCompaction(
 		return nil, err
 	}
 
-	definition, err := s.usableDefinition(ctx, thread, actor, &services.SendMessageRequest{
+	definition, err := s.usableDefinition(ctx, thread, actor, &agentports.SendMessageRequest{
 		ThreadID:   thread.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -154,11 +156,11 @@ func (s *Service) PrepareCompaction(
 		After:        before.Total() - before.Frees(),
 		Kept:         kept,
 		Instructions: before.Instructions,
-		Request: &services.ChatCompletionRequest{
+		Request: &agentports.ChatCompletionRequest{
 			TenantInfo: actor.TenantInfo(),
 			System:     compactionPrompt(definition.Name),
-			Messages: []services.Message{
-				{Role: services.RoleUser, Content: compactionTranscript(older)},
+			Messages: []agentports.Message{
+				{Role: agentports.RoleUser, Content: compactionTranscript(older)},
 			},
 			MaxTokens:           conversation.SummaryTokenBudget,
 			PreferredProviderID: compactionProvider(thread, definition),
@@ -177,7 +179,7 @@ func (s *Service) FinishCompaction(
 	ctx context.Context,
 	plan *CompactionPlan,
 	reply *CompactionReply,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*CompactionResult, error) {
 	summary := strings.TrimSpace(reply.Summary)
 	if summary == "" {
@@ -188,7 +190,7 @@ func (s *Service) FinishCompaction(
 	summary = stringutils.Ellipsize(summary, maxSummaryChars)
 
 	tenant := actor.TenantInfo()
-	thread, err := s.conversations.GetThread(ctx, repositories.GetThreadRequest{
+	thread, err := s.conversations.GetThread(ctx, agentports.GetThreadRequest{
 		ID:         plan.ThreadID,
 		UserID:     actor.UserID,
 		TenantInfo: tenant,
@@ -240,7 +242,7 @@ func (s *Service) FinishCompaction(
 	})
 	message.Compaction.After = usage.Total()
 
-	saved, err := s.conversations.AppendTurn(ctx, repositories.AppendTurnRequest{
+	saved, err := s.conversations.AppendTurn(ctx, agentports.AppendTurnRequest{
 		ThreadID:   thread.ID,
 		TenantInfo: tenant,
 		Messages:   []conversation.Message{message},
@@ -267,7 +269,7 @@ func (s *Service) StopCompactingItself(
 ) error {
 	off := true
 
-	return s.conversations.UpdateThreadContext(ctx, repositories.UpdateThreadContextRequest{
+	return s.conversations.UpdateThreadContext(ctx, agentports.UpdateThreadContextRequest{
 		ThreadID:       threadID,
 		TenantInfo:     tenant,
 		AutoCompactOff: &off,
@@ -285,7 +287,7 @@ func (s *Service) measureAfterTurn(
 	saved []conversation.Message,
 	window int,
 	tenant pagination.TenantInfo,
-	emit services.AssistantStreamEmitter,
+	emit kernelports.AssistantStreamEmitter,
 ) {
 	history, err := s.modelHistory(ctx, thread.ID, tenant)
 	if err != nil {
@@ -310,9 +312,9 @@ func (s *Service) measureAfterTurn(
 	s.keepContextUsage(ctx, thread, &usage, tenant)
 
 	if emit != nil {
-		emit(services.StreamEvent{
-			Event: services.AssistantEventContext,
-			Data: services.AssistantContextEvent{
+		emit(kernelports.StreamEvent{
+			Event: agentports.AssistantEventContext,
+			Data: agentports.AssistantContextEvent{
 				ThreadID:       thread.ID,
 				Usage:          &usage,
 				AutoCompactOff: thread.AutoCompactOff,
@@ -329,7 +331,7 @@ func (s *Service) keepContextUsage(
 	tenant pagination.TenantInfo,
 ) {
 	thread.ContextUsage = usage
-	if err := s.conversations.UpdateThreadContext(ctx, repositories.UpdateThreadContextRequest{
+	if err := s.conversations.UpdateThreadContext(ctx, agentports.UpdateThreadContextRequest{
 		ThreadID:   thread.ID,
 		TenantInfo: tenant,
 		Usage:      usage,
@@ -348,7 +350,7 @@ func (s *Service) modelHistory(
 	threadID pulid.ID,
 	tenant pagination.TenantInfo,
 ) ([]conversation.Message, error) {
-	return s.conversations.ListMessages(ctx, repositories.ListMessagesRequest{
+	return s.conversations.ListMessages(ctx, agentports.ListMessagesRequest{
 		ThreadID:        threadID,
 		TenantInfo:      tenant,
 		Limit:           historyLimit,
@@ -362,7 +364,7 @@ func (s *Service) modelHistory(
 func (s *Service) currentUsage(
 	thread *conversation.Thread,
 	history []conversation.Message,
-	outcomes []services.ProposalOutcome,
+	outcomes []agentports.ProposalOutcome,
 ) conversation.ContextUsage {
 	return agentruntime.MeasureContext(agentruntime.ContextRequest{
 		Instructions: lastInstructions(thread),
@@ -464,11 +466,11 @@ func compactionProvider(
 func compactionAttribution(
 	definition *agentdefinition.Definition,
 	thread *conversation.Thread,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	turnID pulid.ID,
-) services.AIUsageAttribution {
+) aiusageports.AIUsageAttribution {
 	version := definition.Version
-	attribution := services.AIUsageAttribution{
+	attribution := aiusageports.AIUsageAttribution{
 		UserID:            actor.PersonUserID(),
 		AgentDefinitionID: definition.ID,
 		ThreadID:          thread.ID,
@@ -476,7 +478,7 @@ func compactionAttribution(
 		DefinitionVersion: &version,
 	}
 	if turnID.IsNotNil() {
-		attribution.OwnerKind = services.RunStepOwnerAssistantTurn
+		attribution.OwnerKind = agentports.RunStepOwnerAssistantTurn
 		attribution.OwnerID = turnID
 	}
 

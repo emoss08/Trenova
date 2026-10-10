@@ -9,8 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/invoicerun"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -19,23 +21,23 @@ import (
 )
 
 type fakeAdjustmentReader struct {
-	lineage   *serviceports.InvoiceAdjustmentLineage
+	lineage   *invoiceadjustmentports.InvoiceAdjustmentLineage
 	detail    *invoiceadjustment.InvoiceAdjustment
-	approvals []*repositories.InvoiceAdjustmentApprovalQueueItem
+	approvals []*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem
 	groupID   pulid.ID
 }
 
 func (f *fakeAdjustmentReader) GetDetail(
 	context.Context,
-	*serviceports.GetInvoiceAdjustmentDetailRequest,
+	*invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest,
 ) (*invoiceadjustment.InvoiceAdjustment, error) {
 	return f.detail, nil
 }
 
 func (f *fakeAdjustmentReader) GetLineage(
 	_ context.Context,
-	req *serviceports.GetInvoiceAdjustmentLineageRequest,
-) (*serviceports.InvoiceAdjustmentLineage, error) {
+	req *invoiceadjustmentports.GetInvoiceAdjustmentLineageRequest,
+) (*invoiceadjustmentports.InvoiceAdjustmentLineage, error) {
 	f.groupID = req.CorrectionGroupID
 
 	return f.lineage, nil
@@ -43,9 +45,9 @@ func (f *fakeAdjustmentReader) GetLineage(
 
 func (f *fakeAdjustmentReader) ListApprovals(
 	context.Context,
-	*repositories.ListApprovalQueueRequest,
-) (*pagination.CursorListResult[*repositories.InvoiceAdjustmentApprovalQueueItem], error) {
-	return &pagination.CursorListResult[*repositories.InvoiceAdjustmentApprovalQueueItem]{
+	*invoiceadjustmentports.ListApprovalQueueRequest,
+) (*pagination.CursorListResult[*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem], error) {
+	return &pagination.CursorListResult[*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem]{
 		Items: f.approvals,
 	}, nil
 }
@@ -56,7 +58,7 @@ type fakeDisputeLister struct {
 
 func (f *fakeDisputeLister) ListByInvoiceIDs(
 	context.Context,
-	*repositories.ListInvoiceDisputesByInvoiceIDsRequest,
+	*invoiceports.ListInvoiceDisputesByInvoiceIDsRequest,
 ) (map[pulid.ID][]*invoice.InvoiceDispute, error) {
 	return f.disputes, nil
 }
@@ -67,7 +69,7 @@ type fakeCreditApplications struct {
 
 func (f *fakeCreditApplications) ListCreditMemoApplicationsByInvoiceIDs(
 	context.Context,
-	*repositories.ListApplicationsByInvoiceIDsRequest,
+	*customerpaymentports.ListApplicationsByInvoiceIDsRequest,
 ) (map[pulid.ID][]*customerpayment.CreditMemoApplication, error) {
 	return f.byInvoice, nil
 }
@@ -75,14 +77,14 @@ func (f *fakeCreditApplications) ListCreditMemoApplicationsByInvoiceIDs(
 type fakeRunReader struct {
 	run        *invoicerun.InvoiceRun
 	runs       []*invoicerun.InvoiceRun
-	statements []*serviceports.OpenStatement
-	getReq     repositories.GetInvoiceRunByIDRequest
-	stmtReq    *serviceports.ListOpenStatementsRequest
+	statements []*invoicerunports.OpenStatement
+	getReq     invoicerunports.GetInvoiceRunByIDRequest
+	stmtReq    *invoicerunports.ListOpenStatementsRequest
 }
 
 func (f *fakeRunReader) Get(
 	_ context.Context,
-	req repositories.GetInvoiceRunByIDRequest,
+	req invoicerunports.GetInvoiceRunByIDRequest,
 ) (*invoicerun.InvoiceRun, error) {
 	f.getReq = req
 
@@ -91,32 +93,32 @@ func (f *fakeRunReader) Get(
 
 func (f *fakeRunReader) List(
 	context.Context,
-	*repositories.ListInvoiceRunsRequest,
+	*invoicerunports.ListInvoiceRunsRequest,
 ) (*pagination.ListResult[*invoicerun.InvoiceRun], error) {
 	return &pagination.ListResult[*invoicerun.InvoiceRun]{Items: f.runs, Total: len(f.runs)}, nil
 }
 
 func (f *fakeRunReader) ListOpenStatements(
 	_ context.Context,
-	req *serviceports.ListOpenStatementsRequest,
-) ([]*serviceports.OpenStatement, error) {
+	req *invoicerunports.ListOpenStatementsRequest,
+) ([]*invoicerunports.OpenStatement, error) {
 	f.stmtReq = req
 
 	return f.statements, nil
 }
 
 type fakeShareCandidates struct {
-	req        *serviceports.ListShareCandidatesRequest
-	candidates []*serviceports.ShareCandidate
+	req        *invoiceports.ListShareCandidatesRequest
+	candidates []*invoiceports.ShareCandidate
 }
 
 func (f *fakeShareCandidates) ListCandidates(
 	_ context.Context,
-	req *serviceports.ListShareCandidatesRequest,
-) (*pagination.ListResult[*serviceports.ShareCandidate], error) {
+	req *invoiceports.ListShareCandidatesRequest,
+) (*pagination.ListResult[*invoiceports.ShareCandidate], error) {
 	f.req = req
 
-	return &pagination.ListResult[*serviceports.ShareCandidate]{
+	return &pagination.ListResult[*invoiceports.ShareCandidate]{
 		Items: f.candidates,
 		Total: len(f.candidates),
 	}, nil
@@ -150,7 +152,7 @@ func TestListInvoiceAdjustments_ReadsAnInvoicesLineageWithItsDrafts(t *testing.T
 		Status:            invoiceadjustment.StatusDraft,
 		CreditTotalAmount: decimal.RequireFromString("-150.00"),
 	}
-	reader := &fakeAdjustmentReader{lineage: &serviceports.InvoiceAdjustmentLineage{
+	reader := &fakeAdjustmentReader{lineage: &invoiceadjustmentports.InvoiceAdjustmentLineage{
 		Invoices:    []*invoice.Invoice{inv},
 		Adjustments: []*invoiceadjustment.InvoiceAdjustment{draft},
 	}}
@@ -182,7 +184,7 @@ func TestListInvoiceAdjustments_ReadsAnInvoicesLineageWithItsDrafts(t *testing.T
 func TestListInvoiceAdjustments_WithoutAnInvoiceListsWhatWaitsForApproval(t *testing.T) {
 	t.Parallel()
 
-	pending := &repositories.InvoiceAdjustmentApprovalQueueItem{
+	pending := &invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem{
 		AdjustmentID:          pulid.MustNew("iadj_"),
 		OriginalInvoiceID:     pulid.MustNew("inv_"),
 		OriginalInvoiceNumber: "INV-9",
@@ -190,7 +192,7 @@ func TestListInvoiceAdjustments_WithoutAnInvoiceListsWhatWaitsForApproval(t *tes
 		Status:                invoiceadjustment.StatusPendingApproval,
 	}
 	tool := newListInvoiceAdjustmentsTool(
-		&fakeAdjustmentReader{approvals: []*repositories.InvoiceAdjustmentApprovalQueueItem{pending}},
+		&fakeAdjustmentReader{approvals: []*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem{pending}},
 		&fakeInvoiceRepo{},
 		&fakePermissions{},
 	)
@@ -330,15 +332,15 @@ func TestListOpenStatements_ShowsTheShipmentsForOneCustomer(t *testing.T) {
 	t.Parallel()
 
 	customerID := pulid.MustNew("cus_")
-	runs := &fakeRunReader{statements: []*serviceports.OpenStatement{{
+	runs := &fakeRunReader{statements: []*invoicerunports.OpenStatement{{
 		CustomerID:    customerID,
 		CustomerName:  "Acme Foods",
 		ShipmentCount: 1,
 		TotalAmount:   decimal.RequireFromString("400.00"),
-		Groups: []*serviceports.StatementGroup{{
+		Groups: []*invoicerunports.StatementGroup{{
 			Label:       "Acme Foods",
 			TotalAmount: decimal.RequireFromString("400.00"),
-			Shipments: []*serviceports.StatementShipment{{
+			Shipments: []*invoicerunports.StatementShipment{{
 				BillingQueueItemID: pulid.MustNew("bqi_"),
 				ProNumber:          "PRO-7",
 				Amount:             decimal.RequireFromString("400.00"),
@@ -365,7 +367,7 @@ func TestListInvoiceShareCandidates_ListsWhoMayReadTheInvoice(t *testing.T) {
 	t.Parallel()
 
 	invoiceID := pulid.MustNew("inv_")
-	shares := &fakeShareCandidates{candidates: []*serviceports.ShareCandidate{{
+	shares := &fakeShareCandidates{candidates: []*invoiceports.ShareCandidate{{
 		ID: pulid.MustNew("usr_"), Name: "Dana Whitfield", Username: "dana",
 	}}}
 	tool := newListInvoiceShareCandidatesTool(shares)

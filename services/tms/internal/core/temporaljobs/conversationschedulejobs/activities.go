@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/conversationscheduleservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.temporal.io/sdk/temporal"
 	"go.uber.org/fx"
@@ -20,15 +20,15 @@ type reconciler interface {
 type ActivitiesParams struct {
 	fx.In
 
-	Runner    serviceports.ConversationScheduleRunner
-	Syncer    serviceports.ConversationScheduleSyncer
+	Runner    conversationscheduleports.ConversationScheduleRunner
+	Syncer    conversationscheduleports.ConversationScheduleSyncer
 	Schedules *Schedules
 	Logger    *zap.Logger
 }
 
 type Activities struct {
-	runner     serviceports.ConversationScheduleRunner
-	syncer     serviceports.ConversationScheduleSyncer
+	runner     conversationscheduleports.ConversationScheduleRunner
+	syncer     conversationscheduleports.ConversationScheduleSyncer
 	reconciler reconciler
 	l          *zap.Logger
 }
@@ -49,7 +49,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 func (a *Activities) FireConversationScheduleActivity(
 	ctx context.Context,
 	input *FireInput,
-) (*serviceports.FireConversationScheduleResult, error) {
+) (*conversationscheduleports.FireConversationScheduleResult, error) {
 	if input == nil || input.Payload == nil || input.Payload.ScheduleID.IsNil() {
 		return nil, temporal.NewNonRetryableApplicationError(
 			"a scheduled run must name its schedule", "InvalidInput", nil,
@@ -57,7 +57,7 @@ func (a *Activities) FireConversationScheduleActivity(
 	}
 
 	payload := input.Payload
-	result, err := a.runner.Fire(ctx, serviceports.FireConversationScheduleRequest{
+	result, err := a.runner.Fire(ctx, conversationscheduleports.FireConversationScheduleRequest{
 		ScheduleID: payload.ScheduleID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  payload.OrganizationID,

@@ -4,12 +4,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/core/services/dispatcheligibility"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 )
 
-func decorateMoves(moves []*repositories.BoardMove, now int64) []*BoardMove {
+func decorateMoves(moves []*shipmentports.BoardMove, now int64) []*BoardMove {
 	decorated := make([]*BoardMove, 0, len(moves))
 	for _, move := range moves {
 		decorated = append(decorated, decorateMove(move, now))
@@ -17,7 +17,7 @@ func decorateMoves(moves []*repositories.BoardMove, now int64) []*BoardMove {
 	return decorated
 }
 
-func decorateMove(move *repositories.BoardMove, now int64) *BoardMove {
+func decorateMove(move *shipmentports.BoardMove, now int64) *BoardMove {
 	return &BoardMove{
 		BoardMove:       move,
 		Urgency:         urgencyFor(move, now),
@@ -52,7 +52,7 @@ func summarizeTender(entity *tender.Tender) *MoveTenderSummary {
 	return summary
 }
 
-func urgencyFor(move *repositories.BoardMove, now int64) UrgencyBucket {
+func urgencyFor(move *shipmentports.BoardMove, now int64) UrgencyBucket {
 	if move.OriginWindowStart <= 0 {
 		return UrgencyPlanned
 	}
@@ -72,7 +72,7 @@ func urgencyFor(move *repositories.BoardMove, now int64) UrgencyBucket {
 	}
 }
 
-func minutesToPickup(move *repositories.BoardMove, now int64) int64 {
+func minutesToPickup(move *shipmentports.BoardMove, now int64) int64 {
 	if move.OriginWindowStart <= 0 {
 		return 0
 	}
@@ -152,7 +152,7 @@ func applyWorkload(row *BoardDriver, snapshot *dispatchcandidateservice.FleetSna
 }
 
 func availabilityFindings(
-	driver *repositories.BoardDriver,
+	driver *shipmentports.BoardDriver,
 	snapshot *dispatchcandidateservice.FleetSnapshot,
 	control *dispatchcontrol.DispatchControl,
 	now int64,

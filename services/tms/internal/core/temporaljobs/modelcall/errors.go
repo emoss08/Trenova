@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"time"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/temporal"
@@ -104,11 +104,11 @@ func Classify(err error) error {
 			})
 	}
 
-	if errors.Is(err, serviceports.ErrNoProviderConfigured) {
+	if errors.Is(err, agentports.ErrNoProviderConfigured) {
 		return fail(ErrTypeNoProviderConfigured, true, 0)
 	}
 
-	if errors.Is(err, serviceports.ErrProvidersResting) {
+	if errors.Is(err, agentports.ErrProvidersResting) {
 		return fail(ErrTypeProvidersResting, false, restingBackoff)
 	}
 
@@ -123,7 +123,7 @@ func Classify(err error) error {
 		return fail(ErrTypeModelRejected, true, 0)
 	}
 
-	var failure serviceports.ProviderFailure
+	var failure agentports.ProviderFailure
 	if errors.As(err, &failure) && !retryableStatus(failure.ProviderStatus()) {
 		return fail(ErrTypeModelRejected, true, 0)
 	}
@@ -145,7 +145,7 @@ type modelFailure struct {
 	Refusal       *refusal     `json:"refusal,omitempty"`
 	Plan          *PlanRefusal `json:"plan,omitempty"`
 	// Providers are the providers asked, when every one of them failed.
-	Providers []serviceports.ChatProviderFailure `json:"providers,omitempty"`
+	Providers []agentports.ChatProviderFailure `json:"providers,omitempty"`
 }
 
 type PlanRefusal struct {
@@ -201,14 +201,14 @@ type refusal struct {
 
 func modelFailureOf(err error) modelFailure {
 	detail := modelFailure{
-		Resting:       errors.Is(err, serviceports.ErrProvidersResting),
+		Resting:       errors.Is(err, agentports.ErrProvidersResting),
 		TimedOut:      errors.Is(err, context.DeadlineExceeded),
-		NoProvider:    errors.Is(err, serviceports.ErrNoProviderConfigured),
-		SchemaInvalid: errors.Is(err, serviceports.ErrModelSchemaValidation),
+		NoProvider:    errors.Is(err, agentports.ErrNoProviderConfigured),
+		SchemaInvalid: errors.Is(err, agentports.ErrModelSchemaValidation),
 		Plan:          planRefusalOf(err),
 	}
 
-	var failure serviceports.ProviderFailure
+	var failure agentports.ProviderFailure
 	if errors.As(err, &failure) {
 		detail.Status = failure.ProviderStatus()
 		detail.Retryable = failure.ProviderRetryable()
@@ -223,7 +223,7 @@ func modelFailureOf(err error) modelFailure {
 		detail.Refusal = &refusal{Message: business.Message, Args: args, Details: business.Details}
 	}
 
-	var exhausted *serviceports.ChatProvidersFailedError
+	var exhausted *agentports.ChatProvidersFailedError
 	if errors.As(err, &exhausted) {
 		detail.Providers = exhausted.Failures
 	}
@@ -252,7 +252,7 @@ type Failure struct {
 	Refusal *refusal     `json:"refusal,omitempty"`
 	Plan    *PlanRefusal `json:"plan,omitempty"`
 	// Providers are the providers asked, when every one of them failed.
-	Providers []serviceports.ChatProviderFailure `json:"providers,omitempty"`
+	Providers []agentports.ChatProviderFailure `json:"providers,omitempty"`
 }
 
 // FailureOf reads why a run ended from the error workflow code was handed.
@@ -300,7 +300,7 @@ func (f *Failure) Err() error {
 	// Every model the reply was asked of failed: the error says which, so the
 	// saved reply can list them the way the reader saw them.
 	if f != nil && len(f.Providers) > 0 && err != nil {
-		return &serviceports.ChatProvidersFailedError{Failures: f.Providers, Err: err}
+		return &agentports.ChatProvidersFailedError{Failures: f.Providers, Err: err}
 	}
 
 	return err
@@ -317,13 +317,13 @@ func (f *Failure) err() error {
 	case f.Refusal != nil:
 		return f.Refusal.err()
 	case f.NoProvider:
-		return fmt.Errorf("%s: %w", f.Message, serviceports.ErrNoProviderConfigured)
+		return fmt.Errorf("%s: %w", f.Message, agentports.ErrNoProviderConfigured)
 	case f.SchemaInvalid:
-		return fmt.Errorf("%s: %w", f.Message, serviceports.ErrModelSchemaValidation)
+		return fmt.Errorf("%s: %w", f.Message, agentports.ErrModelSchemaValidation)
 	case f.Status != 0:
 		return providerFailure{f}
 	case f.Resting:
-		return fmt.Errorf("%s: %w", f.Message, serviceports.ErrProvidersResting)
+		return fmt.Errorf("%s: %w", f.Message, agentports.ErrProvidersResting)
 	case f.TimedOut:
 		return fmt.Errorf("%s: %w", f.Message, context.DeadlineExceeded)
 	default:
@@ -385,7 +385,7 @@ func retryableStatus(status int) bool {
 // providerBackoff is how long the provider asked to be left alone, capped.
 // Zero leaves the wait to the retry policy's own backoff.
 func providerBackoff(err error) time.Duration {
-	var backoff serviceports.ProviderBackoff
+	var backoff agentports.ProviderBackoff
 	if !errors.As(err, &backoff) {
 		return 0
 	}

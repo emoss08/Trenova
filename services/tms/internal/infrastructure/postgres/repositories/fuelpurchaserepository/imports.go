@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -20,7 +20,7 @@ import (
 
 func (r *repository) GetImportBatchByID(
 	ctx context.Context,
-	req *repositories.GetImportBatchByIDRequest,
+	req *fuelpurchaseports.GetImportBatchByIDRequest,
 ) (*fuelpurchase.ImportBatch, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*fuelpurchase.ImportBatch, error) {
 		entity := new(fuelpurchase.ImportBatch)
@@ -121,7 +121,7 @@ func (r *repository) ReplaceImportRows(
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		tenant := pagination.TenantInfo{OrgID: batch.OrganizationID, BuID: batch.BusinessUnitID}
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
 			if _, dErr := tx.NewDelete().
 				Model((*fuelpurchase.ImportRow)(nil)).
 				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
@@ -158,7 +158,7 @@ func (r *repository) ReplaceImportRows(
 
 func (r *repository) ListImportRows(
 	ctx context.Context,
-	req *repositories.ListImportRowsRequest,
+	req *fuelpurchaseports.ListImportRowsRequest,
 ) (*pagination.CursorListResult[*fuelpurchase.ImportRow], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*fuelpurchase.ImportRow], error) {
 		cols := buncolgen.ImportRowColumns
@@ -254,9 +254,9 @@ type committedPurchase struct {
 
 func (r *repository) CommitImport(
 	ctx context.Context,
-	req *repositories.CommitImportRequest,
-) (*repositories.CommitImportResult, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.CommitImportResult, error) {
+	req *fuelpurchaseports.CommitImportRequest,
+) (*fuelpurchaseports.CommitImportResult, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fuelpurchaseports.CommitImportResult, error) {
 		cols := buncolgen.FuelPurchaseColumns
 		rowCols := buncolgen.ImportRowColumns
 		batch := req.Batch
@@ -265,9 +265,9 @@ func (r *repository) CommitImport(
 			", " + cols.TransactionReference.Name + ") WHERE " + cols.TransactionReference.Name +
 			" IS NOT NULL DO NOTHING"
 
-		result := &repositories.CommitImportResult{}
+		result := &fuelpurchaseports.CommitImportResult{}
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
 			for _, purchase := range req.Purchases {
 				purchase.OrganizationID = batch.OrganizationID
 				purchase.BusinessUnitID = batch.BusinessUnitID
@@ -384,7 +384,7 @@ func (r *repository) CommitImport(
 
 func (r *repository) applyImportBatchFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListImportBatchesRequest,
+	req *fuelpurchaseports.ListImportBatchesRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.ImportBatchColumns
 
@@ -408,7 +408,7 @@ func (r *repository) applyImportBatchFilters(
 // per run, so this doubles as the history of what each connection has read.
 func (r *repository) ListImportBatches(
 	ctx context.Context,
-	req *repositories.ListImportBatchesRequest,
+	req *fuelpurchaseports.ListImportBatchesRequest,
 ) (*pagination.CursorListResult[*fuelpurchase.ImportBatch], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*fuelpurchase.ImportBatch], error) {
 		dba := r.db.DBForContext(ctx)

@@ -7,12 +7,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
 	"github.com/emoss08/trenova/internal/core/services/agentshadow"
 	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
@@ -43,12 +43,12 @@ type handOffEffects struct {
 	svc      *Service
 	parent   *agentdefinition.Definition
 	threadID pulid.ID
-	opened   []*serviceports.RunRequest
+	opened   []*agentports.RunRequest
 }
 
 func (fx *handOffEffects) Complete(
 	_ *agentruntime.Turn,
-	req *serviceports.ChatCompletionRequest,
+	req *agentports.ChatCompletionRequest,
 ) (agentruntime.ModelReply, error) {
 	return fx.svc.runtime.StreamCompletion(fx.ctx, req, fx.Emit)
 }
@@ -64,11 +64,11 @@ func (*handOffEffects) Find(*agentruntime.Turn, map[string]any) agentruntime.Fin
 	return agentruntime.FindAnswer{}
 }
 
-func (*handOffEffects) Emit(serviceports.StreamEvent) {}
+func (*handOffEffects) Emit(kernelports.StreamEvent) {}
 
 func (fx *handOffEffects) Observe(
 	_ *agentruntime.Turn,
-	call *serviceports.ToolCall,
+	call *agentports.ToolCall,
 	outcome agentruntime.ToolOutcome,
 ) agentruntime.ToolOutcome {
 	return fx.svc.runtime.ObserveCall(nil, call, outcome)
@@ -150,12 +150,12 @@ func TestHandOff_VoidAndRecreateIsOneTwoStepPlanInTheOrderAsked(t *testing.T) {
 		ToolName: "duplicate_shipment",
 		Tier:     agent.TierPropose,
 	}
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
-		{ToolCalls: []serviceports.ToolCall{{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+		{ToolCalls: []agentports.ToolCall{{
 			ID: "call_void", Name: "void_shipment",
 			Arguments: map[string]any{"shipmentId": "shp_old", "reason": "Wrong dates"},
 		}}},
-		{ToolCalls: []serviceports.ToolCall{{
+		{ToolCalls: []agentports.ToolCall{{
 			ID: "call_hand", Name: "delegate_task",
 			Arguments: map[string]any{
 				"agentId": f.delegate.ID.String(),
@@ -163,7 +163,7 @@ func TestHandOff_VoidAndRecreateIsOneTwoStepPlanInTheOrderAsked(t *testing.T) {
 				"records": []any{map[string]any{"entityType": "shipment", "id": "shp_old"}},
 			},
 		}}},
-		{ToolCalls: []serviceports.ToolCall{{
+		{ToolCalls: []agentports.ToolCall{{
 			ID: "call_copy", Name: "duplicate_shipment",
 			Arguments: map[string]any{"shipmentId": "shp_old"},
 		}}},
@@ -175,7 +175,7 @@ func TestHandOff_VoidAndRecreateIsOneTwoStepPlanInTheOrderAsked(t *testing.T) {
 		Completion: completion,
 		QueryTools: &stubQueryRegistry{},
 		ActionTools: &stubActionRegistry{
-			Tools: []serviceports.AgentTool{void, duplicate},
+			Tools: []agentports.AgentTool{void, duplicate},
 		},
 		Permissions: &agentruntimetest.StubPermissions{},
 	})
@@ -189,7 +189,7 @@ func TestHandOff_VoidAndRecreateIsOneTwoStepPlanInTheOrderAsked(t *testing.T) {
 	})
 
 	threadID := pulid.MustNew("athr_")
-	req := &serviceports.RunRequest{
+	req := &agentports.RunRequest{
 		Definition: f.parent,
 		Actor:      f.request.Actor,
 		Context: agentdefinition.RuntimeContext{
@@ -202,8 +202,8 @@ func TestHandOff_VoidAndRecreateIsOneTwoStepPlanInTheOrderAsked(t *testing.T) {
 		},
 		Input:    "Void SEED-DET-009 and recreate it for next Monday.",
 		ThreadID: threadID,
-		StepOwner: serviceports.RunStepOwner{
-			Kind: serviceports.RunStepOwnerAssistantTurn,
+		StepOwner: agentports.RunStepOwner{
+			Kind: agentports.RunStepOwnerAssistantTurn,
 			ID:   pulid.MustNew("atrn_"),
 		},
 	}
@@ -258,7 +258,7 @@ func TestHandOff_VoidAndRecreateIsOneTwoStepPlanInTheOrderAsked(t *testing.T) {
 	assert.Equal(t, 2, steps["duplicate_shipment"].PlanStep)
 	assert.Equal(t, delegateRun.ID, steps["duplicate_shipment"].RunID)
 
-	byTool := map[string]serviceports.AssistantProposal{}
+	byTool := map[string]agentports.AssistantProposal{}
 	for _, proposal := range persisted {
 		byTool[proposal.ToolName] = proposal
 	}
@@ -277,7 +277,7 @@ func TestPersistProposals_AReadOnlyHandOffLeavesItsRun(t *testing.T) {
 	svc := newProposalService(runs, proposals, &stubConversationRepo{})
 	params := proposalTestParams(nil, nil)
 	params.TurnID = pulid.MustNew("atrn_")
-	params.Delegations = []serviceports.DelegatedRun{{
+	params.Delegations = []agentports.DelegatedRun{{
 		Definition: &agentdefinition.Definition{
 			ID:   pulid.MustNew("agd_"),
 			Name: "Shipment Desk",
@@ -308,7 +308,7 @@ type threadPlans struct {
 
 func (s *threadPlans) ListByThread(
 	context.Context,
-	repositories.ListAgentPlansByThreadRequest,
+	agentports.ListAgentPlansByThreadRequest,
 ) ([]*agent.AgentPlan, error) {
 	return s.plans, nil
 }
@@ -347,7 +347,7 @@ func TestListThreadPlans_HoldsAPlanWithAStepFromAnAgentInShadowMode(t *testing.T
 		&stubConversationRepo{thread: thread}, shadowSwitches{definition: delegate})
 	svc.plans = &threadPlans{plans: []*agent.AgentPlan{plan}}
 
-	listed, err := svc.ListThreadPlans(t.Context(), repositories.GetThreadRequest{ID: thread.ID})
+	listed, err := svc.ListThreadPlans(t.Context(), agentports.GetThreadRequest{ID: thread.ID})
 	require.NoError(t, err)
 
 	require.Len(t, listed, 1)
@@ -357,7 +357,7 @@ func TestListThreadPlans_HoldsAPlanWithAStepFromAnAgentInShadowMode(t *testing.T
 
 func (s *threadPlans) ExpirePendingByThread(
 	context.Context,
-	repositories.ExpireAgentPlansByThreadRequest,
+	agentports.ExpireAgentPlansByThreadRequest,
 ) (int, error) {
 	return 0, nil
 }

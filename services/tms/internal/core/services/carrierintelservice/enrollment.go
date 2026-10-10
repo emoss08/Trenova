@@ -9,8 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -50,7 +49,7 @@ func isPolicyReason(reason carrierintel.EnrollmentReason) bool {
 	}
 }
 
-func (s *Service) CarrierSaved(ctx context.Context, event *services.CarrierLifecycleEvent) {
+func (s *Service) CarrierSaved(ctx context.Context, event *carrierintelports.CarrierLifecycleEvent) {
 	if event == nil || event.Carrier == nil || event.Carrier.DOTNumber == "" {
 		return
 	}
@@ -75,7 +74,7 @@ func (s *Service) CarrierSaved(ctx context.Context, event *services.CarrierLifec
 			tenant:       event.TenantInfo,
 			control:      control,
 			provider:     provider,
-			subjects:     []repositories.CarrierIntelSubject{subject},
+			subjects:     []carrierintelports.CarrierIntelSubject{subject},
 			state:        carrierintel.DesiredStateNotEnrolled,
 			now:          now,
 			onlyIfPolicy: true,
@@ -87,7 +86,7 @@ func (s *Service) CarrierSaved(ctx context.Context, event *services.CarrierLifec
 			tenant:   event.TenantInfo,
 			control:  control,
 			provider: provider,
-			subjects: []repositories.CarrierIntelSubject{subject},
+			subjects: []carrierintelports.CarrierIntelSubject{subject},
 			state:    carrierintel.DesiredStateEnrolled,
 			reason:   carrierintel.EnrollmentReasonPolicyAllActive,
 			now:      now,
@@ -120,7 +119,7 @@ func (s *Service) CarriersUsed(
 
 	subjects, err := s.subjectRepo.ListCarrierSubjects(
 		ctx,
-		&repositories.ListCarrierIntelSubjectsRequest{
+		&carrierintelports.ListCarrierIntelSubjectsRequest{
 			TenantInfo: tenantInfo,
 			CarrierIDs: carrierIDs,
 			ActiveOnly: true,
@@ -149,8 +148,8 @@ func (s *Service) CarriersUsed(
 	}
 }
 
-func carrierSubject(entity *carrier.Carrier) repositories.CarrierIntelSubject {
-	return repositories.CarrierIntelSubject{
+func carrierSubject(entity *carrier.Carrier) carrierintelports.CarrierIntelSubject {
+	return carrierintelports.CarrierIntelSubject{
 		SubjectType:  carrierintel.SubjectTypeCarrier,
 		SubjectID:    entity.ID.String(),
 		CarrierID:    entity.ID,
@@ -166,7 +165,7 @@ type desireRequest struct {
 	tenant       pagination.TenantInfo
 	control      *carrierintel.CarrierIntelControl
 	provider     integration.Type
-	subjects     []repositories.CarrierIntelSubject
+	subjects     []carrierintelports.CarrierIntelSubject
 	state        carrierintel.DesiredState
 	reason       carrierintel.EnrollmentReason
 	now          int64
@@ -195,7 +194,7 @@ func (s *Service) setDesired(ctx context.Context, req *desireRequest) error {
 	for subjectType, ids := range bySubjectType {
 		rows, err := s.enrollmentRepo.ListBySubjects(
 			ctx,
-			&repositories.ListEnrollmentsBySubjectRequest{
+			&carrierintelports.ListEnrollmentsBySubjectRequest{
 				TenantInfo:  req.tenant,
 				Provider:    req.provider,
 				SubjectType: subjectType,
@@ -299,7 +298,7 @@ func (s *Service) SetManualEnrollment(
 
 	subjects, err := s.subjectRepo.ListCarrierSubjects(
 		ctx,
-		&repositories.ListCarrierIntelSubjectsRequest{
+		&carrierintelports.ListCarrierIntelSubjectsRequest{
 			TenantInfo: req.TenantInfo,
 			CarrierIDs: req.CarrierIDs,
 			Limit:      len(req.CarrierIDs),
@@ -337,11 +336,11 @@ func (s *Service) desiredSubjects(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	control *carrierintel.CarrierIntelControl,
-) ([]repositories.CarrierIntelSubject, error) {
-	subjects := make([]repositories.CarrierIntelSubject, 0, 128)
+) ([]carrierintelports.CarrierIntelSubject, error) {
+	subjects := make([]carrierintelports.CarrierIntelSubject, 0, 128)
 
 	if control.EnrollmentPolicy != carrierintel.EnrollmentPolicyManual {
-		req := &repositories.ListCarrierIntelSubjectsRequest{
+		req := &carrierintelports.ListCarrierIntelSubjectsRequest{
 			TenantInfo: tenantInfo,
 			ActiveOnly: true,
 			Limit:      subjectPageSize,
@@ -383,7 +382,7 @@ func (s *Service) desiredSubjects(
 
 func reasonForSubject(
 	control *carrierintel.CarrierIntelControl,
-	subject repositories.CarrierIntelSubject,
+	subject carrierintelports.CarrierIntelSubject,
 ) carrierintel.EnrollmentReason {
 	switch subject.SubjectType {
 	case carrierintel.SubjectTypeOrganization:
@@ -423,7 +422,7 @@ func (s *Service) ReconcileDesired(
 	now := s.now()
 	result := &ReconcileResult{Desired: len(subjects)}
 
-	byReason := make(map[carrierintel.EnrollmentReason][]repositories.CarrierIntelSubject, 3)
+	byReason := make(map[carrierintel.EnrollmentReason][]carrierintelports.CarrierIntelSubject, 3)
 	want := make(map[string]struct{}, len(subjects))
 	for _, subject := range subjects {
 		reason := reasonForSubject(control, subject)
@@ -493,7 +492,7 @@ func (s *Service) SyncPendingEnrollments(
 
 	pending, err := s.enrollmentRepo.ListNeedingSync(
 		ctx,
-		&repositories.ListEnrollmentsNeedingSyncRequest{
+		&carrierintelports.ListEnrollmentsNeedingSyncRequest{
 			TenantInfo: tenantInfo,
 			Provider:   provider,
 			Limit:      maxEnrollmentSyncPerRun,
@@ -519,7 +518,7 @@ func (s *Service) SyncPendingEnrollments(
 	if err != nil {
 		return nil, err
 	}
-	monitor, ok := bound.client.(services.CarrierIntelNativeMonitor)
+	monitor, ok := bound.client.(carrierintelports.CarrierIntelNativeMonitor)
 	if !ok {
 		return &SyncResult{}, nil
 	}
@@ -584,7 +583,7 @@ func (s *Service) SyncPendingEnrollments(
 func (s *Service) fillProviderRefs(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	monitor services.CarrierIntelNativeMonitor,
+	monitor carrierintelports.CarrierIntelNativeMonitor,
 	rows []*carrierintel.CarrierMonitoringEnrollment,
 ) error {
 	missing := make(map[carrierintel.SubjectType][]string, 2)
@@ -622,7 +621,7 @@ type syncBatch struct {
 	bound   *boundProvider
 	rows    []*carrierintel.CarrierMonitoringEnrollment
 	add     bool
-	call    func(ctx context.Context, refs []string) (*services.CarrierIntelEnrollResult, error)
+	call    func(ctx context.Context, refs []string) (*carrierintelports.CarrierIntelEnrollResult, error)
 	result  *SyncResult
 }
 
@@ -695,20 +694,20 @@ func isPausingError(err error) bool {
 	if isSpendCapError(err) {
 		return true
 	}
-	kind, ok := services.CarrierIntelErrorKindOf(err)
-	return ok && (kind == services.CarrierIntelErrorUnauthorized ||
-		kind == services.CarrierIntelErrorPaymentRequired)
+	kind, ok := carrierintelports.CarrierIntelErrorKindOf(err)
+	return ok && (kind == carrierintelports.CarrierIntelErrorUnauthorized ||
+		kind == carrierintelports.CarrierIntelErrorPaymentRequired)
 }
 
 func pauseReasonFor(err error) carrierintel.FeedPauseReason {
 	if isSpendCapError(err) {
 		return carrierintel.FeedPauseReasonSpendCap
 	}
-	kind, _ := services.CarrierIntelErrorKindOf(err)
+	kind, _ := carrierintelports.CarrierIntelErrorKindOf(err)
 	switch kind {
-	case services.CarrierIntelErrorPaymentRequired:
+	case carrierintelports.CarrierIntelErrorPaymentRequired:
 		return carrierintel.FeedPauseReasonPaymentRequired
-	case services.CarrierIntelErrorUnauthorized:
+	case carrierintelports.CarrierIntelErrorUnauthorized:
 		return carrierintel.FeedPauseReasonUnauthorized
 	default:
 		return carrierintel.FeedPauseReasonNone
@@ -716,7 +715,7 @@ func pauseReasonFor(err error) carrierintel.FeedPauseReason {
 }
 
 func errorSummary(err error) string {
-	var providerErr *services.CarrierIntelProviderError
+	var providerErr *carrierintelports.CarrierIntelProviderError
 	if errors.As(err, &providerErr) {
 		return providerErr.Error()
 	}
@@ -755,7 +754,7 @@ func (s *Service) pauseFeed(
 	reason carrierintel.FeedPauseReason,
 	message string,
 ) error {
-	key := repositories.CarrierIntelFeedStateKey{
+	key := carrierintelports.CarrierIntelFeedStateKey{
 		TenantInfo: tenantInfo,
 		Provider:   provider,
 		FeedType:   feedType,
@@ -797,7 +796,7 @@ func (s *Service) pauseFeed(
 	return nil
 }
 
-func newFeedState(key repositories.CarrierIntelFeedStateKey) *carrierintel.CarrierIntelFeedState {
+func newFeedState(key carrierintelports.CarrierIntelFeedStateKey) *carrierintel.CarrierIntelFeedState {
 	return &carrierintel.CarrierIntelFeedState{
 		OrganizationID: key.TenantInfo.OrgID,
 		BusinessUnitID: key.TenantInfo.BuID,
@@ -818,7 +817,7 @@ func (s *Service) ResumeFeeds(ctx context.Context, tenantInfo pagination.TenantI
 	for _, feedType := range []carrierintel.FeedType{
 		carrierintel.FeedTypeChangeFeed, carrierintel.FeedTypeSnapshotRefresh,
 	} {
-		key := repositories.CarrierIntelFeedStateKey{
+		key := carrierintelports.CarrierIntelFeedStateKey{
 			TenantInfo: tenantInfo,
 			Provider:   provider,
 			FeedType:   feedType,
@@ -911,7 +910,7 @@ func (s *Service) DriftCheck(
 	if err != nil {
 		return nil, err
 	}
-	monitor, ok := bound.client.(services.CarrierIntelNativeMonitor)
+	monitor, ok := bound.client.(carrierintelports.CarrierIntelNativeMonitor)
 	if !ok {
 		return &ReconcileResult{}, nil
 	}

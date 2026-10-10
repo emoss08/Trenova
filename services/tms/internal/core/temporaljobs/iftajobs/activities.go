@@ -5,8 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"go.temporal.io/sdk/activity"
@@ -17,14 +16,14 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	JurisdictionMileRepo repositories.ShipmentMoveJurisdictionMileRepository
-	DistanceCalculation  services.DistanceCalculationService
+	JurisdictionMileRepo shipmentports.ShipmentMoveJurisdictionMileRepository
+	DistanceCalculation  shipmentports.DistanceCalculationService
 	Logger               *zap.Logger
 }
 
 type Activities struct {
-	jurisdictionMileRepo repositories.ShipmentMoveJurisdictionMileRepository
-	distanceCalculation  services.DistanceCalculationService
+	jurisdictionMileRepo shipmentports.ShipmentMoveJurisdictionMileRepository
+	distanceCalculation  shipmentports.DistanceCalculationService
 	logger               *zap.Logger
 }
 
@@ -42,7 +41,7 @@ func (a *Activities) ListMovesMissingBreakdownActivity(
 ) (*ListMovesMissingBreakdownResult, error) {
 	page, err := a.jurisdictionMileRepo.ListUnattributedMoves(
 		ctx,
-		repositories.UnattributedMovesRequest{
+		shipmentports.UnattributedMovesRequest{
 			TenantInfo: input.TenantInfo,
 			Start:      input.Start,
 			End:        input.End,
@@ -71,7 +70,7 @@ func (a *Activities) AttributeMovesActivity(
 		}
 		rows, err := a.distanceCalculation.RecalculateMoveJurisdictionMiles(
 			ctx,
-			services.RecalculateMoveJurisdictionMilesRequest{
+			shipmentports.RecalculateMoveJurisdictionMilesRequest{
 				TenantInfo:     input.TenantInfo,
 				ShipmentMoveID: moveID,
 				UserID:         input.TenantInfo.UserID,

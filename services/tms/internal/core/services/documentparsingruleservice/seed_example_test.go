@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/documentparsingrule"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentparsingruleports"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
 	"github.com/stretchr/testify/require"
 )
@@ -49,7 +49,7 @@ func TestSeededDocumentParsingRuleExampleMatchesFixture(t *testing.T) {
 		MatchConfig:   data.Version.MatchConfig,
 		RuleDocument:  data.Version.RuleDocument,
 	}
-	input := &serviceports.DocumentParsingRuntimeInput{
+	input := &documentparsingruleports.DocumentParsingRuntimeInput{
 		DocumentKind:        string(data.RuleSet.DocumentKind),
 		FileName:            data.Fixture.FileName,
 		ProviderFingerprint: data.Fixture.ProviderFingerprint,
@@ -84,7 +84,7 @@ func loadParsingRuleExampleSeedDataForTest(t *testing.T) *parsingRuleExampleSeed
 	return data
 }
 
-func loadParsingRuleExamplePagesForTest(t *testing.T) ([]serviceports.DocumentParsingPage, string) {
+func loadParsingRuleExamplePagesForTest(t *testing.T) ([]documentparsingruleports.DocumentParsingPage, string) {
 	t.Helper()
 
 	raw, err := os.ReadFile(filepath.Join(
@@ -104,7 +104,7 @@ func loadParsingRuleExamplePagesForTest(t *testing.T) ([]serviceports.DocumentPa
 	matches := pagePattern.FindAllStringSubmatchIndex(string(raw), -1)
 	require.NotEmpty(t, matches)
 
-	pages := make([]serviceports.DocumentParsingPage, 0, len(matches))
+	pages := make([]documentparsingruleports.DocumentParsingPage, 0, len(matches))
 	textParts := make([]string, 0, len(matches))
 	for idx, match := range matches {
 		pageNumber, convErr := strconv.Atoi(string(raw[match[2]:match[3]]))
@@ -117,7 +117,7 @@ func loadParsingRuleExamplePagesForTest(t *testing.T) ([]serviceports.DocumentPa
 		}
 
 		pageText := strings.TrimSpace(string(raw[start:end]))
-		pages = append(pages, serviceports.DocumentParsingPage{
+		pages = append(pages, documentparsingruleports.DocumentParsingPage{
 			PageNumber: pageNumber,
 			Text:       pageText,
 		})

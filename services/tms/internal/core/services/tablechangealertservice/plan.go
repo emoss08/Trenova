@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/tablechangealert"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/tablechangealertports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,7 +16,7 @@ func (s *Service) ownSubscription(
 	id pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) (*tablechangealert.TCASubscription, error) {
-	return s.subRepo.GetByID(ctx, repositories.GetTCASubscriptionByIDRequest{
+	return s.subRepo.GetByID(ctx, tablechangealertports.GetTCASubscriptionByIDRequest{
 		SubscriptionID: id,
 		TenantInfo:     tenantInfo,
 	})
@@ -25,7 +25,7 @@ func (s *Service) ownSubscription(
 func (s *Service) PlanUpdateSubscription(
 	ctx context.Context,
 	entity *tablechangealert.TCASubscription,
-) (*services.RecordChange[tablechangealert.TCASubscription], error) {
+) (*kernelports.RecordChange[tablechangealert.TCASubscription], error) {
 	original, err := s.ownSubscription(ctx, entity.ID, pagination.TenantInfo{
 		OrgID:  entity.OrganizationID,
 		BuID:   entity.BusinessUnitID,
@@ -41,7 +41,7 @@ func (s *Service) PlanUpdateSubscription(
 		return nil, err
 	}
 
-	return &services.RecordChange[tablechangealert.TCASubscription]{
+	return &kernelports.RecordChange[tablechangealert.TCASubscription]{
 		Before: original,
 		After:  entity,
 	}, nil
@@ -52,7 +52,7 @@ func (s *Service) PlanSetSubscriptionStatus(
 	id pulid.ID,
 	tenantInfo pagination.TenantInfo,
 	status tablechangealert.SubscriptionStatus,
-) (*services.RecordChange[tablechangealert.TCASubscription], error) {
+) (*kernelports.RecordChange[tablechangealert.TCASubscription], error) {
 	original, err := s.ownSubscription(ctx, id, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -66,7 +66,7 @@ func (s *Service) PlanSetSubscriptionStatus(
 		return nil, multiErr
 	}
 
-	return &services.RecordChange[tablechangealert.TCASubscription]{
+	return &kernelports.RecordChange[tablechangealert.TCASubscription]{
 		Before: original,
 		After:  &changed,
 	}, nil

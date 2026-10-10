@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -21,7 +21,7 @@ func TestUpdateRoleRecordsBeforeAndAfter(t *testing.T) {
 	existing := &permission.Role{ID: pulid.MustNew("rol_"), Name: "Dispatch", BusinessUnitID: buID}
 	updated := &permission.Role{ID: existing.ID, Name: "Dispatch lead", MaxSensitivity: permission.SensitivityInternal}
 
-	deps.roleRepo.On("GetByID", mock.Anything, repositories.GetRoleByIDRequest{
+	deps.roleRepo.On("GetByID", mock.Anything, permissionports.GetRoleByIDRequest{
 		ID:         existing.ID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(existing, nil)
@@ -60,7 +60,7 @@ func TestAssignAndUnassignRoleRecordTheUser(t *testing.T) {
 	deps.roleRepo.On("GetUserRoleAssignments", mock.Anything, target, orgID).
 		Return([]*permission.UserRoleAssignment{}, nil)
 	deps.roleRepo.On("CreateAssignment", mock.Anything, assignment).Return(nil)
-	deps.roleRepo.On("DeleteAssignment", mock.Anything, repositories.DeleteRoleAssignmentRequest{
+	deps.roleRepo.On("DeleteAssignment", mock.Anything, permissionports.DeleteRoleAssignmentRequest{
 		AssignmentID:   assignment.ID,
 		OrganizationID: orgID,
 	}).Return(assignment, nil)

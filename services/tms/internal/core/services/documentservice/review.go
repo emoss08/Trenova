@@ -5,9 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -26,7 +27,7 @@ type ReviewRequest struct {
 	TenantInfo pagination.TenantInfo
 	Decision   document.ReviewDecision
 	Reason     string
-	Actor      services.RequestActor
+	Actor      permissionports.RequestActor
 }
 
 type ReviewPlan struct {
@@ -52,7 +53,7 @@ func (s *Service) PlanReview(ctx context.Context, req *ReviewRequest) (*ReviewPl
 		return nil, errortypes.NewAuthorizationError("Only a person can review a document")
 	}
 
-	current, err := s.repo.GetByID(ctx, repositories.GetDocumentByIDRequest{
+	current, err := s.repo.GetByID(ctx, documentports.GetDocumentByIDRequest{
 		ID:         req.DocumentID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -93,7 +94,7 @@ func (s *Service) Review(ctx context.Context, req *ReviewRequest) (*document.Doc
 	}
 
 	operation, comment := reviewAuditOperation(req.Decision)
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceDocument,
 		ResourceID:     reviewed.ID.String(),
 		Operation:      operation,

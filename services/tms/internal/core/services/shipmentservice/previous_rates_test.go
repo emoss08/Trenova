@@ -1,9 +1,10 @@
 package shipmentservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -23,9 +24,9 @@ func TestServiceGetPreviousRates_DelegatesToRepository(t *testing.T) {
 	shipmentTypeID := pulid.MustNew("sht_")
 	serviceTypeID := pulid.MustNew("svc_")
 
-	repo := mocks.NewMockShipmentRepository(t)
+	repo := shipmentportsmock.NewMockShipmentRepository(t)
 	repo.EXPECT().
-		GetPreviousRates(mock.Anything, mock.MatchedBy(func(req *repositories.GetPreviousRatesRequest) bool {
+		GetPreviousRates(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetPreviousRatesRequest) bool {
 			return req.TenantInfo.OrgID == orgID &&
 				req.TenantInfo.BuID == buID &&
 				req.OriginLocationID == originID &&
@@ -33,8 +34,8 @@ func TestServiceGetPreviousRates_DelegatesToRepository(t *testing.T) {
 				req.ShipmentTypeID == shipmentTypeID &&
 				req.ServiceTypeID == serviceTypeID
 		})).
-		Return(&pagination.ListResult[*repositories.PreviousRateSummary]{
-			Items: []*repositories.PreviousRateSummary{{ShipmentID: pulid.MustNew("shp_")}},
+		Return(&pagination.ListResult[*shipmentports.PreviousRateSummary]{
+			Items: []*shipmentports.PreviousRateSummary{{ShipmentID: pulid.MustNew("shp_")}},
 			Total: 1,
 		}, nil).
 		Once()
@@ -44,7 +45,7 @@ func TestServiceGetPreviousRates_DelegatesToRepository(t *testing.T) {
 		repo: repo,
 	}
 
-	result, err := svc.GetPreviousRates(t.Context(), &repositories.GetPreviousRatesRequest{
+	result, err := svc.GetPreviousRates(t.Context(), &shipmentports.GetPreviousRatesRequest{
 		TenantInfo:            pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		OriginLocationID:      originID,
 		DestinationLocationID: destinationID,
@@ -62,10 +63,10 @@ func TestServiceGetPreviousRates_ValidatesRequest(t *testing.T) {
 
 	svc := &service{
 		l:    zap.NewNop(),
-		repo: mocks.NewMockShipmentRepository(t),
+		repo: shipmentportsmock.NewMockShipmentRepository(t),
 	}
 
-	result, err := svc.GetPreviousRates(t.Context(), &repositories.GetPreviousRatesRequest{})
+	result, err := svc.GetPreviousRates(t.Context(), &shipmentports.GetPreviousRatesRequest{})
 
 	require.Nil(t, result)
 	require.Error(t, err)

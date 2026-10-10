@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/invoicevoid"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -32,7 +32,7 @@ func (s *Service) voidReversedInvoice(
 	ctx context.Context,
 	adjustment *invoiceadjustment.InvoiceAdjustment,
 	original *invoice.Invoice,
-	actor *servicesports.RequestActor,
+	actor *permissionports.RequestActor,
 	now int64,
 ) error {
 	if original.Status == invoice.StatusVoided {

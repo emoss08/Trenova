@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/aicontrolsummary"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aicontrolsummaryports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -14,13 +14,13 @@ import (
 // has put away before the failure they would now see.
 func (s *Service) VisibleFailures(
 	ctx context.Context,
-	req *services.VisibleFailuresRequest,
+	req *aicontrolsummaryports.VisibleFailuresRequest,
 ) ([]aicontrolsummary.ProviderFailure, error) {
 	if len(req.Failing) == 0 {
 		return []aicontrolsummary.ProviderFailure{}, nil
 	}
 
-	dismissals, err := s.dismissals.List(ctx, &repositories.ListFailureDismissalsRequest{
+	dismissals, err := s.dismissals.List(ctx, &agentports.ListFailureDismissalsRequest{
 		TenantInfo: req.TenantInfo,
 		UserID:     req.UserID,
 	})
@@ -45,11 +45,11 @@ func (s *Service) VisibleFailures(
 
 // DismissFailure puts away the notice of a provider's failure for one person,
 // up to the failure they saw.
-func (s *Service) DismissFailure(ctx context.Context, req *services.ProviderFailureDismissal) error {
+func (s *Service) DismissFailure(ctx context.Context, req *aicontrolsummaryports.ProviderFailureDismissal) error {
 	if req.UserID.IsNil() {
 		return errortypes.NewBusinessError("Only a person can put a notice away")
 	}
-	if _, err := s.providers.GetByID(ctx, repositories.GetAIProviderByIDRequest{
+	if _, err := s.providers.GetByID(ctx, agentports.GetAIProviderByIDRequest{
 		ID:         req.ProviderID,
 		TenantInfo: req.TenantInfo,
 	}); err != nil {
@@ -66,8 +66,8 @@ func (s *Service) DismissFailure(ctx context.Context, req *services.ProviderFail
 }
 
 // RestoreFailure brings a dismissed notice back, for the undo after a dismissal.
-func (s *Service) RestoreFailure(ctx context.Context, req *services.ProviderFailureDismissal) error {
-	return s.dismissals.Delete(ctx, &repositories.DeleteFailureDismissalRequest{
+func (s *Service) RestoreFailure(ctx context.Context, req *aicontrolsummaryports.ProviderFailureDismissal) error {
+	return s.dismissals.Delete(ctx, &agentports.DeleteFailureDismissalRequest{
 		TenantInfo: req.TenantInfo,
 		UserID:     req.UserID,
 		ProviderID: req.ProviderID,

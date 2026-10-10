@@ -7,8 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -26,21 +28,21 @@ const (
 type accountingInboundOperator interface {
 	Get(
 		ctx context.Context,
-		req *serviceports.GetAccountingInboundChangeRequest,
+		req *accountingsyncports.GetAccountingInboundChangeRequest,
 	) (*accountingsync.AccountingInboundChange, error)
 	PreviewApply(
 		ctx context.Context,
-		req *serviceports.GetAccountingInboundChangeRequest,
-	) (*serviceports.AccountingInboundApplyPreview, error)
+		req *accountingsyncports.GetAccountingInboundChangeRequest,
+	) (*accountingsyncports.AccountingInboundApplyPreview, error)
 	Apply(
 		ctx context.Context,
-		req *serviceports.DecideAccountingInboundChangeRequest,
-		actor *serviceports.RequestActor,
+		req *accountingsyncports.DecideAccountingInboundChangeRequest,
+		actor *permissionports.RequestActor,
 	) (*accountingsync.AccountingInboundChange, error)
 	Ignore(
 		ctx context.Context,
-		req *serviceports.DecideAccountingInboundChangeRequest,
-		actor *serviceports.RequestActor,
+		req *accountingsyncports.DecideAccountingInboundChangeRequest,
+		actor *permissionports.RequestActor,
 	) (*accountingsync.AccountingInboundChange, error)
 }
 
@@ -60,13 +62,13 @@ func inboundLabel(change *accountingsync.AccountingInboundChange) string {
 }
 
 func inboundRequest(
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.GetAccountingInboundChangeRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*accountingsyncports.GetAccountingInboundChangeRequest, error) {
 	id, err := requirePulid(params.Params, paramInboundChangeID)
 	if err != nil {
 		return nil, err
 	}
-	return &serviceports.GetAccountingInboundChangeRequest{
+	return &accountingsyncports.GetAccountingInboundChangeRequest{
 		TenantInfo: tenantFrom(*params),
 		ID:         id,
 	}, nil
@@ -76,13 +78,13 @@ type applyAccountingInboundChangeTool struct {
 	inbound accountingInboundOperator
 }
 
-func newApplyAccountingInboundChangeTool(inbound accountingInboundOperator) serviceports.AgentTool {
+func newApplyAccountingInboundChangeTool(inbound accountingInboundOperator) agentports.AgentTool {
 	return &applyAccountingInboundChangeTool{inbound: inbound}
 }
 
 func provideApplyAccountingInboundChangeTool(
-	inbound serviceports.AccountingInboundService,
-) serviceports.AgentTool {
+	inbound accountingsyncports.AccountingInboundService,
+) agentports.AgentTool {
 	return newApplyAccountingInboundChangeTool(inbound)
 }
 
@@ -119,8 +121,8 @@ func (t *applyAccountingInboundChangeTool) ParamSchema() map[string]any {
 	}, paramInboundChangeID)
 }
 
-func (t *applyAccountingInboundChangeTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *applyAccountingInboundChangeTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceAccountingSync,
@@ -140,14 +142,14 @@ func (t *applyAccountingInboundChangeTool) Policy() serviceports.ToolPolicy {
 // payment was applied, ignored or voided before it was approved.
 func (t *applyAccountingInboundChangeTool) Target(
 	params map[string]any,
-) (serviceports.ToolTarget, bool) {
+) (agentports.ToolTarget, bool) {
 	return targetOf(params, paramInboundChangeID, permission.ResourceAccountingSync)
 }
 
 func (t *applyAccountingInboundChangeTool) preview(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.AccountingInboundApplyPreview, error) {
+	params *agentports.ToolExecuteParams,
+) (*accountingsyncports.AccountingInboundApplyPreview, error) {
 	if err := guardExecute(t, *params); err != nil {
 		return nil, err
 	}
@@ -171,7 +173,7 @@ func (t *applyAccountingInboundChangeTool) preview(
 
 func (t *applyAccountingInboundChangeTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.preview(ctx, &params)
 	return err
@@ -179,7 +181,7 @@ func (t *applyAccountingInboundChangeTool) Validate(
 
 func (t *applyAccountingInboundChangeTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if _, err := t.preview(ctx, &params); err != nil {
 		return err
@@ -188,7 +190,7 @@ func (t *applyAccountingInboundChangeTool) Execute(
 	if err != nil {
 		return err
 	}
-	_, err = t.inbound.Apply(ctx, &serviceports.DecideAccountingInboundChangeRequest{
+	_, err = t.inbound.Apply(ctx, &accountingsyncports.DecideAccountingInboundChangeRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.ID,
 	}, params.Actor)
@@ -201,13 +203,13 @@ type ignoreAccountingInboundChangeTool struct {
 
 func newIgnoreAccountingInboundChangeTool(
 	inbound accountingInboundOperator,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return &ignoreAccountingInboundChangeTool{inbound: inbound}
 }
 
 func provideIgnoreAccountingInboundChangeTool(
-	inbound serviceports.AccountingInboundService,
-) serviceports.AgentTool {
+	inbound accountingsyncports.AccountingInboundService,
+) agentports.AgentTool {
 	return newIgnoreAccountingInboundChangeTool(inbound)
 }
 
@@ -241,7 +243,7 @@ func (t *ignoreAccountingInboundChangeTool) ParamSchema() map[string]any {
 	}, paramInboundChangeID, paramInboundNote)
 }
 
-func (t *ignoreAccountingInboundChangeTool) Policy() serviceports.ToolPolicy {
+func (t *ignoreAccountingInboundChangeTool) Policy() agentports.ToolPolicy {
 	return accountingSyncPolicy(t.Name(), accountingSyncPolicySpec{
 		resource:  permission.ResourceAccountingSync,
 		operation: permission.OpUpdate,
@@ -253,14 +255,14 @@ func (t *ignoreAccountingInboundChangeTool) Policy() serviceports.ToolPolicy {
 
 func (t *ignoreAccountingInboundChangeTool) Target(
 	params map[string]any,
-) (serviceports.ToolTarget, bool) {
+) (agentports.ToolTarget, bool) {
 	return targetOf(params, paramInboundChangeID, permission.ResourceAccountingSync)
 }
 
 func (t *ignoreAccountingInboundChangeTool) request(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.DecideAccountingInboundChangeRequest, *accountingsync.AccountingInboundChange, error) {
+	params *agentports.ToolExecuteParams,
+) (*accountingsyncports.DecideAccountingInboundChangeRequest, *accountingsync.AccountingInboundChange, error) {
 	if err := guardExecute(t, *params); err != nil {
 		return nil, nil, err
 	}
@@ -291,7 +293,7 @@ func (t *ignoreAccountingInboundChangeTool) request(
 			string(change.Status),
 		)
 	}
-	return &serviceports.DecideAccountingInboundChangeRequest{
+	return &accountingsyncports.DecideAccountingInboundChangeRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.ID,
 		Note:       note,
@@ -300,7 +302,7 @@ func (t *ignoreAccountingInboundChangeTool) request(
 
 func (t *ignoreAccountingInboundChangeTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, _, err := t.request(ctx, &params)
 	return err
@@ -308,7 +310,7 @@ func (t *ignoreAccountingInboundChangeTool) Validate(
 
 func (t *ignoreAccountingInboundChangeTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	req, _, err := t.request(ctx, &params)
 	if err != nil {

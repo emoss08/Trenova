@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -15,18 +15,18 @@ import (
 type agentGrantLister interface {
 	ListRolesByAgents(
 		ctx context.Context,
-		req repositories.ListGrantsByAgentsRequest,
+		req permissionports.ListGrantsByAgentsRequest,
 	) (map[pulid.ID][]*permission.Role, error)
 	ListAgentsByRoles(
 		ctx context.Context,
-		req repositories.ListGrantsByRolesRequest,
+		req permissionports.ListGrantsByRolesRequest,
 	) (map[pulid.ID][]*agentdefinition.Definition, error)
 }
 
 type AgentGrantLoaderFactoryParams struct {
 	fx.In
 
-	Grants repositories.RoleAgentGrantRepository
+	Grants permissionports.RoleAgentGrantRepository
 }
 
 // AccessRolesByAgentIDLoaderFactory reads the roles granted a page of agents
@@ -52,7 +52,7 @@ func (f *AccessRolesByAgentIDLoaderFactory) batchFunc(
 ) batchFetchFunc[[]*permission.Role] {
 	return batchGroupFunc(
 		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*permission.Role, error) {
-			return f.grants.ListRolesByAgents(ctx, repositories.ListGrantsByAgentsRequest{
+			return f.grants.ListRolesByAgents(ctx, permissionports.ListGrantsByAgentsRequest{
 				TenantInfo: tenantInfo,
 				AgentIDs:   ids,
 			})
@@ -84,7 +84,7 @@ func (f *AgentsByRoleIDLoaderFactory) batchFunc(
 			ctx context.Context,
 			ids []pulid.ID,
 		) (map[pulid.ID][]*agentdefinition.Definition, error) {
-			return f.grants.ListAgentsByRoles(ctx, repositories.ListGrantsByRolesRequest{
+			return f.grants.ListAgentsByRoles(ctx, permissionports.ListGrantsByRolesRequest{
 				TenantInfo: tenantInfo,
 				RoleIDs:    ids,
 			})

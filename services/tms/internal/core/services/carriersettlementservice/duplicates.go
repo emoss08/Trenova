@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -36,7 +36,7 @@ func (s *Service) screenDuplicateMatch(
 ) (*pulid.ID, error) {
 	live, err := s.invoiceMatchRepo.GetLiveByCarrierInvoiceNumber(
 		ctx,
-		&repositories.GetLiveCarrierInvoiceMatchByNumberRequest{
+		&carriersettlementports.GetLiveCarrierInvoiceMatchByNumberRequest{
 			TenantInfo:    tenantInfo,
 			CarrierID:     carrierID,
 			InvoiceNumber: invoiceNumber,
@@ -51,7 +51,7 @@ func (s *Service) screenDuplicateMatch(
 
 	onLoad, err := s.invoiceMatchRepo.ListLiveByAssignment(
 		ctx,
-		repositories.ListLiveCarrierInvoiceMatchesByAssignmentRequest{
+		carriersettlementports.ListLiveCarrierInvoiceMatchesByAssignmentRequest{
 			TenantInfo:   tenantInfo,
 			AssignmentID: assignmentID,
 		},
@@ -96,7 +96,7 @@ func (s *Service) acceptGuard(
 	if match.IsDuplicate() {
 		original, err := s.invoiceMatchRepo.GetByID(
 			ctx,
-			repositories.GetCarrierInvoiceMatchByIDRequest{
+			carriersettlementports.GetCarrierInvoiceMatchByIDRequest{
 				ID:         *match.DuplicateOfMatchID,
 				TenantInfo: tenantInfo,
 			},
@@ -120,7 +120,7 @@ func (s *Service) acceptGuard(
 
 	onLoad, err := s.invoiceMatchRepo.ListLiveByAssignment(
 		ctx,
-		repositories.ListLiveCarrierInvoiceMatchesByAssignmentRequest{
+		carriersettlementports.ListLiveCarrierInvoiceMatchesByAssignmentRequest{
 			TenantInfo:   tenantInfo,
 			AssignmentID: match.CarrierAssignmentID,
 		},

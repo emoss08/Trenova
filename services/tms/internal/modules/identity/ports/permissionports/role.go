@@ -1,0 +1,107 @@
+package permissionports
+
+import (
+	"context"
+
+	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+)
+
+type ImpactedUser struct {
+	UserID         pulid.ID `json:"userId"`
+	UserName       string   `json:"userName"`
+	OrganizationID pulid.ID `json:"organizationId"`
+	OrgName        string   `json:"orgName"`
+	AssignmentType string   `json:"assignmentType"`
+}
+
+// PermittedUser is an active user who holds an operation on a resource in an
+// organization, through any role they are assigned or that role's parents.
+type PermittedUser struct {
+	UserID       pulid.ID `bun:"user_id"`
+	Name         string   `bun:"name"`
+	EmailAddress string   `bun:"email_address"`
+	Locale       string   `bun:"locale"`
+}
+
+type ListUsersWithPermissionRequest struct {
+	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
+	Resource       permission.Resource
+	Operation      permission.Operation
+	// Now excludes expired role assignments.
+	Now int64
+}
+
+type ListRolesRequest struct {
+	Filter *pagination.QueryOptions `json:"filter"`
+}
+
+type ListRoleConnectionRequest struct {
+	Filter      *pagination.QueryOptions `json:"filter"`
+	Cursor      pagination.CursorInfo    `json:"-"`
+	RoleColumns []string                 `json:"-"`
+}
+
+type DeleteRoleAssignmentRequest struct {
+	AssignmentID   pulid.ID
+	OrganizationID pulid.ID
+}
+
+type DeleteResourcePermissionRequest struct {
+	PermissionID pulid.ID
+	RoleID       pulid.ID
+}
+
+type GetRoleByIDRequest struct {
+	ID         pulid.ID              `json:"id"`
+	TenantInfo pagination.TenantInfo `json:"-"`
+}
+
+type GetUserRoleAssignmentsByIDRequest struct {
+	TenantInfo       pagination.TenantInfo `json:"-"`
+	RoleAssignmentID pulid.ID              `json:"roleAssignmentID"`
+	UserID           pulid.ID              `json:"userId"` // UserID is the user ID to get the role assignments for
+	ExpandRoles      bool                  `json:"expandRoles"`
+}
+
+type RoleRepository interface {
+	List(
+		ctx context.Context,
+		req *ListRolesRequest,
+	) (*pagination.ListResult[*permission.Role], error)
+	ListConnection(
+		ctx context.Context,
+		req *ListRoleConnectionRequest,
+	) (*pagination.CursorListResult[*permission.Role], error)
+	SelectOptions(
+		ctx context.Context,
+		req *pagination.SelectQueryRequest,
+	) (*pagination.ListResult[*permission.Role], error)
+	Create(ctx context.Context, role *permission.Role) error
+	Update(ctx context.Context, role *permission.Role) error
+	GetByID(ctx context.Context, req GetRoleByIDRequest) (*permission.Role, error)
+	GetRolesWithInheritance(ctx context.Context, roleIDs []pulid.ID) ([]*permission.Role, error)
+	GetUsersWithRole(ctx context.Context, roleID pulid.ID) ([]ImpactedUser, error)
+	ListUsersWithPermission(
+		ctx context.Context,
+		req ListUsersWithPermissionRequest,
+	) ([]PermittedUser, error)
+	GetUserRoleAssignments(
+		ctx context.Context,
+		userID, orgID pulid.ID,
+	) ([]*permission.UserRoleAssignment, error)
+	CreateAssignment(ctx context.Context, assignment *permission.UserRoleAssignment) error
+	DeleteAssignment(
+		ctx context.Context,
+		req DeleteRoleAssignmentRequest,
+	) (*permission.UserRoleAssignment, error)
+	CreateResourcePermission(ctx context.Context, rp *permission.ResourcePermission) error
+	UpdateResourcePermission(ctx context.Context, rp *permission.ResourcePermission) error
+	DeleteResourcePermission(ctx context.Context, req DeleteResourcePermissionRequest) error
+	GetResourcePermissionsByRoleID(
+		ctx context.Context,
+		roleID pulid.ID,
+	) ([]*permission.ResourcePermission, error)
+}

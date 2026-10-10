@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/invoicerun"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -19,8 +19,8 @@ import (
 // why a statement looked the way it did.
 func (s *Service) AdjustMembership(
 	ctx context.Context,
-	req *servicesports.AdjustInvoiceRunMembershipRequest,
-	actor *servicesports.RequestActor,
+	req *invoicerunports.AdjustInvoiceRunMembershipRequest,
+	actor *permissionports.RequestActor,
 ) (*invoicerun.InvoiceRun, error) {
 	if req == nil || actor == nil {
 		return nil, errortypes.NewValidationError(
@@ -30,7 +30,7 @@ func (s *Service) AdjustMembership(
 		)
 	}
 
-	run, err := s.repo.GetByID(ctx, repositories.GetInvoiceRunByIDRequest{
+	run, err := s.repo.GetByID(ctx, invoicerunports.GetInvoiceRunByIDRequest{
 		ID:            req.RunID,
 		TenantInfo:    req.TenantInfo,
 		IncludeGroups: true,
@@ -67,7 +67,7 @@ func (s *Service) AdjustMembership(
 
 	s.audit(ctx, run, actor, permission.OpUpdate, "Invoice run membership adjusted")
 
-	return s.repo.GetByID(ctx, repositories.GetInvoiceRunByIDRequest{
+	return s.repo.GetByID(ctx, invoicerunports.GetInvoiceRunByIDRequest{
 		ID:            req.RunID,
 		TenantInfo:    req.TenantInfo,
 		IncludeGroups: true,
@@ -80,7 +80,7 @@ func (s *Service) AdjustMembership(
 func (s *Service) resyncGroups(ctx context.Context, run *invoicerun.InvoiceRun) error {
 	// Re-read so a moved item is counted against the group it landed in rather
 	// than the one it left.
-	fresh, err := s.repo.GetByID(ctx, repositories.GetInvoiceRunByIDRequest{
+	fresh, err := s.repo.GetByID(ctx, invoicerunports.GetInvoiceRunByIDRequest{
 		ID:            run.ID,
 		TenantInfo:    tenantOf(run),
 		IncludeGroups: true,

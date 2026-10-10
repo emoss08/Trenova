@@ -8,8 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/hashutils"
@@ -364,7 +364,7 @@ func TestPageUploadRejectsWhatIsNotAOnePagePDF(t *testing.T) {
 	batch, err := s.OpenBatch(t.Context(), principal, &OpenBatchInput{ClientKey: "k", Source: capture.SourceScan})
 	require.NoError(t, err)
 
-	two, err := s.assembler.Assemble(t.Context(), []services.CaptureAssemblyPage{
+	two, err := s.assembler.Assemble(t.Context(), []captureports.CaptureAssemblyPage{
 		{PDF: pdfPage(t, 10)}, {PDF: pdfPage(t, 20)},
 	})
 	require.NoError(t, err)
@@ -437,10 +437,10 @@ func TestProcessSplitsOnPatchCodesAndCoverSheets(t *testing.T) {
 	assert.Positive(t, issued[0].QRCode.Size)
 
 	pages := [][]byte{pdfPage(t, 1), pdfPage(t, 2), pdfPage(t, 3), pdfPage(t, 4), pdfPage(t, 5), pdfPage(t, 6)}
-	w.inspections[string(pages[3])] = &services.CapturePageInspection{
+	w.inspections[string(pages[3])] = &captureports.CapturePageInspection{
 		InkCoverage: 0.1, Thumbnail: []byte("jpeg"), Codes: []string{issued[0].Payload},
 	}
-	w.inspections[string(pages[5])] = &services.CapturePageInspection{InkCoverage: 0.0001, Thumbnail: []byte("j")}
+	w.inspections[string(pages[5])] = &captureports.CapturePageInspection{InkCoverage: 0.0001, Thumbnail: []byte("j")}
 
 	batch := scan(t, s, principal, &OpenBatchInput{ClientKey: "stack", Source: capture.SourceScan},
 		pages, map[int]string{2: "T"})
@@ -488,7 +488,7 @@ func TestCoverSheetsDoNotAutoFileWhenTheOrganizationSaysNot(t *testing.T) {
 	require.NoError(t, err)
 
 	pages := [][]byte{pdfPage(t, 1), pdfPage(t, 2)}
-	w.inspections[string(pages[0])] = &services.CapturePageInspection{
+	w.inspections[string(pages[0])] = &captureports.CapturePageInspection{
 		InkCoverage: 0.1, Codes: []string{issued[0].Payload},
 	}
 	batch := scan(t, s, principal, &OpenBatchInput{ClientKey: "c", Source: capture.SourceScan}, pages, nil)
@@ -517,7 +517,7 @@ func TestAnotherTenantsCoverSheetRoutesNothing(t *testing.T) {
 	w.coverSheets[foreign.ID] = foreign
 
 	pages := [][]byte{pdfPage(t, 1), pdfPage(t, 2), pdfPage(t, 3)}
-	w.inspections[string(pages[1])] = &services.CapturePageInspection{
+	w.inspections[string(pages[1])] = &captureports.CapturePageInspection{
 		InkCoverage: 0.1, Codes: []string{capture.CoverSheetPayload("stolen")},
 	}
 	batch := scan(t, s, principal, &OpenBatchInput{ClientKey: "f", Source: capture.SourceScan}, pages, nil)
@@ -739,7 +739,7 @@ func TestPrintJobLandsOnTheArmedDestination(t *testing.T) {
 	assert.Equal(t, rearmed.ID, *batch.RequestID)
 	assert.Equal(t, second, *batch.TargetID)
 
-	job, err := s.assembler.Assemble(t.Context(), []services.CaptureAssemblyPage{
+	job, err := s.assembler.Assemble(t.Context(), []captureports.CaptureAssemblyPage{
 		{PDF: pdfPage(t, 1)}, {PDF: pdfPage(t, 2)}, {PDF: pdfPage(t, 3)},
 	})
 	require.NoError(t, err)

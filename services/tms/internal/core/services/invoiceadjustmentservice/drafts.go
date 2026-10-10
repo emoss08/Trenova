@@ -5,9 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -18,10 +19,10 @@ import (
 
 func (s *Service) CreateDraft(
 	ctx context.Context,
-	req *servicesports.CreateDraftInvoiceAdjustmentRequest,
-	actor *servicesports.RequestActor,
+	req *invoiceadjustmentports.CreateDraftInvoiceAdjustmentRequest,
+	actor *permissionports.RequestActor,
 ) (*invoiceadjustment.InvoiceAdjustment, error) {
-	entity, err := s.invoiceRepo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+	entity, err := s.invoiceRepo.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID: req.InvoiceID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: req.TenantInfo.OrgID,
@@ -62,14 +63,14 @@ func (s *Service) CreateDraft(
 	}
 
 	lines := s.buildDraftLines(entity, draft.ID, req.TenantInfo)
-	if err = s.repo.CreateAdjustmentArtifacts(ctx, repositories.CreateAdjustmentArtifactsParams{
+	if err = s.repo.CreateAdjustmentArtifacts(ctx, invoiceadjustmentports.CreateAdjustmentArtifactsParams{
 		Adjustment: draft,
 		Lines:      lines,
 	}); err != nil {
 		return nil, err
 	}
 
-	created, err := s.GetDetail(ctx, &servicesports.GetInvoiceAdjustmentDetailRequest{
+	created, err := s.GetDetail(ctx, &invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest{
 		AdjustmentID: draft.ID,
 		TenantInfo:   req.TenantInfo,
 	})
@@ -85,10 +86,10 @@ func (s *Service) CreateDraft(
 
 func (s *Service) UpdateDraft(
 	ctx context.Context,
-	req *servicesports.UpdateDraftInvoiceAdjustmentRequest,
-	actor *servicesports.RequestActor,
+	req *invoiceadjustmentports.UpdateDraftInvoiceAdjustmentRequest,
+	actor *permissionports.RequestActor,
 ) (*invoiceadjustment.InvoiceAdjustment, error) {
-	entity, err := s.repo.GetByID(ctx, repositories.GetInvoiceAdjustmentRequest{
+	entity, err := s.repo.GetByID(ctx, invoiceadjustmentports.GetInvoiceAdjustmentRequest{
 		ID:         req.AdjustmentID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -103,7 +104,7 @@ func (s *Service) UpdateDraft(
 		)
 	}
 
-	sourceInvoice, err := s.invoiceRepo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+	sourceInvoice, err := s.invoiceRepo.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         entity.OriginalInvoiceID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -130,11 +131,11 @@ func (s *Service) UpdateDraft(
 
 	lines := s.buildAdjustmentLines(entity.ID, sourceInvoice.ID, req.Lines, req.TenantInfo)
 
-	if err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	if err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		if _, txErr := s.repo.UpdateAdjustment(txCtx, entity); txErr != nil {
 			return txErr
 		}
-		if txErr := s.repo.ReplaceAdjustmentLines(txCtx, repositories.ReplaceAdjustmentLinesRequest{
+		if txErr := s.repo.ReplaceAdjustmentLines(txCtx, invoiceadjustmentports.ReplaceAdjustmentLinesRequest{
 			AdjustmentID: entity.ID,
 			TenantInfo:   req.TenantInfo,
 			Lines:        lines,
@@ -143,7 +144,7 @@ func (s *Service) UpdateDraft(
 		}
 		return s.repo.ReplaceDocumentReferences(
 			txCtx,
-			repositories.ReplaceDocumentReferencesRequest{
+			invoiceadjustmentports.ReplaceDocumentReferencesRequest{
 				AdjustmentID: entity.ID,
 				TenantInfo:   req.TenantInfo,
 				References:   references,
@@ -153,7 +154,7 @@ func (s *Service) UpdateDraft(
 		return nil, err
 	}
 
-	return s.GetDetail(ctx, &servicesports.GetInvoiceAdjustmentDetailRequest{
+	return s.GetDetail(ctx, &invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest{
 		AdjustmentID: entity.ID,
 		TenantInfo:   req.TenantInfo,
 	})
@@ -161,9 +162,9 @@ func (s *Service) UpdateDraft(
 
 func (s *Service) PreviewDraft(
 	ctx context.Context,
-	req *servicesports.GetInvoiceAdjustmentDetailRequest,
-	_ *servicesports.RequestActor,
-) (*servicesports.InvoiceAdjustmentPreview, error) {
+	req *invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest,
+	_ *permissionports.RequestActor,
+) (*invoiceadjustmentports.InvoiceAdjustmentPreview, error) {
 	entity, draftReq, err := s.loadDraftRequest(ctx, req)
 	if err != nil {
 		return nil, err
@@ -181,9 +182,9 @@ func (s *Service) PreviewDraft(
 
 func (s *Service) loadDraftRequest(
 	ctx context.Context,
-	req *servicesports.GetInvoiceAdjustmentDetailRequest,
-) (*invoiceadjustment.InvoiceAdjustment, *servicesports.InvoiceAdjustmentRequest, error) {
-	entity, err := s.repo.GetByID(ctx, repositories.GetInvoiceAdjustmentRequest{
+	req *invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest,
+) (*invoiceadjustment.InvoiceAdjustment, *invoiceadjustmentports.InvoiceAdjustmentRequest, error) {
+	entity, err := s.repo.GetByID(ctx, invoiceadjustmentports.GetInvoiceAdjustmentRequest{
 		ID:         req.AdjustmentID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -191,9 +192,9 @@ func (s *Service) loadDraftRequest(
 		return nil, nil, err
 	}
 
-	lineItems := make([]*servicesports.InvoiceAdjustmentLineInput, 0, len(entity.Lines))
+	lineItems := make([]*invoiceadjustmentports.InvoiceAdjustmentLineInput, 0, len(entity.Lines))
 	for _, line := range entity.Lines {
-		lineItems = append(lineItems, &servicesports.InvoiceAdjustmentLineInput{
+		lineItems = append(lineItems, &invoiceadjustmentports.InvoiceAdjustmentLineInput{
 			OriginalLineID:     line.OriginalLineID,
 			CreditQuantity:     line.CreditQuantity,
 			CreditAmount:       line.CreditAmount,
@@ -209,7 +210,7 @@ func (s *Service) loadDraftRequest(
 		attachmentIDs = append(attachmentIDs, reference.DocumentID)
 	}
 
-	return entity, &servicesports.InvoiceAdjustmentRequest{
+	return entity, &invoiceadjustmentports.InvoiceAdjustmentRequest{
 		AdjustmentID:   entity.ID,
 		InvoiceID:      entity.OriginalInvoiceID,
 		Kind:           entity.Kind,

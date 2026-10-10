@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -33,7 +33,7 @@ func TestEnqueueWritesARecordOnlyForSyncingConnections(t *testing.T) {
 	inv := h.postedInvoice(pulid.MustNew("cus_"), invoiceSpec{number: "INV-100"})
 	require.NoError(t, h.enqueuer.Enqueue(
 		t.Context(),
-		services.InvoiceSyncRequest(inv, accountingsync.SyncSourceInvoicePosted),
+		accountingsyncports.InvoiceSyncRequest(inv, accountingsync.SyncSourceInvoicePosted),
 	))
 
 	records := h.records.all()
@@ -67,7 +67,7 @@ func TestRequestIDIsStableAndDerivedFromConnectionAndKey(t *testing.T) {
 	assert.Equal(t, "trn-"+hex.EncodeToString(sum[:])[:40], record.RequestID)
 	assert.Len(t, record.RequestID, len("trn-")+40)
 
-	again := NewRecordFor(h.conn, services.InvoiceSyncRequest(inv, accountingsync.SyncSourceSafetyNet), 1)
+	again := NewRecordFor(h.conn, accountingsyncports.InvoiceSyncRequest(inv, accountingsync.SyncSourceSafetyNet), 1)
 	assert.Equal(t, record.RequestID, again.RequestID, "a re-push replays under the same request id")
 }
 
@@ -82,7 +82,7 @@ func TestEnqueueSkipsDocumentsDatedBeforeTheStartDate(t *testing.T) {
 	for _, inv := range []*invoice.Invoice{before, onStart} {
 		require.NoError(t, h.enqueuer.Enqueue(
 			t.Context(),
-			services.InvoiceSyncRequest(inv, accountingsync.SyncSourceInvoicePosted),
+			accountingsyncports.InvoiceSyncRequest(inv, accountingsync.SyncSourceInvoicePosted),
 		))
 	}
 
@@ -109,7 +109,7 @@ func TestEnqueueQueuesDependenciesEvenWhenAutoSyncIsOff(t *testing.T) {
 	h.updateConnection(func(conn *accountingsync.AccountingConnection) { conn.AutoSync = false })
 	customerID := pulid.MustNew("cus_")
 
-	h.enqueue(t, &services.AccountingSyncEnqueueRequest{
+	h.enqueue(t, &accountingsyncports.AccountingSyncEnqueueRequest{
 		ObjectType:  accountingsync.SyncObjectCustomer,
 		ObjectID:    customerID,
 		Operation:   accountingsync.SyncOperationCreate,
@@ -134,7 +134,7 @@ func TestEnqueueCustomerUpdatesOnlyWhenTheCustomerIsMapped(t *testing.T) {
 	for _, customerID := range []pulid.ID{unmapped, proposed, mapped} {
 		require.NoError(t, h.enqueuer.Enqueue(
 			t.Context(),
-			services.CustomerSyncRequest(h.tenant, customerID, "Customer", 4),
+			accountingsyncports.CustomerSyncRequest(h.tenant, customerID, "Customer", 4),
 		))
 	}
 
@@ -152,7 +152,7 @@ func TestEnqueueDependencyCustomerDoesNotNeedAMapping(t *testing.T) {
 	h := newHarness(t)
 	customerID := pulid.MustNew("cus_")
 
-	h.enqueue(t, &services.AccountingSyncEnqueueRequest{
+	h.enqueue(t, &accountingsyncports.AccountingSyncEnqueueRequest{
 		ObjectType:  accountingsync.SyncObjectCustomer,
 		ObjectID:    customerID,
 		Operation:   accountingsync.SyncOperationCreate,
@@ -175,13 +175,13 @@ func TestEnqueueUpdateSupersedesOlderRevisions(t *testing.T) {
 		AccountingDate:  aprilTenth,
 		Version:         1,
 	}
-	require.NoError(t, h.enqueuer.Enqueue(t.Context(), services.PaymentSyncRequest(
+	require.NoError(t, h.enqueuer.Enqueue(t.Context(), accountingsyncports.PaymentSyncRequest(
 		payment, accountingsync.SyncOperationCreate, accountingsync.SyncSourceCustomerPaymentPosted)))
 	payment.Version = 2
-	require.NoError(t, h.enqueuer.Enqueue(t.Context(), services.PaymentSyncRequest(
+	require.NoError(t, h.enqueuer.Enqueue(t.Context(), accountingsyncports.PaymentSyncRequest(
 		payment, accountingsync.SyncOperationUpdate, accountingsync.SyncSourceCustomerPaymentApplied)))
 	payment.Version = 3
-	require.NoError(t, h.enqueuer.Enqueue(t.Context(), services.PaymentSyncRequest(
+	require.NoError(t, h.enqueuer.Enqueue(t.Context(), accountingsyncports.PaymentSyncRequest(
 		payment, accountingsync.SyncOperationUpdate, accountingsync.SyncSourceCustomerPaymentApplied)))
 
 	updates := h.records.find(accountingsync.SyncObjectCustomerPayment, payment.ID, accountingsync.SyncOperationUpdate)
@@ -202,7 +202,7 @@ func TestEnqueueIsIdempotent(t *testing.T) {
 
 	h := newHarness(t)
 	inv := h.postedInvoice(pulid.MustNew("cus_"), invoiceSpec{})
-	req := services.InvoiceSyncRequest(inv, accountingsync.SyncSourceInvoicePosted)
+	req := accountingsyncports.InvoiceSyncRequest(inv, accountingsync.SyncSourceInvoicePosted)
 
 	require.NoError(t, h.enqueuer.Enqueue(t.Context(), req))
 	require.NoError(t, h.enqueuer.Enqueue(t.Context(), req))
@@ -215,13 +215,13 @@ func TestEnqueueKicksTheDispatcherOnlyAfterCommit(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	txCtx, hooks := ports.WithAfterCommitHooks(t.Context())
+	txCtx, hooks := kernelports.WithAfterCommitHooks(t.Context())
 	customerID := pulid.MustNew("cus_")
 
 	for range 2 {
 		require.NoError(t, h.enqueuer.Enqueue(
 			txCtx,
-			services.InvoiceSyncRequest(h.postedInvoice(customerID, invoiceSpec{}), accountingsync.SyncSourceInvoicePosted),
+			accountingsyncports.InvoiceSyncRequest(h.postedInvoice(customerID, invoiceSpec{}), accountingsync.SyncSourceInvoicePosted),
 		))
 	}
 	assert.Len(t, h.records.all(), 2, "the outbox row is written inside the transaction")
@@ -257,8 +257,8 @@ func TestEnqueueWritesWithoutADispatcher(t *testing.T) {
 func TestEnqueueRejectsMalformedRequests(t *testing.T) {
 	t.Parallel()
 
-	valid := func() *services.AccountingSyncEnqueueRequest {
-		return &services.AccountingSyncEnqueueRequest{
+	valid := func() *accountingsyncports.AccountingSyncEnqueueRequest {
+		return &accountingsyncports.AccountingSyncEnqueueRequest{
 			ObjectType:   accountingsync.SyncObjectInvoice,
 			ObjectID:     pulid.MustNew("inv_"),
 			Operation:    accountingsync.SyncOperationCreate,
@@ -269,24 +269,24 @@ func TestEnqueueRejectsMalformedRequests(t *testing.T) {
 	}
 	tests := []struct {
 		name   string
-		mutate func(*services.AccountingSyncEnqueueRequest) *services.AccountingSyncEnqueueRequest
+		mutate func(*accountingsyncports.AccountingSyncEnqueueRequest) *accountingsyncports.AccountingSyncEnqueueRequest
 	}{
-		{name: "nil request", mutate: func(*services.AccountingSyncEnqueueRequest) *services.AccountingSyncEnqueueRequest {
+		{name: "nil request", mutate: func(*accountingsyncports.AccountingSyncEnqueueRequest) *accountingsyncports.AccountingSyncEnqueueRequest {
 			return nil
 		}},
-		{name: "unknown object type", mutate: func(r *services.AccountingSyncEnqueueRequest) *services.AccountingSyncEnqueueRequest {
+		{name: "unknown object type", mutate: func(r *accountingsyncports.AccountingSyncEnqueueRequest) *accountingsyncports.AccountingSyncEnqueueRequest {
 			r.ObjectType = "Vendor"
 			return r
 		}},
-		{name: "unknown operation", mutate: func(r *services.AccountingSyncEnqueueRequest) *services.AccountingSyncEnqueueRequest {
+		{name: "unknown operation", mutate: func(r *accountingsyncports.AccountingSyncEnqueueRequest) *accountingsyncports.AccountingSyncEnqueueRequest {
 			r.Operation = "Delete"
 			return r
 		}},
-		{name: "unknown source", mutate: func(r *services.AccountingSyncEnqueueRequest) *services.AccountingSyncEnqueueRequest {
+		{name: "unknown source", mutate: func(r *accountingsyncports.AccountingSyncEnqueueRequest) *accountingsyncports.AccountingSyncEnqueueRequest {
 			r.SourceEvent = "Guess"
 			return r
 		}},
-		{name: "missing id", mutate: func(r *services.AccountingSyncEnqueueRequest) *services.AccountingSyncEnqueueRequest {
+		{name: "missing id", mutate: func(r *accountingsyncports.AccountingSyncEnqueueRequest) *accountingsyncports.AccountingSyncEnqueueRequest {
 			r.ObjectID = pulid.Nil
 			return r
 		}},
@@ -310,7 +310,7 @@ func TestEnqueueRejectsMalformedRequests(t *testing.T) {
 func TestEnqueueAccountingSyncIgnoresAMissingEnqueuer(t *testing.T) {
 	t.Parallel()
 
-	require.NoError(t, services.EnqueueAccountingSync(t.Context(), nil, &services.AccountingSyncEnqueueRequest{}))
+	require.NoError(t, accountingsyncports.EnqueueAccountingSync(t.Context(), nil, &accountingsyncports.AccountingSyncEnqueueRequest{}))
 }
 
 func TestEnqueueReportsWhatItQueuedToACollector(t *testing.T) {
@@ -320,14 +320,14 @@ func TestEnqueueReportsWhatItQueuedToACollector(t *testing.T) {
 	second := h.addConnection(syncingConnection)
 	inv := h.postedInvoice(pulid.MustNew("cus_"), invoiceSpec{number: "INV-200"})
 
-	ctx, collector := services.CollectAccountingSync(t.Context())
+	ctx, collector := accountingsyncports.CollectAccountingSync(t.Context())
 	require.NoError(t, h.enqueuer.Enqueue(
 		ctx,
-		services.InvoiceSyncRequest(inv, accountingsync.SyncSourceInvoicePosted),
+		accountingsyncports.InvoiceSyncRequest(inv, accountingsync.SyncSourceInvoicePosted),
 	))
 	require.NoError(t, h.enqueuer.Enqueue(
 		ctx,
-		services.InvoiceSyncRequest(inv, accountingsync.SyncSourceInvoicePosted),
+		accountingsyncports.InvoiceSyncRequest(inv, accountingsync.SyncSourceInvoicePosted),
 	))
 
 	collected := collector.Records()
@@ -340,7 +340,7 @@ func TestEnqueueReportsWhatItQueuedToACollector(t *testing.T) {
 
 	require.NoError(t, h.enqueuer.Enqueue(
 		t.Context(),
-		services.InvoiceSyncRequest(
+		accountingsyncports.InvoiceSyncRequest(
 			h.postedInvoice(pulid.MustNew("cus_"), invoiceSpec{number: "INV-201"}),
 			accountingsync.SyncSourceInvoicePosted,
 		),

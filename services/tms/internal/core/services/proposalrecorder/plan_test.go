@@ -6,7 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,8 +27,8 @@ func (s *capturingPlans) Create(
 	return plan, nil
 }
 
-func pendingAction(tool string) serviceports.PendingAction {
-	return serviceports.PendingAction{
+func pendingAction(tool string) agentports.PendingAction {
+	return agentports.PendingAction{
 		ToolName:  tool,
 		Arguments: map[string]any{},
 		Rationale: "because " + tool,
@@ -38,7 +39,7 @@ func pendingAction(tool string) serviceports.PendingAction {
 func recordActions(
 	t *testing.T,
 	plans *capturingPlans,
-	actions ...serviceports.PendingAction,
+	actions ...agentports.PendingAction,
 ) *RecordResult {
 	t.Helper()
 
@@ -50,7 +51,7 @@ func recordActions(
 		store,
 	).WithPlans(plans).
 		Record(t.Context(), &RecordRequest{
-			Actor: &serviceports.RequestActor{OrganizationID: orgID, BusinessUnitID: buID},
+			Actor: &permissionports.RequestActor{OrganizationID: orgID, BusinessUnitID: buID},
 			Definition: &agentdefinition.Definition{
 				ID:   pulid.MustNew("agdef_"),
 				Name: "Dispatch coverage",

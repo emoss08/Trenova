@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/modeprofile"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/modeprofileports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -21,17 +21,17 @@ type ProfileParams struct {
 	fx.In
 
 	DB     *postgres.Connection
-	Cache  repositories.ModeProfileCacheRepository
+	Cache  modeprofileports.ModeProfileCacheRepository
 	Logger *zap.Logger
 }
 
 type profileRepository struct {
 	db    *postgres.Connection
-	cache repositories.ModeProfileCacheRepository
+	cache modeprofileports.ModeProfileCacheRepository
 	l     *zap.Logger
 }
 
-func NewProfileRepository(p ProfileParams) repositories.ModeProfileRepository {
+func NewProfileRepository(p ProfileParams) modeprofileports.ModeProfileRepository {
 	return &profileRepository{
 		db:    p.DB,
 		cache: p.Cache,
@@ -58,7 +58,7 @@ func orderRules(sq *bun.SelectQuery) *bun.SelectQuery {
 
 func (r *profileRepository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListModeProfilesRequest,
+	req *modeprofileports.ListModeProfilesRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
@@ -76,7 +76,7 @@ func (r *profileRepository) filterQuery(
 
 func (r *profileRepository) List(
 	ctx context.Context,
-	req *repositories.ListModeProfilesRequest,
+	req *modeprofileports.ListModeProfilesRequest,
 ) (*pagination.ListResult[*modeprofile.Profile], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*modeprofile.Profile], error) {
 		log := r.l.With(zap.String("operation", "List"))
@@ -103,7 +103,7 @@ func (r *profileRepository) List(
 
 func (r *profileRepository) GetByID(
 	ctx context.Context,
-	req *repositories.GetModeProfileByIDRequest,
+	req *modeprofileports.GetModeProfileByIDRequest,
 ) (*modeprofile.Profile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*modeprofile.Profile, error) {
 		log := r.l.With(
@@ -202,7 +202,7 @@ func (r *profileRepository) Create(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*modeprofile.Profile, error) {
 		log := r.l.With(zap.String("operation", "Create"))
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			if _, iErr := r.db.DBForContext(c).
 				NewInsert().
 				Model(entity).
@@ -243,7 +243,7 @@ func (r *profileRepository) Update(
 		entity.Version++
 
 		ruleCols := buncolgen.CapabilityRuleColumns
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			results, uErr := r.db.DBForContext(c).
 				NewUpdate().
 				Model(entity).

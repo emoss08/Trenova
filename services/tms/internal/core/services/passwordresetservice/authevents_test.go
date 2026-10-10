@@ -6,17 +6,17 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/iam"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type recordingAuthEvents struct {
-	records []serviceports.AuthEventRecord
+	records []iamports.AuthEventRecord
 }
 
-func (r *recordingAuthEvents) Record(_ context.Context, rec *serviceports.AuthEventRecord) {
+func (r *recordingAuthEvents) Record(_ context.Context, rec *iamports.AuthEventRecord) {
 	r.records = append(r.records, *rec)
 }
 
@@ -73,7 +73,7 @@ func TestRequestResetRecordsEachOutcome(t *testing.T) {
 
 			require.Len(t, events.records, 1)
 			rec := events.records[0]
-			assert.Equal(t, serviceports.AuthEventProviderPasswordResetRequest, rec.Provider)
+			assert.Equal(t, iamports.AuthEventProviderPasswordResetRequest, rec.Provider)
 			assert.Equal(t, tt.outcome, rec.Outcome)
 			assert.Equal(t, tt.code, rec.ErrorCode)
 			if tt.withUser {
@@ -100,7 +100,7 @@ func TestResetPasswordRecordsTheRedemption(t *testing.T) {
 
 	require.Len(t, events.records, 1)
 	rec := events.records[0]
-	assert.Equal(t, serviceports.AuthEventProviderPasswordResetConfirm, rec.Provider)
+	assert.Equal(t, iamports.AuthEventProviderPasswordResetConfirm, rec.Provider)
 	assert.Equal(t, iam.AuthEventOutcomeSuccess, rec.Outcome)
 	assert.Equal(t, user.ID, rec.UserID)
 	assert.Equal(t, token.OrganizationID, rec.OrganizationID)

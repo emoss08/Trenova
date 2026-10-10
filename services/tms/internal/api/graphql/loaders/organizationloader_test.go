@@ -1,11 +1,12 @@
 package loaders
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -25,9 +26,9 @@ func TestOrganizationBatchFunc_DelegatesToOrganizationService(t *testing.T) {
 		BuID:   pulid.MustNew("bu_"),
 		UserID: pulid.MustNew("usr_"),
 	}
-	organizationService := mocks.NewMockOrganizationService(t)
+	organizationService := tenantportsmock.NewMockOrganizationService(t)
 	organizationService.EXPECT().
-		GetByIDs(mock.Anything, services.GetOrganizationsByIDsRequest{
+		GetByIDs(mock.Anything, tenantports.GetOrganizationsByIDsRequest{
 			TenantInfo:      tenantInfo,
 			OrganizationIDs: []pulid.ID{secondID, firstID, missingID},
 			IncludeState:    true,
@@ -64,9 +65,9 @@ func TestOrganizationBatchFunc_ServiceErrorFillsValidResults(t *testing.T) {
 
 	organizationID := pulid.MustNew("org_")
 	serviceErr := assert.AnError
-	organizationService := mocks.NewMockOrganizationService(t)
+	organizationService := tenantportsmock.NewMockOrganizationService(t)
 	organizationService.EXPECT().
-		GetByIDs(mock.Anything, services.GetOrganizationsByIDsRequest{
+		GetByIDs(mock.Anything, tenantports.GetOrganizationsByIDsRequest{
 			OrganizationIDs: []pulid.ID{organizationID},
 			IncludeState:    true,
 			IncludeBU:       true,

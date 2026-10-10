@@ -15,9 +15,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/pagedraft"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/productguide"
@@ -93,15 +95,15 @@ var draftSpecs = map[string]draftSpec{
 // as the tool that made it finishes, so the pane can open it while the reply
 // is still arriving, and ties them to their messages once the turn is saved.
 type artifactRecorder struct {
-	repo      repositories.AssistantArtifactRepository
+	repo      assistantartifactports.AssistantArtifactRepository
 	proposals chatProposalStore
-	activity  services.AgentActivityPublisher
+	activity  agentports.AgentActivityPublisher
 	logger    *zap.Logger
 	ctx       context.Context
 	thread    *conversation.Thread
 	tenant    pagination.TenantInfo
-	actor     services.AuditActor
-	emit      services.AssistantStreamEmitter
+	actor     kernelports.AuditActor
+	emit      kernelports.AssistantStreamEmitter
 	recorded  []*assistantartifact.Artifact
 	// svc reads what an artifact needs beyond the tool's result: the agent
 	// a document is credited to, the pages an extraction was read from.
@@ -115,14 +117,14 @@ func (s *Service) newArtifactRecorder(
 	ctx context.Context,
 	thread *conversation.Thread,
 	tenant pagination.TenantInfo,
-	actor *services.RequestActor,
-	emit services.AssistantStreamEmitter,
+	actor *permissionports.RequestActor,
+	emit kernelports.AssistantStreamEmitter,
 ) *artifactRecorder {
 	if s.artifacts == nil {
 		return nil
 	}
 	if emit == nil {
-		emit = func(services.StreamEvent) {}
+		emit = func(kernelports.StreamEvent) {}
 	}
 
 	return &artifactRecorder{
@@ -141,7 +143,7 @@ func (s *Service) newArtifactRecorder(
 
 // observer is the hook the runtime calls per tool result; nil when there is
 // no recorder, so the runtime skips the call altogether.
-func (r *artifactRecorder) observer() services.ToolObserver {
+func (r *artifactRecorder) observer() agentports.ToolObserver {
 	if r == nil {
 		return nil
 	}
@@ -150,12 +152,12 @@ func (r *artifactRecorder) observer() services.ToolObserver {
 }
 
 func (r *artifactRecorder) observe(
-	observation services.ToolObservation,
-) (*services.ShownArtifact, error) {
-	if document, ok := observation.Data.(services.PublishedDocument); ok {
+	observation agentports.ToolObservation,
+) (*agentports.ShownArtifact, error) {
+	if document, ok := observation.Data.(agentports.PublishedDocument); ok {
 		return r.publish(observation.Call.ID, document)
 	}
-	if request, ok := observation.Data.(services.DecisionRequest); ok {
+	if request, ok := observation.Data.(agentports.DecisionRequest); ok {
 		return r.requestDecision(observation.Call.ID, request)
 	}
 	if observation.Call.Name == toolGetShipmentDraft && !observation.Failed {
@@ -198,9 +200,9 @@ func (r *artifactRecorder) observe(
 // is a move, not something to keep: the reply names the page as a link, and
 // nothing is added beside the conversation.
 func (r *artifactRecorder) announceNavigation(artifact *assistantartifact.Artifact) {
-	r.emit(services.StreamEvent{
-		Event: services.AssistantEventArtifact,
-		Data: services.AssistantArtifactEvent{
+	r.emit(kernelports.StreamEvent{
+		Event: agentports.AssistantEventArtifact,
+		Data: agentports.AssistantArtifactEvent{
 			ID:               pulid.MustNew("art_"),
 			Kind:             artifact.Kind,
 			Status:           artifact.Status,
@@ -216,12 +218,12 @@ func (r *artifactRecorder) announceNavigation(artifact *assistantartifact.Artifa
 // with its versions, and the text it replaced can be read and restored.
 func (r *artifactRecorder) publish(
 	callID string,
-	document services.PublishedDocument,
-) (*services.ShownArtifact, error) {
+	document agentports.PublishedDocument,
+) (*agentports.ShownArtifact, error) {
 	artifact := documentArtifact(callID, document, r.author())
 
 	if !document.ArtifactID.IsNil() {
-		existing, err := r.repo.GetByID(r.ctx, repositories.GetArtifactRequest{
+		existing, err := r.repo.GetByID(r.ctx, assistantartifactports.GetArtifactRequest{
 			ID:         document.ArtifactID,
 			TenantInfo: r.tenant,
 		})
@@ -249,7 +251,7 @@ func (r *artifactRecorder) publish(
 func (r *artifactRecorder) latestVersion(
 	artifact *assistantartifact.Artifact,
 ) *assistantartifact.Artifact {
-	versions, err := r.repo.ListLineage(r.ctx, repositories.LineageRequest{
+	versions, err := r.repo.ListLineage(r.ctx, assistantartifactports.LineageRequest{
 		ThreadID:   r.thread.ID,
 		TenantInfo: r.tenant,
 		ID:         artifact.ID,
@@ -274,7 +276,7 @@ func (r *artifactRecorder) author() string {
 		return ""
 	}
 
-	return r.svc.agentName(r.ctx, repositories.GetThreadRequest{
+	return r.svc.agentName(r.ctx, agentports.GetThreadRequest{
 		ID:         r.thread.ID,
 		TenantInfo: r.tenant,
 	}, r.thread)
@@ -370,7 +372,7 @@ func (r *artifactRecorder) keepLinked(linked map[string]bool) {
 	if len(unused) == 0 {
 		return
 	}
-	if err := r.repo.Delete(r.ctx, &repositories.DeleteArtifactsRequest{
+	if err := r.repo.Delete(r.ctx, &assistantartifactports.DeleteArtifactsRequest{
 		ThreadID:   r.thread.ID,
 		TenantInfo: r.tenant,
 		IDs:        unused,
@@ -402,12 +404,12 @@ func linkedArtifacts(messages []conversation.Message) map[string]bool {
 }
 
 // artifacts is what the turn produced, for the turn's result.
-func (r *artifactRecorder) artifacts() []services.AssistantArtifact {
+func (r *artifactRecorder) artifacts() []agentports.AssistantArtifact {
 	if r == nil || len(r.recorded) == 0 {
 		return nil
 	}
 
-	out := make([]services.AssistantArtifact, 0, len(r.recorded))
+	out := make([]agentports.AssistantArtifact, 0, len(r.recorded))
 	for _, artifact := range r.recorded {
 		out = append(out, toAssistantArtifact(artifact))
 	}
@@ -423,7 +425,7 @@ func (r *artifactRecorder) followLineage(
 	if artifact.LineageKey == "" {
 		return nil
 	}
-	previous, err := r.repo.LatestInLineage(r.ctx, repositories.LatestInLineageRequest{
+	previous, err := r.repo.LatestInLineage(r.ctx, assistantartifactports.LatestInLineageRequest{
 		ThreadID:       r.thread.ID,
 		TenantInfo:     r.tenant,
 		LineageKey:     artifact.LineageKey,
@@ -497,11 +499,11 @@ func (r *artifactRecorder) save(
 
 	r.remember(saved)
 	if r.activity != nil {
-		r.activity.ArtifactChanged(r.ctx, saved, r.actor, services.ActivityUpdated)
+		r.activity.ArtifactChanged(r.ctx, saved, r.actor, agentports.ActivityUpdated)
 	}
-	r.emit(services.StreamEvent{
-		Event: services.AssistantEventArtifact,
-		Data: services.AssistantArtifactEvent{
+	r.emit(kernelports.StreamEvent{
+		Event: agentports.AssistantEventArtifact,
+		Data: agentports.AssistantArtifactEvent{
 			ID:               saved.ID,
 			Kind:             saved.Kind,
 			Status:           saved.Status,
@@ -538,8 +540,8 @@ func (r *artifactRecorder) forget(id pulid.ID) {
 }
 
 // shownArtifact is how the model is told what the person now sees.
-func shownArtifact(artifact *assistantartifact.Artifact) *services.ShownArtifact {
-	return &services.ShownArtifact{
+func shownArtifact(artifact *assistantartifact.Artifact) *agentports.ShownArtifact {
+	return &agentports.ShownArtifact{
 		ID:         artifact.ID,
 		Kind:       string(artifact.Kind),
 		Title:      artifact.Title,
@@ -604,13 +606,13 @@ func actionableTable(artifact *assistantartifact.Artifact) bool {
 
 func (r *artifactRecorder) requestDecision(
 	callID string,
-	request services.DecisionRequest,
-) (*services.ShownArtifact, error) {
+	request agentports.DecisionRequest,
+) (*agentports.ShownArtifact, error) {
 	if r.proposals == nil {
 		return nil, errDecisionUnavailable
 	}
 
-	stored, err := r.proposals.ListByThread(r.ctx, repositories.ListAgentProposalsByThreadRequest{
+	stored, err := r.proposals.ListByThread(r.ctx, agentports.ListAgentProposalsByThreadRequest{
 		ThreadID:   r.thread.ID,
 		TenantInfo: r.tenant,
 	})
@@ -639,7 +641,7 @@ func (r *artifactRecorder) requestDecision(
 
 func requestedArtifact(
 	callID string,
-	request services.DecisionRequest,
+	request agentports.DecisionRequest,
 	stored []*agent.AgentProposal,
 ) (*assistantartifact.Artifact, error) {
 	byID := make(map[pulid.ID]*agent.AgentProposal, len(stored))
@@ -806,7 +808,7 @@ var (
 // sources its citation marks point to.
 func documentArtifact(
 	callID string,
-	document services.PublishedDocument,
+	document agentports.PublishedDocument,
 	author string,
 ) *assistantartifact.Artifact {
 	sources := make([]assistantartifact.DocumentSource, 0, len(document.Sources))
@@ -852,7 +854,7 @@ func documentArtifact(
 
 // artifactFromObservation turns a finished query tool into what the pane
 // shows for it, or nil when the result is one to read rather than see.
-func artifactFromObservation(observation services.ToolObservation) *assistantartifact.Artifact {
+func artifactFromObservation(observation agentports.ToolObservation) *assistantartifact.Artifact {
 	if observation.Failed || observation.Data == nil || observation.Call.ID == "" {
 		return nil
 	}
@@ -1683,8 +1685,8 @@ func artifactTitle(title string) string {
 	return stringutils.TruncateRunes(title, maxArtifactTitleRunes)
 }
 
-func toAssistantArtifact(artifact *assistantartifact.Artifact) services.AssistantArtifact {
-	return services.AssistantArtifact{
+func toAssistantArtifact(artifact *assistantartifact.Artifact) agentports.AssistantArtifact {
+	return agentports.AssistantArtifact{
 		ID:               artifact.ID,
 		ThreadID:         artifact.ThreadID,
 		MessageID:        artifact.MessageID,
@@ -1710,7 +1712,7 @@ func toAssistantArtifact(artifact *assistantartifact.Artifact) services.Assistan
 // which is what the pane showed last time.
 func (s *Service) followDecisions(
 	ctx context.Context,
-	req repositories.GetThreadRequest,
+	req agentports.GetThreadRequest,
 	artifacts []*assistantartifact.Artifact,
 ) {
 	var wantProposals, wantPlans bool
@@ -1723,7 +1725,7 @@ func (s *Service) followDecisions(
 	if wantProposals && s.proposals != nil {
 		proposals, err := s.proposals.ListByThread(
 			ctx,
-			repositories.ListAgentProposalsByThreadRequest{
+			agentports.ListAgentProposalsByThreadRequest{
 				ThreadID:   req.ID,
 				TenantInfo: req.TenantInfo,
 			},
@@ -1749,7 +1751,7 @@ func (s *Service) followDecisions(
 	}
 
 	if wantPlans && s.plans != nil {
-		plans, err := s.plans.ListByThread(ctx, repositories.ListAgentPlansByThreadRequest{
+		plans, err := s.plans.ListByThread(ctx, agentports.ListAgentPlansByThreadRequest{
 			ThreadID:   req.ID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -1771,10 +1773,10 @@ func (s *Service) followDecisions(
 
 func (s *Service) PinArtifact(
 	ctx context.Context,
-	req repositories.GetThreadRequest,
+	req agentports.GetThreadRequest,
 	artifactID pulid.ID,
 	pinned bool,
-) (*services.AssistantArtifact, error) {
+) (*agentports.AssistantArtifact, error) {
 	if _, err := s.conversations.GetThread(ctx, req); err != nil {
 		return nil, err
 	}
@@ -1782,7 +1784,7 @@ func (s *Service) PinArtifact(
 		return nil, errortypes.NewNotFoundError("Artifact not found")
 	}
 
-	artifact, err := s.artifacts.SetPinned(ctx, repositories.SetArtifactPinnedRequest{
+	artifact, err := s.artifacts.SetPinned(ctx, assistantartifactports.SetArtifactPinnedRequest{
 		ID:         artifactID,
 		ThreadID:   req.ID,
 		TenantInfo: req.TenantInfo,

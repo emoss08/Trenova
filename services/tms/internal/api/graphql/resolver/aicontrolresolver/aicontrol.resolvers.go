@@ -10,8 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aicontrolsummary"
 	"github.com/emoss08/trenova/internal/core/domain/aituneup"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aicontrolsummaryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -49,7 +49,7 @@ func (r *AIControlSummaryResolver) VisibleFailures(ctx context.Context, obj *aic
 		return nil, err
 	}
 
-	visible, err := r.AiControlSummaryService.VisibleFailures(ctx, &services.VisibleFailuresRequest{
+	visible, err := r.AiControlSummaryService.VisibleFailures(ctx, &aicontrolsummaryports.VisibleFailuresRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 		Failing:    obj.Facts.Failing,
@@ -76,7 +76,7 @@ func (r *MutationResolver) DismissAIProviderFailure(ctx context.Context, provide
 		return false, err
 	}
 
-	if err = r.AiControlSummaryService.DismissFailure(ctx, &services.ProviderFailureDismissal{
+	if err = r.AiControlSummaryService.DismissFailure(ctx, &aicontrolsummaryports.ProviderFailureDismissal{
 		TenantInfo: base.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 		ProviderID: id,
@@ -98,7 +98,7 @@ func (r *MutationResolver) RestoreAIProviderFailure(ctx context.Context, provide
 		return false, err
 	}
 
-	if err = r.AiControlSummaryService.RestoreFailure(ctx, &services.ProviderFailureDismissal{
+	if err = r.AiControlSummaryService.RestoreFailure(ctx, &aicontrolsummaryports.ProviderFailureDismissal{
 		TenantInfo: base.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 		ProviderID: id,
@@ -114,7 +114,7 @@ func (r *QueryResolver) AiControlSummary(ctx context.Context, tab aicontrolsumma
 		return nil, err
 	}
 
-	return r.AiControlSummaryService.Summary(ctx, &services.AIControlSummaryRequest{
+	return r.AiControlSummaryService.Summary(ctx, &aicontrolsummaryports.AIControlSummaryRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		Tab:        tab,
 	})
@@ -132,7 +132,7 @@ func (r *MutationResolver) ApplyAITuneUp(ctx context.Context, id string, version
 	}
 
 	tenantInfo := base.TenantInfo(authCtx)
-	tuneUp, err := r.AiTuneUpService.Get(ctx, repositories.GetAITuneUpRequest{TenantInfo: tenantInfo, ID: tuneUpID})
+	tuneUp, err := r.AiTuneUpService.Get(ctx, aituneupports.GetAITuneUpRequest{TenantInfo: tenantInfo, ID: tuneUpID})
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +140,7 @@ func (r *MutationResolver) ApplyAITuneUp(ctx context.Context, id string, version
 		return nil, err
 	}
 
-	view, err := r.AiTuneUpService.Apply(ctx, &services.AITuneUpDecisionRequest{
+	view, err := r.AiTuneUpService.Apply(ctx, &aituneupports.AITuneUpDecisionRequest{
 		TenantInfo: tenantInfo,
 		ID:         tuneUpID,
 		Version:    int64(version),
@@ -162,7 +162,7 @@ func (r *MutationResolver) DismissAITuneUp(ctx context.Context, id string, versi
 		return nil, err
 	}
 
-	request := &services.AITuneUpDecisionRequest{
+	request := &aituneupports.AITuneUpDecisionRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		ID:         tuneUpID,
 		Version:    int64(version),
@@ -189,7 +189,7 @@ func (r *MutationResolver) RestoreAITuneUp(ctx context.Context, id string, versi
 		return nil, err
 	}
 
-	view, err := r.AiTuneUpService.Restore(ctx, &services.AITuneUpDecisionRequest{
+	view, err := r.AiTuneUpService.Restore(ctx, &aituneupports.AITuneUpDecisionRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		ID:         tuneUpID,
 		Version:    int64(version),

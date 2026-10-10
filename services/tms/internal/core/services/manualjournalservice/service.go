@@ -4,16 +4,18 @@ package manualjournalservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/services/journalposting"
-
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/manualjournal"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/services/journalposting"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/manualjournalports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/seqgen"
@@ -35,28 +37,28 @@ type Params struct {
 	fx.In
 
 	Logger         *zap.Logger
-	DB             ports.DBConnection
-	Repo           repositories.ManualJournalRepository
-	JournalRepo    repositories.JournalPostingRepository
-	AccountingRepo repositories.AccountingControlRepository
+	DB             kernelports.DBConnection
+	Repo           manualjournalports.ManualJournalRepository
+	JournalRepo    journalentryports.JournalPostingRepository
+	AccountingRepo tenantports.AccountingControlRepository
 	Generator      seqgen.Generator
 	Validator      *Validator
-	AuditService   serviceports.AuditService
+	AuditService   auditports.AuditService
 }
 
 type Service struct {
 	l              *zap.Logger
-	db             ports.DBConnection
-	repo           repositories.ManualJournalRepository
-	journalRepo    repositories.JournalPostingRepository
-	accountingRepo repositories.AccountingControlRepository
+	db             kernelports.DBConnection
+	repo           manualjournalports.ManualJournalRepository
+	journalRepo    journalentryports.JournalPostingRepository
+	accountingRepo tenantports.AccountingControlRepository
 	generator      seqgen.Generator
 	validator      *Validator
-	auditService   serviceports.AuditService
+	auditService   auditports.AuditService
 }
 
 type postingPlan struct {
-	change      *serviceports.ManualJournalChange
+	change      *manualjournalports.ManualJournalChange
 	control     *tenant.AccountingControl
 	period      *fiscalperiod.FiscalPeriod
 	postingDate int64
@@ -79,32 +81,32 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListManualJournalRequest,
+	req *manualjournalports.ListManualJournalRequest,
 ) (*pagination.ListResult[*manualjournal.Request], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListManualJournalConnectionRequest,
+	req *manualjournalports.ListManualJournalConnectionRequest,
 ) (*pagination.CursorListResult[*manualjournal.Request], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	req *serviceports.GetManualJournalRequest,
+	req *manualjournalports.GetManualJournalRequest,
 ) (*manualjournal.Request, error) {
 	return s.repo.GetByID(
 		ctx,
-		repositories.GetManualJournalByIDRequest{ID: req.RequestID, TenantInfo: req.TenantInfo},
+		manualjournalports.GetManualJournalByIDRequest{ID: req.RequestID, TenantInfo: req.TenantInfo},
 	)
 }
 
 func (s *Service) PlanCreateDraft(
 	ctx context.Context,
-	req *serviceports.CreateManualJournalRequest,
-	actor *serviceports.RequestActor,
+	req *manualjournalports.CreateManualJournalRequest,
+	actor *permissionports.RequestActor,
 ) (*manualjournal.Request, error) {
 	userID, err := requireManualJournalUser(actor)
 	if err != nil {
@@ -143,8 +145,8 @@ func (s *Service) PlanCreateDraft(
 
 func (s *Service) CreateDraft(
 	ctx context.Context,
-	req *serviceports.CreateManualJournalRequest,
-	actor *serviceports.RequestActor,
+	req *manualjournalports.CreateManualJournalRequest,
+	actor *permissionports.RequestActor,
 ) (*manualjournal.Request, error) {
 	entity, err := s.PlanCreateDraft(ctx, req, actor)
 	if err != nil {
@@ -162,7 +164,7 @@ func (s *Service) CreateDraft(
 	}
 
 	var created *manualjournal.Request
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		created, err = s.repo.Create(txCtx, entity)
 		return err
 	})
@@ -182,9 +184,9 @@ func (s *Service) CreateDraft(
 
 func (s *Service) PlanUpdateDraft(
 	ctx context.Context,
-	req *serviceports.UpdateManualJournalDraftRequest,
-	actor *serviceports.RequestActor,
-) (*serviceports.ManualJournalChange, error) {
+	req *manualjournalports.UpdateManualJournalDraftRequest,
+	actor *permissionports.RequestActor,
+) (*manualjournalports.ManualJournalChange, error) {
 	userID, err := requireManualJournalUser(actor)
 	if err != nil {
 		return nil, err
@@ -192,7 +194,7 @@ func (s *Service) PlanUpdateDraft(
 
 	original, err := s.repo.GetByID(
 		ctx,
-		repositories.GetManualJournalByIDRequest{ID: req.RequestID, TenantInfo: req.TenantInfo},
+		manualjournalports.GetManualJournalByIDRequest{ID: req.RequestID, TenantInfo: req.TenantInfo},
 	)
 	if err != nil {
 		return nil, err
@@ -223,13 +225,13 @@ func (s *Service) PlanUpdateDraft(
 	}
 	updatedEntity.SyncTotals()
 
-	return &serviceports.ManualJournalChange{Before: original, After: updatedEntity}, nil
+	return &manualjournalports.ManualJournalChange{Before: original, After: updatedEntity}, nil
 }
 
 func (s *Service) UpdateDraft(
 	ctx context.Context,
-	req *serviceports.UpdateManualJournalDraftRequest,
-	actor *serviceports.RequestActor,
+	req *manualjournalports.UpdateManualJournalDraftRequest,
+	actor *permissionports.RequestActor,
 ) (*manualjournal.Request, error) {
 	change, err := s.PlanUpdateDraft(ctx, req, actor)
 	if err != nil {
@@ -237,7 +239,7 @@ func (s *Service) UpdateDraft(
 	}
 
 	var updated *manualjournal.Request
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		updated, err = s.repo.Update(txCtx, change.After)
 		return err
 	})
@@ -257,9 +259,9 @@ func (s *Service) UpdateDraft(
 
 func (s *Service) PlanSubmit(
 	ctx context.Context,
-	req *serviceports.GetManualJournalRequest,
-	actor *serviceports.RequestActor,
-) (*serviceports.ManualJournalChange, error) {
+	req *manualjournalports.GetManualJournalRequest,
+	actor *permissionports.RequestActor,
+) (*manualjournalports.ManualJournalChange, error) {
 	userID, err := requireManualJournalUser(actor)
 	if err != nil {
 		return nil, err
@@ -290,13 +292,13 @@ func (s *Service) PlanSubmit(
 		after.ApprovedByID = userID
 	}
 
-	return &serviceports.ManualJournalChange{Before: entity, After: after}, nil
+	return &manualjournalports.ManualJournalChange{Before: entity, After: after}, nil
 }
 
 func (s *Service) Submit(
 	ctx context.Context,
-	req *serviceports.GetManualJournalRequest,
-	actor *serviceports.RequestActor,
+	req *manualjournalports.GetManualJournalRequest,
+	actor *permissionports.RequestActor,
 ) (*manualjournal.Request, error) {
 	change, err := s.PlanSubmit(ctx, req, actor)
 	if err != nil {
@@ -308,8 +310,8 @@ func (s *Service) Submit(
 
 func (s *Service) Approve(
 	ctx context.Context,
-	req *serviceports.GetManualJournalRequest,
-	actor *serviceports.RequestActor,
+	req *manualjournalports.GetManualJournalRequest,
+	actor *permissionports.RequestActor,
 ) (*manualjournal.Request, error) {
 	userID, err := requireManualJournalUser(actor)
 	if err != nil {
@@ -318,7 +320,7 @@ func (s *Service) Approve(
 
 	entity, err := s.repo.GetByID(
 		ctx,
-		repositories.GetManualJournalByIDRequest{ID: req.RequestID, TenantInfo: req.TenantInfo},
+		manualjournalports.GetManualJournalByIDRequest{ID: req.RequestID, TenantInfo: req.TenantInfo},
 	)
 	if err != nil {
 		return nil, err
@@ -336,7 +338,7 @@ func (s *Service) Approve(
 
 	return s.saveTransition(
 		ctx,
-		&serviceports.ManualJournalChange{Before: entity, After: after},
+		&manualjournalports.ManualJournalChange{Before: entity, After: after},
 		permission.OpApprove,
 		"Manual journal approved",
 	)
@@ -344,9 +346,9 @@ func (s *Service) Approve(
 
 func (s *Service) PlanPost(
 	ctx context.Context,
-	req *serviceports.GetManualJournalRequest,
-	actor *serviceports.RequestActor,
-) (*serviceports.ManualJournalChange, error) {
+	req *manualjournalports.GetManualJournalRequest,
+	actor *permissionports.RequestActor,
+) (*manualjournalports.ManualJournalChange, error) {
 	plan, err := s.planPost(ctx, req, actor)
 	if err != nil {
 		return nil, err
@@ -357,8 +359,8 @@ func (s *Service) PlanPost(
 
 func (s *Service) planPost(
 	ctx context.Context,
-	req *serviceports.GetManualJournalRequest,
-	actor *serviceports.RequestActor,
+	req *manualjournalports.GetManualJournalRequest,
+	actor *permissionports.RequestActor,
 ) (*postingPlan, error) {
 	userID, err := requireManualJournalUser(actor)
 	if err != nil {
@@ -392,7 +394,7 @@ func (s *Service) planPost(
 	after.UpdatedByID = userID
 
 	return &postingPlan{
-		change: &serviceports.ManualJournalChange{
+		change: &manualjournalports.ManualJournalChange{
 			Before:  entity,
 			After:   after,
 			Journal: journalPreview(entity, postingPeriod.ID, postingDate),
@@ -408,8 +410,8 @@ func (s *Service) planPost(
 //nolint:govet // existing scoped variable reuse is local and behavior-preserving
 func (s *Service) Post(
 	ctx context.Context,
-	req *serviceports.GetManualJournalRequest,
-	actor *serviceports.RequestActor,
+	req *manualjournalports.GetManualJournalRequest,
+	actor *permissionports.RequestActor,
 ) (*manualjournal.Request, error) {
 	plan, err := s.planPost(ctx, req, actor)
 	if err != nil {
@@ -442,12 +444,12 @@ func (s *Service) Post(
 	batchID := pulid.MustNew("jb_")
 	entryID := pulid.MustNew("je_")
 
-	lines := make([]repositories.JournalPostingLine, 0, len(entity.Lines))
+	lines := make([]journalentryports.JournalPostingLine, 0, len(entity.Lines))
 	for idx, line := range entity.Lines {
 		if line == nil {
 			continue
 		}
-		lines = append(lines, repositories.JournalPostingLine{
+		lines = append(lines, journalentryports.JournalPostingLine{
 			ID:           pulid.MustNew("jel_"),
 			GLAccountID:  line.GLAccountID,
 			LineNumber:   int16(idx + 1),
@@ -459,8 +461,8 @@ func (s *Service) Post(
 		})
 	}
 
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		if err := s.journalRepo.CreatePosting(txCtx, repositories.CreateJournalPostingParams{
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		if err := s.journalRepo.CreatePosting(txCtx, journalentryports.CreateJournalPostingParams{
 			BatchID:              batchID,
 			OrganizationID:       entity.OrganizationID,
 			BusinessUnitID:       entity.BusinessUnitID,
@@ -529,8 +531,8 @@ func (s *Service) Post(
 
 func (s *Service) Reject(
 	ctx context.Context,
-	req *serviceports.RejectManualJournalRequest,
-	actor *serviceports.RequestActor,
+	req *manualjournalports.RejectManualJournalRequest,
+	actor *permissionports.RequestActor,
 ) (*manualjournal.Request, error) {
 	userID, err := requireManualJournalUser(actor)
 	if err != nil {
@@ -539,7 +541,7 @@ func (s *Service) Reject(
 
 	entity, err := s.repo.GetByID(
 		ctx,
-		repositories.GetManualJournalByIDRequest{ID: req.RequestID, TenantInfo: req.TenantInfo},
+		manualjournalports.GetManualJournalByIDRequest{ID: req.RequestID, TenantInfo: req.TenantInfo},
 	)
 	if err != nil {
 		return nil, err
@@ -558,7 +560,7 @@ func (s *Service) Reject(
 
 	return s.saveTransition(
 		ctx,
-		&serviceports.ManualJournalChange{Before: entity, After: after},
+		&manualjournalports.ManualJournalChange{Before: entity, After: after},
 		permission.OpReject,
 		"Manual journal rejected",
 	)
@@ -566,9 +568,9 @@ func (s *Service) Reject(
 
 func (s *Service) PlanCancel(
 	ctx context.Context,
-	req *serviceports.CancelManualJournalRequest,
-	actor *serviceports.RequestActor,
-) (*serviceports.ManualJournalChange, error) {
+	req *manualjournalports.CancelManualJournalRequest,
+	actor *permissionports.RequestActor,
+) (*manualjournalports.ManualJournalChange, error) {
 	userID, err := requireManualJournalUser(actor)
 	if err != nil {
 		return nil, err
@@ -576,7 +578,7 @@ func (s *Service) PlanCancel(
 
 	entity, err := s.repo.GetByID(
 		ctx,
-		repositories.GetManualJournalByIDRequest{ID: req.RequestID, TenantInfo: req.TenantInfo},
+		manualjournalports.GetManualJournalByIDRequest{ID: req.RequestID, TenantInfo: req.TenantInfo},
 	)
 	if err != nil {
 		return nil, err
@@ -593,13 +595,13 @@ func (s *Service) PlanCancel(
 	after.CancelReason = req.Reason
 	after.UpdatedByID = userID
 
-	return &serviceports.ManualJournalChange{Before: entity, After: after}, nil
+	return &manualjournalports.ManualJournalChange{Before: entity, After: after}, nil
 }
 
 func (s *Service) Cancel(
 	ctx context.Context,
-	req *serviceports.CancelManualJournalRequest,
-	actor *serviceports.RequestActor,
+	req *manualjournalports.CancelManualJournalRequest,
+	actor *permissionports.RequestActor,
 ) (*manualjournal.Request, error) {
 	change, err := s.PlanCancel(ctx, req, actor)
 	if err != nil {
@@ -611,7 +613,7 @@ func (s *Service) Cancel(
 
 func (s *Service) saveTransition(
 	ctx context.Context,
-	change *serviceports.ManualJournalChange,
+	change *manualjournalports.ManualJournalChange,
 	operation permission.Operation,
 	comment string,
 ) (*manualjournal.Request, error) {
@@ -622,7 +624,7 @@ func (s *Service) saveTransition(
 		updated *manualjournal.Request
 		err     error
 	)
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		updated, err = s.repo.Update(txCtx, entity)
 		return err
 	})
@@ -641,7 +643,7 @@ func (s *Service) loadRequestWithAccountingControl(
 ) (*manualjournal.Request, *tenant.AccountingControl, error) {
 	entity, err := s.repo.GetByID(
 		ctx,
-		repositories.GetManualJournalByIDRequest{ID: requestID, TenantInfo: tenantInfo},
+		manualjournalports.GetManualJournalByIDRequest{ID: requestID, TenantInfo: tenantInfo},
 	)
 	if err != nil {
 		return nil, nil, err
@@ -657,13 +659,13 @@ func journalPreview(
 	entity *manualjournal.Request,
 	periodID pulid.ID,
 	postingDate int64,
-) *serviceports.JournalPreview {
-	lines := make([]serviceports.JournalLinePreview, 0, len(entity.Lines))
+) *kernelports.JournalPreview {
+	lines := make([]kernelports.JournalLinePreview, 0, len(entity.Lines))
 	for _, line := range entity.Lines {
 		if line == nil {
 			continue
 		}
-		lines = append(lines, serviceports.JournalLinePreview{
+		lines = append(lines, kernelports.JournalLinePreview{
 			GLAccountID: line.GLAccountID,
 			Description: line.Description,
 			DebitMinor:  line.DebitAmount,
@@ -671,7 +673,7 @@ func journalPreview(
 		})
 	}
 
-	return &serviceports.JournalPreview{
+	return &kernelports.JournalPreview{
 		AccountingDate: postingDate,
 		FiscalPeriodID: periodID,
 		EntryStatus:    entryStatusPosted,
@@ -698,7 +700,7 @@ func cloneRequest(src *manualjournal.Request) *manualjournal.Request {
 	return &clone
 }
 
-func mapLines(inputs []*serviceports.ManualJournalLineInput) []*manualjournal.Line {
+func mapLines(inputs []*manualjournalports.ManualJournalLineInput) []*manualjournal.Line {
 	lines := make([]*manualjournal.Line, 0, len(inputs))
 	for idx, input := range inputs {
 		if input == nil {
@@ -718,7 +720,7 @@ func mapLines(inputs []*serviceports.ManualJournalLineInput) []*manualjournal.Li
 	return lines
 }
 
-func requireManualJournalUser(actor *serviceports.RequestActor) (pulid.ID, error) {
+func requireManualJournalUser(actor *permissionports.RequestActor) (pulid.ID, error) {
 	if actor == nil || actor.UserID.IsNil() {
 		return pulid.Nil, errortypes.NewAuthorizationError(
 			"Manual journal actions require an authenticated user",
@@ -756,7 +758,7 @@ func (s *Service) logAudit(
 	userID pulid.ID,
 	comment string,
 ) {
-	params := &serviceports.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceManualJournal,
 		ResourceID:     current.ID.String(),
 		Operation:      operation,
@@ -769,7 +771,7 @@ func (s *Service) logAudit(
 		params.PreviousState = jsonutils.MustToJSON(previous)
 	}
 
-	options := []serviceports.LogOption{auditservice.WithComment(comment)}
+	options := []auditports.LogOption{auditservice.WithComment(comment)}
 	if previous != nil {
 		options = append(options, auditservice.WithDiff(previous, current))
 	}

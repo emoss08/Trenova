@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,7 +19,7 @@ import (
 )
 
 type subjectPermissions struct {
-	serviceports.PermissionEngine
+	permissionports.PermissionEngine
 
 	allowed map[string]bool
 	asked   []string
@@ -30,8 +30,8 @@ type subjectPermissions struct {
 	agentChecks []pulid.ID
 }
 
-func (p *subjectPermissions) usable(operation permission.Operation) *serviceports.UsableAgents {
-	return &serviceports.UsableAgents{
+func (p *subjectPermissions) usable(operation permission.Operation) *permissionports.UsableAgents {
+	return &permissionports.UsableAgents{
 		Assistant:  p.allowed[permission.ResourceAssistant.String()+":"+string(operation)],
 		GrantedIDs: p.granted,
 	}
@@ -39,9 +39,9 @@ func (p *subjectPermissions) usable(operation permission.Operation) *serviceport
 
 func (p *subjectPermissions) AgentsUsable(
 	_ context.Context,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 	operation permission.Operation,
-) (*serviceports.UsableAgents, error) {
+) (*permissionports.UsableAgents, error) {
 	p.asked = append(p.asked, permission.ResourceAssistant.String()+":"+string(operation))
 
 	return p.usable(operation), nil
@@ -49,7 +49,7 @@ func (p *subjectPermissions) AgentsUsable(
 
 func (p *subjectPermissions) MayUseAgent(
 	_ context.Context,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 	definition *agentdefinition.Definition,
 ) (bool, error) {
 	p.agentChecks = append(p.agentChecks, definition.ID)
@@ -59,12 +59,12 @@ func (p *subjectPermissions) MayUseAgent(
 
 func (p *subjectPermissions) Check(
 	_ context.Context,
-	req *serviceports.PermissionCheckRequest,
-) (*serviceports.PermissionCheckResult, error) {
+	req *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
 	key := req.Resource + ":" + string(req.Operation)
 	p.asked = append(p.asked, key)
 
-	return &serviceports.PermissionCheckResult{Allowed: p.allowed[key]}, nil
+	return &permissionports.PermissionCheckResult{Allowed: p.allowed[key]}, nil
 }
 
 type recordingSubjects struct {
@@ -106,8 +106,8 @@ func subjectService(
 	}, conversations, permissions
 }
 
-func workerThread() *serviceports.StartThreadRequest {
-	return &serviceports.StartThreadRequest{
+func workerThread() *agentports.StartThreadRequest {
+	return &agentports.StartThreadRequest{
 		AgentDefinitionID: pulid.MustNew("agdef_"),
 		SubjectType:       agent.SubjectWorker,
 		SubjectID:         pulid.MustNew("wrk_"),
@@ -153,7 +153,7 @@ func TestStartThread_NeedsNoGrantWithoutARecord(t *testing.T) {
 
 	svc, _, permissions := subjectService(chatDefinition("Dispatch", ""))
 
-	_, err := startAs(t, svc, &serviceports.StartThreadRequest{
+	_, err := startAs(t, svc, &agentports.StartThreadRequest{
 		AgentDefinitionID: pulid.MustNew("agdef_"),
 	}, testActor())
 
@@ -170,7 +170,7 @@ func TestStartThread_RefusesAnAgentThatRunsOnItsOwn(t *testing.T) {
 	desk.TriggerMode = agentdefinition.TriggerEvent
 	svc, conversations, _ := subjectService(desk)
 
-	_, err := startAs(t, svc, &serviceports.StartThreadRequest{
+	_, err := startAs(t, svc, &agentports.StartThreadRequest{
 		AgentDefinitionID: desk.ID,
 	}, testActor())
 
@@ -209,4 +209,4 @@ func TestDescribeSubject_WithholdsARecordThePersonCanNoLongerRead(t *testing.T) 
 	assert.Equal(t, 1, subjects.described)
 }
 
-var _ repositories.ConversationRepository = (*creatingConversations)(nil)
+var _ agentports.ConversationRepository = (*creatingConversations)(nil)

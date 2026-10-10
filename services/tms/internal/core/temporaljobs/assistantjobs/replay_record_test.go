@@ -21,13 +21,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/assistantservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/stretchr/testify/require"
 	enumspb "go.temporal.io/api/enums/v1"
@@ -115,8 +114,8 @@ func registerTurnStandIns(
 	)
 
 	replies := []*agentruntime.ModelReply{
-		{Completion: &serviceports.ChatCompletionResult{
-			ToolCalls: []serviceports.ToolCall{{
+		{Completion: &agentports.ChatCompletionResult{
+			ToolCalls: []agentports.ToolCall{{
 				ID:        "call_recorded_1",
 				Name:      replayToolName,
 				Arguments: map[string]any{"proNumber": "12345"},
@@ -125,7 +124,7 @@ func registerTurnStandIns(
 			InputTokens:     1200,
 			OutputTokens:    40,
 		}},
-		{Completion: &serviceports.ChatCompletionResult{
+		{Completion: &agentports.ChatCompletionResult{
 			Text:            "Load 12345 is in Memphis.",
 			ModelIdentifier: "recorded-model",
 			InputTokens:     1300,
@@ -161,7 +160,7 @@ func registerTurnStandIns(
 					Status: string(conversation.AssistantTurnStatusCompleted),
 				},
 				Event: temporaltype.StreamItem{
-					Event: serviceports.AssistantEventDone,
+					Event: agentports.AssistantEventDone,
 					Data:  map[string]any{"turnId": in.Payload.TurnID.String()},
 				},
 			}, nil

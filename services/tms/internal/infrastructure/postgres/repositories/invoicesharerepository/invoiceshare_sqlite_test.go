@@ -11,10 +11,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoicesharerepository"
 	sqlitemigrations "github.com/emoss08/trenova/internal/infrastructure/sqlite/migrations"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,12 +24,11 @@ import (
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 	"github.com/uptrace/bun/migrate"
 	"go.uber.org/zap"
-
 	_ "modernc.org/sqlite"
 )
 
 type fixture struct {
-	repo      repositories.InvoiceShareRepository
+	repo      invoiceports.InvoiceShareRepository
 	db        *bun.DB
 	tenant    pagination.TenantInfo
 	invoiceID pulid.ID
@@ -157,7 +156,7 @@ func (f *fixture) share(
 func (f *fixture) list(t *testing.T) []*invoice.InvoiceShare {
 	t.Helper()
 
-	shares, err := f.repo.ListByInvoiceID(t.Context(), &repositories.ListInvoiceSharesRequest{
+	shares, err := f.repo.ListByInvoiceID(t.Context(), &invoiceports.ListInvoiceSharesRequest{
 		TenantInfo: f.tenant,
 		InvoiceID:  f.invoiceID,
 	})

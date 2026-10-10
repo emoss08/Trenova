@@ -9,10 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -41,7 +41,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.InvoiceRepository {
+func New(p Params) invoiceports.InvoiceRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.invoice-repository"),
@@ -50,7 +50,7 @@ func New(p Params) repositories.InvoiceRepository {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListInvoicesRequest,
+	req *invoiceports.ListInvoicesRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
@@ -66,7 +66,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListInvoicesRequest,
+	req *invoiceports.ListInvoicesRequest,
 ) (*pagination.ListResult[*invoice.Invoice], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*invoice.Invoice], error) {
 		entities := make([]*invoice.Invoice, 0, req.Filter.Pagination.SafeLimit())
@@ -90,7 +90,7 @@ func (r *repository) List(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListInvoiceConnectionRequest,
+	req *invoiceports.ListInvoiceConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -103,7 +103,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListInvoiceConnectionRequest,
+	req *invoiceports.ListInvoiceConnectionRequest,
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -115,7 +115,7 @@ func (r *repository) applyTotalCountFilters(
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListInvoiceConnectionRequest,
+	req *invoiceports.ListInvoiceConnectionRequest,
 ) (*pagination.CursorListResult[*invoice.Invoice], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*invoice.Invoice], error) {
 		log := r.l.With(
@@ -168,7 +168,7 @@ func (r *repository) ListConnection(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetInvoiceByIDRequest,
+	req invoiceports.GetInvoiceByIDRequest,
 ) (*invoice.Invoice, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*invoice.Invoice, error) {
 		entity := new(invoice.Invoice)
@@ -198,7 +198,7 @@ func (r *repository) GetByID(
 
 func (r *repository) GetByIDs(
 	ctx context.Context,
-	req repositories.GetInvoicesByIDsRequest,
+	req invoiceports.GetInvoicesByIDsRequest,
 ) ([]*invoice.Invoice, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*invoice.Invoice, error) {
 		rel := buncolgen.InvoiceRelations
@@ -234,15 +234,15 @@ func (r *repository) GetByIDs(
 // one that names it in the header, so grouped and consolidated invoices appear.
 func (r *repository) ListLineCharges(
 	ctx context.Context,
-	req *repositories.ListInvoiceLineChargesRequest,
-) ([]repositories.InvoiceLineCharge, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.InvoiceLineCharge, error) {
+	req *invoiceports.ListInvoiceLineChargesRequest,
+) ([]invoiceports.InvoiceLineCharge, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]invoiceports.InvoiceLineCharge, error) {
 		if req == nil || len(req.InvoiceIDs) == 0 {
-			return []repositories.InvoiceLineCharge{}, nil
+			return []invoiceports.InvoiceLineCharge{}, nil
 		}
 
 		invl := buncolgen.InvoiceLineColumns
-		charges := make([]repositories.InvoiceLineCharge, 0, len(req.InvoiceIDs))
+		charges := make([]invoiceports.InvoiceLineCharge, 0, len(req.InvoiceIDs))
 		if err := r.db.DBForContext(ctx).NewSelect().
 			Model((*invoice.InvoiceLine)(nil)).
 			Distinct().
@@ -264,7 +264,7 @@ func (r *repository) ListLineCharges(
 
 func (r *repository) NetBilledByCharge(
 	ctx context.Context,
-	req *repositories.NetBilledByChargeRequest,
+	req *invoiceports.NetBilledByChargeRequest,
 ) (map[pulid.ID]decimal.Decimal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]decimal.Decimal, error) {
 		if req == nil || len(req.ChargeIDs) == 0 {
@@ -327,7 +327,7 @@ func (r *repository) NetBilledByCharge(
 
 func (r *repository) ListByShipmentIDs(
 	ctx context.Context,
-	req repositories.ListInvoicesByShipmentIDsRequest,
+	req invoiceports.ListInvoicesByShipmentIDsRequest,
 ) (map[pulid.ID][]*invoice.Invoice, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (map[pulid.ID][]*invoice.Invoice, error) {
 		result := make(map[pulid.ID][]*invoice.Invoice, len(req.ShipmentIDs))
@@ -375,7 +375,7 @@ func (r *repository) ListByShipmentIDs(
 			invoiceIDs = append(invoiceIDs, pair.InvoiceID)
 		}
 
-		invoices, err := r.GetByIDs(ctx, repositories.GetInvoicesByIDsRequest{
+		invoices, err := r.GetByIDs(ctx, invoiceports.GetInvoicesByIDsRequest{
 			TenantInfo: req.TenantInfo,
 			InvoiceIDs: invoiceIDs,
 		})
@@ -411,7 +411,7 @@ func (r *repository) ListByShipmentIDs(
 // an application sees the balance nobody else is changing.
 func (r *repository) LockForUpdate(
 	ctx context.Context,
-	req repositories.GetInvoiceByIDRequest,
+	req invoiceports.GetInvoiceByIDRequest,
 ) (*invoice.Invoice, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoice.Invoice, error) {
 		entity := new(invoice.Invoice)
@@ -438,7 +438,7 @@ func (r *repository) LockForUpdate(
 // version: delivery reports arrive from the EDI pipeline, not from a user edit.
 func (r *repository) UpdateEDISendStatus(
 	ctx context.Context,
-	req repositories.UpdateInvoiceEDISendStatusRequest,
+	req invoiceports.UpdateInvoiceEDISendStatusRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		inv := buncolgen.InvoiceColumns
@@ -467,7 +467,7 @@ func (r *repository) UpdateEDISendStatus(
 
 func (r *repository) GetByBillingQueueItemID(
 	ctx context.Context,
-	req repositories.GetInvoiceByBillingQueueItemIDRequest,
+	req invoiceports.GetInvoiceByBillingQueueItemIDRequest,
 ) (*invoice.Invoice, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoice.Invoice, error) {
 		inv := buncolgen.InvoiceColumns
@@ -485,7 +485,7 @@ func (r *repository) GetByBillingQueueItemID(
 			return nil, dberror.HandleNotFoundError(err, "Invoice")
 		}
 
-		return r.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+		return r.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 			ID:         entity.ID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -494,7 +494,7 @@ func (r *repository) GetByBillingQueueItemID(
 
 func (r *repository) CountPostedReconciliationDiscrepancies(
 	ctx context.Context,
-	req repositories.CountPostedInvoiceReconciliationDiscrepanciesRequest,
+	req invoiceports.CountPostedInvoiceReconciliationDiscrepanciesRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		return r.db.DBForContext(ctx).
@@ -571,7 +571,7 @@ func (r *repository) Create(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoice.Invoice, error) {
 		entity.SyncMinorAmounts()
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 			if _, err := r.db.DBForContext(txCtx).NewInsert().Model(entity).Exec(txCtx); err != nil {
 				return fmt.Errorf("insert invoice: %w", err)
 			}
@@ -597,7 +597,7 @@ func (r *repository) Create(
 			return nil, err
 		}
 
-		return r.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+		return r.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 			ID:         entity.ID,
 			TenantInfo: tenantInfo(entity),
 		})
@@ -665,7 +665,7 @@ func (r *repository) Update(
 			return nil, err
 		}
 
-		return r.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+		return r.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 			ID:         entity.ID,
 			TenantInfo: tenantInfo(entity),
 		})
@@ -674,10 +674,10 @@ func (r *repository) Update(
 
 func (r *repository) UpsertAttachments(
 	ctx context.Context,
-	req repositories.UpsertInvoiceAttachmentsRequest,
+	req invoiceports.UpsertInvoiceAttachmentsRequest,
 ) ([]*invoice.Attachment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*invoice.Attachment, error) {
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 			if _, deleteErr := r.db.DBForContext(txCtx).
 				NewDelete().
 				Model((*invoice.Attachment)(nil)).
@@ -716,7 +716,7 @@ func (r *repository) UpsertAttachments(
 			return nil, err
 		}
 
-		return r.ListAttachments(ctx, repositories.ListInvoiceEmailAttemptsRequest{
+		return r.ListAttachments(ctx, invoiceports.ListInvoiceEmailAttemptsRequest{
 			InvoiceID:  req.InvoiceID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -725,7 +725,7 @@ func (r *repository) UpsertAttachments(
 
 func (r *repository) ListAttachments(
 	ctx context.Context,
-	req repositories.ListInvoiceEmailAttemptsRequest,
+	req invoiceports.ListInvoiceEmailAttemptsRequest,
 ) ([]*invoice.Attachment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*invoice.Attachment, error) {
 		entities := make([]*invoice.Attachment, 0)
@@ -751,7 +751,7 @@ func (r *repository) CreateEmailAttempt(
 	attachments []*invoice.EmailAttemptAttachment,
 ) (*invoice.EmailAttempt, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoice.EmailAttempt, error) {
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 			if _, insertErr := r.db.DBForContext(txCtx).
 				NewInsert().
 				Model(attempt).
@@ -800,7 +800,7 @@ func (r *repository) CreateEmailAttempt(
 
 func (r *repository) ListEmailAttempts(
 	ctx context.Context,
-	req repositories.ListInvoiceEmailAttemptsRequest,
+	req invoiceports.ListInvoiceEmailAttemptsRequest,
 ) (*pagination.ListResult[*invoice.EmailAttempt], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*invoice.EmailAttempt], error) {
 		limit := pagination.DefaultLimit
@@ -873,7 +873,7 @@ func (r *repository) SyncEmailAttemptsForMessage(
 			sentAt = &msg.SentAt
 		}
 
-		return r.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		return r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 			if _, err := r.db.DBForContext(txCtx).
 				NewUpdate().
 				Model((*invoice.EmailAttempt)(nil)).
@@ -1011,7 +1011,7 @@ func (r *repository) CreateDocumentShareToken(
 		if _, err := r.db.DBForContext(ctx).NewInsert().Model(token).Exec(ctx); err != nil {
 			return nil, fmt.Errorf("insert invoice document share token: %w", err)
 		}
-		return r.GetDocumentShareToken(ctx, repositories.GetInvoiceDocumentShareTokenRequest{
+		return r.GetDocumentShareToken(ctx, invoiceports.GetInvoiceDocumentShareTokenRequest{
 			TokenHash: token.TokenHash,
 		})
 	})
@@ -1019,7 +1019,7 @@ func (r *repository) CreateDocumentShareToken(
 
 func (r *repository) GetDocumentShareToken(
 	ctx context.Context,
-	req repositories.GetInvoiceDocumentShareTokenRequest,
+	req invoiceports.GetInvoiceDocumentShareTokenRequest,
 ) (*invoice.DocumentShareToken, error) {
 	ctx = dbscope.WithSystem(ctx, "resolve a public invoice document link before its tenant is known")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*invoice.DocumentShareToken, error) {
@@ -1062,7 +1062,7 @@ func (r *repository) UpdateDocumentShareToken(
 		); err != nil {
 			return nil, err
 		}
-		return r.GetDocumentShareToken(ctx, repositories.GetInvoiceDocumentShareTokenRequest{
+		return r.GetDocumentShareToken(ctx, invoiceports.GetInvoiceDocumentShareTokenRequest{
 			TokenHash: token.TokenHash,
 		})
 	})
@@ -1087,7 +1087,7 @@ func ediSendStatusOrDefault(status invoice.EDISendStatus) invoice.EDISendStatus 
 
 func (r *repository) StampExchangeRate(
 	ctx context.Context,
-	req *repositories.StampExchangeRateRequest,
+	req *kernelports.StampExchangeRateRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		inv := buncolgen.InvoiceColumns

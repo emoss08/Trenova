@@ -8,9 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -23,16 +23,16 @@ type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	WorkerRepo    repositories.WorkerRepository
+	WorkerRepo    workerports.WorkerRepository
 	Notifications *notificationservice.Service
-	Templates     services.DocumentTemplateResolver
+	Templates     documenttemplateports.DocumentTemplateResolver
 }
 
 type Service struct {
 	l             *zap.Logger
-	workerRepo    repositories.WorkerRepository
+	workerRepo    workerports.WorkerRepository
 	notifications *notificationservice.Service
-	templates     services.DocumentTemplateResolver
+	templates     documenttemplateports.DocumentTemplateResolver
 }
 
 func New(p Params) *Service {

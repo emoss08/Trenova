@@ -6,12 +6,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -51,7 +51,7 @@ func TestARAnalyticsRepositoryQueriesExecute(t *testing.T) {
 
 	overview, err := repo.GetBalanceOverview(
 		ctx,
-		repositories.GetARAnalyticsRequest{TenantInfo: tenantInfo, AsOfDate: asOf},
+		customerledgerports.GetARAnalyticsRequest{TenantInfo: tenantInfo, AsOfDate: asOf},
 	)
 	require.NoError(t, err)
 	require.NotNil(t, overview)
@@ -59,7 +59,7 @@ func TestARAnalyticsRepositoryQueriesExecute(t *testing.T) {
 
 	stats, err := repo.GetPaymentStats(
 		ctx,
-		repositories.GetARAnalyticsRequest{TenantInfo: tenantInfo, AsOfDate: asOf},
+		customerledgerports.GetARAnalyticsRequest{TenantInfo: tenantInfo, AsOfDate: asOf},
 	)
 	require.NoError(t, err)
 	require.NotNil(t, stats)
@@ -67,7 +67,7 @@ func TestARAnalyticsRepositoryQueriesExecute(t *testing.T) {
 
 	series, err := repo.ListBalanceSeries(
 		ctx,
-		repositories.ListARSeriesRequest{TenantInfo: tenantInfo, AsOfDate: asOf, Weeks: 13},
+		customerledgerports.ListARSeriesRequest{TenantInfo: tenantInfo, AsOfDate: asOf, Weeks: 13},
 	)
 	require.NoError(t, err)
 	assert.Len(t, series, 13)
@@ -77,14 +77,14 @@ func TestARAnalyticsRepositoryQueriesExecute(t *testing.T) {
 
 	agingTrend, err := repo.ListAgingTrend(
 		ctx,
-		repositories.ListARSeriesRequest{TenantInfo: tenantInfo, AsOfDate: asOf, Weeks: 13},
+		customerledgerports.ListARSeriesRequest{TenantInfo: tenantInfo, AsOfDate: asOf, Weeks: 13},
 	)
 	require.NoError(t, err)
 	assert.Len(t, agingTrend, 13)
 
 	cashFlow, err := repo.ListCashFlow(
 		ctx,
-		repositories.ListARCashFlowRequest{
+		customerledgerports.ListARCashFlowRequest{
 			TenantInfo:  tenantInfo,
 			AsOfDate:    asOf,
 			PastWeeks:   6,
@@ -104,7 +104,7 @@ func TestARAnalyticsRepositoryQueriesExecute(t *testing.T) {
 
 	totals, err := repo.GetCollectionTotals(
 		ctx,
-		repositories.GetARCollectionMetricsRequest{
+		customerledgerports.GetARCollectionMetricsRequest{
 			TenantInfo: tenantInfo,
 			AsOfDate:   asOf,
 			PeriodDays: 91,
@@ -116,7 +116,7 @@ func TestARAnalyticsRepositoryQueriesExecute(t *testing.T) {
 
 	topOverdue, err := repo.ListTopOverdueCustomers(
 		ctx,
-		repositories.ListARTopOverdueCustomersRequest{
+		customerledgerports.ListARTopOverdueCustomersRequest{
 			TenantInfo: tenantInfo,
 			AsOfDate:   asOf,
 			Limit:      10,
@@ -127,7 +127,7 @@ func TestARAnalyticsRepositoryQueriesExecute(t *testing.T) {
 
 	worklist, err := repo.ListCollectionsWorklist(
 		ctx,
-		repositories.ListARCollectionsWorklistRequest{
+		customerledgerports.ListARCollectionsWorklistRequest{
 			TenantInfo: tenantInfo,
 			AsOfDate:   asOf,
 			Limit:      25,
@@ -152,7 +152,7 @@ func TestARAnalyticsRepositoryQueriesExecute(t *testing.T) {
 
 	snapshot, err := repo.GetCustomerSnapshot(
 		ctx,
-		repositories.GetARCustomerSnapshotRequest{
+		customerledgerports.GetARCustomerSnapshotRequest{
 			TenantInfo: tenantInfo,
 			CustomerID: customer.ID,
 			AsOfDate:   asOf,

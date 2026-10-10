@@ -3,7 +3,7 @@ package agentruntime
 import (
 	"regexp"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 
 // ArtifactHrefScheme starts the address of a link that names an artifact in
@@ -15,7 +15,7 @@ const ArtifactHrefScheme = "artifact:"
 var artifactLink = regexp.MustCompile(`\[([^\[\]\n]+)\]\(` + ArtifactHrefScheme + `([A-Za-z0-9_]+)\)`)
 
 // ArtifactRef is how the model names an artifact inside a sentence.
-func ArtifactRef(shown *services.ShownArtifact) string {
+func ArtifactRef(shown *agentports.ShownArtifact) string {
 	return "[" + escapeLinkText(shown.Title) + "](" + ArtifactHrefScheme + shown.ID.String() + ")"
 }
 
@@ -28,7 +28,7 @@ func StripArtifactLinks(text string) string {
 // artifactRefNote tells the model how to point at an artifact where its
 // sentence mentions it, so the person can open it from the words that
 // explain it rather than from a list under the reply.
-func artifactRefNote(shown *services.ShownArtifact) string {
+func artifactRefNote(shown *agentports.ShownArtifact) string {
 	return " To point to it, write " + ArtifactRef(shown) +
 		" inside the sentence that mentions it, exactly as written, never on a line of its " +
 		"own or after a table; it is shown as a button that opens it. Use it once, and never " +

@@ -9,8 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -25,14 +26,14 @@ const (
 )
 
 type fakeSyncLedger struct {
-	summary  *serviceports.AccountingSyncSummary
+	summary  *accountingsyncports.AccountingSyncSummary
 	records  []*accountingsync.AccountingSyncRecord
 	attempts []*accountingsync.AccountingSyncAttempt
-	states   map[pulid.ID]*serviceports.AccountingSyncObjectState
+	states   map[pulid.ID]*accountingsyncports.AccountingSyncObjectState
 	hasMore  bool
 
 	summarized bool
-	listed     *serviceports.ListAccountingSyncRecordsRequest
+	listed     *accountingsyncports.ListAccountingSyncRecordsRequest
 	asked      []pulid.ID
 }
 
@@ -40,14 +41,14 @@ func (f *fakeSyncLedger) Summary(
 	context.Context,
 	pagination.TenantInfo,
 	integration.Type,
-) (*serviceports.AccountingSyncSummary, error) {
+) (*accountingsyncports.AccountingSyncSummary, error) {
 	f.summarized = true
 	return f.summary, nil
 }
 
 func (f *fakeSyncLedger) ListRecords(
 	_ context.Context,
-	req *serviceports.ListAccountingSyncRecordsRequest,
+	req *accountingsyncports.ListAccountingSyncRecordsRequest,
 ) (*pagination.CursorListResult[*accountingsync.AccountingSyncRecord], error) {
 	f.listed = req
 	return &pagination.CursorListResult[*accountingsync.AccountingSyncRecord]{
@@ -76,24 +77,24 @@ func (f *fakeSyncLedger) ObjectStates(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	ids []pulid.ID,
-) (map[pulid.ID]*serviceports.AccountingSyncObjectState, error) {
+) (map[pulid.ID]*accountingsyncports.AccountingSyncObjectState, error) {
 	f.asked = ids
 	return f.states, nil
 }
 
 type syncLedgerPermissions struct {
-	serviceports.PermissionEngine
+	permissionports.PermissionEngine
 
 	allowed bool
-	asked   *serviceports.PermissionCheckRequest
+	asked   *permissionports.PermissionCheckRequest
 }
 
 func (p *syncLedgerPermissions) Check(
 	_ context.Context,
-	req *serviceports.PermissionCheckRequest,
-) (*serviceports.PermissionCheckResult, error) {
+	req *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
 	p.asked = req
-	return &serviceports.PermissionCheckResult{Allowed: p.allowed}, nil
+	return &permissionports.PermissionCheckResult{Allowed: p.allowed}, nil
 }
 
 func blockedInvoiceRecord() *accountingsync.AccountingSyncRecord {
@@ -182,20 +183,20 @@ func TestGetAccountingSyncStatus_CountsTheQueueForAReader(t *testing.T) {
 	t.Parallel()
 
 	conn := syncingConnection()
-	status := &fakeAccountingStatus{status: &serviceports.AccountingSyncStatus{
+	status := &fakeAccountingStatus{status: &accountingsyncports.AccountingSyncStatus{
 		IntegrationType: integration.TypeQuickBooksOnline,
 		ProviderName:    "QuickBooks Online",
 		Available:       true,
 		Connection:      conn,
 	}}
 	sample := pulid.MustNew("acctsr_")
-	ledger := &fakeSyncLedger{summary: &serviceports.AccountingSyncSummary{
+	ledger := &fakeSyncLedger{summary: &accountingsyncports.AccountingSyncSummary{
 		Connection: conn,
-		Counts: []repositories.AccountingSyncStatusCount{
+		Counts: []accountingsyncports.AccountingSyncStatusCount{
 			{Status: accountingsync.SyncStatusSynced, Count: 120},
 			{Status: accountingsync.SyncStatusBlocked, Count: 4},
 		},
-		Attention: []repositories.AccountingSyncAttentionGroup{{
+		Attention: []accountingsyncports.AccountingSyncAttentionGroup{{
 			Status:         accountingsync.SyncStatusBlocked,
 			ErrorCategory:  accountingsync.SyncErrorMapping,
 			Resolution:     "Map the Detention charge to an item, then retry.",
@@ -246,7 +247,7 @@ func TestGetAccountingSyncStatus_WithholdsTheQueueWithoutLedgerAccess(t *testing
 	paused := int64(1_788_500_000)
 	conn.PausedAt = &paused
 	conn.PausedReason = "Month-end close"
-	status := &fakeAccountingStatus{status: &serviceports.AccountingSyncStatus{
+	status := &fakeAccountingStatus{status: &accountingsyncports.AccountingSyncStatus{
 		IntegrationType: integration.TypeQuickBooksOnline,
 		ProviderName:    "QuickBooks Online",
 		Available:       true,
@@ -272,7 +273,7 @@ func TestGetAccountingSyncStatus_SaysSendingHasNotStarted(t *testing.T) {
 	conn := syncingConnection()
 	conn.SyncStartDate = nil
 	conn.SyncEnabledAt = nil
-	status := &fakeAccountingStatus{status: &serviceports.AccountingSyncStatus{
+	status := &fakeAccountingStatus{status: &accountingsyncports.AccountingSyncStatus{
 		IntegrationType: integration.TypeQuickBooksOnline,
 		ProviderName:    "QuickBooks Online",
 		Available:       true,
@@ -424,7 +425,7 @@ func TestGetRecordAccountingSyncState_AnswersForEveryDocumentAsked(t *testing.T)
 
 	payment := syncedPaymentRecord()
 	unsent := pulid.MustNew("inv_")
-	ledger := &fakeSyncLedger{states: map[pulid.ID]*serviceports.AccountingSyncObjectState{
+	ledger := &fakeSyncLedger{states: map[pulid.ID]*accountingsyncports.AccountingSyncObjectState{
 		payment.ObjectID: {
 			ObjectType:   payment.ObjectType,
 			ObjectID:     payment.ObjectID,
@@ -482,7 +483,7 @@ func TestAccountingSyncLedgerTools_ReadTheSyncLedger(t *testing.T) {
 	t.Parallel()
 
 	ledger := &fakeSyncLedger{}
-	for _, tool := range []serviceports.AgentQueryTool{
+	for _, tool := range []agentports.AgentQueryTool{
 		newListAccountingSyncRecordsTool(ledger),
 		newGetAccountingSyncRecordTool(ledger),
 		newGetRecordAccountingSyncStateTool(ledger),

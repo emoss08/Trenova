@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -18,13 +18,13 @@ type ValidatorParams struct {
 	fx.In
 
 	DB   *postgres.Connection
-	Repo repositories.FuelPurchaseRepository
+	Repo fuelpurchaseports.FuelPurchaseRepository
 }
 
 type CardFinder interface {
 	FindCardByLastFour(
 		ctx context.Context,
-		req *repositories.FindFuelCardByLastFourRequest,
+		req *fuelpurchaseports.FindFuelCardByLastFourRequest,
 	) (*fuelpurchase.FuelCard, error)
 }
 
@@ -91,7 +91,7 @@ func uniqueCardRule(cards CardFinder) validationframework.TenantedRule[*fuelpurc
 			}
 			existing, err := cards.FindCardByLastFour(
 				ctx,
-				&repositories.FindFuelCardByLastFourRequest{
+				&fuelpurchaseports.FindFuelCardByLastFourRequest{
 					TenantInfo: pagination.TenantInfo{
 						OrgID: card.OrganizationID,
 						BuID:  card.BusinessUnitID,

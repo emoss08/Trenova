@@ -1,14 +1,15 @@
 package assignmenthandler_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"net/http"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/handlers/assignmenthandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,7 +21,7 @@ import (
 
 func setupAssignmentHandler(
 	t *testing.T,
-	service *mocks.MockAssignmentService,
+	service *shipmentportsmock.MockAssignmentService,
 ) *assignmenthandler.Handler {
 	t.Helper()
 
@@ -52,9 +53,9 @@ func TestAssignmentHandler_Unassign_Success(t *testing.T) {
 	t.Parallel()
 
 	moveID := pulid.MustNew("sm_")
-	service := mocks.NewMockAssignmentService(t)
+	service := shipmentportsmock.NewMockAssignmentService(t)
 	service.EXPECT().
-		Unassign(mock.Anything, mock.MatchedBy(func(req *repositories.UnassignShipmentMoveRequest) bool {
+		Unassign(mock.Anything, mock.MatchedBy(func(req *shipmentports.UnassignShipmentMoveRequest) bool {
 			return req.ShipmentMoveID == moveID &&
 				req.TenantInfo.OrgID == testutil.TestOrgID &&
 				req.TenantInfo.BuID == testutil.TestBuID &&
@@ -79,7 +80,7 @@ func TestAssignmentHandler_Unassign_Success(t *testing.T) {
 func TestAssignmentHandler_Unassign_InvalidMoveID(t *testing.T) {
 	t.Parallel()
 
-	handler := setupAssignmentHandler(t, mocks.NewMockAssignmentService(t))
+	handler := setupAssignmentHandler(t, shipmentportsmock.NewMockAssignmentService(t))
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodDelete).
@@ -96,7 +97,7 @@ func TestAssignmentHandler_Unassign_ServiceError(t *testing.T) {
 	t.Parallel()
 
 	moveID := pulid.MustNew("sm_")
-	service := mocks.NewMockAssignmentService(t)
+	service := shipmentportsmock.NewMockAssignmentService(t)
 	service.EXPECT().
 		Unassign(mock.Anything, mock.AnythingOfType("*repositories.UnassignShipmentMoveRequest")).
 		Return(errortypes.NewBusinessError("Only fresh assigned shipment moves can be unassigned")).

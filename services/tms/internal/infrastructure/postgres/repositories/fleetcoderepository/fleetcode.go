@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/fleetcodeports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -30,7 +30,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.FleetCodeRepository {
+func New(p Params) fleetcodeports.FleetCodeRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.fleet-code-repository"),
@@ -39,7 +39,7 @@ func New(p Params) repositories.FleetCodeRepository {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListFleetCodesRequest,
+	req *fleetcodeports.ListFleetCodesRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
@@ -57,7 +57,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListFleetCodesRequest,
+	req *fleetcodeports.ListFleetCodesRequest,
 ) (*pagination.ListResult[*fleetcode.FleetCode], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*fleetcode.FleetCode], error) {
 		log := r.l.With(
@@ -86,7 +86,7 @@ func (r *repository) List(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListFleetCodeConnectionRequest,
+	req *fleetcodeports.ListFleetCodeConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -99,7 +99,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListFleetCodeConnectionRequest,
+	req *fleetcodeports.ListFleetCodeConnectionRequest,
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -119,7 +119,7 @@ func applyFleetCodeColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuer
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListFleetCodeConnectionRequest,
+	req *fleetcodeports.ListFleetCodeConnectionRequest,
 ) (*pagination.CursorListResult[*fleetcode.FleetCode], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*fleetcode.FleetCode], error) {
 		log := r.l.With(
@@ -226,7 +226,7 @@ func (r *repository) Update(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetFleetCodeByIDRequest,
+	req fleetcodeports.GetFleetCodeByIDRequest,
 ) (*fleetcode.FleetCode, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*fleetcode.FleetCode, error) {
 		log := r.l.With(

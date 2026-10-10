@@ -5,24 +5,24 @@ import (
 	"strings"
 	"testing"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 // readingTurn is a request that has read results, one call and its answer
 // after another, each result of size characters, fenced as a tool's are.
-func readingTurn(results, size int) *serviceports.ChatCompletionRequest {
-	messages := []serviceports.Message{{Role: serviceports.RoleUser, Content: "Which loads are late?"}}
+func readingTurn(results, size int) *agentports.ChatCompletionRequest {
+	messages := []agentports.Message{{Role: agentports.RoleUser, Content: "Which loads are late?"}}
 	for idx := range results {
 		callID := fmt.Sprintf("call_%d", idx)
 		messages = append(messages,
-			serviceports.Message{
-				Role:      serviceports.RoleAssistant,
-				ToolCalls: []serviceports.ToolCall{{ID: callID, Name: "list_shipments"}},
+			agentports.Message{
+				Role:      agentports.RoleAssistant,
+				ToolCalls: []agentports.ToolCall{{ID: callID, Name: "list_shipments"}},
 			},
-			serviceports.Message{
-				Role:       serviceports.RoleTool,
+			agentports.Message{
+				Role:       agentports.RoleTool,
 				ToolCallID: callID,
 				ToolName:   "list_shipments",
 				Content:    FenceToolResult("list_shipments", strings.Repeat("r", size)),
@@ -30,7 +30,7 @@ func readingTurn(results, size int) *serviceports.ChatCompletionRequest {
 		)
 	}
 
-	return &serviceports.ChatCompletionRequest{System: "Help dispatch.", Messages: messages}
+	return &agentports.ChatCompletionRequest{System: "Help dispatch.", Messages: messages}
 }
 
 /*
@@ -120,7 +120,7 @@ func TestRun_ShortensEarlierReadsWhenTheTurnOutgrowsTheWindow(t *testing.T) {
 	t.Parallel()
 
 	tool := queryTool("get_shipment", map[string]any{"notes": strings.Repeat("n", 9_000)}, nil)
-	read := func(id string) *serviceports.ChatCompletionResult {
+	read := func(id string) *agentports.ChatCompletionResult {
 		turn := toolTurn("get_shipment", map[string]any{"shipmentId": id})
 		turn.ContextWindow = 4_096
 
@@ -128,13 +128,13 @@ func TestRun_ShortensEarlierReadsWhenTheTurnOutgrowsTheWindow(t *testing.T) {
 	}
 	answer := textTurn("Those loads are running late.")
 	answer.ContextWindow = 4_096
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		read("shp_1"), read("shp_2"), read("shp_3"), answer,
 	}}
-	rt := newRuntime(completion, &stubQueryRegistry{Tools: []serviceports.AgentQueryTool{tool}},
+	rt := newRuntime(completion, &stubQueryRegistry{Tools: []agentports.AgentQueryTool{tool}},
 		&stubActionRegistry{}, nil)
 
-	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+	result, err := rt.Run(t.Context(), &agentports.RunRequest{
 		Definition: testDefinition("get_shipment"),
 		Actor:      testActor(),
 		Input:      "Which of these are late?",
@@ -146,7 +146,7 @@ func TestRun_ShortensEarlierReadsWhenTheTurnOutgrowsTheWindow(t *testing.T) {
 	last := completion.Requests[3].Messages
 	var results []string
 	for _, message := range last {
-		if message.Role == serviceports.RoleTool {
+		if message.Role == agentports.RoleTool {
 			results = append(results, message.Content)
 		}
 	}
@@ -167,7 +167,7 @@ func TestRun_ShortensEarlierReadsWhenTheTurnOutgrowsTheWindow(t *testing.T) {
 func TestTurnWindow_IsTheAnsweringProvidersWindow(t *testing.T) {
 	t.Parallel()
 
-	turn := &Turn{result: &serviceports.RunResult{}}
+	turn := &Turn{result: &agentports.RunResult{}}
 	assert.Zero(t, turn.window())
 
 	turn.result.Model = "claude-sonnet-4-5"

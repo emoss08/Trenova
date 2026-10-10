@@ -5,8 +5,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -16,10 +17,10 @@ type cutOffEffects struct {
 
 	supports bool
 	asked    []string
-	events   []serviceports.StreamEvent
+	events   []kernelports.StreamEvent
 }
 
-func (fx *cutOffEffects) Emit(event serviceports.StreamEvent) {
+func (fx *cutOffEffects) Emit(event kernelports.StreamEvent) {
 	fx.events = append(fx.events, event)
 }
 
@@ -32,19 +33,19 @@ func (fx *cutOffEffects) Supports(change string) bool {
 	return true
 }
 
-func cutMidCall(limit int) *serviceports.ChatCompletionResult {
-	return &serviceports.ChatCompletionResult{
+func cutMidCall(limit int) *agentports.ChatCompletionResult {
+	return &agentports.ChatCompletionResult{
 		Text:            "I'll transfer all 21 now.",
 		Truncated:       true,
 		OutputLimit:     limit,
 		OutputTokens:    limit,
-		CutOffCall:      &serviceports.CutOffToolCall{Name: "transfer_to_billing"},
+		CutOffCall:      &agentports.CutOffToolCall{Name: "transfer_to_billing"},
 		ModelIdentifier: "z-ai/glm-5.3",
 	}
 }
 
-func cutBeforeAnswering(limit int) *serviceports.ChatCompletionResult {
-	return &serviceports.ChatCompletionResult{
+func cutBeforeAnswering(limit int) *agentports.ChatCompletionResult {
+	return &agentports.ChatCompletionResult{
 		Truncated:       true,
 		OutputLimit:     limit,
 		OutputTokens:    limit,
@@ -53,7 +54,7 @@ func cutBeforeAnswering(limit int) *serviceports.ChatCompletionResult {
 }
 
 type cutOffRun struct {
-	result     *serviceports.RunResult
+	result     *agentports.RunResult
 	completion *scriptedCompletion
 	fx         *cutOffEffects
 	tool       *agentruntimetest.StubActionTool
@@ -62,7 +63,7 @@ type cutOffRun struct {
 func runCutOff(
 	t *testing.T,
 	supports bool,
-	turns ...*serviceports.ChatCompletionResult,
+	turns ...*agentports.ChatCompletionResult,
 ) cutOffRun {
 	t.Helper()
 
@@ -72,16 +73,16 @@ func runCutOff(
 		Tier:     agent.TierPropose,
 	}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
-		Tools: []serviceports.AgentTool{tool},
+		Tools: []agentports.AgentTool{tool},
 	}, nil)
 	fx := &cutOffEffects{supports: supports}
 	fx.localEffects = &localEffects{
 		s:    rt,
 		ctx:  t.Context(),
-		emit: func(serviceports.StreamEvent) {},
+		emit: func(kernelports.StreamEvent) {},
 	}
 
-	result, err := rt.Drive(rt.OpenTurn(t.Context(), &serviceports.RunRequest{
+	result, err := rt.Drive(rt.OpenTurn(t.Context(), &agentports.RunRequest{
 		Definition: testDefinition("transfer_to_billing"),
 		Actor:      testActor(),
 		Input:      "Transfer all of them to billing.",
@@ -91,10 +92,10 @@ func runCutOff(
 	return cutOffRun{result: result, completion: completion, fx: fx, tool: tool}
 }
 
-func retryingReasons(events []serviceports.StreamEvent) []string {
+func retryingReasons(events []kernelports.StreamEvent) []string {
 	reasons := make([]string, 0, 1)
 	for _, event := range events {
-		if data, ok := event.Data.(serviceports.AssistantRetryingEvent); ok {
+		if data, ok := event.Data.(agentports.AssistantRetryingEvent); ok {
 			reasons = append(reasons, data.Reason)
 		}
 	}
@@ -162,10 +163,10 @@ func TestCutOffCall_AReplyThatSpentItsBudgetThinkingIsAskedAgain(t *testing.T) {
 func TestCutOffCall_ABrokenNativeCallIsAskedAgain(t *testing.T) {
 	t.Parallel()
 
-	broken := &serviceports.ChatCompletionResult{
+	broken := &agentports.ChatCompletionResult{
 		Truncated:   true,
 		OutputLimit: 4096,
-		ToolCalls: []serviceports.ToolCall{{
+		ToolCalls: []agentports.ToolCall{{
 			ID:             "call_1",
 			Name:           "transfer_to_billing",
 			Arguments:      map[string]any{},
@@ -197,7 +198,7 @@ func TestCutOffCall_TheRetryIsCappedByTheRuntimeCeiling(t *testing.T) {
 func TestCutOffCall_ALongTextAnswerKeepsTheOldNotice(t *testing.T) {
 	t.Parallel()
 
-	long := &serviceports.ChatCompletionResult{
+	long := &agentports.ChatCompletionResult{
 		Text:        "| Shipment | Amount |\n| shp_1 | 100 |",
 		Truncated:   true,
 		OutputLimit: 1024,

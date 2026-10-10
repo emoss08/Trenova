@@ -7,9 +7,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -25,7 +25,7 @@ type batchRepository struct {
 	l  *zap.Logger
 }
 
-func NewBatch(p Params) repositories.CarrierSettlementBatchRepository {
+func NewBatch(p Params) carriersettlementports.CarrierSettlementBatchRepository {
 	return &batchRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.carrier-settlement-batch-repository"),
@@ -34,7 +34,7 @@ func NewBatch(p Params) repositories.CarrierSettlementBatchRepository {
 
 func (r *batchRepository) List(
 	ctx context.Context,
-	req *repositories.ListCarrierSettlementBatchesRequest,
+	req *carriersettlementports.ListCarrierSettlementBatchesRequest,
 ) (*pagination.ListResult[*carriersettlement.CarrierSettlementBatch], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*carriersettlement.CarrierSettlementBatch], error) {
 		cols := buncolgen.CarrierSettlementBatchColumns
@@ -70,7 +70,7 @@ func (r *batchRepository) List(
 
 func (r *batchRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListCarrierSettlementBatchConnectionRequest,
+	req *carriersettlementports.ListCarrierSettlementBatchConnectionRequest,
 ) (*pagination.CursorListResult[*carriersettlement.CarrierSettlementBatch], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*carriersettlement.CarrierSettlementBatch], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -130,7 +130,7 @@ func (r *batchRepository) ListConnection(
 
 func (r *batchRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetCarrierSettlementBatchByIDRequest,
+	req carriersettlementports.GetCarrierSettlementBatchByIDRequest,
 ) (*carriersettlement.CarrierSettlementBatch, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carriersettlement.CarrierSettlementBatch, error) {
 		cols := buncolgen.CarrierSettlementBatchColumns
@@ -222,7 +222,7 @@ func (r *batchRepository) RecalculateAggregates(
 			return nil, fmt.Errorf("recalculate carrier settlement batch aggregates: %w", err)
 		}
 
-		return r.GetByID(ctx, repositories.GetCarrierSettlementBatchByIDRequest{
+		return r.GetByID(ctx, carriersettlementports.GetCarrierSettlementBatchByIDRequest{
 			ID:         batchID,
 			TenantInfo: tenantInfo,
 		})

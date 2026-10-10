@@ -6,7 +6,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -22,19 +22,19 @@ func TestWithTxMarksAReadOnlyTransaction(t *testing.T) {
 	readOnly := false
 	nestedReadOnly := false
 
-	err := conn.WithTx(t.Context(), ports.TxOptions{ReadOnly: true}, func(ctx context.Context, _ bun.Tx) error {
-		readOnly = ports.IsReadOnly(ctx)
-		ports.AfterCommit(ctx, func(context.Context) { ran = true })
+	err := conn.WithTx(t.Context(), kernelports.TxOptions{ReadOnly: true}, func(ctx context.Context, _ bun.Tx) error {
+		readOnly = kernelports.IsReadOnly(ctx)
+		kernelports.AfterCommit(ctx, func(context.Context) { ran = true })
 
 		return nil
 	})
 	require.NoError(t, err)
 
-	err = conn.WithTx(t.Context(), ports.TxOptions{}, func(ctx context.Context, _ bun.Tx) error {
-		assert.False(t, ports.IsReadOnly(ctx))
+	err = conn.WithTx(t.Context(), kernelports.TxOptions{}, func(ctx context.Context, _ bun.Tx) error {
+		assert.False(t, kernelports.IsReadOnly(ctx))
 
-		return conn.WithTx(ctx, ports.TxOptions{ReadOnly: true}, func(inner context.Context, _ bun.Tx) error {
-			nestedReadOnly = ports.IsReadOnly(inner)
+		return conn.WithTx(ctx, kernelports.TxOptions{ReadOnly: true}, func(inner context.Context, _ bun.Tx) error {
+			nestedReadOnly = kernelports.IsReadOnly(inner)
 			return nil
 		})
 	})

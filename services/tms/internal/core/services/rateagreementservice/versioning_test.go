@@ -1,11 +1,13 @@
 package rateagreementservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/rateagreementportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -23,7 +25,7 @@ func TestCreate_WritesTheInitialHeaderVersion(t *testing.T) {
 	agreement := draftAgreement(rateagreement.StatusDraft)
 	agreement.ID = pulid.Nil
 
-	repo := mocks.NewMockRateAgreementRepository(t)
+	repo := rateagreementportsmock.NewMockRateAgreementRepository(t)
 	repo.EXPECT().
 		Create(mock.Anything, mock.AnythingOfType("*rateagreement.RateAgreement")).
 		RunAndReturn(func(
@@ -46,7 +48,7 @@ func TestCreate_WritesTheInitialHeaderVersion(t *testing.T) {
 		}).
 		Once()
 
-	audit := mocks.NewMockAuditService(t)
+	audit := auditportsmock.NewMockAuditService(t)
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Once()
 
 	svc := New(Params{
@@ -310,17 +312,17 @@ func TestHeaderTermsChanged_FuelBindingIsATerm(t *testing.T) {
 func updateHarness(
 	t *testing.T,
 	original *rateagreement.RateAgreement,
-) (*mocks.MockRateAgreementRepository, *mocks.MockAuditService) {
+) (*rateagreementportsmock.MockRateAgreementRepository, *auditportsmock.MockAuditService) {
 	t.Helper()
 
 	var saved *rateagreement.RateAgreement
 
-	repo := mocks.NewMockRateAgreementRepository(t)
+	repo := rateagreementportsmock.NewMockRateAgreementRepository(t)
 	repo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetRateAgreementByIDRequest")).
 		RunAndReturn(func(
 			_ context.Context,
-			req *repositories.GetRateAgreementByIDRequest,
+			req *rateagreementports.GetRateAgreementByIDRequest,
 		) (*rateagreement.RateAgreement, error) {
 			require.Equal(t, original.ID, req.RateAgreementID)
 			if saved != nil {
@@ -340,7 +342,7 @@ func updateHarness(
 		}).
 		Once()
 
-	audit := mocks.NewMockAuditService(t)
+	audit := auditportsmock.NewMockAuditService(t)
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Once()
 
 	return repo, audit

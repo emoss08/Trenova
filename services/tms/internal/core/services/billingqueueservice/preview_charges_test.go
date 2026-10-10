@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -22,8 +22,8 @@ func TestPreviewUpdateCharges_IsWhatUpdateChargesSaves(t *testing.T) {
 	h.expectItem(f.acmeItem)
 	actor := testActor(f.tenantInfo)
 
-	request := func() *services.UpdateChargesRequest {
-		return &services.UpdateChargesRequest{
+	request := func() *billingqueueports.UpdateChargesRequest {
+		return &billingqueueports.UpdateChargesRequest{
 			ItemID:            f.acmeItem.ID,
 			TenantInfo:        f.tenantInfo,
 			AdditionalCharges: editedDetention(f, "1200"),
@@ -67,7 +67,7 @@ func TestPreviewUpdateCharges_RefusesARepricing(t *testing.T) {
 	f := h.f
 	rate := decimal.NewFromInt(2000)
 
-	_, err := h.svc.PreviewUpdateCharges(t.Context(), &services.UpdateChargesRequest{
+	_, err := h.svc.PreviewUpdateCharges(t.Context(), &billingqueueports.UpdateChargesRequest{
 		ItemID:     f.acmeItem.ID,
 		TenantInfo: f.tenantInfo,
 		BaseRate:   &rate,

@@ -1,6 +1,9 @@
 package shipmentservicetest
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
@@ -9,10 +12,10 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func NewAssignmentRepository(t testing.TB) *mocks.MockAssignmentRepository {
+func NewAssignmentRepository(t testing.TB) *shipmentportsmock.MockAssignmentRepository {
 	t.Helper()
 
-	repo := mocks.NewMockAssignmentRepository(t)
+	repo := shipmentportsmock.NewMockAssignmentRepository(t)
 	repo.EXPECT().
 		FindNearestActualEventByTractorID(
 			mock.Anything,
@@ -49,10 +52,10 @@ func NewAssignmentRepository(t testing.TB) *mocks.MockAssignmentRepository {
 	return repo
 }
 
-func NewControlRepository(t testing.TB) *mocks.MockShipmentControlRepository {
+func NewControlRepository(t testing.TB) *tenantportsmock.MockShipmentControlRepository {
 	t.Helper()
 
-	repo := mocks.NewMockShipmentControlRepository(t)
+	repo := tenantportsmock.NewMockShipmentControlRepository(t)
 	repo.EXPECT().
 		Get(mock.Anything, mock.Anything).
 		Return(&tenant.ShipmentControl{
@@ -64,10 +67,10 @@ func NewControlRepository(t testing.TB) *mocks.MockShipmentControlRepository {
 	return repo
 }
 
-func NewCustomerRepository(t testing.TB) *mocks.MockCustomerRepository {
+func NewCustomerRepository(t testing.TB) *customerportsmock.MockCustomerRepository {
 	t.Helper()
 
-	repo := mocks.NewMockCustomerRepository(t)
+	repo := customerportsmock.NewMockCustomerRepository(t)
 	repo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
 		Return(&customer.Customer{

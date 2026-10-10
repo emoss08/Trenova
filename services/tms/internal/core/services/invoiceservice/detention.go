@@ -6,7 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -22,7 +23,7 @@ func (s *Service) guardDetentionHolds(
 		return nil
 	}
 
-	return s.detentionBilling.GuardShipments(ctx, &servicesports.DetentionBillingHoldsRequest{
+	return s.detentionBilling.GuardShipments(ctx, &detentionports.DetentionBillingHoldsRequest{
 		TenantInfo:  tenantInfo,
 		ShipmentIDs: shipmentIDs,
 	})
@@ -47,7 +48,7 @@ func (s *Service) guardItemDetentionHolds(
 func (s *Service) syncDetentionBilling(
 	ctx context.Context,
 	created *invoice.Invoice,
-	actor *servicesports.RequestActor,
+	actor *permissionports.RequestActor,
 ) error {
 	if s.detentionBilling == nil || created == nil {
 		return nil
@@ -60,11 +61,11 @@ func (s *Service) syncDetentionBilling(
 
 	return s.detentionBilling.SyncInvoiceBilling(
 		ctx,
-		&servicesports.SyncDetentionInvoiceBillingRequest{
+		&detentionports.SyncDetentionInvoiceBillingRequest{
 			TenantInfo:    tenantInfo,
 			InvoiceIDs:    []pulid.ID{created.ID},
 			InvoiceNumber: created.Number,
-			Event:         servicesports.DetentionBillingInvoiceCreated,
+			Event:         detentionports.DetentionBillingInvoiceCreated,
 			ActorUserID:   actorUserID(actor, tenantInfo),
 		},
 	)

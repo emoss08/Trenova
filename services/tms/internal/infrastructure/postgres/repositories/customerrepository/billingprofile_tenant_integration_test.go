@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/domainregistry"
@@ -60,14 +60,14 @@ func TestGetBillingProfile_StaysInsideTheTenant(t *testing.T) {
 
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 
-	_, err := repo.GetBillingProfile(ctx, repositories.GetCustomerBillingProfileRequest{
+	_, err := repo.GetBillingProfile(ctx, customerports.GetCustomerBillingProfileRequest{
 		CustomerID: fixtureB.Customer.ID,
 		TenantInfo: infoA,
 	})
 	require.Error(t, err)
 	assert.True(t, errortypes.IsNotFoundError(err))
 
-	profile, err := repo.GetBillingProfile(ctx, repositories.GetCustomerBillingProfileRequest{
+	profile, err := repo.GetBillingProfile(ctx, customerports.GetCustomerBillingProfileRequest{
 		CustomerID: fixtureB.Customer.ID,
 		TenantInfo: infoB,
 	})

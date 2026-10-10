@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
@@ -46,9 +46,9 @@ func (r *repository) rosterCount(
 func (r *repository) HeadcountByFleet(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) ([]repositories.HeadcountRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.HeadcountRow, error) {
-		rows := make([]repositories.HeadcountRow, 0, 8)
+) ([]workerports.HeadcountRow, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.HeadcountRow, error) {
+		rows := make([]workerports.HeadcountRow, 0, 8)
 		if err := r.rosterCount(ctx, tenantInfo).
 			Join("LEFT JOIN fleet_codes AS fc").
 			JoinOn("fc.id = wrk.fleet_code_id").
@@ -71,9 +71,9 @@ func (r *repository) HeadcountByFleet(
 func (r *repository) HeadcountByPosition(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) ([]repositories.HeadcountRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.HeadcountRow, error) {
-		rows := make([]repositories.HeadcountRow, 0, 16)
+) ([]workerports.HeadcountRow, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.HeadcountRow, error) {
+		rows := make([]workerports.HeadcountRow, 0, 16)
 		if err := r.rosterCount(ctx, tenantInfo).
 			ColumnExpr("COALESCE(wrk.position_id, '') AS key").
 			ColumnExpr("COALESCE(jpos.title, 'No position') AS label").
@@ -92,9 +92,9 @@ func (r *repository) HeadcountByPosition(
 func (r *repository) HeadcountByDepartment(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) ([]repositories.HeadcountRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.HeadcountRow, error) {
-		rows := make([]repositories.HeadcountRow, 0, 9)
+) ([]workerports.HeadcountRow, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.HeadcountRow, error) {
+		rows := make([]workerports.HeadcountRow, 0, 9)
 		if err := r.rosterCount(ctx, tenantInfo).
 			ColumnExpr("COALESCE(jpos.department::text, '') AS key").
 			ColumnExpr("COALESCE(jpos.department::text, 'Unassigned') AS label").
@@ -124,14 +124,14 @@ func teamScope(managerIDs []pulid.ID) func(*bun.SelectQuery) *bun.SelectQuery {
 
 func (r *repository) TeamMembers(
 	ctx context.Context,
-	req *repositories.TeamScopeRequest,
-) ([]repositories.TeamMemberRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.TeamMemberRow, error) {
+	req *workerports.TeamScopeRequest,
+) ([]workerports.TeamMemberRow, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.TeamMemberRow, error) {
 		if len(req.ManagerIDs) == 0 {
-			return []repositories.TeamMemberRow{}, nil
+			return []workerports.TeamMemberRow{}, nil
 		}
 
-		rows := make([]repositories.TeamMemberRow, 0, 32)
+		rows := make([]workerports.TeamMemberRow, 0, 32)
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*worker.Worker)(nil)).

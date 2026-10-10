@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -19,7 +19,7 @@ func taintOf(marks ...agent.TaintMark) *agent.RunTaint {
 }
 
 func delegatingTurnScript(delegateID string) *scriptedCompletion {
-	return &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	return &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		toolTurn(delegateTaskName, map[string]any{
 			"agentId": delegateID,
 			"task":    "Create the report and return its id.",
@@ -76,9 +76,9 @@ func TestDelegate_FoldsTheDelegatesTaintBackUp(t *testing.T) {
 	assert.Equal(t, []agent.TaintMark{document}, result.Delegations[0].Taint.Marks,
 		"the delegate's proposals carry its own turn's taint")
 
-	var announced []serviceports.AssistantRunTaintedEvent
+	var announced []agentports.AssistantRunTaintedEvent
 	for _, event := range fx.events {
-		if data, ok := event.Data.(serviceports.AssistantRunTaintedEvent); ok {
+		if data, ok := event.Data.(agentports.AssistantRunTaintedEvent); ok {
 			announced = append(announced, data)
 		}
 	}
@@ -106,7 +106,7 @@ func TestDelegate_AMarkTheTurnAlreadyHadIsNotAnnouncedAgain(t *testing.T) {
 	result := driveWith(t, rt, req, fx)
 
 	assert.Len(t, result.Taint.Marks, 1)
-	assert.NotContains(t, fx.eventNames(), serviceports.AssistantEventRunTainted)
+	assert.NotContains(t, fx.eventNames(), agentports.AssistantEventRunTainted)
 }
 
 func TestDelegate_ADelegateOfUnknownTaintLeavesTheTurnUnknown(t *testing.T) {

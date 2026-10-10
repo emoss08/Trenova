@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -14,7 +14,7 @@ import (
 )
 
 type indexedTenantsPipeline struct {
-	serviceports.RetrievalIndexPipeline
+	agentports.RetrievalIndexPipeline
 	tenants []pagination.TenantInfo
 	after   *pagination.TenantInfo
 	limit   int

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -15,7 +15,7 @@ import (
 )
 
 type linkStubMessageRepo struct {
-	repositories.InboundMessageRepository
+	inboundmessageports.InboundMessageRepository
 
 	message *inboundmessage.InboundMessage
 	updated *inboundmessage.InboundMessage
@@ -23,7 +23,7 @@ type linkStubMessageRepo struct {
 
 func (s *linkStubMessageRepo) GetByID(
 	_ context.Context,
-	_ repositories.GetInboundMessageByIDRequest,
+	_ inboundmessageports.GetInboundMessageByIDRequest,
 ) (*inboundmessage.InboundMessage, error) {
 	return s.message, nil
 }

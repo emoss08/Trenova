@@ -4,8 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -17,8 +16,8 @@ const (
 
 func (s *Service) Daily(
 	ctx context.Context,
-	req *services.AIUsageDailyRequest,
-) ([]services.AIUsageDay, error) {
+	req *aiusageports.AIUsageDailyRequest,
+) ([]aiusageports.AIUsageDay, error) {
 	days := req.Days
 	switch {
 	case days <= 0:
@@ -41,7 +40,7 @@ func (s *Service) Daily(
 	today := s.clock().In(location)
 	first := time.Date(today.Year(), today.Month(), today.Day()-(days-1), 0, 0, 0, 0, location)
 
-	rows, err := s.usage.Daily(ctx, repositories.AIUsageDailyRequest{
+	rows, err := s.usage.Daily(ctx, aiusageports.AIUsageDailyQuery{
 		TenantInfo: req.TenantInfo,
 		Since:      first.Unix(),
 		Timezone:   location.String(),
@@ -56,16 +55,16 @@ func (s *Service) Daily(
 
 // fillDays lays the days that had usage over every day of the window, so a
 // quiet day is a zero rather than a gap.
-func fillDays(first time.Time, days int, rows []repositories.AIUsageDayTotals) []services.AIUsageDay {
-	byDay := make(map[string]*repositories.AIUsageDayTotals, len(rows))
+func fillDays(first time.Time, days int, rows []aiusageports.AIUsageDayTotals) []aiusageports.AIUsageDay {
+	byDay := make(map[string]*aiusageports.AIUsageDayTotals, len(rows))
 	for idx := range rows {
 		byDay[rows[idx].Day] = &rows[idx]
 	}
 
-	out := make([]services.AIUsageDay, 0, days)
+	out := make([]aiusageports.AIUsageDay, 0, days)
 	for offset := range days {
 		day := first.AddDate(0, 0, offset).Format(dayLayout)
-		entry := services.AIUsageDay{Day: day, CostUSD: "0"}
+		entry := aiusageports.AIUsageDay{Day: day, CostUSD: "0"}
 		if row, ok := byDay[day]; ok {
 			entry.Calls = row.Calls
 			entry.Failed = row.Failed

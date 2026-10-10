@@ -6,14 +6,13 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/emoss08/trenova/internal/core/services/formula/contextvariablecache"
-
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/formula/contextvariablecache"
 	"github.com/emoss08/trenova/internal/core/services/formula/effectiveversioncache"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/pkg/ratetablecache"
 	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -42,21 +41,21 @@ const defaultShopLimit = 10
 // considered, including what could not be used.
 func (s *Service) Shop(
 	ctx context.Context,
-	req *services.ShopRequest,
-) (*services.ShopResult, error) {
+	req *ratequoteports.ShopRequest,
+) (*ratequoteports.ShopResult, error) {
 	if req == nil || req.Shipment == nil {
 		return nil, ErrNoParty
 	}
 
 	strategy := req.Strategy
 	if !strategy.IsValid() {
-		strategy = services.ShopStrategyLeastCost
+		strategy = ratequoteports.ShopStrategyLeastCost
 	}
 
-	result := &services.ShopResult{
+	result := &ratequoteports.ShopResult{
 		Strategy:  strategy,
 		SellTotal: req.SellTotal,
-		Options:   []*services.ShopOption{},
+		Options:   []*ratequoteports.ShopOption{},
 	}
 
 	candidates := s.shopCandidates(ctx, req, result)
@@ -112,8 +111,8 @@ type shopCandidate struct {
 // organization already wrote down which carriers may haul which lane.
 func (s *Service) shopCandidates(
 	ctx context.Context,
-	req *services.ShopRequest,
-	result *services.ShopResult,
+	req *ratequoteports.ShopRequest,
+	result *ratequoteports.ShopResult,
 ) []shopCandidate {
 	if len(req.CarrierIDs) > 0 {
 		candidates := make([]shopCandidate, 0, len(req.CarrierIDs))
@@ -173,11 +172,11 @@ func carrierNameOf(entry *tender.RoutingGuideEntry) string {
 	return entry.Carrier.Name
 }
 
-func matchLaneRequest(req *services.ShopRequest) *repositories.MatchLaneRequest {
+func matchLaneRequest(req *ratequoteports.ShopRequest) *tenderports.MatchLaneRequest {
 	origin := req.Shipment.ShipperStop()
 	destination := req.Shipment.DeliveryStop()
 
-	match := &repositories.MatchLaneRequest{TenantInfo: req.TenantInfo}
+	match := &tenderports.MatchLaneRequest{TenantInfo: req.TenantInfo}
 
 	if origin != nil && origin.Location != nil {
 		match.OriginLocationID = origin.Location.ID
@@ -205,17 +204,17 @@ func matchLaneRequest(req *services.ShopRequest) *repositories.MatchLaneRequest 
 // other nine from being compared.
 func (s *Service) priceCandidate(
 	ctx context.Context,
-	req *services.ShopRequest,
+	req *ratequoteports.ShopRequest,
 	candidate shopCandidate,
-) *services.ShopOption {
-	option := &services.ShopOption{
+) *ratequoteports.ShopOption {
+	option := &ratequoteports.ShopOption{
 		CarrierID:       candidate.carrierID,
 		CarrierName:     candidate.name,
 		GuideRank:       candidate.guideRank,
 		OfferTTLSeconds: candidate.offerTTL,
 	}
 
-	rated, err := s.RateShipment(ctx, &services.RateShipmentRequest{
+	rated, err := s.RateShipment(ctx, &ratequoteports.RateShipmentRequest{
 		Shipment:       req.Shipment,
 		TenantInfo:     req.TenantInfo,
 		PartyType:      rateagreement.PartyTypeCarrier,
@@ -266,7 +265,7 @@ func (s *Service) priceCandidate(
 	return option
 }
 
-func sellTotalOf(req *services.ShopRequest) decimal.Decimal {
+func sellTotalOf(req *ratequoteports.ShopRequest) decimal.Decimal {
 	if !req.SellTotal.Valid {
 		return decimal.Zero
 	}
@@ -279,7 +278,7 @@ func sellTotalOf(req *services.ShopRequest) decimal.Decimal {
 // It comes from the agreement that priced this option rather than from a
 // setting, because the floor is a negotiated term: a carrier signed at a
 // thinner margin than another one is not a breach of anything.
-func marginFloorOf(rated *services.RatedShipment) decimal.NullDecimal {
+func marginFloorOf(rated *ratequoteports.RatedShipment) decimal.NullDecimal {
 	agreement := agreementOf(rated)
 	if agreement == nil {
 		return decimal.NullDecimal{}
@@ -288,7 +287,7 @@ func marginFloorOf(rated *services.RatedShipment) decimal.NullDecimal {
 	return agreement.MarginFloorPercent
 }
 
-func maxPayPercentOf(rated *services.RatedShipment) decimal.NullDecimal {
+func maxPayPercentOf(rated *ratequoteports.RatedShipment) decimal.NullDecimal {
 	agreement := agreementOf(rated)
 	if agreement == nil {
 		return decimal.NullDecimal{}
@@ -297,7 +296,7 @@ func maxPayPercentOf(rated *services.RatedShipment) decimal.NullDecimal {
 	return agreement.MaxPayPercentOfSell
 }
 
-func agreementOf(rated *services.RatedShipment) *rateagreement.RateAgreement {
+func agreementOf(rated *ratequoteports.RatedShipment) *rateagreement.RateAgreement {
 	if rated == nil || rated.Quote == nil {
 		return nil
 	}
@@ -315,8 +314,8 @@ func agreementOf(rated *services.RatedShipment) *rateagreement.RateAgreement {
 // Every comparison ends on the carrier id. Two carriers quoting the same number
 // is ordinary, and without a final tiebreak the same load would shop two ways
 // on two runs and nobody could reproduce which carrier was offered it.
-func rankOptions(options []*services.ShopOption, strategy services.ShopStrategy) {
-	slices.SortStableFunc(options, func(a, b *services.ShopOption) int {
+func rankOptions(options []*ratequoteports.ShopOption, strategy ratequoteports.ShopStrategy) {
+	slices.SortStableFunc(options, func(a, b *ratequoteports.ShopOption) int {
 		if a.Priced() != b.Priced() {
 			if a.Priced() {
 				return -1
@@ -339,19 +338,19 @@ func rankOptions(options []*services.ShopOption, strategy services.ShopStrategy)
 	}
 }
 
-func compareByStrategy(a, b *services.ShopOption, strategy services.ShopStrategy) int {
+func compareByStrategy(a, b *ratequoteports.ShopOption, strategy ratequoteports.ShopStrategy) int {
 	switch strategy {
-	case services.ShopStrategyBestMargin:
+	case ratequoteports.ShopStrategyBestMargin:
 		// Reversed: the most margin comes first.
 		return b.Margin.Amount.Cmp(a.Margin.Amount)
 
-	case services.ShopStrategyGuideRank:
+	case ratequoteports.ShopStrategyGuideRank:
 		return compareGuideRank(a, b)
 
-	case services.ShopStrategyFastestAccept:
+	case ratequoteports.ShopStrategyFastestAccept:
 		return compareOfferTTL(a, b)
 
-	case services.ShopStrategyLeastCost:
+	case ratequoteports.ShopStrategyLeastCost:
 		return a.Cost.Cmp(b.Cost)
 
 	default:
@@ -361,7 +360,7 @@ func compareByStrategy(a, b *services.ShopOption, strategy services.ShopStrategy
 
 // compareGuideRank orders by the guide's own ranking, with carriers that came
 // from no guide behind every carrier that did.
-func compareGuideRank(a, b *services.ShopOption) int {
+func compareGuideRank(a, b *ratequoteports.ShopOption) int {
 	if (a.GuideRank == 0) != (b.GuideRank == 0) {
 		if a.GuideRank == 0 {
 			return 1
@@ -375,7 +374,7 @@ func compareGuideRank(a, b *services.ShopOption) int {
 
 // compareOfferTTL orders by the shortest offer window, with carriers whose
 // window is unknown behind every carrier whose is not.
-func compareOfferTTL(a, b *services.ShopOption) int {
+func compareOfferTTL(a, b *ratequoteports.ShopOption) int {
 	if (a.OfferTTLSeconds == 0) != (b.OfferTTLSeconds == 0) {
 		if a.OfferTTLSeconds == 0 {
 			return 1

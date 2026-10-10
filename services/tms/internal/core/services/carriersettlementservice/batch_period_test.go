@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/settlementshared"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,7 +17,7 @@ import (
 )
 
 type periodBatchRepoStub struct {
-	repositories.CarrierSettlementBatchRepository
+	carriersettlementports.CarrierSettlementBatchRepository
 	existing *carriersettlement.CarrierSettlementBatch
 }
 

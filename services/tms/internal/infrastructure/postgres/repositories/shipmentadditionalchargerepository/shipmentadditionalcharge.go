@@ -5,8 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -24,16 +25,16 @@ type Params struct {
 
 	DB                   *postgres.Connection
 	Logger               *zap.Logger
-	OccurrenceRepository repositories.DetentionOccurrenceRepository
+	OccurrenceRepository detentionports.DetentionOccurrenceRepository
 }
 
 type repository struct {
 	db             *postgres.Connection
 	l              *zap.Logger
-	occurrenceRepo repositories.DetentionOccurrenceRepository
+	occurrenceRepo detentionports.DetentionOccurrenceRepository
 }
 
-func New(p Params) repositories.ShipmentAdditionalChargeRepository {
+func New(p Params) shipmentports.ShipmentAdditionalChargeRepository {
 	return &repository{
 		db:             p.DB,
 		l:              p.Logger.Named("postgres.shipment-additional-charge-repository"),
@@ -135,7 +136,7 @@ func (r *repository) linkDetentionOccurrences(
 		return nil
 	}
 
-	if err := r.occurrenceRepo.LinkCharges(ctx, tx, &repositories.LinkOccurrenceChargesRequest{
+	if err := r.occurrenceRepo.LinkCharges(ctx, tx, &detentionports.LinkOccurrenceChargesRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,

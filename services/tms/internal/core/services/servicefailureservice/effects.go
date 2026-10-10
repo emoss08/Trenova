@@ -2,15 +2,18 @@ package servicefailureservice
 
 import (
 	"context"
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/domain/watchtower"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -20,7 +23,7 @@ import (
 
 type serviceFailureActionParams struct {
 	entity   *servicefailure.ServiceFailure
-	actor    *services.RequestActor
+	actor    *permissionports.RequestActor
 	op       permission.Operation
 	previous any
 	current  any
@@ -29,7 +32,7 @@ type serviceFailureActionParams struct {
 
 type serviceFailureInvalidationParams struct {
 	entity  *servicefailure.ServiceFailure
-	actor   *services.RequestActor
+	actor   *permissionports.RequestActor
 	action  string
 	payload any
 }
@@ -43,7 +46,7 @@ type commentParams struct {
 func (s *service) afterServiceFailureCreate(
 	ctx context.Context,
 	entity *servicefailure.ServiceFailure,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	comment string,
 ) {
 	s.logServiceFailureAction(serviceFailureActionParams{
@@ -59,7 +62,7 @@ func (s *service) afterServiceFailureCreate(
 		action:  "created",
 		payload: entity,
 	})
-	services.PublishAgentEvent(ctx, s.publisher, services.AgentEvent{
+	agentports.PublishAgentEvent(ctx, s.publisher, agentports.AgentEvent{
 		Kind:       agent.EventServiceFailureDetected,
 		SubjectID:  entity.ShipmentID,
 		TenantInfo: serviceFailureTenantInfo(entity),
@@ -89,7 +92,7 @@ func (s *service) projectToWatchtower(
 
 func (s *service) logServiceFailureAction(params serviceFailureActionParams) {
 	auditActor := params.actor.AuditActorOrSystem()
-	logParams := &services.LogActionParams{
+	logParams := &auditports.LogActionParams{
 		Resource:       permission.ResourceServiceFailure,
 		ResourceID:     params.entity.ID.String(),
 		Operation:      params.op,
@@ -107,7 +110,7 @@ func (s *service) logServiceFailureAction(params serviceFailureActionParams) {
 		logParams.PreviousState = jsonutils.MustToJSON(params.previous)
 	}
 
-	opts := []services.LogOption{
+	opts := []auditports.LogOption{
 		auditservice.WithComment(params.comment),
 		auditservice.WithMetadata(serviceFailureMetadata(params.entity, params.actor)),
 	}
@@ -122,7 +125,7 @@ func (s *service) logServiceFailureAction(params serviceFailureActionParams) {
 func serviceFailureLifecycleMetadata(
 	previous *servicefailure.ServiceFailure,
 	current *servicefailure.ServiceFailure,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) map[string]any {
 	metadata := serviceFailureMetadata(current, actor)
 	if previous != nil {
@@ -138,7 +141,7 @@ func serviceFailureLifecycleMetadata(
 
 func serviceFailureMetadata(
 	entity *servicefailure.ServiceFailure,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) map[string]any {
 	metadata := map[string]any{}
 	if entity == nil {
@@ -213,7 +216,7 @@ func (s *service) comment(ctx context.Context, params commentParams) {
 	}
 	params.metadata["serviceFailureNumber"] = params.entity.Number
 	params.metadata["serviceFailureStatus"] = string(params.entity.Status)
-	if _, err := s.commentService.CreateSystem(ctx, &services.CreateSystemShipmentCommentRequest{
+	if _, err := s.commentService.CreateSystem(ctx, &shipmentports.CreateSystemShipmentCommentRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: params.entity.OrganizationID,
 			BuID:  params.entity.BusinessUnitID,

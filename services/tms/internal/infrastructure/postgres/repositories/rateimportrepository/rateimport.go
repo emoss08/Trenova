@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/rateimport"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateimportports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -33,7 +33,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.RateImportRepository {
+func New(p Params) rateimportports.RateImportRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.rateimport-repository"),
@@ -42,7 +42,7 @@ func New(p Params) repositories.RateImportRepository {
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req *repositories.GetRateImportBatchByIDRequest,
+	req *rateimportports.GetRateImportBatchByIDRequest,
 ) (*rateimport.RateImportBatch, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*rateimport.RateImportBatch, error) {
 		entity := new(rateimport.RateImportBatch)
@@ -76,7 +76,7 @@ func (r *repository) GetByID(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListRateImportBatchesRequest,
+	req *rateimportports.ListRateImportBatchesRequest,
 ) (*pagination.ListResult[*rateimport.RateImportBatch], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*rateimport.RateImportBatch], error) {
 		cols := buncolgen.RateImportBatchColumns
@@ -108,7 +108,7 @@ func (r *repository) List(
 
 func (r *repository) ListRows(
 	ctx context.Context,
-	req *repositories.ListRateImportRowsRequest,
+	req *rateimportports.ListRateImportRowsRequest,
 ) (*pagination.ListResult[*rateimport.RateImportRow], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*rateimport.RateImportRow], error) {
 		cols := buncolgen.RateImportRowColumns
@@ -154,7 +154,7 @@ func (r *repository) Create(
 	rows []*rateimport.RateImportRow,
 ) (*rateimport.RateImportBatch, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*rateimport.RateImportBatch, error) {
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			if _, iErr := r.db.DBForContext(c).
 				NewInsert().
 				Model(entity).

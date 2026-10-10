@@ -1,19 +1,21 @@
 package documentservice_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentuploadportsmock"
 	"context"
 	"errors"
 	"testing"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
 	"github.com/emoss08/trenova/internal/core/services/workflowstarter"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -26,36 +28,36 @@ import (
 )
 
 type mockDocRepo struct {
-	ListFn                             func(ctx context.Context, req *repositories.ListDocumentsRequest) (*pagination.ListResult[*document.Document], error)
-	SelectOptionsFn                    func(ctx context.Context, req *repositories.DocumentSelectOptionsRequest) (*pagination.ListResult[*document.Document], error)
-	GetByIDFn                          func(ctx context.Context, req repositories.GetDocumentByIDRequest) (*document.Document, error)
-	GetByStoragePathFn                 func(ctx context.Context, req repositories.GetDocumentByStoragePathRequest) (*document.Document, error)
-	GetByIDsFn                         func(ctx context.Context, req repositories.BulkDeleteDocumentRequest) ([]*document.Document, error)
-	ListVersionsFn                     func(ctx context.Context, req repositories.ListDocumentVersionsRequest) ([]*document.Document, error)
-	GetByResFn                         func(ctx context.Context, req *repositories.GetDocumentsByResourceRequest) ([]*document.Document, error)
-	GetByResIDsFn                      func(ctx context.Context, req *repositories.GetDocumentsByResourceIDsRequest) ([]*document.Document, error)
+	ListFn                             func(ctx context.Context, req *documentports.ListDocumentsRequest) (*pagination.ListResult[*document.Document], error)
+	SelectOptionsFn                    func(ctx context.Context, req *documentports.DocumentSelectOptionsRequest) (*pagination.ListResult[*document.Document], error)
+	GetByIDFn                          func(ctx context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error)
+	GetByStoragePathFn                 func(ctx context.Context, req documentports.GetDocumentByStoragePathRequest) (*document.Document, error)
+	GetByIDsFn                         func(ctx context.Context, req documentports.BulkDeleteDocumentRequest) ([]*document.Document, error)
+	ListVersionsFn                     func(ctx context.Context, req documentports.ListDocumentVersionsRequest) ([]*document.Document, error)
+	GetByResFn                         func(ctx context.Context, req *documentports.GetDocumentsByResourceRequest) ([]*document.Document, error)
+	GetByResIDsFn                      func(ctx context.Context, req *documentports.GetDocumentsByResourceIDsRequest) ([]*document.Document, error)
 	ListPendingPreviewReconciliationFn func(ctx context.Context, olderThan int64, limit int) ([]*document.Document, error)
 	CreateFn                           func(ctx context.Context, entity *document.Document) (*document.Document, error)
 	UpdateFn                           func(ctx context.Context, entity *document.Document) (*document.Document, error)
-	UpdatePreviewFn                    func(ctx context.Context, req *repositories.UpdateDocumentPreviewRequest) error
-	UpdateIntelligenceFn               func(ctx context.Context, req *repositories.UpdateDocumentIntelligenceRequest) error
-	PromoteVersionFn                   func(ctx context.Context, req *repositories.PromoteDocumentVersionRequest) error
-	MoveLineageToResourceFn            func(ctx context.Context, req *repositories.MoveDocumentLineageRequest) error
-	DeleteFn                           func(ctx context.Context, req repositories.DeleteDocumentRequest) error
-	BulkDeleteFn                       func(ctx context.Context, req repositories.BulkDeleteDocumentRequest) error
-	DeleteByLineageIDsFn               func(ctx context.Context, req repositories.DeleteDocumentLineageRequest) error
+	UpdatePreviewFn                    func(ctx context.Context, req *documentports.UpdateDocumentPreviewRequest) error
+	UpdateIntelligenceFn               func(ctx context.Context, req *documentports.UpdateDocumentIntelligenceRequest) error
+	PromoteVersionFn                   func(ctx context.Context, req *documentports.PromoteDocumentVersionRequest) error
+	MoveLineageToResourceFn            func(ctx context.Context, req *documentports.MoveDocumentLineageRequest) error
+	DeleteFn                           func(ctx context.Context, req documentports.DeleteDocumentRequest) error
+	BulkDeleteFn                       func(ctx context.Context, req documentports.BulkDeleteDocumentRequest) error
+	DeleteByLineageIDsFn               func(ctx context.Context, req documentports.DeleteDocumentLineageRequest) error
 }
 
 func (m *mockDocRepo) List(
 	ctx context.Context,
-	req *repositories.ListDocumentsRequest,
+	req *documentports.ListDocumentsRequest,
 ) (*pagination.ListResult[*document.Document], error) {
 	return m.ListFn(ctx, req)
 }
 
 func (m *mockDocRepo) SelectOptions(
 	ctx context.Context,
-	req *repositories.DocumentSelectOptionsRequest,
+	req *documentports.DocumentSelectOptionsRequest,
 ) (*pagination.ListResult[*document.Document], error) {
 	if m.SelectOptionsFn == nil {
 		return nil, nil
@@ -65,14 +67,14 @@ func (m *mockDocRepo) SelectOptions(
 
 func (m *mockDocRepo) GetByID(
 	ctx context.Context,
-	req repositories.GetDocumentByIDRequest,
+	req documentports.GetDocumentByIDRequest,
 ) (*document.Document, error) {
 	return m.GetByIDFn(ctx, req)
 }
 
 func (m *mockDocRepo) GetByStoragePath(
 	ctx context.Context,
-	req repositories.GetDocumentByStoragePathRequest,
+	req documentports.GetDocumentByStoragePathRequest,
 ) (*document.Document, error) {
 	if m.GetByStoragePathFn == nil {
 		return nil, errortypes.NewNotFoundError("Document not found within your organization")
@@ -82,14 +84,14 @@ func (m *mockDocRepo) GetByStoragePath(
 
 func (m *mockDocRepo) GetByIDs(
 	ctx context.Context,
-	req repositories.BulkDeleteDocumentRequest,
+	req documentports.BulkDeleteDocumentRequest,
 ) ([]*document.Document, error) {
 	return m.GetByIDsFn(ctx, req)
 }
 
 func (m *mockDocRepo) ListVersions(
 	ctx context.Context,
-	req repositories.ListDocumentVersionsRequest,
+	req documentports.ListDocumentVersionsRequest,
 ) ([]*document.Document, error) {
 	if m.ListVersionsFn == nil {
 		return nil, nil
@@ -99,14 +101,14 @@ func (m *mockDocRepo) ListVersions(
 
 func (m *mockDocRepo) GetByResourceID(
 	ctx context.Context,
-	req *repositories.GetDocumentsByResourceRequest,
+	req *documentports.GetDocumentsByResourceRequest,
 ) ([]*document.Document, error) {
 	return m.GetByResFn(ctx, req)
 }
 
 func (m *mockDocRepo) GetByResourceIDs(
 	ctx context.Context,
-	req *repositories.GetDocumentsByResourceIDsRequest,
+	req *documentports.GetDocumentsByResourceIDsRequest,
 ) ([]*document.Document, error) {
 	if m.GetByResIDsFn == nil {
 		return []*document.Document{}, nil
@@ -116,7 +118,7 @@ func (m *mockDocRepo) GetByResourceIDs(
 
 func (m *mockDocRepo) ListPendingPreviewReconciliation(
 	ctx context.Context,
-	req *repositories.ListPendingPreviewReconciliationRequest,
+	req *documentports.ListPendingPreviewReconciliationRequest,
 ) ([]*document.Document, error) {
 	if m.ListPendingPreviewReconciliationFn == nil {
 		return nil, nil
@@ -126,7 +128,7 @@ func (m *mockDocRepo) ListPendingPreviewReconciliation(
 
 func (m *mockDocRepo) ListPendingPreviewReconciliationTenants(
 	context.Context,
-	*repositories.ListPendingPreviewReconciliationRequest,
+	*documentports.ListPendingPreviewReconciliationRequest,
 ) ([]pagination.TenantInfo, error) {
 	return []pagination.TenantInfo{}, nil
 }
@@ -147,7 +149,7 @@ func (m *mockDocRepo) Update(
 
 func (m *mockDocRepo) UpdatePreview(
 	ctx context.Context,
-	req *repositories.UpdateDocumentPreviewRequest,
+	req *documentports.UpdateDocumentPreviewRequest,
 ) error {
 	if m.UpdatePreviewFn == nil {
 		return nil
@@ -157,7 +159,7 @@ func (m *mockDocRepo) UpdatePreview(
 
 func (m *mockDocRepo) UpdateIntelligence(
 	ctx context.Context,
-	req *repositories.UpdateDocumentIntelligenceRequest,
+	req *documentports.UpdateDocumentIntelligenceRequest,
 ) error {
 	if m.UpdateIntelligenceFn == nil {
 		return nil
@@ -167,7 +169,7 @@ func (m *mockDocRepo) UpdateIntelligence(
 
 func (m *mockDocRepo) PromoteVersion(
 	ctx context.Context,
-	req *repositories.PromoteDocumentVersionRequest,
+	req *documentports.PromoteDocumentVersionRequest,
 ) error {
 	if m.PromoteVersionFn == nil {
 		return nil
@@ -177,7 +179,7 @@ func (m *mockDocRepo) PromoteVersion(
 
 func (m *mockDocRepo) MoveLineageToResource(
 	ctx context.Context,
-	req *repositories.MoveDocumentLineageRequest,
+	req *documentports.MoveDocumentLineageRequest,
 ) error {
 	if m.MoveLineageToResourceFn == nil {
 		return nil
@@ -185,20 +187,20 @@ func (m *mockDocRepo) MoveLineageToResource(
 	return m.MoveLineageToResourceFn(ctx, req)
 }
 
-func (m *mockDocRepo) Delete(ctx context.Context, req repositories.DeleteDocumentRequest) error {
+func (m *mockDocRepo) Delete(ctx context.Context, req documentports.DeleteDocumentRequest) error {
 	return m.DeleteFn(ctx, req)
 }
 
 func (m *mockDocRepo) BulkDelete(
 	ctx context.Context,
-	req repositories.BulkDeleteDocumentRequest,
+	req documentports.BulkDeleteDocumentRequest,
 ) error {
 	return m.BulkDeleteFn(ctx, req)
 }
 
 func (m *mockDocRepo) DeleteByLineageIDs(
 	ctx context.Context,
-	req repositories.DeleteDocumentLineageRequest,
+	req documentports.DeleteDocumentLineageRequest,
 ) error {
 	if m.DeleteByLineageIDsFn == nil {
 		return nil
@@ -207,45 +209,45 @@ func (m *mockDocRepo) DeleteByLineageIDs(
 }
 
 type mockStorageClient struct {
-	UploadFn                func(ctx context.Context, params *storage.UploadParams) (*storage.FileInfo, error)
-	DownloadFn              func(ctx context.Context, key string) (*storage.DownloadResult, error)
+	UploadFn                func(ctx context.Context, params *kernelports.UploadParams) (*kernelports.FileInfo, error)
+	DownloadFn              func(ctx context.Context, key string) (*kernelports.DownloadResult, error)
 	DeleteFn                func(ctx context.Context, key string) error
-	DeleteObjectFn          func(ctx context.Context, params *storage.DeleteObjectParams) error
-	GetPresignedURLFn       func(ctx context.Context, params *storage.PresignedURLParams) (string, error)
+	DeleteObjectFn          func(ctx context.Context, params *kernelports.DeleteObjectParams) error
+	GetPresignedURLFn       func(ctx context.Context, params *kernelports.PresignedURLParams) (string, error)
 	GetPresignedUploadURLFn func(
 		ctx context.Context,
-		params *storage.PresignedUploadURLParams,
+		params *kernelports.PresignedUploadURLParams,
 	) (string, error)
 	InitiateMultipartUploadFn func(
 		ctx context.Context,
-		params *storage.MultipartUploadParams,
+		params *kernelports.MultipartUploadParams,
 	) (string, error)
 	GetMultipartUploadPartURLFn func(
 		ctx context.Context,
-		params *storage.MultipartUploadPartURLParams,
+		params *kernelports.MultipartUploadPartURLParams,
 	) (string, error)
 	CompleteMultipartUploadFn func(
 		ctx context.Context,
-		params *storage.CompleteMultipartUploadParams,
+		params *kernelports.CompleteMultipartUploadParams,
 	) error
 	AbortMultipartUploadFn func(
 		ctx context.Context,
-		params *storage.AbortMultipartUploadParams,
+		params *kernelports.AbortMultipartUploadParams,
 	) error
 	ListMultipartUploadPartsFn func(
 		ctx context.Context,
-		params *storage.ListMultipartUploadPartsParams,
-	) ([]storage.UploadedPart, error)
+		params *kernelports.ListMultipartUploadPartsParams,
+	) ([]kernelports.UploadedPart, error)
 	ExistsFn      func(ctx context.Context, key string) (bool, error)
-	GetFileInfoFn func(ctx context.Context, key string) (*storage.FileInfo, error)
+	GetFileInfoFn func(ctx context.Context, key string) (*kernelports.FileInfo, error)
 }
 
 func (m *mockStorageClient) Upload(
 	ctx context.Context,
-	params *storage.UploadParams,
-) (*storage.FileInfo, error) {
+	params *kernelports.UploadParams,
+) (*kernelports.FileInfo, error) {
 	if m.UploadFn == nil {
-		return &storage.FileInfo{
+		return &kernelports.FileInfo{
 			Key:         params.Key,
 			Size:        params.Size,
 			ContentType: params.ContentType,
@@ -257,7 +259,7 @@ func (m *mockStorageClient) Upload(
 func (m *mockStorageClient) Download(
 	ctx context.Context,
 	key string,
-) (*storage.DownloadResult, error) {
+) (*kernelports.DownloadResult, error) {
 	if m.DownloadFn == nil {
 		return nil, nil
 	}
@@ -273,7 +275,7 @@ func (m *mockStorageClient) Delete(ctx context.Context, key string) error {
 
 func (m *mockStorageClient) DeleteObject(
 	ctx context.Context,
-	params *storage.DeleteObjectParams,
+	params *kernelports.DeleteObjectParams,
 ) error {
 	if m.DeleteObjectFn != nil {
 		return m.DeleteObjectFn(ctx, params)
@@ -283,7 +285,7 @@ func (m *mockStorageClient) DeleteObject(
 
 func (m *mockStorageClient) GetPresignedURL(
 	ctx context.Context,
-	params *storage.PresignedURLParams,
+	params *kernelports.PresignedURLParams,
 ) (string, error) {
 	if m.GetPresignedURLFn == nil {
 		return "https://storage.example.com/presigned?token=abc123", nil
@@ -300,7 +302,7 @@ func (m *mockStorageClient) Exists(ctx context.Context, key string) (bool, error
 
 func (m *mockStorageClient) GetPresignedUploadURL(
 	ctx context.Context,
-	params *storage.PresignedUploadURLParams,
+	params *kernelports.PresignedUploadURLParams,
 ) (string, error) {
 	if m.GetPresignedUploadURLFn == nil {
 		return "https://storage.example.com/upload?token=abc123", nil
@@ -310,7 +312,7 @@ func (m *mockStorageClient) GetPresignedUploadURL(
 
 func (m *mockStorageClient) InitiateMultipartUpload(
 	ctx context.Context,
-	params *storage.MultipartUploadParams,
+	params *kernelports.MultipartUploadParams,
 ) (string, error) {
 	if m.InitiateMultipartUploadFn == nil {
 		return "upload-id", nil
@@ -320,7 +322,7 @@ func (m *mockStorageClient) InitiateMultipartUpload(
 
 func (m *mockStorageClient) GetMultipartUploadPartURL(
 	ctx context.Context,
-	params *storage.MultipartUploadPartURLParams,
+	params *kernelports.MultipartUploadPartURLParams,
 ) (string, error) {
 	if m.GetMultipartUploadPartURLFn == nil {
 		return "https://storage.example.com/part?token=abc123", nil
@@ -330,7 +332,7 @@ func (m *mockStorageClient) GetMultipartUploadPartURL(
 
 func (m *mockStorageClient) CompleteMultipartUpload(
 	ctx context.Context,
-	params *storage.CompleteMultipartUploadParams,
+	params *kernelports.CompleteMultipartUploadParams,
 ) error {
 	if m.CompleteMultipartUploadFn == nil {
 		return nil
@@ -340,7 +342,7 @@ func (m *mockStorageClient) CompleteMultipartUpload(
 
 func (m *mockStorageClient) AbortMultipartUpload(
 	ctx context.Context,
-	params *storage.AbortMultipartUploadParams,
+	params *kernelports.AbortMultipartUploadParams,
 ) error {
 	if m.AbortMultipartUploadFn == nil {
 		return nil
@@ -350,8 +352,8 @@ func (m *mockStorageClient) AbortMultipartUpload(
 
 func (m *mockStorageClient) ListMultipartUploadParts(
 	ctx context.Context,
-	params *storage.ListMultipartUploadPartsParams,
-) ([]storage.UploadedPart, error) {
+	params *kernelports.ListMultipartUploadPartsParams,
+) ([]kernelports.UploadedPart, error) {
 	if m.ListMultipartUploadPartsFn == nil {
 		return nil, nil
 	}
@@ -361,16 +363,16 @@ func (m *mockStorageClient) ListMultipartUploadParts(
 func (m *mockStorageClient) GetFileInfo(
 	ctx context.Context,
 	key string,
-) (*storage.FileInfo, error) {
+) (*kernelports.FileInfo, error) {
 	if m.GetFileInfoFn == nil {
-		return &storage.FileInfo{Key: key}, nil
+		return &kernelports.FileInfo{Key: key}, nil
 	}
 	return m.GetFileInfoFn(ctx, key)
 }
 
 var (
-	_ storage.Client                  = (*mockStorageClient)(nil)
-	_ repositories.DocumentRepository = (*mockDocRepo)(nil)
+	_ kernelports.Client               = (*mockStorageClient)(nil)
+	_ documentports.DocumentRepository = (*mockDocRepo)(nil)
 )
 
 // func NewTestService(
@@ -397,8 +399,8 @@ var (
 
 type unitDeps struct {
 	svc         *documentservice.Service
-	cacheRepo   *mocks.MockDocumentCacheRepository
-	sessionRepo *mocks.MockDocumentUploadSessionRepository
+	cacheRepo   *customerportsmock.MockDocumentCacheRepository
+	sessionRepo *documentuploadportsmock.MockDocumentUploadSessionRepository
 }
 
 func newUnitTestService(t *testing.T, repo *mockDocRepo, sc *mockStorageClient) *unitDeps {
@@ -410,8 +412,8 @@ func newUnitTestService(t *testing.T, repo *mockDocRepo, sc *mockStorageClient) 
 	validator := documentservice.NewValidator(documentservice.ValidatorParams{
 		Config: &config.Config{Storage: *storageCfg},
 	})
-	cacheRepo := mocks.NewMockDocumentCacheRepository(t)
-	sessionRepo := mocks.NewMockDocumentUploadSessionRepository(t)
+	cacheRepo := customerportsmock.NewMockDocumentCacheRepository(t)
+	sessionRepo := documentuploadportsmock.NewMockDocumentUploadSessionRepository(t)
 
 	return &unitDeps{
 		svc: documentservice.NewTestService(
@@ -442,14 +444,14 @@ func TestUnit_List_Success(t *testing.T) {
 	}
 
 	repo := &mockDocRepo{
-		ListFn: func(_ context.Context, _ *repositories.ListDocumentsRequest) (*pagination.ListResult[*document.Document], error) {
+		ListFn: func(_ context.Context, _ *documentports.ListDocumentsRequest) (*pagination.ListResult[*document.Document], error) {
 			return expected, nil
 		},
 	}
 	deps := newUnitTestService(t, repo, &mockStorageClient{})
 	svc := deps.svc
 
-	result, err := svc.List(t.Context(), &repositories.ListDocumentsRequest{
+	result, err := svc.List(t.Context(), &documentports.ListDocumentsRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: pulid.MustNew("org_"),
@@ -468,14 +470,14 @@ func TestUnit_List_Error(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockDocRepo{
-		ListFn: func(_ context.Context, _ *repositories.ListDocumentsRequest) (*pagination.ListResult[*document.Document], error) {
+		ListFn: func(_ context.Context, _ *documentports.ListDocumentsRequest) (*pagination.ListResult[*document.Document], error) {
 			return nil, errors.New("db error")
 		},
 	}
 	deps := newUnitTestService(t, repo, &mockStorageClient{})
 	svc := deps.svc
 
-	result, err := svc.List(t.Context(), &repositories.ListDocumentsRequest{
+	result, err := svc.List(t.Context(), &documentports.ListDocumentsRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: pulid.MustNew("org_"),
@@ -494,16 +496,16 @@ func TestUnit_Get_Success(t *testing.T) {
 
 	doc := &document.Document{ID: pulid.MustNew("doc_"), OriginalName: "test.pdf"}
 	repo := &mockDocRepo{
-		GetByIDFn: func(_ context.Context, _ repositories.GetDocumentByIDRequest) (*document.Document, error) {
+		GetByIDFn: func(_ context.Context, _ documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return doc, nil
 		},
 	}
 	deps := newUnitTestService(t, repo, &mockStorageClient{})
 	svc := deps.svc
 	deps.cacheRepo.On("GetByID", mock.Anything, mock.Anything).
-		Return(nil, repositories.ErrCacheMiss)
+		Return(nil, customerports.ErrCacheMiss)
 
-	result, err := svc.Get(t.Context(), repositories.GetDocumentByIDRequest{
+	result, err := svc.Get(t.Context(), documentports.GetDocumentByIDRequest{
 		ID:         doc.ID,
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 	})
@@ -516,16 +518,16 @@ func TestUnit_Get_NotFound(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockDocRepo{
-		GetByIDFn: func(_ context.Context, _ repositories.GetDocumentByIDRequest) (*document.Document, error) {
+		GetByIDFn: func(_ context.Context, _ documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return nil, errors.New("not found")
 		},
 	}
 	deps := newUnitTestService(t, repo, &mockStorageClient{})
 	svc := deps.svc
 	deps.cacheRepo.On("GetByID", mock.Anything, mock.Anything).
-		Return(nil, repositories.ErrCacheMiss)
+		Return(nil, customerports.ErrCacheMiss)
 
-	result, err := svc.Get(t.Context(), repositories.GetDocumentByIDRequest{
+	result, err := svc.Get(t.Context(), documentports.GetDocumentByIDRequest{
 		ID:         pulid.MustNew("doc_"),
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 	})
@@ -542,7 +544,7 @@ func TestUnit_GetByResource_Success(t *testing.T) {
 		{ID: pulid.MustNew("doc_"), OriginalName: "b.pdf"},
 	}
 	repo := &mockDocRepo{
-		GetByResFn: func(_ context.Context, _ *repositories.GetDocumentsByResourceRequest) ([]*document.Document, error) {
+		GetByResFn: func(_ context.Context, _ *documentports.GetDocumentsByResourceRequest) ([]*document.Document, error) {
 			return docs, nil
 		},
 	}
@@ -551,7 +553,7 @@ func TestUnit_GetByResource_Success(t *testing.T) {
 
 	result, err := svc.GetByResource(
 		t.Context(),
-		&repositories.GetDocumentsByResourceRequest{
+		&documentports.GetDocumentsByResourceRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: pulid.MustNew("org_"),
 				BuID:  pulid.MustNew("bu_"),
@@ -579,8 +581,8 @@ func TestUnit_Upload_Success(t *testing.T) {
 		},
 	}
 	sc := &mockStorageClient{
-		UploadFn: func(_ context.Context, _ *storage.UploadParams) (*storage.FileInfo, error) {
-			return &storage.FileInfo{Key: "test-key"}, nil
+		UploadFn: func(_ context.Context, _ *kernelports.UploadParams) (*kernelports.FileInfo, error) {
+			return &kernelports.FileInfo{Key: "test-key"}, nil
 		},
 	}
 	deps := newUnitTestService(t, repo, sc)
@@ -589,7 +591,7 @@ func TestUnit_Upload_Success(t *testing.T) {
 	fileData := []byte("pdf content here")
 	fileHeader := storageutil.NewMockFileHeader("test.pdf", fileData, "application/pdf")
 
-	result, err := svc.Upload(t.Context(), &services.UploadRequest{
+	result, err := svc.Upload(t.Context(), &documentports.UploadRequest{
 		TenantInfo:   pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
 		File:         fileHeader,
 		ResourceID:   "res_123",
@@ -613,7 +615,7 @@ func TestUnit_Upload_ValidationFailure(t *testing.T) {
 	fileData := []byte("exe content")
 	fileHeader := storageutil.NewMockFileHeader("malware.exe", fileData, "application/x-msdownload")
 
-	result, err := svc.Upload(t.Context(), &services.UploadRequest{
+	result, err := svc.Upload(t.Context(), &documentports.UploadRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  pulid.MustNew("org_"),
 			BuID:   pulid.MustNew("bu_"),
@@ -632,7 +634,7 @@ func TestUnit_Upload_StorageError(t *testing.T) {
 	t.Parallel()
 
 	sc := &mockStorageClient{
-		UploadFn: func(_ context.Context, _ *storage.UploadParams) (*storage.FileInfo, error) {
+		UploadFn: func(_ context.Context, _ *kernelports.UploadParams) (*kernelports.FileInfo, error) {
 			return nil, errors.New("storage unavailable")
 		},
 	}
@@ -642,7 +644,7 @@ func TestUnit_Upload_StorageError(t *testing.T) {
 	fileData := []byte("pdf content")
 	fileHeader := storageutil.NewMockFileHeader("test.pdf", fileData, "application/pdf")
 
-	result, err := svc.Upload(t.Context(), &services.UploadRequest{
+	result, err := svc.Upload(t.Context(), &documentports.UploadRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  pulid.MustNew("org_"),
 			BuID:   pulid.MustNew("bu_"),
@@ -662,8 +664,8 @@ func TestUnit_Upload_CreateRepoError_CleansUpStorage(t *testing.T) {
 
 	var deletedKey string
 	sc := &mockStorageClient{
-		UploadFn: func(_ context.Context, _ *storage.UploadParams) (*storage.FileInfo, error) {
-			return &storage.FileInfo{Key: "uploaded-key"}, nil
+		UploadFn: func(_ context.Context, _ *kernelports.UploadParams) (*kernelports.FileInfo, error) {
+			return &kernelports.FileInfo{Key: "uploaded-key"}, nil
 		},
 		DeleteFn: func(_ context.Context, key string) error {
 			deletedKey = key
@@ -681,7 +683,7 @@ func TestUnit_Upload_CreateRepoError_CleansUpStorage(t *testing.T) {
 	fileData := []byte("pdf content")
 	fileHeader := storageutil.NewMockFileHeader("test.pdf", fileData, "application/pdf")
 
-	result, err := svc.Upload(t.Context(), &services.UploadRequest{
+	result, err := svc.Upload(t.Context(), &documentports.UploadRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  pulid.MustNew("org_"),
 			BuID:   pulid.MustNew("bu_"),
@@ -709,8 +711,8 @@ func TestUnit_BulkUpload_Success(t *testing.T) {
 		},
 	}
 	sc := &mockStorageClient{
-		UploadFn: func(_ context.Context, _ *storage.UploadParams) (*storage.FileInfo, error) {
-			return &storage.FileInfo{}, nil
+		UploadFn: func(_ context.Context, _ *kernelports.UploadParams) (*kernelports.FileInfo, error) {
+			return &kernelports.FileInfo{}, nil
 		},
 	}
 	deps := newUnitTestService(t, repo, sc)
@@ -753,8 +755,8 @@ func TestUnit_BulkUpload_PartialFailure(t *testing.T) {
 		},
 	}
 	sc := &mockStorageClient{
-		UploadFn: func(_ context.Context, _ *storage.UploadParams) (*storage.FileInfo, error) {
-			return &storage.FileInfo{}, nil
+		UploadFn: func(_ context.Context, _ *kernelports.UploadParams) (*kernelports.FileInfo, error) {
+			return &kernelports.FileInfo{}, nil
 		},
 		DeleteFn: func(_ context.Context, _ string) error {
 			return nil
@@ -794,12 +796,12 @@ func TestUnit_GetDownloadURL_Success(t *testing.T) {
 		OriginalName: "my-file.pdf",
 	}
 	repo := &mockDocRepo{
-		GetByIDFn: func(_ context.Context, _ repositories.GetDocumentByIDRequest) (*document.Document, error) {
+		GetByIDFn: func(_ context.Context, _ documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return doc, nil
 		},
 	}
 	sc := &mockStorageClient{
-		GetPresignedURLFn: func(_ context.Context, params *storage.PresignedURLParams) (string, error) {
+		GetPresignedURLFn: func(_ context.Context, params *kernelports.PresignedURLParams) (string, error) {
 			assert.Equal(t, doc.StoragePath, params.Key)
 			assert.Contains(t, params.ContentDisposition, "attachment")
 			return "https://storage.example.com/signed-url", nil
@@ -808,7 +810,7 @@ func TestUnit_GetDownloadURL_Success(t *testing.T) {
 	deps := newUnitTestService(t, repo, sc)
 	svc := deps.svc
 
-	url, err := svc.GetDownloadURL(t.Context(), repositories.GetDocumentByIDRequest{
+	url, err := svc.GetDownloadURL(t.Context(), documentports.GetDocumentByIDRequest{
 		ID:         doc.ID,
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 	})
@@ -821,14 +823,14 @@ func TestUnit_GetDownloadURL_DocNotFound(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockDocRepo{
-		GetByIDFn: func(_ context.Context, _ repositories.GetDocumentByIDRequest) (*document.Document, error) {
+		GetByIDFn: func(_ context.Context, _ documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return nil, errors.New("not found")
 		},
 	}
 	deps := newUnitTestService(t, repo, &mockStorageClient{})
 	svc := deps.svc
 
-	url, err := svc.GetDownloadURL(t.Context(), repositories.GetDocumentByIDRequest{
+	url, err := svc.GetDownloadURL(t.Context(), documentports.GetDocumentByIDRequest{
 		ID:         pulid.MustNew("doc_"),
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 	})
@@ -846,19 +848,19 @@ func TestUnit_GetDownloadURL_PresignError(t *testing.T) {
 		OriginalName: "file.pdf",
 	}
 	repo := &mockDocRepo{
-		GetByIDFn: func(_ context.Context, _ repositories.GetDocumentByIDRequest) (*document.Document, error) {
+		GetByIDFn: func(_ context.Context, _ documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return doc, nil
 		},
 	}
 	sc := &mockStorageClient{
-		GetPresignedURLFn: func(_ context.Context, _ *storage.PresignedURLParams) (string, error) {
+		GetPresignedURLFn: func(_ context.Context, _ *kernelports.PresignedURLParams) (string, error) {
 			return "", errors.New("presign failed")
 		},
 	}
 	deps := newUnitTestService(t, repo, sc)
 	svc := deps.svc
 
-	url, err := svc.GetDownloadURL(t.Context(), repositories.GetDocumentByIDRequest{
+	url, err := svc.GetDownloadURL(t.Context(), documentports.GetDocumentByIDRequest{
 		ID:         doc.ID,
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 	})
@@ -877,12 +879,12 @@ func TestUnit_GetViewURL_Success(t *testing.T) {
 		FileType:     "application/pdf",
 	}
 	repo := &mockDocRepo{
-		GetByIDFn: func(_ context.Context, _ repositories.GetDocumentByIDRequest) (*document.Document, error) {
+		GetByIDFn: func(_ context.Context, _ documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return doc, nil
 		},
 	}
 	sc := &mockStorageClient{
-		GetPresignedURLFn: func(_ context.Context, params *storage.PresignedURLParams) (string, error) {
+		GetPresignedURLFn: func(_ context.Context, params *kernelports.PresignedURLParams) (string, error) {
 			assert.Contains(t, params.ContentDisposition, "inline")
 			return "https://storage.example.com/view-url", nil
 		},
@@ -890,7 +892,7 @@ func TestUnit_GetViewURL_Success(t *testing.T) {
 	deps := newUnitTestService(t, repo, sc)
 	svc := deps.svc
 
-	url, err := svc.GetViewURL(t.Context(), repositories.GetDocumentByIDRequest{
+	url, err := svc.GetViewURL(t.Context(), documentports.GetDocumentByIDRequest{
 		ID:         doc.ID,
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 	})
@@ -909,12 +911,12 @@ func TestUnit_GetViewURL_ActiveContentUsesAttachmentDisposition(t *testing.T) {
 		FileType:     "text/html",
 	}
 	repo := &mockDocRepo{
-		GetByIDFn: func(_ context.Context, _ repositories.GetDocumentByIDRequest) (*document.Document, error) {
+		GetByIDFn: func(_ context.Context, _ documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return doc, nil
 		},
 	}
 	sc := &mockStorageClient{
-		GetPresignedURLFn: func(_ context.Context, params *storage.PresignedURLParams) (string, error) {
+		GetPresignedURLFn: func(_ context.Context, params *kernelports.PresignedURLParams) (string, error) {
 			assert.Contains(t, params.ContentDisposition, "attachment")
 			assert.NotContains(t, params.ContentDisposition, "inline")
 			return "https://storage.example.com/view-url", nil
@@ -923,7 +925,7 @@ func TestUnit_GetViewURL_ActiveContentUsesAttachmentDisposition(t *testing.T) {
 	deps := newUnitTestService(t, repo, sc)
 	svc := deps.svc
 
-	url, err := svc.GetViewURL(t.Context(), repositories.GetDocumentByIDRequest{
+	url, err := svc.GetViewURL(t.Context(), documentports.GetDocumentByIDRequest{
 		ID:         doc.ID,
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 	})
@@ -936,14 +938,14 @@ func TestUnit_GetViewURL_DocNotFound(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockDocRepo{
-		GetByIDFn: func(_ context.Context, _ repositories.GetDocumentByIDRequest) (*document.Document, error) {
+		GetByIDFn: func(_ context.Context, _ documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return nil, errors.New("not found")
 		},
 	}
 	deps := newUnitTestService(t, repo, &mockStorageClient{})
 	svc := deps.svc
 
-	url, err := svc.GetViewURL(t.Context(), repositories.GetDocumentByIDRequest{
+	url, err := svc.GetViewURL(t.Context(), documentports.GetDocumentByIDRequest{
 		ID:         pulid.MustNew("doc_"),
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 	})
@@ -961,19 +963,19 @@ func TestUnit_GetViewURL_PresignError(t *testing.T) {
 		OriginalName: "file.pdf",
 	}
 	repo := &mockDocRepo{
-		GetByIDFn: func(_ context.Context, _ repositories.GetDocumentByIDRequest) (*document.Document, error) {
+		GetByIDFn: func(_ context.Context, _ documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return doc, nil
 		},
 	}
 	sc := &mockStorageClient{
-		GetPresignedURLFn: func(_ context.Context, _ *storage.PresignedURLParams) (string, error) {
+		GetPresignedURLFn: func(_ context.Context, _ *kernelports.PresignedURLParams) (string, error) {
 			return "", errors.New("presign failed")
 		},
 	}
 	deps := newUnitTestService(t, repo, sc)
 	svc := deps.svc
 
-	url, err := svc.GetViewURL(t.Context(), repositories.GetDocumentByIDRequest{
+	url, err := svc.GetViewURL(t.Context(), documentports.GetDocumentByIDRequest{
 		ID:         doc.ID,
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 	})
@@ -994,10 +996,10 @@ func TestUnit_Delete_Success(t *testing.T) {
 	}
 	var storageDeletions []string
 	repo := &mockDocRepo{
-		GetByIDFn: func(_ context.Context, _ repositories.GetDocumentByIDRequest) (*document.Document, error) {
+		GetByIDFn: func(_ context.Context, _ documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return doc, nil
 		},
-		DeleteFn: func(_ context.Context, _ repositories.DeleteDocumentRequest) error {
+		DeleteFn: func(_ context.Context, _ documentports.DeleteDocumentRequest) error {
 			return nil
 		},
 	}
@@ -1012,7 +1014,7 @@ func TestUnit_Delete_Success(t *testing.T) {
 	deps.sessionRepo.On("ClearDocumentReference", mock.Anything, mock.Anything, mock.Anything).
 		Return(nil)
 
-	err := svc.Delete(t.Context(), repositories.DeleteDocumentRequest{
+	err := svc.Delete(t.Context(), documentports.DeleteDocumentRequest{
 		ID:         doc.ID,
 		TenantInfo: pagination.TenantInfo{OrgID: doc.OrganizationID, BuID: doc.BusinessUnitID},
 	}, pulid.MustNew("usr_"))
@@ -1034,10 +1036,10 @@ func TestUnit_Delete_WithPreview(t *testing.T) {
 	}
 	var storageDeletions []string
 	repo := &mockDocRepo{
-		GetByIDFn: func(_ context.Context, _ repositories.GetDocumentByIDRequest) (*document.Document, error) {
+		GetByIDFn: func(_ context.Context, _ documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return doc, nil
 		},
-		DeleteFn: func(_ context.Context, _ repositories.DeleteDocumentRequest) error {
+		DeleteFn: func(_ context.Context, _ documentports.DeleteDocumentRequest) error {
 			return nil
 		},
 	}
@@ -1052,7 +1054,7 @@ func TestUnit_Delete_WithPreview(t *testing.T) {
 	deps.sessionRepo.On("ClearDocumentReference", mock.Anything, mock.Anything, mock.Anything).
 		Return(nil)
 
-	err := svc.Delete(t.Context(), repositories.DeleteDocumentRequest{
+	err := svc.Delete(t.Context(), documentports.DeleteDocumentRequest{
 		ID:         doc.ID,
 		TenantInfo: pagination.TenantInfo{OrgID: doc.OrganizationID, BuID: doc.BusinessUnitID},
 	}, pulid.MustNew("usr_"))
@@ -1066,14 +1068,14 @@ func TestUnit_Delete_NotFound(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockDocRepo{
-		GetByIDFn: func(_ context.Context, _ repositories.GetDocumentByIDRequest) (*document.Document, error) {
+		GetByIDFn: func(_ context.Context, _ documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return nil, errors.New("not found")
 		},
 	}
 	deps := newUnitTestService(t, repo, &mockStorageClient{})
 	svc := deps.svc
 
-	err := svc.Delete(t.Context(), repositories.DeleteDocumentRequest{
+	err := svc.Delete(t.Context(), documentports.DeleteDocumentRequest{
 		ID:         pulid.MustNew("doc_"),
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 	}, pulid.MustNew("usr_"))
@@ -1092,10 +1094,10 @@ func TestUnit_Delete_RepoDeleteError(t *testing.T) {
 		OriginalName:   "file.pdf",
 	}
 	repo := &mockDocRepo{
-		GetByIDFn: func(_ context.Context, _ repositories.GetDocumentByIDRequest) (*document.Document, error) {
+		GetByIDFn: func(_ context.Context, _ documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return doc, nil
 		},
-		DeleteFn: func(_ context.Context, _ repositories.DeleteDocumentRequest) error {
+		DeleteFn: func(_ context.Context, _ documentports.DeleteDocumentRequest) error {
 			return errors.New("db delete failed")
 		},
 	}
@@ -1109,7 +1111,7 @@ func TestUnit_Delete_RepoDeleteError(t *testing.T) {
 	deps.sessionRepo.On("ClearDocumentReference", mock.Anything, mock.Anything, mock.Anything).
 		Return(nil)
 
-	err := svc.Delete(t.Context(), repositories.DeleteDocumentRequest{
+	err := svc.Delete(t.Context(), documentports.DeleteDocumentRequest{
 		ID:         doc.ID,
 		TenantInfo: pagination.TenantInfo{OrgID: doc.OrganizationID, BuID: doc.BusinessUnitID},
 	}, pulid.MustNew("usr_"))
@@ -1143,10 +1145,10 @@ func TestUnit_BulkDelete_Success(t *testing.T) {
 	}
 	var storageDeletions []string
 	repo := &mockDocRepo{
-		GetByIDsFn: func(_ context.Context, _ repositories.BulkDeleteDocumentRequest) ([]*document.Document, error) {
+		GetByIDsFn: func(_ context.Context, _ documentports.BulkDeleteDocumentRequest) ([]*document.Document, error) {
 			return docs, nil
 		},
-		BulkDeleteFn: func(_ context.Context, _ repositories.BulkDeleteDocumentRequest) error {
+		BulkDeleteFn: func(_ context.Context, _ documentports.BulkDeleteDocumentRequest) error {
 			return nil
 		},
 	}
@@ -1193,7 +1195,7 @@ func TestUnit_BulkDelete_GetByIDsError(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockDocRepo{
-		GetByIDsFn: func(_ context.Context, _ repositories.BulkDeleteDocumentRequest) ([]*document.Document, error) {
+		GetByIDsFn: func(_ context.Context, _ documentports.BulkDeleteDocumentRequest) ([]*document.Document, error) {
 			return nil, errors.New("db error")
 		},
 	}
@@ -1217,10 +1219,10 @@ func TestUnit_BulkDelete_BulkDeleteRepoError(t *testing.T) {
 		{ID: pulid.MustNew("doc_"), StoragePath: "path/a.pdf", OriginalName: "a.pdf"},
 	}
 	repo := &mockDocRepo{
-		GetByIDsFn: func(_ context.Context, _ repositories.BulkDeleteDocumentRequest) ([]*document.Document, error) {
+		GetByIDsFn: func(_ context.Context, _ documentports.BulkDeleteDocumentRequest) ([]*document.Document, error) {
 			return docs, nil
 		},
-		BulkDeleteFn: func(_ context.Context, _ repositories.BulkDeleteDocumentRequest) error {
+		BulkDeleteFn: func(_ context.Context, _ documentports.BulkDeleteDocumentRequest) error {
 			return errors.New("bulk delete failed")
 		},
 	}
@@ -1259,10 +1261,10 @@ func TestUnit_BulkDelete_StorageDeleteErrors(t *testing.T) {
 		},
 	}
 	repo := &mockDocRepo{
-		GetByIDsFn: func(_ context.Context, _ repositories.BulkDeleteDocumentRequest) ([]*document.Document, error) {
+		GetByIDsFn: func(_ context.Context, _ documentports.BulkDeleteDocumentRequest) ([]*document.Document, error) {
 			return docs, nil
 		},
-		BulkDeleteFn: func(_ context.Context, _ repositories.BulkDeleteDocumentRequest) error {
+		BulkDeleteFn: func(_ context.Context, _ documentports.BulkDeleteDocumentRequest) error {
 			return nil
 		},
 	}
@@ -1298,12 +1300,12 @@ func TestUnit_GetPreviewURL_Success(t *testing.T) {
 		OriginalName:       "file.pdf",
 	}
 	repo := &mockDocRepo{
-		GetByIDFn: func(_ context.Context, _ repositories.GetDocumentByIDRequest) (*document.Document, error) {
+		GetByIDFn: func(_ context.Context, _ documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return doc, nil
 		},
 	}
 	sc := &mockStorageClient{
-		GetPresignedURLFn: func(_ context.Context, params *storage.PresignedURLParams) (string, error) {
+		GetPresignedURLFn: func(_ context.Context, params *kernelports.PresignedURLParams) (string, error) {
 			assert.Equal(t, doc.PreviewStoragePath, params.Key)
 			return "https://storage.example.com/preview-url", nil
 		},
@@ -1311,7 +1313,7 @@ func TestUnit_GetPreviewURL_Success(t *testing.T) {
 	deps := newUnitTestService(t, repo, sc)
 	svc := deps.svc
 
-	url, err := svc.GetPreviewURL(t.Context(), repositories.GetDocumentByIDRequest{
+	url, err := svc.GetPreviewURL(t.Context(), documentports.GetDocumentByIDRequest{
 		ID:         doc.ID,
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 	})
@@ -1330,14 +1332,14 @@ func TestUnit_GetPreviewURL_NoPreview(t *testing.T) {
 		OriginalName:       "file.pdf",
 	}
 	repo := &mockDocRepo{
-		GetByIDFn: func(_ context.Context, _ repositories.GetDocumentByIDRequest) (*document.Document, error) {
+		GetByIDFn: func(_ context.Context, _ documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return doc, nil
 		},
 	}
 	deps := newUnitTestService(t, repo, &mockStorageClient{})
 	svc := deps.svc
 
-	url, err := svc.GetPreviewURL(t.Context(), repositories.GetDocumentByIDRequest{
+	url, err := svc.GetPreviewURL(t.Context(), documentports.GetDocumentByIDRequest{
 		ID:         doc.ID,
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 	})
@@ -1350,14 +1352,14 @@ func TestUnit_GetPreviewURL_DocNotFound(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockDocRepo{
-		GetByIDFn: func(_ context.Context, _ repositories.GetDocumentByIDRequest) (*document.Document, error) {
+		GetByIDFn: func(_ context.Context, _ documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return nil, errors.New("not found")
 		},
 	}
 	deps := newUnitTestService(t, repo, &mockStorageClient{})
 	svc := deps.svc
 
-	url, err := svc.GetPreviewURL(t.Context(), repositories.GetDocumentByIDRequest{
+	url, err := svc.GetPreviewURL(t.Context(), documentports.GetDocumentByIDRequest{
 		ID:         pulid.MustNew("doc_"),
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 	})
@@ -1376,19 +1378,19 @@ func TestUnit_GetPreviewURL_PresignError(t *testing.T) {
 		OriginalName:       "file.pdf",
 	}
 	repo := &mockDocRepo{
-		GetByIDFn: func(_ context.Context, _ repositories.GetDocumentByIDRequest) (*document.Document, error) {
+		GetByIDFn: func(_ context.Context, _ documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return doc, nil
 		},
 	}
 	sc := &mockStorageClient{
-		GetPresignedURLFn: func(_ context.Context, _ *storage.PresignedURLParams) (string, error) {
+		GetPresignedURLFn: func(_ context.Context, _ *kernelports.PresignedURLParams) (string, error) {
 			return "", errors.New("presign error")
 		},
 	}
 	deps := newUnitTestService(t, repo, sc)
 	svc := deps.svc
 
-	url, err := svc.GetPreviewURL(t.Context(), repositories.GetDocumentByIDRequest{
+	url, err := svc.GetPreviewURL(t.Context(), documentports.GetDocumentByIDRequest{
 		ID:         doc.ID,
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 	})
@@ -1410,13 +1412,13 @@ func TestNew(t *testing.T) {
 	})
 
 	repo := &mockDocRepo{
-		ListFn: func(ctx context.Context, req *repositories.ListDocumentsRequest) (*pagination.ListResult[*document.Document], error) {
+		ListFn: func(ctx context.Context, req *documentports.ListDocumentsRequest) (*pagination.ListResult[*document.Document], error) {
 			return nil, nil
 		},
 	}
 	sc := &mockStorageClient{}
-	cacheRepo := mocks.NewMockDocumentCacheRepository(t)
-	sessionRepo := mocks.NewMockDocumentUploadSessionRepository(t)
+	cacheRepo := customerportsmock.NewMockDocumentCacheRepository(t)
+	sessionRepo := documentuploadportsmock.NewMockDocumentUploadSessionRepository(t)
 
 	svc := documentservice.NewTestService(
 		zap.NewNop(),
@@ -1448,7 +1450,7 @@ func TestNewConstructor(t *testing.T) {
 
 	repo := &mockDocRepo{}
 	sc := &mockStorageClient{}
-	cacheRepo := mocks.NewMockDocumentCacheRepository(t)
+	cacheRepo := customerportsmock.NewMockDocumentCacheRepository(t)
 
 	svc := documentservice.New(documentservice.Params{
 		Logger:             zap.NewNop(),
@@ -1478,10 +1480,10 @@ func TestUnit_Delete_WithPreviewPath(t *testing.T) {
 	}
 	var deletedPaths []string
 	repo := &mockDocRepo{
-		GetByIDFn: func(_ context.Context, _ repositories.GetDocumentByIDRequest) (*document.Document, error) {
+		GetByIDFn: func(_ context.Context, _ documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return doc, nil
 		},
-		DeleteFn: func(_ context.Context, _ repositories.DeleteDocumentRequest) error {
+		DeleteFn: func(_ context.Context, _ documentports.DeleteDocumentRequest) error {
 			return nil
 		},
 	}
@@ -1496,7 +1498,7 @@ func TestUnit_Delete_WithPreviewPath(t *testing.T) {
 	deps.sessionRepo.On("ClearDocumentReference", mock.Anything, mock.Anything, mock.Anything).
 		Return(nil)
 
-	err := svc.Delete(t.Context(), repositories.DeleteDocumentRequest{
+	err := svc.Delete(t.Context(), documentports.DeleteDocumentRequest{
 		ID:         doc.ID,
 		TenantInfo: pagination.TenantInfo{OrgID: doc.OrganizationID, BuID: doc.BusinessUnitID},
 	}, pulid.MustNew("usr_"))
@@ -1518,10 +1520,10 @@ func TestUnit_Delete_StorageDeleteError(t *testing.T) {
 		OriginalName:       "file.pdf",
 	}
 	repo := &mockDocRepo{
-		GetByIDFn: func(_ context.Context, _ repositories.GetDocumentByIDRequest) (*document.Document, error) {
+		GetByIDFn: func(_ context.Context, _ documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return doc, nil
 		},
-		DeleteFn: func(_ context.Context, _ repositories.DeleteDocumentRequest) error {
+		DeleteFn: func(_ context.Context, _ documentports.DeleteDocumentRequest) error {
 			return nil
 		},
 	}
@@ -1535,7 +1537,7 @@ func TestUnit_Delete_StorageDeleteError(t *testing.T) {
 	deps.sessionRepo.On("ClearDocumentReference", mock.Anything, mock.Anything, mock.Anything).
 		Return(nil)
 
-	err := svc.Delete(t.Context(), repositories.DeleteDocumentRequest{
+	err := svc.Delete(t.Context(), documentports.DeleteDocumentRequest{
 		ID:         doc.ID,
 		TenantInfo: pagination.TenantInfo{OrgID: doc.OrganizationID, BuID: doc.BusinessUnitID},
 	}, pulid.MustNew("usr_"))
@@ -1560,10 +1562,10 @@ func TestUnit_BulkDelete_WithPreviewPaths(t *testing.T) {
 	}
 	var deletedPaths []string
 	repo := &mockDocRepo{
-		GetByIDsFn: func(_ context.Context, _ repositories.BulkDeleteDocumentRequest) ([]*document.Document, error) {
+		GetByIDsFn: func(_ context.Context, _ documentports.BulkDeleteDocumentRequest) ([]*document.Document, error) {
 			return docs, nil
 		},
-		BulkDeleteFn: func(_ context.Context, _ repositories.BulkDeleteDocumentRequest) error {
+		BulkDeleteFn: func(_ context.Context, _ documentports.BulkDeleteDocumentRequest) error {
 			return nil
 		},
 	}
@@ -1595,7 +1597,7 @@ func TestUnit_PlanDelete_RefusesADocumentThatIsNotHere(t *testing.T) {
 
 	known := &document.Document{ID: pulid.MustNew("doc_"), StoragePath: "path/a.pdf"}
 	repo := &mockDocRepo{
-		GetByIDsFn: func(_ context.Context, _ repositories.BulkDeleteDocumentRequest) ([]*document.Document, error) {
+		GetByIDsFn: func(_ context.Context, _ documentports.BulkDeleteDocumentRequest) ([]*document.Document, error) {
 			return []*document.Document{known}, nil
 		},
 	}
@@ -1615,12 +1617,12 @@ func TestUnit_PlanDelete_CountsEveryVersionOfALineage(t *testing.T) {
 	lineage := pulid.MustNew("doc_")
 	current := &document.Document{ID: pulid.MustNew("doc_"), LineageID: lineage}
 	repo := &mockDocRepo{
-		GetByIDsFn: func(_ context.Context, _ repositories.BulkDeleteDocumentRequest) ([]*document.Document, error) {
+		GetByIDsFn: func(_ context.Context, _ documentports.BulkDeleteDocumentRequest) ([]*document.Document, error) {
 			return []*document.Document{current}, nil
 		},
 		ListVersionsFn: func(
 			_ context.Context,
-			_ repositories.ListDocumentVersionsRequest,
+			_ documentports.ListDocumentVersionsRequest,
 		) ([]*document.Document, error) {
 			return []*document.Document{current, {ID: pulid.MustNew("doc_"), LineageID: lineage}}, nil
 		},

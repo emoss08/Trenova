@@ -6,10 +6,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/orgstructureservice"
 	"github.com/emoss08/trenova/internal/core/services/teamscope"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,26 +20,26 @@ type fakeScheduleReader struct {
 	preferences []*worker.WorkerAvailabilityPreference
 	swaps       []*worker.ShiftSwapRequest
 	templates   []*worker.ShiftTemplate
-	swapQuery   *repositories.ListShiftSwapsRequest
+	swapQuery   *workerports.ListShiftSwapsRequest
 }
 
 func (f *fakeScheduleReader) ListAssignments(
 	context.Context,
-	*repositories.ListShiftAssignmentsRequest,
+	*workerports.ListShiftAssignmentsRequest,
 ) ([]*worker.WorkerShiftAssignment, error) {
 	return f.assignments, nil
 }
 
 func (f *fakeScheduleReader) ListPreferences(
 	context.Context,
-	*repositories.ListAvailabilityPreferencesRequest,
+	*workerports.ListAvailabilityPreferencesRequest,
 ) ([]*worker.WorkerAvailabilityPreference, error) {
 	return f.preferences, nil
 }
 
 func (f *fakeScheduleReader) ListSwaps(
 	_ context.Context,
-	req *repositories.ListShiftSwapsRequest,
+	req *workerports.ListShiftSwapsRequest,
 ) ([]*worker.ShiftSwapRequest, error) {
 	f.swapQuery = req
 
@@ -48,7 +48,7 @@ func (f *fakeScheduleReader) ListSwaps(
 
 func (f *fakeScheduleReader) ListTemplates(
 	context.Context,
-	*repositories.ListShiftTemplatesRequest,
+	*workerports.ListShiftTemplatesRequest,
 ) ([]*worker.ShiftTemplate, error) {
 	return f.templates, nil
 }
@@ -59,9 +59,9 @@ type teamPermissions struct {
 
 func (p *teamPermissions) Check(
 	context.Context,
-	*serviceports.PermissionCheckRequest,
-) (*serviceports.PermissionCheckResult, error) {
-	return &serviceports.PermissionCheckResult{
+	*permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
+	return &permissionports.PermissionCheckResult{
 		Allowed:   true,
 		DataScope: permission.DataScopeTeam,
 	}, nil

@@ -3,15 +3,17 @@ package fuelpricejobs
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/services/formula/contextvariablecache"
-
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/services/formula/contextvariablecache"
 	"github.com/emoss08/trenova/internal/core/services/formula/effectiveversioncache"
 	"github.com/emoss08/trenova/internal/core/services/fuelsurchargeservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetablecache"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -58,20 +60,20 @@ type ActivitiesParams struct {
 
 	FuelSurchargeService *fuelsurchargeservice.Service
 	Commercial           *shipmentcommercial.Calculator
-	IntegrationRepo      repositories.IntegrationRepository
-	ProgramRepo          repositories.FuelSurchargeProgramRepository
-	ShipmentRepo         repositories.ShipmentRepository
-	ShipmentControlRepo  repositories.ShipmentControlRepository
+	IntegrationRepo      integrationports.IntegrationRepository
+	ProgramRepo          fuelsurchargeports.FuelSurchargeProgramRepository
+	ShipmentRepo         shipmentports.ShipmentRepository
+	ShipmentControlRepo  tenantports.ShipmentControlRepository
 	Logger               *zap.Logger
 }
 
 type Activities struct {
 	fuelSurchargeSvc    *fuelsurchargeservice.Service
 	commercial          *shipmentcommercial.Calculator
-	integrationRepo     repositories.IntegrationRepository
-	programRepo         repositories.FuelSurchargeProgramRepository
-	shipmentRepo        repositories.ShipmentRepository
-	shipmentControlRepo repositories.ShipmentControlRepository
+	integrationRepo     integrationports.IntegrationRepository
+	programRepo         fuelsurchargeports.FuelSurchargeProgramRepository
+	shipmentRepo        shipmentports.ShipmentRepository
+	shipmentControlRepo tenantports.ShipmentControlRepository
 	logger              *zap.Logger
 }
 
@@ -160,7 +162,7 @@ func (a *Activities) ReRateFallbackShipmentsActivity(
 		return &ReRateFallbackShipmentsResult{}, nil
 	}
 
-	control, err := a.shipmentControlRepo.Get(ctx, repositories.GetShipmentControlRequest{
+	control, err := a.shipmentControlRepo.Get(ctx, tenantports.GetShipmentControlRequest{
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {
@@ -200,10 +202,10 @@ func (a *Activities) reRateShipment(
 	shipmentID pulid.ID,
 	control *tenant.ShipmentControl,
 ) error {
-	entity, err := a.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	entity, err := a.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         shipmentID,
 		TenantInfo: tenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})

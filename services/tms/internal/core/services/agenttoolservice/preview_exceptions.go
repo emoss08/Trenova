@@ -7,14 +7,14 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentexceptionservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 
 var (
-	_ serviceports.ToolPreviewer = (*raiseExceptionTool)(nil)
-	_ serviceports.ToolPreviewer = (*flagManualReviewTool)(nil)
+	_ agentports.ToolPreviewer = (*raiseExceptionTool)(nil)
+	_ agentports.ToolPreviewer = (*flagManualReviewTool)(nil)
 )
 
 var raisedExceptionFields = []string{
@@ -48,7 +48,7 @@ func raisedExceptionOptions(subjectType agent.SubjectType) []toolpreview.Option 
 }
 
 func previewRaisedException(
-	request *serviceports.FlagAgentExceptionRequest,
+	request *agentports.FlagAgentExceptionRequest,
 ) (*agent.ToolPreview, error) {
 	summary := fmt.Sprintf(
 		"Would hand %s to a person as a %s %s exception.",
@@ -74,7 +74,7 @@ func previewRaisedException(
 
 func (t *raiseExceptionTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	if err := guardPreview(t, &params); err != nil {
 		return nil, err
@@ -94,7 +94,7 @@ func (t *raiseExceptionTool) Preview(
 
 func (t *flagManualReviewTool) Preview(
 	_ context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	if err := guardPreview(t, &params); err != nil {
 		return nil, err

@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentsafetyservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/memtable"
@@ -76,10 +76,10 @@ func TestAgentToolSafetyPageToModelEndsOnTheLastEdge(t *testing.T) {
 	t.Parallel()
 
 	agentID := pulid.MustNew("agdef_")
-	out := agentToolSafetyPageToModel(&services.AgentToolSafetyPage{
-		Edges: []services.AgentToolSafetyEdge{
-			{Node: services.AgentToolSafety{AgentID: agentID, PolicyName: "a"}, Cursor: "c1"},
-			{Node: services.AgentToolSafety{AgentID: agentID, PolicyName: "b"}, Cursor: "c2"},
+	out := agentToolSafetyPageToModel(&agentports.AgentToolSafetyPage{
+		Edges: []agentports.AgentToolSafetyEdge{
+			{Node: agentports.AgentToolSafety{AgentID: agentID, PolicyName: "a"}, Cursor: "c1"},
+			{Node: agentports.AgentToolSafety{AgentID: agentID, PolicyName: "b"}, Cursor: "c2"},
 		},
 		HasNextPage: true,
 	})
@@ -95,17 +95,17 @@ func TestToolPolicyPageToModelEndsOnTheLastEdge(t *testing.T) {
 	t.Parallel()
 
 	total := 40
-	edge := func(name, cursor string) services.AgentToolPolicyEdge {
-		return services.AgentToolPolicyEdge{
-			View:   services.AgentToolPolicyView{Policy: services.ToolPolicy{Name: name}},
+	edge := func(name, cursor string) agentports.AgentToolPolicyEdge {
+		return agentports.AgentToolPolicyEdge{
+			View:   agentports.AgentToolPolicyView{Policy: agentports.ToolPolicy{Name: name}},
 			Cursor: cursor,
 		}
 	}
 	alone := true
 	attended := edge("b", "c2")
 	attended.RunsWithoutPerson = &alone
-	out := toolPolicyPageToModel(&services.AgentToolPolicyPage{
-		Edges:       []services.AgentToolPolicyEdge{edge("a", "c1"), attended},
+	out := toolPolicyPageToModel(&agentports.AgentToolPolicyPage{
+		Edges:       []agentports.AgentToolPolicyEdge{edge("a", "c1"), attended},
 		HasNextPage: true,
 		TotalCount:  &total,
 	})
@@ -119,7 +119,7 @@ func TestToolPolicyPageToModelEndsOnTheLastEdge(t *testing.T) {
 	assert.Equal(t, "c2", *out.PageInfo.EndCursor)
 	assert.Same(t, &total, out.TotalCount)
 
-	empty := toolPolicyPageToModel(&services.AgentToolPolicyPage{})
+	empty := toolPolicyPageToModel(&agentports.AgentToolPolicyPage{})
 	assert.Empty(t, empty.Edges)
 	assert.Nil(t, empty.PageInfo.EndCursor)
 	assert.Nil(t, empty.TotalCount)

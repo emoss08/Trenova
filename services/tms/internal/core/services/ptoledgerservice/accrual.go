@@ -8,9 +8,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -61,7 +61,7 @@ func (s *Service) PreviewAccrual(
 		if rule == nil {
 			continue
 		}
-		bal, bErr := s.ledgerRepo.GetBalance(ctx, &repositories.PTOBalanceKey{
+		bal, bErr := s.ledgerRepo.GetBalance(ctx, &workerports.PTOBalanceKey{
 			TenantInfo: tenantInfo,
 			WorkerID:   workerID,
 			PTOType:    rule.PTOType,
@@ -132,7 +132,7 @@ func (s *Service) RunAccrualForWorker(
 		if rule == nil {
 			continue
 		}
-		key := repositories.PTOBalanceKey{
+		key := workerports.PTOBalanceKey{
 			TenantInfo: tenantInfo,
 			WorkerID:   workerID,
 			PTOType:    rule.PTOType,
@@ -169,7 +169,7 @@ func (s *Service) RunAccrualForWorker(
 
 	result.WorkersProcessed = 1
 	if actor.Type == worker.PTOLedgerActorUser && !actor.UserID.IsNil() {
-		if err = s.auditService.LogAction(&services.LogActionParams{
+		if err = s.auditService.LogAction(&auditports.LogActionParams{
 			Resource:       permission.ResourceWorkerPTO,
 			ResourceID:     workerID.String(),
 			Operation:      permission.OpManage,
@@ -189,7 +189,7 @@ func (s *Service) RunAccrualForWorker(
 
 func (s *Service) postPlanned(
 	ctx context.Context,
-	key repositories.PTOBalanceKey,
+	key workerports.PTOBalanceKey,
 	resolved *ResolvedPolicy,
 	rule *worker.PTOPolicyRule,
 	planned PlannedEntry,
@@ -233,7 +233,7 @@ func (s *Service) postPlanned(
 	case errors.Is(err, ErrCapped):
 		result.EntriesCapped++
 		return nil
-	case errors.Is(err, repositories.ErrDuplicatePTOLedgerEntry):
+	case errors.Is(err, workerports.ErrDuplicatePTOLedgerEntry):
 		result.EntriesSkipped++
 		return s.advanceCursorOnly(ctx, key, planned, rule)
 	default:
@@ -310,7 +310,7 @@ func advanceCursor(bal *worker.WorkerPTOBalance, planned PlannedEntry, rule *wor
 
 func (s *Service) advanceCursorOnly(
 	ctx context.Context,
-	key repositories.PTOBalanceKey,
+	key workerports.PTOBalanceKey,
 	planned PlannedEntry,
 	rule *worker.PTOPolicyRule,
 ) error {
@@ -346,7 +346,7 @@ func (s *Service) RunAccrualForTenant(
 ) (*TenantAccrualPage, error) {
 	assignments, err := s.policyRepo.ListOpenAssignments(
 		ctx,
-		&repositories.ListOpenPTOAssignmentsRequest{
+		&workerports.ListOpenPTOAssignmentsRequest{
 			TenantInfo: tenantInfo,
 			AfterID:    afterID,
 			Limit:      limit,

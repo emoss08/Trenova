@@ -8,9 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"
@@ -19,14 +19,14 @@ import (
 )
 
 type stubControls struct {
-	repositories.ShipmentControlRepository
+	tenantports.ShipmentControlRepository
 	control *tenant.ShipmentControl
 	calls   int
 }
 
 func (s *stubControls) Get(
 	context.Context,
-	repositories.GetShipmentControlRequest,
+	tenantports.GetShipmentControlRequest,
 ) (*tenant.ShipmentControl, error) {
 	s.calls++
 	return s.control, nil
@@ -55,7 +55,7 @@ func TestResolveRejectsUnknownZone(t *testing.T) {
 	t.Parallel()
 
 	svc := newTestService(&stubControls{}, &stubCosts{})
-	_, err := svc.Resolve(t.Context(), &services.ResolveShipmentQuickFilterBasisRequest{
+	_, err := svc.Resolve(t.Context(), &shipmentports.ResolveShipmentQuickFilterBasisRequest{
 		Timezone: "Mars/Olympus",
 	})
 
@@ -77,7 +77,7 @@ func TestResolveLoadsOnlyWhatIsNeeded(t *testing.T) {
 	}}
 	svc := newTestService(controls, costs)
 
-	basis, err := svc.Resolve(t.Context(), &services.ResolveShipmentQuickFilterBasisRequest{
+	basis, err := svc.Resolve(t.Context(), &shipmentports.ResolveShipmentQuickFilterBasisRequest{
 		Timezone: "America/New_York",
 	})
 	require.NoError(t, err)
@@ -87,7 +87,7 @@ func TestResolveLoadsOnlyWhatIsNeeded(t *testing.T) {
 	assert.Equal(t, "America/New_York", basis.Location.String())
 	assert.Equal(t, 16, basis.Now.Hour())
 
-	basis, err = svc.Resolve(t.Context(), &services.ResolveShipmentQuickFilterBasisRequest{
+	basis, err = svc.Resolve(t.Context(), &shipmentports.ResolveShipmentQuickFilterBasisRequest{
 		Timezone:  "UTC",
 		Margin:    true,
 		Detention: true,
@@ -107,11 +107,11 @@ func TestPrepareValidatesAndAttachesTheBasis(t *testing.T) {
 
 	svc := newTestService(&stubControls{control: &tenant.ShipmentControl{}}, &stubCosts{})
 
-	opts := &repositories.ShipmentOptions{}
+	opts := &shipmentports.ShipmentOptions{}
 	require.NoError(t, svc.Prepare(t.Context(), pagination.TenantInfo{}, opts))
 	assert.Nil(t, opts.QuickFilterBasis)
 
-	opts = &repositories.ShipmentOptions{
+	opts = &shipmentports.ShipmentOptions{
 		QuickFilters: []shipment.QuickFilterSpec{{Filter: shipment.QuickFilterDeliveryHour}},
 		Timezone:     "UTC",
 	}
@@ -119,7 +119,7 @@ func TestPrepareValidatesAndAttachesTheBasis(t *testing.T) {
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
 
-	opts = &repositories.ShipmentOptions{
+	opts = &shipmentports.ShipmentOptions{
 		QuickFilters: []shipment.QuickFilterSpec{shipment.Quick(shipment.QuickFilterDetention)},
 		Timezone:     "UTC",
 	}

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -14,14 +14,14 @@ import (
 type agentMemoriesByIDsLister interface {
 	ListByIDs(
 		ctx context.Context,
-		req repositories.ListAgentMemoriesByIDsRequest,
+		req agentports.ListAgentMemoriesByIDsRequest,
 	) ([]*agent.Memory, error)
 }
 
 type AgentMemoryByIDLoaderFactoryParams struct {
 	fx.In
 
-	Memories repositories.AgentMemoryRepository
+	Memories agentports.AgentMemoryRepository
 }
 
 type AgentMemoryByIDLoaderFactory struct {
@@ -39,7 +39,7 @@ func (f *AgentMemoryByIDLoaderFactory) NewForTenant(
 ) *dataloadgen.Loader[string, *agent.Memory] {
 	return newLoader(batchByIDFunc(
 		func(ctx context.Context, ids []pulid.ID) ([]*agent.Memory, error) {
-			return f.memories.ListByIDs(ctx, repositories.ListAgentMemoriesByIDsRequest{
+			return f.memories.ListByIDs(ctx, agentports.ListAgentMemoriesByIDsRequest{
 				TenantInfo: tenantInfo,
 				IDs:        ids,
 			})
@@ -51,14 +51,14 @@ func (f *AgentMemoryByIDLoaderFactory) NewForTenant(
 type agentMemoryReplacementsLister interface {
 	ListReplacements(
 		ctx context.Context,
-		req repositories.ListAgentMemoryReplacementsRequest,
+		req agentports.ListAgentMemoryReplacementsRequest,
 	) ([]*agent.Memory, error)
 }
 
 type AgentMemoryReplacementLoaderFactoryParams struct {
 	fx.In
 
-	Memories repositories.AgentMemoryRepository
+	Memories agentports.AgentMemoryRepository
 }
 
 type AgentMemoryReplacementLoaderFactory struct {
@@ -92,7 +92,7 @@ func batchReplacementFunc(
 
 		replacements, err := memories.ListReplacements(
 			ctx,
-			repositories.ListAgentMemoryReplacementsRequest{
+			agentports.ListAgentMemoryReplacementsRequest{
 				TenantInfo:  tenantInfo,
 				ReplacedIDs: ids,
 			},

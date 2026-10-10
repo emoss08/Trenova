@@ -9,7 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -22,7 +23,7 @@ type delegateRecorder struct {
 
 	run    DelegateRun
 	calls  []DelegateCall
-	events []serviceports.StreamEvent
+	events []kernelports.StreamEvent
 }
 
 func (fx *delegateRecorder) Delegate(_ *Turn, call DelegateCall) DelegateRun {
@@ -31,7 +32,7 @@ func (fx *delegateRecorder) Delegate(_ *Turn, call DelegateCall) DelegateRun {
 	return fx.run
 }
 
-func (fx *delegateRecorder) Emit(event serviceports.StreamEvent) {
+func (fx *delegateRecorder) Emit(event kernelports.StreamEvent) {
 	fx.events = append(fx.events, event)
 }
 
@@ -55,28 +56,28 @@ func reportBuilder() agentdefinition.RuntimeDelegate {
 	}
 }
 
-func delegatingRequest(delegates ...agentdefinition.RuntimeDelegate) *serviceports.RunRequest {
-	return &serviceports.RunRequest{
+func delegatingRequest(delegates ...agentdefinition.RuntimeDelegate) *agentports.RunRequest {
+	return &agentports.RunRequest{
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Context:    agentdefinition.RuntimeContext{Delegates: delegates},
 		Input:      "Build a dashboard of this month's on-time delivery.",
 		ThreadID:   pulid.MustNew("athr_"),
-		StepOwner: serviceports.RunStepOwner{
-			Kind: serviceports.RunStepOwnerAssistantTurn,
+		StepOwner: agentports.RunStepOwner{
+			Kind: agentports.RunStepOwnerAssistantTurn,
 			ID:   pulid.MustNew("atrn_"),
 		},
 	}
 }
 
-func delegateTurn(agentID pulid.ID, task string) *serviceports.ChatCompletionResult {
+func delegateTurn(agentID pulid.ID, task string) *agentports.ChatCompletionResult {
 	return toolTurn(delegateTaskName, map[string]any{
 		"agentId": agentID.String(),
 		"task":    task,
 	})
 }
 
-func offered(req *serviceports.ChatCompletionRequest) []string {
+func offered(req *agentports.ChatCompletionRequest) []string {
 	names := make([]string, 0, len(req.Tools))
 	for _, spec := range req.Tools {
 		names = append(names, spec.Name)
@@ -88,9 +89,9 @@ func offered(req *serviceports.ChatCompletionRequest) []string {
 func driveWith(
 	t *testing.T,
 	rt *Service,
-	req *serviceports.RunRequest,
+	req *agentports.RunRequest,
 	fx *delegateRecorder,
-) *serviceports.RunResult {
+) *agentports.RunResult {
 	t.Helper()
 
 	// The model's streamed words go nowhere; what the loop itself emits is
@@ -98,7 +99,7 @@ func driveWith(
 	fx.localEffects = &localEffects{
 		s:    rt,
 		ctx:  t.Context(),
-		emit: func(serviceports.StreamEvent) {},
+		emit: func(kernelports.StreamEvent) {},
 	}
 	result, err := rt.Drive(rt.OpenTurn(t.Context(), req), fx)
 	require.NoError(t, err)
@@ -113,7 +114,7 @@ func scriptedDelegateRun(delegate agentdefinition.RuntimeDelegate) DelegateRun {
 
 	return DelegateRun{
 		Definition: definition,
-		Result: &serviceports.RunResult{
+		Result: &agentports.RunResult{
 			Reply: "I saved the report \"On-time this month\".",
 			Model: "delegate-model",
 			Messages: []conversation.Message{
@@ -129,7 +130,7 @@ func scriptedDelegateRun(delegate agentdefinition.RuntimeDelegate) DelegateRun {
 				{Role: conversation.RoleTool, ToolCallID: "call_d2", ToolName: "share_report"},
 				{Role: conversation.RoleAssistant, Content: "I saved the report."},
 			},
-			Actions: []serviceports.PendingAction{
+			Actions: []agentports.PendingAction{
 				{
 					ToolName:   "create_report",
 					ToolCallID: "call_d1",
@@ -153,7 +154,7 @@ func scriptedDelegateRun(delegate agentdefinition.RuntimeDelegate) DelegateRun {
 			},
 			ToolCallsUsed: 2,
 		},
-		Documents: []serviceports.DelegateDocument{
+		Documents: []agentports.DelegateDocument{
 			{ID: pulid.MustNew("aart_"), Kind: "document", Title: "Report notes"},
 		},
 	}
@@ -170,7 +171,7 @@ func TestDelegate_HandsTheTaskAndFoldsBackWhatTheDelegateDid(t *testing.T) {
 	t.Parallel()
 
 	delegate := reportBuilder()
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		delegateTurn(delegate.ID, "Create a report of this month's on-time deliveries and "+
 			"return its id."),
 		textTurn("The report is saved and the tile is ready."),
@@ -234,15 +235,15 @@ func TestDelegate_HandsTheTaskAndFoldsBackWhatTheDelegateDid(t *testing.T) {
 	assert.Equal(t, 1, result.ToolCallsUsed, "the task costs the turn one call")
 
 	assert.Equal(t, []string{
-		serviceports.AssistantEventMessage,
-		serviceports.AssistantEventToolStarted,
-		serviceports.AssistantEventDelegateStarted,
-		serviceports.AssistantEventDelegateFinished,
-		serviceports.AssistantEventToolFinished,
+		agentports.AssistantEventMessage,
+		agentports.AssistantEventToolStarted,
+		agentports.AssistantEventDelegateStarted,
+		agentports.AssistantEventDelegateFinished,
+		agentports.AssistantEventToolFinished,
 	}, fx.eventNames())
-	finished, ok := fx.events[3].Data.(serviceports.AssistantDelegateFinishedEvent)
+	finished, ok := fx.events[3].Data.(agentports.AssistantDelegateFinishedEvent)
 	require.True(t, ok)
-	assert.Equal(t, serviceports.DelegateStatusCompleted, finished.Status)
+	assert.Equal(t, agentports.DelegateStatusCompleted, finished.Status)
 	assert.Equal(t, "Report Builder", finished.AgentName)
 	assert.Equal(t, "receipt", finished.Icon)
 	assert.Equal(t, "teal", finished.Accent)
@@ -261,13 +262,13 @@ func TestDelegate_ASubAgentTurnNeverHandsItsTaskOn(t *testing.T) {
 	t.Parallel()
 
 	delegate := reportBuilder()
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		delegateTurn(delegate.ID, "Do it for me."),
 		textTurn("I could not finish the tile."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 	req := delegatingRequest(delegate)
-	req.Delegation = &serviceports.Delegation{
+	req.Delegation = &agentports.Delegation{
 		ParentAgentName: "Homepage Widget Builder",
 		CallID:          "call_parent",
 		StepScope:       "scope",
@@ -293,14 +294,14 @@ func TestDelegate_IsOfferedOnlyInAConversationSomebodyIsReading(t *testing.T) {
 	t.Parallel()
 
 	delegate := reportBuilder()
-	for name, change := range map[string]func(*serviceports.RunRequest){
-		"unattended":     func(req *serviceports.RunRequest) { req.Unattended = true },
-		"no thread":      func(req *serviceports.RunRequest) { req.ThreadID = pulid.Nil },
-		"no delegates":   func(req *serviceports.RunRequest) { req.Context.Delegates = nil },
-		"a sub-agent":    func(req *serviceports.RunRequest) { req.Delegation = &serviceports.Delegation{} },
-		"all conditions": func(*serviceports.RunRequest) {},
+	for name, change := range map[string]func(*agentports.RunRequest){
+		"unattended":     func(req *agentports.RunRequest) { req.Unattended = true },
+		"no thread":      func(req *agentports.RunRequest) { req.ThreadID = pulid.Nil },
+		"no delegates":   func(req *agentports.RunRequest) { req.Context.Delegates = nil },
+		"a sub-agent":    func(req *agentports.RunRequest) { req.Delegation = &agentports.Delegation{} },
+		"all conditions": func(*agentports.RunRequest) {},
 	} {
-		completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+		completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 			textTurn("Done."),
 		}}
 		rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
@@ -319,7 +320,7 @@ func TestDelegate_RefusesAnAgentItWasNotOffered(t *testing.T) {
 	t.Parallel()
 
 	delegate := reportBuilder()
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		delegateTurn(pulid.MustNew("agdef_"), "Build it."),
 		textTurn("I could not ask that agent."),
 	}}
@@ -341,7 +342,7 @@ func TestDelegate_CapsTheTasksOneTurnHandsOut(t *testing.T) {
 	t.Parallel()
 
 	delegate := reportBuilder()
-	turns := make([]*serviceports.ChatCompletionResult, 0, maxDelegationsPerTurn+2)
+	turns := make([]*agentports.ChatCompletionResult, 0, maxDelegationsPerTurn+2)
 	for idx := 0; idx <= maxDelegationsPerTurn; idx++ {
 		turns = append(turns, delegateTurn(delegate.ID, "Task "+string(rune('A'+idx))))
 	}
@@ -367,7 +368,7 @@ func TestDelegate_AFailedDelegateKeepsWhatItMadeAndDeniesNothing(t *testing.T) {
 	delegate := reportBuilder()
 	run := scriptedDelegateRun(delegate)
 	run.Failure = "The model provider did not answer Report Builder in time."
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		delegateTurn(delegate.ID, "Build it."),
 		textTurn("The report was saved, but the rest is unconfirmed."),
 	}}
@@ -391,7 +392,7 @@ func TestDelegate_ADeclinedDelegatePassesOnTheReason(t *testing.T) {
 	t.Parallel()
 
 	delegate := reportBuilder()
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		delegateTurn(delegate.ID, "Build it."),
 		textTurn("The Report Builder is disabled."),
 	}}
@@ -419,7 +420,7 @@ func TestDelegate_ADeclinedDelegatePassesOnTheReason(t *testing.T) {
 func TestOpenTurn_LeavesTheDelegatesStepsOutOfTheReplay(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		textTurn("Done."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
@@ -464,7 +465,7 @@ func TestStepKey_ScopeSeparatesADelegatesStepsAndLeavesTheOwnersAlone(t *testing
 	}
 	own := StepKey(params)
 
-	base, ok := callKey(serviceports.ToolCall{Name: params.ToolName, Arguments: params.Args})
+	base, ok := callKey(agentports.ToolCall{Name: params.ToolName, Arguments: params.Args})
 	require.True(t, ok)
 	legacy := sha256.Sum256([]byte(owner.String() + "\x00" + base + "\x00" + "0"))
 	assert.Equal(t, hex.EncodeToString(legacy[:]), own)
@@ -502,7 +503,7 @@ func TestDelegate_TheSavedAccountIsBoundedAndTheModelReadsItWhole(t *testing.T) 
 	delegate := reportBuilder()
 	run := scriptedDelegateRun(delegate)
 	run.Result.Reply = strings.Repeat("word ", 1000) + "end"
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		delegateTurn(delegate.ID, "Build it."),
 		textTurn("Done."),
 	}}

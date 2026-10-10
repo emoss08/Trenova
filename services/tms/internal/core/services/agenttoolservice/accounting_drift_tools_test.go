@@ -8,7 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,10 +21,10 @@ import (
 type fakeDriftOperator struct {
 	findings   map[pulid.ID]*accountingsync.AccountingDriftFinding
 	refuse     error
-	resolved   *serviceports.ResolveAccountingDriftRequest
-	dismissed  *serviceports.DismissAccountingDriftRequest
+	resolved   *accountingsyncports.ResolveAccountingDriftRequest
+	dismissed  *accountingsyncports.DismissAccountingDriftRequest
 	checked    integration.Type
-	lastActor  *serviceports.RequestActor
+	lastActor  *permissionports.RequestActor
 	overviewID pulid.ID
 }
 
@@ -37,16 +39,16 @@ func (f *fakeDriftOperator) finding(id pulid.ID) (*accountingsync.AccountingDrif
 
 func (f *fakeDriftOperator) Get(
 	_ context.Context,
-	req *serviceports.GetAccountingDriftFindingRequest,
+	req *accountingsyncports.GetAccountingDriftFindingRequest,
 ) (*accountingsync.AccountingDriftFinding, error) {
 	return f.finding(req.ID)
 }
 
 func (f *fakeDriftOperator) PreviewResolve(
 	_ context.Context,
-	req *serviceports.ResolveAccountingDriftRequest,
-	actor *serviceports.RequestActor,
-) (*serviceports.AccountingDriftFixPreview, error) {
+	req *accountingsyncports.ResolveAccountingDriftRequest,
+	actor *permissionports.RequestActor,
+) (*accountingsyncports.AccountingDriftFixPreview, error) {
 	f.lastActor = actor
 	if f.refuse != nil {
 		return nil, f.refuse
@@ -55,7 +57,7 @@ func (f *fakeDriftOperator) PreviewResolve(
 	if err != nil {
 		return nil, err
 	}
-	return &serviceports.AccountingDriftFixPreview{
+	return &accountingsyncports.AccountingDriftFixPreview{
 		Finding:   finding,
 		Direction: req.Direction,
 		FixObject: accountingsync.DriftFixCreditMemo,
@@ -65,8 +67,8 @@ func (f *fakeDriftOperator) PreviewResolve(
 
 func (f *fakeDriftOperator) Resolve(
 	_ context.Context,
-	req *serviceports.ResolveAccountingDriftRequest,
-	actor *serviceports.RequestActor,
+	req *accountingsyncports.ResolveAccountingDriftRequest,
+	actor *permissionports.RequestActor,
 ) (*accountingsync.AccountingDriftFinding, error) {
 	f.resolved = req
 	f.lastActor = actor
@@ -75,9 +77,9 @@ func (f *fakeDriftOperator) Resolve(
 
 func (f *fakeDriftOperator) PreviewDismiss(
 	_ context.Context,
-	req *serviceports.DismissAccountingDriftRequest,
-	actor *serviceports.RequestActor,
-) (*serviceports.AccountingDriftFixPreview, error) {
+	req *accountingsyncports.DismissAccountingDriftRequest,
+	actor *permissionports.RequestActor,
+) (*accountingsyncports.AccountingDriftFixPreview, error) {
 	f.lastActor = actor
 	if f.refuse != nil {
 		return nil, f.refuse
@@ -86,7 +88,7 @@ func (f *fakeDriftOperator) PreviewDismiss(
 	if err != nil {
 		return nil, err
 	}
-	return &serviceports.AccountingDriftFixPreview{
+	return &accountingsyncports.AccountingDriftFixPreview{
 		Finding: finding,
 		Summary: "Dismiss the difference in the total of INV-1001 and keep both sides as they are.",
 	}, nil
@@ -94,8 +96,8 @@ func (f *fakeDriftOperator) PreviewDismiss(
 
 func (f *fakeDriftOperator) Dismiss(
 	_ context.Context,
-	req *serviceports.DismissAccountingDriftRequest,
-	actor *serviceports.RequestActor,
+	req *accountingsyncports.DismissAccountingDriftRequest,
+	actor *permissionports.RequestActor,
 ) (*accountingsync.AccountingDriftFinding, error) {
 	f.dismissed = req
 	f.lastActor = actor
@@ -104,9 +106,9 @@ func (f *fakeDriftOperator) Dismiss(
 
 func (f *fakeDriftOperator) Overview(
 	_ context.Context,
-	_ *serviceports.AccountingDriftOverviewRequest,
-) (*serviceports.AccountingDriftOverview, error) {
-	return &serviceports.AccountingDriftOverview{
+	_ *accountingsyncports.AccountingDriftOverviewRequest,
+) (*accountingsyncports.AccountingDriftOverview, error) {
+	return &accountingsyncports.AccountingDriftOverview{
 		ConnectionID: f.overviewID,
 		ProviderName: "QuickBooks Online",
 	}, nil
@@ -116,9 +118,9 @@ func (f *fakeDriftOperator) CheckNow(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	integrationType integration.Type,
-) (*serviceports.AccountingDriftOverview, error) {
+) (*accountingsyncports.AccountingDriftOverview, error) {
 	f.checked = integrationType
-	return &serviceports.AccountingDriftOverview{ConnectionID: f.overviewID}, nil
+	return &accountingsyncports.AccountingDriftOverview{ConnectionID: f.overviewID}, nil
 }
 
 func openDriftFinding() *accountingsync.AccountingDriftFinding {
@@ -154,7 +156,7 @@ func TestResolveAccountingDrift_PreviewsThenFixesAsTheApprover(t *testing.T) {
 		"direction": "AdjustTrenova",
 	})
 
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	assert.Contains(t, preview.Summary, "Would post a credit memo of 50.00 USD")
 	require.Len(t, preview.Changes, 1)
@@ -166,9 +168,9 @@ func TestResolveAccountingDrift_PreviewsThenFixesAsTheApprover(t *testing.T) {
 	assert.Equal(t, accountingsync.DriftAdjustTrenova, operator.resolved.Direction)
 	assert.Equal(t, params.Actor.UserID, operator.lastActor.UserID)
 
-	target, ok := tool.(serviceports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
-	assert.Equal(t, serviceports.ToolTarget{Resource: permission.ResourceAccountingSync, ID: finding.ID}, target)
+	assert.Equal(t, agentports.ToolTarget{Resource: permission.ResourceAccountingSync, ID: finding.ID}, target)
 }
 
 func TestResolveAccountingDrift_RefusesAnUnknownDirectionOrARefusedFix(t *testing.T) {
@@ -190,7 +192,7 @@ func TestResolveAccountingDrift_RefusesAnUnknownDirectionOrARefusedFix(t *testin
 		"direction": "PushTrenovaValue",
 	})
 	require.Error(t, tool.Execute(t.Context(), params))
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err, "a refusal previews as a warning")
 	assert.NotEmpty(t, preview.Warnings)
 	assert.Nil(t, operator.resolved)
@@ -207,7 +209,7 @@ func TestDismissAccountingDrift_DismissesWithTheNoteAsTheAgent(t *testing.T) {
 		"note":      "  Rounding on the\n customer's side.  ",
 	})
 
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	assert.Contains(t, preview.Summary, "Rounding on the customer's side.")
 
@@ -229,7 +231,7 @@ func TestCheckAccountingDrift_StartsTheCheck(t *testing.T) {
 	tool := newCheckAccountingDriftTool(operator)
 	params := syncParams(map[string]any{"system": "QuickBooksOnline"})
 
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	assert.Contains(t, preview.Summary, "QuickBooks Online")
 	assert.Empty(t, operator.checked)
@@ -242,14 +244,14 @@ func TestAccountingDriftTools_AskAPersonFirst(t *testing.T) {
 	t.Parallel()
 
 	operator := &fakeDriftOperator{}
-	resolve := newResolveAccountingDriftTool(operator).(serviceports.ToolPolicyDeclarer).Policy()
+	resolve := newResolveAccountingDriftTool(operator).(agentports.ToolPolicyDeclarer).Policy()
 	assert.Equal(t, agent.TierActWithApproval, resolve.MaxTier)
 	assert.Equal(t, []agent.EgressClass{agent.EgressMoney}, resolve.Egress)
-	for _, tool := range []serviceports.AgentTool{
+	for _, tool := range []agentports.AgentTool{
 		newDismissAccountingDriftTool(operator),
 		newCheckAccountingDriftTool(operator),
 	} {
-		policy := tool.(serviceports.ToolPolicyDeclarer).Policy()
+		policy := tool.(agentports.ToolPolicyDeclarer).Policy()
 		assert.Equal(t, agent.TierActWithApproval, policy.MaxTier, policy.Name)
 		assert.Equal(t, permission.ResourceAccountingSync, policy.Resource, policy.Name)
 	}

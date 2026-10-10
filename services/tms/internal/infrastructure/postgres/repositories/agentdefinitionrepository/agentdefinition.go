@@ -7,10 +7,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -40,7 +40,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.AgentDefinitionRepository {
+func New(p Params) agentdefinitionports.AgentDefinitionRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.agentdefinition-repository"),
@@ -49,7 +49,7 @@ func New(p Params) repositories.AgentDefinitionRepository {
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListAgentDefinitionRequest,
+	req *agentdefinitionports.ListAgentDefinitionRequest,
 ) (*pagination.ListResult[*agentdefinition.Definition], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*agentdefinition.Definition], error) {
 		cols := buncolgen.DefinitionColumns
@@ -90,7 +90,7 @@ func (r *repository) List(
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListAgentDefinitionConnectionRequest,
+	req *agentdefinitionports.ListAgentDefinitionConnectionRequest,
 ) (*pagination.CursorListResult[*agentdefinition.Definition], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*agentdefinition.Definition], error) {
 		dba := r.db.DBForContext(ctx)
@@ -157,10 +157,10 @@ func (r *repository) ListConnection(
 type usability struct {
 	enabledOnly bool
 	chatOnly    bool
-	audience    *repositories.AgentAudience
+	audience    *kernelports.AgentAudience
 }
 
-func connectionUsability(req *repositories.ListAgentDefinitionConnectionRequest) usability {
+func connectionUsability(req *agentdefinitionports.ListAgentDefinitionConnectionRequest) usability {
 	return usability{
 		enabledOnly: req.EnabledOnly,
 		chatOnly:    req.ChatOnly,
@@ -197,7 +197,7 @@ func applyUsability(sq *bun.SelectQuery, u usability) *bun.SelectQuery {
 
 func (r *repository) ListByIDs(
 	ctx context.Context,
-	req repositories.ListAgentDefinitionsByIDsRequest,
+	req agentdefinitionports.ListAgentDefinitionsByIDsRequest,
 ) ([]*agentdefinition.Definition, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentdefinition.Definition, error) {
 		if len(req.IDs) == 0 {
@@ -223,7 +223,7 @@ func (r *repository) ListByIDs(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetAgentDefinitionByIDRequest,
+	req agentdefinitionports.GetAgentDefinitionByIDRequest,
 ) (*agentdefinition.Definition, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentdefinition.Definition, error) {
 		entity := new(agentdefinition.Definition)
@@ -246,7 +246,7 @@ func (r *repository) GetByID(
 
 func (r *repository) GetBySystemKey(
 	ctx context.Context,
-	req repositories.GetAgentDefinitionBySystemKeyRequest,
+	req agentdefinitionports.GetAgentDefinitionBySystemKeyRequest,
 ) (*agentdefinition.Definition, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentdefinition.Definition, error) {
 		entity := new(agentdefinition.Definition)
@@ -269,7 +269,7 @@ func (r *repository) GetBySystemKey(
 
 func (r *repository) ListEnabledByTrigger(
 	ctx context.Context,
-	req repositories.ListAgentDefinitionsByTriggerRequest,
+	req agentdefinitionports.ListAgentDefinitionsByTriggerRequest,
 ) ([]*agentdefinition.Definition, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentdefinition.Definition, error) {
 		cols := buncolgen.DefinitionColumns
@@ -300,7 +300,7 @@ func (r *repository) ListEnabledByTrigger(
 
 func (r *repository) ListScheduledAcrossTenants(
 	ctx context.Context,
-	req repositories.ListScheduledAcrossTenantsRequest,
+	req agentdefinitionports.ListScheduledAcrossTenantsRequest,
 ) ([]*agentdefinition.Definition, error) {
 	ctx = dbscope.WithSystem(ctx, "list scheduled agent definitions across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentdefinition.Definition, error) {
@@ -332,7 +332,7 @@ func (r *repository) ListScheduledAcrossTenants(
 
 func (r *repository) ListDue(
 	ctx context.Context,
-	req repositories.ListDueAgentDefinitionsRequest,
+	req agentdefinitionports.ListDueAgentDefinitionsRequest,
 ) ([]*agentdefinition.Definition, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentdefinition.Definition, error) {
 		cols := buncolgen.DefinitionColumns
@@ -500,7 +500,7 @@ func (r *repository) Update(
 
 func (r *repository) MarkRun(
 	ctx context.Context,
-	req repositories.MarkAgentDefinitionRunRequest,
+	req agentdefinitionports.MarkAgentDefinitionRunRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
 		cols := buncolgen.DefinitionColumns
@@ -544,7 +544,7 @@ func (r *repository) MarkRun(
 // save. A core tool is held by every agent without being listed.
 func (r *repository) SetToolTier(
 	ctx context.Context,
-	req repositories.SetAgentDefinitionToolTierRequest,
+	req agentdefinitionports.SetAgentDefinitionToolTierRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.DefinitionColumns
@@ -583,7 +583,7 @@ func (r *repository) SetToolTier(
 // undo a change made here.
 func (r *repository) SetAccessMode(
 	ctx context.Context,
-	req repositories.SetAgentDefinitionAccessModeRequest,
+	req agentdefinitionports.SetAgentDefinitionAccessModeRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.DefinitionColumns
@@ -612,9 +612,9 @@ func (r *repository) SetAccessMode(
 // no longer exists.
 func (r *repository) Delete(
 	ctx context.Context,
-	req repositories.DeleteAgentDefinitionRequest,
+	req agentdefinitionports.DeleteAgentDefinitionRequest,
 ) error {
-	return r.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	return r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		if err := r.removeDelegate(txCtx, req); err != nil {
 			return err
 		}
@@ -641,7 +641,7 @@ func (r *repository) Delete(
 // the deleted agent back.
 func (r *repository) removeDelegate(
 	ctx context.Context,
-	req repositories.DeleteAgentDefinitionRequest,
+	req agentdefinitionports.DeleteAgentDefinitionRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.DefinitionColumns
@@ -672,15 +672,15 @@ func (r *repository) StatsByIDs(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	ids []pulid.ID,
-) (map[pulid.ID]repositories.AgentDefinitionStats, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]repositories.AgentDefinitionStats, error) {
-		stats := make(map[pulid.ID]repositories.AgentDefinitionStats, len(ids))
+) (map[pulid.ID]agentdefinitionports.AgentDefinitionStats, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]agentdefinitionports.AgentDefinitionStats, error) {
+		stats := make(map[pulid.ID]agentdefinitionports.AgentDefinitionStats, len(ids))
 		if len(ids) == 0 {
 			return stats, nil
 		}
 
 		runCols := buncolgen.AgentRunColumns
-		var runRows []repositories.AgentDefinitionStats
+		var runRows []agentdefinitionports.AgentDefinitionStats
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*agent.AgentRun)(nil)).

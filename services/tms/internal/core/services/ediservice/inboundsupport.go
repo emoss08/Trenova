@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -304,7 +304,7 @@ func (s *Service) EnsureOutboundDocumentProfile(
 ) (*edi.EDIPartnerDocumentProfile, error) {
 	profile, err := s.documentProfileRepo.GetActivePartnerDocumentProfile(
 		ctx,
-		repositories.GetActiveEDIPartnerDocumentProfileRequest{
+		ediports.GetActiveEDIPartnerDocumentProfileRequest{
 			PartnerID:      partnerID,
 			TenantInfo:     tenantInfo,
 			TransactionSet: transactionSet,
@@ -344,7 +344,7 @@ func (s *Service) partnerEnvelopeSettings(
 ) (edi.X12EnvelopeSettings, error) {
 	profiles, err := s.documentProfileRepo.ListPartnerDocumentProfiles(
 		ctx,
-		&repositories.ListEDIPartnerDocumentProfilesRequest{
+		&ediports.ListEDIPartnerDocumentProfilesRequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: tenantInfo,
 				Pagination: pagination.Info{Limit: 50},
@@ -431,49 +431,49 @@ func (s *Service) generateExternalTenderResponse(
 
 func (s *Service) ListPartnersCursor(
 	ctx context.Context,
-	req *repositories.ListEDIPartnersRequest,
+	req *ediports.ListEDIPartnersRequest,
 ) (*pagination.CursorListResult[*edi.EDIPartner], error) {
 	return s.partnerRepo.ListCursor(ctx, req)
 }
 
 func (s *Service) ListCommunicationProfilesCursor(
 	ctx context.Context,
-	req *repositories.ListEDICommunicationProfilesRequest,
+	req *ediports.ListEDICommunicationProfilesRequest,
 ) (*pagination.CursorListResult[*edi.EDICommunicationProfile], error) {
 	return s.profileRepo.ListProfilesCursor(ctx, req)
 }
 
 func (s *Service) ListInboundTransfersCursor(
 	ctx context.Context,
-	req *repositories.ListEDITransfersRequest,
+	req *ediports.ListEDITransfersRequest,
 ) (*pagination.CursorListResult[*edi.EDITransfer], error) {
 	return s.transferRepo.ListInboundCursor(ctx, req)
 }
 
 func (s *Service) ListOutboundTransfersCursor(
 	ctx context.Context,
-	req *repositories.ListEDITransfersRequest,
+	req *ediports.ListEDITransfersRequest,
 ) (*pagination.CursorListResult[*edi.EDITransfer], error) {
 	return s.transferRepo.ListOutboundCursor(ctx, req)
 }
 
 func (s *Service) ListMessagesCursor(
 	ctx context.Context,
-	req *repositories.ListEDIMessagesRequest,
+	req *ediports.ListEDIMessagesRequest,
 ) (*pagination.CursorListResult[*edi.EDIMessage], error) {
 	return s.messageRepo.ListMessagesCursor(ctx, req)
 }
 
 func (s *Service) ListTemplatesCursor(
 	ctx context.Context,
-	req *repositories.ListEDITemplatesRequest,
+	req *ediports.ListEDITemplatesRequest,
 ) (*pagination.CursorListResult[*edi.EDITemplate], error) {
 	return s.templateRepo.ListTemplatesCursor(ctx, req)
 }
 
 func (s *Service) ListMappingProfilesCursor(
 	ctx context.Context,
-	req *repositories.ListEDIMappingProfilesRequest,
+	req *ediports.ListEDIMappingProfilesRequest,
 ) (*pagination.CursorListResult[*edi.EDIMappingProfile], error) {
 	return s.mappingProfileRepo.ListMappingProfilesCursor(ctx, req)
 }

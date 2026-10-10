@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -27,12 +28,12 @@ number than the one being disputed.
 
 type stubQuoteReader struct {
 	quote *ratequote.RateQuote
-	saw   *repositories.GetShipmentRateQuoteRequest
+	saw   *ratequoteports.GetShipmentRateQuoteRequest
 }
 
 func (s *stubQuoteReader) GetAppliedForShipment(
 	_ context.Context,
-	req *repositories.GetShipmentRateQuoteRequest,
+	req *ratequoteports.GetShipmentRateQuoteRequest,
 ) (*ratequote.RateQuote, error) {
 	s.saw = req
 
@@ -244,7 +245,7 @@ type stubShipmentRating struct{ record *shipment.Shipment }
 
 func (s *stubShipmentRating) GetByID(
 	_ context.Context,
-	_ *repositories.GetShipmentByIDRequest,
+	_ *shipmentports.GetShipmentByIDRequest,
 ) (*shipment.Shipment, error) {
 	return s.record, nil
 }

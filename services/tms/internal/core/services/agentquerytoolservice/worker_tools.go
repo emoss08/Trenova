@@ -6,22 +6,23 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
 type getWorkerTool struct {
-	repo   repositories.WorkerRepository
+	repo   workerports.WorkerRepository
 	access fieldAccess
 }
 
 func newGetWorkerTool(
-	repo repositories.WorkerRepository,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	repo workerports.WorkerRepository,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &getWorkerTool{repo: repo, access: newFieldAccess(permissions)}
 }
 
@@ -47,7 +48,7 @@ func (t *getWorkerTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *getWorkerTool) Policy() serviceports.ToolPolicy {
+func (t *getWorkerTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceWorker,
 	})
@@ -55,7 +56,7 @@ func (t *getWorkerTool) Policy() serviceports.ToolPolicy {
 
 func (t *getWorkerTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -66,7 +67,7 @@ func (t *getWorkerTool) Query(
 		return nil, err
 	}
 
-	entity, err := t.repo.GetByID(ctx, repositories.GetWorkerByIDRequest{
+	entity, err := t.repo.GetByID(ctx, workerports.GetWorkerByIDRequest{
 		ID: workerID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  params.OrganizationID,
@@ -193,14 +194,14 @@ func workerDetailFrom(
 }
 
 type searchWorkerTool struct {
-	repo   repositories.WorkerRepository
+	repo   workerports.WorkerRepository
 	access fieldAccess
 }
 
 func newSearchWorkerTool(
-	repo repositories.WorkerRepository,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	repo workerports.WorkerRepository,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &searchWorkerTool{repo: repo, access: newFieldAccess(permissions)}
 }
 
@@ -238,7 +239,7 @@ func (t *searchWorkerTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *searchWorkerTool) Policy() serviceports.ToolPolicy {
+func (t *searchWorkerTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceWorker,
 	})
@@ -246,7 +247,7 @@ func (t *searchWorkerTool) Policy() serviceports.ToolPolicy {
 
 func (t *searchWorkerTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -266,7 +267,7 @@ func (t *searchWorkerTool) Query(
 	criteria := filtercatalog.NewCriteria("workers").At(clockFor(params))
 	criteria.Text(query)
 
-	result, err := t.repo.List(ctx, &repositories.ListWorkersRequest{
+	result, err := t.repo.List(ctx, &workerports.ListWorkersRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: pagination.TenantInfo{
 				OrgID:  params.OrganizationID,

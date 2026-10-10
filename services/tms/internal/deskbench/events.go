@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 
 type eventCollector struct {
@@ -26,17 +26,17 @@ func newEventCollector(live *liveTurn) *eventCollector {
 
 func streamedText(event string) bool {
 	switch event {
-	case serviceports.AssistantEventDelta,
-		serviceports.AssistantEventReasoning,
-		serviceports.AssistantEventDelegateDelta,
-		serviceports.AssistantEventDelegateReasoning:
+	case agentports.AssistantEventDelta,
+		agentports.AssistantEventReasoning,
+		agentports.AssistantEventDelegateDelta,
+		agentports.AssistantEventDelegateReasoning:
 		return true
 	}
 
 	return false
 }
 
-func (e *eventCollector) onFrame(frame serviceports.TurnStreamFrame) error {
+func (e *eventCollector) onFrame(frame agentports.TurnStreamFrame) error {
 	e.live.frame(frame)
 	if streamedText(frame.Event) {
 		e.deltas++
@@ -56,13 +56,13 @@ func (e *eventCollector) onFrame(frame serviceports.TurnStreamFrame) error {
 	e.events = append(e.events, event)
 
 	switch frame.Event {
-	case serviceports.AssistantEventToolStarted:
-		var started serviceports.AssistantToolStartedEvent
+	case agentports.AssistantEventToolStarted:
+		var started agentports.AssistantToolStartedEvent
 		if sonic.Unmarshal(frame.Data, &started) == nil {
 			e.start(at, &started)
 		}
-	case serviceports.AssistantEventToolFinished:
-		var finished serviceports.AssistantToolFinishedEvent
+	case agentports.AssistantEventToolFinished:
+		var finished agentports.AssistantToolFinishedEvent
 		if sonic.Unmarshal(frame.Data, &finished) == nil {
 			e.finish(at, &finished)
 		}
@@ -75,7 +75,7 @@ func callKey(callID, delegateCallID string) string {
 	return delegateCallID + "/" + callID
 }
 
-func (e *eventCollector) start(at time.Time, started *serviceports.AssistantToolStartedEvent) {
+func (e *eventCollector) start(at time.Time, started *agentports.AssistantToolStartedEvent) {
 	record := &ToolCallRecord{
 		CallID:         started.CallID,
 		Name:           started.Name,
@@ -90,7 +90,7 @@ func (e *eventCollector) start(at time.Time, started *serviceports.AssistantTool
 	e.byCall[callKey(started.CallID, started.DelegateCallID)] = record
 }
 
-func (e *eventCollector) finish(at time.Time, finished *serviceports.AssistantToolFinishedEvent) {
+func (e *eventCollector) finish(at time.Time, finished *agentports.AssistantToolFinishedEvent) {
 	key := callKey(finished.CallID, finished.DelegateCallID)
 	record, ok := e.byCall[key]
 	if !ok {

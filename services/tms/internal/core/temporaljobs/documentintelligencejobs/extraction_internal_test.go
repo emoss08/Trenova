@@ -11,9 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/officedoc"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -21,7 +21,7 @@ import (
 
 type fakePDFPage struct {
 	text   string
-	layout *services.PDFPageLayout
+	layout *kernelports.PDFPageLayout
 }
 
 type fakePDFDocument struct {
@@ -39,7 +39,7 @@ func (d *fakePDFDocument) PageText(_ context.Context, page int) (string, error) 
 	return d.pages[page].text, nil
 }
 
-func (d *fakePDFDocument) PageLayout(_ context.Context, page int) (*services.PDFPageLayout, error) {
+func (d *fakePDFDocument) PageLayout(_ context.Context, page int) (*kernelports.PDFPageLayout, error) {
 	if d.pages[page].layout == nil {
 		return nil, errors.New("no layout")
 	}
@@ -56,14 +56,14 @@ type fakePDFReader struct {
 	err error
 }
 
-func (r *fakePDFReader) Open(context.Context, []byte) (services.PDFDocument, error) {
+func (r *fakePDFReader) Open(context.Context, []byte) (kernelports.PDFDocument, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
 	return r.doc, nil
 }
 
-func extractionActivities(pdf services.PDFReader) *Activities {
+func extractionActivities(pdf kernelports.PDFReader) *Activities {
 	return &Activities{
 		logger:       zap.NewNop(),
 		cfg:          &config.AIConfig{},
@@ -78,9 +78,9 @@ func TestExtractContentReadsNativePDFPages(t *testing.T) {
 	pdfDoc := &fakePDFDocument{pages: []fakePDFPage{
 		{
 			text: "Rate: $1,359.56",
-			layout: &services.PDFPageLayout{
+			layout: &kernelports.PDFPageLayout{
 				Width: 600, Height: 800,
-				Lines: []services.PDFTextLine{{Text: "Rate: $1,359.56", Left: 60, Top: 80, Width: 75, Height: 12}},
+				Lines: []kernelports.PDFTextLine{{Text: "Rate: $1,359.56", Left: 60, Top: 80, Width: 75, Height: 12}},
 			},
 		},
 		{text: "Page two"},
@@ -112,7 +112,7 @@ func TestExtractContentReadsNativePDFPages(t *testing.T) {
 func TestExtractContentFailsOnUnreadablePDF(t *testing.T) {
 	t.Parallel()
 
-	activities := extractionActivities(&fakePDFReader{err: services.ErrPDFUnreadable})
+	activities := extractionActivities(&fakePDFReader{err: kernelports.ErrPDFUnreadable})
 
 	_, err := activities.extractContent(
 		t.Context(),
@@ -120,7 +120,7 @@ func TestExtractContentFailsOnUnreadablePDF(t *testing.T) {
 		[]byte("junk"),
 		&tenant.DocumentControl{},
 	)
-	require.ErrorIs(t, err, services.ErrPDFUnreadable)
+	require.ErrorIs(t, err, kernelports.ErrPDFUnreadable)
 }
 
 func TestExtractContentReadsOfficeDocuments(t *testing.T) {
@@ -161,8 +161,8 @@ func TestExtractContentSkipsOCRForImageOnlyOfficePagesWhenDisabled(t *testing.T)
 	t.Parallel()
 
 	activities := extractionActivities(nil)
-	activities.officeReader = officeReaderFunc(func() []services.OfficePage {
-		return []services.OfficePage{{Images: []services.OfficeImage{{Name: "a.png", Ext: ".png", Data: []byte{1}}}}}
+	activities.officeReader = officeReaderFunc(func() []kernelports.OfficePage {
+		return []kernelports.OfficePage{{Images: []kernelports.OfficeImage{{Name: "a.png", Ext: ".png", Data: []byte{1}}}}}
 	})
 
 	result, err := activities.extractContent(
@@ -176,8 +176,8 @@ func TestExtractContentSkipsOCRForImageOnlyOfficePagesWhenDisabled(t *testing.T)
 	assert.Equal(t, "native_skipped", result.Pages[0].Metadata["extractionMode"])
 }
 
-type officeReaderFunc func() []services.OfficePage
+type officeReaderFunc func() []kernelports.OfficePage
 
-func (f officeReaderFunc) Read(context.Context, []byte, services.OfficeFormat) ([]services.OfficePage, error) {
+func (f officeReaderFunc) Read(context.Context, []byte, kernelports.OfficeFormat) ([]kernelports.OfficePage, error) {
 	return f(), nil
 }

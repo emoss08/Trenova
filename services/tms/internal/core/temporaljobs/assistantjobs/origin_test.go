@@ -4,13 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
-
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace/aitracetest"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -36,7 +35,7 @@ func TestAssistantTurnPayload_OriginIsOptional(t *testing.T) {
 }
 
 type anchoredStarter struct {
-	serviceports.WorkflowStarter
+	kernelports.WorkflowStarter
 
 	startedUnder trace.SpanContext
 	payload      *assistantcontract.AssistantTurnPayload

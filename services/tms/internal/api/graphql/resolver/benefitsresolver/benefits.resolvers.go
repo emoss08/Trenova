@@ -12,8 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/benefitsservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -147,7 +147,7 @@ func (r *QueryResolver) BenefitPlans(ctx context.Context, activeOnly *bool, plan
 		return nil, err
 	}
 
-	return r.BenefitsService.ListPlans(ctx, &repositories.ListBenefitPlansRequest{
+	return r.BenefitsService.ListPlans(ctx, &driverpayports.ListBenefitPlansRequest{
 		TenantInfo:     base.TenantInfo(authCtx),
 		ActiveOnly:     base.BoolValue(activeOnly),
 		PlanYear:       int16(base.IntValue(planYear)), //nolint:gosec // a calendar year
@@ -180,7 +180,7 @@ func (r *QueryResolver) WorkerBenefitEnrollments(ctx context.Context, workerID s
 		return nil, errortypes.NewValidationError("workerId", errortypes.ErrInvalid, "Worker is invalid")
 	}
 
-	return r.BenefitsService.ListEnrollments(ctx, &repositories.ListBenefitEnrollmentsRequest{
+	return r.BenefitsService.ListEnrollments(ctx, &driverpayports.ListBenefitEnrollmentsRequest{
 		TenantInfo:  base.TenantInfo(authCtx),
 		WorkerID:    id,
 		OpenOnly:    base.BoolValue(openOnly),
@@ -199,7 +199,7 @@ func (r *QueryResolver) BenefitEnrollments(ctx context.Context, planID *string, 
 		return nil, errortypes.NewValidationError("planId", errortypes.ErrInvalid, "Plan is invalid")
 	}
 
-	return r.BenefitsService.ListEnrollments(ctx, &repositories.ListBenefitEnrollmentsRequest{
+	return r.BenefitsService.ListEnrollments(ctx, &driverpayports.ListBenefitEnrollmentsRequest{
 		TenantInfo:    base.TenantInfo(authCtx),
 		PlanID:        plan,
 		Statuses:      statuses,
@@ -210,7 +210,7 @@ func (r *QueryResolver) BenefitEnrollments(ctx context.Context, planID *string, 
 	})
 }
 
-func (r *QueryResolver) BenefitCosts(ctx context.Context, planYear *int) ([]*repositories.BenefitCostRow, error) {
+func (r *QueryResolver) BenefitCosts(ctx context.Context, planYear *int) ([]*driverpayports.BenefitCostRow, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceBenefitPlan, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -225,7 +225,7 @@ func (r *QueryResolver) BenefitCosts(ctx context.Context, planYear *int) ([]*rep
 		return nil, err
 	}
 
-	out := make([]*repositories.BenefitCostRow, 0, len(rows))
+	out := make([]*driverpayports.BenefitCostRow, 0, len(rows))
 	for i := range rows {
 		out = append(out, &rows[i])
 	}

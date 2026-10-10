@@ -8,9 +8,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/extractionrollout"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -32,9 +35,9 @@ func testTenant() pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: testOrg, BuID: testBU, UserID: testUser}
 }
 
-func testActor() *services.RequestActor {
-	return &services.RequestActor{
-		PrincipalType: services.PrincipalTypeUser,
+func testActor() *permissionports.RequestActor {
+	return &permissionports.RequestActor{
+		PrincipalType: permissionports.PrincipalTypeUser,
 		PrincipalID:   testUser,
 		UserID:        testUser,
 	}
@@ -117,7 +120,7 @@ func (f *assignmentStore) Create(
 
 func (f *assignmentStore) GetByExtraction(
 	_ context.Context,
-	req repositories.GetRolloutAssignmentRequest,
+	req extractionrolloutports.GetRolloutAssignmentRequest,
 ) (*extractionrollout.RolloutAssignment, error) {
 	existing := f.find(req.DocumentID, req.ExtractedAt)
 	if existing == nil {
@@ -142,8 +145,8 @@ func (f *assignmentStore) Save(
 
 func (f *assignmentStore) Totals(
 	_ context.Context,
-	req repositories.TotalRolloutAssignmentsRequest,
-) ([]repositories.RolloutAssignmentTotal, error) {
+	req extractionrolloutports.TotalRolloutAssignmentsRequest,
+) ([]extractionrolloutports.RolloutAssignmentTotal, error) {
 	type key struct {
 		arm      extractionrollout.Arm
 		servedBy extractionrollout.ServedBy
@@ -164,9 +167,9 @@ func (f *assignmentStore) Totals(
 		}
 		counts[key{item.Arm, servedBy, item.Outcome}]++
 	}
-	totals := make([]repositories.RolloutAssignmentTotal, 0, len(counts))
+	totals := make([]extractionrolloutports.RolloutAssignmentTotal, 0, len(counts))
 	for k, count := range counts {
-		totals = append(totals, repositories.RolloutAssignmentTotal{
+		totals = append(totals, extractionrolloutports.RolloutAssignmentTotal{
 			Arm:      k.arm,
 			ServedBy: k.servedBy,
 			Outcome:  k.outcome,
@@ -178,7 +181,7 @@ func (f *assignmentStore) Totals(
 
 func (f *assignmentStore) PurgeBefore(
 	_ context.Context,
-	req repositories.PurgeRolloutAssignmentsRequest,
+	req extractionrolloutports.PurgeRolloutAssignmentsRequest,
 ) (int64, error) {
 	kept := f.items[:0]
 	var purged int64
@@ -194,15 +197,15 @@ func (f *assignmentStore) PurgeBefore(
 }
 
 type correctionStore struct {
-	repositories.AICorrectionRepository
+	aicorrectionports.AICorrectionRepository
 	items []*aicorrection.Correction
 }
 
 func (f *correctionStore) TotalsByProvider(
 	_ context.Context,
-	req *repositories.TotalAICorrectionsByProviderRequest,
-) ([]repositories.AICorrectionProviderTotal, error) {
-	var candidate, production repositories.AICorrectionProviderTotal
+	req *aicorrectionports.TotalAICorrectionsByProviderRequest,
+) ([]aicorrectionports.AICorrectionProviderTotal, error) {
+	var candidate, production aicorrectionports.AICorrectionProviderTotal
 	candidate.Candidate = true
 	for _, item := range f.items {
 		if item.Task != req.Task || item.CapturedAt < req.Since || item.ExtractionProviderID == nil {
@@ -215,12 +218,12 @@ func (f *correctionStore) TotalsByProvider(
 		side.Scored += item.ScoredCount
 		side.Correct += item.CorrectCount
 	}
-	return []repositories.AICorrectionProviderTotal{candidate, production}, nil
+	return []aicorrectionports.AICorrectionProviderTotal{candidate, production}, nil
 }
 
 func (f *correctionStore) ListForAccuracy(
 	_ context.Context,
-	req repositories.ListAICorrectionsForAccuracyRequest,
+	req aicorrectionports.ListAICorrectionsForAccuracyRequest,
 ) ([]*aicorrection.Correction, error) {
 	out := make([]*aicorrection.Correction, 0, len(f.items))
 	for _, item := range f.items {
@@ -232,14 +235,14 @@ func (f *correctionStore) ListForAccuracy(
 }
 
 type providerStore struct {
-	repositories.AIProviderRepository
+	agentports.AIProviderRepository
 	providers map[pulid.ID]*aiprovider.Provider
 	err       error
 }
 
 func (f *providerStore) GetByID(
 	_ context.Context,
-	req repositories.GetAIProviderByIDRequest,
+	req agentports.GetAIProviderByIDRequest,
 ) (*aiprovider.Provider, error) {
 	if f.err != nil {
 		return nil, f.err
@@ -252,12 +255,12 @@ func (f *providerStore) GetByID(
 }
 
 type retentionStore struct {
-	repositories.DataRetentionRepository
+	tenantports.DataRetentionRepository
 }
 
 func (retentionStore) Get(
 	context.Context,
-	repositories.GetDataRetentionRequest,
+	tenantports.GetDataRetentionRequest,
 ) (*tenant.DataRetention, error) {
 	return nil, errortypes.NewNotFoundError("retention not found")
 }

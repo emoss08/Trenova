@@ -4,16 +4,16 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentguard"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
 	"github.com/emoss08/trenova/internal/core/services/assistantservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/replaytest"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/sdk/worker"
@@ -28,7 +28,7 @@ func replayRuntime() *agentruntime.Service {
 		Logger:     zap.NewNop(),
 		Completion: &agentruntimetest.ScriptedCompletion{},
 		QueryTools: &agentruntimetest.StubQueryRegistry{
-			Tools: []serviceports.AgentQueryTool{&agentruntimetest.StubQueryTool{
+			Tools: []agentports.AgentQueryTool{&agentruntimetest.StubQueryTool{
 				ToolName: replayToolName,
 			}},
 		},
@@ -51,8 +51,8 @@ func replayPayload() *assistantcontract.AssistantTurnPayload {
 		TurnID:   pulid.MustNew("atrn_"),
 		ThreadID: pulid.MustNew("athr_"),
 		Content:  "Where is load 12345?",
-		Actor: serviceports.RequestActor{
-			PrincipalType:  serviceports.PrincipalTypeUser,
+		Actor: permissionports.RequestActor{
+			PrincipalType:  permissionports.PrincipalTypeUser,
 			PrincipalID:    user,
 			UserID:         user,
 			OrganizationID: org,

@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,7 +18,7 @@ import (
 )
 
 type fakeAccountingChecker struct {
-	status  *serviceports.AccountingSyncStatus
+	status  *accountingsyncports.AccountingSyncStatus
 	checked []pulid.ID
 	tenant  pagination.TenantInfo
 	guard   writeGuard
@@ -27,7 +28,7 @@ func (f *fakeAccountingChecker) Status(
 	_ context.Context,
 	tenant pagination.TenantInfo,
 	_ integration.Type,
-) (*serviceports.AccountingSyncStatus, error) {
+) (*accountingsyncports.AccountingSyncStatus, error) {
 	f.tenant = tenant
 	return f.status, nil
 }
@@ -45,8 +46,8 @@ func (f *fakeAccountingChecker) CheckHealth(
 	return f.status.Connection, nil
 }
 
-func connectedStatus(status accountingsync.ConnectionStatus) *serviceports.AccountingSyncStatus {
-	return &serviceports.AccountingSyncStatus{
+func connectedStatus(status accountingsync.ConnectionStatus) *accountingsyncports.AccountingSyncStatus {
+	return &accountingsyncports.AccountingSyncStatus{
 		IntegrationType: integration.TypeQuickBooksOnline,
 		ProviderName:    "QuickBooks Online",
 		Available:       true,
@@ -74,7 +75,7 @@ func TestCheckAccountingConnection_ChecksTheTenantsConnection(t *testing.T) {
 func TestCheckAccountingConnection_RefusesAConnectionThatNeedsAPerson(t *testing.T) {
 	t.Parallel()
 
-	for _, status := range []*serviceports.AccountingSyncStatus{
+	for _, status := range []*accountingsyncports.AccountingSyncStatus{
 		connectedStatus(accountingsync.ConnectionStatusRevoked),
 		connectedStatus(accountingsync.ConnectionStatusDisconnected),
 		{IntegrationType: integration.TypeQuickBooksOnline, ProviderName: "QuickBooks Online"},
@@ -83,7 +84,7 @@ func TestCheckAccountingConnection_RefusesAConnectionThatNeedsAPerson(t *testing
 		tool := newCheckAccountingConnectionTool(checker)
 		params := executeParams(map[string]any{"system": "QuickBooksOnline"})
 
-		err := tool.(serviceports.ToolValidator).Validate(t.Context(), params)
+		err := tool.(agentports.ToolValidator).Validate(t.Context(), params)
 		require.Error(t, err)
 		assert.True(t, errortypes.IsBusinessError(err))
 		require.Error(t, tool.Execute(t.Context(), params))

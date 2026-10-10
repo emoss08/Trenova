@@ -5,16 +5,15 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/pkg/dbscope"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"go.temporal.io/sdk/activity"
-
 	"github.com/emoss08/trenova/internal/core/services/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
+	"github.com/emoss08/trenova/shared/timeutils"
+	"go.temporal.io/sdk/activity"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -23,7 +22,7 @@ type ActivitiesParams struct {
 	fx.In
 
 	Inbound *inboundmessageservice.Service
-	Tenants repositories.TenantSyncRepository
+	Tenants tenantports.TenantSyncRepository
 	Logger  *zap.Logger
 }
 
@@ -36,7 +35,7 @@ type settledPurger interface {
 type Activities struct {
 	inbound *inboundmessageservice.Service
 	purger  settledPurger
-	tenants repositories.TenantSyncRepository
+	tenants tenantports.TenantSyncRepository
 	l       *zap.Logger
 }
 
@@ -109,8 +108,8 @@ func (a *Activities) FetchInboundContentActivity(
 		return &FetchInboundContentResult{Readable: true}, nil
 	}
 
-	rejected := errors.Is(err, services.ErrInboundContentRejected)
-	unavailable := errors.Is(err, services.ErrInboundContentUnavailable)
+	rejected := errors.Is(err, inboundmessageports.ErrInboundContentRejected)
+	unavailable := errors.Is(err, inboundmessageports.ErrInboundContentUnavailable)
 	if !rejected && !unavailable {
 		return nil, err
 	}

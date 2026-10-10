@@ -10,10 +10,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/billingtransfercriteria"
 	"github.com/emoss08/trenova/internal/core/services/billingtransferservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -36,17 +38,17 @@ const (
 type billingTransferPlanner interface {
 	PlanBillingTransfers(
 		ctx context.Context,
-		req *serviceports.PlanBillingTransfersRequest,
-	) (*serviceports.BillingTransferPlan, error)
+		req *shipmentports.PlanBillingTransfersRequest,
+	) (*shipmentports.BillingTransferPlan, error)
 	BulkTransferToBilling(
 		ctx context.Context,
-		req *serviceports.BulkTransferShipmentToBillingRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.BulkTransferToBillingResponse, error)
+		req *shipmentports.BulkTransferShipmentToBillingRequest,
+		actor *permissionports.RequestActor,
+	) (*shipmentports.BulkTransferToBillingResponse, error)
 	ListBillingTransferCandidateIDs(
 		ctx context.Context,
-		req *serviceports.ListBillingTransferCandidateIDsRequest,
-	) (*serviceports.BillingTransferCandidateIDsResponse, error)
+		req *shipmentports.ListBillingTransferCandidateIDsRequest,
+	) (*shipmentports.BillingTransferCandidateIDsResponse, error)
 }
 
 // errBothSelections answers a call that names shipments and also asks for
@@ -74,10 +76,10 @@ type billingTransferRunStarter interface {
 }
 
 var (
-	_ serviceports.ToolPreviewer         = (*transferToBillingTool)(nil)
-	_ serviceports.ToolValidator         = (*transferToBillingTool)(nil)
-	_ serviceports.ToolResultReporter    = (*transferToBillingTool)(nil)
-	_ serviceports.ToolSelectionResolver = (*transferToBillingTool)(nil)
+	_ agentports.ToolPreviewer         = (*transferToBillingTool)(nil)
+	_ agentports.ToolValidator         = (*transferToBillingTool)(nil)
+	_ agentports.ToolResultReporter    = (*transferToBillingTool)(nil)
+	_ agentports.ToolSelectionResolver = (*transferToBillingTool)(nil)
 )
 
 // transferToBillingTool queues delivered shipments for billing. A set the
@@ -91,7 +93,7 @@ type transferToBillingTool struct {
 func newTransferToBillingTool(
 	shipments billingTransferPlanner,
 	runs billingTransferRunStarter,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return &transferToBillingTool{shipments: shipments, runs: runs}
 }
 
@@ -132,7 +134,7 @@ func (t *transferToBillingTool) ParamSchema() map[string]any {
 			toolschema.KeyDescription: "The shipments to transfer, by id from " +
 				"list_billing_transfer_candidates, when not allTransferable. Never guess one.",
 			toolschema.KeyMinItems: 1,
-			toolschema.KeyMaxItems: serviceports.MaxBillingTransferCandidateIDs,
+			toolschema.KeyMaxItems: shipmentports.MaxBillingTransferCandidateIDs,
 			toolschema.KeyItems: map[string]any{
 				toolschema.KeyType: toolschema.TypeString,
 			},
@@ -154,8 +156,8 @@ func (t *transferToBillingTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *transferToBillingTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *transferToBillingTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceShipment,
@@ -189,11 +191,11 @@ type transferRequest struct {
 }
 
 func (r transferRequest) background() bool {
-	return len(r.shipmentIDs) > serviceports.MaxBulkTransferToBillingShipments
+	return len(r.shipmentIDs) > shipmentports.MaxBulkTransferToBillingShipments
 }
 
 func (t *transferToBillingTool) request(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (transferRequest, error) {
 	if err := guardPreview(t, params); err != nil {
 		return transferRequest{}, err
@@ -239,7 +241,7 @@ func (t *transferToBillingTool) request(
 	ids, err := requirePulidSlice(
 		params.Params,
 		paramShipmentIDs,
-		serviceports.MaxBillingTransferCandidateIDs,
+		shipmentports.MaxBillingTransferCandidateIDs,
 	)
 	if err != nil {
 		return transferRequest{}, err
@@ -251,7 +253,7 @@ func (t *transferToBillingTool) request(
 
 func (t *transferToBillingTool) ResolveSelection(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolSelectionResolver interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolSelectionResolver interface passes params by value
 ) (map[string]any, error) {
 	request, err := t.request(&params)
 	if err != nil {
@@ -304,13 +306,13 @@ func withoutCriteria(params map[string]any) map[string]any {
 
 func (t *transferToBillingTool) transferable(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 	request *transferRequest,
-) ([]pulid.ID, *serviceports.BillingTransferPlan, error) {
+) ([]pulid.ID, *shipmentports.BillingTransferPlan, error) {
 	tenant := tenantFrom(*params)
 	candidates, err := t.shipments.ListBillingTransferCandidateIDs(
 		ctx,
-		&serviceports.ListBillingTransferCandidateIDsRequest{
+		&shipmentports.ListBillingTransferCandidateIDsRequest{
 			Filter: request.criteria.QueryOptions(tenant, pagination.Info{}),
 			Status: request.criteria.Status,
 		},
@@ -322,7 +324,7 @@ func (t *transferToBillingTool) transferable(
 		return nil, nil, fmt.Errorf(
 			"%d shipments match, more than one transfer takes (%d); narrow the selection "+
 				"with status, customerId, query or a delivery window",
-			candidates.TotalCount, serviceports.MaxBillingTransferCandidateIDs,
+			candidates.TotalCount, shipmentports.MaxBillingTransferCandidateIDs,
 		)
 	}
 	if len(candidates.IDs) == 0 {
@@ -332,7 +334,7 @@ func (t *transferToBillingTool) transferable(
 		)
 	}
 
-	plan, err := t.shipments.PlanBillingTransfers(ctx, &serviceports.PlanBillingTransfersRequest{
+	plan, err := t.shipments.PlanBillingTransfers(ctx, &shipmentports.PlanBillingTransfersRequest{
 		TenantInfo:                  tenant,
 		ShipmentIDs:                 candidates.IDs,
 		MarkCompletedReadyToInvoice: request.markReady,
@@ -341,8 +343,8 @@ func (t *transferToBillingTool) transferable(
 		return nil, nil, err
 	}
 
-	going := &serviceports.BillingTransferPlan{
-		Decisions: make([]serviceports.BillingTransferDecision, 0, plan.Transfer),
+	going := &shipmentports.BillingTransferPlan{
+		Decisions: make([]shipmentports.BillingTransferDecision, 0, plan.Transfer),
 	}
 	ids := make([]pulid.ID, 0, plan.Transfer)
 	for idx := range plan.Decisions {
@@ -378,7 +380,7 @@ func isBillType(billType billingqueue.BillType) bool {
 
 func (t *transferToBillingTool) Validate(
 	_ context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	_, err := t.request(&params)
 
@@ -387,7 +389,7 @@ func (t *transferToBillingTool) Validate(
 
 func (t *transferToBillingTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -399,7 +401,7 @@ func (t *transferToBillingTool) Execute(
 // set was handed to.
 func (t *transferToBillingTool) ExecuteWithResult(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
 	if err := guardExecute(t, params); err != nil {
 		return nil, err
@@ -418,7 +420,7 @@ func (t *transferToBillingTool) ExecuteWithResult(
 
 	response, err := t.shipments.BulkTransferToBilling(
 		ctx,
-		&serviceports.BulkTransferShipmentToBillingRequest{
+		&shipmentports.BulkTransferShipmentToBillingRequest{
 			ShipmentIDs:                 request.shipmentIDs,
 			BillType:                    request.billType,
 			MarkCompletedReadyToInvoice: request.markReady,
@@ -438,7 +440,7 @@ func (t *transferToBillingTool) ExecuteWithResult(
 
 func (t *transferToBillingTool) startRun(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 	request transferRequest,
 ) (*agent.ToolExecutionResult, error) {
 	run, err := t.runs.Start(ctx, &billingtransferservice.StartRunRequest{
@@ -464,7 +466,7 @@ func (t *transferToBillingTool) startRun(
 	}, nil
 }
 
-func transferOutcome(response *serviceports.BulkTransferToBillingResponse) string {
+func transferOutcome(response *shipmentports.BulkTransferToBillingResponse) string {
 	outcome := fmt.Sprintf(
 		"%d of %d transferred",
 		response.SuccessCount,

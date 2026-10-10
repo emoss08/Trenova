@@ -11,9 +11,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/pagedraft"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/servicetypeports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/shipmenttypeports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -38,7 +43,7 @@ func importDraftToolProviders() []any {
 	}
 }
 
-func draftPolicy(name string) serviceports.ToolPolicy {
+func draftPolicy(name string) agentports.ToolPolicy {
 	return readPolicy(name, readSpec{
 		resource:  permission.ResourceDocument,
 		scope:     agent.ToolScopeSelf,
@@ -86,7 +91,7 @@ func requireStopIndex(params map[string]any) (int, error) {
 
 type acceptFieldTool struct{}
 
-func newAcceptFieldTool() serviceports.AgentQueryTool { return &acceptFieldTool{} }
+func newAcceptFieldTool() agentports.AgentQueryTool { return &acceptFieldTool{} }
 
 func (t *acceptFieldTool) Name() string { return string(pagedraft.ActionAcceptField) }
 
@@ -107,7 +112,7 @@ func (t *acceptFieldTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *acceptFieldTool) Policy() serviceports.ToolPolicy { return draftPolicy(t.Name()) }
+func (t *acceptFieldTool) Policy() agentports.ToolPolicy { return draftPolicy(t.Name()) }
 
 func (t *acceptFieldTool) SearchTerms() []string {
 	return []string{"accept", "confirm", "extracted", "correct", "approve value", "import"}
@@ -115,7 +120,7 @@ func (t *acceptFieldTool) SearchTerms() []string {
 
 func (t *acceptFieldTool) Query(
 	_ context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -134,7 +139,7 @@ func (t *acceptFieldTool) Query(
 
 type acceptAllConfidentTool struct{}
 
-func newAcceptAllConfidentTool() serviceports.AgentQueryTool {
+func newAcceptAllConfidentTool() agentports.AgentQueryTool {
 	return &acceptAllConfidentTool{}
 }
 
@@ -156,7 +161,7 @@ func (t *acceptAllConfidentTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *acceptAllConfidentTool) Policy() serviceports.ToolPolicy {
+func (t *acceptAllConfidentTool) Policy() agentports.ToolPolicy {
 	return draftPolicy(t.Name())
 }
 
@@ -166,7 +171,7 @@ func (t *acceptAllConfidentTool) SearchTerms() []string {
 
 func (t *acceptAllConfidentTool) Query(
 	_ context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -177,7 +182,7 @@ func (t *acceptAllConfidentTool) Query(
 
 type setFieldValueTool struct{}
 
-func newSetFieldValueTool() serviceports.AgentQueryTool { return &setFieldValueTool{} }
+func newSetFieldValueTool() agentports.AgentQueryTool { return &setFieldValueTool{} }
 
 func (t *setFieldValueTool) Name() string { return string(pagedraft.ActionSetFieldValue) }
 
@@ -202,7 +207,7 @@ func (t *setFieldValueTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *setFieldValueTool) Policy() serviceports.ToolPolicy { return draftPolicy(t.Name()) }
+func (t *setFieldValueTool) Policy() agentports.ToolPolicy { return draftPolicy(t.Name()) }
 
 func (t *setFieldValueTool) SearchTerms() []string {
 	return []string{"set", "change", "correct", "bol", "weight", "pieces", "rate", "import"}
@@ -210,7 +215,7 @@ func (t *setFieldValueTool) SearchTerms() []string {
 
 func (t *setFieldValueTool) Query(
 	_ context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -238,10 +243,10 @@ func (t *setFieldValueTool) Query(
 }
 
 type requiredRecordReader struct {
-	customers     repositories.CustomerRepository
-	serviceTypes  repositories.ServiceTypeRepository
-	shipmentTypes repositories.ShipmentTypeRepository
-	formulas      repositories.FormulaTemplateRepository
+	customers     customerports.CustomerRepository
+	serviceTypes  servicetypeports.ServiceTypeRepository
+	shipmentTypes shipmenttypeports.ShipmentTypeRepository
+	formulas      formulatemplateports.FormulaTemplateRepository
 }
 
 func (r requiredRecordReader) resource(field pagedraft.RequiredField) permission.Resource {
@@ -267,7 +272,7 @@ func (r requiredRecordReader) label(
 ) (string, error) {
 	switch field {
 	case pagedraft.RequiredCustomer:
-		found, err := r.customers.GetByID(ctx, repositories.GetCustomerByIDRequest{
+		found, err := r.customers.GetByID(ctx, customerports.GetCustomerByIDRequest{
 			ID: id, TenantInfo: tenant,
 		})
 		if err != nil {
@@ -276,7 +281,7 @@ func (r requiredRecordReader) label(
 
 		return codedLabel(found.Code, found.Name), nil
 	case pagedraft.RequiredServiceType:
-		found, err := r.serviceTypes.GetByID(ctx, repositories.GetServiceTypeByIDRequest{
+		found, err := r.serviceTypes.GetByID(ctx, servicetypeports.GetServiceTypeByIDRequest{
 			ID: id, TenantInfo: tenant,
 		})
 		if err != nil {
@@ -285,7 +290,7 @@ func (r requiredRecordReader) label(
 
 		return codedLabel(found.Code, found.Description), nil
 	case pagedraft.RequiredShipmentType:
-		found, err := r.shipmentTypes.GetByID(ctx, repositories.GetShipmentTypeByIDRequest{
+		found, err := r.shipmentTypes.GetByID(ctx, shipmenttypeports.GetShipmentTypeByIDRequest{
 			ID: id, TenantInfo: tenant,
 		})
 		if err != nil {
@@ -294,7 +299,7 @@ func (r requiredRecordReader) label(
 
 		return codedLabel(found.Code, found.Description), nil
 	case pagedraft.RequiredFormulaTemplate:
-		found, err := r.formulas.GetByID(ctx, repositories.GetFormulaTemplateByIDRequest{
+		found, err := r.formulas.GetByID(ctx, formulatemplateports.GetFormulaTemplateByIDRequest{
 			TemplateID: id, TenantInfo: tenant,
 		})
 		if err != nil {
@@ -340,12 +345,12 @@ type setRequiredFieldTool struct {
 }
 
 func provideSetRequiredFieldTool(
-	customers repositories.CustomerRepository,
-	serviceTypes repositories.ServiceTypeRepository,
-	shipmentTypes repositories.ShipmentTypeRepository,
-	formulas repositories.FormulaTemplateRepository,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	customers customerports.CustomerRepository,
+	serviceTypes servicetypeports.ServiceTypeRepository,
+	shipmentTypes shipmenttypeports.ShipmentTypeRepository,
+	formulas formulatemplateports.FormulaTemplateRepository,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &setRequiredFieldTool{
 		records: requiredRecordReader{
 			customers:     customers,
@@ -387,7 +392,7 @@ func (t *setRequiredFieldTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *setRequiredFieldTool) Policy() serviceports.ToolPolicy { return draftPolicy(t.Name()) }
+func (t *setRequiredFieldTool) Policy() agentports.ToolPolicy { return draftPolicy(t.Name()) }
 
 func (t *setRequiredFieldTool) SearchTerms() []string {
 	return []string{
@@ -398,7 +403,7 @@ func (t *setRequiredFieldTool) SearchTerms() []string {
 
 func (t *setRequiredFieldTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -450,14 +455,14 @@ func (t *setRequiredFieldTool) Query(
 }
 
 type setStopLocationTool struct {
-	locations repositories.LocationRepository
+	locations locationports.LocationRepository
 	access    fieldAccess
 }
 
 func provideSetStopLocationTool(
-	locations repositories.LocationRepository,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	locations locationports.LocationRepository,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &setStopLocationTool{locations: locations, access: newFieldAccess(permissions)}
 }
 
@@ -486,7 +491,7 @@ func (t *setStopLocationTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *setStopLocationTool) Policy() serviceports.ToolPolicy { return draftPolicy(t.Name()) }
+func (t *setStopLocationTool) Policy() agentports.ToolPolicy { return draftPolicy(t.Name()) }
 
 func (t *setStopLocationTool) SearchTerms() []string {
 	return []string{"stop", "location", "match", "pickup", "delivery", "facility", "import"}
@@ -494,7 +499,7 @@ func (t *setStopLocationTool) SearchTerms() []string {
 
 func (t *setStopLocationTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -515,7 +520,7 @@ func (t *setStopLocationTool) Query(
 		)
 	}
 
-	found, err := t.locations.GetByID(ctx, repositories.GetLocationByIDRequest{
+	found, err := t.locations.GetByID(ctx, locationports.GetLocationByIDRequest{
 		ID: locationID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  params.OrganizationID,
@@ -548,7 +553,7 @@ func locationLabel(code, name, city string) string {
 
 type setStopScheduleTool struct{}
 
-func newSetStopScheduleTool() serviceports.AgentQueryTool { return &setStopScheduleTool{} }
+func newSetStopScheduleTool() agentports.AgentQueryTool { return &setStopScheduleTool{} }
 
 func (t *setStopScheduleTool) Name() string { return string(pagedraft.ActionSetStopSchedule) }
 
@@ -578,7 +583,7 @@ func (t *setStopScheduleTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *setStopScheduleTool) Policy() serviceports.ToolPolicy { return draftPolicy(t.Name()) }
+func (t *setStopScheduleTool) Policy() agentports.ToolPolicy { return draftPolicy(t.Name()) }
 
 func (t *setStopScheduleTool) SearchTerms() []string {
 	return []string{"schedule", "window", "appointment", "pickup time", "delivery date", "import"}
@@ -586,7 +591,7 @@ func (t *setStopScheduleTool) SearchTerms() []string {
 
 func (t *setStopScheduleTool) Query(
 	_ context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

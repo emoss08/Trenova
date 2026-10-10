@@ -6,9 +6,13 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -21,20 +25,20 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.RoutingGuideRepository
-	CarrierRepo  repositories.CarrierRepository
+	Repo         tenderports.RoutingGuideRepository
+	CarrierRepo  carrierports.CarrierRepository
 	Validator    *Validator
-	AuditService services.AuditService
-	Realtime     services.RealtimeService
+	AuditService auditports.AuditService
+	Realtime     agentports.RealtimeService
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.RoutingGuideRepository
-	carrierRepo  repositories.CarrierRepository
+	repo         tenderports.RoutingGuideRepository
+	carrierRepo  carrierports.CarrierRepository
 	validator    *Validator
-	auditService services.AuditService
-	realtime     services.RealtimeService
+	auditService auditports.AuditService
+	realtime     agentports.RealtimeService
 }
 
 func New(p Params) *Service {
@@ -50,28 +54,28 @@ func New(p Params) *Service {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListRoutingGuideRequest,
+	req *tenderports.ListRoutingGuideRequest,
 ) (*pagination.ListResult[*tender.RoutingGuide], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListRoutingGuideConnectionRequest,
+	req *tenderports.ListRoutingGuideConnectionRequest,
 ) (*pagination.CursorListResult[*tender.RoutingGuide], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	req repositories.GetRoutingGuideByIDRequest,
+	req tenderports.GetRoutingGuideByIDRequest,
 ) (*tender.RoutingGuide, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) GetByIDs(
 	ctx context.Context,
-	req repositories.GetRoutingGuidesByIDsRequest,
+	req tenderports.GetRoutingGuidesByIDsRequest,
 ) ([]*tender.RoutingGuide, error) {
 	return s.repo.GetByIDs(ctx, req)
 }
@@ -80,7 +84,7 @@ func (s *Service) GetByIDs(
 // tender creation and by the dispatch preview.
 func (s *Service) MatchLane(
 	ctx context.Context,
-	req *repositories.MatchLaneRequest,
+	req *tenderports.MatchLaneRequest,
 ) (*tender.RoutingGuide, error) {
 	return s.repo.MatchLane(ctx, req)
 }
@@ -99,7 +103,7 @@ func (s *Service) validateEDIEntries(
 		}
 		channel, err := s.carrierRepo.GetDefaultEDIChannel(
 			ctx,
-			repositories.GetCarrierEDIChannelRequest{
+			carrierports.GetCarrierEDIChannelRequest{
 				TenantInfo: tenantInfo,
 				CarrierID:  entry.CarrierID,
 			},
@@ -129,7 +133,7 @@ func (s *Service) validateEDIEntries(
 func (s *Service) Create(
 	ctx context.Context,
 	entity *tender.RoutingGuide,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*tender.RoutingGuide, error) {
 	auditActor := actor.AuditActor()
 	log := s.l.With(
@@ -154,7 +158,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceRoutingGuide,
 		ResourceID:     createdEntity.GetID().String(),
 		Operation:      permission.OpCreate,
@@ -179,7 +183,7 @@ func (s *Service) Create(
 func (s *Service) Update(
 	ctx context.Context,
 	entity *tender.RoutingGuide,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*tender.RoutingGuide, error) {
 	auditActor := actor.AuditActor()
 	log := s.l.With(
@@ -198,10 +202,10 @@ func (s *Service) Update(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetByID(ctx, repositories.GetRoutingGuideByIDRequest{
+	original, err := s.repo.GetByID(ctx, tenderports.GetRoutingGuideByIDRequest{
 		ID:         entity.GetID(),
 		TenantInfo: tenantInfo,
-		RoutingGuideFilterOptions: repositories.RoutingGuideFilterOptions{
+		RoutingGuideFilterOptions: tenderports.RoutingGuideFilterOptions{
 			IncludeEntries: true,
 		},
 	})
@@ -216,7 +220,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceRoutingGuide,
 		ResourceID:     updatedEntity.GetID().String(),
 		Operation:      permission.OpUpdate,
@@ -242,8 +246,8 @@ func (s *Service) Update(
 
 func (s *Service) Delete(
 	ctx context.Context,
-	req repositories.DeleteRoutingGuideRequest,
-	actor *services.RequestActor,
+	req tenderports.DeleteRoutingGuideRequest,
+	actor *permissionports.RequestActor,
 ) error {
 	auditActor := actor.AuditActor()
 	log := s.l.With(
@@ -251,10 +255,10 @@ func (s *Service) Delete(
 		zap.String("id", req.ID.String()),
 	)
 
-	original, err := s.repo.GetByID(ctx, repositories.GetRoutingGuideByIDRequest{
+	original, err := s.repo.GetByID(ctx, tenderports.GetRoutingGuideByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
-		RoutingGuideFilterOptions: repositories.RoutingGuideFilterOptions{
+		RoutingGuideFilterOptions: tenderports.RoutingGuideFilterOptions{
 			IncludeEntries: true,
 		},
 	})
@@ -267,7 +271,7 @@ func (s *Service) Delete(
 		return err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceRoutingGuide,
 		ResourceID:     req.ID.String(),
 		Operation:      permission.OpDelete,
@@ -292,7 +296,7 @@ func (s *Service) Delete(
 func (s *Service) publishInvalidation(
 	ctx context.Context,
 	entity *tender.RoutingGuide,
-	auditActor services.AuditActor,
+	auditActor kernelports.AuditActor,
 	action string,
 ) {
 	if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{

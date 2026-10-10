@@ -9,8 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -29,7 +30,7 @@ type fakeAgentDefinitions struct {
 
 func (f *fakeAgentDefinitions) GetByID(
 	ctx context.Context,
-	req repositories.GetAgentDefinitionByIDRequest,
+	req agentdefinitionports.GetAgentDefinitionByIDRequest,
 ) (*agentdefinition.Definition, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -49,16 +50,16 @@ func (f *fakeAgentDefinitions) GetByID(
 	return &agentdefinition.Definition{ID: req.ID, Name: name}, nil
 }
 
-func unattendedParams(definitionID, systemUser pulid.ID) *services.LogActionParams {
-	actor := (&services.RequestActor{
-		PrincipalType:  services.PrincipalTypeAgent,
+func unattendedParams(definitionID, systemUser pulid.ID) *auditports.LogActionParams {
+	actor := (&permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeAgent,
 		PrincipalID:    definitionID,
 		UserID:         systemUser,
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
 	}).AuditActor()
 
-	return &services.LogActionParams{
+	return &auditports.LogActionParams{
 		Resource:       permission.ResourceShipment,
 		ResourceID:     pulid.MustNew("shp_").String(),
 		Operation:      permission.OpUpdate,
@@ -115,7 +116,7 @@ func TestLogAction_AnUnattendedWriteNamesTheSystemUserAndCreditsTheAgent(t *test
 	require.NoError(t, srv.LogAction(params, WithComment("Shipment updated")))
 
 	entry := pushedEntry(t, bufferRepo)
-	assert.Equal(t, string(services.PrincipalTypeAgent), entry.PrincipalType)
+	assert.Equal(t, string(permissionports.PrincipalTypeAgent), entry.PrincipalType)
 	assert.Equal(t, definitionID, entry.PrincipalID, "the principal names which agent ran")
 	assert.Equal(t, systemUser, entry.UserID, "the user is the system account")
 	assert.Equal(t, "Shipment updated (Ran by Dispatch Agent)", entry.Comment)
@@ -161,7 +162,7 @@ func TestLogAction_AGenericAgentPrincipalIsCreditedWithoutALookup(t *testing.T) 
 	srv, bufferRepo := creditedService(t, definitions)
 	bufferRepo.On("Push", mock.Anything, mock.Anything).Return(nil)
 
-	params := unattendedParams(services.AgentPrincipalID, pulid.Nil)
+	params := unattendedParams(permissionports.AgentPrincipalID, pulid.Nil)
 	require.NoError(t, srv.LogAction(params))
 
 	entry := pushedEntry(t, bufferRepo)
@@ -199,7 +200,7 @@ func TestLogActions_CreditsEachUnattendedEntry(t *testing.T) {
 		}).
 		Return(nil)
 
-	require.NoError(t, srv.LogActions([]services.BulkLogEntry{
+	require.NoError(t, srv.LogActions([]auditports.BulkLogEntry{
 		{Params: unattendedParams(definitionID, pulid.MustNew("usr_"))},
 		{Params: validLogActionParams()},
 	}))

@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -28,7 +28,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.DispatchControlRepository {
+func New(p Params) dispatchcontrolports.DispatchControlRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.dispatch-control-repository"),
@@ -37,7 +37,7 @@ func New(p Params) repositories.DispatchControlRepository {
 
 func (r *repository) GetByOrgID(
 	ctx context.Context,
-	req repositories.GetDispatchControlRequest,
+	req dispatchcontrolports.GetDispatchControlRequest,
 ) (*dispatchcontrol.DispatchControl, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*dispatchcontrol.DispatchControl, error) {
 		log := r.l.With(

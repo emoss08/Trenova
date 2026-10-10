@@ -4,22 +4,22 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-type VerificationChange = services.RecordChange[worker.WorkerEmploymentVerification]
+type VerificationChange = kernelports.RecordChange[worker.WorkerEmploymentVerification]
 
 func (s *Service) prepareRecord(
 	ctx context.Context,
 	entity *worker.WorkerEmploymentVerification,
 	userID pulid.ID,
 ) error {
-	if _, err := s.workerRepo.GetByID(ctx, repositories.GetWorkerByIDRequest{
+	if _, err := s.workerRepo.GetByID(ctx, workerports.GetWorkerByIDRequest{
 		ID:         entity.WorkerID,
 		TenantInfo: verificationTenant(entity),
 	}); err != nil {
@@ -47,7 +47,7 @@ func (s *Service) loadVerification(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*worker.WorkerEmploymentVerification, error) {
-	return s.repo.GetVerificationByID(ctx, &repositories.GetEmploymentVerificationByIDRequest{
+	return s.repo.GetVerificationByID(ctx, &workerports.GetEmploymentVerificationByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})

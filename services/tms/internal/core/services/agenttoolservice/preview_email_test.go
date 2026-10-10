@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
@@ -21,9 +21,9 @@ type fakeSenders struct {
 
 func (f fakeSenders) ResolveSender(
 	context.Context,
-	*serviceports.SendEmailRequest,
-) (*serviceports.EmailSender, error) {
-	return &serviceports.EmailSender{
+	*emailports.SendEmailRequest,
+) (*emailports.EmailSender, error) {
+	return &emailports.EmailSender{
 		Email:      "ops@carrier.example",
 		Name:       "Carrier Operations",
 		Suppressed: f.suppressed,
@@ -35,7 +35,7 @@ func (f fakeSenders) ResolveSender(
 func assertMessageIsTheSend(
 	t *testing.T,
 	message *agent.MessagePreview,
-	sent *serviceports.SendEmailRequest,
+	sent *emailports.SendEmailRequest,
 ) {
 	t.Helper()
 

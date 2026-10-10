@@ -6,7 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/requestmeta"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,13 +17,13 @@ import (
 )
 
 type accessAuditCapture struct {
-	services.AuditService
+	auditports.AuditService
 
-	params *services.LogActionParams
+	params *auditports.LogActionParams
 	entry  *audit.Entry
 }
 
-func (c *accessAuditCapture) LogAction(params *services.LogActionParams, opts ...services.LogOption) error {
+func (c *accessAuditCapture) LogAction(params *auditports.LogActionParams, opts ...auditports.LogOption) error {
 	c.params = params
 	c.entry = &audit.Entry{}
 	for _, opt := range opts {
@@ -60,7 +61,7 @@ func TestRecordAccessAuditsTheReaderAndTheRequest(t *testing.T) {
 	assert.Equal(t, permission.OpRead, capture.params.Operation)
 	assert.Equal(t, doc.ID.String(), capture.params.ResourceID)
 	assert.Equal(t, tenantInfo.UserID, capture.params.UserID)
-	assert.Equal(t, services.PrincipalTypeUser, capture.params.PrincipalType)
+	assert.Equal(t, permissionports.PrincipalTypeUser, capture.params.PrincipalType)
 	assert.False(t, capture.params.Critical)
 	assert.Equal(t, "Document downloaded", capture.entry.Comment)
 	assert.Equal(t, "198.51.100.20", capture.entry.IPAddress)
@@ -86,7 +87,7 @@ func TestRecordAccessWithoutAUserIsTheSystem(t *testing.T) {
 		doc, documentAccessView, documentChannelPresignedURL)
 
 	require.NotNil(t, capture.params)
-	assert.Equal(t, services.PrincipalTypeSystem, capture.params.PrincipalType)
+	assert.Equal(t, permissionports.PrincipalTypeSystem, capture.params.PrincipalType)
 	assert.True(t, capture.params.UserID.IsNil())
 	assert.Equal(t, "Document viewed", capture.entry.Comment)
 }

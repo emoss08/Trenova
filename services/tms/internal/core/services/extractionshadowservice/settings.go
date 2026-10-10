@@ -6,8 +6,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/extractionshadow"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -31,8 +33,8 @@ func (s *Service) GetSettings(
 
 func (s *Service) UpdateSettings(
 	ctx context.Context,
-	req *services.UpdateExtractionShadowSettingsRequest,
-	actor *services.RequestActor,
+	req *extractionshadowports.UpdateExtractionShadowSettingsRequest,
+	actor *permissionports.RequestActor,
 ) (*extractionshadow.ShadowSettings, error) {
 	current, err := s.GetSettings(ctx, req.TenantInfo)
 	if err != nil {
@@ -72,7 +74,7 @@ func (s *Service) UpdateSettings(
 		return nil, err
 	}
 
-	s.logAction(actor, &services.LogActionParams{
+	s.logAction(actor, &auditports.LogActionParams{
 		Resource:       permission.ResourceAgentEvalSuite,
 		ResourceID:     saved.ID.String(),
 		Operation:      permission.OpUpdate,
@@ -91,7 +93,7 @@ func (s *Service) checkCandidate(
 	providerID pulid.ID,
 	enabled bool,
 ) error {
-	provider, err := s.providers.GetByID(ctx, repositories.GetAIProviderByIDRequest{
+	provider, err := s.providers.GetByID(ctx, agentports.GetAIProviderByIDRequest{
 		ID:         providerID,
 		TenantInfo: tenant,
 	})
@@ -129,7 +131,7 @@ func auditableSettings(settings *extractionshadow.ShadowSettings) map[string]any
 	}
 }
 
-func actorID(actor *services.RequestActor, tenant pagination.TenantInfo) pulid.ID {
+func actorID(actor *permissionports.RequestActor, tenant pagination.TenantInfo) pulid.ID {
 	auditActor := actor.AuditActorOrSystem()
 	return pulid.FirstNotNil(auditActor.UserID, auditActor.PrincipalID, tenant.UserID)
 }

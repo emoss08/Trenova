@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/bankreceiptservice"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -120,7 +120,7 @@ func (h *Handler) get(c *gin.Context) {
 	}
 	entity, err := h.service.Get(
 		c.Request.Context(),
-		&services.GetBankReceiptRequest{
+		&bankreceiptports.GetBankReceiptRequest{
 			ReceiptID: id,
 			TenantInfo: pagination.TenantInfo{
 				OrgID:  auth.OrganizationID,
@@ -145,7 +145,7 @@ func (h *Handler) suggestions(c *gin.Context) {
 	}
 	items, err := h.service.SuggestMatches(
 		c.Request.Context(),
-		&services.GetBankReceiptRequest{
+		&bankreceiptports.GetBankReceiptRequest{
 			ReceiptID: id,
 			TenantInfo: pagination.TenantInfo{
 				OrgID:  auth.OrganizationID,
@@ -163,7 +163,7 @@ func (h *Handler) suggestions(c *gin.Context) {
 
 func (h *Handler) importReceipt(c *gin.Context) {
 	auth := authctx.GetAuthContext(c)
-	req := new(services.ImportBankReceiptRequest)
+	req := new(bankreceiptports.ImportBankReceiptRequest)
 	if err := authctx.BindJSON(c, auth, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -197,7 +197,7 @@ func (h *Handler) match(c *gin.Context) {
 	}
 	entity, err := h.service.Match(
 		c.Request.Context(),
-		&services.MatchBankReceiptRequest{
+		&bankreceiptports.MatchBankReceiptRequest{
 			ReceiptID: id,
 			PaymentID: body.PaymentID,
 			TenantInfo: pagination.TenantInfo{

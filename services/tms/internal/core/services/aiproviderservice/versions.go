@@ -5,10 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/settingversion"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/editconflict"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,10 +22,10 @@ type writeFunc func(ctx context.Context) (*aiprovider.Provider, error)
 func (s *Service) save(
 	ctx context.Context,
 	write writeFunc,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*aiprovider.Provider, error) {
 	var saved *aiprovider.Provider
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		var txErr error
 		saved, txErr = write(txCtx)
 		if txErr != nil {
@@ -57,7 +57,7 @@ func (s *Service) explainConflict(ctx context.Context, req *conflictRequest) err
 	if !errortypes.IsVersionMismatchError(req.cause) {
 		return req.cause
 	}
-	current, err := s.repo.GetByID(ctx, repositories.GetAIProviderByIDRequest{
+	current, err := s.repo.GetByID(ctx, agentports.GetAIProviderByIDRequest{
 		ID:         req.providerID,
 		TenantInfo: req.tenantInfo,
 	})

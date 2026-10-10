@@ -1,6 +1,11 @@
 package ediinboundservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/carrierportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmenteventportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"errors"
 	"strings"
@@ -12,10 +17,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -30,21 +36,21 @@ type tenderedCarrierFixture struct {
 	file          *edi.EDIInboundFile
 	partner       *edi.EDIPartner
 	tenderRepo    *fakeTenderRepository
-	recipientRepo *mocks.MockEDITenderRecipientRepository
-	commentRepo   *mocks.MockShipmentCommentRepository
-	userRepo      *mocks.MockUserRepository
-	eventRepo     *mocks.MockShipmentEventRepository
-	invoiceRepo   *mocks.MockEDICarrierInvoiceRepository
-	moveRepo      *mocks.MockShipmentMoveRepository
-	moveSvc       *mocks.MockShipmentMoveService
-	matcher       *mocks.MockCarrierInvoiceAutoMatcher
+	recipientRepo *ediportsmock.MockEDITenderRecipientRepository
+	commentRepo   *shipmentportsmock.MockShipmentCommentRepository
+	userRepo      *tenantportsmock.MockUserRepository
+	eventRepo     *shipmenteventportsmock.MockShipmentEventRepository
+	invoiceRepo   *ediportsmock.MockEDICarrierInvoiceRepository
+	moveRepo      *shipmentportsmock.MockShipmentMoveRepository
+	moveSvc       *shipmentportsmock.MockShipmentMoveService
+	matcher       *carrierportsmock.MockCarrierInvoiceAutoMatcher
 }
 
 func (f *tenderedCarrierFixture) withInvoiceMatcher(
 	t *testing.T,
-) *mocks.MockCarrierInvoiceAutoMatcher {
+) *carrierportsmock.MockCarrierInvoiceAutoMatcher {
 	t.Helper()
-	f.matcher = mocks.NewMockCarrierInvoiceAutoMatcher(t)
+	f.matcher = carrierportsmock.NewMockCarrierInvoiceAutoMatcher(t)
 	f.service.invoiceMatcher = f.matcher
 	return f.matcher
 }
@@ -81,11 +87,11 @@ func buildTenderedCarrierFixture(t *testing.T, withStopActuals bool) *tenderedCa
 			EnabledForInbound: true,
 		},
 		tenderRepo:    &fakeTenderRepository{},
-		recipientRepo: mocks.NewMockEDITenderRecipientRepository(t),
-		commentRepo:   mocks.NewMockShipmentCommentRepository(t),
-		userRepo:      mocks.NewMockUserRepository(t),
-		eventRepo:     mocks.NewMockShipmentEventRepository(t),
-		invoiceRepo:   mocks.NewMockEDICarrierInvoiceRepository(t),
+		recipientRepo: ediportsmock.NewMockEDITenderRecipientRepository(t),
+		commentRepo:   shipmentportsmock.NewMockShipmentCommentRepository(t),
+		userRepo:      tenantportsmock.NewMockUserRepository(t),
+		eventRepo:     shipmenteventportsmock.NewMockShipmentEventRepository(t),
+		invoiceRepo:   ediportsmock.NewMockEDICarrierInvoiceRepository(t),
 	}
 	fixture.invoiceRepo.EXPECT().
 		GetCarrierInvoiceByNumber(mock.Anything, mock.Anything).
@@ -99,8 +105,8 @@ func buildTenderedCarrierFixture(t *testing.T, withStopActuals bool) *tenderedCa
 		CarrierInvoiceRepo:  fixture.invoiceRepo,
 	}
 	if withStopActuals {
-		fixture.moveRepo = mocks.NewMockShipmentMoveRepository(t)
-		fixture.moveSvc = mocks.NewMockShipmentMoveService(t)
+		fixture.moveRepo = shipmentportsmock.NewMockShipmentMoveRepository(t)
+		fixture.moveSvc = shipmentportsmock.NewMockShipmentMoveService(t)
 		params.ShipmentMoveRepo = fixture.moveRepo
 		params.ShipmentMoves = fixture.moveSvc
 	}
@@ -184,7 +190,7 @@ func TestRouteShipmentStatus_RecipientHitDoesNotUseOfferFallback(t *testing.T) {
 		GetActiveExternalRecipientByShipmentReference(
 			mock.Anything,
 			mock.MatchedBy(
-				func(req repositories.GetActiveExternalEDITenderRecipientByReferenceRequest) bool {
+				func(req ediports.GetActiveExternalEDITenderRecipientByReferenceRequest) bool {
 					return req.Reference == "SHIP-1001" && req.PartnerID == fixture.partner.ID
 				},
 			),
@@ -377,16 +383,16 @@ func TestRouteShipmentStatus_X3RecordsOriginArrivalWithEventTime(t *testing.T) {
 
 	move, origin, _ := fixture.tenderedMoveWithStops(moveID)
 	fixture.moveRepo.EXPECT().
-		GetByID(mock.Anything, mock.MatchedBy(func(req *repositories.GetMoveByIDRequest) bool {
+		GetByID(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetMoveByIDRequest) bool {
 			return req.MoveID == moveID && req.ExpandMoveDetails
 		})).
 		Return(move, nil).
 		Once()
-	var recorded *repositories.RecordStopActualRequest
+	var recorded *shipmentports.RecordStopActualRequest
 	fixture.moveSvc.EXPECT().
 		RecordStopActual(mock.Anything, mock.AnythingOfType("*repositories.RecordStopActualRequest")).
 		RunAndReturn(
-			func(_ context.Context, req *repositories.RecordStopActualRequest) (*shipment.ShipmentMove, error) {
+			func(_ context.Context, req *shipmentports.RecordStopActualRequest) (*shipment.ShipmentMove, error) {
 				recorded = req
 				return move, nil
 			},
@@ -404,7 +410,7 @@ func TestRouteShipmentStatus_X3RecordsOriginArrivalWithEventTime(t *testing.T) {
 	require.NoError(t, err)
 	require.Empty(t, warnings)
 	require.NotNil(t, recorded)
-	require.Equal(t, repositories.StopActualActionArrive, recorded.Action)
+	require.Equal(t, shipmentports.StopActualActionArrive, recorded.Action)
 	require.Equal(t, origin.ID, recorded.StopID)
 	require.Equal(t, moveID, recorded.MoveID)
 	require.NotNil(t, recorded.OccurredAt)
@@ -439,11 +445,11 @@ func TestRouteShipmentStatus_D1RecordsArriveAndDepartAtDestination(t *testing.T)
 		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetMoveByIDRequest")).
 		Return(move, nil).
 		Once()
-	recorded := make([]*repositories.RecordStopActualRequest, 0, 2)
+	recorded := make([]*shipmentports.RecordStopActualRequest, 0, 2)
 	fixture.moveSvc.EXPECT().
 		RecordStopActual(mock.Anything, mock.AnythingOfType("*repositories.RecordStopActualRequest")).
 		RunAndReturn(
-			func(_ context.Context, req *repositories.RecordStopActualRequest) (*shipment.ShipmentMove, error) {
+			func(_ context.Context, req *shipmentports.RecordStopActualRequest) (*shipment.ShipmentMove, error) {
 				recorded = append(recorded, req)
 				return move, nil
 			},
@@ -461,8 +467,8 @@ func TestRouteShipmentStatus_D1RecordsArriveAndDepartAtDestination(t *testing.T)
 	require.NoError(t, err)
 	require.Empty(t, warnings)
 	require.Len(t, recorded, 2)
-	require.Equal(t, repositories.StopActualActionArrive, recorded[0].Action)
-	require.Equal(t, repositories.StopActualActionDepart, recorded[1].Action)
+	require.Equal(t, shipmentports.StopActualActionArrive, recorded[0].Action)
+	require.Equal(t, shipmentports.StopActualActionDepart, recorded[1].Action)
 	require.Equal(t, destination.ID, recorded[0].StopID)
 	require.Equal(t, destination.ID, recorded[1].StopID)
 }
@@ -708,13 +714,13 @@ func TestRouteFreightInvoice_TenderedOfferAutoMatches(t *testing.T) {
 			},
 		).
 		Once()
-	var matchRequest *services.AutoMatchInboundInvoiceRequest
+	var matchRequest *carrierports.AutoMatchInboundInvoiceRequest
 	matcher.EXPECT().
 		AutoMatchInboundInvoice(mock.Anything, mock.Anything).
-		Run(func(_ context.Context, req *services.AutoMatchInboundInvoiceRequest) {
+		Run(func(_ context.Context, req *carrierports.AutoMatchInboundInvoiceRequest) {
 			matchRequest = req
 		}).
-		Return(&services.AutoMatchInboundInvoiceResult{
+		Return(&carrierports.AutoMatchInboundInvoiceResult{
 			Matched:      true,
 			AutoAccepted: true,
 			Status:       "Resolved",
@@ -772,7 +778,7 @@ func TestRouteFreightInvoice_AutoMatchWarningsSurfaceOnFile(t *testing.T) {
 		Once()
 	matcher.EXPECT().
 		AutoMatchInboundInvoice(mock.Anything, mock.Anything).
-		Return(&services.AutoMatchInboundInvoiceResult{
+		Return(&carrierports.AutoMatchInboundInvoiceResult{
 			Warnings: []string{
 				"carrier invoice INV-1 was not auto-matched: " +
 					"no carrier assignment matches its pro number or shipment reference",

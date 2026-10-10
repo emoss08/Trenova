@@ -14,8 +14,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
@@ -83,13 +85,13 @@ var delegateJSON = sonic.Config{SortMapKeys: true}.Froze()
 // delegateTaskSpec is the tool a turn hands a task to another agent with.
 // agentId is limited to the agents the turn may ask, so a model cannot name
 // one it was not offered.
-func delegateTaskSpec(delegates []agentdefinition.RuntimeDelegate) serviceports.ToolSpec {
+func delegateTaskSpec(delegates []agentdefinition.RuntimeDelegate) kernelports.ToolSpec {
 	ids := make([]string, 0, len(delegates))
 	for _, delegate := range delegates {
 		ids = append(ids, delegate.ID.String())
 	}
 
-	return serviceports.ToolSpec{
+	return kernelports.ToolSpec{
 		Name:        delegateTaskName,
 		Description: delegateTaskDescription,
 		Parameters: map[string]any{
@@ -147,7 +149,7 @@ func delegateTaskSpec(delegates []agentdefinition.RuntimeDelegate) serviceports.
 
 // DelegateCall is one task the loop has decided to hand to another agent.
 type DelegateCall struct {
-	Call     serviceports.ToolCall           `json:"call"`
+	Call     agentports.ToolCall             `json:"call"`
 	Delegate agentdefinition.RuntimeDelegate `json:"delegate"`
 	Task     string                          `json:"task"`
 	// StepScope separates the delegate's steps from this turn's in the
@@ -223,7 +225,7 @@ type DelegateRun struct {
 	Definition *agentdefinition.Definition `json:"definition,omitempty"`
 	// Result is everything the delegate's turn did, including when it ended
 	// before it finished.
-	Result *serviceports.RunResult `json:"result,omitempty"`
+	Result *agentports.RunResult `json:"result,omitempty"`
 	// Declined is why the delegate could not be asked at all, in words the
 	// delegating agent can pass on.
 	Declined string `json:"declined,omitempty"`
@@ -232,7 +234,7 @@ type DelegateRun struct {
 	Failure string `json:"failure,omitempty"`
 	Stopped bool   `json:"stopped,omitempty"`
 	// Documents are what it kept beside the conversation.
-	Documents []serviceports.DelegateDocument `json:"documents,omitempty"`
+	Documents []agentports.DelegateDocument `json:"documents,omitempty"`
 	// ExternalContent says the delegate read content from outside the
 	// organization, which now reaches this turn through its answer.
 	ExternalContent bool `json:"externalContent,omitempty"`
@@ -241,7 +243,7 @@ type DelegateRun struct {
 // delegate hands one task to another agent and answers the call with what it
 // did. The delegate's steps are folded into the turn's own record, tagged, and
 // its writes are kept apart so they are recorded as its own.
-func (s *Service) delegate(t *Turn, fx TurnEffects, call serviceports.ToolCall) toolOutcome {
+func (s *Service) delegate(t *Turn, fx TurnEffects, call agentports.ToolCall) toolOutcome {
 	if t.req.Delegation != nil {
 		return failedOutcome("%s", delegatedRefusal)
 	}
@@ -281,7 +283,7 @@ func (s *Service) delegate(t *Turn, fx TurnEffects, call serviceports.ToolCall) 
 // handedTask is one task on its way to another agent, already checked as one
 // the turn may hand out.
 type handedTask struct {
-	call     serviceports.ToolCall
+	call     agentports.ToolCall
 	delegate agentdefinition.RuntimeDelegate
 	task     string
 	handed   *DelegateContext
@@ -296,7 +298,7 @@ func (s *Service) handTask(
 	t *Turn,
 	fx TurnEffects,
 	h *handedTask,
-) (outcome toolOutcome, report serviceports.AssistantDelegateFinishedEvent) {
+) (outcome toolOutcome, report agentports.AssistantDelegateFinishedEvent) {
 	call, delegate, task := h.call, h.delegate, h.task
 	scope := StepKey(StepKeyParams{
 		OwnerID:  t.req.StepOwner.ID,
@@ -308,9 +310,9 @@ func (s *Service) handTask(
 		scope = "call:" + call.ID
 	}
 
-	fx.Emit(serviceports.StreamEvent{
-		Event: serviceports.AssistantEventDelegateStarted,
-		Data: serviceports.AssistantDelegateStartedEvent{
+	fx.Emit(kernelports.StreamEvent{
+		Event: agentports.AssistantEventDelegateStarted,
+		Data: agentports.AssistantDelegateStartedEvent{
 			DelegateCallID: call.ID,
 			AgentID:        delegate.ID,
 			AgentName:      delegate.Name,
@@ -347,7 +349,7 @@ func (s *Service) handTask(
 		t.inheritDelegateTaint(fx, run.Result)
 	}
 	if run.Definition != nil && run.Result != nil {
-		t.result.Delegations = append(t.result.Delegations, serviceports.DelegatedRun{
+		t.result.Delegations = append(t.result.Delegations, agentports.DelegatedRun{
 			Definition: run.Definition,
 			CallID:     call.ID,
 			Actions:    run.Result.Actions,
@@ -359,8 +361,8 @@ func (s *Service) handTask(
 		})
 	}
 
-	fx.Emit(serviceports.StreamEvent{
-		Event: serviceports.AssistantEventDelegateFinished,
+	fx.Emit(kernelports.StreamEvent{
+		Event: agentports.AssistantEventDelegateFinished,
 		Data:  report,
 	})
 
@@ -587,19 +589,19 @@ func delegateReport(
 	delegate agentdefinition.RuntimeDelegate,
 	callID string,
 	run DelegateRun,
-) serviceports.AssistantDelegateFinishedEvent {
-	report := serviceports.AssistantDelegateFinishedEvent{
+) agentports.AssistantDelegateFinishedEvent {
+	report := agentports.AssistantDelegateFinishedEvent{
 		DelegateCallID: callID,
 		AgentID:        delegate.ID,
 		AgentName:      delegate.Name,
 		Icon:           delegate.Icon,
 		Accent:         delegate.Accent,
-		Made:           []serviceports.DelegateWrite{},
-		Awaiting:       []serviceports.DelegateWrite{},
+		Made:           []agentports.DelegateWrite{},
+		Awaiting:       []agentports.DelegateWrite{},
 		Published:      slices.Clone(run.Documents),
 	}
 	if report.Published == nil {
-		report.Published = []serviceports.DelegateDocument{}
+		report.Published = []agentports.DelegateDocument{}
 	}
 
 	result := run.Result
@@ -610,7 +612,7 @@ func delegateReport(
 			if action.Withdrawn {
 				continue
 			}
-			write := serviceports.DelegateWrite{
+			write := agentports.DelegateWrite{
 				ToolName:   action.ToolName,
 				CallID:     action.ToolCallID,
 				Tier:       action.Tier,
@@ -630,24 +632,24 @@ func delegateReport(
 
 	switch {
 	case run.Declined != "":
-		report.Status = serviceports.DelegateStatusDeclined
+		report.Status = agentports.DelegateStatusDeclined
 		report.Reason = run.Declined
 	case run.Stopped:
-		report.Status = serviceports.DelegateStatusStopped
+		report.Status = agentports.DelegateStatusStopped
 		report.Reason = "The person stopped the reply before " + delegate.Name + " finished."
 	case run.Failure != "":
-		report.Status = serviceports.DelegateStatusFailed
+		report.Status = agentports.DelegateStatusFailed
 		report.Reason = run.Failure
 	case result == nil:
-		report.Status = serviceports.DelegateStatusFailed
+		report.Status = agentports.DelegateStatusFailed
 		report.Reason = delegate.Name + " did not report back."
 	case result.Exhausted:
-		report.Status = serviceports.DelegateStatusExhausted
+		report.Status = agentports.DelegateStatusExhausted
 		report.Reply = result.Reply
 		report.Reason = delegate.Name + " used every tool call its settings allow before it " +
 			"finished."
 	default:
-		report.Status = serviceports.DelegateStatusCompleted
+		report.Status = agentports.DelegateStatusCompleted
 		report.Reply = result.Reply
 	}
 
@@ -658,7 +660,7 @@ func delegateReport(
 // that ended partway is a failed call whose writes are still named: they
 // happened, and what else the delegate may have begun is unconfirmed rather
 // than undone, so nothing here says a change did not happen.
-func delegateOutcome(report serviceports.AssistantDelegateFinishedEvent) toolOutcome {
+func delegateOutcome(report agentports.AssistantDelegateFinishedEvent) toolOutcome {
 	encoded, err := delegateJSON.MarshalToString(report)
 	if err != nil {
 		encoded = fmt.Sprintf(`{"agent":%q,"status":%q}`, report.AgentName, report.Status)
@@ -673,30 +675,30 @@ func delegateOutcome(report serviceports.AssistantDelegateFinishedEvent) toolOut
 	}
 
 	switch report.Status {
-	case serviceports.DelegateStatusDeclined:
+	case agentports.DelegateStatusDeclined:
 		declined := failedOutcome("Tool %q was not run: %s", delegateTaskName, report.Reason)
 		declined.delegateReport = outcome.delegateReport
 
 		return declined
-	case serviceports.DelegateStatusFailed, serviceports.DelegateStatusStopped:
+	case agentports.DelegateStatusFailed, agentports.DelegateStatusStopped:
 		outcome.failed = true
-	case serviceports.DelegateStatusCompleted,
-		serviceports.DelegateStatusExhausted,
-		serviceports.DelegateStatusRefused:
+	case agentports.DelegateStatusCompleted,
+		agentports.DelegateStatusExhausted,
+		agentports.DelegateStatusRefused:
 	}
 
 	return outcome
 }
 
 // delegateNote tells the delegating model how to read the account above it.
-func delegateNote(report serviceports.AssistantDelegateFinishedEvent) string {
+func delegateNote(report agentports.AssistantDelegateFinishedEvent) string {
 	name := report.AgentName
 	switch report.Status {
-	case serviceports.DelegateStatusFailed, serviceports.DelegateStatusStopped:
+	case agentports.DelegateStatusFailed, agentports.DelegateStatusStopped:
 		return "[" + name + " stopped before it finished. Everything under made happened. " +
 			"Anything else it may have begun is unconfirmed: tell the person plainly, and do " +
 			"not claim it happened or that it did not.]"
-	case serviceports.DelegateStatusRefused:
+	case agentports.DelegateStatusRefused:
 		return "[" + name + "'s answer was withheld. Everything under made happened and " +
 			"everything under awaiting is waiting on the person; tell them so, without the " +
 			"withheld answer.]"
@@ -730,13 +732,13 @@ func delegateArtifactNote(reply string) string {
 // agent, and a check that cannot be made offers nothing.
 func UsableAgentsFor(
 	ctx context.Context,
-	permissions serviceports.PermissionEngine,
-	actor *serviceports.RequestActor,
+	permissions permissionports.PermissionEngine,
+	actor *permissionports.RequestActor,
 	logger *zap.Logger,
-) *serviceports.UsableAgents {
+) *permissionports.UsableAgents {
 	if permissions == nil || actor == nil ||
-		actor.PrincipalType != serviceports.PrincipalTypeUser {
-		return &serviceports.UsableAgents{}
+		actor.PrincipalType != permissionports.PrincipalTypeUser {
+		return &permissionports.UsableAgents{}
 	}
 
 	usable, err := permissions.AgentsUsable(ctx, actor, permission.OpCreate)
@@ -746,10 +748,10 @@ func UsableAgentsFor(
 				"withholding them", zap.Error(err))
 		}
 
-		return &serviceports.UsableAgents{}
+		return &permissionports.UsableAgents{}
 	}
 	if usable == nil {
-		return &serviceports.UsableAgents{}
+		return &permissionports.UsableAgents{}
 	}
 
 	return usable
@@ -759,7 +761,7 @@ func UsableAgentsFor(
 // turn's own tool set is narrowed by.
 func (s *Service) PermittedTools(
 	ctx context.Context,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 	names []string,
 ) []string {
 	return s.permittedTools(ctx, actor, names)

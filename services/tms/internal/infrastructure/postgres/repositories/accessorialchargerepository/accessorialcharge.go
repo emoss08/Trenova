@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -30,7 +30,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.AccessorialChargeRepository {
+func New(p Params) accessorialchargeports.AccessorialChargeRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.accessorialcharge-repository"),
@@ -39,7 +39,7 @@ func New(p Params) repositories.AccessorialChargeRepository {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListAccessorialChargeRequest,
+	req *accessorialchargeports.ListAccessorialChargeRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.AccessorialChargeColumns
 	q = querybuilder.ApplyFilters(
@@ -57,7 +57,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListAccessorialChargeRequest,
+	req *accessorialchargeports.ListAccessorialChargeRequest,
 ) (*pagination.ListResult[*accessorialcharge.AccessorialCharge], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*accessorialcharge.AccessorialCharge], error) {
 		log := r.l.With(
@@ -86,7 +86,7 @@ func (r *repository) List(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListAccessorialChargeConnectionRequest,
+	req *accessorialchargeports.ListAccessorialChargeConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -99,7 +99,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListAccessorialChargeConnectionRequest,
+	req *accessorialchargeports.ListAccessorialChargeConnectionRequest,
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -119,7 +119,7 @@ func applyAccessorialChargeColumns(q *bun.SelectQuery, columns []string) *bun.Se
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListAccessorialChargeConnectionRequest,
+	req *accessorialchargeports.ListAccessorialChargeConnectionRequest,
 ) (*pagination.CursorListResult[*accessorialcharge.AccessorialCharge], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*accessorialcharge.AccessorialCharge], error) {
 		log := r.l.With(
@@ -230,7 +230,7 @@ func (r *repository) Update(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetAccessorialChargeByIDRequest,
+	req accessorialchargeports.GetAccessorialChargeByIDRequest,
 ) (*accessorialcharge.AccessorialCharge, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*accessorialcharge.AccessorialCharge, error) {
 		log := r.l.With(

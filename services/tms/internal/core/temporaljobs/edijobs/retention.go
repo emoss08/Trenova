@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -127,7 +127,7 @@ func (a *Activities) PurgeEDIRawPayloadsTenantActivity(
 	result := new(PurgeEDIRawPayloadsTenantResult)
 
 	if tenantItem.InboundFileRetentionDays > 0 {
-		purged, err := a.purgeInBatches(ctx, repositories.PurgeEDIRawPayloadsRequest{
+		purged, err := a.purgeInBatches(ctx, ediports.PurgeEDIRawPayloadsRequest{
 			TenantInfo: tenantItem.TenantInfo(),
 			Before:     now - int64(tenantItem.InboundFileRetentionDays)*secondsPerDay,
 			PurgedAt:   now,
@@ -145,7 +145,7 @@ func (a *Activities) PurgeEDIRawPayloadsTenantActivity(
 	}
 
 	if tenantItem.MessageRetentionDays > 0 {
-		purged, err := a.purgeInBatches(ctx, repositories.PurgeEDIRawPayloadsRequest{
+		purged, err := a.purgeInBatches(ctx, ediports.PurgeEDIRawPayloadsRequest{
 			TenantInfo: tenantItem.TenantInfo(),
 			Before:     now - int64(tenantItem.MessageRetentionDays)*secondsPerDay,
 			PurgedAt:   now,
@@ -173,8 +173,8 @@ func (a *Activities) PurgeEDIRawPayloadsTenantActivity(
 
 func (a *Activities) purgeInBatches(
 	ctx context.Context,
-	req repositories.PurgeEDIRawPayloadsRequest,
-	purge func(context.Context, repositories.PurgeEDIRawPayloadsRequest) (int64, error),
+	req ediports.PurgeEDIRawPayloadsRequest,
+	purge func(context.Context, ediports.PurgeEDIRawPayloadsRequest) (int64, error),
 ) (int64, error) {
 	var total int64
 	for {

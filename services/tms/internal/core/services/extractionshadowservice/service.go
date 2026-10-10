@@ -5,9 +5,13 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/core/domain/extractionshadow"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -16,9 +20,9 @@ import (
 )
 
 var (
-	_ services.ExtractionShadowService   = (*Service)(nil)
-	_ services.ExtractionShadowSampler   = (*Service)(nil)
-	_ services.ExtractionShadowRetention = (*Service)(nil)
+	_ extractionshadowports.ExtractionShadowService   = (*Service)(nil)
+	_ extractionshadowports.ExtractionShadowSampler   = (*Service)(nil)
+	_ extractionshadowports.ExtractionShadowRetention = (*Service)(nil)
 )
 
 type contentReader interface {
@@ -33,28 +37,28 @@ type Params struct {
 	fx.In
 
 	Logger    *zap.Logger
-	Settings  repositories.ExtractionShadowSettingsRepository
-	Results   repositories.ExtractionShadowResultRepository
+	Settings  extractionshadowports.ExtractionShadowSettingsRepository
+	Results   extractionshadowports.ExtractionShadowResultRepository
 	Scorer    *Scorer
-	Contents  repositories.DocumentContentRepository
-	Providers repositories.AIProviderRepository
-	Retention repositories.DataRetentionRepository
-	Audit     services.AuditService
-	Predictor services.ExtractionShadowPredictor `optional:"true"`
-	Starter   services.ExtractionShadowStarter   `optional:"true"`
+	Contents  documentcontentports.DocumentContentRepository
+	Providers agentports.AIProviderRepository
+	Retention tenantports.DataRetentionRepository
+	Audit     auditports.AuditService
+	Predictor extractionshadowports.ExtractionShadowPredictor `optional:"true"`
+	Starter   extractionshadowports.ExtractionShadowStarter   `optional:"true"`
 }
 
 type Service struct {
 	l         *zap.Logger
-	settings  repositories.ExtractionShadowSettingsRepository
-	results   repositories.ExtractionShadowResultRepository
+	settings  extractionshadowports.ExtractionShadowSettingsRepository
+	results   extractionshadowports.ExtractionShadowResultRepository
 	scorer    *Scorer
 	contents  contentReader
-	providers repositories.AIProviderRepository
-	retention repositories.DataRetentionRepository
-	audit     services.AuditService
-	predictor services.ExtractionShadowPredictor
-	starter   services.ExtractionShadowStarter
+	providers agentports.AIProviderRepository
+	retention tenantports.DataRetentionRepository
+	audit     auditports.AuditService
+	predictor extractionshadowports.ExtractionShadowPredictor
+	starter   extractionshadowports.ExtractionShadowStarter
 	now       func() int64
 }
 
@@ -75,19 +79,19 @@ func New(p Params) *Service {
 	}
 }
 
-func AsService(s *Service) services.ExtractionShadowService { return s }
+func AsService(s *Service) extractionshadowports.ExtractionShadowService { return s }
 
-func AsSampler(s *Service) services.ExtractionShadowSampler { return s }
+func AsSampler(s *Service) extractionshadowports.ExtractionShadowSampler { return s }
 
-func AsRetention(s *Service) services.ExtractionShadowRetention { return s }
+func AsRetention(s *Service) extractionshadowports.ExtractionShadowRetention { return s }
 
 func tenantOf(result *extractionshadow.ShadowResult) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: result.OrganizationID, BuID: result.BusinessUnitID}
 }
 
 func (s *Service) logAction(
-	actor *services.RequestActor,
-	params *services.LogActionParams,
+	actor *permissionports.RequestActor,
+	params *auditports.LogActionParams,
 	comment string,
 ) {
 	auditActor := actor.AuditActorOrSystem()

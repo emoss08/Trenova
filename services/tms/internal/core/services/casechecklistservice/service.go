@@ -6,9 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/deskcase"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -21,8 +21,8 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Checklists   repositories.CaseChecklistRepository
-	AuditService services.AuditService
+	Checklists   deskcaseports.CaseChecklistRepository
+	AuditService auditports.AuditService
 }
 
 // Service keeps how an organization, and any customer of it, wants case
@@ -31,13 +31,13 @@ type Params struct {
 // something that can tick them, and their document types the
 // organization's.
 type Service struct {
-	checklists repositories.CaseChecklistRepository
-	audit      services.AuditService
+	checklists deskcaseports.CaseChecklistRepository
+	audit      auditports.AuditService
 	l          *zap.Logger
 }
 
 //nolint:gocritic // fx passes params by value
-func New(p Params) services.CaseChecklistService {
+func New(p Params) deskcaseports.CaseChecklistService {
 	return &Service{
 		checklists: p.Checklists,
 		audit:      p.AuditService,
@@ -50,15 +50,15 @@ func New(p Params) services.CaseChecklistService {
 // to date with the steps Trenova defines.
 func (s *Service) List(
 	ctx context.Context,
-	req *services.ListCaseChecklistTemplatesRequest,
-) (*services.CaseChecklistTemplates, error) {
+	req *deskcaseports.ListCaseChecklistTemplatesRequest,
+) (*deskcaseports.CaseChecklistTemplates, error) {
 	if !req.Kind.IsValid() {
 		return nil, errortypes.NewValidationError(
 			"kind", errortypes.ErrInvalid, "Choose ready to bill or ready to close",
 		)
 	}
 
-	templates, err := s.checklists.ListTemplates(ctx, &repositories.ListCaseChecklistTemplatesRequest{
+	templates, err := s.checklists.ListTemplates(ctx, &deskcaseports.ListCaseChecklistTemplatesRequest{
 		TenantInfo: req.TenantInfo,
 		Kind:       req.Kind,
 	})
@@ -66,7 +66,7 @@ func (s *Service) List(
 		return nil, err
 	}
 
-	out := &services.CaseChecklistTemplates{
+	out := &deskcaseports.CaseChecklistTemplates{
 		Kind:      req.Kind,
 		Customers: make([]*deskcase.ChecklistTemplate, 0, len(templates)),
 		Locked:    deskcase.LockedKeys(req.Kind),
@@ -93,7 +93,7 @@ func (s *Service) List(
 
 func (s *Service) Save(
 	ctx context.Context,
-	req *services.SaveCaseChecklistTemplateRequest,
+	req *deskcaseports.SaveCaseChecklistTemplateRequest,
 ) (*deskcase.ChecklistTemplate, error) {
 	entity := &deskcase.ChecklistTemplate{
 		OrganizationID: req.TenantInfo.OrgID,
@@ -106,7 +106,7 @@ func (s *Service) Save(
 
 	var previous *deskcase.ChecklistTemplate
 	if req.ID.IsNotNil() {
-		stored, err := s.checklists.GetTemplate(ctx, &repositories.GetCaseChecklistTemplateRequest{
+		stored, err := s.checklists.GetTemplate(ctx, &deskcaseports.GetCaseChecklistTemplateRequest{
 			TenantInfo: req.TenantInfo,
 			ID:         req.ID,
 		})
@@ -133,7 +133,7 @@ func (s *Service) Save(
 
 	saved, err := s.checklists.SaveTemplate(ctx, entity)
 	switch {
-	case errors.Is(err, repositories.ErrCaseChecklistTemplateStale):
+	case errors.Is(err, deskcaseports.ErrCaseChecklistTemplateStale):
 		return nil, errortypes.NewConflictError(
 			"Someone else saved this checklist while you were editing it. Reload it and make your change again",
 		)
@@ -154,7 +154,7 @@ func (s *Service) Save(
 // that is not the organization's.
 func (s *Service) checkDocumentTypes(
 	ctx context.Context,
-	req *services.SaveCaseChecklistTemplateRequest,
+	req *deskcaseports.SaveCaseChecklistTemplateRequest,
 	entity *deskcase.ChecklistTemplate,
 ) error {
 	ids := entity.DocumentTypeIDs()
@@ -162,7 +162,7 @@ func (s *Service) checkDocumentTypes(
 		return nil
 	}
 
-	count, err := s.checklists.CountDocumentTypes(ctx, &repositories.CountCaseChecklistDocumentTypesRequest{
+	count, err := s.checklists.CountDocumentTypes(ctx, &deskcaseports.CountCaseChecklistDocumentTypesRequest{
 		TenantInfo: req.TenantInfo,
 		IDs:        ids,
 	})
@@ -181,15 +181,15 @@ func (s *Service) checkDocumentTypes(
 
 // Delete removes a template: a customer's goes back to the organization's,
 // the organization's back to the default.
-func (s *Service) Delete(ctx context.Context, req *services.DeleteCaseChecklistTemplateRequest) error {
-	stored, err := s.checklists.GetTemplate(ctx, &repositories.GetCaseChecklistTemplateRequest{
+func (s *Service) Delete(ctx context.Context, req *deskcaseports.DeleteCaseChecklistTemplateRequest) error {
+	stored, err := s.checklists.GetTemplate(ctx, &deskcaseports.GetCaseChecklistTemplateRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.ID,
 	})
 	if err != nil {
 		return err
 	}
-	if err = s.checklists.DeleteTemplate(ctx, &repositories.GetCaseChecklistTemplateRequest{
+	if err = s.checklists.DeleteTemplate(ctx, &deskcaseports.GetCaseChecklistTemplateRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.ID,
 	}); err != nil {
@@ -207,7 +207,7 @@ func (s *Service) record(
 	operation permission.Operation,
 	comment string,
 ) {
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceBillingControl,
 		ResourceID:     current.ID.String(),
 		Operation:      operation,
@@ -216,7 +216,7 @@ func (s *Service) record(
 		OrganizationID: current.OrganizationID,
 		BusinessUnitID: current.BusinessUnitID,
 	}
-	options := []services.LogOption{auditservice.WithComment(comment)}
+	options := []auditports.LogOption{auditservice.WithComment(comment)}
 	if previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(previous)
 		options = append(options, auditservice.WithDiff(previous, current))

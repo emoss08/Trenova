@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/extractionrollout"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -27,7 +27,7 @@ type assignmentRepository struct {
 	l  *zap.Logger
 }
 
-func NewAssignments(p Params) repositories.RolloutAssignmentRepository {
+func NewAssignments(p Params) extractionrolloutports.RolloutAssignmentRepository {
 	return &assignmentRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.extractionrollout-assignment-repository"),
@@ -72,7 +72,7 @@ func (r *assignmentRepository) Create(
 			return entity, true, nil
 		}
 
-		existing, err := r.GetByExtraction(ctx, repositories.GetRolloutAssignmentRequest{
+		existing, err := r.GetByExtraction(ctx, extractionrolloutports.GetRolloutAssignmentRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
 				BuID:  entity.BusinessUnitID,
@@ -90,7 +90,7 @@ func (r *assignmentRepository) Create(
 
 func (r *assignmentRepository) GetByExtraction(
 	ctx context.Context,
-	req repositories.GetRolloutAssignmentRequest,
+	req extractionrolloutports.GetRolloutAssignmentRequest,
 ) (*extractionrollout.RolloutAssignment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*extractionrollout.RolloutAssignment, error) {
 		cols := buncolgen.RolloutAssignmentColumns
@@ -160,12 +160,12 @@ func (r *assignmentRepository) Save(
 
 func (r *assignmentRepository) Totals(
 	ctx context.Context,
-	req repositories.TotalRolloutAssignmentsRequest,
-) ([]repositories.RolloutAssignmentTotal, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.RolloutAssignmentTotal, error) {
+	req extractionrolloutports.TotalRolloutAssignmentsRequest,
+) ([]extractionrolloutports.RolloutAssignmentTotal, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]extractionrolloutports.RolloutAssignmentTotal, error) {
 		cols := buncolgen.RolloutAssignmentColumns
 		totals := make(
-			[]repositories.RolloutAssignmentTotal,
+			[]extractionrolloutports.RolloutAssignmentTotal,
 			0,
 			len(extractionrollout.AllArms())*len(extractionrollout.AllOutcomes())*3,
 		)
@@ -204,7 +204,7 @@ func (r *assignmentRepository) Totals(
 
 func (r *assignmentRepository) PurgeBefore(
 	ctx context.Context,
-	req repositories.PurgeRolloutAssignmentsRequest,
+	req extractionrolloutports.PurgeRolloutAssignmentsRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
 		cols := buncolgen.RolloutAssignmentColumns

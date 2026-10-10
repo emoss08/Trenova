@@ -7,8 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -61,7 +61,7 @@ func TestToAdapterMessages_ReplaysWhatBecameOfEachProposal(t *testing.T) {
 		},
 		{Role: conversation.RoleAssistant, Content: "Proposed two updates."},
 	}
-	outcomes := []serviceports.ProposalOutcome{
+	outcomes := []agentports.ProposalOutcome{
 		{
 			SourceMessageID: sourceID,
 			ToolName:        "update_report",
@@ -108,7 +108,7 @@ func TestToAdapterMessages_TellsTheModelAPendingProposalIsStillWaiting(t *testin
 			Content:    "Recorded a proposal",
 		},
 	}
-	outcomes := []serviceports.ProposalOutcome{
+	outcomes := []agentports.ProposalOutcome{
 		{SourceMessageID: sourceID, ToolName: "fork_report", Status: agent.ProposalStatusPending},
 	}
 
@@ -148,20 +148,20 @@ func TestRun_DoesNotProposeWhatIsAlreadyPending(t *testing.T) {
 
 	action := actionTool("update_report", agent.TierActWithApproval, nil)
 	args := map[string]any{"definitionId": "rd_1", "name": "Readable"}
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		toolTurn("update_report", args),
 		textTurn("It is waiting on your card."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []serviceports.AgentTool{action}}, nil)
+		&stubActionRegistry{Tools: []agentports.AgentTool{action}}, nil)
 	definition := testDefinition("update_report")
 	definition.AutonomyCeiling = agent.TierActWithApproval
 
-	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+	result, err := rt.Run(t.Context(), &agentports.RunRequest{
 		Definition: definition,
 		Actor:      testActor(),
 		Input:      "yes",
-		Proposals: []serviceports.ProposalOutcome{{
+		Proposals: []agentports.ProposalOutcome{{
 			SourceMessageID: pulid.MustNew("amsg_"),
 			ToolName:        "update_report",
 			ToolParams:      map[string]any{"name": "Readable", "definitionId": "rd_1"},
@@ -180,20 +180,20 @@ func TestRun_StillProposesWhenTheEarlierOneWasDecided(t *testing.T) {
 
 	action := actionTool("update_report", agent.TierActWithApproval, nil)
 	args := map[string]any{"definitionId": "rd_1"}
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		toolTurn("update_report", args),
 		textTurn("Proposed again."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []serviceports.AgentTool{action}}, nil)
+		&stubActionRegistry{Tools: []agentports.AgentTool{action}}, nil)
 	definition := testDefinition("update_report")
 	definition.AutonomyCeiling = agent.TierActWithApproval
 
-	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+	result, err := rt.Run(t.Context(), &agentports.RunRequest{
 		Definition: definition,
 		Actor:      testActor(),
 		Input:      "try again",
-		Proposals: []serviceports.ProposalOutcome{{
+		Proposals: []agentports.ProposalOutcome{{
 			ToolName:   "update_report",
 			ToolParams: args,
 			Status:     agent.ProposalStatusRejected,
@@ -208,9 +208,9 @@ func TestRun_DoesNotProposeTheSameWriteTwiceInOneTurn(t *testing.T) {
 
 	action := actionTool("update_report", agent.TierActWithApproval, nil)
 	args := map[string]any{"definitionId": "rd_1"}
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		{
-			ToolCalls: []serviceports.ToolCall{
+			ToolCalls: []agentports.ToolCall{
 				{ID: "call_1", Name: "update_report", Arguments: args},
 				{
 					ID:        "call_2",
@@ -223,11 +223,11 @@ func TestRun_DoesNotProposeTheSameWriteTwiceInOneTurn(t *testing.T) {
 		textTurn("Done."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []serviceports.AgentTool{action}}, nil)
+		&stubActionRegistry{Tools: []agentports.AgentTool{action}}, nil)
 	definition := testDefinition("update_report")
 	definition.AutonomyCeiling = agent.TierActWithApproval
 
-	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+	result, err := rt.Run(t.Context(), &agentports.RunRequest{
 		Definition: definition,
 		Actor:      testActor(),
 		Input:      "update",
@@ -246,17 +246,17 @@ for.
 func TestPendingDuplicate_NeverMatchesArgumentsThatCannotBeEncoded(t *testing.T) {
 	t.Parallel()
 
-	call := serviceports.ToolCall{
+	call := agentports.ToolCall{
 		ID:        "call_2",
 		Name:      "update_report",
 		Arguments: map[string]any{"definitionId": "rd_2", "cycle": make(chan int)},
 	}
-	earlier := []serviceports.ProposalOutcome{{
+	earlier := []agentports.ProposalOutcome{{
 		ToolName:   "update_report",
 		Status:     agent.ProposalStatusPending,
 		ToolParams: map[string]any{"definitionId": "rd_1", "cycle": make(chan int)},
 	}}
-	thisTurn := []serviceports.PendingAction{{
+	thisTurn := []agentports.PendingAction{{
 		ToolName:  "update_report",
 		Arguments: map[string]any{"definitionId": "rd_1", "cycle": make(chan int)},
 	}}
@@ -274,14 +274,14 @@ type validatingActionTool struct {
 
 	invalid  error
 	checked  int
-	lastSeen serviceports.ToolExecuteParams
+	lastSeen agentports.ToolExecuteParams
 }
 
 type stubActionToolAlias = agentruntimetest.StubActionTool
 
 func (t *validatingActionTool) Validate(
 	_ context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	t.checked++
 	t.lastSeen = params
@@ -301,17 +301,17 @@ func TestRun_RefusesAProposalItsToolSaysWouldFail(t *testing.T) {
 			"unknown field \"assignment.primaryWorker.firstName\" on entity \"shipment_move\"",
 		),
 	}
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		toolTurn("update_report", map[string]any{"definitionId": "rd_1"}),
 		textTurn("I will fix the column."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []serviceports.AgentTool{tool}}, nil)
+		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
 	definition := testDefinition("update_report")
 	definition.AutonomyCeiling = agent.TierActWithApproval
 	actor := testActor()
 
-	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+	result, err := rt.Run(t.Context(), &agentports.RunRequest{
 		Definition: definition,
 		Actor:      actor,
 		Input:      "update",
@@ -326,15 +326,15 @@ func TestRun_RefusesAProposalItsToolSaysWouldFail(t *testing.T) {
 	assert.Contains(t, result.Messages[2].Content, "unknown field")
 
 	tool.invalid = nil
-	completion = &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion = &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		toolTurn("update_report", map[string]any{"definitionId": "rd_1"}),
 		textTurn("Proposed."),
 	}}
 	rt = newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []serviceports.AgentTool{tool}}, nil)
+		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
 	result, err = rt.Run(
 		t.Context(),
-		&serviceports.RunRequest{Definition: definition, Actor: actor, Input: "update"},
+		&agentports.RunRequest{Definition: definition, Actor: actor, Input: "update"},
 	)
 	require.NoError(t, err)
 	assert.Len(t, result.Actions, 1)
@@ -346,7 +346,7 @@ func TestRun_RefusesAProposalItsToolSaysWouldFail(t *testing.T) {
 func TestProposalOutcomeText_SaysWhatTheApproverChanged(t *testing.T) {
 	t.Parallel()
 
-	text := proposalOutcomeText("notify_driver", serviceports.ProposalOutcome{
+	text := proposalOutcomeText("notify_driver", agentports.ProposalOutcome{
 		Status:        agent.ProposalStatusExecuted,
 		Modifications: map[string]any{"priority": "high", "message": "Call dispatch now"},
 	})
@@ -356,7 +356,7 @@ func TestProposalOutcomeText_SaysWhatTheApproverChanged(t *testing.T) {
 
 	plain := proposalOutcomeText(
 		"notify_driver",
-		serviceports.ProposalOutcome{Status: agent.ProposalStatusExecuted},
+		agentports.ProposalOutcome{Status: agent.ProposalStatusExecuted},
 	)
 	assert.NotContains(t, plain, "after changing")
 }

@@ -9,9 +9,12 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/iam"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -29,22 +32,22 @@ const (
 type ActivitiesParams struct {
 	fx.In
 
-	AuditRepository         repositories.AuditRepository
-	AuditBufferRepository   repositories.AuditBufferRepository
-	AuditDLQRepository      repositories.AuditDLQRepository
-	AuthEventRepository     repositories.AuthEventRepository
-	DataRetentionRepository repositories.DataRetentionRepository
-	RealtimeService         services.RealtimeService
+	AuditRepository         auditports.AuditRepository
+	AuditBufferRepository   auditports.AuditBufferRepository
+	AuditDLQRepository      auditports.AuditDLQRepository
+	AuthEventRepository     iamports.AuthEventRepository
+	DataRetentionRepository tenantports.DataRetentionRepository
+	RealtimeService         agentports.RealtimeService
 	Metrics                 *metrics.Registry
 }
 
 type Activities struct {
-	ar      repositories.AuditRepository
-	abr     repositories.AuditBufferRepository
-	adlq    repositories.AuditDLQRepository
-	aer     repositories.AuthEventRepository
-	dr      repositories.DataRetentionRepository
-	rt      services.RealtimeService
+	ar      auditports.AuditRepository
+	abr     auditports.AuditBufferRepository
+	adlq    auditports.AuditDLQRepository
+	aer     iamports.AuthEventRepository
+	dr      tenantports.DataRetentionRepository
+	rt      agentports.RealtimeService
 	metrics *metrics.Registry
 }
 
@@ -121,7 +124,7 @@ func (a *Activities) DeleteAuditEntriesActivity(
 			fmt.Sprintf("deleting audit entries for org %s", entity.OrganizationID),
 		)
 
-		deletedRows, drErr := a.ar.DeleteAuditEntries(ctx, repositories.DeleteAuditEntriesRequest{
+		deletedRows, drErr := a.ar.DeleteAuditEntries(ctx, auditports.DeleteAuditEntriesRequest{
 			OrgID:          entity.OrganizationID,
 			BuID:           entity.BusinessUnitID,
 			Before:         timestamp,
@@ -278,7 +281,7 @@ func (a *Activities) publishRealtimeInvalidation(
 		buID          pulid.ID
 		actorUserID   pulid.ID
 		actorID       pulid.ID
-		actorType     services.PrincipalType
+		actorType     kernelports.PrincipalType
 		actorAPIKeyID pulid.ID
 		record        pulid.ID
 		count         int
@@ -298,7 +301,7 @@ func (a *Activities) publishRealtimeInvalidation(
 				buID:          entry.BusinessUnitID,
 				actorUserID:   entry.UserID,
 				actorID:       entry.PrincipalID,
-				actorType:     services.PrincipalType(entry.PrincipalType),
+				actorType:     kernelports.PrincipalType(entry.PrincipalType),
 				actorAPIKeyID: entry.APIKeyID,
 				record:        entry.ID,
 			}

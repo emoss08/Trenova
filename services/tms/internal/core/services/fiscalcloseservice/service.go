@@ -12,7 +12,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/glbalanceports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalsourceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/seqgen"
@@ -24,29 +31,29 @@ type Params struct {
 	fx.In
 
 	Logger           *zap.Logger
-	FiscalYearRepo   repositories.FiscalYearRepository
-	FiscalPeriodRepo repositories.FiscalPeriodRepository
-	GLBalanceRepo    repositories.GLBalanceRepository
-	GLAccountRepo    repositories.GLAccountRepository
-	AccountingRepo   repositories.AccountingControlRepository
-	CustomerLedger   repositories.CustomerLedgerProjectionRepository
-	JournalPostRepo  repositories.JournalPostingRepository
-	JournalEntryRepo repositories.JournalEntryRepository
-	SourceRepo       repositories.JournalSourceRepository
+	FiscalYearRepo   fiscalyearports.FiscalYearRepository
+	FiscalPeriodRepo fiscalperiodports.FiscalPeriodRepository
+	GLBalanceRepo    glbalanceports.GLBalanceRepository
+	GLAccountRepo    glaccountports.GLAccountRepository
+	AccountingRepo   tenantports.AccountingControlRepository
+	CustomerLedger   customerledgerports.CustomerLedgerProjectionRepository
+	JournalPostRepo  journalentryports.JournalPostingRepository
+	JournalEntryRepo journalentryports.JournalEntryRepository
+	SourceRepo       journalsourceports.JournalSourceRepository
 	Generator        seqgen.Generator
 }
 
 type Service struct {
 	l                  *zap.Logger
-	fiscalYearRepo     repositories.FiscalYearRepository
-	fiscalPeriodRepo   repositories.FiscalPeriodRepository
-	glBalanceRepo      repositories.GLBalanceRepository
-	glAccountRepo      repositories.GLAccountRepository
-	accountingRepo     repositories.AccountingControlRepository
-	customerLedgerRepo repositories.CustomerLedgerProjectionRepository
-	journalPostRepo    repositories.JournalPostingRepository
-	journalEntryRepo   repositories.JournalEntryRepository
-	sourceRepo         repositories.JournalSourceRepository
+	fiscalYearRepo     fiscalyearports.FiscalYearRepository
+	fiscalPeriodRepo   fiscalperiodports.FiscalPeriodRepository
+	glBalanceRepo      glbalanceports.GLBalanceRepository
+	glAccountRepo      glaccountports.GLAccountRepository
+	accountingRepo     tenantports.AccountingControlRepository
+	customerLedgerRepo customerledgerports.CustomerLedgerProjectionRepository
+	journalPostRepo    journalentryports.JournalPostingRepository
+	journalEntryRepo   journalentryports.JournalEntryRepository
+	sourceRepo         journalsourceports.JournalSourceRepository
 	generator          seqgen.Generator
 }
 
@@ -117,7 +124,7 @@ func (s *Service) prepare(
 
 	in.balances, err = s.glBalanceRepo.ListYearToDateBalances(
 		ctx,
-		repositories.ListYearToDateBalancesRequest{
+		glbalanceports.ListYearToDateBalancesRequest{
 			TenantInfo:   tenantInfo,
 			FiscalYearID: fy.ID,
 		},
@@ -180,7 +187,7 @@ func (s *Service) resolveRetainedEarnings(
 		)
 	}
 
-	account, err := s.glAccountRepo.GetByID(ctx, repositories.GetGLAccountByIDRequest{
+	account, err := s.glAccountRepo.GetByID(ctx, glaccountports.GetGLAccountByIDRequest{
 		ID:         control.DefaultRetainedEarningsAccountID,
 		TenantInfo: tenantOf(fy),
 	})
@@ -224,7 +231,7 @@ func (s *Service) resolveClosingPeriod(
 ) (periodTarget, *fiscalclose.Blocker, error) {
 	periods, err := s.fiscalPeriodRepo.ListByFiscalYearID(
 		ctx,
-		repositories.ListByFiscalYearIDRequest{
+		fiscalperiodports.ListByFiscalYearIDRequest{
 			FiscalYearID: fy.ID,
 			OrgID:        fy.OrganizationID,
 			BuID:         fy.BusinessUnitID,
@@ -325,7 +332,7 @@ func (s *Service) resolveCarryforwardTarget(
 
 	nextYear, err := s.fiscalYearRepo.GetNextFiscalYear(
 		ctx,
-		repositories.GetNextFiscalYearRequest{
+		fiscalyearports.GetNextFiscalYearRequest{
 			TenantInfo: tenantOf(fy),
 			AfterDate:  fy.EndDate,
 		},
@@ -357,7 +364,7 @@ func (s *Service) resolveCarryforwardTarget(
 
 	periods, err := s.fiscalPeriodRepo.ListByFiscalYearID(
 		ctx,
-		repositories.ListByFiscalYearIDRequest{
+		fiscalperiodports.ListByFiscalYearIDRequest{
 			FiscalYearID: nextYear.ID,
 			OrgID:        fy.OrganizationID,
 			BuID:         fy.BusinessUnitID,
@@ -410,7 +417,7 @@ func (s *Service) resolveCarryforwardTarget(
 // reopened year is closed again with fresh idempotency keys, and the revision is
 // what keeps those keys unique.
 func (s *Service) closeRevision(ctx context.Context, fy *fiscalyear.FiscalYear) (int, error) {
-	sources, err := s.sourceRepo.ListByObject(ctx, repositories.GetJournalSourceByObjectRequest{
+	sources, err := s.sourceRepo.ListByObject(ctx, journalsourceports.GetJournalSourceByObjectRequest{
 		TenantInfo:       tenantOf(fy),
 		SourceObjectType: sourceObjectType,
 		SourceObjectID:   fy.ID.String(),

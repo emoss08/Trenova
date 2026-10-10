@@ -8,16 +8,16 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/core/services/dispatcheligibility"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-var _ serviceports.ToolPreviewer = (*assignMoveTool)(nil)
+var _ agentports.ToolPreviewer = (*assignMoveTool)(nil)
 
 type assignmentChecker interface {
 	PreviewAssignment(
@@ -78,7 +78,7 @@ func assignedMoveOf(entity *shipment.Shipment, moveID pulid.ID) *assignedMoveVie
 
 func (t *assignMoveTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	if err := guardPreview(t, &params); err != nil {
 		return nil, err
@@ -136,8 +136,8 @@ func (t *assignMoveTool) Preview(
 }
 
 func (t *assignMoveTool) assignmentChanges(
-	request *repositories.AssignShipmentMoveRequest,
-	plan *serviceports.AssignmentPlan,
+	request *shipmentports.AssignShipmentMoveRequest,
+	plan *shipmentports.AssignmentPlan,
 ) ([]*agent.RecordChange, error) {
 	shipmentLabel := plan.ShipmentBefore.ProNumber
 	assignment, err := toolpreview.Create(toolpreview.Record{
@@ -220,7 +220,7 @@ func moveVersion(move *shipment.ShipmentMove) *int64 {
 
 func (t *assignMoveTool) check(
 	ctx context.Context,
-	request *repositories.AssignShipmentMoveRequest,
+	request *shipmentports.AssignShipmentMoveRequest,
 ) (*dispatchconsoleservice.AssignmentPreview, string, error) {
 	if t.console == nil {
 		return &dispatchconsoleservice.AssignmentPreview{}, "", nil
@@ -249,7 +249,7 @@ func (t *assignMoveTool) check(
 	return check, "", nil
 }
 
-func equipmentInUseSentence(inUse []serviceports.EquipmentInUse) string {
+func equipmentInUseSentence(inUse []shipmentports.EquipmentInUse) string {
 	if len(inUse) == 0 {
 		return ""
 	}

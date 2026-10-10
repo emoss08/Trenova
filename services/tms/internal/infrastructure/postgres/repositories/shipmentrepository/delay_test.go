@@ -5,7 +5,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -24,7 +24,7 @@ func TestGetDelayedShipments_UsesTenantAndThreshold(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"id", "organization_id", "business_unit_id", "status"}).
 			AddRow(shipmentID, orgID, buID, shipment.StatusAssigned))
 
-	entities, err := repo.GetDelayedShipments(t.Context(), &repositories.GetDelayedShipmentsRequest{
+	entities, err := repo.GetDelayedShipments(t.Context(), &shipmentports.GetDelayedShipmentsRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 	}, 15)
 
@@ -50,7 +50,7 @@ func TestDelayShipments_UpdatesEligibleShipments(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectCommit()
 
-	entities, err := repo.DelayShipments(t.Context(), &repositories.DelayShipmentsRequest{
+	entities, err := repo.DelayShipments(t.Context(), &shipmentports.DelayShipmentsRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 	}, 30)
 

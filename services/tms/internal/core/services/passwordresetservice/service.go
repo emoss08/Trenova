@@ -13,10 +13,16 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/iam"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -41,31 +47,31 @@ var errInvalidToken = errortypes.NewValidationError(
 type Params struct {
 	fx.In
 
-	UserRepository   repositories.UserRepository
-	TokenRepository  repositories.PasswordResetTokenRepository
-	SessionRepo      repositories.SessionRepository
-	OrganizationRepo repositories.OrganizationRepository
-	EmailService     serviceports.EmailService
-	Templates        serviceports.DocumentTemplateResolver
-	AuditService     serviceports.AuditService
-	AuthEvents       serviceports.AuthEventRecorder
-	Plans            serviceports.PlanService          `optional:"true"`
-	PlatformEmail    serviceports.PlatformEmailService `optional:"true"`
+	UserRepository   tenantports.UserRepository
+	TokenRepository  tenantports.PasswordResetTokenRepository
+	SessionRepo      sessionports.SessionRepository
+	OrganizationRepo tenantports.OrganizationRepository
+	EmailService     emailports.EmailService
+	Templates        documenttemplateports.DocumentTemplateResolver
+	AuditService     auditports.AuditService
+	AuthEvents       iamports.AuthEventRecorder
+	Plans            platformplanports.PlanService    `optional:"true"`
+	PlatformEmail    kernelports.PlatformEmailService `optional:"true"`
 	Config           *config.Config
 	Logger           *zap.Logger
 }
 
 type Service struct {
-	ur           repositories.UserRepository
-	tokens       repositories.PasswordResetTokenRepository
-	sessions     repositories.SessionRepository
-	orgs         repositories.OrganizationRepository
-	emailService serviceports.EmailService
-	templates    serviceports.DocumentTemplateResolver
-	audit        serviceports.AuditService
-	authEvents   serviceports.AuthEventRecorder
-	plans        serviceports.PlanService
-	platform     serviceports.PlatformEmailService
+	ur           tenantports.UserRepository
+	tokens       tenantports.PasswordResetTokenRepository
+	sessions     sessionports.SessionRepository
+	orgs         tenantports.OrganizationRepository
+	emailService emailports.EmailService
+	templates    documenttemplateports.DocumentTemplateResolver
+	audit        auditports.AuditService
+	authEvents   iamports.AuthEventRecorder
+	plans        platformplanports.PlanService
+	platform     kernelports.PlatformEmailService
 	cfg          *config.Config
 	l            *zap.Logger
 }
@@ -103,7 +109,7 @@ func (s *Service) RequestReset(ctx context.Context, emailAddress string) (err er
 		return nil
 	}
 
-	event := resetEvent{provider: serviceports.AuthEventProviderPasswordResetRequest}
+	event := resetEvent{provider: iamports.AuthEventProviderPasswordResetRequest}
 	defer func() { s.recordResetEvent(ctx, &event, err) }()
 
 	log := s.l.With(zap.String("operation", "RequestReset"))
@@ -180,7 +186,7 @@ func (s *Service) RequestResetForUser(ctx context.Context, req AdminResetRequest
 		zap.String("targetUserId", req.TargetUserID.String()),
 	)
 
-	user, err := s.ur.GetByID(ctx, repositories.GetUserByIDRequest{
+	user, err := s.ur.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo:   req.Actor,
 		LookupUserID: req.TargetUserID,
 	})
@@ -200,7 +206,7 @@ func (s *Service) RequestResetForUser(ctx context.Context, req AdminResetRequest
 	}
 
 	if s.audit != nil {
-		if auditErr := s.audit.LogAction(&serviceports.LogActionParams{
+		if auditErr := s.audit.LogAction(&auditports.LogActionParams{
 			Resource:       permission.ResourceUser,
 			ResourceID:     user.ID.String(),
 			Operation:      permission.OpUpdate,
@@ -283,7 +289,7 @@ func (s *Service) ResetPassword(ctx context.Context, rawToken, newPassword strin
 		return err
 	}
 
-	event := resetEvent{provider: serviceports.AuthEventProviderPasswordResetConfirm}
+	event := resetEvent{provider: iamports.AuthEventProviderPasswordResetConfirm}
 	defer func() { s.recordResetEvent(ctx, &event, err) }()
 
 	now := timeutils.NowUnix()
@@ -333,7 +339,7 @@ func (s *Service) ResetPassword(ctx context.Context, rawToken, newPassword strin
 		return err
 	}
 
-	if err = s.ur.UpdatePassword(scoped, repositories.UpdateUserPasswordRequest{
+	if err = s.ur.UpdatePassword(scoped, tenantports.UpdateUserPasswordRequest{
 		UserID:         user.ID,
 		OrganizationID: token.OrganizationID,
 		BusinessUnitID: token.BusinessUnitID,
@@ -405,7 +411,7 @@ func (s *Service) sendResetEmail(
 	idempotencyKey := "password-reset-" + tokenutils.Hash(rawToken)
 
 	if s.usesPlatformSender(ctx, tenantInfo) {
-		if err = s.platform.SendPasswordReset(ctx, &serviceports.PasswordResetEmail{
+		if err = s.platform.SendPasswordReset(ctx, &kernelports.PasswordResetEmail{
 			To:               user.EmailAddress,
 			Locale:           i18n.Locale(user.Locale),
 			Name:             user.Name,
@@ -427,7 +433,7 @@ func (s *Service) sendResetEmail(
 		return
 	}
 
-	rendered, renderErr := s.templates.RenderMessage(ctx, &serviceports.RenderMessageRequest{
+	rendered, renderErr := s.templates.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
 		TenantInfo: tenantInfo,
 		Kind:       documenttemplate.KindPasswordResetEmail,
 		Data: documenttemplate.PasswordResetContext{
@@ -449,7 +455,7 @@ func (s *Service) sendResetEmail(
 		return
 	}
 
-	if _, err = s.emailService.Send(ctx, &serviceports.SendEmailRequest{
+	if _, err = s.emailService.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo: tenantInfo,
 		Purpose:    email.PurposeGeneral,
 		To:         []string{user.EmailAddress},
@@ -496,7 +502,7 @@ func (s *Service) resetURL(rawToken string) (string, error) {
 }
 
 func (s *Service) companyName(ctx context.Context, user *tenant.User) string {
-	org, err := s.orgs.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+	org, err := s.orgs.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: pagination.TenantInfo{
 			UserID: user.ID,
 			OrgID:  user.CurrentOrganizationID,

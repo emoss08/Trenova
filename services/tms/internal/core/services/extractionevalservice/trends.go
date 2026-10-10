@@ -10,9 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,12 +27,12 @@ const (
 	driftNoticeLinkURL = "/admin/agent-control?tab=quality&quality=extraction&extraction=accuracy"
 )
 
-var _ services.ExtractionDriftChecker = (*Service)(nil)
+var _ extractionevalports.ExtractionDriftChecker = (*Service)(nil)
 
 func (s *Service) ProviderTrends(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-) (*services.ExtractionProviderTrends, error) {
+) (*extractionevalports.ExtractionProviderTrends, error) {
 	return s.providerTrends(ctx, tenant, s.now())
 }
 
@@ -39,11 +40,11 @@ func (s *Service) providerTrends(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	now int64,
-) (*services.ExtractionProviderTrends, error) {
+) (*extractionevalports.ExtractionProviderTrends, error) {
 	window := aicorrection.NewTrendWindow(now)
 	totals, err := s.corrections.WeeklyTotalsByProvider(
 		ctx,
-		&repositories.WeeklyAICorrectionTotalsRequest{
+		&aicorrectionports.WeeklyAICorrectionTotalsRequest{
 			TenantInfo: tenant,
 			Task:       aicorrection.TaskShipmentDraftExtraction,
 			Since:      window.Since(),
@@ -54,18 +55,18 @@ func (s *Service) providerTrends(
 	}
 
 	trends := aicorrection.BuildProviderTrends(window, totals)
-	report := &services.ExtractionProviderTrends{
+	report := &extractionevalports.ExtractionProviderTrends{
 		Weeks:             window.Weeks,
 		CheckedWeek:       window.CheckedWeek,
 		BaselineStart:     window.BaselineStart,
-		Providers:         make([]services.ExtractionProviderTrend, 0, len(trends)),
+		Providers:         make([]extractionevalports.ExtractionProviderTrend, 0, len(trends)),
 		DriftPoints:       aicorrection.DriftPoints,
 		MinWeekFields:     aicorrection.MinDriftWeekFields,
 		MinBaselineFields: aicorrection.MinDriftBaselineFields,
 	}
 	for i := range trends {
 		trend := &trends[i]
-		entry := services.ExtractionProviderTrend{
+		entry := extractionevalports.ExtractionProviderTrend{
 			ProviderID: trend.ProviderID,
 			Weeks:      trend.Weeks,
 			Checked:    trend.Checked,
@@ -94,7 +95,7 @@ func (s *Service) trendProvider(
 	tenant pagination.TenantInfo,
 	providerID pulid.ID,
 ) (*aiprovider.Provider, bool, error) {
-	provider, err := s.providers.GetByID(ctx, repositories.GetAIProviderByIDRequest{
+	provider, err := s.providers.GetByID(ctx, agentports.GetAIProviderByIDRequest{
 		ID:         providerID,
 		TenantInfo: tenant,
 	})
@@ -110,7 +111,7 @@ func (s *Service) trendProvider(
 
 func (s *Service) CheckDrift(
 	ctx context.Context,
-	req *services.ExtractionDriftCheckRequest,
+	req *extractionevalports.ExtractionDriftCheckRequest,
 ) (int, error) {
 	now := req.Now
 	if now <= 0 {
@@ -145,8 +146,8 @@ func (s *Service) CheckDrift(
 func (s *Service) notifyDrift(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	report *services.ExtractionProviderTrends,
-	trend *services.ExtractionProviderTrend,
+	report *extractionevalports.ExtractionProviderTrends,
+	trend *extractionevalports.ExtractionProviderTrend,
 	now int64,
 ) bool {
 	if s.notifier == nil {
@@ -162,7 +163,7 @@ func (s *Service) notifyDrift(
 		Now:         now,
 		DedupeSince: report.CheckedWeek,
 		Notification: notification.Notification{
-			EventType:     services.ExtractionAccuracyDriftEvent,
+			EventType:     extractionevalports.ExtractionAccuracyDriftEvent,
 			Priority:      notification.PriorityHigh,
 			Title:         driftTitle(trend),
 			Message:       driftMessage(trend),
@@ -188,7 +189,7 @@ func (s *Service) notifyDrift(
 	return sent > 0
 }
 
-func driftTitle(trend *services.ExtractionProviderTrend) string {
+func driftTitle(trend *extractionevalports.ExtractionProviderTrend) string {
 	name := trend.ProviderName
 	if name == "" {
 		name = "An extraction provider"
@@ -197,7 +198,7 @@ func driftTitle(trend *services.ExtractionProviderTrend) string {
 	return fmt.Sprintf("%s read documents less accurately last week", name)
 }
 
-func driftMessage(trend *services.ExtractionProviderTrend) string {
+func driftMessage(trend *extractionevalports.ExtractionProviderTrend) string {
 	return fmt.Sprintf(
 		"It read %s of confirmed fields correctly in the week of %s, against %s over the %d weeks before. "+
 			"Review document extraction accuracy in AI Control.",

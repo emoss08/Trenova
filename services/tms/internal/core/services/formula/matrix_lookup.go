@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/core/domain/ratematrix"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/shopspring/decimal"
@@ -94,7 +94,7 @@ var (
 // mode. Codes are indexed as stored — the repository already restricts to
 // active matrices.
 func NewMatrixLookup(
-	data []*repositories.RateMatrixLookupData,
+	data []*ratematrixports.RateMatrixLookupData,
 ) formulatemplatetypes.RateTableLookup {
 	lookup := &matrixLookup{
 		exact:  make(map[string]exactTable),
@@ -118,7 +118,7 @@ func NewMatrixLookup(
 	return lookup
 }
 
-func indexSingleAxis(lookup *matrixLookup, item *repositories.RateMatrixLookupData) {
+func indexSingleAxis(lookup *matrixLookup, item *ratematrixports.RateMatrixLookupData) {
 	axis := item.Matrix.Dimensions[0]
 	if axis == nil {
 		return
@@ -159,7 +159,7 @@ func indexSingleAxis(lookup *matrixLookup, item *repositories.RateMatrixLookupDa
 	}
 }
 
-func indexTwoAxis(lookup *matrixLookup, item *repositories.RateMatrixLookupData) {
+func indexTwoAxis(lookup *matrixLookup, item *ratematrixports.RateMatrixLookupData) {
 	var rowAxis, colAxis *ratematrix.RateMatrixDimension
 	for _, dim := range item.Matrix.Dimensions {
 		if dim == nil {

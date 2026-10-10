@@ -1,7 +1,7 @@
 package proposalrecorder
 
 import (
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"go.uber.org/fx"
 )
 
@@ -10,6 +10,6 @@ var Module = fx.Module("proposalrecorder",
 	fx.Provide(NewPlanStore),
 )
 
-func NewPlanStore(plans repositories.AgentPlanRepository) PlanStore {
+func NewPlanStore(plans agentports.AgentPlanRepository) PlanStore {
 	return plans
 }

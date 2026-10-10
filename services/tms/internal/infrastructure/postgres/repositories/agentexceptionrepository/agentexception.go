@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -31,7 +31,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.AgentExceptionRepository {
+func New(p Params) agentports.AgentExceptionRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.agentexception-repository"),
@@ -40,7 +40,7 @@ func New(p Params) repositories.AgentExceptionRepository {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListAgentExceptionRequest,
+	req *agentports.ListAgentExceptionRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.AgentExceptionColumns
 	q = querybuilder.ApplyFilters(
@@ -58,7 +58,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListAgentExceptionRequest,
+	req *agentports.ListAgentExceptionRequest,
 ) (*pagination.ListResult[*agent.AgentException], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*agent.AgentException], error) {
 		log := r.l.With(zap.String("operation", "List"))
@@ -81,7 +81,7 @@ func (r *repository) List(
 
 func (r *repository) ListByIDs(
 	ctx context.Context,
-	req repositories.ListAgentExceptionsByIDsRequest,
+	req agentports.ListAgentExceptionsByIDsRequest,
 ) ([]*agent.AgentException, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentException, error) {
 		if len(req.IDs) == 0 {
@@ -110,7 +110,7 @@ func (r *repository) ListByIDs(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListAgentExceptionConnectionRequest,
+	req *agentports.ListAgentExceptionConnectionRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -124,7 +124,7 @@ func (r *repository) applyTotalCountFilters(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListAgentExceptionConnectionRequest,
+	req *agentports.ListAgentExceptionConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -145,7 +145,7 @@ func applyAgentExceptionColumns(q *bun.SelectQuery, columns []string) *bun.Selec
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListAgentExceptionConnectionRequest,
+	req *agentports.ListAgentExceptionConnectionRequest,
 ) (*pagination.CursorListResult[*agent.AgentException], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*agent.AgentException], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -196,7 +196,7 @@ func (r *repository) ListConnection(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetAgentExceptionByIDRequest,
+	req agentports.GetAgentExceptionByIDRequest,
 ) (*agent.AgentException, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.AgentException, error) {
 		log := r.l.With(zap.String("operation", "GetByID"), zap.String("id", req.ID.String()))
@@ -238,7 +238,7 @@ func (r *repository) Create(
 
 func (r *repository) UpdateResolution(
 	ctx context.Context,
-	req repositories.UpdateAgentExceptionResolutionRequest,
+	req agentports.UpdateAgentExceptionResolutionRequest,
 ) (*agent.AgentException, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentException, error) {
 		log := r.l.With(zap.String("operation", "UpdateResolution"), zap.String("id", req.ID.String()))

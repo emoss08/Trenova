@@ -3,8 +3,8 @@ package weatheralertjobs
 import (
 	"context"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
 	"go.temporal.io/sdk/activity"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -31,12 +31,12 @@ type PollNWSAlertsResult struct {
 type ActivitiesParams struct {
 	fx.In
 
-	Service serviceports.WeatherAlertService
+	Service weatheralertports.WeatherAlertService
 	Logger  *zap.Logger
 }
 
 type Activities struct {
-	service serviceports.WeatherAlertService
+	service weatheralertports.WeatherAlertService
 	logger  *zap.Logger
 }
 

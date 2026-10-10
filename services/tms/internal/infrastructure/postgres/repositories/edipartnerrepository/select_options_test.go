@@ -5,8 +5,8 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -76,7 +76,7 @@ func TestSelectPartnerOptions_FiltersByExternalKind(t *testing.T) {
 
 	result, err := repo.SelectOptions(
 		t.Context(),
-		&repositories.EDIPartnerSelectOptionsRequest{
+		&ediports.EDIPartnerSelectOptionsRequest{
 			SelectQueryRequest: &pagination.SelectQueryRequest{
 				TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 				Pagination: pagination.Info{Limit: 10},

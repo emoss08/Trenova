@@ -3,7 +3,7 @@ package dbhelper
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
@@ -17,7 +17,7 @@ var testInsightColumns = InsightColumns{
 
 func TestFacet_RefusesAFieldOutsideTheTablesList(t *testing.T) {
 	for _, field := range []string{"secret", "weight", "status; drop table x"} {
-		_, err := Facet(t.Context(), nil, testInsightColumns, &repositories.TableFacetRequest{
+		_, err := Facet(t.Context(), nil, testInsightColumns, &permissionports.TableFacetRequest{
 			Field: field,
 		})
 
@@ -28,7 +28,7 @@ func TestFacet_RefusesAFieldOutsideTheTablesList(t *testing.T) {
 }
 
 func TestAggregate_RefusesAFieldThatCannotBeTotalled(t *testing.T) {
-	_, err := Aggregate(t.Context(), nil, testInsightColumns, &repositories.TableAggregateRequest{
+	_, err := Aggregate(t.Context(), nil, testInsightColumns, &permissionports.TableAggregateRequest{
 		Fields: []string{"weight", "status"},
 	})
 
@@ -43,7 +43,7 @@ func TestAggregate_RefusesTooManyFieldsAtOnce(t *testing.T) {
 		fields[i] = "weight"
 	}
 
-	_, err := Aggregate(t.Context(), nil, testInsightColumns, &repositories.TableAggregateRequest{
+	_, err := Aggregate(t.Context(), nil, testInsightColumns, &permissionports.TableAggregateRequest{
 		Fields: fields,
 	})
 
@@ -70,7 +70,7 @@ func TestParseInsightDecimal(t *testing.T) {
 }
 
 func TestInsightColumnsFields_ListsEachFieldOnceInNameOrder(t *testing.T) {
-	assert.Equal(t, []repositories.TableInsightField{
+	assert.Equal(t, []permissionports.TableInsightField{
 		{Name: "status", Facetable: true},
 		{Name: "weight", Summable: true},
 	}, testInsightColumns.Fields())

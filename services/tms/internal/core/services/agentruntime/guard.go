@@ -5,8 +5,8 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
@@ -23,7 +23,7 @@ func newOrdinals() *ordinals {
 }
 
 // next returns this call's ordinal and counts it.
-func (o *ordinals) next(call serviceports.ToolCall) int {
+func (o *ordinals) next(call agentports.ToolCall) int {
 	key, ok := callKey(call)
 	if !ok {
 		return 0
@@ -37,10 +37,10 @@ func (o *ordinals) next(call serviceports.ToolCall) int {
 
 // guardedDispatchParams groups what running one guarded call needs.
 type guardedDispatchParams struct {
-	req            *serviceports.RunRequest
-	call           serviceports.ToolCall
+	req            *agentports.RunRequest
+	call           agentports.ToolCall
 	completionText string
-	proposedSoFar  []serviceports.PendingAction
+	proposedSoFar  []agentports.PendingAction
 	// ordinal numbers this exact call within the run; the loop assigns it.
 	ordinal int
 	taint   *agent.RunTaint
@@ -95,11 +95,11 @@ func (s *Service) guardedDispatch(
 		return outcome
 	}
 
-	step := serviceports.RunStep{
+	step := agentports.RunStep{
 		OwnerKind: req.StepOwner.Kind,
 		OwnerID:   req.StepOwner.ID,
 		Attempt:   req.Attempt,
-		Kind:      serviceports.RunStepTool,
+		Kind:      agentports.RunStepTool,
 		Key:       key,
 		ToolName:  p.call.Name,
 		CallID:    p.call.ID,
@@ -124,7 +124,7 @@ func (s *Service) guardedDispatch(
 func (s *Service) claimAndDispatch(
 	ctx context.Context,
 	p *guardedDispatchParams,
-	step *serviceports.RunStep,
+	step *agentports.RunStep,
 ) toolOutcome {
 	req := p.req
 	key := step.Key
@@ -153,9 +153,9 @@ func (s *Service) claimAndDispatch(
 
 	span.SetAttributes(aitrace.AIStepState.String(stepState(verdict.State)))
 	switch verdict.State {
-	case serviceports.StepCompleted, serviceports.StepFailed:
+	case agentports.StepCompleted, agentports.StepFailed:
 		return replayedOutcome(verdict.Outcome)
-	case serviceports.StepUnknown:
+	case agentports.StepUnknown:
 		return unknownOutcome(p.call.Name)
 	}
 
@@ -170,11 +170,11 @@ func (s *Service) claimAndDispatch(
 		stepKey:        key,
 	})
 
-	step.Status = serviceports.RunStepCompleted
+	step.Status = agentports.RunStepCompleted
 	if outcome.failed {
-		step.Status = serviceports.RunStepFailed
+		step.Status = agentports.RunStepFailed
 	}
-	step.Outcome = serviceports.RunStepOutcome{
+	step.Outcome = agentports.RunStepOutcome{
 		Content: outcome.content,
 		Failed:  outcome.failed,
 		Action:  outcome.action,
@@ -215,7 +215,7 @@ func (s *Service) claimAndDispatch(
 // The result comes back too, when it was kept, so what the original call
 // showed beside the conversation is shown again rather than lost with the
 // attempt that made it.
-func replayedOutcome(recorded serviceports.RunStepOutcome) toolOutcome {
+func replayedOutcome(recorded agentports.RunStepOutcome) toolOutcome {
 	content := recorded.Content
 	if content == "" {
 		content = "This call was made on an earlier attempt of this run. " +
@@ -246,7 +246,7 @@ const maxStoredStepDataBytes = 64 * 1024
 
 // showsResults reports whether anything beside the run shows what its tools
 // return. Only a conversation does, and only there is a result worth keeping.
-func showsResults(req *serviceports.RunRequest) bool {
+func showsResults(req *agentports.RunRequest) bool {
 	return req.ToolObserver != nil || !req.ThreadID.IsNil()
 }
 
@@ -301,7 +301,7 @@ func unknownOutcome(toolName string) toolOutcome {
 // earlier attempt's calls minted a new key, and the write ran a second time.
 func (s *Service) seedFromLedger(
 	ctx context.Context,
-	req *serviceports.RunRequest,
+	req *agentports.RunRequest,
 	repeats *repeatGuard,
 ) {
 	if req.Steps == nil || req.StepOwner.ID.IsNil() {
@@ -326,14 +326,14 @@ func (s *Service) seedFromLedger(
 
 	replayed := 0
 	for _, step := range steps {
-		if step.Kind != serviceports.RunStepTool {
+		if step.Kind != agentports.RunStepTool {
 			continue
 		}
 		replayed++
 
-		if step.Status == serviceports.RunStepFailed && step.Outcome.Content != "" {
+		if step.Status == agentports.RunStepFailed && step.Outcome.Content != "" {
 			repeats.record(
-				serviceports.ToolCall{Name: step.ToolName, Arguments: step.Args},
+				agentports.ToolCall{Name: step.ToolName, Arguments: step.Args},
 				step.Outcome.Content,
 			)
 		}

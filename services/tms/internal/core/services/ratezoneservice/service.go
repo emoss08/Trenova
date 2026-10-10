@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/ratezone"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratezoneports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,16 +19,16 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.RateZoneRepository
+	Repo         ratezoneports.RateZoneRepository
 	Validator    *Validator
-	AuditService services.AuditService
+	AuditService auditports.AuditService
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.RateZoneRepository
+	repo         ratezoneports.RateZoneRepository
 	validator    *Validator
-	auditService services.AuditService
+	auditService auditports.AuditService
 }
 
 func New(p Params) *Service {
@@ -42,14 +42,14 @@ func New(p Params) *Service {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListRateZoneRequest,
+	req *ratezoneports.ListRateZoneRequest,
 ) (*pagination.ListResult[*ratezone.RateZone], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListRateZoneConnectionRequest,
+	req *ratezoneports.ListRateZoneConnectionRequest,
 ) (*pagination.CursorListResult[*ratezone.RateZone], error) {
 	return s.repo.ListConnection(ctx, req)
 }
@@ -63,7 +63,7 @@ func (s *Service) SelectOptions(
 
 func (s *Service) GetByID(
 	ctx context.Context,
-	req *repositories.GetRateZoneByIDRequest,
+	req *ratezoneports.GetRateZoneByIDRequest,
 ) (*ratezone.RateZone, error) {
 	return s.repo.GetByID(ctx, req)
 }
@@ -111,7 +111,7 @@ func (s *Service) Update(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetByID(ctx, &repositories.GetRateZoneByIDRequest{
+	original, err := s.repo.GetByID(ctx, &ratezoneports.GetRateZoneByIDRequest{
 		RateZoneID: entity.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -140,7 +140,7 @@ func (s *Service) Update(
 // written against it into a rate that can never match again.
 func (s *Service) Delete(
 	ctx context.Context,
-	req *repositories.GetRateZoneByIDRequest,
+	req *ratezoneports.GetRateZoneByIDRequest,
 	userID pulid.ID,
 ) error {
 	log := s.l.With(
@@ -172,7 +172,7 @@ func (s *Service) audit(
 	userID pulid.ID,
 	comment string,
 ) {
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceRateZone,
 		ResourceID:     entity.GetID().String(),
 		Operation:      operation,
@@ -187,7 +187,7 @@ func (s *Service) audit(
 		params.CurrentState = jsonutils.MustToJSON(entity)
 	}
 
-	opts := []services.LogOption{auditservice.WithComment(comment)}
+	opts := []auditports.LogOption{auditservice.WithComment(comment)}
 
 	if original != nil {
 		params.PreviousState = jsonutils.MustToJSON(original)

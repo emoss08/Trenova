@@ -6,8 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,16 +16,16 @@ import (
 
 func (f *fakeConnections) GetByType(
 	_ context.Context,
-	_ repositories.GetAccountingConnectionRequest,
+	_ accountingsyncports.GetAccountingConnectionRequest,
 ) (*accountingsync.AccountingConnection, error) {
 	return f.current(), nil
 }
 
 func (f *fakeFindings) Summarize(
 	_ context.Context,
-	req *repositories.SummarizeAccountingDriftRequest,
-) (*repositories.AccountingDriftSummary, error) {
-	summary := &repositories.AccountingDriftSummary{}
+	req *accountingsyncports.SummarizeAccountingDriftRequest,
+) (*accountingsyncports.AccountingDriftSummary, error) {
+	summary := &accountingsyncports.AccountingDriftSummary{}
 	for _, row := range f.all() {
 		if row.ConnectionID != req.ConnectionID {
 			continue
@@ -44,7 +43,7 @@ func (f *fakeFindings) Summarize(
 
 func (f *fakeFindings) ListConnection(
 	_ context.Context,
-	req *repositories.ListAccountingDriftFindingsConnectionRequest,
+	req *accountingsyncports.ListAccountingDriftFindingsConnectionRequest,
 ) (*pagination.CursorListResult[*accountingsync.AccountingDriftFinding], error) {
 	f.mu.Lock()
 	f.lastList = req
@@ -70,7 +69,7 @@ func TestOverviewCountsFindingsAndStatesTheTolerance(t *testing.T) {
 	h.provider(accountingsync.SyncObjectInvoice, "101", "1200.00")
 	h.reconcile(t)
 
-	overview, err := h.svc.Overview(t.Context(), &services.AccountingDriftOverviewRequest{
+	overview, err := h.svc.Overview(t.Context(), &accountingsyncports.AccountingDriftOverviewRequest{
 		TenantInfo:      h.tenant,
 		IntegrationType: integration.TypeQuickBooksOnline,
 	})
@@ -89,7 +88,7 @@ func TestListScopesTheTableToTheConnection(t *testing.T) {
 	h := newHarness(t)
 	objectID := pulid.MustNew("inv_")
 
-	_, err := h.svc.List(t.Context(), &services.ListAccountingDriftFindingsRequest{
+	_, err := h.svc.List(t.Context(), &accountingsyncports.ListAccountingDriftFindingsRequest{
 		TenantInfo:      h.tenant,
 		IntegrationType: integration.TypeQuickBooksOnline,
 		Statuses:        []accountingsync.DriftStatus{accountingsync.DriftStatusOpen},

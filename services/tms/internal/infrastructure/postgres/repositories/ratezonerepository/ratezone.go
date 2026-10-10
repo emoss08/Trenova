@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/ratezone"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratezoneports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -32,7 +32,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.RateZoneRepository {
+func New(p Params) ratezoneports.RateZoneRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.ratezone-repository"),
@@ -45,7 +45,7 @@ func orderMembers(sq *bun.SelectQuery) *bun.SelectQuery {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListRateZoneRequest,
+	req *ratezoneports.ListRateZoneRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.RateZoneColumns
 	q = querybuilder.ApplyFilters(
@@ -63,7 +63,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListRateZoneRequest,
+	req *ratezoneports.ListRateZoneRequest,
 ) (*pagination.ListResult[*ratezone.RateZone], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*ratezone.RateZone], error) {
 		log := r.l.With(zap.String("operation", "List"))
@@ -87,7 +87,7 @@ func (r *repository) List(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListRateZoneConnectionRequest,
+	req *ratezoneports.ListRateZoneConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -100,7 +100,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListRateZoneConnectionRequest,
+	req *ratezoneports.ListRateZoneConnectionRequest,
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -120,7 +120,7 @@ func applyRateZoneColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListRateZoneConnectionRequest,
+	req *ratezoneports.ListRateZoneConnectionRequest,
 ) (*pagination.CursorListResult[*ratezone.RateZone], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*ratezone.RateZone], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -169,7 +169,7 @@ func (r *repository) ListConnection(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req *repositories.GetRateZoneByIDRequest,
+	req *ratezoneports.GetRateZoneByIDRequest,
 ) (*ratezone.RateZone, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ratezone.RateZone, error) {
 		log := r.l.With(
@@ -208,7 +208,7 @@ func (r *repository) GetByID(
 // and returns nothing but the zone ids.
 func (r *repository) ResolveMembership(
 	ctx context.Context,
-	req *repositories.ResolveZoneMembershipRequest,
+	req *ratezoneports.ResolveZoneMembershipRequest,
 ) ([]pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
 		if len(req.MatchKeys) == 0 {
@@ -269,7 +269,7 @@ func (r *repository) Create(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*ratezone.RateZone, error) {
 		log := r.l.With(zap.String("operation", "Create"), zap.String("code", entity.Code))
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			if _, iErr := r.db.DBForContext(c).
 				NewInsert().
 				Model(entity).
@@ -315,7 +315,7 @@ func (r *repository) Update(
 		zoneCols := buncolgen.RateZoneColumns
 		memberCols := buncolgen.RateZoneMemberColumns
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			results, uErr := r.db.DBForContext(c).
 				NewUpdate().
 				Model(entity).
@@ -363,7 +363,7 @@ func (r *repository) Update(
 
 func (r *repository) Delete(
 	ctx context.Context,
-	req *repositories.GetRateZoneByIDRequest,
+	req *ratezoneports.GetRateZoneByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		log := r.l.With(

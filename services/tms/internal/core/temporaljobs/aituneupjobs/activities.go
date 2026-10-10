@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -14,14 +14,14 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	TuneUps services.AITuneUpService
-	Tenants repositories.TenantSyncRepository
+	TuneUps aituneupports.AITuneUpService
+	Tenants tenantports.TenantSyncRepository
 	Logger  *zap.Logger
 }
 
 type Activities struct {
-	tuneUps services.AITuneUpService
-	tenants repositories.TenantSyncRepository
+	tuneUps aituneupports.AITuneUpService
+	tenants tenantports.TenantSyncRepository
 	l       *zap.Logger
 }
 

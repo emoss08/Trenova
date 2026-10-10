@@ -6,8 +6,8 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -63,7 +63,7 @@ func TestCancel_UpdatesShipmentAndComponents(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(0, 2))
 	mock.ExpectCommit()
 
-	entity, err := repo.Cancel(t.Context(), &repositories.CancelShipmentRequest{
+	entity, err := repo.Cancel(t.Context(), &shipmentports.CancelShipmentRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: orgID,
 			BuID:  buID,
@@ -105,7 +105,7 @@ func TestUncancel_UpdatesShipmentAndComponents(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectCommit()
 
-	entity, err := repo.Uncancel(t.Context(), &repositories.UncancelShipmentRequest{
+	entity, err := repo.Uncancel(t.Context(), &shipmentports.UncancelShipmentRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: orgID,
 			BuID:  buID,
@@ -113,10 +113,10 @@ func TestUncancel_UpdatesShipmentAndComponents(t *testing.T) {
 		ShipmentID:      shipmentID,
 		ExpectedVersion: 2,
 		RestoredStatus:  shipment.StatusInTransit,
-		MoveStatuses: []repositories.MoveStatusRestore{
+		MoveStatuses: []shipmentports.MoveStatusRestore{
 			{MoveID: moveID, Status: shipment.MoveStatusInTransit},
 		},
-		StopStatuses: []repositories.StopStatusRestore{
+		StopStatuses: []shipmentports.StopStatusRestore{
 			{StopID: stopID, Status: shipment.StopStatusNew},
 		},
 	})
@@ -140,7 +140,7 @@ func TestTransferOwnership_UpdatesOwner(t *testing.T) {
 			"id", "organization_id", "business_unit_id", "owner_id", "version",
 		}).AddRow(shipmentID, orgID, buID, ownerID, 4))
 
-	entity, err := repo.TransferOwnership(t.Context(), &repositories.TransferOwnershipRequest{
+	entity, err := repo.TransferOwnership(t.Context(), &shipmentports.TransferOwnershipRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: orgID,
 			BuID:  buID,
@@ -166,7 +166,7 @@ func TestCheckForDuplicateBOLs_ExcludesCanceledAndCurrentShipment(t *testing.T) 
 		WillReturnRows(sqlmock.NewRows([]string{"id", "pro_number"}).
 			AddRow(pulid.MustNew("shp_"), "PRO-101"))
 
-	results, err := repo.CheckForDuplicateBOLs(t.Context(), &repositories.DuplicateBOLCheckRequest{
+	results, err := repo.CheckForDuplicateBOLs(t.Context(), &shipmentports.DuplicateBOLCheckRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: orgID,
 			BuID:  buID,
@@ -245,7 +245,7 @@ func TestAutoDelayShipments_UpdatesEligibleShipments(t *testing.T) {
 type mockShipmentAdditionalChargeRepository struct{}
 
 type mockChargeAllocationRepository struct {
-	repositories.ChargeAllocationRepository
+	shipmentports.ChargeAllocationRepository
 }
 
 func (m *mockChargeAllocationRepository) SyncForShipment(

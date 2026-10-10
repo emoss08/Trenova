@@ -4,8 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/productguide"
@@ -80,7 +81,7 @@ const fixture = `{
 }`
 
 type stubPermissions struct {
-	serviceports.PermissionEngine
+	permissionports.PermissionEngine
 
 	allowed map[string]bool
 	batches int
@@ -89,30 +90,30 @@ type stubPermissions struct {
 
 func (s *stubPermissions) CheckBatch(
 	_ context.Context,
-	req *serviceports.BatchPermissionCheckRequest,
-) (*serviceports.BatchPermissionCheckResult, error) {
+	req *permissionports.BatchPermissionCheckRequest,
+) (*permissionports.BatchPermissionCheckResult, error) {
 	s.batches++
-	results := make([]serviceports.PermissionCheckResult, 0, len(req.Checks))
+	results := make([]permissionports.PermissionCheckResult, 0, len(req.Checks))
 	for _, check := range req.Checks {
 		key := check.Resource + ":" + string(check.Operation)
 		s.checked = append(s.checked, key)
-		results = append(results, serviceports.PermissionCheckResult{Allowed: s.allowed[key]})
+		results = append(results, permissionports.PermissionCheckResult{Allowed: s.allowed[key]})
 	}
 
-	return &serviceports.BatchPermissionCheckResult{Results: results}, nil
+	return &permissionports.BatchPermissionCheckResult{Results: results}, nil
 }
 
 type stubOrganizations struct {
-	repositories.OrganizationRepository
+	tenantports.OrganizationRepository
 
-	capabilities repositories.OrganizationCapabilities
+	capabilities tenantports.OrganizationCapabilities
 	reads        int
 }
 
 func (s *stubOrganizations) GetCapabilities(
 	context.Context,
-	repositories.GetOrganizationCapabilitiesRequest,
-) (*repositories.OrganizationCapabilities, error) {
+	tenantports.GetOrganizationCapabilitiesRequest,
+) (*tenantports.OrganizationCapabilities, error) {
 	s.reads++
 	capabilities := s.capabilities
 
@@ -148,9 +149,9 @@ func newHarness(t *testing.T, allowed ...string) *harness {
 	}
 }
 
-func actor() *serviceports.RequestActor {
-	return &serviceports.RequestActor{
-		PrincipalType:  serviceports.PrincipalTypeUser,
+func actor() *permissionports.RequestActor {
+	return &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    pulid.MustNew("usr_"),
 		UserID:         pulid.MustNew("usr_"),
 		OrganizationID: pulid.MustNew("org_"),
@@ -158,10 +159,10 @@ func actor() *serviceports.RequestActor {
 	}
 }
 
-func (h *harness) search(t *testing.T, query string) []serviceports.ProductGuideMatch {
+func (h *harness) search(t *testing.T, query string) []agentports.ProductGuideMatch {
 	t.Helper()
 
-	matches, err := h.service.Search(t.Context(), &serviceports.ProductGuideSearchRequest{
+	matches, err := h.service.Search(t.Context(), &agentports.ProductGuideSearchRequest{
 		Actor:      actor(),
 		TenantInfo: pagination.TenantInfo{},
 		Query:      query,
@@ -255,7 +256,7 @@ func TestSearch_AnswersFromOnePageWhenAskedAboutIt(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t, "rate_matrix:read", "shipment:read")
-	matches, err := h.service.Search(t.Context(), &serviceports.ProductGuideSearchRequest{
+	matches, err := h.service.Search(t.Context(), &agentports.ProductGuideSearchRequest{
 		Actor: actor(),
 		Query: "retire",
 		Page:  "/billing/configuration-files/rate-matrices",
@@ -271,7 +272,7 @@ func TestSearch_RefusesToAnswerForNobody(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	_, err := h.service.Search(t.Context(), &serviceports.ProductGuideSearchRequest{Query: "shipments"})
+	_, err := h.service.Search(t.Context(), &agentports.ProductGuideSearchRequest{Query: "shipments"})
 
 	require.Error(t, err)
 }
@@ -281,7 +282,7 @@ func TestDestination_OpensAPageTheCreateFormOrARecord(t *testing.T) {
 
 	h := newHarness(t, "rate_matrix:read", "shipment:read")
 
-	page, err := h.service.Destination(t.Context(), &serviceports.ProductGuideDestinationRequest{
+	page, err := h.service.Destination(t.Context(), &agentports.ProductGuideDestinationRequest{
 		Actor: actor(),
 		Page:  "/billing/configuration-files/rate-matrices",
 	})
@@ -289,7 +290,7 @@ func TestDestination_OpensAPageTheCreateFormOrARecord(t *testing.T) {
 	assert.Equal(t, "/billing/configuration-files/rate-matrices", page.Path)
 	assert.Equal(t, "Rate matrices", page.Label)
 
-	create, err := h.service.Destination(t.Context(), &serviceports.ProductGuideDestinationRequest{
+	create, err := h.service.Destination(t.Context(), &agentports.ProductGuideDestinationRequest{
 		Actor:  actor(),
 		Page:   "/billing/configuration-files/rate-matrices",
 		Create: true,
@@ -297,7 +298,7 @@ func TestDestination_OpensAPageTheCreateFormOrARecord(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "/billing/configuration-files/rate-matrices?panelType=create", create.Path)
 
-	record, err := h.service.Destination(t.Context(), &serviceports.ProductGuideDestinationRequest{
+	record, err := h.service.Destination(t.Context(), &agentports.ProductGuideDestinationRequest{
 		Actor:    actor(),
 		Entity:   "shipment",
 		RecordID: "shp_1",
@@ -314,21 +315,21 @@ func TestDestination_RefusesWhatItCannotOrMayNotOpen(t *testing.T) {
 
 	tests := []struct {
 		name string
-		req  serviceports.ProductGuideDestinationRequest
+		req  agentports.ProductGuideDestinationRequest
 	}{
-		{name: "nowhere", req: serviceports.ProductGuideDestinationRequest{}},
-		{name: "a page that does not exist", req: serviceports.ProductGuideDestinationRequest{
+		{name: "nowhere", req: agentports.ProductGuideDestinationRequest{}},
+		{name: "a page that does not exist", req: agentports.ProductGuideDestinationRequest{
 			Page: "/billing/made-up",
 		}},
-		{name: "a create form the page does not have", req: serviceports.ProductGuideDestinationRequest{
+		{name: "a create form the page does not have", req: agentports.ProductGuideDestinationRequest{
 			Page:   "/shipment-management/shipments",
 			Create: true,
 		}},
-		{name: "a record kind with no page", req: serviceports.ProductGuideDestinationRequest{
+		{name: "a record kind with no page", req: agentports.ProductGuideDestinationRequest{
 			Entity:   "unicorn",
 			RecordID: "uni_1",
 		}},
-		{name: "a record with no id", req: serviceports.ProductGuideDestinationRequest{
+		{name: "a record with no id", req: agentports.ProductGuideDestinationRequest{
 			Entity: "shipment",
 		}},
 	}
@@ -345,7 +346,7 @@ func TestDestination_RefusesWhatItCannotOrMayNotOpen(t *testing.T) {
 		})
 	}
 
-	_, err := h.service.Destination(t.Context(), &serviceports.ProductGuideDestinationRequest{
+	_, err := h.service.Destination(t.Context(), &agentports.ProductGuideDestinationRequest{
 		Actor: actor(),
 		Page:  "/billing/configuration-files/rate-matrices",
 	})
@@ -389,8 +390,8 @@ func TestSearch_DoesNotMatchAPageOnTheProductsOwnName(t *testing.T) {
 		Organizations: &stubOrganizations{},
 	}, catalog)
 
-	search := func(query string) []serviceports.ProductGuideMatch {
-		matches, searchErr := service.Search(t.Context(), &serviceports.ProductGuideSearchRequest{
+	search := func(query string) []agentports.ProductGuideMatch {
+		matches, searchErr := service.Search(t.Context(), &agentports.ProductGuideSearchRequest{
 			Actor: actor(),
 			Query: query,
 		})

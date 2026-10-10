@@ -1,6 +1,9 @@
 package distancecalculationservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/distancecontrolportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/distanceoverrideportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/storedmileageportsmock"
 	"context"
 	"testing"
 	"time"
@@ -13,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/storedmileage"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
-	"github.com/emoss08/trenova/internal/core/ports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -271,9 +274,9 @@ type resolveFixture struct {
 	service  *Service
 	control  *distancecontrol.DistanceControl
 	profile  *distanceprofile.DistanceProfile
-	stored   *mocks.MockStoredMileageRepository
-	buffer   *mocks.MockStoredMileageBufferRepository
-	override *mocks.MockDistanceOverrideRepository
+	stored   *storedmileageportsmock.MockStoredMileageRepository
+	buffer   *storedmileageportsmock.MockStoredMileageBufferRepository
+	override *distanceoverrideportsmock.MockDistanceOverrideRepository
 	entity   *shipment.Shipment
 	move     *shipment.ShipmentMove
 }
@@ -288,14 +291,14 @@ func newResolveFixture(t *testing.T) *resolveFixture {
 	control := distancecontrol.NewDefault(orgID, buID, profile.ID, profile.ID)
 	control.CaptureJurisdictionMiles = true
 
-	controlRepo := mocks.NewMockDistanceControlRepository(t)
+	controlRepo := distancecontrolportsmock.NewMockDistanceControlRepository(t)
 	controlRepo.EXPECT().EnsureDefault(mock.Anything, mock.Anything).Return(control, nil)
-	overrideRepo := mocks.NewMockDistanceOverrideRepository(t)
+	overrideRepo := distanceoverrideportsmock.NewMockDistanceOverrideRepository(t)
 	overrideRepo.EXPECT().
 		GetByRouteSignature(mock.Anything, mock.Anything, mock.Anything).
 		Return(nil, errortypes.NewNotFoundError("Distance override"))
-	storedRepo := mocks.NewMockStoredMileageRepository(t)
-	bufferRepo := mocks.NewMockStoredMileageBufferRepository(t)
+	storedRepo := storedmileageportsmock.NewMockStoredMileageRepository(t)
+	bufferRepo := storedmileageportsmock.NewMockStoredMileageBufferRepository(t)
 
 	move := testMove(orgID, buID, true)
 	entity := &shipment.Shipment{
@@ -520,7 +523,7 @@ func TestResolveForShipmentInAReadOnlyTransactionCountsNoHit(t *testing.T) {
 		Return(nil).
 		Maybe()
 
-	ctx := ports.WithReadOnly(t.Context())
+	ctx := kernelports.WithReadOnly(t.Context())
 	_, err := f.service.resolveForShipment(ctx, f.entity, f.runtime(&fakeMileageClient{}, false))
 	require.NoError(t, err)
 
@@ -545,7 +548,7 @@ func TestResolveForShipmentInAReadOnlyTransactionBuffersNoCandidate(t *testing.T
 	client := &fakeMileageClient{
 		results: []pcmiler.RouteMileage{{Distance: 200, DataVersion: "Current"}},
 	}
-	ctx := ports.WithReadOnly(t.Context())
+	ctx := kernelports.WithReadOnly(t.Context())
 	resp, err := f.service.resolveForShipment(ctx, f.entity, f.runtime(client, true))
 	require.NoError(t, err)
 
@@ -576,7 +579,7 @@ func TestDistanceOverrideSumsLegsOfAMultiStopRoute(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			overrideRepo := mocks.NewMockDistanceOverrideRepository(t)
+			overrideRepo := distanceoverrideportsmock.NewMockDistanceOverrideRepository(t)
 			overrideRepo.EXPECT().
 				GetByRouteSignature(mock.Anything, mock.Anything, mock.Anything).
 				RunAndReturn(func(

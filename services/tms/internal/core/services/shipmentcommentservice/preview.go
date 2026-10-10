@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -14,7 +14,7 @@ import (
 
 func (s *service) GetByID(
 	ctx context.Context,
-	req *repositories.GetShipmentCommentByIDRequest,
+	req *shipmentports.GetShipmentCommentByIDRequest,
 ) (*shipment.ShipmentComment, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
@@ -42,10 +42,10 @@ func (s *service) GetByID(
 
 func (s *service) PreviewPin(
 	ctx context.Context,
-	req *services.ToggleShipmentCommentRequest,
-	actor *services.RequestActor,
+	req *shipmentports.ToggleShipmentCommentRequest,
+	actor *permissionports.RequestActor,
 	pinned bool,
-) (*services.ShipmentCommentChange, error) {
+) (*shipmentports.ShipmentCommentChange, error) {
 	comment, userID, err := s.planPin(ctx, req, actor, pinned)
 	if err != nil {
 		return nil, err
@@ -63,13 +63,13 @@ func (s *service) PreviewPin(
 		}
 	}
 
-	return &services.ShipmentCommentChange{Before: comment, After: &after}, nil
+	return &shipmentports.ShipmentCommentChange{Before: comment, After: &after}, nil
 }
 
 func (s *service) planPin(
 	ctx context.Context,
-	req *services.ToggleShipmentCommentRequest,
-	actor *services.RequestActor,
+	req *shipmentports.ToggleShipmentCommentRequest,
+	actor *permissionports.RequestActor,
 	pinned bool,
 ) (*shipment.ShipmentComment, pulid.ID, error) {
 	comment, userID, err := s.getToggleTarget(ctx, req, actor)
@@ -88,7 +88,7 @@ func (s *service) planPin(
 	if pinned && !comment.IsPinned() {
 		pinnedCount, countErr := s.repo.CountPinnedByShipmentID(
 			ctx,
-			&repositories.GetShipmentCommentCountRequest{
+			&shipmentports.GetShipmentCommentCountRequest{
 				TenantInfo: req.TenantInfo,
 				ShipmentID: req.ShipmentID,
 			},
@@ -108,10 +108,10 @@ func (s *service) planPin(
 
 func (s *service) PreviewResolve(
 	ctx context.Context,
-	req *services.ToggleShipmentCommentRequest,
-	actor *services.RequestActor,
+	req *shipmentports.ToggleShipmentCommentRequest,
+	actor *permissionports.RequestActor,
 	resolved bool,
-) (*services.ShipmentCommentChange, error) {
+) (*shipmentports.ShipmentCommentChange, error) {
 	comment, userID, err := s.getToggleTarget(ctx, req, actor)
 	if err != nil {
 		return nil, err
@@ -129,26 +129,26 @@ func (s *service) PreviewResolve(
 		}
 	}
 
-	return &services.ShipmentCommentChange{Before: comment, After: &after}, nil
+	return &shipmentports.ShipmentCommentChange{Before: comment, After: &after}, nil
 }
 
 func (s *service) PreviewUpdate(
 	ctx context.Context,
-	req *services.UpdateShipmentCommentRequest,
-	actor *services.RequestActor,
-) (*services.ShipmentCommentChange, error) {
+	req *shipmentports.UpdateShipmentCommentRequest,
+	actor *permissionports.RequestActor,
+) (*shipmentports.ShipmentCommentChange, error) {
 	original, entity, err := s.planUpdate(ctx, req, actor)
 	if err != nil {
 		return nil, err
 	}
 
-	return &services.ShipmentCommentChange{Before: original, After: entity}, nil
+	return &shipmentports.ShipmentCommentChange{Before: original, After: entity}, nil
 }
 
 func (s *service) planUpdate(
 	ctx context.Context,
-	req *services.UpdateShipmentCommentRequest,
-	actor *services.RequestActor,
+	req *shipmentports.UpdateShipmentCommentRequest,
+	actor *permissionports.RequestActor,
 ) (original, entity *shipment.ShipmentComment, err error) {
 	if req == nil || req.Entity == nil {
 		return nil, nil, errortypes.NewValidationError(
@@ -177,7 +177,7 @@ func (s *service) planUpdate(
 		BuID:  entity.BusinessUnitID,
 	}
 
-	original, err = s.getEditableComment(ctx, &repositories.GetShipmentCommentByIDRequest{
+	original, err = s.getEditableComment(ctx, &shipmentports.GetShipmentCommentByIDRequest{
 		CommentID:  entity.ID,
 		ShipmentID: entity.ShipmentID,
 		TenantInfo: tenantInfo,
@@ -203,21 +203,21 @@ func (s *service) planUpdate(
 
 func (s *service) PreviewDelete(
 	ctx context.Context,
-	req *services.DeleteShipmentCommentRequest,
-	actor *services.RequestActor,
-) (*services.ShipmentCommentDeletion, error) {
+	req *shipmentports.DeleteShipmentCommentRequest,
+	actor *permissionports.RequestActor,
+) (*shipmentports.ShipmentCommentDeletion, error) {
 	original, replies, err := s.planDelete(ctx, req, actor)
 	if err != nil {
 		return nil, err
 	}
 
-	return &services.ShipmentCommentDeletion{Comment: original, Tombstoned: replies > 0}, nil
+	return &shipmentports.ShipmentCommentDeletion{Comment: original, Tombstoned: replies > 0}, nil
 }
 
 func (s *service) planDelete(
 	ctx context.Context,
-	req *services.DeleteShipmentCommentRequest,
-	actor *services.RequestActor,
+	req *shipmentports.DeleteShipmentCommentRequest,
+	actor *permissionports.RequestActor,
 ) (original *shipment.ShipmentComment, replies int, err error) {
 	if req == nil {
 		return nil, 0, errortypes.NewValidationError(
@@ -227,7 +227,7 @@ func (s *service) planDelete(
 		)
 	}
 
-	repoReq := &repositories.DeleteShipmentCommentRequest{
+	repoReq := &shipmentports.DeleteShipmentCommentQuery{
 		TenantInfo: req.TenantInfo,
 		ShipmentID: req.ShipmentID,
 		CommentID:  req.CommentID,
@@ -241,7 +241,7 @@ func (s *service) planDelete(
 		return nil, 0, err
 	}
 
-	original, err = s.getEditableComment(ctx, &repositories.GetShipmentCommentByIDRequest{
+	original, err = s.getEditableComment(ctx, &shipmentports.GetShipmentCommentByIDRequest{
 		CommentID:  req.CommentID,
 		ShipmentID: req.ShipmentID,
 		TenantInfo: req.TenantInfo,
@@ -262,7 +262,7 @@ func (s *service) planDelete(
 		return nil, 0, err
 	}
 
-	replies, err = s.repo.CountReplies(ctx, &repositories.GetShipmentCommentByIDRequest{
+	replies, err = s.repo.CountReplies(ctx, &shipmentports.GetShipmentCommentByIDRequest{
 		CommentID:  req.CommentID,
 		ShipmentID: req.ShipmentID,
 		TenantInfo: req.TenantInfo,

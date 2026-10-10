@@ -6,8 +6,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -149,7 +150,7 @@ func ReconcileAccountingDriftWorkflow(
 }
 
 func reconcileRecords(actx workflow.Context, a *Activities, payload *DriftPayload) error {
-	var batch services.AccountingDriftBatchResult
+	var batch accountingsyncports.AccountingDriftBatchResult
 	if err := workflow.ExecuteActivity(actx, a.ReconcileAccountingDriftActivity, payload).
 		Get(actx, &batch); err != nil {
 		return err
@@ -170,7 +171,7 @@ func reconcileRecords(actx workflow.Context, a *Activities, payload *DriftPayloa
 }
 
 func reconcileBalances(actx workflow.Context, a *Activities, payload *DriftPayload) (bool, error) {
-	var page services.AccountingDriftBalanceResult
+	var page accountingsyncports.AccountingDriftBalanceResult
 	if err := workflow.ExecuteActivity(actx, a.ReconcileAccountingDriftBalancesActivity, payload).
 		Get(actx, &page); err != nil {
 		return false, err
@@ -209,8 +210,8 @@ func AnnounceAccountingReconciliationDueWorkflow(
 func (a *Activities) ReconcileAccountingDriftActivity(
 	ctx context.Context,
 	payload *DriftPayload,
-) (*services.AccountingDriftBatchResult, error) {
-	result, err := a.drift.ReconcileBatch(ctx, &services.ReconcileAccountingDriftRequest{
+) (*accountingsyncports.AccountingDriftBatchResult, error) {
+	result, err := a.drift.ReconcileBatch(ctx, &accountingsyncports.ReconcileAccountingDriftRequest{
 		TenantInfo:   payload.TenantInfo(),
 		ConnectionID: payload.ConnectionID,
 		AfterID:      payload.AfterID,
@@ -225,8 +226,8 @@ func (a *Activities) ReconcileAccountingDriftActivity(
 func (a *Activities) ReconcileAccountingDriftBalancesActivity(
 	ctx context.Context,
 	payload *DriftPayload,
-) (*services.AccountingDriftBalanceResult, error) {
-	result, err := a.drift.ReconcileBalances(ctx, &services.ReconcileAccountingDriftBalancesRequest{
+) (*accountingsyncports.AccountingDriftBalanceResult, error) {
+	result, err := a.drift.ReconcileBalances(ctx, &accountingsyncports.ReconcileAccountingDriftBalancesRequest{
 		TenantInfo:      payload.TenantInfo(),
 		ConnectionID:    payload.ConnectionID,
 		AfterCustomerID: payload.AfterCustomerID,
@@ -242,7 +243,7 @@ func (a *Activities) FinishAccountingDriftCheckActivity(
 	ctx context.Context,
 	payload *DriftPayload,
 ) error {
-	return syncError(a.drift.FinishCheck(ctx, &services.FinishAccountingDriftCheckRequest{
+	return syncError(a.drift.FinishCheck(ctx, &accountingsyncports.FinishAccountingDriftCheckRequest{
 		TenantInfo:   payload.TenantInfo(),
 		ConnectionID: payload.ConnectionID,
 	}))
@@ -257,7 +258,7 @@ func (a *Activities) eachDriftConnection(
 	for {
 		conns, err := a.connRepo.ListActive(
 			ctx,
-			repositories.ListActiveAccountingConnectionsRequest{
+			accountingsyncports.ListActiveAccountingConnectionsRequest{
 				AfterID: afterID,
 				Limit:   driftConnectionsPage,
 			},
@@ -311,10 +312,10 @@ func (a *Activities) AnnounceAccountingReconciliationActivity(
 	connections, err := a.eachDriftConnection(
 		ctx,
 		func(tenant pagination.TenantInfo, connectionID pulid.ID) error {
-			services.PublishAgentEvent(
+			agentports.PublishAgentEvent(
 				dbscope.WithTenant(ctx, tenant.DBTenant()),
 				a.publisher,
-				services.AgentEvent{
+				agentports.AgentEvent{
 					Kind:       agent.EventAccountingReconciliationDue,
 					SubjectID:  connectionID,
 					TenantInfo: tenant,
@@ -330,14 +331,14 @@ func (a *Activities) AnnounceAccountingReconciliationActivity(
 type DriftCheckerParams struct {
 	fx.In
 
-	Workflows services.WorkflowStarter
+	Workflows kernelports.WorkflowStarter
 }
 
 type DriftChecker struct {
-	workflows services.WorkflowStarter
+	workflows kernelports.WorkflowStarter
 }
 
-var _ services.AccountingDriftChecker = (*DriftChecker)(nil)
+var _ accountingsyncports.AccountingDriftChecker = (*DriftChecker)(nil)
 
 func NewDriftChecker(p DriftCheckerParams) *DriftChecker {
 	return &DriftChecker{workflows: p.Workflows}
@@ -360,7 +361,7 @@ func (c *DriftChecker) CheckNow(
 		BusinessUnitID: tenantInfo.BuID,
 		ConnectionID:   connectionID,
 	})
-	if errors.Is(err, services.ErrWorkflowStarterDisabled) {
+	if errors.Is(err, kernelports.ErrWorkflowStarterDisabled) {
 		return errortypes.NewBusinessError(
 			"Background work is not available on this server, so the books cannot be checked now",
 		).WithInternal(err)

@@ -7,10 +7,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/insight"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/insightservice/detector"
 	"github.com/emoss08/trenova/internal/core/services/insightservice/narrator"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -62,20 +63,20 @@ func (d *stubDetector) Detect(
 }
 
 type stubRepo struct {
-	replaced    []repositories.ReplaceDetectorFindingsRequest
+	replaced    []insightports.ReplaceDetectorFindingsRequest
 	active      []*insight.Insight
 	byID        *insight.Insight
 	history     []*insight.Insight
 	historyErr  error
 	err         error
-	lastList    repositories.ListActiveInsightsRequest
-	lastBrowse  repositories.ListInsightsRequest
-	lastHistory repositories.ListInsightHistoryRequest
+	lastList    insightports.ListActiveInsightsRequest
+	lastBrowse  insightports.ListInsightsQuery
+	lastHistory insightports.ListInsightHistoryRequest
 }
 
 func (r *stubRepo) ListHistory(
 	_ context.Context,
-	req repositories.ListInsightHistoryRequest,
+	req insightports.ListInsightHistoryRequest,
 ) ([]*insight.Insight, error) {
 	r.lastHistory = req
 
@@ -84,20 +85,20 @@ func (r *stubRepo) ListHistory(
 
 func (r *stubRepo) ReplaceDetectorFindings(
 	_ context.Context,
-	req repositories.ReplaceDetectorFindingsRequest,
-) (repositories.ReplaceDetectorFindingsResult, error) {
+	req insightports.ReplaceDetectorFindingsRequest,
+) (insightports.ReplaceDetectorFindingsResult, error) {
 	if r.err != nil {
-		return repositories.ReplaceDetectorFindingsResult{}, r.err
+		return insightports.ReplaceDetectorFindingsResult{}, r.err
 	}
 
 	r.replaced = append(r.replaced, req)
 
-	return repositories.ReplaceDetectorFindingsResult{Created: len(req.Insights)}, nil
+	return insightports.ReplaceDetectorFindingsResult{Created: len(req.Insights)}, nil
 }
 
 func (r *stubRepo) ListActive(
 	_ context.Context,
-	req repositories.ListActiveInsightsRequest,
+	req insightports.ListActiveInsightsRequest,
 ) ([]*insight.Insight, error) {
 	r.lastList = req
 
@@ -106,7 +107,7 @@ func (r *stubRepo) ListActive(
 
 func (r *stubRepo) List(
 	_ context.Context,
-	req repositories.ListInsightsRequest,
+	req insightports.ListInsightsQuery,
 ) (*pagination.ListResult[*insight.Insight], error) {
 	r.lastBrowse = req
 
@@ -115,21 +116,21 @@ func (r *stubRepo) List(
 
 func (r *stubRepo) Restore(
 	_ context.Context,
-	req repositories.RestoreInsightRequest,
+	req insightports.RestoreInsightQuery,
 ) (*insight.Insight, error) {
 	return &insight.Insight{ID: req.ID, Status: insight.StatusActive}, r.err
 }
 
 func (r *stubRepo) GetByID(
 	context.Context,
-	repositories.GetInsightByIDRequest,
+	insightports.GetInsightByIDRequest,
 ) (*insight.Insight, error) {
 	return r.byID, r.err
 }
 
 func (r *stubRepo) Dismiss(
 	_ context.Context,
-	req repositories.DismissInsightRequest,
+	req insightports.DismissInsightQuery,
 ) (*insight.Insight, error) {
 	return &insight.Insight{ID: req.ID, Status: insight.StatusDismissed}, r.err
 }
@@ -142,14 +143,14 @@ type stubPermissions struct {
 
 func (p *stubPermissions) Check(
 	_ context.Context,
-	req *services.PermissionCheckRequest,
-) (*services.PermissionCheckResult, error) {
+	req *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
 	p.checks++
 	if p.err != nil {
 		return nil, p.err
 	}
 
-	return &services.PermissionCheckResult{
+	return &permissionports.PermissionCheckResult{
 		Allowed: p.allowedResources[permission.Resource(req.Resource)],
 	}, nil
 }
@@ -168,24 +169,24 @@ type failingCompletion struct{}
 
 func (failingCompletion) CompleteStructured(
 	context.Context,
-	*services.StructuredCompletionRequest,
-) (*services.StructuredCompletionResult, error) {
-	return nil, services.ErrNoProviderConfigured
+	*agentports.StructuredCompletionRequest,
+) (*agentports.StructuredCompletionResult, error) {
+	return nil, agentports.ErrNoProviderConfigured
 }
 
 func (failingCompletion) CompleteChat(
 	context.Context,
-	*services.ChatCompletionRequest,
-) (*services.ChatCompletionResult, error) {
-	return nil, services.ErrNoProviderConfigured
+	*agentports.ChatCompletionRequest,
+) (*agentports.ChatCompletionResult, error) {
+	return nil, agentports.ErrNoProviderConfigured
 }
 
 func (failingCompletion) StreamChat(
 	context.Context,
-	*services.ChatCompletionRequest,
-	services.ChatStreamSink,
-) (*services.ChatCompletionResult, error) {
-	return nil, services.ErrNoProviderConfigured
+	*agentports.ChatCompletionRequest,
+	agentports.ChatStreamSink,
+) (*agentports.ChatCompletionResult, error) {
+	return nil, agentports.ErrNoProviderConfigured
 }
 
 func newService(repo *stubRepo, perms *stubPermissions, ds ...detector.Detector) *Service {
@@ -416,7 +417,7 @@ func TestListActive_AsksOnlyForDetectorsTheReaderMaySee(t *testing.T) {
 		&stubDetector{key: "workers", resource: permission.ResourceWorker},
 	)
 
-	_, err := svc.ListActive(t.Context(), services.ListInsightsRequest{
+	_, err := svc.ListActive(t.Context(), insightports.ListInsightsRequest{
 		TenantInfo: tenant(),
 		UserID:     pulid.MustNew("usr_"),
 		Limit:      10,
@@ -425,7 +426,7 @@ func TestListActive_AsksOnlyForDetectorsTheReaderMaySee(t *testing.T) {
 
 	assert.Equal(
 		t,
-		repositories.AllowedDetectorKeys{"shipments"},
+		insightports.AllowedDetectorKeys{"shipments"},
 		repo.lastList.AllowedDetectorKeys,
 	)
 }
@@ -459,7 +460,7 @@ func TestListActive_RestrictsASurfaceToWhatTheReaderMaySee(t *testing.T) {
 		},
 	)
 
-	_, err := svc.ListActive(t.Context(), services.ListInsightsRequest{
+	_, err := svc.ListActive(t.Context(), insightports.ListInsightsRequest{
 		TenantInfo: tenant(),
 		UserID:     pulid.MustNew("usr_"),
 		Surface:    insight.SurfaceAccounting,
@@ -469,7 +470,7 @@ func TestListActive_RestrictsASurfaceToWhatTheReaderMaySee(t *testing.T) {
 
 	assert.Equal(
 		t,
-		repositories.AllowedDetectorKeys{"unbilled-aging"},
+		insightports.AllowedDetectorKeys{"unbilled-aging"},
 		repo.lastList.AllowedDetectorKeys,
 	)
 }
@@ -487,7 +488,7 @@ func TestListActive_AsksForNothingOnASurfaceNoDetectorClaims(t *testing.T) {
 		&stubDetector{key: "shipments", resource: permission.ResourceShipment},
 	)
 
-	_, err := svc.ListActive(t.Context(), services.ListInsightsRequest{
+	_, err := svc.ListActive(t.Context(), insightports.ListInsightsRequest{
 		TenantInfo: tenant(),
 		UserID:     pulid.MustNew("usr_"),
 		Surface:    insight.SurfaceFleet,
@@ -509,7 +510,7 @@ func TestListActive_AsksForNothingWhenTheReaderMaySeeNothing(t *testing.T) {
 		&stubDetector{key: "shipments", resource: permission.ResourceShipment},
 	)
 
-	_, err := svc.ListActive(t.Context(), services.ListInsightsRequest{
+	_, err := svc.ListActive(t.Context(), insightports.ListInsightsRequest{
 		TenantInfo: tenant(),
 		UserID:     pulid.MustNew("usr_"),
 		Limit:      10,
@@ -533,7 +534,7 @@ func TestListActive_NeverAllowsADetectorThatNoLongerExists(t *testing.T) {
 		&stubDetector{key: "shipments", resource: permission.ResourceShipment},
 	)
 
-	_, err := svc.ListActive(t.Context(), services.ListInsightsRequest{
+	_, err := svc.ListActive(t.Context(), insightports.ListInsightsRequest{
 		TenantInfo: tenant(),
 		UserID:     pulid.MustNew("usr_"),
 		Limit:      10,
@@ -554,7 +555,7 @@ func TestListActive_AllowsNothingWhenThePermissionCheckFails(t *testing.T) {
 		&stubDetector{key: "shipments", resource: permission.ResourceShipment},
 	)
 
-	_, err := svc.ListActive(t.Context(), services.ListInsightsRequest{
+	_, err := svc.ListActive(t.Context(), insightports.ListInsightsRequest{
 		TenantInfo: tenant(),
 		UserID:     pulid.MustNew("usr_"),
 		Limit:      10,
@@ -585,7 +586,7 @@ func TestListActive_ResolvesEachDetectorsPermissionOnce(t *testing.T) {
 		&stubDetector{key: "shipments", resource: permission.ResourceShipment},
 	).ListActive(
 		t.Context(),
-		services.ListInsightsRequest{
+		insightports.ListInsightsRequest{
 			TenantInfo: tenant(),
 			UserID:     pulid.MustNew("usr_"),
 			Limit:      10,
@@ -611,7 +612,7 @@ func TestList_CarriesTheSameDetectorRestrictionAsTheWidget(t *testing.T) {
 		&stubDetector{key: "workers", resource: permission.ResourceWorker},
 	)
 
-	_, err := svc.List(t.Context(), services.BrowseInsightsRequest{
+	_, err := svc.List(t.Context(), insightports.BrowseInsightsRequest{
 		TenantInfo: tenant(),
 		UserID:     pulid.MustNew("usr_"),
 		Statuses:   []insight.Status{insight.StatusDismissed},
@@ -621,7 +622,7 @@ func TestList_CarriesTheSameDetectorRestrictionAsTheWidget(t *testing.T) {
 
 	assert.Equal(
 		t,
-		repositories.AllowedDetectorKeys{"shipments"},
+		insightports.AllowedDetectorKeys{"shipments"},
 		repo.lastBrowse.AllowedDetectorKeys,
 	)
 }
@@ -638,7 +639,7 @@ func TestList_PassesTheRequestedFiltersThrough(t *testing.T) {
 		&stubDetector{key: "shipments", resource: permission.ResourceShipment},
 	)
 
-	_, err := svc.List(t.Context(), services.BrowseInsightsRequest{
+	_, err := svc.List(t.Context(), insightports.BrowseInsightsRequest{
 		TenantInfo: tenant(),
 		UserID:     pulid.MustNew("usr_"),
 		Categories: []insight.Category{insight.CategoryCashFlow},
@@ -673,7 +674,7 @@ func TestGetDetail_ReturnsTheFindingItsTrendAndTheRuleBehindIt(t *testing.T) {
 
 	detail, err := newService(repo, perms,
 		&stubDetector{key: "shipments", resource: permission.ResourceShipment},
-	).GetDetail(t.Context(), services.GetInsightDetailRequest{
+	).GetDetail(t.Context(), insightports.GetInsightDetailRequest{
 		ID:         found.ID,
 		UserID:     pulid.MustNew("usr_"),
 		TenantInfo: tenant(),
@@ -703,7 +704,7 @@ func TestGetDetail_KeepsTheFindingOutOfItsOwnHistory(t *testing.T) {
 
 	_, err := newService(repo, perms,
 		&stubDetector{key: "shipments", resource: permission.ResourceShipment},
-	).GetDetail(t.Context(), services.GetInsightDetailRequest{
+	).GetDetail(t.Context(), insightports.GetInsightDetailRequest{
 		ID:         found.ID,
 		UserID:     pulid.MustNew("usr_"),
 		TenantInfo: tenant(),
@@ -731,7 +732,7 @@ func TestGetDetail_RefusesAFindingTheReaderMayNotSee(t *testing.T) {
 
 	_, err := newService(repo, perms,
 		&stubDetector{key: "workers", resource: permission.ResourceWorker},
-	).GetDetail(t.Context(), services.GetInsightDetailRequest{
+	).GetDetail(t.Context(), insightports.GetInsightDetailRequest{
 		ID:         found.ID,
 		UserID:     pulid.MustNew("usr_"),
 		TenantInfo: tenant(),
@@ -755,7 +756,7 @@ func TestGetDetail_RefusesAFindingFromADetectorThatNoLongerExists(t *testing.T) 
 
 	_, err := newService(repo, perms).GetDetail(
 		t.Context(),
-		services.GetInsightDetailRequest{
+		insightports.GetInsightDetailRequest{
 			ID:         pulid.MustNew("inst_"),
 			UserID:     pulid.MustNew("usr_"),
 			TenantInfo: tenant(),
@@ -782,7 +783,7 @@ func TestGetDetail_StillReturnsTheFindingWhenItsHistoryCannotBeRead(t *testing.T
 
 	detail, err := newService(repo, perms,
 		&stubDetector{key: "shipments", resource: permission.ResourceShipment},
-	).GetDetail(t.Context(), services.GetInsightDetailRequest{
+	).GetDetail(t.Context(), insightports.GetInsightDetailRequest{
 		ID:         found.ID,
 		UserID:     pulid.MustNew("usr_"),
 		TenantInfo: tenant(),
@@ -807,7 +808,7 @@ func TestRestore_ReturnsADismissedFindingToActive(t *testing.T) {
 
 	restored, err := newService(repo, &stubPermissions{}).Restore(
 		t.Context(),
-		services.RestoreInsightRequest{ID: id, TenantInfo: tenant()},
+		insightports.RestoreInsightRequest{ID: id, TenantInfo: tenant()},
 	)
 	require.NoError(t, err)
 
@@ -822,7 +823,7 @@ func TestPlanRestore_RefusesAFindingThatIsNotDismissed(t *testing.T) {
 
 	_, err := newService(repo, &stubPermissions{}).Restore(
 		t.Context(),
-		services.RestoreInsightRequest{ID: repo.byID.ID, TenantInfo: tenant()},
+		insightports.RestoreInsightRequest{ID: repo.byID.ID, TenantInfo: tenant()},
 	)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "only a dismissed one can be restored")
@@ -841,7 +842,7 @@ func TestPlanRestore_ShowsTheDismissalCleared(t *testing.T) {
 
 	change, err := newService(repo, &stubPermissions{}).PlanRestore(
 		t.Context(),
-		services.RestoreInsightRequest{ID: repo.byID.ID, TenantInfo: tenant()},
+		insightports.RestoreInsightRequest{ID: repo.byID.ID, TenantInfo: tenant()},
 	)
 	require.NoError(t, err)
 	assert.Equal(t, insight.StatusDismissed, change.Before.Status)
@@ -863,7 +864,7 @@ func TestListActive_AppliesADefaultLimit(t *testing.T) {
 		&stubDetector{key: "shipments", resource: permission.ResourceShipment},
 	).ListActive(
 		t.Context(),
-		services.ListInsightsRequest{TenantInfo: tenant(), UserID: pulid.MustNew("usr_")},
+		insightports.ListInsightsRequest{TenantInfo: tenant(), UserID: pulid.MustNew("usr_")},
 	)
 	require.NoError(t, err)
 
@@ -877,7 +878,7 @@ func TestDismiss_RecordsTheReaderAndTheirReason(t *testing.T) {
 
 	dismissed, err := newService(&stubRepo{}, &stubPermissions{}).Dismiss(
 		t.Context(),
-		services.DismissInsightRequest{
+		insightports.DismissInsightRequest{
 			ID:         id,
 			UserID:     pulid.MustNew("usr_"),
 			Reason:     "Known seasonal pattern",
@@ -903,19 +904,19 @@ func svc(repo *stubRepo, ds ...detector.Detector) *Service {
 // to poll.
 func (f failingCompletion) SubmitBackground(
 	ctx context.Context,
-	req *services.StructuredCompletionRequest,
-) (*services.BackgroundSubmission, error) {
+	req *agentports.StructuredCompletionRequest,
+) (*agentports.BackgroundSubmission, error) {
 	result, err := f.CompleteStructured(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	return &services.BackgroundSubmission{Result: result}, nil
+	return &agentports.BackgroundSubmission{Result: result}, nil
 }
 
 func (f failingCompletion) PollBackground(
 	context.Context,
-	*services.BackgroundPollRequest,
-) (*services.BackgroundOutcome, error) {
+	*agentports.BackgroundPollRequest,
+) (*agentports.BackgroundOutcome, error) {
 	return nil, errors.New("this completion runs inline and issues no handle to poll")
 }

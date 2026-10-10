@@ -9,8 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,20 +21,20 @@ import (
 )
 
 type stubArtifactRepo struct {
-	repositories.AssistantArtifactRepository
+	assistantartifactports.AssistantArtifactRepository
 
 	upserts   []*assistantartifact.Artifact
 	listed    []*assistantartifact.Artifact
 	stored    map[pulid.ID]*assistantartifact.Artifact
 	inserted  []*assistantartifact.Artifact
-	paged     []repositories.ListArtifactsRequest
+	paged     []assistantartifactports.ListArtifactsRequest
 	questions map[pulid.ID]string
 	arguments map[string]map[string]any
 }
 
 func (r *stubArtifactRepo) GetByID(
 	_ context.Context,
-	req repositories.GetArtifactRequest,
+	req assistantartifactports.GetArtifactRequest,
 ) (*assistantartifact.Artifact, error) {
 	artifact, ok := r.stored[req.ID]
 	if !ok {
@@ -59,7 +60,7 @@ func (r *stubArtifactRepo) Upsert(
 
 func (r *stubArtifactRepo) LatestInLineage(
 	_ context.Context,
-	req repositories.LatestInLineageRequest,
+	req assistantartifactports.LatestInLineageRequest,
 ) (*assistantartifact.Artifact, error) {
 	var latest *assistantartifact.Artifact
 	for _, artifact := range r.upserts {
@@ -73,11 +74,11 @@ func (r *stubArtifactRepo) LatestInLineage(
 
 func (r *stubArtifactRepo) ListPage(
 	_ context.Context,
-	req repositories.ListArtifactsRequest,
-) (*repositories.ArtifactPage, error) {
+	req assistantartifactports.ListArtifactsRequest,
+) (*assistantartifactports.ArtifactPage, error) {
 	r.paged = append(r.paged, req)
 
-	return &repositories.ArtifactPage{Artifacts: r.listed, Total: len(r.listed)}, nil
+	return &assistantartifactports.ArtifactPage{Artifacts: r.listed, Total: len(r.listed)}, nil
 }
 
 func (r *stubArtifactRepo) TakenSlugs(
@@ -98,7 +99,7 @@ func (r *stubArtifactRepo) TakenSlugs(
 // oldest first.
 func (r *stubArtifactRepo) ListLineage(
 	_ context.Context,
-	req repositories.LineageRequest,
+	req assistantartifactports.LineageRequest,
 ) ([]*assistantartifact.Artifact, error) {
 	all := make([]*assistantartifact.Artifact, 0, len(r.stored)+len(r.upserts)+len(r.inserted))
 	for _, artifact := range r.stored {
@@ -165,9 +166,9 @@ func (r *stubArtifactRepo) ToolCallArguments(
 	return r.arguments[callID], nil
 }
 
-func observation(name string, data any) serviceports.ToolObservation {
-	return serviceports.ToolObservation{
-		Call: serviceports.ToolCall{ID: "call_" + name, Name: name},
+func observation(name string, data any) agentports.ToolObservation {
+	return agentports.ToolObservation{
+		Call: agentports.ToolCall{ID: "call_" + name, Name: name},
 		Data: data,
 	}
 }
@@ -271,8 +272,8 @@ func TestArtifactFromObservation_RecordsBecomeCardsAndViewsDoNot(t *testing.T) {
 		"moves": []any{},
 	})), "a board is not a record")
 	assert.Nil(t, artifactFromObservation(observation("list_shipments", map[string]any{"id": "x"})))
-	assert.Nil(t, artifactFromObservation(serviceports.ToolObservation{
-		Call:   serviceports.ToolCall{ID: "call_x", Name: "get_shipment"},
+	assert.Nil(t, artifactFromObservation(agentports.ToolObservation{
+		Call:   agentports.ToolCall{ID: "call_x", Name: "get_shipment"},
 		Failed: true,
 	}))
 	assert.Nil(t, artifactFromObservation(observation("get_shipment", nil)))
@@ -362,7 +363,7 @@ func TestArtifactRecorder_KeepsAndAnnouncesWhatATurnProduced(t *testing.T) {
 	t.Parallel()
 
 	repo := &stubArtifactRepo{}
-	var events []serviceports.StreamEvent
+	var events []kernelports.StreamEvent
 	svc := &Service{logger: zap.NewNop(), artifacts: repo}
 	thread := &conversation.Thread{ID: pulid.MustNew("thr_")}
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
@@ -371,7 +372,7 @@ func TestArtifactRecorder_KeepsAndAnnouncesWhatATurnProduced(t *testing.T) {
 		thread,
 		tenant,
 		testActor(),
-		func(event serviceports.StreamEvent) {
+		func(event kernelports.StreamEvent) {
 			events = append(events, event)
 		},
 	)
@@ -383,8 +384,8 @@ func TestArtifactRecorder_KeepsAndAnnouncesWhatATurnProduced(t *testing.T) {
 	assert.Equal(t, thread.ID, repo.upserts[0].ThreadID)
 	assert.Equal(t, tenant.OrgID, repo.upserts[0].OrganizationID)
 	require.Len(t, events, 1)
-	assert.Equal(t, serviceports.AssistantEventArtifact, events[0].Event)
-	announced, ok := events[0].Data.(serviceports.AssistantArtifactEvent)
+	assert.Equal(t, agentports.AssistantEventArtifact, events[0].Event)
+	announced, ok := events[0].Data.(agentports.AssistantArtifactEvent)
 	require.True(t, ok)
 	assert.Equal(t, assistantartifact.KindEntityCard, announced.Kind)
 	assert.Equal(t, "call_get_customer", announced.SourceToolCallID)
@@ -406,11 +407,11 @@ func TestArtifactRecorder_AnnouncesWhereANavigationGoes(t *testing.T) {
 	t.Parallel()
 
 	repo := &stubArtifactRepo{}
-	var events []serviceports.StreamEvent
+	var events []kernelports.StreamEvent
 	svc := &Service{logger: zap.NewNop(), artifacts: repo}
 	thread := &conversation.Thread{ID: pulid.MustNew("thr_")}
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	recorder := svc.newArtifactRecorder(t.Context(), thread, tenant, testActor(), func(event serviceports.StreamEvent) {
+	recorder := svc.newArtifactRecorder(t.Context(), thread, tenant, testActor(), func(event kernelports.StreamEvent) {
 		events = append(events, event)
 	})
 
@@ -421,12 +422,12 @@ func TestArtifactRecorder_AnnouncesWhereANavigationGoes(t *testing.T) {
 	recorder.observe(observation("get_shipment", map[string]any{"id": "shp_1", "proNumber": "PRO-1"}))
 
 	require.Len(t, events, 2)
-	moved, ok := events[0].Data.(serviceports.AssistantArtifactEvent)
+	moved, ok := events[0].Data.(agentports.AssistantArtifactEvent)
 	require.True(t, ok)
 	assert.Equal(t, assistantartifact.KindNavigation, moved.Kind)
 	assert.Equal(t, "/billing/invoices", moved.Path)
 
-	card, ok := events[1].Data.(serviceports.AssistantArtifactEvent)
+	card, ok := events[1].Data.(agentports.AssistantArtifactEvent)
 	require.True(t, ok)
 	assert.Empty(t, card.Path)
 	// The move is announced and not kept: only the card was saved.
@@ -498,8 +499,8 @@ func TestListThreadArtifacts_DraftStatusFollowsTheProposal(t *testing.T) {
 
 	page, err := svc.ListThreadArtifacts(
 		t.Context(),
-		repositories.GetThreadRequest{ID: thread.ID},
-		serviceports.ListArtifactsOptions{},
+		agentports.GetThreadRequest{ID: thread.ID},
+		agentports.ListArtifactsOptions{},
 	)
 	require.NoError(t, err)
 	listed := page.Results
@@ -904,9 +905,9 @@ func TestArtifactRecorder_ReadingTheSameSourceAgainMakesANewVersion(t *testing.T
 		"columns": []any{"number", "status"},
 		"count":   1,
 	}
-	read := func(callID string, status string, data map[string]any) serviceports.ToolObservation {
-		return serviceports.ToolObservation{
-			Call: serviceports.ToolCall{
+	read := func(callID string, status string, data map[string]any) agentports.ToolObservation {
+		return agentports.ToolObservation{
+			Call: agentports.ToolCall{
 				ID:        callID,
 				Name:      "list_billing_queue_items",
 				Arguments: map[string]any{"status": status},

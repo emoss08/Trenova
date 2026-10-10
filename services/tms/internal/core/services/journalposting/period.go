@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -14,11 +14,11 @@ import (
 type PeriodReader interface {
 	GetPeriodByDate(
 		ctx context.Context,
-		req repositories.GetPeriodByDateRequest,
+		req fiscalperiodports.GetPeriodByDateRequest,
 	) (*fiscalperiod.FiscalPeriod, error)
 	ListByFiscalYearID(
 		ctx context.Context,
-		req repositories.ListByFiscalYearIDRequest,
+		req fiscalperiodports.ListByFiscalYearIDRequest,
 	) ([]*fiscalperiod.FiscalPeriod, error)
 }
 
@@ -45,7 +45,7 @@ func ResolvePeriod(
 	periods PeriodReader,
 	req *ResolvePeriodRequest,
 ) (*ResolvedPeriod, error) {
-	period, err := periods.GetPeriodByDate(ctx, repositories.GetPeriodByDateRequest{
+	period, err := periods.GetPeriodByDate(ctx, fiscalperiodports.GetPeriodByDateRequest{
 		OrgID: req.OrganizationID,
 		BuID:  req.BusinessUnitID,
 		Date:  req.Date,
@@ -89,7 +89,7 @@ func nextOpenPeriod(
 		).WithParam("fiscalPeriodId", closed.ID.String())
 	}
 
-	candidates, err := periods.ListByFiscalYearID(ctx, repositories.ListByFiscalYearIDRequest{
+	candidates, err := periods.ListByFiscalYearID(ctx, fiscalperiodports.ListByFiscalYearIDRequest{
 		FiscalYearID: closed.FiscalYearID,
 		OrgID:        req.OrganizationID,
 		BuID:         req.BusinessUnitID,

@@ -6,10 +6,10 @@ import (
 	"sort"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -31,7 +31,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.SequenceConfigRepository {
+func New(p Params) tenantports.SequenceConfigRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.sequenceconfig-repository"),
@@ -40,7 +40,7 @@ func New(p Params) repositories.SequenceConfigRepository {
 
 func (r *repository) GetByTenant(
 	ctx context.Context,
-	req repositories.GetSequenceConfigRequest,
+	req tenantports.GetSequenceConfigRequest,
 ) (*tenant.SequenceConfigDocument, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.SequenceConfigDocument, error) {
 		if err := r.ensureDefaults(ctx, req.TenantInfo.OrgID, req.TenantInfo.BuID); err != nil {
@@ -92,7 +92,7 @@ func (r *repository) UpdateByTenant(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.SequenceConfigDocument, error) {
 		now := timeutils.NowUnix()
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 			for _, cfg := range doc.Configs {
 				if cfg == nil {
 					continue
@@ -146,7 +146,7 @@ func (r *repository) UpdateByTenant(
 			)
 		}
 
-		return r.GetByTenant(ctx, repositories.GetSequenceConfigRequest{
+		return r.GetByTenant(ctx, tenantports.GetSequenceConfigRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: doc.OrganizationID,
 				BuID:  doc.BusinessUnitID,

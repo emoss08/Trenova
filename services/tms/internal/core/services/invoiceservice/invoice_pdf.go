@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/shopspring/decimal"
@@ -114,7 +114,7 @@ func buildInvoicePDFData(
 	var org *tenant.Organization
 	var shp *shipment.Shipment
 	var control *tenant.BillingControl
-	var summaries []*repositories.ShipmentSummary
+	var summaries []*shipmentports.ShipmentSummary
 	if deliveryProfile != nil {
 		cus = deliveryProfile.Customer
 		org = deliveryProfile.Organization
@@ -170,7 +170,7 @@ func applyInvoicePDFFreight(
 	data *invoicePDFData,
 	entity *invoice.Invoice,
 	shp *shipment.Shipment,
-	summaries []*repositories.ShipmentSummary,
+	summaries []*shipmentports.ShipmentSummary,
 ) {
 	if len(summaries) > 1 {
 		data.ShipmentRows = shipmentPDFRows(entity, summaries)
@@ -198,7 +198,7 @@ func invoicePDFPeriod(entity *invoice.Invoice) string {
 
 func shipmentPDFRows(
 	entity *invoice.Invoice,
-	summaries []*repositories.ShipmentSummary,
+	summaries []*shipmentports.ShipmentSummary,
 ) []invoicePDFShipmentRow {
 	rows := make([]invoicePDFShipmentRow, 0, len(summaries))
 	for _, summary := range summaries {

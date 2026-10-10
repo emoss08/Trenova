@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/edix12"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -66,7 +66,7 @@ func (s *Service) ResolvePartnerSettingSchema(
 	if profile.PartnerSettingsSchemaID.IsNotNil() {
 		schema, err := s.partnerSettingRepo.GetPartnerSettingSchema(
 			ctx,
-			repositories.GetEDIPartnerSettingSchemaRequest{
+			ediports.GetEDIPartnerSettingSchemaRequest{
 				ID:         profile.PartnerSettingsSchemaID,
 				TenantInfo: tenantInfo,
 			},
@@ -87,7 +87,7 @@ func (s *Service) ResolvePartnerSettingSchema(
 
 	return s.partnerSettingRepo.GetActivePartnerSettingSchema(
 		ctx,
-		repositories.GetActiveEDIPartnerSettingSchemaRequest{
+		ediports.GetActiveEDIPartnerSettingSchemaRequest{
 			TenantInfo:     tenantInfo,
 			DocumentTypeID: profile.DocumentTypeID,
 			Standard:       profile.Standard,
@@ -137,7 +137,7 @@ func (s *Service) validateProfilePartnerSettings(
 	}
 	fields, err := s.partnerSettingRepo.ListPartnerSettingFields(
 		ctx,
-		&repositories.ListEDIPartnerSettingFieldsRequest{
+		&ediports.ListEDIPartnerSettingFieldsRequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: tenantInfo,
 				Pagination: pagination.Info{Limit: 1000},
@@ -162,7 +162,7 @@ func (s *Service) partnerSettingsValidationProfile(
 	if req.PartnerDocumentProfileID.IsNotNil() {
 		profile, err := s.documentProfileRepo.GetPartnerDocumentProfileByID(
 			ctx,
-			repositories.GetEDIPartnerDocumentProfileByIDRequest{
+			ediports.GetEDIPartnerDocumentProfileByIDRequest{
 				ID:         req.PartnerDocumentProfileID,
 				TenantInfo: req.TenantInfo,
 			},

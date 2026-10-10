@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
 )
@@ -53,7 +53,7 @@ func (s *Service) toolTrust(
 		return new(agent.ToolTrust), nil
 	}
 
-	rows, err := s.trust.ListByDefinition(ctx, repositories.ListToolTrustRequest{
+	rows, err := s.trust.ListByDefinition(ctx, agentports.ListToolTrustRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: definition.OrganizationID,
 			BuID:  definition.BusinessUnitID,

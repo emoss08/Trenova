@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -452,7 +452,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return obj.AdjustmentID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -462,7 +462,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return obj.CorrectionGroupID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -472,7 +472,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return obj.OriginalInvoiceID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -482,7 +482,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return obj.OriginalInvoiceNumber, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -492,7 +492,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return obj.OriginalInvoiceStatus, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -502,7 +502,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return obj.CustomerName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -512,7 +512,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return obj.Kind, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceadjustmentᚐKind),
@@ -522,7 +522,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return obj.Status, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceadjustmentᚐStatus),
@@ -532,7 +532,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return obj.ApprovalStatus, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentApprovalStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceadjustmentᚐApprovalStatus),
@@ -543,7 +543,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return gqlexec.Resolver[resolverInvoiceAdjustmentApprovalQueueItem](ec, "InvoiceAdjustmentApprovalQueueItem").RebillStrategy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInvoiceAdjustmentRebillStrategy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceadjustmentᚐRebillStrategy),
@@ -553,7 +553,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return obj.Reason, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -563,7 +563,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return obj.PolicyReason, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -573,7 +573,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return obj.PolicySource, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -585,7 +585,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return gqlexec.Resolver[resolverInvoiceAdjustmentApprovalQueueItem](ec, "InvoiceAdjustmentApprovalQueueItem").CreditTotalAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -597,7 +597,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return gqlexec.Resolver[resolverInvoiceAdjustmentApprovalQueueItem](ec, "InvoiceAdjustmentApprovalQueueItem").RebillTotalAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -609,7 +609,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return gqlexec.Resolver[resolverInvoiceAdjustmentApprovalQueueItem](ec, "InvoiceAdjustmentApprovalQueueItem").NetDeltaAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -621,7 +621,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return gqlexec.Resolver[resolverInvoiceAdjustmentApprovalQueueItem](ec, "InvoiceAdjustmentApprovalQueueItem").RerateVariancePercent(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -631,7 +631,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return obj.WouldCreateUnappliedCredit, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -641,7 +641,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return obj.RequiresReconciliationException, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -651,7 +651,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return obj.RequiresReplacementInvoiceReview, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -660,7 +660,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "submittedById",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return obj.SubmittedByID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -670,7 +670,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return obj.SubmittedByName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -679,7 +679,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "submittedAt",
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return obj.SubmittedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -688,7 +688,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "approvedById",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return obj.ApprovedByID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -698,7 +698,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return obj.ApprovedByName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -707,7 +707,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "approvedAt",
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return obj.ApprovedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -716,7 +716,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "rejectedById",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return obj.RejectedByID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -726,7 +726,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return obj.RejectedByName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -735,7 +735,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "rejectedAt",
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return obj.RejectedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -745,7 +745,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return obj.RejectionReason, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -754,7 +754,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "creditMemoInvoiceId",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return obj.CreditMemoInvoiceID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -764,7 +764,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return obj.CreditMemoInvoiceNumber, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -773,7 +773,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "replacementInvoiceId",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return obj.ReplacementInvoiceID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -783,7 +783,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return obj.ReplacementInvoiceNumber, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -792,7 +792,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "rebillQueueItemId",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return obj.RebillQueueItemID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -802,7 +802,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return obj.RebillQueueNumber, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -811,7 +811,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "batchId",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return obj.BatchID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -821,7 +821,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return obj.CreatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -831,7 +831,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentApprovalQueueItem)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1004,7 +1004,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "InvoiceAdjustmentSummaryCount",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentOperationsSummary)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentOperationsSummary)
 					return obj.AdjustmentsByStatus, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentSummaryCount2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐInvoiceAdjustmentSummaryCountᚄ),
@@ -1014,7 +1014,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentOperationsSummary)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentOperationsSummary)
 					return obj.ApprovalsPending, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1024,7 +1024,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentOperationsSummary)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentOperationsSummary)
 					return obj.ReconciliationPending, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1034,7 +1034,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentOperationsSummary)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentOperationsSummary)
 					return obj.WriteOffPending, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1044,7 +1044,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentOperationsSummary)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentOperationsSummary)
 					return obj.BatchesInFlight, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1054,7 +1054,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentOperationsSummary)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentOperationsSummary)
 					return obj.FailedBatchItems, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1065,7 +1065,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "InvoiceAdjustmentSummaryCount",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentOperationsSummary)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentOperationsSummary)
 					return obj.ReasonDistribution, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentSummaryCount2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐInvoiceAdjustmentSummaryCountᚄ),
@@ -1076,7 +1076,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "InvoiceAdjustmentRepeatedSummary",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentOperationsSummary)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentOperationsSummary)
 					return obj.RepeatedAdjustments, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentRepeatedSummary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐInvoiceAdjustmentRepeatedSummaryᚄ),
@@ -1087,7 +1087,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "InvoiceAdjustmentRepeatedSummary",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentOperationsSummary)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentOperationsSummary)
 					return obj.RepeatedCustomerAdjustments, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentRepeatedSummary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐInvoiceAdjustmentRepeatedSummaryᚄ),
@@ -1099,7 +1099,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentRepeatedSummary)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentRepeatedSummary)
 					return obj.EntityID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1109,7 +1109,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentRepeatedSummary)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentRepeatedSummary)
 					return obj.EntityType, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1119,7 +1119,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentRepeatedSummary)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentRepeatedSummary)
 					return obj.Label, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1129,7 +1129,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentRepeatedSummary)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentRepeatedSummary)
 					return obj.Count, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1141,7 +1141,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentSummaryCount)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentSummaryCount)
 					return obj.Label, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1151,7 +1151,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.InvoiceAdjustmentSummaryCount)
+					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentSummaryCount)
 					return obj.Count, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1249,11 +1249,11 @@ type resolverInvoiceAdjustment interface {
 }
 
 type resolverInvoiceAdjustmentApprovalQueueItem interface {
-	RebillStrategy(ctx context.Context, obj *repositories.InvoiceAdjustmentApprovalQueueItem) (*invoiceadjustment.RebillStrategy, error)
-	CreditTotalAmount(ctx context.Context, obj *repositories.InvoiceAdjustmentApprovalQueueItem) (string, error)
-	RebillTotalAmount(ctx context.Context, obj *repositories.InvoiceAdjustmentApprovalQueueItem) (string, error)
-	NetDeltaAmount(ctx context.Context, obj *repositories.InvoiceAdjustmentApprovalQueueItem) (string, error)
-	RerateVariancePercent(ctx context.Context, obj *repositories.InvoiceAdjustmentApprovalQueueItem) (string, error)
+	RebillStrategy(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem) (*invoiceadjustment.RebillStrategy, error)
+	CreditTotalAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem) (string, error)
+	RebillTotalAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem) (string, error)
+	NetDeltaAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem) (string, error)
+	RerateVariancePercent(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem) (string, error)
 }
 
 type resolverInvoiceAdjustmentLine interface {
@@ -1272,7 +1272,7 @@ type resolverMutation interface {
 type resolverQuery interface {
 	InvoiceAdjustment(ctx context.Context, id string) (*invoiceadjustment.InvoiceAdjustment, error)
 	InvoiceAdjustmentApprovals(ctx context.Context, input gqlmodel.InvoiceAdjustmentApprovalsInput) (*gqlmodel.InvoiceAdjustmentApprovalQueueConnection, error)
-	InvoiceAdjustmentOperationsSummary(ctx context.Context) (*repositories.InvoiceAdjustmentOperationsSummary, error)
+	InvoiceAdjustmentOperationsSummary(ctx context.Context) (*invoiceadjustmentports.InvoiceAdjustmentOperationsSummary, error)
 }
 
 var (
@@ -1559,7 +1559,7 @@ func marshalNInvoiceAdjustmentApprovalQueueEdge2ᚖgithubᚗcomᚋemoss08ᚋtren
 	return ec.MarshalType(ctx, sel, "InvoiceAdjustmentApprovalQueueEdge", v)
 }
 
-func marshalNInvoiceAdjustmentApprovalQueueItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐInvoiceAdjustmentApprovalQueueItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *repositories.InvoiceAdjustmentApprovalQueueItem) graphql.Marshaler {
+func marshalNInvoiceAdjustmentApprovalQueueItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐInvoiceAdjustmentApprovalQueueItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1599,7 +1599,7 @@ func marshalNInvoiceAdjustmentLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return ec.MarshalType(ctx, sel, "InvoiceAdjustmentLine", v)
 }
 
-func marshalNInvoiceAdjustmentOperationsSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐInvoiceAdjustmentOperationsSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *repositories.InvoiceAdjustmentOperationsSummary) graphql.Marshaler {
+func marshalNInvoiceAdjustmentOperationsSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐInvoiceAdjustmentOperationsSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoiceadjustmentports.InvoiceAdjustmentOperationsSummary) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1607,15 +1607,15 @@ func marshalNInvoiceAdjustmentOperationsSummary2ᚖgithubᚗcomᚋemoss08ᚋtren
 	return ec.MarshalType(ctx, sel, "InvoiceAdjustmentOperationsSummary", v)
 }
 
-func marshalNInvoiceAdjustmentRepeatedSummary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐInvoiceAdjustmentRepeatedSummaryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*repositories.InvoiceAdjustmentRepeatedSummary) graphql.Marshaler {
-	return gqlexec.List[*repositories.InvoiceAdjustmentRepeatedSummary]{
+func marshalNInvoiceAdjustmentRepeatedSummary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐInvoiceAdjustmentRepeatedSummaryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*invoiceadjustmentports.InvoiceAdjustmentRepeatedSummary) graphql.Marshaler {
+	return gqlexec.List[*invoiceadjustmentports.InvoiceAdjustmentRepeatedSummary]{
 		Elem:        marshalNInvoiceAdjustmentRepeatedSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐInvoiceAdjustmentRepeatedSummary,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNInvoiceAdjustmentRepeatedSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐInvoiceAdjustmentRepeatedSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *repositories.InvoiceAdjustmentRepeatedSummary) graphql.Marshaler {
+func marshalNInvoiceAdjustmentRepeatedSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐInvoiceAdjustmentRepeatedSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoiceadjustmentports.InvoiceAdjustmentRepeatedSummary) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1639,15 +1639,15 @@ func marshalNInvoiceAdjustmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return res
 }
 
-func marshalNInvoiceAdjustmentSummaryCount2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐInvoiceAdjustmentSummaryCountᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*repositories.InvoiceAdjustmentSummaryCount) graphql.Marshaler {
-	return gqlexec.List[*repositories.InvoiceAdjustmentSummaryCount]{
+func marshalNInvoiceAdjustmentSummaryCount2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐInvoiceAdjustmentSummaryCountᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*invoiceadjustmentports.InvoiceAdjustmentSummaryCount) graphql.Marshaler {
+	return gqlexec.List[*invoiceadjustmentports.InvoiceAdjustmentSummaryCount]{
 		Elem:        marshalNInvoiceAdjustmentSummaryCount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐInvoiceAdjustmentSummaryCount,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNInvoiceAdjustmentSummaryCount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐInvoiceAdjustmentSummaryCount(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *repositories.InvoiceAdjustmentSummaryCount) graphql.Marshaler {
+func marshalNInvoiceAdjustmentSummaryCount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐInvoiceAdjustmentSummaryCount(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoiceadjustmentports.InvoiceAdjustmentSummaryCount) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

@@ -7,9 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,8 +24,8 @@ type fakeCommentModerator struct {
 	refusal  error
 	pinned   *bool
 	resolved *bool
-	updated  *serviceports.UpdateShipmentCommentRequest
-	deleted  *serviceports.DeleteShipmentCommentRequest
+	updated  *shipmentports.UpdateShipmentCommentRequest
+	deleted  *shipmentports.DeleteShipmentCommentRequest
 	replies  int64
 }
 
@@ -47,7 +48,7 @@ func (f *fakeCommentModerator) comment() *shipment.ShipmentComment {
 
 func (f *fakeCommentModerator) GetByID(
 	context.Context,
-	*repositories.GetShipmentCommentByIDRequest,
+	*shipmentports.GetShipmentCommentByIDRequest,
 ) (*shipment.ShipmentComment, error) {
 	if f.refusal != nil {
 		return nil, f.refusal
@@ -67,40 +68,40 @@ func (f *fakeCommentModerator) toggle(pinned, resolved *bool) (*shipment.Shipmen
 
 func (f *fakeCommentModerator) Pin(
 	context.Context,
-	*serviceports.ToggleShipmentCommentRequest,
-	*serviceports.RequestActor,
+	*shipmentports.ToggleShipmentCommentRequest,
+	*permissionports.RequestActor,
 ) (*shipment.ShipmentComment, error) {
 	return f.toggle(boolPointer(true), nil)
 }
 
 func (f *fakeCommentModerator) Unpin(
 	context.Context,
-	*serviceports.ToggleShipmentCommentRequest,
-	*serviceports.RequestActor,
+	*shipmentports.ToggleShipmentCommentRequest,
+	*permissionports.RequestActor,
 ) (*shipment.ShipmentComment, error) {
 	return f.toggle(boolPointer(false), nil)
 }
 
 func (f *fakeCommentModerator) Resolve(
 	context.Context,
-	*serviceports.ToggleShipmentCommentRequest,
-	*serviceports.RequestActor,
+	*shipmentports.ToggleShipmentCommentRequest,
+	*permissionports.RequestActor,
 ) (*shipment.ShipmentComment, error) {
 	return f.toggle(nil, boolPointer(true))
 }
 
 func (f *fakeCommentModerator) Unresolve(
 	context.Context,
-	*serviceports.ToggleShipmentCommentRequest,
-	*serviceports.RequestActor,
+	*shipmentports.ToggleShipmentCommentRequest,
+	*permissionports.RequestActor,
 ) (*shipment.ShipmentComment, error) {
 	return f.toggle(nil, boolPointer(false))
 }
 
 func (f *fakeCommentModerator) Update(
 	_ context.Context,
-	req *serviceports.UpdateShipmentCommentRequest,
-	_ *serviceports.RequestActor,
+	req *shipmentports.UpdateShipmentCommentRequest,
+	_ *permissionports.RequestActor,
 ) (*shipment.ShipmentComment, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -112,8 +113,8 @@ func (f *fakeCommentModerator) Update(
 
 func (f *fakeCommentModerator) Delete(
 	_ context.Context,
-	req *serviceports.DeleteShipmentCommentRequest,
-	_ *serviceports.RequestActor,
+	req *shipmentports.DeleteShipmentCommentRequest,
+	_ *permissionports.RequestActor,
 ) error {
 	if err := f.guard.write(); err != nil {
 		return err
@@ -125,10 +126,10 @@ func (f *fakeCommentModerator) Delete(
 
 func (f *fakeCommentModerator) PreviewPin(
 	_ context.Context,
-	_ *serviceports.ToggleShipmentCommentRequest,
-	actor *serviceports.RequestActor,
+	_ *shipmentports.ToggleShipmentCommentRequest,
+	actor *permissionports.RequestActor,
 	pinned bool,
-) (*serviceports.ShipmentCommentChange, error) {
+) (*shipmentports.ShipmentCommentChange, error) {
 	if f.refusal != nil {
 		return nil, f.refusal
 	}
@@ -143,15 +144,15 @@ func (f *fakeCommentModerator) PreviewPin(
 		after.PinnedByID = nil
 	}
 
-	return &serviceports.ShipmentCommentChange{Before: before, After: &after}, nil
+	return &shipmentports.ShipmentCommentChange{Before: before, After: &after}, nil
 }
 
 func (f *fakeCommentModerator) PreviewResolve(
 	_ context.Context,
-	_ *serviceports.ToggleShipmentCommentRequest,
-	actor *serviceports.RequestActor,
+	_ *shipmentports.ToggleShipmentCommentRequest,
+	actor *permissionports.RequestActor,
 	resolved bool,
-) (*serviceports.ShipmentCommentChange, error) {
+) (*shipmentports.ShipmentCommentChange, error) {
 	before := f.comment()
 	after := *before
 	if resolved {
@@ -163,27 +164,27 @@ func (f *fakeCommentModerator) PreviewResolve(
 		after.ResolvedByID = nil
 	}
 
-	return &serviceports.ShipmentCommentChange{Before: before, After: &after}, nil
+	return &shipmentports.ShipmentCommentChange{Before: before, After: &after}, nil
 }
 
 func (f *fakeCommentModerator) PreviewUpdate(
 	_ context.Context,
-	req *serviceports.UpdateShipmentCommentRequest,
-	_ *serviceports.RequestActor,
-) (*serviceports.ShipmentCommentChange, error) {
+	req *shipmentports.UpdateShipmentCommentRequest,
+	_ *permissionports.RequestActor,
+) (*shipmentports.ShipmentCommentChange, error) {
 	if f.refusal != nil {
 		return nil, f.refusal
 	}
 
-	return &serviceports.ShipmentCommentChange{Before: f.comment(), After: req.Entity}, nil
+	return &shipmentports.ShipmentCommentChange{Before: f.comment(), After: req.Entity}, nil
 }
 
 func (f *fakeCommentModerator) PreviewDelete(
 	context.Context,
-	*serviceports.DeleteShipmentCommentRequest,
-	*serviceports.RequestActor,
-) (*serviceports.ShipmentCommentDeletion, error) {
-	return &serviceports.ShipmentCommentDeletion{
+	*shipmentports.DeleteShipmentCommentRequest,
+	*permissionports.RequestActor,
+) (*shipmentports.ShipmentCommentDeletion, error) {
+	return &shipmentports.ShipmentCommentDeletion{
 		Comment:    f.comment(),
 		Tombstoned: f.replies > 0,
 	}, nil
@@ -192,25 +193,25 @@ func (f *fakeCommentModerator) PreviewDelete(
 type fakePermissionCheck struct {
 	allowed  bool
 	err      error
-	requests []*serviceports.PermissionCheckRequest
+	requests []*permissionports.PermissionCheckRequest
 }
 
 func (f *fakePermissionCheck) Check(
 	_ context.Context,
-	req *serviceports.PermissionCheckRequest,
-) (*serviceports.PermissionCheckResult, error) {
+	req *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
 	f.requests = append(f.requests, req)
 	if f.err != nil {
 		return nil, f.err
 	}
 
-	return &serviceports.PermissionCheckResult{Allowed: f.allowed}, nil
+	return &permissionports.PermissionCheckResult{Allowed: f.allowed}, nil
 }
 
 func commentParams(
 	comments *fakeCommentModerator,
 	extra map[string]any,
-) serviceports.ToolExecuteParams {
+) agentports.ToolExecuteParams {
 	raw := map[string]any{
 		paramShipmentID: comments.comment().ShipmentID.String(),
 		paramCommentID:  comments.comment().ID.String(),
@@ -230,13 +231,13 @@ func TestPinShipmentComment_PreviewsThePinAndWrites(t *testing.T) {
 	params := commentParams(comments, nil)
 
 	preview := previewWithoutWrites(t, comments.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	change := previewChange(t, preview, 0)
 	assert.Equal(t, agent.PreviewOperationUpdate, change.Operation)
 	assert.NotNil(t, fieldByPath(t, change, fieldPinnedByID).After)
 
-	result, err := tool.(serviceports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	assert.Equal(t, "pinned", result.Action)
 	require.NotNil(t, comments.pinned)
@@ -259,7 +260,7 @@ func TestUnpinShipmentComment_ClearsThePin(t *testing.T) {
 	params := commentParams(comments, nil)
 
 	preview := previewWithoutWrites(t, comments.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Nil(t, fieldByPath(t, previewChange(t, preview, 0), fieldPinnedByID).After)
 
@@ -283,7 +284,7 @@ func TestResolveShipmentComment_ResolvesByDefaultAndReopensOnFalse(t *testing.T)
 
 	reopen := commentParams(comments, map[string]any{paramResolved: false})
 	preview := previewWithoutWrites(t, comments.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), reopen)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), reopen)
 	})
 	assert.Contains(t, preview.Summary, "resolve")
 	err = tool.Execute(t.Context(), reopen)
@@ -302,7 +303,7 @@ func TestPinShipmentComment_AReplyIsAWouldFail(t *testing.T) {
 	}
 	tool := newPinShipmentCommentTool(comments)
 
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(),
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(),
 		commentParams(comments, nil))
 	require.NoError(t, err)
 	requireWarning(t, preview, agent.PreviewWarningWouldFail)
@@ -326,7 +327,7 @@ func TestEditShipmentComment_ChangesOnlyWhatIsSentAndKeepsMentions(t *testing.T)
 	params.Actor.UserID = comments.comment().UserID
 
 	preview := previewWithoutWrites(t, comments.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	change := previewChange(t, preview, 0)
 	assert.Equal(t, "High", fieldByPath(t, change, fieldPriority).After)
@@ -416,12 +417,12 @@ func TestDeleteShipmentComment_SaysWhenAPlaceholderStays(t *testing.T) {
 	params := commentParams(comments, nil)
 
 	preview := previewWithoutWrites(t, comments.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "placeholder")
 	assert.Equal(t, agent.PreviewOperationDelete, previewChange(t, preview, 0).Operation)
 
-	result, err := tool.(serviceports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	assert.Equal(t, "deleted", result.Action)
 	require.NotNil(t, comments.deleted)

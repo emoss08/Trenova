@@ -9,9 +9,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -44,7 +45,7 @@ type MailboxSettings struct {
 }
 
 type CreateMailboxRequest struct {
-	Actor    *services.RequestActor
+	Actor    *permissionports.RequestActor
 	Settings MailboxSettings
 	// SigningSecret is optional at creation: a mailbox without one refuses
 	// every delivery until it is set, which is the safe way to be half done.
@@ -56,25 +57,25 @@ type CreateMailboxRequest struct {
 }
 
 type UpdateMailboxRequest struct {
-	Actor    *services.RequestActor
+	Actor    *permissionports.RequestActor
 	ID       pulid.ID
 	Version  int64
 	Settings MailboxSettings
 }
 
 type MailboxActionRequest struct {
-	Actor *services.RequestActor
+	Actor *permissionports.RequestActor
 	ID    pulid.ID
 }
 
 type SetMailboxSecretRequest struct {
-	Actor  *services.RequestActor
+	Actor  *permissionports.RequestActor
 	ID     pulid.ID
 	Secret string
 }
 
 type SetMailboxAPIKeyRequest struct {
-	Actor  *services.RequestActor
+	Actor  *permissionports.RequestActor
 	ID     pulid.ID
 	APIKey string
 }
@@ -199,7 +200,7 @@ func (s *Service) getMailbox(
 ) (*inboundmessage.Mailbox, error) {
 	return s.mailboxRepo.GetByID(
 		ctx,
-		repositories.GetMailboxByIDRequest{ID: id, TenantInfo: tenant},
+		inboundmessageports.GetMailboxByIDRequest{ID: id, TenantInfo: tenant},
 	)
 }
 
@@ -386,7 +387,7 @@ func (s *Service) SetMailboxAPIKey(
 // auditMailbox records a configuration change. The token hash, the sealed
 // secret and the sealed API key are not serialised with the mailbox, so neither reaches the log.
 func (s *Service) auditMailbox(
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	op permission.Operation,
 	before, after *inboundmessage.Mailbox,
 	comment string,
@@ -396,7 +397,7 @@ func (s *Service) auditMailbox(
 	}
 
 	auditActor := actor.AuditActor()
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceInboundMailbox,
 		ResourceID:     after.ID.String(),
 		Operation:      op,
@@ -408,7 +409,7 @@ func (s *Service) auditMailbox(
 		OrganizationID: after.OrganizationID,
 		BusinessUnitID: after.BusinessUnitID,
 	}
-	options := []services.LogOption{auditservice.WithComment(comment)}
+	options := []auditports.LogOption{auditservice.WithComment(comment)}
 	if before != nil {
 		params.PreviousState = jsonutils.MustToJSON(before)
 		options = append(options, auditservice.WithDiff(before, after))

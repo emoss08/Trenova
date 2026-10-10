@@ -6,14 +6,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
-
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -41,21 +41,21 @@ func (subsetProposalTool) ParamSchema() map[string]any {
 	}
 }
 
-func (subsetProposalTool) Policy() services.ToolPolicy { return services.ToolPolicy{} }
+func (subsetProposalTool) Policy() agentports.ToolPolicy { return agentports.ToolPolicy{} }
 
-func (subsetProposalTool) Execute(context.Context, services.ToolExecuteParams) error {
+func (subsetProposalTool) Execute(context.Context, agentports.ToolExecuteParams) error {
 	return nil
 }
 
 type subsetToolRegistry struct{}
 
-func (subsetToolRegistry) Get(string) (services.AgentTool, bool) {
+func (subsetToolRegistry) Get(string) (agentports.AgentTool, bool) {
 	return subsetProposalTool{}, true
 }
 
-func (subsetToolRegistry) All() []services.AgentTool { return nil }
+func (subsetToolRegistry) All() []agentports.AgentTool { return nil }
 
-func (subsetToolRegistry) Descriptors() []services.AgentToolDescriptor { return nil }
+func (subsetToolRegistry) Descriptors() []agentports.AgentToolDescriptor { return nil }
 
 // A client builds the approval form from parameterFields: a record-subset
 // parameter comes back as RecordSubset naming the resource its ids belong to,
@@ -91,7 +91,7 @@ func TestAgentProposalParameterFields_ExposeARecordSubset(t *testing.T) {
 
 type choiceLabeler struct {
 	mu     sync.Mutex
-	labels services.RecordLabels
+	labels agentports.RecordLabels
 	reads  int
 }
 
@@ -99,12 +99,12 @@ func (l *choiceLabeler) Labels(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	refs map[permission.Resource][]pulid.ID,
-) (services.RecordLabels, error) {
+) (agentports.RecordLabels, error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	l.reads++
 
-	out := make(services.RecordLabels, len(refs))
+	out := make(agentports.RecordLabels, len(refs))
 	for resource, ids := range refs {
 		out[resource] = make(map[pulid.ID]string, len(ids))
 		for _, id := range ids {
@@ -144,11 +144,11 @@ func newChoicesHarness(t *testing.T, granted bool) *choicesHarness {
 		gone:  pulid.MustNew("shp_"),
 		other: pulid.MustNew("shp_"),
 	}
-	h.labeler = &choiceLabeler{labels: services.RecordLabels{
+	h.labeler = &choiceLabeler{labels: agentports.RecordLabels{
 		permission.ResourceShipment: {h.known: "PRO-1001", h.other: "PRO-2002"},
 	}}
 	auth := &authctx.AuthContext{
-		PrincipalType:  string(services.PrincipalTypeUser),
+		PrincipalType:  string(permissionports.PrincipalTypeUser),
 		PrincipalID:    pulid.MustNew("usr_"),
 		UserID:         pulid.MustNew("usr_"),
 		OrganizationID: pulid.MustNew("org_"),

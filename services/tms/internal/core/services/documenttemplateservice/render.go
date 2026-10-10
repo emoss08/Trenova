@@ -6,8 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/templateengine"
 	"github.com/emoss08/trenova/shared/i18n"
@@ -18,8 +17,8 @@ import (
 // caller's kind and customer.
 func (s *Service) RenderDocument(
 	ctx context.Context,
-	req *services.RenderDocumentRequest,
-) (*services.RenderedDocument, error) {
+	req *documenttemplateports.RenderDocumentRequest,
+) (*documenttemplateports.RenderedDocument, error) {
 	def, ok := s.registry.Get(req.Kind)
 	if !ok {
 		return nil, errortypes.NewBusinessError("Template kind \"{0}\" is not registered", req.Kind)
@@ -32,7 +31,7 @@ func (s *Service) RenderDocument(
 		)
 	}
 
-	resolved, err := s.Resolve(ctx, &services.ResolveTemplateRequest{
+	resolved, err := s.Resolve(ctx, &documenttemplateports.ResolveTemplateRequest{
 		TenantInfo: req.TenantInfo,
 		Kind:       req.Kind,
 		CustomerID: req.CustomerID,
@@ -42,7 +41,7 @@ func (s *Service) RenderDocument(
 		return nil, err
 	}
 
-	data, err := s.contextFor(ctx, req.Kind, req.Data, &services.BuildContextRequest{
+	data, err := s.contextFor(ctx, req.Kind, req.Data, &documenttemplateports.BuildContextRequest{
 		TenantInfo:  req.TenantInfo,
 		Kind:        req.Kind,
 		ReferenceID: req.ReferenceID,
@@ -62,7 +61,7 @@ func (s *Service) RenderDocument(
 		return nil, err
 	}
 
-	out := &services.RenderedDocument{
+	out := &documenttemplateports.RenderedDocument{
 		HTML:        rendered.body,
 		Source:      resolved.Source,
 		TemplateID:  resolved.TemplateID,
@@ -95,7 +94,7 @@ type renderedDocument struct {
 func (s *Service) renderDocumentHTML(
 	ctx context.Context,
 	def *documenttemplate.KindDefinition,
-	resolved *services.ResolvedTemplate,
+	resolved *documenttemplateports.ResolvedTemplate,
 	data any,
 	title string,
 	opts compileOptions,
@@ -121,7 +120,7 @@ func (s *Service) renderDocumentHTML(
 
 	// Images are resolved after rendering, not before: the source may build a
 	// src from context, and only the rendered markup knows the final URL.
-	inlined, err := s.inliner.InlineAssets(ctx, &services.AssetInlineRequest{
+	inlined, err := s.inliner.InlineAssets(ctx, &documenttemplateports.AssetInlineRequest{
 		HTML:  document,
 		Field: documenttemplate.ChannelPDF.Field(),
 	})
@@ -186,16 +185,16 @@ func (s *Service) renderRunningPart(
 
 func (s *Service) printPDF(
 	ctx context.Context,
-	resolved *services.ResolvedTemplate,
+	resolved *documenttemplateports.ResolvedTemplate,
 	rendered *renderedDocument,
 	title string,
 	traceID string,
 ) ([]byte, error) {
 	if !s.pdf.Enabled() {
-		return nil, services.ErrPDFRendererUnavailable
+		return nil, documenttemplateports.ErrPDFRendererUnavailable
 	}
 
-	pdf, err := s.pdf.Render(ctx, &services.PDFRenderRequest{
+	pdf, err := s.pdf.Render(ctx, &documenttemplateports.PDFRenderRequest{
 		HTML:        rendered.body,
 		HeaderHTML:  rendered.header,
 		FooterHTML:  rendered.footer,
@@ -218,8 +217,8 @@ func (s *Service) printPDF(
 // which of them a given kind uses.
 func (s *Service) RenderMessage(
 	ctx context.Context,
-	req *services.RenderMessageRequest,
-) (*services.RenderedMessage, error) {
+	req *documenttemplateports.RenderMessageRequest,
+) (*documenttemplateports.RenderedMessage, error) {
 	def, ok := s.registry.Get(req.Kind)
 	if !ok {
 		return nil, errortypes.NewBusinessError("Template kind \"{0}\" is not registered", req.Kind)
@@ -230,7 +229,7 @@ func (s *Service) RenderMessage(
 		return nil, err
 	}
 
-	data, err := s.contextFor(ctx, req.Kind, req.Data, &services.BuildContextRequest{
+	data, err := s.contextFor(ctx, req.Kind, req.Data, &documenttemplateports.BuildContextRequest{
 		TenantInfo:  req.TenantInfo,
 		Kind:        req.Kind,
 		ReferenceID: req.ReferenceID,
@@ -265,9 +264,9 @@ func (s *Service) RenderMessage(
 
 func (s *Service) resolveForMessage(
 	ctx context.Context,
-	req *services.RenderMessageRequest,
-) (*services.ResolvedTemplate, error) {
-	return s.Resolve(ctx, &services.ResolveTemplateRequest{
+	req *documenttemplateports.RenderMessageRequest,
+) (*documenttemplateports.ResolvedTemplate, error) {
+	return s.Resolve(ctx, &documenttemplateports.ResolveTemplateRequest{
 		TenantInfo: req.TenantInfo,
 		Kind:       req.Kind,
 		CustomerID: req.CustomerID,
@@ -278,10 +277,10 @@ func (s *Service) resolveForMessage(
 func (s *Service) renderMessageWith(
 	ctx context.Context,
 	def *documenttemplate.KindDefinition,
-	resolved *services.ResolvedTemplate,
+	resolved *documenttemplateports.ResolvedTemplate,
 	data any,
 	locale i18n.Locale,
-) (*services.RenderedMessage, error) {
+) (*documenttemplateports.RenderedMessage, error) {
 	compiled := s.compile(def, &resolved.Content, compileOptions{
 		CacheKeyPrefix: s.cacheKeyFor(resolved),
 		Locale:         locale,
@@ -291,7 +290,7 @@ func (s *Service) renderMessageWith(
 		return nil, multiErr
 	}
 
-	out := &services.RenderedMessage{
+	out := &documenttemplateports.RenderedMessage{
 		Source:      resolved.Source,
 		TemplateID:  resolved.TemplateID,
 		VersionID:   resolved.VersionID,
@@ -327,7 +326,7 @@ func (s *Service) renderMessageWith(
 	}
 
 	if out.HTML != "" {
-		inlined, err := s.inliner.InlineAssets(ctx, &services.AssetInlineRequest{
+		inlined, err := s.inliner.InlineAssets(ctx, &documenttemplateports.AssetInlineRequest{
 			HTML:  out.HTML,
 			Field: documenttemplate.ChannelEmailHTML.Field(),
 		})
@@ -348,8 +347,8 @@ func (s *Service) renderMessageWith(
 // the complaint at the same time.
 func (s *Service) PreviewVersion(
 	ctx context.Context,
-	req *services.PreviewVersionRequest,
-) (*services.PreviewResult, error) {
+	req *documenttemplateports.PreviewVersionRequest,
+) (*documenttemplateports.PreviewResult, error) {
 	resolved, err := s.previewSource(ctx, req)
 	if err != nil {
 		return nil, err
@@ -377,7 +376,7 @@ func (s *Service) PreviewVersion(
 	// A draft changes under a stable id, so previews are never cached by key.
 	compiled := s.compile(def, &resolved.Content, compileOptions{})
 
-	result := &services.PreviewResult{
+	result := &documenttemplateports.PreviewResult{
 		Source:      resolved.Source,
 		ContentHash: resolved.ContentHash,
 		Diagnostics: compiled.diags.Sorted(),
@@ -419,10 +418,10 @@ func (s *Service) PreviewVersion(
 func (s *Service) fillPreviewChannels(
 	ctx context.Context,
 	def *documenttemplate.KindDefinition,
-	resolved *services.ResolvedTemplate,
+	resolved *documenttemplateports.ResolvedTemplate,
 	compiled *compiledVersion,
 	data any,
-	result *services.PreviewResult,
+	result *documenttemplateports.PreviewResult,
 ) error {
 	for _, channel := range def.Channels {
 		target := compiled.compiledFor(channel)
@@ -460,8 +459,8 @@ func (s *Service) fillPreviewChannels(
 // stored version, or the built-in.
 func (s *Service) previewSource(
 	ctx context.Context,
-	req *services.PreviewVersionRequest,
-) (*services.ResolvedTemplate, error) {
+	req *documenttemplateports.PreviewVersionRequest,
+) (*documenttemplateports.ResolvedTemplate, error) {
 	if req.Content != nil {
 		kind := req.Kind
 		if kind == "" {
@@ -473,7 +472,7 @@ func (s *Service) previewSource(
 		content := *req.Content
 		applyPageDefaults(&content)
 
-		return &services.ResolvedTemplate{
+		return &documenttemplateports.ResolvedTemplate{
 			Kind: kind,
 			// Unsaved content belongs to no tier yet. Reporting the tier it
 			// would land in would be a guess the author could act on wrongly.
@@ -486,7 +485,7 @@ func (s *Service) previewSource(
 	if req.VersionID != nil && !req.VersionID.IsNil() {
 		version, err := s.versionRepo.GetByID(
 			ctx,
-			&repositories.GetDocumentTemplateVersionByIDRequest{
+			&documenttemplateports.GetDocumentTemplateVersionByIDRequest{
 				VersionID:  *req.VersionID,
 				TenantInfo: req.TenantInfo,
 			},
@@ -506,7 +505,7 @@ func (s *Service) previewSource(
 			source = documenttemplate.SourceAssigned
 		}
 
-		return &services.ResolvedTemplate{
+		return &documenttemplateports.ResolvedTemplate{
 			Kind:        kind,
 			Source:      source,
 			Content:     content,
@@ -527,7 +526,7 @@ func (s *Service) previewSource(
 
 // applyPageDefaults fills the page box a draft has not chosen, so a preview
 // never asks the renderer for a page with no area.
-func applyPageDefaults(content *services.TemplateContent) {
+func applyPageDefaults(content *documenttemplateports.TemplateContent) {
 	if !content.PageSize.IsValid() {
 		content.PageSize = documenttemplate.PageSizeLetter
 	}
@@ -541,7 +540,7 @@ func applyPageDefaults(content *services.TemplateContent) {
 
 // cacheKeyFor reuses a compilation only for content that cannot change under
 // its own identity: a published version and a built-in are both immutable.
-func (s *Service) cacheKeyFor(resolved *services.ResolvedTemplate) string {
+func (s *Service) cacheKeyFor(resolved *documenttemplateports.ResolvedTemplate) string {
 	if resolved.ContentHash == "" {
 		return ""
 	}
@@ -552,7 +551,7 @@ func (s *Service) contextFor(
 	ctx context.Context,
 	kind documenttemplate.Kind,
 	supplied any,
-	req *services.BuildContextRequest,
+	req *documenttemplateports.BuildContextRequest,
 ) (any, error) {
 	if supplied != nil {
 		return supplied, nil

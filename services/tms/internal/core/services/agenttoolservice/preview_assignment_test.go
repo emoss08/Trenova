@@ -7,19 +7,19 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/assignmentservice"
 	"github.com/emoss08/trenova/internal/core/services/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/core/services/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/core/services/dispatcheligibility"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type savingAssignments struct {
-	serviceports.AssignmentService
+	shipmentports.AssignmentService
 
 	shipment *shipment.Shipment
 	existing *shipment.Assignment
@@ -28,8 +28,8 @@ type savingAssignments struct {
 }
 
 func (f *savingAssignments) plan(
-	req *repositories.AssignShipmentMoveRequest,
-) (*serviceports.AssignmentPlan, error) {
+	req *shipmentports.AssignShipmentMoveRequest,
+) (*shipmentports.AssignmentPlan, error) {
 	assignment, err := assignmentservice.NewMoveAssignment(req, f.existing)
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func (f *savingAssignments) plan(
 	move.Status = shipment.MoveStatusAssigned
 	after.Status = shipment.StatusAssigned
 
-	return &serviceports.AssignmentPlan{
+	return &shipmentports.AssignmentPlan{
 		Assignment:     assignment,
 		ShipmentBefore: f.shipment,
 		ShipmentAfter:  after,
@@ -50,14 +50,14 @@ func (f *savingAssignments) plan(
 
 func (f *savingAssignments) PreviewAssignToMove(
 	_ context.Context,
-	req *repositories.AssignShipmentMoveRequest,
-) (*serviceports.AssignmentPlan, error) {
+	req *shipmentports.AssignShipmentMoveRequest,
+) (*shipmentports.AssignmentPlan, error) {
 	return f.plan(req)
 }
 
 func (f *savingAssignments) AssignToMove(
 	_ context.Context,
-	req *repositories.AssignShipmentMoveRequest,
+	req *shipmentports.AssignShipmentMoveRequest,
 ) (*shipment.Assignment, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -73,7 +73,7 @@ func (f *savingAssignments) AssignToMove(
 }
 
 type checkingConsole struct {
-	serviceports.DispatchConsoleService
+	agentports.DispatchConsoleService
 
 	preview *dispatchconsoleservice.AssignmentPreview
 }
@@ -101,7 +101,7 @@ func uncoveredShipment() *shipment.Shipment {
 	}
 }
 
-func assignParams(entity *shipment.Shipment) (serviceports.ToolExecuteParams, pulid.ID, pulid.ID) {
+func assignParams(entity *shipment.Shipment) (agentports.ToolExecuteParams, pulid.ID, pulid.ID) {
 	workerID := pulid.MustNew("wrk_")
 	tractorID := pulid.MustNew("trc_")
 

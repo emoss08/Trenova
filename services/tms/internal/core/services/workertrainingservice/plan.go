@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -14,13 +14,13 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-type RecordChange = services.RecordChange[worker.WorkerTrainingRecord]
+type RecordChange = kernelports.RecordChange[worker.WorkerTrainingRecord]
 
 func (s *Service) PlanAssign(
 	ctx context.Context,
 	req *AssignRequest,
 ) (*worker.WorkerTrainingRecord, error) {
-	course, err := s.repo.GetCourseByID(ctx, &repositories.GetTrainingCourseByIDRequest{
+	course, err := s.repo.GetCourseByID(ctx, &workerports.GetTrainingCourseByIDRequest{
 		ID:         req.CourseID,
 		TenantInfo: req.TenantInfo,
 	})

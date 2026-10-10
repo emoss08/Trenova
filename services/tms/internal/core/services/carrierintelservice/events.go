@@ -7,9 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -21,7 +22,7 @@ const maxBulkEventIDs = 500
 
 func (s *Service) ListEvents(
 	ctx context.Context,
-	req *repositories.ListCarrierIntelEventsRequest,
+	req *carrierintelports.ListCarrierIntelEventsRequest,
 ) (*pagination.CursorListResult[*carrierintel.CarrierIntelEvent], error) {
 	return s.eventRepo.ListConnection(ctx, req)
 }
@@ -44,7 +45,7 @@ func (s *Service) GetEvent(
 func (s *Service) EventCounts(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*repositories.CarrierIntelEventCounts, error) {
+) (*carrierintelports.CarrierIntelEventCounts, error) {
 	return s.eventRepo.CountOpen(ctx, tenantInfo)
 }
 
@@ -64,7 +65,7 @@ func (s *Service) AcknowledgeEvents(
 
 	count, err := s.eventRepo.BulkAcknowledge(
 		ctx,
-		&repositories.BulkAcknowledgeCarrierIntelEventsRequest{
+		&carrierintelports.BulkAcknowledgeCarrierIntelEventsRequest{
 			TenantInfo:     tenantInfo,
 			EventIDs:       eventIDs,
 			UserID:         tenantInfo.UserID,
@@ -75,12 +76,12 @@ func (s *Service) AcknowledgeEvents(
 		return 0, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:      permission.ResourceCarrierIntelligence,
 		ResourceID:    "events",
 		Operation:     permission.OpUpdate,
 		UserID:        tenantInfo.UserID,
-		PrincipalType: services.PrincipalTypeUser,
+		PrincipalType: permissionports.PrincipalTypeUser,
 		PrincipalID:   tenantInfo.UserID,
 		CurrentState: map[string]any{
 			"acknowledged": count,
@@ -151,12 +152,12 @@ func (s *Service) ResolveEvent(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceCarrierIntelligence,
 		ResourceID:     updated.ID.String(),
 		Operation:      permission.OpUpdate,
 		UserID:         req.TenantInfo.UserID,
-		PrincipalType:  services.PrincipalTypeUser,
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    req.TenantInfo.UserID,
 		CurrentState:   jsonutils.MustToJSON(updated),
 		PreviousState:  jsonutils.MustToJSON(&original),
@@ -205,7 +206,7 @@ func (s *Service) MarkReviewed(ctx context.Context, req *MarkReviewedRequest) er
 	}
 
 	now := s.now()
-	if err := s.snapshotRepo.MarkReviewed(ctx, &repositories.MarkSnapshotReviewedRequest{
+	if err := s.snapshotRepo.MarkReviewed(ctx, &carrierintelports.MarkSnapshotReviewedRequest{
 		TenantInfo:  req.TenantInfo,
 		SubjectType: subjectType,
 		SubjectID:   subjectID,
@@ -219,7 +220,7 @@ func (s *Service) MarkReviewed(ctx context.Context, req *MarkReviewedRequest) er
 	snapshot, err := s.snapshotRepo.GetCurrent(
 		ctx,
 		req.TenantInfo,
-		repositories.CarrierIntelSubjectRef{
+		carrierintelports.CarrierIntelSubjectRef{
 			SubjectType: subjectType,
 			SubjectID:   subjectID,
 		},
@@ -228,7 +229,7 @@ func (s *Service) MarkReviewed(ctx context.Context, req *MarkReviewedRequest) er
 		return err
 	}
 	if snapshot != nil && subjectType == carrierintel.SubjectTypeCarrier {
-		if err = s.updateCarrierSummary(ctx, req.TenantInfo, repositories.CarrierIntelSubject{
+		if err = s.updateCarrierSummary(ctx, req.TenantInfo, carrierintelports.CarrierIntelSubject{
 			SubjectType: subjectType,
 			SubjectID:   subjectID,
 			CarrierID:   snapshot.CarrierID,
@@ -237,12 +238,12 @@ func (s *Service) MarkReviewed(ctx context.Context, req *MarkReviewedRequest) er
 		}
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:      permission.ResourceCarrierIntelligence,
 		ResourceID:    subjectID,
 		Operation:     permission.OpUpdate,
 		UserID:        req.TenantInfo.UserID,
-		PrincipalType: services.PrincipalTypeUser,
+		PrincipalType: permissionports.PrincipalTypeUser,
 		PrincipalID:   req.TenantInfo.UserID,
 		CurrentState: map[string]any{
 			"subjectType": subjectType,
@@ -269,7 +270,7 @@ func (s *Service) ReviewQueue(
 	tenantInfo pagination.TenantInfo,
 	limit int,
 ) ([]*carrierintel.CarrierIntelSnapshot, error) {
-	return s.snapshotRepo.ListReviewQueue(ctx, &repositories.ListCarrierIntelReviewQueueRequest{
+	return s.snapshotRepo.ListReviewQueue(ctx, &carrierintelports.ListCarrierIntelReviewQueueRequest{
 		TenantInfo: tenantInfo,
 		Limit:      limit,
 	})
@@ -277,7 +278,7 @@ func (s *Service) ReviewQueue(
 
 func (s *Service) SnapshotHistory(
 	ctx context.Context,
-	req *repositories.ListCarrierIntelSnapshotHistoryRequest,
+	req *carrierintelports.ListCarrierIntelSnapshotHistoryRequest,
 ) ([]*carrierintel.CarrierIntelSnapshot, error) {
 	return s.snapshotRepo.ListHistory(ctx, req)
 }
@@ -285,7 +286,7 @@ func (s *Service) SnapshotHistory(
 func (s *Service) CurrentSnapshot(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	subject repositories.CarrierIntelSubjectRef,
+	subject carrierintelports.CarrierIntelSubjectRef,
 ) (*carrierintel.CarrierIntelSnapshot, error) {
 	return s.snapshotRepo.GetCurrent(ctx, tenantInfo, subject)
 }
@@ -325,7 +326,7 @@ func (s *Service) EnrollmentsByCarrierIDs(
 
 func (s *Service) ListEnrollments(
 	ctx context.Context,
-	req *repositories.ListEnrollmentConnectionRequest,
+	req *carrierintelports.ListEnrollmentConnectionRequest,
 ) (*pagination.CursorListResult[*carrierintel.CarrierMonitoringEnrollment], error) {
 	return s.enrollmentRepo.ListConnection(ctx, req)
 }
@@ -333,14 +334,14 @@ func (s *Service) ListEnrollments(
 func (s *Service) EnrollmentCounts(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*repositories.CarrierIntelEnrollmentCounts, error) {
+) (*carrierintelports.CarrierIntelEnrollmentCounts, error) {
 	control, err := s.controlRepo.GetOrCreate(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
 	provider, ok := control.PrimaryType()
 	if !ok {
-		return &repositories.CarrierIntelEnrollmentCounts{}, nil
+		return &carrierintelports.CarrierIntelEnrollmentCounts{}, nil
 	}
 	return s.enrollmentRepo.Counts(ctx, tenantInfo, provider)
 }
@@ -361,7 +362,7 @@ func (s *Service) FeedStates(
 	for _, feedType := range []carrierintel.FeedType{
 		carrierintel.FeedTypeChangeFeed, carrierintel.FeedTypeSnapshotRefresh,
 	} {
-		state, getErr := s.feedRepo.Get(ctx, repositories.CarrierIntelFeedStateKey{
+		state, getErr := s.feedRepo.Get(ctx, carrierintelports.CarrierIntelFeedStateKey{
 			TenantInfo: tenantInfo, Provider: provider, FeedType: feedType,
 		})
 		if getErr != nil {
@@ -378,11 +379,11 @@ func (s *Service) RawPayload(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	snapshotID pulid.ID,
-	subject repositories.CarrierIntelSubjectRef,
+	subject carrierintelports.CarrierIntelSubjectRef,
 ) (string, error) {
 	history, err := s.snapshotRepo.ListHistory(
 		ctx,
-		&repositories.ListCarrierIntelSnapshotHistoryRequest{
+		&carrierintelports.ListCarrierIntelSnapshotHistoryRequest{
 			TenantInfo:  tenantInfo,
 			SubjectType: subject.SubjectType,
 			SubjectID:   subject.SubjectID,
@@ -403,12 +404,12 @@ func (s *Service) RawPayload(
 		if rawErr != nil {
 			return "", rawErr
 		}
-		if err = s.auditService.LogAction(&services.LogActionParams{
+		if err = s.auditService.LogAction(&auditports.LogActionParams{
 			Resource:       permission.ResourceCarrierIntelligence,
 			ResourceID:     snap.ID.String(),
 			Operation:      permission.OpExport,
 			UserID:         tenantInfo.UserID,
-			PrincipalType:  services.PrincipalTypeUser,
+			PrincipalType:  permissionports.PrincipalTypeUser,
 			PrincipalID:    tenantInfo.UserID,
 			CurrentState:   map[string]any{"rawPayloadId": raw.ID.String()},
 			OrganizationID: tenantInfo.OrgID,

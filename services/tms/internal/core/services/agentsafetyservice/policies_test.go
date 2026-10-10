@@ -9,9 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentaccessservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -29,7 +28,7 @@ type fakeTrust struct {
 
 func (f *fakeTrust) ListByDefinitionIDs(
 	_ context.Context,
-	req repositories.ListToolTrustByDefinitionsRequest,
+	req agentports.ListToolTrustByDefinitionsRequest,
 ) (map[pulid.ID][]*agent.ToolTrust, error) {
 	f.calls++
 	out := make(map[pulid.ID][]*agent.ToolTrust, len(req.AgentDefinitionIDs))
@@ -43,7 +42,7 @@ func (f *fakeTrust) ListByDefinitionIDs(
 }
 
 func manyPoliciesService(count int, defs *fakeDefinitions) *Service {
-	policies := make([]services.ToolPolicy, 0, count)
+	policies := make([]agentports.ToolPolicy, 0, count)
 	for idx := count - 1; idx >= 0; idx-- {
 		policies = append(policies, policy(
 			fmt.Sprintf("tool_%03d", idx),
@@ -83,7 +82,7 @@ func surveyService(defs *fakeDefinitions, trust *fakeTrust) *Service {
 	})
 }
 
-func pageNames(page *services.AgentToolPolicyPage) []string {
+func pageNames(page *agentports.AgentToolPolicyPage) []string {
 	out := make([]string, 0, len(page.Edges))
 	for _, edge := range page.Edges {
 		out = append(out, edge.View.Policy.Name)
@@ -100,10 +99,10 @@ func listRules(
 	t *testing.T,
 	svc *Service,
 	table memtable.Request,
-) *services.AgentToolPolicyPage {
+) *agentports.AgentToolPolicyPage {
 	t.Helper()
 
-	page, err := svc.ListToolPolicies(t.Context(), &services.ListAgentToolPoliciesRequest{
+	page, err := svc.ListToolPolicies(t.Context(), &agentports.ListAgentToolPoliciesRequest{
 		Table: table,
 	})
 	require.NoError(t, err)
@@ -318,7 +317,7 @@ func TestListToolPoliciesFiltersByWhatRunsWithoutAPerson(t *testing.T) {
 	assert.Equal(t, listed, defs.pages, "no agent is read when nobody asked")
 	assert.Nil(t, unasked.Edges[0].RunsWithoutPerson)
 
-	shown, err := svc.ListToolPolicies(t.Context(), &services.ListAgentToolPoliciesRequest{
+	shown, err := svc.ListToolPolicies(t.Context(), &agentports.ListAgentToolPoliciesRequest{
 		WithAttendance: true,
 	})
 	require.NoError(t, err)
@@ -356,13 +355,13 @@ func TestListToolPoliciesRejectsABadCursorAndBadFilters(t *testing.T) {
 		},
 		"search too long": {Query: string(make([]byte, memtable.MaxQueryLength+1))},
 	} {
-		_, err := svc.ListToolPolicies(t.Context(), &services.ListAgentToolPoliciesRequest{
+		_, err := svc.ListToolPolicies(t.Context(), &agentports.ListAgentToolPoliciesRequest{
 			Table: table,
 		})
 		require.Error(t, err, name)
 	}
 
-	_, err := svc.ListToolPolicies(t.Context(), &services.ListAgentToolPoliciesRequest{
+	_, err := svc.ListToolPolicies(t.Context(), &agentports.ListAgentToolPoliciesRequest{
 		Table: memtable.Request{After: "%%%"},
 	})
 	var validation *errortypes.Error
@@ -395,9 +394,9 @@ func TestListAgentToolsListsEveryPickedAgentsTools(t *testing.T) {
 	defs := &fakeDefinitions{all: []*agentdefinition.Definition{dispatcher, auditor}}
 	svc := surveyService(defs, &fakeTrust{})
 
-	list := func(table memtable.Request) *services.AgentToolSafetyPage {
+	list := func(table memtable.Request) *agentports.AgentToolSafetyPage {
 		t.Helper()
-		page, err := svc.ListAgentTools(t.Context(), &services.ListAgentToolSafetyRequest{
+		page, err := svc.ListAgentTools(t.Context(), &agentports.ListAgentToolSafetyRequest{
 			AgentIDs: []pulid.ID{dispatcher.ID, auditor.ID},
 			Table:    table,
 		})
@@ -405,7 +404,7 @@ func TestListAgentToolsListsEveryPickedAgentsTools(t *testing.T) {
 
 		return page
 	}
-	rows := func(page *services.AgentToolSafetyPage) []string {
+	rows := func(page *agentports.AgentToolSafetyPage) []string {
 		out := make([]string, 0, len(page.Edges))
 		for _, edge := range page.Edges {
 			out = append(out, edge.Node.AgentName+"/"+edge.Node.PolicyName)
@@ -448,19 +447,19 @@ func TestListAgentToolsNamesBetweenOneAndTenAgents(t *testing.T) {
 
 	svc := testService(&fakeDefinitions{}, &tenant.AgentControl{})
 
-	_, err := svc.ListAgentTools(t.Context(), &services.ListAgentToolSafetyRequest{})
+	_, err := svc.ListAgentTools(t.Context(), &agentports.ListAgentToolSafetyRequest{})
 	require.Error(t, err)
 
 	tooMany := make([]pulid.ID, 0, MaxComparedAgents+1)
 	for range MaxComparedAgents + 1 {
 		tooMany = append(tooMany, pulid.MustNew("agdef_"))
 	}
-	_, err = svc.ListAgentTools(t.Context(), &services.ListAgentToolSafetyRequest{
+	_, err = svc.ListAgentTools(t.Context(), &agentports.ListAgentToolSafetyRequest{
 		AgentIDs: tooMany,
 	})
 	require.Error(t, err)
 
-	page, err := svc.ListAgentTools(t.Context(), &services.ListAgentToolSafetyRequest{
+	page, err := svc.ListAgentTools(t.Context(), &agentports.ListAgentToolSafetyRequest{
 		AgentIDs: []pulid.ID{pulid.MustNew("agdef_")},
 		Table:    memtable.Request{IncludeTotalCount: true},
 	})

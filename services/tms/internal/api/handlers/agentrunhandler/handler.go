@@ -8,8 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,15 +21,15 @@ import (
 type Params struct {
 	fx.In
 
-	Service              serviceports.AgentRunService
-	Transcripts          serviceports.AgentRunTranscriptService
+	Service              agentports.AgentRunService
+	Transcripts          agentports.AgentRunTranscriptService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	service     serviceports.AgentRunService
-	transcripts serviceports.AgentRunTranscriptService
+	service     agentports.AgentRunService
+	transcripts agentports.AgentRunTranscriptService
 	eh          *helpers.ErrorHandler
 	pm          *middleware.PermissionMiddleware
 }
@@ -42,9 +43,9 @@ func New(p Params) *Handler {
 	}
 }
 
-func requestActorFromAuthContext(authCtx *authctx.AuthContext) serviceports.RequestActor {
-	return serviceports.RequestActor{
-		PrincipalType:  serviceports.PrincipalType(authCtx.PrincipalType),
+func requestActorFromAuthContext(authCtx *authctx.AuthContext) permissionports.RequestActor {
+	return permissionports.RequestActor{
+		PrincipalType:  kernelports.PrincipalType(authCtx.PrincipalType),
 		PrincipalID:    authCtx.PrincipalID,
 		UserID:         authCtx.UserID,
 		APIKeyID:       authCtx.APIKeyID,
@@ -91,7 +92,7 @@ func (h *Handler) start(c *gin.Context) {
 	actor := requestActorFromAuthContext(authCtx)
 	run, err := h.service.StartForDefinition(
 		c.Request.Context(),
-		&serviceports.StartAgentRunForDefinitionRequest{
+		&agentports.StartAgentRunForDefinitionRequest{
 			DefinitionID: body.AgentDefinitionID,
 			SystemKey:    body.SystemKey,
 			SubjectType:  body.SubjectType,
@@ -109,15 +110,15 @@ func (h *Handler) start(c *gin.Context) {
 	c.JSON(http.StatusAccepted, run)
 }
 
-func runRequest(c *gin.Context) (repositories.GetAgentRunByIDRequest, error) {
+func runRequest(c *gin.Context) (agentports.GetAgentRunByIDRequest, error) {
 	runID, err := pulid.Parse(c.Param("runID"))
 	if err != nil {
-		return repositories.GetAgentRunByIDRequest{}, err
+		return agentports.GetAgentRunByIDRequest{}, err
 	}
 
 	authCtx := authctx.GetAuthContext(c)
 
-	return repositories.GetAgentRunByIDRequest{
+	return agentports.GetAgentRunByIDRequest{
 		ID: runID,
 		TenantInfo: &pagination.TenantInfo{
 			OrgID: authCtx.OrganizationID,

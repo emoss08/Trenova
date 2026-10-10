@@ -6,9 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
 	"github.com/emoss08/trenova/internal/core/services/workercredentialservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -79,7 +79,7 @@ func (s *Service) UploadMyCredentialDocument(
 	tenantInfo pagination.TenantInfo,
 	credentialID pulid.ID,
 	file *multipart.FileHeader,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*PortalDocument, error) {
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {

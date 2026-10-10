@@ -13,7 +13,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -77,7 +77,7 @@ func (s *Service) OpenBatch(
 	}
 
 	clientKey := strings.TrimSpace(in.ClientKey)
-	existing, err := s.batches.GetByClientKey(ctx, repositories.GetCaptureBatchByClientKeyRequest{
+	existing, err := s.batches.GetByClientKey(ctx, captureports.GetCaptureBatchByClientKeyRequest{
 		TenantInfo: tenantInfo,
 		DeviceID:   principal.Device.ID,
 		ClientKey:  clientKey,
@@ -135,7 +135,7 @@ func (s *Service) OpenBatch(
 	created, err := s.batches.Create(ctx, batch)
 	if err != nil {
 		if dberror.IsUniqueConstraintViolation(err) {
-			return s.batches.GetByClientKey(ctx, repositories.GetCaptureBatchByClientKeyRequest{
+			return s.batches.GetByClientKey(ctx, captureports.GetCaptureBatchByClientKeyRequest{
 				TenantInfo: tenantInfo,
 				DeviceID:   principal.Device.ID,
 				ClientKey:  clientKey,
@@ -227,7 +227,7 @@ func (s *Service) deviceBatch(
 	principal *DevicePrincipal,
 	batchID pulid.ID,
 ) (*capture.CaptureBatch, error) {
-	batch, err := s.batches.GetByID(ctx, &repositories.GetCaptureBatchByIDRequest{
+	batch, err := s.batches.GetByID(ctx, &captureports.GetCaptureBatchByIDRequest{
 		ID:         batchID,
 		TenantInfo: principal.TenantInfo(),
 	})
@@ -295,7 +295,7 @@ func (s *Service) PutPage(
 	}
 
 	tenantInfo := principal.TenantInfo()
-	existing, err := s.pages.GetBySequence(ctx, repositories.GetCapturePageBySequenceRequest{
+	existing, err := s.pages.GetBySequence(ctx, captureports.GetCapturePageBySequenceRequest{
 		BatchID:    batch.ID,
 		TenantInfo: tenantInfo,
 		Sequence:   in.Sequence,
@@ -389,7 +389,7 @@ func (s *Service) storePage(
 		return samePage(page, in.checksum)
 	}
 
-	if err = s.batches.IncrementReceived(ctx, repositories.IncrementCaptureBatchPagesRequest{
+	if err = s.batches.IncrementReceived(ctx, captureports.IncrementCaptureBatchPagesRequest{
 		ID:         batch.ID,
 		TenantInfo: tenantInfo,
 	}); err != nil {
@@ -594,7 +594,7 @@ func (s *Service) SealBatch(
 	}
 
 	tenantInfo := principal.TenantInfo()
-	pages, err := s.pages.ListByBatch(ctx, repositories.ListCapturePagesRequest{
+	pages, err := s.pages.ListByBatch(ctx, captureports.ListCapturePagesRequest{
 		BatchID:    batch.ID,
 		TenantInfo: tenantInfo,
 	})
@@ -662,7 +662,7 @@ func (s *Service) completeRequest(ctx context.Context, batch *capture.CaptureBat
 		return
 	}
 
-	request, err := s.requests.GetByID(ctx, repositories.GetCaptureRequestByIDRequest{
+	request, err := s.requests.GetByID(ctx, captureports.GetCaptureRequestByIDRequest{
 		ID:         *batch.RequestID,
 		TenantInfo: pagination.TenantInfo{OrgID: batch.OrganizationID, BuID: batch.BusinessUnitID},
 	})

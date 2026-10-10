@@ -4,15 +4,14 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 )
 
 // Draft builds the agent a save would store, checked as a save would check
 // it, without saving it. An ID is an edit of that agent; none is a new one.
 func (s *Service) Draft(
 	ctx context.Context,
-	req *services.SaveAgentDefinitionRequest,
+	req *agentdefinitionports.SaveAgentDefinitionRequest,
 ) (*agentdefinition.Definition, error) {
 	if req.ID.IsNil() {
 		draft := &agentdefinition.Definition{
@@ -26,7 +25,7 @@ func (s *Service) Draft(
 		return draft, nil
 	}
 
-	existing, err := s.repo.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	existing, err := s.repo.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})

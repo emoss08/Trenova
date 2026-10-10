@@ -1,11 +1,14 @@
 package shipmentmoveservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -26,9 +29,9 @@ func TestPreviewUpdateStatus_ProjectsTheMovesAndTheirShipment(t *testing.T) {
 	shipmentID := pulid.MustNew("shp_")
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 
-	moveRepo := mocks.NewMockShipmentMoveRepository(t)
+	moveRepo := shipmentportsmock.NewMockShipmentMoveRepository(t)
 	moveRepo.EXPECT().
-		GetByID(mock.Anything, mock.MatchedBy(func(req *repositories.GetMoveByIDRequest) bool {
+		GetByID(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetMoveByIDRequest) bool {
 			return req.MoveID == moveID && !req.ForUpdate
 		})).
 		Return(&shipment.ShipmentMove{
@@ -38,9 +41,9 @@ func TestPreviewUpdateStatus_ProjectsTheMovesAndTheirShipment(t *testing.T) {
 			Version:    4,
 		}, nil).
 		Once()
-	assignmentRepo := mocks.NewMockAssignmentRepository(t)
+	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
 	assignmentRepo.EXPECT().GetByMoveID(mock.Anything, tenantInfo, moveID).Return(nil, nil).Once()
-	shipmentRepo := mocks.NewMockShipmentRepository(t)
+	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
 		Return(&shipment.Shipment{
@@ -54,9 +57,9 @@ func TestPreviewUpdateStatus_ProjectsTheMovesAndTheirShipment(t *testing.T) {
 			},
 		}, nil).
 		Once()
-	controlRepo := mocks.NewMockShipmentControlRepository(t)
+	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
-		Get(mock.Anything, repositories.GetShipmentControlRequest{TenantInfo: tenantInfo}).
+		Get(mock.Anything, tenantports.GetShipmentControlRequest{TenantInfo: tenantInfo}).
 		Return(&tenant.ShipmentControl{}, nil).
 		Once()
 
@@ -66,12 +69,12 @@ func TestPreviewUpdateStatus_ProjectsTheMovesAndTheirShipment(t *testing.T) {
 		repo:           moveRepo,
 		assignmentRepo: assignmentRepo,
 		shipmentRepo:   shipmentRepo,
-		holdRepo:       mocks.NewMockShipmentHoldRepository(t),
+		holdRepo:       shipmentportsmock.NewMockShipmentHoldRepository(t),
 		controlRepo:    controlRepo,
 		coordinator:    shipmentstateCoordinator(),
 	}
 
-	plan, err := svc.PreviewUpdateStatus(t.Context(), &repositories.BulkUpdateMoveStatusRequest{
+	plan, err := svc.PreviewUpdateStatus(t.Context(), &shipmentports.BulkUpdateMoveStatusRequest{
 		TenantInfo: tenantInfo,
 		MoveIDs:    []pulid.ID{moveID},
 		Status:     shipment.MoveStatusInTransit,
@@ -96,9 +99,9 @@ func TestPreviewUpdateStatus_RefusesWhatTheWriteRefuses(t *testing.T) {
 	moveID := pulid.MustNew("sm_")
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 
-	moveRepo := mocks.NewMockShipmentMoveRepository(t)
+	moveRepo := shipmentportsmock.NewMockShipmentMoveRepository(t)
 	moveRepo.EXPECT().
-		GetByID(mock.Anything, mock.MatchedBy(func(req *repositories.GetMoveByIDRequest) bool {
+		GetByID(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetMoveByIDRequest) bool {
 			return req.MoveID == moveID
 		})).
 		Return(&shipment.ShipmentMove{ID: moveID, Status: shipment.MoveStatusCompleted}, nil).
@@ -108,16 +111,16 @@ func TestPreviewUpdateStatus_RefusesWhatTheWriteRefuses(t *testing.T) {
 		l:            zap.NewNop(),
 		db:           testDBConnection{},
 		repo:         moveRepo,
-		shipmentRepo: mocks.NewMockShipmentRepository(t),
-		holdRepo:     mocks.NewMockShipmentHoldRepository(t),
+		shipmentRepo: shipmentportsmock.NewMockShipmentRepository(t),
+		holdRepo:     shipmentportsmock.NewMockShipmentHoldRepository(t),
 	}
 
-	_, previewErr := svc.PreviewUpdateStatus(t.Context(), &repositories.BulkUpdateMoveStatusRequest{
+	_, previewErr := svc.PreviewUpdateStatus(t.Context(), &shipmentports.BulkUpdateMoveStatusRequest{
 		TenantInfo: tenantInfo,
 		MoveIDs:    []pulid.ID{moveID},
 		Status:     shipment.MoveStatusInTransit,
 	})
-	_, writeErr := svc.UpdateStatus(t.Context(), &repositories.UpdateMoveStatusRequest{
+	_, writeErr := svc.UpdateStatus(t.Context(), &shipmentports.UpdateMoveStatusRequest{
 		TenantInfo: tenantInfo,
 		MoveID:     moveID,
 		Status:     shipment.MoveStatusInTransit,
@@ -135,7 +138,7 @@ func TestPreviewUpdateStatus_RefusesARepeatedMove(t *testing.T) {
 	moveID := pulid.MustNew("sm_")
 	svc := &service{l: zap.NewNop()}
 
-	_, err := svc.PreviewUpdateStatus(t.Context(), &repositories.BulkUpdateMoveStatusRequest{
+	_, err := svc.PreviewUpdateStatus(t.Context(), &shipmentports.BulkUpdateMoveStatusRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),

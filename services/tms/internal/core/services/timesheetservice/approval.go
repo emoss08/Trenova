@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -32,7 +32,7 @@ func (s *Service) Transition(
 	ctx context.Context,
 	req *TransitionTimesheetRequest,
 ) (*worker.Timesheet, error) {
-	sheet, err := s.repo.GetTimesheetByID(ctx, &repositories.GetTimesheetByIDRequest{
+	sheet, err := s.repo.GetTimesheetByID(ctx, &workerports.GetTimesheetByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -72,7 +72,7 @@ func (s *Service) Transition(
 		if err = s.recalculate(ctx, req.TenantInfo, sheet.ID); err != nil {
 			return nil, err
 		}
-		if sheet, err = s.repo.GetTimesheetByID(ctx, &repositories.GetTimesheetByIDRequest{
+		if sheet, err = s.repo.GetTimesheetByID(ctx, &workerports.GetTimesheetByIDRequest{
 			ID:         req.ID,
 			TenantInfo: req.TenantInfo,
 		}); err != nil {
@@ -197,7 +197,7 @@ func (s *Service) GenerateExport(
 		return nil, err
 	}
 
-	stamped, err := s.repo.StampExport(ctx, &repositories.StampExportRequest{
+	stamped, err := s.repo.StampExport(ctx, &workerports.StampExportRequest{
 		TenantInfo:   req.TenantInfo,
 		ExportID:     created.ID,
 		TimesheetIDs: ids,
@@ -234,7 +234,7 @@ func (s *Service) reconcileExport(
 	tenantInfo pagination.TenantInfo,
 	export *worker.PayrollExport,
 ) (*worker.PayrollExport, error) {
-	sheets, err := s.repo.ListTimesheets(ctx, &repositories.ListTimesheetsRequest{
+	sheets, err := s.repo.ListTimesheets(ctx, &workerports.ListTimesheetsRequest{
 		TenantInfo: tenantInfo,
 		ExportID:   export.ID,
 	})
@@ -261,7 +261,7 @@ func (s *Service) ExportRows(
 	tenantInfo pagination.TenantInfo,
 	exportID pulid.ID,
 ) ([]*PayrollExportRow, error) {
-	sheets, err := s.repo.ListTimesheets(ctx, &repositories.ListTimesheetsRequest{
+	sheets, err := s.repo.ListTimesheets(ctx, &workerports.ListTimesheetsRequest{
 		TenantInfo:    tenantInfo,
 		ExportID:      exportID,
 		IncludeWorker: true,
@@ -291,7 +291,7 @@ func (s *Service) ExportRows(
 
 func (s *Service) ListExports(
 	ctx context.Context,
-	req *repositories.ListPayrollExportsRequest,
+	req *workerports.ListPayrollExportsRequest,
 ) ([]*worker.PayrollExport, error) {
 	return s.repo.ListExports(ctx, req)
 }
@@ -301,7 +301,7 @@ func (s *Service) GetExport(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*worker.PayrollExport, error) {
-	return s.repo.GetExportByID(ctx, &repositories.GetPayrollExportByIDRequest{
+	return s.repo.GetExportByID(ctx, &workerports.GetPayrollExportByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})

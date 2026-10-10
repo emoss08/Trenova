@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -127,7 +127,7 @@ func (s *Service) PlanUpdate(
 	ctx context.Context,
 	entity *rateagreement.RateAgreement,
 ) (*UpdatePlan, error) {
-	original, err := s.repo.GetByID(ctx, &repositories.GetRateAgreementByIDRequest{
+	original, err := s.repo.GetByID(ctx, &rateagreementports.GetRateAgreementByIDRequest{
 		RateAgreementID: entity.ID,
 		TenantInfo:      tenantOf(entity),
 		IncludeChildren: true,
@@ -175,7 +175,7 @@ func (s *Service) PlanDuplicate(
 	ctx context.Context,
 	req *DuplicateRateAgreementRequest,
 ) (*DuplicatePlan, error) {
-	original, err := s.repo.GetByID(ctx, &repositories.GetRateAgreementByIDRequest{
+	original, err := s.repo.GetByID(ctx, &rateagreementports.GetRateAgreementByIDRequest{
 		RateAgreementID: req.RateAgreementID,
 		TenantInfo:      req.TenantInfo,
 		IncludeChildren: true,
@@ -194,9 +194,9 @@ func (s *Service) PlanDuplicate(
 
 func (s *Service) PlanAmendRules(
 	ctx context.Context,
-	req *repositories.AmendRateAgreementRulesRequest,
+	req *rateagreementports.AmendRateAgreementRulesRequest,
 ) (*AmendmentPlan, error) {
-	agreement, err := s.repo.GetByID(ctx, &repositories.GetRateAgreementByIDRequest{
+	agreement, err := s.repo.GetByID(ctx, &rateagreementports.GetRateAgreementByIDRequest{
 		RateAgreementID: req.RateAgreementID,
 		TenantInfo:      req.TenantInfo,
 		IncludeChildren: true,

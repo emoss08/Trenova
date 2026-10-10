@@ -12,10 +12,15 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	repositoryports "github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptworkitemports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
@@ -31,27 +36,27 @@ type Params struct {
 	fx.In
 
 	Logger              *zap.Logger
-	Repo                repositoryports.BankReceiptRepository
-	WorkItemRepo        repositoryports.BankReceiptWorkItemRepository
-	PaymentRepo         repositoryports.CustomerPaymentRepository
-	AccountingRepo      repositoryports.AccountingControlRepository
+	Repo                bankreceiptports.BankReceiptRepository
+	WorkItemRepo        bankreceiptworkitemports.BankReceiptWorkItemRepository
+	PaymentRepo         customerpaymentports.CustomerPaymentRepository
+	AccountingRepo      tenantports.AccountingControlRepository
 	NotificationService *notificationservice.Service
-	AuditService        serviceports.AuditService
+	AuditService        auditports.AuditService
 	// Events is told about each receipt that could not be matched on its
 	// own, so an agent subscribed to bank_receipt.exception can work it. It
 	// is optional because an import is worth running with nobody listening.
-	Events serviceports.AgentEventPublisher `optional:"true"`
+	Events agentports.AgentEventPublisher `optional:"true"`
 }
 
 type Service struct {
 	l                   *zap.Logger
-	repo                repositoryports.BankReceiptRepository
-	workItemRepo        repositoryports.BankReceiptWorkItemRepository
-	paymentRepo         repositoryports.CustomerPaymentRepository
-	accountingRepo      repositoryports.AccountingControlRepository
+	repo                bankreceiptports.BankReceiptRepository
+	workItemRepo        bankreceiptworkitemports.BankReceiptWorkItemRepository
+	paymentRepo         customerpaymentports.CustomerPaymentRepository
+	accountingRepo      tenantports.AccountingControlRepository
 	notificationService *notificationservice.Service
-	auditService        serviceports.AuditService
-	events              serviceports.AgentEventPublisher
+	auditService        auditports.AuditService
+	events              agentports.AgentEventPublisher
 }
 
 //nolint:gocritic // dependency injection
@@ -70,11 +75,11 @@ func New(p Params) *Service {
 
 func (s *Service) Get(
 	ctx context.Context,
-	req *serviceports.GetBankReceiptRequest,
+	req *bankreceiptports.GetBankReceiptRequest,
 ) (*bankreceipt.BankReceipt, error) {
 	return s.repo.GetByID(
 		ctx,
-		repositoryports.GetBankReceiptByIDRequest{ID: req.ReceiptID, TenantInfo: req.TenantInfo},
+		bankreceiptports.GetBankReceiptByIDRequest{ID: req.ReceiptID, TenantInfo: req.TenantInfo},
 	)
 }
 
@@ -89,30 +94,30 @@ func (s *Service) GetSummary(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	asOfDate int64,
-) (*repositoryports.BankReceiptReconciliationSummary, error) {
+) (*bankreceiptports.BankReceiptReconciliationSummary, error) {
 	if asOfDate == 0 {
 		asOfDate = timeutils.NowUnix()
 	}
 	return s.repo.GetSummary(
 		ctx,
-		repositoryports.GetBankReceiptSummaryRequest{TenantInfo: tenantInfo, AsOfDate: asOfDate},
+		bankreceiptports.GetBankReceiptSummaryRequest{TenantInfo: tenantInfo, AsOfDate: asOfDate},
 	)
 }
 
 func (s *Service) SuggestMatches(
 	ctx context.Context,
-	req *serviceports.GetBankReceiptRequest,
-) ([]*serviceports.BankReceiptMatchSuggestion, error) {
+	req *bankreceiptports.GetBankReceiptRequest,
+) ([]*bankreceiptports.BankReceiptMatchSuggestion, error) {
 	receipt, err := s.repo.GetByID(
 		ctx,
-		repositoryports.GetBankReceiptByIDRequest{ID: req.ReceiptID, TenantInfo: req.TenantInfo},
+		bankreceiptports.GetBankReceiptByIDRequest{ID: req.ReceiptID, TenantInfo: req.TenantInfo},
 	)
 	if err != nil {
 		return nil, err
 	}
 	candidates, err := s.paymentRepo.FindSuggestedMatchCandidates(
 		ctx,
-		repositoryports.FindCustomerPaymentMatchCandidatesRequest{
+		customerpaymentports.FindCustomerPaymentMatchCandidatesRequest{
 			TenantInfo:      req.TenantInfo,
 			ReferenceNumber: receipt.ReferenceNumber,
 			AmountMinor:     receipt.AmountMinor,
@@ -126,8 +131,8 @@ func (s *Service) SuggestMatches(
 
 func (s *Service) Import(
 	ctx context.Context,
-	req *serviceports.ImportBankReceiptRequest,
-	actor *serviceports.RequestActor,
+	req *bankreceiptports.ImportBankReceiptRequest,
+	actor *permissionports.RequestActor,
 ) (*bankreceipt.BankReceipt, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
@@ -174,8 +179,8 @@ func (s *Service) Import(
 
 func (s *Service) Match(
 	ctx context.Context,
-	req *serviceports.MatchBankReceiptRequest,
-	actor *serviceports.RequestActor,
+	req *bankreceiptports.MatchBankReceiptRequest,
+	actor *permissionports.RequestActor,
 ) (*bankreceipt.BankReceipt, error) {
 	plan, err := s.planStoredMatch(ctx, req, actor)
 	if err != nil {
@@ -203,7 +208,7 @@ func (s *Service) Match(
 func (s *Service) applyReconciliationPolicy(
 	ctx context.Context,
 	receipt *bankreceipt.BankReceipt,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*bankreceipt.BankReceipt, error) {
 	if receipt == nil || s.accountingRepo == nil {
 		return receipt, nil
@@ -226,7 +231,7 @@ func (s *Service) applyReconciliationPolicy(
 	}
 	candidates, err := s.paymentRepo.FindSuggestedMatchCandidates(
 		ctx,
-		repositoryports.FindCustomerPaymentMatchCandidatesRequest{
+		customerpaymentports.FindCustomerPaymentMatchCandidatesRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: receipt.OrganizationID,
 				BuID:  receipt.BusinessUnitID,
@@ -243,7 +248,7 @@ func (s *Service) applyReconciliationPolicy(
 	if shouldAutoMatchSuggestion(suggestions) {
 		return s.Match(
 			ctx,
-			&serviceports.MatchBankReceiptRequest{
+			&bankreceiptports.MatchBankReceiptRequest{
 				ReceiptID: receipt.ID,
 				PaymentID: suggestions[0].CustomerPaymentID,
 				SkipAudit: !receipt.ImportBatchID.IsNil(),
@@ -267,7 +272,7 @@ func (s *Service) applyReconciliationPolicy(
 func (s *Service) markException(
 	ctx context.Context,
 	receipt *bankreceipt.BankReceipt,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 	reason string,
 	skipAudit bool,
 ) (*bankreceipt.BankReceipt, error) {
@@ -331,7 +336,7 @@ func (s *Service) markException(
 			)
 		}
 	}
-	serviceports.PublishAgentEvent(ctx, s.events, serviceports.AgentEvent{
+	agentports.PublishAgentEvent(ctx, s.events, agentports.AgentEvent{
 		Kind:       agent.EventBankReceiptException,
 		SubjectID:  updated.ID,
 		TenantInfo: tenantInfo,
@@ -367,7 +372,7 @@ func (s *Service) logAudit(
 	operation permission.Operation,
 	comment string,
 ) {
-	params := &serviceports.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceBankReceipt,
 		ResourceID:     current.ID.String(),
 		Operation:      operation,
@@ -379,7 +384,7 @@ func (s *Service) logAudit(
 	if previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(previous)
 	}
-	options := []serviceports.LogOption{auditservice.WithComment(comment)}
+	options := []auditports.LogOption{auditservice.WithComment(comment)}
 	if previous != nil {
 		options = append(options, auditservice.WithDiff(previous, current))
 	}
@@ -445,8 +450,8 @@ func resolveMatchScore(
 func buildMatchSuggestions(
 	receipt *bankreceipt.BankReceipt,
 	candidates []*customerpayment.Payment,
-) []*serviceports.BankReceiptMatchSuggestion {
-	suggestions := make([]*serviceports.BankReceiptMatchSuggestion, 0, len(candidates))
+) []*bankreceiptports.BankReceiptMatchSuggestion {
+	suggestions := make([]*bankreceiptports.BankReceiptMatchSuggestion, 0, len(candidates))
 	for _, candidate := range candidates {
 		if candidate == nil {
 			continue
@@ -457,7 +462,7 @@ func buildMatchSuggestions(
 		}
 		suggestions = append(
 			suggestions,
-			&serviceports.BankReceiptMatchSuggestion{
+			&bankreceiptports.BankReceiptMatchSuggestion{
 				CustomerPaymentID: candidate.ID,
 				ReferenceNumber:   candidate.ReferenceNumber,
 				AmountMinor:       candidate.AmountMinor,
@@ -476,7 +481,7 @@ func buildMatchSuggestions(
 	return suggestions
 }
 
-func shouldAutoMatchSuggestion(suggestions []*serviceports.BankReceiptMatchSuggestion) bool {
+func shouldAutoMatchSuggestion(suggestions []*bankreceiptports.BankReceiptMatchSuggestion) bool {
 	if len(suggestions) == 0 {
 		return false
 	}

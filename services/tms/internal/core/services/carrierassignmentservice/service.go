@@ -8,11 +8,19 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -27,48 +35,48 @@ type Params struct {
 	fx.In
 
 	Logger            *zap.Logger
-	DB                ports.DBConnection
-	Repo              repositories.CarrierAssignmentRepository
-	AssignmentRepo    repositories.AssignmentRepository
-	CarrierRepo       repositories.CarrierRepository
-	ShipmentRepo      repositories.ShipmentRepository
-	HoldRepo          repositories.ShipmentHoldRepository
-	ControlRepo       repositories.ShipmentControlRepository
-	RateConRepo       repositories.RateConfirmationRepository
+	DB                kernelports.DBConnection
+	Repo              shipmentports.CarrierAssignmentRepository
+	AssignmentRepo    shipmentports.AssignmentRepository
+	CarrierRepo       carrierports.CarrierRepository
+	ShipmentRepo      shipmentports.ShipmentRepository
+	HoldRepo          shipmentports.ShipmentHoldRepository
+	ControlRepo       tenantports.ShipmentControlRepository
+	RateConRepo       rateconfirmationports.RateConfirmationRepository
 	ShipmentValidator *shipmentservice.Validator
 	Coordinator       *shipmentstate.Coordinator
-	EventService      portservices.ShipmentEventService
-	AuditService      portservices.AuditService
-	Invalidator       portservices.ShipmentInvalidator
-	CostAccrual       portservices.CarrierCostAccrual `optional:"true"`
-	TenderGuard       portservices.TenderGuard        `optional:"true"`
-	RateEngine        portservices.RateEngine         `optional:"true"`
-	AgreementRepo     repositories.RateAgreementRepository
-	BillingCtrlRepo   repositories.BillingControlRepository
+	EventService      shipmenteventports.ShipmentEventService
+	AuditService      auditports.AuditService
+	Invalidator       shipmentports.ShipmentInvalidator
+	CostAccrual       carrierports.CarrierCostAccrual `optional:"true"`
+	TenderGuard       tenderports.TenderGuard         `optional:"true"`
+	RateEngine        ratequoteports.RateEngine       `optional:"true"`
+	AgreementRepo     rateagreementports.RateAgreementRepository
+	BillingCtrlRepo   tenantports.BillingControlRepository
 }
 
 type Service struct {
 	l                 *zap.Logger
-	db                ports.DBConnection
-	repo              repositories.CarrierAssignmentRepository
-	assignmentRepo    repositories.AssignmentRepository
-	carrierRepo       repositories.CarrierRepository
-	shipmentRepo      repositories.ShipmentRepository
-	holdRepo          repositories.ShipmentHoldRepository
-	controlRepo       repositories.ShipmentControlRepository
-	rateConRepo       repositories.RateConfirmationRepository
+	db                kernelports.DBConnection
+	repo              shipmentports.CarrierAssignmentRepository
+	assignmentRepo    shipmentports.AssignmentRepository
+	carrierRepo       carrierports.CarrierRepository
+	shipmentRepo      shipmentports.ShipmentRepository
+	holdRepo          shipmentports.ShipmentHoldRepository
+	controlRepo       tenantports.ShipmentControlRepository
+	rateConRepo       rateconfirmationports.RateConfirmationRepository
 	shipmentValidator *shipmentservice.Validator
 	coordinator       *shipmentstate.Coordinator
-	eventService      portservices.ShipmentEventService
-	auditService      portservices.AuditService
-	invalidator       portservices.ShipmentInvalidator
-	costAccrual       portservices.CarrierCostAccrual
-	tenderGuard       portservices.TenderGuard
-	rateEngine        portservices.RateEngine
-	agreementRepo     repositories.RateAgreementRepository
-	billingCtrlRepo   repositories.BillingControlRepository
-	intelGate         portservices.CarrierIntelGate
-	lifecycle         portservices.CarrierLifecycleObserver
+	eventService      shipmenteventports.ShipmentEventService
+	auditService      auditports.AuditService
+	invalidator       shipmentports.ShipmentInvalidator
+	costAccrual       carrierports.CarrierCostAccrual
+	tenderGuard       tenderports.TenderGuard
+	rateEngine        ratequoteports.RateEngine
+	agreementRepo     rateagreementports.RateAgreementRepository
+	billingCtrlRepo   tenantports.BillingControlRepository
+	intelGate         carrierintelports.CarrierIntelGate
+	lifecycle         carrierintelports.CarrierLifecycleObserver
 }
 
 func New(p Params) *Service {
@@ -95,11 +103,11 @@ func New(p Params) *Service {
 	}
 }
 
-var _ portservices.CarrierMoveAssigner = (*Service)(nil)
+var _ tenderports.CarrierMoveAssigner = (*Service)(nil)
 
 func (s *Service) Get(
 	ctx context.Context,
-	req *repositories.GetCarrierAssignmentByIDRequest,
+	req *shipmentports.GetCarrierAssignmentByIDRequest,
 ) (*shipment.CarrierAssignment, error) {
 	return s.repo.GetByID(ctx, req)
 }
@@ -132,11 +140,11 @@ func (s *Service) PreviewEligibility(
 	return &result, nil
 }
 
-func (s *Service) SetIntelGate(gate portservices.CarrierIntelGate) {
+func (s *Service) SetIntelGate(gate carrierintelports.CarrierIntelGate) {
 	s.intelGate = gate
 }
 
-func (s *Service) SetLifecycleObserver(observer portservices.CarrierLifecycleObserver) {
+func (s *Service) SetLifecycleObserver(observer carrierintelports.CarrierLifecycleObserver) {
 	s.lifecycle = observer
 }
 
@@ -164,7 +172,7 @@ func (s *Service) refreshIntel(
 	if s.intelGate == nil {
 		return nil
 	}
-	s.intelGate.EnsureFresh(ctx, &portservices.CarrierIntelEnsureFreshRequest{
+	s.intelGate.EnsureFresh(ctx, &carrierintelports.CarrierIntelEnsureFreshRequest{
 		TenantInfo: tenantInfo,
 		CarrierIDs: []pulid.ID{carrierID},
 	})
@@ -173,7 +181,7 @@ func (s *Service) refreshIntel(
 
 func (s *Service) AssignToMove(
 	ctx context.Context,
-	req *repositories.AssignMoveToCarrierRequest,
+	req *shipmentports.AssignMoveToCarrierRequest,
 ) (*shipment.CarrierAssignment, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
@@ -185,7 +193,7 @@ func (s *Service) AssignToMove(
 
 	intelGate := s.refreshIntel(ctx, req.TenantInfo, req.CarrierID)
 
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		plan, txErr := s.planAssignToMove(txCtx, req, intelGate)
 		if txErr != nil {
 			return txErr
@@ -232,7 +240,7 @@ func (s *Service) AssignToMove(
 			return txErr
 		}
 
-		result, txErr = s.repo.GetByID(txCtx, &repositories.GetCarrierAssignmentByIDRequest{
+		result, txErr = s.repo.GetByID(txCtx, &shipmentports.GetCarrierAssignmentByIDRequest{
 			TenantInfo:          req.TenantInfo,
 			CarrierAssignmentID: saved.ID,
 		})
@@ -260,10 +268,10 @@ func (s *Service) AssignToMove(
 		Comment:    "Carrier " + carrierEntity.Name + " assigned to move",
 		Current:    result,
 	})
-	portservices.InvalidateShipments(
+	shipmentports.InvalidateShipments(
 		ctx,
 		s.invalidator,
-		portservices.ShipmentInvalidationByUser(
+		shipmentports.ShipmentInvalidationByUser(
 			req.TenantInfo,
 			shipmentIDOf(result),
 			"carrier_assigned",
@@ -288,7 +296,7 @@ func (s *Service) ConfirmAssignment(
 	tenantInfo pagination.TenantInfo,
 	assignmentID pulid.ID,
 ) error {
-	entity, err := s.repo.GetByID(ctx, &repositories.GetCarrierAssignmentByIDRequest{
+	entity, err := s.repo.GetByID(ctx, &shipmentports.GetCarrierAssignmentByIDRequest{
 		TenantInfo:          tenantInfo,
 		CarrierAssignmentID: assignmentID,
 	})
@@ -348,7 +356,7 @@ func (s *Service) withdrawLiveTender(
 
 func (s *Service) Cancel(
 	ctx context.Context,
-	req *repositories.CancelCarrierAssignmentRequest,
+	req *shipmentports.CancelCarrierAssignmentRequest,
 ) error {
 	if multiErr := req.Validate(); multiErr != nil {
 		return multiErr
@@ -358,7 +366,7 @@ func (s *Service) Cancel(
 	var shipmentID pulid.ID
 	var canceled *shipment.CarrierAssignment
 
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		plan, txErr := s.planCancel(txCtx, req)
 		if txErr != nil {
 			return txErr
@@ -410,10 +418,10 @@ func (s *Service) Cancel(
 		Comment:    "Carrier assignment canceled: " + req.Reason,
 		Current:    canceled,
 	})
-	portservices.InvalidateShipments(
+	shipmentports.InvalidateShipments(
 		ctx,
 		s.invalidator,
-		portservices.ShipmentInvalidationByUser(req.TenantInfo, shipmentID, "carrier_unassigned"),
+		shipmentports.ShipmentInvalidationByUser(req.TenantInfo, shipmentID, "carrier_unassigned"),
 	)
 	s.reaccrueMove(ctx, req.TenantInfo, req.ShipmentMoveID)
 
@@ -440,7 +448,7 @@ func (s *Service) applyCoverageChange(
 }
 
 func (s *Service) buildAssignment(
-	req *repositories.AssignMoveToCarrierRequest,
+	req *shipmentports.AssignMoveToCarrierRequest,
 	move *shipment.ShipmentMove,
 ) *shipment.CarrierAssignment {
 	accessorials := make([]*shipment.CarrierAssignmentAccessorial, 0, len(req.Accessorials))
@@ -488,10 +496,10 @@ func (s *Service) loadCarrier(
 	tenantInfo pagination.TenantInfo,
 	carrierID pulid.ID,
 ) (*carrier.Carrier, error) {
-	return s.carrierRepo.GetByID(ctx, repositories.GetCarrierByIDRequest{
+	return s.carrierRepo.GetByID(ctx, carrierports.GetCarrierByIDRequest{
 		ID:         carrierID,
 		TenantInfo: tenantInfo,
-		CarrierFilterOptions: repositories.CarrierFilterOptions{
+		CarrierFilterOptions: carrierports.CarrierFilterOptions{
 			IncludeInsurancePolicies: true,
 		},
 	})
@@ -502,13 +510,13 @@ func (s *Service) loadShipment(
 	tenantInfo pagination.TenantInfo,
 	shipmentID pulid.ID,
 ) (*shipment.Shipment, error) {
-	return s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	return s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID: shipmentID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: tenantInfo.OrgID,
 			BuID:  tenantInfo.BuID,
 		},
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -580,7 +588,7 @@ func validatePerMileDistance(rateMethod shipment.CarrierRateMethod, distance *fl
 
 func (s *Service) recordEvent(
 	ctx context.Context,
-	params *portservices.RecordShipmentEventParams,
+	params *shipmenteventports.RecordShipmentEventParams,
 ) {
 	if params == nil || params.ShipmentID.IsNil() {
 		return

@@ -3,7 +3,7 @@ package loaders
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/vikstrous/dataloadgen"
 	"go.uber.org/fx"
@@ -12,11 +12,11 @@ import (
 type AgentDefinitionStatsLoaderFactoryParams struct {
 	fx.In
 
-	DefinitionRepo repositories.AgentDefinitionRepository
+	DefinitionRepo agentdefinitionports.AgentDefinitionRepository
 }
 
 type AgentDefinitionStatsLoaderFactory struct {
-	definitionRepo repositories.AgentDefinitionRepository
+	definitionRepo agentdefinitionports.AgentDefinitionRepository
 }
 
 func NewAgentDefinitionStatsLoaderFactory(
@@ -27,15 +27,15 @@ func NewAgentDefinitionStatsLoaderFactory(
 
 func (f *AgentDefinitionStatsLoaderFactory) NewForTenant(
 	tenantInfo pagination.TenantInfo,
-) *dataloadgen.Loader[string, repositories.AgentDefinitionStats] {
+) *dataloadgen.Loader[string, agentdefinitionports.AgentDefinitionStats] {
 	return newLoader(f.batchFunc(tenantInfo))
 }
 
 func (f *AgentDefinitionStatsLoaderFactory) batchFunc(
 	tenantInfo pagination.TenantInfo,
-) batchFetchFunc[repositories.AgentDefinitionStats] {
-	return func(ctx context.Context, keys []string) ([]repositories.AgentDefinitionStats, []error) {
-		values := make([]repositories.AgentDefinitionStats, len(keys))
+) batchFetchFunc[agentdefinitionports.AgentDefinitionStats] {
+	return func(ctx context.Context, keys []string) ([]agentdefinitionports.AgentDefinitionStats, []error) {
+		values := make([]agentdefinitionports.AgentDefinitionStats, len(keys))
 		errs := make([]error, len(keys))
 
 		ids, indexesByID := parseBatchKeys(keys, errs)

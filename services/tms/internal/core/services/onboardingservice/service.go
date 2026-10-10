@@ -9,9 +9,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/onboarding"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/onboardingports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -43,7 +43,7 @@ var scacPattern = regexp.MustCompile(`^[A-Z]{2,4}$`)
 type OrganizationStore interface {
 	GetByID(
 		ctx context.Context,
-		req repositories.GetOrganizationByIDRequest,
+		req tenantports.GetOrganizationByIDRequest,
 	) (*tenant.Organization, error)
 	Update(ctx context.Context, entity *tenant.Organization) (*tenant.Organization, error)
 }
@@ -55,22 +55,22 @@ type SampleDataLoader interface {
 type Params struct {
 	fx.In
 
-	DB            ports.DBConnection
-	Repository    repositories.OnboardingRepository
-	Organizations services.OrganizationService
+	DB            kernelports.DBConnection
+	Repository    onboardingports.OnboardingRepository
+	Organizations tenantports.OrganizationService
 	SampleData    *SampleData
 	Logger        *zap.Logger
 }
 
 type Service struct {
-	db            ports.DBConnection
-	repo          repositories.OnboardingRepository
+	db            kernelports.DBConnection
+	repo          onboardingports.OnboardingRepository
 	organizations OrganizationStore
 	sampleData    SampleDataLoader
 	l             *zap.Logger
 }
 
-func New(p Params) services.OnboardingService {
+func New(p Params) onboardingports.OnboardingService {
 	return &Service{
 		db:            p.DB,
 		repo:          p.Repository,
@@ -80,8 +80,8 @@ func New(p Params) services.OnboardingService {
 	}
 }
 
-func notRequired() *services.OnboardingState {
-	return &services.OnboardingState{
+func notRequired() *onboardingports.OnboardingState {
+	return &onboardingports.OnboardingState{
 		Required: false,
 		Status:   onboarding.StatusCompleted,
 	}
@@ -90,8 +90,8 @@ func notRequired() *services.OnboardingState {
 func (s *Service) Get(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*services.OnboardingState, error) {
-	entity, err := s.repo.Get(ctx, repositories.GetOnboardingRequest{TenantInfo: tenantInfo})
+) (*onboardingports.OnboardingState, error) {
+	entity, err := s.repo.Get(ctx, onboardingports.GetOnboardingRequest{TenantInfo: tenantInfo})
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return notRequired(), nil
@@ -99,7 +99,7 @@ func (s *Service) Get(
 		return nil, err
 	}
 
-	org, err := s.organizations.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+	org, err := s.organizations.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {
@@ -109,8 +109,8 @@ func (s *Service) Get(
 	return stateOf(entity, org), nil
 }
 
-func stateOf(entity *onboarding.Onboarding, org *tenant.Organization) *services.OnboardingState {
-	state := &services.OnboardingState{
+func stateOf(entity *onboarding.Onboarding, org *tenant.Organization) *onboardingports.OnboardingState {
+	state := &onboardingports.OnboardingState{
 		Required:         !entity.IsCompleted(),
 		Status:           entity.Status,
 		OperationType:    entity.OperationType,
@@ -125,8 +125,8 @@ func stateOf(entity *onboarding.Onboarding, org *tenant.Organization) *services.
 	return state
 }
 
-func organizationOf(org *tenant.Organization, completed bool) *services.OnboardingOrganization {
-	out := &services.OnboardingOrganization{
+func organizationOf(org *tenant.Organization, completed bool) *onboardingports.OnboardingOrganization {
+	out := &onboardingports.OnboardingOrganization{
 		Name:     org.Name,
 		Timezone: org.Timezone,
 	}
@@ -150,8 +150,8 @@ func organizationOf(org *tenant.Organization, completed bool) *services.Onboardi
 
 func (s *Service) Complete(
 	ctx context.Context,
-	req *services.CompleteOnboardingRequest,
-) (*services.OnboardingState, error) {
+	req *onboardingports.CompleteOnboardingRequest,
+) (*onboardingports.OnboardingState, error) {
 	normalized, err := normalizeRequest(req)
 	if err != nil {
 		return nil, err
@@ -163,7 +163,7 @@ func (s *Service) Complete(
 	// organizations would wait on that lock until lock_timeout. Retrying after a
 	// failed second step re-applies the same update.
 	var org *tenant.Organization
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		if _, txErr := s.getPending(txCtx, req.TenantInfo); txErr != nil {
 			return txErr
 		}
@@ -176,8 +176,8 @@ func (s *Service) Complete(
 		return nil, err
 	}
 
-	var state *services.OnboardingState
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	var state *onboardingports.OnboardingState
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		entity, txErr := s.getPending(txCtx, req.TenantInfo)
 		if txErr != nil {
 			return txErr
@@ -231,7 +231,7 @@ func (s *Service) getPending(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*onboarding.Onboarding, error) {
-	entity, err := s.repo.Get(ctx, repositories.GetOnboardingRequest{
+	entity, err := s.repo.Get(ctx, onboardingports.GetOnboardingRequest{
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {
@@ -250,9 +250,9 @@ func (s *Service) getPending(
 func (s *Service) updateOrganization(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	req *services.CompleteOnboardingRequest,
+	req *onboardingports.CompleteOnboardingRequest,
 ) (*tenant.Organization, error) {
-	org, err := s.organizations.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+	org, err := s.organizations.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {
@@ -284,9 +284,9 @@ func (s *Service) updateOrganization(
 }
 
 func normalizeRequest(
-	req *services.CompleteOnboardingRequest,
-) (*services.CompleteOnboardingRequest, error) {
-	profile := services.OnboardingOrganization{
+	req *onboardingports.CompleteOnboardingRequest,
+) (*onboardingports.CompleteOnboardingRequest, error) {
+	profile := onboardingports.OnboardingOrganization{
 		Name:         collapseSpaces(req.Organization.Name),
 		Timezone:     strings.TrimSpace(req.Organization.Timezone),
 		AddressLine1: collapseSpaces(req.Organization.AddressLine1),
@@ -333,7 +333,7 @@ func normalizeRequest(
 		return nil, multiErr
 	}
 
-	return &services.CompleteOnboardingRequest{
+	return &onboardingports.CompleteOnboardingRequest{
 		TenantInfo:     req.TenantInfo,
 		Actor:          req.Actor,
 		Organization:   profile,

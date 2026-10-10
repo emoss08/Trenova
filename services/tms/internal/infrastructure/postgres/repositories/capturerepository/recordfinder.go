@@ -13,9 +13,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -109,7 +109,7 @@ type recordFinder struct {
 	db *postgres.Connection
 }
 
-func NewRecordFinder(p Params) repositories.CaptureRecordFinder {
+func NewRecordFinder(p Params) captureports.CaptureRecordFinder {
 	return &recordFinder{db: p.DB}
 }
 
@@ -136,18 +136,18 @@ func (f *recordFinder) Exists(
 
 func (f *recordFinder) Labels(
 	ctx context.Context,
-	req *repositories.ListCaptureRecordLabelsRequest,
-) ([]*repositories.CaptureRecordLabel, error) {
-	return dbtx.Read(ctx, f.db, func(ctx context.Context) ([]*repositories.CaptureRecordLabel, error) {
+	req *captureports.ListCaptureRecordLabelsRequest,
+) ([]*captureports.CaptureRecordLabel, error) {
+	return dbtx.Read(ctx, f.db, func(ctx context.Context) ([]*captureports.CaptureRecordLabel, error) {
 		kind, err := lookupKind(req.ResourceType)
 		if err != nil {
 			return nil, err
 		}
 		if len(req.IDs) == 0 {
-			return []*repositories.CaptureRecordLabel{}, nil
+			return []*captureports.CaptureRecordLabel{}, nil
 		}
 
-		labels := make([]*repositories.CaptureRecordLabel, 0, len(req.IDs))
+		labels := make([]*captureports.CaptureRecordLabel, 0, len(req.IDs))
 		if err = f.db.DBForContext(ctx).
 			NewSelect().
 			Model(kind.model()).

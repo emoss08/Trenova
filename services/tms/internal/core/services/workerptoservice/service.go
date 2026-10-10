@@ -6,20 +6,23 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/smsjobs/smscontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/core/services/planservice"
 	"github.com/emoss08/trenova/internal/core/services/ptoledgerservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/smsjobs/smscontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -38,35 +41,35 @@ type Params struct {
 	fx.In
 
 	Logger          *zap.Logger
-	DB              ports.DBConnection
-	Repo            repositories.WorkerPTORepository
-	UserRepo        repositories.UserRepository
-	WorkerRepo      repositories.WorkerRepository
+	DB              kernelports.DBConnection
+	Repo            workerports.WorkerPTORepository
+	UserRepo        tenantports.UserRepository
+	WorkerRepo      workerports.WorkerRepository
 	Ledger          *ptoledgerservice.Service
-	WorkflowStarter services.WorkflowStarter
-	AuditService    services.AuditService
+	WorkflowStarter kernelports.WorkflowStarter
+	AuditService    auditports.AuditService
 	DriverNotify    *drivernotificationservice.Service `optional:"true"`
-	Realtime        services.RealtimeService           `optional:"true"`
-	Plans           services.PlanService               `optional:"true"`
+	Realtime        agentports.RealtimeService         `optional:"true"`
+	Plans           platformplanports.PlanService      `optional:"true"`
 }
 
 type Service struct {
 	l               *zap.Logger
-	db              ports.DBConnection
-	repo            repositories.WorkerPTORepository
-	userRepo        repositories.UserRepository
-	workerRepo      repositories.WorkerRepository
+	db              kernelports.DBConnection
+	repo            workerports.WorkerPTORepository
+	userRepo        tenantports.UserRepository
+	workerRepo      workerports.WorkerRepository
 	ledger          *ptoledgerservice.Service
-	workflowStarter services.WorkflowStarter
-	auditService    services.AuditService
+	workflowStarter kernelports.WorkflowStarter
+	auditService    auditports.AuditService
 	driverNotify    *drivernotificationservice.Service
-	realtime        services.RealtimeService
-	plans           services.PlanService
+	realtime        agentports.RealtimeService
+	plans           platformplanports.PlanService
 }
 
 const maxPTOChartRangeSeconds int64 = 366 * 24 * 60 * 60
 
-var _ services.WorkerPTOService = (*Service)(nil)
+var _ workerports.WorkerPTOService = (*Service)(nil)
 
 func New(p Params) *Service {
 	return &Service{
@@ -86,14 +89,14 @@ func New(p Params) *Service {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListPTORequest,
+	req *workerports.ListPTORequest,
 ) (*pagination.CursorListResult[*worker.WorkerPTO], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	req *repositories.GetPTOByIDRequest,
+	req *workerports.GetPTOByIDRequest,
 ) (*worker.WorkerPTO, error) {
 	return s.repo.GetByID(ctx, req)
 }
@@ -140,7 +143,7 @@ func (s *Service) Create(
 		})
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceWorkerPTO,
 		ResourceID:     createdEntity.GetResourceID(),
 		Operation:      permission.OpCreate,
@@ -179,7 +182,7 @@ func (s *Service) Update(
 	}
 	s.publishPTOInvalidation(ctx, updated, permission.OpUpdate, userID)
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceWorkerPTO,
 		ResourceID:     updated.GetResourceID(),
 		Operation:      permission.OpUpdate,
@@ -197,7 +200,7 @@ func (s *Service) Update(
 
 func (s *Service) Approve(
 	ctx context.Context,
-	req *repositories.UpdatePTOStatusRequest,
+	req *workerports.UpdatePTOStatusRequest,
 ) (*worker.WorkerPTO, error) {
 	return s.transition(ctx, transitionParams{
 		req:          req,
@@ -208,7 +211,7 @@ func (s *Service) Approve(
 
 func (s *Service) Reject(
 	ctx context.Context,
-	req *repositories.UpdatePTOStatusRequest,
+	req *workerports.UpdatePTOStatusRequest,
 ) (*worker.WorkerPTO, error) {
 	if err := requireRejectionReason(req); err != nil {
 		return nil, err
@@ -223,7 +226,7 @@ func (s *Service) Reject(
 
 func (s *Service) Cancel(
 	ctx context.Context,
-	req *repositories.UpdatePTOStatusRequest,
+	req *workerports.UpdatePTOStatusRequest,
 ) (*worker.WorkerPTO, error) {
 	return s.transition(ctx, transitionParams{
 		req:          req,
@@ -234,7 +237,7 @@ func (s *Service) Cancel(
 
 func (s *Service) CancelRequested(
 	ctx context.Context,
-	req *repositories.UpdatePTOStatusRequest,
+	req *workerports.UpdatePTOStatusRequest,
 ) (*worker.WorkerPTO, error) {
 	return s.transition(ctx, transitionParams{
 		req:          req,
@@ -245,8 +248,8 @@ func (s *Service) CancelRequested(
 
 func (s *Service) BulkAction(
 	ctx context.Context,
-	req *services.PTOBulkActionRequest,
-) (*services.PTOBulkActionPayload, error) {
+	req *workerports.PTOBulkActionRequest,
+) (*workerports.PTOBulkActionPayload, error) {
 	if len(req.PTOIDs) == 0 {
 		return nil, errortypes.NewValidationError(
 			"ptoIds",
@@ -261,7 +264,7 @@ func (s *Service) BulkAction(
 			"Bulk action is invalid",
 		)
 	}
-	if req.Action == services.PTOBulkActionReject && strings.TrimSpace(req.Reason) == "" {
+	if req.Action == workerports.PTOBulkActionReject && strings.TrimSpace(req.Reason) == "" {
 		return nil, errortypes.NewValidationError(
 			"reason",
 			errortypes.ErrRequired,
@@ -269,7 +272,7 @@ func (s *Service) BulkAction(
 		)
 	}
 
-	existing, err := s.repo.GetByIDs(ctx, &repositories.GetPTOsByIDsRequest{
+	existing, err := s.repo.GetByIDs(ctx, &workerports.GetPTOsByIDsRequest{
 		IDs:        req.PTOIDs,
 		TenantInfo: req.TenantInfo,
 	})
@@ -282,11 +285,11 @@ func (s *Service) BulkAction(
 		byID[pto.ID] = pto
 	}
 
-	payload := &services.PTOBulkActionPayload{
-		Results: make([]*services.PTOBulkActionResult, 0, len(req.PTOIDs)),
+	payload := &workerports.PTOBulkActionPayload{
+		Results: make([]*workerports.PTOBulkActionResult, 0, len(req.PTOIDs)),
 	}
 	for _, ptoID := range req.PTOIDs {
-		result := &services.PTOBulkActionResult{PTOID: ptoID}
+		result := &workerports.PTOBulkActionResult{PTOID: ptoID}
 
 		current, found := byID[ptoID]
 		if !found {
@@ -297,7 +300,7 @@ func (s *Service) BulkAction(
 		}
 
 		_, actionErr := s.transition(ctx, transitionParams{
-			req: &repositories.UpdatePTOStatusRequest{
+			req: &workerports.UpdatePTOStatusRequest{
 				ID:              ptoID,
 				TenantInfo:      req.TenantInfo,
 				UserID:          req.UserID,
@@ -322,7 +325,7 @@ func (s *Service) BulkAction(
 }
 
 type transitionParams struct {
-	req          *repositories.UpdatePTOStatusRequest
+	req          *workerports.UpdatePTOStatusRequest
 	target       worker.PTOStatus
 	notifyWorker bool
 	current      *worker.WorkerPTO
@@ -395,7 +398,7 @@ func transitionOperation(target worker.PTOStatus) permission.Operation {
 func (s *Service) logTransitionAudit(
 	previous, updated *worker.WorkerPTO,
 	operation permission.Operation,
-	req *repositories.UpdatePTOStatusRequest,
+	req *workerports.UpdatePTOStatusRequest,
 	log *zap.Logger,
 ) {
 	if s.auditService == nil {
@@ -413,7 +416,7 @@ func (s *Service) logTransitionAudit(
 		comment = fmt.Sprintf("%s: %s", comment, req.Reason)
 	}
 
-	if err := s.auditService.LogAction(&services.LogActionParams{
+	if err := s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceWorkerPTO,
 		ResourceID:     updated.GetResourceID(),
 		Operation:      operation,
@@ -429,7 +432,7 @@ func (s *Service) logTransitionAudit(
 
 func (s *Service) notifyTransition(
 	ctx context.Context,
-	req *repositories.UpdatePTOStatusRequest,
+	req *workerports.UpdatePTOStatusRequest,
 	updated *worker.WorkerPTO,
 	target worker.PTOStatus,
 	log *zap.Logger,
@@ -443,7 +446,7 @@ func (s *Service) notifyTransition(
 
 func (s *Service) sendTransitionSMS(
 	ctx context.Context,
-	req *repositories.UpdatePTOStatusRequest,
+	req *workerports.UpdatePTOStatusRequest,
 	updated *worker.WorkerPTO,
 	target worker.PTOStatus,
 	log *zap.Logger,
@@ -539,8 +542,8 @@ func transitionSMSMessage(
 
 func (s *Service) GetChartData(
 	ctx context.Context,
-	req *repositories.PTOChartRequest,
-) ([]*repositories.PTOChartDataPoint, error) {
+	req *workerports.PTOChartRequest,
+) ([]*workerports.PTOChartDataPoint, error) {
 	if err := s.validateChartRequest(req); err != nil {
 		return nil, err
 	}
@@ -548,7 +551,7 @@ func (s *Service) GetChartData(
 	return s.repo.GetChartData(ctx, req)
 }
 
-func (s *Service) validateChartRequest(req *repositories.PTOChartRequest) error {
+func (s *Service) validateChartRequest(req *workerports.PTOChartRequest) error {
 	multiErr := errortypes.NewMultiError()
 
 	if req == nil {
@@ -611,7 +614,7 @@ func (s *Service) validateChartRequest(req *repositories.PTOChartRequest) error 
 
 func (s *Service) ListUpcoming(
 	ctx context.Context,
-	req *repositories.ListUpcomingPTORequest,
+	req *workerports.ListUpcomingPTORequest,
 ) (*pagination.CursorListResult[*worker.WorkerPTO], error) {
 	return s.repo.ListUpcoming(ctx, req)
 }
@@ -629,7 +632,7 @@ func (s *Service) publishPTOInvalidation(
 		OrganizationID: pto.OrganizationID,
 		BusinessUnitID: pto.BusinessUnitID,
 		ActorUserID:    userID,
-		ActorType:      services.PrincipalTypeUser,
+		ActorType:      permissionports.PrincipalTypeUser,
 		ActorID:        userID,
 		Resource:       "worker_pto",
 		Action:         string(action),
@@ -687,7 +690,7 @@ func (s *Service) inTx(ctx context.Context, fn func(context.Context) error) erro
 	if s.db == nil {
 		return fn(ctx)
 	}
-	return s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	return s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		return fn(txCtx)
 	})
 }
@@ -779,7 +782,7 @@ func (s *Service) bookUsage(
 		return err
 	}
 	pto.BalanceAfterDays = decimal.NewNullDecimal(entry.BalanceAfterDays)
-	return s.repo.SetBalanceAfter(ctx, &repositories.SetPTOBalanceAfterRequest{
+	return s.repo.SetBalanceAfter(ctx, &workerports.SetPTOBalanceAfterRequest{
 		ID:               pto.ID,
 		TenantInfo:       tenantInfo,
 		BalanceAfterDays: entry.BalanceAfterDays,

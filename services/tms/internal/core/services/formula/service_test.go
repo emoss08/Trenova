@@ -8,12 +8,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/formula"
 	"github.com/emoss08/trenova/internal/core/services/formula/engine"
 	"github.com/emoss08/trenova/internal/core/services/formula/resolver"
 	"github.com/emoss08/trenova/internal/core/services/formula/schema"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
@@ -27,7 +27,7 @@ import (
 )
 
 type mockFormulaTemplateRepo struct {
-	getByIDFunc func(ctx context.Context, req repositories.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error)
+	getByIDFunc func(ctx context.Context, req formulatemplateports.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error)
 }
 
 func (m *mockFormulaTemplateRepo) Create(
@@ -46,7 +46,7 @@ func (m *mockFormulaTemplateRepo) Update(
 
 func (m *mockFormulaTemplateRepo) GetByID(
 	ctx context.Context,
-	req repositories.GetFormulaTemplateByIDRequest,
+	req formulatemplateports.GetFormulaTemplateByIDRequest,
 ) (*formulatemplate.FormulaTemplate, error) {
 	if m.getByIDFunc != nil {
 		return m.getByIDFunc(ctx, req)
@@ -56,56 +56,56 @@ func (m *mockFormulaTemplateRepo) GetByID(
 
 func (m *mockFormulaTemplateRepo) GetByIDs(
 	_ context.Context,
-	_ repositories.GetFormulaTemplatesByIDsRequest,
+	_ formulatemplateports.GetFormulaTemplatesByIDsRequest,
 ) ([]*formulatemplate.FormulaTemplate, error) {
 	return nil, nil
 }
 
 func (m *mockFormulaTemplateRepo) FindByNames(
 	_ context.Context,
-	_ repositories.GetFormulaTemplatesByNamesRequest,
+	_ formulatemplateports.GetFormulaTemplatesByNamesRequest,
 ) ([]*formulatemplate.FormulaTemplate, error) {
 	return nil, nil
 }
 
 func (m *mockFormulaTemplateRepo) List(
 	_ context.Context,
-	_ *repositories.ListFormulaTemplatesRequest,
+	_ *formulatemplateports.ListFormulaTemplatesRequest,
 ) (*pagination.ListResult[*formulatemplate.FormulaTemplate], error) {
 	return nil, nil
 }
 
 func (m *mockFormulaTemplateRepo) ListConnection(
 	_ context.Context,
-	_ *repositories.ListFormulaTemplateConnectionRequest,
+	_ *formulatemplateports.ListFormulaTemplateConnectionRequest,
 ) (*pagination.CursorListResult[*formulatemplate.FormulaTemplate], error) {
 	return nil, nil
 }
 
 func (m *mockFormulaTemplateRepo) BulkUpdateStatus(
 	_ context.Context,
-	_ *repositories.BulkUpdateFormulaTemplateStatusRequest,
+	_ *formulatemplateports.BulkUpdateFormulaTemplateStatusRequest,
 ) ([]*formulatemplate.FormulaTemplate, error) {
 	return nil, nil
 }
 
 func (m *mockFormulaTemplateRepo) BulkDuplicate(
 	_ context.Context,
-	_ *repositories.BulkDuplicateFormulaTemplateRequest,
+	_ *formulatemplateports.BulkDuplicateFormulaTemplateRequest,
 ) ([]*formulatemplate.FormulaTemplate, error) {
 	return nil, nil
 }
 
 func (m *mockFormulaTemplateRepo) CountUsages(
 	_ context.Context,
-	_ *repositories.GetTemplateUsageRequest,
-) (*repositories.GetTemplateUsageResponse, error) {
+	_ *formulatemplateports.GetTemplateUsageRequest,
+) (*formulatemplateports.GetTemplateUsageResponse, error) {
 	return nil, nil
 }
 
 func (m *mockFormulaTemplateRepo) SelectOptions(
 	_ context.Context,
-	_ *repositories.FormulaTemplateSelectOptionsRequest,
+	_ *formulatemplateports.FormulaTemplateSelectOptionsRequest,
 ) (*pagination.ListResult[*formulatemplate.FormulaTemplate], error) {
 	return nil, nil
 }
@@ -151,7 +151,7 @@ func setupService(t *testing.T) *formula.Service {
 
 func setupServiceWithRepo(
 	t *testing.T,
-	repo repositories.FormulaTemplateRepository,
+	repo formulatemplateports.FormulaTemplateRepository,
 ) *formula.Service {
 	t.Helper()
 	return setupServiceWithRepoAndMatrixData(t, repo, nil)
@@ -159,7 +159,7 @@ func setupServiceWithRepo(
 
 func setupServiceWithMatrixData(
 	t *testing.T,
-	data []*repositories.RateMatrixLookupData,
+	data []*ratematrixports.RateMatrixLookupData,
 ) *formula.Service {
 	t.Helper()
 	return setupServiceWithRepoAndMatrixData(t, nil, data)
@@ -167,8 +167,8 @@ func setupServiceWithMatrixData(
 
 func setupServiceWithRepoAndMatrixData(
 	t *testing.T,
-	repo repositories.FormulaTemplateRepository,
-	data []*repositories.RateMatrixLookupData,
+	repo formulatemplateports.FormulaTemplateRepository,
+	data []*ratematrixports.RateMatrixLookupData,
 ) *formula.Service {
 	t.Helper()
 
@@ -201,20 +201,20 @@ func setupServiceWithRepoAndMatrixData(
 }
 
 type stubVersionRepo struct {
-	repositories.FormulaTemplateVersionRepository
+	formulatemplateports.FormulaTemplateVersionRepository
 	effectiveVersion *formulatemplate.FormulaTemplateVersion
 }
 
 func (s *stubVersionRepo) GetEffectiveVersion(
 	_ context.Context,
-	_ *repositories.GetEffectiveVersionRequest,
+	_ *formulatemplateports.GetEffectiveVersionRequest,
 ) (*formulatemplate.FormulaTemplateVersion, error) {
 	return s.effectiveVersion, nil
 }
 
 func (s *stubVersionRepo) ListScheduled(
 	_ context.Context,
-	_ *repositories.ListScheduledVersionsRequest,
+	_ *formulatemplateports.ListScheduledVersionsRequest,
 ) ([]*formulatemplate.FormulaTemplateVersion, error) {
 	if s.effectiveVersion == nil {
 		return nil, nil
@@ -223,14 +223,14 @@ func (s *stubVersionRepo) ListScheduled(
 }
 
 type stubMatrixRepo struct {
-	repositories.RateMatrixRepository
-	data []*repositories.RateMatrixLookupData
+	ratematrixports.RateMatrixRepository
+	data []*ratematrixports.RateMatrixLookupData
 }
 
 func (s *stubMatrixRepo) GetLookupData(
 	_ context.Context,
-	_ *repositories.GetRateMatrixLookupDataRequest,
-) ([]*repositories.RateMatrixLookupData, error) {
+	_ *ratematrixports.GetRateMatrixLookupDataRequest,
+) ([]*ratematrixports.RateMatrixLookupData, error) {
 	return s.data, nil
 }
 
@@ -735,7 +735,7 @@ func TestService_Calculate_Success(t *testing.T) {
 
 	templateID := pulid.MustNew("ft_")
 	repo := &mockFormulaTemplateRepo{
-		getByIDFunc: func(_ context.Context, req repositories.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
+		getByIDFunc: func(_ context.Context, req formulatemplateports.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
 			assert.Equal(t, templateID, req.TemplateID)
 			return &formulatemplate.FormulaTemplate{
 				ID:         templateID,
@@ -777,7 +777,7 @@ func TestService_Calculate_RepoError(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockFormulaTemplateRepo{
-		getByIDFunc: func(_ context.Context, _ repositories.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
+		getByIDFunc: func(_ context.Context, _ formulatemplateports.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
 			return nil, errors.New("template not found")
 		},
 	}
@@ -804,7 +804,7 @@ func TestService_Calculate_EvaluateError(t *testing.T) {
 
 	templateID := pulid.MustNew("ft_")
 	repo := &mockFormulaTemplateRepo{
-		getByIDFunc: func(_ context.Context, _ repositories.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
+		getByIDFunc: func(_ context.Context, _ formulatemplateports.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
 			return &formulatemplate.FormulaTemplate{
 				ID:         templateID,
 				Status:     formulatemplate.StatusActive,
@@ -836,7 +836,7 @@ func TestService_Calculate_UnknownSchema(t *testing.T) {
 
 	templateID := pulid.MustNew("ft_")
 	repo := &mockFormulaTemplateRepo{
-		getByIDFunc: func(_ context.Context, _ repositories.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
+		getByIDFunc: func(_ context.Context, _ formulatemplateports.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
 			return &formulatemplate.FormulaTemplate{
 				ID:         templateID,
 				Status:     formulatemplate.StatusActive,
@@ -869,7 +869,7 @@ func TestService_Calculate_UndeclaredVariableShadowsField(t *testing.T) {
 
 	templateID := pulid.MustNew("ft_")
 	repo := &mockFormulaTemplateRepo{
-		getByIDFunc: func(_ context.Context, _ repositories.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
+		getByIDFunc: func(_ context.Context, _ formulatemplateports.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
 			return &formulatemplate.FormulaTemplate{
 				ID:         templateID,
 				Status:     formulatemplate.StatusActive,
@@ -977,7 +977,7 @@ func TestService_EvaluatePredicate(t *testing.T) {
 
 			got, err := svc.EvaluatePredicate(
 				context.Background(),
-				&services.EvaluatePredicateRequest{
+				&formulatemplateports.EvaluatePredicateRequest{
 					Expression: tt.expression,
 					SchemaID:   "shipment",
 					Entity:     entity,
@@ -1091,9 +1091,9 @@ func TestService_Rate_MissingNullableFieldIsAValidationError(t *testing.T) {
 
 func (m *mockFormulaTemplateRepo) CountStatsByIDs(
 	context.Context,
-	*repositories.GetFormulaTemplateStatsRequest,
-) (map[pulid.ID]repositories.TemplateStats, error) {
-	return map[pulid.ID]repositories.TemplateStats{}, nil
+	*formulatemplateports.GetFormulaTemplateStatsRequest,
+) (map[pulid.ID]formulatemplateports.TemplateStats, error) {
+	return map[pulid.ID]formulatemplateports.TemplateStats{}, nil
 }
 
 func (*stubMatrixRepo) GetLookupStamp(context.Context, pagination.TenantInfo) (string, error) {

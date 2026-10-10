@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -63,7 +63,7 @@ func TestSelectMappingProfileOptions_AppliesTenantSearchAndFilters(t *testing.T)
 
 	result, err := repo.SelectMappingProfileOptions(
 		t.Context(),
-		&repositories.EDIMappingProfileSelectOptionsRequest{
+		&ediports.EDIMappingProfileSelectOptionsRequest{
 			SelectQueryRequest: &pagination.SelectQueryRequest{
 				TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 				Pagination: pagination.Info{Limit: 10},

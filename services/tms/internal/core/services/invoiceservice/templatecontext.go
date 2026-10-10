@@ -6,8 +6,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/fx"
 )
@@ -19,20 +22,20 @@ import (
 // depends on the builder group; routing the builder through *Service would close
 // that loop and fx would refuse to start.
 type ContextBuilder struct {
-	invoiceRepo  repositories.InvoiceRepository
+	invoiceRepo  invoiceports.InvoiceRepository
 	profileRepos deliveryProfileRepos
-	inliner      services.AssetInliner
+	inliner      documenttemplateports.AssetInliner
 }
 
 type ContextBuilderParams struct {
 	fx.In
 
-	InvoiceRepo      repositories.InvoiceRepository
-	CustomerRepo     repositories.CustomerRepository
-	ShipmentRepo     repositories.ShipmentRepository
-	BillingRepo      repositories.BillingControlRepository
-	OrganizationRepo repositories.OrganizationRepository
-	Inliner          services.AssetInliner
+	InvoiceRepo      invoiceports.InvoiceRepository
+	CustomerRepo     customerports.CustomerRepository
+	ShipmentRepo     shipmentports.ShipmentRepository
+	BillingRepo      tenantports.BillingControlRepository
+	OrganizationRepo tenantports.OrganizationRepository
+	Inliner          documenttemplateports.AssetInliner
 }
 
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
@@ -49,7 +52,7 @@ func NewContextBuilder(p ContextBuilderParams) *ContextBuilder {
 	}
 }
 
-var _ services.ContextBuilder = (*ContextBuilder)(nil)
+var _ documenttemplateports.ContextBuilder = (*ContextBuilder)(nil)
 
 func (b *ContextBuilder) Kind() documenttemplate.Kind {
 	return documenttemplate.KindInvoicePDF
@@ -58,9 +61,9 @@ func (b *ContextBuilder) Kind() documenttemplate.Kind {
 // Build loads the invoice and everything its document names.
 func (b *ContextBuilder) Build(
 	ctx context.Context,
-	req *services.BuildContextRequest,
+	req *documenttemplateports.BuildContextRequest,
 ) (any, error) {
-	entity, err := b.invoiceRepo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+	entity, err := b.invoiceRepo.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         req.ReferenceID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -125,7 +128,7 @@ func (b *ContextBuilder) resolveLogo(
 		return "", nil
 	}
 
-	return services.ResolveLogoDataURI(ctx, b.inliner, deliveryProfile.Organization.LogoURL)
+	return documenttemplateports.ResolveLogoDataURI(ctx, b.inliner, deliveryProfile.Organization.LogoURL)
 }
 
 // invoiceContextFromPDFData is the whole mapping between the surviving data

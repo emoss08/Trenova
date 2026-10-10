@@ -6,7 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/homelayout"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/homelayoutports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -60,7 +61,7 @@ type PreviewRequest struct {
 // once per request, so a page of thirty presets still costs one query.
 func countAssignedUsers(
 	preset *homelayout.Preset,
-	assignments []repositories.HomeRoleUserAssignment,
+	assignments []homelayoutports.HomeRoleUserAssignment,
 ) int {
 	if len(preset.RoleIDs) == 0 && preset.CoreResponsibility == "" {
 		return 0
@@ -81,7 +82,7 @@ func (s *Service) ListPresets(ctx context.Context, req *Request) ([]*PresetView,
 
 	presets, err := s.repo.ListPresets(
 		ctx,
-		&repositories.ListHomeLayoutPresetsRequest{TenantInfo: req.TenantInfo},
+		&homelayoutports.ListHomeLayoutPresetsRequest{TenantInfo: req.TenantInfo},
 	)
 	if err != nil {
 		log.Error("failed to list home layout presets", zap.Error(err))
@@ -105,7 +106,7 @@ func (s *Service) ListPresets(ctx context.Context, req *Request) ([]*PresetView,
 }
 
 func (s *Service) GetPreset(ctx context.Context, req *GetPresetRequest) (*PresetView, error) {
-	preset, err := s.repo.GetPreset(ctx, &repositories.GetHomeLayoutPresetRequest{
+	preset, err := s.repo.GetPreset(ctx, &homelayoutports.GetHomeLayoutPresetRequest{
 		TenantInfo: req.TenantInfo,
 		PresetID:   req.PresetID,
 	})
@@ -129,7 +130,7 @@ func (s *Service) GetPreset(ctx context.Context, req *GetPresetRequest) (*Preset
 // that silently reaches nobody.
 func (s *Service) validateRoleIDs(ctx context.Context, req *SavePresetRequest) error {
 	for _, roleID := range req.RoleIDs {
-		if _, err := s.roles.GetByID(ctx, repositories.GetRoleByIDRequest{
+		if _, err := s.roles.GetByID(ctx, permissionports.GetRoleByIDRequest{
 			ID:         roleID,
 			TenantInfo: req.TenantInfo,
 		}); err != nil {
@@ -205,7 +206,7 @@ func (s *Service) UpdatePreset(
 		zap.String("presetID", req.PresetID.String()),
 	)
 
-	existing, err := s.repo.GetPreset(ctx, &repositories.GetHomeLayoutPresetRequest{
+	existing, err := s.repo.GetPreset(ctx, &homelayoutports.GetHomeLayoutPresetRequest{
 		TenantInfo: req.TenantInfo,
 		PresetID:   req.PresetID,
 	})
@@ -253,7 +254,7 @@ func (s *Service) UpdatePreset(
 }
 
 func (s *Service) DeletePreset(ctx context.Context, req *DeletePresetRequest) error {
-	return s.repo.DeletePreset(ctx, &repositories.DeleteHomeLayoutPresetRequest{
+	return s.repo.DeletePreset(ctx, &homelayoutports.DeleteHomeLayoutPresetRequest{
 		TenantInfo: req.TenantInfo,
 		PresetID:   req.PresetID,
 	})
@@ -294,7 +295,7 @@ func (s *Service) previewSource(
 	req *PreviewRequest,
 ) (*homelayout.Layout, string, Source, error) {
 	if !req.PresetID.IsNil() {
-		preset, err := s.repo.GetPreset(ctx, &repositories.GetHomeLayoutPresetRequest{
+		preset, err := s.repo.GetPreset(ctx, &homelayoutports.GetHomeLayoutPresetRequest{
 			TenantInfo: req.TenantInfo,
 			PresetID:   req.PresetID,
 		})
@@ -314,13 +315,13 @@ func (s *Service) previewSource(
 
 	presets, err := s.repo.ListPresets(
 		ctx,
-		&repositories.ListHomeLayoutPresetsRequest{TenantInfo: req.TenantInfo},
+		&homelayoutports.ListHomeLayoutPresetsRequest{TenantInfo: req.TenantInfo},
 	)
 	if err != nil {
 		return nil, "", SourceBuiltIn, err
 	}
 
-	role, err := s.roles.GetByID(ctx, repositories.GetRoleByIDRequest{
+	role, err := s.roles.GetByID(ctx, permissionports.GetRoleByIDRequest{
 		ID:         req.RoleID,
 		TenantInfo: req.TenantInfo,
 	})

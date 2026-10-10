@@ -5,12 +5,11 @@ import (
 	"errors"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs/billingcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs/billingcontract"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -82,7 +81,7 @@ func (a *Activities) SendInvoiceEDIActivity(
 		BuID:   payload.BusinessUnitID,
 		UserID: payload.UserID,
 	}
-	current, err := a.invoiceService.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+	current, err := a.invoiceService.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         payload.InvoiceID,
 		TenantInfo: tenantInfo,
 	})
@@ -107,7 +106,7 @@ func (a *Activities) SendInvoiceEDIActivity(
 
 	plans, err := a.invoiceService.ResolveEDISendPlans(
 		ctx,
-		&services.ResolveInvoiceEDISendPlansRequest{
+		&invoiceports.ResolveInvoiceEDISendPlansRequest{
 			TenantInfo: tenantInfo,
 			Invoices:   []*invoice.Invoice{current},
 		},
@@ -121,7 +120,7 @@ func (a *Activities) SendInvoiceEDIActivity(
 		if plan != nil && len(plan.Blockers) > 0 {
 			reason = plan.Blockers[0]
 		}
-		if err = a.invoiceRepo.UpdateEDISendStatus(ctx, repositories.UpdateInvoiceEDISendStatusRequest{
+		if err = a.invoiceRepo.UpdateEDISendStatus(ctx, invoiceports.UpdateInvoiceEDISendStatusRequest{
 			TenantInfo: tenantInfo,
 			InvoiceID:  current.ID,
 			Status:     invoice.EDISendStatusNotConfigured,
@@ -136,7 +135,7 @@ func (a *Activities) SendInvoiceEDIActivity(
 		}, nil
 	}
 
-	message, err := a.ediService.GenerateDocument(ctx, &services.GenerateEDIDocumentRequest{
+	message, err := a.ediService.GenerateDocument(ctx, &ediports.GenerateEDIDocumentRequest{
 		TenantInfo:               tenantInfo,
 		PartnerDocumentProfileID: plan.DocumentProfileID,
 		EDIPartnerID:             plan.PartnerID,
@@ -146,7 +145,7 @@ func (a *Activities) SendInvoiceEDIActivity(
 		GeneratedByID:            payload.UserID,
 	})
 	if err != nil {
-		if updateErr := a.invoiceRepo.UpdateEDISendStatus(ctx, repositories.UpdateInvoiceEDISendStatusRequest{
+		if updateErr := a.invoiceRepo.UpdateEDISendStatus(ctx, invoiceports.UpdateInvoiceEDISendStatusRequest{
 			TenantInfo: tenantInfo,
 			InvoiceID:  current.ID,
 			Status:     invoice.EDISendStatusFailed,
@@ -172,7 +171,7 @@ func (a *Activities) SendInvoiceEDIActivity(
 		status = invoice.EDISendStatusSent
 		sentAt = &now
 	}
-	if err = a.invoiceRepo.UpdateEDISendStatus(ctx, repositories.UpdateInvoiceEDISendStatusRequest{
+	if err = a.invoiceRepo.UpdateEDISendStatus(ctx, invoiceports.UpdateInvoiceEDISendStatusRequest{
 		TenantInfo: tenantInfo,
 		InvoiceID:  current.ID,
 		MessageID:  message.ID,

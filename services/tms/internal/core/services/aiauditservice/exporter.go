@@ -15,8 +15,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/csvutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -39,8 +38,8 @@ var ErrExportChanged = errors.New("the AI audit trail changed while it was being
 // ExportSpec is one export's scope and reader.
 type ExportSpec struct {
 	Export      *aiaudit.AIAuditExport
-	Summary     *repositories.AIAuditEventSummary
-	Ceilings    serviceports.FieldCeilings
+	Summary     *aiauditports.AIAuditEventSummary
+	Ceilings    aiauditports.FieldCeilings
 	RequestedBy string
 	// LinkAuditEntries adds the ids of the audit log rows matched to each
 	// event by time; only a reader who may read the audit log is given them.
@@ -62,17 +61,17 @@ type ExportStats struct {
 // Exporter writes the trail to a CSV or JSON file one page at a time, so an
 // export of a million rows never holds more than a page in memory.
 type Exporter struct {
-	ledger  repositories.AIAuditRepository
+	ledger  aiauditports.AIAuditRepository
 	keyring *Keyring
 }
 
-func NewExporter(ledger repositories.AIAuditRepository, keyring *Keyring) *Exporter {
+func NewExporter(ledger aiauditports.AIAuditRepository, keyring *Keyring) *Exporter {
 	return &Exporter{ledger: ledger, keyring: keyring}
 }
 
 // ChainComplete reports whether an export holds an unbroken stretch of the
 // chain: nothing filtered out, and every seq between its first and last row.
-func ChainComplete(filter *aiaudit.ExportFilter, summary *repositories.AIAuditEventSummary) bool {
+func ChainComplete(filter *aiaudit.ExportFilter, summary *aiauditports.AIAuditEventSummary) bool {
 	if summary == nil || summary.Count == 0 || !filter.Unfiltered() {
 		return false
 	}
@@ -145,7 +144,7 @@ func (x *Exporter) Write(ctx context.Context, w io.Writer, spec *ExportSpec) (*E
 
 func (x *Exporter) stream(ctx context.Context, spec *ExportSpec, sink rowSink) (int64, error) {
 	export := spec.Export
-	scope := repositories.AIAuditEventScope{
+	scope := aiauditports.AIAuditEventScope{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: export.OrganizationID,
 			BuID:  export.BusinessUnitID,
@@ -157,7 +156,7 @@ func (x *Exporter) stream(ctx context.Context, spec *ExportSpec, sink rowSink) (
 	}
 
 	var written int64
-	page := &repositories.ListAIAuditEventPageRequest{Scope: scope, Limit: exportPageSize}
+	page := &aiauditports.ListAIAuditEventPageRequest{Scope: scope, Limit: exportPageSize}
 	for {
 		if err := ctx.Err(); err != nil {
 			return written, err
@@ -422,7 +421,7 @@ type exportRow struct {
 func toExportRow(
 	ctx context.Context,
 	event *aiaudit.AIAuditEvent,
-	ceilings serviceports.FieldCeilings,
+	ceilings aiauditports.FieldCeilings,
 	linked []*audit.Entry,
 	link bool,
 ) *exportRow {

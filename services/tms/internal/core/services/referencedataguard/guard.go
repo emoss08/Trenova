@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -15,7 +15,7 @@ type Params struct {
 	fx.In
 
 	Config  *config.Config
-	Edition services.EditionInfo
+	Edition ediports.EditionInfo
 }
 
 type Guard struct {
@@ -27,7 +27,7 @@ func New(p Params) (*Guard, error) {
 	return FromPlatform(&p.Config.Platform, p.Edition)
 }
 
-func FromPlatform(platform *config.PlatformConfig, edition services.EditionInfo) (*Guard, error) {
+func FromPlatform(platform *config.PlatformConfig, edition ediports.EditionInfo) (*Guard, error) {
 	stewards := make(map[pulid.ID]struct{}, len(platform.ReferenceDataStewards))
 	for _, raw := range platform.ReferenceDataStewards {
 		id, err := pulid.Parse(strings.TrimSpace(raw))

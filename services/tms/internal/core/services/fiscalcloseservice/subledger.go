@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fiscalclose"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/glbalanceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
@@ -29,7 +30,7 @@ func (s *Service) reconcileSubledgers(
 	ctx context.Context,
 	fy *fiscalyear.FiscalYear,
 	control *tenant.AccountingControl,
-	balances []*repositories.GLPeriodAccountBalance,
+	balances []*glbalanceports.GLPeriodAccountBalance,
 ) ([]*fiscalclose.SubledgerCheck, error) {
 	checks := make([]*fiscalclose.SubledgerCheck, 0, 1)
 
@@ -39,7 +40,7 @@ func (s *Service) reconcileSubledgers(
 
 	subledgerBalance, err := s.customerLedgerRepo.SumBalanceAsOf(
 		ctx,
-		repositories.SumCustomerLedgerBalanceRequest{
+		customerledgerports.SumCustomerLedgerBalanceRequest{
 			TenantInfo: tenantOf(fy),
 			AsOfDate:   fy.EndDate,
 		},
@@ -65,7 +66,7 @@ type subledgerCheckInput struct {
 	key              string
 	label            string
 	glAccountID      pulid.ID
-	balances         []*repositories.GLPeriodAccountBalance
+	balances         []*glbalanceports.GLPeriodAccountBalance
 	subledgerMinor   int64
 	toleranceMinor   int64
 	reconcileEnabled bool

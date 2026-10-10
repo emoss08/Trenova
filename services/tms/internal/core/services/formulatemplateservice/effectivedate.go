@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
@@ -16,7 +16,7 @@ const effectiveFromGraceSeconds int64 = 3600
 
 func (s *Service) UpdateVersionEffectiveDate(
 	ctx context.Context,
-	req *repositories.UpdateEffectiveDateRequest,
+	req *formulatemplateports.UpdateEffectiveDateRequest,
 ) (*formulatemplate.FormulaTemplateVersion, error) {
 	log := s.l.With(
 		zap.String("operation", "UpdateVersionEffectiveDate"),
@@ -24,7 +24,7 @@ func (s *Service) UpdateVersionEffectiveDate(
 		zap.Int64("versionNumber", req.VersionNumber),
 	)
 
-	version, err := s.versionRepo.GetByTemplateAndVersion(ctx, &repositories.GetVersionRequest{
+	version, err := s.versionRepo.GetByTemplateAndVersion(ctx, &formulatemplateports.GetVersionRequest{
 		TenantInfo:    req.TenantInfo,
 		TemplateID:    req.TemplateID,
 		VersionNumber: req.VersionNumber,
@@ -93,7 +93,7 @@ func (s *Service) UpdateVersionEffectiveDate(
 
 func (s *Service) ListScheduledVersions(
 	ctx context.Context,
-	req *repositories.ListScheduledVersionsRequest,
+	req *formulatemplateports.ListScheduledVersionsRequest,
 ) ([]*formulatemplate.FormulaTemplateVersion, error) {
 	return s.versionRepo.ListScheduled(ctx, req)
 }

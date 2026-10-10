@@ -9,7 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/pkg/fuelimport"
 	"github.com/emoss08/trenova/pkg/rateimport"
 	"github.com/emoss08/trenova/shared/sftp"
@@ -62,8 +62,8 @@ func (c *Connector) IntegrationType() integration.Type { return c.integrationTyp
 // Capability is IFTA-grade because both fleet networks report Level III detail on
 // a fuel purchase. Whether a given row actually carries gallons is decided when it
 // is parsed, not here.
-func (c *Connector) Capability() services.FuelFeedCapability {
-	return services.FuelFeedCapabilityIFTAGrade
+func (c *Connector) Capability() fuelpurchaseports.FuelFeedCapability {
+	return fuelpurchaseports.FuelFeedCapabilityIFTAGrade
 }
 
 func (c *Connector) TestConnection(ctx context.Context, config map[string]string) error {
@@ -87,8 +87,8 @@ func (c *Connector) TestConnection(ctx context.Context, config map[string]string
 
 func (c *Connector) FetchTransactions(
 	ctx context.Context,
-	req *services.FetchFuelTransactionsRequest,
-) (*services.FetchFuelTransactionsResult, error) {
+	req *fuelpurchaseports.FetchFuelTransactionsRequest,
+) (*fuelpurchaseports.FetchFuelTransactionsResult, error) {
 	settings, err := settingsFrom(req.Config)
 	if err != nil {
 		return nil, err
@@ -133,7 +133,7 @@ func (c *Connector) FetchTransactions(
 		}
 	}
 
-	return &services.FetchFuelTransactionsResult{
+	return &fuelpurchaseports.FetchFuelTransactionsResult{
 		Staged:    staged,
 		Reference: strings.Join(references, ", "),
 		Format:    settings.sourceFormat,
@@ -248,9 +248,9 @@ func matchesPattern(name, pattern string) bool {
 func cardsFromStaged(
 	staged *fuelimport.StageResult,
 	provider fuelpurchase.CardProvider,
-) []services.ProviderCard {
+) []fuelpurchaseports.ProviderCard {
 	seen := make(map[string]struct{}, 8)
-	cards := make([]services.ProviderCard, 0, 8)
+	cards := make([]fuelpurchaseports.ProviderCard, 0, 8)
 
 	for _, row := range staged.Rows {
 		if row.Parsed == nil || row.Parsed.CardLastFour == "" {
@@ -261,7 +261,7 @@ func cardsFromStaged(
 		}
 
 		seen[row.Parsed.CardLastFour] = struct{}{}
-		cards = append(cards, services.ProviderCard{
+		cards = append(cards, fuelpurchaseports.ProviderCard{
 			LastFour: row.Parsed.CardLastFour,
 			Provider: provider,
 			Label:    provider.Label() + " " + row.Parsed.CardLastFour,

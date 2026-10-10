@@ -1,6 +1,8 @@
 package authservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
 	"context"
 	"errors"
 	"net/http"
@@ -11,8 +13,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
 	"github.com/emoss08/trenova/internal/core/domain/subscription"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -23,16 +26,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func withThrottle(t *testing.T, deps *testDeps) *mocks.MockLoginThrottleStore {
+func withThrottle(t *testing.T, deps *testDeps) *sessionportsmock.MockLoginThrottleStore {
 	t.Helper()
-	store := mocks.NewMockLoginThrottleStore(t)
+	store := sessionportsmock.NewMockLoginThrottleStore(t)
 	deps.svc.throttle = store
 	return store
 }
 
-func withPlans(t *testing.T, deps *testDeps) *mocks.MockPlanService {
+func withPlans(t *testing.T, deps *testDeps) *platformplanportsmock.MockPlanService {
 	t.Helper()
-	plans := mocks.NewMockPlanService(t)
+	plans := platformplanportsmock.NewMockPlanService(t)
 	deps.svc.plans = plans
 	return plans
 }
@@ -42,8 +45,8 @@ func metaContext(t *testing.T) context.Context {
 	return requestmeta.With(t.Context(), requestmeta.New("req-1", "203.0.113.7", "test-agent"))
 }
 
-func throttleKeyFor(email string) repositories.LoginThrottleKey {
-	return repositories.LoginThrottleKey{Account: email, ClientIP: "203.0.113.7"}
+func throttleKeyFor(email string) sessionports.LoginThrottleKey {
+	return sessionports.LoginThrottleKey{Account: email, ClientIP: "203.0.113.7"}
 }
 
 func expectSuccessfulSession(deps *testDeps, usr *tenant.User) {
@@ -72,14 +75,14 @@ func TestLoginRefusedWhileAccountIsThrottled(t *testing.T) {
 	ctx := metaContext(t)
 
 	store.EXPECT().Check(mock.Anything, throttleKeyFor("test@example.com")).Return(
-		&repositories.LoginThrottleDecision{
+		&sessionports.LoginThrottleDecision{
 			Blocked:    true,
-			Scope:      repositories.LoginThrottleScopeAccount,
+			Scope:      sessionports.LoginThrottleScopeAccount,
 			RetryAfter: 90 * time.Second,
 		}, nil,
 	)
 
-	_, err := deps.svc.Login(ctx, services.LoginRequest{
+	_, err := deps.svc.Login(ctx, tenantports.LoginRequest{
 		EmailAddress: "Test@Example.com",
 		Password:     "password123",
 	})
@@ -90,7 +93,7 @@ func TestLoginRefusedWhileAccountIsThrottled(t *testing.T) {
 	assert.Equal(t, 90*time.Second, retryAfter)
 
 	rec := deps.authEvents.only(t)
-	assert.Equal(t, services.AuthEventProviderLoginThrottled, rec.Provider)
+	assert.Equal(t, iamports.AuthEventProviderLoginThrottled, rec.Provider)
 	assert.Equal(t, iam.AuthEventOutcomeDenied, rec.Outcome)
 	assert.Equal(t, authErrorThrottledAccount, rec.ErrorCode)
 	assert.Equal(t, []string{riskSignalAccountThrottle}, rec.RiskSignals)
@@ -103,14 +106,14 @@ func TestLoginRefusedWhileIPIsThrottled(t *testing.T) {
 	store := withThrottle(t, deps)
 
 	store.EXPECT().Check(mock.Anything, mock.Anything).Return(
-		&repositories.LoginThrottleDecision{
+		&sessionports.LoginThrottleDecision{
 			Blocked:    true,
-			Scope:      repositories.LoginThrottleScopeIP,
+			Scope:      sessionports.LoginThrottleScopeIP,
 			RetryAfter: time.Hour,
 		}, nil,
 	)
 
-	_, err := deps.svc.Login(metaContext(t), services.LoginRequest{
+	_, err := deps.svc.Login(metaContext(t), tenantports.LoginRequest{
 		EmailAddress: "test@example.com",
 		Password:     "password123",
 	})
@@ -125,16 +128,16 @@ func TestLoginFailureIsCountedAndTripsTheThrottle(t *testing.T) {
 	usr := newTestUser(t)
 	key := throttleKeyFor(usr.EmailAddress)
 
-	store.EXPECT().Check(mock.Anything, key).Return(&repositories.LoginThrottleDecision{}, nil)
+	store.EXPECT().Check(mock.Anything, key).Return(&sessionports.LoginThrottleDecision{}, nil)
 	deps.userRepo.On("FindByEmail", mock.Anything, usr.EmailAddress).Return(usr, nil)
-	store.EXPECT().RecordFailure(mock.Anything, key).Return(&repositories.LoginThrottleDecision{
+	store.EXPECT().RecordFailure(mock.Anything, key).Return(&sessionports.LoginThrottleDecision{
 		Blocked:         true,
-		Scope:           repositories.LoginThrottleScopeAccount,
+		Scope:           sessionports.LoginThrottleScopeAccount,
 		RetryAfter:      30 * time.Second,
 		AccountFailures: 5,
 	}, nil)
 
-	_, err := deps.svc.Login(metaContext(t), services.LoginRequest{
+	_, err := deps.svc.Login(metaContext(t), tenantports.LoginRequest{
 		EmailAddress: usr.EmailAddress,
 		Password:     "wrong-password",
 	})
@@ -143,7 +146,7 @@ func TestLoginFailureIsCountedAndTripsTheThrottle(t *testing.T) {
 	deps.authEvents.mu.Lock()
 	defer deps.authEvents.mu.Unlock()
 	require.Len(t, deps.authEvents.records, 2)
-	assert.Equal(t, services.AuthEventProviderLoginThrottled, deps.authEvents.records[0].Provider)
+	assert.Equal(t, iamports.AuthEventProviderLoginThrottled, deps.authEvents.records[0].Provider)
 	assert.Equal(t, authErrorRejectedLogin, deps.authEvents.records[1].ErrorCode)
 }
 
@@ -153,13 +156,13 @@ func TestLoginUnknownAccountIsCounted(t *testing.T) {
 	store := withThrottle(t, deps)
 	key := throttleKeyFor("ghost@example.com")
 
-	store.EXPECT().Check(mock.Anything, key).Return(&repositories.LoginThrottleDecision{}, nil)
+	store.EXPECT().Check(mock.Anything, key).Return(&sessionports.LoginThrottleDecision{}, nil)
 	deps.userRepo.On("FindByEmail", mock.Anything, "ghost@example.com").
 		Return(nil, errors.New("not found"))
 	store.EXPECT().RecordFailure(mock.Anything, key).
-		Return(&repositories.LoginThrottleDecision{AccountFailures: 1}, nil)
+		Return(&sessionports.LoginThrottleDecision{AccountFailures: 1}, nil)
 
-	_, err := deps.svc.Login(metaContext(t), services.LoginRequest{
+	_, err := deps.svc.Login(metaContext(t), tenantports.LoginRequest{
 		EmailAddress: "ghost@example.com",
 		Password:     "password123",
 	})
@@ -174,12 +177,12 @@ func TestLoginSuccessClearsTheAccountCounter(t *testing.T) {
 	usr := newTestUser(t)
 	key := throttleKeyFor(usr.EmailAddress)
 
-	store.EXPECT().Check(mock.Anything, key).Return(&repositories.LoginThrottleDecision{}, nil)
+	store.EXPECT().Check(mock.Anything, key).Return(&sessionports.LoginThrottleDecision{}, nil)
 	deps.userRepo.On("FindByEmail", mock.Anything, usr.EmailAddress).Return(usr, nil)
 	store.EXPECT().Reset(mock.Anything, usr.EmailAddress).Return(nil)
 	expectSuccessfulSession(deps, usr)
 
-	_, err := deps.svc.Login(metaContext(t), services.LoginRequest{
+	_, err := deps.svc.Login(metaContext(t), tenantports.LoginRequest{
 		EmailAddress: usr.EmailAddress,
 		Password:     "password123",
 	})
@@ -197,7 +200,7 @@ func TestLoginThrottleFailsOpenWhenRedisIsDown(t *testing.T) {
 	store.EXPECT().Reset(mock.Anything, mock.Anything).Return(errors.New("redis down"))
 	expectSuccessfulSession(deps, usr)
 
-	_, err := deps.svc.Login(metaContext(t), services.LoginRequest{
+	_, err := deps.svc.Login(metaContext(t), tenantports.LoginRequest{
 		EmailAddress: usr.EmailAddress,
 		Password:     "password123",
 	})
@@ -222,7 +225,7 @@ func TestLoginRefusedWhenTheOnlySubscriptionExpired(t *testing.T) {
 		}}, nil,
 	)
 
-	_, err := deps.svc.Login(t.Context(), services.LoginRequest{
+	_, err := deps.svc.Login(t.Context(), tenantports.LoginRequest{
 		EmailAddress: usr.EmailAddress,
 		Password:     "password123",
 	})
@@ -263,7 +266,7 @@ func TestLoginSwitchesAwayFromAnExpiredOrganization(t *testing.T) {
 	deps.userRepo.On("UpdateCurrentOrganization", mock.Anything, usr.ID, otherOrg, otherBU).Return(nil)
 	expectSuccessfulSession(deps, usr)
 
-	resp, err := deps.svc.Login(t.Context(), services.LoginRequest{
+	resp, err := deps.svc.Login(t.Context(), tenantports.LoginRequest{
 		EmailAddress: usr.EmailAddress,
 		Password:     "password123",
 	})
@@ -284,7 +287,7 @@ func TestLoginAllowedForReadOnlySubscription(t *testing.T) {
 		Return(managedPlan(subscription.StatusReadOnly, usr.CurrentOrganizationID, usr.BusinessUnitID), nil)
 	expectSuccessfulSession(deps, usr)
 
-	_, err := deps.svc.Login(t.Context(), services.LoginRequest{
+	_, err := deps.svc.Login(t.Context(), tenantports.LoginRequest{
 		EmailAddress: usr.EmailAddress,
 		Password:     "password123",
 	})
@@ -301,7 +304,7 @@ func TestLoginSkipsPlanCheckOutsideCloud(t *testing.T) {
 	plans.EXPECT().EnforcesPlans().Return(false)
 	expectSuccessfulSession(deps, usr)
 
-	_, err := deps.svc.Login(t.Context(), services.LoginRequest{
+	_, err := deps.svc.Login(t.Context(), tenantports.LoginRequest{
 		EmailAddress: usr.EmailAddress,
 		Password:     "password123",
 	})
@@ -314,14 +317,14 @@ func TestCreateSessionForUser(t *testing.T) {
 	usr := newTestUser(t)
 	expectSuccessfulSession(deps, usr)
 
-	resp, err := deps.svc.CreateSessionForUser(t.Context(), &services.CreateSessionForUserRequest{
+	resp, err := deps.svc.CreateSessionForUser(t.Context(), &tenantports.CreateSessionForUserRequest{
 		User: usr,
 	})
 	require.NoError(t, err)
 	assert.Equal(t, usr, resp.User)
 	assert.NotEmpty(t, resp.SessionID)
 	assert.NotEmpty(t, resp.SessionToken)
-	assert.Equal(t, services.AuthEventProviderPassword, resp.AuthProvider)
+	assert.Equal(t, iamports.AuthEventProviderPassword, resp.AuthProvider)
 
 	rec := deps.authEvents.only(t)
 	assert.Equal(t, iam.AuthEventOutcomeSuccess, rec.Outcome)
@@ -334,7 +337,7 @@ func TestCreateSessionForUserRefusesInactiveUsers(t *testing.T) {
 	usr := newTestUser(t)
 	usr.Status = domaintypes.StatusInactive
 
-	_, err := deps.svc.CreateSessionForUser(t.Context(), &services.CreateSessionForUserRequest{
+	_, err := deps.svc.CreateSessionForUser(t.Context(), &tenantports.CreateSessionForUserRequest{
 		User: usr,
 	})
 	require.Error(t, err)

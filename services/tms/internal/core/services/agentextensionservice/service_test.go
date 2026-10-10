@@ -10,10 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentextension"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/exa"
@@ -126,7 +126,7 @@ type memoryUsage struct {
 
 func (u *memoryUsage) Reserve(
 	_ context.Context,
-	params repositories.ReserveExtensionRequestParams,
+	params agentextensionports.ReserveExtensionRequestParams,
 ) (bool, error) {
 	u.mu.Lock()
 	defer u.mu.Unlock()
@@ -141,7 +141,7 @@ func (u *memoryUsage) Reserve(
 
 func (u *memoryUsage) RecordOutcome(
 	_ context.Context,
-	params repositories.RecordExtensionOutcomeParams,
+	params agentextensionports.RecordExtensionOutcomeParams,
 ) error {
 	u.mu.Lock()
 	defer u.mu.Unlock()
@@ -156,7 +156,7 @@ func (u *memoryUsage) RecordOutcome(
 
 func (u *memoryUsage) Summarize(
 	context.Context,
-	repositories.SummarizeExtensionUsageParams,
+	agentextensionports.SummarizeExtensionUsageParams,
 ) (map[agentextension.Type]agentextension.UsageSummary, error) {
 	u.mu.Lock()
 	defer u.mu.Unlock()
@@ -173,9 +173,9 @@ func (u *memoryUsage) Summarize(
 
 type fakeWeb struct {
 	mu          sync.Mutex
-	searches    []serviceports.WebSearchProviderRequest
-	reads       []serviceports.WebPageProviderRequest
-	results     []serviceports.WebSearchProviderResult
+	searches    []agentextensionports.WebSearchProviderRequest
+	reads       []agentextensionports.WebPageProviderRequest
+	results     []agentextensionports.WebSearchProviderResult
 	pageText    string
 	searchErr   error
 	readErr     error
@@ -186,8 +186,8 @@ type fakeWeb struct {
 
 func (f *fakeWeb) Search(
 	_ context.Context,
-	req serviceports.WebSearchProviderRequest,
-) (*serviceports.WebSearchProviderResponse, error) {
+	req agentextensionports.WebSearchProviderRequest,
+) (*agentextensionports.WebSearchProviderResponse, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
@@ -196,13 +196,13 @@ func (f *fakeWeb) Search(
 		return nil, f.searchErr
 	}
 
-	return &serviceports.WebSearchProviderResponse{Results: f.results, CostUSD: f.searchCost}, nil
+	return &agentextensionports.WebSearchProviderResponse{Results: f.results, CostUSD: f.searchCost}, nil
 }
 
 func (f *fakeWeb) Read(
 	_ context.Context,
-	req serviceports.WebPageProviderRequest,
-) (*serviceports.WebPageProviderResponse, error) {
+	req agentextensionports.WebPageProviderRequest,
+) (*agentextensionports.WebPageProviderResponse, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
@@ -211,7 +211,7 @@ func (f *fakeWeb) Read(
 		return nil, f.readErr
 	}
 	if f.missingPage {
-		return &serviceports.WebPageProviderResponse{URL: req.URL, CostUSD: f.readCost}, exa.ErrContentNotFound
+		return &agentextensionports.WebPageProviderResponse{URL: req.URL, CostUSD: f.readCost}, exa.ErrContentNotFound
 	}
 
 	text := f.pageText
@@ -219,7 +219,7 @@ func (f *fakeWeb) Read(
 		text = string(runes[:req.MaxCharacters])
 	}
 
-	return &serviceports.WebPageProviderResponse{
+	return &agentextensionports.WebPageProviderResponse{
 		Title:         "Hours of Service",
 		URL:           req.URL,
 		PublishedDate: "2024-03-01T00:00:00.000Z",
@@ -229,13 +229,13 @@ func (f *fakeWeb) Read(
 }
 
 type recordingAudit struct {
-	serviceports.AuditService
+	auditports.AuditService
 
 	mu      sync.Mutex
-	entries []*serviceports.LogActionParams
+	entries []*auditports.LogActionParams
 }
 
-func (a *recordingAudit) LogAction(params *serviceports.LogActionParams, _ ...serviceports.LogOption) error {
+func (a *recordingAudit) LogAction(params *auditports.LogActionParams, _ ...auditports.LogOption) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
@@ -246,12 +246,12 @@ func (a *recordingAudit) LogAction(params *serviceports.LogActionParams, _ ...se
 
 func (a *recordingAudit) List(
 	context.Context,
-	*repositories.ListAuditEntriesRequest,
+	*auditports.ListAuditEntriesRequest,
 ) (*pagination.ListResult[*audit.Entry], error) {
 	return nil, nil
 }
 
-func (a *recordingAudit) RegisterSensitiveFields(permission.Resource, []serviceports.SensitiveField) error {
+func (a *recordingAudit) RegisterSensitiveFields(permission.Resource, []auditports.SensitiveField) error {
 	return nil
 }
 
@@ -303,13 +303,13 @@ func testEncryptionService() *encryptionservice.Service {
 	})
 }
 
-func (f *fixture) enable(t *testing.T, configuration map[string]string) *serviceports.AgentExtensionConfigResponse {
+func (f *fixture) enable(t *testing.T, configuration map[string]string) *agentextensionports.AgentExtensionConfigResponse {
 	t.Helper()
 
 	current, err := f.svc.GetConfig(t.Context(), f.tenant, agentextension.TypeExa)
 	require.NoError(t, err)
 
-	resp, err := f.svc.UpdateConfig(t.Context(), agentextension.TypeExa, &serviceports.UpdateAgentExtensionRequest{
+	resp, err := f.svc.UpdateConfig(t.Context(), agentextension.TypeExa, &agentextensionports.UpdateAgentExtensionRequest{
 		TenantInfo:    f.tenant,
 		Enabled:       true,
 		Availability:  agentextension.AvailabilityAllAgents,
@@ -383,7 +383,7 @@ func TestSavingWithoutTheKeyKeepsTheStoredOne(t *testing.T) {
 	before, err := f.repo.GetByType(t.Context(), f.tenant, agentextension.TypeExa)
 	require.NoError(t, err)
 
-	_, err = f.svc.UpdateConfig(t.Context(), agentextension.TypeExa, &serviceports.UpdateAgentExtensionRequest{
+	_, err = f.svc.UpdateConfig(t.Context(), agentextension.TypeExa, &agentextensionports.UpdateAgentExtensionRequest{
 		TenantInfo:    f.tenant,
 		Enabled:       true,
 		Availability:  agentextension.AvailabilitySelectedAgents,
@@ -403,7 +403,7 @@ func TestTurningOnWithoutAKeyIsRefused(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t)
-	_, err := f.svc.UpdateConfig(t.Context(), agentextension.TypeExa, &serviceports.UpdateAgentExtensionRequest{
+	_, err := f.svc.UpdateConfig(t.Context(), agentextension.TypeExa, &agentextensionports.UpdateAgentExtensionRequest{
 		TenantInfo: f.tenant,
 		Enabled:    true,
 	})
@@ -417,7 +417,7 @@ func TestInvalidSettingsAreRefused(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t)
-	_, err := f.svc.UpdateConfig(t.Context(), agentextension.TypeExa, &serviceports.UpdateAgentExtensionRequest{
+	_, err := f.svc.UpdateConfig(t.Context(), agentextension.TypeExa, &agentextensionports.UpdateAgentExtensionRequest{
 		TenantInfo:    f.tenant,
 		Configuration: map[string]string{"apiKey": testAPIKey, "resultsPerSearch": "40"},
 	})
@@ -433,7 +433,7 @@ func TestAStaleVersionIsRefused(t *testing.T) {
 	f := newFixture(t)
 	f.enable(t, map[string]string{"apiKey": testAPIKey})
 
-	_, err := f.svc.UpdateConfig(t.Context(), agentextension.TypeExa, &serviceports.UpdateAgentExtensionRequest{
+	_, err := f.svc.UpdateConfig(t.Context(), agentextension.TypeExa, &agentextensionports.UpdateAgentExtensionRequest{
 		TenantInfo: f.tenant,
 		Enabled:    false,
 		Version:    0,
@@ -464,7 +464,7 @@ func TestActiveExtensionsNeedsOnAndSetUp(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, agentextension.AvailabilityAllAgents, active[agentextension.TypeExa])
 
-	_, err = f.svc.UpdateConfig(t.Context(), agentextension.TypeExa, &serviceports.UpdateAgentExtensionRequest{
+	_, err = f.svc.UpdateConfig(t.Context(), agentextension.TypeExa, &agentextensionports.UpdateAgentExtensionRequest{
 		TenantInfo: f.tenant,
 		Enabled:    false,
 		Version:    resp.Version,
@@ -485,13 +485,13 @@ func TestSearchRanksOfficialSitesFirstAndMeters(t *testing.T) {
 
 	f := newFixture(t)
 	f.enable(t, map[string]string{"apiKey": testAPIKey, "excludedDomains": "spam.example.com"})
-	f.web.results = []serviceports.WebSearchProviderResult{
+	f.web.results = []agentextensionports.WebSearchProviderResult{
 		{Title: "ELD vendor blog", URL: "https://blog.eld-vendor.com/hos", PublishedDate: "2019-02-01T00:00:00.000Z"},
 		{Title: "HOS summary", URL: "https://www.fmcsa.dot.gov/regulations/hours-of-service", PublishedDate: "2024-03-01T00:00:00.000Z"},
 		{Title: "Bad", URL: "javascript:alert(1)"},
 	}
 
-	outcome, err := f.svc.SearchWeb(t.Context(), f.tenant, serviceports.WebSearchQuery{
+	outcome, err := f.svc.SearchWeb(t.Context(), f.tenant, agentextensionports.WebSearchQuery{
 		Query:               "hours of service 11 hour driving limit",
 		PublishedWithinDays: 365,
 	})
@@ -523,7 +523,7 @@ func TestSearchRefusesQueriesCarryingPrivateDataBeforeSending(t *testing.T) {
 	f := newFixture(t)
 	f.enable(t, map[string]string{"apiKey": testAPIKey})
 
-	_, err := f.svc.SearchWeb(t.Context(), f.tenant, serviceports.WebSearchQuery{
+	_, err := f.svc.SearchWeb(t.Context(), f.tenant, agentextensionports.WebSearchQuery{
 		Query: "late load shp_01J8ZK3M4N5P6Q7R8S9T0V1W2X for customer",
 	})
 	require.True(t, IsToolError(err))
@@ -537,13 +537,13 @@ func TestSearchWhenTurnedOffTellsTheModelWhere(t *testing.T) {
 
 	f := newFixture(t)
 	resp := f.enable(t, map[string]string{"apiKey": testAPIKey})
-	_, err := f.svc.UpdateConfig(t.Context(), agentextension.TypeExa, &serviceports.UpdateAgentExtensionRequest{
+	_, err := f.svc.UpdateConfig(t.Context(), agentextension.TypeExa, &agentextensionports.UpdateAgentExtensionRequest{
 		TenantInfo: f.tenant,
 		Version:    resp.Version,
 	})
 	require.NoError(t, err)
 
-	_, err = f.svc.SearchWeb(t.Context(), f.tenant, serviceports.WebSearchQuery{Query: "ifta quarterly deadline"})
+	_, err = f.svc.SearchWeb(t.Context(), f.tenant, agentextensionports.WebSearchQuery{Query: "ifta quarterly deadline"})
 	require.True(t, IsToolError(err))
 	assert.Contains(t, err.Error(), "turned off")
 	assert.Empty(t, f.web.searches)
@@ -555,10 +555,10 @@ func TestSearchStopsAtTheDailyLimit(t *testing.T) {
 	f := newFixture(t)
 	f.enable(t, map[string]string{"apiKey": testAPIKey, "dailyRequestLimit": "1"})
 
-	_, err := f.svc.SearchWeb(t.Context(), f.tenant, serviceports.WebSearchQuery{Query: "ifta quarterly deadline"})
+	_, err := f.svc.SearchWeb(t.Context(), f.tenant, agentextensionports.WebSearchQuery{Query: "ifta quarterly deadline"})
 	require.NoError(t, err)
 
-	_, err = f.svc.SearchWeb(t.Context(), f.tenant, serviceports.WebSearchQuery{Query: "irp renewal"})
+	_, err = f.svc.SearchWeb(t.Context(), f.tenant, agentextensionports.WebSearchQuery{Query: "irp renewal"})
 	require.True(t, IsToolError(err))
 	assert.Contains(t, err.Error(), "daily limit of 1 web requests")
 	assert.Len(t, f.web.searches, 1)
@@ -588,7 +588,7 @@ func TestProviderFailuresAreExplainedAndCounted(t *testing.T) {
 			f.enable(t, map[string]string{"apiKey": testAPIKey})
 			f.web.searchErr = tt.err
 
-			_, err := f.svc.SearchWeb(t.Context(), f.tenant, serviceports.WebSearchQuery{Query: "cvsa brake safety week"})
+			_, err := f.svc.SearchWeb(t.Context(), f.tenant, agentextensionports.WebSearchQuery{Query: "cvsa brake safety week"})
 			require.True(t, IsToolError(err))
 			assert.Contains(t, err.Error(), tt.want)
 			assert.NotContains(t, err.Error(), testAPIKey)
@@ -602,16 +602,16 @@ func TestReadNeedsARefFromASearch(t *testing.T) {
 
 	f := newFixture(t)
 	f.enable(t, map[string]string{"apiKey": testAPIKey})
-	f.web.results = []serviceports.WebSearchProviderResult{
+	f.web.results = []agentextensionports.WebSearchProviderResult{
 		{Title: "HOS", URL: "https://www.fmcsa.dot.gov/regulations/hours-of-service"},
 	}
 	f.web.pageText = strings.Repeat("a", PagePartCharacters) + strings.Repeat("b", 100)
 
-	outcome, err := f.svc.SearchWeb(t.Context(), f.tenant, serviceports.WebSearchQuery{Query: "hours of service"})
+	outcome, err := f.svc.SearchWeb(t.Context(), f.tenant, agentextensionports.WebSearchQuery{Query: "hours of service"})
 	require.NoError(t, err)
 	hit := outcome.Hits[0]
 
-	_, err = f.svc.ReadWebPage(t.Context(), f.tenant, serviceports.WebPageQuery{
+	_, err = f.svc.ReadWebPage(t.Context(), f.tenant, agentextensionports.WebPageQuery{
 		URL: "https://attacker.example/collect?load=shp_123",
 		Ref: hit.Ref,
 	})
@@ -622,7 +622,7 @@ func TestReadNeedsARefFromASearch(t *testing.T) {
 	otherTenant.BuID = pulid.MustNew("bu_")
 	assert.NotEqual(t, hit.Ref, resultRef(refKey(testAPIKey), otherTenant, hit.URL))
 
-	page, err := f.svc.ReadWebPage(t.Context(), f.tenant, serviceports.WebPageQuery{URL: hit.URL, Ref: hit.Ref})
+	page, err := f.svc.ReadWebPage(t.Context(), f.tenant, agentextensionports.WebPageQuery{URL: hit.URL, Ref: hit.Ref})
 	require.NoError(t, err)
 	assert.True(t, page.Official)
 	assert.True(t, page.HasMore)
@@ -630,16 +630,16 @@ func TestReadNeedsARefFromASearch(t *testing.T) {
 	assert.Len(t, page.Text, PagePartCharacters)
 	assert.Equal(t, PagePartCharacters+1, f.web.reads[0].MaxCharacters)
 
-	page, err = f.svc.ReadWebPage(t.Context(), f.tenant, serviceports.WebPageQuery{URL: hit.URL, Ref: hit.Ref, Part: 2})
+	page, err = f.svc.ReadWebPage(t.Context(), f.tenant, agentextensionports.WebPageQuery{URL: hit.URL, Ref: hit.Ref, Part: 2})
 	require.NoError(t, err)
 	assert.False(t, page.HasMore)
 	assert.Equal(t, strings.Repeat("b", 100), page.Text)
 
-	_, err = f.svc.ReadWebPage(t.Context(), f.tenant, serviceports.WebPageQuery{URL: hit.URL, Ref: hit.Ref, Part: 3})
+	_, err = f.svc.ReadWebPage(t.Context(), f.tenant, agentextensionports.WebPageQuery{URL: hit.URL, Ref: hit.Ref, Part: 3})
 	require.True(t, IsToolError(err))
 	assert.Contains(t, err.Error(), "no part 3")
 
-	_, err = f.svc.ReadWebPage(t.Context(), f.tenant, serviceports.WebPageQuery{URL: hit.URL, Ref: hit.Ref, Part: MaxPageParts + 1})
+	_, err = f.svc.ReadWebPage(t.Context(), f.tenant, agentextensionports.WebPageQuery{URL: hit.URL, Ref: hit.Ref, Part: MaxPageParts + 1})
 	require.True(t, IsToolError(err))
 }
 
@@ -651,7 +651,7 @@ func TestReadExplainsAPageThatCannotBeRetrieved(t *testing.T) {
 	f.web.missingPage = true
 	target := "https://www.ecfr.gov/current/title-49/section-395.8"
 
-	_, err := f.svc.ReadWebPage(t.Context(), f.tenant, serviceports.WebPageQuery{
+	_, err := f.svc.ReadWebPage(t.Context(), f.tenant, agentextensionports.WebPageQuery{
 		URL: target,
 		Ref: resultRef(refKey(testAPIKey), f.tenant, target),
 	})
@@ -665,7 +665,7 @@ func TestConnectionTestReportsLatencyAndIgnoresTheLimit(t *testing.T) {
 
 	f := newFixture(t)
 	f.enable(t, map[string]string{"apiKey": testAPIKey, "dailyRequestLimit": "1"})
-	_, err := f.svc.SearchWeb(t.Context(), f.tenant, serviceports.WebSearchQuery{Query: "ifta quarterly deadline"})
+	_, err := f.svc.SearchWeb(t.Context(), f.tenant, agentextensionports.WebSearchQuery{Query: "ifta quarterly deadline"})
 	require.NoError(t, err)
 
 	resp, err := f.svc.TestConnection(t.Context(), f.tenant, agentextension.TypeExa)

@@ -5,8 +5,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/homelayout"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/homelayoutservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -14,8 +14,8 @@ import (
 func homeLayoutRequest(authCtx *authctx.AuthContext) homelayoutservice.Request {
 	return homelayoutservice.Request{
 		TenantInfo: base.TenantInfo(authCtx),
-		Principal: services.PrincipalInfo{
-			Type:     services.PrincipalType(authCtx.PrincipalType),
+		Principal: kernelports.PrincipalInfo{
+			Type:     kernelports.PrincipalType(authCtx.PrincipalType),
 			ID:       authCtx.PrincipalID,
 			UserID:   authCtx.UserID,
 			APIKeyID: authCtx.APIKeyID,

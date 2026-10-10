@@ -1,12 +1,13 @@
 package rateagreementservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/rateagreementportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/rategeo"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -96,7 +97,7 @@ func TestReview_AppliesThePlannedMove(t *testing.T) {
 func TestPlanCreate_StartsEveryAgreementAsADraftAndSavesNothing(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockRateAgreementRepository(t)
+	repo := rateagreementportsmock.NewMockRateAgreementRepository(t)
 	svc := New(Params{Logger: zap.NewNop(), Repo: repo, Validator: NewTestValidator()})
 
 	entity := draftAgreement(rateagreement.StatusActive)
@@ -115,15 +116,15 @@ func TestPlanCreate_StartsEveryAgreementAsADraftAndSavesNothing(t *testing.T) {
 func agreementRepoReturning(
 	t *testing.T,
 	agreement *rateagreement.RateAgreement,
-) *mocks.MockRateAgreementRepository {
+) *rateagreementportsmock.MockRateAgreementRepository {
 	t.Helper()
 
-	repo := mocks.NewMockRateAgreementRepository(t)
+	repo := rateagreementportsmock.NewMockRateAgreementRepository(t)
 	repo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetRateAgreementByIDRequest")).
 		RunAndReturn(func(
 			context.Context,
-			*repositories.GetRateAgreementByIDRequest,
+			*rateagreementports.GetRateAgreementByIDRequest,
 		) (*rateagreement.RateAgreement, error) {
 			copied := *agreement
 
@@ -210,7 +211,7 @@ func TestPlanAmendRules_ChecksTheAmendmentAndWritesNothing(t *testing.T) {
 
 	successor := laneRule("2.40")
 	successor.ID = pulid.Nil
-	plan, err := svc.PlanAmendRules(t.Context(), &repositories.AmendRateAgreementRulesRequest{
+	plan, err := svc.PlanAmendRules(t.Context(), &rateagreementports.AmendRateAgreementRulesRequest{
 		TenantInfo:      pagination.TenantInfo{OrgID: stored.OrganizationID, BuID: stored.BusinessUnitID},
 		RateAgreementID: stored.ID,
 		EffectiveFrom:   1_000,
@@ -223,7 +224,7 @@ func TestPlanAmendRules_ChecksTheAmendmentAndWritesNothing(t *testing.T) {
 	assert.Equal(t, current.ID, plan.Superseded[0].ID)
 	repo.AssertNotCalled(t, "AmendRules", mock.Anything, mock.Anything)
 
-	_, err = svc.PlanAmendRules(t.Context(), &repositories.AmendRateAgreementRulesRequest{
+	_, err = svc.PlanAmendRules(t.Context(), &rateagreementports.AmendRateAgreementRulesRequest{
 		TenantInfo:      pagination.TenantInfo{OrgID: stored.OrganizationID, BuID: stored.BusinessUnitID},
 		RateAgreementID: stored.ID,
 		EffectiveFrom:   1_000,

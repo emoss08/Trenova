@@ -5,9 +5,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,23 +21,23 @@ const (
 )
 
 type locationKeeper interface {
-	Get(ctx context.Context, req repositories.GetLocationByIDRequest) (*location.Location, error)
+	Get(ctx context.Context, req locationports.GetLocationByIDRequest) (*location.Location, error)
 	PlanUpdate(
 		ctx context.Context,
 		entity *location.Location,
-	) (*serviceports.RecordChange[location.Location], error)
+	) (*kernelports.RecordChange[location.Location], error)
 	Update(
 		ctx context.Context,
 		entity *location.Location,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*location.Location, error)
 	PlanBulkUpdateStatus(
 		ctx context.Context,
-		req *repositories.BulkUpdateLocationStatusRequest,
-	) ([]serviceports.RecordChange[location.Location], error)
+		req *locationports.BulkUpdateLocationStatusRequest,
+	) ([]kernelports.RecordChange[location.Location], error)
 	BulkUpdateStatus(
 		ctx context.Context,
-		req *repositories.BulkUpdateLocationStatusRequest,
+		req *locationports.BulkUpdateLocationStatusRequest,
 	) ([]*location.Location, error)
 }
 
@@ -112,7 +114,7 @@ func locationFields() []masterField[location.Location] {
 	}
 }
 
-func newUpdateLocationTool(locations locationKeeper, states stateLookup) serviceports.AgentTool {
+func newUpdateLocationTool(locations locationKeeper, states stateLookup) agentports.AgentTool {
 	return newMasterUpdateTool(&masterUpdateSpec[location.Location]{
 		record: locationRecord,
 		name:   "update_location",
@@ -130,7 +132,7 @@ func newUpdateLocationTool(locations locationKeeper, states stateLookup) service
 			tenant pagination.TenantInfo,
 			id pulid.ID,
 		) (*location.Location, error) {
-			return locations.Get(ctx, repositories.GetLocationByIDRequest{
+			return locations.Get(ctx, locationports.GetLocationByIDRequest{
 				ID:         id,
 				TenantInfo: tenant,
 			})
@@ -143,7 +145,7 @@ func newUpdateLocationTool(locations locationKeeper, states stateLookup) service
 func newUpdateLocationStatusTool(
 	locations locationKeeper,
 	states stateLookup,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newMasterStatusTool(&masterStatusSpec[location.Location, domaintypes.Status]{
 		record: locationRecord,
 		name:   "update_location_status",
@@ -160,9 +162,9 @@ func newUpdateLocationStatusTool(
 			tenant pagination.TenantInfo,
 			ids []pulid.ID,
 			status domaintypes.Status,
-		) ([]serviceports.RecordChange[location.Location], error) {
+		) ([]kernelports.RecordChange[location.Location], error) {
 			return locations.PlanBulkUpdateStatus(ctx,
-				&repositories.BulkUpdateLocationStatusRequest{
+				&locationports.BulkUpdateLocationStatusRequest{
 					TenantInfo:  tenant,
 					LocationIDs: ids,
 					Status:      status,
@@ -174,7 +176,7 @@ func newUpdateLocationStatusTool(
 			ids []pulid.ID,
 			status domaintypes.Status,
 		) ([]*location.Location, error) {
-			return locations.BulkUpdateStatus(ctx, &repositories.BulkUpdateLocationStatusRequest{
+			return locations.BulkUpdateStatus(ctx, &locationports.BulkUpdateLocationStatusRequest{
 				TenantInfo:  tenant,
 				LocationIDs: ids,
 				Status:      status,

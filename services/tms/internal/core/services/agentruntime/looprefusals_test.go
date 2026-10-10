@@ -3,8 +3,8 @@ package agentruntime
 import (
 	"testing"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -22,16 +22,16 @@ func TestRun_KeepsTheCallsTheLoopRefusedWithoutDispatching(t *testing.T) {
 	t.Parallel()
 
 	tool := queryTool("search_worker", map[string]any{}, nil)
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		toolTurn("search_worker", map[string]any{"query": "Maria"}),
 		toolTurn("get_shipment", map[string]any{"shipmentId": "shp_1"}),
 		textTurn("I cannot look that up."),
 	}}
-	rt := newRuntime(completion, &stubQueryRegistry{Tools: []serviceports.AgentQueryTool{
+	rt := newRuntime(completion, &stubQueryRegistry{Tools: []agentports.AgentQueryTool{
 		tool, queryTool("get_shipment", map[string]any{"id": "shp_1"}, nil),
 	}}, &stubActionRegistry{}, nil)
 
-	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+	result, err := rt.Run(t.Context(), &agentports.RunRequest{
 		Definition: testDefinition("get_shipment"),
 		Actor:      testActor(),
 		Input:      "Who is Maria?",
@@ -54,13 +54,13 @@ func TestRecordLoopRefusals_WritesEachOnceAsAFailedToolStep(t *testing.T) {
 	req := &RecordLoopRefusalsRequest{
 		Ledger: ledger,
 		Tenant: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
-		Owner: serviceports.RunStepOwner{
-			Kind: serviceports.RunStepOwnerAssistantTurn,
+		Owner: agentports.RunStepOwner{
+			Kind: agentports.RunStepOwnerAssistantTurn,
 			ID:   pulid.MustNew("atrn_"),
 		},
 		DefinitionID: definition,
 		Attempt:      1,
-		Refusals: []serviceports.LoopRefusal{
+		Refusals: []agentports.LoopRefusal{
 			{
 				CallID:   "call_1",
 				ToolName: "search_worker",
@@ -76,8 +76,8 @@ func TestRecordLoopRefusals_WritesEachOnceAsAFailedToolStep(t *testing.T) {
 	require.Len(t, ledger.steps, 1, "a refusal with no call id has nothing to key it by")
 
 	step := ledger.steps[loopRefusalKeyPrefix+"call_1"]
-	assert.Equal(t, serviceports.RunStepTool, step.Kind)
-	assert.Equal(t, serviceports.RunStepFailed, step.Status)
+	assert.Equal(t, agentports.RunStepTool, step.Kind)
+	assert.Equal(t, agentports.RunStepFailed, step.Status)
 	assert.Equal(t, definition, step.DefinitionID, "the scorecard counts it toward its agent")
 	assert.Equal(t, aitrace.OutcomeDenied, step.Outcome.Verdict)
 	assert.Equal(t, "the agent does not hold the tool", step.Outcome.Reason)

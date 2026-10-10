@@ -14,11 +14,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/weatheralert"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmenttracking"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -30,16 +33,16 @@ import (
 func ptrOf[T any](v T) *T { return &v }
 
 type fakeTrackingShipments struct {
-	repositories.ShipmentRepository
+	shipmentports.ShipmentRepository
 
 	byID    map[pulid.ID]*shipment.Shipment
 	listed  []*shipment.Shipment
-	lastGet *repositories.GetShipmentByIDRequest
+	lastGet *shipmentports.GetShipmentByIDRequest
 }
 
 func (f *fakeTrackingShipments) GetByID(
 	_ context.Context,
-	req *repositories.GetShipmentByIDRequest,
+	req *shipmentports.GetShipmentByIDRequest,
 ) (*shipment.Shipment, error) {
 	f.lastGet = req
 	if sp, ok := f.byID[req.ID]; ok {
@@ -51,20 +54,20 @@ func (f *fakeTrackingShipments) GetByID(
 
 func (f *fakeTrackingShipments) List(
 	_ context.Context,
-	_ *repositories.ListShipmentsRequest,
+	_ *shipmentports.ListShipmentsRequest,
 ) (*pagination.CursorListResult[*shipment.Shipment], error) {
 	return &pagination.CursorListResult[*shipment.Shipment]{Items: f.listed}, nil
 }
 
 type fakeBoardMoves struct {
-	moves  []*repositories.BoardMove
-	filter *repositories.DispatchBoardFilter
+	moves  []*shipmentports.BoardMove
+	filter *shipmentports.DispatchBoardFilter
 }
 
 func (f *fakeBoardMoves) ListBoardMoves(
 	_ context.Context,
-	filter *repositories.DispatchBoardFilter,
-) ([]*repositories.BoardMove, error) {
+	filter *shipmentports.DispatchBoardFilter,
+) ([]*shipmentports.BoardMove, error) {
 	f.filter = filter
 
 	return f.moves, nil
@@ -160,7 +163,7 @@ func TestGetShipmentTracking_ComposesStopsAssignmentPositionAndHours(t *testing.
 	tractorID := pulid.MustNew("trc_")
 	workerID := pulid.MustNew("wrk_")
 	shipments := &fakeTrackingShipments{byID: map[pulid.ID]*shipment.Shipment{sp.ID: sp}}
-	board := &fakeBoardMoves{moves: []*repositories.BoardMove{{
+	board := &fakeBoardMoves{moves: []*shipmentports.BoardMove{{
 		MoveID:              move.ID,
 		AssignedWorkerID:    workerID,
 		AssignedWorkerName:  "Maria Ortiz",
@@ -355,14 +358,14 @@ func TestGetDispatchBoard_ReadsMovesDriversAndUrgency(t *testing.T) {
 	board := &fakeBoard{board: &dispatchconsoleservice.Board{
 		WindowStart: 1_790_000_000,
 		WindowEnd:   1_790_000_000 + 86_400,
-		Summary: &repositories.BoardSummary{
+		Summary: &shipmentports.BoardSummary{
 			UncoveredMoves:   1,
 			LateMoves:        1,
 			AvailableDrivers: 1,
 		},
 		Moves: []*dispatchconsoleservice.BoardMove{
 			{
-				BoardMove: &repositories.BoardMove{
+				BoardMove: &shipmentports.BoardMove{
 					MoveID: pulid.MustNew(
 						"smv_",
 					), ShipmentID: pulid.MustNew("shp_"), ProNumber: "S1",
@@ -373,7 +376,7 @@ func TestGetDispatchBoard_ReadsMovesDriversAndUrgency(t *testing.T) {
 				Urgency: dispatchconsoleservice.UrgencyLate, MinutesToPickup: -30,
 			},
 			{
-				BoardMove: &repositories.BoardMove{
+				BoardMove: &shipmentports.BoardMove{
 					MoveID: pulid.MustNew(
 						"smv_",
 					), ProNumber: "S2", AssignedWorkerName: "Maria Ortiz",
@@ -385,7 +388,7 @@ func TestGetDispatchBoard_ReadsMovesDriversAndUrgency(t *testing.T) {
 			},
 		},
 		Drivers: []*dispatchconsoleservice.BoardDriver{{
-			BoardDriver: &repositories.BoardDriver{
+			BoardDriver: &shipmentports.BoardDriver{
 				WorkerID:    pulid.MustNew("wrk_"),
 				FirstName:   "Dan",
 				LastName:    "Lee",
@@ -427,12 +430,12 @@ func TestGetDispatchBoard_ReadsMovesDriversAndUrgency(t *testing.T) {
 
 type fakeFailures struct {
 	items   []*servicefailure.ServiceFailure
-	request *repositories.ListServiceFailuresRequest
+	request *servicefailureports.ListServiceFailuresRequest
 }
 
 func (f *fakeFailures) List(
 	_ context.Context,
-	req *repositories.ListServiceFailuresRequest,
+	req *servicefailureports.ListServiceFailuresRequest,
 ) (*pagination.ListResult[*servicefailure.ServiceFailure], error) {
 	f.request = req
 
@@ -491,12 +494,12 @@ func TestListServiceFailures_FiltersOnStatusAndRendersTheRow(t *testing.T) {
 
 type fakeReasonCodes struct {
 	codes   []*servicefailure.ReasonCode
-	request *repositories.ServiceFailureReasonCodeSelectOptionsRequest
+	request *servicefailureports.ServiceFailureReasonCodeSelectOptionsRequest
 }
 
 func (f *fakeReasonCodes) SelectOptions(
 	_ context.Context,
-	req *repositories.ServiceFailureReasonCodeSelectOptionsRequest,
+	req *servicefailureports.ServiceFailureReasonCodeSelectOptionsRequest,
 ) (*pagination.ListResult[*servicefailure.ReasonCode], error) {
 	f.request = req
 
@@ -652,23 +655,23 @@ func TestListDetentionDesk_RendersTheOpenOccurrencesByUrgency(t *testing.T) {
 }
 
 type fakeWeather struct {
-	features []*serviceports.WeatherAlertFeature
+	features []*weatheralertports.WeatherAlertFeature
 }
 
 func (f *fakeWeather) GetActiveAlerts(
 	_ context.Context,
 	_ pagination.TenantInfo,
-) (*serviceports.WeatherAlertFeatureCollection, error) {
-	return &serviceports.WeatherAlertFeatureCollection{Features: f.features}, nil
+) (*weatheralertports.WeatherAlertFeatureCollection, error) {
+	return &weatheralertports.WeatherAlertFeatureCollection{Features: f.features}, nil
 }
 
 func TestListWeatherAlerts_KeepsSevereAndWorseByDefault(t *testing.T) {
 	t.Parallel()
 
 	expires := int64(1_790_000_000 + 7200)
-	weather := &fakeWeather{features: []*serviceports.WeatherAlertFeature{
+	weather := &fakeWeather{features: []*weatheralertports.WeatherAlertFeature{
 		{
-			Properties: serviceports.WeatherAlertFeatureProperties{
+			Properties: weatheralertports.WeatherAlertFeatureProperties{
 				ID:            pulid.MustNew("wal_"),
 				Event:         "Ice Storm Warning",
 				Severity:      "Extreme",
@@ -678,7 +681,7 @@ func TestListWeatherAlerts_KeepsSevereAndWorseByDefault(t *testing.T) {
 			},
 		},
 		{
-			Properties: serviceports.WeatherAlertFeatureProperties{
+			Properties: weatheralertports.WeatherAlertFeatureProperties{
 				ID:       pulid.MustNew("wal_"),
 				Event:    "Wind Advisory",
 				Severity: "Minor",
@@ -715,7 +718,7 @@ func TestListWeatherAlerts_KeepsSevereAndWorseByDefault(t *testing.T) {
 func TestMonitoringTools_RejectAMismatchedActor(t *testing.T) {
 	t.Parallel()
 
-	tools := []serviceports.AgentQueryTool{
+	tools := []agentports.AgentQueryTool{
 		newGetShipmentTrackingTool(&fakeTrackingShipments{}, &fakeBoardMoves{}, &fakeTelematics{}),
 		newListVehiclePositionsTool(&fakeTelematics{}, &fakePermissions{}),
 		newGetWorkerHOSTool(&fakeTelematics{}),
@@ -746,7 +749,7 @@ func TestListVehiclePositions_NamesTheDriverOnlyToAReaderOfWorkers(t *testing.T)
 			PrimaryWorker: &worker.Worker{FirstName: "Maria", LastName: "Ortiz"},
 		},
 	}}}
-	noWorkers := &fakePermissions{readable: map[string]*serviceports.ResourcePermissionDetail{
+	noWorkers := &fakePermissions{readable: map[string]*permissionports.ResourcePermissionDetail{
 		permission.ResourceTractor.String(): {
 			Operations: []permission.Operation{permission.OpRead},
 		},
@@ -762,8 +765,8 @@ func TestListVehiclePositions_NamesTheDriverOnlyToAReaderOfWorkers(t *testing.T)
 	assert.Empty(t, rows[0].Driver, "a reader without worker access is not told who is driving")
 
 	agentParams := testParams(map[string]any{})
-	agentParams.Actor = &serviceports.RequestActor{
-		PrincipalType:  serviceports.PrincipalTypeAgent,
+	agentParams.Actor = &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeAgent,
 		PrincipalID:    pulid.MustNew("agd_"),
 		OrganizationID: agentParams.OrganizationID,
 		BusinessUnitID: agentParams.BusinessUnitID,
@@ -775,8 +778,8 @@ func TestListVehiclePositions_NamesTheDriverOnlyToAReaderOfWorkers(t *testing.T)
 
 func vehicleRows(
 	t *testing.T,
-	tool serviceports.AgentQueryTool,
-	params *serviceports.QueryToolParams,
+	tool agentports.AgentQueryTool,
+	params *agentports.QueryToolParams,
 ) []vehiclePositionRow {
 	t.Helper()
 

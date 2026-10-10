@@ -6,11 +6,20 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -31,53 +40,53 @@ type Params struct {
 	fx.In
 
 	Logger                *zap.Logger
-	DB                    ports.DBConnection
-	Repo                  repositories.TenderRepository
-	GuideRepo             repositories.RoutingGuideRepository
-	CarrierRepo           repositories.CarrierRepository
-	CarrierAssignmentRepo repositories.CarrierAssignmentRepository
-	AssignmentRepo        repositories.AssignmentRepository
-	ShipmentRepo          repositories.ShipmentRepository
-	HoldRepo              repositories.ShipmentHoldRepository
-	OrgRepo               repositories.OrganizationRepository
-	Workflows             portservices.WorkflowStarter
-	EventService          portservices.ShipmentEventService
-	AuditService          portservices.AuditService
-	Invalidator           portservices.ShipmentInvalidator
+	DB                    kernelports.DBConnection
+	Repo                  tenderports.TenderRepository
+	GuideRepo             tenderports.RoutingGuideRepository
+	CarrierRepo           carrierports.CarrierRepository
+	CarrierAssignmentRepo shipmentports.CarrierAssignmentRepository
+	AssignmentRepo        shipmentports.AssignmentRepository
+	ShipmentRepo          shipmentports.ShipmentRepository
+	HoldRepo              shipmentports.ShipmentHoldRepository
+	OrgRepo               tenantports.OrganizationRepository
+	Workflows             kernelports.WorkflowStarter
+	EventService          shipmenteventports.ShipmentEventService
+	AuditService          auditports.AuditService
+	Invalidator           shipmentports.ShipmentInvalidator
 	Config                *config.Config
-	Templates             portservices.DocumentTemplateResolver `optional:"true"`
-	EmailService          portservices.EmailService             `optional:"true"`
-	Notifications         *notificationservice.Service          `optional:"true"`
-	EDIChannel            portservices.EDITenderChannel         `optional:"true"`
-	RateConIssuer         portservices.RateConfirmationIssuer   `optional:"true"`
-	RateEngine            portservices.RateEngine               `optional:"true"`
+	Templates             documenttemplateports.DocumentTemplateResolver `optional:"true"`
+	EmailService          emailports.EmailService                        `optional:"true"`
+	Notifications         *notificationservice.Service                   `optional:"true"`
+	EDIChannel            tenderports.EDITenderChannel                   `optional:"true"`
+	RateConIssuer         rateconfirmationports.RateConfirmationIssuer   `optional:"true"`
+	RateEngine            ratequoteports.RateEngine                      `optional:"true"`
 }
 
 type Service struct {
 	l                     *zap.Logger
-	db                    ports.DBConnection
-	repo                  repositories.TenderRepository
-	guideRepo             repositories.RoutingGuideRepository
-	carrierRepo           repositories.CarrierRepository
-	carrierAssignmentRepo repositories.CarrierAssignmentRepository
-	assignmentRepo        repositories.AssignmentRepository
-	shipmentRepo          repositories.ShipmentRepository
-	holdRepo              repositories.ShipmentHoldRepository
-	orgRepo               repositories.OrganizationRepository
-	workflows             portservices.WorkflowStarter
-	eventService          portservices.ShipmentEventService
-	auditService          portservices.AuditService
-	invalidator           portservices.ShipmentInvalidator
+	db                    kernelports.DBConnection
+	repo                  tenderports.TenderRepository
+	guideRepo             tenderports.RoutingGuideRepository
+	carrierRepo           carrierports.CarrierRepository
+	carrierAssignmentRepo shipmentports.CarrierAssignmentRepository
+	assignmentRepo        shipmentports.AssignmentRepository
+	shipmentRepo          shipmentports.ShipmentRepository
+	holdRepo              shipmentports.ShipmentHoldRepository
+	orgRepo               tenantports.OrganizationRepository
+	workflows             kernelports.WorkflowStarter
+	eventService          shipmenteventports.ShipmentEventService
+	auditService          auditports.AuditService
+	invalidator           shipmentports.ShipmentInvalidator
 	cfg                   *config.Config
-	templates             portservices.DocumentTemplateResolver
-	emailService          portservices.EmailService
+	templates             documenttemplateports.DocumentTemplateResolver
+	emailService          emailports.EmailService
 	notifications         *notificationservice.Service
-	assigner              portservices.CarrierMoveAssigner
-	ediChannel            portservices.EDITenderChannel
-	rateConIssuer         portservices.RateConfirmationIssuer
-	rateEngine            portservices.RateEngine
-	intelGate             portservices.CarrierIntelGate
-	lifecycle             portservices.CarrierLifecycleObserver
+	assigner              tenderports.CarrierMoveAssigner
+	ediChannel            tenderports.EDITenderChannel
+	rateConIssuer         rateconfirmationports.RateConfirmationIssuer
+	rateEngine            ratequoteports.RateEngine
+	intelGate             carrierintelports.CarrierIntelGate
+	lifecycle             carrierintelports.CarrierLifecycleObserver
 }
 
 func New(p Params) *Service {
@@ -111,18 +120,18 @@ func New(p Params) *Service {
 // assignment service (which needs the tender guard to withdraw dead tenders):
 // the assigner arrives after both are built.
 type AssignerSetter interface {
-	SetCarrierMoveAssigner(assigner portservices.CarrierMoveAssigner)
+	SetCarrierMoveAssigner(assigner tenderports.CarrierMoveAssigner)
 }
 
-func (s *Service) SetCarrierMoveAssigner(assigner portservices.CarrierMoveAssigner) {
+func (s *Service) SetCarrierMoveAssigner(assigner tenderports.CarrierMoveAssigner) {
 	s.assigner = assigner
 }
 
-func (s *Service) SetIntelGate(gate portservices.CarrierIntelGate) {
+func (s *Service) SetIntelGate(gate carrierintelports.CarrierIntelGate) {
 	s.intelGate = gate
 }
 
-func (s *Service) SetLifecycleObserver(observer portservices.CarrierLifecycleObserver) {
+func (s *Service) SetLifecycleObserver(observer carrierintelports.CarrierLifecycleObserver) {
 	s.lifecycle = observer
 }
 
@@ -136,7 +145,7 @@ func (s *Service) intelGates(
 		return nil
 	}
 	if refresh {
-		s.intelGate.EnsureFresh(ctx, &portservices.CarrierIntelEnsureFreshRequest{
+		s.intelGate.EnsureFresh(ctx, &carrierintelports.CarrierIntelEnsureFreshRequest{
 			TenantInfo: tenantInfo,
 			CarrierIDs: carrierIDs,
 		})
@@ -152,47 +161,47 @@ func (s *Service) intelGates(
 // SetEDITenderChannel injects the EDI delivery seam after construction:
 // providing it through FX would close the cycle ediservice -> ShipmentService
 // -> TenderGuard -> tenderservice -> EDITenderChannel.
-func (s *Service) SetEDITenderChannel(channel portservices.EDITenderChannel) {
+func (s *Service) SetEDITenderChannel(channel tenderports.EDITenderChannel) {
 	s.ediChannel = channel
 }
 
 var (
-	_ portservices.TenderGuard            = (*Service)(nil)
-	_ portservices.TenderResponseRecorder = (*Service)(nil)
-	_ portservices.TenderLifecycle        = (*Service)(nil)
+	_ tenderports.TenderGuard            = (*Service)(nil)
+	_ tenderports.TenderResponseRecorder = (*Service)(nil)
+	_ tenderports.TenderLifecycle        = (*Service)(nil)
 )
 
 func (s *Service) Get(
 	ctx context.Context,
-	req repositories.GetTenderByIDRequest,
+	req tenderports.GetTenderByIDRequest,
 ) (*tender.Tender, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) GetOffer(
 	ctx context.Context,
-	req repositories.GetTenderOfferByIDRequest,
+	req tenderports.GetTenderOfferByIDRequest,
 ) (*tender.TenderOffer, error) {
 	return s.repo.GetOfferByID(ctx, req)
 }
 
 func (s *Service) ListByShipment(
 	ctx context.Context,
-	req repositories.ListTendersByShipmentRequest,
+	req tenderports.ListTendersByShipmentRequest,
 ) ([]*tender.Tender, error) {
 	return s.repo.ListByShipment(ctx, req)
 }
 
 func (s *Service) GetLiveByMoveID(
 	ctx context.Context,
-	req repositories.GetLiveTenderByMoveRequest,
+	req tenderports.GetLiveTenderByMoveRequest,
 ) (*tender.Tender, error) {
 	return s.repo.GetLiveByMoveID(ctx, req)
 }
 
 func (s *Service) recordEvent(
 	ctx context.Context,
-	params *portservices.RecordShipmentEventParams,
+	params *shipmenteventports.RecordShipmentEventParams,
 ) {
 	if params == nil || params.ShipmentID.IsNil() {
 		return

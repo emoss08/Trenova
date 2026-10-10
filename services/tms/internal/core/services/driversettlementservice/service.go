@@ -5,17 +5,25 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
-
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/core/services/driverpayservice"
 	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -30,64 +38,64 @@ type Params struct {
 	fx.In
 
 	Logger              *zap.Logger
-	DB                  ports.DBConnection
-	SettlementRepo      repositories.DriverSettlementRepository
-	DisputeRepo         repositories.SettlementDisputeRepository
-	ExpenseRepo         repositories.DriverExpenseRepository
-	BatchRepo           repositories.SettlementBatchRepository
-	PayEventRepo        repositories.PayEventRepository
-	AssignmentRepo      repositories.WorkerPayAssignmentRepository
-	DeductionRepo       repositories.RecurringDeductionRepository
-	EarningRepo         repositories.RecurringEarningRepository
-	PayCodeRepo         repositories.PayCodeRepository
-	AdvanceRepo         repositories.PayAdvanceRepository
-	EscrowRepo          repositories.EscrowAccountRepository
-	SettlementControl   repositories.SettlementControlRepository
-	DashControlRepo     repositories.DashControlRepository
-	ShipmentRepo        repositories.ShipmentRepository
-	WorkerRepo          repositories.WorkerRepository
-	AccountingRepo      repositories.AccountingControlRepository
+	DB                  kernelports.DBConnection
+	SettlementRepo      driversettlementports.DriverSettlementRepository
+	DisputeRepo         driversettlementports.SettlementDisputeRepository
+	ExpenseRepo         driverpayports.DriverExpenseRepository
+	BatchRepo           driversettlementports.SettlementBatchRepository
+	PayEventRepo        driversettlementports.PayEventRepository
+	AssignmentRepo      driverpayports.WorkerPayAssignmentRepository
+	DeductionRepo       driverpayports.RecurringDeductionRepository
+	EarningRepo         driverpayports.RecurringEarningRepository
+	PayCodeRepo         driverpayports.PayCodeRepository
+	AdvanceRepo         driverpayports.PayAdvanceRepository
+	EscrowRepo          driverpayports.EscrowAccountRepository
+	SettlementControl   tenantports.SettlementControlRepository
+	DashControlRepo     tenantports.DashControlRepository
+	ShipmentRepo        shipmentports.ShipmentRepository
+	WorkerRepo          workerports.WorkerRepository
+	AccountingRepo      tenantports.AccountingControlRepository
 	Stamper             *exchangeratestamp.Stamper
-	JournalRepo         repositories.JournalPostingRepository
-	FiscalPeriodRepo    repositories.FiscalPeriodRepository
+	JournalRepo         journalentryports.JournalPostingRepository
+	FiscalPeriodRepo    fiscalperiodports.FiscalPeriodRepository
 	Generator           seqgen.Generator
 	PayService          *driverpayservice.Service
-	AuditService        serviceports.AuditService
-	Realtime            serviceports.RealtimeService
+	AuditService        auditports.AuditService
+	Realtime            agentports.RealtimeService
 	DriverNotify        *drivernotificationservice.Service
 	NotificationService *notificationservice.Service
-	Sync                serviceports.AccountingSyncEnqueuer `optional:"true"`
+	Sync                accountingsyncports.AccountingSyncEnqueuer `optional:"true"`
 }
 
 type Service struct {
 	l                   *zap.Logger
-	db                  ports.DBConnection
-	settlementRepo      repositories.DriverSettlementRepository
-	disputeRepo         repositories.SettlementDisputeRepository
-	expenseRepo         repositories.DriverExpenseRepository
-	batchRepo           repositories.SettlementBatchRepository
-	payEventRepo        repositories.PayEventRepository
-	assignmentRepo      repositories.WorkerPayAssignmentRepository
-	deductionRepo       repositories.RecurringDeductionRepository
-	earningRepo         repositories.RecurringEarningRepository
-	payCodeRepo         repositories.PayCodeRepository
-	advanceRepo         repositories.PayAdvanceRepository
-	escrowRepo          repositories.EscrowAccountRepository
-	settlementControl   repositories.SettlementControlRepository
-	dashControlRepo     repositories.DashControlRepository
-	shipmentRepo        repositories.ShipmentRepository
-	workerRepo          repositories.WorkerRepository
-	accountingRepo      repositories.AccountingControlRepository
+	db                  kernelports.DBConnection
+	settlementRepo      driversettlementports.DriverSettlementRepository
+	disputeRepo         driversettlementports.SettlementDisputeRepository
+	expenseRepo         driverpayports.DriverExpenseRepository
+	batchRepo           driversettlementports.SettlementBatchRepository
+	payEventRepo        driversettlementports.PayEventRepository
+	assignmentRepo      driverpayports.WorkerPayAssignmentRepository
+	deductionRepo       driverpayports.RecurringDeductionRepository
+	earningRepo         driverpayports.RecurringEarningRepository
+	payCodeRepo         driverpayports.PayCodeRepository
+	advanceRepo         driverpayports.PayAdvanceRepository
+	escrowRepo          driverpayports.EscrowAccountRepository
+	settlementControl   tenantports.SettlementControlRepository
+	dashControlRepo     tenantports.DashControlRepository
+	shipmentRepo        shipmentports.ShipmentRepository
+	workerRepo          workerports.WorkerRepository
+	accountingRepo      tenantports.AccountingControlRepository
 	stamper             *exchangeratestamp.Stamper
-	journalRepo         repositories.JournalPostingRepository
-	fiscalPeriodRepo    repositories.FiscalPeriodRepository
+	journalRepo         journalentryports.JournalPostingRepository
+	fiscalPeriodRepo    fiscalperiodports.FiscalPeriodRepository
 	generator           seqgen.Generator
 	payService          *driverpayservice.Service
-	auditService        serviceports.AuditService
-	realtime            serviceports.RealtimeService
+	auditService        auditports.AuditService
+	realtime            agentports.RealtimeService
 	driverNotify        *drivernotificationservice.Service
 	notificationService *notificationservice.Service
-	sync                serviceports.AccountingSyncEnqueuer
+	sync                accountingsyncports.AccountingSyncEnqueuer
 }
 
 func New(p Params) *Service { //nolint:gocritic // stable API shape
@@ -133,10 +141,10 @@ func (s *Service) queueSync(
 	if entity.Classification != driverpay.PayeeClassificationOwnerOperator {
 		return nil
 	}
-	return serviceports.EnqueueAccountingSync(
+	return accountingsyncports.EnqueueAccountingSync(
 		ctx,
 		s.sync,
-		serviceports.SettlementSync(&serviceports.SettlementSyncRequest{
+		accountingsyncports.SettlementSync(&accountingsyncports.SettlementSyncRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
 				BuID:  entity.BusinessUnitID,
@@ -151,7 +159,7 @@ func (s *Service) queueSync(
 	)
 }
 
-func requireActor(actor *serviceports.RequestActor, operation string) error {
+func requireActor(actor *permissionports.RequestActor, operation string) error {
 	if actor == nil || actor.UserID.IsNil() {
 		return errortypes.NewAuthorizationError("{0} requires an authenticated user", operation)
 	}
@@ -160,56 +168,56 @@ func requireActor(actor *serviceports.RequestActor, operation string) error {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListDriverSettlementsRequest,
+	req *driversettlementports.ListDriverSettlementsRequest,
 ) (*pagination.ListResult[*driversettlement.Settlement], error) {
 	return s.settlementRepo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListDriverSettlementConnectionRequest,
+	req *driversettlementports.ListDriverSettlementConnectionRequest,
 ) (*pagination.CursorListResult[*driversettlement.Settlement], error) {
 	return s.settlementRepo.ListConnection(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	req repositories.GetDriverSettlementByIDRequest,
+	req driversettlementports.GetDriverSettlementByIDRequest,
 ) (*driversettlement.Settlement, error) {
 	return s.settlementRepo.GetByID(ctx, req)
 }
 
 func (s *Service) ListBatches(
 	ctx context.Context,
-	req *repositories.ListSettlementBatchesRequest,
+	req *driversettlementports.ListSettlementBatchesRequest,
 ) (*pagination.ListResult[*driversettlement.SettlementBatch], error) {
 	return s.batchRepo.List(ctx, req)
 }
 
 func (s *Service) ListBatchesConnection(
 	ctx context.Context,
-	req *repositories.ListSettlementBatchConnectionRequest,
+	req *driversettlementports.ListSettlementBatchConnectionRequest,
 ) (*pagination.CursorListResult[*driversettlement.SettlementBatch], error) {
 	return s.batchRepo.ListConnection(ctx, req)
 }
 
 func (s *Service) GetBatch(
 	ctx context.Context,
-	req repositories.GetSettlementBatchByIDRequest,
+	req driversettlementports.GetSettlementBatchByIDRequest,
 ) (*driversettlement.SettlementBatch, error) {
 	return s.batchRepo.GetByID(ctx, req)
 }
 
 func (s *Service) ListPayEvents(
 	ctx context.Context,
-	req *repositories.ListPayEventsRequest,
+	req *driversettlementports.ListPayEventsRequest,
 ) (*pagination.ListResult[*driversettlement.PayEvent], error) {
 	return s.payEventRepo.List(ctx, req)
 }
 
 func (s *Service) ListPayEventsConnection(
 	ctx context.Context,
-	req *repositories.ListPayEventConnectionRequest,
+	req *driversettlementports.ListPayEventConnectionRequest,
 ) (*pagination.CursorListResult[*driversettlement.PayEvent], error) {
 	return s.payEventRepo.ListConnection(ctx, req)
 }
@@ -229,7 +237,7 @@ func (s *Service) GetWorkerEarningsSummary(
 ) (*WorkerEarningsSummary, error) {
 	totals, err := s.payEventRepo.GetAccruedTotalsForWorker(
 		ctx,
-		repositories.GetAccruedTotalsForWorkerRequest{
+		driversettlementports.GetAccruedTotalsForWorkerRequest{
 			TenantInfo: tenantInfo,
 			WorkerID:   workerID,
 		},
@@ -245,7 +253,7 @@ func (s *Service) GetWorkerEarningsSummary(
 
 	advances, err := s.advanceRepo.ListOutstandingForWorker(
 		ctx,
-		repositories.ListOutstandingAdvancesForWorkerRequest{
+		driverpayports.ListOutstandingAdvancesForWorkerRequest{
 			TenantInfo: tenantInfo,
 			WorkerID:   workerID,
 		},
@@ -259,7 +267,7 @@ func (s *Service) GetWorkerEarningsSummary(
 
 	escrow, err := s.escrowRepo.GetActiveForWorker(
 		ctx,
-		repositories.GetActiveEscrowAccountForWorkerRequest{
+		driverpayports.GetActiveEscrowAccountForWorkerRequest{
 			TenantInfo: tenantInfo,
 			WorkerID:   workerID,
 		},
@@ -284,7 +292,7 @@ func (s *Service) publishRealtimeInvalidation(
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		ActorUserID:    userID,
-		ActorType:      serviceports.PrincipalTypeUser,
+		ActorType:      permissionports.PrincipalTypeUser,
 		ActorID:        userID,
 		Resource:       resource,
 		Action:         string(action),
@@ -333,7 +341,7 @@ func (s *Service) logSettlementAudit(
 		current.BusinessUnitID,
 		userID,
 	)
-	params := &serviceports.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceDriverSettlement,
 		ResourceID:     current.ID.String(),
 		Operation:      operation,
@@ -342,7 +350,7 @@ func (s *Service) logSettlementAudit(
 		OrganizationID: current.OrganizationID,
 		BusinessUnitID: current.BusinessUnitID,
 	}
-	options := []serviceports.LogOption{auditservice.WithComment(comment)}
+	options := []auditports.LogOption{auditservice.WithComment(comment)}
 	if previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(previous)
 		options = append(options, auditservice.WithDiff(previous, current))

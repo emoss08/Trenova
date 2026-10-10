@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -21,7 +21,7 @@ func (s *service) checkExternalReference(ctx context.Context, entity *shipment.S
 
 	existing, err := s.repo.FindByExternalReference(
 		ctx,
-		&repositories.ExternalReferenceCheckRequest{
+		&shipmentports.ExternalReferenceCheckRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
 				BuID:  entity.BusinessUnitID,

@@ -11,7 +11,8 @@ import (
 	"sync"
 
 	"github.com/bytedance/sonic"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
 
 const (
@@ -89,9 +90,9 @@ type hashedMessage struct {
 }
 
 type hashedRequest struct {
-	System   string                  `json:"system"`
-	Messages []hashedMessage         `json:"messages"`
-	Tools    []serviceports.ToolSpec `json:"tools"`
+	System   string                 `json:"system"`
+	Messages []hashedMessage        `json:"messages"`
+	Tools    []kernelports.ToolSpec `json:"tools"`
 }
 
 // mintedIDs are the ids a turn mints as it runs (a proposal, a plan, an
@@ -104,7 +105,7 @@ func withoutMintedIDs(text string) string {
 	return mintedIDs.ReplaceAllString(text, "${1}_minted")
 }
 
-func HashRequest(req *serviceports.ChatCompletionRequest) (string, error) {
+func HashRequest(req *agentports.ChatCompletionRequest) (string, error) {
 	hashed := hashedRequest{
 		System:   withoutMintedIDs(req.System),
 		Messages: make([]hashedMessage, 0, len(req.Messages)),
@@ -131,7 +132,7 @@ func HashRequest(req *serviceports.ChatCompletionRequest) (string, error) {
 	return hex.EncodeToString(sum[:]), nil
 }
 
-func cassetteCalls(calls []serviceports.ToolCall) []CassetteCall {
+func cassetteCalls(calls []agentports.ToolCall) []CassetteCall {
 	if len(calls) == 0 {
 		return nil
 	}
@@ -144,10 +145,10 @@ func cassetteCalls(calls []serviceports.ToolCall) []CassetteCall {
 	return out
 }
 
-func (r CassetteResponse) completion() *serviceports.ChatCompletionResult {
-	calls := make([]serviceports.ToolCall, 0, len(r.ToolCalls))
+func (r CassetteResponse) completion() *agentports.ChatCompletionResult {
+	calls := make([]agentports.ToolCall, 0, len(r.ToolCalls))
 	for _, call := range r.ToolCalls {
-		calls = append(calls, serviceports.ToolCall{
+		calls = append(calls, agentports.ToolCall{
 			ID:        call.ID,
 			Name:      call.Name,
 			Arguments: call.Arguments,
@@ -159,14 +160,14 @@ func (r CassetteResponse) completion() *serviceports.ChatCompletionResult {
 		model = "cassette"
 	}
 
-	return &serviceports.ChatCompletionResult{
+	return &agentports.ChatCompletionResult{
 		Text:            r.Text,
 		ToolCalls:       calls,
 		ModelIdentifier: model,
 	}
 }
 
-func responseOf(result *serviceports.ChatCompletionResult) CassetteResponse {
+func responseOf(result *agentports.ChatCompletionResult) CassetteResponse {
 	return CassetteResponse{
 		Text:      result.Text,
 		ToolCalls: cassetteCalls(result.ToolCalls),
@@ -209,8 +210,8 @@ func (p *CassettePlayer) Played() int {
 
 func (p *CassettePlayer) CompleteChat(
 	_ context.Context,
-	req *serviceports.ChatCompletionRequest,
-) (*serviceports.ChatCompletionResult, error) {
+	req *agentports.ChatCompletionRequest,
+) (*agentports.ChatCompletionResult, error) {
 	hash, err := HashRequest(req)
 	if err != nil {
 		return nil, err
@@ -234,9 +235,9 @@ func (p *CassettePlayer) CompleteChat(
 
 func (p *CassettePlayer) StreamChat(
 	ctx context.Context,
-	req *serviceports.ChatCompletionRequest,
-	sink serviceports.ChatStreamSink,
-) (*serviceports.ChatCompletionResult, error) {
+	req *agentports.ChatCompletionRequest,
+	sink agentports.ChatStreamSink,
+) (*agentports.ChatCompletionResult, error) {
 	result, err := p.CompleteChat(ctx, req)
 	if err != nil {
 		return nil, err
@@ -250,34 +251,34 @@ func (p *CassettePlayer) StreamChat(
 
 func (*CassettePlayer) CompleteStructured(
 	context.Context,
-	*serviceports.StructuredCompletionRequest,
-) (*serviceports.StructuredCompletionResult, error) {
+	*agentports.StructuredCompletionRequest,
+) (*agentports.StructuredCompletionResult, error) {
 	return nil, ErrNotRecordable
 }
 
 func (*CassettePlayer) SubmitBackground(
 	context.Context,
-	*serviceports.StructuredCompletionRequest,
-) (*serviceports.BackgroundSubmission, error) {
+	*agentports.StructuredCompletionRequest,
+) (*agentports.BackgroundSubmission, error) {
 	return nil, ErrNotRecordable
 }
 
 func (*CassettePlayer) PollBackground(
 	context.Context,
-	*serviceports.BackgroundPollRequest,
-) (*serviceports.BackgroundOutcome, error) {
+	*agentports.BackgroundPollRequest,
+) (*agentports.BackgroundOutcome, error) {
 	return nil, ErrNotRecordable
 }
 
 type CassetteRecorder struct {
-	serviceports.CompletionService
+	agentports.CompletionService
 
 	mu       sync.Mutex
 	cassette Cassette
 }
 
 func NewCassetteRecorder(
-	completion serviceports.CompletionService,
+	completion agentports.CompletionService,
 	caseName string,
 ) *CassetteRecorder {
 	return &CassetteRecorder{
@@ -298,27 +299,27 @@ func (r *CassetteRecorder) Cassette() *Cassette {
 
 func (r *CassetteRecorder) CompleteChat(
 	ctx context.Context,
-	req *serviceports.ChatCompletionRequest,
-) (*serviceports.ChatCompletionResult, error) {
-	return r.record(req, func() (*serviceports.ChatCompletionResult, error) {
+	req *agentports.ChatCompletionRequest,
+) (*agentports.ChatCompletionResult, error) {
+	return r.record(req, func() (*agentports.ChatCompletionResult, error) {
 		return r.CompletionService.CompleteChat(ctx, req)
 	})
 }
 
 func (r *CassetteRecorder) StreamChat(
 	ctx context.Context,
-	req *serviceports.ChatCompletionRequest,
-	sink serviceports.ChatStreamSink,
-) (*serviceports.ChatCompletionResult, error) {
-	return r.record(req, func() (*serviceports.ChatCompletionResult, error) {
+	req *agentports.ChatCompletionRequest,
+	sink agentports.ChatStreamSink,
+) (*agentports.ChatCompletionResult, error) {
+	return r.record(req, func() (*agentports.ChatCompletionResult, error) {
 		return r.CompletionService.StreamChat(ctx, req, sink)
 	})
 }
 
 func (r *CassetteRecorder) record(
-	req *serviceports.ChatCompletionRequest,
-	call func() (*serviceports.ChatCompletionResult, error),
-) (*serviceports.ChatCompletionResult, error) {
+	req *agentports.ChatCompletionRequest,
+	call func() (*agentports.ChatCompletionResult, error),
+) (*agentports.ChatCompletionResult, error) {
 	hash, err := HashRequest(req)
 	if err != nil {
 		return nil, err

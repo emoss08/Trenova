@@ -1,6 +1,12 @@
 package rateengine
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/exchangerateportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/formulatemplateportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/rateagreementportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/ratematrixportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/ratequoteportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/ratezoneportsmock"
 	"context"
 	"fmt"
 	"testing"
@@ -12,8 +18,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -29,13 +36,13 @@ import (
 const testNow = int64(1_700_000_000)
 
 type deps struct {
-	agreements *mocks.MockRateAgreementRepository
-	zones      *mocks.MockRateZoneRepository
-	matrices   *mocks.MockRateMatrixRepository
-	density    *mocks.MockDensityScaleRepository
-	quotes     *mocks.MockRateQuoteRepository
-	formula    *mocks.MockFormulaCalculator
-	exchange   *mocks.MockExchangeRateService
+	agreements *rateagreementportsmock.MockRateAgreementRepository
+	zones      *ratezoneportsmock.MockRateZoneRepository
+	matrices   *ratematrixportsmock.MockRateMatrixRepository
+	density    *ratematrixportsmock.MockDensityScaleRepository
+	quotes     *ratequoteportsmock.MockRateQuoteRepository
+	formula    *formulatemplateportsmock.MockFormulaCalculator
+	exchange   *exchangerateportsmock.MockExchangeRateService
 	guides     *stubRoutingGuides
 	svc        *Service
 
@@ -51,7 +58,7 @@ type deps struct {
 // that repository's seven methods, and hand-maintaining the other six would be
 // six chances to drift.
 type stubRoutingGuides struct {
-	repositories.RoutingGuideRepository
+	tenderports.RoutingGuideRepository
 
 	guide *tender.RoutingGuide
 	err   error
@@ -60,7 +67,7 @@ type stubRoutingGuides struct {
 
 func (s *stubRoutingGuides) MatchLane(
 	_ context.Context,
-	_ *repositories.MatchLaneRequest,
+	_ *tenderports.MatchLaneRequest,
 ) (*tender.RoutingGuide, error) {
 	s.calls++
 
@@ -71,13 +78,13 @@ func setup(t *testing.T) *deps {
 	t.Helper()
 
 	d := &deps{
-		agreements: mocks.NewMockRateAgreementRepository(t),
-		zones:      mocks.NewMockRateZoneRepository(t),
-		matrices:   mocks.NewMockRateMatrixRepository(t),
-		density:    mocks.NewMockDensityScaleRepository(t),
-		quotes:     mocks.NewMockRateQuoteRepository(t),
-		formula:    mocks.NewMockFormulaCalculator(t),
-		exchange:   mocks.NewMockExchangeRateService(t),
+		agreements: rateagreementportsmock.NewMockRateAgreementRepository(t),
+		zones:      ratezoneportsmock.NewMockRateZoneRepository(t),
+		matrices:   ratematrixportsmock.NewMockRateMatrixRepository(t),
+		density:    ratematrixportsmock.NewMockDensityScaleRepository(t),
+		quotes:     ratequoteportsmock.NewMockRateQuoteRepository(t),
+		formula:    formulatemplateportsmock.NewMockFormulaCalculator(t),
+		exchange:   exchangerateportsmock.NewMockExchangeRateService(t),
 		guides:     &stubRoutingGuides{},
 	}
 
@@ -261,8 +268,8 @@ func perMileRule(rate string, specificity int32) *rateagreement.RateAgreementRul
 	}
 }
 
-func rateRequest(entity *shipment.Shipment) *services.RateShipmentRequest {
-	return &services.RateShipmentRequest{
+func rateRequest(entity *shipment.Shipment) *ratequoteports.RateShipmentRequest {
+	return &ratequoteports.RateShipmentRequest{
 		Shipment:   entity,
 		TenantInfo: tenantInfo(),
 		PartyType:  rateagreement.PartyTypeCustomer,
@@ -272,7 +279,7 @@ func rateRequest(entity *shipment.Shipment) *services.RateShipmentRequest {
 
 func expectRules(d *deps, rules ...*rateagreement.RateAgreementRule) {
 	d.agreements.On("ResolveRules", mock.Anything, mock.Anything).
-		Return(&repositories.ResolveRateRulesResult{
+		Return(&rateagreementports.ResolveRateRulesResult{
 			Rules: rules,
 			Total: len(rules),
 		}, nil).Once()

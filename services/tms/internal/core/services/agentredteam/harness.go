@@ -11,10 +11,12 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentevalgate"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -36,7 +38,7 @@ var (
 
 type RunParams struct {
 	Case       *Case
-	Completion serviceports.CompletionService
+	Completion agentports.CompletionService
 	Tenant     *Tenant
 }
 
@@ -48,9 +50,9 @@ type Tenant struct {
 
 type Outcome struct {
 	Case              *Case
-	Actor             *serviceports.RequestActor
+	Actor             *permissionports.RequestActor
 	Main              *agentdefinition.Definition
-	Result            *serviceports.RunResult
+	Result            *agentports.RunResult
 	RunErr            error
 	Kit               *agentevalgate.Kit
 	DefinitionsBefore map[pulid.ID]string
@@ -61,15 +63,15 @@ type Outcome struct {
 	Delegations       []DelegationRecord
 	Memories          []MemoryRecord
 	Opened            []OpenedTurn
-	Events            []serviceports.StreamEvent
+	Events            []kernelports.StreamEvent
 }
 
 func Script(c *Case) *agentruntimetest.ScriptedCompletion {
-	turns := make([]*serviceports.ChatCompletionResult, 0, len(c.Script))
+	turns := make([]*agentports.ChatCompletionResult, 0, len(c.Script))
 	for stepIdx, step := range c.Script {
-		result := &serviceports.ChatCompletionResult{Text: step.Reply, ModelIdentifier: scriptModel}
+		result := &agentports.ChatCompletionResult{Text: step.Reply, ModelIdentifier: scriptModel}
 		for callIdx, call := range step.Calls {
-			result.ToolCalls = append(result.ToolCalls, serviceports.ToolCall{
+			result.ToolCalls = append(result.ToolCalls, agentports.ToolCall{
 				ID:        fmt.Sprintf("call_%d_%d", stepIdx, callIdx),
 				Name:      call.Name,
 				Arguments: maps.Clone(call.Args),
@@ -111,7 +113,7 @@ func Run(ctx context.Context, p RunParams) (*Outcome, error) {
 	}
 
 	actor := actorFor(c.Agent.Unattended, *tenant)
-	req := &serviceports.RunRequest{
+	req := &agentports.RunRequest{
 		Definition: primary,
 		Actor:      actor,
 		Context:    contextFor(c, definitions, *tenant),
@@ -167,7 +169,7 @@ func Run(ctx context.Context, p RunParams) (*Outcome, error) {
 func newRuntime(
 	rec *recorder,
 	c *Case,
-	completion serviceports.CompletionService,
+	completion agentports.CompletionService,
 ) (*agentevalgate.Kit, *agentruntime.Service, error) {
 	built, err := buildTools(rec, c.Responses)
 	if err != nil {
@@ -188,8 +190,8 @@ func newRuntime(
 
 type reopenRequest struct {
 	definition *agentdefinition.Definition
-	actor      *serviceports.RequestActor
-	base       *serviceports.RunRequest
+	actor      *permissionports.RequestActor
+	base       *agentports.RunRequest
 }
 
 func reopen(
@@ -215,7 +217,7 @@ func reopen(
 		Trigger:          p.base.Context.Trigger,
 		Memories:         written,
 	}
-	req := &serviceports.RunRequest{
+	req := &agentports.RunRequest{
 		Definition: p.definition,
 		Actor:      p.actor,
 		Context:    rc,
@@ -280,18 +282,18 @@ func definitionFor(
 	return definition
 }
 
-func actorFor(unattended bool, tenant Tenant) *serviceports.RequestActor {
+func actorFor(unattended bool, tenant Tenant) *permissionports.RequestActor {
 	if unattended {
-		return &serviceports.RequestActor{
-			PrincipalType:  serviceports.PrincipalTypeAgent,
+		return &permissionports.RequestActor{
+			PrincipalType:  permissionports.PrincipalTypeAgent,
 			PrincipalID:    MainAgentID,
 			OrganizationID: tenant.OrganizationID,
 			BusinessUnitID: tenant.BusinessUnitID,
 		}
 	}
 
-	return &serviceports.RequestActor{
-		PrincipalType:  serviceports.PrincipalTypeUser,
+	return &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    tenant.UserID,
 		UserID:         tenant.UserID,
 		OrganizationID: tenant.OrganizationID,
@@ -398,10 +400,10 @@ type effects struct {
 
 	mu      sync.Mutex
 	minted  int
-	emitted []serviceports.StreamEvent
+	emitted []kernelports.StreamEvent
 }
 
-func (fx *effects) events() []serviceports.StreamEvent {
+func (fx *effects) events() []kernelports.StreamEvent {
 	fx.mu.Lock()
 	defer fx.mu.Unlock()
 
@@ -410,7 +412,7 @@ func (fx *effects) events() []serviceports.StreamEvent {
 
 func (fx *effects) Complete(
 	t *agentruntime.Turn,
-	req *serviceports.ChatCompletionRequest,
+	req *agentports.ChatCompletionRequest,
 ) (agentruntime.ModelReply, error) {
 	fx.rec.read(ReadCompletion, t.Definition().Name, req.TenantInfo)
 
@@ -452,7 +454,7 @@ func (fx *effects) Find(t *agentruntime.Turn, arguments map[string]any) agentrun
 	}
 }
 
-func (fx *effects) Emit(event serviceports.StreamEvent) {
+func (fx *effects) Emit(event kernelports.StreamEvent) {
 	fx.mu.Lock()
 	defer fx.mu.Unlock()
 
@@ -461,7 +463,7 @@ func (fx *effects) Emit(event serviceports.StreamEvent) {
 
 func (fx *effects) Observe(
 	_ *agentruntime.Turn,
-	call *serviceports.ToolCall,
+	call *agentports.ToolCall,
 	outcome agentruntime.ToolOutcome,
 ) agentruntime.ToolOutcome {
 	return fx.rt.ObserveCall(nil, call, outcome)
@@ -497,7 +499,7 @@ func (fx *effects) Delegate(
 	fx.rec.delegated(&record)
 
 	parentReq := t.Request()
-	req := &serviceports.RunRequest{
+	req := &agentports.RunRequest{
 		Definition: definition,
 		Actor:      parentReq.Actor,
 		Context: agentdefinition.RuntimeContext{
@@ -509,7 +511,7 @@ func (fx *effects) Delegate(
 		},
 		Input:    call.Task,
 		ThreadID: parentReq.ThreadID,
-		Delegation: &serviceports.Delegation{
+		Delegation: &agentports.Delegation{
 			ParentAgentID:   parent.ID,
 			ParentAgentName: parent.Name,
 			CallID:          call.Call.ID,

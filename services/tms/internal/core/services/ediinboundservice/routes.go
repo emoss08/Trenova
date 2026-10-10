@@ -7,9 +7,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -51,7 +51,7 @@ func (s *Service) routeAcknowledgment(
 		}
 		original, err := s.messageRepo.GetOutboundMessageForAck(
 			ctx,
-			repositories.GetEDIOutboundMessageForAckRequest{
+			ediports.GetEDIOutboundMessageForAckRequest{
 				TenantInfo:               tenantInfo,
 				PartnerID:                partner.ID,
 				TransactionSet:           transactionSetFromCode(entry.originalTransactionSet),
@@ -69,7 +69,7 @@ func (s *Service) routeAcknowledgment(
 		ackStatus, ackError := acknowledgmentResolution(entry)
 		if _, err = s.messageRepo.UpdateMessageAcknowledgment(
 			ctx,
-			&repositories.UpdateEDIMessageAcknowledgmentRequest{
+			&ediports.UpdateEDIMessageAcknowledgmentRequest{
 				ID:            original.ID,
 				TenantInfo:    tenantInfo,
 				AckStatus:     ackStatus,
@@ -140,7 +140,7 @@ func (s *Service) routeTenderResponse(
 	}
 	recipient, err := s.tenderRecipientRepo.GetActiveExternalRecipientByShipmentReference(
 		ctx,
-		repositories.GetActiveExternalEDITenderRecipientByReferenceRequest{
+		ediports.GetActiveExternalEDITenderRecipientByReferenceRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: file.OrganizationID,
 				BuID:  file.BusinessUnitID,
@@ -199,7 +199,7 @@ func (s *Service) routeTenderOfferResponse(
 		OrgID: file.OrganizationID,
 		BuID:  file.BusinessUnitID,
 	}
-	offer, err := s.tenderRepo.GetOfferByID(ctx, repositories.GetTenderOfferByIDRequest{
+	offer, err := s.tenderRepo.GetOfferByID(ctx, tenderports.GetTenderOfferByIDRequest{
 		TenantInfo:    tenantInfo,
 		OfferID:       offerID,
 		IncludeTender: true,
@@ -251,7 +251,7 @@ func (s *Service) routeTenderOfferResponse(
 			),
 		}}
 	}
-	err = s.tenderResponses.RecordResponse(ctx, &services.TenderResponseRequest{
+	err = s.tenderResponses.RecordResponse(ctx, &tenderports.TenderResponseRequest{
 		TenantInfo:    tenantInfo,
 		OfferID:       offer.ID,
 		Action:        action,
@@ -309,7 +309,7 @@ func (s *Service) routeShipmentStatus(
 	}
 	recipient, err := s.tenderRecipientRepo.GetActiveExternalRecipientByShipmentReference(
 		ctx,
-		repositories.GetActiveExternalEDITenderRecipientByReferenceRequest{
+		ediports.GetActiveExternalEDITenderRecipientByReferenceRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: file.OrganizationID,
 				BuID:  file.BusinessUnitID,
@@ -419,7 +419,7 @@ func (s *Service) freightInvoiceRecipient(
 	for _, reference := range references {
 		recipient, err := s.tenderRecipientRepo.GetActiveExternalRecipientByShipmentReference(
 			ctx,
-			repositories.GetActiveExternalEDITenderRecipientByReferenceRequest{
+			ediports.GetActiveExternalEDITenderRecipientByReferenceRequest{
 				TenantInfo: tenantInfo,
 				PartnerID:  partner.ID,
 				Reference:  reference,
@@ -535,7 +535,7 @@ func (s *Service) supersedePriorInboundTransfer(
 	}
 	prior, err := s.transferRepo.GetActionableInboundTransferByExternalReference(
 		ctx,
-		repositories.GetActionableInboundEDITransferByExternalReferenceRequest{
+		ediports.GetActionableInboundEDITransferByExternalReferenceRequest{
 			TenantInfo:        tenantInfo,
 			PartnerID:         partner.ID,
 			ExternalReference: externalRef,

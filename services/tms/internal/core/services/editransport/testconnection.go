@@ -9,7 +9,7 @@ import (
 	"path"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/sftp"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -20,43 +20,43 @@ const (
 	as2ReachabilityTimeout         = 15 * time.Second
 )
 
-func passedCheck(name, message string) services.EDIConnectionCheck {
-	return services.EDIConnectionCheck{
+func passedCheck(name, message string) ediports.EDIConnectionCheck {
+	return ediports.EDIConnectionCheck{
 		Name:    name,
-		Status:  services.EDIConnectionCheckPassed,
+		Status:  ediports.EDIConnectionCheckPassed,
 		Message: message,
 	}
 }
 
-func warningCheck(name, message string) services.EDIConnectionCheck {
-	return services.EDIConnectionCheck{
+func warningCheck(name, message string) ediports.EDIConnectionCheck {
+	return ediports.EDIConnectionCheck{
 		Name:    name,
-		Status:  services.EDIConnectionCheckWarning,
+		Status:  ediports.EDIConnectionCheckWarning,
 		Message: message,
 	}
 }
 
-func failedCheck(name, message string) services.EDIConnectionCheck {
-	return services.EDIConnectionCheck{
+func failedCheck(name, message string) ediports.EDIConnectionCheck {
+	return ediports.EDIConnectionCheck{
 		Name:    name,
-		Status:  services.EDIConnectionCheckFailed,
+		Status:  ediports.EDIConnectionCheckFailed,
 		Message: message,
 	}
 }
 
 func (t *SFTPTransport) TestConnection(
 	ctx context.Context,
-	req *services.EDITransportRequest,
-) []services.EDIConnectionCheck {
+	req *ediports.EDITransportRequest,
+) []ediports.EDIConnectionCheck {
 	return testSFTPEndpoint(ctx, req, defaultOutboundDirectory)
 }
 
 func (t *VANTransport) TestConnection(
 	ctx context.Context,
-	req *services.EDITransportRequest,
-) []services.EDIConnectionCheck {
+	req *ediports.EDITransportRequest,
+) []ediports.EDIConnectionCheck {
 	if req == nil || req.Profile == nil {
-		return []services.EDIConnectionCheck{
+		return []ediports.EDIConnectionCheck{
 			failedCheck("configuration", "EDI communication profile is required"),
 		}
 	}
@@ -65,7 +65,7 @@ func (t *VANTransport) TestConnection(
 		"",
 	)
 	if mailboxID == "" {
-		return []services.EDIConnectionCheck{
+		return []ediports.EDIConnectionCheck{
 			failedCheck("configuration", "VAN mailbox ID is required"),
 		}
 	}
@@ -74,10 +74,10 @@ func (t *VANTransport) TestConnection(
 
 func testSFTPEndpoint(
 	ctx context.Context,
-	req *services.EDITransportRequest,
+	req *ediports.EDITransportRequest,
 	fallbackOutboundDirectory string,
-) []services.EDIConnectionCheck {
-	checks := make([]services.EDIConnectionCheck, 0, 4)
+) []ediports.EDIConnectionCheck {
+	checks := make([]ediports.EDIConnectionCheck, 0, 4)
 	if req == nil || req.Profile == nil {
 		return append(checks, failedCheck("configuration", "EDI communication profile is required"))
 	}
@@ -122,9 +122,9 @@ func testSFTPEndpoint(
 
 func (t *AS2Transport) TestConnection(
 	ctx context.Context,
-	req *services.EDITransportRequest,
-) []services.EDIConnectionCheck {
-	checks := make([]services.EDIConnectionCheck, 0, 5)
+	req *ediports.EDITransportRequest,
+) []ediports.EDIConnectionCheck {
+	checks := make([]ediports.EDIConnectionCheck, 0, 5)
 	if req == nil || req.Profile == nil {
 		return append(checks, failedCheck("configuration", "EDI communication profile is required"))
 	}
@@ -156,7 +156,7 @@ func (t *AS2Transport) TestConnection(
 	return checks
 }
 
-func testAS2LocalIdentity(cfg *AS2Config) services.EDIConnectionCheck {
+func testAS2LocalIdentity(cfg *AS2Config) ediports.EDIConnectionCheck {
 	if cfg.LocalCertificate == nil {
 		return failedCheck("local identity", "Local certificate is not configured")
 	}
@@ -175,13 +175,13 @@ func testAS2LocalIdentity(cfg *AS2Config) services.EDIConnectionCheck {
 		)
 	}
 	expiry := certificateExpiryCheck("local certificate", cfg.LocalCertificate)
-	if expiry.Status != services.EDIConnectionCheckPassed {
+	if expiry.Status != ediports.EDIConnectionCheckPassed {
 		return expiry
 	}
 	return passedCheck("local identity", "Private key matches the local certificate")
 }
 
-func certificateExpiryCheck(name string, cert *x509.Certificate) services.EDIConnectionCheck {
+func certificateExpiryCheck(name string, cert *x509.Certificate) ediports.EDIConnectionCheck {
 	now := time.Now()
 	switch {
 	case now.After(cert.NotAfter):
@@ -211,7 +211,7 @@ func testAS2Reachability(
 	ctx context.Context,
 	client *http.Client,
 	cfg *AS2Config,
-) services.EDIConnectionCheck {
+) ediports.EDIConnectionCheck {
 	if cfg.EndpointURL == "" {
 		return failedCheck("endpoint", "Endpoint URL is not configured")
 	}

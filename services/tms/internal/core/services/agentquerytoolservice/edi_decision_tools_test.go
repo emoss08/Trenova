@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -24,14 +24,14 @@ type fakeTransferDetail struct {
 
 func (f *fakeTransferDetail) GetTransfer(
 	context.Context,
-	repositories.GetEDITransferByIDRequest,
+	ediports.GetEDITransferByIDRequest,
 ) (*edi.EDITransfer, error) {
 	return f.transfer, nil
 }
 
 func (f *fakeTransferDetail) MappingPreview(
 	context.Context,
-	repositories.GetEDITransferByIDRequest,
+	ediports.GetEDITransferByIDRequest,
 ) (*ediservice.MappingPreview, error) {
 	f.mapped = true
 
@@ -127,12 +127,12 @@ func TestGetEDITransfer_WithholdsTheRateBelowRestrictedAndNeverReadsTheOtherSide
 
 type fakeMessageList struct {
 	messages []*edi.EDIMessage
-	request  *repositories.ListEDIMessagesRequest
+	request  *ediports.ListEDIMessagesRequest
 }
 
 func (f *fakeMessageList) ListMessagesCursor(
 	_ context.Context,
-	req *repositories.ListEDIMessagesRequest,
+	req *ediports.ListEDIMessagesRequest,
 ) (*pagination.CursorListResult[*edi.EDIMessage], error) {
 	f.request = req
 
@@ -171,12 +171,12 @@ func TestListEDIMessages_FiltersOnDeliveryAndNeverReturnsTheDocument(t *testing.
 
 type fakeTenderChangeList struct {
 	changes []*edi.TenderChange
-	request *repositories.ListEDITenderChangesRequest
+	request *ediports.ListEDITenderChangesRequest
 }
 
 func (f *fakeTenderChangeList) ListTenderChanges(
 	_ context.Context,
-	req *repositories.ListEDITenderChangesRequest,
+	req *ediports.ListEDITenderChangesRequest,
 ) (*pagination.ListResult[*edi.TenderChange], error) {
 	f.request = req
 
@@ -219,12 +219,12 @@ func TestListEDITenderChanges_SaysWhatChangedAndWhichWaitOnThisOrganization(t *t
 
 type fakeTransferChangeList struct {
 	changes []*edi.TransferChange
-	request *repositories.ListEDITransferChangesRequest
+	request *ediports.ListEDITransferChangesRequest
 }
 
 func (f *fakeTransferChangeList) ListTransferChanges(
 	_ context.Context,
-	req *repositories.ListEDITransferChangesRequest,
+	req *ediports.ListEDITransferChangesRequest,
 ) (*pagination.ListResult[*edi.TransferChange], error) {
 	f.request = req
 
@@ -256,12 +256,12 @@ func TestListEDITransferChanges_GivesTheReportedStatus(t *testing.T) {
 
 type fakePartnerList struct {
 	partners []*edi.EDIPartner
-	request  *repositories.ListEDIPartnersRequest
+	request  *ediports.ListEDIPartnersRequest
 }
 
 func (f *fakePartnerList) ListPartnersCursor(
 	_ context.Context,
-	req *repositories.ListEDIPartnersRequest,
+	req *ediports.ListEDIPartnersRequest,
 ) (*pagination.CursorListResult[*edi.EDIPartner], error) {
 	f.request = req
 

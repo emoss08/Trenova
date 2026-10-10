@@ -5,10 +5,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/orderservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/shopspring/decimal"
@@ -37,13 +38,13 @@ func orderToolProviders() []any {
 }
 
 type orderReader interface {
-	Get(ctx context.Context, req repositories.GetOrderByIDRequest) (*order.Order, error)
+	Get(ctx context.Context, req orderports.GetOrderByIDRequest) (*order.Order, error)
 }
 
 func provideGetOrderTool(
 	orders *orderservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newGetOrderTool(orders, permissions)
 }
 
@@ -98,9 +99,9 @@ func orderRowFrom(entity *order.Order, gate *fieldGate) orderRow {
 }
 
 func newListOrdersTool(
-	repo repositories.OrderRepository,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	repo orderports.OrderRepository,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "list_orders",
 		entityPlural: "orders",
@@ -129,7 +130,7 @@ func newListOrdersTool(
 			opts *pagination.QueryOptions,
 			gate *fieldGate,
 		) ([]any, error) {
-			result, err := repo.List(ctx, &repositories.ListOrdersRequest{Filter: opts})
+			result, err := repo.List(ctx, &orderports.ListOrdersRequest{Filter: opts})
 			if err != nil {
 				return nil, err
 			}
@@ -148,8 +149,8 @@ type getOrderTool struct {
 
 func newGetOrderTool(
 	orders orderReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &getOrderTool{orders: orders, access: newFieldAccess(permissions)}
 }
 
@@ -176,7 +177,7 @@ func (t *getOrderTool) ParamSchema() map[string]any {
 	)
 }
 
-func (t *getOrderTool) Policy() serviceports.ToolPolicy {
+func (t *getOrderTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceOrder})
 }
 
@@ -211,7 +212,7 @@ type orderView struct {
 
 func (t *getOrderTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -222,7 +223,7 @@ func (t *getOrderTool) Query(
 		return nil, err
 	}
 
-	entity, err := t.orders.Get(ctx, repositories.GetOrderByIDRequest{
+	entity, err := t.orders.Get(ctx, orderports.GetOrderByIDRequest{
 		ID:              id,
 		TenantInfo:      tenantOf(params),
 		IncludeShipment: true,

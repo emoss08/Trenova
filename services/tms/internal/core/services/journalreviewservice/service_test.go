@@ -1,14 +1,17 @@
 package journalreviewservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/journalentry"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -29,13 +32,13 @@ var (
 
 type fakeReview struct {
 	entries  map[pulid.ID]*journalentry.JournalEntry
-	approved []*repositories.ApproveJournalEntryParams
-	posted   []*repositories.PostJournalEntryParams
+	approved []*journalentryports.ApproveJournalEntryParams
+	posted   []*journalentryports.PostJournalEntryParams
 }
 
 func (f *fakeReview) LockEntry(
 	_ context.Context,
-	req repositories.LockJournalEntryRequest,
+	req journalentryports.LockJournalEntryRequest,
 ) (*journalentry.JournalEntry, error) {
 	entry, ok := f.entries[req.EntryID]
 	if !ok || req.TenantInfo != tenantInfo {
@@ -45,19 +48,19 @@ func (f *fakeReview) LockEntry(
 	return &copied, nil
 }
 
-func (f *fakeReview) ApproveEntry(_ context.Context, params *repositories.ApproveJournalEntryParams) error {
+func (f *fakeReview) ApproveEntry(_ context.Context, params *journalentryports.ApproveJournalEntryParams) error {
 	f.approved = append(f.approved, params)
 	return nil
 }
 
-func (f *fakeReview) PostEntry(_ context.Context, params *repositories.PostJournalEntryParams) error {
+func (f *fakeReview) PostEntry(_ context.Context, params *journalentryports.PostJournalEntryParams) error {
 	f.posted = append(f.posted, params)
 	return nil
 }
 
 func (f *fakeReview) ListConnection(
 	context.Context,
-	*repositories.ListJournalReviewRequest,
+	*journalentryports.ListJournalReviewQuery,
 ) (*pagination.CursorListResult[*journalentry.JournalEntry], error) {
 	return &pagination.CursorListResult[*journalentry.JournalEntry]{}, nil
 }
@@ -65,9 +68,9 @@ func (f *fakeReview) ListConnection(
 func (f *fakeReview) Summarize(
 	context.Context,
 	pagination.TenantInfo,
-) (*repositories.JournalReviewSummary, error) {
+) (*journalentryports.JournalReviewSummaryRow, error) {
 	oldest := int64(1_000)
-	return &repositories.JournalReviewSummary{
+	return &journalentryports.JournalReviewSummaryRow{
 		AwaitingApproval:     2,
 		ReadyToPost:          1,
 		OldestAccountingDate: &oldest,
@@ -100,13 +103,13 @@ func newService(
 	t *testing.T,
 	repo *fakeReview,
 	control *tenant.AccountingControl,
-	periods *mocks.MockFiscalPeriodRepository,
+	periods *fiscalperiodportsmock.MockFiscalPeriodRepository,
 ) *Service {
 	t.Helper()
-	controls := mocks.NewMockAccountingControlRepository(t)
+	controls := tenantportsmock.NewMockAccountingControlRepository(t)
 	controls.EXPECT().GetByOrgID(mock.Anything, orgID).Return(control, nil).Maybe()
 	if periods == nil {
-		periods = mocks.NewMockFiscalPeriodRepository(t)
+		periods = fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	}
 	return &Service{
 		l:        zap.NewNop(),
@@ -118,15 +121,15 @@ func newService(
 	}
 }
 
-func request(ids ...pulid.ID) *serviceports.JournalReviewRequest {
-	return &serviceports.JournalReviewRequest{TenantInfo: tenantInfo, EntryIDs: ids}
+func request(ids ...pulid.ID) *journalentryports.JournalReviewRequest {
+	return &journalentryports.JournalReviewRequest{TenantInfo: tenantInfo, EntryIDs: ids}
 }
 
-func actor() *serviceports.RequestActor {
-	return &serviceports.RequestActor{UserID: reviewerID}
+func actor() *permissionports.RequestActor {
+	return &permissionports.RequestActor{UserID: reviewerID}
 }
 
-func openPeriod(t *testing.T, date int64) (*mocks.MockFiscalPeriodRepository, *fiscalperiod.FiscalPeriod) {
+func openPeriod(t *testing.T, date int64) (*fiscalperiodportsmock.MockFiscalPeriodRepository, *fiscalperiod.FiscalPeriod) {
 	t.Helper()
 	period := &fiscalperiod.FiscalPeriod{
 		ID:           pulid.MustNew("fp_"),
@@ -134,9 +137,9 @@ func openPeriod(t *testing.T, date int64) (*mocks.MockFiscalPeriodRepository, *f
 		PeriodNumber: 3,
 		Status:       fiscalperiod.StatusOpen,
 	}
-	periods := mocks.NewMockFiscalPeriodRepository(t)
+	periods := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	periods.EXPECT().
-		GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: date}).
+		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: date}).
 		Return(period, nil).
 		Maybe()
 	return periods, period
@@ -217,7 +220,7 @@ func TestPostMovesAnEntryOutOfAPeriodClosedSinceItWasWritten(t *testing.T) {
 		Status:       fiscalperiod.StatusOpen,
 		StartDate:    4_000,
 	}
-	periods := mocks.NewMockFiscalPeriodRepository(t)
+	periods := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	periods.EXPECT().GetPeriodByDate(mock.Anything, mock.Anything).Return(closed, nil)
 	periods.EXPECT().
 		ListByFiscalYearID(mock.Anything, mock.Anything).
@@ -270,8 +273,8 @@ func TestReviewValidatesTheRequest(t *testing.T) {
 	_, err := svc.Approve(t.Context(), request(), actor())
 	require.Error(t, err)
 
-	tooMany := make([]pulid.ID, 0, serviceports.MaxJournalReviewEntries+1)
-	for range serviceports.MaxJournalReviewEntries + 1 {
+	tooMany := make([]pulid.ID, 0, journalentryports.MaxJournalReviewEntries+1)
+	for range journalentryports.MaxJournalReviewEntries + 1 {
 		tooMany = append(tooMany, pulid.MustNew("je_"))
 	}
 	_, err = svc.Post(t.Context(), request(tooMany...), actor())
@@ -304,7 +307,7 @@ func TestPostNamesTheRealCauseWhenSomethingOtherThanTheEntryIsMissing(t *testing
 
 	ready := entry("JE-8", journalentry.StatusApproved, true)
 	repo := &fakeReview{entries: map[pulid.ID]*journalentry.JournalEntry{ready.ID: ready}}
-	controls := mocks.NewMockAccountingControlRepository(t)
+	controls := tenantportsmock.NewMockAccountingControlRepository(t)
 	controls.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
 		Return(nil, errortypes.NewNotFoundError("Accounting control not found")).
@@ -314,7 +317,7 @@ func TestPostNamesTheRealCauseWhenSomethingOtherThanTheEntryIsMissing(t *testing
 		db:       dbtest.NopConnection{},
 		repo:     repo,
 		controls: controls,
-		periods:  mocks.NewMockFiscalPeriodRepository(t),
+		periods:  fiscalperiodportsmock.NewMockFiscalPeriodRepository(t),
 		now:      func() int64 { return 9_000 },
 	}
 
@@ -333,8 +336,8 @@ func TestReviewCollapsesRepeatedEntryIDsBeforeCountingThem(t *testing.T) {
 
 	pending := entry("JE-9", journalentry.StatusPending, false)
 	repo := &fakeReview{entries: map[pulid.ID]*journalentry.JournalEntry{pending.ID: pending}}
-	repeated := make([]pulid.ID, 0, 2*serviceports.MaxJournalReviewEntries)
-	for range 2 * serviceports.MaxJournalReviewEntries {
+	repeated := make([]pulid.ID, 0, 2*journalentryports.MaxJournalReviewEntries)
+	for range 2 * journalentryports.MaxJournalReviewEntries {
 		repeated = append(repeated, pending.ID)
 	}
 

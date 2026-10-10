@@ -5,8 +5,8 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -88,7 +88,7 @@ func TestCloseBumpsVersionSoOpenEditorsRefresh(t *testing.T) {
 
 	mock.ExpectQuery("UPDATE").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(id.String()))
 
-	_, err = repo.Close(t.Context(), repositories.CloseFiscalYearRequest{
+	_, err = repo.Close(t.Context(), fiscalyearports.CloseFiscalYearRequest{
 		ID: id,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),

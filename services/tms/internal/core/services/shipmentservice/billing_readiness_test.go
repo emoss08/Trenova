@@ -1,6 +1,10 @@
 package shipmentservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"encoding/json"
 	"testing"
@@ -11,7 +15,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -37,9 +43,9 @@ func TestServiceGetBillingReadiness_UsesTenantEnforcementOverride(t *testing.T) 
 		Name: "Bill of Lading",
 	}
 
-	repo := mocks.NewMockShipmentRepository(t)
+	repo := shipmentportsmock.NewMockShipmentRepository(t)
 	repo.EXPECT().
-		GetByID(mock.Anything, &repositories.GetShipmentByIDRequest{
+		GetByID(mock.Anything, &shipmentports.GetShipmentByIDRequest{
 			ID: entity.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
@@ -49,20 +55,20 @@ func TestServiceGetBillingReadiness_UsesTenantEnforcementOverride(t *testing.T) 
 		Return(entity, nil).
 		Once()
 	repo.EXPECT().
-		GetByID(mock.Anything, &repositories.GetShipmentByIDRequest{
+		GetByID(mock.Anything, &shipmentports.GetShipmentByIDRequest{
 			ID: entity.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
 				BuID:  entity.BusinessUnitID,
 			},
-			ShipmentOptions: repositories.ShipmentOptions{ExpandShipmentDetails: true},
+			ShipmentOptions: shipmentports.ShipmentOptions{ExpandShipmentDetails: true},
 		}).
 		Return(entity, nil).
 		Once()
 
-	customerRepo := mocks.NewMockCustomerRepository(t)
+	customerRepo := customerportsmock.NewMockCustomerRepository(t)
 	customerRepo.EXPECT().
-		GetByIDs(mock.Anything, mock.MatchedBy(func(req repositories.GetCustomersByIDsRequest) bool {
+		GetByIDs(mock.Anything, mock.MatchedBy(func(req customerports.GetCustomersByIDsRequest) bool {
 			return len(req.CustomerIDs) == 1 && req.CustomerIDs[0] == entity.CustomerID &&
 				req.IncludeBillingProfile
 		})).
@@ -70,7 +76,7 @@ func TestServiceGetBillingReadiness_UsesTenantEnforcementOverride(t *testing.T) 
 		Once()
 	customerRepo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("repositories.GetCustomerByIDRequest")).
-		RunAndReturn(func(_ context.Context, req repositories.GetCustomerByIDRequest) (*customer.Customer, error) {
+		RunAndReturn(func(_ context.Context, req customerports.GetCustomerByIDRequest) (*customer.Customer, error) {
 			assert.Equal(t, entity.CustomerID, req.ID)
 			return &customer.Customer{
 				ID: entity.CustomerID,
@@ -84,7 +90,7 @@ func TestServiceGetBillingReadiness_UsesTenantEnforcementOverride(t *testing.T) 
 		}).
 		Once()
 
-	billingRepo := mocks.NewMockBillingControlRepository(t)
+	billingRepo := tenantportsmock.NewMockBillingControlRepository(t)
 	billingRepo.EXPECT().
 		GetByOrgID(mock.Anything, entity.OrganizationID).
 		Return(&tenant.BillingControl{
@@ -94,9 +100,9 @@ func TestServiceGetBillingReadiness_UsesTenantEnforcementOverride(t *testing.T) 
 		}, nil).
 		Once()
 
-	documentRepo := mocks.NewMockDocumentRepository(t)
+	documentRepo := documentportsmock.NewMockDocumentRepository(t)
 	documentRepo.EXPECT().
-		GetByResourceID(mock.Anything, mock.MatchedBy(func(req *repositories.GetDocumentsByResourceRequest) bool {
+		GetByResourceID(mock.Anything, mock.MatchedBy(func(req *documentports.GetDocumentsByResourceRequest) bool {
 			return req.ResourceID == entity.ID.String() && req.ResourceType == "shipment"
 		})).
 		Return([]*document.Document{}, nil).
@@ -152,15 +158,15 @@ func TestServiceGetBillingReadiness_FallsBackToCustomerSettings(t *testing.T) {
 	}
 	matchingDocID := pulid.MustNew("doc_")
 
-	repo := mocks.NewMockShipmentRepository(t)
+	repo := shipmentportsmock.NewMockShipmentRepository(t)
 	repo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
 		Return(entity, nil).
 		Twice()
 
-	customerRepo := mocks.NewMockCustomerRepository(t)
+	customerRepo := customerportsmock.NewMockCustomerRepository(t)
 	customerRepo.EXPECT().
-		GetByIDs(mock.Anything, mock.MatchedBy(func(req repositories.GetCustomersByIDsRequest) bool {
+		GetByIDs(mock.Anything, mock.MatchedBy(func(req customerports.GetCustomersByIDsRequest) bool {
 			return len(req.CustomerIDs) == 1 && req.CustomerIDs[0] == entity.CustomerID &&
 				req.IncludeBillingProfile
 		})).
@@ -178,13 +184,13 @@ func TestServiceGetBillingReadiness_FallsBackToCustomerSettings(t *testing.T) {
 		}, nil).
 		Once()
 
-	billingRepo := mocks.NewMockBillingControlRepository(t)
+	billingRepo := tenantportsmock.NewMockBillingControlRepository(t)
 	billingRepo.EXPECT().
 		GetByOrgID(mock.Anything, entity.OrganizationID).
 		Return(nil, errortypes.NewNotFoundError("billing control not found")).
 		Once()
 
-	documentRepo := mocks.NewMockDocumentRepository(t)
+	documentRepo := documentportsmock.NewMockDocumentRepository(t)
 	documentRepo.EXPECT().
 		GetByResourceID(mock.Anything, mock.AnythingOfType("*repositories.GetDocumentsByResourceRequest")).
 		Return([]*document.Document{
@@ -242,9 +248,9 @@ func TestValidateBillingReadinessForStatusChange_RejectsMissingRequirements(t *t
 		Name: "Bill of Lading",
 	}
 
-	customerRepo := mocks.NewMockCustomerRepository(t)
+	customerRepo := customerportsmock.NewMockCustomerRepository(t)
 	customerRepo.EXPECT().
-		GetByIDs(mock.Anything, mock.MatchedBy(func(req repositories.GetCustomersByIDsRequest) bool {
+		GetByIDs(mock.Anything, mock.MatchedBy(func(req customerports.GetCustomersByIDsRequest) bool {
 			return len(req.CustomerIDs) == 1 && req.CustomerIDs[0] == entity.CustomerID &&
 				req.IncludeBillingProfile
 		})).
@@ -262,13 +268,13 @@ func TestValidateBillingReadinessForStatusChange_RejectsMissingRequirements(t *t
 		}, nil).
 		Once()
 
-	billingRepo := mocks.NewMockBillingControlRepository(t)
+	billingRepo := tenantportsmock.NewMockBillingControlRepository(t)
 	billingRepo.EXPECT().
 		GetByOrgID(mock.Anything, entity.OrganizationID).
 		Return(&tenant.BillingControl{}, nil).
 		Once()
 
-	documentRepo := mocks.NewMockDocumentRepository(t)
+	documentRepo := documentportsmock.NewMockDocumentRepository(t)
 	documentRepo.EXPECT().
 		GetByResourceID(mock.Anything, mock.AnythingOfType("*repositories.GetDocumentsByResourceRequest")).
 		Return([]*document.Document{}, nil).

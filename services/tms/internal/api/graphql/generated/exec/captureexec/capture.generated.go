@@ -11,10 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/capturereleaseservice"
 	"github.com/emoss08/trenova/internal/core/services/captureservice"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -1642,7 +1641,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.CaptureQRCode)
+					obj := o.(*captureports.CaptureQRCode)
 					return obj.Size, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1652,7 +1651,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.CaptureQRCode)
+					obj := o.(*captureports.CaptureQRCode)
 					return obj.Modules, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
@@ -1664,7 +1663,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.CaptureRecordLabel)
+					obj := o.(*captureports.CaptureRecordLabel)
 					return obj.ResourceType, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1674,7 +1673,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.CaptureRecordLabel)
+					obj := o.(*captureports.CaptureRecordLabel)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1684,7 +1683,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.CaptureRecordLabel)
+					obj := o.(*captureports.CaptureRecordLabel)
 					return obj.Title, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1694,7 +1693,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.CaptureRecordLabel)
+					obj := o.(*captureports.CaptureRecordLabel)
 					return obj.Subtitle, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2513,7 +2512,7 @@ var Shard = &gqlexec.Shard{
 type resolverCaptureBatch interface {
 	User(ctx context.Context, obj *capture.CaptureBatch) (*tenant.User, error)
 	Device(ctx context.Context, obj *capture.CaptureBatch) (*capture.CaptureDevice, error)
-	Target(ctx context.Context, obj *capture.CaptureBatch) (*repositories.CaptureRecordLabel, error)
+	Target(ctx context.Context, obj *capture.CaptureBatch) (*captureports.CaptureRecordLabel, error)
 	OpenItemCount(ctx context.Context, obj *capture.CaptureBatch) (int, error)
 	IsEditable(ctx context.Context, obj *capture.CaptureBatch) (bool, error)
 	Pages(ctx context.Context, obj *capture.CaptureBatch) ([]*capture.CapturePage, error)
@@ -2521,7 +2520,7 @@ type resolverCaptureBatch interface {
 }
 
 type resolverCaptureCoverSheet interface {
-	Target(ctx context.Context, obj *gqlmodel.CaptureCoverSheet) (*repositories.CaptureRecordLabel, error)
+	Target(ctx context.Context, obj *gqlmodel.CaptureCoverSheet) (*captureports.CaptureRecordLabel, error)
 }
 
 type resolverCaptureDevice interface {
@@ -2531,9 +2530,9 @@ type resolverCaptureDevice interface {
 
 type resolverCaptureItem interface {
 	PageCount(ctx context.Context, obj *capture.CaptureItem) (int, error)
-	SuggestedRecord(ctx context.Context, obj *capture.CaptureItem) (*repositories.CaptureRecordLabel, error)
+	SuggestedRecord(ctx context.Context, obj *capture.CaptureItem) (*captureports.CaptureRecordLabel, error)
 	SuggestionSource(ctx context.Context, obj *capture.CaptureItem) (*capture.SuggestionSource, error)
-	FiledRecord(ctx context.Context, obj *capture.CaptureItem) (*repositories.CaptureRecordLabel, error)
+	FiledRecord(ctx context.Context, obj *capture.CaptureItem) (*captureports.CaptureRecordLabel, error)
 	FiledBy(ctx context.Context, obj *capture.CaptureItem) (*tenant.User, error)
 }
 
@@ -3983,7 +3982,7 @@ func marshalNCaptureProfileStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return res
 }
 
-func marshalNCaptureQRCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐCaptureQRCode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.CaptureQRCode) graphql.Marshaler {
+func marshalNCaptureQRCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐCaptureQRCode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *captureports.CaptureQRCode) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -4192,7 +4191,7 @@ func marshalOCapturePixelType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋc
 	return res
 }
 
-func marshalOCaptureRecordRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐCaptureRecordLabel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *repositories.CaptureRecordLabel) graphql.Marshaler {
+func marshalOCaptureRecordRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐCaptureRecordLabel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *captureports.CaptureRecordLabel) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

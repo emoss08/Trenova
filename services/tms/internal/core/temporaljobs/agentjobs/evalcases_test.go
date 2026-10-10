@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -18,7 +18,7 @@ func TestCaptureEvalCaseCandidatesWorkflow_StopsWhenARoundCapturesNothing(t *tes
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestWorkflowEnvironment()
 
-	rounds := []serviceports.CaptureEvalCaseCandidatesResult{
+	rounds := []agentports.CaptureEvalCaseCandidatesResult{
 		{Scanned: evalCaseCaptureBatch, Captured: 90, Duplicates: 4, Failed: 6},
 		{Scanned: evalCaseCaptureBatch, Failed: evalCaseCaptureBatch},
 		{Scanned: 3, Captured: 3},
@@ -29,7 +29,7 @@ func TestCaptureEvalCaseCandidatesWorkflow_StopsWhenARoundCapturesNothing(t *tes
 		Return(func(
 			_ context.Context,
 			input *CaptureEvalCaseCandidatesInput,
-		) (*serviceports.CaptureEvalCaseCandidatesResult, error) {
+		) (*agentports.CaptureEvalCaseCandidatesResult, error) {
 			sinces = append(sinces, input.Since)
 			next := rounds[0]
 			rounds = rounds[1:]
@@ -40,7 +40,7 @@ func TestCaptureEvalCaseCandidatesWorkflow_StopsWhenARoundCapturesNothing(t *tes
 
 	require.True(t, env.IsWorkflowCompleted())
 	require.NoError(t, env.GetWorkflowError())
-	var result serviceports.CaptureEvalCaseCandidatesResult
+	var result agentports.CaptureEvalCaseCandidatesResult
 	require.NoError(t, env.GetWorkflowResult(&result))
 
 	assert.Len(t, sinces, 2, "a round of failures ends the sweep instead of spinning on it")
@@ -63,17 +63,17 @@ func TestPurgeEvalCasesWorkflow_PurgesAtTheWorkflowsClock(t *testing.T) {
 		Return(func(
 			_ context.Context,
 			input *PurgeEvalCasesInput,
-		) (*serviceports.PurgeEvalCasesResult, error) {
+		) (*agentports.PurgeEvalCasesResult, error) {
 			now = input.Now
-			return &serviceports.PurgeEvalCasesResult{Retained: 2, Expired: 1, Orphaned: 3}, nil
+			return &agentports.PurgeEvalCasesResult{Retained: 2, Expired: 1, Orphaned: 3}, nil
 		}).Once()
 
 	env.ExecuteWorkflow(PurgeEvalCasesWorkflow)
 
 	require.True(t, env.IsWorkflowCompleted())
 	require.NoError(t, env.GetWorkflowError())
-	var result serviceports.PurgeEvalCasesResult
+	var result agentports.PurgeEvalCasesResult
 	require.NoError(t, env.GetWorkflowResult(&result))
 	assert.Positive(t, now)
-	assert.Equal(t, serviceports.PurgeEvalCasesResult{Retained: 2, Expired: 1, Orphaned: 3}, result)
+	assert.Equal(t, agentports.PurgeEvalCasesResult{Retained: 2, Expired: 1, Orphaned: 3}, result)
 }

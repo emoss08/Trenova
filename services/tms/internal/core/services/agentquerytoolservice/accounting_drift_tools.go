@@ -6,8 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 	"github.com/emoss08/trenova/shared/money"
@@ -29,12 +30,12 @@ const (
 type accountingDriftReader interface {
 	List(
 		ctx context.Context,
-		req *serviceports.ListAccountingDriftFindingsRequest,
+		req *accountingsyncports.ListAccountingDriftFindingsRequest,
 	) (*pagination.CursorListResult[*accountingsync.AccountingDriftFinding], error)
 	Overview(
 		ctx context.Context,
-		req *serviceports.AccountingDriftOverviewRequest,
-	) (*serviceports.AccountingDriftOverview, error)
+		req *accountingsyncports.AccountingDriftOverviewRequest,
+	) (*accountingsyncports.AccountingDriftOverview, error)
 }
 
 type accountingDriftLineRow struct {
@@ -136,13 +137,13 @@ type listAccountingDriftFindingsTool struct {
 	drift accountingDriftReader
 }
 
-func newListAccountingDriftFindingsTool(drift accountingDriftReader) serviceports.AgentQueryTool {
+func newListAccountingDriftFindingsTool(drift accountingDriftReader) agentports.AgentQueryTool {
 	return &listAccountingDriftFindingsTool{drift: drift}
 }
 
 func provideListAccountingDriftFindingsTool(
-	drift serviceports.AccountingDriftService,
-) serviceports.AgentQueryTool {
+	drift accountingsyncports.AccountingDriftService,
+) agentports.AgentQueryTool {
 	return newListAccountingDriftFindingsTool(drift)
 }
 
@@ -198,13 +199,13 @@ func (t *listAccountingDriftFindingsTool) ParamSchema() map[string]any {
 	}, paramAccountingSystem)
 }
 
-func (t *listAccountingDriftFindingsTool) Policy() serviceports.ToolPolicy {
+func (t *listAccountingDriftFindingsTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceAccountingSync})
 }
 
 func (t *listAccountingDriftFindingsTool) request(
-	params *serviceports.QueryToolParams,
-) (*serviceports.ListAccountingDriftFindingsRequest, error) {
+	params *agentports.QueryToolParams,
+) (*accountingsyncports.ListAccountingDriftFindingsRequest, error) {
 	system, err := requireAccountingSystem(params.Params)
 	if err != nil {
 		return nil, err
@@ -240,7 +241,7 @@ func (t *listAccountingDriftFindingsTool) request(
 	}
 	cursor.IncludeTotalCount = false
 
-	return &serviceports.ListAccountingDriftFindingsRequest{
+	return &accountingsyncports.ListAccountingDriftFindingsRequest{
 		TenantInfo:      tenantOf(params),
 		IntegrationType: system,
 		Statuses:        statuses,
@@ -253,7 +254,7 @@ func (t *listAccountingDriftFindingsTool) request(
 
 func (t *listAccountingDriftFindingsTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -262,7 +263,7 @@ func (t *listAccountingDriftFindingsTool) Query(
 	if err != nil {
 		return nil, err
 	}
-	overview, err := t.drift.Overview(ctx, &serviceports.AccountingDriftOverviewRequest{
+	overview, err := t.drift.Overview(ctx, &accountingsyncports.AccountingDriftOverviewRequest{
 		TenantInfo:      req.TenantInfo,
 		IntegrationType: req.IntegrationType,
 	})

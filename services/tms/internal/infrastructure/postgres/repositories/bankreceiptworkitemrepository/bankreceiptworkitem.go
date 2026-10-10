@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/bankreceiptworkitem"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptworkitemports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -26,13 +26,13 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.BankReceiptWorkItemRepository {
+func New(p Params) bankreceiptworkitemports.BankReceiptWorkItemRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.bank-receipt-work-item-repository")}
 }
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetBankReceiptWorkItemByIDRequest,
+	req bankreceiptworkitemports.GetBankReceiptWorkItemByIDRequest,
 ) (*bankreceiptworkitem.WorkItem, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*bankreceiptworkitem.WorkItem, error) {
 		entity := new(bankreceiptworkitem.WorkItem)
@@ -107,7 +107,7 @@ func (r *repository) Create(
 		}
 		return r.GetByID(
 			ctx,
-			repositories.GetBankReceiptWorkItemByIDRequest{
+			bankreceiptworkitemports.GetBankReceiptWorkItemByIDRequest{
 				ID: entity.ID,
 				TenantInfo: pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
@@ -148,7 +148,7 @@ func (r *repository) Update(
 		}
 		return r.GetByID(
 			ctx,
-			repositories.GetBankReceiptWorkItemByIDRequest{
+			bankreceiptworkitemports.GetBankReceiptWorkItemByIDRequest{
 				ID: entity.ID,
 				TenantInfo: pagination.TenantInfo{
 					OrgID: entity.OrganizationID,

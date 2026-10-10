@@ -13,8 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/schedulingservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -195,7 +195,7 @@ func (r *QueryResolver) ShiftTemplates(ctx context.Context, activeOnly *bool, li
 		return nil, err
 	}
 
-	return r.SchedulingService.ListTemplates(ctx, &repositories.ListShiftTemplatesRequest{
+	return r.SchedulingService.ListTemplates(ctx, &workerports.ListShiftTemplatesRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		ActiveOnly: base.BoolValue(activeOnly),
 		Limit:      base.IntValue(limit),
@@ -233,7 +233,7 @@ func (r *QueryResolver) WorkerShiftAssignments(ctx context.Context, workerID str
 		return nil, err
 	}
 
-	req := &repositories.ListShiftAssignmentsRequest{
+	req := &workerports.ListShiftAssignmentsRequest{
 		TenantInfo:      base.TenantInfo(authCtx),
 		WorkerID:        id,
 		IncludeTemplate: true,
@@ -264,7 +264,7 @@ func (r *QueryResolver) WorkerAvailabilityPreferences(ctx context.Context, worke
 
 	return r.SchedulingService.ListPreferences(
 		ctx,
-		&repositories.ListAvailabilityPreferencesRequest{
+		&workerports.ListAvailabilityPreferencesRequest{
 			TenantInfo: base.TenantInfo(authCtx),
 			WorkerID:   id,
 		},
@@ -282,7 +282,7 @@ func (r *QueryResolver) ShiftSwapRequests(ctx context.Context, workerID *string,
 		return nil, base.InvalidIDError("workerId", "Worker is invalid")
 	}
 
-	return r.SchedulingService.ListSwaps(ctx, &repositories.ListShiftSwapsRequest{
+	return r.SchedulingService.ListSwaps(ctx, &workerports.ListShiftSwapsRequest{
 		TenantInfo:     base.TenantInfo(authCtx),
 		WorkerID:       id,
 		OpenOnly:       base.BoolValue(openOnly),

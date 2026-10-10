@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/approvalworkflow"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -64,7 +64,7 @@ func (s *Service) Approve(
 	req *ApprovalActionRequest,
 ) (*formulatemplate.FormulaTemplate, error) {
 	var approved *formulatemplate.FormulaTemplate
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		result, txErr := s.approvals().Apply(txCtx, req, templateTransition{
 			Operation:    "Approve",
 			From:         formulatemplate.StatusInReview,

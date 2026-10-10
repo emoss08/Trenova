@@ -4,9 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -21,22 +22,22 @@ const secondsPerHour = int64(3600)
 type ActivitiesParams struct {
 	fx.In
 
-	DispatchControlRepo repositories.DispatchControlRepository
-	ProposalRepo        repositories.AgentProposalRepository
-	AutoAssign          portservices.DispatchAutoAssignService
+	DispatchControlRepo dispatchcontrolports.DispatchControlRepository
+	ProposalRepo        agentports.AgentProposalRepository
+	AutoAssign          agentports.DispatchAutoAssignService
 	// Watchtower puts a load about to leave with nobody on it on the feed.
-	Watchtower portservices.WatchtowerProjector `optional:"true"`
+	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
 	// Publisher wakes whichever agent covers dispatch for the same moves.
-	Publisher portservices.AgentEventPublisher `optional:"true"`
+	Publisher agentports.AgentEventPublisher `optional:"true"`
 	Logger    *zap.Logger
 }
 
 type Activities struct {
-	dispatchControlRepo repositories.DispatchControlRepository
-	proposalRepo        repositories.AgentProposalRepository
-	autoAssign          portservices.DispatchAutoAssignService
-	watchtower          portservices.WatchtowerProjector
-	publisher           portservices.AgentEventPublisher
+	dispatchControlRepo dispatchcontrolports.DispatchControlRepository
+	proposalRepo        agentports.AgentProposalRepository
+	autoAssign          agentports.DispatchAutoAssignService
+	watchtower          watchtowerports.WatchtowerProjector
+	publisher           agentports.AgentEventPublisher
 	now                 func() int64
 	logger              *zap.Logger
 }
@@ -95,7 +96,7 @@ func (a *Activities) planTenant(
 		BusinessUnitID: tenant.BuID.String(),
 	}
 
-	plan, err := a.autoAssign.Plan(ctx, &portservices.DispatchPlanRequest{
+	plan, err := a.autoAssign.Plan(ctx, &agentports.DispatchPlanRequest{
 		TenantInfo: tenant,
 		Apply:      false,
 	})
@@ -137,9 +138,9 @@ func (a *Activities) planTenant(
 func (a *Activities) raiseCoverageRisk(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	uncovered []*portservices.DispatchUncoveredMove,
+	uncovered []*agentports.DispatchUncoveredMove,
 ) int {
-	dated := make([]*portservices.DispatchUncoveredMove, 0, len(uncovered))
+	dated := make([]*agentports.DispatchUncoveredMove, 0, len(uncovered))
 	for _, move := range uncovered {
 		if move != nil && move.StartsAt > 0 {
 			dated = append(dated, move)
@@ -151,7 +152,7 @@ func (a *Activities) raiseCoverageRisk(
 
 	control, err := a.dispatchControlRepo.GetByOrgID(
 		ctx,
-		repositories.GetDispatchControlRequest{TenantInfo: tenant},
+		dispatchcontrolports.GetDispatchControlRequest{TenantInfo: tenant},
 	)
 	if err != nil {
 		a.logger.Warn("coverage window unavailable for tenant",
@@ -182,7 +183,7 @@ func (a *Activities) raiseCoverageRisk(
 		if a.watchtower != nil {
 			a.watchtower.Upsert(ctx, watchtowersources.DescribeMoveCoverageRisk(item))
 		}
-		portservices.PublishAgentEvent(ctx, a.publisher, portservices.AgentEvent{
+		agentports.PublishAgentEvent(ctx, a.publisher, agentports.AgentEvent{
 			Kind:       agent.EventShipmentMoveCoverageAtRisk,
 			SubjectID:  move.MoveID,
 			TenantInfo: tenant,
@@ -195,7 +196,7 @@ func (a *Activities) raiseCoverageRisk(
 func (a *Activities) retireProposals(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	plan *portservices.DispatchPlan,
+	plan *agentports.DispatchPlan,
 	outcome *TenantHorizonPlan,
 ) {
 	if plan.RunID.IsNil() {
@@ -204,7 +205,7 @@ func (a *Activities) retireProposals(
 
 	expired, err := a.proposalRepo.ExpirePendingByRun(
 		ctx,
-		repositories.ExpireAgentProposalsByRunRequest{
+		agentports.ExpireAgentProposalsByRunRequest{
 			RunID:      plan.RunID,
 			TenantInfo: tenant,
 		},

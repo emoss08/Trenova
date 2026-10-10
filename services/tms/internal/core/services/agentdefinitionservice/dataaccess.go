@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -15,7 +15,7 @@ const dataAccessField = "dataAccessCeiling"
 func (s *Service) checkDataAccess(
 	ctx context.Context,
 	definition, previous *agentdefinition.Definition,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) error {
 	wanted := definition.DataAccessSensitivity()
 	if wanted == permission.SensitivityInternal {
@@ -45,7 +45,7 @@ func (s *Service) checkDataAccess(
 
 func (s *Service) actorSensitivity(
 	ctx context.Context,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (permission.FieldSensitivity, error) {
 	if actor == nil || !actor.IsUser() || s.permissions == nil {
 		return permission.SensitivityInternal, nil

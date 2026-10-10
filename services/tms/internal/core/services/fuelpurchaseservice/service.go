@@ -5,9 +5,15 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/ifta"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -42,27 +48,27 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.FuelPurchaseRepository
-	IFTARepo     repositories.IFTARepository
-	TractorRepo  repositories.TractorRepository
-	WorkerRepo   repositories.WorkerRepository
-	Documents    services.InvoiceDocumentService
-	AuditService services.AuditService
-	Realtime     services.RealtimeService      `optional:"true"`
-	Feeds        services.FuelCardFeedResolver `optional:"true"`
+	Repo         fuelpurchaseports.FuelPurchaseRepository
+	IFTARepo     iftaports.IFTARepository
+	TractorRepo  tractorports.TractorRepository
+	WorkerRepo   workerports.WorkerRepository
+	Documents    documentports.InvoiceDocumentService
+	AuditService auditports.AuditService
+	Realtime     agentports.RealtimeService             `optional:"true"`
+	Feeds        fuelpurchaseports.FuelCardFeedResolver `optional:"true"`
 	Validator    *Validator
 }
 
 type Service struct {
 	l             *zap.Logger
-	repo          repositories.FuelPurchaseRepository
+	repo          fuelpurchaseports.FuelPurchaseRepository
 	jurisdictions JurisdictionReader
-	tractorRepo   repositories.TractorRepository
-	workerRepo    repositories.WorkerRepository
-	documents     services.InvoiceDocumentService
-	auditService  services.AuditService
-	realtime      services.RealtimeService
-	feeds         services.FuelCardFeedResolver
+	tractorRepo   tractorports.TractorRepository
+	workerRepo    workerports.WorkerRepository
+	documents     documentports.InvoiceDocumentService
+	auditService  auditports.AuditService
+	realtime      agentports.RealtimeService
+	feeds         fuelpurchaseports.FuelCardFeedResolver
 	validator     *Validator
 	now           func() int64
 }
@@ -85,14 +91,14 @@ func New(p Params) *Service {
 
 type Deps struct {
 	Logger        *zap.Logger
-	Repo          repositories.FuelPurchaseRepository
+	Repo          fuelpurchaseports.FuelPurchaseRepository
 	Jurisdictions JurisdictionReader
-	TractorRepo   repositories.TractorRepository
-	WorkerRepo    repositories.WorkerRepository
-	Documents     services.InvoiceDocumentService
-	AuditService  services.AuditService
-	Realtime      services.RealtimeService
-	Feeds         services.FuelCardFeedResolver
+	TractorRepo   tractorports.TractorRepository
+	WorkerRepo    workerports.WorkerRepository
+	Documents     documentports.InvoiceDocumentService
+	AuditService  auditports.AuditService
+	Realtime      agentports.RealtimeService
+	Feeds         fuelpurchaseports.FuelCardFeedResolver
 	Validator     *Validator
 	Now           func() int64
 }
@@ -136,7 +142,7 @@ func (s *Service) audit(p *auditParams) {
 	if s.auditService == nil || p.userID.IsNil() {
 		return
 	}
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       p.resource,
 		ResourceID:     p.resourceID,
 		Operation:      p.operation,
@@ -145,7 +151,7 @@ func (s *Service) audit(p *auditParams) {
 		OrganizationID: p.tenant.OrgID,
 		BusinessUnitID: p.tenant.BuID,
 	}
-	opts := []services.LogOption{auditservice.WithComment(p.comment)}
+	opts := []auditports.LogOption{auditservice.WithComment(p.comment)}
 	if p.previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(p.previous)
 		opts = append(opts, auditservice.WithDiff(p.previous, p.current))
@@ -170,7 +176,7 @@ func (s *Service) publish(
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
 		ActorUserID:    userID,
-		ActorType:      services.PrincipalTypeUser,
+		ActorType:      permissionports.PrincipalTypeUser,
 		ActorID:        userID,
 		Resource:       resource,
 		Action:         string(operation),

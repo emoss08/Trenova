@@ -7,9 +7,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,12 +21,12 @@ import (
 )
 
 type stubRepo struct {
-	repositories.WatchtowerRepository
+	watchtowerports.WatchtowerRepository
 
 	items    map[string]*watchtower.Item
 	cursor   *watchtower.Cursor
-	lastList repositories.ListWatchtowerItemsRequest
-	resolved []repositories.ResolveMissingWatchtowerItemsRequest
+	lastList watchtowerports.ListWatchtowerItemsQuery
+	resolved []watchtowerports.ResolveMissingWatchtowerItemsRequest
 }
 
 func newStubRepo() *stubRepo {
@@ -57,7 +59,7 @@ func (r *stubRepo) Upsert(
 
 func (r *stubRepo) Resolve(
 	_ context.Context,
-	req repositories.ResolveWatchtowerItemRequest,
+	req watchtowerports.ResolveWatchtowerItemRequest,
 ) (*watchtower.Item, error) {
 	item, ok := r.items[r.key(req.SourceKind, req.SourceID)]
 	if !ok || item.ResolvedAt != nil {
@@ -71,7 +73,7 @@ func (r *stubRepo) Resolve(
 
 func (r *stubRepo) ResolveByID(
 	_ context.Context,
-	req repositories.GetWatchtowerItemRequest,
+	req watchtowerports.GetWatchtowerItemRequest,
 	at int64,
 ) (*watchtower.Item, error) {
 	for _, item := range r.items {
@@ -86,7 +88,7 @@ func (r *stubRepo) ResolveByID(
 
 func (r *stubRepo) ResolveMissing(
 	_ context.Context,
-	req repositories.ResolveMissingWatchtowerItemsRequest,
+	req watchtowerports.ResolveMissingWatchtowerItemsRequest,
 ) (int, error) {
 	r.resolved = append(r.resolved, req)
 	open := map[string]bool{}
@@ -107,7 +109,7 @@ func (r *stubRepo) ResolveMissing(
 
 func (r *stubRepo) GetByID(
 	_ context.Context,
-	req repositories.GetWatchtowerItemRequest,
+	req watchtowerports.GetWatchtowerItemRequest,
 ) (*watchtower.Item, error) {
 	for _, item := range r.items {
 		if item.ID == req.ID {
@@ -120,7 +122,7 @@ func (r *stubRepo) GetByID(
 
 func (r *stubRepo) List(
 	_ context.Context,
-	req repositories.ListWatchtowerItemsRequest,
+	req watchtowerports.ListWatchtowerItemsQuery,
 ) ([]*watchtower.Item, error) {
 	r.lastList = req
 	allowed := map[watchtower.SourceKind]bool{}
@@ -142,9 +144,9 @@ func (r *stubRepo) List(
 
 func (r *stubRepo) Counts(
 	_ context.Context,
-	req repositories.CountWatchtowerItemsRequest,
-) (*repositories.WatchtowerCounts, error) {
-	counts := &repositories.WatchtowerCounts{}
+	req watchtowerports.CountWatchtowerItemsRequest,
+) (*watchtowerports.WatchtowerCountsRow, error) {
+	counts := &watchtowerports.WatchtowerCountsRow{}
 	allowed := map[watchtower.SourceKind]bool{}
 	for _, kind := range req.Kinds {
 		allowed[kind] = true
@@ -167,7 +169,7 @@ func (r *stubRepo) Counts(
 
 func (r *stubRepo) GetCursor(
 	_ context.Context,
-	req repositories.GetWatchtowerCursorRequest,
+	req watchtowerports.GetWatchtowerCursorRequest,
 ) (*watchtower.Cursor, error) {
 	if r.cursor != nil {
 		return r.cursor, nil
@@ -186,16 +188,16 @@ func (r *stubRepo) SetCursor(
 }
 
 type stubDefinitions struct {
-	repositories.AgentDefinitionRepository
+	agentdefinitionports.AgentDefinitionRepository
 
 	subscribers []*agentdefinition.Definition
 	enabled     []*agentdefinition.Definition
-	lastTrigger repositories.ListAgentDefinitionsByTriggerRequest
+	lastTrigger agentdefinitionports.ListAgentDefinitionsByTriggerRequest
 }
 
 func (d *stubDefinitions) ListEnabledByTrigger(
 	_ context.Context,
-	req repositories.ListAgentDefinitionsByTriggerRequest,
+	req agentdefinitionports.ListAgentDefinitionsByTriggerRequest,
 ) ([]*agentdefinition.Definition, error) {
 	d.lastTrigger = req
 
@@ -204,29 +206,29 @@ func (d *stubDefinitions) ListEnabledByTrigger(
 
 func (d *stubDefinitions) List(
 	_ context.Context,
-	_ *repositories.ListAgentDefinitionRequest,
+	_ *agentdefinitionports.ListAgentDefinitionRequest,
 ) (*pagination.ListResult[*agentdefinition.Definition], error) {
 	return &pagination.ListResult[*agentdefinition.Definition]{Items: d.enabled}, nil
 }
 
 type stubEvents struct {
-	published []services.AgentEvent
+	published []agentports.AgentEvent
 }
 
-func (e *stubEvents) Publish(_ context.Context, event services.AgentEvent) {
+func (e *stubEvents) Publish(_ context.Context, event agentports.AgentEvent) {
 	e.published = append(e.published, event)
 }
 
 type stubRuns struct {
-	services.AgentRunService
+	agentports.AgentRunService
 
-	last *services.StartAgentRunForDefinitionRequest
+	last *agentports.StartAgentRunForDefinitionRequest
 }
 
 func (r *stubRuns) StartForDefinition(
 	_ context.Context,
-	req *services.StartAgentRunForDefinitionRequest,
-	_ *services.RequestActor,
+	req *agentports.StartAgentRunForDefinitionRequest,
+	_ *permissionports.RequestActor,
 ) (*agent.AgentRun, error) {
 	r.last = req
 
@@ -235,7 +237,7 @@ func (r *stubRuns) StartForDefinition(
 
 type stubSource struct {
 	kind  watchtower.SourceKind
-	items []services.WatchtowerItemInput
+	items []watchtowerports.WatchtowerItemInput
 	err   error
 }
 
@@ -244,13 +246,13 @@ func (s *stubSource) Kind() watchtower.SourceKind { return s.kind }
 func (s *stubSource) Snapshot(
 	context.Context,
 	pagination.TenantInfo,
-) ([]services.WatchtowerItemInput, error) {
+) ([]watchtowerports.WatchtowerItemInput, error) {
 	return s.items, s.err
 }
 
-func testActor() *services.RequestActor {
-	return &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeUser,
+func testActor() *permissionports.RequestActor {
+	return &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    pulid.MustNew("usr_"),
 		UserID:         pulid.MustNew("usr_"),
 		OrganizationID: pulid.MustNew("org_"),
@@ -261,7 +263,7 @@ func testActor() *services.RequestActor {
 func newService(
 	repo *stubRepo,
 	perms *agentruntimetest.StubPermissions,
-	sources ...services.WatchtowerSource,
+	sources ...watchtowerports.WatchtowerSource,
 ) *Service {
 	projector := NewProjector(ProjectorParams{Logger: zap.NewNop(), Repo: repo})
 	projector.now = func() int64 { return 1_700_000_000 }
@@ -285,8 +287,8 @@ func input(
 	id string,
 	severity watchtower.Severity,
 	at int64,
-) services.WatchtowerItemInput {
-	return services.WatchtowerItemInput{
+) watchtowerports.WatchtowerItemInput {
+	return watchtowerports.WatchtowerItemInput{
 		TenantInfo: tenant,
 		SourceKind: kind,
 		SourceID:   id,
@@ -321,7 +323,7 @@ func TestList_ShowsOnlyKindsTheReaderMayOpen(t *testing.T) {
 
 	page, err := svc.List(
 		t.Context(),
-		services.ListWatchtowerItemsRequest{TenantInfo: tenant, UnresolvedOnly: true},
+		watchtowerports.ListWatchtowerItemsRequest{TenantInfo: tenant, UnresolvedOnly: true},
 		actor,
 	)
 	require.NoError(t, err)
@@ -329,7 +331,7 @@ func TestList_ShowsOnlyKindsTheReaderMayOpen(t *testing.T) {
 	assert.Equal(t, watchtower.SourceServiceFailure, page.Items[0].SourceKind)
 	assert.NotContains(t, repo.lastList.Kinds, watchtower.SourceBillingException)
 
-	narrowed, err := svc.List(t.Context(), services.ListWatchtowerItemsRequest{
+	narrowed, err := svc.List(t.Context(), watchtowerports.ListWatchtowerItemsRequest{
 		TenantInfo: tenant,
 		Kinds:      []watchtower.SourceKind{watchtower.SourceBillingException},
 	}, actor)
@@ -364,7 +366,7 @@ func TestList_MarksWhatTheReaderHasSeen(t *testing.T) {
 
 	page, err := svc.List(
 		t.Context(),
-		services.ListWatchtowerItemsRequest{TenantInfo: tenant},
+		watchtowerports.ListWatchtowerItemsRequest{TenantInfo: tenant},
 		actor,
 	)
 	require.NoError(t, err)
@@ -452,7 +454,7 @@ func TestHandOff_PublishesToSubscribersOrNamesWhoCouldTakeIt(t *testing.T) {
 	}
 	result, err := svc.HandOff(
 		t.Context(),
-		services.HandOffWatchtowerItemRequest{TenantInfo: tenant, ItemID: item.ID},
+		watchtowerports.HandOffWatchtowerItemRequest{TenantInfo: tenant, ItemID: item.ID},
 		actor,
 	)
 	require.NoError(t, err)
@@ -465,7 +467,7 @@ func TestHandOff_PublishesToSubscribersOrNamesWhoCouldTakeIt(t *testing.T) {
 	definitions.subscribers = []*agentdefinition.Definition{{Name: "Service desk"}}
 	result, err = svc.HandOff(
 		t.Context(),
-		services.HandOffWatchtowerItemRequest{TenantInfo: tenant, ItemID: item.ID},
+		watchtowerports.HandOffWatchtowerItemRequest{TenantInfo: tenant, ItemID: item.ID},
 		actor,
 	)
 	require.NoError(t, err)
@@ -477,7 +479,7 @@ func TestHandOff_PublishesToSubscribersOrNamesWhoCouldTakeIt(t *testing.T) {
 	runs := &stubRuns{}
 	svc.runs = runs
 	chosen := pulid.MustNew("agdef_")
-	result, err = svc.HandOff(t.Context(), services.HandOffWatchtowerItemRequest{
+	result, err = svc.HandOff(t.Context(), watchtowerports.HandOffWatchtowerItemRequest{
 		TenantInfo: tenant, ItemID: item.ID, AgentDefinitionID: chosen,
 	}, actor)
 	require.NoError(t, err)
@@ -529,7 +531,7 @@ func TestHandOff_SuggestsTheStarterThatListensForTheEvent(t *testing.T) {
 
 			result, err := svc.HandOff(
 				t.Context(),
-				services.HandOffWatchtowerItemRequest{TenantInfo: tenant, ItemID: item.ID},
+				watchtowerports.HandOffWatchtowerItemRequest{TenantInfo: tenant, ItemID: item.ID},
 				actor,
 			)
 			require.NoError(t, err)
@@ -556,7 +558,7 @@ func TestHandOff_RefusesAnItemTheReaderMayNotSee(t *testing.T) {
 
 	_, err = svc.HandOff(
 		t.Context(),
-		services.HandOffWatchtowerItemRequest{TenantInfo: tenant, ItemID: item.ID},
+		watchtowerports.HandOffWatchtowerItemRequest{TenantInfo: tenant, ItemID: item.ID},
 		actor,
 	)
 	require.Error(t, err)
@@ -575,7 +577,7 @@ func TestReconcile_FollowsTheSourcesAndSurvivesOneFailing(t *testing.T) {
 	tenant := actor.TenantInfo()
 	failures := &stubSource{
 		kind: watchtower.SourceServiceFailure,
-		items: []services.WatchtowerItemInput{
+		items: []watchtowerports.WatchtowerItemInput{
 			input(tenant, watchtower.SourceServiceFailure, "sf_2", watchtower.SeverityWarning, 200),
 		},
 	}

@@ -6,20 +6,21 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentevalgate"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type axisEmbedder struct {
 	axes     map[string]int
-	requests map[serviceports.EmbeddingPurpose]int
+	requests map[aiusageports.EmbeddingPurpose]int
 }
 
 func (e *axisEmbedder) embed(
 	_ context.Context,
-	purpose serviceports.EmbeddingPurpose,
+	purpose aiusageports.EmbeddingPurpose,
 	inputs []string,
 ) ([][]float32, error) {
 	e.requests[purpose] += len(inputs)
@@ -63,7 +64,7 @@ func TestRecordEmbeddingFixture_KeysEveryVectorByItsHash(t *testing.T) {
 
 	kit := newKit(t)
 	inputs, axes := syntheticInputs(kit)
-	embedder := &axisEmbedder{axes: axes, requests: map[serviceports.EmbeddingPurpose]int{}}
+	embedder := &axisEmbedder{axes: axes, requests: map[aiusageports.EmbeddingPurpose]int{}}
 
 	fixture, err := agentevalgate.RecordEmbeddingFixture(
 		t.Context(), embedder.embed, airetrieval.Dimensions768, inputs,
@@ -74,9 +75,9 @@ func TestRecordEmbeddingFixture_KeysEveryVectorByItsHash(t *testing.T) {
 	assert.Len(t, fixture.Queries, 2)
 	assert.Equal(t,
 		len(inputs.Documents)-1,
-		embedder.requests[serviceports.EmbeddingPurposeDocument],
+		embedder.requests[aiusageports.EmbeddingPurposeDocument],
 	)
-	assert.Equal(t, 2, embedder.requests[serviceports.EmbeddingPurposeQuery])
+	assert.Equal(t, 2, embedder.requests[aiusageports.EmbeddingPurposeQuery])
 	require.NoError(t, fixture.Stale(inputs))
 
 	found, err := kit.HybridFinder(fixture)("glorp the frobnicator")
@@ -94,15 +95,15 @@ func TestEmbeddingFixture_NamesTheCommandWhenStale(t *testing.T) {
 
 	kit := newKit(t)
 	inputs, axes := syntheticInputs(kit)
-	embedder := &axisEmbedder{axes: axes, requests: map[serviceports.EmbeddingPurpose]int{}}
+	embedder := &axisEmbedder{axes: axes, requests: map[aiusageports.EmbeddingPurpose]int{}}
 	fixture, err := agentevalgate.RecordEmbeddingFixture(
 		t.Context(), embedder.embed, airetrieval.Dimensions768, inputs,
 	)
 	require.NoError(t, err)
 
 	edited := inputs
-	edited.Documents = append([]serviceports.EmbeddingCatalogItem(nil), inputs.Documents...)
-	edited.Documents[1] = serviceports.NewEmbeddingCatalogItem(
+	edited.Documents = append([]agentports.EmbeddingCatalogItem(nil), inputs.Documents...)
+	edited.Documents[1] = agentports.NewEmbeddingCatalogItem(
 		edited.Documents[1].Key, edited.Documents[1].Text+" Edited.",
 	)
 	edited.Queries = append(edited.Queries, "a new eval request")
@@ -125,7 +126,7 @@ func TestRecordEmbeddingFixture_RefusesAVectorOfTheWrongSize(t *testing.T) {
 
 	short := func(
 		context.Context,
-		serviceports.EmbeddingPurpose,
+		aiusageports.EmbeddingPurpose,
 		[]string,
 	) ([][]float32, error) {
 		return [][]float32{{1, 2, 3}}, nil

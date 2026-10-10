@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
 
 const (
@@ -22,22 +22,22 @@ var errUnsupportedFormat = errors.New("unsupported office format")
 
 type Reader struct{}
 
-var _ services.OfficeDocumentReader = (*Reader)(nil)
+var _ kernelports.OfficeDocumentReader = (*Reader)(nil)
 
-func New() services.OfficeDocumentReader {
+func New() kernelports.OfficeDocumentReader {
 	return &Reader{}
 }
 
 func (r *Reader) Read(
 	ctx context.Context,
 	data []byte,
-	format services.OfficeFormat,
-) (pages []services.OfficePage, err error) {
+	format kernelports.OfficeFormat,
+) (pages []kernelports.OfficePage, err error) {
 	defer func() {
 		if recovered := recover(); recovered != nil {
 			pages = nil
 			err = fmt.Errorf("read %s: %w: parser panic: %v",
-				format, services.ErrOfficeDocumentUnreadable, recovered)
+				format, kernelports.ErrOfficeDocumentUnreadable, recovered)
 		}
 	}()
 
@@ -46,7 +46,7 @@ func (r *Reader) Read(
 		if ctxErr := ctx.Err(); ctxErr != nil {
 			return nil, fmt.Errorf("read %s: %w", format, ctxErr)
 		}
-		return nil, fmt.Errorf("read %s: %w: %w", format, services.ErrOfficeDocumentUnreadable, err)
+		return nil, fmt.Errorf("read %s: %w: %w", format, kernelports.ErrOfficeDocumentUnreadable, err)
 	}
 
 	return pages, nil
@@ -55,16 +55,16 @@ func (r *Reader) Read(
 func (r *Reader) read(
 	ctx context.Context,
 	data []byte,
-	format services.OfficeFormat,
-) ([]services.OfficePage, error) {
+	format kernelports.OfficeFormat,
+) ([]kernelports.OfficePage, error) {
 	switch format {
-	case services.OfficeFormatXLSX:
+	case kernelports.OfficeFormatXLSX:
 		return readXLSX(ctx, data)
-	case services.OfficeFormatDOCX:
+	case kernelports.OfficeFormatDOCX:
 		return withArchive(ctx, data, readDOCX)
-	case services.OfficeFormatPPTX:
+	case kernelports.OfficeFormatPPTX:
 		return withArchive(ctx, data, readPPTX)
-	case services.OfficeFormatEPUB:
+	case kernelports.OfficeFormatEPUB:
 		return withArchive(ctx, data, readEPUB)
 	default:
 		return nil, fmt.Errorf("%w: %q", errUnsupportedFormat, format)
@@ -74,8 +74,8 @@ func (r *Reader) read(
 func withArchive(
 	ctx context.Context,
 	data []byte,
-	read func(context.Context, *archive) ([]services.OfficePage, error),
-) ([]services.OfficePage, error) {
+	read func(context.Context, *archive) ([]kernelports.OfficePage, error),
+) ([]kernelports.OfficePage, error) {
 	pkg, err := openArchive(data)
 	if err != nil {
 		return nil, err

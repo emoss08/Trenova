@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -15,7 +15,7 @@ func TestPlanConfirmShowsTheConfirmationWithoutSavingIt(t *testing.T) {
 	h.rescore(t)
 
 	ar := h.keyed(t, accountingsync.TargetAccountRole, accountingsync.AccountRoleAR)
-	plan, err := h.svc.PlanConfirm(t.Context(), &services.ConfirmAccountingMappingsRequest{
+	plan, err := h.svc.PlanConfirm(t.Context(), &accountingsyncports.ConfirmAccountingMappingsRequest{
 		TenantInfo: h.tenant,
 		UserID:     h.tenant.UserID,
 		Items:      shown(ar),
@@ -38,7 +38,7 @@ func TestPlanRejectShowsTheRejectionWithoutSavingIt(t *testing.T) {
 	h.rescore(t)
 
 	cus := h.object(t, accountingsync.TargetCustomer, h.customerID)
-	change, err := h.svc.PlanReject(t.Context(), &services.AccountingMappingActionRequest{
+	change, err := h.svc.PlanReject(t.Context(), &accountingsyncports.AccountingMappingActionRequest{
 		TenantInfo: h.tenant,
 		UserID:     h.tenant.UserID,
 		ID:         cus.ID,

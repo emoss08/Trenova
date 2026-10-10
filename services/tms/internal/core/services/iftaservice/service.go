@@ -4,13 +4,17 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/services/orgzone"
-
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/services/orgzone"
 	"github.com/emoss08/trenova/internal/core/services/referencedataguard"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -30,32 +34,32 @@ const (
 type FuelAccumulator interface {
 	AccumulateFuel(
 		ctx context.Context,
-		req *repositories.AccumulateFuelRequest,
-	) ([]*repositories.FuelAccumulationRow, error)
+		req *fuelpurchaseports.AccumulateFuelRequest,
+	) ([]*fuelpurchaseports.FuelAccumulationRow, error)
 }
 
 type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Repo          repositories.IFTARepository
-	Fuel          repositories.FuelPurchaseRepository
-	TractorRepo   repositories.TractorRepository
-	Organizations repositories.OrganizationRepository
-	AuditService  services.AuditService
+	Repo          iftaports.IFTARepository
+	Fuel          fuelpurchaseports.FuelPurchaseRepository
+	TractorRepo   tractorports.TractorRepository
+	Organizations tenantports.OrganizationRepository
+	AuditService  auditports.AuditService
 	ReferenceData *referencedataguard.Guard
-	Realtime      services.RealtimeService `optional:"true"`
+	Realtime      agentports.RealtimeService `optional:"true"`
 }
 
 type Service struct {
 	l             *zap.Logger
-	repo          repositories.IFTARepository
+	repo          iftaports.IFTARepository
 	fuel          FuelAccumulator
-	tractorRepo   repositories.TractorRepository
-	organizations repositories.OrganizationRepository
-	auditService  services.AuditService
+	tractorRepo   tractorports.TractorRepository
+	organizations tenantports.OrganizationRepository
+	auditService  auditports.AuditService
 	referenceData *referencedataguard.Guard
-	realtime      services.RealtimeService
+	realtime      agentports.RealtimeService
 	now           func() int64
 }
 
@@ -75,13 +79,13 @@ func New(p Params) *Service {
 
 type Deps struct {
 	Logger        *zap.Logger
-	Repo          repositories.IFTARepository
+	Repo          iftaports.IFTARepository
 	Fuel          FuelAccumulator
-	TractorRepo   repositories.TractorRepository
-	Organizations repositories.OrganizationRepository
-	AuditService  services.AuditService
+	TractorRepo   tractorports.TractorRepository
+	Organizations tenantports.OrganizationRepository
+	AuditService  auditports.AuditService
 	ReferenceData *referencedataguard.Guard
-	Realtime      services.RealtimeService
+	Realtime      agentports.RealtimeService
 	Now           func() int64
 }
 
@@ -122,7 +126,7 @@ func (s *Service) audit(p *auditParams) {
 	if s.auditService == nil || p.userID.IsNil() {
 		return
 	}
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       p.resource,
 		ResourceID:     p.resourceID,
 		Operation:      p.operation,
@@ -131,7 +135,7 @@ func (s *Service) audit(p *auditParams) {
 		OrganizationID: p.tenant.OrgID,
 		BusinessUnitID: p.tenant.BuID,
 	}
-	opts := []services.LogOption{auditservice.WithComment(p.comment)}
+	opts := []auditports.LogOption{auditservice.WithComment(p.comment)}
 	if p.previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(p.previous)
 		opts = append(opts, auditservice.WithDiff(p.previous, p.current))
@@ -156,7 +160,7 @@ func (s *Service) publish(
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
 		ActorUserID:    userID,
-		ActorType:      services.PrincipalTypeUser,
+		ActorType:      permissionports.PrincipalTypeUser,
 		ActorID:        userID,
 		Resource:       resource,
 		Action:         string(operation),

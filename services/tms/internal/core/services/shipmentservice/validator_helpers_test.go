@@ -1,10 +1,13 @@
 package shipmentservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/commodityportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/hazmatsegregationruleportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/shipmentservice/shipmentservicetest"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 )
 
@@ -16,7 +19,7 @@ func newTestValidator(t testing.TB) *Validator {
 
 func newTestValidatorWithAssignmentRepo(
 	t testing.TB,
-	assignmentRepo repositories.AssignmentRepository,
+	assignmentRepo shipmentports.AssignmentRepository,
 ) *Validator {
 	t.Helper()
 
@@ -24,8 +27,8 @@ func newTestValidatorWithAssignmentRepo(
 		AssignmentRepo:            assignmentRepo,
 		ControlRepo:               shipmentservicetest.NewControlRepository(t),
 		CustomerRepo:              shipmentservicetest.NewCustomerRepository(t),
-		CommodityRepo:             mocks.NewMockCommodityRepository(t),
-		HazmatSegregationRuleRepo: mocks.NewMockHazmatSegregationRuleRepository(t),
-		ShipmentRepo:              mocks.NewMockShipmentRepository(t),
+		CommodityRepo:             commodityportsmock.NewMockCommodityRepository(t),
+		HazmatSegregationRuleRepo: hazmatsegregationruleportsmock.NewMockHazmatSegregationRuleRepository(t),
+		ShipmentRepo:              shipmentportsmock.NewMockShipmentRepository(t),
 	})
 }

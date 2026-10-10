@@ -7,13 +7,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-var _ serviceports.ToolPreviewer = (*recordStopActualTool)(nil)
+var _ agentports.ToolPreviewer = (*recordStopActualTool)(nil)
 
 var stopActualLabels = map[string]string{
 	"moveStatus": "Move status",
@@ -61,7 +61,7 @@ func stopLabel(stop *shipment.Stop) string {
 	return fmt.Sprintf("%s stop %d", stop.Type, stop.Sequence+1)
 }
 
-func stopActualOptions(request *repositories.RecordStopActualRequest) []toolpreview.Option {
+func stopActualOptions(request *shipmentports.RecordStopActualRequest) []toolpreview.Option {
 	opts := []toolpreview.Option{toolpreview.Labels(stopActualLabels)}
 	if request.OccurredAt == nil {
 		opts = append(opts, toolpreview.Volatile(stopActualTimes...))
@@ -72,7 +72,7 @@ func stopActualOptions(request *repositories.RecordStopActualRequest) []toolprev
 
 func (t *recordStopActualTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	if err := guardPreview(t, &params); err != nil {
 		return nil, err
@@ -85,7 +85,7 @@ func (t *recordStopActualTool) Preview(
 
 	verb := "arrival at"
 	switch {
-	case request.Action == repositories.StopActualActionDepart:
+	case request.Action == shipmentports.StopActualActionDepart:
 		verb = "departure from"
 	case request.DepartedAt != nil:
 		verb = "arrival at and departure from"

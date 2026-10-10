@@ -8,8 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -23,22 +25,22 @@ import (
 type Params struct {
 	fx.In
 
-	Service              serviceports.AgentDefinitionService
-	Trust                serviceports.AgentTrustService
-	Budgets              serviceports.AgentBudgetService
-	Workflows            serviceports.WorkflowStarter
-	Streams              serviceports.TurnStreamReader
+	Service              agentdefinitionports.AgentDefinitionService
+	Trust                agentports.AgentTrustService
+	Budgets              agentports.AgentBudgetService
+	Workflows            kernelports.WorkflowStarter
+	Streams              agentports.TurnStreamReader
 	Logger               *zap.Logger
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	service   serviceports.AgentDefinitionService
-	trust     serviceports.AgentTrustService
-	budgets   serviceports.AgentBudgetService
-	workflows serviceports.WorkflowStarter
-	streams   serviceports.TurnStreamReader
+	service   agentdefinitionports.AgentDefinitionService
+	trust     agentports.AgentTrustService
+	budgets   agentports.AgentBudgetService
+	workflows kernelports.WorkflowStarter
+	streams   agentports.TurnStreamReader
 	logger    *zap.Logger
 	eh        *helpers.ErrorHandler
 	pm        *middleware.PermissionMiddleware
@@ -84,9 +86,9 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.DELETE("/:agentID/", h.pm.RequirePermission(resource, permission.OpDelete), h.remove)
 }
 
-func requestActorFromAuthContext(authCtx *authctx.AuthContext) serviceports.RequestActor {
-	return serviceports.RequestActor{
-		PrincipalType:  serviceports.PrincipalType(authCtx.PrincipalType),
+func requestActorFromAuthContext(authCtx *authctx.AuthContext) permissionports.RequestActor {
+	return permissionports.RequestActor{
+		PrincipalType:  kernelports.PrincipalType(authCtx.PrincipalType),
 		PrincipalID:    authCtx.PrincipalID,
 		UserID:         authCtx.UserID,
 		APIKeyID:       authCtx.APIKeyID,
@@ -115,7 +117,7 @@ func (h *Handler) list(c *gin.Context) {
 		req,
 		h.eh,
 		func() (*pagination.ListResult[*agentdefinition.Definition], error) {
-			return h.service.List(c.Request.Context(), &repositories.ListAgentDefinitionRequest{
+			return h.service.List(c.Request.Context(), &agentdefinitionports.ListAgentDefinitionRequest{
 				Filter:      req,
 				EnabledOnly: enabledOnly,
 				ChatOnly:    chatOnly,
@@ -155,7 +157,7 @@ func (h *Handler) get(c *gin.Context) {
 
 	definition, err := h.service.GetByID(
 		c.Request.Context(),
-		repositories.GetAgentDefinitionByIDRequest{
+		agentdefinitionports.GetAgentDefinitionByIDRequest{
 			ID:         agentID,
 			TenantInfo: tenantFromAuthContext(authCtx),
 		},
@@ -180,7 +182,7 @@ func (h *Handler) trustLedger(c *gin.Context) {
 		return
 	}
 
-	rows, err := h.trust.ListForDefinition(c.Request.Context(), repositories.ListToolTrustRequest{
+	rows, err := h.trust.ListForDefinition(c.Request.Context(), agentports.ListToolTrustRequest{
 		TenantInfo:        tenantFromAuthContext(authCtx),
 		AgentDefinitionID: agentID,
 	})
@@ -197,7 +199,7 @@ func (h *Handler) getBySystemKey(c *gin.Context) {
 
 	definition, err := h.service.GetBySystemKey(
 		c.Request.Context(),
-		repositories.GetAgentDefinitionBySystemKeyRequest{
+		agentdefinitionports.GetAgentDefinitionBySystemKeyRequest{
 			SystemKey:  c.Param("systemKey"),
 			TenantInfo: tenantFromAuthContext(authCtx),
 		},
@@ -258,7 +260,7 @@ type saveAgentRequest struct {
 // says nothing. One of the two fields without the other is refused rather
 // than guessed at.
 func (r *saveAgentRequest) access() (
-	access serviceports.AgentAccessWrite,
+	access agentdefinitionports.AgentAccessWrite,
 	given bool,
 	err error,
 ) {
@@ -277,7 +279,7 @@ func (r *saveAgentRequest) access() (
 		)
 	}
 
-	return serviceports.AgentAccessWrite{
+	return agentdefinitionports.AgentAccessWrite{
 		Mode:    *r.AccessMode,
 		RoleIDs: *r.AccessRoleIDs,
 	}, true, nil
@@ -286,8 +288,8 @@ func (r *saveAgentRequest) access() (
 func (r *saveAgentRequest) toServiceRequest(
 	id pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) *serviceports.SaveAgentDefinitionRequest {
-	return &serviceports.SaveAgentDefinitionRequest{
+) *agentdefinitionports.SaveAgentDefinitionRequest {
+	return &agentdefinitionports.SaveAgentDefinitionRequest{
 		ID:                     id,
 		Name:                   r.Name,
 		Description:            r.Description,
@@ -332,7 +334,7 @@ func (r *saveAgentRequest) toServiceRequest(
 func (r *saveAgentRequest) toSaveRequest(
 	id pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) (*serviceports.SaveAgentDefinitionRequest, error) {
+) (*agentdefinitionports.SaveAgentDefinitionRequest, error) {
 	access, given, err := r.access()
 	if err != nil {
 		return nil, err
@@ -412,7 +414,7 @@ func (h *Handler) previewPrompt(c *gin.Context) {
 	}
 
 	actor := requestActorFromAuthContext(authCtx)
-	prompt, err := h.service.PreviewPrompt(c.Request.Context(), &serviceports.PreviewPromptRequest{
+	prompt, err := h.service.PreviewPrompt(c.Request.Context(), &agentdefinitionports.PreviewPromptRequest{
 		Definition: body.toServiceRequest(pulid.Nil, tenantFromAuthContext(authCtx)),
 		Actor:      &actor,
 	})
@@ -434,7 +436,7 @@ func (h *Handler) remove(c *gin.Context) {
 	}
 
 	actor := requestActorFromAuthContext(authCtx)
-	if err = h.service.Delete(c.Request.Context(), repositories.DeleteAgentDefinitionRequest{
+	if err = h.service.Delete(c.Request.Context(), agentdefinitionports.DeleteAgentDefinitionRequest{
 		ID:         agentID,
 		TenantInfo: tenantFromAuthContext(authCtx),
 	}, &actor); err != nil {
@@ -458,7 +460,7 @@ func (h *Handler) budget(c *gin.Context) {
 
 	definition, err := h.service.GetByID(
 		c.Request.Context(),
-		repositories.GetAgentDefinitionByIDRequest{
+		agentdefinitionports.GetAgentDefinitionByIDRequest{
 			ID:         agentID,
 			TenantInfo: tenantFromAuthContext(authCtx),
 		},

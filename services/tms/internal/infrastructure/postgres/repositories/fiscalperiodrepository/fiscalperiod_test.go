@@ -6,8 +6,8 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -40,7 +40,7 @@ func TestGetByIDForUpdateReturnsRetryableLockError(t *testing.T) {
 	t.Parallel()
 
 	repo, mock := newTestRepository(t)
-	req := repositories.GetFiscalPeriodByIDRequest{
+	req := fiscalperiodports.GetFiscalPeriodByIDRequest{
 		ID: pulid.MustNew("fp_"),
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
@@ -141,7 +141,7 @@ func TestLockRecordsLockStamp(t *testing.T) {
 
 	mock.ExpectQuery("UPDATE").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(id.String()))
 
-	_, err := repo.Lock(t.Context(), repositories.LockFiscalPeriodRequest{
+	_, err := repo.Lock(t.Context(), fiscalperiodports.LockFiscalPeriodRequest{
 		ID:         id,
 		TenantInfo: tenant,
 		LockedByID: userID,
@@ -166,7 +166,7 @@ func TestActivateOpensPeriod(t *testing.T) {
 
 	mock.ExpectQuery("UPDATE").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(id.String()))
 
-	_, err := repo.Activate(t.Context(), repositories.ActivateFiscalPeriodRequest{
+	_, err := repo.Activate(t.Context(), fiscalperiodports.ActivateFiscalPeriodRequest{
 		ID:         id,
 		TenantInfo: testTenant(),
 	})
@@ -186,7 +186,7 @@ func TestCountUnclosedPeriodsIncludesLocked(t *testing.T) {
 
 	count, err := repo.CountUnclosedPeriodsByFiscalYear(
 		t.Context(),
-		repositories.CountUnclosedPeriodsByFiscalYearRequest{
+		fiscalperiodports.CountUnclosedPeriodsByFiscalYearRequest{
 			FiscalYearID: pulid.MustNew("fy_"),
 			OrgID:        tenant.OrgID,
 			BuID:         tenant.BuID,

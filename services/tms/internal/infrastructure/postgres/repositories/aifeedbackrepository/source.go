@@ -6,9 +6,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/uptrace/bun"
@@ -30,7 +30,7 @@ type sourceRepository struct {
 	l  *zap.Logger
 }
 
-func NewSource(p SourceParams) repositories.AIFeedbackSourceRepository {
+func NewSource(p SourceParams) aifeedbackports.AIFeedbackSourceRepository {
 	return &sourceRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.aifeedback-source-repository"),
@@ -39,9 +39,9 @@ func NewSource(p SourceParams) repositories.AIFeedbackSourceRepository {
 
 func (r *sourceRepository) GetMessageContext(
 	ctx context.Context,
-	req repositories.GetAIFeedbackMessageRequest,
-) (*repositories.AIFeedbackMessageContext, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.AIFeedbackMessageContext, error) {
+	req aifeedbackports.GetAIFeedbackMessageRequest,
+) (*aifeedbackports.AIFeedbackMessageContext, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*aifeedbackports.AIFeedbackMessageContext, error) {
 		dba := r.db.DBForContext(ctx)
 		msgCols := buncolgen.MessageColumns
 
@@ -77,7 +77,7 @@ func (r *sourceRepository) GetMessageContext(
 			return nil, err
 		}
 
-		return &repositories.AIFeedbackMessageContext{
+		return &aifeedbackports.AIFeedbackMessageContext{
 			Message:  message,
 			Thread:   thread,
 			Exchange: exchange,
@@ -88,7 +88,7 @@ func (r *sourceRepository) GetMessageContext(
 
 func (r *sourceRepository) exchange(
 	ctx context.Context,
-	req repositories.GetAIFeedbackMessageRequest,
+	req aifeedbackports.GetAIFeedbackMessageRequest,
 	message *conversation.Message,
 ) ([]conversation.Message, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]conversation.Message, error) {
@@ -162,7 +162,7 @@ func chronological(rows []conversation.Message) []conversation.Message {
 
 func (r *sourceRepository) turn(
 	ctx context.Context,
-	req repositories.GetAIFeedbackMessageRequest,
+	req aifeedbackports.GetAIFeedbackMessageRequest,
 	message *conversation.Message,
 ) (*conversation.AssistantTurn, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversation.AssistantTurn, error) {

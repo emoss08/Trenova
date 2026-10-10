@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,7 +21,7 @@ func TestTargetOf_NamesTheRecordFromItsArgument(t *testing.T) {
 	)
 
 	require.True(t, ok)
-	assert.Equal(t, serviceports.ToolTarget{Resource: permission.ResourceShipment, ID: id}, target)
+	assert.Equal(t, agentports.ToolTarget{Resource: permission.ResourceShipment, ID: id}, target)
 }
 
 // A missing or malformed id yields no target and the call is still made: the
@@ -50,7 +50,7 @@ func TestSingleRecordTools_NameTheirTarget(t *testing.T) {
 
 	id := pulid.MustNew("x_")
 	cases := []struct {
-		tool     serviceports.AgentTool
+		tool     agentports.AgentTool
 		key      string
 		resource permission.Resource
 	}{
@@ -90,7 +90,7 @@ func TestSingleRecordTools_NameTheirTarget(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		targeted, ok := tc.tool.(serviceports.TargetedTool)
+		targeted, ok := tc.tool.(agentports.TargetedTool)
 		require.True(t, ok, "%T names no target", tc.tool)
 		target, found := targeted.Target(map[string]any{tc.key: id.String()})
 		require.True(t, found, "%T", tc.tool)

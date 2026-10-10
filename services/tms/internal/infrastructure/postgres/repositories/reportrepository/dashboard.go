@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/uptrace/bun"
@@ -26,7 +26,7 @@ type dashboardRepository struct {
 	l  *zap.Logger
 }
 
-func NewDashboardRepository(p DashboardParams) repositories.ReportDashboardRepository {
+func NewDashboardRepository(p DashboardParams) reportports.ReportDashboardRepository {
 	return &dashboardRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.report-dashboard-repository"),
@@ -83,7 +83,7 @@ func (r *dashboardRepository) Update(
 
 func (r *dashboardRepository) GetByID(
 	ctx context.Context,
-	req *repositories.GetReportDashboardRequest,
+	req *reportports.GetReportDashboardRequest,
 ) (*report.Dashboard, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*report.Dashboard, error) {
 		entity := new(report.Dashboard)
@@ -105,7 +105,7 @@ func (r *dashboardRepository) GetByID(
 
 func (r *dashboardRepository) List(
 	ctx context.Context,
-	req *repositories.ListReportDashboardsRequest,
+	req *reportports.ListReportDashboardsRequest,
 ) ([]*report.Dashboard, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.Dashboard, error) {
 		cols := buncolgen.DashboardColumns
@@ -141,7 +141,7 @@ func (r *dashboardRepository) List(
 
 func (r *dashboardRepository) Delete(
 	ctx context.Context,
-	req *repositories.GetReportDashboardRequest,
+	req *reportports.GetReportDashboardRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		result, err := r.db.DBForContext(ctx).

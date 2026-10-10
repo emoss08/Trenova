@@ -9,11 +9,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
 )
@@ -48,22 +50,22 @@ type VerifyResult struct {
 // hash recomputes under the key it names, each seal matches the row it ends
 // on, and the head names the last row.
 type Verifier struct {
-	ledger   repositories.AIAuditRepository
+	ledger   aiauditports.AIAuditRepository
 	keyring  *Keyring
 	notifier PermittedNotifier
-	audit    serviceports.AuditService
-	realtime serviceports.RealtimeService
+	audit    auditports.AuditService
+	realtime agentports.RealtimeService
 	metrics  *metrics.AIAudit
 	now      func() time.Time
 	l        *zap.Logger
 }
 
 type VerifierParams struct {
-	Ledger   repositories.AIAuditRepository
+	Ledger   aiauditports.AIAuditRepository
 	Keyring  *Keyring
 	Notifier PermittedNotifier
-	Audit    serviceports.AuditService
-	Realtime serviceports.RealtimeService
+	Audit    auditports.AuditService
+	Realtime agentports.RealtimeService
 	Metrics  *metrics.AIAudit
 	Now      func() time.Time
 	Logger   *zap.Logger
@@ -117,7 +119,7 @@ func (v *Verifier) VerifyTenant(
 		return nil, err
 	}
 
-	if _, err = v.ledger.RecordVerification(ctx, &repositories.RecordAIAuditVerificationRequest{
+	if _, err = v.ledger.RecordVerification(ctx, &aiauditports.RecordAIAuditVerificationRequest{
 		TenantInfo:  tenantInfo,
 		Status:      result.Status,
 		VerifiedSeq: result.VerifiedSeq,
@@ -173,7 +175,7 @@ func (v *Verifier) walk(
 			return nil, err
 		}
 
-		rows, listErr := v.ledger.ListChainRange(ctx, repositories.ListAIAuditChainRangeRequest{
+		rows, listErr := v.ledger.ListChainRange(ctx, aiauditports.ListAIAuditChainRangeRequest{
 			TenantInfo: tenantInfo,
 			AfterSeq:   after,
 			Limit:      verifyPageSize,
@@ -311,7 +313,7 @@ func (v *Verifier) pageSeals(
 	tenantInfo pagination.TenantInfo,
 	from, to int64,
 ) (map[int64]*aiaudit.AIAuditSeal, error) {
-	seals, err := v.ledger.ListSeals(ctx, repositories.ListAIAuditSealsRequest{
+	seals, err := v.ledger.ListSeals(ctx, aiauditports.ListAIAuditSealsRequest{
 		TenantInfo: tenantInfo,
 		FromSeq:    from,
 		Limit:      int(to-from) + 1,
@@ -344,13 +346,13 @@ func (v *Verifier) publish(ctx context.Context, tenantInfo pagination.TenantInfo
 		return
 	}
 	if err := v.realtime.PublishResourceInvalidation(ctx,
-		&serviceports.PublishResourceInvalidationRequest{
+		&agentports.PublishResourceInvalidationRequest{
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
-			Resource:       serviceports.AIAuditChainResource,
+			Resource:       aiauditports.AIAuditChainResource,
 			Action:         "verified",
-			ActorType:      serviceports.PrincipalTypeSystem,
-			ActorID:        serviceports.SystemPrincipalID,
+			ActorType:      permissionports.PrincipalTypeSystem,
+			ActorID:        permissionports.SystemPrincipalID,
 		}); err != nil {
 		v.l.Warn("failed to announce an AI audit verification", zap.Error(err))
 	}
@@ -375,8 +377,8 @@ func (v *Verifier) alarm(ctx context.Context, result *VerifyResult) {
 	)
 
 	if v.audit != nil {
-		actor := serviceports.SystemAuditActor()
-		if err := v.audit.LogAction(&serviceports.LogActionParams{
+		actor := permissionports.SystemAuditActor()
+		if err := v.audit.LogAction(&auditports.LogActionParams{
 			Resource:       permission.ResourceAIAuditTrail,
 			ResourceID:     tenantInfo.OrgID.String(),
 			Operation:      permission.OpRead,
@@ -411,7 +413,7 @@ func (v *Verifier) alarm(ctx context.Context, result *VerifyResult) {
 		Now:         now.Unix(),
 		DedupeSince: now.Add(-mismatchNoticeWindow).Unix(),
 		Notification: notification.Notification{
-			EventType: serviceports.AIAuditChainMismatchEvent,
+			EventType: aiauditports.AIAuditChainMismatchEvent,
 			Priority:  notification.PriorityCritical,
 			Title:     "The AI audit trail failed verification",
 			Message: "A row of the AI audit trail no longer matches its chain. " +
@@ -419,7 +421,7 @@ func (v *Verifier) alarm(ctx context.Context, result *VerifyResult) {
 			Source:        mismatchNoticeSource,
 			CorrelationID: &correlation,
 			Data: map[string]any{
-				noticeKeyKind:   serviceports.AIAuditChainMismatchEvent,
+				noticeKeyKind:   aiauditports.AIAuditChainMismatchEvent,
 				noticeKeyStatus: string(result.Status),
 				"failedSeq":     failedSeq,
 			},
@@ -433,7 +435,7 @@ func (v *Verifier) alarm(ctx context.Context, result *VerifyResult) {
 func (v *Verifier) ChainStatus(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*serviceports.AIAuditChainStatus, error) {
+) (*aiauditports.AIAuditChainStatus, error) {
 	head, err := v.ledger.GetChainHead(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -443,7 +445,7 @@ func (v *Verifier) ChainStatus(
 		return nil, err
 	}
 
-	status := &serviceports.AIAuditChainStatus{
+	status := &aiauditports.AIAuditChainStatus{
 		OrganizationID:         tenantInfo.OrgID,
 		BusinessUnitID:         tenantInfo.BuID,
 		Signed:                 v.keyring.Signed(),

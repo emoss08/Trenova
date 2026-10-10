@@ -6,16 +6,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/assistantservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -154,8 +152,8 @@ func (w *Workflows) compact(
 	}
 
 	stream.Publish(ctx, temporaltype.StreamItem{
-		Event: serviceports.AssistantEventCompactionStarted,
-		Data: serviceports.AssistantCompactionEvent{
+		Event: agentports.AssistantEventCompactionStarted,
+		Data: agentports.AssistantCompactionEvent{
 			TurnID:   payload.TurnID,
 			ThreadID: payload.ThreadID,
 			Auto:     plan.Auto,
@@ -256,8 +254,8 @@ func rejectionMessage(err error) string {
 func compactionEndingFor(in *CompactionEndInput, autoOff bool) CompactionEnding {
 	if in.Status == conversation.AssistantTurnStatusStopped {
 		return CompactionEnding{Event: temporaltype.StreamItem{
-			Event: serviceports.AssistantEventCompactionCancelled,
-			Data: serviceports.AssistantCompactionEvent{
+			Event: agentports.AssistantEventCompactionCancelled,
+			Data: agentports.AssistantCompactionEvent{
 				TurnID:         in.Payload.TurnID,
 				ThreadID:       in.Payload.ThreadID,
 				Auto:           in.Payload.Auto,
@@ -267,7 +265,7 @@ func compactionEndingFor(in *CompactionEndInput, autoOff bool) CompactionEnding 
 	}
 
 	return CompactionEnding{Event: temporaltype.StreamItem{
-		Event: serviceports.AssistantEventError,
+		Event: agentports.AssistantEventError,
 		Data: map[string]any{
 			"message":    in.Message,
 			"compaction": true,
@@ -334,8 +332,8 @@ func (a *Activities) FinishCompactionActivity(
 	}
 
 	return &CompactionEnding{Event: temporaltype.StreamItem{
-		Event: serviceports.AssistantEventCompactionFinished,
-		Data: serviceports.AssistantCompactionEvent{
+		Event: agentports.AssistantEventCompactionFinished,
+		Data: agentports.AssistantCompactionEvent{
 			TurnID:   payload.TurnID,
 			ThreadID: payload.ThreadID,
 			Auto:     in.Plan.Auto,
@@ -386,7 +384,7 @@ func (a *Activities) closeCompaction(
 	status conversation.AssistantTurnStatus,
 	message string,
 ) {
-	turn, err := a.turnRepo.GetByID(ctx, repositories.GetAssistantTurnRequest{
+	turn, err := a.turnRepo.GetByID(ctx, agentports.GetAssistantTurnRequest{
 		ID:         payload.TurnID,
 		TenantInfo: payload.TenantInfo(),
 	})

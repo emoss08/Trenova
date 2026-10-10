@@ -7,8 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,12 +17,12 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-var _ services.EDITenderChannel = (*Service)(nil)
+var _ tenderports.EDITenderChannel = (*Service)(nil)
 
 func (s *Service) SendTenderOffer(
 	ctx context.Context,
-	req *services.SendTenderOfferEDIRequest,
-) (*services.SendTenderOfferEDIResult, error) {
+	req *tenderports.SendTenderOfferEDIRequest,
+) (*tenderports.SendTenderOfferEDIResult, error) {
 	if req == nil || req.OfferID.IsNil() {
 		return nil, errortypes.NewValidationError(
 			"offerId",
@@ -35,7 +36,7 @@ func (s *Service) SendTenderOffer(
 		)
 	}
 
-	offer, err := s.tenderRepo.GetOfferByID(ctx, repositories.GetTenderOfferByIDRequest{
+	offer, err := s.tenderRepo.GetOfferByID(ctx, tenderports.GetTenderOfferByIDRequest{
 		TenantInfo:    req.TenantInfo,
 		OfferID:       req.OfferID,
 		IncludeTender: true,
@@ -62,10 +63,10 @@ func (s *Service) SendTenderOffer(
 		return nil, err
 	}
 
-	source, err := s.shipmentSvc.Get(ctx, &repositories.GetShipmentByIDRequest{
+	source, err := s.shipmentSvc.Get(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         offer.Tender.ShipmentID,
 		TenantInfo: req.TenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -94,7 +95,7 @@ func (s *Service) SendTenderOffer(
 		return nil, err
 	}
 
-	return &services.SendTenderOfferEDIResult{MessageID: message.ID}, nil
+	return &tenderports.SendTenderOfferEDIResult{MessageID: message.ID}, nil
 }
 
 func TenderOfferDocumentKey(offerID pulid.ID) string {
@@ -107,7 +108,7 @@ func (s *Service) resolveCarrierEDIChannel(
 	offer *tender.TenderOffer,
 ) (*carrier.CarrierEDIChannel, error) {
 	partnerID := pulid.ConvertFromPtr(offer.EDIPartnerID)
-	channels, err := s.carrierRepo.ListEDIChannels(ctx, repositories.GetCarrierEDIChannelRequest{
+	channels, err := s.carrierRepo.ListEDIChannels(ctx, carrierports.GetCarrierEDIChannelRequest{
 		TenantInfo: tenantInfo,
 		CarrierID:  offer.CarrierID,
 	})
@@ -121,7 +122,7 @@ func (s *Service) resolveCarrierEDIChannel(
 	}
 	channel, err := s.carrierRepo.GetDefaultEDIChannel(
 		ctx,
-		repositories.GetCarrierEDIChannelRequest{
+		carrierports.GetCarrierEDIChannelRequest{
 			TenantInfo: tenantInfo,
 			CarrierID:  offer.CarrierID,
 		},

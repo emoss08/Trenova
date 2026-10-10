@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/ratelimit"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -95,8 +95,8 @@ type failingStore struct{}
 
 func (failingStore) Check(
 	context.Context,
-	[]repositories.RateLimitRequest,
-) ([]repositories.RateLimitDecision, error) {
+	[]kernelports.RateLimitRequest,
+) ([]kernelports.RateLimitDecision, error) {
 	return nil, errors.New("store down")
 }
 

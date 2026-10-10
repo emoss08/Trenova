@@ -7,7 +7,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 
 var jsonPairPattern = regexp.MustCompile(
@@ -28,13 +28,13 @@ type sensitivityLookup interface {
 }
 
 type toolResources struct {
-	tools   services.AgentToolRegistry
-	queries services.AgentQueryToolRegistry
+	tools   agentports.AgentToolRegistry
+	queries agentports.AgentQueryToolRegistry
 }
 
 func newToolResources(
-	tools services.AgentToolRegistry,
-	queries services.AgentQueryToolRegistry,
+	tools agentports.AgentToolRegistry,
+	queries agentports.AgentQueryToolRegistry,
 ) toolResources {
 	return toolResources{tools: tools, queries: queries}
 }

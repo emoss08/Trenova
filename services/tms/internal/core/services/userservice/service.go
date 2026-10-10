@@ -7,11 +7,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -26,26 +29,26 @@ type Params struct {
 	fx.In
 
 	Logger            *zap.Logger
-	Repo              repositories.UserRepository
-	RoleRepository    repositories.RoleRepository
-	SessionRepository repositories.SessionRepository
-	AuditService      services.AuditService
-	Auditor           services.SecurityAuditor
-	Realtime          services.RealtimeService
-	Storage           storage.Client
+	Repo              tenantports.UserRepository
+	RoleRepository    permissionports.RoleRepository
+	SessionRepository sessionports.SessionRepository
+	AuditService      auditports.AuditService
+	Auditor           permissionports.SecurityAuditor
+	Realtime          agentports.RealtimeService
+	Storage           kernelports.Client
 	Config            *config.Config
 	Validator         *Validator
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.UserRepository
-	roleRepo     repositories.RoleRepository
-	sr           repositories.SessionRepository
-	auditService services.AuditService
-	auditor      services.SecurityAuditor
-	realtime     services.RealtimeService
-	storage      storage.Client
+	repo         tenantports.UserRepository
+	roleRepo     permissionports.RoleRepository
+	sr           sessionports.SessionRepository
+	auditService auditports.AuditService
+	auditor      permissionports.SecurityAuditor
+	realtime     agentports.RealtimeService
+	storage      kernelports.Client
 	storageCfg   *config.StorageConfig
 	validator    *Validator
 }
@@ -67,14 +70,14 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListUsersRequest,
+	req *tenantports.ListUsersRequest,
 ) (*pagination.ListResult[*tenant.User], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListUserConnectionRequest,
+	req *tenantports.ListUserConnectionRequest,
 ) (*pagination.CursorListResult[*tenant.User], error) {
 	return s.repo.ListConnection(ctx, req)
 }
@@ -88,14 +91,14 @@ func (s *Service) SelectOptions(
 
 func (s *Service) BulkUpdateStatus(
 	ctx context.Context,
-	req *repositories.BulkUpdateUserStatusRequest,
+	req *tenantports.BulkUpdateUserStatusRequest,
 ) ([]*tenant.User, error) {
 	log := s.l.With(
 		zap.String("operation", "BulkUpdateStatus"),
 		zap.Any("request", req),
 	)
 
-	originalEntities, err := s.repo.GetByIDs(ctx, repositories.GetUsersByIDsRequest{
+	originalEntities, err := s.repo.GetByIDs(ctx, tenantports.GetUsersByIDsRequest{
 		TenantInfo: req.TenantInfo,
 		UserIDs:    req.UserIDs,
 	})
@@ -141,7 +144,7 @@ func (s *Service) BulkUpdateStatus(
 
 func (s *Service) GetByID(
 	ctx context.Context,
-	req repositories.GetUserByIDRequest,
+	req tenantports.GetUserByIDRequest,
 ) (*tenant.User, error) {
 	return s.repo.GetByID(ctx, req)
 }
@@ -150,7 +153,7 @@ func (s *Service) GetOrganizations(
 	ctx context.Context,
 	userID pulid.ID,
 	currentOrgID pulid.ID,
-) ([]*repositories.UserOrganizationResponse, error) {
+) ([]*tenantports.UserOrganizationResponse, error) {
 	log := s.l.With(
 		zap.String("operation", "GetUserOrganizations"),
 		zap.String("userID", userID.String()),
@@ -162,13 +165,13 @@ func (s *Service) GetOrganizations(
 		return nil, err
 	}
 
-	orgs := make([]*repositories.UserOrganizationResponse, len(results))
+	orgs := make([]*tenantports.UserOrganizationResponse, len(results))
 	for i, r := range results {
 		if r == nil || r.Organization == nil {
 			continue
 		}
 
-		orgs[i] = &repositories.UserOrganizationResponse{
+		orgs[i] = &tenantports.UserOrganizationResponse{
 			ID:        r.OrganizationID,
 			Name:      r.Organization.Name,
 			City:      r.Organization.City,
@@ -184,7 +187,7 @@ func (s *Service) GetOrganizations(
 
 func (s *Service) SwitchOrganization(
 	ctx context.Context,
-	req repositories.SwitchOrganizationRequest,
+	req tenantports.SwitchOrganizationRequest,
 ) (*tenant.User, error) {
 	log := s.l.With(
 		zap.String("operation", "SwitchOrganization"),
@@ -245,7 +248,7 @@ func (s *Service) SwitchOrganization(
 		return nil, err
 	}
 
-	user, err := s.repo.GetByID(ctx, repositories.GetUserByIDRequest{
+	user, err := s.repo.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo: pagination.TenantInfo{
 			UserID: sess.UserID,
 			OrgID:  req.OrganizationID,
@@ -282,7 +285,7 @@ func (s *Service) UploadProfilePicture(
 		return nil, multiErr
 	}
 
-	user, err := s.repo.GetByID(ctx, repositories.GetUserByIDRequest{
+	user, err := s.repo.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo:         tenantInfo,
 		IncludeMemberships: true,
 	})
@@ -304,7 +307,7 @@ func (s *Service) UploadProfilePicture(
 		fileHeader.Filename,
 	)
 
-	if _, err = s.storage.Upload(ctx, &storage.UploadParams{
+	if _, err = s.storage.Upload(ctx, &kernelports.UploadParams{
 		Key:         key,
 		ContentType: contentType,
 		Size:        fileHeader.Size,
@@ -342,7 +345,7 @@ func (s *Service) DeleteProfilePicture(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*tenant.User, error) {
-	user, err := s.repo.GetByID(ctx, repositories.GetUserByIDRequest{
+	user, err := s.repo.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo:         tenantInfo,
 		IncludeMemberships: true,
 	})
@@ -374,7 +377,7 @@ func (s *Service) GetProfilePictureURL(
 	userID pulid.ID,
 	variant string,
 ) (string, error) {
-	user, err := s.repo.GetByID(ctx, repositories.GetUserByIDRequest{
+	user, err := s.repo.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo:   tenantInfo,
 		LookupUserID: userID,
 	})
@@ -397,7 +400,7 @@ func (s *Service) GetProfilePictureURL(
 		return profilePictureKey, nil
 	}
 
-	url, err := s.storage.GetPresignedURL(ctx, &storage.PresignedURLParams{
+	url, err := s.storage.GetPresignedURL(ctx, &kernelports.PresignedURLParams{
 		Key:    profilePictureKey,
 		Expiry: s.storageCfg.GetPresignedURLExpiry(),
 	})
@@ -470,7 +473,7 @@ func (s *Service) UpdateMySettings(
 		return nil, err
 	}
 
-	user, err := s.repo.GetByID(ctx, repositories.GetUserByIDRequest{
+	user, err := s.repo.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo:         tenantInfo,
 		IncludeMemberships: true,
 	})
@@ -535,7 +538,7 @@ func (s *Service) ChangeMyPassword(
 		return nil, err
 	}
 
-	user, err := s.repo.GetByID(ctx, repositories.GetUserByIDRequest{
+	user, err := s.repo.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {
@@ -552,7 +555,7 @@ func (s *Service) ChangeMyPassword(
 	}
 
 	original := *user
-	if err = s.repo.UpdatePassword(ctx, repositories.UpdateUserPasswordRequest{
+	if err = s.repo.UpdatePassword(ctx, tenantports.UpdateUserPasswordRequest{
 		UserID:             tenantInfo.UserID,
 		OrganizationID:     tenantInfo.OrgID,
 		BusinessUnitID:     tenantInfo.BuID,
@@ -565,7 +568,7 @@ func (s *Service) ChangeMyPassword(
 	user.Password = hashedPassword
 	user.MustChangePassword = false
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceUser,
 		ResourceID:     user.ID.String(),
 		Operation:      permission.OpUpdate,
@@ -595,7 +598,7 @@ func (s *Service) ChangeMyPassword(
 		s.l.Warn("failed to publish user invalidation", zap.Error(err))
 	}
 
-	updatedUser, err := s.repo.GetByID(ctx, repositories.GetUserByIDRequest{
+	updatedUser, err := s.repo.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo:         tenantInfo,
 		IncludeMemberships: true,
 	})
@@ -620,7 +623,7 @@ func (s *Service) Update(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetByID(ctx, repositories.GetUserByIDRequest{
+	original, err := s.repo.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo: pagination.TenantInfo{
 			UserID: userID,
 			OrgID:  entity.CurrentOrganizationID,
@@ -639,7 +642,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceUser,
 		ResourceID:     updatedEntity.ID.String(),
 		Operation:      permission.OpUpdate,
@@ -691,7 +694,7 @@ func (s *Service) ReplaceOrganizationMemberships(
 
 	memberships, err := s.repo.ReplaceOrganizationMemberships(
 		ctx,
-		repositories.ReplaceOrganizationMembershipsRequest{
+		tenantports.ReplaceOrganizationMembershipsRequest{
 			ActorID:         actorID,
 			UserID:          userID,
 			BusinessUnitID:  businessUnitID,

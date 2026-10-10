@@ -5,10 +5,10 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -32,7 +32,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.ShipmentMoveRepository {
+func New(p Params) shipmentports.ShipmentMoveRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.shipment-move-repository"),
@@ -136,7 +136,7 @@ func (r *repository) SyncForShipment(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req *repositories.GetMoveByIDRequest,
+	req *shipmentports.GetMoveByIDRequest,
 ) (*shipment.ShipmentMove, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.ShipmentMove, error) {
 		sm := buncolgen.ShipmentMoveColumns
@@ -185,7 +185,7 @@ func (r *repository) GetByID(
 
 func (r *repository) GetMovesByShipmentID(
 	ctx context.Context,
-	req *repositories.GetMovesByShipmentIDRequest,
+	req *shipmentports.GetMovesByShipmentIDRequest,
 ) ([]*shipment.ShipmentMove, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*shipment.ShipmentMove, error) {
 		sm := buncolgen.ShipmentMoveColumns
@@ -330,12 +330,12 @@ func (r *repository) hydrateActiveCarrierAssignments(
 
 func (r *repository) UpdateStatus(
 	ctx context.Context,
-	req *repositories.UpdateMoveStatusRequest,
+	req *shipmentports.UpdateMoveStatusRequest,
 ) (*shipment.ShipmentMove, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.ShipmentMove, error) {
 		sm := buncolgen.ShipmentMoveColumns
 
-		move, err := r.GetByID(ctx, &repositories.GetMoveByIDRequest{
+		move, err := r.GetByID(ctx, &shipmentports.GetMoveByIDRequest{
 			MoveID:            req.MoveID,
 			TenantInfo:        req.TenantInfo,
 			ExpandMoveDetails: false,
@@ -364,7 +364,7 @@ func (r *repository) UpdateStatus(
 			return nil, err
 		}
 
-		return r.GetByID(ctx, &repositories.GetMoveByIDRequest{
+		return r.GetByID(ctx, &shipmentports.GetMoveByIDRequest{
 			MoveID:            req.MoveID,
 			TenantInfo:        req.TenantInfo,
 			ExpandMoveDetails: true,
@@ -412,7 +412,7 @@ func (r *repository) UpdateStopActuals(
 //nolint:govet // existing scoped variable reuse is local and behavior-preserving
 func (r *repository) BulkUpdateStatus(
 	ctx context.Context,
-	req *repositories.BulkUpdateMoveStatusRequest,
+	req *shipmentports.BulkUpdateMoveStatusRequest,
 ) ([]*shipment.ShipmentMove, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*shipment.ShipmentMove, error) {
 		sm := buncolgen.ShipmentMoveColumns
@@ -422,9 +422,9 @@ func (r *repository) BulkUpdateStatus(
 		}
 
 		entities := make([]*shipment.ShipmentMove, 0, len(req.MoveIDs))
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 			for _, moveID := range req.MoveIDs {
-				move, err := r.GetByID(c, &repositories.GetMoveByIDRequest{
+				move, err := r.GetByID(c, &shipmentports.GetMoveByIDRequest{
 					MoveID:            moveID,
 					TenantInfo:        req.TenantInfo,
 					ExpandMoveDetails: false,
@@ -468,7 +468,7 @@ func (r *repository) BulkUpdateStatus(
 
 		result := make([]*shipment.ShipmentMove, 0, len(req.MoveIDs))
 		for _, moveID := range req.MoveIDs {
-			move, err := r.GetByID(ctx, &repositories.GetMoveByIDRequest{
+			move, err := r.GetByID(ctx, &shipmentports.GetMoveByIDRequest{
 				MoveID:            moveID,
 				TenantInfo:        req.TenantInfo,
 				ExpandMoveDetails: true,
@@ -485,12 +485,12 @@ func (r *repository) BulkUpdateStatus(
 
 func (r *repository) SplitMove(
 	ctx context.Context,
-	req *repositories.SplitMoveRequest,
-) (*repositories.SplitMoveResponse, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.SplitMoveResponse, error) {
-		var response *repositories.SplitMoveResponse
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
-			originalMove, err := r.GetByID(c, &repositories.GetMoveByIDRequest{
+	req *shipmentports.SplitMoveRequest,
+) (*shipmentports.SplitMoveResponse, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipmentports.SplitMoveResponse, error) {
+		var response *shipmentports.SplitMoveResponse
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+			originalMove, err := r.GetByID(c, &shipmentports.GetMoveByIDRequest{
 				MoveID:            req.MoveID,
 				TenantInfo:        req.TenantInfo,
 				ExpandMoveDetails: true,
@@ -987,7 +987,7 @@ func (r *repository) loadSplitMoveResponse(
 	tx bun.IDB,
 	tenantInfo pagination.TenantInfo,
 	originalMoveID, newMoveID pulid.ID,
-) (*repositories.SplitMoveResponse, error) {
+) (*shipmentports.SplitMoveResponse, error) {
 	originalMove, err := r.loadMoveWithDetails(ctx, tx, tenantInfo, originalMoveID)
 	if err != nil {
 		return nil, err
@@ -998,7 +998,7 @@ func (r *repository) loadSplitMoveResponse(
 		return nil, err
 	}
 
-	return &repositories.SplitMoveResponse{
+	return &shipmentports.SplitMoveResponse{
 		OriginalMove: originalMove,
 		NewMove:      newMove,
 	}, nil

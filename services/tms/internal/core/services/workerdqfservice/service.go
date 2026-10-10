@@ -16,9 +16,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documentpacketrule"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -68,26 +71,26 @@ type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Repo          repositories.WorkerDQFRepository
-	WorkerRepo    repositories.WorkerRepository
-	RetentionRepo repositories.DataRetentionRepository
+	Repo          workerports.WorkerDQFRepository
+	WorkerRepo    workerports.WorkerRepository
+	RetentionRepo tenantports.DataRetentionRepository
 	Credentials   CredentialSummarizer
 	Documents     PacketSummarizer
 	DrugAlcohol   DrugAlcoholStander
-	AuditService  services.AuditService
-	Realtime      services.RealtimeService `optional:"true"`
+	AuditService  auditports.AuditService
+	Realtime      agentports.RealtimeService `optional:"true"`
 }
 
 type Service struct {
 	l             *zap.Logger
-	repo          repositories.WorkerDQFRepository
-	workerRepo    repositories.WorkerRepository
-	retentionRepo repositories.DataRetentionRepository
+	repo          workerports.WorkerDQFRepository
+	workerRepo    workerports.WorkerRepository
+	retentionRepo tenantports.DataRetentionRepository
 	credentials   CredentialSummarizer
 	documents     PacketSummarizer
 	drugAlcohol   DrugAlcoholStander
-	auditService  services.AuditService
-	realtime      services.RealtimeService
+	auditService  auditports.AuditService
+	realtime      agentports.RealtimeService
 }
 
 func New(p Params) *Service {
@@ -107,13 +110,13 @@ func New(p Params) *Service {
 // Deps is the constructor shape tests use to swap in fakes.
 type Deps struct {
 	Logger        *zap.Logger
-	Repo          repositories.WorkerDQFRepository
-	WorkerRepo    repositories.WorkerRepository
-	RetentionRepo repositories.DataRetentionRepository
+	Repo          workerports.WorkerDQFRepository
+	WorkerRepo    workerports.WorkerRepository
+	RetentionRepo tenantports.DataRetentionRepository
 	Credentials   CredentialSummarizer
 	Documents     PacketSummarizer
 	DrugAlcohol   DrugAlcoholStander
-	AuditService  services.AuditService
+	AuditService  auditports.AuditService
 }
 
 func NewWithDeps(d Deps) *Service {
@@ -146,7 +149,7 @@ func (s *Service) File(
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 ) (*worker.DQFFile, error) {
-	wrk, err := s.workerRepo.GetByID(ctx, repositories.GetWorkerByIDRequest{
+	wrk, err := s.workerRepo.GetByID(ctx, workerports.GetWorkerByIDRequest{
 		ID:             workerID,
 		TenantInfo:     tenantInfo,
 		IncludeProfile: true,
@@ -186,7 +189,7 @@ func (s *Service) File(
 		var gErr error
 		verifications, gErr = s.repo.ListVerifications(
 			groupCtx,
-			&repositories.ListEmploymentVerificationsRequest{
+			&workerports.ListEmploymentVerificationsRequest{
 				TenantInfo: tenantInfo,
 				WorkerID:   workerID,
 			},
@@ -234,7 +237,7 @@ func (s *Service) retentionDays(
 	if s.retentionRepo == nil {
 		return worker.DefaultDQFRetentionDays
 	}
-	retention, err := s.retentionRepo.Get(ctx, repositories.GetDataRetentionRequest{
+	retention, err := s.retentionRepo.Get(ctx, tenantports.GetDataRetentionRequest{
 		OrgID: tenantInfo.OrgID,
 		BuID:  tenantInfo.BuID,
 	})
@@ -254,9 +257,9 @@ func (s *Service) RetentionCandidates(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	limit int,
-) ([]repositories.DQFRetentionCandidate, error) {
+) ([]workerports.DQFRetentionCandidate, error) {
 	days := s.retentionDays(ctx, tenantInfo)
-	return s.repo.ListRetentionCandidates(ctx, &repositories.ListDQFRetentionCandidatesRequest{
+	return s.repo.ListRetentionCandidates(ctx, &workerports.ListDQFRetentionCandidatesRequest{
 		TenantInfo:       tenantInfo,
 		RetentionSeconds: int64(days) * secondsPerDay,
 		AsOf:             timeutils.NowUnix(),
@@ -278,7 +281,7 @@ func (s *Service) audit(p *auditParams) {
 	if s.auditService == nil || p.userID.IsNil() {
 		return
 	}
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceQualification,
 		ResourceID:     p.resourceID,
 		Operation:      p.operation,
@@ -287,7 +290,7 @@ func (s *Service) audit(p *auditParams) {
 		OrganizationID: p.tenant.OrgID,
 		BusinessUnitID: p.tenant.BuID,
 	}
-	opts := []services.LogOption{auditservice.WithComment(p.comment)}
+	opts := []auditports.LogOption{auditservice.WithComment(p.comment)}
 	if p.previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(p.previous)
 		opts = append(opts, auditservice.WithDiff(p.previous, p.current))
@@ -311,7 +314,7 @@ func (s *Service) publish(
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
 		ActorUserID:    userID,
-		ActorType:      services.PrincipalTypeUser,
+		ActorType:      permissionports.PrincipalTypeUser,
 		ActorID:        userID,
 		Resource:       realtimeVerification,
 		Action:         string(operation),

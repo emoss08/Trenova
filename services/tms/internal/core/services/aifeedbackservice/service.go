@@ -4,8 +4,6 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/services/orgzone"
-
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
@@ -13,8 +11,15 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/insight"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/orgzone"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -23,88 +28,88 @@ import (
 )
 
 var (
-	_ services.AIFeedbackService     = (*Service)(nil)
-	_ services.AIFeedbackMaintenance = (*Service)(nil)
+	_ aifeedbackports.AIFeedbackService     = (*Service)(nil)
+	_ aifeedbackports.AIFeedbackMaintenance = (*Service)(nil)
 )
 
 type feedbackStore interface {
 	Upsert(ctx context.Context, entity *aifeedback.Feedback) (*aifeedback.Feedback, error)
-	Delete(ctx context.Context, req repositories.DeleteAIFeedbackRequest) (bool, error)
+	Delete(ctx context.Context, req aifeedbackports.DeleteAIFeedbackRequest) (bool, error)
 	ListForTargets(
 		ctx context.Context,
-		req repositories.ListAIFeedbackForTargetsRequest,
+		req aifeedbackports.ListAIFeedbackForTargetsRequest,
 	) ([]*aifeedback.Feedback, error)
 	ListByIDs(
 		ctx context.Context,
-		req repositories.ListAIFeedbackByIDsRequest,
+		req aifeedbackports.ListAIFeedbackByIDsRequest,
 	) ([]*aifeedback.Feedback, error)
 	ListConnection(
 		ctx context.Context,
-		req *repositories.ListAIFeedbackConnectionRequest,
+		req *aifeedbackports.ListAIFeedbackConnectionRequest,
 	) (*pagination.CursorListResult[*aifeedback.Feedback], error)
 	DailySatisfaction(
 		ctx context.Context,
-		req repositories.AIFeedbackWindowRequest,
-	) ([]*repositories.AIFeedbackDay, error)
+		req aifeedbackports.AIFeedbackWindowRequest,
+	) ([]*aifeedbackports.AIFeedbackDay, error)
 	WorstRated(
 		ctx context.Context,
-		req repositories.AIFeedbackWindowRequest,
-	) ([]*repositories.AIFeedbackTargetScore, error)
+		req aifeedbackports.AIFeedbackWindowRequest,
+	) ([]*aifeedbackports.AIFeedbackTargetScore, error)
 	ListNegativeSince(
 		ctx context.Context,
-		req repositories.ListNegativeAIFeedbackRequest,
+		req aifeedbackports.ListNegativeAIFeedbackRequest,
 	) ([]*aifeedback.Feedback, error)
-	PurgeBefore(ctx context.Context, req repositories.PurgeAIFeedbackRequest) (int64, error)
+	PurgeBefore(ctx context.Context, req aifeedbackports.PurgeAIFeedbackRequest) (int64, error)
 }
 
 type messageSource interface {
 	GetMessageContext(
 		ctx context.Context,
-		req repositories.GetAIFeedbackMessageRequest,
-	) (*repositories.AIFeedbackMessageContext, error)
+		req aifeedbackports.GetAIFeedbackMessageRequest,
+	) (*aifeedbackports.AIFeedbackMessageContext, error)
 }
 
 type briefingReader interface {
-	GetByID(ctx context.Context, req repositories.GetBriefingByIDRequest) (*briefing.Briefing, error)
+	GetByID(ctx context.Context, req briefingports.GetBriefingByIDRequest) (*briefing.Briefing, error)
 }
 
 type insightReader interface {
-	GetByID(ctx context.Context, req repositories.GetInsightByIDRequest) (*insight.Insight, error)
+	GetByID(ctx context.Context, req insightports.GetInsightByIDRequest) (*insight.Insight, error)
 }
 
 type watchtowerReader interface {
 	GetByID(
 		ctx context.Context,
-		req repositories.GetWatchtowerItemRequest,
+		req watchtowerports.GetWatchtowerItemRequest,
 	) (*watchtower.Item, error)
 }
 
 type proposalReader interface {
 	GetByID(
 		ctx context.Context,
-		req repositories.GetAgentProposalByIDRequest,
+		req agentports.GetAgentProposalByIDRequest,
 	) (*agent.AgentProposal, error)
 }
 
 type planReader interface {
-	GetByID(ctx context.Context, req repositories.GetAgentPlanByIDRequest) (*agent.AgentPlan, error)
+	GetByID(ctx context.Context, req agentports.GetAgentPlanByIDRequest) (*agent.AgentPlan, error)
 }
 
 type runReader interface {
-	GetByID(ctx context.Context, req repositories.GetAgentRunByIDRequest) (*agent.AgentRun, error)
+	GetByID(ctx context.Context, req agentports.GetAgentRunByIDRequest) (*agent.AgentRun, error)
 }
 
 type exceptionReader interface {
 	GetByID(
 		ctx context.Context,
-		req repositories.GetAgentExceptionByIDRequest,
+		req agentports.GetAgentExceptionByIDRequest,
 	) (*agent.AgentException, error)
 }
 
 type definitionReader interface {
 	GetByID(
 		ctx context.Context,
-		req repositories.GetAgentDefinitionByIDRequest,
+		req agentdefinitionports.GetAgentDefinitionByIDRequest,
 	) (*agentdefinition.Definition, error)
 }
 
@@ -112,41 +117,41 @@ type memoryStore interface {
 	Create(ctx context.Context, entity *agent.Memory) (*agent.Memory, error)
 	ListSuggestionContext(
 		ctx context.Context,
-		req repositories.ListAgentMemorySuggestionContextRequest,
+		req agentports.ListAgentMemorySuggestionContextRequest,
 	) ([]*agent.Memory, error)
 }
 
 type retentionReader interface {
-	Get(ctx context.Context, req repositories.GetDataRetentionRequest) (*tenant.DataRetention, error)
+	Get(ctx context.Context, req tenantports.GetDataRetentionRequest) (*tenant.DataRetention, error)
 }
 
 type permissionChecker interface {
 	Check(
 		ctx context.Context,
-		req *services.PermissionCheckRequest,
-	) (*services.PermissionCheckResult, error)
+		req *permissionports.PermissionCheckRequest,
+	) (*permissionports.PermissionCheckResult, error)
 }
 
 type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Repo          repositories.AIFeedbackRepository
-	Sources       repositories.AIFeedbackSourceRepository
-	Briefings     repositories.BriefingRepository
-	Insights      repositories.InsightRepository
-	Watchtower    repositories.WatchtowerRepository
-	Proposals     repositories.AgentProposalRepository
-	Plans         repositories.AgentPlanRepository
-	Runs          repositories.AgentRunRepository
-	Exceptions    repositories.AgentExceptionRepository
-	Definitions   repositories.AgentDefinitionRepository
-	Memories      repositories.AgentMemoryRepository
-	Retention     repositories.DataRetentionRepository
-	Organizations repositories.OrganizationRepository
-	Permissions   services.PermissionEngine
-	Tools         services.AgentToolRegistry      `optional:"true"`
-	QueryTools    services.AgentQueryToolRegistry `optional:"true"`
+	Repo          aifeedbackports.AIFeedbackRepository
+	Sources       aifeedbackports.AIFeedbackSourceRepository
+	Briefings     briefingports.BriefingRepository
+	Insights      insightports.InsightRepository
+	Watchtower    watchtowerports.WatchtowerRepository
+	Proposals     agentports.AgentProposalRepository
+	Plans         agentports.AgentPlanRepository
+	Runs          agentports.AgentRunRepository
+	Exceptions    agentports.AgentExceptionRepository
+	Definitions   agentdefinitionports.AgentDefinitionRepository
+	Memories      agentports.AgentMemoryRepository
+	Retention     tenantports.DataRetentionRepository
+	Organizations tenantports.OrganizationRepository
+	Permissions   permissionports.PermissionEngine
+	Tools         agentports.AgentToolRegistry      `optional:"true"`
+	QueryTools    agentports.AgentQueryToolRegistry `optional:"true"`
 }
 
 type Service struct {
@@ -191,14 +196,14 @@ func New(p Params) *Service {
 	}
 }
 
-func AsService(s *Service) services.AIFeedbackService { return s }
+func AsService(s *Service) aifeedbackports.AIFeedbackService { return s }
 
-func AsMaintenance(s *Service) services.AIFeedbackMaintenance { return s }
+func AsMaintenance(s *Service) aifeedbackports.AIFeedbackMaintenance { return s }
 
 func (s *Service) SetMine(
 	ctx context.Context,
-	req *services.SetAIFeedbackRequest,
-	actor *services.RequestActor,
+	req *aifeedbackports.SetAIFeedbackRequest,
+	actor *permissionports.RequestActor,
 ) (*aifeedback.Feedback, error) {
 	if err := requirePerson(actor); err != nil {
 		return nil, err
@@ -238,8 +243,8 @@ func (s *Service) SetMine(
 
 func (s *Service) ClearMine(
 	ctx context.Context,
-	req services.ClearAIFeedbackRequest,
-	actor *services.RequestActor,
+	req aifeedbackports.ClearAIFeedbackRequest,
+	actor *permissionports.RequestActor,
 ) (bool, error) {
 	if err := requirePerson(actor); err != nil {
 		return false, err
@@ -250,7 +255,7 @@ func (s *Service) ClearMine(
 		return false, err
 	}
 
-	return s.repo.Delete(ctx, repositories.DeleteAIFeedbackRequest{
+	return s.repo.Delete(ctx, aifeedbackports.DeleteAIFeedbackRequest{
 		TenantInfo: req.TenantInfo,
 		UserID:     actor.UserID,
 		Target:     target,
@@ -259,8 +264,8 @@ func (s *Service) ClearMine(
 
 func (s *Service) ListMine(
 	ctx context.Context,
-	req services.ListMyAIFeedbackRequest,
-	actor *services.RequestActor,
+	req aifeedbackports.ListMyAIFeedbackRequest,
+	actor *permissionports.RequestActor,
 ) ([]*aifeedback.Feedback, error) {
 	if err := requirePerson(actor); err != nil {
 		return nil, err
@@ -268,16 +273,16 @@ func (s *Service) ListMine(
 	if len(req.Targets) == 0 {
 		return []*aifeedback.Feedback{}, nil
 	}
-	if len(req.Targets) > repositories.MaxAIFeedbackTargetsPerRead {
+	if len(req.Targets) > aifeedbackports.MaxAIFeedbackTargetsPerRead {
 		return nil, errortypes.NewValidationError(
 			"targets",
 			errortypes.ErrInvalid,
 			"Ask for at most {0} targets at a time",
-			repositories.MaxAIFeedbackTargetsPerRead,
+			aifeedbackports.MaxAIFeedbackTargetsPerRead,
 		)
 	}
 
-	targets := make([]repositories.AIFeedbackTargetRef, 0, len(req.Targets))
+	targets := make([]aifeedbackports.AIFeedbackTargetRef, 0, len(req.Targets))
 	for _, target := range req.Targets {
 		target = normalizeTarget(target)
 		if err := validateTarget(target); err != nil {
@@ -286,7 +291,7 @@ func (s *Service) ListMine(
 		targets = append(targets, target)
 	}
 
-	return s.repo.ListForTargets(ctx, repositories.ListAIFeedbackForTargetsRequest{
+	return s.repo.ListForTargets(ctx, aifeedbackports.ListAIFeedbackForTargetsRequest{
 		TenantInfo: req.TenantInfo,
 		UserID:     actor.UserID,
 		Targets:    targets,
@@ -295,12 +300,12 @@ func (s *Service) ListMine(
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListAIFeedbackConnectionRequest,
+	req *aifeedbackports.ListAIFeedbackConnectionRequest,
 ) (*pagination.CursorListResult[*aifeedback.Feedback], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
-func requirePerson(actor *services.RequestActor) error {
+func requirePerson(actor *permissionports.RequestActor) error {
 	if !actor.IsUser() || actor.UserID.IsNil() {
 		return errortypes.NewAuthorizationError("Only a person can rate what an AI wrote")
 	}
@@ -308,13 +313,13 @@ func requirePerson(actor *services.RequestActor) error {
 	return nil
 }
 
-func normalizeTarget(target repositories.AIFeedbackTargetRef) repositories.AIFeedbackTargetRef {
+func normalizeTarget(target aifeedbackports.AIFeedbackTargetRef) aifeedbackports.AIFeedbackTargetRef {
 	target.TargetPart = strings.TrimSpace(target.TargetPart)
 
 	return target
 }
 
-func validateTarget(target repositories.AIFeedbackTargetRef) error {
+func validateTarget(target aifeedbackports.AIFeedbackTargetRef) error {
 	me := errortypes.NewMultiError()
 	if !target.TargetType.IsValid() {
 		me.Add("targetType", errortypes.ErrInvalid, "Target type is invalid")

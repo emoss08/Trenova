@@ -10,9 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/typeutils"
@@ -297,7 +298,7 @@ func usagePrincipal(record *aiusage.AIUsageRecord) (aiaudit.PrincipalType, strin
 	case record.AgentDefinitionID.IsNotNil():
 		return aiaudit.PrincipalAgent, record.AgentDefinitionID.String()
 	default:
-		return aiaudit.PrincipalSystem, serviceports.SystemPrincipalID.String()
+		return aiaudit.PrincipalSystem, permissionports.SystemPrincipalID.String()
 	}
 }
 
@@ -312,8 +313,8 @@ func joinReason(class, message string) string {
 	}
 }
 
-func decodeOutcome(raw map[string]any) serviceports.RunStepOutcome {
-	var outcome serviceports.RunStepOutcome
+func decodeOutcome(raw map[string]any) agentports.RunStepOutcome {
+	var outcome agentports.RunStepOutcome
 	if len(raw) == 0 {
 		return outcome
 	}
@@ -407,7 +408,7 @@ func (d *deriver) stepBase(l *lookups, step *agent.AgentRunStep) (*aiaudit.AIAud
 	return event, nil
 }
 
-func stepOutcome(step *agent.AgentRunStep, outcome *serviceports.RunStepOutcome) aiaudit.Outcome {
+func stepOutcome(step *agent.AgentRunStep, outcome *agentports.RunStepOutcome) aiaudit.Outcome {
 	if action := outcome.Action; action != nil {
 		switch {
 		case action.Simulated:
@@ -425,7 +426,7 @@ func stepOutcome(step *agent.AgentRunStep, outcome *serviceports.RunStepOutcome)
 		return refused
 	}
 
-	failed := outcome.Failed || step.Status == string(serviceports.RunStepFailed)
+	failed := outcome.Failed || step.Status == string(agentports.RunStepFailed)
 	switch {
 	case failed && outcome.Reason != "":
 		return aiaudit.OutcomeDenied
@@ -449,7 +450,7 @@ func verdictOutcome(verdict string) (aiaudit.Outcome, bool) {
 	}
 }
 
-func (d *deriver) applyAction(event *aiaudit.AIAuditEvent, action *serviceports.PendingAction) {
+func (d *deriver) applyAction(event *aiaudit.AIAuditEvent, action *agentports.PendingAction) {
 	event.Tier = string(action.Tier)
 	event.TierSource = string(action.TierSource)
 	event.HeldBy = slices.Clone(action.HeldBy)
@@ -567,11 +568,11 @@ func (d *deriver) runEventEvent(l *lookups, row *agent.AgentRunEvent) *aiaudit.A
 	}
 
 	switch row.Kind {
-	case serviceports.AssistantEventToolFinished:
+	case agentports.AssistantEventToolFinished:
 		if failed, _ := payload[payloadKeyFailed].(bool); !failed {
 			return nil
 		}
-		if _, claimed := l.calls[repositories.OwnerCall{
+		if _, claimed := l.calls[aiauditports.OwnerCall{
 			OwnerID: row.OwnerID,
 			CallID:  row.CallID,
 		}]; claimed {
@@ -590,11 +591,11 @@ func (d *deriver) runEventEvent(l *lookups, row *agent.AgentRunEvent) *aiaudit.A
 		if policy, ok := d.redactor.Policy(event.ToolName); ok {
 			event.ToolEffect = string(policy.EffectiveEffect())
 		}
-	case serviceports.AssistantEventDelegateStarted:
+	case agentports.AssistantEventDelegateStarted:
 		event.Kind = aiaudit.KindDelegationStarted
 		event.Outcome = aiaudit.OutcomeStarted
 		event.ToolName = delegateToolName
-	case serviceports.AssistantEventDelegateFinished:
+	case agentports.AssistantEventDelegateFinished:
 		event.Kind = aiaudit.KindDelegationEnded
 		event.Outcome = delegateOutcome(
 			conversation.DelegateStatus(typeutils.StringOf(payload[payloadKeyStatus])),
@@ -620,7 +621,7 @@ func (d *deriver) runEventEvent(l *lookups, row *agent.AgentRunEvent) *aiaudit.A
 const delegateToolName = "delegate_task"
 
 func delegateOrCallKey(kind string) string {
-	if kind == serviceports.AssistantEventToolFinished {
+	if kind == agentports.AssistantEventToolFinished {
 		return "callId"
 	}
 
@@ -688,7 +689,7 @@ func (d *deriver) proposalEvents(
 			expired.OccurredAt = proposal.ExpiresAt
 		}
 		expired.PrincipalType = aiaudit.PrincipalSystem
-		expired.PrincipalID = serviceports.SystemPrincipalID.String()
+		expired.PrincipalID = permissionports.SystemPrincipalID.String()
 		expired.Arguments = nil
 		expired.ArgumentSensitivity = nil
 		expired.RedactedPaths = nil

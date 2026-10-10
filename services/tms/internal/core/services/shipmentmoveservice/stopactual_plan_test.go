@@ -1,10 +1,11 @@
 package shipmentmoveservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -23,14 +24,14 @@ func TestPreviewStopActual_ReadsWithoutWriting(t *testing.T) {
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	occurredAt := int64(1790000000)
 
-	moveRepo := mocks.NewMockShipmentMoveRepository(t)
+	moveRepo := shipmentportsmock.NewMockShipmentMoveRepository(t)
 	moveRepo.EXPECT().
-		GetByID(mock.Anything, mock.MatchedBy(func(req *repositories.GetMoveByIDRequest) bool {
+		GetByID(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetMoveByIDRequest) bool {
 			return req.MoveID == move.ID && req.ExpandMoveDetails && !req.ForUpdate
 		})).
 		Return(move, nil).
 		Once()
-	assignmentRepo := mocks.NewMockAssignmentRepository(t)
+	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
 	assignmentRepo.EXPECT().
 		GetByMoveID(mock.Anything, tenantInfo, move.ID).
 		Return(nil, nil).
@@ -40,14 +41,14 @@ func TestPreviewStopActual_ReadsWithoutWriting(t *testing.T) {
 		l:              zap.NewNop(),
 		repo:           moveRepo,
 		assignmentRepo: assignmentRepo,
-		holdRepo:       mocks.NewMockShipmentHoldRepository(t),
+		holdRepo:       shipmentportsmock.NewMockShipmentHoldRepository(t),
 	}
 
-	plan, err := svc.PreviewStopActual(t.Context(), &repositories.RecordStopActualRequest{
+	plan, err := svc.PreviewStopActual(t.Context(), &shipmentports.RecordStopActualRequest{
 		TenantInfo: tenantInfo,
 		MoveID:     move.ID,
 		StopID:     origin.ID,
-		Action:     repositories.StopActualActionArrive,
+		Action:     shipmentports.StopActualActionArrive,
 		OccurredAt: &occurredAt,
 	})
 	require.NoError(t, err)
@@ -65,16 +66,16 @@ func TestPreviewStopActual_RefusesWhatRecordingWouldRefuse(t *testing.T) {
 	move, _, destination := stopActualMoveForTest()
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 
-	moveRepo := mocks.NewMockShipmentMoveRepository(t)
+	moveRepo := shipmentportsmock.NewMockShipmentMoveRepository(t)
 	moveRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(move, nil).Once()
 
 	svc := &service{l: zap.NewNop(), repo: moveRepo}
 
-	_, err := svc.PreviewStopActual(t.Context(), &repositories.RecordStopActualRequest{
+	_, err := svc.PreviewStopActual(t.Context(), &shipmentports.RecordStopActualRequest{
 		TenantInfo: tenantInfo,
 		MoveID:     move.ID,
 		StopID:     destination.ID,
-		Action:     repositories.StopActualActionArrive,
+		Action:     shipmentports.StopActualActionArrive,
 	})
 	require.Error(t, err)
 	assert.True(t, errortypes.IsBusinessError(err))
@@ -89,23 +90,23 @@ func TestPreviewStopActual_ArrivalAndDepartureTogether(t *testing.T) {
 	arrivedAt := int64(1790000000)
 	departedAt := arrivedAt + 75*60
 
-	moveRepo := mocks.NewMockShipmentMoveRepository(t)
+	moveRepo := shipmentportsmock.NewMockShipmentMoveRepository(t)
 	moveRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(move, nil).Once()
-	assignmentRepo := mocks.NewMockAssignmentRepository(t)
+	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
 	assignmentRepo.EXPECT().GetByMoveID(mock.Anything, tenantInfo, move.ID).Return(nil, nil).Once()
 
 	svc := &service{
 		l:              zap.NewNop(),
 		repo:           moveRepo,
 		assignmentRepo: assignmentRepo,
-		holdRepo:       mocks.NewMockShipmentHoldRepository(t),
+		holdRepo:       shipmentportsmock.NewMockShipmentHoldRepository(t),
 	}
 
-	plan, err := svc.PreviewStopActual(t.Context(), &repositories.RecordStopActualRequest{
+	plan, err := svc.PreviewStopActual(t.Context(), &shipmentports.RecordStopActualRequest{
 		TenantInfo: tenantInfo,
 		MoveID:     move.ID,
 		StopID:     origin.ID,
-		Action:     repositories.StopActualActionArrive,
+		Action:     shipmentports.StopActualActionArrive,
 		OccurredAt: &arrivedAt,
 		DepartedAt: &departedAt,
 	})

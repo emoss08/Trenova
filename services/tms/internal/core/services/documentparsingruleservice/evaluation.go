@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/documentparsingrule"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentparsingruleports"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -30,7 +30,7 @@ var cityStatePostalPattern = regexp.MustCompile(
 func matchesVersion( //nolint:gocognit,gocritic // stable API shape
 	set *documentparsingrule.RuleSet,
 	version *documentparsingrule.RuleVersion,
-	input *serviceports.DocumentParsingRuntimeInput,
+	input *documentparsingruleports.DocumentParsingRuntimeInput,
 ) (bool, int, string) {
 	if set == nil || version == nil || input == nil {
 		return false, 0, ""
@@ -107,11 +107,11 @@ func matchesVersion( //nolint:gocognit,gocritic // stable API shape
 func evaluateVersion(
 	set *documentparsingrule.RuleSet,
 	version *documentparsingrule.RuleVersion,
-	input *serviceports.DocumentParsingRuntimeInput,
-) (*serviceports.DocumentParsingAnalysis, error) {
+	input *documentparsingruleports.DocumentParsingRuntimeInput,
+) (*documentparsingruleports.DocumentParsingAnalysis, error) {
 	sections := extractSections(version.RuleDocument.Sections, input.Pages, input.Text)
-	fields := make(map[string]serviceports.DocumentParsingField, len(version.RuleDocument.Fields))
-	stops := make([]serviceports.DocumentParsingStop, 0, len(version.RuleDocument.Stops))
+	fields := make(map[string]documentparsingruleports.DocumentParsingField, len(version.RuleDocument.Fields))
+	stops := make([]documentparsingruleports.DocumentParsingStop, 0, len(version.RuleDocument.Stops))
 	missing := make([]string, 0)
 	signals := []string{
 		fmt.Sprintf("rule:%s", set.Name),
@@ -154,10 +154,10 @@ func evaluateVersion(
 		parts++
 	}
 	if parts == 0 {
-		return &serviceports.DocumentParsingAnalysis{
+		return &documentparsingruleports.DocumentParsingAnalysis{
 			Fields:            fields,
 			Stops:             stops,
-			Conflicts:         []serviceports.DocumentParsingConflict{},
+			Conflicts:         []documentparsingruleports.DocumentParsingConflict{},
 			MissingFields:     missing,
 			Signals:           dedupeStrings(signals),
 			ReviewStatus:      "Unavailable",
@@ -172,10 +172,10 @@ func evaluateVersion(
 		reviewStatus = "Ready"
 	}
 
-	return &serviceports.DocumentParsingAnalysis{
+	return &documentparsingruleports.DocumentParsingAnalysis{
 		Fields:            fields,
 		Stops:             normalizeStopSequences(stops),
-		Conflicts:         []serviceports.DocumentParsingConflict{},
+		Conflicts:         []documentparsingruleports.DocumentParsingConflict{},
 		MissingFields:     dedupeStrings(missing),
 		Signals:           dedupeStrings(signals),
 		ReviewStatus:      reviewStatus,
@@ -185,11 +185,11 @@ func evaluateVersion(
 
 func extractSections( //nolint:gocognit // legacy workflow
 	definitions []documentparsingrule.SectionRule,
-	pages []serviceports.DocumentParsingPage,
+	pages []documentparsingruleports.DocumentParsingPage,
 	fallbackText string,
 ) []sectionOccurrence {
 	if len(pages) == 0 && strings.TrimSpace(fallbackText) != "" {
-		pages = append(pages, serviceports.DocumentParsingPage{PageNumber: 1, Text: fallbackText})
+		pages = append(pages, documentparsingruleports.DocumentParsingPage{PageNumber: 1, Text: fallbackText})
 	}
 	sections := make([]sectionOccurrence, 0)
 	allAnchors := collectAllSectionAnchors(definitions)
@@ -240,13 +240,13 @@ func collectAllSectionAnchors(definitions []documentparsingrule.SectionRule) []s
 
 func evaluateFieldRule(
 	rule documentparsingrule.FieldRule, //nolint:gocritic // stable API shape
-	pages []serviceports.DocumentParsingPage,
+	pages []documentparsingruleports.DocumentParsingPage,
 	sections []sectionOccurrence,
-) (serviceports.DocumentParsingField, bool) {
+) (documentparsingruleports.DocumentParsingField, bool) {
 	candidates := linesForFieldRule(rule, pages, sections)
 	for _, candidate := range candidates {
 		if value, excerpt := findValueByAliases(candidate.Lines, rule.Aliases); value != "" {
-			return serviceports.DocumentParsingField{
+			return documentparsingruleports.DocumentParsingField{
 				Key:             rule.Key,
 				Label:           rule.Label,
 				Value:           normalizeValue(value, rule.Normalizer),
@@ -258,7 +258,7 @@ func evaluateFieldRule(
 			}, true
 		}
 		if value, excerpt := findValueByPatterns(candidate.Text, rule.Patterns); value != "" {
-			return serviceports.DocumentParsingField{
+			return documentparsingruleports.DocumentParsingField{
 				Key:             rule.Key,
 				Label:           rule.Label,
 				Value:           normalizeValue(value, rule.Normalizer),
@@ -270,7 +270,7 @@ func evaluateFieldRule(
 			}, true
 		}
 	}
-	return serviceports.DocumentParsingField{}, false
+	return documentparsingruleports.DocumentParsingField{}, false
 }
 
 type fieldCandidate struct {
@@ -281,7 +281,7 @@ type fieldCandidate struct {
 
 func linesForFieldRule(
 	rule documentparsingrule.FieldRule, //nolint:gocritic // stable API shape
-	pages []serviceports.DocumentParsingPage,
+	pages []documentparsingruleports.DocumentParsingPage,
 	sections []sectionOccurrence,
 ) []fieldCandidate {
 	candidates := make([]fieldCandidate, 0)
@@ -312,13 +312,13 @@ func linesForFieldRule(
 
 func evaluateStopRule(
 	rule documentparsingrule.StopRule, //nolint:gocritic // stable API shape
-	pages []serviceports.DocumentParsingPage,
+	pages []documentparsingruleports.DocumentParsingPage,
 	sections []sectionOccurrence,
-) []serviceports.DocumentParsingStop {
+) []documentparsingruleports.DocumentParsingStop {
 	blocks := stopBlocksForRule(rule, pages, sections)
-	stops := make([]serviceports.DocumentParsingStop, 0, len(blocks))
+	stops := make([]documentparsingruleports.DocumentParsingStop, 0, len(blocks))
 	for idx, block := range blocks {
-		stop := serviceports.DocumentParsingStop{
+		stop := documentparsingruleports.DocumentParsingStop{
 			Sequence:        max(1, rule.SequenceStart) + idx,
 			Role:            strings.ToLower(strings.TrimSpace(rule.Role)),
 			PageNumber:      block.PageNumber,
@@ -361,7 +361,7 @@ func evaluateStopRule(
 
 func stopBlocksForRule(
 	rule documentparsingrule.StopRule, //nolint:gocritic // stable API shape
-	pages []serviceports.DocumentParsingPage,
+	pages []documentparsingruleports.DocumentParsingPage,
 	sections []sectionOccurrence,
 ) []sectionOccurrence {
 	if len(rule.SectionNames) > 0 {
@@ -451,7 +451,7 @@ func findValueByPatterns( //nolint:gocritic // stable API shape
 	return "", ""
 }
 
-func assignStopValue(stop *serviceports.DocumentParsingStop, key, value string) {
+func assignStopValue(stop *documentparsingruleports.DocumentParsingStop, key, value string) {
 	switch key {
 	case "name":
 		stop.Name = value
@@ -472,7 +472,7 @@ func assignStopValue(stop *serviceports.DocumentParsingStop, key, value string) 
 	}
 }
 
-func backfillCityStatePostal(stop *serviceports.DocumentParsingStop, lines []string) {
+func backfillCityStatePostal(stop *documentparsingruleports.DocumentParsingStop, lines []string) {
 	if stop.City != "" && stop.State != "" && stop.PostalCode != "" {
 		return
 	}
@@ -495,10 +495,10 @@ func backfillCityStatePostal(stop *serviceports.DocumentParsingStop, lines []str
 }
 
 func normalizeStopSequences(
-	stops []serviceports.DocumentParsingStop,
-) []serviceports.DocumentParsingStop {
+	stops []documentparsingruleports.DocumentParsingStop,
+) []documentparsingruleports.DocumentParsingStop {
 	if len(stops) == 0 {
-		return []serviceports.DocumentParsingStop{}
+		return []documentparsingruleports.DocumentParsingStop{}
 	}
 	for idx := range stops {
 		if stops[idx].Sequence <= 0 {
@@ -545,7 +545,7 @@ func clampConfidence(value float64) float64 {
 	return value
 }
 
-func hasReviewRequiredField(fields map[string]serviceports.DocumentParsingField) bool {
+func hasReviewRequiredField(fields map[string]documentparsingruleports.DocumentParsingField) bool {
 	for _, field := range fields { //nolint:gocritic // stable API shape
 		if field.ReviewRequired {
 			return true
@@ -554,7 +554,7 @@ func hasReviewRequiredField(fields map[string]serviceports.DocumentParsingField)
 	return false
 }
 
-func hasReviewRequiredStop(stops []serviceports.DocumentParsingStop) bool {
+func hasReviewRequiredStop(stops []documentparsingruleports.DocumentParsingStop) bool {
 	for _, stop := range stops { //nolint:gocritic // stable API shape
 		if stop.ReviewRequired {
 			return true
@@ -598,9 +598,9 @@ func lineMatchesAny(line string, needles []string) bool {
 }
 
 func mergeAnalyses(
-	baseline *serviceports.DocumentParsingAnalysis,
-	candidate *serviceports.DocumentParsingAnalysis,
-) *serviceports.DocumentParsingAnalysis {
+	baseline *documentparsingruleports.DocumentParsingAnalysis,
+	candidate *documentparsingruleports.DocumentParsingAnalysis,
+) *documentparsingruleports.DocumentParsingAnalysis {
 	if candidate == nil {
 		return baseline
 	}
@@ -608,13 +608,13 @@ func mergeAnalyses(
 		return candidate
 	}
 
-	merged := &serviceports.DocumentParsingAnalysis{
+	merged := &documentparsingruleports.DocumentParsingAnalysis{
 		Fields: make(
-			map[string]serviceports.DocumentParsingField,
+			map[string]documentparsingruleports.DocumentParsingField,
 			len(baseline.Fields)+len(candidate.Fields),
 		),
-		Stops:         append([]serviceports.DocumentParsingStop{}, baseline.Stops...),
-		Conflicts:     append([]serviceports.DocumentParsingConflict{}, baseline.Conflicts...),
+		Stops:         append([]documentparsingruleports.DocumentParsingStop{}, baseline.Stops...),
+		Conflicts:     append([]documentparsingruleports.DocumentParsingConflict{}, baseline.Conflicts...),
 		MissingFields: []string{},
 		Signals: dedupeStrings(
 			append(append([]string{}, baseline.Signals...), candidate.Signals...),
@@ -629,7 +629,7 @@ func mergeAnalyses(
 		if existing, ok := merged.Fields[key]; ok && strings.TrimSpace(existing.Value) != "" &&
 			strings.TrimSpace(field.Value) != "" &&
 			existing.Value != field.Value {
-			merged.Conflicts = append(merged.Conflicts, serviceports.DocumentParsingConflict{
+			merged.Conflicts = append(merged.Conflicts, documentparsingruleports.DocumentParsingConflict{
 				Key:         key,
 				Label:       field.Label,
 				Values:      dedupeStrings([]string{existing.Value, field.Value}),
@@ -690,7 +690,7 @@ func mergeAnalyses(
 }
 
 func shouldReplaceField(
-	existing, candidate serviceports.DocumentParsingField, //nolint:gocritic // stable API shape
+	existing, candidate documentparsingruleports.DocumentParsingField, //nolint:gocritic // stable API shape
 ) bool {
 	if strings.TrimSpace(existing.Value) == "" {
 		return true
@@ -705,7 +705,7 @@ func shouldReplaceField(
 }
 
 func stopCompleteness(
-	stop serviceports.DocumentParsingStop, //nolint:gocritic // stable API shape
+	stop documentparsingruleports.DocumentParsingStop, //nolint:gocritic // stable API shape
 ) int {
 	score := 0
 	for _, value := range []string{stop.Name, stop.AddressLine1, stop.City, stop.State, stop.PostalCode, stop.Date, stop.TimeWindow} {

@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 )
@@ -27,7 +27,7 @@ func TestOutOfViewDecisions_TellsTheModelWhatBecameOfADelegatesProposal(t *testi
 		{ID: visible, Role: conversation.RoleAssistant, Content: "Handed it on."},
 	}
 
-	note := outOfViewDecisions(history, []serviceports.ProposalOutcome{
+	note := outOfViewDecisions(history, []agentports.ProposalOutcome{
 		{
 			SourceMessageID: pulid.MustNew("amsg_"),
 			ToolName:        "raise_exception",
@@ -67,7 +67,7 @@ func TestOutOfViewDecisions_SaysNothingWhenEverythingIsInView(t *testing.T) {
 	source := pulid.MustNew("amsg_")
 	history := []conversation.Message{{ID: source, Role: conversation.RoleAssistant}}
 
-	assert.Empty(t, outOfViewDecisions(history, []serviceports.ProposalOutcome{{
+	assert.Empty(t, outOfViewDecisions(history, []agentports.ProposalOutcome{{
 		SourceMessageID: source,
 		ToolName:        "update_report",
 		Status:          agent.ProposalStatusExecuted,
@@ -80,12 +80,12 @@ func TestOutOfViewDecisions_SaysNothingWhenEverythingIsInView(t *testing.T) {
 func TestOutOfViewDecisions_KeepsTheNewestFew(t *testing.T) {
 	t.Parallel()
 
-	outcomes := make([]serviceports.ProposalOutcome, 0, maxOutOfViewDecisions+2)
+	outcomes := make([]agentports.ProposalOutcome, 0, maxOutOfViewDecisions+2)
 	names := make([]string, 0, cap(outcomes))
 	for idx := range maxOutOfViewDecisions + 2 {
 		name := "tool_" + string(rune('a'+idx))
 		names = append(names, name)
-		outcomes = append(outcomes, serviceports.ProposalOutcome{
+		outcomes = append(outcomes, agentports.ProposalOutcome{
 			SourceMessageID: pulid.MustNew("amsg_"),
 			ToolName:        name,
 			Status:          agent.ProposalStatusRejected,

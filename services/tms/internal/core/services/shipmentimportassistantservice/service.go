@@ -14,12 +14,22 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentimportchat"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/locationservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentimportchatports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationcategoryports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/servicetypeports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/shipmenttypeports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -39,45 +49,45 @@ type Params struct {
 	Logger               *zap.Logger
 	Config               *config.Config
 	DB                   *postgres.Connection
-	Completion           serviceports.CompletionService
-	ChatRepo             repositories.ShipmentImportChatRepository
-	ChatCacheRepo        repositories.ShipmentImportChatCacheRepository
-	CustomerRepo         repositories.CustomerRepository
-	LocationRepo         repositories.LocationRepository
-	ServiceRepo          repositories.ServiceTypeRepository
-	ShipmentTypeRepo     repositories.ShipmentTypeRepository
-	FormulaTemplateRepo  repositories.FormulaTemplateRepository
-	ShipmentService      serviceports.ShipmentService
-	ShipmentControlRepo  repositories.ShipmentControlRepository
+	Completion           agentports.CompletionService
+	ChatRepo             shipmentimportchatports.ShipmentImportChatRepository
+	ChatCacheRepo        shipmentimportchatports.ShipmentImportChatCacheRepository
+	CustomerRepo         customerports.CustomerRepository
+	LocationRepo         locationports.LocationRepository
+	ServiceRepo          servicetypeports.ServiceTypeRepository
+	ShipmentTypeRepo     shipmenttypeports.ShipmentTypeRepository
+	FormulaTemplateRepo  formulatemplateports.FormulaTemplateRepository
+	ShipmentService      shipmentports.ShipmentService
+	ShipmentControlRepo  tenantports.ShipmentControlRepository
 	LocationService      *locationservice.Service
-	UsStateRepo          repositories.UsStateRepository
-	LocationCategoryRepo repositories.LocationCategoryRepository
-	Permissions          serviceports.PermissionEngine
-	PageThreads          repositories.PageThreadRepository `optional:"true"`
+	UsStateRepo          usstateports.UsStateRepository
+	LocationCategoryRepo locationcategoryports.LocationCategoryRepository
+	Permissions          permissionports.PermissionEngine
+	PageThreads          agentports.PageThreadRepository `optional:"true"`
 }
 
 type Service struct {
 	logger               *zap.Logger
 	cfg                  *config.AIConfig
 	db                   *postgres.Connection
-	completion           serviceports.CompletionService
-	chatRepo             repositories.ShipmentImportChatRepository
-	chatCacheRepo        repositories.ShipmentImportChatCacheRepository
-	customerRepo         repositories.CustomerRepository
-	locationRepo         repositories.LocationRepository
-	serviceRepo          repositories.ServiceTypeRepository
-	shipmentTypeRepo     repositories.ShipmentTypeRepository
-	formulaTemplateRepo  repositories.FormulaTemplateRepository
-	shipmentService      serviceports.ShipmentService
-	shipmentControlRepo  repositories.ShipmentControlRepository
+	completion           agentports.CompletionService
+	chatRepo             shipmentimportchatports.ShipmentImportChatRepository
+	chatCacheRepo        shipmentimportchatports.ShipmentImportChatCacheRepository
+	customerRepo         customerports.CustomerRepository
+	locationRepo         locationports.LocationRepository
+	serviceRepo          servicetypeports.ServiceTypeRepository
+	shipmentTypeRepo     shipmenttypeports.ShipmentTypeRepository
+	formulaTemplateRepo  formulatemplateports.FormulaTemplateRepository
+	shipmentService      shipmentports.ShipmentService
+	shipmentControlRepo  tenantports.ShipmentControlRepository
 	locationService      *locationservice.Service
-	usStateRepo          repositories.UsStateRepository
-	locationCategoryRepo repositories.LocationCategoryRepository
-	permissions          serviceports.PermissionEngine
-	pageThreads          repositories.PageThreadRepository
+	usStateRepo          usstateports.UsStateRepository
+	locationCategoryRepo locationcategoryports.LocationCategoryRepository
+	permissions          permissionports.PermissionEngine
+	pageThreads          agentports.PageThreadRepository
 }
 
-var _ serviceports.ShipmentImportAssistantService = (*Service)(nil)
+var _ shipmentports.ShipmentImportAssistantService = (*Service)(nil)
 
 func New(
 	p Params, //nolint:gocritic // stable API shape
@@ -169,7 +179,7 @@ SUGGEST_QUICK_ACTIONS:
 
 func (s *Service) buildConversationContextMap(
 	ctx context.Context,
-	req *serviceports.ShipmentImportChatRequest,
+	req *shipmentports.ShipmentImportChatRequest,
 ) map[string]any {
 	settledFields := make(map[string]string)
 	for k, v := range req.RequiredFields {
@@ -189,7 +199,7 @@ func (s *Service) buildConversationContextMap(
 
 	control, controlErr := s.shipmentControlRepo.Get(
 		ctx,
-		repositories.GetShipmentControlRequest{TenantInfo: req.TenantInfo},
+		tenantports.GetShipmentControlRequest{TenantInfo: req.TenantInfo},
 	)
 	if controlErr == nil && control != nil {
 		contextMap["shipmentControl"] = map[string]any{
@@ -230,7 +240,7 @@ func (s *Service) buildConversationContextMap(
 
 func (s *Service) buildConversationContext(
 	ctx context.Context,
-	req *serviceports.ShipmentImportChatRequest,
+	req *shipmentports.ShipmentImportChatRequest,
 ) []byte {
 	data, _ := sonic.Marshal(s.buildConversationContextMap(ctx, req))
 	return data
@@ -242,7 +252,7 @@ func (s *Service) buildConversationContext(
 // showing the model its own older view of it is how it contradicts itself.
 func (s *Service) systemMessage(
 	ctx context.Context,
-	req *serviceports.ShipmentImportChatRequest,
+	req *shipmentports.ShipmentImportChatRequest,
 ) string {
 	return systemPrompt + "\n\nCurrent state:\n" + string(s.buildConversationContext(ctx, req))
 }
@@ -257,7 +267,7 @@ func (s *Service) buildDefaultOptions(
 
 	if result, err := s.serviceRepo.SelectOptions(
 		ctx,
-		&repositories.ServiceTypeSelectOptionsRequest{
+		&servicetypeports.ServiceTypeSelectOptionsRequest{
 			SelectQueryRequest: &pagination.SelectQueryRequest{
 				TenantInfo: tenantInfo,
 				Pagination: pagination.Info{Limit: 6},
@@ -275,7 +285,7 @@ func (s *Service) buildDefaultOptions(
 
 	if result, err := s.shipmentTypeRepo.SelectOptions(
 		ctx,
-		&repositories.ShipmentTypeSelectOptionsRequest{
+		&shipmenttypeports.ShipmentTypeSelectOptionsRequest{
 			SelectQueryRequest: &pagination.SelectQueryRequest{
 				TenantInfo: tenantInfo,
 				Pagination: pagination.Info{Limit: 6},
@@ -293,7 +303,7 @@ func (s *Service) buildDefaultOptions(
 
 	if result, err := s.formulaTemplateRepo.SelectOptions(
 		ctx,
-		&repositories.FormulaTemplateSelectOptionsRequest{
+		&formulatemplateports.FormulaTemplateSelectOptionsRequest{
 			SelectQueryRequest: &pagination.SelectQueryRequest{
 				TenantInfo: tenantInfo,
 				Pagination: pagination.Info{Limit: 6},
@@ -316,7 +326,7 @@ func (s *Service) buildDefaultOptions(
 
 func (s *Service) ensureConversation(
 	ctx context.Context,
-	req *serviceports.ShipmentImportChatRequest,
+	req *shipmentports.ShipmentImportChatRequest,
 ) (*shipmentimportchat.Conversation, error) {
 	documentID, err := pulid.Parse(req.DocumentID)
 	if err != nil {
@@ -329,7 +339,7 @@ func (s *Service) ensureConversation(
 
 	conversation, err := s.chatRepo.GetConversationByDocument(
 		ctx,
-		repositories.GetShipmentImportConversationRequest{
+		shipmentimportchatports.GetShipmentImportConversationRequest{
 			DocumentID: documentID,
 			TenantInfo: req.TenantInfo,
 			Status:     shipmentimportchat.ConversationStatusActive,
@@ -358,9 +368,9 @@ func (s *Service) ensureConversation(
 
 // NormalizeSuggestions cleans the chips a model suggested for display.
 func NormalizeSuggestions(
-	suggestions []serviceports.ShipmentImportSuggestion,
-) []serviceports.ShipmentImportSuggestion {
-	normalized := make([]serviceports.ShipmentImportSuggestion, 0, len(suggestions))
+	suggestions []shipmentports.ShipmentImportSuggestion,
+) []shipmentports.ShipmentImportSuggestion {
+	normalized := make([]shipmentports.ShipmentImportSuggestion, 0, len(suggestions))
 	for _, suggestion := range suggestions {
 		if suggestion.Type == "" {
 			suggestion.Type = "prompt"
@@ -383,12 +393,12 @@ func NormalizeSuggestions(
 
 func toHistoryMessages(
 	messages []shipmentimportchat.HistoryMessage,
-) []serviceports.ShipmentImportChatMessage {
-	converted := make([]serviceports.ShipmentImportChatMessage, 0, len(messages))
+) []shipmentports.ShipmentImportChatMessage {
+	converted := make([]shipmentports.ShipmentImportChatMessage, 0, len(messages))
 	for _, message := range messages {
-		toolCalls := make([]serviceports.ShipmentImportToolCallRecord, 0, len(message.ToolCalls))
+		toolCalls := make([]shipmentports.ShipmentImportToolCallRecord, 0, len(message.ToolCalls))
 		for _, toolCall := range message.ToolCalls {
-			toolCalls = append(toolCalls, serviceports.ShipmentImportToolCallRecord{
+			toolCalls = append(toolCalls, shipmentports.ShipmentImportToolCallRecord{
 				Name:   toolCall.Name,
 				CallID: toolCall.CallID,
 				Status: toolCall.Status,
@@ -397,9 +407,9 @@ func toHistoryMessages(
 			})
 		}
 
-		suggestions := make([]serviceports.ShipmentImportSuggestion, 0, len(message.Suggestions))
+		suggestions := make([]shipmentports.ShipmentImportSuggestion, 0, len(message.Suggestions))
 		for _, suggestion := range message.Suggestions {
-			suggestions = append(suggestions, serviceports.ShipmentImportSuggestion{
+			suggestions = append(suggestions, shipmentports.ShipmentImportSuggestion{
 				Label:       suggestion.Label,
 				Prompt:      suggestion.Prompt,
 				Type:        suggestion.Type,
@@ -409,7 +419,7 @@ func toHistoryMessages(
 			})
 		}
 
-		converted = append(converted, serviceports.ShipmentImportChatMessage{
+		converted = append(converted, shipmentports.ShipmentImportChatMessage{
 			ID:          message.ID,
 			Role:        message.Role,
 			Text:        message.Text,
@@ -423,7 +433,7 @@ func toHistoryMessages(
 }
 
 func toHistorySuggestions(
-	suggestions []serviceports.ShipmentImportSuggestion,
+	suggestions []shipmentports.ShipmentImportSuggestion,
 ) []shipmentimportchat.HistorySuggestion {
 	converted := make([]shipmentimportchat.HistorySuggestion, 0, len(suggestions))
 	for _, suggestion := range suggestions {
@@ -441,7 +451,7 @@ func toHistorySuggestions(
 }
 
 func toHistoryToolCalls(
-	toolCalls []serviceports.ShipmentImportToolCallRecord,
+	toolCalls []shipmentports.ShipmentImportToolCallRecord,
 ) []shipmentimportchat.HistoryToolCall {
 	converted := make([]shipmentimportchat.HistoryToolCall, 0, len(toolCalls))
 	for _, toolCall := range toolCalls {
@@ -458,7 +468,7 @@ func toHistoryToolCalls(
 }
 
 func toHistoryActions(
-	actions []serviceports.ShipmentImportAction,
+	actions []shipmentports.ShipmentImportAction,
 ) []shipmentimportchat.HistoryAction {
 	converted := make([]shipmentimportchat.HistoryAction, 0, len(actions))
 	for _, action := range actions {
@@ -475,13 +485,13 @@ func toHistoryActions(
 
 func (s *Service) persistConversationTurn(
 	ctx context.Context,
-	req *serviceports.ShipmentImportChatRequest,
+	req *shipmentports.ShipmentImportChatRequest,
 	conversation *shipmentimportchat.Conversation,
 	responseConversationID string,
 	assistantMessage string,
-	suggestions []serviceports.ShipmentImportSuggestion,
-	toolCalls []serviceports.ShipmentImportToolCallRecord,
-	actions []serviceports.ShipmentImportAction,
+	suggestions []shipmentports.ShipmentImportSuggestion,
+	toolCalls []shipmentports.ShipmentImportToolCallRecord,
+	actions []shipmentports.ShipmentImportAction,
 	model string,
 	resultStatus shipmentimportchat.TurnResultStatus,
 	errorMessage string,
@@ -498,7 +508,7 @@ func (s *Service) persistConversationTurn(
 		Actions:     toHistoryActions(actions),
 	}.Encode()
 
-	if err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	if err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		conversation.UserID = req.TenantInfo.UserID
 		conversation.ExternalConversationID = responseConversationID
 		conversation.TurnCount++
@@ -572,7 +582,7 @@ func (s *Service) getHistorySnapshot(
 
 	conversation, err := s.chatRepo.GetConversationByDocument(
 		ctx,
-		repositories.GetShipmentImportConversationRequest{
+		shipmentimportchatports.GetShipmentImportConversationRequest{
 			DocumentID: documentID,
 			TenantInfo: tenantInfo,
 		},
@@ -589,7 +599,7 @@ func (s *Service) getHistorySnapshot(
 		return nil, err
 	}
 
-	turns, err := s.chatRepo.ListTurns(ctx, repositories.ListShipmentImportTurnsRequest{
+	turns, err := s.chatRepo.ListTurns(ctx, shipmentimportchatports.ListShipmentImportTurnsRequest{
 		ConversationID: conversation.ID,
 		TenantInfo:     tenantInfo,
 	})
@@ -640,12 +650,12 @@ func (s *Service) getHistorySnapshot(
 
 func (s *Service) recordFailedTurn(
 	ctx context.Context,
-	req *serviceports.ShipmentImportChatRequest,
+	req *shipmentports.ShipmentImportChatRequest,
 	conversation *shipmentimportchat.Conversation,
 	conversationID string,
 	assistantMessage string,
-	toolCalls []serviceports.ShipmentImportToolCallRecord,
-	actions []serviceports.ShipmentImportAction,
+	toolCalls []shipmentports.ShipmentImportToolCallRecord,
+	actions []shipmentports.ShipmentImportAction,
 	errorMessage string,
 ) {
 	if conversation == nil {
@@ -742,7 +752,7 @@ type shipmentImportToolCallHandler func(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	args shipmentImportToolCallArgs,
-) (string, []serviceports.ShipmentImportAction)
+) (string, []shipmentports.ShipmentImportAction)
 
 var shipmentImportToolCallHandlers = map[string]shipmentImportToolCallHandler{
 	"accept_field": func(
@@ -750,14 +760,14 @@ var shipmentImportToolCallHandlers = map[string]shipmentImportToolCallHandler{
 		_ context.Context,
 		_ pagination.TenantInfo,
 		args shipmentImportToolCallArgs,
-	) (string, []serviceports.ShipmentImportAction) {
+	) (string, []shipmentports.ShipmentImportAction) {
 		key := args.Str("field_key")
 		return fmt.Sprintf(
-				`{"accepted":"%q"}`,
-				key,
-			), []serviceports.ShipmentImportAction{
-				{Type: "accept_field", FieldKey: key},
-			}
+			`{"accepted":"%q"}`,
+			key,
+		), []shipmentports.ShipmentImportAction{
+			{Type: "accept_field", FieldKey: key},
+		}
 	},
 
 	"accept_all_confident": func(
@@ -765,8 +775,8 @@ var shipmentImportToolCallHandlers = map[string]shipmentImportToolCallHandler{
 		_ context.Context,
 		_ pagination.TenantInfo,
 		_ shipmentImportToolCallArgs,
-	) (string, []serviceports.ShipmentImportAction) {
-		return `{"accepted":"all_confident"}`, []serviceports.ShipmentImportAction{
+	) (string, []shipmentports.ShipmentImportAction) {
+		return `{"accepted":"all_confident"}`, []shipmentports.ShipmentImportAction{
 			{Type: "accept_all_confident"},
 		}
 	},
@@ -776,15 +786,15 @@ var shipmentImportToolCallHandlers = map[string]shipmentImportToolCallHandler{
 		_ context.Context,
 		_ pagination.TenantInfo,
 		args shipmentImportToolCallArgs,
-	) (string, []serviceports.ShipmentImportAction) {
+	) (string, []shipmentports.ShipmentImportAction) {
 		key, value := args.Str("field_key"), args.Str("value")
 		return fmt.Sprintf(
-				`{"set":"%q","value":"%q"}`,
-				key,
-				value,
-			), []serviceports.ShipmentImportAction{
-				{Type: "set_field", FieldKey: key, Value: value},
-			}
+			`{"set":"%q","value":"%q"}`,
+			key,
+			value,
+		), []shipmentports.ShipmentImportAction{
+			{Type: "set_field", FieldKey: key, Value: value},
+		}
 	},
 
 	"set_required_field": func(
@@ -792,20 +802,20 @@ var shipmentImportToolCallHandlers = map[string]shipmentImportToolCallHandler{
 		_ context.Context,
 		_ pagination.TenantInfo,
 		args shipmentImportToolCallArgs,
-	) (string, []serviceports.ShipmentImportAction) {
+	) (string, []shipmentports.ShipmentImportAction) {
 		key, entityID, label := args.Str("field_key"), args.Str("entity_id"), args.Str("label")
 		return fmt.Sprintf(
-				`{"set_required":"%q","entity_id":"%q"}`,
-				key,
-				entityID,
-			), []serviceports.ShipmentImportAction{
-				{
-					Type:     "set_required_field",
-					FieldKey: key,
-					Value:    entityID,
-					Metadata: map[string]any{"label": label},
-				},
-			}
+			`{"set_required":"%q","entity_id":"%q"}`,
+			key,
+			entityID,
+		), []shipmentports.ShipmentImportAction{
+			{
+				Type:     "set_required_field",
+				FieldKey: key,
+				Value:    entityID,
+				Metadata: map[string]any{"label": label},
+			},
+		}
 	},
 
 	"search_customers": func(
@@ -813,7 +823,7 @@ var shipmentImportToolCallHandlers = map[string]shipmentImportToolCallHandler{
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		args shipmentImportToolCallArgs,
-	) (string, []serviceports.ShipmentImportAction) {
+	) (string, []shipmentports.ShipmentImportAction) {
 		return s.searchCustomers(ctx, tenantInfo, args.Str("query")), nil
 	},
 	"search_locations": func(
@@ -821,7 +831,7 @@ var shipmentImportToolCallHandlers = map[string]shipmentImportToolCallHandler{
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		args shipmentImportToolCallArgs,
-	) (string, []serviceports.ShipmentImportAction) {
+	) (string, []shipmentports.ShipmentImportAction) {
 		return s.searchLocations(ctx, tenantInfo, args.Str("query")), nil
 	},
 	"search_service_types": func(
@@ -829,7 +839,7 @@ var shipmentImportToolCallHandlers = map[string]shipmentImportToolCallHandler{
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		args shipmentImportToolCallArgs,
-	) (string, []serviceports.ShipmentImportAction) {
+	) (string, []shipmentports.ShipmentImportAction) {
 		return s.searchServiceTypes(ctx, tenantInfo, args.Str("query")), nil
 	},
 	"search_shipment_types": func(
@@ -837,7 +847,7 @@ var shipmentImportToolCallHandlers = map[string]shipmentImportToolCallHandler{
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		args shipmentImportToolCallArgs,
-	) (string, []serviceports.ShipmentImportAction) {
+	) (string, []shipmentports.ShipmentImportAction) {
 		return s.searchShipmentTypes(ctx, tenantInfo, args.Str("query")), nil
 	},
 	"search_formula_templates": func(
@@ -845,7 +855,7 @@ var shipmentImportToolCallHandlers = map[string]shipmentImportToolCallHandler{
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		args shipmentImportToolCallArgs,
-	) (string, []serviceports.ShipmentImportAction) {
+	) (string, []shipmentports.ShipmentImportAction) {
 		return s.searchFormulaTemplates(ctx, tenantInfo, args.Str("query")), nil
 	},
 
@@ -854,7 +864,7 @@ var shipmentImportToolCallHandlers = map[string]shipmentImportToolCallHandler{
 		_ context.Context,
 		_ pagination.TenantInfo,
 		args shipmentImportToolCallArgs,
-	) (string, []serviceports.ShipmentImportAction) {
+	) (string, []shipmentports.ShipmentImportAction) {
 		idx, _ := args.IntFromFloat64("stop_index")
 		locID := args.Str("location_id")
 		return fmt.Sprintf(
@@ -862,7 +872,7 @@ var shipmentImportToolCallHandlers = map[string]shipmentImportToolCallHandler{
 				idx,
 				locID,
 			),
-			[]serviceports.ShipmentImportAction{
+			[]shipmentports.ShipmentImportAction{
 				{Type: "set_stop_location", FieldKey: strconv.Itoa(idx), Value: locID},
 			}
 	},
@@ -872,7 +882,7 @@ var shipmentImportToolCallHandlers = map[string]shipmentImportToolCallHandler{
 		_ context.Context,
 		_ pagination.TenantInfo,
 		args shipmentImportToolCallArgs,
-	) (string, []serviceports.ShipmentImportAction) {
+	) (string, []shipmentports.ShipmentImportAction) {
 		idx, _ := args.IntFromFloat64("stop_index")
 		start := args.Str("window_start")
 		end := args.Str("window_end")
@@ -895,7 +905,7 @@ var shipmentImportToolCallHandlers = map[string]shipmentImportToolCallHandler{
 			unixStart,
 			unixEnd,
 		)
-		return result, []serviceports.ShipmentImportAction{
+		return result, []shipmentports.ShipmentImportAction{
 			{
 				Type:     "set_stop_schedule",
 				FieldKey: strconv.Itoa(idx),
@@ -910,11 +920,11 @@ var shipmentImportToolCallHandlers = map[string]shipmentImportToolCallHandler{
 		_ context.Context,
 		_ pagination.TenantInfo,
 		args shipmentImportToolCallArgs,
-	) (string, []serviceports.ShipmentImportAction) {
+	) (string, []shipmentports.ShipmentImportAction) {
 		field := args.Str("field")
 		value := args.Str("value")
 		return fmt.Sprintf(`{"set_shipment_field":true,"field":"%q","value":"%q"}`, field, value),
-			[]serviceports.ShipmentImportAction{
+			[]shipmentports.ShipmentImportAction{
 				{Type: "set_shipment_field", FieldKey: field, Value: value},
 			}
 	},
@@ -924,7 +934,7 @@ var shipmentImportToolCallHandlers = map[string]shipmentImportToolCallHandler{
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		args shipmentImportToolCallArgs,
-	) (string, []serviceports.ShipmentImportAction) {
+	) (string, []shipmentports.ShipmentImportAction) {
 		return s.getCustomerRequirements(ctx, tenantInfo, args.Str("customer_id")), nil
 	},
 
@@ -933,7 +943,7 @@ var shipmentImportToolCallHandlers = map[string]shipmentImportToolCallHandler{
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		_ shipmentImportToolCallArgs,
-	) (string, []serviceports.ShipmentImportAction) {
+	) (string, []shipmentports.ShipmentImportAction) {
 		return s.getShipmentControl(ctx, tenantInfo), nil
 	},
 
@@ -942,7 +952,7 @@ var shipmentImportToolCallHandlers = map[string]shipmentImportToolCallHandler{
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		args shipmentImportToolCallArgs,
-	) (string, []serviceports.ShipmentImportAction) {
+	) (string, []shipmentports.ShipmentImportAction) {
 		return s.addLocation(ctx, tenantInfo, args.m), nil
 	},
 
@@ -951,8 +961,8 @@ var shipmentImportToolCallHandlers = map[string]shipmentImportToolCallHandler{
 		_ context.Context,
 		_ pagination.TenantInfo,
 		_ shipmentImportToolCallArgs,
-	) (string, []serviceports.ShipmentImportAction) {
-		return `{"create_shipment":true}`, []serviceports.ShipmentImportAction{
+	) (string, []shipmentports.ShipmentImportAction) {
+		return `{"create_shipment":true}`, []shipmentports.ShipmentImportAction{
 			{Type: "create_shipment"},
 		}
 	},
@@ -984,7 +994,7 @@ func (s *Service) queryCustomers(
 	query string,
 	limit int,
 ) ([]entityMatch, int, error) {
-	result, err := s.customerRepo.SelectOptions(ctx, &repositories.CustomerSelectOptionsRequest{
+	result, err := s.customerRepo.SelectOptions(ctx, &customerports.CustomerSelectOptionsRequest{
 		SelectQueryRequest: &pagination.SelectQueryRequest{
 			TenantInfo: tenantInfo,
 			Pagination: pagination.Info{Limit: limit},
@@ -1051,7 +1061,7 @@ func (s *Service) queryLocations(
 	query string,
 	limit int,
 ) ([]locationMatch, int, error) {
-	result, err := s.locationRepo.SelectOptions(ctx, &repositories.LocationSelectOptionsRequest{
+	result, err := s.locationRepo.SelectOptions(ctx, &locationports.LocationSelectOptionsRequest{
 		SelectQueryRequest: &pagination.SelectQueryRequest{
 			TenantInfo: tenantInfo,
 			Pagination: pagination.Info{Limit: limit},
@@ -1113,7 +1123,7 @@ func (s *Service) searchServiceTypes(
 	tenantInfo pagination.TenantInfo,
 	query string,
 ) string {
-	result, err := s.serviceRepo.SelectOptions(ctx, &repositories.ServiceTypeSelectOptionsRequest{
+	result, err := s.serviceRepo.SelectOptions(ctx, &servicetypeports.ServiceTypeSelectOptionsRequest{
 		SelectQueryRequest: &pagination.SelectQueryRequest{
 			TenantInfo: tenantInfo,
 			Pagination: pagination.Info{Limit: 5},
@@ -1144,7 +1154,7 @@ func (s *Service) searchShipmentTypes(
 ) string {
 	result, err := s.shipmentTypeRepo.SelectOptions(
 		ctx,
-		&repositories.ShipmentTypeSelectOptionsRequest{
+		&shipmenttypeports.ShipmentTypeSelectOptionsRequest{
 			SelectQueryRequest: &pagination.SelectQueryRequest{
 				TenantInfo: tenantInfo,
 				Pagination: pagination.Info{Limit: 5},
@@ -1174,7 +1184,7 @@ func (s *Service) searchFormulaTemplates(
 ) string {
 	result, err := s.formulaTemplateRepo.SelectOptions(
 		ctx,
-		&repositories.FormulaTemplateSelectOptionsRequest{
+		&formulatemplateports.FormulaTemplateSelectOptionsRequest{
 			SelectQueryRequest: &pagination.SelectQueryRequest{
 				TenantInfo: tenantInfo,
 				Pagination: pagination.Info{Limit: 5},
@@ -1268,10 +1278,10 @@ func (s *Service) getCustomerRequirements(
 		return `{"error":"invalid customer ID"}`
 	}
 
-	customer, err := s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
+	customer, err := s.customerRepo.GetByID(ctx, customerports.GetCustomerByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
-		CustomerFilterOptions: repositories.CustomerFilterOptions{
+		CustomerFilterOptions: customerports.CustomerFilterOptions{
 			IncludeBillingProfile: true,
 		},
 	})
@@ -1296,7 +1306,7 @@ func (s *Service) getCustomerRequirements(
 func (s *Service) getShipmentControl(ctx context.Context, tenantInfo pagination.TenantInfo) string {
 	control, err := s.shipmentControlRepo.Get(
 		ctx,
-		repositories.GetShipmentControlRequest{TenantInfo: tenantInfo},
+		tenantports.GetShipmentControlRequest{TenantInfo: tenantInfo},
 	)
 	if err != nil {
 		return `{"error":"could not fetch shipment control"}`
@@ -1315,7 +1325,7 @@ func (s *Service) GetHistory(
 	ctx context.Context,
 	documentID string,
 	tenantInfo pagination.TenantInfo,
-) (*serviceports.ShipmentImportChatHistoryResponse, error) {
+) (*shipmentports.ShipmentImportChatHistoryResponse, error) {
 	id, err := pulid.Parse(documentID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
@@ -1330,7 +1340,7 @@ func (s *Service) GetHistory(
 		return nil, err
 	}
 
-	return &serviceports.ShipmentImportChatHistoryResponse{
+	return &shipmentports.ShipmentImportChatHistoryResponse{
 		DocumentID:     documentID,
 		ConversationID: snapshot.ConversationID,
 		Status:         string(snapshot.Status),
@@ -1395,7 +1405,7 @@ func (s *Service) closeConversations(
 
 	closed, err := s.pageThreads.ArchiveSubjectThreads(
 		ctx,
-		repositories.ArchiveSubjectThreadsRequest{
+		agentports.ArchiveSubjectThreadsRequest{
 			TenantInfo:  tenantInfo,
 			Origin:      conversation.ThreadOriginImport,
 			SubjectType: agent.SubjectDocument,
@@ -1416,4 +1426,4 @@ func (s *Service) closeConversations(
 	return nil
 }
 
-var _ serviceports.ShipmentImportAssistantService = (*Service)(nil)
+var _ shipmentports.ShipmentImportAssistantService = (*Service)(nil)

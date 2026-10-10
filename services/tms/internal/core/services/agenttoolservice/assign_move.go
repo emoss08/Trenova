@@ -5,21 +5,21 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 type assignMoveTool struct {
-	assignments serviceports.AssignmentService
+	assignments shipmentports.AssignmentService
 	console     assignmentChecker
 }
 
 func newAssignMoveTool(
-	assignments serviceports.AssignmentService,
-	console serviceports.DispatchConsoleService,
-) serviceports.AgentTool {
+	assignments shipmentports.AssignmentService,
+	console agentports.DispatchConsoleService,
+) agentports.AgentTool {
 	return &assignMoveTool{assignments: assignments, console: console}
 }
 
@@ -77,8 +77,8 @@ func (t *assignMoveTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *assignMoveTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *assignMoveTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceShipmentMove,
@@ -97,7 +97,7 @@ func (t *assignMoveTool) Policy() serviceports.ToolPolicy {
 
 func (t *assignMoveTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -114,8 +114,8 @@ func (t *assignMoveTool) Execute(
 }
 
 func (t *assignMoveTool) request(
-	params *serviceports.ToolExecuteParams,
-) (*repositories.AssignShipmentMoveRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*shipmentports.AssignShipmentMoveRequest, error) {
 	moveID, err := requirePulid(params.Params, "shipmentMoveId")
 	if err != nil {
 		return nil, err
@@ -129,7 +129,7 @@ func (t *assignMoveTool) request(
 		return nil, err
 	}
 
-	req := &repositories.AssignShipmentMoveRequest{
+	req := &shipmentports.AssignShipmentMoveRequest{
 		TenantInfo:      tenantFrom(*params),
 		ShipmentMoveID:  moveID,
 		PrimaryWorkerID: workerID,
@@ -166,6 +166,6 @@ func optionalPulid(params map[string]any, key string) (pulid.ID, bool, error) {
 
 // Target names the record this call would change, so a proposal to change it
 // can be checked against the record's version before it runs.
-func (t *assignMoveTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *assignMoveTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, "shipmentMoveId", permission.ResourceShipmentMove)
 }

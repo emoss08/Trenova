@@ -31,18 +31,18 @@ Four things make that observable and repeatable:
   a bench turn, and a bench run never touches the dev worker's work. Edit a tool description,
   run the bench again, and the new description is what the model reads. The edition's
   worker-only options are left out, since they add schedules of their own.
-- **A recorder on the model router.** `serviceports.CompletionService` is decorated
+- **A recorder on the model router.** `agentports.CompletionService` is decorated
   (`deskbench.Recorder`) so every chat, streamed and structured call is copied as it was sent and
   as it came back: the system prompt, the messages, the tools offered, thinking, tool calls,
   tokens, latency, cost, retries, fallbacks and errors. Calls are tied to a turn by their usage
   attribution (`ThreadID`, `OwnerID`); a call that carries neither (the scope guard's
   classifier) is listed beside the turn it ran during.
-- **A watcher on the workflow starter.** `serviceports.WorkflowStarter` is decorated
+- **A watcher on the workflow starter.** `kernelports.WorkflowStarter` is decorated
   (`deskbench.TurnWatcher`) so every `AssistantTurnWorkflow` started on a bench conversation, by
   the bench or by the application (a decision follow-up), is seen the moment it starts. The
   bench follows each one's stream from the first frame, waits for its result, and keeps
   waiting a few seconds for another turn the last one started.
-- **No learning.** `serviceports.AgentReflectionScheduler` is replaced with one that does
+- **No learning.** `agentports.AgentReflectionScheduler` is replaced with one that does
   nothing, so a bench conversation is never looked back over. A conversation goes quiet after
   ten minutes, so a run longer than that fed what its early cases taught to the cases after them:
   a rejected hold taught "this person does not want a hold for missing paperwork", and the case
@@ -50,7 +50,7 @@ Four things make that observable and repeatable:
   (`benchLeftovers`) also retires the memories earlier bench conversations taught and dismisses
   what they suggested; memories from people's own conversations are never touched. Reflection
   itself is covered by its own tests, not by the bench. For the same reason
-  `serviceports.AgentTrustService` is wrapped so the bench's approvals, its end-of-case
+  `agentports.AgentTrustService` is wrapped so the bench's approvals, its end-of-case
   rejections and its failed executions are not outcomes for earned autonomy: its streaks
   promoted `transfer_to_billing` to AutoExecute on Billing exceptions, and the case that
   approves that proposal found it had already run.

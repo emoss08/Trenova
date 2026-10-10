@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -52,7 +52,7 @@ type needs struct {
 	evaluations map[pulid.ID]struct{}
 	proposals   map[pulid.ID]struct{}
 	usageTurns  map[pulid.ID]struct{}
-	calls       []repositories.OwnerCall
+	calls       []aiauditports.OwnerCall
 	windowFrom  int64
 	windowTo    int64
 }
@@ -115,7 +115,7 @@ type lookups struct {
 	threadTurns map[pulid.ID][]*conversation.AssistantTurn
 	users       map[pulid.ID]string
 	agents      map[pulid.ID]string
-	calls       map[repositories.OwnerCall]struct{}
+	calls       map[aiauditports.OwnerCall]struct{}
 }
 
 func emptyLookups() *lookups {
@@ -129,7 +129,7 @@ func emptyLookups() *lookups {
 		threadTurns: map[pulid.ID][]*conversation.AssistantTurn{},
 		users:       map[pulid.ID]string{},
 		agents:      map[pulid.ID]string{},
-		calls:       map[repositories.OwnerCall]struct{}{},
+		calls:       map[aiauditports.OwnerCall]struct{}{},
 	}
 }
 
@@ -140,7 +140,7 @@ const usageTurnSlackSeconds = 3600
 // conversations those point at.
 func load(
 	ctx context.Context,
-	source repositories.AIAuditSourceRepository,
+	source aiauditports.AIAuditSourceRepository,
 	tenantInfo pagination.TenantInfo,
 	need *needs,
 ) (*lookups, error) {
@@ -225,7 +225,7 @@ func load(
 
 func loadUsageTurns(
 	ctx context.Context,
-	source repositories.AIAuditSourceRepository,
+	source aiauditports.AIAuditSourceRepository,
 	tenantInfo pagination.TenantInfo,
 	need *needs,
 	found *lookups,
@@ -234,7 +234,7 @@ func loadUsageTurns(
 		return nil
 	}
 
-	turns, err := source.TurnsInWindow(ctx, &repositories.AIAuditTurnWindow{
+	turns, err := source.TurnsInWindow(ctx, &aiauditports.AIAuditTurnWindow{
 		TenantInfo: tenantInfo,
 		ThreadIDs:  idsOf(need.usageTurns),
 		From:       need.windowFrom - usageTurnSlackSeconds,
@@ -255,7 +255,7 @@ func loadUsageTurns(
 // lookup has said which people and agents they name.
 func loadNames(
 	ctx context.Context,
-	source repositories.AIAuditSourceRepository,
+	source aiauditports.AIAuditSourceRepository,
 	tenantInfo pagination.TenantInfo,
 	found *lookups,
 	events []*aiaudit.AIAuditEvent,

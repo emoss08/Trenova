@@ -7,10 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/ediinboundservice"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -114,7 +114,7 @@ func outboundMessage(status edi.MessageDeliveryStatus) *edi.EDIMessage {
 func TestEDIDeliveryTools_ArePersonOnlyProposals(t *testing.T) {
 	t.Parallel()
 
-	for _, tool := range []serviceports.AgentTool{
+	for _, tool := range []agentports.AgentTool{
 		newRetryEDIMessageDeliveryTool(nil),
 		newReplayEDIMessageTool(nil),
 		newReprocessEDIInboundFilesTool(nil),
@@ -188,7 +188,7 @@ func TestReplayEDIMessage_SendsADeliveredDocumentAgainOnlyWhenApproved(t *testin
 
 	target, ok := tool.Target(map[string]any{paramEDIMessageID: sent.ID.String()})
 	require.True(t, ok)
-	assert.Equal(t, serviceports.ToolTarget{Resource: permission.ResourceEDI, ID: sent.ID}, target)
+	assert.Equal(t, agentports.ToolTarget{Resource: permission.ResourceEDI, ID: sent.ID}, target)
 
 	args := map[string]any{paramEDIMessageID: sent.ID.String()}
 	preview := previewWithoutWrites(t, deliveries.guard, func() (*agent.ToolPreview, error) {
@@ -216,7 +216,7 @@ type fakeReprocessor struct {
 
 func (f *fakeReprocessor) GetInboundFile(
 	_ context.Context,
-	req repositories.GetEDIInboundFileByIDRequest,
+	req ediports.GetEDIInboundFileByIDRequest,
 ) (*edi.EDIInboundFile, error) {
 	file, ok := f.files[req.ID]
 	if !ok {
@@ -298,7 +298,7 @@ func TestEDIBulkTools_RefuseMoreThanTheServiceTakes(t *testing.T) {
 	}
 
 	tool := newRetryEDIMessageDeliveryTool(&fakeDeliveries{})
-	err := tool.(serviceports.ToolValidator).Validate(
+	err := tool.(agentports.ToolValidator).Validate(
 		t.Context(),
 		agentParamsFor(map[string]any{paramEDIMessageIDs: ids}),
 	)

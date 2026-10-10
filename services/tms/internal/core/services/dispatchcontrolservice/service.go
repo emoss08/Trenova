@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,16 +19,16 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.DispatchControlRepository
+	Repo         dispatchcontrolports.DispatchControlRepository
 	Validator    *Validator
-	AuditService services.AuditService
+	AuditService auditports.AuditService
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.DispatchControlRepository
+	repo         dispatchcontrolports.DispatchControlRepository
 	validator    *Validator
-	auditService services.AuditService
+	auditService auditports.AuditService
 }
 
 func New(p Params) *Service {
@@ -42,7 +42,7 @@ func New(p Params) *Service {
 
 func (s *Service) Get(
 	ctx context.Context,
-	req repositories.GetDispatchControlRequest,
+	req dispatchcontrolports.GetDispatchControlRequest,
 ) (*dispatchcontrol.DispatchControl, error) {
 	return s.repo.GetByOrgID(ctx, req)
 }
@@ -62,7 +62,7 @@ func (s *Service) Update(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetByOrgID(ctx, repositories.GetDispatchControlRequest{
+	original, err := s.repo.GetByOrgID(ctx, dispatchcontrolports.GetDispatchControlRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  entity.OrganizationID,
 			BuID:   entity.BusinessUnitID,
@@ -81,7 +81,7 @@ func (s *Service) Update(
 	}
 
 	if err = s.auditService.LogAction(
-		&services.LogActionParams{
+		&auditports.LogActionParams{
 			Resource:       permission.ResourceDispatchControl,
 			ResourceID:     updatedEntity.GetID().String(),
 			Operation:      permission.OpUpdate,

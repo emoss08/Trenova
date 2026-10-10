@@ -7,9 +7,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	assistant "github.com/emoss08/trenova/internal/core/services/shipmentimportassistantservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -26,7 +28,7 @@ func turnPayload(stream bool) *TurnPayload {
 			BuID:   pulid.MustNew("bu_"),
 			UserID: pulid.MustNew("usr_"),
 		},
-		Request: &serviceports.ShipmentImportChatRequest{
+		Request: &shipmentports.ShipmentImportChatRequest{
 			UserMessage: "Set the customer to Acme",
 			DocumentID:  pulid.MustNew("doc_").String(),
 		},
@@ -46,8 +48,8 @@ func turnEnv(t *testing.T) *testsuite.TestWorkflowEnvironment {
 		Return(&assistant.PreparedTurn{
 			ConversationID: pulid.MustNew("sic_"),
 			System:         "You are the import assistant.",
-			Messages: []serviceports.Message{{
-				Role:    serviceports.RoleUser,
+			Messages: []agentports.Message{{
+				Role:    agentports.RoleUser,
 				Content: "Set the customer to Acme",
 			}},
 		}, nil).
@@ -67,11 +69,11 @@ func TestImportAssistantTurnWorkflow_RunsTheToolLoopAndSaves(t *testing.T) {
 
 	calls := 0
 	env.OnActivity(a.ImportModelCallActivity, mock.Anything, mock.Anything).
-		Return(func(_ context.Context, in *ModelInput) (*serviceports.ChatCompletionResult, error) {
+		Return(func(_ context.Context, in *ModelInput) (*agentports.ChatCompletionResult, error) {
 			calls++
 			if calls == 1 {
-				return &serviceports.ChatCompletionResult{
-					ToolCalls: []serviceports.ToolCall{{
+				return &agentports.ChatCompletionResult{
+					ToolCalls: []agentports.ToolCall{{
 						ID:        "call_1",
 						Name:      "search_customers",
 						Arguments: map[string]any{"query": "Acme"},
@@ -83,7 +85,7 @@ func TestImportAssistantTurnWorkflow_RunsTheToolLoopAndSaves(t *testing.T) {
 				assert.Equal(t, "call_1", in.Request.Messages[2].ToolCallID)
 			}
 
-			return &serviceports.ChatCompletionResult{
+			return &agentports.ChatCompletionResult{
 				Text:            "Found Acme Freight.",
 				ModelIdentifier: "test-model",
 			}, nil
@@ -93,16 +95,16 @@ func TestImportAssistantTurnWorkflow_RunsTheToolLoopAndSaves(t *testing.T) {
 		Return(&assistant.ToolOutcome{
 			Output:  `{"customers":[{"id":"cus_1"}]}`,
 			Status:  "completed",
-			Actions: []serviceports.ShipmentImportAction{{Type: "set_field", FieldKey: "customer"}},
+			Actions: []shipmentports.ShipmentImportAction{{Type: "set_field", FieldKey: "customer"}},
 		}, nil).
 		Once()
 
 	var saved *FinishInput
 	env.OnActivity(a.FinishImportTurnActivity, mock.Anything, mock.Anything).
-		Return(func(_ context.Context, in *FinishInput) (*serviceports.ShipmentImportChatResponse, error) {
+		Return(func(_ context.Context, in *FinishInput) (*shipmentports.ShipmentImportChatResponse, error) {
 			saved = in
 
-			return &serviceports.ShipmentImportChatResponse{
+			return &shipmentports.ShipmentImportChatResponse{
 				Message:        in.Record.Message,
 				ConversationID: "sic_1",
 				Actions:        in.Record.Actions,
@@ -114,7 +116,7 @@ func TestImportAssistantTurnWorkflow_RunsTheToolLoopAndSaves(t *testing.T) {
 
 	require.True(t, env.IsWorkflowCompleted())
 	require.NoError(t, env.GetWorkflowError())
-	var response serviceports.ShipmentImportChatResponse
+	var response shipmentports.ShipmentImportChatResponse
 	require.NoError(t, env.GetWorkflowResult(&response))
 	assert.Equal(t, "Found Acme Freight.", response.Message)
 
@@ -135,13 +137,13 @@ func TestImportAssistantTurnWorkflow_AttributesEveryModelCallAndTotalsItsUsage(t
 	payload := turnPayload(false)
 	providerID := pulid.MustNew("aip_")
 
-	attributed := make([]serviceports.AIUsageAttribution, 0, 2)
+	attributed := make([]aiusageports.AIUsageAttribution, 0, 2)
 	env.OnActivity(a.ImportModelCallActivity, mock.Anything, mock.Anything).
-		Return(func(_ context.Context, in *ModelInput) (*serviceports.ChatCompletionResult, error) {
+		Return(func(_ context.Context, in *ModelInput) (*agentports.ChatCompletionResult, error) {
 			attributed = append(attributed, in.Request.Attribution)
 			if len(attributed) == 1 {
-				return &serviceports.ChatCompletionResult{
-					ToolCalls: []serviceports.ToolCall{{
+				return &agentports.ChatCompletionResult{
+					ToolCalls: []agentports.ToolCall{{
 						ID:        "call_1",
 						Name:      "search_customers",
 						Arguments: map[string]any{"query": "Acme"},
@@ -153,7 +155,7 @@ func TestImportAssistantTurnWorkflow_AttributesEveryModelCallAndTotalsItsUsage(t
 				}, nil
 			}
 
-			return &serviceports.ChatCompletionResult{
+			return &agentports.ChatCompletionResult{
 				Text:            "Found Acme Freight.",
 				ModelIdentifier: "second-model",
 				ProviderID:      providerID,
@@ -170,10 +172,10 @@ func TestImportAssistantTurnWorkflow_AttributesEveryModelCallAndTotalsItsUsage(t
 
 	var saved *FinishInput
 	env.OnActivity(a.FinishImportTurnActivity, mock.Anything, mock.Anything).
-		Return(func(_ context.Context, in *FinishInput) (*serviceports.ShipmentImportChatResponse, error) {
+		Return(func(_ context.Context, in *FinishInput) (*shipmentports.ShipmentImportChatResponse, error) {
 			saved = in
 
-			return &serviceports.ShipmentImportChatResponse{}, nil
+			return &shipmentports.ShipmentImportChatResponse{}, nil
 		}).
 		Once()
 
@@ -208,12 +210,12 @@ func TestImportAssistantTurnWorkflow_TakesSuggestionsWithoutATool(t *testing.T) 
 
 	calls := 0
 	env.OnActivity(a.ImportModelCallActivity, mock.Anything, mock.Anything).
-		Return(func(context.Context, *ModelInput) (*serviceports.ChatCompletionResult, error) {
+		Return(func(context.Context, *ModelInput) (*agentports.ChatCompletionResult, error) {
 			calls++
 			if calls == 1 {
-				return &serviceports.ChatCompletionResult{
+				return &agentports.ChatCompletionResult{
 					Text: "Is Acme right?",
-					ToolCalls: []serviceports.ToolCall{{
+					ToolCalls: []agentports.ToolCall{{
 						ID:   "call_9",
 						Name: assistant.SuggestQuickActionsTool,
 						Arguments: map[string]any{"suggestions": []any{
@@ -223,15 +225,15 @@ func TestImportAssistantTurnWorkflow_TakesSuggestionsWithoutATool(t *testing.T) 
 				}, nil
 			}
 
-			return &serviceports.ChatCompletionResult{}, nil
+			return &agentports.ChatCompletionResult{}, nil
 		})
 
 	var saved *FinishInput
 	env.OnActivity(a.FinishImportTurnActivity, mock.Anything, mock.Anything).
-		Return(func(_ context.Context, in *FinishInput) (*serviceports.ShipmentImportChatResponse, error) {
+		Return(func(_ context.Context, in *FinishInput) (*shipmentports.ShipmentImportChatResponse, error) {
 			saved = in
 
-			return &serviceports.ShipmentImportChatResponse{}, nil
+			return &shipmentports.ShipmentImportChatResponse{}, nil
 		})
 
 	env.ExecuteWorkflow(ImportAssistantTurnWorkflow, turnPayload(false))
@@ -253,16 +255,16 @@ func TestImportAssistantTurnWorkflow_NeverRetriesAWrite(t *testing.T) {
 
 	calls := 0
 	env.OnActivity(a.ImportModelCallActivity, mock.Anything, mock.Anything).
-		Return(func(context.Context, *ModelInput) (*serviceports.ChatCompletionResult, error) {
+		Return(func(context.Context, *ModelInput) (*agentports.ChatCompletionResult, error) {
 			calls++
 			if calls == 1 {
-				return &serviceports.ChatCompletionResult{ToolCalls: []serviceports.ToolCall{{
+				return &agentports.ChatCompletionResult{ToolCalls: []agentports.ToolCall{{
 					ID:   "call_1",
 					Name: "create_shipment",
 				}}}, nil
 			}
 
-			return &serviceports.ChatCompletionResult{Text: "It did not go through."}, nil
+			return &agentports.ChatCompletionResult{Text: "It did not go through."}, nil
 		})
 
 	writes := 0
@@ -275,10 +277,10 @@ func TestImportAssistantTurnWorkflow_NeverRetriesAWrite(t *testing.T) {
 
 	var saved *FinishInput
 	env.OnActivity(a.FinishImportTurnActivity, mock.Anything, mock.Anything).
-		Return(func(_ context.Context, in *FinishInput) (*serviceports.ShipmentImportChatResponse, error) {
+		Return(func(_ context.Context, in *FinishInput) (*shipmentports.ShipmentImportChatResponse, error) {
 			saved = in
 
-			return &serviceports.ShipmentImportChatResponse{}, nil
+			return &shipmentports.ShipmentImportChatResponse{}, nil
 		})
 
 	env.ExecuteWorkflow(ImportAssistantTurnWorkflow, turnPayload(false))
@@ -299,7 +301,7 @@ func TestImportAssistantTurnWorkflow_RecordsAFailedTurn(t *testing.T) {
 	var a *Activities
 
 	env.OnActivity(a.ImportModelCallActivity, mock.Anything, mock.Anything).
-		Return(nil, modelcall.Classify(serviceports.ErrNoProviderConfigured)).
+		Return(nil, modelcall.Classify(agentports.ErrNoProviderConfigured)).
 		Once()
 
 	var failed *FinishInput
@@ -322,6 +324,6 @@ func TestImportAssistantTurnWorkflow_RecordsAFailedTurn(t *testing.T) {
 
 	require.NotNil(t, failed)
 	require.NotNil(t, failed.Failure)
-	assert.ErrorIs(t, failed.Failure.Err(), serviceports.ErrNoProviderConfigured)
+	assert.ErrorIs(t, failed.Failure.Err(), agentports.ErrNoProviderConfigured)
 	env.AssertExpectations(t)
 }

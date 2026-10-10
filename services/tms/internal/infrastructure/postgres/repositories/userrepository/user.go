@@ -7,12 +7,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/quotaservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -33,16 +33,16 @@ type Params struct {
 
 	DB     *postgres.Connection
 	Logger *zap.Logger
-	Quota  services.QuotaGuard `optional:"true"`
+	Quota  platformplanports.QuotaGuard `optional:"true"`
 }
 
 type repository struct {
 	db    *postgres.Connection
 	l     *zap.Logger
-	quota services.QuotaGuard
+	quota platformplanports.QuotaGuard
 }
 
-func New(p Params) repositories.UserRepository {
+func New(p Params) tenantports.UserRepository {
 	return &repository{
 		db:    p.DB,
 		l:     p.Logger.Named("postgres.user-repository"),
@@ -52,7 +52,7 @@ func New(p Params) repositories.UserRepository {
 
 func (ur *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListUsersRequest,
+	req *tenantports.ListUsersRequest,
 ) *bun.SelectQuery {
 	fieldConfig := querybuilder.NewFieldConfigBuilder((*tenant.User)(nil)).
 		WithAutoMapping().
@@ -97,7 +97,7 @@ func (ur *repository) filterQuery(
 
 func (ur *repository) List(
 	ctx context.Context,
-	req *repositories.ListUsersRequest,
+	req *tenantports.ListUsersRequest,
 ) (*pagination.ListResult[*tenant.User], error) {
 	return dbtx.Read(ctx, ur.db, func(ctx context.Context) (*pagination.ListResult[*tenant.User], error) {
 		log := ur.l.With(
@@ -140,7 +140,7 @@ func (ur *repository) scopeUserTenant(
 
 func (ur *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListUserConnectionRequest,
+	req *tenantports.ListUserConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	q, err := querybuilder.ApplyCursorFiltersWithoutTenantScope(
 		q,
@@ -158,7 +158,7 @@ func (ur *repository) applyCursorPageFilters(
 
 func (ur *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListUserConnectionRequest,
+	req *tenantports.ListUserConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	q, err := querybuilder.ApplyCursorFiltersWithoutTenantScope(
 		q,
@@ -176,7 +176,7 @@ func (ur *repository) applyTotalCountFilters(
 
 func (ur *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListUserConnectionRequest,
+	req *tenantports.ListUserConnectionRequest,
 ) (*pagination.CursorListResult[*tenant.User], error) {
 	return dbtx.Write(ctx, ur.db, func(ctx context.Context) (*pagination.CursorListResult[*tenant.User], error) {
 		log := ur.l.With(
@@ -229,7 +229,7 @@ func (ur *repository) ListConnection(
 
 func (ur *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetUserByIDRequest,
+	req tenantports.GetUserByIDRequest,
 ) (*tenant.User, error) {
 	return dbtx.Read(ctx, ur.db, func(ctx context.Context) (*tenant.User, error) {
 		entity := new(tenant.User)
@@ -454,7 +454,7 @@ func (ur *repository) ListOrganizationMemberships(
 
 func (ur *repository) ReplaceOrganizationMemberships( //nolint:funlen,gocognit // legacy workflow
 	ctx context.Context,
-	req repositories.ReplaceOrganizationMembershipsRequest,
+	req tenantports.ReplaceOrganizationMembershipsRequest,
 ) ([]*tenant.OrganizationMembership, error) {
 	return dbtx.Write(ctx, ur.db, func(ctx context.Context) ([]*tenant.OrganizationMembership, error) {
 		if len(req.OrganizationIDs) == 0 {
@@ -505,7 +505,7 @@ func (ur *repository) ReplaceOrganizationMemberships( //nolint:funlen,gocognit /
 			}
 		}
 
-		err = ur.db.WithTx(ctx, ports.TxOptions{
+		err = ur.db.WithTx(ctx, kernelports.TxOptions{
 			LockTimeout: 250 * time.Millisecond,
 		}, func(txCtx context.Context, tx bun.Tx) error {
 			lockedMemberships := make([]*tenant.OrganizationMembership, 0)
@@ -545,7 +545,7 @@ func (ur *repository) ReplaceOrganizationMemberships( //nolint:funlen,gocognit /
 				if _, ok := currentByOrg[orgID]; ok {
 					continue
 				}
-				if quotaErr := quotaservice.EnforceAll(txCtx, ur.quota, services.QuotaRequest{
+				if quotaErr := quotaservice.EnforceAll(txCtx, ur.quota, platformplanports.QuotaRequest{
 					TenantInfo: pagination.TenantInfo{
 						OrgID: orgID,
 						BuID:  req.BusinessUnitID,
@@ -624,14 +624,14 @@ func (ur *repository) UpdateCurrentOrganization(
 func (ur *repository) GetUserOrganizationSummaries(
 	ctx context.Context,
 	userID pulid.ID,
-) ([]repositories.OrgSummary, error) {
-	return dbtx.Read(ctx, ur.db, func(ctx context.Context) ([]repositories.OrgSummary, error) {
+) ([]tenantports.OrgSummary, error) {
+	return dbtx.Read(ctx, ur.db, func(ctx context.Context) ([]tenantports.OrgSummary, error) {
 		log := ur.l.With(
 			zap.String("operation", "GetUserOrganizationSummaries"),
 			zap.String("userID", userID.String()),
 		)
 
-		var summaries []repositories.OrgSummary
+		var summaries []tenantports.OrgSummary
 		err := ur.db.DBForContext(ctx).
 			NewSelect().
 			Model((*tenant.OrganizationMembership)(nil)).
@@ -690,7 +690,7 @@ func (ur *repository) Update(ctx context.Context, entity *tenant.User) (*tenant.
 
 func (ur *repository) UpdatePassword(
 	ctx context.Context,
-	req repositories.UpdateUserPasswordRequest,
+	req tenantports.UpdateUserPasswordRequest,
 ) error {
 	return dbtx.WriteErr(ctx, ur.db, func(ctx context.Context) error {
 		log := ur.l.With(
@@ -721,7 +721,7 @@ func (ur *repository) UpdatePassword(
 
 func (ur *repository) GetByIDs(
 	ctx context.Context,
-	req repositories.GetUsersByIDsRequest,
+	req tenantports.GetUsersByIDsRequest,
 ) ([]*tenant.User, error) {
 	return dbtx.Read(ctx, ur.db, func(ctx context.Context) ([]*tenant.User, error) {
 		log := ur.l.With(
@@ -750,7 +750,7 @@ func (ur *repository) GetByIDs(
 
 func (ur *repository) BulkUpdateStatus(
 	ctx context.Context,
-	req *repositories.BulkUpdateUserStatusRequest,
+	req *tenantports.BulkUpdateUserStatusRequest,
 ) ([]*tenant.User, error) {
 	return dbtx.Write(ctx, ur.db, func(ctx context.Context) ([]*tenant.User, error) {
 		log := ur.l.With(
@@ -802,7 +802,7 @@ func (ur *repository) GetSystemUser(ctx context.Context, columns ...string) (*te
 
 func (ur *repository) GetTenantMember(
 	ctx context.Context,
-	req repositories.GetTenantMemberRequest,
+	req tenantports.GetTenantMemberRequest,
 ) (*tenant.User, error) {
 	return dbtx.Read(ctx, ur.db, func(ctx context.Context) (*tenant.User, error) {
 		user := buncolgen.UserColumns

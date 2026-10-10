@@ -6,7 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
@@ -16,7 +17,7 @@ import (
 // keepTurnMemories puts what the turn did with memory on its last reply of
 // its own: the memories it used, shown above the reply, and what it kept,
 // shown under it. Another agent's steps are never that reply.
-func keepTurnMemories(messages []conversation.Message, run *serviceports.RunResult) {
+func keepTurnMemories(messages []conversation.Message, run *agentports.RunResult) {
 	if run == nil || (len(run.UsedMemoryIDs) == 0 && len(run.SavedMemories) == 0) {
 		return
 	}
@@ -98,16 +99,16 @@ func (s *Service) deskMemoryActor(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	userID pulid.ID,
-) *serviceports.DeskMemoryActor {
-	actor := &serviceports.RequestActor{
-		PrincipalType:  serviceports.PrincipalTypeUser,
+) *agentports.DeskMemoryActor {
+	actor := &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    userID,
 		UserID:         userID,
 		OrganizationID: tenant.OrgID,
 		BusinessUnitID: tenant.BuID,
 	}
 
-	return &serviceports.DeskMemoryActor{
+	return &agentports.DeskMemoryActor{
 		Actor:           actor,
 		MayCreateShared: s.allowed(ctx, actor, permission.OpCreate),
 		MayUpdateShared: s.allowed(ctx, actor, permission.OpUpdate),
@@ -116,7 +117,7 @@ func (s *Service) deskMemoryActor(
 
 func (s *Service) allowed(
 	ctx context.Context,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 	operation permission.Operation,
 ) bool {
 	if s.permissions == nil {
@@ -128,7 +129,7 @@ func (s *Service) allowed(
 	return err == nil && result != nil && result.Allowed
 }
 
-func memoryNote(memory *serviceports.DeskMemory) conversation.MemoryNote {
+func memoryNote(memory *agentports.DeskMemory) conversation.MemoryNote {
 	note := conversation.MemoryNote{
 		ID:          memory.Memory.ID,
 		Content:     memory.Memory.Content,
@@ -152,7 +153,7 @@ func memoryNote(memory *serviceports.DeskMemory) conversation.MemoryNote {
 	return note
 }
 
-func memoryNoteLink(link *serviceports.DeskMemoryLink) *conversation.MemoryNoteLink {
+func memoryNoteLink(link *agentports.DeskMemoryLink) *conversation.MemoryNoteLink {
 	if link == nil {
 		return nil
 	}

@@ -7,8 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/iam"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"go.uber.org/fx"
@@ -17,7 +17,7 @@ import (
 type ValidatorParams struct {
 	fx.In
 
-	Repo repositories.IAMRepository
+	Repo iamports.IAMRepository
 	DB   *postgres.Connection
 }
 
@@ -30,7 +30,7 @@ func NewValidator(p ValidatorParams) *Validator {
 }
 
 func newValidator(
-	repo repositories.IAMRepository,
+	repo iamports.IAMRepository,
 	uniquenessChecker validationframework.UniquenessChecker,
 ) *Validator {
 	return &Validator{
@@ -64,7 +64,7 @@ func (v *Validator) ValidateUpdate(
 }
 
 func newAccessPolicyDecisionScopeRule(
-	repo repositories.IAMRepository,
+	repo iamports.IAMRepository,
 ) validationframework.TenantedRule[*iam.AccessPolicy] {
 	return validationframework.NewTenantedRule[*iam.AccessPolicy]("access_policy_decision_scope").
 		WithStage(validationframework.ValidationStageDataIntegrity).
@@ -82,7 +82,7 @@ func newAccessPolicyDecisionScopeRule(
 
 			policies, err := repo.ListEnabledAccessPolicies(
 				ctx,
-				repositories.IAMPolicyLookupRequest{
+				iamports.IAMPolicyLookupRequest{
 					OrganizationID: entity.OrganizationID,
 					BusinessUnitID: entity.BusinessUnitID,
 					Resource:       entity.Resource,

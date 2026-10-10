@@ -1,16 +1,22 @@
 package driversettlementservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"testing"
-
-	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp/exchangeratestamptest"
 
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp/exchangeratestamptest"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -85,12 +91,12 @@ func TestPaymentJournalIsWrittenOnThePaidDateAgainstThePostedPayable(t *testing.
 		JournalPostingMode:   tenant.JournalPostingModeAutomatic,
 	}
 
-	accounting := mocks.NewMockAccountingControlRepository(t)
+	accounting := tenantportsmock.NewMockAccountingControlRepository(t)
 	accounting.EXPECT().GetByOrgID(mock.Anything, entity.OrganizationID).Return(control, nil).Once()
 
-	periods := mocks.NewMockFiscalPeriodRepository(t)
+	periods := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	periods.EXPECT().
-		GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{
+		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
 			Date:  paidAt,
@@ -102,11 +108,11 @@ func TestPaymentJournalIsWrittenOnThePaidDateAgainstThePostedPayable(t *testing.
 		}, nil).
 		Once()
 
-	var written repositories.CreateJournalPostingParams
-	journals := mocks.NewMockJournalPostingRepository(t)
+	var written journalentryports.CreateJournalPostingParams
+	journals := journalentryportsmock.NewMockJournalPostingRepository(t)
 	journals.EXPECT().
 		CreatePosting(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, params repositories.CreateJournalPostingParams) error {
+		RunAndReturn(func(_ context.Context, params journalentryports.CreateJournalPostingParams) error {
 			written = params
 			return nil
 		}).
@@ -141,7 +147,7 @@ func TestPaymentJournalNeedsACashAccount(t *testing.T) {
 	t.Parallel()
 
 	entity := paidSettlement(1_250)
-	accounting := mocks.NewMockAccountingControlRepository(t)
+	accounting := tenantportsmock.NewMockAccountingControlRepository(t)
 	accounting.EXPECT().
 		GetByOrgID(mock.Anything, entity.OrganizationID).
 		Return(&tenant.AccountingControl{}, nil).
@@ -207,14 +213,14 @@ func TestAZeroSettlementRecordsNoPaymentJournal(t *testing.T) {
 }
 
 type settlementStore struct {
-	repositories.DriverSettlementRepository
+	driversettlementports.DriverSettlementRepository
 	current *driversettlement.Settlement
 	saved   *driversettlement.Settlement
 }
 
 func (s *settlementStore) GetByID(
 	context.Context,
-	repositories.GetDriverSettlementByIDRequest,
+	driversettlementports.GetDriverSettlementByIDRequest,
 ) (*driversettlement.Settlement, error) {
 	copied := *s.current
 	return &copied, nil
@@ -229,10 +235,10 @@ func (s *settlementStore) Update(
 }
 
 type silentAudit struct {
-	serviceports.AuditService
+	auditports.AuditService
 }
 
-func (silentAudit) LogAction(*serviceports.LogActionParams, ...serviceports.LogOption) error {
+func (silentAudit) LogAction(*auditports.LogActionParams, ...auditports.LogOption) error {
 	return nil
 }
 
@@ -243,7 +249,7 @@ func TestMarkPaidWritesThePaymentJournalAndKeepsItsBatch(t *testing.T) {
 	entity := paidSettlement(1_250)
 	store := &settlementStore{current: entity}
 
-	accounting := mocks.NewMockAccountingControlRepository(t)
+	accounting := tenantportsmock.NewMockAccountingControlRepository(t)
 	accounting.EXPECT().
 		GetByOrgID(mock.Anything, entity.OrganizationID).
 		Return(&tenant.AccountingControl{
@@ -251,7 +257,7 @@ func TestMarkPaidWritesThePaymentJournalAndKeepsItsBatch(t *testing.T) {
 			JournalPostingMode:   tenant.JournalPostingModeAutomatic,
 		}, nil).
 		Once()
-	periods := mocks.NewMockFiscalPeriodRepository(t)
+	periods := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	periods.EXPECT().
 		GetPeriodByDate(mock.Anything, mock.Anything).
 		Return(&fiscalperiod.FiscalPeriod{
@@ -260,11 +266,11 @@ func TestMarkPaidWritesThePaymentJournalAndKeepsItsBatch(t *testing.T) {
 			Status:       fiscalperiod.StatusOpen,
 		}, nil).
 		Once()
-	var written repositories.CreateJournalPostingParams
-	journals := mocks.NewMockJournalPostingRepository(t)
+	var written journalentryports.CreateJournalPostingParams
+	journals := journalentryportsmock.NewMockJournalPostingRepository(t)
 	journals.EXPECT().
 		CreatePosting(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, params repositories.CreateJournalPostingParams) error {
+		RunAndReturn(func(_ context.Context, params journalentryports.CreateJournalPostingParams) error {
 			written = params
 			return nil
 		}).
@@ -279,7 +285,7 @@ func TestMarkPaidWritesThePaymentJournalAndKeepsItsBatch(t *testing.T) {
 		generator:        journalNumbers{},
 		auditService:     silentAudit{},
 	}
-	paid, err := svc.MarkPaid(t.Context(), &serviceports.MarkSettlementPaidRequest{
+	paid, err := svc.MarkPaid(t.Context(), &carriersettlementports.MarkSettlementPaidRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -287,7 +293,7 @@ func TestMarkPaidWritesThePaymentJournalAndKeepsItsBatch(t *testing.T) {
 		SettlementID:  entity.ID,
 		PaymentMethod: "ACH",
 		PaidAt:        paidAt,
-	}, &serviceports.RequestActor{UserID: pulid.MustNew("usr_")})
+	}, &permissionports.RequestActor{UserID: pulid.MustNew("usr_")})
 	require.NoError(t, err)
 
 	assert.Equal(t, driversettlement.StatusPaid, paid.Status)
@@ -306,7 +312,7 @@ func TestMarkPaidStampsTheExchangeRateOfAForeignCurrencySettlement(t *testing.T)
 	entity.CurrencyCode = "CAD"
 	store := &settlementStore{current: entity}
 
-	accounting := mocks.NewMockAccountingControlRepository(t)
+	accounting := tenantportsmock.NewMockAccountingControlRepository(t)
 	accounting.EXPECT().
 		GetByOrgID(mock.Anything, entity.OrganizationID).
 		Return(&tenant.AccountingControl{
@@ -314,7 +320,7 @@ func TestMarkPaidStampsTheExchangeRateOfAForeignCurrencySettlement(t *testing.T)
 			JournalPostingMode:   tenant.JournalPostingModeAutomatic,
 		}, nil).
 		Once()
-	periods := mocks.NewMockFiscalPeriodRepository(t)
+	periods := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	periods.EXPECT().
 		GetPeriodByDate(mock.Anything, mock.Anything).
 		Return(&fiscalperiod.FiscalPeriod{
@@ -323,7 +329,7 @@ func TestMarkPaidStampsTheExchangeRateOfAForeignCurrencySettlement(t *testing.T)
 			Status:       fiscalperiod.StatusOpen,
 		}, nil).
 		Once()
-	journals := mocks.NewMockJournalPostingRepository(t)
+	journals := journalentryportsmock.NewMockJournalPostingRepository(t)
 	journals.EXPECT().CreatePosting(mock.Anything, mock.Anything).Return(nil).Once()
 
 	svc := &Service{
@@ -336,7 +342,7 @@ func TestMarkPaidStampsTheExchangeRateOfAForeignCurrencySettlement(t *testing.T)
 		auditService:     silentAudit{},
 		stamper:          exchangeratestamptest.NewFixedForTest(t, "USD", decimal.RequireFromString("0.7312")),
 	}
-	paid, err := svc.MarkPaid(t.Context(), &serviceports.MarkSettlementPaidRequest{
+	paid, err := svc.MarkPaid(t.Context(), &carriersettlementports.MarkSettlementPaidRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -344,7 +350,7 @@ func TestMarkPaidStampsTheExchangeRateOfAForeignCurrencySettlement(t *testing.T)
 		SettlementID:  entity.ID,
 		PaymentMethod: "ACH",
 		PaidAt:        paidAt,
-	}, &serviceports.RequestActor{UserID: pulid.MustNew("usr_")})
+	}, &permissionports.RequestActor{UserID: pulid.MustNew("usr_")})
 	require.NoError(t, err)
 
 	require.True(t, paid.PaidExchangeRate.Valid)

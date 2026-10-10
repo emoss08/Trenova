@@ -3,11 +3,10 @@ package detentionjobs
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/detentionjobs/detentioncontract"
-
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/detentionjobs/detentioncontract"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -19,14 +18,14 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	DetentionService    services.DetentionNoticeService
-	ShipmentControlRepo repositories.ShipmentControlRepository
+	DetentionService    detentionports.DetentionNoticeService
+	ShipmentControlRepo tenantports.ShipmentControlRepository
 	Logger              *zap.Logger
 }
 
 type Activities struct {
-	detentionService    services.DetentionNoticeService
-	shipmentControlRepo repositories.ShipmentControlRepository
+	detentionService    detentionports.DetentionNoticeService
+	shipmentControlRepo tenantports.ShipmentControlRepository
 	logger              *zap.Logger
 }
 
@@ -97,7 +96,7 @@ func (a *Activities) AttachNoticePDFDocumentActivity(
 
 	if err := a.detentionService.AttachNoticePDFDocument(
 		ctx,
-		&services.AttachNoticePDFDocumentParams{
+		&detentionports.AttachNoticePDFDocumentParams{
 			TenantInfo:   tenantInfo,
 			NoticeID:     payload.NoticeID,
 			OccurrenceID: payload.OccurrenceID,

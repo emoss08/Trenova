@@ -9,8 +9,8 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/carrierintel/intelkit"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/shared/carrierok"
 	"github.com/emoss08/trenova/shared/jsonflex"
 	"github.com/emoss08/trenova/shared/sliceutils"
@@ -55,7 +55,7 @@ func (c *Client) MonitoringRef(
 func (c *Client) Enroll(
 	ctx context.Context,
 	refs []string,
-) (*services.CarrierIntelEnrollResult, error) {
+) (*carrierintelports.CarrierIntelEnrollResult, error) {
 	return c.writeMonitoring(ctx, &monitoringWrite{
 		refs:     refs,
 		endpoint: carrierintel.EndpointMonitorAdd,
@@ -68,7 +68,7 @@ func (c *Client) Enroll(
 func (c *Client) Unenroll(
 	ctx context.Context,
 	refs []string,
-) (*services.CarrierIntelEnrollResult, error) {
+) (*carrierintelports.CarrierIntelEnrollResult, error) {
 	return c.writeMonitoring(ctx, &monitoringWrite{
 		refs:     refs,
 		endpoint: carrierintel.EndpointMonitorRemove,
@@ -89,10 +89,10 @@ type monitoringWrite struct {
 func (c *Client) writeMonitoring(
 	ctx context.Context,
 	write *monitoringWrite,
-) (*services.CarrierIntelEnrollResult, error) {
+) (*carrierintelports.CarrierIntelEnrollResult, error) {
 	refs := sliceutils.DedupeStrings(write.refs)
 	if len(refs) == 0 {
-		return &services.CarrierIntelEnrollResult{}, nil
+		return &carrierintelports.CarrierIntelEnrollResult{}, nil
 	}
 
 	outcome := &intelkit.CallOutcome{
@@ -120,7 +120,7 @@ func splitWriteResult(
 	refs []string,
 	result *carrierok.MonitoringWriteResult,
 	write *monitoringWrite,
-) *services.CarrierIntelEnrollResult {
+) *carrierintelports.CarrierIntelEnrollResult {
 	failedMessages := make(map[string]string, len(result.Failed))
 	for _, failure := range result.Failed {
 		ref := strings.ToUpper(strings.TrimSpace(failure.ProfileID))
@@ -133,20 +133,20 @@ func splitWriteResult(
 	rejectAll := len(failedMessages) == 0 && write.applied(result) == 0 &&
 		strings.TrimSpace(result.Error) != ""
 
-	out := &services.CarrierIntelEnrollResult{
+	out := &carrierintelports.CarrierIntelEnrollResult{
 		Succeeded: make([]string, 0, len(refs)),
-		Failed:    make([]services.CarrierIntelEnrollFailure, 0, len(failedMessages)),
+		Failed:    make([]carrierintelports.CarrierIntelEnrollFailure, 0, len(failedMessages)),
 	}
 	for _, ref := range refs {
 		if rejectAll {
-			out.Failed = append(out.Failed, services.CarrierIntelEnrollFailure{
+			out.Failed = append(out.Failed, carrierintelports.CarrierIntelEnrollFailure{
 				ProviderRef: ref,
 				Message:     failureMessage(result.Error, write.rejected),
 			})
 			continue
 		}
 		if message, failed := failedMessages[strings.ToUpper(ref)]; failed {
-			out.Failed = append(out.Failed, services.CarrierIntelEnrollFailure{
+			out.Failed = append(out.Failed, carrierintelports.CarrierIntelEnrollFailure{
 				ProviderRef: ref,
 				Message:     message,
 			})
@@ -166,10 +166,10 @@ func failureMessage(vendorMessage, fallback string) string {
 
 func (c *Client) ListChanges(
 	ctx context.Context,
-	req *services.CarrierIntelChangeFeedRequest,
-) (*services.CarrierIntelChangeFeedPage, error) {
+	req *carrierintelports.CarrierIntelChangeFeedRequest,
+) (*carrierintelports.CarrierIntelChangeFeedPage, error) {
 	if req == nil {
-		req = &services.CarrierIntelChangeFeedRequest{}
+		req = &carrierintelports.CarrierIntelChangeFeedRequest{}
 	}
 	page, pageSize := normalizePage(req.Page, req.PageSize)
 	viewChanges := true
@@ -194,12 +194,12 @@ func (c *Client) ListChanges(
 		return nil, err
 	}
 
-	items := make([]services.CarrierIntelChangedProfile, 0, len(result.Profiles))
+	items := make([]carrierintelports.CarrierIntelChangedProfile, 0, len(result.Profiles))
 	for idx := range result.Profiles {
 		items = append(items, changedProfile(&result.Profiles[idx]))
 	}
 	total := int(max(result.TotalCount, int64(len(items))))
-	return &services.CarrierIntelChangeFeedPage{
+	return &carrierintelports.CarrierIntelChangeFeedPage{
 		Items:    items,
 		Total:    total,
 		Page:     page,
@@ -211,7 +211,7 @@ func (c *Client) ListChanges(
 func (c *Client) ListWatchlist(
 	ctx context.Context,
 	page, pageSize int,
-) (*services.CarrierIntelWatchlistPage, error) {
+) (*carrierintelports.CarrierIntelWatchlistPage, error) {
 	page, pageSize = normalizePage(page, pageSize)
 	result, err := c.listMonitoring(ctx, &carrierok.MonitoringListParams{
 		Page:     page,
@@ -226,7 +226,7 @@ func (c *Client) ListWatchlist(
 		refs = append(refs, result.Profiles[idx].ProfileID)
 	}
 	total := int(max(result.TotalCount, int64(len(refs))))
-	return &services.CarrierIntelWatchlistPage{
+	return &carrierintelports.CarrierIntelWatchlistPage{
 		ProviderRefs: refs,
 		Total:        total,
 		HasMore:      page*pageSize < total,
@@ -263,15 +263,15 @@ func normalizePage(page, pageSize int) (normalizedPage, normalizedSize int) {
 	return normalizedPage, min(normalizedSize, maxMonitoringPageSize)
 }
 
-func changedProfile(monitored *carrierok.MonitoredProfile) services.CarrierIntelChangedProfile {
-	changes := make([]services.CarrierIntelVendorChange, 0, len(monitored.Changes))
+func changedProfile(monitored *carrierok.MonitoredProfile) carrierintelports.CarrierIntelChangedProfile {
+	changes := make([]carrierintelports.CarrierIntelVendorChange, 0, len(monitored.Changes))
 	for idx := range monitored.Changes {
 		change := &monitored.Changes[idx]
 		if !change.Changed && (change.Prior == nil || bytes.Equal(change.Prior, change.Current)) {
 			continue
 		}
 		path := vendorFieldPath(change.Field)
-		changes = append(changes, services.CarrierIntelVendorChange{
+		changes = append(changes, carrierintelports.CarrierIntelVendorChange{
 			VendorField: change.Field,
 			Path:        path,
 			Section:     carrierintel.SectionForPath(path),
@@ -280,7 +280,7 @@ func changedProfile(monitored *carrierok.MonitoredProfile) services.CarrierIntel
 		})
 	}
 
-	return services.CarrierIntelChangedProfile{
+	return carrierintelports.CarrierIntelChangedProfile{
 		ProviderRef: monitored.ProfileID,
 		DOTNumber:   monitored.DOTNumber,
 		ChangedAt:   parseChangedAt(monitored.Meta[changeDateType]),

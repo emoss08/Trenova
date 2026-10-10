@@ -4,9 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/settlementshared"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,7 +22,7 @@ func (s *Service) ListUnsettledEventsForWorker(
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 ) ([]*driversettlement.PayEvent, error) {
-	return s.payEventRepo.ListAccruedForWorker(ctx, &repositories.ListAccruedPayEventsRequest{
+	return s.payEventRepo.ListAccruedForWorker(ctx, &driversettlementports.ListAccruedPayEventsRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
 	})
@@ -48,7 +49,7 @@ type PayWorkerNowRequest struct {
 func (s *Service) PayWorkerNow(
 	ctx context.Context,
 	req *PayWorkerNowRequest,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driversettlement.Settlement, error) {
 	if err := requireActor(actor, "Instant settlement"); err != nil {
 		return nil, err
@@ -83,7 +84,7 @@ func (s *Service) instantGeneration(
 
 	events, err := s.payEventRepo.ListAccruedForWorker(
 		ctx,
-		&repositories.ListAccruedPayEventsRequest{
+		&driversettlementports.ListAccruedPayEventsRequest{
 			TenantInfo: req.TenantInfo,
 			WorkerID:   req.WorkerID,
 			EventIDs:   req.PayEventIDs,
@@ -218,7 +219,7 @@ func (s *Service) driveToPaid(
 	ctx context.Context,
 	req *PayWorkerNowRequest,
 	settlement *driversettlement.Settlement,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driversettlement.Settlement, error) {
 	current := settlement
 
@@ -240,7 +241,7 @@ func (s *Service) driveToPaid(
 	}
 
 	if current.Status == driversettlement.StatusPosted {
-		paid, err := s.MarkPaid(ctx, &serviceports.MarkSettlementPaidRequest{
+		paid, err := s.MarkPaid(ctx, &carriersettlementports.MarkSettlementPaidRequest{
 			TenantInfo:       req.TenantInfo,
 			SettlementID:     current.ID,
 			PaymentMethod:    req.PaymentMethod,

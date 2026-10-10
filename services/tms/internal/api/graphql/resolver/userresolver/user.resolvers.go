@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -29,7 +29,7 @@ func (r *QueryResolver) Users(ctx context.Context, input gqlmodel.DataTableConne
 
 	result, err := r.UserService.ListConnection(
 		ctx,
-		&repositories.ListUserConnectionRequest{
+		&tenantports.ListUserConnectionRequest{
 			Filter: tableInput.Filter,
 			Cursor: tableInput.Cursor,
 		},
@@ -52,7 +52,7 @@ func (r *QueryResolver) User(ctx context.Context, id string) (*tenant.User, erro
 		return nil, err
 	}
 
-	return r.UserService.GetByID(ctx, repositories.GetUserByIDRequest{
+	return r.UserService.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo:   base.TenantInfo(authCtx),
 		LookupUserID: userID,
 	})

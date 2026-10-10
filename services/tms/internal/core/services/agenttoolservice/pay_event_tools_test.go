@@ -8,9 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/settlementshared"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -56,7 +56,7 @@ func (f *fakePayEvents) HoldPayEvent(
 	_ pagination.TenantInfo,
 	eventID pulid.ID,
 	reason string,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*driversettlement.PayEvent, error) {
 	if f.locked {
 		return nil, errPerformedDuringPreview
@@ -70,7 +70,7 @@ func (f *fakePayEvents) ReleasePayEvent(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	eventID pulid.ID,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*driversettlement.PayEvent, error) {
 	if f.locked {
 		return nil, errPerformedDuringPreview
@@ -118,7 +118,7 @@ func (f *fakePayEvents) AttachPayEvents(
 	_ pagination.TenantInfo,
 	settlementID pulid.ID,
 	eventIDs []pulid.ID,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*driversettlement.Settlement, error) {
 	if f.locked {
 		return nil, errPerformedDuringPreview
@@ -132,7 +132,7 @@ func (f *fakePayEvents) DetachPayEvent(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	settlementID, eventID pulid.ID,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*driversettlement.Settlement, error) {
 	if f.locked {
 		return nil, errPerformedDuringPreview

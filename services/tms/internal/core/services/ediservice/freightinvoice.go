@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -128,7 +128,7 @@ func (s *Service) recordedCarrierInvoice(
 ) (*RecordInboundFreightInvoiceResult, error) {
 	existing, err := s.carrierInvoiceRepo.GetCarrierInvoiceByNumber(
 		ctx,
-		&repositories.GetEDICarrierInvoiceByNumberRequest{
+		&ediports.GetEDICarrierInvoiceByNumberRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: incoming.OrganizationID,
 				BuID:  incoming.BusinessUnitID,
@@ -218,7 +218,7 @@ func (s *Service) resolveCarrierInvoiceCustomer(
 		return false, nil
 	}
 	entity.BillToSourceID = edi.MappingSourceID(entity.BillToName)
-	items, err := s.mappingProfileRepo.GetMappingItems(ctx, repositories.GetMappingItemsRequest{
+	items, err := s.mappingProfileRepo.GetMappingItems(ctx, ediports.GetMappingItemsRequest{
 		PartnerID: partner.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: partner.OrganizationID,

@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/ratematrix"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -36,7 +36,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.RateMatrixRepository {
+func New(p Params) ratematrixports.RateMatrixRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.ratematrix-repository"),
@@ -49,7 +49,7 @@ func orderDimensions(sq *bun.SelectQuery) *bun.SelectQuery {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListRateMatrixRequest,
+	req *ratematrixports.ListRateMatrixRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.RateMatrixColumns
 	q = querybuilder.ApplyFilters(
@@ -67,7 +67,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListRateMatrixRequest,
+	req *ratematrixports.ListRateMatrixRequest,
 ) (*pagination.ListResult[*ratematrix.RateMatrix], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*ratematrix.RateMatrix], error) {
 		log := r.l.With(zap.String("operation", "List"))
@@ -91,7 +91,7 @@ func (r *repository) List(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListRateMatrixConnectionRequest,
+	req *ratematrixports.ListRateMatrixConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -104,7 +104,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListRateMatrixConnectionRequest,
+	req *ratematrixports.ListRateMatrixConnectionRequest,
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -124,7 +124,7 @@ func applyRateMatrixColumns(q *bun.SelectQuery, columns []string) *bun.SelectQue
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListRateMatrixConnectionRequest,
+	req *ratematrixports.ListRateMatrixConnectionRequest,
 ) (*pagination.CursorListResult[*ratematrix.RateMatrix], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*ratematrix.RateMatrix], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -174,7 +174,7 @@ func (r *repository) ListConnection(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req *repositories.GetRateMatrixByIDRequest,
+	req *ratematrixports.GetRateMatrixByIDRequest,
 ) (*ratematrix.RateMatrix, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ratematrix.RateMatrix, error) {
 		log := r.l.With(
@@ -216,7 +216,7 @@ func (r *repository) GetByID(
 // every formula that reads it.
 func (r *repository) GetByCode(
 	ctx context.Context,
-	req *repositories.GetRateMatrixByCodeRequest,
+	req *ratematrixports.GetRateMatrixByCodeRequest,
 ) (*ratematrix.RateMatrix, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ratematrix.RateMatrix, error) {
 		log := r.l.With(zap.String("operation", "GetByCode"), zap.String("code", req.Code))
@@ -250,7 +250,7 @@ func (r *repository) Create(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*ratematrix.RateMatrix, error) {
 		log := r.l.With(zap.String("operation", "Create"), zap.String("code", entity.Code))
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			if _, iErr := r.db.DBForContext(c).
 				NewInsert().
 				Model(entity).
@@ -294,7 +294,7 @@ func (r *repository) Update(
 		cols := buncolgen.RateMatrixColumns
 		dimensionCols := buncolgen.RateMatrixDimensionColumns
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			results, uErr := r.db.DBForContext(c).
 				NewUpdate().
 				Model(entity).
@@ -365,7 +365,7 @@ func (r *repository) insertDimensions(
 
 func (r *repository) Delete(
 	ctx context.Context,
-	req *repositories.GetRateMatrixByIDRequest,
+	req *ratematrixports.GetRateMatrixByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		log := r.l.With(

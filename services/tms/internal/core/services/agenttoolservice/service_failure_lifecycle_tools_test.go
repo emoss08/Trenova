@@ -7,9 +7,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -20,9 +22,9 @@ type fakeFailureLifecycle struct {
 	guard    *writeGuard
 	refusal  error
 	current  *servicefailure.ServiceFailure
-	updated  *serviceports.UpdateServiceFailureRequest
-	reviewed *serviceports.ServiceFailureLifecycleRequest
-	voided   *serviceports.ServiceFailureLifecycleRequest
+	updated  *servicefailureports.UpdateServiceFailureRequest
+	reviewed *servicefailureports.ServiceFailureLifecycleRequest
+	voided   *servicefailureports.ServiceFailureLifecycleRequest
 }
 
 func newFakeFailureLifecycle() *fakeFailureLifecycle {
@@ -42,7 +44,7 @@ func newFakeFailureLifecycle() *fakeFailureLifecycle {
 
 func (f *fakeFailureLifecycle) GetByID(
 	context.Context,
-	*repositories.GetServiceFailureByIDRequest,
+	*servicefailureports.GetServiceFailureByIDRequest,
 ) (*servicefailure.ServiceFailure, error) {
 	copied := *f.current
 
@@ -50,7 +52,7 @@ func (f *fakeFailureLifecycle) GetByID(
 }
 
 func (f *fakeFailureLifecycle) apply(
-	req *serviceports.UpdateServiceFailureRequest,
+	req *servicefailureports.UpdateServiceFailureRequest,
 ) *servicefailure.ServiceFailure {
 	after := *f.current
 	after.Notes = req.Notes
@@ -66,8 +68,8 @@ func (f *fakeFailureLifecycle) apply(
 
 func (f *fakeFailureLifecycle) Update(
 	_ context.Context,
-	req *serviceports.UpdateServiceFailureRequest,
-	_ *serviceports.RequestActor,
+	req *servicefailureports.UpdateServiceFailureRequest,
+	_ *permissionports.RequestActor,
 ) (*servicefailure.ServiceFailure, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -79,15 +81,15 @@ func (f *fakeFailureLifecycle) Update(
 
 func (f *fakeFailureLifecycle) PreviewUpdate(
 	_ context.Context,
-	req *serviceports.UpdateServiceFailureRequest,
-) (*serviceports.ServiceFailureLifecyclePreview, error) {
-	return &serviceports.ServiceFailureLifecyclePreview{Before: f.current, After: f.apply(req)}, nil
+	req *servicefailureports.UpdateServiceFailureRequest,
+) (*servicefailureports.ServiceFailureLifecyclePreview, error) {
+	return &servicefailureports.ServiceFailureLifecyclePreview{Before: f.current, After: f.apply(req)}, nil
 }
 
 func (f *fakeFailureLifecycle) Review(
 	_ context.Context,
-	req *serviceports.ServiceFailureLifecycleRequest,
-	_ *serviceports.RequestActor,
+	req *servicefailureports.ServiceFailureLifecycleRequest,
+	_ *permissionports.RequestActor,
 ) (*servicefailure.ServiceFailure, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -99,9 +101,9 @@ func (f *fakeFailureLifecycle) Review(
 
 func (f *fakeFailureLifecycle) PreviewReview(
 	_ context.Context,
-	req *serviceports.ServiceFailureLifecycleRequest,
-	_ *serviceports.RequestActor,
-) (*serviceports.ServiceFailureLifecyclePreview, error) {
+	req *servicefailureports.ServiceFailureLifecycleRequest,
+	_ *permissionports.RequestActor,
+) (*servicefailureports.ServiceFailureLifecyclePreview, error) {
 	if f.refusal != nil {
 		return nil, f.refusal
 	}
@@ -110,13 +112,13 @@ func (f *fakeFailureLifecycle) PreviewReview(
 	reason := req.ReasonCodeID
 	after.ReasonCodeID = &reason
 
-	return &serviceports.ServiceFailureLifecyclePreview{Before: f.current, After: &after}, nil
+	return &servicefailureports.ServiceFailureLifecyclePreview{Before: f.current, After: &after}, nil
 }
 
 func (f *fakeFailureLifecycle) Void(
 	_ context.Context,
-	req *serviceports.ServiceFailureLifecycleRequest,
-	_ *serviceports.RequestActor,
+	req *servicefailureports.ServiceFailureLifecycleRequest,
+	_ *permissionports.RequestActor,
 ) (*servicefailure.ServiceFailure, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -128,18 +130,18 @@ func (f *fakeFailureLifecycle) Void(
 
 func (f *fakeFailureLifecycle) PreviewVoid(
 	_ context.Context,
-	req *serviceports.ServiceFailureLifecycleRequest,
-	_ *serviceports.RequestActor,
-) (*serviceports.ServiceFailureLifecyclePreview, error) {
+	req *servicefailureports.ServiceFailureLifecycleRequest,
+	_ *permissionports.RequestActor,
+) (*servicefailureports.ServiceFailureLifecyclePreview, error) {
 	after := *f.current
 	after.Status = servicefailure.StatusVoided
 	after.VoidReason = req.Notes
 
-	return &serviceports.ServiceFailureLifecyclePreview{
+	return &servicefailureports.ServiceFailureLifecyclePreview{
 		Before: f.current,
 		After:  &after,
-		EDI: &serviceports.ServiceFailure214LifecycleResult{
-			Action:        serviceports.ServiceFailureEDIActionSkipped,
+		EDI: &servicefailureports.ServiceFailure214LifecycleResult{
+			Action:        ediports.ServiceFailureEDIActionSkipped,
 			SkippedReason: ediReadyForGeneration,
 		},
 	}, nil
@@ -157,7 +159,7 @@ func TestUpdateServiceFailure_ChangesOnlyWhatIsSent(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, failures.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	change := previewChange(t, preview, 0)
 	assert.Equal(t, "AX", fieldByPath(t, change, paramX12Status).After)
@@ -173,7 +175,7 @@ func TestUpdateServiceFailure_ChangesOnlyWhatIsSent(t *testing.T) {
 	policy := tool.Policy()
 	assert.Equal(t, permission.ResourceServiceFailure, policy.Resource)
 	assert.Equal(t, permission.OpUpdate, policy.Operation)
-	target, ok := tool.(serviceports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, permission.ResourceServiceFailure, target.Resource)
 
@@ -189,7 +191,7 @@ func TestUpdateServiceFailure_ChangesOnlyWhatIsSent(t *testing.T) {
 			paramX12Reason:        "ABCD",
 		},
 	} {
-		require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+		require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 			executeParams(raw)), name)
 	}
 }
@@ -206,7 +208,7 @@ func TestReviewServiceFailure_IsAPersonsAndAWouldFailWhenRefused(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, failures.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, string(servicefailure.StatusReviewed),
 		fieldByPath(t, previewChange(t, preview, 0), fieldStatus).After)
@@ -219,10 +221,10 @@ func TestReviewServiceFailure_IsAPersonsAndAWouldFailWhenRefused(t *testing.T) {
 	assert.Equal(t, agent.TierPropose, tool.Policy().MaxTier)
 
 	failures.refusal = errortypes.NewBusinessError("a reason code is required")
-	refused, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	refused, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	requireWarning(t, refused, agent.PreviewWarningWouldFail)
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
 }
 
 func TestVoidServiceFailure_NeedsAReasonAndShowsThe214(t *testing.T) {
@@ -236,7 +238,7 @@ func TestVoidServiceFailure_NeedsAReasonAndShowsThe214(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, failures.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	require.Len(t, preview.Changes, 2)
 	message := previewChange(t, preview, 1).Message
@@ -247,7 +249,7 @@ func TestVoidServiceFailure_NeedsAReasonAndShowsThe214(t *testing.T) {
 	assert.Equal(t, "The appointment window was keyed wrong", failures.voided.Notes)
 	assert.Equal(t, permission.OpArchive, tool.Policy().Operation)
 
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 		executeParams(map[string]any{paramServiceFailureID: failures.current.ID.String()})))
 }
 
@@ -282,7 +284,7 @@ func TestEvaluateServiceFailures_OneStopOrSeveralShipments(t *testing.T) {
 		"a bad stop":         {"shipmentId": shipmentID.String(), "stopId": "stop-1"},
 		"too many shipments": {"shipmentIds": manyIDs(maxBulkEvaluationShipments + 1)},
 	} {
-		require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+		require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 			executeParams(raw)), name)
 	}
 }
@@ -308,7 +310,7 @@ func TestDisputeDetention_HoldsTheChargeFromBilling(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, detentions.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "disputed")
 	assert.Contains(t, preview.Summary, "PRO-3001")
@@ -322,7 +324,7 @@ func TestDisputeDetention_HoldsTheChargeFromBilling(t *testing.T) {
 	assert.Equal(t, permission.ResourceDetentionPolicy, policy.Resource)
 	assert.Equal(t, []agent.EgressClass{agent.EgressMoney}, policy.Egress)
 
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 		executeParams(map[string]any{paramOccurrenceID: occurrenceID.String()})))
 	var _ detentionDisputer = (*detentionservice.Service)(nil)
 }

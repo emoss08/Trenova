@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -26,7 +26,7 @@ type Numberer interface {
 type Writer struct {
 	Periods  PeriodReader
 	Numbers  Numberer
-	Journals repositories.JournalPostingRepository
+	Journals journalentryports.JournalPostingRepository
 }
 
 type Line struct {
@@ -71,7 +71,7 @@ type Plan struct {
 	Period         *fiscalperiod.FiscalPeriod
 	AccountingDate int64
 	Workflow       Workflow
-	Lines          []repositories.JournalPostingLine
+	Lines          []journalentryports.JournalPostingLine
 	TotalDebit     int64
 	TotalCredit    int64
 }
@@ -145,7 +145,7 @@ func (w Writer) WritePlan(
 		Workflow:       workflow,
 	}
 	event := req.Source.Event.String()
-	if err = w.Journals.CreatePosting(ctx, repositories.CreateJournalPostingParams{
+	if err = w.Journals.CreatePosting(ctx, journalentryports.CreateJournalPostingParams{
 		BatchID:              result.BatchID,
 		OrganizationID:       req.OrganizationID,
 		BusinessUnitID:       req.BusinessUnitID,
@@ -193,8 +193,8 @@ func (w Writer) WritePlan(
 
 func buildLines(
 	req *WriteRequest,
-) (lines []repositories.JournalPostingLine, totalDebit, totalCredit int64, err error) {
-	lines = make([]repositories.JournalPostingLine, 0, len(req.Lines))
+) (lines []journalentryports.JournalPostingLine, totalDebit, totalCredit int64, err error) {
+	lines = make([]journalentryports.JournalPostingLine, 0, len(req.Lines))
 	for idx, line := range req.Lines {
 		if line.AccountID.IsNil() || line.Debit < 0 || line.Credit < 0 ||
 			(line.Debit == 0) == (line.Credit == 0) {
@@ -209,7 +209,7 @@ func buildLines(
 		}
 		totalDebit += line.Debit
 		totalCredit += line.Credit
-		lines = append(lines, repositories.JournalPostingLine{
+		lines = append(lines, journalentryports.JournalPostingLine{
 			ID:           pulid.MustNew("jel_"),
 			GLAccountID:  line.AccountID,
 			LineNumber:   int16(idx + 1),

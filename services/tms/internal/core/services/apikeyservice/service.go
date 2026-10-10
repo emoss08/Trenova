@@ -8,10 +8,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/apikey"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/planservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,21 +25,21 @@ type Params struct {
 	fx.In
 
 	Logger   *zap.Logger
-	Repo     repositories.APIKeyRepository
+	Repo     apikeyports.APIKeyRepository
 	Registry *permission.Registry
-	Auditor  services.SecurityAuditor
+	Auditor  permissionports.SecurityAuditor
 
 	Config *config.Config
-	Plans  services.PlanService `optional:"true"`
+	Plans  platformplanports.PlanService `optional:"true"`
 }
 
 type Service struct {
 	l        *zap.Logger
-	repo     repositories.APIKeyRepository
+	repo     apikeyports.APIKeyRepository
 	registry *permission.Registry
-	auditor  services.SecurityAuditor
+	auditor  permissionports.SecurityAuditor
 	cfg      *config.Config
-	plans    services.PlanService
+	plans    platformplanports.PlanService
 }
 
 func New(p Params) *Service {
@@ -54,19 +55,19 @@ func New(p Params) *Service {
 
 func (s *Service) ListAPIKeys(
 	ctx context.Context,
-	req *repositories.ListAPIKeysRequest,
-) (*pagination.ListResult[services.APIKeyResponse], error) {
+	req *apikeyports.ListAPIKeysRequest,
+) (*pagination.ListResult[apikeyports.APIKeyResponse], error) {
 	keys, err := s.repo.List(ctx, req)
 	if err != nil {
 		return nil, errortypes.NewBusinessError("failed to list api keys").WithInternal(err)
 	}
 
-	items := make([]services.APIKeyResponse, 0, len(keys.Items))
+	items := make([]apikeyports.APIKeyResponse, 0, len(keys.Items))
 	for _, key := range keys.Items {
 		items = append(items, s.mapAPIKeyResponse(key))
 	}
 
-	return &pagination.ListResult[services.APIKeyResponse]{
+	return &pagination.ListResult[apikeyports.APIKeyResponse]{
 		Items: items,
 		Total: keys.Total,
 	}, nil
@@ -74,7 +75,7 @@ func (s *Service) ListAPIKeys(
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListAPIKeyConnectionRequest,
+	req *apikeyports.ListAPIKeyConnectionRequest,
 ) (*pagination.CursorListResult[*apikey.Key], error) {
 	return s.repo.ListConnection(ctx, req)
 }
@@ -94,9 +95,9 @@ func (s *Service) GetAPIKeyEntity(
 func (s *Service) CreateAPIKey(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	req *services.CreateAPIKeyRequest,
+	req *apikeyports.CreateAPIKeyRequest,
 	userID pulid.ID,
-) (*services.APIKeySecretResponse, error) {
+) (*apikeyports.APIKeySecretResponse, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -157,7 +158,7 @@ func (s *Service) CreateAPIKey(
 		comment:    "API key created",
 	})
 
-	return &services.APIKeySecretResponse{
+	return &apikeyports.APIKeySecretResponse{
 		APIKeyResponse: resp,
 		Token:          generated.Token(),
 	}, nil
@@ -167,7 +168,7 @@ func (s *Service) GetAPIKey(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*services.APIKeyResponse, error) {
+) (*apikeyports.APIKeyResponse, error) {
 	key, err := s.repo.GetByID(ctx, tenantInfo, id)
 	if err != nil {
 		return nil, err
@@ -181,8 +182,8 @@ func (s *Service) UpdateAPIKey(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-	req *services.UpdateAPIKeyRequest,
-) (*services.APIKeyResponse, error) {
+	req *apikeyports.UpdateAPIKeyRequest,
+) (*apikeyports.APIKeyResponse, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -229,7 +230,7 @@ func (s *Service) RotateAPIKey(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*services.APIKeySecretResponse, error) {
+) (*apikeyports.APIKeySecretResponse, error) {
 	if err := planservice.RequireCapability(
 		ctx,
 		s.plans,
@@ -274,7 +275,7 @@ func (s *Service) RotateAPIKey(
 		after:      resp,
 		comment:    "API key secret rotated",
 	})
-	return &services.APIKeySecretResponse{
+	return &apikeyports.APIKeySecretResponse{
 		APIKeyResponse: resp,
 		Token:          generated.Token(),
 	}, nil
@@ -284,7 +285,7 @@ func (s *Service) RevokeAPIKey(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id, userID pulid.ID,
-) (*services.APIKeyResponse, error) {
+) (*apikeyports.APIKeyResponse, error) {
 	key, err := s.repo.GetByID(ctx, tenantInfo, id)
 	if err != nil {
 		return nil, err
@@ -367,7 +368,7 @@ func (s *Service) GetAllowedResources() []AllowedResourceCategory {
 
 func (s *Service) toDomainPermissions(
 	key *apikey.Key,
-	inputs []services.APIKeyPermissionInput,
+	inputs []apikeyports.APIKeyPermissionInput,
 ) []*apikey.Permission {
 	perms := make([]*apikey.Permission, 0, len(inputs))
 	for _, input := range inputs {
@@ -383,8 +384,8 @@ func (s *Service) toDomainPermissions(
 	return perms
 }
 
-func (s *Service) mapAPIKeyResponse(key *apikey.Key) services.APIKeyResponse {
-	resp := services.APIKeyResponse{
+func (s *Service) mapAPIKeyResponse(key *apikey.Key) apikeyports.APIKeyResponse {
+	resp := apikeyports.APIKeyResponse{
 		ID:             key.ID.String(),
 		BusinessUnitID: key.BusinessUnitID.String(),
 		OrganizationID: key.OrganizationID.String(),
@@ -398,9 +399,9 @@ func (s *Service) mapAPIKeyResponse(key *apikey.Key) services.APIKeyResponse {
 		UpdatedAt:      key.UpdatedAt,
 	}
 
-	resp.Permissions = make([]services.APIKeyPermissionInput, 0, len(key.Permissions))
+	resp.Permissions = make([]apikeyports.APIKeyPermissionInput, 0, len(key.Permissions))
 	for _, permission := range key.Permissions {
-		resp.Permissions = append(resp.Permissions, services.APIKeyPermissionInput{
+		resp.Permissions = append(resp.Permissions, apikeyports.APIKeyPermissionInput{
 			Resource:   permission.Resource,
 			Operations: permission.Operations,
 			DataScope:  permission.DataScope,
@@ -451,11 +452,11 @@ func normalizeOperations(ops []permission.Operation) []permission.Operation {
 }
 
 func (s *Service) normalizePermissions(
-	inputs []services.APIKeyPermissionInput,
-) ([]services.APIKeyPermissionInput, error) {
-	normalized := make([]services.APIKeyPermissionInput, 0, len(inputs))
+	inputs []apikeyports.APIKeyPermissionInput,
+) ([]apikeyports.APIKeyPermissionInput, error) {
+	normalized := make([]apikeyports.APIKeyPermissionInput, 0, len(inputs))
 	for _, input := range inputs {
-		normalized = append(normalized, services.APIKeyPermissionInput{
+		normalized = append(normalized, apikeyports.APIKeyPermissionInput{
 			Resource:   strings.TrimSpace(input.Resource),
 			Operations: normalizeOperations(input.Operations),
 			DataScope:  normalizeDataScope(input.DataScope),
@@ -469,7 +470,7 @@ func (s *Service) normalizePermissions(
 	return normalized, nil
 }
 
-func (s *Service) validateRuntimePermissions(inputs []services.APIKeyPermissionInput) error {
+func (s *Service) validateRuntimePermissions(inputs []apikeyports.APIKeyPermissionInput) error {
 	me := errortypes.NewMultiError()
 
 	for _, input := range inputs {

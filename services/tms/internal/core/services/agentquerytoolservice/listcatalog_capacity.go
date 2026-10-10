@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/carriercapacity"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carriercapacityports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/sliceutils"
@@ -65,8 +65,8 @@ func toCapacityPostingRow(item *carriercapacity.Posting) capacityPostingRow {
 }
 
 func newListCarrierCapacityPostingsTool(
-	repo repositories.CarrierCapacityPostingRepository,
-) serviceports.AgentQueryTool {
+	repo carriercapacityports.CarrierCapacityPostingRepository,
+) agentports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "list_carrier_capacity_postings",
 		entityPlural: "carrier capacity postings",
@@ -98,7 +98,7 @@ func newListCarrierCapacityPostingsTool(
 			{Name: fieldCreatedAt, Kind: filterDate, Sortable: true},
 		},
 		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
-			result, err := repo.List(ctx, &repositories.ListCarrierCapacityPostingsRequest{
+			result, err := repo.List(ctx, &carriercapacityports.ListCarrierCapacityPostingsRequest{
 				Filter: opts,
 			})
 			if err != nil {

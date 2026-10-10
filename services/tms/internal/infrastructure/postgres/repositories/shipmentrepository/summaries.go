@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
@@ -23,16 +23,16 @@ import (
 // sees while the statement accrues are the ones the invoice prints.
 func (r *repository) ListSummariesByIDs(
 	ctx context.Context,
-	req *repositories.ListShipmentSummariesRequest,
-) ([]*repositories.ShipmentSummary, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.ShipmentSummary, error) {
+	req *shipmentports.ListShipmentSummariesRequest,
+) ([]*shipmentports.ShipmentSummary, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipmentports.ShipmentSummary, error) {
 		if len(req.ShipmentIDs) == 0 {
 			return nil, nil
 		}
 
 		sp := buncolgen.ShipmentColumns
 
-		summaries := make([]*repositories.ShipmentSummary, 0, len(req.ShipmentIDs))
+		summaries := make([]*shipmentports.ShipmentSummary, 0, len(req.ShipmentIDs))
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*shipment.Shipment)(nil)).

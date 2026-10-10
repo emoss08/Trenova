@@ -1,6 +1,7 @@
 package authhandler
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"bytes"
 	"encoding/json"
 	"errors"
@@ -12,9 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/core/domain/session"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -45,7 +45,7 @@ func newTestConfig() *config.Config {
 	}
 }
 
-func newTestHandler(svc *mocks.MockAuthService) (*Handler, *gin.Engine) {
+func newTestHandler(svc *tenantportsmock.MockAuthService) (*Handler, *gin.Engine) {
 	gin.SetMode(gin.TestMode)
 	cfg := newTestConfig()
 	eh := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
@@ -71,8 +71,8 @@ func TestLogin_Success(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	sessionID := pulid.MustNew("ses_")
 
-	svc := mocks.NewMockAuthService(t)
-	svc.On("Login", mock.Anything, mock.Anything).Return(&services.LoginResponse{
+	svc := tenantportsmock.NewMockAuthService(t)
+	svc.On("Login", mock.Anything, mock.Anything).Return(&tenantports.LoginResponse{
 		User: &tenant.User{
 			ID:                    userID,
 			BusinessUnitID:        buID,
@@ -98,7 +98,7 @@ func TestLogin_Success(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, w.Code)
 
-	var resp services.LoginResponse
+	var resp tenantports.LoginResponse
 	err := json.Unmarshal(w.Body.Bytes(), &resp)
 	require.NoError(t, err)
 	assert.Equal(t, sessionID.String(), resp.SessionID)
@@ -124,7 +124,7 @@ func TestCSRFToken_Success(t *testing.T) {
 
 	sessionID := pulid.MustNew("ses_")
 
-	svc := mocks.NewMockAuthService(t)
+	svc := tenantportsmock.NewMockAuthService(t)
 	svc.On("AuthenticateSession", mock.Anything, sessionID.String()).Return(&session.Session{
 		ID: sessionID,
 	}, nil)
@@ -151,7 +151,7 @@ func TestCSRFToken_Success(t *testing.T) {
 func TestLogin_InvalidJSON(t *testing.T) {
 	t.Parallel()
 
-	svc := mocks.NewMockAuthService(t)
+	svc := tenantportsmock.NewMockAuthService(t)
 	_, r := newTestHandler(svc)
 
 	req := httptest.NewRequest(
@@ -169,7 +169,7 @@ func TestLogin_InvalidJSON(t *testing.T) {
 func TestRedirectSSOError_UsesRelativeFallbackWithoutAllowedOrigins(t *testing.T) {
 	t.Parallel()
 
-	svc := mocks.NewMockAuthService(t)
+	svc := tenantportsmock.NewMockAuthService(t)
 	h, r := newTestHandler(svc)
 
 	r.GET("/sso/error", func(c *gin.Context) {
@@ -187,10 +187,10 @@ func TestRedirectSSOError_UsesRelativeFallbackWithoutAllowedOrigins(t *testing.T
 func TestResolveSSOErrorOrigin_PrefersReturnToOrigin(t *testing.T) {
 	t.Parallel()
 
-	svc := mocks.NewMockAuthService(t)
+	svc := tenantportsmock.NewMockAuthService(t)
 	h, _ := newTestHandler(svc)
 
-	origin := h.resolveSSOErrorOrigin(&repositories.SSOLoginState{
+	origin := h.resolveSSOErrorOrigin(&tenantports.SSOLoginState{
 		ReturnTo: "https://app.example.test/shipments",
 	})
 
@@ -200,7 +200,7 @@ func TestResolveSSOErrorOrigin_PrefersReturnToOrigin(t *testing.T) {
 func TestLogin_ServiceError(t *testing.T) {
 	t.Parallel()
 
-	svc := mocks.NewMockAuthService(t)
+	svc := tenantportsmock.NewMockAuthService(t)
 	svc.On("Login", mock.Anything, mock.Anything).Return(nil, errors.New("invalid credentials"))
 
 	_, r := newTestHandler(svc)
@@ -223,7 +223,7 @@ func TestLogout_Success(t *testing.T) {
 
 	sessionID := pulid.MustNew("ses_")
 
-	svc := mocks.NewMockAuthService(t)
+	svc := tenantportsmock.NewMockAuthService(t)
 	svc.On("AuthenticateSession", mock.Anything, sessionID.String()).
 		Return(&session.Session{ID: sessionID}, nil)
 	svc.On("Logout", mock.Anything, sessionID).Return(nil)
@@ -254,7 +254,7 @@ func TestLogout_Success(t *testing.T) {
 func TestLogout_NoCookie(t *testing.T) {
 	t.Parallel()
 
-	svc := mocks.NewMockAuthService(t)
+	svc := tenantportsmock.NewMockAuthService(t)
 	_, r := newTestHandler(svc)
 
 	req := httptest.NewRequest(http.MethodPost, "/auth/logout", nil)
@@ -269,7 +269,7 @@ func TestValidateSession_Valid(t *testing.T) {
 
 	sessionID := pulid.MustNew("ses_")
 
-	svc := mocks.NewMockAuthService(t)
+	svc := tenantportsmock.NewMockAuthService(t)
 	svc.On("AuthenticateSession", mock.Anything, mock.Anything).
 		Return(&session.Session{ID: sessionID}, nil)
 
@@ -294,7 +294,7 @@ func TestValidateSession_Valid(t *testing.T) {
 func TestValidateSession_NoCookie(t *testing.T) {
 	t.Parallel()
 
-	svc := mocks.NewMockAuthService(t)
+	svc := tenantportsmock.NewMockAuthService(t)
 	_, r := newTestHandler(svc)
 
 	req := httptest.NewRequest(http.MethodPost, "/auth/validate-session", nil)
@@ -314,7 +314,7 @@ func TestValidateSession_InvalidSession(t *testing.T) {
 
 	sessionID := pulid.MustNew("ses_")
 
-	svc := mocks.NewMockAuthService(t)
+	svc := tenantportsmock.NewMockAuthService(t)
 	svc.On("AuthenticateSession", mock.Anything, mock.Anything).
 		Return(nil, errors.New("session expired"))
 
@@ -341,7 +341,7 @@ func TestLogout_RefusesACookieThatDoesNotAuthenticate(t *testing.T) {
 
 	sessionID := pulid.MustNew("ses_")
 
-	svc := mocks.NewMockAuthService(t)
+	svc := tenantportsmock.NewMockAuthService(t)
 	svc.On("AuthenticateSession", mock.Anything, sessionID.String()).
 		Return(nil, errortypes.NewAuthenticationError("Session is invalid. Please login again."))
 

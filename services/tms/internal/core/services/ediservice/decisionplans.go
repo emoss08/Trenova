@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -203,9 +203,9 @@ func (s *Service) CheckTransferChangeReview(
 func (s *Service) PlanApproveTransfer(
 	ctx context.Context,
 	req *ApproveTransferRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*TransferApprovalPlan, error) {
-	transfer, err := s.transferRepo.GetTransferByID(ctx, repositories.GetEDITransferByIDRequest{
+	transfer, err := s.transferRepo.GetTransferByID(ctx, ediports.GetEDITransferByIDRequest{
 		ID:         req.TransferID,
 		TenantInfo: req.TenantInfo,
 		Direction:  TransferDirectionInbound,
@@ -231,11 +231,11 @@ func (s *Service) PlanApproveTransfer(
 func (s *Service) planApproval(
 	ctx context.Context,
 	req *ApproveTransferRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	plan *TransferApprovalPlan,
 ) error {
 	transfer := plan.Transfer
-	targetPartner, err := s.partnerRepo.GetByID(ctx, repositories.GetEDIPartnerByIDRequest{
+	targetPartner, err := s.partnerRepo.GetByID(ctx, ediports.GetEDIPartnerByIDRequest{
 		ID:         transfer.TargetPartnerID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -360,7 +360,7 @@ func (s *Service) deliverableMessage(
 		)
 	}
 
-	return s.messageRepo.GetMessageByID(ctx, repositories.GetEDIMessageByIDRequest{
+	return s.messageRepo.GetMessageByID(ctx, ediports.GetEDIMessageByIDRequest{
 		ID:         req.MessageID,
 		TenantInfo: req.TenantInfo,
 	})

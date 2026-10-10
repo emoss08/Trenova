@@ -1,16 +1,21 @@
 package invoiceservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/emailportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"image"
 	"image/color"
 	"regexp"
 	"strings"
 	"testing"
-
-	"github.com/emoss08/trenova/internal/core/services/invoiceledger"
-	"github.com/emoss08/trenova/internal/core/services/journalposting"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs/billingcontract"
 
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
@@ -24,8 +29,17 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/invoiceledger"
+	"github.com/emoss08/trenova/internal/core/services/journalposting"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs/billingcontract"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -47,7 +61,7 @@ type fakeInvoiceDocumentService struct {
 
 func (f *fakeInvoiceDocumentService) Get(
 	_ context.Context,
-	req repositories.GetDocumentByIDRequest,
+	req documentports.GetDocumentByIDRequest,
 ) (*document.Document, error) {
 	if f.currentDocument != nil {
 		return f.currentDocument, nil
@@ -57,8 +71,8 @@ func (f *fakeInvoiceDocumentService) Get(
 
 func (f *fakeInvoiceDocumentService) GetDownloadContent(
 	context.Context,
-	repositories.GetDocumentByIDRequest,
-) (*servicesports.DocumentContent, error) {
+	documentports.GetDocumentByIDRequest,
+) (*documentports.DocumentContent, error) {
 	return nil, nil
 }
 
@@ -301,9 +315,9 @@ func TestCreateFromApprovedBillingQueueItemReusesExpandedQueueShipment(t *testin
 		Shipment:       queueShipment,
 	}
 
-	repo := mocks.NewMockInvoiceRepository(t)
+	repo := invoiceportsmock.NewMockInvoiceRepository(t)
 	repo.EXPECT().
-		GetByBillingQueueItemID(mock.Anything, repositories.GetInvoiceByBillingQueueItemIDRequest{
+		GetByBillingQueueItemID(mock.Anything, invoiceports.GetInvoiceByBillingQueueItemIDRequest{
 			BillingQueueItemID: billingQueueItemID,
 			TenantInfo:         tenantInfo,
 		}).
@@ -324,9 +338,9 @@ func TestCreateFromApprovedBillingQueueItemReusesExpandedQueueShipment(t *testin
 		}).
 		Once()
 
-	billingQueueRepo := mocks.NewMockBillingQueueRepository(t)
+	billingQueueRepo := billingqueueportsmock.NewMockBillingQueueRepository(t)
 	billingQueueRepo.EXPECT().
-		GetByID(mock.Anything, &repositories.GetBillingQueueItemByIDRequest{
+		GetByID(mock.Anything, &billingqueueports.GetBillingQueueItemByIDRequest{
 			ItemID:                billingQueueItemID,
 			TenantInfo:            tenantInfo,
 			ExpandShipmentDetails: true,
@@ -334,12 +348,12 @@ func TestCreateFromApprovedBillingQueueItemReusesExpandedQueueShipment(t *testin
 		Return(queueItem, nil).
 		Once()
 
-	customerRepo := mocks.NewMockCustomerRepository(t)
+	customerRepo := customerportsmock.NewMockCustomerRepository(t)
 	customerRepo.EXPECT().
-		GetByID(mock.Anything, repositories.GetCustomerByIDRequest{
+		GetByID(mock.Anything, customerports.GetCustomerByIDRequest{
 			ID:         customerID,
 			TenantInfo: tenantInfo,
-			CustomerFilterOptions: repositories.CustomerFilterOptions{
+			CustomerFilterOptions: customerports.CustomerFilterOptions{
 				IncludeBillingProfile: true,
 				IncludeState:          true,
 			},
@@ -356,12 +370,12 @@ func TestCreateFromApprovedBillingQueueItemReusesExpandedQueueShipment(t *testin
 		}, nil).
 		Once()
 
-	billingRepo := mocks.NewMockBillingControlRepository(t)
+	billingRepo := tenantportsmock.NewMockBillingControlRepository(t)
 	billingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
 		Return(&tenant.BillingControl{DefaultPaymentTerm: tenant.PaymentTermNet30}, nil).
 		Twice()
-	shipmentRepo := mocks.NewMockShipmentRepository(t)
+	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 
 	svc := &Service{
 		l:                zap.NewNop(),
@@ -379,7 +393,7 @@ func TestCreateFromApprovedBillingQueueItemReusesExpandedQueueShipment(t *testin
 
 	result, err := svc.CreateFromApprovedBillingQueueItem(
 		t.Context(),
-		&servicesports.CreateInvoiceFromBillingQueueRequest{
+		&invoiceports.CreateInvoiceFromBillingQueueRequest{
 			BillingQueueItemID: billingQueueItemID,
 			TenantInfo:         tenantInfo,
 		},
@@ -513,11 +527,11 @@ func TestSendSnapshotDoesNotFreezeTemplateWording(t *testing.T) {
 	t.Parallel()
 
 	fromTemplate := &invoice.Invoice{Number: "INV-1001"}
-	applySendSnapshot(fromTemplate, &servicesports.InvoiceSendPlan{
+	applySendSnapshot(fromTemplate, &invoiceports.InvoiceSendPlan{
 		Subject:      "Invoice INV-1001 from Trenova Freight",
 		Body:         "Invoice INV-1001 is attached.",
 		FromTemplate: true,
-		Recipients:   servicesports.InvoiceSendRecipients{To: []string{"ap@example.com"}},
+		Recipients:   invoiceports.InvoiceSendRecipients{To: []string{"ap@example.com"}},
 	})
 	require.Empty(t, fromTemplate.EmailSubjectSnapshot)
 	require.Empty(t, fromTemplate.EmailBodySnapshot)
@@ -526,7 +540,7 @@ func TestSendSnapshotDoesNotFreezeTemplateWording(t *testing.T) {
 	// A draft or a customer profile comment is still frozen: that is what makes a
 	// re-send reproduce what the customer already received.
 	fromDraft := &invoice.Invoice{Number: "INV-1001"}
-	applySendSnapshot(fromDraft, &servicesports.InvoiceSendPlan{
+	applySendSnapshot(fromDraft, &invoiceports.InvoiceSendPlan{
 		Subject: "Draft invoice INV-1001",
 		Body:    "Please review.",
 	})
@@ -830,7 +844,7 @@ func TestResolveDeliveryProfileIncludesBillingControlWhenRequested(t *testing.T)
 		DefaultInvoiceTerms:  "Invoice terms",
 		DefaultInvoiceFooter: "Invoice footer",
 	}
-	billingRepo := mocks.NewMockBillingControlRepository(t)
+	billingRepo := tenantportsmock.NewMockBillingControlRepository(t)
 	billingRepo.EXPECT().GetByOrgID(t.Context(), orgID).Return(control, nil).Once()
 
 	svc := &Service{billingRepo: billingRepo}
@@ -849,7 +863,7 @@ func TestResolveDeliveryProfileSkipsBillingControlWhenNotRequested(t *testing.T)
 	t.Parallel()
 
 	orgID := pulid.MustNew("org_")
-	billingRepo := mocks.NewMockBillingControlRepository(t)
+	billingRepo := tenantportsmock.NewMockBillingControlRepository(t)
 	svc := &Service{billingRepo: billingRepo}
 
 	profile, err := svc.resolveDeliveryProfile(t.Context(), resolveDeliveryProfileParams{
@@ -952,28 +966,28 @@ func TestPlanSendRendersTemplatesAndOrganizationAlias(t *testing.T) {
 		},
 	}
 
-	repo := mocks.NewMockInvoiceRepository(t)
+	repo := invoiceportsmock.NewMockInvoiceRepository(t)
 	repo.EXPECT().
-		GetByID(mock.Anything, repositories.GetInvoiceByIDRequest{
+		GetByID(mock.Anything, invoiceports.GetInvoiceByIDRequest{
 			ID:         invoiceID,
 			TenantInfo: tenantInfo,
 		}).
 		Return(entity, nil).
 		Once()
 	repo.EXPECT().
-		ListAttachments(mock.Anything, repositories.ListInvoiceEmailAttemptsRequest{
+		ListAttachments(mock.Anything, invoiceports.ListInvoiceEmailAttemptsRequest{
 			InvoiceID:  invoiceID,
 			TenantInfo: tenantInfo,
 		}).
 		Return([]*invoice.Attachment{}, nil).
 		Once()
 
-	customerRepo := mocks.NewMockCustomerRepository(t)
+	customerRepo := customerportsmock.NewMockCustomerRepository(t)
 	customerRepo.EXPECT().
-		GetByID(mock.Anything, repositories.GetCustomerByIDRequest{
+		GetByID(mock.Anything, customerports.GetCustomerByIDRequest{
 			ID:         customerID,
 			TenantInfo: tenantInfo,
-			CustomerFilterOptions: repositories.CustomerFilterOptions{
+			CustomerFilterOptions: customerports.CustomerFilterOptions{
 				IncludeEmailProfile: true,
 			},
 		}).
@@ -990,19 +1004,19 @@ func TestPlanSendRendersTemplatesAndOrganizationAlias(t *testing.T) {
 		}, nil).
 		Once()
 
-	organizationRepo := mocks.NewMockOrganizationRepository(t)
+	organizationRepo := tenantportsmock.NewMockOrganizationRepository(t)
 	organizationRepo.EXPECT().
-		GetByID(mock.Anything, repositories.GetOrganizationByIDRequest{TenantInfo: tenantInfo}).
+		GetByID(mock.Anything, tenantports.GetOrganizationByIDRequest{TenantInfo: tenantInfo}).
 		Return(&tenant.Organization{Name: "Trenova Freight"}, nil).
 		Once()
 
-	emailRepo := mocks.NewMockEmailRepository(t)
+	emailRepo := emailportsmock.NewMockEmailRepository(t)
 	emailRepo.EXPECT().
 		GetAssignedProfile(mock.Anything, tenantInfo, email.PurposeBilling).
 		Return(&email.Profile{SenderEmail: "billing@example.com"}, nil).
 		Once()
 
-	billingRepo := mocks.NewMockBillingControlRepository(t)
+	billingRepo := tenantportsmock.NewMockBillingControlRepository(t)
 	svc := &Service{
 		l:                zap.NewNop(),
 		repo:             repo,
@@ -1012,7 +1026,7 @@ func TestPlanSendRendersTemplatesAndOrganizationAlias(t *testing.T) {
 		billingRepo:      billingRepo,
 	}
 
-	plan, err := svc.PlanSend(t.Context(), &servicesports.InvoiceSendPlanRequest{
+	plan, err := svc.PlanSend(t.Context(), &invoiceports.InvoiceSendPlanRequest{
 		InvoiceID:  invoiceID,
 		TenantInfo: tenantInfo,
 	})
@@ -1039,7 +1053,7 @@ func TestGeneratePDFStartsWorkflow(t *testing.T) {
 	invoiceID := pulid.MustNew("inv_")
 	tenantInfo := pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}
 
-	workflowStarter := mocks.NewMockWorkflowStarter(t)
+	workflowStarter := kernelportsmock.NewMockWorkflowStarter(t)
 	workflowStarter.EXPECT().Enabled().Return(true).Once()
 	workflowStarter.EXPECT().
 		StartWorkflow(
@@ -1063,9 +1077,9 @@ func TestGeneratePDFStartsWorkflow(t *testing.T) {
 		Return(fakeWorkflowRun{id: "wf-invoice-pdf", runID: "run-1"}, nil).
 		Once()
 
-	invoiceRepo := mocks.NewMockInvoiceRepository(t)
+	invoiceRepo := invoiceportsmock.NewMockInvoiceRepository(t)
 	invoiceRepo.EXPECT().
-		GetByID(mock.Anything, repositories.GetInvoiceByIDRequest{ID: invoiceID, TenantInfo: tenantInfo}).
+		GetByID(mock.Anything, invoiceports.GetInvoiceByIDRequest{ID: invoiceID, TenantInfo: tenantInfo}).
 		Return(&invoice.Invoice{ID: invoiceID, Status: invoice.StatusPosted}, nil).
 		Once()
 
@@ -1077,7 +1091,7 @@ func TestGeneratePDFStartsWorkflow(t *testing.T) {
 
 	result, err := svc.GeneratePDF(
 		t.Context(),
-		&servicesports.InvoicePreviewRequest{
+		&invoiceports.InvoicePreviewRequest{
 			InvoiceID:  invoiceID,
 			TenantInfo: tenantInfo,
 			BaseURL:    "https://billing.example.test",
@@ -1100,7 +1114,7 @@ func TestGeneratePDFWorkflowDisabled(t *testing.T) {
 	invoiceID := pulid.MustNew("inv_")
 	tenantInfo := pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}
 
-	workflowStarter := mocks.NewMockWorkflowStarter(t)
+	workflowStarter := kernelportsmock.NewMockWorkflowStarter(t)
 	workflowStarter.EXPECT().Enabled().Return(false).Once()
 
 	svc := &Service{
@@ -1110,13 +1124,13 @@ func TestGeneratePDFWorkflowDisabled(t *testing.T) {
 
 	result, err := svc.GeneratePDF(
 		t.Context(),
-		&servicesports.InvoicePreviewRequest{InvoiceID: invoiceID, TenantInfo: tenantInfo},
+		&invoiceports.InvoicePreviewRequest{InvoiceID: invoiceID, TenantInfo: tenantInfo},
 		testutil.NewSessionActor(userID, orgID, buID),
 	)
 
 	require.Error(t, err)
 	require.Nil(t, result)
-	assert.ErrorIs(t, err, servicesports.ErrWorkflowStarterDisabled)
+	assert.ErrorIs(t, err, kernelports.ErrWorkflowStarterDisabled)
 }
 
 func TestAutoSendInvoiceAfterPDFGenerationSkipsDisabledAndAlreadySending(t *testing.T) {
@@ -1176,9 +1190,9 @@ func TestAutoSendInvoiceAfterPDFGenerationSkipsDisabledAndAlreadySending(t *test
 				SendStatus:     tc.status,
 			}
 
-			repo := mocks.NewMockInvoiceRepository(t)
+			repo := invoiceportsmock.NewMockInvoiceRepository(t)
 			repo.EXPECT().
-				GetByID(mock.Anything, repositories.GetInvoiceByIDRequest{
+				GetByID(mock.Anything, invoiceports.GetInvoiceByIDRequest{
 					ID:         invoiceID,
 					TenantInfo: tenantInfo,
 				}).
@@ -1197,12 +1211,12 @@ func TestAutoSendInvoiceAfterPDFGenerationSkipsDisabledAndAlreadySending(t *test
 				cus.ID = customerID
 			}
 
-			customerRepo := mocks.NewMockCustomerRepository(t)
+			customerRepo := customerportsmock.NewMockCustomerRepository(t)
 			customerRepo.EXPECT().
-				GetByID(mock.Anything, repositories.GetCustomerByIDRequest{
+				GetByID(mock.Anything, customerports.GetCustomerByIDRequest{
 					ID:         customerID,
 					TenantInfo: tenantInfo,
-					CustomerFilterOptions: repositories.CustomerFilterOptions{
+					CustomerFilterOptions: customerports.CustomerFilterOptions{
 						IncludeBillingProfile: true,
 					},
 				}).
@@ -1217,7 +1231,7 @@ func TestAutoSendInvoiceAfterPDFGenerationSkipsDisabledAndAlreadySending(t *test
 
 			result, err := svc.AutoSendInvoiceAfterPDFGeneration(
 				t.Context(),
-				&servicesports.AutoSendInvoiceAfterPDFGenerationRequest{
+				&invoiceports.AutoSendInvoiceAfterPDFGenerationRequest{
 					InvoiceID:  invoiceID,
 					TenantInfo: tenantInfo,
 					BaseURL:    "https://billing.example.test",
@@ -1248,9 +1262,9 @@ func TestAutoSendInvoiceAfterPDFGenerationRecordsSendFailure(t *testing.T) {
 		SendStatus:     invoice.SendStatusNotSent,
 	}
 
-	repo := mocks.NewMockInvoiceRepository(t)
+	repo := invoiceportsmock.NewMockInvoiceRepository(t)
 	repo.EXPECT().
-		GetByID(mock.Anything, repositories.GetInvoiceByIDRequest{
+		GetByID(mock.Anything, invoiceports.GetInvoiceByIDRequest{
 			ID:         invoiceID,
 			TenantInfo: tenantInfo,
 		}).
@@ -1269,12 +1283,12 @@ func TestAutoSendInvoiceAfterPDFGenerationRecordsSendFailure(t *testing.T) {
 		Return(entity, nil).
 		Once()
 
-	customerRepo := mocks.NewMockCustomerRepository(t)
+	customerRepo := customerportsmock.NewMockCustomerRepository(t)
 	customerRepo.EXPECT().
-		GetByID(mock.Anything, repositories.GetCustomerByIDRequest{
+		GetByID(mock.Anything, customerports.GetCustomerByIDRequest{
 			ID:         customerID,
 			TenantInfo: tenantInfo,
-			CustomerFilterOptions: repositories.CustomerFilterOptions{
+			CustomerFilterOptions: customerports.CustomerFilterOptions{
 				IncludeBillingProfile: true,
 			},
 		}).
@@ -1296,7 +1310,7 @@ func TestAutoSendInvoiceAfterPDFGenerationRecordsSendFailure(t *testing.T) {
 
 	result, err := svc.AutoSendInvoiceAfterPDFGeneration(
 		t.Context(),
-		&servicesports.AutoSendInvoiceAfterPDFGenerationRequest{
+		&invoiceports.AutoSendInvoiceAfterPDFGenerationRequest{
 			InvoiceID:  invoiceID,
 			TenantInfo: tenantInfo,
 			BaseURL:    "https://billing.example.test",
@@ -1480,7 +1494,7 @@ func TestShouldAutoPost(t *testing.T) {
 		func(t *testing.T) {
 			t.Parallel()
 
-			billingRepo := mocks.NewMockBillingControlRepository(t)
+			billingRepo := tenantportsmock.NewMockBillingControlRepository(t)
 			billingRepo.EXPECT().GetByOrgID(t.Context(), orgID).Return(&tenant.BillingControl{
 				InvoiceDraftCreationMode: tenant.InvoiceDraftCreationModeAutomaticWhenTransferred,
 				InvoicePostingMode:       tenant.InvoicePostingModeAutomaticWhenNoBlockingExceptions,
@@ -1502,7 +1516,7 @@ func TestShouldAutoPost(t *testing.T) {
 	t.Run("customer auto bill cannot loosen organization manual review policy", func(t *testing.T) {
 		t.Parallel()
 
-		billingRepo := mocks.NewMockBillingControlRepository(t)
+		billingRepo := tenantportsmock.NewMockBillingControlRepository(t)
 		billingRepo.EXPECT().GetByOrgID(t.Context(), orgID).Return(&tenant.BillingControl{
 			InvoicePostingMode: tenant.InvoicePostingModeManualReviewRequired,
 		}, nil)
@@ -1522,7 +1536,7 @@ func TestShouldAutoPost(t *testing.T) {
 	t.Run("customer fallback still works on tenant not found", func(t *testing.T) {
 		t.Parallel()
 
-		billingRepo := mocks.NewMockBillingControlRepository(t)
+		billingRepo := tenantportsmock.NewMockBillingControlRepository(t)
 		billingRepo.EXPECT().GetByOrgID(t.Context(), orgID).
 			Return(nil, errortypes.NewNotFoundError("billing control not found"))
 
@@ -1606,7 +1620,7 @@ func TestValidatorValidatePost_BlocksLockedPeriodPosting(t *testing.T) {
 		TotalAmount:    decimal.NewFromInt(100),
 	}
 
-	accountingRepo := mocks.NewMockAccountingControlRepository(t)
+	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(&tenant.AccountingControl{
 		AccountingBasis:           tenant.AccountingBasisAccrual,
 		RevenueRecognitionPolicy:  tenant.RevenueRecognitionOnInvoicePost,
@@ -1616,9 +1630,9 @@ func TestValidatorValidatePost_BlocksLockedPeriodPosting(t *testing.T) {
 		DefaultARAccountID:        pulid.MustNew("gla_"),
 	}, nil)
 
-	fiscalPeriodRepo := mocks.NewMockFiscalPeriodRepository(t)
+	fiscalPeriodRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalPeriodRepo.EXPECT().
-		GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{
+		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{
 			OrgID: orgID,
 			BuID:  buID,
 			Date:  1_700_000_000,
@@ -1651,13 +1665,13 @@ func TestValidatorValidatePostRequiresDefaultLedgerAccounts(t *testing.T) {
 		BusinessUnitID: buID,
 		BillType:       billingqueue.BillTypeInvoice,
 	}
-	accountingRepo := mocks.NewMockAccountingControlRepository(t)
+	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(&tenant.AccountingControl{
 		AccountingBasis:          tenant.AccountingBasisAccrual,
 		RevenueRecognitionPolicy: tenant.RevenueRecognitionOnInvoicePost,
 		ReconciliationMode:       tenant.ReconciliationModeDisabled,
 	}, nil)
-	fiscalPeriodRepo := mocks.NewMockFiscalPeriodRepository(t)
+	fiscalPeriodRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	validator := &Validator{
 		l:                zap.NewNop(),
 		accountingRepo:   accountingRepo,
@@ -1685,7 +1699,7 @@ func TestValidatorValidatePostRequiresFiscalPeriod(t *testing.T) {
 		BusinessUnitID: buID,
 		BillType:       billingqueue.BillTypeInvoice,
 	}
-	accountingRepo := mocks.NewMockAccountingControlRepository(t)
+	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(&tenant.AccountingControl{
 		AccountingBasis:          tenant.AccountingBasisAccrual,
 		RevenueRecognitionPolicy: tenant.RevenueRecognitionOnInvoicePost,
@@ -1693,9 +1707,9 @@ func TestValidatorValidatePostRequiresFiscalPeriod(t *testing.T) {
 		DefaultRevenueAccountID:  pulid.MustNew("gla_"),
 		DefaultARAccountID:       pulid.MustNew("gla_"),
 	}, nil)
-	fiscalPeriodRepo := mocks.NewMockFiscalPeriodRepository(t)
+	fiscalPeriodRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalPeriodRepo.EXPECT().
-		GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{
+		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{
 			OrgID: orgID,
 			BuID:  buID,
 			Date:  now,
@@ -1790,7 +1804,7 @@ func TestCreateInvoiceJournalPostingBuildsCreditMemoPolarity(t *testing.T) {
 	revenueAccountID := pulid.MustNew("gla_")
 	arAccountID := pulid.MustNew("gla_")
 
-	accountingRepo := mocks.NewMockAccountingControlRepository(t)
+	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(&tenant.AccountingControl{
 		AccountingBasis:          tenant.AccountingBasisAccrual,
 		RevenueRecognitionPolicy: tenant.RevenueRecognitionOnInvoicePost,
@@ -1802,22 +1816,22 @@ func TestCreateInvoiceJournalPostingBuildsCreditMemoPolarity(t *testing.T) {
 		DefaultARAccountID:      arAccountID,
 	}, nil)
 
-	fiscalPeriodRepo := mocks.NewMockFiscalPeriodRepository(t)
+	fiscalPeriodRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalPeriodRepo.EXPECT().
-		GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: now}).
+		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: now}).
 		Return(&fiscalperiod.FiscalPeriod{
 			ID:           periodID,
 			FiscalYearID: fyID,
 			Status:       fiscalperiod.StatusOpen,
 		}, nil)
 
-	journalRepo := mocks.NewMockJournalPostingRepository(t)
-	var lastParams *repositories.CreateJournalPostingParams
+	journalRepo := journalentryportsmock.NewMockJournalPostingRepository(t)
+	var lastParams *journalentryports.CreateJournalPostingParams
 	journalRepo.EXPECT().
 		CreatePosting(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, params repositories.CreateJournalPostingParams) error {
+		RunAndReturn(func(_ context.Context, params journalentryports.CreateJournalPostingParams) error {
 			copyParams := params
-			copyParams.Lines = append([]repositories.JournalPostingLine(nil), params.Lines...)
+			copyParams.Lines = append([]journalentryports.JournalPostingLine(nil), params.Lines...)
 			lastParams = &copyParams
 			return nil
 		}).
@@ -1860,7 +1874,7 @@ func TestCreateInvoiceJournalPostingSkipsWhenRecognitionPolicyDoesNotAllowInvoic
 	buID := pulid.MustNew("bu_")
 	userID := pulid.MustNew("usr_")
 	now := int64(1_700_000_000)
-	accountingRepo := mocks.NewMockAccountingControlRepository(t)
+	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(&tenant.AccountingControl{
 		AccountingBasis:          tenant.AccountingBasisCash,
 		RevenueRecognitionPolicy: tenant.RevenueRecognitionOnCashReceipt,
@@ -1869,13 +1883,13 @@ func TestCreateInvoiceJournalPostingSkipsWhenRecognitionPolicyDoesNotAllowInvoic
 			tenant.JournalSourceEventCustomerPaymentPosted,
 		},
 	}, nil)
-	journalRepo := mocks.NewMockJournalPostingRepository(t)
+	journalRepo := journalentryportsmock.NewMockJournalPostingRepository(t)
 	svc := &Service{
 		l:                 zap.NewNop(),
 		accountingRepo:    accountingRepo,
 		journalRepo:       journalRepo,
 		sequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
-		validator:         &Validator{fiscalPeriodRepo: mocks.NewMockFiscalPeriodRepository(t)},
+		validator:         &Validator{fiscalPeriodRepo: fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)},
 	}
 
 	err := svc.createInvoiceJournalPosting(
@@ -1900,20 +1914,20 @@ func TestCreateInvoiceJournalPostingSkipsWhenAutoPostDisabled(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 	now := int64(1_700_000_000)
-	accountingRepo := mocks.NewMockAccountingControlRepository(t)
+	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(&tenant.AccountingControl{
 		JournalPostingMode: tenant.JournalPostingModeAutomatic,
 		AutoPostSourceEvents: []tenant.JournalSourceEventType{
 			tenant.JournalSourceEventCustomerPaymentPosted,
 		},
 	}, nil)
-	journalRepo := mocks.NewMockJournalPostingRepository(t)
+	journalRepo := journalentryportsmock.NewMockJournalPostingRepository(t)
 	svc := &Service{
 		l:                 zap.NewNop(),
 		accountingRepo:    accountingRepo,
 		journalRepo:       journalRepo,
 		sequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
-		validator:         &Validator{fiscalPeriodRepo: mocks.NewMockFiscalPeriodRepository(t)},
+		validator:         &Validator{fiscalPeriodRepo: fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)},
 	}
 
 	err := svc.createInvoiceJournalPosting(
@@ -1939,12 +1953,12 @@ func TestResolveInvoicePostingPeriodUsesNextOpenPeriod(t *testing.T) {
 	buID := pulid.MustNew("bu_")
 	fyID := pulid.MustNew("fy_")
 	now := int64(1_700_000_000)
-	fiscalRepo := mocks.NewMockFiscalPeriodRepository(t)
+	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
-		GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: now}).
+		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: now}).
 		Return(&fiscalperiod.FiscalPeriod{FiscalYearID: fyID, PeriodNumber: 1, Status: fiscalperiod.StatusClosed}, nil)
 	fiscalRepo.EXPECT().
-		ListByFiscalYearID(mock.Anything, repositories.ListByFiscalYearIDRequest{FiscalYearID: fyID, OrgID: orgID, BuID: buID}).
+		ListByFiscalYearID(mock.Anything, fiscalperiodports.ListByFiscalYearIDRequest{FiscalYearID: fyID, OrgID: orgID, BuID: buID}).
 		Return([]*fiscalperiod.FiscalPeriod{{FiscalYearID: fyID, PeriodNumber: 1, Status: fiscalperiod.StatusClosed}, {ID: pulid.MustNew("fp_"), FiscalYearID: fyID, PeriodNumber: 2, Status: fiscalperiod.StatusOpen, StartDate: 1_700_001_000}}, nil)
 	resolved, err := journalposting.ResolvePeriod(
 		t.Context(),
@@ -1996,8 +2010,8 @@ func TestCreateInvoiceJournalPostingSkipsWithoutAFiscalPeriodRepository(t *testi
 	now := int64(1_700_000_000)
 	svc := &Service{
 		l:                 zap.NewNop(),
-		accountingRepo:    mocks.NewMockAccountingControlRepository(t),
-		journalRepo:       mocks.NewMockJournalPostingRepository(t),
+		accountingRepo:    tenantportsmock.NewMockAccountingControlRepository(t),
+		journalRepo:       journalentryportsmock.NewMockJournalPostingRepository(t),
 		sequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
 		validator:         &Validator{},
 	}

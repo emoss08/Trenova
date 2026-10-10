@@ -1,14 +1,21 @@
 package shipmentholdservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/holdreasonportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/holdreason"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesport "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/holdreasonports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -23,11 +30,11 @@ import (
 func TestCreate_DerivesFromHoldReasonAuditsAndPublishes(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockShipmentHoldRepository(t)
-	shipmentRepo := mocks.NewMockShipmentRepository(t)
-	holdReasonRepo := mocks.NewMockHoldReasonRepository(t)
-	audit := mocks.NewMockAuditService(t)
-	realtime := mocks.NewMockRealtimeService(t)
+	repo := shipmentportsmock.NewMockShipmentHoldRepository(t)
+	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
+	holdReasonRepo := holdreasonportsmock.NewMockHoldReasonRepository(t)
+	audit := auditportsmock.NewMockAuditService(t)
+	realtime := agentportsmock.NewMockRealtimeService(t)
 
 	svc := New(Params{
 		Logger:         zap.NewNop(),
@@ -46,7 +53,7 @@ func TestCreate_DerivesFromHoldReasonAuditsAndPublishes(t *testing.T) {
 	overrideVisible := true
 
 	shipmentRepo.EXPECT().
-		GetByID(mock.Anything, mock.MatchedBy(func(req *repositories.GetShipmentByIDRequest) bool {
+		GetByID(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetShipmentByIDRequest) bool {
 			return req.ID == shipmentID && req.TenantInfo.OrgID == testutil.TestOrgID &&
 				req.TenantInfo.BuID == testutil.TestBuID
 		})).
@@ -54,7 +61,7 @@ func TestCreate_DerivesFromHoldReasonAuditsAndPublishes(t *testing.T) {
 		Once()
 
 	holdReasonRepo.EXPECT().
-		GetByID(mock.Anything, repositories.GetHoldReasonByIDRequest{ID: reasonID, TenantInfo: pagination.TenantInfo{OrgID: testutil.TestOrgID, BuID: testutil.TestBuID}}).
+		GetByID(mock.Anything, holdreasonports.GetHoldReasonByIDRequest{ID: reasonID, TenantInfo: pagination.TenantInfo{OrgID: testutil.TestOrgID, BuID: testutil.TestBuID}}).
 		Return(&holdreason.HoldReason{ID: reasonID, OrganizationID: testutil.TestOrgID, BusinessUnitID: testutil.TestBuID, Type: holdreason.HoldTypeOperational, Code: "APPT_PENDING", Active: true, DefaultSeverity: holdreason.HoldSeverityAdvisory, DefaultBlocksDispatch: true, DefaultBlocksDelivery: false, DefaultBlocksBilling: false, DefaultVisibleToCustomer: false}, nil).
 		Once()
 
@@ -74,13 +81,13 @@ func TestCreate_DerivesFromHoldReasonAuditsAndPublishes(t *testing.T) {
 	}).Once()
 
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything).
-		Run(func(params *servicesport.LogActionParams, _ ...servicesport.LogOption) {
+		Run(func(params *auditports.LogActionParams, _ ...auditports.LogOption) {
 			assert.Equal(t, permission.ResourceShipmentHold, params.Resource)
 		}).
 		Return(nil).Once()
 
 	realtime.EXPECT().
-		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *servicesport.PublishResourceInvalidationRequest) bool {
+		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *agentports.PublishResourceInvalidationRequest) bool {
 			return req.Resource == permission.ResourceShipmentHold.String() &&
 				req.Action == "created" &&
 				req.RecordID == shipmentID
@@ -88,7 +95,7 @@ func TestCreate_DerivesFromHoldReasonAuditsAndPublishes(t *testing.T) {
 		Return(nil).
 		Once()
 
-	created, err := svc.Create(t.Context(), &repositories.CreateShipmentHoldRequest{
+	created, err := svc.Create(t.Context(), &shipmentports.CreateShipmentHoldRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: testutil.TestOrgID,
 			BuID:  testutil.TestBuID,
@@ -109,11 +116,11 @@ func TestCreate_DerivesFromHoldReasonAuditsAndPublishes(t *testing.T) {
 func TestUpdate_RejectsReleasedHold(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockShipmentHoldRepository(t)
-	shipmentRepo := mocks.NewMockShipmentRepository(t)
-	holdReasonRepo := mocks.NewMockHoldReasonRepository(t)
-	audit := mocks.NewMockAuditService(t)
-	realtime := mocks.NewMockRealtimeService(t)
+	repo := shipmentportsmock.NewMockShipmentHoldRepository(t)
+	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
+	holdReasonRepo := holdreasonportsmock.NewMockHoldReasonRepository(t)
+	audit := auditportsmock.NewMockAuditService(t)
+	realtime := agentportsmock.NewMockRealtimeService(t)
 
 	svc := New(Params{
 		Logger:         zap.NewNop(),
@@ -136,7 +143,7 @@ func TestUpdate_RejectsReleasedHold(t *testing.T) {
 
 	updated, err := svc.Update(
 		t.Context(),
-		&repositories.UpdateShipmentHoldRequest{
+		&shipmentports.UpdateShipmentHoldRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: testutil.TestOrgID,
 				BuID:  testutil.TestBuID,
@@ -162,11 +169,11 @@ func TestUpdate_RejectsReleasedHold(t *testing.T) {
 func TestRelease_SetsReleasedFieldsAuditsAndPublishes(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockShipmentHoldRepository(t)
-	shipmentRepo := mocks.NewMockShipmentRepository(t)
-	holdReasonRepo := mocks.NewMockHoldReasonRepository(t)
-	audit := mocks.NewMockAuditService(t)
-	realtime := mocks.NewMockRealtimeService(t)
+	repo := shipmentportsmock.NewMockShipmentHoldRepository(t)
+	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
+	holdReasonRepo := holdreasonportsmock.NewMockHoldReasonRepository(t)
+	audit := auditportsmock.NewMockAuditService(t)
+	realtime := agentportsmock.NewMockRealtimeService(t)
 
 	svc := New(Params{
 		Logger:         zap.NewNop(),
@@ -194,14 +201,14 @@ func TestRelease_SetsReleasedFieldsAuditsAndPublishes(t *testing.T) {
 	}).Once()
 
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).
-		Run(func(params *servicesport.LogActionParams, _ ...servicesport.LogOption) {
+		Run(func(params *auditports.LogActionParams, _ ...auditports.LogOption) {
 			assert.Equal(t, permission.ResourceShipmentHold, params.Resource)
 			assert.Equal(t, holdID.String(), params.ResourceID)
 		}).
 		Return(nil).Once()
 
 	realtime.EXPECT().
-		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *servicesport.PublishResourceInvalidationRequest) bool {
+		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *agentports.PublishResourceInvalidationRequest) bool {
 			return req.Resource == permission.ResourceShipmentHold.String() &&
 				req.Action == "released" &&
 				req.RecordID == shipmentID
@@ -211,7 +218,7 @@ func TestRelease_SetsReleasedFieldsAuditsAndPublishes(t *testing.T) {
 
 	released, err := svc.Release(
 		t.Context(),
-		&repositories.ReleaseShipmentHoldRequest{
+		&shipmentports.ReleaseShipmentHoldRequest{
 			TenantInfo: pagination.TenantInfo{OrgID: testutil.TestOrgID, BuID: testutil.TestBuID},
 			HoldID:     holdID,
 			ShipmentID: shipmentID,
@@ -225,10 +232,10 @@ func TestRelease_SetsReleasedFieldsAuditsAndPublishes(t *testing.T) {
 	assert.Equal(t, testutil.TestUserID, *released.ReleasedByID)
 }
 
-func testHoldActor() *servicesport.RequestActor {
-	return &servicesport.RequestActor{
+func testHoldActor() *permissionports.RequestActor {
+	return &permissionports.RequestActor{
 		UserID:        testutil.TestUserID,
 		PrincipalID:   testutil.TestUserID,
-		PrincipalType: servicesport.PrincipalTypeUser,
+		PrincipalType: permissionports.PrincipalTypeUser,
 	}
 }

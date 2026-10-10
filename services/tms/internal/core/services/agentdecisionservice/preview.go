@@ -5,9 +5,10 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/proposalexecutor"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -43,8 +44,8 @@ type shownPreview struct {
 func (s *Service) settlePreview(
 	ctx context.Context,
 	proposal *agent.AgentProposal,
-	req *services.DecideAgentProposalRequest,
-	actor *services.RequestActor,
+	req *agentports.DecideAgentProposalRequest,
+	actor *permissionports.RequestActor,
 ) (*shownPreview, error) {
 	// A person can always reject, whatever the preview has become since they
 	// read it: the digest they saw is kept when it is one, and never checked.
@@ -72,9 +73,9 @@ func (s *Service) settlePreview(
 		return &shownPreview{}, nil
 	}
 
-	previewReq := &services.ProposalPreviewRequest{
+	previewReq := &agentports.ProposalPreviewRequest{
 		Proposal: proposal,
-		Viewer:   &services.PreviewViewer{Actor: actor},
+		Viewer:   &agentports.PreviewViewer{Actor: actor},
 		Deciding: true,
 	}
 	if len(req.Modifications) > 0 {

@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/ifta"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -121,7 +121,7 @@ func buildAccumulationPrefix() string {
 		") "
 }
 
-func accumulationArgs(req *repositories.AccumulateMilesRequest) []any {
+func accumulationArgs(req *iftaports.AccumulateMilesRequest) []any {
 	return []any{
 		shipment.JurisdictionDistanceUnitsKilometers,
 		req.TenantInfo.OrgID, req.TenantInfo.BuID, shipment.MoveStatusCompleted,
@@ -236,15 +236,15 @@ func buildMismatchBody() string {
 
 func (r *repository) AccumulateMiles(
 	ctx context.Context,
-	req *repositories.AccumulateMilesRequest,
-) (*repositories.MileAccumulation, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.MileAccumulation, error) {
+	req *iftaports.AccumulateMilesRequest,
+) (*iftaports.MileAccumulation, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*iftaports.MileAccumulation, error) {
 		dba := r.db.DBForContext(ctx)
 		args := accumulationArgs(req)
-		out := &repositories.MileAccumulation{
-			RouteRows:  make([]*repositories.MileRow, 0, defaultRouteRowSize),
-			ManualRows: make([]*repositories.MileRow, 0, defaultRouteRowSize),
-			Mismatches: make([]repositories.MoveMismatch, 0),
+		out := &iftaports.MileAccumulation{
+			RouteRows:  make([]*iftaports.MileRow, 0, defaultRouteRowSize),
+			ManualRows: make([]*iftaports.MileRow, 0, defaultRouteRowSize),
+			Mismatches: make([]iftaports.MoveMismatch, 0),
 		}
 
 		if err := dba.NewRaw(routeRowsSQL, args...).Scan(ctx, &out.RouteRows); err != nil {
@@ -288,9 +288,9 @@ func (r *repository) AccumulateMiles(
 func (r *repository) manualRows(
 	ctx context.Context,
 	dba bun.IDB,
-	req *repositories.AccumulateMilesRequest,
-) ([]*repositories.MileRow, error) {
-	rows := make([]*repositories.MileRow, 0, defaultRouteRowSize)
+	req *iftaports.AccumulateMilesRequest,
+) ([]*iftaports.MileRow, error) {
+	rows := make([]*iftaports.MileRow, 0, defaultRouteRowSize)
 	err := dba.NewSelect().
 		Model((*ifta.JurisdictionMileageEntry)(nil)).
 		ColumnExpr(ifmeCols.TractorID.As("tractor_id")).

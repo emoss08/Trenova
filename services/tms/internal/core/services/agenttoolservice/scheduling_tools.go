@@ -10,11 +10,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/schedulingservice"
 	"github.com/emoss08/trenova/internal/core/services/teamscope"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -118,7 +118,7 @@ func newTeamScope(permissions teamscope.Permissions, teams teamscope.Teams) team
 
 func (s teamScope) require(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 	operation permission.Operation,
 	workerID pulid.ID,
 ) error {
@@ -211,7 +211,7 @@ func scheduleSpec(
 	operation permission.Operation,
 	properties map[string]any,
 	required []string,
-	target func(map[string]any) (serviceports.ToolTarget, bool),
+	target func(map[string]any) (agentports.ToolTarget, bool),
 ) *receivableSpec {
 	return &receivableSpec{
 		name:        name,
@@ -230,11 +230,11 @@ func scheduleSpec(
 	}
 }
 
-func targetScheduledWorker(params map[string]any) (serviceports.ToolTarget, bool) {
+func targetScheduledWorker(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, paramWorkerID, permission.ResourceWorker)
 }
 
-func newAssignWorkerShiftTool(schedules scheduleKeeper, scope teamScope) serviceports.AgentTool {
+func newAssignWorkerShiftTool(schedules scheduleKeeper, scope teamScope) agentports.AgentTool {
 	return newReportingReceivableTool(scheduleSpec(
 		"assign_worker_shift",
 		"Put a worker on a shift pattern from a day onward. The pattern they are on "+
@@ -264,7 +264,7 @@ func newAssignWorkerShiftTool(schedules scheduleKeeper, scope teamScope) service
 		plan: func(
 			ctx context.Context,
 			req *schedulingservice.AssignShiftRequest,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*schedulingservice.ShiftAssignmentPlan, error) {
 			if err := scope.require(
 				ctx,
@@ -289,7 +289,7 @@ func newAssignWorkerShiftTool(schedules scheduleKeeper, scope teamScope) service
 		run: func(
 			ctx context.Context,
 			req *schedulingservice.AssignShiftRequest,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			if err := scope.require(
 				ctx,
@@ -363,7 +363,7 @@ type assignmentEnd struct {
 func newEndWorkerShiftAssignmentTool(
 	schedules scheduleKeeper,
 	scope teamScope,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	spec := scheduleSpec(
 		"end_worker_shift_assignment",
 		"End a worker's shift pattern after a day, leaving them on no pattern from the "+
@@ -380,7 +380,7 @@ func newEndWorkerShiftAssignmentTool(
 			fieldEffectiveTo: agenttoolschema.Date("The last day the worker works the pattern."),
 		},
 		[]string{paramShiftAssignmentID, fieldEffectiveTo},
-		func(params map[string]any) (serviceports.ToolTarget, bool) {
+		func(params map[string]any) (agentports.ToolTarget, bool) {
 			return targetOf(params, paramShiftAssignmentID, permission.ResourceWorkerSchedule)
 		},
 	)
@@ -389,7 +389,7 @@ func newEndWorkerShiftAssignmentTool(
 	return newReportingReceivableTool(spec, receivablePlan[
 		*assignmentEnd, *schedulingservice.AssignmentChange,
 	]{
-		request: func(params *serviceports.ToolExecuteParams) (*assignmentEnd, error) {
+		request: func(params *agentports.ToolExecuteParams) (*assignmentEnd, error) {
 			id, err := requirePulid(params.Params, paramShiftAssignmentID)
 			if err != nil {
 				return nil, err
@@ -409,7 +409,7 @@ func newEndWorkerShiftAssignmentTool(
 		plan: func(
 			ctx context.Context,
 			end *assignmentEnd,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*schedulingservice.AssignmentChange, error) {
 			if err := requireAssignmentScope(ctx, schedules, scope, end, params); err != nil {
 				return nil, err
@@ -438,7 +438,7 @@ func newEndWorkerShiftAssignmentTool(
 		run: func(
 			ctx context.Context,
 			end *assignmentEnd,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			if err := requireAssignmentScope(ctx, schedules, scope, end, params); err != nil {
 				return nil, err
@@ -465,7 +465,7 @@ func requireAssignmentScope(
 	schedules scheduleKeeper,
 	scope teamScope,
 	end *assignmentEnd,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) error {
 	assignment, err := schedules.GetAssignment(ctx, end.req.TenantInfo, end.req.ID)
 	if err != nil {
@@ -478,7 +478,7 @@ func requireAssignmentScope(
 func newSetWorkerAvailabilityPreferenceTool(
 	schedules scheduleKeeper,
 	scope teamScope,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	spec := scheduleSpec(
 		"set_worker_availability_preference",
 		"Record whether a worker prefers, is available for or cannot work one weekday, "+
@@ -507,7 +507,7 @@ func newSetWorkerAvailabilityPreferenceTool(
 		plan: func(
 			ctx context.Context,
 			req *schedulingservice.SetPreferenceRequest,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*schedulingservice.PreferenceChange, error) {
 			if err := scope.require(
 				ctx,
@@ -532,7 +532,7 @@ func newSetWorkerAvailabilityPreferenceTool(
 		run: func(
 			ctx context.Context,
 			req *schedulingservice.SetPreferenceRequest,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			if err := scope.require(
 				ctx,
@@ -593,7 +593,7 @@ func renderPreference(
 		strings.ToLower(string(plan.After.Preference)), day), change), nil
 }
 
-func newProposeShiftSwapTool(schedules scheduleKeeper) serviceports.AgentTool {
+func newProposeShiftSwapTool(schedules scheduleKeeper) agentports.AgentTool {
 	return newReportingReceivableTool(&receivableSpec{
 		name:        "propose_shift_swap",
 		searchTerms: []string{"trade shifts", "shift trade", "swap shifts"},
@@ -629,7 +629,7 @@ func newProposeShiftSwapTool(schedules scheduleKeeper) serviceports.AgentTool {
 				maxScheduleNote),
 		},
 		required: []string{paramRequestingWorkerID, paramShiftDate},
-		target: func(params map[string]any) (serviceports.ToolTarget, bool) {
+		target: func(params map[string]any) (agentports.ToolTarget, bool) {
 			return targetOf(params, paramRequestingWorkerID, permission.ResourceWorker)
 		},
 	}, receivablePlan[*schedulingservice.ProposeSwapRequest, *worker.ShiftSwapRequest]{
@@ -637,7 +637,7 @@ func newProposeShiftSwapTool(schedules scheduleKeeper) serviceports.AgentTool {
 		plan: func(
 			_ context.Context,
 			req *schedulingservice.ProposeSwapRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*worker.ShiftSwapRequest, error) {
 			entity := *req.Entity
 
@@ -673,7 +673,7 @@ func newProposeShiftSwapTool(schedules scheduleKeeper) serviceports.AgentTool {
 		run: func(
 			ctx context.Context,
 			req *schedulingservice.ProposeSwapRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			created, err := schedules.ProposeSwap(ctx, req)
 			if err != nil {
@@ -691,7 +691,7 @@ func newProposeShiftSwapTool(schedules scheduleKeeper) serviceports.AgentTool {
 }
 
 func proposeSwapRequest(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*schedulingservice.ProposeSwapRequest, error) {
 	requesting, err := requirePulid(params.Params, paramRequestingWorkerID)
 	if err != nil {
@@ -741,7 +741,7 @@ type swapDecisionSpec struct {
 	searchTerms []string
 }
 
-func newSwapDecisionTool(schedules scheduleKeeper, spec *swapDecisionSpec) serviceports.AgentTool {
+func newSwapDecisionTool(schedules scheduleKeeper, spec *swapDecisionSpec) agentports.AgentTool {
 	return newReportingReceivableTool(&receivableSpec{
 		name:        spec.name,
 		description: spec.description,
@@ -763,12 +763,12 @@ func newSwapDecisionTool(schedules scheduleKeeper, spec *swapDecisionSpec) servi
 				maxScheduleNote),
 		},
 		required: []string{paramSwapID},
-		target: func(params map[string]any) (serviceports.ToolTarget, bool) {
+		target: func(params map[string]any) (agentports.ToolTarget, bool) {
 			return targetOf(params, paramSwapID, permission.ResourceShiftSwap)
 		},
 	}, receivablePlan[*schedulingservice.TransitionSwapRequest, *schedulingservice.SwapChange]{
 		request: func(
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*schedulingservice.TransitionSwapRequest, error) {
 			id, err := requirePulid(params.Params, paramSwapID)
 			if err != nil {
@@ -790,7 +790,7 @@ func newSwapDecisionTool(schedules scheduleKeeper, spec *swapDecisionSpec) servi
 		plan: func(
 			ctx context.Context,
 			req *schedulingservice.TransitionSwapRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*schedulingservice.SwapChange, error) {
 			return schedules.PreviewTransitionSwap(ctx, req)
 		},
@@ -814,7 +814,7 @@ func newSwapDecisionTool(schedules scheduleKeeper, spec *swapDecisionSpec) servi
 		run: func(
 			ctx context.Context,
 			req *schedulingservice.TransitionSwapRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			updated, err := schedules.TransitionSwap(ctx, req)
 			if err != nil {
@@ -831,7 +831,7 @@ func newSwapDecisionTool(schedules scheduleKeeper, spec *swapDecisionSpec) servi
 	})
 }
 
-func newApproveShiftSwapTool(schedules scheduleKeeper) serviceports.AgentTool {
+func newApproveShiftSwapTool(schedules scheduleKeeper) agentports.AgentTool {
 	return newSwapDecisionTool(schedules, &swapDecisionSpec{
 		name: "approve_shift_swap",
 		description: "Approve a shift swap the other worker has accepted, so the day " +
@@ -847,7 +847,7 @@ func newApproveShiftSwapTool(schedules scheduleKeeper) serviceports.AgentTool {
 	})
 }
 
-func newRejectShiftSwapTool(schedules scheduleKeeper) serviceports.AgentTool {
+func newRejectShiftSwapTool(schedules scheduleKeeper) agentports.AgentTool {
 	return newSwapDecisionTool(schedules, &swapDecisionSpec{
 		name:        "reject_shift_swap",
 		searchTerms: []string{"deny swap", "decline swap"},
@@ -863,7 +863,7 @@ func newRejectShiftSwapTool(schedules scheduleKeeper) serviceports.AgentTool {
 	})
 }
 
-func newWithdrawShiftSwapTool(schedules scheduleKeeper) serviceports.AgentTool {
+func newWithdrawShiftSwapTool(schedules scheduleKeeper) agentports.AgentTool {
 	return newSwapDecisionTool(schedules, &swapDecisionSpec{
 		name: "withdraw_shift_swap",
 		description: "Withdraw a shift swap on the proposing worker's behalf, when they " +
@@ -879,7 +879,7 @@ func newWithdrawShiftSwapTool(schedules scheduleKeeper) serviceports.AgentTool {
 }
 
 func assignShiftRequest(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*schedulingservice.AssignShiftRequest, error) {
 	workerID, err := requirePulid(params.Params, paramWorkerID)
 	if err != nil {
@@ -919,7 +919,7 @@ func assignShiftRequest(
 }
 
 func preferenceRequest(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*schedulingservice.SetPreferenceRequest, error) {
 	workerID, err := requirePulid(params.Params, paramWorkerID)
 	if err != nil {

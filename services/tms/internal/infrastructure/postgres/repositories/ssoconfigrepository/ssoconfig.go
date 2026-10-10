@@ -6,9 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/iam"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -29,7 +29,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.SSOConfigRepository {
+func New(p Params) tenantports.SSOConfigRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.sso-config-repository"),

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/stretchr/testify/require"
@@ -35,7 +35,7 @@ func TestAnUnavailableRendererIsRetried(t *testing.T) {
 	t.Parallel()
 
 	classified := classifyInvoiceRenderError(
-		fmt.Errorf("render invoice: %w", services.ErrPDFRendererUnavailable),
+		fmt.Errorf("render invoice: %w", documenttemplateports.ErrPDFRendererUnavailable),
 	)
 
 	var appErr *temporaltype.ApplicationError

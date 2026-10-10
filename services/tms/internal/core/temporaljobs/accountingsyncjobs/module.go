@@ -1,9 +1,9 @@
 package accountingsyncjobs
 
 import (
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"go.uber.org/fx"
 )
 
@@ -11,19 +11,19 @@ var Module = fx.Module("accounting-sync-jobs",
 	fx.Provide(NewActivities),
 	fx.Provide(fx.Annotate(
 		NewReferenceRefresher,
-		fx.As(new(services.AccountingReferenceRefresher)),
+		fx.As(new(accountingsyncports.AccountingReferenceRefresher)),
 	)),
 	fx.Provide(fx.Annotate(
 		NewSyncDispatcher,
-		fx.As(new(services.AccountingSyncDispatcher)),
+		fx.As(new(accountingsyncports.AccountingSyncDispatcher)),
 	)),
 	fx.Provide(fx.Annotate(
 		NewChangesPoller,
-		fx.As(new(services.AccountingChangePoller)),
+		fx.As(new(accountingsyncports.AccountingChangePoller)),
 	)),
 	fx.Provide(fx.Annotate(
 		NewDriftChecker,
-		fx.As(new(services.AccountingDriftChecker)),
+		fx.As(new(accountingsyncports.AccountingDriftChecker)),
 	)),
 	fx.Provide(schedule.AsProvider(NewScheduleProvider)),
 	fx.Provide(

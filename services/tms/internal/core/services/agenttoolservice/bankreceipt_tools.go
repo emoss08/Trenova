@@ -10,9 +10,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/bankreceiptservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptworkitemports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -32,52 +36,52 @@ const (
 type bankReceiptMatcher interface {
 	Get(
 		ctx context.Context,
-		req *serviceports.GetBankReceiptRequest,
+		req *bankreceiptports.GetBankReceiptRequest,
 	) (*bankreceipt.BankReceipt, error)
 	Match(
 		ctx context.Context,
-		req *serviceports.MatchBankReceiptRequest,
-		actor *serviceports.RequestActor,
+		req *bankreceiptports.MatchBankReceiptRequest,
+		actor *permissionports.RequestActor,
 	) (*bankreceipt.BankReceipt, error)
 	PreviewMatch(
 		ctx context.Context,
-		req *serviceports.MatchBankReceiptRequest,
-		actor *serviceports.RequestActor,
+		req *bankreceiptports.MatchBankReceiptRequest,
+		actor *permissionports.RequestActor,
 	) (*bankreceiptservice.MatchPreview, error)
 	PreviewMatchPayment(
 		ctx context.Context,
 		req *bankreceiptservice.PreviewMatchPaymentRequest,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*bankreceiptservice.MatchPreview, error)
 }
 
 type customerPaymentPoster interface {
 	PostAndApply(
 		ctx context.Context,
-		req *serviceports.PostCustomerPaymentRequest,
-		actor *serviceports.RequestActor,
+		req *customerpaymentports.PostCustomerPaymentRequest,
+		actor *permissionports.RequestActor,
 	) (*customerpayment.Payment, error)
 	PreviewPostAndApply(
 		ctx context.Context,
-		req *serviceports.PostCustomerPaymentRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.CustomerPaymentPostPreview, error)
+		req *customerpaymentports.PostCustomerPaymentRequest,
+		actor *permissionports.RequestActor,
+	) (*customerpaymentports.CustomerPaymentPostPreview, error)
 }
 
 type workItemResolver interface {
 	Get(
 		ctx context.Context,
-		req *serviceports.GetBankReceiptWorkItemRequest,
+		req *bankreceiptworkitemports.GetBankReceiptWorkItemRequest,
 	) (*bankreceiptworkitem.WorkItem, error)
 	Resolve(
 		ctx context.Context,
-		req *serviceports.ResolveBankReceiptWorkItemRequest,
-		actor *serviceports.RequestActor,
+		req *bankreceiptworkitemports.ResolveBankReceiptWorkItemRequest,
+		actor *permissionports.RequestActor,
 	) (*bankreceiptworkitem.WorkItem, error)
 	Dismiss(
 		ctx context.Context,
-		req *serviceports.DismissBankReceiptWorkItemRequest,
-		actor *serviceports.RequestActor,
+		req *bankreceiptworkitemports.DismissBankReceiptWorkItemRequest,
+		actor *permissionports.RequestActor,
 	) (*bankreceiptworkitem.WorkItem, error)
 }
 
@@ -88,7 +92,7 @@ type matchBankReceiptTool struct {
 	receipts bankReceiptMatcher
 }
 
-func newMatchBankReceiptTool(receipts bankReceiptMatcher) serviceports.AgentTool {
+func newMatchBankReceiptTool(receipts bankReceiptMatcher) agentports.AgentTool {
 	return &matchBankReceiptTool{receipts: receipts}
 }
 
@@ -126,8 +130,8 @@ func (t *matchBankReceiptTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *matchBankReceiptTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *matchBankReceiptTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceBankReceipt,
@@ -142,18 +146,18 @@ func (t *matchBankReceiptTool) Policy() serviceports.ToolPolicy {
 	}
 }
 
-func (t *matchBankReceiptTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *matchBankReceiptTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	id, err := requirePulid(params, "bankReceiptId")
 	if err != nil {
-		return serviceports.ToolTarget{}, false
+		return agentports.ToolTarget{}, false
 	}
 
-	return serviceports.ToolTarget{Resource: permission.ResourceBankReceipt, ID: id}, true
+	return agentports.ToolTarget{Resource: permission.ResourceBankReceipt, ID: id}, true
 }
 
 func (t *matchBankReceiptTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	request, err := t.request(params)
 	if err != nil {
@@ -166,14 +170,14 @@ func (t *matchBankReceiptTool) Execute(
 }
 
 func (t *matchBankReceiptTool) request(
-	params serviceports.ToolExecuteParams,
-) (*serviceports.MatchBankReceiptRequest, error) {
+	params agentports.ToolExecuteParams,
+) (*bankreceiptports.MatchBankReceiptRequest, error) {
 	receiptID, paymentID, err := t.arguments(params)
 	if err != nil {
 		return nil, err
 	}
 
-	return &serviceports.MatchBankReceiptRequest{
+	return &bankreceiptports.MatchBankReceiptRequest{
 		ReceiptID:  receiptID,
 		PaymentID:  paymentID,
 		TenantInfo: tenantFrom(params),
@@ -181,7 +185,7 @@ func (t *matchBankReceiptTool) request(
 }
 
 func (t *matchBankReceiptTool) arguments(
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) (pulid.ID, pulid.ID, error) {
 	if err := guardExecute(t, params); err != nil {
 		return "", "", err
@@ -207,14 +211,14 @@ func (t *matchBankReceiptTool) arguments(
 type postCustomerPaymentTool struct {
 	payments    customerPaymentPoster
 	receipts    bankReceiptMatcher
-	permissions serviceports.PermissionEngine
+	permissions permissionports.PermissionEngine
 }
 
 func newPostCustomerPaymentTool(
 	payments customerPaymentPoster,
 	receipts bankReceiptMatcher,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentTool {
 	return &postCustomerPaymentTool{
 		payments:    payments,
 		receipts:    receipts,
@@ -312,8 +316,8 @@ func (t *postCustomerPaymentTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *postCustomerPaymentTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *postCustomerPaymentTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceCustomerPayment,
@@ -329,23 +333,23 @@ func (t *postCustomerPaymentTool) Policy() serviceports.ToolPolicy {
 	}
 }
 
-func (t *postCustomerPaymentTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *postCustomerPaymentTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	id, err := requirePulid(params, "bankReceiptId")
 	if err != nil {
-		return serviceports.ToolTarget{}, false
+		return agentports.ToolTarget{}, false
 	}
 
-	return serviceports.ToolTarget{Resource: permission.ResourceBankReceipt, ID: id}, true
+	return agentports.ToolTarget{Resource: permission.ResourceBankReceipt, ID: id}, true
 }
 
 type postPaymentArgs struct {
-	request   *serviceports.PostCustomerPaymentRequest
+	request   *customerpaymentports.PostCustomerPaymentRequest
 	receiptID pulid.ID
 }
 
 func (t *postCustomerPaymentTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	args, err := t.arguments(ctx, params)
 	if err != nil {
@@ -360,7 +364,7 @@ func (t *postCustomerPaymentTool) Execute(
 		return nil
 	}
 
-	_, err = t.receipts.Match(ctx, &serviceports.MatchBankReceiptRequest{
+	_, err = t.receipts.Match(ctx, &bankreceiptports.MatchBankReceiptRequest{
 		ReceiptID:  args.receiptID,
 		PaymentID:  payment.ID,
 		TenantInfo: args.request.TenantInfo,
@@ -377,7 +381,7 @@ func (t *postCustomerPaymentTool) Execute(
 
 func (t *postCustomerPaymentTool) arguments(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) (postPaymentArgs, error) {
 	if err := guardExecute(t, params); err != nil {
 		return postPaymentArgs{}, err
@@ -414,7 +418,7 @@ func (t *postCustomerPaymentTool) arguments(
 	}
 
 	tenant := tenantFrom(params)
-	args := postPaymentArgs{request: &serviceports.PostCustomerPaymentRequest{
+	args := postPaymentArgs{request: &customerpaymentports.PostCustomerPaymentRequest{
 		CustomerID:      customerID,
 		PaymentDate:     paymentDate,
 		AccountingDate:  paymentDate,
@@ -441,7 +445,7 @@ func (t *postCustomerPaymentTool) arguments(
 	}
 	receipt, err := t.receipts.Get(
 		ctx,
-		&serviceports.GetBankReceiptRequest{ReceiptID: receiptID, TenantInfo: tenant},
+		&bankreceiptports.GetBankReceiptRequest{ReceiptID: receiptID, TenantInfo: tenant},
 	)
 	if err != nil {
 		return postPaymentArgs{}, err
@@ -466,7 +470,7 @@ func (t *postCustomerPaymentTool) arguments(
 
 func (t *postCustomerPaymentTool) authorizeMatch(
 	ctx context.Context,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) error {
 	if t.permissions == nil {
 		return fmt.Errorf(
@@ -474,7 +478,7 @@ func (t *postCustomerPaymentTool) authorizeMatch(
 		)
 	}
 
-	result, err := t.permissions.Check(ctx, &serviceports.PermissionCheckRequest{
+	result, err := t.permissions.Check(ctx, &permissionports.PermissionCheckRequest{
 		PrincipalType:  actor.PrincipalType,
 		PrincipalID:    actor.PrincipalID,
 		UserID:         actor.UserID,
@@ -499,7 +503,7 @@ func (t *postCustomerPaymentTool) authorizeMatch(
 func paymentApplications(
 	params map[string]any,
 	amount int64,
-) ([]*serviceports.CustomerPaymentApplicationInput, error) {
+) ([]*customerpaymentports.CustomerPaymentApplicationInput, error) {
 	applications, total, err := readPaymentApplications(params, paramApplications)
 	if err != nil {
 		return nil, err
@@ -519,7 +523,7 @@ func paymentApplications(
 func readPaymentApplications(
 	params map[string]any,
 	key string,
-) ([]*serviceports.CustomerPaymentApplicationInput, int64, error) {
+) ([]*customerpaymentports.CustomerPaymentApplicationInput, int64, error) {
 	raw, ok := params[key]
 	if !ok || raw == nil {
 		return nil, 0, nil
@@ -537,7 +541,7 @@ func readPaymentApplications(
 		)
 	}
 
-	applications := make([]*serviceports.CustomerPaymentApplicationInput, 0, len(entries))
+	applications := make([]*customerpaymentports.CustomerPaymentApplicationInput, 0, len(entries))
 	seen := make(map[pulid.ID]struct{}, len(entries))
 	total := int64(0)
 	for idx, entry := range entries {
@@ -566,7 +570,7 @@ func readPaymentApplications(
 			return nil, 0, fmt.Errorf("%s[%d]: %w", key, idx, err)
 		}
 		total += applied
-		applications = append(applications, &serviceports.CustomerPaymentApplicationInput{
+		applications = append(applications, &customerpaymentports.CustomerPaymentApplicationInput{
 			InvoiceID:           invoiceID,
 			AppliedAmountMinor:  applied,
 			ShortPayAmountMinor: shortPay,
@@ -604,7 +608,7 @@ type resolveBankReceiptWorkItemTool struct {
 	items workItemResolver
 }
 
-func newResolveBankReceiptWorkItemTool(items workItemResolver) serviceports.AgentTool {
+func newResolveBankReceiptWorkItemTool(items workItemResolver) agentports.AgentTool {
 	return &resolveBankReceiptWorkItemTool{items: items}
 }
 
@@ -645,8 +649,8 @@ func (t *resolveBankReceiptWorkItemTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *resolveBankReceiptWorkItemTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *resolveBankReceiptWorkItemTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceBankReceiptWorkItem,
@@ -664,13 +668,13 @@ func (t *resolveBankReceiptWorkItemTool) Policy() serviceports.ToolPolicy {
 
 func (t *resolveBankReceiptWorkItemTool) Target(
 	params map[string]any,
-) (serviceports.ToolTarget, bool) {
+) (agentports.ToolTarget, bool) {
 	id, err := requirePulid(params, "workItemId")
 	if err != nil {
-		return serviceports.ToolTarget{}, false
+		return agentports.ToolTarget{}, false
 	}
 
-	return serviceports.ToolTarget{Resource: permission.ResourceBankReceiptWorkItem, ID: id}, true
+	return agentports.ToolTarget{Resource: permission.ResourceBankReceiptWorkItem, ID: id}, true
 }
 
 type resolveWorkItemArgs struct {
@@ -681,7 +685,7 @@ type resolveWorkItemArgs struct {
 
 func (t *resolveBankReceiptWorkItemTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	args, err := t.arguments(params)
 	if err != nil {
@@ -706,8 +710,8 @@ func (a resolveWorkItemArgs) dismisses() bool {
 
 func (a resolveWorkItemArgs) dismissal(
 	tenant pagination.TenantInfo,
-) *serviceports.DismissBankReceiptWorkItemRequest {
-	return &serviceports.DismissBankReceiptWorkItemRequest{
+) *bankreceiptworkitemports.DismissBankReceiptWorkItemRequest {
+	return &bankreceiptworkitemports.DismissBankReceiptWorkItemRequest{
 		WorkItemID:     a.id,
 		ResolutionNote: a.note,
 		TenantInfo:     tenant,
@@ -716,8 +720,8 @@ func (a resolveWorkItemArgs) dismissal(
 
 func (a resolveWorkItemArgs) resolved(
 	tenant pagination.TenantInfo,
-) *serviceports.ResolveBankReceiptWorkItemRequest {
-	return &serviceports.ResolveBankReceiptWorkItemRequest{
+) *bankreceiptworkitemports.ResolveBankReceiptWorkItemRequest {
+	return &bankreceiptworkitemports.ResolveBankReceiptWorkItemRequest{
 		WorkItemID:     a.id,
 		ResolutionType: a.resolution,
 		ResolutionNote: a.note,
@@ -726,7 +730,7 @@ func (a resolveWorkItemArgs) resolved(
 }
 
 func (t *resolveBankReceiptWorkItemTool) arguments(
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) (resolveWorkItemArgs, error) {
 	if err := guardExecute(t, params); err != nil {
 		return resolveWorkItemArgs{}, err

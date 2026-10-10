@@ -5,9 +5,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -47,29 +49,29 @@ var (
 )
 
 type carrierKeeper interface {
-	Get(ctx context.Context, req repositories.GetCarrierByIDRequest) (*carrier.Carrier, error)
+	Get(ctx context.Context, req carrierports.GetCarrierByIDRequest) (*carrier.Carrier, error)
 	PlanCreate(ctx context.Context, entity *carrier.Carrier) (*carrier.Carrier, error)
 	Create(
 		ctx context.Context,
 		entity *carrier.Carrier,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*carrier.Carrier, error)
 	PlanUpdate(
 		ctx context.Context,
 		entity *carrier.Carrier,
-	) (*serviceports.RecordChange[carrier.Carrier], error)
+	) (*kernelports.RecordChange[carrier.Carrier], error)
 	Update(
 		ctx context.Context,
 		entity *carrier.Carrier,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*carrier.Carrier, error)
 	PlanBulkUpdateStatus(
 		ctx context.Context,
-		req *repositories.BulkUpdateCarrierStatusRequest,
-	) ([]serviceports.RecordChange[carrier.Carrier], error)
+		req *carrierports.BulkUpdateCarrierStatusRequest,
+	) ([]kernelports.RecordChange[carrier.Carrier], error)
 	BulkUpdateStatus(
 		ctx context.Context,
-		req *repositories.BulkUpdateCarrierStatusRequest,
+		req *carrierports.BulkUpdateCarrierStatusRequest,
 	) ([]*carrier.Carrier, error)
 }
 
@@ -248,10 +250,10 @@ func carrierGetter(carriers carrierKeeper) func(
 		tenant pagination.TenantInfo,
 		id pulid.ID,
 	) (*carrier.Carrier, error) {
-		return carriers.Get(ctx, repositories.GetCarrierByIDRequest{
+		return carriers.Get(ctx, carrierports.GetCarrierByIDRequest{
 			ID:         id,
 			TenantInfo: tenant,
-			CarrierFilterOptions: repositories.CarrierFilterOptions{
+			CarrierFilterOptions: carrierports.CarrierFilterOptions{
 				IncludeContacts:          true,
 				IncludeInsurancePolicies: true,
 				IncludeEDIChannels:       true,
@@ -260,7 +262,7 @@ func carrierGetter(carriers carrierKeeper) func(
 	}
 }
 
-func newCreateCarrierTool(carriers carrierKeeper, states stateLookup) serviceports.AgentTool {
+func newCreateCarrierTool(carriers carrierKeeper, states stateLookup) agentports.AgentTool {
 	return newMasterCreateTool(&masterCreateSpec[carrier.Carrier]{
 		record: carrierRecord,
 		name:   "create_carrier",
@@ -293,7 +295,7 @@ func newCreateCarrierTool(carriers carrierKeeper, states stateLookup) servicepor
 	})
 }
 
-func newUpdateCarrierTool(carriers carrierKeeper, states stateLookup) serviceports.AgentTool {
+func newUpdateCarrierTool(carriers carrierKeeper, states stateLookup) agentports.AgentTool {
 	return newMasterUpdateTool(&masterUpdateSpec[carrier.Carrier]{
 		record: carrierRecord,
 		name:   "update_carrier",
@@ -317,7 +319,7 @@ func newUpdateCarrierTool(carriers carrierKeeper, states stateLookup) servicepor
 func newUpdateCarrierStatusTool(
 	carriers carrierKeeper,
 	states stateLookup,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newMasterStatusTool(&masterStatusSpec[carrier.Carrier, carrier.Status]{
 		record: carrierRecord,
 		name:   "update_carrier_status",
@@ -334,8 +336,8 @@ func newUpdateCarrierStatusTool(
 			tenant pagination.TenantInfo,
 			ids []pulid.ID,
 			status carrier.Status,
-		) ([]serviceports.RecordChange[carrier.Carrier], error) {
-			return carriers.PlanBulkUpdateStatus(ctx, &repositories.BulkUpdateCarrierStatusRequest{
+		) ([]kernelports.RecordChange[carrier.Carrier], error) {
+			return carriers.PlanBulkUpdateStatus(ctx, &carrierports.BulkUpdateCarrierStatusRequest{
 				TenantInfo: tenant,
 				CarrierIDs: ids,
 				Status:     status,
@@ -347,7 +349,7 @@ func newUpdateCarrierStatusTool(
 			ids []pulid.ID,
 			status carrier.Status,
 		) ([]*carrier.Carrier, error) {
-			return carriers.BulkUpdateStatus(ctx, &repositories.BulkUpdateCarrierStatusRequest{
+			return carriers.BulkUpdateStatus(ctx, &carrierports.BulkUpdateCarrierStatusRequest{
 				TenantInfo: tenant,
 				CarrierIDs: ids,
 				Status:     status,

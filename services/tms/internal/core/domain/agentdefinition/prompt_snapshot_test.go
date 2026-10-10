@@ -9,10 +9,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentevalgate"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
 )
@@ -37,7 +38,7 @@ var (
 
 type promptContext struct {
 	name    string
-	request func(definition *agentdefinition.Definition) *serviceports.RunRequest
+	request func(definition *agentdefinition.Definition) *agentports.RunRequest
 }
 
 func snapshotDefinition(template agentdefinition.Template) *agentdefinition.Definition {
@@ -67,9 +68,9 @@ func snapshotDefinition(template agentdefinition.Template) *agentdefinition.Defi
 	return definition
 }
 
-func snapshotUser() *serviceports.RequestActor {
-	return &serviceports.RequestActor{
-		PrincipalType:  serviceports.PrincipalTypeUser,
+func snapshotUser() *permissionports.RequestActor {
+	return &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    snapshotUserID,
 		UserID:         snapshotUserID,
 		OrganizationID: snapshotOrgID,
@@ -91,7 +92,7 @@ func promptContexts() []promptContext {
 	return []promptContext{
 		{
 			name: "chat",
-			request: func(definition *agentdefinition.Definition) *serviceports.RunRequest {
+			request: func(definition *agentdefinition.Definition) *agentports.RunRequest {
 				rc := canonicalContext(agent.RunTriggerChat)
 				rc.User = &agentdefinition.RuntimeUser{
 					Name:  "Maria Ortiz",
@@ -105,7 +106,7 @@ func promptContexts() []promptContext {
 				rc.Guide = true
 				rc.Facts = []string{"Invoice date is Oct 3", "Acme pays net 45"}
 
-				return &serviceports.RunRequest{
+				return &agentports.RunRequest{
 					Definition: definition,
 					Actor:      snapshotUser(),
 					Context:    rc,
@@ -117,7 +118,7 @@ func promptContexts() []promptContext {
 		},
 		{
 			name: "background",
-			request: func(definition *agentdefinition.Definition) *serviceports.RunRequest {
+			request: func(definition *agentdefinition.Definition) *agentports.RunRequest {
 				rc := canonicalContext(agent.RunTriggerEvent)
 				rc.Subject = &agentdefinition.RuntimeSubject{
 					Type:  agent.SubjectShipmentMove,
@@ -126,10 +127,10 @@ func promptContexts() []promptContext {
 					Notes: "Picks up in Dallas tomorrow at 08:00; no driver assigned.",
 				}
 				actor := snapshotUser()
-				actor.PrincipalType = serviceports.PrincipalTypeAgent
+				actor.PrincipalType = permissionports.PrincipalTypeAgent
 				actor.PrincipalID = snapshotAgentID
 
-				return &serviceports.RunRequest{
+				return &agentports.RunRequest{
 					Definition: definition,
 					Actor:      actor,
 					Context:    rc,
@@ -141,11 +142,11 @@ func promptContexts() []promptContext {
 		},
 		{
 			name: "delegated",
-			request: func(definition *agentdefinition.Definition) *serviceports.RunRequest {
+			request: func(definition *agentdefinition.Definition) *agentports.RunRequest {
 				rc := canonicalContext(agent.RunTriggerChat)
 				rc.DelegatedBy = parentAgentName
 
-				return &serviceports.RunRequest{
+				return &agentports.RunRequest{
 					Definition: definition,
 					Actor:      snapshotUser(),
 					Context:    rc,
@@ -153,7 +154,7 @@ func promptContexts() []promptContext {
 					Publishes:  true,
 					Input: "Find the shipments for Acme Freight that picked up this week " +
 						"and hand back their ids.",
-					Delegation: &serviceports.Delegation{
+					Delegation: &agentports.Delegation{
 						ParentAgentID:   snapshotParentID,
 						ParentAgentName: parentAgentName,
 						CallID:          "call_delegate_snapshot",
@@ -248,21 +249,21 @@ func snapshotMemories() ([]*agent.Memory, []agent.MemorySubject) {
 	outside.Tainted = true
 
 	return []*agent.Memory{
-			memory("amem_01JSNAPSHOTMEMORY00000008", agent.MemoryKindFact,
-				"The yard closes at 18:00."),
-			holdFix,
-			long,
-			assignFix,
-			memory("amem_01JSNAPSHOTMEMORY00000009", agent.MemoryKindInstruction,
-				"Quote every lane in US dollars."),
-			outside,
-			dockRule,
-			aboutCustomer,
-			customerRule,
-		}, []agent.MemorySubject{
-			{Type: agent.MemorySubjectCustomer, ID: customer, Relation: agent.MemoryRelationDirect},
-			{Type: agent.MemorySubjectLocation, ID: location, Relation: agent.MemoryRelationRelated},
-		}
+		memory("amem_01JSNAPSHOTMEMORY00000008", agent.MemoryKindFact,
+			"The yard closes at 18:00."),
+		holdFix,
+		long,
+		assignFix,
+		memory("amem_01JSNAPSHOTMEMORY00000009", agent.MemoryKindInstruction,
+			"Quote every lane in US dollars."),
+		outside,
+		dockRule,
+		aboutCustomer,
+		customerRule,
+	}, []agent.MemorySubject{
+		{Type: agent.MemorySubjectCustomer, ID: customer, Relation: agent.MemoryRelationDirect},
+		{Type: agent.MemorySubjectLocation, ID: location, Relation: agent.MemoryRelationRelated},
+	}
 }
 
 func TestPromptSnapshots_MemoryGrouping(t *testing.T) {
@@ -320,7 +321,7 @@ func TestPromptSnapshots_ProposalsAwaitingADecision(t *testing.T) {
 	rt := snapshotRuntime(t)
 	proposalID := pulid.ID("aprop_01JSNAPSHOTWAITING000000000")
 	req := promptContexts()[0].request(snapshotDefinition(agentdefinition.TemplateDispatchAssistant))
-	req.Proposals = []serviceports.ProposalOutcome{{
+	req.Proposals = []agentports.ProposalOutcome{{
 		ProposalID: proposalID,
 		ToolName:   "assign_move",
 		Rationale:  "Cover move 1 of S-1001 with Maria Ortiz and tractor 42.",

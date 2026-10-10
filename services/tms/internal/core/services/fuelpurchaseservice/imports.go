@@ -13,7 +13,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/ifta"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/fuelimport"
@@ -35,7 +37,7 @@ func (s *Service) GetImport(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*fuelpurchase.ImportBatch, error) {
-	return s.repo.GetImportBatchByID(ctx, &repositories.GetImportBatchByIDRequest{
+	return s.repo.GetImportBatchByID(ctx, &fuelpurchaseports.GetImportBatchByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
@@ -43,7 +45,7 @@ func (s *Service) GetImport(
 
 func (s *Service) ListImportRows(
 	ctx context.Context,
-	req *repositories.ListImportRowsRequest,
+	req *fuelpurchaseports.ListImportRowsRequest,
 ) (*pagination.CursorListResult[*fuelpurchase.ImportRow], error) {
 	return s.repo.ListImportRows(ctx, req)
 }
@@ -84,7 +86,7 @@ func (s *Service) CreateImport(
 		UploadedByID:    req.UserID,
 	}
 	if !req.DefaultFuelCardID.IsNil() {
-		if _, err := s.repo.GetCardByID(ctx, &repositories.GetFuelCardByIDRequest{
+		if _, err := s.repo.GetCardByID(ctx, &fuelpurchaseports.GetFuelCardByIDRequest{
 			ID:         req.DefaultFuelCardID,
 			TenantInfo: req.TenantInfo,
 		}); err != nil {
@@ -139,7 +141,7 @@ func (s *Service) Stage(
 		zap.String("batchId", req.BatchID.String()),
 	)
 
-	batch, err := s.repo.GetImportBatchByID(ctx, &repositories.GetImportBatchByIDRequest{
+	batch, err := s.repo.GetImportBatchByID(ctx, &fuelpurchaseports.GetImportBatchByIDRequest{
 		ID:         req.BatchID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -161,7 +163,7 @@ func (s *Service) Stage(
 		)
 	}
 
-	doc, err := s.documents.Get(ctx, repositories.GetDocumentByIDRequest{
+	doc, err := s.documents.Get(ctx, documentports.GetDocumentByIDRequest{
 		ID:         req.DocumentID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -301,7 +303,7 @@ func (s *Service) readDocument(
 	tenantInfo pagination.TenantInfo,
 	documentID pulid.ID,
 ) ([]byte, error) {
-	content, err := s.documents.GetDownloadContent(ctx, repositories.GetDocumentByIDRequest{
+	content, err := s.documents.GetDownloadContent(ctx, documentports.GetDocumentByIDRequest{
 		ID:         documentID,
 		TenantInfo: tenantInfo,
 	})
@@ -504,7 +506,7 @@ func (s *Service) loadStageContext(
 	}
 
 	if len(references) > 0 {
-		existing, err := s.repo.FindReferences(ctx, &repositories.FindFuelPurchaseReferencesRequest{
+		existing, err := s.repo.FindReferences(ctx, &fuelpurchaseports.FindFuelPurchaseReferencesRequest{
 			TenantInfo: tenantInfo,
 			References: references,
 		})
@@ -515,7 +517,7 @@ func (s *Service) loadStageContext(
 	}
 
 	if len(codes) > 0 || len(plates) > 0 {
-		byCode, err := s.tractorRepo.GetByCodes(ctx, repositories.GetTractorsByCodesRequest{
+		byCode, err := s.tractorRepo.GetByCodes(ctx, tractorports.GetTractorsByCodesRequest{
 			TenantInfo:    tenantInfo,
 			Codes:         codes,
 			LicensePlates: plates,
@@ -532,7 +534,7 @@ func (s *Service) loadStageContext(
 	}
 
 	for lastFour := range lastFours {
-		card, err := s.repo.FindCardByLastFour(ctx, &repositories.FindFuelCardByLastFourRequest{
+		card, err := s.repo.FindCardByLastFour(ctx, &fuelpurchaseports.FindFuelCardByLastFourRequest{
 			TenantInfo: tenantInfo,
 			Provider:   batch.Provider,
 			LastFour:   lastFour,
@@ -546,7 +548,7 @@ func (s *Service) loadStageContext(
 	}
 
 	if batch.DefaultFuelCardID != nil && !batch.DefaultFuelCardID.IsNil() {
-		card, err := s.repo.GetCardByID(ctx, &repositories.GetFuelCardByIDRequest{
+		card, err := s.repo.GetCardByID(ctx, &fuelpurchaseports.GetFuelCardByIDRequest{
 			ID:         *batch.DefaultFuelCardID,
 			TenantInfo: tenantInfo,
 		})
@@ -743,7 +745,7 @@ func (s *Service) Commit(
 		return nil, err
 	}
 
-	result, err := s.repo.CommitImport(ctx, &repositories.CommitImportRequest{
+	result, err := s.repo.CommitImport(ctx, &fuelpurchaseports.CommitImportRequest{
 		Batch:            plan.Batch,
 		Purchases:        plan.Purchases,
 		RowIDByReference: plan.RowIDByReference,
@@ -754,7 +756,7 @@ func (s *Service) Commit(
 		return nil, err
 	}
 
-	committed, err := s.repo.GetImportBatchByID(ctx, &repositories.GetImportBatchByIDRequest{
+	committed, err := s.repo.GetImportBatchByID(ctx, &fuelpurchaseports.GetImportBatchByIDRequest{
 		ID:         req.BatchID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -844,7 +846,7 @@ func readSheet(format fuelpurchase.SourceFormat, content []byte) (*rateimport.Sh
 
 func (s *Service) ListImports(
 	ctx context.Context,
-	req *repositories.ListImportBatchesRequest,
+	req *fuelpurchaseports.ListImportBatchesRequest,
 ) (*pagination.CursorListResult[*fuelpurchase.ImportBatch], error) {
 	return s.repo.ListImportBatches(ctx, req)
 }

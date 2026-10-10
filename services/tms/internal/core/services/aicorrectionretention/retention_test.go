@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/aicorrectionretention"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
@@ -22,7 +22,7 @@ type retentionReader struct {
 
 func (r retentionReader) Get(
 	context.Context,
-	repositories.GetDataRetentionRequest,
+	tenantports.GetDataRetentionRequest,
 ) (*tenant.DataRetention, error) {
 	return r.settings, r.err
 }
@@ -41,7 +41,7 @@ func TestSweepPurgesInBatchesUntilAShortOne(t *testing.T) {
 	var befores []int64
 	total, err := sweep.Run(
 		t.Context(),
-		services.PurgeExpiredAICorrectionsRequest{},
+		kernelports.PurgeExpiredAICorrectionsRequest{},
 		func(_ context.Context, before int64, limit int) (int64, error) {
 			assert.Equal(t, 10, limit)
 			befores = append(befores, before)
@@ -70,7 +70,7 @@ func TestSweepUsesTheRequestTimeAndStopsOnError(t *testing.T) {
 	calls := 0
 	total, err := sweep.Run(
 		t.Context(),
-		services.PurgeExpiredAICorrectionsRequest{Now: now},
+		kernelports.PurgeExpiredAICorrectionsRequest{Now: now},
 		func(_ context.Context, before int64, _ int) (int64, error) {
 			calls++
 			assert.Less(t, before, now)
@@ -96,7 +96,7 @@ func TestSweepReturnsARetentionReadFailure(t *testing.T) {
 	}
 	_, err := sweep.Run(
 		t.Context(),
-		services.PurgeExpiredAICorrectionsRequest{},
+		kernelports.PurgeExpiredAICorrectionsRequest{},
 		func(context.Context, int64, int) (int64, error) {
 			t.Fatal("nothing is purged without a cutoff")
 			return 0, nil

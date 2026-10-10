@@ -5,7 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,12 +25,12 @@ func TestApplyAccountingInboundChange_PreviewShowsWhatItPosts(t *testing.T) {
 	t.Parallel()
 
 	change := proposedPayment(accountingsync.InboundStatusProposed)
-	operator := newInboundOperator(change, &serviceports.AccountingInboundApplyPreview{
+	operator := newInboundOperator(change, &accountingsyncports.AccountingInboundApplyPreview{
 		CanApply:       true,
 		PaidAt:         1_790_208_000,
 		CashMinor:      145_025,
 		UnappliedMinor: 5_000,
-		Lines: []serviceports.AccountingInboundPostingLine{{
+		Lines: []accountingsyncports.AccountingInboundPostingLine{{
 			ObjectType:   accountingsync.SyncObjectInvoice,
 			ObjectID:     pulid.MustNew("inv_"),
 			ObjectNumber: "INV-1001",
@@ -40,7 +41,7 @@ func TestApplyAccountingInboundChange_PreviewShowsWhatItPosts(t *testing.T) {
 	tool := newApplyAccountingInboundChangeTool(operator)
 	params := syncParams(map[string]any{"inboundChangeId": change.ID.String()})
 
-	previewer, ok := tool.(serviceports.ToolPreviewer)
+	previewer, ok := tool.(agentports.ToolPreviewer)
 	require.True(t, ok)
 	preview, err := previewer.Preview(t.Context(), params)
 	require.NoError(t, err)
@@ -61,13 +62,13 @@ func TestApplyAccountingInboundChange_PreviewWarnsWhenItNoLongerMatches(t *testi
 	t.Parallel()
 
 	change := proposedPayment(accountingsync.InboundStatusProposed)
-	operator := newInboundOperator(change, &serviceports.AccountingInboundApplyPreview{
+	operator := newInboundOperator(change, &accountingsyncports.AccountingInboundApplyPreview{
 		Blocker: "INV-1001 was paid in Trenova after the payment was read.",
 	})
 	tool := newApplyAccountingInboundChangeTool(operator)
 	params := syncParams(map[string]any{"inboundChangeId": change.ID.String()})
 
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.NotEmpty(t, preview.Warnings)
 	assert.Equal(t, agent.PreviewWarningWouldFail, preview.Warnings[0].Code)
@@ -78,14 +79,14 @@ func TestIgnoreAccountingInboundChange_PreviewShowsTheNote(t *testing.T) {
 	t.Parallel()
 
 	change := proposedPayment(accountingsync.InboundStatusProposed)
-	operator := newInboundOperator(change, &serviceports.AccountingInboundApplyPreview{})
+	operator := newInboundOperator(change, &accountingsyncports.AccountingInboundApplyPreview{})
 	tool := newIgnoreAccountingInboundChangeTool(operator)
 	params := syncParams(map[string]any{
 		"inboundChangeId": change.ID.String(),
 		"note":            "Keyed in Trenova by the AR team.",
 	})
 
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.Len(t, preview.Changes, 1)
 	status, ok := previewField(&preview.Changes[0], "status")
@@ -101,14 +102,14 @@ func TestIgnoreAccountingInboundChange_PreviewWarnsOnAClosedPayment(t *testing.T
 	t.Parallel()
 
 	change := proposedPayment(accountingsync.InboundStatusApplied)
-	operator := newInboundOperator(change, &serviceports.AccountingInboundApplyPreview{})
+	operator := newInboundOperator(change, &accountingsyncports.AccountingInboundApplyPreview{})
 	tool := newIgnoreAccountingInboundChangeTool(operator)
 	params := syncParams(map[string]any{
 		"inboundChangeId": change.ID.String(),
 		"note":            "duplicate",
 	})
 
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.NotEmpty(t, preview.Warnings)
 	assert.Equal(t, agent.PreviewWarningWouldFail, preview.Warnings[0].Code)

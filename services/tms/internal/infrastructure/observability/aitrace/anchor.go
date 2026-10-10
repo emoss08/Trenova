@@ -5,7 +5,9 @@ import (
 	"crypto/sha256"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -88,7 +90,7 @@ func ForDelegate(ownerID pulid.ID, delegateCallID string) Anchor {
 	return AnchorFor(AnchorDelegate, ownerID.String()+delegateKeySep+delegateCallID)
 }
 
-func ForRun(owner serviceports.RunStepOwner, delegation *serviceports.Delegation) Anchor {
+func ForRun(owner agentports.RunStepOwner, delegation *agentports.Delegation) Anchor {
 	callID := ""
 	if delegation != nil {
 		callID = delegation.CallID
@@ -97,7 +99,7 @@ func ForRun(owner serviceports.RunStepOwner, delegation *serviceports.Delegation
 	return forOwner(owner.Kind, owner.ID, callID)
 }
 
-func ForAttribution(attribution *serviceports.AIUsageAttribution) Anchor {
+func ForAttribution(attribution *aiusageports.AIUsageAttribution) Anchor {
 	if attribution == nil {
 		return Anchor{}
 	}
@@ -105,13 +107,13 @@ func ForAttribution(attribution *serviceports.AIUsageAttribution) Anchor {
 		return forOwner(attribution.OwnerKind, attribution.OwnerID, attribution.DelegateCallID)
 	}
 	if attribution.RunID.IsNotNil() {
-		return forOwner(serviceports.RunStepOwnerAgentRun, attribution.RunID, "")
+		return forOwner(agentports.RunStepOwnerAgentRun, attribution.RunID, "")
 	}
 
 	return Anchor{}
 }
 
-func forOwner(kind serviceports.RunStepOwnerKind, id pulid.ID, delegateCallID string) Anchor {
+func forOwner(kind kernelports.RunStepOwnerKind, id pulid.ID, delegateCallID string) Anchor {
 	if id.IsNil() {
 		return Anchor{}
 	}
@@ -120,12 +122,12 @@ func forOwner(kind serviceports.RunStepOwnerKind, id pulid.ID, delegateCallID st
 	}
 
 	switch kind {
-	case serviceports.RunStepOwnerAgentRun:
+	case agentports.RunStepOwnerAgentRun:
 		if id.Prefix() == agent.EvaluationIDPrefix {
 			return AnchorFor(AnchorEvaluation, id.String())
 		}
 		return AnchorFor(AnchorAgentRun, id.String())
-	case serviceports.RunStepOwnerAssistantTurn:
+	case agentports.RunStepOwnerAssistantTurn:
 		return AnchorFor(AnchorAssistantTurn, id.String())
 	}
 

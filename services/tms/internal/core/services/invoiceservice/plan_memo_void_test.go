@@ -1,6 +1,11 @@
 package invoiceservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceadjustmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
@@ -8,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -26,12 +31,12 @@ func TestPreviewVoidDraftShowsItVoidedWithoutWriting(t *testing.T) {
 
 	f := newVoidFixture()
 	draft := f.invoice(invoice.StatusDraft)
-	repo := mocks.NewMockInvoiceRepository(t)
+	repo := invoiceportsmock.NewMockInvoiceRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(draft, nil).Once()
 
 	req := f.request(invoice.VoidDispositionRebill)
 	req.Reason = "  Billed the wrong customer  "
-	preview, err := newVoidService(repo, mocks.NewMockBillingQueueRepository(t)).
+	preview, err := newVoidService(repo, billingqueueportsmock.NewMockBillingQueueRepository(t)).
 		PreviewVoid(t.Context(), req, f.actor)
 
 	require.NoError(t, err)
@@ -49,18 +54,18 @@ func TestPreviewVoidPostedPreviewsTheFullReversalWithoutSubmittingIt(t *testing.
 
 	f := newVoidFixture()
 	posted := f.invoice(invoice.StatusPosted)
-	repo := mocks.NewMockInvoiceRepository(t)
+	repo := invoiceportsmock.NewMockInvoiceRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(posted, nil).Once()
 
-	figures := &servicesports.InvoiceAdjustmentPreview{
+	figures := &invoiceadjustmentports.InvoiceAdjustmentPreview{
 		InvoiceID:         f.invoiceID,
 		Kind:              invoiceadjustment.KindFullReversal,
 		CreditTotalAmount: decimal.NewFromInt(-100),
 		RequiresApproval:  true,
 	}
-	adjustments := mocks.NewMockInvoiceAdjustmentService(t)
+	adjustments := invoiceadjustmentportsmock.NewMockInvoiceAdjustmentService(t)
 	adjustments.EXPECT().
-		Preview(mock.Anything, mock.MatchedBy(func(req *servicesports.InvoiceAdjustmentRequest) bool {
+		Preview(mock.Anything, mock.MatchedBy(func(req *invoiceadjustmentports.InvoiceAdjustmentRequest) bool {
 			return req.InvoiceID == f.invoiceID &&
 				req.Kind == invoiceadjustment.KindFullReversal &&
 				req.IdempotencyKey == "invoice-void:"+f.invoiceID.String() &&
@@ -69,7 +74,7 @@ func TestPreviewVoidPostedPreviewsTheFullReversalWithoutSubmittingIt(t *testing.
 		Return(figures, nil).
 		Once()
 
-	svc := newVoidService(repo, mocks.NewMockBillingQueueRepository(t))
+	svc := newVoidService(repo, billingqueueportsmock.NewMockBillingQueueRepository(t))
 	svc.adjustmentService = adjustments
 
 	preview, err := svc.PreviewVoid(t.Context(), f.request(invoice.VoidDispositionDoNotRebill), f.actor)
@@ -89,10 +94,10 @@ func TestPreviewVoidRefusesWhatVoidRefuses(t *testing.T) {
 	f := newVoidFixture()
 	posted := f.invoice(invoice.StatusPosted)
 	posted.AppliedAmountMinor = 500
-	repo := mocks.NewMockInvoiceRepository(t)
+	repo := invoiceportsmock.NewMockInvoiceRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(posted, nil).Once()
-	svc := newVoidService(repo, mocks.NewMockBillingQueueRepository(t))
-	svc.adjustmentService = mocks.NewMockInvoiceAdjustmentService(t)
+	svc := newVoidService(repo, billingqueueportsmock.NewMockBillingQueueRepository(t))
+	svc.adjustmentService = invoiceadjustmentportsmock.NewMockInvoiceAdjustmentService(t)
 
 	_, err := svc.PreviewVoid(t.Context(), f.request(invoice.VoidDispositionRebill), f.actor)
 
@@ -107,7 +112,7 @@ func TestPreviewMemoBuildsTheMemoWithoutMintingANumberOrWriting(t *testing.T) {
 	customerID := pulid.MustNew("cus_")
 	tenantInfo := pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}
 
-	customers := mocks.NewMockCustomerRepository(t)
+	customers := customerportsmock.NewMockCustomerRepository(t)
 	customers.EXPECT().GetByID(mock.Anything, mock.Anything).Return(&customer.Customer{
 		ID:             customerID,
 		OrganizationID: orgID,
@@ -118,15 +123,15 @@ func TestPreviewMemoBuildsTheMemoWithoutMintingANumberOrWriting(t *testing.T) {
 			PaymentTerm: customer.PaymentTermNet15,
 		},
 	}, nil).Once()
-	billing := mocks.NewMockBillingControlRepository(t)
+	billing := tenantportsmock.NewMockBillingControlRepository(t)
 	billing.EXPECT().GetByOrgID(mock.Anything, orgID).
 		Return(&tenant.BillingControl{DefaultPaymentTerm: tenant.PaymentTermNet30}, nil).Once()
 
 	svc := &Service{
 		l:                zap.NewNop(),
 		db:               fakeInvoiceDB{},
-		repo:             mocks.NewMockInvoiceRepository(t),
-		billingQueueRepo: mocks.NewMockBillingQueueRepository(t),
+		repo:             invoiceportsmock.NewMockInvoiceRepository(t),
+		billingQueueRepo: billingqueueportsmock.NewMockBillingQueueRepository(t),
 		customerRepo:     customers,
 		billingRepo:      billing,
 		validator: &Validator{

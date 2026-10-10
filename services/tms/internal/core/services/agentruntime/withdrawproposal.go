@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -42,8 +43,8 @@ const (
 		"person as filed. Say in your answer which of your proposals replaces which."
 )
 
-func withdrawProposalSpec() serviceports.ToolSpec {
-	return serviceports.ToolSpec{
+func withdrawProposalSpec() kernelports.ToolSpec {
+	return kernelports.ToolSpec{
 		Name:        withdrawProposalName,
 		Description: withdrawProposalDescription,
 		Parameters: map[string]any{
@@ -70,7 +71,7 @@ func withdrawProposalSpec() serviceports.ToolSpec {
 // offerWithdrawal adds withdraw_proposal to the turn once it has filed a
 // proposal a person will decide. A delegate's proposals are its own turn's
 // to answer for, so a delegated turn is never offered it.
-func (t *Turn) offerWithdrawal(action *serviceports.PendingAction) {
+func (t *Turn) offerWithdrawal(action *agentports.PendingAction) {
 	if action == nil || !action.Waiting() || t.req.Delegation != nil || t.tools == nil {
 		return
 	}
@@ -127,7 +128,7 @@ func (t *Turn) withdrawProposal(arguments map[string]any) toolOutcome {
 	return toolOutcome{content: content, summary: summaryLine(summary)}
 }
 
-func (t *Turn) filedAction(id pulid.ID) *serviceports.PendingAction {
+func (t *Turn) filedAction(id pulid.ID) *agentports.PendingAction {
 	for idx := range t.result.Actions {
 		if t.result.Actions[idx].ProposalID == id {
 			return &t.result.Actions[idx]
@@ -150,8 +151,8 @@ func (t *Turn) waitingCount() int {
 
 // unwithdrawn is a turn's actions without the ones the agent withdrew: what
 // is still headed for a person's decision, and what already ran.
-func unwithdrawn(actions []serviceports.PendingAction) []serviceports.PendingAction {
-	kept := make([]serviceports.PendingAction, 0, len(actions))
+func unwithdrawn(actions []agentports.PendingAction) []agentports.PendingAction {
+	kept := make([]agentports.PendingAction, 0, len(actions))
 	for idx := range actions {
 		if !actions[idx].Withdrawn {
 			kept = append(kept, actions[idx])

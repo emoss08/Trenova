@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -30,14 +30,14 @@ func (v *versionStore) Create(_ context.Context, version *agentdefinition.Defini
 
 func (v *versionStore) List(
 	context.Context,
-	*repositories.ListAgentDefinitionVersionsRequest,
+	*agentdefinitionports.ListAgentDefinitionVersionsRequest,
 ) ([]*agentdefinition.DefinitionVersion, error) {
 	return v.created, nil
 }
 
 func (v *versionStore) Get(
 	_ context.Context,
-	req *repositories.GetAgentDefinitionVersionRequest,
+	req *agentdefinitionports.GetAgentDefinitionVersionRequest,
 ) (*agentdefinition.DefinitionVersion, error) {
 	version, ok := v.byNumber[req.Version]
 	if !ok {
@@ -48,7 +48,7 @@ func (v *versionStore) Get(
 
 func (v *versionStore) LatestAt(
 	_ context.Context,
-	req *repositories.GetAgentDefinitionVersionAtRequest,
+	req *agentdefinitionports.GetAgentDefinitionVersionAtRequest,
 ) (*agentdefinition.DefinitionVersion, error) {
 	var best *agentdefinition.DefinitionVersion
 	for number, version := range v.byNumber {
@@ -78,7 +78,7 @@ func TestVersionedRecordsTheSaveItWraps(t *testing.T) {
 	saved, err := svc.inTransaction(t.Context(), svc.versioned(
 		func(context.Context) (*agentdefinition.Definition, error) { return after, nil },
 		before,
-		&serviceports.RequestActor{UserID: author},
+		&permissionports.RequestActor{UserID: author},
 	))
 
 	require.NoError(t, err)
@@ -176,7 +176,7 @@ func TestRestoreVersionIsADraftOnTheCurrentVersion(t *testing.T) {
 		}},
 	}
 
-	draft, err := svc.RestoreVersion(t.Context(), &repositories.GetAgentDefinitionVersionRequest{
+	draft, err := svc.RestoreVersion(t.Context(), &agentdefinitionports.GetAgentDefinitionVersionRequest{
 		TenantInfo:        testTenant(),
 		AgentDefinitionID: current.ID,
 		Version:           2,

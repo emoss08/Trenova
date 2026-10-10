@@ -6,27 +6,28 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
 type recordingAuditService struct {
-	services.AuditService
+	auditports.AuditService
 
-	entries []*services.LogActionParams
+	entries []*auditports.LogActionParams
 }
 
 func (r *recordingAuditService) LogAction(
-	params *services.LogActionParams,
-	_ ...services.LogOption,
+	params *auditports.LogActionParams,
+	_ ...auditports.LogOption,
 ) error {
 	r.entries = append(r.entries, params)
 	return nil
 }
 
-func (r *recordingAuditService) only(t *testing.T) *services.LogActionParams {
+func (r *recordingAuditService) only(t *testing.T) *auditports.LogActionParams {
 	t.Helper()
 	require.Len(t, r.entries, 1)
 	return r.entries[0]
@@ -59,8 +60,8 @@ func TestConfirmByTokenLogsSystemPrincipalAudit(t *testing.T) {
 	assert.Equal(t, permission.OpApprove, entry.Operation)
 	assert.Equal(t, entity.ID.String(), entry.ResourceID)
 	assert.True(t, entry.UserID.IsNil(), "a public signer is never a user principal")
-	assert.Equal(t, services.PrincipalTypeSystem, entry.PrincipalType)
-	assert.Equal(t, services.SystemPrincipalID, entry.PrincipalID)
+	assert.Equal(t, permissionports.PrincipalTypeSystem, entry.PrincipalType)
+	assert.Equal(t, permissionports.SystemPrincipalID, entry.PrincipalID)
 	assert.Equal(t, entity.OrganizationID, entry.OrganizationID)
 	assert.Equal(t, entity.BusinessUnitID, entry.BusinessUnitID)
 	assert.NotEmpty(t, entry.PreviousState)

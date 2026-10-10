@@ -6,9 +6,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/homelayout"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/homelayoutservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -35,14 +36,14 @@ type homeLayoutReader interface {
 
 // homeRequest is the reader's own home page request: their tenant, and the
 // principal the page resolves for.
-func homeRequest(params *serviceports.QueryToolParams) *homelayoutservice.Request {
+func homeRequest(params *agentports.QueryToolParams) *homelayoutservice.Request {
 	return &homelayoutservice.Request{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  params.OrganizationID,
 			BuID:   params.BusinessUnitID,
 			UserID: params.Actor.UserID,
 		},
-		Principal: serviceports.PrincipalInfo{
+		Principal: kernelports.PrincipalInfo{
 			Type:     params.Actor.PrincipalType,
 			ID:       params.Actor.PrincipalID,
 			UserID:   params.Actor.UserID,
@@ -55,7 +56,7 @@ type getMyHomeLayoutTool struct {
 	layouts homeLayoutReader
 }
 
-func newGetMyHomeLayoutTool(layouts *homelayoutservice.Service) serviceports.AgentQueryTool {
+func newGetMyHomeLayoutTool(layouts *homelayoutservice.Service) agentports.AgentQueryTool {
 	return &getMyHomeLayoutTool{layouts: layouts}
 }
 
@@ -77,7 +78,7 @@ func (t *getMyHomeLayoutTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *getMyHomeLayoutTool) Policy() serviceports.ToolPolicy {
+func (t *getMyHomeLayoutTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource:  permission.ResourceHomeLayoutPreset,
 		scope:     agent.ToolScopeSelf,
@@ -112,7 +113,7 @@ type homeLayoutView struct {
 
 func (t *getMyHomeLayoutTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -177,7 +178,7 @@ type listHomeWidgetsTool struct {
 	layouts homeLayoutReader
 }
 
-func newListHomeWidgetsTool(layouts *homelayoutservice.Service) serviceports.AgentQueryTool {
+func newListHomeWidgetsTool(layouts *homelayoutservice.Service) agentports.AgentQueryTool {
 	return &listHomeWidgetsTool{layouts: layouts}
 }
 
@@ -202,7 +203,7 @@ func (t *listHomeWidgetsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listHomeWidgetsTool) Policy() serviceports.ToolPolicy {
+func (t *listHomeWidgetsTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceHomeLayoutPreset,
 		scope:    agent.ToolScopeSelf,
@@ -238,7 +239,7 @@ type homeWidgetCatalogView struct {
 
 func (t *listHomeWidgetsTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

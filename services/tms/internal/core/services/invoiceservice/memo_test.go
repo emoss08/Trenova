@@ -1,6 +1,10 @@
 package invoiceservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"errors"
 	"strings"
@@ -10,8 +14,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -28,13 +33,13 @@ func memoRequest(
 	tenantInfo pagination.TenantInfo,
 	customerID pulid.ID,
 	billType billingqueue.BillType,
-) *servicesports.CreateMemoRequest {
-	return &servicesports.CreateMemoRequest{
+) *invoiceports.CreateMemoRequest {
+	return &invoiceports.CreateMemoRequest{
 		TenantInfo: tenantInfo,
 		CustomerID: customerID,
 		BillType:   billType,
 		Reason:     "Goodwill credit after a late delivery",
-		Lines: []*servicesports.CreateMemoLineInput{
+		Lines: []*invoiceports.CreateMemoLineInput{
 			{Description: "Late delivery goodwill", Amount: decimal.NewFromInt(50)},
 			{
 				Description: "Detention waived",
@@ -53,52 +58,52 @@ func TestValidateMemoRequest(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		mutate  func(req *servicesports.CreateMemoRequest)
+		mutate  func(req *invoiceports.CreateMemoRequest)
 		wantErr string
 	}{
 		{
 			name:    "an ordinary invoice is not a memo",
-			mutate:  func(req *servicesports.CreateMemoRequest) { req.BillType = billingqueue.BillTypeInvoice },
+			mutate:  func(req *invoiceports.CreateMemoRequest) { req.BillType = billingqueue.BillTypeInvoice },
 			wantErr: "credit memo or a debit memo",
 		},
 		{
 			name:    "missing customer",
-			mutate:  func(req *servicesports.CreateMemoRequest) { req.CustomerID = pulid.Nil },
+			mutate:  func(req *invoiceports.CreateMemoRequest) { req.CustomerID = pulid.Nil },
 			wantErr: "Customer is required",
 		},
 		{
 			name:    "reason is required",
-			mutate:  func(req *servicesports.CreateMemoRequest) { req.Reason = "  " },
+			mutate:  func(req *invoiceports.CreateMemoRequest) { req.Reason = "  " },
 			wantErr: "Say why",
 		},
 		{
 			name:    "reason is capped",
-			mutate:  func(req *servicesports.CreateMemoRequest) { req.Reason = strings.Repeat("x", maxMemoReasonLength+1) },
+			mutate:  func(req *invoiceports.CreateMemoRequest) { req.Reason = strings.Repeat("x", maxMemoReasonLength+1) },
 			wantErr: "at most",
 		},
 		{
 			name:    "at least one line",
-			mutate:  func(req *servicesports.CreateMemoRequest) { req.Lines = nil },
+			mutate:  func(req *invoiceports.CreateMemoRequest) { req.Lines = nil },
 			wantErr: "at least one line",
 		},
 		{
 			name:    "amount must be positive",
-			mutate:  func(req *servicesports.CreateMemoRequest) { req.Lines[0].Amount = decimal.Zero },
+			mutate:  func(req *invoiceports.CreateMemoRequest) { req.Lines[0].Amount = decimal.Zero },
 			wantErr: "Amount must be greater than zero",
 		},
 		{
 			name:    "quantity must be positive when set",
-			mutate:  func(req *servicesports.CreateMemoRequest) { req.Lines[1].Quantity = decimal.NewFromInt(-1) },
+			mutate:  func(req *invoiceports.CreateMemoRequest) { req.Lines[1].Quantity = decimal.NewFromInt(-1) },
 			wantErr: "Quantity must be greater than zero",
 		},
 		{
 			name:    "blank description",
-			mutate:  func(req *servicesports.CreateMemoRequest) { req.Lines[0].Description = " " },
+			mutate:  func(req *invoiceports.CreateMemoRequest) { req.Lines[0].Description = " " },
 			wantErr: "Description is required",
 		},
 		{
 			name:    "unknown memo kind",
-			mutate:  func(req *servicesports.CreateMemoRequest) { req.MemoKind = invoice.MemoKind("Bonus") },
+			mutate:  func(req *invoiceports.CreateMemoRequest) { req.MemoKind = invoice.MemoKind("Bonus") },
 			wantErr: "Invalid memo kind",
 		},
 	}
@@ -133,16 +138,16 @@ func TestValidateMemoReference(t *testing.T) {
 
 	t.Run("no reference is fine", func(t *testing.T) {
 		t.Parallel()
-		svc := &Service{l: zap.NewNop(), repo: mocks.NewMockInvoiceRepository(t)}
+		svc := &Service{l: zap.NewNop(), repo: invoiceportsmock.NewMockInvoiceRepository(t)}
 		req := memoRequest(tenantInfo, cus.ID, billingqueue.BillTypeCreditMemo)
 		require.NoError(t, svc.validateMemoReference(t.Context(), req, cus))
 	})
 
 	t.Run("another customer's invoice is refused", func(t *testing.T) {
 		t.Parallel()
-		repo := mocks.NewMockInvoiceRepository(t)
+		repo := invoiceportsmock.NewMockInvoiceRepository(t)
 		repo.EXPECT().
-			GetByID(mock.Anything, repositories.GetInvoiceByIDRequest{ID: referenceID, TenantInfo: tenantInfo}).
+			GetByID(mock.Anything, invoiceports.GetInvoiceByIDRequest{ID: referenceID, TenantInfo: tenantInfo}).
 			Return(&invoice.Invoice{ID: referenceID, CustomerID: pulid.MustNew("cus_"), Status: invoice.StatusPosted}, nil).
 			Once()
 		svc := &Service{l: zap.NewNop(), repo: repo}
@@ -155,7 +160,7 @@ func TestValidateMemoReference(t *testing.T) {
 
 	t.Run("a draft cannot be referenced", func(t *testing.T) {
 		t.Parallel()
-		repo := mocks.NewMockInvoiceRepository(t)
+		repo := invoiceportsmock.NewMockInvoiceRepository(t)
 		repo.EXPECT().
 			GetByID(mock.Anything, mock.Anything).
 			Return(&invoice.Invoice{ID: referenceID, CustomerID: cus.ID, Status: invoice.StatusDraft}, nil).
@@ -172,11 +177,11 @@ func TestValidateMemoReference(t *testing.T) {
 type memoFixture struct {
 	orgID, buID, userID, customerID pulid.ID
 	tenantInfo                      pagination.TenantInfo
-	actor                           *servicesports.RequestActor
-	customerRepo                    *mocks.MockCustomerRepository
-	billingRepo                     *mocks.MockBillingControlRepository
-	queueRepo                       *mocks.MockBillingQueueRepository
-	repo                            *mocks.MockInvoiceRepository
+	actor                           *permissionports.RequestActor
+	customerRepo                    *customerportsmock.MockCustomerRepository
+	billingRepo                     *tenantportsmock.MockBillingControlRepository
+	queueRepo                       *billingqueueportsmock.MockBillingQueueRepository
+	repo                            *invoiceportsmock.MockInvoiceRepository
 	svc                             *Service
 }
 
@@ -191,12 +196,12 @@ func newMemoFixture(t *testing.T, number string) *memoFixture {
 	f.tenantInfo = pagination.TenantInfo{OrgID: f.orgID, BuID: f.buID, UserID: f.userID}
 	f.actor = testutil.NewSessionActor(f.userID, f.orgID, f.buID)
 
-	f.customerRepo = mocks.NewMockCustomerRepository(t)
+	f.customerRepo = customerportsmock.NewMockCustomerRepository(t)
 	f.customerRepo.EXPECT().
-		GetByID(mock.Anything, repositories.GetCustomerByIDRequest{
+		GetByID(mock.Anything, customerports.GetCustomerByIDRequest{
 			ID:         f.customerID,
 			TenantInfo: f.tenantInfo,
-			CustomerFilterOptions: repositories.CustomerFilterOptions{
+			CustomerFilterOptions: customerports.CustomerFilterOptions{
 				IncludeBillingProfile: true,
 				IncludeState:          true,
 			},
@@ -216,13 +221,13 @@ func newMemoFixture(t *testing.T, number string) *memoFixture {
 		}, nil).
 		Once()
 
-	f.billingRepo = mocks.NewMockBillingControlRepository(t)
+	f.billingRepo = tenantportsmock.NewMockBillingControlRepository(t)
 	f.billingRepo.EXPECT().
 		GetByOrgID(mock.Anything, f.orgID).
 		Return(&tenant.BillingControl{DefaultPaymentTerm: tenant.PaymentTermNet30}, nil).
 		Once()
 
-	f.queueRepo = mocks.NewMockBillingQueueRepository(t)
+	f.queueRepo = billingqueueportsmock.NewMockBillingQueueRepository(t)
 	f.queueRepo.EXPECT().
 		Create(mock.Anything, mock.MatchedBy(func(item *billingqueue.BillingQueueItem) bool {
 			return item.BillToCustomerID == f.customerID &&
@@ -236,7 +241,7 @@ func newMemoFixture(t *testing.T, number string) *memoFixture {
 		}).
 		Once()
 
-	f.repo = mocks.NewMockInvoiceRepository(t)
+	f.repo = invoiceportsmock.NewMockInvoiceRepository(t)
 	f.svc = &Service{
 		l:                zap.NewNop(),
 		db:               fakeInvoiceDB{},
@@ -354,7 +359,7 @@ func TestCreateMemoAutoPostGoesThroughPost(t *testing.T) {
 	// Post reloads the memo first; failing that load proves the post was
 	// attempted without needing the whole ledger behind it.
 	f.repo.EXPECT().
-		GetByID(mock.Anything, repositories.GetInvoiceByIDRequest{ID: memoID, TenantInfo: f.tenantInfo}).
+		GetByID(mock.Anything, invoiceports.GetInvoiceByIDRequest{ID: memoID, TenantInfo: f.tenantInfo}).
 		Return(nil, errors.New("ledger unavailable")).
 		Once()
 

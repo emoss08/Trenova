@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/orgstructureservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -95,7 +95,7 @@ func (r *Core) RequirePTOTeamScope(
 		return nil, pulid.Nil, errortypes.NewAuthenticationError("Authentication required")
 	}
 
-	pto, err := r.WorkerPTOService.Get(ctx, &repositories.GetPTOByIDRequest{
+	pto, err := r.WorkerPTOService.Get(ctx, &workerports.GetPTOByIDRequest{
 		ID:         ptoID,
 		TenantInfo: TenantInfo(authCtx),
 	})

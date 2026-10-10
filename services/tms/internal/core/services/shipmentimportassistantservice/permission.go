@@ -6,7 +6,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
 )
@@ -35,9 +35,9 @@ var toolGrants = map[string]toolGrant{
 	},
 }
 
-func actingUser(tenantInfo pagination.TenantInfo) *serviceports.RequestActor {
-	return &serviceports.RequestActor{
-		PrincipalType:  serviceports.PrincipalTypeUser,
+func actingUser(tenantInfo pagination.TenantInfo) *permissionports.RequestActor {
+	return &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    tenantInfo.UserID,
 		UserID:         tenantInfo.UserID,
 		BusinessUnitID: tenantInfo.BuID,

@@ -5,7 +5,8 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -18,16 +19,16 @@ import (
 type DispatcherParams struct {
 	fx.In
 
-	Workflows services.WorkflowStarter       `optional:"true"`
-	Signals   services.WorkflowSignalStarter `optional:"true"`
+	Workflows kernelports.WorkflowStarter       `optional:"true"`
+	Signals   kernelports.WorkflowSignalStarter `optional:"true"`
 }
 
 type SyncDispatcher struct {
-	workflows services.WorkflowStarter
-	signals   services.WorkflowSignalStarter
+	workflows kernelports.WorkflowStarter
+	signals   kernelports.WorkflowSignalStarter
 }
 
-var _ services.AccountingSyncDispatcher = (*SyncDispatcher)(nil)
+var _ accountingsyncports.AccountingSyncDispatcher = (*SyncDispatcher)(nil)
 
 func NewSyncDispatcher(p DispatcherParams) *SyncDispatcher {
 	return &SyncDispatcher{workflows: p.Workflows, signals: p.Signals}
@@ -39,7 +40,7 @@ func (d *SyncDispatcher) Kick(
 	connectionID pulid.ID,
 ) error {
 	if d.signals == nil {
-		return services.ErrWorkflowStarterDisabled
+		return kernelports.ErrWorkflowStarterDisabled
 	}
 	_, err := d.signals.SignalWithStartWorkflow(
 		ctx,
@@ -81,7 +82,7 @@ func (d *SyncDispatcher) StartBackfill(
 		BusinessUnitID: backfill.BusinessUnitID,
 		BackfillID:     backfill.ID,
 	})
-	if errors.Is(err, services.ErrWorkflowStarterDisabled) {
+	if errors.Is(err, kernelports.ErrWorkflowStarterDisabled) {
 		return errortypes.NewBusinessError(
 			"Background work is not available on this server, so a backfill cannot run",
 		).WithInternal(err)

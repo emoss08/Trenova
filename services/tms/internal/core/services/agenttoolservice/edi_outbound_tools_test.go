@@ -8,9 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/internal/core/services/edix12"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -22,7 +23,7 @@ type fakeLoadTenders struct {
 	err       error
 	guard     *writeGuard
 	submitted *ediservice.SubmitLoadTenderRequest
-	actor     *serviceports.RequestActor
+	actor     *permissionports.RequestActor
 }
 
 func (f *fakeLoadTenders) PlanLoadTender(
@@ -42,7 +43,7 @@ func (f *fakeLoadTenders) PlanLoadTender(
 func (f *fakeLoadTenders) SubmitLoadTender(
 	_ context.Context,
 	req *ediservice.SubmitLoadTenderRequest,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*edi.EDITransfer, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -234,7 +235,7 @@ func TestSendEDIStatusUpdate_TakesExactlyOneSourceRecord(t *testing.T) {
 	t.Parallel()
 
 	tool := newSendEDIStatusUpdateTool(&fakeDocuments{guard: &writeGuard{}})
-	validator := tool.(serviceports.ToolValidator)
+	validator := tool.(agentports.ToolValidator)
 	partner := pulid.MustNew("edip_").String()
 
 	none := agentParamsFor(map[string]any{paramEDIPartnerID: partner})

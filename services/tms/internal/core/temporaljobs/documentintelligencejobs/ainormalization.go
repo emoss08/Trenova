@@ -5,13 +5,13 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	services "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/shared/floatutils"
 )
 
 func mergeAIAnalysis(
 	fallback *DocumentIntelligenceAnalysis,
-	aiExtract *services.AIExtractResult,
+	aiExtract *documentaiextractionports.AIExtractResult,
 ) (merged *DocumentIntelligenceAnalysis, accepted bool, rejectionReason string) {
 	normalized := normalizeAIExtractResult(aiExtract)
 	rejectionReason = validateAIExtract(normalized)
@@ -28,7 +28,7 @@ func mergeAIAnalysis(
 	return merged, true, ""
 }
 
-func analysisFromAIExtract(aiExtract *services.AIExtractResult) *DocumentIntelligenceAnalysis {
+func analysisFromAIExtract(aiExtract *documentaiextractionports.AIExtractResult) *DocumentIntelligenceAnalysis {
 	aiExtract = normalizeAIExtractResult(aiExtract)
 	if aiExtract == nil {
 		return &DocumentIntelligenceAnalysis{
@@ -101,20 +101,20 @@ func analysisFromAIExtract(aiExtract *services.AIExtractResult) *DocumentIntelli
 	return analysis
 }
 
-func normalizeAIExtractResult(result *services.AIExtractResult) *services.AIExtractResult {
+func normalizeAIExtractResult(result *documentaiextractionports.AIExtractResult) *documentaiextractionports.AIExtractResult {
 	if result == nil {
 		return nil
 	}
 
-	normalized := &services.AIExtractResult{
+	normalized := &documentaiextractionports.AIExtractResult{
 		DocumentKind:      normalizeRoutedKind(result.DocumentKind),
 		OverallConfidence: result.OverallConfidence,
 		ReviewStatus:      normalizeAIReviewStatus(result.ReviewStatus),
 		MissingFields:     append([]string{}, result.MissingFields...),
 		Signals:           append([]string{}, result.Signals...),
-		Fields:            make(map[string]services.AIDocumentField, len(result.Fields)+3),
-		Stops:             make([]*services.AIDocumentStop, 0, len(result.Stops)),
-		Conflicts:         append([]*services.AIDocumentConflict{}, result.Conflicts...),
+		Fields:            make(map[string]documentaiextractionports.AIDocumentField, len(result.Fields)+3),
+		Stops:             make([]*documentaiextractionports.AIDocumentStop, 0, len(result.Stops)),
+		Conflicts:         append([]*documentaiextractionports.AIDocumentConflict{}, result.Conflicts...),
 	}
 
 	for key, field := range result.Fields {
@@ -194,7 +194,7 @@ func normalizeAIStopRole(role string) string {
 	}
 }
 
-func ensureCanonicalAIField(result *services.AIExtractResult, key string, aliases []string) {
+func ensureCanonicalAIField(result *documentaiextractionports.AIExtractResult, key string, aliases []string) {
 	if result == nil {
 		return
 	}
@@ -218,7 +218,7 @@ func ensureCanonicalAIField(result *services.AIExtractResult, key string, aliase
 	}
 }
 
-func ensureCanonicalAIFieldFromStop(result *services.AIExtractResult, key, label, role string) {
+func ensureCanonicalAIFieldFromStop(result *documentaiextractionports.AIExtractResult, key, label, role string) {
 	if result == nil {
 		return
 	}
@@ -231,7 +231,7 @@ func ensureCanonicalAIFieldFromStop(result *services.AIExtractResult, key, label
 		if stop.Role != role || strings.TrimSpace(stop.Name) == "" || stop.PageNumber <= 0 {
 			continue
 		}
-		result.Fields[key] = services.AIDocumentField{
+		result.Fields[key] = documentaiextractionports.AIDocumentField{
 			Label:           label,
 			Value:           stop.Name,
 			Confidence:      clampConfidence(stop.Confidence),
@@ -245,7 +245,7 @@ func ensureCanonicalAIFieldFromStop(result *services.AIExtractResult, key, label
 	}
 }
 
-func validateAIExtract(result *services.AIExtractResult) string {
+func validateAIExtract(result *documentaiextractionports.AIExtractResult) string {
 	if result == nil || !strings.EqualFold(result.DocumentKind, kindRateConfirmation) {
 		return "ai_candidate_invalid_document_kind"
 	}
@@ -281,7 +281,7 @@ func validateAIExtract(result *services.AIExtractResult) string {
 
 func normalizeAISource(source string) string {
 	if strings.TrimSpace(source) == "" {
-		return services.AIDocumentSourceAI
+		return documentaiextractionports.AIDocumentSourceAI
 	}
 	return source
 }
@@ -319,11 +319,11 @@ func normalizeRoutedKind(kind string) string {
 	}
 }
 
-func toAIFingerprintHint(fingerprint *ProviderFingerprint) *services.AIDocumentFingerprintHint {
+func toAIFingerprintHint(fingerprint *ProviderFingerprint) *documentaiextractionports.AIDocumentFingerprintHint {
 	if fingerprint == nil {
 		return nil
 	}
-	return &services.AIDocumentFingerprintHint{
+	return &documentaiextractionports.AIDocumentFingerprintHint{
 		Provider:   fingerprint.Provider,
 		KindHint:   fingerprint.KindHint,
 		Confidence: fingerprint.Confidence,
@@ -459,6 +459,6 @@ func hasMeaningfulField(fields map[string]*ReviewField, key string) bool {
 	return strings.TrimSpace(field.Value) != ""
 }
 
-func ShipmentDraftDataFromAIExtract(aiExtract *services.AIExtractResult) map[string]any {
+func ShipmentDraftDataFromAIExtract(aiExtract *documentaiextractionports.AIExtractResult) map[string]any {
 	return analysisFromAIExtract(aiExtract).ToMap()
 }

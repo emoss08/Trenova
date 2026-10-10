@@ -6,7 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/ratematrix"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetypes"
@@ -17,7 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func exactMatrixFixture(code string, entries map[string]string) *repositories.RateMatrixLookupData {
+func exactMatrixFixture(code string, entries map[string]string) *ratematrixports.RateMatrixLookupData {
 	matrixID := pulid.MustNew("rmx_")
 
 	cells := make([]*ratematrix.RateMatrixCell, 0, len(entries))
@@ -30,7 +31,7 @@ func exactMatrixFixture(code string, entries map[string]string) *repositories.Ra
 		})
 	}
 
-	return &repositories.RateMatrixLookupData{
+	return &ratematrixports.RateMatrixLookupData{
 		Matrix: &ratematrix.RateMatrix{
 			ID:   matrixID,
 			Code: code,
@@ -44,7 +45,7 @@ func exactMatrixFixture(code string, entries map[string]string) *repositories.Ra
 	}
 }
 
-func rangeMatrixFixture(code string, bands [][3]string) *repositories.RateMatrixLookupData {
+func rangeMatrixFixture(code string, bands [][3]string) *ratematrixports.RateMatrixLookupData {
 	matrixID := pulid.MustNew("rmx_")
 
 	cells := make([]*ratematrix.RateMatrixCell, 0, len(bands))
@@ -61,7 +62,7 @@ func rangeMatrixFixture(code string, bands [][3]string) *repositories.RateMatrix
 		cells = append(cells, cell)
 	}
 
-	return &repositories.RateMatrixLookupData{
+	return &ratematrixports.RateMatrixLookupData{
 		Matrix: &ratematrix.RateMatrix{
 			ID:   matrixID,
 			Code: code,
@@ -85,7 +86,7 @@ func resultAmount(t *testing.T, result *TestExpressionResponse) decimal.Decimal 
 
 func TestTestExpression_PreviewUsesRealRateTables(t *testing.T) {
 	t.Parallel()
-	deps := setupTestWithMatrices(t, []*repositories.RateMatrixLookupData{
+	deps := setupTestWithMatrices(t, []*ratematrixports.RateMatrixLookupData{
 		exactMatrixFixture("fsc", map[string]string{"DIESEL": "0.35"}),
 	})
 
@@ -101,7 +102,7 @@ func TestTestExpression_PreviewUsesRealRateTables(t *testing.T) {
 
 func TestTestExpression_BreakdownLinesUseRealRateTables(t *testing.T) {
 	t.Parallel()
-	deps := setupTestWithMatrices(t, []*repositories.RateMatrixLookupData{
+	deps := setupTestWithMatrices(t, []*ratematrixports.RateMatrixLookupData{
 		rangeMatrixFixture("miles", [][3]string{{"0", "500", "2.5"}, {"500", "", "2.0"}}),
 	})
 
@@ -127,7 +128,7 @@ func TestTestExpression_BreakdownLinesUseRealRateTables(t *testing.T) {
 
 func TestTestExpression_LookupOrFallsBackOnlyWhenKeyMisses(t *testing.T) {
 	t.Parallel()
-	deps := setupTestWithMatrices(t, []*repositories.RateMatrixLookupData{
+	deps := setupTestWithMatrices(t, []*ratematrixports.RateMatrixLookupData{
 		exactMatrixFixture("fsc", map[string]string{"DIESEL": "0.35"}),
 	})
 
@@ -165,7 +166,7 @@ func TestTestExpression_WithoutTableReferencesNeverLoadsTables(t *testing.T) {
 
 func TestRunTestCases_ScenarioUsesRealRateTable(t *testing.T) {
 	t.Parallel()
-	deps := setupTestWithMatrices(t, []*repositories.RateMatrixLookupData{
+	deps := setupTestWithMatrices(t, []*ratematrixports.RateMatrixLookupData{
 		rangeMatrixFixture("miles", [][3]string{{"0", "500", "2.5"}, {"500", "", "2.0"}}),
 	})
 
@@ -450,7 +451,7 @@ func TestReadiness_BrokenExpressionBlocks(t *testing.T) {
 
 func TestTestExpression_ReturnsAReceipt(t *testing.T) {
 	t.Parallel()
-	deps := setupTestWithMatrices(t, []*repositories.RateMatrixLookupData{
+	deps := setupTestWithMatrices(t, []*ratematrixports.RateMatrixLookupData{
 		rangeMatrixFixture("miles", [][3]string{{"0", "500", "2.5"}, {"500", "", "2.0"}}),
 	})
 
@@ -500,7 +501,7 @@ func TestReviewDiff_ComparesLastApprovedSnapshotToPendingContent(t *testing.T) {
 	template.CurrentVersionNumber = 4
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
 	deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.MatchedBy(
-		func(req *repositories.GetLatestVersionByStatusRequest) bool {
+		func(req *formulatemplateports.GetLatestVersionByStatusRequest) bool {
 			return req.Status == formulatemplate.StatusActive && req.TemplateID == template.ID
 		},
 	)).Return(newApprovedSnapshot(template, 2, "totalDistance * 2"), nil)

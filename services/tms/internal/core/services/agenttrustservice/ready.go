@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -17,21 +17,21 @@ import (
 const maxReadyTools = 500
 
 type readyTool struct {
-	promotion  services.ToolPromotion
+	promotion  agentports.ToolPromotion
 	row        *agent.ToolTrust
 	definition *agentdefinition.Definition
 }
 
 func (s *Service) PromotionCandidates(
 	ctx context.Context,
-	req *services.PromoteReadyRequest,
-) ([]services.ToolPromotion, error) {
+	req *agentports.PromoteReadyRequest,
+) ([]agentports.ToolPromotion, error) {
 	ready, err := s.ready(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	out := make([]services.ToolPromotion, 0, len(ready))
+	out := make([]agentports.ToolPromotion, 0, len(ready))
 	for idx := range ready {
 		out = append(out, ready[idx].promotion)
 	}
@@ -40,15 +40,15 @@ func (s *Service) PromotionCandidates(
 
 func (s *Service) PromoteReady(
 	ctx context.Context,
-	req *services.PromoteReadyRequest,
-) ([]services.ToolPromotion, error) {
+	req *agentports.PromoteReadyRequest,
+) ([]agentports.ToolPromotion, error) {
 	ready, err := s.ready(ctx, req)
 	if err != nil || len(ready) == 0 {
-		return []services.ToolPromotion{}, err
+		return []agentports.ToolPromotion{}, err
 	}
 
 	now := timeutils.NowUnix()
-	promoted := make([]services.ToolPromotion, 0, len(ready))
+	promoted := make([]agentports.ToolPromotion, 0, len(ready))
 	for idx := range ready {
 		tool := &ready[idx]
 		change := tierChange{
@@ -81,12 +81,12 @@ func (s *Service) PromoteReady(
 
 // ready reads the tools whose streak meets the threshold and that have a
 // tier above them their agent's ceiling and the tool's policy allow.
-func (s *Service) ready(ctx context.Context, req *services.PromoteReadyRequest) ([]readyTool, error) {
+func (s *Service) ready(ctx context.Context, req *agentports.PromoteReadyRequest) ([]readyTool, error) {
 	if req.Threshold <= 0 {
 		return []readyTool{}, nil
 	}
 
-	rows, err := s.trust.ListReady(ctx, repositories.ListReadyToolTrustRequest{
+	rows, err := s.trust.ListReady(ctx, agentports.ListReadyToolTrustRequest{
 		TenantInfo: req.TenantInfo,
 		MinStreak:  req.Threshold,
 		Limit:      maxReadyTools,
@@ -105,7 +105,7 @@ func (s *Service) ready(ctx context.Context, req *services.PromoteReadyRequest) 
 		ids = append(ids, row.AgentDefinitionID)
 	}
 
-	definitions, err := s.definitions.ListByIDs(ctx, repositories.ListAgentDefinitionsByIDsRequest{
+	definitions, err := s.definitions.ListByIDs(ctx, agentdefinitionports.ListAgentDefinitionsByIDsRequest{
 		IDs:        ids,
 		TenantInfo: req.TenantInfo,
 	})
@@ -129,7 +129,7 @@ func (s *Service) ready(ctx context.Context, req *services.PromoteReadyRequest) 
 			continue
 		}
 		out = append(out, readyTool{
-			promotion: services.ToolPromotion{
+			promotion: agentports.ToolPromotion{
 				AgentDefinitionID: definition.ID,
 				AgentName:         definition.Name,
 				ToolName:          row.ToolName,
@@ -149,8 +149,8 @@ func (s *Service) ready(ctx context.Context, req *services.PromoteReadyRequest) 
 
 func (s *Service) PromoteTool(
 	ctx context.Context,
-	req *services.PromoteToolRequest,
-) (*services.ToolPromotion, error) {
+	req *agentports.PromoteToolRequest,
+) (*agentports.ToolPromotion, error) {
 	ready, err := s.ready(ctx, &req.PromoteReadyRequest)
 	if err != nil {
 		return nil, err

@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/detention"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -29,7 +29,7 @@ type evidenceRepository struct {
 	l  *zap.Logger
 }
 
-func NewEvidenceRepository(p EvidenceParams) repositories.DetentionEvidenceRepository {
+func NewEvidenceRepository(p EvidenceParams) detentionports.DetentionEvidenceRepository {
 	return &evidenceRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.detention-evidence-repository"),
@@ -41,7 +41,7 @@ func NewEvidenceRepository(p EvidenceParams) repositories.DetentionEvidenceRepos
 // the chain, and the occurrence's cached head advances with it.
 func (r *evidenceRepository) Append(
 	ctx context.Context,
-	req *repositories.AppendEvidenceRequest,
+	req *detentionports.AppendEvidenceRequest,
 ) (*detention.DetentionEvidence, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*detention.DetentionEvidence, error) {
 		entry := req.Entry
@@ -55,7 +55,7 @@ func (r *evidenceRepository) Append(
 			BuID:  entry.BusinessUnitID,
 		}
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			head, sequence, hErr := r.headForUpdate(c, entry.DetentionOccurrenceID, tenantInfo)
 			if hErr != nil {
 				return hErr
@@ -128,7 +128,7 @@ func (r *evidenceRepository) headForUpdate(
 
 func (r *evidenceRepository) List(
 	ctx context.Context,
-	req *repositories.ListEvidenceRequest,
+	req *detentionports.ListEvidenceRequest,
 ) ([]*detention.DetentionEvidence, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detention.DetentionEvidence, error) {
 		cols := buncolgen.DetentionEvidenceColumns
@@ -154,7 +154,7 @@ func (r *evidenceRepository) List(
 
 func (r *evidenceRepository) Head(
 	ctx context.Context,
-	req *repositories.ListEvidenceRequest,
+	req *detentionports.ListEvidenceRequest,
 ) (string, int32, error) {
 	return dbtx.Read2(ctx, r.db, func(ctx context.Context) (string, int32, error) {
 		cols := buncolgen.DetentionEvidenceColumns

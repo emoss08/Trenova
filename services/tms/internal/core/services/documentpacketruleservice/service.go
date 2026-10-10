@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/documentpacketrule"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentpacketruleports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,16 +19,16 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.DocumentPacketRuleRepository
+	Repo         documentpacketruleports.DocumentPacketRuleRepository
 	Validator    *Validator
-	AuditService services.AuditService
+	AuditService auditports.AuditService
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.DocumentPacketRuleRepository
+	repo         documentpacketruleports.DocumentPacketRuleRepository
 	validator    *Validator
-	auditService services.AuditService
+	auditService auditports.AuditService
 }
 
 func New(p Params) *Service {
@@ -42,21 +42,21 @@ func New(p Params) *Service {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListDocumentPacketRulesRequest,
+	req *documentpacketruleports.ListDocumentPacketRulesRequest,
 ) (*pagination.ListResult[*documentpacketrule.DocumentPacketRule], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListDocumentPacketRuleConnectionRequest,
+	req *documentpacketruleports.ListDocumentPacketRuleConnectionRequest,
 ) (*pagination.CursorListResult[*documentpacketrule.DocumentPacketRule], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	req repositories.GetDocumentPacketRuleByIDRequest,
+	req documentpacketruleports.GetDocumentPacketRuleByIDRequest,
 ) (*documentpacketrule.DocumentPacketRule, error) {
 	return s.repo.GetByID(ctx, req)
 }
@@ -66,7 +66,7 @@ func (s *Service) ListByResourceType(
 	resourceType string,
 	tenantInfo pagination.TenantInfo,
 ) ([]*documentpacketrule.DocumentPacketRule, error) {
-	return s.repo.ListByResourceType(ctx, &repositories.ListDocumentPacketRulesByResourceRequest{
+	return s.repo.ListByResourceType(ctx, &documentpacketruleports.ListDocumentPacketRulesByResourceRequest{
 		TenantInfo:   tenantInfo,
 		ResourceType: resourceType,
 	})
@@ -92,7 +92,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceDocumentType,
 		ResourceID:     createdEntity.GetID().String(),
 		Operation:      permission.OpCreate,
@@ -121,7 +121,7 @@ func (s *Service) Update(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetByID(ctx, repositories.GetDocumentPacketRuleByIDRequest{
+	original, err := s.repo.GetByID(ctx, documentpacketruleports.GetDocumentPacketRuleByIDRequest{
 		ID: entity.GetID(),
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.GetOrganizationID(),
@@ -139,7 +139,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceDocumentType,
 		ResourceID:     updatedEntity.GetID().String(),
 		Operation:      permission.OpUpdate,
@@ -167,7 +167,7 @@ func (s *Service) Delete(
 		zap.String("userID", userID.String()),
 	)
 
-	original, err := s.repo.GetByID(ctx, repositories.GetDocumentPacketRuleByIDRequest{
+	original, err := s.repo.GetByID(ctx, documentpacketruleports.GetDocumentPacketRuleByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
@@ -176,7 +176,7 @@ func (s *Service) Delete(
 		return err
 	}
 
-	if err = s.repo.Delete(ctx, repositories.GetDocumentPacketRuleByIDRequest{
+	if err = s.repo.Delete(ctx, documentpacketruleports.GetDocumentPacketRuleByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	}); err != nil {
@@ -184,7 +184,7 @@ func (s *Service) Delete(
 		return err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceDocumentType,
 		ResourceID:     original.GetID().String(),
 		Operation:      permission.OpDelete,

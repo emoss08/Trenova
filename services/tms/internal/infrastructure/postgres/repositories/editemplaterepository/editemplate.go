@@ -8,10 +8,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	editemplates "github.com/emoss08/trenova/internal/core/domain/edi/templates"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -36,7 +36,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.EDITemplateRepository {
+func New(p Params) ediports.EDITemplateRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.edi-template-repository"),
@@ -45,7 +45,7 @@ func New(p Params) repositories.EDITemplateRepository {
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListEDITemplatesRequest,
+	req *ediports.ListEDITemplatesRequest,
 ) (*pagination.ListResult[*edi.EDITemplate], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDITemplate], error) {
 		log := r.l.With(
@@ -87,14 +87,14 @@ func (r *repository) List(
 
 func (r *repository) ListTemplates(
 	ctx context.Context,
-	req *repositories.ListEDITemplatesRequest,
+	req *ediports.ListEDITemplatesRequest,
 ) (*pagination.ListResult[*edi.EDITemplate], error) {
 	return r.List(ctx, req)
 }
 
 func (r *repository) ListTemplatesCursor(
 	ctx context.Context,
-	req *repositories.ListEDITemplatesRequest,
+	req *ediports.ListEDITemplatesRequest,
 ) (*pagination.CursorListResult[*edi.EDITemplate], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*edi.EDITemplate], error) {
 		dba := r.db.DBForContext(ctx)
@@ -153,7 +153,7 @@ func (r *repository) ListTemplatesCursor(
 
 func applyTemplateListFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListEDITemplatesRequest,
+	req *ediports.ListEDITemplatesRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.EDITemplateColumns
 	if req.TransactionSet != "" {
@@ -170,7 +170,7 @@ func applyTemplateListFilters(
 
 func (r *repository) listDocumentTypes(
 	ctx context.Context,
-	req repositories.ListEDIDocumentTypesRequest,
+	req ediports.ListEDIDocumentTypesRequest,
 ) ([]*edi.EDIDocumentType, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDIDocumentType, error) {
 		entities := make([]*edi.EDIDocumentType, 0, 8)
@@ -186,7 +186,7 @@ func (r *repository) listDocumentTypes(
 
 func filterDocumentTypesQuery(
 	query *bun.SelectQuery,
-	req repositories.ListEDIDocumentTypesRequest,
+	req ediports.ListEDIDocumentTypesRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.EDIDocumentTypeColumns
 	if req.Standard != "" {
@@ -206,7 +206,7 @@ func filterDocumentTypesQuery(
 
 func (r *repository) SelectTemplateOptions(
 	ctx context.Context,
-	req *repositories.EDITemplateSelectOptionsRequest,
+	req *ediports.EDITemplateSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDITemplate], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDITemplate], error) {
 		entities := make([]*edi.EDITemplate, 0, req.SelectQueryRequest.Pagination.SafeLimit())
@@ -255,7 +255,7 @@ func (r *repository) SelectTemplateOptions(
 
 func (r *repository) GetTemplateByID(
 	ctx context.Context,
-	req repositories.GetEDITemplateByIDRequest,
+	req ediports.GetEDITemplateByIDRequest,
 ) (*edi.EDITemplate, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDITemplate, error) {
 		entity := new(edi.EDITemplate)
@@ -281,10 +281,10 @@ func (r *repository) GetTemplateByID(
 
 func (r *repository) CreateTemplate(
 	ctx context.Context,
-	req *repositories.CreateEDITemplateRequest,
+	req *ediports.CreateEDITemplateRequest,
 ) (*edi.EDITemplate, *edi.EDITemplateVersion, error) {
 	return dbtx.Write2(ctx, r.db, func(ctx context.Context) (*edi.EDITemplate, *edi.EDITemplateVersion, error) {
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			if _, err := r.db.DBForContext(c).
 				NewInsert().
 				Model(req.Template).
@@ -365,7 +365,7 @@ func (r *repository) UpdateTemplate(
 
 func (r *repository) ListTemplateVersions(
 	ctx context.Context,
-	req repositories.ListEDITemplateVersionsRequest,
+	req ediports.ListEDITemplateVersionsRequest,
 ) ([]*edi.EDITemplateVersion, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDITemplateVersion, error) {
 		entities := make([]*edi.EDITemplateVersion, 0, 8)
@@ -387,7 +387,7 @@ func (r *repository) ListTemplateVersions(
 
 func (r *repository) GetTemplateVersionByID(
 	ctx context.Context,
-	req repositories.GetEDITemplateVersionByIDRequest,
+	req ediports.GetEDITemplateVersionByIDRequest,
 ) (*edi.EDITemplateVersion, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDITemplateVersion, error) {
 		entity := new(edi.EDITemplateVersion)
@@ -417,7 +417,7 @@ func (r *repository) GetTemplateVersionByID(
 
 func (r *repository) GetActiveTemplateVersion(
 	ctx context.Context,
-	req repositories.GetActiveEDITemplateVersionRequest,
+	req ediports.GetActiveEDITemplateVersionRequest,
 ) (*edi.EDITemplateVersion, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDITemplateVersion, error) {
 		entity := new(edi.EDITemplateVersion)
@@ -449,11 +449,11 @@ func (r *repository) GetActiveTemplateVersion(
 
 func (r *repository) CreateTemplateVersion(
 	ctx context.Context,
-	req *repositories.CreateEDITemplateVersionRequest,
+	req *ediports.CreateEDITemplateVersionRequest,
 ) (*edi.EDITemplateVersion, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDITemplateVersion, error) {
 		version := req.Version
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			if _, err := r.db.DBForContext(c).
 				NewInsert().
 				Model(version).
@@ -552,10 +552,10 @@ func (r *repository) UpdateTemplateVersionMetadata(
 
 func (r *repository) ReplaceTemplateVersionSegments(
 	ctx context.Context,
-	req repositories.ReplaceEDITemplateVersionSegmentsRequest,
+	req ediports.ReplaceEDITemplateVersionSegmentsRequest,
 ) (*edi.EDITemplateVersion, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDITemplateVersion, error) {
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			if _, err := r.UpdateTemplateVersionMetadata(c, req.Version); err != nil {
 				return err
 			}
@@ -594,7 +594,7 @@ func (r *repository) ReplaceTemplateVersionSegments(
 
 func (r *repository) ListTemplateScriptLibraries(
 	ctx context.Context,
-	req repositories.ListEDITemplateScriptLibrariesRequest,
+	req ediports.ListEDITemplateScriptLibrariesRequest,
 ) ([]*edi.EDITemplateScriptLibrary, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDITemplateScriptLibrary, error) {
 		entities := make([]*edi.EDITemplateScriptLibrary, 0, 4)
@@ -625,10 +625,10 @@ func (r *repository) ListTemplateScriptLibraries(
 
 func (r *repository) ReplaceTemplateVersionScriptLibraries(
 	ctx context.Context,
-	req repositories.ReplaceEDITemplateVersionScriptLibrariesRequest,
+	req ediports.ReplaceEDITemplateVersionScriptLibrariesRequest,
 ) (*edi.EDITemplateVersion, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDITemplateVersion, error) {
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			if _, err := r.UpdateTemplateVersionMetadata(c, req.Version); err != nil {
 				return err
 			}
@@ -670,14 +670,14 @@ func (r *repository) ReplaceTemplateVersionScriptLibraries(
 //nolint:funlen // Template activation updates version state and seed profiles in one transaction.
 func (r *repository) ActivateTemplateVersion(
 	ctx context.Context,
-	req repositories.ActivateEDITemplateVersionRequest,
+	req ediports.ActivateEDITemplateVersionRequest,
 ) (*edi.EDITemplateVersion, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDITemplateVersion, error) {
 		version := new(edi.EDITemplateVersion)
 		now := timeutils.NowUnix()
 		cols := buncolgen.EDITemplateVersionColumns
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			if err := r.db.DBForContext(c).
 				NewSelect().
 				Model(version).
@@ -779,14 +779,14 @@ func (r *repository) ActivateTemplateVersion(
 
 func (r *repository) ArchiveTemplateVersion(
 	ctx context.Context,
-	req repositories.ArchiveEDITemplateVersionRequest,
+	req ediports.ArchiveEDITemplateVersionRequest,
 ) (*edi.EDITemplateVersion, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDITemplateVersion, error) {
 		version := new(edi.EDITemplateVersion)
 		now := timeutils.NowUnix()
 		cols := buncolgen.EDITemplateVersionColumns
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			if err := r.db.DBForContext(c).
 				NewSelect().
 				Model(version).
@@ -894,7 +894,7 @@ func (r *repository) EnsureBaseTemplate(
 		template := new(edi.EDITemplate)
 		version := new(edi.EDITemplateVersion)
 		templateName := fmt.Sprintf("Base X12 %s Outbound", transactionSet)
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			cols := buncolgen.EDITemplateColumns
 
 			err := r.db.DBForContext(c).
@@ -915,7 +915,7 @@ func (r *repository) EnsureBaseTemplate(
 			if err == nil {
 				existing, versionErr := r.GetActiveTemplateVersion(
 					c,
-					repositories.GetActiveEDITemplateVersionRequest{
+					ediports.GetActiveEDITemplateVersionRequest{
 						TemplateID: template.ID,
 						TenantInfo: tenantInfo,
 					},
@@ -927,7 +927,7 @@ func (r *repository) EnsureBaseTemplate(
 				return nil
 			}
 
-			documentTypes, err := r.listDocumentTypes(c, repositories.ListEDIDocumentTypesRequest{
+			documentTypes, err := r.listDocumentTypes(c, ediports.ListEDIDocumentTypesRequest{
 				Standard:       edi.EDIStandardX12,
 				TransactionSet: transactionSet,
 				Direction:      edi.DocumentDirectionOutbound,

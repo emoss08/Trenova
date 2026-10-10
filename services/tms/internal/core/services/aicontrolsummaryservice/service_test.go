@@ -2,16 +2,19 @@ package aicontrolsummaryservice
 
 import (
 	"context"
-	"github.com/emoss08/trenova/internal/core/domain/agentroster"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/agentroster"
 	"github.com/emoss08/trenova/internal/core/domain/aicontrolsummary"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentrosterports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aicontrolsummaryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -21,32 +24,32 @@ import (
 
 type factsRepo struct {
 	counts   aicontrolsummary.AgentCounts
-	failures []repositories.ProviderFailureCount
+	failures []agentrosterports.ProviderFailureCount
 }
 
 func (f *factsRepo) AgentCounts(
 	context.Context,
-	*repositories.AgentCountsRequest,
+	*agentrosterports.AgentCountsRequest,
 ) (aicontrolsummary.AgentCounts, error) {
 	return f.counts, nil
 }
 
 func (f *factsRepo) AgentRoster(
 	context.Context,
-	*repositories.AgentRosterRequest,
+	*agentrosterports.AgentRosterRequest,
 ) ([]*agentroster.Stat, error) {
 	return nil, nil
 }
 
 func (f *factsRepo) ProviderFailures(
 	context.Context,
-	*repositories.ProviderFailuresRequest,
-) ([]repositories.ProviderFailureCount, error) {
+	*agentrosterports.ProviderFailuresRequest,
+) ([]agentrosterports.ProviderFailureCount, error) {
 	return f.failures, nil
 }
 
 type providerRepo struct {
-	repositories.AIProviderRepository
+	agentports.AIProviderRepository
 	enabled []*aiprovider.Provider
 	off     []*aiprovider.Provider
 }
@@ -64,21 +67,21 @@ func (p *providerRepo) ListOrdered(context.Context, pagination.TenantInfo) ([]*a
 }
 
 type usageRepo struct {
-	repositories.AIUsageRepository
+	aiusageports.AIUsageRepository
 	calls int
 	since int64
 }
 
 func (u *usageRepo) Summary(
 	_ context.Context,
-	req repositories.AIUsageSummaryRequest,
-) (*repositories.AIUsageSummary, error) {
+	req aiusageports.AIUsageSummaryRequest,
+) (*aiusageports.AIUsageSummaryRow, error) {
 	u.since = req.Since
-	return &repositories.AIUsageSummary{Totals: repositories.AIUsageTotals{Calls: u.calls}}, nil
+	return &aiusageports.AIUsageSummaryRow{Totals: aiusageports.AIUsageTotals{Calls: u.calls}}, nil
 }
 
 type controlRepo struct {
-	repositories.AgentControlRepository
+	tenantports.AgentControlRepository
 	paused bool
 }
 
@@ -104,7 +107,7 @@ func newMemoryCache() *memoryCache {
 
 func (c *memoryCache) Get(
 	_ context.Context,
-	key *repositories.AIControlSummaryKey,
+	key *aicontrolsummaryports.AIControlSummaryKey,
 	dest *aicontrolsummary.Summary,
 ) (bool, error) {
 	c.mu.Lock()
@@ -118,7 +121,7 @@ func (c *memoryCache) Get(
 
 func (c *memoryCache) Set(
 	_ context.Context,
-	key *repositories.AIControlSummaryKey,
+	key *aicontrolsummaryports.AIControlSummaryKey,
 	value *aicontrolsummary.Summary,
 	ttl time.Duration,
 ) error {
@@ -129,7 +132,7 @@ func (c *memoryCache) Set(
 	return nil
 }
 
-func (c *memoryCache) ClaimNarration(context.Context, *repositories.AIControlSummaryKey, int) (bool, error) {
+func (c *memoryCache) ClaimNarration(context.Context, *aicontrolsummaryports.AIControlSummaryKey, int) (bool, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.claims++
@@ -137,17 +140,17 @@ func (c *memoryCache) ClaimNarration(context.Context, *repositories.AIControlSum
 }
 
 type completion struct {
-	services.CompletionService
+	agentports.CompletionService
 	reply string
 	calls int
 }
 
 func (c *completion) CompleteStructured(
 	context.Context,
-	*services.StructuredCompletionRequest,
-) (*services.StructuredCompletionResult, error) {
+	*agentports.StructuredCompletionRequest,
+) (*agentports.StructuredCompletionResult, error) {
 	c.calls++
-	return &services.StructuredCompletionResult{Text: c.reply, ModelIdentifier: "test"}, nil
+	return &agentports.StructuredCompletionResult{Text: c.reply, ModelIdentifier: "test"}, nil
 }
 
 func newService(cache *memoryCache, model *completion, enabled ...*aiprovider.Provider) *Service {
@@ -185,8 +188,8 @@ const reworded = `{"segments":[
  {"text":"4 proposals","strong":true,"target":"watchtower","providerId":""},
  {"text":" are waiting on someone in Watchtower.","strong":false,"target":"","providerId":""}]}`
 
-func request() *services.AIControlSummaryRequest {
-	return &services.AIControlSummaryRequest{Tab: aicontrolsummary.TabOverview}
+func request() *aicontrolsummaryports.AIControlSummaryRequest {
+	return &aicontrolsummaryports.AIControlSummaryRequest{Tab: aicontrolsummary.TabOverview}
 }
 
 func TestSummaryRewordsOnceAndThenReadsWhatWasKept(t *testing.T) {
@@ -268,7 +271,7 @@ func TestSummaryPastTheDaysAllowanceStaysPlain(t *testing.T) {
 func TestSummaryRefusesAnUnknownTab(t *testing.T) {
 	t.Parallel()
 
-	_, err := newService(newMemoryCache(), nil).Summary(t.Context(), &services.AIControlSummaryRequest{Tab: "Nope"})
+	_, err := newService(newMemoryCache(), nil).Summary(t.Context(), &aicontrolsummaryports.AIControlSummaryRequest{Tab: "Nope"})
 
 	require.Error(t, err)
 }
@@ -278,7 +281,7 @@ func TestFactsNameOnlyEnabledProvidersAsFailing(t *testing.T) {
 
 	on := chatProvider()
 	svc := newService(newMemoryCache(), nil, on)
-	svc.facts = &factsRepo{failures: []repositories.ProviderFailureCount{
+	svc.facts = &factsRepo{failures: []agentrosterports.ProviderFailureCount{
 		{ProviderID: on.ID, FailedCalls: 24, LastFailureAt: 10},
 		{ProviderID: pulid.MustNew("aiprv_"), FailedCalls: 3},
 	}}

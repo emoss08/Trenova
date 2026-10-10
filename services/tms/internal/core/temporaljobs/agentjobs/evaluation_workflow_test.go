@@ -5,14 +5,15 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -70,17 +71,17 @@ func runEvaluationWorkflow(
 			if err != nil || opened.Done {
 				return opened, err
 			}
-			req := &serviceports.RunRequest{
+			req := &agentports.RunRequest{
 				Definition: replayDefinition(),
-				Actor: &serviceports.RequestActor{
-					PrincipalType: serviceports.PrincipalTypeUser,
+				Actor: &permissionports.RequestActor{
+					PrincipalType: permissionports.PrincipalTypeUser,
 					PrincipalID:   pulid.MustNew("usr_"),
 					UserID:        pulid.MustNew("usr_"),
 				},
 				Input:        "Rate S-100",
 				RunID:        pulid.MustNew(agent.EvaluationIDPrefix),
 				Unattended:   true,
-				UsagePurpose: serviceports.AIUsagePurposeEvaluation,
+				UsagePurpose: aiusageports.AIUsagePurposeEvaluation,
 			}
 			opened.Run = agentflow.NewRunContext(req, agentflow.PriorityEvaluation)
 			opened.Turn = runtime.OpenTurn(ctx, req).State()
@@ -88,7 +89,7 @@ func runEvaluationWorkflow(
 			return opened, nil
 		}).Once()
 	env.OnActivity(fa.ModelCallActivity, mock.Anything, mock.Anything).
-		Return(&agentruntime.ModelReply{Completion: &serviceports.ChatCompletionResult{
+		Return(&agentruntime.ModelReply{Completion: &agentports.ChatCompletionResult{
 			Text:            "The rate stays at 1,350.",
 			ModelIdentifier: "test-model",
 		}}, nil).Maybe()

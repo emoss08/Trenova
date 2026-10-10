@@ -7,9 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/deskcase"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports"
 	"go.uber.org/zap"
 )
 
@@ -20,7 +20,7 @@ import (
 // failure to work it out is logged and the Desk asks the agent as before.
 func (s *Service) abilities(
 	ctx context.Context,
-	req *serviceports.CaseThreadRequest,
+	req *deskcaseports.CaseThreadRequest,
 	thread *conversation.Thread,
 	checklist *deskcase.Checklist,
 ) map[deskcase.StepKey]deskcase.StepAbility {
@@ -41,7 +41,7 @@ func (s *Service) abilities(
 
 func (s *Service) resolveAbilities(
 	ctx context.Context,
-	req *serviceports.CaseThreadRequest,
+	req *deskcaseports.CaseThreadRequest,
 	thread *conversation.Thread,
 	steps []deskcase.StepKey,
 ) (map[deskcase.StepKey]deskcase.StepAbility, error) {
@@ -50,7 +50,7 @@ func (s *Service) resolveAbilities(
 		permitted[tool] = struct{}{}
 	}
 
-	definition, err := s.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	definition, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         thread.AgentDefinitionID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -73,7 +73,7 @@ func (s *Service) resolveAbilities(
 // name, each with the tools it holds.
 func (s *Service) otherHolders(
 	ctx context.Context,
-	req *serviceports.CaseThreadRequest,
+	req *deskcaseports.CaseThreadRequest,
 	own *agentdefinition.Definition,
 ) ([]*deskcase.Holder, error) {
 	others, err := agentruntime.OtherUsableAgents(ctx, &agentruntime.OtherUsableAgentsRequest{

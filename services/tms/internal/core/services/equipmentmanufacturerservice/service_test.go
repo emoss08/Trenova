@@ -1,11 +1,13 @@
 package equipmentmanufacturerservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/equipmentmanufacturerportsmock"
 	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentmanufacturerports"
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -27,15 +29,15 @@ func newTestValidator() *Validator {
 }
 
 type testDeps struct {
-	repo  *mocks.MockEquipmentManufacturerRepository
-	audit *mocks.MockAuditService
+	repo  *equipmentmanufacturerportsmock.MockEquipmentManufacturerRepository
+	audit *auditportsmock.MockAuditService
 	svc   *Service
 }
 
 func setupTest(t *testing.T) *testDeps {
 	t.Helper()
-	repo := mocks.NewMockEquipmentManufacturerRepository(t)
-	auditSvc := mocks.NewMockAuditService(t)
+	repo := equipmentmanufacturerportsmock.NewMockEquipmentManufacturerRepository(t)
+	auditSvc := auditportsmock.NewMockAuditService(t)
 	svc := &Service{
 		l:            zap.NewNop(),
 		repo:         repo,
@@ -133,7 +135,7 @@ func TestList_Success(t *testing.T) {
 		Items: []*equipmentmanufacturer.EquipmentManufacturer{newTestEntity()},
 		Total: 1,
 	}
-	req := &repositories.ListEquipmentManufacturersRequest{
+	req := &equipmentmanufacturerports.ListEquipmentManufacturersRequest{
 		Filter: &pagination.QueryOptions{},
 	}
 
@@ -166,7 +168,7 @@ func TestBulkUpdateStatus_Success(t *testing.T) {
 	entity1.Status = domaintypes.StatusInactive
 	entity2.Status = domaintypes.StatusInactive
 
-	req := &repositories.BulkUpdateEquipmentManufacturerStatusRequest{
+	req := &equipmentmanufacturerports.BulkUpdateEquipmentManufacturerStatusRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  entity1.OrganizationID,
 			BuID:   entity1.BusinessUnitID,
@@ -197,7 +199,7 @@ func TestBulkUpdateStatus_GetByIDsError(t *testing.T) {
 	ctx := t.Context()
 	getErr := errors.New("not found")
 
-	req := &repositories.BulkUpdateEquipmentManufacturerStatusRequest{
+	req := &equipmentmanufacturerports.BulkUpdateEquipmentManufacturerStatusRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  pulid.MustNew("org_"),
 			BuID:   pulid.MustNew("bu_"),
@@ -224,7 +226,7 @@ func TestBulkUpdateStatus_BulkUpdateError(t *testing.T) {
 	ctx := t.Context()
 	bulkErr := errors.New("bulk update failed")
 
-	req := &repositories.BulkUpdateEquipmentManufacturerStatusRequest{
+	req := &equipmentmanufacturerports.BulkUpdateEquipmentManufacturerStatusRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  pulid.MustNew("org_"),
 			BuID:   pulid.MustNew("bu_"),
@@ -364,7 +366,7 @@ func TestGet_Success(t *testing.T) {
 	ctx := t.Context()
 	entity := newTestEntity()
 
-	req := repositories.GetEquipmentManufacturerByIDRequest{
+	req := equipmentmanufacturerports.GetEquipmentManufacturerByIDRequest{
 		ID: entity.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -387,7 +389,7 @@ func TestGet_NotFound(t *testing.T) {
 	ctx := t.Context()
 	notFoundErr := errors.New("not found")
 
-	req := repositories.GetEquipmentManufacturerByIDRequest{
+	req := equipmentmanufacturerports.GetEquipmentManufacturerByIDRequest{
 		ID: pulid.MustNew("em_"),
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
@@ -409,7 +411,7 @@ func TestList_Error(t *testing.T) {
 	deps := setupTest(t)
 	ctx := t.Context()
 	dbErr := errors.New("db error")
-	req := &repositories.ListEquipmentManufacturersRequest{
+	req := &equipmentmanufacturerports.ListEquipmentManufacturersRequest{
 		Filter: &pagination.QueryOptions{},
 	}
 
@@ -461,8 +463,8 @@ func TestSelectOptions_Error(t *testing.T) {
 func TestNew(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockEquipmentManufacturerRepository(t)
-	auditSvc := mocks.NewMockAuditService(t)
+	repo := equipmentmanufacturerportsmock.NewMockEquipmentManufacturerRepository(t)
+	auditSvc := auditportsmock.NewMockAuditService(t)
 	validator := newTestValidator()
 
 	svc := New(Params{

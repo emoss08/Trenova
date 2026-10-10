@@ -3,7 +3,9 @@ package shipmenteventservice
 import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -24,12 +26,12 @@ func TenantRefFor(tenantInfo pagination.TenantInfo) TenantRef {
 
 // ActorFor derives the audit actor from request tenant info; system-originated
 // requests without a user yield an empty actor.
-func ActorFor(tenantInfo pagination.TenantInfo) services.AuditActor {
+func ActorFor(tenantInfo pagination.TenantInfo) kernelports.AuditActor {
 	if tenantInfo.UserID.IsNil() {
-		return services.AuditActor{}
+		return kernelports.AuditActor{}
 	}
-	return services.AuditActor{
-		PrincipalType: services.PrincipalTypeUser,
+	return kernelports.AuditActor{
+		PrincipalType: permissionports.PrincipalTypeUser,
 		PrincipalID:   tenantInfo.UserID,
 		UserID:        tenantInfo.UserID,
 	}
@@ -47,9 +49,9 @@ type AssignmentRef struct {
 func BuildShipmentCreated(
 	tenant TenantRef,
 	sh *shipment.Shipment,
-	actor services.AuditActor,
-) *services.RecordShipmentEventParams {
-	return &services.RecordShipmentEventParams{
+	actor kernelports.AuditActor,
+) *shipmenteventports.RecordShipmentEventParams {
+	return &shipmenteventports.RecordShipmentEventParams{
 		OrganizationID: tenant.OrganizationID,
 		BusinessUnitID: tenant.BusinessUnitID,
 		ShipmentID:     sh.ID,
@@ -70,9 +72,9 @@ func BuildStatusChanged(
 	tenant TenantRef,
 	sh *shipment.Shipment,
 	previous shipment.Status,
-	actor services.AuditActor,
-) *services.RecordShipmentEventParams {
-	return &services.RecordShipmentEventParams{
+	actor kernelports.AuditActor,
+) *shipmenteventports.RecordShipmentEventParams {
+	return &shipmenteventports.RecordShipmentEventParams{
 		OrganizationID: tenant.OrganizationID,
 		BusinessUnitID: tenant.BusinessUnitID,
 		ShipmentID:     sh.ID,
@@ -93,9 +95,9 @@ func BuildShipmentCanceled(
 	tenant TenantRef,
 	sh *shipment.Shipment,
 	reason string,
-	actor services.AuditActor,
-) *services.RecordShipmentEventParams {
-	return &services.RecordShipmentEventParams{
+	actor kernelports.AuditActor,
+) *shipmenteventports.RecordShipmentEventParams {
+	return &shipmenteventports.RecordShipmentEventParams{
 		OrganizationID: tenant.OrganizationID,
 		BusinessUnitID: tenant.BusinessUnitID,
 		ShipmentID:     sh.ID,
@@ -114,9 +116,9 @@ func BuildShipmentCanceled(
 func BuildShipmentUncanceled(
 	tenant TenantRef,
 	sh *shipment.Shipment,
-	actor services.AuditActor,
-) *services.RecordShipmentEventParams {
-	return &services.RecordShipmentEventParams{
+	actor kernelports.AuditActor,
+) *shipmenteventports.RecordShipmentEventParams {
+	return &shipmenteventports.RecordShipmentEventParams{
 		OrganizationID: tenant.OrganizationID,
 		BusinessUnitID: tenant.BusinessUnitID,
 		ShipmentID:     sh.ID,
@@ -135,9 +137,9 @@ func BuildOwnershipTransferred(
 	tenant TenantRef,
 	sh *shipment.Shipment,
 	previousOwnerID, newOwnerID pulid.ID,
-	actor services.AuditActor,
-) *services.RecordShipmentEventParams {
-	return &services.RecordShipmentEventParams{
+	actor kernelports.AuditActor,
+) *shipmenteventports.RecordShipmentEventParams {
+	return &shipmenteventports.RecordShipmentEventParams{
 		OrganizationID: tenant.OrganizationID,
 		BusinessUnitID: tenant.BusinessUnitID,
 		ShipmentID:     sh.ID,
@@ -159,10 +161,10 @@ func BuildMoveStatusChanged(
 	tenant TenantRef,
 	move *shipment.ShipmentMove,
 	previous shipment.MoveStatus,
-	actor services.AuditActor,
-) *services.RecordShipmentEventParams {
+	actor kernelports.AuditActor,
+) *shipmenteventports.RecordShipmentEventParams {
 	eventType, severity, summary := classifyMoveStatus(move.Status)
-	return &services.RecordShipmentEventParams{
+	return &shipmenteventports.RecordShipmentEventParams{
 		OrganizationID: tenant.OrganizationID,
 		BusinessUnitID: tenant.BusinessUnitID,
 		ShipmentID:     move.ShipmentID,
@@ -184,9 +186,9 @@ func BuildDriverAssigned(
 	ref AssignmentRef,
 	assignment *shipment.Assignment,
 	driverName string,
-	actor services.AuditActor,
-) *services.RecordShipmentEventParams {
-	return &services.RecordShipmentEventParams{
+	actor kernelports.AuditActor,
+) *shipmenteventports.RecordShipmentEventParams {
+	return &shipmenteventports.RecordShipmentEventParams{
 		OrganizationID: tenant.OrganizationID,
 		BusinessUnitID: tenant.BusinessUnitID,
 		ShipmentID:     ref.ShipmentID,
@@ -206,9 +208,9 @@ func BuildDriverReassigned(
 	ref AssignmentRef,
 	assignment *shipment.Assignment,
 	driverName string,
-	actor services.AuditActor,
-) *services.RecordShipmentEventParams {
-	return &services.RecordShipmentEventParams{
+	actor kernelports.AuditActor,
+) *shipmenteventports.RecordShipmentEventParams {
+	return &shipmenteventports.RecordShipmentEventParams{
 		OrganizationID: tenant.OrganizationID,
 		BusinessUnitID: tenant.BusinessUnitID,
 		ShipmentID:     ref.ShipmentID,
@@ -226,9 +228,9 @@ func BuildDriverReassigned(
 func BuildDriverUnassigned(
 	tenant TenantRef,
 	ref AssignmentRef,
-	actor services.AuditActor,
-) *services.RecordShipmentEventParams {
-	return &services.RecordShipmentEventParams{
+	actor kernelports.AuditActor,
+) *shipmenteventports.RecordShipmentEventParams {
+	return &shipmenteventports.RecordShipmentEventParams{
 		OrganizationID: tenant.OrganizationID,
 		BusinessUnitID: tenant.BusinessUnitID,
 		ShipmentID:     ref.ShipmentID,
@@ -247,8 +249,8 @@ func BuildCarrierAssigned(
 	ref AssignmentRef,
 	assignment *shipment.CarrierAssignment,
 	carrierName string,
-	actor services.AuditActor,
-) *services.RecordShipmentEventParams {
+	actor kernelports.AuditActor,
+) *shipmenteventports.RecordShipmentEventParams {
 	metadata := map[string]any{
 		"carrierName": carrierName,
 	}
@@ -260,7 +262,7 @@ func BuildCarrierAssigned(
 		}
 	}
 
-	return &services.RecordShipmentEventParams{
+	return &shipmenteventports.RecordShipmentEventParams{
 		OrganizationID: tenant.OrganizationID,
 		BusinessUnitID: tenant.BusinessUnitID,
 		ShipmentID:     ref.ShipmentID,
@@ -279,9 +281,9 @@ func BuildCarrierUnassigned(
 	ref AssignmentRef,
 	carrierName string,
 	reason string,
-	actor services.AuditActor,
-) *services.RecordShipmentEventParams {
-	return &services.RecordShipmentEventParams{
+	actor kernelports.AuditActor,
+) *shipmenteventports.RecordShipmentEventParams {
+	return &shipmenteventports.RecordShipmentEventParams{
 		OrganizationID: tenant.OrganizationID,
 		BusinessUnitID: tenant.BusinessUnitID,
 		ShipmentID:     ref.ShipmentID,
@@ -301,9 +303,9 @@ func BuildCarrierUnassigned(
 func BuildHoldPlaced(
 	tenant TenantRef,
 	hold *shipment.ShipmentHold,
-	actor services.AuditActor,
-) *services.RecordShipmentEventParams {
-	return &services.RecordShipmentEventParams{
+	actor kernelports.AuditActor,
+) *shipmenteventports.RecordShipmentEventParams {
+	return &shipmenteventports.RecordShipmentEventParams{
 		OrganizationID: tenant.OrganizationID,
 		BusinessUnitID: tenant.BusinessUnitID,
 		ShipmentID:     hold.ShipmentID,
@@ -324,9 +326,9 @@ func BuildHoldPlaced(
 func BuildHoldUpdated(
 	tenant TenantRef,
 	hold *shipment.ShipmentHold,
-	actor services.AuditActor,
-) *services.RecordShipmentEventParams {
-	return &services.RecordShipmentEventParams{
+	actor kernelports.AuditActor,
+) *shipmenteventports.RecordShipmentEventParams {
+	return &shipmenteventports.RecordShipmentEventParams{
 		OrganizationID: tenant.OrganizationID,
 		BusinessUnitID: tenant.BusinessUnitID,
 		ShipmentID:     hold.ShipmentID,
@@ -345,9 +347,9 @@ func BuildHoldUpdated(
 func BuildHoldReleased(
 	tenant TenantRef,
 	hold *shipment.ShipmentHold,
-	actor services.AuditActor,
-) *services.RecordShipmentEventParams {
-	return &services.RecordShipmentEventParams{
+	actor kernelports.AuditActor,
+) *shipmenteventports.RecordShipmentEventParams {
+	return &shipmenteventports.RecordShipmentEventParams{
 		OrganizationID: tenant.OrganizationID,
 		BusinessUnitID: tenant.BusinessUnitID,
 		ShipmentID:     hold.ShipmentID,
@@ -368,14 +370,14 @@ func BuildHoldReleased(
 func BuildCommentPosted(
 	tenant TenantRef,
 	comment *shipment.ShipmentComment,
-	actor services.AuditActor,
-) *services.RecordShipmentEventParams {
+	actor kernelports.AuditActor,
+) *shipmenteventports.RecordShipmentEventParams {
 	mentionIDs := make([]string, 0, len(comment.MentionedUserIDs))
 	for _, id := range comment.MentionedUserIDs {
 		mentionIDs = append(mentionIDs, id.String())
 	}
 
-	return &services.RecordShipmentEventParams{
+	return &shipmenteventports.RecordShipmentEventParams{
 		OrganizationID: tenant.OrganizationID,
 		BusinessUnitID: tenant.BusinessUnitID,
 		ShipmentID:     comment.ShipmentID,

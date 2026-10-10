@@ -6,8 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -85,7 +86,7 @@ func TestWaiveDetentionPreview_ShowsTheRevenueGivenUp(t *testing.T) {
 		"note":         "Ice storm",
 	})
 
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.Nil(t, det.waived, "a preview must not waive")
 	assert.Contains(t, preview.Summary, "425.00 USD")
@@ -133,7 +134,7 @@ func TestSendDetentionNoticePreview_ShowsTheNoticeAsSent(t *testing.T) {
 			VersionID: &versionID,
 		},
 		Attachment: "detention-notice-SHP-1001.pdf",
-		Sender: &serviceports.EmailSender{
+		Sender: &emailports.EmailSender{
 			Email:      "notices@carrier.test",
 			Name:       "Carrier Billing",
 			Suppressed: []string{"ap@acme.test"},
@@ -142,7 +143,7 @@ func TestSendDetentionNoticePreview_ShowsTheNoticeAsSent(t *testing.T) {
 	tool := newSendDetentionNoticeTool(det)
 	params := executeParams(map[string]any{"occurrenceId": before.ID.String()})
 
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.Nil(t, det.noticed, "a preview must not send")
 

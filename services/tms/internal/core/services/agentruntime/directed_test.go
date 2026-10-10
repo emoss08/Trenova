@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,10 +16,10 @@ const directedStep = "Mark shipment SEED-PAY-001 ready to invoice."
 
 // directedRequest is a turn in a conversation with an agent that lists no
 // other agent, on which the person handed a step to the Report Builder.
-func directedRequest(delegate agentdefinition.RuntimeDelegate) *serviceports.RunRequest {
+func directedRequest(delegate agentdefinition.RuntimeDelegate) *agentports.RunRequest {
 	req := delegatingRequest()
 	req.Input = directedStep
-	req.Directed = &serviceports.DirectedTask{Delegate: delegate, Task: directedStep}
+	req.Directed = &agentports.DirectedTask{Delegate: delegate, Task: directedStep}
 
 	return req
 }
@@ -91,14 +91,14 @@ func TestDriveDirected_RunsTheChosenAgentWithoutAskingTheConversationsModel(t *t
 	assert.Equal(t, 1, result.ToolCallsUsed)
 
 	assert.Equal(t, []string{
-		serviceports.AssistantEventMessage,
-		serviceports.AssistantEventToolStarted,
-		serviceports.AssistantEventDelegateStarted,
-		serviceports.AssistantEventDelegateFinished,
-		serviceports.AssistantEventToolFinished,
-		serviceports.AssistantEventDelta,
+		agentports.AssistantEventMessage,
+		agentports.AssistantEventToolStarted,
+		agentports.AssistantEventDelegateStarted,
+		agentports.AssistantEventDelegateFinished,
+		agentports.AssistantEventToolFinished,
+		agentports.AssistantEventDelta,
 	}, fx.eventNames(), "the stream shows it as any hand-off, then the answer")
-	started, ok := fx.events[2].Data.(serviceports.AssistantDelegateStartedEvent)
+	started, ok := fx.events[2].Data.(agentports.AssistantDelegateStartedEvent)
 	require.True(t, ok)
 	assert.Equal(t, callID, started.DelegateCallID)
 	assert.Equal(t, directedStep, started.Task)
@@ -162,16 +162,16 @@ func TestDriveDirected_ADeclinedTaskRepliesWithTheReason(t *testing.T) {
 func TestDriveDirected_IsIgnoredWhereNoPersonHandsOverATask(t *testing.T) {
 	t.Parallel()
 
-	tests := map[string]func(*serviceports.RunRequest){
-		"a delegate's turn": func(req *serviceports.RunRequest) {
-			req.Delegation = &serviceports.Delegation{
+	tests := map[string]func(*agentports.RunRequest){
+		"a delegate's turn": func(req *agentports.RunRequest) {
+			req.Delegation = &agentports.Delegation{
 				ParentAgentID: pulid.MustNew("agdef_"),
 				CallID:        "call_parent",
 				StepScope:     "scope",
 			}
 		},
-		"an unattended run": func(req *serviceports.RunRequest) { req.Unattended = true },
-		"no conversation":   func(req *serviceports.RunRequest) { req.ThreadID = pulid.Nil },
+		"an unattended run": func(req *agentports.RunRequest) { req.Unattended = true },
+		"no conversation":   func(req *agentports.RunRequest) { req.ThreadID = pulid.Nil },
 	}
 
 	for name, change := range tests {
@@ -179,7 +179,7 @@ func TestDriveDirected_IsIgnoredWhereNoPersonHandsOverATask(t *testing.T) {
 			t.Parallel()
 
 			delegate := reportBuilder()
-			completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+			completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 				textTurn("Done."),
 			}}
 			rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
@@ -222,38 +222,38 @@ func TestDirectedReply_SaysWhatCameOfTheTask(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
-		report serviceports.AssistantDelegateFinishedEvent
+		report agentports.AssistantDelegateFinishedEvent
 		want   string
 	}{
 		"completed": {
-			report: serviceports.AssistantDelegateFinishedEvent{
-				Status: serviceports.DelegateStatusCompleted, Reply: "  Marked ready.  ",
+			report: agentports.AssistantDelegateFinishedEvent{
+				Status: agentports.DelegateStatusCompleted, Reply: "  Marked ready.  ",
 			},
 			want: "Marked ready.",
 		},
 		"completed in silence": {
-			report: serviceports.AssistantDelegateFinishedEvent{
-				Status: serviceports.DelegateStatusCompleted, AgentName: "Billing Assistant",
+			report: agentports.AssistantDelegateFinishedEvent{
+				Status: agentports.DelegateStatusCompleted, AgentName: "Billing Assistant",
 			},
 			want: "Billing Assistant finished without saying anything more.",
 		},
 		"out of tool calls": {
-			report: serviceports.AssistantDelegateFinishedEvent{
-				Status: serviceports.DelegateStatusExhausted,
+			report: agentports.AssistantDelegateFinishedEvent{
+				Status: agentports.DelegateStatusExhausted,
 				Reply:  "I checked the paperwork.",
 				Reason: "It used every tool call.",
 			},
 			want: "I checked the paperwork.\n\nIt used every tool call.",
 		},
 		"failed": {
-			report: serviceports.AssistantDelegateFinishedEvent{
-				Status: serviceports.DelegateStatusFailed, Reason: "The model stopped answering.",
+			report: agentports.AssistantDelegateFinishedEvent{
+				Status: agentports.DelegateStatusFailed, Reason: "The model stopped answering.",
 			},
 			want: "The model stopped answering.",
 		},
 		"failed without a reason": {
-			report: serviceports.AssistantDelegateFinishedEvent{
-				Status: serviceports.DelegateStatusFailed, AgentName: "Billing Assistant",
+			report: agentports.AssistantDelegateFinishedEvent{
+				Status: agentports.DelegateStatusFailed, AgentName: "Billing Assistant",
 			},
 			want: "Billing Assistant did not report back.",
 		},

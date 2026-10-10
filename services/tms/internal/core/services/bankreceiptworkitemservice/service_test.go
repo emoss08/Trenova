@@ -1,12 +1,12 @@
 package bankreceiptworkitemservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/bankreceiptworkitemportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/bankreceiptworkitem"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptworkitemports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -29,7 +29,7 @@ func TestWorkItemLifecycle(t *testing.T) {
 		BusinessUnitID: buID,
 		Status:         bankreceiptworkitem.StatusOpen,
 	}
-	repo := mocks.NewMockBankReceiptWorkItemRepository(t)
+	repo := bankreceiptworkitemportsmock.NewMockBankReceiptWorkItemRepository(t)
 	var current *bankreceiptworkitem.WorkItem
 	setCurrent := func(item *bankreceiptworkitem.WorkItem) {
 		copy := *item
@@ -52,7 +52,7 @@ func TestWorkItemLifecycle(t *testing.T) {
 		GetByID(mock.Anything, mock.Anything).
 		RunAndReturn(func(
 			_ context.Context,
-			_ repositories.GetBankReceiptWorkItemByIDRequest,
+			_ bankreceiptworkitemports.GetBankReceiptWorkItemByIDRequest,
 		) (*bankreceiptworkitem.WorkItem, error) {
 			return current, nil
 		}).
@@ -76,7 +76,7 @@ func TestWorkItemLifecycle(t *testing.T) {
 
 	assigned, err := svc.Assign(
 		t.Context(),
-		&serviceports.AssignBankReceiptWorkItemRequest{
+		&bankreceiptworkitemports.AssignBankReceiptWorkItemRequest{
 			WorkItemID:       work.ID,
 			AssignedToUserID: userID,
 			TenantInfo:       pagination.TenantInfo{OrgID: orgID, BuID: buID},
@@ -88,7 +88,7 @@ func TestWorkItemLifecycle(t *testing.T) {
 
 	review, err := svc.StartReview(
 		t.Context(),
-		&serviceports.GetBankReceiptWorkItemRequest{
+		&bankreceiptworkitemports.GetBankReceiptWorkItemRequest{
 			WorkItemID: work.ID,
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		},
@@ -99,7 +99,7 @@ func TestWorkItemLifecycle(t *testing.T) {
 
 	resolved, err := svc.Resolve(
 		t.Context(),
-		&serviceports.ResolveBankReceiptWorkItemRequest{
+		&bankreceiptworkitemports.ResolveBankReceiptWorkItemRequest{
 			WorkItemID:     work.ID,
 			ResolutionType: bankreceiptworkitem.ResolutionMatchedToPayment,
 			ResolutionNote: "done",
@@ -118,7 +118,7 @@ func TestWorkItemLifecycle(t *testing.T) {
 	})
 	dismissed, err := svc.Dismiss(
 		t.Context(),
-		&serviceports.DismissBankReceiptWorkItemRequest{
+		&bankreceiptworkitemports.DismissBankReceiptWorkItemRequest{
 			WorkItemID:     current.ID,
 			ResolutionNote: "ignore",
 			TenantInfo:     pagination.TenantInfo{OrgID: orgID, BuID: buID},

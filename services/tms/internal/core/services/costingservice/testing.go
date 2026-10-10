@@ -4,8 +4,10 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/costingcontrol"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/costingcontrolports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"go.uber.org/zap"
 )
@@ -25,11 +27,11 @@ func NewTestValidator() *Validator {
 }
 
 type TestServiceParams struct {
-	Repo         repositories.CostingControlRepository
-	ActualsRepo  repositories.CostingActualsRepository
-	PriceRepo    repositories.FuelIndexPriceRepository
-	ShipmentRepo repositories.ShipmentRepository
-	AuditService services.AuditService
+	Repo         costingcontrolports.CostingControlRepository
+	ActualsRepo  costingcontrolports.CostingActualsRepository
+	PriceRepo    fuelsurchargeports.FuelIndexPriceRepository
+	ShipmentRepo shipmentports.ShipmentRepository
+	AuditService auditports.AuditService
 	Now          func() time.Time
 }
 

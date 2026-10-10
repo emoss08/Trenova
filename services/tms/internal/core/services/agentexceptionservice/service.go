@@ -6,10 +6,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -21,21 +23,21 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.AgentExceptionRepository
-	AuditService services.AuditService
+	Repo         agentports.AgentExceptionRepository
+	AuditService auditports.AuditService
 	// Watchtower puts an exception on the feed and takes it off when it is
 	// resolved.
-	Watchtower services.WatchtowerProjector `optional:"true"`
+	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
 }
 
 type Service struct {
 	l          *zap.Logger
-	repo       repositories.AgentExceptionRepository
-	audit      services.AuditService
-	watchtower services.WatchtowerProjector
+	repo       agentports.AgentExceptionRepository
+	audit      auditports.AuditService
+	watchtower watchtowerports.WatchtowerProjector
 }
 
-func New(p Params) services.AgentExceptionService {
+func New(p Params) agentports.AgentExceptionService {
 	return &Service{
 		l:          p.Logger.Named("service.agentexception"),
 		repo:       p.Repo,
@@ -46,8 +48,8 @@ func New(p Params) services.AgentExceptionService {
 
 func (s *Service) Flag(
 	ctx context.Context,
-	req *services.FlagAgentExceptionRequest,
-	actor *services.RequestActor,
+	req *agentports.FlagAgentExceptionRequest,
+	actor *permissionports.RequestActor,
 ) (*agent.AgentException, error) {
 	entity, err := PlanException(req)
 	if err != nil {
@@ -69,29 +71,29 @@ func (s *Service) Flag(
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListAgentExceptionRequest,
+	req *agentports.ListAgentExceptionRequest,
 ) (*pagination.ListResult[*agent.AgentException], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListAgentExceptionConnectionRequest,
+	req *agentports.ListAgentExceptionConnectionRequest,
 ) (*pagination.CursorListResult[*agent.AgentException], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) GetByID(
 	ctx context.Context,
-	req repositories.GetAgentExceptionByIDRequest,
+	req agentports.GetAgentExceptionByIDRequest,
 ) (*agent.AgentException, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) Resolve(
 	ctx context.Context,
-	req *services.ResolveAgentExceptionRequest,
-	actor *services.RequestActor,
+	req *agentports.ResolveAgentExceptionRequest,
+	actor *permissionports.RequestActor,
 ) (*agent.AgentException, error) {
 	if !req.ResolutionState.IsValid() {
 		return nil, errortypes.NewValidationError(
@@ -101,7 +103,7 @@ func (s *Service) Resolve(
 		)
 	}
 
-	updated, err := s.repo.UpdateResolution(ctx, repositories.UpdateAgentExceptionResolutionRequest{
+	updated, err := s.repo.UpdateResolution(ctx, agentports.UpdateAgentExceptionResolutionRequest{
 		ID:              req.ID,
 		ResolutionState: req.ResolutionState,
 		ResolutionNotes: req.ResolutionNotes,
@@ -125,7 +127,7 @@ func (s *Service) Resolve(
 }
 
 func (s *Service) logAction(
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	op permission.Operation,
 	entity *agent.AgentException,
 	previous *agent.AgentException,
@@ -133,7 +135,7 @@ func (s *Service) logAction(
 ) {
 	auditActor := actor.AuditActorOrSystem()
 
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceAgentException,
 		ResourceID:     entity.GetID().String(),
 		Operation:      op,

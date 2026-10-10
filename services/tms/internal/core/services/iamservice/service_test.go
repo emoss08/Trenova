@@ -1,11 +1,12 @@
 package iamservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/iamportsmock"
 	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/iam"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,17 +18,17 @@ import (
 
 type accessPolicyServiceDeps struct {
 	svc         *service
-	repo        *mocks.MockIAMRepository
-	policyCache *mocks.MockAccessPolicyCacheRepository
+	repo        *iamportsmock.MockIAMRepository
+	policyCache *iamportsmock.MockAccessPolicyCacheRepository
 	tenant      pagination.TenantInfo
-	lookup      repositories.IAMTenantPolicyLookupRequest
+	lookup      iamports.IAMTenantPolicyLookupRequest
 }
 
 func setupAccessPolicyService(t *testing.T) accessPolicyServiceDeps {
 	t.Helper()
 
-	repo := mocks.NewMockIAMRepository(t)
-	policyCache := mocks.NewMockAccessPolicyCacheRepository(t)
+	repo := iamportsmock.NewMockIAMRepository(t)
+	policyCache := iamportsmock.NewMockAccessPolicyCacheRepository(t)
 	tenant := pagination.TenantInfo{
 		OrgID: pulid.MustNew("org_"),
 		BuID:  pulid.MustNew("bu_"),
@@ -46,7 +47,7 @@ func setupAccessPolicyService(t *testing.T) accessPolicyServiceDeps {
 		repo:        repo,
 		policyCache: policyCache,
 		tenant:      tenant,
-		lookup: repositories.IAMTenantPolicyLookupRequest{
+		lookup: iamports.IAMTenantPolicyLookupRequest{
 			OrganizationID: tenant.OrgID,
 			BusinessUnitID: tenant.BuID,
 		},

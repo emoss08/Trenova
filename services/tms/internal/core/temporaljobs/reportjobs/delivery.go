@@ -12,8 +12,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/fileutils"
@@ -60,7 +64,7 @@ func (a *Activities) DeliverScheduledRunActivity(
 		BuID:  payload.BusinessUnitID,
 	}
 
-	run, err := a.runRepo.GetByID(ctx, &repositories.GetReportRunRequest{
+	run, err := a.runRepo.GetByID(ctx, &reportports.GetReportRunRequest{
 		TenantInfo: tenant,
 		RunID:      payload.RunID,
 	})
@@ -72,7 +76,7 @@ func (a *Activities) DeliverScheduledRunActivity(
 		return &DeliverRunResult{Skipped: true}, nil
 	}
 
-	schedule, err := a.scheduleRepo.GetByID(ctx, &repositories.GetReportScheduleRequest{
+	schedule, err := a.scheduleRepo.GetByID(ctx, &reportports.GetReportScheduleRequest{
 		TenantInfo: tenant,
 		ScheduleID: run.ScheduleID,
 	})
@@ -120,7 +124,7 @@ func (a *Activities) DeliverScheduledRunActivity(
 // A missing column or absent total returns nil rather than zero: the measure
 // did not appear, and treating that as zero would fire "revenue below target"
 // on a report that simply lost the column.
-func digestTotal(digest *services.ReportDigest, columnID string) *float64 {
+func digestTotal(digest *reportports.ReportDigest, columnID string) *float64 {
 	if digest.IsEmpty() || len(digest.Totals) == 0 {
 		return nil
 	}
@@ -162,7 +166,7 @@ func (a *Activities) evaluateAlert(
 	ctx context.Context,
 	run *report.ReportRun,
 	schedule *report.ReportSchedule,
-	digest *services.ReportDigest,
+	digest *reportports.ReportDigest,
 ) (deliver bool, reason string) {
 	alert := schedule.Alert
 	if alert == nil {
@@ -203,7 +207,7 @@ func (a *Activities) deliverRunEmail(
 	run *report.ReportRun,
 	schedule *report.ReportSchedule,
 	title string,
-	digest *services.ReportDigest,
+	digest *reportports.ReportDigest,
 	result *DeliverRunResult,
 ) error {
 	if a.email == nil {
@@ -222,7 +226,7 @@ func (a *Activities) deliverRunEmail(
 	// A styling problem must not cost a scheduled delivery, so a failed render
 	// falls back to the shipped default. If even that fails the schedule owner is
 	// told, because the alternative is a report nobody knows never arrived.
-	rendered, err := a.templates.RenderMessage(ctx, &services.RenderMessageRequest{
+	rendered, err := a.templates.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
 		TenantInfo: tenantInfo,
 		Kind:       documenttemplate.KindReportDeliveryEmail,
 		Data: a.deliveryEmailContext(&deliveryEmailContent{
@@ -246,7 +250,7 @@ func (a *Activities) deliverRunEmail(
 		return nil //nolint:nilerr // recorded for the schedule owner; retrying cannot help
 	}
 
-	req := &services.SendEmailRequest{
+	req := &emailports.SendEmailRequest{
 		TenantInfo:     tenantInfo,
 		Purpose:        email.PurposeReporting,
 		To:             schedule.Delivery.EmailRecipients,
@@ -256,7 +260,7 @@ func (a *Activities) deliverRunEmail(
 		IdempotencyKey: "report-run-" + run.ID.String(),
 	}
 	if attach != nil {
-		req.Attachments = []services.EmailAttachment{*attach}
+		req.Attachments = []emailports.EmailAttachment{*attach}
 	}
 
 	if _, err = a.email.Send(ctx, req); err != nil {
@@ -282,7 +286,7 @@ func (a *Activities) isRetryableEmailError(ctx context.Context, err error) bool 
 	if activity.GetInfo(ctx).Attempt >= deliverMaxAttempts {
 		return false
 	}
-	if errors.Is(err, services.ErrNonRetryableEmailSend) {
+	if errors.Is(err, emailports.ErrNonRetryableEmailSend) {
 		return false
 	}
 	var (
@@ -319,7 +323,7 @@ func (a *Activities) recordEmailFailure(
 
 	correlationID := run.ID.String()
 	if exists, err := a.notification.ExistsRecent(ctx,
-		repositories.ExistsRecentNotificationRequest{
+		notificationports.ExistsRecentNotificationRequest{
 			OrganizationID: run.OrganizationID,
 			BusinessUnitID: run.BusinessUnitID,
 			EventType:      deliveryFailedEvent,
@@ -396,14 +400,14 @@ func (a *Activities) attachmentPlan(
 	run *report.ReportRun,
 	schedule *report.ReportSchedule,
 	title string,
-) (attach *services.EmailAttachment, tooLarge bool) {
+) (attach *emailports.EmailAttachment, tooLarge bool) {
 	if !schedule.Delivery.EmailAttach {
 		return nil, false
 	}
 	if run.ByteSize <= 0 || run.ByteSize > a.cfg.GetEmailMaxAttachmentBytes() {
 		return nil, true
 	}
-	return &services.EmailAttachment{
+	return &emailports.EmailAttachment{
 		FileName:    deliveryFileName(run, title),
 		ContentType: run.Format.ContentType(),
 		ObjectKey:   run.ArtifactKey,
@@ -440,7 +444,7 @@ func (a *Activities) deliverRunNotifications(
 		return
 	}
 
-	users, err := a.userRepo.GetByIDs(ctx, repositories.GetUsersByIDsRequest{
+	users, err := a.userRepo.GetByIDs(ctx, tenantports.GetUsersByIDsRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: run.OrganizationID,
 			BuID:  run.BusinessUnitID,
@@ -479,7 +483,7 @@ func (a *Activities) deliverRunNotifications(
 		correlationID := run.ID.String() + ":" + userID.String()
 
 		if exists, existsErr := a.notification.ExistsRecent(ctx,
-			repositories.ExistsRecentNotificationRequest{
+			notificationports.ExistsRecentNotificationRequest{
 				OrganizationID: run.OrganizationID,
 				BusinessUnitID: run.BusinessUnitID,
 				EventType:      deliveredEventType,
@@ -524,7 +528,7 @@ func (a *Activities) auditDelivery(
 	schedule *report.ReportSchedule,
 	result *DeliverRunResult,
 ) {
-	if err := a.audit.LogAction(&services.LogActionParams{
+	if err := a.audit.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceReport,
 		ResourceID:     run.ID.String(),
 		Operation:      permission.OpExport,

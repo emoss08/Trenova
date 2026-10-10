@@ -1,17 +1,19 @@
 package shipmentjobs
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs/shipmentcontract"
-
-	"github.com/emoss08/trenova/internal/core/services/shipmentinvalidation"
-
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/shipmentinvalidation"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs/shipmentcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -25,9 +27,9 @@ import (
 func TestActivitiesBulkDuplicateShipmentsActivity(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockShipmentRepository(t)
-	audit := mocks.NewMockAuditService(t)
-	realtime := mocks.NewMockRealtimeService(t)
+	repo := shipmentportsmock.NewMockShipmentRepository(t)
+	audit := auditportsmock.NewMockAuditService(t)
+	realtime := agentportsmock.NewMockRealtimeService(t)
 
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
@@ -37,7 +39,7 @@ func TestActivitiesBulkDuplicateShipmentsActivity(t *testing.T) {
 	copyTwo := pulid.MustNew("shp_")
 
 	repo.EXPECT().
-		BulkDuplicate(mock.Anything, mock.MatchedBy(func(req *repositories.BulkDuplicateShipmentRequest) bool {
+		BulkDuplicate(mock.Anything, mock.MatchedBy(func(req *shipmentports.BulkDuplicateShipmentRequest) bool {
 			return req.ShipmentID == sourceID &&
 				req.Count == 2 &&
 				req.OverrideDates &&
@@ -51,13 +53,13 @@ func TestActivitiesBulkDuplicateShipmentsActivity(t *testing.T) {
 
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Twice()
 	realtime.EXPECT().
-		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *services.PublishResourceInvalidationRequest) bool {
+		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *agentports.PublishResourceInvalidationRequest) bool {
 			return req.Resource == "shipments" &&
 				req.Action == "bulk_created" &&
 				req.OrganizationID == orgID &&
 				req.BusinessUnitID == buID &&
 				req.ActorUserID == userID &&
-				req.ActorType == services.PrincipalTypeUser &&
+				req.ActorType == permissionports.PrincipalTypeUser &&
 				req.ActorID == userID &&
 				req.RecordID.IsNil() &&
 				req.Entity == nil
@@ -95,25 +97,25 @@ func TestActivitiesBulkDuplicateShipmentsActivity(t *testing.T) {
 	assert.Equal(t, []pulid.ID{copyOne, copyTwo}, result.ShipmentIDs)
 	assert.Equal(t, sourceID, result.SourceShipmentID)
 	tenant := pagination.TenantInfo{OrgID: orgID, BuID: buID}
-	assert.Equal(t, []services.AgentEvent{
+	assert.Equal(t, []agentports.AgentEvent{
 		{Kind: agent.EventShipmentCreated, SubjectID: copyOne, TenantInfo: tenant},
 		{Kind: agent.EventShipmentCreated, SubjectID: copyTwo, TenantInfo: tenant},
 	}, agentEvents.events)
 }
 
 type recordingAgentEvents struct {
-	events []services.AgentEvent
+	events []agentports.AgentEvent
 }
 
-func (r *recordingAgentEvents) Publish(_ context.Context, event services.AgentEvent) {
+func (r *recordingAgentEvents) Publish(_ context.Context, event agentports.AgentEvent) {
 	r.events = append(r.events, event)
 }
 
 func TestActivitiesAutoDelayShipmentsActivity(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockShipmentRepository(t)
-	realtime := mocks.NewMockRealtimeService(t)
+	repo := shipmentportsmock.NewMockShipmentRepository(t)
+	realtime := agentportsmock.NewMockRealtimeService(t)
 
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
@@ -129,7 +131,7 @@ func TestActivitiesAutoDelayShipmentsActivity(t *testing.T) {
 		}}, nil).
 		Once()
 	realtime.EXPECT().
-		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *services.PublishResourceInvalidationRequest) bool {
+		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *agentports.PublishResourceInvalidationRequest) bool {
 			return req.Resource == "shipments" &&
 				req.Action == "delayed" &&
 				req.RecordID == shipmentID
@@ -139,7 +141,7 @@ func TestActivitiesAutoDelayShipmentsActivity(t *testing.T) {
 
 	activities := NewActivities(ActivitiesParams{
 		Repo:         repo,
-		AuditService: mocks.NewMockAuditService(t),
+		AuditService: auditportsmock.NewMockAuditService(t),
 		Invalidator:  shipmentinvalidation.NewWithDependencies(realtime, nil, zap.NewNop()),
 		Logger:       zap.NewNop(),
 	})
@@ -155,8 +157,8 @@ func TestActivitiesAutoDelayShipmentsActivity(t *testing.T) {
 func TestActivitiesAutoCancelShipmentsActivity(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockShipmentRepository(t)
-	realtime := mocks.NewMockRealtimeService(t)
+	repo := shipmentportsmock.NewMockShipmentRepository(t)
+	realtime := agentportsmock.NewMockRealtimeService(t)
 
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
@@ -172,7 +174,7 @@ func TestActivitiesAutoCancelShipmentsActivity(t *testing.T) {
 		}}, nil).
 		Once()
 	realtime.EXPECT().
-		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *services.PublishResourceInvalidationRequest) bool {
+		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *agentports.PublishResourceInvalidationRequest) bool {
 			return req.Resource == "shipments" &&
 				req.Action == "bulk_canceled" &&
 				req.OrganizationID == orgID &&
@@ -185,7 +187,7 @@ func TestActivitiesAutoCancelShipmentsActivity(t *testing.T) {
 
 	activities := NewActivities(ActivitiesParams{
 		Repo:         repo,
-		AuditService: mocks.NewMockAuditService(t),
+		AuditService: auditportsmock.NewMockAuditService(t),
 		Invalidator:  shipmentinvalidation.NewWithDependencies(realtime, nil, zap.NewNop()),
 		Logger:       zap.NewNop(),
 	})
@@ -201,8 +203,8 @@ func TestActivitiesAutoCancelShipmentsActivity(t *testing.T) {
 func TestActivitiesAutoCancelShipmentsActivity_PublishesPerAffectedTenant(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockShipmentRepository(t)
-	realtime := mocks.NewMockRealtimeService(t)
+	repo := shipmentportsmock.NewMockShipmentRepository(t)
+	realtime := agentportsmock.NewMockRealtimeService(t)
 
 	orgOne := pulid.MustNew("org_")
 	buOne := pulid.MustNew("bu_")
@@ -233,7 +235,7 @@ func TestActivitiesAutoCancelShipmentsActivity_PublishesPerAffectedTenant(t *tes
 		}, nil).
 		Once()
 	realtime.EXPECT().
-		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *services.PublishResourceInvalidationRequest) bool {
+		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *agentports.PublishResourceInvalidationRequest) bool {
 			return req.Resource == "shipments" &&
 				req.Action == "bulk_canceled" &&
 				req.OrganizationID == orgOne &&
@@ -243,7 +245,7 @@ func TestActivitiesAutoCancelShipmentsActivity_PublishesPerAffectedTenant(t *tes
 		Return(nil).
 		Once()
 	realtime.EXPECT().
-		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *services.PublishResourceInvalidationRequest) bool {
+		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *agentports.PublishResourceInvalidationRequest) bool {
 			return req.Resource == "shipments" &&
 				req.Action == "bulk_canceled" &&
 				req.OrganizationID == orgTwo &&
@@ -255,7 +257,7 @@ func TestActivitiesAutoCancelShipmentsActivity_PublishesPerAffectedTenant(t *tes
 
 	activities := NewActivities(ActivitiesParams{
 		Repo:         repo,
-		AuditService: mocks.NewMockAuditService(t),
+		AuditService: auditportsmock.NewMockAuditService(t),
 		Invalidator:  shipmentinvalidation.NewWithDependencies(realtime, nil, zap.NewNop()),
 		Logger:       zap.NewNop(),
 	})

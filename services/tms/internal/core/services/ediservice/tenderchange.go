@@ -13,10 +13,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	coreports "github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -29,7 +30,7 @@ func (s *Service) AfterShipmentUpdate(
 	ctx context.Context,
 	original *shipment.Shipment,
 	updated *shipment.Shipment,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) error {
 	plan, err := s.planTenderChanges(ctx, original, updated, actor)
 	if err != nil || plan == nil {
@@ -63,7 +64,7 @@ func (s *Service) createTenderChangeForRecipient(
 	recipient *edi.TenderRecipient,
 	newPayload *edi.LoadTenderPayload,
 	sourceShipmentVersion int64,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) error {
 	newHash := tenderPayloadHash(newPayload)
 	diff := diffTenderPayloads(&recipient.LatestBaselinePayload, newPayload)
@@ -110,7 +111,7 @@ func (s *Service) createTenderChangeForRecipient(
 	}
 	if err = s.tenderChangeRepo.SupersedeActionableTenderChanges(
 		ctx,
-		repositories.SupersedeActionableEDITenderChangesRequest{
+		ediports.SupersedeActionableEDITenderChangesRequest{
 			RecipientID:     recipient.ID,
 			ExcludeChangeID: result.TenderChange.ID,
 			Statuses: []edi.TenderChangeStatus{
@@ -131,7 +132,7 @@ func (s *Service) generateExternalTenderChange(
 	ctx context.Context,
 	recipient *edi.TenderRecipient,
 	change *edi.TenderChange,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) error {
 	payload := change.NewTenderPayload
 	payload.PurposeCode = edi.LoadTenderPurposeChange
@@ -176,14 +177,14 @@ func (s *Service) generateExternalTenderChange(
 
 func (s *Service) ListTenderChanges(
 	ctx context.Context,
-	req *repositories.ListEDITenderChangesRequest,
+	req *ediports.ListEDITenderChangesRequest,
 ) (*pagination.ListResult[*edi.TenderChange], error) {
 	return s.tenderChangeRepo.ListTenderChanges(ctx, req)
 }
 
 func (s *Service) GetTenderChange(
 	ctx context.Context,
-	req repositories.GetEDITenderChangeByIDRequest,
+	req ediports.GetEDITenderChangeByIDRequest,
 ) (*edi.TenderChange, error) {
 	return s.tenderChangeRepo.GetTenderChangeByID(ctx, req)
 }
@@ -191,7 +192,7 @@ func (s *Service) GetTenderChange(
 func (s *Service) ApplyTenderChange(
 	ctx context.Context,
 	req *TenderChangeActionRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*edi.TenderChange, error) {
 	return s.reviewTenderChange(ctx, req, actor, edi.TenderChangeStatusApplied)
 }
@@ -199,7 +200,7 @@ func (s *Service) ApplyTenderChange(
 func (s *Service) RejectTenderChange(
 	ctx context.Context,
 	req *TenderChangeActionRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*edi.TenderChange, error) {
 	return s.reviewTenderChange(ctx, req, actor, edi.TenderChangeStatusRejected)
 }
@@ -207,7 +208,7 @@ func (s *Service) RejectTenderChange(
 func (s *Service) reviewTenderChange(
 	ctx context.Context,
 	req *TenderChangeActionRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	status edi.TenderChangeStatus,
 ) (*edi.TenderChange, error) {
 	if req == nil {
@@ -227,7 +228,7 @@ func (s *Service) reviewTenderChange(
 
 	change, err := s.tenderChangeRepo.GetTenderChangeByID(
 		ctx,
-		repositories.GetEDITenderChangeByIDRequest{ID: req.ChangeID, TenantInfo: req.TenantInfo},
+		ediports.GetEDITenderChangeByIDRequest{ID: req.ChangeID, TenantInfo: req.TenantInfo},
 	)
 	if err != nil {
 		return nil, err
@@ -238,7 +239,7 @@ func (s *Service) reviewTenderChange(
 
 	now := timeutils.NowUnix()
 	var applyErr error
-	err = s.db.WithTx(ctx, coreports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		if status == edi.TenderChangeStatusApplied {
 			if applyErr = s.applyApprovedTenderChange(
 				txCtx,
@@ -280,11 +281,11 @@ func (s *Service) applyApprovedTenderChange(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	change *edi.TenderChange,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) error {
 	recipient, err := s.tenderRecipientRepo.GetTenderRecipientByID(
 		ctx,
-		repositories.GetEDITenderRecipientByIDRequest{
+		ediports.GetEDITenderRecipientByIDRequest{
 			ID:         change.RecipientID,
 			TenantInfo: tenantInfo,
 		},
@@ -306,7 +307,7 @@ func (s *Service) applyPendingTransferTenderChange(
 ) error {
 	transfer, err := s.transferRepo.GetTransferForUpdate(
 		ctx,
-		repositories.GetEDITransferForUpdateRequest{
+		ediports.GetEDITransferForUpdateRequest{
 			ID:         change.InternalTransferID,
 			TenantInfo: tenantInfo,
 			Direction:  "inbound",
@@ -315,7 +316,7 @@ func (s *Service) applyPendingTransferTenderChange(
 	if err != nil {
 		return err
 	}
-	targetPartner, err := s.partnerRepo.GetByID(ctx, repositories.GetEDIPartnerByIDRequest{
+	targetPartner, err := s.partnerRepo.GetByID(ctx, ediports.GetEDIPartnerByIDRequest{
 		ID:         transfer.TargetPartnerID,
 		TenantInfo: tenantInfo,
 	})
@@ -349,7 +350,7 @@ func (s *Service) applyLinkedShipmentTenderChange(
 	ctx context.Context,
 	recipient *edi.TenderRecipient,
 	change *edi.TenderChange,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) error {
 	targetTenantInfo, err := tenderRecipientTenantInfo(recipient)
 	if err != nil {
@@ -361,7 +362,7 @@ func (s *Service) applyLinkedShipmentTenderChange(
 	}
 	link, err := s.shipmentLinkRepo.GetShipmentLinkByID(
 		ctx,
-		repositories.GetEDIShipmentLinkByIDRequest{
+		ediports.GetEDIShipmentLinkByIDRequest{
 			ID:         change.ShipmentLinkID,
 			TenantInfo: sourceTenantInfo,
 		},
@@ -371,7 +372,7 @@ func (s *Service) applyLinkedShipmentTenderChange(
 	}
 	transfer, err := s.transferRepo.GetTransferByID(
 		ctx,
-		repositories.GetEDITransferByIDRequest{
+		ediports.GetEDITransferByIDRequest{
 			ID:         change.InternalTransferID,
 			TenantInfo: targetTenantInfo,
 			Direction:  "inbound",
@@ -380,7 +381,7 @@ func (s *Service) applyLinkedShipmentTenderChange(
 	if err != nil {
 		return err
 	}
-	targetPartner, err := s.partnerRepo.GetByID(ctx, repositories.GetEDIPartnerByIDRequest{
+	targetPartner, err := s.partnerRepo.GetByID(ctx, ediports.GetEDIPartnerByIDRequest{
 		ID:         transfer.TargetPartnerID,
 		TenantInfo: targetTenantInfo,
 	})
@@ -394,10 +395,10 @@ func (s *Service) applyLinkedShipmentTenderChange(
 	if len(preview.Unresolved) > 0 {
 		return unresolvedMappingsError(preview.Unresolved)
 	}
-	targetShipment, err := s.shipmentSvc.Get(ctx, &repositories.GetShipmentByIDRequest{
+	targetShipment, err := s.shipmentSvc.Get(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:              link.TargetShipmentID,
 		TenantInfo:      targetTenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{ExpandShipmentDetails: true},
+		ShipmentOptions: shipmentports.ShipmentOptions{ExpandShipmentDetails: true},
 	})
 	if err != nil {
 		return err
@@ -511,7 +512,7 @@ func (s *Service) upsertInternalTenderRecipient(
 	}
 	_, err := s.tenderRecipientRepo.UpsertTenderRecipient(
 		ctx,
-		repositories.UpsertEDITenderRecipientRequest{Recipient: recipient},
+		ediports.UpsertEDITenderRecipientRequest{Recipient: recipient},
 	)
 	return err
 }
@@ -533,7 +534,7 @@ func (s *Service) upsertExternalTenderRecipient(
 	}
 	commProfile, err := s.profileRepo.GetActiveProfileByPartner(
 		ctx,
-		repositories.GetActiveEDICommunicationProfileByPartnerRequest{
+		ediports.GetActiveEDICommunicationProfileByPartnerRequest{
 			PartnerID: message.EDIPartnerID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: message.OrganizationID,
@@ -570,7 +571,7 @@ func (s *Service) upsertExternalTenderRecipient(
 	}
 	_, err = s.tenderRecipientRepo.UpsertTenderRecipient(
 		ctx,
-		repositories.UpsertEDITenderRecipientRequest{Recipient: recipient},
+		ediports.UpsertEDITenderRecipientRequest{Recipient: recipient},
 	)
 	return err
 }
@@ -885,7 +886,7 @@ func (s *Service) decryptProfileSecret(
 	})
 }
 
-func actorUserID(actor *services.RequestActor) pulid.ID {
+func actorUserID(actor *permissionports.RequestActor) pulid.ID {
 	if actor == nil {
 		return pulid.Nil
 	}

@@ -5,9 +5,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/capture"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -22,7 +22,7 @@ type requestRepository struct {
 	l  *zap.Logger
 }
 
-func NewRequestRepository(p Params) repositories.CaptureRequestRepository {
+func NewRequestRepository(p Params) captureports.CaptureRequestRepository {
 	return &requestRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.capture-request-repository"),
@@ -90,7 +90,7 @@ func (r *requestRepository) Update(
 
 func (r *requestRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetCaptureRequestByIDRequest,
+	req captureports.GetCaptureRequestByIDRequest,
 ) (*capture.CaptureRequest, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capture.CaptureRequest, error) {
 		entity := new(capture.CaptureRequest)
@@ -111,7 +111,7 @@ func (r *requestRepository) GetByID(
 
 func (r *requestRepository) ListOpen(
 	ctx context.Context,
-	req repositories.ListOpenCaptureRequestsRequest,
+	req captureports.ListOpenCaptureRequestsRequest,
 ) ([]*capture.CaptureRequest, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*capture.CaptureRequest, error) {
 		entities := make([]*capture.CaptureRequest, 0)
@@ -135,7 +135,7 @@ func (r *requestRepository) ListOpen(
 
 func (r *requestRepository) ListForTarget(
 	ctx context.Context,
-	req repositories.ListCaptureRequestsForTargetRequest,
+	req captureports.ListCaptureRequestsForTargetRequest,
 ) ([]*capture.CaptureRequest, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*capture.CaptureRequest, error) {
 		limit := req.Limit

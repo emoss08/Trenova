@@ -11,8 +11,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -21,14 +24,14 @@ import (
 )
 
 type fakeRoles struct {
-	users    []repositories.PermittedUser
-	requests []repositories.ListUsersWithPermissionRequest
+	users    []permissionports.PermittedUser
+	requests []permissionports.ListUsersWithPermissionRequest
 }
 
 func (f *fakeRoles) ListUsersWithPermission(
 	_ context.Context,
-	req repositories.ListUsersWithPermissionRequest,
-) ([]repositories.PermittedUser, error) {
+	req permissionports.ListUsersWithPermissionRequest,
+) ([]permissionports.PermittedUser, error) {
 	f.requests = append(f.requests, req)
 
 	return f.users, nil
@@ -45,11 +48,13 @@ func (f *fakeNotifications) Create(
 	return entity, nil
 }
 
-type fakeMailer struct{ sent []*services.SendEmailRequest }
+type fakeMailer struct {
+	sent []*emailports.SendEmailRequest
+}
 
 func (f *fakeMailer) Send(
 	_ context.Context,
-	req *services.SendEmailRequest,
+	req *emailports.SendEmailRequest,
 ) (*email.Message, error) {
 	f.sent = append(f.sent, req)
 
@@ -57,16 +62,16 @@ func (f *fakeMailer) Send(
 }
 
 type fakeRenderer struct {
-	requests []*services.RenderMessageRequest
+	requests []*documenttemplateports.RenderMessageRequest
 }
 
 func (f *fakeRenderer) RenderMessage(
 	_ context.Context,
-	req *services.RenderMessageRequest,
-) (*services.RenderedMessage, error) {
+	req *documenttemplateports.RenderMessageRequest,
+) (*documenttemplateports.RenderedMessage, error) {
 	f.requests = append(f.requests, req)
 
-	return &services.RenderedMessage{Subject: "reminder", HTML: "<p>x</p>", Text: "x"}, nil
+	return &documenttemplateports.RenderedMessage{Subject: "reminder", HTML: "<p>x</p>", Text: "x"}, nil
 }
 
 type fakeShadow struct{ shadow bool }
@@ -78,12 +83,12 @@ func (f fakeShadow) Organization(context.Context, pagination.TenantInfo) (bool, 
 type fakeProposals struct {
 	pending  []*agent.AgentProposal
 	reminded []pulid.ID
-	lastList repositories.ListPendingProposalsForReminderRequest
+	lastList agentports.ListPendingProposalsForReminderRequest
 }
 
 func (f *fakeProposals) ListPendingForReminder(
 	_ context.Context,
-	req repositories.ListPendingProposalsForReminderRequest,
+	req agentports.ListPendingProposalsForReminderRequest,
 ) ([]*agent.AgentProposal, error) {
 	f.lastList = req
 
@@ -92,7 +97,7 @@ func (f *fakeProposals) ListPendingForReminder(
 
 func (f *fakeProposals) MarkReminded(
 	_ context.Context,
-	req repositories.MarkProposalsRemindedRequest,
+	req agentports.MarkProposalsRemindedRequest,
 ) (int, error) {
 	f.reminded = append(f.reminded, req.IDs...)
 
@@ -103,7 +108,7 @@ type fakeRuns struct{ runs map[pulid.ID]*agent.AgentRun }
 
 func (f fakeRuns) GetByID(
 	_ context.Context,
-	req repositories.GetAgentRunByIDRequest,
+	req agentports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	return f.runs[req.ID], nil
 }
@@ -112,7 +117,7 @@ type fakeDefinitions struct{ definition *agentdefinition.Definition }
 
 func (f fakeDefinitions) GetByID(
 	context.Context,
-	repositories.GetAgentDefinitionByIDRequest,
+	agentdefinitionports.GetAgentDefinitionByIDRequest,
 ) (*agentdefinition.Definition, error) {
 	return f.definition, nil
 }
@@ -147,7 +152,7 @@ func newHarness(shadow bool) *harness {
 	}
 
 	h := &harness{
-		roles: &fakeRoles{users: []repositories.PermittedUser{
+		roles: &fakeRoles{users: []permissionports.PermittedUser{
 			{
 				UserID:       pulid.MustNew("usr_"),
 				Name:         "Dana Ortiz",
@@ -200,7 +205,7 @@ func TestNotifyPending_TellsEveryDeciderOnce(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(false)
-	require.NoError(t, h.svc.NotifyPending(t.Context(), services.PendingProposalsNotice{
+	require.NoError(t, h.svc.NotifyPending(t.Context(), agentports.PendingProposalsNotice{
 		Definition: h.definition,
 		Run:        h.run,
 		Proposals: []*agent.AgentProposal{
@@ -245,7 +250,7 @@ func TestNotifyPending_SkipsChatRunsAndShadow(t *testing.T) {
 	h := newHarness(false)
 	chat := *h.run
 	chat.Trigger = agent.RunTriggerChat
-	require.NoError(t, h.svc.NotifyPending(t.Context(), services.PendingProposalsNotice{
+	require.NoError(t, h.svc.NotifyPending(t.Context(), agentports.PendingProposalsNotice{
 		Definition: h.definition,
 		Run:        &chat,
 		Proposals: []*agent.AgentProposal{
@@ -255,7 +260,7 @@ func TestNotifyPending_SkipsChatRunsAndShadow(t *testing.T) {
 	assert.Empty(t, h.notifications.created, "the person who asked is looking at the answer")
 
 	shadowed := newHarness(true)
-	require.NoError(t, shadowed.svc.NotifyPending(t.Context(), services.PendingProposalsNotice{
+	require.NoError(t, shadowed.svc.NotifyPending(t.Context(), agentports.PendingProposalsNotice{
 		Definition: shadowed.definition,
 		Run:        shadowed.run,
 		Proposals: []*agent.AgentProposal{
@@ -275,7 +280,7 @@ func TestRemindPending_NotifiesAtHighPriorityAndEmailsThoseWithAnAddress(t *test
 		h.proposal("assign_move", agent.ProposalStatusPending, now-5*3600),
 	}
 
-	reminded, err := h.svc.RemindPending(t.Context(), services.RemindPendingProposalsRequest{
+	reminded, err := h.svc.RemindPending(t.Context(), agentports.RemindPendingProposalsRequest{
 		Now:       now,
 		OlderThan: 4 * time.Hour,
 		Limit:     100,
@@ -316,7 +321,7 @@ func TestRemindPending_MarksShadowedProposalsWithoutTellingAnyone(t *testing.T) 
 		h.proposal("assign_move", agent.ProposalStatusPending, now-9*3600),
 	}
 
-	reminded, err := h.svc.RemindPending(t.Context(), services.RemindPendingProposalsRequest{
+	reminded, err := h.svc.RemindPending(t.Context(), agentports.RemindPendingProposalsRequest{
 		Now: now, OlderThan: 4 * time.Hour, Limit: 100,
 	})
 	require.NoError(t, err)

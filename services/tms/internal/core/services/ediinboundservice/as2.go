@@ -11,11 +11,10 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/internal/core/services/editransport"
 	"github.com/emoss08/trenova/internal/infrastructure/observability"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -95,7 +94,7 @@ func (s *Service) receiveAS2Message(
 
 	profile, err := s.profileRepo.GetActiveAS2ProfileByIdentifiers(
 		ctx,
-		repositories.GetActiveAS2ProfileByIdentifiersRequest{
+		ediports.GetActiveAS2ProfileByIdentifiersRequest{
 			LocalAS2ID:   strings.TrimSpace(req.To),
 			PartnerAS2ID: strings.TrimSpace(req.From),
 		},
@@ -146,7 +145,7 @@ func (s *Service) receiveAS2Message(
 		parsed.FileName,
 		sanitizeAS2FileName(req.MessageID)+as2FileNameSuffix,
 	)
-	staged, skipped, err := s.stageInboundFile(ctx, profile, &services.EDIInboundRemoteFile{
+	staged, skipped, err := s.stageInboundFile(ctx, profile, &ediports.EDIInboundRemoteFile{
 		Path:     "as2:" + req.MessageID,
 		Name:     fileName,
 		Contents: string(parsed.Payload),

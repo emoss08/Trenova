@@ -2,8 +2,8 @@ package retrievaljobs
 
 import (
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/shopspring/decimal"
 )
 
@@ -53,7 +53,7 @@ type IndexOrganizationResult struct {
 	Stopped        airetrieval.UnavailableReason `json:"stopped,omitempty"`
 }
 
-func (r *IndexOrganizationResult) absorb(batch *serviceports.RetrievalIndexBatchResult) {
+func (r *IndexOrganizationResult) absorb(batch *agentports.RetrievalIndexBatchResult) {
 	r.Batches++
 	r.Indexed += batch.Indexed
 	r.Skipped += batch.Skipped

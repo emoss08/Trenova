@@ -12,8 +12,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -47,7 +49,7 @@ func invoiceSharePath(invoiceID string, tab invoice.ShareTab) string {
 func (s *Service) deliver(
 	ctx context.Context,
 	p *deliveryParams,
-) (int, servicesports.InvoiceShareEmailStatus) {
+) (int, invoiceports.InvoiceShareEmailStatus) {
 	tenantInfo := pagination.TenantInfo{
 		OrgID:  p.invoice.OrganizationID,
 		BuID:   p.invoice.BusinessUnitID,
@@ -82,16 +84,16 @@ func (s *Service) deliver(
 	return queued, emailStatus(canEmail, queued, len(p.recipients))
 }
 
-func emailStatus(canEmail bool, queued, recipients int) servicesports.InvoiceShareEmailStatus {
+func emailStatus(canEmail bool, queued, recipients int) invoiceports.InvoiceShareEmailStatus {
 	switch {
 	case !canEmail:
-		return servicesports.InvoiceShareEmailNotConfigured
+		return invoiceports.InvoiceShareEmailNotConfigured
 	case queued == recipients:
-		return servicesports.InvoiceShareEmailQueued
+		return invoiceports.InvoiceShareEmailQueued
 	case queued == 0:
-		return servicesports.InvoiceShareEmailFailed
+		return invoiceports.InvoiceShareEmailFailed
 	default:
-		return servicesports.InvoiceShareEmailPartial
+		return invoiceports.InvoiceShareEmailPartial
 	}
 }
 
@@ -106,7 +108,7 @@ func (s *Service) notify(
 		return
 	}
 
-	rendered, err := s.templates.RenderMessage(ctx, &servicesports.RenderMessageRequest{
+	rendered, err := s.templates.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
 		TenantInfo: tenantInfo,
 		Kind:       documenttemplate.KindNotificationInvoiceShared,
 		Data: &documenttemplate.InvoiceShareNotificationContext{
@@ -182,7 +184,7 @@ func (s *Service) sendEmail(ctx context.Context, p *emailParams) bool {
 		return false
 	}
 
-	if _, err = s.emailService.Send(ctx, &servicesports.SendEmailRequest{
+	if _, err = s.emailService.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo: p.tenantInfo,
 		Purpose:    email.PurposeNotifications,
 		To:         []string{address},
@@ -202,10 +204,10 @@ func (s *Service) sendEmail(ctx context.Context, p *emailParams) bool {
 func (s *Service) renderShareEmail(
 	ctx context.Context,
 	p *emailParams,
-) (*servicesports.RenderedMessage, error) {
+) (*documenttemplateports.RenderedMessage, error) {
 	//nolint:gosec // G203: a configured base URL joined to a server-encoded path
 	invoiceURL := template.URL(p.invoiceURL)
-	return s.templates.RenderMessage(ctx, &servicesports.RenderMessageRequest{
+	return s.templates.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
 		TenantInfo: p.tenantInfo,
 		Kind:       documenttemplate.KindInvoiceShareEmail,
 		Data: &documenttemplate.InvoiceShareEmailContext{
@@ -234,7 +236,7 @@ func (s *Service) companyName(ctx context.Context, tenantInfo pagination.TenantI
 		return ""
 	}
 
-	org, err := s.organizationRepo.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+	org, err := s.organizationRepo.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: tenantInfo,
 	})
 	if err != nil || org == nil {

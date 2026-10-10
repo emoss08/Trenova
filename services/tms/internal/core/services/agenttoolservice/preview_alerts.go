@@ -8,11 +8,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tablechangealert"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 
-var _ serviceports.ToolPreviewer = (*createTableChangeAlertTool)(nil)
+var _ agentports.ToolPreviewer = (*createTableChangeAlertTool)(nil)
 
 var alertViewLabels = map[string]string{
 	"table":          "Watches",
@@ -60,7 +60,7 @@ func alertViewOf(subscription *tablechangealert.TCASubscription) *alertView {
 
 func (t *createTableChangeAlertTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	if err := guardPreview(t, &params); err != nil {
 		return nil, err

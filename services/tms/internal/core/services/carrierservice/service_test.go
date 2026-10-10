@@ -1,12 +1,14 @@
 package carrierservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/carrierportsmock"
 	"context"
 	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -18,15 +20,15 @@ import (
 )
 
 type testDeps struct {
-	repo  *mocks.MockCarrierRepository
-	audit *mocks.MockAuditService
+	repo  *carrierportsmock.MockCarrierRepository
+	audit *auditportsmock.MockAuditService
 	svc   *Service
 }
 
 func setupTest(t *testing.T) *testDeps {
 	t.Helper()
-	repo := mocks.NewMockCarrierRepository(t)
-	auditSvc := mocks.NewMockAuditService(t)
+	repo := carrierportsmock.NewMockCarrierRepository(t)
+	auditSvc := auditportsmock.NewMockAuditService(t)
 	svc := &Service{
 		l:            zap.NewNop(),
 		repo:         repo,
@@ -138,7 +140,7 @@ func TestServiceUpdate(t *testing.T) {
 		original.Name = "Old Name"
 
 		deps.repo.EXPECT().
-			GetByID(mock.Anything, mock.MatchedBy(func(req repositories.GetCarrierByIDRequest) bool {
+			GetByID(mock.Anything, mock.MatchedBy(func(req carrierports.GetCarrierByIDRequest) bool {
 				return req.ID == entity.ID
 			})).
 			Return(&original, nil)
@@ -183,7 +185,7 @@ func TestServiceBulkUpdateStatus(t *testing.T) {
 	deps := setupTest(t)
 
 	entity := newTestEntity()
-	req := &repositories.BulkUpdateCarrierStatusRequest{
+	req := &carrierports.BulkUpdateCarrierStatusRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  entity.OrganizationID,
 			BuID:   entity.BusinessUnitID,
@@ -213,7 +215,7 @@ func TestServiceGet(t *testing.T) {
 	deps := setupTest(t)
 
 	entity := newTestEntity()
-	req := repositories.GetCarrierByIDRequest{
+	req := carrierports.GetCarrierByIDRequest{
 		ID: entity.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,

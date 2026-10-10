@@ -5,8 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/modeprofile"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/modeprofileports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -19,20 +18,20 @@ const ResourceTypeShipment = "shipment"
 type ServiceParams struct {
 	fx.In
 
-	ProfileRepo   repositories.ModeProfileRepository
-	CacheRepo     repositories.ModeProfileCacheRepository
-	DeviationRepo repositories.DeviationRepository
+	ProfileRepo   modeprofileports.ModeProfileRepository
+	CacheRepo     modeprofileports.ModeProfileCacheRepository
+	DeviationRepo modeprofileports.DeviationRepository
 	Logger        *zap.Logger
 }
 
 type service struct {
-	profileRepo   repositories.ModeProfileRepository
-	cacheRepo     repositories.ModeProfileCacheRepository
-	deviationRepo repositories.DeviationRepository
+	profileRepo   modeprofileports.ModeProfileRepository
+	cacheRepo     modeprofileports.ModeProfileCacheRepository
+	deviationRepo modeprofileports.DeviationRepository
 	l             *zap.Logger
 }
 
-func NewService(p ServiceParams) services.ModeProfileService {
+func NewService(p ServiceParams) modeprofileports.ModeProfileService {
 	return &service{
 		profileRepo:   p.ProfileRepo,
 		cacheRepo:     p.CacheRepo,
@@ -50,7 +49,7 @@ func severityToEnforcement(severity errortypes.Severity) tenant.EnforcementLevel
 
 func (s *service) RecordDeviations(
 	ctx context.Context,
-	req *services.RecordDeviationsRequest,
+	req *modeprofileports.RecordDeviationsRequest,
 ) error {
 	if req.Policy == nil {
 		return nil
@@ -99,7 +98,7 @@ func (s *service) RecordDeviations(
 
 	live, readErr := s.deviationRepo.LiveRuleKeysForResource(
 		ctx,
-		&repositories.LiveDeviationKeysRequest{
+		&modeprofileports.LiveDeviationKeysRequest{
 			TenantInfo:   req.TenantInfo,
 			ResourceType: req.ResourceType,
 			ResourceID:   req.ResourceID,
@@ -116,7 +115,7 @@ func (s *service) RecordDeviations(
 	// unchanged shipment would land as another occurrence in the ledger.
 	if err := s.deviationRepo.SupersedeOpenForResource(
 		ctx,
-		&repositories.SupersedeDeviationsRequest{
+		&modeprofileports.SupersedeDeviationsRequest{
 			TenantInfo:   req.TenantInfo,
 			ResourceType: req.ResourceType,
 			ResourceID:   req.ResourceID,
@@ -158,7 +157,7 @@ func (s *service) RecordDeviations(
 
 func (s *service) Acknowledge(
 	ctx context.Context,
-	req *services.AcknowledgeDeviationServiceRequest,
+	req *modeprofileports.AcknowledgeDeviationServiceRequest,
 ) (*modeprofile.Deviation, error) {
 	multiErr := errortypes.NewMultiError()
 
@@ -176,7 +175,7 @@ func (s *service) Acknowledge(
 		return nil, multiErr
 	}
 
-	return s.deviationRepo.Acknowledge(ctx, &repositories.AcknowledgeDeviationRequest{
+	return s.deviationRepo.Acknowledge(ctx, &modeprofileports.AcknowledgeDeviationRequest{
 		DeviationID:      req.DeviationID,
 		TenantInfo:       req.TenantInfo,
 		AcknowledgedByID: req.AcknowledgedByID,
@@ -186,14 +185,14 @@ func (s *service) Acknowledge(
 
 func (s *service) ListDeviations(
 	ctx context.Context,
-	req *repositories.ListDeviationsRequest,
+	req *modeprofileports.ListDeviationsRequest,
 ) (*pagination.ListResult[*modeprofile.Deviation], error) {
 	return s.deviationRepo.List(ctx, req)
 }
 
 func (s *service) Ledger(
 	ctx context.Context,
-	req *repositories.DeviationLedgerRequest,
-) ([]*repositories.DeviationLedgerEntry, error) {
+	req *modeprofileports.DeviationLedgerRequest,
+) ([]*modeprofileports.DeviationLedgerEntry, error) {
 	return s.deviationRepo.Ledger(ctx, req)
 }

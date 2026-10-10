@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/core/domain/manualjournal"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
@@ -22,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/glaccountrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/journalpostingrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/manualjournalrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/manualjournalports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -170,11 +170,11 @@ func TestManualJournalPostingPersistsBatchEntryAndLines(t *testing.T) {
 	tenantInfo := pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID, UserID: user.ID}
 	actor := testutil.NewSessionActor(user.ID, org.ID, org.BusinessUnitID)
 
-	draft, err := svc.CreateDraft(ctx, &serviceports.CreateManualJournalRequest{
+	draft, err := svc.CreateDraft(ctx, &manualjournalports.CreateManualJournalRequest{
 		Description:    "Month-end accrual",
 		Reason:         "Accrue detention expense",
 		AccountingDate: period.StartDate,
-		Lines: []*serviceports.ManualJournalLineInput{
+		Lines: []*manualjournalports.ManualJournalLineInput{
 			{GLAccountID: accounts[0].ID, Description: "Debit accrued expense", DebitAmount: 2500},
 			{
 				GLAccountID:  accounts[1].ID,
@@ -189,7 +189,7 @@ func TestManualJournalPostingPersistsBatchEntryAndLines(t *testing.T) {
 
 	submitted, err := svc.Submit(
 		ctx,
-		&serviceports.GetManualJournalRequest{RequestID: draft.ID, TenantInfo: tenantInfo},
+		&manualjournalports.GetManualJournalRequest{RequestID: draft.ID, TenantInfo: tenantInfo},
 		actor,
 	)
 	require.NoError(t, err)
@@ -197,7 +197,7 @@ func TestManualJournalPostingPersistsBatchEntryAndLines(t *testing.T) {
 
 	posted, err := svc.Post(
 		ctx,
-		&serviceports.GetManualJournalRequest{RequestID: draft.ID, TenantInfo: tenantInfo},
+		&manualjournalports.GetManualJournalRequest{RequestID: draft.ID, TenantInfo: tenantInfo},
 		actor,
 	)
 	require.NoError(t, err)

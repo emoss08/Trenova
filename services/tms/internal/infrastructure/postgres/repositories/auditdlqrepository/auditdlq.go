@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/audit"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -27,7 +27,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.AuditDLQRepository {
+func New(p Params) auditports.AuditDLQRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.audit-dlq-repository"),

@@ -5,9 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -20,17 +21,17 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.ServiceFailureReasonCodeRepository
-	AuditService services.AuditService
+	Repo         servicefailureports.ServiceFailureReasonCodeRepository
+	AuditService auditports.AuditService
 }
 
 type service struct {
 	l            *zap.Logger
-	repo         repositories.ServiceFailureReasonCodeRepository
-	auditService services.AuditService
+	repo         servicefailureports.ServiceFailureReasonCodeRepository
+	auditService auditports.AuditService
 }
 
-func New(p Params) services.ServiceFailureReasonCodeService {
+func New(p Params) servicefailureports.ServiceFailureReasonCodeService {
 	return &service{
 		l:            p.Logger.Named("service.service-failure-reason-code"),
 		repo:         p.Repo,
@@ -40,7 +41,7 @@ func New(p Params) services.ServiceFailureReasonCodeService {
 
 func (s *service) List(
 	ctx context.Context,
-	req *repositories.ListServiceFailureReasonCodesRequest,
+	req *servicefailureports.ListServiceFailureReasonCodesRequest,
 ) (*pagination.ListResult[*servicefailure.ReasonCode], error) {
 	if req == nil || req.Filter == nil {
 		return nil, errortypes.NewValidationError(
@@ -54,14 +55,14 @@ func (s *service) List(
 
 func (s *service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListServiceFailureReasonCodeConnectionRequest,
+	req *servicefailureports.ListServiceFailureReasonCodeConnectionRequest,
 ) (*pagination.CursorListResult[*servicefailure.ReasonCode], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *service) Get(
 	ctx context.Context,
-	req repositories.GetServiceFailureReasonCodeByIDRequest,
+	req servicefailureports.GetServiceFailureReasonCodeByIDRequest,
 ) (*servicefailure.ReasonCode, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
@@ -71,7 +72,7 @@ func (s *service) Get(
 
 func (s *service) SelectOptions(
 	ctx context.Context,
-	req *repositories.ServiceFailureReasonCodeSelectOptionsRequest,
+	req *servicefailureports.ServiceFailureReasonCodeSelectOptionsRequest,
 ) (*pagination.ListResult[*servicefailure.ReasonCode], error) {
 	if req == nil || req.SelectQueryRequest == nil {
 		return nil, errortypes.NewValidationError(
@@ -86,7 +87,7 @@ func (s *service) SelectOptions(
 func (s *service) Create(
 	ctx context.Context,
 	entity *servicefailure.ReasonCode,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*servicefailure.ReasonCode, error) {
 	if entity == nil {
 		return nil, errortypes.NewValidationError(
@@ -118,7 +119,7 @@ func (s *service) Create(
 func (s *service) Update(
 	ctx context.Context,
 	entity *servicefailure.ReasonCode,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*servicefailure.ReasonCode, error) {
 	if entity == nil {
 		return nil, errortypes.NewValidationError(
@@ -131,7 +132,7 @@ func (s *service) Update(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetByID(ctx, repositories.GetServiceFailureReasonCodeByIDRequest{
+	original, err := s.repo.GetByID(ctx, servicefailureports.GetServiceFailureReasonCodeByIDRequest{
 		ID: entity.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -162,9 +163,9 @@ func (s *service) Archive(
 	ctx context.Context,
 	id pulid.ID,
 	tenantInfo pagination.TenantInfo,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*servicefailure.ReasonCode, error) {
-	original, err := s.repo.GetByID(ctx, repositories.GetServiceFailureReasonCodeByIDRequest{
+	original, err := s.repo.GetByID(ctx, servicefailureports.GetServiceFailureReasonCodeByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
@@ -195,9 +196,9 @@ func (s *service) Activate(
 	ctx context.Context,
 	id pulid.ID,
 	tenantInfo pagination.TenantInfo,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*servicefailure.ReasonCode, error) {
-	original, err := s.repo.GetByID(ctx, repositories.GetServiceFailureReasonCodeByIDRequest{
+	original, err := s.repo.GetByID(ctx, servicefailureports.GetServiceFailureReasonCodeByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
@@ -226,8 +227,8 @@ func (s *service) Activate(
 
 func (s *service) Reorder(
 	ctx context.Context,
-	req *repositories.ReorderServiceFailureReasonCodesRequest,
-	actor *services.RequestActor,
+	req *servicefailureports.ReorderServiceFailureReasonCodesRequest,
+	actor *permissionports.RequestActor,
 ) ([]*servicefailure.ReasonCode, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
@@ -239,7 +240,7 @@ func (s *service) Reorder(
 	}
 
 	auditActor := actor.AuditActorOrSystem()
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceServiceFailureReasonCode,
 		ResourceID:     req.TenantInfo.BuID.String(),
 		Operation:      permission.OpUpdate,
@@ -268,14 +269,14 @@ func validateReasonCode(entity *servicefailure.ReasonCode) *errortypes.MultiErro
 
 func (s *service) logReasonCodeAction(
 	entity *servicefailure.ReasonCode,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	op permission.Operation,
 	previous any,
 	current any,
 	comment string,
 ) {
 	auditActor := actor.AuditActorOrSystem()
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceServiceFailureReasonCode,
 		ResourceID:     entity.ID.String(),
 		Operation:      op,
@@ -293,7 +294,7 @@ func (s *service) logReasonCodeAction(
 		params.PreviousState = jsonutils.MustToJSON(previous)
 	}
 
-	opts := []services.LogOption{auditservice.WithComment(comment)}
+	opts := []auditports.LogOption{auditservice.WithComment(comment)}
 	if previous != nil && current != nil {
 		opts = append(opts, auditservice.WithDiff(previous, current))
 	}

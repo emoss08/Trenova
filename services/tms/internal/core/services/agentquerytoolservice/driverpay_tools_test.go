@@ -2,13 +2,14 @@ package agentquerytoolservice
 
 import (
 	"context"
-	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -26,14 +27,14 @@ type fakeDriverPay struct {
 	deductions  []*driverpay.RecurringDeduction
 	earnings    []*driverpay.RecurringEarning
 
-	codeRequest    repositories.ListActivePayCodesRequest
-	escrowRequest  *repositories.ListEscrowAccountsRequest
-	advanceRequest *repositories.ListPayAdvancesRequest
+	codeRequest    driverpayports.ListActivePayCodesRequest
+	escrowRequest  *driverpayports.ListEscrowAccountsRequest
+	advanceRequest *driverpayports.ListPayAdvancesRequest
 }
 
 func (f *fakeDriverPay) ListActivePayCodes(
 	_ context.Context,
-	req repositories.ListActivePayCodesRequest,
+	req driverpayports.ListActivePayCodesRequest,
 ) ([]*driverpay.PayCode, error) {
 	f.codeRequest = req
 
@@ -42,21 +43,21 @@ func (f *fakeDriverPay) ListActivePayCodes(
 
 func (f *fakeDriverPay) ListProfiles(
 	context.Context,
-	*repositories.ListPayProfilesRequest,
+	*driverpayports.ListPayProfilesRequest,
 ) (*pagination.ListResult[*driverpay.PayProfile], error) {
 	return &pagination.ListResult[*driverpay.PayProfile]{Items: f.profiles}, nil
 }
 
 func (f *fakeDriverPay) ListWorkerAssignments(
 	context.Context,
-	repositories.ListWorkerPayAssignmentsRequest,
+	driverpayports.ListWorkerPayAssignmentsRequest,
 ) ([]*driverpay.WorkerPayAssignment, error) {
 	return f.assignments, nil
 }
 
 func (f *fakeDriverPay) ListEscrowAccounts(
 	_ context.Context,
-	req *repositories.ListEscrowAccountsRequest,
+	req *driverpayports.ListEscrowAccountsRequest,
 ) (*pagination.ListResult[*driverpay.EscrowAccount], error) {
 	f.escrowRequest = req
 
@@ -65,7 +66,7 @@ func (f *fakeDriverPay) ListEscrowAccounts(
 
 func (f *fakeDriverPay) ListAdvances(
 	_ context.Context,
-	req *repositories.ListPayAdvancesRequest,
+	req *driverpayports.ListPayAdvancesRequest,
 ) (*pagination.ListResult[*driverpay.PayAdvance], error) {
 	f.advanceRequest = req
 	if req.Status == "" {
@@ -84,14 +85,14 @@ func (f *fakeDriverPay) ListAdvances(
 
 func (f *fakeDriverPay) ListDeductions(
 	context.Context,
-	*repositories.ListRecurringDeductionsRequest,
+	*driverpayports.ListRecurringDeductionsRequest,
 ) (*pagination.ListResult[*driverpay.RecurringDeduction], error) {
 	return &pagination.ListResult[*driverpay.RecurringDeduction]{Items: f.deductions}, nil
 }
 
 func (f *fakeDriverPay) ListEarnings(
 	context.Context,
-	*repositories.ListRecurringEarningsRequest,
+	*driverpayports.ListRecurringEarningsRequest,
 ) (*pagination.ListResult[*driverpay.RecurringEarning], error) {
 	return &pagination.ListResult[*driverpay.RecurringEarning]{Items: f.earnings}, nil
 }
@@ -251,7 +252,7 @@ type fakeDriverNames struct{ workers []*worker.Worker }
 
 func (f *fakeDriverNames) List(
 	_ context.Context,
-	req *repositories.ListWorkersRequest,
+	req *workerports.ListWorkersRequest,
 ) (*pagination.CursorListResult[*worker.Worker], error) {
 	matched := make([]*worker.Worker, 0, len(f.workers))
 	for _, item := range f.workers {

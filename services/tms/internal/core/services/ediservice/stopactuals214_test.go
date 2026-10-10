@@ -1,13 +1,16 @@
 package ediservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmenteventportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -19,24 +22,24 @@ import (
 
 type stopActuals214Fixture struct {
 	service    *Service
-	moveRepo   *mocks.MockShipmentMoveRepository
-	moveSvc    *mocks.MockShipmentMoveService
+	moveRepo   *shipmentportsmock.MockShipmentMoveRepository
+	moveSvc    *shipmentportsmock.MockShipmentMoveService
 	tenantInfo pagination.TenantInfo
 	moveID     pulid.ID
 	origin     *shipment.Stop
 	middle     *shipment.Stop
 	final      *shipment.Stop
-	recorded   []*repositories.RecordStopActualRequest
+	recorded   []*shipmentports.RecordStopActualRequest
 }
 
 func newStopActuals214Fixture(t *testing.T) *stopActuals214Fixture {
 	t.Helper()
 
-	commentRepo := mocks.NewMockShipmentCommentRepository(t)
-	userRepo := mocks.NewMockUserRepository(t)
-	eventRepo := mocks.NewMockShipmentEventRepository(t)
-	moveRepo := mocks.NewMockShipmentMoveRepository(t)
-	moveSvc := mocks.NewMockShipmentMoveService(t)
+	commentRepo := shipmentportsmock.NewMockShipmentCommentRepository(t)
+	userRepo := tenantportsmock.NewMockUserRepository(t)
+	eventRepo := shipmenteventportsmock.NewMockShipmentEventRepository(t)
+	moveRepo := shipmentportsmock.NewMockShipmentMoveRepository(t)
+	moveSvc := shipmentportsmock.NewMockShipmentMoveService(t)
 
 	userRepo.EXPECT().
 		GetSystemUser(mock.Anything, mock.Anything).
@@ -104,7 +107,7 @@ func (f *stopActuals214Fixture) move() *shipment.ShipmentMove {
 func (f *stopActuals214Fixture) expectMoveLoad() {
 	f.moveRepo.EXPECT().
 		GetByID(mock.MatchedBy(func(context.Context) bool { return true }), mock.MatchedBy(
-			func(req *repositories.GetMoveByIDRequest) bool {
+			func(req *shipmentports.GetMoveByIDRequest) bool {
 				return req.MoveID == f.moveID &&
 					req.TenantInfo == f.tenantInfo &&
 					req.ExpandMoveDetails &&
@@ -119,7 +122,7 @@ func (f *stopActuals214Fixture) expectRecordStopActual(times int) {
 	f.moveSvc.EXPECT().
 		RecordStopActual(mock.Anything, mock.AnythingOfType("*repositories.RecordStopActualRequest")).
 		RunAndReturn(
-			func(_ context.Context, req *repositories.RecordStopActualRequest) (*shipment.ShipmentMove, error) {
+			func(_ context.Context, req *shipmentports.RecordStopActualRequest) (*shipment.ShipmentMove, error) {
 				f.recorded = append(f.recorded, req)
 				return f.move(), nil
 			},
@@ -157,7 +160,7 @@ func TestRecordTenderedShipmentStatus_X3ArrivesAtFirstOriginStop(t *testing.T) {
 	require.Empty(t, warnings)
 	require.Len(t, fixture.recorded, 1)
 	recorded := fixture.recorded[0]
-	require.Equal(t, repositories.StopActualActionArrive, recorded.Action)
+	require.Equal(t, shipmentports.StopActualActionArrive, recorded.Action)
 	require.Equal(t, fixture.origin.ID, recorded.StopID)
 	require.Equal(t, fixture.moveID, recorded.MoveID)
 	require.Equal(t, fixture.tenantInfo, recorded.TenantInfo)
@@ -181,7 +184,7 @@ func TestRecordTenderedShipmentStatus_AFDepartsOriginStop(t *testing.T) {
 	require.Empty(t, warnings)
 	require.Len(t, fixture.recorded, 1)
 	recorded := fixture.recorded[0]
-	require.Equal(t, repositories.StopActualActionDepart, recorded.Action)
+	require.Equal(t, shipmentports.StopActualActionDepart, recorded.Action)
 	require.Equal(t, fixture.origin.ID, recorded.StopID)
 	require.Nil(t, recorded.OccurredAt)
 }
@@ -201,7 +204,7 @@ func TestRecordTenderedShipmentStatus_X1ArrivesAtLastDestinationStop(t *testing.
 	require.NoError(t, err)
 	require.Empty(t, warnings)
 	require.Len(t, fixture.recorded, 1)
-	require.Equal(t, repositories.StopActualActionArrive, fixture.recorded[0].Action)
+	require.Equal(t, shipmentports.StopActualActionArrive, fixture.recorded[0].Action)
 	require.Equal(t, fixture.final.ID, fixture.recorded[0].StopID)
 }
 
@@ -220,8 +223,8 @@ func TestRecordTenderedShipmentStatus_D1ArrivesThenDepartsWhenArrivalMissing(t *
 	require.NoError(t, err)
 	require.Empty(t, warnings)
 	require.Len(t, fixture.recorded, 2)
-	require.Equal(t, repositories.StopActualActionArrive, fixture.recorded[0].Action)
-	require.Equal(t, repositories.StopActualActionDepart, fixture.recorded[1].Action)
+	require.Equal(t, shipmentports.StopActualActionArrive, fixture.recorded[0].Action)
+	require.Equal(t, shipmentports.StopActualActionDepart, fixture.recorded[1].Action)
 	require.Equal(t, fixture.final.ID, fixture.recorded[0].StopID)
 	require.Equal(t, fixture.final.ID, fixture.recorded[1].StopID)
 	require.NotNil(t, fixture.recorded[1].OccurredAt)
@@ -246,7 +249,7 @@ func TestRecordTenderedShipmentStatus_D1OnlyDepartsWhenAlreadyArrived(t *testing
 	require.NoError(t, err)
 	require.Empty(t, warnings)
 	require.Len(t, fixture.recorded, 1)
-	require.Equal(t, repositories.StopActualActionDepart, fixture.recorded[0].Action)
+	require.Equal(t, shipmentports.StopActualActionDepart, fixture.recorded[0].Action)
 }
 
 func TestRecordTenderedShipmentStatus_UnmappedCodeStaysCommentOnly(t *testing.T) {
@@ -329,8 +332,8 @@ func TestRecordTenderedShipmentStatus_MoveNotFoundDegradesToWarning(t *testing.T
 func TestRecordTenderedShipmentStatus_MissingMoveServiceStaysCommentOnly(t *testing.T) {
 	t.Parallel()
 
-	commentRepo := mocks.NewMockShipmentCommentRepository(t)
-	userRepo := mocks.NewMockUserRepository(t)
+	commentRepo := shipmentportsmock.NewMockShipmentCommentRepository(t)
+	userRepo := tenantportsmock.NewMockUserRepository(t)
 	service := &Service{
 		l:                   zap.NewNop(),
 		shipmentCommentRepo: commentRepo,
@@ -374,32 +377,32 @@ func TestStopActualsPlanForStatusCode(t *testing.T) {
 		code            string
 		mapped          bool
 		target          stopActualTarget
-		action          repositories.StopActualAction
+		action          shipmentports.StopActualAction
 		arriveIfMissing bool
 	}{
 		{
 			code:   "X3",
 			mapped: true,
 			target: stopTargetOrigin,
-			action: repositories.StopActualActionArrive,
+			action: shipmentports.StopActualActionArrive,
 		},
 		{
 			code:   "AF",
 			mapped: true,
 			target: stopTargetOrigin,
-			action: repositories.StopActualActionDepart,
+			action: shipmentports.StopActualActionDepart,
 		},
 		{
 			code:   "X1",
 			mapped: true,
 			target: stopTargetDestination,
-			action: repositories.StopActualActionArrive,
+			action: shipmentports.StopActualActionArrive,
 		},
 		{
 			code:            "D1",
 			mapped:          true,
 			target:          stopTargetDestination,
-			action:          repositories.StopActualActionDepart,
+			action:          shipmentports.StopActualActionDepart,
 			arriveIfMissing: true,
 		},
 		{code: "A3"},

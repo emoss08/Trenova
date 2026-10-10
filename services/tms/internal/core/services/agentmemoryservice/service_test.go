@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -15,20 +15,20 @@ import (
 )
 
 type fakeMemoryRepo struct {
-	repositories.AgentMemoryRepository
+	agentports.AgentMemoryRepository
 	created []*agent.Memory
 	active  []*agent.Memory
 	found   *agent.Memory
 	used    []pulid.ID
-	listed  *repositories.ListActiveAgentMemoriesRequest
-	sought  *repositories.FindActiveAgentMemoryRequest
+	listed  *agentports.ListActiveAgentMemoriesRequest
+	sought  *agentports.FindActiveAgentMemoryRequest
 
 	activeCount int
 }
 
 func (f *fakeMemoryRepo) CountActive(
 	context.Context,
-	repositories.CountActiveAgentMemoriesRequest,
+	agentports.CountActiveAgentMemoriesRequest,
 ) (int, error) {
 	return f.activeCount, nil
 }
@@ -42,7 +42,7 @@ func (f *fakeMemoryRepo) Create(_ context.Context, entity *agent.Memory) (*agent
 
 func (f *fakeMemoryRepo) FindActive(
 	_ context.Context,
-	req repositories.FindActiveAgentMemoryRequest,
+	req agentports.FindActiveAgentMemoryRequest,
 ) (*agent.Memory, error) {
 	f.sought = &req
 
@@ -51,7 +51,7 @@ func (f *fakeMemoryRepo) FindActive(
 
 func (f *fakeMemoryRepo) ListActive(
 	_ context.Context,
-	req repositories.ListActiveAgentMemoriesRequest,
+	req agentports.ListActiveAgentMemoriesRequest,
 ) ([]*agent.Memory, error) {
 	f.listed = &req
 
@@ -60,7 +60,7 @@ func (f *fakeMemoryRepo) ListActive(
 
 func (f *fakeMemoryRepo) MarkUsed(
 	_ context.Context,
-	req repositories.MarkAgentMemoriesUsedRequest,
+	req agentports.MarkAgentMemoriesUsedRequest,
 ) error {
 	f.used = append(f.used, req.IDs...)
 
@@ -73,7 +73,7 @@ type fakeRuns struct {
 
 func (f *fakeRuns) GetByID(
 	context.Context,
-	repositories.GetAgentRunByIDRequest,
+	agentports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	return f.run, nil
 }
@@ -81,13 +81,13 @@ func (f *fakeRuns) GetByID(
 type fakeLabeler struct {
 	label string
 	err   error
-	asked *repositories.MemorySubjectRef
+	asked *agentports.MemorySubjectRef
 }
 
 func (f *fakeLabeler) Label(
 	_ context.Context,
 	_ pagination.TenantInfo,
-	ref repositories.MemorySubjectRef,
+	ref agentports.MemorySubjectRef,
 ) (string, error) {
 	f.asked = &ref
 
@@ -102,9 +102,9 @@ func tenant() pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 }
 
-func userActor() *services.RequestActor {
-	return &services.RequestActor{
-		PrincipalType: services.PrincipalTypeUser,
+func userActor() *permissionports.RequestActor {
+	return &permissionports.RequestActor{
+		PrincipalType: permissionports.PrincipalTypeUser,
 		UserID:        pulid.MustNew("usr_"),
 	}
 }
@@ -122,7 +122,7 @@ func TestRemember_RecordsForTheAgentAndLabelsTheSubject(t *testing.T) {
 	svc := newService(repo, runs, labeler)
 
 	customerID := pulid.MustNew("cus_")
-	created, err := svc.Remember(t.Context(), &services.RememberRequest{
+	created, err := svc.Remember(t.Context(), &agentports.RememberRequest{
 		TenantInfo:  tenant(),
 		Kind:        agent.MemoryKindInstruction,
 		Content:     "  Needs the POD within one day of delivery.  ",
@@ -145,7 +145,7 @@ func TestRemember_RefusesASubjectThatDoesNotExist(t *testing.T) {
 
 	svc := newService(&fakeMemoryRepo{}, &fakeRuns{}, &fakeLabeler{err: assert.AnError})
 
-	_, err := svc.Remember(t.Context(), &services.RememberRequest{
+	_, err := svc.Remember(t.Context(), &agentports.RememberRequest{
 		TenantInfo:  tenant(),
 		Content:     "x",
 		SubjectType: agent.MemorySubjectWorker,
@@ -167,7 +167,7 @@ func TestRemember_RefreshesTheExistingRowForTheSameSentence(t *testing.T) {
 	repo := &fakeMemoryRepo{found: existing}
 	svc := newService(repo, &fakeRuns{}, &fakeLabeler{})
 
-	got, err := svc.Remember(t.Context(), &services.RememberRequest{
+	got, err := svc.Remember(t.Context(), &agentports.RememberRequest{
 		TenantInfo: tenant(),
 		Content:    "Same",
 	}, userActor())
@@ -187,7 +187,7 @@ func TestRemember_ANewMemoryIsNotMarkedRefreshed(t *testing.T) {
 
 	repo := &fakeMemoryRepo{}
 	created, err := newService(repo, &fakeRuns{}, &fakeLabeler{}).Remember(t.Context(),
-		&services.RememberRequest{TenantInfo: tenant(), Content: "Quote in dollars."},
+		&agentports.RememberRequest{TenantInfo: tenant(), Content: "Quote in dollars."},
 		userActor(),
 	)
 	require.NoError(t, err)
@@ -204,7 +204,7 @@ func TestRemember_LooksForTheSameMemoryOnlyWhereItWouldBeRead(t *testing.T) {
 
 	clean := &fakeMemoryRepo{}
 	_, err := newService(clean, runs, &fakeLabeler{}).Remember(t.Context(),
-		&services.RememberRequest{TenantInfo: tenant(), Content: "Quote in dollars."},
+		&agentports.RememberRequest{TenantInfo: tenant(), Content: "Quote in dollars."},
 		userActor(),
 	)
 	require.NoError(t, err)
@@ -218,7 +218,7 @@ func TestRemember_LooksForTheSameMemoryOnlyWhereItWouldBeRead(t *testing.T) {
 	taint := &agent.RunTaint{}
 	taint.Add(agent.TaintMark{Source: agent.TaintSourceInboundMessage})
 	_, err = newService(tainted, runs, &fakeLabeler{}).Remember(t.Context(),
-		&services.RememberRequest{
+		&agentports.RememberRequest{
 			TenantInfo: tenant(),
 			Content:    "Ship to dock 9.",
 			RunID:      pulid.MustNew("arun_"),
@@ -241,7 +241,7 @@ func TestForContext_ReadsCandidatesWithoutCountingThemUsed(t *testing.T) {
 	repo := &fakeMemoryRepo{active: []*agent.Memory{one}}
 	svc := newService(repo, &fakeRuns{}, &fakeLabeler{})
 
-	got, err := svc.ForContext(t.Context(), services.MemoryContextRequest{
+	got, err := svc.ForContext(t.Context(), agentports.MemoryContextRequest{
 		TenantInfo: tenant(),
 		ToolNames:  []string{"assign_move"},
 	})
@@ -262,14 +262,14 @@ func TestForContext_ReadsTheMemoriesOfTheRecordsTheTurnIsAbout(t *testing.T) {
 	locationID := pulid.MustNew("loc_")
 	repo := &fakeMemoryRepo{}
 	svc := newService(repo, &fakeRuns{}, &fakeLabeler{})
-	links := map[agent.MemoryRecordKind][]repositories.MemoryRecordLink{
+	links := map[agent.MemoryRecordKind][]agentports.MemoryRecordLink{
 		agent.MemoryRecordShipment: {
 			{From: shipmentID, Kind: agent.MemoryRecordLocation, ID: locationID},
 		},
 	}
 	svc.subjects = NewSubjectResolver(&fakeLinks{links: links})
 
-	got, err := svc.ForContext(t.Context(), services.MemoryContextRequest{
+	got, err := svc.ForContext(t.Context(), agentports.MemoryContextRequest{
 		TenantInfo: tenant(),
 		Records: []agent.EntityRef{
 			{Type: "customer", ID: customerID.String()},
@@ -282,7 +282,7 @@ func TestForContext_ReadsTheMemoriesOfTheRecordsTheTurnIsAbout(t *testing.T) {
 		{Type: agent.MemorySubjectCustomer, ID: customerID, Relation: agent.MemoryRelationDirect},
 		{Type: agent.MemorySubjectLocation, ID: locationID, Relation: agent.MemoryRelationRelated},
 	}, got.Subjects)
-	assert.Equal(t, []repositories.MemorySubjectRef{
+	assert.Equal(t, []agentports.MemorySubjectRef{
 		{Type: agent.MemorySubjectCustomer, ID: customerID},
 		{Type: agent.MemorySubjectLocation, ID: locationID},
 	}, repo.listed.Subjects)
@@ -295,13 +295,13 @@ func TestRecordUse_CountsWhatAPromptCarried(t *testing.T) {
 	svc := newService(repo, &fakeRuns{}, &fakeLabeler{})
 	ids := []pulid.ID{pulid.MustNew("amem_"), pulid.MustNew("amem_")}
 
-	require.NoError(t, svc.RecordUse(t.Context(), services.RecordMemoryUseRequest{
+	require.NoError(t, svc.RecordUse(t.Context(), agentports.RecordMemoryUseRequest{
 		TenantInfo: tenant(),
 		IDs:        ids,
 	}))
 	assert.Equal(t, ids, repo.used)
 
-	require.NoError(t, svc.RecordUse(t.Context(), services.RecordMemoryUseRequest{
+	require.NoError(t, svc.RecordUse(t.Context(), agentports.RecordMemoryUseRequest{
 		TenantInfo: tenant(),
 	}))
 	assert.Len(t, repo.used, 2, "nothing carried is nothing to count")
@@ -314,7 +314,7 @@ func TestUsage_ReportsTheCountAgainstTheSoftCap(t *testing.T) {
 	usage, err := newService(repo, &fakeRuns{}, &fakeLabeler{}).Usage(t.Context(), tenant())
 	require.NoError(t, err)
 
-	assert.Equal(t, &services.AgentMemoryUsage{
+	assert.Equal(t, &agentports.AgentMemoryUsage{
 		ActiveCount:   4200,
 		ActiveSoftCap: agent.MemoryActiveSoftCap,
 		WarnAt:        agent.MemoryActiveWarnAt,

@@ -1,12 +1,15 @@
 package fiscalyearservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalyearportsmock"
 	"context"
 	"testing"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -25,8 +28,8 @@ func TestEnsureBootstrapCurrentFiscalYear_ReturnsExisting(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
-	fyRepo := mocks.NewMockFiscalYearRepository(t)
-	fpRepo := mocks.NewMockFiscalPeriodRepository(t)
+	fyRepo := fiscalyearportsmock.NewMockFiscalYearRepository(t)
+	fpRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	service := &Service{
 		l:                zap.NewNop(),
 		repo:             fyRepo,
@@ -42,7 +45,7 @@ func TestEnsureBootstrapCurrentFiscalYear_ReturnsExisting(t *testing.T) {
 	}
 
 	fyRepo.EXPECT().
-		GetCurrentFiscalYear(ctx, repositories.GetCurrentFiscalYearRequest{
+		GetCurrentFiscalYear(ctx, fiscalyearports.GetCurrentFiscalYearRequest{
 			OrgID: orgID,
 			BuID:  buID,
 		}).
@@ -61,8 +64,8 @@ func TestEnsureBootstrapCurrentFiscalYear_ReturnsConflictWhenHistoryExists(t *te
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
-	fyRepo := mocks.NewMockFiscalYearRepository(t)
-	fpRepo := mocks.NewMockFiscalPeriodRepository(t)
+	fyRepo := fiscalyearportsmock.NewMockFiscalYearRepository(t)
+	fpRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	service := &Service{
 		l:                zap.NewNop(),
 		repo:             fyRepo,
@@ -70,7 +73,7 @@ func TestEnsureBootstrapCurrentFiscalYear_ReturnsConflictWhenHistoryExists(t *te
 	}
 
 	fyRepo.EXPECT().
-		GetCurrentFiscalYear(ctx, repositories.GetCurrentFiscalYearRequest{
+		GetCurrentFiscalYear(ctx, fiscalyearports.GetCurrentFiscalYearRequest{
 			OrgID: orgID,
 			BuID:  buID,
 		}).
@@ -78,7 +81,7 @@ func TestEnsureBootstrapCurrentFiscalYear_ReturnsConflictWhenHistoryExists(t *te
 		Once()
 
 	fyRepo.EXPECT().
-		CountByTenant(ctx, repositories.CountFiscalYearsByTenantRequest{
+		CountByTenant(ctx, fiscalyearports.CountFiscalYearsByTenantRequest{
 			OrgID: orgID,
 			BuID:  buID,
 		}).
@@ -98,8 +101,8 @@ func TestEnsureBootstrapCurrentFiscalYear_BootstrapsWhenNoFiscalYearsExist(t *te
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
-	fyRepo := mocks.NewMockFiscalYearRepository(t)
-	fpRepo := mocks.NewMockFiscalPeriodRepository(t)
+	fyRepo := fiscalyearportsmock.NewMockFiscalYearRepository(t)
+	fpRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	service := &Service{
 		l:                zap.NewNop(),
 		repo:             fyRepo,
@@ -107,7 +110,7 @@ func TestEnsureBootstrapCurrentFiscalYear_BootstrapsWhenNoFiscalYearsExist(t *te
 	}
 
 	fyRepo.EXPECT().
-		GetCurrentFiscalYear(ctx, repositories.GetCurrentFiscalYearRequest{
+		GetCurrentFiscalYear(ctx, fiscalyearports.GetCurrentFiscalYearRequest{
 			OrgID: orgID,
 			BuID:  buID,
 		}).
@@ -115,7 +118,7 @@ func TestEnsureBootstrapCurrentFiscalYear_BootstrapsWhenNoFiscalYearsExist(t *te
 		Once()
 
 	fyRepo.EXPECT().
-		CountByTenant(ctx, repositories.CountFiscalYearsByTenantRequest{
+		CountByTenant(ctx, fiscalyearports.CountFiscalYearsByTenantRequest{
 			OrgID: orgID,
 			BuID:  buID,
 		}).
@@ -151,15 +154,15 @@ func TestEnsureBootstrapCurrentFiscalYear_HandlesCreateRace(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
-	fyRepo := mocks.NewMockFiscalYearRepository(t)
-	fpRepo := mocks.NewMockFiscalPeriodRepository(t)
+	fyRepo := fiscalyearportsmock.NewMockFiscalYearRepository(t)
+	fpRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	service := &Service{
 		l:                zap.NewNop(),
 		repo:             fyRepo,
 		fiscalPeriodRepo: fpRepo,
 	}
 
-	currentReq := repositories.GetCurrentFiscalYearRequest{OrgID: orgID, BuID: buID}
+	currentReq := fiscalyearports.GetCurrentFiscalYearRequest{OrgID: orgID, BuID: buID}
 
 	fyRepo.EXPECT().
 		GetCurrentFiscalYear(ctx, currentReq).
@@ -167,7 +170,7 @@ func TestEnsureBootstrapCurrentFiscalYear_HandlesCreateRace(t *testing.T) {
 		Once()
 
 	fyRepo.EXPECT().
-		CountByTenant(ctx, repositories.CountFiscalYearsByTenantRequest{
+		CountByTenant(ctx, fiscalyearports.CountFiscalYearsByTenantRequest{
 			OrgID: orgID,
 			BuID:  buID,
 		}).
@@ -204,15 +207,15 @@ func TestList_EmptyWithExistingHistoryReturnsEmptyWithoutError(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
-	fyRepo := mocks.NewMockFiscalYearRepository(t)
-	fpRepo := mocks.NewMockFiscalPeriodRepository(t)
+	fyRepo := fiscalyearportsmock.NewMockFiscalYearRepository(t)
+	fpRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	service := &Service{
 		l:                zap.NewNop(),
 		repo:             fyRepo,
 		fiscalPeriodRepo: fpRepo,
 	}
 
-	req := &repositories.ListFiscalYearsRequest{
+	req := &fiscalyearports.ListFiscalYearsRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: orgID,
@@ -228,14 +231,14 @@ func TestList_EmptyWithExistingHistoryReturnsEmptyWithoutError(t *testing.T) {
 
 	fyRepo.EXPECT().List(ctx, req).Return(emptyResult, nil).Once()
 	fyRepo.EXPECT().
-		GetCurrentFiscalYear(ctx, repositories.GetCurrentFiscalYearRequest{
+		GetCurrentFiscalYear(ctx, fiscalyearports.GetCurrentFiscalYearRequest{
 			OrgID: orgID,
 			BuID:  buID,
 		}).
 		Return(nil, errortypes.NewNotFoundError("not found")).
 		Once()
 	fyRepo.EXPECT().
-		CountByTenant(ctx, repositories.CountFiscalYearsByTenantRequest{
+		CountByTenant(ctx, fiscalyearports.CountFiscalYearsByTenantRequest{
 			OrgID: orgID,
 			BuID:  buID,
 		}).
@@ -254,15 +257,15 @@ func TestList_EmptyBootstrapsAndReloads(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
-	fyRepo := mocks.NewMockFiscalYearRepository(t)
-	fpRepo := mocks.NewMockFiscalPeriodRepository(t)
+	fyRepo := fiscalyearportsmock.NewMockFiscalYearRepository(t)
+	fpRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	service := &Service{
 		l:                zap.NewNop(),
 		repo:             fyRepo,
 		fiscalPeriodRepo: fpRepo,
 	}
 
-	req := &repositories.ListFiscalYearsRequest{
+	req := &fiscalyearports.ListFiscalYearsRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: orgID,
@@ -289,14 +292,14 @@ func TestList_EmptyBootstrapsAndReloads(t *testing.T) {
 
 	fyRepo.EXPECT().List(ctx, req).Return(emptyResult, nil).Once()
 	fyRepo.EXPECT().
-		GetCurrentFiscalYear(ctx, repositories.GetCurrentFiscalYearRequest{
+		GetCurrentFiscalYear(ctx, fiscalyearports.GetCurrentFiscalYearRequest{
 			OrgID: orgID,
 			BuID:  buID,
 		}).
 		Return(nil, errortypes.NewNotFoundError("not found")).
 		Once()
 	fyRepo.EXPECT().
-		CountByTenant(ctx, repositories.CountFiscalYearsByTenantRequest{
+		CountByTenant(ctx, fiscalyearports.CountFiscalYearsByTenantRequest{
 			OrgID: orgID,
 			BuID:  buID,
 		}).
@@ -340,8 +343,8 @@ func mockFiscalYearForBootstrap(orgID, buID pulid.ID) func(*fiscalyear.FiscalYea
 
 func mockBulkCreateRequest(
 	orgID, buID pulid.ID,
-) func(*repositories.BulkCreateFiscalPeriodsRequest) bool {
-	return func(req *repositories.BulkCreateFiscalPeriodsRequest) bool {
+) func(*fiscalperiodports.BulkCreateFiscalPeriodsRequest) bool {
+	return func(req *fiscalperiodports.BulkCreateFiscalPeriodsRequest) bool {
 		if req == nil || len(req.Periods) == 0 {
 			return false
 		}

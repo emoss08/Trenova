@@ -7,9 +7,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -19,7 +19,7 @@ import (
 
 func (s *Service) ListCommunicationProfiles(
 	ctx context.Context,
-	req *repositories.ListEDICommunicationProfilesRequest,
+	req *ediports.ListEDICommunicationProfilesRequest,
 ) (*pagination.ListResult[*edi.EDICommunicationProfile], error) {
 	result, err := s.profileRepo.ListProfiles(ctx, req)
 	if err != nil {
@@ -34,7 +34,7 @@ func (s *Service) ListCommunicationProfiles(
 
 func (s *Service) SelectCommunicationProfileOptions(
 	ctx context.Context,
-	req *repositories.EDICommunicationProfileSelectOptionsRequest,
+	req *ediports.EDICommunicationProfileSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDICommunicationProfile], error) {
 	result, err := s.profileRepo.SelectProfileOptions(ctx, req)
 	if err != nil {
@@ -49,7 +49,7 @@ func (s *Service) SelectCommunicationProfileOptions(
 
 func (s *Service) GetCommunicationProfile(
 	ctx context.Context,
-	req repositories.GetEDICommunicationProfileByIDRequest,
+	req ediports.GetEDICommunicationProfileByIDRequest,
 ) (*edi.EDICommunicationProfile, error) {
 	profile, err := s.profileRepo.GetProfileByID(ctx, req)
 	if err != nil {
@@ -66,7 +66,7 @@ type TestCommunicationProfileConnectionRequest struct {
 
 type TestCommunicationProfileConnectionResult struct {
 	Success bool                          `json:"success"`
-	Checks  []services.EDIConnectionCheck `json:"checks"`
+	Checks  []ediports.EDIConnectionCheck `json:"checks"`
 }
 
 func (s *Service) TestCommunicationProfileConnection(
@@ -75,7 +75,7 @@ func (s *Service) TestCommunicationProfileConnection(
 ) (*TestCommunicationProfileConnectionResult, error) {
 	profile, err := s.profileRepo.GetProfileByID(
 		ctx,
-		repositories.GetEDICommunicationProfileByIDRequest{
+		ediports.GetEDICommunicationProfileByIDRequest{
 			ID:         req.ProfileID,
 			TenantInfo: req.TenantInfo,
 		},
@@ -97,14 +97,14 @@ func (s *Service) TestCommunicationProfileConnection(
 	checks, err := s.transport.TestConnection(
 		ctx,
 		profile.Method,
-		&services.EDITransportRequest{Profile: profile, Secrets: secrets},
+		&ediports.EDITransportRequest{Profile: profile, Secrets: secrets},
 	)
 	if err != nil {
 		return nil, errortypes.NewBusinessError(err.Error())
 	}
 	result := &TestCommunicationProfileConnectionResult{Success: true, Checks: checks}
 	for _, check := range checks {
-		if check.Status == services.EDIConnectionCheckFailed {
+		if check.Status == ediports.EDIConnectionCheckFailed {
 			result.Success = false
 			break
 		}
@@ -136,7 +136,7 @@ func (s *Service) InspectAS2Certificate(pemData string) (*as2.CertificateSummary
 func (s *Service) CreateCommunicationProfile(
 	ctx context.Context,
 	req *UpsertEDICommunicationProfileRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*edi.EDICommunicationProfile, error) {
 	entity, err := s.buildCommunicationProfile(ctx, req, nil)
 	if err != nil {
@@ -165,11 +165,11 @@ func (s *Service) CreateCommunicationProfile(
 func (s *Service) UpdateCommunicationProfile(
 	ctx context.Context,
 	req *UpsertEDICommunicationProfileRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*edi.EDICommunicationProfile, error) {
 	existing, err := s.profileRepo.GetProfileByID(
 		ctx,
-		repositories.GetEDICommunicationProfileByIDRequest{
+		ediports.GetEDICommunicationProfileByIDRequest{
 			ID:         req.ProfileID,
 			TenantInfo: req.TenantInfo,
 		},
@@ -297,7 +297,7 @@ func (s *Service) ensureProfileReferences(
 	entity *edi.EDICommunicationProfile,
 ) error {
 	if entity.EDIPartnerID.IsNotNil() {
-		if _, err := s.partnerRepo.GetByID(ctx, repositories.GetEDIPartnerByIDRequest{
+		if _, err := s.partnerRepo.GetByID(ctx, ediports.GetEDIPartnerByIDRequest{
 			ID: entity.EDIPartnerID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
@@ -311,7 +311,7 @@ func (s *Service) ensureProfileReferences(
 	if entity.EDIConnectionID.IsNotNil() {
 		_, err := s.connectionRepo.GetConnectionByID(
 			ctx,
-			repositories.GetEDIConnectionByIDRequest{
+			ediports.GetEDIConnectionByIDRequest{
 				ID: entity.EDIConnectionID,
 				TenantInfo: pagination.TenantInfo{
 					OrgID: entity.OrganizationID,

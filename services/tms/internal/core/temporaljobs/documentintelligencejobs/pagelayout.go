@@ -6,7 +6,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
 
 // The layout of a page is kept beside its text so a value the extraction
@@ -103,7 +103,7 @@ func tesseractLayout(output string, width, height int) []documentcontent.LayoutL
 	return lines
 }
 
-func pdfLayout(layout *services.PDFPageLayout) []documentcontent.LayoutLine {
+func pdfLayout(layout *kernelports.PDFPageLayout) []documentcontent.LayoutLine {
 	if layout == nil || layout.Width <= 0 || layout.Height <= 0 {
 		return nil
 	}

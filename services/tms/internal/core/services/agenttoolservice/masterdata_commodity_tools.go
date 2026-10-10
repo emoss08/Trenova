@@ -6,10 +6,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
 	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/hazardousmaterialports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,29 +27,29 @@ const (
 var freightClasses = agenttoolschema.Source("commodity.freightClass", commodity.FreightClasses)
 
 type commodityKeeper interface {
-	Get(ctx context.Context, req repositories.GetCommodityByIDRequest) (*commodity.Commodity, error)
+	Get(ctx context.Context, req commodityports.GetCommodityByIDRequest) (*commodity.Commodity, error)
 	PlanCreate(ctx context.Context, entity *commodity.Commodity) (*commodity.Commodity, error)
 	Create(
 		ctx context.Context,
 		entity *commodity.Commodity,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*commodity.Commodity, error)
 	PlanUpdate(
 		ctx context.Context,
 		entity *commodity.Commodity,
-	) (*serviceports.RecordChange[commodity.Commodity], error)
+	) (*kernelports.RecordChange[commodity.Commodity], error)
 	Update(
 		ctx context.Context,
 		entity *commodity.Commodity,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*commodity.Commodity, error)
 	PlanBulkUpdateStatus(
 		ctx context.Context,
-		req *repositories.BulkUpdateCommodityStatusRequest,
-	) ([]serviceports.RecordChange[commodity.Commodity], error)
+		req *commodityports.BulkUpdateCommodityStatusRequest,
+	) ([]kernelports.RecordChange[commodity.Commodity], error)
 	BulkUpdateStatus(
 		ctx context.Context,
-		req *repositories.BulkUpdateCommodityStatusRequest,
+		req *commodityports.BulkUpdateCommodityStatusRequest,
 	) ([]*commodity.Commodity, error)
 }
 
@@ -154,7 +157,7 @@ func commodityFields() []masterField[commodity.Commodity] {
 	}
 }
 
-func newCreateCommodityTool(commodities commodityKeeper) serviceports.AgentTool {
+func newCreateCommodityTool(commodities commodityKeeper) agentports.AgentTool {
 	return newMasterCreateTool(&masterCreateSpec[commodity.Commodity]{
 		record: commodityRecord,
 		name:   "create_commodity",
@@ -179,7 +182,7 @@ func newCreateCommodityTool(commodities commodityKeeper) serviceports.AgentTool 
 	})
 }
 
-func newUpdateCommodityTool(commodities commodityKeeper) serviceports.AgentTool {
+func newUpdateCommodityTool(commodities commodityKeeper) agentports.AgentTool {
 	return newMasterUpdateTool(&masterUpdateSpec[commodity.Commodity]{
 		record: commodityRecord,
 		name:   "update_commodity",
@@ -196,7 +199,7 @@ func newUpdateCommodityTool(commodities commodityKeeper) serviceports.AgentTool 
 			tenant pagination.TenantInfo,
 			id pulid.ID,
 		) (*commodity.Commodity, error) {
-			return commodities.Get(ctx, repositories.GetCommodityByIDRequest{
+			return commodities.Get(ctx, commodityports.GetCommodityByIDRequest{
 				ID:         id,
 				TenantInfo: tenant,
 			})
@@ -206,7 +209,7 @@ func newUpdateCommodityTool(commodities commodityKeeper) serviceports.AgentTool 
 	})
 }
 
-func newUpdateCommodityStatusTool(commodities commodityKeeper) serviceports.AgentTool {
+func newUpdateCommodityStatusTool(commodities commodityKeeper) agentports.AgentTool {
 	return newMasterStatusTool(&masterStatusSpec[commodity.Commodity, domaintypes.Status]{
 		record: commodityRecord,
 		name:   "update_commodity_status",
@@ -222,9 +225,9 @@ func newUpdateCommodityStatusTool(commodities commodityKeeper) serviceports.Agen
 			tenant pagination.TenantInfo,
 			ids []pulid.ID,
 			status domaintypes.Status,
-		) ([]serviceports.RecordChange[commodity.Commodity], error) {
+		) ([]kernelports.RecordChange[commodity.Commodity], error) {
 			return commodities.PlanBulkUpdateStatus(ctx,
-				&repositories.BulkUpdateCommodityStatusRequest{
+				&commodityports.BulkUpdateCommodityStatusRequest{
 					TenantInfo:   tenant,
 					CommodityIDs: ids,
 					Status:       status,
@@ -237,7 +240,7 @@ func newUpdateCommodityStatusTool(commodities commodityKeeper) serviceports.Agen
 			status domaintypes.Status,
 		) ([]*commodity.Commodity, error) {
 			return commodities.BulkUpdateStatus(ctx,
-				&repositories.BulkUpdateCommodityStatusRequest{
+				&commodityports.BulkUpdateCommodityStatusRequest{
 					TenantInfo:   tenant,
 					CommodityIDs: ids,
 					Status:       status,
@@ -267,7 +270,7 @@ const (
 type hazmatKeeper interface {
 	Get(
 		ctx context.Context,
-		req repositories.GetHazardousMaterialByIDRequest,
+		req hazardousmaterialports.GetHazardousMaterialByIDRequest,
 	) (*hazardousmaterial.HazardousMaterial, error)
 	PlanCreate(
 		ctx context.Context,
@@ -276,24 +279,24 @@ type hazmatKeeper interface {
 	Create(
 		ctx context.Context,
 		entity *hazardousmaterial.HazardousMaterial,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*hazardousmaterial.HazardousMaterial, error)
 	PlanUpdate(
 		ctx context.Context,
 		entity *hazardousmaterial.HazardousMaterial,
-	) (*serviceports.RecordChange[hazardousmaterial.HazardousMaterial], error)
+	) (*kernelports.RecordChange[hazardousmaterial.HazardousMaterial], error)
 	Update(
 		ctx context.Context,
 		entity *hazardousmaterial.HazardousMaterial,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*hazardousmaterial.HazardousMaterial, error)
 	PlanBulkUpdateStatus(
 		ctx context.Context,
-		req *repositories.BulkUpdateHazardousMaterialStatusRequest,
-	) ([]serviceports.RecordChange[hazardousmaterial.HazardousMaterial], error)
+		req *hazardousmaterialports.BulkUpdateHazardousMaterialStatusRequest,
+	) ([]kernelports.RecordChange[hazardousmaterial.HazardousMaterial], error)
 	BulkUpdateStatus(
 		ctx context.Context,
-		req *repositories.BulkUpdateHazardousMaterialStatusRequest,
+		req *hazardousmaterialports.BulkUpdateHazardousMaterialStatusRequest,
 	) ([]*hazardousmaterial.HazardousMaterial, error)
 }
 
@@ -443,7 +446,7 @@ var mdHazmatPolicy = masterPolicy{
 	taintHold:   mdTaintHold,
 }
 
-func newCreateHazardousMaterialTool(materials hazmatKeeper) serviceports.AgentTool {
+func newCreateHazardousMaterialTool(materials hazmatKeeper) agentports.AgentTool {
 	return newMasterCreateTool(&masterCreateSpec[hazardousmaterial.HazardousMaterial]{
 		record: hazmatRecord,
 		name:   "create_hazardous_material",
@@ -470,7 +473,7 @@ func newCreateHazardousMaterialTool(materials hazmatKeeper) serviceports.AgentTo
 	})
 }
 
-func newUpdateHazardousMaterialTool(materials hazmatKeeper) serviceports.AgentTool {
+func newUpdateHazardousMaterialTool(materials hazmatKeeper) agentports.AgentTool {
 	return newMasterUpdateTool(&masterUpdateSpec[hazardousmaterial.HazardousMaterial]{
 		record: hazmatRecord,
 		name:   "update_hazardous_material",
@@ -487,7 +490,7 @@ func newUpdateHazardousMaterialTool(materials hazmatKeeper) serviceports.AgentTo
 			tenant pagination.TenantInfo,
 			id pulid.ID,
 		) (*hazardousmaterial.HazardousMaterial, error) {
-			return materials.Get(ctx, repositories.GetHazardousMaterialByIDRequest{
+			return materials.Get(ctx, hazardousmaterialports.GetHazardousMaterialByIDRequest{
 				ID:         id,
 				TenantInfo: tenant,
 			})
@@ -497,7 +500,7 @@ func newUpdateHazardousMaterialTool(materials hazmatKeeper) serviceports.AgentTo
 	})
 }
 
-func newUpdateHazardousMaterialStatusTool(materials hazmatKeeper) serviceports.AgentTool {
+func newUpdateHazardousMaterialStatusTool(materials hazmatKeeper) agentports.AgentTool {
 	return newMasterStatusTool(
 		&masterStatusSpec[hazardousmaterial.HazardousMaterial, domaintypes.Status]{
 			record: hazmatRecord,
@@ -516,9 +519,9 @@ func newUpdateHazardousMaterialStatusTool(materials hazmatKeeper) serviceports.A
 				tenant pagination.TenantInfo,
 				ids []pulid.ID,
 				status domaintypes.Status,
-			) ([]serviceports.RecordChange[hazardousmaterial.HazardousMaterial], error) {
+			) ([]kernelports.RecordChange[hazardousmaterial.HazardousMaterial], error) {
 				return materials.PlanBulkUpdateStatus(ctx,
-					&repositories.BulkUpdateHazardousMaterialStatusRequest{
+					&hazardousmaterialports.BulkUpdateHazardousMaterialStatusRequest{
 						TenantInfo:           tenant,
 						HazardousMaterialIDs: ids,
 						Status:               status,
@@ -531,7 +534,7 @@ func newUpdateHazardousMaterialStatusTool(materials hazmatKeeper) serviceports.A
 				status domaintypes.Status,
 			) ([]*hazardousmaterial.HazardousMaterial, error) {
 				return materials.BulkUpdateStatus(ctx,
-					&repositories.BulkUpdateHazardousMaterialStatusRequest{
+					&hazardousmaterialports.BulkUpdateHazardousMaterialStatusRequest{
 						TenantInfo:           tenant,
 						HazardousMaterialIDs: ids,
 						Status:               status,

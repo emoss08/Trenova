@@ -7,12 +7,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/quotaservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -30,16 +30,16 @@ type Params struct {
 
 	DB     *postgres.Connection
 	Logger *zap.Logger
-	Quota  services.QuotaGuard `optional:"true"`
+	Quota  platformplanports.QuotaGuard `optional:"true"`
 }
 
 type repository struct {
 	db    *postgres.Connection
 	l     *zap.Logger
-	quota services.QuotaGuard
+	quota platformplanports.QuotaGuard
 }
 
-func New(p Params) repositories.WorkerRepository {
+func New(p Params) workerports.WorkerRepository {
 	return &repository{
 		db:    p.DB,
 		l:     p.Logger.Named("postgres.worker-repository"),
@@ -49,7 +49,7 @@ func New(p Params) repositories.WorkerRepository {
 
 func (r *repository) cursorFilterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListWorkersRequest,
+	req *workerports.ListWorkersRequest,
 ) (*bun.SelectQuery, error) {
 	q, err := querybuilder.ApplyCursorFilters(
 		q,
@@ -67,7 +67,7 @@ func (r *repository) cursorFilterQuery(
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
-	req *repositories.WorkerSelectOptionsRequest,
+	req *workerports.WorkerSelectOptionsRequest,
 ) (*pagination.ListResult[*worker.Worker], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*worker.Worker], error) {
 		return dbhelper.SelectOptions[*worker.Worker](
@@ -124,7 +124,7 @@ func (r *repository) SelectOptions(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListWorkersRequest,
+	req *workerports.ListWorkersRequest,
 ) (*pagination.CursorListResult[*worker.Worker], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*worker.Worker], error) {
 		log := r.l.With(
@@ -181,7 +181,7 @@ func (r *repository) List(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetWorkerByIDRequest,
+	req workerports.GetWorkerByIDRequest,
 ) (*worker.Worker, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.Worker, error) {
 		log := r.l.With(
@@ -225,8 +225,8 @@ func (r *repository) Create(
 			zap.String("lastName", entity.LastName),
 		)
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
-			if quotaErr := quotaservice.EnforceAll(c, r.quota, services.QuotaRequest{
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+			if quotaErr := quotaservice.EnforceAll(c, r.quota, platformplanports.QuotaRequest{
 				TenantInfo: pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
 					BuID:  entity.BusinessUnitID,
@@ -284,7 +284,7 @@ func (r *repository) Update(
 		ov := entity.Version
 		entity.Version++
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 			results, updateErr := r.db.DBForContext(c).
 				NewUpdate().
 				Model(entity).
@@ -347,9 +347,9 @@ func (r *repository) Update(
 func (r *repository) GetWorkerSyncReadinessCounts(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*repositories.WorkerSyncReadinessCounts, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.WorkerSyncReadinessCounts, error) {
-		counts := new(repositories.WorkerSyncReadinessCounts)
+) (*workerports.WorkerSyncReadinessCounts, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*workerports.WorkerSyncReadinessCounts, error) {
+		counts := new(workerports.WorkerSyncReadinessCounts)
 
 		wrk := buncolgen.WorkerColumns
 
@@ -380,11 +380,11 @@ func (r *repository) GetWorkerSyncReadinessCounts(
 func (r *repository) ReplaceWorkerSyncDrifts(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	drifts []repositories.WorkerSyncDriftRecord,
+	drifts []workerports.WorkerSyncDriftRecord,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		return dberror.MapRetryableTransactionError(
-			r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+			r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 				if _, err := r.db.DBForContext(c).NewDelete().
 					Model((*worker.WorkerSyncDrift)(nil)).
 					WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
@@ -426,8 +426,8 @@ func (r *repository) ReplaceWorkerSyncDrifts(
 func (r *repository) ListWorkerSyncDrifts(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) ([]repositories.WorkerSyncDriftRecord, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.WorkerSyncDriftRecord, error) {
+) ([]workerports.WorkerSyncDriftRecord, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.WorkerSyncDriftRecord, error) {
 		models := make([]*worker.WorkerSyncDrift, 0)
 
 		if err := r.db.DBForContext(ctx).NewSelect().
@@ -438,10 +438,10 @@ func (r *repository) ListWorkerSyncDrifts(
 			return nil, err
 		}
 
-		records := make([]repositories.WorkerSyncDriftRecord, 0, len(models))
+		records := make([]workerports.WorkerSyncDriftRecord, 0, len(models))
 		for idx := range models {
 			model := models[idx]
-			records = append(records, repositories.WorkerSyncDriftRecord{
+			records = append(records, workerports.WorkerSyncDriftRecord{
 				WorkerID:        model.WorkerID,
 				WorkerName:      model.WorkerName,
 				DriftType:       model.DriftType,
@@ -458,7 +458,7 @@ func (r *repository) ListWorkerSyncDrifts(
 
 func (r *repository) PatchProfileCredentialField(
 	ctx context.Context,
-	req *repositories.PatchProfileCredentialFieldRequest,
+	req *workerports.PatchProfileCredentialFieldRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.WorkerProfileColumns
@@ -518,7 +518,7 @@ func (r *repository) PatchProfileCredentialField(
 
 func (r *repository) UpdateProfileComplianceStatus(
 	ctx context.Context,
-	req *repositories.UpdateProfileComplianceStatusRequest,
+	req *workerports.UpdateProfileComplianceStatusRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.WorkerProfileColumns
@@ -558,7 +558,7 @@ func (r *repository) UpdateProfileComplianceStatus(
 // when nothing moved, keeping updated_at meaningful.
 func (r *repository) UpdateProfileTrainingRollup(
 	ctx context.Context,
-	req *repositories.UpdateProfileTrainingRollupRequest,
+	req *workerports.UpdateProfileTrainingRollupRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.WorkerProfileColumns
@@ -597,7 +597,7 @@ func (r *repository) UpdateProfileTrainingRollup(
 // for the same reason.
 func (r *repository) UpdateProfileSafetyRollup(
 	ctx context.Context,
-	req *repositories.UpdateProfileSafetyRollupRequest,
+	req *workerports.UpdateProfileSafetyRollupRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.WorkerProfileColumns
@@ -630,7 +630,7 @@ func (r *repository) UpdateProfileSafetyRollup(
 
 func (r *repository) UpdateProfileQualification(
 	ctx context.Context,
-	req *repositories.UpdateProfileQualificationRequest,
+	req *workerports.UpdateProfileQualificationRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.WorkerProfileColumns
@@ -662,13 +662,13 @@ func (r *repository) UpdateProfileQualification(
 // avoid.
 func (r *repository) CountRosterAttention(
 	ctx context.Context,
-	req *repositories.CountRosterAttentionRequest,
-) (*repositories.RosterAttention, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.RosterAttention, error) {
+	req *workerports.CountRosterAttentionRequest,
+) (*workerports.RosterAttention, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*workerports.RosterAttention, error) {
 		wcols := buncolgen.WorkerColumns
 		pcols := buncolgen.WorkerProfileColumns
 
-		counts := new(repositories.RosterAttention)
+		counts := new(workerports.RosterAttention)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*worker.Worker)(nil)).

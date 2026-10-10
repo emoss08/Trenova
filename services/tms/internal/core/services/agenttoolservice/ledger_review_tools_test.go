@@ -10,8 +10,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/fiscalperiodservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptworkitemports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -102,7 +105,7 @@ func TestFiscalPeriodTools_EachIsAPersonsDecisionUnderItsOwnPermission(t *testin
 			})
 
 			preview := previewWithoutWrites(t, periods.guard, func() (*agent.ToolPreview, error) {
-				return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+				return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 			})
 			assert.Contains(t, preview.Summary, "September 2026")
 			assert.Equal(t, tc.want, fieldByPath(t, previewChange(t, preview, 0), "status").After)
@@ -118,7 +121,7 @@ func TestFiscalPeriodTools_EachIsAPersonsDecisionUnderItsOwnPermission(t *testin
 			assert.Equal(t, tc.operation, policy.Operation)
 			assert.Equal(t, agent.TierPropose, policy.MaxTier)
 			assert.Equal(t, []agent.EgressClass{agent.EgressMoney}, policy.Egress)
-			target, ok := tool.(serviceports.TargetedTool).Target(params.Params)
+			target, ok := tool.(agentports.TargetedTool).Target(params.Params)
 			require.True(t, ok)
 			assert.Equal(t, permission.ResourceFiscalPeriod, target.Resource)
 		})
@@ -131,7 +134,7 @@ func TestReopenFiscalPeriod_NeedsAReason(t *testing.T) {
 	periods := &fakeFiscalPeriods{period: septemberPeriod(fiscalperiod.StatusClosed)}
 	tool := newFiscalPeriodTool(periods, reopenFiscalPeriodMove())
 
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), executeParams(
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), executeParams(
 		map[string]any{paramFiscalPeriodID: periods.period.ID.String()},
 	)))
 	assert.Contains(t, tool.ParamSchema()[toolschema.KeyRequired], paramReason)
@@ -151,7 +154,7 @@ func TestCloseFiscalPeriod_ABlockedCloseIsAWouldFail(t *testing.T) {
 	tool := newFiscalPeriodTool(periods, closeFiscalPeriodMove())
 	params := executeParams(map[string]any{paramFiscalPeriodID: periods.period.ID.String()})
 
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	requireWarning(t, preview, agent.PreviewWarningWouldFail)
 }
@@ -159,8 +162,8 @@ func TestCloseFiscalPeriod_ABlockedCloseIsAWouldFail(t *testing.T) {
 type fakeMappingReviewer struct {
 	rows      []*accountingsync.AccountingMapping
 	guard     *writeGuard
-	confirmed *serviceports.ConfirmAccountingMappingsRequest
-	rejected  *serviceports.AccountingMappingActionRequest
+	confirmed *accountingsyncports.ConfirmAccountingMappingsRequest
+	rejected  *accountingsyncports.AccountingMappingActionRequest
 }
 
 func proposedMapping(label, externalID, name string) *accountingsync.AccountingMapping {
@@ -177,9 +180,9 @@ func proposedMapping(label, externalID, name string) *accountingsync.AccountingM
 
 func (f *fakeMappingReviewer) PlanConfirm(
 	_ context.Context,
-	req *serviceports.ConfirmAccountingMappingsRequest,
-) (*serviceports.AccountingMappingConfirmPlan, error) {
-	plan := &serviceports.AccountingMappingConfirmPlan{}
+	req *accountingsyncports.ConfirmAccountingMappingsRequest,
+) (*accountingsyncports.AccountingMappingConfirmPlan, error) {
+	plan := &accountingsyncports.AccountingMappingConfirmPlan{}
 	for _, row := range f.rows {
 		after := row.Clone()
 		after.Confirm(&accountingsync.Choice{
@@ -189,7 +192,7 @@ func (f *fakeMappingReviewer) PlanConfirm(
 			ActorID:      req.UserID,
 			At:           1_790_000_000,
 		})
-		plan.Changes = append(plan.Changes, &serviceports.AccountingMappingChange{
+		plan.Changes = append(plan.Changes, &accountingsyncports.AccountingMappingChange{
 			Before: row,
 			After:  after,
 		})
@@ -201,7 +204,7 @@ func (f *fakeMappingReviewer) PlanConfirm(
 
 func (f *fakeMappingReviewer) Confirm(
 	_ context.Context,
-	req *serviceports.ConfirmAccountingMappingsRequest,
+	req *accountingsyncports.ConfirmAccountingMappingsRequest,
 ) ([]*accountingsync.AccountingMapping, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -213,19 +216,19 @@ func (f *fakeMappingReviewer) Confirm(
 
 func (f *fakeMappingReviewer) PlanReject(
 	context.Context,
-	*serviceports.AccountingMappingActionRequest,
-) (*serviceports.AccountingMappingChange, error) {
+	*accountingsyncports.AccountingMappingActionRequest,
+) (*accountingsyncports.AccountingMappingChange, error) {
 	after := f.rows[0].Clone()
 	if err := after.Reject(); err != nil {
 		return nil, err
 	}
 
-	return &serviceports.AccountingMappingChange{Before: f.rows[0], After: after}, nil
+	return &accountingsyncports.AccountingMappingChange{Before: f.rows[0], After: after}, nil
 }
 
 func (f *fakeMappingReviewer) Reject(
 	_ context.Context,
-	req *serviceports.AccountingMappingActionRequest,
+	req *accountingsyncports.AccountingMappingActionRequest,
 ) (*accountingsync.AccountingMapping, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -249,7 +252,7 @@ func TestConfirmAccountingMappingProposals_ConfirmsWhatWasShownAsTheAgent(t *tes
 	}})
 
 	preview := previewWithoutWrites(t, reviewer.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would confirm 2 accounting mappings as proposed")
 	require.Len(t, preview.Changes, 2)
@@ -275,7 +278,7 @@ func TestConfirmAccountingMappingProposals_RefusesARepeatedMapping(t *testing.T)
 		rows: []*accountingsync.AccountingMapping{ar},
 	})
 
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), executeParams(
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), executeParams(
 		map[string]any{paramMappingProposals: []any{
 			map[string]any{paramMappingID: ar.ID.String(), paramExternalID: "1"},
 			map[string]any{paramMappingID: ar.ID.String(), paramExternalID: "1"},
@@ -293,7 +296,7 @@ func TestRejectAccountingMappingProposal_UnmatchesItAsTheAgent(t *testing.T) {
 	params := executeParams(map[string]any{paramMappingID: customer.ID.String()})
 
 	preview := previewWithoutWrites(t, reviewer.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would turn down Acme Freight LLC for Acme Freight")
 	assert.Equal(t, "Unmatched", fieldByPath(t, previewChange(t, preview, 0), "state").After)
@@ -307,17 +310,17 @@ type fakeSyncReleaser struct {
 	records  map[pulid.ID]*accountingsync.AccountingSyncRecord
 	backfill *accountingsync.AccountingBackfill
 	guard    *writeGuard
-	released *serviceports.ReleaseAccountingSyncRequest
-	changed  *serviceports.ChangeAccountingBackfillRequest
+	released *accountingsyncports.ReleaseAccountingSyncRequest
+	changed  *accountingsyncports.ChangeAccountingBackfillRequest
 }
 
 func (f *fakeSyncReleaser) Summary(
 	context.Context,
 	pagination.TenantInfo,
 	integration.Type,
-) (*serviceports.AccountingSyncSummary, error) {
+) (*accountingsyncports.AccountingSyncSummary, error) {
 	start := int64(1_780_000_000)
-	return &serviceports.AccountingSyncSummary{
+	return &accountingsyncports.AccountingSyncSummary{
 		ProviderName: "QuickBooks Online",
 		Connection: &accountingsync.AccountingConnection{
 			ID:            pulid.MustNew("acctc_"),
@@ -346,7 +349,7 @@ func (f *fakeSyncReleaser) GetRecord(
 
 func (f *fakeSyncReleaser) Release(
 	_ context.Context,
-	req *serviceports.ReleaseAccountingSyncRequest,
+	req *accountingsyncports.ReleaseAccountingSyncRequest,
 ) (int64, error) {
 	if err := f.guard.write(); err != nil {
 		return 0, err
@@ -358,7 +361,7 @@ func (f *fakeSyncReleaser) Release(
 
 func (f *fakeSyncReleaser) ChangeBackfill(
 	_ context.Context,
-	req *serviceports.ChangeAccountingBackfillRequest,
+	req *accountingsyncports.ChangeAccountingBackfillRequest,
 ) (*accountingsync.AccountingBackfill, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -393,7 +396,7 @@ func TestReleaseAccountingSync_OnlyAPersonReleasesHeldDocuments(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, sync.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would release 1 document held for approval")
 	assert.Equal(t, "Queued", fieldByPath(t, previewChange(t, preview, 0), "status").After)
@@ -421,7 +424,7 @@ func TestReleaseAccountingSync_RefusesADocumentThatIsNotHeld(t *testing.T) {
 		records: map[pulid.ID]*accountingsync.AccountingSyncRecord{failed.ID: failed},
 	})
 
-	err := tool.(serviceports.ToolValidator).Validate(t.Context(), executeParams(map[string]any{
+	err := tool.(agentports.ToolValidator).Validate(t.Context(), executeParams(map[string]any{
 		paramAccountingSystem: string(integration.TypeQuickBooksOnline),
 		paramSyncRecordIDs:    []any{failed.ID.String()},
 	}))
@@ -440,11 +443,11 @@ func TestChangeAccountingBackfill_ActsOnTheBackfillInProgress(t *testing.T) {
 	tool := newChangeAccountingBackfillTool(sync)
 	params := personParams(map[string]any{
 		paramAccountingSystem: string(integration.TypeQuickBooksOnline),
-		paramBackfillAction:   string(serviceports.AccountingBackfillPause),
+		paramBackfillAction:   string(accountingsyncports.AccountingBackfillPause),
 	})
 
 	preview := previewWithoutWrites(t, sync.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would pause the QuickBooks Online backfill (now running)")
 	assert.Equal(t, "Paused", fieldByPath(t, previewChange(t, preview, 0), "status").After)
@@ -466,49 +469,49 @@ func TestChangeAccountingBackfill_RefusesAMoveTheBackfillCannotMake(t *testing.T
 
 	resume := personParams(map[string]any{
 		paramAccountingSystem: string(integration.TypeQuickBooksOnline),
-		paramBackfillAction:   string(serviceports.AccountingBackfillResume),
+		paramBackfillAction:   string(accountingsyncports.AccountingBackfillResume),
 	})
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), resume))
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), resume))
 
 	agentCall := agentParamsFor(map[string]any{
 		paramAccountingSystem: string(integration.TypeQuickBooksOnline),
-		paramBackfillAction:   string(serviceports.AccountingBackfillCancel),
+		paramBackfillAction:   string(accountingsyncports.AccountingBackfillCancel),
 	})
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), agentCall))
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), agentCall))
 }
 
 type fakeWorkItemRouter struct {
 	item     *bankreceiptworkitem.WorkItem
 	guard    *writeGuard
-	assigned *serviceports.AssignBankReceiptWorkItemRequest
+	assigned *bankreceiptworkitemports.AssignBankReceiptWorkItemRequest
 	reviewed bool
 }
 
 func (f *fakeWorkItemRouter) change(
 	status bankreceiptworkitem.Status,
 	assignee pulid.ID,
-) *serviceports.BankReceiptWorkItemChange {
+) *bankreceiptworkitemports.BankReceiptWorkItemChange {
 	after := *f.item
 	after.Status = status
 	if assignee.IsNotNil() {
 		after.AssignedToUserID = assignee
 	}
 
-	return &serviceports.BankReceiptWorkItemChange{Before: f.item, After: &after}
+	return &bankreceiptworkitemports.BankReceiptWorkItemChange{Before: f.item, After: &after}
 }
 
 func (f *fakeWorkItemRouter) PlanAssign(
 	_ context.Context,
-	req *serviceports.AssignBankReceiptWorkItemRequest,
-	_ *serviceports.RequestActor,
-) (*serviceports.BankReceiptWorkItemChange, error) {
+	req *bankreceiptworkitemports.AssignBankReceiptWorkItemRequest,
+	_ *permissionports.RequestActor,
+) (*bankreceiptworkitemports.BankReceiptWorkItemChange, error) {
 	return f.change(bankreceiptworkitem.StatusAssigned, req.AssignedToUserID), nil
 }
 
 func (f *fakeWorkItemRouter) Assign(
 	_ context.Context,
-	req *serviceports.AssignBankReceiptWorkItemRequest,
-	_ *serviceports.RequestActor,
+	req *bankreceiptworkitemports.AssignBankReceiptWorkItemRequest,
+	_ *permissionports.RequestActor,
 ) (*bankreceiptworkitem.WorkItem, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -520,16 +523,16 @@ func (f *fakeWorkItemRouter) Assign(
 
 func (f *fakeWorkItemRouter) PlanStartReview(
 	context.Context,
-	*serviceports.GetBankReceiptWorkItemRequest,
-	*serviceports.RequestActor,
-) (*serviceports.BankReceiptWorkItemChange, error) {
+	*bankreceiptworkitemports.GetBankReceiptWorkItemRequest,
+	*permissionports.RequestActor,
+) (*bankreceiptworkitemports.BankReceiptWorkItemChange, error) {
 	return f.change(bankreceiptworkitem.StatusInReview, pulid.Nil), nil
 }
 
 func (f *fakeWorkItemRouter) StartReview(
 	context.Context,
-	*serviceports.GetBankReceiptWorkItemRequest,
-	*serviceports.RequestActor,
+	*bankreceiptworkitemports.GetBankReceiptWorkItemRequest,
+	*permissionports.RequestActor,
 ) (*bankreceiptworkitem.WorkItem, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -559,7 +562,7 @@ func TestTriageBankReceiptWorkItem_AssignsOrMarksItUnderReview(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, items.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), assign)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), assign)
 	})
 	assert.Contains(t, preview.Summary, "Would assign the reconciliation item")
 	assert.Equal(t, "Assigned", fieldByPath(t, previewChange(t, preview, 0), "status").After)
@@ -602,7 +605,7 @@ func TestTriageBankReceiptWorkItem_RefusesAMismatchedAssignee(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			require.Error(t, tool.(serviceports.ToolValidator).Validate(
+			require.Error(t, tool.(agentports.ToolValidator).Validate(
 				t.Context(),
 				executeParams(raw),
 			))

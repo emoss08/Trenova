@@ -8,11 +8,15 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/shipmentbrief"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentsuggestion"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentboardbrief"
 	"github.com/emoss08/trenova/internal/core/services/shipmentboardcache"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -36,63 +40,63 @@ type detentionDesk interface {
 type Params struct {
 	fx.In
 
-	Console         services.DispatchConsoleService
-	Capabilities    services.ShipmentBoardCapabilitiesReader
-	Watchlist       services.ShipmentWatchlistReader
-	Comments        services.ShipmentCommentService
+	Console         agentports.DispatchConsoleService
+	Capabilities    shipmentports.ShipmentBoardCapabilitiesReader
+	Watchlist       shipmentports.ShipmentWatchlistReader
+	Comments        shipmentports.ShipmentCommentService
 	Detention       *detentionservice.Service
-	Decisions       repositories.ShipmentSuggestionDecisionRepository
-	AssignmentReads repositories.AssignmentRepository
-	Tenders         repositories.TenderRepository
-	TenderGuard     services.TenderGuard
-	Assignments     services.AssignmentService
-	Cache           repositories.ShipmentBoardCache `optional:"true"`
-	Briefs          repositories.ShipmentBriefRepository
-	Organizations   repositories.OrganizationRepository
+	Decisions       shipmentsuggestionports.ShipmentSuggestionDecisionRepository
+	AssignmentReads shipmentports.AssignmentRepository
+	Tenders         tenderports.TenderRepository
+	TenderGuard     tenderports.TenderGuard
+	Assignments     shipmentports.AssignmentService
+	Cache           shipmentports.ShipmentBoardCache `optional:"true"`
+	Briefs          shipmentbriefports.ShipmentBriefRepository
+	Organizations   tenantports.OrganizationRepository
 	Logger          *zap.Logger
 }
 
 type Dependencies struct {
-	Console         services.DispatchConsoleService
-	Capabilities    services.ShipmentBoardCapabilitiesReader
-	Watchlist       services.ShipmentWatchlistReader
-	Comments        services.ShipmentCommentService
+	Console         agentports.DispatchConsoleService
+	Capabilities    shipmentports.ShipmentBoardCapabilitiesReader
+	Watchlist       shipmentports.ShipmentWatchlistReader
+	Comments        shipmentports.ShipmentCommentService
 	Detention       detentionDesk
-	Decisions       repositories.ShipmentSuggestionDecisionRepository
-	AssignmentReads repositories.AssignmentRepository
-	Tenders         repositories.TenderRepository
-	TenderGuard     services.TenderGuard
-	Assignments     services.AssignmentService
-	Cache           repositories.ShipmentBoardCache
-	Briefs          repositories.ShipmentBriefRepository
-	Organizations   repositories.OrganizationRepository
+	Decisions       shipmentsuggestionports.ShipmentSuggestionDecisionRepository
+	AssignmentReads shipmentports.AssignmentRepository
+	Tenders         tenderports.TenderRepository
+	TenderGuard     tenderports.TenderGuard
+	Assignments     shipmentports.AssignmentService
+	Cache           shipmentports.ShipmentBoardCache
+	Briefs          shipmentbriefports.ShipmentBriefRepository
+	Organizations   tenantports.OrganizationRepository
 	Logger          *zap.Logger
 	Now             func() time.Time
 }
 
 type Service struct {
-	console         services.DispatchConsoleService
-	capabilities    services.ShipmentBoardCapabilitiesReader
-	watchlist       services.ShipmentWatchlistReader
-	comments        services.ShipmentCommentService
+	console         agentports.DispatchConsoleService
+	capabilities    shipmentports.ShipmentBoardCapabilitiesReader
+	watchlist       shipmentports.ShipmentWatchlistReader
+	comments        shipmentports.ShipmentCommentService
 	detention       detentionDesk
-	decisions       repositories.ShipmentSuggestionDecisionRepository
-	assignmentReads repositories.AssignmentRepository
-	tenders         repositories.TenderRepository
-	tenderGuard     services.TenderGuard
-	assignments     services.AssignmentService
-	cache           repositories.ShipmentBoardCache
-	briefs          repositories.ShipmentBriefRepository
-	organizations   repositories.OrganizationRepository
+	decisions       shipmentsuggestionports.ShipmentSuggestionDecisionRepository
+	assignmentReads shipmentports.AssignmentRepository
+	tenders         tenderports.TenderRepository
+	tenderGuard     tenderports.TenderGuard
+	assignments     shipmentports.AssignmentService
+	cache           shipmentports.ShipmentBoardCache
+	briefs          shipmentbriefports.ShipmentBriefRepository
+	organizations   tenantports.OrganizationRepository
 	rules           []rule
 	l               *zap.Logger
 	now             func() time.Time
 }
 
 var (
-	_ services.ShipmentSuggestionReader     = (*Service)(nil)
-	_ services.ShipmentSuggestionDecider    = (*Service)(nil)
-	_ services.ShipmentSuggestionCandidates = (*Service)(nil)
+	_ shipmentsuggestionports.ShipmentSuggestionReader  = (*Service)(nil)
+	_ shipmentsuggestionports.ShipmentSuggestionDecider = (*Service)(nil)
+	_ shipmentbriefports.ShipmentSuggestionCandidates   = (*Service)(nil)
 )
 
 //nolint:gocritic // dependency injection
@@ -145,20 +149,20 @@ func NewWithDependencies(d *Dependencies) *Service {
 	}
 }
 
-func NewReader(s *Service) services.ShipmentSuggestionReader { return s }
+func NewReader(s *Service) shipmentsuggestionports.ShipmentSuggestionReader { return s }
 
-func NewDecider(s *Service) services.ShipmentSuggestionDecider { return s }
+func NewDecider(s *Service) shipmentsuggestionports.ShipmentSuggestionDecider { return s }
 
-func NewCandidates(s *Service) services.ShipmentSuggestionCandidates { return s }
+func NewCandidates(s *Service) shipmentbriefports.ShipmentSuggestionCandidates { return s }
 
 type queue struct {
-	Items []*services.ShipmentSuggestion `json:"items"`
+	Items []*shipmentsuggestionports.ShipmentSuggestion `json:"items"`
 }
 
 func (s *Service) Suggestions(
 	ctx context.Context,
-	req *services.SuggestionRequest,
-) (*services.ShipmentSuggestionQueue, error) {
+	req *shipmentsuggestionports.SuggestionRequest,
+) (*shipmentsuggestionports.ShipmentSuggestionQueue, error) {
 	base, err := s.queue(ctx, req.TenantInfo, req.Timezone)
 	if err != nil {
 		return nil, err
@@ -167,7 +171,7 @@ func (s *Service) Suggestions(
 	items, narrated := s.applyBriefWording(ctx, req.TenantInfo, req.Timezone, base.Items)
 
 	now := s.now()
-	decided, err := s.decisions.ListSince(ctx, &repositories.ListSuggestionDecisionsRequest{
+	decided, err := s.decisions.ListSince(ctx, &shipmentsuggestionports.ListSuggestionDecisionsRequest{
 		TenantInfo: req.TenantInfo,
 		UserID:     req.UserID,
 		Since:      now.Add(-shiftWindow).Unix(),
@@ -186,7 +190,7 @@ func (s *Service) Candidates(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	timezone string,
-) ([]*services.ShipmentSuggestion, error) {
+) ([]*shipmentsuggestionports.ShipmentSuggestion, error) {
 	base, err := s.queue(ctx, tenantInfo, timezone)
 	if err != nil {
 		return nil, err
@@ -214,7 +218,7 @@ func (s *Service) queue(
 		s.cache,
 		s.l,
 		&shipmentboardcache.Request{
-			Section:    repositories.ShipmentBoardSectionSuggestions,
+			Section:    shipmentports.ShipmentBoardSectionSuggestions,
 			TenantInfo: tenantInfo,
 			Timezone:   timezone,
 		},
@@ -228,8 +232,8 @@ func (s *Service) applyBriefWording(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	timezone string,
-	items []*services.ShipmentSuggestion,
-) ([]*services.ShipmentSuggestion, bool) {
+	items []*shipmentsuggestionports.ShipmentSuggestion,
+) ([]*shipmentsuggestionports.ShipmentSuggestion, bool) {
 	copied := copyItems(items)
 	if s.briefs == nil || s.organizations == nil || len(copied) == 0 {
 		return copied, false
@@ -253,7 +257,7 @@ func (s *Service) applyBriefWording(
 }
 
 func ApplyWording(
-	items []*services.ShipmentSuggestion,
+	items []*shipmentsuggestionports.ShipmentSuggestion,
 	wording map[string]shipmentbrief.Wording,
 ) bool {
 	applied := false
@@ -270,8 +274,8 @@ func ApplyWording(
 	return applied
 }
 
-func copyItems(items []*services.ShipmentSuggestion) []*services.ShipmentSuggestion {
-	out := make([]*services.ShipmentSuggestion, 0, len(items))
+func copyItems(items []*shipmentsuggestionports.ShipmentSuggestion) []*shipmentsuggestionports.ShipmentSuggestion {
+	out := make([]*shipmentsuggestionports.ShipmentSuggestion, 0, len(items))
 	for _, item := range items {
 		copied := *item
 		out = append(out, &copied)
@@ -281,9 +285,9 @@ func copyItems(items []*services.ShipmentSuggestion) []*services.ShipmentSuggest
 }
 
 func applyDecisions(
-	items []*services.ShipmentSuggestion,
+	items []*shipmentsuggestionports.ShipmentSuggestion,
 	decided []*shipmentsuggestion.DecisionRecord,
-) *services.ShipmentSuggestionQueue {
+) *shipmentsuggestionports.ShipmentSuggestionQueue {
 	byKey := make(map[string]shipmentsuggestion.Decision, len(decided))
 	handled := 0
 	for _, record := range decided {
@@ -293,7 +297,7 @@ func applyDecisions(
 		}
 	}
 
-	open := make([]*services.ShipmentSuggestion, 0, len(items))
+	open := make([]*shipmentsuggestionports.ShipmentSuggestion, 0, len(items))
 	for _, item := range items {
 		decision, ok := byKey[item.Key]
 		if ok && decision == shipmentsuggestion.DecisionDone {
@@ -302,11 +306,11 @@ func applyDecisions(
 		item.Deferred = ok && decision == shipmentsuggestion.DecisionLater
 		open = append(open, item)
 	}
-	slices.SortStableFunc(open, func(a, b *services.ShipmentSuggestion) int {
+	slices.SortStableFunc(open, func(a, b *shipmentsuggestionports.ShipmentSuggestion) int {
 		return cmp.Compare(boolRank(a.Deferred), boolRank(b.Deferred))
 	})
 
-	return &services.ShipmentSuggestionQueue{
+	return &shipmentsuggestionports.ShipmentSuggestionQueue{
 		Items:            open,
 		HandledThisShift: handled,
 	}
@@ -320,7 +324,7 @@ func boolRank(value bool) int {
 	return 0
 }
 
-func (s *Service) Decide(ctx context.Context, req *services.DecideSuggestionRequest) error {
+func (s *Service) Decide(ctx context.Context, req *shipmentsuggestionports.DecideSuggestionRequest) error {
 	if _, err := shipmentsuggestion.ParseKey(req.Key); err != nil {
 		return errortypes.NewValidationError("key", errortypes.ErrInvalid, err.Error())
 	}
@@ -344,7 +348,7 @@ func (s *Service) Decide(ctx context.Context, req *services.DecideSuggestionRequ
 		return err
 	}
 
-	if err := s.decisions.Prune(ctx, &repositories.PruneSuggestionDecisionsRequest{
+	if err := s.decisions.Prune(ctx, &shipmentsuggestionports.PruneSuggestionDecisionsRequest{
 		TenantInfo: req.TenantInfo,
 		UserID:     req.UserID,
 		Before:     now.Add(-decisionRetention).Unix(),
@@ -355,13 +359,13 @@ func (s *Service) Decide(ctx context.Context, req *services.DecideSuggestionRequ
 	return nil
 }
 
-func (s *Service) Undo(ctx context.Context, req *services.UndoSuggestionRequest) error {
+func (s *Service) Undo(ctx context.Context, req *shipmentsuggestionports.UndoSuggestionRequest) error {
 	key, err := shipmentsuggestion.ParseKey(req.Key)
 	if err != nil {
 		return errortypes.NewValidationError("key", errortypes.ErrInvalid, err.Error())
 	}
 
-	removed, err := s.decisions.Delete(ctx, &repositories.DeleteSuggestionDecisionRequest{
+	removed, err := s.decisions.Delete(ctx, &shipmentsuggestionports.DeleteSuggestionDecisionRequest{
 		TenantInfo: req.TenantInfo,
 		UserID:     req.UserID,
 		Key:        req.Key,

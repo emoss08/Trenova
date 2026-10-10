@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -15,12 +15,12 @@ import (
 )
 
 type recordingEdits struct {
-	saved []repositories.SetPendingModificationsRequest
+	saved []agentports.SetPendingModificationsRequest
 }
 
 func (r *recordingEdits) SetPendingModifications(
 	_ context.Context,
-	req repositories.SetPendingModificationsRequest,
+	req agentports.SetPendingModificationsRequest,
 ) (*agent.AgentProposal, error) {
 	r.saved = append(r.saved, req)
 
@@ -30,7 +30,7 @@ func (r *recordingEdits) SetPendingModifications(
 type editsFixture struct {
 	svc      *Service
 	edits    *recordingEdits
-	request  repositories.GetThreadRequest
+	request  agentports.GetThreadRequest
 	proposal *agent.AgentProposal
 }
 
@@ -57,7 +57,7 @@ func newEditsFixture(status agent.ProposalStatus) *editsFixture {
 	return &editsFixture{
 		svc:      svc,
 		edits:    edits,
-		request:  repositories.GetThreadRequest{ID: threadID},
+		request:  agentports.GetThreadRequest{ID: threadID},
 		proposal: proposal,
 	}
 }

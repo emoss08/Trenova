@@ -5,15 +5,16 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,26 +25,26 @@ import (
 )
 
 type fakeRuns struct {
-	repositories.AgentRunRepository
+	agentports.AgentRunRepository
 	run *agent.AgentRun
 }
 
 func (f *fakeRuns) GetByID(
 	_ context.Context,
-	_ repositories.GetAgentRunByIDRequest,
+	_ agentports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	return f.run, nil
 }
 
 type fakeConversations struct {
-	repositories.ConversationRepository
+	agentports.ConversationRepository
 	thread *conversation.Thread
-	asked  []repositories.GetThreadOwnedRequest
+	asked  []agentports.GetThreadOwnedRequest
 }
 
 func (f *fakeConversations) GetThreadOwned(
 	_ context.Context,
-	req repositories.GetThreadOwnedRequest,
+	req agentports.GetThreadOwnedRequest,
 ) (*conversation.Thread, error) {
 	f.asked = append(f.asked, req)
 
@@ -52,7 +53,7 @@ func (f *fakeConversations) GetThreadOwned(
 
 // fakeWorkflows records the turn handed to a worker.
 type fakeWorkflows struct {
-	serviceports.WorkflowStarter
+	kernelports.WorkflowStarter
 	payloads []*assistantcontract.AssistantTurnPayload
 }
 
@@ -113,13 +114,13 @@ type fixture struct {
 }
 
 type fakeDefinitions struct {
-	repositories.AgentDefinitionRepository
+	agentdefinitionports.AgentDefinitionRepository
 	definition *agentdefinition.Definition
 }
 
 func (f *fakeDefinitions) GetByID(
 	_ context.Context,
-	req repositories.GetAgentDefinitionByIDRequest,
+	req agentdefinitionports.GetAgentDefinitionByIDRequest,
 ) (*agentdefinition.Definition, error) {
 	if f.definition == nil || f.definition.ID != req.ID {
 		return nil, errortypes.NewNotFoundError("AgentDefinition not found")
@@ -184,7 +185,7 @@ func TestFollowUp_ReportsTheDecisionInTheConversationAsItsOwner(t *testing.T) {
 	f := newFixture(agent.SubjectAssistantThread)
 	proposalID := pulid.MustNew("aprop_")
 
-	f.service.FollowUp(t.Context(), serviceports.DecisionFollowUpRequest{
+	f.service.FollowUp(t.Context(), agentports.DecisionFollowUpRequest{
 		TenantInfo: f.tenant,
 		RunID:      f.runs.run.ID,
 		ProposalID: proposalID,
@@ -202,7 +203,7 @@ func TestFollowUp_ReportsTheDecisionInTheConversationAsItsOwner(t *testing.T) {
 	assert.True(t, payload.Request.FollowUpPlanID.IsNil())
 	assert.Empty(t, payload.Content)
 	assert.Equal(t, f.thread.UserID, payload.Actor.UserID)
-	assert.Equal(t, serviceports.PrincipalTypeUser, payload.Actor.PrincipalType)
+	assert.Equal(t, permissionports.PrincipalTypeUser, payload.Actor.PrincipalType)
 	require.Len(t, f.turns.workflow, 1)
 	assert.Equal(t, assistantcontract.WorkflowIDFor(payload.TurnID), f.turns.workflow[0],
 		"the turn's record names the execution carrying it")
@@ -215,7 +216,7 @@ func TestFollowUp_ReportsAPlanByItsID(t *testing.T) {
 	f := newFixture(agent.SubjectAssistantThread)
 	planID := pulid.MustNew("apl_")
 
-	f.service.FollowUp(t.Context(), serviceports.DecisionFollowUpRequest{
+	f.service.FollowUp(t.Context(), agentports.DecisionFollowUpRequest{
 		TenantInfo: f.tenant,
 		RunID:      f.runs.run.ID,
 		PlanID:     planID,
@@ -233,7 +234,7 @@ func TestFollowUp_LeavesDecisionsOutsideAConversationAlone(t *testing.T) {
 
 	f := newFixture(agent.SubjectShipment)
 
-	f.service.FollowUp(t.Context(), serviceports.DecisionFollowUpRequest{
+	f.service.FollowUp(t.Context(), agentports.DecisionFollowUpRequest{
 		TenantInfo: f.tenant,
 		RunID:      f.runs.run.ID,
 		ProposalID: pulid.MustNew("aprop_"),
@@ -252,7 +253,7 @@ func TestFollowUp_DoesNotInterruptAConversationMidReply(t *testing.T) {
 	f := newFixture(agent.SubjectAssistantThread)
 	f.turns.startErr = errors.New("already working on a reply")
 
-	f.service.FollowUp(t.Context(), serviceports.DecisionFollowUpRequest{
+	f.service.FollowUp(t.Context(), agentports.DecisionFollowUpRequest{
 		TenantInfo: f.tenant,
 		RunID:      f.runs.run.ID,
 		ProposalID: pulid.MustNew("aprop_"),
@@ -269,11 +270,11 @@ func TestFollowUp_RefusesARequestThatNamesNoSingleDecision(t *testing.T) {
 
 	f := newFixture(agent.SubjectAssistantThread)
 
-	f.service.FollowUp(t.Context(), serviceports.DecisionFollowUpRequest{
+	f.service.FollowUp(t.Context(), agentports.DecisionFollowUpRequest{
 		TenantInfo: f.tenant,
 		RunID:      f.runs.run.ID,
 	})
-	f.service.FollowUp(t.Context(), serviceports.DecisionFollowUpRequest{
+	f.service.FollowUp(t.Context(), agentports.DecisionFollowUpRequest{
 		TenantInfo: f.tenant,
 		RunID:      f.runs.run.ID,
 		ProposalID: pulid.MustNew("aprop_"),
@@ -310,7 +311,7 @@ func TestFollowUp_SkipsWhenTheOwnerMayNoLongerUseTheAgent(t *testing.T) {
 			f := newFixture(agent.SubjectAssistantThread)
 			change(f)
 
-			f.service.FollowUp(t.Context(), serviceports.DecisionFollowUpRequest{
+			f.service.FollowUp(t.Context(), agentports.DecisionFollowUpRequest{
 				TenantInfo: f.tenant,
 				RunID:      f.runs.run.ID,
 				ProposalID: pulid.MustNew("aprop_"),
@@ -330,7 +331,7 @@ func TestFollowUp_ReportsWhenTheOwnersRoleIsGrantedTheAgent(t *testing.T) {
 	f.agent.AccessMode = agentdefinition.AccessRoles
 	f.permissions.GrantedAgents = []pulid.ID{f.agent.ID}
 
-	f.service.FollowUp(t.Context(), serviceports.DecisionFollowUpRequest{
+	f.service.FollowUp(t.Context(), agentports.DecisionFollowUpRequest{
 		TenantInfo: f.tenant,
 		RunID:      f.runs.run.ID,
 		ProposalID: pulid.MustNew("aprop_"),

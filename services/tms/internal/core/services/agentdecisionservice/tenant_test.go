@@ -4,7 +4,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -17,15 +18,15 @@ import (
 func TestDecideWithOutcome_RefusesATenantThatIsNotTheDeciders(t *testing.T) {
 	t.Parallel()
 
-	actor := &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeUser,
+	actor := &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    pulid.MustNew("usr_"),
 		UserID:         pulid.MustNew("usr_"),
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
 	}
 
-	_, err := (&Service{}).DecideWithOutcome(t.Context(), &services.DecideAgentProposalRequest{
+	_, err := (&Service{}).DecideWithOutcome(t.Context(), &agentports.DecideAgentProposalRequest{
 		ProposalID: pulid.MustNew("ap_"),
 		Decision:   agent.DecisionAccepted,
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: actor.BusinessUnitID},

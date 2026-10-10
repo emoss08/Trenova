@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/approvalworkflow"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -29,7 +29,7 @@ func (s *Service) ListReviews(
 		return nil, err
 	}
 
-	reviews, err := s.reviewRepo.ListByTemplate(ctx, &repositories.ListTemplateReviewsRequest{
+	reviews, err := s.reviewRepo.ListByTemplate(ctx, &formulatemplateports.ListTemplateReviewsRequest{
 		TemplateID: req.TemplateID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -132,7 +132,7 @@ func (s *Service) ExpireStaleSubmissions(
 	}
 	log := s.l.With(zap.String("operation", "ExpireStaleSubmissions"))
 
-	stale, err := s.reviewRepo.ListStaleSubmissions(ctx, &repositories.ListStaleSubmissionsRequest{
+	stale, err := s.reviewRepo.ListStaleSubmissions(ctx, &formulatemplateports.ListStaleSubmissionsRequest{
 		SubmittedBefore: now - formulatemplate.SubmissionExpiry,
 		Limit:           req.Limit,
 	})
@@ -262,7 +262,7 @@ func (s *Service) latestApprovedVersionNumber(
 ) int64 {
 	version, err := s.versionRepo.GetLatestByStatus(
 		ctx,
-		&repositories.GetLatestVersionByStatusRequest{
+		&formulatemplateports.GetLatestVersionByStatusRequest{
 			TemplateID: template.ID,
 			TenantInfo: tenantInfo,
 			Status:     formulatemplate.StatusActive,

@@ -7,9 +7,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/iam"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -34,7 +34,7 @@ type mfaRepository struct {
 	l  *zap.Logger
 }
 
-func NewMFARepository(p MFARepositoryParams) repositories.MFARepository {
+func NewMFARepository(p MFARepositoryParams) iamports.MFARepository {
 	return &mfaRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.mfa-repository"),
@@ -104,7 +104,7 @@ func (r *mfaRepository) ReplacePendingTOTP(
 
 func (r *mfaRepository) ActivateTOTP(
 	ctx context.Context,
-	req *repositories.ActivateTOTPRequest,
+	req *iamports.ActivateTOTPRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		db := r.db.DBForContext(ctx)
@@ -135,7 +135,7 @@ func (r *mfaRepository) ActivateTOTP(
 
 func (r *mfaRepository) RecordTOTPUse(
 	ctx context.Context,
-	req repositories.RecordTOTPUseRequest,
+	req iamports.RecordTOTPUseRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
 		result, err := r.db.DBForContext(ctx).NewUpdate().
@@ -189,7 +189,7 @@ func (r *mfaRepository) DeleteAll(ctx context.Context, userID pulid.ID) (int, er
 
 func (r *mfaRepository) ReplaceRecoveryCodes(
 	ctx context.Context,
-	req *repositories.ReplaceRecoveryCodesRequest,
+	req *iamports.ReplaceRecoveryCodesRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		return r.replaceRecoveryCodes(ctx, req.UserID, req.Codes)
@@ -223,7 +223,7 @@ func (r *mfaRepository) replaceRecoveryCodes(
 
 func (r *mfaRepository) ConsumeRecoveryCode(
 	ctx context.Context,
-	req repositories.ConsumeRecoveryCodeRequest,
+	req iamports.ConsumeRecoveryCodeRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
 		result, err := r.db.DBForContext(ctx).NewUpdate().

@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -24,10 +24,10 @@ type MonitoringServerParams struct {
 	Logger         *zap.Logger
 	LC             fx.Lifecycle
 	Metrics        *metrics.Registry
-	Database       ports.DBConnection
-	EDIMessageRepo repositories.EDIMessageRepository
-	EDIInboundRepo repositories.EDIInboundFileRepository
-	EDIProfileRepo repositories.EDICommunicationProfileRepository
+	Database       kernelports.DBConnection
+	EDIMessageRepo ediports.EDIMessageRepository
+	EDIInboundRepo ediports.EDIInboundFileRepository
+	EDIProfileRepo ediports.EDICommunicationProfileRepository
 }
 
 type MonitoringServer struct {
@@ -35,10 +35,10 @@ type MonitoringServer struct {
 	cfg            *config.Config
 	logger         *zap.Logger
 	metrics        *metrics.Registry
-	database       ports.DBConnection
-	ediMessageRepo repositories.EDIMessageRepository
-	ediInboundRepo repositories.EDIInboundFileRepository
-	ediProfileRepo repositories.EDICommunicationProfileRepository
+	database       kernelports.DBConnection
+	ediMessageRepo ediports.EDIMessageRepository
+	ediInboundRepo ediports.EDIInboundFileRepository
+	ediProfileRepo ediports.EDICommunicationProfileRepository
 }
 
 type monitoringCheck struct {

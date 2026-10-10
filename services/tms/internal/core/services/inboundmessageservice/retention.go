@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -33,7 +33,7 @@ type PurgeSettledRequest struct {
 func (s *Service) PurgeSettled(ctx context.Context, req PurgeSettledRequest) (int, error) {
 	settled, err := s.messageRepo.ListSettledBefore(
 		ctx,
-		repositories.ListSettledInboundMessagesRequest{
+		inboundmessageports.ListSettledInboundMessagesRequest{
 			TenantInfo: req.TenantInfo,
 			Before:     req.Before,
 			Limit:      req.Limit,
@@ -59,7 +59,7 @@ func (s *Service) PurgeSettled(ctx context.Context, req PurgeSettledRequest) (in
 		ids = append(ids, message.ID)
 	}
 
-	deleted, err := s.messageRepo.DeleteByIDs(ctx, repositories.DeleteInboundMessagesRequest{
+	deleted, err := s.messageRepo.DeleteByIDs(ctx, inboundmessageports.DeleteInboundMessagesRequest{
 		TenantInfo: req.TenantInfo,
 		IDs:        ids,
 	})

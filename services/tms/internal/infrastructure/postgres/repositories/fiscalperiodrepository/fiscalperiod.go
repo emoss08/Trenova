@@ -5,9 +5,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -33,7 +33,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.FiscalPeriodRepository {
+func New(p Params) fiscalperiodports.FiscalPeriodRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.fiscal-period-repository"),
@@ -42,7 +42,7 @@ func New(p Params) repositories.FiscalPeriodRepository {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListFiscalPeriodsRequest,
+	req *fiscalperiodports.ListFiscalPeriodsRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
@@ -56,7 +56,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListFiscalPeriodsRequest,
+	req *fiscalperiodports.ListFiscalPeriodsRequest,
 ) (*pagination.ListResult[*fiscalperiod.FiscalPeriod], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*fiscalperiod.FiscalPeriod], error) {
 		log := r.l.With(
@@ -85,7 +85,7 @@ func (r *repository) List(
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
-	req *repositories.FiscalPeriodSelectOptionsRequest,
+	req *fiscalperiodports.FiscalPeriodSelectOptionsRequest,
 ) (*pagination.ListResult[*fiscalperiod.FiscalPeriod], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*fiscalperiod.FiscalPeriod], error) {
 		cols := buncolgen.FiscalPeriodColumns
@@ -123,7 +123,7 @@ func (r *repository) SelectOptions(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetFiscalPeriodByIDRequest,
+	req fiscalperiodports.GetFiscalPeriodByIDRequest,
 ) (*fiscalperiod.FiscalPeriod, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fiscalperiod.FiscalPeriod, error) {
 		return r.getByID(ctx, r.db.DBForContext(ctx), req, false)
@@ -132,7 +132,7 @@ func (r *repository) GetByID(
 
 func (r *repository) GetByIDForUpdate(
 	ctx context.Context,
-	req repositories.GetFiscalPeriodByIDRequest,
+	req fiscalperiodports.GetFiscalPeriodByIDRequest,
 ) (*fiscalperiod.FiscalPeriod, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fiscalperiod.FiscalPeriod, error) {
 		return r.getByID(ctx, r.db.DBForContext(ctx), req, true)
@@ -142,7 +142,7 @@ func (r *repository) GetByIDForUpdate(
 func (r *repository) getByID(
 	ctx context.Context,
 	db bun.IDB,
-	req repositories.GetFiscalPeriodByIDRequest,
+	req fiscalperiodports.GetFiscalPeriodByIDRequest,
 	forUpdate bool,
 ) (*fiscalperiod.FiscalPeriod, error) {
 	log := r.l.With(
@@ -200,7 +200,7 @@ func (r *repository) Create(
 
 func (r *repository) BulkCreate(
 	ctx context.Context,
-	req *repositories.BulkCreateFiscalPeriodsRequest,
+	req *fiscalperiodports.BulkCreateFiscalPeriodsRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		log := r.l.With(
@@ -265,7 +265,7 @@ func (r *repository) Update(
 
 func (r *repository) Delete(
 	ctx context.Context,
-	req repositories.DeleteFiscalPeriodRequest,
+	req fiscalperiodports.DeleteFiscalPeriodRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		log := r.l.With(
@@ -337,7 +337,7 @@ func (r *repository) applyTransition(
 
 func (r *repository) Close(
 	ctx context.Context,
-	req repositories.CloseFiscalPeriodRequest,
+	req fiscalperiodports.CloseFiscalPeriodRequest,
 ) (*fiscalperiod.FiscalPeriod, error) {
 	cols := buncolgen.FiscalPeriodColumns
 
@@ -356,7 +356,7 @@ func (r *repository) Close(
 
 func (r *repository) Reopen(
 	ctx context.Context,
-	req repositories.ReopenFiscalPeriodRequest,
+	req fiscalperiodports.ReopenFiscalPeriodRequest,
 ) (*fiscalperiod.FiscalPeriod, error) {
 	cols := buncolgen.FiscalPeriodColumns
 
@@ -380,7 +380,7 @@ func (r *repository) Reopen(
 
 func (r *repository) Lock(
 	ctx context.Context,
-	req repositories.LockFiscalPeriodRequest,
+	req fiscalperiodports.LockFiscalPeriodRequest,
 ) (*fiscalperiod.FiscalPeriod, error) {
 	cols := buncolgen.FiscalPeriodColumns
 
@@ -399,7 +399,7 @@ func (r *repository) Lock(
 
 func (r *repository) Unlock(
 	ctx context.Context,
-	req repositories.UnlockFiscalPeriodRequest,
+	req fiscalperiodports.UnlockFiscalPeriodRequest,
 ) (*fiscalperiod.FiscalPeriod, error) {
 	cols := buncolgen.FiscalPeriodColumns
 
@@ -418,7 +418,7 @@ func (r *repository) Unlock(
 
 func (r *repository) Activate(
 	ctx context.Context,
-	req repositories.ActivateFiscalPeriodRequest,
+	req fiscalperiodports.ActivateFiscalPeriodRequest,
 ) (*fiscalperiod.FiscalPeriod, error) {
 	cols := buncolgen.FiscalPeriodColumns
 
@@ -434,7 +434,7 @@ func (r *repository) Activate(
 
 func (r *repository) CountUnclosedPeriodsByFiscalYear(
 	ctx context.Context,
-	req repositories.CountUnclosedPeriodsByFiscalYearRequest,
+	req fiscalperiodports.CountUnclosedPeriodsByFiscalYearRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		log := r.l.With(
@@ -467,7 +467,7 @@ func (r *repository) CountUnclosedPeriodsByFiscalYear(
 
 func (r *repository) ListByFiscalYearID(
 	ctx context.Context,
-	req repositories.ListByFiscalYearIDRequest,
+	req fiscalperiodports.ListByFiscalYearIDRequest,
 ) ([]*fiscalperiod.FiscalPeriod, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*fiscalperiod.FiscalPeriod, error) {
 		return r.listByFiscalYearID(ctx, r.db.DBForContext(ctx), req, false)
@@ -476,7 +476,7 @@ func (r *repository) ListByFiscalYearID(
 
 func (r *repository) ListByFiscalYearIDForUpdate(
 	ctx context.Context,
-	req repositories.ListByFiscalYearIDRequest,
+	req fiscalperiodports.ListByFiscalYearIDRequest,
 ) ([]*fiscalperiod.FiscalPeriod, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*fiscalperiod.FiscalPeriod, error) {
 		return r.listByFiscalYearID(ctx, r.db.DBForContext(ctx), req, true)
@@ -486,7 +486,7 @@ func (r *repository) ListByFiscalYearIDForUpdate(
 func (r *repository) listByFiscalYearID(
 	ctx context.Context,
 	db bun.IDB,
-	req repositories.ListByFiscalYearIDRequest,
+	req fiscalperiodports.ListByFiscalYearIDRequest,
 	forUpdate bool,
 ) ([]*fiscalperiod.FiscalPeriod, error) {
 	log := r.l.With(
@@ -519,7 +519,7 @@ func (r *repository) listByFiscalYearID(
 
 func (r *repository) ListByFiscalYearIDs(
 	ctx context.Context,
-	req repositories.ListByFiscalYearIDsRequest,
+	req fiscalperiodports.ListByFiscalYearIDsRequest,
 ) (map[pulid.ID][]*fiscalperiod.FiscalPeriod, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID][]*fiscalperiod.FiscalPeriod, error) {
 		cols := buncolgen.FiscalPeriodColumns
@@ -546,7 +546,7 @@ func (r *repository) ListByFiscalYearIDs(
 
 func (r *repository) GetPeriodByDate(
 	ctx context.Context,
-	req repositories.GetPeriodByDateRequest,
+	req fiscalperiodports.GetPeriodByDateRequest,
 ) (*fiscalperiod.FiscalPeriod, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*fiscalperiod.FiscalPeriod, error) {
 		log := r.l.With(
@@ -577,7 +577,7 @@ func (r *repository) GetPeriodByDate(
 
 func (r *repository) CloseAllByFiscalYear(
 	ctx context.Context,
-	req repositories.CloseAllByFiscalYearRequest,
+	req fiscalperiodports.CloseAllByFiscalYearRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		log := r.l.With(
@@ -611,7 +611,7 @@ func (r *repository) CloseAllByFiscalYear(
 
 func (r *repository) GetExpiredUnclosedPeriods(
 	ctx context.Context,
-	req repositories.GetExpiredUnclosedPeriodsRequest,
+	req fiscalperiodports.GetExpiredUnclosedPeriodsRequest,
 ) ([]*fiscalperiod.FiscalPeriod, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*fiscalperiod.FiscalPeriod, error) {
 		log := r.l.With(

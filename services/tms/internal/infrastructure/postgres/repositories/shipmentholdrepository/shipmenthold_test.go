@@ -7,8 +7,8 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/core/domain/holdreason"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -55,7 +55,7 @@ func TestListByShipmentID_ReturnsHolds(t *testing.T) {
 			"created_by__id", "created_by__business_unit_id", "created_by__current_organization_id", "created_by__status", "created_by__name", "created_by__username", "created_by__time_format", "created_by__password", "created_by__email_address", "created_by__profile_pic_url", "created_by__thumbnail_url", "created_by__timezone", "created_by__is_locked", "created_by__must_change_password", "created_by__version", "created_by__created_at", "created_by__updated_at", "created_by__last_login_at",
 		}).AddRow(holdID, shipmentID, buID, orgID, reasonID, "OperationalHold", "Blocking", "APPT", "dock issue", "User", true, false, false, false, 10, 10, 10, 0, nil, userID, nil, reasonID, buID, orgID, "OperationalHold", "APPT", "Appointment", true, "Blocking", true, false, false, false, 100, 0, 10, 10, userID, buID, orgID, "Active", "Alice", "alice", "12-hour", "secret", "a@example.com", "", "", "UTC", false, false, 0, 1, 1, nil))
 
-	result, err := repo.ListByShipmentID(t.Context(), &repositories.ListShipmentHoldsRequest{
+	result, err := repo.ListByShipmentID(t.Context(), &shipmentports.ListShipmentHoldsRequest{
 		ShipmentID: shipmentID,
 		Filter: &pagination.QueryOptions{
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
@@ -138,7 +138,7 @@ func TestHasActiveDispatchHold_ReturnsTrue(t *testing.T) {
 	mock.ExpectQuery(fmt.Sprintf(`SELECT count\(\*\) FROM "shipment_holds" AS "shh".*shipment_id = .*organization_id = .*business_unit_id = .*%s.*`, "blocks_dispatch")).
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
 
-	hasHold, err := repo.HasActiveDispatchHold(t.Context(), &repositories.ActiveShipmentHoldRequest{
+	hasHold, err := repo.HasActiveDispatchHold(t.Context(), &shipmentports.ActiveShipmentHoldRequest{
 		ShipmentID: shipmentID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 	})

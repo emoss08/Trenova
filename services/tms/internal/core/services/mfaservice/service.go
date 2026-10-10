@@ -9,10 +9,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/iam"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -55,27 +57,27 @@ var (
 type Params struct {
 	fx.In
 
-	Repository repositories.MFARepository
-	Users      repositories.UserRepository
-	Sessions   repositories.SessionRepository
+	Repository iamports.MFARepository
+	Users      tenantports.UserRepository
+	Sessions   sessionports.SessionRepository
 	Encryption *encryptionservice.Service
-	Auditor    services.SecurityAuditor
+	Auditor    permissionports.SecurityAuditor
 	Config     *config.Config
 	Logger     *zap.Logger
 }
 
 type Service struct {
-	repo     repositories.MFARepository
-	users    repositories.UserRepository
-	sessions repositories.SessionRepository
+	repo     iamports.MFARepository
+	users    tenantports.UserRepository
+	sessions sessionports.SessionRepository
 	enc      *encryptionservice.Service
-	auditor  services.SecurityAuditor
+	auditor  permissionports.SecurityAuditor
 	issuer   string
 	l        *zap.Logger
 	now      func() time.Time
 }
 
-func New(p Params) services.MFAService { //nolint:gocritic // fx params are passed by value
+func New(p Params) sessionports.MFAService { //nolint:gocritic // fx params are passed by value
 	return newService(&p)
 }
 
@@ -101,8 +103,8 @@ func (s *Service) Status(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	sessionAAL int,
-) (*services.MFAStatus, error) {
-	status := &services.MFAStatus{SessionVerified: sessionAAL >= mfaAssuranceLevel}
+) (*sessionports.MFAStatus, error) {
+	status := &sessionports.MFAStatus{SessionVerified: sessionAAL >= mfaAssuranceLevel}
 
 	authenticator, err := s.repo.GetTOTP(ctx, tenantInfo.UserID)
 	if err != nil {
@@ -132,8 +134,8 @@ func (s *Service) Status(
 
 func (s *Service) BeginTOTPEnrollment(
 	ctx context.Context,
-	req *services.BeginTOTPEnrollmentRequest,
-) (*services.TOTPEnrollment, error) {
+	req *sessionports.BeginTOTPEnrollmentRequest,
+) (*sessionports.TOTPEnrollment, error) {
 	usr, err := s.verifyPassword(ctx, req.TenantInfo.UserID, req.Password)
 	if err != nil {
 		return nil, err
@@ -180,7 +182,7 @@ func (s *Service) BeginTOTPEnrollment(
 		return nil, err
 	}
 
-	return &services.TOTPEnrollment{
+	return &sessionports.TOTPEnrollment{
 		AuthenticatorID: authenticator.ID,
 		Secret:          secret,
 		URI:             uri,
@@ -190,8 +192,8 @@ func (s *Service) BeginTOTPEnrollment(
 
 func (s *Service) ConfirmTOTPEnrollment(
 	ctx context.Context,
-	req *services.ConfirmTOTPEnrollmentRequest,
-) (*services.RecoveryCodesResponse, error) {
+	req *sessionports.ConfirmTOTPEnrollmentRequest,
+) (*sessionports.RecoveryCodesResponse, error) {
 	authenticator, err := s.repo.GetTOTP(ctx, req.TenantInfo.UserID)
 	if err != nil {
 		return nil, err
@@ -223,7 +225,7 @@ func (s *Service) ConfirmTOTPEnrollment(
 		return nil, err
 	}
 
-	if err = s.repo.ActivateTOTP(ctx, &repositories.ActivateTOTPRequest{
+	if err = s.repo.ActivateTOTP(ctx, &iamports.ActivateTOTPRequest{
 		AuthenticatorID: authenticator.ID,
 		UserID:          req.TenantInfo.UserID,
 		Step:            step,
@@ -244,15 +246,15 @@ func (s *Service) ConfirmTOTPEnrollment(
 		comment:    "Turned on two-factor authentication with an authenticator app",
 	})
 
-	return &services.RecoveryCodesResponse{RecoveryCodes: codes}, nil
+	return &sessionports.RecoveryCodesResponse{RecoveryCodes: codes}, nil
 }
 
-func (s *Service) DisableTOTP(ctx context.Context, req *services.DisableTOTPRequest) error {
+func (s *Service) DisableTOTP(ctx context.Context, req *sessionports.DisableTOTPRequest) error {
 	if _, err := s.verifyPassword(ctx, req.TenantInfo.UserID, req.Password); err != nil {
 		return err
 	}
 
-	if _, err := s.VerifySecondFactor(ctx, &services.VerifySecondFactorRequest{
+	if _, err := s.VerifySecondFactor(ctx, &sessionports.VerifySecondFactorRequest{
 		UserID:       req.TenantInfo.UserID,
 		Code:         req.Code,
 		RecoveryCode: req.RecoveryCode,
@@ -282,8 +284,8 @@ func (s *Service) DisableTOTP(ctx context.Context, req *services.DisableTOTPRequ
 
 func (s *Service) RegenerateRecoveryCodes(
 	ctx context.Context,
-	req *services.RegenerateRecoveryCodesRequest,
-) (*services.RecoveryCodesResponse, error) {
+	req *sessionports.RegenerateRecoveryCodesRequest,
+) (*sessionports.RecoveryCodesResponse, error) {
 	if err := s.verifyTOTP(ctx, req.TenantInfo.UserID, req.Code); err != nil {
 		return nil, err
 	}
@@ -293,7 +295,7 @@ func (s *Service) RegenerateRecoveryCodes(
 		return nil, err
 	}
 
-	if err = s.repo.ReplaceRecoveryCodes(ctx, &repositories.ReplaceRecoveryCodesRequest{
+	if err = s.repo.ReplaceRecoveryCodes(ctx, &iamports.ReplaceRecoveryCodesRequest{
 		UserID: req.TenantInfo.UserID,
 		Codes:  hashed,
 	}); err != nil {
@@ -308,15 +310,15 @@ func (s *Service) RegenerateRecoveryCodes(
 		comment:    "Replaced two-factor recovery codes",
 	})
 
-	return &services.RecoveryCodesResponse{RecoveryCodes: codes}, nil
+	return &sessionports.RecoveryCodesResponse{RecoveryCodes: codes}, nil
 }
 
-func (s *Service) ResetUserMFA(ctx context.Context, req *services.ResetUserMFARequest) error {
+func (s *Service) ResetUserMFA(ctx context.Context, req *sessionports.ResetUserMFARequest) error {
 	if req.TargetUserID.IsNil() {
 		return errortypes.NewValidationError("userId", errortypes.ErrRequired, "User is required")
 	}
 
-	if _, err := s.users.GetByID(ctx, repositories.GetUserByIDRequest{
+	if _, err := s.users.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo:   req.TenantInfo,
 		LookupUserID: req.TargetUserID,
 	}); err != nil {
@@ -354,10 +356,10 @@ func (s *Service) HasActiveFactor(ctx context.Context, userID pulid.ID) (bool, e
 
 func (s *Service) VerifySecondFactor(
 	ctx context.Context,
-	req *services.VerifySecondFactorRequest,
+	req *sessionports.VerifySecondFactorRequest,
 ) (string, error) {
 	if strings.TrimSpace(req.RecoveryCode) != "" {
-		return services.MFAMethodRecoveryCode, s.consumeRecoveryCode(
+		return sessionports.MFAMethodRecoveryCode, s.consumeRecoveryCode(
 			ctx,
 			req.UserID,
 			req.RecoveryCode,
@@ -368,12 +370,12 @@ func (s *Service) VerifySecondFactor(
 		return "", err
 	}
 
-	return services.MFAMethodTOTP, nil
+	return sessionports.MFAMethodTOTP, nil
 }
 
 func (s *Service) Reauthenticate(
 	ctx context.Context,
-	req *services.ReauthenticateRequest,
+	req *sessionports.ReauthenticateRequest,
 ) (string, error) {
 	if _, err := s.verifyPassword(ctx, req.UserID, req.Password); err != nil {
 		return "", err
@@ -387,7 +389,7 @@ func (s *Service) Reauthenticate(
 		return "", errNoActiveFactor
 	}
 
-	return s.VerifySecondFactor(ctx, &services.VerifySecondFactorRequest{
+	return s.VerifySecondFactor(ctx, &sessionports.VerifySecondFactorRequest{
 		UserID:       req.UserID,
 		Code:         req.Code,
 		RecoveryCode: req.RecoveryCode,
@@ -452,7 +454,7 @@ func (s *Service) verifyTOTP(ctx context.Context, userID pulid.ID, code string) 
 		return errInvalidCode
 	}
 
-	recorded, err := s.repo.RecordTOTPUse(ctx, repositories.RecordTOTPUseRequest{
+	recorded, err := s.repo.RecordTOTPUse(ctx, iamports.RecordTOTPUseRequest{
 		AuthenticatorID: authenticator.ID,
 		UserID:          userID,
 		Step:            step,
@@ -474,7 +476,7 @@ func (s *Service) consumeRecoveryCode(ctx context.Context, userID pulid.ID, code
 		return errInvalidRecoveryCode
 	}
 
-	consumed, err := s.repo.ConsumeRecoveryCode(ctx, repositories.ConsumeRecoveryCodeRequest{
+	consumed, err := s.repo.ConsumeRecoveryCode(ctx, iamports.ConsumeRecoveryCodeRequest{
 		UserID:   userID,
 		CodeHash: tokenutils.Hash(normalized),
 		UsedAt:   s.now().Unix(),
@@ -562,11 +564,11 @@ func (s *Service) recordChange(ctx context.Context, change *mfaChange) {
 		return
 	}
 
-	s.auditor.RecordChange(ctx, &services.SecurityChange{
+	s.auditor.RecordChange(ctx, &permissionports.SecurityChange{
 		Resource:       permission.ResourceMFAAuthenticator,
 		ResourceID:     change.resourceID,
 		Operation:      change.operation,
-		Actor:          services.UserActor(change.tenantInfo).AuditActor(),
+		Actor:          permissionports.UserActor(change.tenantInfo).AuditActor(),
 		OrganizationID: change.tenantInfo.OrgID,
 		BusinessUnitID: change.tenantInfo.BuID,
 		Before:         change.before,

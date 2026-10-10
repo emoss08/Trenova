@@ -4,13 +4,13 @@ import (
 	"sort"
 	"strings"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentsearch"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/rankfusion"
 )
 
 const (
-	DefaultSimilarityFloor = serviceports.DefaultCatalogSimilarityFloor
+	DefaultSimilarityFloor = agentports.DefaultCatalogSimilarityFloor
 	RRFK                   = rankfusion.DefaultK
 
 	vectorCandidateFactor = 4
@@ -41,14 +41,14 @@ type Query struct {
 	StrongOnly   bool
 }
 
-func (c *Catalog) Items() []serviceports.EmbeddingCatalogItem {
-	out := make([]serviceports.EmbeddingCatalogItem, len(c.items))
+func (c *Catalog) Items() []agentports.EmbeddingCatalogItem {
+	out := make([]agentports.EmbeddingCatalogItem, len(c.items))
 	copy(out, c.items)
 
 	return out
 }
 
-func DescriptorText(descriptor *serviceports.AgentToolDescriptor) string {
+func DescriptorText(descriptor *agentports.AgentToolDescriptor) string {
 	var b strings.Builder
 	b.Grow(len(descriptor.Name) + len(descriptor.Description) + 64)
 	b.WriteString(strings.ReplaceAll(descriptor.Name, "_", " "))
@@ -62,7 +62,7 @@ func DescriptorText(descriptor *serviceports.AgentToolDescriptor) string {
 	return b.String()
 }
 
-func (c *Catalog) RankHybrid(q Query) []serviceports.AgentToolDescriptor {
+func (c *Catalog) RankHybrid(q Query) []agentports.AgentToolDescriptor {
 	if !q.Semantic.usable() {
 		return c.Rank(q.Allowed, q.Text, q.Limit)
 	}
@@ -74,7 +74,7 @@ func (c *Catalog) RankHybrid(q Query) []serviceports.AgentToolDescriptor {
 	terms := agentsearch.Terms(q.Text)
 	fused := c.fuse(wanted, c.keywordRanked(wanted, terms, keywordRanking{minScore: 1}), q)
 
-	out := make([]serviceports.AgentToolDescriptor, 0, q.Limit)
+	out := make([]agentports.AgentToolDescriptor, 0, q.Limit)
 	taken := make(map[string]struct{}, q.Limit)
 	for _, entry := range fused {
 		if len(out) == q.Limit {
@@ -97,7 +97,7 @@ func (c *Catalog) RankHybrid(q Query) []serviceports.AgentToolDescriptor {
 	return out
 }
 
-func (c *Catalog) FindHybrid(q Query) []serviceports.AgentToolDescriptor {
+func (c *Catalog) FindHybrid(q Query) []agentports.AgentToolDescriptor {
 	if !q.Semantic.usable() {
 		return c.withFamilies(
 			c.allowedSet(q.Allowed),
@@ -118,7 +118,7 @@ func (c *Catalog) FindHybrid(q Query) []serviceports.AgentToolDescriptor {
 		fused = fused[:q.Limit]
 	}
 
-	found := make([]serviceports.AgentToolDescriptor, 0, len(fused)+maxFamilySize)
+	found := make([]agentports.AgentToolDescriptor, 0, len(fused)+maxFamilySize)
 	for _, entry := range fused {
 		found = append(found, entry.descriptor)
 	}

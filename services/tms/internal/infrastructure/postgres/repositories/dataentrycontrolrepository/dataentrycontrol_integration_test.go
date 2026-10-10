@@ -7,13 +7,12 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/uptrace/bun"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -83,7 +82,7 @@ func TestGetOrCreateInAReadOnlyTransactionWritesNothing(t *testing.T) {
 		Exec(ctx)
 	require.NoError(t, err)
 
-	err = conn.WithTx(ctx, ports.TxOptions{ReadOnly: true}, func(txCtx context.Context, tx bun.Tx) error {
+	err = conn.WithTx(ctx, kernelports.TxOptions{ReadOnly: true}, func(txCtx context.Context, tx bun.Tx) error {
 		entity, getErr := repo.GetOrCreate(txCtx, data.Organization.ID, data.BusinessUnit.ID)
 		require.NoError(t, getErr)
 		require.NotNil(t, entity)

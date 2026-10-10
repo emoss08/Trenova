@@ -1,6 +1,11 @@
 package invoiceservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"testing"
 
@@ -9,8 +14,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -78,9 +83,9 @@ func newApprovalHarness(
 		Shipment:       queueShipment,
 	}
 
-	repo := mocks.NewMockInvoiceRepository(t)
+	repo := invoiceportsmock.NewMockInvoiceRepository(t)
 	repo.EXPECT().
-		GetByBillingQueueItemID(mock.Anything, repositories.GetInvoiceByBillingQueueItemIDRequest{
+		GetByBillingQueueItemID(mock.Anything, invoiceports.GetInvoiceByBillingQueueItemIDRequest{
 			BillingQueueItemID: h.itemID,
 			TenantInfo:         h.tenantInfo,
 		}).
@@ -96,9 +101,9 @@ func newApprovalHarness(
 			Once()
 	}
 
-	billingQueueRepo := mocks.NewMockBillingQueueRepository(t)
+	billingQueueRepo := billingqueueportsmock.NewMockBillingQueueRepository(t)
 	billingQueueRepo.EXPECT().
-		GetByID(mock.Anything, &repositories.GetBillingQueueItemByIDRequest{
+		GetByID(mock.Anything, &billingqueueports.GetBillingQueueItemByIDRequest{
 			ItemID:                h.itemID,
 			TenantInfo:            h.tenantInfo,
 			ExpandShipmentDetails: true,
@@ -106,7 +111,7 @@ func newApprovalHarness(
 		Return(queueItem, nil).
 		Once()
 
-	customerRepo := mocks.NewMockCustomerRepository(t)
+	customerRepo := customerportsmock.NewMockCustomerRepository(t)
 	customerRepo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
 		Return(&customer.Customer{
@@ -119,7 +124,7 @@ func newApprovalHarness(
 		}, nil).
 		Once()
 
-	billingRepo := mocks.NewMockBillingControlRepository(t)
+	billingRepo := tenantportsmock.NewMockBillingControlRepository(t)
 	billingRepo.EXPECT().
 		GetByOrgID(mock.Anything, h.orgID).
 		Return(&tenant.BillingControl{DefaultPaymentTerm: tenant.PaymentTermNet30}, nil).
@@ -129,7 +134,7 @@ func newApprovalHarness(
 		l:                zap.NewNop(),
 		repo:             repo,
 		billingQueueRepo: billingQueueRepo,
-		shipmentRepo:     mocks.NewMockShipmentRepository(t),
+		shipmentRepo:     shipmentportsmock.NewMockShipmentRepository(t),
 		customerRepo:     customerRepo,
 		billingRepo:      billingRepo,
 		validator: &Validator{
@@ -144,8 +149,8 @@ func newApprovalHarness(
 
 func (h *approvalHarness) approve(
 	t *testing.T,
-	req *servicesports.CreateInvoiceFromBillingQueueRequest,
-) (*servicesports.CreateInvoiceFromBillingQueueResult, error) {
+	req *invoiceports.CreateInvoiceFromBillingQueueRequest,
+) (*invoiceports.CreateInvoiceFromBillingQueueResult, error) {
 	t.Helper()
 	req.BillingQueueItemID = h.itemID
 	req.TenantInfo = h.tenantInfo
@@ -184,7 +189,7 @@ func TestApprovingStatementFreightDefersInsteadOfInvoicing(t *testing.T) {
 
 	h := newApprovalHarness(t, statementProfile(), false)
 
-	result, err := h.approve(t, &servicesports.CreateInvoiceFromBillingQueueRequest{
+	result, err := h.approve(t, &invoiceports.CreateInvoiceFromBillingQueueRequest{
 		DeferToStatement: true,
 	})
 
@@ -199,7 +204,7 @@ func TestApprovingOrdinaryFreightStillInvoices(t *testing.T) {
 
 	h := newApprovalHarness(t, perShipmentProfile(), true)
 
-	result, err := h.approve(t, &servicesports.CreateInvoiceFromBillingQueueRequest{
+	result, err := h.approve(t, &invoiceports.CreateInvoiceFromBillingQueueRequest{
 		DeferToStatement: true,
 	})
 
@@ -217,7 +222,7 @@ func TestExplicitInvoicingStillDemandsAReason(t *testing.T) {
 
 	h := newApprovalHarness(t, statementProfile(), false)
 
-	_, err := h.approve(t, &servicesports.CreateInvoiceFromBillingQueueRequest{})
+	_, err := h.approve(t, &invoiceports.CreateInvoiceFromBillingQueueRequest{})
 
 	require.Error(t, err)
 	var validationErr *errortypes.Error
@@ -230,7 +235,7 @@ func TestExplicitInvoicingProceedsWithAReason(t *testing.T) {
 
 	h := newApprovalHarness(t, statementProfile(), true)
 
-	result, err := h.approve(t, &servicesports.CreateInvoiceFromBillingQueueRequest{
+	result, err := h.approve(t, &invoiceports.CreateInvoiceFromBillingQueueRequest{
 		OffCycleReason: "Customer is closing their books early",
 	})
 

@@ -12,11 +12,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/core/services/workeremploymentservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -51,23 +54,23 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.WorkerSafetyRepository
-	WorkerRepo   repositories.WorkerRepository
-	DocumentRepo repositories.DocumentRepository
+	Repo         workerports.WorkerSafetyRepository
+	WorkerRepo   workerports.WorkerRepository
+	DocumentRepo documentports.DocumentRepository
 	Employment   *workeremploymentservice.Service
-	AuditService services.AuditService
-	Realtime     services.RealtimeService           `optional:"true"`
+	AuditService auditports.AuditService
+	Realtime     agentports.RealtimeService         `optional:"true"`
 	DriverNotify *drivernotificationservice.Service `optional:"true"`
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.WorkerSafetyRepository
-	workerRepo   repositories.WorkerRepository
-	documentRepo repositories.DocumentRepository
+	repo         workerports.WorkerSafetyRepository
+	workerRepo   workerports.WorkerRepository
+	documentRepo documentports.DocumentRepository
 	employment   EmploymentRecorder
-	auditService services.AuditService
-	realtime     services.RealtimeService
+	auditService auditports.AuditService
+	realtime     agentports.RealtimeService
 	driverNotify *drivernotificationservice.Service
 }
 
@@ -90,11 +93,11 @@ func New(p Params) *Service {
 // Deps is the constructor shape tests use to swap in fakes.
 type Deps struct {
 	Logger       *zap.Logger
-	Repo         repositories.WorkerSafetyRepository
-	WorkerRepo   repositories.WorkerRepository
-	DocumentRepo repositories.DocumentRepository
+	Repo         workerports.WorkerSafetyRepository
+	WorkerRepo   workerports.WorkerRepository
+	DocumentRepo documentports.DocumentRepository
 	Employment   EmploymentRecorder
-	AuditService services.AuditService
+	AuditService auditports.AuditService
 }
 
 func NewWithDeps(d Deps) *Service {
@@ -128,7 +131,7 @@ func (s *Service) audit(p *auditParams) {
 	if s.auditService == nil || p.userID.IsNil() {
 		return
 	}
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       p.resource,
 		ResourceID:     p.resourceID,
 		Operation:      p.operation,
@@ -137,7 +140,7 @@ func (s *Service) audit(p *auditParams) {
 		OrganizationID: p.tenant.OrgID,
 		BusinessUnitID: p.tenant.BuID,
 	}
-	opts := []services.LogOption{auditservice.WithComment(p.comment)}
+	opts := []auditports.LogOption{auditservice.WithComment(p.comment)}
 	if p.previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(p.previous)
 		opts = append(opts, auditservice.WithDiff(p.previous, p.current))
@@ -162,7 +165,7 @@ func (s *Service) publish(
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
 		ActorUserID:    userID,
-		ActorType:      services.PrincipalTypeUser,
+		ActorType:      permissionports.PrincipalTypeUser,
 		ActorID:        userID,
 		Resource:       resource,
 		Action:         string(operation),
@@ -201,7 +204,7 @@ func (s *Service) loadWorker(
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 ) (*worker.Worker, error) {
-	return s.workerRepo.GetByID(ctx, repositories.GetWorkerByIDRequest{
+	return s.workerRepo.GetByID(ctx, workerports.GetWorkerByIDRequest{
 		ID:             workerID,
 		TenantInfo:     tenantInfo,
 		IncludeProfile: true,
@@ -224,7 +227,7 @@ func (s *Service) RefreshRollup(
 	}
 	if err = s.workerRepo.UpdateProfileSafetyRollup(
 		ctx,
-		&repositories.UpdateProfileSafetyRollupRequest{
+		&workerports.UpdateProfileSafetyRollupRequest{
 			TenantInfo: tenantInfo,
 			WorkerID:   workerID,
 			Rating:     card.Rating,
@@ -244,21 +247,21 @@ func (s *Service) Scorecard(
 	if _, err := s.loadWorker(ctx, tenantInfo, workerID); err != nil {
 		return nil, err
 	}
-	events, err := s.repo.ListEvents(ctx, &repositories.ListWorkerSafetyEventsRequest{
+	events, err := s.repo.ListEvents(ctx, &workerports.ListWorkerSafetyEventsRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
 	})
 	if err != nil {
 		return nil, err
 	}
-	actions, err := s.repo.ListActions(ctx, &repositories.ListWorkerDisciplinaryActionsRequest{
+	actions, err := s.repo.ListActions(ctx, &workerports.ListWorkerDisciplinaryActionsRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
 	})
 	if err != nil {
 		return nil, err
 	}
-	recognitions, err := s.repo.ListRecognitions(ctx, &repositories.ListWorkerRecognitionsRequest{
+	recognitions, err := s.repo.ListRecognitions(ctx, &workerports.ListWorkerRecognitionsRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
 	})

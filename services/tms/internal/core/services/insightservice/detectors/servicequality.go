@@ -13,8 +13,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/insight"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/insightservice/detector"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/shopspring/decimal"
 )
 
@@ -44,10 +44,10 @@ var (
 // that is not news. A customer who was at 95% last month and is at 84% this
 // month is news.
 type OnTimeDecline struct {
-	metrics repositories.InsightMetricsRepository
+	metrics insightports.InsightMetricsRepository
 }
 
-func NewOnTimeDecline(metrics repositories.InsightMetricsRepository) *OnTimeDecline {
+func NewOnTimeDecline(metrics insightports.InsightMetricsRepository) *OnTimeDecline {
 	return &OnTimeDecline{metrics: metrics}
 }
 
@@ -85,7 +85,7 @@ func (d *OnTimeDecline) Detect(
 	ctx context.Context,
 	params detector.Params,
 ) ([]detector.Finding, error) {
-	rows, err := d.metrics.CustomerOnTimeComparison(ctx, repositories.InsightWindowRequest{
+	rows, err := d.metrics.CustomerOnTimeComparison(ctx, insightports.InsightWindowRequest{
 		TenantInfo:  params.TenantInfo,
 		WindowStart: params.WindowStart,
 		WindowEnd:   params.WindowEnd,
@@ -105,7 +105,7 @@ func (d *OnTimeDecline) Detect(
 }
 
 func (d *OnTimeDecline) findingFor(
-	row repositories.CustomerOnTimeRow,
+	row insightports.CustomerOnTimeRow,
 	params detector.Params,
 ) (detector.Finding, bool) {
 	// Both periods need enough volume. A customer who shipped nothing last month

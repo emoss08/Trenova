@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -38,7 +38,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.AgentMemoryRepository {
+func New(p Params) agentports.AgentMemoryRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.agentmemory-repository"),
@@ -147,7 +147,7 @@ func (r *repository) Update(ctx context.Context, entity *agent.Memory) (*agent.M
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetAgentMemoryByIDRequest,
+	req agentports.GetAgentMemoryByIDRequest,
 ) (*agent.Memory, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.Memory, error) {
 		entity := new(agent.Memory)
@@ -170,7 +170,7 @@ func (r *repository) GetByID(
 
 func (r *repository) ListByIDs(
 	ctx context.Context,
-	req repositories.ListAgentMemoriesByIDsRequest,
+	req agentports.ListAgentMemoriesByIDsRequest,
 ) ([]*agent.Memory, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.Memory, error) {
 		if len(req.IDs) == 0 {
@@ -197,7 +197,7 @@ func (r *repository) ListByIDs(
 
 func (r *repository) ListReplacements(
 	ctx context.Context,
-	req repositories.ListAgentMemoryReplacementsRequest,
+	req agentports.ListAgentMemoryReplacementsRequest,
 ) ([]*agent.Memory, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.Memory, error) {
 		if len(req.ReplacedIDs) == 0 {
@@ -227,7 +227,7 @@ func (r *repository) ListReplacements(
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListAgentMemoryConnectionRequest,
+	req *agentports.ListAgentMemoryConnectionRequest,
 ) (*pagination.CursorListResult[*agent.Memory], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*agent.Memory], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -297,7 +297,7 @@ func (r *repository) ListConnection(
 // reads nothing, which is what a caller with no scope means.
 func (r *repository) ListActive(
 	ctx context.Context,
-	req repositories.ListActiveAgentMemoriesRequest,
+	req agentports.ListActiveAgentMemoriesRequest,
 ) ([]*agent.Memory, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.Memory, error) {
 		if !req.OrganizationWide && len(req.Subjects) == 0 && len(req.ToolNames) == 0 {
@@ -357,7 +357,7 @@ func (r *repository) ListActive(
 // share most of its words.
 func (r *repository) Search(
 	ctx context.Context,
-	req repositories.SearchAgentMemoriesRequest,
+	req agentports.SearchAgentMemoriesRequest,
 ) ([]*agent.Memory, error) {
 	text := newTextQuery(req.Query)
 	if text.empty() {
@@ -382,7 +382,7 @@ func (r *repository) Search(
 
 func (r *repository) search(
 	ctx context.Context,
-	req *repositories.SearchAgentMemoriesRequest,
+	req *agentports.SearchAgentMemoriesRequest,
 	match *textMatch,
 ) ([]*agent.Memory, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.Memory, error) {
@@ -449,7 +449,7 @@ func (r *repository) search(
 // database's own idea of a letter decides, never a Go copy of it.
 func (r *repository) FindActive(
 	ctx context.Context,
-	req repositories.FindActiveAgentMemoryRequest,
+	req agentports.FindActiveAgentMemoryRequest,
 ) (*agent.Memory, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.Memory, error) {
 		cols := buncolgen.MemoryColumns
@@ -504,7 +504,7 @@ func (r *repository) FindActive(
 
 func (r *repository) CountActive(
 	ctx context.Context,
-	req repositories.CountActiveAgentMemoriesRequest,
+	req agentports.CountActiveAgentMemoriesRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		count, err := r.db.DBForContext(ctx).
@@ -526,7 +526,7 @@ func (r *repository) CountActive(
 
 func (r *repository) SetStatus(
 	ctx context.Context,
-	req repositories.SetAgentMemoryStatusRequest,
+	req agentports.SetAgentMemoryStatusQuery,
 ) (*agent.Memory, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.Memory, error) {
 		cols := buncolgen.MemoryColumns
@@ -563,14 +563,14 @@ func (r *repository) SetStatus(
 
 		return r.GetByID(
 			ctx,
-			repositories.GetAgentMemoryByIDRequest{ID: req.ID, TenantInfo: req.TenantInfo},
+			agentports.GetAgentMemoryByIDRequest{ID: req.ID, TenantInfo: req.TenantInfo},
 		)
 	})
 }
 
 func (r *repository) Review(
 	ctx context.Context,
-	req repositories.ReviewAgentMemoryRequest,
+	req agentports.ReviewAgentMemoryQuery,
 ) (*agent.Memory, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.Memory, error) {
 		cols := buncolgen.MemoryColumns
@@ -602,14 +602,14 @@ func (r *repository) Review(
 
 		return r.GetByID(
 			ctx,
-			repositories.GetAgentMemoryByIDRequest{ID: req.ID, TenantInfo: req.TenantInfo},
+			agentports.GetAgentMemoryByIDRequest{ID: req.ID, TenantInfo: req.TenantInfo},
 		)
 	})
 }
 
 func (r *repository) MarkUsed(
 	ctx context.Context,
-	req repositories.MarkAgentMemoriesUsedRequest,
+	req agentports.MarkAgentMemoriesUsedRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if len(req.IDs) == 0 {
@@ -636,7 +636,7 @@ func (r *repository) MarkUsed(
 
 func (r *repository) ListSuggestionContext(
 	ctx context.Context,
-	req repositories.ListAgentMemorySuggestionContextRequest,
+	req agentports.ListAgentMemorySuggestionContextRequest,
 ) ([]*agent.Memory, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.Memory, error) {
 		cols := buncolgen.MemoryColumns
@@ -687,7 +687,7 @@ func (r *repository) ListSuggestionContext(
 
 func (r *repository) ResolveSuggestion(
 	ctx context.Context,
-	req repositories.ResolveAgentMemorySuggestionRequest,
+	req agentports.ResolveAgentMemorySuggestionRequest,
 ) (*agent.Memory, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.Memory, error) {
 		cols := buncolgen.MemoryColumns
@@ -756,7 +756,7 @@ func (r *repository) ResolveSuggestion(
 
 		resolved, err := r.GetByID(
 			ctx,
-			repositories.GetAgentMemoryByIDRequest{ID: req.ID, TenantInfo: req.TenantInfo},
+			agentports.GetAgentMemoryByIDRequest{ID: req.ID, TenantInfo: req.TenantInfo},
 		)
 		if err != nil {
 			return nil, err
@@ -819,7 +819,7 @@ func forPerson(sq *bun.SelectQuery, reader agent.MemoryReader) *bun.SelectQuery 
 
 // sameReaders keeps the rows read by exactly the readers the new memory
 // would be: the same agent, the same person or the same role.
-func sameReaders(sq *bun.SelectQuery, req *repositories.FindActiveAgentMemoryRequest) *bun.SelectQuery {
+func sameReaders(sq *bun.SelectQuery, req *agentports.FindActiveAgentMemoryRequest) *bun.SelectQuery {
 	cols := buncolgen.MemoryColumns
 	switch req.Scope {
 	case agent.MemoryScopeAgent:

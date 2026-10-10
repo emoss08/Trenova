@@ -4,10 +4,10 @@ import (
 	"embed"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/formula/engine"
 	"github.com/emoss08/trenova/internal/core/services/formula/resolver"
 	"github.com/emoss08/trenova/internal/core/services/formula/schema"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"go.uber.org/fx"
 )
 
@@ -29,11 +29,11 @@ func newSchemaRegistry() (*schema.Registry, error) {
 	return registry, nil
 }
 
-func asFormulaCalculator(s *Service) services.FormulaCalculator {
+func asFormulaCalculator(s *Service) formulatemplateports.FormulaCalculator {
 	return s
 }
 
-func asFormulaPredicateEvaluator(s *Service) services.FormulaPredicateEvaluator {
+func asFormulaPredicateEvaluator(s *Service) formulatemplateports.FormulaPredicateEvaluator {
 	return s
 }
 

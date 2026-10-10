@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -169,7 +169,7 @@ func TestFilterQueryRendersTypedFilters(t *testing.T) {
 	repo := &repository{l: zap.NewNop()}
 
 	var entities []*formulatemplate.FormulaTemplate
-	req := &repositories.ListFormulaTemplatesRequest{
+	req := &formulatemplateports.ListFormulaTemplatesRequest{
 		Filter: &pagination.QueryOptions{Pagination: pagination.Info{Limit: 25}},
 		Type:   "FreightCharge",
 		Status: "Active",

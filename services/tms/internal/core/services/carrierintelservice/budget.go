@@ -9,7 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -126,7 +126,7 @@ func (s *Service) guardBudget(ctx context.Context, check *budgetCheck) error {
 	if control.DailyFullProfileCap != nil && check.endpoint == carrierintel.EndpointProfileFull {
 		count, countErr := s.usageRepo.CountBillableSince(
 			ctx,
-			&repositories.CountBillableUsageRequest{
+			&carrierintelports.CountBillableUsageRequest{
 				TenantInfo: check.tenant,
 				Provider:   check.bound.provider,
 				Endpoint:   check.endpoint,

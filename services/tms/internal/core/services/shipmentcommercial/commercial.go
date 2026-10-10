@@ -5,8 +5,6 @@ import (
 	"context"
 	"math"
 
-	"github.com/emoss08/trenova/internal/core/services/formula/contextvariablecache"
-
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/detention"
@@ -15,10 +13,16 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
+	"github.com/emoss08/trenova/internal/core/services/formula/contextvariablecache"
 	"github.com/emoss08/trenova/internal/core/services/formula/effectiveversioncache"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetablecache"
@@ -35,25 +39,25 @@ type Params struct {
 	fx.In
 
 	Logger             *zap.Logger
-	RateEngine         services.RateEngine
-	Predicate          services.FormulaPredicateEvaluator
-	AccessorialRepo    repositories.AccessorialChargeRepository
-	AgreementRepo      repositories.RateAgreementRepository
-	QuoteRepo          repositories.RateQuoteRepository
-	BillingControlRepo repositories.BillingControlRepository
-	FuelSurcharge      services.FuelSurchargeResolver
+	RateEngine         ratequoteports.RateEngine
+	Predicate          formulatemplateports.FormulaPredicateEvaluator
+	AccessorialRepo    accessorialchargeports.AccessorialChargeRepository
+	AgreementRepo      rateagreementports.RateAgreementRepository
+	QuoteRepo          ratequoteports.RateQuoteRepository
+	BillingControlRepo tenantports.BillingControlRepository
+	FuelSurcharge      fuelsurchargeports.FuelSurchargeResolver
 	DetentionEngine    *detentionservice.Service
 }
 
 type Calculator struct {
 	logger             *zap.Logger
-	rateEngine         services.RateEngine
-	predicate          services.FormulaPredicateEvaluator
-	accessorialRepo    repositories.AccessorialChargeRepository
-	agreementRepo      repositories.RateAgreementRepository
-	quoteRepo          repositories.RateQuoteRepository
-	billingControlRepo repositories.BillingControlRepository
-	fuelSurcharge      services.FuelSurchargeResolver
+	rateEngine         ratequoteports.RateEngine
+	predicate          formulatemplateports.FormulaPredicateEvaluator
+	accessorialRepo    accessorialchargeports.AccessorialChargeRepository
+	agreementRepo      rateagreementports.RateAgreementRepository
+	quoteRepo          ratequoteports.RateQuoteRepository
+	billingControlRepo tenantports.BillingControlRepository
+	fuelSurcharge      fuelsurchargeports.FuelSurchargeResolver
 	detentionEngine    *detentionservice.Service
 	now                func() int64
 }
@@ -108,7 +112,7 @@ func (c *Calculator) CalculateTotals(
 	entity *shipment.Shipment,
 	control *tenant.ShipmentControl,
 	userID pulid.ID,
-) (*repositories.ShipmentTotalsResponse, error) {
+) (*shipmentports.ShipmentTotalsResponse, error) {
 	baseCharge, otherChargeAmount, _, err := c.calculateCommercialTotals(
 		ctx,
 		entity,
@@ -120,7 +124,7 @@ func (c *Calculator) CalculateTotals(
 		return nil, err
 	}
 
-	return &repositories.ShipmentTotalsResponse{
+	return &shipmentports.ShipmentTotalsResponse{
 		FreightChargeAmount: baseCharge,
 		OtherChargeAmount:   otherChargeAmount,
 		TotalChargeAmount:   baseCharge.Add(otherChargeAmount),
@@ -219,7 +223,7 @@ func (c *Calculator) calculateBaseCharge(
 		return c.lockedCharge(entity), entity.RatingDetail, nil
 	}
 
-	rated, err := c.rateEngine.RateShipment(ctx, &services.RateShipmentRequest{
+	rated, err := c.rateEngine.RateShipment(ctx, &ratequoteports.RateShipmentRequest{
 		Shipment:  entity,
 		Purpose:   ratequote.PurposeRating,
 		PartyType: rateagreement.PartyTypeCustomer,
@@ -280,7 +284,7 @@ func (c *Calculator) lockedCharge(entity *shipment.Shipment) decimal.Decimal {
 // of what priced it travels with the shipment rather than only in the quote.
 func (c *Calculator) applyQuote(
 	entity *shipment.Shipment,
-	rated *services.RatedShipment,
+	rated *ratequoteports.RatedShipment,
 ) {
 	seedBillToFromAgreement(entity, rated)
 	entity.RateAgreementID = rated.AgreementID
@@ -305,7 +309,7 @@ func (c *Calculator) applyQuote(
 // agreement prices the shipment. It never overwrites a bill-to somebody set by
 // hand, and it does not re-seed on later recalculations under the same
 // agreement, so a user who cleared it is not fighting the rater.
-func seedBillToFromAgreement(entity *shipment.Shipment, rated *services.RatedShipment) {
+func seedBillToFromAgreement(entity *shipment.Shipment, rated *ratequoteports.RatedShipment) {
 	if entity == nil || rated == nil || rated.BillToCustomerID == nil ||
 		rated.BillToCustomerID.IsNil() || rated.AgreementID == nil {
 		return
@@ -323,7 +327,7 @@ func seedBillToFromAgreement(entity *shipment.Shipment, rated *services.RatedShi
 	entity.BillToCustomerID = &billTo
 }
 
-func ratingDetailFromQuote(rated *services.RatedShipment) *shipment.RatingDetail {
+func ratingDetailFromQuote(rated *ratequoteports.RatedShipment) *shipment.RatingDetail {
 	result, _ := rated.Amount.Float64()
 
 	// The trace records what priced the load, not the variables that fed the
@@ -528,7 +532,7 @@ func (c *Calculator) syncDetentionCharge(
 		return nil
 	}
 
-	accessorial, err := c.accessorialRepo.GetByID(ctx, repositories.GetAccessorialChargeByIDRequest{
+	accessorial, err := c.accessorialRepo.GetByID(ctx, accessorialchargeports.GetAccessorialChargeByIDRequest{
 		ID: *control.DetentionChargeID,
 		TenantInfo: &pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -632,7 +636,7 @@ func (c *Calculator) syncFuelSurcharge(
 
 	resolved, err := c.fuelSurcharge.ResolveShipmentCharge(
 		ctx,
-		&services.ResolveShipmentChargeRequest{
+		&fuelsurchargeports.ResolveShipmentChargeRequest{
 			Shipment:         entity,
 			Linehaul:         baseCharge,
 			AccessorialTotal: nonFuelSurchargeChargeTotal(entity, baseCharge),
@@ -682,7 +686,7 @@ func removeGeneratedFuelSurchargeCharges(entity *shipment.Shipment) {
 
 func ensureGeneratedFuelSurchargeCharge(
 	entity *shipment.Shipment,
-	resolved *services.ResolvedFuelSurcharge,
+	resolved *fuelsurchargeports.ResolvedFuelSurcharge,
 ) {
 	var generated *shipment.AdditionalCharge
 	filtered := make([]*shipment.AdditionalCharge, 0, len(entity.AdditionalCharges))

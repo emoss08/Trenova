@@ -9,12 +9,12 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/reporting/canned"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/pkg/reportrows"
@@ -173,22 +173,22 @@ func (f *fakeReporting) Preview(
 }
 
 type fakePermissions struct {
-	serviceports.PermissionEngine
+	permissionports.PermissionEngine
 
 	allowed  bool
-	captured *serviceports.PermissionCheckRequest
+	captured *permissionports.PermissionCheckRequest
 	// readable names the resources the actor may read from the report
 	// catalog; nil means every resource, at full sensitivity.
-	readable map[string]*serviceports.ResourcePermissionDetail
+	readable map[string]*permissionports.ResourcePermissionDetail
 }
 
 func (f *fakePermissions) GetResourcePermissions(
 	_ context.Context,
 	_, _ pulid.ID,
 	resource string,
-) (*serviceports.ResourcePermissionDetail, error) {
+) (*permissionports.ResourcePermissionDetail, error) {
 	if f.readable == nil {
-		return &serviceports.ResourcePermissionDetail{
+		return &permissionports.ResourcePermissionDetail{
 			Resource:       resource,
 			Operations:     []permission.Operation{permission.OpRead},
 			MaxSensitivity: permission.SensitivityConfidential,
@@ -198,18 +198,18 @@ func (f *fakePermissions) GetResourcePermissions(
 		return detail, nil
 	}
 
-	return &serviceports.ResourcePermissionDetail{Resource: resource}, nil
+	return &permissionports.ResourcePermissionDetail{Resource: resource}, nil
 }
 
 func (f *fakePermissions) Check(
 	_ context.Context,
-	req *serviceports.PermissionCheckRequest,
-) (*serviceports.PermissionCheckResult, error) {
+	req *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
 	f.captured = req
 
 	allowed := f.allowed
 	switch {
-	case req.PrincipalType == serviceports.PrincipalTypeAgent:
+	case req.PrincipalType == permissionports.PrincipalTypeAgent:
 		// The engine answers an agent principal from the platform allow-list
 		// before any role applies; the fake answers the same way.
 		allowed = permission.IsAgentAllowed(permission.Resource(req.Resource), req.Operation)
@@ -218,7 +218,7 @@ func (f *fakePermissions) Check(
 		allowed = ok && slices.Contains(detail.Operations, req.Operation)
 	}
 
-	return &serviceports.PermissionCheckResult{
+	return &permissionports.PermissionCheckResult{
 		Allowed: allowed,
 		Reason:  "not permitted",
 	}, nil
@@ -243,7 +243,7 @@ func agingEntry() *canned.Entry {
 
 func reportingTools(
 	t *testing.T,
-) (*fakeReporting, *fakePermissions, map[string]serviceports.AgentQueryTool) {
+) (*fakeReporting, *fakePermissions, map[string]agentports.AgentQueryTool) {
 	t.Helper()
 
 	service := &fakeReporting{
@@ -265,8 +265,8 @@ func reportingTools(
 	runner.settleWindow = 40 * time.Millisecond
 	runner.settlePoll = 2 * time.Millisecond
 
-	tools := map[string]serviceports.AgentQueryTool{}
-	for _, tool := range []serviceports.AgentQueryTool{
+	tools := map[string]agentports.AgentQueryTool{}
+	for _, tool := range []agentports.AgentQueryTool{
 		newListReportsTool(service),
 		runner,
 		newGetReportRunTool(service),

@@ -13,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/customerpaymentservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
@@ -27,6 +26,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fiscalyearrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoicerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/journalpostingrepository"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -257,7 +258,7 @@ func TestImportAndMatchBankReceiptToCustomerPayment(t *testing.T) {
 	)
 	payment, err := paymentSvc.PostAndApply(
 		ctx,
-		&serviceports.PostCustomerPaymentRequest{
+		&customerpaymentports.PostCustomerPaymentRequest{
 			CustomerID:      shp.CustomerID,
 			PaymentDate:     now.Unix(),
 			AccountingDate:  now.Unix(),
@@ -265,7 +266,7 @@ func TestImportAndMatchBankReceiptToCustomerPayment(t *testing.T) {
 			PaymentMethod:   customerpayment.MethodACH,
 			ReferenceNumber: "BANK-MATCH-1",
 			CurrencyCode:    "USD",
-			Applications: []*serviceports.CustomerPaymentApplicationInput{
+			Applications: []*customerpaymentports.CustomerPaymentApplicationInput{
 				{InvoiceID: inv.ID, AppliedAmountMinor: 10000},
 			},
 			TenantInfo: pagination.TenantInfo{
@@ -288,7 +289,7 @@ func TestImportAndMatchBankReceiptToCustomerPayment(t *testing.T) {
 	)
 	receipt, err := svc.Import(
 		ctx,
-		&serviceports.ImportBankReceiptRequest{
+		&bankreceiptports.ImportBankReceiptRequest{
 			ReceiptDate:     now.Unix(),
 			AmountMinor:     10000,
 			ReferenceNumber: "BANK-MATCH-1",
@@ -305,7 +306,7 @@ func TestImportAndMatchBankReceiptToCustomerPayment(t *testing.T) {
 
 	matched, err := svc.Match(
 		ctx,
-		&serviceports.MatchBankReceiptRequest{
+		&bankreceiptports.MatchBankReceiptRequest{
 			ReceiptID: receipt.ID,
 			PaymentID: payment.ID,
 			TenantInfo: pagination.TenantInfo{

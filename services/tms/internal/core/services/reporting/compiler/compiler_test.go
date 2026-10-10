@@ -10,8 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -58,12 +59,12 @@ func (f *fakePermissionEngine) GetResourcePermissions(
 	_ context.Context,
 	_, _ pulid.ID,
 	resource string,
-) (*services.ResourcePermissionDetail, error) {
+) (*permissionports.ResourcePermissionDetail, error) {
 	grant := f.defaultGrant
 	if override, ok := f.overrides[resource]; ok {
 		grant = override
 	}
-	return &services.ResourcePermissionDetail{
+	return &permissionports.ResourcePermissionDetail{
 		Resource:         resource,
 		Operations:       grant.operations,
 		DataScope:        grant.dataScope,
@@ -73,20 +74,20 @@ func (f *fakePermissionEngine) GetResourcePermissions(
 }
 
 func (f *fakePermissionEngine) Check(
-	context.Context, *services.PermissionCheckRequest,
-) (*services.PermissionCheckResult, error) {
+	context.Context, *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
 	panic("not used by compiler")
 }
 
 func (f *fakePermissionEngine) CheckBatch(
-	context.Context, *services.BatchPermissionCheckRequest,
-) (*services.BatchPermissionCheckResult, error) {
+	context.Context, *permissionports.BatchPermissionCheckRequest,
+) (*permissionports.BatchPermissionCheckResult, error) {
 	panic("not used by compiler")
 }
 
 func (f *fakePermissionEngine) GetLightManifest(
 	context.Context, pulid.ID, pulid.ID,
-) (*services.LightPermissionManifest, error) {
+) (*permissionports.LightPermissionManifest, error) {
 	panic("not used by compiler")
 }
 
@@ -96,35 +97,35 @@ func (f *fakePermissionEngine) InvalidateUser(context.Context, pulid.ID, pulid.I
 
 func (f *fakePermissionEngine) GetEffectivePermissions(
 	context.Context, pulid.ID, pulid.ID,
-) (*services.EffectivePermissions, error) {
+) (*permissionports.EffectivePermissions, error) {
 	panic("not used by compiler")
 }
 
 func (f *fakePermissionEngine) SimulatePermissions(
-	context.Context, *services.SimulatePermissionsRequest,
-) (*services.EffectivePermissions, error) {
+	context.Context, *permissionports.SimulatePermissionsRequest,
+) (*permissionports.EffectivePermissions, error) {
 	panic("not used by compiler")
 }
 
 func (f *fakePermissionEngine) AgentsUsable(
-	context.Context, *services.RequestActor, permission.Operation,
-) (*services.UsableAgents, error) {
+	context.Context, *permissionports.RequestActor, permission.Operation,
+) (*permissionports.UsableAgents, error) {
 	panic("not used by compiler")
 }
 
 func (f *fakePermissionEngine) MayUseAgent(
-	context.Context, *services.RequestActor, *agentdefinition.Definition,
+	context.Context, *permissionports.RequestActor, *agentdefinition.Definition,
 ) (bool, error) {
 	panic("not used by compiler")
 }
 
 func (f *fakePermissionEngine) RoleCoverage(
-	context.Context, *services.RoleCoverageRequest,
-) ([]services.RoleCoverage, error) {
+	context.Context, *permissionports.RoleCoverageRequest,
+) ([]permissionports.RoleCoverage, error) {
 	panic("not used by compiler")
 }
 
-func newTestCompiler(engine services.PermissionEngine) *Compiler {
+func newTestCompiler(engine permissionports.PermissionEngine) *Compiler {
 	return NewWithCatalog(
 		&reportcatalog.Default,
 		engine,
@@ -134,8 +135,8 @@ func newTestCompiler(engine services.PermissionEngine) *Compiler {
 	)
 }
 
-func newRequest(def *report.Definition) *services.ReportCompileRequest {
-	return &services.ReportCompileRequest{
+func newRequest(def *report.Definition) *reportports.ReportCompileRequest {
+	return &reportports.ReportCompileRequest{
 		Definition: def,
 		Tenant: pagination.TenantInfo{
 			OrgID:  testOrgID,
@@ -147,7 +148,7 @@ func newRequest(def *report.Definition) *services.ReportCompileRequest {
 	}
 }
 
-func mustCompile(t *testing.T, c *Compiler, def *report.Definition) *services.CompiledReportQuery {
+func mustCompile(t *testing.T, c *Compiler, def *report.Definition) *reportports.CompiledReportQuery {
 	t.Helper()
 	compiled, err := c.Compile(context.Background(), newRequest(def))
 	require.NoError(t, err)

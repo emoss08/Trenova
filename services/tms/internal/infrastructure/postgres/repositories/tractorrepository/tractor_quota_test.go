@@ -1,13 +1,14 @@
 package tractorrepository
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
 	"regexp"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -27,8 +28,8 @@ func newTractorForQuota() *tractor.Tractor {
 	}
 }
 
-func tractorQuota(entity *tractor.Tractor) *services.QuotaRequest {
-	return &services.QuotaRequest{
+func tractorQuota(entity *tractor.Tractor) *platformplanports.QuotaRequest {
+	return &platformplanports.QuotaRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
 		Meter:      platformcatalog.MeterTractorsTotal,
 		Quantity:   1,
@@ -39,7 +40,7 @@ func TestCreateRefusesATractorPastTheQuota(t *testing.T) {
 	t.Parallel()
 
 	conn, sqlMock := dbtest.NewSQLMock(t)
-	guard := mocks.NewMockQuotaGuard(t)
+	guard := platformplanportsmock.NewMockQuotaGuard(t)
 	repo := &repository{db: conn, l: zap.NewNop(), quota: guard}
 	entity := newTractorForQuota()
 
@@ -59,7 +60,7 @@ func TestCreateInsertsATractorUnderTheQuota(t *testing.T) {
 	t.Parallel()
 
 	conn, sqlMock := dbtest.NewSQLMock(t)
-	guard := mocks.NewMockQuotaGuard(t)
+	guard := platformplanportsmock.NewMockQuotaGuard(t)
 	repo := &repository{db: conn, l: zap.NewNop(), quota: guard}
 	entity := newTractorForQuota()
 

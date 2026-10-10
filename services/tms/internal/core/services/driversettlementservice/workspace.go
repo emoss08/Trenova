@@ -4,8 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -49,7 +50,7 @@ func (s *Service) GetWorkspaceSummary(
 
 	counts, err := s.settlementRepo.GetWorkspaceCounts(
 		ctx,
-		&repositories.GetWorkspaceCountsRequest{
+		&driversettlementports.GetWorkspaceCountsRequest{
 			TenantInfo:  tenantInfo,
 			PeriodStart: bounds.PeriodStart,
 			PeriodEnd:   bounds.PeriodEnd,
@@ -83,7 +84,7 @@ func (s *Service) GetWorkspaceSummary(
 		UnsettledWorkerCount: unsettled.WorkerCount,
 	}
 
-	batches, err := s.batchRepo.List(ctx, &repositories.ListSettlementBatchesRequest{
+	batches, err := s.batchRepo.List(ctx, &driversettlementports.ListSettlementBatchesRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenantInfo,
 			Pagination: pagination.Info{Limit: 1},
@@ -102,7 +103,7 @@ func (s *Service) ListUnsettledWorkers(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	periodStart, periodEnd int64,
-) ([]*repositories.UnsettledWorkerSummary, error) {
+) ([]*driversettlementports.UnsettledWorkerSummary, error) {
 	control, err := s.settlementControl.GetOrCreate(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -115,7 +116,7 @@ func (s *Service) ListUnsettledWorkers(
 
 	return s.payEventRepo.ListUnsettledWorkerSummaries(
 		ctx,
-		&repositories.ListUnsettledWorkerSummariesRequest{
+		&driversettlementports.ListUnsettledWorkerSummariesRequest{
 			TenantInfo:  tenantInfo,
 			PeriodStart: bounds.PeriodStart,
 			PeriodEnd:   bounds.PeriodEnd,
@@ -164,7 +165,7 @@ type BulkActionPayload struct {
 func (s *Service) BulkAction(
 	ctx context.Context,
 	req *BulkActionRequest,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*BulkActionPayload, error) {
 	if err := requireActor(actor, "Bulk settlement action"); err != nil {
 		return nil, err
@@ -204,7 +205,7 @@ func (s *Service) BulkAction(
 		case BulkActionPost:
 			_, err = s.Post(ctx, req.TenantInfo, settlementID, actor)
 		case BulkActionMarkPaid:
-			_, err = s.MarkPaid(ctx, &serviceports.MarkSettlementPaidRequest{
+			_, err = s.MarkPaid(ctx, &carriersettlementports.MarkSettlementPaidRequest{
 				TenantInfo:       req.TenantInfo,
 				SettlementID:     settlementID,
 				PaymentMethod:    req.PaymentMethod,

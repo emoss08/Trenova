@@ -1,11 +1,12 @@
 package weatheralertjobs
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/weatheralertportsmock"
 	"context"
 	"errors"
 	"testing"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,20 +23,20 @@ func TestPollNWSAlertsActivity_ReportsEachTenant(t *testing.T) {
 	broken := pagination.TenantInfo{OrgID: pulid.ID("org_b"), BuID: pulid.ID("bu_b")}
 	quiet := pagination.TenantInfo{OrgID: pulid.ID("org_c"), BuID: pulid.ID("bu_c")}
 
-	service := mocks.NewMockWeatherAlertService(t)
+	service := weatheralertportsmock.NewMockWeatherAlertService(t)
 	service.EXPECT().
 		PollNWSAlerts(mock.Anything, mock.Anything).
 		RunAndReturn(func(
 			_ context.Context,
-			heartbeat serviceports.WeatherAlertPollHeartbeat,
-		) (*serviceports.PollNWSAlertsResult, error) {
+			heartbeat weatheralertports.WeatherAlertPollHeartbeat,
+		) (*weatheralertports.PollNWSAlertsResult, error) {
 			require.NotNil(t, heartbeat)
 			heartbeat("outside an activity a heartbeat is a no-op")
 
-			return &serviceports.PollNWSAlertsResult{
+			return &weatheralertports.PollNWSAlertsResult{
 				AlertsInFeed:   10,
 				TenantsScanned: 3,
-				Tenants: []serviceports.WeatherAlertTenantSync{
+				Tenants: []weatheralertports.WeatherAlertTenantSync{
 					{TenantInfo: healthy, Written: 3, Unchanged: 7},
 					{TenantInfo: broken, Written: 1, Err: errors.New("database unavailable")},
 					{TenantInfo: quiet, Unchanged: 10},
@@ -64,10 +65,10 @@ func TestPollNWSAlertsActivity_ReportsEachTenant(t *testing.T) {
 func TestPollNWSAlertsActivity_ReportsAnUnchangedFeed(t *testing.T) {
 	t.Parallel()
 
-	service := mocks.NewMockWeatherAlertService(t)
+	service := weatheralertportsmock.NewMockWeatherAlertService(t)
 	service.EXPECT().
 		PollNWSAlerts(mock.Anything, mock.Anything).
-		Return(&serviceports.PollNWSAlertsResult{FeedUnchanged: true, TenantsScanned: 4}, nil).
+		Return(&weatheralertports.PollNWSAlertsResult{FeedUnchanged: true, TenantsScanned: 4}, nil).
 		Once()
 
 	activities := NewActivities(ActivitiesParams{Service: service, Logger: zap.NewNop()})
@@ -83,7 +84,7 @@ func TestPollNWSAlertsActivity_ReportsAnUnchangedFeed(t *testing.T) {
 func TestPollNWSAlertsActivity_ReturnsAPollFailure(t *testing.T) {
 	t.Parallel()
 
-	service := mocks.NewMockWeatherAlertService(t)
+	service := weatheralertportsmock.NewMockWeatherAlertService(t)
 	service.EXPECT().
 		PollNWSAlerts(mock.Anything, mock.Anything).
 		Return(nil, errors.New("feed down")).

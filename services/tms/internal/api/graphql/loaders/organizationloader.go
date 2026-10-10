@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -14,11 +14,11 @@ import (
 type OrganizationByIDLoaderFactoryParams struct {
 	fx.In
 
-	OrganizationService services.OrganizationService
+	OrganizationService tenantports.OrganizationService
 }
 
 type OrganizationByIDLoaderFactory struct {
-	organizationService services.OrganizationService
+	organizationService tenantports.OrganizationService
 }
 
 func NewOrganizationByIDLoaderFactory(
@@ -39,7 +39,7 @@ func (f *OrganizationByIDLoaderFactory) batchFunc(
 	tenantInfo pagination.TenantInfo,
 ) batchFetchFunc[*tenant.Organization] {
 	return batchByIDFunc(func(ctx context.Context, ids []pulid.ID) ([]*tenant.Organization, error) {
-		return f.organizationService.GetByIDs(ctx, services.GetOrganizationsByIDsRequest{
+		return f.organizationService.GetByIDs(ctx, tenantports.GetOrganizationsByIDsRequest{
 			TenantInfo:      tenantInfo,
 			OrganizationIDs: ids,
 			IncludeState:    true,

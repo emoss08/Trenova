@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -55,7 +55,7 @@ func (s *Service) putObject(
 	}
 
 	body := []byte(sealed)
-	_, err = s.storage.Upload(ctx, &storage.UploadParams{
+	_, err = s.storage.Upload(ctx, &kernelports.UploadParams{
 		Key:         key,
 		ContentType: contentType,
 		Size:        int64(len(body)),

@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -77,7 +77,7 @@ func (s *Service) PreviewLiveTenders(
 
 	withOffers := make([]*tender.Tender, 0, len(live))
 	for _, entity := range live {
-		loaded, gErr := s.repo.GetByID(ctx, repositories.GetTenderByIDRequest{
+		loaded, gErr := s.repo.GetByID(ctx, tenderports.GetTenderByIDRequest{
 			TenantInfo:    tenantInfo,
 			TenderID:      entity.ID,
 			IncludeOffers: true,
@@ -96,7 +96,7 @@ func (s *Service) liveTendersForShipment(
 	tenantInfo pagination.TenantInfo,
 	shipmentID pulid.ID,
 ) ([]*tender.Tender, error) {
-	tenders, err := s.repo.ListByShipment(ctx, repositories.ListTendersByShipmentRequest{
+	tenders, err := s.repo.ListByShipment(ctx, tenderports.ListTendersByShipmentRequest{
 		TenantInfo: tenantInfo,
 		ShipmentID: shipmentID,
 	})

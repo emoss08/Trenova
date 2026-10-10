@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/dispatcheligibility"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -41,7 +41,7 @@ func (s *service) runHOSComplianceChecks(
 
 	states, err := s.telematicsRepo.ListWorkerHOSStates(
 		ctx,
-		&repositories.ListWorkerHOSStatesRequest{
+		&telematicsports.ListWorkerHOSStatesRequest{
 			TenantInfo: tenantInfo,
 			WorkerIDs:  workerIDs,
 		},

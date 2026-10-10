@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/costingcontrolports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
@@ -26,7 +26,7 @@ type actualsRepository struct {
 	l  *zap.Logger
 }
 
-func NewActuals(p ActualsParams) repositories.CostingActualsRepository {
+func NewActuals(p ActualsParams) costingcontrolports.CostingActualsRepository {
 	return &actualsRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.costing-actuals-repository"),
@@ -35,7 +35,7 @@ func NewActuals(p ActualsParams) repositories.CostingActualsRepository {
 
 func (r *actualsRepository) SumExpenseByAccounts(
 	ctx context.Context,
-	req *repositories.SumExpenseByAccountsRequest,
+	req *costingcontrolports.SumExpenseByAccountsRequest,
 ) (map[pulid.ID]decimal.Decimal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]decimal.Decimal, error) {
 		if len(req.GLAccountIDs) == 0 {
@@ -83,11 +83,11 @@ func (r *actualsRepository) SumExpenseByAccounts(
 
 func (r *actualsRepository) ShipmentMilesByIDs(
 	ctx context.Context,
-	req *repositories.ShipmentMilesByIDsRequest,
-) ([]*repositories.ShipmentMilesRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.ShipmentMilesRow, error) {
+	req *costingcontrolports.ShipmentMilesByIDsRequest,
+) ([]*costingcontrolports.ShipmentMilesRow, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*costingcontrolports.ShipmentMilesRow, error) {
 		if len(req.ShipmentIDs) == 0 {
-			return []*repositories.ShipmentMilesRow{}, nil
+			return []*costingcontrolports.ShipmentMilesRow{}, nil
 		}
 
 		log := r.l.With(
@@ -95,7 +95,7 @@ func (r *actualsRepository) ShipmentMilesByIDs(
 			zap.String("orgID", req.TenantInfo.OrgID.String()),
 		)
 
-		rows := make([]*repositories.ShipmentMilesRow, 0, len(req.ShipmentIDs))
+		rows := make([]*costingcontrolports.ShipmentMilesRow, 0, len(req.ShipmentIDs))
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			TableExpr("shipments AS sp").
@@ -127,15 +127,15 @@ func (r *actualsRepository) ShipmentMilesByIDs(
 
 func (r *actualsRepository) FleetMiles(
 	ctx context.Context,
-	req *repositories.FleetMilesRequest,
-) (*repositories.FleetMilesResult, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.FleetMilesResult, error) {
+	req *costingcontrolports.FleetMilesRequest,
+) (*costingcontrolports.FleetMilesResult, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*costingcontrolports.FleetMilesResult, error) {
 		log := r.l.With(
 			zap.String("operation", "FleetMiles"),
 			zap.String("orgID", req.TenantInfo.OrgID.String()),
 		)
 
-		result := new(repositories.FleetMilesResult)
+		result := new(costingcontrolports.FleetMilesResult)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			TableExpr("shipment_moves AS sm").
@@ -167,9 +167,9 @@ func (r *actualsRepository) FleetMiles(
 
 func (r *actualsRepository) FleetCostAggregates(
 	ctx context.Context,
-	req *repositories.FleetCostAggregatesRequest,
-) (*repositories.FleetCostAggregatesResult, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.FleetCostAggregatesResult, error) {
+	req *costingcontrolports.FleetCostAggregatesRequest,
+) (*costingcontrolports.FleetCostAggregatesResult, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*costingcontrolports.FleetCostAggregatesResult, error) {
 		log := r.l.With(
 			zap.String("operation", "FleetCostAggregates"),
 			zap.String("orgID", req.TenantInfo.OrgID.String()),
@@ -200,7 +200,7 @@ func (r *actualsRepository) FleetCostAggregates(
 			Where("sp.created_at <= ?", req.ToDate).
 			GroupExpr("sp.id, sp.total_charge_amount")
 
-		result := new(repositories.FleetCostAggregatesResult)
+		result := new(costingcontrolports.FleetCostAggregatesResult)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			TableExpr("(?) AS s", shipmentAggregates).

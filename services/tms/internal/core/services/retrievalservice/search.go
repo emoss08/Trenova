@@ -10,8 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -33,24 +32,24 @@ const (
 	messageBodyField    = "textBody"
 )
 
-var _ serviceports.RetrievalSearcher = (*Searcher)(nil)
+var _ agentports.RetrievalSearcher = (*Searcher)(nil)
 
 type SearcherParams struct {
 	fx.In
 
 	Logger     *zap.Logger
-	Repo       repositories.AIRetrievalRepository
-	Sources    repositories.RetrievalSourceRepository
+	Repo       agentports.AIRetrievalRepository
+	Sources    agentports.RetrievalSourceRepository
 	Registry   *permission.Registry
-	Vectorizer serviceports.QueryVectorizer `optional:"true"`
+	Vectorizer agentports.QueryVectorizer `optional:"true"`
 }
 
 type Searcher struct {
 	l          *zap.Logger
-	repo       repositories.AIRetrievalRepository
-	sources    repositories.RetrievalSourceRepository
+	repo       agentports.AIRetrievalRepository
+	sources    agentports.RetrievalSourceRepository
 	registry   *permission.Registry
-	vectorizer serviceports.QueryVectorizer
+	vectorizer agentports.QueryVectorizer
 	tuning     SearchTuning
 }
 
@@ -70,7 +69,7 @@ func NewSearcher(p SearcherParams) *Searcher {
 	}
 }
 
-func AsSearcher(s *Searcher) serviceports.RetrievalSearcher { return s }
+func AsSearcher(s *Searcher) agentports.RetrievalSearcher { return s }
 
 func (s *Searcher) WithTuning(tuning SearchTuning) *Searcher {
 	tuned := *s
@@ -86,7 +85,7 @@ type searchPlan struct {
 	candidates int
 }
 
-func (s *Searcher) plan(req *serviceports.RetrievalSearchRequest) (searchPlan, error) {
+func (s *Searcher) plan(req *agentports.RetrievalSearchRequest) (searchPlan, error) {
 	if req == nil || req.TenantInfo.OrgID.IsNil() || req.TenantInfo.BuID.IsNil() {
 		return searchPlan{}, errortypes.NewValidationError(
 			"tenant", errortypes.ErrRequired, "Organization and business unit are required")
@@ -118,25 +117,25 @@ func (s *Searcher) plan(req *serviceports.RetrievalSearchRequest) (searchPlan, e
 
 type keywordLeg func(
 	context.Context,
-	repositories.RetrievalKeywordSearchRequest,
-) ([]repositories.RetrievalKeywordHit, error)
+	agentports.RetrievalKeywordSearchRequest,
+) ([]agentports.RetrievalKeywordHit, error)
 
 func (s *Searcher) legs(
 	ctx context.Context,
-	req *serviceports.RetrievalSearchRequest,
+	req *agentports.RetrievalSearchRequest,
 	plan searchPlan,
 	sourceType airetrieval.SourceType,
 	keyword keywordLeg,
-) ([]FusedHit, serviceports.RetrievalSemantics, error) {
+) ([]FusedHit, agentports.RetrievalSemantics, error) {
 	var (
-		keywordHits []repositories.RetrievalKeywordHit
-		vectorHits  []repositories.VectorSearchHit
-		semantics   serviceports.RetrievalSemantics
+		keywordHits []agentports.RetrievalKeywordHit
+		vectorHits  []agentports.VectorSearchHit
+		semantics   agentports.RetrievalSemantics
 	)
 
 	group, groupCtx := errgroup.WithContext(ctx)
 	group.Go(func() error {
-		hits, err := keyword(groupCtx, repositories.RetrievalKeywordSearchRequest{
+		hits, err := keyword(groupCtx, agentports.RetrievalKeywordSearchRequest{
 			TenantInfo: req.TenantInfo,
 			Query:      plan.query,
 			Limit:      plan.candidates,
@@ -160,12 +159,12 @@ func (s *Searcher) legs(
 
 func (s *Searcher) vectorLeg(
 	ctx context.Context,
-	req *serviceports.RetrievalSearchRequest,
+	req *agentports.RetrievalSearchRequest,
 	plan searchPlan,
 	sourceType airetrieval.SourceType,
-) ([]repositories.VectorSearchHit, serviceports.RetrievalSemantics) {
+) ([]agentports.VectorSearchHit, agentports.RetrievalSemantics) {
 	if s.vectorizer == nil {
-		return nil, serviceports.RetrievalSemantics{Reason: airetrieval.UnavailableReasonNoProvider}
+		return nil, agentports.RetrievalSemantics{Reason: airetrieval.UnavailableReasonNoProvider}
 	}
 
 	settings, err := s.repo.GetSettings(ctx, req.TenantInfo)
@@ -173,15 +172,15 @@ func (s *Searcher) vectorLeg(
 		s.l.Warn("retrieval settings could not be read; searching by keyword only",
 			zap.String("organizationId", req.TenantInfo.OrgID.String()),
 			zap.Error(err))
-		return nil, serviceports.RetrievalSemantics{
+		return nil, agentports.RetrievalSemantics{
 			Reason: airetrieval.UnavailableReasonProviderFailed,
 		}
 	}
 	if !settings.SourceEnabled(sourceType) {
-		return nil, serviceports.RetrievalSemantics{Reason: airetrieval.UnavailableReasonDisabled}
+		return nil, agentports.RetrievalSemantics{Reason: airetrieval.UnavailableReasonDisabled}
 	}
 
-	vector, err := s.vectorizer.Vectorize(ctx, &serviceports.QueryVectorRequest{
+	vector, err := s.vectorizer.Vectorize(ctx, &agentports.QueryVectorRequest{
 		TenantInfo:  req.TenantInfo,
 		Text:        plan.query,
 		Attribution: req.Attribution,
@@ -190,7 +189,7 @@ func (s *Searcher) vectorLeg(
 		s.l.Warn("query could not be embedded; searching by keyword only",
 			zap.String("organizationId", req.TenantInfo.OrgID.String()),
 			zap.Error(err))
-		return nil, serviceports.RetrievalSemantics{
+		return nil, agentports.RetrievalSemantics{
 			Reason: airetrieval.UnavailableReasonProviderFailed,
 		}
 	}
@@ -199,10 +198,10 @@ func (s *Searcher) vectorLeg(
 		if reason == "" {
 			reason = airetrieval.UnavailableReasonNotIndexed
 		}
-		return nil, serviceports.RetrievalSemantics{Reason: reason}
+		return nil, agentports.RetrievalSemantics{Reason: reason}
 	}
 
-	hits, err := s.repo.Search(ctx, &repositories.VectorSearchRequest{
+	hits, err := s.repo.Search(ctx, &agentports.VectorSearchRequest{
 		TenantInfo:  req.TenantInfo,
 		SourceTypes: []airetrieval.SourceType{sourceType},
 		ModelKey:    vector.ModelKey,
@@ -213,17 +212,17 @@ func (s *Searcher) vectorLeg(
 	if err != nil {
 		var unavailable *airetrieval.UnavailableError
 		if errors.As(err, &unavailable) {
-			return nil, serviceports.RetrievalSemantics{Reason: unavailable.Reason}
+			return nil, agentports.RetrievalSemantics{Reason: unavailable.Reason}
 		}
 		s.l.Warn("vector search failed; searching by keyword only",
 			zap.String("organizationId", req.TenantInfo.OrgID.String()),
 			zap.Error(err))
-		return nil, serviceports.RetrievalSemantics{
+		return nil, agentports.RetrievalSemantics{
 			Reason: airetrieval.UnavailableReasonProviderFailed,
 		}
 	}
 
-	return hits, serviceports.RetrievalSemantics{Used: true}
+	return hits, agentports.RetrievalSemantics{Used: true}
 }
 
 func fusedIDs(hits []FusedHit) []pulid.ID {
@@ -237,14 +236,14 @@ func fusedIDs(hits []FusedHit) []pulid.ID {
 
 func (s *Searcher) SearchDocuments(
 	ctx context.Context,
-	req *serviceports.RetrievalSearchRequest,
-) (*serviceports.DocumentSearchResult, error) {
+	req *agentports.RetrievalSearchRequest,
+) (*agentports.DocumentSearchResult, error) {
 	plan, err := s.plan(req)
 	if err != nil {
 		return nil, err
 	}
 
-	result := &serviceports.DocumentSearchResult{Hits: []serviceports.DocumentSearchHit{}}
+	result := &agentports.DocumentSearchResult{Hits: []agentports.DocumentSearchHit{}}
 	if !req.Access.MayReadResource(ctx, permission.ResourceDocument) {
 		return result, nil
 	}
@@ -264,7 +263,7 @@ func (s *Searcher) SearchDocuments(
 		return result, nil
 	}
 
-	sources, err := s.sources.GetDocuments(ctx, &repositories.RetrievalDocumentsRequest{
+	sources, err := s.sources.GetDocuments(ctx, &agentports.RetrievalDocumentsRequest{
 		TenantInfo:   req.TenantInfo,
 		IDs:          fusedIDs(kept),
 		IncludePages: true,
@@ -272,7 +271,7 @@ func (s *Searcher) SearchDocuments(
 	if err != nil {
 		return nil, fmt.Errorf("read matched documents: %w", err)
 	}
-	byID := make(map[pulid.ID]*repositories.RetrievalDocumentSource, len(sources))
+	byID := make(map[pulid.ID]*agentports.RetrievalDocumentSource, len(sources))
 	for _, source := range sources {
 		byID[source.Document.ID] = source
 	}
@@ -293,11 +292,11 @@ func (s *Searcher) SearchDocuments(
 
 func (s *Searcher) readableDocuments(
 	ctx context.Context,
-	req *serviceports.RetrievalSearchRequest,
+	req *agentports.RetrievalSearchRequest,
 	plan searchPlan,
 	fused []FusedHit,
 ) ([]FusedHit, error) {
-	sources, err := s.sources.GetDocuments(ctx, &repositories.RetrievalDocumentsRequest{
+	sources, err := s.sources.GetDocuments(ctx, &agentports.RetrievalDocumentsRequest{
 		TenantInfo: req.TenantInfo,
 		IDs:        fusedIDs(fused),
 	})
@@ -335,13 +334,13 @@ func (s *Searcher) readableDocuments(
 
 func (s *Searcher) documentHit(
 	ctx context.Context,
-	req *serviceports.RetrievalSearchRequest,
+	req *agentports.RetrievalSearchRequest,
 	plan searchPlan,
 	hit FusedHit,
-	source *repositories.RetrievalDocumentSource,
+	source *agentports.RetrievalDocumentSource,
 	showsName, showsText bool,
-) serviceports.DocumentSearchHit {
-	out := serviceports.DocumentSearchHit{
+) agentports.DocumentSearchHit {
+	out := agentports.DocumentSearchHit{
 		Document:      source.Document,
 		ShowsFileName: showsName,
 		Match:         hit.Match(),
@@ -374,15 +373,15 @@ func (s *Searcher) documentHit(
 
 func (s *Searcher) SearchInboundMessages(
 	ctx context.Context,
-	req *serviceports.RetrievalSearchRequest,
-) (*serviceports.InboundMessageSearchResult, error) {
+	req *agentports.RetrievalSearchRequest,
+) (*agentports.InboundMessageSearchResult, error) {
 	plan, err := s.plan(req)
 	if err != nil {
 		return nil, err
 	}
 
-	result := &serviceports.InboundMessageSearchResult{
-		Hits: []serviceports.InboundMessageSearchHit{},
+	result := &agentports.InboundMessageSearchResult{
+		Hits: []agentports.InboundMessageSearchHit{},
 	}
 	if !req.Access.MayReadResource(ctx, permission.ResourceInboundMessage) {
 		return result, nil
@@ -395,7 +394,7 @@ func (s *Searcher) SearchInboundMessages(
 		return result, err
 	}
 
-	messages, err := s.sources.GetInboundMessages(ctx, repositories.RetrievalSourcesRequest{
+	messages, err := s.sources.GetInboundMessages(ctx, agentports.RetrievalSourcesRequest{
 		TenantInfo: req.TenantInfo,
 		IDs:        fusedIDs(fused),
 	})
@@ -438,8 +437,8 @@ func messageHit(
 	hit FusedHit,
 	message *inboundmessage.InboundMessage,
 	visible messageVisibility,
-) serviceports.InboundMessageSearchHit {
-	out := serviceports.InboundMessageSearchHit{
+) agentports.InboundMessageSearchHit {
+	out := agentports.InboundMessageSearchHit{
 		Message:    message,
 		Match:      hit.Match(),
 		Score:      hit.Score,

@@ -5,7 +5,7 @@ import (
 	"context"
 	"errors"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"go.temporal.io/api/serviceerror"
 	"go.temporal.io/sdk/client"
@@ -23,15 +23,15 @@ type Service struct {
 }
 
 var (
-	_ serviceports.WorkflowStarter       = (*Service)(nil)
-	_ serviceports.WorkflowSignalStarter = (*Service)(nil)
+	_ kernelports.WorkflowStarter       = (*Service)(nil)
+	_ kernelports.WorkflowSignalStarter = (*Service)(nil)
 )
 
-func New(p Params) serviceports.WorkflowStarter {
+func New(p Params) kernelports.WorkflowStarter {
 	return &Service{client: p.TemporalClient}
 }
 
-func NewSignalStarter(p Params) serviceports.WorkflowSignalStarter {
+func NewSignalStarter(p Params) kernelports.WorkflowSignalStarter {
 	return &Service{client: p.TemporalClient}
 }
 
@@ -42,7 +42,7 @@ func (s *Service) StartWorkflow(
 	args ...any,
 ) (client.WorkflowRun, error) {
 	if s.client == nil {
-		return nil, serviceports.ErrWorkflowStarterDisabled
+		return nil, kernelports.ErrWorkflowStarterDisabled
 	}
 
 	run, err := s.client.ExecuteWorkflow(ctx, options, workflow, args...)
@@ -51,7 +51,7 @@ func (s *Service) StartWorkflow(
 
 func (s *Service) CancelWorkflow(ctx context.Context, workflowID, runID string) error {
 	if s.client == nil {
-		return serviceports.ErrWorkflowStarterDisabled
+		return kernelports.ErrWorkflowStarterDisabled
 	}
 
 	return unreachable(s.client.CancelWorkflow(ctx, workflowID, runID))
@@ -63,7 +63,7 @@ func (s *Service) SignalWorkflow(
 	arg any,
 ) error {
 	if s.client == nil {
-		return serviceports.ErrWorkflowStarterDisabled
+		return kernelports.ErrWorkflowStarterDisabled
 	}
 
 	return unreachable(s.client.SignalWorkflow(ctx, workflowID, runID, signalName, arg))
@@ -78,7 +78,7 @@ func (s *Service) SignalWithStartWorkflow(
 	args ...any,
 ) (client.WorkflowRun, error) {
 	if s.client == nil {
-		return nil, serviceports.ErrWorkflowStarterDisabled
+		return nil, kernelports.ErrWorkflowStarterDisabled
 	}
 
 	run, err := s.client.SignalWithStartWorkflow(

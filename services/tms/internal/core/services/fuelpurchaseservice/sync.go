@@ -7,8 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -119,9 +118,9 @@ func (s *Service) runFeed(
 	ctx context.Context,
 	log *zap.Logger,
 	req *SyncFeedRequest,
-	feed *services.ResolvedFuelFeed,
+	feed *fuelpurchaseports.ResolvedFuelFeed,
 ) (*SyncFeedResult, error) {
-	state, err := s.repo.GetFeedState(ctx, &repositories.GetFuelFeedStateRequest{
+	state, err := s.repo.GetFeedState(ctx, &fuelpurchaseports.GetFuelFeedStateRequest{
 		TenantInfo: req.TenantInfo,
 		Provider:   feed.Provider,
 		FeedType:   fuelpurchase.FeedTypeTransactions,
@@ -133,7 +132,7 @@ func (s *Service) runFeed(
 	now := s.now()
 	fetched, err := feed.Connector.FetchTransactions(
 		ctx,
-		&services.FetchFuelTransactionsRequest{
+		&fuelpurchaseports.FetchFuelTransactionsRequest{
 			TenantInfo: req.TenantInfo,
 			Provider:   feed.Provider,
 			Config:     feed.Config,
@@ -174,8 +173,8 @@ func (s *Service) runFeed(
 func (s *Service) postFeedRows(
 	ctx context.Context,
 	req *SyncFeedRequest,
-	feed *services.ResolvedFuelFeed,
-	fetched *services.FetchFuelTransactionsResult,
+	feed *fuelpurchaseports.ResolvedFuelFeed,
+	fetched *fuelpurchaseports.FetchFuelTransactionsResult,
 ) (*SyncFeedResult, error) {
 	result := &SyncFeedResult{Provider: feed.Provider}
 	if fetched.Staged == nil || len(fetched.Staged.Rows) == 0 {
@@ -244,8 +243,8 @@ func (s *Service) postFeedRows(
 func (s *Service) openFeedBatch(
 	ctx context.Context,
 	req *SyncFeedRequest,
-	feed *services.ResolvedFuelFeed,
-	fetched *services.FetchFuelTransactionsResult,
+	feed *fuelpurchaseports.ResolvedFuelFeed,
+	fetched *fuelpurchaseports.FetchFuelTransactionsResult,
 ) (*fuelpurchase.ImportBatch, error) {
 	batch := &fuelpurchase.ImportBatch{
 		OrganizationID: req.TenantInfo.OrgID,
@@ -277,7 +276,7 @@ func (s *Service) commitFeedRows(
 	req *SyncFeedRequest,
 	batch *fuelpurchase.ImportBatch,
 	rows []*fuelpurchase.ImportRow,
-) (*repositories.CommitImportResult, error) {
+) (*fuelpurchaseports.CommitImportResult, error) {
 	purchases := make([]*fuelpurchase.FuelPurchase, 0, len(rows))
 	rowIDByReference := make(map[string]pulid.ID, len(rows))
 
@@ -317,7 +316,7 @@ func (s *Service) commitFeedRows(
 		return nil, nil
 	}
 
-	return s.repo.CommitImport(ctx, &repositories.CommitImportRequest{
+	return s.repo.CommitImport(ctx, &fuelpurchaseports.CommitImportRequest{
 		Batch:            batch,
 		Purchases:        purchases,
 		RowIDByReference: rowIDByReference,
@@ -334,7 +333,7 @@ func (s *Service) discoverCards(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	provider fuelpurchase.CardProvider,
-	cards []services.ProviderCard,
+	cards []fuelpurchaseports.ProviderCard,
 ) (int, error) {
 	if len(cards) == 0 {
 		return 0, nil
@@ -347,7 +346,7 @@ func (s *Service) discoverCards(
 
 	existing, err := s.repo.FindCardsByLastFour(
 		ctx,
-		&repositories.FindFuelCardsByLastFourRequest{
+		&fuelpurchaseports.FindFuelCardsByLastFourRequest{
 			TenantInfo: tenantInfo,
 			Provider:   provider,
 			LastFours:  lastFours,
@@ -391,7 +390,7 @@ func (s *Service) discoverCards(
 	return created, nil
 }
 
-func discoveredCardLabel(card services.ProviderCard, provider fuelpurchase.CardProvider) string {
+func discoveredCardLabel(card fuelpurchaseports.ProviderCard, provider fuelpurchase.CardProvider) string {
 	if label := strings.TrimSpace(card.Label); label != "" {
 		return label
 	}

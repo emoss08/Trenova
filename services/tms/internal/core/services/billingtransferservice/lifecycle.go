@@ -3,10 +3,9 @@ package billingtransferservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/billingtransferjobs/billingtransfercontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/billingtransfer"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/billingtransferjobs/billingtransfercontract"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingtransferports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -35,7 +34,7 @@ func (s *Service) Cancel(
 
 	canceled, err := s.runRepo.RequestCancel(
 		ctx,
-		&repositories.RequestBillingTransferRunCancelRequest{
+		&billingtransferports.RequestBillingTransferRunCancelRequest{
 			TenantInfo:    req.TenantInfo,
 			RunID:         run.ID,
 			RequestedByID: req.TenantInfo.UserID,
@@ -93,7 +92,7 @@ func (s *Service) Retry(
 
 	seeded, err := s.runRepo.SeedRetryItems(
 		ctx,
-		&repositories.SeedBillingTransferRetryItemsRequest{
+		&billingtransferports.SeedBillingTransferRetryItemsRequest{
 			TenantInfo:  req.TenantInfo,
 			RunID:       created.ID,
 			SourceRunID: source.ID,
@@ -158,7 +157,7 @@ func (s *Service) planCancel(
 	ctx context.Context,
 	req *RunRequest,
 ) (*billingtransfer.BillingTransferRun, error) {
-	run, err := s.runRepo.GetByID(ctx, &repositories.GetBillingTransferRunRequest{
+	run, err := s.runRepo.GetByID(ctx, &billingtransferports.GetBillingTransferRunRequest{
 		TenantInfo: req.TenantInfo,
 		RunID:      req.RunID,
 	})
@@ -189,7 +188,7 @@ func (s *Service) planRetry(
 		)
 	}
 
-	source, err = s.runRepo.GetByID(ctx, &repositories.GetBillingTransferRunRequest{
+	source, err = s.runRepo.GetByID(ctx, &billingtransferports.GetBillingTransferRunRequest{
 		TenantInfo: req.TenantInfo,
 		RunID:      req.RunID,
 	})

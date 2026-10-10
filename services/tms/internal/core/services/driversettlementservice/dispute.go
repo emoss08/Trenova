@@ -7,10 +7,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -39,14 +40,14 @@ type ResolveDisputeRequest struct {
 
 func (s *Service) ListDisputesConnection(
 	ctx context.Context,
-	req *repositories.ListSettlementDisputeConnectionRequest,
+	req *driversettlementports.ListSettlementDisputeConnectionRequest,
 ) (*pagination.CursorListResult[*driversettlement.Dispute], error) {
 	return s.disputeRepo.ListConnection(ctx, req)
 }
 
 func (s *Service) GetDispute(
 	ctx context.Context,
-	req repositories.GetSettlementDisputeByIDRequest,
+	req driversettlementports.GetSettlementDisputeByIDRequest,
 ) (*driversettlement.Dispute, error) {
 	return s.disputeRepo.GetByID(ctx, req)
 }
@@ -60,7 +61,7 @@ func (s *Service) CountOpenDisputes(
 
 func (s *Service) ListDisputesForWorker(
 	ctx context.Context,
-	req *repositories.ListSettlementDisputesForWorkerRequest,
+	req *driversettlementports.ListSettlementDisputesForWorkerRequest,
 ) ([]*driversettlement.Dispute, error) {
 	return s.disputeRepo.ListForWorker(ctx, req)
 }
@@ -73,7 +74,7 @@ func (s *Service) CreateDispute(
 		return nil, err
 	}
 
-	settlement, err := s.settlementRepo.GetByID(ctx, repositories.GetDriverSettlementByIDRequest{
+	settlement, err := s.settlementRepo.GetByID(ctx, driversettlementports.GetDriverSettlementByIDRequest{
 		ID:           req.SettlementID,
 		TenantInfo:   req.TenantInfo,
 		IncludeLines: req.SettlementLineID != nil,
@@ -107,7 +108,7 @@ func (s *Service) CreateDispute(
 
 	openDisputes, err := s.disputeRepo.ListForWorker(
 		ctx,
-		&repositories.ListSettlementDisputesForWorkerRequest{
+		&driversettlementports.ListSettlementDisputesForWorkerRequest{
 			TenantInfo: req.TenantInfo,
 			WorkerID:   req.WorkerID,
 			Statuses: []driversettlement.DisputeStatus{
@@ -169,7 +170,7 @@ func (s *Service) WithdrawDispute(
 	disputeID pulid.ID,
 	workerID pulid.ID,
 ) (*driversettlement.Dispute, error) {
-	dispute, err := s.disputeRepo.GetByID(ctx, repositories.GetSettlementDisputeByIDRequest{
+	dispute, err := s.disputeRepo.GetByID(ctx, driversettlementports.GetSettlementDisputeByIDRequest{
 		ID:         disputeID,
 		TenantInfo: tenantInfo,
 	})
@@ -215,7 +216,7 @@ func (s *Service) StartDisputeReview(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	disputeID pulid.ID,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driversettlement.Dispute, error) {
 	change, err := s.PlanStartDisputeReview(ctx, tenantInfo, disputeID, actor)
 	if err != nil {
@@ -236,7 +237,7 @@ func (s *Service) StartDisputeReview(
 func (s *Service) ResolveDispute(
 	ctx context.Context,
 	req *ResolveDisputeRequest,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driversettlement.Dispute, error) {
 	plan, err := s.PlanResolveDispute(ctx, req, actor)
 	if err != nil {
@@ -288,11 +289,11 @@ func (s *Service) applyDisputeAdjustment(
 	ctx context.Context,
 	req *ResolveDisputeRequest,
 	dispute *driversettlement.Dispute,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (pulid.ID, error) {
 	target, err := s.settlementRepo.GetOpenDraftForWorker(
 		ctx,
-		repositories.GetOpenDraftForWorkerRequest{
+		driversettlementports.GetOpenDraftForWorkerRequest{
 			TenantInfo: req.TenantInfo,
 			WorkerID:   dispute.WorkerID,
 		},
@@ -343,7 +344,7 @@ func (s *Service) generateDisputeSettlement(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driversettlement.Settlement, error) {
 	control, err := s.settlementControl.GetOrCreate(ctx, tenantInfo)
 	if err != nil {
@@ -399,7 +400,7 @@ func (s *Service) logDisputeAudit(
 		current.BusinessUnitID,
 		userID,
 	)
-	params := &serviceports.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceSettlementDispute,
 		ResourceID:     current.ID.String(),
 		Operation:      operation,
@@ -408,7 +409,7 @@ func (s *Service) logDisputeAudit(
 		OrganizationID: current.OrganizationID,
 		BusinessUnitID: current.BusinessUnitID,
 	}
-	options := []serviceports.LogOption{auditservice.WithComment(comment)}
+	options := []auditports.LogOption{auditservice.WithComment(comment)}
 	if previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(previous)
 		options = append(options, auditservice.WithDiff(previous, current))

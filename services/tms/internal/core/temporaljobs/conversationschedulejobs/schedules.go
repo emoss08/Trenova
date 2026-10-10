@@ -9,9 +9,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/core/domain/conversationschedule"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/api/enums/v1"
@@ -57,7 +56,7 @@ type SchedulesParams struct {
 	fx.In
 
 	Client    client.Client
-	Schedules repositories.ConversationScheduleRepository
+	Schedules conversationscheduleports.ConversationScheduleRepository
 	Logger    *zap.Logger
 }
 
@@ -65,11 +64,11 @@ type SchedulesParams struct {
 // the way agentjobs.DefinitionSchedules does for scheduled agents.
 type Schedules struct {
 	client    client.Client
-	schedules repositories.ConversationScheduleRepository
+	schedules conversationscheduleports.ConversationScheduleRepository
 	l         *zap.Logger
 }
 
-var _ serviceports.ConversationScheduleSyncer = (*Schedules)(nil)
+var _ conversationscheduleports.ConversationScheduleSyncer = (*Schedules)(nil)
 
 func NewSchedules(p SchedulesParams) *Schedules {
 	return &Schedules{
@@ -229,7 +228,7 @@ func (s *Schedules) Reconcile(ctx context.Context) (*ReconcileResult, error) {
 	for {
 		page, err := s.schedules.ListAcrossTenants(
 			ctx,
-			repositories.ListConversationSchedulesAcrossTenantsRequest{
+			conversationscheduleports.ListConversationSchedulesAcrossTenantsRequest{
 				AfterID: after,
 				Limit:   reconcilePageSize,
 			},

@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,7 +20,7 @@ import (
 )
 
 type searchFixture struct {
-	repo   repositories.AgentMemoryRepository
+	repo   agentports.AgentMemoryRepository
 	tenant pagination.TenantInfo
 	now    int64
 }
@@ -67,7 +67,7 @@ func (f searchFixture) search(
 ) []pulid.ID {
 	t.Helper()
 
-	found, err := f.repo.Search(ctx, repositories.SearchAgentMemoriesRequest{
+	found, err := f.repo.Search(ctx, agentports.SearchAgentMemoriesRequest{
 		TenantInfo: f.tenant,
 		Now:        f.now,
 		Query:      query,
@@ -134,7 +134,7 @@ func TestSearch_ReadsOneMemoryByIDAndBoundsTheRows(t *testing.T) {
 		last = f.record(ctx, t, &agent.Memory{Content: fmt.Sprintf("Lane rule number %d.", idx)})
 	}
 
-	byID, err := f.repo.Search(ctx, repositories.SearchAgentMemoriesRequest{
+	byID, err := f.repo.Search(ctx, agentports.SearchAgentMemoriesRequest{
 		TenantInfo: f.tenant,
 		Now:        f.now,
 		IDs:        []pulid.ID{last.ID},
@@ -144,7 +144,7 @@ func TestSearch_ReadsOneMemoryByIDAndBoundsTheRows(t *testing.T) {
 	assert.Equal(t, last.ID, byID[0].ID)
 	assert.Empty(t, byID[0].SearchVector, "the search column is never read back")
 
-	defaulted, err := f.repo.Search(ctx, repositories.SearchAgentMemoriesRequest{
+	defaulted, err := f.repo.Search(ctx, agentports.SearchAgentMemoriesRequest{
 		TenantInfo: f.tenant,
 		Now:        f.now,
 		Query:      "lane",
@@ -152,7 +152,7 @@ func TestSearch_ReadsOneMemoryByIDAndBoundsTheRows(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, defaulted, agent.DefaultMemoryRecallLimit)
 
-	capped, err := f.repo.Search(ctx, repositories.SearchAgentMemoriesRequest{
+	capped, err := f.repo.Search(ctx, agentports.SearchAgentMemoriesRequest{
 		TenantInfo: f.tenant,
 		Now:        f.now,
 		Query:      "lane",
@@ -169,7 +169,7 @@ func TestCountActive_CountsOnlyWhatAgentsMayRead(t *testing.T) {
 	past := f.now - 60
 	f.record(ctx, t, &agent.Memory{Content: "Expired.", ExpiresAt: &past})
 	retired := f.record(ctx, t, &agent.Memory{Content: "Retired."})
-	_, err := f.repo.SetStatus(ctx, repositories.SetAgentMemoryStatusRequest{
+	_, err := f.repo.SetStatus(ctx, agentports.SetAgentMemoryStatusQuery{
 		ID:         retired.ID,
 		TenantInfo: f.tenant,
 		Status:     agent.MemoryStatusRetired,
@@ -177,7 +177,7 @@ func TestCountActive_CountsOnlyWhatAgentsMayRead(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	count, err := f.repo.CountActive(ctx, repositories.CountActiveAgentMemoriesRequest{
+	count, err := f.repo.CountActive(ctx, agentports.CountActiveAgentMemoriesRequest{
 		TenantInfo: f.tenant,
 		Now:        f.now,
 	})

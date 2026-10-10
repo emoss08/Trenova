@@ -4,12 +4,12 @@ package tenantresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	services "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 )
 
 type Deps struct {
 	*base.Core
-	OrganizationService services.OrganizationService
+	OrganizationService tenantports.OrganizationService
 }
 
 type MutationResolver struct{ *Deps }

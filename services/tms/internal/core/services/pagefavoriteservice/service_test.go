@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/pagefavorite"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/pagefavoriteports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -21,7 +21,7 @@ type mockPageFavoriteRepo struct {
 
 func (m *mockPageFavoriteRepo) List(
 	ctx context.Context,
-	req *repositories.ListPageFavoritesRequest,
+	req *pagefavoriteports.ListPageFavoritesRequest,
 ) ([]*pagefavorite.PageFavorite, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
@@ -32,7 +32,7 @@ func (m *mockPageFavoriteRepo) List(
 
 func (m *mockPageFavoriteRepo) GetByURL(
 	ctx context.Context,
-	req *repositories.GetPageFavoriteByURLRequest,
+	req *pagefavoriteports.GetPageFavoriteByURLRequest,
 ) (*pagefavorite.PageFavorite, bool, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
@@ -94,7 +94,7 @@ func TestList_Success(t *testing.T) {
 	ctx := t.Context()
 
 	expected := []*pagefavorite.PageFavorite{newTestEntity()}
-	req := &repositories.ListPageFavoritesRequest{
+	req := &pagefavoriteports.ListPageFavoritesRequest{
 		UserID: pulid.MustNew("usr_"),
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
@@ -116,7 +116,7 @@ func TestList_Error(t *testing.T) {
 	deps := setupTest(t)
 	ctx := t.Context()
 
-	req := &repositories.ListPageFavoritesRequest{
+	req := &pagefavoriteports.ListPageFavoritesRequest{
 		UserID: pulid.MustNew("usr_"),
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
@@ -160,7 +160,7 @@ func TestToggle_CreateFavorite(t *testing.T) {
 		PageTitle:      "Shipments",
 	}
 
-	deps.repo.On("GetByURL", mock.Anything, &repositories.GetPageFavoriteByURLRequest{
+	deps.repo.On("GetByURL", mock.Anything, &pagefavoriteports.GetPageFavoriteByURLRequest{
 		PageURL:    req.PageURL,
 		UserID:     req.UserID,
 		TenantInfo: req.TenantInfo,
@@ -199,7 +199,7 @@ func TestToggle_RemoveFavorite(t *testing.T) {
 		TenantInfo: tenantInfo,
 	}
 
-	deps.repo.On("GetByURL", mock.Anything, &repositories.GetPageFavoriteByURLRequest{
+	deps.repo.On("GetByURL", mock.Anything, &pagefavoriteports.GetPageFavoriteByURLRequest{
 		PageURL:    req.PageURL,
 		UserID:     req.UserID,
 		TenantInfo: req.TenantInfo,
@@ -259,7 +259,7 @@ func TestToggle_DeleteError(t *testing.T) {
 		TenantInfo: tenantInfo,
 	}
 
-	deps.repo.On("GetByURL", mock.Anything, &repositories.GetPageFavoriteByURLRequest{
+	deps.repo.On("GetByURL", mock.Anything, &pagefavoriteports.GetPageFavoriteByURLRequest{
 		PageURL:    req.PageURL,
 		UserID:     req.UserID,
 		TenantInfo: req.TenantInfo,
@@ -310,7 +310,7 @@ func TestIsFavorited_True(t *testing.T) {
 
 	existing := newTestEntity()
 
-	deps.repo.On("GetByURL", mock.Anything, &repositories.GetPageFavoriteByURLRequest{
+	deps.repo.On("GetByURL", mock.Anything, &pagefavoriteports.GetPageFavoriteByURLRequest{
 		PageURL:    pageURL,
 		UserID:     userID,
 		TenantInfo: tenantInfo,
@@ -335,7 +335,7 @@ func TestIsFavorited_False(t *testing.T) {
 	}
 	pageURL := "/shipments"
 
-	deps.repo.On("GetByURL", mock.Anything, &repositories.GetPageFavoriteByURLRequest{
+	deps.repo.On("GetByURL", mock.Anything, &pagefavoriteports.GetPageFavoriteByURLRequest{
 		PageURL:    pageURL,
 		UserID:     userID,
 		TenantInfo: tenantInfo,

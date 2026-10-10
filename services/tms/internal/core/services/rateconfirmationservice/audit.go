@@ -3,8 +3,9 @@ package rateconfirmationservice
 import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -25,7 +26,7 @@ func (s *Service) logRateConfirmationAudit(p *rateConfirmationAuditParams) {
 		return
 	}
 
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceRateConfirmation,
 		ResourceID:     p.Current.ID.String(),
 		Operation:      p.Operation,
@@ -35,11 +36,11 @@ func (s *Service) logRateConfirmationAudit(p *rateConfirmationAuditParams) {
 		BusinessUnitID: p.TenantInfo.BuID,
 	}
 	if p.UserID.IsNil() {
-		params.PrincipalType = services.PrincipalTypeSystem
-		params.PrincipalID = services.SystemPrincipalID
+		params.PrincipalType = permissionports.PrincipalTypeSystem
+		params.PrincipalID = permissionports.SystemPrincipalID
 	}
 
-	options := []services.LogOption{auditservice.WithComment(p.Comment)}
+	options := []auditports.LogOption{auditservice.WithComment(p.Comment)}
 	if p.Previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(p.Previous)
 		options = append(options, auditservice.WithDiff(p.Previous, p.Current))

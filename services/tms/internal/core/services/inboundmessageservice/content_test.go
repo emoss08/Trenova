@@ -8,8 +8,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -18,7 +17,7 @@ import (
 )
 
 type contentRepo struct {
-	repositories.InboundMessageRepository
+	inboundmessageports.InboundMessageRepository
 
 	mu sync.Mutex
 
@@ -29,7 +28,7 @@ type contentRepo struct {
 }
 
 func (r *contentRepo) GetByID(
-	_ context.Context, req repositories.GetInboundMessageByIDRequest,
+	_ context.Context, req inboundmessageports.GetInboundMessageByIDRequest,
 ) (*inboundmessage.InboundMessage, error) {
 	r.askedForAttachment = r.askedForAttachment || req.IncludeAttachments
 
@@ -76,14 +75,14 @@ func (r *contentRepo) UpdateAttachment(
 }
 
 type stubFetcher struct {
-	content *services.InboundContent
+	content *inboundmessageports.InboundContent
 	err     error
-	asked   *services.InboundContentRequest
+	asked   *inboundmessageports.InboundContentRequest
 }
 
 func (f *stubFetcher) Fetch(
-	_ context.Context, req *services.InboundContentRequest,
-) (*services.InboundContent, error) {
+	_ context.Context, req *inboundmessageports.InboundContentRequest,
+) (*inboundmessageports.InboundContent, error) {
 	f.asked = req
 	if f.err != nil {
 		return nil, f.err
@@ -123,13 +122,13 @@ func resendMessage() *inboundmessage.InboundMessage {
 	}
 }
 
-func fetchedContent() *services.InboundContent {
-	return &services.InboundContent{
+func fetchedContent() *inboundmessageports.InboundContent {
+	return &inboundmessageports.InboundContent{
 		HTML:       "<p>Please confirm pickup <b>Thursday</b>.</p>",
 		MessageID:  "<ignored@bigshipper.com>",
 		InReplyTo:  "<prev@bigshipper.com>",
 		References: []string{"<one@bigshipper.com>", "<prev@bigshipper.com>"},
-		Attachments: []services.InboundContentAttachment{
+		Attachments: []inboundmessageports.InboundContentAttachment{
 			{ProviderID: "att_1", FileName: "tender.pdf", Content: []byte("%PDF-1.7")},
 			{ProviderID: "att_2", FileName: "huge.zip", FailureText: "The file is too large."},
 			{ProviderID: "att_4", FileName: "done.pdf", Content: []byte("again")},
@@ -248,7 +247,7 @@ func TestFetchContent_RejectsAMailboxWithNoAPIKey(t *testing.T) {
 	svc := contentService(repo, fetcher, &stubStorage{}, nil)
 
 	err := svc.FetchContent(t.Context(), message.ID, tenantOfMessage(message))
-	require.ErrorIs(t, err, services.ErrInboundContentRejected)
+	require.ErrorIs(t, err, inboundmessageports.ErrInboundContentRejected)
 	assert.Contains(t, err.Error(), "no Resend API key")
 	assert.Nil(t, fetcher.asked)
 	assert.Zero(t, repo.writes)
@@ -261,7 +260,7 @@ func TestFetchContent_RejectsWhenNothingCanFetch(t *testing.T) {
 	svc := contentService(&contentRepo{message: message}, nil, &stubStorage{}, nil)
 
 	err := svc.FetchContent(t.Context(), message.ID, tenantOfMessage(message))
-	require.ErrorIs(t, err, services.ErrInboundContentRejected)
+	require.ErrorIs(t, err, inboundmessageports.ErrInboundContentRejected)
 }
 
 func TestFetchContent_PassesTheProvidersFailureThrough(t *testing.T) {
@@ -269,11 +268,11 @@ func TestFetchContent_PassesTheProvidersFailureThrough(t *testing.T) {
 
 	message := resendMessage()
 	repo := &contentRepo{message: message}
-	cause := fmt.Errorf("%w: Resend answered 503", services.ErrInboundContentUnavailable)
+	cause := fmt.Errorf("%w: Resend answered 503", inboundmessageports.ErrInboundContentUnavailable)
 	svc := contentService(repo, &stubFetcher{err: cause}, &stubStorage{}, nil)
 
 	err := svc.FetchContent(t.Context(), message.ID, tenantOfMessage(message))
-	require.ErrorIs(t, err, services.ErrInboundContentUnavailable)
+	require.ErrorIs(t, err, inboundmessageports.ErrInboundContentUnavailable)
 	assert.Zero(t, repo.writes)
 }
 
@@ -345,7 +344,7 @@ func TestContentFailureText(t *testing.T) {
 	t.Parallel()
 
 	rejected := ContentFailureText(
-		fmt.Errorf("%w: the mailbox has no Resend API key", services.ErrInboundContentRejected),
+		fmt.Errorf("%w: the mailbox has no Resend API key", inboundmessageports.ErrInboundContentRejected),
 	)
 	assert.Equal(t,
 		"The body and attachments of this message could not be read from the provider: "+
@@ -354,7 +353,7 @@ func TestContentFailureText(t *testing.T) {
 		rejected)
 
 	unavailable := ContentFailureText(
-		fmt.Errorf("%w: Resend answered 503", services.ErrInboundContentUnavailable),
+		fmt.Errorf("%w: Resend answered 503", inboundmessageports.ErrInboundContentUnavailable),
 	)
 	assert.Equal(t,
 		"The body and attachments of this message could not be read from the provider: "+
@@ -386,8 +385,8 @@ type blockingFetcher struct {
 }
 
 func (f *blockingFetcher) Fetch(
-	ctx context.Context, _ *services.InboundContentRequest,
-) (*services.InboundContent, error) {
+	ctx context.Context, _ *inboundmessageports.InboundContentRequest,
+) (*inboundmessageports.InboundContent, error) {
 	close(f.asked)
 	select {
 	case <-f.release:
@@ -395,7 +394,7 @@ func (f *blockingFetcher) Fetch(
 		return nil, ctx.Err()
 	}
 
-	return &services.InboundContent{Text: "Read after the provider was answered."}, nil
+	return &inboundmessageports.InboundContent{Text: "Read after the provider was answered."}, nil
 }
 
 /*
@@ -444,7 +443,7 @@ func TestFetchContentInline_RecordsATimedOutFetchOnAFreshContext(t *testing.T) {
 	message := resendMessage()
 	repo := &contentRepo{message: message}
 	cause := fmt.Errorf("%w: Resend could not be reached: %w",
-		services.ErrInboundContentUnavailable, context.DeadlineExceeded)
+		inboundmessageports.ErrInboundContentUnavailable, context.DeadlineExceeded)
 	svc := contentService(repo, &stubFetcher{err: cause}, &stubStorage{}, nil)
 
 	expired, cancel := context.WithCancel(t.Context())

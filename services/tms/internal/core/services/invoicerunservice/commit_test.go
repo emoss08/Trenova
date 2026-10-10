@@ -1,12 +1,15 @@
 package invoicerunservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/invoicerun"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -29,9 +32,9 @@ func TestResolveGroupLegsSkipsAnItemReallocatedToAnotherPayer(t *testing.T) {
 		ShipmentID:         pulid.MustNew("shp_"),
 	}
 
-	billingQueueRepo := mocks.NewMockBillingQueueRepository(t)
+	billingQueueRepo := billingqueueportsmock.NewMockBillingQueueRepository(t)
 	billingQueueRepo.EXPECT().
-		GetByID(mock.Anything, &repositories.GetBillingQueueItemByIDRequest{
+		GetByID(mock.Anything, &billingqueueports.GetBillingQueueItemByIDRequest{
 			ItemID:     item.BillingQueueItemID,
 			TenantInfo: tenantInfo,
 		}).
@@ -76,11 +79,11 @@ func TestResolveGroupLegsLoadsLegsForThePayersItems(t *testing.T) {
 	}
 	leg := &shipment.Shipment{ID: item.ShipmentID}
 
-	billingQueueRepo := mocks.NewMockBillingQueueRepository(t)
+	billingQueueRepo := billingqueueportsmock.NewMockBillingQueueRepository(t)
 	billingQueueRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(queueItem, nil).Once()
-	shipmentRepo := mocks.NewMockShipmentRepository(t)
+	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
-		GetByID(mock.Anything, mock.MatchedBy(func(req *repositories.GetShipmentByIDRequest) bool {
+		GetByID(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetShipmentByIDRequest) bool {
 			return req.ID == item.ShipmentID && req.ShipmentOptions.ExpandShipmentDetails
 		})).
 		Return(leg, nil).

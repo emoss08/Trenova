@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -59,7 +59,7 @@ func TestSSOIdentityLinks_BindOneSubjectToOneUserPerProvider(t *testing.T) {
 	}
 	require.NoError(t, repo.Create(ctx, link))
 
-	found, err := repo.GetBySubject(ctx, repositories.GetSSOIdentityLinkBySubjectRequest{
+	found, err := repo.GetBySubject(ctx, tenantports.GetSSOIdentityLinkBySubjectRequest{
 		SSOConfigID: cfg.ID, Issuer: cfg.OIDCIssuerURL, Subject: "okta|1",
 	})
 	require.NoError(t, err)
@@ -81,7 +81,7 @@ func TestSSOIdentityLinks_BindOneSubjectToOneUserPerProvider(t *testing.T) {
 
 	require.NoError(t, repo.RecordLogin(ctx, found, timeutils.NowUnix()))
 
-	_, err = repo.GetByUser(ctx, repositories.GetSSOIdentityLinkByUserRequest{
+	_, err = repo.GetByUser(ctx, tenantports.GetSSOIdentityLinkByUserRequest{
 		SSOConfigID: cfg.ID, Issuer: cfg.OIDCIssuerURL, UserID: secondUser.ID,
 	})
 	require.Error(t, err)

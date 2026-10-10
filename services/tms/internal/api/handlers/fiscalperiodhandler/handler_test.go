@@ -1,6 +1,8 @@
 package fiscalperiodhandler_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalyearportsmock"
 	"net/http"
 	"testing"
 
@@ -10,9 +12,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fiscalclose"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/fiscalperiodservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -27,7 +30,7 @@ import (
 func TestHandlerCloseBlockers(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockFiscalPeriodRepository(t)
+	repo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	periodID := pulid.MustNew("fp_")
 	fyID := pulid.MustNew("fy_")
 	period := &fiscalperiod.FiscalPeriod{
@@ -39,15 +42,15 @@ func TestHandlerCloseBlockers(t *testing.T) {
 		PeriodNumber:   1,
 	}
 	repo.EXPECT().
-		GetByID(mock.Anything, repositories.GetFiscalPeriodByIDRequest{ID: periodID, TenantInfo: pagination.TenantInfo{OrgID: sharedtestutil.TestOrgID, BuID: sharedtestutil.TestBuID}}).
+		GetByID(mock.Anything, fiscalperiodports.GetFiscalPeriodByIDRequest{ID: periodID, TenantInfo: pagination.TenantInfo{OrgID: sharedtestutil.TestOrgID, BuID: sharedtestutil.TestBuID}}).
 		Return(period, nil).
 		Once()
 	repo.EXPECT().
-		ListByFiscalYearID(mock.Anything, repositories.ListByFiscalYearIDRequest{FiscalYearID: fyID, OrgID: sharedtestutil.TestOrgID, BuID: sharedtestutil.TestBuID}).
+		ListByFiscalYearID(mock.Anything, fiscalperiodports.ListByFiscalYearIDRequest{FiscalYearID: fyID, OrgID: sharedtestutil.TestOrgID, BuID: sharedtestutil.TestBuID}).
 		Return([]*fiscalperiod.FiscalPeriod{period}, nil).
 		Once()
 
-	handler := newFiscalPeriodHandler(t, repo, mocks.NewMockFiscalYearRepository(t))
+	handler := newFiscalPeriodHandler(t, repo, fiscalyearportsmock.NewMockFiscalYearRepository(t))
 	ginCtx := sharedtestutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/fiscal-periods/" + periodID.String() + "/close-blockers/").
@@ -65,8 +68,8 @@ func TestHandlerCloseBlockers(t *testing.T) {
 
 func newFiscalPeriodHandler(
 	t *testing.T,
-	repo *mocks.MockFiscalPeriodRepository,
-	yearRepo *mocks.MockFiscalYearRepository,
+	repo *fiscalperiodportsmock.MockFiscalPeriodRepository,
+	yearRepo *fiscalyearportsmock.MockFiscalYearRepository,
 ) *fiscalperiodhandler.Handler {
 	t.Helper()
 
@@ -102,8 +105,8 @@ func newFiscalPeriodHandler(
 }
 
 func expectTransitionState(
-	repo *mocks.MockFiscalPeriodRepository,
-	yearRepo *mocks.MockFiscalYearRepository,
+	repo *fiscalperiodportsmock.MockFiscalPeriodRepository,
+	yearRepo *fiscalyearportsmock.MockFiscalYearRepository,
 	period *fiscalperiod.FiscalPeriod,
 ) {
 	tenant := pagination.TenantInfo{
@@ -112,11 +115,11 @@ func expectTransitionState(
 		UserID: sharedtestutil.TestUserID,
 	}
 	repo.EXPECT().
-		GetByID(mock.Anything, repositories.GetFiscalPeriodByIDRequest{ID: period.ID, TenantInfo: tenant}).
+		GetByID(mock.Anything, fiscalperiodports.GetFiscalPeriodByIDRequest{ID: period.ID, TenantInfo: tenant}).
 		Return(period, nil).
 		Once()
 	yearRepo.EXPECT().
-		GetByID(mock.Anything, repositories.GetFiscalYearByIDRequest{ID: period.FiscalYearID, TenantInfo: tenant}).
+		GetByID(mock.Anything, fiscalyearports.GetFiscalYearByIDRequest{ID: period.FiscalYearID, TenantInfo: tenant}).
 		Return(&fiscalyear.FiscalYear{ID: period.FiscalYearID, Status: fiscalyear.StatusOpen}, nil).
 		Once()
 	repo.EXPECT().
@@ -128,8 +131,8 @@ func expectTransitionState(
 func TestHandlerActivateOpensInactivePeriod(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockFiscalPeriodRepository(t)
-	yearRepo := mocks.NewMockFiscalYearRepository(t)
+	repo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
+	yearRepo := fiscalyearportsmock.NewMockFiscalYearRepository(t)
 	period := &fiscalperiod.FiscalPeriod{
 		ID:             pulid.MustNew("fp_"),
 		FiscalYearID:   pulid.MustNew("fy_"),
@@ -145,7 +148,7 @@ func TestHandlerActivateOpensInactivePeriod(t *testing.T) {
 	opened := *period
 	opened.Status = fiscalperiod.StatusOpen
 	repo.EXPECT().
-		Activate(mock.Anything, repositories.ActivateFiscalPeriodRequest{ID: period.ID, TenantInfo: pagination.TenantInfo{OrgID: sharedtestutil.TestOrgID, BuID: sharedtestutil.TestBuID, UserID: sharedtestutil.TestUserID}}).
+		Activate(mock.Anything, fiscalperiodports.ActivateFiscalPeriodRequest{ID: period.ID, TenantInfo: pagination.TenantInfo{OrgID: sharedtestutil.TestOrgID, BuID: sharedtestutil.TestBuID, UserID: sharedtestutil.TestUserID}}).
 		Return(&opened, nil).
 		Once()
 
@@ -166,8 +169,8 @@ func TestHandlerActivateOpensInactivePeriod(t *testing.T) {
 func TestHandlerReopenForwardsReason(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockFiscalPeriodRepository(t)
-	yearRepo := mocks.NewMockFiscalYearRepository(t)
+	repo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
+	yearRepo := fiscalyearportsmock.NewMockFiscalYearRepository(t)
 	period := &fiscalperiod.FiscalPeriod{
 		ID:             pulid.MustNew("fp_"),
 		FiscalYearID:   pulid.MustNew("fy_"),
@@ -181,7 +184,7 @@ func TestHandlerReopenForwardsReason(t *testing.T) {
 	reopened := *period
 	reopened.Status = fiscalperiod.StatusOpen
 	repo.EXPECT().
-		Reopen(mock.Anything, mock.MatchedBy(func(req repositories.ReopenFiscalPeriodRequest) bool {
+		Reopen(mock.Anything, mock.MatchedBy(func(req fiscalperiodports.ReopenFiscalPeriodRequest) bool {
 			return req.ID == period.ID && req.ReopenReason == "Late vendor invoice"
 		})).
 		Return(&reopened, nil).

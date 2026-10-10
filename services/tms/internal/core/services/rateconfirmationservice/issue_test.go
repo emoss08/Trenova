@@ -1,13 +1,15 @@
 package rateconfirmationservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/carrierportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -18,8 +20,8 @@ import (
 
 type issueTestDeps struct {
 	repo                  *fakeRateConRepo
-	carrierAssignmentRepo *mocks.MockCarrierAssignmentRepository
-	carrierRepo           *mocks.MockCarrierRepository
+	carrierAssignmentRepo *shipmentportsmock.MockCarrierAssignmentRepository
+	carrierRepo           *carrierportsmock.MockCarrierRepository
 	svc                   *Service
 }
 
@@ -28,8 +30,8 @@ func setupIssueTest(t *testing.T) *issueTestDeps {
 
 	deps := &issueTestDeps{
 		repo:                  newFakeRateConRepo(),
-		carrierAssignmentRepo: mocks.NewMockCarrierAssignmentRepository(t),
-		carrierRepo:           mocks.NewMockCarrierRepository(t),
+		carrierAssignmentRepo: shipmentportsmock.NewMockCarrierAssignmentRepository(t),
+		carrierRepo:           carrierportsmock.NewMockCarrierRepository(t),
 	}
 	deps.svc = &Service{
 		l:                     zap.NewNop(),
@@ -41,8 +43,8 @@ func setupIssueTest(t *testing.T) *issueTestDeps {
 	return deps
 }
 
-func issueRequest() *services.IssueTenderRateConfirmationRequest {
-	return &services.IssueTenderRateConfirmationRequest{
+func issueRequest() *rateconfirmationports.IssueTenderRateConfirmationRequest {
+	return &rateconfirmationports.IssueTenderRateConfirmationRequest{
 		TenantInfo:     testTenant(),
 		ShipmentMoveID: pulid.MustNew("smv_"),
 		OfferID:        pulid.MustNew("tof_"),
@@ -53,7 +55,7 @@ func issueRequest() *services.IssueTenderRateConfirmationRequest {
 }
 
 func pendingAssignment(
-	req *services.IssueTenderRateConfirmationRequest,
+	req *rateconfirmationports.IssueTenderRateConfirmationRequest,
 ) *shipment.CarrierAssignment {
 	return &shipment.CarrierAssignment{
 		ID:        pulid.MustNew("cass_"),
@@ -63,7 +65,7 @@ func pendingAssignment(
 }
 
 func tenderIssuedRateCon(
-	req *services.IssueTenderRateConfirmationRequest,
+	req *rateconfirmationports.IssueTenderRateConfirmationRequest,
 	assignment *shipment.CarrierAssignment,
 	status rateconfirmation.Status,
 ) *rateconfirmation.RateConfirmation {

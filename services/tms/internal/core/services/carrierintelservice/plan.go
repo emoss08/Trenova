@@ -8,7 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -18,7 +20,7 @@ import (
 // VetPlan is what vetting would ask the provider for: the subject and the
 // provider that answers, with nothing fetched.
 type VetPlan struct {
-	Subject  repositories.CarrierIntelSubject
+	Subject  carrierintelports.CarrierIntelSubject
 	Provider integration.Type
 	Depth    carrierintel.LookupDepth
 	Current  *carrierintel.CarrierIntelSnapshot
@@ -59,7 +61,7 @@ func (s *Service) PlanVetCustomerBroker(
 func (s *Service) planFetch(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	subject *repositories.CarrierIntelSubject,
+	subject *carrierintelports.CarrierIntelSubject,
 	depth carrierintel.LookupDepth,
 ) (*VetPlan, error) {
 	control, err := s.controlRepo.GetOrCreate(ctx, tenantInfo)
@@ -73,7 +75,7 @@ func (s *Service) planFetch(
 		)
 	}
 
-	current, err := s.snapshotRepo.GetCurrent(ctx, tenantInfo, repositories.CarrierIntelSubjectRef{
+	current, err := s.snapshotRepo.GetCurrent(ctx, tenantInfo, carrierintelports.CarrierIntelSubjectRef{
 		SubjectType: subject.SubjectType,
 		SubjectID:   subject.SubjectID,
 	})
@@ -121,7 +123,7 @@ func (s *Service) PlanManualEnrollment(
 
 	subjects, err := s.subjectRepo.ListCarrierSubjects(
 		ctx,
-		&repositories.ListCarrierIntelSubjectsRequest{
+		&carrierintelports.ListCarrierIntelSubjectsRequest{
 			TenantInfo: req.TenantInfo,
 			CarrierIDs: req.CarrierIDs,
 			Limit:      len(req.CarrierIDs),
@@ -140,7 +142,7 @@ func (s *Service) PlanManualEnrollment(
 	for _, subject := range subjects {
 		ids = append(ids, subject.SubjectID)
 	}
-	rows, err := s.enrollmentRepo.ListBySubjects(ctx, &repositories.ListEnrollmentsBySubjectRequest{
+	rows, err := s.enrollmentRepo.ListBySubjects(ctx, &carrierintelports.ListEnrollmentsBySubjectRequest{
 		TenantInfo:  req.TenantInfo,
 		Provider:    provider,
 		SubjectType: carrierintel.SubjectTypeCarrier,
@@ -200,7 +202,7 @@ func (s *Service) PlanMarkReviewed(
 	snapshot, err := s.snapshotRepo.GetCurrent(
 		ctx,
 		req.TenantInfo,
-		repositories.CarrierIntelSubjectRef{
+		carrierintelports.CarrierIntelSubjectRef{
 			SubjectType: carrierintel.SubjectTypeCarrier,
 			SubjectID:   req.CarrierID.String(),
 		},
@@ -249,7 +251,7 @@ func (s *Service) PlanApplySuggestions(
 	snapshot, err := s.snapshotRepo.GetCurrent(
 		ctx,
 		req.TenantInfo,
-		repositories.CarrierIntelSubjectRef{
+		carrierintelports.CarrierIntelSubjectRef{
 			SubjectType: carrierintel.SubjectTypeCarrier,
 			SubjectID:   req.CarrierID.String(),
 		},
@@ -262,10 +264,10 @@ func (s *Service) PlanApplySuggestions(
 	}
 
 	load := func() (*carrier.Carrier, error) {
-		return s.carrierRepo.GetByID(ctx, repositories.GetCarrierByIDRequest{
+		return s.carrierRepo.GetByID(ctx, carrierports.GetCarrierByIDRequest{
 			ID:         req.CarrierID,
 			TenantInfo: req.TenantInfo,
-			CarrierFilterOptions: repositories.CarrierFilterOptions{
+			CarrierFilterOptions: carrierports.CarrierFilterOptions{
 				IncludeContacts:          true,
 				IncludeInsurancePolicies: true,
 				IncludeEDIChannels:       true,
@@ -371,7 +373,7 @@ func (s *Service) PlanVerifyEquipment(
 	ctx context.Context,
 	req *VerifyEquipmentRequest,
 ) (*carrierintel.CarrierEquipmentVerification, *carrier.Carrier, error) {
-	assignment, err := s.assignmentRepo.GetByID(ctx, &repositories.GetCarrierAssignmentByIDRequest{
+	assignment, err := s.assignmentRepo.GetByID(ctx, &shipmentports.GetCarrierAssignmentByIDRequest{
 		TenantInfo:          req.TenantInfo,
 		CarrierAssignmentID: req.CarrierAssignmentID,
 	})
@@ -379,7 +381,7 @@ func (s *Service) PlanVerifyEquipment(
 		return nil, nil, err
 	}
 
-	carrierEntity, err := s.carrierRepo.GetByID(ctx, repositories.GetCarrierByIDRequest{
+	carrierEntity, err := s.carrierRepo.GetByID(ctx, carrierports.GetCarrierByIDRequest{
 		ID:         assignment.CarrierID,
 		TenantInfo: req.TenantInfo,
 	})

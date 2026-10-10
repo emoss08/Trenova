@@ -8,9 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
@@ -40,21 +41,21 @@ type ReviewExpenseRequest struct {
 
 func (s *Service) ListExpensesConnection(
 	ctx context.Context,
-	req *repositories.ListDriverExpenseConnectionRequest,
+	req *driverpayports.ListDriverExpenseConnectionRequest,
 ) (*pagination.CursorListResult[*driverpay.Expense], error) {
 	return s.expenseRepo.ListConnection(ctx, req)
 }
 
 func (s *Service) GetExpense(
 	ctx context.Context,
-	req repositories.GetDriverExpenseByIDRequest,
+	req driverpayports.GetDriverExpenseByIDRequest,
 ) (*driverpay.Expense, error) {
 	return s.expenseRepo.GetByID(ctx, req)
 }
 
 func (s *Service) ListExpensesForWorker(
 	ctx context.Context,
-	req *repositories.ListDriverExpensesForWorkerRequest,
+	req *driverpayports.ListDriverExpensesForWorkerRequest,
 ) ([]*driverpay.Expense, error) {
 	return s.expenseRepo.ListForWorker(ctx, req)
 }
@@ -71,7 +72,7 @@ func (s *Service) SubmitExpense(
 	req *SubmitExpenseRequest,
 ) (*driverpay.Expense, error) {
 	if req.PayCodeID != nil && !req.PayCodeID.IsNil() {
-		payCode, err := s.payCodeRepo.GetByID(ctx, repositories.GetPayCodeByIDRequest{
+		payCode, err := s.payCodeRepo.GetByID(ctx, driverpayports.GetPayCodeByIDRequest{
 			ID:         *req.PayCodeID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -160,7 +161,7 @@ func (s *Service) CancelExpense(
 	expenseID pulid.ID,
 	workerID pulid.ID,
 ) (*driverpay.Expense, error) {
-	expense, err := s.expenseRepo.GetByID(ctx, repositories.GetDriverExpenseByIDRequest{
+	expense, err := s.expenseRepo.GetByID(ctx, driverpayports.GetDriverExpenseByIDRequest{
 		ID:         expenseID,
 		TenantInfo: tenantInfo,
 	})
@@ -202,7 +203,7 @@ func (s *Service) SetExpenseReceipt(
 	workerID pulid.ID,
 	documentID pulid.ID,
 ) (*driverpay.Expense, error) {
-	expense, err := s.expenseRepo.GetByID(ctx, repositories.GetDriverExpenseByIDRequest{
+	expense, err := s.expenseRepo.GetByID(ctx, driverpayports.GetDriverExpenseByIDRequest{
 		ID:         expenseID,
 		TenantInfo: tenantInfo,
 	})
@@ -231,7 +232,7 @@ func (s *Service) SetExpenseReceipt(
 func (s *Service) ReviewExpense(
 	ctx context.Context,
 	req *ReviewExpenseRequest,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driverpay.Expense, error) {
 	change, err := s.PlanReviewExpense(ctx, req, actor)
 	if err != nil {
@@ -273,11 +274,11 @@ func (s *Service) applyExpenseReimbursement(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	expense *driverpay.Expense,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) error {
 	target, err := s.settlementRepo.GetOpenDraftForWorker(
 		ctx,
-		repositories.GetOpenDraftForWorkerRequest{
+		driversettlementports.GetOpenDraftForWorkerRequest{
 			TenantInfo: tenantInfo,
 			WorkerID:   expense.WorkerID,
 		},

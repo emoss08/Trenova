@@ -10,9 +10,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -121,12 +123,12 @@ type masterPlanned[T any] struct {
 }
 
 type masterChanged[T any] struct {
-	change *serviceports.RecordChange[T]
+	change *kernelports.RecordChange[T]
 	states map[pulid.ID]string
 }
 
 type masterStatusPlanned[T any] struct {
-	changes []serviceports.RecordChange[T]
+	changes []kernelports.RecordChange[T]
 	states  map[pulid.ID]string
 }
 
@@ -158,7 +160,7 @@ func (r *masterRecord[T]) result(action string, entity *T) *agent.ToolExecutionR
 	}
 }
 
-func (r *masterRecord[T]) target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (r *masterRecord[T]) target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, r.idParam, r.resource)
 }
 
@@ -630,18 +632,18 @@ type masterPolicy struct {
 }
 
 func (p *masterPolicy) classify(
-	params serviceports.ToolExecuteParams, //nolint:gocritic // ToolPolicy.Classify passes params by value
-) serviceports.CallPolicy {
+	params agentports.ToolExecuteParams, //nolint:gocritic // ToolPolicy.Classify passes params by value
+) agentports.CallPolicy {
 	switch {
 	case sendsAny(params.Params, p.moneyKeys...):
-		return serviceports.CallPolicy{Egress: agent.EgressMoney, MaxTier: agent.TierPropose}
+		return agentports.CallPolicy{Egress: agent.EgressMoney, MaxTier: agent.TierPropose}
 	case sendsAny(params.Params, p.outsideKeys...):
-		return serviceports.CallPolicy{
+		return agentports.CallPolicy{
 			Egress:  agent.EgressExternalRecipient,
 			MaxTier: agent.TierPropose,
 		}
 	default:
-		return serviceports.CallPolicy{Egress: agent.EgressInternal}
+		return agentports.CallPolicy{Egress: agent.EgressInternal}
 	}
 }
 
@@ -663,7 +665,7 @@ func (p *masterPolicy) apply(spec *receivableSpec) *receivableSpec {
 	return spec
 }
 
-func (p *masterPolicy) guard(name string, params *serviceports.ToolExecuteParams) error {
+func (p *masterPolicy) guard(name string, params *agentports.ToolExecuteParams) error {
 	if sendsAny(params.Params, p.moneyKeys...) && !params.ApprovedFromProposal() {
 		return fmt.Errorf("%s: %w", name, ErrNeedsAPersonsApproval)
 	}
@@ -683,12 +685,12 @@ type masterCreateSpec[T any] struct {
 	states      stateLookup
 	fresh       func(tenant pagination.TenantInfo) *T
 	plan        func(ctx context.Context, entity *T) (*T, error)
-	create      func(ctx context.Context, entity *T, actor *serviceports.RequestActor) (*T, error)
+	create      func(ctx context.Context, entity *T, actor *permissionports.RequestActor) (*T, error)
 }
 
 func (s *masterCreateSpec[T]) build(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*T, error) {
 	entity := s.fresh(tenantFrom(*params))
 	for _, key := range s.required {
@@ -705,7 +707,7 @@ func (s *masterCreateSpec[T]) build(
 	return entity, nil
 }
 
-func newMasterCreateTool[T any](spec *masterCreateSpec[T]) serviceports.AgentTool {
+func newMasterCreateTool[T any](spec *masterCreateSpec[T]) agentports.AgentTool {
 	record := spec.record
 
 	return newReportingReceivableTool(spec.policy.apply(&receivableSpec{
@@ -720,14 +722,14 @@ func newMasterCreateTool[T any](spec *masterCreateSpec[T]) serviceports.AgentToo
 		properties:  masterProperties(spec.fields, false),
 		required:    spec.required,
 		searchTerms: spec.searchTerms,
-	}), receivablePlan[*serviceports.ToolExecuteParams, *masterPlanned[T]]{
-		request: func(params *serviceports.ToolExecuteParams) (*serviceports.ToolExecuteParams, error) {
+	}), receivablePlan[*agentports.ToolExecuteParams, *masterPlanned[T]]{
+		request: func(params *agentports.ToolExecuteParams) (*agentports.ToolExecuteParams, error) {
 			return params, nil
 		},
 		plan: func(
 			ctx context.Context,
-			params *serviceports.ToolExecuteParams,
-			_ *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*masterPlanned[T], error) {
 			entity, err := spec.build(ctx, params)
 			if err != nil {
@@ -743,11 +745,11 @@ func newMasterCreateTool[T any](spec *masterCreateSpec[T]) serviceports.AgentToo
 				states: record.stateNames(ctx, spec.states, planned),
 			}, nil
 		},
-		refused: func(*serviceports.ToolExecuteParams) string {
+		refused: func(*agentports.ToolExecuteParams) string {
 			return fmt.Sprintf("Would create a %s.", record.kind)
 		},
 		render: func(
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 			planned *masterPlanned[T],
 		) (*agent.ToolPreview, error) {
 			change, err := toolpreview.Create(record.record(planned.entity),
@@ -761,8 +763,8 @@ func newMasterCreateTool[T any](spec *masterCreateSpec[T]) serviceports.AgentToo
 		},
 		run: func(
 			ctx context.Context,
-			_ *serviceports.ToolExecuteParams,
-			params *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			if err := spec.policy.guard(spec.name, params); err != nil {
 				return nil, err
@@ -791,8 +793,8 @@ type masterUpdateSpec[T any] struct {
 	policy      masterPolicy
 	states      stateLookup
 	get         func(ctx context.Context, tenant pagination.TenantInfo, id pulid.ID) (*T, error)
-	plan        func(ctx context.Context, entity *T) (*serviceports.RecordChange[T], error)
-	update      func(ctx context.Context, entity *T, actor *serviceports.RequestActor) (*T, error)
+	plan        func(ctx context.Context, entity *T) (*kernelports.RecordChange[T], error)
+	update      func(ctx context.Context, entity *T, actor *permissionports.RequestActor) (*T, error)
 }
 
 type masterEdit struct {
@@ -800,7 +802,7 @@ type masterEdit struct {
 	values map[string]any
 }
 
-func (s *masterUpdateSpec[T]) edit(params *serviceports.ToolExecuteParams) (*masterEdit, error) {
+func (s *masterUpdateSpec[T]) edit(params *agentports.ToolExecuteParams) (*masterEdit, error) {
 	id, err := requirePulid(params.Params, s.record.idParam)
 	if err != nil {
 		return nil, err
@@ -821,7 +823,7 @@ func (s *masterUpdateSpec[T]) edit(params *serviceports.ToolExecuteParams) (*mas
 func (s *masterUpdateSpec[T]) build(
 	ctx context.Context,
 	edit *masterEdit,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*T, error) {
 	stored, err := s.get(ctx, tenantFrom(*params), edit.id)
 	if err != nil {
@@ -839,7 +841,7 @@ func (s *masterUpdateSpec[T]) build(
 	return &changed, nil
 }
 
-func newMasterUpdateTool[T any](spec *masterUpdateSpec[T]) serviceports.AgentTool {
+func newMasterUpdateTool[T any](spec *masterUpdateSpec[T]) agentports.AgentTool {
 	record := spec.record
 	properties := masterProperties(spec.fields, true)
 	properties[record.idParam] = agenttoolschema.RecordIDText(record.resource,
@@ -862,7 +864,7 @@ func newMasterUpdateTool[T any](spec *masterUpdateSpec[T]) serviceports.AgentToo
 		plan: func(
 			ctx context.Context,
 			edit *masterEdit,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*masterChanged[T], error) {
 			entity, err := spec.build(ctx, edit, params)
 			if err != nil {
@@ -895,7 +897,7 @@ func newMasterUpdateTool[T any](spec *masterUpdateSpec[T]) serviceports.AgentToo
 		run: func(
 			ctx context.Context,
 			edit *masterEdit,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			if err := spec.policy.guard(spec.name, params); err != nil {
 				return nil, err
@@ -929,7 +931,7 @@ type masterStatusSpec[T any, S ~string] struct {
 		tenant pagination.TenantInfo,
 		ids []pulid.ID,
 		status S,
-	) ([]serviceports.RecordChange[T], error)
+	) ([]kernelports.RecordChange[T], error)
 	run func(
 		ctx context.Context,
 		tenant pagination.TenantInfo,
@@ -944,7 +946,7 @@ type masterStatusChange[S ~string] struct {
 }
 
 func (s *masterStatusSpec[T, S]) change(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*masterStatusChange[S], error) {
 	ids, err := requirePulidSlice(params.Params, s.record.idsParam,
 		maxMasterRecordsPerStatusChange)
@@ -959,7 +961,7 @@ func (s *masterStatusSpec[T, S]) change(
 	return &masterStatusChange[S]{ids: ids, status: status}, nil
 }
 
-func newMasterStatusTool[T any, S ~string](spec *masterStatusSpec[T, S]) serviceports.AgentTool {
+func newMasterStatusTool[T any, S ~string](spec *masterStatusSpec[T, S]) agentports.AgentTool {
 	record := spec.record
 
 	return newReportingReceivableTool(spec.policy.apply(&receivableSpec{
@@ -984,13 +986,13 @@ func newMasterStatusTool[T any, S ~string](spec *masterStatusSpec[T, S]) service
 		plan: func(
 			ctx context.Context,
 			change *masterStatusChange[S],
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*masterStatusPlanned[T], error) {
 			changes, err := spec.plan(ctx, tenantFrom(*params), change.ids, change.status)
 			if err != nil {
 				return nil, err
 			}
-			befores := serviceports.Befores(changes)
+			befores := kernelports.Befores(changes)
 
 			return &masterStatusPlanned[T]{
 				changes: changes,
@@ -1022,7 +1024,7 @@ func newMasterStatusTool[T any, S ~string](spec *masterStatusSpec[T, S]) service
 		run: func(
 			ctx context.Context,
 			change *masterStatusChange[S],
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			updated, err := spec.run(ctx, tenantFrom(*params), change.ids, change.status)
 			if err != nil {

@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/insightservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/sdk/activity"
@@ -19,13 +19,13 @@ type ActivitiesParams struct {
 	fx.In
 
 	Insights *insightservice.Service
-	Tenants  repositories.TenantSyncRepository
+	Tenants  tenantports.TenantSyncRepository
 	Logger   *zap.Logger
 }
 
 type Activities struct {
 	insights *insightservice.Service
-	tenants  repositories.TenantSyncRepository
+	tenants  tenantports.TenantSyncRepository
 	l        *zap.Logger
 }
 

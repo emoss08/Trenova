@@ -15,9 +15,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/documenttemplateservice"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -82,7 +81,7 @@ func (h *Handler) previewPDF(c *gin.Context) {
 
 	version, err := h.service.GetVersion(
 		c.Request.Context(),
-		&repositories.GetDocumentTemplateVersionByIDRequest{
+		&documenttemplateports.GetDocumentTemplateVersionByIDRequest{
 			VersionID:  versionID,
 			TenantInfo: tenantInfo,
 		},
@@ -102,7 +101,7 @@ func (h *Handler) previewPDF(c *gin.Context) {
 
 	result, err := h.service.PreviewVersion(
 		c.Request.Context(),
-		&services.PreviewVersionRequest{
+		&documenttemplateports.PreviewVersionRequest{
 			TenantInfo: tenantInfo,
 			Kind:       kind,
 			VersionID:  &versionID,
@@ -110,7 +109,7 @@ func (h *Handler) previewPDF(c *gin.Context) {
 		},
 	)
 	if err != nil {
-		if errors.Is(err, services.ErrPDFRendererUnavailable) {
+		if errors.Is(err, documenttemplateports.ErrPDFRendererUnavailable) {
 			// A missing renderer is a deployment condition, not a server fault,
 			// and the editor shows it as such rather than as a crash.
 			h.eh.HandleError(c, errortypes.NewBusinessError(

@@ -1,6 +1,9 @@
 package latechargeservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/latechargeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"errors"
 	"testing"
@@ -9,8 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/latecharge"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -35,8 +39,8 @@ func candidate(
 	number string,
 	openMinor int64,
 	assessed ...int,
-) *repositories.LateChargeCandidate {
-	return &repositories.LateChargeCandidate{
+) *latechargeports.LateChargeCandidate {
+	return &latechargeports.LateChargeCandidate{
 		CustomerID:       customerID,
 		CustomerName:     name,
 		InvoiceID:        pulid.MustNew("inv_"),
@@ -63,7 +67,7 @@ func TestBuildPlansGroupsByCustomerAndChargesEachPendingPeriod(t *testing.T) {
 		pulid.MustNew("bu_"),
 	)
 
-	plans := buildPlans([]*repositories.LateChargeCandidate{
+	plans := buildPlans([]*latechargeports.LateChargeCandidate{
 		candidate(intel, "Intel", "INV-1", 120_000, 1),
 		candidate(amd, "AMD", "INV-2", 50_000),
 		candidate(intel, "Intel", "INV-3", 10_000, 1, 2, 3),
@@ -105,7 +109,7 @@ func TestBuildPlansSkipsFullyAssessedAndBelowMinimum(t *testing.T) {
 		pulid.MustNew("bu_"),
 	)
 
-	plans := buildPlans([]*repositories.LateChargeCandidate{
+	plans := buildPlans([]*latechargeports.LateChargeCandidate{
 		candidate(pulid.MustNew("cus_"), "Done", "INV-1", 120_000, 1),
 		candidate(pulid.MustNew("cus_"), "Tiny", "INV-2", 1_000),
 		candidate(pulid.MustNew("cus_"), "Big", "INV-3", 200_000),
@@ -122,10 +126,10 @@ func TestBuildPlansSkipsFullyAssessedAndBelowMinimum(t *testing.T) {
 
 type lateChargeFixture struct {
 	tenantInfo     pagination.TenantInfo
-	actor          *servicesports.RequestActor
-	repo           *mocks.MockLateChargeRepository
-	billingRepo    *mocks.MockBillingControlRepository
-	invoiceService *mocks.MockInvoiceService
+	actor          *permissionports.RequestActor
+	repo           *latechargeportsmock.MockLateChargeRepository
+	billingRepo    *tenantportsmock.MockBillingControlRepository
+	invoiceService *invoiceportsmock.MockInvoiceService
 	svc            *Service
 }
 
@@ -137,9 +141,9 @@ func newLateChargeFixture(t *testing.T, control *tenant.BillingControl) *lateCha
 	f := &lateChargeFixture{
 		tenantInfo:     pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
 		actor:          testutil.NewSessionActor(userID, orgID, buID),
-		repo:           mocks.NewMockLateChargeRepository(t),
-		billingRepo:    mocks.NewMockBillingControlRepository(t),
-		invoiceService: mocks.NewMockInvoiceService(t),
+		repo:           latechargeportsmock.NewMockLateChargeRepository(t),
+		billingRepo:    tenantportsmock.NewMockBillingControlRepository(t),
+		invoiceService: invoiceportsmock.NewMockInvoiceService(t),
 	}
 	f.billingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(control, nil).Once()
 	f.svc = &Service{
@@ -155,10 +159,10 @@ func newLateChargeFixture(t *testing.T, control *tenant.BillingControl) *lateCha
 
 func (f *lateChargeFixture) expectCandidates(
 	asOf int64,
-	candidates ...*repositories.LateChargeCandidate,
+	candidates ...*latechargeports.LateChargeCandidate,
 ) {
 	f.repo.EXPECT().
-		ListCandidates(mock.Anything, &repositories.ListLateChargeCandidatesRequest{TenantInfo: f.tenantInfo, AsOfDate: asOf}).
+		ListCandidates(mock.Anything, &latechargeports.ListLateChargeCandidatesRequest{TenantInfo: f.tenantInfo, AsOfDate: asOf}).
 		Return(candidates, nil).
 		Once()
 }
@@ -173,7 +177,7 @@ func TestAssessPreviewWritesNothing(t *testing.T) {
 	asOf := dueDate + 5*day + 1
 	f.expectCandidates(asOf, candidate(pulid.MustNew("cus_"), "AMD", "INV-2", 50_000))
 
-	result, err := f.svc.Assess(t.Context(), &servicesports.LateChargeAssessmentRequest{
+	result, err := f.svc.Assess(t.Context(), &latechargeports.LateChargeAssessmentRequest{
 		TenantInfo: f.tenantInfo, AsOfDate: asOf, Preview: true,
 	}, f.actor)
 
@@ -198,7 +202,7 @@ func TestAssessRefusesARealRunWhenDisabled(t *testing.T) {
 
 	_, err := f.svc.Assess(
 		t.Context(),
-		&servicesports.LateChargeAssessmentRequest{TenantInfo: f.tenantInfo, AsOfDate: dueDate},
+		&latechargeports.LateChargeAssessmentRequest{TenantInfo: f.tenantInfo, AsOfDate: dueDate},
 		f.actor,
 	)
 
@@ -235,7 +239,7 @@ func TestAssessRaisesOneLateChargeMemoPerCustomer(t *testing.T) {
 	memoID := pulid.Nil
 	memoLine := &invoice.InvoiceLine{ID: pulid.MustNew("invl_")}
 	f.invoiceService.EXPECT().
-		CreateMemo(mock.Anything, mock.MatchedBy(func(req *servicesports.CreateMemoRequest) bool {
+		CreateMemo(mock.Anything, mock.MatchedBy(func(req *invoiceports.CreateMemoRequest) bool {
 			memoID = req.ID
 			return req.CustomerID == amd.CustomerID &&
 				req.BillType == billingqueue.BillTypeDebitMemo &&
@@ -246,7 +250,7 @@ func TestAssessRaisesOneLateChargeMemoPerCustomer(t *testing.T) {
 				req.Lines[0].Amount.Equal(decimal.RequireFromString("7.5")) &&
 				req.Lines[0].Description != ""
 		}), f.actor).
-		RunAndReturn(func(_ context.Context, req *servicesports.CreateMemoRequest, _ *servicesports.RequestActor) (*invoice.Invoice, error) {
+		RunAndReturn(func(_ context.Context, req *invoiceports.CreateMemoRequest, _ *permissionports.RequestActor) (*invoice.Invoice, error) {
 			return &invoice.Invoice{
 				ID:     req.ID,
 				Number: "DM-5",
@@ -265,7 +269,7 @@ func TestAssessRaisesOneLateChargeMemoPerCustomer(t *testing.T) {
 
 	result, err := f.svc.Assess(
 		t.Context(),
-		&servicesports.LateChargeAssessmentRequest{TenantInfo: f.tenantInfo, AsOfDate: asOf},
+		&latechargeports.LateChargeAssessmentRequest{TenantInfo: f.tenantInfo, AsOfDate: asOf},
 		f.actor,
 	)
 
@@ -300,8 +304,8 @@ func TestAssessDoesNotAutoPostUnderManualReview(t *testing.T) {
 		}).
 		Once()
 	f.invoiceService.EXPECT().
-		CreateMemo(mock.Anything, mock.MatchedBy(func(req *servicesports.CreateMemoRequest) bool { return !req.AutoPost }), f.actor).
-		RunAndReturn(func(_ context.Context, req *servicesports.CreateMemoRequest, _ *servicesports.RequestActor) (*invoice.Invoice, error) {
+		CreateMemo(mock.Anything, mock.MatchedBy(func(req *invoiceports.CreateMemoRequest) bool { return !req.AutoPost }), f.actor).
+		RunAndReturn(func(_ context.Context, req *invoiceports.CreateMemoRequest, _ *permissionports.RequestActor) (*invoice.Invoice, error) {
 			return &invoice.Invoice{
 				ID:     req.ID,
 				Number: "DM-6",
@@ -314,7 +318,7 @@ func TestAssessDoesNotAutoPostUnderManualReview(t *testing.T) {
 
 	result, err := f.svc.Assess(
 		t.Context(),
-		&servicesports.LateChargeAssessmentRequest{TenantInfo: f.tenantInfo, AsOfDate: asOf},
+		&latechargeports.LateChargeAssessmentRequest{TenantInfo: f.tenantInfo, AsOfDate: asOf},
 		f.actor,
 	)
 
@@ -349,7 +353,7 @@ func TestAssessRollsBackAssessmentsWhenTheMemoFails(t *testing.T) {
 
 	result, err := f.svc.Assess(
 		t.Context(),
-		&servicesports.LateChargeAssessmentRequest{TenantInfo: f.tenantInfo, AsOfDate: asOf},
+		&latechargeports.LateChargeAssessmentRequest{TenantInfo: f.tenantInfo, AsOfDate: asOf},
 		f.actor,
 	)
 
@@ -376,7 +380,7 @@ func TestAssessSkipsACustomerAnotherRunGotToFirst(t *testing.T) {
 
 	result, err := f.svc.Assess(
 		t.Context(),
-		&servicesports.LateChargeAssessmentRequest{TenantInfo: f.tenantInfo, AsOfDate: asOf},
+		&latechargeports.LateChargeAssessmentRequest{TenantInfo: f.tenantInfo, AsOfDate: asOf},
 		f.actor,
 	)
 

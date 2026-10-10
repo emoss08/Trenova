@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/fuelsurcharge"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -34,7 +34,7 @@ func (s *Service) ContextVariables(
 		return map[string]any{}, nil
 	}
 
-	pricesByIndex, err := s.priceRepo.LatestPerIndex(ctx, &repositories.LatestPricesPerIndexRequest{
+	pricesByIndex, err := s.priceRepo.LatestPerIndex(ctx, &fuelsurchargeports.LatestPricesPerIndexRequest{
 		TenantInfo: tenantInfo,
 		PerIndex:   1,
 	})

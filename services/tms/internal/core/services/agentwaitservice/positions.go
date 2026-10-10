@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentwait"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -41,7 +41,7 @@ func (s *Service) NotifyPositions(
 	}
 	ctx = dbscope.WithValidTenant(context.WithoutCancel(ctx), tenant.DBTenant())
 
-	waits, err := s.waits.ListOpenOfKinds(ctx, &repositories.ListOpenWaitsOfKindsRequest{
+	waits, err := s.waits.ListOpenOfKinds(ctx, &agentwaitports.ListOpenWaitsOfKindsRequest{
 		TenantInfo: tenant,
 		Kinds:      []agentwait.Kind{agentwait.KindStopArrival, agentwait.KindStopDeparture},
 	})
@@ -164,7 +164,7 @@ func (s *Service) observeVisit(
 		}
 		condition := *wait.Condition
 		condition.SeenInsideAt = position.RecordedAt
-		if err := s.waits.UpdateCondition(ctx, &repositories.UpdateAgentWaitConditionRequest{
+		if err := s.waits.UpdateCondition(ctx, &agentwaitports.UpdateAgentWaitConditionRequest{
 			ID:         wait.ID,
 			TenantInfo: tenantOf(wait),
 			Condition:  &condition,

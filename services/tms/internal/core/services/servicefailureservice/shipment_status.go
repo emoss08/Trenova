@@ -6,9 +6,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -24,24 +27,24 @@ type delayedShipmentMarker interface {
 
 type delayedShipmentMarkerParams struct {
 	logger          *zap.Logger
-	shipmentRepo    repositories.ShipmentRepository
-	auditService    services.AuditService
-	realtime        services.RealtimeService
-	orderDerivation services.OrderDerivationService
+	shipmentRepo    shipmentports.ShipmentRepository
+	auditService    auditports.AuditService
+	realtime        agentports.RealtimeService
+	orderDerivation orderports.OrderDerivationService
 }
 
 type delayedShipmentMarkParams struct {
 	shipment *shipment.Shipment
-	actor    *services.RequestActor
+	actor    *permissionports.RequestActor
 	failure  *servicefailure.ServiceFailure
 }
 
 type shipmentStatusMarker struct {
 	l               *zap.Logger
-	shipmentRepo    repositories.ShipmentRepository
-	auditService    services.AuditService
-	realtime        services.RealtimeService
-	orderDerivation services.OrderDerivationService
+	shipmentRepo    shipmentports.ShipmentRepository
+	auditService    auditports.AuditService
+	realtime        agentports.RealtimeService
+	orderDerivation orderports.OrderDerivationService
 }
 
 func newDelayedShipmentMarker(params delayedShipmentMarkerParams) delayedShipmentMarker {
@@ -57,7 +60,7 @@ func newDelayedShipmentMarker(params delayedShipmentMarkerParams) delayedShipmen
 func (s *service) transitionShipmentToDelayed(
 	ctx context.Context,
 	source *shipment.Shipment,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	failure *servicefailure.ServiceFailure,
 ) {
 	if s.delayedMarker == nil {
@@ -118,7 +121,7 @@ func (m *shipmentStatusMarker) MarkDelayedForServiceFailure(
 	}
 
 	auditActor := params.actor.AuditActorOrSystem()
-	if err = m.auditService.LogAction(&services.LogActionParams{
+	if err = m.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceShipment,
 		ResourceID:     updated.ID.String(),
 		Operation:      permission.OpUpdate,

@@ -5,10 +5,10 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -32,7 +32,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.PTOPolicyRepository {
+func New(p Params) workerports.PTOPolicyRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.pto-policy-repository"),
@@ -46,7 +46,7 @@ func orderRules(sq *bun.SelectQuery) *bun.SelectQuery {
 
 func (r *repository) applyListFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListPTOPoliciesRequest,
+	req *workerports.ListPTOPoliciesRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.PTOPolicyColumns
 	if req.Status != "" {
@@ -60,7 +60,7 @@ func (r *repository) applyListFilters(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListPTOPoliciesRequest,
+	req *workerports.ListPTOPoliciesRequest,
 ) (*pagination.CursorListResult[*worker.PTOPolicy], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*worker.PTOPolicy], error) {
 		log := r.l.With(zap.String("operation", "List"))
@@ -124,7 +124,7 @@ func (r *repository) List(
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
-	req *repositories.PTOPolicySelectOptionsRequest,
+	req *workerports.PTOPolicySelectOptionsRequest,
 ) (*pagination.ListResult[*worker.PTOPolicy], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*worker.PTOPolicy], error) {
 		cols := buncolgen.PTOPolicyColumns
@@ -169,7 +169,7 @@ func (r *repository) SelectOptions(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req *repositories.GetPTOPolicyByIDRequest,
+	req *workerports.GetPTOPolicyByIDRequest,
 ) (*worker.PTOPolicy, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.PTOPolicy, error) {
 		log := r.l.With(zap.String("operation", "GetByID"), zap.String("id", req.ID.String()))
@@ -229,7 +229,7 @@ func (r *repository) GetDefault(
 
 func (r *repository) CodeExists(
 	ctx context.Context,
-	req *repositories.PTOPolicyCodeExistsRequest,
+	req *workerports.PTOPolicyCodeExistsRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
 		cols := buncolgen.PTOPolicyColumns
@@ -292,9 +292,9 @@ func (r *repository) Create(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.PTOPolicy, error) {
 		log := r.l.With(zap.String("operation", "Create"))
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			if entity.IsDefault {
-				if cErr := r.ClearDefault(c, &repositories.ClearDefaultPTOPolicyRequest{
+				if cErr := r.ClearDefault(c, &workerports.ClearDefaultPTOPolicyRequest{
 					TenantInfo: pagination.TenantInfo{
 						OrgID: entity.OrganizationID,
 						BuID:  entity.BusinessUnitID,
@@ -339,9 +339,9 @@ func (r *repository) Update(
 		ruleCols := buncolgen.PTOPolicyRuleColumns
 		tenant := pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			if entity.IsDefault {
-				if cErr := r.ClearDefault(c, &repositories.ClearDefaultPTOPolicyRequest{
+				if cErr := r.ClearDefault(c, &workerports.ClearDefaultPTOPolicyRequest{
 					TenantInfo: tenant,
 					ExceptID:   entity.ID,
 				}); cErr != nil {
@@ -391,7 +391,7 @@ func (r *repository) Update(
 
 func (r *repository) ClearDefault(
 	ctx context.Context,
-	req *repositories.ClearDefaultPTOPolicyRequest,
+	req *workerports.ClearDefaultPTOPolicyRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.PTOPolicyColumns
@@ -418,7 +418,7 @@ func (r *repository) ClearDefault(
 
 func (r *repository) CountOpenAssignments(
 	ctx context.Context,
-	req *repositories.CountOpenPTOAssignmentsRequest,
+	req *workerports.CountOpenPTOAssignmentsRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		cols := buncolgen.WorkerPTOPolicyAssignmentColumns
@@ -442,7 +442,7 @@ func (r *repository) CountOpenAssignments(
 
 func (r *repository) CountOpenAssignmentsByIDs(
 	ctx context.Context,
-	req *repositories.CountOpenPTOAssignmentsByIDsRequest,
+	req *workerports.CountOpenPTOAssignmentsByIDsRequest,
 ) (map[pulid.ID]int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (map[pulid.ID]int, error) {
 		if len(req.PolicyIDs) == 0 {

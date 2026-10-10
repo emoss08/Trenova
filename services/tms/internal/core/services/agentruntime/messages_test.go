@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -145,7 +145,7 @@ func TestToAdapterMessages_StartsAtAUserTurn(t *testing.T) {
 	messages := toAdapterMessages(history, nil)
 
 	require.Len(t, messages, 2)
-	assert.Equal(t, serviceports.RoleUser, messages[0].Role)
+	assert.Equal(t, agentports.RoleUser, messages[0].Role)
 	assert.Equal(t, "And the driver?", messages[0].Content)
 }
 
@@ -211,7 +211,7 @@ func TestToAdapterMessages_DropsTheResultsOfARefusedTurnsCalls(t *testing.T) {
 
 	require.Len(t, messages, 3)
 	for _, msg := range messages {
-		assert.NotEqual(t, serviceports.RoleTool, msg.Role)
+		assert.NotEqual(t, agentports.RoleTool, msg.Role)
 	}
 }
 
@@ -256,14 +256,14 @@ func TestToAdapterMessages_CompactsToolResultsFromOlderTurns(t *testing.T) {
 
 	require.Len(t, messages, len(history))
 	oldest := messages[2]
-	require.Equal(t, serviceports.RoleTool, oldest.Role)
+	require.Equal(t, agentports.RoleTool, oldest.Role)
 	assert.Less(t, len(oldest.Content), len(big)/4)
 	assert.True(t, strings.HasPrefix(oldest.Content, "row,row,"), "the opening is kept")
 	assert.Contains(t, oldest.Content, "elided")
 	assert.Contains(t, oldest.Content, "again", "the model is told it may fetch it again")
 
 	newest := messages[len(messages)-2]
-	require.Equal(t, serviceports.RoleTool, newest.Role)
+	require.Equal(t, agentports.RoleTool, newest.Role)
 	assert.Equal(t, big, newest.Content, "the recent turns keep their results whole")
 }
 
@@ -338,8 +338,8 @@ func TestToAdapterMessages_DropsCallsNothingAnswered(t *testing.T) {
 	require.Len(t, messages[1].ToolCalls, 1)
 	assert.Equal(t, "c1", messages[1].ToolCalls[0].ID)
 	assert.Equal(t, "Looking.", messages[1].Content)
-	assert.Equal(t, serviceports.RoleTool, messages[2].Role)
-	assert.Equal(t, serviceports.RoleUser, messages[4].Role)
+	assert.Equal(t, agentports.RoleTool, messages[2].Role)
+	assert.Equal(t, agentports.RoleUser, messages[4].Role)
 }
 
 // What a provider attached to a call is stored with the call and replayed
@@ -350,7 +350,7 @@ func TestToolCallRecords_KeepTheProvidersOwnData(t *testing.T) {
 	t.Parallel()
 
 	providerID := pulid.MustNew("aip_")
-	calls := []serviceports.ToolCall{{
+	calls := []agentports.ToolCall{{
 		ID:           "c1",
 		Name:         "get_shipment",
 		Arguments:    map[string]any{"id": "S1"},

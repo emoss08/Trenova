@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -28,7 +28,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.DocumentControlRepository {
+func New(p Params) tenantports.DocumentControlRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.documentcontrol-repository"),
@@ -37,7 +37,7 @@ func New(p Params) repositories.DocumentControlRepository {
 
 func (r *repository) Get(
 	ctx context.Context,
-	req repositories.GetDocumentControlRequest,
+	req tenantports.GetDocumentControlRequest,
 ) (*tenant.DocumentControl, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.DocumentControl, error) {
 		log := r.l.With(

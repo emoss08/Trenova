@@ -1,10 +1,11 @@
 package ediservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -44,8 +45,8 @@ func TestRecordInboundFreightInvoice_ReturnsTheInvoiceAlreadyRecorded(t *testing
 		InvoiceNumber: "INV-1",
 		TotalAmount:   decimal.NullDecimal{Decimal: decimal.NewFromInt(1500), Valid: true},
 	}
-	invoiceRepo := mocks.NewMockEDICarrierInvoiceRepository(t)
-	invoiceRepo.EXPECT().GetCarrierInvoiceByNumber(mock.Anything, &repositories.GetEDICarrierInvoiceByNumberRequest{
+	invoiceRepo := ediportsmock.NewMockEDICarrierInvoiceRepository(t)
+	invoiceRepo.EXPECT().GetCarrierInvoiceByNumber(mock.Anything, &ediports.GetEDICarrierInvoiceByNumberRequest{
 		TenantInfo:    pagination.TenantInfo{OrgID: message.OrganizationID, BuID: message.BusinessUnitID},
 		PartnerID:     partner.ID,
 		InvoiceNumber: "inv-1 ",
@@ -76,7 +77,7 @@ func TestRecordInboundFreightInvoice_LosingTheInsertRaceReturnsTheWinner(t *test
 		InvoiceNumber: "INV-1",
 		TotalAmount:   payload.TotalAmount,
 	}
-	invoiceRepo := mocks.NewMockEDICarrierInvoiceRepository(t)
+	invoiceRepo := ediportsmock.NewMockEDICarrierInvoiceRepository(t)
 	invoiceRepo.EXPECT().GetCarrierInvoiceByNumber(mock.Anything, mock.Anything).
 		Return(nil, errortypes.NewNotFoundError("CarrierInvoice not found")).Once()
 	invoiceRepo.EXPECT().CreateCarrierInvoice(mock.Anything, mock.Anything).

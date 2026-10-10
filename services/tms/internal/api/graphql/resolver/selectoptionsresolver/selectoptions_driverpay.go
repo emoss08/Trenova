@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -16,7 +16,7 @@ func (r *Deps) resolvePayCodeSelectOptions(
 	if len(req.IDs) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.IDs))
 		for _, id := range req.IDs {
-			entity, err := r.DriverPayService.GetPayCode(ctx, repositories.GetPayCodeByIDRequest{
+			entity, err := r.DriverPayService.GetPayCode(ctx, driverpayports.GetPayCodeByIDRequest{
 				ID:         id,
 				TenantInfo: req.TenantInfo,
 			})
@@ -31,7 +31,7 @@ func (r *Deps) resolvePayCodeSelectOptions(
 
 	result, err := r.DriverPayService.PayCodeSelectOptions(
 		ctx,
-		&repositories.PayCodeSelectOptionsRequest{
+		&driverpayports.PayCodeSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
 			Direction: driverpay.PayCodeDirection(
 				selectOptionStringFilter(req.Filters, "direction"),
@@ -76,7 +76,7 @@ func (r *Deps) resolvePayProfileSelectOptions(
 	if len(req.IDs) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.IDs))
 		for _, id := range req.IDs {
-			entity, err := r.DriverPayService.GetProfile(ctx, repositories.GetPayProfileByIDRequest{
+			entity, err := r.DriverPayService.GetProfile(ctx, driverpayports.GetPayProfileByIDRequest{
 				ID:         id,
 				TenantInfo: req.TenantInfo,
 			})
@@ -91,7 +91,7 @@ func (r *Deps) resolvePayProfileSelectOptions(
 
 	result, err := r.DriverPayService.ProfileSelectOptions(
 		ctx,
-		&repositories.PayProfileSelectOptionsRequest{
+		&driverpayports.PayProfileSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
 			Classification: driverpay.PayeeClassification(
 				selectOptionStringFilter(req.Filters, "classification"),

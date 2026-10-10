@@ -7,8 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/dispatchguard"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -60,7 +61,7 @@ type cancelPlan struct {
 // refreshed, since refreshing it writes.
 func (s *Service) PreviewAssignToMove(
 	ctx context.Context,
-	req *repositories.AssignMoveToCarrierRequest,
+	req *shipmentports.AssignMoveToCarrierRequest,
 ) (*CoveragePlan, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
@@ -117,7 +118,7 @@ func (s *Service) PreviewAssignToMove(
 // writing.
 func (s *Service) PreviewCancel(
 	ctx context.Context,
-	req *repositories.CancelCarrierAssignmentRequest,
+	req *shipmentports.CancelCarrierAssignmentRequest,
 ) (*CoveragePlan, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
@@ -148,7 +149,7 @@ func (s *Service) PreviewCancel(
 
 func (s *Service) planAssignToMove(
 	ctx context.Context,
-	req *repositories.AssignMoveToCarrierRequest,
+	req *shipmentports.AssignMoveToCarrierRequest,
 	intelGate *carrier.IntelGate,
 ) (*assignPlan, error) {
 	move, err := s.assignmentRepo.GetMoveByID(ctx, req.TenantInfo, req.ShipmentMoveID)
@@ -210,7 +211,7 @@ func (s *Service) planAssignToMove(
 
 func (s *Service) planCancel(
 	ctx context.Context,
-	req *repositories.CancelCarrierAssignmentRequest,
+	req *shipmentports.CancelCarrierAssignmentRequest,
 ) (*cancelPlan, error) {
 	existing, err := s.repo.GetActiveByMoveID(ctx, req.TenantInfo, req.ShipmentMoveID)
 	if err != nil {
@@ -305,7 +306,7 @@ func (s *Service) projectCoverageChange(
 		targetMove.CoverageType = shipment.MoveCoverageTypeUnassigned
 	}
 
-	control, err := s.controlRepo.Get(ctx, repositories.GetShipmentControlRequest{
+	control, err := s.controlRepo.Get(ctx, tenantports.GetShipmentControlRequest{
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {

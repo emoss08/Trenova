@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/carrierassignmentservice"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -28,8 +28,8 @@ type fakeCarrierCoverage struct {
 	standing *rateconfirmation.RateConfirmation
 	refusal  error
 
-	assigned *repositories.AssignMoveToCarrierRequest
-	canceled *repositories.CancelCarrierAssignmentRequest
+	assigned *shipmentports.AssignMoveToCarrierRequest
+	canceled *shipmentports.CancelCarrierAssignmentRequest
 }
 
 func newFakeCarrierCoverage() *fakeCarrierCoverage {
@@ -72,7 +72,7 @@ func (f *fakeCarrierCoverage) retire(plan *carrierassignmentservice.CoveragePlan
 
 func (f *fakeCarrierCoverage) PreviewAssignToMove(
 	_ context.Context,
-	req *repositories.AssignMoveToCarrierRequest,
+	req *shipmentports.AssignMoveToCarrierRequest,
 ) (*carrierassignmentservice.CoveragePlan, error) {
 	if f.refusal != nil {
 		return nil, f.refusal
@@ -114,7 +114,7 @@ func (f *fakeCarrierCoverage) PreviewAssignToMove(
 
 func (f *fakeCarrierCoverage) AssignToMove(
 	_ context.Context,
-	req *repositories.AssignMoveToCarrierRequest,
+	req *shipmentports.AssignMoveToCarrierRequest,
 ) (*shipment.CarrierAssignment, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -126,7 +126,7 @@ func (f *fakeCarrierCoverage) AssignToMove(
 
 func (f *fakeCarrierCoverage) PreviewCancel(
 	_ context.Context,
-	req *repositories.CancelCarrierAssignmentRequest,
+	req *shipmentports.CancelCarrierAssignmentRequest,
 ) (*carrierassignmentservice.CoveragePlan, error) {
 	if f.refusal != nil {
 		return nil, f.refusal
@@ -152,7 +152,7 @@ func (f *fakeCarrierCoverage) PreviewCancel(
 
 func (f *fakeCarrierCoverage) Cancel(
 	_ context.Context,
-	req *repositories.CancelCarrierAssignmentRequest,
+	req *shipmentports.CancelCarrierAssignmentRequest,
 ) error {
 	if err := f.guard.write(); err != nil {
 		return err

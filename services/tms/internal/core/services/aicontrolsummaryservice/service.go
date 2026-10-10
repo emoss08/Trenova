@@ -12,8 +12,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/aicontrolsummary"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentrosterports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aicontrolsummaryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
@@ -42,31 +45,31 @@ type Params struct {
 	fx.In
 
 	Logger     *zap.Logger
-	Facts      repositories.AIControlFactsRepository
-	Providers  repositories.AIProviderRepository
-	Controls   repositories.AgentControlRepository
-	Cache      repositories.AIControlSummaryCache
-	Dismissals repositories.AIProviderFailureDismissalRepository
-	Usage      repositories.AIUsageRepository
-	Completion services.CompletionService `optional:"true"`
+	Facts      agentrosterports.AIControlFactsRepository
+	Providers  agentports.AIProviderRepository
+	Controls   tenantports.AgentControlRepository
+	Cache      aicontrolsummaryports.AIControlSummaryCache
+	Dismissals agentports.AIProviderFailureDismissalRepository
+	Usage      aiusageports.AIUsageRepository
+	Completion agentports.CompletionService `optional:"true"`
 }
 
 type Service struct {
 	l          *zap.Logger
-	facts      repositories.AIControlFactsRepository
-	providers  repositories.AIProviderRepository
-	controls   repositories.AgentControlRepository
-	cache      repositories.AIControlSummaryCache
-	dismissals repositories.AIProviderFailureDismissalRepository
-	usage      repositories.AIUsageRepository
-	completion services.CompletionService
+	facts      agentrosterports.AIControlFactsRepository
+	providers  agentports.AIProviderRepository
+	controls   tenantports.AgentControlRepository
+	cache      aicontrolsummaryports.AIControlSummaryCache
+	dismissals agentports.AIProviderFailureDismissalRepository
+	usage      aiusageports.AIUsageRepository
+	completion agentports.CompletionService
 	inflight   singleflight.Group
 	now        func() time.Time
 	// detach starts a rewording that outlives the request asking for it.
 	detach func(func())
 }
 
-var _ services.AIControlSummaryService = (*Service)(nil)
+var _ aicontrolsummaryports.AIControlSummaryService = (*Service)(nil)
 
 func New(p Params) *Service {
 	return &Service{
@@ -86,7 +89,7 @@ func New(p Params) *Service {
 // Summary is a tab's sentence for the facts as they are now.
 func (s *Service) Summary(
 	ctx context.Context,
-	req *services.AIControlSummaryRequest,
+	req *aicontrolsummaryports.AIControlSummaryRequest,
 ) (*aicontrolsummary.Summary, error) {
 	if !req.Tab.IsValid() {
 		return nil, errortypes.NewValidationError("tab", errortypes.ErrInvalid, "Unknown tab")
@@ -97,7 +100,7 @@ func (s *Service) Summary(
 		return nil, err
 	}
 
-	key := &repositories.AIControlSummaryKey{
+	key := &aicontrolsummaryports.AIControlSummaryKey{
 		TenantInfo: pagination.TenantInfo{OrgID: req.TenantInfo.OrgID, BuID: req.TenantInfo.BuID},
 		Tab:        req.Tab,
 		FactsHash:  facts.Hash(req.Tab),
@@ -141,7 +144,7 @@ func (s *Service) Summary(
 // reword asks a model for the sentence once per key, however many readers
 // are waiting on it, and keeps what comes back.
 func (s *Service) reword(
-	key *repositories.AIControlSummaryKey,
+	key *aicontrolsummaryports.AIControlSummaryKey,
 	tenantInfo pagination.TenantInfo,
 	facts *aicontrolsummary.Facts,
 	plain *aicontrolsummary.Summary,
@@ -176,7 +179,7 @@ func (s *Service) Facts(
 	tenantInfo pagination.TenantInfo,
 ) (*aicontrolsummary.Facts, error) {
 	now := s.now()
-	counts, err := s.facts.AgentCounts(ctx, &repositories.AgentCountsRequest{
+	counts, err := s.facts.AgentCounts(ctx, &agentrosterports.AgentCountsRequest{
 		TenantInfo:  tenantInfo,
 		ShadowSince: now.Add(-shadowWindow).Unix(),
 	})
@@ -189,7 +192,7 @@ func (s *Service) Facts(
 		return nil, err
 	}
 
-	failures, err := s.facts.ProviderFailures(ctx, &repositories.ProviderFailuresRequest{
+	failures, err := s.facts.ProviderFailures(ctx, &agentrosterports.ProviderFailuresRequest{
 		TenantInfo: tenantInfo,
 		Since:      now.Add(-failureWindow).Unix(),
 	})
@@ -207,7 +210,7 @@ func (s *Service) Facts(
 		return nil, err
 	}
 
-	week, err := s.usage.Summary(ctx, repositories.AIUsageSummaryRequest{
+	week, err := s.usage.Summary(ctx, aiusageports.AIUsageSummaryRequest{
 		TenantInfo: tenantInfo,
 		Since:      now.Add(-weekWindow).Unix(),
 	})
@@ -240,7 +243,7 @@ func awaitingKey(providers []*aiprovider.Provider) *aicontrolsummary.ProviderRef
 // A disabled provider's failures are its own business, not the overview's.
 func failingProviders(
 	enabled []*aiprovider.Provider,
-	failures []repositories.ProviderFailureCount,
+	failures []agentrosterports.ProviderFailureCount,
 ) []aicontrolsummary.ProviderFailure {
 	names := make(map[string]string, len(enabled))
 	for _, provider := range enabled {
@@ -272,4 +275,3 @@ func uncoveredTasks(enabled []*aiprovider.Provider) int {
 	}
 	return uncovered
 }
-

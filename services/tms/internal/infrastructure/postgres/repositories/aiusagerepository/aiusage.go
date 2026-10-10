@@ -3,16 +3,16 @@ package aiusagerepository
 import (
 	"context"
 	"fmt"
-	"github.com/shopspring/decimal"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -30,7 +30,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.AIUsageRepository {
+func New(p Params) aiusageports.AIUsageRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("repository.aiusage")}
 }
 
@@ -64,13 +64,13 @@ type totalsRow struct {
 	LatencyP95      float64 `bun:"latency_p95"`
 }
 
-func (row *totalsRow) totals() repositories.AIUsageTotals {
+func (row *totalsRow) totals() aiusageports.AIUsageTotals {
 	cost := row.CostUSD
 	if cost == "" {
 		cost = "0"
 	}
 
-	return repositories.AIUsageTotals{
+	return aiusageports.AIUsageTotals{
 		Calls:           row.Calls,
 		Failed:          row.Failed,
 		InputTokens:     row.InputTokens,
@@ -98,9 +98,9 @@ const waitedFor = `aiu.succeeded AND aiu.surface <> '` + string(aiusage.SurfaceB
 
 func (r *repository) Summary(
 	ctx context.Context,
-	req repositories.AIUsageSummaryRequest,
-) (*repositories.AIUsageSummary, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.AIUsageSummary, error) {
+	req aiusageports.AIUsageSummaryRequest,
+) (*aiusageports.AIUsageSummaryRow, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*aiusageports.AIUsageSummaryRow, error) {
 		cols := buncolgen.AIUsageRecordColumns
 		db := r.db.DBForContext(ctx)
 
@@ -148,21 +148,21 @@ func (r *repository) Summary(
 			return nil, fmt.Errorf("summarise ai usage by feature: %w", err)
 		}
 
-		summary := &repositories.AIUsageSummary{
+		summary := &aiusageports.AIUsageSummaryRow{
 			Totals:     total.totals(),
-			ByProvider: make([]repositories.AIUsageProviderTotals, 0, len(byProvider)),
-			ByFeature:  make([]repositories.AIUsageFeatureTotals, 0, len(byFeature)),
+			ByProvider: make([]aiusageports.AIUsageProviderTotals, 0, len(byProvider)),
+			ByFeature:  make([]aiusageports.AIUsageFeatureTotals, 0, len(byFeature)),
 		}
 		for i := range byFeature {
 			row := &byFeature[i]
-			summary.ByFeature = append(summary.ByFeature, repositories.AIUsageFeatureTotals{
+			summary.ByFeature = append(summary.ByFeature, aiusageports.AIUsageFeatureTotals{
 				Feature:       aiusage.Feature(row.Feature),
 				AIUsageTotals: row.totals(),
 			})
 		}
 		for i := range byProvider {
 			row := &byProvider[i]
-			slice := repositories.AIUsageProviderTotals{
+			slice := aiusageports.AIUsageProviderTotals{
 				ProviderName:  row.ProviderName,
 				Model:         row.Model,
 				AIUsageTotals: row.totals(),
@@ -179,9 +179,9 @@ func (r *repository) Summary(
 
 func (r *repository) Daily(
 	ctx context.Context,
-	req repositories.AIUsageDailyRequest,
-) ([]repositories.AIUsageDayTotals, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.AIUsageDayTotals, error) {
+	req aiusageports.AIUsageDailyQuery,
+) ([]aiusageports.AIUsageDayTotals, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]aiusageports.AIUsageDayTotals, error) {
 		cols := buncolgen.AIUsageRecordColumns
 
 		var rows []dayRow
@@ -201,9 +201,9 @@ func (r *repository) Daily(
 			return nil, fmt.Errorf("summarise ai usage by day: %w", err)
 		}
 
-		days := make([]repositories.AIUsageDayTotals, 0, len(rows))
+		days := make([]aiusageports.AIUsageDayTotals, 0, len(rows))
 		for idx := range rows {
-			days = append(days, repositories.AIUsageDayTotals{
+			days = append(days, aiusageports.AIUsageDayTotals{
 				Day:           rows[idx].Day,
 				AIUsageTotals: rows[idx].totals(),
 			})
@@ -222,9 +222,9 @@ type dayRow struct {
 // where the count is shown.
 func (r *repository) RecentFailures(
 	ctx context.Context,
-	req repositories.AIUsageFailuresRequest,
-) ([]repositories.AIUsageFailure, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.AIUsageFailure, error) {
+	req aiusageports.AIUsageFailuresRequest,
+) ([]aiusageports.AIUsageFailureRow, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]aiusageports.AIUsageFailureRow, error) {
 		cols := buncolgen.AIUsageRecordColumns
 		limit := req.Limit
 		if limit <= 0 {
@@ -254,10 +254,10 @@ func (r *repository) RecentFailures(
 			return nil, fmt.Errorf("list ai usage failures: %w", err)
 		}
 
-		failures := make([]repositories.AIUsageFailure, 0, len(rows))
+		failures := make([]aiusageports.AIUsageFailureRow, 0, len(rows))
 		for i := range rows {
 			row := &rows[i]
-			failure := repositories.AIUsageFailure{
+			failure := aiusageports.AIUsageFailureRow{
 				ProviderName: row.ProviderName,
 				Model:        row.Model,
 				Task:         row.Task,
@@ -290,9 +290,9 @@ type failureRow struct {
 // free would let an agent on an unpriced provider run without end.
 func (r *repository) CostByDefinition(
 	ctx context.Context,
-	req repositories.AIUsageCostRequest,
-) (*repositories.AIUsageCost, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.AIUsageCost, error) {
+	req aiusageports.AIUsageCostRequest,
+) (*aiusageports.AIUsageCost, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*aiusageports.AIUsageCost, error) {
 		cols := buncolgen.AIUsageRecordColumns
 
 		q := costSums(r.db.DBForContext(ctx).NewSelect()).
@@ -325,7 +325,7 @@ func scanCost(
 	ctx context.Context,
 	q *bun.SelectQuery,
 	what string,
-) (*repositories.AIUsageCost, error) {
+) (*aiusageports.AIUsageCost, error) {
 	var row costRow
 	if err := q.Scan(ctx, &row); err != nil {
 		return nil, fmt.Errorf("sum %s: %w", what, err)
@@ -336,7 +336,7 @@ func scanCost(
 		return nil, fmt.Errorf("read %s %q: %w", what, row.CostUSD, err)
 	}
 
-	return &repositories.AIUsageCost{
+	return &aiusageports.AIUsageCost{
 		CostUSD:       cost,
 		Calls:         row.Calls,
 		UnpricedCalls: row.UnpricedCalls,
@@ -345,9 +345,9 @@ func scanCost(
 
 func (r *repository) SurfaceCost(
 	ctx context.Context,
-	req repositories.AIUsageSurfaceCostRequest,
-) (*repositories.AIUsageCost, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.AIUsageCost, error) {
+	req aiusageports.AIUsageSurfaceCostRequest,
+) (*aiusageports.AIUsageCost, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*aiusageports.AIUsageCost, error) {
 		cols := buncolgen.AIUsageRecordColumns
 
 		q := costSums(r.db.DBForContext(ctx).NewSelect()).
@@ -364,9 +364,9 @@ func (r *repository) SurfaceCost(
 
 func (r *repository) EvaluationCost(
 	ctx context.Context,
-	req repositories.AIUsageEvaluationCostRequest,
-) (*repositories.AIUsageCost, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.AIUsageCost, error) {
+	req aiusageports.AIUsageEvaluationCostRequest,
+) (*aiusageports.AIUsageCost, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*aiusageports.AIUsageCost, error) {
 		cols := buncolgen.AIUsageRecordColumns
 		evals := buncolgen.EvaluationColumns
 		dba := r.db.DBForContext(ctx)
@@ -402,9 +402,9 @@ type providerTaskRow struct {
 
 func (r *repository) ProviderTaskTotals(
 	ctx context.Context,
-	req repositories.AIUsageProviderTaskRequest,
-) ([]repositories.AIUsageProviderTaskTotals, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.AIUsageProviderTaskTotals, error) {
+	req aiusageports.AIUsageProviderTaskRequest,
+) ([]aiusageports.AIUsageProviderTaskTotals, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]aiusageports.AIUsageProviderTaskTotals, error) {
 		cols := buncolgen.AIUsageRecordColumns
 		var rows []providerTaskRow
 		if err := r.db.DBForContext(ctx).NewSelect().
@@ -425,10 +425,10 @@ func (r *repository) ProviderTaskTotals(
 			return nil, fmt.Errorf("total ai usage by provider and task: %w", err)
 		}
 
-		totals := make([]repositories.AIUsageProviderTaskTotals, 0, len(rows))
+		totals := make([]aiusageports.AIUsageProviderTaskTotals, 0, len(rows))
 		for i := range rows {
 			row := &rows[i]
-			totals = append(totals, repositories.AIUsageProviderTaskTotals{
+			totals = append(totals, aiusageports.AIUsageProviderTaskTotals{
 				ProviderID: pulidFrom(row.ProviderID),
 				Task:       aiprovider.Task(row.Task),
 				Calls:      row.Calls,
@@ -447,7 +447,7 @@ type providerSpendRow struct {
 
 func (r *repository) SpendByProvider(
 	ctx context.Context,
-	req repositories.AIUsageProviderSpendRequest,
+	req aiusageports.AIUsageProviderSpendRequest,
 ) (map[pulid.ID]decimal.Decimal, error) {
 	if len(req.ProviderIDs) == 0 {
 		return map[pulid.ID]decimal.Decimal{}, nil
@@ -460,7 +460,7 @@ func (r *repository) SpendByProvider(
 		if err := r.db.DBForContext(ctx).NewSelect().
 			Model((*aiusage.AIUsageRecord)(nil)).
 			ColumnExpr(cols.ProviderID.As("provider_id")).
-			ColumnExpr("COALESCE(SUM(" + cols.CostUSD.Qualified() + "), 0)::text AS cost_usd").
+			ColumnExpr("COALESCE(SUM("+cols.CostUSD.Qualified()+"), 0)::text AS cost_usd").
 			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
 			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
 			Where(cols.ProviderID.In(), bun.In(req.ProviderIDs)).

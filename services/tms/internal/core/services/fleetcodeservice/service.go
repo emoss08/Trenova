@@ -5,9 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/fleetcodeports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,18 +20,18 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.FleetCodeRepository
+	Repo         fleetcodeports.FleetCodeRepository
 	Validator    *Validator
-	AuditService services.AuditService
-	Transformer  services.DataTransformer
+	AuditService auditports.AuditService
+	Transformer  accessorialchargeports.DataTransformer
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.FleetCodeRepository
+	repo         fleetcodeports.FleetCodeRepository
 	validator    *Validator
-	auditService services.AuditService
-	transformer  services.DataTransformer
+	auditService auditports.AuditService
+	transformer  accessorialchargeports.DataTransformer
 }
 
 func New(p Params) *Service {
@@ -45,21 +46,21 @@ func New(p Params) *Service {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListFleetCodesRequest,
+	req *fleetcodeports.ListFleetCodesRequest,
 ) (*pagination.ListResult[*fleetcode.FleetCode], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListFleetCodeConnectionRequest,
+	req *fleetcodeports.ListFleetCodeConnectionRequest,
 ) (*pagination.CursorListResult[*fleetcode.FleetCode], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	req repositories.GetFleetCodeByIDRequest,
+	req fleetcodeports.GetFleetCodeByIDRequest,
 ) (*fleetcode.FleetCode, error) {
 	return s.repo.GetByID(ctx, req)
 }
@@ -96,7 +97,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceFleetCode,
 		ResourceID:     createdEntity.GetID().String(),
 		Operation:      permission.OpCreate,
@@ -132,7 +133,7 @@ func (s *Service) Update(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetByID(ctx, repositories.GetFleetCodeByIDRequest{
+	original, err := s.repo.GetByID(ctx, fleetcodeports.GetFleetCodeByIDRequest{
 		ID: entity.GetID(),
 		TenantInfo: &pagination.TenantInfo{
 			OrgID: entity.GetOrganizationID(),
@@ -150,7 +151,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceFleetCode,
 		ResourceID:     updatedEntity.GetID().String(),
 		Operation:      permission.OpUpdate,

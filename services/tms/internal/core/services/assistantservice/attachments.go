@@ -10,8 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -61,7 +61,7 @@ func (s *Service) resolveAttachments(
 	ctx context.Context,
 	thread *conversation.Thread,
 	ids []pulid.ID,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	tenant pagination.TenantInfo,
 ) ([]conversation.MessageAttachment, []agentdefinition.RuntimeAttachment, error) {
 	if len(ids) == 0 {
@@ -142,10 +142,10 @@ func (s *Service) readAttachment(
 	ctx context.Context,
 	thread *conversation.Thread,
 	id pulid.ID,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	tenant pagination.TenantInfo,
 ) attachmentSlot {
-	doc, err := s.documents.GetByID(ctx, repositories.GetDocumentByIDRequest{
+	doc, err := s.documents.GetByID(ctx, documentports.GetDocumentByIDRequest{
 		ID:         id,
 		TenantInfo: tenant,
 	})

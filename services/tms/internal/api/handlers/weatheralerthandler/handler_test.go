@@ -7,8 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/handlers/weatheralerthandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	sharedtestutil "github.com/emoss08/trenova/shared/testutil"
@@ -18,15 +18,15 @@ import (
 )
 
 type weatherAlertServiceStub struct {
-	collection *serviceports.WeatherAlertFeatureCollection
-	detail     *serviceports.WeatherAlertDetail
+	collection *weatheralertports.WeatherAlertFeatureCollection
+	detail     *weatheralertports.WeatherAlertDetail
 }
 
 func (s *weatherAlertServiceStub) PollNWSAlerts(
 	context.Context,
-	serviceports.WeatherAlertPollHeartbeat,
-) (*serviceports.PollNWSAlertsResult, error) {
-	return &serviceports.PollNWSAlertsResult{}, nil
+	weatheralertports.WeatherAlertPollHeartbeat,
+) (*weatheralertports.PollNWSAlertsResult, error) {
+	return &weatheralertports.PollNWSAlertsResult{}, nil
 }
 
 func (s *weatherAlertServiceStub) ListWeatherAlertTenants(
@@ -50,20 +50,20 @@ func (s *weatherAlertServiceStub) ExpireStaleWeatherAlerts(context.Context) erro
 func (s *weatherAlertServiceStub) GetActiveAlerts(
 	context.Context,
 	pagination.TenantInfo,
-) (*serviceports.WeatherAlertFeatureCollection, error) {
+) (*weatheralertports.WeatherAlertFeatureCollection, error) {
 	return s.collection, nil
 }
 
 func (s *weatherAlertServiceStub) GetAlertDetail(
 	context.Context,
-	*serviceports.GetWeatherAlertDetailRequest,
-) (*serviceports.WeatherAlertDetail, error) {
+	*weatheralertports.GetWeatherAlertDetailRequest,
+) (*weatheralertports.WeatherAlertDetail, error) {
 	return s.detail, nil
 }
 
 func setupHandler(
 	t *testing.T,
-	service serviceports.WeatherAlertService,
+	service weatheralertports.WeatherAlertService,
 ) *weatheralerthandler.Handler {
 	t.Helper()
 
@@ -80,16 +80,16 @@ func TestListWeatherAlerts(t *testing.T) {
 
 	alertID := pulid.MustNew("walt_")
 	handler := setupHandler(t, &weatherAlertServiceStub{
-		collection: &serviceports.WeatherAlertFeatureCollection{
+		collection: &weatheralertports.WeatherAlertFeatureCollection{
 			Type: "FeatureCollection",
-			Features: []*serviceports.WeatherAlertFeature{
+			Features: []*weatheralertports.WeatherAlertFeature{
 				{
 					Type: "Feature",
 					ID:   alertID,
-					Geometry: serviceports.WeatherAlertGeometry{
+					Geometry: weatheralertports.WeatherAlertGeometry{
 						"type": "Polygon",
 					},
-					Properties: serviceports.WeatherAlertFeatureProperties{
+					Properties: weatheralertports.WeatherAlertFeatureProperties{
 						ID:    alertID,
 						NWSID: "urn:oid:1",
 						Event: "Flood Warning",
@@ -107,7 +107,7 @@ func TestListWeatherAlerts(t *testing.T) {
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
-	var resp serviceports.WeatherAlertFeatureCollection
+	var resp weatheralertports.WeatherAlertFeatureCollection
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
 	require.Len(t, resp.Features, 1)
 	assert.Equal(t, alertID, resp.Features[0].ID)
@@ -118,14 +118,14 @@ func TestGetWeatherAlertDetail(t *testing.T) {
 
 	alertID := pulid.MustNew("walt_")
 	handler := setupHandler(t, &weatherAlertServiceStub{
-		detail: &serviceports.WeatherAlertDetail{
-			Feature: &serviceports.WeatherAlertFeature{
+		detail: &weatheralertports.WeatherAlertDetail{
+			Feature: &weatheralertports.WeatherAlertFeature{
 				Type: "Feature",
 				ID:   alertID,
-				Geometry: serviceports.WeatherAlertGeometry{
+				Geometry: weatheralertports.WeatherAlertGeometry{
 					"type": "Polygon",
 				},
-				Properties: serviceports.WeatherAlertFeatureProperties{
+				Properties: weatheralertports.WeatherAlertFeatureProperties{
 					ID:    alertID,
 					NWSID: "urn:oid:1",
 					Event: "Flood Warning",
@@ -142,7 +142,7 @@ func TestGetWeatherAlertDetail(t *testing.T) {
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
-	var resp serviceports.WeatherAlertDetail
+	var resp weatheralertports.WeatherAlertDetail
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
 	require.NotNil(t, resp.Feature)
 	assert.Equal(t, alertID, resp.Feature.ID)

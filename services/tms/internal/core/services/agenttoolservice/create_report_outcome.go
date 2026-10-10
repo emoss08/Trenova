@@ -5,7 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 )
 
 // reportRecordEntity is the record-link registry's name for a saved report
@@ -13,18 +14,18 @@ import (
 const reportRecordEntity = "report"
 
 var (
-	_ serviceports.ToolResultReporter = (*createReportTool)(nil)
-	_ serviceports.ToolResultReporter = (*forkReportTool)(nil)
+	_ agentports.ToolResultReporter = (*createReportTool)(nil)
+	_ agentports.ToolResultReporter = (*forkReportTool)(nil)
 )
 
-func classifyReportVisibility(params serviceports.ToolExecuteParams) serviceports.CallPolicy {
-	shared := serviceports.CallPolicy{
+func classifyReportVisibility(params agentports.ToolExecuteParams) agentports.CallPolicy {
+	shared := agentports.CallPolicy{
 		Egress:  agent.EgressInternal,
 		MaxTier: agent.TierActWithApproval,
 	}
 
 	actor := params.Actor
-	if actor == nil || actor.PrincipalType != serviceports.PrincipalTypeUser ||
+	if actor == nil || actor.PrincipalType != permissionports.PrincipalTypeUser ||
 		actor.UserID.IsNil() {
 		return shared
 	}
@@ -37,7 +38,7 @@ func classifyReportVisibility(params serviceports.ToolExecuteParams) serviceport
 		return shared
 	}
 
-	return serviceports.CallPolicy{Egress: agent.EgressPersonal}
+	return agentports.CallPolicy{Egress: agent.EgressPersonal}
 }
 
 // ExecuteWithResult saves the report and names it by the id describe_report,
@@ -45,7 +46,7 @@ func classifyReportVisibility(params serviceports.ToolExecuteParams) serviceport
 // can use it next.
 func (t *createReportTool) ExecuteWithResult(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) (*agent.ToolExecutionResult, error) {
 	save, err := t.prepare(params)
 	if err != nil {

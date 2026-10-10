@@ -1,6 +1,11 @@
 package accountingmappingservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/carrierportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/glaccountportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"errors"
 	"strings"
 	"testing"
@@ -10,8 +15,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -95,7 +100,7 @@ func newHarness(t *testing.T) *harness {
 	h.mappings = &fakeMappings{}
 	h.connector = &fakeConnector{}
 	h.connService = &fakeConnectionService{
-		session: &services.AccountingSession{
+		session: &accountingsyncports.AccountingSession{
 			Connection:  h.conn,
 			AccessToken: "access",
 			Connector:   h.connector,
@@ -105,11 +110,11 @@ func newHarness(t *testing.T) *harness {
 	h.completion = &fakeCompletion{}
 	h.refresher = &fakeRefresher{}
 
-	controls := mocks.NewMockAccountingControlRepository(t)
+	controls := tenantportsmock.NewMockAccountingControlRepository(t)
 	controls.EXPECT().GetByOrgID(mock.Anything, h.tenant.OrgID).
 		Return(nil, errortypes.NewNotFoundError("not found")).Maybe()
 
-	charges := mocks.NewMockAccessorialChargeRepository(t)
+	charges := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
 	charges.EXPECT().List(mock.Anything, mock.Anything).
 		Return(&pagination.ListResult[*accessorialcharge.AccessorialCharge]{
 			Items: []*accessorialcharge.AccessorialCharge{{
@@ -128,7 +133,7 @@ func newHarness(t *testing.T) *harness {
 
 	cus := &customer.Customer{ID: h.customerID, Name: "Acme Logistics", Code: "ACME"}
 	h.customer = cus
-	customers := mocks.NewMockCustomerRepository(t)
+	customers := customerportsmock.NewMockCustomerRepository(t)
 	customers.EXPECT().List(mock.Anything, mock.Anything).
 		Return(&pagination.ListResult[*customer.Customer]{Items: []*customer.Customer{cus}, Total: 1}, nil).
 		Maybe()
@@ -136,7 +141,7 @@ func newHarness(t *testing.T) *harness {
 		Return([]*customer.Customer{cus}, nil).Maybe()
 
 	carr := &carrier.Carrier{ID: h.carrierID, Name: "Roadrunner Freight", SCAC: "RRFT"}
-	carriers := mocks.NewMockCarrierRepository(t)
+	carriers := carrierportsmock.NewMockCarrierRepository(t)
 	carriers.EXPECT().List(mock.Anything, mock.Anything).
 		Return(&pagination.ListResult[*carrier.Carrier]{Items: []*carrier.Carrier{carr}, Total: 1}, nil).
 		Maybe()
@@ -151,7 +156,7 @@ func newHarness(t *testing.T) *harness {
 		Mappings:           h.mappings,
 		ConnectionService:  h.connService,
 		AccountingControls: controls,
-		GLAccounts:         mocks.NewMockGLAccountRepository(t),
+		GLAccounts:         glaccountportsmock.NewMockGLAccountRepository(t),
 		Customers:          customers,
 		Carriers:           carriers,
 		Accessorials:       charges,
@@ -162,7 +167,7 @@ func newHarness(t *testing.T) *harness {
 	return h
 }
 
-func (h *harness) rescore(t *testing.T) *services.AccountingRescoreResult {
+func (h *harness) rescore(t *testing.T) *accountingsyncports.AccountingRescoreResult {
 	t.Helper()
 	result, err := h.svc.Rescore(t.Context(), h.tenant, h.conn.ID)
 	require.NoError(t, err)
@@ -191,10 +196,10 @@ func (h *harness) object(
 	return h.mappings.get(row.ID)
 }
 
-func shown(rows ...*accountingsync.AccountingMapping) []services.AccountingMappingConfirmation {
-	items := make([]services.AccountingMappingConfirmation, 0, len(rows))
+func shown(rows ...*accountingsync.AccountingMapping) []accountingsyncports.AccountingMappingConfirmation {
+	items := make([]accountingsyncports.AccountingMappingConfirmation, 0, len(rows))
 	for _, row := range rows {
-		items = append(items, services.AccountingMappingConfirmation{ID: row.ID, ExternalID: row.ExternalID})
+		items = append(items, accountingsyncports.AccountingMappingConfirmation{ID: row.ID, ExternalID: row.ExternalID})
 	}
 	return items
 }
@@ -206,9 +211,9 @@ func TestConfirmRefusesAProposalThatChangedSinceItWasShown(t *testing.T) {
 
 	cus := h.object(t, accountingsync.TargetCustomer, h.customerID)
 	require.Equal(t, "50", cus.ExternalID)
-	_, err := h.svc.Confirm(t.Context(), &services.ConfirmAccountingMappingsRequest{
+	_, err := h.svc.Confirm(t.Context(), &accountingsyncports.ConfirmAccountingMappingsRequest{
 		TenantInfo: h.tenant,
-		Items:      []services.AccountingMappingConfirmation{{ID: cus.ID, ExternalID: "49"}},
+		Items:      []accountingsyncports.AccountingMappingConfirmation{{ID: cus.ID, ExternalID: "49"}},
 	})
 	require.Error(t, err)
 	assert.True(t, errortypes.IsBusinessError(err))
@@ -258,7 +263,7 @@ func TestRescoreIsIdempotentAndNeverTouchesConfirmedRows(t *testing.T) {
 	h.rescore(t)
 
 	ar := h.keyed(t, accountingsync.TargetAccountRole, accountingsync.AccountRoleAR)
-	confirmed, err := h.svc.Confirm(t.Context(), &services.ConfirmAccountingMappingsRequest{
+	confirmed, err := h.svc.Confirm(t.Context(), &accountingsyncports.ConfirmAccountingMappingsRequest{
 		TenantInfo: h.tenant,
 		UserID:     h.tenant.UserID,
 		Items:      shown(ar),
@@ -285,7 +290,7 @@ func TestRejectedCandidateIsNotProposedAgain(t *testing.T) {
 	h.rescore(t)
 
 	cus := h.object(t, accountingsync.TargetCustomer, h.customerID)
-	rejected, err := h.svc.Reject(t.Context(), &services.AccountingMappingActionRequest{
+	rejected, err := h.svc.Reject(t.Context(), &accountingsyncports.AccountingMappingActionRequest{
 		TenantInfo: h.tenant,
 		UserID:     h.tenant.UserID,
 		ID:         cus.ID,
@@ -308,7 +313,7 @@ func TestConfirmRejectsRowsWithoutAProposal(t *testing.T) {
 	ap := h.keyed(t, accountingsync.TargetAccountRole, accountingsync.AccountRoleAP)
 	require.Equal(t, accountingsync.MappingStateUnmatched, ap.State)
 
-	_, err := h.svc.Confirm(t.Context(), &services.ConfirmAccountingMappingsRequest{
+	_, err := h.svc.Confirm(t.Context(), &accountingsyncports.ConfirmAccountingMappingsRequest{
 		TenantInfo: h.tenant,
 		Items:      shown(ap),
 	})
@@ -328,7 +333,7 @@ func TestConfirmRefusesAReferenceThatWentInactive(t *testing.T) {
 		}
 	}
 
-	_, err := h.svc.Confirm(t.Context(), &services.ConfirmAccountingMappingsRequest{
+	_, err := h.svc.Confirm(t.Context(), &accountingsyncports.ConfirmAccountingMappingsRequest{
 		TenantInfo: h.tenant,
 		Items:      shown(cus),
 	})
@@ -341,11 +346,11 @@ func TestConfirmLimitsTheBatch(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t)
 
-	items := make([]services.AccountingMappingConfirmation, maxConfirmBatch+1)
+	items := make([]accountingsyncports.AccountingMappingConfirmation, maxConfirmBatch+1)
 	for idx := range items {
-		items[idx] = services.AccountingMappingConfirmation{ID: pulid.MustNew("acctm_")}
+		items[idx] = accountingsyncports.AccountingMappingConfirmation{ID: pulid.MustNew("acctm_")}
 	}
-	_, err := h.svc.Confirm(t.Context(), &services.ConfirmAccountingMappingsRequest{
+	_, err := h.svc.Confirm(t.Context(), &accountingsyncports.ConfirmAccountingMappingsRequest{
 		TenantInfo: h.tenant,
 		Items:      items,
 	})
@@ -359,7 +364,7 @@ func TestConfirmRecordsTheActorAndAudits(t *testing.T) {
 	h.rescore(t)
 
 	ar := h.keyed(t, accountingsync.TargetAccountRole, accountingsync.AccountRoleAR)
-	_, err := h.svc.Confirm(t.Context(), &services.ConfirmAccountingMappingsRequest{
+	_, err := h.svc.Confirm(t.Context(), &accountingsyncports.ConfirmAccountingMappingsRequest{
 		TenantInfo: h.tenant,
 		UserID:     h.tenant.UserID,
 		Items:      shown(ar),
@@ -379,7 +384,7 @@ func TestSetRefusesAnIneligibleAccount(t *testing.T) {
 	h := newHarness(t)
 	h.rescore(t)
 
-	_, err := h.svc.Set(t.Context(), &services.SetAccountingMappingRequest{
+	_, err := h.svc.Set(t.Context(), &accountingsyncports.SetAccountingMappingRequest{
 		TenantInfo:      h.tenant,
 		IntegrationType: integration.TypeQuickBooksOnline,
 		TargetType:      accountingsync.TargetAccountRole,
@@ -389,7 +394,7 @@ func TestSetRefusesAnIneligibleAccount(t *testing.T) {
 	require.Error(t, err)
 	assert.True(t, errortypes.IsError(err))
 
-	_, err = h.svc.Set(t.Context(), &services.SetAccountingMappingRequest{
+	_, err = h.svc.Set(t.Context(), &accountingsyncports.SetAccountingMappingRequest{
 		TenantInfo:      h.tenant,
 		IntegrationType: integration.TypeQuickBooksOnline,
 		TargetType:      accountingsync.TargetAccountRole,
@@ -405,7 +410,7 @@ func TestSetConfirmsAManualChoice(t *testing.T) {
 	h := newHarness(t)
 	h.rescore(t)
 
-	updated, err := h.svc.Set(t.Context(), &services.SetAccountingMappingRequest{
+	updated, err := h.svc.Set(t.Context(), &accountingsyncports.SetAccountingMappingRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.tenant.UserID,
 		IntegrationType: integration.TypeQuickBooksOnline,
@@ -427,7 +432,7 @@ func TestClearReturnsARowToUnmatched(t *testing.T) {
 	h.rescore(t)
 
 	ap := h.keyed(t, accountingsync.TargetAccountRole, accountingsync.AccountRoleAP)
-	_, err := h.svc.Clear(t.Context(), &services.AccountingMappingActionRequest{
+	_, err := h.svc.Clear(t.Context(), &accountingsyncports.AccountingMappingActionRequest{
 		TenantInfo: h.tenant,
 		ID:         ap.ID,
 	})
@@ -435,7 +440,7 @@ func TestClearReturnsARowToUnmatched(t *testing.T) {
 	assert.True(t, errortypes.IsBusinessError(err))
 
 	ar := h.keyed(t, accountingsync.TargetAccountRole, accountingsync.AccountRoleAR)
-	cleared, err := h.svc.Clear(t.Context(), &services.AccountingMappingActionRequest{
+	cleared, err := h.svc.Clear(t.Context(), &accountingsyncports.AccountingMappingActionRequest{
 		TenantInfo: h.tenant,
 		ID:         ar.ID,
 	})
@@ -455,7 +460,7 @@ func confirmRequired(t *testing.T, h *harness) {
 		rows = append(rows, h.keyed(t, accountingsync.TargetAccountRole, role))
 	}
 	rows = append(rows, h.keyed(t, accountingsync.TargetLineType, "Freight"))
-	_, err := h.svc.Confirm(t.Context(), &services.ConfirmAccountingMappingsRequest{
+	_, err := h.svc.Confirm(t.Context(), &accountingsyncports.ConfirmAccountingMappingsRequest{
 		TenantInfo: h.tenant,
 		UserID:     h.tenant.UserID,
 		Items:      shown(rows...),
@@ -467,7 +472,7 @@ func TestCompleteSetupWaitsForTheRequiredMappings(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t)
 	h.rescore(t)
-	req := &services.AccountingSetupRequest{
+	req := &accountingsyncports.AccountingSetupRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.tenant.UserID,
 		IntegrationType: integration.TypeQuickBooksOnline,
@@ -514,7 +519,7 @@ func TestRequestRefreshStartsTheWorkflow(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t)
 
-	_, err := h.svc.RequestRefresh(t.Context(), &services.AccountingSetupRequest{
+	_, err := h.svc.RequestRefresh(t.Context(), &accountingsyncports.AccountingSetupRequest{
 		TenantInfo:      h.tenant,
 		IntegrationType: integration.TypeQuickBooksOnline,
 	})
@@ -522,7 +527,7 @@ func TestRequestRefreshStartsTheWorkflow(t *testing.T) {
 	assert.Equal(t, []pulid.ID{h.conn.ID}, h.refresher.requested)
 
 	h.connections.rows[h.conn.ID].Status = accountingsync.ConnectionStatusDisconnected
-	_, err = h.svc.RequestRefresh(t.Context(), &services.AccountingSetupRequest{
+	_, err = h.svc.RequestRefresh(t.Context(), &accountingsyncports.AccountingSetupRequest{
 		TenantInfo:      h.tenant,
 		IntegrationType: integration.TypeQuickBooksOnline,
 	})
@@ -586,7 +591,7 @@ func TestCreateReferenceRecordNeedsTheRevenueAccount(t *testing.T) {
 	h.rescore(t)
 
 	charge := h.object(t, accountingsync.TargetAccessorialCharge, h.chargeID)
-	_, err := h.svc.CreateReferenceRecord(t.Context(), &services.CreateAccountingReferenceRecordRequest{
+	_, err := h.svc.CreateReferenceRecord(t.Context(), &accountingsyncports.CreateAccountingReferenceRecordRequest{
 		TenantInfo: h.tenant,
 		MappingID:  charge.ID,
 	})
@@ -609,7 +614,7 @@ func TestCreateReferenceRecordCreatesAndConfirms(t *testing.T) {
 	}
 
 	charge := h.object(t, accountingsync.TargetAccessorialCharge, h.chargeID)
-	updated, err := h.svc.CreateReferenceRecord(t.Context(), &services.CreateAccountingReferenceRecordRequest{
+	updated, err := h.svc.CreateReferenceRecord(t.Context(), &accountingsyncports.CreateAccountingReferenceRecordRequest{
 		TenantInfo: h.tenant,
 		UserID:     h.tenant.UserID,
 		MappingID:  charge.ID,
@@ -628,14 +633,14 @@ func TestCreateReferenceRecordCreatesAndConfirms(t *testing.T) {
 	assert.Equal(t, creationRequestID(charge), sent.RequestID)
 	assert.LessOrEqual(t, len(sent.RequestID), 50)
 
-	refs, err := h.references.GetByExternalIDs(t.Context(), &repositories.GetAccountingReferenceObjectsRequest{
+	refs, err := h.references.GetByExternalIDs(t.Context(), &accountingsyncports.GetAccountingReferenceObjectsRequest{
 		Kind:        accountingsync.ReferenceKindItem,
 		ExternalIDs: []string{"91"},
 	})
 	require.NoError(t, err)
 	assert.Len(t, refs, 1)
 
-	_, err = h.svc.CreateReferenceRecord(t.Context(), &services.CreateAccountingReferenceRecordRequest{
+	_, err = h.svc.CreateReferenceRecord(t.Context(), &accountingsyncports.CreateAccountingReferenceRecordRequest{
 		TenantInfo: h.tenant,
 		MappingID:  charge.ID,
 	})
@@ -666,7 +671,7 @@ func TestCreateReferenceRecordSuggestsAnExistingDuplicate(t *testing.T) {
 	h.connector.duplicate = true
 
 	cus := h.object(t, accountingsync.TargetCustomer, h.customerID)
-	_, err := h.svc.CreateReferenceRecord(t.Context(), &services.CreateAccountingReferenceRecordRequest{
+	_, err := h.svc.CreateReferenceRecord(t.Context(), &accountingsyncports.CreateAccountingReferenceRecordRequest{
 		TenantInfo: h.tenant,
 		MappingID:  cus.ID,
 		Name:       "Acme Logistics, Inc.",
@@ -687,7 +692,7 @@ func TestCreateReferenceRecordRefusesAccounts(t *testing.T) {
 	h.rescore(t)
 
 	ap := h.keyed(t, accountingsync.TargetAccountRole, accountingsync.AccountRoleAP)
-	_, err := h.svc.CreateReferenceRecord(t.Context(), &services.CreateAccountingReferenceRecordRequest{
+	_, err := h.svc.CreateReferenceRecord(t.Context(), &accountingsyncports.CreateAccountingReferenceRecordRequest{
 		TenantInfo: h.tenant,
 		MappingID:  ap.ID,
 	})
@@ -750,7 +755,7 @@ func TestModelPassCapsConfidence(t *testing.T) {
 func TestModelPassWithoutAProvider(t *testing.T) {
 	t.Parallel()
 	h, row := modelHarness(t)
-	h.completion.err = services.ErrNoProviderConfigured
+	h.completion.err = agentports.ErrNoProviderConfigured
 
 	applied, err := h.svc.ModelPass(t.Context(), h.tenant, h.conn.ID, []pulid.ID{row.ID})
 	require.NoError(t, err)
@@ -777,7 +782,7 @@ func TestRescoreRelabelsAConfirmedMappingWithoutTouchingIt(t *testing.T) {
 	h.rescore(t)
 
 	cus := h.object(t, accountingsync.TargetCustomer, h.customerID)
-	_, err := h.svc.Confirm(t.Context(), &services.ConfirmAccountingMappingsRequest{
+	_, err := h.svc.Confirm(t.Context(), &accountingsyncports.ConfirmAccountingMappingsRequest{
 		TenantInfo: h.tenant,
 		Items:      shown(cus),
 	})
@@ -852,7 +857,7 @@ func TestCreateReferenceRecordStillMapsWhenARescoreRacedIt(t *testing.T) {
 		_, _ = h.mappings.ApplyScoring(t.Context(), []*accountingsync.AccountingMapping{raced})
 	}
 
-	updated, err := h.svc.CreateReferenceRecord(t.Context(), &services.CreateAccountingReferenceRecordRequest{
+	updated, err := h.svc.CreateReferenceRecord(t.Context(), &accountingsyncports.CreateAccountingReferenceRecordRequest{
 		TenantInfo: h.tenant,
 		MappingID:  carr.ID,
 		Name:       "Roadrunner Freight",

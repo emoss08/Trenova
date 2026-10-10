@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/modeprofile"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
@@ -114,7 +114,7 @@ func LocalHourStart(now time.Time, loc *time.Location, hour int) int64 {
 
 func QuickFilterConditions(
 	dba bun.IDB,
-	opts *repositories.ShipmentOptions,
+	opts *shipmentports.ShipmentOptions,
 ) ([]schema.QueryAppender, error) {
 	if opts == nil || !opts.HasQuickFilters() {
 		return nil, nil
@@ -134,7 +134,7 @@ func QuickFilterConditions(
 
 func QuickFilterCondition(
 	dba bun.IDB,
-	basis *repositories.ShipmentQuickFilterBasis,
+	basis *shipmentports.ShipmentQuickFilterBasis,
 	spec shipment.QuickFilterSpec,
 ) (schema.QueryAppender, error) {
 	if basis == nil || basis.Location == nil {
@@ -267,7 +267,7 @@ func costMilesExpr(includeDeadhead bool) string {
 
 func lowMarginCondition(
 	dba bun.IDB,
-	margin *repositories.ShipmentMarginBasis,
+	margin *shipmentports.ShipmentMarginBasis,
 ) schema.QueryAppender {
 	sp := buncolgen.ShipmentColumns
 	sm := buncolgen.ShipmentMoveColumns
@@ -290,7 +290,7 @@ func lowMarginCondition(
 func DetentionCondition(
 	dba bun.IDB,
 	now int64,
-	basis *repositories.ShipmentDetentionBasis,
+	basis *shipmentports.ShipmentDetentionBasis,
 ) schema.QueryAppender {
 	sp := buncolgen.ShipmentColumns
 
@@ -348,7 +348,7 @@ func ApplyAggregateScope(
 	q *bun.SelectQuery,
 	dba bun.IDB,
 	filter *pagination.QueryOptions,
-	opts *repositories.ShipmentOptions,
+	opts *shipmentports.ShipmentOptions,
 ) (*bun.SelectQuery, error) {
 	if filter == nil {
 		return nil, ErrShipmentScopeFilterMissing

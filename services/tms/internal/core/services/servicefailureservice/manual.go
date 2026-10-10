@@ -4,14 +4,15 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
 func (s *service) CreateManual(
 	ctx context.Context,
-	req *services.CreateManualServiceFailureRequest,
-	actor *services.RequestActor,
+	req *servicefailureports.CreateManualServiceFailureRequest,
+	actor *permissionports.RequestActor,
 ) (*servicefailure.ServiceFailure, error) {
 	return nil, manualServiceFailureDisabledError()
 }

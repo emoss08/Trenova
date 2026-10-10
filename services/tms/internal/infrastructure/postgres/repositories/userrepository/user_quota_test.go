@@ -1,12 +1,13 @@
 package userrepository
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -21,7 +22,7 @@ func TestReplaceOrganizationMembershipsRefusesASeatPastTheQuota(t *testing.T) {
 	t.Parallel()
 
 	conn, sqlMock := dbtest.NewSQLMock(t)
-	guard := mocks.NewMockQuotaGuard(t)
+	guard := platformplanportsmock.NewMockQuotaGuard(t)
 	repo := &repository{db: conn, l: zap.NewNop(), quota: guard}
 	buID := pulid.MustNew("bu_")
 	orgID := pulid.MustNew("org_")
@@ -34,7 +35,7 @@ func TestReplaceOrganizationMembershipsRefusesASeatPastTheQuota(t *testing.T) {
 	sqlMock.ExpectExec(`SET LOCAL lock_timeout`).WillReturnResult(sqlmock.NewResult(0, 0))
 	sqlMock.ExpectQuery(`FROM "user_organization_memberships"`).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}))
-	guard.EXPECT().Enforce(mock.Anything, &services.QuotaRequest{
+	guard.EXPECT().Enforce(mock.Anything, &platformplanports.QuotaRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		Meter:      platformcatalog.MeterUserSeats,
 		Quantity:   1,
@@ -43,7 +44,7 @@ func TestReplaceOrganizationMembershipsRefusesASeatPastTheQuota(t *testing.T) {
 
 	memberships, err := repo.ReplaceOrganizationMemberships(
 		t.Context(),
-		repositories.ReplaceOrganizationMembershipsRequest{
+		tenantports.ReplaceOrganizationMembershipsRequest{
 			ActorID:         pulid.MustNew("usr_"),
 			UserID:          pulid.MustNew("usr_"),
 			BusinessUnitID:  buID,

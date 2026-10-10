@@ -4,11 +4,10 @@ import (
 	"context"
 
 	"github.com/bytedance/sonic"
-
 	"github.com/emoss08/trenova/internal/core/domain/capture"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -22,7 +21,7 @@ type pageRepository struct {
 	l  *zap.Logger
 }
 
-func NewPageRepository(p Params) repositories.CapturePageRepository {
+func NewPageRepository(p Params) captureports.CapturePageRepository {
 	return &pageRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.capture-page-repository"),
@@ -55,7 +54,7 @@ func (r *pageRepository) Insert(
 			return entity, true, nil
 		}
 
-		existing, err := r.GetBySequence(ctx, repositories.GetCapturePageBySequenceRequest{
+		existing, err := r.GetBySequence(ctx, captureports.GetCapturePageBySequenceRequest{
 			BatchID: entity.BatchID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
@@ -137,7 +136,7 @@ func (r *pageRepository) RecordInspection(
 
 func (r *pageRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetCapturePageByIDRequest,
+	req captureports.GetCapturePageByIDRequest,
 ) (*capture.CapturePage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capture.CapturePage, error) {
 		entity := new(capture.CapturePage)
@@ -157,7 +156,7 @@ func (r *pageRepository) GetByID(
 
 func (r *pageRepository) GetBySequence(
 	ctx context.Context,
-	req repositories.GetCapturePageBySequenceRequest,
+	req captureports.GetCapturePageBySequenceRequest,
 ) (*capture.CapturePage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capture.CapturePage, error) {
 		entity := new(capture.CapturePage)
@@ -179,7 +178,7 @@ func (r *pageRepository) GetBySequence(
 
 func (r *pageRepository) ListByBatch(
 	ctx context.Context,
-	req repositories.ListCapturePagesRequest,
+	req captureports.ListCapturePagesRequest,
 ) ([]*capture.CapturePage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*capture.CapturePage, error) {
 		entities := make([]*capture.CapturePage, 0)

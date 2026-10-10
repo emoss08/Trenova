@@ -8,8 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -30,13 +31,13 @@ type turnChecks struct {
 	allowanceErr  error
 	roomErr       error
 
-	directed    *services.DirectedTask
+	directed    *agentports.DirectedTask
 	directedErr error
 
 	history    []conversation.Message
 	historyErr error
 
-	proposals []services.ProposalOutcome
+	proposals []agentports.ProposalOutcome
 	subject   *agentdefinition.RuntimeSubject
 	anchors   []agentdefinition.RuntimeAnchor
 }
@@ -73,8 +74,8 @@ func (c *turnChecks) err() error {
 func (s *Service) checkTurn(
 	ctx context.Context,
 	thread *conversation.Thread,
-	req *services.SendMessageRequest,
-	actor *services.RequestActor,
+	req *agentports.SendMessageRequest,
+	actor *permissionports.RequestActor,
 	page *agent.PageContext,
 ) *turnChecks {
 	checks := &turnChecks{}
@@ -137,8 +138,8 @@ func (s *Service) checkTurn(
 func (s *Service) usableDefinition(
 	ctx context.Context,
 	thread *conversation.Thread,
-	actor *services.RequestActor,
-	req *services.SendMessageRequest,
+	actor *permissionports.RequestActor,
+	req *agentports.SendMessageRequest,
 ) (*agentdefinition.Definition, error) {
 	return s.usableAgent(ctx, thread.AgentDefinitionID, actor, req.TenantInfo)
 }
@@ -148,10 +149,10 @@ func (s *Service) usableDefinition(
 func (s *Service) usableAgent(
 	ctx context.Context,
 	id pulid.ID,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	tenant pagination.TenantInfo,
 ) (*agentdefinition.Definition, error) {
-	definition, err := s.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	definition, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         id,
 		TenantInfo: tenant,
 	})
@@ -180,9 +181,9 @@ func (s *Service) usableAgent(
 func (s *Service) directedTask(
 	ctx context.Context,
 	thread *conversation.Thread,
-	actor *services.RequestActor,
-	req *services.SendMessageRequest,
-) (*services.DirectedTask, error) {
+	actor *permissionports.RequestActor,
+	req *agentports.SendMessageRequest,
+) (*agentports.DirectedTask, error) {
 	if req.DirectedAgentID.IsNil() {
 		return nil, nil //nolint:nilnil // no other agent was chosen
 	}
@@ -199,7 +200,7 @@ func (s *Service) directedTask(
 		return nil, err
 	}
 
-	return &services.DirectedTask{
+	return &agentports.DirectedTask{
 		Delegate: definition.AsDelegate(),
 		Task:     strings.TrimSpace(req.Content),
 	}, nil

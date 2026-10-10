@@ -91,7 +91,7 @@ findings:
       stops at the caller's deadline instead of 20 s.
     fixedIn: "uncommitted; verified in .deskbench/runs/20261010-101625-run: 151 hedges, no question let through unclassified"
     files:
-      - services/tms/internal/core/ports/services/agentcompletion.go
+      - services/tms/internal/modules/agent/ports/agentports/agentcompletion.go
       - services/tms/internal/infrastructure/agentcompletion/completionrouter/hedge.go
       - services/tms/internal/infrastructure/agentcompletion/completionrouter/router.go
       - services/tms/internal/infrastructure/agentcompletion/completionrouter/limits.go
@@ -1167,7 +1167,7 @@ findings:
       and the preview names both.
     fixedIn: uncommitted; verified by .deskbench/runs/20261009-214446-run (arrival and departure proposed in one call, load Completed)
     files:
-      - services/tms/internal/core/ports/repositories/shipmentmove.go
+      - services/tms/internal/modules/operations/ports/shipmentports/shipmentmove.go
       - services/tms/internal/core/services/shipmentmoveservice/stopactual_plan.go
       - services/tms/internal/core/services/shipmentmoveservice/stopactuals.go
       - services/tms/internal/core/services/agenttoolservice/move_tools.go
@@ -1351,7 +1351,7 @@ findings:
     files:
       - services/tms/internal/core/services/agentruntime/withdrawproposal.go
       - services/tms/internal/core/services/proposalrecorder/recorder.go
-      - services/tms/internal/core/ports/services/agentruntime.go
+      - services/tms/internal/modules/agent/ports/agentports/agentruntime.go
 
   - id: DB-057
     title: An agent without quote_shipment asked the person for a rating method the contract decides
@@ -1543,7 +1543,7 @@ findings:
     files:
       - services/tms/internal/core/services/assistantservice/workingset.go
       - services/tms/internal/core/services/agentruntime/directed.go
-      - services/tms/internal/core/ports/services/agentruntime.go
+      - services/tms/internal/modules/agent/ports/agentports/agentruntime.go
 
   - id: DB-066
     title: Driver pay lists took no driver name, and search_shipments ignored what a load carries
@@ -1924,7 +1924,7 @@ findings:
       filtered empty result lists up to five requests the filter left out.
     fixedIn: uncommitted; unit-tested
     files:
-      - services/tms/internal/core/ports/repositories/workerpto.go
+      - services/tms/internal/modules/workforce/ports/workerports/workerpto.go
       - services/tms/internal/infrastructure/postgres/repositories/workerptorepository/workerpto.go
       - services/tms/internal/core/services/agentquerytoolservice/pto_tools.go
 
@@ -2522,7 +2522,7 @@ findings:
       Statuses, applied as an IN filter.
     fixedIn: uncommitted; TestSearchShipments_TakesSeveralStatusesInOneCall
     files:
-      - services/tms/internal/core/ports/repositories/shipment.go
+      - services/tms/internal/modules/operations/ports/shipmentports/shipment.go
       - services/tms/internal/infrastructure/postgres/repositories/shipmentrepository/helpers.go
       - services/tms/internal/core/services/agentquerytoolservice/shipment_tools.go
       - services/tms/internal/core/services/agentquerytoolservice/shipment_tools_test.go
@@ -2705,7 +2705,7 @@ findings:
       says posting the existing draft is the step from where the load stands.
     fixedIn: uncommitted; TestSearchShipments_RequiresAStopAtEachPlaceNamed
     files:
-      - services/tms/internal/core/ports/repositories/shipment.go
+      - services/tms/internal/modules/operations/ports/shipmentports/shipment.go
       - services/tms/internal/infrastructure/postgres/repositories/shipmentrepository/helpers.go
       - services/tms/internal/core/services/agentquerytoolservice/shipment_search_parties.go
       - services/tms/internal/core/services/agentquerytoolservice/shipment_tools.go
@@ -2962,7 +2962,7 @@ findings:
       availability message formats its date in the organization's zone too.
     fixedIn: uncommitted; TestPTOLabel_NamesTheDaysInTheOrganizationsZone
     files:
-      - services/tms/internal/core/ports/services/workerpto.go
+      - services/tms/internal/modules/workforce/ports/workerports/workerpto_services.go
       - services/tms/internal/core/services/workerptoservice/preview_transition.go
       - services/tms/internal/core/services/agenttoolservice/preview_driver.go
       - services/tms/internal/core/services/agenttoolservice/preview_pto_approval.go
@@ -3130,7 +3130,7 @@ findings:
       TestAnthropicAdapter_ARequestCanTurnThinkingOffOnHaiku55, TestOpenAIResponsesAdapter_ARequestCanAskForNoReasoning
     files:
       - services/tms/internal/core/services/agentguard/classifier.go
-      - services/tms/internal/core/ports/services/agentcompletion.go
+      - services/tms/internal/modules/agent/ports/agentports/agentcompletion.go
       - services/tms/internal/infrastructure/agentcompletion/completionrouter/router.go
       - services/tms/internal/infrastructure/agentcompletion/completionrouter/prompt.go
       - services/tms/internal/infrastructure/agentcompletion/modeladapter/adapter.go

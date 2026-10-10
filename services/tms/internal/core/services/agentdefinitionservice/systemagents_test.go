@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -18,7 +18,7 @@ import (
 )
 
 type systemStore struct {
-	repositories.AgentDefinitionRepository
+	agentdefinitionports.AgentDefinitionRepository
 
 	mu       sync.Mutex
 	byKey    map[string]*agentdefinition.Definition
@@ -41,7 +41,7 @@ func newSystemStore(names ...string) *systemStore {
 
 func (s *systemStore) GetBySystemKey(
 	_ context.Context,
-	req repositories.GetAgentDefinitionBySystemKeyRequest,
+	req agentdefinitionports.GetAgentDefinitionBySystemKeyRequest,
 ) (*agentdefinition.Definition, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -78,13 +78,13 @@ func (s *systemStore) CreateSystem(
 }
 
 type auditLog struct {
-	services.AuditService
+	auditports.AuditService
 
 	mu      sync.Mutex
-	entries []*services.LogActionParams
+	entries []*auditports.LogActionParams
 }
 
-func (a *auditLog) LogAction(params *services.LogActionParams, _ ...services.LogOption) error {
+func (a *auditLog) LogAction(params *auditports.LogActionParams, _ ...auditports.LogOption) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	a.entries = append(a.entries, params)
@@ -108,12 +108,12 @@ func TestEnsureSystem_CreatesTheAgentFromItsTemplateOnce(t *testing.T) {
 	s := &Service{l: zap.NewNop(), repo: store, audit: audit}
 	tenant := systemTenant()
 
-	first, err := s.EnsureSystem(t.Context(), services.EnsureSystemAgentRequest{
+	first, err := s.EnsureSystem(t.Context(), agentdefinitionports.EnsureSystemAgentRequest{
 		TenantInfo: tenant,
 		SystemKey:  agentdefinition.SystemKeyImportAssistant,
 	})
 	require.NoError(t, err)
-	second, err := s.EnsureSystem(t.Context(), services.EnsureSystemAgentRequest{
+	second, err := s.EnsureSystem(t.Context(), agentdefinitionports.EnsureSystemAgentRequest{
 		TenantInfo: tenant,
 		SystemKey:  agentdefinition.SystemKeyImportAssistant,
 	})
@@ -152,7 +152,7 @@ func TestEnsureSystem_ConcurrentFirstUsesShareOneAgent(t *testing.T) {
 	var wg sync.WaitGroup
 	for range callers {
 		wg.Go(func() {
-			found, err := s.EnsureSystem(t.Context(), services.EnsureSystemAgentRequest{
+			found, err := s.EnsureSystem(t.Context(), agentdefinitionports.EnsureSystemAgentRequest{
 				TenantInfo: tenant,
 				SystemKey:  agentdefinition.SystemKeyFormulaAssistant,
 			})
@@ -182,7 +182,7 @@ func TestEnsureSystem_TakesAnotherNameWhenOneIsInUse(t *testing.T) {
 	store := newSystemStore(label)
 	s := &Service{l: zap.NewNop(), repo: store, audit: &auditLog{}}
 
-	found, err := s.EnsureSystem(t.Context(), services.EnsureSystemAgentRequest{
+	found, err := s.EnsureSystem(t.Context(), agentdefinitionports.EnsureSystemAgentRequest{
 		TenantInfo: systemTenant(),
 		SystemKey:  agentdefinition.SystemKeyFormulaAssistant,
 	})
@@ -192,7 +192,7 @@ func TestEnsureSystem_TakesAnotherNameWhenOneIsInUse(t *testing.T) {
 	crowded := newSystemStore(label, label+" (built-in)", label+" (built-in 2)",
 		label+" (built-in 3)", label+" (built-in 4)")
 	s.repo = crowded
-	_, err = s.EnsureSystem(t.Context(), services.EnsureSystemAgentRequest{
+	_, err = s.EnsureSystem(t.Context(), agentdefinitionports.EnsureSystemAgentRequest{
 		TenantInfo: systemTenant(),
 		SystemKey:  agentdefinition.SystemKeyFormulaAssistant,
 	})
@@ -206,13 +206,13 @@ func TestEnsureSystem_RefusesAnAgentItDoesNotCreate(t *testing.T) {
 	store := newSystemStore()
 	s := &Service{l: zap.NewNop(), repo: store, audit: &auditLog{}}
 
-	_, err := s.EnsureSystem(t.Context(), services.EnsureSystemAgentRequest{
+	_, err := s.EnsureSystem(t.Context(), agentdefinitionports.EnsureSystemAgentRequest{
 		TenantInfo: systemTenant(),
 		SystemKey:  "billing_exception",
 	})
 	require.Error(t, err)
 
-	_, err = s.EnsureSystem(t.Context(), services.EnsureSystemAgentRequest{
+	_, err = s.EnsureSystem(t.Context(), agentdefinitionports.EnsureSystemAgentRequest{
 		SystemKey: agentdefinition.SystemKeyImportAssistant,
 	})
 	require.Error(t, err)

@@ -8,8 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/pagedraft"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -40,9 +41,9 @@ var pageSurfaces = map[conversation.ThreadOrigin]pageSurface{
 
 func (s *Service) OpenPageThread(
 	ctx context.Context,
-	req *services.OpenPageThreadRequest,
-	actor *services.RequestActor,
-) (*services.PageThread, error) {
+	req *agentports.OpenPageThreadRequest,
+	actor *permissionports.RequestActor,
+) (*agentports.PageThread, error) {
 	surface, ok := pageSurfaces[req.Origin]
 	if !ok {
 		return nil, errortypes.NewValidationError(
@@ -69,7 +70,7 @@ func (s *Service) OpenPageThread(
 		return nil, errAgentsWithheld()
 	}
 
-	definition, err := s.systemAgents.EnsureSystem(ctx, services.EnsureSystemAgentRequest{
+	definition, err := s.systemAgents.EnsureSystem(ctx, agentdefinitionports.EnsureSystemAgentRequest{
 		TenantInfo: req.TenantInfo,
 		SystemKey:  surface.systemKey,
 	})
@@ -91,11 +92,11 @@ func (s *Service) OpenPageThread(
 	}
 	thread.MarkContinuable()
 
-	return &services.PageThread{Thread: thread, Agent: pageAgentOf(definition)}, nil
+	return &agentports.PageThread{Thread: thread, Agent: pageAgentOf(definition)}, nil
 }
 
-func pageAgentOf(definition *agentdefinition.Definition) services.PageAgent {
-	return services.PageAgent{
+func pageAgentOf(definition *agentdefinition.Definition) agentports.PageAgent {
+	return agentports.PageAgent{
 		ID:          definition.ID,
 		Name:        definition.Name,
 		Description: definition.Description,
@@ -108,7 +109,7 @@ func pageAgentOf(definition *agentdefinition.Definition) services.PageAgent {
 	}
 }
 
-func checkPageSubject(surface pageSurface, req *services.OpenPageThreadRequest) error {
+func checkPageSubject(surface pageSurface, req *agentports.OpenPageThreadRequest) error {
 	if req.SubjectType != "" && req.SubjectType != surface.subjectType {
 		return errortypes.NewValidationError(
 			"subjectType", errortypes.ErrInvalid,
@@ -132,7 +133,7 @@ func checkPageSubject(surface pageSurface, req *services.OpenPageThreadRequest) 
 
 func (s *Service) assertPageAgentUsable(
 	ctx context.Context,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	definition *agentdefinition.Definition,
 ) error {
 	if !definition.Enabled {
@@ -149,10 +150,10 @@ func (s *Service) assertPageAgentUsable(
 
 func (s *Service) claimPageThread(
 	ctx context.Context,
-	req *services.OpenPageThreadRequest,
+	req *agentports.OpenPageThreadRequest,
 	surface pageSurface,
 	definition *agentdefinition.Definition,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*conversation.Thread, error) {
 	subjectType := agent.SubjectType("")
 	if req.SubjectID.IsNotNil() {
@@ -160,7 +161,7 @@ func (s *Service) claimPageThread(
 	}
 
 	if req.SubjectID.IsNotNil() {
-		existing, err := s.pageThreads.GetPageThread(ctx, repositories.PageThreadKey{
+		existing, err := s.pageThreads.GetPageThread(ctx, agentports.PageThreadKey{
 			TenantInfo:  req.TenantInfo,
 			UserID:      actor.UserID,
 			Origin:      req.Origin,
@@ -173,7 +174,7 @@ func (s *Service) claimPageThread(
 				return existing, nil
 			}
 			if _, archiveErr := s.pageThreads.ArchiveSubjectThreads(ctx,
-				repositories.ArchiveSubjectThreadsRequest{
+				agentports.ArchiveSubjectThreadsRequest{
 					TenantInfo:  req.TenantInfo,
 					Origin:      req.Origin,
 					SubjectType: subjectType,
@@ -219,7 +220,7 @@ func (s *Service) assertPageTurn(
 	ctx context.Context,
 	thread *conversation.Thread,
 	page *agent.PageContext,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) error {
 	draft := pagedraft.Surface("")
 	if page != nil && page.Draft != nil {

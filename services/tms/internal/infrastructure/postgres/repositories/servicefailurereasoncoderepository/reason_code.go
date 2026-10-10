@@ -5,10 +5,10 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
-	coreports "github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -34,7 +34,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.ServiceFailureReasonCodeRepository {
+func New(p Params) servicefailureports.ServiceFailureReasonCodeRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.service-failure-reason-code-repository"),
@@ -43,7 +43,7 @@ func New(p Params) repositories.ServiceFailureReasonCodeRepository {
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListServiceFailureReasonCodesRequest,
+	req *servicefailureports.ListServiceFailureReasonCodesRequest,
 ) (*pagination.ListResult[*servicefailure.ReasonCode], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*servicefailure.ReasonCode], error) {
 		if req.Filter.Pagination.Limit <= 0 {
@@ -74,7 +74,7 @@ func (r *repository) List(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListServiceFailureReasonCodeConnectionRequest,
+	req *servicefailureports.ListServiceFailureReasonCodeConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -87,7 +87,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListServiceFailureReasonCodeConnectionRequest,
+	req *servicefailureports.ListServiceFailureReasonCodeConnectionRequest,
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -107,7 +107,7 @@ func applyServiceFailureReasonCodeColumns(q *bun.SelectQuery, columns []string) 
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListServiceFailureReasonCodeConnectionRequest,
+	req *servicefailureports.ListServiceFailureReasonCodeConnectionRequest,
 ) (*pagination.CursorListResult[*servicefailure.ReasonCode], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*servicefailure.ReasonCode], error) {
 		log := r.l.With(
@@ -164,7 +164,7 @@ func (r *repository) ListConnection(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetServiceFailureReasonCodeByIDRequest,
+	req servicefailureports.GetServiceFailureReasonCodeByIDRequest,
 ) (*servicefailure.ReasonCode, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*servicefailure.ReasonCode, error) {
 		entity := new(servicefailure.ReasonCode)
@@ -225,7 +225,7 @@ func (r *repository) Create(
 			return nil, mapReasonCodeConstraint(err)
 		}
 
-		return r.GetByID(ctx, repositories.GetServiceFailureReasonCodeByIDRequest{
+		return r.GetByID(ctx, servicefailureports.GetServiceFailureReasonCodeByIDRequest{
 			ID:         entity.ID,
 			TenantInfo: tenantInfo(entity),
 		})
@@ -270,7 +270,7 @@ func (r *repository) Update(
 			return nil, err
 		}
 
-		return r.GetByID(ctx, repositories.GetServiceFailureReasonCodeByIDRequest{
+		return r.GetByID(ctx, servicefailureports.GetServiceFailureReasonCodeByIDRequest{
 			ID:         entity.ID,
 			TenantInfo: tenantInfo(entity),
 		})
@@ -310,7 +310,7 @@ func (r *repository) Archive(
 			return nil, err
 		}
 
-		return r.GetByID(ctx, repositories.GetServiceFailureReasonCodeByIDRequest{
+		return r.GetByID(ctx, servicefailureports.GetServiceFailureReasonCodeByIDRequest{
 			ID:         id,
 			TenantInfo: tenantInfo,
 		})
@@ -348,7 +348,7 @@ func (r *repository) Activate(
 			return nil, err
 		}
 
-		return r.GetByID(ctx, repositories.GetServiceFailureReasonCodeByIDRequest{
+		return r.GetByID(ctx, servicefailureports.GetServiceFailureReasonCodeByIDRequest{
 			ID:         id,
 			TenantInfo: tenantInfo,
 		})
@@ -357,10 +357,10 @@ func (r *repository) Activate(
 
 func (r *repository) Reorder(
 	ctx context.Context,
-	req *repositories.ReorderServiceFailureReasonCodesRequest,
+	req *servicefailureports.ReorderServiceFailureReasonCodesRequest,
 ) ([]*servicefailure.ReasonCode, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*servicefailure.ReasonCode, error) {
-		if err := r.db.WithTx(ctx, coreports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		if err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 			for idx, id := range req.ReasonIDs {
 				_, err := r.db.DBForContext(txCtx).
 					NewUpdate().
@@ -400,7 +400,7 @@ func (r *repository) Reorder(
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
-	req *repositories.ServiceFailureReasonCodeSelectOptionsRequest,
+	req *servicefailureports.ServiceFailureReasonCodeSelectOptionsRequest,
 ) (*pagination.ListResult[*servicefailure.ReasonCode], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*servicefailure.ReasonCode], error) {
 		return dbhelper.SelectOptions[*servicefailure.ReasonCode](

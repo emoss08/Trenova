@@ -1,13 +1,16 @@
 package dispatchjobs
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	portservices "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,18 +22,18 @@ import (
 const testNow = int64(1_767_225_600)
 
 type recordingPublisher struct {
-	events []portservices.AgentEvent
+	events []agentports.AgentEvent
 }
 
-func (r *recordingPublisher) Publish(_ context.Context, event portservices.AgentEvent) {
+func (r *recordingPublisher) Publish(_ context.Context, event agentports.AgentEvent) {
 	r.events = append(r.events, event)
 }
 
 type recordingProjector struct {
-	items []portservices.WatchtowerItemInput
+	items []watchtowerports.WatchtowerItemInput
 }
 
-func (r *recordingProjector) Upsert(_ context.Context, item portservices.WatchtowerItemInput) {
+func (r *recordingProjector) Upsert(_ context.Context, item watchtowerports.WatchtowerItemInput) {
 	r.items = append(r.items, item)
 }
 
@@ -48,7 +51,7 @@ func coverageActivities(
 ) (*Activities, *recordingPublisher, *recordingProjector) {
 	t.Helper()
 
-	controls := mocks.NewMockDispatchControlRepository(t)
+	controls := dispatchcontrolportsmock.NewMockDispatchControlRepository(t)
 	controls.EXPECT().
 		GetByOrgID(mock.Anything, mock.Anything).
 		Return(&dispatchcontrol.DispatchControl{CoverageRiskWindowHours: window}, nil).
@@ -59,7 +62,7 @@ func coverageActivities(
 	activities := NewActivities(ActivitiesParams{
 		DispatchControlRepo: controls,
 		ProposalRepo:        new(stubProposalRepo),
-		AutoAssign:          mocks.NewMockDispatchAutoAssignService(t),
+		AutoAssign:          agentportsmock.NewMockDispatchAutoAssignService(t),
 		Watchtower:          projector,
 		Publisher:           publisher,
 		Logger:              zap.NewNop(),
@@ -69,8 +72,8 @@ func coverageActivities(
 	return activities, publisher, projector
 }
 
-func uncoveredAt(hoursOut int64) *portservices.DispatchUncoveredMove {
-	return &portservices.DispatchUncoveredMove{
+func uncoveredAt(hoursOut int64) *agentports.DispatchUncoveredMove {
+	return &agentports.DispatchUncoveredMove{
 		MoveID:    pulid.MustNew("mov_"),
 		ProNumber: "PRO-1",
 		Reason:    "No eligible driver was available for this move",
@@ -124,7 +127,7 @@ func TestRaiseCoverageRisk_OnlyMovesInsideTheWindow(t *testing.T) {
 			t.Parallel()
 
 			activities, publisher, projector := coverageActivities(t, tc.window)
-			moves := make([]*portservices.DispatchUncoveredMove, 0, len(tc.hoursOut))
+			moves := make([]*agentports.DispatchUncoveredMove, 0, len(tc.hoursOut))
 			for _, hours := range tc.hoursOut {
 				moves = append(moves, uncoveredAt(hours))
 			}
@@ -153,7 +156,7 @@ func TestRaiseCoverageRisk_LeavesUndatedMovesAlone(t *testing.T) {
 	raised := activities.raiseCoverageRisk(
 		t.Context(),
 		tenant(),
-		[]*portservices.DispatchUncoveredMove{
+		[]*agentports.DispatchUncoveredMove{
 			nil,
 			{MoveID: pulid.MustNew("mov_"), StartsAt: 0},
 		},
@@ -172,7 +175,7 @@ func TestRaiseCoverageRisk_SeverityRisesAsTheMoveNears(t *testing.T) {
 	raised := activities.raiseCoverageRisk(
 		t.Context(),
 		tenant(),
-		[]*portservices.DispatchUncoveredMove{
+		[]*agentports.DispatchUncoveredMove{
 			uncoveredAt(2),
 			uncoveredAt(10),
 		},

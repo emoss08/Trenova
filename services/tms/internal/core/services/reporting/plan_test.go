@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/reporting/canned"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,14 +19,14 @@ import (
 var errPlanWrote = errors.New("a plan wrote")
 
 type planDefinitions struct {
-	repositories.ReportDefinitionRepository
+	reportports.ReportDefinitionRepository
 
 	definition *report.ReportDefinition
 }
 
 func (r *planDefinitions) GetByID(
 	context.Context,
-	*repositories.GetReportDefinitionRequest,
+	*reportports.GetReportDefinitionRequest,
 ) (*report.ReportDefinition, error) {
 	copied := *r.definition
 
@@ -43,20 +43,20 @@ func (r *planDefinitions) Update(
 
 func (r *planDefinitions) Delete(
 	context.Context,
-	*repositories.DeleteReportDefinitionRequest,
+	*reportports.DeleteReportDefinitionRequest,
 ) error {
 	return errPlanWrote
 }
 
 type planDashboards struct {
-	repositories.ReportDashboardRepository
+	reportports.ReportDashboardRepository
 
 	dashboard *report.Dashboard
 }
 
 func (r *planDashboards) GetByID(
 	context.Context,
-	*repositories.GetReportDashboardRequest,
+	*reportports.GetReportDashboardRequest,
 ) (*report.Dashboard, error) {
 	copied := *r.dashboard
 
@@ -64,14 +64,14 @@ func (r *planDashboards) GetByID(
 }
 
 type planRuns struct {
-	repositories.ReportRunRepository
+	reportports.ReportRunRepository
 
 	run *report.ReportRun
 }
 
 func (r *planRuns) GetByID(
 	context.Context,
-	*repositories.GetReportRunRequest,
+	*reportports.GetReportRunRequest,
 ) (*report.ReportRun, error) {
 	copied := *r.run
 
@@ -79,14 +79,14 @@ func (r *planRuns) GetByID(
 }
 
 type planSchedules struct {
-	repositories.ReportScheduleRepository
+	reportports.ReportScheduleRepository
 
 	schedule *report.ReportSchedule
 }
 
 func (r *planSchedules) GetByID(
 	context.Context,
-	*repositories.GetReportScheduleRequest,
+	*reportports.GetReportScheduleRequest,
 ) (*report.ReportSchedule, error) {
 	copied := *r.schedule
 

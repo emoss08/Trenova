@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -41,7 +41,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.AIFeedbackRepository {
+func New(p Params) aifeedbackports.AIFeedbackRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.aifeedback-repository"),
@@ -108,7 +108,7 @@ func (r *repository) Upsert(
 
 func (r *repository) Delete(
 	ctx context.Context,
-	req repositories.DeleteAIFeedbackRequest,
+	req aifeedbackports.DeleteAIFeedbackRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
 		cols := buncolgen.FeedbackColumns
@@ -139,7 +139,7 @@ func (r *repository) Delete(
 
 func (r *repository) ListForTargets(
 	ctx context.Context,
-	req repositories.ListAIFeedbackForTargetsRequest,
+	req aifeedbackports.ListAIFeedbackForTargetsRequest,
 ) ([]*aifeedback.Feedback, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aifeedback.Feedback, error) {
 		if len(req.Targets) == 0 {
@@ -180,7 +180,7 @@ func (r *repository) ListForTargets(
 
 func (r *repository) ListByIDs(
 	ctx context.Context,
-	req repositories.ListAIFeedbackByIDsRequest,
+	req aifeedbackports.ListAIFeedbackByIDsRequest,
 ) ([]*aifeedback.Feedback, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aifeedback.Feedback, error) {
 		if len(req.IDs) == 0 {
@@ -208,7 +208,7 @@ func (r *repository) ListByIDs(
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListAIFeedbackConnectionRequest,
+	req *aifeedbackports.ListAIFeedbackConnectionRequest,
 ) (*pagination.CursorListResult[*aifeedback.Feedback], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*aifeedback.Feedback], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -274,11 +274,11 @@ func (r *repository) ListConnection(
 
 func (r *repository) DailySatisfaction(
 	ctx context.Context,
-	req repositories.AIFeedbackWindowRequest,
-) ([]*repositories.AIFeedbackDay, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.AIFeedbackDay, error) {
+	req aifeedbackports.AIFeedbackWindowRequest,
+) ([]*aifeedbackports.AIFeedbackDay, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aifeedbackports.AIFeedbackDay, error) {
 		cols := buncolgen.FeedbackColumns
-		rows := make([]*repositories.AIFeedbackDay, 0)
+		rows := make([]*aifeedbackports.AIFeedbackDay, 0)
 		day := cols.CreatedAt.Expr("to_char(to_timestamp({}) AT TIME ZONE ?, 'YYYY-MM-DD')")
 
 		err := r.db.DBForContext(ctx).
@@ -305,9 +305,9 @@ func (r *repository) DailySatisfaction(
 
 func (r *repository) WorstRated(
 	ctx context.Context,
-	req repositories.AIFeedbackWindowRequest,
-) ([]*repositories.AIFeedbackTargetScore, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.AIFeedbackTargetScore, error) {
+	req aifeedbackports.AIFeedbackWindowRequest,
+) ([]*aifeedbackports.AIFeedbackTargetScore, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aifeedbackports.AIFeedbackTargetScore, error) {
 		cols := buncolgen.FeedbackColumns
 		limit := req.Limit
 		if limit <= 0 {
@@ -318,7 +318,7 @@ func (r *repository) WorstRated(
 		}
 
 		countRating := cols.Rating.Expr("COUNT(*) FILTER (WHERE {} = ?)")
-		rows := make([]*repositories.AIFeedbackTargetScore, 0, limit)
+		rows := make([]*aifeedbackports.AIFeedbackTargetScore, 0, limit)
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -365,7 +365,7 @@ func (r *repository) WorstRated(
 	})
 }
 
-func windowScope(sq *bun.SelectQuery, req repositories.AIFeedbackWindowRequest) *bun.SelectQuery {
+func windowScope(sq *bun.SelectQuery, req aifeedbackports.AIFeedbackWindowRequest) *bun.SelectQuery {
 	cols := buncolgen.FeedbackColumns
 
 	sq = buncolgen.FeedbackScopeTenant(sq, req.TenantInfo).
@@ -379,11 +379,11 @@ func windowScope(sq *bun.SelectQuery, req repositories.AIFeedbackWindowRequest) 
 
 func (r *repository) TotalsByAgent(
 	ctx context.Context,
-	req repositories.AIFeedbackAgentTotalsRequest,
-) ([]*repositories.AIFeedbackAgentTotals, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.AIFeedbackAgentTotals, error) {
+	req aifeedbackports.AIFeedbackAgentTotalsRequest,
+) ([]*aifeedbackports.AIFeedbackAgentTotals, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aifeedbackports.AIFeedbackAgentTotals, error) {
 		cols := buncolgen.FeedbackColumns
-		rows := make([]*repositories.AIFeedbackAgentTotals, 0, len(req.AgentDefinitionIDs))
+		rows := make([]*aifeedbackports.AIFeedbackAgentTotals, 0, len(req.AgentDefinitionIDs))
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -426,7 +426,7 @@ func timezoneOf(timezone string) string {
 
 func (r *repository) ListNegativeSince(
 	ctx context.Context,
-	req repositories.ListNegativeAIFeedbackRequest,
+	req aifeedbackports.ListNegativeAIFeedbackRequest,
 ) ([]*aifeedback.Feedback, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aifeedback.Feedback, error) {
 		cols := buncolgen.FeedbackColumns
@@ -479,7 +479,7 @@ func (r *repository) ListNegativeSince(
 
 func (r *repository) PurgeBefore(
 	ctx context.Context,
-	req repositories.PurgeAIFeedbackRequest,
+	req aifeedbackports.PurgeAIFeedbackRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
 		cols := buncolgen.FeedbackColumns
@@ -526,7 +526,7 @@ func (r *repository) PurgeBefore(
 
 func (r *repository) LinkEvalCase(
 	ctx context.Context,
-	req repositories.LinkAIFeedbackEvalCaseRequest,
+	req aifeedbackports.LinkAIFeedbackEvalCaseRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.FeedbackColumns

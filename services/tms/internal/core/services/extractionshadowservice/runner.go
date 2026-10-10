@@ -7,9 +7,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/core/domain/extractionshadow"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/extractionfailure"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -24,7 +24,7 @@ const (
 	budgetReason     = "The evaluation budget is spent: "
 )
 
-var _ services.ExtractionShadowRunner = (*Runner)(nil)
+var _ extractionshadowports.ExtractionShadowRunner = (*Runner)(nil)
 
 var errPredictorUnavailable = errors.New("extraction shadow predictor is not configured")
 
@@ -32,18 +32,18 @@ type RunnerParams struct {
 	fx.In
 
 	Logger    *zap.Logger
-	Results   repositories.ExtractionShadowResultRepository
+	Results   extractionshadowports.ExtractionShadowResultRepository
 	Scorer    *Scorer
-	Budget    services.EvaluationBudget          `optional:"true"`
-	Predictor services.ExtractionShadowPredictor `optional:"true"`
+	Budget    agentqualityports.EvaluationBudget              `optional:"true"`
+	Predictor extractionshadowports.ExtractionShadowPredictor `optional:"true"`
 }
 
 type Runner struct {
 	l         *zap.Logger
-	results   repositories.ExtractionShadowResultRepository
+	results   extractionshadowports.ExtractionShadowResultRepository
 	scorer    *Scorer
-	budget    services.EvaluationBudget
-	predictor services.ExtractionShadowPredictor
+	budget    agentqualityports.EvaluationBudget
+	predictor extractionshadowports.ExtractionShadowPredictor
 	now       func() int64
 }
 
@@ -58,13 +58,13 @@ func NewRunner(p RunnerParams) *Runner {
 	}
 }
 
-func AsRunner(r *Runner) services.ExtractionShadowRunner { return r }
+func AsRunner(r *Runner) extractionshadowports.ExtractionShadowRunner { return r }
 
 func (r *Runner) RunShadow(
 	ctx context.Context,
-	req *services.RunExtractionShadowRequest,
+	req *extractionshadowports.RunExtractionShadowRequest,
 ) error {
-	result, err := r.results.GetByID(ctx, repositories.GetExtractionShadowResultRequest{
+	result, err := r.results.GetByID(ctx, extractionshadowports.GetExtractionShadowResultRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.ResultID,
 	})
@@ -91,7 +91,7 @@ func (r *Runner) RunShadow(
 		result.StartedAt = &started
 	}
 
-	prediction, err := r.predictor.PredictShadowDraft(ctx, &services.PredictShadowDraftRequest{
+	prediction, err := r.predictor.PredictShadowDraft(ctx, &extractionshadowports.PredictShadowDraftRequest{
 		TenantInfo:  tenantOf(result),
 		DocumentID:  result.DocumentID,
 		ExtractedAt: result.ExtractedAt,
@@ -99,7 +99,7 @@ func (r *Runner) RunShadow(
 	})
 	switch {
 	case err == nil:
-	case errors.Is(err, services.ErrShadowSuperseded):
+	case errors.Is(err, extractionshadowports.ErrShadowSuperseded):
 		return r.settle(ctx, result, extractionshadow.ResultStatusSkipped, supersededReason)
 	case errortypes.IsNotFoundError(err):
 		return r.settle(ctx, result, extractionshadow.ResultStatusSkipped, deletedReason)
@@ -137,7 +137,7 @@ func (r *Runner) RunShadow(
 
 func (r *Runner) FailShadow(
 	ctx context.Context,
-	req repositories.GetExtractionShadowResultRequest,
+	req extractionshadowports.GetExtractionShadowResultRequest,
 	message string,
 ) error {
 	result, err := r.results.GetByID(ctx, req)
@@ -172,7 +172,7 @@ func (r *Runner) budgetSpent(
 
 func (r *Runner) recordPrediction(
 	result *extractionshadow.ShadowResult,
-	prediction *services.ShadowDraftPrediction,
+	prediction *extractionshadowports.ShadowDraftPrediction,
 ) {
 	result.DraftData = prediction.DraftData
 	result.Predicted = aicorrection.ReadPrediction(prediction.DraftData).Snapshot

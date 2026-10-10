@@ -9,40 +9,42 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/briefing"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type fakeFeed struct {
-	serviceports.WatchtowerService
+	watchtowerports.WatchtowerService
 
-	page     *serviceports.WatchtowerPage
-	requests []serviceports.ListWatchtowerItemsRequest
+	page     *watchtowerports.WatchtowerPage
+	requests []watchtowerports.ListWatchtowerItemsRequest
 }
 
 func (f *fakeFeed) List(
 	_ context.Context,
-	req serviceports.ListWatchtowerItemsRequest,
-	_ *serviceports.RequestActor,
-) (*serviceports.WatchtowerPage, error) {
+	req watchtowerports.ListWatchtowerItemsRequest,
+	_ *permissionports.RequestActor,
+) (*watchtowerports.WatchtowerPage, error) {
 	f.requests = append(f.requests, req)
 
 	return f.page, nil
 }
 
 type fakeRunsByID struct {
-	repositories.AgentRunRepository
+	agentports.AgentRunRepository
 
 	runs     map[pulid.ID]*agent.AgentRun
-	requests []repositories.ListAgentRunsByIDsRequest
+	requests []agentports.ListAgentRunsByIDsRequest
 }
 
 func (f *fakeRunsByID) ListByIDs(
 	_ context.Context,
-	req repositories.ListAgentRunsByIDsRequest,
+	req agentports.ListAgentRunsByIDsRequest,
 ) ([]*agent.AgentRun, error) {
 	f.requests = append(f.requests, req)
 	out := make([]*agent.AgentRun, 0, len(req.IDs))
@@ -56,7 +58,7 @@ func (f *fakeRunsByID) ListByIDs(
 }
 
 type fakeProposalsByID struct {
-	repositories.AgentProposalRepository
+	agentports.AgentProposalRepository
 
 	proposals map[pulid.ID]*agent.AgentProposal
 	calls     int
@@ -64,7 +66,7 @@ type fakeProposalsByID struct {
 
 func (f *fakeProposalsByID) ListByIDs(
 	_ context.Context,
-	req repositories.ListAgentProposalsByIDsRequest,
+	req agentports.ListAgentProposalsByIDsRequest,
 ) ([]*agent.AgentProposal, error) {
 	f.calls++
 	out := make([]*agent.AgentProposal, 0, len(req.IDs))
@@ -78,7 +80,7 @@ func (f *fakeProposalsByID) ListByIDs(
 }
 
 type fakePlansByID struct {
-	repositories.AgentPlanRepository
+	agentports.AgentPlanRepository
 
 	plans map[pulid.ID]*agent.AgentPlan
 	calls int
@@ -86,7 +88,7 @@ type fakePlansByID struct {
 
 func (f *fakePlansByID) ListByIDs(
 	_ context.Context,
-	req repositories.ListAgentPlansByIDsRequest,
+	req agentports.ListAgentPlansByIDsRequest,
 ) ([]*agent.AgentPlan, error) {
 	f.calls++
 	out := make([]*agent.AgentPlan, 0, len(req.IDs))
@@ -100,7 +102,7 @@ func (f *fakePlansByID) ListByIDs(
 }
 
 type fakeExceptionsByID struct {
-	repositories.AgentExceptionRepository
+	agentports.AgentExceptionRepository
 
 	exceptions map[pulid.ID]*agent.AgentException
 	calls      int
@@ -108,7 +110,7 @@ type fakeExceptionsByID struct {
 
 func (f *fakeExceptionsByID) ListByIDs(
 	_ context.Context,
-	req repositories.ListAgentExceptionsByIDsRequest,
+	req agentports.ListAgentExceptionsByIDsRequest,
 ) ([]*agent.AgentException, error) {
 	f.calls++
 	out := make([]*agent.AgentException, 0, len(req.IDs))
@@ -131,7 +133,7 @@ type towerFixture struct {
 
 func newTowerFixture(items ...*watchtower.Item) *towerFixture {
 	return &towerFixture{
-		feed: &fakeFeed{page: &serviceports.WatchtowerPage{
+		feed: &fakeFeed{page: &watchtowerports.WatchtowerPage{
 			Items:     items,
 			EndCursor: "cursor_next",
 		}},
@@ -142,7 +144,7 @@ func newTowerFixture(items ...*watchtower.Item) *towerFixture {
 	}
 }
 
-func (f *towerFixture) tool() serviceports.AgentQueryTool {
+func (f *towerFixture) tool() agentports.AgentQueryTool {
 	return provideListWatchtowerItemsTool(f.feed, watchtowerRunRepositories{
 		Runs:       f.runs,
 		Proposals:  f.proposals,
@@ -171,8 +173,8 @@ func towerItem(kind watchtower.SourceKind, sourceID string, occurredAt int64) *w
 
 func queryFeed(
 	t *testing.T,
-	tool serviceports.AgentQueryTool,
-	params *serviceports.QueryToolParams,
+	tool agentports.AgentQueryTool,
+	params *agentports.QueryToolParams,
 ) *watchtowerFeed {
 	t.Helper()
 
@@ -294,7 +296,7 @@ func TestListWatchtowerItems_AnInboundEmailOnTheTowerTaintsTheRun(t *testing.T) 
 	fixture := newTowerFixture(injected)
 
 	params := testParams(map[string]any{})
-	params.Actor.PrincipalType = serviceports.PrincipalTypeAgent
+	params.Actor.PrincipalType = permissionports.PrincipalTypeAgent
 	feed := queryFeed(t, fixture.tool(), params)
 
 	require.Len(t, feed.TaintedMarks(), 1)
@@ -310,7 +312,7 @@ func TestListWatchtowerItems_NeverMarksAnythingSeen(t *testing.T) {
 	t.Parallel()
 
 	fixture := newTowerFixture(towerItem(watchtower.SourceServiceFailure, "sf_1", 10))
-	params := personParams(serviceports.PrincipalTypeUser)
+	params := personParams(permissionports.PrincipalTypeUser)
 	params.Params = map[string]any{
 		paramUnseenOnly: true,
 		paramKinds:      []any{"ServiceFailure", "InboundMessage"},
@@ -347,7 +349,7 @@ func TestListWatchtowerItems_UnseenOnlyFollowsThePersonsCursor(t *testing.T) {
 	fixture := newTowerFixture(newest, newer, seen)
 	fixture.feed.page.HasNextPage = true
 
-	params := personParams(serviceports.PrincipalTypeUser)
+	params := personParams(permissionports.PrincipalTypeUser)
 	params.Params = map[string]any{paramUnseenOnly: true}
 	feed := queryFeed(t, fixture.tool(), params)
 
@@ -372,7 +374,7 @@ func TestListWatchtowerItems_UnseenOnlyIsIgnoredForAnAgent(t *testing.T) {
 	fixture := newTowerFixture(towerItem(watchtower.SourceServiceFailure, "sf_2", 20), seen)
 
 	params := testParams(map[string]any{paramUnseenOnly: true})
-	params.Actor.PrincipalType = serviceports.PrincipalTypeAgent
+	params.Actor.PrincipalType = permissionports.PrincipalTypeAgent
 	feed := queryFeed(t, fixture.tool(), params)
 
 	assert.Len(t, feed.Items, 2, "an agent has no place in the feed to follow")
@@ -415,13 +417,13 @@ func TestListWatchtowerItems_PolicyNamesEverySourceARowMayCarry(t *testing.T) {
 
 type fakeBriefings struct {
 	page     *briefing.Briefing
-	requests []serviceports.GetBriefingRequest
+	requests []briefingports.GetBriefingRequest
 }
 
 func (f *fakeBriefings) Today(
 	_ context.Context,
-	req serviceports.GetBriefingRequest,
-	_ *serviceports.RequestActor,
+	req briefingports.GetBriefingRequest,
+	_ *permissionports.RequestActor,
 ) (*briefing.Briefing, error) {
 	f.requests = append(f.requests, req)
 
@@ -465,10 +467,10 @@ func morningPage() *briefing.Briefing {
 	}
 }
 
-func readable(resources ...permission.Resource) map[string]*serviceports.ResourcePermissionDetail {
-	out := make(map[string]*serviceports.ResourcePermissionDetail, len(resources))
+func readable(resources ...permission.Resource) map[string]*permissionports.ResourcePermissionDetail {
+	out := make(map[string]*permissionports.ResourcePermissionDetail, len(resources))
 	for _, resource := range resources {
-		out[resource.String()] = &serviceports.ResourcePermissionDetail{
+		out[resource.String()] = &permissionports.ResourcePermissionDetail{
 			Resource:   resource.String(),
 			Operations: []permission.Operation{permission.OpRead},
 		}
@@ -479,8 +481,8 @@ func readable(resources ...permission.Resource) map[string]*serviceports.Resourc
 
 func queryBriefing(
 	t *testing.T,
-	tool serviceports.AgentQueryTool,
-	params *serviceports.QueryToolParams,
+	tool agentports.AgentQueryTool,
+	params *agentports.QueryToolParams,
 ) dailyBriefingView {
 	t.Helper()
 
@@ -511,7 +513,7 @@ func TestGetDailyBriefing_DropsSectionsTheReaderCannotRead(t *testing.T) {
 		permission.ResourceServiceFailure,
 		permission.ResourceShipmentMove,
 	)})
-	params := personParams(serviceports.PrincipalTypeUser)
+	params := personParams(permissionports.PrincipalTypeUser)
 
 	view := queryBriefing(t, tool, params)
 
@@ -536,7 +538,7 @@ func TestGetDailyBriefing_AReaderOfEverySectionGetsTheNarratedPage(t *testing.T)
 
 	briefings := &fakeBriefings{page: morningPage()}
 	tool := newGetDailyBriefingTool(briefings, &fakePermissions{allowed: true})
-	params := personParams(serviceports.PrincipalTypeUser)
+	params := personParams(permissionports.PrincipalTypeUser)
 	params.Params = map[string]any{paramRole: "Billing", paramDate: "2026-09-23"}
 
 	view := queryBriefing(t, tool, params)
@@ -563,7 +565,7 @@ func TestGetDailyBriefing_AnAgentReadsOnlyWhatTheAllowListGrants(t *testing.T) {
 	briefings := &fakeBriefings{page: page}
 	tool := newGetDailyBriefingTool(briefings, &fakePermissions{})
 	params := testParams(map[string]any{})
-	params.Actor.PrincipalType = serviceports.PrincipalTypeAgent
+	params.Actor.PrincipalType = permissionports.PrincipalTypeAgent
 
 	view := queryBriefing(t, tool, params)
 
@@ -587,7 +589,7 @@ func TestGetDailyBriefing_ASectionNobodyMappedIsWithheld(t *testing.T) {
 	})
 	tool := newGetDailyBriefingTool(&fakeBriefings{page: page}, &fakePermissions{allowed: true})
 
-	view := queryBriefing(t, tool, personParams(serviceports.PrincipalTypeUser))
+	view := queryBriefing(t, tool, personParams(permissionports.PrincipalTypeUser))
 
 	assert.NotContains(t, sectionKeys(view), "Payroll")
 	assert.Equal(t, []string{"Payroll"}, view.Withheld)
@@ -598,7 +600,7 @@ func TestGetDailyBriefing_SaysSoWhenNothingIsWrittenYet(t *testing.T) {
 
 	tool := newGetDailyBriefingTool(&fakeBriefings{}, &fakePermissions{allowed: true})
 
-	view := queryBriefing(t, tool, personParams(serviceports.PrincipalTypeUser))
+	view := queryBriefing(t, tool, personParams(permissionports.PrincipalTypeUser))
 
 	assert.False(t, view.Found)
 	assert.Equal(t, "General", view.Role)

@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,14 +21,14 @@ func (testDBConnection) IsHealthy(context.Context) bool       { return true }
 func (testDBConnection) Close() error                         { return nil }
 func (testDBConnection) WithTx(
 	ctx context.Context,
-	_ ports.TxOptions,
+	_ kernelports.TxOptions,
 	fn func(context.Context, bun.Tx) error,
 ) error {
 	return fn(ctx, bun.Tx{})
 }
 
 type fakeRateConRepo struct {
-	repositories.RateConfirmationRepository
+	rateconfirmationports.RateConfirmationRepository
 
 	byID               map[pulid.ID]*rateconfirmation.RateConfirmation
 	activeByAssignment map[pulid.ID]*rateconfirmation.RateConfirmation
@@ -59,7 +59,7 @@ func (f *fakeRateConRepo) add(entity *rateconfirmation.RateConfirmation) {
 
 func (f *fakeRateConRepo) GetByID(
 	_ context.Context,
-	req *repositories.GetRateConfirmationByIDRequest,
+	req *rateconfirmationports.GetRateConfirmationByIDRequest,
 ) (*rateconfirmation.RateConfirmation, error) {
 	entity, ok := f.byID[req.RateConfirmationID]
 	if !ok {
@@ -130,7 +130,7 @@ func (f *fakeRateConRepo) GetTokenByHash(
 
 func (f *fakeRateConRepo) MarkTokenUsed(
 	_ context.Context,
-	req *repositories.MarkRateConfirmationTokenUsedRequest,
+	req *rateconfirmationports.MarkRateConfirmationTokenUsedRequest,
 ) (bool, error) {
 	f.markedUsed = append(f.markedUsed, req.TokenID)
 	return true, nil

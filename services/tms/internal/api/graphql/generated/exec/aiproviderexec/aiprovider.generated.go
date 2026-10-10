@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -428,7 +428,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.TestAIProviderResult)
+					obj := o.(*agentports.TestAIProviderResult)
 					return obj.Success, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -438,7 +438,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.TestAIProviderResult)
+					obj := o.(*agentports.TestAIProviderResult)
 					return obj.Message, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -448,7 +448,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.TestAIProviderResult)
+					obj := o.(*agentports.TestAIProviderResult)
 					return obj.Detail, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -458,7 +458,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.TestAIProviderResult)
+					obj := o.(*agentports.TestAIProviderResult)
 					return obj.Hint, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -468,7 +468,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.TestAIProviderResult)
+					obj := o.(*agentports.TestAIProviderResult)
 					return obj.ModelIdentifier, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -478,7 +478,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.TestAIProviderResult)
+					obj := o.(*agentports.TestAIProviderResult)
 					return obj.SchemaHonoured, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -488,7 +488,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.TestAIProviderResult)
+					obj := o.(*agentports.TestAIProviderResult)
 					return obj.LatencyMS, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -956,7 +956,7 @@ type resolverAIRouteChoice interface {
 }
 
 type resolverMutation interface {
-	TestAIProviderDraft(ctx context.Context, input gqlmodel.AIProviderDraftTestInput) (*services.TestAIProviderResult, error)
+	TestAIProviderDraft(ctx context.Context, input gqlmodel.AIProviderDraftTestInput) (*agentports.TestAIProviderResult, error)
 	ReorderAIProviders(ctx context.Context, ids []string) ([]*aiprovider.Provider, error)
 	PatchAIProvider(ctx context.Context, id string, version int, input gqlmodel.AIProviderPatchInput) (*aiprovider.Provider, error)
 }
@@ -1568,7 +1568,7 @@ func marshalNAIProviderConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return ec.MarshalType(ctx, sel, "AIProviderConnection", v)
 }
 
-func marshalNAIProviderDraftTestResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐTestAIProviderResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.TestAIProviderResult) graphql.Marshaler {
+func marshalNAIProviderDraftTestResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐTestAIProviderResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentports.TestAIProviderResult) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

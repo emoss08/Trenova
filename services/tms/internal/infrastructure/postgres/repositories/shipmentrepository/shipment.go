@@ -10,12 +10,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/quotaservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -34,28 +35,28 @@ type Params struct {
 	DB                         *postgres.Connection
 	Logger                     *zap.Logger
 	Generator                  seqgen.Generator
-	MoveRepository             repositories.ShipmentMoveRepository
-	AdditionalChargeRepository repositories.ShipmentAdditionalChargeRepository
-	ChargeAllocationRepository repositories.ChargeAllocationRepository
-	CommodityRepository        repositories.ShipmentCommodityRepository
-	OrderRepository            repositories.OrderRepository
-	Quota                      services.QuotaGuard `optional:"true"`
+	MoveRepository             shipmentports.ShipmentMoveRepository
+	AdditionalChargeRepository shipmentports.ShipmentAdditionalChargeRepository
+	ChargeAllocationRepository shipmentports.ChargeAllocationRepository
+	CommodityRepository        shipmentports.ShipmentCommodityRepository
+	OrderRepository            orderports.OrderRepository
+	Quota                      platformplanports.QuotaGuard `optional:"true"`
 }
 
 type repository struct {
 	db                         *postgres.Connection
 	l                          *zap.Logger
 	generator                  seqgen.Generator
-	moveRepository             repositories.ShipmentMoveRepository
-	additionalChargeRepository repositories.ShipmentAdditionalChargeRepository
-	chargeAllocationRepository repositories.ChargeAllocationRepository
-	commodityRepository        repositories.ShipmentCommodityRepository
-	orderRepository            repositories.OrderRepository
-	quota                      services.QuotaGuard
+	moveRepository             shipmentports.ShipmentMoveRepository
+	additionalChargeRepository shipmentports.ShipmentAdditionalChargeRepository
+	chargeAllocationRepository shipmentports.ChargeAllocationRepository
+	commodityRepository        shipmentports.ShipmentCommodityRepository
+	orderRepository            orderports.OrderRepository
+	quota                      platformplanports.QuotaGuard
 }
 
 //nolint:gocritic // This is a constructor function
-func New(p Params) repositories.ShipmentRepository {
+func New(p Params) shipmentports.ShipmentRepository {
 	return &repository{
 		db:                         p.DB,
 		l:                          p.Logger.Named("postgres.shipment-repository"),
@@ -71,7 +72,7 @@ func New(p Params) repositories.ShipmentRepository {
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListShipmentsRequest,
+	req *shipmentports.ListShipmentsRequest,
 ) (*pagination.CursorListResult[*shipment.Shipment], error) {
 	return dbtx.Write(
 		ctx,
@@ -133,7 +134,7 @@ func (r *repository) List(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req *repositories.GetShipmentByIDRequest,
+	req *shipmentports.GetShipmentByIDRequest,
 ) (*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
 		sp := buncolgen.ShipmentColumns
@@ -165,7 +166,7 @@ func (r *repository) GetByID(
 
 func (r *repository) GetByIDs(
 	ctx context.Context,
-	req *repositories.GetShipmentsByIDsRequest,
+	req *shipmentports.GetShipmentsByIDsRequest,
 ) ([]*shipment.Shipment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipment.Shipment, error) {
 		sp := buncolgen.ShipmentColumns
@@ -197,7 +198,7 @@ func (r *repository) GetByIDs(
 
 func (r *repository) ListRatedByFormulaTemplate(
 	ctx context.Context,
-	req *repositories.ListRatedByFormulaTemplateRequest,
+	req *shipmentports.ListRatedByFormulaTemplateRequest,
 ) ([]*shipment.Shipment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipment.Shipment, error) {
 		sp := buncolgen.ShipmentColumns
@@ -254,7 +255,7 @@ func (r *repository) ListRatedByFormulaTemplate(
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
-	req *repositories.ShipmentSelectOptionsRequest,
+	req *shipmentports.ShipmentSelectOptionsRequest,
 ) (*pagination.ListResult[*shipment.Shipment], error) {
 	return dbtx.Write(
 		ctx,
@@ -304,7 +305,7 @@ func (r *repository) SelectOptions(
 
 func (r *repository) GetUnassigned(
 	ctx context.Context,
-	req *repositories.GetUnassignedShipmentsRequest,
+	req *shipmentports.GetUnassignedShipmentsRequest,
 ) (*pagination.CursorListResult[*shipment.Shipment], error) {
 	return dbtx.Write(
 		ctx,
@@ -318,9 +319,9 @@ func (r *repository) GetUnassigned(
 					NewSelect().
 					Model((*shipment.Shipment)(nil)).
 					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						countReq := repositories.ListShipmentsRequest{
+						countReq := shipmentports.ListShipmentsRequest{
 							Filter: req.Filter,
-							ShipmentOptions: repositories.ShipmentOptions{
+							ShipmentOptions: shipmentports.ShipmentOptions{
 								Status: string(shipment.StatusNew),
 							},
 						}
@@ -364,14 +365,14 @@ func (r *repository) GetUnassigned(
 
 func (r *repository) GetPreviousRates(
 	ctx context.Context,
-	req *repositories.GetPreviousRatesRequest,
-) (*pagination.ListResult[*repositories.PreviousRateSummary], error) {
+	req *shipmentports.GetPreviousRatesRequest,
+) (*pagination.ListResult[*shipmentports.PreviousRateSummary], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*repositories.PreviousRateSummary], error) {
+		func(ctx context.Context) (*pagination.ListResult[*shipmentports.PreviousRateSummary], error) {
 			sp := buncolgen.ShipmentColumns
-			entities := make([]*repositories.PreviousRateSummary, 0, 50)
+			entities := make([]*shipmentports.PreviousRateSummary, 0, 50)
 
 			baseQuery := func(dba bun.IDB) *bun.SelectQuery {
 				originCTE, destinationCTE := buildPreviousRatesCTEs(
@@ -433,7 +434,7 @@ func (r *repository) GetPreviousRates(
 				return nil, err
 			}
 
-			return &pagination.ListResult[*repositories.PreviousRateSummary]{
+			return &pagination.ListResult[*shipmentports.PreviousRateSummary]{
 				Items: entities,
 				Total: total,
 			}, nil
@@ -476,7 +477,7 @@ func (r *repository) Create(
 			return nil, err
 		}
 
-		err = r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+		err = r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 			if err = quotaservice.EnforceAll(c, r.quota, quotaReq); err != nil {
 				return err
 			}
@@ -560,7 +561,7 @@ func (r *repository) Update(
 ) (*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
 		sp := buncolgen.ShipmentColumns
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 			ov := entity.Version
 			entity.Version++
 
@@ -625,7 +626,7 @@ func (r *repository) UpdateOperationalLifecycle(
 ) (*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
 		sp := buncolgen.ShipmentColumns
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 			ov := entity.Version
 			entity.Version++
 
@@ -723,7 +724,7 @@ func (r *repository) UpdateDerivedState(
 ) (*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
 		sp := buncolgen.ShipmentColumns
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 			ov := entity.Version
 			entity.Version++
 
@@ -785,7 +786,7 @@ func (r *repository) UpdateDerivedState(
 
 func (r *repository) UpdateStatus(
 	ctx context.Context,
-	req *repositories.UpdateShipmentStatusRequest,
+	req *shipmentports.UpdateShipmentStatusRequest,
 ) (*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
 		sp := buncolgen.ShipmentColumns
@@ -820,13 +821,13 @@ func (r *repository) UpdateStatus(
 
 func (r *repository) Cancel(
 	ctx context.Context,
-	req *repositories.CancelShipmentRequest,
+	req *shipmentports.CancelShipmentRequest,
 ) (*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
 		sp := buncolgen.ShipmentColumns
 		entity := new(shipment.Shipment)
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 			results, err := tx.NewUpdate().
 				Model(entity).
 				Set(sp.Status.Set(), shipment.StatusCanceled).
@@ -871,13 +872,13 @@ func (r *repository) Cancel(
 
 func (r *repository) Uncancel(
 	ctx context.Context,
-	req *repositories.UncancelShipmentRequest,
+	req *shipmentports.UncancelShipmentRequest,
 ) (*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
 		sp := buncolgen.ShipmentColumns
 		entity := new(shipment.Shipment)
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 			results, err := tx.NewUpdate().
 				Model(entity).
 				Set(sp.Status.Set(), restoredShipmentStatus(req)).
@@ -920,7 +921,7 @@ func (r *repository) Uncancel(
 
 func (r *repository) TransferOwnership(
 	ctx context.Context,
-	req *repositories.TransferOwnershipRequest,
+	req *shipmentports.TransferOwnershipRequest,
 ) (*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
 		sp := buncolgen.ShipmentColumns
@@ -954,8 +955,8 @@ func (r *repository) TransferOwnership(
 
 func (r *repository) FindByExternalReference(
 	ctx context.Context,
-	req *repositories.ExternalReferenceCheckRequest,
-) (*repositories.DuplicateBOLResult, error) {
+	req *shipmentports.ExternalReferenceCheckRequest,
+) (*shipmentports.DuplicateBOLResult, error) {
 	reference := strings.TrimSpace(req.ExternalReference)
 	if reference == "" || req.CustomerID.IsNil() {
 		return nil, nil //nolint:nilnil // no reference never collides
@@ -963,9 +964,9 @@ func (r *repository) FindByExternalReference(
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*repositories.DuplicateBOLResult, error) {
+		func(ctx context.Context) (*shipmentports.DuplicateBOLResult, error) {
 			sp := buncolgen.ShipmentColumns
-			found := new(repositories.DuplicateBOLResult)
+			found := new(shipmentports.DuplicateBOLResult)
 			query := r.db.DBForContext(ctx).
 				NewSelect().
 				Column(sp.ID.Bare(), sp.ProNumber.Bare()).
@@ -994,7 +995,7 @@ func (r *repository) FindByExternalReference(
 
 func (r *repository) FindIDByIdempotencyKey(
 	ctx context.Context,
-	req *repositories.IdempotencyKeyLookupRequest,
+	req *shipmentports.IdempotencyKeyLookupRequest,
 ) (pulid.ID, error) {
 	if req.IdempotencyKey == "" {
 		return pulid.Nil, nil
@@ -1024,14 +1025,14 @@ func (r *repository) FindIDByIdempotencyKey(
 
 func (r *repository) CheckForDuplicateBOLs(
 	ctx context.Context,
-	req *repositories.DuplicateBOLCheckRequest,
-) ([]*repositories.DuplicateBOLResult, error) {
+	req *shipmentports.DuplicateBOLCheckRequest,
+) ([]*shipmentports.DuplicateBOLResult, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*repositories.DuplicateBOLResult, error) {
+		func(ctx context.Context) ([]*shipmentports.DuplicateBOLResult, error) {
 			sp := buncolgen.ShipmentColumns
-			duplicates := make([]*repositories.DuplicateBOLResult, 0)
+			duplicates := make([]*shipmentports.DuplicateBOLResult, 0)
 
 			query := r.db.DBForContext(ctx).
 				NewSelect().
@@ -1058,7 +1059,7 @@ func (r *repository) CheckForDuplicateBOLs(
 
 func (r *repository) BulkDuplicate(
 	ctx context.Context,
-	req *repositories.BulkDuplicateShipmentRequest,
+	req *shipmentports.BulkDuplicateShipmentRequest,
 ) ([]*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*shipment.Shipment, error) {
 		quotaReq := shipmentQuotaRequest(
@@ -1124,7 +1125,7 @@ func (r *repository) BulkDuplicate(
 		}
 
 		quotaReq.Quantity = int64(len(graph.shipments))
-		err = r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+		err = r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 			if quotaErr := quotaservice.EnforceAll(c, r.quota, quotaReq); quotaErr != nil {
 				return quotaErr
 			}
@@ -1214,8 +1215,8 @@ func (r *repository) BulkDuplicate(
 
 func (r *repository) PlanDuplicate(
 	ctx context.Context,
-	req *repositories.BulkDuplicateShipmentRequest,
-) (*repositories.ShipmentDuplicatePlan, error) {
+	req *shipmentports.BulkDuplicateShipmentRequest,
+) (*shipmentports.ShipmentDuplicatePlan, error) {
 	source, err := r.getDuplicateSource(ctx, req)
 	if err != nil {
 		return nil, err
@@ -1228,12 +1229,12 @@ func (r *repository) PlanDuplicate(
 		req.TenantInfo.UserID,
 	)
 
-	return &repositories.ShipmentDuplicatePlan{Source: source, Copies: graph.shipments}, nil
+	return &shipmentports.ShipmentDuplicatePlan{Source: source, Copies: graph.shipments}, nil
 }
 
 func (r *repository) getDuplicateSource(
 	ctx context.Context,
-	req *repositories.BulkDuplicateShipmentRequest,
+	req *shipmentports.BulkDuplicateShipmentRequest,
 ) (*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
 		return LoadShipmentGraphSource(
@@ -1294,8 +1295,8 @@ func ResolveSequenceCodes(
 	return locationCode, businessUnitCode, nil
 }
 
-func shipmentQuotaRequest(orgID, buID pulid.ID, quantity int64) services.QuotaRequest {
-	return services.QuotaRequest{
+func shipmentQuotaRequest(orgID, buID pulid.ID, quantity int64) platformplanports.QuotaRequest {
+	return platformplanports.QuotaRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		Meter:      platformcatalog.MeterShipmentsTotal,
 		Quantity:   quantity,

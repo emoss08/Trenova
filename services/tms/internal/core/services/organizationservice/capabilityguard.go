@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -27,7 +27,7 @@ type capabilityDisableGuard struct {
 	field     string
 	noun      string
 	requested func(*tenant.Organization) bool
-	current   func(*repositories.OrganizationCapabilities) bool
+	current   func(*tenantports.OrganizationCapabilities) bool
 	describe  func(context.Context, pagination.TenantInfo) (string, error)
 }
 
@@ -37,7 +37,7 @@ func (s *service) capabilityDisableGuards() [2]capabilityDisableGuard {
 			field:     brokerageEnabledField,
 			noun:      "brokerage",
 			requested: func(o *tenant.Organization) bool { return o.BrokerageEnabled },
-			current: func(c *repositories.OrganizationCapabilities) bool {
+			current: func(c *tenantports.OrganizationCapabilities) bool {
 				return c.BrokerageEnabled
 			},
 			describe: s.describeBrokerageDependencies,
@@ -46,7 +46,7 @@ func (s *service) capabilityDisableGuards() [2]capabilityDisableGuard {
 			field:     assetOperationsEnabledField,
 			noun:      "asset operations",
 			requested: func(o *tenant.Organization) bool { return o.AssetOperationsEnabled },
-			current: func(c *repositories.OrganizationCapabilities) bool {
+			current: func(c *tenantports.OrganizationCapabilities) bool {
 				return c.AssetOperationsEnabled
 			},
 			describe: s.describeAssetDependencies,
@@ -75,9 +75,9 @@ func (s *service) guardCapabilityDisable(
 		BuID:  entity.BusinessUnitID,
 	}
 
-	current, err := s.repo.GetCapabilities(ctx, repositories.GetOrganizationCapabilitiesRequest{
+	current, err := s.repo.GetCapabilities(ctx, tenantports.GetOrganizationCapabilitiesRequest{
 		TenantInfo: tenantInfo,
-		Lock:       repositories.CapabilityLockUpdate,
+		Lock:       tenantports.CapabilityLockUpdate,
 	})
 	if err != nil {
 		return err

@@ -19,10 +19,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -40,13 +41,13 @@ type WorkerUpdater interface {
 	Update(
 		ctx context.Context,
 		entity *worker.Worker,
-		actor *services.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*worker.Worker, error)
 }
 
 // WorkerReader is the one read this service makes of the roster.
 type WorkerReader interface {
-	GetByID(ctx context.Context, req repositories.GetWorkerByIDRequest) (*worker.Worker, error)
+	GetByID(ctx context.Context, req workerports.GetWorkerByIDRequest) (*worker.Worker, error)
 }
 
 // DocumentChecksums is the slice of the document store an acknowledgement
@@ -64,21 +65,21 @@ type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Repo          repositories.SelfServiceRepository
-	WorkerRepo    repositories.WorkerRepository
+	Repo          workerports.SelfServiceRepository
+	WorkerRepo    workerports.WorkerRepository
 	WorkerUpdater WorkerUpdater
 	Checksums     DocumentChecksums `optional:"true"`
-	AuditService  services.AuditService
+	AuditService  auditports.AuditService
 	DriverNotify  *drivernotificationservice.Service `optional:"true"`
 }
 
 type Service struct {
 	l             *zap.Logger
-	repo          repositories.SelfServiceRepository
+	repo          workerports.SelfServiceRepository
 	workerRepo    WorkerReader
 	workerUpdater WorkerUpdater
 	checksums     DocumentChecksums
-	auditService  services.AuditService
+	auditService  auditports.AuditService
 	driverNotify  *drivernotificationservice.Service
 }
 
@@ -97,11 +98,11 @@ func New(p Params) *Service {
 // Deps is the constructor shape tests use to swap in fakes.
 type Deps struct {
 	Logger        *zap.Logger
-	Repo          repositories.SelfServiceRepository
+	Repo          workerports.SelfServiceRepository
 	WorkerRepo    WorkerReader
 	WorkerUpdater WorkerUpdater
 	Checksums     DocumentChecksums
-	AuditService  services.AuditService
+	AuditService  auditports.AuditService
 }
 
 func NewWithDeps(d Deps) *Service {
@@ -134,7 +135,7 @@ func (s *Service) audit(p auditParams) {
 	if s.auditService == nil || p.userID.IsNil() {
 		return
 	}
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       p.resource,
 		ResourceID:     p.resourceID,
 		Operation:      p.operation,
@@ -143,7 +144,7 @@ func (s *Service) audit(p auditParams) {
 		OrganizationID: p.tenantInfo.OrgID,
 		BusinessUnitID: p.tenantInfo.BuID,
 	}
-	opts := []services.LogOption{auditservice.WithComment(p.comment)}
+	opts := []auditports.LogOption{auditservice.WithComment(p.comment)}
 	if p.previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(p.previous)
 		opts = append(opts, auditservice.WithDiff(p.previous, p.current))
@@ -155,7 +156,7 @@ func (s *Service) audit(p auditParams) {
 
 func (s *Service) ListPolicies(
 	ctx context.Context,
-	req *repositories.ListWorkerPoliciesRequest,
+	req *workerports.ListWorkerPoliciesRequest,
 ) ([]*worker.WorkerPolicy, error) {
 	return s.repo.ListPolicies(ctx, req)
 }
@@ -165,7 +166,7 @@ func (s *Service) GetPolicy(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*worker.WorkerPolicy, error) {
-	return s.repo.GetPolicyByID(ctx, &repositories.GetWorkerPolicyByIDRequest{
+	return s.repo.GetPolicyByID(ctx, &workerports.GetWorkerPolicyByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
@@ -235,7 +236,7 @@ func (s *Service) UpdatePolicy(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetPolicyByID(ctx, &repositories.GetWorkerPolicyByIDRequest{
+	original, err := s.repo.GetPolicyByID(ctx, &workerports.GetWorkerPolicyByIDRequest{
 		ID:         entity.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -290,7 +291,7 @@ func (s *Service) UpdatePolicy(
 // derived on read: the roster and the acknowledgements both move.
 type PolicyCompliance struct {
 	Policy      *worker.WorkerPolicy
-	Rows        []repositories.PolicyComplianceRow
+	Rows        []workerports.PolicyComplianceRow
 	Signed      int
 	Outstanding int
 }
@@ -305,7 +306,7 @@ func (s *Service) PolicyCompliance(
 		return nil, err
 	}
 
-	rows, err := s.repo.PolicyCompliance(ctx, &repositories.PolicyComplianceRequest{
+	rows, err := s.repo.PolicyCompliance(ctx, &workerports.PolicyComplianceRequest{
 		TenantInfo:   tenantInfo,
 		PolicyID:     policy.ID,
 		VersionLabel: policy.VersionLabel,
@@ -346,7 +347,7 @@ func (s *Service) PoliciesForWorker(
 	tenantInfo pagination.TenantInfo,
 	wrk *worker.Worker,
 ) ([]PolicyStanding, error) {
-	policies, err := s.repo.ListPolicies(ctx, &repositories.ListWorkerPoliciesRequest{
+	policies, err := s.repo.ListPolicies(ctx, &workerports.ListWorkerPoliciesRequest{
 		TenantInfo: tenantInfo,
 		ActiveOnly: true,
 		AsOf:       timeutils.NowUnix(),
@@ -355,7 +356,7 @@ func (s *Service) PoliciesForWorker(
 		return nil, err
 	}
 
-	acks, err := s.repo.ListAcknowledgements(ctx, &repositories.ListPolicyAcknowledgementsRequest{
+	acks, err := s.repo.ListAcknowledgements(ctx, &workerports.ListPolicyAcknowledgementsRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   wrk.ID,
 	})
@@ -439,7 +440,7 @@ func (s *Service) Acknowledge(
 
 	existing, err := s.repo.ListAcknowledgements(
 		ctx,
-		&repositories.ListPolicyAcknowledgementsRequest{
+		&workerports.ListPolicyAcknowledgementsRequest{
 			TenantInfo:   req.TenantInfo,
 			PolicyID:     policy.ID,
 			WorkerID:     req.Worker.ID,
@@ -507,7 +508,7 @@ func truncate(value string, limit int) string {
 
 func (s *Service) ListAcknowledgements(
 	ctx context.Context,
-	req *repositories.ListPolicyAcknowledgementsRequest,
+	req *workerports.ListPolicyAcknowledgementsRequest,
 ) ([]*worker.WorkerPolicyAcknowledgement, error) {
 	return s.repo.ListAcknowledgements(ctx, req)
 }

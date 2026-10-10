@@ -12,8 +12,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -176,7 +176,7 @@ func (f *rlsFixture) connect(t *testing.T) *Connection {
 
 func fleetCodes(ctx context.Context, conn *Connection) ([]string, error) {
 	var codes []string
-	err := conn.WithTx(ctx, ports.TxOptions{ReadOnly: true}, func(ctx context.Context, tx bun.Tx) error {
+	err := conn.WithTx(ctx, kernelports.TxOptions{ReadOnly: true}, func(ctx context.Context, tx bun.Tx) error {
 		return tx.NewRaw("SELECT code FROM fleet_codes ORDER BY code").Scan(ctx, &codes)
 	})
 
@@ -214,7 +214,7 @@ func TestRLS_WritesIntoAnotherTenantAreRejected(t *testing.T) {
 	conn := f.connect(t)
 	ctx := dbscope.WithTenant(t.Context(), f.tenantA)
 
-	err := conn.WithTx(ctx, ports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+	err := conn.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewRaw(
 			"INSERT INTO fleet_codes (id, code, organization_id, business_unit_id, manager_id) VALUES (?, 'X', ?, ?, ?)",
 			pulid.MustNew("fc_"), f.tenantB.OrganizationID, f.tenantB.BusinessUnitID, f.tenantB.UserID,
@@ -225,7 +225,7 @@ func TestRLS_WritesIntoAnotherTenantAreRejected(t *testing.T) {
 	assert.Contains(t, err.Error(), "row-level security")
 
 	var affected int64
-	err = conn.WithTx(ctx, ports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+	err = conn.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
 		res, err := tx.NewRaw("UPDATE fleet_codes SET code = 'STOLEN' WHERE organization_id = ?", f.tenantB.OrganizationID).Exec(ctx)
 		if err != nil {
 			return err
@@ -250,7 +250,7 @@ func TestRLS_ForgedOrReplayedScopeIsRefused(t *testing.T) {
 	forged, err := forger.token(f.tenantB)
 	require.NoError(t, err)
 
-	err = conn.WithTx(ctx, ports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+	err = conn.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
 		if _, err := tx.ExecContext(ctx, "SET LOCAL trenova.scope = '"+forged+"'"); err != nil {
 			return err
 		}
@@ -266,7 +266,7 @@ func TestRLS_ForgedOrReplayedScopeIsRefused(t *testing.T) {
 	expired, err := expiredSigner.token(f.tenantB)
 	require.NoError(t, err)
 
-	err = conn.WithTx(ctx, ports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+	err = conn.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
 		if _, err := tx.ExecContext(ctx, "SET LOCAL trenova.scope = '"+expired+"'"); err != nil {
 			return err
 		}
@@ -290,7 +290,7 @@ func TestRLS_SystemScopeUsesTheBypassPool(t *testing.T) {
 	assert.Equal(t, []string{"FCA", "FCB"}, codes)
 
 	codes = nil
-	err = conn.WithTx(ctx, ports.TxOptions{ReadOnly: true}, func(ctx context.Context, tx bun.Tx) error {
+	err = conn.WithTx(ctx, kernelports.TxOptions{ReadOnly: true}, func(ctx context.Context, tx bun.Tx) error {
 		return tx.NewRaw("SELECT code FROM fleet_codes ORDER BY code").Scan(ctx, &codes)
 	})
 	require.NoError(t, err)
@@ -304,7 +304,7 @@ func TestRLS_ChangingScopeInsideATransactionOpensANewOne(t *testing.T) {
 	f := newRLSFixture(t, config.RLSModeEnforce)
 	conn := f.connect(t)
 
-	err := conn.WithTx(dbscope.WithTenant(t.Context(), f.tenantA), ports.TxOptions{}, func(ctx context.Context, _ bun.Tx) error {
+	err := conn.WithTx(dbscope.WithTenant(t.Context(), f.tenantA), kernelports.TxOptions{}, func(ctx context.Context, _ bun.Tx) error {
 		codes, err := fleetCodes(dbscope.WithTenant(ctx, f.tenantB), conn)
 		if err != nil {
 			return err
@@ -328,7 +328,7 @@ func TestRLS_MembershipPoliciesForUsersAndOrganizations(t *testing.T) {
 	ctx := dbscope.WithTenant(t.Context(), f.tenantA)
 
 	var users, orgs []string
-	err := conn.WithTx(ctx, ports.TxOptions{ReadOnly: true}, func(ctx context.Context, tx bun.Tx) error {
+	err := conn.WithTx(ctx, kernelports.TxOptions{ReadOnly: true}, func(ctx context.Context, tx bun.Tx) error {
 		if err := tx.NewRaw("SELECT id FROM users").Scan(ctx, &users); err != nil {
 			return err
 		}

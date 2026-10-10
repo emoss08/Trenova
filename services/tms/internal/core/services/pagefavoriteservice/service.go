@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/pagefavorite"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/pagefavoriteports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -27,12 +27,12 @@ type Params struct {
 	fx.In
 
 	Logger *zap.Logger
-	Repo   repositories.PageFavoriteRepository
+	Repo   pagefavoriteports.PageFavoriteRepository
 }
 
 type Service struct {
 	l    *zap.Logger
-	repo repositories.PageFavoriteRepository
+	repo pagefavoriteports.PageFavoriteRepository
 }
 
 func New(p Params) *Service {
@@ -44,7 +44,7 @@ func New(p Params) *Service {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListPageFavoritesRequest,
+	req *pagefavoriteports.ListPageFavoritesRequest,
 ) ([]*pagefavorite.PageFavorite, error) {
 	return s.repo.List(ctx, req)
 }
@@ -59,7 +59,7 @@ func (s *Service) Toggle(
 		zap.String("userID", req.UserID.String()),
 	)
 
-	existing, exists, err := s.repo.GetByURL(ctx, &repositories.GetPageFavoriteByURLRequest{
+	existing, exists, err := s.repo.GetByURL(ctx, &pagefavoriteports.GetPageFavoriteByURLRequest{
 		PageURL:    req.PageURL,
 		UserID:     req.UserID,
 		TenantInfo: req.TenantInfo,
@@ -103,7 +103,7 @@ func (s *Service) IsFavorited(
 	userID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) (bool, error) {
-	_, exists, err := s.repo.GetByURL(ctx, &repositories.GetPageFavoriteByURLRequest{
+	_, exists, err := s.repo.GetByURL(ctx, &pagefavoriteports.GetPageFavoriteByURLRequest{
 		PageURL:    pageURL,
 		UserID:     userID,
 		TenantInfo: tenantInfo,

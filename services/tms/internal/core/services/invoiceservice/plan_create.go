@@ -9,9 +9,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/invoicelines"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -42,10 +44,10 @@ func (s *Service) checkPayer(
 		)
 	}
 
-	cus, err := s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
+	cus, err := s.customerRepo.GetByID(ctx, customerports.GetCustomerByIDRequest{
 		ID:         share.PayerID,
 		TenantInfo: tenantInfo,
-		CustomerFilterOptions: repositories.CustomerFilterOptions{
+		CustomerFilterOptions: customerports.CustomerFilterOptions{
 			IncludeBillingProfile: true,
 		},
 	})
@@ -69,9 +71,9 @@ type orderInvoicePlan struct {
 
 func (s *Service) planOrderInvoices(
 	ctx context.Context,
-	req *servicesports.CreateInvoiceFromOrderRequest,
+	req *invoiceports.CreateInvoiceFromOrderRequest,
 ) (*orderInvoicePlan, error) {
-	ord, err := s.orderRepo.GetByID(ctx, repositories.GetOrderByIDRequest{
+	ord, err := s.orderRepo.GetByID(ctx, orderports.GetOrderByIDRequest{
 		ID:              req.OrderID,
 		TenantInfo:      req.TenantInfo,
 		IncludeShipment: true,
@@ -139,10 +141,10 @@ func (s *Service) planOrderInvoices(
 		defaultPayer: buckets[0].PayerID,
 	}
 	for _, bucket := range buckets {
-		cus, cusErr := s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
+		cus, cusErr := s.customerRepo.GetByID(ctx, customerports.GetCustomerByIDRequest{
 			ID:         bucket.PayerID,
 			TenantInfo: req.TenantInfo,
-			CustomerFilterOptions: repositories.CustomerFilterOptions{
+			CustomerFilterOptions: customerports.CustomerFilterOptions{
 				IncludeBillingProfile: true,
 				IncludeState:          true,
 			},
@@ -161,7 +163,7 @@ func (s *Service) planOrderInvoices(
 
 func (s *Service) buildBucketInvoice(
 	ctx context.Context,
-	req *servicesports.CreateInvoiceFromOrderRequest,
+	req *invoiceports.CreateInvoiceFromOrderRequest,
 	plan *orderInvoicePlan,
 	idx int,
 	anchor *billingqueue.BillingQueueItem,
@@ -172,7 +174,7 @@ func (s *Service) buildBucketInvoice(
 
 	charges, err := s.orderRepo.ListUninvoicedChargeSharesForPayer(
 		ctx,
-		&repositories.ListUninvoicedChargeSharesRequest{
+		&orderports.ListUninvoicedChargeSharesRequest{
 			TenantInfo: req.TenantInfo,
 			OrderID:    plan.order.ID,
 			PayerID:    bucket.PayerID,
@@ -213,11 +215,11 @@ func (s *Service) buildBucketInvoice(
 
 func (s *Service) sharedOrderOf(
 	ctx context.Context,
-	req *servicesports.CreateInvoiceFromShipmentsRequest,
+	req *invoiceports.CreateInvoiceFromShipmentsRequest,
 ) (pulid.ID, error) {
 	var orderID pulid.ID
 	for _, shipmentID := range req.ShipmentIDs {
-		shp, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+		shp, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 			ID:         shipmentID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -271,8 +273,8 @@ func unnumberedAnchor(
 
 func (s *Service) PlanCreateInvoices(
 	ctx context.Context,
-	req *servicesports.PlanCreateInvoicesRequest,
-) (*servicesports.CreateInvoicesPlan, error) {
+	req *invoiceports.PlanCreateInvoicesRequest,
+) (*invoiceports.CreateInvoicesPlan, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"request",
@@ -294,11 +296,11 @@ func (s *Service) PlanCreateInvoices(
 
 func (s *Service) planCreateInvoices(
 	ctx context.Context,
-	req *servicesports.PlanCreateInvoicesRequest,
-) (*servicesports.CreateInvoicesPlan, error) {
+	req *invoiceports.PlanCreateInvoicesRequest,
+) (*invoiceports.CreateInvoicesPlan, error) {
 	switch {
 	case req.OrderID.IsNotNil():
-		return s.planOrderDrafts(ctx, &servicesports.CreateInvoiceFromOrderRequest{
+		return s.planOrderDrafts(ctx, &invoiceports.CreateInvoiceFromOrderRequest{
 			OrderID:        req.OrderID,
 			ShipmentIDs:    req.ShipmentIDs,
 			TenantInfo:     req.TenantInfo,
@@ -311,7 +313,7 @@ func (s *Service) planCreateInvoices(
 			"One shipment is required",
 		)
 	case len(req.ShipmentIDs) > 1:
-		shipmentsReq := &servicesports.CreateInvoiceFromShipmentsRequest{
+		shipmentsReq := &invoiceports.CreateInvoiceFromShipmentsRequest{
 			ShipmentIDs:    req.ShipmentIDs,
 			TenantInfo:     req.TenantInfo,
 			OffCycleReason: req.OffCycleReason,
@@ -320,7 +322,7 @@ func (s *Service) planCreateInvoices(
 		if err != nil {
 			return nil, err
 		}
-		return s.planOrderDrafts(ctx, &servicesports.CreateInvoiceFromOrderRequest{
+		return s.planOrderDrafts(ctx, &invoiceports.CreateInvoiceFromOrderRequest{
 			OrderID:        orderID,
 			ShipmentIDs:    req.ShipmentIDs,
 			TenantInfo:     req.TenantInfo,
@@ -333,8 +335,8 @@ func (s *Service) planCreateInvoices(
 
 func (s *Service) planShipmentDrafts(
 	ctx context.Context,
-	req *servicesports.PlanCreateInvoicesRequest,
-) (*servicesports.CreateInvoicesPlan, error) {
+	req *invoiceports.PlanCreateInvoicesRequest,
+) (*invoiceports.CreateInvoicesPlan, error) {
 	shp, err := s.shipmentRepo.GetByID(
 		ctx,
 		expandedShipmentByIDRequest(req.ShipmentIDs[0], req.TenantInfo),
@@ -358,7 +360,7 @@ func (s *Service) planShipmentDrafts(
 		return nil, err
 	}
 
-	plan := &servicesports.CreateInvoicesPlan{
+	plan := &invoiceports.CreateInvoicesPlan{
 		Drafts: make([]*invoice.Invoice, 0, len(resolution.Shares)),
 	}
 	for _, share := range resolution.Shares {
@@ -369,7 +371,7 @@ func (s *Service) planShipmentDrafts(
 		anchor := unnumberedAnchor(req.TenantInfo, shp, share.PayerID, share)
 		draft, draftErr := s.planDraftFromItem(
 			ctx,
-			&servicesports.CreateInvoiceFromBillingQueueRequest{
+			&invoiceports.CreateInvoiceFromBillingQueueRequest{
 				BillingQueueItemID: anchor.ID,
 				TenantInfo:         req.TenantInfo,
 				OffCycleReason:     offCycleReasonFor(cus, req.OffCycleReason),
@@ -390,19 +392,19 @@ func (s *Service) planShipmentDrafts(
 
 func (s *Service) planOrderDrafts(
 	ctx context.Context,
-	req *servicesports.CreateInvoiceFromOrderRequest,
-) (*servicesports.CreateInvoicesPlan, error) {
-	ord, err := s.orderRepo.GetByID(ctx, repositories.GetOrderByIDRequest{
+	req *invoiceports.CreateInvoiceFromOrderRequest,
+) (*invoiceports.CreateInvoicesPlan, error) {
+	ord, err := s.orderRepo.GetByID(ctx, orderports.GetOrderByIDRequest{
 		ID:         req.OrderID,
 		TenantInfo: req.TenantInfo,
 	})
 	if err != nil {
 		return nil, err
 	}
-	orderCustomer, err := s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
+	orderCustomer, err := s.customerRepo.GetByID(ctx, customerports.GetCustomerByIDRequest{
 		ID:         ord.CustomerID,
 		TenantInfo: req.TenantInfo,
-		CustomerFilterOptions: repositories.CustomerFilterOptions{
+		CustomerFilterOptions: customerports.CustomerFilterOptions{
 			IncludeBillingProfile: true,
 		},
 	})
@@ -415,7 +417,7 @@ func (s *Service) planOrderDrafts(
 		return nil, err
 	}
 
-	drafts := &servicesports.CreateInvoicesPlan{
+	drafts := &invoiceports.CreateInvoicesPlan{
 		Drafts: make([]*invoice.Invoice, 0, len(plan.buckets)),
 	}
 	for idx, bucket := range plan.buckets {

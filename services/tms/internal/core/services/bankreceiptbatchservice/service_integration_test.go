@@ -14,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/bankreceiptservice"
 	"github.com/emoss08/trenova/internal/core/services/customerpaymentservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -31,6 +30,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fiscalyearrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoicerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/journalpostingrepository"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptbatchports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -78,10 +79,10 @@ func TestImportBatchPersistsMixedOutcomesAndSupportsReads(t *testing.T) {
 	createPostedCustomerPayment(t, env, "BANK-MATCH-1", 10000)
 
 	actor := testutil.NewSessionActor(env.user.ID, env.org.ID, env.org.BusinessUnitID)
-	result, err := env.batchService.Import(env.ctx, &serviceports.ImportBankReceiptBatchRequest{
+	result, err := env.batchService.Import(env.ctx, &bankreceiptbatchports.ImportBankReceiptBatchRequest{
 		Source:    "csv",
 		Reference: "BATCH-MIXED-1",
-		Receipts: []*serviceports.ImportBankReceiptBatchLine{
+		Receipts: []*bankreceiptbatchports.ImportBankReceiptBatchLine{
 			{
 				ReceiptDate:     env.now.Unix(),
 				AmountMinor:     10000,
@@ -118,7 +119,7 @@ func TestImportBatchPersistsMixedOutcomesAndSupportsReads(t *testing.T) {
 
 	detail, err := env.batchService.Get(
 		env.ctx,
-		&serviceports.GetBankReceiptBatchRequest{
+		&bankreceiptbatchports.GetBankReceiptBatchRequest{
 			BatchID: result.Batch.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID:  env.org.ID,
@@ -163,10 +164,10 @@ func TestImportBatchRollsBackOnNilReceiptLine(t *testing.T) {
 	createPostedCustomerPayment(t, env, "ROLLBACK-MATCH-1", 10000)
 
 	actor := testutil.NewSessionActor(env.user.ID, env.org.ID, env.org.BusinessUnitID)
-	result, err := env.batchService.Import(env.ctx, &serviceports.ImportBankReceiptBatchRequest{
+	result, err := env.batchService.Import(env.ctx, &bankreceiptbatchports.ImportBankReceiptBatchRequest{
 		Source:    "csv",
 		Reference: "BATCH-ROLLBACK-1",
-		Receipts: []*serviceports.ImportBankReceiptBatchLine{
+		Receipts: []*bankreceiptbatchports.ImportBankReceiptBatchLine{
 			{
 				ReceiptDate:     env.now.Unix(),
 				AmountMinor:     10000,
@@ -465,7 +466,7 @@ func createPostedCustomerPayment(
 	)
 	_, err = paymentSvc.PostAndApply(
 		env.ctx,
-		&serviceports.PostCustomerPaymentRequest{
+		&customerpaymentports.PostCustomerPaymentRequest{
 			CustomerID:      env.shipment.CustomerID,
 			PaymentDate:     now.Unix(),
 			AccountingDate:  now.Unix(),
@@ -473,7 +474,7 @@ func createPostedCustomerPayment(
 			PaymentMethod:   customerpayment.MethodACH,
 			ReferenceNumber: referenceNumber,
 			CurrencyCode:    "USD",
-			Applications: []*serviceports.CustomerPaymentApplicationInput{
+			Applications: []*customerpaymentports.CustomerPaymentApplicationInput{
 				{InvoiceID: inv.ID, AppliedAmountMinor: amountMinor},
 			},
 			TenantInfo: pagination.TenantInfo{

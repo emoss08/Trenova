@@ -8,8 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 )
 
@@ -28,47 +30,47 @@ var errApplicationsRequired = errors.New("applications must name at least one in
 type receivablesKeeper interface {
 	ApplyUnapplied(
 		ctx context.Context,
-		req *serviceports.ApplyCustomerPaymentRequest,
-		actor *serviceports.RequestActor,
+		req *customerpaymentports.ApplyCustomerPaymentRequest,
+		actor *permissionports.RequestActor,
 	) (*customerpayment.Payment, error)
 	Reverse(
 		ctx context.Context,
-		req *serviceports.ReverseCustomerPaymentRequest,
-		actor *serviceports.RequestActor,
+		req *customerpaymentports.ReverseCustomerPaymentRequest,
+		actor *permissionports.RequestActor,
 	) (*customerpayment.Payment, error)
 	ApplyCreditMemo(
 		ctx context.Context,
-		req *serviceports.ApplyCreditMemoRequest,
-		actor *serviceports.RequestActor,
+		req *customerpaymentports.ApplyCreditMemoRequest,
+		actor *permissionports.RequestActor,
 	) ([]*customerpayment.CreditMemoApplication, error)
 	UnapplyCreditMemoApplication(
 		ctx context.Context,
-		req *serviceports.UnapplyCreditMemoApplicationRequest,
-		actor *serviceports.RequestActor,
+		req *customerpaymentports.UnapplyCreditMemoApplicationRequest,
+		actor *permissionports.RequestActor,
 	) (*customerpayment.CreditMemoApplication, error)
 	PreviewApplyUnapplied(
 		ctx context.Context,
-		req *serviceports.ApplyCustomerPaymentRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.CustomerPaymentChangePreview, error)
+		req *customerpaymentports.ApplyCustomerPaymentRequest,
+		actor *permissionports.RequestActor,
+	) (*customerpaymentports.CustomerPaymentChangePreview, error)
 	PreviewReverse(
 		ctx context.Context,
-		req *serviceports.ReverseCustomerPaymentRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.CustomerPaymentChangePreview, error)
+		req *customerpaymentports.ReverseCustomerPaymentRequest,
+		actor *permissionports.RequestActor,
+	) (*customerpaymentports.CustomerPaymentChangePreview, error)
 	PreviewApplyCreditMemo(
 		ctx context.Context,
-		req *serviceports.ApplyCreditMemoRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.CreditMemoApplicationPreview, error)
+		req *customerpaymentports.ApplyCreditMemoRequest,
+		actor *permissionports.RequestActor,
+	) (*customerpaymentports.CreditMemoApplicationPreview, error)
 	PreviewUnapplyCreditMemoApplication(
 		ctx context.Context,
-		req *serviceports.UnapplyCreditMemoApplicationRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.CreditMemoApplicationPreview, error)
+		req *customerpaymentports.UnapplyCreditMemoApplicationRequest,
+		actor *permissionports.RequestActor,
+	) (*customerpaymentports.CreditMemoApplicationPreview, error)
 }
 
-func targetCustomerPayment(params map[string]any) (serviceports.ToolTarget, bool) {
+func targetCustomerPayment(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, paramCustomerPaymentID, permission.ResourceCustomerPayment)
 }
 
@@ -117,7 +119,7 @@ func receivableMoneySpec(spec *receivableSpec) *receivableSpec {
 	return spec
 }
 
-func newApplyCustomerPaymentTool(payments receivablesKeeper) serviceports.AgentTool {
+func newApplyCustomerPaymentTool(payments receivablesKeeper) agentports.AgentTool {
 	return newReceivableTool(receivableMoneySpec(&receivableSpec{
 		name: "apply_customer_payment",
 		recipe: []string{
@@ -143,24 +145,24 @@ func newApplyCustomerPaymentTool(payments receivablesKeeper) serviceports.AgentT
 		},
 		required: []string{paramCustomerPaymentID, paramAccountingDate, paramApplications},
 		target:   targetCustomerPayment,
-	}), receivablePlan[*serviceports.ApplyCustomerPaymentRequest, *serviceports.CustomerPaymentChangePreview]{
+	}), receivablePlan[*customerpaymentports.ApplyCustomerPaymentRequest, *customerpaymentports.CustomerPaymentChangePreview]{
 		request: applyPaymentRequest,
 		plan: func(
 			ctx context.Context,
-			req *serviceports.ApplyCustomerPaymentRequest,
-			params *serviceports.ToolExecuteParams,
-		) (*serviceports.CustomerPaymentChangePreview, error) {
+			req *customerpaymentports.ApplyCustomerPaymentRequest,
+			params *agentports.ToolExecuteParams,
+		) (*customerpaymentports.CustomerPaymentChangePreview, error) {
 			return payments.PreviewApplyUnapplied(ctx, req, params.Actor)
 		},
-		refused: func(req *serviceports.ApplyCustomerPaymentRequest) string {
+		refused: func(req *customerpaymentports.ApplyCustomerPaymentRequest) string {
 			return fmt.Sprintf("Would apply the payment's unapplied cash to %s.",
 				countOf(len(req.Applications), "invoice"))
 		},
 		render: renderApplyPayment,
 		run: func(
 			ctx context.Context,
-			req *serviceports.ApplyCustomerPaymentRequest,
-			params *serviceports.ToolExecuteParams,
+			req *customerpaymentports.ApplyCustomerPaymentRequest,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := payments.ApplyUnapplied(ctx, req, params.Actor)
 			return nil, err
@@ -169,8 +171,8 @@ func newApplyCustomerPaymentTool(payments receivablesKeeper) serviceports.AgentT
 }
 
 func applyPaymentRequest(
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.ApplyCustomerPaymentRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*customerpaymentports.ApplyCustomerPaymentRequest, error) {
 	paymentID, err := requirePulid(params.Params, paramCustomerPaymentID)
 	if err != nil {
 		return nil, err
@@ -187,7 +189,7 @@ func applyPaymentRequest(
 		return nil, errApplicationsRequired
 	}
 
-	return &serviceports.ApplyCustomerPaymentRequest{
+	return &customerpaymentports.ApplyCustomerPaymentRequest{
 		PaymentID:      paymentID,
 		AccountingDate: accountingDate,
 		Applications:   applications,
@@ -195,7 +197,7 @@ func applyPaymentRequest(
 	}, nil
 }
 
-func newReverseCustomerPaymentTool(payments receivablesKeeper) serviceports.AgentTool {
+func newReverseCustomerPaymentTool(payments receivablesKeeper) agentports.AgentTool {
 	return newReceivableTool(receivableMoneySpec(&receivableSpec{
 		name: "reverse_customer_payment",
 		description: "Propose reversing a posted customer payment that bounced, was charged back " +
@@ -214,23 +216,23 @@ func newReverseCustomerPaymentTool(payments receivablesKeeper) serviceports.Agen
 		},
 		required: []string{paramCustomerPaymentID, paramAccountingDate, paramReason},
 		target:   targetCustomerPayment,
-	}), receivablePlan[*serviceports.ReverseCustomerPaymentRequest, *serviceports.CustomerPaymentChangePreview]{
+	}), receivablePlan[*customerpaymentports.ReverseCustomerPaymentRequest, *customerpaymentports.CustomerPaymentChangePreview]{
 		request: reversePaymentRequest,
 		plan: func(
 			ctx context.Context,
-			req *serviceports.ReverseCustomerPaymentRequest,
-			params *serviceports.ToolExecuteParams,
-		) (*serviceports.CustomerPaymentChangePreview, error) {
+			req *customerpaymentports.ReverseCustomerPaymentRequest,
+			params *agentports.ToolExecuteParams,
+		) (*customerpaymentports.CustomerPaymentChangePreview, error) {
 			return payments.PreviewReverse(ctx, req, params.Actor)
 		},
-		refused: func(*serviceports.ReverseCustomerPaymentRequest) string {
+		refused: func(*customerpaymentports.ReverseCustomerPaymentRequest) string {
 			return "Would reverse the payment."
 		},
 		render: renderReversePayment,
 		run: func(
 			ctx context.Context,
-			req *serviceports.ReverseCustomerPaymentRequest,
-			params *serviceports.ToolExecuteParams,
+			req *customerpaymentports.ReverseCustomerPaymentRequest,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := payments.Reverse(ctx, req, params.Actor)
 			return nil, err
@@ -239,8 +241,8 @@ func newReverseCustomerPaymentTool(payments receivablesKeeper) serviceports.Agen
 }
 
 func reversePaymentRequest(
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.ReverseCustomerPaymentRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*customerpaymentports.ReverseCustomerPaymentRequest, error) {
 	paymentID, err := requirePulid(params.Params, paramCustomerPaymentID)
 	if err != nil {
 		return nil, err
@@ -254,7 +256,7 @@ func reversePaymentRequest(
 		return nil, err
 	}
 
-	return &serviceports.ReverseCustomerPaymentRequest{
+	return &customerpaymentports.ReverseCustomerPaymentRequest{
 		PaymentID:      paymentID,
 		AccountingDate: accountingDate,
 		Reason:         reason,
@@ -262,7 +264,7 @@ func reversePaymentRequest(
 	}, nil
 }
 
-func newApplyCreditMemoTool(payments receivablesKeeper) serviceports.AgentTool {
+func newApplyCreditMemoTool(payments receivablesKeeper) agentports.AgentTool {
 	return newReceivableTool(receivableMoneySpec(&receivableSpec{
 		name:   "apply_credit_memo",
 		recipe: []string{"list_ar_open_items", "apply_credit_memo"},
@@ -282,27 +284,27 @@ func newApplyCreditMemoTool(payments receivablesKeeper) serviceports.AgentTool {
 				"The invoices the credit settles and how much goes to each.", false),
 		},
 		required: []string{paramCreditMemoID, paramAccountingDate, paramApplications},
-		target: func(params map[string]any) (serviceports.ToolTarget, bool) {
+		target: func(params map[string]any) (agentports.ToolTarget, bool) {
 			return targetOf(params, paramCreditMemoID, permission.ResourceInvoice)
 		},
-	}), receivablePlan[*serviceports.ApplyCreditMemoRequest, *serviceports.CreditMemoApplicationPreview]{
+	}), receivablePlan[*customerpaymentports.ApplyCreditMemoRequest, *customerpaymentports.CreditMemoApplicationPreview]{
 		request: applyCreditRequest,
 		plan: func(
 			ctx context.Context,
-			req *serviceports.ApplyCreditMemoRequest,
-			params *serviceports.ToolExecuteParams,
-		) (*serviceports.CreditMemoApplicationPreview, error) {
+			req *customerpaymentports.ApplyCreditMemoRequest,
+			params *agentports.ToolExecuteParams,
+		) (*customerpaymentports.CreditMemoApplicationPreview, error) {
 			return payments.PreviewApplyCreditMemo(ctx, req, params.Actor)
 		},
-		refused: func(req *serviceports.ApplyCreditMemoRequest) string {
+		refused: func(req *customerpaymentports.ApplyCreditMemoRequest) string {
 			return fmt.Sprintf("Would apply the credit memo to %s.",
 				countOf(len(req.Applications), "invoice"))
 		},
 		render: renderApplyCredit,
 		run: func(
 			ctx context.Context,
-			req *serviceports.ApplyCreditMemoRequest,
-			params *serviceports.ToolExecuteParams,
+			req *customerpaymentports.ApplyCreditMemoRequest,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := payments.ApplyCreditMemo(ctx, req, params.Actor)
 			return nil, err
@@ -311,8 +313,8 @@ func newApplyCreditMemoTool(payments receivablesKeeper) serviceports.AgentTool {
 }
 
 func applyCreditRequest(
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.ApplyCreditMemoRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*customerpaymentports.ApplyCreditMemoRequest, error) {
 	memoID, err := requirePulid(params.Params, paramCreditMemoID)
 	if err != nil {
 		return nil, err
@@ -328,19 +330,19 @@ func applyCreditRequest(
 	if len(read) == 0 {
 		return nil, errApplicationsRequired
 	}
-	applications := make([]*serviceports.CreditMemoApplicationInput, 0, len(read))
+	applications := make([]*customerpaymentports.CreditMemoApplicationInput, 0, len(read))
 	for idx, application := range read {
 		if application.ShortPayAmountMinor > 0 {
 			return nil, fmt.Errorf("%s[%d]: a credit memo writes nothing off; leave out %s",
 				paramApplications, idx, paramShortPayAmount)
 		}
-		applications = append(applications, &serviceports.CreditMemoApplicationInput{
+		applications = append(applications, &customerpaymentports.CreditMemoApplicationInput{
 			InvoiceID:          application.InvoiceID,
 			AppliedAmountMinor: application.AppliedAmountMinor,
 		})
 	}
 
-	return &serviceports.ApplyCreditMemoRequest{
+	return &customerpaymentports.ApplyCreditMemoRequest{
 		CreditMemoID:   memoID,
 		AccountingDate: accountingDate,
 		Applications:   applications,
@@ -348,7 +350,7 @@ func applyCreditRequest(
 	}, nil
 }
 
-func newUnapplyCreditMemoTool(payments receivablesKeeper) serviceports.AgentTool {
+func newUnapplyCreditMemoTool(payments receivablesKeeper) agentports.AgentTool {
 	return newReceivableTool(receivableMoneySpec(&receivableSpec{
 		name: "unapply_credit_memo",
 		description: "Propose taking back one credit memo application: the invoice it settled " +
@@ -365,28 +367,28 @@ func newUnapplyCreditMemoTool(payments receivablesKeeper) serviceports.AgentTool
 			paramReason: stringProperty("Why it is taken back.", maxReceivableReasonChars),
 		},
 		required: []string{paramCreditMemoApplicationID, paramReason},
-		target: func(params map[string]any) (serviceports.ToolTarget, bool) {
+		target: func(params map[string]any) (agentports.ToolTarget, bool) {
 			return targetOf(
-				params, paramCreditMemoApplicationID, serviceports.RecordCreditMemoApplication,
+				params, paramCreditMemoApplicationID, agentports.RecordCreditMemoApplication,
 			)
 		},
-	}), receivablePlan[*serviceports.UnapplyCreditMemoApplicationRequest, *serviceports.CreditMemoApplicationPreview]{
+	}), receivablePlan[*customerpaymentports.UnapplyCreditMemoApplicationRequest, *customerpaymentports.CreditMemoApplicationPreview]{
 		request: unapplyCreditRequest,
 		plan: func(
 			ctx context.Context,
-			req *serviceports.UnapplyCreditMemoApplicationRequest,
-			params *serviceports.ToolExecuteParams,
-		) (*serviceports.CreditMemoApplicationPreview, error) {
+			req *customerpaymentports.UnapplyCreditMemoApplicationRequest,
+			params *agentports.ToolExecuteParams,
+		) (*customerpaymentports.CreditMemoApplicationPreview, error) {
 			return payments.PreviewUnapplyCreditMemoApplication(ctx, req, params.Actor)
 		},
-		refused: func(*serviceports.UnapplyCreditMemoApplicationRequest) string {
+		refused: func(*customerpaymentports.UnapplyCreditMemoApplicationRequest) string {
 			return "Would take back the credit memo application."
 		},
 		render: renderUnapplyCredit,
 		run: func(
 			ctx context.Context,
-			req *serviceports.UnapplyCreditMemoApplicationRequest,
-			params *serviceports.ToolExecuteParams,
+			req *customerpaymentports.UnapplyCreditMemoApplicationRequest,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := payments.UnapplyCreditMemoApplication(ctx, req, params.Actor)
 			return nil, err
@@ -395,8 +397,8 @@ func newUnapplyCreditMemoTool(payments receivablesKeeper) serviceports.AgentTool
 }
 
 func unapplyCreditRequest(
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.UnapplyCreditMemoApplicationRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*customerpaymentports.UnapplyCreditMemoApplicationRequest, error) {
 	applicationID, err := requirePulid(params.Params, paramCreditMemoApplicationID)
 	if err != nil {
 		return nil, err
@@ -406,7 +408,7 @@ func unapplyCreditRequest(
 		return nil, err
 	}
 
-	return &serviceports.UnapplyCreditMemoApplicationRequest{
+	return &customerpaymentports.UnapplyCreditMemoApplicationRequest{
 		ApplicationID: applicationID,
 		Reason:        reason,
 		TenantInfo:    tenantFrom(*params),

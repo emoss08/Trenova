@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentextension"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
@@ -21,7 +21,7 @@ type usageRepository struct {
 	l  *zap.Logger
 }
 
-func NewUsageRepository(p Params) repositories.AgentExtensionUsageRepository {
+func NewUsageRepository(p Params) agentextensionports.AgentExtensionUsageRepository {
 	return &usageRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.agent-extension-usage-repository"),
@@ -30,7 +30,7 @@ func NewUsageRepository(p Params) repositories.AgentExtensionUsageRepository {
 
 func buildReserve(
 	db bun.IDB,
-	params repositories.ReserveExtensionRequestParams,
+	params agentextensionports.ReserveExtensionRequestParams,
 ) *bun.InsertQuery {
 	cols := buncolgen.ExtensionUsageDailyColumns
 
@@ -52,7 +52,7 @@ func buildReserve(
 
 func (r *usageRepository) Reserve(
 	ctx context.Context,
-	params repositories.ReserveExtensionRequestParams,
+	params agentextensionports.ReserveExtensionRequestParams,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
 		result, err := buildReserve(r.db.DBForContext(ctx), params).Exec(ctx)
@@ -72,7 +72,7 @@ func (r *usageRepository) Reserve(
 
 func buildRecordOutcome(
 	db bun.IDB,
-	params repositories.RecordExtensionOutcomeParams,
+	params agentextensionports.RecordExtensionOutcomeParams,
 ) *bun.UpdateQuery {
 	cols := buncolgen.ExtensionUsageDailyColumns
 	failures := 0
@@ -98,7 +98,7 @@ func buildRecordOutcome(
 
 func (r *usageRepository) RecordOutcome(
 	ctx context.Context,
-	params repositories.RecordExtensionOutcomeParams,
+	params agentextensionports.RecordExtensionOutcomeParams,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if _, err := buildRecordOutcome(r.db.DBForContext(ctx), params).Exec(ctx); err != nil {
@@ -120,7 +120,7 @@ type usageTotals struct {
 
 func buildSummarize(
 	db bun.IDB,
-	params repositories.SummarizeExtensionUsageParams,
+	params agentextensionports.SummarizeExtensionUsageParams,
 ) *bun.SelectQuery {
 	cols := buncolgen.ExtensionUsageDailyColumns
 
@@ -145,7 +145,7 @@ func buildSummarize(
 
 func (r *usageRepository) Summarize(
 	ctx context.Context,
-	params repositories.SummarizeExtensionUsageParams,
+	params agentextensionports.SummarizeExtensionUsageParams,
 ) (map[agentextension.Type]agentextension.UsageSummary, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[agentextension.Type]agentextension.UsageSummary, error) {
 		rows := make([]usageTotals, 0, len(agentextension.AllTypes()))

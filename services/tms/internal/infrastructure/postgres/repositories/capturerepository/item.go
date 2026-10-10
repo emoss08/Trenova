@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/capture"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/uptrace/bun"
@@ -19,7 +19,7 @@ type itemRepository struct {
 	l  *zap.Logger
 }
 
-func NewItemRepository(p Params) repositories.CaptureItemRepository {
+func NewItemRepository(p Params) captureports.CaptureItemRepository {
 	return &itemRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.capture-item-repository"),
@@ -77,7 +77,7 @@ func (r *itemRepository) Update(
 
 func (r *itemRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetCaptureItemByIDRequest,
+	req captureports.GetCaptureItemByIDRequest,
 ) (*capture.CaptureItem, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capture.CaptureItem, error) {
 		entity := new(capture.CaptureItem)
@@ -97,7 +97,7 @@ func (r *itemRepository) GetByID(
 
 func (r *itemRepository) ListByBatch(
 	ctx context.Context,
-	req repositories.ListCaptureItemsRequest,
+	req captureports.ListCaptureItemsRequest,
 ) ([]*capture.CaptureItem, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*capture.CaptureItem, error) {
 		entities := make([]*capture.CaptureItem, 0)
@@ -119,12 +119,12 @@ func (r *itemRepository) ListByBatch(
 
 func (r *itemRepository) ReplaceOpen(
 	ctx context.Context,
-	req *repositories.ReplaceOpenCaptureItemsRequest,
+	req *captureports.ReplaceOpenCaptureItemsRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.CaptureItemColumns
 
-		return r.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
+		return r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
 			if _, err := tx.NewDelete().
 				Model((*capture.CaptureItem)(nil)).
 				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {

@@ -10,9 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/accounttype"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -61,7 +62,7 @@ func trialAccountLabel(code, name string) string {
 }
 
 func (s *Service) pendingLedgerRecords(ctx context.Context, sess *readSession) (bool, error) {
-	counts, err := s.records.CountByStatus(ctx, repositories.AccountingSyncConnectionRequest{
+	counts, err := s.records.CountByStatus(ctx, accountingsyncports.AccountingSyncConnectionRequest{
 		TenantInfo:   sess.tenant,
 		ConnectionID: sess.conn.ID,
 	})
@@ -88,7 +89,7 @@ func (s *Service) pendingLedgerRecords(ctx context.Context, sess *readSession) (
 }
 
 func (s *Service) location(ctx context.Context, sess *readSession) (*time.Location, error) {
-	org, err := s.organizations.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+	org, err := s.organizations.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: sess.tenant,
 	})
 	if err != nil {
@@ -104,8 +105,8 @@ func (s *Service) reconcileTrialBalance(
 	ctx context.Context,
 	sess *readSession,
 	eventBudget int,
-) (*services.AccountingDriftBalanceResult, error) {
-	result := new(services.AccountingDriftBalanceResult)
+) (*accountingsyncports.AccountingDriftBalanceResult, error) {
+	result := new(accountingsyncports.AccountingDriftBalanceResult)
 	if sess.ledger == nil || sess.conn.SyncStartDate == nil {
 		return result, nil
 	}
@@ -137,7 +138,7 @@ func (s *Service) reconcileTrialBalance(
 		return result, nil
 	}
 
-	rows, err := sess.ledger.ReadTrialBalance(ctx, &services.ReadTrialBalanceRequest{
+	rows, err := sess.ledger.ReadTrialBalance(ctx, &accountingsyncports.ReadTrialBalanceRequest{
 		Auth:      sess.auth,
 		StartDate: window.fromDate,
 		EndDate:   window.endDate,
@@ -146,7 +147,7 @@ func (s *Service) reconcileTrialBalance(
 		s.recordFailure(ctx, sess.conn, s.classify(sess, err))
 		return nil, err
 	}
-	provider := make(map[string]services.AccountingTrialBalanceRow, len(rows))
+	provider := make(map[string]accountingsyncports.AccountingTrialBalanceRow, len(rows))
 	for idx := range rows {
 		provider[rows[idx].AccountExternalID] = rows[idx]
 	}
@@ -166,7 +167,7 @@ func (s *Service) reconcileTrialBalance(
 	}
 
 	tally := &compareTally{compared: len(grouped)}
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		return s.applyObservations(txCtx, sess, compared, observed, now, tally)
 	})
 	if err != nil {
@@ -235,7 +236,7 @@ func (s *Service) trenovaTrialBalance(
 	window trialBalanceWindow,
 ) ([]*trialAccount, error) {
 	byAccount := make(map[pulid.ID]*trialAccount, 32)
-	accountOf := func(balance *repositories.LedgerAccountBalance) *trialAccount {
+	accountOf := func(balance *journalentryports.LedgerAccountBalance) *trialAccount {
 		account, ok := byAccount[balance.AccountID]
 		if !ok {
 			account = &trialAccount{
@@ -248,7 +249,7 @@ func (s *Service) trenovaTrialBalance(
 		}
 		return account
 	}
-	add := func(balances []repositories.LedgerAccountBalance, income bool) {
+	add := func(balances []journalentryports.LedgerAccountBalance, income bool) {
 		for idx := range balances {
 			balance := &balances[idx]
 			if isIncomeStatement(balance.Category) != income {
@@ -259,7 +260,7 @@ func (s *Service) trenovaTrialBalance(
 	}
 
 	from := window.start
-	during, err := s.ledger.SumLines(ctx, &repositories.SumLedgerRequest{
+	during, err := s.ledger.SumLines(ctx, &journalentryports.SumLedgerRequest{
 		TenantInfo: sess.tenant,
 		From:       &from,
 		Before:     window.before,
@@ -269,7 +270,7 @@ func (s *Service) trenovaTrialBalance(
 	}
 	add(during, false)
 	if sess.conn.SentOpeningBalances() {
-		opening, openErr := s.ledger.SumLines(ctx, &repositories.SumLedgerRequest{
+		opening, openErr := s.ledger.SumLines(ctx, &journalentryports.SumLedgerRequest{
 			TenantInfo:     sess.tenant,
 			Before:         window.start,
 			IncludeClosing: true,
@@ -280,7 +281,7 @@ func (s *Service) trenovaTrialBalance(
 		add(opening, false)
 	}
 	incomeFrom := window.incomeFrom
-	income, err := s.ledger.SumLines(ctx, &repositories.SumLedgerRequest{
+	income, err := s.ledger.SumLines(ctx, &journalentryports.SumLedgerRequest{
 		TenantInfo: sess.tenant,
 		From:       &incomeFrom,
 		Before:     window.before,
@@ -322,7 +323,7 @@ func (s *Service) groupByProviderAccount(
 	control *tenant.AccountingControl,
 	accounts []*trialAccount,
 ) ([]*providerAccount, error) {
-	mappings, err := s.mappings.ListByConnection(ctx, &repositories.ListAccountingMappingsRequest{
+	mappings, err := s.mappings.ListByConnection(ctx, &accountingsyncports.ListAccountingMappingsQuery{
 		TenantInfo:   sess.tenant,
 		ConnectionID: sess.conn.ID,
 		TargetTypes: []accountingsync.MappingTargetType{
@@ -398,7 +399,7 @@ func (s *Service) withoutRetainedEarnings(
 	}
 	refs, err := s.references.GetByExternalIDs(
 		ctx,
-		&repositories.GetAccountingReferenceObjectsRequest{
+		&accountingsyncports.GetAccountingReferenceObjectsRequest{
 			TenantInfo:   sess.tenant,
 			ConnectionID: sess.conn.ID,
 			Kind:         accountingsync.ReferenceKindAccount,
@@ -423,7 +424,7 @@ func (s *Service) withoutRetainedEarnings(
 func trialObservation(
 	sess *readSession,
 	group *providerAccount,
-	row services.AccountingTrialBalanceRow,
+	row accountingsyncports.AccountingTrialBalanceRow,
 	found bool,
 	currency string,
 	at int64,

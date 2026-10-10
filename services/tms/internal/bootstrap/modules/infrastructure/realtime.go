@@ -1,9 +1,9 @@
 package infrastructure
 
 import (
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/realtimeservice"
 	"github.com/emoss08/trenova/internal/infrastructure/realtimebroker"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"go.uber.org/fx"
 )
 
@@ -14,7 +14,7 @@ var RealtimePublisherModule = fx.Module("realtime-publisher",
 		fx.Annotate(
 			realtimebroker.NewPublisher,
 			fx.As(fx.Self()),
-			fx.As(new(services.RealtimePublisher)),
+			fx.As(new(agentports.RealtimePublisher)),
 		),
 		realtimebroker.NewChangeFeed,
 	),
@@ -26,7 +26,7 @@ var RealtimeGatewayModule = fx.Module("realtime-gateway",
 	fx.Provide(
 		fx.Annotate(
 			realtimebroker.NewBroker,
-			fx.As(new(services.RealtimeBroker)),
+			fx.As(new(agentports.RealtimeBroker)),
 		),
 		realtimeservice.NewGateway,
 	),

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -15,15 +15,15 @@ import (
 )
 
 type readStubMessageRepo struct {
-	repositories.InboundMessageRepository
+	inboundmessageports.InboundMessageRepository
 
-	listed    *repositories.ListInboundMessagesRequest
-	breakdown []repositories.InboundMessageCount
+	listed    *inboundmessageports.ListInboundMessagesRequest
+	breakdown []inboundmessageports.InboundMessageCount
 }
 
 func (s *readStubMessageRepo) ListCursor(
 	_ context.Context,
-	req *repositories.ListInboundMessagesRequest,
+	req *inboundmessageports.ListInboundMessagesRequest,
 ) (*pagination.CursorListResult[*inboundmessage.InboundMessage], error) {
 	s.listed = req
 
@@ -34,8 +34,8 @@ func (s *readStubMessageRepo) ListCursor(
 
 func (s *readStubMessageRepo) CountBreakdown(
 	_ context.Context,
-	_ repositories.CountInboundMessagesRequest,
-) ([]repositories.InboundMessageCount, error) {
+	_ inboundmessageports.CountInboundMessagesRequest,
+) ([]inboundmessageports.InboundMessageCount, error) {
 	return s.breakdown, nil
 }
 
@@ -50,7 +50,7 @@ func TestListOrdersTheInboxByArrivalNewestFirst(t *testing.T) {
 	repo := &readStubMessageRepo{}
 	svc := &Service{messageRepo: repo}
 
-	_, err := svc.List(t.Context(), &repositories.ListInboundMessagesRequest{
+	_, err := svc.List(t.Context(), &inboundmessageports.ListInboundMessagesRequest{
 		Filter: &pagination.QueryOptions{},
 	})
 	require.NoError(t, err)
@@ -68,13 +68,13 @@ func TestListTrimsTheSearchAndDropsOneThatIsOnlySpace(t *testing.T) {
 	repo := &readStubMessageRepo{}
 	svc := &Service{messageRepo: repo}
 
-	_, err := svc.List(t.Context(), &repositories.ListInboundMessagesRequest{
+	_, err := svc.List(t.Context(), &inboundmessageports.ListInboundMessagesRequest{
 		Filter: &pagination.QueryOptions{Query: "  detention  "},
 	})
 	require.NoError(t, err)
 	assert.Equal(t, "detention", repo.listed.Filter.Query)
 
-	_, err = svc.List(t.Context(), &repositories.ListInboundMessagesRequest{
+	_, err = svc.List(t.Context(), &inboundmessageports.ListInboundMessagesRequest{
 		Filter: &pagination.QueryOptions{Query: "   "},
 	})
 	require.NoError(t, err)
@@ -87,7 +87,7 @@ func TestCountsFoldsTheBreakdownIntoLanesKindsAndMailboxes(t *testing.T) {
 	intake := pulid.MustNew("imbx_")
 	billing := pulid.MustNew("imbx_")
 
-	repo := &readStubMessageRepo{breakdown: []repositories.InboundMessageCount{
+	repo := &readStubMessageRepo{breakdown: []inboundmessageports.InboundMessageCount{
 		{
 			Status:         inboundmessage.StatusInReview,
 			Classification: inboundmessage.ClassificationTender,

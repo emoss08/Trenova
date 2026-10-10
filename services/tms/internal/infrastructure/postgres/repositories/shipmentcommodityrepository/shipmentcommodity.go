@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -29,7 +29,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.ShipmentCommodityRepository {
+func New(p Params) shipmentports.ShipmentCommodityRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.shipment-commodity-repository"),

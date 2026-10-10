@@ -1,17 +1,22 @@
 package invoiceservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
 	"errors"
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs/billingcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs/billingcontract"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -128,9 +133,9 @@ func TestResolvePartnerTargetInternalPartnerNeedsNoTransport(t *testing.T) {
 	partner := &edi.EDIPartner{ID: pulid.MustNew("edip_"), Kind: edi.PartnerKindInternal}
 	profile := &edi.EDIPartnerDocumentProfile{ID: pulid.MustNew("epdp_")}
 
-	documentProfiles := mocks.NewMockEDIPartnerDocumentProfileRepository(t)
+	documentProfiles := ediportsmock.NewMockEDIPartnerDocumentProfileRepository(t)
 	documentProfiles.EXPECT().
-		GetActivePartnerDocumentProfile(mock.Anything, repositories.GetActiveEDIPartnerDocumentProfileRequest{
+		GetActivePartnerDocumentProfile(mock.Anything, ediports.GetActiveEDIPartnerDocumentProfileRequest{
 			PartnerID:      partner.ID,
 			TenantInfo:     tenantInfo,
 			TransactionSet: edi.TransactionSet210,
@@ -138,7 +143,7 @@ func TestResolvePartnerTargetInternalPartnerNeedsNoTransport(t *testing.T) {
 		}).
 		Return(profile, nil).
 		Once()
-	commProfiles := mocks.NewMockEDICommunicationProfileRepository(t)
+	commProfiles := ediportsmock.NewMockEDICommunicationProfileRepository(t)
 
 	svc := &Service{
 		l:                           zap.NewNop(),
@@ -160,14 +165,14 @@ func TestResolvePartnerTargetReportsMissingProfiles(t *testing.T) {
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	partner := &edi.EDIPartner{ID: pulid.MustNew("edip_"), Kind: edi.PartnerKindExternal}
 
-	documentProfiles := mocks.NewMockEDIPartnerDocumentProfileRepository(t)
+	documentProfiles := ediportsmock.NewMockEDIPartnerDocumentProfileRepository(t)
 	documentProfiles.EXPECT().
 		GetActivePartnerDocumentProfile(mock.Anything, mock.Anything).
 		Return(nil, errortypes.NewNotFoundError("no 210 profile")).
 		Once()
-	commProfiles := mocks.NewMockEDICommunicationProfileRepository(t)
+	commProfiles := ediportsmock.NewMockEDICommunicationProfileRepository(t)
 	commProfiles.EXPECT().
-		GetActiveProfileByPartner(mock.Anything, repositories.GetActiveEDICommunicationProfileByPartnerRequest{
+		GetActiveProfileByPartner(mock.Anything, ediports.GetActiveEDICommunicationProfileByPartnerRequest{
 			PartnerID:  partner.ID,
 			TenantInfo: tenantInfo,
 		}).
@@ -193,7 +198,7 @@ func TestResolvePartnerTargetReportsMissingProfiles(t *testing.T) {
 func TestResolveEDISendPlansWithoutEDIWiringNeverTouchesCustomers(t *testing.T) {
 	t.Parallel()
 
-	customerRepo := mocks.NewMockCustomerRepository(t)
+	customerRepo := customerportsmock.NewMockCustomerRepository(t)
 	svc := &Service{l: zap.NewNop(), customerRepo: customerRepo}
 	inv := &invoice.Invoice{
 		ID:            pulid.MustNew("inv_"),
@@ -203,7 +208,7 @@ func TestResolveEDISendPlansWithoutEDIWiringNeverTouchesCustomers(t *testing.T) 
 
 	plans, err := svc.ResolveEDISendPlans(
 		t.Context(),
-		&servicesports.ResolveInvoiceEDISendPlansRequest{
+		&invoiceports.ResolveInvoiceEDISendPlansRequest{
 			TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_")},
 			Invoices:   []*invoice.Invoice{inv, nil},
 		},
@@ -223,10 +228,10 @@ func TestResolveEDISendPlansWithoutEDIWiringNeverTouchesCustomers(t *testing.T) 
 // external partner, a 210 profile and an SFTP channel: nothing blocks a send.
 type ediWiredFixture struct {
 	tenantInfo pagination.TenantInfo
-	actor      *servicesports.RequestActor
+	actor      *permissionports.RequestActor
 	inv        *invoice.Invoice
-	repo       *mocks.MockInvoiceRepository
-	starter    *mocks.MockWorkflowStarter
+	repo       *invoiceportsmock.MockInvoiceRepository
+	starter    *kernelportsmock.MockWorkflowStarter
 	svc        *Service
 }
 
@@ -239,12 +244,12 @@ func newEDIWiredFixture(t *testing.T, status invoice.EDISendStatus) *ediWiredFix
 	partnerID := pulid.MustNew("edip_")
 	tenantInfo := pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}
 
-	customerRepo := mocks.NewMockCustomerRepository(t)
+	customerRepo := customerportsmock.NewMockCustomerRepository(t)
 	customerRepo.EXPECT().
-		GetByIDs(mock.Anything, repositories.GetCustomersByIDsRequest{
+		GetByIDs(mock.Anything, customerports.GetCustomersByIDsRequest{
 			TenantInfo:            tenantInfo,
 			CustomerIDs:           []pulid.ID{customerID},
-			CustomerFilterOptions: repositories.CustomerFilterOptions{IncludeBillingProfile: true},
+			CustomerFilterOptions: customerports.CustomerFilterOptions{IncludeBillingProfile: true},
 		}).
 		Return([]*customer.Customer{{
 			ID: customerID,
@@ -255,21 +260,21 @@ func newEDIWiredFixture(t *testing.T, status invoice.EDISendStatus) *ediWiredFix
 		}}, nil).
 		Maybe()
 
-	partners := mocks.NewMockEDIPartnerRepository(t)
+	partners := ediportsmock.NewMockEDIPartnerRepository(t)
 	partners.EXPECT().
-		ListOutboundPartnersByCustomerIDs(mock.Anything, repositories.ListEDIPartnersByCustomerIDsRequest{
+		ListOutboundPartnersByCustomerIDs(mock.Anything, ediports.ListEDIPartnersByCustomerIDsRequest{
 			CustomerIDs: []pulid.ID{customerID},
 			TenantInfo:  tenantInfo,
 		}).
 		Return([]*edi.EDIPartner{{ID: partnerID, CustomerID: customerID, Name: "AMD EDI", Kind: edi.PartnerKindExternal}}, nil).
 		Maybe()
 
-	documentProfiles := mocks.NewMockEDIPartnerDocumentProfileRepository(t)
+	documentProfiles := ediportsmock.NewMockEDIPartnerDocumentProfileRepository(t)
 	documentProfiles.EXPECT().
 		GetActivePartnerDocumentProfile(mock.Anything, mock.Anything).
 		Return(&edi.EDIPartnerDocumentProfile{ID: pulid.MustNew("epdp_")}, nil).
 		Maybe()
-	commProfiles := mocks.NewMockEDICommunicationProfileRepository(t)
+	commProfiles := ediportsmock.NewMockEDICommunicationProfileRepository(t)
 	commProfiles.EXPECT().
 		GetActiveProfileByPartner(mock.Anything, mock.Anything).
 		Return(&edi.EDICommunicationProfile{Method: edi.ConnectionMethodSFTP}, nil).
@@ -287,8 +292,8 @@ func newEDIWiredFixture(t *testing.T, status invoice.EDISendStatus) *ediWiredFix
 			Status:         invoice.StatusPosted,
 			EDISendStatus:  status,
 		},
-		repo:    mocks.NewMockInvoiceRepository(t),
-		starter: mocks.NewMockWorkflowStarter(t),
+		repo:    invoiceportsmock.NewMockInvoiceRepository(t),
+		starter: kernelportsmock.NewMockWorkflowStarter(t),
 	}
 	f.svc = &Service{
 		l:                           zap.NewNop(),
@@ -305,7 +310,7 @@ func newEDIWiredFixture(t *testing.T, status invoice.EDISendStatus) *ediWiredFix
 
 func (f *ediWiredFixture) expectLoad() {
 	f.repo.EXPECT().
-		GetByID(mock.Anything, repositories.GetInvoiceByIDRequest{ID: f.inv.ID, TenantInfo: f.tenantInfo}).
+		GetByID(mock.Anything, invoiceports.GetInvoiceByIDRequest{ID: f.inv.ID, TenantInfo: f.tenantInfo}).
 		Return(f.inv, nil).
 		Once()
 }
@@ -330,7 +335,7 @@ func (f *ediWiredFixture) expectWorkflowStart(t *testing.T, force bool) {
 		Return(fakeWorkflowRun{id: "wf-edi", runID: "run-edi"}, nil).
 		Once()
 	f.repo.EXPECT().
-		UpdateEDISendStatus(mock.Anything, repositories.UpdateInvoiceEDISendStatusRequest{
+		UpdateEDISendStatus(mock.Anything, invoiceports.UpdateInvoiceEDISendStatusRequest{
 			TenantInfo: f.tenantInfo,
 			InvoiceID:  f.inv.ID,
 			Status:     invoice.EDISendStatusQueued,
@@ -348,7 +353,7 @@ func TestSendEDIRefusesADraft(t *testing.T) {
 
 	_, err := f.svc.SendEDI(
 		t.Context(),
-		&servicesports.SendInvoiceEDIRequest{InvoiceID: f.inv.ID, TenantInfo: f.tenantInfo},
+		&invoiceports.SendInvoiceEDIRequest{InvoiceID: f.inv.ID, TenantInfo: f.tenantInfo},
 		f.actor,
 	)
 
@@ -367,7 +372,7 @@ func TestSendEDIRefusesAnInFlightSendUnlessForced(t *testing.T) {
 
 			_, err := f.svc.SendEDI(
 				t.Context(),
-				&servicesports.SendInvoiceEDIRequest{InvoiceID: f.inv.ID, TenantInfo: f.tenantInfo},
+				&invoiceports.SendInvoiceEDIRequest{InvoiceID: f.inv.ID, TenantInfo: f.tenantInfo},
 				f.actor,
 			)
 
@@ -385,7 +390,7 @@ func TestSendEDIRefusesASentInvoiceUnlessForced(t *testing.T) {
 
 	_, err := f.svc.SendEDI(
 		t.Context(),
-		&servicesports.SendInvoiceEDIRequest{InvoiceID: f.inv.ID, TenantInfo: f.tenantInfo},
+		&invoiceports.SendInvoiceEDIRequest{InvoiceID: f.inv.ID, TenantInfo: f.tenantInfo},
 		f.actor,
 	)
 
@@ -402,7 +407,7 @@ func TestSendEDIForceQueuesTheWorkflow(t *testing.T) {
 
 	result, err := f.svc.SendEDI(
 		t.Context(),
-		&servicesports.SendInvoiceEDIRequest{
+		&invoiceports.SendInvoiceEDIRequest{
 			InvoiceID:  f.inv.ID,
 			TenantInfo: f.tenantInfo,
 			Force:      true,
@@ -431,7 +436,7 @@ func TestSendEDIRefusesWhenTheChannelIsBlocked(t *testing.T) {
 
 	_, err := f.svc.SendEDI(
 		t.Context(),
-		&servicesports.SendInvoiceEDIRequest{InvoiceID: f.inv.ID, TenantInfo: f.tenantInfo},
+		&invoiceports.SendInvoiceEDIRequest{InvoiceID: f.inv.ID, TenantInfo: f.tenantInfo},
 		f.actor,
 	)
 
@@ -456,7 +461,7 @@ func TestEnqueueEDIAfterPostRecordsTheFirstBlocker(t *testing.T) {
 	f := newEDIWiredFixture(t, invoice.EDISendStatusNotSent)
 	f.svc.ediDocumentProfileRepo = nil
 	f.repo.EXPECT().
-		UpdateEDISendStatus(mock.Anything, repositories.UpdateInvoiceEDISendStatusRequest{
+		UpdateEDISendStatus(mock.Anything, invoiceports.UpdateInvoiceEDISendStatusRequest{
 			TenantInfo: f.tenantInfo,
 			InvoiceID:  f.inv.ID,
 			Status:     invoice.EDISendStatusNotConfigured,
@@ -489,7 +494,7 @@ func TestEnqueueEDIAfterPostMarksFailedWhenTheWorkflowCannotStart(t *testing.T) 
 		Return(nil, errors.New("temporal down")).
 		Once()
 	f.repo.EXPECT().
-		UpdateEDISendStatus(mock.Anything, mock.MatchedBy(func(req repositories.UpdateInvoiceEDISendStatusRequest) bool {
+		UpdateEDISendStatus(mock.Anything, mock.MatchedBy(func(req invoiceports.UpdateInvoiceEDISendStatusRequest) bool {
 			return req.InvoiceID == f.inv.ID && req.Status == invoice.EDISendStatusFailed &&
 				strings.Contains(req.Error, "Failed to start invoice EDI send")
 		})).
@@ -505,7 +510,7 @@ func TestEnqueueEDIAfterPostIsSilentWhenAutoSendIsOff(t *testing.T) {
 	t.Parallel()
 
 	f := newEDIWiredFixture(t, invoice.EDISendStatusNotSent)
-	customerRepo := mocks.NewMockCustomerRepository(t)
+	customerRepo := customerportsmock.NewMockCustomerRepository(t)
 	customerRepo.EXPECT().
 		GetByIDs(mock.Anything, mock.Anything).
 		Return([]*customer.Customer{{

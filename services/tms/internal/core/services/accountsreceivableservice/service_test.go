@@ -1,9 +1,10 @@
 package accountsreceivableservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerledgerportsmock"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -15,13 +16,13 @@ import (
 func TestGetAgingSummaryAggregatesTotals(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockAccountsReceivableRepository(t)
+	repo := customerledgerportsmock.NewMockAccountsReceivableRepository(t)
 	repo.EXPECT().
 		ListARAging(mock.Anything, mock.Anything).
-		Return([]*repositories.ARCustomerAgingRow{
+		Return([]*customerledgerports.ARCustomerAgingRow{
 			{
 				CustomerID: pulid.MustNew("cus_"),
-				Buckets: repositories.ARAgingBucketTotals{
+				Buckets: customerledgerports.ARAgingBucketTotals{
 					CurrentMinor:   100,
 					Days1To30Minor: 200,
 					TotalOpenMinor: 300,
@@ -29,7 +30,7 @@ func TestGetAgingSummaryAggregatesTotals(t *testing.T) {
 			},
 			{
 				CustomerID: pulid.MustNew("cus_"),
-				Buckets: repositories.ARAgingBucketTotals{
+				Buckets: customerledgerports.ARAgingBucketTotals{
 					Days31To60Minor: 400,
 					TotalOpenMinor:  400,
 				},
@@ -51,8 +52,8 @@ func TestGetAgingSummaryAggregatesTotals(t *testing.T) {
 func TestListOpenItemsDefaultsAsOfDate(t *testing.T) {
 	t.Parallel()
 
-	expected := []*repositories.AROpenItem{{InvoiceID: pulid.MustNew("inv_")}}
-	repo := mocks.NewMockAccountsReceivableRepository(t)
+	expected := []*customerledgerports.AROpenItem{{InvoiceID: pulid.MustNew("inv_")}}
+	repo := customerledgerportsmock.NewMockAccountsReceivableRepository(t)
 	repo.EXPECT().
 		ListOpenItems(mock.Anything, mock.Anything).
 		Return(expected, nil).
@@ -69,14 +70,14 @@ func TestGetCustomerStatementBuildsBalanceForwardAndRunningBalance(t *testing.T)
 	t.Parallel()
 
 	customerID := pulid.MustNew("cus_")
-	repo := mocks.NewMockAccountsReceivableRepository(t)
+	repo := customerledgerportsmock.NewMockAccountsReceivableRepository(t)
 	repo.EXPECT().
 		GetCustomerName(mock.Anything, mock.Anything).
 		Return("Acme", nil).
 		Once()
 	repo.EXPECT().
 		ListCustomerLedger(mock.Anything, mock.Anything).
-		Return([]*repositories.ARLedgerEntry{
+		Return([]*customerledgerports.ARLedgerEntry{
 			{
 				CustomerID:      customerID,
 				TransactionDate: 10,
@@ -102,16 +103,16 @@ func TestGetCustomerStatementBuildsBalanceForwardAndRunningBalance(t *testing.T)
 		Once()
 	repo.EXPECT().
 		ListOpenItems(mock.Anything, mock.Anything).
-		Return([]*repositories.AROpenItem{
+		Return([]*customerledgerports.AROpenItem{
 			{InvoiceID: pulid.MustNew("inv_"), CustomerID: customerID, OpenAmountMinor: 9000},
 		}, nil).
 		Once()
 	repo.EXPECT().
 		GetCustomerAging(mock.Anything, mock.Anything).
-		Return(&repositories.ARCustomerAgingRow{
+		Return(&customerledgerports.ARCustomerAgingRow{
 			CustomerID:   customerID,
 			CustomerName: "Acme",
-			Buckets:      repositories.ARAgingBucketTotals{TotalOpenMinor: 9000},
+			Buckets:      customerledgerports.ARAgingBucketTotals{TotalOpenMinor: 9000},
 		}, nil).
 		Once()
 	svc := &Service{repo: repo}

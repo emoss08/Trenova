@@ -7,8 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/settlementshared"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
@@ -34,7 +34,7 @@ func (s *Service) ExportBatchPayrollCSV(
 	tenantInfo pagination.TenantInfo,
 	batchID pulid.ID,
 ) (string, error) {
-	batch, err := s.batchRepo.GetByID(ctx, repositories.GetSettlementBatchByIDRequest{
+	batch, err := s.batchRepo.GetByID(ctx, driversettlementports.GetSettlementBatchByIDRequest{
 		ID:                 batchID,
 		TenantInfo:         tenantInfo,
 		IncludeSettlements: true,
@@ -114,7 +114,7 @@ func (s *Service) GetYTDPaySummaries(
 
 	filter := &pagination.QueryOptions{TenantInfo: tenantInfo}
 	filter.Pagination.Limit = 10000
-	result, err := s.settlementRepo.List(ctx, &repositories.ListDriverSettlementsRequest{
+	result, err := s.settlementRepo.List(ctx, &driversettlementports.ListDriverSettlementsRequest{
 		Filter: filter,
 	})
 	if err != nil {

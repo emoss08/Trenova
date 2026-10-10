@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -16,7 +16,7 @@ func TestApplyShipmentOptionFilters_ActivityWindowAddsOverlapPredicate(t *testin
 	dba := repo.db.DB()
 
 	q := dba.NewSelect().Model((*shipment.Shipment)(nil))
-	q = applyShipmentOptionFilters(q, dba, repositories.ShipmentOptions{
+	q = applyShipmentOptionFilters(q, dba, shipmentports.ShipmentOptions{
 		ActivityWindowStart: 1_700_000_000,
 		ActivityWindowEnd:   1_700_086_400,
 	})
@@ -46,7 +46,7 @@ func TestApplyShipmentOptionFilters_NoWindowLeavesQueryUntouched(t *testing.T) {
 	filtered := applyShipmentOptionFilters(
 		dba.NewSelect().Model((*shipment.Shipment)(nil)),
 		dba,
-		repositories.ShipmentOptions{},
+		shipmentports.ShipmentOptions{},
 	)
 
 	assert.Equal(t, base.String(), filtered.String())
@@ -55,9 +55,9 @@ func TestApplyShipmentOptionFilters_NoWindowLeavesQueryUntouched(t *testing.T) {
 func TestApplyShipmentOptionFilters_HalfOpenWindowIgnored(t *testing.T) {
 	t.Parallel()
 
-	require.False(t, repositories.ShipmentOptions{ActivityWindowStart: 100}.HasActivityWindow())
-	require.False(t, repositories.ShipmentOptions{ActivityWindowEnd: 100}.HasActivityWindow())
-	require.True(t, repositories.ShipmentOptions{
+	require.False(t, shipmentports.ShipmentOptions{ActivityWindowStart: 100}.HasActivityWindow())
+	require.False(t, shipmentports.ShipmentOptions{ActivityWindowEnd: 100}.HasActivityWindow())
+	require.True(t, shipmentports.ShipmentOptions{
 		ActivityWindowStart: 100,
 		ActivityWindowEnd:   200,
 	}.HasActivityWindow())

@@ -9,9 +9,15 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/shipmenttypeports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -34,18 +40,18 @@ const (
 )
 
 type getShipmentTool struct {
-	repo     repositories.ShipmentRepository
-	comments repositories.ShipmentCommentRepository
-	holds    repositories.ShipmentHoldRepository
+	repo     shipmentports.ShipmentRepository
+	comments shipmentports.ShipmentCommentRepository
+	holds    shipmentports.ShipmentHoldRepository
 	access   fieldAccess
 }
 
 func newGetShipmentTool(
-	repo repositories.ShipmentRepository,
-	comments repositories.ShipmentCommentRepository,
-	holds repositories.ShipmentHoldRepository,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	repo shipmentports.ShipmentRepository,
+	comments shipmentports.ShipmentCommentRepository,
+	holds shipmentports.ShipmentHoldRepository,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &getShipmentTool{
 		repo:     repo,
 		comments: comments,
@@ -90,7 +96,7 @@ func (t *getShipmentTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *getShipmentTool) Policy() serviceports.ToolPolicy {
+func (t *getShipmentTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceShipment,
 		reads:    agent.ExternalReadMarked,
@@ -103,7 +109,7 @@ func (t *getShipmentTool) Policy() serviceports.ToolPolicy {
 
 func (t *getShipmentTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -124,10 +130,10 @@ func (t *getShipmentTool) Query(
 		BuID:   params.BusinessUnitID,
 		UserID: params.Actor.UserID,
 	}
-	entity, err := t.repo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	entity, err := t.repo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         shipmentID,
 		TenantInfo: tenant,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 			IncludeCustomer:       true,
 		},
@@ -175,7 +181,7 @@ func shipmentDetailOf(params map[string]any) (shipmentDetail, error) {
 
 func (t *getShipmentTool) activeHolds(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 	tenant pagination.TenantInfo,
 	shipmentID pulid.ID,
 ) ([]*shipment.ShipmentHold, error) {
@@ -183,7 +189,7 @@ func (t *getShipmentTool) activeHolds(
 		return nil, nil
 	}
 
-	page, err := t.holds.ListByShipmentID(ctx, &repositories.ListShipmentHoldsRequest{
+	page, err := t.holds.ListByShipmentID(ctx, &shipmentports.ListShipmentHoldsRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenant,
 			Pagination: pagination.Info{Limit: maxShipmentHolds},
@@ -209,7 +215,7 @@ func (t *getShipmentTool) activeHolds(
 
 func (t *getShipmentTool) recentComments(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 	tenant pagination.TenantInfo,
 	shipmentID pulid.ID,
 ) ([]*shipment.ShipmentComment, error) {
@@ -218,7 +224,7 @@ func (t *getShipmentTool) recentComments(
 		return nil, nil
 	}
 
-	page, err := t.comments.ListByShipmentID(ctx, &repositories.ListShipmentCommentsRequest{
+	page, err := t.comments.ListByShipmentID(ctx, &shipmentports.ListShipmentCommentsRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenant,
 			Pagination: pagination.Info{Limit: maxShipmentComments},
@@ -237,18 +243,18 @@ func (t *getShipmentTool) recentComments(
 }
 
 type searchShipmentsTool struct {
-	repo    repositories.ShipmentRepository
+	repo    shipmentports.ShipmentRepository
 	parties shipmentPartySources
 }
 
 func provideSearchShipmentsTool(
-	repo repositories.ShipmentRepository,
-	customers repositories.CustomerRepository,
-	locations repositories.LocationRepository,
-	workers repositories.WorkerRepository,
-	commodities repositories.CommodityRepository,
-	types repositories.ShipmentTypeRepository,
-) serviceports.AgentQueryTool {
+	repo shipmentports.ShipmentRepository,
+	customers customerports.CustomerRepository,
+	locations locationports.LocationRepository,
+	workers workerports.WorkerRepository,
+	commodities commodityports.CommodityRepository,
+	types shipmenttypeports.ShipmentTypeRepository,
+) agentports.AgentQueryTool {
 	return newSearchShipmentsTool(repo, shipmentPartySources{
 		customers:   customers,
 		locations:   locations,
@@ -259,9 +265,9 @@ func provideSearchShipmentsTool(
 }
 
 func newSearchShipmentsTool(
-	repo repositories.ShipmentRepository,
+	repo shipmentports.ShipmentRepository,
 	parties shipmentPartySources,
-) serviceports.AgentQueryTool {
+) agentports.AgentQueryTool {
 	return &searchShipmentsTool{repo: repo, parties: parties}
 }
 
@@ -311,7 +317,7 @@ func (t *searchShipmentsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *searchShipmentsTool) Policy() serviceports.ToolPolicy {
+func (t *searchShipmentsTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceShipment,
 	})
@@ -319,7 +325,7 @@ func (t *searchShipmentsTool) Policy() serviceports.ToolPolicy {
 
 func (t *searchShipmentsTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -384,7 +390,7 @@ func (t *searchShipmentsTool) Query(
 					UserID: params.Actor.UserID,
 				},
 				Query: query,
-			}, repositories.ShipmentOptions{Statuses: statuses}); countErr == nil &&
+			}, shipmentports.ShipmentOptions{Statuses: statuses}); countErr == nil &&
 				total > len(rows) {
 				outcome.Total = &total
 			}
@@ -416,7 +422,7 @@ func (t *searchShipmentsTool) Query(
 // to Los Angeles and never the delayed one, and asked which load was meant.
 func (t *searchShipmentsTool) withEachStatus(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 	query string,
 	statuses []shipment.Status,
 	rows []shipmentRow,
@@ -462,7 +468,7 @@ type shipmentSearch struct {
 
 func (t *searchShipmentsTool) search(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 	query string,
 	statuses []shipment.Status,
 	limit int,
@@ -471,7 +477,7 @@ func (t *searchShipmentsTool) search(
 	criteria.Text(query)
 	criteria.Field("status", statusNames(statuses))
 
-	result, err := t.repo.List(ctx, &repositories.ListShipmentsRequest{
+	result, err := t.repo.List(ctx, &shipmentports.ListShipmentsRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: pagination.TenantInfo{
 				OrgID:  params.OrganizationID,
@@ -481,7 +487,7 @@ func (t *searchShipmentsTool) search(
 			Pagination: pagination.Info{Limit: limit},
 			Query:      query,
 		},
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			Statuses:        statuses,
 			IncludeCustomer: true,
 			IncludeRoute:    true,
@@ -514,7 +520,7 @@ func (t *searchShipmentsTool) search(
 }
 
 type partySearch struct {
-	params   *serviceports.QueryToolParams
+	params   *agentports.QueryToolParams
 	query    string
 	statuses []shipment.Status
 	limit    int
@@ -537,10 +543,10 @@ func (t *searchShipmentsTool) addPartyMatches(
 		return rows, err
 	}
 
-	lookups := make([]repositories.ShipmentOptions, 0, 5)
+	lookups := make([]shipmentports.ShipmentOptions, 0, 5)
 	if parties.allFromDifferentWords() || parties.onlyPlacesFromDifferentWords() {
 		places := partiesByTerm(parties.locations)
-		combined := repositories.ShipmentOptions{
+		combined := shipmentports.ShipmentOptions{
 			CustomerIDs:     partyIDs(parties.customers),
 			WorkerIDs:       partyIDs(parties.workers),
 			CommodityIDs:    partyIDs(parties.commodities),
@@ -572,27 +578,27 @@ func (t *searchShipmentsTool) addPartyMatches(
 		}
 	} else {
 		if len(parties.customers) > 0 {
-			lookups = append(lookups, repositories.ShipmentOptions{CustomerIDs: partyIDs(parties.customers)})
+			lookups = append(lookups, shipmentports.ShipmentOptions{CustomerIDs: partyIDs(parties.customers)})
 			search.criteria.Field("or customer", partyNames(parties.customers))
 		}
 		if len(parties.locations) > 0 {
-			lookups = append(lookups, repositories.ShipmentOptions{
+			lookups = append(lookups, shipmentports.ShipmentOptions{
 				StopLocationIDs: partyIDs(parties.locations),
 			})
 			search.criteria.Field("or a stop at", partyNames(parties.locations))
 		}
 		if len(parties.workers) > 0 {
-			lookups = append(lookups, repositories.ShipmentOptions{WorkerIDs: partyIDs(parties.workers)})
+			lookups = append(lookups, shipmentports.ShipmentOptions{WorkerIDs: partyIDs(parties.workers)})
 			search.criteria.Field("or driven by", partyNames(parties.workers))
 		}
 		if len(parties.commodities) > 0 {
-			lookups = append(lookups, repositories.ShipmentOptions{
+			lookups = append(lookups, shipmentports.ShipmentOptions{
 				CommodityIDs: partyIDs(parties.commodities),
 			})
 			search.criteria.Field("or carrying", partyNames(parties.commodities))
 		}
 		if len(parties.types) > 0 {
-			lookups = append(lookups, repositories.ShipmentOptions{
+			lookups = append(lookups, shipmentports.ShipmentOptions{
 				ShipmentTypeIDs: partyIDs(parties.types),
 			})
 			search.criteria.Field("or of type", partyNames(parties.types))
@@ -610,7 +616,7 @@ func (t *searchShipmentsTool) addPartyMatches(
 		options.Statuses = search.statuses
 		options.IncludeCustomer = true
 		options.IncludeRoute = true
-		result, listErr := t.repo.List(ctx, &repositories.ListShipmentsRequest{
+		result, listErr := t.repo.List(ctx, &shipmentports.ListShipmentsRequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: tenant,
 				Pagination: pagination.Info{Limit: search.limit},

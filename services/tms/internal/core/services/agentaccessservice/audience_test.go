@@ -7,8 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -18,7 +19,7 @@ import (
 // heldRuntime says an agent holds exactly the tools its definition names, so
 // a preview is seen to read the form's tools rather than the saved ones.
 type heldRuntime struct {
-	services.AgentRuntime
+	agentports.AgentRuntime
 }
 
 func (heldRuntime) ToolSummaries(
@@ -34,17 +35,17 @@ func (heldRuntime) ToolSummaries(
 
 type coveringPermissions struct {
 	*checkingPermissions
-	required [][]services.RequiredGrant
+	required [][]permissionports.RequiredGrant
 }
 
 func (p *coveringPermissions) RoleCoverage(
 	_ context.Context,
-	req *services.RoleCoverageRequest,
-) ([]services.RoleCoverage, error) {
+	req *permissionports.RoleCoverageRequest,
+) ([]permissionports.RoleCoverage, error) {
 	p.required = append(p.required, req.Required)
-	out := make([]services.RoleCoverage, 0, len(req.RoleIDs))
+	out := make([]permissionports.RoleCoverage, 0, len(req.RoleIDs))
 	for _, id := range req.RoleIDs {
-		out = append(out, services.RoleCoverage{
+		out = append(out, permissionports.RoleCoverage{
 			RoleID:           id,
 			Coverage:         agentdefinition.CoverageFull,
 			MissingResources: []permission.Resource{},
@@ -61,7 +62,7 @@ type grantsByAgent struct {
 
 func (g *grantsByAgent) ListRolesByAgents(
 	_ context.Context,
-	req repositories.ListGrantsByAgentsRequest,
+	req permissionports.ListGrantsByAgentsRequest,
 ) (map[pulid.ID][]*permission.Role, error) {
 	g.reads++
 	out := make(map[pulid.ID][]*permission.Role, len(req.AgentIDs))
@@ -115,7 +116,7 @@ func TestPreviewAudience_ReadsTheFormNotTheSavedAgent(t *testing.T) {
 	f := newPreviewFixture(t)
 	f.grants.agentRoles[f.agent.ID] = []pulid.ID{f.roleA.ID}
 
-	open, err := f.service.PreviewAudience(t.Context(), &services.PreviewAgentAudienceRequest{
+	open, err := f.service.PreviewAudience(t.Context(), &agentdefinitionports.PreviewAgentAudienceRequest{
 		TenantInfo: f.tenant,
 		AgentID:    f.agent.ID,
 		ToolNames:  []string{"get_shipment", "email_customer"},
@@ -129,7 +130,7 @@ func TestPreviewAudience_ReadsTheFormNotTheSavedAgent(t *testing.T) {
 		assert.Equal(t, role.Role.ID == f.roleA.ID, role.Granted, role.Role.Name)
 	}
 
-	stored, err := f.definitions.GetByID(t.Context(), repositories.GetAgentDefinitionByIDRequest{
+	stored, err := f.definitions.GetByID(t.Context(), agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID: f.agent.ID, TenantInfo: f.tenant,
 	})
 	require.NoError(t, err)
@@ -137,7 +138,7 @@ func TestPreviewAudience_ReadsTheFormNotTheSavedAgent(t *testing.T) {
 	assert.Equal(t, []string{"get_shipment"}, stored.ToolNames)
 	assert.Empty(t, f.definitions.modeSets)
 
-	restricted, err := f.service.PreviewAudience(t.Context(), &services.PreviewAgentAudienceRequest{
+	restricted, err := f.service.PreviewAudience(t.Context(), &agentdefinitionports.PreviewAgentAudienceRequest{
 		TenantInfo: f.tenant,
 		AgentID:    f.agent.ID,
 		ToolNames:  []string{"get_shipment", "email_customer"},
@@ -154,7 +155,7 @@ func TestPreviewAudience_WorksForAnAgentNotYetSaved(t *testing.T) {
 
 	f := newPreviewFixture(t)
 
-	preview, err := f.service.PreviewAudience(t.Context(), &services.PreviewAgentAudienceRequest{
+	preview, err := f.service.PreviewAudience(t.Context(), &agentdefinitionports.PreviewAgentAudienceRequest{
 		TenantInfo: f.tenant,
 		ToolNames:  []string{" email_customer ", "email_customer", "", "not_a_tool"},
 		Mode:       agentdefinition.AccessEveryone,
@@ -167,7 +168,7 @@ func TestPreviewAudience_WorksForAnAgentNotYetSaved(t *testing.T) {
 		assert.False(t, role.Granted)
 	}
 	require.Len(t, f.coverage.required, 1)
-	assert.Equal(t, []services.RequiredGrant{
+	assert.Equal(t, []permissionports.RequiredGrant{
 		{Tool: "email_customer", Resource: "shipment", Operation: permission.OpRead},
 	}, f.coverage.required[0])
 }
@@ -178,7 +179,7 @@ func TestPreviewAudience_ASystemAgentStaysOpen(t *testing.T) {
 
 	f := newPreviewFixture(t)
 
-	preview, err := f.service.PreviewAudience(t.Context(), &services.PreviewAgentAudienceRequest{
+	preview, err := f.service.PreviewAudience(t.Context(), &agentdefinitionports.PreviewAgentAudienceRequest{
 		TenantInfo: f.tenant,
 		AgentID:    f.system.ID,
 		ToolNames:  []string{"email_customer"},
@@ -194,7 +195,7 @@ func TestPreviewAudience_RefusesABadRequest(t *testing.T) {
 
 	f := newPreviewFixture(t)
 
-	_, err := f.service.PreviewAudience(t.Context(), &services.PreviewAgentAudienceRequest{
+	_, err := f.service.PreviewAudience(t.Context(), &agentdefinitionports.PreviewAgentAudienceRequest{
 		TenantInfo: f.tenant,
 		Mode:       "Somebody",
 	})
@@ -206,7 +207,7 @@ func TestPreviewAudience_RefusesABadRequest(t *testing.T) {
 	for i := range tooMany {
 		tooMany[i] = "get_shipment"
 	}
-	_, err = f.service.PreviewAudience(t.Context(), &services.PreviewAgentAudienceRequest{
+	_, err = f.service.PreviewAudience(t.Context(), &agentdefinitionports.PreviewAgentAudienceRequest{
 		TenantInfo: f.tenant,
 		ToolNames:  tooMany,
 		Mode:       agentdefinition.AccessEveryone,
@@ -214,7 +215,7 @@ func TestPreviewAudience_RefusesABadRequest(t *testing.T) {
 	require.ErrorAs(t, err, &invalid)
 	assert.Equal(t, "toolNames", invalid.Field)
 
-	_, err = f.service.PreviewAudience(t.Context(), &services.PreviewAgentAudienceRequest{
+	_, err = f.service.PreviewAudience(t.Context(), &agentdefinitionports.PreviewAgentAudienceRequest{
 		TenantInfo: f.tenant,
 		AgentID:    pulid.MustNew("agdef_"),
 		Mode:       agentdefinition.AccessEveryone,

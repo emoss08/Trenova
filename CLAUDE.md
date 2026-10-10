@@ -397,8 +397,8 @@ before a tenant is known.**
 ## Security Audit Trail
 
 Sign-ins, SSO callbacks, sign-outs and password resets write `auth_events` through
-`services.AuthEventRecorder`; API key, role, permission, IAM and membership changes write
-critical `audit_entries` through `services.SecurityAuditor`; document downloads and views
+`iamports.AuthEventRecorder`; API key, role, permission, IAM and membership changes write
+critical `audit_entries` through `permissionports.SecurityAuditor`; document downloads and views
 and refused cross-tenant requests (`tenantboundary.Report`) are recorded too, each with the
 request ID, client IP and user agent. Both tables are append-only and only the retention
 sweep may delete from them. **Read [docs/engineering/security-audit.md](docs/engineering/security-audit.md)

@@ -1,10 +1,10 @@
 package agenttoolservice
 
 import (
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/carrierassignmentservice"
 	"github.com/emoss08/trenova/internal/core/services/rateconfirmationservice"
 	"github.com/emoss08/trenova/internal/core/services/tenderservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 
 // The carrier assignment, tender and rate confirmation services are provided
@@ -14,44 +14,44 @@ import (
 
 func provideAssignMoveToCarrierTool(
 	carriers *carrierassignmentservice.Service,
-) services.AgentTool {
+) agentports.AgentTool {
 	return newAssignMoveToCarrierTool(carriers)
 }
 
 func provideCancelCarrierAssignmentTool(
 	carriers *carrierassignmentservice.Service,
-) services.AgentTool {
+) agentports.AgentTool {
 	return newCancelCarrierAssignmentTool(carriers)
 }
 
-func provideCancelTenderTool(tenders *tenderservice.Service) services.AgentTool {
+func provideCancelTenderTool(tenders *tenderservice.Service) agentports.AgentTool {
 	return newCancelTenderTool(tenders)
 }
 
-func provideRecordTenderResponseTool(tenders *tenderservice.Service) services.AgentTool {
+func provideRecordTenderResponseTool(tenders *tenderservice.Service) agentports.AgentTool {
 	return newRecordTenderResponseTool(tenders)
 }
 
 func provideGenerateRateConfirmationTool(
 	rateCons *rateconfirmationservice.Service,
-) services.AgentTool {
+) agentports.AgentTool {
 	return newGenerateRateConfirmationTool(rateCons)
 }
 
 func provideSendRateConfirmationTool(
 	rateCons *rateconfirmationservice.Service,
-) services.AgentTool {
+) agentports.AgentTool {
 	return newSendRateConfirmationTool(rateCons)
 }
 
 func provideVoidRateConfirmationTool(
 	rateCons *rateconfirmationservice.Service,
-) services.AgentTool {
+) agentports.AgentTool {
 	return newVoidRateConfirmationTool(rateCons)
 }
 
 func provideRecordRateConfirmationConfirmedTool(
 	rateCons *rateconfirmationservice.Service,
-) services.AgentTool {
+) agentports.AgentTool {
 	return newRecordRateConfirmationConfirmedTool(rateCons)
 }

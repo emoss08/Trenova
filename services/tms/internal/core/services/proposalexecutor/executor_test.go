@@ -7,8 +7,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,7 +22,7 @@ type recordingTool struct {
 	operation   permission.Operation
 	err         error
 	calls       int
-	lastParams  services.ToolExecuteParams
+	lastParams  agentports.ToolExecuteParams
 	requiresKey bool
 }
 
@@ -29,8 +30,8 @@ func (t *recordingTool) Name() string                { return t.name }
 func (t *recordingTool) Description() string         { return "recording tool" }
 func (t *recordingTool) ParamSchema() map[string]any { return map[string]any{} }
 
-func (t *recordingTool) Policy() services.ToolPolicy {
-	return services.ToolPolicy{
+func (t *recordingTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.name,
 		Kind:          agent.ToolKindAction,
 		Resource:      t.resource,
@@ -47,16 +48,16 @@ func (t *recordingTool) Policy() services.ToolPolicy {
 	}
 }
 
-func (t *recordingTool) Execute(_ context.Context, params services.ToolExecuteParams) error {
+func (t *recordingTool) Execute(_ context.Context, params agentports.ToolExecuteParams) error {
 	t.calls++
 	t.lastParams = params
 
 	return t.err
 }
 
-type fakeRegistry struct{ tools []services.AgentTool }
+type fakeRegistry struct{ tools []agentports.AgentTool }
 
-func (r fakeRegistry) Get(name string) (services.AgentTool, bool) {
+func (r fakeRegistry) Get(name string) (agentports.AgentTool, bool) {
 	for _, tool := range r.tools {
 		if tool.Name() == name {
 			return tool, true
@@ -66,8 +67,8 @@ func (r fakeRegistry) Get(name string) (services.AgentTool, bool) {
 	return nil, false
 }
 
-func (r fakeRegistry) All() []services.AgentTool                   { return r.tools }
-func (r fakeRegistry) Descriptors() []services.AgentToolDescriptor { return nil }
+func (r fakeRegistry) All() []agentports.AgentTool                   { return r.tools }
+func (r fakeRegistry) Descriptors() []agentports.AgentToolDescriptor { return nil }
 
 type recordedExecution struct {
 	status     agent.ProposalStatus
@@ -81,12 +82,12 @@ type recordedExecution struct {
 
 type fakeProposalRepo struct {
 	recorded  []recordedExecution
-	simulated []repositories.RecordAgentProposalSimulationRequest
+	simulated []agentports.RecordAgentProposalSimulationRequest
 }
 
 func (r *fakeProposalRepo) RecordExecution(
 	_ context.Context,
-	req repositories.RecordAgentProposalExecutionRequest,
+	req agentports.RecordAgentProposalExecutionRequest,
 ) (*agent.AgentProposal, error) {
 	r.recorded = append(r.recorded, recordedExecution{
 		status:     req.Status,
@@ -104,34 +105,34 @@ func (r *fakeProposalRepo) RecordExecution(
 type fakePermissions struct {
 	allowed  bool
 	err      error
-	lastReq  *services.PermissionCheckRequest
+	lastReq  *permissionports.PermissionCheckRequest
 	checkErr error
 }
 
 func (p *fakePermissions) Check(
 	_ context.Context,
-	req *services.PermissionCheckRequest,
-) (*services.PermissionCheckResult, error) {
+	req *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
 	p.lastReq = req
 	if p.checkErr != nil {
 		return nil, p.checkErr
 	}
 
-	return &services.PermissionCheckResult{Allowed: p.allowed}, p.err
+	return &permissionports.PermissionCheckResult{Allowed: p.allowed}, p.err
 }
 
 type noopAudit struct{}
 
-func (noopAudit) LogAction(_ *services.LogActionParams, _ ...services.LogOption) error {
+func (noopAudit) LogAction(_ *auditports.LogActionParams, _ ...auditports.LogOption) error {
 	return nil
 }
 
 func newExecutor(
-	tool services.AgentTool,
+	tool agentports.AgentTool,
 	repo *fakeProposalRepo,
 	perms *fakePermissions,
 ) *Service {
-	tools := []services.AgentTool{}
+	tools := []agentports.AgentTool{}
 	if tool != nil {
 		tools = append(tools, tool)
 	}
@@ -156,9 +157,9 @@ func testProposal(toolName string, params map[string]any) *agent.AgentProposal {
 	}
 }
 
-func testActor(orgID, buID pulid.ID) *services.RequestActor {
-	return &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeUser,
+func testActor(orgID, buID pulid.ID) *permissionports.RequestActor {
+	return &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		UserID:         pulid.MustNew("usr_"),
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
@@ -358,7 +359,7 @@ func TestExecute_RecordsFailureWhenTheToolNoLongerExists(t *testing.T) {
 
 func (r *fakeProposalRepo) RecordSimulation(
 	_ context.Context,
-	req repositories.RecordAgentProposalSimulationRequest,
+	req agentports.RecordAgentProposalSimulationRequest,
 ) (*agent.AgentProposal, error) {
 	r.simulated = append(r.simulated, req)
 

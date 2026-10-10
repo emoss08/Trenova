@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
@@ -19,12 +19,12 @@ type Params struct {
 	fx.In
 
 	Logger *zap.Logger
-	Repo   repositories.DataRetentionRepository
+	Repo   tenantports.DataRetentionRepository
 }
 
 type Service struct {
 	l    *zap.Logger
-	repo repositories.DataRetentionRepository
+	repo tenantports.DataRetentionRepository
 }
 
 func New(p Params) *Service {
@@ -38,7 +38,7 @@ func (s *Service) Get(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*tenant.DataRetention, error) {
-	entity, err := s.repo.Get(ctx, repositories.GetDataRetentionRequest{
+	entity, err := s.repo.Get(ctx, tenantports.GetDataRetentionRequest{
 		UserID: tenantInfo.UserID,
 		OrgID:  tenantInfo.OrgID,
 		BuID:   tenantInfo.BuID,

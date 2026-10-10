@@ -12,9 +12,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -44,7 +46,7 @@ func (s *Service) coverSheetByID(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*capture.CaptureCoverSheet, bool, error) {
-	sheet, err := s.coverSheets.GetByID(ctx, repositories.GetCaptureCoverSheetByIDRequest{
+	sheet, err := s.coverSheets.GetByID(ctx, captureports.GetCaptureCoverSheetByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
@@ -72,7 +74,7 @@ func (s *Service) assembleItem(
 		byID[page.ID] = page
 	}
 
-	parts := make([]services.CaptureAssemblyPage, 0, len(item.PageIDs))
+	parts := make([]captureports.CaptureAssemblyPage, 0, len(item.PageIDs))
 	for _, id := range item.PageIDs {
 		page, ok := byID[id]
 		if !ok {
@@ -83,7 +85,7 @@ func (s *Service) assembleItem(
 		if err != nil {
 			return nil, err
 		}
-		parts = append(parts, services.CaptureAssemblyPage{PDF: data, Rotation: page.Rotation})
+		parts = append(parts, captureports.CaptureAssemblyPage{PDF: data, Rotation: page.Rotation})
 	}
 
 	return s.assembler.Assemble(ctx, parts)
@@ -95,7 +97,7 @@ func (s *Service) visibleBatch(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	op permission.Operation,
-	req *repositories.GetCaptureBatchByIDRequest,
+	req *captureports.GetCaptureBatchByIDRequest,
 ) (*capture.CaptureBatch, error) {
 	result, err := s.require(ctx, tenantInfo, permission.ResourceCaptureBatch, op)
 	if err != nil {
@@ -124,7 +126,7 @@ func (s *Service) GetBatch(
 		ctx,
 		tenantInfo,
 		permission.OpRead,
-		&repositories.GetCaptureBatchByIDRequest{
+		&captureports.GetCaptureBatchByIDRequest{
 			ID:            batchID,
 			IncludePages:  true,
 			IncludeItems:  true,
@@ -166,7 +168,7 @@ func (s *Service) ListBatches(
 			"The end of the range must not be before its start")
 	}
 
-	req := &repositories.ListCaptureBatchesRequest{
+	req := &captureports.ListCaptureBatchesRequest{
 		Filter:      in.Filter,
 		Cursor:      in.Cursor,
 		Statuses:    in.Statuses,
@@ -212,7 +214,7 @@ type PageContentRequest struct {
 func (s *Service) PageContent(ctx context.Context, req *PageContentRequest) (*PageContent, error) {
 	page, err := s.pages.GetByID(
 		ctx,
-		repositories.GetCapturePageByIDRequest{ID: req.PageID, TenantInfo: req.TenantInfo},
+		captureports.GetCapturePageByIDRequest{ID: req.PageID, TenantInfo: req.TenantInfo},
 	)
 	if err != nil {
 		return nil, err
@@ -221,7 +223,7 @@ func (s *Service) PageContent(ctx context.Context, req *PageContentRequest) (*Pa
 		ctx,
 		req.TenantInfo,
 		permission.OpRead,
-		&repositories.GetCaptureBatchByIDRequest{
+		&captureports.GetCaptureBatchByIDRequest{
 			ID: page.BatchID,
 		},
 	); err != nil {
@@ -275,7 +277,7 @@ func (s *Service) EditItems(
 		ctx,
 		in.TenantInfo,
 		permission.OpUpdate,
-		&repositories.GetCaptureBatchByIDRequest{
+		&captureports.GetCaptureBatchByIDRequest{
 			ID:           in.BatchID,
 			IncludePages: true,
 			IncludeItems: true,
@@ -305,13 +307,13 @@ func (s *Service) EditItems(
 
 	tenantInfo := pagination.TenantInfo{OrgID: batch.OrganizationID, BuID: batch.BusinessUnitID}
 	var updated *capture.CaptureBatch
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		for _, page := range pages {
 			if _, pageErr := s.pages.Update(txCtx, page); pageErr != nil {
 				return pageErr
 			}
 		}
-		if replaceErr := s.items.ReplaceOpen(txCtx, &repositories.ReplaceOpenCaptureItemsRequest{
+		if replaceErr := s.items.ReplaceOpen(txCtx, &captureports.ReplaceOpenCaptureItemsRequest{
 			BatchID:    batch.ID,
 			TenantInfo: tenantInfo,
 			Items:      items,
@@ -319,7 +321,7 @@ func (s *Service) EditItems(
 			return replaceErr
 		}
 
-		all, listErr := s.items.ListByBatch(txCtx, repositories.ListCaptureItemsRequest{
+		all, listErr := s.items.ListByBatch(txCtx, captureports.ListCaptureItemsRequest{
 			BatchID:    batch.ID,
 			TenantInfo: tenantInfo,
 		})
@@ -339,14 +341,14 @@ func (s *Service) EditItems(
 	}
 
 	s.publishBatch(ctx, updated, itemActionEdited)
-	s.logAudit(&services.LogActionParams{
+	s.logAudit(&auditports.LogActionParams{
 		Resource:       permission.ResourceCaptureBatch,
 		ResourceID:     updated.ID.String(),
 		Operation:      permission.OpUpdate,
 		PreviousState:  before,
 		CurrentState:   layoutState(items),
 		UserID:         in.TenantInfo.UserID,
-		PrincipalType:  services.PrincipalTypeUser,
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    in.TenantInfo.UserID,
 		OrganizationID: updated.OrganizationID,
 		BusinessUnitID: updated.BusinessUnitID,
@@ -579,9 +581,9 @@ func (s *Service) FileItem(ctx context.Context, in *FileItemInput) (*capture.Cap
 		return item, nil
 	}
 
-	session, err := s.uploads.Complete(ctx, &services.CompletionRequest{
+	session, err := s.uploads.Complete(ctx, &documentuploadports.CompletionRequest{
 		TenantInfo: in.TenantInfo,
-		Actor:      *services.UserActor(in.TenantInfo),
+		Actor:      *permissionports.UserActor(in.TenantInfo),
 		SessionID:  sessionID,
 	})
 	if err != nil || session.DocumentID == nil {
@@ -619,9 +621,9 @@ func (s *Service) stageFiling(
 		profile = document.ProcessingProfileAssistantAttachment
 	}
 
-	session, err := s.uploads.CreateSession(ctx, &services.CreateSessionRequest{
+	session, err := s.uploads.CreateSession(ctx, &documentuploadports.CreateSessionRequest{
 		TenantInfo:        tenantInfo,
-		Actor:             *services.UserActor(tenantInfo),
+		Actor:             *permissionports.UserActor(tenantInfo),
 		ResourceID:        item.FiledID.String(),
 		ResourceType:      item.FiledType,
 		ProcessingProfile: string(profile),
@@ -636,7 +638,7 @@ func (s *Service) stageFiling(
 		return pulid.Nil, err
 	}
 
-	if _, err = s.uploads.UploadPart(ctx, &services.UploadPartRequest{
+	if _, err = s.uploads.UploadPart(ctx, &documentuploadports.UploadPartRequest{
 		TenantInfo: tenantInfo,
 		SessionID:  session.ID,
 		PartNumber: 1,
@@ -734,10 +736,10 @@ func (s *Service) RecordFiled(
 	var filed *capture.CaptureItem
 	var batch *capture.CaptureBatch
 
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		item, err := s.items.GetByID(
 			txCtx,
-			repositories.GetCaptureItemByIDRequest{ID: itemID, TenantInfo: scope},
+			captureports.GetCaptureItemByIDRequest{ID: itemID, TenantInfo: scope},
 		)
 		if err != nil {
 			return err
@@ -769,7 +771,7 @@ func (s *Service) RecordFiled(
 	}
 
 	if filed.CoverSheetID != nil && filed.SuggestionSource == capture.SuggestionCoverSheet {
-		if markErr := s.coverSheets.MarkUsed(ctx, repositories.MarkCaptureCoverSheetUsedRequest{
+		if markErr := s.coverSheets.MarkUsed(ctx, captureports.MarkCaptureCoverSheetUsedRequest{
 			ID:         *filed.CoverSheetID,
 			TenantInfo: scope,
 			UsedAt:     timeutils.NowUnix(),
@@ -782,12 +784,12 @@ func (s *Service) RecordFiled(
 	if filed.FiledByID != nil {
 		filer = *filed.FiledByID
 	}
-	s.logAudit(&services.LogActionParams{
+	s.logAudit(&auditports.LogActionParams{
 		Resource:       permission.ResourceCaptureBatch,
 		ResourceID:     batch.ID.String(),
 		Operation:      permission.OpUpdate,
 		UserID:         filer,
-		PrincipalType:  services.PrincipalTypeUser,
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    filer,
 		OrganizationID: batch.OrganizationID,
 		BusinessUnitID: batch.BusinessUnitID,
@@ -814,7 +816,7 @@ func (s *Service) RecordFilingFailed(
 	scope := pagination.TenantInfo{OrgID: tenantInfo.OrgID, BuID: tenantInfo.BuID}
 	item, err := s.items.GetByID(
 		ctx,
-		repositories.GetCaptureItemByIDRequest{ID: itemID, TenantInfo: scope},
+		captureports.GetCaptureItemByIDRequest{ID: itemID, TenantInfo: scope},
 	)
 	if err != nil {
 		return nil, err
@@ -846,14 +848,14 @@ func (s *Service) settleBatch(
 ) (*capture.CaptureBatch, error) {
 	batch, err := s.batches.GetByID(
 		ctx,
-		&repositories.GetCaptureBatchByIDRequest{ID: batchID, TenantInfo: tenantInfo},
+		&captureports.GetCaptureBatchByIDRequest{ID: batchID, TenantInfo: tenantInfo},
 	)
 	if err != nil {
 		return nil, err
 	}
 	items, err := s.items.ListByBatch(
 		ctx,
-		repositories.ListCaptureItemsRequest{BatchID: batchID, TenantInfo: tenantInfo},
+		captureports.ListCaptureItemsRequest{BatchID: batchID, TenantInfo: tenantInfo},
 	)
 	if err != nil {
 		return nil, err
@@ -884,7 +886,7 @@ func (s *Service) DiscardItem(
 	item.Status = capture.ItemDiscarded
 	scope := pagination.TenantInfo{OrgID: batch.OrganizationID, BuID: batch.BusinessUnitID}
 	var settled *capture.CaptureBatch
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		if _, updateErr := s.items.Update(txCtx, item); updateErr != nil {
 			return updateErr
 		}
@@ -898,13 +900,13 @@ func (s *Service) DiscardItem(
 	}
 
 	s.publishBatch(ctx, settled, batchActionUpdated)
-	s.logAudit(&services.LogActionParams{
+	s.logAudit(&auditports.LogActionParams{
 		Resource:       permission.ResourceCaptureBatch,
 		ResourceID:     settled.ID.String(),
 		Operation:      permission.OpDelete,
 		CurrentState:   jsonutils.MustToJSON(item),
 		UserID:         in.TenantInfo.UserID,
-		PrincipalType:  services.PrincipalTypeUser,
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    in.TenantInfo.UserID,
 		OrganizationID: settled.OrganizationID,
 		BusinessUnitID: settled.BusinessUnitID,
@@ -939,12 +941,12 @@ func (s *Service) DiscardBatch(
 		return nil, err
 	}
 
-	s.logAudit(&services.LogActionParams{
+	s.logAudit(&auditports.LogActionParams{
 		Resource:       permission.ResourceCaptureBatch,
 		ResourceID:     discarded.ID.String(),
 		Operation:      permission.OpDelete,
 		UserID:         in.TenantInfo.UserID,
-		PrincipalType:  services.PrincipalTypeUser,
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    in.TenantInfo.UserID,
 		OrganizationID: discarded.OrganizationID,
 		BusinessUnitID: discarded.BusinessUnitID,
@@ -963,8 +965,8 @@ func (s *Service) discardBatch(
 	scope := pagination.TenantInfo{OrgID: batch.OrganizationID, BuID: batch.BusinessUnitID}
 	var discarded *capture.CaptureBatch
 
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		items, err := s.items.ListByBatch(txCtx, repositories.ListCaptureItemsRequest{
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		items, err := s.items.ListByBatch(txCtx, captureports.ListCaptureItemsRequest{
 			BatchID:    batch.ID,
 			TenantInfo: scope,
 		})

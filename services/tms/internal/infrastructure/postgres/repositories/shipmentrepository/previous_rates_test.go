@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -42,7 +42,7 @@ func TestGetPreviousRates_ReturnsPricingSummaries(t *testing.T) {
 
 	customerID := pulid.MustNew("cus_")
 	excludeID := pulid.MustNew("shp_")
-	result, err := repo.GetPreviousRates(t.Context(), &repositories.GetPreviousRatesRequest{
+	result, err := repo.GetPreviousRates(t.Context(), &shipmentports.GetPreviousRatesRequest{
 		TenantInfo:            pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		OriginLocationID:      pulid.MustNew("loc_"),
 		DestinationLocationID: pulid.MustNew("loc_"),

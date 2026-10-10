@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -15,7 +15,7 @@ import (
 func eventTestInput() *ingestInput {
 	return &ingestInput{
 		tenant: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
-		subject: repositories.CarrierIntelSubject{
+		subject: carrierintelports.CarrierIntelSubject{
 			SubjectType: carrierintel.SubjectTypeCarrier,
 			SubjectID:   pulid.MustNew("car_").String(),
 			Name:        "FedEx Ground",

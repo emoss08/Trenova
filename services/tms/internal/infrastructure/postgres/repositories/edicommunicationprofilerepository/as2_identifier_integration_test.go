@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -77,7 +77,7 @@ func TestAS2IdentifierPairsAreUniqueAcrossTenants(t *testing.T) {
 
 	routed, err := repo.GetActiveAS2ProfileByIdentifiers(
 		ctx,
-		repositories.GetActiveAS2ProfileByIdentifiersRequest{
+		ediports.GetActiveAS2ProfileByIdentifiersRequest{
 			LocalAS2ID:   "SHIPPER-AS2",
 			PartnerAS2ID: "CARRIER-AS2",
 		},

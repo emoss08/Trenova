@@ -6,28 +6,28 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type echoPreviews struct {
-	serviceports.ProposalPreviewService
+	agentports.ProposalPreviewService
 
 	preview *agent.ToolPreview
 }
 
 func (p echoPreviews) Baseline(
 	context.Context,
-	*serviceports.ProposalBaselineRequest,
-) *serviceports.ProposalBaselineResult {
-	return &serviceports.ProposalBaselineResult{Preview: p.preview}
+	*agentports.ProposalBaselineRequest,
+) *agentports.ProposalBaselineResult {
+	return &agentports.ProposalBaselineResult{Preview: p.preview}
 }
 
 func filedContent(
 	t *testing.T,
-	previews serviceports.ProposalPreviewService,
+	previews agentports.ProposalPreviewService,
 	schema map[string]any,
 	args map[string]any,
 ) string {
@@ -38,18 +38,18 @@ func filedContent(
 		Tier:     agent.TierPropose,
 		Schema:   schema,
 	}
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		toolTurn("create_shipment", args),
 		textTurn("I have proposed the shipment."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
-		Tools: []serviceports.AgentTool{tool},
+		Tools: []agentports.AgentTool{tool},
 	}, nil)
 	if previews != nil {
 		rt.previews = previews
 	}
 
-	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+	result, err := rt.Run(t.Context(), &agentports.RunRequest{
 		Definition: testDefinition("create_shipment"),
 		Actor:      testActor(),
 		Input:      "copy PRO-100 for Tuesday",

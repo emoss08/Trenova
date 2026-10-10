@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -34,7 +34,7 @@ func TestListForTaskSendsAPostgresArrayNotJSON(t *testing.T) {
 	sql := buildProvidersForTaskQuery(
 		renderDB(),
 		&entities,
-		repositories.ListAIProvidersForTaskRequest{
+		agentports.ListAIProvidersForTaskRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: pulid.MustNew("org_"),
 				BuID:  pulid.MustNew("bu_"),
@@ -57,7 +57,7 @@ func TestListForTaskUsesTheContainmentOperator(t *testing.T) {
 	sql := buildProvidersForTaskQuery(
 		renderDB(),
 		&entities,
-		repositories.ListAIProvidersForTaskRequest{
+		agentports.ListAIProvidersForTaskRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: pulid.MustNew("org_"),
 				BuID:  pulid.MustNew("bu_"),

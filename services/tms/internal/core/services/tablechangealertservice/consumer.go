@@ -11,8 +11,8 @@ import (
 
 	"github.com/bytedance/sonic"
 	notificationdomain "github.com/emoss08/trenova/internal/core/domain/notification"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/tablechangealertports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/redis/go-redis/v9"
@@ -53,14 +53,14 @@ type ConsumerParams struct {
 
 	Logger       *zap.Logger
 	Redis        *redis.Client
-	SubRepo      repositories.TCASubscriptionRepository
+	SubRepo      tablechangealertports.TCASubscriptionRepository
 	NotifService *notificationservice.Service
 }
 
 type Consumer struct {
 	l            *zap.Logger
 	redis        *redis.Client
-	subRepo      repositories.TCASubscriptionRepository
+	subRepo      tablechangealertports.TCASubscriptionRepository
 	notifService *notificationservice.Service
 	cancel       context.CancelFunc
 }
@@ -319,7 +319,7 @@ func (c *Consumer) processMessage(ctx context.Context, msg redis.XMessage) error
 
 	subs, err := c.subRepo.FindMatchingSubscriptions(
 		ctx,
-		repositories.FindMatchingTCASubscriptionsRequest{
+		tablechangealertports.FindMatchingTCASubscriptionsRequest{
 			OrganizationID: eventOrgID,
 			BusinessUnitID: eventBuID,
 			TableName:      event.Table,

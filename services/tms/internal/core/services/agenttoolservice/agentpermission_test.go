@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentquerytoolservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/testutil/providertest"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/stretchr/testify/require"
@@ -53,7 +53,7 @@ func toolPermissions(t *testing.T) map[string]toolPermission {
 
 	out := map[string]toolPermission{}
 	for _, provider := range append(agentquerytoolservice.ToolProviders(), ToolProviders()...) {
-		declarer, ok := providertest.Build(t, provider, supplied).(serviceports.ToolPolicyDeclarer)
+		declarer, ok := providertest.Build(t, provider, supplied).(agentports.ToolPolicyDeclarer)
 		require.Truef(t, ok, "%T builds a tool with no policy", provider)
 
 		policy := declarer.Policy()

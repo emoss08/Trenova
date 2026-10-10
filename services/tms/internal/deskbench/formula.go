@@ -12,8 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/pagedraft"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -48,7 +48,7 @@ func (s *Session) OpenFormula(ctx context.Context, label string, page *FormulaPa
 		state.draft.TemplateType = page.Type
 	}
 
-	req := &serviceports.OpenPageThreadRequest{
+	req := &agentports.OpenPageThreadRequest{
 		TenantInfo:  s.Tenant,
 		Origin:      conversation.ThreadOriginFormula,
 		SubjectType: agent.SubjectFormulaTemplate,
@@ -133,7 +133,7 @@ func (f *formulaState) page() *agent.PageContext {
 	}
 }
 
-func (f *formulaState) apply(artifacts []serviceports.AssistantArtifact) {
+func (f *formulaState) apply(artifacts []agentports.AssistantArtifact) {
 	for idx := range artifacts {
 		artifact := &artifacts[idx]
 		if artifact.Kind != assistantartifact.KindDraftEdit {

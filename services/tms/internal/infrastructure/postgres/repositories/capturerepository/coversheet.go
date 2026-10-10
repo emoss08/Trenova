@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/capture"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/uptrace/bun"
@@ -18,7 +18,7 @@ type coverSheetRepository struct {
 	l  *zap.Logger
 }
 
-func NewCoverSheetRepository(p Params) repositories.CaptureCoverSheetRepository {
+func NewCoverSheetRepository(p Params) captureports.CaptureCoverSheetRepository {
 	return &coverSheetRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.capture-cover-sheet-repository"),
@@ -46,7 +46,7 @@ func (r *coverSheetRepository) CreateMany(
 
 func (r *coverSheetRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetCaptureCoverSheetByIDRequest,
+	req captureports.GetCaptureCoverSheetByIDRequest,
 ) (*capture.CaptureCoverSheet, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capture.CaptureCoverSheet, error) {
 		entity := new(capture.CaptureCoverSheet)
@@ -66,7 +66,7 @@ func (r *coverSheetRepository) GetByID(
 
 func (r *coverSheetRepository) GetByTokenHash(
 	ctx context.Context,
-	req repositories.GetCaptureCoverSheetByTokenRequest,
+	req captureports.GetCaptureCoverSheetByTokenRequest,
 ) (*capture.CaptureCoverSheet, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capture.CaptureCoverSheet, error) {
 		entity := new(capture.CaptureCoverSheet)
@@ -86,7 +86,7 @@ func (r *coverSheetRepository) GetByTokenHash(
 
 func (r *coverSheetRepository) MarkUsed(
 	ctx context.Context,
-	req repositories.MarkCaptureCoverSheetUsedRequest,
+	req captureports.MarkCaptureCoverSheetUsedRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.CaptureCoverSheetColumns

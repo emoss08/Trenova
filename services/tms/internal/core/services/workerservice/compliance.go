@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/dispatcheligibility"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -20,7 +20,7 @@ const (
 )
 
 func createWorkerComplianceRule(
-	dcRepo repositories.DispatchControlRepository,
+	dcRepo dispatchcontrolports.DispatchControlRepository,
 ) validationframework.TenantedRule[*worker.Worker] {
 	return validationframework.NewTenantedRule[*worker.Worker]("worker_compliance").
 		OnBoth().
@@ -49,7 +49,7 @@ func createWorkerComplianceRule(
 }
 
 func createAgeComplianceRule(
-	dcRepo repositories.DispatchControlRepository,
+	dcRepo dispatchcontrolports.DispatchControlRepository,
 ) validationframework.TenantedRule[*worker.Worker] {
 	return validationframework.NewTenantedRule[*worker.Worker]("age_compliance_49cfr_391.11").
 		OnBoth().
@@ -72,7 +72,7 @@ func createAgeComplianceRule(
 }
 
 func createCDLComplianceRule(
-	dcRepo repositories.DispatchControlRepository,
+	dcRepo dispatchcontrolports.DispatchControlRepository,
 ) validationframework.TenantedRule[*worker.Worker] {
 	return validationframework.NewTenantedRule[*worker.Worker]("cdl_compliance_49cfr_391.11").
 		OnBoth().
@@ -95,7 +95,7 @@ func createCDLComplianceRule(
 }
 
 func createMedicalCertComplianceRule(
-	dcRepo repositories.DispatchControlRepository,
+	dcRepo dispatchcontrolports.DispatchControlRepository,
 ) validationframework.TenantedRule[*worker.Worker] {
 	return validationframework.
 		NewTenantedRule[*worker.Worker]("medical_cert_compliance_49cfr_391.45").
@@ -119,7 +119,7 @@ func createMedicalCertComplianceRule(
 }
 
 func createMVRComplianceRule(
-	dcRepo repositories.DispatchControlRepository,
+	dcRepo dispatchcontrolports.DispatchControlRepository,
 ) validationframework.TenantedRule[*worker.Worker] {
 	return validationframework.NewTenantedRule[*worker.Worker]("mvr_compliance_49cfr_391.25").
 		OnBoth().
@@ -142,7 +142,7 @@ func createMVRComplianceRule(
 }
 
 func createDrugTestComplianceRule(
-	dcRepo repositories.DispatchControlRepository,
+	dcRepo dispatchcontrolports.DispatchControlRepository,
 ) validationframework.TenantedRule[*worker.Worker] {
 	return validationframework.NewTenantedRule[*worker.Worker](
 		"drug_test_compliance_49cfr_382.301",
@@ -167,7 +167,7 @@ func createDrugTestComplianceRule(
 }
 
 func createHazmatComplianceRule(
-	dcRepo repositories.DispatchControlRepository,
+	dcRepo dispatchcontrolports.DispatchControlRepository,
 ) validationframework.TenantedRule[*worker.Worker] {
 	return validationframework.NewTenantedRule[*worker.Worker]("hazmat_compliance_49cfr_383.93").
 		OnBoth().

@@ -7,8 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -29,8 +28,8 @@ func (c *Calculator) RateAgainstContract(
 	entity *shipment.Shipment,
 	userID pulid.ID,
 	persist bool,
-) (*services.RatedShipment, error) {
-	return c.rateEngine.RateShipment(ctx, &services.RateShipmentRequest{
+) (*ratequoteports.RatedShipment, error) {
+	return c.rateEngine.RateShipment(ctx, &ratequoteports.RateShipmentRequest{
 		Shipment:  entity,
 		Purpose:   ratequote.PurposeRating,
 		PartyType: rateagreement.PartyTypeCustomer,
@@ -56,7 +55,7 @@ func (c *Calculator) RateAgainstContract(
 func (c *Calculator) AdoptContractRate(
 	ctx context.Context,
 	entity *shipment.Shipment,
-	rated *services.RatedShipment,
+	rated *ratequoteports.RatedShipment,
 ) {
 	if rated == nil || !rated.Outcome.Priced() {
 		return
@@ -137,7 +136,7 @@ func clearRateDeparture(entity *shipment.Shipment) {
 // rate — rather than the resulting money, because the money follows from them
 // and from the mileage, and a rounding difference in the total is not somebody
 // having renegotiated the rate.
-func ContractRateMatches(entity *shipment.Shipment, rated *services.RatedShipment) bool {
+func ContractRateMatches(entity *shipment.Shipment, rated *ratequoteports.RatedShipment) bool {
 	if entity == nil || rated == nil || !rated.Outcome.Priced() {
 		return false
 	}
@@ -344,7 +343,7 @@ func (c *Calculator) appliedQuote(
 		return nil
 	}
 
-	quote, err := c.quoteRepo.GetByID(ctx, &repositories.GetRateQuoteByIDRequest{
+	quote, err := c.quoteRepo.GetByID(ctx, &ratequoteports.GetRateQuoteByIDRequest{
 		RateQuoteID: *entity.RateQuoteID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -418,7 +417,7 @@ func supersedingQuote(
 func (c *Calculator) AdoptAndRecordContractRate(
 	ctx context.Context,
 	entity *shipment.Shipment,
-	rated *services.RatedShipment,
+	rated *ratequoteports.RatedShipment,
 	control *tenant.ShipmentControl,
 	userID pulid.ID,
 ) error {
@@ -432,7 +431,7 @@ func (c *Calculator) AdoptAndRecordContractRate(
 func (c *Calculator) AdoptAndRecalculateContractRate(
 	ctx context.Context,
 	entity *shipment.Shipment,
-	rated *services.RatedShipment,
+	rated *ratequoteports.RatedShipment,
 	control *tenant.ShipmentControl,
 	userID pulid.ID,
 ) error {
@@ -444,7 +443,7 @@ func (c *Calculator) AdoptAndRecalculateContractRate(
 func (c *Calculator) RecordContractQuote(
 	ctx context.Context,
 	entity *shipment.Shipment,
-	rated *services.RatedShipment,
+	rated *ratequoteports.RatedShipment,
 ) error {
 	if rated == nil {
 		return nil
@@ -462,7 +461,7 @@ func (c *Calculator) RecordContractQuote(
 func (c *Calculator) ContractAccessorials(
 	ctx context.Context,
 	entity *shipment.Shipment,
-	rated *services.RatedShipment,
+	rated *ratequoteports.RatedShipment,
 ) []*rateagreement.RateAgreementAccessorial {
 	if rated == nil || !rated.Outcome.Priced() {
 		return nil

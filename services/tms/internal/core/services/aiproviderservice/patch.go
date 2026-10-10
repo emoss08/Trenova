@@ -6,15 +6,16 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/optional"
 )
 
 func (s *Service) Patch(
 	ctx context.Context,
-	req *services.PatchAIProviderRequest,
-	actor *services.RequestActor,
+	req *agentports.PatchAIProviderRequest,
+	actor *permissionports.RequestActor,
 ) (*aiprovider.Provider, error) {
 	if req.Version < 0 {
 		return nil, errortypes.NewValidationError(
@@ -56,8 +57,8 @@ func (s *Service) Patch(
 type providerEdit func(*aiprovider.Provider)
 
 func (s *Service) patchEdits(
-	req *services.PatchAIProviderRequest,
-	actor *services.RequestActor,
+	req *agentports.PatchAIProviderRequest,
+	actor *permissionports.RequestActor,
 ) ([]providerEdit, error) {
 	multiErr := errortypes.NewMultiError()
 	edits := make([]providerEdit, 0, 7)

@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -14,7 +14,7 @@ import (
 func validAction() Spec {
 	return Spec{
 		ToolName: "assign_move",
-		Policy: serviceports.ToolPolicy{
+		Policy: agentports.ToolPolicy{
 			Name:          "assign_move",
 			Kind:          agent.ToolKindAction,
 			Resource:      permission.ResourceShipmentMove,
@@ -33,7 +33,7 @@ func validAction() Spec {
 func validQuery() Spec {
 	return Spec{
 		ToolName: "get_shipment",
-		Policy: serviceports.ToolPolicy{
+		Policy: agentports.ToolPolicy{
 			Name:          "get_shipment",
 			Kind:          agent.ToolKindQuery,
 			Resource:      permission.ResourceShipment,
@@ -49,12 +49,12 @@ func validQuery() Spec {
 	}
 }
 
-func holdToPropose(context.Context, serviceports.ToolExecuteParams) agent.AutonomyTier {
+func holdToPropose(context.Context, agentports.ToolExecuteParams) agent.AutonomyTier {
 	return agent.TierPropose
 }
 
-func classifyAsInternal(serviceports.ToolExecuteParams) serviceports.CallPolicy {
-	return serviceports.CallPolicy{Egress: agent.EgressInternal}
+func classifyAsInternal(agentports.ToolExecuteParams) agentports.CallPolicy {
+	return agentports.CallPolicy{Egress: agent.EgressInternal}
 }
 
 func TestValidate_AcceptsWellFormedSpecs(t *testing.T) {
@@ -352,7 +352,7 @@ func TestValidate_RefusesEachBrokenRule(t *testing.T) {
 			name: "a condition says what it does and how",
 			specs: func() []Spec {
 				spec := validAction()
-				spec.Policy.Condition = &serviceports.TierCondition{Limit: holdToPropose}
+				spec.Policy.Condition = &agentports.TierCondition{Limit: holdToPropose}
 				return []Spec{spec}
 			},
 			reason: "condition needs both a description and a limit",

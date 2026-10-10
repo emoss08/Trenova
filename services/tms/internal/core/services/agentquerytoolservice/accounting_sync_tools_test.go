@@ -7,7 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -15,7 +17,7 @@ import (
 )
 
 type fakeAccountingStatus struct {
-	status *serviceports.AccountingSyncStatus
+	status *accountingsyncports.AccountingSyncStatus
 	asked  pagination.TenantInfo
 }
 
@@ -23,18 +25,18 @@ func (f *fakeAccountingStatus) Status(
 	_ context.Context,
 	tenant pagination.TenantInfo,
 	_ integration.Type,
-) (*serviceports.AccountingSyncStatus, error) {
+) (*accountingsyncports.AccountingSyncStatus, error) {
 	f.asked = tenant
 	return f.status, nil
 }
 
-func accountingQueryParams(system string) *serviceports.QueryToolParams {
+func accountingQueryParams(system string) *agentports.QueryToolParams {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
-	return &serviceports.QueryToolParams{
+	return &agentports.QueryToolParams{
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
-		Actor: &serviceports.RequestActor{
+		Actor: &permissionports.RequestActor{
 			UserID:         pulid.MustNew("usr_"),
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
@@ -46,7 +48,7 @@ func accountingQueryParams(system string) *serviceports.QueryToolParams {
 func TestGetAccountingSyncStatus_NeverConnected(t *testing.T) {
 	t.Parallel()
 
-	reader := &fakeAccountingStatus{status: &serviceports.AccountingSyncStatus{
+	reader := &fakeAccountingStatus{status: &accountingsyncports.AccountingSyncStatus{
 		IntegrationType: integration.TypeQuickBooksOnline,
 		ProviderName:    "QuickBooks Online",
 		Available:       false,
@@ -69,7 +71,7 @@ func TestGetAccountingSyncStatus_NeverRepeatsProviderText(t *testing.T) {
 	t.Parallel()
 
 	checked := int64(1_790_000_000)
-	reader := &fakeAccountingStatus{status: &serviceports.AccountingSyncStatus{
+	reader := &fakeAccountingStatus{status: &accountingsyncports.AccountingSyncStatus{
 		IntegrationType: integration.TypeQuickBooksOnline,
 		ProviderName:    "QuickBooks Online",
 		Available:       true,
@@ -104,7 +106,7 @@ func TestGetAccountingSyncStatus_ReportsTheLedgerMode(t *testing.T) {
 	t.Parallel()
 
 	sent := int64(1_790_000_000)
-	reader := &fakeAccountingStatus{status: &serviceports.AccountingSyncStatus{
+	reader := &fakeAccountingStatus{status: &accountingsyncports.AccountingSyncStatus{
 		IntegrationType: integration.TypeQuickBooksOnline,
 		ProviderName:    "QuickBooks Online",
 		Available:       true,

@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -28,7 +28,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.EDITransferChangeRepository {
+func New(p Params) ediports.EDITransferChangeRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.edi-transfer-change-repository"),
@@ -37,7 +37,7 @@ func New(p Params) repositories.EDITransferChangeRepository {
 
 func (r *repository) ListTransferChanges(
 	ctx context.Context,
-	req *repositories.ListEDITransferChangesRequest,
+	req *ediports.ListEDITransferChangesRequest,
 ) (*pagination.ListResult[*edi.TransferChange], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.TransferChange], error) {
 		entities := make([]*edi.TransferChange, 0, req.Filter.Pagination.SafeLimit())
@@ -70,7 +70,7 @@ func (r *repository) ListTransferChanges(
 
 func (r *repository) GetTransferChangeByID(
 	ctx context.Context,
-	req repositories.GetEDITransferChangeByIDRequest,
+	req ediports.GetEDITransferChangeByIDRequest,
 ) (*edi.TransferChange, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.TransferChange, error) {
 		entity := new(edi.TransferChange)
@@ -112,8 +112,8 @@ func (r *repository) CreateTransferChange(
 func (r *repository) CreateTransferChangeIdempotent(
 	ctx context.Context,
 	entity *edi.TransferChange,
-) (*repositories.CreateEDITransferChangeIdempotentResult, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.CreateEDITransferChangeIdempotentResult, error) {
+) (*ediports.CreateEDITransferChangeIdempotentResult, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*ediports.CreateEDITransferChangeIdempotentResult, error) {
 		cols := buncolgen.TransferChangeColumns
 
 		results, err := r.db.DBForContext(ctx).
@@ -131,7 +131,7 @@ func (r *repository) CreateTransferChangeIdempotent(
 			return nil, err
 		}
 		if rowsAffected > 0 {
-			return &repositories.CreateEDITransferChangeIdempotentResult{
+			return &ediports.CreateEDITransferChangeIdempotentResult{
 				TransferChange: entity,
 				Created:        true,
 			}, nil
@@ -150,7 +150,7 @@ func (r *repository) CreateTransferChangeIdempotent(
 			return nil, dberror.HandleNotFoundError(err, "EDITransferChange")
 		}
 
-		return &repositories.CreateEDITransferChangeIdempotentResult{
+		return &ediports.CreateEDITransferChangeIdempotentResult{
 			TransferChange: existing,
 			Created:        false,
 		}, nil

@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -41,7 +41,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.WorkerTrainingRepository {
+func New(p Params) workerports.WorkerTrainingRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.worker-training-repository"),
@@ -71,7 +71,7 @@ func orderCourses(sq *bun.SelectQuery) *bun.SelectQuery {
 
 func (r *repository) applyCourseFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListTrainingCoursesRequest,
+	req *workerports.ListTrainingCoursesRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.TrainingCourseColumns
 	if req.Status != "" {
@@ -85,7 +85,7 @@ func (r *repository) applyCourseFilters(
 
 func (r *repository) ListCourses(
 	ctx context.Context,
-	req *repositories.ListTrainingCoursesRequest,
+	req *workerports.ListTrainingCoursesRequest,
 ) (*pagination.CursorListResult[*worker.TrainingCourse], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*worker.TrainingCourse], error) {
 		log := r.l.With(zap.String("operation", "ListCourses"))
@@ -175,7 +175,7 @@ func (r *repository) ListActiveCourses(
 
 func (r *repository) CourseSelectOptions(
 	ctx context.Context,
-	req *repositories.TrainingCourseSelectOptionsRequest,
+	req *workerports.TrainingCourseSelectOptionsRequest,
 ) (*pagination.ListResult[*worker.TrainingCourse], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*worker.TrainingCourse], error) {
 		cols := buncolgen.TrainingCourseColumns
@@ -216,7 +216,7 @@ func (r *repository) CourseSelectOptions(
 
 func (r *repository) GetCourseByID(
 	ctx context.Context,
-	req *repositories.GetTrainingCourseByIDRequest,
+	req *workerports.GetTrainingCourseByIDRequest,
 ) (*worker.TrainingCourse, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.TrainingCourse, error) {
 		entity := new(worker.TrainingCourse)
@@ -238,7 +238,7 @@ func (r *repository) GetCourseByID(
 
 func (r *repository) CourseCodeExists(
 	ctx context.Context,
-	req *repositories.TrainingCourseCodeExistsRequest,
+	req *workerports.TrainingCourseCodeExistsRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
 		cols := buncolgen.TrainingCourseColumns
@@ -316,7 +316,7 @@ func (r *repository) UpdateCourse(
 
 func (r *repository) CountRecordsByCourse(
 	ctx context.Context,
-	req *repositories.CountTrainingRecordsRequest,
+	req *workerports.CountTrainingRecordsRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		cols := buncolgen.WorkerTrainingRecordColumns
@@ -346,7 +346,7 @@ func (r *repository) CountRecordsByCourse(
 
 func (r *repository) CountRecordsByCourseIDs(
 	ctx context.Context,
-	req *repositories.CountTrainingRecordsByCourseIDsRequest,
+	req *workerports.CountTrainingRecordsByCourseIDsRequest,
 ) (map[pulid.ID]int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (map[pulid.ID]int, error) {
 		if len(req.CourseIDs) == 0 {
@@ -380,7 +380,7 @@ func (r *repository) CountRecordsByCourseIDs(
 
 func (r *repository) ListForWorker(
 	ctx context.Context,
-	req *repositories.ListWorkerTrainingRequest,
+	req *workerports.ListWorkerTrainingRequest,
 ) ([]*worker.WorkerTrainingRecord, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerTrainingRecord, error) {
 		cols := buncolgen.WorkerTrainingRecordColumns
@@ -423,7 +423,7 @@ func (r *repository) ListForWorker(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req *repositories.GetWorkerTrainingByIDRequest,
+	req *workerports.GetWorkerTrainingByIDRequest,
 ) (*worker.WorkerTrainingRecord, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerTrainingRecord, error) {
 		entity := new(worker.WorkerTrainingRecord)
@@ -510,7 +510,7 @@ func (r *repository) Update(
 
 func (r *repository) reminderQuery(
 	ctx context.Context,
-	req *repositories.ListTrainingRemindersRequest,
+	req *workerports.ListTrainingRemindersRequest,
 	entities *[]*worker.WorkerTrainingRecord,
 ) *bun.SelectQuery {
 	cols := buncolgen.WorkerTrainingRecordColumns
@@ -541,14 +541,14 @@ func (r *repository) reminderQuery(
 	return q
 }
 
-func reminderWindow(req *repositories.ListTrainingRemindersRequest) (int64, int64) {
+func reminderWindow(req *workerports.ListTrainingRemindersRequest) (int64, int64) {
 	now := timeutils.NowUnix()
 	return now - int64(req.GraceDays)*secondsPerDay, now + int64(req.HorizonDays)*secondsPerDay
 }
 
 func (r *repository) ListDue(
 	ctx context.Context,
-	req *repositories.ListTrainingRemindersRequest,
+	req *workerports.ListTrainingRemindersRequest,
 ) ([]*worker.WorkerTrainingRecord, error) {
 	if req.TenantInfo.OrgID.IsNil() {
 		ctx = dbscope.WithSystem(ctx, "list training due across every organization for the reminder sweep")
@@ -575,7 +575,7 @@ func (r *repository) ListDue(
 
 func (r *repository) ListExpiring(
 	ctx context.Context,
-	req *repositories.ListTrainingRemindersRequest,
+	req *workerports.ListTrainingRemindersRequest,
 ) ([]*worker.WorkerTrainingRecord, error) {
 	if req.TenantInfo.OrgID.IsNil() {
 		ctx = dbscope.WithSystem(ctx, "list expiring training across every organization for the reminder sweep")

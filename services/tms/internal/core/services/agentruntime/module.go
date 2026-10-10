@@ -1,7 +1,7 @@
 package agentruntime
 
 import (
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"go.uber.org/fx"
 )
 
@@ -10,7 +10,7 @@ import (
 // can rebuild a turn from data; everything else only ever needs the port.
 var Module = fx.Module("agentruntime",
 	fx.Provide(
-		fx.Annotate(New, fx.As(fx.Self()), fx.As(new(serviceports.AgentRuntime))),
+		fx.Annotate(New, fx.As(fx.Self()), fx.As(new(agentports.AgentRuntime))),
 		NewContextBuilder,
 		RuntimePolicies,
 	),

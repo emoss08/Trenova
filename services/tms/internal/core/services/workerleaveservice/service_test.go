@@ -1,13 +1,14 @@
 package workerleaveservice_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"context"
 	"testing"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/workerleaveservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -56,7 +57,7 @@ func (f *fakeRepo) UpdateControl(
 
 func (f *fakeRepo) ListCases(
 	_ context.Context,
-	req *repositories.ListLeaveCasesRequest,
+	req *workerports.ListLeaveCasesRequest,
 ) ([]*worker.WorkerLeaveCase, error) {
 	out := make([]*worker.WorkerLeaveCase, 0, len(f.cases))
 	for _, entity := range f.cases {
@@ -76,7 +77,7 @@ func (f *fakeRepo) ListCases(
 
 func (f *fakeRepo) CountCases(
 	ctx context.Context,
-	req *repositories.ListLeaveCasesRequest,
+	req *workerports.ListLeaveCasesRequest,
 ) (int, error) {
 	cases, err := f.ListCases(ctx, req)
 	if err != nil {
@@ -87,7 +88,7 @@ func (f *fakeRepo) CountCases(
 
 func (f *fakeRepo) GetCaseByID(
 	_ context.Context,
-	req *repositories.GetLeaveCaseByIDRequest,
+	req *workerports.GetLeaveCaseByIDRequest,
 ) (*worker.WorkerLeaveCase, error) {
 	entity, ok := f.cases[req.ID]
 	if !ok {
@@ -117,7 +118,7 @@ func (f *fakeRepo) UpdateCase(
 
 func (f *fakeRepo) ListEntries(
 	_ context.Context,
-	req *repositories.ListLeaveEntriesRequest,
+	req *workerports.ListLeaveEntriesRequest,
 ) ([]*worker.WorkerLeaveEntry, error) {
 	out := make([]*worker.WorkerLeaveEntry, 0, len(f.entries))
 	for _, entity := range f.entries {
@@ -137,7 +138,7 @@ func (f *fakeRepo) ListEntries(
 
 func (f *fakeRepo) ListEntriesByCaseIDs(
 	_ context.Context,
-	req *repositories.ListLeaveEntriesByCaseIDsRequest,
+	req *workerports.ListLeaveEntriesByCaseIDsRequest,
 ) (map[pulid.ID][]*worker.WorkerLeaveEntry, error) {
 	wanted := make(map[pulid.ID]struct{}, len(req.LeaveCaseIDs))
 	for _, id := range req.LeaveCaseIDs {
@@ -156,7 +157,7 @@ func (f *fakeRepo) ListEntriesByCaseIDs(
 
 func (f *fakeRepo) GetEntryByID(
 	_ context.Context,
-	req *repositories.GetLeaveEntryByIDRequest,
+	req *workerports.GetLeaveEntryByIDRequest,
 ) (*worker.WorkerLeaveEntry, error) {
 	entity, ok := f.entries[req.ID]
 	if !ok {
@@ -186,7 +187,7 @@ func (f *fakeRepo) UpdateEntry(
 
 func (f *fakeRepo) DeleteEntry(
 	_ context.Context,
-	req *repositories.GetLeaveEntryByIDRequest,
+	req *workerports.GetLeaveEntryByIDRequest,
 ) error {
 	delete(f.entries, req.ID)
 	return nil
@@ -207,7 +208,7 @@ func newHarness(t *testing.T) *harness {
 	buID := pulid.MustNew("bu_")
 	workerID := pulid.MustNew("wrk_")
 
-	workerRepo := mocks.NewMockWorkerRepository(t)
+	workerRepo := workerportsmock.NewMockWorkerRepository(t)
 	workerRepo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
 		Return(&worker.Worker{

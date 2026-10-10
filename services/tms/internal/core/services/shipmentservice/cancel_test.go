@@ -1,12 +1,19 @@
 package shipmentservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/equipmentcontinuityportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -21,10 +28,10 @@ import (
 func TestServiceCancel_Success(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockShipmentRepository(t)
-	audit := mocks.NewMockAuditService(t)
-	realtime := mocks.NewMockRealtimeService(t)
-	continuityRepo := mocks.NewMockEquipmentContinuityRepository(t)
+	repo := shipmentportsmock.NewMockShipmentRepository(t)
+	audit := auditportsmock.NewMockAuditService(t)
+	realtime := agentportsmock.NewMockRealtimeService(t)
+	continuityRepo := equipmentcontinuityportsmock.NewMockEquipmentContinuityRepository(t)
 
 	shipmentID := pulid.MustNew("shp_")
 	orgID := pulid.MustNew("org_")
@@ -46,14 +53,14 @@ func TestServiceCancel_Success(t *testing.T) {
 	}
 
 	repo.EXPECT().
-		GetByID(mock.Anything, mock.MatchedBy(func(req *repositories.GetShipmentByIDRequest) bool {
+		GetByID(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetShipmentByIDRequest) bool {
 			return req.ID == shipmentID && req.TenantInfo.OrgID == orgID &&
 				req.TenantInfo.BuID == buID
 		})).
 		Return(original, nil).
 		Once()
 	repo.EXPECT().
-		Cancel(mock.Anything, mock.MatchedBy(func(req *repositories.CancelShipmentRequest) bool {
+		Cancel(mock.Anything, mock.MatchedBy(func(req *shipmentports.CancelShipmentRequest) bool {
 			return req.ShipmentID == shipmentID &&
 				req.TenantInfo.OrgID == orgID &&
 				req.TenantInfo.BuID == buID &&
@@ -65,7 +72,7 @@ func TestServiceCancel_Success(t *testing.T) {
 		Return(updated, nil).
 		Once()
 	continuityRepo.EXPECT().
-		RollbackCurrentByShipment(mock.Anything, repositories.RollbackEquipmentContinuityByShipmentRequest{
+		RollbackCurrentByShipment(mock.Anything, equipmentcontinuityports.RollbackEquipmentContinuityByShipmentRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: orgID,
 				BuID:  buID,
@@ -79,7 +86,7 @@ func TestServiceCancel_Success(t *testing.T) {
 		Return(nil).
 		Once()
 	realtime.EXPECT().
-		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *services.PublishResourceInvalidationRequest) bool {
+		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *agentports.PublishResourceInvalidationRequest) bool {
 			return req.Resource == "shipments" && req.Action == "canceled" &&
 				req.RecordID == shipmentID
 		})).
@@ -98,15 +105,15 @@ func TestServiceCancel_Success(t *testing.T) {
 		coordinator:    newStateCoordinator(),
 	}
 
-	entity, err := svc.Cancel(t.Context(), &repositories.CancelShipmentRequest{
+	entity, err := svc.Cancel(t.Context(), &shipmentports.CancelShipmentRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: orgID,
 			BuID:  buID,
 		},
 		ShipmentID:   shipmentID,
 		CancelReason: "customer request",
-	}, &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeUser,
+	}, &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    userID,
 		UserID:         userID,
 		OrganizationID: orgID,
@@ -120,7 +127,7 @@ func TestServiceCancel_Success(t *testing.T) {
 func TestServiceCancel_RejectsAlreadyCanceledShipment(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockShipmentRepository(t)
+	repo := shipmentportsmock.NewMockShipmentRepository(t)
 	repo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
 		Return(&shipment.Shipment{Status: shipment.StatusCanceled}, nil).
@@ -130,19 +137,19 @@ func TestServiceCancel_RejectsAlreadyCanceledShipment(t *testing.T) {
 		l:            zap.NewNop(),
 		repo:         repo,
 		validator:    newTestValidator(t),
-		auditService: mocks.NewMockAuditService(t),
-		invalidator:  newTestInvalidator(mocks.NewMockRealtimeService(t)),
+		auditService: auditportsmock.NewMockAuditService(t),
+		invalidator:  newTestInvalidator(agentportsmock.NewMockRealtimeService(t)),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
 
-	entity, err := svc.Cancel(t.Context(), &repositories.CancelShipmentRequest{
+	entity, err := svc.Cancel(t.Context(), &shipmentports.CancelShipmentRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),
 		},
 		ShipmentID: pulid.MustNew("shp_"),
-	}, &services.RequestActor{})
+	}, &permissionports.RequestActor{})
 
 	require.Nil(t, entity)
 	require.Error(t, err)
@@ -151,9 +158,9 @@ func TestServiceCancel_RejectsAlreadyCanceledShipment(t *testing.T) {
 func TestServiceUncancel_Success(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockShipmentRepository(t)
-	audit := mocks.NewMockAuditService(t)
-	realtime := mocks.NewMockRealtimeService(t)
+	repo := shipmentportsmock.NewMockShipmentRepository(t)
+	audit := auditportsmock.NewMockAuditService(t)
+	realtime := agentportsmock.NewMockRealtimeService(t)
 
 	shipmentID := pulid.MustNew("shp_")
 	orgID := pulid.MustNew("org_")
@@ -174,18 +181,18 @@ func TestServiceUncancel_Success(t *testing.T) {
 	}
 
 	repo.EXPECT().
-		GetByID(mock.Anything, mock.MatchedBy(func(req *repositories.GetShipmentByIDRequest) bool {
+		GetByID(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetShipmentByIDRequest) bool {
 			return req.ExpandShipmentDetails
 		})).
 		Return(original, nil).
 		Once()
-	controlRepo := mocks.NewMockShipmentControlRepository(t)
+	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
 		Get(mock.Anything, mock.Anything).
 		Return(&tenant.ShipmentControl{}, nil).
 		Once()
 	repo.EXPECT().
-		Uncancel(mock.Anything, mock.MatchedBy(func(req *repositories.UncancelShipmentRequest) bool {
+		Uncancel(mock.Anything, mock.MatchedBy(func(req *shipmentports.UncancelShipmentRequest) bool {
 			return req.ShipmentID == shipmentID && req.TenantInfo.OrgID == orgID &&
 				req.TenantInfo.BuID == buID &&
 				req.RestoredStatus == shipment.StatusNew
@@ -197,7 +204,7 @@ func TestServiceUncancel_Success(t *testing.T) {
 		Return(nil).
 		Once()
 	realtime.EXPECT().
-		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *services.PublishResourceInvalidationRequest) bool {
+		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *agentports.PublishResourceInvalidationRequest) bool {
 			return req.Resource == "shipments" && req.Action == "uncanceled" &&
 				req.RecordID == shipmentID
 		})).
@@ -215,14 +222,14 @@ func TestServiceUncancel_Success(t *testing.T) {
 		coordinator:  newStateCoordinator(),
 	}
 
-	entity, err := svc.Uncancel(t.Context(), &repositories.UncancelShipmentRequest{
+	entity, err := svc.Uncancel(t.Context(), &shipmentports.UncancelShipmentRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: orgID,
 			BuID:  buID,
 		},
 		ShipmentID: shipmentID,
-	}, &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeUser,
+	}, &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    userID,
 		UserID:         userID,
 		OrganizationID: orgID,
@@ -236,7 +243,7 @@ func TestServiceUncancel_Success(t *testing.T) {
 func TestServiceUncancel_RejectsNonCanceledShipment(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockShipmentRepository(t)
+	repo := shipmentportsmock.NewMockShipmentRepository(t)
 	repo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
 		Return(&shipment.Shipment{Status: shipment.StatusAssigned}, nil).
@@ -246,19 +253,19 @@ func TestServiceUncancel_RejectsNonCanceledShipment(t *testing.T) {
 		l:            zap.NewNop(),
 		repo:         repo,
 		validator:    newTestValidator(t),
-		auditService: mocks.NewMockAuditService(t),
-		invalidator:  newTestInvalidator(mocks.NewMockRealtimeService(t)),
+		auditService: auditportsmock.NewMockAuditService(t),
+		invalidator:  newTestInvalidator(agentportsmock.NewMockRealtimeService(t)),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
 
-	entity, err := svc.Uncancel(t.Context(), &repositories.UncancelShipmentRequest{
+	entity, err := svc.Uncancel(t.Context(), &shipmentports.UncancelShipmentRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),
 		},
 		ShipmentID: pulid.MustNew("shp_"),
-	}, &services.RequestActor{})
+	}, &permissionports.RequestActor{})
 
 	require.Nil(t, entity)
 	require.Error(t, err)
@@ -292,7 +299,7 @@ func TestServiceCancel_RefusesLockedShipments(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			repo := mocks.NewMockShipmentRepository(t)
+			repo := shipmentportsmock.NewMockShipmentRepository(t)
 			repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(tt.original, nil).Once()
 
 			svc := &service{
@@ -300,19 +307,19 @@ func TestServiceCancel_RefusesLockedShipments(t *testing.T) {
 				db:           dbtest.NopConnection{},
 				repo:         repo,
 				validator:    newTestValidator(t),
-				auditService: mocks.NewMockAuditService(t),
-				invalidator:  newTestInvalidator(mocks.NewMockRealtimeService(t)),
+				auditService: auditportsmock.NewMockAuditService(t),
+				invalidator:  newTestInvalidator(agentportsmock.NewMockRealtimeService(t)),
 				eventService: noopShipmentEventService{},
 				coordinator:  newStateCoordinator(),
 			}
 
-			entity, err := svc.Cancel(t.Context(), &repositories.CancelShipmentRequest{
+			entity, err := svc.Cancel(t.Context(), &shipmentports.CancelShipmentRequest{
 				TenantInfo: pagination.TenantInfo{
 					OrgID: pulid.MustNew("org_"),
 					BuID:  pulid.MustNew("bu_"),
 				},
 				ShipmentID: pulid.MustNew("shp_"),
-			}, &services.RequestActor{})
+			}, &permissionports.RequestActor{})
 
 			require.Nil(t, entity)
 			var conflict *errortypes.ConflictError
@@ -325,8 +332,8 @@ func TestServiceCancel_RefusesLockedShipments(t *testing.T) {
 func TestServiceUncancel_RestoresStatusesFromActuals(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockShipmentRepository(t)
-	controlRepo := mocks.NewMockShipmentControlRepository(t)
+	repo := shipmentportsmock.NewMockShipmentRepository(t)
+	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
 
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
@@ -384,7 +391,7 @@ func TestServiceUncancel_RestoresStatusesFromActuals(t *testing.T) {
 		coordinator:  newStateCoordinator(),
 	}
 
-	req := &repositories.UncancelShipmentRequest{
+	req := &shipmentports.UncancelShipmentRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		ShipmentID: original.ID,
 	}
@@ -396,10 +403,10 @@ func TestServiceUncancel_RestoresStatusesFromActuals(t *testing.T) {
 	assert.Equal(t, int64(7), req.ExpectedVersion)
 	assert.Equal(t, shipment.StatusInTransit, req.RestoredStatus)
 	assert.Equal(t, shipment.StatusInTransit, after.Status)
-	assert.Equal(t, []repositories.MoveStatusRestore{
+	assert.Equal(t, []shipmentports.MoveStatusRestore{
 		{MoveID: move.ID, Status: shipment.MoveStatusInTransit},
 	}, req.MoveStatuses)
-	assert.ElementsMatch(t, []repositories.StopStatusRestore{
+	assert.ElementsMatch(t, []shipmentports.StopStatusRestore{
 		{StopID: arrivedStop.ID, Status: shipment.StopStatusInTransit},
 		{StopID: openStop.ID, Status: shipment.StopStatusNew},
 	}, req.StopStatuses)

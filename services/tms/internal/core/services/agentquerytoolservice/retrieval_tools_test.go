@@ -9,22 +9,23 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type fakeRetrievalSearcher struct {
-	documents *serviceports.DocumentSearchResult
-	messages  *serviceports.InboundMessageSearchResult
-	requests  []serviceports.RetrievalSearchRequest
+	documents *agentports.DocumentSearchResult
+	messages  *agentports.InboundMessageSearchResult
+	requests  []agentports.RetrievalSearchRequest
 }
 
 func (f *fakeRetrievalSearcher) SearchDocuments(
 	_ context.Context,
-	req *serviceports.RetrievalSearchRequest,
-) (*serviceports.DocumentSearchResult, error) {
+	req *agentports.RetrievalSearchRequest,
+) (*agentports.DocumentSearchResult, error) {
 	f.requests = append(f.requests, *req)
 
 	return f.documents, nil
@@ -32,8 +33,8 @@ func (f *fakeRetrievalSearcher) SearchDocuments(
 
 func (f *fakeRetrievalSearcher) SearchInboundMessages(
 	_ context.Context,
-	req *serviceports.RetrievalSearchRequest,
-) (*serviceports.InboundMessageSearchResult, error) {
+	req *agentports.RetrievalSearchRequest,
+) (*agentports.InboundMessageSearchResult, error) {
 	f.requests = append(f.requests, *req)
 
 	return f.messages, nil
@@ -50,18 +51,18 @@ func TestSearchDocumentsReturnsRowsAndMarksEveryDocument(t *testing.T) {
 		ResourceID:   "shp_1",
 	}
 	second := &document.Document{ID: pulid.MustNew("doc_"), OriginalName: "private.pdf"}
-	searcher := &fakeRetrievalSearcher{documents: &serviceports.DocumentSearchResult{
-		Hits: []serviceports.DocumentSearchHit{
+	searcher := &fakeRetrievalSearcher{documents: &agentports.DocumentSearchResult{
+		Hits: []agentports.DocumentSearchHit{
 			{
 				Document:      first,
 				Page:          2,
 				Snippet:       "Lumper fee reimbursed with receipt.",
 				ShowsFileName: true,
-				Match:         serviceports.RetrievalMatchBoth,
+				Match:         agentports.RetrievalMatchBoth,
 			},
-			{Document: second, Match: serviceports.RetrievalMatchMeaning},
+			{Document: second, Match: agentports.RetrievalMatchMeaning},
 		},
-		Semantics: serviceports.RetrievalSemantics{Used: true},
+		Semantics: agentports.RetrievalSemantics{Used: true},
 	}}
 	tool := newSearchDocumentsTool(searcher, &fakePermissions{allowed: true}, nil)
 
@@ -101,9 +102,9 @@ func TestSearchDocumentsReturnsRowsAndMarksEveryDocument(t *testing.T) {
 func TestSearchDocumentsSaysWhenMeaningWasNotSearched(t *testing.T) {
 	t.Parallel()
 
-	searcher := &fakeRetrievalSearcher{documents: &serviceports.DocumentSearchResult{
-		Hits: []serviceports.DocumentSearchHit{},
-		Semantics: serviceports.RetrievalSemantics{
+	searcher := &fakeRetrievalSearcher{documents: &agentports.DocumentSearchResult{
+		Hits: []agentports.DocumentSearchHit{},
+		Semantics: agentports.RetrievalSemantics{
 			Reason: airetrieval.UnavailableReasonNoProvider,
 		},
 	}}
@@ -123,7 +124,7 @@ func TestSearchToolsNeedAQuery(t *testing.T) {
 	t.Parallel()
 
 	searcher := &fakeRetrievalSearcher{}
-	for _, tool := range []serviceports.AgentQueryTool{
+	for _, tool := range []agentports.AgentQueryTool{
 		newSearchDocumentsTool(searcher, &fakePermissions{allowed: true}, nil),
 		newSearchInboundMessagesTool(searcher, &fakePermissions{allowed: true}),
 	} {
@@ -142,13 +143,13 @@ func TestSearchInboundMessagesMarksEveryMessage(t *testing.T) {
 		Classification: inboundmessage.ClassificationDetentionDispute,
 		ReceivedAt:     1_790_000_000,
 	}
-	searcher := &fakeRetrievalSearcher{messages: &serviceports.InboundMessageSearchResult{
-		Hits: []serviceports.InboundMessageSearchHit{{
+	searcher := &fakeRetrievalSearcher{messages: &agentports.InboundMessageSearchResult{
+		Hits: []agentports.InboundMessageSearchHit{{
 			Message: message,
 			Subject: "Detention charges on invoice 7781",
 			From:    "ap@globex.test",
 			Snippet: "We dispute the detention.",
-			Match:   serviceports.RetrievalMatchWords,
+			Match:   agentports.RetrievalMatchWords,
 		}},
 	}}
 	tool := newSearchInboundMessagesTool(searcher, &fakePermissions{allowed: true})
@@ -187,7 +188,7 @@ func TestRetrievalAccessChecksEachRecordOnceAndHonoursTheCeiling(t *testing.T) {
 	t.Parallel()
 
 	permissions := &countingPermissions{fakePermissions: fakePermissions{
-		readable: map[string]*serviceports.ResourcePermissionDetail{
+		readable: map[string]*permissionports.ResourcePermissionDetail{
 			permission.ResourceDocument.String(): {
 				Resource:       permission.ResourceDocument.String(),
 				Operations:     []permission.Operation{permission.OpRead},
@@ -227,13 +228,13 @@ func TestRetrievalAccessChecksEachRecordOnceAndHonoursTheCeiling(t *testing.T) {
 type countingPermissions struct {
 	fakePermissions
 
-	requests []*serviceports.PermissionCheckRequest
+	requests []*permissionports.PermissionCheckRequest
 }
 
 func (c *countingPermissions) Check(
 	ctx context.Context,
-	req *serviceports.PermissionCheckRequest,
-) (*serviceports.PermissionCheckResult, error) {
+	req *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
 	c.requests = append(c.requests, req)
 
 	return c.fakePermissions.Check(ctx, req)

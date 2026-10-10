@@ -8,7 +8,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
@@ -16,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fiscalyearrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -151,7 +151,7 @@ func TestListJournalEntries(t *testing.T) {
 
 	result, err := repo.List(
 		ctx,
-		&repositories.ListJournalEntriesRequest{
+		&journalentryports.ListJournalEntriesRequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID},
 				Pagination: pagination.Info{Limit: 10},

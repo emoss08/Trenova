@@ -9,9 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -29,7 +30,7 @@ func TestBuildDeliveryWatch(t *testing.T) {
 	day := time.Date(2026, 10, 6, 0, 0, 0, 0, loc).Unix()
 	now := day + 14*3600
 
-	rows := []*repositories.ShipmentDeliveryRow{
+	rows := []*shipmentports.ShipmentDeliveryRow{
 		{
 			ShipmentID:    pulid.MustNew("shp_"),
 			DeliveryAt:    day + 8*3600,
@@ -92,7 +93,7 @@ func TestAccruedAmountAndSummary(t *testing.T) {
 	assert.True(t, AccruedAmount(rate, 1000, 900).IsZero())
 	assert.True(t, AccruedAmount(decimal.Zero, 0, 3600).IsZero())
 
-	accruals := []services.DetentionAccrual{
+	accruals := []shipmentports.DetentionAccrual{
 		{FacilityName: "a", Amount: decimal.NewFromInt(10), RatePerHour: decimal.NewFromInt(50)},
 		{FacilityName: "b", Amount: decimal.NewFromInt(40), RatePerHour: decimal.NewFromInt(50)},
 		{FacilityName: "c", Amount: decimal.NewFromInt(30), RatePerHour: decimal.NewFromInt(75)},
@@ -112,32 +113,32 @@ type stubBasis struct{ now time.Time }
 
 func (s stubBasis) Resolve(
 	context.Context,
-	*services.ResolveShipmentQuickFilterBasisRequest,
-) (*repositories.ShipmentQuickFilterBasis, error) {
-	return &repositories.ShipmentQuickFilterBasis{Now: s.now, Location: time.UTC}, nil
+	*shipmentports.ResolveShipmentQuickFilterBasisRequest,
+) (*shipmentports.ShipmentQuickFilterBasis, error) {
+	return &shipmentports.ShipmentQuickFilterBasis{Now: s.now, Location: time.UTC}, nil
 }
 
 func (stubBasis) Prepare(
 	context.Context,
 	pagination.TenantInfo,
-	*repositories.ShipmentOptions,
+	*shipmentports.ShipmentOptions,
 ) error {
 	return nil
 }
 
 type stubBoard struct {
-	repositories.ShipmentBoardRepository
+	shipmentports.ShipmentBoardRepository
 	filters []shipment.QuickFilterSpec
 }
 
 func (s *stubBoard) QuickFilterTotals(
 	_ context.Context,
-	req *repositories.CountShipmentQuickFiltersRequest,
-) ([]repositories.ShipmentQuickFilterTotal, error) {
+	req *shipmentports.CountShipmentQuickFiltersRequest,
+) ([]shipmentports.ShipmentQuickFilterTotal, error) {
 	s.filters = req.Filters
-	totals := make([]repositories.ShipmentQuickFilterTotal, len(req.Filters))
+	totals := make([]shipmentports.ShipmentQuickFilterTotal, len(req.Filters))
 	for i := range totals {
-		totals[i] = repositories.ShipmentQuickFilterTotal{
+		totals[i] = shipmentports.ShipmentQuickFilterTotal{
 			Count:   i + 1,
 			Revenue: decimal.NewFromInt(int64(100 * (i + 1))),
 		}
@@ -146,58 +147,58 @@ func (s *stubBoard) QuickFilterTotals(
 }
 
 type stubWatchlist struct {
-	dwelling []*repositories.ShipmentDwellRow
+	dwelling []*shipmentports.ShipmentDwellRow
 }
 
 func (s *stubWatchlist) ListDeliveriesToday(
 	context.Context,
-	*repositories.ShipmentWatchlistRequest,
-) ([]*repositories.ShipmentDeliveryRow, error) {
+	*shipmentports.ShipmentWatchlistRequest,
+) ([]*shipmentports.ShipmentDeliveryRow, error) {
 	return nil, nil
 }
 
 func (s *stubWatchlist) NextUncoveredPickup(
 	context.Context,
-	*repositories.ShipmentWatchlistRequest,
-) (*repositories.ShipmentPickupRow, error) {
-	return &repositories.ShipmentPickupRow{PickupAt: 77, OriginCity: "Joliet"}, nil
+	*shipmentports.ShipmentWatchlistRequest,
+) (*shipmentports.ShipmentPickupRow, error) {
+	return &shipmentports.ShipmentPickupRow{PickupAt: 77, OriginCity: "Joliet"}, nil
 }
 
 func (s *stubWatchlist) ListDwellingStops(
 	context.Context,
-	*repositories.ShipmentWatchlistRequest,
-) ([]*repositories.ShipmentDwellRow, error) {
+	*shipmentports.ShipmentWatchlistRequest,
+) ([]*shipmentports.ShipmentDwellRow, error) {
 	return s.dwelling, nil
 }
 
 func (s *stubWatchlist) ListReadyToBillCustomers(
 	context.Context,
-	*repositories.ListReadyToBillCustomersRequest,
-) ([]*repositories.ShipmentBillingCustomerRow, error) {
-	return []*repositories.ShipmentBillingCustomerRow{
+	*shipmentports.ListReadyToBillCustomersRequest,
+) ([]*shipmentports.ShipmentBillingCustomerRow, error) {
+	return []*shipmentports.ShipmentBillingCustomerRow{
 		{Name: "Acme", Count: 2, Total: decimal.NewFromInt(500), TotalCustomers: 6},
 	}, nil
 }
 
 type stubControls struct {
-	repositories.ShipmentControlRepository
+	tenantports.ShipmentControlRepository
 	control *tenant.ShipmentControl
 }
 
 func (s stubControls) Get(
 	context.Context,
-	repositories.GetShipmentControlRequest,
+	tenantports.GetShipmentControlRequest,
 ) (*tenant.ShipmentControl, error) {
 	return s.control, nil
 }
 
 type stubAccessorials struct {
-	repositories.AccessorialChargeRepository
+	accessorialchargeports.AccessorialChargeRepository
 }
 
 func (stubAccessorials) GetByID(
 	context.Context,
-	repositories.GetAccessorialChargeByIDRequest,
+	accessorialchargeports.GetAccessorialChargeByIDRequest,
 ) (*accessorialcharge.AccessorialCharge, error) {
 	return &accessorialcharge.AccessorialCharge{
 		Amount:   decimal.NewFromInt(60),
@@ -209,11 +210,11 @@ type stubMoves struct{}
 
 func (stubMoves) ListBoardMoves(
 	_ context.Context,
-	filter *repositories.DispatchBoardFilter,
-) ([]*repositories.BoardMove, error) {
-	out := make([]*repositories.BoardMove, 0, len(filter.MoveIDs))
+	filter *shipmentports.DispatchBoardFilter,
+) ([]*shipmentports.BoardMove, error) {
+	out := make([]*shipmentports.BoardMove, 0, len(filter.MoveIDs))
 	for _, id := range filter.MoveIDs {
-		out = append(out, &repositories.BoardMove{MoveID: id, AssignedCarrierName: "Swift"})
+		out = append(out, &shipmentports.BoardMove{MoveID: id, AssignedCarrierName: "Swift"})
 	}
 	return out, nil
 }
@@ -235,7 +236,7 @@ func TestWatchlistComputesEverySection(t *testing.T) {
 	board := &stubBoard{}
 	svc := NewWithDependencies(&Dependencies{
 		Board: board,
-		Watchlist: &stubWatchlist{dwelling: []*repositories.ShipmentDwellRow{{
+		Watchlist: &stubWatchlist{dwelling: []*shipmentports.ShipmentDwellRow{{
 			MoveID:        pulid.MustNew("smv_"),
 			FacilityName:  "DC 4",
 			ActualArrival: now.Unix() - 2*3600,

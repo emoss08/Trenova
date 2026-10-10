@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -41,15 +43,15 @@ func (v Verdict) Shadow() bool {
 type Params struct {
 	fx.In
 
-	Control     repositories.AgentControlRepository
-	Runs        repositories.AgentRunRepository
-	Definitions repositories.AgentDefinitionRepository
+	Control     tenantports.AgentControlRepository
+	Runs        agentports.AgentRunRepository
+	Definitions agentdefinitionports.AgentDefinitionRepository
 }
 
 type Resolver struct {
-	control     repositories.AgentControlRepository
-	runs        repositories.AgentRunRepository
-	definitions repositories.AgentDefinitionRepository
+	control     tenantports.AgentControlRepository
+	runs        agentports.AgentRunRepository
+	definitions agentdefinitionports.AgentDefinitionRepository
 }
 
 func New(p Params) *Resolver {
@@ -131,7 +133,7 @@ func (r *Resolver) ForRuns(
 			continue
 		}
 
-		run, err := r.runs.GetByID(ctx, repositories.GetAgentRunByIDRequest{
+		run, err := r.runs.GetByID(ctx, agentports.GetAgentRunByIDRequest{
 			ID:         id,
 			TenantInfo: &tenantInfo,
 		})
@@ -165,7 +167,7 @@ func (r *Resolver) definition(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*agentdefinition.Definition, error) {
-	definition, err := r.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	definition, err := r.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})

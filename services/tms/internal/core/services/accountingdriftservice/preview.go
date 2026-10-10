@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/shared/money"
 )
 
@@ -39,12 +39,12 @@ func valueOf(minor *int64, currency string) string {
 func (s *Service) preview(
 	ctx context.Context,
 	plan *fixPlan,
-) (*services.AccountingDriftFixPreview, error) {
+) (*accountingsyncports.AccountingDriftFixPreview, error) {
 	tolerance, err := s.toleranceMinor(ctx, plan.finding.TenantInfo())
 	if err != nil {
 		return nil, err
 	}
-	return &services.AccountingDriftFixPreview{
+	return &accountingsyncports.AccountingDriftFixPreview{
 		Finding:         plan.finding,
 		Direction:       plan.direction,
 		FixObject:       plan.fixObject,

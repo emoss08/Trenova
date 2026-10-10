@@ -1,6 +1,10 @@
 package ediservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmenteventportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"errors"
 	"testing"
@@ -43,9 +47,9 @@ func acceptedTenderOfferForTest() *tender.TenderOffer {
 func TestRecordTenderedShipmentStatus_WritesCommentAndEvent(t *testing.T) {
 	t.Parallel()
 
-	commentRepo := mocks.NewMockShipmentCommentRepository(t)
-	userRepo := mocks.NewMockUserRepository(t)
-	eventRepo := mocks.NewMockShipmentEventRepository(t)
+	commentRepo := shipmentportsmock.NewMockShipmentCommentRepository(t)
+	userRepo := tenantportsmock.NewMockUserRepository(t)
+	eventRepo := shipmenteventportsmock.NewMockShipmentEventRepository(t)
 	service := &Service{
 		l:                   zap.NewNop(),
 		shipmentCommentRepo: commentRepo,
@@ -138,9 +142,9 @@ func TestRecordTenderedShipmentStatus_RequiresOfferWithTender(t *testing.T) {
 func TestRecordTenderedShipmentStatus_EventInsertFailureIsNonFatal(t *testing.T) {
 	t.Parallel()
 
-	commentRepo := mocks.NewMockShipmentCommentRepository(t)
-	userRepo := mocks.NewMockUserRepository(t)
-	eventRepo := mocks.NewMockShipmentEventRepository(t)
+	commentRepo := shipmentportsmock.NewMockShipmentCommentRepository(t)
+	userRepo := tenantportsmock.NewMockUserRepository(t)
+	eventRepo := shipmenteventportsmock.NewMockShipmentEventRepository(t)
 	service := &Service{
 		l:                   zap.NewNop(),
 		shipmentCommentRepo: commentRepo,
@@ -195,7 +199,7 @@ func TestRecordInboundFreightInvoice_AcceptedOfferStampsCarrierAndShipment(t *te
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			invoiceRepo := mocks.NewMockEDICarrierInvoiceRepository(t)
+			invoiceRepo := ediportsmock.NewMockEDICarrierInvoiceRepository(t)
 			invoiceRepo.EXPECT().
 				GetCarrierInvoiceByNumber(mock.Anything, mock.Anything).
 				Return(nil, errortypes.NewNotFoundError("CarrierInvoice not found")).

@@ -1,13 +1,14 @@
 package dispatchjobs
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
 	"context"
 	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	portservices "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -27,7 +28,7 @@ type stubProposalRepo struct {
 
 func (m *stubProposalRepo) ExpirePendingByRun(
 	ctx context.Context,
-	req repositories.ExpireAgentProposalsByRunRequest,
+	req agentports.ExpireAgentProposalsByRunRequest,
 ) (int, error) {
 	args := m.Called(ctx, req)
 	return args.Int(0), args.Error(1)
@@ -35,56 +36,56 @@ func (m *stubProposalRepo) ExpirePendingByRun(
 
 func (m *stubProposalRepo) ExpirePendingByDefinition(
 	context.Context,
-	repositories.ExpireAgentProposalsByDefinitionRequest,
+	agentports.ExpireAgentProposalsByDefinitionRequest,
 ) (int, error) {
 	return 0, nil
 }
 
 func (m *stubProposalRepo) ExpirePending(
 	context.Context,
-	repositories.ExpireAgentProposalsRequest,
+	agentports.ExpireAgentProposalsRequest,
 ) (int, error) {
 	return 0, nil
 }
 
 func (m *stubProposalRepo) ListByIDs(
 	context.Context,
-	repositories.ListAgentProposalsByIDsRequest,
+	agentports.ListAgentProposalsByIDsRequest,
 ) ([]*agent.AgentProposal, error) {
 	return nil, nil
 }
 
 func (m *stubProposalRepo) ListPendingForReminder(
 	context.Context,
-	repositories.ListPendingProposalsForReminderRequest,
+	agentports.ListPendingProposalsForReminderRequest,
 ) ([]*agent.AgentProposal, error) {
 	return nil, nil
 }
 
 func (m *stubProposalRepo) MarkReminded(
 	context.Context,
-	repositories.MarkProposalsRemindedRequest,
+	agentports.MarkProposalsRemindedRequest,
 ) (int, error) {
 	return 0, nil
 }
 
 func (m *stubProposalRepo) List(
 	context.Context,
-	*repositories.ListAgentProposalRequest,
+	*agentports.ListAgentProposalRequest,
 ) (*pagination.ListResult[*agent.AgentProposal], error) {
 	return nil, nil
 }
 
 func (m *stubProposalRepo) ListConnection(
 	context.Context,
-	*repositories.ListAgentProposalConnectionRequest,
+	*agentports.ListAgentProposalConnectionRequest,
 ) (*pagination.CursorListResult[*agent.AgentProposal], error) {
 	return nil, nil
 }
 
 func (m *stubProposalRepo) GetByID(
 	context.Context,
-	repositories.GetAgentProposalByIDRequest,
+	agentports.GetAgentProposalByIDRequest,
 ) (*agent.AgentProposal, error) {
 	return nil, nil
 }
@@ -98,38 +99,38 @@ func (m *stubProposalRepo) Create(
 
 func (m *stubProposalRepo) RecordExecution(
 	context.Context,
-	repositories.RecordAgentProposalExecutionRequest,
+	agentports.RecordAgentProposalExecutionRequest,
 ) (*agent.AgentProposal, error) {
 	return nil, nil
 }
 
 func (m *stubProposalRepo) ListByThread(
 	context.Context,
-	repositories.ListAgentProposalsByThreadRequest,
+	agentports.ListAgentProposalsByThreadRequest,
 ) ([]*agent.AgentProposal, error) {
 	return nil, nil
 }
 
 func (m *stubProposalRepo) UpdateStatus(
 	context.Context,
-	repositories.UpdateAgentProposalStatusRequest,
+	agentports.UpdateAgentProposalStatusRequest,
 ) (*agent.AgentProposal, error) {
 	return nil, nil
 }
 
 type activityMocks struct {
-	controls   *mocks.MockDispatchControlRepository
+	controls   *dispatchcontrolportsmock.MockDispatchControlRepository
 	proposals  *stubProposalRepo
-	autoAssign *mocks.MockDispatchAutoAssignService
+	autoAssign *agentportsmock.MockDispatchAutoAssignService
 }
 
 func newActivities(t *testing.T) (*Activities, *activityMocks) {
 	t.Helper()
 
 	deps := &activityMocks{
-		controls:   mocks.NewMockDispatchControlRepository(t),
+		controls:   dispatchcontrolportsmock.NewMockDispatchControlRepository(t),
 		proposals:  new(stubProposalRepo),
-		autoAssign: mocks.NewMockDispatchAutoAssignService(t),
+		autoAssign: agentportsmock.NewMockDispatchAutoAssignService(t),
 	}
 
 	return NewActivities(ActivitiesParams{
@@ -142,23 +143,23 @@ func newActivities(t *testing.T) (*Activities, *activityMocks) {
 
 func planWithRun(
 	assignments, uncovered int,
-	tours ...*portservices.DispatchTour,
-) *portservices.DispatchPlan {
-	return &portservices.DispatchPlan{
+	tours ...*agentports.DispatchTour,
+) *agentports.DispatchPlan {
+	return &agentports.DispatchPlan{
 		RunID:       pulid.MustNew("arun_"),
-		Assignments: make([]*portservices.DispatchPlannedAssignment, assignments),
-		Uncovered:   make([]*portservices.DispatchUncoveredMove, uncovered),
+		Assignments: make([]*agentports.DispatchPlannedAssignment, assignments),
+		Uncovered:   make([]*agentports.DispatchUncoveredMove, uncovered),
 		Tours:       tours,
 	}
 }
 
-func tourOf(moves int, deadhead float64) *portservices.DispatchTour {
+func tourOf(moves int, deadhead float64) *agentports.DispatchTour {
 	moveIDs := make([]pulid.ID, 0, moves)
 	for range moves {
 		moveIDs = append(moveIDs, pulid.MustNew("mov_"))
 	}
 
-	return &portservices.DispatchTour{
+	return &agentports.DispatchTour{
 		TourID:             pulid.MustNew("tour_"),
 		WorkerID:           pulid.MustNew("wrk_"),
 		MoveIDs:            moveIDs,
@@ -177,14 +178,14 @@ func TestHorizonPlanSweepActivity_SummarisesEachTenant(t *testing.T) {
 		Return([]pagination.TenantInfo{first, second}, nil)
 
 	deps.autoAssign.EXPECT().
-		Plan(mock.Anything, mock.MatchedBy(func(req *portservices.DispatchPlanRequest) bool {
+		Plan(mock.Anything, mock.MatchedBy(func(req *agentports.DispatchPlanRequest) bool {
 			return req.TenantInfo.OrgID == first.OrgID
 		})).
-		Return(&portservices.DispatchPlan{
+		Return(&agentports.DispatchPlan{
 			RunID:       pulid.MustNew("arun_"),
-			Assignments: make([]*portservices.DispatchPlannedAssignment, 5),
-			Uncovered:   make([]*portservices.DispatchUncoveredMove, 2),
-			Tours:       []*portservices.DispatchTour{tourOf(3, 40), tourOf(2, 25)},
+			Assignments: make([]*agentports.DispatchPlannedAssignment, 5),
+			Uncovered:   make([]*agentports.DispatchUncoveredMove, 2),
+			Tours:       []*agentports.DispatchTour{tourOf(3, 40), tourOf(2, 25)},
 			TotalScore:  400,
 			ShadowMode:  true,
 		}, nil)
@@ -192,13 +193,13 @@ func TestHorizonPlanSweepActivity_SummarisesEachTenant(t *testing.T) {
 	deps.proposals.On("ExpirePendingByRun", mock.Anything, mock.Anything).Return(5, nil)
 
 	deps.autoAssign.EXPECT().
-		Plan(mock.Anything, mock.MatchedBy(func(req *portservices.DispatchPlanRequest) bool {
+		Plan(mock.Anything, mock.MatchedBy(func(req *agentports.DispatchPlanRequest) bool {
 			return req.TenantInfo.OrgID == second.OrgID
 		})).
-		Return(&portservices.DispatchPlan{
-			Assignments: make([]*portservices.DispatchPlannedAssignment, 1),
-			Uncovered:   make([]*portservices.DispatchUncoveredMove, 0),
-			Tours:       []*portservices.DispatchTour{tourOf(1, 10)},
+		Return(&agentports.DispatchPlan{
+			Assignments: make([]*agentports.DispatchPlannedAssignment, 1),
+			Uncovered:   make([]*agentports.DispatchUncoveredMove, 0),
+			Tours:       []*agentports.DispatchTour{tourOf(1, 10)},
 			TotalScore:  90,
 		}, nil)
 
@@ -236,7 +237,7 @@ func TestHorizonPlanSweepActivity_RetiresItsOwnProposals(t *testing.T) {
 	deps.proposals.On(
 		"ExpirePendingByRun",
 		mock.Anything,
-		mock.MatchedBy(func(req repositories.ExpireAgentProposalsByRunRequest) bool {
+		mock.MatchedBy(func(req agentports.ExpireAgentProposalsByRunRequest) bool {
 			return req.RunID == plan.RunID && req.TenantInfo.OrgID == only.OrgID
 		}),
 	).Return(4, nil).Once()
@@ -286,7 +287,7 @@ func TestHorizonPlanSweepActivity_SkipsRetirementWithoutARun(t *testing.T) {
 
 	deps.autoAssign.EXPECT().
 		Plan(mock.Anything, mock.Anything).
-		Return(&portservices.DispatchPlan{}, nil)
+		Return(&agentports.DispatchPlan{}, nil)
 
 	result, err := activities.HorizonPlanSweepActivity(t.Context())
 	require.NoError(t, err)
@@ -306,10 +307,10 @@ func TestHorizonPlanSweepActivity_NeverApplies(t *testing.T) {
 		Return([]pagination.TenantInfo{only}, nil)
 
 	deps.autoAssign.EXPECT().
-		Plan(mock.Anything, mock.MatchedBy(func(req *portservices.DispatchPlanRequest) bool {
+		Plan(mock.Anything, mock.MatchedBy(func(req *agentports.DispatchPlanRequest) bool {
 			return !req.Apply
 		})).
-		Return(&portservices.DispatchPlan{}, nil)
+		Return(&agentports.DispatchPlan{}, nil)
 
 	_, err := activities.HorizonPlanSweepActivity(t.Context())
 	require.NoError(t, err)
@@ -326,18 +327,18 @@ func TestHorizonPlanSweepActivity_OneTenantFailingDoesNotStopTheSweep(t *testing
 		Return([]pagination.TenantInfo{broken, healthy}, nil)
 
 	deps.autoAssign.EXPECT().
-		Plan(mock.Anything, mock.MatchedBy(func(req *portservices.DispatchPlanRequest) bool {
+		Plan(mock.Anything, mock.MatchedBy(func(req *agentports.DispatchPlanRequest) bool {
 			return req.TenantInfo.OrgID == broken.OrgID
 		})).
 		Return(nil, errors.New("Auto assignment is disabled for this organization"))
 
 	deps.autoAssign.EXPECT().
-		Plan(mock.Anything, mock.MatchedBy(func(req *portservices.DispatchPlanRequest) bool {
+		Plan(mock.Anything, mock.MatchedBy(func(req *agentports.DispatchPlanRequest) bool {
 			return req.TenantInfo.OrgID == healthy.OrgID
 		})).
-		Return(&portservices.DispatchPlan{
-			Assignments: make([]*portservices.DispatchPlannedAssignment, 2),
-			Tours:       []*portservices.DispatchTour{tourOf(2, 15)},
+		Return(&agentports.DispatchPlan{
+			Assignments: make([]*agentports.DispatchPlannedAssignment, 2),
+			Tours:       []*agentports.DispatchTour{tourOf(2, 15)},
 		}, nil)
 
 	result, err := activities.HorizonPlanSweepActivity(t.Context())
@@ -386,49 +387,49 @@ func TestHorizonPlanSweepActivity_PropagatesTenantLookupFailure(t *testing.T) {
 
 func (s *stubProposalRepo) RecordSimulation(
 	context.Context,
-	repositories.RecordAgentProposalSimulationRequest,
+	agentports.RecordAgentProposalSimulationRequest,
 ) (*agent.AgentProposal, error) {
 	return nil, nil
 }
 
 func (s *stubProposalRepo) SetPendingModifications(
 	context.Context,
-	repositories.SetPendingModificationsRequest,
+	agentports.SetPendingModificationsRequest,
 ) (*agent.AgentProposal, error) {
 	return nil, nil
 }
 
 func (s *stubProposalRepo) CountExecutedTool(
 	context.Context,
-	repositories.CountExecutedToolRequest,
+	agentports.CountExecutedToolRequest,
 ) (int, error) {
 	return 0, nil
 }
 
 func (s *stubProposalRepo) ListByPlan(
 	context.Context,
-	repositories.ListAgentProposalsByPlanRequest,
+	agentports.ListAgentProposalsByPlanRequest,
 ) ([]*agent.AgentProposal, error) {
 	return nil, nil
 }
 
 func (s *stubProposalRepo) SkipPendingByPlan(
 	context.Context,
-	repositories.SkipPendingByPlanRequest,
+	agentports.SkipPendingByPlanRequest,
 ) (int, error) {
 	return 0, nil
 }
 
 func (s *stubProposalRepo) ListByRun(
 	context.Context,
-	repositories.ListAgentProposalsByRunRequest,
+	agentports.ListAgentProposalsByRunRequest,
 ) ([]*agent.AgentProposal, error) {
 	return nil, nil
 }
 
 func (m *stubProposalRepo) ExpirePendingByThread(
 	context.Context,
-	repositories.ExpireAgentProposalsByThreadRequest,
+	agentports.ExpireAgentProposalsByThreadRequest,
 ) (int, error) {
 	return 0, nil
 }

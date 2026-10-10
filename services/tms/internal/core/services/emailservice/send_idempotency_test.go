@@ -1,13 +1,14 @@
 package emailservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/emailportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
 	"context"
 	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/email"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -21,8 +22,8 @@ import (
 
 type sendHarness struct {
 	svc       *Service
-	repo      *mocks.MockEmailRepository
-	workflows *mocks.MockWorkflowStarter
+	repo      *emailportsmock.MockEmailRepository
+	workflows *kernelportsmock.MockWorkflowStarter
 	tenant    pagination.TenantInfo
 	profile   *email.Profile
 }
@@ -41,12 +42,12 @@ func newSendHarness(t *testing.T) *sendHarness {
 		Status:         email.ProfileStatusActive,
 	}
 
-	repo := mocks.NewMockEmailRepository(t)
+	repo := emailportsmock.NewMockEmailRepository(t)
 	repo.EXPECT().GetAssignedProfile(mock.Anything, tenant, email.PurposeGeneral).
 		Return(profile, nil).Maybe()
 	repo.EXPECT().HasSuppression(mock.Anything, tenant, mock.Anything).Return(false, nil).Maybe()
 
-	workflows := mocks.NewMockWorkflowStarter(t)
+	workflows := kernelportsmock.NewMockWorkflowStarter(t)
 	workflows.EXPECT().Enabled().Return(true).Maybe()
 
 	return &sendHarness{
@@ -63,8 +64,8 @@ func newSendHarness(t *testing.T) *sendHarness {
 	}
 }
 
-func (h *sendHarness) request(to ...string) *services.SendEmailRequest {
-	return &services.SendEmailRequest{
+func (h *sendHarness) request(to ...string) *emailports.SendEmailRequest {
+	return &emailports.SendEmailRequest{
 		TenantInfo:     h.tenant,
 		Purpose:        email.PurposeGeneral,
 		To:             to,
@@ -181,4 +182,4 @@ func TestSend_FirstSendStartsTheWorkflow(t *testing.T) {
 	assert.Equal(t, "tender-offer-tof_1", msg.IdempotencyKey)
 }
 
-var _ repositories.EmailRepository = (*mocks.MockEmailRepository)(nil)
+var _ emailports.EmailRepository = (*emailportsmock.MockEmailRepository)(nil)

@@ -12,10 +12,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/ratequoteservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -40,7 +42,7 @@ type getShipmentDraftTool struct {
 	drafts draftReader
 }
 
-func newGetShipmentDraftTool(drafts draftReader) serviceports.AgentQueryTool {
+func newGetShipmentDraftTool(drafts draftReader) agentports.AgentQueryTool {
 	return &getShipmentDraftTool{drafts: drafts}
 }
 
@@ -70,7 +72,7 @@ func (t *getShipmentDraftTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *getShipmentDraftTool) Policy() serviceports.ToolPolicy {
+func (t *getShipmentDraftTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceDocument,
 		reads:    agent.ExternalReadAlways,
@@ -142,7 +144,7 @@ type draftView struct {
 
 func (t *getShipmentDraftTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -217,17 +219,17 @@ type shipmentQuoter interface {
 	Quote(
 		ctx context.Context,
 		req *ratequoteservice.QuoteRequest,
-	) (*serviceports.RatedShipment, error)
+	) (*ratequoteports.RatedShipment, error)
 }
 
 type carrierShopper interface {
-	Shop(ctx context.Context, req *ratequoteservice.ShopRequest) (*serviceports.ShopResult, error)
+	Shop(ctx context.Context, req *ratequoteservice.ShopRequest) (*ratequoteports.ShopResult, error)
 }
 
 type locationReader interface {
 	GetByIDs(
 		ctx context.Context,
-		req repositories.GetLocationsByIDsRequest,
+		req locationports.GetLocationsByIDsRequest,
 	) ([]*location.Location, error)
 }
 
@@ -255,7 +257,7 @@ type quoteShipmentTool struct {
 func newQuoteShipmentTool(
 	quotes shipmentQuoter,
 	locations locationReader,
-) serviceports.AgentQueryTool {
+) agentports.AgentQueryTool {
 	return &quoteShipmentTool{quotes: quotes, locations: locations}
 }
 
@@ -334,7 +336,7 @@ func (t *quoteShipmentTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *quoteShipmentTool) Policy() serviceports.ToolPolicy {
+func (t *quoteShipmentTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceRateQuote,
 	})
@@ -362,7 +364,7 @@ type quoteView struct {
 
 func (t *quoteShipmentTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -471,7 +473,7 @@ func (t *quoteShipmentTool) hypotheticalShipment(
 		ids = append(ids, id)
 	}
 
-	locations, err := t.locations.GetByIDs(ctx, repositories.GetLocationsByIDsRequest{
+	locations, err := t.locations.GetByIDs(ctx, locationports.GetLocationsByIDsRequest{
 		TenantInfo:  tenantInfo,
 		LocationIDs: ids,
 	})
@@ -553,7 +555,7 @@ func placeLabel(loc *location.Location) string {
 	return strings.Join(parts, ", ")
 }
 
-func quoteViewOf(rated *serviceports.RatedShipment, lane []string) *quoteView {
+func quoteViewOf(rated *ratequoteports.RatedShipment, lane []string) *quoteView {
 	view := &quoteView{
 		Outcome:  string(rated.Outcome),
 		Amount:   rated.Amount,
@@ -603,14 +605,14 @@ type shopCarriersTool struct {
 type shopCarrierReader interface {
 	GetByIDs(
 		ctx context.Context,
-		req repositories.GetCarriersByIDsRequest,
+		req carrierports.GetCarriersByIDsRequest,
 	) ([]*carrier.Carrier, error)
 }
 
 func newShopCarriersTool(
 	shopper carrierShopper,
 	carriers shopCarrierReader,
-) serviceports.AgentQueryTool {
+) agentports.AgentQueryTool {
 	return &shopCarriersTool{shopper: shopper, carriers: carriers}
 }
 
@@ -651,7 +653,7 @@ func (t *shopCarriersTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *shopCarriersTool) Policy() serviceports.ToolPolicy {
+func (t *shopCarriersTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceRateQuote,
 	})
@@ -686,7 +688,7 @@ type shopView struct {
 
 func (t *shopCarriersTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -705,7 +707,7 @@ func (t *shopCarriersTool) Query(
 	req := &ratequoteservice.ShopRequest{
 		TenantInfo: tenantOf(params),
 		ShipmentID: shipmentID,
-		Strategy:   serviceports.ShopStrategy(optionalString(params.Params, "strategy")),
+		Strategy:   ratequoteports.ShopStrategy(optionalString(params.Params, "strategy")),
 		Limit:      limit,
 		Persist:    false,
 	}
@@ -753,7 +755,7 @@ func (t *shopCarriersTool) standing(
 			ids = append(ids, id)
 		}
 	}
-	found, err := t.carriers.GetByIDs(ctx, repositories.GetCarriersByIDsRequest{
+	found, err := t.carriers.GetByIDs(ctx, carrierports.GetCarriersByIDsRequest{
 		TenantInfo: tenant,
 		CarrierIDs: ids,
 	})
@@ -774,7 +776,7 @@ func (t *shopCarriersTool) standing(
 	}
 }
 
-func shopViewOf(result *serviceports.ShopResult) *shopView {
+func shopViewOf(result *ratequoteports.ShopResult) *shopView {
 	view := &shopView{
 		Strategy: string(result.Strategy),
 		Options:  make([]shopOptionView, 0, len(result.Options)),

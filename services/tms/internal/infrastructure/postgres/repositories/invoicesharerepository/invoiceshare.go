@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -27,7 +27,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.InvoiceShareRepository {
+func New(p Params) invoiceports.InvoiceShareRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.invoice-share-repository"),
@@ -69,7 +69,7 @@ func (r *repository) Upsert(ctx context.Context, shares []*invoice.InvoiceShare)
 
 func (r *repository) ListByInvoiceID(
 	ctx context.Context,
-	req *repositories.ListInvoiceSharesRequest,
+	req *invoiceports.ListInvoiceSharesRequest,
 ) ([]*invoice.InvoiceShare, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*invoice.InvoiceShare, error) {
 		cols := buncolgen.InvoiceShareColumns

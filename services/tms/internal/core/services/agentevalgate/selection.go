@@ -7,9 +7,9 @@ import (
 	"slices"
 	"strings"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/core/services/productguideservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"gopkg.in/yaml.v3"
 )
 
@@ -210,7 +210,7 @@ func (r SelectionReport) SpuriousMatches() string {
 	return builder.String()
 }
 
-func descriptorNames(found []serviceports.AgentToolDescriptor) []string {
+func descriptorNames(found []agentports.AgentToolDescriptor) []string {
 	names := make([]string, 0, len(found))
 	for _, descriptor := range found {
 		names = append(names, descriptor.Name)

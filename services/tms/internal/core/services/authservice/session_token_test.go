@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/session"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/sessiontoken"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -38,7 +38,7 @@ func TestLogin_IssuesASessionTokenWhoseSecretIsStoredOnlyAsAHash(t *testing.T) {
 		Return(nil)
 	deps.userRepo.On("UpdateLastLoginAt", mock.Anything, usr.ID).Return(nil)
 
-	resp, err := deps.svc.Login(t.Context(), services.LoginRequest{
+	resp, err := deps.svc.Login(t.Context(), tenantports.LoginRequest{
 		EmailAddress: "test@example.com",
 		Password:     "password123",
 	})

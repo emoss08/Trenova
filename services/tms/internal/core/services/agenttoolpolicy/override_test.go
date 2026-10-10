@@ -4,13 +4,13 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 )
 
-func declaredRule() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func declaredRule() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          "update_shipment",
 		Kind:          agent.ToolKindAction,
 		DefaultTier:   agent.TierActWithApproval,

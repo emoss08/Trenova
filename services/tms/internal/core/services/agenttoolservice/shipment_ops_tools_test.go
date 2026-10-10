@@ -10,8 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,12 +26,12 @@ type fakeShipmentOperator struct {
 	guard      *writeGuard
 	refusal    error
 	existing   *shipment.Shipment
-	uncanceled *repositories.UncancelShipmentRequest
-	owner      *repositories.TransferOwnershipRequest
-	rerated    *serviceports.AutoRateShipmentRequest
+	uncanceled *shipmentports.UncancelShipmentRequest
+	owner      *shipmentports.TransferOwnershipRequest
+	rerated    *shipmentports.AutoRateShipmentRequest
 	unpriced   bool
 	measured   pulid.ID
-	duplicated *repositories.BulkDuplicateShipmentRequest
+	duplicated *shipmentports.BulkDuplicateShipmentRequest
 }
 
 func (f *fakeShipmentOperator) shipment() *shipment.Shipment {
@@ -52,8 +54,8 @@ func (f *fakeShipmentOperator) shipment() *shipment.Shipment {
 
 func (f *fakeShipmentOperator) Uncancel(
 	_ context.Context,
-	req *repositories.UncancelShipmentRequest,
-	_ *serviceports.RequestActor,
+	req *shipmentports.UncancelShipmentRequest,
+	_ *permissionports.RequestActor,
 ) (*shipment.Shipment, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -65,8 +67,8 @@ func (f *fakeShipmentOperator) Uncancel(
 
 func (f *fakeShipmentOperator) PreviewUncancel(
 	context.Context,
-	*repositories.UncancelShipmentRequest,
-) (*serviceports.ShipmentChangePreview, error) {
+	*shipmentports.UncancelShipmentRequest,
+) (*shipmentports.ShipmentChangePreview, error) {
 	if f.refusal != nil {
 		return nil, f.refusal
 	}
@@ -74,13 +76,13 @@ func (f *fakeShipmentOperator) PreviewUncancel(
 	after := *before
 	after.ApplyUncancel()
 
-	return &serviceports.ShipmentChangePreview{Before: before, After: &after}, nil
+	return &shipmentports.ShipmentChangePreview{Before: before, After: &after}, nil
 }
 
 func (f *fakeShipmentOperator) TransferOwnership(
 	_ context.Context,
-	req *repositories.TransferOwnershipRequest,
-	_ *serviceports.RequestActor,
+	req *shipmentports.TransferOwnershipRequest,
+	_ *permissionports.RequestActor,
 ) (*shipment.Shipment, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -92,50 +94,50 @@ func (f *fakeShipmentOperator) TransferOwnership(
 
 func (f *fakeShipmentOperator) PreviewTransferOwnership(
 	_ context.Context,
-	req *repositories.TransferOwnershipRequest,
-	_ *serviceports.RequestActor,
-) (*serviceports.ShipmentChangePreview, error) {
+	req *shipmentports.TransferOwnershipRequest,
+	_ *permissionports.RequestActor,
+) (*shipmentports.ShipmentChangePreview, error) {
 	before := f.shipment()
 	after := *before
 	after.OwnerID = req.OwnerID
 
-	return &serviceports.ShipmentChangePreview{Before: before, After: &after}, nil
+	return &shipmentports.ShipmentChangePreview{Before: before, After: &after}, nil
 }
 
 func (f *fakeShipmentOperator) AutoRate(
 	_ context.Context,
-	req *serviceports.AutoRateShipmentRequest,
-	_ *serviceports.RequestActor,
-) (*shipment.Shipment, *serviceports.ContractRateApplication, error) {
+	req *shipmentports.AutoRateShipmentRequest,
+	_ *permissionports.RequestActor,
+) (*shipment.Shipment, *shipmentports.ContractRateApplication, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, nil, err
 	}
 	f.rerated = req
 
-	return f.shipment(), &serviceports.ContractRateApplication{Applied: !f.unpriced}, nil
+	return f.shipment(), &shipmentports.ContractRateApplication{Applied: !f.unpriced}, nil
 }
 
 func (f *fakeShipmentOperator) PreviewAutoRate(
 	context.Context,
-	*serviceports.AutoRateShipmentRequest,
-	*serviceports.RequestActor,
-) (*serviceports.ShipmentAutoRatePreview, error) {
+	*shipmentports.AutoRateShipmentRequest,
+	*permissionports.RequestActor,
+) (*shipmentports.ShipmentAutoRatePreview, error) {
 	before := f.shipment()
 	if f.unpriced {
-		return &serviceports.ShipmentAutoRatePreview{
+		return &shipmentports.ShipmentAutoRatePreview{
 			Before:      before,
 			After:       before,
-			Application: &serviceports.ContractRateApplication{Outcome: ratequote.Outcome("NoMatch")},
+			Application: &shipmentports.ContractRateApplication{Outcome: ratequote.Outcome("NoMatch")},
 		}, nil
 	}
 	after := *before
 	after.FreightChargeAmount = decimal.NewNullDecimal(decimal.RequireFromString("1250"))
 	after.TotalChargeAmount = decimal.NewNullDecimal(decimal.RequireFromString("1250"))
 
-	return &serviceports.ShipmentAutoRatePreview{
+	return &shipmentports.ShipmentAutoRatePreview{
 		Before:      before,
 		After:       &after,
-		Application: &serviceports.ContractRateApplication{Applied: true, AgreementName: "Acme 2026"},
+		Application: &shipmentports.ContractRateApplication{Applied: true, AgreementName: "Acme 2026"},
 	}, nil
 }
 
@@ -143,20 +145,20 @@ func (f *fakeShipmentOperator) RecalculateDistance(
 	_ context.Context,
 	shipmentID pulid.ID,
 	_ pagination.TenantInfo,
-) (*serviceports.DistanceCalculationResponse, error) {
+) (*shipmentports.DistanceCalculationResponse, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
 	}
 	f.measured = shipmentID
 
-	return &serviceports.DistanceCalculationResponse{TotalDistance: 412.5}, nil
+	return &shipmentports.DistanceCalculationResponse{TotalDistance: 412.5}, nil
 }
 
 func (f *fakeShipmentOperator) PreviewRecalculateDistance(
 	context.Context,
 	pulid.ID,
 	pagination.TenantInfo,
-) (*serviceports.ShipmentDistancePreview, error) {
+) (*shipmentports.ShipmentDistancePreview, error) {
 	oldMiles, newMiles := 300.0, 412.5
 	moveID := pulid.MustNew("sm_")
 	before := *f.shipment()
@@ -164,29 +166,29 @@ func (f *fakeShipmentOperator) PreviewRecalculateDistance(
 	after := before
 	after.Moves = []*shipment.ShipmentMove{{ID: moveID, Distance: &newMiles, Version: 2}}
 
-	return &serviceports.ShipmentDistancePreview{
+	return &shipmentports.ShipmentDistancePreview{
 		Before:   &before,
 		After:    &after,
-		Distance: &serviceports.DistanceCalculationResponse{TotalDistance: newMiles},
+		Distance: &shipmentports.DistanceCalculationResponse{TotalDistance: newMiles},
 	}, nil
 }
 
 func (f *fakeShipmentOperator) Duplicate(
 	_ context.Context,
-	req *repositories.BulkDuplicateShipmentRequest,
-) (*repositories.ShipmentDuplicateWorkflowResponse, error) {
+	req *shipmentports.BulkDuplicateShipmentRequest,
+) (*shipmentports.ShipmentDuplicateWorkflowResponse, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
 	}
 	f.duplicated = req
 
-	return &repositories.ShipmentDuplicateWorkflowResponse{WorkflowID: "wf-1"}, nil
+	return &shipmentports.ShipmentDuplicateWorkflowResponse{WorkflowID: "wf-1"}, nil
 }
 
 func (f *fakeShipmentOperator) PreviewDuplicate(
 	_ context.Context,
-	req *repositories.BulkDuplicateShipmentRequest,
-) (*serviceports.ShipmentDuplicatePreview, error) {
+	req *shipmentports.BulkDuplicateShipmentRequest,
+) (*shipmentports.ShipmentDuplicatePreview, error) {
 	source := f.shipment()
 	copies := make([]*shipment.Shipment, 0, req.Count)
 	for range req.Count {
@@ -201,7 +203,7 @@ func (f *fakeShipmentOperator) PreviewDuplicate(
 		copies = append(copies, copied)
 	}
 
-	return &serviceports.ShipmentDuplicatePreview{Source: source, Copies: copies}, nil
+	return &shipmentports.ShipmentDuplicatePreview{Source: source, Copies: copies}, nil
 }
 
 func TestUncancelShipment_PreviewsTheReopenedShipmentAndWrites(t *testing.T) {
@@ -212,7 +214,7 @@ func TestUncancelShipment_PreviewsTheReopenedShipmentAndWrites(t *testing.T) {
 	params := executeParams(map[string]any{paramShipmentID: shipments.shipment().ID.String()})
 
 	preview := previewWithoutWrites(t, shipments.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	change := previewChange(t, preview, 0)
 	assert.Equal(t, "New", fieldByPath(t, change, fieldStatus).After)
@@ -226,7 +228,7 @@ func TestUncancelShipment_PreviewsTheReopenedShipmentAndWrites(t *testing.T) {
 	assert.Equal(t, permission.ResourceShipment, policy.Resource)
 	assert.Equal(t, permission.OpUpdate, policy.Operation)
 	assert.Equal(t, agent.TierActWithApproval, policy.MaxTier)
-	target, ok := tool.(serviceports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, permission.ResourceShipment, target.Resource)
 }
@@ -238,11 +240,11 @@ func TestUncancelShipment_AShipmentThatIsNotCanceledIsAWouldFail(t *testing.T) {
 	tool := newUncancelShipmentTool(shipments)
 	params := executeParams(map[string]any{paramShipmentID: pulid.MustNew("shp_").String()})
 
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	requireWarning(t, preview, agent.PreviewWarningWouldFail)
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), params))
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 		executeParams(map[string]any{paramShipmentID: "not-an-id"})))
 }
 
@@ -258,7 +260,7 @@ func TestTransferShipmentOwnership_NamesTheNewOwner(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, shipments.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	field := fieldByPath(t, previewChange(t, preview, 0), paramOwnerID)
 	require.NotNil(t, field.AfterRef)
@@ -266,7 +268,7 @@ func TestTransferShipmentOwnership_NamesTheNewOwner(t *testing.T) {
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.Equal(t, owner, shipments.owner.OwnerID)
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 		executeParams(map[string]any{paramShipmentID: owner.String()})))
 }
 
@@ -278,7 +280,7 @@ func TestRerateShipment_ShowsTheMoneyAndIsAMoneyWrite(t *testing.T) {
 	params := executeParams(map[string]any{paramShipmentID: shipments.shipment().ID.String()})
 
 	preview := previewWithoutWrites(t, shipments.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Acme 2026")
 	change := previewChange(t, preview, 0)
@@ -296,12 +298,12 @@ func TestRerateShipment_NoContractChangesNothing(t *testing.T) {
 	tool := newRerateShipmentTool(shipments)
 	params := executeParams(map[string]any{paramShipmentID: shipments.shipment().ID.String()})
 
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	assert.Empty(t, preview.Changes)
 	assert.Contains(t, preview.Summary, "NoMatch")
 
-	result, err := tool.(serviceports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	assert.Contains(t, result.Action, "left unchanged")
 }
@@ -314,7 +316,7 @@ func TestRecalculateShipmentDistance_ShowsEachMoveThatChanges(t *testing.T) {
 	params := executeParams(map[string]any{paramShipmentID: shipments.shipment().ID.String()})
 
 	preview := previewWithoutWrites(t, shipments.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	change := previewChange(t, preview, 0)
 	assert.Equal(t, permission.ResourceShipmentMove, change.Resource)
@@ -338,7 +340,7 @@ func TestDuplicateShipment_CopiesServerSideWithTheNewDates(t *testing.T) {
 	params.Timezone = "America/Chicago"
 
 	preview := previewWithoutWrites(t, shipments.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	require.Len(t, preview.Changes, 2)
 	created := previewChange(t, preview, 0)
@@ -346,7 +348,7 @@ func TestDuplicateShipment_CopiesServerSideWithTheNewDates(t *testing.T) {
 	assert.Equal(t, "BOL-COPY-01", fieldByPath(t, created, fieldBol).After)
 	assert.Contains(t, preview.Summary, "2 new shipments")
 
-	result, err := tool.(serviceports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	require.NotNil(t, shipments.duplicated)
 	assert.Equal(t, 2, shipments.duplicated.Count)
@@ -371,7 +373,7 @@ func TestDuplicateShipment_RefusesBadArguments(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+			require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 				executeParams(raw)))
 		})
 	}
@@ -379,12 +381,12 @@ func TestDuplicateShipment_RefusesBadArguments(t *testing.T) {
 
 type fakeShipmentSources struct {
 	source *shipment.Shipment
-	asked  *repositories.GetShipmentByIDRequest
+	asked  *shipmentports.GetShipmentByIDRequest
 }
 
 func (f *fakeShipmentSources) Get(
 	_ context.Context,
-	req *repositories.GetShipmentByIDRequest,
+	req *shipmentports.GetShipmentByIDRequest,
 ) (*shipment.Shipment, error) {
 	f.asked = req
 
@@ -397,7 +399,7 @@ type fakeLocationZones struct {
 
 func (f fakeLocationZones) GetByIDs(
 	_ context.Context,
-	req repositories.GetLocationsByIDsRequest,
+	req locationports.GetLocationsByIDsRequest,
 ) ([]*location.Location, error) {
 	found := make([]*location.Location, 0, len(req.LocationIDs))
 	for _, id := range req.LocationIDs {
@@ -435,7 +437,7 @@ func TestDuplicateShipment_ReadsTheFirstPickupWhereItIs(t *testing.T) {
 	})
 	params.Timezone = "America/Chicago"
 
-	_, err := tool.(serviceports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	_, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 
 	require.NotNil(t, shipments.duplicated.FirstPickupAt)
@@ -448,19 +450,19 @@ func TestDuplicateShipment_ReadsTheFirstPickupWhereItIs(t *testing.T) {
 type fakeHoldUpdater struct {
 	guard   *writeGuard
 	current *shipment.ShipmentHold
-	updated *repositories.UpdateShipmentHoldRequest
+	updated *shipmentports.UpdateShipmentHoldRequest
 }
 
 func (f *fakeHoldUpdater) GetByID(
 	context.Context,
-	*repositories.GetShipmentHoldByIDRequest,
+	*shipmentports.GetShipmentHoldByIDRequest,
 ) (*shipment.ShipmentHold, error) {
 	copied := *f.current
 
 	return &copied, nil
 }
 
-func (f *fakeHoldUpdater) apply(req *repositories.UpdateShipmentHoldRequest) *shipment.ShipmentHold {
+func (f *fakeHoldUpdater) apply(req *shipmentports.UpdateShipmentHoldRequest) *shipment.ShipmentHold {
 	next := *f.current
 	next.Severity = req.Severity
 	next.Notes = req.Notes
@@ -474,8 +476,8 @@ func (f *fakeHoldUpdater) apply(req *repositories.UpdateShipmentHoldRequest) *sh
 
 func (f *fakeHoldUpdater) Update(
 	_ context.Context,
-	req *repositories.UpdateShipmentHoldRequest,
-	_ *serviceports.RequestActor,
+	req *shipmentports.UpdateShipmentHoldRequest,
+	_ *permissionports.RequestActor,
 ) (*shipment.ShipmentHold, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -487,8 +489,8 @@ func (f *fakeHoldUpdater) Update(
 
 func (f *fakeHoldUpdater) PreviewUpdate(
 	_ context.Context,
-	req *repositories.UpdateShipmentHoldRequest,
-	_ *serviceports.RequestActor,
+	req *shipmentports.UpdateShipmentHoldRequest,
+	_ *permissionports.RequestActor,
 ) (*shipment.ShipmentHold, error) {
 	return f.apply(req), nil
 }
@@ -522,7 +524,7 @@ func TestUpdateShipmentHold_ChangesOnlyWhatIsSentAndKeepsTheVersion(t *testing.T
 	})
 
 	preview := previewWithoutWrites(t, holds.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	change := previewChange(t, preview, 0)
 	assert.Equal(t, true, fieldByPath(t, change, paramBlocksBilling).After)
@@ -550,7 +552,7 @@ func TestUpdateShipmentHold_ShowingItToTheCustomerIsCustomerVisible(t *testing.T
 		paramBlocksBilling: true,
 	})).Egress)
 
-	require.ErrorIs(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+	require.ErrorIs(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 		executeParams(map[string]any{
 			paramShipmentID: pulid.MustNew("shp_").String(),
 			paramHoldID:     pulid.MustNew("shh_").String(),
@@ -559,7 +561,7 @@ func TestUpdateShipmentHold_ShowingItToTheCustomerIsCustomerVisible(t *testing.T
 
 type fakeMoveSplitter struct {
 	guard *writeGuard
-	split *repositories.SplitMoveRequest
+	split *shipmentports.SplitMoveRequest
 }
 
 func splitSourceMove() *shipment.ShipmentMove {
@@ -577,24 +579,24 @@ func splitSourceMove() *shipment.ShipmentMove {
 
 func (f *fakeMoveSplitter) SplitMove(
 	_ context.Context,
-	req *repositories.SplitMoveRequest,
-) (*repositories.SplitMoveResponse, error) {
+	req *shipmentports.SplitMoveRequest,
+) (*shipmentports.SplitMoveResponse, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
 	}
 	f.split = req
 
-	return &repositories.SplitMoveResponse{NewMove: &shipment.ShipmentMove{ID: pulid.MustNew("sm_")}}, nil
+	return &shipmentports.SplitMoveResponse{NewMove: &shipment.ShipmentMove{ID: pulid.MustNew("sm_")}}, nil
 }
 
 func (f *fakeMoveSplitter) PreviewSplitMove(
 	_ context.Context,
-	req *repositories.SplitMoveRequest,
-) (*serviceports.MoveSplitPlan, error) {
+	req *shipmentports.SplitMoveRequest,
+) (*shipmentports.MoveSplitPlan, error) {
 	move := splitSourceMove()
 	move.ID = req.MoveID
 
-	return &serviceports.MoveSplitPlan{Move: move, Split: shipment.PlanMoveSplit(move, req.Spec())}, nil
+	return &shipmentports.MoveSplitPlan{Move: move, Split: shipment.PlanMoveSplit(move, req.Spec())}, nil
 }
 
 func TestSplitMoveAtRelay_AlwaysProposesAndShowsTheNewMove(t *testing.T) {
@@ -612,7 +614,7 @@ func TestSplitMoveAtRelay_AlwaysProposesAndShowsTheNewMove(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, moves.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	require.Len(t, preview.Changes, 2)
 	assert.Equal(t, string(shipment.StopTypeSplitDelivery),
@@ -627,7 +629,7 @@ func TestSplitMoveAtRelay_AlwaysProposesAndShowsTheNewMove(t *testing.T) {
 	assert.Equal(t, int64(1_900_000_000), moves.split.SplitPickupTimes.ScheduledWindowStart)
 	assert.Equal(t, agent.TierPropose, tool.Policy().MaxTier)
 
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 		executeParams(map[string]any{
 			paramMoveID:                pulid.MustNew("sm_").String(),
 			paramNewDeliveryLocationID: destination.String(),

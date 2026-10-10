@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,7 +16,7 @@ import (
 
 func (r *repository) ListApplicationsByInvoiceIDs(
 	ctx context.Context,
-	req *repositories.ListApplicationsByInvoiceIDsRequest,
+	req *customerpaymentports.ListApplicationsByInvoiceIDsRequest,
 ) (map[pulid.ID][]*customerpayment.Application, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID][]*customerpayment.Application, error) {
 		result := make(map[pulid.ID][]*customerpayment.Application, len(req.InvoiceIDs))
@@ -93,7 +93,7 @@ func (r *repository) UpdateCreditMemoApplication(
 
 func (r *repository) GetCreditMemoApplicationByID(
 	ctx context.Context,
-	req repositories.GetCreditMemoApplicationRequest,
+	req customerpaymentports.GetCreditMemoApplicationRequest,
 ) (*customerpayment.CreditMemoApplication, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*customerpayment.CreditMemoApplication, error) {
 		cols := buncolgen.CreditMemoApplicationColumns
@@ -114,7 +114,7 @@ func (r *repository) GetCreditMemoApplicationByID(
 
 func (r *repository) ListCreditMemoApplicationsByInvoiceIDs(
 	ctx context.Context,
-	req *repositories.ListApplicationsByInvoiceIDsRequest,
+	req *customerpaymentports.ListApplicationsByInvoiceIDsRequest,
 ) (map[pulid.ID][]*customerpayment.CreditMemoApplication, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID][]*customerpayment.CreditMemoApplication, error) {
 		result := make(map[pulid.ID][]*customerpayment.CreditMemoApplication, len(req.InvoiceIDs))

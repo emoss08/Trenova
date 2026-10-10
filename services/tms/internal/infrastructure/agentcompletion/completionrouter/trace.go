@@ -5,10 +5,10 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/shopspring/decimal"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -27,7 +27,7 @@ type attemptSpec struct {
 	attempt     int
 	failover    bool
 	maxTokens   int
-	attribution serviceports.AIUsageAttribution
+	attribution aiusageports.AIUsageAttribution
 }
 
 func (s *Service) startAttempt(

@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -31,7 +31,7 @@ type assignmentRepository struct {
 
 func NewAssignmentRepository(
 	p AssignmentParams,
-) repositories.DocumentTemplateAssignmentRepository {
+) documenttemplateports.DocumentTemplateAssignmentRepository {
 	return &assignmentRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.document-template-assignment-repository"),
@@ -40,7 +40,7 @@ func NewAssignmentRepository(
 
 func (r *assignmentRepository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListDocumentTemplateAssignmentsRequest,
+	req *documenttemplateports.ListDocumentTemplateAssignmentsRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
@@ -64,7 +64,7 @@ func (r *assignmentRepository) filterQuery(
 
 func (r *assignmentRepository) List(
 	ctx context.Context,
-	req *repositories.ListDocumentTemplateAssignmentsRequest,
+	req *documenttemplateports.ListDocumentTemplateAssignmentsRequest,
 ) (*pagination.ListResult[*documenttemplate.DocumentTemplateAssignment], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*documenttemplate.DocumentTemplateAssignment], error) {
 		log := r.l.With(zap.String("operation", "List"))
@@ -97,7 +97,7 @@ func (r *assignmentRepository) List(
 
 func (r *assignmentRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListDocumentTemplateAssignmentConnectionRequest,
+	req *documenttemplateports.ListDocumentTemplateAssignmentConnectionRequest,
 ) (*pagination.CursorListResult[*documenttemplate.DocumentTemplateAssignment], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*documenttemplate.DocumentTemplateAssignment], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -165,7 +165,7 @@ func (r *assignmentRepository) ListConnection(
 // customer detail tab shows without having to ask per kind.
 func (r *assignmentRepository) GetForCustomer(
 	ctx context.Context,
-	req *repositories.GetCustomerAssignmentsRequest,
+	req *documenttemplateports.GetCustomerAssignmentsRequest,
 ) ([]*documenttemplate.DocumentTemplateAssignment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*documenttemplate.DocumentTemplateAssignment, error) {
 		log := r.l.With(
@@ -233,7 +233,7 @@ func (r *assignmentRepository) Assign(
 
 func (r *assignmentRepository) Unassign(
 	ctx context.Context,
-	req *repositories.UnassignDocumentTemplateRequest,
+	req *documenttemplateports.UnassignDocumentTemplateRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		log := r.l.With(

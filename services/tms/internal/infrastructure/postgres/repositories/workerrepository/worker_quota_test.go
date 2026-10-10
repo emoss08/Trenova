@@ -1,11 +1,12 @@
 package workerrepository
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -18,7 +19,7 @@ func TestCreateRefusesAWorkerPastTheQuota(t *testing.T) {
 	t.Parallel()
 
 	repo, sqlMock := newTestRepository(t)
-	guard := mocks.NewMockQuotaGuard(t)
+	guard := platformplanportsmock.NewMockQuotaGuard(t)
 	repo.quota = guard
 	entity := &worker.Worker{
 		OrganizationID: pulid.MustNew("org_"),
@@ -27,7 +28,7 @@ func TestCreateRefusesAWorkerPastTheQuota(t *testing.T) {
 		LastName:       "Driver",
 	}
 
-	guard.EXPECT().Enforce(mock.Anything, &services.QuotaRequest{
+	guard.EXPECT().Enforce(mock.Anything, &platformplanports.QuotaRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
 		Meter:      platformcatalog.MeterWorkersTotal,
 		Quantity:   1,

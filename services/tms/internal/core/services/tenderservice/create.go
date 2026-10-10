@@ -5,17 +5,17 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/tenderjobs/tendercontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/dispatchguard"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/tenderjobs/tendercontract"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -232,7 +232,7 @@ func (s *Service) loadTenderableMove(
 		).WithParam("shipmentMoveId", moveID.String())
 	}
 
-	live, err := s.repo.GetLiveByMoveID(ctx, repositories.GetLiveTenderByMoveRequest{
+	live, err := s.repo.GetLiveByMoveID(ctx, tenderports.GetLiveTenderByMoveRequest{
 		TenantInfo: tenantInfo,
 		MoveID:     moveID,
 	})
@@ -245,13 +245,13 @@ func (s *Service) loadTenderableMove(
 		).WithParam("tenderId", live.ID.String())
 	}
 
-	sh, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	sh, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID: move.ShipmentID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: tenantInfo.OrgID,
 			BuID:  tenantInfo.BuID,
 		},
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -269,10 +269,10 @@ func (s *Service) resolveGuide(
 	sh *shipment.Shipment,
 ) (*tender.RoutingGuide, error) {
 	if req.RoutingGuideID != nil && !req.RoutingGuideID.IsNil() {
-		guide, err := s.guideRepo.GetByID(ctx, repositories.GetRoutingGuideByIDRequest{
+		guide, err := s.guideRepo.GetByID(ctx, tenderports.GetRoutingGuideByIDRequest{
 			ID:         *req.RoutingGuideID,
 			TenantInfo: req.TenantInfo,
-			RoutingGuideFilterOptions: repositories.RoutingGuideFilterOptions{
+			RoutingGuideFilterOptions: tenderports.RoutingGuideFilterOptions{
 				IncludeEntries: true,
 			},
 		})
@@ -314,8 +314,8 @@ func (s *Service) buildMatchLaneRequest(
 	tenantInfo pagination.TenantInfo,
 	move *shipment.ShipmentMove,
 	sh *shipment.Shipment,
-) *repositories.MatchLaneRequest {
-	req := &repositories.MatchLaneRequest{TenantInfo: tenantInfo}
+) *tenderports.MatchLaneRequest {
+	req := &tenderports.MatchLaneRequest{TenantInfo: tenantInfo}
 
 	stops := move.Stops
 	if len(stops) == 0 && sh != nil {
@@ -387,10 +387,10 @@ func (s *Service) buildGuideOffers(
 		}
 		carrierIDs = append(carrierIDs, entry.CarrierID)
 	}
-	carriers, err := s.carrierRepo.GetByIDs(ctx, repositories.GetCarriersByIDsRequest{
+	carriers, err := s.carrierRepo.GetByIDs(ctx, carrierports.GetCarriersByIDsRequest{
 		TenantInfo: tenantInfo,
 		CarrierIDs: carrierIDs,
-		CarrierFilterOptions: repositories.CarrierFilterOptions{
+		CarrierFilterOptions: carrierports.CarrierFilterOptions{
 			IncludeInsurancePolicies: true,
 		},
 	})
@@ -596,10 +596,10 @@ func (s *Service) buildSpotOffers(
 	for _, line := range req.Lines {
 		carrierIDs = append(carrierIDs, line.CarrierID)
 	}
-	carriers, err := s.carrierRepo.GetByIDs(ctx, repositories.GetCarriersByIDsRequest{
+	carriers, err := s.carrierRepo.GetByIDs(ctx, carrierports.GetCarriersByIDsRequest{
 		TenantInfo: req.TenantInfo,
 		CarrierIDs: carrierIDs,
-		CarrierFilterOptions: repositories.CarrierFilterOptions{
+		CarrierFilterOptions: carrierports.CarrierFilterOptions{
 			IncludeInsurancePolicies: true,
 		},
 	})
@@ -727,7 +727,7 @@ func (s *Service) resolveOfferChannel(
 	case tender.ChannelEDI:
 		channel, err := s.carrierRepo.GetDefaultEDIChannel(
 			ctx,
-			repositories.GetCarrierEDIChannelRequest{
+			carrierports.GetCarrierEDIChannelRequest{
 				TenantInfo: tenantInfo,
 				CarrierID:  offer.CarrierID,
 			},
@@ -760,7 +760,7 @@ func (s *Service) persistAndStart(
 		return nil, multiErr
 	}
 
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		_, txErr := s.repo.Create(txCtx, entity)
 		if dberror.IsUniqueConstraintViolation(txErr) {
 			return errortypes.NewBusinessError(
@@ -797,10 +797,10 @@ func (s *Service) persistAndStart(
 	}
 	entity.WorkflowID = workflowID
 
-	portservices.InvalidateShipments(
+	shipmentports.InvalidateShipments(
 		ctx,
 		s.invalidator,
-		portservices.ShipmentInvalidationByUser(tenantInfo, entity.ShipmentID, "tender_created"),
+		shipmentports.ShipmentInvalidationByUser(tenantInfo, entity.ShipmentID, "tender_created"),
 	)
 	s.markCarriersUsed(ctx, tenantInfo, entity.Offers)
 
@@ -813,7 +813,7 @@ func (s *Service) cancelAfterStartFailure(
 	entity *tender.Tender,
 ) {
 	now := timeutils.NowUnix()
-	if _, err := s.repo.UpdateTenderStatus(ctx, &repositories.UpdateTenderStatusRequest{
+	if _, err := s.repo.UpdateTenderStatus(ctx, &tenderports.UpdateTenderStatusRequest{
 		TenantInfo:         tenantInfo,
 		TenderID:           entity.ID,
 		FromStatus:         []tender.Status{tender.StatusActive},
@@ -825,7 +825,7 @@ func (s *Service) cancelAfterStartFailure(
 			zap.Error(err), zap.String("tenderId", entity.ID.String()))
 	}
 
-	if _, err := s.repo.BulkUpdateOfferStatus(ctx, &repositories.BulkOfferStatusRequest{
+	if _, err := s.repo.BulkUpdateOfferStatus(ctx, &tenderports.BulkOfferStatusRequest{
 		TenantInfo: tenantInfo,
 		TenderID:   entity.ID,
 		FromStatus: []tender.OfferStatus{tender.OfferStatusPending, tender.OfferStatusSent},

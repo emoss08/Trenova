@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/equipmenttypeservice"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmenttypeports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -106,7 +106,7 @@ func (h *Handler) list(c *gin.Context) {
 		func(cursor pagination.CursorInfo) (*pagination.CursorListResult[*equipmenttype.EquipmentType], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListEquipmentTypesRequest{
+				&equipmenttypeports.ListEquipmentTypesRequest{
 					Filter:  req,
 					Cursor:  cursor,
 					Classes: helpers.QuerySlice(c, "classes", []string{}),
@@ -139,7 +139,7 @@ func (h *Handler) bulkUpdateStatus(c *gin.Context) {
 		return
 	}
 
-	req := new(repositories.BulkUpdateEquipmentTypeStatusRequest)
+	req := new(equipmenttypeports.BulkUpdateEquipmentTypeStatusRequest)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -181,7 +181,7 @@ func (h *Handler) getOption(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.Get(c.Request.Context(), repositories.GetEquipmentTypeByIDRequest{
+	entity, err := h.service.Get(c.Request.Context(), equipmenttypeports.GetEquipmentTypeByIDRequest{
 		ID:         equipTypeID,
 		TenantInfo: pagination.FromAuth(authCtx),
 	})
@@ -217,7 +217,7 @@ func (h *Handler) selectOptions(c *gin.Context) {
 		func() (*pagination.ListResult[*equipmenttype.EquipmentType], error) {
 			return h.service.SelectOptions(
 				c.Request.Context(),
-				&repositories.EquipmentTypeSelectOptionsRequest{
+				&equipmenttypeports.EquipmentTypeSelectOptionsRequest{
 					SelectQueryRequest: req,
 					Classes:            helpers.QuerySlice(c, "classes", []string{}),
 				},
@@ -249,7 +249,7 @@ func (h *Handler) get(c *gin.Context) {
 
 	entity, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetEquipmentTypeByIDRequest{
+		equipmenttypeports.GetEquipmentTypeByIDRequest{
 			ID:         equipTypeID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -322,7 +322,7 @@ func (h *Handler) patch(c *gin.Context) {
 
 	existing, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetEquipmentTypeByIDRequest{
+		equipmenttypeports.GetEquipmentTypeByIDRequest{
 			ID:         equipTypeID,
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 		},

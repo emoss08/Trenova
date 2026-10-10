@@ -6,7 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,7 +21,7 @@ func (s *Service) ListReviews(
 	workerID pulid.ID,
 	statuses []worker.ReviewStatus,
 ) ([]*worker.PerformanceReview, error) {
-	return s.repo.ListReviews(ctx, &repositories.ListPerformanceReviewsRequest{
+	return s.repo.ListReviews(ctx, &workerports.ListPerformanceReviewsRequest{
 		TenantInfo:      tenantInfo,
 		WorkerID:        workerID,
 		Statuses:        statuses,
@@ -34,7 +35,7 @@ func (s *Service) GetReview(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*worker.PerformanceReview, error) {
-	return s.repo.GetReviewByID(ctx, &repositories.GetPerformanceReviewByIDRequest{
+	return s.repo.GetReviewByID(ctx, &workerports.GetPerformanceReviewByIDRequest{
 		ID:              id,
 		TenantInfo:      tenantInfo,
 		IncludeTemplate: true,
@@ -238,7 +239,7 @@ func (s *Service) reviewerName(
 	if reviewerID.IsNil() || s.userRepo == nil {
 		return ""
 	}
-	user, err := s.userRepo.GetByID(ctx, repositories.GetUserByIDRequest{
+	user, err := s.userRepo.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo:   tenantInfo,
 		LookupUserID: reviewerID,
 	})
@@ -381,7 +382,7 @@ func (s *Service) DeleteReview(
 	if err != nil {
 		return err
 	}
-	if err = s.repo.DeleteReview(ctx, &repositories.GetPerformanceReviewByIDRequest{
+	if err = s.repo.DeleteReview(ctx, &workerports.GetPerformanceReviewByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	}); err != nil {
@@ -404,7 +405,7 @@ func (s *Service) loadReview(
 	id pulid.ID,
 	version int64,
 ) (*worker.PerformanceReview, error) {
-	original, err := s.repo.GetReviewByID(ctx, &repositories.GetPerformanceReviewByIDRequest{
+	original, err := s.repo.GetReviewByID(ctx, &workerports.GetPerformanceReviewByIDRequest{
 		ID:              id,
 		TenantInfo:      tenantInfo,
 		IncludeTemplate: true,

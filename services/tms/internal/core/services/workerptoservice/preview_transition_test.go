@@ -1,16 +1,17 @@
 package workerptoservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"context"
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/smsjobs/smscontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/smsjobs/smscontract"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -21,7 +22,7 @@ import (
 )
 
 type recordingStarter struct {
-	serviceports.WorkflowStarter
+	kernelports.WorkflowStarter
 
 	texts []*smscontract.SendSMSPayload
 }
@@ -52,23 +53,23 @@ func TestPreviewReject_IsWhatRejectSavesAndTexts(t *testing.T) {
 	var saved *worker.WorkerPTO
 	writable := false
 	starter := &recordingStarter{}
-	users := mocks.NewMockUserRepository(t)
+	users := tenantportsmock.NewMockUserRepository(t)
 	users.EXPECT().GetByID(mock.Anything, mock.Anything).
 		Return(&tenant.User{Name: "Dana Ortiz"}, nil)
-	workers := mocks.NewMockWorkerRepository(t)
+	workers := workerportsmock.NewMockWorkerRepository(t)
 	workers.EXPECT().GetByID(mock.Anything, mock.Anything).
 		Return(&worker.Worker{ID: current.WorkerID, PhoneNumber: "+15555550100"}, nil)
 
 	svc := &Service{
 		l: zap.NewNop(),
 		repo: &fakePTORepo{
-			getByID: func(context.Context, *repositories.GetPTOByIDRequest) (*worker.WorkerPTO, error) {
+			getByID: func(context.Context, *workerports.GetPTOByIDRequest) (*worker.WorkerPTO, error) {
 				copied := *current
 				return &copied, nil
 			},
 			updateStatus: func(
 				_ context.Context,
-				req *repositories.UpdatePTOStatusRequest,
+				req *workerports.UpdatePTOStatusRequest,
 			) (*worker.WorkerPTO, error) {
 				if !writable {
 					return nil, errors.New("a preview wrote")
@@ -82,8 +83,8 @@ func TestPreviewReject_IsWhatRejectSavesAndTexts(t *testing.T) {
 		workflowStarter: starter,
 		auditService:    &fakeAuditService{},
 	}
-	request := func() *repositories.UpdatePTOStatusRequest {
-		return &repositories.UpdatePTOStatusRequest{
+	request := func() *workerports.UpdatePTOStatusRequest {
+		return &workerports.UpdatePTOStatusRequest{
 			ID:         current.ID,
 			TenantInfo: tenantFor(current),
 			UserID:     pulid.MustNew("usr_"),
@@ -123,13 +124,13 @@ func TestPreviewCancel_SaysApprovedDaysGoBack(t *testing.T) {
 	svc := &Service{
 		l: zap.NewNop(),
 		repo: &fakePTORepo{
-			getByID: func(context.Context, *repositories.GetPTOByIDRequest) (*worker.WorkerPTO, error) {
+			getByID: func(context.Context, *workerports.GetPTOByIDRequest) (*worker.WorkerPTO, error) {
 				return current, nil
 			},
 		},
 	}
 
-	preview, err := svc.PreviewCancel(t.Context(), &repositories.UpdatePTOStatusRequest{
+	preview, err := svc.PreviewCancel(t.Context(), &workerports.UpdatePTOStatusRequest{
 		ID:         current.ID,
 		TenantInfo: tenantFor(current),
 		UserID:     pulid.MustNew("usr_"),

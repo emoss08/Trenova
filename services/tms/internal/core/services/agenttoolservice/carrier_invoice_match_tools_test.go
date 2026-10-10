@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -58,7 +58,7 @@ func (f *fakeMatches) PlanMatchDecision(
 func (f *fakeMatches) PerformMatchDecision(
 	_ context.Context,
 	req *carriersettlementservice.MatchDecisionRequest,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*carriersettlement.InvoiceMatch, error) {
 	f.performed = req
 
@@ -198,7 +198,7 @@ func (f *fakeMatchCreator) PlanCreateMatch(
 func (f *fakeMatchCreator) CreateMatch(
 	_ context.Context,
 	req *carriersettlementservice.CreateMatchRequest,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*carriersettlement.InvoiceMatch, error) {
 	f.created = req
 
@@ -266,7 +266,7 @@ func (f *fakeInvoiceLinker) LinkInvoiceToCarrier(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	_, carrierID pulid.ID,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*edi.CarrierInvoice, error) {
 	f.linked = carrierID
 

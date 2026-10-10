@@ -10,7 +10,8 @@ import (
 	shipmentdomain "github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -471,14 +472,14 @@ func TestShipmentEventToModel_RejectsUnknownType(t *testing.T) {
 func TestShipmentBillingReadinessToModel_MapsWarningContext(t *testing.T) {
 	t.Parallel()
 
-	model := shipmentBillingReadinessToModel(&services.ShipmentBillingReadiness{
+	model := shipmentBillingReadinessToModel(&shipmentports.ShipmentBillingReadiness{
 		ShipmentID:     "shp_1",
 		ShipmentStatus: shipmentdomain.StatusCompleted,
-		Policy: services.ShipmentBillingReadinessPolicy{
+		Policy: shipmentports.ShipmentBillingReadinessPolicy{
 			ShipmentBillingRequirementEnforcement: tenant.EnforcementLevelWarn,
 			RateValidationEnforcement:             tenant.EnforcementLevelWarn,
 		},
-		Warnings: []services.ShipmentBillingWarning{
+		Warnings: []shipmentports.ShipmentBillingWarning{
 			{
 				Code:    "missing_documents",
 				Message: "Missing documents",
@@ -512,7 +513,7 @@ func TestShipmentAnalyticsToModel_MapsTypedCards(t *testing.T) {
 	t.Parallel()
 
 	target := 96.5
-	model, err := shipmentAnalyticsToModel(services.AnalyticsData{
+	model, err := shipmentAnalyticsToModel(kernelports.AnalyticsData{
 		"activeShipments": map[string]any{
 			"count":               12,
 			"changeFromYesterday": -1,

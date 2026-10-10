@@ -11,13 +11,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/workercredentialservice"
 	"github.com/emoss08/trenova/internal/core/services/workerservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -61,7 +62,7 @@ type detentionEscalator interface {
 	) (*detention.DetentionOccurrence, error)
 	GetOccurrenceDetail(
 		ctx context.Context,
-		req *repositories.GetDetentionOccurrenceByIDRequest,
+		req *detentionports.GetDetentionOccurrenceByIDRequest,
 	) (*detentionservice.OccurrenceDetail, error)
 }
 
@@ -69,7 +70,7 @@ type escalateDetentionTool struct {
 	detention detentionEscalator
 }
 
-func newEscalateDetentionTool(detention detentionEscalator) serviceports.AgentTool {
+func newEscalateDetentionTool(detention detentionEscalator) agentports.AgentTool {
 	return &escalateDetentionTool{detention: detention}
 }
 
@@ -107,8 +108,8 @@ func (t *escalateDetentionTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *escalateDetentionTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *escalateDetentionTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceDetentionPolicy,
@@ -125,7 +126,7 @@ func (t *escalateDetentionTool) Policy() serviceports.ToolPolicy {
 }
 
 func (t *escalateDetentionTool) arguments(
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) (pulid.ID, string, error) {
 	if err := guardExecute(t, params); err != nil {
 		return "", "", err
@@ -145,7 +146,7 @@ func (t *escalateDetentionTool) arguments(
 
 func (t *escalateDetentionTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	occurrenceID, _, err := t.arguments(params)
 	if err != nil {
@@ -163,11 +164,11 @@ func (t *escalateDetentionTool) Validate(
 func (t *escalateDetentionTool) occurrence(
 	ctx context.Context,
 	occurrenceID pulid.ID,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) (*detention.DetentionOccurrence, error) {
 	detail, err := t.detention.GetOccurrenceDetail(
 		ctx,
-		&repositories.GetDetentionOccurrenceByIDRequest{
+		&detentionports.GetDetentionOccurrenceByIDRequest{
 			OccurrenceID: occurrenceID,
 			TenantInfo:   tenantFrom(params),
 		},
@@ -181,7 +182,7 @@ func (t *escalateDetentionTool) occurrence(
 
 func (t *escalateDetentionTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	occurrenceID, reason, err := t.arguments(params)
 	if err != nil {
@@ -198,7 +199,7 @@ func (t *escalateDetentionTool) Execute(
 	return err
 }
 
-func (t *escalateDetentionTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *escalateDetentionTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, "occurrenceId", permission.ResourceDetentionPolicy)
 }
 
@@ -213,7 +214,7 @@ type detentionApprover interface {
 	) (*detentionservice.OccurrenceChange, error)
 	GetOccurrenceDetail(
 		ctx context.Context,
-		req *repositories.GetDetentionOccurrenceByIDRequest,
+		req *detentionports.GetDetentionOccurrenceByIDRequest,
 	) (*detentionservice.OccurrenceDetail, error)
 }
 
@@ -229,7 +230,7 @@ type approveDetentionTool struct {
 	detention detentionApprover
 }
 
-func newApproveDetentionTool(detention detentionApprover) serviceports.AgentTool {
+func newApproveDetentionTool(detention detentionApprover) agentports.AgentTool {
 	return &approveDetentionTool{detention: detention}
 }
 
@@ -275,8 +276,8 @@ func (t *approveDetentionTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *approveDetentionTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *approveDetentionTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceDetentionPolicy,
@@ -293,7 +294,7 @@ func (t *approveDetentionTool) Policy() serviceports.ToolPolicy {
 }
 
 func (t *approveDetentionTool) arguments(
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) (pulid.ID, string, error) {
 	if err := guardExecute(t, params); err != nil {
 		return "", "", err
@@ -314,11 +315,11 @@ func (t *approveDetentionTool) arguments(
 func (t *approveDetentionTool) pending(
 	ctx context.Context,
 	occurrenceID pulid.ID,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) (*detentionservice.OccurrenceDetail, error) {
 	detail, err := t.detention.GetOccurrenceDetail(
 		ctx,
-		&repositories.GetDetentionOccurrenceByIDRequest{
+		&detentionports.GetDetentionOccurrenceByIDRequest{
 			OccurrenceID: occurrenceID,
 			TenantInfo:   tenantFrom(params),
 		},
@@ -339,7 +340,7 @@ func (t *approveDetentionTool) pending(
 
 func (t *approveDetentionTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	occurrenceID, _, err := t.arguments(params)
 	if err != nil {
@@ -356,7 +357,7 @@ func (t *approveDetentionTool) Validate(
 // as its note.
 func (t *approveDetentionTool) request(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) (detentionservice.ApproveParams, *detentionservice.OccurrenceDetail, error) {
 	occurrenceID, evidence, err := t.arguments(params)
 	if err != nil {
@@ -378,7 +379,7 @@ func (t *approveDetentionTool) request(
 
 func (t *approveDetentionTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	if _, _, err := t.arguments(params); err != nil {
 		return err
@@ -397,7 +398,7 @@ func (t *approveDetentionTool) Execute(
 	return err
 }
 
-func (t *approveDetentionTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *approveDetentionTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, "occurrenceId", permission.ResourceDetentionPolicy)
 }
 
@@ -415,7 +416,7 @@ type requestCredentialRenewalTool struct {
 	credentials credentialActor
 }
 
-func newRequestCredentialRenewalTool(credentials credentialActor) serviceports.AgentTool {
+func newRequestCredentialRenewalTool(credentials credentialActor) agentports.AgentTool {
 	return &requestCredentialRenewalTool{credentials: credentials}
 }
 
@@ -462,8 +463,8 @@ func (t *requestCredentialRenewalTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *requestCredentialRenewalTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *requestCredentialRenewalTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceWorkerCredential,
@@ -480,7 +481,7 @@ func (t *requestCredentialRenewalTool) Policy() serviceports.ToolPolicy {
 }
 
 func (t *requestCredentialRenewalTool) arguments(
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) (workercredentialservice.RenewalRequest, error) {
 	var out workercredentialservice.RenewalRequest
 	if err := guardExecute(t, params); err != nil {
@@ -531,7 +532,7 @@ func (t *requestCredentialRenewalTool) arguments(
 
 func (t *requestCredentialRenewalTool) Validate(
 	_ context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	_, err := t.arguments(params)
 
@@ -540,7 +541,7 @@ func (t *requestCredentialRenewalTool) Validate(
 
 func (t *requestCredentialRenewalTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	request, err := t.arguments(params)
 	if err != nil {
@@ -552,7 +553,7 @@ func (t *requestCredentialRenewalTool) Execute(
 
 func (t *requestCredentialRenewalTool) Target(
 	params map[string]any,
-) (serviceports.ToolTarget, bool) {
+) (agentports.ToolTarget, bool) {
 	return targetOf(params, "workerId", permission.ResourceWorker)
 }
 
@@ -561,14 +562,14 @@ type workerHolder interface {
 		ctx context.Context,
 		req workerservice.DispatchHoldRequest,
 	) (*worker.Worker, error)
-	Get(ctx context.Context, req repositories.GetWorkerByIDRequest) (*worker.Worker, error)
+	Get(ctx context.Context, req workerports.GetWorkerByIDRequest) (*worker.Worker, error)
 }
 
 type placeWorkerDispatchHoldTool struct {
 	workers workerHolder
 }
 
-func newPlaceWorkerDispatchHoldTool(workers workerHolder) serviceports.AgentTool {
+func newPlaceWorkerDispatchHoldTool(workers workerHolder) agentports.AgentTool {
 	return &placeWorkerDispatchHoldTool{workers: workers}
 }
 
@@ -608,8 +609,8 @@ func (t *placeWorkerDispatchHoldTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *placeWorkerDispatchHoldTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *placeWorkerDispatchHoldTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceWorkerDispatchHold,
@@ -626,7 +627,7 @@ func (t *placeWorkerDispatchHoldTool) Policy() serviceports.ToolPolicy {
 }
 
 func (t *placeWorkerDispatchHoldTool) arguments(
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) (workerservice.DispatchHoldRequest, error) {
 	var out workerservice.DispatchHoldRequest
 	if err := guardExecute(t, params); err != nil {
@@ -653,14 +654,14 @@ func (t *placeWorkerDispatchHoldTool) arguments(
 
 func (t *placeWorkerDispatchHoldTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	request, err := t.arguments(params)
 	if err != nil {
 		return err
 	}
 
-	held, err := t.workers.Get(ctx, repositories.GetWorkerByIDRequest{
+	held, err := t.workers.Get(ctx, workerports.GetWorkerByIDRequest{
 		ID:         request.WorkerID,
 		TenantInfo: request.TenantInfo,
 	})
@@ -676,7 +677,7 @@ func (t *placeWorkerDispatchHoldTool) Validate(
 
 func (t *placeWorkerDispatchHoldTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	request, err := t.arguments(params)
 	if err != nil {
@@ -690,7 +691,7 @@ func (t *placeWorkerDispatchHoldTool) Execute(
 
 func (t *placeWorkerDispatchHoldTool) Target(
 	params map[string]any,
-) (serviceports.ToolTarget, bool) {
+) (agentports.ToolTarget, bool) {
 	return targetOf(params, "workerId", permission.ResourceWorker)
 }
 
@@ -725,13 +726,13 @@ type acknowledgeCarrierIntelEventTool struct{ carrierIntelEventTool }
 
 type resolveCarrierIntelEventTool struct{ carrierIntelEventTool }
 
-func newAcknowledgeCarrierIntelEventTool(intel carrierIntelActor) serviceports.AgentTool {
+func newAcknowledgeCarrierIntelEventTool(intel carrierIntelActor) agentports.AgentTool {
 	return &acknowledgeCarrierIntelEventTool{
 		carrierIntelEventTool{intel: intel},
 	}
 }
 
-func newResolveCarrierIntelEventTool(intel carrierIntelActor) serviceports.AgentTool {
+func newResolveCarrierIntelEventTool(intel carrierIntelActor) agentports.AgentTool {
 	return &resolveCarrierIntelEventTool{
 		carrierIntelEventTool{intel: intel, resolves: true},
 	}
@@ -763,13 +764,13 @@ func (t *resolveCarrierIntelEventTool) SearchTerms() []string {
 	return []string{"carrier finding", "insurance lapse", "finding resolved"}
 }
 
-func (t *carrierIntelEventTool) Policy() serviceports.ToolPolicy {
+func (t *carrierIntelEventTool) Policy() agentports.ToolPolicy {
 	rationale := "Acknowledges a carrier finding inside Trenova."
 	if t.resolves {
 		rationale = "Closes a carrier finding inside Trenova."
 	}
 
-	return serviceports.ToolPolicy{
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceCarrierIntelligence,
@@ -838,7 +839,7 @@ func (t *carrierIntelEventTool) required() []string {
 }
 
 func (t *carrierIntelEventTool) arguments(
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) (*carrierintelservice.ResolveEventRequest, error) {
 	if err := guardExecute(t, params); err != nil {
 		return nil, err
@@ -877,7 +878,7 @@ func (t *carrierIntelEventTool) arguments(
 
 func (t *carrierIntelEventTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	request, err := t.arguments(params)
 	if err != nil {
@@ -897,7 +898,7 @@ func (t *carrierIntelEventTool) Validate(
 
 func (t *carrierIntelEventTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	request, err := t.arguments(params)
 	if err != nil {
@@ -915,6 +916,6 @@ func (t *carrierIntelEventTool) Execute(
 	return err
 }
 
-func (t *carrierIntelEventTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *carrierIntelEventTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, "eventId", permission.ResourceCarrierIntelligence)
 }

@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -46,9 +46,9 @@ var mentionKinds = []mentionKind{
 
 func (s *Service) SearchMentions(
 	ctx context.Context,
-	actor serviceports.RequestActor,
-	req serviceports.MentionSearchRequest,
-) ([]serviceports.MentionCandidate, error) {
+	actor permissionports.RequestActor,
+	req agentports.MentionSearchRequest,
+) ([]agentports.MentionCandidate, error) {
 	tab := strings.TrimSpace(req.Kind)
 	if tab == "all" {
 		tab = ""
@@ -78,9 +78,9 @@ func (s *Service) SearchMentions(
 // follows without counting the rest.
 func (s *Service) SearchMentionPage(
 	ctx context.Context,
-	actor serviceports.RequestActor,
-	req serviceports.MentionPageRequest,
-) (*serviceports.MentionPage, error) {
+	actor permissionports.RequestActor,
+	req agentports.MentionPageRequest,
+) (*agentports.MentionPage, error) {
 	kind := strings.TrimSpace(req.Kind)
 	idx := slices.IndexFunc(mentionKinds, func(candidate mentionKind) bool {
 		return candidate.kind == kind
@@ -107,7 +107,7 @@ func (s *Service) SearchMentionPage(
 		return nil, err
 	}
 
-	page := &serviceports.MentionPage{Results: rows, HasMore: len(rows) > limit}
+	page := &agentports.MentionPage{Results: rows, HasMore: len(rows) > limit}
 	if page.HasMore {
 		page.Results = rows[:limit]
 	}
@@ -126,25 +126,25 @@ type mentionSearch struct {
 // capped at the limit.
 func (s *Service) searchKinds(
 	ctx context.Context,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 	search *mentionSearch,
-) ([]serviceports.MentionCandidate, error) {
+) ([]agentports.MentionCandidate, error) {
 	query := strings.TrimSpace(search.query)
 	if len(query) > maxMentionQueryLen {
 		query = query[:maxMentionQueryLen]
 	}
 	if len(search.wanted) == 0 || s.permissions == nil {
-		return []serviceports.MentionCandidate{}, nil
+		return []agentports.MentionCandidate{}, nil
 	}
 
-	checks := make([]serviceports.ResourceOperationCheck, 0, len(search.wanted))
+	checks := make([]permissionports.ResourceOperationCheck, 0, len(search.wanted))
 	for _, candidate := range search.wanted {
-		checks = append(checks, serviceports.ResourceOperationCheck{
+		checks = append(checks, permissionports.ResourceOperationCheck{
 			Resource:  candidate.resource.String(),
 			Operation: permission.OpRead,
 		})
 	}
-	result, err := s.permissions.CheckBatch(ctx, &serviceports.BatchPermissionCheckRequest{
+	result, err := s.permissions.CheckBatch(ctx, &permissionports.BatchPermissionCheckRequest{
 		PrincipalType:  actor.PrincipalType,
 		PrincipalID:    actor.PrincipalID,
 		UserID:         actor.UserID,
@@ -164,10 +164,10 @@ func (s *Service) searchKinds(
 		}
 	}
 	if len(kinds) == 0 {
-		return []serviceports.MentionCandidate{}, nil
+		return []agentports.MentionCandidate{}, nil
 	}
 
-	rows, err := s.conversations.SearchMentions(ctx, repositories.SearchMentionsRequest{
+	rows, err := s.conversations.SearchMentions(ctx, agentports.SearchMentionsRequest{
 		TenantInfo:   actor.TenantInfo(),
 		Query:        query,
 		Kinds:        kinds,
@@ -178,9 +178,9 @@ func (s *Service) searchKinds(
 		return nil, err
 	}
 
-	out := make([]serviceports.MentionCandidate, 0, len(rows))
+	out := make([]agentports.MentionCandidate, 0, len(rows))
 	for _, row := range rows {
-		out = append(out, serviceports.MentionCandidate{
+		out = append(out, agentports.MentionCandidate{
 			Type:     row.Type,
 			ID:       row.ID,
 			Label:    row.Label,

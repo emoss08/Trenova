@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/iam"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -36,7 +36,7 @@ func (s *Service) recordResetEvent(ctx context.Context, event *resetEvent, err e
 		return
 	}
 
-	rec := serviceports.AuthEventRecord{
+	rec := iamports.AuthEventRecord{
 		Provider:       event.provider,
 		Outcome:        event.outcome,
 		ErrorCode:      event.errorCode,

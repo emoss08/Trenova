@@ -6,15 +6,15 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -46,9 +46,9 @@ type harness struct {
 }
 
 type harnessParams struct {
-	query  []serviceports.AgentQueryTool
-	action []serviceports.AgentTool
-	ledger serviceports.RunStepLedger
+	query  []agentports.AgentQueryTool
+	action []agentports.AgentTool
+	ledger agentports.RunStepLedger
 	// delegates opens another agent's turn when the run's agent hands it a
 	// task.
 	delegates DelegateOpener
@@ -108,7 +108,7 @@ func newHarness(t *testing.T, p harnessParams) *harness {
 
 // replies scripts the model: each call to the model activity answers with the
 // next reply in turn.
-func (h *harness) replies(replies ...*serviceports.ChatCompletionResult) {
+func (h *harness) replies(replies ...*agentports.ChatCompletionResult) {
 	for _, reply := range replies {
 		h.env.OnActivity(h.activities.ModelCallActivity, mock.Anything, mock.Anything).
 			Return(&agentruntime.ModelReply{Completion: reply}, nil).Once()
@@ -143,8 +143,8 @@ func runContext(tools ...string) RunContext {
 
 	return RunContext{
 		Definition: definition,
-		Actor: &serviceports.RequestActor{
-			PrincipalType:  serviceports.PrincipalTypeUser,
+		Actor: &permissionports.RequestActor{
+			PrincipalType:  permissionports.PrincipalTypeUser,
 			PrincipalID:    pulid.MustNew("usr_"),
 			UserID:         pulid.MustNew("usr_"),
 			OrganizationID: pulid.MustNew("org_"),
@@ -155,13 +155,13 @@ func runContext(tools ...string) RunContext {
 	}
 }
 
-func textReply(text string) *serviceports.ChatCompletionResult {
-	return &serviceports.ChatCompletionResult{Text: text, ModelIdentifier: "test-model"}
+func textReply(text string) *agentports.ChatCompletionResult {
+	return &agentports.ChatCompletionResult{Text: text, ModelIdentifier: "test-model"}
 }
 
-func toolReply(name string, args map[string]any) *serviceports.ChatCompletionResult {
-	return &serviceports.ChatCompletionResult{
-		ToolCalls:       []serviceports.ToolCall{{ID: "call_1", Name: name, Arguments: args}},
+func toolReply(name string, args map[string]any) *agentports.ChatCompletionResult {
+	return &agentports.ChatCompletionResult{
+		ToolCalls:       []agentports.ToolCall{{ID: "call_1", Name: name, Arguments: args}},
 		ModelIdentifier: "test-model",
 	}
 }
@@ -198,7 +198,7 @@ func TestRunCallsAToolAsItsOwnActivity(t *testing.T) {
 		ToolName: "get_shipment",
 		Result:   map[string]any{"status": "InTransit", "city": "Memphis"},
 	}
-	h := newHarness(t, harnessParams{query: []serviceports.AgentQueryTool{lookup}})
+	h := newHarness(t, harnessParams{query: []agentports.AgentQueryTool{lookup}})
 	h.replies(
 		toolReply("get_shipment", map[string]any{"proNumber": "12345"}),
 		textReply("It is in transit near Memphis."),
@@ -222,9 +222,9 @@ func TestRunCallsAToolAsItsOwnActivity(t *testing.T) {
 	assert.Equal(t, 1, result.Outcome.Result.ToolCallsUsed)
 	assert.Equal(t,
 		[]string{
-			serviceports.AssistantEventMessage,
-			serviceports.AssistantEventToolStarted,
-			serviceports.AssistantEventToolFinished,
+			agentports.AssistantEventMessage,
+			agentports.AssistantEventToolStarted,
+			agentports.AssistantEventToolFinished,
 		},
 		eventNames(result.Outcome),
 	)
@@ -242,7 +242,7 @@ func TestRunToolBindsTheRunsTenantForTheDatabase(t *testing.T) {
 		ToolName: "get_shipment",
 		Result:   map[string]any{"status": "InTransit"},
 	}
-	h := newHarness(t, harnessParams{query: []serviceports.AgentQueryTool{lookup}})
+	h := newHarness(t, harnessParams{query: []agentports.AgentQueryTool{lookup}})
 	h.replies(
 		toolReply("get_shipment", map[string]any{"proNumber": "12345"}),
 		textReply("It is in transit."),
@@ -262,7 +262,7 @@ func TestRunToolRefusesACallWithNoTenant(t *testing.T) {
 	t.Parallel()
 
 	lookup := &agentruntimetest.StubQueryTool{ToolName: "get_shipment"}
-	h := newHarness(t, harnessParams{query: []serviceports.AgentQueryTool{lookup}})
+	h := newHarness(t, harnessParams{query: []agentports.AgentQueryTool{lookup}})
 	h.replies(
 		toolReply("get_shipment", map[string]any{"proNumber": "12345"}),
 		textReply("I could not look that up."),
@@ -285,7 +285,7 @@ func TestRunTellsTheModelWhenAToolCouldNotBeRun(t *testing.T) {
 	lookup := &agentruntimetest.StubQueryTool{ToolName: "get_shipment"}
 	attempts := 0
 	h := newHarness(t, harnessParams{
-		query: []serviceports.AgentQueryTool{lookup},
+		query: []agentports.AgentQueryTool{lookup},
 		wrapTool: func(
 			func(context.Context, converter.EncodedValues) (*ToolResult, error),
 		) func(context.Context, converter.EncodedValues) (*ToolResult, error) {
@@ -334,7 +334,7 @@ func TestRunReturnsWhatTheTurnDidWhenTheModelFails(t *testing.T) {
 	t.Parallel()
 
 	lookup := &agentruntimetest.StubQueryTool{ToolName: "get_shipment", Result: "found"}
-	h := newHarness(t, harnessParams{query: []serviceports.AgentQueryTool{lookup}})
+	h := newHarness(t, harnessParams{query: []agentports.AgentQueryTool{lookup}})
 	h.replies(toolReply("get_shipment", map[string]any{"proNumber": "12345"}))
 	h.env.OnActivity(h.activities.ModelCallActivity, mock.Anything, mock.Anything).
 		Return(nil, temporal.NewNonRetryableApplicationError("bad request", modelcall.ErrTypeModelRejected, nil)).
@@ -352,7 +352,7 @@ func TestRunCarriesAProposalBackAcrossTheActivity(t *testing.T) {
 	t.Parallel()
 
 	move := &agentruntimetest.StubActionTool{ToolName: "assign_move", Tier: agent.TierPropose}
-	h := newHarness(t, harnessParams{action: []serviceports.AgentTool{move}})
+	h := newHarness(t, harnessParams{action: []agentports.AgentTool{move}})
 	h.replies(
 		toolReply("assign_move", map[string]any{"moveId": "mv_1"}),
 		textReply("I have proposed the assignment."),
@@ -371,30 +371,30 @@ func TestRunCarriesAProposalBackAcrossTheActivity(t *testing.T) {
 // time, and with the recorded outcome once the step has settled.
 type memoryLedger struct {
 	mu      sync.Mutex
-	settled map[string]serviceports.RunStepOutcome
+	settled map[string]agentports.RunStepOutcome
 	claims  int
 }
 
 func (l *memoryLedger) Claim(
 	_ context.Context,
 	_ pagination.TenantInfo,
-	step serviceports.RunStep,
-) (serviceports.StepVerdict, error) {
+	step agentports.RunStep,
+) (agentports.StepVerdict, error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
 	l.claims++
 	if outcome, ok := l.settled[step.Key]; ok {
-		return serviceports.StepVerdict{State: serviceports.StepCompleted, Outcome: outcome}, nil
+		return agentports.StepVerdict{State: agentports.StepCompleted, Outcome: outcome}, nil
 	}
 
-	return serviceports.StepVerdict{State: serviceports.StepFresh}, nil
+	return agentports.StepVerdict{State: agentports.StepFresh}, nil
 }
 
 func (l *memoryLedger) Settle(
 	_ context.Context,
 	_ pagination.TenantInfo,
-	step serviceports.RunStep,
+	step agentports.RunStep,
 ) error {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -404,15 +404,15 @@ func (l *memoryLedger) Settle(
 	return nil
 }
 
-func (*memoryLedger) Record(context.Context, pagination.TenantInfo, serviceports.RunStep) error {
+func (*memoryLedger) Record(context.Context, pagination.TenantInfo, agentports.RunStep) error {
 	return nil
 }
 
 func (*memoryLedger) Loaded(
 	context.Context,
 	pagination.TenantInfo,
-	serviceports.RunStepOwner,
-) ([]serviceports.RunStep, error) {
+	agentports.RunStepOwner,
+) ([]agentports.RunStep, error) {
 	return nil, nil
 }
 
@@ -422,9 +422,9 @@ func TestRunNeverWritesTwiceWhenAToolIsRetried(t *testing.T) {
 	t.Parallel()
 
 	move := &agentruntimetest.StubActionTool{ToolName: "assign_move", Tier: agent.TierAutoExecute}
-	ledger := &memoryLedger{settled: map[string]serviceports.RunStepOutcome{}}
+	ledger := &memoryLedger{settled: map[string]agentports.RunStepOutcome{}}
 	h := newHarness(t, harnessParams{
-		action: []serviceports.AgentTool{move},
+		action: []agentports.AgentTool{move},
 		ledger: ledger,
 		wrapTool: func(
 			run func(context.Context, converter.EncodedValues) (*ToolResult, error),
@@ -446,7 +446,7 @@ func TestRunNeverWritesTwiceWhenAToolIsRetried(t *testing.T) {
 
 	rc := runContext("assign_move")
 	rc.RunID = pulid.MustNew("arun_")
-	rc.StepOwner = serviceports.RunStepOwner{Kind: serviceports.RunStepOwnerAgentRun, ID: rc.RunID}
+	rc.StepOwner = agentports.RunStepOwner{Kind: agentports.RunStepOwnerAgentRun, ID: rc.RunID}
 
 	result := h.run(t, rc)
 
@@ -481,7 +481,7 @@ func TestToolActivityRefusesWhatIsNotATool(t *testing.T) {
 			t.Parallel()
 
 			move := &agentruntimetest.StubActionTool{ToolName: "assign_move"}
-			h := newHarness(t, harnessParams{action: []serviceports.AgentTool{move}})
+			h := newHarness(t, harnessParams{action: []agentports.AgentTool{move}})
 			h.env.RegisterWorkflowWithOptions(
 				func(ctx workflow.Context, name string, in *ToolInput) error {
 					ctx = workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
@@ -497,7 +497,7 @@ func TestToolActivityRefusesWhatIsNotATool(t *testing.T) {
 			h.env.ExecuteWorkflow("agentflow-test-call", tt.activity, &ToolInput{
 				Run: runContext("assign_move"),
 				Call: agentruntime.DispatchCall{
-					Call: serviceports.ToolCall{ID: "call_1", Name: tt.call},
+					Call: agentports.ToolCall{ID: "call_1", Name: tt.call},
 				},
 			})
 
@@ -515,14 +515,14 @@ func TestRunAsksACutOffCallAgainWithMoreRoom(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t, harnessParams{})
-	cut := &serviceports.ChatCompletionResult{
+	cut := &agentports.ChatCompletionResult{
 		Text:            "Transferring.",
 		Truncated:       true,
 		OutputLimit:     1024,
-		CutOffCall:      &serviceports.CutOffToolCall{Name: "transfer_to_billing"},
+		CutOffCall:      &agentports.CutOffToolCall{Name: "transfer_to_billing"},
 		ModelIdentifier: "z-ai/glm-5.3",
 	}
-	replies := []*serviceports.ChatCompletionResult{cut, textReply("Nothing is waiting.")}
+	replies := []*agentports.ChatCompletionResult{cut, textReply("Nothing is waiting.")}
 	var (
 		mu      sync.Mutex
 		budgets []int
@@ -541,5 +541,5 @@ func TestRunAsksACutOffCallAgainWithMoreRoom(t *testing.T) {
 	require.Empty(t, result.Err)
 	assert.Equal(t, []int{0, 2048}, budgets)
 	assert.Equal(t, "Nothing is waiting.", result.Outcome.Result.Reply)
-	assert.Contains(t, eventNames(result.Outcome), serviceports.AssistantEventRetrying)
+	assert.Contains(t, eventNames(result.Outcome), agentports.AssistantEventRetrying)
 }

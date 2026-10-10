@@ -12,9 +12,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/mdtable"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/recordids"
@@ -111,9 +112,9 @@ type RefusalExpect struct {
 
 type ConversationOutcome struct {
 	Case     *ConversationCase
-	Result   *serviceports.RunResult
+	Result   *agentports.RunResult
 	Received map[string][]map[string]any
-	Tables   map[string]serviceports.ShownArtifact
+	Tables   map[string]agentports.ShownArtifact
 }
 
 func LoadConversationSuite(path string) (*ConversationSuite, error) {
@@ -141,7 +142,7 @@ type recordingTool struct {
 
 func (t *recordingTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	t.mu.Lock()
 	t.received = append(t.received, maps.Clone(params.Params))
@@ -154,7 +155,7 @@ func (t *recordingTool) Query(
 // the case's tools as the only ones registered.
 func RunConversation(ctx context.Context, c *ConversationCase) (*ConversationOutcome, error) {
 	tools := make([]*recordingTool, 0, len(c.Tools))
-	queries := make([]serviceports.AgentQueryTool, 0, len(c.Tools))
+	queries := make([]agentports.AgentQueryTool, 0, len(c.Tools))
 	names := make([]string, 0, len(c.Tools))
 	tables := make(map[string]*TableFixture, len(c.Tools))
 	for idx := range c.Tools {
@@ -191,7 +192,7 @@ func RunConversation(ctx context.Context, c *ConversationCase) (*ConversationOut
 	outcome := &ConversationOutcome{
 		Case:     c,
 		Received: make(map[string][]map[string]any, len(tools)),
-		Tables:   make(map[string]serviceports.ShownArtifact, len(tables)),
+		Tables:   make(map[string]agentports.ShownArtifact, len(tables)),
 	}
 	var shown sync.Mutex
 	definition := &agentdefinition.Definition{
@@ -204,10 +205,10 @@ func RunConversation(ctx context.Context, c *ConversationCase) (*ConversationOut
 	}
 	definition.ApplyDefaults()
 
-	result, err := rt.Run(ctx, &serviceports.RunRequest{
+	result, err := rt.Run(ctx, &agentports.RunRequest{
 		Definition: definition,
-		Actor: &serviceports.RequestActor{
-			PrincipalType:  serviceports.PrincipalTypeUser,
+		Actor: &permissionports.RequestActor{
+			PrincipalType:  permissionports.PrincipalTypeUser,
 			PrincipalID:    conversationUser,
 			UserID:         conversationUser,
 			OrganizationID: conversationOrganization,
@@ -215,8 +216,8 @@ func RunConversation(ctx context.Context, c *ConversationCase) (*ConversationOut
 		},
 		Input: c.Input,
 		ToolObserver: func(
-			observation serviceports.ToolObservation,
-		) (*serviceports.ShownArtifact, error) {
+			observation agentports.ToolObservation,
+		) (*agentports.ShownArtifact, error) {
 			table, kept := tables[observation.Call.Name]
 			if !kept || observation.Failed {
 				return nil, nil //nolint:nilnil // a call that showed nothing
@@ -264,13 +265,13 @@ func tableLabel(idx int) string {
 	return fmt.Sprintf("%s%d", tableRowPrefix, firstTableRow+idx)
 }
 
-func tableArtifact(table *TableFixture) serviceports.ShownArtifact {
+func tableArtifact(table *TableFixture) agentports.ShownArtifact {
 	labels := make([]string, 0, table.Rows)
 	for idx := range table.Rows {
 		labels = append(labels, tableLabel(idx))
 	}
 
-	return serviceports.ShownArtifact{
+	return agentports.ShownArtifact{
 		ID:     pulid.MustNew("aart_"),
 		Kind:   "table_view",
 		Title:  table.Title,
@@ -286,10 +287,10 @@ func conversationScript(
 	c *ConversationCase,
 	tables map[string]*TableFixture,
 ) (*agentruntimetest.ScriptedCompletion, error) {
-	turns := make([]*serviceports.ChatCompletionResult, 0, len(c.Script))
+	turns := make([]*agentports.ChatCompletionResult, 0, len(c.Script))
 	for stepIdx := range c.Script {
 		step := &c.Script[stepIdx]
-		result := &serviceports.ChatCompletionResult{
+		result := &agentports.ChatCompletionResult{
 			Text:            step.Reply + reprint(step.ReprintRows, tables),
 			ModelIdentifier: conversationModel,
 		}
@@ -299,7 +300,7 @@ func conversationScript(
 			if err != nil {
 				return nil, err
 			}
-			result.ToolCalls = append(result.ToolCalls, serviceports.ToolCall{
+			result.ToolCalls = append(result.ToolCalls, agentports.ToolCall{
 				ID:        fmt.Sprintf("call_%d_%d", stepIdx, callIdx),
 				Name:      call.Name,
 				Arguments: args,

@@ -10,18 +10,18 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/carrierassignmentservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/money"
 )
 
 var (
-	_ serviceports.ToolPreviewer = (*assignMoveToCarrierTool)(nil)
-	_ serviceports.ToolPreviewer = (*cancelCarrierAssignmentTool)(nil)
-	_ serviceports.ToolValidator = (*assignMoveToCarrierTool)(nil)
-	_ serviceports.ToolValidator = (*cancelCarrierAssignmentTool)(nil)
+	_ agentports.ToolPreviewer = (*assignMoveToCarrierTool)(nil)
+	_ agentports.ToolPreviewer = (*cancelCarrierAssignmentTool)(nil)
+	_ agentports.ToolValidator = (*assignMoveToCarrierTool)(nil)
+	_ agentports.ToolValidator = (*cancelCarrierAssignmentTool)(nil)
 )
 
 const fieldCarrierID = "carrierId"
@@ -51,7 +51,7 @@ var carrierAssignmentLabels = map[string]string{
 
 func (t *assignMoveToCarrierTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	request, err := t.request(&params)
 	if err != nil {
@@ -121,7 +121,7 @@ func (t *assignMoveToCarrierTool) Preview(
 
 func (t *cancelCarrierAssignmentTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	request, err := t.request(&params)
 	if err != nil {

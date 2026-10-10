@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/exchangerate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/exchangerateports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/uptrace/bun"
@@ -27,7 +27,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.ExchangeRateRepository {
+func New(p Params) exchangerateports.ExchangeRateRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.exchange-rate-repository"),
@@ -36,7 +36,7 @@ func New(p Params) repositories.ExchangeRateRepository {
 
 func (r *repository) GetRate(
 	ctx context.Context,
-	req *repositories.GetExchangeRateRequest,
+	req *exchangerateports.GetExchangeRateRequest,
 ) (*exchangerate.ExchangeRate, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*exchangerate.ExchangeRate, error) {
 		entity := new(exchangerate.ExchangeRate)
@@ -60,7 +60,7 @@ func (r *repository) GetRate(
 
 func (r *repository) UpsertRates(
 	ctx context.Context,
-	req *repositories.UpsertExchangeRatesRequest,
+	req *exchangerateports.UpsertExchangeRatesRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		return r.db.DBForContext(ctx).RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
@@ -88,7 +88,7 @@ func (r *repository) UpsertRates(
 
 func (r *repository) CreateSettlementQuote(
 	ctx context.Context,
-	req *repositories.CreateSettlementQuoteRequest,
+	req *exchangerateports.CreateSettlementQuoteQuery,
 ) (*exchangerate.SettlementQuote, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*exchangerate.SettlementQuote, error) {
 		req.Quote.OrganizationID = req.TenantInfo.OrgID

@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-type ReviewChange = services.RecordChange[worker.PerformanceReview]
+type ReviewChange = kernelports.RecordChange[worker.PerformanceReview]
 
 func (s *Service) PlanCreateReview(
 	ctx context.Context,
@@ -23,7 +23,7 @@ func (s *Service) PlanCreateReview(
 	if _, err := s.loadWorker(ctx, req.TenantInfo, req.WorkerID); err != nil {
 		return nil, err
 	}
-	template, err := s.repo.GetTemplateByID(ctx, &repositories.GetReviewTemplateByIDRequest{
+	template, err := s.repo.GetTemplateByID(ctx, &workerports.GetReviewTemplateByIDRequest{
 		ID:         req.TemplateID,
 		TenantInfo: req.TenantInfo,
 	})

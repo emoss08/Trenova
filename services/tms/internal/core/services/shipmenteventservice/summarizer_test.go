@@ -6,7 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,10 +21,10 @@ func newTenant(t *testing.T) TenantRef {
 	}
 }
 
-func userActor() services.AuditActor {
+func userActor() kernelports.AuditActor {
 	userID := pulid.MustNew("usr_")
-	return services.AuditActor{
-		PrincipalType: services.PrincipalTypeUser,
+	return kernelports.AuditActor{
+		PrincipalType: permissionports.PrincipalTypeUser,
 		PrincipalID:   userID,
 		UserID:        userID,
 	}
@@ -237,8 +238,8 @@ func TestResolveActor(t *testing.T) {
 	t.Parallel()
 
 	userID := pulid.MustNew("usr_")
-	at, id := resolveActor(services.AuditActor{
-		PrincipalType: services.PrincipalTypeUser,
+	at, id := resolveActor(kernelports.AuditActor{
+		PrincipalType: permissionports.PrincipalTypeUser,
 		PrincipalID:   userID,
 		UserID:        userID,
 	})
@@ -246,15 +247,15 @@ func TestResolveActor(t *testing.T) {
 	assert.Equal(t, userID, id)
 
 	keyID := pulid.MustNew("ak_")
-	at, id = resolveActor(services.AuditActor{
-		PrincipalType: services.PrincipalTypeAPIKey,
+	at, id = resolveActor(kernelports.AuditActor{
+		PrincipalType: permissionports.PrincipalTypeAPIKey,
 		PrincipalID:   keyID,
 		APIKeyID:      keyID,
 	})
 	assert.Equal(t, shipmentevent.ActorAPIKey, at)
 	assert.Equal(t, keyID, id)
 
-	at, id = resolveActor(services.AuditActor{})
+	at, id = resolveActor(kernelports.AuditActor{})
 	assert.Equal(t, shipmentevent.ActorSystem, at)
 	assert.True(t, id.IsNil())
 }

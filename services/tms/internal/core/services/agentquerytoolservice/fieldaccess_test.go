@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,9 +18,9 @@ func personReachingEach(
 	sensitivity permission.FieldSensitivity,
 	resources ...permission.Resource,
 ) *fakePermissions {
-	readable := make(map[string]*serviceports.ResourcePermissionDetail, len(resources))
+	readable := make(map[string]*permissionports.ResourcePermissionDetail, len(resources))
 	for _, resource := range resources {
-		readable[resource.String()] = &serviceports.ResourcePermissionDetail{
+		readable[resource.String()] = &permissionports.ResourcePermissionDetail{
 			Resource:       resource.String(),
 			Operations:     []permission.Operation{permission.OpRead},
 			MaxSensitivity: sensitivity,
@@ -96,7 +97,7 @@ func nestedPeopleRecord(fixture *nestedPeopleFixture) map[string]any {
 func redact(
 	t *testing.T,
 	permissions *fakePermissions,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 	record map[string]any,
 ) map[string]any {
 	t.Helper()

@@ -5,17 +5,17 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 )
 
 type flagManualReviewTool struct {
-	exceptions serviceports.AgentExceptionService
+	exceptions agentports.AgentExceptionService
 }
 
-func newFlagManualReviewTool(exceptions serviceports.AgentExceptionService) serviceports.AgentTool {
+func newFlagManualReviewTool(exceptions agentports.AgentExceptionService) agentports.AgentTool {
 	return &flagManualReviewTool{exceptions: exceptions}
 }
 
@@ -97,8 +97,8 @@ func (t *flagManualReviewTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *flagManualReviewTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *flagManualReviewTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceAgentException,
@@ -117,7 +117,7 @@ func (t *flagManualReviewTool) Policy() serviceports.ToolPolicy {
 
 func (t *flagManualReviewTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -138,14 +138,14 @@ func (t *flagManualReviewTool) Execute(
 // shape is refused to the model before it is proposed.
 func (t *flagManualReviewTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	return previewValidates(ctx, t, &params)
 }
 
 func (t *flagManualReviewTool) request(
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.FlagAgentExceptionRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*agentports.FlagAgentExceptionRequest, error) {
 	runID, err := requirePulid(params.Params, "runId")
 	if err != nil {
 		return nil, err
@@ -180,7 +180,7 @@ func (t *flagManualReviewTool) request(
 		return nil, err
 	}
 
-	return &serviceports.FlagAgentExceptionRequest{
+	return &agentports.FlagAgentExceptionRequest{
 		RunID:          runID,
 		Category:       category,
 		Severity:       severity,

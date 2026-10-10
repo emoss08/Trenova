@@ -7,7 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/permit"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,7 +19,7 @@ import (
 )
 
 type fakePermits struct {
-	serviceports.PermitService
+	permitports.PermitService
 
 	guard  *writeGuard
 	permit *permit.Permit
@@ -73,7 +76,7 @@ func (f *fakePermits) PlanCreatePermit(
 func (f *fakePermits) CreatePermit(
 	_ context.Context,
 	entity *permit.Permit,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*permit.Permit, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -87,17 +90,17 @@ func (f *fakePermits) CreatePermit(
 func (f *fakePermits) PlanUpdatePermit(
 	_ context.Context,
 	entity *permit.Permit,
-) (*serviceports.RecordChange[permit.Permit], error) {
+) (*kernelports.RecordChange[permit.Permit], error) {
 	if err := validPermit(entity); err != nil {
 		return nil, err
 	}
-	return &serviceports.RecordChange[permit.Permit]{Before: f.permit, After: entity}, nil
+	return &kernelports.RecordChange[permit.Permit]{Before: f.permit, After: entity}, nil
 }
 
 func (f *fakePermits) UpdatePermit(
 	_ context.Context,
 	entity *permit.Permit,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*permit.Permit, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -123,10 +126,10 @@ func TestRecordShipmentPermit_ChecksWhatTheStateIssued(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, permits.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, "Would record permit OH-99812 as Active.", preview.Summary)
-	result, err := tool.(serviceports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	require.NotNil(t, permits.created)
 	assert.Equal(t, params.OrganizationID, permits.created.OrganizationID)
@@ -139,14 +142,14 @@ func TestRecordShipmentPermit_ChecksWhatTheStateIssued(t *testing.T) {
 	assert.Equal(t, permission.ResourcePermit, policy.Resource)
 	assert.Equal(t, permission.OpCreate, policy.Operation)
 
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 		executeParams(map[string]any{
 			paramShipmentID:   permits.permit.ShipmentID.String(),
 			paramStateID:      permits.permit.StateID.String(),
 			paramPermitNumber: "OH-99812",
 			fieldStatus:       "Active",
 		})), "an active permit records when it expires")
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 		executeParams(map[string]any{
 			paramShipmentID:   permits.permit.ShipmentID.String(),
 			paramStateID:      permits.permit.StateID.String(),
@@ -167,7 +170,7 @@ func TestUpdateShipmentPermit_FindsThePermitOnItsShipment(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, permits.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, "Would change permit IN-44120.", preview.Summary)
 	assert.Equal(t, string(permit.StatusVoid),
@@ -177,7 +180,7 @@ func TestUpdateShipmentPermit_FindsThePermitOnItsShipment(t *testing.T) {
 	assert.Equal(t, permit.StatusVoid, permits.updated.Status)
 	assert.Equal(t, "IN-44120", permits.updated.PermitNumber)
 
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 		executeParams(map[string]any{
 			paramShipmentID: pulid.MustNew("shp_").String(),
 			paramPermitID:   permits.permit.ID.String(),

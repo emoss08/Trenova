@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -14,13 +14,13 @@ import (
 )
 
 type balanceReader struct {
-	repositories.PTOLedgerRepository
+	workerports.PTOLedgerRepository
 	balances []*worker.WorkerPTOBalance
 }
 
 func (r *balanceReader) ListBalances(
 	context.Context,
-	*repositories.ListPTOBalancesRequest,
+	*workerports.ListPTOBalancesRequest,
 ) ([]*worker.WorkerPTOBalance, error) {
 	return r.balances, nil
 }

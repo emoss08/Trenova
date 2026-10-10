@@ -8,7 +8,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
 )
@@ -41,7 +43,7 @@ type WorldCheck struct {
 
 type Interjections struct {
 	Steers []Steer
-	World  *serviceports.RecordChanges
+	World  *agentports.RecordChanges
 }
 
 type OwnWrite struct {
@@ -58,7 +60,7 @@ type WorldState struct {
 
 func (s *Service) watchWorld(
 	ctx context.Context,
-	req *serviceports.RunRequest,
+	req *agentports.RunRequest,
 	now int64,
 ) *WorldState {
 	if s.changes == nil || req.Delegation != nil || req.Actor == nil {
@@ -73,7 +75,7 @@ func (s *Service) watchWorld(
 	return openWorld(cursor, watchedRecords(req), now)
 }
 
-func watchedRecords(req *serviceports.RunRequest) []agent.EntityRef {
+func watchedRecords(req *agentports.RunRequest) []agent.EntityRef {
 	if len(req.Context.Anchors) == 0 {
 		return req.Records
 	}
@@ -136,7 +138,7 @@ func (w *WorldState) watch(record agent.EntityRef) {
 	}
 }
 
-func (w *WorldState) read(call *serviceports.ToolCall, summary string) {
+func (w *WorldState) read(call *agentports.ToolCall, summary string) {
 	if w == nil {
 		return
 	}
@@ -165,7 +167,7 @@ func RecordsRead(name string, arguments map[string]any, summary string) []agent.
 	return records
 }
 
-func (w *WorldState) wrote(action *serviceports.PendingAction, at int64) {
+func (w *WorldState) wrote(action *agentports.PendingAction, at int64) {
 	if w == nil || action == nil || !action.Executed || action.Target == nil ||
 		action.Target.ID.IsNil() {
 		return
@@ -180,7 +182,7 @@ func (w *WorldState) wrote(action *serviceports.PendingAction, at int64) {
 	w.Own[idx].At = at
 }
 
-func (t *Turn) noteWorld(fx TurnEffects, call *serviceports.ToolCall, outcome *toolOutcome) {
+func (t *Turn) noteWorld(fx TurnEffects, call *agentports.ToolCall, outcome *toolOutcome) {
 	if t.world == nil {
 		return
 	}
@@ -203,9 +205,9 @@ func (w *WorldState) due(now int64) *WorldCheck {
 }
 
 func (w *WorldState) news(
-	found *serviceports.RecordChanges,
+	found *agentports.RecordChanges,
 	now int64,
-) []serviceports.WatchedRecordChange {
+) []agentports.WatchedRecordChange {
 	w.CheckedAt = now
 	if found == nil {
 		return nil
@@ -217,7 +219,7 @@ func (w *WorldState) news(
 		return nil
 	}
 
-	news := make([]serviceports.WatchedRecordChange, 0, len(found.Changes))
+	news := make([]agentports.WatchedRecordChange, 0, len(found.Changes))
 	for i := range found.Changes {
 		change := &found.Changes[i]
 		if w.ownChange(change) {
@@ -236,7 +238,7 @@ func (w *WorldState) news(
 	return news
 }
 
-func (w *WorldState) ownChange(change *serviceports.WatchedRecordChange) bool {
+func (w *WorldState) ownChange(change *agentports.WatchedRecordChange) bool {
 	idx := slices.IndexFunc(w.Own, func(own OwnWrite) bool { return own.ID == change.RecordID })
 
 	return idx >= 0 && change.At <= w.Own[idx].At+ownWriteGrace
@@ -304,8 +306,8 @@ func (t *Turn) steer(fx TurnEffects, steer Steer) {
 		t.world.watch(mention)
 	}
 
-	t.messages = append(t.messages, serviceports.Message{
-		Role:    serviceports.RoleUser,
+	t.messages = append(t.messages, agentports.Message{
+		Role:    agentports.RoleUser,
 		Content: SteerPrompt(content, mentions),
 	})
 	t.result.Messages = append(t.result.Messages, conversation.Message{
@@ -315,9 +317,9 @@ func (t *Turn) steer(fx TurnEffects, steer Steer) {
 		Mentions:  mentions,
 		CreatedAt: fx.Now(),
 	})
-	fx.Emit(serviceports.StreamEvent{
-		Event: serviceports.AssistantEventSteered,
-		Data: serviceports.AssistantSteeredEvent{
+	fx.Emit(kernelports.StreamEvent{
+		Event: agentports.AssistantEventSteered,
+		Data: agentports.AssistantSteeredEvent{
 			ID:       steer.ID,
 			Content:  content,
 			Mentions: mentions,
@@ -325,12 +327,12 @@ func (t *Turn) steer(fx TurnEffects, steer Steer) {
 	})
 }
 
-func (t *Turn) worldChanged(fx TurnEffects, changes []serviceports.WatchedRecordChange) {
+func (t *Turn) worldChanged(fx TurnEffects, changes []agentports.WatchedRecordChange) {
 	notice := WorldChangeNotice(changes, t.req.Actor)
 	clear(t.repeats.reads)
 
-	t.messages = append(t.messages, serviceports.Message{
-		Role:    serviceports.RoleUser,
+	t.messages = append(t.messages, agentports.Message{
+		Role:    agentports.RoleUser,
 		Content: notice,
 	})
 	t.result.Messages = append(t.result.Messages, conversation.Message{
@@ -340,9 +342,9 @@ func (t *Turn) worldChanged(fx TurnEffects, changes []serviceports.WatchedRecord
 		WorldChanges: changes,
 		CreatedAt:    fx.Now(),
 	})
-	fx.Emit(serviceports.StreamEvent{
-		Event: serviceports.AssistantEventWorldChanged,
-		Data:  serviceports.AssistantWorldChangedEvent{Changes: changes},
+	fx.Emit(kernelports.StreamEvent{
+		Event: agentports.AssistantEventWorldChanged,
+		Data:  agentports.AssistantWorldChangedEvent{Changes: changes},
 	})
 }
 
@@ -378,8 +380,8 @@ const worldChangeClosing = "What you read about them earlier may be out of date.
 	"one again before you rely on it or change it, and tell the person if it changes your answer."
 
 func WorldChangeNotice(
-	changes []serviceports.WatchedRecordChange,
-	actor *serviceports.RequestActor,
+	changes []agentports.WatchedRecordChange,
+	actor *permissionports.RequestActor,
 ) string {
 	var b strings.Builder
 	b.WriteString(worldChangePreamble)
@@ -418,21 +420,21 @@ func changeVerb(action string) string {
 }
 
 func changedBy(
-	change *serviceports.WatchedRecordChange,
-	actor *serviceports.RequestActor,
+	change *agentports.WatchedRecordChange,
+	actor *permissionports.RequestActor,
 ) string {
 	if actor != nil && actor.UserID.IsNotNil() && change.ActorUserID == actor.UserID.String() &&
-		change.ActorType != string(serviceports.PrincipalTypeAgent) {
+		change.ActorType != string(permissionports.PrincipalTypeAgent) {
 		return "by the person you are working for, outside this conversation"
 	}
-	switch serviceports.PrincipalType(change.ActorType) {
-	case serviceports.PrincipalTypeAgent:
+	switch kernelports.PrincipalType(change.ActorType) {
+	case permissionports.PrincipalTypeAgent:
 		return "by an agent"
-	case serviceports.PrincipalTypeSystem:
+	case permissionports.PrincipalTypeSystem:
 		return "by the system"
-	case serviceports.PrincipalTypeAPIKey:
+	case permissionports.PrincipalTypeAPIKey:
 		return "through the API"
-	case serviceports.PrincipalTypeUser:
+	case permissionports.PrincipalTypeUser:
 		return "by someone else"
 	default:
 		return "elsewhere"

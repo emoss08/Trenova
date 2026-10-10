@@ -12,9 +12,10 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentsearch"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/productguide"
@@ -52,22 +53,22 @@ type Params struct {
 	fx.In
 
 	Logger         *zap.Logger
-	Permissions    serviceports.PermissionEngine
-	Organizations  repositories.OrganizationRepository
-	Vectorizer     serviceports.QueryVectorizer    `optional:"true"`
-	CatalogVectors serviceports.CatalogVectorIndex `optional:"true"`
+	Permissions    permissionports.PermissionEngine
+	Organizations  tenantports.OrganizationRepository
+	Vectorizer     agentports.QueryVectorizer    `optional:"true"`
+	CatalogVectors agentports.CatalogVectorIndex `optional:"true"`
 }
 
 type Service struct {
 	l             *zap.Logger
 	catalog       *productguide.Catalog
-	permissions   serviceports.PermissionEngine
-	organizations repositories.OrganizationRepository
+	permissions   permissionports.PermissionEngine
+	organizations tenantports.OrganizationRepository
 	index         []indexedPage
 	resources     *permission.Registry
-	vectorizer    serviceports.QueryVectorizer
-	vectors       serviceports.CatalogVectorIndex
-	items         []serviceports.EmbeddingCatalogItem
+	vectorizer    agentports.QueryVectorizer
+	vectors       agentports.CatalogVectorIndex
+	items         []agentports.EmbeddingCatalogItem
 	floor         float64
 }
 
@@ -88,7 +89,7 @@ type indexedTask struct {
 	steps    map[string]struct{}
 }
 
-func New(p Params) serviceports.ProductGuide {
+func New(p Params) agentports.ProductGuide {
 	return newService(p, productguide.Default)
 }
 
@@ -103,7 +104,7 @@ func newService(p Params, catalog *productguide.Catalog) *Service {
 		vectorizer:    p.Vectorizer,
 		vectors:       p.CatalogVectors,
 		items:         CatalogItems(catalog),
-		floor:         serviceports.DefaultCatalogSimilarityFloor,
+		floor:         agentports.DefaultCatalogSimilarityFloor,
 	}
 }
 
@@ -147,8 +148,8 @@ type scored struct {
 
 func (s *Service) Search(
 	ctx context.Context,
-	req *serviceports.ProductGuideSearchRequest,
-) ([]serviceports.ProductGuideMatch, error) {
+	req *agentports.ProductGuideSearchRequest,
+) ([]agentports.ProductGuideMatch, error) {
 	limit := req.Limit
 	if limit <= 0 {
 		limit = DefaultLimit
@@ -162,7 +163,7 @@ func (s *Service) Search(
 	}
 	candidates := s.ranked(req.Query, onlyPage, similarity, limit)
 	if len(candidates) == 0 {
-		return []serviceports.ProductGuideMatch{}, nil
+		return []agentports.ProductGuideMatch{}, nil
 	}
 
 	pages := make([]*productguide.Page, 0, len(candidates))
@@ -174,10 +175,10 @@ func (s *Service) Search(
 		return nil, err
 	}
 
-	matches := make([]serviceports.ProductGuideMatch, 0, len(candidates))
+	matches := make([]agentports.ProductGuideMatch, 0, len(candidates))
 	for _, candidate := range candidates {
 		canOpen, missing := access.check(candidate.entry.page)
-		matches = append(matches, serviceports.ProductGuideMatch{
+		matches = append(matches, agentports.ProductGuideMatch{
 			Page:    candidate.entry.page,
 			Task:    candidate.task,
 			CanOpen: canOpen,
@@ -282,8 +283,8 @@ func bestTask(entry *indexedPage, terms map[string]struct{}) (*productguide.Task
 
 func (s *Service) Destination(
 	ctx context.Context,
-	req *serviceports.ProductGuideDestinationRequest,
-) (*serviceports.ProductGuideDestination, error) {
+	req *agentports.ProductGuideDestinationRequest,
+) (*agentports.ProductGuideDestination, error) {
 	entity := strings.TrimSpace(req.Entity)
 	pagePath := strings.TrimSpace(req.Page)
 
@@ -356,7 +357,7 @@ func (s *Service) Destination(
 		))
 	}
 
-	return &serviceports.ProductGuideDestination{Path: path, Page: page, Label: label}, nil
+	return &agentports.ProductGuideDestination{Path: path, Page: page, Label: label}, nil
 }
 
 func (s *Service) recordEntities() []string {
@@ -399,13 +400,13 @@ func withQuery(path string, query map[string]string) string {
 // organization's capabilities when one of them depends on one.
 type access struct {
 	allowed      map[string]bool
-	capabilities repositories.OrganizationCapabilities
+	capabilities tenantports.OrganizationCapabilities
 	resources    *permission.Registry
 }
 
 func (s *Service) access(
 	ctx context.Context,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 	tenant pagination.TenantInfo,
 	pages []*productguide.Page,
 ) (*access, error) {
@@ -437,7 +438,7 @@ func (s *Service) access(
 	if !gated {
 		return result, nil
 	}
-	capabilities, err := s.organizations.GetCapabilities(ctx, repositories.GetOrganizationCapabilitiesRequest{
+	capabilities, err := s.organizations.GetCapabilities(ctx, tenantports.GetOrganizationCapabilitiesRequest{
 		TenantInfo: tenant,
 	})
 	if err != nil {
@@ -451,7 +452,7 @@ func (s *Service) access(
 // allowed checks every requirement in one batch.
 func (s *Service) allowed(
 	ctx context.Context,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 	requirements []productguide.Requirement,
 ) (map[string]bool, error) {
 	allowed := make(map[string]bool, len(requirements))
@@ -459,14 +460,14 @@ func (s *Service) allowed(
 		return allowed, nil
 	}
 
-	checks := make([]serviceports.ResourceOperationCheck, 0, len(requirements))
+	checks := make([]permissionports.ResourceOperationCheck, 0, len(requirements))
 	for _, requirement := range requirements {
-		checks = append(checks, serviceports.ResourceOperationCheck{
+		checks = append(checks, permissionports.ResourceOperationCheck{
 			Resource:  requirement.Resource,
 			Operation: permission.Operation(requirement.Operation),
 		})
 	}
-	result, err := s.permissions.CheckBatch(ctx, &serviceports.BatchPermissionCheckRequest{
+	result, err := s.permissions.CheckBatch(ctx, &permissionports.BatchPermissionCheckRequest{
 		PrincipalType:  actor.PrincipalType,
 		PrincipalID:    actor.PrincipalID,
 		UserID:         actor.UserID,

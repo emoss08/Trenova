@@ -6,14 +6,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestApplyCreditBalancePolicy(t *testing.T) {
 	svc := &Service{}
-	preview := &serviceports.InvoiceAdjustmentPreview{
+	preview := &invoiceadjustmentports.InvoiceAdjustmentPreview{
 		WouldCreateUnappliedCredit: true,
 		Errors:                     make(map[string][]string),
 	}
@@ -33,7 +33,7 @@ func TestApplyCreditBalancePolicy(t *testing.T) {
 
 func TestApplyCreditBalancePolicyDisallow(t *testing.T) {
 	svc := &Service{}
-	preview := &serviceports.InvoiceAdjustmentPreview{
+	preview := &invoiceadjustmentports.InvoiceAdjustmentPreview{
 		WouldCreateUnappliedCredit: true,
 		Errors:                     make(map[string][]string),
 	}
@@ -51,7 +51,7 @@ func TestApplyCreditBalancePolicyDisallow(t *testing.T) {
 
 func TestApplyReplacementReviewPolicy(t *testing.T) {
 	svc := &Service{}
-	preview := &serviceports.InvoiceAdjustmentPreview{
+	preview := &invoiceadjustmentports.InvoiceAdjustmentPreview{
 		Kind:                  invoiceadjustment.KindCreditRebill,
 		CreditTotalAmount:     decimal.NewFromInt(100),
 		RebillTotalAmount:     decimal.NewFromInt(110),
@@ -68,7 +68,7 @@ func TestApplyReplacementReviewPolicy(t *testing.T) {
 
 func TestValidateSettlementPolicy(t *testing.T) {
 	svc := &Service{}
-	preview := &serviceports.InvoiceAdjustmentPreview{
+	preview := &invoiceadjustmentports.InvoiceAdjustmentPreview{
 		Errors: make(map[string][]string),
 	}
 

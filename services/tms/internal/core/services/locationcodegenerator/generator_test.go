@@ -5,8 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/seqgen"
@@ -21,7 +20,7 @@ type stubSequenceConfigRepo struct {
 
 func (r stubSequenceConfigRepo) GetByTenant(
 	context.Context,
-	repositories.GetSequenceConfigRequest,
+	tenantports.GetSequenceConfigRequest,
 ) (*tenant.SequenceConfigDocument, error) {
 	return r.doc, r.err
 }
@@ -59,10 +58,10 @@ func TestGeneratorGenerateBuildsReadablePrefix(t *testing.T) {
 		sequenceGenerator:  seq,
 	}
 
-	code, err := generator.Generate(t.Context(), services.LocationCodeGenerateRequest{
+	code, err := generator.Generate(t.Context(), tenantports.LocationCodeGenerateRequest{
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
-		Input: services.LocationCodeInput{
+		Input: tenantports.LocationCodeInput{
 			Name:              "Acme Warehouse",
 			City:              "Dallas",
 			StateAbbreviation: "TX",
@@ -85,13 +84,13 @@ func TestGeneratorBuildPrefix(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		input    services.LocationCodeInput
+		input    tenantports.LocationCodeInput
 		strategy *tenant.LocationCodeStrategy
 		want     string
 	}{
 		{
 			name: "default name city state",
-			input: services.LocationCodeInput{
+			input: tenantports.LocationCodeInput{
 				Name:              "Acme Warehouse",
 				City:              "Dallas",
 				StateAbbreviation: "TX",
@@ -101,7 +100,7 @@ func TestGeneratorBuildPrefix(t *testing.T) {
 		},
 		{
 			name: "missing city and state collapses adjacent fallback tokens",
-			input: services.LocationCodeInput{
+			input: tenantports.LocationCodeInput{
 				Name: "Acme Warehouse",
 			},
 			strategy: nil,
@@ -109,7 +108,7 @@ func TestGeneratorBuildPrefix(t *testing.T) {
 		},
 		{
 			name: "short components are preserved",
-			input: services.LocationCodeInput{
+			input: tenantports.LocationCodeInput{
 				Name:              "AB",
 				City:              "LA",
 				StateAbbreviation: "CA",
@@ -119,7 +118,7 @@ func TestGeneratorBuildPrefix(t *testing.T) {
 		},
 		{
 			name: "invalid characters are removed",
-			input: services.LocationCodeInput{
+			input: tenantports.LocationCodeInput{
 				Name:              "A*c&m!e",
 				City:              "Dal@las",
 				StateAbbreviation: "T.X.",
@@ -129,7 +128,7 @@ func TestGeneratorBuildPrefix(t *testing.T) {
 		},
 		{
 			name: "lowercase and empty separator",
-			input: services.LocationCodeInput{
+			input: tenantports.LocationCodeInput{
 				Name:              "Acme Warehouse",
 				City:              "Dallas",
 				StateAbbreviation: "TX",
@@ -149,7 +148,7 @@ func TestGeneratorBuildPrefix(t *testing.T) {
 		},
 		{
 			name: "postal code component",
-			input: services.LocationCodeInput{
+			input: tenantports.LocationCodeInput{
 				Name:       "Acme Warehouse",
 				PostalCode: "75201-1234",
 			},
@@ -199,10 +198,10 @@ func TestGeneratorGenerateUsesDefaultStrategyWhenConfigIsMissing(t *testing.T) {
 		sequenceGenerator: seq,
 	}
 
-	_, err := generator.Generate(t.Context(), services.LocationCodeGenerateRequest{
+	_, err := generator.Generate(t.Context(), tenantports.LocationCodeGenerateRequest{
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
-		Input: services.LocationCodeInput{
+		Input: tenantports.LocationCodeInput{
 			Name:              "AB",
 			City:              "LA",
 			StateAbbreviation: "CA",
@@ -218,7 +217,7 @@ func TestGeneratorGenerateUsesDefaultStrategyWhenConfigIsMissing(t *testing.T) {
 func sequenceConfigRepo(
 	orgID, buID pulid.ID,
 	strategy *tenant.LocationCodeStrategy,
-) repositories.SequenceConfigRepository {
+) tenantports.SequenceConfigRepository {
 	return stubSequenceConfigRepo{
 		doc: &tenant.SequenceConfigDocument{
 			OrganizationID: orgID,
@@ -237,6 +236,6 @@ func sequenceConfigRepo(
 	}
 }
 
-var _ repositories.SequenceConfigRepository = stubSequenceConfigRepo{}
+var _ tenantports.SequenceConfigRepository = stubSequenceConfigRepo{}
 var _ seqgen.Generator = (*captureSequenceGenerator)(nil)
 var _ = pagination.TenantInfo{}

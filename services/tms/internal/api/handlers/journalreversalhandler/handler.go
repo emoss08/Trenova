@@ -8,9 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/journalreversalservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalreversalports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -83,7 +82,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*journalreversal.Reversal], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListJournalReversalsRequest{Filter: query},
+				&journalreversalports.ListJournalReversalsRequest{Filter: query},
 			)
 		},
 	)
@@ -97,7 +96,7 @@ func (h *Handler) get(c *gin.Context) {
 	}
 	entity, err := h.service.Get(
 		c.Request.Context(),
-		&serviceports.GetJournalReversalRequest{
+		&journalreversalports.GetJournalReversalRequest{
 			ReversalID: id,
 			TenantInfo: pagination.TenantInfo{
 				OrgID:  auth.OrganizationID,
@@ -114,7 +113,7 @@ func (h *Handler) get(c *gin.Context) {
 }
 func (h *Handler) create(c *gin.Context) {
 	auth := authctx.GetAuthContext(c)
-	req := new(serviceports.CreateJournalReversalRequest)
+	req := new(journalreversalports.CreateJournalReversalRequest)
 	if err := authctx.BindJSON(c, auth, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -137,7 +136,7 @@ func (h *Handler) approve(c *gin.Context) {
 		func(ctx *gin.Context, auth *authctx.AuthContext, id pulid.ID) (*journalreversal.Reversal, error) {
 			return h.service.Approve(
 				ctx.Request.Context(),
-				&serviceports.GetJournalReversalRequest{
+				&journalreversalports.GetJournalReversalRequest{
 					ReversalID: id,
 					TenantInfo: pagination.TenantInfo{
 						OrgID:  auth.OrganizationID,
@@ -156,7 +155,7 @@ func (h *Handler) post(c *gin.Context) {
 		func(ctx *gin.Context, auth *authctx.AuthContext, id pulid.ID) (*journalreversal.Reversal, error) {
 			return h.service.Post(
 				ctx.Request.Context(),
-				&serviceports.GetJournalReversalRequest{
+				&journalreversalports.GetJournalReversalRequest{
 					ReversalID: id,
 					TenantInfo: pagination.TenantInfo{
 						OrgID:  auth.OrganizationID,
@@ -185,7 +184,7 @@ func (h *Handler) reject(c *gin.Context) {
 	}
 	entity, err := h.service.Reject(
 		c.Request.Context(),
-		&serviceports.RejectJournalReversalRequest{
+		&journalreversalports.RejectJournalReversalRequest{
 			ReversalID: id,
 			Reason:     body.Reason,
 			TenantInfo: pagination.TenantInfo{
@@ -218,7 +217,7 @@ func (h *Handler) cancel(c *gin.Context) {
 	}
 	entity, err := h.service.Cancel(
 		c.Request.Context(),
-		&serviceports.CancelJournalReversalRequest{
+		&journalreversalports.CancelJournalReversalRequest{
 			ReversalID: id,
 			Reason:     body.Reason,
 			TenantInfo: pagination.TenantInfo{

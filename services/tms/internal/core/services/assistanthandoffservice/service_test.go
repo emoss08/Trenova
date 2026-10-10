@@ -10,8 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -20,7 +22,7 @@ import (
 )
 
 type fakeConversations struct {
-	repositories.ConversationRepository
+	agentports.ConversationRepository
 
 	threads  map[pulid.ID]*conversation.Thread
 	history  []conversation.Message
@@ -29,7 +31,7 @@ type fakeConversations struct {
 
 func (f *fakeConversations) GetThread(
 	_ context.Context,
-	req repositories.GetThreadRequest,
+	req agentports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	thread, ok := f.threads[req.ID]
 	if !ok || thread.UserID != req.UserID {
@@ -41,14 +43,14 @@ func (f *fakeConversations) GetThread(
 
 func (f *fakeConversations) ListMessages(
 	_ context.Context,
-	req repositories.ListMessagesRequest,
+	req agentports.ListMessagesRequest,
 ) ([]conversation.Message, error) {
 	return f.history, nil
 }
 
 func (f *fakeConversations) AppendTurn(
 	_ context.Context,
-	req repositories.AppendTurnRequest,
+	req agentports.AppendTurnRequest,
 ) ([]conversation.Message, error) {
 	f.appended[req.ThreadID] = append(f.appended[req.ThreadID], req.Messages...)
 
@@ -56,14 +58,14 @@ func (f *fakeConversations) AppendTurn(
 }
 
 type fakeDefinitions struct {
-	repositories.AgentDefinitionRepository
+	agentdefinitionports.AgentDefinitionRepository
 
 	byID map[pulid.ID]*agentdefinition.Definition
 }
 
 func (f *fakeDefinitions) GetByID(
 	_ context.Context,
-	req repositories.GetAgentDefinitionByIDRequest,
+	req agentdefinitionports.GetAgentDefinitionByIDRequest,
 ) (*agentdefinition.Definition, error) {
 	definition, ok := f.byID[req.ID]
 	if !ok {
@@ -74,7 +76,7 @@ func (f *fakeDefinitions) GetByID(
 }
 
 type fakeArtifacts struct {
-	repositories.AssistantArtifactRepository
+	assistantartifactports.AssistantArtifactRepository
 
 	listed []*assistantartifact.Artifact
 	copied []*assistantartifact.Artifact
@@ -82,8 +84,8 @@ type fakeArtifacts struct {
 
 func (f *fakeArtifacts) ListPage(
 	_ context.Context,
-	req repositories.ListArtifactsRequest,
-) (*repositories.ArtifactPage, error) {
+	req assistantartifactports.ListArtifactsRequest,
+) (*assistantartifactports.ArtifactPage, error) {
 	out := make([]*assistantartifact.Artifact, 0, len(f.listed))
 	for _, artifact := range f.listed {
 		if !req.PinnedOnly || artifact.Pinned {
@@ -91,7 +93,7 @@ func (f *fakeArtifacts) ListPage(
 		}
 	}
 
-	return &repositories.ArtifactPage{Artifacts: out, Total: len(out)}, nil
+	return &assistantartifactports.ArtifactPage{Artifacts: out, Total: len(out)}, nil
 }
 
 func (f *fakeArtifacts) Upsert(
@@ -105,16 +107,16 @@ func (f *fakeArtifacts) Upsert(
 }
 
 type fakeAssistant struct {
-	services.AssistantService
+	agentports.AssistantService
 
-	started *services.StartThreadRequest
+	started *agentports.StartThreadRequest
 	refuse  error
 }
 
 func (f *fakeAssistant) StartThread(
 	_ context.Context,
-	req *services.StartThreadRequest,
-	actor *services.RequestActor,
+	req *agentports.StartThreadRequest,
+	actor *permissionports.RequestActor,
 ) (*conversation.Thread, error) {
 	if f.refuse != nil {
 		return nil, f.refuse
@@ -133,19 +135,19 @@ func (f *fakeAssistant) StartThread(
 type fakeCompleter struct {
 	text string
 	err  error
-	req  *services.StructuredCompletionRequest
+	req  *agentports.StructuredCompletionRequest
 }
 
 func (f *fakeCompleter) CompleteStructured(
 	_ context.Context,
-	req *services.StructuredCompletionRequest,
-) (*services.StructuredCompletionResult, error) {
+	req *agentports.StructuredCompletionRequest,
+) (*agentports.StructuredCompletionResult, error) {
 	f.req = req
 	if f.err != nil {
 		return nil, f.err
 	}
 
-	return &services.StructuredCompletionResult{Text: f.text}, nil
+	return &agentports.StructuredCompletionResult{Text: f.text}, nil
 }
 
 type handoffFixture struct {
@@ -208,14 +210,14 @@ func newHandoffFixture() *handoffFixture {
 	}
 }
 
-func (f *handoffFixture) handoff(t *testing.T, facts ...string) (*services.HandoffThreadResult, error) {
+func (f *handoffFixture) handoff(t *testing.T, facts ...string) (*agentports.HandoffThreadResult, error) {
 	t.Helper()
 
-	return f.svc.Handoff(t.Context(), &services.HandoffThreadRequest{
+	return f.svc.Handoff(t.Context(), &agentports.HandoffThreadRequest{
 		ThreadID:          f.origin.ID,
 		AgentDefinitionID: f.target.ID,
 		Facts:             facts,
-	}, &services.RequestActor{PrincipalType: services.PrincipalTypeUser, UserID: f.user})
+	}, &permissionports.RequestActor{PrincipalType: permissionports.PrincipalTypeUser, UserID: f.user})
 }
 
 // The new conversation opens with what was carried over, and the one handed
@@ -289,10 +291,10 @@ func TestHandoff_RefusedWritesNothing(t *testing.T) {
 		t.Parallel()
 
 		f := newHandoffFixture()
-		_, err := f.svc.Handoff(t.Context(), &services.HandoffThreadRequest{
+		_, err := f.svc.Handoff(t.Context(), &agentports.HandoffThreadRequest{
 			ThreadID:          f.origin.ID,
 			AgentDefinitionID: f.target.ID,
-		}, &services.RequestActor{PrincipalType: services.PrincipalTypeUser, UserID: pulid.MustNew("usr_")})
+		}, &permissionports.RequestActor{PrincipalType: permissionports.PrincipalTypeUser, UserID: pulid.MustNew("usr_")})
 		require.Error(t, err)
 		assert.Empty(t, f.conversations.appended)
 	})
@@ -313,10 +315,10 @@ func TestHandoff_RefusedWritesNothing(t *testing.T) {
 		t.Parallel()
 
 		f := newHandoffFixture()
-		_, err := f.svc.Handoff(t.Context(), &services.HandoffThreadRequest{
+		_, err := f.svc.Handoff(t.Context(), &agentports.HandoffThreadRequest{
 			ThreadID:          f.origin.ID,
 			AgentDefinitionID: f.origin.AgentDefinitionID,
-		}, &services.RequestActor{PrincipalType: services.PrincipalTypeUser, UserID: f.user})
+		}, &permissionports.RequestActor{PrincipalType: permissionports.PrincipalTypeUser, UserID: f.user})
 		require.Error(t, err)
 	})
 }

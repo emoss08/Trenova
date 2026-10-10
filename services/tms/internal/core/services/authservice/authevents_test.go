@@ -8,7 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/iam"
 	"github.com/emoss08/trenova/internal/core/domain/session"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -18,16 +19,16 @@ import (
 
 type recordingAuthEvents struct {
 	mu      sync.Mutex
-	records []services.AuthEventRecord
+	records []iamports.AuthEventRecord
 }
 
-func (r *recordingAuthEvents) Record(_ context.Context, rec *services.AuthEventRecord) {
+func (r *recordingAuthEvents) Record(_ context.Context, rec *iamports.AuthEventRecord) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.records = append(r.records, *rec)
 }
 
-func (r *recordingAuthEvents) only(t *testing.T) services.AuthEventRecord {
+func (r *recordingAuthEvents) only(t *testing.T) iamports.AuthEventRecord {
 	t.Helper()
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -45,14 +46,14 @@ func TestLoginRecordsASuccessfulSignIn(t *testing.T) {
 	deps.sessionRepo.On("Create", mock.Anything, mock.Anything).Return(nil)
 	deps.userRepo.On("UpdateLastLoginAt", mock.Anything, usr.ID).Return(nil)
 
-	_, err := deps.svc.Login(t.Context(), services.LoginRequest{
+	_, err := deps.svc.Login(t.Context(), tenantports.LoginRequest{
 		EmailAddress: usr.EmailAddress,
 		Password:     "password123",
 	})
 	require.NoError(t, err)
 
 	rec := deps.authEvents.only(t)
-	assert.Equal(t, services.AuthEventProviderPassword, rec.Provider)
+	assert.Equal(t, iamports.AuthEventProviderPassword, rec.Provider)
 	assert.Equal(t, iam.AuthEventOutcomeSuccess, rec.Outcome)
 	assert.Equal(t, usr.ID, rec.UserID)
 	assert.Equal(t, usr.CurrentOrganizationID, rec.OrganizationID)
@@ -67,7 +68,7 @@ func TestLoginRecordsAnUnknownAccountWithoutATenant(t *testing.T) {
 	deps.userRepo.On("FindByEmail", mock.Anything, "nobody@example.com").
 		Return(nil, errors.New("not found"))
 
-	_, err := deps.svc.Login(t.Context(), services.LoginRequest{
+	_, err := deps.svc.Login(t.Context(), tenantports.LoginRequest{
 		EmailAddress: "nobody@example.com",
 		Password:     "password123",
 	})
@@ -87,7 +88,7 @@ func TestLoginRecordsAWrongPasswordAgainstTheAccount(t *testing.T) {
 
 	deps.userRepo.On("FindByEmail", mock.Anything, usr.EmailAddress).Return(usr, nil)
 
-	_, err := deps.svc.Login(t.Context(), services.LoginRequest{
+	_, err := deps.svc.Login(t.Context(), tenantports.LoginRequest{
 		EmailAddress: usr.EmailAddress,
 		Password:     "wrong-password",
 	})
@@ -104,7 +105,7 @@ func TestLoginDoesNotRecordARequestThatFailsValidation(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
 
-	_, err := deps.svc.Login(t.Context(), services.LoginRequest{})
+	_, err := deps.svc.Login(t.Context(), tenantports.LoginRequest{})
 	require.Error(t, err)
 
 	assert.Empty(t, deps.authEvents.records)
@@ -126,7 +127,7 @@ func TestLogoutRecordsTheSessionOwner(t *testing.T) {
 	require.NoError(t, deps.svc.Logout(t.Context(), sess.ID))
 
 	rec := deps.authEvents.only(t)
-	assert.Equal(t, services.AuthEventProviderLogout, rec.Provider)
+	assert.Equal(t, iamports.AuthEventProviderLogout, rec.Provider)
 	assert.Equal(t, iam.AuthEventOutcomeSuccess, rec.Outcome)
 	assert.Equal(t, sess.UserID, rec.UserID)
 	assert.Equal(t, sess.OrganizationID, rec.OrganizationID)

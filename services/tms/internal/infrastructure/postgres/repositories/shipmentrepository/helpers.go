@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
@@ -15,7 +15,7 @@ import (
 
 func standardShipmentFilter(
 	q *bun.SelectQuery,
-	opts repositories.ShipmentOptions,
+	opts shipmentports.ShipmentOptions,
 ) *bun.SelectQuery {
 	if opts.ExpandShipmentDetails {
 		q = q.Relation(buncolgen.ShipmentRelations.Customer).
@@ -101,7 +101,7 @@ func activeCarrierAssignmentJoin() []schema.QueryWithArgs {
 func cursorFilterQuery(
 	q *bun.SelectQuery,
 	dba bun.IDB,
-	req *repositories.ListShipmentsRequest,
+	req *shipmentports.ListShipmentsRequest,
 ) (*bun.SelectQuery, error) {
 	q = q.Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 		return standardShipmentFilter(sq, req.ShipmentOptions)
@@ -125,7 +125,7 @@ func cursorFilterQuery(
 func countShipmentListQuery(
 	q *bun.SelectQuery,
 	dba bun.IDB,
-	req *repositories.ListShipmentsRequest,
+	req *shipmentports.ListShipmentsRequest,
 ) *bun.SelectQuery {
 	countReq := *req
 	countReq.ShipmentOptions.ExpandShipmentDetails = false
@@ -138,7 +138,7 @@ func countShipmentListQuery(
 func baseShipmentListQuery(
 	q *bun.SelectQuery,
 	dba bun.IDB,
-	req *repositories.ListShipmentsRequest,
+	req *shipmentports.ListShipmentsRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -157,7 +157,7 @@ func baseShipmentListQuery(
 func applyShipmentOptionFilters(
 	q *bun.SelectQuery,
 	dba bun.IDB,
-	opts repositories.ShipmentOptions,
+	opts shipmentports.ShipmentOptions,
 ) *bun.SelectQuery {
 	if opts.Status != "" {
 		q = q.Where(buncolgen.ShipmentColumns.Status.Eq(), shipment.Status(opts.Status))
@@ -246,7 +246,7 @@ func stopLocationPredicate(dba bun.IDB, locationIDs []pulid.ID) *bun.SelectQuery
 
 func activityWindowPredicate(
 	dba bun.IDB,
-	opts repositories.ShipmentOptions,
+	opts shipmentports.ShipmentOptions,
 ) *bun.SelectQuery {
 	return dba.NewSelect().
 		TableExpr(`"shipment_moves" AS "sm_aw"`).
@@ -270,7 +270,7 @@ func activityWindowPredicate(
 func unassignedShipmentListQuery(
 	q *bun.SelectQuery,
 	dba bun.IDB,
-	req *repositories.GetUnassignedShipmentsRequest,
+	req *shipmentports.GetUnassignedShipmentsRequest,
 ) (*bun.SelectQuery, error) {
 	q = q.Relation(buncolgen.ShipmentRelations.Customer).
 		Where(buncolgen.ShipmentColumns.Status.Eq(), shipment.StatusNew).
@@ -312,7 +312,7 @@ func (r *repository) hydrateMoves(
 
 		moves, err := r.moveRepository.GetMovesByShipmentID(
 			ctx,
-			&repositories.GetMovesByShipmentIDRequest{
+			&shipmentports.GetMovesByShipmentIDRequest{
 				ShipmentID: entity.ID,
 				TenantInfo: pagination.TenantInfo{
 					OrgID: entity.OrganizationID,

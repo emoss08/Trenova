@@ -5,10 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/tenderjobs/tendercontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/tenderjobs/tendercontract"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -25,7 +24,7 @@ func newTenderWorkflowTestEnv(t *testing.T) *testsuite.TestWorkflowEnvironment {
 
 type testPlanFixture struct {
 	input    *tendercontract.WorkflowInput
-	plan     *serviceports.TenderPlan
+	plan     *tenderports.TenderPlan
 	offerOne pulid.ID
 	offerTwo pulid.ID
 }
@@ -42,11 +41,11 @@ func newPlanFixture(mode tender.Mode) *testPlanFixture {
 			BusinessUnitID: pulid.MustNew("bu_"),
 			Mode:           mode,
 		},
-		plan: &serviceports.TenderPlan{
+		plan: &tenderports.TenderPlan{
 			TenderID: tenderID,
 			Status:   tender.StatusActive,
 			Mode:     mode,
-			Offers: []serviceports.TenderPlanOffer{
+			Offers: []tenderports.TenderPlanOffer{
 				{
 					OfferID:         offerOne,
 					Rank:            1,
@@ -66,8 +65,8 @@ func newPlanFixture(mode tender.Mode) *testPlanFixture {
 	}
 }
 
-func dispatchResultIn(ttl time.Duration) *serviceports.TenderDispatchResult {
-	return &serviceports.TenderDispatchResult{
+func dispatchResultIn(ttl time.Duration) *tenderports.TenderDispatchResult {
+	return &tenderports.TenderDispatchResult{
 		Delivered: true,
 		ExpiresAt: time.Now().Add(ttl).Unix(),
 	}
@@ -105,7 +104,7 @@ func TestCarrierTenderWorkflow_WaterfallAcceptShortCircuits(t *testing.T) {
 		func(in *TenderActivityInput) bool { return in.OfferID == fixture.offerOne },
 	)).Return(dispatchResultIn(10*time.Minute), nil).Once()
 	env.OnActivity(a.AcceptOfferActivity, mock.Anything, mock.Anything).
-		Return(&serviceports.TenderAcceptResult{}, nil).Once()
+		Return(&tenderports.TenderAcceptResult{}, nil).Once()
 	env.OnActivity(a.FinalizeAcceptedActivity, mock.Anything, mock.Anything).
 		Return(nil).Once()
 	env.OnActivity(a.IssueRateConfirmationActivity, mock.Anything, mock.Anything).
@@ -142,7 +141,7 @@ func TestCarrierTenderWorkflow_AcceptIssuesRateConfirmation(t *testing.T) {
 		func(in *TenderActivityInput) bool { return in.OfferID == fixture.offerOne },
 	)).Return(dispatchResultIn(10*time.Minute), nil).Once()
 	env.OnActivity(a.AcceptOfferActivity, mock.Anything, mock.Anything).
-		Return(&serviceports.TenderAcceptResult{}, nil).Once()
+		Return(&tenderports.TenderAcceptResult{}, nil).Once()
 	env.OnActivity(a.FinalizeAcceptedActivity, mock.Anything, mock.Anything).
 		Return(nil).Once()
 	env.OnActivity(a.IssueRateConfirmationActivity, mock.Anything, mock.MatchedBy(
@@ -176,7 +175,7 @@ func TestCarrierTenderWorkflow_RateConIssueFailureDoesNotFailWorkflow(t *testing
 		func(in *TenderActivityInput) bool { return in.OfferID == fixture.offerOne },
 	)).Return(dispatchResultIn(10*time.Minute), nil).Once()
 	env.OnActivity(a.AcceptOfferActivity, mock.Anything, mock.Anything).
-		Return(&serviceports.TenderAcceptResult{}, nil).Once()
+		Return(&tenderports.TenderAcceptResult{}, nil).Once()
 	env.OnActivity(a.FinalizeAcceptedActivity, mock.Anything, mock.Anything).
 		Return(nil).Once()
 	env.OnActivity(a.IssueRateConfirmationActivity, mock.Anything, mock.Anything).
@@ -246,7 +245,7 @@ func TestCarrierTenderWorkflow_NeedsReviewHalts(t *testing.T) {
 	env.OnActivity(a.DispatchOfferActivity, mock.Anything, mock.Anything).
 		Return(dispatchResultIn(10*time.Minute), nil).Once()
 	env.OnActivity(a.AcceptOfferActivity, mock.Anything, mock.Anything).
-		Return(&serviceports.TenderAcceptResult{
+		Return(&tenderports.TenderAcceptResult{
 			NeedsReview:  true,
 			ReviewReason: "Carrier insurance expired",
 		}, nil).Once()
@@ -282,7 +281,7 @@ func TestCarrierTenderWorkflow_BroadcastFirstAcceptWins(t *testing.T) {
 		Return(dispatchResultIn(10*time.Minute), nil).Twice()
 	env.OnActivity(a.AcceptOfferActivity, mock.Anything, mock.MatchedBy(
 		func(in *TenderActivityInput) bool { return in.OfferID == fixture.offerTwo },
-	)).Return(&serviceports.TenderAcceptResult{}, nil).Once()
+	)).Return(&tenderports.TenderAcceptResult{}, nil).Once()
 	env.OnActivity(a.FinalizeAcceptedActivity, mock.Anything, mock.Anything).
 		Return(nil).Once()
 	env.OnActivity(a.IssueRateConfirmationActivity, mock.Anything, mock.MatchedBy(
@@ -343,7 +342,7 @@ func TestCarrierTenderWorkflow_DeliveryFailureAdvances(t *testing.T) {
 		Return(fixture.plan, nil).Once()
 	env.OnActivity(a.DispatchOfferActivity, mock.Anything, mock.MatchedBy(
 		func(in *TenderActivityInput) bool { return in.OfferID == fixture.offerOne },
-	)).Return(&serviceports.TenderDispatchResult{
+	)).Return(&tenderports.TenderDispatchResult{
 		Delivered: false,
 		Reason:    "Email delivery is not configured",
 	}, nil).Once()

@@ -1,6 +1,7 @@
 package formulatemplateservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/notificationportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
@@ -21,7 +22,7 @@ import (
 func withNotifications(t *testing.T, deps *testDeps) **notificationdomain.Notification {
 	t.Helper()
 
-	notifRepo := mocks.NewMockNotificationRepository(t)
+	notifRepo := notificationportsmock.NewMockNotificationRepository(t)
 	deps.svc.notifications = notificationservice.New(notificationservice.Params{
 		Logger:   zap.NewNop(),
 		Repo:     notifRepo,

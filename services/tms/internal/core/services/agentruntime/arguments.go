@@ -5,8 +5,8 @@ import (
 	"sort"
 	"strings"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -60,10 +60,10 @@ func contractCall(
 	opts ...toolschema.CoerceOption,
 ) (argumentContract, error) {
 	aliased, aliases := aliasArguments(schema, args)
-	if _, owned := aliased[serviceports.SelfScopeOwnerParam]; owned {
+	if _, owned := aliased[agentports.SelfScopeOwnerParam]; owned {
 		stripped := make(map[string]any, len(aliased)-1)
 		for key, value := range aliased {
-			if key != serviceports.SelfScopeOwnerParam {
+			if key != agentports.SelfScopeOwnerParam {
 				stripped[key] = value
 			}
 		}

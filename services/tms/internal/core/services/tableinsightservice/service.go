@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"go.uber.org/fx"
@@ -17,16 +17,16 @@ type Params struct {
 	fx.In
 
 	Logger  *zap.Logger
-	Sources []repositories.TableInsightSource `group:"table_insight_sources"`
+	Sources []permissionports.TableInsightSource `group:"table_insight_sources"`
 }
 
 type Service struct {
 	l       *zap.Logger
-	sources map[permission.Resource]repositories.TableInsightSource
+	sources map[permission.Resource]permissionports.TableInsightSource
 }
 
 func New(p Params) *Service {
-	sources := make(map[permission.Resource]repositories.TableInsightSource, len(p.Sources))
+	sources := make(map[permission.Resource]permissionports.TableInsightSource, len(p.Sources))
 	for _, source := range p.Sources {
 		if source == nil {
 			continue
@@ -52,7 +52,7 @@ func (s *Service) Resolve(resource string) (permission.Resource, error) {
 	return key, nil
 }
 
-func (s *Service) Fields(resource permission.Resource) []repositories.TableInsightField {
+func (s *Service) Fields(resource permission.Resource) []permissionports.TableInsightField {
 	source, ok := s.sources[resource]
 	if !ok {
 		return nil
@@ -63,8 +63,8 @@ func (s *Service) Fields(resource permission.Resource) []repositories.TableInsig
 func (s *Service) Facet(
 	ctx context.Context,
 	resource permission.Resource,
-	req *repositories.TableFacetRequest,
-) (*repositories.TableFacetResult, error) {
+	req *permissionports.TableFacetRequest,
+) (*permissionports.TableFacetResult, error) {
 	source, ok := s.sources[resource]
 	if !ok {
 		return nil, errortypes.NewValidationError(
@@ -89,8 +89,8 @@ func (s *Service) Facet(
 func (s *Service) Aggregate(
 	ctx context.Context,
 	resource permission.Resource,
-	req *repositories.TableAggregateRequest,
-) (*repositories.TableAggregateResult, error) {
+	req *permissionports.TableAggregateRequest,
+) (*permissionports.TableAggregateResult, error) {
 	source, ok := s.sources[resource]
 	if !ok {
 		return nil, errortypes.NewValidationError(
@@ -101,7 +101,7 @@ func (s *Service) Aggregate(
 	}
 
 	if len(req.Fields) == 0 {
-		return &repositories.TableAggregateResult{}, nil
+		return &permissionports.TableAggregateResult{}, nil
 	}
 
 	result, err := source.Aggregate(ctx, req)
@@ -119,8 +119,8 @@ func (s *Service) Aggregate(
 func (s *Service) MatchingIDs(
 	ctx context.Context,
 	resource permission.Resource,
-	req *repositories.TableMatchRequest,
-) (*repositories.TableMatchResult, error) {
+	req *permissionports.TableMatchRequest,
+) (*permissionports.TableMatchResult, error) {
 	source, ok := s.sources[resource]
 	if !ok {
 		return nil, errortypes.NewValidationError(
@@ -140,7 +140,7 @@ const (
 )
 
 type SeriesRequest struct {
-	Scope       repositories.TableInsightScope
+	Scope       permissionports.TableInsightScope
 	GroupField  string
 	GroupValues []string
 	DateField   string
@@ -153,7 +153,7 @@ type SeriesRequest struct {
 
 type SeriesResult struct {
 	PeriodStarts []int64
-	Groups       []repositories.TableSeriesGroup
+	Groups       []permissionports.TableSeriesGroup
 }
 
 func (s *Service) Series(
@@ -175,7 +175,7 @@ func (s *Service) Series(
 		return nil, err
 	}
 
-	result, err := source.Series(ctx, &repositories.TableSeriesRequest{
+	result, err := source.Series(ctx, &permissionports.TableSeriesRequest{
 		Scope:       req.Scope,
 		GroupField:  req.GroupField,
 		GroupValues: req.GroupValues,

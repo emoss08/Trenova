@@ -7,9 +7,9 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/m2msync"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -53,7 +53,7 @@ func TestBulkUpdateStatusReturnsVersionMismatchWhenRowsAffectedZero(t *testing.T
 
 	updated, err := repo.BulkUpdateStatus(
 		t.Context(),
-		&repositories.BulkUpdateCustomerStatusRequest{
+		&customerports.BulkUpdateCustomerStatusRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: pulid.MustNew("org_"),
 				BuID:  pulid.MustNew("bu_"),

@@ -1,14 +1,18 @@
 package drivernotificationservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/notificationportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,20 +25,20 @@ import (
 func previewNotificationService(
 	t *testing.T,
 	wrk *worker.Worker,
-) (*Service, *mocks.MockNotificationRepository) {
+) (*Service, *notificationportsmock.MockNotificationRepository) {
 	t.Helper()
 
-	workers := mocks.NewMockWorkerRepository(t)
+	workers := workerportsmock.NewMockWorkerRepository(t)
 	workers.EXPECT().GetByID(mock.Anything, mock.Anything).Return(wrk, nil)
-	resolver := mocks.NewMockDocumentTemplateResolver(t)
+	resolver := documenttemplateportsmock.NewMockDocumentTemplateResolver(t)
 	resolver.EXPECT().
 		RenderMessage(mock.Anything, mock.Anything).
-		Return(&services.RenderedMessage{
+		Return(&documenttemplateports.RenderedMessage{
 			Subject: "Delivery moved to 3 PM",
 			Text:    "Marcus, the receiver moved your delivery to 3 PM.",
 		}, nil)
-	repo := mocks.NewMockNotificationRepository(t)
-	realtime := mocks.NewMockRealtimeService(t)
+	repo := notificationportsmock.NewMockNotificationRepository(t)
+	realtime := agentportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Maybe()
 
 	return &Service{

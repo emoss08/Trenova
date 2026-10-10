@@ -5,9 +5,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
@@ -22,7 +24,7 @@ func (fakeDB) DBForContext(context.Context) bun.IDB { return nil }
 
 func (fakeDB) WithTx(
 	ctx context.Context,
-	_ ports.TxOptions,
+	_ kernelports.TxOptions,
 	fn func(context.Context, bun.Tx) error,
 ) error {
 	return fn(ctx, bun.Tx{})
@@ -35,27 +37,27 @@ func (fakeDB) IsHealthy(context.Context) bool { return true }
 func (fakeDB) Close() error { return nil }
 
 type fakeAuditService struct {
-	serviceports.AuditService
-	logged []*serviceports.LogActionParams
+	auditports.AuditService
+	logged []*auditports.LogActionParams
 }
 
 func (f *fakeAuditService) LogAction(
-	params *serviceports.LogActionParams,
-	_ ...serviceports.LogOption,
+	params *auditports.LogActionParams,
+	_ ...auditports.LogOption,
 ) error {
 	f.logged = append(f.logged, params)
 	return nil
 }
 
 type fakeEscrowRepo struct {
-	repositories.EscrowAccountRepository
+	driverpayports.EscrowAccountRepository
 	getByID func(
 		ctx context.Context,
-		req repositories.GetEscrowAccountByIDRequest,
+		req driverpayports.GetEscrowAccountByIDRequest,
 	) (*driverpay.EscrowAccount, error)
 	getActiveForWorker func(
 		ctx context.Context,
-		req repositories.GetActiveEscrowAccountForWorkerRequest,
+		req driverpayports.GetActiveEscrowAccountForWorkerRequest,
 	) (*driverpay.EscrowAccount, error)
 	create func(
 		ctx context.Context,
@@ -73,14 +75,14 @@ type fakeEscrowRepo struct {
 
 func (f *fakeEscrowRepo) GetByID(
 	ctx context.Context,
-	req repositories.GetEscrowAccountByIDRequest,
+	req driverpayports.GetEscrowAccountByIDRequest,
 ) (*driverpay.EscrowAccount, error) {
 	return f.getByID(ctx, req)
 }
 
 func (f *fakeEscrowRepo) GetActiveForWorker(
 	ctx context.Context,
-	req repositories.GetActiveEscrowAccountForWorkerRequest,
+	req driverpayports.GetActiveEscrowAccountForWorkerRequest,
 ) (*driverpay.EscrowAccount, error) {
 	return f.getActiveForWorker(ctx, req)
 }
@@ -107,7 +109,7 @@ func (f *fakeEscrowRepo) AppendTransaction(
 }
 
 type fakeSettlementControlRepo struct {
-	repositories.SettlementControlRepository
+	tenantports.SettlementControlRepository
 	getOrCreate func(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -122,7 +124,7 @@ func (f *fakeSettlementControlRepo) GetOrCreate(
 }
 
 type fakeAssignmentRepo struct {
-	repositories.WorkerPayAssignmentRepository
+	driverpayports.WorkerPayAssignmentRepository
 	getByID func(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -172,25 +174,25 @@ func (f *fakeAssignmentRepo) Update(
 }
 
 type fakeProfileRepo struct {
-	repositories.PayProfileRepository
+	driverpayports.PayProfileRepository
 	getByID func(
 		ctx context.Context,
-		req repositories.GetPayProfileByIDRequest,
+		req driverpayports.GetPayProfileByIDRequest,
 	) (*driverpay.PayProfile, error)
 }
 
 func (f *fakeProfileRepo) GetByID(
 	ctx context.Context,
-	req repositories.GetPayProfileByIDRequest,
+	req driverpayports.GetPayProfileByIDRequest,
 ) (*driverpay.PayProfile, error) {
 	return f.getByID(ctx, req)
 }
 
 type fakeAdvanceRepo struct {
-	repositories.PayAdvanceRepository
+	driverpayports.PayAdvanceRepository
 	getByID func(
 		ctx context.Context,
-		req repositories.GetPayAdvanceByIDRequest,
+		req driverpayports.GetPayAdvanceByIDRequest,
 	) (*driverpay.PayAdvance, error)
 	create func(
 		ctx context.Context,
@@ -204,7 +206,7 @@ type fakeAdvanceRepo struct {
 
 func (f *fakeAdvanceRepo) GetByID(
 	ctx context.Context,
-	req repositories.GetPayAdvanceByIDRequest,
+	req driverpayports.GetPayAdvanceByIDRequest,
 ) (*driverpay.PayAdvance, error) {
 	return f.getByID(ctx, req)
 }
@@ -233,6 +235,6 @@ func newTestService() (*Service, *fakeAuditService) {
 	return svc, audit
 }
 
-func testActor() *serviceports.RequestActor {
-	return &serviceports.RequestActor{UserID: pulid.MustNew("usr_")}
+func testActor() *permissionports.RequestActor {
+	return &permissionports.RequestActor{UserID: pulid.MustNew("usr_")}
 }

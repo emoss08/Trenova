@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/gin-gonic/gin"
@@ -19,13 +19,13 @@ type AuthMiddlewareParams struct {
 	fx.In
 
 	Config       *config.Config
-	Service      services.AuthService
+	Service      tenantports.AuthService
 	ErrorHandler *helpers.ErrorHandler
 }
 
 type AuthMiddleware struct {
 	cfg          *config.Config
-	service      services.AuthService
+	service      tenantports.AuthService
 	errorHandler *helpers.ErrorHandler
 }
 

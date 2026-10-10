@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -44,7 +44,7 @@ func (s *Service) GetWorkspaceSummary(
 
 	counts, err := s.settlementRepo.GetWorkspaceCounts(
 		ctx,
-		&repositories.GetCarrierSettlementWorkspaceCountsRequest{
+		&carriersettlementports.GetCarrierSettlementWorkspaceCountsRequest{
 			TenantInfo:  tenantInfo,
 			PeriodStart: bounds.PeriodStart,
 			PeriodEnd:   bounds.PeriodEnd,
@@ -75,7 +75,7 @@ func (s *Service) GetWorkspaceSummary(
 		PendingCarrierCount:  pending.PendingCarrierCount,
 	}
 
-	batches, err := s.batchRepo.List(ctx, &repositories.ListCarrierSettlementBatchesRequest{
+	batches, err := s.batchRepo.List(ctx, &carriersettlementports.ListCarrierSettlementBatchesRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenantInfo,
 			Pagination: pagination.Info{Limit: 1},

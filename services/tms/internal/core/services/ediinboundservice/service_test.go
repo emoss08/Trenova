@@ -1,13 +1,14 @@
 package ediinboundservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -21,14 +22,14 @@ type inboundFixture struct {
 	service             *Service
 	file                *edi.EDIInboundFile
 	partner             *edi.EDIPartner
-	inboundFileRepo     *mocks.MockEDIInboundFileRepository
-	partnerRepo         *mocks.MockEDIPartnerRepository
-	messageRepo         *mocks.MockEDIMessageRepository
-	documentTypeRepo    *mocks.MockEDIDocumentTypeRepository
-	documentProfileRepo *mocks.MockEDIPartnerDocumentProfileRepository
-	transferRepo        *mocks.MockEDILoadTenderTransferRepository
-	recipientRepo       *mocks.MockEDITenderRecipientRepository
-	mappingProfileRepo  *mocks.MockEDIMappingProfileRepository
+	inboundFileRepo     *ediportsmock.MockEDIInboundFileRepository
+	partnerRepo         *ediportsmock.MockEDIPartnerRepository
+	messageRepo         *ediportsmock.MockEDIMessageRepository
+	documentTypeRepo    *ediportsmock.MockEDIDocumentTypeRepository
+	documentProfileRepo *ediportsmock.MockEDIPartnerDocumentProfileRepository
+	transferRepo        *ediportsmock.MockEDILoadTenderTransferRepository
+	recipientRepo       *ediportsmock.MockEDITenderRecipientRepository
+	mappingProfileRepo  *ediportsmock.MockEDIMappingProfileRepository
 }
 
 func newInboundFixture(t *testing.T, rawContent string) *inboundFixture {
@@ -57,14 +58,14 @@ func newInboundFixture(t *testing.T, rawContent string) *inboundFixture {
 			Code:              "PARTNER",
 			EnabledForInbound: true,
 		},
-		inboundFileRepo:     mocks.NewMockEDIInboundFileRepository(t),
-		partnerRepo:         mocks.NewMockEDIPartnerRepository(t),
-		messageRepo:         mocks.NewMockEDIMessageRepository(t),
-		documentTypeRepo:    mocks.NewMockEDIDocumentTypeRepository(t),
-		documentProfileRepo: mocks.NewMockEDIPartnerDocumentProfileRepository(t),
-		transferRepo:        mocks.NewMockEDILoadTenderTransferRepository(t),
-		recipientRepo:       mocks.NewMockEDITenderRecipientRepository(t),
-		mappingProfileRepo:  mocks.NewMockEDIMappingProfileRepository(t),
+		inboundFileRepo:     ediportsmock.NewMockEDIInboundFileRepository(t),
+		partnerRepo:         ediportsmock.NewMockEDIPartnerRepository(t),
+		messageRepo:         ediportsmock.NewMockEDIMessageRepository(t),
+		documentTypeRepo:    ediportsmock.NewMockEDIDocumentTypeRepository(t),
+		documentProfileRepo: ediportsmock.NewMockEDIPartnerDocumentProfileRepository(t),
+		transferRepo:        ediportsmock.NewMockEDILoadTenderTransferRepository(t),
+		recipientRepo:       ediportsmock.NewMockEDITenderRecipientRepository(t),
+		mappingProfileRepo:  ediportsmock.NewMockEDIMappingProfileRepository(t),
 	}
 	ediSvc := ediservice.New(ediservice.Params{
 		Logger:              zap.NewNop(),
@@ -97,7 +98,7 @@ func (f *inboundFixture) expectFileLoadAndUpdates(t *testing.T) *edi.EDIInboundF
 	t.Helper()
 	var lastUpdated edi.EDIInboundFile
 	f.inboundFileRepo.EXPECT().
-		GetInboundFileByID(mock.Anything, repositories.GetEDIInboundFileByIDRequest{
+		GetInboundFileByID(mock.Anything, ediports.GetEDIInboundFileByIDRequest{
 			ID:         f.file.ID,
 			TenantInfo: f.tenantInfo(),
 		}).
@@ -114,7 +115,7 @@ func (f *inboundFixture) expectFileLoadAndUpdates(t *testing.T) *edi.EDIInboundF
 
 func (f *inboundFixture) expectPartnerLoad() {
 	f.partnerRepo.EXPECT().
-		GetByID(mock.Anything, repositories.GetEDIPartnerByIDRequest{
+		GetByID(mock.Anything, ediports.GetEDIPartnerByIDRequest{
 			ID:         f.partner.ID,
 			TenantInfo: f.tenantInfo(),
 		}).
@@ -124,7 +125,7 @@ func (f *inboundFixture) expectPartnerLoad() {
 
 func (f *inboundFixture) expectInboundDocumentType(set edi.TransactionSet) {
 	f.documentTypeRepo.EXPECT().
-		ListDocumentTypes(mock.Anything, repositories.ListEDIDocumentTypesRequest{
+		ListDocumentTypes(mock.Anything, ediports.ListEDIDocumentTypesRequest{
 			Standard:       edi.EDIStandardX12,
 			TransactionSet: set,
 			Direction:      edi.DocumentDirectionInbound,
@@ -141,7 +142,7 @@ func (f *inboundFixture) expectInboundDocumentType(set edi.TransactionSet) {
 func (f *inboundFixture) expectMessageCreate() {
 	f.messageRepo.EXPECT().
 		CreateMessageWithDiagnostics(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req repositories.CreateEDIMessageWithDiagnosticsRequest) (*edi.EDIMessage, error) {
+		RunAndReturn(func(_ context.Context, req ediports.CreateEDIMessageWithDiagnosticsRequest) (*edi.EDIMessage, error) {
 			message := *req.Message
 			message.ID = pulid.MustNew("edimsg_")
 			return &message, nil
@@ -153,7 +154,7 @@ func (f *inboundFixture) expectNoInboundAckProfile(set edi.TransactionSet) {
 	f.documentProfileRepo.EXPECT().
 		GetActivePartnerDocumentProfile(
 			mock.Anything,
-			repositories.GetActiveEDIPartnerDocumentProfileRequest{
+			ediports.GetActiveEDIPartnerDocumentProfileRequest{
 				PartnerID:      f.partner.ID,
 				TenantInfo:     f.tenantInfo(),
 				TransactionSet: set,
@@ -194,7 +195,7 @@ func TestProcessInboundFile_Reconciles997Acknowledgment(t *testing.T) {
 	}
 	fixture.messageRepo.EXPECT().
 		GetOutboundMessageForAck(mock.Anything, mock.MatchedBy(
-			func(req repositories.GetEDIOutboundMessageForAckRequest) bool {
+			func(req ediports.GetEDIOutboundMessageForAckRequest) bool {
 				return req.PartnerID == fixture.partner.ID &&
 					req.GroupControlNumber == "42" &&
 					req.TransactionControlNumber == "0042" &&
@@ -205,7 +206,7 @@ func TestProcessInboundFile_Reconciles997Acknowledgment(t *testing.T) {
 		Once()
 	fixture.messageRepo.EXPECT().
 		UpdateMessageAcknowledgment(mock.Anything, mock.MatchedBy(
-			func(req *repositories.UpdateEDIMessageAcknowledgmentRequest) bool {
+			func(req *ediports.UpdateEDIMessageAcknowledgmentRequest) bool {
 				return req.ID == originalMessage.ID &&
 					req.AckStatus == edi.MessageAcknowledgmentStatusAccepted &&
 					req.AckMessageID.IsNotNil()

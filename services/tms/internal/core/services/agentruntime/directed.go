@@ -5,13 +5,14 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
 
 // directedTask is the task the person handed another agent, on a turn that
 // can run one: the person's own, read as it runs, in a conversation that
 // keeps what the other agent does.
-func directedTask(req *serviceports.RunRequest) *serviceports.DirectedTask {
+func directedTask(req *agentports.RunRequest) *agentports.DirectedTask {
 	if req.Directed == nil || req.Delegation != nil || req.Unattended ||
 		req.ThreadID.IsNil() {
 		return nil
@@ -38,10 +39,10 @@ func directedTask(req *serviceports.RunRequest) *serviceports.DirectedTask {
 // The person's choice stands in for the conversation's agent's list; every
 // other check is made again when the task opens: the agent exists, is
 // enabled and talked to, the person may use it, and its budget is not spent.
-func (s *Service) driveDirected(t *Turn, fx TurnEffects) *serviceports.RunResult {
+func (s *Service) driveDirected(t *Turn, fx TurnEffects) *agentports.RunResult {
 	directed := t.directed
 	result := t.result
-	call := serviceports.ToolCall{
+	call := agentports.ToolCall{
 		ID:   fx.NewCallID(),
 		Name: delegateTaskName,
 		Arguments: map[string]any{
@@ -53,23 +54,23 @@ func (s *Service) driveDirected(t *Turn, fx TurnEffects) *serviceports.RunResult
 
 	opening := conversation.Message{
 		Role:      conversation.RoleAssistant,
-		ToolCalls: toToolCallRecords([]serviceports.ToolCall{call}),
+		ToolCalls: toToolCallRecords([]agentports.ToolCall{call}),
 		CreatedAt: fx.Now(),
 	}
 	result.Messages = append(result.Messages, opening)
-	t.messages = append(t.messages, serviceports.Message{
-		Role:      serviceports.RoleAssistant,
-		ToolCalls: []serviceports.ToolCall{call},
+	t.messages = append(t.messages, agentports.Message{
+		Role:      agentports.RoleAssistant,
+		ToolCalls: []agentports.ToolCall{call},
 	})
-	fx.Emit(serviceports.StreamEvent{
-		Event: serviceports.AssistantEventMessage,
-		Data: serviceports.AssistantMessageEvent{
+	fx.Emit(kernelports.StreamEvent{
+		Event: agentports.AssistantEventMessage,
+		Data: agentports.AssistantMessageEvent{
 			ToolCalls: s.callsWithEffects(opening.ToolCalls),
 		},
 	})
-	fx.Emit(serviceports.StreamEvent{
-		Event: serviceports.AssistantEventToolStarted,
-		Data: serviceports.AssistantToolStartedEvent{
+	fx.Emit(kernelports.StreamEvent{
+		Event: agentports.AssistantEventToolStarted,
+		Data: agentports.AssistantToolStartedEvent{
 			CallID:    call.ID,
 			Name:      call.Name,
 			Arguments: call.Arguments,
@@ -91,13 +92,13 @@ func (s *Service) driveDirected(t *Turn, fx TurnEffects) *serviceports.RunResult
 	reply := directedReply(&report)
 	fx.Emit(deltaEvent(reply))
 
-	return s.finish(result, &serviceports.ChatCompletionResult{Text: reply}, fx)
+	return s.finish(result, &agentports.ChatCompletionResult{Text: reply}, fx)
 }
 
 // recordsInPlay hands the conversation's subject and the records it has been
 // working on to the agent the person turned to. Without them "bill it" reached
 // the billing agent as two words, and it went looking for which load.
-func recordsInPlay(req *serviceports.RunRequest) []agent.RecordRef {
+func recordsInPlay(req *agentports.RunRequest) []agent.RecordRef {
 	watched := watchedRecords(req)
 	records := make([]agent.RecordRef, 0, min(len(watched), maxDelegateRecords))
 	for _, record := range watched {
@@ -127,23 +128,23 @@ func handedRecords(records []agent.RecordRef) *DelegateContext {
 // directedReply is what closes a directed turn: the other agent's answer,
 // or why there is none, so the conversation never ends on a tool result
 // and the person reads the outcome where they read every reply.
-func directedReply(report *serviceports.AssistantDelegateFinishedEvent) string {
+func directedReply(report *agentports.AssistantDelegateFinishedEvent) string {
 	reply := strings.TrimSpace(report.Reply)
 	switch report.Status {
-	case serviceports.DelegateStatusCompleted:
+	case agentports.DelegateStatusCompleted:
 		if reply != "" {
 			return reply
 		}
 		return report.AgentName + " finished without saying anything more."
-	case serviceports.DelegateStatusExhausted:
+	case agentports.DelegateStatusExhausted:
 		if reply != "" {
 			return reply + "\n\n" + report.Reason
 		}
 		return report.Reason
-	case serviceports.DelegateStatusDeclined,
-		serviceports.DelegateStatusRefused,
-		serviceports.DelegateStatusStopped,
-		serviceports.DelegateStatusFailed:
+	case agentports.DelegateStatusDeclined,
+		agentports.DelegateStatusRefused,
+		agentports.DelegateStatusStopped,
+		agentports.DelegateStatusFailed:
 		if report.Reason != "" {
 			return report.Reason
 		}

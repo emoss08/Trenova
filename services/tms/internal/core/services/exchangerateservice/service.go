@@ -12,9 +12,8 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/exchangerate"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/integrationservice"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/exchangerateports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"
@@ -38,14 +37,14 @@ type Params struct {
 
 	Logger             *zap.Logger
 	IntegrationService *integrationservice.Service
-	ExchangeRateRepo   repositories.ExchangeRateRepository
+	ExchangeRateRepo   exchangerateports.ExchangeRateRepository
 	HTTPClient         *http.Client `optional:"true"`
 }
 
 type Service struct {
 	l                  *zap.Logger
 	integrationService *integrationservice.Service
-	repo               repositories.ExchangeRateRepository
+	repo               exchangerateports.ExchangeRateRepository
 	httpClient         *http.Client
 }
 
@@ -84,12 +83,12 @@ func (s *Service) Convert(
 	fromCurrency, toCurrency string,
 	amount decimal.Decimal,
 	date time.Time,
-) (*services.RateConversionResult, error) {
+) (*exchangerateports.RateConversionResult, error) {
 	fromCurrency = normalizeCurrency(fromCurrency)
 	toCurrency = normalizeCurrency(toCurrency)
 
 	if fromCurrency == toCurrency {
-		return &services.RateConversionResult{
+		return &exchangerateports.RateConversionResult{
 			FromCurrency:       fromCurrency,
 			ToCurrency:         toCurrency,
 			Amount:             amount,
@@ -113,13 +112,13 @@ func (s *Service) CachedRate(
 	tenantInfo pagination.TenantInfo,
 	fromCurrency, toCurrency string,
 	date time.Time,
-) (*services.RateConversionResult, error) {
+) (*exchangerateports.RateConversionResult, error) {
 	fromCurrency = normalizeCurrency(fromCurrency)
 	toCurrency = normalizeCurrency(toCurrency)
 	one := decimal.NewFromInt(1)
 
 	if fromCurrency == toCurrency {
-		return &services.RateConversionResult{
+		return &exchangerateports.RateConversionResult{
 			FromCurrency: fromCurrency,
 			ToCurrency:   toCurrency,
 			Amount:       one,
@@ -133,7 +132,7 @@ func (s *Service) CachedRate(
 	if err != nil {
 		return nil, err
 	}
-	cached, err := s.repo.GetRate(ctx, &repositories.GetExchangeRateRequest{
+	cached, err := s.repo.GetRate(ctx, &exchangerateports.GetExchangeRateRequest{
 		TenantInfo:   tenantInfo,
 		Provider:     exchangerate.ProviderOANDA,
 		FromCurrency: fromCurrency,
@@ -143,7 +142,7 @@ func (s *Service) CachedRate(
 	})
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
-			return nil, services.ErrExchangeRateNotCached
+			return nil, exchangerateports.ErrExchangeRateNotCached
 		}
 		return nil, errortypes.NewBusinessError("failed to retrieve cached exchange rate").
 			WithInternal(err)
@@ -155,10 +154,10 @@ func (s *Service) CachedRate(
 func conversionOf(
 	rate *exchangerate.ExchangeRate,
 	amount decimal.Decimal,
-) *services.RateConversionResult {
+) *exchangerateports.RateConversionResult {
 	fetchedAt := rate.FetchedAt
 	sourceTimestamp := rate.SourceTimestamp
-	return &services.RateConversionResult{
+	return &exchangerateports.RateConversionResult{
 		FromCurrency:       rate.FromCurrency,
 		ToCurrency:         rate.ToCurrency,
 		Amount:             amount,
@@ -177,7 +176,7 @@ func (s *Service) GetLatestRates(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	baseCurrency string,
-) (*services.LatestRatesResult, error) {
+) (*exchangerateports.LatestRatesResult, error) {
 	baseCurrency = normalizeCurrency(baseCurrency)
 	return s.fetchAndCacheRates(ctx, tenantInfo, baseCurrency, nil, time.Time{})
 }
@@ -196,7 +195,7 @@ func (s *Service) RefreshRates(
 func (s *Service) CreateSettlementQuote(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	req *services.CreateSettlementQuoteRequest,
+	req *exchangerateports.CreateSettlementQuoteRequest,
 ) (*exchangerate.SettlementQuote, error) {
 	if req == nil {
 		return nil, errortypes.NewBusinessError("settlement quote request is required")
@@ -241,7 +240,7 @@ func (s *Service) CreateSettlementQuote(
 		if fetchErr != nil {
 			return nil, fetchErr
 		}
-		if upsertErr := s.repo.UpsertRates(ctx, &repositories.UpsertExchangeRatesRequest{
+		if upsertErr := s.repo.UpsertRates(ctx, &exchangerateports.UpsertExchangeRatesRequest{
 			TenantInfo: tenantInfo,
 			Rates:      []*exchangerate.ExchangeRate{snapshot},
 		}); upsertErr != nil {
@@ -268,7 +267,7 @@ func (s *Service) CreateSettlementQuote(
 		ExpiresAt:       fetchedAt.Add(settlementQuoteTTL),
 	}
 
-	return s.repo.CreateSettlementQuote(ctx, &repositories.CreateSettlementQuoteRequest{
+	return s.repo.CreateSettlementQuote(ctx, &exchangerateports.CreateSettlementQuoteQuery{
 		TenantInfo: tenantInfo,
 		Quote:      quote,
 	})
@@ -286,7 +285,7 @@ func (s *Service) getRate(
 	}
 
 	rateType := normalizeRateType("", cfg.DefaultRateType)
-	cached, err := s.repo.GetRate(ctx, &repositories.GetExchangeRateRequest{
+	cached, err := s.repo.GetRate(ctx, &exchangerateports.GetExchangeRateRequest{
 		TenantInfo:   tenantInfo,
 		Provider:     exchangerate.ProviderOANDA,
 		FromCurrency: fromCurrency,
@@ -307,7 +306,7 @@ func (s *Service) getRate(
 		return nil, err
 	}
 
-	if upsertErr := s.repo.UpsertRates(ctx, &repositories.UpsertExchangeRatesRequest{
+	if upsertErr := s.repo.UpsertRates(ctx, &exchangerateports.UpsertExchangeRatesRequest{
 		TenantInfo: tenantInfo,
 		Rates:      []*exchangerate.ExchangeRate{rate},
 	}); upsertErr != nil {
@@ -379,7 +378,7 @@ func (s *Service) fetchAndCacheRates(
 	baseCurrency string,
 	targetCurrencies []string,
 	date time.Time,
-) (*services.LatestRatesResult, error) {
+) (*exchangerateports.LatestRatesResult, error) {
 	cfg, err := s.oandaConfig(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -392,7 +391,7 @@ func (s *Service) fetchAndCacheRates(
 	}
 
 	if len(snapshots) > 0 {
-		if upsertErr := s.repo.UpsertRates(ctx, &repositories.UpsertExchangeRatesRequest{
+		if upsertErr := s.repo.UpsertRates(ctx, &exchangerateports.UpsertExchangeRatesRequest{
 			TenantInfo: tenantInfo,
 			Rates:      snapshots,
 		}); upsertErr != nil {
@@ -409,7 +408,7 @@ func (s *Service) fetchAndCacheRates(
 		resultDate = rate.Date
 	}
 
-	return &services.LatestRatesResult{
+	return &exchangerateports.LatestRatesResult{
 		BaseCurrency: baseCurrency,
 		Date:         resultDate,
 		Provider:     string(exchangerate.ProviderOANDA),

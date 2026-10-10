@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -18,14 +18,14 @@ const eventProfileChangeReviewed = "dash.profile_change_reviewed"
 
 func (s *Service) ListChangeRequests(
 	ctx context.Context,
-	req *repositories.ListProfileChangeRequestsRequest,
+	req *workerports.ListProfileChangeRequestsRequest,
 ) ([]*worker.WorkerProfileChangeRequest, error) {
 	return s.repo.ListChangeRequests(ctx, req)
 }
 
 func (s *Service) GetChangeRequest(
 	ctx context.Context,
-	req *repositories.GetProfileChangeRequestByIDRequest,
+	req *workerports.GetProfileChangeRequestByIDRequest,
 ) (*worker.WorkerProfileChangeRequest, error) {
 	return s.repo.GetChangeRequestByID(ctx, req)
 }
@@ -56,7 +56,7 @@ func (s *Service) SubmitChange(
 		)
 	}
 
-	pending, err := s.repo.ListChangeRequests(ctx, &repositories.ListProfileChangeRequestsRequest{
+	pending, err := s.repo.ListChangeRequests(ctx, &workerports.ListProfileChangeRequestsRequest{
 		TenantInfo: req.TenantInfo,
 		WorkerID:   req.Worker.ID,
 		Statuses:   []worker.ProfileChangeStatus{worker.ProfileChangePending},
@@ -105,7 +105,7 @@ func (s *Service) WithdrawChange(
 ) (*worker.WorkerProfileChangeRequest, error) {
 	entity, err := s.repo.GetChangeRequestByID(
 		ctx,
-		&repositories.GetProfileChangeRequestByIDRequest{ID: req.ID, TenantInfo: req.TenantInfo},
+		&workerports.GetProfileChangeRequestByIDRequest{ID: req.ID, TenantInfo: req.TenantInfo},
 	)
 	if err != nil {
 		return nil, err
@@ -139,7 +139,7 @@ type DecideChangeRequest struct {
 	Note       string
 	TenantInfo pagination.TenantInfo
 	UserID     pulid.ID
-	Actor      *services.RequestActor
+	Actor      *permissionports.RequestActor
 }
 
 // DecideChange approves or rejects a request. An approval applies exactly the
@@ -154,7 +154,7 @@ func (s *Service) DecideChange(
 ) (*worker.WorkerProfileChangeRequest, error) {
 	entity, err := s.repo.GetChangeRequestByID(
 		ctx,
-		&repositories.GetProfileChangeRequestByIDRequest{ID: req.ID, TenantInfo: req.TenantInfo},
+		&workerports.GetProfileChangeRequestByIDRequest{ID: req.ID, TenantInfo: req.TenantInfo},
 	)
 	if err != nil {
 		return nil, err
@@ -186,7 +186,7 @@ func (s *Service) DecideChange(
 	}
 
 	if req.Approve {
-		wrk, wErr := s.workerRepo.GetByID(ctx, repositories.GetWorkerByIDRequest{
+		wrk, wErr := s.workerRepo.GetByID(ctx, workerports.GetWorkerByIDRequest{
 			ID:         entity.WorkerID,
 			TenantInfo: req.TenantInfo,
 		})

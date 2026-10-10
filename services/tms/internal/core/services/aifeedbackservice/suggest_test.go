@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -66,10 +66,10 @@ func suggest(
 	t *testing.T,
 	h *harness,
 	tenant pagination.TenantInfo,
-) *services.SuggestAgentMemoriesResult {
+) *aifeedbackports.SuggestAgentMemoriesResult {
 	t.Helper()
 
-	result, err := h.svc.SuggestMemories(t.Context(), services.SuggestAgentMemoriesRequest{
+	result, err := h.svc.SuggestMemories(t.Context(), aifeedbackports.SuggestAgentMemoriesRequest{
 		TenantInfo: tenant,
 		Now:        1_760_000_000,
 	})

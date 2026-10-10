@@ -6,10 +6,10 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -34,7 +34,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.CarrierRepository {
+func New(p Params) carrierports.CarrierRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.carrier-repository"),
@@ -43,7 +43,7 @@ func New(p Params) repositories.CarrierRepository {
 
 func (r *repository) addOptions(
 	q *bun.SelectQuery,
-	opts repositories.CarrierFilterOptions,
+	opts carrierports.CarrierFilterOptions,
 ) *bun.SelectQuery {
 	if opts.IncludeState {
 		q = q.Relation("State")
@@ -68,7 +68,7 @@ func (r *repository) addOptions(
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListCarrierRequest,
+	req *carrierports.ListCarrierRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
@@ -86,7 +86,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListCarrierRequest,
+	req *carrierports.ListCarrierRequest,
 ) (*pagination.ListResult[*carrier.Carrier], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*carrier.Carrier], error) {
 		log := r.l.With(
@@ -115,7 +115,7 @@ func (r *repository) List(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListCarrierConnectionRequest,
+	req *carrierports.ListCarrierConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -128,7 +128,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListCarrierConnectionRequest,
+	req *carrierports.ListCarrierConnectionRequest,
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -140,7 +140,7 @@ func (r *repository) applyTotalCountFilters(
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListCarrierConnectionRequest,
+	req *carrierports.ListCarrierConnectionRequest,
 ) (*pagination.CursorListResult[*carrier.Carrier], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*carrier.Carrier], error) {
 		log := r.l.With(
@@ -198,7 +198,7 @@ func (r *repository) ListConnection(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetCarrierByIDRequest,
+	req carrierports.GetCarrierByIDRequest,
 ) (*carrier.Carrier, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carrier.Carrier, error) {
 		log := r.l.With(
@@ -230,7 +230,7 @@ func (r *repository) GetByID(
 
 func (r *repository) FindByIdentity(
 	ctx context.Context,
-	req *repositories.FindCarrierByIdentityRequest,
+	req *carrierports.FindCarrierByIdentityRequest,
 ) (*carrier.Carrier, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carrier.Carrier, error) {
 		if req.SCAC == "" && req.DOTNumber == "" {
@@ -273,7 +273,7 @@ func (r *repository) FindByIdentity(
 
 func (r *repository) GetByIDs(
 	ctx context.Context,
-	req repositories.GetCarriersByIDsRequest,
+	req carrierports.GetCarriersByIDsRequest,
 ) ([]*carrier.Carrier, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carrier.Carrier, error) {
 		log := r.l.With(
@@ -305,7 +305,7 @@ func (r *repository) GetByIDs(
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
-	req *repositories.CarrierSelectOptionsRequest,
+	req *carrierports.CarrierSelectOptionsRequest,
 ) (*pagination.ListResult[*carrier.Carrier], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*carrier.Carrier], error) {
 		return dbhelper.SelectOptions[*carrier.Carrier](
@@ -555,7 +555,7 @@ func (r *repository) Create(
 			zap.String("code", entity.Code),
 		)
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			if _, iErr := r.db.DBForContext(c).
 				NewInsert().
 				Model(entity).
@@ -587,7 +587,7 @@ func (r *repository) Update(
 			zap.String("id", entity.ID.String()),
 		)
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			ov := entity.Version
 			entity.Version++
 
@@ -633,7 +633,7 @@ func (r *repository) Update(
 
 func (r *repository) BulkUpdateStatus(
 	ctx context.Context,
-	req *repositories.BulkUpdateCarrierStatusRequest,
+	req *carrierports.BulkUpdateCarrierStatusRequest,
 ) ([]*carrier.Carrier, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*carrier.Carrier, error) {
 		log := r.l.With(
@@ -668,7 +668,7 @@ func (r *repository) BulkUpdateStatus(
 
 func (r *repository) ListEDIChannels(
 	ctx context.Context,
-	req repositories.GetCarrierEDIChannelRequest,
+	req carrierports.GetCarrierEDIChannelRequest,
 ) ([]*carrier.CarrierEDIChannel, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carrier.CarrierEDIChannel, error) {
 		cols := buncolgen.CarrierEDIChannelColumns
@@ -694,7 +694,7 @@ func (r *repository) ListEDIChannels(
 
 func (r *repository) GetDefaultEDIChannel(
 	ctx context.Context,
-	req repositories.GetCarrierEDIChannelRequest,
+	req carrierports.GetCarrierEDIChannelRequest,
 ) (*carrier.CarrierEDIChannel, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carrier.CarrierEDIChannel, error) {
 		cols := buncolgen.CarrierEDIChannelColumns

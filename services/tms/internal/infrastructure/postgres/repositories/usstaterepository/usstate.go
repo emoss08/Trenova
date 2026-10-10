@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -31,7 +31,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.UsStateRepository {
+func New(p Params) usstateports.UsStateRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.us-state-repository"),
@@ -40,7 +40,7 @@ func New(p Params) repositories.UsStateRepository {
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetUsStateByIDRequest,
+	req usstateports.GetUsStateByIDRequest,
 ) (*usstate.UsState, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*usstate.UsState, error) {
 		log := r.l.With(

@@ -7,9 +7,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/settingversion"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/settingversionports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -28,7 +28,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.SettingVersionRepository {
+func New(p Params) settingversionports.SettingVersionRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.setting-version-repository")}
 }
 
@@ -43,7 +43,7 @@ func (r *repository) Create(ctx context.Context, version *settingversion.Setting
 
 func (r *repository) LatestAt(
 	ctx context.Context,
-	req *repositories.GetSettingVersionAtRequest,
+	req *settingversionports.GetSettingVersionAtRequest,
 ) (*settingversion.SettingVersion, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*settingversion.SettingVersion, error) {
 		cols := buncolgen.SettingVersionColumns

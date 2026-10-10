@@ -6,8 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -49,7 +50,7 @@ const maxQualitySummary = 1000
 func DescribeQualityRegression(
 	run *agentquality.SuiteRun,
 	agentName string,
-) services.WatchtowerItemInput {
+) watchtowerports.WatchtowerItemInput {
 	who := agentName
 	if who == "" {
 		who = "An agent"
@@ -59,7 +60,7 @@ func DescribeQualityRegression(
 		occurredAt = *run.FinishedAt
 	}
 
-	return services.WatchtowerItemInput{
+	return watchtowerports.WatchtowerItemInput{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: run.OrganizationID,
 			BuID:  run.BusinessUnitID,
@@ -75,14 +76,14 @@ func DescribeQualityRegression(
 }
 
 type QualityRegressionSource struct {
-	runs        repositories.AgentSuiteRunRepository
-	definitions repositories.AgentDefinitionRepository
+	runs        agentqualityports.AgentSuiteRunRepository
+	definitions agentdefinitionports.AgentDefinitionRepository
 }
 
 func NewQualityRegressionSource(
-	runs repositories.AgentSuiteRunRepository,
-	definitions repositories.AgentDefinitionRepository,
-) services.WatchtowerSource {
+	runs agentqualityports.AgentSuiteRunRepository,
+	definitions agentdefinitionports.AgentDefinitionRepository,
+) watchtowerports.WatchtowerSource {
 	return &QualityRegressionSource{runs: runs, definitions: definitions}
 }
 
@@ -93,8 +94,8 @@ func (s *QualityRegressionSource) Kind() watchtower.SourceKind {
 func (s *QualityRegressionSource) Snapshot(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-) ([]services.WatchtowerItemInput, error) {
-	latest, err := s.runs.Latest(ctx, repositories.LatestAgentSuiteRunsRequest{
+) ([]watchtowerports.WatchtowerItemInput, error) {
+	latest, err := s.runs.Latest(ctx, agentqualityports.LatestAgentSuiteRunsRequest{
 		TenantInfo: tenant,
 		Statuses: []agentquality.SuiteRunStatus{
 			agentquality.SuiteRunStatusCompleted,
@@ -115,14 +116,14 @@ func (s *QualityRegressionSource) Snapshot(
 		}
 	}
 	if len(regressed) == 0 {
-		return []services.WatchtowerItemInput{}, nil
+		return []watchtowerports.WatchtowerItemInput{}, nil
 	}
 
 	names := map[pulid.ID]string{}
 	if s.definitions != nil {
 		definitions, dErr := s.definitions.ListByIDs(
 			ctx,
-			repositories.ListAgentDefinitionsByIDsRequest{
+			agentdefinitionports.ListAgentDefinitionsByIDsRequest{
 				IDs:        unique(definitionIDs),
 				TenantInfo: tenant,
 			},
@@ -136,7 +137,7 @@ func (s *QualityRegressionSource) Snapshot(
 		}
 	}
 
-	items := make([]services.WatchtowerItemInput, 0, len(regressed))
+	items := make([]watchtowerports.WatchtowerItemInput, 0, len(regressed))
 	for _, run := range regressed {
 		items = append(items, DescribeQualityRegression(run, names[run.AgentDefinitionID]))
 	}

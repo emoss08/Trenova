@@ -9,8 +9,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -30,10 +31,10 @@ import (
 // tiers. A person who chose to be asked first gets the memory offered instead:
 // kept as a suggestion nothing reads until they accept it in the conversation.
 type rememberTool struct {
-	memories serviceports.AgentMemoryService
+	memories agentports.AgentMemoryService
 }
 
-var _ serviceports.MemoryRecordingTool = (*rememberTool)(nil)
+var _ agentports.MemoryRecordingTool = (*rememberTool)(nil)
 
 // Who a memory the agent keeps is visible to, as the model names it.
 const (
@@ -42,7 +43,7 @@ const (
 	visibleToOrganization = "organization"
 )
 
-func newRememberTool(memories serviceports.AgentMemoryService) serviceports.AgentTool {
+func newRememberTool(memories agentports.AgentMemoryService) agentports.AgentTool {
 	return &rememberTool{memories: memories}
 }
 
@@ -114,8 +115,8 @@ func (t *rememberTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *rememberTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *rememberTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:                t.Name(),
 		Kind:                agent.ToolKindAction,
 		Resource:            permission.ResourceAgentMemory,
@@ -130,7 +131,7 @@ func (t *rememberTool) Policy() serviceports.ToolPolicy {
 		Reversible:          true,
 		ReadsExternal:       agent.ExternalReadNever,
 		CarriesTaint:        true,
-		TaintHold: &serviceports.TaintHold{
+		TaintHold: &agentports.TaintHold{
 			Description: "An Instruction, a Procedure or a Correction recorded after the run " +
 				"read text from outside the organization waits for a person's approval; a Fact " +
 				"is recorded and stays marked as drawn from outside text.",
@@ -145,19 +146,19 @@ func (t *rememberTool) Policy() serviceports.ToolPolicy {
 // classifyRemember calls a memory for the person in the conversation alone
 // personal: it reaches nobody else's conversations. Anything wider, or any
 // memory recorded with nobody in the conversation, is internal.
-func classifyRemember(params serviceports.ToolExecuteParams) serviceports.CallPolicy {
+func classifyRemember(params agentports.ToolExecuteParams) agentports.CallPolicy {
 	actor := params.Actor
 	if rememberAudience(params) != visibleToMe || actor == nil ||
-		actor.PrincipalType != serviceports.PrincipalTypeUser || actor.UserID.IsNil() {
-		return serviceports.CallPolicy{Egress: agent.EgressInternal}
+		actor.PrincipalType != permissionports.PrincipalTypeUser || actor.UserID.IsNil() {
+		return agentports.CallPolicy{Egress: agent.EgressInternal}
 	}
 
-	return serviceports.CallPolicy{Egress: agent.EgressPersonal}
+	return agentports.CallPolicy{Egress: agent.EgressPersonal}
 }
 
 // rememberAudience is who the call keeps the memory for, defaulting to the
 // person when there is one.
-func rememberAudience(params serviceports.ToolExecuteParams) string {
+func rememberAudience(params agentports.ToolExecuteParams) string {
 	if audience := optionalString(params.Params, fieldVisibleTo); audience != "" {
 		return audience
 	}
@@ -168,7 +169,7 @@ func rememberAudience(params serviceports.ToolExecuteParams) string {
 	return visibleToOrganization
 }
 
-func rememberHeldWhenTainted(params serviceports.ToolExecuteParams) bool {
+func rememberHeldWhenTainted(params agentports.ToolExecuteParams) bool {
 	return rememberKind(params.Params) != agent.MemoryKindFact
 }
 
@@ -181,7 +182,7 @@ func rememberKind(params map[string]any) agent.MemoryKind {
 	return kind
 }
 
-func (t *rememberTool) Execute(ctx context.Context, params serviceports.ToolExecuteParams) error {
+func (t *rememberTool) Execute(ctx context.Context, params agentports.ToolExecuteParams) error {
 	_, err := t.Record(ctx, params)
 
 	return err
@@ -191,7 +192,7 @@ func (t *rememberTool) Execute(ctx context.Context, params serviceports.ToolExec
 // person what was kept and let them edit or undo it.
 func (t *rememberTool) Record(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) (*agent.Memory, error) {
 	request, err := t.request(ctx, &params)
 	if err != nil {
@@ -203,8 +204,8 @@ func (t *rememberTool) Record(
 
 func (t *rememberTool) request(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.RememberRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*agentports.RememberRequest, error) {
 	if err := guardExecute(t, *params); err != nil {
 		return nil, err
 	}
@@ -235,7 +236,7 @@ func (t *rememberTool) request(
 		return nil, err
 	}
 
-	request := &serviceports.RememberRequest{
+	request := &agentports.RememberRequest{
 		TenantInfo:   tenantFrom(*params),
 		Kind:         kind,
 		Content:      content,
@@ -260,8 +261,8 @@ func (t *rememberTool) request(
 // a person already approved as a proposal was asked about, and is kept.
 func (t *rememberTool) audience(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
-	request *serviceports.RememberRequest,
+	params *agentports.ToolExecuteParams,
+	request *agentports.RememberRequest,
 ) error {
 	person := request.PersonUserID
 	switch audience := rememberAudience(*params); audience {
@@ -309,10 +310,10 @@ func (t *rememberTool) audience(
 // change, not a delete, so a person can see what was forgotten and restore
 // it.
 type forgetMemoryTool struct {
-	memories serviceports.AgentMemoryService
+	memories agentports.AgentMemoryService
 }
 
-func newForgetMemoryTool(memories serviceports.AgentMemoryService) serviceports.AgentTool {
+func newForgetMemoryTool(memories agentports.AgentMemoryService) agentports.AgentTool {
 	return &forgetMemoryTool{memories: memories}
 }
 
@@ -339,8 +340,8 @@ func (t *forgetMemoryTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *forgetMemoryTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *forgetMemoryTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceAgentMemory,
@@ -358,7 +359,7 @@ func (t *forgetMemoryTool) Policy() serviceports.ToolPolicy {
 
 func (t *forgetMemoryTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	request, err := t.request(&params)
 	if err != nil {
@@ -371,18 +372,18 @@ func (t *forgetMemoryTool) Execute(
 }
 
 func (t *forgetMemoryTool) request(
-	params *serviceports.ToolExecuteParams,
-) (serviceports.SetAgentMemoryStatusRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (agentports.SetAgentMemoryStatusRequest, error) {
 	if err := guardExecute(t, *params); err != nil {
-		return serviceports.SetAgentMemoryStatusRequest{}, err
+		return agentports.SetAgentMemoryStatusRequest{}, err
 	}
 
 	memoryID, err := requirePulid(params.Params, "memoryId")
 	if err != nil {
-		return serviceports.SetAgentMemoryStatusRequest{}, err
+		return agentports.SetAgentMemoryStatusRequest{}, err
 	}
 
-	return serviceports.SetAgentMemoryStatusRequest{
+	return agentports.SetAgentMemoryStatusRequest{
 		ID:         memoryID,
 		TenantInfo: tenantFrom(*params),
 		Status:     agent.MemoryStatusRetired,

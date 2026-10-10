@@ -6,9 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -25,7 +25,7 @@ func (s *Service) refreshAttention(ctx context.Context, conn *accountingsync.Acc
 		return
 	}
 	tenant := tenantOf(conn)
-	groups, err := s.records.ListAttention(ctx, repositories.ListAccountingSyncAttentionRequest{
+	groups, err := s.records.ListAttention(ctx, accountingsyncports.ListAccountingSyncAttentionRequest{
 		TenantInfo:   tenant,
 		ConnectionID: conn.ID,
 		Limit:        attentionGroups,
@@ -108,7 +108,7 @@ func (s *Service) publishOutcome(
 	default:
 		return
 	}
-	services.PublishAgentEvent(ctx, s.publisher, services.AgentEvent{
+	agentports.PublishAgentEvent(ctx, s.publisher, agentports.AgentEvent{
 		Kind:       kind,
 		SubjectID:  record.ID,
 		TenantInfo: record.TenantInfo(),

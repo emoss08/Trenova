@@ -9,8 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -24,16 +26,16 @@ type memoPlan struct {
 
 func (s *Service) planMemo(
 	ctx context.Context,
-	req *servicesports.CreateMemoRequest,
+	req *invoiceports.CreateMemoRequest,
 ) (*memoPlan, error) {
 	if multiErr := validateMemoRequest(req); multiErr != nil {
 		return nil, multiErr
 	}
 
-	cus, err := s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
+	cus, err := s.customerRepo.GetByID(ctx, customerports.GetCustomerByIDRequest{
 		ID:         req.CustomerID,
 		TenantInfo: req.TenantInfo,
-		CustomerFilterOptions: repositories.CustomerFilterOptions{
+		CustomerFilterOptions: customerports.CustomerFilterOptions{
 			IncludeBillingProfile: true,
 			IncludeState:          true,
 		},
@@ -59,7 +61,7 @@ func (s *Service) planMemo(
 }
 
 func memoQueueItem(
-	req *servicesports.CreateMemoRequest,
+	req *invoiceports.CreateMemoRequest,
 	cus *customer.Customer,
 	number string,
 ) *billingqueue.BillingQueueItem {
@@ -79,7 +81,7 @@ func memoQueueItem(
 
 func (s *Service) PreviewMemo(
 	ctx context.Context,
-	req *servicesports.CreateMemoRequest,
+	req *invoiceports.CreateMemoRequest,
 ) (*invoice.Invoice, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
@@ -107,8 +109,8 @@ func (s *Service) PreviewMemo(
 
 func (s *Service) planVoid(
 	ctx context.Context,
-	req *servicesports.VoidInvoiceRequest,
-	actor *servicesports.RequestActor,
+	req *invoiceports.VoidInvoiceRequest,
+	actor *permissionports.RequestActor,
 ) (*invoice.Invoice, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
@@ -128,7 +130,7 @@ func (s *Service) planVoid(
 		return nil, multiErr
 	}
 
-	entity, err := s.repo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+	entity, err := s.repo.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         req.InvoiceID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -173,8 +175,8 @@ func refuseAppliedInvoice(entity *invoice.Invoice) error {
 func (s *Service) markDraftVoided(
 	ctx context.Context,
 	entity *invoice.Invoice,
-	req *servicesports.VoidInvoiceRequest,
-	actor *servicesports.RequestActor,
+	req *invoiceports.VoidInvoiceRequest,
+	actor *permissionports.RequestActor,
 	now int64,
 ) error {
 	if err := refuseAppliedInvoice(entity); err != nil {
@@ -208,9 +210,9 @@ func (s *Service) refuseVoidingPosted(entity *invoice.Invoice) error {
 
 func voidReversalRequest(
 	entity *invoice.Invoice,
-	req *servicesports.VoidInvoiceRequest,
-) *servicesports.InvoiceAdjustmentRequest {
-	return &servicesports.InvoiceAdjustmentRequest{
+	req *invoiceports.VoidInvoiceRequest,
+) *invoiceadjustmentports.InvoiceAdjustmentRequest {
+	return &invoiceadjustmentports.InvoiceAdjustmentRequest{
 		InvoiceID:      entity.ID,
 		Kind:           invoiceadjustment.KindFullReversal,
 		Reason:         strings.TrimSpace(req.Reason),
@@ -221,16 +223,16 @@ func voidReversalRequest(
 
 func (s *Service) PreviewVoid(
 	ctx context.Context,
-	req *servicesports.VoidInvoiceRequest,
-	actor *servicesports.RequestActor,
-) (*servicesports.InvoiceVoidPreview, error) {
+	req *invoiceports.VoidInvoiceRequest,
+	actor *permissionports.RequestActor,
+) (*invoiceports.InvoiceVoidPreview, error) {
 	entity, err := s.planVoid(ctx, req, actor)
 	if err != nil {
 		return nil, err
 	}
 
 	after := *entity
-	preview := &servicesports.InvoiceVoidPreview{Before: entity, After: &after}
+	preview := &invoiceports.InvoiceVoidPreview{Before: entity, After: &after}
 	if entity.Status == invoice.StatusDraft {
 		if err = s.markDraftVoided(ctx, &after, req, actor, timeutils.NowUnix()); err != nil {
 			return nil, err

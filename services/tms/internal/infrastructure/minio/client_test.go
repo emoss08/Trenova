@@ -8,16 +8,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	minioadapter "github.com/emoss08/trenova/internal/infrastructure/minio"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
 
-func setupTestClient(t *testing.T, mc *testutil.MinioContainer) storage.Client {
+func setupTestClient(t *testing.T, mc *testutil.MinioContainer) kernelports.Client {
 	t.Helper()
 
 	cfg := &config.Config{
@@ -99,7 +99,7 @@ func TestClient_Upload(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := client.Upload(tc.Ctx, &storage.UploadParams{
+			result, err := client.Upload(tc.Ctx, &kernelports.UploadParams{
 				Key:         tt.key,
 				ContentType: tt.contentType,
 				Size:        int64(len(tt.content)),
@@ -133,7 +133,7 @@ func TestClient_Download(t *testing.T) {
 	uploadContent := []byte("download test content")
 	uploadKey := "download-test/file.txt"
 
-	_, err := client.Upload(tc.Ctx, &storage.UploadParams{
+	_, err := client.Upload(tc.Ctx, &kernelports.UploadParams{
 		Key:         uploadKey,
 		ContentType: "text/plain",
 		Size:        int64(len(uploadContent)),
@@ -175,7 +175,7 @@ func TestClient_Delete(t *testing.T) {
 	uploadContent := []byte("delete test content")
 	uploadKey := "delete-test/file.txt"
 
-	_, err := client.Upload(tc.Ctx, &storage.UploadParams{
+	_, err := client.Upload(tc.Ctx, &kernelports.UploadParams{
 		Key:         uploadKey,
 		ContentType: "text/plain",
 		Size:        int64(len(uploadContent)),
@@ -211,7 +211,7 @@ func TestClient_GetPresignedURL(t *testing.T) {
 	uploadContent := []byte("presigned url test content")
 	uploadKey := "presigned-test/file.txt"
 
-	_, err := client.Upload(tc.Ctx, &storage.UploadParams{
+	_, err := client.Upload(tc.Ctx, &kernelports.UploadParams{
 		Key:         uploadKey,
 		ContentType: "text/plain",
 		Size:        int64(len(uploadContent)),
@@ -220,7 +220,7 @@ func TestClient_GetPresignedURL(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("generate presigned URL", func(t *testing.T) {
-		url, err := client.GetPresignedURL(tc.Ctx, &storage.PresignedURLParams{
+		url, err := client.GetPresignedURL(tc.Ctx, &kernelports.PresignedURLParams{
 			Key:    uploadKey,
 			Expiry: 15 * time.Minute,
 		})
@@ -232,7 +232,7 @@ func TestClient_GetPresignedURL(t *testing.T) {
 	})
 
 	t.Run("generate presigned URL with content disposition", func(t *testing.T) {
-		url, err := client.GetPresignedURL(tc.Ctx, &storage.PresignedURLParams{
+		url, err := client.GetPresignedURL(tc.Ctx, &kernelports.PresignedURLParams{
 			Key:                uploadKey,
 			Expiry:             15 * time.Minute,
 			ContentDisposition: "attachment; filename=\"download.txt\"",
@@ -251,7 +251,7 @@ func TestClient_Exists(t *testing.T) {
 	client := setupTestClient(t, mc)
 
 	existingKey := "exists-test/file.txt"
-	_, err := client.Upload(tc.Ctx, &storage.UploadParams{
+	_, err := client.Upload(tc.Ctx, &kernelports.UploadParams{
 		Key:         existingKey,
 		ContentType: "text/plain",
 		Size:        5,
@@ -300,7 +300,7 @@ func TestClient_GetFileInfo(t *testing.T) {
 	uploadKey := "fileinfo-test/file.txt"
 	metadata := map[string]string{"custom-key": "custom-value"}
 
-	_, err := client.Upload(tc.Ctx, &storage.UploadParams{
+	_, err := client.Upload(tc.Ctx, &kernelports.UploadParams{
 		Key:         uploadKey,
 		ContentType: "text/plain",
 		Size:        int64(len(uploadContent)),
@@ -339,7 +339,7 @@ func TestClient_LargeFileUpload(t *testing.T) {
 	uploadKey := "large-file-test/large.bin"
 
 	t.Run("upload large file", func(t *testing.T) {
-		result, err := client.Upload(tc.Ctx, &storage.UploadParams{
+		result, err := client.Upload(tc.Ctx, &kernelports.UploadParams{
 			Key:         uploadKey,
 			ContentType: "application/octet-stream",
 			Size:        int64(len(largeContent)),
@@ -375,7 +375,7 @@ func TestClient_ConcurrentOperations(t *testing.T) {
 			key := "concurrent-test/file-" + string(rune('0'+idx)) + ".txt"
 			content := []byte("content for file " + string(rune('0'+idx)))
 
-			_, err := client.Upload(tc.Ctx, &storage.UploadParams{
+			_, err := client.Upload(tc.Ctx, &kernelports.UploadParams{
 				Key:         key,
 				ContentType: "text/plain",
 				Size:        int64(len(content)),
@@ -412,7 +412,7 @@ func TestClient_ContextCancellation(t *testing.T) {
 	ctx, cancel := context.WithCancel(tc.Ctx)
 	cancel()
 
-	_, err := client.Upload(ctx, &storage.UploadParams{
+	_, err := client.Upload(ctx, &kernelports.UploadParams{
 		Key:         "cancelled/file.txt",
 		ContentType: "text/plain",
 		Size:        5,
@@ -485,7 +485,7 @@ func TestClient_Upload_WithMetadata(t *testing.T) {
 		"uploaded-by":   "user_456",
 	}
 
-	result, err := client.Upload(tc.Ctx, &storage.UploadParams{
+	result, err := client.Upload(tc.Ctx, &kernelports.UploadParams{
 		Key:         "metadata-test/file.txt",
 		ContentType: "text/plain",
 		Size:        int64(len("hello")),

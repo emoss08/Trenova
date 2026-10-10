@@ -11,10 +11,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentsuggestion"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/customerupdateservice"
 	"github.com/emoss08/trenova/internal/core/services/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/core/services/dispatchconsoleservice"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -39,7 +40,7 @@ type ruleInput struct {
 	timezone string
 	loc      *time.Location
 	now      time.Time
-	caps     *services.ShipmentBoardCapabilities
+	caps     *shipmentports.ShipmentBoardCapabilities
 	board    *dispatchconsoleservice.Board
 }
 
@@ -49,7 +50,7 @@ func (in *ruleInput) clock(unix int64) string {
 
 type rule interface {
 	name() string
-	collect(ctx context.Context, s *Service, in *ruleInput) ([]*services.ShipmentSuggestion, error)
+	collect(ctx context.Context, s *Service, in *ruleInput) ([]*shipmentsuggestionports.ShipmentSuggestion, error)
 }
 
 func defaultRules() []rule {
@@ -82,7 +83,7 @@ func (s *Service) compute(
 		caps:     caps,
 		board:    board,
 	}
-	items := make([]*services.ShipmentSuggestion, 0, maxQueueItems)
+	items := make([]*shipmentsuggestionports.ShipmentSuggestion, 0, maxQueueItems)
 	for _, r := range s.rules {
 		found, ruleErr := r.collect(ctx, s, in)
 		if ruleErr != nil {
@@ -92,7 +93,7 @@ func (s *Service) compute(
 		items = append(items, found...)
 	}
 
-	slices.SortStableFunc(items, func(a, b *services.ShipmentSuggestion) int {
+	slices.SortStableFunc(items, func(a, b *shipmentsuggestionports.ShipmentSuggestion) int {
 		return cmp.Or(
 			cmp.Compare(toneRank(a.Tone), toneRank(b.Tone)),
 			cmp.Compare(dueOf(a), dueOf(b)),
@@ -105,22 +106,22 @@ func (s *Service) compute(
 	return &queue{Items: items}, nil
 }
 
-func toneRank(tone services.SuggestionTone) int {
+func toneRank(tone shipmentsuggestionports.SuggestionTone) int {
 	switch tone {
-	case services.SuggestionToneDanger:
+	case shipmentsuggestionports.SuggestionToneDanger:
 		return 0
-	case services.SuggestionToneWarning:
+	case shipmentsuggestionports.SuggestionToneWarning:
 		return 1
-	case services.SuggestionToneAccent:
+	case shipmentsuggestionports.SuggestionToneAccent:
 		return 2
-	case services.SuggestionToneBrand:
+	case shipmentsuggestionports.SuggestionToneBrand:
 		return 3
 	default:
 		return 3
 	}
 }
 
-func dueOf(item *services.ShipmentSuggestion) int64 {
+func dueOf(item *shipmentsuggestionports.ShipmentSuggestion) int64 {
 	if item.DueAt == nil {
 		return 1<<62 - 1
 	}
@@ -179,7 +180,7 @@ func (coverageRule) collect(
 	ctx context.Context,
 	s *Service,
 	in *ruleInput,
-) ([]*services.ShipmentSuggestion, error) {
+) ([]*shipmentsuggestionports.ShipmentSuggestion, error) {
 	horizon := in.now.Add(coverageHorizon).Unix()
 	open := make([]*dispatchconsoleservice.BoardMove, 0)
 	for _, move := range in.board.Moves {
@@ -195,9 +196,9 @@ func (coverageRule) collect(
 	open = open[:min(maxCoverageItems, len(open))]
 
 	operation := in.caps.OperationType
-	out := make([]*services.ShipmentSuggestion, 0, len(open))
+	out := make([]*shipmentsuggestionports.ShipmentSuggestion, 0, len(open))
 	for _, move := range open {
-		var item *services.ShipmentSuggestion
+		var item *shipmentsuggestionports.ShipmentSuggestion
 		if operation.RunsAssets() {
 			driver, err := s.bestDriver(ctx, in.tenant, move.MoveID)
 			if err != nil {
@@ -241,12 +242,12 @@ func (s *Service) bestDriver(
 	return nil, nil //nolint:nilnil // no driver can take the move
 }
 
-func coverageTone(in *ruleInput, move *dispatchconsoleservice.BoardMove) services.SuggestionTone {
+func coverageTone(in *ruleInput, move *dispatchconsoleservice.BoardMove) shipmentsuggestionports.SuggestionTone {
 	if move.OriginWindowStart < in.now.Unix() {
-		return services.SuggestionToneDanger
+		return shipmentsuggestionports.SuggestionToneDanger
 	}
 
-	return services.SuggestionToneWarning
+	return shipmentsuggestionports.SuggestionToneWarning
 }
 
 func pickupDue(move *dispatchconsoleservice.BoardMove) *int64 {
@@ -261,7 +262,7 @@ func assignSuggestion(
 	in *ruleInput,
 	move *dispatchconsoleservice.BoardMove,
 	driver *dispatchcandidateservice.CandidateScore,
-) *services.ShipmentSuggestion {
+) *shipmentsuggestionports.ShipmentSuggestion {
 	first := stringutils.FirstName(driver.WorkerName)
 	deadhead := ""
 	if driver.DeadheadMiles != nil {
@@ -269,10 +270,10 @@ func assignSuggestion(
 	}
 	reason := assignReason(in, deadhead, driver.DriveRemainingMs, *pickupDue(move))
 
-	return &services.ShipmentSuggestion{
+	return &shipmentsuggestionports.ShipmentSuggestion{
 		Key: shipmentsuggestion.NewKey(shipmentsuggestion.KindCoverage, move.MoveID).
 			String(),
-		Kind:       services.SuggestionCoverage,
+		Kind:       shipmentsuggestionports.SuggestionCoverage,
 		Tone:       coverageTone(in, move),
 		ShipmentID: move.ShipmentID,
 		ProNumber:  move.ProNumber,
@@ -283,8 +284,8 @@ func assignSuggestion(
 			deadhead,
 			fmt.Sprintf("%d%% fit", driver.Score),
 		),
-		Primary: services.SuggestionAction{
-			Type:      services.SuggestionActionAssignDriver,
+		Primary: shipmentsuggestionports.SuggestionAction{
+			Type:      shipmentsuggestionports.SuggestionActionAssignDriver,
 			Label:     "Assign " + first,
 			MoveID:    move.MoveID,
 			WorkerID:  driver.WorkerID,
@@ -315,10 +316,10 @@ func assignReason(in *ruleInput, deadhead string, driveRemainingMs, pickupDue in
 func tenderSuggestion(
 	in *ruleInput,
 	move *dispatchconsoleservice.BoardMove,
-) *services.ShipmentSuggestion {
-	return &services.ShipmentSuggestion{
+) *shipmentsuggestionports.ShipmentSuggestion {
+	return &shipmentsuggestionports.ShipmentSuggestion{
 		Key:        shipmentsuggestion.NewKey(shipmentsuggestion.KindTender, move.MoveID).String(),
-		Kind:       services.SuggestionTender,
+		Kind:       shipmentsuggestionports.SuggestionTender,
 		Tone:       coverageTone(in, move),
 		ShipmentID: move.ShipmentID,
 		ProNumber:  move.ProNumber,
@@ -328,8 +329,8 @@ func tenderSuggestion(
 			in.clock(*pickupDue(move)),
 		),
 		Impact: compactImpact(money(move.Revenue), "pickup "+in.clock(move.OriginWindowStart)),
-		Primary: services.SuggestionAction{
-			Type:   services.SuggestionActionTenderCarrier,
+		Primary: shipmentsuggestionports.SuggestionAction{
+			Type:   shipmentsuggestionports.SuggestionActionTenderCarrier,
 			Label:  "Tender",
 			MoveID: move.MoveID,
 		},
@@ -341,11 +342,11 @@ func tenderSuggestion(
 func uncoverableSuggestion(
 	in *ruleInput,
 	move *dispatchconsoleservice.BoardMove,
-) *services.ShipmentSuggestion {
-	return &services.ShipmentSuggestion{
+) *shipmentsuggestionports.ShipmentSuggestion {
+	return &shipmentsuggestionports.ShipmentSuggestion{
 		Key: shipmentsuggestion.NewKey(shipmentsuggestion.KindCoverage, move.MoveID).
 			String(),
-		Kind:       services.SuggestionCoverage,
+		Kind:       shipmentsuggestionports.SuggestionCoverage,
 		Tone:       coverageTone(in, move),
 		ShipmentID: move.ShipmentID,
 		ProNumber:  move.ProNumber,
@@ -358,8 +359,8 @@ func uncoverableSuggestion(
 			in.clock(move.OriginWindowStart),
 		),
 		Impact: compactImpact(money(move.Revenue)),
-		Primary: services.SuggestionAction{
-			Type:   services.SuggestionActionReview,
+		Primary: shipmentsuggestionports.SuggestionAction{
+			Type:   shipmentsuggestionports.SuggestionActionReview,
 			Label:  reviewLabel,
 			MoveID: move.MoveID,
 		},
@@ -376,13 +377,13 @@ func (delayRule) collect(
 	ctx context.Context,
 	s *Service,
 	in *ruleInput,
-) ([]*services.ShipmentSuggestion, error) {
+) ([]*shipmentsuggestionports.ShipmentSuggestion, error) {
 	watch, err := s.watchlist.Watchlist(ctx, in.tenant, in.timezone)
 	if err != nil {
 		return nil, err
 	}
 
-	out := make([]*services.ShipmentSuggestion, 0, maxDelayItems)
+	out := make([]*shipmentsuggestionports.ShipmentSuggestion, 0, maxDelayItems)
 	for _, late := range watch.Deliveries.WorstLate {
 		if len(out) == maxDelayItems {
 			break
@@ -399,11 +400,11 @@ func (delayRule) collect(
 
 		behind := duration(late.DeltaMinutes)
 		customer := stringutils.WithDefault(late.CustomerName, "the customer")
-		out = append(out, &services.ShipmentSuggestion{
+		out = append(out, &shipmentsuggestionports.ShipmentSuggestion{
 			Key: shipmentsuggestion.NewKey(shipmentsuggestion.KindDelayNotice, late.ShipmentID).
 				String(),
-			Kind:       services.SuggestionDelayNotice,
-			Tone:       services.SuggestionToneDanger,
+			Kind:       shipmentsuggestionports.SuggestionDelayNotice,
+			Tone:       shipmentsuggestionports.SuggestionToneDanger,
 			ShipmentID: late.ShipmentID,
 			ProNumber:  late.ProNumber,
 			Title:      fmt.Sprintf("Let %s know about the delay", customer),
@@ -412,8 +413,8 @@ func (delayRule) collect(
 				late.ProNumber, late.City, behind,
 			),
 			Impact: compactImpact("+" + behind),
-			Primary: services.SuggestionAction{
-				Type:  services.SuggestionActionNotifyCustomer,
+			Primary: shipmentsuggestionports.SuggestionAction{
+				Type:  shipmentsuggestionports.SuggestionActionNotifyCustomer,
 				Label: "Send update",
 				Message: fmt.Sprintf(
 					"Shipment %s to %s is running about %s behind its delivery appointment. "+
@@ -436,7 +437,7 @@ func (hoursRule) collect(
 	_ context.Context,
 	_ *Service,
 	in *ruleInput,
-) ([]*services.ShipmentSuggestion, error) {
+) ([]*shipmentsuggestionports.ShipmentSuggestion, error) {
 	if !in.caps.HOS || !in.caps.OperationType.RunsAssets() {
 		return nil, nil
 	}
@@ -448,7 +449,7 @@ func (hoursRule) collect(
 		}
 	}
 
-	out := make([]*services.ShipmentSuggestion, 0)
+	out := make([]*shipmentsuggestionports.ShipmentSuggestion, 0)
 	for _, driver := range in.board.Drivers {
 		if driver == nil || driver.BoardDriver == nil || driver.HOSIsStale ||
 			driver.HOSRecordedAt == 0 || driver.DriveRemainingMs >= hosWarnMs ||
@@ -460,11 +461,11 @@ func (hoursRule) collect(
 			continue
 		}
 		name := strings.TrimSpace(driver.FirstName + " " + driver.LastName)
-		out = append(out, &services.ShipmentSuggestion{
+		out = append(out, &shipmentsuggestionports.ShipmentSuggestion{
 			Key: shipmentsuggestion.NewKey(shipmentsuggestion.KindHoursOfService, move.MoveID).
 				String(),
-			Kind:       services.SuggestionHoursOfService,
-			Tone:       services.SuggestionToneWarning,
+			Kind:       shipmentsuggestionports.SuggestionHoursOfService,
+			Tone:       shipmentsuggestionports.SuggestionToneWarning,
 			ShipmentID: move.ShipmentID,
 			ProNumber:  move.ProNumber,
 			Title:      fmt.Sprintf("%s runs out of hours before %s", name, move.DestinationCity),
@@ -473,8 +474,8 @@ func (hoursRule) collect(
 				hoursClock(driver.DriveRemainingMs), move.ProNumber,
 			),
 			Impact: compactImpact(hoursClock(driver.DriveRemainingMs) + " HOS"),
-			Primary: services.SuggestionAction{
-				Type:     services.SuggestionActionReview,
+			Primary: shipmentsuggestionports.SuggestionAction{
+				Type:     shipmentsuggestionports.SuggestionActionReview,
 				Label:    reviewLabel,
 				MoveID:   move.MoveID,
 				WorkerID: driver.WorkerID,
@@ -497,7 +498,7 @@ func (detentionRule) collect(
 	ctx context.Context,
 	s *Service,
 	in *ruleInput,
-) ([]*services.ShipmentSuggestion, error) {
+) ([]*shipmentsuggestionports.ShipmentSuggestion, error) {
 	if s.detention == nil {
 		return nil, nil
 	}
@@ -506,7 +507,7 @@ func (detentionRule) collect(
 		return nil, err
 	}
 
-	out := make([]*services.ShipmentSuggestion, 0, maxDetentionItems)
+	out := make([]*shipmentsuggestionports.ShipmentSuggestion, 0, maxDetentionItems)
 	for _, entry := range desk {
 		if len(out) == maxDetentionItems {
 			break
@@ -517,11 +518,11 @@ func (detentionRule) collect(
 		}
 		amount := "$" + occurrence.BillableAmount.StringFixed(0)
 		facility := stringutils.WithDefault(occurrence.LocationName, "the stop")
-		out = append(out, &services.ShipmentSuggestion{
+		out = append(out, &shipmentsuggestionports.ShipmentSuggestion{
 			Key: shipmentsuggestion.NewKey(shipmentsuggestion.KindDetention, occurrence.ID).
 				String(),
-			Kind:       services.SuggestionDetention,
-			Tone:       services.SuggestionToneAccent,
+			Kind:       shipmentsuggestionports.SuggestionDetention,
+			Tone:       shipmentsuggestionports.SuggestionToneAccent,
 			ShipmentID: occurrence.ShipmentID,
 			ProNumber:  occurrence.ShipmentProNumber,
 			Title:      "Approve detention at " + facility,
@@ -530,8 +531,8 @@ func (detentionRule) collect(
 				duration(int(occurrence.BillableMinutes)), occurrence.ShipmentProNumber,
 			),
 			Impact: compactImpact(amount),
-			Primary: services.SuggestionAction{
-				Type:                  services.SuggestionActionApproveDetention,
+			Primary: shipmentsuggestionports.SuggestionAction{
+				Type:                  shipmentsuggestionports.SuggestionActionApproveDetention,
 				Label:                 "Approve " + amount,
 				DetentionOccurrenceID: occurrence.ID,
 			},
@@ -550,22 +551,22 @@ func (retenderRule) collect(
 	_ context.Context,
 	_ *Service,
 	in *ruleInput,
-) ([]*services.ShipmentSuggestion, error) {
+) ([]*shipmentsuggestionports.ShipmentSuggestion, error) {
 	if !in.caps.OperationType.RunsBrokerage() {
 		return nil, nil
 	}
 
-	out := make([]*services.ShipmentSuggestion, 0)
+	out := make([]*shipmentsuggestionports.ShipmentSuggestion, 0)
 	for _, move := range in.board.Moves {
 		if move == nil || move.LiveTender == nil ||
 			move.LiveTender.Status != tender.StatusNeedsReview {
 			continue
 		}
-		out = append(out, &services.ShipmentSuggestion{
+		out = append(out, &shipmentsuggestionports.ShipmentSuggestion{
 			Key: shipmentsuggestion.NewKey(shipmentsuggestion.KindRetender, move.MoveID).
 				String(),
-			Kind:       services.SuggestionRetender,
-			Tone:       services.SuggestionToneDanger,
+			Kind:       shipmentsuggestionports.SuggestionRetender,
+			Tone:       shipmentsuggestionports.SuggestionToneDanger,
 			ShipmentID: move.ShipmentID,
 			ProNumber:  move.ProNumber,
 			Title:      fmt.Sprintf("The tender for %s needs a person", lane(move)),
@@ -574,8 +575,8 @@ func (retenderRule) collect(
 				in.clock(move.OriginWindowStart),
 			),
 			Impact: compactImpact(money(move.Revenue)),
-			Primary: services.SuggestionAction{
-				Type:   services.SuggestionActionReview,
+			Primary: shipmentsuggestionports.SuggestionAction{
+				Type:   shipmentsuggestionports.SuggestionActionReview,
 				Label:  reviewLabel,
 				MoveID: move.MoveID,
 			},

@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/uptrace/bun"
@@ -40,8 +40,8 @@ var openInvoiceMatchStatuses = []carriersettlement.InvoiceMatchStatus{
 func (r *repository) CountBrokerageDependencies(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*repositories.BrokerageDependencyCounts, error) {
-	counts := new(repositories.BrokerageDependencyCounts)
+) (*tenantports.BrokerageDependencyCounts, error) {
+	counts := new(tenantports.BrokerageDependencyCounts)
 
 	if err := r.countDependencies(ctx, brokerageDependencyCounts(tenantInfo, counts)); err != nil {
 		return nil, err
@@ -52,7 +52,7 @@ func (r *repository) CountBrokerageDependencies(
 
 func brokerageDependencyCounts(
 	tenantInfo pagination.TenantInfo,
-	counts *repositories.BrokerageDependencyCounts,
+	counts *tenantports.BrokerageDependencyCounts,
 ) []dependencyCount {
 	return []dependencyCount{
 		{

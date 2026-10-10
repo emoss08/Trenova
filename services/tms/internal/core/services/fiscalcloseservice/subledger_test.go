@@ -6,14 +6,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accounttype"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalclose"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/glbalanceports"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func arBalances(debit, credit int64) []*repositories.GLPeriodAccountBalance {
-	return []*repositories.GLPeriodAccountBalance{
+func arBalances(debit, credit int64) []*glbalanceports.GLPeriodAccountBalance {
+	return []*glbalanceports.GLPeriodAccountBalance{
 		balance(cashID, "1000", accounttype.CategoryAsset, 5000, 0),
 		{
 			GLAccountID:       arID,
@@ -98,7 +98,7 @@ func TestSubledgerCheckIsBlankWhenTheAccountHasNoActivity(t *testing.T) {
 		key:            "accounts_receivable",
 		label:          "Accounts Receivable",
 		glAccountID:    arID,
-		balances:       []*repositories.GLPeriodAccountBalance{},
+		balances:       []*glbalanceports.GLPeriodAccountBalance{},
 		subledgerMinor: 0,
 	})
 

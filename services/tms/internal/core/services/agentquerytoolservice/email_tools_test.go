@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -15,12 +15,12 @@ import (
 
 type fakeProfiles struct {
 	profiles []*email.Profile
-	request  *repositories.EmailProfileSelectOptionsRequest
+	request  *emailports.EmailProfileSelectOptionsRequest
 }
 
 func (f *fakeProfiles) SelectProfileOptions(
 	_ context.Context,
-	req *repositories.EmailProfileSelectOptionsRequest,
+	req *emailports.EmailProfileSelectOptionsRequest,
 ) (*pagination.ListResult[*email.Profile], error) {
 	f.request = req
 

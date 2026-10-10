@@ -5,13 +5,14 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/bulkeditjobs/bulkeditcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/bulkedit"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/tableinsightservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/bulkeditjobs/bulkeditcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/bulkeditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -36,24 +37,24 @@ type Params struct {
 	fx.In
 
 	Logger    *zap.Logger
-	Repo      repositories.BulkEditRepository
-	Editors   []services.BulkEditor `group:"bulk_editors"`
+	Repo      bulkeditports.BulkEditRepository
+	Editors   []bulkeditports.BulkEditor `group:"bulk_editors"`
 	Insight   *tableinsightservice.Service
-	Realtime  services.RealtimeService
-	Workflows services.WorkflowStarter
+	Realtime  agentports.RealtimeService
+	Workflows kernelports.WorkflowStarter
 }
 
 type Service struct {
 	l         *zap.Logger
-	repo      repositories.BulkEditRepository
-	editors   map[permission.Resource]services.BulkEditor
+	repo      bulkeditports.BulkEditRepository
+	editors   map[permission.Resource]bulkeditports.BulkEditor
 	insight   *tableinsightservice.Service
-	realtime  services.RealtimeService
-	workflows services.WorkflowStarter
+	realtime  agentports.RealtimeService
+	workflows kernelports.WorkflowStarter
 }
 
 func New(p Params) *Service { //nolint:gocritic // fx.In parameter structs are passed by value
-	editors := make(map[permission.Resource]services.BulkEditor, len(p.Editors))
+	editors := make(map[permission.Resource]bulkeditports.BulkEditor, len(p.Editors))
 	for _, editor := range p.Editors {
 		if editor != nil {
 			editors[editor.Resource()] = editor
@@ -69,7 +70,7 @@ func New(p Params) *Service { //nolint:gocritic // fx.In parameter structs are p
 	}
 }
 
-func (s *Service) Editor(resource string) (permission.Resource, services.BulkEditor, error) {
+func (s *Service) Editor(resource string) (permission.Resource, bulkeditports.BulkEditor, error) {
 	key := permission.Resource(resource)
 	editor, ok := s.editors[key]
 	if !ok {
@@ -261,7 +262,7 @@ func (s *Service) ListMine(
 	resource string,
 	limit int,
 ) ([]*bulkedit.BulkEdit, error) {
-	return s.repo.ListForUser(ctx, &repositories.ListBulkEditsRequest{
+	return s.repo.ListForUser(ctx, &bulkeditports.ListBulkEditsRequest{
 		TenantInfo: tenantInfo,
 		Resource:   resource,
 		Limit:      limit,
@@ -275,7 +276,7 @@ func (s *Service) Prepare(
 ) (*bulkedit.BulkEdit, error) {
 	entity, err := s.repo.GetByID(
 		ctx,
-		&repositories.GetBulkEditRequest{TenantInfo: tenantInfo, ID: id},
+		&bulkeditports.GetBulkEditRequest{TenantInfo: tenantInfo, ID: id},
 	)
 	if err != nil {
 		return nil, err
@@ -334,7 +335,7 @@ func (s *Service) ProcessBatch(
 ) (int, error) {
 	entity, err := s.repo.GetByID(
 		ctx,
-		&repositories.GetBulkEditRequest{TenantInfo: tenantInfo, ID: id},
+		&bulkeditports.GetBulkEditRequest{TenantInfo: tenantInfo, ID: id},
 	)
 	if err != nil {
 		return 0, err
@@ -350,7 +351,7 @@ func (s *Service) ProcessBatch(
 		return 0, nil
 	}
 	batch := entity.Targets[start:end]
-	actor := services.UserActor(tenantInfo)
+	actor := permissionports.UserActor(tenantInfo)
 
 	if entity.Status == bulkedit.StatusUndoing {
 		s.undoBatch(ctx, editor, entity, batch, tenantInfo, actor)
@@ -368,14 +369,14 @@ func (s *Service) ProcessBatch(
 
 func (s *Service) applyBatch(
 	ctx context.Context,
-	editor services.BulkEditor,
+	editor bulkeditports.BulkEditor,
 	entity *bulkedit.BulkEdit,
 	batch []bulkedit.Target,
 	tenantInfo pagination.TenantInfo,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) {
 	ids := targetIDs(batch)
-	outcomes, err := editor.Apply(ctx, &services.BulkEditApplyRequest{
+	outcomes, err := editor.Apply(ctx, &bulkeditports.BulkEditApplyRequest{
 		TenantInfo: tenantInfo,
 		Actor:      actor,
 		IDs:        ids,
@@ -387,11 +388,11 @@ func (s *Service) applyBatch(
 
 func (s *Service) undoBatch(
 	ctx context.Context,
-	editor services.BulkEditor,
+	editor bulkeditports.BulkEditor,
 	entity *bulkedit.BulkEdit,
 	batch []bulkedit.Target,
 	tenantInfo pagination.TenantInfo,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) {
 	groups := make(map[string][]int, 4)
 	order := make([]string, 0, 4)
@@ -408,7 +409,7 @@ func (s *Service) undoBatch(
 		for _, idx := range indexes {
 			group = append(group, batch[idx])
 		}
-		outcomes, err := editor.Apply(ctx, &services.BulkEditApplyRequest{
+		outcomes, err := editor.Apply(ctx, &bulkeditports.BulkEditApplyRequest{
 			TenantInfo: tenantInfo,
 			Actor:      actor,
 			IDs:        targetIDs(group),
@@ -425,11 +426,11 @@ func (s *Service) undoBatch(
 func recordOutcomes(
 	entity *bulkedit.BulkEdit,
 	batch []bulkedit.Target,
-	outcomes []services.BulkEditOutcome,
+	outcomes []bulkeditports.BulkEditOutcome,
 	batchErr error,
 	keepPrevious bool,
 ) {
-	byID := make(map[string]services.BulkEditOutcome, len(outcomes))
+	byID := make(map[string]bulkeditports.BulkEditOutcome, len(outcomes))
 	for _, outcome := range outcomes {
 		byID[outcome.ID.String()] = outcome
 	}
@@ -484,7 +485,7 @@ func (s *Service) Finalize(
 ) (*bulkedit.BulkEdit, error) {
 	entity, err := s.repo.GetByID(
 		ctx,
-		&repositories.GetBulkEditRequest{TenantInfo: tenantInfo, ID: id},
+		&bulkeditports.GetBulkEditRequest{TenantInfo: tenantInfo, ID: id},
 	)
 	if err != nil {
 		return nil, err
@@ -532,8 +533,8 @@ func (s *Service) resolveTargets(
 		)
 	}
 
-	result, err := s.insight.MatchingIDs(ctx, resource, &repositories.TableMatchRequest{
-		Scope: repositories.TableInsightScope{
+	result, err := s.insight.MatchingIDs(ctx, resource, &permissionports.TableMatchRequest{
+		Scope: permissionports.TableInsightScope{
 			Filter: &pagination.QueryOptions{
 				TenantInfo:   tenantInfo,
 				Query:        selection.Filter.Query,
@@ -565,7 +566,7 @@ func (s *Service) mine(
 ) (*bulkedit.BulkEdit, error) {
 	entity, err := s.repo.GetByID(
 		ctx,
-		&repositories.GetBulkEditRequest{TenantInfo: tenantInfo, ID: id},
+		&bulkeditports.GetBulkEditRequest{TenantInfo: tenantInfo, ID: id},
 	)
 	if err != nil {
 		return nil, err
@@ -582,7 +583,7 @@ func (s *Service) announce(ctx context.Context, entity *bulkedit.BulkEdit) {
 	}
 	if err := s.realtime.PublishResourceInvalidation(
 		ctx,
-		&services.PublishResourceInvalidationRequest{
+		&agentports.PublishResourceInvalidationRequest{
 			OrganizationID: entity.OrganizationID,
 			BusinessUnitID: entity.BusinessUnitID,
 			AudienceUserID: entity.UserID,
@@ -595,7 +596,7 @@ func (s *Service) announce(ctx context.Context, entity *bulkedit.BulkEdit) {
 	}
 }
 
-func hasField(editor services.BulkEditor, name string) bool {
+func hasField(editor bulkeditports.BulkEditor, name string) bool {
 	for _, field := range editor.Fields() {
 		if field.Name == name {
 			return true

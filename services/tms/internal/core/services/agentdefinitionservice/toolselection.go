@@ -8,8 +8,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/agentextension"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -28,8 +29,8 @@ func (e extensionState) offers(name string) (agentextension.Type, bool) {
 type toolSelection struct {
 	definition *agentdefinition.Definition
 	previous   *agentdefinition.Definition
-	actions    serviceports.AgentToolRegistry
-	queries    serviceports.AgentQueryToolRegistry
+	actions    agentports.AgentToolRegistry
+	queries    agentports.AgentQueryToolRegistry
 	extensions extensionState
 }
 
@@ -87,22 +88,22 @@ func (s toolSelection) previouslyHeld(name string) bool {
 }
 
 func buildToolCatalog(
-	actions serviceports.AgentToolRegistry,
-	queries serviceports.AgentQueryToolRegistry,
+	actions agentports.AgentToolRegistry,
+	queries agentports.AgentQueryToolRegistry,
 	extensions extensionState,
-) []serviceports.ToolCatalogEntry {
+) []agentdefinitionports.ToolCatalogEntry {
 	queryTools := queries.All()
 	actionTools := actions.All()
-	entries := make([]serviceports.ToolCatalogEntry, 0, len(queryTools)+len(actionTools))
+	entries := make([]agentdefinitionports.ToolCatalogEntry, 0, len(queryTools)+len(actionTools))
 
 	for _, tool := range queryTools {
-		if entry, offered := extensions.entry(tool, serviceports.ToolCatalogKindQuery); offered {
+		if entry, offered := extensions.entry(tool, agentdefinitionports.ToolCatalogKindQuery); offered {
 			entries = append(entries, entry)
 		}
 	}
 
 	for _, tool := range actionTools {
-		if entry, offered := extensions.entry(tool, serviceports.ToolCatalogKindAction); offered {
+		if entry, offered := extensions.entry(tool, agentdefinitionports.ToolCatalogKindAction); offered {
 			entries = append(entries, entry)
 		}
 	}
@@ -122,16 +123,16 @@ type catalogTool interface {
 	Name() string
 	Description() string
 	ParamSchema() map[string]any
-	Policy() serviceports.ToolPolicy
+	Policy() agentports.ToolPolicy
 }
 
 func (e extensionState) entry(
 	tool catalogTool,
-	kind serviceports.ToolCatalogKind,
-) (serviceports.ToolCatalogEntry, bool) {
+	kind agentdefinitionports.ToolCatalogKind,
+) (agentdefinitionports.ToolCatalogEntry, bool) {
 	typ, offered := e.offers(tool.Name())
 	if !offered {
-		return serviceports.ToolCatalogEntry{}, false
+		return agentdefinitionports.ToolCatalogEntry{}, false
 	}
 
 	entry := catalogEntry(tool, kind)
@@ -143,10 +144,10 @@ func (e extensionState) entry(
 
 func catalogEntry(
 	tool catalogTool,
-	kind serviceports.ToolCatalogKind,
-) serviceports.ToolCatalogEntry {
+	kind agentdefinitionports.ToolCatalogKind,
+) agentdefinitionports.ToolCatalogEntry {
 	policy := tool.Policy()
-	entry := serviceports.ToolCatalogEntry{
+	entry := agentdefinitionports.ToolCatalogEntry{
 		Name:        tool.Name(),
 		Description: tool.Description(),
 		Parameters:  tool.ParamSchema(),
@@ -155,10 +156,10 @@ func catalogEntry(
 		Operation:   policy.Operation,
 		Reversible:  policy.Reversible,
 		Core:        agentdefinition.IsCoreTool(tool.Name()),
-		Effect:      serviceports.EffectOf(tool),
+		Effect:      agentports.EffectOf(tool),
 	}
 	entry.Prerequisites = prerequisitesOf(tool)
-	if kind == serviceports.ToolCatalogKindAction {
+	if kind == agentdefinitionports.ToolCatalogKindAction {
 		entry.DefaultAutonomyTier = policy.DefaultTier
 		entry.MaxAutonomyTier = agenttoolpolicy.Promotable(policy)
 	}
@@ -167,7 +168,7 @@ func catalogEntry(
 }
 
 func prerequisitesOf(tool any) []string {
-	if dependent, ok := tool.(serviceports.PrerequisiteTool); ok {
+	if dependent, ok := tool.(agentports.PrerequisiteTool); ok {
 		return dependent.Prerequisites()
 	}
 
@@ -176,8 +177,8 @@ func prerequisitesOf(tool any) []string {
 
 func registeredStarterTools(
 	template agentdefinition.Template,
-	actions serviceports.AgentToolRegistry,
-	queries serviceports.AgentQueryToolRegistry,
+	actions agentports.AgentToolRegistry,
+	queries agentports.AgentQueryToolRegistry,
 ) []string {
 	starters := template.StarterTools()
 	tools := make([]string, 0, len(starters))

@@ -6,9 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	coreports "github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -18,14 +18,14 @@ import (
 
 func (s *Service) ListTransferChanges(
 	ctx context.Context,
-	req *repositories.ListEDITransferChangesRequest,
+	req *ediports.ListEDITransferChangesRequest,
 ) (*pagination.ListResult[*edi.TransferChange], error) {
 	return s.transferChangeRepo.ListTransferChanges(ctx, req)
 }
 
 func (s *Service) GetTransferChange(
 	ctx context.Context,
-	req repositories.GetEDITransferChangeByIDRequest,
+	req ediports.GetEDITransferChangeByIDRequest,
 ) (*edi.TransferChange, error) {
 	return s.transferChangeRepo.GetTransferChangeByID(ctx, req)
 }
@@ -33,7 +33,7 @@ func (s *Service) GetTransferChange(
 func (s *Service) ApplyTransferChange(
 	ctx context.Context,
 	req *TransferChangeActionRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*edi.TransferChange, error) {
 	return s.reviewTransferChange(ctx, req, actor, edi.TransferChangeStatusApplied)
 }
@@ -41,7 +41,7 @@ func (s *Service) ApplyTransferChange(
 func (s *Service) RejectTransferChange(
 	ctx context.Context,
 	req *TransferChangeActionRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*edi.TransferChange, error) {
 	return s.reviewTransferChange(ctx, req, actor, edi.TransferChangeStatusRejected)
 }
@@ -49,7 +49,7 @@ func (s *Service) RejectTransferChange(
 func (s *Service) reviewTransferChange(
 	ctx context.Context,
 	req *TransferChangeActionRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	status edi.TransferChangeStatus,
 ) (*edi.TransferChange, error) {
 	if actor == nil || actor.UserID.IsNil() {
@@ -62,7 +62,7 @@ func (s *Service) reviewTransferChange(
 
 	change, err := s.transferChangeRepo.GetTransferChangeByID(
 		ctx,
-		repositories.GetEDITransferChangeByIDRequest{
+		ediports.GetEDITransferChangeByIDRequest{
 			ID:         req.ChangeID,
 			TenantInfo: req.TenantInfo,
 		},
@@ -81,7 +81,7 @@ func (s *Service) reviewTransferChange(
 		ctx,
 		"apply a reviewed transfer change to the linked shipments of both organizations in one transaction",
 	)
-	err = s.db.WithTx(reviewCtx, coreports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(reviewCtx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		if status == edi.TransferChangeStatusApplied {
 			if txErr := s.applyApprovedTransferChange(
 				txCtx,
@@ -131,7 +131,7 @@ func (s *Service) validateTransferChangeReviewer(
 ) error {
 	link, err := s.shipmentLinkRepo.GetShipmentLinkByID(
 		ctx,
-		repositories.GetEDIShipmentLinkByIDRequest{
+		ediports.GetEDIShipmentLinkByIDRequest{
 			ID:         change.ShipmentLinkID,
 			TenantInfo: tenantInfo,
 		},
@@ -160,7 +160,7 @@ func (s *Service) commentTransferChangeReview(
 ) error {
 	link, err := s.shipmentLinkRepo.GetShipmentLinkByID(
 		ctx,
-		repositories.GetEDIShipmentLinkByIDRequest{
+		ediports.GetEDIShipmentLinkByIDRequest{
 			ID:         change.ShipmentLinkID,
 			TenantInfo: tenantInfo,
 		},

@@ -8,17 +8,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/shared/stringutils"
-
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 // maxPreviewRows bounds what preview_report hands the model. A preview exists
@@ -60,7 +61,7 @@ var errNoReportNamed = errors.New(
 func resolveReportSource(
 	ctx context.Context,
 	reports reportRunner,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (reportSource, error) {
 	if raw := optionalString(params.Params, "definitionId"); raw != "" {
 		id, err := pulid.Parse(raw)
@@ -134,11 +135,11 @@ func sourceFromDefinition(definition *report.ReportDefinition) reportSource {
 // same way the report builder's own catalog does, so a model sees exactly
 // what the person driving it would see in the builder.
 type catalogAccess struct {
-	permissions serviceports.PermissionEngine
+	permissions permissionports.PermissionEngine
 	sensitivity *permission.Registry
 }
 
-func newCatalogAccess(permissions serviceports.PermissionEngine) catalogAccess {
+func newCatalogAccess(permissions permissionports.PermissionEngine) catalogAccess {
 	return catalogAccess{permissions: permissions, sensitivity: permission.NewRegistry()}
 }
 
@@ -147,9 +148,9 @@ func newCatalogAccess(permissions serviceports.PermissionEngine) catalogAccess {
 // because a model told "you may not read invoices" will keep trying to.
 func (c catalogAccess) entity(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 	entity *reportcatalog.Entity,
-) (*serviceports.ResourcePermissionDetail, bool, error) {
+) (*permissionports.ResourcePermissionDetail, bool, error) {
 	if c.permissions == nil {
 		return nil, false, errors.New(
 			"datasets cannot be described because authorization is unavailable",
@@ -175,7 +176,7 @@ func (c catalogAccess) entity(
 func (c catalogAccess) fieldAccessible(
 	entity *reportcatalog.Entity,
 	field *reportcatalog.Field,
-	detail *serviceports.ResourcePermissionDetail,
+	detail *permissionports.ResourcePermissionDetail,
 ) (permission.FieldSensitivity, bool) {
 	sensitivity := c.sensitivity.GetFieldSensitivity(entity.Resource.String(), field.Key)
 
@@ -236,8 +237,8 @@ type listReportDatasetsTool struct {
 }
 
 func newListReportDatasetsTool(
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &listReportDatasetsTool{access: newCatalogAccess(permissions)}
 }
 
@@ -269,7 +270,7 @@ func (t *listReportDatasetsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listReportDatasetsTool) Policy() serviceports.ToolPolicy {
+func (t *listReportDatasetsTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceReport,
 	})
@@ -277,7 +278,7 @@ func (t *listReportDatasetsTool) Policy() serviceports.ToolPolicy {
 
 func (t *listReportDatasetsTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -424,8 +425,8 @@ type describeReportDatasetTool struct {
 }
 
 func newDescribeReportDatasetTool(
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &describeReportDatasetTool{access: newCatalogAccess(permissions)}
 }
 
@@ -457,7 +458,7 @@ func (t *describeReportDatasetTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *describeReportDatasetTool) Policy() serviceports.ToolPolicy {
+func (t *describeReportDatasetTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceReport,
 	})
@@ -465,7 +466,7 @@ func (t *describeReportDatasetTool) Policy() serviceports.ToolPolicy {
 
 func (t *describeReportDatasetTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -733,7 +734,7 @@ type describeReportTool struct {
 	reports reportRunner
 }
 
-func newDescribeReportTool(reports reportRunner) serviceports.AgentQueryTool {
+func newDescribeReportTool(reports reportRunner) agentports.AgentQueryTool {
 	return &describeReportTool{reports: reports}
 }
 
@@ -765,7 +766,7 @@ func (t *describeReportTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *describeReportTool) Policy() serviceports.ToolPolicy {
+func (t *describeReportTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceReport,
 	})
@@ -773,7 +774,7 @@ func (t *describeReportTool) Policy() serviceports.ToolPolicy {
 
 func (t *describeReportTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -932,7 +933,7 @@ type previewReportTool struct {
 	reports reportRunner
 }
 
-func newPreviewReportTool(reports reportRunner) serviceports.AgentQueryTool {
+func newPreviewReportTool(reports reportRunner) agentports.AgentQueryTool {
 	return &previewReportTool{reports: reports}
 }
 
@@ -974,7 +975,7 @@ func (t *previewReportTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *previewReportTool) Policy() serviceports.ToolPolicy {
+func (t *previewReportTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceReport,
 	})
@@ -982,7 +983,7 @@ func (t *previewReportTool) Policy() serviceports.ToolPolicy {
 
 func (t *previewReportTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -1023,7 +1024,7 @@ func (t *previewReportTool) Query(
 // the case the tool exists for, and a named report otherwise.
 func (t *previewReportTool) source(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (reportSource, error) {
 	raw, given := params.Params["definition"]
 	if given && raw != nil {
@@ -1141,7 +1142,7 @@ func (s *sampleShape) add(
 	}
 }
 
-func (s *sampleShape) row(row serviceports.ReportRow) map[string]any {
+func (s *sampleShape) row(row reportports.ReportRow) map[string]any {
 	return rowByLabel(s.labels, renderDates(row, s.dated, s.clk))
 }
 
@@ -1150,7 +1151,7 @@ func sampleRows[R ~[]any](shape sampleShape, rows []R, limit int) []map[string]a
 	shown := min(len(rows), limit)
 	out := make([]map[string]any, 0, shown)
 	for _, row := range rows[:shown] {
-		out = append(out, shape.row(serviceports.ReportRow(row)))
+		out = append(out, shape.row(reportports.ReportRow(row)))
 	}
 
 	return out
@@ -1167,8 +1168,8 @@ func hasDated(dated []bool) bool {
 }
 
 // renderDates writes each epoch cell as a readable date.
-func renderDates(row serviceports.ReportRow, dated []bool, clk clock) serviceports.ReportRow {
-	out := make(serviceports.ReportRow, len(row))
+func renderDates(row reportports.ReportRow, dated []bool, clk clock) reportports.ReportRow {
+	out := make(reportports.ReportRow, len(row))
 	for idx, value := range row {
 		if idx < len(dated) && dated[idx] {
 			if seconds, ok := epochSeconds(value); ok {
@@ -1200,7 +1201,7 @@ func epochSeconds(value any) (int64, bool) {
 	}
 }
 
-func rowByLabel(labels []string, row serviceports.ReportRow) map[string]any {
+func rowByLabel(labels []string, row reportports.ReportRow) map[string]any {
 	out := make(map[string]any, len(labels))
 	for i, label := range labels {
 		if i < len(row) {

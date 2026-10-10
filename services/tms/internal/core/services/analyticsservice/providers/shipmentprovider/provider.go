@@ -10,11 +10,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/lanequery"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -25,7 +25,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var _ services.AnalyticsPageProvider = (*Provider)(nil)
+var _ kernelports.AnalyticsPageProvider = (*Provider)(nil)
 
 const laneHeatmapInclude = "laneHeatmap"
 const tomorrowsPickupsInclude = "tomorrowsPickups"
@@ -38,14 +38,14 @@ type ProviderParams struct {
 
 	DB             *postgres.Connection
 	Logger         *zap.Logger
-	DispatchRepo   repositories.DispatchControlRepository
+	DispatchRepo   dispatchcontrolports.DispatchControlRepository
 	CostingService *costingservice.Service
 }
 
 type Provider struct {
 	l              *zap.Logger
 	db             *postgres.Connection
-	dispatchRepo   repositories.DispatchControlRepository
+	dispatchRepo   dispatchcontrolports.DispatchControlRepository
 	costingService *costingservice.Service
 }
 
@@ -107,14 +107,14 @@ func NewProvider(p ProviderParams) *Provider {
 	}
 }
 
-func (p *Provider) GetPage() services.AnalyticsPage {
-	return services.ShipmentAnalyticsPage
+func (p *Provider) GetPage() kernelports.AnalyticsPage {
+	return kernelports.ShipmentAnalyticsPage
 }
 
 func (p *Provider) GetAnalyticsData(
 	ctx context.Context,
-	opts *services.AnalyticsRequestOptions,
-) (services.AnalyticsData, error) {
+	opts *kernelports.AnalyticsRequestOptions,
+) (kernelports.AnalyticsData, error) {
 	log := p.l.With(zap.String("operation", "GetAnalyticsData"), zap.Any("opts", opts))
 
 	tz := timeutils.NormalizeTimezone(opts.Timezone)
@@ -132,7 +132,7 @@ func (p *Provider) GetAnalyticsData(
 			return nil, err
 		}
 
-		return services.AnalyticsData{
+		return kernelports.AnalyticsData{
 			"tomorrowsPickups": tomorrowsPickups,
 		}, nil
 	}
@@ -144,7 +144,7 @@ func (p *Provider) GetAnalyticsData(
 	}
 
 	if opts.Include == laneHeatmapInclude {
-		return services.AnalyticsData{
+		return kernelports.AnalyticsData{
 			"laneHeatmap": laneHeatmap,
 		}, nil
 	}
@@ -154,11 +154,11 @@ func (p *Provider) GetAnalyticsData(
 
 func (p *Provider) getFullAnalyticsData(
 	ctx context.Context,
-	opts *services.AnalyticsRequestOptions,
+	opts *kernelports.AnalyticsRequestOptions,
 	tz string,
 	laneHeatmap *LaneHeatmapCard,
 	log *zap.Logger,
-) (services.AnalyticsData, error) {
+) (kernelports.AnalyticsData, error) {
 	activeShipments, err := p.getActiveShipments(ctx, opts.OrgID, opts.BuID, tz)
 	if err != nil {
 		log.Error("failed to get active shipments", zap.Error(err))
@@ -230,7 +230,7 @@ func (p *Provider) getFullAnalyticsData(
 		return nil, err
 	}
 
-	data := services.AnalyticsData{
+	data := kernelports.AnalyticsData{
 		"activeShipments":    activeShipments,
 		"onTimePercent":      onTime,
 		"revenueToday":       revenue,
@@ -406,7 +406,7 @@ func (p *Provider) getOnTimePercent(
 
 		var target *float64
 		if p.dispatchRepo != nil {
-			control, err := p.dispatchRepo.GetByOrgID(ctx, repositories.GetDispatchControlRequest{
+			control, err := p.dispatchRepo.GetByOrgID(ctx, dispatchcontrolports.GetDispatchControlRequest{
 				TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 			})
 			if err != nil {

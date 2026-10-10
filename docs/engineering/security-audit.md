@@ -53,7 +53,7 @@ balancer, list it there, or every row records the balancer's address.
 
 ## Authentication events
 
-`services.AuthEventRecorder` (`autheventservice`) writes one `auth_events` row per
+`iamports.AuthEventRecorder` (`autheventservice`) writes one `auth_events` row per
 attempt. The caller fills an `AuthEventRecord` (provider, outcome, user,
 organization, assurance levels, an error code) and the recorder adds the request
 metadata. `provider` names the method: `password`, `sso.<provider>`,
@@ -96,7 +96,7 @@ revocation are, and `api_keys.last_used_*` tracks use.
 
 ## Administrative changes
 
-Services that change who can do what take a `services.SecurityAuditor` and call
+Services that change who can do what take a `permissionports.SecurityAuditor` and call
 `RecordChange` after the change commits, with the resource, operation, actor,
 tenant, before and after state, a comment and metadata. The auditor:
 

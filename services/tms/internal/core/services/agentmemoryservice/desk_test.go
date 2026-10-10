@@ -8,8 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -20,7 +20,7 @@ import (
 // deskRepo keeps memories in a map and answers the Desk's reads the way the
 // database does: by reader, by status, newest first.
 type deskRepo struct {
-	repositories.AgentMemoryRepository
+	agentports.AgentMemoryRepository
 	memories   map[pulid.ID]*agent.Memory
 	preference *agent.MemoryPreference
 	clock      int64
@@ -53,14 +53,14 @@ func (r *deskRepo) Create(_ context.Context, entity *agent.Memory) (*agent.Memor
 
 func (r *deskRepo) FindActive(
 	context.Context,
-	repositories.FindActiveAgentMemoryRequest,
+	agentports.FindActiveAgentMemoryRequest,
 ) (*agent.Memory, error) {
 	return nil, nil
 }
 
 func (r *deskRepo) GetByID(
 	_ context.Context,
-	req repositories.GetAgentMemoryByIDRequest,
+	req agentports.GetAgentMemoryByIDRequest,
 ) (*agent.Memory, error) {
 	memory, ok := r.memories[req.ID]
 	if !ok {
@@ -73,13 +73,13 @@ func (r *deskRepo) GetByID(
 
 func (r *deskRepo) GetDesk(
 	_ context.Context,
-	req repositories.GetDeskMemoriesRequest,
-) ([]*repositories.DeskMemoryRow, error) {
-	rows := make([]*repositories.DeskMemoryRow, 0, len(req.IDs))
+	req agentports.GetDeskMemoriesRequest,
+) ([]*agentports.DeskMemoryRow, error) {
+	rows := make([]*agentports.DeskMemoryRow, 0, len(req.IDs))
 	for _, id := range req.IDs {
 		if memory, ok := r.memories[id]; ok {
 			copied := *memory
-			rows = append(rows, &repositories.DeskMemoryRow{Memory: &copied})
+			rows = append(rows, &agentports.DeskMemoryRow{Memory: &copied})
 		}
 	}
 
@@ -88,7 +88,7 @@ func (r *deskRepo) GetDesk(
 
 func (r *deskRepo) ListByIDs(
 	_ context.Context,
-	req repositories.ListAgentMemoriesByIDsRequest,
+	req agentports.ListAgentMemoriesByIDsRequest,
 ) ([]*agent.Memory, error) {
 	out := make([]*agent.Memory, 0, len(req.IDs))
 	for _, id := range req.IDs {
@@ -103,7 +103,7 @@ func (r *deskRepo) ListByIDs(
 
 func (r *deskRepo) ListReplacements(
 	_ context.Context,
-	req repositories.ListAgentMemoryReplacementsRequest,
+	req agentports.ListAgentMemoryReplacementsRequest,
 ) ([]*agent.Memory, error) {
 	out := make([]*agent.Memory, 0)
 	for _, memory := range r.memories {
@@ -116,7 +116,7 @@ func (r *deskRepo) ListReplacements(
 	return out, nil
 }
 
-func (r *deskRepo) visible(filter *repositories.DeskMemoryFilter) []*agent.Memory {
+func (r *deskRepo) visible(filter *agentports.DeskMemoryFilter) []*agent.Memory {
 	out := make([]*agent.Memory, 0, len(r.memories))
 	for _, memory := range r.memories {
 		if memory.Status != agent.MemoryStatusActive && memory.Status != agent.MemoryStatusPaused {
@@ -134,9 +134,9 @@ func (r *deskRepo) visible(filter *repositories.DeskMemoryFilter) []*agent.Memor
 
 func (r *deskRepo) ListDesk(
 	_ context.Context,
-	req repositories.ListDeskMemoriesRequest,
-) ([]*repositories.DeskMemoryRow, error) {
-	rows := make([]*repositories.DeskMemoryRow, 0)
+	req agentports.ListDeskMemoriesQuery,
+) ([]*agentports.DeskMemoryRow, error) {
+	rows := make([]*agentports.DeskMemoryRow, 0)
 	for _, memory := range r.visible(&req.Filter) {
 		if req.Filter.Scope != "" && memory.Scope != req.Filter.Scope {
 			continue
@@ -145,7 +145,7 @@ func (r *deskRepo) ListDesk(
 			continue
 		}
 		copied := *memory
-		rows = append(rows, &repositories.DeskMemoryRow{Memory: &copied})
+		rows = append(rows, &agentports.DeskMemoryRow{Memory: &copied})
 		if len(rows) == req.Limit {
 			break
 		}
@@ -156,9 +156,9 @@ func (r *deskRepo) ListDesk(
 
 func (r *deskRepo) CountDesk(
 	_ context.Context,
-	filter repositories.DeskMemoryFilter,
-) ([]repositories.DeskMemoryCount, error) {
-	counts := map[string]*repositories.DeskMemoryCount{}
+	filter agentports.DeskMemoryFilter,
+) ([]agentports.DeskMemoryCountRow, error) {
+	counts := map[string]*agentports.DeskMemoryCountRow{}
 	order := make([]string, 0)
 	for _, memory := range r.visible(&filter) {
 		roleID := pulid.Nil
@@ -167,13 +167,13 @@ func (r *deskRepo) CountDesk(
 		}
 		key := string(memory.Scope) + roleID.String()
 		if counts[key] == nil {
-			counts[key] = &repositories.DeskMemoryCount{Scope: memory.Scope, RoleID: roleID}
+			counts[key] = &agentports.DeskMemoryCountRow{Scope: memory.Scope, RoleID: roleID}
 			order = append(order, key)
 		}
 		counts[key].Count++
 	}
 
-	out := make([]repositories.DeskMemoryCount, 0, len(order))
+	out := make([]agentports.DeskMemoryCountRow, 0, len(order))
 	for _, key := range order {
 		out = append(out, *counts[key])
 	}
@@ -183,7 +183,7 @@ func (r *deskRepo) CountDesk(
 
 func (r *deskRepo) SetStatus(
 	_ context.Context,
-	req repositories.SetAgentMemoryStatusRequest,
+	req agentports.SetAgentMemoryStatusQuery,
 ) (*agent.Memory, error) {
 	memory := r.memories[req.ID]
 	memory.Status = req.Status
@@ -195,7 +195,7 @@ func (r *deskRepo) SetStatus(
 
 func (r *deskRepo) Revise(
 	_ context.Context,
-	req repositories.ReviseAgentMemoryRequest,
+	req agentports.ReviseAgentMemoryRequest,
 ) (*agent.Memory, error) {
 	memory := r.memories[req.ID]
 	memory.Content = req.Content
@@ -208,7 +208,7 @@ func (r *deskRepo) Revise(
 
 func (r *deskRepo) ResolveSuggestion(
 	_ context.Context,
-	req repositories.ResolveAgentMemorySuggestionRequest,
+	req agentports.ResolveAgentMemorySuggestionRequest,
 ) (*agent.Memory, error) {
 	memory := r.memories[req.ID]
 	memory.Status = req.Status
@@ -224,7 +224,7 @@ func (r *deskRepo) ResolveSuggestion(
 
 func (r *deskRepo) GetPreference(
 	context.Context,
-	repositories.GetAgentMemoryPreferenceRequest,
+	agentports.GetAgentMemoryPreferenceRequest,
 ) (*agent.MemoryPreference, error) {
 	return r.preference, nil
 }
@@ -298,10 +298,10 @@ func newDeskWorld() *deskWorld {
 }
 
 // actor is Avery on the Desk, with or without the agent-memory permissions.
-func (w *deskWorld) actor(shared bool) *services.DeskMemoryActor {
-	return &services.DeskMemoryActor{
-		Actor: &services.RequestActor{
-			PrincipalType:  services.PrincipalTypeUser,
+func (w *deskWorld) actor(shared bool) *agentports.DeskMemoryActor {
+	return &agentports.DeskMemoryActor{
+		Actor: &permissionports.RequestActor{
+			PrincipalType:  permissionports.PrincipalTypeUser,
 			PrincipalID:    w.avery,
 			UserID:         w.avery,
 			OrganizationID: pulid.MustNew("org_"),
@@ -319,7 +319,7 @@ func (w *deskWorld) keep(content string, scope agent.MemoryScope, owner, role pu
 	return w.repo.put(memory)
 }
 
-func deskIDs(memories []*services.DeskMemory) []pulid.ID {
+func deskIDs(memories []*agentports.DeskMemory) []pulid.ID {
 	ids := make([]pulid.ID, 0, len(memories))
 	for _, memory := range memories {
 		ids = append(ids, memory.Memory.ID)
@@ -368,7 +368,7 @@ func TestDeskMemories_SharedOnesNeedPermissionToKeep(t *testing.T) {
 	w := newDeskWorld()
 	ctx := t.Context()
 
-	own, err := w.svc.CreateDesk(ctx, &services.CreateDeskMemoryRequest{
+	own, err := w.svc.CreateDesk(ctx, &agentports.CreateDeskMemoryRequest{
 		Actor: w.actor(false), Content: "  Granite pays by ACH only.  ", Scope: agent.MemoryScopeUser,
 	})
 	require.NoError(t, err)
@@ -379,26 +379,26 @@ func TestDeskMemories_SharedOnesNeedPermissionToKeep(t *testing.T) {
 	assert.True(t, own.Editable)
 
 	for _, scope := range []agent.MemoryScope{agent.MemoryScopeRole, agent.MemoryScopeOrganization} {
-		_, err = w.svc.CreateDesk(ctx, &services.CreateDeskMemoryRequest{
+		_, err = w.svc.CreateDesk(ctx, &agentports.CreateDeskMemoryRequest{
 			Actor: w.actor(false), Content: "Shared.", Scope: scope, RoleID: w.billing.ID,
 		})
 		require.Error(t, err, scope)
 		assert.True(t, errortypes.IsAuthorizationError(err), scope)
 	}
 
-	team, err := w.svc.CreateDesk(ctx, &services.CreateDeskMemoryRequest{
+	team, err := w.svc.CreateDesk(ctx, &agentports.CreateDeskMemoryRequest{
 		Actor: w.actor(true), Content: "Columbus loads need a lumper receipt.",
 		Scope: agent.MemoryScopeRole, RoleID: w.billing.ID,
 	})
 	require.NoError(t, err)
 	assert.Equal(t, w.billing.ID, *team.Memory.RoleID)
 
-	_, err = w.svc.CreateDesk(ctx, &services.CreateDeskMemoryRequest{
+	_, err = w.svc.CreateDesk(ctx, &agentports.CreateDeskMemoryRequest{
 		Actor: w.actor(true), Content: "Not my team.", Scope: agent.MemoryScopeRole, RoleID: w.dispatch.ID,
 	})
 	require.Error(t, err, "a role the person does not hold is not theirs to keep memories for")
 
-	_, err = w.svc.CreateDesk(ctx, &services.CreateDeskMemoryRequest{
+	_, err = w.svc.CreateDesk(ctx, &agentports.CreateDeskMemoryRequest{
 		Actor: w.actor(true), Content: "Kept for one agent.", Scope: agent.MemoryScopeAgent,
 	})
 	require.Error(t, err, "agent memories are kept in AI Control")
@@ -410,19 +410,19 @@ func TestDeskMemories_MovingOneToTheTeamNeedsTheSamePermission(t *testing.T) {
 	w := newDeskWorld()
 	own := w.keep("Group AR by facility.", agent.MemoryScopeUser, w.avery, pulid.Nil)
 
-	_, err := w.svc.ReviseDesk(t.Context(), &services.ReviseDeskMemoryRequest{
+	_, err := w.svc.ReviseDesk(t.Context(), &agentports.ReviseDeskMemoryRequest{
 		Actor: w.actor(false), ID: own.ID, Scope: agent.MemoryScopeRole, RoleID: w.billing.ID,
 	})
 	require.Error(t, err)
 
-	edited, err := w.svc.ReviseDesk(t.Context(), &services.ReviseDeskMemoryRequest{
+	edited, err := w.svc.ReviseDesk(t.Context(), &agentports.ReviseDeskMemoryRequest{
 		Actor: w.actor(false), ID: own.ID, Content: "Group AR and detention by facility.",
 	})
 	require.NoError(t, err)
 	assert.Equal(t, "Group AR and detention by facility.", edited.Memory.Content)
 	assert.Equal(t, agent.MemoryScopeUser, edited.Memory.Scope, "an edit of the words keeps the readers")
 
-	moved, err := w.svc.ReviseDesk(t.Context(), &services.ReviseDeskMemoryRequest{
+	moved, err := w.svc.ReviseDesk(t.Context(), &agentports.ReviseDeskMemoryRequest{
 		Actor: w.actor(true), ID: own.ID, Scope: agent.MemoryScopeRole, RoleID: w.billing.ID,
 	})
 	require.NoError(t, err)
@@ -430,7 +430,7 @@ func TestDeskMemories_MovingOneToTheTeamNeedsTheSamePermission(t *testing.T) {
 	assert.Nil(t, moved.Memory.OwnerUserID)
 
 	team := w.keep("Acme is billed net-45.", agent.MemoryScopeRole, pulid.Nil, w.billing.ID)
-	_, err = w.svc.ReviseDesk(t.Context(), &services.ReviseDeskMemoryRequest{
+	_, err = w.svc.ReviseDesk(t.Context(), &agentports.ReviseDeskMemoryRequest{
 		Actor: w.actor(false), ID: team.ID, Content: "Acme is billed net-30.",
 	})
 	require.Error(t, err, "the team's memory is not hers to rewrite without the permission")
@@ -443,9 +443,9 @@ func TestDeskMemories_PauseResumeForgetAndUndo(t *testing.T) {
 
 	w := newDeskWorld()
 	own := w.keep("Avery approves invoices after 4 PM.", agent.MemoryScopeUser, w.avery, pulid.Nil)
-	step := func(status agent.MemoryStatus) *services.DeskMemory {
+	step := func(status agent.MemoryStatus) *agentports.DeskMemory {
 		t.Helper()
-		changed, err := w.svc.SetDeskStatus(t.Context(), &services.SetDeskMemoryStatusRequest{
+		changed, err := w.svc.SetDeskStatus(t.Context(), &agentports.SetDeskMemoryStatusRequest{
 			Actor: w.actor(false), ID: own.ID, Status: status,
 		})
 		require.NoError(t, err)
@@ -459,13 +459,13 @@ func TestDeskMemories_PauseResumeForgetAndUndo(t *testing.T) {
 	step(agent.MemoryStatusRetired)
 	step(agent.MemoryStatusActive)
 
-	_, err := w.svc.SetDeskStatus(t.Context(), &services.SetDeskMemoryStatusRequest{
+	_, err := w.svc.SetDeskStatus(t.Context(), &agentports.SetDeskMemoryStatusRequest{
 		Actor: w.actor(false), ID: own.ID, Status: agent.MemoryStatusSuggested,
 	})
 	require.Error(t, err)
 
 	someoneElses := w.keep("Jordan's note.", agent.MemoryScopeUser, pulid.MustNew("usr_"), pulid.Nil)
-	_, err = w.svc.SetDeskStatus(t.Context(), &services.SetDeskMemoryStatusRequest{
+	_, err = w.svc.SetDeskStatus(t.Context(), &agentports.SetDeskMemoryStatusRequest{
 		Actor: w.actor(true), ID: someoneElses.ID, Status: agent.MemoryStatusRetired,
 	})
 	require.Error(t, err)
@@ -484,7 +484,7 @@ func TestDeskMemories_ListCountsEveryScopeAndPages(t *testing.T) {
 	forgotten := w.keep("Forgotten.", agent.MemoryScopeUser, w.avery, pulid.Nil)
 	forgotten.Status = agent.MemoryStatusRetired
 
-	page, err := w.svc.ListDesk(t.Context(), &services.ListDeskMemoriesRequest{
+	page, err := w.svc.ListDesk(t.Context(), &agentports.ListDeskMemoriesRequest{
 		Actor: w.actor(false), Limit: 3,
 	})
 	require.NoError(t, err)
@@ -503,7 +503,7 @@ func TestDeskMemories_ListCountsEveryScopeAndPages(t *testing.T) {
 		agent.MemoryScopeRole:         1,
 	}, counts)
 
-	rest, err := w.svc.ListDesk(t.Context(), &services.ListDeskMemoriesRequest{
+	rest, err := w.svc.ListDesk(t.Context(), &agentports.ListDeskMemoriesRequest{
 		Actor: w.actor(false), Limit: 3, After: page.Next,
 	})
 	require.NoError(t, err)
@@ -511,14 +511,14 @@ func TestDeskMemories_ListCountsEveryScopeAndPages(t *testing.T) {
 	assert.Equal(t, "One.", rest.Items[0].Memory.Content)
 	assert.Empty(t, rest.Next)
 
-	mine, err := w.svc.ListDesk(t.Context(), &services.ListDeskMemoriesRequest{
+	mine, err := w.svc.ListDesk(t.Context(), &agentports.ListDeskMemoriesRequest{
 		Actor: w.actor(false), Scope: agent.MemoryScopeUser,
 	})
 	require.NoError(t, err)
 	assert.Len(t, mine.Items, 2)
 	assert.Equal(t, 4, mine.All, "the chips count every scope whichever one is chosen")
 
-	_, err = w.svc.ListDesk(t.Context(), &services.ListDeskMemoriesRequest{
+	_, err = w.svc.ListDesk(t.Context(), &agentports.ListDeskMemoriesRequest{
 		Actor: w.actor(false), After: "not a cursor",
 	})
 	require.Error(t, err)
@@ -545,7 +545,7 @@ func TestDeskMemories_AnOfferIsAcceptedOnlyByWhoItWasOfferedTo(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, shown, 1, "the person it was offered to sees the offer")
 
-	saved, err := w.svc.ConfirmDesk(t.Context(), &services.ConfirmDeskMemoryRequest{
+	saved, err := w.svc.ConfirmDesk(t.Context(), &agentports.ConfirmDeskMemoryRequest{
 		Actor: w.actor(false), ID: offered.ID, Content: "Columbus, OH loads need a lumper receipt.",
 		Scope: agent.MemoryScopeUser,
 	})
@@ -553,25 +553,25 @@ func TestDeskMemories_AnOfferIsAcceptedOnlyByWhoItWasOfferedTo(t *testing.T) {
 	assert.Equal(t, agent.MemoryStatusActive, saved.Memory.Status)
 	assert.Equal(t, "Columbus, OH loads need a lumper receipt.", saved.Memory.Content)
 
-	_, err = w.svc.ConfirmDesk(t.Context(), &services.ConfirmDeskMemoryRequest{
+	_, err = w.svc.ConfirmDesk(t.Context(), &agentports.ConfirmDeskMemoryRequest{
 		Actor: w.actor(false), ID: offered.ID, Content: "Again.", Scope: agent.MemoryScopeUser,
 	})
 	require.Error(t, err, "an offer is answered once")
 
 	declined := offer()
-	dismissed, err := w.svc.DismissDesk(t.Context(), services.DeskMemoryRef{Actor: w.actor(false), ID: declined.ID})
+	dismissed, err := w.svc.DismissDesk(t.Context(), agentports.DeskMemoryRef{Actor: w.actor(false), ID: declined.ID})
 	require.NoError(t, err)
 	assert.Equal(t, agent.MemoryStatusDismissed, dismissed.Memory.Status)
-	_, err = w.svc.DismissDesk(t.Context(), services.DeskMemoryRef{Actor: w.actor(false), ID: declined.ID})
+	_, err = w.svc.DismissDesk(t.Context(), agentports.DeskMemoryRef{Actor: w.actor(false), ID: declined.ID})
 	require.Error(t, err, "an offer is turned down once")
-	reconsidered, err := w.svc.ConfirmDesk(t.Context(), &services.ConfirmDeskMemoryRequest{
+	reconsidered, err := w.svc.ConfirmDesk(t.Context(), &agentports.ConfirmDeskMemoryRequest{
 		Actor: w.actor(false), ID: declined.ID, Content: declined.Content, Scope: agent.MemoryScopeUser,
 	})
 	require.NoError(t, err, "Undo of Don't save can still save it")
 	assert.Equal(t, agent.MemoryStatusActive, reconsidered.Memory.Status)
 
 	toTeam := offer()
-	_, err = w.svc.ConfirmDesk(t.Context(), &services.ConfirmDeskMemoryRequest{
+	_, err = w.svc.ConfirmDesk(t.Context(), &agentports.ConfirmDeskMemoryRequest{
 		Actor: w.actor(false), ID: toTeam.ID, Content: "For the team.",
 		Scope: agent.MemoryScopeRole, RoleID: w.billing.ID,
 	})
@@ -583,7 +583,7 @@ func TestDeskMemories_AnOfferIsAcceptedOnlyByWhoItWasOfferedTo(t *testing.T) {
 		Status: agent.MemoryStatusSuggested, Content: "Jordan's offer.",
 		Scope: agent.MemoryScopeUser, OwnerUserID: &jordan, CreatedByUserID: &jordan,
 	})
-	_, err = w.svc.ConfirmDesk(t.Context(), &services.ConfirmDeskMemoryRequest{
+	_, err = w.svc.ConfirmDesk(t.Context(), &agentports.ConfirmDeskMemoryRequest{
 		Actor: w.actor(false), ID: someoneElses.ID, Content: "Mine now.", Scope: agent.MemoryScopeUser,
 	})
 	require.Error(t, err)
@@ -625,12 +625,12 @@ func TestDeskMemories_NameWhatTheyReplacedAndWhatReplacedThem(t *testing.T) {
 	mine := w.keep("Copy me as well.", agent.MemoryScopeUser, w.avery, pulid.Nil)
 	mine.SupersedesID = &jordans.ID
 
-	page, err := w.svc.ListDesk(t.Context(), &services.ListDeskMemoriesRequest{
+	page, err := w.svc.ListDesk(t.Context(), &agentports.ListDeskMemoriesRequest{
 		Actor: w.actor(false),
 		Limit: 10,
 	})
 	require.NoError(t, err)
-	byID := map[pulid.ID]*services.DeskMemory{}
+	byID := map[pulid.ID]*agentports.DeskMemory{}
 	for _, item := range page.Items {
 		byID[item.Memory.ID] = item
 	}

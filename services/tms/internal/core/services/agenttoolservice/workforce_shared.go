@@ -6,9 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
@@ -75,7 +75,7 @@ func withSchema(
 }
 
 func targeting(spec *receivableSpec, key string, resource permission.Resource) *receivableSpec {
-	spec.target = func(params map[string]any) (serviceports.ToolTarget, bool) {
+	spec.target = func(params map[string]any) (agentports.ToolTarget, bool) {
 		return targetOf(params, key, resource)
 	}
 

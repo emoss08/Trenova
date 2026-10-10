@@ -7,8 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -18,8 +18,8 @@ type plainTool struct{ name string }
 func (t plainTool) Name() string                { return t.name }
 func (t plainTool) Description() string         { return "" }
 func (t plainTool) ParamSchema() map[string]any { return map[string]any{} }
-func (t plainTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t plainTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.name,
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceShipment,
@@ -35,7 +35,7 @@ func (t plainTool) Policy() serviceports.ToolPolicy {
 	}
 }
 
-func (t plainTool) Execute(context.Context, serviceports.ToolExecuteParams) error {
+func (t plainTool) Execute(context.Context, agentports.ToolExecuteParams) error {
 	return errors.New("must not run in simulation")
 }
 
@@ -48,10 +48,10 @@ type previewingTool struct {
 
 func (t previewingTool) Preview(
 	ctx context.Context,
-	_ serviceports.ToolExecuteParams,
+	_ agentports.ToolExecuteParams,
 ) (*agent.ToolPreview, error) {
 	if t.readOnly != nil {
-		*t.readOnly = ports.IsReadOnly(ctx)
+		*t.readOnly = kernelports.IsReadOnly(ctx)
 	}
 
 	return t.record, t.failed
@@ -78,7 +78,7 @@ func TestSimulate_DescribesAToolWithoutAPreview(t *testing.T) {
 	preview := Simulate(
 		t.Context(),
 		plainTool{name: "cancel_shipment"},
-		&serviceports.ToolExecuteParams{
+		&agentports.ToolExecuteParams{
 			Params: map[string]any{
 				"shipmentId":   "shp_1",
 				"cancelReason": "Customer pulled the load",
@@ -104,7 +104,7 @@ func TestSimulate_ReadsTheRecordPreview(t *testing.T) {
 
 	tool := previewingTool{plainTool: plainTool{name: "cancel_shipment"}, record: cancelPreview()}
 
-	preview := Simulate(t.Context(), tool, &serviceports.ToolExecuteParams{})
+	preview := Simulate(t.Context(), tool, &agentports.ToolExecuteParams{})
 
 	assert.True(t, preview.Previewed)
 	assert.Equal(t, "Would cancel PRO-100.", preview.Summary)
@@ -112,7 +112,7 @@ func TestSimulate_ReadsTheRecordPreview(t *testing.T) {
 
 	tool.failed = errors.New("shipment not found")
 	tool.record = nil
-	failed := Simulate(t.Context(), tool, &serviceports.ToolExecuteParams{
+	failed := Simulate(t.Context(), tool, &agentports.ToolExecuteParams{
 		Params: map[string]any{"shipmentId": "shp_1", "_owner": "usr_1"},
 	})
 	assert.False(t, failed.Previewed)
@@ -133,7 +133,7 @@ func TestSimulate_PreviewsInAReadOnlyContext(t *testing.T) {
 		readOnly:  &readOnly,
 	}
 
-	Simulate(t.Context(), tool, &serviceports.ToolExecuteParams{})
+	Simulate(t.Context(), tool, &agentports.ToolExecuteParams{})
 
 	assert.True(t, readOnly)
 }
@@ -141,7 +141,7 @@ func TestSimulate_PreviewsInAReadOnlyContext(t *testing.T) {
 func TestFromBaseline_ReadsTheSnapshotsPreview(t *testing.T) {
 	t.Parallel()
 
-	simulation := FromBaseline("cancel_shipment", nil, &serviceports.ProposalBaselineResult{
+	simulation := FromBaseline("cancel_shipment", nil, &agentports.ProposalBaselineResult{
 		Preview: cancelPreview(),
 	})
 
@@ -157,7 +157,7 @@ func TestFromBaseline_ReportsAFailedPreviewWithoutRunningItAgain(t *testing.T) {
 	simulation := FromBaseline(
 		"cancel_shipment",
 		map[string]any{"shipmentId": "shp_1"},
-		&serviceports.ProposalBaselineResult{
+		&agentports.ProposalBaselineResult{
 			PreviewErr: errors.New("cannot execute UPDATE in a read-only transaction"),
 		},
 	)
@@ -171,7 +171,7 @@ func TestFromBaseline_ReportsAFailedPreviewWithoutRunningItAgain(t *testing.T) {
 func TestFromBaseline_DescribesWhenNothingWasPreviewed(t *testing.T) {
 	t.Parallel()
 
-	for _, baseline := range []*serviceports.ProposalBaselineResult{nil, {}} {
+	for _, baseline := range []*agentports.ProposalBaselineResult{nil, {}} {
 		simulation := FromBaseline("cancel_shipment", map[string]any{"shipmentId": "shp_1"}, baseline)
 
 		assert.False(t, simulation.Previewed)

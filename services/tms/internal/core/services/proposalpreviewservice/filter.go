@@ -6,8 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/fieldsensitivity"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
@@ -16,11 +17,11 @@ import (
 // access is what one reader may see: their ceiling per resource and whether
 // they may read each resource at all.
 type readerAccess struct {
-	ceilings services.FieldCeilings
-	reads    services.ResourceReadAccess
+	ceilings aiauditports.FieldCeilings
+	reads    agentports.ResourceReadAccess
 }
 
-func (s *Service) accessFor(viewer *services.PreviewViewer) readerAccess {
+func (s *Service) accessFor(viewer *agentports.PreviewViewer) readerAccess {
 	a := readerAccess{}
 	actor := viewerActor(viewer)
 	if viewer != nil {

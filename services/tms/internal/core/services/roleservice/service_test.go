@@ -1,12 +1,12 @@
 package roleservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/rbactest"
 	"github.com/emoss08/trenova/internal/testutil/securityaudittest"
@@ -30,10 +30,10 @@ func newStubValidator() *Validator {
 }
 
 type testServiceDeps struct {
-	roleRepo   *mocks.MockRoleRepository
+	roleRepo   *permissionportsmock.MockRoleRepository
 	rbacRepo   *rbactest.Repository
-	permCache  *mocks.MockPermissionCacheRepository
-	permEngine *mocks.MockPermissionEngine
+	permCache  *permissionportsmock.MockPermissionCacheRepository
+	permEngine *permissionportsmock.MockPermissionEngine
 	audit      *securityaudittest.Recorder
 	svc        *Service
 }
@@ -41,10 +41,10 @@ type testServiceDeps struct {
 func setupTestService(t *testing.T) *testServiceDeps {
 	t.Helper()
 
-	roleRepo := mocks.NewMockRoleRepository(t)
+	roleRepo := permissionportsmock.NewMockRoleRepository(t)
 	rbacRepo := &rbactest.Repository{}
-	permCache := mocks.NewMockPermissionCacheRepository(t)
-	permEngine := mocks.NewMockPermissionEngine(t)
+	permCache := permissionportsmock.NewMockPermissionCacheRepository(t)
+	permEngine := permissionportsmock.NewMockPermissionEngine(t)
 	logger := zap.NewNop()
 	recorder := &securityaudittest.Recorder{}
 
@@ -77,22 +77,22 @@ func (d *testServiceDeps) expectFullEffectivePermissions() {
 		Return(testFullEffectivePermissions(), nil)
 }
 
-func testFullEffectivePermissions() *services.EffectivePermissions {
+func testFullEffectivePermissions() *permissionports.EffectivePermissions {
 	registry := permission.NewRegistry()
-	resources := make(map[string]services.EffectiveResourcePermission, len(registry.All()))
+	resources := make(map[string]permissionports.EffectiveResourcePermission, len(registry.All()))
 	for _, def := range registry.All() {
 		operations := make([]permission.Operation, len(def.Operations))
 		for i, op := range def.Operations {
 			operations[i] = op.Operation
 		}
 
-		resources[def.Resource] = services.EffectiveResourcePermission{
+		resources[def.Resource] = permissionports.EffectiveResourcePermission{
 			Operations: operations,
 			DataScope:  permission.DataScopeAll,
 		}
 	}
 
-	return &services.EffectivePermissions{
+	return &permissionports.EffectivePermissions{
 		MaxSensitivity: permission.SensitivityConfidential,
 		Resources:      resources,
 	}
@@ -115,9 +115,9 @@ func TestCreateRole_PrivilegeEscalation_Fails(t *testing.T) {
 	deps.permEngine.ExpectedCalls = nil
 
 	deps.permEngine.On("GetEffectivePermissions", ctx, actorID, orgID).
-		Return(&services.EffectivePermissions{
+		Return(&permissionports.EffectivePermissions{
 			MaxSensitivity: permission.SensitivityInternal,
-			Resources:      make(map[string]services.EffectiveResourcePermission),
+			Resources:      make(map[string]permissionports.EffectiveResourcePermission),
 		}, nil)
 
 	err := deps.svc.CreateRole(ctx, CreateRoleRequest{
@@ -147,7 +147,7 @@ func TestUpdateRole_SystemRole_Fails(t *testing.T) {
 		Name: "Updated Role",
 	}
 
-	deps.roleRepo.On("GetByID", ctx, repositories.GetRoleByIDRequest{
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(&permission.Role{
@@ -184,7 +184,7 @@ func TestUpdateRole_Success(t *testing.T) {
 		Permissions:    []*permission.ResourcePermission{},
 	}
 
-	deps.roleRepo.On("GetByID", ctx, repositories.GetRoleByIDRequest{
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(&permission.Role{
@@ -218,7 +218,7 @@ func TestListRoles(t *testing.T) {
 		{ID: pulid.MustNew("rol_"), Name: "Role 2"},
 	}
 
-	req := &repositories.ListRolesRequest{
+	req := &permissionports.ListRolesRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: pagination.TenantInfo{OrgID: orgID},
 			Pagination: pagination.Info{Limit: 10, Offset: 0},
@@ -254,7 +254,7 @@ func TestAssignRole_Success(t *testing.T) {
 		RoleID: roleID,
 	}
 
-	deps.roleRepo.On("GetByID", ctx, repositories.GetRoleByIDRequest{
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(&permission.Role{
@@ -296,7 +296,7 @@ func TestAssignRole_DuplicateActiveAssignment_Fails(t *testing.T) {
 		RoleID: roleID,
 	}
 
-	deps.roleRepo.On("GetByID", ctx, repositories.GetRoleByIDRequest{
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(&permission.Role{
@@ -332,7 +332,7 @@ func TestUnassignRole_Success(t *testing.T) {
 	assignmentID := pulid.MustNew("ura_")
 
 	userID := pulid.MustNew("usr_")
-	deps.roleRepo.On("DeleteAssignment", ctx, repositories.DeleteRoleAssignmentRequest{
+	deps.roleRepo.On("DeleteAssignment", ctx, permissionports.DeleteRoleAssignmentRequest{
 		AssignmentID:   assignmentID,
 		OrganizationID: orgID,
 	}).Return(&permission.UserRoleAssignment{
@@ -360,7 +360,7 @@ func TestGetImpactedUsers(t *testing.T) {
 	ctx := t.Context()
 	roleID := pulid.MustNew("rol_")
 
-	expected := []repositories.ImpactedUser{
+	expected := []permissionports.ImpactedUser{
 		{UserID: pulid.MustNew("usr_"), UserName: "User 1"},
 		{UserID: pulid.MustNew("usr_"), UserName: "User 2"},
 	}
@@ -420,7 +420,7 @@ func TestCreateResourcePermission_Success(t *testing.T) {
 		DataScope:  permission.DataScopeOrganization,
 	}
 
-	deps.roleRepo.On("GetByID", ctx, repositories.GetRoleByIDRequest{
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(&permission.Role{
@@ -452,7 +452,7 @@ func TestCreateResourcePermission_SystemRole_Fails(t *testing.T) {
 		Resource: "shipment",
 	}
 
-	deps.roleRepo.On("GetByID", ctx, repositories.GetRoleByIDRequest{
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(&permission.Role{
@@ -477,14 +477,14 @@ func TestDeleteResourcePermission_Success(t *testing.T) {
 	roleID := pulid.MustNew("rol_")
 	permID := pulid.MustNew("rp_")
 
-	deps.roleRepo.On("GetByID", ctx, repositories.GetRoleByIDRequest{
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(&permission.Role{
 		ID:       roleID,
 		IsSystem: false,
 	}, nil)
-	deps.roleRepo.On("DeleteResourcePermission", ctx, repositories.DeleteResourcePermissionRequest{
+	deps.roleRepo.On("DeleteResourcePermission", ctx, permissionports.DeleteResourcePermissionRequest{
 		PermissionID: permID,
 		RoleID:       roleID,
 	}).Return(nil)
@@ -548,9 +548,9 @@ func TestValidateNoEscalation_ResourceNotAllowed(t *testing.T) {
 	deps.permEngine.ExpectedCalls = nil
 
 	deps.permEngine.On("GetEffectivePermissions", ctx, actorID, orgID).
-		Return(&services.EffectivePermissions{
+		Return(&permissionports.EffectivePermissions{
 			MaxSensitivity: permission.SensitivityInternal,
-			Resources: map[string]services.EffectiveResourcePermission{
+			Resources: map[string]permissionports.EffectiveResourcePermission{
 				"shipment": {
 					Operations: []permission.Operation{permission.OpRead},
 					DataScope:  permission.DataScopeOrganization,
@@ -594,9 +594,9 @@ func TestValidateNoEscalation_OperationNotAllowed(t *testing.T) {
 	deps.permEngine.ExpectedCalls = nil
 
 	deps.permEngine.On("GetEffectivePermissions", ctx, actorID, orgID).
-		Return(&services.EffectivePermissions{
+		Return(&permissionports.EffectivePermissions{
 			MaxSensitivity: permission.SensitivityInternal,
-			Resources: map[string]services.EffectiveResourcePermission{
+			Resources: map[string]permissionports.EffectiveResourcePermission{
 				"shipment": {
 					Operations: []permission.Operation{permission.OpRead},
 					DataScope:  permission.DataScopeOrganization,
@@ -640,9 +640,9 @@ func TestValidateNoEscalation_DataScopeNotAllowed(t *testing.T) {
 	deps.permEngine.ExpectedCalls = nil
 
 	deps.permEngine.On("GetEffectivePermissions", ctx, actorID, orgID).
-		Return(&services.EffectivePermissions{
+		Return(&permissionports.EffectivePermissions{
 			MaxSensitivity: permission.SensitivityInternal,
-			Resources: map[string]services.EffectiveResourcePermission{
+			Resources: map[string]permissionports.EffectiveResourcePermission{
 				"shipment": {
 					Operations: []permission.Operation{permission.OpRead},
 					DataScope:  permission.DataScopeOrganization,
@@ -676,12 +676,12 @@ func TestGetRoleByID(t *testing.T) {
 		Name: "Test Role",
 	}
 
-	deps.roleRepo.On("GetByID", ctx, repositories.GetRoleByIDRequest{
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(expectedRole, nil)
 
-	role, err := deps.svc.GetRoleByID(ctx, repositories.GetRoleByIDRequest{
+	role, err := deps.svc.GetRoleByID(ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	})
@@ -701,12 +701,12 @@ func TestGetRoleByID_NotFound(t *testing.T) {
 	roleID := pulid.MustNew("rol_")
 	orgID := pulid.MustNew("org_")
 
-	deps.roleRepo.On("GetByID", ctx, repositories.GetRoleByIDRequest{
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(nil, errors.New("not found"))
 
-	role, err := deps.svc.GetRoleByID(ctx, repositories.GetRoleByIDRequest{
+	role, err := deps.svc.GetRoleByID(ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	})
@@ -736,7 +736,7 @@ func TestUpdateResourcePermission_Success(t *testing.T) {
 		DataScope:  permission.DataScopeOrganization,
 	}
 
-	deps.roleRepo.On("GetByID", ctx, repositories.GetRoleByIDRequest{
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(&permission.Role{
@@ -770,7 +770,7 @@ func TestUpdateResourcePermission_SystemRole_Fails(t *testing.T) {
 		Resource: "shipment",
 	}
 
-	deps.roleRepo.On("GetByID", ctx, repositories.GetRoleByIDRequest{
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(&permission.Role{
@@ -804,7 +804,7 @@ func TestUpdateResourcePermission_PrivilegeEscalation_Fails(t *testing.T) {
 		DataScope:  permission.DataScopeOrganization,
 	}
 
-	deps.roleRepo.On("GetByID", ctx, repositories.GetRoleByIDRequest{
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(&permission.Role{
@@ -813,9 +813,9 @@ func TestUpdateResourcePermission_PrivilegeEscalation_Fails(t *testing.T) {
 	}, nil)
 	deps.permEngine.ExpectedCalls = nil
 	deps.permEngine.On("GetEffectivePermissions", ctx, actorID, orgID).
-		Return(&services.EffectivePermissions{
+		Return(&permissionports.EffectivePermissions{
 			MaxSensitivity: permission.SensitivityInternal,
-			Resources: map[string]services.EffectiveResourcePermission{
+			Resources: map[string]permissionports.EffectiveResourcePermission{
 				"shipment": {
 					Operations: []permission.Operation{permission.OpRead},
 					DataScope:  permission.DataScopeOrganization,
@@ -852,13 +852,13 @@ func TestCircularInheritance_IndirectCycle(t *testing.T) {
 		Permissions:   []*permission.ResourcePermission{},
 	}
 
-	deps.roleRepo.On("GetByID", ctx, mock.MatchedBy(func(req repositories.GetRoleByIDRequest) bool {
+	deps.roleRepo.On("GetByID", ctx, mock.MatchedBy(func(req permissionports.GetRoleByIDRequest) bool {
 		return req.ID == roleB
 	})).Return(&permission.Role{
 		ID:            roleB,
 		ParentRoleIDs: []pulid.ID{roleA},
 	}, nil)
-	deps.roleRepo.On("GetByID", ctx, mock.MatchedBy(func(req repositories.GetRoleByIDRequest) bool {
+	deps.roleRepo.On("GetByID", ctx, mock.MatchedBy(func(req permissionports.GetRoleByIDRequest) bool {
 		return req.ID == roleA
 	})).Return(&permission.Role{
 		ID:            roleA,
@@ -922,7 +922,7 @@ func TestCircularInheritance_ValidChain(t *testing.T) {
 		Permissions:    []*permission.ResourcePermission{},
 	}
 
-	deps.roleRepo.On("GetByID", ctx, mock.MatchedBy(func(req repositories.GetRoleByIDRequest) bool {
+	deps.roleRepo.On("GetByID", ctx, mock.MatchedBy(func(req permissionports.GetRoleByIDRequest) bool {
 		return req.ID == parentRoleID
 	})).Return(&permission.Role{
 		ID:            parentRoleID,
@@ -950,7 +950,7 @@ func TestUnassignRole_Error(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	assignmentID := pulid.MustNew("ura_")
 
-	deps.roleRepo.On("DeleteAssignment", ctx, repositories.DeleteRoleAssignmentRequest{
+	deps.roleRepo.On("DeleteAssignment", ctx, permissionports.DeleteRoleAssignmentRequest{
 		AssignmentID:   assignmentID,
 		OrganizationID: orgID,
 	}).Return(nil, errors.New("database error"))
@@ -975,7 +975,7 @@ func TestDeleteResourcePermission_SystemRole_Fails(t *testing.T) {
 	roleID := pulid.MustNew("rol_")
 	permID := pulid.MustNew("rp_")
 
-	deps.roleRepo.On("GetByID", ctx, repositories.GetRoleByIDRequest{
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(&permission.Role{
@@ -1040,7 +1040,7 @@ func TestUpdateRole_GetByIDError(t *testing.T) {
 		Name: "Updated Role",
 	}
 
-	deps.roleRepo.On("GetByID", ctx, repositories.GetRoleByIDRequest{
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(nil, errors.New("not found"))
@@ -1070,7 +1070,7 @@ func TestAssignRole_GetRoleError(t *testing.T) {
 		RoleID: roleID,
 	}
 
-	deps.roleRepo.On("GetByID", ctx, repositories.GetRoleByIDRequest{
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(nil, errors.New("not found"))
@@ -1100,7 +1100,7 @@ func TestCreateResourcePermission_GetRoleError(t *testing.T) {
 		Resource: "shipment",
 	}
 
-	deps.roleRepo.On("GetByID", ctx, repositories.GetRoleByIDRequest{
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(nil, errors.New("not found"))
@@ -1127,7 +1127,7 @@ func TestUpdateResourcePermission_GetRoleError(t *testing.T) {
 		Resource: "shipment",
 	}
 
-	deps.roleRepo.On("GetByID", ctx, repositories.GetRoleByIDRequest{
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(nil, errors.New("not found"))
@@ -1148,7 +1148,7 @@ func TestDeleteResourcePermission_GetRoleError(t *testing.T) {
 	roleID := pulid.MustNew("rol_")
 	permID := pulid.MustNew("rp_")
 
-	deps.roleRepo.On("GetByID", ctx, repositories.GetRoleByIDRequest{
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(nil, errors.New("not found"))
@@ -1163,9 +1163,9 @@ func TestDeleteResourcePermission_GetRoleError(t *testing.T) {
 func TestNew(t *testing.T) {
 	t.Parallel()
 
-	roleRepo := mocks.NewMockRoleRepository(t)
-	permCache := mocks.NewMockPermissionCacheRepository(t)
-	permEngine := mocks.NewMockPermissionEngine(t)
+	roleRepo := permissionportsmock.NewMockRoleRepository(t)
+	permCache := permissionportsmock.NewMockPermissionCacheRepository(t)
+	permEngine := permissionportsmock.NewMockPermissionEngine(t)
 	validator := newStubValidator()
 	registry := permission.NewRegistry()
 
@@ -1253,7 +1253,7 @@ func TestCreateResourcePermission_PermissionRepoError(t *testing.T) {
 		DataScope:  permission.DataScopeOrganization,
 	}
 
-	deps.roleRepo.On("GetByID", ctx, repositories.GetRoleByIDRequest{
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(&permission.Role{
@@ -1287,7 +1287,7 @@ func TestCreateResourcePermission_CacheInvalidationError(t *testing.T) {
 		DataScope:  permission.DataScopeOrganization,
 	}
 
-	deps.roleRepo.On("GetByID", ctx, repositories.GetRoleByIDRequest{
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(&permission.Role{
@@ -1325,7 +1325,7 @@ func TestUpdateResourcePermission_PermissionRepoError(t *testing.T) {
 		DataScope:  permission.DataScopeOrganization,
 	}
 
-	deps.roleRepo.On("GetByID", ctx, repositories.GetRoleByIDRequest{
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(&permission.Role{
@@ -1361,7 +1361,7 @@ func TestUpdateResourcePermission_CacheInvalidationError(t *testing.T) {
 		DataScope:  permission.DataScopeOrganization,
 	}
 
-	deps.roleRepo.On("GetByID", ctx, repositories.GetRoleByIDRequest{
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(&permission.Role{
@@ -1389,14 +1389,14 @@ func TestDeleteResourcePermission_NotFoundError(t *testing.T) {
 	roleID := pulid.MustNew("rol_")
 	permID := pulid.MustNew("rp_")
 
-	deps.roleRepo.On("GetByID", ctx, repositories.GetRoleByIDRequest{
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(&permission.Role{
 		ID:       roleID,
 		IsSystem: false,
 	}, nil)
-	deps.roleRepo.On("DeleteResourcePermission", ctx, repositories.DeleteResourcePermissionRequest{
+	deps.roleRepo.On("DeleteResourcePermission", ctx, permissionports.DeleteResourcePermissionRequest{
 		PermissionID: permID,
 		RoleID:       roleID,
 	}).Return(errors.New("not found"))
@@ -1420,11 +1420,11 @@ func TestSaveRoleConstraint_ValidatesRolesAndInvalidatesCache(t *testing.T) {
 	roleID := pulid.MustNew("rol_")
 	otherRoleID := pulid.MustNew("rol_")
 
-	deps.roleRepo.On("GetByID", ctx, repositories.GetRoleByIDRequest{
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(&permission.Role{ID: roleID}, nil)
-	deps.roleRepo.On("GetByID", ctx, repositories.GetRoleByIDRequest{
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         otherRoleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(&permission.Role{ID: otherRoleID}, nil)
@@ -1480,11 +1480,11 @@ func TestSaveRoleConstraint_InvalidTenantRoleFails(t *testing.T) {
 	otherRoleID := pulid.MustNew("rol_")
 	expectedErr := errors.New("role not found")
 
-	deps.roleRepo.On("GetByID", ctx, repositories.GetRoleByIDRequest{
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(&permission.Role{ID: roleID}, nil)
-	deps.roleRepo.On("GetByID", ctx, repositories.GetRoleByIDRequest{
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         otherRoleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(nil, expectedErr)

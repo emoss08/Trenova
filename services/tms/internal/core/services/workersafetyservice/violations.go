@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -15,7 +15,7 @@ const realtimeViolation = "worker_safety_violation"
 
 func (s *Service) ListViolations(
 	ctx context.Context,
-	req *repositories.ListWorkerSafetyViolationsRequest,
+	req *workerports.ListWorkerSafetyViolationsRequest,
 ) ([]*worker.WorkerSafetyViolation, error) {
 	return s.repo.ListViolations(ctx, req)
 }
@@ -121,7 +121,7 @@ func (s *Service) DeleteViolation(
 		return err
 	}
 
-	if err = s.repo.DeleteViolation(ctx, &repositories.GetWorkerSafetyViolationByIDRequest{
+	if err = s.repo.DeleteViolation(ctx, &workerports.GetWorkerSafetyViolationByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	}); err != nil {

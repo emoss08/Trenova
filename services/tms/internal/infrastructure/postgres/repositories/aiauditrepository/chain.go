@@ -7,9 +7,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiaudit"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -71,7 +71,7 @@ func (r *repository) ListChainHeads(ctx context.Context) ([]*aiaudit.AIAuditChai
 // head it shares a row with.
 func (r *repository) RecordVerification(
 	ctx context.Context,
-	req *repositories.RecordAIAuditVerificationRequest,
+	req *aiauditports.RecordAIAuditVerificationRequest,
 ) (*aiaudit.AIAuditChainHead, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*aiaudit.AIAuditChainHead, error) {
 		cols := buncolgen.AIAuditChainHeadColumns
@@ -140,7 +140,7 @@ func (r *repository) GetSealEndingAt(
 
 func (r *repository) ListSeals(
 	ctx context.Context,
-	req repositories.ListAIAuditSealsRequest,
+	req aiauditports.ListAIAuditSealsRequest,
 ) ([]*aiaudit.AIAuditSeal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiaudit.AIAuditSeal, error) {
 		cols := buncolgen.AIAuditSealColumns
@@ -195,7 +195,7 @@ func (r *repository) LastSealBefore(
 // transaction, each under the setting the append-only trigger admits.
 func (r *repository) Prune(
 	ctx context.Context,
-	req repositories.PruneAIAuditEventsRequest,
+	req aiauditports.PruneAIAuditEventsRequest,
 ) (int, error) {
 	ctx = dbscope.WithSystem(ctx, "prune AI audit events past retention behind the projector horizon")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
@@ -208,7 +208,7 @@ func (r *repository) Prune(
 		total := 0
 		for {
 			deleted := 0
-			err := r.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
+			err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
 				if isPostgres(tx) {
 					if _, err := tx.NewSelect().
 						ColumnExpr("set_config(?, 'on', true)", pruneSetting).

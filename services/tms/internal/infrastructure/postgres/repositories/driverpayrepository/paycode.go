@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -24,7 +24,7 @@ type payCodeRepository struct {
 	l  *zap.Logger
 }
 
-func NewPayCode(p Params) repositories.PayCodeRepository {
+func NewPayCode(p Params) driverpayports.PayCodeRepository {
 	return &payCodeRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.pay-code-repository"),
@@ -33,7 +33,7 @@ func NewPayCode(p Params) repositories.PayCodeRepository {
 
 func (r *payCodeRepository) List(
 	ctx context.Context,
-	req *repositories.ListPayCodesRequest,
+	req *driverpayports.ListPayCodesRequest,
 ) (*pagination.ListResult[*driverpay.PayCode], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*driverpay.PayCode], error) {
 		limit := req.Filter.Pagination.SafeLimit()
@@ -68,7 +68,7 @@ func (r *payCodeRepository) List(
 
 func (r *payCodeRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListPayCodeConnectionRequest,
+	req *driverpayports.ListPayCodeConnectionRequest,
 ) (*pagination.CursorListResult[*driverpay.PayCode], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*driverpay.PayCode], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -129,7 +129,7 @@ func (r *payCodeRepository) ListConnection(
 
 func (r *payCodeRepository) ListActive(
 	ctx context.Context,
-	req repositories.ListActivePayCodesRequest,
+	req driverpayports.ListActivePayCodesRequest,
 ) ([]*driverpay.PayCode, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driverpay.PayCode, error) {
 		items := make([]*driverpay.PayCode, 0)
@@ -152,7 +152,7 @@ func (r *payCodeRepository) ListActive(
 
 func (r *payCodeRepository) SelectOptions(
 	ctx context.Context,
-	req *repositories.PayCodeSelectOptionsRequest,
+	req *driverpayports.PayCodeSelectOptionsRequest,
 ) (*pagination.ListResult[*driverpay.PayCode], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*driverpay.PayCode], error) {
 		cols := buncolgen.PayCodeColumns
@@ -194,7 +194,7 @@ func (r *payCodeRepository) SelectOptions(
 
 func (r *payCodeRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetPayCodeByIDRequest,
+	req driverpayports.GetPayCodeByIDRequest,
 ) (*driverpay.PayCode, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driverpay.PayCode, error) {
 		entity := new(driverpay.PayCode)
@@ -248,7 +248,7 @@ func (r *payCodeRepository) Create(
 		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
 			return nil, fmt.Errorf("create pay code: %w", err)
 		}
-		return r.GetByID(ctx, repositories.GetPayCodeByIDRequest{
+		return r.GetByID(ctx, driverpayports.GetPayCodeByIDRequest{
 			ID: entity.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
@@ -286,7 +286,7 @@ func (r *payCodeRepository) Update(
 		if err = dberror.CheckRowsAffected(res, "PayCode", entity.ID.String()); err != nil {
 			return nil, err
 		}
-		return r.GetByID(ctx, repositories.GetPayCodeByIDRequest{
+		return r.GetByID(ctx, driverpayports.GetPayCodeByIDRequest{
 			ID: entity.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,

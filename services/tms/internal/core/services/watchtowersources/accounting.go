@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -17,16 +17,16 @@ import (
 const accountingReconnectSuffix = ":reconnect"
 
 type AccountingSyncSource struct {
-	repo    repositories.AccountingConnectionRepository
-	records repositories.AccountingSyncRecordRepository
-	inbound repositories.AccountingInboundChangeRepository
+	repo    accountingsyncports.AccountingConnectionRepository
+	records accountingsyncports.AccountingSyncRecordRepository
+	inbound accountingsyncports.AccountingInboundChangeRepository
 }
 
 func NewAccountingSyncSource(
-	repo repositories.AccountingConnectionRepository,
-	records repositories.AccountingSyncRecordRepository,
-	inbound repositories.AccountingInboundChangeRepository,
-) services.WatchtowerSource {
+	repo accountingsyncports.AccountingConnectionRepository,
+	records accountingsyncports.AccountingSyncRecordRepository,
+	inbound accountingsyncports.AccountingInboundChangeRepository,
+) watchtowerports.WatchtowerSource {
 	return &AccountingSyncSource{repo: repo, records: records, inbound: inbound}
 }
 
@@ -37,14 +37,14 @@ func (s *AccountingSyncSource) Kind() watchtower.SourceKind {
 func (s *AccountingSyncSource) Snapshot(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-) ([]services.WatchtowerItemInput, error) {
+) ([]watchtowerports.WatchtowerItemInput, error) {
 	connections, err := s.repo.ListByTenant(ctx, tenant)
 	if err != nil {
 		return nil, err
 	}
 
 	now := timeutils.NowUnix()
-	items := make([]services.WatchtowerItemInput, 0, len(connections))
+	items := make([]watchtowerports.WatchtowerItemInput, 0, len(connections))
 	for _, conn := range connections {
 		if item, open := DescribeAccountingConnectionHealth(conn); open {
 			items = append(items, item)
@@ -60,7 +60,7 @@ func (s *AccountingSyncSource) Snapshot(
 		}
 		groups, listErr := s.records.ListAttention(
 			ctx,
-			repositories.ListAccountingSyncAttentionRequest{
+			accountingsyncports.ListAccountingSyncAttentionRequest{
 				TenantInfo:   tenant,
 				ConnectionID: conn.ID,
 			},
@@ -75,7 +75,7 @@ func (s *AccountingSyncSource) Snapshot(
 		}
 		inbound, inboundErr := s.inbound.ListAttention(
 			ctx,
-			&repositories.ListAccountingInboundAttentionRequest{
+			&accountingsyncports.ListAccountingInboundAttentionRequest{
 				TenantInfo:     tenant,
 				ConnectionID:   conn.ID,
 				DetectedBefore: now - int64(AccountingInboundAfter/time.Second),
@@ -104,7 +104,7 @@ func AccountingReconnectSourceID(conn *accountingsync.AccountingConnection) stri
 
 func DescribeAccountingConnectionHealth(
 	conn *accountingsync.AccountingConnection,
-) (services.WatchtowerItemInput, bool) {
+) (watchtowerports.WatchtowerItemInput, bool) {
 	provider := accountingsync.ProviderName(conn.IntegrationType)
 
 	var severity watchtower.Severity
@@ -125,7 +125,7 @@ func DescribeAccountingConnectionHealth(
 		summary = "The authorization was revoked or expired. Reconnect " + provider +
 			" to resume sync; nothing is lost while it is disconnected."
 	default:
-		return services.WatchtowerItemInput{}, false
+		return watchtowerports.WatchtowerItemInput{}, false
 	}
 
 	occurredAt := conn.UpdatedAt
@@ -133,7 +133,7 @@ func DescribeAccountingConnectionHealth(
 		occurredAt = *conn.LastFailureAt
 	}
 
-	return services.WatchtowerItemInput{
+	return watchtowerports.WatchtowerItemInput{
 		TenantInfo:  pagination.TenantInfo{OrgID: conn.OrganizationID, BuID: conn.BusinessUnitID},
 		SourceKind:  watchtower.SourceAccountingSync,
 		SourceID:    AccountingConnectionHealthSourceID(conn),
@@ -151,13 +151,13 @@ func DescribeAccountingConnectionHealth(
 func DescribeAccountingReconnect(
 	conn *accountingsync.AccountingConnection,
 	now int64,
-) (services.WatchtowerItemInput, bool) {
+) (watchtowerports.WatchtowerItemInput, bool) {
 	if !conn.IsActive() || !conn.RefreshTokenNearAbsoluteExpiry(now) {
-		return services.WatchtowerItemInput{}, false
+		return watchtowerports.WatchtowerItemInput{}, false
 	}
 
 	provider := accountingsync.ProviderName(conn.IntegrationType)
-	return services.WatchtowerItemInput{
+	return watchtowerports.WatchtowerItemInput{
 		TenantInfo: pagination.TenantInfo{OrgID: conn.OrganizationID, BuID: conn.BusinessUnitID},
 		SourceKind: watchtower.SourceAccountingSync,
 		SourceID:   AccountingReconnectSourceID(conn),

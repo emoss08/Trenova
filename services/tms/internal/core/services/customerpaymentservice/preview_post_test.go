@@ -1,6 +1,11 @@
 package customerpaymentservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerpaymentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"testing"
 
@@ -9,8 +14,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -42,15 +47,15 @@ func TestPreviewPostAndApply_IsWhatPostAndApplyRecords(t *testing.T) {
 		SettlementStatus:   invoice.SettlementStatusPartiallyPaid,
 	}
 
-	paymentRepo := mocks.NewMockCustomerPaymentRepository(t)
-	invoiceRepo := mocks.NewMockInvoiceRepository(t)
+	paymentRepo := customerpaymentportsmock.NewMockCustomerPaymentRepository(t)
+	invoiceRepo := invoiceportsmock.NewMockInvoiceRepository(t)
 	invoiceRepo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(context.Context, repositories.GetInvoiceByIDRequest) (*invoice.Invoice, error) {
+		RunAndReturn(func(context.Context, invoiceports.GetInvoiceByIDRequest) (*invoice.Invoice, error) {
 			copied := *stored
 			return &copied, nil
 		})
-	accountingRepo := mocks.NewMockAccountingControlRepository(t)
+	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
 		Return(&tenant.AccountingControl{
@@ -61,14 +66,14 @@ func TestPreviewPostAndApply_IsWhatPostAndApplyRecords(t *testing.T) {
 			DefaultUnappliedCashAccountID: pulid.MustNew("gla_"),
 			DefaultARAccountID:            pulid.MustNew("gla_"),
 		}, nil)
-	fiscalRepo := mocks.NewMockFiscalPeriodRepository(t)
+	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
 		GetPeriodByDate(mock.Anything, mock.Anything).
 		Return(&fiscalperiod.FiscalPeriod{
 			ID:           pulid.MustNew("fp_"),
 			FiscalYearID: pulid.MustNew("fy_"),
 		}, nil)
-	journalRepo := mocks.NewMockJournalPostingRepository(t)
+	journalRepo := journalentryportsmock.NewMockJournalPostingRepository(t)
 
 	svc := &Service{
 		db:             fakePaymentDB{},
@@ -82,15 +87,15 @@ func TestPreviewPostAndApply_IsWhatPostAndApplyRecords(t *testing.T) {
 		),
 		auditService: &mocks.NoopAuditService{},
 	}
-	request := func() *serviceports.PostCustomerPaymentRequest {
-		return &serviceports.PostCustomerPaymentRequest{
+	request := func() *customerpaymentports.PostCustomerPaymentRequest {
+		return &customerpaymentports.PostCustomerPaymentRequest{
 			CustomerID:     customerID,
 			PaymentDate:    100,
 			AccountingDate: 100,
 			AmountMinor:    10000,
 			PaymentMethod:  customerpayment.MethodACH,
 			CurrencyCode:   "USD",
-			Applications: []*serviceports.CustomerPaymentApplicationInput{{
+			Applications: []*customerpaymentports.CustomerPaymentApplicationInput{{
 				InvoiceID:          stored.ID,
 				AppliedAmountMinor: 6000,
 			}},

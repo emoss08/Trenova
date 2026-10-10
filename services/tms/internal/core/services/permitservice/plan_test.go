@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/permit"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -15,7 +15,7 @@ func TestPlanPermit_ChecksWithoutWriting(t *testing.T) {
 	stored := activePermit()
 	svc := &service{
 		permitRepo: &permitRepoStub{
-			getByID: func(*repositories.GetPermitByIDRequest) (*permit.Permit, error) {
+			getByID: func(*permitports.GetPermitByIDRequest) (*permit.Permit, error) {
 				copied := *stored
 				return &copied, nil
 			},
@@ -57,7 +57,7 @@ func TestUpdatePermit_RefusesAPermitFromAnotherShipment(t *testing.T) {
 	stored := activePermit()
 	svc := &service{
 		permitRepo: &permitRepoStub{
-			getByID: func(*repositories.GetPermitByIDRequest) (*permit.Permit, error) {
+			getByID: func(*permitports.GetPermitByIDRequest) (*permit.Permit, error) {
 				copied := *stored
 				return &copied, nil
 			},

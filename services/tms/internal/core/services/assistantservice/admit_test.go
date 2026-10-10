@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentguard"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -47,7 +47,7 @@ func waitFor(ctx context.Context, ch <-chan struct{}) bool {
 }
 
 type rendezvousClassifier struct {
-	serviceports.CompletionService
+	agentports.CompletionService
 
 	meet     *rendezvous
 	category agentguard.Category
@@ -55,12 +55,12 @@ type rendezvousClassifier struct {
 
 func (c *rendezvousClassifier) CompleteStructured(
 	ctx context.Context,
-	_ *serviceports.StructuredCompletionRequest,
-) (*serviceports.StructuredCompletionResult, error) {
+	_ *agentports.StructuredCompletionRequest,
+) (*agentports.StructuredCompletionResult, error) {
 	close(c.meet.guardStarted)
 	c.meet.guardSawContext.Store(waitFor(ctx, c.meet.contextStarted))
 
-	return &serviceports.StructuredCompletionResult{
+	return &agentports.StructuredCompletionResult{
 		Text: `{"category":"` + string(c.category) + `","reasoning":"stub"}`,
 	}, nil
 }
@@ -72,7 +72,7 @@ type rendezvousContexts struct {
 
 func (c *rendezvousContexts) Build(
 	ctx context.Context,
-	_ *serviceports.RuntimeContextRequest,
+	_ *agentports.RuntimeContextRequest,
 ) (agentdefinition.RuntimeContext, error) {
 	c.calls.Add(1)
 	close(c.meet.contextStarted)

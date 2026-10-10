@@ -6,19 +6,18 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp"
 	"github.com/emoss08/trenova/internal/core/services/journalposting"
 	"github.com/emoss08/trenova/internal/core/services/settlementshared"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
@@ -31,7 +30,7 @@ func (s *Service) Post(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	settlementID pulid.ID,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driversettlement.Settlement, error) {
 	if err := requireActor(actor, "Settlement posting"); err != nil {
 		return nil, err
@@ -39,7 +38,7 @@ func (s *Service) Post(
 
 	var updated *driversettlement.Settlement
 	var previous driversettlement.Settlement
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		entity, txErr := s.getForUpdate(txCtx, tenantInfo, settlementID)
 		if txErr != nil {
 			return txErr
@@ -104,7 +103,7 @@ func (s *Service) Post(
 func (s *Service) postVoidReversal(
 	ctx context.Context,
 	entity *driversettlement.Settlement,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) error {
 	batchID, err := s.postSettlementJournal(ctx, entity, actor, true)
 	if err != nil {
@@ -299,7 +298,7 @@ type journalDraft struct {
 func (s *Service) postSettlementJournal(
 	ctx context.Context,
 	entity *driversettlement.Settlement,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 	reversal bool,
 ) (*pulid.ID, error) {
 	draft, err := s.planSettlementJournal(ctx, entity, actor.UserID, reversal)
@@ -426,7 +425,7 @@ func (s *Service) draftJournal(
 func (s *Service) writeSettlementJournal(
 	ctx context.Context,
 	_ *driversettlement.Settlement,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 	draft *journalDraft,
 ) (*pulid.ID, error) {
 	result, err := s.journalWriter().WritePlan(ctx, draft.request, draft.posting)

@@ -13,8 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/workerleaveservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -232,7 +232,7 @@ func (r *QueryResolver) WorkerLeaveCases(ctx context.Context, workerID string) (
 			"Worker is invalid",
 		)
 	}
-	return r.WorkerLeaveService.ListCases(ctx, &repositories.ListLeaveCasesRequest{
+	return r.WorkerLeaveService.ListCases(ctx, &workerports.ListLeaveCasesRequest{
 		TenantInfo:      base.TenantInfo(authCtx),
 		WorkerID:        id,
 		IncludeDocument: true,
@@ -285,7 +285,7 @@ func (r *QueryResolver) LeaveCertificationsOutstanding(ctx context.Context) ([]*
 		return nil, err
 	}
 
-	return r.WorkerLeaveService.ListCases(ctx, &repositories.ListLeaveCasesRequest{
+	return r.WorkerLeaveService.ListCases(ctx, &workerports.ListLeaveCasesRequest{
 		TenantInfo:                   base.TenantInfo(authCtx),
 		CertificationOutstandingOnly: true,
 		IncludeWorker:                true,
@@ -354,7 +354,7 @@ func (r *WorkerLeaveCaseResolver) Entries(ctx context.Context, obj *worker.Worke
 		return l.WorkerLeaveEntriesByCaseID.Load(ctx, obj.ID.String())
 	}
 
-	return r.WorkerLeaveService.ListEntries(ctx, &repositories.ListLeaveEntriesRequest{
+	return r.WorkerLeaveService.ListEntries(ctx, &workerports.ListLeaveEntriesRequest{
 		TenantInfo:  base.TenantInfo(authCtx),
 		LeaveCaseID: obj.ID,
 	})

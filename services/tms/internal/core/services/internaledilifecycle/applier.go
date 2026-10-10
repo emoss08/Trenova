@@ -6,14 +6,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
 type ShipmentRepository interface {
 	GetByID(
 		ctx context.Context,
-		req *repositories.GetShipmentByIDRequest,
+		req *shipmentports.GetShipmentByIDRequest,
 	) (*shipment.Shipment, error)
 	UpdateOperationalLifecycle(
 		ctx context.Context,
@@ -171,13 +171,13 @@ func (a *Applier) loadShipments(
 	ctx context.Context,
 	link *edi.ShipmentLink,
 ) (*shipment.Shipment, *shipment.Shipment, error) {
-	source, err := a.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	source, err := a.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID: link.SourceShipmentID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: link.SourceOrganizationID,
 			BuID:  link.BusinessUnitID,
 		},
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -185,13 +185,13 @@ func (a *Applier) loadShipments(
 		return nil, nil, err
 	}
 
-	target, err := a.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	target, err := a.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID: link.TargetShipmentID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: link.TargetOrganizationID,
 			BuID:  link.BusinessUnitID,
 		},
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})

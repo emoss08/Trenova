@@ -7,8 +7,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/productguide"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -36,9 +37,9 @@ func (w *namingReportWriter) CreateDefinition(
 	return &report.ReportDefinition{ID: w.id, Name: req.Name}, nil
 }
 
-func personParams(args map[string]any) serviceports.ToolExecuteParams {
+func personParams(args map[string]any) agentports.ToolExecuteParams {
 	params := executeParams(args)
-	params.Actor.PrincipalType = serviceports.PrincipalTypeUser
+	params.Actor.PrincipalType = permissionports.PrincipalTypeUser
 	params.Actor.PrincipalID = params.Actor.UserID
 
 	return params
@@ -71,7 +72,7 @@ func TestCreateReport_ClassifiesPrivateReportsAsPersonalAndHoldsSharedOnes(t *te
 
 	cases := []struct {
 		name   string
-		params serviceports.ToolExecuteParams
+		params agentports.ToolExecuteParams
 		want   agent.AutonomyTier
 	}{
 		{
@@ -96,9 +97,9 @@ func TestCreateReport_ClassifiesPrivateReportsAsPersonalAndHoldsSharedOnes(t *te
 		},
 		{
 			name: "an agent principal, not a person",
-			params: func() serviceports.ToolExecuteParams {
+			params: func() agentports.ToolExecuteParams {
 				params := personParams(base())
-				params.Actor.PrincipalType = serviceports.PrincipalTypeAgent
+				params.Actor.PrincipalType = permissionports.PrincipalTypeAgent
 
 				return params
 			}(),
@@ -106,7 +107,7 @@ func TestCreateReport_ClassifiesPrivateReportsAsPersonalAndHoldsSharedOnes(t *te
 		},
 		{
 			name: "a person with no user",
-			params: func() serviceports.ToolExecuteParams {
+			params: func() agentports.ToolExecuteParams {
 				params := personParams(base())
 				params.Actor.UserID = pulid.Nil
 
@@ -116,7 +117,7 @@ func TestCreateReport_ClassifiesPrivateReportsAsPersonalAndHoldsSharedOnes(t *te
 		},
 		{
 			name: "no actor",
-			params: func() serviceports.ToolExecuteParams {
+			params: func() agentports.ToolExecuteParams {
 				params := personParams(base())
 				params.Actor = nil
 
@@ -151,7 +152,7 @@ func TestCreateReport_ExecuteWithResultNamesTheSavedReport(t *testing.T) {
 	writer := &namingReportWriter{id: pulid.MustNew("rd_")}
 	tool := newCreateReportTool(writer)
 
-	result, err := serviceports.ExecuteTool(t.Context(), tool, personParams(map[string]any{
+	result, err := agentports.ExecuteTool(t.Context(), tool, personParams(map[string]any{
 		"name":       "Shipments for Peak Distributing",
 		"definition": definitionArgument(),
 	}))
@@ -187,7 +188,7 @@ func TestCreateReport_ExecuteWithResultReportsNothingWhenTheSaveFails(t *testing
 
 	writer := &namingReportWriter{id: pulid.MustNew("rd_"), err: errors.New("name taken")}
 
-	result, err := serviceports.ExecuteTool(
+	result, err := agentports.ExecuteTool(
 		t.Context(),
 		newCreateReportTool(writer),
 		personParams(map[string]any{"name": "Lane revenue", "definition": definitionArgument()}),

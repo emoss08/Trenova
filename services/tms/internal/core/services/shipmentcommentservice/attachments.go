@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -27,7 +27,7 @@ func (s *service) validateAttachmentDocuments(
 		BuID:  entity.BusinessUnitID,
 	}
 
-	docs, err := s.documentRepo.GetByIDs(ctx, repositories.BulkDeleteDocumentRequest{
+	docs, err := s.documentRepo.GetByIDs(ctx, documentports.BulkDeleteDocumentRequest{
 		IDs:        entity.AttachmentDocumentIDs,
 		TenantInfo: tenantInfo,
 	})
@@ -89,7 +89,7 @@ func (s *service) attachDocuments(
 		}
 		if err := s.documentRepo.MoveLineageToResource(
 			ctx,
-			&repositories.MoveDocumentLineageRequest{
+			&documentports.MoveDocumentLineageRequest{
 				DocumentID:   doc.ID,
 				ResourceID:   commentResourceID,
 				ResourceType: shipment.CommentAttachmentResourceType,
@@ -115,7 +115,7 @@ func (s *service) reconcileAttachments(
 
 	current, err := s.documentRepo.GetByResourceIDs(
 		ctx,
-		&repositories.GetDocumentsByResourceIDsRequest{
+		&documentports.GetDocumentsByResourceIDsRequest{
 			TenantInfo:   tenantInfo,
 			ResourceType: shipment.CommentAttachmentResourceType,
 			ResourceIDs:  []string{comment.ID.String()},
@@ -158,7 +158,7 @@ func (s *service) deleteAllAttachments(
 ) error {
 	docs, err := s.documentRepo.GetByResourceIDs(
 		ctx,
-		&repositories.GetDocumentsByResourceIDsRequest{
+		&documentports.GetDocumentsByResourceIDsRequest{
 			TenantInfo:   tenantInfo,
 			ResourceType: shipment.CommentAttachmentResourceType,
 			ResourceIDs:  []string{comment.ID.String()},
@@ -212,7 +212,7 @@ func (s *service) loadAttachments(
 
 	docs, err := s.documentRepo.GetByResourceIDs(
 		ctx,
-		&repositories.GetDocumentsByResourceIDsRequest{
+		&documentports.GetDocumentsByResourceIDsRequest{
 			TenantInfo:   tenantInfo,
 			ResourceType: shipment.CommentAttachmentResourceType,
 			ResourceIDs:  resourceIDs,

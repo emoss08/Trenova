@@ -12,13 +12,14 @@ package assistantfollowupservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
@@ -29,25 +30,25 @@ type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Runs          repositories.AgentRunRepository
-	Conversations repositories.ConversationRepository
-	Definitions   repositories.AgentDefinitionRepository
-	Permissions   serviceports.PermissionEngine
+	Runs          agentports.AgentRunRepository
+	Conversations agentports.ConversationRepository
+	Definitions   agentdefinitionports.AgentDefinitionRepository
+	Permissions   permissionports.PermissionEngine
 	Turns         *assistantturnservice.Service
-	Workflows     serviceports.WorkflowStarter
-	Proposals     repositories.AgentProposalRepository
-	Plans         repositories.AgentPlanRepository
-	Decisions     repositories.AgentDecisionRepository
+	Workflows     kernelports.WorkflowStarter
+	Proposals     agentports.AgentProposalRepository
+	Plans         agentports.AgentPlanRepository
+	Decisions     agentports.AgentDecisionRepository
 }
 
 type Service struct {
 	l             *zap.Logger
-	runs          repositories.AgentRunRepository
-	conversations repositories.ConversationRepository
-	definitions   repositories.AgentDefinitionRepository
-	permissions   serviceports.PermissionEngine
+	runs          agentports.AgentRunRepository
+	conversations agentports.ConversationRepository
+	definitions   agentdefinitionports.AgentDefinitionRepository
+	permissions   permissionports.PermissionEngine
 	turns         turnStarter
-	workflows     serviceports.WorkflowStarter
+	workflows     kernelports.WorkflowStarter
 	decided       decidedReader
 }
 
@@ -60,13 +61,13 @@ type turnStarter interface {
 	) (*conversation.AssistantTurn, error)
 }
 
-func New(p Params) serviceports.DecisionFollowUps {
+func New(p Params) agentports.DecisionFollowUps {
 	return newService(p)
 }
 
 // NewResumer is the same service, as what a turn that ended asks to start the
 // follow-ups it kept out.
-func NewResumer(p Params) serviceports.DecisionFollowUpResumer {
+func NewResumer(p Params) agentports.DecisionFollowUpResumer {
 	return newService(p)
 }
 
@@ -90,7 +91,7 @@ func newService(p Params) *Service {
 // FollowUp starts the turn in which the agent reports a decision, when the
 // decision was on something a conversation raised. Anything else, a
 // background run's proposal most often, is not a conversation's to answer.
-func (s *Service) FollowUp(ctx context.Context, req serviceports.DecisionFollowUpRequest) {
+func (s *Service) FollowUp(ctx context.Context, req agentports.DecisionFollowUpRequest) {
 	if req.ProposalID.IsNil() == req.PlanID.IsNil() {
 		s.l.Error("a decision follow-up must name one proposal or one plan",
 			zap.String("proposal", req.ProposalID.String()),
@@ -118,8 +119,8 @@ func (s *Service) FollowUp(ctx context.Context, req serviceports.DecisionFollowU
 	// The turn runs as the person whose conversation it is. The decision may
 	// have been made by someone else; the report is addressed to the owner,
 	// with the owner's access, as every turn in their conversation is.
-	actor := serviceports.RequestActor{
-		PrincipalType:  serviceports.PrincipalTypeUser,
+	actor := permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    thread.UserID,
 		UserID:         thread.UserID,
 		OrganizationID: thread.OrganizationID,
@@ -161,10 +162,10 @@ func (s *Service) FollowUp(ctx context.Context, req serviceports.DecisionFollowU
 // a conversation did not raise it.
 func (s *Service) threadFor(
 	ctx context.Context,
-	req serviceports.DecisionFollowUpRequest,
+	req agentports.DecisionFollowUpRequest,
 ) (*conversation.Thread, error) {
 	tenant := req.TenantInfo
-	run, err := s.runs.GetByID(ctx, repositories.GetAgentRunByIDRequest{
+	run, err := s.runs.GetByID(ctx, agentports.GetAgentRunByIDRequest{
 		ID:         req.RunID,
 		TenantInfo: &tenant,
 	})
@@ -175,7 +176,7 @@ func (s *Service) threadFor(
 		return nil, nil
 	}
 
-	return s.conversations.GetThreadOwned(ctx, repositories.GetThreadOwnedRequest{
+	return s.conversations.GetThreadOwned(ctx, agentports.GetThreadOwnedRequest{
 		ID:         run.SubjectID,
 		TenantInfo: tenant,
 	})
@@ -187,7 +188,7 @@ func (s *Service) threadFor(
 func (s *Service) ownerMayUseAgent(
 	ctx context.Context,
 	thread *conversation.Thread,
-	owner *serviceports.RequestActor,
+	owner *permissionports.RequestActor,
 	tenant pagination.TenantInfo,
 ) bool {
 	if s.definitions == nil || s.permissions == nil {
@@ -197,7 +198,7 @@ func (s *Service) ownerMayUseAgent(
 		return false
 	}
 
-	definition, err := s.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	definition, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         thread.AgentDefinitionID,
 		TenantInfo: tenant,
 	})

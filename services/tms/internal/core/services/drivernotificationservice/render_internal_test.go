@@ -1,13 +1,14 @@
 package drivernotificationservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
 	"context"
 	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -38,13 +39,13 @@ func notifiedWorker() *worker.Worker {
 func TestRenderKeysTheTemplateByEventTypeAndFillsTheRecipient(t *testing.T) {
 	t.Parallel()
 
-	resolver := mocks.NewMockDocumentTemplateResolver(t)
+	resolver := documenttemplateportsmock.NewMockDocumentTemplateResolver(t)
 	resolver.EXPECT().
 		RenderMessage(mock.Anything, mock.Anything).
 		RunAndReturn(func(
 			_ context.Context,
-			req *services.RenderMessageRequest,
-		) (*services.RenderedMessage, error) {
+			req *documenttemplateports.RenderMessageRequest,
+		) (*documenttemplateports.RenderedMessage, error) {
 			assert.Equal(t, documenttemplate.KindNotificationSettlementPaid, req.Kind)
 			assert.True(t, req.FallbackToBuiltIn,
 				"a lost notification is worse than an unstyled one")
@@ -57,7 +58,7 @@ func TestRenderKeysTheTemplateByEventTypeAndFillsTheRecipient(t *testing.T) {
 			assert.Equal(t, "STL-1", data.SettlementNumber,
 				"the caller's own data must survive the recipient being filled in")
 
-			return &services.RenderedMessage{
+			return &documenttemplateports.RenderedMessage{
 				Subject: "You've been paid",
 				Text:    "Settlement STL-1 was paid via ACH.",
 			}, nil
@@ -90,7 +91,7 @@ func TestRenderKeysTheTemplateByEventTypeAndFillsTheRecipient(t *testing.T) {
 func TestRenderDropsTheNotificationWhenNothingRenders(t *testing.T) {
 	t.Parallel()
 
-	resolver := mocks.NewMockDocumentTemplateResolver(t)
+	resolver := documenttemplateportsmock.NewMockDocumentTemplateResolver(t)
 	resolver.EXPECT().
 		RenderMessage(mock.Anything, mock.Anything).
 		Return(nil, errors.New("the kind is not registered")).
@@ -121,10 +122,10 @@ func TestRenderDropsTheNotificationWhenNothingRenders(t *testing.T) {
 func TestRenderToleratesAContextWithoutARecipient(t *testing.T) {
 	t.Parallel()
 
-	resolver := mocks.NewMockDocumentTemplateResolver(t)
+	resolver := documenttemplateportsmock.NewMockDocumentTemplateResolver(t)
 	resolver.EXPECT().
 		RenderMessage(mock.Anything, mock.Anything).
-		Return(&services.RenderedMessage{Subject: "Title", Text: "Body"}, nil).
+		Return(&documenttemplateports.RenderedMessage{Subject: "Title", Text: "Body"}, nil).
 		Once()
 
 	svc := &Service{l: zapNop(t), templates: resolver}

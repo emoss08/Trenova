@@ -1,11 +1,18 @@
 package trailerservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customfieldportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/equipmentcontinuityportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/formulatemplateportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/locationportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/trailerportsmock"
 	"context"
 	"errors"
 	"testing"
-
-	"github.com/emoss08/trenova/internal/core/services/rateengine/rateenginetest"
 
 	"github.com/emoss08/trenova/internal/core/domain/customfield"
 	"github.com/emoss08/trenova/internal/core/domain/equipmentcontinuity"
@@ -14,9 +21,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
+	"github.com/emoss08/trenova/internal/core/services/rateengine/rateenginetest"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -42,21 +53,21 @@ func newTestValidator() *Validator {
 }
 
 type testDeps struct {
-	repo      *mocks.MockTrailerRepository
-	userRepo  *mocks.MockUserRepository
-	audit     *mocks.MockAuditService
-	valueRepo *mocks.MockCustomFieldValueRepository
-	defRepo   *mocks.MockCustomFieldDefinitionRepository
+	repo      *trailerportsmock.MockTrailerRepository
+	userRepo  *tenantportsmock.MockUserRepository
+	audit     *auditportsmock.MockAuditService
+	valueRepo *customfieldportsmock.MockCustomFieldValueRepository
+	defRepo   *customfieldportsmock.MockCustomFieldDefinitionRepository
 	svc       *Service
 }
 
 func setupTest(t *testing.T) *testDeps {
 	t.Helper()
-	repo := mocks.NewMockTrailerRepository(t)
-	userRepo := mocks.NewMockUserRepository(t)
-	auditSvc := mocks.NewMockAuditService(t)
-	valueRepo := mocks.NewMockCustomFieldValueRepository(t)
-	defRepo := mocks.NewMockCustomFieldDefinitionRepository(t)
+	repo := trailerportsmock.NewMockTrailerRepository(t)
+	userRepo := tenantportsmock.NewMockUserRepository(t)
+	auditSvc := auditportsmock.NewMockAuditService(t)
+	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
+	defRepo := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
 
 	logger := zap.NewNop()
 
@@ -135,14 +146,14 @@ func TestList_Success(t *testing.T) {
 		Items:       []*trailer.Trailer{entity},
 		HasNextPage: false,
 	}
-	req := &repositories.ListTrailersRequest{
+	req := &trailerports.ListTrailersRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
 				BuID:  entity.BusinessUnitID,
 			},
 		},
-		TrailerRelationIncludes: repositories.TrailerRelationIncludes{
+		TrailerRelationIncludes: trailerports.TrailerRelationIncludes{
 			IncludeCustomFields: true,
 		},
 	}
@@ -169,7 +180,7 @@ func TestList_EmptyResult(t *testing.T) {
 		Items:       []*trailer.Trailer{},
 		HasNextPage: false,
 	}
-	req := &repositories.ListTrailersRequest{
+	req := &trailerports.ListTrailersRequest{
 		Filter: &pagination.QueryOptions{},
 	}
 
@@ -190,13 +201,13 @@ func TestGet_Success(t *testing.T) {
 	ctx := t.Context()
 	entity := newTestEntity()
 
-	req := repositories.GetTrailerByIDRequest{
+	req := trailerports.GetTrailerByIDRequest{
 		ID: entity.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
 		},
-		TrailerRelationIncludes: repositories.TrailerRelationIncludes{
+		TrailerRelationIncludes: trailerports.TrailerRelationIncludes{
 			IncludeCustomFields: true,
 		},
 	}
@@ -296,9 +307,9 @@ func TestLocate_RejectsBrandNewTrailer(t *testing.T) {
 	trailerID := pulid.MustNew("tr_")
 	tenantInfo := pagination.TenantInfo{OrgID: orgID, BuID: buID}
 
-	continuityRepo := mocks.NewMockEquipmentContinuityRepository(t)
+	continuityRepo := equipmentcontinuityportsmock.NewMockEquipmentContinuityRepository(t)
 	continuityRepo.EXPECT().
-		GetEffectiveCurrent(mock.Anything, repositories.GetCurrentEquipmentContinuityRequest{
+		GetEffectiveCurrent(mock.Anything, equipmentcontinuityports.GetCurrentEquipmentContinuityRequest{
 			TenantInfo:    tenantInfo,
 			EquipmentType: equipmentcontinuity.EquipmentTypeTrailer,
 			EquipmentID:   trailerID,
@@ -307,14 +318,14 @@ func TestLocate_RejectsBrandNewTrailer(t *testing.T) {
 		Once()
 
 	deps.repo.EXPECT().
-		GetByID(mock.Anything, repositories.GetTrailerByIDRequest{
+		GetByID(mock.Anything, trailerports.GetTrailerByIDRequest{
 			ID:         trailerID,
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		}).
 		Return(&trailer.Trailer{ID: trailerID, OrganizationID: orgID, BusinessUnitID: buID}, nil).
 		Once()
 
-	assignmentRepo := mocks.NewMockAssignmentRepository(t)
+	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
 	assignmentRepo.EXPECT().
 		FindInProgressByTrailerID(mock.Anything, tenantInfo, trailerID, pulid.Nil).
 		Return(nil, nil).
@@ -323,19 +334,19 @@ func TestLocate_RejectsBrandNewTrailer(t *testing.T) {
 	deps.svc.db = dbtest.NopConnection{}
 	deps.svc.assignmentRepo = assignmentRepo
 	deps.svc.continuityRepo = continuityRepo
-	deps.svc.shipmentRepo = mocks.NewMockShipmentRepository(t)
-	deps.svc.shipmentCommentRepo = mocks.NewMockShipmentCommentRepository(t)
-	deps.svc.controlRepo = mocks.NewMockShipmentControlRepository(t)
-	deps.svc.locationRepo = mocks.NewMockLocationRepository(t)
+	deps.svc.shipmentRepo = shipmentportsmock.NewMockShipmentRepository(t)
+	deps.svc.shipmentCommentRepo = shipmentportsmock.NewMockShipmentCommentRepository(t)
+	deps.svc.controlRepo = tenantportsmock.NewMockShipmentControlRepository(t)
+	deps.svc.locationRepo = locationportsmock.NewMockLocationRepository(t)
 	deps.svc.shipmentValidator = newTestShipmentValidator(t)
 	deps.svc.coordinator = shipmentstate.NewCoordinator()
 	deps.svc.commercial = shipmentcommercial.New(shipmentcommercial.Params{
 		Logger:          zap.NewNop(),
-		RateEngine:      rateenginetest.NewFallbackEngine(t, mocks.NewMockFormulaCalculator(t)),
-		AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
+		RateEngine:      rateenginetest.NewFallbackEngine(t, formulatemplateportsmock.NewMockFormulaCalculator(t)),
+		AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 	})
 
-	result, err := deps.svc.Locate(t.Context(), &repositories.LocateTrailerRequest{
+	result, err := deps.svc.Locate(t.Context(), &trailerports.LocateTrailerRequest{
 		TenantInfo:    tenantInfo,
 		TrailerID:     trailerID,
 		NewLocationID: pulid.MustNew("loc_"),
@@ -366,7 +377,7 @@ func TestLocate_AppendsMoveAndAdvancesContinuity(t *testing.T) {
 	trailerEntity.Code = "TRL-100"
 
 	deps.repo.EXPECT().
-		GetByID(mock.Anything, repositories.GetTrailerByIDRequest{
+		GetByID(mock.Anything, trailerports.GetTrailerByIDRequest{
 			ID: trailerID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: orgID,
@@ -376,9 +387,9 @@ func TestLocate_AppendsMoveAndAdvancesContinuity(t *testing.T) {
 		Return(trailerEntity, nil).
 		Once()
 
-	continuityRepo := mocks.NewMockEquipmentContinuityRepository(t)
+	continuityRepo := equipmentcontinuityportsmock.NewMockEquipmentContinuityRepository(t)
 	continuityRepo.EXPECT().
-		GetEffectiveCurrent(mock.Anything, repositories.GetCurrentEquipmentContinuityRequest{
+		GetEffectiveCurrent(mock.Anything, equipmentcontinuityports.GetCurrentEquipmentContinuityRequest{
 			TenantInfo:    tenantInfo,
 			EquipmentType: equipmentcontinuity.EquipmentTypeTrailer,
 			EquipmentID:   trailerID,
@@ -395,7 +406,7 @@ func TestLocate_AppendsMoveAndAdvancesContinuity(t *testing.T) {
 		}, nil).
 		Once()
 	continuityRepo.EXPECT().
-		Advance(mock.Anything, mock.MatchedBy(func(req repositories.CreateEquipmentContinuityRequest) bool {
+		Advance(mock.Anything, mock.MatchedBy(func(req equipmentcontinuityports.CreateEquipmentContinuityRequest) bool {
 			return req.EquipmentID == trailerID &&
 				req.CurrentLocationID == newLocationID &&
 				req.SourceType == equipmentcontinuity.SourceTypeManualLocate &&
@@ -405,7 +416,7 @@ func TestLocate_AppendsMoveAndAdvancesContinuity(t *testing.T) {
 		Return(&equipmentcontinuity.EquipmentContinuity{ID: pulid.MustNew("eqc_")}, nil).
 		Once()
 
-	shipmentRepo := mocks.NewMockShipmentRepository(t)
+	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
 		Return(&shipment.Shipment{
@@ -494,13 +505,13 @@ func TestLocate_AppendsMoveAndAdvancesContinuity(t *testing.T) {
 		}).
 		Once()
 
-	controlRepo := mocks.NewMockShipmentControlRepository(t)
+	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
-		Get(mock.Anything, repositories.GetShipmentControlRequest{TenantInfo: tenantInfo}).
+		Get(mock.Anything, tenantports.GetShipmentControlRequest{TenantInfo: tenantInfo}).
 		Return(&tenant.ShipmentControl{AutoDelayShipmentsThreshold: new(int16(30))}, nil).
 		Once()
 
-	formula := mocks.NewMockFormulaCalculator(t)
+	formula := formulatemplateportsmock.NewMockFormulaCalculator(t)
 	formula.EXPECT().
 		Calculate(mock.Anything, mock.AnythingOfType("*formulatemplatetypes.CalculateRequest")).
 		Return(&formulatemplatetypes.CalculateResponse{Amount: decimal.Zero}, nil).
@@ -511,7 +522,7 @@ func TestLocate_AppendsMoveAndAdvancesContinuity(t *testing.T) {
 		Return(&tenant.User{ID: systemUserID}, nil).
 		Once()
 
-	assignmentRepo := mocks.NewMockAssignmentRepository(t)
+	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
 	assignmentRepo.EXPECT().
 		FindInProgressByTrailerID(mock.Anything, tenantInfo, trailerID, pulid.Nil).
 		Return(nil, nil).
@@ -533,23 +544,23 @@ func TestLocate_AppendsMoveAndAdvancesContinuity(t *testing.T) {
 		}).
 		Once()
 
-	locationRepo := mocks.NewMockLocationRepository(t)
+	locationRepo := locationportsmock.NewMockLocationRepository(t)
 	locationRepo.EXPECT().
-		GetByID(mock.Anything, repositories.GetLocationByIDRequest{
+		GetByID(mock.Anything, locationports.GetLocationByIDRequest{
 			ID:         currentLocationID,
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		}).
 		Return(&location.Location{ID: currentLocationID, OrganizationID: orgID, BusinessUnitID: buID, Name: "Madison Yard"}, nil).
 		Once()
 	locationRepo.EXPECT().
-		GetByID(mock.Anything, repositories.GetLocationByIDRequest{
+		GetByID(mock.Anything, locationports.GetLocationByIDRequest{
 			ID:         newLocationID,
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		}).
 		Return(&location.Location{ID: newLocationID, OrganizationID: orgID, BusinessUnitID: buID, Name: "Greensboro Yard"}, nil).
 		Once()
 
-	commentRepo := mocks.NewMockShipmentCommentRepository(t)
+	commentRepo := shipmentportsmock.NewMockShipmentCommentRepository(t)
 	commentRepo.EXPECT().
 		Create(mock.Anything, mock.MatchedBy(func(comment *shipment.ShipmentComment) bool {
 			return comment.ShipmentID == shipmentID &&
@@ -571,10 +582,10 @@ func TestLocate_AppendsMoveAndAdvancesContinuity(t *testing.T) {
 	deps.svc.commercial = shipmentcommercial.New(shipmentcommercial.Params{
 		Logger:          zap.NewNop(),
 		RateEngine:      rateenginetest.NewFallbackEngine(t, formula),
-		AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
+		AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 	})
 
-	result, err := deps.svc.Locate(t.Context(), &repositories.LocateTrailerRequest{
+	result, err := deps.svc.Locate(t.Context(), &trailerports.LocateTrailerRequest{
 		TenantInfo:    tenantInfo,
 		TrailerID:     trailerID,
 		NewLocationID: newLocationID,
@@ -594,14 +605,14 @@ func TestLocate_RejectsTrailerAlreadyInProgress(t *testing.T) {
 	tenantInfo := pagination.TenantInfo{OrgID: orgID, BuID: buID}
 
 	deps.repo.EXPECT().
-		GetByID(mock.Anything, repositories.GetTrailerByIDRequest{
+		GetByID(mock.Anything, trailerports.GetTrailerByIDRequest{
 			ID:         trailerID,
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		}).
 		Return(&trailer.Trailer{ID: trailerID, OrganizationID: orgID, BusinessUnitID: buID}, nil).
 		Once()
 
-	assignmentRepo := mocks.NewMockAssignmentRepository(t)
+	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
 	assignmentRepo.EXPECT().
 		FindInProgressByTrailerID(mock.Anything, tenantInfo, trailerID, pulid.Nil).
 		Return(&shipment.Assignment{
@@ -613,20 +624,20 @@ func TestLocate_RejectsTrailerAlreadyInProgress(t *testing.T) {
 
 	deps.svc.db = dbtest.NopConnection{}
 	deps.svc.assignmentRepo = assignmentRepo
-	deps.svc.continuityRepo = mocks.NewMockEquipmentContinuityRepository(t)
-	deps.svc.shipmentRepo = mocks.NewMockShipmentRepository(t)
-	deps.svc.shipmentCommentRepo = mocks.NewMockShipmentCommentRepository(t)
-	deps.svc.controlRepo = mocks.NewMockShipmentControlRepository(t)
-	deps.svc.locationRepo = mocks.NewMockLocationRepository(t)
+	deps.svc.continuityRepo = equipmentcontinuityportsmock.NewMockEquipmentContinuityRepository(t)
+	deps.svc.shipmentRepo = shipmentportsmock.NewMockShipmentRepository(t)
+	deps.svc.shipmentCommentRepo = shipmentportsmock.NewMockShipmentCommentRepository(t)
+	deps.svc.controlRepo = tenantportsmock.NewMockShipmentControlRepository(t)
+	deps.svc.locationRepo = locationportsmock.NewMockLocationRepository(t)
 	deps.svc.shipmentValidator = newTestShipmentValidator(t)
 	deps.svc.coordinator = shipmentstate.NewCoordinator()
 	deps.svc.commercial = shipmentcommercial.New(shipmentcommercial.Params{
 		Logger:          zap.NewNop(),
-		RateEngine:      rateenginetest.NewFallbackEngine(t, mocks.NewMockFormulaCalculator(t)),
-		AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
+		RateEngine:      rateenginetest.NewFallbackEngine(t, formulatemplateportsmock.NewMockFormulaCalculator(t)),
+		AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 	})
 
-	result, err := deps.svc.Locate(t.Context(), &repositories.LocateTrailerRequest{
+	result, err := deps.svc.Locate(t.Context(), &trailerports.LocateTrailerRequest{
 		TenantInfo:    tenantInfo,
 		TrailerID:     trailerID,
 		NewLocationID: pulid.MustNew("loc_"),
@@ -737,7 +748,7 @@ func TestBulkUpdateStatus_Success(t *testing.T) {
 	entity1.Status = domaintypes.EquipmentStatusOOS
 	entity2.Status = domaintypes.EquipmentStatusOOS
 
-	req := &repositories.BulkUpdateTrailerStatusRequest{
+	req := &trailerports.BulkUpdateTrailerStatusRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  entity1.OrganizationID,
 			BuID:   entity1.BusinessUnitID,
@@ -768,7 +779,7 @@ func TestBulkUpdateStatus_GetByIDsError(t *testing.T) {
 	ctx := t.Context()
 	getErr := errors.New("not found")
 
-	req := &repositories.BulkUpdateTrailerStatusRequest{
+	req := &trailerports.BulkUpdateTrailerStatusRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  pulid.MustNew("org_"),
 			BuID:   pulid.MustNew("bu_"),
@@ -791,8 +802,8 @@ func TestBulkUpdateStatus_GetByIDsError(t *testing.T) {
 
 func TestNew(t *testing.T) {
 	t.Parallel()
-	repo := mocks.NewMockTrailerRepository(t)
-	auditSvc := mocks.NewMockAuditService(t)
+	repo := trailerportsmock.NewMockTrailerRepository(t)
+	auditSvc := auditportsmock.NewMockAuditService(t)
 	logger := zap.NewNop()
 
 	svc := New(Params{
@@ -844,7 +855,7 @@ func TestList_Error(t *testing.T) {
 	ctx := t.Context()
 	dbErr := errors.New("db error")
 
-	req := &repositories.ListTrailersRequest{
+	req := &trailerports.ListTrailersRequest{
 		Filter: &pagination.QueryOptions{},
 	}
 
@@ -868,14 +879,14 @@ func TestList_CustomFieldsError(t *testing.T) {
 		Items:       []*trailer.Trailer{entity},
 		HasNextPage: false,
 	}
-	req := &repositories.ListTrailersRequest{
+	req := &trailerports.ListTrailersRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
 				BuID:  entity.BusinessUnitID,
 			},
 		},
-		TrailerRelationIncludes: repositories.TrailerRelationIncludes{
+		TrailerRelationIncludes: trailerports.TrailerRelationIncludes{
 			IncludeCustomFields: true,
 		},
 	}
@@ -898,7 +909,7 @@ func TestGet_Error(t *testing.T) {
 	ctx := t.Context()
 	notFoundErr := errors.New("not found")
 
-	req := repositories.GetTrailerByIDRequest{
+	req := trailerports.GetTrailerByIDRequest{
 		ID: pulid.MustNew("tr_"),
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
@@ -922,13 +933,13 @@ func TestGet_CustomFieldsError(t *testing.T) {
 	ctx := t.Context()
 	entity := newTestEntity()
 
-	req := repositories.GetTrailerByIDRequest{
+	req := trailerports.GetTrailerByIDRequest{
 		ID: entity.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
 		},
-		TrailerRelationIncludes: repositories.TrailerRelationIncludes{
+		TrailerRelationIncludes: trailerports.TrailerRelationIncludes{
 			IncludeCustomFields: true,
 		},
 	}
@@ -1202,7 +1213,7 @@ func TestBulkUpdateStatus_RepoError(t *testing.T) {
 	ctx := t.Context()
 	bulkErr := errors.New("bulk update failed")
 
-	req := &repositories.BulkUpdateTrailerStatusRequest{
+	req := &trailerports.BulkUpdateTrailerStatusRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  pulid.MustNew("org_"),
 			BuID:   pulid.MustNew("bu_"),
@@ -1235,7 +1246,7 @@ func TestBulkUpdateStatus_AuditLogError(t *testing.T) {
 	original := newTestEntity()
 	original.ID = entity.ID
 
-	req := &repositories.BulkUpdateTrailerStatusRequest{
+	req := &trailerports.BulkUpdateTrailerStatusRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  entity.OrganizationID,
 			BuID:   entity.BusinessUnitID,

@@ -4,17 +4,17 @@ package customerpaymentresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	repositories "github.com/emoss08/trenova/internal/core/ports/repositories"
-	services "github.com/emoss08/trenova/internal/core/ports/services"
 	customerservice "github.com/emoss08/trenova/internal/core/services/customerservice"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 )
 
 type Deps struct {
 	*base.Core
-	CustomerPaymentService services.CustomerPaymentService
-	CustomerPaymentRepo    repositories.CustomerPaymentRepository
+	CustomerPaymentService customerpaymentports.CustomerPaymentService
+	CustomerPaymentRepo    customerpaymentports.CustomerPaymentRepository
 	CustomerService        *customerservice.Service
-	InvoiceService         services.InvoiceService
+	InvoiceService         invoiceports.InvoiceService
 }
 
 type CustomerPaymentApplicationResolver struct{ *Deps }

@@ -5,9 +5,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -44,7 +46,7 @@ func (s *Service) checkDismiss(
 	ctx context.Context,
 	finding *accountingsync.AccountingDriftFinding,
 	note string,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (int64, error) {
 	if !finding.IsOpen() {
 		return 0, fixError(accountingsync.ErrDriftClosed)
@@ -67,9 +69,9 @@ func (s *Service) checkDismiss(
 
 func (s *Service) PreviewDismiss(
 	ctx context.Context,
-	req *services.DismissAccountingDriftRequest,
-	actor *services.RequestActor,
-) (*services.AccountingDriftFixPreview, error) {
+	req *accountingsyncports.DismissAccountingDriftRequest,
+	actor *permissionports.RequestActor,
+) (*accountingsyncports.AccountingDriftFixPreview, error) {
 	if err := s.authorize(ctx, actor, dismissPermissions); err != nil {
 		return nil, err
 	}
@@ -81,7 +83,7 @@ func (s *Service) PreviewDismiss(
 	if err != nil {
 		return nil, err
 	}
-	return &services.AccountingDriftFixPreview{
+	return &accountingsyncports.AccountingDriftFixPreview{
 		Finding:         finding,
 		CurrencyCode:    finding.CurrencyCode,
 		ToleranceMinor:  tolerance,
@@ -94,8 +96,8 @@ func (s *Service) PreviewDismiss(
 
 func (s *Service) Dismiss(
 	ctx context.Context,
-	req *services.DismissAccountingDriftRequest,
-	actor *services.RequestActor,
+	req *accountingsyncports.DismissAccountingDriftRequest,
+	actor *permissionports.RequestActor,
 ) (*accountingsync.AccountingDriftFinding, error) {
 	if err := s.authorize(ctx, actor, dismissPermissions); err != nil {
 		return nil, err
@@ -103,7 +105,7 @@ func (s *Service) Dismiss(
 
 	var updated *accountingsync.AccountingDriftFinding
 	var previous map[string]any
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		finding, txErr := s.findingByID(txCtx, req.TenantInfo, req.ID, true)
 		if txErr != nil {
 			return txErr
@@ -137,7 +139,7 @@ func (s *Service) logAudit(
 	if s.audit == nil {
 		return
 	}
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceAccountingSync,
 		ResourceID:     finding.ID.String(),
 		Operation:      permission.OpUpdate,

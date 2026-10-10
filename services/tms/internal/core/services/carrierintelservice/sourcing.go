@@ -9,8 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/planservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -84,7 +85,7 @@ type SourcingPage struct {
 func (s *Service) searchCapable(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*boundProvider, services.CarrierIntelSearcher, *carrierintel.CarrierIntelControl, error) {
+) (*boundProvider, carrierintelports.CarrierIntelSearcher, *carrierintel.CarrierIntelControl, error) {
 	control, err := s.controlRepo.GetOrCreate(ctx, tenantInfo)
 	if err != nil {
 		return nil, nil, nil, err
@@ -93,7 +94,7 @@ func (s *Service) searchCapable(
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	searcher, ok := bound.client.(services.CarrierIntelSearcher)
+	searcher, ok := bound.client.(carrierintelports.CarrierIntelSearcher)
 	if !ok || !bound.capabilities().Has(carrierintel.CapabilitySearch) {
 		return nil, nil, nil, errortypes.NewBusinessError(
 			"{0} does not support carrier search", bound.provider.String(),
@@ -134,7 +135,7 @@ func (s *Service) SearchCarriers(ctx context.Context, query *SourcingQuery) (*So
 		return nil, err
 	}
 
-	request := &services.CarrierIntelSearchRequest{
+	request := &carrierintelports.CarrierIntelSearchRequest{
 		State:  stringutils.FirstNonEmptyTrimmed(query.State, query.OriginState),
 		Limit:  limit,
 		Offset: max(query.Offset, 0),
@@ -148,7 +149,7 @@ func (s *Service) SearchCarriers(ctx context.Context, query *SourcingQuery) (*So
 		request.Query = text
 	}
 
-	var result *services.CarrierIntelSearchResult
+	var result *carrierintelports.CarrierIntelSearchResult
 	err = s.withRateLimitWait(ctx, func() error {
 		var searchErr error
 		result, searchErr = searcher.Search(ctx, request)
@@ -398,10 +399,10 @@ func (s *Service) AutocompleteCarriers(
 	tenantInfo pagination.TenantInfo,
 	query string,
 	limit int,
-) ([]services.CarrierIntelSuggestion, error) {
+) ([]carrierintelports.CarrierIntelSuggestion, error) {
 	query = strings.TrimSpace(query)
 	if len(query) < minAutocompleteChars {
-		return []services.CarrierIntelSuggestion{}, nil
+		return []carrierintelports.CarrierIntelSuggestion{}, nil
 	}
 	allowed, err := planservice.Allows(
 		ctx,
@@ -413,7 +414,7 @@ func (s *Service) AutocompleteCarriers(
 		return nil, err
 	}
 	if !allowed {
-		return []services.CarrierIntelSuggestion{}, nil
+		return []carrierintelports.CarrierIntelSuggestion{}, nil
 	}
 	if limit <= 0 || limit > maxAutocompleteLimit {
 		limit = maxAutocompleteLimit
@@ -424,7 +425,7 @@ func (s *Service) AutocompleteCarriers(
 		return nil, err
 	}
 	if !bound.capabilities().Has(carrierintel.CapabilityAutocomplete) {
-		return []services.CarrierIntelSuggestion{}, nil
+		return []carrierintelports.CarrierIntelSuggestion{}, nil
 	}
 	if err = s.guardBudget(ctx, &budgetCheck{
 		tenant:   tenantInfo,
@@ -489,8 +490,8 @@ func (s *Service) ImportProspect(
 		return nil, err
 	}
 
-	created, err := s.carrierService.Create(ctx, entity, &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeUser,
+	created, err := s.carrierService.Create(ctx, entity, &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    req.TenantInfo.UserID,
 		UserID:         req.TenantInfo.UserID,
 		OrganizationID: req.TenantInfo.OrgID,

@@ -10,10 +10,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/invoicerun"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/invoicerunservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -36,52 +40,52 @@ const (
 type adjustmentReader interface {
 	GetDetail(
 		ctx context.Context,
-		req *serviceports.GetInvoiceAdjustmentDetailRequest,
+		req *invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest,
 	) (*invoiceadjustment.InvoiceAdjustment, error)
 	GetLineage(
 		ctx context.Context,
-		req *serviceports.GetInvoiceAdjustmentLineageRequest,
-	) (*serviceports.InvoiceAdjustmentLineage, error)
+		req *invoiceadjustmentports.GetInvoiceAdjustmentLineageRequest,
+	) (*invoiceadjustmentports.InvoiceAdjustmentLineage, error)
 	ListApprovals(
 		ctx context.Context,
-		req *repositories.ListApprovalQueueRequest,
-	) (*pagination.CursorListResult[*repositories.InvoiceAdjustmentApprovalQueueItem], error)
+		req *invoiceadjustmentports.ListApprovalQueueRequest,
+	) (*pagination.CursorListResult[*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem], error)
 }
 
 type disputeLister interface {
 	ListByInvoiceIDs(
 		ctx context.Context,
-		req *repositories.ListInvoiceDisputesByInvoiceIDsRequest,
+		req *invoiceports.ListInvoiceDisputesByInvoiceIDsRequest,
 	) (map[pulid.ID][]*invoice.InvoiceDispute, error)
 }
 
 type creditApplicationLister interface {
 	ListCreditMemoApplicationsByInvoiceIDs(
 		ctx context.Context,
-		req *repositories.ListApplicationsByInvoiceIDsRequest,
+		req *customerpaymentports.ListApplicationsByInvoiceIDsRequest,
 	) (map[pulid.ID][]*customerpayment.CreditMemoApplication, error)
 }
 
 type invoiceRunReader interface {
 	Get(
 		ctx context.Context,
-		req repositories.GetInvoiceRunByIDRequest,
+		req invoicerunports.GetInvoiceRunByIDRequest,
 	) (*invoicerun.InvoiceRun, error)
 	List(
 		ctx context.Context,
-		req *repositories.ListInvoiceRunsRequest,
+		req *invoicerunports.ListInvoiceRunsRequest,
 	) (*pagination.ListResult[*invoicerun.InvoiceRun], error)
 	ListOpenStatements(
 		ctx context.Context,
-		req *serviceports.ListOpenStatementsRequest,
-	) ([]*serviceports.OpenStatement, error)
+		req *invoicerunports.ListOpenStatementsRequest,
+	) ([]*invoicerunports.OpenStatement, error)
 }
 
 type shareCandidateLister interface {
 	ListCandidates(
 		ctx context.Context,
-		req *serviceports.ListShareCandidatesRequest,
-	) (*pagination.ListResult[*serviceports.ShareCandidate], error)
+		req *invoiceports.ListShareCandidatesRequest,
+	) (*pagination.ListResult[*invoiceports.ShareCandidate], error)
 }
 
 type receivableList[T any] struct {
@@ -107,7 +111,7 @@ type amounts struct {
 func amountsFor(
 	ctx context.Context,
 	access fieldAccess,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (amounts, *fieldGate) {
 	gate := access.gate(ctx, params, permission.ResourceInvoice)
 
@@ -182,8 +186,8 @@ type listInvoiceAdjustmentsTool struct {
 func newListInvoiceAdjustmentsTool(
 	adjustments adjustmentReader,
 	invoices invoiceReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &listInvoiceAdjustmentsTool{
 		adjustments: adjustments,
 		invoices:    invoices,
@@ -209,13 +213,13 @@ func (t *listInvoiceAdjustmentsTool) ParamSchema() map[string]any {
 	})
 }
 
-func (t *listInvoiceAdjustmentsTool) Policy() serviceports.ToolPolicy {
+func (t *listInvoiceAdjustmentsTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceInvoice})
 }
 
 func (t *listInvoiceAdjustmentsTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -235,7 +239,7 @@ func (t *listInvoiceAdjustmentsTool) Query(
 	if err != nil {
 		return nil, err
 	}
-	queue, err := t.adjustments.ListApprovals(ctx, &repositories.ListApprovalQueueRequest{
+	queue, err := t.adjustments.ListApprovals(ctx, &invoiceadjustmentports.ListApprovalQueueRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenantOf(params),
 			Pagination: pagination.Info{Limit: limit},
@@ -271,12 +275,12 @@ func (t *listInvoiceAdjustmentsTool) Query(
 
 func (t *listInvoiceAdjustmentsTool) lineage(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 	invoiceID pulid.ID,
 	show amounts,
 	gate *fieldGate,
 ) (any, error) {
-	entity, err := t.invoices.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+	entity, err := t.invoices.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         invoiceID,
 		TenantInfo: tenantOf(params),
 	})
@@ -289,7 +293,7 @@ func (t *listInvoiceAdjustmentsTool) lineage(
 		return list, nil
 	}
 
-	lineage, err := t.adjustments.GetLineage(ctx, &serviceports.GetInvoiceAdjustmentLineageRequest{
+	lineage, err := t.adjustments.GetLineage(ctx, &invoiceadjustmentports.GetInvoiceAdjustmentLineageRequest{
 		CorrectionGroupID: entity.CorrectionGroupID,
 		TenantInfo:        tenantOf(params),
 	})
@@ -367,8 +371,8 @@ type getInvoiceAdjustmentTool struct {
 
 func newGetInvoiceAdjustmentTool(
 	adjustments adjustmentReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &getInvoiceAdjustmentTool{adjustments: adjustments, access: newFieldAccess(permissions)}
 }
 
@@ -387,13 +391,13 @@ func (t *getInvoiceAdjustmentTool) ParamSchema() map[string]any {
 	)
 }
 
-func (t *getInvoiceAdjustmentTool) Policy() serviceports.ToolPolicy {
+func (t *getInvoiceAdjustmentTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceInvoice})
 }
 
 func (t *getInvoiceAdjustmentTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -403,7 +407,7 @@ func (t *getInvoiceAdjustmentTool) Query(
 		return nil, err
 	}
 
-	adjustment, err := t.adjustments.GetDetail(ctx, &serviceports.GetInvoiceAdjustmentDetailRequest{
+	adjustment, err := t.adjustments.GetDetail(ctx, &invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest{
 		AdjustmentID: id,
 		TenantInfo:   tenantOf(params),
 	})
@@ -475,8 +479,8 @@ type listInvoiceDisputesTool struct {
 
 func newListInvoiceDisputesTool(
 	disputes disputeLister,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &listInvoiceDisputesTool{disputes: disputes, access: newFieldAccess(permissions)}
 }
 
@@ -498,13 +502,13 @@ func (t *listInvoiceDisputesTool) ParamSchema() map[string]any {
 	}, paramReceivableInvoices)
 }
 
-func (t *listInvoiceDisputesTool) Policy() serviceports.ToolPolicy {
+func (t *listInvoiceDisputesTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceInvoiceDispute})
 }
 
 func (t *listInvoiceDisputesTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -515,7 +519,7 @@ func (t *listInvoiceDisputesTool) Query(
 	}
 
 	byInvoice, err := t.disputes.ListByInvoiceIDs(ctx,
-		&repositories.ListInvoiceDisputesByInvoiceIDsRequest{
+		&invoiceports.ListInvoiceDisputesByInvoiceIDsRequest{
 			TenantInfo: tenantOf(params),
 			InvoiceIDs: ids,
 		})
@@ -567,8 +571,8 @@ type listCreditMemoApplicationsTool struct {
 
 func newListCreditMemoApplicationsTool(
 	applications creditApplicationLister,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &listCreditMemoApplicationsTool{
 		applications: applications,
 		access:       newFieldAccess(permissions),
@@ -596,13 +600,13 @@ func (t *listCreditMemoApplicationsTool) ParamSchema() map[string]any {
 	}, paramReceivableInvoices)
 }
 
-func (t *listCreditMemoApplicationsTool) Policy() serviceports.ToolPolicy {
+func (t *listCreditMemoApplicationsTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceInvoice})
 }
 
 func (t *listCreditMemoApplicationsTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -613,7 +617,7 @@ func (t *listCreditMemoApplicationsTool) Query(
 	}
 
 	byInvoice, err := t.applications.ListCreditMemoApplicationsByInvoiceIDs(ctx,
-		&repositories.ListApplicationsByInvoiceIDsRequest{
+		&customerpaymentports.ListApplicationsByInvoiceIDsRequest{
 			TenantInfo: tenantOf(params),
 			InvoiceIDs: ids,
 		})
@@ -689,8 +693,8 @@ func invoiceRunRowFrom(run *invoicerun.InvoiceRun, show amounts) invoiceRunRow {
 
 func newListInvoiceRunsTool(
 	runs invoiceRunReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	access := newFieldAccess(permissions)
 
 	return newListTool(listSpec{
@@ -725,7 +729,7 @@ func newListInvoiceRunsTool(
 			opts *pagination.QueryOptions,
 			gate *fieldGate,
 		) ([]any, error) {
-			result, err := runs.List(ctx, &repositories.ListInvoiceRunsRequest{Filter: opts})
+			result, err := runs.List(ctx, &invoicerunports.ListInvoiceRunsRequest{Filter: opts})
 			if err != nil {
 				return nil, err
 			}
@@ -777,8 +781,8 @@ type getInvoiceRunTool struct {
 
 func newGetInvoiceRunTool(
 	runs invoiceRunReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &getInvoiceRunTool{runs: runs, access: newFieldAccess(permissions)}
 }
 
@@ -799,13 +803,13 @@ func (t *getInvoiceRunTool) ParamSchema() map[string]any {
 	)
 }
 
-func (t *getInvoiceRunTool) Policy() serviceports.ToolPolicy {
+func (t *getInvoiceRunTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceInvoiceRun})
 }
 
 func (t *getInvoiceRunTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -815,7 +819,7 @@ func (t *getInvoiceRunTool) Query(
 		return nil, err
 	}
 
-	run, err := t.runs.Get(ctx, repositories.GetInvoiceRunByIDRequest{
+	run, err := t.runs.Get(ctx, invoicerunports.GetInvoiceRunByIDRequest{
 		ID:            id,
 		TenantInfo:    tenantOf(params),
 		IncludeGroups: true,
@@ -914,8 +918,8 @@ type listOpenStatementsTool struct {
 
 func newListOpenStatementsTool(
 	runs invoiceRunReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &listOpenStatementsTool{runs: runs, access: newFieldAccess(permissions)}
 }
 
@@ -936,13 +940,13 @@ func (t *listOpenStatementsTool) ParamSchema() map[string]any {
 	})
 }
 
-func (t *listOpenStatementsTool) Policy() serviceports.ToolPolicy {
+func (t *listOpenStatementsTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceInvoiceRun})
 }
 
 func (t *listOpenStatementsTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -952,7 +956,7 @@ func (t *listOpenStatementsTool) Query(
 		return nil, err
 	}
 
-	statements, err := t.runs.ListOpenStatements(ctx, &serviceports.ListOpenStatementsRequest{
+	statements, err := t.runs.ListOpenStatements(ctx, &invoicerunports.ListOpenStatementsRequest{
 		TenantInfo:       tenantOf(params),
 		CustomerID:       customerID,
 		IncludeShipments: oneCustomer,
@@ -974,7 +978,7 @@ func (t *listOpenStatementsTool) Query(
 	return newReceivableList(rows, gate), nil
 }
 
-func statementRowFrom(statement *serviceports.OpenStatement, show amounts) statementRow {
+func statementRowFrom(statement *invoicerunports.OpenStatement, show amounts) statementRow {
 	row := statementRow{
 		CustomerID:    statement.CustomerID.String(),
 		CustomerName:  statement.CustomerName,
@@ -1028,7 +1032,7 @@ type listInvoiceShareCandidatesTool struct {
 	shares shareCandidateLister
 }
 
-func newListInvoiceShareCandidatesTool(shares shareCandidateLister) serviceports.AgentQueryTool {
+func newListInvoiceShareCandidatesTool(shares shareCandidateLister) agentports.AgentQueryTool {
 	return &listInvoiceShareCandidatesTool{shares: shares}
 }
 
@@ -1050,13 +1054,13 @@ func (t *listInvoiceShareCandidatesTool) ParamSchema() map[string]any {
 	}, paramReceivableInvoice)
 }
 
-func (t *listInvoiceShareCandidatesTool) Policy() serviceports.ToolPolicy {
+func (t *listInvoiceShareCandidatesTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceInvoice})
 }
 
 func (t *listInvoiceShareCandidatesTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -1066,7 +1070,7 @@ func (t *listInvoiceShareCandidatesTool) Query(
 		return nil, err
 	}
 
-	result, err := t.shares.ListCandidates(ctx, &serviceports.ListShareCandidatesRequest{
+	result, err := t.shares.ListCandidates(ctx, &invoiceports.ListShareCandidatesRequest{
 		TenantInfo: tenantOf(params),
 		InvoiceID:  invoiceID,
 		Query:      strings.TrimSpace(optionalString(params.Params, paramQuery)),
@@ -1105,57 +1109,57 @@ func receivableToolProviders() []any {
 }
 
 func provideListInvoiceAdjustmentsTool(
-	adjustments serviceports.InvoiceAdjustmentService,
-	invoices repositories.InvoiceRepository,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	adjustments invoiceadjustmentports.InvoiceAdjustmentService,
+	invoices invoiceports.InvoiceRepository,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newListInvoiceAdjustmentsTool(adjustments, invoices, permissions)
 }
 
 func provideGetInvoiceAdjustmentTool(
-	adjustments serviceports.InvoiceAdjustmentService,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	adjustments invoiceadjustmentports.InvoiceAdjustmentService,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newGetInvoiceAdjustmentTool(adjustments, permissions)
 }
 
 func provideListInvoiceDisputesTool(
-	disputes repositories.InvoiceDisputeRepository,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	disputes invoiceports.InvoiceDisputeRepository,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newListInvoiceDisputesTool(disputes, permissions)
 }
 
 func provideListCreditMemoApplicationsTool(
-	payments repositories.CustomerPaymentRepository,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	payments customerpaymentports.CustomerPaymentRepository,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newListCreditMemoApplicationsTool(payments, permissions)
 }
 
 func provideListInvoiceRunsTool(
 	runs *invoicerunservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newListInvoiceRunsTool(runs, permissions)
 }
 
 func provideGetInvoiceRunTool(
 	runs *invoicerunservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newGetInvoiceRunTool(runs, permissions)
 }
 
 func provideListOpenStatementsTool(
 	runs *invoicerunservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newListOpenStatementsTool(runs, permissions)
 }
 
 func provideListInvoiceShareCandidatesTool(
-	shares serviceports.InvoiceShareService,
-) serviceports.AgentQueryTool {
+	shares invoiceports.InvoiceShareService,
+) agentports.AgentQueryTool {
 	return newListInvoiceShareCandidatesTool(shares)
 }

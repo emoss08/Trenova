@@ -5,9 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentmanufacturerports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"go.temporal.io/sdk/client"
@@ -19,17 +20,17 @@ type Params struct {
 	fx.In
 
 	Logger         *zap.Logger
-	Repo           repositories.EquipmentManufacturerRepository
+	Repo           equipmentmanufacturerports.EquipmentManufacturerRepository
 	Validator      *Validator
-	AuditService   services.AuditService
+	AuditService   auditports.AuditService
 	TemporalClient client.Client
 }
 
 type Service struct {
 	l              *zap.Logger
-	repo           repositories.EquipmentManufacturerRepository
+	repo           equipmentmanufacturerports.EquipmentManufacturerRepository
 	validator      *Validator
-	auditService   services.AuditService
+	auditService   auditports.AuditService
 	temporalClient client.Client
 }
 
@@ -45,28 +46,28 @@ func New(p Params) *Service {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListEquipmentManufacturersRequest,
+	req *equipmentmanufacturerports.ListEquipmentManufacturersRequest,
 ) (*pagination.ListResult[*equipmentmanufacturer.EquipmentManufacturer], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListEquipmentManufacturerConnectionRequest,
+	req *equipmentmanufacturerports.ListEquipmentManufacturerConnectionRequest,
 ) (*pagination.CursorListResult[*equipmentmanufacturer.EquipmentManufacturer], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	req repositories.GetEquipmentManufacturerByIDRequest,
+	req equipmentmanufacturerports.GetEquipmentManufacturerByIDRequest,
 ) (*equipmentmanufacturer.EquipmentManufacturer, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) GetByIDs(
 	ctx context.Context,
-	req repositories.GetEquipmentManufacturersByIDsRequest,
+	req equipmentmanufacturerports.GetEquipmentManufacturersByIDsRequest,
 ) ([]*equipmentmanufacturer.EquipmentManufacturer, error) {
 	return s.repo.GetByIDs(ctx, req)
 }
@@ -80,7 +81,7 @@ func (s *Service) SelectOptions(
 
 func (s *Service) BulkUpdateStatus(
 	ctx context.Context,
-	req *repositories.BulkUpdateEquipmentManufacturerStatusRequest,
+	req *equipmentmanufacturerports.BulkUpdateEquipmentManufacturerStatusRequest,
 ) ([]*equipmentmanufacturer.EquipmentManufacturer, error) {
 	log := s.l.With(
 		zap.String("operation", "BulkUpdateStatus"),
@@ -89,7 +90,7 @@ func (s *Service) BulkUpdateStatus(
 
 	originalEntities, err := s.repo.GetByIDs(
 		ctx,
-		repositories.GetEquipmentManufacturersByIDsRequest{
+		equipmentmanufacturerports.GetEquipmentManufacturersByIDsRequest{
 			TenantInfo:               req.TenantInfo,
 			EquipmentManufacturerIDs: req.EquipmentManufacturerIDs,
 		},
@@ -126,7 +127,7 @@ func (s *Service) BulkUpdateStatus(
 func (s *Service) Create(
 	ctx context.Context,
 	entity *equipmentmanufacturer.EquipmentManufacturer,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*equipmentmanufacturer.EquipmentManufacturer, error) {
 	auditActor := actor.AuditActor()
 	log := s.l.With(
@@ -146,7 +147,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceEquipmentManufacturer,
 		ResourceID:     createdEntity.GetID().String(),
 		Operation:      permission.OpCreate,
@@ -167,7 +168,7 @@ func (s *Service) Create(
 func (s *Service) Update(
 	ctx context.Context,
 	entity *equipmentmanufacturer.EquipmentManufacturer,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*equipmentmanufacturer.EquipmentManufacturer, error) {
 	auditActor := actor.AuditActor()
 	log := s.l.With(
@@ -181,7 +182,7 @@ func (s *Service) Update(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetByID(ctx, repositories.GetEquipmentManufacturerByIDRequest{
+	original, err := s.repo.GetByID(ctx, equipmentmanufacturerports.GetEquipmentManufacturerByIDRequest{
 		ID: entity.GetID(),
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.GetOrganizationID(),
@@ -199,7 +200,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceEquipmentManufacturer,
 		ResourceID:     updatedEntity.GetID().String(),
 		Operation:      permission.OpUpdate,

@@ -4,10 +4,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
-
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
@@ -85,7 +84,7 @@ func ThreadReflectionWorkflow(
 		waitForQuiet(ctx, signals)
 
 		var a *Activities
-		var plan serviceports.ReflectionPlan
+		var plan agentports.ReflectionPlan
 		err := workflow.ExecuteActivity(
 			withPriority(ctx, prepareOptions, input.TenantInfo),
 			a.PrepareThreadReflectionActivity, input.request(),
@@ -121,10 +120,10 @@ func RunReflectionWorkflow(
 	result := &ReflectionResult{Rounds: 1}
 
 	var a *Activities
-	var plan serviceports.ReflectionPlan
+	var plan agentports.ReflectionPlan
 	err := workflow.ExecuteActivity(
 		withPriority(ctx, prepareOptions, input.TenantInfo),
-		a.PrepareRunReflectionActivity, &serviceports.ReflectOnRunRequest{
+		a.PrepareRunReflectionActivity, &agentports.ReflectOnRunRequest{
 			TenantInfo: input.TenantInfo,
 			RunID:      input.RunID,
 		},
@@ -137,7 +136,7 @@ func RunReflectionWorkflow(
 	return result, nil
 }
 
-func lookBack(ctx workflow.Context, plan *serviceports.ReflectionPlan, result *ReflectionResult) {
+func lookBack(ctx workflow.Context, plan *agentports.ReflectionPlan, result *ReflectionResult) {
 	if !plan.Ready() {
 		result.Skipped++
 
@@ -145,7 +144,7 @@ func lookBack(ctx workflow.Context, plan *serviceports.ReflectionPlan, result *R
 	}
 
 	var a *Activities
-	var completion serviceports.StructuredCompletionResult
+	var completion agentports.StructuredCompletionResult
 	err := workflow.ExecuteActivity(
 		withPriority(ctx, modelOptions, plan.TenantInfo),
 		a.ReflectionModelActivity, plan,
@@ -154,7 +153,7 @@ func lookBack(ctx workflow.Context, plan *serviceports.ReflectionPlan, result *R
 		result.Failed++
 		failure := workflow.ExecuteActivity(
 			withPriority(ctx, failOptions, plan.TenantInfo),
-			a.FailReflectionActivity, &serviceports.FailReflectionRequest{
+			a.FailReflectionActivity, &agentports.FailReflectionRequest{
 				Plan:    plan,
 				Message: err.Error(),
 			},
@@ -169,7 +168,7 @@ func lookBack(ctx workflow.Context, plan *serviceports.ReflectionPlan, result *R
 		return
 	}
 
-	var outcome serviceports.ReflectionOutcome
+	var outcome agentports.ReflectionOutcome
 	err = workflow.ExecuteActivity(
 		withPriority(ctx, finishOptions, plan.TenantInfo),
 		a.FinishReflectionActivity, &FinishReflectionInput{Plan: plan, Result: &completion},

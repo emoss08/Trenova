@@ -7,9 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -61,7 +61,7 @@ func (h *Handler) listConnections(c *gin.Context) {
 	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*edi.EDIConnection], error) {
 		return h.service.ListConnections(
 			c.Request.Context(),
-			&repositories.ListEDIConnectionsRequest{Filter: req},
+			&ediports.ListEDIConnectionsRequest{Filter: req},
 		)
 	})
 }
@@ -103,7 +103,7 @@ func (h *Handler) getConnection(c *gin.Context) {
 
 	connection, err := h.service.GetConnection(
 		c.Request.Context(),
-		repositories.GetEDIConnectionByIDRequest{
+		ediports.GetEDIConnectionByIDRequest{
 			ID:         connectionID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -137,7 +137,7 @@ func (h *Handler) connectionAction(
 	fn func(
 		context.Context,
 		*ediservice.EDIConnectionActionRequest,
-		*services.RequestActor,
+		*permissionports.RequestActor,
 	) (*edi.EDIConnection, error),
 ) {
 	authCtx := authctx.GetAuthContext(c)

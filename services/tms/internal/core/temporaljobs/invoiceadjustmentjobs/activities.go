@@ -6,8 +6,8 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -18,14 +18,14 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	Service servicesports.InvoiceAdjustmentService
-	Repo    repositories.InvoiceAdjustmentRepository
+	Service invoiceadjustmentports.InvoiceAdjustmentService
+	Repo    invoiceadjustmentports.InvoiceAdjustmentRepository
 	Logger  *zap.Logger
 }
 
 type Activities struct {
-	service servicesports.InvoiceAdjustmentService
-	repo    repositories.InvoiceAdjustmentRepository
+	service invoiceadjustmentports.InvoiceAdjustmentService
+	repo    invoiceadjustmentports.InvoiceAdjustmentRepository
 	logger  *zap.Logger
 }
 
@@ -46,7 +46,7 @@ func (a *Activities) ProcessBatchItemActivity(
 		BuID:   payload.BusinessUnitID,
 		UserID: payload.UserID,
 	}
-	batch, err := a.repo.GetBatchByID(ctx, repositories.GetBatchRequest{
+	batch, err := a.repo.GetBatchByID(ctx, invoiceadjustmentports.GetBatchRequest{
 		ID:         payload.BatchID,
 		TenantInfo: tenantInfo,
 	})
@@ -74,13 +74,13 @@ func (a *Activities) ProcessBatchItemActivity(
 		return nil, err
 	}
 
-	req := new(servicesports.InvoiceAdjustmentRequest)
+	req := new(invoiceadjustmentports.InvoiceAdjustmentRequest)
 	if err = decodeRequestPayload(item.RequestPayload, req); err != nil {
 		return nil, err
 	}
 	req.TenantInfo = tenantInfo
 
-	actor := &servicesports.RequestActor{
+	actor := &permissionports.RequestActor{
 		PrincipalType:  payload.PrincipalType,
 		PrincipalID:    payload.PrincipalID,
 		UserID:         payload.UserID,
@@ -128,7 +128,7 @@ func (a *Activities) refreshBatchProgress(
 	batchID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) (*invoiceadjustment.InvoiceAdjustmentBatch, error) {
-	batch, err := a.repo.GetBatchByID(ctx, repositories.GetBatchRequest{
+	batch, err := a.repo.GetBatchByID(ctx, invoiceadjustmentports.GetBatchRequest{
 		ID:         batchID,
 		TenantInfo: tenantInfo,
 	})
@@ -177,7 +177,7 @@ func (a *Activities) refreshBatchProgress(
 
 func decodeRequestPayload(
 	payload map[string]any,
-	req *servicesports.InvoiceAdjustmentRequest,
+	req *invoiceadjustmentports.InvoiceAdjustmentRequest,
 ) error {
 	raw, err := sonic.Marshal(payload)
 	if err != nil {

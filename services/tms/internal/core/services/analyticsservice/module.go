@@ -1,9 +1,9 @@
 package analyticsservice
 
 import (
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/analyticsservice/providers/apikeyprovider"
 	"github.com/emoss08/trenova/internal/core/services/analyticsservice/providers/shipmentprovider"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -11,10 +11,10 @@ import (
 type ProvidersParams struct {
 	fx.In
 
-	Registry services.AnalyticsRegistry
+	Registry kernelports.AnalyticsRegistry
 
 	// List all providers here with the group tag - they'll be automatically injected
-	Providers []services.AnalyticsPageProvider `group:"analytics_providers"`
+	Providers []kernelports.AnalyticsPageProvider `group:"analytics_providers"`
 	Logger    *zap.Logger
 }
 
@@ -37,12 +37,12 @@ var Module = fx.Module("analytics",
 		fx.Annotate(
 			shipmentprovider.NewProvider,
 			fx.ResultTags(`group:"analytics_providers"`),
-			fx.As(new(services.AnalyticsPageProvider)),
+			fx.As(new(kernelports.AnalyticsPageProvider)),
 		),
 		fx.Annotate(
 			apikeyprovider.NewProvider,
 			fx.ResultTags(`group:"analytics_providers"`),
-			fx.As(new(services.AnalyticsPageProvider)),
+			fx.As(new(kernelports.AnalyticsPageProvider)),
 		),
 	),
 	fx.Invoke(

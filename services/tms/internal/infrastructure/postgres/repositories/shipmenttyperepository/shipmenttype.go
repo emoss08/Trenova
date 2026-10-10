@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/shipmenttypeports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -30,7 +30,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.ShipmentTypeRepository {
+func New(p Params) shipmenttypeports.ShipmentTypeRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.shipmenttype-repository"),
@@ -39,7 +39,7 @@ func New(p Params) repositories.ShipmentTypeRepository {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListShipmentTypesRequest,
+	req *shipmenttypeports.ListShipmentTypesRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
@@ -53,7 +53,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListShipmentTypesRequest,
+	req *shipmenttypeports.ListShipmentTypesRequest,
 ) (*pagination.ListResult[*shipmenttype.ShipmentType], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*shipmenttype.ShipmentType], error) {
 		log := r.l.With(
@@ -82,7 +82,7 @@ func (r *repository) List(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListShipmentTypesConnectionRequest,
+	req *shipmenttypeports.ListShipmentTypesConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -95,7 +95,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListShipmentTypesConnectionRequest,
+	req *shipmenttypeports.ListShipmentTypesConnectionRequest,
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -115,7 +115,7 @@ func applyShipmentTypeColumns(q *bun.SelectQuery, columns []string) *bun.SelectQ
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListShipmentTypesConnectionRequest,
+	req *shipmenttypeports.ListShipmentTypesConnectionRequest,
 ) (*pagination.CursorListResult[*shipmenttype.ShipmentType], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*shipmenttype.ShipmentType], error) {
 		log := r.l.With(
@@ -221,7 +221,7 @@ func (r *repository) Update(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetShipmentTypeByIDRequest,
+	req shipmenttypeports.GetShipmentTypeByIDRequest,
 ) (*shipmenttype.ShipmentType, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipmenttype.ShipmentType, error) {
 		log := r.l.With(
@@ -249,7 +249,7 @@ func (r *repository) GetByID(
 
 func (r *repository) GetByIDs(
 	ctx context.Context,
-	req repositories.GetShipmentTypesByIDsRequest,
+	req shipmenttypeports.GetShipmentTypesByIDsRequest,
 ) ([]*shipmenttype.ShipmentType, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipmenttype.ShipmentType, error) {
 		log := r.l.With(
@@ -277,7 +277,7 @@ func (r *repository) GetByIDs(
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
-	req *repositories.ShipmentTypeSelectOptionsRequest,
+	req *shipmenttypeports.ShipmentTypeSelectOptionsRequest,
 ) (*pagination.ListResult[*shipmenttype.ShipmentType], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*shipmenttype.ShipmentType], error) {
 		cols := buncolgen.ShipmentTypeColumns
@@ -308,7 +308,7 @@ func (r *repository) SelectOptions(
 
 func (r *repository) BulkUpdateStatus(
 	ctx context.Context,
-	req *repositories.BulkUpdateShipmentTypeStatusRequest,
+	req *shipmenttypeports.BulkUpdateShipmentTypeStatusRequest,
 ) ([]*shipmenttype.ShipmentType, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*shipmenttype.ShipmentType, error) {
 		log := r.l.With(

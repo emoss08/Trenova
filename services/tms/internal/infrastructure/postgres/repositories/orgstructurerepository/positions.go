@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,9 +24,9 @@ import (
 func (r *repository) StaffByPosition(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) ([]repositories.StaffCountRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.StaffCountRow, error) {
-		rows := make([]repositories.StaffCountRow, 0, 16)
+) ([]workerports.StaffCountRow, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.StaffCountRow, error) {
+		rows := make([]workerports.StaffCountRow, 0, 16)
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*tenant.OrganizationMembership)(nil)).
@@ -57,9 +57,9 @@ func (r *repository) ListPositionHolders(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	positionID pulid.ID,
-) ([]repositories.PositionHolderRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.PositionHolderRow, error) {
-		workers := make([]repositories.PositionHolderRow, 0, 16)
+) ([]workerports.PositionHolderRow, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.PositionHolderRow, error) {
+		workers := make([]workerports.PositionHolderRow, 0, 16)
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*worker.Worker)(nil)).
@@ -70,7 +70,7 @@ func (r *repository) ListPositionHolders(
 			Where("wrk.organization_id = ?", tenantInfo.OrgID).
 			Where("wrk.business_unit_id = ?", tenantInfo.BuID).
 			Where("wrk.position_id = ?", positionID).
-			ColumnExpr("? AS kind", string(repositories.PositionHolderWorker)).
+			ColumnExpr("? AS kind", string(workerports.PositionHolderWorker)).
 			ColumnExpr("wrk.id AS id").
 			ColumnExpr("wrk.first_name || ' ' || wrk.last_name AS name").
 			ColumnExpr("wrk.status::text AS status").
@@ -81,7 +81,7 @@ func (r *repository) ListPositionHolders(
 			return nil, fmt.Errorf("list workers in position: %w", err)
 		}
 
-		users := make([]repositories.PositionHolderRow, 0, 8)
+		users := make([]workerports.PositionHolderRow, 0, 8)
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*tenant.OrganizationMembership)(nil)).
@@ -90,7 +90,7 @@ func (r *repository) ListPositionHolders(
 			Where("uom.organization_id = ?", tenantInfo.OrgID).
 			Where("uom.business_unit_id = ?", tenantInfo.BuID).
 			Where("uom.position_id = ?", positionID).
-			ColumnExpr("? AS kind", string(repositories.PositionHolderUser)).
+			ColumnExpr("? AS kind", string(workerports.PositionHolderUser)).
 			ColumnExpr("usr.id AS id").
 			ColumnExpr("usr.name AS name").
 			ColumnExpr("usr.status::text AS status").
@@ -107,7 +107,7 @@ func (r *repository) ListPositionHolders(
 
 func (r *repository) SetWorkerPosition(
 	ctx context.Context,
-	req *repositories.SetWorkerPositionRequest,
+	req *workerports.SetWorkerPositionRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		result, err := r.db.DBForContext(ctx).
@@ -132,7 +132,7 @@ func (r *repository) SetWorkerPosition(
 
 func (r *repository) SetUserPosition(
 	ctx context.Context,
-	req *repositories.SetUserPositionRequest,
+	req *workerports.SetUserPositionRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		result, err := r.db.DBForContext(ctx).

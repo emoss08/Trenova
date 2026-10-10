@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -37,10 +37,10 @@ func TestRecordingAGeneratedDocumentNamesTheVersionThatProducedIt(t *testing.T) 
 
 	_, err := h.service.RecordGeneratedDocument(
 		t.Context(),
-		&services.RecordGeneratedDocumentRequest{
+		&documenttemplateports.RecordGeneratedDocumentRequest{
 			TenantInfo: h.tenantInfo,
 			Kind:       documenttemplate.KindInvoicePDF,
-			Rendered: &services.RenderedDocument{
+			Rendered: &documenttemplateports.RenderedDocument{
 				Source:      documenttemplate.SourceOrgDefault,
 				TemplateID:  &templateID,
 				VersionID:   &versionID,
@@ -77,10 +77,10 @@ func TestRecordingABuiltInRenderKeepsTheContentHash(t *testing.T) {
 
 	_, err := h.service.RecordGeneratedDocument(
 		t.Context(),
-		&services.RecordGeneratedDocumentRequest{
+		&documenttemplateports.RecordGeneratedDocumentRequest{
 			TenantInfo: h.tenantInfo,
 			Kind:       documenttemplate.KindInvoicePDF,
-			Rendered: &services.RenderedDocument{
+			Rendered: &documenttemplateports.RenderedDocument{
 				Source:      documenttemplate.SourceBuiltIn,
 				ContentHash: "starter-hash",
 			},
@@ -104,10 +104,10 @@ func TestRecordingRefusesADocumentWithNowhereToFetchIt(t *testing.T) {
 
 	_, err := h.service.RecordGeneratedDocument(
 		t.Context(),
-		&services.RecordGeneratedDocumentRequest{
+		&documenttemplateports.RecordGeneratedDocumentRequest{
 			TenantInfo: h.tenantInfo,
 			Kind:       documenttemplate.KindInvoicePDF,
-			Rendered: &services.RenderedDocument{
+			Rendered: &documenttemplateports.RenderedDocument{
 				Source: documenttemplate.SourceBuiltIn,
 			},
 			ReferenceType: "invoice",
@@ -127,7 +127,7 @@ func TestRecordingRefusesARenderItCannotAttribute(t *testing.T) {
 
 	_, err := h.service.RecordGeneratedDocument(
 		t.Context(),
-		&services.RecordGeneratedDocumentRequest{
+		&documenttemplateports.RecordGeneratedDocumentRequest{
 			TenantInfo:    h.tenantInfo,
 			Kind:          documenttemplate.KindInvoicePDF,
 			ReferenceType: "invoice",

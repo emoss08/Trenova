@@ -8,7 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/invoicerun"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -18,20 +20,20 @@ import (
 type fakeRunKeeper struct {
 	guard     *writeGuard
 	built     *invoicerun.InvoiceRun
-	change    *serviceports.InvoiceRunChangePreview
-	commit    *serviceports.InvoiceRunCommitPlan
-	statement *serviceports.StatementBillPlan
-	previewed *serviceports.PreviewInvoiceRunRequest
-	adjusted  *serviceports.AdjustInvoiceRunMembershipRequest
-	committed *serviceports.CommitInvoiceRunRequest
-	canceled  *serviceports.CancelInvoiceRunRequest
-	billed    *serviceports.BillStatementNowRequest
+	change    *invoicerunports.InvoiceRunChangePreview
+	commit    *invoicerunports.InvoiceRunCommitPlan
+	statement *invoicerunports.StatementBillPlan
+	previewed *invoicerunports.PreviewInvoiceRunRequest
+	adjusted  *invoicerunports.AdjustInvoiceRunMembershipRequest
+	committed *invoicerunports.CommitInvoiceRunRequest
+	canceled  *invoicerunports.CancelInvoiceRunRequest
+	billed    *invoicerunports.BillStatementNowRequest
 }
 
 func (f *fakeRunKeeper) Preview(
 	_ context.Context,
-	req *serviceports.PreviewInvoiceRunRequest,
-	_ *serviceports.RequestActor,
+	req *invoicerunports.PreviewInvoiceRunRequest,
+	_ *permissionports.RequestActor,
 ) (*invoicerun.InvoiceRun, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -43,16 +45,16 @@ func (f *fakeRunKeeper) Preview(
 
 func (f *fakeRunKeeper) PreviewBuild(
 	context.Context,
-	*serviceports.PreviewInvoiceRunRequest,
-	*serviceports.RequestActor,
+	*invoicerunports.PreviewInvoiceRunRequest,
+	*permissionports.RequestActor,
 ) (*invoicerun.InvoiceRun, error) {
 	return f.built, nil
 }
 
 func (f *fakeRunKeeper) AdjustMembership(
 	_ context.Context,
-	req *serviceports.AdjustInvoiceRunMembershipRequest,
-	_ *serviceports.RequestActor,
+	req *invoicerunports.AdjustInvoiceRunMembershipRequest,
+	_ *permissionports.RequestActor,
 ) (*invoicerun.InvoiceRun, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -64,35 +66,35 @@ func (f *fakeRunKeeper) AdjustMembership(
 
 func (f *fakeRunKeeper) PreviewMembership(
 	context.Context,
-	*serviceports.AdjustInvoiceRunMembershipRequest,
-) (*serviceports.InvoiceRunChangePreview, error) {
+	*invoicerunports.AdjustInvoiceRunMembershipRequest,
+) (*invoicerunports.InvoiceRunChangePreview, error) {
 	return f.change, nil
 }
 
 func (f *fakeRunKeeper) Commit(
 	_ context.Context,
-	req *serviceports.CommitInvoiceRunRequest,
-	_ *serviceports.RequestActor,
-) (*serviceports.CommitInvoiceRunResult, error) {
+	req *invoicerunports.CommitInvoiceRunRequest,
+	_ *permissionports.RequestActor,
+) (*invoicerunports.CommitInvoiceRunResult, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
 	}
 	f.committed = req
 
-	return &serviceports.CommitInvoiceRunResult{}, nil
+	return &invoicerunports.CommitInvoiceRunResult{}, nil
 }
 
 func (f *fakeRunKeeper) PreviewCommit(
 	context.Context,
-	*serviceports.CommitInvoiceRunRequest,
-) (*serviceports.InvoiceRunCommitPlan, error) {
+	*invoicerunports.CommitInvoiceRunRequest,
+) (*invoicerunports.InvoiceRunCommitPlan, error) {
 	return f.commit, nil
 }
 
 func (f *fakeRunKeeper) Cancel(
 	_ context.Context,
-	req *serviceports.CancelInvoiceRunRequest,
-	_ *serviceports.RequestActor,
+	req *invoicerunports.CancelInvoiceRunRequest,
+	_ *permissionports.RequestActor,
 ) (*invoicerun.InvoiceRun, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -104,30 +106,30 @@ func (f *fakeRunKeeper) Cancel(
 
 func (f *fakeRunKeeper) PreviewCancel(
 	context.Context,
-	*serviceports.CancelInvoiceRunRequest,
-	*serviceports.RequestActor,
-) (*serviceports.InvoiceRunChangePreview, error) {
+	*invoicerunports.CancelInvoiceRunRequest,
+	*permissionports.RequestActor,
+) (*invoicerunports.InvoiceRunChangePreview, error) {
 	return f.change, nil
 }
 
 func (f *fakeRunKeeper) BillStatementNow(
 	_ context.Context,
-	req *serviceports.BillStatementNowRequest,
-	_ *serviceports.RequestActor,
-) (*serviceports.CommitInvoiceRunResult, error) {
+	req *invoicerunports.BillStatementNowRequest,
+	_ *permissionports.RequestActor,
+) (*invoicerunports.CommitInvoiceRunResult, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
 	}
 	f.billed = req
 
-	return &serviceports.CommitInvoiceRunResult{}, nil
+	return &invoicerunports.CommitInvoiceRunResult{}, nil
 }
 
 func (f *fakeRunKeeper) PreviewBillStatement(
 	context.Context,
-	*serviceports.BillStatementNowRequest,
-	*serviceports.RequestActor,
-) (*serviceports.StatementBillPlan, error) {
+	*invoicerunports.BillStatementNowRequest,
+	*permissionports.RequestActor,
+) (*invoicerunports.StatementBillPlan, error) {
 	return f.statement, nil
 }
 
@@ -175,7 +177,7 @@ func TestBuildInvoiceRun_PreviewsTheProposedInvoicesAndBuildsIt(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, runs.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would build an invoice run proposing 1 invoice for 3 shipments")
 	require.Len(t, preview.Changes, 2)
@@ -203,7 +205,7 @@ func TestBuildInvoiceRun_RefusesAPeriodThatEndsBeforeItStarts(t *testing.T) {
 		paramPeriodStart: "2026-09-30",
 		paramPeriodEnd:   "2026-09-01",
 	})
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
 }
 
 func TestAdjustInvoiceRunMembership_ShowsTheNewTotals(t *testing.T) {
@@ -218,7 +220,7 @@ func TestAdjustInvoiceRunMembership_ShowsTheNewTotals(t *testing.T) {
 	after.TotalAmount = decimal.RequireFromString("1450.00")
 	after.ExcludedCount = 1
 	runs := &fakeRunKeeper{
-		change: &serviceports.InvoiceRunChangePreview{Before: before, After: after},
+		change: &invoicerunports.InvoiceRunChangePreview{Before: before, After: after},
 		guard:  &writeGuard{},
 	}
 	tool := newAdjustInvoiceRunMembershipTool(runs)
@@ -232,7 +234,7 @@ func TestAdjustInvoiceRunMembership_ShowsTheNewTotals(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, runs.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "1850.00 to 1450.00")
 	require.NotEmpty(t, preview.Changes)
@@ -241,7 +243,7 @@ func TestAdjustInvoiceRunMembership_ShowsTheNewTotals(t *testing.T) {
 	require.NotNil(t, runs.adjusted)
 	require.Len(t, runs.adjusted.Exclude, 1)
 	assert.Equal(t, itemID, runs.adjusted.Exclude[0].ItemID)
-	target, ok := tool.(serviceports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, permission.ResourceInvoiceRun, target.Resource)
 }
@@ -251,7 +253,7 @@ func TestAdjustInvoiceRunMembership_NeedsAnEdit(t *testing.T) {
 
 	tool := newAdjustInvoiceRunMembershipTool(&fakeRunKeeper{})
 	params := executeParams(map[string]any{paramInvoiceRunID: pulid.MustNew("invrun_").String()})
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
 }
 
 func TestCommitInvoiceRun_OnlyAPersonCommitsWhatWouldBill(t *testing.T) {
@@ -260,18 +262,18 @@ func TestCommitInvoiceRun_OnlyAPersonCommitsWhatWouldBill(t *testing.T) {
 	run := proposedRun()
 	runs := &fakeRunKeeper{
 		guard: &writeGuard{},
-		commit: &serviceports.InvoiceRunCommitPlan{
+		commit: &invoicerunports.InvoiceRunCommitPlan{
 			Run: run,
-			Groups: []serviceports.InvoiceRunGroupPlan{
+			Groups: []invoicerunports.InvoiceRunGroupPlan{
 				{
 					GroupID: run.Groups[0].ID, GroupLabel: "Acme Foods", ShipmentCount: 3,
 					Total: decimal.RequireFromString("1850.00"), CurrencyCode: "USD",
-					Outcome: serviceports.InvoiceRunGroupBills,
+					Outcome: invoicerunports.InvoiceRunGroupBills,
 				},
 				{
 					GroupID: pulid.MustNew("invrg_"), GroupLabel: "Beta Farms", ShipmentCount: 1,
 					Total: decimal.RequireFromString("90.00"), CurrencyCode: "USD",
-					Outcome: serviceports.InvoiceRunGroupSkips,
+					Outcome: invoicerunports.InvoiceRunGroupSkips,
 					Reason:  "Below this customer's 100.00 minimum — held for the next period",
 				},
 			},
@@ -281,7 +283,7 @@ func TestCommitInvoiceRun_OnlyAPersonCommitsWhatWouldBill(t *testing.T) {
 	params := executeParams(map[string]any{paramInvoiceRunID: run.ID.String()})
 
 	preview := previewWithoutWrites(t, runs.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would commit Invoice run RUN-12, making 1 invoice for 1850.00")
 	assert.Contains(t, preview.Summary, "Beta Farms is skipped")
@@ -305,7 +307,7 @@ func TestCancelInvoiceRun_CancelsWithAReason(t *testing.T) {
 	after.Status = invoicerun.StatusCanceled
 	after.FailureReason = "Built for the wrong period"
 	runs := &fakeRunKeeper{
-		change: &serviceports.InvoiceRunChangePreview{Before: before, After: &after},
+		change: &invoicerunports.InvoiceRunChangePreview{Before: before, After: &after},
 		guard:  &writeGuard{},
 	}
 	tool := newCancelInvoiceRunTool(runs)
@@ -315,7 +317,7 @@ func TestCancelInvoiceRun_CancelsWithAReason(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, runs.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, "Canceled", fieldByPath(t, previewChange(t, preview, 0), "status").After)
 
@@ -331,17 +333,17 @@ func TestBillStatementNow_OnlyAPersonBillsEarly(t *testing.T) {
 	run := proposedRun()
 	runs := &fakeRunKeeper{
 		guard: &writeGuard{},
-		statement: &serviceports.StatementBillPlan{
-			Statement: &serviceports.OpenStatement{
+		statement: &invoicerunports.StatementBillPlan{
+			Statement: &invoicerunports.OpenStatement{
 				CustomerID:   run.Groups[0].CustomerID,
 				CustomerName: "Acme Foods",
 				CurrencyCode: "USD",
 			},
 			Run: run,
-			Groups: []serviceports.InvoiceRunGroupPlan{{
+			Groups: []invoicerunports.InvoiceRunGroupPlan{{
 				GroupLabel: "Acme Foods", ShipmentCount: 3, CurrencyCode: "USD",
 				Total:   decimal.RequireFromString("1850.00"),
-				Outcome: serviceports.InvoiceRunGroupBills,
+				Outcome: invoicerunports.InvoiceRunGroupBills,
 			}},
 		},
 	}
@@ -352,7 +354,7 @@ func TestBillStatementNow_OnlyAPersonBillsEarly(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, runs.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would bill Acme Foods's open statement now")
 

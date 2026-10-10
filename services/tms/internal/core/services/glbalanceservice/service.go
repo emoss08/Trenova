@@ -4,8 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/accounttype"
-	repositoryports "github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/glbalanceports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -16,12 +15,12 @@ type Params struct {
 	fx.In
 
 	Logger *zap.Logger
-	Repo   repositoryports.GLBalanceRepository
+	Repo   glbalanceports.GLBalanceRepository
 }
 
 type Service struct {
 	l    *zap.Logger
-	repo repositoryports.GLBalanceRepository
+	repo glbalanceports.GLBalanceRepository
 }
 
 func New(p Params) *Service {
@@ -32,8 +31,8 @@ func (s *Service) ListTrialBalanceByPeriod(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	fiscalPeriodID pulid.ID,
-) ([]*repositoryports.GLPeriodAccountBalance, error) {
-	return s.repo.ListTrialBalanceByPeriod(ctx, repositoryports.ListTrialBalanceByPeriodRequest{
+) ([]*glbalanceports.GLPeriodAccountBalance, error) {
+	return s.repo.ListTrialBalanceByPeriod(ctx, glbalanceports.ListTrialBalanceByPeriodRequest{
 		TenantInfo:     tenantInfo,
 		FiscalPeriodID: fiscalPeriodID,
 	})
@@ -43,7 +42,7 @@ func (s *Service) GetIncomeStatement(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	fiscalPeriodID pulid.ID,
-) (*serviceports.GLIncomeStatement, error) {
+) (*glbalanceports.GLIncomeStatement, error) {
 	balances, err := s.ListTrialBalanceByPeriod(ctx, tenantInfo, fiscalPeriodID)
 	if err != nil {
 		return nil, err
@@ -72,7 +71,7 @@ func (s *Service) GetIncomeStatement(
 	grossProfit := revenue.TotalMinor - costOfRevenue.TotalMinor
 	netIncome := grossProfit - operatingExpense.TotalMinor
 
-	return &serviceports.GLIncomeStatement{
+	return &glbalanceports.GLIncomeStatement{
 		FiscalPeriodID:   fiscalPeriodID,
 		Revenue:          revenue,
 		CostOfRevenue:    costOfRevenue,
@@ -90,10 +89,10 @@ func (s *Service) GetBalanceSheet(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	fiscalPeriodID pulid.ID,
-) (*serviceports.GLBalanceSheet, error) {
+) (*glbalanceports.GLBalanceSheet, error) {
 	balances, err := s.repo.ListCumulativeBalancesThroughPeriod(
 		ctx,
-		repositoryports.ListCumulativeBalancesThroughPeriodRequest{
+		glbalanceports.ListCumulativeBalancesThroughPeriodRequest{
 			TenantInfo:     tenantInfo,
 			FiscalPeriodID: fiscalPeriodID,
 		},
@@ -126,7 +125,7 @@ func (s *Service) GetBalanceSheet(
 		}
 	}
 
-	return &serviceports.GLBalanceSheet{
+	return &glbalanceports.GLBalanceSheet{
 		FiscalPeriodID:           fiscalPeriodID,
 		Assets:                   assets,
 		Liabilities:              liabilities,
@@ -138,19 +137,19 @@ func (s *Service) GetBalanceSheet(
 	}, nil
 }
 
-func newSection(key, label string) *serviceports.GLStatementSection {
-	return &serviceports.GLStatementSection{
+func newSection(key, label string) *glbalanceports.GLStatementSection {
+	return &glbalanceports.GLStatementSection{
 		Key:   key,
 		Label: label,
-		Lines: make([]*serviceports.GLStatementLine, 0),
+		Lines: make([]*glbalanceports.GLStatementLine, 0),
 	}
 }
 
 func toStatementLine(
-	balance *repositoryports.GLPeriodAccountBalance,
+	balance *glbalanceports.GLPeriodAccountBalance,
 	amountMinor int64,
-) *serviceports.GLStatementLine {
-	return &serviceports.GLStatementLine{
+) *glbalanceports.GLStatementLine {
+	return &glbalanceports.GLStatementLine{
 		GLAccountID:     balance.GLAccountID,
 		AccountCode:     balance.AccountCode,
 		AccountName:     balance.AccountName,
@@ -159,7 +158,7 @@ func toStatementLine(
 	}
 }
 
-func statementAmount(balance *repositoryports.GLPeriodAccountBalance) int64 {
+func statementAmount(balance *glbalanceports.GLPeriodAccountBalance) int64 {
 	switch balance.AccountCategory {
 	case accounttype.CategoryAsset, accounttype.CategoryExpense, accounttype.CategoryCostOfRevenue:
 		return balance.PeriodDebitMinor - balance.PeriodCreditMinor

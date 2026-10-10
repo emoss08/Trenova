@@ -9,25 +9,27 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/workercredentialservice"
 	"github.com/emoss08/trenova/internal/core/services/workerservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/require"
 )
 
-func deskParams(params map[string]any) serviceports.ToolExecuteParams {
+func deskParams(params map[string]any) agentports.ToolExecuteParams {
 	orgID, buID := pulid.MustNew("org_"), pulid.MustNew("bu_")
 
-	return serviceports.ToolExecuteParams{
+	return agentports.ToolExecuteParams{
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
-		Actor: &serviceports.RequestActor{
+		Actor: &permissionports.RequestActor{
 			UserID:         pulid.MustNew("usr_"),
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
@@ -62,7 +64,7 @@ func (s *stubEscalator) Escalate(
 
 func (s *stubEscalator) GetOccurrenceDetail(
 	context.Context,
-	*repositories.GetDetentionOccurrenceByIDRequest,
+	*detentionports.GetDetentionOccurrenceByIDRequest,
 ) (*detentionservice.OccurrenceDetail, error) {
 	copied := *s.occurrence
 
@@ -93,7 +95,7 @@ func TestEscalateDetention_HandsOverWithoutTouchingTheCharge(t *testing.T) {
 		"reason":       "the notice window closed and the customer has no recipients",
 	})
 
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.Contains(t, preview.Summary, "90 billable minutes")
 	for _, change := range preview.Changes {
@@ -118,7 +120,7 @@ func TestEscalateDetention_RefusesAWaivedClock(t *testing.T) {
 	}}
 	tool := newEscalateDetentionTool(stub)
 
-	err := tool.(serviceports.ToolValidator).Validate(t.Context(), deskParams(map[string]any{
+	err := tool.(agentports.ToolValidator).Validate(t.Context(), deskParams(map[string]any{
 		"occurrenceId": occurrenceID.String(),
 		"reason":       "please look at this",
 	}))
@@ -170,7 +172,7 @@ func TestRequestCredentialRenewal_RefusesAnEmptyAsk(t *testing.T) {
 	t.Parallel()
 
 	tool := newRequestCredentialRenewalTool(&stubCredentialActor{})
-	err := tool.(serviceports.ToolValidator).Validate(t.Context(), deskParams(map[string]any{
+	err := tool.(agentports.ToolValidator).Validate(t.Context(), deskParams(map[string]any{
 		"workerId":      pulid.MustNew("wrk_").String(),
 		"credentialIds": []any{},
 		"note":          "please renew",
@@ -203,7 +205,7 @@ func (s *stubWorkerHolder) SetDispatchHold(
 
 func (s *stubWorkerHolder) Get(
 	context.Context,
-	repositories.GetWorkerByIDRequest,
+	workerports.GetWorkerByIDRequest,
 ) (*worker.Worker, error) {
 	copied := *s.held
 
@@ -244,7 +246,7 @@ func TestPlaceWorkerDispatchHold_RefusesADriverAlreadyHeld(t *testing.T) {
 	stub := &stubWorkerHolder{held: &worker.Worker{ID: workerID, CanBeAssigned: false}}
 	tool := newPlaceWorkerDispatchHoldTool(stub)
 
-	err := tool.(serviceports.ToolValidator).Validate(t.Context(), deskParams(map[string]any{
+	err := tool.(agentports.ToolValidator).Validate(t.Context(), deskParams(map[string]any{
 		"workerId": workerID.String(),
 		"reason":   "medical card lapsed",
 	}))
@@ -339,7 +341,7 @@ func TestResolveCarrierIntelEvent_RefusesAnOutcomeItDoesNotHave(t *testing.T) {
 	event := openFinding()
 	tool := newResolveCarrierIntelEventTool(&stubCarrierIntel{event: event})
 
-	err := tool.(serviceports.ToolValidator).Validate(t.Context(), deskParams(map[string]any{
+	err := tool.(agentports.ToolValidator).Validate(t.Context(), deskParams(map[string]any{
 		"eventId":    event.ID.String(),
 		"resolution": "SeemedFine",
 		"note":       "looked alright",
@@ -373,14 +375,14 @@ func TestCarrierIntelEventTools_RefuseAFindingAlreadyClosed(t *testing.T) {
 	event := openFinding()
 	event.Status = carrierintel.EventStatusResolved
 
-	for name, tool := range map[string]serviceports.AgentTool{
+	for name, tool := range map[string]agentports.AgentTool{
 		"acknowledge": newAcknowledgeCarrierIntelEventTool(&stubCarrierIntel{event: event}),
 		"resolve":     newResolveCarrierIntelEventTool(&stubCarrierIntel{event: event}),
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			err := tool.(serviceports.ToolValidator).Validate(
+			err := tool.(agentports.ToolValidator).Validate(
 				t.Context(),
 				deskParams(map[string]any{
 					"eventId":    event.ID.String(),

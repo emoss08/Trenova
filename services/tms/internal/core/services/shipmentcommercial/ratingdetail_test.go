@@ -1,13 +1,13 @@
 package shipmentcommercial
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/ratequoteportsmock"
 	"testing"
-
-	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial/shipmentcommercialtest"
 
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial/shipmentcommercialtest"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -69,10 +69,10 @@ func TestRecalculate_FormulaPricedShipmentNamesItsTemplate(t *testing.T) {
 		},
 	})
 
-	engine := mocks.NewMockRateEngine(t)
+	engine := ratequoteportsmock.NewMockRateEngine(t)
 	engine.EXPECT().
 		RateShipment(mock.Anything, mock.AnythingOfType("*services.RateShipmentRequest")).
-		Return(&services.RatedShipment{
+		Return(&ratequoteports.RatedShipment{
 			Amount:   linehaul,
 			Currency: "USD",
 			Outcome:  ratequote.OutcomeFormulaFallback,
@@ -137,10 +137,10 @@ func TestRecalculate_ClampedRateRecordsTheGuardrailThatDecidedIt(t *testing.T) {
 		},
 	}
 
-	engine := mocks.NewMockRateEngine(t)
+	engine := ratequoteportsmock.NewMockRateEngine(t)
 	engine.EXPECT().
 		RateShipment(mock.Anything, mock.AnythingOfType("*services.RateShipmentRequest")).
-		Return(&services.RatedShipment{
+		Return(&ratequoteports.RatedShipment{
 			Amount:   clamped,
 			Currency: "USD",
 			Outcome:  ratequote.OutcomeRated,

@@ -4,12 +4,25 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -21,65 +34,65 @@ type Params struct {
 	fx.In
 
 	Logger             *zap.Logger
-	DB                 ports.DBConnection
-	Repo               repositories.InvoiceAdjustmentRepository
-	InvoiceRepo        repositories.InvoiceRepository
-	CustomerRepo       repositories.CustomerRepository
-	BillingQueueRepo   repositories.BillingQueueRepository
-	ShipmentRepo       repositories.ShipmentRepository
-	AccessorialRepo    repositories.AccessorialChargeRepository
-	ShipmentCtrlRepo   repositories.ShipmentControlRepository
-	BillingCtrlRepo    repositories.BillingControlRepository
-	AdjustmentCtrlRepo repositories.InvoiceAdjustmentControlRepository
-	AccountingRepo     repositories.AccountingControlRepository
+	DB                 kernelports.DBConnection
+	Repo               invoiceadjustmentports.InvoiceAdjustmentRepository
+	InvoiceRepo        invoiceports.InvoiceRepository
+	CustomerRepo       customerports.CustomerRepository
+	BillingQueueRepo   billingqueueports.BillingQueueRepository
+	ShipmentRepo       shipmentports.ShipmentRepository
+	AccessorialRepo    accessorialchargeports.AccessorialChargeRepository
+	ShipmentCtrlRepo   tenantports.ShipmentControlRepository
+	BillingCtrlRepo    tenantports.BillingControlRepository
+	AdjustmentCtrlRepo tenantports.InvoiceAdjustmentControlRepository
+	AccountingRepo     tenantports.AccountingControlRepository
 	Stamper            *exchangeratestamp.Stamper
-	JournalRepo        repositories.JournalPostingRepository
-	FiscalPeriodRepo   repositories.FiscalPeriodRepository
-	DocumentRepo       repositories.DocumentRepository
-	OrderRepo          repositories.OrderRepository            `optional:"true"`
-	ChargeAllocRepo    repositories.ChargeAllocationRepository `optional:"true"`
-	OrderDerivation    servicesports.OrderDerivationService    `optional:"true"`
-	DetentionBilling   servicesports.DetentionBillingService
+	JournalRepo        journalentryports.JournalPostingRepository
+	FiscalPeriodRepo   fiscalperiodports.FiscalPeriodRepository
+	DocumentRepo       documentports.DocumentRepository
+	OrderRepo          orderports.OrderRepository               `optional:"true"`
+	ChargeAllocRepo    shipmentports.ChargeAllocationRepository `optional:"true"`
+	OrderDerivation    orderports.OrderDerivationService        `optional:"true"`
+	DetentionBilling   detentionports.DetentionBillingService
 	Validator          *Validator
-	AuditService       servicesports.AuditService
-	WorkflowStarter    servicesports.WorkflowStarter
+	AuditService       auditports.AuditService
+	WorkflowStarter    kernelports.WorkflowStarter
 	Commercial         *shipmentcommercial.Calculator
-	Generator          servicesports.InvoiceAdjustGenerator
+	Generator          invoiceadjustmentports.InvoiceAdjustGenerator
 	SequenceGenerator  seqgen.Generator
-	AccountingSync     servicesports.AccountingSyncEnqueuer `optional:"true"`
-	CustomerLedgerRepo repositories.CustomerLedgerProjectionRepository
+	AccountingSync     accountingsyncports.AccountingSyncEnqueuer `optional:"true"`
+	CustomerLedgerRepo customerledgerports.CustomerLedgerProjectionRepository
 	AccountingPolicy   *accountingcontrolpolicyservice.Service
 }
 
 type Service struct {
 	l                  *zap.Logger
-	db                 ports.DBConnection
-	repo               repositories.InvoiceAdjustmentRepository
-	invoiceRepo        repositories.InvoiceRepository
-	customerRepo       repositories.CustomerRepository
-	billingQueueRepo   repositories.BillingQueueRepository
-	shipmentRepo       repositories.ShipmentRepository
-	accessorialRepo    repositories.AccessorialChargeRepository
-	shipmentCtrlRepo   repositories.ShipmentControlRepository
-	billingCtrlRepo    repositories.BillingControlRepository
-	adjustmentCtrlRepo repositories.InvoiceAdjustmentControlRepository
-	accountingRepo     repositories.AccountingControlRepository
+	db                 kernelports.DBConnection
+	repo               invoiceadjustmentports.InvoiceAdjustmentRepository
+	invoiceRepo        invoiceports.InvoiceRepository
+	customerRepo       customerports.CustomerRepository
+	billingQueueRepo   billingqueueports.BillingQueueRepository
+	shipmentRepo       shipmentports.ShipmentRepository
+	accessorialRepo    accessorialchargeports.AccessorialChargeRepository
+	shipmentCtrlRepo   tenantports.ShipmentControlRepository
+	billingCtrlRepo    tenantports.BillingControlRepository
+	adjustmentCtrlRepo tenantports.InvoiceAdjustmentControlRepository
+	accountingRepo     tenantports.AccountingControlRepository
 	stamper            *exchangeratestamp.Stamper
-	journalRepo        repositories.JournalPostingRepository
-	fiscalPeriodRepo   repositories.FiscalPeriodRepository
-	documentRepo       repositories.DocumentRepository
-	orderRepo          repositories.OrderRepository
-	chargeAllocRepo    repositories.ChargeAllocationRepository
-	orderDerivation    servicesports.OrderDerivationService
-	detentionBilling   servicesports.DetentionBillingService
+	journalRepo        journalentryports.JournalPostingRepository
+	fiscalPeriodRepo   fiscalperiodports.FiscalPeriodRepository
+	documentRepo       documentports.DocumentRepository
+	orderRepo          orderports.OrderRepository
+	chargeAllocRepo    shipmentports.ChargeAllocationRepository
+	orderDerivation    orderports.OrderDerivationService
+	detentionBilling   detentionports.DetentionBillingService
 	validator          *Validator
-	auditService       servicesports.AuditService
-	workflowStarter    servicesports.WorkflowStarter
+	auditService       auditports.AuditService
+	workflowStarter    kernelports.WorkflowStarter
 	commercial         *shipmentcommercial.Calculator
-	generator          servicesports.InvoiceAdjustGenerator
+	generator          invoiceadjustmentports.InvoiceAdjustGenerator
 	sequenceGenerator  seqgen.Generator
-	accountingSync     servicesports.AccountingSyncEnqueuer
-	customerLedgerRepo repositories.CustomerLedgerProjectionRepository
+	accountingSync     accountingsyncports.AccountingSyncEnqueuer
+	customerLedgerRepo customerledgerports.CustomerLedgerProjectionRepository
 	accountingPolicy   *accountingcontrolpolicyservice.Service
 }
 
@@ -88,7 +101,7 @@ type previewComputation struct {
 	correctionGroupID pulid.ID
 	control           *tenant.InvoiceAdjustmentControl
 	accountingControl *tenant.AccountingControl
-	preview           *servicesports.InvoiceAdjustmentPreview
+	preview           *invoiceadjustmentports.InvoiceAdjustmentPreview
 	lines             []*invoiceadjustment.InvoiceAdjustmentLine
 	creditLineItems   []*invoice.InvoiceLine
 	replacementLines  []*invoice.InvoiceLine
@@ -96,7 +109,7 @@ type previewComputation struct {
 
 type previewLineValuesRequest struct {
 	sourceLine *invoice.InvoiceLine
-	input      *servicesports.InvoiceAdjustmentLineInput
+	input      *invoiceadjustmentports.InvoiceAdjustmentLineInput
 	kind       invoiceadjustment.Kind
 	eligible   decimal.Decimal
 }
@@ -110,7 +123,7 @@ type previewLineValues struct {
 	payload        map[string]any
 }
 
-func New(p Params) servicesports.InvoiceAdjustmentService { //nolint:gocritic // stable API shape
+func New(p Params) invoiceadjustmentports.InvoiceAdjustmentService { //nolint:gocritic // stable API shape
 	return &Service{
 		l:                  p.Logger.Named("service.invoice-adjustment"),
 		db:                 p.DB,

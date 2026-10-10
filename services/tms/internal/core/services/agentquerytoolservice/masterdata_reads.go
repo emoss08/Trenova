@@ -8,10 +8,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tablechangealert"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/captureservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentmanufacturerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/tablechangealertports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -35,8 +36,8 @@ func masterDataReadProviders() []any {
 }
 
 func newListEquipmentManufacturersTool(
-	repo repositories.EquipmentManufacturerRepository,
-) serviceports.AgentQueryTool {
+	repo equipmentmanufacturerports.EquipmentManufacturerRepository,
+) agentports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "list_equipment_manufacturers",
 		entityPlural: "equipment manufacturers",
@@ -54,7 +55,7 @@ func newListEquipmentManufacturersTool(
 		},
 		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
 			result, err := repo.List(ctx,
-				&repositories.ListEquipmentManufacturersRequest{Filter: opts})
+				&equipmentmanufacturerports.ListEquipmentManufacturersRequest{Filter: opts})
 			if err != nil {
 				return nil, err
 			}
@@ -86,8 +87,8 @@ type tableChangeAlertRow struct {
 }
 
 func newListTableChangeAlertsTool(
-	repo repositories.TCASubscriptionRepository,
-) serviceports.AgentQueryTool {
+	repo tablechangealertports.TCASubscriptionRepository,
+) agentports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "list_table_change_alerts",
 		entityPlural: "table change alerts",
@@ -107,7 +108,7 @@ func newListTableChangeAlertsTool(
 			{Name: "tableName", Kind: filterText},
 		},
 		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
-			result, err := repo.List(ctx, &repositories.ListTCASubscriptionsRequest{Filter: opts})
+			result, err := repo.List(ctx, &tablechangealertports.ListTCASubscriptionsRequest{Filter: opts})
 			if err != nil {
 				return nil, err
 			}
@@ -233,11 +234,11 @@ type listCaptureBatchesTool struct {
 	batches captureBatchReader
 }
 
-func provideListCaptureBatchesTool(batches *captureservice.Service) serviceports.AgentQueryTool {
+func provideListCaptureBatchesTool(batches *captureservice.Service) agentports.AgentQueryTool {
 	return newListCaptureBatchesTool(batches)
 }
 
-func newListCaptureBatchesTool(batches captureBatchReader) serviceports.AgentQueryTool {
+func newListCaptureBatchesTool(batches captureBatchReader) agentports.AgentQueryTool {
 	return &listCaptureBatchesTool{batches: batches}
 }
 
@@ -273,13 +274,13 @@ func (t *listCaptureBatchesTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listCaptureBatchesTool) Policy() serviceports.ToolPolicy {
+func (t *listCaptureBatchesTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceCaptureBatch})
 }
 
 func (t *listCaptureBatchesTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

@@ -1,14 +1,17 @@
 package shipmentservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/commodityportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/hazmatsegregationruleportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"testing"
-
-	"github.com/emoss08/trenova/internal/core/services/shipmentservice/shipmentservicetest"
 
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/services/shipmentservice/shipmentservicetest"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -124,10 +127,10 @@ func TestRateCoverageAdvisory(t *testing.T) {
 func billingControlWith(
 	t *testing.T,
 	disposition tenant.UnratedShipmentDisposition,
-) *mocks.MockBillingControlRepository {
+) *tenantportsmock.MockBillingControlRepository {
 	t.Helper()
 
-	repo := mocks.NewMockBillingControlRepository(t)
+	repo := tenantportsmock.NewMockBillingControlRepository(t)
 	repo.EXPECT().
 		GetByOrgID(mock.Anything, mock.Anything).
 		Return(&tenant.BillingControl{UnratedShipmentDisposition: disposition}, nil).
@@ -136,7 +139,7 @@ func billingControlWith(
 	return repo
 }
 
-func rateCoverageValidator(t *testing.T, billing repositories.BillingControlRepository) *Validator {
+func rateCoverageValidator(t *testing.T, billing tenantports.BillingControlRepository) *Validator {
 	t.Helper()
 
 	v := newTestValidator(t)
@@ -144,9 +147,9 @@ func rateCoverageValidator(t *testing.T, billing repositories.BillingControlRepo
 	v.validator = newValidatorBuilder(validatorDeps{
 		ControlRepo:    shipmentservicetest.NewControlRepository(t),
 		CustomerRepo:   shipmentservicetest.NewCustomerRepository(t),
-		CommodityRepo:  mocks.NewMockCommodityRepository(t),
-		HazmatRuleRepo: mocks.NewMockHazmatSegregationRuleRepository(t),
-		ShipmentRepo:   mocks.NewMockShipmentRepository(t),
+		CommodityRepo:  commodityportsmock.NewMockCommodityRepository(t),
+		HazmatRuleRepo: hazmatsegregationruleportsmock.NewMockHazmatSegregationRuleRepository(t),
+		ShipmentRepo:   shipmentportsmock.NewMockShipmentRepository(t),
 		BillingRepo:    billing,
 	}).Build()
 
@@ -199,7 +202,7 @@ func TestRateCoverageRule_RefusesAShipmentThatCannotBePriced(t *testing.T) {
 func TestRateCoverageRule_RefusesWithoutABillingControl(t *testing.T) {
 	t.Parallel()
 
-	failing := mocks.NewMockBillingControlRepository(t)
+	failing := tenantportsmock.NewMockBillingControlRepository(t)
 	failing.EXPECT().
 		GetByOrgID(mock.Anything, mock.Anything).
 		Return(nil, errortypes.NewNotFoundError("billing control not found"))
@@ -228,7 +231,7 @@ func TestRateCoverageRule_ZeroAndFlagKeepsTheShipmentAndFlagsIt(t *testing.T) {
 func TestRateCoverageRule_APricedCreateNeedsNoControl(t *testing.T) {
 	t.Parallel()
 
-	v := rateCoverageValidator(t, mocks.NewMockBillingControlRepository(t))
+	v := rateCoverageValidator(t, tenantportsmock.NewMockBillingControlRepository(t))
 	entity := validShipmentForValidation()
 	entity.RatingDetail = &shipment.RatingDetail{Source: string(ratequote.OutcomeFormulaFallback)}
 
@@ -261,7 +264,7 @@ func TestRateCoverageRule_AnUpdateThatUnpricesAShipmentIsRefused(t *testing.T) {
 func TestRateCoverageRule_AnAlreadyUnratedShipmentStaysEditable(t *testing.T) {
 	t.Parallel()
 
-	v := rateCoverageValidator(t, mocks.NewMockBillingControlRepository(t))
+	v := rateCoverageValidator(t, tenantportsmock.NewMockBillingControlRepository(t))
 	original := unratedShipment()
 	original.ID = pulid.MustNew("shp_")
 	updated := unratedShipment()

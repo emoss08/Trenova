@@ -2,10 +2,11 @@ package ediservice
 
 import (
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/editransport"
 	"github.com/emoss08/trenova/internal/core/services/edix12"
 	"github.com/emoss08/trenova/internal/core/services/edix12inspect"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -102,9 +103,9 @@ type TenderChangeActionRequest struct {
 	Reason     string                `json:"reason"`
 }
 
-type PreviewEDIDocumentRequest = services.PreviewEDIDocumentRequest
+type PreviewEDIDocumentRequest = ediports.PreviewEDIDocumentRequest
 
-type GenerateEDIDocumentRequest = services.GenerateEDIDocumentRequest
+type GenerateEDIDocumentRequest = ediports.GenerateEDIDocumentRequest
 
 type InspectX12Request struct {
 	TenantInfo     pagination.TenantInfo    `json:"-"`
@@ -226,7 +227,7 @@ type EDIActionNotesRequest struct {
 	Notes      string                `json:"notes"`
 }
 
-type EDIDocumentPreview = services.EDIDocumentPreview
+type EDIDocumentPreview = ediports.EDIDocumentPreview
 
 type MappingPreview struct {
 	Resolved   []edi.MappingResolution `json:"resolved"`
@@ -235,9 +236,9 @@ type MappingPreview struct {
 }
 
 type ApproveLoadTenderTransferWorkflowPayload struct {
-	TransferID pulid.ID               `json:"transferId"`
-	TenantInfo pagination.TenantInfo  `json:"tenantInfo"`
-	Actor      *services.RequestActor `json:"actor"`
+	TransferID pulid.ID                      `json:"transferId"`
+	TenantInfo pagination.TenantInfo         `json:"tenantInfo"`
+	Actor      *permissionports.RequestActor `json:"actor"`
 }
 
 type ApproveLoadTenderTransferWorkflowResult struct {

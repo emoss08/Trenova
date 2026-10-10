@@ -9,9 +9,8 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -62,7 +61,7 @@ type UsageBuffer struct {
 	mu           sync.Mutex
 	counts       map[usageKey]*usageEntry
 	lastUsed     map[pulid.ID]*usageMetadata
-	repo         repositories.APIKeyRepository
+	repo         apikeyports.APIKeyRepository
 	l            *zap.Logger
 	flushEvery   time.Duration
 	writeTimeout time.Duration
@@ -79,13 +78,13 @@ type UsageBufferParams struct {
 	fx.In
 
 	LC     fx.Lifecycle
-	Repo   repositories.APIKeyRepository
+	Repo   apikeyports.APIKeyRepository
 	Logger *zap.Logger
 	Config *config.Config
 }
 
 func NewUsageBuffer(
-	repo repositories.APIKeyRepository,
+	repo apikeyports.APIKeyRepository,
 	l *zap.Logger,
 	cfg *config.Config,
 ) *UsageBuffer {
@@ -120,7 +119,7 @@ func NewUsageBufferWithLifecycle(p UsageBufferParams) *UsageBuffer {
 	return buf
 }
 
-func (b *UsageBuffer) RecordUsage(event services.APIKeyUsageEvent) {
+func (b *UsageBuffer) RecordUsage(event apikeyports.APIKeyUsageEvent) {
 	if event.APIKeyID.IsNil() {
 		return
 	}
@@ -271,7 +270,7 @@ func (b *UsageBuffer) flush(parent context.Context) error {
 			usageScope(parent, item.metadata.orgID, item.metadata.buID),
 			b.writeTimeout,
 		)
-		err := b.repo.UpdateUsage(ctx, item.apiKeyID, repositories.APIKeyUsageMetadata{
+		err := b.repo.UpdateUsage(ctx, item.apiKeyID, apikeyports.APIKeyUsageMetadata{
 			LastUsedAt:        item.metadata.lastUsedAt,
 			LastUsedIP:        item.metadata.lastUsedIP,
 			LastUsedUserAgent: item.metadata.lastUsedUserAgent,

@@ -1,18 +1,18 @@
 package invoiceadjustmentresolver
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceadjustmentportsmock"
 	"context"
 	"testing"
-
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/dbtype"
@@ -30,7 +30,7 @@ type invoiceAdjustmentResolverFixture struct {
 	orgID       pulid.ID
 	buID        pulid.ID
 	userID      pulid.ID
-	service     *mocks.MockInvoiceAdjustmentService
+	service     *invoiceadjustmentportsmock.MockInvoiceAdjustmentService
 	permissions *resolvertest.RecordingPermissionEngine
 	resolver    *Deps
 }
@@ -42,7 +42,7 @@ func newInvoiceAdjustmentResolverFixture(t *testing.T) *invoiceAdjustmentResolve
 		orgID:       pulid.MustNew("org_"),
 		buID:        pulid.MustNew("bu_"),
 		userID:      pulid.MustNew("usr_"),
-		service:     mocks.NewMockInvoiceAdjustmentService(t),
+		service:     invoiceadjustmentportsmock.NewMockInvoiceAdjustmentService(t),
 		permissions: &resolvertest.RecordingPermissionEngine{},
 	}
 	f.resolver = &Deps{
@@ -81,12 +81,12 @@ func TestQueryResolver_InvoiceAdjustmentApprovals_MapsTypedFiltersAndEncodesKeys
 		{Field: "id", Direction: "desc"},
 	}
 
-	var captured *repositories.ListApprovalQueueRequest
+	var captured *invoiceadjustmentports.ListApprovalQueueRequest
 	f.service.EXPECT().
 		ListApprovals(mock.Anything, mock.Anything).
-		Run(func(_ context.Context, req *repositories.ListApprovalQueueRequest) { captured = req }).
-		Return(&pagination.CursorListResult[*repositories.InvoiceAdjustmentApprovalQueueItem]{
-			Items: []*repositories.InvoiceAdjustmentApprovalQueueItem{
+		Run(func(_ context.Context, req *invoiceadjustmentports.ListApprovalQueueRequest) { captured = req }).
+		Return(&pagination.CursorListResult[*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem]{
+			Items: []*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem{
 				{AdjustmentID: first, CreatedAt: 1_600_000_000},
 				{AdjustmentID: second, CreatedAt: 1_600_000_000},
 			},
@@ -152,11 +152,11 @@ func TestQueryResolver_InvoiceAdjustmentApprovals_SendsNoFiltersWhenUnfiltered(t
 	t.Parallel()
 
 	f := newInvoiceAdjustmentResolverFixture(t)
-	var captured *repositories.ListApprovalQueueRequest
+	var captured *invoiceadjustmentports.ListApprovalQueueRequest
 	f.service.EXPECT().
 		ListApprovals(mock.Anything, mock.Anything).
-		Run(func(_ context.Context, req *repositories.ListApprovalQueueRequest) { captured = req }).
-		Return(&pagination.CursorListResult[*repositories.InvoiceAdjustmentApprovalQueueItem]{}, nil).
+		Run(func(_ context.Context, req *invoiceadjustmentports.ListApprovalQueueRequest) { captured = req }).
+		Return(&pagination.CursorListResult[*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem]{}, nil).
 		Once()
 
 	blank := "   "
@@ -234,7 +234,7 @@ func TestMutationResolver_ApproveInvoiceAdjustment_RequiresApproveAndCallsTheSer
 	f.service.EXPECT().
 		Approve(
 			mock.Anything,
-			&services.ApproveInvoiceAdjustmentRequest{
+			&invoiceadjustmentports.ApproveInvoiceAdjustmentRequest{
 				AdjustmentID: adjustmentID,
 				TenantInfo: pagination.TenantInfo{
 					OrgID:  f.orgID,
@@ -242,7 +242,7 @@ func TestMutationResolver_ApproveInvoiceAdjustment_RequiresApproveAndCallsTheSer
 					UserID: f.userID,
 				},
 			},
-			mock.MatchedBy(func(actor *services.RequestActor) bool {
+			mock.MatchedBy(func(actor *permissionports.RequestActor) bool {
 				return actor != nil && actor.UserID == f.userID
 			}),
 		).
@@ -285,7 +285,7 @@ func TestMutationResolver_RejectInvoiceAdjustment_PassesTheReason(t *testing.T) 
 			f.service.EXPECT().
 				Reject(
 					mock.Anything,
-					&services.RejectInvoiceAdjustmentRequest{
+					&invoiceadjustmentports.RejectInvoiceAdjustmentRequest{
 						AdjustmentID: adjustmentID,
 						Reason:       tt.want,
 						TenantInfo: pagination.TenantInfo{
@@ -339,7 +339,7 @@ func TestInvoiceAdjustmentFieldResolvers_SerializeDecimalsAndBlankRebillStrategy
 	t.Parallel()
 
 	r := &Deps{Core: &base.Core{}}
-	item := &repositories.InvoiceAdjustmentApprovalQueueItem{
+	item := &invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem{
 		NetDeltaAmount:        decimal.RequireFromString("-125.5000"),
 		RerateVariancePercent: decimal.RequireFromString("0.012500"),
 	}

@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolcatalog"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -16,7 +16,7 @@ import (
 // a whole turn rather than one tool set.
 func wideRun(
 	t *testing.T,
-	turns ...*serviceports.ChatCompletionResult,
+	turns ...*agentports.ChatCompletionResult,
 ) (*Service, *scriptedCompletion, []string) {
 	t.Helper()
 
@@ -27,7 +27,7 @@ func wideRun(
 	return service, completion, names
 }
 
-func requestTools(req *serviceports.ChatCompletionRequest) []string {
+func requestTools(req *agentports.ChatCompletionRequest) []string {
 	return specNames(req.Tools)
 }
 
@@ -46,7 +46,7 @@ func TestRun_FindToolsLoadsAToolIntoTheNextRequest(t *testing.T) {
 		textTurn("Two trailers are due."),
 	)
 
-	result, err := service.Run(t.Context(), &serviceports.RunRequest{
+	result, err := service.Run(t.Context(), &agentports.RunRequest{
 		Definition: testDefinition(names...),
 		Actor:      testActor(),
 		Input:      "say hello",
@@ -135,7 +135,7 @@ func TestRun_RefusesAQuestionInARunNobodyIsWatching(t *testing.T) {
 		textTurn("Raised it for a person."),
 	)
 
-	result, err := service.Run(t.Context(), &serviceports.RunRequest{
+	result, err := service.Run(t.Context(), &agentports.RunRequest{
 		Definition: testDefinition(names[:3]...),
 		Actor:      testActor(),
 		Input:      "check the fleet",
@@ -153,7 +153,7 @@ func TestRun_RefusesAQuestionInARunNobodyIsWatching(t *testing.T) {
 func TestRun_FindToolsIsNotChargedUntilTheCap(t *testing.T) {
 	t.Parallel()
 
-	turns := make([]*serviceports.ChatCompletionResult, 0, maxFindCalls+2)
+	turns := make([]*agentports.ChatCompletionResult, 0, maxFindCalls+2)
 	for range maxFindCalls + 1 {
 		turns = append(turns, toolTurn(findToolsName, map[string]any{"need": "tractors"}))
 	}
@@ -162,7 +162,7 @@ func TestRun_FindToolsIsNotChargedUntilTheCap(t *testing.T) {
 	definition := testDefinition(names...)
 	definition.MaxToolCalls = 1
 
-	result, err := service.Run(t.Context(), &serviceports.RunRequest{
+	result, err := service.Run(t.Context(), &agentports.RunRequest{
 		Definition: definition,
 		Actor:      testActor(),
 		Input:      "say hello",
@@ -216,15 +216,15 @@ func TestRun_HoldsTheReadsAHeldToolTakesItsArgumentsFrom(t *testing.T) {
 	t.Parallel()
 
 	reports := queryTool("list_reports", []map[string]any{{"id": "rpt_1"}}, nil)
-	query := &stubQueryRegistry{Tools: []serviceports.AgentQueryTool{reports}}
-	action := &stubActionRegistry{Tools: []serviceports.AgentTool{
+	query := &stubQueryRegistry{Tools: []agentports.AgentQueryTool{reports}}
+	action := &stubActionRegistry{Tools: []agentports.AgentTool{
 		&dependentTool{
 			StubActionTool: actionTool("create_dashboard", agent.TierPropose, nil),
 			needs:          []string{"list_reports", "delete_report"},
 		},
 		actionTool("delete_report", agent.TierPropose, nil),
 	}}
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		toolTurn("list_reports", map[string]any{}),
 		toolTurn("delete_report", map[string]any{}),
 		textTurn("Found one report."),
@@ -235,7 +235,7 @@ func TestRun_HoldsTheReadsAHeldToolTakesItsArgumentsFrom(t *testing.T) {
 		ActionTools: action,
 	})
 
-	result, err := service.Run(t.Context(), &serviceports.RunRequest{
+	result, err := service.Run(t.Context(), &agentports.RunRequest{
 		Definition: testDefinition("create_dashboard"),
 		Actor:      testActor(),
 		Input:      "build me a dashboard",
@@ -267,7 +267,7 @@ func TestRun_RefusalLoadsTheNearestToolsTheAgentHolds(t *testing.T) {
 		}
 	}
 
-	result, err := service.Run(t.Context(), &serviceports.RunRequest{
+	result, err := service.Run(t.Context(), &agentports.RunRequest{
 		Definition: testDefinition(held...),
 		Actor:      testActor(),
 		Input:      "say hello",

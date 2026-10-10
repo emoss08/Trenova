@@ -1,6 +1,13 @@
 package invoiceshareservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/emailportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/notificationportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"errors"
 	"strings"
@@ -13,10 +20,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -48,7 +58,7 @@ func (f *fakeShareRepo) Upsert(_ context.Context, shares []*invoice.InvoiceShare
 
 func (f *fakeShareRepo) ListByInvoiceID(
 	_ context.Context,
-	_ *repositories.ListInvoiceSharesRequest,
+	_ *invoiceports.ListInvoiceSharesRequest,
 ) ([]*invoice.InvoiceShare, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -63,19 +73,19 @@ type harness struct {
 	svc           *Service
 	cfg           *config.Config
 	shares        *fakeShareRepo
-	invoices      *mocks.MockInvoiceRepository
-	users         *mocks.MockUserRepository
-	orgs          *mocks.MockOrganizationRepository
-	permissions   *mocks.MockPermissionEngine
-	templates     *mocks.MockDocumentTemplateResolver
-	emails        *mocks.MockEmailService
-	audit         *mocks.MockAuditService
+	invoices      *invoiceportsmock.MockInvoiceRepository
+	users         *tenantportsmock.MockUserRepository
+	orgs          *tenantportsmock.MockOrganizationRepository
+	permissions   *permissionportsmock.MockPermissionEngine
+	templates     *documenttemplateportsmock.MockDocumentTemplateResolver
+	emails        *emailportsmock.MockEmailService
+	audit         *auditportsmock.MockAuditService
 	notifications []*notification.Notification
-	renders       []*servicesports.RenderMessageRequest
-	sentEmails    []*servicesports.SendEmailRequest
+	renders       []*documenttemplateports.RenderMessageRequest
+	sentEmails    []*emailports.SendEmailRequest
 	mu            sync.Mutex
 	tenant        pagination.TenantInfo
-	actor         *servicesports.RequestActor
+	actor         *permissionports.RequestActor
 	sharer        *tenant.User
 	invoice       *invoice.Invoice
 }
@@ -87,13 +97,13 @@ func newHarness(t *testing.T) *harness {
 		t:           t,
 		cfg:         &config.Config{},
 		shares:      &fakeShareRepo{},
-		invoices:    mocks.NewMockInvoiceRepository(t),
-		users:       mocks.NewMockUserRepository(t),
-		orgs:        mocks.NewMockOrganizationRepository(t),
-		permissions: mocks.NewMockPermissionEngine(t),
-		templates:   mocks.NewMockDocumentTemplateResolver(t),
-		emails:      mocks.NewMockEmailService(t),
-		audit:       mocks.NewMockAuditService(t),
+		invoices:    invoiceportsmock.NewMockInvoiceRepository(t),
+		users:       tenantportsmock.NewMockUserRepository(t),
+		orgs:        tenantportsmock.NewMockOrganizationRepository(t),
+		permissions: permissionportsmock.NewMockPermissionEngine(t),
+		templates:   documenttemplateportsmock.NewMockDocumentTemplateResolver(t),
+		emails:      emailportsmock.NewMockEmailService(t),
+		audit:       auditportsmock.NewMockAuditService(t),
 		tenant: pagination.TenantInfo{
 			OrgID:  pulid.MustNew("org_"),
 			BuID:   pulid.MustNew("bu_"),
@@ -106,8 +116,8 @@ func newHarness(t *testing.T) *harness {
 		Name:   "Marcus Bell",
 		Status: domaintypes.StatusActive,
 	}
-	h.actor = &servicesports.RequestActor{
-		PrincipalType:  servicesports.PrincipalTypeUser,
+	h.actor = &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    h.sharer.ID,
 		UserID:         h.sharer.ID,
 		OrganizationID: h.tenant.OrgID,
@@ -121,7 +131,7 @@ func newHarness(t *testing.T) *harness {
 		BillToName:     "Halstead Grocery Group",
 	}
 
-	notificationRepo := mocks.NewMockNotificationRepository(t)
+	notificationRepo := notificationportsmock.NewMockNotificationRepository(t)
 	notificationRepo.On("Create", mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {
 			entity, ok := args.Get(1).(*notification.Notification)
@@ -137,14 +147,14 @@ func newHarness(t *testing.T) *harness {
 
 	h.templates.On("RenderMessage", mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {
-			req, ok := args.Get(1).(*servicesports.RenderMessageRequest)
+			req, ok := args.Get(1).(*documenttemplateports.RenderMessageRequest)
 			require.True(t, ok)
 			h.mu.Lock()
 			h.renders = append(h.renders, req)
 			h.mu.Unlock()
 		}).
-		Return(func(_ context.Context, req *servicesports.RenderMessageRequest) *servicesports.RenderedMessage {
-			return &servicesports.RenderedMessage{
+		Return(func(_ context.Context, req *documenttemplateports.RenderMessageRequest) *documenttemplateports.RenderedMessage {
+			return &documenttemplateports.RenderedMessage{
 				Subject: "subject:" + string(req.Kind),
 				Text:    "text:" + string(req.Kind),
 				HTML:    "html:" + string(req.Kind),
@@ -191,18 +201,18 @@ func (h *harness) recipient(name string) *tenant.User {
 }
 
 func (h *harness) expectInvoiceAndSharer() {
-	h.invoices.On("GetByID", mock.Anything, repositories.GetInvoiceByIDRequest{
+	h.invoices.On("GetByID", mock.Anything, invoiceports.GetInvoiceByIDRequest{
 		ID:         h.invoice.ID,
 		TenantInfo: h.tenant,
 	}).Return(h.invoice, nil)
-	h.users.On("GetByID", mock.Anything, repositories.GetUserByIDRequest{
+	h.users.On("GetByID", mock.Anything, tenantports.GetUserByIDRequest{
 		TenantInfo:   h.tenant,
 		LookupUserID: h.sharer.ID,
 	}).Return(h.sharer, nil)
 }
 
 func (h *harness) expectUsers(users ...*tenant.User) {
-	h.users.On("GetByIDs", mock.Anything, mock.MatchedBy(func(req repositories.GetUsersByIDsRequest) bool {
+	h.users.On("GetByIDs", mock.Anything, mock.MatchedBy(func(req tenantports.GetUsersByIDsRequest) bool {
 		return req.TenantInfo == h.tenant
 	})).
 		Return(users, nil)
@@ -221,22 +231,22 @@ func (h *harness) expectPermission(user *tenant.User, allowed bool) {
 			_, hasActivation := authctx.GetSessionRoleActivation(ctx)
 			return !hasActivation
 		}),
-		mock.MatchedBy(func(req *servicesports.PermissionCheckRequest) bool {
+		mock.MatchedBy(func(req *permissionports.PermissionCheckRequest) bool {
 			return req.UserID == user.ID &&
 				req.PrincipalID == user.ID &&
-				req.PrincipalType == servicesports.PrincipalTypeUser &&
+				req.PrincipalType == permissionports.PrincipalTypeUser &&
 				req.OrganizationID == h.tenant.OrgID &&
 				req.BusinessUnitID == h.tenant.BuID &&
 				req.Resource == permission.ResourceInvoice.String() &&
 				req.Operation == permission.OpRead
 		}),
-	).Return(&servicesports.PermissionCheckResult{Allowed: allowed}, nil)
+	).Return(&permissionports.PermissionCheckResult{Allowed: allowed}, nil)
 }
 
 func (h *harness) expectEmails(err error) {
 	h.emails.On("Send", mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {
-			req, ok := args.Get(1).(*servicesports.SendEmailRequest)
+			req, ok := args.Get(1).(*emailports.SendEmailRequest)
 			require.True(h.t, ok)
 			h.mu.Lock()
 			h.sentEmails = append(h.sentEmails, req)
@@ -253,8 +263,8 @@ func (h *harness) request(
 	userIDs []pulid.ID,
 	note string,
 	tab invoice.ShareTab,
-) *servicesports.ShareInvoiceRequest {
-	return &servicesports.ShareInvoiceRequest{
+) *invoiceports.ShareInvoiceRequest {
+	return &invoiceports.ShareInvoiceRequest{
 		TenantInfo: h.tenant,
 		InvoiceID:  h.invoice.ID,
 		UserIDs:    userIDs,
@@ -305,7 +315,7 @@ func TestShareStoresNotifiesAndEmailsEveryRecipient(t *testing.T) {
 
 	assert.Equal(t, 2, result.RecipientCount)
 	assert.Equal(t, 2, result.EmailsQueued)
-	assert.Equal(t, servicesports.InvoiceShareEmailQueued, result.EmailStatus)
+	assert.Equal(t, invoiceports.InvoiceShareEmailQueued, result.EmailStatus)
 	require.Len(t, result.Shares, 2)
 
 	require.Len(t, h.shares.upserted, 2)
@@ -393,7 +403,7 @@ func TestShareSkipsEmailWhenTheWebBaseURLIsNotConfigured(t *testing.T) {
 	result, err := h.svc.Share(t.Context(), h.request([]pulid.ID{dana.ID}, "", ""), h.actor)
 	require.NoError(t, err)
 
-	assert.Equal(t, servicesports.InvoiceShareEmailNotConfigured, result.EmailStatus)
+	assert.Equal(t, invoiceports.InvoiceShareEmailNotConfigured, result.EmailStatus)
 	assert.Zero(t, result.EmailsQueued)
 	assert.Len(t, h.notifications, 1)
 	h.emails.AssertNotCalled(t, "Send", mock.Anything, mock.Anything)
@@ -413,7 +423,7 @@ func TestShareReportsEmailFailuresWithoutFailingTheShare(t *testing.T) {
 	result, err := h.svc.Share(t.Context(), h.request([]pulid.ID{dana.ID}, "", ""), h.actor)
 	require.NoError(t, err)
 
-	assert.Equal(t, servicesports.InvoiceShareEmailFailed, result.EmailStatus)
+	assert.Equal(t, invoiceports.InvoiceShareEmailFailed, result.EmailStatus)
 	assert.Len(t, h.shares.upserted, 1)
 	assert.Len(t, h.notifications, 1)
 }
@@ -477,29 +487,29 @@ func TestShareValidatesTheRequestBeforeReadingAnything(t *testing.T) {
 
 	tests := []struct {
 		name  string
-		build func(h *harness) *servicesports.ShareInvoiceRequest
+		build func(h *harness) *invoiceports.ShareInvoiceRequest
 		field string
 	}{
 		{
 			name:  "no recipients",
-			build: func(h *harness) *servicesports.ShareInvoiceRequest { return h.request(nil, "", "") },
+			build: func(h *harness) *invoiceports.ShareInvoiceRequest { return h.request(nil, "", "") },
 			field: "userIds",
 		},
 		{
 			name:  "too many recipients",
-			build: func(h *harness) *servicesports.ShareInvoiceRequest { return h.request(tooMany, "", "") },
+			build: func(h *harness) *invoiceports.ShareInvoiceRequest { return h.request(tooMany, "", "") },
 			field: "userIds",
 		},
 		{
 			name: "sharing with yourself",
-			build: func(h *harness) *servicesports.ShareInvoiceRequest {
+			build: func(h *harness) *invoiceports.ShareInvoiceRequest {
 				return h.request([]pulid.ID{h.sharer.ID}, "", "")
 			},
 			field: "userIds[0]",
 		},
 		{
 			name: "unknown tab",
-			build: func(h *harness) *servicesports.ShareInvoiceRequest {
+			build: func(h *harness) *invoiceports.ShareInvoiceRequest {
 				return h.request(
 					[]pulid.ID{pulid.MustNew("usr_")},
 					"",
@@ -510,7 +520,7 @@ func TestShareValidatesTheRequestBeforeReadingAnything(t *testing.T) {
 		},
 		{
 			name: "note too long",
-			build: func(h *harness) *servicesports.ShareInvoiceRequest {
+			build: func(h *harness) *invoiceports.ShareInvoiceRequest {
 				return h.request(
 					[]pulid.ID{pulid.MustNew("usr_")},
 					strings.Repeat("é", invoice.MaxShareNoteLength+1),
@@ -558,8 +568,8 @@ func TestShareRequiresASignedInUser(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	apiKey := &servicesports.RequestActor{
-		PrincipalType: servicesports.PrincipalTypeAPIKey,
+	apiKey := &permissionports.RequestActor{
+		PrincipalType: permissionports.PrincipalTypeAPIKey,
 		PrincipalID:   pulid.MustNew("ak_"),
 		APIKeyID:      pulid.MustNew("ak_"),
 	}
@@ -594,7 +604,7 @@ func TestListRequiresTheInvoiceInTheTenant(t *testing.T) {
 	h.invoices.On("GetByID", mock.Anything, mock.Anything).
 		Return(nil, errortypes.NewNotFoundError("Invoice not found"))
 
-	_, err := h.svc.List(t.Context(), &repositories.ListInvoiceSharesRequest{
+	_, err := h.svc.List(t.Context(), &invoiceports.ListInvoiceSharesRequest{
 		TenantInfo: h.tenant,
 		InvoiceID:  h.invoice.ID,
 	})
@@ -605,10 +615,10 @@ func TestListRequiresTheInvoiceInTheTenant(t *testing.T) {
 func TestEmailStatus(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, servicesports.InvoiceShareEmailNotConfigured, emailStatus(false, 0, 3))
-	assert.Equal(t, servicesports.InvoiceShareEmailQueued, emailStatus(true, 3, 3))
-	assert.Equal(t, servicesports.InvoiceShareEmailPartial, emailStatus(true, 1, 3))
-	assert.Equal(t, servicesports.InvoiceShareEmailFailed, emailStatus(true, 0, 3))
+	assert.Equal(t, invoiceports.InvoiceShareEmailNotConfigured, emailStatus(false, 0, 3))
+	assert.Equal(t, invoiceports.InvoiceShareEmailQueued, emailStatus(true, 3, 3))
+	assert.Equal(t, invoiceports.InvoiceShareEmailPartial, emailStatus(true, 1, 3))
+	assert.Equal(t, invoiceports.InvoiceShareEmailFailed, emailStatus(true, 0, 3))
 }
 
 func TestInvoiceSharePathOmitsTheDefaultTab(t *testing.T) {
@@ -626,7 +636,7 @@ func TestInvoiceSharePathOmitsTheDefaultTab(t *testing.T) {
 }
 
 func (h *harness) expectInvoice() {
-	h.invoices.On("GetByID", mock.Anything, repositories.GetInvoiceByIDRequest{
+	h.invoices.On("GetByID", mock.Anything, invoiceports.GetInvoiceByIDRequest{
 		ID:         h.invoice.ID,
 		TenantInfo: h.tenant,
 	}).Return(h.invoice, nil)
@@ -651,7 +661,7 @@ func TestListCandidatesOffersOnlyTeammatesWhoCanOpenTheLink(t *testing.T) {
 	h.expectPermission(dana, true)
 	h.expectPermission(normal, false)
 
-	result, err := h.svc.ListCandidates(t.Context(), &servicesports.ListShareCandidatesRequest{
+	result, err := h.svc.ListCandidates(t.Context(), &invoiceports.ListShareCandidatesRequest{
 		TenantInfo: h.tenant,
 		InvoiceID:  h.invoice.ID,
 		Query:      "a",
@@ -679,7 +689,7 @@ func TestListCandidatesPagesThroughTheEligibleTeammates(t *testing.T) {
 	h.users.On("SelectOptions", mock.Anything, mock.Anything).
 		Return(&pagination.ListResult[*tenant.User]{Items: users, Total: len(users)}, nil)
 
-	result, err := h.svc.ListCandidates(t.Context(), &servicesports.ListShareCandidatesRequest{
+	result, err := h.svc.ListCandidates(t.Context(), &invoiceports.ListShareCandidatesRequest{
 		TenantInfo: h.tenant,
 		InvoiceID:  h.invoice.ID,
 		Pagination: pagination.Info{Limit: 2, Offset: 4},
@@ -699,7 +709,7 @@ func TestGetCandidateHidesTeammatesWhoCannotReceiveAShare(t *testing.T) {
 	normal := h.recipient("Normal User")
 	h.expectInvoice()
 	for _, user := range []*tenant.User{dana, normal, h.sharer} {
-		h.users.On("GetByID", mock.Anything, repositories.GetUserByIDRequest{
+		h.users.On("GetByID", mock.Anything, tenantports.GetUserByIDRequest{
 			TenantInfo:   h.tenant,
 			LookupUserID: user.ID,
 		}).Return(user, nil)
@@ -707,7 +717,7 @@ func TestGetCandidateHidesTeammatesWhoCannotReceiveAShare(t *testing.T) {
 	h.expectPermission(dana, true)
 	h.expectPermission(normal, false)
 
-	candidate, err := h.svc.GetCandidate(t.Context(), &servicesports.GetShareCandidateRequest{
+	candidate, err := h.svc.GetCandidate(t.Context(), &invoiceports.GetShareCandidateRequest{
 		TenantInfo: h.tenant,
 		InvoiceID:  h.invoice.ID,
 		UserID:     dana.ID,
@@ -716,7 +726,7 @@ func TestGetCandidateHidesTeammatesWhoCannotReceiveAShare(t *testing.T) {
 	assert.Equal(t, dana.Name, candidate.Name)
 
 	for _, hidden := range []*tenant.User{normal, h.sharer} {
-		_, err = h.svc.GetCandidate(t.Context(), &servicesports.GetShareCandidateRequest{
+		_, err = h.svc.GetCandidate(t.Context(), &invoiceports.GetShareCandidateRequest{
 			TenantInfo: h.tenant,
 			InvoiceID:  h.invoice.ID,
 			UserID:     hidden.ID,

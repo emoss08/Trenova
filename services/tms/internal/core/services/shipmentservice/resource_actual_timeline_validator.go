@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -70,7 +70,7 @@ type timelineWindowConflictKey struct {
 
 func validateResourceActualTimeline(
 	ctx context.Context,
-	assignmentRepo repositories.AssignmentRepository,
+	assignmentRepo shipmentports.AssignmentRepository,
 	original *shipment.Shipment,
 	entity *shipment.Shipment,
 	isCreate bool,
@@ -107,7 +107,7 @@ func validateResourceActualTimeline(
 		if previous := findPayloadNeighbor(
 			payloadTimeline[event.key],
 			event,
-			repositories.ActualTimelineDirectionPrevious,
+			shipmentports.ActualTimelineDirectionPrevious,
 		); previous != nil {
 			addTimelineConflict(
 				multiErr,
@@ -121,7 +121,7 @@ func validateResourceActualTimeline(
 		if next := findPayloadNeighbor(
 			payloadTimeline[event.key],
 			event,
-			repositories.ActualTimelineDirectionNext,
+			shipmentports.ActualTimelineDirectionNext,
 		); next != nil {
 			addTimelineConflict(
 				multiErr,
@@ -401,7 +401,7 @@ func findPayloadOverlap(
 func findPayloadNeighbor(
 	events []*resourceTimelineEvent,
 	candidate *resourceTimelineEvent,
-	direction repositories.ActualTimelineDirection,
+	direction shipmentports.ActualTimelineDirection,
 ) *resourceTimelineEvent {
 	if len(events) == 0 {
 		return nil
@@ -419,7 +419,7 @@ func findPayloadNeighbor(
 	}
 
 	switch direction {
-	case repositories.ActualTimelineDirectionPrevious:
+	case shipmentports.ActualTimelineDirectionPrevious:
 		if candidateIndex == 0 {
 			return nil
 		}
@@ -427,7 +427,7 @@ func findPayloadNeighbor(
 		if previous.timestamp >= candidate.timestamp {
 			return previous
 		}
-	case repositories.ActualTimelineDirectionNext:
+	case shipmentports.ActualTimelineDirectionNext:
 		if candidateIndex >= len(events)-1 {
 			return nil
 		}
@@ -442,18 +442,18 @@ func findPayloadNeighbor(
 
 func validateExternalTimelineEvent(
 	ctx context.Context,
-	assignmentRepo repositories.AssignmentRepository,
+	assignmentRepo shipmentports.AssignmentRepository,
 	tenantInfo pagination.TenantInfo,
 	shipmentID pulid.ID,
 	event *resourceTimelineEvent,
 	multiErr *errortypes.MultiError,
 	windowConflicts map[timelineWindowConflictKey]map[resourceTimelineKind]struct{},
 ) error {
-	req := repositories.FindNearestActualTimelineEventRequest{
+	req := shipmentports.FindNearestActualTimelineEventRequest{
 		TenantInfo:        tenantInfo,
 		ExcludeShipmentID: shipmentID,
 		Timestamp:         event.timestamp,
-		Direction:         repositories.ActualTimelineDirectionPrevious,
+		Direction:         shipmentports.ActualTimelineDirectionPrevious,
 	}
 
 	previous, err := findNearestExternalTimelineEvent(ctx, assignmentRepo, event.key, req)
@@ -470,7 +470,7 @@ func validateExternalTimelineEvent(
 		)
 	}
 
-	req.Direction = repositories.ActualTimelineDirectionNext
+	req.Direction = shipmentports.ActualTimelineDirectionNext
 	next, err := findNearestExternalTimelineEvent(ctx, assignmentRepo, event.key, req)
 	if err != nil {
 		return err
@@ -489,7 +489,7 @@ func validateExternalTimelineEvent(
 		ctx,
 		assignmentRepo,
 		event.key,
-		repositories.FindOverlappingActualTimelineWindowRequest{
+		shipmentports.FindOverlappingActualTimelineWindowRequest{
 			TenantInfo:        tenantInfo,
 			ExcludeShipmentID: shipmentID,
 			Timestamp:         event.timestamp,
@@ -507,10 +507,10 @@ func validateExternalTimelineEvent(
 
 func findNearestExternalTimelineEvent(
 	ctx context.Context,
-	assignmentRepo repositories.AssignmentRepository,
+	assignmentRepo shipmentports.AssignmentRepository,
 	key resourceTimelineKey,
-	req repositories.FindNearestActualTimelineEventRequest,
-) (*repositories.ActualTimelineEvent, error) {
+	req shipmentports.FindNearestActualTimelineEventRequest,
+) (*shipmentports.ActualTimelineEvent, error) {
 	switch key.kind {
 	case resourceTimelineKindTractor:
 		return assignmentRepo.FindNearestActualEventByTractorID(ctx, req, key.id)
@@ -523,10 +523,10 @@ func findNearestExternalTimelineEvent(
 
 func findOverlappingExternalTimelineWindow(
 	ctx context.Context,
-	assignmentRepo repositories.AssignmentRepository,
+	assignmentRepo shipmentports.AssignmentRepository,
 	key resourceTimelineKey,
-	req repositories.FindOverlappingActualTimelineWindowRequest,
-) (*repositories.ActualTimelineWindow, error) {
+	req shipmentports.FindOverlappingActualTimelineWindowRequest,
+) (*shipmentports.ActualTimelineWindow, error) {
 	switch key.kind {
 	case resourceTimelineKindTractor:
 		return assignmentRepo.FindOverlappingActualWindowByTractorID(ctx, req, key.id)
@@ -559,7 +559,7 @@ func addTimelineConflict(
 func recordTimelineWindowConflict(
 	windowConflicts map[timelineWindowConflictKey]map[resourceTimelineKind]struct{},
 	event *resourceTimelineEvent,
-	window *repositories.ActualTimelineWindow,
+	window *shipmentports.ActualTimelineWindow,
 ) {
 	key := timelineWindowConflictKey{
 		field:       stopFieldPath(event.moveIndex, event.stopIndex, string(event.field)),

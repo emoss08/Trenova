@@ -7,8 +7,9 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -20,7 +21,7 @@ const (
 var liveQueries = []string{getShipmentTool, listWatchtowerTool}
 
 type shipmentDesk struct {
-	repositories.ShipmentRepository
+	shipmentports.ShipmentRepository
 
 	rec      *recorder
 	response map[string]any
@@ -28,7 +29,7 @@ type shipmentDesk struct {
 
 func (d *shipmentDesk) GetByID(
 	_ context.Context,
-	req *repositories.GetShipmentByIDRequest,
+	req *shipmentports.GetShipmentByIDRequest,
 ) (*shipment.Shipment, error) {
 	d.rec.read(ReadShipmentRepo, "GetByID", req.TenantInfo)
 
@@ -45,7 +46,7 @@ func (d *shipmentDesk) GetByID(
 }
 
 type commentDesk struct {
-	repositories.ShipmentCommentRepository
+	shipmentports.ShipmentCommentRepository
 
 	rec      *recorder
 	response map[string]any
@@ -53,7 +54,7 @@ type commentDesk struct {
 
 func (d *commentDesk) ListByShipmentID(
 	_ context.Context,
-	req *repositories.ListShipmentCommentsRequest,
+	req *shipmentports.ListShipmentCommentsRequest,
 ) (*pagination.CursorListResult[*shipment.ShipmentComment], error) {
 	tenant := pagination.TenantInfo{}
 	if req.Filter != nil {
@@ -98,7 +99,7 @@ func plantedShipment(response map[string]any) (*shipment.Shipment, error) {
 }
 
 type watchtowerDesk struct {
-	serviceports.WatchtowerService
+	watchtowerports.WatchtowerService
 
 	rec      *recorder
 	response map[string]any
@@ -106,9 +107,9 @@ type watchtowerDesk struct {
 
 func (d *watchtowerDesk) List(
 	_ context.Context,
-	req serviceports.ListWatchtowerItemsRequest, //nolint:gocritic // the port takes it by value
-	_ *serviceports.RequestActor,
-) (*serviceports.WatchtowerPage, error) {
+	req watchtowerports.ListWatchtowerItemsRequest, //nolint:gocritic // the port takes it by value
+	_ *permissionports.RequestActor,
+) (*watchtowerports.WatchtowerPage, error) {
 	d.rec.read(ReadWatchtower, "List", req.TenantInfo)
 
 	items, err := plantedWatchtowerItems(d.response)
@@ -120,7 +121,7 @@ func (d *watchtowerDesk) List(
 		item.BusinessUnitID = req.TenantInfo.BuID
 	}
 
-	return &serviceports.WatchtowerPage{Items: items}, nil
+	return &watchtowerports.WatchtowerPage{Items: items}, nil
 }
 
 func plantedWatchtowerItems(response map[string]any) ([]*watchtower.Item, error) {
@@ -143,19 +144,19 @@ func plantedWatchtowerItems(response map[string]any) ([]*watchtower.Item, error)
 }
 
 type permissionDesk struct {
-	serviceports.PermissionEngine
+	permissionports.PermissionEngine
 
 	rec *recorder
 }
 
 func (d *permissionDesk) Check(
 	_ context.Context,
-	req *serviceports.PermissionCheckRequest,
-) (*serviceports.PermissionCheckResult, error) {
+	req *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
 	d.rec.read(ReadPermissions, req.Resource, pagination.TenantInfo{
 		OrgID: req.OrganizationID,
 		BuID:  req.BusinessUnitID,
 	})
 
-	return &serviceports.PermissionCheckResult{Allowed: true}, nil
+	return &permissionports.PermissionCheckResult{Allowed: true}, nil
 }

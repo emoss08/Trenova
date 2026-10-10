@@ -11,8 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -25,37 +26,37 @@ type stubCompleter struct {
 	reply string
 	err   error
 	calls int
-	saw   *serviceports.StructuredCompletionRequest
+	saw   *agentports.StructuredCompletionRequest
 }
 
 func (s *stubCompleter) CompleteStructured(
 	_ context.Context,
-	req *serviceports.StructuredCompletionRequest,
-) (*serviceports.StructuredCompletionResult, error) {
+	req *agentports.StructuredCompletionRequest,
+) (*agentports.StructuredCompletionResult, error) {
 	s.calls++
 	s.saw = req
 	if s.err != nil {
 		return nil, s.err
 	}
 
-	return &serviceports.StructuredCompletionResult{Text: s.reply, ModelIdentifier: "stub"}, nil
+	return &agentports.StructuredCompletionResult{Text: s.reply, ModelIdentifier: "stub"}, nil
 }
 
 type stubDefinitions struct {
-	serviceports.AgentDefinitionService
-	drafted *serviceports.SaveAgentDefinitionRequest
+	agentdefinitionports.AgentDefinitionService
+	drafted *agentdefinitionports.SaveAgentDefinitionRequest
 }
 
 func (s *stubDefinitions) ToolCatalog(
 	context.Context,
 	pagination.TenantInfo,
-) ([]serviceports.ToolCatalogEntry, error) {
+) ([]agentdefinitionports.ToolCatalogEntry, error) {
 	return testCatalog(), nil
 }
 
 func (s *stubDefinitions) Draft(
 	_ context.Context,
-	req *serviceports.SaveAgentDefinitionRequest,
+	req *agentdefinitionports.SaveAgentDefinitionRequest,
 ) (*agentdefinition.Definition, error) {
 	s.drafted = req
 	definition := &agentdefinition.Definition{
@@ -86,7 +87,7 @@ func (s *stubDefinitions) Draft(
 }
 
 type stubProviders struct {
-	repositories.AIProviderRepository
+	agentports.AIProviderRepository
 	providers []*aiprovider.Provider
 	err       error
 	asked     aiprovider.Task
@@ -94,7 +95,7 @@ type stubProviders struct {
 
 func (s *stubProviders) ListForTask(
 	_ context.Context,
-	req repositories.ListAIProvidersForTaskRequest,
+	req agentports.ListAIProvidersForTaskRequest,
 ) ([]*aiprovider.Provider, error) {
 	s.asked = req.Task
 	if s.err != nil {
@@ -105,13 +106,13 @@ func (s *stubProviders) ListForTask(
 }
 
 type stubOrganizations struct {
-	repositories.OrganizationRepository
+	tenantports.OrganizationRepository
 	timezone string
 }
 
 func (s *stubOrganizations) GetByID(
 	context.Context,
-	repositories.GetOrganizationByIDRequest,
+	tenantports.GetOrganizationByIDRequest,
 ) (*tenant.Organization, error) {
 	return &tenant.Organization{Timezone: s.timezone}, nil
 }
@@ -167,7 +168,7 @@ func TestDraftFromDescriptionAsksTheChatProvidersAndSavesNothing(t *testing.T) {
 	service := newTestService(completer, definitions, &stubProviders{})
 	tenantInfo := testTenant()
 
-	draft, err := service.DraftFromDescription(t.Context(), &serviceports.DraftAgentRequest{
+	draft, err := service.DraftFromDescription(t.Context(), &agentports.DraftAgentRequest{
 		TenantInfo:  tenantInfo,
 		Description: "Answer customers asking where their loads are.",
 	})
@@ -212,13 +213,13 @@ func TestDraftFromDescriptionRefusesBeforeAskingTheModel(t *testing.T) {
 	completer := &stubCompleter{reply: validDraftReply}
 	service := newTestService(completer, &stubDefinitions{}, &stubProviders{})
 
-	_, err := service.DraftFromDescription(t.Context(), &serviceports.DraftAgentRequest{
+	_, err := service.DraftFromDescription(t.Context(), &agentports.DraftAgentRequest{
 		TenantInfo:  testTenant(),
 		Description: "   ",
 	})
 	require.Error(t, err)
 
-	_, err = service.DraftFromDescription(t.Context(), &serviceports.DraftAgentRequest{
+	_, err = service.DraftFromDescription(t.Context(), &agentports.DraftAgentRequest{
 		TenantInfo:  testTenant(),
 		Description: strings.Repeat("a", maxDescriptionRunes+1),
 	})
@@ -240,7 +241,7 @@ func TestDraftFromDescriptionFailsClearlyOnAnEmptyReply(t *testing.T) {
 		definitions := &stubDefinitions{}
 		service := newTestService(completer, definitions, &stubProviders{})
 
-		_, err := service.DraftFromDescription(t.Context(), &serviceports.DraftAgentRequest{
+		_, err := service.DraftFromDescription(t.Context(), &agentports.DraftAgentRequest{
 			TenantInfo:  testTenant(),
 			Description: "Watch for late loads.",
 		})
@@ -255,15 +256,15 @@ func TestDraftFromDescriptionPassesOnTheRoutersError(t *testing.T) {
 	t.Parallel()
 
 	routerErr := errortypes.NewBusinessError("No AI provider is configured for AssistantChat").
-		WithInternal(serviceports.ErrNoProviderConfigured)
+		WithInternal(agentports.ErrNoProviderConfigured)
 	service := newTestService(&stubCompleter{err: routerErr}, &stubDefinitions{}, &stubProviders{})
 
-	_, err := service.DraftFromDescription(t.Context(), &serviceports.DraftAgentRequest{
+	_, err := service.DraftFromDescription(t.Context(), &agentports.DraftAgentRequest{
 		TenantInfo:  testTenant(),
 		Description: "Watch for late loads.",
 	})
 
-	require.ErrorIs(t, err, serviceports.ErrNoProviderConfigured)
+	require.ErrorIs(t, err, agentports.ErrNoProviderConfigured)
 }
 
 func TestTightenInstructionsKeepsPlaceholdersAndAsksTheChatProviders(t *testing.T) {
@@ -274,7 +275,7 @@ func TestTightenInstructionsKeepsPlaceholdersAndAsksTheChatProviders(t *testing.
 
 	result, err := service.TightenInstructions(
 		t.Context(),
-		&serviceports.TightenAgentInstructionsRequest{
+		&agentports.TightenAgentInstructionsRequest{
 			TenantInfo:   testTenant(),
 			Instructions: "You should help {{user.name}}. Always look the loads up before anything else.",
 		},
@@ -295,7 +296,7 @@ func TestTightenInstructionsRefusesAReplyThatLostAPlaceholder(t *testing.T) {
 
 	_, err := service.TightenInstructions(
 		t.Context(),
-		&serviceports.TightenAgentInstructionsRequest{
+		&agentports.TightenAgentInstructionsRequest{
 			TenantInfo:   testTenant(),
 			Instructions: "You should help {{user.name}}.",
 		},
@@ -314,7 +315,7 @@ func TestTightenInstructionsRefusesEmptyAndOverlongInstructions(t *testing.T) {
 	for _, text := range []string{" ", strings.Repeat("x", agentdefinition.MaxInstructionsRunes+1)} {
 		_, err := service.TightenInstructions(
 			t.Context(),
-			&serviceports.TightenAgentInstructionsRequest{TenantInfo: testTenant(), Instructions: text},
+			&agentports.TightenAgentInstructionsRequest{TenantInfo: testTenant(), Instructions: text},
 		)
 		require.Error(t, err)
 	}

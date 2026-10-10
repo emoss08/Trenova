@@ -8,10 +8,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/core/domain/bankreceiptbatch"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	repositoryports "github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptbatchports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -24,19 +26,19 @@ import (
 type Params struct {
 	fx.In
 	Logger             *zap.Logger
-	DB                 ports.DBConnection
-	Repo               repositoryports.BankReceiptBatchRepository
-	ReceiptRepo        repositoryports.BankReceiptRepository
-	BankReceiptService serviceports.BankReceiptService
-	AuditService       serviceports.AuditService
+	DB                 kernelports.DBConnection
+	Repo               bankreceiptbatchports.BankReceiptBatchRepository
+	ReceiptRepo        bankreceiptports.BankReceiptRepository
+	BankReceiptService bankreceiptports.BankReceiptService
+	AuditService       auditports.AuditService
 }
 type Service struct {
 	l                  *zap.Logger
-	db                 ports.DBConnection
-	repo               repositoryports.BankReceiptBatchRepository
-	receiptRepo        repositoryports.BankReceiptRepository
-	bankReceiptService serviceports.BankReceiptService
-	auditService       serviceports.AuditService
+	db                 kernelports.DBConnection
+	repo               bankreceiptbatchports.BankReceiptBatchRepository
+	receiptRepo        bankreceiptports.BankReceiptRepository
+	bankReceiptService bankreceiptports.BankReceiptService
+	auditService       auditports.AuditService
 }
 
 //nolint:gocritic // dependency injection
@@ -53,8 +55,8 @@ func New(p Params) *Service {
 
 func (s *Service) Get(
 	ctx context.Context,
-	req *serviceports.GetBankReceiptBatchRequest,
-) (*serviceports.BankReceiptBatchResult, error) {
+	req *bankreceiptbatchports.GetBankReceiptBatchRequest,
+) (*bankreceiptbatchports.BankReceiptBatchResult, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"request",
@@ -65,7 +67,7 @@ func (s *Service) Get(
 
 	batch, err := s.repo.GetByID(
 		ctx,
-		repositoryports.GetBankReceiptBatchByIDRequest{
+		bankreceiptbatchports.GetBankReceiptBatchByIDRequest{
 			ID:         req.BatchID,
 			TenantInfo: req.TenantInfo,
 		},
@@ -76,7 +78,7 @@ func (s *Service) Get(
 
 	receipts, err := s.receiptRepo.ListByImportBatchID(
 		ctx,
-		repositoryports.ListBankReceiptsByImportBatchRequest{
+		bankreceiptports.ListBankReceiptsByImportBatchRequest{
 			BatchID:    req.BatchID,
 			TenantInfo: req.TenantInfo,
 		},
@@ -85,7 +87,7 @@ func (s *Service) Get(
 		return nil, err
 	}
 
-	return &serviceports.BankReceiptBatchResult{Batch: batch, Receipts: receipts}, nil
+	return &bankreceiptbatchports.BankReceiptBatchResult{Batch: batch, Receipts: receipts}, nil
 }
 
 func (s *Service) List(
@@ -98,15 +100,15 @@ func (s *Service) List(
 func (s *Service) DistinctSources(
 	ctx context.Context,
 	req *pagination.SelectQueryRequest,
-) (*pagination.ListResult[*repositoryports.BankReceiptBatchSourceOption], error) {
+) (*pagination.ListResult[*bankreceiptbatchports.BankReceiptBatchSourceOption], error) {
 	return s.repo.DistinctSources(ctx, req)
 }
 
 func (s *Service) Import(
 	ctx context.Context,
-	req *serviceports.ImportBankReceiptBatchRequest,
-	actor *serviceports.RequestActor,
-) (*serviceports.BankReceiptBatchResult, error) {
+	req *bankreceiptbatchports.ImportBankReceiptBatchRequest,
+	actor *permissionports.RequestActor,
+) (*bankreceiptbatchports.BankReceiptBatchResult, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"request",
@@ -147,13 +149,13 @@ func (s *Service) Import(
 	}
 
 	s.logAudit(updatedBatch, nil, actor.UserID, "Bank receipt batch imported")
-	return &serviceports.BankReceiptBatchResult{Batch: updatedBatch, Receipts: receipts}, nil
+	return &bankreceiptbatchports.BankReceiptBatchResult{Batch: updatedBatch, Receipts: receipts}, nil
 }
 
 func (s *Service) importBatchWithinTx(
 	ctx context.Context,
-	req *serviceports.ImportBankReceiptBatchRequest,
-	actor *serviceports.RequestActor,
+	req *bankreceiptbatchports.ImportBankReceiptBatchRequest,
+	actor *permissionports.RequestActor,
 	batch *bankreceiptbatch.BankReceiptBatch,
 ) (*bankreceiptbatch.BankReceiptBatch, []*bankreceipt.BankReceipt, error) {
 	var (
@@ -161,7 +163,7 @@ func (s *Service) importBatchWithinTx(
 		receipts     []*bankreceipt.BankReceipt
 	)
 
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		createdBatch, txErr := s.repo.Create(txCtx, batch)
 		if txErr != nil {
 			return txErr
@@ -179,7 +181,7 @@ func (s *Service) importBatchWithinTx(
 
 			receipt, importErr := s.bankReceiptService.Import(
 				txCtx,
-				&serviceports.ImportBankReceiptRequest{
+				&bankreceiptports.ImportBankReceiptRequest{
 					ReceiptDate:     line.ReceiptDate,
 					AmountMinor:     line.AmountMinor,
 					ReferenceNumber: line.ReferenceNumber,
@@ -226,7 +228,7 @@ func (s *Service) logAudit(
 	userID pulid.ID,
 	comment string,
 ) {
-	params := &serviceports.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceBankReceipt,
 		ResourceID:     current.ID.String(),
 		Operation:      permission.OpCreate,
@@ -238,7 +240,7 @@ func (s *Service) logAudit(
 	if previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(previous)
 	}
-	options := []serviceports.LogOption{auditservice.WithComment(comment)}
+	options := []auditports.LogOption{auditservice.WithComment(comment)}
 	if previous != nil {
 		options = append(options, auditservice.WithDiff(previous, current))
 	}

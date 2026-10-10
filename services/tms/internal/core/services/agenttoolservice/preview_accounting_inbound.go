@@ -8,15 +8,16 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 var (
-	_ serviceports.ToolPreviewer = (*applyAccountingInboundChangeTool)(nil)
-	_ serviceports.ToolPreviewer = (*ignoreAccountingInboundChangeTool)(nil)
+	_ agentports.ToolPreviewer = (*applyAccountingInboundChangeTool)(nil)
+	_ agentports.ToolPreviewer = (*ignoreAccountingInboundChangeTool)(nil)
 )
 
 const (
@@ -54,7 +55,7 @@ func inboundChangeRecord(change *accountingsync.AccountingInboundChange) toolpre
 	}
 }
 
-func inboundPostingSummary(preview *serviceports.AccountingInboundApplyPreview) string {
+func inboundPostingSummary(preview *accountingsyncports.AccountingInboundApplyPreview) string {
 	change := preview.Change
 	currency := change.CurrencyCode
 	pays := make([]string, 0, len(preview.Lines))
@@ -86,7 +87,7 @@ func inboundPostingSummary(preview *serviceports.AccountingInboundApplyPreview) 
 
 func (t *applyAccountingInboundChangeTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	const refusedSummary = "Would bring a payment from the accounting system into Trenova."
 
@@ -121,7 +122,7 @@ func (t *applyAccountingInboundChangeTool) Preview(
 
 func (t *ignoreAccountingInboundChangeTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	const refusedSummary = "Would keep a payment from the accounting system out of Trenova."
 

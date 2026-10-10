@@ -7,8 +7,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agentextension"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -22,7 +23,7 @@ func TestOpenTurn_ReadsTheOrganizationsExtensionsOnce(t *testing.T) {
 	gate := webGate(agentextension.AvailabilitySelectedAgents)
 	rt := newRuntime(
 		&scriptedCompletion{},
-		&stubQueryRegistry{Tools: []serviceports.AgentQueryTool{
+		&stubQueryRegistry{Tools: []agentports.AgentQueryTool{
 			queryTool(agentextension.ToolWebSearch, map[string]any{}, nil),
 		}},
 		&stubActionRegistry{},
@@ -30,7 +31,7 @@ func TestOpenTurn_ReadsTheOrganizationsExtensionsOnce(t *testing.T) {
 	)
 	rt.extensions = gate
 
-	turn := rt.OpenTurn(t.Context(), &serviceports.RunRequest{
+	turn := rt.OpenTurn(t.Context(), &agentports.RunRequest{
 		Definition: testDefinition(agentextension.ToolWebSearch),
 		Actor:      testActor(),
 		Input:      "What changed in the ELD rules?",
@@ -52,8 +53,8 @@ type meetingPermissions struct {
 
 func (m *meetingPermissions) Check(
 	ctx context.Context,
-	req *serviceports.PermissionCheckRequest,
-) (*serviceports.PermissionCheckResult, error) {
+	req *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
 	if m.first.CompareAndSwap(false, true) {
 		if meet(ctx, m.started) {
 			m.met.Add(1)
@@ -83,7 +84,7 @@ func TestPermittedTools_ChecksDistinctPermissionsTogetherAndAnswersTheSame(t *te
 	}
 	rt := newRuntime(
 		&scriptedCompletion{},
-		&stubQueryRegistry{Tools: []serviceports.AgentQueryTool{
+		&stubQueryRegistry{Tools: []agentports.AgentQueryTool{
 			queryTool("get_shipment", map[string]any{}, nil),
 			queryTool("list_shipments", map[string]any{}, nil),
 			&agentruntimetest.StubQueryTool{

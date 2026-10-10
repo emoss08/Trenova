@@ -5,8 +5,8 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -194,7 +194,7 @@ func TestGetMovesByShipmentID_ExpandedDetailsKeepsUnassignedMoves(t *testing.T) 
 
 	entities, err := repo.GetMovesByShipmentID(
 		t.Context(),
-		&repositories.GetMovesByShipmentIDRequest{
+		&shipmentports.GetMovesByShipmentIDRequest{
 			ShipmentID: shipmentID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: orgID,
@@ -243,7 +243,7 @@ func TestUpdateStatus_UpdatesMove(t *testing.T) {
 			"id", "business_unit_id", "organization_id", "shipment_move_id", "carrier_id", "status", "version", "created_at", "updated_at",
 		}))
 
-	entity, err := repo.UpdateStatus(t.Context(), &repositories.UpdateMoveStatusRequest{
+	entity, err := repo.UpdateStatus(t.Context(), &shipmentports.UpdateMoveStatusRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: orgID,
 			BuID:  buID,
@@ -332,18 +332,18 @@ func TestSplitMove_CreatesDownstreamMoveAndUpdatesOriginalStop(t *testing.T) {
 		}))
 	mock.ExpectCommit()
 
-	response, err := repo.SplitMove(t.Context(), &repositories.SplitMoveRequest{
+	response, err := repo.SplitMove(t.Context(), &shipmentports.SplitMoveRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: orgID,
 			BuID:  buID,
 		},
 		MoveID:                moveID,
 		NewDeliveryLocationID: newDeliveryLocationID,
-		SplitPickupTimes: repositories.SplitStopTimes{
+		SplitPickupTimes: shipmentports.SplitStopTimes{
 			ScheduledWindowStart: 5,
 			ScheduledWindowEnd:   new(int64(6)),
 		},
-		NewDeliveryTimes: repositories.SplitStopTimes{
+		NewDeliveryTimes: shipmentports.SplitStopTimes{
 			ScheduledWindowStart: 7,
 			ScheduledWindowEnd:   new(int64(8)),
 		},

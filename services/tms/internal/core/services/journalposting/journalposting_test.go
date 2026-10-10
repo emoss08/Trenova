@@ -1,12 +1,15 @@
 package journalposting
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -45,11 +48,11 @@ func period(number int, status fiscalperiod.Status, start int64) *fiscalperiod.F
 	}
 }
 
-func periodsReturning(t *testing.T, found *fiscalperiod.FiscalPeriod) *mocks.MockFiscalPeriodRepository {
+func periodsReturning(t *testing.T, found *fiscalperiod.FiscalPeriod) *fiscalperiodportsmock.MockFiscalPeriodRepository {
 	t.Helper()
-	periods := mocks.NewMockFiscalPeriodRepository(t)
+	periods := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	periods.EXPECT().
-		GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{
+		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{
 			OrgID: orgID,
 			BuID:  buID,
 			Date:  1_000,
@@ -105,7 +108,7 @@ func TestResolvePeriodMovesToTheEarliestLaterOpenPeriod(t *testing.T) {
 	next := period(5, fiscalperiod.StatusLocked, 5_000)
 	periods := periodsReturning(t, closed)
 	periods.EXPECT().
-		ListByFiscalYearID(mock.Anything, repositories.ListByFiscalYearIDRequest{
+		ListByFiscalYearID(mock.Anything, fiscalperiodports.ListByFiscalYearIDRequest{
 			FiscalYearID: yearID,
 			OrgID:        orgID,
 			BuID:         buID,
@@ -153,7 +156,7 @@ func TestResolvePeriodRefusesAnInactivePeriodAndAMissingOne(t *testing.T) {
 	assert.Equal(t, "The {0} cannot be posted to an inactive fiscal period", message)
 	assert.Len(t, args, 1)
 
-	missing := mocks.NewMockFiscalPeriodRepository(t)
+	missing := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	missing.EXPECT().
 		GetPeriodByDate(mock.Anything, mock.Anything).
 		Return(nil, errortypes.NewNotFoundError("fiscal period not found")).
@@ -224,11 +227,11 @@ func TestWriterPostsABalancedJournalInTheResolvedPeriod(t *testing.T) {
 
 	open := period(3, fiscalperiod.StatusOpen, 900)
 	payable, cash := pulid.MustNew("gla_"), pulid.MustNew("gla_")
-	var written repositories.CreateJournalPostingParams
-	journals := mocks.NewMockJournalPostingRepository(t)
+	var written journalentryports.CreateJournalPostingParams
+	journals := journalentryportsmock.NewMockJournalPostingRepository(t)
 	journals.EXPECT().
 		CreatePosting(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, params repositories.CreateJournalPostingParams) error {
+		RunAndReturn(func(_ context.Context, params journalentryports.CreateJournalPostingParams) error {
 			written = params
 			return nil
 		}).
@@ -265,11 +268,11 @@ func TestWriterPostsABalancedJournalInTheResolvedPeriod(t *testing.T) {
 func TestWriterLeavesAManualModeJournalUnposted(t *testing.T) {
 	t.Parallel()
 
-	var written repositories.CreateJournalPostingParams
-	journals := mocks.NewMockJournalPostingRepository(t)
+	var written journalentryports.CreateJournalPostingParams
+	journals := journalentryportsmock.NewMockJournalPostingRepository(t)
 	journals.EXPECT().
 		CreatePosting(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, params repositories.CreateJournalPostingParams) error {
+		RunAndReturn(func(_ context.Context, params journalentryports.CreateJournalPostingParams) error {
 			written = params
 			return nil
 		}).
@@ -313,9 +316,9 @@ func TestWriterRefusesJournalsThatDoNotBalanceOrHaveBadLines(t *testing.T) {
 			t.Parallel()
 
 			_, err := Writer{
-				Periods:  mocks.NewMockFiscalPeriodRepository(t),
+				Periods:  fiscalperiodportsmock.NewMockFiscalPeriodRepository(t),
 				Numbers:  fixedNumbers{},
-				Journals: mocks.NewMockJournalPostingRepository(t),
+				Journals: journalentryportsmock.NewMockJournalPostingRepository(t),
 			}.Write(t.Context(), writeRequest(&tenant.AccountingControl{}, lines...))
 			require.Error(t, err)
 			assert.True(t, errortypes.IsBusinessError(err))

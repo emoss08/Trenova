@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
@@ -14,10 +14,10 @@ import (
 )
 
 type recordedFollowUps struct {
-	requests []services.DecisionFollowUpRequest
+	requests []agentports.DecisionFollowUpRequest
 }
 
-func (r *recordedFollowUps) FollowUp(_ context.Context, req services.DecisionFollowUpRequest) {
+func (r *recordedFollowUps) FollowUp(_ context.Context, req agentports.DecisionFollowUpRequest) {
 	r.requests = append(r.requests, req)
 }
 
@@ -25,10 +25,10 @@ func (h *decideHarness) decideWithNote(
 	t *testing.T,
 	decision agent.DecisionType,
 	note string,
-) (*services.DecisionOutcome, error) {
+) (*agentports.DecisionOutcome, error) {
 	t.Helper()
 
-	return h.service.DecideWithOutcome(t.Context(), &services.DecideAgentProposalRequest{
+	return h.service.DecideWithOutcome(t.Context(), &agentports.DecideAgentProposalRequest{
 		ProposalID: h.proposals.proposal.ID,
 		Decision:   decision,
 		ReasonCode: "rejected_in_conversation",

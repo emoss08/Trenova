@@ -4,14 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/agentdryrun"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/assistantservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"go.temporal.io/sdk/temporal"
@@ -106,7 +105,7 @@ func (w *Workflows) dryRun(
 	})
 	if plan.Refused() {
 		return temporaltype.StreamItem{
-			Event: serviceports.AssistantEventDone,
+			Event: agentports.AssistantEventDone,
 			Data:  map[string]any{"reply": plan.Decision.Message},
 			At:    workflow.Now(ctx).Unix(),
 		}
@@ -140,7 +139,7 @@ func (w *Workflows) dryRun(
 	})
 
 	return temporaltype.StreamItem{
-		Event: serviceports.AssistantEventDone,
+		Event: agentports.AssistantEventDone,
 		Data:  map[string]any{"reply": reply},
 		At:    workflow.Now(ctx).Unix(),
 	}
@@ -155,7 +154,7 @@ func dryRunError(ctx workflow.Context, err error) temporaltype.StreamItem {
 	}
 
 	return temporaltype.StreamItem{
-		Event: serviceports.AssistantEventError,
+		Event: agentports.AssistantEventError,
 		Data:  map[string]any{"message": message},
 		At:    workflow.Now(ctx).Unix(),
 	}
@@ -170,10 +169,10 @@ func dryRunSteps(plan *assistantservice.DryRunPlan, outcome *agentflow.Outcome) 
 	calls := make([]agentdryrun.Call, 0, len(outcome.Events))
 	for idx := range outcome.Events {
 		item := &outcome.Events[idx]
-		if item.Event != serviceports.AssistantEventToolFinished {
+		if item.Event != agentports.AssistantEventToolFinished {
 			continue
 		}
-		var finished serviceports.AssistantToolFinishedEvent
+		var finished agentports.AssistantToolFinishedEvent
 		if err := jsonutils.Convert(item.Data, &finished); err != nil || finished.AgentID.IsNotNil() {
 			continue
 		}

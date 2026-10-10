@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/billingtransferjobs/billingtransfercontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/billingtransferjobs/billingtransfercontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingtransferports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -33,18 +34,18 @@ const (
 type ActivitiesParams struct {
 	fx.In
 
-	RunRepo             repositories.BillingTransferRunRepository
-	ShipmentService     services.ShipmentService
+	RunRepo             billingtransferports.BillingTransferRunRepository
+	ShipmentService     shipmentports.ShipmentService
 	NotificationService *notificationservice.Service
-	RealtimeService     services.RealtimeService `optional:"true"`
+	RealtimeService     agentports.RealtimeService `optional:"true"`
 	Logger              *zap.Logger
 }
 
 type Activities struct {
-	runRepo      repositories.BillingTransferRunRepository
-	shipments    services.ShipmentService
+	runRepo      billingtransferports.BillingTransferRunRepository
+	shipments    shipmentports.ShipmentService
 	notification *notificationservice.Service
-	realtime     services.RealtimeService
+	realtime     agentports.RealtimeService
 	l            *zap.Logger
 }
 
@@ -71,7 +72,7 @@ func (a *Activities) PrepareRunActivity(
 ) (*PreparedRun, error) {
 	tenant := payload.Tenant()
 
-	run, err := a.runRepo.GetByID(ctx, &repositories.GetBillingTransferRunRequest{
+	run, err := a.runRepo.GetByID(ctx, &billingtransferports.GetBillingTransferRunRequest{
 		TenantInfo: tenant,
 		RunID:      payload.RunID,
 	})
@@ -93,7 +94,7 @@ func (a *Activities) PrepareRunActivity(
 	if run.Scope == billingtransfer.RunScopeAllMatching {
 		candidates, listErr := a.shipments.ListBillingTransferCandidateIDs(
 			ctx,
-			&services.ListBillingTransferCandidateIDsRequest{
+			&shipmentports.ListBillingTransferCandidateIDsRequest{
 				Filter: &pagination.QueryOptions{
 					TenantInfo: tenant,
 					Query:      run.SearchQuery,
@@ -109,7 +110,7 @@ func (a *Activities) PrepareRunActivity(
 			)
 		}
 
-		if _, seedErr := a.runRepo.SeedItems(ctx, &repositories.SeedBillingTransferRunItemsRequest{
+		if _, seedErr := a.runRepo.SeedItems(ctx, &billingtransferports.SeedBillingTransferRunItemsRequest{
 			TenantInfo:  tenant,
 			RunID:       run.ID,
 			ShipmentIDs: candidates.IDs,
@@ -124,7 +125,7 @@ func (a *Activities) PrepareRunActivity(
 	}
 
 	info := activity.GetInfo(ctx)
-	updated, err := a.runRepo.MarkRunning(ctx, &repositories.MarkBillingTransferRunRunningRequest{
+	updated, err := a.runRepo.MarkRunning(ctx, &billingtransferports.MarkBillingTransferRunRunningRequest{
 		TenantInfo:         tenant,
 		RunID:              run.ID,
 		TemporalWorkflowID: info.WorkflowExecution.ID,
@@ -143,7 +144,7 @@ func (a *Activities) PrepareRunActivity(
 		RequestedByID:  updated.RequestedByID,
 		TotalCount:     updated.TotalCount,
 		UnmatchedCount: updated.UnmatchedCount,
-		BatchSize:      min(BatchSize, services.MaxBulkTransferToBillingShipments),
+		BatchSize:      min(BatchSize, shipmentports.MaxBulkTransferToBillingShipments),
 	}, nil
 }
 
@@ -159,7 +160,7 @@ func (a *Activities) ProcessBatchActivity(
 ) (*ProcessBatchResult, error) {
 	tenant := payload.tenant()
 
-	run, err := a.runRepo.GetByID(ctx, &repositories.GetBillingTransferRunRequest{
+	run, err := a.runRepo.GetByID(ctx, &billingtransferports.GetBillingTransferRunRequest{
 		TenantInfo: tenant,
 		RunID:      payload.RunID,
 	})
@@ -173,7 +174,7 @@ func (a *Activities) ProcessBatchActivity(
 
 	shipmentIDs, err := a.runRepo.NextPendingShipmentIDs(
 		ctx,
-		&repositories.NextPendingBillingTransferItemsRequest{
+		&billingtransferports.NextPendingBillingTransferItemsRequest{
 			TenantInfo: tenant,
 			RunID:      run.ID,
 			Limit:      payload.Limit,
@@ -186,8 +187,8 @@ func (a *Activities) ProcessBatchActivity(
 		return &ProcessBatchResult{}, nil
 	}
 
-	actor := &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeUser,
+	actor := &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    run.RequestedByID,
 		UserID:         run.RequestedByID,
 		OrganizationID: run.OrganizationID,
@@ -195,7 +196,7 @@ func (a *Activities) ProcessBatchActivity(
 	}
 
 	result := new(ProcessBatchResult)
-	pending := make([]repositories.BillingTransferItemOutcome, 0, flushEvery)
+	pending := make([]billingtransferports.BillingTransferItemOutcome, 0, flushEvery)
 	done := 0
 
 	flush := func() error {
@@ -205,7 +206,7 @@ func (a *Activities) ProcessBatchActivity(
 
 		progress, recErr := a.runRepo.RecordItemOutcomes(
 			ctx,
-			&repositories.RecordBillingTransferOutcomesRequest{
+			&billingtransferports.RecordBillingTransferOutcomesRequest{
 				TenantInfo: tenant,
 				RunID:      run.ID,
 				Outcomes:   pending,
@@ -225,12 +226,12 @@ func (a *Activities) ProcessBatchActivity(
 	}
 
 	var flushErr error
-	_, err = a.shipments.BulkTransferToBilling(ctx, &services.BulkTransferShipmentToBillingRequest{
+	_, err = a.shipments.BulkTransferToBilling(ctx, &shipmentports.BulkTransferShipmentToBillingRequest{
 		ShipmentIDs:                    shipmentIDs,
 		BillType:                       run.BillType,
 		MarkCompletedReadyToInvoice:    run.MarkCompletedReadyToInvoice,
 		SuppressExceptionNotifications: true,
-		OnResult: func(outcome services.BulkTransferToBillingResult) {
+		OnResult: func(outcome shipmentports.BulkTransferToBillingResult) {
 			if flushErr != nil {
 				return
 			}
@@ -279,7 +280,7 @@ func (a *Activities) FinalizeRunActivity(
 ) (*TransferRunResult, error) {
 	tenant := payload.tenant()
 
-	existing, err := a.runRepo.GetByID(ctx, &repositories.GetBillingTransferRunRequest{
+	existing, err := a.runRepo.GetByID(ctx, &billingtransferports.GetBillingTransferRunRequest{
 		TenantInfo: tenant,
 		RunID:      payload.RunID,
 	})
@@ -290,7 +291,7 @@ func (a *Activities) FinalizeRunActivity(
 		return runResultFrom(existing), nil
 	}
 
-	run, err := a.runRepo.Finalize(ctx, &repositories.FinalizeBillingTransferRunRequest{
+	run, err := a.runRepo.Finalize(ctx, &billingtransferports.FinalizeBillingTransferRunRequest{
 		TenantInfo:     tenant,
 		RunID:          payload.RunID,
 		Status:         payload.Status,
@@ -314,7 +315,7 @@ func (a *Activities) ReconcileZombieRunsActivity(
 ) (*ReconcileZombieRunsResult, error) {
 	cutoff := timeutils.NowUnix() - zombieRunCutoffSeconds
 
-	runs, err := a.runRepo.ListStale(ctx, &repositories.ListStaleBillingTransferRunsRequest{
+	runs, err := a.runRepo.ListStale(ctx, &billingtransferports.ListStaleBillingTransferRunsRequest{
 		UpdatedBeforeUnix: cutoff,
 		Limit:             zombieRunSweepLimit,
 	})
@@ -331,7 +332,7 @@ func (a *Activities) ReconcileZombieRunsActivity(
 				OrganizationID: run.OrganizationID,
 				BusinessUnitID: run.BusinessUnitID,
 			}),
-			&repositories.FinalizeBillingTransferRunRequest{
+			&billingtransferports.FinalizeBillingTransferRunRequest{
 				TenantInfo: pagination.TenantInfo{
 					OrgID: run.OrganizationID,
 					BuID:  run.BusinessUnitID,
@@ -365,9 +366,9 @@ const (
 )
 
 func itemOutcomeFrom(
-	result services.BulkTransferToBillingResult,
-) repositories.BillingTransferItemOutcome {
-	outcome := repositories.BillingTransferItemOutcome{
+	result shipmentports.BulkTransferToBillingResult,
+) billingtransferports.BillingTransferItemOutcome {
+	outcome := billingtransferports.BillingTransferItemOutcome{
 		ShipmentID:           result.ShipmentID,
 		ProNumber:            result.ProNumber,
 		MarkedReadyToInvoice: result.MarkedReadyToInvoice,
@@ -537,7 +538,7 @@ func (a *Activities) publishRunChanged(
 
 	if err := a.realtime.PublishResourceInvalidation(
 		ctx,
-		&services.PublishResourceInvalidationRequest{
+		&agentports.PublishResourceInvalidationRequest{
 			OrganizationID: run.OrganizationID,
 			BusinessUnitID: run.BusinessUnitID,
 			Resource:       invalidationResource,

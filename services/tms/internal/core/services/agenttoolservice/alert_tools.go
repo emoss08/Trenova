@@ -6,18 +6,17 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/shared/pulid"
-
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/internal/core/domain/tablechangealert"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/tablechangealertservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/cronutils"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -61,7 +60,7 @@ type scheduleReportTool struct {
 	schedules scheduleWriter
 }
 
-func newScheduleReportTool(schedules *reporting.Service) serviceports.AgentTool {
+func newScheduleReportTool(schedules *reporting.Service) agentports.AgentTool {
 	return &scheduleReportTool{schedules: schedules}
 }
 
@@ -122,8 +121,8 @@ func (t *scheduleReportTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *scheduleReportTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *scheduleReportTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceReport,
@@ -143,7 +142,7 @@ func (t *scheduleReportTool) Policy() serviceports.ToolPolicy {
 
 func (t *scheduleReportTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	if err := t.validateArgs(params.Params); err != nil {
 		return err
@@ -177,7 +176,7 @@ func (t *scheduleReportTool) Validate(
 // Monday schedules piled up on one report before this.
 func (t *scheduleReportTool) refuseRepeat(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 	definitionID pulid.ID,
 ) error {
 	existing, err := t.schedules.ListSchedules(ctx, &reporting.ListSchedulesRequest{
@@ -265,7 +264,7 @@ func (t *scheduleReportTool) validateArgs(params map[string]any) error {
 
 func (t *scheduleReportTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	request, err := t.request(&params)
 	if err != nil {
@@ -279,7 +278,7 @@ func (t *scheduleReportTool) Execute(
 
 // request is the schedule the preview shows and the write creates.
 func (t *scheduleReportTool) request(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*reporting.SaveScheduleRequest, error) {
 	if err := guardExecute(t, *params); err != nil {
 		return nil, err
@@ -322,7 +321,7 @@ func scheduleFormats(params map[string]any) []string {
 	return []string{string(report.DefaultScheduleFormat)}
 }
 
-func (t *scheduleReportTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *scheduleReportTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, "definitionId", permission.ResourceReport)
 }
 
@@ -340,7 +339,7 @@ type createTableChangeAlertTool struct {
 
 func newCreateTableChangeAlertTool(
 	alerts *tablechangealertservice.Service,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return &createTableChangeAlertTool{alerts: alerts}
 }
 
@@ -441,8 +440,8 @@ var (
 	)
 )
 
-func (t *createTableChangeAlertTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *createTableChangeAlertTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceTableChangeAlert,
@@ -460,7 +459,7 @@ func (t *createTableChangeAlertTool) Policy() serviceports.ToolPolicy {
 
 func (t *createTableChangeAlertTool) Validate(
 	_ context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	return t.validateArgs(params.Params)
 }
@@ -528,7 +527,7 @@ func alertConditions(params map[string]any) []tablechangealert.Condition {
 
 func (t *createTableChangeAlertTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -539,7 +538,7 @@ func (t *createTableChangeAlertTool) Execute(
 	return err
 }
 
-func alertSubscription(params *serviceports.ToolExecuteParams) *tablechangealert.TCASubscription {
+func alertSubscription(params *agentports.ToolExecuteParams) *tablechangealert.TCASubscription {
 	match := optionalString(params.Params, "conditionMatch")
 	if match == "" {
 		match = "all"

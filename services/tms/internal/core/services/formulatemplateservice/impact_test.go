@@ -6,7 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -52,7 +53,7 @@ func expectRatedShipments(
 ) {
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
 	deps.shipmentRepo.On("ListRatedByFormulaTemplate", mock.Anything, mock.MatchedBy(
-		func(req *repositories.ListRatedByFormulaTemplateRequest) bool {
+		func(req *shipmentports.ListRatedByFormulaTemplateRequest) bool {
 			return req.TemplateID == template.ID && req.Limit == impactDefaultLimit
 		},
 	)).Return(shipments, nil)
@@ -72,7 +73,7 @@ func TestApprovalImpact_UsesVersionRecordedOnEachShipment(t *testing.T) {
 
 	// Two shipments stamped with the same version resolve it once.
 	deps.versionRepo.On("GetByTemplateAndVersion", mock.Anything, mock.MatchedBy(
-		func(req *repositories.GetVersionRequest) bool {
+		func(req *formulatemplateports.GetVersionRequest) bool {
 			return req.TemplateID == template.ID && req.VersionNumber == 1
 		},
 	)).Return(newApprovedSnapshot(template, 1, "baseRate"), nil).Once()
@@ -103,7 +104,7 @@ func TestApprovalImpact_FallsBackToLastActiveSnapshot(t *testing.T) {
 
 	expectRatedShipments(deps, template, newBacktestShipments())
 	deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.MatchedBy(
-		func(req *repositories.GetLatestVersionByStatusRequest) bool {
+		func(req *formulatemplateports.GetLatestVersionByStatusRequest) bool {
 			return req.TemplateID == template.ID && req.Status == formulatemplate.StatusActive
 		},
 	)).Return(newApprovedSnapshot(template, 1, "baseRate"), nil).Once()

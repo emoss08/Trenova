@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -29,7 +29,7 @@ type definitionRepository struct {
 	l  *zap.Logger
 }
 
-func NewDefinitionRepository(p DefinitionParams) repositories.ReportDefinitionRepository {
+func NewDefinitionRepository(p DefinitionParams) reportports.ReportDefinitionRepository {
 	return &definitionRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.report-definition-repository"),
@@ -46,7 +46,7 @@ func (r *definitionRepository) Create(
 
 		entity.CurrentRevision = 1
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
 			if _, iErr := tx.NewInsert().Model(entity).Exec(txCtx); iErr != nil {
 				return iErr
 			}
@@ -79,7 +79,7 @@ func (r *definitionRepository) Update(
 		entity.Version++
 		entity.CurrentRevision++
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
 			result, uErr := tx.NewUpdate().
 				Model(entity).
 				WherePK().
@@ -124,7 +124,7 @@ func newRevision(
 
 func (r *definitionRepository) UpdateStatus(
 	ctx context.Context,
-	req *repositories.GetReportDefinitionRequest,
+	req *reportports.GetReportDefinitionRequest,
 	status report.DefinitionStatus,
 	diagnostics []string,
 ) error {
@@ -157,7 +157,7 @@ func (r *definitionRepository) UpdateStatus(
 
 func (r *definitionRepository) GetByID(
 	ctx context.Context,
-	req *repositories.GetReportDefinitionRequest,
+	req *reportports.GetReportDefinitionRequest,
 ) (*report.ReportDefinition, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*report.ReportDefinition, error) {
 		entity := new(report.ReportDefinition)
@@ -179,7 +179,7 @@ func (r *definitionRepository) GetByID(
 
 func (r *definitionRepository) List(
 	ctx context.Context,
-	req *repositories.ListReportDefinitionsRequest,
+	req *reportports.ListReportDefinitionsRequest,
 ) ([]*report.ReportDefinition, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.ReportDefinition, error) {
 		cols := buncolgen.ReportDefinitionColumns
@@ -214,7 +214,7 @@ func (r *definitionRepository) List(
 
 func (r *definitionRepository) Delete(
 	ctx context.Context,
-	req *repositories.DeleteReportDefinitionRequest,
+	req *reportports.DeleteReportDefinitionRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		result, err := r.db.DBForContext(ctx).
@@ -236,7 +236,7 @@ func (r *definitionRepository) Delete(
 
 func (r *definitionRepository) GetRevision(
 	ctx context.Context,
-	req *repositories.GetReportRevisionRequest,
+	req *reportports.GetReportRevisionRequest,
 ) (*report.ReportDefinitionRevision, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*report.ReportDefinitionRevision, error) {
 		entity := new(report.ReportDefinitionRevision)
@@ -258,7 +258,7 @@ func (r *definitionRepository) GetRevision(
 
 func (r *definitionRepository) ListRevisions(
 	ctx context.Context,
-	req *repositories.ListReportRevisionsRequest,
+	req *reportports.ListReportRevisionsRequest,
 ) ([]*report.ReportDefinitionRevision, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.ReportDefinitionRevision, error) {
 		cols := buncolgen.ReportDefinitionRevisionColumns

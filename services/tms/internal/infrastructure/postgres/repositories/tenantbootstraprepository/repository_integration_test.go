@@ -15,10 +15,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/stretchr/testify/assert"
@@ -71,11 +71,11 @@ func TestBootstrapCreatesEverythingATenantNeeds(t *testing.T) {
 	org := newOrganization("Acme Freight, LLC")
 	org.StateID = data.State.ID
 
-	var result *repositories.BootstrapTenantResult
-	err := conn.WithTx(ctx, ports.TxOptions{}, func(ctx context.Context, _ bun.Tx) error {
+	var result *tenantports.BootstrapTenantResult
+	err := conn.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, _ bun.Tx) error {
 		require.NoError(t, repo.LockProvisioning(ctx))
 		var bootErr error
-		result, bootErr = repo.Bootstrap(ctx, &repositories.BootstrapTenantRequest{
+		result, bootErr = repo.Bootstrap(ctx, &tenantports.BootstrapTenantRequest{
 			BusinessUnitName: "Acme Freight, LLC",
 			Organization:     org,
 			LoginSlugBase:    "acme-freight-llc",
@@ -107,7 +107,7 @@ func TestBootstrapCreatesEverythingATenantNeeds(t *testing.T) {
 
 	second := newOrganization("Acme Freight, LLC")
 	second.StateID = data.State.ID
-	again, err := repo.Bootstrap(ctx, &repositories.BootstrapTenantRequest{
+	again, err := repo.Bootstrap(ctx, &tenantports.BootstrapTenantRequest{
 		BusinessUnitName: "Acme Freight, LLC",
 		Organization:     second,
 		LoginSlugBase:    "acme-freight-llc",
@@ -127,7 +127,7 @@ func TestBootstrapResolvesThePlaceholderState(t *testing.T) {
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 
-	result, err := repo.Bootstrap(ctx, &repositories.BootstrapTenantRequest{
+	result, err := repo.Bootstrap(ctx, &tenantports.BootstrapTenantRequest{
 		BusinessUnitName:  "Beta Haulers",
 		Organization:      newOrganization("Beta Haulers"),
 		LoginSlugBase:     "beta-haulers",
@@ -138,7 +138,7 @@ func TestBootstrapResolvesThePlaceholderState(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, data.State.ID, result.Organization.StateID)
 
-	_, err = repo.Bootstrap(ctx, &repositories.BootstrapTenantRequest{
+	_, err = repo.Bootstrap(ctx, &tenantports.BootstrapTenantRequest{
 		BusinessUnitName:  "Gamma",
 		Organization:      newOrganization("Gamma"),
 		StateAbbreviation: "ZZ",

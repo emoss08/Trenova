@@ -5,22 +5,21 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type dailyUsage struct {
-	repositories.AIUsageRepository
-	asked repositories.AIUsageDailyRequest
-	rows  []repositories.AIUsageDayTotals
+	aiusageports.AIUsageRepository
+	asked aiusageports.AIUsageDailyQuery
+	rows  []aiusageports.AIUsageDayTotals
 }
 
 func (d *dailyUsage) Daily(
 	_ context.Context,
-	req repositories.AIUsageDailyRequest,
-) ([]repositories.AIUsageDayTotals, error) {
+	req aiusageports.AIUsageDailyQuery,
+) ([]aiusageports.AIUsageDayTotals, error) {
 	d.asked = req
 	return d.rows, nil
 }
@@ -30,14 +29,14 @@ func TestDailyFillsQuietDaysInTheAskedTimezone(t *testing.T) {
 
 	chicago, err := time.LoadLocation("America/Chicago")
 	require.NoError(t, err)
-	usage := &dailyUsage{rows: []repositories.AIUsageDayTotals{
-		{Day: "2026-10-05", AIUsageTotals: repositories.AIUsageTotals{Calls: 4, Failed: 1, CostUSD: "0.12"}},
+	usage := &dailyUsage{rows: []aiusageports.AIUsageDayTotals{
+		{Day: "2026-10-05", AIUsageTotals: aiusageports.AIUsageTotals{Calls: 4, Failed: 1, CostUSD: "0.12"}},
 	}}
 	svc := &Service{usage: usage, clock: func() time.Time {
 		return time.Date(2026, 10, 7, 3, 0, 0, 0, time.UTC)
 	}}
 
-	days, err := svc.Daily(t.Context(), &services.AIUsageDailyRequest{Days: 3, Timezone: "America/Chicago"})
+	days, err := svc.Daily(t.Context(), &aiusageports.AIUsageDailyRequest{Days: 3, Timezone: "America/Chicago"})
 
 	require.NoError(t, err)
 	assert.Equal(t, time.Date(2026, 10, 4, 0, 0, 0, 0, chicago).Unix(), usage.asked.Since,
@@ -56,7 +55,7 @@ func TestDailyRefusesAnUnknownTimezone(t *testing.T) {
 
 	svc := &Service{usage: &dailyUsage{}, clock: time.Now}
 
-	_, err := svc.Daily(t.Context(), &services.AIUsageDailyRequest{Timezone: "Mars/Olympus"})
+	_, err := svc.Daily(t.Context(), &aiusageports.AIUsageDailyRequest{Timezone: "Mars/Olympus"})
 
 	require.Error(t, err)
 }

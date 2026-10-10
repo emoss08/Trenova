@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -36,7 +36,7 @@ func newTestRepository(db *bun.DB) *testRepository {
 
 func (r *testRepository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListDocumentsRequest,
+	req *documentports.ListDocumentsRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
@@ -62,7 +62,7 @@ func (r *testRepository) filterQuery(
 
 func (r *testRepository) List(
 	ctx context.Context,
-	req *repositories.ListDocumentsRequest,
+	req *documentports.ListDocumentsRequest,
 ) (*pagination.ListResult[*document.Document], error) {
 	entities := make([]*document.Document, 0, req.Filter.Pagination.SafeLimit())
 	total, err := r.db.
@@ -83,7 +83,7 @@ func (r *testRepository) List(
 
 func (r *testRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetDocumentByIDRequest,
+	req documentports.GetDocumentByIDRequest,
 ) (*document.Document, error) {
 	entity := new(document.Document)
 	err := r.db.
@@ -104,7 +104,7 @@ func (r *testRepository) GetByID(
 
 func (r *testRepository) GetByResourceID(
 	ctx context.Context,
-	req repositories.GetDocumentsByResourceRequest,
+	req documentports.GetDocumentsByResourceRequest,
 ) ([]*document.Document, error) {
 	entities := make([]*document.Document, 0)
 	err := r.db.
@@ -162,7 +162,7 @@ func (r *testRepository) Update(
 
 func (r *testRepository) GetByIDs(
 	ctx context.Context,
-	req repositories.BulkDeleteDocumentRequest,
+	req documentports.BulkDeleteDocumentRequest,
 ) ([]*document.Document, error) {
 	entities := make([]*document.Document, 0, len(req.IDs))
 	err := r.db.
@@ -183,7 +183,7 @@ func (r *testRepository) GetByIDs(
 
 func (r *testRepository) Delete(
 	ctx context.Context,
-	req repositories.DeleteDocumentRequest,
+	req documentports.DeleteDocumentRequest,
 ) error {
 	results, err := r.db.
 		NewDelete().
@@ -208,7 +208,7 @@ func (r *testRepository) Delete(
 
 func (r *testRepository) BulkDelete(
 	ctx context.Context,
-	req repositories.BulkDeleteDocumentRequest,
+	req documentports.BulkDeleteDocumentRequest,
 ) error {
 	results, err := r.db.
 		NewDelete().
@@ -327,7 +327,7 @@ func TestDocumentRepository_GetByID_Integration(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("get existing document", func(t *testing.T) {
-		retrieved, err := repo.GetByID(ctx, repositories.GetDocumentByIDRequest{
+		retrieved, err := repo.GetByID(ctx, documentports.GetDocumentByIDRequest{
 			ID: doc.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: fixtures.orgID,
@@ -341,7 +341,7 @@ func TestDocumentRepository_GetByID_Integration(t *testing.T) {
 	})
 
 	t.Run("get non-existent document", func(t *testing.T) {
-		_, err := repo.GetByID(ctx, repositories.GetDocumentByIDRequest{
+		_, err := repo.GetByID(ctx, documentports.GetDocumentByIDRequest{
 			ID: pulid.MustNew("doc_"),
 			TenantInfo: pagination.TenantInfo{
 				OrgID: fixtures.orgID,
@@ -352,7 +352,7 @@ func TestDocumentRepository_GetByID_Integration(t *testing.T) {
 	})
 
 	t.Run("get document with wrong tenant", func(t *testing.T) {
-		_, err := repo.GetByID(ctx, repositories.GetDocumentByIDRequest{
+		_, err := repo.GetByID(ctx, documentports.GetDocumentByIDRequest{
 			ID: doc.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: pulid.MustNew("org_"),
@@ -393,7 +393,7 @@ func TestDocumentRepository_GetByResourceID_Integration(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("get documents by resource", func(t *testing.T) {
-		docs, err := repo.GetByResourceID(ctx, repositories.GetDocumentsByResourceRequest{
+		docs, err := repo.GetByResourceID(ctx, documentports.GetDocumentsByResourceRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: fixtures.orgID,
 				BuID:  fixtures.buID,
@@ -406,7 +406,7 @@ func TestDocumentRepository_GetByResourceID_Integration(t *testing.T) {
 	})
 
 	t.Run("get documents for resource with no documents", func(t *testing.T) {
-		docs, err := repo.GetByResourceID(ctx, repositories.GetDocumentsByResourceRequest{
+		docs, err := repo.GetByResourceID(ctx, documentports.GetDocumentsByResourceRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: fixtures.orgID,
 				BuID:  fixtures.buID,
@@ -440,7 +440,7 @@ func TestDocumentRepository_List_Integration(t *testing.T) {
 	}
 
 	t.Run("list all documents", func(t *testing.T) {
-		result, err := repo.List(ctx, &repositories.ListDocumentsRequest{
+		result, err := repo.List(ctx, &documentports.ListDocumentsRequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: pagination.TenantInfo{
 					OrgID: fixtures.orgID,
@@ -458,7 +458,7 @@ func TestDocumentRepository_List_Integration(t *testing.T) {
 	})
 
 	t.Run("list with pagination", func(t *testing.T) {
-		result, err := repo.List(ctx, &repositories.ListDocumentsRequest{
+		result, err := repo.List(ctx, &documentports.ListDocumentsRequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: pagination.TenantInfo{
 					OrgID: fixtures.orgID,
@@ -476,7 +476,7 @@ func TestDocumentRepository_List_Integration(t *testing.T) {
 	})
 
 	t.Run("list with status filter", func(t *testing.T) {
-		result, err := repo.List(ctx, &repositories.ListDocumentsRequest{
+		result, err := repo.List(ctx, &documentports.ListDocumentsRequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: pagination.TenantInfo{
 					OrgID: fixtures.orgID,
@@ -537,7 +537,7 @@ func TestDocumentRepository_Delete_Integration(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("delete existing document", func(t *testing.T) {
-		err := repo.Delete(ctx, repositories.DeleteDocumentRequest{
+		err := repo.Delete(ctx, documentports.DeleteDocumentRequest{
 			ID: doc.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: fixtures.orgID,
@@ -546,7 +546,7 @@ func TestDocumentRepository_Delete_Integration(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		_, err = repo.GetByID(ctx, repositories.GetDocumentByIDRequest{
+		_, err = repo.GetByID(ctx, documentports.GetDocumentByIDRequest{
 			ID: doc.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: fixtures.orgID,
@@ -557,7 +557,7 @@ func TestDocumentRepository_Delete_Integration(t *testing.T) {
 	})
 
 	t.Run("delete non-existent document", func(t *testing.T) {
-		err := repo.Delete(ctx, repositories.DeleteDocumentRequest{
+		err := repo.Delete(ctx, documentports.DeleteDocumentRequest{
 			ID: pulid.MustNew("doc_"),
 			TenantInfo: pagination.TenantInfo{
 				OrgID: fixtures.orgID,
@@ -597,7 +597,7 @@ func TestDocumentRepository_MultiTenancy_Integration(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("org1 can only see org1 documents", func(t *testing.T) {
-		result, err := repo.List(ctx, &repositories.ListDocumentsRequest{
+		result, err := repo.List(ctx, &documentports.ListDocumentsRequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: pagination.TenantInfo{
 					OrgID: org1,
@@ -612,7 +612,7 @@ func TestDocumentRepository_MultiTenancy_Integration(t *testing.T) {
 	})
 
 	t.Run("org2 can only see org2 documents", func(t *testing.T) {
-		result, err := repo.List(ctx, &repositories.ListDocumentsRequest{
+		result, err := repo.List(ctx, &documentports.ListDocumentsRequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: pagination.TenantInfo{
 					OrgID: org2,
@@ -627,7 +627,7 @@ func TestDocumentRepository_MultiTenancy_Integration(t *testing.T) {
 	})
 
 	t.Run("org1 cannot access org2 document by ID", func(t *testing.T) {
-		_, err := repo.GetByID(ctx, repositories.GetDocumentByIDRequest{
+		_, err := repo.GetByID(ctx, documentports.GetDocumentByIDRequest{
 			ID: doc2.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: org1,
@@ -638,7 +638,7 @@ func TestDocumentRepository_MultiTenancy_Integration(t *testing.T) {
 	})
 
 	t.Run("org1 cannot delete org2 document", func(t *testing.T) {
-		err := repo.Delete(ctx, repositories.DeleteDocumentRequest{
+		err := repo.Delete(ctx, documentports.DeleteDocumentRequest{
 			ID: doc2.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: org1,

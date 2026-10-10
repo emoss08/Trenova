@@ -7,15 +7,15 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 var (
-	_ serviceports.ToolPreviewer = (*createDashboardTool)(nil)
-	_ serviceports.ToolPreviewer = (*addDashboardTileTool)(nil)
+	_ agentports.ToolPreviewer = (*createDashboardTool)(nil)
+	_ agentports.ToolPreviewer = (*addDashboardTileTool)(nil)
 )
 
 var dashboardViewLabels = map[string]string{fieldTiles: "Tiles, in order"}
@@ -62,7 +62,7 @@ func dashboardAudience(visibility report.Visibility) string {
 
 func (t *createDashboardTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	if err := guardPreview(t, &params); err != nil {
 		return nil, err
@@ -94,7 +94,7 @@ func (t *createDashboardTool) Preview(
 
 func (t *addDashboardTileTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	if err := guardPreview(t, &params); err != nil {
 		return nil, err

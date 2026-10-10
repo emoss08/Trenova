@@ -1,7 +1,7 @@
 package shipmentimportassistantservice
 
 import (
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
 
 // The tools the import assistant may call. They are declared in the port's own
@@ -15,16 +15,16 @@ import (
 // extractor harvests any Description field it finds (shared/cmd/i18n-extract) —
 // which would put seventeen prompts into the translation catalogs and make what
 // the assistant is told depend on the operator's locale.
-func tool(name, description string, parameters map[string]any) serviceports.ToolSpec {
-	return serviceports.ToolSpec{
+func tool(name, description string, parameters map[string]any) kernelports.ToolSpec {
+	return kernelports.ToolSpec{
 		Name:        name,
 		Description: description,
 		Parameters:  parameters,
 	}
 }
 
-func buildTools() []serviceports.ToolSpec { //nolint:funlen // one entry per tool the assistant may call
-	return []serviceports.ToolSpec{
+func buildTools() []kernelports.ToolSpec { //nolint:funlen // one entry per tool the assistant may call
+	return []kernelports.ToolSpec{
 		tool(
 			"accept_field",
 			"Accept an extracted field value as correct",

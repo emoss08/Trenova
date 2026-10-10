@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -71,10 +71,10 @@ func agentDefinitionConnectionToModel(
 func agentDefinitionStats(
 	ctx context.Context,
 	obj *agentdefinition.Definition,
-) (repositories.AgentDefinitionStats, error) {
+) (agentdefinitionports.AgentDefinitionStats, error) {
 	loadersForRequest, ok := loaders.FromContext(ctx)
 	if !ok || loadersForRequest == nil {
-		return repositories.AgentDefinitionStats{}, errortypes.NewDatabaseError(
+		return agentdefinitionports.AgentDefinitionStats{}, errortypes.NewDatabaseError(
 			"Agent definition stats loader is not configured",
 		)
 	}

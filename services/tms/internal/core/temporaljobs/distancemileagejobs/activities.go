@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/places/ports/storedmileageports"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -17,14 +17,14 @@ const (
 type ActivitiesParams struct {
 	fx.In
 
-	StoredMileageRepo   repositories.StoredMileageRepository
-	StoredMileageBuffer repositories.StoredMileageBufferRepository
+	StoredMileageRepo   storedmileageports.StoredMileageRepository
+	StoredMileageBuffer storedmileageports.StoredMileageBufferRepository
 	Logger              *zap.Logger
 }
 
 type Activities struct {
-	storedMileageRepo   repositories.StoredMileageRepository
-	storedMileageBuffer repositories.StoredMileageBufferRepository
+	storedMileageRepo   storedmileageports.StoredMileageRepository
+	storedMileageBuffer storedmileageports.StoredMileageBufferRepository
 	l                   *zap.Logger
 }
 

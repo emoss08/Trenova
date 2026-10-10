@@ -6,9 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/conversationschedule"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -39,7 +39,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.ConversationScheduleRepository {
+func New(p Params) conversationscheduleports.ConversationScheduleRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.conversation-schedule-repository"),
@@ -48,7 +48,7 @@ func New(p Params) repositories.ConversationScheduleRepository {
 
 func (r *repository) Create(
 	ctx context.Context,
-	req repositories.CreateConversationScheduleRequest,
+	req conversationscheduleports.CreateConversationScheduleRequest,
 ) (*conversationschedule.Schedule, *conversation.Message, error) {
 	return dbtx.Write2(ctx, r.db, func(ctx context.Context) (
 		*conversationschedule.Schedule, *conversation.Message, error,
@@ -113,7 +113,7 @@ func (r *repository) Create(
 
 func (r *repository) Get(
 	ctx context.Context,
-	req repositories.GetConversationScheduleRequest,
+	req conversationscheduleports.GetConversationScheduleRequest,
 ) (*conversationschedule.Schedule, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversationschedule.Schedule, error) {
 		cols := buncolgen.ScheduleColumns
@@ -142,7 +142,7 @@ func (r *repository) Get(
 
 func (r *repository) List(
 	ctx context.Context,
-	req repositories.ListConversationSchedulesRequest,
+	req conversationscheduleports.ListConversationSchedulesRequest,
 ) (*pagination.ListResult[*conversationschedule.Schedule], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (
 		*pagination.ListResult[*conversationschedule.Schedule], error,
@@ -180,7 +180,7 @@ func (r *repository) List(
 
 func (r *repository) Count(
 	ctx context.Context,
-	req repositories.CountConversationSchedulesRequest,
+	req conversationscheduleports.CountConversationSchedulesRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		return r.db.DBForContext(ctx).
@@ -211,7 +211,7 @@ func (r *repository) scoped(
 
 func (r *repository) ListAcrossTenants(
 	ctx context.Context,
-	req repositories.ListConversationSchedulesAcrossTenantsRequest,
+	req conversationscheduleports.ListConversationSchedulesAcrossTenantsRequest,
 ) ([]*conversationschedule.Schedule, error) {
 	ctx = dbscope.WithSystem(
 		ctx,
@@ -289,7 +289,7 @@ func (r *repository) UpdateState(
 
 func (r *repository) RecordRun(
 	ctx context.Context,
-	req repositories.RecordConversationScheduleRunRequest,
+	req conversationscheduleports.RecordConversationScheduleRunRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.ScheduleColumns
@@ -316,7 +316,7 @@ func (r *repository) RecordRun(
 
 func (r *repository) Delete(
 	ctx context.Context,
-	req repositories.GetConversationScheduleRequest,
+	req conversationscheduleports.GetConversationScheduleRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if req.UserID.IsNil() {

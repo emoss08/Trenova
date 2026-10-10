@@ -7,8 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,13 +20,13 @@ import (
 type Params struct {
 	fx.In
 
-	Service              serviceports.AgentExceptionService
+	Service              agentports.AgentExceptionService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	service serviceports.AgentExceptionService
+	service agentports.AgentExceptionService
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
 }
@@ -38,9 +39,9 @@ func New(p Params) *Handler {
 	}
 }
 
-func requestActorFromAuthContext(authCtx *authctx.AuthContext) serviceports.RequestActor {
-	return serviceports.RequestActor{
-		PrincipalType:  serviceports.PrincipalType(authCtx.PrincipalType),
+func requestActorFromAuthContext(authCtx *authctx.AuthContext) permissionports.RequestActor {
+	return permissionports.RequestActor{
+		PrincipalType:  kernelports.PrincipalType(authCtx.PrincipalType),
 		PrincipalID:    authCtx.PrincipalID,
 		UserID:         authCtx.UserID,
 		APIKeyID:       authCtx.APIKeyID,
@@ -74,7 +75,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*agent.AgentException], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListAgentExceptionRequest{Filter: req},
+				&agentports.ListAgentExceptionRequest{Filter: req},
 			)
 		},
 	)
@@ -103,7 +104,7 @@ func (h *Handler) resolve(c *gin.Context) {
 	actor := requestActorFromAuthContext(authCtx)
 	updated, err := h.service.Resolve(
 		c.Request.Context(),
-		&serviceports.ResolveAgentExceptionRequest{
+		&agentports.ResolveAgentExceptionRequest{
 			ID:              exceptionID,
 			ResolutionState: body.ResolutionState,
 			ResolutionNotes: body.ResolutionNotes,

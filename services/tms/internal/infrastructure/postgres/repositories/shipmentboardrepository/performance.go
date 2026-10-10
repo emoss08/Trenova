@@ -6,15 +6,15 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 )
 
-func NewCarrierPerformanceRepository(r *Repository) repositories.CarrierPerformanceRepository {
+func NewCarrierPerformanceRepository(r *Repository) shipmentports.CarrierPerformanceRepository {
 	return r
 }
 
@@ -32,12 +32,12 @@ type rateRow struct {
 
 func (r *Repository) ListCarrierPerformance(
 	ctx context.Context,
-	req *repositories.ListCarrierPerformanceRequest,
-) ([]*repositories.CarrierPerformance, error) {
+	req *shipmentports.ListCarrierPerformanceRequest,
+) ([]*shipmentports.CarrierPerformance, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*repositories.CarrierPerformance, error) {
+		func(ctx context.Context) ([]*shipmentports.CarrierPerformance, error) {
 			dba := r.db.DBForContext(ctx)
 			offers, err := r.offerTotals(ctx, dba, req)
 			if err != nil {
@@ -56,7 +56,7 @@ func (r *Repository) ListCarrierPerformance(
 func (r *Repository) offerTotals(
 	ctx context.Context,
 	dba bun.IDB,
-	req *repositories.ListCarrierPerformanceRequest,
+	req *shipmentports.ListCarrierPerformanceRequest,
 ) ([]offerTotalsRow, error) {
 	cols := buncolgen.TenderOfferColumns
 	answered := []tender.OfferStatus{
@@ -91,7 +91,7 @@ func (r *Repository) offerTotals(
 func (r *Repository) perMileRates(
 	ctx context.Context,
 	dba bun.IDB,
-	req *repositories.ListCarrierPerformanceRequest,
+	req *shipmentports.ListCarrierPerformanceRequest,
 ) ([]rateRow, error) {
 	cols := buncolgen.CarrierAssignmentColumns
 
@@ -117,13 +117,13 @@ func (r *Repository) perMileRates(
 	return rows, nil
 }
 
-func mergePerformance(offers []offerTotalsRow, rates []rateRow) []*repositories.CarrierPerformance {
-	byCarrier := make(map[pulid.ID]*repositories.CarrierPerformance, len(offers)+len(rates))
-	entry := func(id pulid.ID) *repositories.CarrierPerformance {
+func mergePerformance(offers []offerTotalsRow, rates []rateRow) []*shipmentports.CarrierPerformance {
+	byCarrier := make(map[pulid.ID]*shipmentports.CarrierPerformance, len(offers)+len(rates))
+	entry := func(id pulid.ID) *shipmentports.CarrierPerformance {
 		if existing, ok := byCarrier[id]; ok {
 			return existing
 		}
-		created := &repositories.CarrierPerformance{CarrierID: id}
+		created := &shipmentports.CarrierPerformance{CarrierID: id}
 		byCarrier[id] = created
 
 		return created
@@ -139,7 +139,7 @@ func mergePerformance(offers []offerTotalsRow, rates []rateRow) []*repositories.
 		perf.AvgRatePerMile = row.AvgRate
 	}
 
-	out := make([]*repositories.CarrierPerformance, 0, len(byCarrier))
+	out := make([]*shipmentports.CarrierPerformance, 0, len(byCarrier))
 	for _, perf := range byCarrier {
 		out = append(out, perf)
 	}

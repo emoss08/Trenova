@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -35,7 +35,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.TimesheetRepository {
+func New(p Params) workerports.TimesheetRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.timesheet-repository"),
@@ -51,7 +51,7 @@ func limitOr(requested, fallback int) int {
 
 func (r *repository) ListEntries(
 	ctx context.Context,
-	req *repositories.ListTimeClockEntriesRequest,
+	req *workerports.ListTimeClockEntriesRequest,
 ) ([]*worker.TimeClockEntry, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.TimeClockEntry, error) {
 		cols := buncolgen.TimeClockEntryColumns
@@ -108,7 +108,7 @@ func (r *repository) ListEntries(
 
 func (r *repository) GetEntryByID(
 	ctx context.Context,
-	req *repositories.GetTimeClockEntryByIDRequest,
+	req *workerports.GetTimeClockEntryByIDRequest,
 ) (*worker.TimeClockEntry, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.TimeClockEntry, error) {
 		entity := new(worker.TimeClockEntry)
@@ -206,7 +206,7 @@ func (r *repository) UpdateEntry(
 
 func (r *repository) DeleteEntry(
 	ctx context.Context,
-	req *repositories.GetTimeClockEntryByIDRequest,
+	req *workerports.GetTimeClockEntryByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		results, err := r.db.DBForContext(ctx).
@@ -228,7 +228,7 @@ func (r *repository) DeleteEntry(
 
 func (r *repository) ListTimesheets(
 	ctx context.Context,
-	req *repositories.ListTimesheetsRequest,
+	req *workerports.ListTimesheetsRequest,
 ) ([]*worker.Timesheet, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.Timesheet, error) {
 		cols := buncolgen.TimesheetColumns
@@ -289,7 +289,7 @@ func (r *repository) ListTimesheets(
 
 func (r *repository) GetTimesheetByID(
 	ctx context.Context,
-	req *repositories.GetTimesheetByIDRequest,
+	req *workerports.GetTimesheetByIDRequest,
 ) (*worker.Timesheet, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.Timesheet, error) {
 		entity := new(worker.Timesheet)
@@ -310,7 +310,7 @@ func (r *repository) GetTimesheetByID(
 		}
 
 		if req.IncludeEntries {
-			entries, err := r.ListEntries(ctx, &repositories.ListTimeClockEntriesRequest{
+			entries, err := r.ListEntries(ctx, &workerports.ListTimeClockEntriesRequest{
 				TenantInfo:  req.TenantInfo,
 				TimesheetID: entity.ID,
 			})
@@ -439,7 +439,7 @@ func (r *repository) AttachEntries(
 
 func (r *repository) ListExports(
 	ctx context.Context,
-	req *repositories.ListPayrollExportsRequest,
+	req *workerports.ListPayrollExportsRequest,
 ) ([]*worker.PayrollExport, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.PayrollExport, error) {
 		entities := make([]*worker.PayrollExport, 0, 8)
@@ -463,7 +463,7 @@ func (r *repository) ListExports(
 
 func (r *repository) GetExportByID(
 	ctx context.Context,
-	req *repositories.GetPayrollExportByIDRequest,
+	req *workerports.GetPayrollExportByIDRequest,
 ) (*worker.PayrollExport, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.PayrollExport, error) {
 		entity := new(worker.PayrollExport)
@@ -534,7 +534,7 @@ func (r *repository) UpdateExport(
 // instead of being locked out from under them.
 func (r *repository) StampExport(
 	ctx context.Context,
-	req *repositories.StampExportRequest,
+	req *workerports.StampExportRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		cols := buncolgen.TimesheetColumns
@@ -575,10 +575,10 @@ func (r *repository) ApprovedLeaveRanges(
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 	from, to int64,
-) ([]repositories.RotaRangeRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.RotaRangeRow, error) {
+) ([]workerports.RotaRangeRow, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.RotaRangeRow, error) {
 		cols := buncolgen.WorkerPTOColumns
-		rows := make([]repositories.RotaRangeRow, 0, 4)
+		rows := make([]workerports.RotaRangeRow, 0, 4)
 
 		if err := buncolgen.WorkerPTOScopeTenant(
 			r.db.DBForContext(ctx).NewSelect().Model((*worker.WorkerPTO)(nil)),

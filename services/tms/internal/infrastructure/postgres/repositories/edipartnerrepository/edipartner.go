@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -32,7 +32,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.EDIPartnerRepository {
+func New(p Params) ediports.EDIPartnerRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.edi-partner-repository"),
@@ -41,7 +41,7 @@ func New(p Params) repositories.EDIPartnerRepository {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListEDIPartnersRequest,
+	req *ediports.ListEDIPartnersRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.EDIPartnerColumns
 	rel := buncolgen.EDIPartnerRelations
@@ -74,7 +74,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListEDIPartnersRequest,
+	req *ediports.ListEDIPartnersRequest,
 ) (*pagination.ListResult[*edi.EDIPartner], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDIPartner], error) {
 		entities := make([]*edi.EDIPartner, 0, req.Filter.Pagination.SafeLimit())
@@ -98,7 +98,7 @@ func (r *repository) List(
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
-	req *repositories.EDIPartnerSelectOptionsRequest,
+	req *ediports.EDIPartnerSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDIPartner], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDIPartner], error) {
 		col := buncolgen.EDIPartnerColumns
@@ -143,7 +143,7 @@ func (r *repository) SelectOptions(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetEDIPartnerByIDRequest,
+	req ediports.GetEDIPartnerByIDRequest,
 ) (*edi.EDIPartner, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIPartner, error) {
 		entity := new(edi.EDIPartner)
@@ -165,7 +165,7 @@ func (r *repository) GetByID(
 
 func (r *repository) Create(ctx context.Context, entity *edi.EDIPartner) (*edi.EDIPartner, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIPartner, error) {
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			if _, err := r.db.DBForContext(c).
 				NewInsert().
 				Model(entity).
@@ -228,14 +228,14 @@ func (r *repository) ensureMappingProfile(
 
 func (r *repository) GetReadiness(
 	ctx context.Context,
-	req *repositories.GetEDIPartnerReadinessRequest,
-) ([]*repositories.EDIPartnerReadinessRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.EDIPartnerReadinessRow, error) {
+	req *ediports.GetEDIPartnerReadinessRequest,
+) ([]*ediports.EDIPartnerReadinessRow, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*ediports.EDIPartnerReadinessRow, error) {
 		if len(req.PartnerIDs) == 0 {
-			return []*repositories.EDIPartnerReadinessRow{}, nil
+			return []*ediports.EDIPartnerReadinessRow{}, nil
 		}
 		cols := buncolgen.EDIPartnerColumns
-		rows := make([]*repositories.EDIPartnerReadinessRow, 0, len(req.PartnerIDs))
+		rows := make([]*ediports.EDIPartnerReadinessRow, 0, len(req.PartnerIDs))
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*edi.EDIPartner)(nil)).
@@ -320,7 +320,7 @@ func (r *repository) Update(ctx context.Context, entity *edi.EDIPartner) (*edi.E
 
 func (r *repository) GetReciprocalInternalPartner(
 	ctx context.Context,
-	req repositories.GetReciprocalInternalPartnerRequest,
+	req ediports.GetReciprocalInternalPartnerRequest,
 ) (*edi.EDIPartner, error) {
 	ctx = dbscope.WithSystem(ctx, "read the receiving organization's internal partner record for an internal tender")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIPartner, error) {
@@ -355,7 +355,7 @@ func (r *repository) GetReciprocalInternalPartner(
 
 func (r *repository) ListOutboundPartnersByCustomerIDs(
 	ctx context.Context,
-	req repositories.ListEDIPartnersByCustomerIDsRequest,
+	req ediports.ListEDIPartnersByCustomerIDsRequest,
 ) ([]*edi.EDIPartner, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDIPartner, error) {
 		if len(req.CustomerIDs) == 0 {
@@ -384,7 +384,7 @@ func (r *repository) ListOutboundPartnersByCustomerIDs(
 
 func (r *repository) ListInternalOutboundPartnersByCustomerIDs(
 	ctx context.Context,
-	req repositories.ListEDIPartnersByCustomerIDsRequest,
+	req ediports.ListEDIPartnersByCustomerIDsRequest,
 ) ([]*edi.EDIPartner, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDIPartner, error) {
 		if len(req.CustomerIDs) == 0 {
@@ -414,7 +414,7 @@ func (r *repository) ListInternalOutboundPartnersByCustomerIDs(
 
 func (r *repository) ListCursor(
 	ctx context.Context,
-	req *repositories.ListEDIPartnersRequest,
+	req *ediports.ListEDIPartnersRequest,
 ) (*pagination.CursorListResult[*edi.EDIPartner], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*edi.EDIPartner], error) {
 		dba := r.db.DBForContext(ctx)
@@ -472,7 +472,7 @@ func (r *repository) ListCursor(
 
 func applyPartnerListFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListEDIPartnersRequest,
+	req *ediports.ListEDIPartnersRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.EDIPartnerColumns
 	if req.CustomerID.IsNotNil() {

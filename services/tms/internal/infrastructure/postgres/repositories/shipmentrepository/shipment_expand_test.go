@@ -1,12 +1,13 @@
 package shipmentrepository
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -30,7 +31,7 @@ func TestGetByID_ExpandedDetailsPreloadsCommodityHazmat(t *testing.T) {
 		require.NoError(t, bunDB.Close())
 	})
 
-	moveRepo := mocks.NewMockShipmentMoveRepository(t)
+	moveRepo := shipmentportsmock.NewMockShipmentMoveRepository(t)
 
 	repo := &repository{
 		db:             postgres.NewTestConnection(bunDB),
@@ -72,7 +73,7 @@ func TestGetByID_ExpandedDetailsPreloadsCommodityHazmat(t *testing.T) {
 			hazmatID, buID, orgID, "UN1263", "Flammable liquid", "Class3", "II",
 		))
 	moveRepo.EXPECT().
-		GetMovesByShipmentID(mock.Anything, mock.MatchedBy(func(req *repositories.GetMovesByShipmentIDRequest) bool {
+		GetMovesByShipmentID(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetMovesByShipmentIDRequest) bool {
 			return req != nil &&
 				req.ShipmentID == shipmentID &&
 				req.TenantInfo.OrgID == orgID &&
@@ -97,13 +98,13 @@ func TestGetByID_ExpandedDetailsPreloadsCommodityHazmat(t *testing.T) {
 		}, nil).
 		Once()
 
-	entity, err := repo.GetByID(t.Context(), &repositories.GetShipmentByIDRequest{
+	entity, err := repo.GetByID(t.Context(), &shipmentports.GetShipmentByIDRequest{
 		ID: shipmentID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: orgID,
 			BuID:  buID,
 		},
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})

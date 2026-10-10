@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/invoicerun"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -24,8 +24,8 @@ const (
 )
 
 func planRunHeader(
-	req *servicesports.PreviewInvoiceRunRequest,
-	actor *servicesports.RequestActor,
+	req *invoicerunports.PreviewInvoiceRunRequest,
+	actor *permissionports.RequestActor,
 ) (*invoicerun.InvoiceRun, []pulid.ID, error) {
 	if req == nil || actor == nil {
 		return nil, nil, errortypes.NewValidationError(
@@ -71,8 +71,8 @@ func planRunHeader(
 
 func (s *Service) PreviewBuild(
 	ctx context.Context,
-	req *servicesports.PreviewInvoiceRunRequest,
-	actor *servicesports.RequestActor,
+	req *invoicerunports.PreviewInvoiceRunRequest,
+	actor *permissionports.RequestActor,
 ) (*invoicerun.InvoiceRun, error) {
 	run, customerIDs, err := planRunHeader(req, actor)
 	if err != nil {
@@ -96,8 +96,8 @@ func (s *Service) PreviewBuild(
 
 func planCancel(
 	run *invoicerun.InvoiceRun,
-	req *servicesports.CancelInvoiceRunRequest,
-	actor *servicesports.RequestActor,
+	req *invoicerunports.CancelInvoiceRunRequest,
+	actor *permissionports.RequestActor,
 	now int64,
 ) error {
 	if !invoicerun.CanTransition(run.Status, invoicerun.StatusCanceled) {
@@ -121,7 +121,7 @@ func (s *Service) loadRun(
 	runID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) (*invoicerun.InvoiceRun, error) {
-	return s.repo.GetByID(ctx, repositories.GetInvoiceRunByIDRequest{
+	return s.repo.GetByID(ctx, invoicerunports.GetInvoiceRunByIDRequest{
 		ID:            runID,
 		TenantInfo:    tenantInfo,
 		IncludeGroups: true,
@@ -131,9 +131,9 @@ func (s *Service) loadRun(
 
 func (s *Service) PreviewCancel(
 	ctx context.Context,
-	req *servicesports.CancelInvoiceRunRequest,
-	actor *servicesports.RequestActor,
-) (*servicesports.InvoiceRunChangePreview, error) {
+	req *invoicerunports.CancelInvoiceRunRequest,
+	actor *permissionports.RequestActor,
+) (*invoicerunports.InvoiceRunChangePreview, error) {
 	if req == nil || actor == nil {
 		return nil, errortypes.NewValidationError(
 			"request",
@@ -154,12 +154,12 @@ func (s *Service) PreviewCancel(
 		return nil, err
 	}
 
-	return &servicesports.InvoiceRunChangePreview{Before: run, After: after}, nil
+	return &invoicerunports.InvoiceRunChangePreview{Before: run, After: after}, nil
 }
 
 func applyMembership(
 	run *invoicerun.InvoiceRun,
-	req *servicesports.AdjustInvoiceRunMembershipRequest,
+	req *invoicerunports.AdjustInvoiceRunMembershipRequest,
 ) (map[pulid.ID]*invoicerun.InvoiceRunGroupItem, error) {
 	index := indexItems(run)
 	touched := make(map[pulid.ID]*invoicerun.InvoiceRunGroupItem, len(req.Exclude)+len(req.Moves))
@@ -216,8 +216,8 @@ func applyMembership(
 
 func (s *Service) PreviewMembership(
 	ctx context.Context,
-	req *servicesports.AdjustInvoiceRunMembershipRequest,
-) (*servicesports.InvoiceRunChangePreview, error) {
+	req *invoicerunports.AdjustInvoiceRunMembershipRequest,
+) (*invoicerunports.InvoiceRunChangePreview, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"request",
@@ -244,7 +244,7 @@ func (s *Service) PreviewMembership(
 	regroup(after)
 	after.SyncTotals()
 
-	return &servicesports.InvoiceRunChangePreview{Before: run, After: after}, nil
+	return &invoicerunports.InvoiceRunChangePreview{Before: run, After: after}, nil
 }
 
 func regroup(run *invoicerun.InvoiceRun) {
@@ -276,7 +276,7 @@ func cloneRun(run *invoicerun.InvoiceRun) (*invoicerun.InvoiceRun, error) {
 }
 
 type groupDecision struct {
-	plan       servicesports.InvoiceRunGroupPlan
+	plan       invoicerunports.InvoiceRunGroupPlan
 	legs       []*shipment.Shipment
 	queueItems []*billingqueue.BillingQueueItem
 }
@@ -287,7 +287,7 @@ func (s *Service) decideGroup(
 	group *invoicerun.InvoiceRunGroup,
 ) (groupDecision, error) {
 	included := group.IncludedItems()
-	decision := groupDecision{plan: servicesports.InvoiceRunGroupPlan{
+	decision := groupDecision{plan: invoicerunports.InvoiceRunGroupPlan{
 		GroupID:       group.ID,
 		GroupLabel:    group.GroupLabel,
 		CustomerID:    group.CustomerID,
@@ -295,15 +295,15 @@ func (s *Service) decideGroup(
 		ShipmentCount: len(included),
 		Total:         includedTotal(included),
 		CurrencyCode:  group.CurrencyCode,
-		Outcome:       servicesports.InvoiceRunGroupBills,
+		Outcome:       invoicerunports.InvoiceRunGroupBills,
 	}}
 
 	switch {
 	case group.Status == invoicerun.GroupStatusCommitted:
-		decision.plan.Outcome = servicesports.InvoiceRunGroupAlreadyCommitted
+		decision.plan.Outcome = invoicerunports.InvoiceRunGroupAlreadyCommitted
 		return decision, nil
 	case group.Status == invoicerun.GroupStatusSkipped:
-		decision.plan.Outcome = servicesports.InvoiceRunGroupAlreadySkipped
+		decision.plan.Outcome = invoicerunports.InvoiceRunGroupAlreadySkipped
 		decision.plan.Reason = group.SkipReason
 		return decision, nil
 	case len(included) == 0:
@@ -326,7 +326,7 @@ func (s *Service) decideGroup(
 }
 
 func (d *groupDecision) skip(reason string) groupDecision {
-	d.plan.Outcome = servicesports.InvoiceRunGroupSkips
+	d.plan.Outcome = invoicerunports.InvoiceRunGroupSkips
 	d.plan.Reason = reason
 
 	return *d
@@ -344,9 +344,9 @@ func includedTotal(items []*invoicerun.InvoiceRunGroupItem) decimal.Decimal {
 func (s *Service) planGroups(
 	ctx context.Context,
 	run *invoicerun.InvoiceRun,
-) ([]servicesports.InvoiceRunGroupPlan, error) {
+) ([]invoicerunports.InvoiceRunGroupPlan, error) {
 	tenantInfo := tenantOf(run)
-	plans := make([]servicesports.InvoiceRunGroupPlan, 0, len(run.Groups))
+	plans := make([]invoicerunports.InvoiceRunGroupPlan, 0, len(run.Groups))
 	for _, group := range run.Groups {
 		if group == nil {
 			continue
@@ -363,8 +363,8 @@ func (s *Service) planGroups(
 
 func (s *Service) PreviewCommit(
 	ctx context.Context,
-	req *servicesports.CommitInvoiceRunRequest,
-) (*servicesports.InvoiceRunCommitPlan, error) {
+	req *invoicerunports.CommitInvoiceRunRequest,
+) (*invoicerunports.InvoiceRunCommitPlan, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"request",
@@ -377,7 +377,7 @@ func (s *Service) PreviewCommit(
 	if err != nil {
 		return nil, err
 	}
-	plan := &servicesports.InvoiceRunCommitPlan{Run: run}
+	plan := &invoicerunports.InvoiceRunCommitPlan{Run: run}
 	if run.Status == invoicerun.StatusCommitted {
 		plan.AlreadyCommitted = true
 		return plan, nil
@@ -393,8 +393,8 @@ func (s *Service) PreviewCommit(
 }
 
 func validateBillStatementRequest(
-	req *servicesports.BillStatementNowRequest,
-	actor *servicesports.RequestActor,
+	req *invoicerunports.BillStatementNowRequest,
+	actor *permissionports.RequestActor,
 ) error {
 	if req == nil || actor == nil {
 		return errortypes.NewValidationError(
@@ -416,7 +416,7 @@ func validateBillStatementRequest(
 
 func matchStatementExclusions(
 	run *invoicerun.InvoiceRun,
-	req *servicesports.BillStatementNowRequest,
+	req *invoicerunports.BillStatementNowRequest,
 	apply func(item *invoicerun.InvoiceRunGroupItem, reason string),
 ) {
 	if len(req.Exclude) == 0 {
@@ -447,14 +447,14 @@ func matchStatementExclusions(
 
 func (s *Service) PreviewBillStatement(
 	ctx context.Context,
-	req *servicesports.BillStatementNowRequest,
-	actor *servicesports.RequestActor,
-) (*servicesports.StatementBillPlan, error) {
+	req *invoicerunports.BillStatementNowRequest,
+	actor *permissionports.RequestActor,
+) (*invoicerunports.StatementBillPlan, error) {
 	if err := validateBillStatementRequest(req, actor); err != nil {
 		return nil, err
 	}
 
-	statement, err := s.GetOpenStatement(ctx, &servicesports.ListOpenStatementsRequest{
+	statement, err := s.GetOpenStatement(ctx, &invoicerunports.ListOpenStatementsRequest{
 		TenantInfo: req.TenantInfo,
 		CustomerID: req.CustomerID,
 	})
@@ -470,7 +470,7 @@ func (s *Service) PreviewBillStatement(
 	}
 
 	now := timeutils.NowUnix()
-	run, err := s.PreviewBuild(ctx, &servicesports.PreviewInvoiceRunRequest{
+	run, err := s.PreviewBuild(ctx, &invoicerunports.PreviewInvoiceRunRequest{
 		TenantInfo:  req.TenantInfo,
 		CustomerIDs: []pulid.ID{req.CustomerID},
 		PeriodStart: statement.PeriodStart,
@@ -484,7 +484,7 @@ func (s *Service) PreviewBillStatement(
 	}
 	run.OffCycleReason = req.Reason
 
-	plan := &servicesports.StatementBillPlan{Statement: statement, Run: run}
+	plan := &invoicerunports.StatementBillPlan{Statement: statement, Run: run}
 	matched := make(map[pulid.ID]struct{}, len(req.Exclude))
 	matchStatementExclusions(run, req, func(item *invoicerun.InvoiceRunGroupItem, reason string) {
 		item.Excluded = true

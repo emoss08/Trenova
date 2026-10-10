@@ -12,13 +12,13 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/xero"
 	"github.com/shopspring/decimal"
 )
 
-var _ services.AccountingDocumentWriter = (*Connector)(nil)
+var _ accountingsyncports.AccountingDocumentWriter = (*Connector)(nil)
 
 const (
 	providerName        = "Xero"
@@ -43,8 +43,8 @@ var (
 	)
 )
 
-func (c *Connector) DocumentLimits() services.AccountingDocumentLimits {
-	return services.AccountingDocumentLimits{
+func (c *Connector) DocumentLimits() accountingsyncports.AccountingDocumentLimits {
+	return accountingsyncports.AccountingDocumentLimits{
 		MaxDocNumberLength:      xero.MaxDocumentNumberLength,
 		SupportsDebitMemo:       false,
 		CanVoidCreditMemo:       true,
@@ -54,7 +54,7 @@ func (c *Connector) DocumentLimits() services.AccountingDocumentLimits {
 }
 
 func (c *Connector) DocumentURL(
-	auth services.AccountingDocumentAuth,
+	auth accountingsyncports.AccountingDocumentAuth,
 	kind accountingsync.SyncObjectType,
 	externalID string,
 ) string {
@@ -77,8 +77,8 @@ func (c *Connector) DocumentURL(
 
 func (c *Connector) UpsertCustomer(
 	ctx context.Context,
-	doc *services.AccountingCustomerDocument,
-) (*services.AccountingDocumentResult, error) {
+	doc *accountingsyncports.AccountingCustomerDocument,
+) (*accountingsyncports.AccountingDocumentResult, error) {
 	return c.upsertContact(ctx, &contactWrite{
 		auth:       doc.Auth,
 		requestID:  doc.RequestID,
@@ -88,16 +88,16 @@ func (c *Connector) UpsertCustomer(
 }
 
 type contactWrite struct {
-	auth       services.AccountingDocumentAuth
+	auth       accountingsyncports.AccountingDocumentAuth
 	requestID  string
 	externalID string
-	party      *services.AccountingPartyDraft
+	party      *accountingsyncports.AccountingPartyDraft
 }
 
 func (c *Connector) upsertContact(
 	ctx context.Context,
 	write *contactWrite,
-) (*services.AccountingDocumentResult, error) {
+) (*accountingsyncports.AccountingDocumentResult, error) {
 	client, err := c.client(write.auth)
 	if err != nil {
 		return nil, err
@@ -113,7 +113,7 @@ func (c *Connector) upsertContact(
 	if err != nil {
 		return nil, err
 	}
-	return &services.AccountingDocumentResult{
+	return &accountingsyncports.AccountingDocumentResult{
 		ExternalID: saved.ContactID,
 		DocNumber:  saved.Name,
 		Refs:       map[string]string{},
@@ -193,7 +193,7 @@ func (b *documentBody) creditNote(kind string) xero.CreditNoteInput {
 func (c *Connector) salesBody(
 	ctx context.Context,
 	client *xero.Client,
-	doc *services.AccountingSalesDocument,
+	doc *accountingsyncports.AccountingSalesDocument,
 ) (*documentBody, error) {
 	date, err := parseDate(doc.TxnDate)
 	if err != nil {
@@ -283,7 +283,7 @@ func reference(note string) string {
 func (c *Connector) writeSales(
 	ctx context.Context,
 	client *xero.Client,
-	doc *services.AccountingSalesDocument,
+	doc *accountingsyncports.AccountingSalesDocument,
 	externalID string,
 ) (id, number string, err error) {
 	kind, err := salesKindOf(doc.Kind)
@@ -324,8 +324,8 @@ func (c *Connector) writeSales(
 
 func (c *Connector) CreateSalesDocument(
 	ctx context.Context,
-	doc *services.AccountingSalesDocument,
-) (*services.AccountingDocumentResult, error) {
+	doc *accountingsyncports.AccountingSalesDocument,
+) (*accountingsyncports.AccountingDocumentResult, error) {
 	kind, err := salesKindOf(doc.Kind)
 	if err != nil {
 		return nil, err
@@ -376,8 +376,8 @@ func (c *Connector) CreateSalesDocument(
 
 func (c *Connector) UpdateSalesDocument(
 	ctx context.Context,
-	doc *services.AccountingSalesDocument,
-) (*services.AccountingDocumentResult, error) {
+	doc *accountingsyncports.AccountingSalesDocument,
+) (*accountingsyncports.AccountingDocumentResult, error) {
 	if _, err := salesKindOf(doc.Kind); err != nil {
 		return nil, err
 	}
@@ -401,8 +401,8 @@ func (c *Connector) UpdateSalesDocument(
 
 func (c *Connector) VoidSalesDocument(
 	ctx context.Context,
-	ref *services.AccountingDocumentRef,
-) (*services.AccountingDocumentResult, error) {
+	ref *accountingsyncports.AccountingDocumentRef,
+) (*accountingsyncports.AccountingDocumentResult, error) {
 	kind, err := salesKindOf(ref.Kind)
 	if err != nil {
 		return nil, err
@@ -538,8 +538,8 @@ func closedStatus(status string) bool {
 
 func (c *Connector) CreateCreditApplication(
 	ctx context.Context,
-	doc *services.AccountingCreditApplicationDocument,
-) (*services.AccountingDocumentResult, error) {
+	doc *accountingsyncports.AccountingCreditApplicationDocument,
+) (*accountingsyncports.AccountingDocumentResult, error) {
 	if !doc.Amount.IsPositive() {
 		return nil, xero.ErrAmountNotPositive
 	}
@@ -567,8 +567,8 @@ func (c *Connector) CreateCreditApplication(
 	return allocationResult(allocation), nil
 }
 
-func allocationResult(allocation *xero.Allocation) *services.AccountingDocumentResult {
-	return &services.AccountingDocumentResult{
+func allocationResult(allocation *xero.Allocation) *accountingsyncports.AccountingDocumentResult {
+	return &accountingsyncports.AccountingDocumentResult{
 		ExternalID: allocation.AllocationID,
 		Refs: map[string]string{
 			accountingsync.ExternalRefDocument: allocation.AllocationID,
@@ -579,8 +579,8 @@ func allocationResult(allocation *xero.Allocation) *services.AccountingDocumentR
 
 func (c *Connector) VoidCreditApplication(
 	ctx context.Context,
-	ref *services.AccountingDocumentRef,
-) (*services.AccountingDocumentResult, error) {
+	ref *accountingsyncports.AccountingDocumentRef,
+) (*accountingsyncports.AccountingDocumentResult, error) {
 	noteID := strings.TrimSpace(ref.Refs[refCreditNote])
 	if noteID == "" {
 		return nil, errCreditNoteID
@@ -593,7 +593,7 @@ func (c *Connector) VoidCreditApplication(
 		!xero.IsNotFound(err) {
 		return nil, err
 	}
-	return &services.AccountingDocumentResult{
+	return &accountingsyncports.AccountingDocumentResult{
 		ExternalID: ref.ExternalID,
 		Refs:       map[string]string{},
 	}, nil
@@ -872,8 +872,8 @@ func sameID(a, b string) bool {
 	return strings.EqualFold(strings.TrimSpace(a), strings.TrimSpace(b))
 }
 
-func newResult(refs map[string]string) *services.AccountingDocumentResult {
+func newResult(refs map[string]string) *accountingsyncports.AccountingDocumentResult {
 	copied := make(map[string]string, len(refs)+2)
 	maps.Copy(copied, refs)
-	return &services.AccountingDocumentResult{Refs: copied}
+	return &accountingsyncports.AccountingDocumentResult{Refs: copied}
 }

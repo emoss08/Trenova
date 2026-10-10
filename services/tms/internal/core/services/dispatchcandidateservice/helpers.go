@@ -2,24 +2,24 @@ package dispatchcandidateservice
 
 import (
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-func CustomerIDsOf(moves []*repositories.BoardMove) []pulid.ID {
-	return uniqueMoveIDs(moves, func(move *repositories.BoardMove) pulid.ID {
+func CustomerIDsOf(moves []*shipmentports.BoardMove) []pulid.ID {
+	return uniqueMoveIDs(moves, func(move *shipmentports.BoardMove) pulid.ID {
 		return move.CustomerID
 	})
 }
 
-func TrailerIDsOf(moves []*repositories.BoardMove) []pulid.ID {
+func TrailerIDsOf(moves []*shipmentports.BoardMove) []pulid.ID {
 	return uniqueMoveIDs(moves, resolveTrailer)
 }
 
 func uniqueMoveIDs(
-	moves []*repositories.BoardMove,
-	pick func(*repositories.BoardMove) pulid.ID,
+	moves []*shipmentports.BoardMove,
+	pick func(*shipmentports.BoardMove) pulid.ID,
 ) []pulid.ID {
 	seen := make(map[pulid.ID]struct{}, len(moves))
 	ids := make([]pulid.ID, 0, len(moves))
@@ -37,7 +37,7 @@ func uniqueMoveIDs(
 	return ids
 }
 
-func ProjectedTimeAvailable(commitments []*repositories.WorkerCommitment, now int64) int64 {
+func ProjectedTimeAvailable(commitments []*shipmentports.WorkerCommitment, now int64) int64 {
 	latest := now
 	for _, commitment := range commitments {
 		if commitment.WindowEnd > latest {
@@ -61,7 +61,7 @@ func ResolveWindow(
 	return start, end
 }
 
-func MoveWindowEnd(move *repositories.BoardMove) int64 {
+func MoveWindowEnd(move *shipmentports.BoardMove) int64 {
 	end := move.DestinationWindowStart
 	if move.DestinationWindowEnd != nil && *move.DestinationWindowEnd > end {
 		end = *move.DestinationWindowEnd

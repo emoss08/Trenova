@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
@@ -46,7 +46,7 @@ var Module = fx.Module("conversation-schedule-jobs",
 	fx.Provide(fx.Annotate(
 		NewSchedules,
 		fx.As(fx.Self()),
-		fx.As(new(serviceports.ConversationScheduleSyncer)),
+		fx.As(new(conversationscheduleports.ConversationScheduleSyncer)),
 	)),
 	fx.Provide(schedule.AsProvider(NewScheduleProvider)),
 	fx.Provide(

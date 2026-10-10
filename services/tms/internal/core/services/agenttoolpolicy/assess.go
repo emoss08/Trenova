@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/sliceutils"
 )
 
@@ -17,14 +18,14 @@ const (
 )
 
 type AssessInput struct {
-	Policy     serviceports.ToolPolicy
+	Policy     agentports.ToolPolicy
 	Definition *agentdefinition.Definition
 	Trust      *agent.ToolTrust
 	Control    *tenant.AgentControl
 	Tainted    bool
 }
 
-func Assess(ctx context.Context, in *AssessInput) serviceports.ToolAutonomy {
+func Assess(ctx context.Context, in *AssessInput) agentports.ToolAutonomy {
 	definition := in.Definition
 	if definition == nil {
 		definition = &agentdefinition.Definition{AutonomyCeiling: agent.TierAutoExecute}
@@ -34,7 +35,7 @@ func Assess(ctx context.Context, in *AssessInput) serviceports.ToolAutonomy {
 	best := bestCase(ctx, in, definition, taint)
 	worst := worstCase(ctx, in, definition, taint)
 
-	out := serviceports.ToolAutonomy{
+	out := agentports.ToolAutonomy{
 		Tier:   best.Tier,
 		HeldBy: mergeHeld(best.HeldBy, worst.HeldBy),
 	}
@@ -111,13 +112,13 @@ func worstCase(
 	policy := in.Policy
 	policy.Classify = fixedCall(in.Policy.HighestEgress())
 	if in.Policy.Condition != nil {
-		policy.Condition = &serviceports.TierCondition{
+		policy.Condition = &agentports.TierCondition{
 			Description: in.Policy.Condition.Description,
 			Limit:       heldToProposal,
 		}
 	}
 	if in.Policy.TaintHold != nil {
-		policy.TaintHold = &serviceports.TaintHold{
+		policy.TaintHold = &agentports.TaintHold{
 			Description: in.Policy.TaintHold.Description,
 			Applies:     alwaysHeld,
 		}
@@ -155,29 +156,29 @@ func approvalsToNext(in *AssessInput, definition *agentdefinition.Definition) *i
 	return &remaining
 }
 
-type classifier = func(serviceports.ToolExecuteParams) serviceports.CallPolicy
+type classifier = func(agentports.ToolExecuteParams) agentports.CallPolicy
 
 func fixedCall(class agent.EgressClass) classifier {
-	return func(serviceports.ToolExecuteParams) serviceports.CallPolicy {
-		return serviceports.CallPolicy{Egress: class}
+	return func(agentports.ToolExecuteParams) agentports.CallPolicy {
+		return agentports.CallPolicy{Egress: class}
 	}
 }
 
-func heldToProposal(context.Context, serviceports.ToolExecuteParams) agent.AutonomyTier {
+func heldToProposal(context.Context, agentports.ToolExecuteParams) agent.AutonomyTier {
 	return agent.TierPropose
 }
 
-func alwaysHeld(serviceports.ToolExecuteParams) bool {
+func alwaysHeld(agentports.ToolExecuteParams) bool {
 	return true
 }
 
-func representativeParams(attended bool) serviceports.ToolExecuteParams {
+func representativeParams(attended bool) agentports.ToolExecuteParams {
 	if !attended {
-		return serviceports.ToolExecuteParams{}
+		return agentports.ToolExecuteParams{}
 	}
 
-	return serviceports.ToolExecuteParams{
-		Actor: &serviceports.RequestActor{PrincipalType: serviceports.PrincipalTypeUser},
+	return agentports.ToolExecuteParams{
+		Actor: &permissionports.RequestActor{PrincipalType: permissionports.PrincipalTypeUser},
 	}
 }
 

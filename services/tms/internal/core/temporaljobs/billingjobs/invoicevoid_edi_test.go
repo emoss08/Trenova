@@ -1,15 +1,16 @@
 package billingjobs
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs/billingcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs/billingcontract"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -82,9 +83,9 @@ func TestAutoPostInvoiceActivityTreatsVoidedAsDone(t *testing.T) {
 		UserID: pulid.MustNew("usr_"),
 	}
 	invoiceID := pulid.MustNew("inv_")
-	invoiceService := mocks.NewMockInvoiceService(t)
+	invoiceService := invoiceportsmock.NewMockInvoiceService(t)
 	invoiceService.EXPECT().
-		GetByID(mock.Anything, repositories.GetInvoiceByIDRequest{ID: invoiceID, TenantInfo: tenantInfo}).
+		GetByID(mock.Anything, invoiceports.GetInvoiceByIDRequest{ID: invoiceID, TenantInfo: tenantInfo}).
 		Return(&invoice.Invoice{ID: invoiceID, Status: invoice.StatusVoided}, nil).
 		Once()
 
@@ -104,7 +105,7 @@ func TestAutoPostInvoiceActivityReportsAPostedInvoiceWithoutVoidFlag(t *testing.
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	invoiceID := pulid.MustNew("inv_")
 	postedAt := int64(1_700_000_000)
-	invoiceService := mocks.NewMockInvoiceService(t)
+	invoiceService := invoiceportsmock.NewMockInvoiceService(t)
 	invoiceService.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
 		Return(&invoice.Invoice{ID: invoiceID, Status: invoice.StatusPosted, PostedAt: &postedAt}, nil).
@@ -122,9 +123,9 @@ func TestAutoPostInvoiceActivityReportsAPostedInvoiceWithoutVoidFlag(t *testing.
 type ediActivityFixture struct {
 	tenantInfo     pagination.TenantInfo
 	inv            *invoice.Invoice
-	invoiceService *mocks.MockInvoiceService
-	invoiceRepo    *mocks.MockInvoiceRepository
-	ediService     *mocks.MockEDIService
+	invoiceService *invoiceportsmock.MockInvoiceService
+	invoiceRepo    *invoiceportsmock.MockInvoiceRepository
+	ediService     *ediportsmock.MockEDIService
 	activities     *Activities
 }
 
@@ -136,9 +137,9 @@ func newEDIActivityFixture(t *testing.T) *ediActivityFixture {
 			BuID:   pulid.MustNew("bu_"),
 			UserID: pulid.MustNew("usr_"),
 		},
-		invoiceService: mocks.NewMockInvoiceService(t),
-		invoiceRepo:    mocks.NewMockInvoiceRepository(t),
-		ediService:     mocks.NewMockEDIService(t),
+		invoiceService: invoiceportsmock.NewMockInvoiceService(t),
+		invoiceRepo:    invoiceportsmock.NewMockInvoiceRepository(t),
+		ediService:     ediportsmock.NewMockEDIService(t),
 	}
 	f.inv = &invoice.Invoice{
 		ID:            pulid.MustNew("inv_"),
@@ -146,7 +147,7 @@ func newEDIActivityFixture(t *testing.T) *ediActivityFixture {
 		EDISendStatus: invoice.EDISendStatusQueued,
 	}
 	f.invoiceService.EXPECT().
-		GetByID(mock.Anything, repositories.GetInvoiceByIDRequest{ID: f.inv.ID, TenantInfo: f.tenantInfo}).
+		GetByID(mock.Anything, invoiceports.GetInvoiceByIDRequest{ID: f.inv.ID, TenantInfo: f.tenantInfo}).
 		Return(f.inv, nil).
 		Maybe()
 	f.activities = &Activities{
@@ -171,18 +172,18 @@ func (f *ediActivityFixture) payload(force bool) *billingcontract.SendInvoiceEDI
 	}
 }
 
-func (f *ediActivityFixture) expectPlan(plan *services.InvoiceEDISendPlan) {
+func (f *ediActivityFixture) expectPlan(plan *invoiceports.InvoiceEDISendPlan) {
 	f.invoiceService.EXPECT().
-		ResolveEDISendPlans(mock.Anything, &services.ResolveInvoiceEDISendPlansRequest{
+		ResolveEDISendPlans(mock.Anything, &invoiceports.ResolveInvoiceEDISendPlansRequest{
 			TenantInfo: f.tenantInfo,
 			Invoices:   []*invoice.Invoice{f.inv},
 		}).
-		Return(map[pulid.ID]*services.InvoiceEDISendPlan{f.inv.ID: plan}, nil).
+		Return(map[pulid.ID]*invoiceports.InvoiceEDISendPlan{f.inv.ID: plan}, nil).
 		Once()
 }
 
-func readyPlan(method edi.ConnectionMethod) *services.InvoiceEDISendPlan {
-	return &services.InvoiceEDISendPlan{
+func readyPlan(method edi.ConnectionMethod) *invoiceports.InvoiceEDISendPlan {
+	return &invoiceports.InvoiceEDISendPlan{
 		Enabled:             true,
 		PartnerID:           pulid.MustNew("edip_"),
 		DocumentProfileID:   pulid.MustNew("epdp_"),
@@ -224,10 +225,10 @@ func TestSendInvoiceEDIActivityMarksNotConfiguredWithTheFirstBlocker(t *testing.
 
 	f := newEDIActivityFixture(t)
 	f.expectPlan(
-		&services.InvoiceEDISendPlan{Enabled: true, Blockers: []string{"no partner", "no profile"}},
+		&invoiceports.InvoiceEDISendPlan{Enabled: true, Blockers: []string{"no partner", "no profile"}},
 	)
 	f.invoiceRepo.EXPECT().
-		UpdateEDISendStatus(mock.Anything, repositories.UpdateInvoiceEDISendStatusRequest{
+		UpdateEDISendStatus(mock.Anything, invoiceports.UpdateInvoiceEDISendStatusRequest{
 			TenantInfo: f.tenantInfo,
 			InvoiceID:  f.inv.ID,
 			Status:     invoice.EDISendStatusNotConfigured,
@@ -257,7 +258,7 @@ func TestSendInvoiceEDIActivityRecordsGenerationFailures(t *testing.T) {
 			Return(nil, multiErr).
 			Once()
 		f.invoiceRepo.EXPECT().
-			UpdateEDISendStatus(mock.Anything, mock.MatchedBy(func(req repositories.UpdateInvoiceEDISendStatusRequest) bool {
+			UpdateEDISendStatus(mock.Anything, mock.MatchedBy(func(req invoiceports.UpdateInvoiceEDISendStatusRequest) bool {
 				return req.InvoiceID == f.inv.ID && req.Status == invoice.EDISendStatusFailed &&
 					req.Error != ""
 			})).
@@ -319,7 +320,7 @@ func TestSendInvoiceEDIActivityGeneratesForExternalAndSendsForInternalPartners(t
 			f.expectPlan(plan)
 			messageID := pulid.MustNew("emsg_")
 			f.ediService.EXPECT().
-				GenerateDocument(mock.Anything, mock.MatchedBy(func(req *services.GenerateEDIDocumentRequest) bool {
+				GenerateDocument(mock.Anything, mock.MatchedBy(func(req *ediports.GenerateEDIDocumentRequest) bool {
 					return req.InvoiceID == f.inv.ID &&
 						req.EDIPartnerID == plan.PartnerID &&
 						req.PartnerDocumentProfileID == plan.DocumentProfileID &&
@@ -330,7 +331,7 @@ func TestSendInvoiceEDIActivityGeneratesForExternalAndSendsForInternalPartners(t
 				Return(&edi.EDIMessage{ID: messageID}, nil).
 				Once()
 			f.invoiceRepo.EXPECT().
-				UpdateEDISendStatus(mock.Anything, mock.MatchedBy(func(req repositories.UpdateInvoiceEDISendStatusRequest) bool {
+				UpdateEDISendStatus(mock.Anything, mock.MatchedBy(func(req invoiceports.UpdateInvoiceEDISendStatusRequest) bool {
 					return req.InvoiceID == f.inv.ID &&
 						req.MessageID == messageID &&
 						req.Status == tt.wantStatus &&

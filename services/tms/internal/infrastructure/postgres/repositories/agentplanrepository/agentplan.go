@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -32,7 +32,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.AgentPlanRepository {
+func New(p Params) agentports.AgentPlanRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.agentplan-repository"),
@@ -56,7 +56,7 @@ func (r *repository) Create(
 
 func (r *repository) ListByIDs(
 	ctx context.Context,
-	req repositories.ListAgentPlansByIDsRequest,
+	req agentports.ListAgentPlansByIDsRequest,
 ) ([]*agent.AgentPlan, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentPlan, error) {
 		if len(req.IDs) == 0 {
@@ -83,7 +83,7 @@ func (r *repository) ListByIDs(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetAgentPlanByIDRequest,
+	req agentports.GetAgentPlanByIDRequest,
 ) (*agent.AgentPlan, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.AgentPlan, error) {
 		entity := new(agent.AgentPlan)
@@ -108,7 +108,7 @@ func (r *repository) GetByID(
 // first, so a reopened thread can show them where their turns were.
 func (r *repository) ListByThread(
 	ctx context.Context,
-	req repositories.ListAgentPlansByThreadRequest,
+	req agentports.ListAgentPlansByThreadRequest,
 ) ([]*agent.AgentPlan, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentPlan, error) {
 		cols := buncolgen.AgentPlanColumns
@@ -140,7 +140,7 @@ func (r *repository) ListByThread(
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListAgentPlanConnectionRequest,
+	req *agentports.ListAgentPlanConnectionRequest,
 ) (*pagination.CursorListResult[*agent.AgentPlan], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*agent.AgentPlan], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -248,7 +248,7 @@ func excludeShadowDefinitions(q *bun.SelectQuery) *bun.SelectQuery {
 
 func (r *repository) UpdateStatus(
 	ctx context.Context,
-	req repositories.UpdateAgentPlanStatusRequest,
+	req agentports.UpdateAgentPlanStatusRequest,
 ) (*agent.AgentPlan, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentPlan, error) {
 		entity := new(agent.AgentPlan)
@@ -305,7 +305,7 @@ func (r *repository) UpdateStatus(
 
 func (r *repository) RecordProgress(
 	ctx context.Context,
-	req repositories.RecordAgentPlanProgressRequest,
+	req agentports.RecordAgentPlanProgressRequest,
 ) (*agent.AgentPlan, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentPlan, error) {
 		entity := new(agent.AgentPlan)
@@ -338,7 +338,7 @@ func (r *repository) RecordProgress(
 
 func (r *repository) ExpirePending(
 	ctx context.Context,
-	req repositories.ExpireAgentPlansRequest,
+	req agentports.ExpireAgentPlansRequest,
 ) (int, error) {
 	ctx = dbscope.WithSystem(ctx, "expire stale agent plans across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
@@ -369,7 +369,7 @@ func (r *repository) ExpirePending(
 
 func (r *repository) ExpirePendingByThread(
 	ctx context.Context,
-	req repositories.ExpireAgentPlansByThreadRequest,
+	req agentports.ExpireAgentPlansByThreadRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		db := r.db.DBForContext(ctx)
@@ -413,7 +413,7 @@ func (r *repository) ExpirePendingByThread(
 
 func (r *repository) ExpirePendingByDefinition(
 	ctx context.Context,
-	req repositories.ExpireAgentPlansByDefinitionRequest,
+	req agentports.ExpireAgentPlansByDefinitionRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		db := r.db.DBForContext(ctx)

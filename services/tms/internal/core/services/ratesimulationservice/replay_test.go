@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -28,10 +28,10 @@ func historicalShipment(billed string) *shipment.Shipment {
 	}
 }
 
-func simulated(value string) *services.RatedShipment {
+func simulated(value string) *ratequoteports.RatedShipment {
 	ruleID := pulid.MustNew("ragr_")
 
-	return &services.RatedShipment{
+	return &ratequoteports.RatedShipment{
 		Amount:  amount(value),
 		Outcome: ratequote.OutcomeRated,
 		RuleID:  &ruleID,
@@ -60,7 +60,7 @@ func TestReplay_ComparesAgainstWhatTheShipmentWasBilled(t *testing.T) {
 func TestReplay_AShipmentTheContractDoesNotCoverIsRecordedNotSkipped(t *testing.T) {
 	t.Parallel()
 
-	uncovered := &services.RatedShipment{Outcome: ratequote.OutcomeNoRateFound}
+	uncovered := &ratequoteports.RatedShipment{Outcome: ratequote.OutcomeNoRateFound}
 
 	result := replayResult(historicalShipment("2000"), uncovered, nil)
 

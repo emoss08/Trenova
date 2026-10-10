@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -43,7 +43,7 @@ func (r *DQFFileResolver) Verifications(ctx context.Context, obj *worker.DQFFile
 
 	return r.WorkerDQFService.ListVerifications(
 		ctx,
-		&repositories.ListEmploymentVerificationsRequest{
+		&workerports.ListEmploymentVerificationsRequest{
 			TenantInfo:      base.TenantInfo(authCtx),
 			WorkerID:        obj.WorkerID,
 			IncludeDocument: true,
@@ -187,7 +187,7 @@ func (r *QueryResolver) WorkerEmploymentVerifications(ctx context.Context, worke
 	}
 	return r.WorkerDQFService.ListVerifications(
 		ctx,
-		&repositories.ListEmploymentVerificationsRequest{
+		&workerports.ListEmploymentVerificationsRequest{
 			TenantInfo:      base.TenantInfo(authCtx),
 			WorkerID:        id,
 			IncludeDocument: true,
@@ -203,7 +203,7 @@ func (r *QueryResolver) OutstandingEmploymentVerifications(ctx context.Context) 
 
 	return r.WorkerDQFService.ListVerifications(
 		ctx,
-		&repositories.ListEmploymentVerificationsRequest{
+		&workerports.ListEmploymentVerificationsRequest{
 			TenantInfo:      base.TenantInfo(authCtx),
 			OutstandingOnly: true,
 			IncludeWorker:   true,
@@ -211,7 +211,7 @@ func (r *QueryResolver) OutstandingEmploymentVerifications(ctx context.Context) 
 	)
 }
 
-func (r *QueryResolver) DqfRetentionCandidates(ctx context.Context) ([]*repositories.DQFRetentionCandidate, error) {
+func (r *QueryResolver) DqfRetentionCandidates(ctx context.Context) ([]*workerports.DQFRetentionCandidate, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceQualification, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -222,7 +222,7 @@ func (r *QueryResolver) DqfRetentionCandidates(ctx context.Context) ([]*reposito
 		return nil, err
 	}
 
-	out := make([]*repositories.DQFRetentionCandidate, 0, len(candidates))
+	out := make([]*workerports.DQFRetentionCandidate, 0, len(candidates))
 	for i := range candidates {
 		out = append(out, &candidates[i])
 	}

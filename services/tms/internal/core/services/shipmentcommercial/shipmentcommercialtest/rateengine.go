@@ -1,10 +1,11 @@
 package shipmentcommercialtest
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/ratequoteportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,7 +23,7 @@ const RatedAt = int64(7300)
 // detention, contract accessorials and fuel. Which of those produced the
 // linehaul is the engine's business, so tests of the calculator hold it fixed
 // and vary everything around it.
-func StubRateEngine(t *testing.T, amount int64) *mocks.MockRateEngine {
+func StubRateEngine(t *testing.T, amount int64) *ratequoteportsmock.MockRateEngine {
 	t.Helper()
 
 	return StubRateEngineForAgreement(t, amount, nil)
@@ -35,15 +36,15 @@ func StubRateEngineForAgreement(
 	t *testing.T,
 	amount int64,
 	agreementID *pulid.ID,
-) *mocks.MockRateEngine {
+) *ratequoteportsmock.MockRateEngine {
 	t.Helper()
 
 	linehaul := decimal.NewFromInt(amount)
 
-	engine := mocks.NewMockRateEngine(t)
+	engine := ratequoteportsmock.NewMockRateEngine(t)
 	engine.EXPECT().
 		RateShipment(mock.Anything, mock.AnythingOfType("*services.RateShipmentRequest")).
-		Return(&services.RatedShipment{
+		Return(&ratequoteports.RatedShipment{
 			Amount:      linehaul,
 			Currency:    "USD",
 			Outcome:     ratequote.OutcomeRated,

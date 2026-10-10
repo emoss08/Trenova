@@ -7,8 +7,8 @@ import (
 	"image/png"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/pdftest"
 	"github.com/stretchr/testify/require"
 )
@@ -74,7 +74,7 @@ func TestGenerateFromPDFInvalidData(t *testing.T) {
 		bytes.NewReader([]byte("not a pdf")),
 		"application/pdf",
 	)
-	require.ErrorIs(t, err, services.ErrPDFUnreadable)
+	require.ErrorIs(t, err, kernelports.ErrPDFUnreadable)
 	require.ErrorContains(t, err, "failed to open PDF")
 }
 

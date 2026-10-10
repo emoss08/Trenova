@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/servicetype"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/servicetypeports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -30,7 +30,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.ServiceTypeRepository {
+func New(p Params) servicetypeports.ServiceTypeRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.servicetype-repository"),
@@ -39,7 +39,7 @@ func New(p Params) repositories.ServiceTypeRepository {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListServiceTypesRequest,
+	req *servicetypeports.ListServiceTypesRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.ServiceTypeColumns
 	q = querybuilder.ApplyFilters(
@@ -57,7 +57,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListServiceTypesRequest,
+	req *servicetypeports.ListServiceTypesRequest,
 ) (*pagination.ListResult[*servicetype.ServiceType], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*servicetype.ServiceType], error) {
 		log := r.l.With(
@@ -86,7 +86,7 @@ func (r *repository) List(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListServiceTypesConnectionRequest,
+	req *servicetypeports.ListServiceTypesConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -99,7 +99,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListServiceTypesConnectionRequest,
+	req *servicetypeports.ListServiceTypesConnectionRequest,
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -119,7 +119,7 @@ func applyServiceTypeColumns(q *bun.SelectQuery, columns []string) *bun.SelectQu
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListServiceTypesConnectionRequest,
+	req *servicetypeports.ListServiceTypesConnectionRequest,
 ) (*pagination.CursorListResult[*servicetype.ServiceType], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*servicetype.ServiceType], error) {
 		log := r.l.With(
@@ -227,7 +227,7 @@ func (r *repository) Update(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetServiceTypeByIDRequest,
+	req servicetypeports.GetServiceTypeByIDRequest,
 ) (*servicetype.ServiceType, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*servicetype.ServiceType, error) {
 		log := r.l.With(
@@ -256,7 +256,7 @@ func (r *repository) GetByID(
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
-	req *repositories.ServiceTypeSelectOptionsRequest,
+	req *servicetypeports.ServiceTypeSelectOptionsRequest,
 ) (*pagination.ListResult[*servicetype.ServiceType], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*servicetype.ServiceType], error) {
 		cols := buncolgen.ServiceTypeColumns
@@ -286,7 +286,7 @@ func (r *repository) SelectOptions(
 
 func (r *repository) BulkUpdateStatus(
 	ctx context.Context,
-	req *repositories.BulkUpdateServiceTypeStatusRequest,
+	req *servicetypeports.BulkUpdateServiceTypeStatusRequest,
 ) ([]*servicetype.ServiceType, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*servicetype.ServiceType, error) {
 		log := r.l.With(
@@ -321,7 +321,7 @@ func (r *repository) BulkUpdateStatus(
 
 func (r *repository) GetByIDs(
 	ctx context.Context,
-	req repositories.GetServiceTypesByIDsRequest,
+	req servicetypeports.GetServiceTypesByIDsRequest,
 ) ([]*servicetype.ServiceType, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*servicetype.ServiceType, error) {
 		log := r.l.With(

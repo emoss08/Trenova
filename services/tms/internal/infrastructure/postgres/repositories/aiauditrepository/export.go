@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiaudit"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -23,7 +23,7 @@ type exportRepository struct {
 	l  *zap.Logger
 }
 
-func NewExport(p Params) repositories.AIAuditExportRepository {
+func NewExport(p Params) aiauditports.AIAuditExportRepository {
 	return &exportRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.aiaudit-export-repository"),
@@ -86,7 +86,7 @@ func (r *exportRepository) Update(
 
 func (r *exportRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetAIAuditExportRequest,
+	req aiauditports.GetAIAuditExportRequest,
 ) (*aiaudit.AIAuditExport, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*aiaudit.AIAuditExport, error) {
 		entity := new(aiaudit.AIAuditExport)
@@ -107,7 +107,7 @@ func (r *exportRepository) GetByID(
 
 func (r *exportRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListAIAuditExportsRequest,
+	req *aiauditports.ListAIAuditExportsRequest,
 ) (*pagination.CursorListResult[*aiaudit.AIAuditExport], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*aiaudit.AIAuditExport], error) {
 		dba := r.db.DBForContext(ctx)

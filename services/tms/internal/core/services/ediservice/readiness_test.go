@@ -3,7 +3,7 @@ package ediservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -12,7 +12,7 @@ import (
 func TestBuildPartnerReadiness(t *testing.T) {
 	t.Parallel()
 
-	ready := buildPartnerReadiness(&repositories.EDIPartnerReadinessRow{
+	ready := buildPartnerReadiness(&ediports.EDIPartnerReadinessRow{
 		PartnerID:             pulid.MustNew("edip_"),
 		ContactEmail:          "ops@partner.example",
 		Timezone:              "America/Chicago",
@@ -29,7 +29,7 @@ func TestBuildPartnerReadiness(t *testing.T) {
 	assert.Equal(t, ready.TotalCount, ready.CompletedCount)
 	assert.Len(t, ready.Items, 6)
 
-	partial := buildPartnerReadiness(&repositories.EDIPartnerReadinessRow{
+	partial := buildPartnerReadiness(&ediports.EDIPartnerReadinessRow{
 		PartnerID:          pulid.MustNew("edip_"),
 		HasActiveProfile:   true,
 		EnabledForOutbound: true,
@@ -39,7 +39,7 @@ func TestBuildPartnerReadiness(t *testing.T) {
 	assert.Equal(t, 5, partial.TotalCount)
 	assert.Equal(t, 1, partial.CompletedCount)
 
-	internal := buildPartnerReadiness(&repositories.EDIPartnerReadinessRow{
+	internal := buildPartnerReadiness(&ediports.EDIPartnerReadinessRow{
 		PartnerID:         pulid.MustNew("edip_"),
 		ContactEmail:      "edi@internal.example",
 		Timezone:          "UTC",

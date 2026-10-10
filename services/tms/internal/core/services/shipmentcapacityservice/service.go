@@ -6,10 +6,13 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/ratequoteservice"
 	"github.com/emoss08/trenova/internal/core/services/tenderservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carriercapacityports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -35,7 +38,7 @@ const (
 var ErrUnknownKind = errors.New("capacity kind must be Driver or Carrier")
 
 type shopper interface {
-	Shop(ctx context.Context, req *ratequoteservice.ShopRequest) (*services.ShopResult, error)
+	Shop(ctx context.Context, req *ratequoteservice.ShopRequest) (*ratequoteports.ShopResult, error)
 }
 
 type tenderer interface {
@@ -52,24 +55,24 @@ type tenderer interface {
 type Params struct {
 	fx.In
 
-	Console      services.DispatchConsoleService
-	Capabilities services.ShipmentBoardCapabilitiesReader
-	Postings     repositories.CarrierCapacityPostingRepository
-	Performance  repositories.CarrierPerformanceRepository
-	Carriers     repositories.CarrierRepository
-	Shipments    repositories.ShipmentRepository
+	Console      agentports.DispatchConsoleService
+	Capabilities shipmentports.ShipmentBoardCapabilitiesReader
+	Postings     carriercapacityports.CarrierCapacityPostingRepository
+	Performance  shipmentports.CarrierPerformanceRepository
+	Carriers     carrierports.CarrierRepository
+	Shipments    shipmentports.ShipmentRepository
 	RateQuotes   *ratequoteservice.Service
 	Tenders      *tenderservice.Service
 	Logger       *zap.Logger
 }
 
 type Dependencies struct {
-	Console      services.DispatchConsoleService
-	Capabilities services.ShipmentBoardCapabilitiesReader
-	Postings     repositories.CarrierCapacityPostingRepository
-	Performance  repositories.CarrierPerformanceRepository
-	Carriers     repositories.CarrierRepository
-	Shipments    repositories.ShipmentRepository
+	Console      agentports.DispatchConsoleService
+	Capabilities shipmentports.ShipmentBoardCapabilitiesReader
+	Postings     carriercapacityports.CarrierCapacityPostingRepository
+	Performance  shipmentports.CarrierPerformanceRepository
+	Carriers     carrierports.CarrierRepository
+	Shipments    shipmentports.ShipmentRepository
 	Shopper      shopper
 	Tenderer     tenderer
 	Logger       *zap.Logger
@@ -77,12 +80,12 @@ type Dependencies struct {
 }
 
 type Service struct {
-	console      services.DispatchConsoleService
-	capabilities services.ShipmentBoardCapabilitiesReader
-	postings     repositories.CarrierCapacityPostingRepository
-	performance  repositories.CarrierPerformanceRepository
-	carriers     repositories.CarrierRepository
-	shipments    repositories.ShipmentRepository
+	console      agentports.DispatchConsoleService
+	capabilities shipmentports.ShipmentBoardCapabilitiesReader
+	postings     carriercapacityports.CarrierCapacityPostingRepository
+	performance  shipmentports.CarrierPerformanceRepository
+	carriers     carrierports.CarrierRepository
+	shipments    shipmentports.ShipmentRepository
 	shopper      shopper
 	tenderer     tenderer
 	l            *zap.Logger
@@ -90,9 +93,9 @@ type Service struct {
 }
 
 var (
-	_ services.ShipmentCapacityReader    = (*Service)(nil)
-	_ services.ShipmentCoverageSuggester = (*Service)(nil)
-	_ services.ShipmentTenderer          = (*Service)(nil)
+	_ shipmentports.ShipmentCapacityReader    = (*Service)(nil)
+	_ shipmentports.ShipmentCoverageSuggester = (*Service)(nil)
+	_ shipmentports.ShipmentTenderer          = (*Service)(nil)
 )
 
 //nolint:gocritic // dependency injection
@@ -134,21 +137,21 @@ func NewWithDependencies(d *Dependencies) *Service {
 	}
 }
 
-func NewCapacityReader(s *Service) services.ShipmentCapacityReader { return s }
+func NewCapacityReader(s *Service) shipmentports.ShipmentCapacityReader { return s }
 
-func NewCoverageSuggester(s *Service) services.ShipmentCoverageSuggester { return s }
+func NewCoverageSuggester(s *Service) shipmentports.ShipmentCoverageSuggester { return s }
 
-func NewTenderer(s *Service) services.ShipmentTenderer { return s }
+func NewTenderer(s *Service) shipmentports.ShipmentTenderer { return s }
 
 func (s *Service) Capacity(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	kind services.CapacityUnitKind,
-) (*services.ShipmentCapacity, error) {
+	kind shipmentports.CapacityUnitKind,
+) (*shipmentports.ShipmentCapacity, error) {
 	switch kind {
-	case services.CapacityUnitDriver:
+	case shipmentports.CapacityUnitDriver:
 		return s.driverCapacity(ctx, tenantInfo)
-	case services.CapacityUnitCarrier:
+	case shipmentports.CapacityUnitCarrier:
 		return s.carrierCapacity(ctx, tenantInfo)
 	default:
 		return nil, ErrUnknownKind
@@ -157,8 +160,8 @@ func (s *Service) Capacity(
 
 func (s *Service) Matches(
 	ctx context.Context,
-	req *services.CapacityMatchesRequest,
-) ([]*services.CapacityMatch, error) {
+	req *shipmentports.CapacityMatchesRequest,
+) ([]*shipmentports.CapacityMatch, error) {
 	limit := req.Limit
 	if limit <= 0 {
 		limit = defaultMatches
@@ -166,9 +169,9 @@ func (s *Service) Matches(
 	limit = min(limit, maxMatches)
 
 	switch req.Kind {
-	case services.CapacityUnitDriver:
+	case shipmentports.CapacityUnitDriver:
 		return s.driverMatches(ctx, req.TenantInfo, req.UnitID, limit)
-	case services.CapacityUnitCarrier:
+	case shipmentports.CapacityUnitCarrier:
 		return s.carrierMatches(ctx, req.TenantInfo, req.UnitID, limit)
 	default:
 		return nil, ErrUnknownKind

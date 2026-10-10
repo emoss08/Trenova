@@ -5,9 +5,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/hazardousmaterialports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"go.uber.org/fx"
@@ -18,18 +21,18 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.HazardousMaterialRepository
+	Repo         hazardousmaterialports.HazardousMaterialRepository
 	Validator    *Validator
-	AuditService services.AuditService
-	Transformer  services.DataTransformer
+	AuditService auditports.AuditService
+	Transformer  accessorialchargeports.DataTransformer
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.HazardousMaterialRepository
+	repo         hazardousmaterialports.HazardousMaterialRepository
 	validator    *Validator
-	auditService services.AuditService
-	transformer  services.DataTransformer
+	auditService auditports.AuditService
+	transformer  accessorialchargeports.DataTransformer
 }
 
 func New(p Params) *Service {
@@ -44,35 +47,35 @@ func New(p Params) *Service {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListHazardousMaterialsRequest,
+	req *hazardousmaterialports.ListHazardousMaterialsRequest,
 ) (*pagination.ListResult[*hazardousmaterial.HazardousMaterial], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListHazardousMaterialConnectionRequest,
+	req *hazardousmaterialports.ListHazardousMaterialConnectionRequest,
 ) (*pagination.CursorListResult[*hazardousmaterial.HazardousMaterial], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	req repositories.GetHazardousMaterialByIDRequest,
+	req hazardousmaterialports.GetHazardousMaterialByIDRequest,
 ) (*hazardousmaterial.HazardousMaterial, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) SelectOptions(
 	ctx context.Context,
-	req *repositories.HazardousMaterialSelectOptionsRequest,
+	req *hazardousmaterialports.HazardousMaterialSelectOptionsRequest,
 ) (*pagination.ListResult[*hazardousmaterial.HazardousMaterial], error) {
 	return s.repo.SelectOptions(ctx, req)
 }
 
 func (s *Service) BulkUpdateStatus(
 	ctx context.Context,
-	req *repositories.BulkUpdateHazardousMaterialStatusRequest,
+	req *hazardousmaterialports.BulkUpdateHazardousMaterialStatusRequest,
 ) ([]*hazardousmaterial.HazardousMaterial, error) {
 	log := s.l.With(
 		zap.String("operation", "BulkUpdateStatus"),
@@ -83,7 +86,7 @@ func (s *Service) BulkUpdateStatus(
 	if err != nil {
 		return nil, err
 	}
-	originalEntities := services.Befores(changes)
+	originalEntities := kernelports.Befores(changes)
 
 	entities, err := s.repo.BulkUpdateStatus(ctx, req)
 	if err != nil {
@@ -112,7 +115,7 @@ func (s *Service) BulkUpdateStatus(
 func (s *Service) Create(
 	ctx context.Context,
 	entity *hazardousmaterial.HazardousMaterial,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*hazardousmaterial.HazardousMaterial, error) {
 	auditActor := actor.AuditActor()
 	planned, err := s.PlanCreate(ctx, entity)
@@ -126,7 +129,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceHazardousMaterial,
 		ResourceID:     createdEntity.GetID().String(),
 		Operation:      permission.OpCreate,
@@ -149,7 +152,7 @@ func (s *Service) Create(
 func (s *Service) Update(
 	ctx context.Context,
 	entity *hazardousmaterial.HazardousMaterial,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*hazardousmaterial.HazardousMaterial, error) {
 	auditActor := actor.AuditActor()
 	change, err := s.PlanUpdate(ctx, entity)
@@ -164,7 +167,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceHazardousMaterial,
 		ResourceID:     updatedEntity.GetID().String(),
 		Operation:      permission.OpUpdate,

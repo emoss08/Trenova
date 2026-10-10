@@ -24,11 +24,15 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentshadow"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/i18n"
@@ -51,8 +55,8 @@ const (
 type deciderLister interface {
 	ListUsersWithPermission(
 		ctx context.Context,
-		req repositories.ListUsersWithPermissionRequest,
-	) ([]repositories.PermittedUser, error)
+		req permissionports.ListUsersWithPermissionRequest,
+	) ([]permissionports.PermittedUser, error)
 }
 
 type notifier interface {
@@ -63,14 +67,14 @@ type notifier interface {
 }
 
 type mailer interface {
-	Send(context.Context, *services.SendEmailRequest) (*email.Message, error)
+	Send(context.Context, *emailports.SendEmailRequest) (*email.Message, error)
 }
 
 type renderer interface {
 	RenderMessage(
 		ctx context.Context,
-		req *services.RenderMessageRequest,
-	) (*services.RenderedMessage, error)
+		req *documenttemplateports.RenderMessageRequest,
+	) (*documenttemplateports.RenderedMessage, error)
 }
 
 type shadowReader interface {
@@ -80,19 +84,19 @@ type shadowReader interface {
 type proposalStore interface {
 	ListPendingForReminder(
 		ctx context.Context,
-		req repositories.ListPendingProposalsForReminderRequest,
+		req agentports.ListPendingProposalsForReminderRequest,
 	) ([]*agent.AgentProposal, error)
-	MarkReminded(ctx context.Context, req repositories.MarkProposalsRemindedRequest) (int, error)
+	MarkReminded(ctx context.Context, req agentports.MarkProposalsRemindedRequest) (int, error)
 }
 
 type runReader interface {
-	GetByID(ctx context.Context, req repositories.GetAgentRunByIDRequest) (*agent.AgentRun, error)
+	GetByID(ctx context.Context, req agentports.GetAgentRunByIDRequest) (*agent.AgentRun, error)
 }
 
 type definitionReader interface {
 	GetByID(
 		ctx context.Context,
-		req repositories.GetAgentDefinitionByIDRequest,
+		req agentdefinitionports.GetAgentDefinitionByIDRequest,
 	) (*agentdefinition.Definition, error)
 }
 
@@ -101,19 +105,19 @@ type Params struct {
 
 	Logger      *zap.Logger
 	Config      *config.Config
-	Roles       repositories.RoleRepository
-	Proposals   repositories.AgentProposalRepository
-	Runs        repositories.AgentRunRepository
-	Definitions repositories.AgentDefinitionRepository
-	Orgs        repositories.OrganizationRepository
+	Roles       permissionports.RoleRepository
+	Proposals   agentports.AgentProposalRepository
+	Runs        agentports.AgentRunRepository
+	Definitions agentdefinitionports.AgentDefinitionRepository
+	Orgs        tenantports.OrganizationRepository
 	Shadow      *agentshadow.Resolver
 	// The channels are optional: an in-app notice needs the notification
 	// service, an email needs the email service and a template resolver, and
 	// the ledger of who was reminded is kept either way.
-	Notifications *notificationservice.Service      `optional:"true"`
-	Email         services.EmailService             `optional:"true"`
-	Templates     services.DocumentTemplateResolver `optional:"true"`
-	Inliner       services.AssetInliner             `optional:"true"`
+	Notifications *notificationservice.Service                   `optional:"true"`
+	Email         emailports.EmailService                        `optional:"true"`
+	Templates     documenttemplateports.DocumentTemplateResolver `optional:"true"`
+	Inliner       documenttemplateports.AssetInliner             `optional:"true"`
 }
 
 type Service struct {
@@ -123,15 +127,15 @@ type Service struct {
 	proposals     proposalStore
 	runs          runReader
 	definitions   definitionReader
-	orgs          repositories.OrganizationRepository
+	orgs          tenantports.OrganizationRepository
 	shadow        shadowReader
 	notifications notifier
 	email         mailer
 	templates     renderer
-	inliner       services.AssetInliner
+	inliner       documenttemplateports.AssetInliner
 }
 
-func New(p Params) services.AgentProposalNotifier {
+func New(p Params) agentports.AgentProposalNotifier {
 	svc := &Service{
 		l:           p.Logger.Named("service.agentproposalnotifier"),
 		roles:       p.Roles,
@@ -162,7 +166,7 @@ func New(p Params) services.AgentProposalNotifier {
 // are stored. A chat run is skipped: the person who asked is looking at the
 // answer. A run in shadow is skipped too, because its proposals are hidden
 // and a notice that leads to nothing to decide is worse than none.
-func (s *Service) NotifyPending(ctx context.Context, notice services.PendingProposalsNotice) error {
+func (s *Service) NotifyPending(ctx context.Context, notice agentports.PendingProposalsNotice) error {
 	if notice.Run == nil || notice.Definition == nil || notice.Run.Trigger == agent.RunTriggerChat {
 		return nil
 	}
@@ -221,11 +225,11 @@ func (s *Service) NotifyPending(ctx context.Context, notice services.PendingProp
 // reminder rather than one every sweep.
 func (s *Service) RemindPending(
 	ctx context.Context,
-	req services.RemindPendingProposalsRequest,
+	req agentports.RemindPendingProposalsRequest,
 ) (int, error) {
 	proposals, err := s.proposals.ListPendingForReminder(
 		ctx,
-		repositories.ListPendingProposalsForReminderRequest{
+		agentports.ListPendingProposalsForReminderRequest{
 			Before: req.Now - int64(req.OlderThan.Seconds()),
 			Now:    req.Now,
 			Limit:  req.Limit,
@@ -267,7 +271,7 @@ type proposalGroup struct {
 }
 
 func (s *Service) remindGroup(ctx context.Context, group proposalGroup, now int64) error {
-	run, err := s.runs.GetByID(ctx, repositories.GetAgentRunByIDRequest{
+	run, err := s.runs.GetByID(ctx, agentports.GetAgentRunByIDRequest{
 		ID:         group.runID,
 		TenantInfo: &group.tenant,
 	})
@@ -277,7 +281,7 @@ func (s *Service) remindGroup(ctx context.Context, group proposalGroup, now int6
 	group.run = run
 
 	if run.AgentDefinitionID.IsNotNil() {
-		definition, defErr := s.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+		definition, defErr := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 			ID:         run.AgentDefinitionID,
 			TenantInfo: group.tenant,
 		})
@@ -289,7 +293,7 @@ func (s *Service) remindGroup(ctx context.Context, group proposalGroup, now int6
 
 	// Marked first: a proposal in shadow is hidden, so there is nothing to
 	// remind anyone of, and it must not be picked up again by the next sweep.
-	if _, err = s.proposals.MarkReminded(ctx, repositories.MarkProposalsRemindedRequest{
+	if _, err = s.proposals.MarkReminded(ctx, agentports.MarkProposalsRemindedRequest{
 		IDs: ids(group.proposals),
 		At:  now,
 	}); err != nil {
@@ -349,8 +353,8 @@ func (s *Service) deciders(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	now int64,
-) ([]repositories.PermittedUser, error) {
-	users, err := s.roles.ListUsersWithPermission(ctx, repositories.ListUsersWithPermissionRequest{
+) ([]permissionports.PermittedUser, error) {
+	users, err := s.roles.ListUsersWithPermission(ctx, permissionports.ListUsersWithPermissionRequest{
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
 		Resource:       permission.ResourceAgentProposal,
@@ -374,7 +378,7 @@ type deciderNotice struct {
 func (s *Service) notify(
 	ctx context.Context,
 	group proposalGroup,
-	decider repositories.PermittedUser,
+	decider permissionports.PermittedUser,
 	n deciderNotice,
 ) {
 	if s.notifications == nil {
@@ -422,7 +426,7 @@ func (s *Service) notify(
 func (s *Service) mail(
 	ctx context.Context,
 	group proposalGroup,
-	decider repositories.PermittedUser,
+	decider permissionports.PermittedUser,
 	waitingHours int,
 ) {
 	address := strings.TrimSpace(decider.EmailAddress)
@@ -443,7 +447,7 @@ func (s *Service) mail(
 	s.brand(ctx, group.tenant, data)
 
 	locale, _ := i18n.Parse(decider.Locale)
-	rendered, err := s.templates.RenderMessage(ctx, &services.RenderMessageRequest{
+	rendered, err := s.templates.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
 		TenantInfo:        group.tenant,
 		Kind:              documenttemplate.KindAgentProposalReminderEmail,
 		Data:              data,
@@ -462,7 +466,7 @@ func (s *Service) mail(
 		return
 	}
 
-	if _, err = s.email.Send(ctx, &services.SendEmailRequest{
+	if _, err = s.email.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo:     group.tenant,
 		Purpose:        email.PurposeNotifications,
 		To:             []string{address},
@@ -488,13 +492,13 @@ func (s *Service) brand(
 		return
 	}
 
-	org, err := s.orgs.GetByID(ctx, repositories.GetOrganizationByIDRequest{TenantInfo: tenantInfo})
+	org, err := s.orgs.GetByID(ctx, tenantports.GetOrganizationByIDRequest{TenantInfo: tenantInfo})
 	if err != nil || org == nil {
 		return
 	}
 
 	out.CompanyName = org.Name
-	if dataURI, logoErr := services.ResolveLogoDataURI(
+	if dataURI, logoErr := documenttemplateports.ResolveLogoDataURI(
 		ctx,
 		s.inliner,
 		org.LogoURL,

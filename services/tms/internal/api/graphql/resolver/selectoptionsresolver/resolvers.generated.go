@@ -4,8 +4,6 @@ package selectoptionsresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	repositories "github.com/emoss08/trenova/internal/core/ports/repositories"
-	services "github.com/emoss08/trenova/internal/core/ports/services"
 	accessorialchargeservice "github.com/emoss08/trenova/internal/core/services/accessorialchargeservice"
 	accounttypeservice "github.com/emoss08/trenova/internal/core/services/accounttypeservice"
 	benefitsservice "github.com/emoss08/trenova/internal/core/services/benefitsservice"
@@ -44,19 +42,29 @@ import (
 	workercredentialservice "github.com/emoss08/trenova/internal/core/services/workercredentialservice"
 	workerservice "github.com/emoss08/trenova/internal/core/services/workerservice"
 	workertrainingservice "github.com/emoss08/trenova/internal/core/services/workertrainingservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 )
 
 type Deps struct {
 	*base.Core
-	OrganizationService          services.OrganizationService
-	ShipmentService              services.ShipmentService
+	OrganizationService          tenantports.OrganizationService
+	ShipmentService              shipmentports.ShipmentService
 	EdiService                   *ediservice.Service
 	EquipmentTypeService         *equipmenttypeservice.Service
 	AccessorialChargeService     *accessorialchargeservice.Service
 	AccountTypeService           *accounttypeservice.Service
-	CarrierRepo                  repositories.CarrierRepository
-	CustomerRepo                 repositories.CustomerRepository
-	GlAccountRepo                repositories.GLAccountRepository
+	CarrierRepo                  carrierports.CarrierRepository
+	CustomerRepo                 customerports.CustomerRepository
+	GlAccountRepo                glaccountports.GLAccountRepository
 	CommodityService             *commodityservice.Service
 	FleetCodeService             *fleetcodeservice.Service
 	HazardousMaterialService     *hazardousmaterialservice.Service
@@ -83,14 +91,14 @@ type Deps struct {
 	RateAgreementService         *rateagreementservice.Service
 	RateZoneService              *ratezoneservice.Service
 	RateMatrixService            *ratematrixservice.Service
-	FuelIndexRepo                repositories.FuelIndexRepository
-	FuelSurchargeProgramRepo     repositories.FuelSurchargeProgramRepository
-	FiscalYearRepo               repositories.FiscalYearRepository
-	FiscalPeriodRepo             repositories.FiscalPeriodRepository
+	FuelIndexRepo                fuelsurchargeports.FuelIndexRepository
+	FuelSurchargeProgramRepo     fuelsurchargeports.FuelSurchargeProgramRepository
+	FiscalYearRepo               fiscalyearports.FiscalYearRepository
+	FiscalPeriodRepo             fiscalperiodports.FiscalPeriodRepository
 	EmailService                 *emailservice.Service
 	DistanceProfileService       *distanceprofileservice.Service
-	ServiceFailureReasonCodeSvc  services.ServiceFailureReasonCodeService
-	AiProviderService            services.AIProviderService
+	ServiceFailureReasonCodeSvc  servicefailureports.ServiceFailureReasonCodeService
+	AiProviderService            agentports.AIProviderService
 	CaptureService               *captureservice.Service
 	RoleService                  *roleservice.Service
 	UserService                  *userservice.Service

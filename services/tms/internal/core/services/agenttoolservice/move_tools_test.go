@@ -9,8 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -18,15 +17,15 @@ import (
 )
 
 type fakeMoveService struct {
-	serviceports.ShipmentMoveService
+	shipmentports.ShipmentMoveService
 
-	recorded *repositories.RecordStopActualRequest
+	recorded *shipmentports.RecordStopActualRequest
 	err      error
 }
 
 func (f *fakeMoveService) RecordStopActual(
 	_ context.Context,
-	req *repositories.RecordStopActualRequest,
+	req *shipmentports.RecordStopActualRequest,
 ) (*shipment.ShipmentMove, error) {
 	f.recorded = req
 
@@ -59,7 +58,7 @@ func TestRecordStopActual_PassesTheActionThrough(t *testing.T) {
 		require.NotNil(t, moves.recorded)
 		assert.Equal(t, moveID, moves.recorded.MoveID)
 		assert.Equal(t, stopID, moves.recorded.StopID)
-		assert.Equal(t, repositories.StopActualAction(action), moves.recorded.Action)
+		assert.Equal(t, shipmentports.StopActualAction(action), moves.recorded.Action)
 	}
 }
 
@@ -121,7 +120,7 @@ type fakeMoveStops struct {
 
 func (f *fakeMoveStops) GetByID(
 	_ context.Context,
-	req *repositories.GetMoveByIDRequest,
+	req *shipmentports.GetMoveByIDRequest,
 ) (*shipment.ShipmentMove, error) {
 	f.asks++
 	f.move.ID = req.MoveID

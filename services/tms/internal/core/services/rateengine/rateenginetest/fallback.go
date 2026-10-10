@@ -1,14 +1,18 @@
 package rateenginetest
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/exchangerateportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/rateagreementportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/ratematrixportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/ratequoteportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/ratezoneportsmock"
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/services/rateengine"
-
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/rateengine"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
@@ -23,16 +27,16 @@ import (
 // shipment ends up with the right numbers, not which contract produced them.
 // Resolving nothing puts the engine on its fallback path, so those tests go on
 // asserting exactly what they asserted before rate agreements existed.
-func NewFallbackEngine(t *testing.T, formula services.FormulaCalculator) *rateengine.Service {
+func NewFallbackEngine(t *testing.T, formula formulatemplateports.FormulaCalculator) *rateengine.Service {
 	t.Helper()
 
-	agreementRepo := mocks.NewMockRateAgreementRepository(t)
+	agreementRepo := rateagreementportsmock.NewMockRateAgreementRepository(t)
 	agreementRepo.EXPECT().
 		ResolveRules(mock.Anything, mock.AnythingOfType("*repositories.ResolveRateRulesRequest")).
-		Return(&repositories.ResolveRateRulesResult{}, nil).
+		Return(&rateagreementports.ResolveRateRulesResult{}, nil).
 		Maybe()
 
-	zoneRepo := mocks.NewMockRateZoneRepository(t)
+	zoneRepo := ratezoneportsmock.NewMockRateZoneRepository(t)
 	zoneRepo.EXPECT().
 		ResolveMembership(
 			mock.Anything,
@@ -41,7 +45,7 @@ func NewFallbackEngine(t *testing.T, formula services.FormulaCalculator) *rateen
 		Return(nil, nil).
 		Maybe()
 
-	quoteRepo := mocks.NewMockRateQuoteRepository(t)
+	quoteRepo := ratequoteportsmock.NewMockRateQuoteRepository(t)
 	quoteRepo.EXPECT().
 		Record(mock.Anything, mock.AnythingOfType("*ratequote.RateQuote")).
 		RunAndReturn(func(
@@ -59,10 +63,10 @@ func NewFallbackEngine(t *testing.T, formula services.FormulaCalculator) *rateen
 		Logger:        zap.NewNop(),
 		AgreementRepo: agreementRepo,
 		ZoneRepo:      zoneRepo,
-		MatrixRepo:    mocks.NewMockRateMatrixRepository(t),
-		DensityRepo:   mocks.NewMockDensityScaleRepository(t),
+		MatrixRepo:    ratematrixportsmock.NewMockRateMatrixRepository(t),
+		DensityRepo:   ratematrixportsmock.NewMockDensityScaleRepository(t),
 		QuoteRepo:     quoteRepo,
 		Formula:       formula,
-		Exchange:      mocks.NewMockExchangeRateService(t),
+		Exchange:      exchangerateportsmock.NewMockExchangeRateService(t),
 	})
 }

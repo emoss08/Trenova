@@ -10,8 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/iftajobs/iftacontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/distancecalculation"
 	"github.com/emoss08/trenova/internal/core/domain/distancecontrol"
 	"github.com/emoss08/trenova/internal/core/domain/distanceprofile"
@@ -20,10 +18,15 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/storedmileage"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/integrationservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/iftajobs/iftacontract"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/distancecalculationports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/distancecontrolports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/distanceoverrideports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/distanceprofileports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/storedmileageports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -63,35 +66,35 @@ type Params struct {
 	fx.In
 
 	Logger               *zap.Logger
-	ShipmentRepo         repositories.ShipmentRepository
-	DistanceOverrideRepo repositories.DistanceOverrideRepository
-	DistanceControlRepo  repositories.DistanceControlRepository
-	DistanceProfileRepo  repositories.DistanceProfileRepository
-	DistanceCalcRepo     repositories.DistanceCalculationRepository
-	StoredMileageRepo    repositories.StoredMileageRepository
-	StoredMileageBuffer  repositories.StoredMileageBufferRepository
-	JurisdictionMileRepo repositories.ShipmentMoveJurisdictionMileRepository
-	ShipmentMoveRepo     repositories.ShipmentMoveRepository
-	WorkflowStarter      services.WorkflowStarter
+	ShipmentRepo         shipmentports.ShipmentRepository
+	DistanceOverrideRepo distanceoverrideports.DistanceOverrideRepository
+	DistanceControlRepo  distancecontrolports.DistanceControlRepository
+	DistanceProfileRepo  distanceprofileports.DistanceProfileRepository
+	DistanceCalcRepo     distancecalculationports.DistanceCalculationRepository
+	StoredMileageRepo    storedmileageports.StoredMileageRepository
+	StoredMileageBuffer  storedmileageports.StoredMileageBufferRepository
+	JurisdictionMileRepo shipmentports.ShipmentMoveJurisdictionMileRepository
+	ShipmentMoveRepo     shipmentports.ShipmentMoveRepository
+	WorkflowStarter      kernelports.WorkflowStarter
 	IntegrationService   *integrationservice.Service
 }
 
 type Service struct {
 	l                    *zap.Logger
-	shipmentRepo         repositories.ShipmentRepository
-	distanceOverrideRepo repositories.DistanceOverrideRepository
-	distanceControlRepo  repositories.DistanceControlRepository
-	distanceProfileRepo  repositories.DistanceProfileRepository
-	distanceCalcRepo     repositories.DistanceCalculationRepository
-	storedMileageRepo    repositories.StoredMileageRepository
-	storedMileageBuffer  repositories.StoredMileageBufferRepository
-	jurisdictionMileRepo repositories.ShipmentMoveJurisdictionMileRepository
-	shipmentMoveRepo     repositories.ShipmentMoveRepository
-	workflowStarter      services.WorkflowStarter
+	shipmentRepo         shipmentports.ShipmentRepository
+	distanceOverrideRepo distanceoverrideports.DistanceOverrideRepository
+	distanceControlRepo  distancecontrolports.DistanceControlRepository
+	distanceProfileRepo  distanceprofileports.DistanceProfileRepository
+	distanceCalcRepo     distancecalculationports.DistanceCalculationRepository
+	storedMileageRepo    storedmileageports.StoredMileageRepository
+	storedMileageBuffer  storedmileageports.StoredMileageBufferRepository
+	jurisdictionMileRepo shipmentports.ShipmentMoveJurisdictionMileRepository
+	shipmentMoveRepo     shipmentports.ShipmentMoveRepository
+	workflowStarter      kernelports.WorkflowStarter
 	integrationService   *integrationservice.Service
 }
 
-func New(p Params) services.DistanceCalculationService {
+func New(p Params) shipmentports.DistanceCalculationService {
 	return &Service{
 		l:                    p.Logger.Named("service.distance-calculation"),
 		shipmentRepo:         p.ShipmentRepo,
@@ -111,7 +114,7 @@ func New(p Params) services.DistanceCalculationService {
 func (s *Service) ResolveForShipment(
 	ctx context.Context,
 	entity *shipment.Shipment,
-) (*services.DistanceCalculationResponse, error) {
+) (*shipmentports.DistanceCalculationResponse, error) {
 	return s.resolveForShipment(ctx, entity, make(map[string]pcmilerRuntime, 2))
 }
 
@@ -119,14 +122,14 @@ func (s *Service) resolveForShipment(
 	ctx context.Context,
 	entity *shipment.Shipment,
 	pcRuntimeByPurpose map[string]pcmilerRuntime,
-) (*services.DistanceCalculationResponse, error) {
+) (*shipmentports.DistanceCalculationResponse, error) {
 	if entity == nil {
 		return nil, errortypes.NewBusinessError("shipment is required")
 	}
 
-	resp := &services.DistanceCalculationResponse{
+	resp := &shipmentports.DistanceCalculationResponse{
 		ShipmentID: entity.ID,
-		Moves:      make([]services.DistanceMoveResult, 0, len(entity.Moves)),
+		Moves:      make([]shipmentports.DistanceMoveResult, 0, len(entity.Moves)),
 	}
 
 	control, controlErr := s.distanceControlRepo.EnsureDefault(ctx, pagination.TenantInfo{
@@ -349,7 +352,7 @@ func (s *Service) RecalculateShipment(
 	ctx context.Context,
 	shipmentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) (*services.DistanceCalculationResponse, error) {
+) (*shipmentports.DistanceCalculationResponse, error) {
 	plan, err := s.planRecalculateShipment(ctx, shipmentID, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -365,7 +368,7 @@ func (s *Service) PreviewRecalculateShipment(
 	ctx context.Context,
 	shipmentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) (*services.ShipmentDistancePreview, error) {
+) (*shipmentports.ShipmentDistancePreview, error) {
 	return s.planRecalculateShipment(ctx, shipmentID, tenantInfo)
 }
 
@@ -373,11 +376,11 @@ func (s *Service) planRecalculateShipment(
 	ctx context.Context,
 	shipmentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) (*services.ShipmentDistancePreview, error) {
-	entity, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+) (*shipmentports.ShipmentDistancePreview, error) {
+	entity, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         shipmentID,
 		TenantInfo: tenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -391,7 +394,7 @@ func (s *Service) planRecalculateShipment(
 		return nil, err
 	}
 
-	return &services.ShipmentDistancePreview{Before: before, After: entity, Distance: resp}, nil
+	return &shipmentports.ShipmentDistancePreview{Before: before, After: entity, Distance: resp}, nil
 }
 
 func snapshotMoveDistances(entity *shipment.Shipment) *shipment.Shipment {
@@ -411,12 +414,12 @@ func snapshotMoveDistances(entity *shipment.Shipment) *shipment.Shipment {
 
 func (s *Service) jurisdictionMove(
 	ctx context.Context,
-	req *services.RecalculateMoveJurisdictionMilesRequest,
+	req *shipmentports.RecalculateMoveJurisdictionMilesRequest,
 ) (*shipment.ShipmentMove, error) {
 	if req.ShipmentMoveID.IsNil() {
 		return nil, errortypes.NewBusinessError("Shipment move is required")
 	}
-	move, err := s.shipmentMoveRepo.GetByID(ctx, &repositories.GetMoveByIDRequest{
+	move, err := s.shipmentMoveRepo.GetByID(ctx, &shipmentports.GetMoveByIDRequest{
 		MoveID:            req.ShipmentMoveID,
 		TenantInfo:        req.TenantInfo,
 		ExpandMoveDetails: true,
@@ -435,14 +438,14 @@ func (s *Service) jurisdictionMove(
 
 func (s *Service) PlanMoveJurisdictionMiles(
 	ctx context.Context,
-	req *services.RecalculateMoveJurisdictionMilesRequest,
-) (*services.MoveJurisdictionMilesPlan, error) {
+	req *shipmentports.RecalculateMoveJurisdictionMilesRequest,
+) (*shipmentports.MoveJurisdictionMilesPlan, error) {
 	move, err := s.jurisdictionMove(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	return &services.MoveJurisdictionMilesPlan{Move: move}, nil
+	return &shipmentports.MoveJurisdictionMilesPlan{Move: move}, nil
 }
 
 func (s *Service) moveShipmentAndControl(
@@ -450,10 +453,10 @@ func (s *Service) moveShipmentAndControl(
 	move *shipment.ShipmentMove,
 	tenantInfo pagination.TenantInfo,
 ) (*shipment.Shipment, *distancecontrol.DistanceControl, error) {
-	entity, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	entity, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         move.ShipmentID,
 		TenantInfo: tenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -473,7 +476,7 @@ func (s *Service) moveShipmentAndControl(
 
 func (s *Service) RecalculateMoveJurisdictionMiles(
 	ctx context.Context,
-	req services.RecalculateMoveJurisdictionMilesRequest, //nolint:gocritic // the DistanceCalculationService port passes the request by value
+	req shipmentports.RecalculateMoveJurisdictionMilesRequest, //nolint:gocritic // the DistanceCalculationService port passes the request by value
 ) ([]*shipment.ShipmentMoveJurisdictionMile, error) {
 	move, err := s.jurisdictionMove(ctx, &req)
 	if err != nil {
@@ -573,14 +576,14 @@ func (s *Service) RecalculateMoveJurisdictionMiles(
 
 func (s *Service) BackfillJurisdictionMiles(
 	ctx context.Context,
-	req services.BackfillJurisdictionMilesRequest,
-) (*services.BackfillJurisdictionMilesResult, error) {
+	req shipmentports.BackfillJurisdictionMilesRequest,
+) (*shipmentports.BackfillJurisdictionMilesResult, error) {
 	if req.Start <= 0 || req.End <= req.Start {
 		return nil, errortypes.NewBusinessError("Period start must be before period end")
 	}
 	page, err := s.jurisdictionMileRepo.ListUnattributedMoves(
 		ctx,
-		repositories.UnattributedMovesRequest{
+		shipmentports.UnattributedMovesRequest{
 			TenantInfo: req.TenantInfo,
 			Start:      req.Start,
 			End:        req.End,
@@ -590,7 +593,7 @@ func (s *Service) BackfillJurisdictionMiles(
 	if err != nil {
 		return nil, err
 	}
-	result := &services.BackfillJurisdictionMilesResult{
+	result := &shipmentports.BackfillJurisdictionMilesResult{
 		DryRun:            req.DryRun,
 		UnattributedMoves: page.TotalMoves,
 		UnattributedMiles: page.TotalMiles,
@@ -740,7 +743,7 @@ func (s *Service) persistMoveDistances(ctx context.Context, moves []*shipment.Sh
 func (s *Service) logRuns(
 	ctx context.Context,
 	entity *shipment.Shipment,
-	resp *services.DistanceCalculationResponse,
+	resp *shipmentports.DistanceCalculationResponse,
 ) {
 	if resp == nil {
 		return
@@ -808,7 +811,7 @@ func (s *Service) pcmilerRuntime(
 		profileID := control.ProfileIDForPurpose(purpose)
 		profile, err = s.distanceProfileRepo.GetByID(
 			ctx,
-			repositories.GetDistanceProfileByIDRequest{
+			distanceprofileports.GetDistanceProfileByIDRequest{
 				ID:         profileID,
 				TenantInfo: tenantInfo,
 			},
@@ -968,7 +971,7 @@ func (s *Service) storedMileage(
 	if !ok {
 		return nil, false, nil
 	}
-	found, err := s.storedMileageRepo.Lookup(ctx, repositories.StoredMileageLookupRequest{
+	found, err := s.storedMileageRepo.Lookup(ctx, storedmileageports.StoredMileageLookupRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -1043,7 +1046,7 @@ func (s *Service) incrementStoredMileageHit(
 	entity *shipment.Shipment,
 	storedMileageID pulid.ID,
 ) {
-	if storedMileageID.IsNil() || ports.IsReadOnly(ctx) {
+	if storedMileageID.IsNil() || kernelports.IsReadOnly(ctx) {
 		return
 	}
 	tenantInfo := pagination.TenantInfo{
@@ -1072,7 +1075,7 @@ func (s *Service) enqueueStoredMileageCandidate(
 	hazmatTypes []string,
 ) {
 	if control == nil || !control.AutoCreateStoredMileage || s.storedMileageBuffer == nil ||
-		ports.IsReadOnly(ctx) {
+		kernelports.IsReadOnly(ctx) {
 		return
 	}
 	candidate, ok := buildStoredMileageCandidate(
@@ -1476,16 +1479,16 @@ func mergeWarnings(base, extra []string) []string {
 
 func jurisdictionMileResults(
 	rows []*shipment.ShipmentMoveJurisdictionMile,
-) []services.JurisdictionMileResult {
+) []shipmentports.JurisdictionMileResult {
 	if len(rows) == 0 {
 		return nil
 	}
-	results := make([]services.JurisdictionMileResult, 0, len(rows))
+	results := make([]shipmentports.JurisdictionMileResult, 0, len(rows))
 	for _, row := range rows {
 		if row == nil {
 			continue
 		}
-		results = append(results, services.JurisdictionMileResult{
+		results = append(results, shipmentports.JurisdictionMileResult{
 			CountryCode:      row.CountryCode,
 			JurisdictionCode: row.JurisdictionCode,
 			Distance:         row.Distance,
@@ -1517,7 +1520,7 @@ func moveResult(
 	move *shipment.ShipmentMove,
 	idx int,
 	warnings []string,
-) services.DistanceMoveResult {
+) shipmentports.DistanceMoveResult {
 	distance := roundDistance(manualDistance(move))
 	if move.Distance != nil {
 		distance = roundDistance(*move.Distance)
@@ -1526,7 +1529,7 @@ func moveResult(
 	if move.DistanceCalculatedAt != nil {
 		calculatedAt = *move.DistanceCalculatedAt
 	}
-	return services.DistanceMoveResult{
+	return shipmentports.DistanceMoveResult{
 		MoveID:              move.ID,
 		MoveIndex:           idx,
 		Distance:            distance,

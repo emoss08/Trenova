@@ -6,10 +6,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/ptoledgerservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -25,20 +27,20 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.PTOPolicyRepository
+	Repo         workerports.PTOPolicyRepository
 	Ledger       *ptoledgerservice.Service
-	WorkerRepo   repositories.WorkerRepository
-	AuditService services.AuditService
-	Realtime     services.RealtimeService `optional:"true"`
+	WorkerRepo   workerports.WorkerRepository
+	AuditService auditports.AuditService
+	Realtime     agentports.RealtimeService `optional:"true"`
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.PTOPolicyRepository
+	repo         workerports.PTOPolicyRepository
 	ledger       *ptoledgerservice.Service
-	workerRepo   repositories.WorkerRepository
-	auditService services.AuditService
-	realtime     services.RealtimeService
+	workerRepo   workerports.WorkerRepository
+	auditService auditports.AuditService
+	realtime     agentports.RealtimeService
 }
 
 func New(p Params) *Service {
@@ -54,21 +56,21 @@ func New(p Params) *Service {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListPTOPoliciesRequest,
+	req *workerports.ListPTOPoliciesRequest,
 ) (*pagination.CursorListResult[*worker.PTOPolicy], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) SelectOptions(
 	ctx context.Context,
-	req *repositories.PTOPolicySelectOptionsRequest,
+	req *workerports.PTOPolicySelectOptionsRequest,
 ) (*pagination.ListResult[*worker.PTOPolicy], error) {
 	return s.repo.SelectOptions(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	req *repositories.GetPTOPolicyByIDRequest,
+	req *workerports.GetPTOPolicyByIDRequest,
 ) (*worker.PTOPolicy, error) {
 	return s.repo.GetByID(ctx, req)
 }
@@ -78,7 +80,7 @@ func (s *Service) validate(ctx context.Context, entity *worker.PTOPolicy) error 
 	entity.Validate(multiErr)
 
 	if entity.Code != "" {
-		exists, err := s.repo.CodeExists(ctx, &repositories.PTOPolicyCodeExistsRequest{
+		exists, err := s.repo.CodeExists(ctx, &workerports.PTOPolicyCodeExistsRequest{
 			TenantInfo: tenantOf(entity),
 			Code:       entity.Code,
 			ExcludeID:  entity.ID,
@@ -135,7 +137,7 @@ func (s *Service) Update(
 ) (*worker.PTOPolicy, error) {
 	log := s.l.With(zap.String("operation", "Update"), zap.String("id", entity.ID.String()))
 
-	original, err := s.repo.GetByID(ctx, &repositories.GetPTOPolicyByIDRequest{
+	original, err := s.repo.GetByID(ctx, &workerports.GetPTOPolicyByIDRequest{
 		ID:           entity.ID,
 		TenantInfo:   tenantOf(entity),
 		IncludeRules: true,
@@ -196,7 +198,7 @@ func (s *Service) changeStatus(
 ) (*worker.PTOPolicy, error) {
 	log := s.l.With(zap.String("operation", string(operation)), zap.String("id", req.ID.String()))
 
-	original, err := s.repo.GetByID(ctx, &repositories.GetPTOPolicyByIDRequest{
+	original, err := s.repo.GetByID(ctx, &workerports.GetPTOPolicyByIDRequest{
 		ID:           req.ID,
 		TenantInfo:   req.TenantInfo,
 		IncludeRules: true,
@@ -238,7 +240,7 @@ func (s *Service) changeStatus(
 }
 
 func (s *Service) CountOpenAssignments(ctx context.Context, entity *worker.PTOPolicy) (int, error) {
-	return s.repo.CountOpenAssignments(ctx, &repositories.CountOpenPTOAssignmentsRequest{
+	return s.repo.CountOpenAssignments(ctx, &workerports.CountOpenPTOAssignmentsRequest{
 		TenantInfo: tenantOf(entity),
 		PolicyID:   entity.ID,
 	})
@@ -249,7 +251,7 @@ func (s *Service) CountOpenAssignmentsByIDs(
 	tenantInfo pagination.TenantInfo,
 	policyIDs []pulid.ID,
 ) (map[pulid.ID]int, error) {
-	return s.repo.CountOpenAssignmentsByIDs(ctx, &repositories.CountOpenPTOAssignmentsByIDsRequest{
+	return s.repo.CountOpenAssignmentsByIDs(ctx, &workerports.CountOpenPTOAssignmentsByIDsRequest{
 		TenantInfo: tenantInfo,
 		PolicyIDs:  policyIDs,
 	})
@@ -286,7 +288,7 @@ func (s *Service) audit(
 	comment string,
 	log *zap.Logger,
 ) {
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourcePTOPolicy,
 		ResourceID:     current.GetResourceID(),
 		Operation:      operation,
@@ -295,7 +297,7 @@ func (s *Service) audit(
 		OrganizationID: current.OrganizationID,
 		BusinessUnitID: current.BusinessUnitID,
 	}
-	opts := []services.LogOption{auditservice.WithComment(comment)}
+	opts := []auditports.LogOption{auditservice.WithComment(comment)}
 	if previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(previous)
 		opts = append(opts, auditservice.WithDiff(previous, current))
@@ -318,7 +320,7 @@ func (s *Service) publish(
 		OrganizationID: entity.OrganizationID,
 		BusinessUnitID: entity.BusinessUnitID,
 		ActorUserID:    userID,
-		ActorType:      services.PrincipalTypeUser,
+		ActorType:      permissionports.PrincipalTypeUser,
 		ActorID:        userID,
 		Resource:       realtimeResource,
 		Action:         string(operation),

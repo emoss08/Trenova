@@ -7,8 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
@@ -18,12 +17,12 @@ import (
 type notedConversations struct {
 	*fakeConversations
 	notes []conversation.Message
-	asked []repositories.ListMessagesRequest
+	asked []agentports.ListMessagesRequest
 }
 
 func (f *notedConversations) ListMessages(
 	_ context.Context,
-	req repositories.ListMessagesRequest,
+	req agentports.ListMessagesRequest,
 ) ([]conversation.Message, error) {
 	f.asked = append(f.asked, req)
 
@@ -36,7 +35,7 @@ type fakeProposals struct {
 
 func (f *fakeProposals) ListByThread(
 	_ context.Context,
-	_ repositories.ListAgentProposalsByThreadRequest,
+	_ agentports.ListAgentProposalsByThreadRequest,
 ) ([]*agent.AgentProposal, error) {
 	return f.proposals, nil
 }
@@ -47,7 +46,7 @@ type fakePlans struct {
 
 func (f *fakePlans) ListByThread(
 	_ context.Context,
-	_ repositories.ListAgentPlansByThreadRequest,
+	_ agentports.ListAgentPlansByThreadRequest,
 ) ([]*agent.AgentPlan, error) {
 	return f.plans, nil
 }
@@ -58,7 +57,7 @@ type fakeDecisions struct {
 
 func (f *fakeDecisions) ListByProposals(
 	_ context.Context,
-	_ repositories.ListAgentDecisionsByProposalsRequest,
+	_ agentports.ListAgentDecisionsByProposalsRequest,
 ) ([]*agent.AgentDecision, error) {
 	return f.decisions, nil
 }
@@ -109,7 +108,7 @@ func (f *resumeFixture) decide(status agent.ProposalStatus, at int64) *agent.Age
 func (f *resumeFixture) resume(t *testing.T) {
 	t.Helper()
 
-	f.service.ResumeFollowUps(t.Context(), serviceports.ResumeFollowUpsRequest{
+	f.service.ResumeFollowUps(t.Context(), agentports.ResumeFollowUpsRequest{
 		TenantInfo: f.tenant,
 		ThreadID:   f.thread.ID,
 	})

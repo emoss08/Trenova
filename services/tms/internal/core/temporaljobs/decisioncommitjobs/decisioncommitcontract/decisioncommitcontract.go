@@ -3,7 +3,7 @@ package decisioncommitcontract
 import (
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -31,7 +31,7 @@ func WorkflowID(key pulid.ID) string {
 // a client draws from it starts at the full window and the person always has
 // at least that long.
 func CommitsAt(now time.Time) int64 {
-	due := now.Add(services.ApprovalUndoWindow)
+	due := now.Add(agentports.ApprovalUndoWindow)
 	if due.Nanosecond() > 0 {
 		return due.Unix() + 1
 	}

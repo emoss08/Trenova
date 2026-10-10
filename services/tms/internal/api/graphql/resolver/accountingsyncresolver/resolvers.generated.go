@@ -4,16 +4,16 @@ package accountingsyncresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	services "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 )
 
 type Deps struct {
 	*base.Core
-	AccountingConnections    services.AccountingConnectionService
-	AccountingMappingService services.AccountingMappingService
-	AccountingSync           services.AccountingSyncService
-	AccountingInbound        services.AccountingInboundService
-	AccountingDrift          services.AccountingDriftService
+	AccountingConnections    accountingsyncports.AccountingConnectionService
+	AccountingMappingService accountingsyncports.AccountingMappingService
+	AccountingSync           accountingsyncports.AccountingSyncService
+	AccountingInbound        accountingsyncports.AccountingInboundService
+	AccountingDrift          accountingsyncports.AccountingDriftService
 }
 
 type AccountingAppCredentialResolver struct{ *Deps }

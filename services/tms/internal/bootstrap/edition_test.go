@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/bootstrap"
 	"github.com/emoss08/trenova/internal/bootstrap/edition"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/editioninfo"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/fx"
@@ -39,7 +39,7 @@ func fakeEdition() *edition.Edition {
 		Name: "fake",
 		Options: []fx.Option{
 			fx.Supply(&everyProcess{}),
-			fx.Decorate(func(services.EditionInfo) services.EditionInfo {
+			fx.Decorate(func(ediports.EditionInfo) ediports.EditionInfo {
 				return editioninfo.NewStatic("fake", true)
 			}),
 		},
@@ -56,7 +56,7 @@ func TestEditionOptionsReachTheAPIGraph(t *testing.T) {
 	require.NoError(t, fx.ValidateApp(
 		bootstrap.OptionsFor(fake),
 		bootstrap.APIOptionsFor(fake),
-		fx.Invoke(func(*everyProcess, *apiOnly, services.EditionInfo, sections) {}),
+		fx.Invoke(func(*everyProcess, *apiOnly, ediports.EditionInfo, sections) {}),
 	))
 
 	err := fx.ValidateApp(
@@ -92,7 +92,7 @@ func TestCommunityEditionAddsNothing(t *testing.T) {
 	require.NoError(t, fx.ValidateApp(
 		bootstrap.OptionsFor(community),
 		bootstrap.APIOptionsFor(community),
-		fx.Invoke(func(info services.EditionInfo) {}),
+		fx.Invoke(func(info ediports.EditionInfo) {}),
 	))
 
 	err := fx.ValidateApp(

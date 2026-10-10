@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/sdk/temporal"
@@ -89,10 +89,10 @@ func (a *Activities) SweepConsolidatedInvoiceRunsActivity(
 	}, nil
 }
 
-func consolidationSystemActor() *services.RequestActor {
-	return &services.RequestActor{
-		PrincipalType: services.PrincipalTypeSystem,
-		PrincipalID:   services.SystemPrincipalID,
-		UserID:        services.SystemPrincipalID,
+func consolidationSystemActor() *permissionports.RequestActor {
+	return &permissionports.RequestActor{
+		PrincipalType: permissionports.PrincipalTypeSystem,
+		PrincipalID:   permissionports.SystemPrincipalID,
+		UserID:        permissionports.SystemPrincipalID,
 	}
 }

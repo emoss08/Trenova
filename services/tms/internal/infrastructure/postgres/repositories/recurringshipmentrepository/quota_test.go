@@ -1,13 +1,14 @@
 package recurringshipmentrepository
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
 	"regexp"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/core/domain/recurringshipment"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -34,11 +35,11 @@ func TestInsertSeriesRefusesASeriesPastTheQuota(t *testing.T) {
 	t.Parallel()
 
 	conn, sqlMock := dbtest.NewSQLMock(t)
-	guard := mocks.NewMockQuotaGuard(t)
+	guard := platformplanportsmock.NewMockQuotaGuard(t)
 	repo := &repository{db: conn, l: zap.NewNop(), quota: guard}
 	series := quotaSeries()
 
-	guard.EXPECT().Enforce(mock.Anything, &services.QuotaRequest{
+	guard.EXPECT().Enforce(mock.Anything, &platformplanports.QuotaRequest{
 		TenantInfo: seriesTenant(series),
 		Meter:      platformcatalog.MeterRecurringShipmentSeries,
 		Quantity:   1,
@@ -58,7 +59,7 @@ func TestInsertSeriesWritesUnderTheQuota(t *testing.T) {
 	t.Parallel()
 
 	conn, sqlMock := dbtest.NewSQLMock(t)
-	guard := mocks.NewMockQuotaGuard(t)
+	guard := platformplanportsmock.NewMockQuotaGuard(t)
 	repo := &repository{db: conn, l: zap.NewNop(), quota: guard}
 	series := quotaSeries()
 
@@ -75,14 +76,14 @@ func TestInsertSeriesWritesUnderTheQuota(t *testing.T) {
 func TestEnforceGeneratedShipmentCountsOneShipment(t *testing.T) {
 	t.Parallel()
 
-	guard := mocks.NewMockQuotaGuard(t)
+	guard := platformplanportsmock.NewMockQuotaGuard(t)
 	repo := &repository{l: zap.NewNop(), quota: guard}
 	series := quotaSeries()
 	refusal := errortypes.NewQuotaExceededError(
 		string(platformcatalog.MeterShipmentsTotal), 12, 12, "free_demo",
 	)
 
-	guard.EXPECT().Enforce(mock.Anything, &services.QuotaRequest{
+	guard.EXPECT().Enforce(mock.Anything, &platformplanports.QuotaRequest{
 		TenantInfo: seriesTenant(series),
 		Meter:      platformcatalog.MeterShipmentsTotal,
 		Quantity:   1,

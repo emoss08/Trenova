@@ -2,17 +2,18 @@ package agentquerytoolservice
 
 import (
 	"context"
-	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/ratequoteservice"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -127,7 +128,7 @@ func TestGetShipmentDraft_RejectsAMismatchedActor(t *testing.T) {
 }
 
 type fakeQuoter struct {
-	rated   *serviceports.RatedShipment
+	rated   *ratequoteports.RatedShipment
 	lastReq *ratequoteservice.QuoteRequest
 	miles   float64
 }
@@ -135,7 +136,7 @@ type fakeQuoter struct {
 func (f *fakeQuoter) Quote(
 	_ context.Context,
 	req *ratequoteservice.QuoteRequest,
-) (*serviceports.RatedShipment, error) {
+) (*ratequoteports.RatedShipment, error) {
 	f.lastReq = req
 	if f.miles > 0 && req.Shipment != nil {
 		for _, move := range req.Shipment.Moves {
@@ -153,7 +154,7 @@ type fakeLocations struct {
 
 func (f *fakeLocations) GetByIDs(
 	_ context.Context,
-	req repositories.GetLocationsByIDsRequest,
+	req locationports.GetLocationsByIDsRequest,
 ) ([]*location.Location, error) {
 	out := make([]*location.Location, 0, len(req.LocationIDs))
 	for _, id := range req.LocationIDs {
@@ -183,7 +184,7 @@ func TestQuoteShipment_BuildsTheLaneFromLocationsAndNeverPersists(t *testing.T) 
 		State:      &usstate.UsState{Abbreviation: "TX"},
 	}
 	agreementID := pulid.MustNew("ragr_")
-	quoter := &fakeQuoter{miles: 240, rated: &serviceports.RatedShipment{
+	quoter := &fakeQuoter{miles: 240, rated: &ratequoteports.RatedShipment{
 		Amount: decimal.NewFromInt(1450), Currency: "USD", Outcome: ratequote.OutcomeRated,
 		AgreementID: &agreementID, BaseRate: decimal.NewNullDecimal(decimal.NewFromFloat(2.9)),
 	}}
@@ -275,24 +276,24 @@ func TestQuoteShipment_SaysWhenNothingPricedTheLane(t *testing.T) {
 	t.Parallel()
 
 	formulaID := pulid.MustNew("ft_")
-	fallback := quoteViewOf(&serviceports.RatedShipment{
+	fallback := quoteViewOf(&ratequoteports.RatedShipment{
 		Outcome: ratequote.OutcomeFormulaFallback, Amount: decimal.NewFromInt(900), FormulaTemplateID: &formulaID,
 	}, nil)
 	assert.Contains(t, fallback.Note, "formula priced it")
 
-	none := quoteViewOf(&serviceports.RatedShipment{Outcome: ratequote.OutcomeNoRateFound}, nil)
+	none := quoteViewOf(&ratequoteports.RatedShipment{Outcome: ratequote.OutcomeNoRateFound}, nil)
 	assert.Contains(t, none.Note, "not a rate")
 }
 
 type fakeShopper struct {
-	result  *serviceports.ShopResult
+	result  *ratequoteports.ShopResult
 	lastReq *ratequoteservice.ShopRequest
 }
 
 func (f *fakeShopper) Shop(
 	_ context.Context,
 	req *ratequoteservice.ShopRequest,
-) (*serviceports.ShopResult, error) {
+) (*ratequoteports.ShopResult, error) {
 	f.lastReq = req
 
 	return f.result, nil
@@ -303,10 +304,10 @@ func TestShopCarriers_RanksOptionsWithMarginAndPassesTheShortlist(t *testing.T) 
 
 	carrierA := pulid.MustNew("carr_")
 	carrierB := pulid.MustNew("carr_")
-	shopper := &fakeShopper{result: &serviceports.ShopResult{
-		Strategy:  serviceports.ShopStrategyBestMargin,
+	shopper := &fakeShopper{result: &ratequoteports.ShopResult{
+		Strategy:  ratequoteports.ShopStrategyBestMargin,
 		SellTotal: decimal.NewNullDecimal(decimal.NewFromInt(2000)),
-		Options: []*serviceports.ShopOption{
+		Options: []*ratequoteports.ShopOption{
 			{
 				Rank:        1,
 				CarrierID:   carrierA,
@@ -365,7 +366,7 @@ type shopCarriers struct{ carriers []*carrier.Carrier }
 
 func (s *shopCarriers) GetByIDs(
 	context.Context,
-	repositories.GetCarriersByIDsRequest,
+	carrierports.GetCarriersByIDsRequest,
 ) ([]*carrier.Carrier, error) {
 	return s.carriers, nil
 }

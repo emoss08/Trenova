@@ -1,14 +1,17 @@
 package agenttoolservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
@@ -20,8 +23,8 @@ type approveOnlyTool struct{}
 func (approveOnlyTool) Name() string                { return "approve_only" }
 func (approveOnlyTool) Description() string         { return "" }
 func (approveOnlyTool) ParamSchema() map[string]any { return map[string]any{} }
-func (approveOnlyTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (approveOnlyTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          "approve_only",
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceBillingQueue,
@@ -35,7 +38,7 @@ func (approveOnlyTool) Policy() serviceports.ToolPolicy {
 		Rationale:     "An approval stub.",
 	}
 }
-func (approveOnlyTool) Execute(_ context.Context, _ serviceports.ToolExecuteParams) error {
+func (approveOnlyTool) Execute(_ context.Context, _ agentports.ToolExecuteParams) error {
 	return nil
 }
 
@@ -43,12 +46,12 @@ func TestGuardExecute_AgentCannotApprove(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
-	err := guardExecute(approveOnlyTool{}, serviceports.ToolExecuteParams{
+	err := guardExecute(approveOnlyTool{}, agentports.ToolExecuteParams{
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
-		Actor: &serviceports.RequestActor{
-			PrincipalType:  serviceports.PrincipalTypeAgent,
-			PrincipalID:    serviceports.AgentPrincipalID,
+		Actor: &permissionports.RequestActor{
+			PrincipalType:  permissionports.PrincipalTypeAgent,
+			PrincipalID:    permissionports.AgentPrincipalID,
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
 		},
@@ -60,17 +63,17 @@ func TestGuardExecute_AgentCannotApprove(t *testing.T) {
 func TestExecute_TenantMismatch_DoesNotCallPort(t *testing.T) {
 	// The mock has no expectations configured; if the tool reaches the port,
 	// testify panics, failing the test.
-	billing := mocks.NewMockBillingQueueService(t)
+	billing := billingqueueportsmock.NewMockBillingQueueService(t)
 	tool := newTransitionToInReviewTool(billing)
 
 	actorOrg := pulid.MustNew("org_")
 	actorBu := pulid.MustNew("bu_")
 
-	err := tool.Execute(t.Context(), serviceports.ToolExecuteParams{
+	err := tool.Execute(t.Context(), agentports.ToolExecuteParams{
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
-		Actor: &serviceports.RequestActor{
-			PrincipalType:  serviceports.PrincipalTypeUser,
+		Actor: &permissionports.RequestActor{
+			PrincipalType:  permissionports.PrincipalTypeUser,
 			OrganizationID: actorOrg,
 			BusinessUnitID: actorBu,
 		},
@@ -81,24 +84,24 @@ func TestExecute_TenantMismatch_DoesNotCallPort(t *testing.T) {
 }
 
 type fakeExceptionService struct {
-	serviceports.AgentExceptionService
+	agentports.AgentExceptionService
 
-	flagged []*serviceports.FlagAgentExceptionRequest
+	flagged []*agentports.FlagAgentExceptionRequest
 }
 
 func (f *fakeExceptionService) Flag(
 	_ context.Context,
-	req *serviceports.FlagAgentExceptionRequest,
-	_ *serviceports.RequestActor,
+	req *agentports.FlagAgentExceptionRequest,
+	_ *permissionports.RequestActor,
 ) (*agent.AgentException, error) {
 	f.flagged = append(f.flagged, req)
 	return &agent.AgentException{ID: pulid.MustNew("aexc_")}, nil
 }
 
-func agentActorFor(orgID, buID pulid.ID) *serviceports.RequestActor {
-	return &serviceports.RequestActor{
-		PrincipalType:  serviceports.PrincipalTypeAgent,
-		PrincipalID:    serviceports.AgentPrincipalID,
+func agentActorFor(orgID, buID pulid.ID) *permissionports.RequestActor {
+	return &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeAgent,
+		PrincipalID:    permissionports.AgentPrincipalID,
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 	}
@@ -108,7 +111,7 @@ func agentActorFor(orgID, buID pulid.ID) *serviceports.RequestActor {
 // never does. It is taken from the actor so an agent cannot assign a driver
 // in another organization by naming that organization's ids.
 func TestAssignMove_UsesTheActorTenantAndPassesEveryId(t *testing.T) {
-	assignments := mocks.NewMockAssignmentService(t)
+	assignments := shipmentportsmock.NewMockAssignmentService(t)
 	tool := newAssignMoveTool(assignments, nil)
 
 	orgID := pulid.MustNew("org_")
@@ -119,7 +122,7 @@ func TestAssignMove_UsesTheActorTenantAndPassesEveryId(t *testing.T) {
 	trailerID := pulid.MustNew("trl_")
 
 	assignments.EXPECT().
-		AssignToMove(mock.Anything, mock.MatchedBy(func(req *repositories.AssignShipmentMoveRequest) bool {
+		AssignToMove(mock.Anything, mock.MatchedBy(func(req *shipmentports.AssignShipmentMoveRequest) bool {
 			return req.TenantInfo.OrgID == orgID &&
 				req.TenantInfo.BuID == buID &&
 				req.ShipmentMoveID == moveID &&
@@ -130,7 +133,7 @@ func TestAssignMove_UsesTheActorTenantAndPassesEveryId(t *testing.T) {
 		})).
 		Return(&shipment.Assignment{}, nil)
 
-	err := tool.Execute(t.Context(), serviceports.ToolExecuteParams{
+	err := tool.Execute(t.Context(), agentports.ToolExecuteParams{
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		Actor:          agentActorFor(orgID, buID),
@@ -149,10 +152,10 @@ func TestAssignMove_UsesTheActorTenantAndPassesEveryId(t *testing.T) {
 }
 
 func TestAssignMove_TenantMismatch_DoesNotCallPort(t *testing.T) {
-	assignments := mocks.NewMockAssignmentService(t)
+	assignments := shipmentportsmock.NewMockAssignmentService(t)
 	tool := newAssignMoveTool(assignments, nil)
 
-	err := tool.Execute(t.Context(), serviceports.ToolExecuteParams{
+	err := tool.Execute(t.Context(), agentports.ToolExecuteParams{
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
 		Actor:          agentActorFor(pulid.MustNew("org_"), pulid.MustNew("bu_")),
@@ -177,7 +180,7 @@ func TestRaiseException_TiesTheCaseToTheExecutingRun(t *testing.T) {
 	runID := pulid.MustNew("arun_")
 	subjectID := pulid.MustNew("bqi_")
 
-	err := tool.Execute(t.Context(), serviceports.ToolExecuteParams{
+	err := tool.Execute(t.Context(), agentports.ToolExecuteParams{
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		Actor:          agentActorFor(orgID, buID),
@@ -212,7 +215,7 @@ func TestRaiseException_RefusesWithoutARun(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
-	err := tool.Execute(t.Context(), serviceports.ToolExecuteParams{
+	err := tool.Execute(t.Context(), agentports.ToolExecuteParams{
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		Actor:          agentActorFor(orgID, buID),

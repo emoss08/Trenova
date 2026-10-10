@@ -17,9 +17,24 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/insight"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/shipmenttracking"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptworkitemports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
@@ -39,62 +54,62 @@ type Params struct {
 	fx.In
 
 	Logger            *zap.Logger
-	BillingQueue      serviceports.BillingQueueService
-	Shipments         serviceports.ShipmentService
-	Console           repositories.DispatchConsoleRepository         `optional:"true"`
-	Content           serviceports.DocumentContentService            `optional:"true"`
-	Insights          repositories.InsightRepository                 `optional:"true"`
-	BankReceipts      serviceports.BankReceiptService                `optional:"true"`
-	WorkItems         repositories.BankReceiptWorkItemRepository     `optional:"true"`
-	Occurrences       repositories.DetentionOccurrenceRepository     `optional:"true"`
-	Workers           repositories.WorkerRepository                  `optional:"true"`
-	Credentials       repositories.WorkerCredentialRepository        `optional:"true"`
-	CarrierIntel      repositories.CarrierIntelEventRepository       `optional:"true"`
-	EDIFiles          repositories.EDIInboundFileRepository          `optional:"true"`
-	Inbound           repositories.InboundMessageRepository          `optional:"true"`
-	Reports           repositories.ReportDefinitionRepository        `optional:"true"`
-	Dashboards        repositories.ReportDashboardRepository         `optional:"true"`
-	Accounting        repositories.AccountingConnectionRepository    `optional:"true"`
-	SyncRecords       repositories.AccountingSyncRecordRepository    `optional:"true"`
-	AccountingInbound repositories.AccountingInboundChangeRepository `optional:"true"`
-	AccountingDrift   repositories.AccountingDriftFindingRepository  `optional:"true"`
-	Dispatch          repositories.DispatchControlRepository         `optional:"true"`
-	Formulas          repositories.FormulaTemplateRepository         `optional:"true"`
-	Invoices          repositories.InvoiceRepository                 `optional:"true"`
-	Disputes          repositories.InvoiceDisputeRepository          `optional:"true"`
+	BillingQueue      billingqueueports.BillingQueueService
+	Shipments         shipmentports.ShipmentService
+	Console           shipmentports.DispatchConsoleRepository                `optional:"true"`
+	Content           documentports.DocumentContentService                   `optional:"true"`
+	Insights          insightports.InsightRepository                         `optional:"true"`
+	BankReceipts      bankreceiptports.BankReceiptService                    `optional:"true"`
+	WorkItems         bankreceiptworkitemports.BankReceiptWorkItemRepository `optional:"true"`
+	Occurrences       detentionports.DetentionOccurrenceRepository           `optional:"true"`
+	Workers           workerports.WorkerRepository                           `optional:"true"`
+	Credentials       workerports.WorkerCredentialRepository                 `optional:"true"`
+	CarrierIntel      carrierintelports.CarrierIntelEventRepository          `optional:"true"`
+	EDIFiles          ediports.EDIInboundFileRepository                      `optional:"true"`
+	Inbound           inboundmessageports.InboundMessageRepository           `optional:"true"`
+	Reports           reportports.ReportDefinitionRepository                 `optional:"true"`
+	Dashboards        reportports.ReportDashboardRepository                  `optional:"true"`
+	Accounting        accountingsyncports.AccountingConnectionRepository     `optional:"true"`
+	SyncRecords       accountingsyncports.AccountingSyncRecordRepository     `optional:"true"`
+	AccountingInbound accountingsyncports.AccountingInboundChangeRepository  `optional:"true"`
+	AccountingDrift   accountingsyncports.AccountingDriftFindingRepository   `optional:"true"`
+	Dispatch          dispatchcontrolports.DispatchControlRepository         `optional:"true"`
+	Formulas          formulatemplateports.FormulaTemplateRepository         `optional:"true"`
+	Invoices          invoiceports.InvoiceRepository                         `optional:"true"`
+	Disputes          invoiceports.InvoiceDisputeRepository                  `optional:"true"`
 }
 
 // Service describes the record an agent run or a conversation is about, so
 // a run woken by an event and a thread opened from a page both start with
 // the same picture of their subject in front of the model.
 type Service struct {
-	content           serviceports.DocumentContentService
-	billingQueue      serviceports.BillingQueueService
-	shipments         serviceports.ShipmentService
-	console           repositories.DispatchConsoleRepository
-	insights          repositories.InsightRepository
-	receipts          serviceports.BankReceiptService
-	workItems         repositories.BankReceiptWorkItemRepository
-	occurrences       repositories.DetentionOccurrenceRepository
-	workers           repositories.WorkerRepository
-	credentials       repositories.WorkerCredentialRepository
-	carrierIntel      repositories.CarrierIntelEventRepository
-	ediFiles          repositories.EDIInboundFileRepository
-	inbound           repositories.InboundMessageRepository
-	reports           repositories.ReportDefinitionRepository
-	dashboards        repositories.ReportDashboardRepository
-	accounting        repositories.AccountingConnectionRepository
-	syncRecords       repositories.AccountingSyncRecordRepository
-	accountingInbound repositories.AccountingInboundChangeRepository
-	accountingDrift   repositories.AccountingDriftFindingRepository
-	dispatch          repositories.DispatchControlRepository
-	formulas          repositories.FormulaTemplateRepository
-	invoices          repositories.InvoiceRepository
-	disputes          repositories.InvoiceDisputeRepository
+	content           documentports.DocumentContentService
+	billingQueue      billingqueueports.BillingQueueService
+	shipments         shipmentports.ShipmentService
+	console           shipmentports.DispatchConsoleRepository
+	insights          insightports.InsightRepository
+	receipts          bankreceiptports.BankReceiptService
+	workItems         bankreceiptworkitemports.BankReceiptWorkItemRepository
+	occurrences       detentionports.DetentionOccurrenceRepository
+	workers           workerports.WorkerRepository
+	credentials       workerports.WorkerCredentialRepository
+	carrierIntel      carrierintelports.CarrierIntelEventRepository
+	ediFiles          ediports.EDIInboundFileRepository
+	inbound           inboundmessageports.InboundMessageRepository
+	reports           reportports.ReportDefinitionRepository
+	dashboards        reportports.ReportDashboardRepository
+	accounting        accountingsyncports.AccountingConnectionRepository
+	syncRecords       accountingsyncports.AccountingSyncRecordRepository
+	accountingInbound accountingsyncports.AccountingInboundChangeRepository
+	accountingDrift   accountingsyncports.AccountingDriftFindingRepository
+	dispatch          dispatchcontrolports.DispatchControlRepository
+	formulas          formulatemplateports.FormulaTemplateRepository
+	invoices          invoiceports.InvoiceRepository
+	disputes          invoiceports.InvoiceDisputeRepository
 	logger            *zap.Logger
 }
 
-func New(p Params) serviceports.AgentSubjectDescriber {
+func New(p Params) agentports.AgentSubjectDescriber {
 	return &Service{
 		content:           p.Content,
 		billingQueue:      p.BillingQueue,
@@ -186,7 +201,7 @@ func (s *Service) billingQueueItem(
 	tenant pagination.TenantInfo,
 	itemID pulid.ID,
 ) (*agentdefinition.RuntimeSubject, error) {
-	item, err := s.billingQueue.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
+	item, err := s.billingQueue.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
 		TenantInfo:            tenant,
 		ItemID:                itemID,
 		ExpandShipmentDetails: true,
@@ -242,7 +257,7 @@ func (s *Service) shipmentMove(
 		}, nil
 	}
 
-	moves, err := s.console.ListBoardMoves(ctx, &repositories.DispatchBoardFilter{
+	moves, err := s.console.ListBoardMoves(ctx, &shipmentports.DispatchBoardFilter{
 		TenantInfo: tenant,
 		MoveIDs:    []pulid.ID{moveID},
 		Limit:      1,
@@ -268,7 +283,7 @@ func (s *Service) shipmentMove(
 }
 
 type moveNotes struct {
-	*repositories.BoardMove
+	*shipmentports.BoardMove
 
 	Coverage *moveCoverage `json:"coverage,omitempty"`
 }
@@ -282,13 +297,13 @@ type moveCoverage struct {
 func (s *Service) moveCoverage(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	move *repositories.BoardMove,
+	move *shipmentports.BoardMove,
 ) *moveCoverage {
 	if s.dispatch == nil || move == nil || move.OriginWindowStart <= 0 {
 		return nil
 	}
 
-	control, err := s.dispatch.GetByOrgID(ctx, repositories.GetDispatchControlRequest{
+	control, err := s.dispatch.GetByOrgID(ctx, dispatchcontrolports.GetDispatchControlRequest{
 		TenantInfo: tenant,
 	})
 	if err != nil {
@@ -338,10 +353,10 @@ func (s *Service) shipment(
 		return subject, nil
 	}
 
-	entity, err := s.shipments.Get(ctx, &repositories.GetShipmentByIDRequest{
+	entity, err := s.shipments.Get(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         shipmentID,
 		TenantInfo: tenant,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 			IncludeCustomer:       true,
 		},
@@ -350,7 +365,7 @@ func (s *Service) shipment(
 		return nil, fmt.Errorf("load shipment: %w", err)
 	}
 
-	assignments := make(map[pulid.ID]*repositories.BoardMove, len(entity.Moves))
+	assignments := make(map[pulid.ID]*shipmentports.BoardMove, len(entity.Moves))
 	if s.console != nil && len(entity.Moves) > 0 {
 		moveIDs := make([]pulid.ID, 0, len(entity.Moves))
 		for _, move := range entity.Moves {
@@ -358,7 +373,7 @@ func (s *Service) shipment(
 				moveIDs = append(moveIDs, move.ID)
 			}
 		}
-		moves, listErr := s.console.ListBoardMoves(ctx, &repositories.DispatchBoardFilter{
+		moves, listErr := s.console.ListBoardMoves(ctx, &shipmentports.DispatchBoardFilter{
 			TenantInfo:     tenant,
 			MoveIDs:        moveIDs,
 			IncludeCovered: true,
@@ -453,7 +468,7 @@ func (s *Service) insight(
 		return subject, nil
 	}
 
-	found, err := s.insights.GetByID(ctx, repositories.GetInsightByIDRequest{
+	found, err := s.insights.GetByID(ctx, insightports.GetInsightByIDRequest{
 		ID:         insightID,
 		TenantInfo: tenant,
 	})
@@ -504,7 +519,7 @@ func (s *Service) bankReceipt(
 		return subject, nil
 	}
 
-	req := &serviceports.GetBankReceiptRequest{ReceiptID: receiptID, TenantInfo: tenant}
+	req := &bankreceiptports.GetBankReceiptRequest{ReceiptID: receiptID, TenantInfo: tenant}
 	receipt, err := s.receipts.Get(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("load bank receipt: %w", err)
@@ -587,7 +602,7 @@ func (s *Service) detentionOccurrence(
 		return subject, nil
 	}
 
-	occurrence, err := s.occurrences.GetByID(ctx, &repositories.GetDetentionOccurrenceByIDRequest{
+	occurrence, err := s.occurrences.GetByID(ctx, &detentionports.GetDetentionOccurrenceByIDRequest{
 		OccurrenceID:   occurrenceID,
 		TenantInfo:     tenant,
 		IncludeNotices: true,
@@ -651,7 +666,7 @@ func (s *Service) worker(
 		return subject, nil
 	}
 
-	entity, err := s.workers.GetByID(ctx, repositories.GetWorkerByIDRequest{
+	entity, err := s.workers.GetByID(ctx, workerports.GetWorkerByIDRequest{
 		ID:             workerID,
 		TenantInfo:     tenant,
 		IncludeProfile: true,
@@ -692,7 +707,7 @@ func (s *Service) workerCredentials(
 	tenant pagination.TenantInfo,
 	workerID pulid.ID,
 ) []map[string]any {
-	credentials, err := s.credentials.ListForWorker(ctx, &repositories.ListWorkerCredentialsRequest{
+	credentials, err := s.credentials.ListForWorker(ctx, &workerports.ListWorkerCredentialsRequest{
 		TenantInfo:  tenant,
 		WorkerID:    workerID,
 		IncludeType: true,
@@ -814,7 +829,7 @@ func (s *Service) ediInboundFile(
 		return subject, nil
 	}
 
-	file, err := s.ediFiles.GetInboundFileByID(ctx, repositories.GetEDIInboundFileByIDRequest{
+	file, err := s.ediFiles.GetInboundFileByID(ctx, ediports.GetEDIInboundFileByIDRequest{
 		ID:              fileID,
 		TenantInfo:      tenant,
 		IncludeMessages: true,
@@ -866,7 +881,7 @@ func (s *Service) inboundMessage(
 		return subject, nil
 	}
 
-	message, err := s.inbound.GetByID(ctx, repositories.GetInboundMessageByIDRequest{
+	message, err := s.inbound.GetByID(ctx, inboundmessageports.GetInboundMessageByIDRequest{
 		ID:                 messageID,
 		TenantInfo:         tenant,
 		IncludeAttachments: true,
@@ -923,7 +938,7 @@ func (s *Service) report(
 		return subject, nil
 	}
 
-	found, err := s.reports.GetByID(ctx, &repositories.GetReportDefinitionRequest{
+	found, err := s.reports.GetByID(ctx, &reportports.GetReportDefinitionRequest{
 		TenantInfo:   tenant,
 		DefinitionID: definitionID,
 	})
@@ -963,7 +978,7 @@ func (s *Service) dashboard(
 		return subject, nil
 	}
 
-	found, err := s.dashboards.GetByID(ctx, &repositories.GetReportDashboardRequest{
+	found, err := s.dashboards.GetByID(ctx, &reportports.GetReportDashboardRequest{
 		TenantInfo:  tenant,
 		DashboardID: dashboardID,
 	})
@@ -1001,7 +1016,7 @@ func (s *Service) formulaTemplate(
 		return subject, nil
 	}
 
-	found, err := s.formulas.GetByID(ctx, repositories.GetFormulaTemplateByIDRequest{
+	found, err := s.formulas.GetByID(ctx, formulatemplateports.GetFormulaTemplateByIDRequest{
 		TemplateID: templateID,
 		TenantInfo: tenant,
 	})
@@ -1072,7 +1087,7 @@ func (s *Service) accountingConnection(
 		return subject, nil
 	}
 
-	found, err := s.accounting.GetByID(ctx, repositories.GetAccountingConnectionByIDRequest{
+	found, err := s.accounting.GetByID(ctx, accountingsyncports.GetAccountingConnectionByIDRequest{
 		TenantInfo: tenant,
 		ID:         connectionID,
 	})
@@ -1110,7 +1125,7 @@ func (s *Service) accountingSyncRecord(
 		return subject, nil
 	}
 
-	found, err := s.syncRecords.GetByID(ctx, repositories.GetAccountingSyncRecordRequest{
+	found, err := s.syncRecords.GetByID(ctx, accountingsyncports.GetAccountingSyncRecordRequest{
 		TenantInfo: tenant,
 		ID:         recordID,
 	})
@@ -1150,7 +1165,7 @@ func (s *Service) accountingInboundChange(
 		return subject, nil
 	}
 
-	found, err := s.accountingInbound.GetByID(ctx, repositories.GetAccountingInboundChangeRequest{
+	found, err := s.accountingInbound.GetByID(ctx, accountingsyncports.GetAccountingInboundChangeQuery{
 		TenantInfo: tenant,
 		ID:         changeID,
 	})
@@ -1188,7 +1203,7 @@ func (s *Service) accountingDriftFinding(
 		return subject, nil
 	}
 
-	found, err := s.accountingDrift.GetByID(ctx, repositories.GetAccountingDriftFindingRequest{
+	found, err := s.accountingDrift.GetByID(ctx, accountingsyncports.GetAccountingDriftFindingQuery{
 		TenantInfo: tenant,
 		ID:         findingID,
 	})

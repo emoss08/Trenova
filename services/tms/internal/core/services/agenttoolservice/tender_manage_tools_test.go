@@ -10,8 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/tenderservice"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -25,7 +25,7 @@ type fakeTenderManager struct {
 	entity   *tender.Tender
 	refusal  error
 	canceled *tenderservice.CancelTenderRequest
-	answered *serviceports.TenderResponseRequest
+	answered *tenderports.TenderResponseRequest
 }
 
 func newFakeTenderManager(status tender.Status, offers ...tender.OfferStatus) *fakeTenderManager {
@@ -97,7 +97,7 @@ func (f *fakeTenderManager) Cancel(
 
 func (f *fakeTenderManager) PreviewResponse(
 	_ context.Context,
-	req *serviceports.TenderResponseRequest,
+	req *tenderports.TenderResponseRequest,
 ) (*tenderservice.ResponsePreview, error) {
 	if f.refusal != nil {
 		return nil, f.refusal
@@ -143,7 +143,7 @@ func (f *fakeTenderManager) PreviewResponse(
 
 func (f *fakeTenderManager) RecordResponse(
 	_ context.Context,
-	req *serviceports.TenderResponseRequest,
+	req *tenderports.TenderResponseRequest,
 ) error {
 	if err := f.guard.write(); err != nil {
 		return err

@@ -9,18 +9,19 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 var (
-	_ serviceports.ToolPreviewer = (*retryAccountingSyncTool)(nil)
-	_ serviceports.ToolPreviewer = (*skipAccountingSyncTool)(nil)
-	_ serviceports.ToolPreviewer = (*pauseAccountingSyncTool)(nil)
-	_ serviceports.ToolPreviewer = (*resumeAccountingSyncTool)(nil)
-	_ serviceports.ToolPreviewer = (*requestAccountingBackfillTool)(nil)
+	_ agentports.ToolPreviewer = (*retryAccountingSyncTool)(nil)
+	_ agentports.ToolPreviewer = (*skipAccountingSyncTool)(nil)
+	_ agentports.ToolPreviewer = (*pauseAccountingSyncTool)(nil)
+	_ agentports.ToolPreviewer = (*resumeAccountingSyncTool)(nil)
+	_ agentports.ToolPreviewer = (*requestAccountingBackfillTool)(nil)
 )
 
 const (
@@ -107,7 +108,7 @@ func syncRecordRecord(record *accountingsync.AccountingSyncRecord) toolpreview.R
 	}
 }
 
-func syncConnectionRecord(summary *serviceports.AccountingSyncSummary) toolpreview.Record {
+func syncConnectionRecord(summary *accountingsyncports.AccountingSyncSummary) toolpreview.Record {
 	return toolpreview.Record{
 		Resource: permission.ResourceAccountingIntegration,
 		ID:       summary.Connection.ID,
@@ -126,7 +127,7 @@ func refusedSync(summary string, err error) (*agent.ToolPreview, error) {
 
 func (t *retryAccountingSyncTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
@@ -200,7 +201,7 @@ func (t *retryAccountingSyncTool) Preview(
 
 func (t *skipAccountingSyncTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	req, record, err := t.request(ctx, &params)
 	if err != nil {
@@ -229,7 +230,7 @@ func (t *skipAccountingSyncTool) Preview(
 
 func (t *redateAccountingSyncTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	req, redatePlan, err := t.request(ctx, &params)
 	if err != nil {
@@ -262,7 +263,7 @@ func (t *redateAccountingSyncTool) Preview(
 
 func (t *pauseAccountingSyncTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	req, summary, err := t.request(ctx, &params)
 	if err != nil {
@@ -294,7 +295,7 @@ func (t *pauseAccountingSyncTool) Preview(
 
 func (t *resumeAccountingSyncTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	_, summary, err := t.request(ctx, &params)
 	if err != nil {
@@ -324,7 +325,7 @@ func (t *resumeAccountingSyncTool) Preview(
 	), change), nil
 }
 
-func waitingToSend(summary *serviceports.AccountingSyncSummary) int {
+func waitingToSend(summary *accountingsyncports.AccountingSyncSummary) int {
 	return countWithStatus(
 		summary,
 		accountingsync.SyncStatusQueued,
@@ -345,7 +346,7 @@ func (p *backfillPlan) backfill() *accountingsync.AccountingBackfill {
 
 func (t *requestAccountingBackfillTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {

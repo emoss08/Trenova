@@ -11,8 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -64,10 +64,10 @@ func ParseReply(text string) (*reflectionReply, error) {
 
 func (s *Service) Finish(
 	ctx context.Context,
-	plan *services.ReflectionPlan,
-	result *services.StructuredCompletionResult,
-) (*services.ReflectionOutcome, error) {
-	reflection, err := s.repo.GetByID(ctx, repositories.GetAgentReflectionRequest{
+	plan *agentports.ReflectionPlan,
+	result *agentports.StructuredCompletionResult,
+) (*agentports.ReflectionOutcome, error) {
+	reflection, err := s.repo.GetByID(ctx, agentports.GetAgentReflectionRequest{
 		ID:         plan.ReflectionID,
 		TenantInfo: plan.TenantInfo,
 	})
@@ -122,7 +122,7 @@ func (s *Service) Finish(
 
 func (s *Service) apply(
 	ctx context.Context,
-	plan *services.ReflectionPlan,
+	plan *agentports.ReflectionPlan,
 	in *lesson,
 ) (agent.ReflectionChange, error) {
 	change := agent.ReflectionChange{
@@ -173,9 +173,9 @@ func (s *Service) apply(
 
 func (s *Service) lessonRequest(
 	ctx context.Context,
-	plan *services.ReflectionPlan,
+	plan *agentports.ReflectionPlan,
 	in *lesson,
-) (*services.RememberRequest, string, error) {
+) (*agentports.RememberRequest, string, error) {
 	person := plan.PersonUserID
 	kind := agent.MemoryKind(strings.TrimSpace(in.Kind))
 	switch kind {
@@ -196,7 +196,7 @@ func (s *Service) lessonRequest(
 		content = stringutils.Ellipsize(content, agent.MaxReflectionLessonChars)
 	}
 
-	req := &services.RememberRequest{
+	req := &agentports.RememberRequest{
 		TenantInfo:        plan.TenantInfo,
 		Kind:              kind,
 		Content:           content,
@@ -239,7 +239,7 @@ func (s *Service) lessonRequest(
 	return req, "", nil
 }
 
-func subjectOf(plan *services.ReflectionPlan, in *lesson, req *services.RememberRequest) string {
+func subjectOf(plan *agentports.ReflectionPlan, in *lesson, req *agentports.RememberRequest) string {
 	raw := strings.TrimSpace(in.SubjectID)
 	if raw == "" {
 		return ""
@@ -248,7 +248,7 @@ func subjectOf(plan *services.ReflectionPlan, in *lesson, req *services.Remember
 	subjectType := agent.MemorySubjectType(strings.TrimSpace(in.SubjectType))
 	id, err := pulid.Parse(raw)
 	if err != nil || !subjectType.IsValid() ||
-		!slices.Contains(plan.Subjects, services.ReflectionSubjectRef{
+		!slices.Contains(plan.Subjects, agentports.ReflectionSubjectRef{
 			Type: subjectType,
 			ID:   id,
 		}) {
@@ -262,9 +262,9 @@ func subjectOf(plan *services.ReflectionPlan, in *lesson, req *services.Remember
 
 func (s *Service) audience(
 	ctx context.Context,
-	plan *services.ReflectionPlan,
+	plan *agentports.ReflectionPlan,
 	audience string,
-	req *services.RememberRequest,
+	req *agentports.RememberRequest,
 ) (string, error) {
 	person := plan.PersonUserID
 	suggest := plan.Tainted()
@@ -333,7 +333,7 @@ func (s *Service) mayShare(
 		return false
 	}
 
-	actor := services.UserActor(
+	actor := permissionports.UserActor(
 		pagination.TenantInfo{OrgID: tenant.OrgID, BuID: tenant.BuID, UserID: person},
 	)
 	result, err := s.permissions.Check(
@@ -355,7 +355,7 @@ func (s *Service) mayShare(
 
 func (s *Service) attach(
 	ctx context.Context,
-	plan *services.ReflectionPlan,
+	plan *agentports.ReflectionPlan,
 	changes []agent.ReflectionChange,
 ) {
 	if plan.ThreadID.IsNil() || plan.ReplyMessageID.IsNil() {
@@ -376,7 +376,7 @@ func (s *Service) attach(
 		return
 	}
 
-	if err := s.conversations.AddSavedMemories(ctx, repositories.AddSavedMemoriesRequest{
+	if err := s.conversations.AddSavedMemories(ctx, agentports.AddSavedMemoriesRequest{
 		MessageID:  plan.ReplyMessageID,
 		ThreadID:   plan.ThreadID,
 		TenantInfo: plan.TenantInfo,
@@ -391,7 +391,7 @@ func (s *Service) attach(
 
 func (s *Service) announce(
 	ctx context.Context,
-	plan *services.ReflectionPlan,
+	plan *agentports.ReflectionPlan,
 	reflection *agent.Reflection,
 ) {
 	kept := reflection.KeptMemoryIDs()
@@ -399,14 +399,14 @@ func (s *Service) announce(
 		return
 	}
 
-	if err := s.realtime.PublishResourceInvalidation(ctx, &services.PublishResourceInvalidationRequest{
+	if err := s.realtime.PublishResourceInvalidation(ctx, &agentports.PublishResourceInvalidationRequest{
 		OrganizationID: plan.TenantInfo.OrgID,
 		BusinessUnitID: plan.TenantInfo.BuID,
 		AudienceUserID: plan.PersonUserID,
-		Resource:       services.AgentMemoryResource,
+		Resource:       agentports.AgentMemoryResource,
 		Action:         "learned",
 		RecordID:       reflection.ID,
-		ActorType:      services.PrincipalTypeAgent,
+		ActorType:      permissionports.PrincipalTypeAgent,
 		ActorID:        plan.AgentDefinitionID,
 		Entity: map[string]any{
 			"id":        reflection.ID,
@@ -418,9 +418,9 @@ func (s *Service) announce(
 	}
 }
 
-func reflectionActor(plan *services.ReflectionPlan) *services.RequestActor {
-	return &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeAgent,
+func reflectionActor(plan *agentports.ReflectionPlan) *permissionports.RequestActor {
+	return &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeAgent,
 		PrincipalID:    plan.AgentDefinitionID,
 		OrganizationID: plan.TenantInfo.OrgID,
 		BusinessUnitID: plan.TenantInfo.BuID,
@@ -436,8 +436,8 @@ func quotes(evidence string) []string {
 	return []string{stringutils.Ellipsize(evidence, maxEvidenceChars)}
 }
 
-func outcomeOf(reflection *agent.Reflection) *services.ReflectionOutcome {
-	outcome := &services.ReflectionOutcome{
+func outcomeOf(reflection *agent.Reflection) *agentports.ReflectionOutcome {
+	outcome := &agentports.ReflectionOutcome{
 		ReflectionID: reflection.ID,
 		Status:       reflection.Status,
 	}

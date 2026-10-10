@@ -1,10 +1,11 @@
 package ediservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -17,7 +18,7 @@ import (
 func TestService_CreatePartner_AllowsExternalWithoutInternalOrganization(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockEDIPartnerRepository(t)
+	repo := ediportsmock.NewMockEDIPartnerRepository(t)
 	svc := New(Params{
 		Logger:      zap.NewNop(),
 		PartnerRepo: repo,
@@ -64,7 +65,7 @@ func TestService_CreatePartner_RejectsInternalWithoutInternalOrganization(t *tes
 func TestService_UpdatePartner_AllowsExternalWithoutInternalOrganization(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockEDIPartnerRepository(t)
+	repo := ediportsmock.NewMockEDIPartnerRepository(t)
 	svc := New(Params{
 		Logger:      zap.NewNop(),
 		PartnerRepo: repo,
@@ -76,7 +77,7 @@ func TestService_UpdatePartner_AllowsExternalWithoutInternalOrganization(t *test
 	partner.EnabledForOutbound = false
 
 	repo.EXPECT().
-		GetByID(mock.Anything, repositories.GetEDIPartnerByIDRequest{
+		GetByID(mock.Anything, ediports.GetEDIPartnerByIDRequest{
 			ID: partner.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: partner.OrganizationID,

@@ -17,8 +17,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/servicetype"
 	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/dataentrycontrolports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -28,15 +28,15 @@ type Params struct {
 	fx.In
 
 	Logger *zap.Logger
-	Repo   repositories.DataEntryControlRepository
+	Repo   dataentrycontrolports.DataEntryControlRepository
 }
 
 type Service struct {
 	l    *zap.Logger
-	repo repositories.DataEntryControlRepository
+	repo dataentrycontrolports.DataEntryControlRepository
 }
 
-func New(p Params) services.DataTransformer {
+func New(p Params) accessorialchargeports.DataTransformer {
 	return &Service{
 		l:    p.Logger.Named("service.datatransformer"),
 		repo: p.Repo,

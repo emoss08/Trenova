@@ -5,9 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/jurisdictionrule"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/jurisdictionruleports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,9 +17,9 @@ import (
 
 func (s *service) ListOverrides(
 	ctx context.Context,
-	req *services.ListOverridesRequest,
+	req *jurisdictionruleports.ListOverridesRequest,
 ) (*pagination.CursorListResult[*jurisdictionrule.Override], error) {
-	return s.repo.ListOverridesConnection(ctx, &repositories.ListOverridesRequest{
+	return s.repo.ListOverridesConnection(ctx, &permitports.ListOverridesRequest{
 		Filter: req.Filter,
 		Cursor: req.Cursor,
 	}, req.TenantInfo)
@@ -29,7 +30,7 @@ func (s *service) GetOverrideByID(
 	overrideID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) (*jurisdictionrule.Override, error) {
-	return s.repo.GetOverrideByID(ctx, &repositories.GetOverrideByIDRequest{
+	return s.repo.GetOverrideByID(ctx, &permitports.GetOverrideByIDRequest{
 		OverrideID: overrideID,
 		TenantInfo: tenantInfo,
 	})
@@ -49,7 +50,7 @@ func (s *service) validateAgainstStatute(
 	entity *jurisdictionrule.Override,
 	multiErr *errortypes.MultiError,
 ) {
-	rules, err := s.repo.GetActiveByStateIDs(ctx, &repositories.GetJurisdictionRulesRequest{
+	rules, err := s.repo.GetActiveByStateIDs(ctx, &permitports.GetJurisdictionRulesRequest{
 		StateIDs: []pulid.ID{entity.StateID},
 	})
 	if err != nil {
@@ -123,7 +124,7 @@ func ruleInEffect(
 func (s *service) CreateOverride(
 	ctx context.Context,
 	entity *jurisdictionrule.Override,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*jurisdictionrule.Override, error) {
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
@@ -151,7 +152,7 @@ func (s *service) CreateOverride(
 func (s *service) UpdateOverride(
 	ctx context.Context,
 	entity *jurisdictionrule.Override,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*jurisdictionrule.Override, error) {
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
@@ -160,7 +161,7 @@ func (s *service) UpdateOverride(
 		return nil, multiErr
 	}
 
-	previous, err := s.repo.GetOverrideByID(ctx, &repositories.GetOverrideByIDRequest{
+	previous, err := s.repo.GetOverrideByID(ctx, &permitports.GetOverrideByIDRequest{
 		OverrideID: entity.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -194,9 +195,9 @@ func (s *service) DeleteOverride(
 	ctx context.Context,
 	overrideID pulid.ID,
 	tenantInfo pagination.TenantInfo,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) error {
-	previous, err := s.repo.GetOverrideByID(ctx, &repositories.GetOverrideByIDRequest{
+	previous, err := s.repo.GetOverrideByID(ctx, &permitports.GetOverrideByIDRequest{
 		OverrideID: overrideID,
 		TenantInfo: tenantInfo,
 	})
@@ -204,7 +205,7 @@ func (s *service) DeleteOverride(
 		return err
 	}
 
-	if err = s.repo.DeleteOverride(ctx, &repositories.DeleteOverrideRequest{
+	if err = s.repo.DeleteOverride(ctx, &permitports.DeleteOverrideRequest{
 		OverrideID: overrideID,
 		TenantInfo: tenantInfo,
 	}); err != nil {
@@ -228,7 +229,7 @@ func (s *service) DeleteOverride(
 type overrideAuditParams struct {
 	Override  *jurisdictionrule.Override
 	Operation permission.Operation
-	Actor     *services.RequestActor
+	Actor     *permissionports.RequestActor
 	Previous  any
 	Current   any
 	Comment   string

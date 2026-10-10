@@ -6,7 +6,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
@@ -47,16 +47,16 @@ func TestWithTxRunsAfterCommitCallbacksOnlyOnceCommitted(t *testing.T) {
 	order := make([]string, 0, 3)
 	seen := -1
 
-	err := conn.WithTx(t.Context(), ports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+	err := conn.WithTx(t.Context(), kernelports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
 		if _, err := tx.ExecContext(ctx, "INSERT INTO after_commit_rows (id) VALUES (1)"); err != nil {
 			return err
 		}
 
-		ports.AfterCommit(ctx, func(hookCtx context.Context) {
+		kernelports.AfterCommit(ctx, func(hookCtx context.Context) {
 			order = append(order, "first")
 			seen = countAfterCommitRows(hookCtx, t, conn)
 		})
-		ports.AfterCommit(ctx, func(context.Context) { order = append(order, "second") })
+		kernelports.AfterCommit(ctx, func(context.Context) { order = append(order, "second") })
 		order = append(order, "body")
 
 		return nil
@@ -74,11 +74,11 @@ func TestWithTxDropsAfterCommitCallbacksOnRollback(t *testing.T) {
 	failure := errors.New("boom")
 	ran := false
 
-	err := conn.WithTx(t.Context(), ports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+	err := conn.WithTx(t.Context(), kernelports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
 		if _, err := tx.ExecContext(ctx, "INSERT INTO after_commit_rows (id) VALUES (1)"); err != nil {
 			return err
 		}
-		ports.AfterCommit(ctx, func(context.Context) { ran = true })
+		kernelports.AfterCommit(ctx, func(context.Context) { ran = true })
 
 		return failure
 	})
@@ -95,9 +95,9 @@ func TestWithTxNestedAfterCommitWaitsForTheOutermostCommit(t *testing.T) {
 	ranAfterInner := false
 	ran := false
 
-	err := conn.WithTx(t.Context(), ports.TxOptions{}, func(ctx context.Context, _ bun.Tx) error {
-		if err := conn.WithTx(ctx, ports.TxOptions{}, func(inner context.Context, _ bun.Tx) error {
-			ports.AfterCommit(inner, func(context.Context) { ran = true })
+	err := conn.WithTx(t.Context(), kernelports.TxOptions{}, func(ctx context.Context, _ bun.Tx) error {
+		if err := conn.WithTx(ctx, kernelports.TxOptions{}, func(inner context.Context, _ bun.Tx) error {
+			kernelports.AfterCommit(inner, func(context.Context) { ran = true })
 			return nil
 		}); err != nil {
 			return err
@@ -119,9 +119,9 @@ func TestWithTxNestedAfterCommitDroppedWhenTheOuterRollsBack(t *testing.T) {
 	failure := errors.New("outer failed")
 	ran := false
 
-	err := conn.WithTx(t.Context(), ports.TxOptions{}, func(ctx context.Context, _ bun.Tx) error {
-		if err := conn.WithTx(ctx, ports.TxOptions{}, func(inner context.Context, _ bun.Tx) error {
-			ports.AfterCommit(inner, func(context.Context) { ran = true })
+	err := conn.WithTx(t.Context(), kernelports.TxOptions{}, func(ctx context.Context, _ bun.Tx) error {
+		if err := conn.WithTx(ctx, kernelports.TxOptions{}, func(inner context.Context, _ bun.Tx) error {
+			kernelports.AfterCommit(inner, func(context.Context) { ran = true })
 			return nil
 		}); err != nil {
 			return err
@@ -140,8 +140,8 @@ func TestWithTxAfterCommitCallbackReadsOutsideTheCommittedTransaction(t *testing
 	conn := newAfterCommitTestConnection(t)
 	var hookDB bun.IDB
 
-	err := conn.WithTx(t.Context(), ports.TxOptions{}, func(ctx context.Context, _ bun.Tx) error {
-		ports.AfterCommit(ctx, func(hookCtx context.Context) { hookDB = conn.DBForContext(hookCtx) })
+	err := conn.WithTx(t.Context(), kernelports.TxOptions{}, func(ctx context.Context, _ bun.Tx) error {
+		kernelports.AfterCommit(ctx, func(hookCtx context.Context) { hookDB = conn.DBForContext(hookCtx) })
 		return nil
 	})
 	require.NoError(t, err)

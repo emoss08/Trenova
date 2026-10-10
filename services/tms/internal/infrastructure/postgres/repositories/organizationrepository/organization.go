@@ -5,9 +5,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -23,16 +23,16 @@ type Params struct {
 
 	DB     *postgres.Connection
 	Logger *zap.Logger
-	Cache  repositories.OrganizationCacheRepository
+	Cache  tenantports.OrganizationCacheRepository
 }
 
 type repository struct {
 	db    *postgres.Connection
-	cache repositories.OrganizationCacheRepository
+	cache tenantports.OrganizationCacheRepository
 	l     *zap.Logger
 }
 
-func New(p Params) repositories.OrganizationRepository {
+func New(p Params) tenantports.OrganizationRepository {
 	return &repository{
 		db:    p.DB,
 		cache: p.Cache,
@@ -43,7 +43,7 @@ func New(p Params) repositories.OrganizationRepository {
 //nolint:govet // existing scoped variable reuse is local and behavior-preserving
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetOrganizationByIDRequest,
+	req tenantports.GetOrganizationByIDRequest,
 ) (*tenant.Organization, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.Organization, error) {
 		log := r.l.With(
@@ -94,7 +94,7 @@ func (r *repository) GetByID(
 
 func (r *repository) GetByIDs(
 	ctx context.Context,
-	req repositories.GetOrganizationsByIDsRequest,
+	req tenantports.GetOrganizationsByIDsQuery,
 ) ([]*tenant.Organization, error) {
 	ctx = dbscope.WithSystem(ctx, "load organizations of the caller's business unit, including ones it shares no membership with")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*tenant.Organization, error) {
@@ -135,7 +135,7 @@ func (r *repository) GetByIDs(
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
-	req *repositories.SelectOrganizationOptionsRequest,
+	req *tenantports.SelectOrganizationOptionsRequest,
 ) (*pagination.ListResult[*tenant.Organization], error) {
 	ctx = dbscope.WithSystem(ctx, "list organizations of the caller's business unit to pick a counterparty from")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*tenant.Organization], error) {

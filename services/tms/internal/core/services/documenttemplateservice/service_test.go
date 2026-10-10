@@ -1,13 +1,14 @@
 package documenttemplateservice_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate/starters"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/documenttemplateservice"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/templateengine"
@@ -19,11 +20,11 @@ import (
 
 type harness struct {
 	service    *documenttemplateservice.Service
-	repo       *mocks.MockDocumentTemplateRepository
-	versions   *mocks.MockDocumentTemplateVersionRepository
-	inliner    *mocks.MockAssetInliner
-	pdf        *mocks.MockPDFRenderer
-	generated  *mocks.MockGeneratedDocumentRepository
+	repo       *documenttemplateportsmock.MockDocumentTemplateRepository
+	versions   *documenttemplateportsmock.MockDocumentTemplateVersionRepository
+	inliner    *documenttemplateportsmock.MockAssetInliner
+	pdf        *documenttemplateportsmock.MockPDFRenderer
+	generated  *documenttemplateportsmock.MockGeneratedDocumentRepository
 	registry   *documenttemplate.Registry
 	tenantInfo pagination.TenantInfo
 }
@@ -32,11 +33,11 @@ func newHarness(t *testing.T) *harness {
 	t.Helper()
 
 	registry := documenttemplate.NewRegistry()
-	repo := mocks.NewMockDocumentTemplateRepository(t)
-	versions := mocks.NewMockDocumentTemplateVersionRepository(t)
-	inliner := mocks.NewMockAssetInliner(t)
-	pdf := mocks.NewMockPDFRenderer(t)
-	generated := mocks.NewMockGeneratedDocumentRepository(t)
+	repo := documenttemplateportsmock.NewMockDocumentTemplateRepository(t)
+	versions := documenttemplateportsmock.NewMockDocumentTemplateVersionRepository(t)
+	inliner := documenttemplateportsmock.NewMockAssetInliner(t)
+	pdf := documenttemplateportsmock.NewMockPDFRenderer(t)
+	generated := documenttemplateportsmock.NewMockGeneratedDocumentRepository(t)
 
 	engine, err := templateengine.New(templateengine.Config{})
 	require.NoError(t, err)
@@ -45,7 +46,7 @@ func newHarness(t *testing.T) *harness {
 		Logger:         zap.NewNop(),
 		Repo:           repo,
 		VersionRepo:    versions,
-		AssignmentRepo: mocks.NewMockDocumentTemplateAssignmentRepository(t),
+		AssignmentRepo: documenttemplateportsmock.NewMockDocumentTemplateAssignmentRepository(t),
 		GeneratedRepo:  generated,
 		Registry:       registry,
 		Engine:         engine,
@@ -54,7 +55,7 @@ func newHarness(t *testing.T) *harness {
 		Validator: documenttemplateservice.NewValidator(
 			documenttemplateservice.ValidatorParams{Registry: registry},
 		),
-		AuditService: mocks.NewMockAuditService(t),
+		AuditService: auditportsmock.NewMockAuditService(t),
 	})
 
 	return &harness{
@@ -126,7 +127,7 @@ func TestResolveFallsBackToTheBuiltIn(t *testing.T) {
 		Return(nil, nil).
 		Once()
 
-	resolved, err := h.service.Resolve(t.Context(), &services.ResolveTemplateRequest{
+	resolved, err := h.service.Resolve(t.Context(), &documenttemplateports.ResolveTemplateRequest{
 		TenantInfo: h.tenantInfo,
 		Kind:       documenttemplate.KindInvoicePDF,
 	})
@@ -155,14 +156,14 @@ func TestResolveDropsTheCustomerForAKindThatIsNotCustomerScoped(t *testing.T) {
 
 	h.repo.EXPECT().
 		Resolve(mock.Anything, mock.MatchedBy(
-			func(req *repositories.ResolveDocumentTemplateRequest) bool {
+			func(req *documenttemplateports.ResolveDocumentTemplateRequest) bool {
 				return req.CustomerID == nil
 			},
 		)).
 		Return(nil, nil).
 		Once()
 
-	_, err := h.service.Resolve(t.Context(), &services.ResolveTemplateRequest{
+	_, err := h.service.Resolve(t.Context(), &documenttemplateports.ResolveTemplateRequest{
 		TenantInfo: h.tenantInfo,
 		Kind:       documenttemplate.KindReportPDF,
 		CustomerID: &customerID,
@@ -182,14 +183,14 @@ func TestResolveKeepsTheCustomerForACustomerScopedKind(t *testing.T) {
 
 	h.repo.EXPECT().
 		Resolve(mock.Anything, mock.MatchedBy(
-			func(req *repositories.ResolveDocumentTemplateRequest) bool {
+			func(req *documenttemplateports.ResolveDocumentTemplateRequest) bool {
 				return req.CustomerID != nil && *req.CustomerID == customerID
 			},
 		)).
 		Return(nil, nil).
 		Once()
 
-	_, err := h.service.Resolve(t.Context(), &services.ResolveTemplateRequest{
+	_, err := h.service.Resolve(t.Context(), &documenttemplateports.ResolveTemplateRequest{
 		TenantInfo: h.tenantInfo,
 		Kind:       documenttemplate.KindInvoicePDF,
 		CustomerID: &customerID,
@@ -202,7 +203,7 @@ func TestResolveRejectsAnUnregisteredKind(t *testing.T) {
 
 	h := newHarness(t)
 
-	_, err := h.service.Resolve(t.Context(), &services.ResolveTemplateRequest{
+	_, err := h.service.Resolve(t.Context(), &documenttemplateports.ResolveTemplateRequest{
 		TenantInfo: h.tenantInfo,
 		Kind:       documenttemplate.Kind("invoice.telegram"),
 	})
@@ -299,7 +300,7 @@ func TestPublishGateRefusesAnUnregisteredKindsVersion(t *testing.T) {
 		}, nil).
 		Once()
 
-	_, err := h.service.PublishVersion(t.Context(), &services.PublishVersionRequest{
+	_, err := h.service.PublishVersion(t.Context(), &documenttemplateports.PublishVersionRequest{
 		TenantInfo: h.tenantInfo,
 		VersionID:  pulid.MustNew("dtv_"),
 		UserID:     pulid.MustNew("usr_"),
@@ -314,8 +315,8 @@ func TestContentHashDistinguishesWhereContentLives(t *testing.T) {
 	// Moving text between channels must change the identity, or a version that
 	// renders differently would be recorded as the one that produced older
 	// documents.
-	subjectSide := &services.TemplateContent{Subject: "Invoice", BodyHTML: ""}
-	bodySide := &services.TemplateContent{Subject: "", BodyHTML: "Invoice"}
+	subjectSide := &documenttemplateports.TemplateContent{Subject: "Invoice", BodyHTML: ""}
+	bodySide := &documenttemplateports.TemplateContent{Subject: "", BodyHTML: "Invoice"}
 
 	require.NotEqual(
 		t,

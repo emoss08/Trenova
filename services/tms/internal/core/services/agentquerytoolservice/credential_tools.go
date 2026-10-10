@@ -7,8 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -44,12 +44,12 @@ type expiringCredentialRow struct {
 }
 
 type listExpiringCredentialsTool struct {
-	repo repositories.WorkerCredentialRepository
+	repo workerports.WorkerCredentialRepository
 }
 
 func newListExpiringCredentialsTool(
-	repo repositories.WorkerCredentialRepository,
-) serviceports.AgentQueryTool {
+	repo workerports.WorkerCredentialRepository,
+) agentports.AgentQueryTool {
 	return &listExpiringCredentialsTool{repo: repo}
 }
 
@@ -102,7 +102,7 @@ func (t *listExpiringCredentialsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listExpiringCredentialsTool) Policy() serviceports.ToolPolicy {
+func (t *listExpiringCredentialsTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceWorkerCredential,
 	})
@@ -110,7 +110,7 @@ func (t *listExpiringCredentialsTool) Policy() serviceports.ToolPolicy {
 
 func (t *listExpiringCredentialsTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -157,7 +157,7 @@ func (t *listExpiringCredentialsTool) Query(
 	// every tenant when handed a zero TenantInfo — that is what the nightly
 	// compliance sweep wants and exactly what a model-driven caller must never
 	// be able to ask for.
-	credentials, err := t.repo.ListExpiring(ctx, &repositories.ListExpiringWorkerCredentialsRequest{
+	credentials, err := t.repo.ListExpiring(ctx, &workerports.ListExpiringWorkerCredentialsRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  params.OrganizationID,
 			BuID:   params.BusinessUnitID,

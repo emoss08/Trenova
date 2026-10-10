@@ -12,9 +12,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -37,18 +39,18 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.WorkerLeaveRepository
-	WorkerRepo   repositories.WorkerRepository
-	AuditService services.AuditService
-	Realtime     services.RealtimeService `optional:"true"`
+	Repo         workerports.WorkerLeaveRepository
+	WorkerRepo   workerports.WorkerRepository
+	AuditService auditports.AuditService
+	Realtime     agentports.RealtimeService `optional:"true"`
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.WorkerLeaveRepository
-	workerRepo   repositories.WorkerRepository
-	auditService services.AuditService
-	realtime     services.RealtimeService
+	repo         workerports.WorkerLeaveRepository
+	workerRepo   workerports.WorkerRepository
+	auditService auditports.AuditService
+	realtime     agentports.RealtimeService
 }
 
 func New(p Params) *Service {
@@ -64,9 +66,9 @@ func New(p Params) *Service {
 // Deps is the constructor shape tests use to swap in fakes.
 type Deps struct {
 	Logger       *zap.Logger
-	Repo         repositories.WorkerLeaveRepository
-	WorkerRepo   repositories.WorkerRepository
-	AuditService services.AuditService
+	Repo         workerports.WorkerLeaveRepository
+	WorkerRepo   workerports.WorkerRepository
+	AuditService auditports.AuditService
 }
 
 func NewWithDeps(d Deps) *Service {
@@ -96,7 +98,7 @@ func (s *Service) audit(p *auditParams) {
 	if s.auditService == nil || p.userID.IsNil() {
 		return
 	}
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceWorkerLeave,
 		ResourceID:     p.resourceID,
 		Operation:      p.operation,
@@ -105,7 +107,7 @@ func (s *Service) audit(p *auditParams) {
 		OrganizationID: p.tenant.OrgID,
 		BusinessUnitID: p.tenant.BuID,
 	}
-	opts := []services.LogOption{auditservice.WithComment(p.comment)}
+	opts := []auditports.LogOption{auditservice.WithComment(p.comment)}
 	if p.previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(p.previous)
 		opts = append(opts, auditservice.WithDiff(p.previous, p.current))
@@ -130,7 +132,7 @@ func (s *Service) publish(
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
 		ActorUserID:    userID,
-		ActorType:      services.PrincipalTypeUser,
+		ActorType:      permissionports.PrincipalTypeUser,
 		ActorID:        userID,
 		Resource:       resource,
 		Action:         string(operation),
@@ -237,7 +239,7 @@ func (s *Service) Entitlement(
 		asOf = timeutils.NowUnix()
 	}
 
-	wrk, err := s.workerRepo.GetByID(ctx, repositories.GetWorkerByIDRequest{
+	wrk, err := s.workerRepo.GetByID(ctx, workerports.GetWorkerByIDRequest{
 		ID:             workerID,
 		TenantInfo:     tenantInfo,
 		IncludeProfile: true,
@@ -251,7 +253,7 @@ func (s *Service) Entitlement(
 		return worker.LeaveEntitlement{}, err
 	}
 
-	cases, err := s.repo.ListCases(ctx, &repositories.ListLeaveCasesRequest{
+	cases, err := s.repo.ListCases(ctx, &workerports.ListLeaveCasesRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
 	})
@@ -262,7 +264,7 @@ func (s *Service) Entitlement(
 	// The forward method needs the first day ever taken to know where the
 	// period starts, so the entries cannot be trimmed to a window that has not
 	// been worked out yet.
-	entries, err := s.repo.ListEntries(ctx, &repositories.ListLeaveEntriesRequest{
+	entries, err := s.repo.ListEntries(ctx, &workerports.ListLeaveEntriesRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
 	})

@@ -7,10 +7,10 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiaudit"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -44,7 +44,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.AIAuditRepository {
+func New(p Params) aiauditports.AIAuditRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.aiaudit-repository"),
@@ -60,11 +60,11 @@ func isPostgres(db bun.IDB) bool {
 // given and are signed one after another, and the batch is sealed.
 func (r *repository) Append(
 	ctx context.Context,
-	req *repositories.AppendAIAuditEventsRequest,
-) (*repositories.AppendAIAuditEventsResult, error) {
+	req *aiauditports.AppendAIAuditEventsRequest,
+) (*aiauditports.AppendAIAuditEventsResult, error) {
 	ctx = dbscope.WithSystem(ctx, "append projected events to each organization's AI audit chain in one pass")
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.AppendAIAuditEventsResult, error) {
-		result := &repositories.AppendAIAuditEventsResult{}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*aiauditports.AppendAIAuditEventsResult, error) {
+		result := &aiauditports.AppendAIAuditEventsResult{}
 		if len(req.Events) == 0 {
 			return result, nil
 		}
@@ -72,7 +72,7 @@ func (r *repository) Append(
 			return nil, errors.New("an AI audit append needs a signer")
 		}
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
 			head, err := r.lockHead(txCtx, tx, req.TenantInfo, req.Now)
 			if err != nil {
 				return err
@@ -303,7 +303,7 @@ func existingSourceKeys(
 // (occurred_at, id).
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListAIAuditEventsRequest,
+	req *aiauditports.ListAIAuditEventsQuery,
 ) (*pagination.CursorListResult[*aiaudit.AIAuditEvent], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*aiaudit.AIAuditEvent], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -370,7 +370,7 @@ func (r *repository) ListConnection(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetAIAuditEventRequest,
+	req aiauditports.GetAIAuditEventRequest,
 ) (*aiaudit.AIAuditEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*aiaudit.AIAuditEvent, error) {
 		entity := new(aiaudit.AIAuditEvent)
@@ -414,7 +414,7 @@ func (r *repository) ListByIDs(
 
 func applyScope(
 	q *bun.SelectQuery,
-	scope *repositories.AIAuditEventScope,
+	scope *aiauditports.AIAuditEventScope,
 ) *bun.SelectQuery {
 	cols := buncolgen.AIAuditEventColumns
 	filter := scope.Filter
@@ -445,11 +445,11 @@ func applyScope(
 
 func (r *repository) Summarize(
 	ctx context.Context,
-	scope *repositories.AIAuditEventScope,
-) (*repositories.AIAuditEventSummary, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.AIAuditEventSummary, error) {
+	scope *aiauditports.AIAuditEventScope,
+) (*aiauditports.AIAuditEventSummary, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*aiauditports.AIAuditEventSummary, error) {
 		cols := buncolgen.AIAuditEventColumns
-		summary := new(repositories.AIAuditEventSummary)
+		summary := new(aiauditports.AIAuditEventSummary)
 
 		err := r.db.DBForContext(ctx).NewSelect().
 			Model((*aiaudit.AIAuditEvent)(nil)).
@@ -468,7 +468,7 @@ func (r *repository) Summarize(
 
 func (r *repository) ListPage(
 	ctx context.Context,
-	req *repositories.ListAIAuditEventPageRequest,
+	req *aiauditports.ListAIAuditEventPageRequest,
 ) ([]*aiaudit.AIAuditEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiaudit.AIAuditEvent, error) {
 		cols := buncolgen.AIAuditEventColumns
@@ -498,7 +498,7 @@ func (r *repository) ListPage(
 
 func (r *repository) ListChainRange(
 	ctx context.Context,
-	req repositories.ListAIAuditChainRangeRequest,
+	req aiauditports.ListAIAuditChainRangeRequest,
 ) ([]*aiaudit.AIAuditEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiaudit.AIAuditEvent, error) {
 		cols := buncolgen.AIAuditEventColumns

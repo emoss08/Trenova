@@ -7,15 +7,16 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs/thumbnailcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/core/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/core/domain/documentupload"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	workflowstarterservice "github.com/emoss08/trenova/internal/core/services/workflowstarter"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs/thumbnailcontract"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentsearchprojectionports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -31,20 +32,20 @@ type Params struct {
 	fx.In
 
 	Logger           *zap.Logger
-	DocumentRepo     repositories.DocumentRepository
-	SessionRepo      repositories.DocumentUploadSessionRepository
-	ContentService   serviceports.DocumentContentService
-	SearchProjection serviceports.DocumentSearchProjectionService
-	WorkflowStarter  serviceports.WorkflowStarter
+	DocumentRepo     documentports.DocumentRepository
+	SessionRepo      documentuploadports.DocumentUploadSessionRepository
+	ContentService   documentports.DocumentContentService
+	SearchProjection documentsearchprojectionports.DocumentSearchProjectionService
+	WorkflowStarter  kernelports.WorkflowStarter
 }
 
 type Service struct {
 	logger           *zap.Logger
-	documentRepo     repositories.DocumentRepository
-	sessionRepo      repositories.DocumentUploadSessionRepository
-	contentService   serviceports.DocumentContentService
-	searchProjection serviceports.DocumentSearchProjectionService
-	workflowStarter  serviceports.WorkflowStarter
+	documentRepo     documentports.DocumentRepository
+	sessionRepo      documentuploadports.DocumentUploadSessionRepository
+	contentService   documentports.DocumentContentService
+	searchProjection documentsearchprojectionports.DocumentSearchProjectionService
+	workflowStarter  kernelports.WorkflowStarter
 }
 
 type WorkflowReference struct {
@@ -83,7 +84,7 @@ func (s *Service) GetDiagnostics(
 	documentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) (*Diagnostics, error) {
-	doc, err := s.documentRepo.GetByID(ctx, repositories.GetDocumentByIDRequest{
+	doc, err := s.documentRepo.GetByID(ctx, documentports.GetDocumentByIDRequest{
 		ID:         documentID,
 		TenantInfo: tenantInfo,
 	})
@@ -91,7 +92,7 @@ func (s *Service) GetDiagnostics(
 		return nil, err
 	}
 
-	versions, err := s.documentRepo.ListVersions(ctx, repositories.ListDocumentVersionsRequest{
+	versions, err := s.documentRepo.ListVersions(ctx, documentports.ListDocumentVersionsRequest{
 		LineageID:  doc.LineageID,
 		TenantInfo: tenantInfo,
 	})
@@ -101,7 +102,7 @@ func (s *Service) GetDiagnostics(
 
 	sessions, err := s.sessionRepo.ListRelated(
 		ctx,
-		&repositories.ListRelatedDocumentUploadSessionsRequest{
+		&documentuploadports.ListRelatedDocumentUploadSessionsRequest{
 			TenantInfo: tenantInfo,
 			DocumentID: doc.ID,
 			LineageID:  doc.LineageID,
@@ -151,7 +152,7 @@ func (s *Service) ResyncSearch(
 	documentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) error {
-	doc, err := s.documentRepo.GetByID(ctx, repositories.GetDocumentByIDRequest{
+	doc, err := s.documentRepo.GetByID(ctx, documentports.GetDocumentByIDRequest{
 		ID:         documentID,
 		TenantInfo: tenantInfo,
 	})
@@ -184,7 +185,7 @@ func (s *Service) RegeneratePreview(
 		return errortypes.NewConflictError("Thumbnail regeneration is unavailable")
 	}
 
-	doc, err := s.documentRepo.GetByID(ctx, repositories.GetDocumentByIDRequest{
+	doc, err := s.documentRepo.GetByID(ctx, documentports.GetDocumentByIDRequest{
 		ID:         documentID,
 		TenantInfo: tenantInfo,
 	})
@@ -229,7 +230,7 @@ func (s *Service) RegeneratePreview(
 		}
 	}
 
-	return s.documentRepo.UpdatePreview(ctx, &repositories.UpdateDocumentPreviewRequest{
+	return s.documentRepo.UpdatePreview(ctx, &documentports.UpdateDocumentPreviewRequest{
 		ID:                 doc.ID,
 		TenantInfo:         tenantInfo,
 		PreviewStatus:      document.PreviewStatusPending,

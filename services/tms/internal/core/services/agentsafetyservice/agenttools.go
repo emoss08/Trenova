@@ -7,8 +7,8 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/memtable"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,16 +20,16 @@ const (
 )
 
 type agentToolRow struct {
-	safety services.AgentToolSafety
+	safety agentports.AgentToolSafety
 	entry  *policyEntry
 }
 
 func (s *Service) ListAgentTools(
 	ctx context.Context,
-	req *services.ListAgentToolSafetyRequest,
-) (*services.AgentToolSafetyPage, error) {
+	req *agentports.ListAgentToolSafetyRequest,
+) (*agentports.AgentToolSafetyPage, error) {
 	if req == nil {
-		req = &services.ListAgentToolSafetyRequest{}
+		req = &agentports.ListAgentToolSafetyRequest{}
 	}
 
 	ids, err := validateComparedAgents(req.AgentIDs)
@@ -47,13 +47,13 @@ func (s *Service) ListAgentTools(
 		return nil, err
 	}
 
-	out := &services.AgentToolSafetyPage{
-		Edges:       make([]services.AgentToolSafetyEdge, 0, len(page.Items)),
+	out := &agentports.AgentToolSafetyPage{
+		Edges:       make([]agentports.AgentToolSafetyEdge, 0, len(page.Items)),
 		HasNextPage: page.HasNextPage,
 		TotalCount:  page.TotalCount,
 	}
 	for idx, row := range page.Items {
-		out.Edges = append(out.Edges, services.AgentToolSafetyEdge{
+		out.Edges = append(out.Edges, agentports.AgentToolSafetyEdge{
 			Node:   row.safety,
 			Cursor: page.Cursors[idx],
 		})
@@ -64,10 +64,10 @@ func (s *Service) ListAgentTools(
 
 func (s *Service) agentToolRows(
 	ctx context.Context,
-	req *services.ListAgentToolSafetyRequest,
+	req *agentports.ListAgentToolSafetyRequest,
 	ids []pulid.ID,
 ) ([]agentToolRow, error) {
-	definitions, err := s.definitionsByID(ctx, &services.ListAgentSafetyRequest{
+	definitions, err := s.definitionsByID(ctx, &agentports.ListAgentSafetyRequest{
 		TenantInfo: req.TenantInfo,
 		AgentIDs:   ids,
 	})
@@ -90,8 +90,8 @@ func (s *Service) agentToolRows(
 
 	rows := make([]agentToolRow, 0, len(definitions)*len(s.entries)/2+1)
 	for _, definition := range definitions {
-		assessed := s.Assess(ctx, &services.AssessAgentSafetyRequest{
-			Subject: &services.AgentSafetySubject{Agent: definition, Control: control},
+		assessed := s.Assess(ctx, &agentports.AssessAgentSafetyRequest{
+			Subject: &agentports.AgentSafetySubject{Agent: definition, Control: control},
 			Trust:   trust[definition.ID],
 		})
 		for idx := range assessed {
@@ -125,7 +125,7 @@ func validateComparedAgents(ids []pulid.ID) ([]pulid.ID, error) {
 }
 
 func newAgentToolTable(resources []string) *memtable.Table[agentToolRow] {
-	view := func(row *agentToolRow) *services.AgentToolPolicyView { return &row.entry.view }
+	view := func(row *agentToolRow) *agentports.AgentToolPolicyView { return &row.entry.view }
 
 	return memtable.New(memtable.Config[agentToolRow]{
 		CursorScope: agentToolCursorScope,
@@ -179,10 +179,10 @@ func newAgentToolTable(resources []string) *memtable.Table[agentToolRow] {
 				Sortable:   true,
 				Text:       func(row *agentToolRow) string { return row.entry.resource },
 			},
-			answerField("clean", func(row *agentToolRow) *services.ToolAutonomy {
+			answerField("clean", func(row *agentToolRow) *agentports.ToolAutonomy {
 				return &row.safety.Clean
 			}),
-			answerField("tainted", func(row *agentToolRow) *services.ToolAutonomy {
+			answerField("tainted", func(row *agentToolRow) *agentports.ToolAutonomy {
 				return &row.safety.Tainted
 			}),
 			{
@@ -210,7 +210,7 @@ func newAgentToolTable(resources []string) *memtable.Table[agentToolRow] {
 
 func answerField(
 	name string,
-	autonomy func(*agentToolRow) *services.ToolAutonomy,
+	autonomy func(*agentToolRow) *agentports.ToolAutonomy,
 ) memtable.Field[agentToolRow] {
 	return memtable.Field[agentToolRow]{
 		Name: name,
@@ -246,7 +246,7 @@ func answerExposure(answer agent.AutonomyAnswer) int {
 	}
 }
 
-func heldByUnion(tool *services.AgentToolSafety) []string {
+func heldByUnion(tool *agentports.AgentToolSafety) []string {
 	out := make([]string, 0, len(tool.Clean.HeldBy)+len(tool.Tainted.HeldBy))
 	out = append(out, tool.Clean.HeldBy...)
 	for _, key := range tool.Tainted.HeldBy {

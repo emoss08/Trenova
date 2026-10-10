@@ -10,8 +10,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/ptoledgerservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -69,7 +69,7 @@ type BalanceReader interface {
 	Summary(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-	) (*repositories.PTOBalanceSummary, error)
+	) (*workerports.PTOBalanceSummary, error)
 }
 
 // ReviewCounter is the slice of the review repository the home tile needs: a
@@ -77,7 +77,7 @@ type BalanceReader interface {
 type ReviewCounter interface {
 	CountReviews(
 		ctx context.Context,
-		req *repositories.CountPerformanceReviewsRequest,
+		req *workerports.CountPerformanceReviewsRequest,
 	) (int, error)
 }
 
@@ -87,7 +87,7 @@ type ReviewCounter interface {
 type LeaveCounter interface {
 	CountCases(
 		ctx context.Context,
-		req *repositories.ListLeaveCasesRequest,
+		req *workerports.ListLeaveCasesRequest,
 	) (int, error)
 }
 
@@ -147,7 +147,7 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	WorkerRepo   repositories.WorkerRepository
+	WorkerRepo   workerports.WorkerRepository
 	ReviewCounts ReviewCounter
 	Credentials  CredentialSummarizer
 	Training     TrainingSummarizer
@@ -160,7 +160,7 @@ type Params struct {
 
 type Service struct {
 	l            *zap.Logger
-	workerRepo   repositories.WorkerRepository
+	workerRepo   workerports.WorkerRepository
 	reviewCounts ReviewCounter
 	credentials  CredentialSummarizer
 	training     TrainingSummarizer
@@ -189,7 +189,7 @@ func New(p Params) *Service {
 // Deps lets tests assemble the service from narrow fakes without Uber FX.
 type Deps struct {
 	Logger       *zap.Logger
-	WorkerRepo   repositories.WorkerRepository
+	WorkerRepo   workerports.WorkerRepository
 	ReviewCounts ReviewCounter
 	Credentials  CredentialSummarizer
 	Training     TrainingSummarizer
@@ -229,7 +229,7 @@ func (s *Service) Get(
 	workerID pulid.ID,
 	sections Sections,
 ) (*Overview, error) {
-	wrk, err := s.workerRepo.GetByID(ctx, repositories.GetWorkerByIDRequest{
+	wrk, err := s.workerRepo.GetByID(ctx, workerports.GetWorkerByIDRequest{
 		ID:             workerID,
 		TenantInfo:     tenantInfo,
 		IncludeProfile: true,
@@ -360,9 +360,9 @@ func (s *Service) RosterAttention(
 	tenantInfo pagination.TenantInfo,
 ) (*RosterAttention, error) {
 	var (
-		counts     *repositories.RosterAttention
+		counts     *workerports.RosterAttention
 		reviews    int
-		ptoTotals  *repositories.PTOBalanceSummary
+		ptoTotals  *workerports.PTOBalanceSummary
 		leaveCerts int
 	)
 	group, groupCtx := errgroup.WithContext(ctx)
@@ -371,7 +371,7 @@ func (s *Service) RosterAttention(
 		var err error
 		counts, err = s.workerRepo.CountRosterAttention(
 			groupCtx,
-			&repositories.CountRosterAttentionRequest{
+			&workerports.CountRosterAttentionRequest{
 				TenantInfo:    tenantInfo,
 				ExpiryHorizon: timeutils.NowUnix() + attentionHorizonDays*24*60*60,
 			},
@@ -385,7 +385,7 @@ func (s *Service) RosterAttention(
 		// written and is nobody's queue but its author's.
 		reviews, err = s.reviewCounts.CountReviews(
 			groupCtx,
-			&repositories.CountPerformanceReviewsRequest{
+			&workerports.CountPerformanceReviewsRequest{
 				TenantInfo: tenantInfo,
 				Statuses:   []worker.ReviewStatus{worker.ReviewStatusSubmitted},
 			},
@@ -402,7 +402,7 @@ func (s *Service) RosterAttention(
 			return nil
 		}
 		var err error
-		leaveCerts, err = s.leave.CountCases(groupCtx, &repositories.ListLeaveCasesRequest{
+		leaveCerts, err = s.leave.CountCases(groupCtx, &workerports.ListLeaveCasesRequest{
 			TenantInfo:                   tenantInfo,
 			CertificationOutstandingOnly: true,
 		})

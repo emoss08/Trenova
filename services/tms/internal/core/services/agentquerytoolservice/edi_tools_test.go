@@ -10,8 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -20,12 +20,12 @@ import (
 
 type fakeInboundFiles struct {
 	files  []*edi.EDIInboundFile
-	listed *repositories.ListEDIInboundFilesRequest
+	listed *ediports.ListEDIInboundFilesRequest
 }
 
 func (f *fakeInboundFiles) ListInboundFiles(
 	_ context.Context,
-	req *repositories.ListEDIInboundFilesRequest,
+	req *ediports.ListEDIInboundFilesRequest,
 ) (*pagination.ListResult[*edi.EDIInboundFile], error) {
 	f.listed = req
 
@@ -34,7 +34,7 @@ func (f *fakeInboundFiles) ListInboundFiles(
 
 func (f *fakeInboundFiles) GetInboundFile(
 	context.Context,
-	repositories.GetEDIInboundFileByIDRequest,
+	ediports.GetEDIInboundFileByIDRequest,
 ) (*edi.EDIInboundFile, error) {
 	return f.files[0], nil
 }
@@ -138,12 +138,12 @@ func TestListEDIInboundFiles_MarksEveryFileItReturns(t *testing.T) {
 type fakeTransfers struct {
 	transfers []*edi.EDITransfer
 	direction string
-	request   *repositories.ListEDITransfersRequest
+	request   *ediports.ListEDITransfersRequest
 }
 
 func (f *fakeTransfers) ListInboundTransfersCursor(
 	_ context.Context,
-	req *repositories.ListEDITransfersRequest,
+	req *ediports.ListEDITransfersRequest,
 ) (*pagination.CursorListResult[*edi.EDITransfer], error) {
 	f.direction, f.request = transferInbound, req
 
@@ -155,7 +155,7 @@ func (f *fakeTransfers) ListInboundTransfersCursor(
 
 func (f *fakeTransfers) ListOutboundTransfersCursor(
 	_ context.Context,
-	req *repositories.ListEDITransfersRequest,
+	req *ediports.ListEDITransfersRequest,
 ) (*pagination.CursorListResult[*edi.EDITransfer], error) {
 	f.direction, f.request = transferOutbound, req
 
@@ -205,7 +205,7 @@ type fakePartners struct {
 
 func (f *fakePartners) GetPartner(
 	context.Context,
-	repositories.GetEDIPartnerByIDRequest,
+	ediports.GetEDIPartnerByIDRequest,
 ) (*edi.EDIPartner, error) {
 	return f.partner, nil
 }

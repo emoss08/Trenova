@@ -9,9 +9,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -37,7 +40,7 @@ func (s *service) reviewedItem(
 	itemID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) (*billingqueue.BillingQueueItem, error) {
-	return s.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
+	return s.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
 		ItemID:                itemID,
 		TenantInfo:            tenantInfo,
 		ExpandShipmentDetails: true,
@@ -50,8 +53,8 @@ func (s *service) reviewedItem(
 // does not settle anything; the paperwork arriving does.
 func (s *service) ResolveIssue(
 	ctx context.Context,
-	req *services.ResolveBillingQueueIssueRequest,
-	actor *services.RequestActor,
+	req *billingqueueports.ResolveBillingQueueIssueRequest,
+	actor *permissionports.RequestActor,
 ) (*billingqueue.BillingQueueItem, error) {
 	if s.reviewRepo == nil {
 		return nil, errortypes.NewBusinessError("Billing checks are unavailable")
@@ -71,7 +74,7 @@ func (s *service) ResolveIssue(
 		)
 	}
 
-	issue, err := s.reviewRepo.GetIssue(ctx, &repositories.GetBillingQueueIssueRequest{
+	issue, err := s.reviewRepo.GetIssue(ctx, &billingqueueports.GetBillingQueueIssueRequest{
 		TenantInfo: req.TenantInfo,
 		ItemID:     req.ItemID,
 		IssueID:    req.IssueID,
@@ -128,8 +131,8 @@ func (s *service) ResolveIssue(
 // back as it was, and the issue is open again.
 func (s *service) UndoIssue(
 	ctx context.Context,
-	req *services.UndoBillingQueueIssueRequest,
-	actor *services.RequestActor,
+	req *billingqueueports.UndoBillingQueueIssueRequest,
+	actor *permissionports.RequestActor,
 ) (*billingqueue.BillingQueueItem, error) {
 	if s.reviewRepo == nil {
 		return nil, errortypes.NewBusinessError("Billing checks are unavailable")
@@ -142,7 +145,7 @@ func (s *service) UndoIssue(
 	if err != nil {
 		return nil, err
 	}
-	issue, err := s.reviewRepo.GetIssue(ctx, &repositories.GetBillingQueueIssueRequest{
+	issue, err := s.reviewRepo.GetIssue(ctx, &billingqueueports.GetBillingQueueIssueRequest{
 		TenantInfo: req.TenantInfo,
 		ItemID:     req.ItemID,
 		IssueID:    req.IssueID,
@@ -196,7 +199,7 @@ func (s *service) applyChargeEffect(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
 	effect billingqueue.IssueEffect,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	tenantInfo pagination.TenantInfo,
 ) (*billingqueue.EffectSnapshot, error) {
 	if item.Shipment == nil {
@@ -232,7 +235,7 @@ func (s *service) applyChargeEffect(
 	}
 
 	snapshot := &billingqueue.EffectSnapshot{Charge: chargeSnapshot(target, item)}
-	if _, err := s.updateCharges(ctx, &services.UpdateChargesRequest{
+	if _, err := s.updateCharges(ctx, &billingqueueports.UpdateChargesRequest{
 		ItemID:            item.ID,
 		AdditionalCharges: charges,
 		TenantInfo:        tenantInfo,
@@ -251,7 +254,7 @@ func (s *service) restoreCharge(
 	item *billingqueue.BillingQueueItem,
 	kind billingqueue.EffectKind,
 	snapshot *billingqueue.EffectSnapshot,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	tenantInfo pagination.TenantInfo,
 ) (pulid.ID, error) {
 	if item.Shipment == nil {
@@ -287,7 +290,7 @@ func (s *service) restoreCharge(
 		})
 	}
 
-	if _, err := s.updateCharges(ctx, &services.UpdateChargesRequest{
+	if _, err := s.updateCharges(ctx, &billingqueueports.UpdateChargesRequest{
 		ItemID:            item.ID,
 		AdditionalCharges: charges,
 		TenantInfo:        tenantInfo,
@@ -298,10 +301,10 @@ func (s *service) restoreCharge(
 		return snap.AdditionalChargeID, nil
 	}
 
-	shp, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	shp, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         item.ShipmentID,
 		TenantInfo: tenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -357,7 +360,7 @@ func (s *service) requestPaperwork(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
 	issue *billingqueue.Issue,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	tenantInfo pagination.TenantInfo,
 ) (*billingqueue.BillingQueueItem, error) {
 	pod := podState(item.Shipment, nil, nil)
@@ -401,10 +404,10 @@ func (s *service) requestPaperwork(
 // Release takes an item off hold and back to where the hold found it.
 func (s *service) Release(
 	ctx context.Context,
-	req *services.BillingQueueItemRequest,
-	actor *services.RequestActor,
+	req *billingqueueports.BillingQueueItemRequest,
+	actor *permissionports.RequestActor,
 ) (*billingqueue.BillingQueueItem, error) {
-	item, err := s.repo.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
+	item, err := s.repo.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
 		ItemID:     req.ItemID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -424,7 +427,7 @@ func (s *service) Release(
 		target = *before
 	}
 
-	return s.UpdateStatus(ctx, &services.UpdateBillingQueueStatusRequest{
+	return s.UpdateStatus(ctx, &billingqueueports.UpdateBillingQueueStatusRequest{
 		ItemID:     req.ItemID,
 		NewStatus:  target,
 		TenantInfo: req.TenantInfo,
@@ -436,9 +439,9 @@ func (s *service) Release(
 // invoice of its own to post.
 func (s *service) Post(
 	ctx context.Context,
-	req *services.BillingQueueItemRequest,
-	actor *services.RequestActor,
-) (*services.PostBillingQueueItemResult, error) {
+	req *billingqueueports.BillingQueueItemRequest,
+	actor *permissionports.RequestActor,
+) (*billingqueueports.PostBillingQueueItemResult, error) {
 	if actor.IsAgent() {
 		return nil, errPersonDecides()
 	}
@@ -446,7 +449,7 @@ func (s *service) Post(
 		return nil, errortypes.NewBusinessError("Posting is unavailable")
 	}
 
-	item, err := s.repo.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
+	item, err := s.repo.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
 		ItemID:     req.ItemID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -459,7 +462,7 @@ func (s *service) Post(
 		)
 	}
 
-	inv, err := s.invoiceRepo.GetByBillingQueueItemID(ctx, repositories.GetInvoiceByBillingQueueItemIDRequest{
+	inv, err := s.invoiceRepo.GetByBillingQueueItemID(ctx, invoiceports.GetInvoiceByBillingQueueItemIDRequest{
 		BillingQueueItemID: item.ID,
 		TenantInfo:         req.TenantInfo,
 	})
@@ -474,7 +477,7 @@ func (s *service) Post(
 	}
 
 	wasPosted := item.Status == billingqueue.StatusPosted
-	posted, err := s.invoiceSvc.Post(ctx, &services.PostInvoiceRequest{
+	posted, err := s.invoiceSvc.Post(ctx, &invoiceports.PostInvoiceRequest{
 		InvoiceID:   inv.ID,
 		TenantInfo:  req.TenantInfo,
 		TriggeredBy: "billing_queue_item",
@@ -483,7 +486,7 @@ func (s *service) Post(
 		return nil, err
 	}
 
-	updated, err := s.repo.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
+	updated, err := s.repo.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
 		ItemID:     req.ItemID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -491,16 +494,16 @@ func (s *service) Post(
 		return nil, err
 	}
 
-	result := &services.PostBillingQueueItemResult{
+	result := &billingqueueports.PostBillingQueueItemResult{
 		Item:          updated,
 		InvoiceID:     posted.ID,
 		InvoiceNumber: posted.Number,
 		Recipients:    []string{},
 	}
-	if cus, cusErr := s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
+	if cus, cusErr := s.customerRepo.GetByID(ctx, customerports.GetCustomerByIDRequest{
 		ID:         item.BillToCustomerID,
 		TenantInfo: req.TenantInfo,
-		CustomerFilterOptions: repositories.CustomerFilterOptions{
+		CustomerFilterOptions: customerports.CustomerFilterOptions{
 			IncludeBillingProfile: true,
 			IncludeEmailProfile:   true,
 		},
@@ -530,15 +533,15 @@ func (s *service) Post(
 // It never approves on the strength of what a table showed a few seconds ago.
 func (s *service) ApproveIfReady(
 	ctx context.Context,
-	req *services.ApproveIfReadyRequest,
-	actor *services.RequestActor,
-) (*services.ApproveIfReadyResult, error) {
+	req *billingqueueports.ApproveIfReadyRequest,
+	actor *permissionports.RequestActor,
+) (*billingqueueports.ApproveIfReadyResult, error) {
 	item, err := s.reviewedItem(ctx, req.ItemID, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
 	if req.AssignApprover && onlyWantsBiller(item) && actor != nil && actor.UserID.IsNotNil() {
-		if _, err = s.AssignBiller(ctx, &services.AssignBillerRequest{
+		if _, err = s.AssignBiller(ctx, &billingqueueports.AssignBillerRequest{
 			ItemID:     req.ItemID,
 			BillerID:   actor.UserID,
 			TenantInfo: req.TenantInfo,
@@ -549,7 +552,7 @@ func (s *service) ApproveIfReady(
 			return nil, err
 		}
 	}
-	result := &services.ApproveIfReadyResult{Item: item}
+	result := &billingqueueports.ApproveIfReadyResult{Item: item}
 
 	switch {
 	case item.Status == billingqueue.StatusApproved || item.Status == billingqueue.StatusPosted:
@@ -566,7 +569,7 @@ func (s *service) ApproveIfReady(
 		return result, nil
 	}
 
-	approved, err := s.UpdateStatus(ctx, &services.UpdateBillingQueueStatusRequest{
+	approved, err := s.UpdateStatus(ctx, &billingqueueports.UpdateBillingQueueStatusRequest{
 		ItemID:     req.ItemID,
 		NewStatus:  billingqueue.StatusApproved,
 		TenantInfo: req.TenantInfo,
@@ -578,7 +581,7 @@ func (s *service) ApproveIfReady(
 	result.Approved = true
 
 	if s.invoiceRepo != nil {
-		if inv, invErr := s.invoiceRepo.GetByBillingQueueItemID(ctx, repositories.GetInvoiceByBillingQueueItemIDRequest{
+		if inv, invErr := s.invoiceRepo.GetByBillingQueueItemID(ctx, invoiceports.GetInvoiceByBillingQueueItemIDRequest{
 			BillingQueueItemID: approved.ID,
 			TenantInfo:         req.TenantInfo,
 		}); invErr == nil && inv != nil {

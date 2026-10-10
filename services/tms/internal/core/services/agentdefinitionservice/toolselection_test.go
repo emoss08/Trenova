@@ -7,9 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -18,7 +19,7 @@ import (
 )
 
 func testRegistries() (*agentruntimetest.StubActionRegistry, *agentruntimetest.StubQueryRegistry) {
-	actions := &agentruntimetest.StubActionRegistry{Tools: []serviceports.AgentTool{
+	actions := &agentruntimetest.StubActionRegistry{Tools: []agentports.AgentTool{
 		&agentruntimetest.StubActionTool{
 			ToolName: "reassign_move",
 			Resource: permission.ResourceShipmentMove,
@@ -35,7 +36,7 @@ func testRegistries() (*agentruntimetest.StubActionRegistry, *agentruntimetest.S
 			Tier:     agent.TierActWithApproval,
 		},
 	}}
-	queries := &agentruntimetest.StubQueryRegistry{Tools: []serviceports.AgentQueryTool{
+	queries := &agentruntimetest.StubQueryRegistry{Tools: []agentports.AgentQueryTool{
 		&agentruntimetest.StubQueryTool{
 			ToolName: "get_shipment",
 			Resource: permission.ResourceShipment,
@@ -122,14 +123,14 @@ func TestBuildToolCatalog_ListsEveryRegisteredToolWithItsKind(t *testing.T) {
 	catalog := buildToolCatalog(actions, queries, nil)
 
 	require.Len(t, catalog, 4)
-	byName := make(map[string]serviceports.ToolCatalogEntry, len(catalog))
+	byName := make(map[string]agentdefinitionports.ToolCatalogEntry, len(catalog))
 	for _, entry := range catalog {
 		byName[entry.Name] = entry
 	}
 
-	assert.Equal(t, serviceports.ToolCatalogKindQuery, byName["get_shipment"].Kind)
+	assert.Equal(t, agentdefinitionports.ToolCatalogKindQuery, byName["get_shipment"].Kind)
 	assert.Equal(t, permission.OpRead, byName["get_shipment"].Operation)
-	assert.Equal(t, serviceports.ToolCatalogKindAction, byName["update_customer"].Kind)
+	assert.Equal(t, agentdefinitionports.ToolCatalogKindAction, byName["update_customer"].Kind)
 	assert.Equal(t, agent.TierActWithApproval, byName["update_customer"].DefaultAutonomyTier)
 	assert.Equal(t, permission.ResourceCustomer, byName["update_customer"].Resource)
 }
@@ -140,7 +141,7 @@ func TestBuildToolCatalog_SaysWhatEachToolDoes(t *testing.T) {
 	actions, queries := testRegistries()
 	catalog := buildToolCatalog(actions, queries, nil)
 
-	byName := make(map[string]serviceports.ToolCatalogEntry, len(catalog))
+	byName := make(map[string]agentdefinitionports.ToolCatalogEntry, len(catalog))
 	for _, entry := range catalog {
 		byName[entry.Name] = entry
 	}
@@ -161,7 +162,7 @@ func TestRegisteredStarterTools_DropsToolsNotYetRegistered(t *testing.T) {
 }
 
 type stubDefinitionRepo struct {
-	repositories.AgentDefinitionRepository
+	agentdefinitionports.AgentDefinitionRepository
 
 	existing *agentdefinition.Definition
 	deleted  []pulid.ID
@@ -169,23 +170,23 @@ type stubDefinitionRepo struct {
 
 func (r *stubDefinitionRepo) GetByID(
 	_ context.Context,
-	_ repositories.GetAgentDefinitionByIDRequest,
+	_ agentdefinitionports.GetAgentDefinitionByIDRequest,
 ) (*agentdefinition.Definition, error) {
 	return r.existing, nil
 }
 
 func (r *stubDefinitionRepo) Delete(
 	_ context.Context,
-	req repositories.DeleteAgentDefinitionRequest,
+	req agentdefinitionports.DeleteAgentDefinitionRequest,
 ) error {
 	r.deleted = append(r.deleted, req.ID)
 
 	return nil
 }
 
-type stubAudit struct{ serviceports.AuditService }
+type stubAudit struct{ auditports.AuditService }
 
-func (stubAudit) LogAction(_ *serviceports.LogActionParams, _ ...serviceports.LogOption) error {
+func (stubAudit) LogAction(_ *auditports.LogActionParams, _ ...auditports.LogOption) error {
 	return nil
 }
 
@@ -204,7 +205,7 @@ func TestDelete_RefusesASystemAgent(t *testing.T) {
 
 	err := svc.Delete(
 		t.Context(),
-		repositories.DeleteAgentDefinitionRequest{ID: repo.existing.ID},
+		agentdefinitionports.DeleteAgentDefinitionRequest{ID: repo.existing.ID},
 		nil,
 	)
 
@@ -216,7 +217,7 @@ func TestApply_ClearsTriggerFieldsThatDoNotBelongToTheMode(t *testing.T) {
 	t.Parallel()
 
 	d := &agentdefinition.Definition{}
-	apply(d, &serviceports.SaveAgentDefinitionRequest{
+	apply(d, &agentdefinitionports.SaveAgentDefinitionRequest{
 		Name:            " Night desk ",
 		TriggerMode:     agentdefinition.TriggerEvent,
 		CronExpression:  "* * * * *",
@@ -242,7 +243,7 @@ func TestApply_StoresNoCoreTool(t *testing.T) {
 	t.Parallel()
 
 	d := &agentdefinition.Definition{}
-	apply(d, &serviceports.SaveAgentDefinitionRequest{
+	apply(d, &agentdefinitionports.SaveAgentDefinitionRequest{
 		Name:      "Report builder",
 		ToolNames: []string{"recall_memory", " list_reports ", "remember", "create_report"},
 	})
@@ -262,7 +263,7 @@ func TestBuildToolCatalog_MarksTheCoreTools(t *testing.T) {
 		},
 	)
 
-	byName := make(map[string]serviceports.ToolCatalogEntry)
+	byName := make(map[string]agentdefinitionports.ToolCatalogEntry)
 	for _, entry := range buildToolCatalog(actions, queries, nil) {
 		byName[entry.Name] = entry
 	}
@@ -275,7 +276,7 @@ type cappedStubTool struct {
 	*agentruntimetest.StubActionTool
 }
 
-func (t cappedStubTool) Policy() serviceports.ToolPolicy {
+func (t cappedStubTool) Policy() agentports.ToolPolicy {
 	policy := t.StubActionTool.Policy()
 	policy.MaxTier = agent.TierActWithApproval
 	policy.Egress = []agent.EgressClass{agent.EgressExternalRecipient}
@@ -288,7 +289,7 @@ func (t cappedStubTool) Policy() serviceports.ToolPolicy {
 func TestValidateToolSelection_RefusesATierAboveAToolsCeiling(t *testing.T) {
 	t.Parallel()
 
-	actions := &agentruntimetest.StubActionRegistry{Tools: []serviceports.AgentTool{
+	actions := &agentruntimetest.StubActionRegistry{Tools: []agentports.AgentTool{
 		cappedStubTool{&agentruntimetest.StubActionTool{
 			ToolName: "email_customer",
 			Resource: permission.ResourceCustomer,
@@ -318,10 +319,10 @@ func TestValidateToolSelection_RefusesATierAboveAToolsCeiling(t *testing.T) {
 type policyStubTool struct {
 	*agentruntimetest.StubActionTool
 
-	policy serviceports.ToolPolicy
+	policy agentports.ToolPolicy
 }
 
-func (t policyStubTool) Policy() serviceports.ToolPolicy { return t.policy }
+func (t policyStubTool) Policy() agentports.ToolPolicy { return t.policy }
 
 func tierMessages(
 	t *testing.T,
@@ -330,7 +331,7 @@ func tierMessages(
 ) map[string]string {
 	t.Helper()
 
-	actions := &agentruntimetest.StubActionRegistry{Tools: []serviceports.AgentTool{tool}}
+	actions := &agentruntimetest.StubActionRegistry{Tools: []agentports.AgentTool{tool}}
 	d := definition("", tool.ToolName)
 	d.ToolTiers = map[string]agent.AutonomyTier{tool.ToolName: tier}
 	multiErr := errortypes.NewMultiError()
@@ -389,11 +390,11 @@ func TestApply_StoresTheMemoryBudgetAsSent(t *testing.T) {
 
 	budget := 12000
 	d := &agentdefinition.Definition{}
-	apply(d, &serviceports.SaveAgentDefinitionRequest{Name: "Rates", MemoryTokenBudget: &budget})
+	apply(d, &agentdefinitionports.SaveAgentDefinitionRequest{Name: "Rates", MemoryTokenBudget: &budget})
 	require.NotNil(t, d.MemoryTokenBudget)
 	assert.Equal(t, 12000, d.EffectiveMemoryTokenBudget())
 
-	apply(d, &serviceports.SaveAgentDefinitionRequest{Name: "Rates"})
+	apply(d, &agentdefinitionports.SaveAgentDefinitionRequest{Name: "Rates"})
 	assert.Nil(t, d.MemoryTokenBudget, "clearing the field returns the agent to the default")
 	assert.Equal(t, agentdefinition.DefaultMemoryTokenBudget, d.EffectiveMemoryTokenBudget())
 }
@@ -401,15 +402,15 @@ func TestApply_StoresTheMemoryBudgetAsSent(t *testing.T) {
 func TestBuildToolCatalog_NamesTheMostEachChangeMayBeGiven(t *testing.T) {
 	t.Parallel()
 
-	actions := &agentruntimetest.StubActionRegistry{Tools: []serviceports.AgentTool{
+	actions := &agentruntimetest.StubActionRegistry{Tools: []agentports.AgentTool{
 		&agentruntimetest.StubActionTool{ToolName: "update_customer"},
 		&agentruntimetest.StubActionTool{ToolName: "pay_carrier", Egress: agent.EgressMoney},
 	}}
-	queries := &agentruntimetest.StubQueryRegistry{Tools: []serviceports.AgentQueryTool{
+	queries := &agentruntimetest.StubQueryRegistry{Tools: []agentports.AgentQueryTool{
 		&agentruntimetest.StubQueryTool{ToolName: "get_shipment"},
 	}}
 
-	byName := make(map[string]serviceports.ToolCatalogEntry)
+	byName := make(map[string]agentdefinitionports.ToolCatalogEntry)
 	for _, entry := range buildToolCatalog(actions, queries, nil) {
 		byName[entry.Name] = entry
 	}

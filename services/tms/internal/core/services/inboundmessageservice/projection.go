@@ -3,20 +3,20 @@ package inboundmessageservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/watchtower"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
-
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
-	"github.com/emoss08/trenova/pkg/pagination"
 )
 
 // project puts a message on the watchtower, or takes it off.
@@ -67,7 +67,7 @@ func (s *Service) announce(ctx context.Context, message *inboundmessage.InboundM
 	// The detail names the message, never what it says: a wait it ends hands
 	// the line to the agent, which reads the message itself, and taints its
 	// work when it does.
-	services.PublishAgentEvent(ctx, s.events, services.AgentEvent{
+	agentports.PublishAgentEvent(ctx, s.events, agentports.AgentEvent{
 		Kind:      agent.EventInboundMessageClassified,
 		SubjectID: message.ID,
 		TenantInfo: pagination.TenantInfo{
@@ -104,7 +104,7 @@ func (s *Service) publish(ctx context.Context, orgID, buID, messageID pulid.ID, 
 	if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
-		ActorType:      services.PrincipalTypeSystem,
+		ActorType:      permissionports.PrincipalTypeSystem,
 		Resource:       permission.ResourceInboundMessage.String(),
 		Action:         action,
 		RecordID:       messageID,

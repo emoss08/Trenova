@@ -6,9 +6,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -22,8 +23,8 @@ type ProjectorParams struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Repo          repositories.WatchtowerRepository
-	Realtime      services.RealtimeService     `optional:"true"`
+	Repo          watchtowerports.WatchtowerRepository
+	Realtime      agentports.RealtimeService   `optional:"true"`
 	Notifications *notificationservice.Service `optional:"true"`
 }
 
@@ -42,8 +43,8 @@ type ProjectorParams struct {
 // is free to be held by anyone.
 type Projector struct {
 	l             *zap.Logger
-	repo          repositories.WatchtowerRepository
-	realtime      services.RealtimeService
+	repo          watchtowerports.WatchtowerRepository
+	realtime      agentports.RealtimeService
 	notifications *notificationservice.Service
 	now           func() int64
 }
@@ -59,10 +60,10 @@ func NewProjector(p ProjectorParams) *Projector {
 }
 
 // AsProjector is the face fx hands to every source.
-func AsProjector(p *Projector) services.WatchtowerProjector { return p }
+func AsProjector(p *Projector) watchtowerports.WatchtowerProjector { return p }
 
 // itemFromInput builds the stored shape from what a source said.
-func itemFromInput(input services.WatchtowerItemInput) *watchtower.Item {
+func itemFromInput(input watchtowerports.WatchtowerItemInput) *watchtower.Item {
 	occurredAt := input.OccurredAt
 	if occurredAt <= 0 {
 		occurredAt = timeutils.NowUnix()
@@ -88,7 +89,7 @@ func itemFromInput(input services.WatchtowerItemInput) *watchtower.Item {
 
 // Upsert projects one source record. Nothing here reaches the caller: a
 // projection that fails is logged, and the nightly reconcile catches it.
-func (p *Projector) Upsert(ctx context.Context, input services.WatchtowerItemInput) {
+func (p *Projector) Upsert(ctx context.Context, input watchtowerports.WatchtowerItemInput) {
 	if _, err := p.upsert(ctx, input); err != nil {
 		p.l.Warn("watchtower projection lost",
 			zap.String("kind", string(input.SourceKind)),
@@ -100,7 +101,7 @@ func (p *Projector) Upsert(ctx context.Context, input services.WatchtowerItemInp
 
 func (p *Projector) upsert(
 	ctx context.Context,
-	input services.WatchtowerItemInput,
+	input watchtowerports.WatchtowerItemInput,
 ) (*watchtower.Item, error) {
 	item := itemFromInput(input)
 	multiErr := errortypes.NewMultiError()
@@ -115,9 +116,9 @@ func (p *Projector) upsert(
 		return nil, err
 	}
 
-	action := services.ActivityUpdated
+	action := agentports.ActivityUpdated
 	if inserted {
-		action = services.ActivityCreated
+		action = agentports.ActivityCreated
 	}
 	p.publish(ctx, saved, action)
 	if inserted && saved.Severity == watchtower.SeverityCritical {
@@ -135,7 +136,7 @@ func (p *Projector) Resolve(
 	sourceID string,
 ) {
 	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
-	item, err := p.repo.Resolve(ctx, repositories.ResolveWatchtowerItemRequest{
+	item, err := p.repo.Resolve(ctx, watchtowerports.ResolveWatchtowerItemRequest{
 		TenantInfo: tenant,
 		SourceKind: kind,
 		SourceID:   sourceID,
@@ -163,7 +164,7 @@ func (p *Projector) publish(ctx context.Context, item *watchtower.Item, action s
 	if err := realtimeinvalidation.Publish(ctx, p.realtime, &realtimeinvalidation.PublishParams{
 		OrganizationID: item.OrganizationID,
 		BusinessUnitID: item.BusinessUnitID,
-		ActorType:      services.PrincipalTypeSystem,
+		ActorType:      permissionports.PrincipalTypeSystem,
 		Resource:       RealtimeResource,
 		Action:         action,
 		RecordID:       item.ID,

@@ -1,11 +1,12 @@
 package dataretentionservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -16,10 +17,10 @@ import (
 	"go.uber.org/zap"
 )
 
-func newTestService(t *testing.T) (*Service, *mocks.MockDataRetentionRepository) {
+func newTestService(t *testing.T) (*Service, *tenantportsmock.MockDataRetentionRepository) {
 	t.Helper()
 
-	repo := mocks.NewMockDataRetentionRepository(t)
+	repo := tenantportsmock.NewMockDataRetentionRepository(t)
 
 	return New(Params{Logger: zap.NewNop(), Repo: repo}), repo
 }
@@ -36,7 +37,7 @@ func intPtr(value int) *int {
 	return &value
 }
 
-func upsertReturnsEntity(repo *mocks.MockDataRetentionRepository) *tenant.DataRetention {
+func upsertReturnsEntity(repo *tenantportsmock.MockDataRetentionRepository) *tenant.DataRetention {
 	saved := &tenant.DataRetention{}
 	repo.EXPECT().
 		Upsert(mock.Anything, mock.AnythingOfType("*tenant.DataRetention")).
@@ -55,7 +56,7 @@ func TestGet_DefaultsTheAIAuditTrailToSevenYears(t *testing.T) {
 	svc, repo := newTestService(t)
 	info := testTenant()
 	repo.EXPECT().
-		Get(mock.Anything, repositories.GetDataRetentionRequest{
+		Get(mock.Anything, tenantports.GetDataRetentionRequest{
 			UserID: info.UserID,
 			OrgID:  info.OrgID,
 			BuID:   info.BuID,

@@ -5,8 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -19,12 +20,12 @@ type ValidatorParams struct {
 	fx.In
 
 	DB                  *postgres.Connection
-	FormulaTemplateRepo repositories.FormulaTemplateRepository
+	FormulaTemplateRepo formulatemplateports.FormulaTemplateRepository
 }
 
 type Validator struct {
 	validator           *validationframework.TenantedValidator[*rateagreement.RateAgreement]
-	formulaTemplateRepo repositories.FormulaTemplateRepository
+	formulaTemplateRepo formulatemplateports.FormulaTemplateRepository
 }
 
 func NewValidator(p ValidatorParams) *Validator {
@@ -36,7 +37,7 @@ func NewValidator(p ValidatorParams) *Validator {
 
 func newBuilder(
 	db *postgres.Connection,
-	formulaTemplateRepo repositories.FormulaTemplateRepository,
+	formulaTemplateRepo formulatemplateports.FormulaTemplateRepository,
 ) *validationframework.TenantedValidatorBuilder[*rateagreement.RateAgreement] {
 	builder := validationframework.
 		NewTenantedValidatorBuilder[*rateagreement.RateAgreement]().
@@ -103,7 +104,7 @@ func (v *Validator) ValidateUpdate(
 func (v *Validator) ValidateAmendment(
 	ctx context.Context,
 	agreement *rateagreement.RateAgreement,
-	req *repositories.AmendRateAgreementRulesRequest,
+	req *rateagreementports.AmendRateAgreementRulesRequest,
 ) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 
@@ -171,7 +172,7 @@ func (v *Validator) ValidateAmendment(
 // tenant, is not Active, or is not a freight-charge template. Without it the
 // failure surfaces only at rating time, where it blocks the shipment save.
 func templateReferenceRule(
-	formulaTemplateRepo repositories.FormulaTemplateRepository,
+	formulaTemplateRepo formulatemplateports.FormulaTemplateRepository,
 ) validationframework.TenantedRule[*rateagreement.RateAgreement] {
 	return validationframework.
 		NewTenantedRule[*rateagreement.RateAgreement]("rate_agreement_rule_template_reference").
@@ -201,7 +202,7 @@ func templateReferenceRule(
 
 func validateRuleTemplateReferences(
 	ctx context.Context,
-	formulaTemplateRepo repositories.FormulaTemplateRepository,
+	formulaTemplateRepo formulatemplateports.FormulaTemplateRepository,
 	tenantInfo pagination.TenantInfo,
 	rules []*rateagreement.RateAgreementRule,
 	multiErr *errortypes.MultiError,
@@ -229,7 +230,7 @@ func validateRuleTemplateReferences(
 
 	templates, err := formulaTemplateRepo.GetByIDs(
 		ctx,
-		repositories.GetFormulaTemplatesByIDsRequest{
+		formulatemplateports.GetFormulaTemplatesByIDsRequest{
 			TenantInfo:  tenantInfo,
 			TemplateIDs: templateIDs,
 		},

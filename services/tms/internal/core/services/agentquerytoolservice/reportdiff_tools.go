@@ -9,9 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/reportdiff"
 	"github.com/emoss08/trenova/pkg/reportrows"
@@ -27,7 +27,7 @@ type listReportRunsTool struct {
 	reports reportRunner
 }
 
-func newListReportRunsTool(reports reportRunner) serviceports.AgentQueryTool {
+func newListReportRunsTool(reports reportRunner) agentports.AgentQueryTool {
 	return &listReportRunsTool{reports: reports}
 }
 
@@ -64,7 +64,7 @@ func (t *listReportRunsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listReportRunsTool) Policy() serviceports.ToolPolicy {
+func (t *listReportRunsTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceReport,
 	})
@@ -72,7 +72,7 @@ func (t *listReportRunsTool) Policy() serviceports.ToolPolicy {
 
 func (t *listReportRunsTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -190,7 +190,7 @@ type compareReportRunsTool struct {
 	reports reportRunner
 }
 
-func newCompareReportRunsTool(reports reportRunner) serviceports.AgentQueryTool {
+func newCompareReportRunsTool(reports reportRunner) agentports.AgentQueryTool {
 	return &compareReportRunsTool{reports: reports}
 }
 
@@ -242,7 +242,7 @@ func (t *compareReportRunsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *compareReportRunsTool) Policy() serviceports.ToolPolicy {
+func (t *compareReportRunsTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceReport,
 		effect:   agent.ToolEffectPresent,
@@ -251,7 +251,7 @@ func (t *compareReportRunsTool) Policy() serviceports.ToolPolicy {
 
 func (t *compareReportRunsTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

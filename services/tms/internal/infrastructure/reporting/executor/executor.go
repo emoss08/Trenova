@@ -9,9 +9,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
@@ -19,7 +19,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var _ services.ReportDatasetExecutor = (*Executor)(nil)
+var _ reportports.ReportDatasetExecutor = (*Executor)(nil)
 
 type Params struct {
 	fx.In
@@ -35,7 +35,7 @@ type Executor struct {
 	l   *zap.Logger
 }
 
-func New(p Params) services.ReportDatasetExecutor {
+func New(p Params) reportports.ReportDatasetExecutor {
 	return &Executor{
 		db:  p.DB,
 		cfg: p.Config.GetReportingConfig(),
@@ -45,8 +45,8 @@ func New(p Params) services.ReportDatasetExecutor {
 
 func (x *Executor) Open(
 	ctx context.Context,
-	req *services.OpenReportDatasetRequest,
-) (services.ReportDatasetReader, error) {
+	req *reportports.OpenReportDatasetRequest,
+) (reportports.ReportDatasetReader, error) {
 	maxRows := req.MaxRows
 	if maxRows <= 0 {
 		maxRows = x.cfg.GetMaxRows()
@@ -85,7 +85,7 @@ func (x *Executor) Open(
 }
 
 type datasetReader struct {
-	schema    []services.ReportResultColumn
+	schema    []reportports.ReportResultColumn
 	rows      *sql.Rows
 	tx        bun.Tx
 	cancel    context.CancelFunc
@@ -94,20 +94,20 @@ type datasetReader struct {
 	truncated bool
 	closed    bool
 
-	compiled   *services.CompiledReportQuery
+	compiled   *reportports.CompiledReportQuery
 	db         *postgres.ReportingConnection
 	timeout    time.Duration
-	totals     services.ReportRow
+	totals     reportports.ReportRow
 	totalsDone bool
 }
 
-func (r *datasetReader) Schema() []services.ReportResultColumn { return r.schema }
+func (r *datasetReader) Schema() []reportports.ReportResultColumn { return r.schema }
 
 func (r *datasetReader) RowCount() int64 { return r.count }
 
 func (r *datasetReader) Truncated() bool { return r.truncated }
 
-func (r *datasetReader) Next(ctx context.Context) (services.ReportRow, error) {
+func (r *datasetReader) Next(ctx context.Context) (reportports.ReportRow, error) {
 	if r.closed {
 		return nil, io.EOF
 	}
@@ -137,7 +137,7 @@ func (r *datasetReader) Next(ctx context.Context) (services.ReportRow, error) {
 		return nil, fmt.Errorf("scan report row: %w", err)
 	}
 
-	row := make(services.ReportRow, len(r.schema))
+	row := make(reportports.ReportRow, len(r.schema))
 	for i := range r.schema {
 		value, err := decodeValue(r.schema[i].Type, raw[i])
 		if err != nil {
@@ -153,7 +153,7 @@ func (r *datasetReader) Next(ctx context.Context) (services.ReportRow, error) {
 // Totals runs the compiled grand-total query on first call and memoizes it, so
 // a renderer that asks for totals at end-of-stream pays for one extra scan and
 // a caller that never asks pays for none.
-func (r *datasetReader) Totals(ctx context.Context) (services.ReportRow, error) {
+func (r *datasetReader) Totals(ctx context.Context) (reportports.ReportRow, error) {
 	if r.totalsDone || r.compiled == nil || !r.compiled.HasTotals() {
 		return r.totals, nil
 	}
@@ -179,7 +179,7 @@ func (r *datasetReader) Totals(ctx context.Context) (services.ReportRow, error) 
 		return nil, fmt.Errorf("scan report totals: %w", err)
 	}
 
-	totals := make(services.ReportRow, len(r.schema))
+	totals := make(reportports.ReportRow, len(r.schema))
 	for i := range r.schema {
 		value, err := decodeValue(r.schema[i].Type, raw[i])
 		if err != nil {

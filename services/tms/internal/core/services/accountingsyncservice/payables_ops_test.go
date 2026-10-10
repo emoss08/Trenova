@@ -6,21 +6,21 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func driverEnqueueRequests(h *harness, workerID pulid.ID) []*services.AccountingSyncEnqueueRequest {
+func driverEnqueueRequests(h *harness, workerID pulid.ID) []*accountingsyncports.AccountingSyncEnqueueRequest {
 	accts := newPayableAccounts()
 	settlement := h.driverSettlement(accts)
-	return []*services.AccountingSyncEnqueueRequest{
+	return []*accountingsyncports.AccountingSyncEnqueueRequest{
 		settlementRequest(h, accountingsync.SyncObjectDriverBill, accountingsync.SyncOperationCreate, settlement),
 		settlementRequest(h, accountingsync.SyncObjectDriverBill, accountingsync.SyncOperationVoid, settlement),
 		settlementRequest(h, accountingsync.SyncObjectDriverBillPay, accountingsync.SyncOperationCreate, settlement),
-		services.VendorSyncRequest(h.tenant, accountingsync.SyncObjectDriverVendor, workerID, "Dana Ortiz", 2),
+		accountingsyncports.VendorSyncRequest(h.tenant, accountingsync.SyncObjectDriverVendor, workerID, "Dana Ortiz", 2),
 		{
 			TenantInfo:  h.tenant,
 			ObjectType:  accountingsync.SyncObjectDriverVendor,
@@ -97,7 +97,7 @@ func TestCarrierRecordsDoNotNeedTheDriverSetting(t *testing.T) {
 	h.enqueueSettlement(t, accountingsync.SyncObjectCarrierBill, accountingsync.SyncOperationCreate, settlement)
 	h.enqueueSettlement(t, accountingsync.SyncObjectCarrierBill, accountingsync.SyncOperationVoid, settlement)
 	h.enqueueSettlement(t, accountingsync.SyncObjectCarrierBillPay, accountingsync.SyncOperationCreate, settlement)
-	require.NoError(t, h.enqueuer.Enqueue(t.Context(), services.VendorSyncRequest(
+	require.NoError(t, h.enqueuer.Enqueue(t.Context(), accountingsyncports.VendorSyncRequest(
 		h.tenant, accountingsync.SyncObjectCarrierVendor, settlement.PartyID, "Swift Haulers", 2,
 	)))
 
@@ -142,7 +142,7 @@ func TestVendorUpdatesAreEnqueuedOnlyForConfirmedMappings(t *testing.T) {
 			}
 
 			require.NoError(t, h.enqueuer.Enqueue(t.Context(),
-				services.VendorSyncRequest(h.tenant, tc.objectType, partyID, "Party", 3)))
+				accountingsyncports.VendorSyncRequest(h.tenant, tc.objectType, partyID, "Party", 3)))
 
 			assert.Len(t, h.records.find(tc.objectType, partyID, accountingsync.SyncOperationUpdate), tc.want)
 		})
@@ -323,7 +323,7 @@ func TestRequestBackfillReachesDriverSettlementsOnlyWhenTheSettingIsOn(t *testin
 			t.Parallel()
 			h := newHarness(t)
 
-			_, err := h.requestBackfill(t, func(r *services.RequestAccountingBackfillRequest) {
+			_, err := h.requestBackfill(t, func(r *accountingsyncports.RequestAccountingBackfillRequest) {
 				r.ObjectTypes = []accountingsync.SyncObjectType{accountingsync.SyncObjectCarrierBill, typ}
 			})
 
@@ -338,7 +338,7 @@ func TestRequestBackfillReachesDriverSettlementsOnlyWhenTheSettingIsOn(t *testin
 		h := newHarness(t)
 		h.sendDriverSettlements(syncEnabledAt)
 
-		_, err := h.requestBackfill(t, func(r *services.RequestAccountingBackfillRequest) {
+		_, err := h.requestBackfill(t, func(r *accountingsyncports.RequestAccountingBackfillRequest) {
 			r.ObjectTypes = []accountingsync.SyncObjectType{accountingsync.SyncObjectCarrierVendor}
 		})
 
@@ -415,7 +415,7 @@ func (h *harness) updateSettings(
 	autoSync, drivers bool,
 ) (*accountingsync.AccountingConnection, error) {
 	t.Helper()
-	return h.svc.UpdateSettings(t.Context(), &services.UpdateAccountingSyncSettingsRequest{
+	return h.svc.UpdateSettings(t.Context(), &accountingsyncports.UpdateAccountingSyncSettingsRequest{
 		TenantInfo:        h.tenant,
 		UserID:            h.userID,
 		IntegrationType:   integration.TypeQuickBooksOnline,
@@ -510,7 +510,7 @@ func TestUpdateSettingsChangesTheInboundPaymentPolicy(t *testing.T) {
 
 	h := newHarness(t)
 	update := func(policy accountingsync.InboundPaymentPolicy) (*accountingsync.AccountingConnection, error) {
-		return h.svc.UpdateSettings(t.Context(), &services.UpdateAccountingSyncSettingsRequest{
+		return h.svc.UpdateSettings(t.Context(), &accountingsyncports.UpdateAccountingSyncSettingsRequest{
 			TenantInfo:      h.tenant,
 			UserID:          h.userID,
 			IntegrationType: integration.TypeQuickBooksOnline,
@@ -546,7 +546,7 @@ func TestEnableSyncWithDriverSettlementsStampsBothTimesAndBackfillsThem(t *testi
 	h := newHarness(t)
 	h.atStartDateStep()
 
-	conn, err := h.svc.EnableSync(t.Context(), &services.EnableAccountingSyncRequest{
+	conn, err := h.svc.EnableSync(t.Context(), &accountingsyncports.EnableAccountingSyncRequest{
 		TenantInfo:        h.tenant,
 		UserID:            h.userID,
 		IntegrationType:   integration.TypeQuickBooksOnline,

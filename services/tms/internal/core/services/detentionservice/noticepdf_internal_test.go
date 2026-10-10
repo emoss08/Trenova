@@ -1,6 +1,7 @@
 package detentionservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
 	"context"
 	"errors"
 	"testing"
@@ -8,8 +9,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,7 +24,7 @@ import (
 // have no generated mocks and the project forbids running mockery, so the two
 // calls under test are captured by hand.
 type stubNoticeRepo struct {
-	attached  []*repositories.AttachNoticePDFDocumentRequest
+	attached  []*detentionports.AttachNoticePDFDocumentRequest
 	attachErr error
 }
 
@@ -36,7 +37,7 @@ func (r *stubNoticeRepo) Create(
 
 func (r *stubNoticeRepo) AttachPDFDocument(
 	_ context.Context,
-	req *repositories.AttachNoticePDFDocumentRequest,
+	req *detentionports.AttachNoticePDFDocumentRequest,
 ) error {
 	r.attached = append(r.attached, req)
 	return r.attachErr
@@ -51,19 +52,19 @@ func (r *stubNoticeRepo) Update(
 
 func (r *stubNoticeRepo) List(
 	_ context.Context,
-	_ *repositories.ListDetentionNoticesRequest,
+	_ *detentionports.ListDetentionNoticesRequest,
 ) ([]*detention.DetentionNotice, error) {
 	return nil, nil
 }
 
 func (r *stubNoticeRepo) ListQueued(
 	_ context.Context,
-	_ *repositories.ListNoticesDueRequest,
+	_ *detentionports.ListNoticesDueRequest,
 ) ([]*detention.DetentionNotice, error) {
 	return nil, nil
 }
 
-var _ repositories.DetentionNoticeRepository = (*stubNoticeRepo)(nil)
+var _ detentionports.DetentionNoticeRepository = (*stubNoticeRepo)(nil)
 
 func pdfOccurrence() *detention.DetentionOccurrence {
 	return &detention.DetentionOccurrence{
@@ -85,10 +86,10 @@ func TestRenderNoticePDFKeepsTheBytesOutOfTheProvenance(t *testing.T) {
 
 	occurrence := pdfOccurrence()
 	versionID := pulid.MustNew("dtv_")
-	resolver := mocks.NewMockDocumentTemplateResolver(t)
+	resolver := documenttemplateportsmock.NewMockDocumentTemplateResolver(t)
 	resolver.EXPECT().
 		RenderDocument(mock.Anything, mock.Anything).
-		Return(&services.RenderedDocument{
+		Return(&documenttemplateports.RenderedDocument{
 			PDF:         []byte("%PDF-1.7 notice"),
 			HTML:        "<html>notice</html>",
 			Source:      documenttemplate.SourceOrgDefault,
@@ -126,10 +127,10 @@ func TestBuildNoticeSendsWithoutAPDFWhenTheDocumentRenderFails(t *testing.T) {
 	occurrence := pdfOccurrence()
 	occurrence.PolicySnapshot = nil
 
-	resolver := mocks.NewMockDocumentTemplateResolver(t)
+	resolver := documenttemplateportsmock.NewMockDocumentTemplateResolver(t)
 	resolver.EXPECT().
 		RenderMessage(mock.Anything, mock.Anything).
-		Return(&services.RenderedMessage{
+		Return(&documenttemplateports.RenderedMessage{
 			Subject: "Detention notice",
 			Text:    "plain",
 			HTML:    "<p>html</p>",
@@ -196,12 +197,12 @@ func TestAttachNoticePDFDocumentFilesTheDocumentAndRecordsTheRender(t *testing.T
 	}
 
 	repo := &stubNoticeRepo{}
-	resolver := mocks.NewMockDocumentTemplateResolver(t)
+	resolver := documenttemplateportsmock.NewMockDocumentTemplateResolver(t)
 	resolver.EXPECT().
 		RecordGeneratedDocument(mock.Anything, mock.Anything).
 		RunAndReturn(func(
 			_ context.Context,
-			req *services.RecordGeneratedDocumentRequest,
+			req *documenttemplateports.RecordGeneratedDocumentRequest,
 		) (*documenttemplate.GeneratedDocument, error) {
 			assert.Equal(t, documenttemplate.KindDetentionNoticePDF, req.Kind)
 			assert.Equal(t, noticePDFReferenceType, req.ReferenceType)
@@ -218,14 +219,14 @@ func TestAttachNoticePDFDocumentFilesTheDocumentAndRecordsTheRender(t *testing.T
 
 	require.NoError(t, svc.AttachNoticePDFDocument(
 		t.Context(),
-		&services.AttachNoticePDFDocumentParams{
+		&detentionports.AttachNoticePDFDocumentParams{
 			TenantInfo:   tenantInfo,
 			NoticeID:     noticeID,
 			OccurrenceID: occurrenceID,
 			DocumentID:   documentID,
 			FileName:     "detention-notice.pdf",
 			FileSize:     16,
-			Provenance:   &services.RenderedDocument{VersionID: &versionID},
+			Provenance:   &documenttemplateports.RenderedDocument{VersionID: &versionID},
 		},
 	))
 
@@ -241,7 +242,7 @@ func TestAttachNoticePDFDocumentSucceedsWhenTheAuditRowFails(t *testing.T) {
 	t.Parallel()
 
 	repo := &stubNoticeRepo{}
-	resolver := mocks.NewMockDocumentTemplateResolver(t)
+	resolver := documenttemplateportsmock.NewMockDocumentTemplateResolver(t)
 	resolver.EXPECT().
 		RecordGeneratedDocument(mock.Anything, mock.Anything).
 		Return(nil, errors.New("generated_documents is unavailable")).
@@ -251,10 +252,10 @@ func TestAttachNoticePDFDocumentSucceedsWhenTheAuditRowFails(t *testing.T) {
 
 	require.NoError(t, svc.AttachNoticePDFDocument(
 		t.Context(),
-		&services.AttachNoticePDFDocumentParams{
+		&detentionports.AttachNoticePDFDocumentParams{
 			NoticeID:   pulid.MustNew("dtn_"),
 			DocumentID: pulid.MustNew("doc_"),
-			Provenance: &services.RenderedDocument{},
+			Provenance: &documenttemplateports.RenderedDocument{},
 		},
 	))
 	require.Len(t, repo.attached, 1)
@@ -268,7 +269,7 @@ func TestAttachNoticePDFDocumentRefusesAnIncompleteFiling(t *testing.T) {
 	require.Error(t, svc.AttachNoticePDFDocument(t.Context(), nil))
 	require.Error(t, svc.AttachNoticePDFDocument(
 		t.Context(),
-		&services.AttachNoticePDFDocumentParams{NoticeID: pulid.MustNew("dtn_")},
+		&detentionports.AttachNoticePDFDocumentParams{NoticeID: pulid.MustNew("dtn_")},
 	))
 }
 

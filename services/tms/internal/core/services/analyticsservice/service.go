@@ -3,7 +3,7 @@ package analyticsservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -14,29 +14,29 @@ type Params struct {
 	fx.In
 
 	Logger   *zap.Logger
-	Registry services.AnalyticsRegistry
+	Registry kernelports.AnalyticsRegistry
 }
 
 type Service struct {
 	l        *zap.Logger
-	registry services.AnalyticsRegistry
+	registry kernelports.AnalyticsRegistry
 }
 
-func NewService(p Params) services.AnalyticsService {
+func NewService(p Params) kernelports.AnalyticsService {
 	return &Service{
 		l:        p.Logger.Named("service.anayltics"),
 		registry: p.Registry,
 	}
 }
 
-func (s *Service) GetRegistry() services.AnalyticsRegistry {
+func (s *Service) GetRegistry() kernelports.AnalyticsRegistry {
 	return s.registry
 }
 
 func (s *Service) GetAnalytics(
 	ctx context.Context,
-	opts *services.AnalyticsRequestOptions,
-) (services.AnalyticsData, error) {
+	opts *kernelports.AnalyticsRequestOptions,
+) (kernelports.AnalyticsData, error) {
 	log := s.l.With(zap.String("operation", "GetAnalytics"), zap.Any("req", opts))
 
 	provider, exists := s.registry.GetProvider(opts.Page)

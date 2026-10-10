@@ -7,8 +7,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -20,7 +21,7 @@ type bunchingRepo struct {
 	stubArtifactRepo
 
 	deleted  []pulid.ID
-	listedBy []repositories.ListArtifactsByToolCallsRequest
+	listedBy []assistantartifactports.ListArtifactsByToolCallsRequest
 }
 
 func (r *bunchingRepo) current() []*assistantartifact.Artifact {
@@ -45,7 +46,7 @@ func (r *bunchingRepo) current() []*assistantartifact.Artifact {
 
 func (r *bunchingRepo) ListByToolCalls(
 	_ context.Context,
-	req *repositories.ListArtifactsByToolCallsRequest,
+	req *assistantartifactports.ListArtifactsByToolCallsRequest,
 ) ([]*assistantartifact.Artifact, error) {
 	r.listedBy = append(r.listedBy, *req)
 	out := make([]*assistantartifact.Artifact, 0, len(req.CallIDs))
@@ -58,15 +59,15 @@ func (r *bunchingRepo) ListByToolCalls(
 	return out, nil
 }
 
-func (r *bunchingRepo) Delete(_ context.Context, req *repositories.DeleteArtifactsRequest) error {
+func (r *bunchingRepo) Delete(_ context.Context, req *assistantartifactports.DeleteArtifactsRequest) error {
 	r.deleted = append(r.deleted, req.IDs...)
 
 	return nil
 }
 
-func invoiceRead(callID string, number string, earlier ...string) serviceports.ToolObservation {
-	return serviceports.ToolObservation{
-		Call: serviceports.ToolCall{ID: callID, Name: "get_invoice"},
+func invoiceRead(callID string, number string, earlier ...string) agentports.ToolObservation {
+	return agentports.ToolObservation{
+		Call: agentports.ToolCall{ID: callID, Name: "get_invoice"},
 		Data: map[string]any{
 			"id":          pulid.MustNew("inv_").String(),
 			"number":      number,
@@ -200,9 +201,9 @@ func TestBunch_TheCardsATableReplacedAreWithdrawnFromTheReader(t *testing.T) {
 	svc := &Service{logger: zap.NewNop(), artifacts: repo}
 	thread := &conversation.Thread{ID: pulid.MustNew("athr_")}
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	var events []serviceports.StreamEvent
+	var events []kernelports.StreamEvent
 	recorder := svc.newArtifactRecorder(t.Context(), thread, tenant, testActor(),
-		func(event serviceports.StreamEvent) { events = append(events, event) })
+		func(event kernelports.StreamEvent) { events = append(events, event) })
 
 	_, err := recorder.observe(invoiceRead("call_1", "INV-1"))
 	require.NoError(t, err)
@@ -213,8 +214,8 @@ func TestBunch_TheCardsATableReplacedAreWithdrawnFromTheReader(t *testing.T) {
 
 	removed := make([]pulid.ID, 0, 1)
 	for _, event := range events {
-		if event.Event == serviceports.AssistantEventArtifactRemoved {
-			data, ok := event.Data.(serviceports.AssistantArtifactRemovedEvent)
+		if event.Event == agentports.AssistantEventArtifactRemoved {
+			data, ok := event.Data.(agentports.AssistantArtifactRemovedEvent)
 			require.True(t, ok)
 			removed = append(removed, data.ID)
 		}

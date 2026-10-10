@@ -1,6 +1,7 @@
 package bankreceiptbatchhandler_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/bankreceiptbatchportsmock"
 	"context"
 	"net/http"
 	"testing"
@@ -10,8 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/core/domain/bankreceiptbatch"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptbatchports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,7 +26,7 @@ import (
 
 func setupHandler(
 	t *testing.T,
-	service *mocks.MockBankReceiptBatchService,
+	service *bankreceiptbatchportsmock.MockBankReceiptBatchService,
 ) *bankreceiptbatchhandler.Handler {
 	t.Helper()
 
@@ -50,7 +52,7 @@ func setupHandler(
 func TestHandlerListBatches(t *testing.T) {
 	t.Parallel()
 
-	service := mocks.NewMockBankReceiptBatchService(t)
+	service := bankreceiptbatchportsmock.NewMockBankReceiptBatchService(t)
 	handler := setupHandler(t, service)
 	batch := &bankreceiptbatch.BankReceiptBatch{
 		ID:             pulid.MustNew("brib_"),
@@ -82,7 +84,7 @@ func TestHandlerListBatches(t *testing.T) {
 func TestHandlerGetBatchDetail(t *testing.T) {
 	t.Parallel()
 
-	service := mocks.NewMockBankReceiptBatchService(t)
+	service := bankreceiptbatchportsmock.NewMockBankReceiptBatchService(t)
 	handler := setupHandler(t, service)
 	batchID := pulid.MustNew("brib_")
 	batch := &bankreceiptbatch.BankReceiptBatch{
@@ -99,8 +101,8 @@ func TestHandlerGetBatchDetail(t *testing.T) {
 	}
 
 	service.EXPECT().
-		Get(mock.Anything, &serviceports.GetBankReceiptBatchRequest{BatchID: batchID, TenantInfo: pagination.TenantInfo{OrgID: sharedtestutil.TestOrgID, BuID: sharedtestutil.TestBuID, UserID: sharedtestutil.TestUserID}}).
-		Return(&serviceports.BankReceiptBatchResult{Batch: batch, Receipts: []*bankreceipt.BankReceipt{receipt}}, nil).
+		Get(mock.Anything, &bankreceiptbatchports.GetBankReceiptBatchRequest{BatchID: batchID, TenantInfo: pagination.TenantInfo{OrgID: sharedtestutil.TestOrgID, BuID: sharedtestutil.TestBuID, UserID: sharedtestutil.TestUserID}}).
+		Return(&bankreceiptbatchports.BankReceiptBatchResult{Batch: batch, Receipts: []*bankreceipt.BankReceipt{receipt}}, nil).
 		Once()
 
 	ginCtx := sharedtestutil.NewGinTestContext().
@@ -111,7 +113,7 @@ func TestHandlerGetBatchDetail(t *testing.T) {
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
-	var resp serviceports.BankReceiptBatchResult
+	var resp bankreceiptbatchports.BankReceiptBatchResult
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
 	require.NotNil(t, resp.Batch)
 	require.Len(t, resp.Receipts, 1)
@@ -122,7 +124,7 @@ func TestHandlerGetBatchDetail(t *testing.T) {
 func TestHandlerImportBatch(t *testing.T) {
 	t.Parallel()
 
-	service := mocks.NewMockBankReceiptBatchService(t)
+	service := bankreceiptbatchportsmock.NewMockBankReceiptBatchService(t)
 	handler := setupHandler(t, service)
 	batchID := pulid.MustNew("brib_")
 	batch := &bankreceiptbatch.BankReceiptBatch{
@@ -140,12 +142,12 @@ func TestHandlerImportBatch(t *testing.T) {
 
 	service.EXPECT().
 		Import(mock.Anything, mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req *serviceports.ImportBankReceiptBatchRequest, actor *serviceports.RequestActor) (*serviceports.BankReceiptBatchResult, error) {
+		RunAndReturn(func(_ context.Context, req *bankreceiptbatchports.ImportBankReceiptBatchRequest, actor *permissionports.RequestActor) (*bankreceiptbatchports.BankReceiptBatchResult, error) {
 			require.Equal(t, "csv", req.Source)
 			require.Equal(t, sharedtestutil.TestOrgID, req.TenantInfo.OrgID)
 			require.Equal(t, sharedtestutil.TestBuID, req.TenantInfo.BuID)
 			require.Equal(t, sharedtestutil.TestUserID, actor.UserID)
-			return &serviceports.BankReceiptBatchResult{
+			return &bankreceiptbatchports.BankReceiptBatchResult{
 				Batch:    batch,
 				Receipts: []*bankreceipt.BankReceipt{receipt},
 			}, nil
@@ -161,7 +163,7 @@ func TestHandlerImportBatch(t *testing.T) {
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusCreated, ginCtx.ResponseCode())
-	var resp serviceports.BankReceiptBatchResult
+	var resp bankreceiptbatchports.BankReceiptBatchResult
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
 	require.NotNil(t, resp.Batch)
 	assert.Equal(t, batchID, resp.Batch.ID)
@@ -170,7 +172,7 @@ func TestHandlerImportBatch(t *testing.T) {
 func TestHandlerGetBatchInvalidID(t *testing.T) {
 	t.Parallel()
 
-	service := mocks.NewMockBankReceiptBatchService(t)
+	service := bankreceiptbatchportsmock.NewMockBankReceiptBatchService(t)
 	handler := setupHandler(t, service)
 
 	ginCtx := sharedtestutil.NewGinTestContext().
@@ -186,7 +188,7 @@ func TestHandlerGetBatchInvalidID(t *testing.T) {
 func TestHandlerImportBatchBadJSON(t *testing.T) {
 	t.Parallel()
 
-	service := mocks.NewMockBankReceiptBatchService(t)
+	service := bankreceiptbatchportsmock.NewMockBankReceiptBatchService(t)
 	handler := setupHandler(t, service)
 
 	ginCtx := sharedtestutil.NewGinTestContext().

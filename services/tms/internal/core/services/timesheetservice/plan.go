@@ -4,14 +4,14 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-type ExportChange = services.RecordChange[worker.PayrollExport]
+type ExportChange = kernelports.RecordChange[worker.PayrollExport]
 
 type ExportPlan struct {
 	Export       *worker.PayrollExport
@@ -22,7 +22,7 @@ func (s *Service) PlanGenerateExport(
 	ctx context.Context,
 	req *GenerateExportRequest,
 ) (*ExportPlan, error) {
-	sheets, err := s.repo.ListTimesheets(ctx, &repositories.ListTimesheetsRequest{
+	sheets, err := s.repo.ListTimesheets(ctx, &workerports.ListTimesheetsRequest{
 		TenantInfo:     req.TenantInfo,
 		Statuses:       []worker.TimesheetStatus{worker.TimesheetApproved},
 		From:           req.PeriodStart,
@@ -73,7 +73,7 @@ func (s *Service) PlanVoidExport(
 	ctx context.Context,
 	req *VoidExportRequest,
 ) (*ExportChange, error) {
-	original, err := s.repo.GetExportByID(ctx, &repositories.GetPayrollExportByIDRequest{
+	original, err := s.repo.GetExportByID(ctx, &workerports.GetPayrollExportByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})

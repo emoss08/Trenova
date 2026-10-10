@@ -5,9 +5,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/shipmenttypeports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"go.uber.org/fx"
@@ -18,18 +20,18 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.ShipmentTypeRepository
+	Repo         shipmenttypeports.ShipmentTypeRepository
 	Validator    *Validator
-	AuditService services.AuditService
-	Transformer  services.DataTransformer
+	AuditService auditports.AuditService
+	Transformer  accessorialchargeports.DataTransformer
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.ShipmentTypeRepository
+	repo         shipmenttypeports.ShipmentTypeRepository
 	validator    *Validator
-	auditService services.AuditService
-	transformer  services.DataTransformer
+	auditService auditports.AuditService
+	transformer  accessorialchargeports.DataTransformer
 }
 
 func New(p Params) *Service {
@@ -44,42 +46,42 @@ func New(p Params) *Service {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListShipmentTypesRequest,
+	req *shipmenttypeports.ListShipmentTypesRequest,
 ) (*pagination.ListResult[*shipmenttype.ShipmentType], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListShipmentTypesConnectionRequest,
+	req *shipmenttypeports.ListShipmentTypesConnectionRequest,
 ) (*pagination.CursorListResult[*shipmenttype.ShipmentType], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	req repositories.GetShipmentTypeByIDRequest,
+	req shipmenttypeports.GetShipmentTypeByIDRequest,
 ) (*shipmenttype.ShipmentType, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) SelectOptions(
 	ctx context.Context,
-	req *repositories.ShipmentTypeSelectOptionsRequest,
+	req *shipmenttypeports.ShipmentTypeSelectOptionsRequest,
 ) (*pagination.ListResult[*shipmenttype.ShipmentType], error) {
 	return s.repo.SelectOptions(ctx, req)
 }
 
 func (s *Service) BulkUpdateStatus(
 	ctx context.Context,
-	req *repositories.BulkUpdateShipmentTypeStatusRequest,
+	req *shipmenttypeports.BulkUpdateShipmentTypeStatusRequest,
 ) ([]*shipmenttype.ShipmentType, error) {
 	log := s.l.With(
 		zap.String("operation", "BulkUpdateStatus"),
 		zap.Any("request", req),
 	)
 
-	originalEntities, err := s.repo.GetByIDs(ctx, repositories.GetShipmentTypesByIDsRequest{
+	originalEntities, err := s.repo.GetByIDs(ctx, shipmenttypeports.GetShipmentTypesByIDsRequest{
 		TenantInfo:      req.TenantInfo,
 		ShipmentTypeIDs: req.ShipmentTypeIDs,
 	})
@@ -115,7 +117,7 @@ func (s *Service) BulkUpdateStatus(
 func (s *Service) Create(
 	ctx context.Context,
 	entity *shipmenttype.ShipmentType,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*shipmenttype.ShipmentType, error) {
 	auditActor := actor.AuditActor()
 	if err := s.transformer.TransformShipmentType(ctx, entity); err != nil {
@@ -133,7 +135,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceShipmentType,
 		ResourceID:     createdEntity.GetID().String(),
 		Operation:      permission.OpCreate,
@@ -156,7 +158,7 @@ func (s *Service) Create(
 func (s *Service) Update(
 	ctx context.Context,
 	entity *shipmenttype.ShipmentType,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*shipmenttype.ShipmentType, error) {
 	auditActor := actor.AuditActor()
 	if err := s.transformer.TransformShipmentType(ctx, entity); err != nil {
@@ -168,7 +170,7 @@ func (s *Service) Update(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetByID(ctx, repositories.GetShipmentTypeByIDRequest{
+	original, err := s.repo.GetByID(ctx, shipmenttypeports.GetShipmentTypeByIDRequest{
 		ID: entity.GetID(),
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.GetOrganizationID(),
@@ -186,7 +188,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceShipmentType,
 		ResourceID:     updatedEntity.GetID().String(),
 		Operation:      permission.OpUpdate,

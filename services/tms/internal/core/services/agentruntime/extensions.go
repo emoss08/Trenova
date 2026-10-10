@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/agentextension"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"go.uber.org/zap"
 )
 
@@ -18,7 +19,7 @@ type activeExtensions map[agentextension.Type]agentextension.Availability
 
 func (s *Service) activeExtensions(
 	ctx context.Context,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) activeExtensions {
 	if s.extensions == nil || actor == nil {
 		return activeExtensions{}
@@ -88,7 +89,7 @@ func touchesExtensions(names []string) bool {
 	})
 }
 
-func (s *Service) holdsFor(ctx context.Context, req *serviceports.RunRequest, name string) bool {
+func (s *Service) holdsFor(ctx context.Context, req *agentports.RunRequest, name string) bool {
 	if s.holds(req.Definition, name) {
 		return true
 	}
@@ -101,7 +102,7 @@ func (s *Service) holdsFor(ctx context.Context, req *serviceports.RunRequest, na
 
 func (s *Service) extensionRefusal(
 	ctx context.Context,
-	req *serviceports.RunRequest,
+	req *agentports.RunRequest,
 	name string,
 ) (toolOutcome, bool) {
 	if _, isExtension := agentextension.ExtensionForTool(name); !isExtension {

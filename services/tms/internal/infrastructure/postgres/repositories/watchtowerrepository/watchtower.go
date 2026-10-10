@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -36,7 +36,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.WatchtowerRepository {
+func New(p Params) watchtowerports.WatchtowerRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.watchtower-repository"),
@@ -88,7 +88,7 @@ func buildUpsert(db bun.IDB, item *watchtower.Item) *bun.InsertQuery {
 
 func (r *repository) Resolve(
 	ctx context.Context,
-	req repositories.ResolveWatchtowerItemRequest,
+	req watchtowerports.ResolveWatchtowerItemRequest,
 ) (*watchtower.Item, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*watchtower.Item, error) {
 		cols := buncolgen.ItemColumns
@@ -121,7 +121,7 @@ func (r *repository) Resolve(
 
 func (r *repository) ResolveByID(
 	ctx context.Context,
-	req repositories.GetWatchtowerItemRequest,
+	req watchtowerports.GetWatchtowerItemRequest,
 	resolvedAt int64,
 ) (*watchtower.Item, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*watchtower.Item, error) {
@@ -156,7 +156,7 @@ func (r *repository) ResolveByID(
 // which is what a source that reports nothing open means.
 func (r *repository) ResolveMissing(
 	ctx context.Context,
-	req repositories.ResolveMissingWatchtowerItemsRequest,
+	req watchtowerports.ResolveMissingWatchtowerItemsRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		cols := buncolgen.ItemColumns
@@ -190,7 +190,7 @@ func (r *repository) ResolveMissing(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetWatchtowerItemRequest,
+	req watchtowerports.GetWatchtowerItemRequest,
 ) (*watchtower.Item, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*watchtower.Item, error) {
 		cols := buncolgen.ItemColumns
@@ -217,7 +217,7 @@ func (r *repository) GetByID(
 
 func (r *repository) List(
 	ctx context.Context,
-	req repositories.ListWatchtowerItemsRequest,
+	req watchtowerports.ListWatchtowerItemsQuery,
 ) ([]*watchtower.Item, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*watchtower.Item, error) {
 		cols := buncolgen.ItemColumns
@@ -272,9 +272,9 @@ func (r *repository) List(
 
 func (r *repository) Counts(
 	ctx context.Context,
-	req repositories.CountWatchtowerItemsRequest,
-) (*repositories.WatchtowerCounts, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.WatchtowerCounts, error) {
+	req watchtowerports.CountWatchtowerItemsRequest,
+) (*watchtowerports.WatchtowerCountsRow, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*watchtowerports.WatchtowerCountsRow, error) {
 		cols := buncolgen.ItemColumns
 		db := r.db.DBForContext(ctx)
 
@@ -308,7 +308,7 @@ func (r *repository) Counts(
 			return nil, fmt.Errorf("count watchtower items: %w", err)
 		}
 
-		byKind := make([]repositories.WatchtowerKindCount, 0, len(watchtower.AllSourceKinds()))
+		byKind := make([]watchtowerports.WatchtowerKindCount, 0, len(watchtower.AllSourceKinds()))
 		if err := open().
 			ColumnExpr("? AS source_kind", bun.Ident(cols.SourceKind.Qualified())).
 			ColumnExpr("COUNT(*) AS count").
@@ -317,7 +317,7 @@ func (r *repository) Counts(
 			return nil, fmt.Errorf("count watchtower items by kind: %w", err)
 		}
 
-		return &repositories.WatchtowerCounts{
+		return &watchtowerports.WatchtowerCountsRow{
 			Unresolved:     totals.Unresolved,
 			Critical:       totals.Critical,
 			UnseenCritical: totals.UnseenCritical,
@@ -329,7 +329,7 @@ func (r *repository) Counts(
 
 func (r *repository) GetCursor(
 	ctx context.Context,
-	req repositories.GetWatchtowerCursorRequest,
+	req watchtowerports.GetWatchtowerCursorRequest,
 ) (*watchtower.Cursor, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*watchtower.Cursor, error) {
 		cols := buncolgen.CursorColumns
@@ -387,7 +387,7 @@ func (r *repository) SetCursor(
 
 func (r *repository) DeleteResolvedBefore(
 	ctx context.Context,
-	req repositories.DeleteResolvedWatchtowerItemsRequest,
+	req watchtowerports.DeleteResolvedWatchtowerItemsRequest,
 ) (int, error) {
 	ctx = dbscope.WithSystem(ctx, "delete resolved watchtower items past retention across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {

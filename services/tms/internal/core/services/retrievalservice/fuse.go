@@ -4,15 +4,14 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/rankfusion"
 )
 
 const (
 	DefaultRRFK            = rankfusion.DefaultK
-	DefaultSimilarityFloor = serviceports.DefaultCatalogSimilarityFloor
+	DefaultSimilarityFloor = agentports.DefaultCatalogSimilarityFloor
 	DefaultCandidateFactor = 4
 	DefaultMinCandidates   = 20
 )
@@ -61,20 +60,20 @@ type FusedHit struct {
 	ChunkIndex  int
 }
 
-func (h FusedHit) Match() serviceports.RetrievalMatch {
+func (h FusedHit) Match() agentports.RetrievalMatch {
 	switch {
 	case h.KeywordRank > 0 && h.VectorRank > 0:
-		return serviceports.RetrievalMatchBoth
+		return agentports.RetrievalMatchBoth
 	case h.VectorRank > 0:
-		return serviceports.RetrievalMatchMeaning
+		return agentports.RetrievalMatchMeaning
 	default:
-		return serviceports.RetrievalMatchWords
+		return agentports.RetrievalMatchWords
 	}
 }
 
 func Fuse(
-	keyword []repositories.RetrievalKeywordHit,
-	vector []repositories.VectorSearchHit,
+	keyword []agentports.RetrievalKeywordHit,
+	vector []agentports.VectorSearchHit,
 	tuning SearchTuning,
 ) []FusedHit {
 	tuning = tuning.normalized()

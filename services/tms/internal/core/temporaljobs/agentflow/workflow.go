@@ -6,12 +6,12 @@ import (
 	"slices"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/contrib/workflowstreams"
 	"go.temporal.io/sdk/temporal"
@@ -52,7 +52,7 @@ func Run(
 }
 
 // Publish sends one event to the run's reader from workflow code.
-func Publish(events *workflowstreams.WorkflowTopicHandle, event serviceports.StreamEvent) error {
+func Publish(events *workflowstreams.WorkflowTopicHandle, event kernelports.StreamEvent) error {
 	return events.Publish(StreamItem{Event: event.Event, Data: event.Data})
 }
 
@@ -113,7 +113,7 @@ func (fx *workflowEffects) Interject(
 // checkWorld reads the changes as a local activity: a read of the realtime
 // stream on the worker running the turn, with no queue between steps. A read
 // that fails leaves the cursor where it was, so the next step looks again.
-func (fx *workflowEffects) checkWorld(check *agentruntime.WorldCheck) *serviceports.RecordChanges {
+func (fx *workflowEffects) checkWorld(check *agentruntime.WorldCheck) *agentports.RecordChanges {
 	if fx.run.Actor == nil {
 		return nil
 	}
@@ -125,7 +125,7 @@ func (fx *workflowEffects) checkWorld(check *agentruntime.WorldCheck) *servicepo
 		RetryPolicy:            &temporal.RetryPolicy{MaximumAttempts: 2},
 	})
 
-	var found serviceports.RecordChanges
+	var found agentports.RecordChanges
 	err := workflow.ExecuteLocalActivity(ctx, a.CheckWorldActivity, &WorldCheckInput{
 		OrganizationID: fx.run.Actor.OrganizationID,
 		BusinessUnitID: fx.run.Actor.BusinessUnitID,
@@ -142,7 +142,7 @@ func (fx *workflowEffects) checkWorld(check *agentruntime.WorldCheck) *servicepo
 
 func (fx *workflowEffects) Complete(
 	_ *agentruntime.Turn,
-	req *serviceports.ChatCompletionRequest,
+	req *agentports.ChatCompletionRequest,
 ) (agentruntime.ModelReply, error) {
 	var a *Activities
 	ctx := workflow.WithActivityOptions(fx.ctx, fx.modelOptions())
@@ -228,7 +228,7 @@ func (fx *workflowEffects) Find(
 	}
 }
 
-func (fx *workflowEffects) Emit(event serviceports.StreamEvent) {
+func (fx *workflowEffects) Emit(event kernelports.StreamEvent) {
 	event, shown := fx.run.Scope().Tag(event)
 	if !shown {
 		return
@@ -253,10 +253,10 @@ func (fx *workflowEffects) Emit(event serviceports.StreamEvent) {
 // which the transcript keeps whole.
 func streamedText(event string) bool {
 	switch event {
-	case serviceports.AssistantEventDelta,
-		serviceports.AssistantEventReasoning,
-		serviceports.AssistantEventDelegateDelta,
-		serviceports.AssistantEventDelegateReasoning:
+	case agentports.AssistantEventDelta,
+		agentports.AssistantEventReasoning,
+		agentports.AssistantEventDelegateDelta,
+		agentports.AssistantEventDelegateReasoning:
 		return true
 	default:
 		return false
@@ -268,7 +268,7 @@ func streamedText(event string) bool {
 // raw result exist, and what it showed is already in the outcome.
 func (fx *workflowEffects) Observe(
 	_ *agentruntime.Turn,
-	call *serviceports.ToolCall,
+	call *agentports.ToolCall,
 	outcome agentruntime.ToolOutcome,
 ) agentruntime.ToolOutcome {
 	if !outcome.Publishes {
@@ -403,13 +403,13 @@ func delegateFailureReason(name string, failure *modelcall.Failure) string {
 // shown to the person as they always are; they are not what it made.
 func publishedDocuments(
 	artifacts []*assistantartifact.Artifact,
-) []serviceports.DelegateDocument {
-	documents := make([]serviceports.DelegateDocument, 0, len(artifacts))
+) []agentports.DelegateDocument {
+	documents := make([]agentports.DelegateDocument, 0, len(artifacts))
 	for _, artifact := range artifacts {
 		if artifact == nil || artifact.Kind != assistantartifact.KindDocument {
 			continue
 		}
-		documents = append(documents, serviceports.DelegateDocument{
+		documents = append(documents, agentports.DelegateDocument{
 			ID:    artifact.ID,
 			Kind:  string(artifact.Kind),
 			Title: artifact.Title,

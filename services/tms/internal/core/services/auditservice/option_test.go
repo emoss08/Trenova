@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/requestmeta"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -207,7 +207,7 @@ func TestWithCompactDiff(t *testing.T) {
 func TestNewBulkLogEntry(t *testing.T) {
 	t.Parallel()
 
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:   permission.Resource("test"),
 		Operation:  permission.OpCreate,
 		ResourceID: "test-id",
@@ -260,7 +260,7 @@ func TestBuildBulkLogEntries(t *testing.T) {
 		assert.NotNil(t, entry.Params.PreviousState)
 	}
 
-	_ = services.BulkLogEntry{}
+	_ = auditports.BulkLogEntry{}
 }
 
 func TestWithRequest(t *testing.T) {

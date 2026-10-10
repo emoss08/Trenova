@@ -6,10 +6,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -46,7 +46,7 @@ type enrollmentRepository struct {
 	l  *zap.Logger
 }
 
-func NewEnrollmentRepository(p Params) repositories.CarrierMonitoringEnrollmentRepository {
+func NewEnrollmentRepository(p Params) carrierintelports.CarrierMonitoringEnrollmentRepository {
 	return &enrollmentRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.carrier-monitoring-enrollment-repository"),
@@ -55,7 +55,7 @@ func NewEnrollmentRepository(p Params) repositories.CarrierMonitoringEnrollmentR
 
 func (r *enrollmentRepository) ListBySubjects(
 	ctx context.Context,
-	req *repositories.ListEnrollmentsBySubjectRequest,
+	req *carrierintelports.ListEnrollmentsBySubjectRequest,
 ) ([]*carrierintel.CarrierMonitoringEnrollment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carrierintel.CarrierMonitoringEnrollment, error) {
 		if len(req.SubjectIDs) == 0 {
@@ -194,7 +194,7 @@ func (r *enrollmentRepository) SaveSyncState(
 		}
 
 		cols := buncolgen.CarrierMonitoringEnrollmentColumns
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			dba := r.db.DBForContext(c)
 			for _, entity := range entities {
 				if entity == nil {
@@ -234,7 +234,7 @@ func (r *enrollmentRepository) SaveSyncState(
 
 func (r *enrollmentRepository) ListNeedingSync(
 	ctx context.Context,
-	req *repositories.ListEnrollmentsNeedingSyncRequest,
+	req *carrierintelports.ListEnrollmentsNeedingSyncRequest,
 ) ([]*carrierintel.CarrierMonitoringEnrollment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carrierintel.CarrierMonitoringEnrollment, error) {
 		cols := buncolgen.CarrierMonitoringEnrollmentColumns
@@ -279,7 +279,7 @@ func (r *enrollmentRepository) ListNeedingSync(
 
 func (r *enrollmentRepository) ListActive(
 	ctx context.Context,
-	req *repositories.ListActiveEnrollmentsRequest,
+	req *carrierintelports.ListActiveEnrollmentsRequest,
 ) ([]*carrierintel.CarrierMonitoringEnrollment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carrierintel.CarrierMonitoringEnrollment, error) {
 		cols := buncolgen.CarrierMonitoringEnrollmentColumns
@@ -357,7 +357,7 @@ func (r *enrollmentRepository) ListByProviderRefs(
 
 func (r *enrollmentRepository) applyConnectionFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListEnrollmentConnectionRequest,
+	req *carrierintelports.ListEnrollmentConnectionRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.CarrierMonitoringEnrollmentColumns
 	if req.Provider != "" {
@@ -375,7 +375,7 @@ func (r *enrollmentRepository) applyConnectionFilters(
 
 func (r *enrollmentRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListEnrollmentConnectionRequest,
+	req *carrierintelports.ListEnrollmentConnectionRequest,
 ) (*pagination.CursorListResult[*carrierintel.CarrierMonitoringEnrollment], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*carrierintel.CarrierMonitoringEnrollment], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -440,7 +440,7 @@ func (r *enrollmentRepository) ListConnection(
 
 func (r *enrollmentRepository) TouchConfirmed(
 	ctx context.Context,
-	req *repositories.TouchEnrollmentsConfirmedRequest,
+	req *carrierintelports.TouchEnrollmentsConfirmedRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.CarrierMonitoringEnrollmentColumns
@@ -472,10 +472,10 @@ func (r *enrollmentRepository) Counts(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	provider integration.Type,
-) (*repositories.CarrierIntelEnrollmentCounts, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.CarrierIntelEnrollmentCounts, error) {
+) (*carrierintelports.CarrierIntelEnrollmentCounts, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carrierintelports.CarrierIntelEnrollmentCounts, error) {
 		cols := buncolgen.CarrierMonitoringEnrollmentColumns
-		counts := new(repositories.CarrierIntelEnrollmentCounts)
+		counts := new(carrierintelports.CarrierIntelEnrollmentCounts)
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().

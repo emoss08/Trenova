@@ -6,8 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 	"github.com/emoss08/trenova/shared/money"
@@ -28,7 +29,7 @@ const (
 type accountingInboundReader interface {
 	List(
 		ctx context.Context,
-		req *serviceports.ListAccountingInboundChangesRequest,
+		req *accountingsyncports.ListAccountingInboundChangesRequest,
 	) (*pagination.CursorListResult[*accountingsync.AccountingInboundChange], error)
 }
 
@@ -112,13 +113,13 @@ type listAccountingInboundChangesTool struct {
 
 func newListAccountingInboundChangesTool(
 	inbound accountingInboundReader,
-) serviceports.AgentQueryTool {
+) agentports.AgentQueryTool {
 	return &listAccountingInboundChangesTool{inbound: inbound}
 }
 
 func provideListAccountingInboundChangesTool(
-	inbound serviceports.AccountingInboundService,
-) serviceports.AgentQueryTool {
+	inbound accountingsyncports.AccountingInboundService,
+) agentports.AgentQueryTool {
 	return newListAccountingInboundChangesTool(inbound)
 }
 
@@ -169,13 +170,13 @@ func (t *listAccountingInboundChangesTool) ParamSchema() map[string]any {
 	}, paramAccountingSystem)
 }
 
-func (t *listAccountingInboundChangesTool) Policy() serviceports.ToolPolicy {
+func (t *listAccountingInboundChangesTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceAccountingSync})
 }
 
 func (t *listAccountingInboundChangesTool) request(
-	params *serviceports.QueryToolParams,
-) (*serviceports.ListAccountingInboundChangesRequest, error) {
+	params *agentports.QueryToolParams,
+) (*accountingsyncports.ListAccountingInboundChangesRequest, error) {
 	system, err := requireAccountingSystem(params.Params)
 	if err != nil {
 		return nil, err
@@ -218,7 +219,7 @@ func (t *listAccountingInboundChangesTool) request(
 	}
 	cursor.IncludeTotalCount = false
 
-	return &serviceports.ListAccountingInboundChangesRequest{
+	return &accountingsyncports.ListAccountingInboundChangesRequest{
 		TenantInfo:      tenantOf(params),
 		IntegrationType: system,
 		Statuses:        statuses,
@@ -231,7 +232,7 @@ func (t *listAccountingInboundChangesTool) request(
 
 func (t *listAccountingInboundChangesTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

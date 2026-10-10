@@ -7,13 +7,15 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
 	"github.com/emoss08/trenova/internal/core/services/agentshadow"
 	"github.com/emoss08/trenova/internal/core/services/proposalexecutor"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace/aitracetest"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -26,7 +28,7 @@ import (
 )
 
 type traceControls struct {
-	repositories.AgentControlRepository
+	tenantports.AgentControlRepository
 }
 
 func (traceControls) GetOrCreate(
@@ -37,40 +39,40 @@ func (traceControls) GetOrCreate(
 }
 
 type traceRuns struct {
-	repositories.AgentRunRepository
+	agentports.AgentRunRepository
 }
 
 func (traceRuns) GetByID(
 	_ context.Context,
-	req repositories.GetAgentRunByIDRequest,
+	req agentports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	return &agent.AgentRun{ID: req.ID}, nil
 }
 
 type traceProposals struct {
-	repositories.AgentProposalRepository
+	agentports.AgentProposalRepository
 
 	proposal *agent.AgentProposal
-	executed []repositories.RecordAgentProposalExecutionRequest
+	executed []agentports.RecordAgentProposalExecutionRequest
 }
 
 func (p *traceProposals) GetByID(
 	context.Context,
-	repositories.GetAgentProposalByIDRequest,
+	agentports.GetAgentProposalByIDRequest,
 ) (*agent.AgentProposal, error) {
 	return p.proposal, nil
 }
 
 func (p *traceProposals) UpdateStatus(
 	context.Context,
-	repositories.UpdateAgentProposalStatusRequest,
+	agentports.UpdateAgentProposalStatusRequest,
 ) (*agent.AgentProposal, error) {
 	return p.proposal, nil
 }
 
 func (p *traceProposals) RecordExecution(
 	_ context.Context,
-	req repositories.RecordAgentProposalExecutionRequest,
+	req agentports.RecordAgentProposalExecutionRequest,
 ) (*agent.AgentProposal, error) {
 	p.executed = append(p.executed, req)
 
@@ -78,7 +80,7 @@ func (p *traceProposals) RecordExecution(
 }
 
 type traceDecisions struct {
-	repositories.AgentDecisionRepository
+	agentports.AgentDecisionRepository
 
 	created *agent.AgentDecision
 }
@@ -94,17 +96,17 @@ func (d *traceDecisions) Create(
 }
 
 type traceAudit struct {
-	services.AuditService
+	auditports.AuditService
 }
 
-func (traceAudit) LogAction(*services.LogActionParams, ...services.LogOption) error { return nil }
+func (traceAudit) LogAction(*auditports.LogActionParams, ...auditports.LogOption) error { return nil }
 
 type traceVersions struct{ versions []int64 }
 
 func (v *traceVersions) Version(
 	context.Context,
 	pagination.TenantInfo,
-	services.ToolTarget,
+	agentports.ToolTarget,
 ) (int64, error) {
 	version := v.versions[0]
 	if len(v.versions) > 1 {
@@ -118,7 +120,7 @@ type decideHarness struct {
 	service   *Service
 	proposals *traceProposals
 	decisions *traceDecisions
-	actor     *services.RequestActor
+	actor     *permissionports.RequestActor
 	proposing trace.SpanContext
 }
 
@@ -126,8 +128,8 @@ func newDecideHarness(t *testing.T) *decideHarness {
 	t.Helper()
 	aitracetest.Install()
 
-	actor := &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeUser,
+	actor := &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    pulid.MustNew("usr_"),
 		UserID:         pulid.MustNew("usr_"),
 		OrganizationID: pulid.MustNew("org_"),
@@ -159,7 +161,7 @@ func newDecideHarness(t *testing.T) *decideHarness {
 	runs := traceRuns{}
 	executor := proposalexecutor.New(proposalexecutor.Params{
 		Logger: zap.NewNop(),
-		Tools: &agentruntimetest.StubActionRegistry{Tools: []services.AgentTool{
+		Tools: &agentruntimetest.StubActionRegistry{Tools: []agentports.AgentTool{
 			&agentruntimetest.StubActionTool{ToolName: "place_shipment_hold"},
 		}},
 		ProposalRepo: proposals,
@@ -189,10 +191,10 @@ func (h *decideHarness) decide(
 	t *testing.T,
 	ctx context.Context,
 	decision agent.DecisionType,
-) *services.DecisionOutcome {
+) *agentports.DecisionOutcome {
 	t.Helper()
 
-	outcome, err := h.service.DecideWithOutcome(ctx, &services.DecideAgentProposalRequest{
+	outcome, err := h.service.DecideWithOutcome(ctx, &agentports.DecideAgentProposalRequest{
 		ProposalID: h.proposals.proposal.ID,
 		Decision:   decision,
 		ReasonCode: "looks_right",

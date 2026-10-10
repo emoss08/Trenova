@@ -20,9 +20,9 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -49,19 +49,19 @@ type Params struct {
 	fx.In
 
 	Logger  *zap.Logger
-	Repo    repositories.AgentRunEventRepository
+	Repo    agentports.AgentRunEventRepository
 	Metrics *metrics.Registry `optional:"true"`
 }
 
 type Service struct {
 	l       *zap.Logger
-	repo    repositories.AgentRunEventRepository
+	repo    agentports.AgentRunEventRepository
 	metrics *metrics.Assistant
 }
 
-var _ serviceports.AgentRunEventRecorder = (*Service)(nil)
+var _ agentports.AgentRunEventRecorder = (*Service)(nil)
 
-func New(p Params) serviceports.AgentRunEventRecorder {
+func New(p Params) agentports.AgentRunEventRecorder {
 	service := &Service{
 		l:    p.Logger.Named("service.agentrunevent"),
 		repo: p.Repo,
@@ -82,8 +82,8 @@ func New(p Params) serviceports.AgentRunEventRecorder {
 func (s *Service) Recorder(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	owner serviceports.RunStepOwner,
-) serviceports.AgentRunEventWriter {
+	owner agentports.RunStepOwner,
+) agentports.AgentRunEventWriter {
 	next, err := s.repo.NextSequence(ctx, tenantInfo, string(owner.Kind), owner.ID)
 	if err != nil {
 		// A recorder that cannot find its place still accepts events and drops
@@ -107,7 +107,7 @@ func (s *Service) Recorder(
 type writer struct {
 	service  *Service
 	tenant   pagination.TenantInfo
-	owner    serviceports.RunStepOwner
+	owner    agentports.RunStepOwner
 	disabled bool
 
 	mu       sync.Mutex
@@ -118,7 +118,7 @@ type writer struct {
 // Record files one event. It never blocks on postgres except when the buffer
 // fills, and never returns an error, because no caller has anything useful to
 // do with one.
-func (w *writer) Record(ctx context.Context, event serviceports.StreamEvent) {
+func (w *writer) Record(ctx context.Context, event kernelports.StreamEvent) {
 	if w == nil || w.disabled {
 		return
 	}
@@ -153,7 +153,7 @@ func (w *writer) Flush(ctx context.Context) {
 		return
 	}
 
-	err := w.service.repo.Append(ctx, repositories.AppendAgentRunEventsRequest{
+	err := w.service.repo.Append(ctx, agentports.AppendAgentRunEventsRequest{
 		TenantInfo: w.tenant,
 		Events:     pending,
 	})
@@ -172,7 +172,7 @@ func (w *writer) Flush(ctx context.Context) {
 	w.service.metrics.RecordTrajectoryWritten(string(w.owner.Kind), len(pending))
 }
 
-func (w *writer) rowFor(event serviceports.StreamEvent) *agent.AgentRunEvent {
+func (w *writer) rowFor(event kernelports.StreamEvent) *agent.AgentRunEvent {
 	payload, truncated := encodePayload(event.Data)
 
 	w.mu.Lock()
@@ -235,13 +235,13 @@ func encodePayload(data any) (map[string]any, bool) {
 // start and finish can be found without opening the payload.
 func callIDOf(data any) string {
 	switch typed := data.(type) {
-	case serviceports.AssistantToolStartedEvent:
+	case agentports.AssistantToolStartedEvent:
 		return typed.CallID
-	case *serviceports.AssistantToolStartedEvent:
+	case *agentports.AssistantToolStartedEvent:
 		return typed.CallID
-	case serviceports.AssistantToolFinishedEvent:
+	case agentports.AssistantToolFinishedEvent:
 		return typed.CallID
-	case *serviceports.AssistantToolFinishedEvent:
+	case *agentports.AssistantToolFinishedEvent:
 		return typed.CallID
 	default:
 		return ""

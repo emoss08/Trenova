@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,16 +19,16 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.RateAgreementRepository
+	Repo         rateagreementports.RateAgreementRepository
 	Validator    *Validator
-	AuditService services.AuditService
+	AuditService auditports.AuditService
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.RateAgreementRepository
+	repo         rateagreementports.RateAgreementRepository
 	validator    *Validator
-	auditService services.AuditService
+	auditService auditports.AuditService
 }
 
 func New(p Params) *Service {
@@ -42,14 +42,14 @@ func New(p Params) *Service {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListRateAgreementRequest,
+	req *rateagreementports.ListRateAgreementRequest,
 ) (*pagination.ListResult[*rateagreement.RateAgreement], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListRateAgreementConnectionRequest,
+	req *rateagreementports.ListRateAgreementConnectionRequest,
 ) (*pagination.CursorListResult[*rateagreement.RateAgreement], error) {
 	return s.repo.ListConnection(ctx, req)
 }
@@ -63,7 +63,7 @@ func (s *Service) SelectOptions(
 
 func (s *Service) GetByID(
 	ctx context.Context,
-	req *repositories.GetRateAgreementByIDRequest,
+	req *rateagreementports.GetRateAgreementByIDRequest,
 ) (*rateagreement.RateAgreement, error) {
 	return s.repo.GetByID(ctx, req)
 }
@@ -126,7 +126,7 @@ func (s *Service) Update(
 	// successors effective from this moment, dropped lanes are closed out, and
 	// restated lanes are left untouched.
 	if len(plan.SupersededIDs) > 0 || len(plan.Inserts) > 0 {
-		if err = s.repo.AmendRules(ctx, &repositories.AmendRateAgreementRulesRequest{
+		if err = s.repo.AmendRules(ctx, &rateagreementports.AmendRateAgreementRulesRequest{
 			TenantInfo:      tenantOf(plan.After),
 			RateAgreementID: plan.After.ID,
 			EffectiveFrom:   plan.AmendAt,
@@ -145,7 +145,7 @@ func (s *Service) Update(
 	// The caller gets what the database now holds rather than an echo of what
 	// it sent: rules with their minted identities, and none of the rows the
 	// amendment closed out.
-	updated, err := s.repo.GetByID(ctx, &repositories.GetRateAgreementByIDRequest{
+	updated, err := s.repo.GetByID(ctx, &rateagreementports.GetRateAgreementByIDRequest{
 		RateAgreementID: entity.ID,
 		TenantInfo:      tenantOf(entity),
 		IncludeChildren: true,
@@ -169,7 +169,7 @@ func (s *Service) Update(
 // makes "what did this lane cost on March 4th" answerable a year later.
 func (s *Service) AmendRules(
 	ctx context.Context,
-	req *repositories.AmendRateAgreementRulesRequest,
+	req *rateagreementports.AmendRateAgreementRulesRequest,
 	userID pulid.ID,
 ) (*rateagreement.RateAgreement, error) {
 	log := s.l.With(
@@ -188,7 +188,7 @@ func (s *Service) AmendRules(
 		return nil, err
 	}
 
-	amended, err := s.repo.GetByID(ctx, &repositories.GetRateAgreementByIDRequest{
+	amended, err := s.repo.GetByID(ctx, &rateagreementports.GetRateAgreementByIDRequest{
 		RateAgreementID: req.RateAgreementID,
 		TenantInfo:      req.TenantInfo,
 		IncludeChildren: true,
@@ -205,21 +205,21 @@ func (s *Service) AmendRules(
 
 func (s *Service) ListRules(
 	ctx context.Context,
-	req *repositories.ListRateAgreementRulesRequest,
+	req *rateagreementports.ListRateAgreementRulesRequest,
 ) ([]*rateagreement.RateAgreementRule, error) {
 	return s.repo.ListRules(ctx, req)
 }
 
 func (s *Service) GetRuleByID(
 	ctx context.Context,
-	req *repositories.GetRateAgreementRuleByIDRequest,
+	req *rateagreementports.GetRateAgreementRuleByIDRequest,
 ) (*rateagreement.RateAgreementRule, error) {
 	return s.repo.GetRuleByID(ctx, req)
 }
 
 func (s *Service) ListVersions(
 	ctx context.Context,
-	req *repositories.ListRateAgreementVersionsRequest,
+	req *rateagreementports.ListRateAgreementVersionsRequest,
 ) (*pagination.ListResult[*rateagreement.RateAgreementVersion], error) {
 	return s.repo.ListVersions(ctx, req)
 }
@@ -232,7 +232,7 @@ func (s *Service) audit(
 	userID pulid.ID,
 	comment string,
 ) {
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceRateAgreement,
 		ResourceID:     entity.GetID().String(),
 		Operation:      operation,
@@ -242,7 +242,7 @@ func (s *Service) audit(
 		BusinessUnitID: entity.BusinessUnitID,
 	}
 
-	opts := []services.LogOption{auditservice.WithComment(comment)}
+	opts := []auditports.LogOption{auditservice.WithComment(comment)}
 
 	if original != nil {
 		params.PreviousState = jsonutils.MustToJSON(original)

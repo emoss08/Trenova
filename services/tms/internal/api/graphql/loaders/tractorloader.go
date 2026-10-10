@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/tractorservice"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -15,7 +15,7 @@ import (
 type tractorsByIDsGetter interface {
 	GetByIDs(
 		ctx context.Context,
-		req repositories.GetTractorsByIDsRequest,
+		req tractorports.GetTractorsByIDsRequest,
 	) ([]*tractor.Tractor, error)
 }
 
@@ -47,7 +47,7 @@ func (f *TractorByIDLoaderFactory) batchFunc(
 	tenantInfo pagination.TenantInfo,
 ) batchFetchFunc[*tractor.Tractor] {
 	return batchByIDFunc(func(ctx context.Context, ids []pulid.ID) ([]*tractor.Tractor, error) {
-		return f.tractors.GetByIDs(ctx, repositories.GetTractorsByIDsRequest{
+		return f.tractors.GetByIDs(ctx, tractorports.GetTractorsByIDsRequest{
 			TenantInfo: tenantInfo,
 			TractorIDs: ids,
 		})

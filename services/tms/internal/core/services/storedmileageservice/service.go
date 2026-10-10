@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/storedmileage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/places/ports/storedmileageports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,14 +19,14 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.StoredMileageRepository
-	AuditService services.AuditService
+	Repo         storedmileageports.StoredMileageRepository
+	AuditService auditports.AuditService
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.StoredMileageRepository
-	auditService services.AuditService
+	repo         storedmileageports.StoredMileageRepository
+	auditService auditports.AuditService
 }
 
 func New(p Params) *Service {
@@ -39,31 +39,31 @@ func New(p Params) *Service {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListStoredMileageRequest,
+	req *storedmileageports.ListStoredMileageRequest,
 ) (*pagination.ListResult[*storedmileage.StoredMileage], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListStoredMileageConnectionRequest,
+	req *storedmileageports.ListStoredMileageConnectionRequest,
 ) (*pagination.CursorListResult[*storedmileage.StoredMileage], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	req repositories.GetStoredMileageByIDRequest,
+	req storedmileageports.GetStoredMileageByIDRequest,
 ) (*storedmileage.StoredMileage, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) Deactivate(
 	ctx context.Context,
-	req repositories.DeleteStoredMileageRequest,
+	req storedmileageports.DeleteStoredMileageRequest,
 	userID pulid.ID,
 ) error {
-	existing, err := s.repo.GetByID(ctx, repositories.GetStoredMileageByIDRequest(req))
+	existing, err := s.repo.GetByID(ctx, storedmileageports.GetStoredMileageByIDRequest(req))
 	if err != nil {
 		return err
 	}
@@ -84,7 +84,7 @@ func (s *Service) logAudit(
 	if current == nil {
 		return
 	}
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceStoredMileage,
 		ResourceID:     current.ID.String(),
 		Operation:      permission.OpUpdate,
@@ -96,7 +96,7 @@ func (s *Service) logAudit(
 	if previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(previous)
 	}
-	opts := []services.LogOption{auditservice.WithComment("Stored mileage deactivated")}
+	opts := []auditports.LogOption{auditservice.WithComment("Stored mileage deactivated")}
 	if previous != nil {
 		opts = append(opts, auditservice.WithDiff(previous, current))
 	}

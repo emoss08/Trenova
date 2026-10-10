@@ -6,8 +6,8 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -35,8 +35,8 @@ func newTestRepository(t *testing.T) (*Repository, sqlmock.Sqlmock) {
 	return &Repository{db: postgres.NewTestConnection(bunDB), l: zap.NewNop()}, mock
 }
 
-func testScope() *repositories.ShipmentBoardScope {
-	return &repositories.ShipmentBoardScope{
+func testScope() *shipmentports.ShipmentBoardScope {
+	return &shipmentports.ShipmentBoardScope{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: pulid.MustNew("org_"),
@@ -47,12 +47,12 @@ func testScope() *repositories.ShipmentBoardScope {
 				{Field: "customerId", Operator: dbtype.OpEqual, Value: "cus_1"},
 			},
 		},
-		Options: repositories.ShipmentOptions{
-			QuickFilterBasis: &repositories.ShipmentQuickFilterBasis{
+		Options: shipmentports.ShipmentOptions{
+			QuickFilterBasis: &shipmentports.ShipmentQuickFilterBasis{
 				Now:       time.Unix(1_791_318_600, 0).UTC(),
 				Location:  time.UTC,
-				Detention: &repositories.ShipmentDetentionBasis{ThresholdMinutes: 30},
-				Margin: &repositories.ShipmentMarginBasis{
+				Detention: &shipmentports.ShipmentDetentionBasis{ThresholdMinutes: 30},
+				Margin: &shipmentports.ShipmentMarginBasis{
 					CostPerMile:         decimal.NewFromInt(2),
 					TargetMarginPercent: decimal.NewFromInt(10),
 				},
@@ -89,7 +89,7 @@ func TestQuickFilterTotalsIsOneQuery(t *testing.T) {
 
 	totals, err := repo.QuickFilterTotals(
 		t.Context(),
-		&repositories.CountShipmentQuickFiltersRequest{
+		&shipmentports.CountShipmentQuickFiltersRequest{
 			Scope: testScope(),
 			Filters: []shipment.QuickFilterSpec{
 				shipment.Quick(shipment.QuickFilterLate),
@@ -104,4 +104,3 @@ func TestQuickFilterTotalsIsOneQuery(t *testing.T) {
 	assert.Equal(t, 2, totals[1].Count)
 	require.NoError(t, mock.ExpectationsWereMet())
 }
-

@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/disintegration/imaging"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/gen2brain/webp"
 )
 
@@ -33,10 +33,10 @@ type Generator struct {
 	maxWidth    int
 	maxHeight   int
 	webpQuality int
-	pdfReader   services.PDFReader
+	pdfReader   kernelports.PDFReader
 }
 
-func NewGenerator(pdfReader services.PDFReader) *Generator {
+func NewGenerator(pdfReader kernelports.PDFReader) *Generator {
 	return &Generator{
 		maxWidth:    DefaultMaxWidth,
 		maxHeight:   DefaultMaxHeight,

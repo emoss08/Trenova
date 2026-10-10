@@ -9,12 +9,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/rategeo"
 	"github.com/emoss08/trenova/internal/core/domain/ratematrix"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/fuelsurchargeservice"
 	"github.com/emoss08/trenova/internal/core/services/rateagreementservice"
 	"github.com/emoss08/trenova/internal/core/services/ratematrixservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -58,26 +60,26 @@ func ratingToolProviders() []any {
 type rateAgreementReader interface {
 	List(
 		ctx context.Context,
-		req *repositories.ListRateAgreementRequest,
+		req *rateagreementports.ListRateAgreementRequest,
 	) (*pagination.ListResult[*rateagreement.RateAgreement], error)
 	GetByID(
 		ctx context.Context,
-		req *repositories.GetRateAgreementByIDRequest,
+		req *rateagreementports.GetRateAgreementByIDRequest,
 	) (*rateagreement.RateAgreement, error)
 	ListVersions(
 		ctx context.Context,
-		req *repositories.ListRateAgreementVersionsRequest,
+		req *rateagreementports.ListRateAgreementVersionsRequest,
 	) (*pagination.ListResult[*rateagreement.RateAgreementVersion], error)
 }
 
 type rateMatrixReader interface {
 	GetByID(
 		ctx context.Context,
-		req *repositories.GetRateMatrixByIDRequest,
+		req *ratematrixports.GetRateMatrixByIDRequest,
 	) (*ratematrix.RateMatrix, error)
 	ListCells(
 		ctx context.Context,
-		req *repositories.ListRateMatrixCellsRequest,
+		req *ratematrixports.ListRateMatrixCellsRequest,
 	) (*pagination.ListResult[*ratematrix.RateMatrixCell], error)
 }
 
@@ -90,28 +92,28 @@ type fuelRateReader interface {
 
 func provideListRateAgreementsTool(
 	agreements *rateagreementservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newListRateAgreementsTool(agreements, permissions)
 }
 
 func provideGetRateAgreementTool(
 	agreements *rateagreementservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newGetRateAgreementTool(agreements, permissions)
 }
 
 func provideGetRateMatrixTool(
 	matrices *ratematrixservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newGetRateMatrixTool(matrices, permissions)
 }
 
 func provideGetFuelSurchargeRatesTool(
 	fuel *fuelsurchargeservice.Service,
-) serviceports.AgentQueryTool {
+) agentports.AgentQueryTool {
 	return newGetFuelSurchargeRatesTool(fuel)
 }
 
@@ -206,8 +208,8 @@ type listRateAgreementsTool struct {
 
 func newListRateAgreementsTool(
 	agreements rateAgreementReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &listRateAgreementsTool{agreements: agreements, access: newFieldAccess(permissions)}
 }
 
@@ -233,13 +235,13 @@ func (t *listRateAgreementsTool) ParamSchema() map[string]any {
 	}, defaultListLimit, maxListLimit))
 }
 
-func (t *listRateAgreementsTool) Policy() serviceports.ToolPolicy {
+func (t *listRateAgreementsTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceRateAgreement})
 }
 
 func (t *listRateAgreementsTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -263,7 +265,7 @@ func (t *listRateAgreementsTool) Query(
 	}
 	window := readPage(params.Params, defaultListLimit, maxListLimit)
 
-	req := &repositories.ListRateAgreementRequest{
+	req := &rateagreementports.ListRateAgreementRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenantOf(params),
 			Pagination: pagination.Info{Limit: window.fetch(), Offset: window.offset},
@@ -316,8 +318,8 @@ type getRateAgreementTool struct {
 
 func newGetRateAgreementTool(
 	agreements rateAgreementReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &getRateAgreementTool{agreements: agreements, access: newFieldAccess(permissions)}
 }
 
@@ -345,7 +347,7 @@ func (t *getRateAgreementTool) ParamSchema() map[string]any {
 	)
 }
 
-func (t *getRateAgreementTool) Policy() serviceports.ToolPolicy {
+func (t *getRateAgreementTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceRateAgreement})
 }
 
@@ -428,7 +430,7 @@ type rateAgreementView struct {
 
 func (t *getRateAgreementTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -440,7 +442,7 @@ func (t *getRateAgreementTool) Query(
 	}
 
 	tenant := tenantOf(params)
-	entity, err := t.agreements.GetByID(ctx, &repositories.GetRateAgreementByIDRequest{
+	entity, err := t.agreements.GetByID(ctx, &rateagreementports.GetRateAgreementByIDRequest{
 		RateAgreementID: id,
 		TenantInfo:      tenant,
 		IncludeChildren: true,
@@ -450,7 +452,7 @@ func (t *getRateAgreementTool) Query(
 		return nil, err
 	}
 
-	versions, err := t.agreements.ListVersions(ctx, &repositories.ListRateAgreementVersionsRequest{
+	versions, err := t.agreements.ListVersions(ctx, &rateagreementports.ListRateAgreementVersionsRequest{
 		TenantInfo:      tenant,
 		RateAgreementID: id,
 		Limit:           1,
@@ -627,8 +629,8 @@ type getRateMatrixTool struct {
 
 func newGetRateMatrixTool(
 	matrices rateMatrixReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &getRateMatrixTool{matrices: matrices, access: newFieldAccess(permissions)}
 }
 
@@ -651,7 +653,7 @@ func (t *getRateMatrixTool) ParamSchema() map[string]any {
 	}, paramRateMatrixID)
 }
 
-func (t *getRateMatrixTool) Policy() serviceports.ToolPolicy {
+func (t *getRateMatrixTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceRateMatrix})
 }
 
@@ -692,7 +694,7 @@ type rateMatrixView struct {
 
 func (t *getRateMatrixTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -705,7 +707,7 @@ func (t *getRateMatrixTool) Query(
 	offset := max(optionalInt(params.Params, "cellOffset", 0), 0)
 
 	tenant := tenantOf(params)
-	matrix, err := t.matrices.GetByID(ctx, &repositories.GetRateMatrixByIDRequest{
+	matrix, err := t.matrices.GetByID(ctx, &ratematrixports.GetRateMatrixByIDRequest{
 		RateMatrixID:      id,
 		TenantInfo:        tenant,
 		IncludeDimensions: true,
@@ -788,7 +790,7 @@ func (t *getRateMatrixTool) cells(
 	cells := make([]*ratematrix.RateMatrixCell, 0, matrixCellPage)
 	total := 0
 	for len(cells) < maxMatrixCells {
-		page, err := t.matrices.ListCells(ctx, &repositories.ListRateMatrixCellsRequest{
+		page, err := t.matrices.ListCells(ctx, &ratematrixports.ListRateMatrixCellsRequest{
 			TenantInfo:   tenant,
 			RateMatrixID: matrixID,
 			Filter: &pagination.QueryOptions{
@@ -856,7 +858,7 @@ type getFuelSurchargeRatesTool struct {
 	fuel fuelRateReader
 }
 
-func newGetFuelSurchargeRatesTool(fuel fuelRateReader) serviceports.AgentQueryTool {
+func newGetFuelSurchargeRatesTool(fuel fuelRateReader) agentports.AgentQueryTool {
 	return &getFuelSurchargeRatesTool{fuel: fuel}
 }
 
@@ -880,7 +882,7 @@ func (t *getFuelSurchargeRatesTool) ParamSchema() map[string]any {
 	})
 }
 
-func (t *getFuelSurchargeRatesTool) Policy() serviceports.ToolPolicy {
+func (t *getFuelSurchargeRatesTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceFuelSurchargeProgram})
 }
 
@@ -933,7 +935,7 @@ func fuelRateRowFrom(entry *fuelsurchargeservice.ProgramCurrentRate) fuelRateRow
 
 func (t *getFuelSurchargeRatesTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

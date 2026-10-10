@@ -8,10 +8,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -36,37 +37,37 @@ var serviceFailureUserRefs = map[string]permission.Resource{
 type serviceFailureLifecycle interface {
 	GetByID(
 		ctx context.Context,
-		req *repositories.GetServiceFailureByIDRequest,
+		req *servicefailureports.GetServiceFailureByIDRequest,
 	) (*servicefailure.ServiceFailure, error)
 	Update(
 		ctx context.Context,
-		req *serviceports.UpdateServiceFailureRequest,
-		actor *serviceports.RequestActor,
+		req *servicefailureports.UpdateServiceFailureRequest,
+		actor *permissionports.RequestActor,
 	) (*servicefailure.ServiceFailure, error)
 	Review(
 		ctx context.Context,
-		req *serviceports.ServiceFailureLifecycleRequest,
-		actor *serviceports.RequestActor,
+		req *servicefailureports.ServiceFailureLifecycleRequest,
+		actor *permissionports.RequestActor,
 	) (*servicefailure.ServiceFailure, error)
 	Void(
 		ctx context.Context,
-		req *serviceports.ServiceFailureLifecycleRequest,
-		actor *serviceports.RequestActor,
+		req *servicefailureports.ServiceFailureLifecycleRequest,
+		actor *permissionports.RequestActor,
 	) (*servicefailure.ServiceFailure, error)
 	PreviewUpdate(
 		ctx context.Context,
-		req *serviceports.UpdateServiceFailureRequest,
-	) (*serviceports.ServiceFailureLifecyclePreview, error)
+		req *servicefailureports.UpdateServiceFailureRequest,
+	) (*servicefailureports.ServiceFailureLifecyclePreview, error)
 	PreviewReview(
 		ctx context.Context,
-		req *serviceports.ServiceFailureLifecycleRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.ServiceFailureLifecyclePreview, error)
+		req *servicefailureports.ServiceFailureLifecycleRequest,
+		actor *permissionports.RequestActor,
+	) (*servicefailureports.ServiceFailureLifecyclePreview, error)
 	PreviewVoid(
 		ctx context.Context,
-		req *serviceports.ServiceFailureLifecycleRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.ServiceFailureLifecyclePreview, error)
+		req *servicefailureports.ServiceFailureLifecycleRequest,
+		actor *permissionports.RequestActor,
+	) (*servicefailureports.ServiceFailureLifecyclePreview, error)
 }
 
 func serviceFailureIDProperty() map[string]any {
@@ -100,7 +101,7 @@ func serviceFailureResult(
 	return result
 }
 
-func targetServiceFailure(params map[string]any) (serviceports.ToolTarget, bool) {
+func targetServiceFailure(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, paramServiceFailureID, permission.ResourceServiceFailure)
 }
 
@@ -116,7 +117,7 @@ type serviceFailureEdit struct {
 	x12Exception  *string
 }
 
-func readServiceFailureEdit(params *serviceports.ToolExecuteParams) (*serviceFailureEdit, error) {
+func readServiceFailureEdit(params *agentports.ToolExecuteParams) (*serviceFailureEdit, error) {
 	id, err := requirePulid(params.Params, paramServiceFailureID)
 	if err != nil {
 		return nil, err
@@ -172,8 +173,8 @@ func readServiceFailureEdit(params *serviceports.ToolExecuteParams) (*serviceFai
 
 func (e *serviceFailureEdit) request(
 	current *servicefailure.ServiceFailure,
-) *serviceports.UpdateServiceFailureRequest {
-	req := &serviceports.UpdateServiceFailureRequest{
+) *servicefailureports.UpdateServiceFailureRequest {
+	req := &servicefailureports.UpdateServiceFailureRequest{
 		TenantInfo:            e.tenant,
 		ID:                    current.ID,
 		ShipmentID:            current.ShipmentID,
@@ -205,7 +206,7 @@ func (e *serviceFailureEdit) request(
 	return req
 }
 
-func newUpdateServiceFailureTool(failures serviceFailureLifecycle) serviceports.AgentTool {
+func newUpdateServiceFailureTool(failures serviceFailureLifecycle) agentports.AgentTool {
 	return newReportingReceivableTool(&receivableSpec{
 		name:        "update_service_failure",
 		searchTerms: []string{"change reason code", "edit service failure"},
@@ -244,14 +245,14 @@ func newUpdateServiceFailureTool(failures serviceFailureLifecycle) serviceports.
 		},
 		required: []string{paramServiceFailureID},
 		target:   targetServiceFailure,
-	}, receivablePlan[*serviceFailureEdit, *serviceports.ServiceFailureLifecyclePreview]{
+	}, receivablePlan[*serviceFailureEdit, *servicefailureports.ServiceFailureLifecyclePreview]{
 		request: readServiceFailureEdit,
 		plan: func(
 			ctx context.Context,
 			edit *serviceFailureEdit,
-			_ *serviceports.ToolExecuteParams,
-		) (*serviceports.ServiceFailureLifecyclePreview, error) {
-			current, err := failures.GetByID(ctx, &repositories.GetServiceFailureByIDRequest{
+			_ *agentports.ToolExecuteParams,
+		) (*servicefailureports.ServiceFailureLifecyclePreview, error) {
+			current, err := failures.GetByID(ctx, &servicefailureports.GetServiceFailureByIDRequest{
 				ID:         edit.id,
 				TenantInfo: edit.tenant,
 			})
@@ -266,7 +267,7 @@ func newUpdateServiceFailureTool(failures serviceFailureLifecycle) serviceports.
 		},
 		render: func(
 			_ *serviceFailureEdit,
-			plan *serviceports.ServiceFailureLifecyclePreview,
+			plan *servicefailureports.ServiceFailureLifecyclePreview,
 		) (*agent.ToolPreview, error) {
 			change, err := toolpreview.Changed(
 				serviceFailureRecord(plan.Before),
@@ -286,9 +287,9 @@ func newUpdateServiceFailureTool(failures serviceFailureLifecycle) serviceports.
 		run: func(
 			ctx context.Context,
 			edit *serviceFailureEdit,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
-			current, err := failures.GetByID(ctx, &repositories.GetServiceFailureByIDRequest{
+			current, err := failures.GetByID(ctx, &servicefailureports.GetServiceFailureByIDRequest{
 				ID:         edit.id,
 				TenantInfo: edit.tenant,
 			})
@@ -313,7 +314,7 @@ type serviceFailureTransition struct {
 }
 
 func readServiceFailureTransition(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 	notesRequired bool,
 ) (*serviceFailureTransition, error) {
 	id, err := requirePulid(params.Params, paramServiceFailureID)
@@ -341,8 +342,8 @@ func readServiceFailureTransition(
 
 func (t *serviceFailureTransition) request(
 	current *servicefailure.ServiceFailure,
-) *serviceports.ServiceFailureLifecycleRequest {
-	return &serviceports.ServiceFailureLifecycleRequest{
+) *servicefailureports.ServiceFailureLifecycleRequest {
+	return &servicefailureports.ServiceFailureLifecycleRequest{
 		TenantInfo:   t.tenant,
 		ID:           current.ID,
 		ShipmentID:   current.ShipmentID,
@@ -366,21 +367,21 @@ type serviceFailureTransitionSpec struct {
 	preview       func(
 		failures serviceFailureLifecycle,
 		ctx context.Context,
-		req *serviceports.ServiceFailureLifecycleRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.ServiceFailureLifecyclePreview, error)
+		req *servicefailureports.ServiceFailureLifecycleRequest,
+		actor *permissionports.RequestActor,
+	) (*servicefailureports.ServiceFailureLifecyclePreview, error)
 	run func(
 		failures serviceFailureLifecycle,
 		ctx context.Context,
-		req *serviceports.ServiceFailureLifecycleRequest,
-		actor *serviceports.RequestActor,
+		req *servicefailureports.ServiceFailureLifecycleRequest,
+		actor *permissionports.RequestActor,
 	) (*servicefailure.ServiceFailure, error)
 }
 
 func newServiceFailureTransitionTool(
 	failures serviceFailureLifecycle,
 	spec *serviceFailureTransitionSpec,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	properties := map[string]any{
 		paramServiceFailureID: serviceFailureIDProperty(),
 		fieldNotes: stringProperty("What was found, in a sentence a person reads on the "+
@@ -412,16 +413,16 @@ func newServiceFailureTransitionTool(
 		properties:  properties,
 		required:    required,
 		target:      targetServiceFailure,
-	}, receivablePlan[*serviceFailureTransition, *serviceports.ServiceFailureLifecyclePreview]{
-		request: func(params *serviceports.ToolExecuteParams) (*serviceFailureTransition, error) {
+	}, receivablePlan[*serviceFailureTransition, *servicefailureports.ServiceFailureLifecyclePreview]{
+		request: func(params *agentports.ToolExecuteParams) (*serviceFailureTransition, error) {
 			return readServiceFailureTransition(params, spec.notesRequired)
 		},
 		plan: func(
 			ctx context.Context,
 			transition *serviceFailureTransition,
-			params *serviceports.ToolExecuteParams,
-		) (*serviceports.ServiceFailureLifecyclePreview, error) {
-			current, err := failures.GetByID(ctx, &repositories.GetServiceFailureByIDRequest{
+			params *agentports.ToolExecuteParams,
+		) (*servicefailureports.ServiceFailureLifecyclePreview, error) {
+			current, err := failures.GetByID(ctx, &servicefailureports.GetServiceFailureByIDRequest{
 				ID:         transition.id,
 				TenantInfo: transition.tenant,
 			})
@@ -436,7 +437,7 @@ func newServiceFailureTransitionTool(
 		},
 		render: func(
 			_ *serviceFailureTransition,
-			plan *serviceports.ServiceFailureLifecyclePreview,
+			plan *servicefailureports.ServiceFailureLifecyclePreview,
 		) (*agent.ToolPreview, error) {
 			change, err := toolpreview.Changed(
 				serviceFailureRecord(plan.Before),
@@ -456,9 +457,9 @@ func newServiceFailureTransitionTool(
 		run: func(
 			ctx context.Context,
 			transition *serviceFailureTransition,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
-			current, err := failures.GetByID(ctx, &repositories.GetServiceFailureByIDRequest{
+			current, err := failures.GetByID(ctx, &servicefailureports.GetServiceFailureByIDRequest{
 				ID:         transition.id,
 				TenantInfo: transition.tenant,
 			})
@@ -475,7 +476,7 @@ func newServiceFailureTransitionTool(
 	})
 }
 
-func newReviewServiceFailureTool(failures serviceFailureLifecycle) serviceports.AgentTool {
+func newReviewServiceFailureTool(failures serviceFailureLifecycle) agentports.AgentTool {
 	return newServiceFailureTransitionTool(failures, &serviceFailureTransitionSpec{
 		name:        "review_service_failure",
 		searchTerms: []string{"mark reviewed"},
@@ -501,7 +502,7 @@ func newReviewServiceFailureTool(failures serviceFailureLifecycle) serviceports.
 	})
 }
 
-func newVoidServiceFailureTool(failures serviceFailureLifecycle) serviceports.AgentTool {
+func newVoidServiceFailureTool(failures serviceFailureLifecycle) agentports.AgentTool {
 	return newServiceFailureTransitionTool(failures, &serviceFailureTransitionSpec{
 		name: "void_service_failure",
 		description: "Void a service failure that should never have been opened, with " +

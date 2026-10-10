@@ -8,21 +8,21 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/rateconfirmationservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
 var (
-	_ serviceports.ToolPreviewer = (*generateRateConfirmationTool)(nil)
-	_ serviceports.ToolPreviewer = (*sendRateConfirmationTool)(nil)
-	_ serviceports.ToolPreviewer = (*voidRateConfirmationTool)(nil)
-	_ serviceports.ToolPreviewer = (*recordRateConfirmationConfirmedTool)(nil)
-	_ serviceports.ToolValidator = (*generateRateConfirmationTool)(nil)
-	_ serviceports.ToolValidator = (*sendRateConfirmationTool)(nil)
-	_ serviceports.ToolValidator = (*voidRateConfirmationTool)(nil)
-	_ serviceports.ToolValidator = (*recordRateConfirmationConfirmedTool)(nil)
+	_ agentports.ToolPreviewer = (*generateRateConfirmationTool)(nil)
+	_ agentports.ToolPreviewer = (*sendRateConfirmationTool)(nil)
+	_ agentports.ToolPreviewer = (*voidRateConfirmationTool)(nil)
+	_ agentports.ToolPreviewer = (*recordRateConfirmationConfirmedTool)(nil)
+	_ agentports.ToolValidator = (*generateRateConfirmationTool)(nil)
+	_ agentports.ToolValidator = (*sendRateConfirmationTool)(nil)
+	_ agentports.ToolValidator = (*voidRateConfirmationTool)(nil)
+	_ agentports.ToolValidator = (*recordRateConfirmationConfirmedTool)(nil)
 )
 
 var rateConfirmationLabels = map[string]string{
@@ -36,7 +36,7 @@ var rateConfirmationLabels = map[string]string{
 
 func (t *generateRateConfirmationTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	moveID, err := t.moveID(&params)
 	if err != nil {
@@ -99,7 +99,7 @@ func (t *generateRateConfirmationTool) Preview(
 
 func (t *sendRateConfirmationTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	id, err := rateConfirmationArg(t, &params)
 	if err != nil {
@@ -149,7 +149,7 @@ func (t *sendRateConfirmationTool) Preview(
 
 func (t *voidRateConfirmationTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	id, reason, err := t.arguments(&params)
 	if err != nil {
@@ -189,7 +189,7 @@ func (t *voidRateConfirmationTool) Preview(
 
 func (t *recordRateConfirmationConfirmedTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	id, name, err := t.arguments(&params)
 	if err != nil {

@@ -1,8 +1,6 @@
 package driverportalservice
 
 import (
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
@@ -15,6 +13,15 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/workerservice"
 	"github.com/emoss08/trenova/internal/core/services/workertrainingservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -30,23 +37,23 @@ type Params struct {
 
 	Logger              *zap.Logger
 	Config              *config.Config
-	PortalRepo          repositories.PortalAccessRepository
-	OrgRepo             repositories.OrganizationRepository
-	SettlementRepo      repositories.DriverSettlementRepository
-	PayEventRepo        repositories.PayEventRepository
-	AdvanceRepo         repositories.PayAdvanceRepository
-	EscrowRepo          repositories.EscrowAccountRepository
-	SettlementControl   repositories.SettlementControlRepository
-	DashControlRepo     repositories.DashControlRepository
-	DocumentTypeRepo    repositories.DocumentTypeRepository
-	PTORepo             repositories.WorkerPTORepository
-	EmailService        serviceports.EmailService
-	Templates           serviceports.DocumentTemplateResolver
-	CommentService      serviceports.ShipmentCommentService
-	MoveService         serviceports.ShipmentMoveService
+	PortalRepo          workerports.PortalAccessRepository
+	OrgRepo             tenantports.OrganizationRepository
+	SettlementRepo      driversettlementports.DriverSettlementRepository
+	PayEventRepo        driversettlementports.PayEventRepository
+	AdvanceRepo         driverpayports.PayAdvanceRepository
+	EscrowRepo          driverpayports.EscrowAccountRepository
+	SettlementControl   tenantports.SettlementControlRepository
+	DashControlRepo     tenantports.DashControlRepository
+	DocumentTypeRepo    documenttypeports.DocumentTypeRepository
+	PTORepo             workerports.WorkerPTORepository
+	EmailService        emailports.EmailService
+	Templates           documenttemplateports.DocumentTemplateResolver
+	CommentService      shipmentports.ShipmentCommentService
+	MoveService         shipmentports.ShipmentMoveService
 	WorkerService       *workerservice.Service
 	DocumentService     *documentservice.Service
-	PTOService          serviceports.WorkerPTOService
+	PTOService          workerports.WorkerPTOService
 	PTOLedger           *ptoledgerservice.Service
 	Credentials         *workercredentialservice.Service
 	Training            *workertrainingservice.Service
@@ -57,29 +64,29 @@ type Params struct {
 	SelfService         *selfserviceservice.Service
 	SettlementService   *driversettlementservice.Service
 	NotificationService *notificationservice.Service
-	AuditService        serviceports.AuditService
+	AuditService        auditports.AuditService
 }
 
 type Service struct {
 	l                   *zap.Logger
 	cfg                 *config.Config
-	portalRepo          repositories.PortalAccessRepository
-	orgRepo             repositories.OrganizationRepository
-	settlementRepo      repositories.DriverSettlementRepository
-	payEventRepo        repositories.PayEventRepository
-	advanceRepo         repositories.PayAdvanceRepository
-	escrowRepo          repositories.EscrowAccountRepository
-	settlementControl   repositories.SettlementControlRepository
-	dashControlRepo     repositories.DashControlRepository
-	documentTypeRepo    repositories.DocumentTypeRepository
-	ptoRepo             repositories.WorkerPTORepository
-	emailService        serviceports.EmailService
-	templates           serviceports.DocumentTemplateResolver
-	commentService      serviceports.ShipmentCommentService
-	moveService         serviceports.ShipmentMoveService
+	portalRepo          workerports.PortalAccessRepository
+	orgRepo             tenantports.OrganizationRepository
+	settlementRepo      driversettlementports.DriverSettlementRepository
+	payEventRepo        driversettlementports.PayEventRepository
+	advanceRepo         driverpayports.PayAdvanceRepository
+	escrowRepo          driverpayports.EscrowAccountRepository
+	settlementControl   tenantports.SettlementControlRepository
+	dashControlRepo     tenantports.DashControlRepository
+	documentTypeRepo    documenttypeports.DocumentTypeRepository
+	ptoRepo             workerports.WorkerPTORepository
+	emailService        emailports.EmailService
+	templates           documenttemplateports.DocumentTemplateResolver
+	commentService      shipmentports.ShipmentCommentService
+	moveService         shipmentports.ShipmentMoveService
 	workerService       *workerservice.Service
 	documentService     *documentservice.Service
-	ptoService          serviceports.WorkerPTOService
+	ptoService          workerports.WorkerPTOService
 	ptoLedger           *ptoledgerservice.Service
 	credentials         *workercredentialservice.Service
 	training            *workertrainingservice.Service
@@ -90,7 +97,7 @@ type Service struct {
 	selfService         *selfserviceservice.Service
 	settlementService   *driversettlementservice.Service
 	notificationService *notificationservice.Service
-	auditService        serviceports.AuditService
+	auditService        auditports.AuditService
 }
 
 func New(p Params) *Service { //nolint:gocritic // stable API shape

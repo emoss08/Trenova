@@ -3,7 +3,8 @@ package billingqueueservice
 import (
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -12,8 +13,8 @@ import (
 // actor may not make the move.
 func PlanStatusChange(
 	entity *billingqueue.BillingQueueItem,
-	req *services.UpdateBillingQueueStatusRequest,
-	actor *services.RequestActor,
+	req *billingqueueports.UpdateBillingQueueStatusRequest,
+	actor *permissionports.RequestActor,
 	now int64,
 ) error {
 	if err := guardAgentTransition(actor, req.NewStatus); err != nil {
@@ -28,8 +29,8 @@ func PlanStatusChange(
 // the write still goes through UpdateStatus, which refuses an agent.
 func PlanTransition(
 	entity *billingqueue.BillingQueueItem,
-	req *services.UpdateBillingQueueStatusRequest,
-	actor *services.RequestActor,
+	req *billingqueueports.UpdateBillingQueueStatusRequest,
+	actor *permissionports.RequestActor,
 	now int64,
 ) error {
 	startReviewForApproval(entity, req, now)
@@ -53,7 +54,7 @@ func PlanTransition(
 // way through rather than refusing.
 func startReviewForApproval(
 	entity *billingqueue.BillingQueueItem,
-	req *services.UpdateBillingQueueStatusRequest,
+	req *billingqueueports.UpdateBillingQueueStatusRequest,
 	now int64,
 ) {
 	if req.NewStatus != billingqueue.StatusApproved ||
@@ -67,7 +68,7 @@ func startReviewForApproval(
 	}
 }
 
-func checkHoldReason(req *services.UpdateBillingQueueStatusRequest) error {
+func checkHoldReason(req *billingqueueports.UpdateBillingQueueStatusRequest) error {
 	if req.NewStatus != billingqueue.StatusOnHold || req.HoldReasonCode == nil ||
 		req.HoldReasonCode.IsValid() {
 		return nil
@@ -97,7 +98,7 @@ func AgentMayMoveTo(status billingqueue.Status) bool {
 	}
 }
 
-func guardAgentTransition(actor *services.RequestActor, status billingqueue.Status) error {
+func guardAgentTransition(actor *permissionports.RequestActor, status billingqueue.Status) error {
 	if actor.IsAgent() && !AgentMayMoveTo(status) {
 		return errAgentCannotTransition()
 	}
@@ -134,7 +135,7 @@ func SendBackComment(
 
 func checkStatusTransition(
 	entity *billingqueue.BillingQueueItem,
-	req *services.UpdateBillingQueueStatusRequest,
+	req *billingqueueports.UpdateBillingQueueStatusRequest,
 ) error {
 	if billingqueue.IsAllowedTransition(entity.Status, req.NewStatus) {
 		return nil
@@ -158,8 +159,8 @@ func errAgentCannotTransition() error {
 func applyStatusFields(
 	entity *billingqueue.BillingQueueItem,
 	from billingqueue.Status,
-	req *services.UpdateBillingQueueStatusRequest,
-	actor *services.RequestActor,
+	req *billingqueueports.UpdateBillingQueueStatusRequest,
+	actor *permissionports.RequestActor,
 	now int64,
 ) {
 	if req.NewStatus != billingqueue.StatusOnHold && from == billingqueue.StatusOnHold {

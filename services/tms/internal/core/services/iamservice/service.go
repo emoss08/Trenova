@@ -10,10 +10,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/iam"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/planservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/slugutil"
@@ -30,26 +31,26 @@ const (
 type Params struct {
 	fx.In
 
-	Repo        repositories.IAMRepository
-	PolicyCache repositories.AccessPolicyCacheRepository
+	Repo        iamports.IAMRepository
+	PolicyCache iamports.AccessPolicyCacheRepository
 	Encryption  *encryptionservice.Service
 	Validator   *Validator
-	Auditor     services.SecurityAuditor
+	Auditor     permissionports.SecurityAuditor
 	Logger      *zap.Logger
-	Plans       services.PlanService `optional:"true"`
+	Plans       platformplanports.PlanService `optional:"true"`
 }
 
 type service struct {
-	repo        repositories.IAMRepository
-	policyCache repositories.AccessPolicyCacheRepository
+	repo        iamports.IAMRepository
+	policyCache iamports.AccessPolicyCacheRepository
 	enc         *encryptionservice.Service
 	validator   *Validator
-	auditor     services.SecurityAuditor
+	auditor     permissionports.SecurityAuditor
 	l           *zap.Logger
-	plans       services.PlanService
+	plans       platformplanports.PlanService
 }
 
-func New(p Params) services.IAMService {
+func New(p Params) iamports.IAMService {
 	return &service{
 		repo:        p.Repo,
 		policyCache: p.PolicyCache,
@@ -69,13 +70,13 @@ func (s *service) ListIdentityProviders(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]*iam.IdentityProvider, error) {
-	return s.repo.ListIdentityProviders(ctx, repositories.ListIAMRequest{TenantInfo: tenantInfo})
+	return s.repo.ListIdentityProviders(ctx, iamports.ListIAMRequest{TenantInfo: tenantInfo})
 }
 
 func (s *service) CreateIdentityProvider(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	req *services.IdentityProviderRequest,
+	req *iamports.IdentityProviderRequest,
 ) (*iam.IdentityProvider, error) {
 	if err := s.requireSSO(ctx, tenantInfo); err != nil {
 		return nil, err
@@ -105,7 +106,7 @@ func (s *service) UpdateIdentityProvider(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-	req *services.IdentityProviderRequest,
+	req *iamports.IdentityProviderRequest,
 ) (*iam.IdentityProvider, error) {
 	if err := s.requireSSO(ctx, tenantInfo); err != nil {
 		return nil, err
@@ -171,7 +172,7 @@ func (s *service) DeleteIdentityProvider(
 
 func (s *service) identityProviderFromRequest(
 	tenantInfo pagination.TenantInfo,
-	req *services.IdentityProviderRequest,
+	req *iamports.IdentityProviderRequest,
 	existing *iam.IdentityProvider,
 ) (*iam.IdentityProvider, error) {
 	if req == nil {
@@ -306,7 +307,7 @@ func normalizedScopes(values []string) []string {
 
 func (s *service) ListSCIMDirectories(
 	ctx context.Context,
-	req *repositories.ListSCIMDirectoryRequest,
+	req *iamports.ListSCIMDirectoryRequest,
 ) (*pagination.ListResult[*iam.SCIMDirectory], error) {
 	return s.repo.ListSCIMDirectories(ctx, req)
 }
@@ -345,7 +346,7 @@ func (s *service) UpdateSCIMDirectory(
 	id pulid.ID,
 	entity *iam.SCIMDirectory,
 ) (*iam.SCIMDirectory, error) {
-	existing, err := s.repo.GetSCIMDirectory(ctx, repositories.GetSCIMDirectoryRequest{
+	existing, err := s.repo.GetSCIMDirectory(ctx, iamports.GetSCIMDirectoryRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
@@ -380,7 +381,7 @@ func (s *service) DeleteSCIMDirectory(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) error {
-	existing, err := s.repo.GetSCIMDirectory(ctx, repositories.GetSCIMDirectoryRequest{
+	existing, err := s.repo.GetSCIMDirectory(ctx, iamports.GetSCIMDirectoryRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
@@ -414,8 +415,8 @@ func (s *service) CreateSCIMToken(
 	ctx context.Context,
 	orgID pulid.ID,
 	directoryID pulid.ID,
-	req *services.SCIMTokenCreateRequest,
-) (*services.SCIMTokenCreateResponse, error) {
+	req *iamports.SCIMTokenCreateRequest,
+) (*iamports.SCIMTokenCreateResponse, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"token",
@@ -463,7 +464,7 @@ func (s *service) CreateSCIMToken(
 			metadataTokenPrefix: saved.Prefix,
 		},
 	})
-	return &services.SCIMTokenCreateResponse{
+	return &iamports.SCIMTokenCreateResponse{
 		SCIMToken: saved,
 		Token:     generated.token,
 	}, nil
@@ -522,14 +523,14 @@ func generateSCIMToken() (*generatedSCIMToken, error) {
 
 func (s *service) ListSCIMGroupRoleMappings(
 	ctx context.Context,
-	req *repositories.ListSCIMGroupRoleMappingsRequest,
+	req *iamports.ListSCIMGroupRoleMappingsRequest,
 ) (*pagination.ListResult[*iam.SCIMGroupRoleMapping], error) {
 	return s.repo.ListSCIMGroupRoleMappings(ctx, req)
 }
 
 func (s *service) ListSCIMGroupRoleMappingsConnection(
 	ctx context.Context,
-	req *repositories.ListSCIMGroupRoleMappingConnectionRequest,
+	req *iamports.ListSCIMGroupRoleMappingConnectionRequest,
 ) (*pagination.CursorListResult[*iam.SCIMGroupRoleMapping], error) {
 	return s.repo.ListSCIMGroupRoleMappingsConnection(ctx, req)
 }
@@ -624,7 +625,7 @@ func (s *service) ListAccessPolicies(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]*iam.AccessPolicy, error) {
-	return s.repo.ListAccessPolicies(ctx, repositories.ListIAMRequest{TenantInfo: tenantInfo})
+	return s.repo.ListAccessPolicies(ctx, iamports.ListIAMRequest{TenantInfo: tenantInfo})
 }
 
 func (s *service) CreateAccessPolicy(
@@ -716,7 +717,7 @@ func (s *service) invalidateAccessPolicyCache(
 	if s.policyCache == nil {
 		return
 	}
-	err := s.policyCache.Invalidate(ctx, repositories.IAMTenantPolicyLookupRequest{
+	err := s.policyCache.Invalidate(ctx, iamports.IAMTenantPolicyLookupRequest{
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
 	})
@@ -749,7 +750,7 @@ func (s *service) ListExternalIdentities(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]*iam.ExternalIdentity, error) {
-	return s.repo.ListExternalIdentities(ctx, repositories.ListIAMRequest{TenantInfo: tenantInfo})
+	return s.repo.ListExternalIdentities(ctx, iamports.ListIAMRequest{TenantInfo: tenantInfo})
 }
 
 func (s *service) ListMFAAuthenticators(

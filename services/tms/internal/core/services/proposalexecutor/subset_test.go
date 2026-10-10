@@ -6,7 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/stretchr/testify/assert"
@@ -36,8 +37,8 @@ func (t *subsetTool) ParamSchema() map[string]any {
 		"additionalProperties": false,
 	}
 }
-func (t *subsetTool) Policy() services.ToolPolicy {
-	return services.ToolPolicy{
+func (t *subsetTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceShipment,
@@ -51,13 +52,13 @@ func (t *subsetTool) Policy() services.ToolPolicy {
 		Rationale:     "A subset stub.",
 	}
 }
-func (t *subsetTool) Execute(_ context.Context, params services.ToolExecuteParams) error {
+func (t *subsetTool) Execute(_ context.Context, params agentports.ToolExecuteParams) error {
 	t.ran = params.Params
 
 	return nil
 }
 
-func subsetFixture() (*subsetTool, *Service, *agent.AgentProposal, *services.RequestActor) {
+func subsetFixture() (*subsetTool, *Service, *agent.AgentProposal, *permissionports.RequestActor) {
 	tool := &subsetTool{}
 	executor := newExecutor(tool, &fakeProposalRepo{}, &fakePermissions{allowed: true})
 	proposal := testProposal(tool.Name(), map[string]any{

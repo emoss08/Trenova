@@ -7,8 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -25,7 +25,7 @@ type ingestFormInput struct {
 	DriverID     string
 	RouteStopID  string
 	SubmittedAt  int64
-	Fields       []services.ProviderFormField
+	Fields       []telematicsports.ProviderFormField
 }
 
 func (s *Service) ingestFormSubmission(
@@ -54,7 +54,7 @@ func (s *Service) ingestFormSubmission(
 	assignment, err := s.resolveActiveAssignment(ctx, tenantInfo, pulid.Nil, workerID)
 	if err == nil && assignment != nil {
 		record.ShipmentMoveID = assignment.ShipmentMoveID
-		if move, moveErr := s.shipmentMoveRepo.GetByID(ctx, &repositories.GetMoveByIDRequest{
+		if move, moveErr := s.shipmentMoveRepo.GetByID(ctx, &shipmentports.GetMoveByIDRequest{
 			MoveID:     assignment.ShipmentMoveID,
 			TenantInfo: tenantInfo,
 		}); moveErr == nil && move != nil {
@@ -147,7 +147,7 @@ func (s *Service) applyShipmentFields(
 	shipmentID pulid.ID,
 	updates map[string]string,
 ) (int, error) {
-	entity, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	entity, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         shipmentID,
 		TenantInfo: tenantInfo,
 	})
@@ -200,7 +200,7 @@ func setShipmentField(entity *shipment.Shipment, field, value string) bool {
 	return false
 }
 
-func toFieldValues(fields []services.ProviderFormField) []telematics.FormFieldValue {
+func toFieldValues(fields []telematicsports.ProviderFormField) []telematics.FormFieldValue {
 	out := make([]telematics.FormFieldValue, 0, len(fields))
 	for _, field := range fields {
 		out = append(out, telematics.FormFieldValue{

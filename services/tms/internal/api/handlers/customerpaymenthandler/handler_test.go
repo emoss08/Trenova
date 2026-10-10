@@ -1,6 +1,7 @@
 package customerpaymenthandler_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerpaymentportsmock"
 	"context"
 	"net/http"
 	"testing"
@@ -9,9 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,7 +25,7 @@ import (
 
 func setupHandler(
 	t *testing.T,
-	service *mocks.MockCustomerPaymentService,
+	service *customerpaymentportsmock.MockCustomerPaymentService,
 ) *customerpaymenthandler.Handler {
 	t.Helper()
 
@@ -50,7 +51,7 @@ func setupHandler(
 func TestHandlerListCustomerPayments(t *testing.T) {
 	t.Parallel()
 
-	service := mocks.NewMockCustomerPaymentService(t)
+	service := customerpaymentportsmock.NewMockCustomerPaymentService(t)
 	handler := setupHandler(t, service)
 	payment := &customerpayment.Payment{
 		ID:             pulid.MustNew("cpay_"),
@@ -62,7 +63,7 @@ func TestHandlerListCustomerPayments(t *testing.T) {
 
 	service.EXPECT().
 		List(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req *repositories.ListCustomerPaymentsRequest) (*pagination.ListResult[*customerpayment.Payment], error) {
+		RunAndReturn(func(_ context.Context, req *customerpaymentports.ListCustomerPaymentsRequest) (*pagination.ListResult[*customerpayment.Payment], error) {
 			assert.Equal(t, sharedtestutil.TestOrgID, req.Filter.TenantInfo.OrgID)
 			assert.Equal(t, sharedtestutil.TestBuID, req.Filter.TenantInfo.BuID)
 			assert.Equal(t, sharedtestutil.TestUserID, req.Filter.TenantInfo.UserID)
@@ -90,7 +91,7 @@ func TestHandlerListCustomerPayments(t *testing.T) {
 func TestHandlerGetCustomerPayment(t *testing.T) {
 	t.Parallel()
 
-	service := mocks.NewMockCustomerPaymentService(t)
+	service := customerpaymentportsmock.NewMockCustomerPaymentService(t)
 	handler := setupHandler(t, service)
 	paymentID := pulid.MustNew("cpay_")
 	payment := &customerpayment.Payment{
@@ -102,7 +103,7 @@ func TestHandlerGetCustomerPayment(t *testing.T) {
 	}
 
 	service.EXPECT().
-		Get(mock.Anything, &serviceports.GetCustomerPaymentRequest{PaymentID: paymentID, TenantInfo: pagination.TenantInfo{OrgID: sharedtestutil.TestOrgID, BuID: sharedtestutil.TestBuID, UserID: sharedtestutil.TestUserID}}).
+		Get(mock.Anything, &customerpaymentports.GetCustomerPaymentRequest{PaymentID: paymentID, TenantInfo: pagination.TenantInfo{OrgID: sharedtestutil.TestOrgID, BuID: sharedtestutil.TestBuID, UserID: sharedtestutil.TestUserID}}).
 		Return(payment, nil).
 		Once()
 
@@ -122,7 +123,7 @@ func TestHandlerGetCustomerPayment(t *testing.T) {
 func TestHandlerPostCustomerPayment(t *testing.T) {
 	t.Parallel()
 
-	service := mocks.NewMockCustomerPaymentService(t)
+	service := customerpaymentportsmock.NewMockCustomerPaymentService(t)
 	handler := setupHandler(t, service)
 	payment := &customerpayment.Payment{
 		ID:             pulid.MustNew("cpay_"),
@@ -134,7 +135,7 @@ func TestHandlerPostCustomerPayment(t *testing.T) {
 
 	service.EXPECT().
 		PostAndApply(mock.Anything, mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req *serviceports.PostCustomerPaymentRequest, actor *serviceports.RequestActor) (*customerpayment.Payment, error) {
+		RunAndReturn(func(_ context.Context, req *customerpaymentports.PostCustomerPaymentRequest, actor *permissionports.RequestActor) (*customerpayment.Payment, error) {
 			assert.Equal(t, sharedtestutil.TestOrgID, req.TenantInfo.OrgID)
 			assert.Equal(t, sharedtestutil.TestBuID, req.TenantInfo.BuID)
 			assert.Equal(t, sharedtestutil.TestUserID, actor.UserID)
@@ -156,7 +157,7 @@ func TestHandlerPostCustomerPayment(t *testing.T) {
 func TestHandlerApplyUnapplied(t *testing.T) {
 	t.Parallel()
 
-	service := mocks.NewMockCustomerPaymentService(t)
+	service := customerpaymentportsmock.NewMockCustomerPaymentService(t)
 	handler := setupHandler(t, service)
 	paymentID := pulid.MustNew("cpay_")
 	payment := &customerpayment.Payment{
@@ -169,7 +170,7 @@ func TestHandlerApplyUnapplied(t *testing.T) {
 
 	service.EXPECT().
 		ApplyUnapplied(mock.Anything, mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req *serviceports.ApplyCustomerPaymentRequest, actor *serviceports.RequestActor) (*customerpayment.Payment, error) {
+		RunAndReturn(func(_ context.Context, req *customerpaymentports.ApplyCustomerPaymentRequest, actor *permissionports.RequestActor) (*customerpayment.Payment, error) {
 			assert.Equal(t, paymentID, req.PaymentID)
 			assert.Equal(t, sharedtestutil.TestUserID, actor.UserID)
 			return payment, nil
@@ -190,7 +191,7 @@ func TestHandlerApplyUnapplied(t *testing.T) {
 func TestHandlerReverseCustomerPayment(t *testing.T) {
 	t.Parallel()
 
-	service := mocks.NewMockCustomerPaymentService(t)
+	service := customerpaymentportsmock.NewMockCustomerPaymentService(t)
 	handler := setupHandler(t, service)
 	paymentID := pulid.MustNew("cpay_")
 	payment := &customerpayment.Payment{
@@ -203,7 +204,7 @@ func TestHandlerReverseCustomerPayment(t *testing.T) {
 
 	service.EXPECT().
 		Reverse(mock.Anything, mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req *serviceports.ReverseCustomerPaymentRequest, actor *serviceports.RequestActor) (*customerpayment.Payment, error) {
+		RunAndReturn(func(_ context.Context, req *customerpaymentports.ReverseCustomerPaymentRequest, actor *permissionports.RequestActor) (*customerpayment.Payment, error) {
 			assert.Equal(t, paymentID, req.PaymentID)
 			assert.Equal(t, sharedtestutil.TestUserID, actor.UserID)
 			return payment, nil
@@ -224,7 +225,7 @@ func TestHandlerReverseCustomerPayment(t *testing.T) {
 func TestHandlerGetCustomerPaymentInvalidID(t *testing.T) {
 	t.Parallel()
 
-	service := mocks.NewMockCustomerPaymentService(t)
+	service := customerpaymentportsmock.NewMockCustomerPaymentService(t)
 	handler := setupHandler(t, service)
 
 	ginCtx := sharedtestutil.NewGinTestContext().

@@ -7,9 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -31,8 +32,8 @@ func TestRun_AnUnattendedSystemUserCannotReachASelfScopedTool(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
-				callsTurn(serviceports.ToolCall{
+			completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+				callsTurn(agentports.ToolCall{
 					ID:        "home",
 					Name:      "add_home_widget",
 					Arguments: map[string]any{"key": "kpi"},
@@ -41,7 +42,7 @@ func TestRun_AnUnattendedSystemUserCannotReachASelfScopedTool(t *testing.T) {
 			}}
 			service, permissions := selfScopedRuntime(completion)
 			actor := systemUserActor()
-			req := &serviceports.RunRequest{
+			req := &agentports.RunRequest{
 				Definition: testDefinition("add_home_widget"),
 				Actor:      actor,
 				Input:      "tidy the home page",
@@ -58,7 +59,7 @@ func TestRun_AnUnattendedSystemUserCannotReachASelfScopedTool(t *testing.T) {
 			assert.Contains(t, toolMessages(result)[0].Content, "nobody is in this one")
 			assert.Equal(t, aitrace.OutcomeDenied, finishedVerdicts(events)["home"])
 			for _, request := range permissions.Requests {
-				assert.Equal(t, serviceports.PrincipalTypeAgent, request.PrincipalType,
+				assert.Equal(t, permissionports.PrincipalTypeAgent, request.PrincipalType,
 					"every check is made as the agent, never as the system user")
 			}
 		})
@@ -70,8 +71,8 @@ func TestRun_AnUnattendedRunIsCheckedAsTheAgentNotItsSystemUser(t *testing.T) {
 
 	tool := actionTool("update_worker", agent.TierAutoExecute, nil)
 	tool.Resource = permission.ResourceWorker
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
-		callsTurn(serviceports.ToolCall{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+		callsTurn(agentports.ToolCall{
 			ID:        "write",
 			Name:      "update_worker",
 			Arguments: map[string]any{"workerId": "wrk_1"},
@@ -80,10 +81,10 @@ func TestRun_AnUnattendedRunIsCheckedAsTheAgentNotItsSystemUser(t *testing.T) {
 	}}
 	permissions := &agentruntimetest.StubPermissions{}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []serviceports.AgentTool{tool}}, permissions)
+		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, permissions)
 	actor := systemUserActor()
 
-	_, err := rt.Run(t.Context(), &serviceports.RunRequest{
+	_, err := rt.Run(t.Context(), &agentports.RunRequest{
 		Definition: autoDefinition("update_worker"),
 		Actor:      actor,
 		Input:      "A worker changed.",
@@ -93,12 +94,12 @@ func TestRun_AnUnattendedRunIsCheckedAsTheAgentNotItsSystemUser(t *testing.T) {
 
 	require.NotEmpty(t, permissions.Requests)
 	for _, request := range permissions.Requests {
-		assert.Equal(t, serviceports.PrincipalTypeAgent, request.PrincipalType)
-		assert.Equal(t, serviceports.AgentPrincipalID, request.PrincipalID)
+		assert.Equal(t, permissionports.PrincipalTypeAgent, request.PrincipalType)
+		assert.Equal(t, permissionports.AgentPrincipalID, request.PrincipalID)
 	}
 	assert.Equal(t, actor.UserID, tool.LastParams.Actor.UserID,
 		"the write is attributed to the system user")
-	assert.Equal(t, serviceports.PrincipalTypeAgent, tool.LastParams.Actor.PrincipalType)
+	assert.Equal(t, permissionports.PrincipalTypeAgent, tool.LastParams.Actor.PrincipalType)
 }
 
 func TestContextBuilder_NeverDescribesTheSystemUserAsThePerson(t *testing.T) {
@@ -118,14 +119,14 @@ func TestContextBuilder_NeverDescribesTheSystemUserAsThePerson(t *testing.T) {
 	definition := testDefinition()
 	definition.ContextProviders = []agentdefinition.ContextProvider{agentdefinition.ContextUser}
 
-	unattended, err := builder.Build(t.Context(), &serviceports.RuntimeContextRequest{
+	unattended, err := builder.Build(t.Context(), &agentports.RuntimeContextRequest{
 		Definition: definition,
 		Actor:      systemUserActor(),
 	})
 	require.NoError(t, err)
 	assert.Nil(t, unattended.User, "the system user is not someone the agent works for")
 
-	person, err := builder.Build(t.Context(), &serviceports.RuntimeContextRequest{
+	person, err := builder.Build(t.Context(), &agentports.RuntimeContextRequest{
 		Definition: definition,
 		Actor:      testActor(),
 	})
@@ -136,13 +137,13 @@ func TestContextBuilder_NeverDescribesTheSystemUserAsThePerson(t *testing.T) {
 func TestTurnAttribution_UsageIsNotChargedToTheSystemUser(t *testing.T) {
 	t.Parallel()
 
-	unattended := turnAttribution(&serviceports.RunRequest{
+	unattended := turnAttribution(&agentports.RunRequest{
 		Definition: testDefinition(),
 		Actor:      systemUserActor(),
 	})
 	assert.Equal(t, pulid.Nil, unattended.UserID)
 
 	actor := testActor()
-	person := turnAttribution(&serviceports.RunRequest{Definition: testDefinition(), Actor: actor})
+	person := turnAttribution(&agentports.RunRequest{Definition: testDefinition(), Actor: actor})
 	assert.Equal(t, actor.UserID, person.UserID)
 }

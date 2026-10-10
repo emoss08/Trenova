@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -76,13 +76,13 @@ WHERE p.organization_id = ?
 
 func (r *repository) ListThreadAttention(
 	ctx context.Context,
-	req repositories.ListThreadAttentionRequest,
-) (map[pulid.ID]repositories.ThreadAttentionRow, error) {
+	req agentports.ListThreadAttentionRequest,
+) (map[pulid.ID]agentports.ThreadAttentionRow, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (map[pulid.ID]repositories.ThreadAttentionRow, error) {
-			out := make(map[pulid.ID]repositories.ThreadAttentionRow, len(req.ThreadIDs))
+		func(ctx context.Context) (map[pulid.ID]agentports.ThreadAttentionRow, error) {
+			out := make(map[pulid.ID]agentports.ThreadAttentionRow, len(req.ThreadIDs))
 			if len(req.ThreadIDs) == 0 {
 				return out, nil
 			}
@@ -104,7 +104,7 @@ func (r *repository) ListThreadAttention(
 			owned := make([]pulid.ID, 0, len(rows))
 			for _, row := range rows {
 				owned = append(owned, row.ThreadID)
-				out[row.ThreadID] = repositories.ThreadAttentionRow{
+				out[row.ThreadID] = agentports.ThreadAttentionRow{
 					PendingPlans:   row.PendingPlans,
 					LastTurnStatus: row.LastTurnStatus,
 				}
@@ -139,7 +139,7 @@ func (r *repository) ListThreadAttention(
 
 func (r *repository) MarkThreadRead(
 	ctx context.Context,
-	req repositories.MarkThreadReadRequest,
+	req agentports.MarkThreadReadRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.ThreadColumns
@@ -163,7 +163,7 @@ func (r *repository) MarkThreadRead(
 
 func (r *repository) WakeThread(
 	ctx context.Context,
-	req *repositories.WakeThreadRequest,
+	req *agentports.WakeThreadRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
 		cols := buncolgen.ThreadColumns

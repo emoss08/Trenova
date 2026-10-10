@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/numberguard"
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
@@ -18,9 +18,9 @@ type Narration[T any] struct {
 
 func Narrate[T any](
 	ctx context.Context,
-	completion services.CompletionService,
+	completion agentports.CompletionService,
 	logger *zap.Logger,
-	req *services.StructuredCompletionRequest,
+	req *agentports.StructuredCompletionRequest,
 ) (*Narration[T], bool) {
 	if completion == nil {
 		return nil, false
@@ -28,7 +28,7 @@ func Narrate[T any](
 
 	result, err := completion.CompleteStructured(ctx, req)
 	if err != nil {
-		if errors.Is(err, services.ErrNoProviderConfigured) {
+		if errors.Is(err, agentports.ErrNoProviderConfigured) {
 			logger.Debug("no provider configured; using computed wording",
 				zap.String("schema", req.SchemaName))
 			return nil, false

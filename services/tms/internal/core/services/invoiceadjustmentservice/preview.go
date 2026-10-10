@@ -10,11 +10,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/formula/contextvariablecache"
 	"github.com/emoss08/trenova/internal/core/services/formula/effectiveversioncache"
 	"github.com/emoss08/trenova/internal/core/services/invoicelines"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetablecache"
@@ -25,10 +27,10 @@ import (
 
 func (s *Service) computePreview( //nolint:cyclop,funlen // legacy workflow
 	ctx context.Context,
-	req *servicesports.InvoiceAdjustmentRequest,
+	req *invoiceadjustmentports.InvoiceAdjustmentRequest,
 	excludeAdjustmentID pulid.ID,
 ) (*previewComputation, error) {
-	entity, err := s.invoiceRepo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+	entity, err := s.invoiceRepo.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         req.InvoiceID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -46,7 +48,7 @@ func (s *Service) computePreview( //nolint:cyclop,funlen // legacy workflow
 		return nil, err
 	}
 
-	preview := &servicesports.InvoiceAdjustmentPreview{
+	preview := &invoiceadjustmentports.InvoiceAdjustmentPreview{
 		InvoiceID:      entity.ID,
 		InvoiceNumber:  entity.Number,
 		CurrencyCode:   entity.CurrencyCode,
@@ -55,7 +57,7 @@ func (s *Service) computePreview( //nolint:cyclop,funlen // legacy workflow
 		Warnings:       make([]string, 0),
 		Errors:         make(map[string][]string),
 		Lines: make(
-			[]*servicesports.InvoiceAdjustmentPreviewLine,
+			[]*invoiceadjustmentports.InvoiceAdjustmentPreviewLine,
 			0,
 			len(entity.Lines),
 		),
@@ -86,7 +88,7 @@ func (s *Service) computePreview( //nolint:cyclop,funlen // legacy workflow
 	case true:
 		if group, groupErr := s.repo.GetCorrectionGroupByRootInvoice(
 			ctx,
-			repositories.GetCorrectionGroupByRootInvoiceRequest{
+			invoiceadjustmentports.GetCorrectionGroupByRootInvoiceRequest{
 				RootInvoiceID: entity.ID,
 				TenantInfo:    req.TenantInfo,
 			},
@@ -100,7 +102,7 @@ func (s *Service) computePreview( //nolint:cyclop,funlen // legacy workflow
 
 	usageByLine, err := s.repo.GetInvoiceLineCreditUsage(
 		ctx,
-		repositories.GetInvoiceLineCreditUsageRequest{
+		invoiceadjustmentports.GetInvoiceLineCreditUsageRequest{
 			InvoiceID:           entity.ID,
 			TenantInfo:          req.TenantInfo,
 			ExcludeAdjustmentID: excludeAdjustmentID,
@@ -110,7 +112,7 @@ func (s *Service) computePreview( //nolint:cyclop,funlen // legacy workflow
 		return nil, err
 	}
 
-	requestedByLine := make(map[string]*servicesports.InvoiceAdjustmentLineInput, len(req.Lines))
+	requestedByLine := make(map[string]*invoiceadjustmentports.InvoiceAdjustmentLineInput, len(req.Lines))
 	for _, line := range req.Lines {
 		if line == nil {
 			continue
@@ -171,7 +173,7 @@ func (s *Service) computePreview( //nolint:cyclop,funlen // legacy workflow
 			appendPreviewError(preview, "lines", eligibilityMessage)
 		}
 
-		linePreview := &servicesports.InvoiceAdjustmentPreviewLine{
+		linePreview := &invoiceadjustmentports.InvoiceAdjustmentPreviewLine{
 			LineNumber:               sourceLine.LineNumber,
 			OriginalLineID:           sourceLine.ID,
 			Description:              sourceLine.Description,
@@ -333,7 +335,7 @@ func resolvePreviewLineValues(req previewLineValuesRequest) previewLineValues {
 }
 
 func (s *Service) applyCreditBalancePolicy(
-	preview *servicesports.InvoiceAdjustmentPreview,
+	preview *invoiceadjustmentports.InvoiceAdjustmentPreview,
 	entity *invoice.Invoice,
 	control *tenant.InvoiceAdjustmentControl,
 ) {
@@ -375,7 +377,7 @@ func (s *Service) applyCreditBalancePolicy(
 }
 
 func (s *Service) applyApprovalPolicy(
-	preview *servicesports.InvoiceAdjustmentPreview,
+	preview *invoiceadjustmentports.InvoiceAdjustmentPreview,
 	entity *invoice.Invoice,
 	control *tenant.InvoiceAdjustmentControl,
 ) {
@@ -409,7 +411,7 @@ func (s *Service) applyApprovalPolicy(
 }
 
 func (s *Service) applyReplacementReviewPolicy(
-	preview *servicesports.InvoiceAdjustmentPreview,
+	preview *invoiceadjustmentports.InvoiceAdjustmentPreview,
 	control *tenant.InvoiceAdjustmentControl,
 ) {
 	if preview.Kind != invoiceadjustment.KindCreditRebill {
@@ -450,7 +452,7 @@ func (s *Service) computeRerate( //nolint:gocritic // stable API shape
 		)
 	}
 
-	control, err := s.shipmentCtrlRepo.Get(ctx, repositories.GetShipmentControlRequest{
+	control, err := s.shipmentCtrlRepo.Get(ctx, tenantports.GetShipmentControlRequest{
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {
@@ -467,10 +469,10 @@ func (s *Service) computeRerate( //nolint:gocritic // stable API shape
 	total := decimal.Zero
 	nextLineNumber := 1
 	for _, legID := range legIDs {
-		shp, legErr := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+		shp, legErr := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 			ID:         legID,
 			TenantInfo: tenantInfo,
-			ShipmentOptions: repositories.ShipmentOptions{
+			ShipmentOptions: shipmentports.ShipmentOptions{
 				ExpandShipmentDetails: true,
 			},
 		})
@@ -547,7 +549,7 @@ func (s *Service) computeRerate( //nolint:gocritic // stable API shape
 	return lines, total, variance, nil
 }
 
-func appendPreviewError(preview *servicesports.InvoiceAdjustmentPreview, field, message string) {
+func appendPreviewError(preview *invoiceadjustmentports.InvoiceAdjustmentPreview, field, message string) {
 	preview.Errors[field] = append(preview.Errors[field], message)
 }
 

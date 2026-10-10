@@ -3,8 +3,7 @@ package accountingsyncjobs
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -15,8 +14,8 @@ import (
 )
 
 type (
-	DrainBatchResult   = services.AccountingSyncDrainResult
-	BackfillStepResult = services.AccountingBackfillStepResult
+	DrainBatchResult   = accountingsyncports.AccountingSyncDrainResult
+	BackfillStepResult = accountingsyncports.AccountingBackfillStepResult
 )
 
 func syncError(err error) error {
@@ -34,7 +33,7 @@ func (a *Activities) DrainAccountingOutboxActivity(
 	ctx context.Context,
 	payload *DrainPayload,
 ) (*DrainBatchResult, error) {
-	result, err := a.sync.Drain(ctx, &services.DrainAccountingSyncRequest{
+	result, err := a.sync.Drain(ctx, &accountingsyncports.DrainAccountingSyncRequest{
 		TenantInfo:   payload.TenantInfo(),
 		ConnectionID: payload.ConnectionID,
 		Limit:        drainBatchLimit,
@@ -77,7 +76,7 @@ func (a *Activities) AccountingSafetyNetActivity(
 	for {
 		conns, err := a.connRepo.ListActive(
 			ctx,
-			repositories.ListActiveAccountingConnectionsRequest{
+			accountingsyncports.ListActiveAccountingConnectionsRequest{
 				AfterID: afterID,
 				Limit:   safetyNetConnectionsPage,
 			},
@@ -94,7 +93,7 @@ func (a *Activities) AccountingSafetyNetActivity(
 			tenant := pagination.TenantInfo{OrgID: conn.OrganizationID, BuID: conn.BusinessUnitID}
 			found, netErr := a.sync.SafetyNet(
 				dbscope.WithTenant(ctx, tenant.DBTenant()),
-				services.AccountingSyncConnectionRef{TenantInfo: tenant, ConnectionID: conn.ID},
+				accountingsyncports.AccountingSyncConnectionRef{TenantInfo: tenant, ConnectionID: conn.ID},
 			)
 			activity.RecordHeartbeat(ctx, result.Connections)
 			if netErr != nil {

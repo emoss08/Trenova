@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fiscalclose"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/fiscalyearservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -125,7 +125,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*fiscalyear.FiscalYear], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListFiscalYearsRequest{
+				&fiscalyearports.ListFiscalYearsRequest{
 					Filter:         req,
 					IncludePeriods: helpers.QueryBool(c, "includePeriods", false),
 				},
@@ -156,7 +156,7 @@ func (h *Handler) get(c *gin.Context) {
 
 	entity, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetFiscalYearByIDRequest{
+		fiscalyearports.GetFiscalYearByIDRequest{
 			ID:         fiscalYearID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -179,7 +179,7 @@ func (h *Handler) closeBlockers(c *gin.Context) {
 
 	result, err := h.service.GetCloseBlockers(
 		c.Request.Context(),
-		repositories.GetFiscalYearByIDRequest{
+		fiscalyearports.GetFiscalYearByIDRequest{
 			ID:         fiscalYearID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -215,7 +215,7 @@ func (h *Handler) closePreview(c *gin.Context) {
 	var plan *fiscalclose.Plan
 	plan, err = h.service.GetClosePreview(
 		c.Request.Context(),
-		repositories.GetFiscalYearByIDRequest{
+		fiscalyearports.GetFiscalYearByIDRequest{
 			ID:         fiscalYearID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -261,7 +261,7 @@ func (h *Handler) reopen(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.Reopen(c.Request.Context(), repositories.ReopenFiscalYearRequest{
+	entity, err := h.service.Reopen(c.Request.Context(), fiscalyearports.ReopenFiscalYearRequest{
 		ID:           fiscalYearID,
 		TenantInfo:   pagination.FromAuthAsUser(authCtx),
 		ReopenReason: payload.ReopenReason,
@@ -368,7 +368,7 @@ func (h *Handler) patch(c *gin.Context) {
 
 	existing, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetFiscalYearByIDRequest{
+		fiscalyearports.GetFiscalYearByIDRequest{
 			ID:         fiscalYearID,
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 		},
@@ -412,7 +412,7 @@ func (h *Handler) delete(c *gin.Context) {
 		return
 	}
 
-	if err = h.service.Delete(c.Request.Context(), repositories.DeleteFiscalYearRequest{
+	if err = h.service.Delete(c.Request.Context(), fiscalyearports.DeleteFiscalYearRequest{
 		ID:         fiscalYearID,
 		TenantInfo: pagination.FromAuthAsUser(authCtx),
 	}, authCtx.UserID); err != nil {
@@ -444,7 +444,7 @@ func (h *Handler) close(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.Close(c.Request.Context(), repositories.CloseFiscalYearRequest{
+	entity, err := h.service.Close(c.Request.Context(), fiscalyearports.CloseFiscalYearRequest{
 		ID:         fiscalYearID,
 		TenantInfo: pagination.FromAuthAsUser(authCtx),
 	}, authCtx.UserID)
@@ -477,7 +477,7 @@ func (h *Handler) activate(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.Activate(c.Request.Context(), repositories.ActivateFiscalYearRequest{
+	entity, err := h.service.Activate(c.Request.Context(), fiscalyearports.ActivateFiscalYearRequest{
 		ID:         fiscalYearID,
 		TenantInfo: pagination.FromAuthAsUser(authCtx),
 	}, authCtx.UserID)

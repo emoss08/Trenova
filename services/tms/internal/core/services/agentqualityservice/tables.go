@@ -8,8 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
 	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/memtable"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -57,35 +57,35 @@ type agentWindow struct {
 	previousSince int64
 }
 
-var qualityAgentTable = memtable.New(memtable.Config[services.AgentQualityAgent]{
+var qualityAgentTable = memtable.New(memtable.Config[agentqualityports.AgentQualityAgent]{
 	CursorScope: agentsCursorScope,
-	Search:      func(row *services.AgentQualityAgent) string { return row.Name },
-	Order: func(a, b *services.AgentQualityAgent) int {
+	Search:      func(row *agentqualityports.AgentQualityAgent) string { return row.Name },
+	Order: func(a, b *agentqualityports.AgentQualityAgent) int {
 		return cmp.Or(
 			cmp.Compare(strings.ToLower(a.Name), strings.ToLower(b.Name)),
 			cmp.Compare(a.AgentDefinitionID.String(), b.AgentDefinitionID.String()),
 		)
 	},
-	Fields: []memtable.Field[services.AgentQualityAgent]{
+	Fields: []memtable.Field[agentqualityports.AgentQualityAgent]{
 		{
 			Name:       "name",
 			Kind:       memtable.KindText,
 			Filterable: true,
 			Sortable:   true,
-			Text:       func(row *services.AgentQualityAgent) string { return row.Name },
+			Text:       func(row *agentqualityports.AgentQualityAgent) string { return row.Name },
 		},
 		{
 			Name:       "enabled",
 			Kind:       memtable.KindBoolean,
 			Filterable: true,
 			Sortable:   true,
-			Bool:       func(row *services.AgentQualityAgent) bool { return row.Enabled },
+			Bool:       func(row *agentqualityports.AgentQualityAgent) bool { return row.Enabled },
 		},
 		{
 			Name:     fieldSatisfaction,
 			Kind:     memtable.KindNumber,
 			Sortable: true,
-			Number: func(row *services.AgentQualityAgent) (float64, bool) {
+			Number: func(row *agentqualityports.AgentQualityAgent) (float64, bool) {
 				return typeutils.Deref(row.Satisfaction)
 			},
 		},
@@ -93,7 +93,7 @@ var qualityAgentTable = memtable.New(memtable.Config[services.AgentQualityAgent]
 			Name:     fieldSatisfactionDiff,
 			Kind:     memtable.KindNumber,
 			Sortable: true,
-			Number: func(row *services.AgentQualityAgent) (float64, bool) {
+			Number: func(row *agentqualityports.AgentQualityAgent) (float64, bool) {
 				return typeutils.Deref(row.SatisfactionDelta)
 			},
 		},
@@ -101,7 +101,7 @@ var qualityAgentTable = memtable.New(memtable.Config[services.AgentQualityAgent]
 			Name:     fieldRatings,
 			Kind:     memtable.KindNumber,
 			Sortable: true,
-			Number: func(row *services.AgentQualityAgent) (float64, bool) {
+			Number: func(row *agentqualityports.AgentQualityAgent) (float64, bool) {
 				return float64(row.Ratings), true
 			},
 		},
@@ -109,7 +109,7 @@ var qualityAgentTable = memtable.New(memtable.Config[services.AgentQualityAgent]
 			Name:     fieldQualityScore,
 			Kind:     memtable.KindNumber,
 			Sortable: true,
-			Number: func(row *services.AgentQualityAgent) (float64, bool) {
+			Number: func(row *agentqualityports.AgentQualityAgent) (float64, bool) {
 				return typeutils.Deref(row.QualityScore)
 			},
 		},
@@ -118,7 +118,7 @@ var qualityAgentTable = memtable.New(memtable.Config[services.AgentQualityAgent]
 			Kind:       memtable.KindBoolean,
 			Filterable: true,
 			Sortable:   true,
-			Bool:       func(row *services.AgentQualityAgent) bool { return row.OpenRegression },
+			Bool:       func(row *agentqualityports.AgentQualityAgent) bool { return row.OpenRegression },
 		},
 		{
 			Name:       fieldLastRunStatus,
@@ -126,7 +126,7 @@ var qualityAgentTable = memtable.New(memtable.Config[services.AgentQualityAgent]
 			Values:     suiteRunStatusValues(),
 			Filterable: true,
 			Sortable:   true,
-			Text: func(row *services.AgentQualityAgent) string {
+			Text: func(row *agentqualityports.AgentQualityAgent) string {
 				if row.LastSuiteRun == nil {
 					return ""
 				}
@@ -138,7 +138,7 @@ var qualityAgentTable = memtable.New(memtable.Config[services.AgentQualityAgent]
 			Name:     fieldLastRunAt,
 			Kind:     memtable.KindNumber,
 			Sortable: true,
-			Number: func(row *services.AgentQualityAgent) (float64, bool) {
+			Number: func(row *agentqualityports.AgentQualityAgent) (float64, bool) {
 				if row.LastSuiteRun == nil {
 					return 0, false
 				}
@@ -151,8 +151,8 @@ var qualityAgentTable = memtable.New(memtable.Config[services.AgentQualityAgent]
 
 func (s *Service) ListAgentTable(
 	ctx context.Context,
-	req *services.ListAgentQualityAgentTableRequest,
-) (*services.AgentQualityAgentPage, error) {
+	req *agentqualityports.ListAgentQualityAgentTableRequest,
+) (*agentqualityports.AgentQualityAgentPage, error) {
 	window, err := windowDays(req.WindowDays)
 	if err != nil {
 		return nil, err
@@ -205,13 +205,13 @@ func (s *Service) ListAgentTable(
 		}
 	}
 
-	out := &services.AgentQualityAgentPage{
-		Edges:       make([]*services.AgentQualityAgentEdge, 0, len(page.Items)),
+	out := &agentqualityports.AgentQualityAgentPage{
+		Edges:       make([]*agentqualityports.AgentQualityAgentEdge, 0, len(page.Items)),
 		HasNextPage: page.HasNextPage,
 		TotalCount:  page.TotalCount,
 	}
 	for idx, node := range page.Items {
-		out.Edges = append(out.Edges, &services.AgentQualityAgentEdge{
+		out.Edges = append(out.Edges, &agentqualityports.AgentQualityAgentEdge{
 			Node:   node,
 			Cursor: page.Cursors[idx],
 		})
@@ -222,11 +222,11 @@ func (s *Service) ListAgentTable(
 
 func (s *Service) allQualityAgents(
 	ctx context.Context,
-	req *services.ListAgentQualityAgentTableRequest,
-) ([]services.AgentQualityAgent, error) {
-	out := make([]services.AgentQualityAgent, 0, agentListChunk)
+	req *agentqualityports.ListAgentQualityAgentTableRequest,
+) ([]agentqualityports.AgentQualityAgent, error) {
+	out := make([]agentqualityports.AgentQualityAgent, 0, agentListChunk)
 	for offset := 0; offset < MaxQualityAgents; offset += agentListChunk {
-		rows, err := s.suiteRuns.ListAgents(ctx, repositories.ListAgentQualityAgentsRequest{
+		rows, err := s.suiteRuns.ListAgents(ctx, agentqualityports.ListAgentQualityAgentsQuery{
 			TenantInfo: req.TenantInfo,
 			Limit:      agentListChunk,
 			Offset:     offset,
@@ -236,12 +236,12 @@ func (s *Service) allQualityAgents(
 		}
 
 		for _, row := range rows.Items {
-			out = append(out, services.AgentQualityAgent{
+			out = append(out, agentqualityports.AgentQualityAgent{
 				AgentDefinitionID: row.ID,
 				Name:              row.Name,
 				Enabled:           row.Enabled,
 				RatingsVisible:    req.IncludeRatings,
-				QualityPoints:     []*services.AgentQualityPoint{},
+				QualityPoints:     []*agentqualityports.AgentQualityPoint{},
 			})
 		}
 		if !rows.HasNextPage {
@@ -255,7 +255,7 @@ func (s *Service) allQualityAgents(
 func (s *Service) fillAgents(
 	ctx context.Context,
 	scope agentWindow,
-	nodes []*services.AgentQualityAgent,
+	nodes []*agentqualityports.AgentQualityAgent,
 	parts agentParts,
 ) error {
 	for chunk := range slices.Chunk(nodes, agentDataChunk) {
@@ -285,7 +285,7 @@ func (s *Service) fillAgents(
 	return nil
 }
 
-func applyAgentData(node *services.AgentQualityAgent, data *agentPageData, parts agentParts) {
+func applyAgentData(node *agentqualityports.AgentQualityAgent, data *agentPageData, parts agentParts) {
 	id := node.AgentDefinitionID
 	if parts.history {
 		node.QualityPoints = qualityPoints(data.history[id])
@@ -315,7 +315,7 @@ func applyAgentData(node *services.AgentQualityAgent, data *agentPageData, parts
 }
 
 type worstRatedRow struct {
-	answer *services.AgentWorstRatedAnswer
+	answer *agentqualityports.AgentWorstRatedAnswer
 	rank   int
 }
 
@@ -398,8 +398,8 @@ var worstRatedTable = memtable.New(memtable.Config[worstRatedRow]{
 
 func (s *Service) ListWorstRatedTable(
 	ctx context.Context,
-	req *services.ListAgentWorstRatedTableRequest,
-) (*services.AgentWorstRatedPage, error) {
+	req *agentqualityports.ListAgentWorstRatedTableRequest,
+) (*agentqualityports.AgentWorstRatedPage, error) {
 	window, err := windowDays(req.WindowDays)
 	if err != nil {
 		return nil, err
@@ -409,7 +409,7 @@ func (s *Service) ListWorstRatedTable(
 		return nil, err
 	}
 
-	scores, err := s.feedback.WorstRated(ctx, repositories.AIFeedbackWindowRequest{
+	scores, err := s.feedback.WorstRated(ctx, aifeedbackports.AIFeedbackWindowRequest{
 		TenantInfo:        req.TenantInfo,
 		AgentDefinitionID: req.AgentDefinitionID,
 		Since:             s.now() - int64(window)*secondsPerDay,
@@ -439,7 +439,7 @@ func (s *Service) ListWorstRatedTable(
 	}
 
 	if !samplesFirst && len(page.Items) > 0 {
-		pageScores := make([]*repositories.AIFeedbackTargetScore, 0, len(page.Items))
+		pageScores := make([]*aifeedbackports.AIFeedbackTargetScore, 0, len(page.Items))
 		pageRows := make([]worstRatedRow, 0, len(page.Items))
 		for _, row := range page.Items {
 			pageScores = append(pageScores, scores[row.rank])
@@ -450,13 +450,13 @@ func (s *Service) ListWorstRatedTable(
 		}
 	}
 
-	out := &services.AgentWorstRatedPage{
-		Edges:       make([]*services.AgentWorstRatedEdge, 0, len(page.Items)),
+	out := &agentqualityports.AgentWorstRatedPage{
+		Edges:       make([]*agentqualityports.AgentWorstRatedEdge, 0, len(page.Items)),
 		HasNextPage: page.HasNextPage,
 		TotalCount:  page.TotalCount,
 	}
 	for idx, row := range page.Items {
-		out.Edges = append(out.Edges, &services.AgentWorstRatedEdge{
+		out.Edges = append(out.Edges, &agentqualityports.AgentWorstRatedEdge{
 			Node:   row.answer,
 			Cursor: page.Cursors[idx],
 		})
@@ -470,11 +470,11 @@ type sampleScope struct {
 	viewer pulid.ID
 }
 
-func worstRatedRows(scores []*repositories.AIFeedbackTargetScore) []worstRatedRow {
+func worstRatedRows(scores []*aifeedbackports.AIFeedbackTargetScore) []worstRatedRow {
 	rows := make([]worstRatedRow, 0, len(scores))
 	for idx, score := range scores {
 		rows = append(rows, worstRatedRow{
-			answer: &services.AgentWorstRatedAnswer{
+			answer: &agentqualityports.AgentWorstRatedAnswer{
 				TargetType:  score.TargetType,
 				TargetID:    score.TargetID,
 				TargetPart:  score.TargetPart,
@@ -492,7 +492,7 @@ func worstRatedRows(scores []*repositories.AIFeedbackTargetScore) []worstRatedRo
 func (s *Service) attachSamples(
 	ctx context.Context,
 	scope sampleScope,
-	scores []*repositories.AIFeedbackTargetScore,
+	scores []*aifeedbackports.AIFeedbackTargetScore,
 	rows []worstRatedRow,
 ) error {
 	sampleIDs := make([]pulid.ID, 0, len(scores))
@@ -507,7 +507,7 @@ func (s *Service) attachSamples(
 
 	samples := make(map[pulid.ID]*aifeedback.Feedback, len(sampleIDs))
 	for chunk := range slices.Chunk(sampleIDs, agentDataChunk) {
-		found, err := s.feedback.ListByIDs(ctx, repositories.ListAIFeedbackByIDsRequest{
+		found, err := s.feedback.ListByIDs(ctx, aifeedbackports.ListAIFeedbackByIDsRequest{
 			TenantInfo: scope.tenant,
 			IDs:        chunk,
 		})
@@ -544,7 +544,7 @@ func (s *Service) attachSamples(
 	return nil
 }
 
-func questionOf(answer *services.AgentWorstRatedAnswer) string {
+func questionOf(answer *agentqualityports.AgentWorstRatedAnswer) string {
 	if answer.Sample == nil || answer.Sample.TurnSnapshot == nil {
 		return ""
 	}
@@ -552,7 +552,7 @@ func questionOf(answer *services.AgentWorstRatedAnswer) string {
 	return answer.Sample.TurnSnapshot.Question
 }
 
-func commentOf(answer *services.AgentWorstRatedAnswer) string {
+func commentOf(answer *agentqualityports.AgentWorstRatedAnswer) string {
 	if answer.Sample == nil {
 		return ""
 	}
@@ -572,7 +572,7 @@ func suiteRunStatusValues() []string {
 
 func (s *Service) ListSuiteRunConnection(
 	ctx context.Context,
-	req *repositories.ListAgentSuiteRunConnectionRequest,
+	req *agentqualityports.ListAgentSuiteRunConnectionRequest,
 ) (*pagination.CursorListResult[*agentquality.SuiteRun], error) {
 	return s.suiteRuns.ListConnection(ctx, req)
 }

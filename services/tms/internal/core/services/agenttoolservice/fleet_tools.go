@@ -8,9 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -38,22 +39,22 @@ const equipmentStatusNote = "Available means it can be dispatched. " +
 type tractorStatusUpdater interface {
 	GetByIDs(
 		ctx context.Context,
-		req repositories.GetTractorsByIDsRequest,
+		req tractorports.GetTractorsByIDsRequest,
 	) ([]*tractor.Tractor, error)
 	BulkUpdateStatus(
 		ctx context.Context,
-		req *repositories.BulkUpdateTractorStatusRequest,
+		req *tractorports.BulkUpdateTractorStatusRequest,
 	) ([]*tractor.Tractor, error)
 }
 
 type trailerStatusUpdater interface {
 	GetByIDs(
 		ctx context.Context,
-		req repositories.GetTrailersByIDsRequest,
+		req trailerports.GetTrailersByIDsRequest,
 	) ([]*trailer.Trailer, error)
 	BulkUpdateStatus(
 		ctx context.Context,
-		req *repositories.BulkUpdateTrailerStatusRequest,
+		req *trailerports.BulkUpdateTrailerStatusRequest,
 	) ([]*trailer.Trailer, error)
 }
 
@@ -61,7 +62,7 @@ type updateTractorStatusTool struct {
 	tractors tractorStatusUpdater
 }
 
-func newUpdateTractorStatusTool(tractors tractorStatusUpdater) serviceports.AgentTool {
+func newUpdateTractorStatusTool(tractors tractorStatusUpdater) agentports.AgentTool {
 	return &updateTractorStatusTool{tractors: tractors}
 }
 
@@ -85,8 +86,8 @@ func (t *updateTractorStatusTool) ParamSchema() map[string]any {
 	)
 }
 
-func (t *updateTractorStatusTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *updateTractorStatusTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceTractor,
@@ -104,7 +105,7 @@ func (t *updateTractorStatusTool) Policy() serviceports.ToolPolicy {
 
 func (t *updateTractorStatusTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -115,7 +116,7 @@ func (t *updateTractorStatusTool) Execute(
 		return err
 	}
 
-	_, err = t.tractors.BulkUpdateStatus(ctx, &repositories.BulkUpdateTractorStatusRequest{
+	_, err = t.tractors.BulkUpdateStatus(ctx, &tractorports.BulkUpdateTractorStatusRequest{
 		TenantInfo: tenantFrom(params),
 		TractorIDs: ids,
 		Status:     status,
@@ -128,7 +129,7 @@ type updateTrailerStatusTool struct {
 	trailers trailerStatusUpdater
 }
 
-func newUpdateTrailerStatusTool(trailers trailerStatusUpdater) serviceports.AgentTool {
+func newUpdateTrailerStatusTool(trailers trailerStatusUpdater) agentports.AgentTool {
 	return &updateTrailerStatusTool{trailers: trailers}
 }
 
@@ -152,8 +153,8 @@ func (t *updateTrailerStatusTool) ParamSchema() map[string]any {
 	)
 }
 
-func (t *updateTrailerStatusTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *updateTrailerStatusTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceTrailer,
@@ -171,7 +172,7 @@ func (t *updateTrailerStatusTool) Policy() serviceports.ToolPolicy {
 
 func (t *updateTrailerStatusTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -182,7 +183,7 @@ func (t *updateTrailerStatusTool) Execute(
 		return err
 	}
 
-	_, err = t.trailers.BulkUpdateStatus(ctx, &repositories.BulkUpdateTrailerStatusRequest{
+	_, err = t.trailers.BulkUpdateStatus(ctx, &trailerports.BulkUpdateTrailerStatusRequest{
 		TenantInfo: tenantFrom(params),
 		TrailerIDs: ids,
 		Status:     status,

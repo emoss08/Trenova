@@ -12,9 +12,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -34,16 +36,16 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.OrgStructureRepository
-	AuditService services.AuditService
-	Realtime     services.RealtimeService `optional:"true"`
+	Repo         workerports.OrgStructureRepository
+	AuditService auditports.AuditService
+	Realtime     agentports.RealtimeService `optional:"true"`
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.OrgStructureRepository
-	auditService services.AuditService
-	realtime     services.RealtimeService
+	repo         workerports.OrgStructureRepository
+	auditService auditports.AuditService
+	realtime     agentports.RealtimeService
 }
 
 func New(p Params) *Service {
@@ -58,8 +60,8 @@ func New(p Params) *Service {
 // Deps is the constructor shape tests use to swap in fakes.
 type Deps struct {
 	Logger       *zap.Logger
-	Repo         repositories.OrgStructureRepository
-	AuditService services.AuditService
+	Repo         workerports.OrgStructureRepository
+	AuditService auditports.AuditService
 }
 
 func NewWithDeps(d Deps) *Service {
@@ -89,7 +91,7 @@ func (s *Service) audit(p *auditParams) {
 	if s.auditService == nil || p.userID.IsNil() {
 		return
 	}
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       p.resource,
 		ResourceID:     p.resourceID,
 		Operation:      p.operation,
@@ -98,7 +100,7 @@ func (s *Service) audit(p *auditParams) {
 		OrganizationID: p.tenant.OrgID,
 		BusinessUnitID: p.tenant.BuID,
 	}
-	opts := []services.LogOption{auditservice.WithComment(p.comment)}
+	opts := []auditports.LogOption{auditservice.WithComment(p.comment)}
 	if p.previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(p.previous)
 		opts = append(opts, auditservice.WithDiff(p.previous, p.current))
@@ -123,7 +125,7 @@ func (s *Service) publish(
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
 		ActorUserID:    userID,
-		ActorType:      services.PrincipalTypeUser,
+		ActorType:      permissionports.PrincipalTypeUser,
 		ActorID:        userID,
 		Resource:       resource,
 		Action:         string(operation),
@@ -138,9 +140,9 @@ func (s *Service) publish(
 // Headcount is the roster counted three ways. They run together because the
 // page shows them together and they touch the same two tables.
 type Headcount struct {
-	ByFleet      []repositories.HeadcountRow
-	ByPosition   []repositories.HeadcountRow
-	ByDepartment []repositories.HeadcountRow
+	ByFleet      []workerports.HeadcountRow
+	ByPosition   []workerports.HeadcountRow
+	ByDepartment []workerports.HeadcountRow
 	ActiveTotal  int
 	DriverTotal  int
 	Terminated   int
@@ -195,9 +197,9 @@ func (s *Service) Headcount(
 // title only users hold is absent from the worker rows, so it is added; a
 // title both hold gets its staff count beside its workers.
 func mergeStaffIntoPositions(
-	rows []repositories.HeadcountRow,
-	staff []repositories.StaffCountRow,
-) []repositories.HeadcountRow {
+	rows []workerports.HeadcountRow,
+	staff []workerports.StaffCountRow,
+) []workerports.HeadcountRow {
 	index := make(map[string]int, len(rows))
 	for i, row := range rows {
 		index[row.Key] = i
@@ -208,7 +210,7 @@ func mergeStaffIntoPositions(
 			rows[i].Staff += count.Staff
 			continue
 		}
-		rows = append(rows, repositories.HeadcountRow{
+		rows = append(rows, workerports.HeadcountRow{
 			Key:   key,
 			Label: count.Title,
 			Code:  count.Code,
@@ -219,9 +221,9 @@ func mergeStaffIntoPositions(
 }
 
 func mergeStaffIntoDepartments(
-	rows []repositories.HeadcountRow,
-	staff []repositories.StaffCountRow,
-) []repositories.HeadcountRow {
+	rows []workerports.HeadcountRow,
+	staff []workerports.StaffCountRow,
+) []workerports.HeadcountRow {
 	index := make(map[string]int, len(rows))
 	for i, row := range rows {
 		index[row.Key] = i
@@ -231,7 +233,7 @@ func mergeStaffIntoDepartments(
 			rows[i].Staff += count.Staff
 			continue
 		}
-		rows = append(rows, repositories.HeadcountRow{
+		rows = append(rows, workerports.HeadcountRow{
 			Key:   count.Department,
 			Label: count.Department,
 			Staff: count.Staff,
@@ -244,7 +246,7 @@ func mergeStaffIntoDepartments(
 // ListPositions reads the job catalog.
 func (s *Service) ListPositions(
 	ctx context.Context,
-	req *repositories.ListJobPositionsRequest,
+	req *workerports.ListJobPositionsRequest,
 ) ([]*worker.JobPosition, error) {
 	return s.repo.ListPositions(ctx, req)
 }
@@ -254,7 +256,7 @@ func (s *Service) GetPosition(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*worker.JobPosition, error) {
-	return s.repo.GetPositionByID(ctx, &repositories.GetJobPositionByIDRequest{
+	return s.repo.GetPositionByID(ctx, &workerports.GetJobPositionByIDRequest{
 		ID:               id,
 		TenantInfo:       tenantInfo,
 		IncludeReportsTo: true,
@@ -301,7 +303,7 @@ func (s *Service) UpdatePosition(
 ) (*worker.JobPosition, error) {
 	tenantInfo := positionTenant(entity)
 
-	original, err := s.repo.GetPositionByID(ctx, &repositories.GetJobPositionByIDRequest{
+	original, err := s.repo.GetPositionByID(ctx, &workerports.GetJobPositionByIDRequest{
 		ID:         entity.ID,
 		TenantInfo: tenantInfo,
 	})
@@ -396,7 +398,7 @@ func (s *Service) checkReportingLine(
 		}
 		seen[next] = true
 
-		parent, err := s.repo.GetPositionByID(ctx, &repositories.GetJobPositionByIDRequest{
+		parent, err := s.repo.GetPositionByID(ctx, &workerports.GetJobPositionByIDRequest{
 			ID:         next,
 			TenantInfo: tenantInfo,
 		})

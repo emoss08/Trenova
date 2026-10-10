@@ -8,9 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/holdreason"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -19,7 +19,7 @@ import (
 )
 
 type savingHolds struct {
-	serviceports.ShipmentHoldService
+	shipmentports.ShipmentHoldService
 
 	reason  *holdreason.HoldReason
 	current *shipment.ShipmentHold
@@ -27,7 +27,7 @@ type savingHolds struct {
 	guard   writeGuard
 }
 
-func (f *savingHolds) plan(req *repositories.CreateShipmentHoldRequest) *shipment.ShipmentHold {
+func (f *savingHolds) plan(req *shipmentports.CreateShipmentHoldRequest) *shipment.ShipmentHold {
 	return &shipment.ShipmentHold{
 		ShipmentID:     req.ShipmentID,
 		HoldReasonID:   &f.reason.ID,
@@ -43,8 +43,8 @@ func (f *savingHolds) plan(req *repositories.CreateShipmentHoldRequest) *shipmen
 
 func (f *savingHolds) PreviewCreate(
 	_ context.Context,
-	req *repositories.CreateShipmentHoldRequest,
-	_ *serviceports.RequestActor,
+	req *shipmentports.CreateShipmentHoldRequest,
+	_ *permissionports.RequestActor,
 ) (*shipment.ShipmentHold, error) {
 	if !f.reason.Active {
 		return nil, errortypes.NewValidationError(
@@ -57,8 +57,8 @@ func (f *savingHolds) PreviewCreate(
 
 func (f *savingHolds) Create(
 	_ context.Context,
-	req *repositories.CreateShipmentHoldRequest,
-	_ *serviceports.RequestActor,
+	req *shipmentports.CreateShipmentHoldRequest,
+	_ *permissionports.RequestActor,
 ) (*shipment.ShipmentHold, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -71,14 +71,14 @@ func (f *savingHolds) Create(
 
 func (f *savingHolds) GetByID(
 	context.Context,
-	*repositories.GetShipmentHoldByIDRequest,
+	*shipmentports.GetShipmentHoldByIDRequest,
 ) (*shipment.ShipmentHold, error) {
 	copied := *f.current
 
 	return &copied, nil
 }
 
-func (f *savingHolds) release(actor *serviceports.RequestActor) (*shipment.ShipmentHold, error) {
+func (f *savingHolds) release(actor *permissionports.RequestActor) (*shipment.ShipmentHold, error) {
 	if !f.current.IsActive() {
 		return nil, errortypes.NewBusinessError("Shipment hold is already released")
 	}
@@ -92,16 +92,16 @@ func (f *savingHolds) release(actor *serviceports.RequestActor) (*shipment.Shipm
 
 func (f *savingHolds) PreviewRelease(
 	_ context.Context,
-	_ *repositories.ReleaseShipmentHoldRequest,
-	actor *serviceports.RequestActor,
+	_ *shipmentports.ReleaseShipmentHoldRequest,
+	actor *permissionports.RequestActor,
 ) (*shipment.ShipmentHold, error) {
 	return f.release(actor)
 }
 
 func (f *savingHolds) Release(
 	_ context.Context,
-	_ *repositories.ReleaseShipmentHoldRequest,
-	actor *serviceports.RequestActor,
+	_ *shipmentports.ReleaseShipmentHoldRequest,
+	actor *permissionports.RequestActor,
 ) (*shipment.ShipmentHold, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err

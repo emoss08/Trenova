@@ -7,10 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/internal/core/services/workercredentialservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -152,7 +152,7 @@ func applyCredentialFacts(entity *worker.WorkerCredential, params map[string]any
 }
 
 func credentialCreateFrom(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*workercredentialservice.CreateRequest, error) {
 	workerID, err := requirePulid(params.Params, paramWorkerID)
 	if err != nil {
@@ -182,7 +182,7 @@ func credentialCreateFrom(
 	}, nil
 }
 
-func newRecordWorkerCredentialTool(credentials credentialKeeper) serviceports.AgentTool {
+func newRecordWorkerCredentialTool(credentials credentialKeeper) agentports.AgentTool {
 	properties := credentialFactProperties()
 	properties[paramWorkerID] = workerProperty()
 	properties[paramCredentialTypeID] = agenttoolschema.RecordIDText(
@@ -214,7 +214,7 @@ func newRecordWorkerCredentialTool(credentials credentialKeeper) serviceports.Ag
 		plan: func(
 			ctx context.Context,
 			req *workercredentialservice.CreateRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*workercredentialservice.CreatePlan, error) {
 			return credentials.PlanCreate(ctx, req)
 		},
@@ -251,7 +251,7 @@ func newRecordWorkerCredentialTool(credentials credentialKeeper) serviceports.Ag
 		run: func(
 			ctx context.Context,
 			req *workercredentialservice.CreateRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			created, err := credentials.Create(ctx, req)
 			if err != nil {
@@ -265,7 +265,7 @@ func newRecordWorkerCredentialTool(credentials credentialKeeper) serviceports.Ag
 
 type credentialEdit struct {
 	id     pulid.ID
-	params *serviceports.ToolExecuteParams
+	params *agentports.ToolExecuteParams
 }
 
 func (e *credentialEdit) entity(
@@ -282,7 +282,7 @@ func (e *credentialEdit) entity(
 	return &entity, applyCredentialFacts(&entity, e.params.Params)
 }
 
-func newUpdateWorkerCredentialTool(credentials credentialKeeper) serviceports.AgentTool {
+func newUpdateWorkerCredentialTool(credentials credentialKeeper) agentports.AgentTool {
 	properties := credentialFactProperties()
 	properties[paramCredentialID] = credentialIDProperty()
 	spec := targeting(withSchema(wfSpec(
@@ -300,7 +300,7 @@ func newUpdateWorkerCredentialTool(credentials credentialKeeper) serviceports.Ag
 	return newReportingReceivableTool(spec, receivablePlan[
 		*credentialEdit, *workercredentialservice.CredentialChange,
 	]{
-		request: func(params *serviceports.ToolExecuteParams) (*credentialEdit, error) {
+		request: func(params *agentports.ToolExecuteParams) (*credentialEdit, error) {
 			id, err := requirePulid(params.Params, paramCredentialID)
 			if err != nil {
 				return nil, err
@@ -310,7 +310,7 @@ func newUpdateWorkerCredentialTool(credentials credentialKeeper) serviceports.Ag
 		plan: func(
 			ctx context.Context,
 			edit *credentialEdit,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*workercredentialservice.CredentialChange, error) {
 			entity, err := edit.entity(ctx, credentials)
 			if err != nil {
@@ -337,7 +337,7 @@ func newUpdateWorkerCredentialTool(credentials credentialKeeper) serviceports.Ag
 		run: func(
 			ctx context.Context,
 			edit *credentialEdit,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			entity, err := edit.entity(ctx, credentials)
 			if err != nil {
@@ -353,7 +353,7 @@ func newUpdateWorkerCredentialTool(credentials credentialKeeper) serviceports.Ag
 	})
 }
 
-func newAttachWorkerCredentialDocumentTool(credentials credentialKeeper) serviceports.AgentTool {
+func newAttachWorkerCredentialDocumentTool(credentials credentialKeeper) agentports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
 		"attach_worker_credential_document",
 		"Attach a scan of the card or certificate, already filed on the worker, to a "+
@@ -372,7 +372,7 @@ func newAttachWorkerCredentialDocumentTool(credentials credentialKeeper) service
 		*workercredentialservice.AttachDocumentRequest, *workercredentialservice.CredentialChange,
 	]{
 		request: func(
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*workercredentialservice.AttachDocumentRequest, error) {
 			id, err := requirePulid(params.Params, paramCredentialID)
 			if err != nil {
@@ -392,7 +392,7 @@ func newAttachWorkerCredentialDocumentTool(credentials credentialKeeper) service
 		plan: func(
 			ctx context.Context,
 			req *workercredentialservice.AttachDocumentRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*workercredentialservice.CredentialChange, error) {
 			return credentials.PlanAttachDocument(ctx, req)
 		},
@@ -414,7 +414,7 @@ func newAttachWorkerCredentialDocumentTool(credentials credentialKeeper) service
 		run: func(
 			ctx context.Context,
 			req *workercredentialservice.AttachDocumentRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			saved, err := credentials.AttachDocument(ctx, req)
 			if err != nil {
@@ -426,7 +426,7 @@ func newAttachWorkerCredentialDocumentTool(credentials credentialKeeper) service
 	})
 }
 
-func newArchiveWorkerCredentialTool(credentials credentialKeeper) serviceports.AgentTool {
+func newArchiveWorkerCredentialTool(credentials credentialKeeper) agentports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
 		"archive_worker_credential",
 		"Archive a credential that no longer applies, such as an endorsement the driver "+
@@ -450,7 +450,7 @@ func newArchiveWorkerCredentialTool(credentials credentialKeeper) serviceports.A
 		plan: func(
 			ctx context.Context,
 			req *reasonedRecord,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*workercredentialservice.CredentialChange, error) {
 			return credentials.PlanArchive(ctx, &workercredentialservice.StatusRequest{
 				ID:         req.id,
@@ -480,7 +480,7 @@ func newArchiveWorkerCredentialTool(credentials credentialKeeper) serviceports.A
 		run: func(
 			ctx context.Context,
 			req *reasonedRecord,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			archived, err := credentials.Archive(ctx, &workercredentialservice.StatusRequest{
 				ID:         req.id,
@@ -497,22 +497,22 @@ func newArchiveWorkerCredentialTool(credentials credentialKeeper) serviceports.A
 	})
 }
 
-func provideRecordWorkerCredentialTool(s *workercredentialservice.Service) serviceports.AgentTool {
+func provideRecordWorkerCredentialTool(s *workercredentialservice.Service) agentports.AgentTool {
 	return newRecordWorkerCredentialTool(s)
 }
 
-func provideUpdateWorkerCredentialTool(s *workercredentialservice.Service) serviceports.AgentTool {
+func provideUpdateWorkerCredentialTool(s *workercredentialservice.Service) agentports.AgentTool {
 	return newUpdateWorkerCredentialTool(s)
 }
 
 func provideAttachWorkerCredentialDocumentTool(
 	s *workercredentialservice.Service,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newAttachWorkerCredentialDocumentTool(s)
 }
 
 func provideArchiveWorkerCredentialTool(
 	s *workercredentialservice.Service,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newArchiveWorkerCredentialTool(s)
 }

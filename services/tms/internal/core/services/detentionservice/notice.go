@@ -12,8 +12,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/email"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -107,7 +110,7 @@ func (s *Service) BuildNotice(
 		customerID = p.CustomerID
 	}
 
-	rendered, err := s.templates.RenderMessage(ctx, &services.RenderMessageRequest{
+	rendered, err := s.templates.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
 		TenantInfo:  tenantInfo,
 		Kind:        documenttemplate.KindDetentionNoticeEmail,
 		CustomerID:  customerID,
@@ -283,7 +286,7 @@ func (s *Service) SendNotice(
 		return s.persistNoticeOutcome(ctx, notice, occurrence, now)
 	}
 
-	_, err := s.emailService.Send(ctx, &services.SendEmailRequest{
+	_, err := s.emailService.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo:     tenantInfo,
 		Purpose:        email.PurposeNotifications,
 		To:             notice.Recipients,
@@ -320,12 +323,12 @@ func (s *Service) SendNotice(
 // noticeAttachments hands the rendered PDF to the email service, which stores it
 // and references it by object key rather than carrying bytes through the send
 // workflow.
-func noticeAttachments(pdf *NoticePDF) []services.EmailAttachment {
+func noticeAttachments(pdf *NoticePDF) []emailports.EmailAttachment {
 	if pdf == nil || len(pdf.Content) == 0 {
 		return nil
 	}
 
-	return []services.EmailAttachment{
+	return []emailports.EmailAttachment{
 		{
 			FileName:    pdf.FileName,
 			ContentType: "application/pdf",
@@ -461,10 +464,10 @@ func (s *Service) noticeRecipients(
 			"Customer lookup is not available")
 	}
 
-	entity, err := s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
+	entity, err := s.customerRepo.GetByID(ctx, customerports.GetCustomerByIDRequest{
 		ID:         occurrence.CustomerID,
 		TenantInfo: tenantInfo,
-		CustomerFilterOptions: repositories.CustomerFilterOptions{
+		CustomerFilterOptions: customerports.CustomerFilterOptions{
 			IncludeEmailProfile: true,
 		},
 	})
@@ -494,10 +497,10 @@ func (s *Service) noticeRecipients(
 func (s *Service) SweepNoticesDue(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*services.NoticeSweepResult, error) {
+) (*detentionports.NoticeSweepResult, error) {
 	now := s.now()
 
-	occurrences, err := s.occurrenceRepo.ListNoticesDue(ctx, &repositories.ListNoticesDueRequest{
+	occurrences, err := s.occurrenceRepo.ListNoticesDue(ctx, &detentionports.ListNoticesDueRequest{
 		TenantInfo: tenantInfo,
 		Before:     now,
 	})
@@ -505,7 +508,7 @@ func (s *Service) SweepNoticesDue(
 		return nil, err
 	}
 
-	result := &services.NoticeSweepResult{Due: len(occurrences)}
+	result := &detentionports.NoticeSweepResult{Due: len(occurrences)}
 	policyCache := make(map[pulid.ID]*detention.DetentionPolicy, 4)
 
 	for _, occurrence := range occurrences {
@@ -521,7 +524,7 @@ func (s *Service) SweepNoticesDue(
 			// detention is woken to draft it. A policy that could not be
 			// read is a configuration problem and wakes nobody.
 			if policy != nil {
-				services.PublishAgentEvent(ctx, s.publisher, services.AgentEvent{
+				agentports.PublishAgentEvent(ctx, s.publisher, agentports.AgentEvent{
 					Kind:       agent.EventDetentionNoticeDue,
 					SubjectID:  occurrence.ID,
 					TenantInfo: tenantInfo,
@@ -587,7 +590,7 @@ func (s *Service) noticePolicy(
 	}
 
 	policyID := *occurrence.DetentionPolicyID
-	policy, err := s.policyRepo.GetByID(ctx, &repositories.GetDetentionPolicyByIDRequest{
+	policy, err := s.policyRepo.GetByID(ctx, &detentionports.GetDetentionPolicyByIDRequest{
 		DetentionPolicyID: policyID,
 		TenantInfo:        tenantInfo,
 	})
@@ -692,7 +695,7 @@ func (s *Service) appendEvidence(
 		RecordedAt:            s.now(),
 	}
 
-	if _, err := s.evidenceRepo.Append(ctx, &repositories.AppendEvidenceRequest{
+	if _, err := s.evidenceRepo.Append(ctx, &detentionports.AppendEvidenceRequest{
 		Entry: entry,
 	}); err != nil {
 		s.l.Warn("failed to append detention evidence",

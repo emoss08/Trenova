@@ -4,9 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/notification"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesport "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/webpushservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -17,19 +18,19 @@ type Params struct {
 	fx.In
 
 	Logger   *zap.Logger
-	Repo     repositories.NotificationRepository
-	Realtime servicesport.RealtimeService
+	Repo     notificationports.NotificationRepository
+	Realtime agentports.RealtimeService
 	WebPush  *webpushservice.Service `optional:"true"`
 	// Roles answers who may read a resource, for NotifyPermitted.
-	Roles repositories.RoleRepository `optional:"true"`
+	Roles permissionports.RoleRepository `optional:"true"`
 }
 
 type Service struct {
 	l        *zap.Logger
-	repo     repositories.NotificationRepository
-	realtime servicesport.RealtimeService
+	repo     notificationports.NotificationRepository
+	realtime agentports.RealtimeService
 	webPush  *webpushservice.Service
-	roles    repositories.RoleRepository
+	roles    permissionports.RoleRepository
 }
 
 func New(p Params) *Service {
@@ -44,7 +45,7 @@ func New(p Params) *Service {
 
 func (s *Service) ExistsRecent(
 	ctx context.Context,
-	req repositories.ExistsRecentNotificationRequest,
+	req notificationports.ExistsRecentNotificationRequest,
 ) (bool, error) {
 	return s.repo.ExistsRecent(ctx, req)
 }
@@ -68,7 +69,7 @@ func (s *Service) Create(
 
 	pubErr := s.realtime.PublishResourceInvalidation(
 		ctx,
-		&servicesport.PublishResourceInvalidationRequest{
+		&agentports.PublishResourceInvalidationRequest{
 			OrganizationID: created.OrganizationID,
 			BusinessUnitID: buID,
 			AudienceUserID: pulid.ConvertFromPtr(created.TargetUserID),
@@ -115,14 +116,14 @@ func (s *Service) sendWebPush(ctx context.Context, created *notification.Notific
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListNotificationsRequest,
+	req *notificationports.ListNotificationsRequest,
 ) (*pagination.ListResult[*notification.Notification], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListNotificationConnectionRequest,
+	req *notificationports.ListNotificationConnectionRequest,
 ) (*pagination.CursorListResult[*notification.Notification], error) {
 	return s.repo.ListConnection(ctx, req)
 }
@@ -138,28 +139,28 @@ func (s *Service) CountUnread(
 
 func (s *Service) MarkAsRead(
 	ctx context.Context,
-	req repositories.NotificationActionRequest,
+	req notificationports.NotificationActionRequest,
 ) error {
 	return s.repo.MarkAsRead(ctx, req)
 }
 
 func (s *Service) MarkAsUnread(
 	ctx context.Context,
-	req repositories.NotificationActionRequest,
+	req notificationports.NotificationActionRequest,
 ) error {
 	return s.repo.MarkAsUnread(ctx, req)
 }
 
 func (s *Service) Dismiss(
 	ctx context.Context,
-	req repositories.NotificationActionRequest,
+	req notificationports.NotificationActionRequest,
 ) error {
 	return s.repo.Dismiss(ctx, req)
 }
 
 func (s *Service) Restore(
 	ctx context.Context,
-	req repositories.NotificationActionRequest,
+	req notificationports.NotificationActionRequest,
 ) error {
 	return s.repo.Restore(ctx, req)
 }

@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/stretchr/testify/require"
 )
 
@@ -96,6 +96,6 @@ func TestResendSenderIncludesProviderFailureBody(t *testing.T) {
 	})
 
 	require.Error(t, err)
-	require.True(t, errors.Is(err, serviceports.ErrNonRetryableEmailSend))
+	require.True(t, errors.Is(err, emailports.ErrNonRetryableEmailSend))
 	require.Contains(t, err.Error(), "domain is not verified")
 }

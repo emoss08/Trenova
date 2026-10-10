@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/documentupload"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -31,7 +31,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.DocumentUploadSessionRepository {
+func New(p Params) documentuploadports.DocumentUploadSessionRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.document-upload-session-repository"),
@@ -46,7 +46,7 @@ func (r *repository) Create(
 		cols := buncolgen.DocumentUploadSessionColumns
 		err := r.db.WithTx(
 			ctx,
-			ports.TxOptions{Isolation: 0},
+			kernelports.TxOptions{Isolation: 0},
 			func(c context.Context, tx bun.Tx) error {
 				if _, err := tx.NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
 					return err
@@ -121,7 +121,7 @@ func (r *repository) Update(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetDocumentUploadSessionByIDRequest,
+	req documentuploadports.GetDocumentUploadSessionByIDRequest,
 ) (*documentupload.DocumentUploadSession, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*documentupload.DocumentUploadSession, error) {
 		entity := new(documentupload.DocumentUploadSession)
@@ -145,7 +145,7 @@ func (r *repository) GetByID(
 
 func (r *repository) ListForReconciliation(
 	ctx context.Context,
-	req *repositories.ListDocumentUploadReconciliationRequest,
+	req *documentuploadports.ListDocumentUploadReconciliationRequest,
 ) ([]*documentupload.DocumentUploadSession, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*documentupload.DocumentUploadSession, error) {
 		limit := req.Limit
@@ -196,7 +196,7 @@ func (r *repository) ListForReconciliation(
 
 func (r *repository) ListReconciliationTenants(
 	ctx context.Context,
-	req *repositories.ListDocumentUploadReconciliationRequest,
+	req *documentuploadports.ListDocumentUploadReconciliationRequest,
 ) ([]pagination.TenantInfo, error) {
 	ctx = dbscope.WithSystem(ctx, "list organizations with uploads to reconcile")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
@@ -303,7 +303,7 @@ func (r *repository) ClearDocumentReferences(
 
 func (r *repository) ListActive(
 	ctx context.Context,
-	req *repositories.ListActiveDocumentUploadSessionsRequest,
+	req *documentuploadports.ListActiveDocumentUploadSessionsRequest,
 ) ([]*documentupload.DocumentUploadSession, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*documentupload.DocumentUploadSession, error) {
 		sessions := make([]*documentupload.DocumentUploadSession, 0)
@@ -341,7 +341,7 @@ func (r *repository) ListActive(
 
 func (r *repository) ListRelated(
 	ctx context.Context,
-	req *repositories.ListRelatedDocumentUploadSessionsRequest,
+	req *documentuploadports.ListRelatedDocumentUploadSessionsRequest,
 ) ([]*documentupload.DocumentUploadSession, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*documentupload.DocumentUploadSession, error) {
 		sessions := make([]*documentupload.DocumentUploadSession, 0)

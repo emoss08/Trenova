@@ -6,16 +6,16 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func stopReview(moveID, stopID pulid.ID, occurredAt int64, reason string) *repositories.StopReview {
-	return &repositories.StopReview{
+func stopReview(moveID, stopID pulid.ID, occurredAt int64, reason string) *telematicsports.StopReview {
+	return &telematicsports.StopReview{
 		ShipmentID: pulid.MustNew("shp_"),
 		Event: &telematics.TelematicsEvent{
 			ID:                telematics.NewEventID(),
@@ -42,7 +42,7 @@ func TestDescribeTelematicsStopVisits_OneItemPerStopVisit(t *testing.T) {
 	other := stopReview(moveID, pulid.MustNew("stp_"), 100, "other stop")
 
 	items := watchtowersources.DescribeTelematicsStopVisits(
-		[]*repositories.StopReview{latest, earlier, nil, other},
+		[]*telematicsports.StopReview{latest, earlier, nil, other},
 	)
 
 	require.Len(t, items, 2)

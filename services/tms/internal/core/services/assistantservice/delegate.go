@@ -8,9 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -32,9 +33,9 @@ type OpenDelegateRequest struct {
 	// Parent is the agent that handed the task over, as its turn began.
 	Parent *agentdefinition.Definition
 	// Actor is the person the turn runs as. The delegate runs as them too.
-	Actor     *services.RequestActor
+	Actor     *permissionports.RequestActor
 	ThreadID  pulid.ID
-	StepOwner services.RunStepOwner
+	StepOwner agentports.RunStepOwner
 	Call      agentruntime.DelegateCall
 	// Records are the records the parent's turn is about. The delegate reads
 	// their memories, since the task is about them too.
@@ -43,7 +44,7 @@ type OpenDelegateRequest struct {
 
 // DelegateOpening is the delegate's turn, ready to drive.
 type DelegateOpening struct {
-	Request *services.RunRequest
+	Request *agentports.RunRequest
 	Turn    agentruntime.TurnState
 }
 
@@ -72,7 +73,7 @@ func (s *Service) OpenDelegate(
 	tenant := req.Actor.TenantInfo()
 	name := req.Call.Delegate.Name
 
-	parent, err := s.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	parent, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         req.Parent.ID,
 		TenantInfo: tenant,
 	})
@@ -84,7 +85,7 @@ func (s *Service) OpenDelegate(
 		return nil, fmt.Errorf("read the agent handing over the task: %w", err)
 	}
 
-	delegate, err := s.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	delegate, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         req.Call.Delegate.ID,
 		TenantInfo: tenant,
 	})
@@ -117,7 +118,7 @@ func (s *Service) OpenDelegate(
 		return nil, err
 	}
 
-	runReq := &services.RunRequest{
+	runReq := &agentports.RunRequest{
 		Definition: delegate,
 		Actor:      req.Actor,
 		Context:    s.delegateContext(ctx, parent, delegate, req),
@@ -129,7 +130,7 @@ func (s *Service) OpenDelegate(
 		// A document it publishes is kept beside the same conversation.
 		Publishes: s.artifacts != nil,
 		StepOwner: req.StepOwner,
-		Delegation: &services.Delegation{
+		Delegation: &agentports.Delegation{
 			ParentAgentID:   parent.ID,
 			ParentAgentName: parent.Name,
 			CallID:          req.Call.Call.ID,
@@ -163,13 +164,13 @@ func (s *Service) delegateContext(
 		return bare
 	}
 
-	built, err := s.contexts.Build(ctx, &services.RuntimeContextRequest{
+	built, err := s.contexts.Build(ctx, &agentports.RuntimeContextRequest{
 		Definition:       delegate,
 		Actor:            req.Actor,
 		Trigger:          agent.RunTriggerChat,
 		DelegatedBy:      parent.Name,
 		DelegatorRecords: req.Records,
-		Query: (&services.ContextQuery{
+		Query: (&agentports.ContextQuery{
 			Actor:        req.Actor,
 			DefinitionID: definitionID(delegate),
 			ThreadID:     req.ThreadID,

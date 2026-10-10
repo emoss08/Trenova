@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -18,7 +18,7 @@ import (
 
 func (r *repository) GetDelayedShipments(
 	ctx context.Context,
-	req *repositories.GetDelayedShipmentsRequest,
+	req *shipmentports.GetDelayedShipmentsRequest,
 	thresholdMinutes int16,
 ) ([]*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*shipment.Shipment, error) {
@@ -35,14 +35,14 @@ func (r *repository) GetDelayedShipments(
 
 func (r *repository) DelayShipments(
 	ctx context.Context,
-	req *repositories.DelayShipmentsRequest,
+	req *shipmentports.DelayShipmentsRequest,
 	thresholdMinutes int16,
 ) ([]*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*shipment.Shipment, error) {
 		currentTime := timeutils.NowUnix()
 		entities := make([]*shipment.Shipment, 0)
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 			var err error
 			entities, err = r.getDelayedShipments(
 				c,
@@ -85,7 +85,7 @@ func (r *repository) AutoDelayShipments(ctx context.Context) ([]*shipment.Shipme
 		currentTime := timeutils.NowUnix()
 		entities := make([]*shipment.Shipment, 0)
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 			var err error
 			entities, err = r.getAutoDelayedShipments(c, tx, currentTime)
 			if err != nil || len(entities) == 0 {
@@ -166,7 +166,7 @@ func (r *repository) RunAutoDelayShipmentsForTenant(
 		currentTime := timeutils.NowUnix()
 		entities := make([]*shipment.Shipment, 0)
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 			var err error
 			entities, err = r.getAutoDelayedShipmentsForTenant(
 				c,

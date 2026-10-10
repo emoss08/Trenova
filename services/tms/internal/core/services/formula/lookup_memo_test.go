@@ -7,10 +7,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/formula"
 	"github.com/emoss08/trenova/internal/core/services/formula/engine"
 	"github.com/emoss08/trenova/internal/core/services/formula/resolver"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetablecache"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,7 +21,7 @@ import (
 
 // countingMatrixRepo records how often the expensive read happened.
 type countingMatrixRepo struct {
-	repositories.RateMatrixRepository
+	ratematrixports.RateMatrixRepository
 
 	mu    sync.Mutex
 	calls int
@@ -29,8 +29,8 @@ type countingMatrixRepo struct {
 
 func (c *countingMatrixRepo) GetLookupData(
 	_ context.Context,
-	_ *repositories.GetRateMatrixLookupDataRequest,
-) ([]*repositories.RateMatrixLookupData, error) {
+	_ *ratematrixports.GetRateMatrixLookupDataRequest,
+) ([]*ratematrixports.RateMatrixLookupData, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -46,7 +46,7 @@ func (c *countingMatrixRepo) count() int {
 	return c.calls
 }
 
-func setupCountingService(t *testing.T, repo repositories.RateMatrixRepository) *formula.Service {
+func setupCountingService(t *testing.T, repo ratematrixports.RateMatrixRepository) *formula.Service {
 	t.Helper()
 
 	registry := newTestRegistry(t)

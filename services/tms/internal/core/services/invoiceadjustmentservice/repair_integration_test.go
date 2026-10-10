@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/journalrepairservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -19,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/journalpostingrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/journalrepairrepository"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -188,7 +188,7 @@ func (h *integrationHarness) executeAdjustment(
 		makeInvoiceLine(2, invoice.InvoiceLineTypeAccessorial, "Fuel", 1, 25),
 	}, invoice.SettlementStatusUnpaid, decimal.Zero)
 
-	adjustment, err := h.service.Submit(h.ctx, &servicesports.InvoiceAdjustmentRequest{
+	adjustment, err := h.service.Submit(h.ctx, &invoiceadjustmentports.InvoiceAdjustmentRequest{
 		InvoiceID:      entity.ID,
 		Kind:           kind,
 		IdempotencyKey: string(kind) + "-" + entity.ID.String(),
@@ -350,7 +350,7 @@ func TestWriteOffJournalIsStampedWhenItIsWrittenNotOnItsAccountingDate(t *testin
 	require.NoError(t, err)
 
 	writtenAfter := timeutils.NowUnix()
-	adjustment, err := h.service.Submit(ctx, &servicesports.InvoiceAdjustmentRequest{
+	adjustment, err := h.service.Submit(ctx, &invoiceadjustmentports.InvoiceAdjustmentRequest{
 		InvoiceID:      entity.ID,
 		Kind:           invoiceadjustment.KindWriteOff,
 		IdempotencyKey: "writeoff-stamp-" + entity.ID.String(),

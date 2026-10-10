@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/detention"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
@@ -13,11 +13,11 @@ import (
 type ValidatorParams struct {
 	fx.In
 
-	Repo repositories.DetentionPolicyRepository
+	Repo detentionports.DetentionPolicyRepository
 }
 
 type Validator struct {
-	repo repositories.DetentionPolicyRepository
+	repo detentionports.DetentionPolicyRepository
 }
 
 func NewValidator(p ValidatorParams) *Validator {
@@ -66,7 +66,7 @@ func (v *Validator) validateUniqueCode(
 		return
 	}
 
-	req := &repositories.DetentionPolicyCodeExistsRequest{
+	req := &detentionports.DetentionPolicyCodeExistsRequest{
 		TenantInfo: tenantOf(entity),
 		Code:       entity.Code,
 	}
@@ -101,7 +101,7 @@ func (v *Validator) validateNoOverlap(
 		return
 	}
 
-	req := &repositories.FindOverlappingDetentionPoliciesRequest{
+	req := &detentionports.FindOverlappingDetentionPoliciesRequest{
 		TenantInfo:         tenantOf(entity),
 		CustomerID:         entity.CustomerID,
 		LocationID:         entity.LocationID,

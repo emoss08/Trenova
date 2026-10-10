@@ -1,6 +1,7 @@
 package agentjobs
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"errors"
 	"testing"
@@ -8,9 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,10 +22,10 @@ import (
 	"go.uber.org/zap"
 )
 
-func actorActivities(t *testing.T) (*Activities, *mocks.MockUserRepository) {
+func actorActivities(t *testing.T) (*Activities, *tenantportsmock.MockUserRepository) {
 	t.Helper()
 
-	users := mocks.NewMockUserRepository(t)
+	users := tenantportsmock.NewMockUserRepository(t)
 
 	return NewActivities(ActivitiesParams{Logger: zap.NewNop(), Users: users}), users
 }
@@ -44,7 +45,7 @@ func TestUnattendedActor_NamesTheSystemUserAndStaysAnAgent(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, system, actor.UserID, "writes are attributed to the system user")
-	assert.Equal(t, serviceports.PrincipalTypeAgent, actor.PrincipalType,
+	assert.Equal(t, permissionports.PrincipalTypeAgent, actor.PrincipalType,
 		"authorization stays the agent's")
 	assert.Equal(t, definition.ID, actor.PrincipalID, "the principal names which agent runs")
 	assert.True(t, actor.IsAgent())
@@ -57,7 +58,7 @@ func TestUnattendedActor_NamesTheSystemUserAndStaysAnAgent(t *testing.T) {
 		"an automatic write is executed by the system user")
 
 	audit := actor.AuditActor()
-	assert.Equal(t, serviceports.PrincipalTypeAgent, audit.PrincipalType)
+	assert.Equal(t, permissionports.PrincipalTypeAgent, audit.PrincipalType)
 	assert.Equal(t, definition.ID, audit.PrincipalID)
 	assert.Equal(t, system, audit.UserID, "the audit log names the system user")
 }
@@ -67,8 +68,8 @@ func TestAgentActorFor_FallsBackToTheGenericAgentWithoutADefinition(t *testing.T
 
 	scope := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 
-	assert.Equal(t, serviceports.AgentPrincipalID, agentActorFor(scope, nil).PrincipalID)
-	assert.Equal(t, serviceports.AgentPrincipalID,
+	assert.Equal(t, permissionports.AgentPrincipalID, agentActorFor(scope, nil).PrincipalID)
+	assert.Equal(t, permissionports.AgentPrincipalID,
 		agentActorFor(scope, &agentdefinition.Definition{}).PrincipalID)
 	assert.True(t, agentActorFor(scope, nil).UserID.IsNil(),
 		"only an unattended run's actor carries the system user")
@@ -96,12 +97,12 @@ func TestUnattendedActor_AMissingSystemUserFailsTheAttemptRetryably(t *testing.T
 }
 
 type noProposalsYet struct {
-	repositories.AgentProposalRepository
+	agentports.AgentProposalRepository
 }
 
 func (noProposalsYet) ListByRun(
 	context.Context,
-	repositories.ListAgentProposalsByRunRequest,
+	agentports.ListAgentProposalsByRunRequest,
 ) ([]*agent.AgentProposal, error) {
 	return nil, nil
 }
@@ -122,7 +123,7 @@ func (s *createdProposals) Create(
 func TestRecordProposals_AnAutomaticWriteIsExecutedByTheSystemUser(t *testing.T) {
 	t.Parallel()
 
-	users := mocks.NewMockUserRepository(t)
+	users := tenantportsmock.NewMockUserRepository(t)
 	system := pulid.MustNew("usr_")
 	users.On("GetSystemUser", mock.Anything, []string{"id"}).
 		Return(&tenant.User{ID: system}, nil).
@@ -140,7 +141,7 @@ func TestRecordProposals_AnAutomaticWriteIsExecutedByTheSystemUser(t *testing.T)
 		Definition: &agentdefinition.Definition{ID: pulid.MustNew("agdef_"), Name: "Dispatch Agent"},
 		Run:        &agent.AgentRun{ID: pulid.MustNew("ar_")},
 		TenantInfo: scope,
-		Actions: []serviceports.PendingAction{{
+		Actions: []agentports.PendingAction{{
 			ToolName:  "assign_move",
 			Arguments: map[string]any{},
 			Rationale: "cover the move",
@@ -160,7 +161,7 @@ func TestRecordProposals_NothingToFileReadsNoSystemUser(t *testing.T) {
 
 	activities := &Activities{
 		logger:       zap.NewNop(),
-		users:        mocks.NewMockUserRepository(t),
+		users:        tenantportsmock.NewMockUserRepository(t),
 		proposalRepo: noProposalsYet{},
 		recorder:     proposalrecorder.NewWithStores(zap.NewNop(), nil, &createdProposals{}),
 	}

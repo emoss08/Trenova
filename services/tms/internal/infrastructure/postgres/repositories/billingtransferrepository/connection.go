@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingtransfer"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingtransferports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -16,7 +16,7 @@ import (
 
 func runItemScope(
 	q *bun.SelectQuery,
-	req *repositories.ListBillingTransferRunItemsRequest,
+	req *billingtransferports.ListBillingTransferRunItemsRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.BillingTransferRunItemColumns
 
@@ -32,7 +32,7 @@ func runItemScope(
 // for a total, because the CSV export walks every page and has no use for it.
 func (r *repository) ListItems(
 	ctx context.Context,
-	req *repositories.ListBillingTransferRunItemsRequest,
+	req *billingtransferports.ListBillingTransferRunItemsRequest,
 ) (*pagination.CursorListResult[*billingtransfer.BillingTransferRunItem], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*billingtransfer.BillingTransferRunItem], error) {
 		log := r.l.With(zap.String("operation", "ListItems"))

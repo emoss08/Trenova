@@ -5,9 +5,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -29,7 +29,7 @@ type mailboxRepository struct {
 	l  *zap.Logger
 }
 
-func NewMailboxRepository(p MailboxParams) repositories.InboundMailboxRepository {
+func NewMailboxRepository(p MailboxParams) inboundmessageports.InboundMailboxRepository {
 	return &mailboxRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.inbound-mailbox-repository"),
@@ -38,7 +38,7 @@ func NewMailboxRepository(p MailboxParams) repositories.InboundMailboxRepository
 
 func (r *mailboxRepository) List(
 	ctx context.Context,
-	req *repositories.ListMailboxesRequest,
+	req *inboundmessageports.ListMailboxesRequest,
 ) (*pagination.ListResult[*inboundmessage.Mailbox], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*inboundmessage.Mailbox], error) {
 		entities := make([]*inboundmessage.Mailbox, 0, req.Filter.Pagination.SafeLimit())
@@ -64,7 +64,7 @@ func (r *mailboxRepository) List(
 
 func (r *mailboxRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetMailboxByIDRequest,
+	req inboundmessageports.GetMailboxByIDRequest,
 ) (*inboundmessage.Mailbox, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*inboundmessage.Mailbox, error) {
 		entity := new(inboundmessage.Mailbox)
@@ -92,7 +92,7 @@ func (r *mailboxRepository) GetByID(
 // to whoever posted.
 func (r *mailboxRepository) GetByTokenHash(
 	ctx context.Context,
-	req repositories.GetMailboxByTokenHashRequest,
+	req inboundmessageports.GetMailboxByTokenHashRequest,
 ) (*inboundmessage.Mailbox, error) {
 	ctx = dbscope.WithSystem(ctx, "resolve the inbound mailbox a provider delivered to before its tenant is known")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*inboundmessage.Mailbox, error) {

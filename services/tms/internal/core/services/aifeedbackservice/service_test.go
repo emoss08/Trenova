@@ -12,8 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/insight"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -71,10 +71,10 @@ func newConversation(owner pulid.ID) conversationFixture {
 	}
 }
 
-func (c conversationFixture) source() *repositories.AIFeedbackMessageContext {
+func (c conversationFixture) source() *aifeedbackports.AIFeedbackMessageContext {
 	answer := c.answer
 
-	return &repositories.AIFeedbackMessageContext{
+	return &aifeedbackports.AIFeedbackMessageContext{
 		Message:  &answer,
 		Thread:   c.thread,
 		Exchange: []conversation.Message{c.question, c.tool, c.answer},
@@ -82,8 +82,8 @@ func (c conversationFixture) source() *repositories.AIFeedbackMessageContext {
 	}
 }
 
-func thumbsDown(target repositories.AIFeedbackTargetRef) *services.SetAIFeedbackRequest {
-	return &services.SetAIFeedbackRequest{
+func thumbsDown(target aifeedbackports.AIFeedbackTargetRef) *aifeedbackports.SetAIFeedbackRequest {
+	return &aifeedbackports.SetAIFeedbackRequest{
 		Target:  target,
 		Rating:  aifeedback.RatingNegative,
 		Reasons: []aifeedback.Reason{aifeedback.ReasonInaccurate},
@@ -100,7 +100,7 @@ func TestSetMine_AnAnswerIsRatedOnlyByTheThreadsOwner(t *testing.T) {
 	fixture := newConversation(pulid.MustNew("usr_"))
 	h.messages.context = fixture.source()
 
-	req := thumbsDown(repositories.AIFeedbackTargetRef{
+	req := thumbsDown(aifeedbackports.AIFeedbackTargetRef{
 		TargetType: aifeedback.TargetAssistantMessage,
 		TargetID:   fixture.answer.ID,
 	})
@@ -122,7 +122,7 @@ func TestSetMine_CreditsTheAnswerAndKeepsWhatThePersonSaw(t *testing.T) {
 	h.messages.context = fixture.source()
 	h.definitions.definition = &agentdefinition.Definition{Version: 7}
 
-	req := thumbsDown(repositories.AIFeedbackTargetRef{
+	req := thumbsDown(aifeedbackports.AIFeedbackTargetRef{
 		TargetType: aifeedback.TargetAssistantMessage,
 		TargetID:   fixture.answer.ID,
 	})
@@ -163,9 +163,9 @@ func TestSetMine_ReasonsMustMatchTheRating(t *testing.T) {
 	fixture := newConversation(actor.UserID)
 	h.messages.context = fixture.source()
 
-	req := &services.SetAIFeedbackRequest{
+	req := &aifeedbackports.SetAIFeedbackRequest{
 		TenantInfo: tenant,
-		Target: repositories.AIFeedbackTargetRef{
+		Target: aifeedbackports.AIFeedbackTargetRef{
 			TargetType: aifeedback.TargetAssistantMessage,
 			TargetID:   fixture.answer.ID,
 		},
@@ -190,7 +190,7 @@ func TestSetMine_ADelegatedAnswerIsCreditedToTheDelegate(t *testing.T) {
 	fixture.answer.AgentDefinitionID = delegate
 	h.messages.context = fixture.source()
 
-	req := thumbsDown(repositories.AIFeedbackTargetRef{
+	req := thumbsDown(aifeedbackports.AIFeedbackTargetRef{
 		TargetType: aifeedback.TargetAssistantMessage,
 		TargetID:   fixture.answer.ID,
 	})
@@ -216,7 +216,7 @@ func TestSetMine_OnlyAnAnswerCanBeRated(t *testing.T) {
 	source.Message = &question
 	h.messages.context = source
 
-	req := thumbsDown(repositories.AIFeedbackTargetRef{
+	req := thumbsDown(aifeedbackports.AIFeedbackTargetRef{
 		TargetType: aifeedback.TargetAssistantMessage,
 		TargetID:   fixture.question.ID,
 	})
@@ -243,7 +243,7 @@ func TestSetMine_AnInsightNeedsInsightRead(t *testing.T) {
 	}
 	h.insights.byID[entity.ID] = entity
 
-	req := thumbsDown(repositories.AIFeedbackTargetRef{
+	req := thumbsDown(aifeedbackports.AIFeedbackTargetRef{
 		TargetType: aifeedback.TargetInsight,
 		TargetID:   entity.ID,
 	})
@@ -280,7 +280,7 @@ func TestSetMine_ABriefingIsRatedByItsReader(t *testing.T) {
 		},
 	}
 
-	req := thumbsDown(repositories.AIFeedbackTargetRef{
+	req := thumbsDown(aifeedbackports.AIFeedbackTargetRef{
 		TargetType: aifeedback.TargetBriefing,
 		TargetID:   h.briefings.entity.ID,
 	})
@@ -299,7 +299,7 @@ func TestSetMine_ABriefingIsRatedByItsReader(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "claude-sonnet", saved.Model)
 
-	req.Target = repositories.AIFeedbackTargetRef{
+	req.Target = aifeedbackports.AIFeedbackTargetRef{
 		TargetType: aifeedback.TargetBriefingSection,
 		TargetID:   h.briefings.entity.ID,
 		TargetPart: "billing",
@@ -337,7 +337,7 @@ func TestSetMine_AWatchtowerItemIsCreditedToTheAgentBehindIt(t *testing.T) {
 		ModelIdentifier:   "claude-opus",
 	}
 
-	req := thumbsDown(repositories.AIFeedbackTargetRef{
+	req := thumbsDown(aifeedbackports.AIFeedbackTargetRef{
 		TargetType: aifeedback.TargetWatchtowerItem,
 		TargetID:   h.watchtower.item.ID,
 	})
@@ -376,7 +376,7 @@ func TestSetMine_AWatchtowerItemFromAnInsightIsCreditedToItsDetector(t *testing.
 	h.permissions.allowed[permission.ResourceWatchtower] = true
 	h.permissions.allowed[permission.ResourceInsight] = true
 
-	req := thumbsDown(repositories.AIFeedbackTargetRef{
+	req := thumbsDown(aifeedbackports.AIFeedbackTargetRef{
 		TargetType: aifeedback.TargetWatchtowerItem,
 		TargetID:   h.watchtower.item.ID,
 	})
@@ -402,7 +402,7 @@ func TestSetMine_AWatchtowerItemNotRaisedByAIIsRefused(t *testing.T) {
 	h.permissions.allowed[permission.ResourceWatchtower] = true
 	h.permissions.allowed[permission.ResourceShipment] = true
 
-	req := thumbsDown(repositories.AIFeedbackTargetRef{
+	req := thumbsDown(aifeedbackports.AIFeedbackTargetRef{
 		TargetType: aifeedback.TargetWatchtowerItem,
 		TargetID:   h.watchtower.item.ID,
 	})
@@ -418,12 +418,12 @@ func TestSetMine_OnlyAPersonRates(t *testing.T) {
 
 	h := newHarness()
 	tenant := testTenant()
-	actor := &services.RequestActor{
-		PrincipalType: services.PrincipalTypeAPIKey,
+	actor := &permissionports.RequestActor{
+		PrincipalType: permissionports.PrincipalTypeAPIKey,
 		APIKeyID:      pulid.MustNew("key_"),
 	}
 
-	req := thumbsDown(repositories.AIFeedbackTargetRef{
+	req := thumbsDown(aifeedbackports.AIFeedbackTargetRef{
 		TargetType: aifeedback.TargetInsight,
 		TargetID:   pulid.MustNew("ins_"),
 	})
@@ -432,7 +432,7 @@ func TestSetMine_OnlyAPersonRates(t *testing.T) {
 	_, err := h.svc.SetMine(t.Context(), req, actor)
 	require.Error(t, err)
 
-	_, err = h.svc.ClearMine(t.Context(), services.ClearAIFeedbackRequest{
+	_, err = h.svc.ClearMine(t.Context(), aifeedbackports.ClearAIFeedbackRequest{
 		TenantInfo: tenant,
 		Target:     req.Target,
 	}, actor)
@@ -445,13 +445,13 @@ func TestClearMine_RemovesOnlyTheCallersOwnRating(t *testing.T) {
 	h := newHarness()
 	tenant := testTenant()
 	actor := person(tenant)
-	target := repositories.AIFeedbackTargetRef{
+	target := aifeedbackports.AIFeedbackTargetRef{
 		TargetType: aifeedback.TargetBriefingSection,
 		TargetID:   pulid.MustNew("brf_"),
 		TargetPart: "  dispatch ",
 	}
 
-	removed, err := h.svc.ClearMine(t.Context(), services.ClearAIFeedbackRequest{
+	removed, err := h.svc.ClearMine(t.Context(), aifeedbackports.ClearAIFeedbackRequest{
 		TenantInfo: tenant,
 		Target:     target,
 	}, actor)
@@ -462,9 +462,9 @@ func TestClearMine_RemovesOnlyTheCallersOwnRating(t *testing.T) {
 	assert.Equal(t, tenant, h.store.deleted[0].TenantInfo)
 	assert.Equal(t, "dispatch", h.store.deleted[0].Target.TargetPart)
 
-	_, err = h.svc.ClearMine(t.Context(), services.ClearAIFeedbackRequest{
+	_, err = h.svc.ClearMine(t.Context(), aifeedbackports.ClearAIFeedbackRequest{
 		TenantInfo: tenant,
-		Target: repositories.AIFeedbackTargetRef{
+		Target: aifeedbackports.AIFeedbackTargetRef{
 			TargetType: aifeedback.TargetBriefingSection,
 			TargetID:   pulid.MustNew("brf_"),
 		},
@@ -479,21 +479,21 @@ func TestListMine_IsScopedToTheCallerAndBounded(t *testing.T) {
 	tenant := testTenant()
 	actor := person(tenant)
 
-	targets := make([]repositories.AIFeedbackTargetRef, 0, repositories.MaxAIFeedbackTargetsPerRead+1)
-	for range repositories.MaxAIFeedbackTargetsPerRead + 1 {
-		targets = append(targets, repositories.AIFeedbackTargetRef{
+	targets := make([]aifeedbackports.AIFeedbackTargetRef, 0, aifeedbackports.MaxAIFeedbackTargetsPerRead+1)
+	for range aifeedbackports.MaxAIFeedbackTargetsPerRead + 1 {
+		targets = append(targets, aifeedbackports.AIFeedbackTargetRef{
 			TargetType: aifeedback.TargetAssistantMessage,
 			TargetID:   pulid.MustNew("amsg_"),
 		})
 	}
 
-	_, err := h.svc.ListMine(t.Context(), services.ListMyAIFeedbackRequest{
+	_, err := h.svc.ListMine(t.Context(), aifeedbackports.ListMyAIFeedbackRequest{
 		TenantInfo: tenant,
 		Targets:    targets,
 	}, actor)
 	require.Error(t, err)
 
-	_, err = h.svc.ListMine(t.Context(), services.ListMyAIFeedbackRequest{
+	_, err = h.svc.ListMine(t.Context(), aifeedbackports.ListMyAIFeedbackRequest{
 		TenantInfo: tenant,
 		Targets:    targets[:2],
 	}, actor)
@@ -527,7 +527,7 @@ func TestSetMine_RedactsRestrictedToolValuesFromTheSnapshot(t *testing.T) {
 		},
 	}
 
-	req := thumbsDown(repositories.AIFeedbackTargetRef{
+	req := thumbsDown(aifeedbackports.AIFeedbackTargetRef{
 		TargetType: aifeedback.TargetAssistantMessage,
 		TargetID:   fixture.answer.ID,
 	})
@@ -582,7 +582,7 @@ func TestPurgeExpired_UsesTheOrganizationsRetention(t *testing.T) {
 	tenant := testTenant()
 	h.store.purgeRows = []int64{purgeBatchSize, 3}
 
-	purged, err := h.svc.PurgeExpired(t.Context(), services.PurgeExpiredAIFeedbackRequest{
+	purged, err := h.svc.PurgeExpired(t.Context(), aifeedbackports.PurgeExpiredAIFeedbackRequest{
 		TenantInfo: tenant,
 		Now:        1_760_000_000,
 	})
@@ -598,10 +598,10 @@ func TestAgentSummary_RefusesAWindowOutOfRange(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness()
-	_, err := h.svc.AgentSummary(t.Context(), services.AgentFeedbackSummaryRequest{
+	_, err := h.svc.AgentSummary(t.Context(), aifeedbackports.AgentFeedbackSummaryRequest{
 		TenantInfo:        pagination.TenantInfo{OrgID: pulid.MustNew("org_")},
 		AgentDefinitionID: pulid.MustNew("agdef_"),
-		WindowDays:        services.MaxAgentFeedbackWindowDays + 1,
+		WindowDays:        aifeedbackports.MaxAgentFeedbackWindowDays + 1,
 	})
 	require.Error(t, err)
 }

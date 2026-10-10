@@ -8,10 +8,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/driverpayservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -80,31 +82,31 @@ func driverPayToolProviders() []any {
 type driverPayReader interface {
 	ListActivePayCodes(
 		ctx context.Context,
-		req repositories.ListActivePayCodesRequest,
+		req driverpayports.ListActivePayCodesRequest,
 	) ([]*driverpay.PayCode, error)
 	ListProfiles(
 		ctx context.Context,
-		req *repositories.ListPayProfilesRequest,
+		req *driverpayports.ListPayProfilesRequest,
 	) (*pagination.ListResult[*driverpay.PayProfile], error)
 	ListWorkerAssignments(
 		ctx context.Context,
-		req repositories.ListWorkerPayAssignmentsRequest,
+		req driverpayports.ListWorkerPayAssignmentsRequest,
 	) ([]*driverpay.WorkerPayAssignment, error)
 	ListEscrowAccounts(
 		ctx context.Context,
-		req *repositories.ListEscrowAccountsRequest,
+		req *driverpayports.ListEscrowAccountsRequest,
 	) (*pagination.ListResult[*driverpay.EscrowAccount], error)
 	ListAdvances(
 		ctx context.Context,
-		req *repositories.ListPayAdvancesRequest,
+		req *driverpayports.ListPayAdvancesRequest,
 	) (*pagination.ListResult[*driverpay.PayAdvance], error)
 	ListDeductions(
 		ctx context.Context,
-		req *repositories.ListRecurringDeductionsRequest,
+		req *driverpayports.ListRecurringDeductionsRequest,
 	) (*pagination.ListResult[*driverpay.RecurringDeduction], error)
 	ListEarnings(
 		ctx context.Context,
-		req *repositories.ListRecurringEarningsRequest,
+		req *driverpayports.ListRecurringEarningsRequest,
 	) (*pagination.ListResult[*driverpay.RecurringEarning], error)
 }
 
@@ -117,43 +119,43 @@ type driverPayTool struct {
 type driverNameReader interface {
 	List(
 		ctx context.Context,
-		req *repositories.ListWorkersRequest,
+		req *workerports.ListWorkersRequest,
 	) (*pagination.CursorListResult[*worker.Worker], error)
 }
 
 func newDriverPayTool(
 	pay driverPayReader,
-	permissions serviceports.PermissionEngine,
+	permissions permissionports.PermissionEngine,
 ) driverPayTool {
 	return driverPayTool{pay: pay, access: newFieldAccess(permissions)}
 }
 
 func provideListPayCodesTool(
 	pay *driverpayservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &listPayCodesTool{newDriverPayTool(pay, permissions)}
 }
 
 func provideListPayProfilesTool(
 	pay *driverpayservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &listPayProfilesTool{newDriverPayTool(pay, permissions)}
 }
 
 func provideListWorkerPayAssignmentsTool(
 	pay *driverpayservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &listWorkerPayAssignmentsTool{newDriverPayTool(pay, permissions)}
 }
 
 func provideListEscrowAccountsTool(
 	pay *driverpayservice.Service,
-	permissions serviceports.PermissionEngine,
-	workers repositories.WorkerRepository,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+	workers workerports.WorkerRepository,
+) agentports.AgentQueryTool {
 	tool := newDriverPayTool(pay, permissions)
 	tool.workers = workers
 
@@ -162,9 +164,9 @@ func provideListEscrowAccountsTool(
 
 func provideListPayAdvancesTool(
 	pay *driverpayservice.Service,
-	permissions serviceports.PermissionEngine,
-	workers repositories.WorkerRepository,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+	workers workerports.WorkerRepository,
+) agentports.AgentQueryTool {
 	tool := newDriverPayTool(pay, permissions)
 	tool.workers = workers
 
@@ -173,9 +175,9 @@ func provideListPayAdvancesTool(
 
 func provideListRecurringDeductionsTool(
 	pay *driverpayservice.Service,
-	permissions serviceports.PermissionEngine,
-	workers repositories.WorkerRepository,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+	workers workerports.WorkerRepository,
+) agentports.AgentQueryTool {
 	tool := newDriverPayTool(pay, permissions)
 	tool.workers = workers
 
@@ -184,9 +186,9 @@ func provideListRecurringDeductionsTool(
 
 func provideListRecurringEarningsTool(
 	pay *driverpayservice.Service,
-	permissions serviceports.PermissionEngine,
-	workers repositories.WorkerRepository,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+	workers workerports.WorkerRepository,
+) agentports.AgentQueryTool {
 	tool := newDriverPayTool(pay, permissions)
 	tool.workers = workers
 
@@ -201,7 +203,7 @@ type workerFilter struct {
 
 func (t *driverPayTool) readWorkerFilter(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 	statuses agenttoolschema.EnumSource[string],
 ) (workerFilter, error) {
 	workerID, err := optionalID(params.Params, paramWorkerID)
@@ -225,7 +227,7 @@ func (t *driverPayTool) readWorkerFilter(
 	}, nil
 }
 
-func (f workerFilter) options(params *serviceports.QueryToolParams) *pagination.QueryOptions {
+func (f workerFilter) options(params *agentports.QueryToolParams) *pagination.QueryOptions {
 	return &pagination.QueryOptions{
 		TenantInfo: tenantOf(params),
 		Pagination: pagination.Info{Limit: f.window.fetch(), Offset: f.window.offset},
@@ -234,7 +236,7 @@ func (f workerFilter) options(params *serviceports.QueryToolParams) *pagination.
 
 func (f workerFilter) criteria(
 	entity string,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) *filtercatalog.Criteria {
 	criteria := filtercatalog.NewCriteria(entity).At(clockFor(params))
 	if f.workerID.IsNotNil() {
@@ -267,14 +269,14 @@ func workerFilterSchema(
 // picks the one meant rather than reading another driver's pay.
 func (t *driverPayTool) driverNamed(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (pulid.ID, error) {
 	name := strings.TrimSpace(optionalString(params.Params, paramQuery))
 	if name == "" || t.workers == nil {
 		return pulid.Nil, nil
 	}
 
-	found, err := t.workers.List(ctx, &repositories.ListWorkersRequest{
+	found, err := t.workers.List(ctx, &workerports.ListWorkersRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenantOf(params),
 			Pagination: pagination.Info{Limit: driverNameMatches},
@@ -317,7 +319,7 @@ func (t *listPayCodesTool) ParamSchema() map[string]any {
 	})
 }
 
-func (t *listPayCodesTool) Policy() serviceports.ToolPolicy {
+func (t *listPayCodesTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourcePayCode})
 }
 
@@ -333,7 +335,7 @@ type payCodeRow struct {
 
 func (t *listPayCodesTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -343,7 +345,7 @@ func (t *listPayCodesTool) Query(
 		return nil, err
 	}
 
-	codes, err := t.pay.ListActivePayCodes(ctx, repositories.ListActivePayCodesRequest{
+	codes, err := t.pay.ListActivePayCodes(ctx, driverpayports.ListActivePayCodesRequest{
 		TenantInfo: tenantOf(params),
 		Direction:  driverpay.PayCodeDirection(direction),
 	})
@@ -393,7 +395,7 @@ func (t *listPayProfilesTool) ParamSchema() map[string]any {
 	}, defaultListLimit, maxListLimit))
 }
 
-func (t *listPayProfilesTool) Policy() serviceports.ToolPolicy {
+func (t *listPayProfilesTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceDriverPayProfile})
 }
 
@@ -408,7 +410,7 @@ type payProfileRow struct {
 
 func (t *listPayProfilesTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -420,7 +422,7 @@ func (t *listPayProfilesTool) Query(
 	window := readPage(params.Params, defaultListLimit, maxListLimit)
 	query := optionalString(params.Params, paramQuery)
 
-	result, err := t.pay.ListProfiles(ctx, &repositories.ListPayProfilesRequest{
+	result, err := t.pay.ListProfiles(ctx, &driverpayports.ListPayProfilesRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenantOf(params),
 			Pagination: pagination.Info{Limit: window.fetch(), Offset: window.offset},
@@ -480,7 +482,7 @@ func (t *listWorkerPayAssignmentsTool) ParamSchema() map[string]any {
 	)
 }
 
-func (t *listWorkerPayAssignmentsTool) Policy() serviceports.ToolPolicy {
+func (t *listWorkerPayAssignmentsTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceDriverPayProfile})
 }
 
@@ -503,7 +505,7 @@ type payAssignmentsView struct {
 
 func (t *listWorkerPayAssignmentsTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -515,7 +517,7 @@ func (t *listWorkerPayAssignmentsTool) Query(
 
 	assignments, err := t.pay.ListWorkerAssignments(
 		ctx,
-		repositories.ListWorkerPayAssignmentsRequest{
+		driverpayports.ListWorkerPayAssignmentsRequest{
 			TenantInfo: tenantOf(params),
 			WorkerID:   workerID,
 		},
@@ -571,7 +573,7 @@ func (t *listEscrowAccountsTool) ParamSchema() map[string]any {
 	return workerFilterSchema(escrowStatuses, "accounts")
 }
 
-func (t *listEscrowAccountsTool) Policy() serviceports.ToolPolicy {
+func (t *listEscrowAccountsTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceEscrowAccount})
 }
 
@@ -590,7 +592,7 @@ type escrowAccountRow struct {
 
 func (t *listEscrowAccountsTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -600,7 +602,7 @@ func (t *listEscrowAccountsTool) Query(
 		return nil, err
 	}
 
-	result, err := t.pay.ListEscrowAccounts(ctx, &repositories.ListEscrowAccountsRequest{
+	result, err := t.pay.ListEscrowAccounts(ctx, &driverpayports.ListEscrowAccountsRequest{
 		Filter:   filter.options(params),
 		WorkerID: filter.workerID,
 		Status:   driverpay.EscrowAccountStatus(filter.status),
@@ -659,7 +661,7 @@ func (t *listPayAdvancesTool) ParamSchema() map[string]any {
 	return workerFilterSchema(advanceStatuses, "advances")
 }
 
-func (t *listPayAdvancesTool) Policy() serviceports.ToolPolicy {
+func (t *listPayAdvancesTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourcePayAdvance})
 }
 
@@ -679,7 +681,7 @@ type payAdvanceRow struct {
 
 func (t *listPayAdvancesTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -689,7 +691,7 @@ func (t *listPayAdvancesTool) Query(
 		return nil, err
 	}
 
-	result, err := t.pay.ListAdvances(ctx, &repositories.ListPayAdvancesRequest{
+	result, err := t.pay.ListAdvances(ctx, &driverpayports.ListPayAdvancesRequest{
 		Filter:   filter.options(params),
 		WorkerID: filter.workerID,
 		Status:   driverpay.AdvanceStatus(filter.status),
@@ -741,10 +743,10 @@ func (t *listPayAdvancesTool) Query(
 // before it would propose the deduction it had been asked for.
 func (t *listPayAdvancesTool) advancesInOtherStatuses(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 	filter workerFilter,
 ) string {
-	result, err := t.pay.ListAdvances(ctx, &repositories.ListPayAdvancesRequest{
+	result, err := t.pay.ListAdvances(ctx, &driverpayports.ListPayAdvancesRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenantOf(params),
 			Pagination: pagination.Info{Limit: maxOtherSettlements},
@@ -807,13 +809,13 @@ func (t *listRecurringDeductionsTool) ParamSchema() map[string]any {
 	return workerFilterSchema(deductionStatuses, "deductions")
 }
 
-func (t *listRecurringDeductionsTool) Policy() serviceports.ToolPolicy {
+func (t *listRecurringDeductionsTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceRecurringDeduction})
 }
 
 func (t *listRecurringDeductionsTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -823,7 +825,7 @@ func (t *listRecurringDeductionsTool) Query(
 		return nil, err
 	}
 
-	result, err := t.pay.ListDeductions(ctx, &repositories.ListRecurringDeductionsRequest{
+	result, err := t.pay.ListDeductions(ctx, &driverpayports.ListRecurringDeductionsRequest{
 		Filter:   filter.options(params),
 		WorkerID: filter.workerID,
 		Status:   driverpay.DeductionStatus(filter.status),
@@ -882,13 +884,13 @@ func (t *listRecurringEarningsTool) ParamSchema() map[string]any {
 	return workerFilterSchema(earningStatuses, "earnings")
 }
 
-func (t *listRecurringEarningsTool) Policy() serviceports.ToolPolicy {
+func (t *listRecurringEarningsTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceRecurringEarning})
 }
 
 func (t *listRecurringEarningsTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -898,7 +900,7 @@ func (t *listRecurringEarningsTool) Query(
 		return nil, err
 	}
 
-	result, err := t.pay.ListEarnings(ctx, &repositories.ListRecurringEarningsRequest{
+	result, err := t.pay.ListEarnings(ctx, &driverpayports.ListRecurringEarningsRequest{
 		Filter:   filter.options(params),
 		WorkerID: filter.workerID,
 		Status:   driverpay.EarningStatus(filter.status),

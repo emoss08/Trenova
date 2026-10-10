@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -22,7 +22,7 @@ type resolvingTool struct {
 
 func (r *resolvingTool) ResolveSelection(
 	_ context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the interface passes params by value
 ) (map[string]any, error) {
 	r.asked = append(r.asked, params.Params)
 	if r.err != nil {
@@ -36,21 +36,21 @@ func runSelection(
 	t *testing.T,
 	tool *resolvingTool,
 	auto bool,
-) *serviceports.RunResult {
+) *agentports.RunResult {
 	t.Helper()
 
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		toolTurn("transfer_to_billing", map[string]any{"allTransferable": true}),
 		textTurn("Done."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []serviceports.AgentTool{tool}}, nil)
+		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
 	definition := testDefinition("transfer_to_billing")
 	if auto {
 		definition = autoDefinition("transfer_to_billing")
 	}
 
-	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+	result, err := rt.Run(t.Context(), &agentports.RunRequest{
 		Definition: definition,
 		Actor:      testActor(),
 		Input:      "Transfer all of them.",
@@ -139,7 +139,7 @@ type pinningTool struct {
 
 func (p *pinningTool) ResolveProposalSelection(
 	_ context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the interface passes params by value
 ) (map[string]any, error) {
 	p.asked = append(p.asked, params.Params)
 	if p.err != nil {
@@ -149,21 +149,21 @@ func (p *pinningTool) ResolveProposalSelection(
 	return p.pinned, nil
 }
 
-func runPinning(t *testing.T, tool *pinningTool, auto bool) *serviceports.RunResult {
+func runPinning(t *testing.T, tool *pinningTool, auto bool) *agentports.RunResult {
 	t.Helper()
 
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		toolTurn("retry_accounting_sync", map[string]any{"errorCategories": []any{"Transient"}}),
 		textTurn("Done."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []serviceports.AgentTool{tool}}, nil)
+		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
 	definition := testDefinition("retry_accounting_sync")
 	if auto {
 		definition = autoDefinition("retry_accounting_sync")
 	}
 
-	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+	result, err := rt.Run(t.Context(), &agentports.RunRequest{
 		Definition: definition,
 		Actor:      testActor(),
 		Input:      "Retry what failed in the outage.",

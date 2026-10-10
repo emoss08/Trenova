@@ -5,9 +5,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/carriercapacity"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carriercapacityports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,18 +24,18 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.CarrierCapacityPostingRepository
+	Repo         carriercapacityports.CarrierCapacityPostingRepository
 	Validator    *Validator
-	AuditService services.AuditService
-	Invalidator  services.ShipmentInvalidator
+	AuditService auditports.AuditService
+	Invalidator  shipmentports.ShipmentInvalidator
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.CarrierCapacityPostingRepository
+	repo         carriercapacityports.CarrierCapacityPostingRepository
 	validator    *Validator
-	auditService services.AuditService
-	invalidator  services.ShipmentInvalidator
+	auditService auditports.AuditService
+	invalidator  shipmentports.ShipmentInvalidator
 }
 
 func New(p Params) *Service {
@@ -47,21 +50,21 @@ func New(p Params) *Service {
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListCarrierCapacityPostingsRequest,
+	req *carriercapacityports.ListCarrierCapacityPostingsRequest,
 ) (*pagination.CursorListResult[*carriercapacity.Posting], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	req *repositories.GetCarrierCapacityPostingRequest,
+	req *carriercapacityports.GetCarrierCapacityPostingRequest,
 ) (*carriercapacity.Posting, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) ListOpen(
 	ctx context.Context,
-	req *repositories.ListOpenCarrierCapacityRequest,
+	req *carriercapacityports.ListOpenCarrierCapacityRequest,
 ) ([]*carriercapacity.Posting, error) {
 	return s.repo.ListOpen(ctx, req)
 }
@@ -80,13 +83,13 @@ func (s *Service) PlanCreate(
 func (s *Service) PlanUpdate(
 	ctx context.Context,
 	entity *carriercapacity.Posting,
-) (*services.RecordChange[carriercapacity.Posting], error) {
+) (*kernelports.RecordChange[carriercapacity.Posting], error) {
 	normalize(entity)
 	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetByID(ctx, &repositories.GetCarrierCapacityPostingRequest{
+	original, err := s.repo.GetByID(ctx, &carriercapacityports.GetCarrierCapacityPostingRequest{
 		ID: entity.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -98,14 +101,14 @@ func (s *Service) PlanUpdate(
 	}
 
 	entity.CreatedAt = original.CreatedAt
-	return &services.RecordChange[carriercapacity.Posting]{Before: original, After: entity}, nil
+	return &kernelports.RecordChange[carriercapacity.Posting]{Before: original, After: entity}, nil
 }
 
 func (s *Service) PlanDelete(
 	ctx context.Context,
-	req *repositories.DeleteCarrierCapacityPostingRequest,
+	req *carriercapacityports.DeleteCarrierCapacityPostingRequest,
 ) (*carriercapacity.Posting, error) {
-	return s.repo.GetByID(ctx, &repositories.GetCarrierCapacityPostingRequest{
+	return s.repo.GetByID(ctx, &carriercapacityports.GetCarrierCapacityPostingRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -114,7 +117,7 @@ func (s *Service) PlanDelete(
 func (s *Service) Create(
 	ctx context.Context,
 	entity *carriercapacity.Posting,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*carriercapacity.Posting, error) {
 	planned, err := s.PlanCreate(ctx, entity)
 	if err != nil {
@@ -135,7 +138,7 @@ func (s *Service) Create(
 func (s *Service) Update(
 	ctx context.Context,
 	entity *carriercapacity.Posting,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*carriercapacity.Posting, error) {
 	change, err := s.PlanUpdate(ctx, entity)
 	if err != nil {
@@ -155,8 +158,8 @@ func (s *Service) Update(
 
 func (s *Service) Delete(
 	ctx context.Context,
-	req *repositories.DeleteCarrierCapacityPostingRequest,
-	actor *services.RequestActor,
+	req *carriercapacityports.DeleteCarrierCapacityPostingRequest,
+	actor *permissionports.RequestActor,
 ) error {
 	original, err := s.PlanDelete(ctx, req)
 	if err != nil {
@@ -174,7 +177,7 @@ func (s *Service) Delete(
 }
 
 func (s *Service) audit(
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	current, previous *carriercapacity.Posting,
 	operation permission.Operation,
 	comment string,
@@ -185,7 +188,7 @@ func (s *Service) audit(
 		subject = previous
 	}
 
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceCarrierCapacityPosting,
 		ResourceID:     subject.ID.String(),
 		Operation:      operation,
@@ -196,7 +199,7 @@ func (s *Service) audit(
 		OrganizationID: subject.OrganizationID,
 		BusinessUnitID: subject.BusinessUnitID,
 	}
-	options := []services.LogOption{auditservice.WithComment(comment)}
+	options := []auditports.LogOption{auditservice.WithComment(comment)}
 	if current != nil {
 		params.CurrentState = jsonutils.MustToJSON(current)
 	}
@@ -215,12 +218,12 @@ func (s *Service) audit(
 func (s *Service) invalidate(
 	ctx context.Context,
 	entity *carriercapacity.Posting,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) {
-	services.InvalidateShipments(
+	shipmentports.InvalidateShipments(
 		ctx,
 		s.invalidator,
-		services.ShipmentInvalidationByActor(
+		shipmentports.ShipmentInvalidationByActor(
 			pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
 			actor.AuditActorOrSystem(),
 			pulid.Nil,

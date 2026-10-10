@@ -5,10 +5,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -33,7 +33,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.EDIConnectionRepository {
+func New(p Params) ediports.EDIConnectionRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.edi-connection-repository"),
@@ -42,7 +42,7 @@ func New(p Params) repositories.EDIConnectionRepository {
 
 func (r *repository) ListConnections(
 	ctx context.Context,
-	req *repositories.ListEDIConnectionsRequest,
+	req *ediports.ListEDIConnectionsRequest,
 ) (*pagination.ListResult[*edi.EDIConnection], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDIConnection], error) {
 		entities := make([]*edi.EDIConnection, 0, req.Filter.Pagination.SafeLimit())
@@ -75,7 +75,7 @@ func (r *repository) ListConnections(
 
 func filterConnectionsQuery(
 	query *bun.SelectQuery,
-	req *repositories.ListEDIConnectionsRequest,
+	req *ediports.ListEDIConnectionsRequest,
 ) *bun.SelectQuery {
 	query = applyConnectionTenantFilter(query, req.Filter.TenantInfo)
 	if req.Filter.Query == "" {
@@ -96,7 +96,7 @@ func filterConnectionsQuery(
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
-	req *repositories.EDIConnectionSelectOptionsRequest,
+	req *ediports.EDIConnectionSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDIConnection], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDIConnection], error) {
 		cols := buncolgen.EDIConnectionColumns
@@ -145,7 +145,7 @@ func (r *repository) SelectOptions(
 
 func (r *repository) GetConnectionsByIDs(
 	ctx context.Context,
-	req repositories.GetEDIConnectionsByIDsRequest,
+	req ediports.GetEDIConnectionsByIDsRequest,
 ) ([]*edi.EDIConnection, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDIConnection, error) {
 		entities := make([]*edi.EDIConnection, 0, len(req.ConnectionIDs))
@@ -174,7 +174,7 @@ func (r *repository) GetConnectionsByIDs(
 
 func (r *repository) GetConnectionByID(
 	ctx context.Context,
-	req repositories.GetEDIConnectionByIDRequest,
+	req ediports.GetEDIConnectionByIDRequest,
 ) (*edi.EDIConnection, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIConnection, error) {
 		entity := new(edi.EDIConnection)
@@ -203,7 +203,7 @@ func (r *repository) GetConnectionByID(
 
 func (r *repository) GetConnectionForUpdate(
 	ctx context.Context,
-	req repositories.GetEDIConnectionForUpdateRequest,
+	req ediports.GetEDIConnectionForUpdateRequest,
 ) (*edi.EDIConnection, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIConnection, error) {
 		entity := new(edi.EDIConnection)
@@ -228,7 +228,7 @@ func (r *repository) GetConnectionForUpdate(
 
 func (r *repository) GetActiveConnectionForPartner(
 	ctx context.Context,
-	req repositories.GetActiveEDIConnectionForPartnerRequest,
+	req ediports.GetActiveEDIConnectionForPartnerRequest,
 ) (*edi.EDIConnection, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIConnection, error) {
 		entity := new(edi.EDIConnection)
@@ -385,11 +385,11 @@ func (r *repository) ensureTargetOrganizationInBusinessUnit(
 
 func (r *repository) AcceptInternalConnection(
 	ctx context.Context,
-	req *repositories.CreateInternalEDIConnectionAcceptanceRequest,
+	req *ediports.CreateInternalEDIConnectionAcceptanceRequest,
 ) (*edi.EDIConnection, error) {
 	ctx = dbscope.WithSystem(ctx, "create the partner and profile records in both organizations of an internal connection atomically")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIConnection, error) {
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 			if _, err := r.db.DBForContext(txCtx).
 				NewInsert().
 				Model(req.SourcePartner).

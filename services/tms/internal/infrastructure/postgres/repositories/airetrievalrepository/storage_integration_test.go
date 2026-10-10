@@ -10,8 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/core/domain/document"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/migrations"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -34,7 +34,7 @@ func TestDeletingASourceRemovesItsRetrievalRows(t *testing.T) {
 		{airetrieval.SourceTypeMemory, kept.ID},
 		{airetrieval.SourceTypeDocument, doc.ID},
 	} {
-		_, err := h.repo.MarkStale(h.ctx, &repositories.MarkAIRetrievalStaleRequest{
+		_, err := h.repo.MarkStale(h.ctx, &agentports.MarkAIRetrievalStaleRequest{
 			TenantInfo: h.tenant,
 			SourceType: source.sourceType,
 			SourceIDs:  []pulid.ID{source.id},
@@ -51,15 +51,15 @@ func TestDeletingASourceRemovesItsRetrievalRows(t *testing.T) {
 	}
 	if withVectors {
 		h.replace(t, h.tenant, airetrieval.SourceTypeMemory, memory.ID, modelA, 768,
-			repositories.EmbeddingChunk{ChunkIndex: 0, ContentHash: "m",
+			agentports.EmbeddingChunk{ChunkIndex: 0, ContentHash: "m",
 				Vector: axisVector(768, map[int]float32{0: 1})})
 		h.replace(t, h.tenant, airetrieval.SourceTypeMemory, kept.ID, modelA, 768,
-			repositories.EmbeddingChunk{ChunkIndex: 0, ContentHash: "k",
+			agentports.EmbeddingChunk{ChunkIndex: 0, ContentHash: "k",
 				Vector: axisVector(768, map[int]float32{1: 1})})
 		h.replace(t, h.tenant, airetrieval.SourceTypeDocument, doc.ID, modelA, 768,
-			repositories.EmbeddingChunk{ChunkIndex: 0, ContentHash: "d0",
+			agentports.EmbeddingChunk{ChunkIndex: 0, ContentHash: "d0",
 				Vector: axisVector(768, map[int]float32{2: 1})},
-			repositories.EmbeddingChunk{ChunkIndex: 1, ContentHash: "d1",
+			agentports.EmbeddingChunk{ChunkIndex: 1, ContentHash: "d1",
 				Vector: axisVector(768, map[int]float32{3: 1})})
 	}
 
@@ -122,7 +122,7 @@ func TestIndexOutbox_ClaimsOnceAndKeepsLateWritesPending(t *testing.T) {
 	second := h.insertMemory(t, "Carrier Blue Ox needs a lumper receipt")
 	now := time.Now().Unix()
 
-	marked, err := h.repo.MarkStale(h.ctx, &repositories.MarkAIRetrievalStaleRequest{
+	marked, err := h.repo.MarkStale(h.ctx, &agentports.MarkAIRetrievalStaleRequest{
 		TenantInfo: h.tenant,
 		SourceType: airetrieval.SourceTypeMemory,
 		SourceIDs:  []pulid.ID{first.ID, second.ID, first.ID},
@@ -132,7 +132,7 @@ func TestIndexOutbox_ClaimsOnceAndKeepsLateWritesPending(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 2, marked, "a repeated id is marked once")
 
-	claimed, err := h.repo.ClaimIndexEntries(h.ctx, &repositories.ClaimIndexEntriesRequest{
+	claimed, err := h.repo.ClaimIndexEntries(h.ctx, &agentports.ClaimIndexEntriesRequest{
 		TenantInfo: h.tenant,
 		ModelKey:   modelA,
 		Limit:      10,
@@ -147,7 +147,7 @@ func TestIndexOutbox_ClaimsOnceAndKeepsLateWritesPending(t *testing.T) {
 		assert.Equal(t, now+60, *entry.LeaseExpiresAt)
 	}
 
-	again, err := h.repo.ClaimIndexEntries(h.ctx, &repositories.ClaimIndexEntriesRequest{
+	again, err := h.repo.ClaimIndexEntries(h.ctx, &agentports.ClaimIndexEntriesRequest{
 		TenantInfo: h.tenant,
 		ModelKey:   modelA,
 		Now:        now + 1,
@@ -155,7 +155,7 @@ func TestIndexOutbox_ClaimsOnceAndKeepsLateWritesPending(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, again, "a leased entry is not claimed twice")
 
-	_, err = h.repo.MarkStale(h.ctx, &repositories.MarkAIRetrievalStaleRequest{
+	_, err = h.repo.MarkStale(h.ctx, &agentports.MarkAIRetrievalStaleRequest{
 		TenantInfo: h.tenant,
 		SourceType: airetrieval.SourceTypeMemory,
 		SourceIDs:  []pulid.ID{second.ID},
@@ -164,23 +164,23 @@ func TestIndexOutbox_ClaimsOnceAndKeepsLateWritesPending(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	outcomes := make([]repositories.IndexEntryOutcome, 0, len(claimed))
+	outcomes := make([]agentports.IndexEntryOutcome, 0, len(claimed))
 	for _, entry := range claimed {
-		outcomes = append(outcomes, repositories.IndexEntryOutcome{
+		outcomes = append(outcomes, agentports.IndexEntryOutcome{
 			Key:        entry.Key(),
 			Generation: entry.Generation,
 			ChunkCount: 1,
 		})
 	}
-	result, err := h.repo.MarkIndexed(h.ctx, repositories.MarkIndexEntriesRequest{
+	result, err := h.repo.MarkIndexed(h.ctx, agentports.MarkIndexEntriesRequest{
 		Outcomes: outcomes,
 		Now:      now + 3,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, repositories.MarkIndexEntriesResult{Applied: 1, Superseded: 1}, result,
+	assert.Equal(t, agentports.MarkIndexEntriesResult{Applied: 1, Superseded: 1}, result,
 		"a source written while it was being indexed stays pending")
 
-	retry, err := h.repo.ClaimIndexEntries(h.ctx, &repositories.ClaimIndexEntriesRequest{
+	retry, err := h.repo.ClaimIndexEntries(h.ctx, &agentports.ClaimIndexEntriesRequest{
 		TenantInfo: h.tenant,
 		ModelKey:   modelA,
 		Now:        now + 4,
@@ -190,8 +190,8 @@ func TestIndexOutbox_ClaimsOnceAndKeepsLateWritesPending(t *testing.T) {
 	assert.Equal(t, second.ID, retry[0].SourceID)
 	assert.Equal(t, int64(2), retry[0].Generation)
 
-	failed, err := h.repo.MarkFailed(h.ctx, repositories.MarkIndexEntriesRequest{
-		Outcomes: []repositories.IndexEntryOutcome{{
+	failed, err := h.repo.MarkFailed(h.ctx, agentports.MarkIndexEntriesRequest{
+		Outcomes: []agentports.IndexEntryOutcome{{
 			Key:        retry[0].Key(),
 			Generation: retry[0].Generation,
 			Error:      "provider returned 503",
@@ -202,7 +202,7 @@ func TestIndexOutbox_ClaimsOnceAndKeepsLateWritesPending(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 1, failed.Applied)
 
-	early, err := h.repo.ClaimIndexEntries(h.ctx, &repositories.ClaimIndexEntriesRequest{
+	early, err := h.repo.ClaimIndexEntries(h.ctx, &agentports.ClaimIndexEntriesRequest{
 		TenantInfo: h.tenant,
 		ModelKey:   modelA,
 		Now:        now + 6,
@@ -210,7 +210,7 @@ func TestIndexOutbox_ClaimsOnceAndKeepsLateWritesPending(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, early, "a retry waits for its backoff")
 
-	counts, err := h.repo.CountIndexEntries(h.ctx, repositories.CountIndexEntriesRequest{
+	counts, err := h.repo.CountIndexEntries(h.ctx, agentports.CountIndexEntriesRequest{
 		TenantInfo: h.tenant,
 		ModelKey:   modelA,
 	})
@@ -225,7 +225,7 @@ func TestIndexOutbox_ClaimsOnceAndKeepsLateWritesPending(t *testing.T) {
 		airetrieval.IndexStatusPending: 1,
 	}, byStatus)
 
-	stale, err := h.repo.FindStaleSources(h.ctx, &repositories.FindStaleAIRetrievalSourcesRequest{
+	stale, err := h.repo.FindStaleSources(h.ctx, &agentports.FindStaleAIRetrievalSourcesRequest{
 		TenantInfo: h.tenant,
 		SourceType: airetrieval.SourceTypeMemory,
 		ModelKey:   modelA,
@@ -245,7 +245,7 @@ func TestIndexOutbox_ClaimsOnceAndKeepsLateWritesPending(t *testing.T) {
 		Exec(h.ctx)
 	require.NoError(t, err)
 
-	stale, err = h.repo.FindStaleSources(h.ctx, &repositories.FindStaleAIRetrievalSourcesRequest{
+	stale, err = h.repo.FindStaleSources(h.ctx, &agentports.FindStaleAIRetrievalSourcesRequest{
 		TenantInfo: h.tenant,
 		SourceType: airetrieval.SourceTypeMemory,
 		ModelKey:   modelA,
@@ -283,7 +283,7 @@ func TestFallback_ReportsUnavailableWithoutTheExtension(t *testing.T) {
 		Reason: airetrieval.UnavailableReasonExtensionMissing,
 	}, availability)
 
-	_, err = repo.Search(h.ctx, &repositories.VectorSearchRequest{
+	_, err = repo.Search(h.ctx, &agentports.VectorSearchRequest{
 		TenantInfo: h.tenant,
 		ModelKey:   modelA,
 		Dimensions: 768,
@@ -294,15 +294,15 @@ func TestFallback_ReportsUnavailableWithoutTheExtension(t *testing.T) {
 	require.ErrorAs(t, err, &unavailable)
 	assert.Equal(t, airetrieval.UnavailableReasonExtensionMissing, unavailable.Reason)
 
-	_, err = repo.ReplaceChunks(h.ctx, &repositories.ReplaceEmbeddingChunksRequest{
-		Source: repositories.AIRetrievalSourceRef{
+	_, err = repo.ReplaceChunks(h.ctx, &agentports.ReplaceEmbeddingChunksRequest{
+		Source: agentports.AIRetrievalSourceRef{
 			TenantInfo: h.tenant,
 			SourceType: airetrieval.SourceTypeMemory,
 			SourceID:   pulid.MustNew("amem_"),
 		},
 		ModelKey:   modelA,
 		Dimensions: 768,
-		Chunks: []repositories.EmbeddingChunk{{
+		Chunks: []agentports.EmbeddingChunk{{
 			ChunkIndex:  0,
 			ContentHash: "x",
 			Vector:      axisVector(768, map[int]float32{0: 1}),
@@ -310,19 +310,19 @@ func TestFallback_ReportsUnavailableWithoutTheExtension(t *testing.T) {
 	})
 	require.ErrorIs(t, err, airetrieval.ErrVectorUnavailable)
 
-	_, err = repo.GetCatalogEmbeddings(h.ctx, repositories.GetCatalogEmbeddingsRequest{
+	_, err = repo.GetCatalogEmbeddings(h.ctx, agentports.GetCatalogEmbeddingsRequest{
 		ModelKey: modelA,
 		Corpus:   airetrieval.CatalogCorpusTools,
 	})
 	require.ErrorIs(t, err, airetrieval.ErrVectorUnavailable)
 
 	memory := h.insertMemory(t, "Keyword search keeps working")
-	source := &repositories.AIRetrievalSourceRef{
+	source := &agentports.AIRetrievalSourceRef{
 		TenantInfo: h.tenant,
 		SourceType: airetrieval.SourceTypeMemory,
 		SourceID:   memory.ID,
 	}
-	marked, err := repo.MarkStale(h.ctx, &repositories.MarkAIRetrievalStaleRequest{
+	marked, err := repo.MarkStale(h.ctx, &agentports.MarkAIRetrievalStaleRequest{
 		TenantInfo: h.tenant,
 		SourceType: airetrieval.SourceTypeMemory,
 		SourceIDs:  []pulid.ID{memory.ID},
@@ -333,7 +333,7 @@ func TestFallback_ReportsUnavailableWithoutTheExtension(t *testing.T) {
 
 	deleted, err := repo.DeleteSource(h.ctx, source)
 	require.NoError(t, err)
-	assert.Equal(t, repositories.DeleteAIRetrievalSourceResult{IndexEntries: 1}, deleted)
+	assert.Equal(t, agentports.DeleteAIRetrievalSourceResult{IndexEntries: 1}, deleted)
 
 	settings, err := repo.GetSettings(h.ctx, h.tenant)
 	require.NoError(t, err)
@@ -384,7 +384,7 @@ func TestEnableVector_InstallsTheSchemaAMigrationSkipped(t *testing.T) {
 	memory := h.insertMemory(t, "Indexed after enabling")
 	h.repo = repo
 	h.replace(t, h.tenant, airetrieval.SourceTypeMemory, memory.ID, modelA, 768,
-		repositories.EmbeddingChunk{ChunkIndex: 0, ContentHash: "e",
+		agentports.EmbeddingChunk{ChunkIndex: 0, ContentHash: "e",
 			Vector: axisVector(768, map[int]float32{0: 1})})
 	_, err = h.db.NewDelete().
 		Model((*agent.Memory)(nil)).

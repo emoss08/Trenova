@@ -11,8 +11,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -25,38 +29,38 @@ type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Repo          repositories.AgentReflectionRepository
-	Conversations repositories.ConversationRepository
-	Definitions   repositories.AgentDefinitionRepository
-	Controls      repositories.AgentControlRepository
-	Runs          repositories.AgentRunRepository
-	Proposals     repositories.AgentProposalRepository
-	Decisions     repositories.AgentDecisionRepository
-	Memories      services.AgentMemoryService
-	Feedback      repositories.AIFeedbackRepository `optional:"true"`
-	Budgets       services.AgentBudgetService       `optional:"true"`
-	Permissions   services.PermissionEngine         `optional:"true"`
-	Realtime      services.RealtimeService          `optional:"true"`
+	Repo          agentports.AgentReflectionRepository
+	Conversations agentports.ConversationRepository
+	Definitions   agentdefinitionports.AgentDefinitionRepository
+	Controls      tenantports.AgentControlRepository
+	Runs          agentports.AgentRunRepository
+	Proposals     agentports.AgentProposalRepository
+	Decisions     agentports.AgentDecisionRepository
+	Memories      agentports.AgentMemoryService
+	Feedback      aifeedbackports.AIFeedbackRepository `optional:"true"`
+	Budgets       agentports.AgentBudgetService        `optional:"true"`
+	Permissions   permissionports.PermissionEngine     `optional:"true"`
+	Realtime      agentports.RealtimeService           `optional:"true"`
 }
 
 type Service struct {
 	l             *zap.Logger
-	repo          repositories.AgentReflectionRepository
-	conversations repositories.ConversationRepository
-	definitions   repositories.AgentDefinitionRepository
-	controls      repositories.AgentControlRepository
-	runs          repositories.AgentRunRepository
-	proposals     repositories.AgentProposalRepository
-	decisions     repositories.AgentDecisionRepository
-	memories      services.AgentMemoryService
-	feedback      repositories.AIFeedbackRepository
-	budgets       services.AgentBudgetService
-	permissions   services.PermissionEngine
-	realtime      services.RealtimeService
+	repo          agentports.AgentReflectionRepository
+	conversations agentports.ConversationRepository
+	definitions   agentdefinitionports.AgentDefinitionRepository
+	controls      tenantports.AgentControlRepository
+	runs          agentports.AgentRunRepository
+	proposals     agentports.AgentProposalRepository
+	decisions     agentports.AgentDecisionRepository
+	memories      agentports.AgentMemoryService
+	feedback      aifeedbackports.AIFeedbackRepository
+	budgets       agentports.AgentBudgetService
+	permissions   permissionports.PermissionEngine
+	realtime      agentports.RealtimeService
 	now           func() int64
 }
 
-func New(p Params) services.AgentReflectionService {
+func New(p Params) agentports.AgentReflectionService {
 	return &Service{
 		l:             p.Logger.Named("service.agentreflection"),
 		repo:          p.Repo,
@@ -77,16 +81,16 @@ func New(p Params) services.AgentReflectionService {
 
 func (s *Service) PrepareThread(
 	ctx context.Context,
-	req *services.ReflectOnThreadRequest,
-) (*services.ReflectionPlan, error) {
+	req *agentports.ReflectOnThreadRequest,
+) (*agentports.ReflectionPlan, error) {
 	tenant := req.TenantInfo
-	thread, err := s.conversations.GetThreadOwned(ctx, repositories.GetThreadOwnedRequest{
+	thread, err := s.conversations.GetThreadOwned(ctx, agentports.GetThreadOwnedRequest{
 		ID:         req.ThreadID,
 		TenantInfo: tenant,
 	})
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
-			return &services.ReflectionPlan{TenantInfo: tenant}, nil
+			return &agentports.ReflectionPlan{TenantInfo: tenant}, nil
 		}
 
 		return nil, fmt.Errorf("read the conversation to look back over: %w", err)
@@ -95,7 +99,7 @@ func (s *Service) PrepareThread(
 	after := -1
 	through, found, err := s.repo.ThreadReflectedThrough(
 		ctx,
-		repositories.ThreadReflectedThroughRequest{
+		agentports.ThreadReflectedThroughRequest{
 			ThreadID:   thread.ID,
 			TenantInfo: tenant,
 		},
@@ -107,7 +111,7 @@ func (s *Service) PrepareThread(
 		after = through
 	}
 
-	messages, err := s.conversations.ListMessages(ctx, repositories.ListMessagesRequest{
+	messages, err := s.conversations.ListMessages(ctx, agentports.ListMessagesRequest{
 		ThreadID:      thread.ID,
 		TenantInfo:    tenant,
 		AfterSequence: &after,
@@ -117,7 +121,7 @@ func (s *Service) PrepareThread(
 		return nil, fmt.Errorf("read the conversation's latest turns: %w", err)
 	}
 	if len(messages) == 0 {
-		return &services.ReflectionPlan{TenantInfo: tenant}, nil
+		return &agentports.ReflectionPlan{TenantInfo: tenant}, nil
 	}
 
 	person := thread.UserID
@@ -132,10 +136,10 @@ func (s *Service) PrepareThread(
 		ThroughSequence:   messages[len(messages)-1].Sequence,
 	})
 	if err != nil || reflection == nil {
-		return &services.ReflectionPlan{TenantInfo: tenant}, err
+		return &agentports.ReflectionPlan{TenantInfo: tenant}, err
 	}
 
-	plan := &services.ReflectionPlan{
+	plan := &agentports.ReflectionPlan{
 		TenantInfo:        tenant,
 		ReflectionID:      reflection.ID,
 		Subject:           agent.ReflectionSubjectThread,
@@ -174,22 +178,22 @@ func (s *Service) PrepareThread(
 
 func (s *Service) PrepareRun(
 	ctx context.Context,
-	req *services.ReflectOnRunRequest,
-) (*services.ReflectionPlan, error) {
+	req *agentports.ReflectOnRunRequest,
+) (*agentports.ReflectionPlan, error) {
 	tenant := req.TenantInfo
 	run, err := s.runs.GetByID(
 		ctx,
-		repositories.GetAgentRunByIDRequest{ID: req.RunID, TenantInfo: &tenant},
+		agentports.GetAgentRunByIDRequest{ID: req.RunID, TenantInfo: &tenant},
 	)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
-			return &services.ReflectionPlan{TenantInfo: tenant}, nil
+			return &agentports.ReflectionPlan{TenantInfo: tenant}, nil
 		}
 
 		return nil, fmt.Errorf("read the run to look back over: %w", err)
 	}
 	if run.AgentDefinitionID.IsNil() || !runSettled(run.Status) {
-		return &services.ReflectionPlan{TenantInfo: tenant}, nil
+		return &agentports.ReflectionPlan{TenantInfo: tenant}, nil
 	}
 
 	reflection, err := s.claim(ctx, &agent.Reflection{
@@ -200,10 +204,10 @@ func (s *Service) PrepareRun(
 		RunID:             pulid.PtrOrNil(run.ID),
 	})
 	if err != nil || reflection == nil {
-		return &services.ReflectionPlan{TenantInfo: tenant}, err
+		return &agentports.ReflectionPlan{TenantInfo: tenant}, err
 	}
 
-	plan := &services.ReflectionPlan{
+	plan := &agentports.ReflectionPlan{
 		TenantInfo:        tenant,
 		ReflectionID:      reflection.ID,
 		Subject:           agent.ReflectionSubjectRun,
@@ -243,14 +247,14 @@ func (s *Service) PrepareRun(
 
 type readyParams struct {
 	reflection *agent.Reflection
-	plan       *services.ReflectionPlan
+	plan       *agentports.ReflectionPlan
 	definition *agentdefinition.Definition
 	window     *Window
 	trigger    string
 	provider   pulid.ID
 }
 
-func (s *Service) ready(ctx context.Context, p *readyParams) (*services.ReflectionPlan, error) {
+func (s *Service) ready(ctx context.Context, p *readyParams) (*agentports.ReflectionPlan, error) {
 	plan := p.plan
 	signals := ReadSignals(p.window)
 	plan.Signals = signals
@@ -263,7 +267,7 @@ func (s *Service) ready(ctx context.Context, p *readyParams) (*services.Reflecti
 	}
 
 	toolNames := windowToolNames(p.window.Messages)
-	known, err := s.memories.ForContext(ctx, services.MemoryContextRequest{
+	known, err := s.memories.ForContext(ctx, agentports.MemoryContextRequest{
 		TenantInfo:        plan.TenantInfo,
 		AgentDefinitionID: plan.AgentDefinitionID,
 		ReaderUserID:      plan.PersonUserID,
@@ -308,7 +312,7 @@ func (s *Service) ready(ctx context.Context, p *readyParams) (*services.Reflecti
 		Messages:    p.window.Messages,
 	}
 	version := p.definition.Version
-	plan.Request = &services.StructuredCompletionRequest{
+	plan.Request = &agentports.StructuredCompletionRequest{
 		TenantInfo:          plan.TenantInfo,
 		Task:                aiprovider.TaskAssistantChat,
 		System:              systemPrompt(in),
@@ -317,7 +321,7 @@ func (s *Service) ready(ctx context.Context, p *readyParams) (*services.Reflecti
 		SchemaName:          schemaName,
 		MaxTokens:           reflectionMaxTokens,
 		PreferredProviderID: p.provider,
-		Attribution: services.AIUsageAttribution{
+		Attribution: aiusageports.AIUsageAttribution{
 			UserID:            plan.PersonUserID,
 			AgentDefinitionID: plan.AgentDefinitionID,
 			ThreadID:          plan.ThreadID,
@@ -365,9 +369,9 @@ func (s *Service) claim(ctx context.Context, entity *agent.Reflection) (*agent.R
 func (s *Service) skip(
 	ctx context.Context,
 	reflection *agent.Reflection,
-	plan *services.ReflectionPlan,
+	plan *agentports.ReflectionPlan,
 	reason agent.ReflectionSkip,
-) (*services.ReflectionPlan, error) {
+) (*agentports.ReflectionPlan, error) {
 	reflection.Skip(reason, s.now())
 	reflection.Tainted = plan.Tainted()
 	if _, err := s.repo.Update(ctx, reflection); err != nil {
@@ -391,7 +395,7 @@ func (s *Service) usableAgent(
 		return nil, agent.ReflectionSkipLearningOff, nil
 	}
 
-	definition, err := s.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	definition, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         agentID,
 		TenantInfo: tenant,
 	})
@@ -430,12 +434,12 @@ func (s *Service) overBudget(ctx context.Context, definition *agentdefinition.De
 	return refusal.Refused()
 }
 
-func (s *Service) Fail(ctx context.Context, req *services.FailReflectionRequest) error {
+func (s *Service) Fail(ctx context.Context, req *agentports.FailReflectionRequest) error {
 	if req == nil || req.Plan == nil || req.Plan.ReflectionID.IsNil() {
 		return nil
 	}
 
-	reflection, err := s.repo.GetByID(ctx, repositories.GetAgentReflectionRequest{
+	reflection, err := s.repo.GetByID(ctx, agentports.GetAgentReflectionRequest{
 		ID:         req.Plan.ReflectionID,
 		TenantInfo: req.Plan.TenantInfo,
 	})
@@ -454,7 +458,7 @@ func (s *Service) Fail(ctx context.Context, req *services.FailReflectionRequest)
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListAgentReflectionConnectionRequest,
+	req *agentports.ListAgentReflectionConnectionRequest,
 ) (*pagination.CursorListResult[*agent.Reflection], error) {
 	return s.repo.ListConnection(ctx, req)
 }
@@ -531,10 +535,10 @@ func memoryIDs(memories []*agent.Memory) []pulid.ID {
 	return ids
 }
 
-func subjectRefs(subjects []agent.MemorySubject) []services.ReflectionSubjectRef {
-	refs := make([]services.ReflectionSubjectRef, 0, len(subjects))
+func subjectRefs(subjects []agent.MemorySubject) []agentports.ReflectionSubjectRef {
+	refs := make([]agentports.ReflectionSubjectRef, 0, len(subjects))
 	for _, subject := range subjects {
-		refs = append(refs, services.ReflectionSubjectRef{Type: subject.Type, ID: subject.ID})
+		refs = append(refs, agentports.ReflectionSubjectRef{Type: subject.Type, ID: subject.ID})
 	}
 
 	return refs

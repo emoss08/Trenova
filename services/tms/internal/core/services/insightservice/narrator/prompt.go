@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/insightservice/detector"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/numberguard"
 )
 
@@ -38,7 +38,7 @@ Rules:
 // exactly the figures the guard will accept back. The section is marked
 // untrusted because subject names are customer- and location-supplied text that
 // happens to be passing through a prompt.
-func buildContext(findings []detector.Finding, windowDays int) services.DelimitedContext {
+func buildContext(findings []detector.Finding, windowDays int) agentports.DelimitedContext {
 	var builder strings.Builder
 
 	if windowDays > 0 {
@@ -51,8 +51,8 @@ func buildContext(findings []detector.Finding, windowDays int) services.Delimite
 		writeFinding(&builder, finding)
 	}
 
-	return services.DelimitedContext{
-		Sections: []services.ContextSection{{
+	return agentports.DelimitedContext{
+		Sections: []agentports.ContextSection{{
 			Title:   "Findings",
 			Trusted: false,
 			Content: builder.String(),
@@ -140,5 +140,5 @@ func outputSchema() map[string]any {
 // call failed", because the first is a choice and should not be logged as a
 // fault on every refresh.
 func errorsIsNoProvider(err error) bool {
-	return errors.Is(err, services.ErrNoProviderConfigured)
+	return errors.Is(err, agentports.ErrNoProviderConfigured)
 }

@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/distanceoverride"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/places/ports/distanceoverrideports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,16 +19,16 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.DistanceOverrideRepository
+	Repo         distanceoverrideports.DistanceOverrideRepository
 	Validator    *Validator
-	AuditService services.AuditService
+	AuditService auditports.AuditService
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.DistanceOverrideRepository
+	repo         distanceoverrideports.DistanceOverrideRepository
 	validator    *Validator
-	auditService services.AuditService
+	auditService auditports.AuditService
 }
 
 func New(p Params) *Service {
@@ -42,21 +42,21 @@ func New(p Params) *Service {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListDistanceOverrideRequest,
+	req *distanceoverrideports.ListDistanceOverrideRequest,
 ) (*pagination.ListResult[*distanceoverride.DistanceOverride], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListDistanceOverrideConnectionRequest,
+	req *distanceoverrideports.ListDistanceOverrideConnectionRequest,
 ) (*pagination.CursorListResult[*distanceoverride.DistanceOverride], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	req repositories.GetDistanceOverrideByIDRequest,
+	req distanceoverrideports.GetDistanceOverrideByIDRequest,
 ) (*distanceoverride.DistanceOverride, error) {
 	return s.repo.GetByID(ctx, req)
 }
@@ -83,7 +83,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceDistanceOverride,
 		ResourceID:     createdEntity.GetID().String(),
 		Operation:      permission.OpCreate,
@@ -116,7 +116,7 @@ func (s *Service) Update(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetByID(ctx, repositories.GetDistanceOverrideByIDRequest{
+	original, err := s.repo.GetByID(ctx, distanceoverrideports.GetDistanceOverrideByIDRequest{
 		ID: entity.GetID(),
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.GetOrganizationID(),
@@ -134,7 +134,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceDistanceOverride,
 		ResourceID:     updatedEntity.GetID().String(),
 		Operation:      permission.OpUpdate,
@@ -155,7 +155,7 @@ func (s *Service) Update(
 
 func (s *Service) Delete(
 	ctx context.Context,
-	req repositories.DeleteDistanceOverrideRequest,
+	req distanceoverrideports.DeleteDistanceOverrideRequest,
 	userID pulid.ID,
 ) error {
 	log := s.l.With(
@@ -166,7 +166,7 @@ func (s *Service) Delete(
 
 	existing, err := s.repo.GetByID(
 		ctx,
-		repositories.GetDistanceOverrideByIDRequest(req),
+		distanceoverrideports.GetDistanceOverrideByIDRequest(req),
 	)
 	if err != nil {
 		log.Error("failed to get distance override for delete", zap.Error(err))
@@ -178,7 +178,7 @@ func (s *Service) Delete(
 		return err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceDistanceOverride,
 		ResourceID:     existing.GetID().String(),
 		Operation:      permission.OpDelete,

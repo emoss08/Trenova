@@ -5,7 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/journalentry"
 	"github.com/emoss08/trenova/internal/core/domain/journalsource"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalsourceports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -16,14 +17,14 @@ type Params struct {
 	fx.In
 
 	Logger     *zap.Logger
-	EntryRepo  repositories.JournalEntryRepository
-	SourceRepo repositories.JournalSourceRepository
+	EntryRepo  journalentryports.JournalEntryRepository
+	SourceRepo journalsourceports.JournalSourceRepository
 }
 
 type Service struct {
 	l          *zap.Logger
-	entryRepo  repositories.JournalEntryRepository
-	sourceRepo repositories.JournalSourceRepository
+	entryRepo  journalentryports.JournalEntryRepository
+	sourceRepo journalsourceports.JournalSourceRepository
 }
 
 func New(p Params) *Service {
@@ -36,7 +37,7 @@ func New(p Params) *Service {
 
 func (s *Service) ListEntries(
 	ctx context.Context,
-	req *repositories.ListJournalEntriesRequest,
+	req *journalentryports.ListJournalEntriesRequest,
 ) (*pagination.ListResult[*journalentry.JournalEntry], error) {
 	return s.entryRepo.List(ctx, req)
 }
@@ -48,7 +49,7 @@ func (s *Service) GetEntry(
 ) (*journalentry.JournalEntry, error) {
 	return s.entryRepo.GetByID(
 		ctx,
-		repositories.GetJournalEntryByIDRequest{ID: entryID, TenantInfo: tenantInfo},
+		journalentryports.GetJournalEntryByIDRequest{ID: entryID, TenantInfo: tenantInfo},
 	)
 }
 
@@ -59,7 +60,7 @@ func (s *Service) ListEntriesBySource(
 ) ([]*journalentry.JournalEntry, error) {
 	sources, err := s.sourceRepo.ListByObject(
 		ctx,
-		repositories.GetJournalSourceByObjectRequest{
+		journalsourceports.GetJournalSourceByObjectRequest{
 			TenantInfo:       tenantInfo,
 			SourceObjectType: sourceObjectType,
 			SourceObjectID:   sourceObjectID,
@@ -81,7 +82,7 @@ func (s *Service) ListEntriesBySource(
 		seen[source.JournalEntryID] = struct{}{}
 		entry, entryErr := s.entryRepo.GetByID(
 			ctx,
-			repositories.GetJournalEntryByIDRequest{
+			journalentryports.GetJournalEntryByIDRequest{
 				ID:         source.JournalEntryID,
 				TenantInfo: tenantInfo,
 			},
@@ -101,7 +102,7 @@ func (s *Service) GetSourceByObject(
 ) (*journalsource.Source, error) {
 	return s.sourceRepo.GetByObject(
 		ctx,
-		repositories.GetJournalSourceByObjectRequest{
+		journalsourceports.GetJournalSourceByObjectRequest{
 			TenantInfo:       tenantInfo,
 			SourceObjectType: sourceObjectType,
 			SourceObjectID:   sourceObjectID,

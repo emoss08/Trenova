@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -29,7 +29,7 @@ func (r *QueryResolver) EmailProfiles(ctx context.Context, input gqlmodel.DataTa
 
 	result, err := r.EmailService.ListProfilesConnection(
 		ctx,
-		&repositories.ListEmailProfileConnectionRequest{
+		&emailports.ListEmailProfileConnectionRequest{
 			Filter:              tableInput.Filter,
 			Cursor:              tableInput.Cursor,
 			EmailProfileColumns: emailProfileColumns(ctx, "edges.node"),
@@ -53,7 +53,7 @@ func (r *QueryResolver) EmailProfile(ctx context.Context, id string) (*email.Pro
 		return nil, err
 	}
 
-	return r.EmailService.GetProfile(ctx, repositories.GetEmailEntityRequest{
+	return r.EmailService.GetProfile(ctx, emailports.GetEmailEntityRequest{
 		ID:         profileID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})

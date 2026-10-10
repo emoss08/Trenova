@@ -8,8 +8,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -40,10 +41,10 @@ const (
 
 func (s *Service) StartThread(
 	ctx context.Context,
-	req *services.StartThreadRequest,
-	actor *services.RequestActor,
+	req *agentports.StartThreadRequest,
+	actor *permissionports.RequestActor,
 ) (*conversation.Thread, error) {
-	definition, err := s.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	definition, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         req.AgentDefinitionID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -138,8 +139,8 @@ func (s *Service) assertWithinBudget(
 
 func (s *Service) ListThreads(
 	ctx context.Context,
-	req repositories.ListThreadsRequest,
-) (*repositories.ThreadPage, error) {
+	req agentports.ListThreadsRequest,
+) (*agentports.ThreadPage, error) {
 	result, err := s.conversations.ListThreads(ctx, req)
 	if err != nil {
 		return nil, err
@@ -176,7 +177,7 @@ func (s *Service) markAttention(
 		ids = append(ids, thread.ID)
 	}
 
-	rows, err := s.conversations.ListThreadAttention(ctx, repositories.ListThreadAttentionRequest{
+	rows, err := s.conversations.ListThreadAttention(ctx, agentports.ListThreadAttentionRequest{
 		ThreadIDs:  ids,
 		UserID:     userID,
 		TenantInfo: tenant,
@@ -211,8 +212,8 @@ func (s *Service) markAttention(
 	return nil
 }
 
-func (s *Service) MarkThreadRead(ctx context.Context, req repositories.GetThreadRequest) error {
-	return s.conversations.MarkThreadRead(ctx, repositories.MarkThreadReadRequest{
+func (s *Service) MarkThreadRead(ctx context.Context, req agentports.GetThreadRequest) error {
+	return s.conversations.MarkThreadRead(ctx, agentports.MarkThreadReadRequest{
 		ThreadID:   req.ID,
 		UserID:     req.UserID,
 		TenantInfo: req.TenantInfo,
@@ -222,7 +223,7 @@ func (s *Service) MarkThreadRead(ctx context.Context, req repositories.GetThread
 
 func (s *Service) GetThread(
 	ctx context.Context,
-	req repositories.GetThreadRequest,
+	req agentports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	thread, err := s.conversations.GetThread(ctx, req)
 	if err != nil {
@@ -254,8 +255,8 @@ func (s *Service) markCases(
 
 func (s *Service) ListMessages(
 	ctx context.Context,
-	req services.ListThreadMessagesRequest,
-) (*services.ThreadMessagesPage, error) {
+	req agentports.ListThreadMessagesRequest,
+) (*agentports.ThreadMessagesPage, error) {
 	// Reading the thread first is the authorization check: it is scoped by user,
 	// so a thread belonging to someone else is not found rather than returned.
 	if _, err := s.conversations.GetThread(ctx, req.Thread); err != nil {
@@ -266,7 +267,7 @@ func (s *Service) ListMessages(
 
 	// One more than the page says whether there is a page above it without
 	// a second query for the count of what is left.
-	messages, err := s.conversations.ListMessages(ctx, repositories.ListMessagesRequest{
+	messages, err := s.conversations.ListMessages(ctx, agentports.ListMessagesRequest{
 		ThreadID:       req.Thread.ID,
 		TenantInfo:     req.Thread.TenantInfo,
 		Limit:          limit + 1,
@@ -281,7 +282,7 @@ func (s *Service) ListMessages(
 		messages = messages[len(messages)-limit:]
 	}
 
-	total, err := s.conversations.CountMessages(ctx, repositories.CountMessagesRequest{
+	total, err := s.conversations.CountMessages(ctx, agentports.CountMessagesRequest{
 		ThreadID:   req.Thread.ID,
 		TenantInfo: req.Thread.TenantInfo,
 	})
@@ -293,7 +294,7 @@ func (s *Service) ListMessages(
 	s.nameDelegatedSteps(ctx, req.Thread.TenantInfo, messages)
 	s.describeMemories(ctx, req.Thread.TenantInfo, req.Thread.UserID, messages)
 
-	return &services.ThreadMessagesPage{
+	return &agentports.ThreadMessagesPage{
 		Results: messages,
 		HasMore: hasMore,
 		Total:   total,
@@ -322,7 +323,7 @@ func (s *Service) assertRoom(
 	thread *conversation.Thread,
 	tenantInfo pagination.TenantInfo,
 ) error {
-	count, err := s.conversations.CountMessages(ctx, repositories.CountMessagesRequest{
+	count, err := s.conversations.CountMessages(ctx, agentports.CountMessagesRequest{
 		ThreadID:   thread.ID,
 		TenantInfo: tenantInfo,
 	})
@@ -344,10 +345,10 @@ func (s *Service) assertRoom(
 // is not found rather than renamed.
 func (s *Service) UpdateThread(
 	ctx context.Context,
-	req *services.UpdateThreadRequest,
-	actor *services.RequestActor,
+	req *agentports.UpdateThreadRequest,
+	actor *permissionports.RequestActor,
 ) (*conversation.Thread, error) {
-	thread, err := s.conversations.GetThread(ctx, repositories.GetThreadRequest{
+	thread, err := s.conversations.GetThread(ctx, agentports.GetThreadRequest{
 		ID:         req.ThreadID,
 		UserID:     actor.UserID,
 		TenantInfo: req.TenantInfo,
@@ -394,7 +395,7 @@ func (s *Service) UpdateThread(
 // approving one followed up into a conversation that no longer existed.
 func (s *Service) DeleteThread(
 	ctx context.Context,
-	req repositories.GetThreadRequest,
+	req agentports.GetThreadRequest,
 ) error {
 	if err := s.conversations.DeleteThread(ctx, req); err != nil {
 		return err
@@ -414,7 +415,7 @@ func (s *Service) withdrawPending(
 ) {
 	if s.proposals != nil {
 		if _, err := s.proposals.ExpirePendingByThread(ctx,
-			repositories.ExpireAgentProposalsByThreadRequest{ThreadID: threadID, TenantInfo: tenant},
+			agentports.ExpireAgentProposalsByThreadRequest{ThreadID: threadID, TenantInfo: tenant},
 		); err != nil {
 			s.logger.Warn("could not withdraw a deleted conversation's proposals",
 				zap.String("thread", threadID.String()), zap.Error(err))
@@ -422,7 +423,7 @@ func (s *Service) withdrawPending(
 	}
 	if s.plans != nil {
 		if _, err := s.plans.ExpirePendingByThread(ctx,
-			repositories.ExpireAgentPlansByThreadRequest{ThreadID: threadID, TenantInfo: tenant},
+			agentports.ExpireAgentPlansByThreadRequest{ThreadID: threadID, TenantInfo: tenant},
 		); err != nil {
 			s.logger.Warn("could not withdraw a deleted conversation's plans",
 				zap.String("thread", threadID.String()), zap.Error(err))

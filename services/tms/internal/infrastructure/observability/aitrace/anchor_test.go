@@ -6,7 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -94,56 +95,56 @@ func TestForRun_NamesTheUnitOfWork(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		owner      serviceports.RunStepOwner
-		delegation *serviceports.Delegation
+		owner      agentports.RunStepOwner
+		delegation *agentports.Delegation
 		want       Anchor
 	}{
 		{
 			name:  "an agent run",
-			owner: serviceports.RunStepOwner{Kind: serviceports.RunStepOwnerAgentRun, ID: runID},
+			owner: agentports.RunStepOwner{Kind: agentports.RunStepOwnerAgentRun, ID: runID},
 			want:  AnchorFor(AnchorAgentRun, runID.String()),
 		},
 		{
 			name: "an assistant turn",
-			owner: serviceports.RunStepOwner{
-				Kind: serviceports.RunStepOwnerAssistantTurn,
+			owner: agentports.RunStepOwner{
+				Kind: agentports.RunStepOwnerAssistantTurn,
 				ID:   turnID,
 			},
 			want: AnchorFor(AnchorAssistantTurn, turnID.String()),
 		},
 		{
 			name: "an evaluation replay",
-			owner: serviceports.RunStepOwner{
-				Kind: serviceports.RunStepOwnerAgentRun,
+			owner: agentports.RunStepOwner{
+				Kind: agentports.RunStepOwnerAgentRun,
 				ID:   evaluationID,
 			},
 			want: AnchorFor(AnchorEvaluation, evaluationID.String()),
 		},
 		{
 			name: "a delegate working for a turn",
-			owner: serviceports.RunStepOwner{
-				Kind: serviceports.RunStepOwnerAssistantTurn,
+			owner: agentports.RunStepOwner{
+				Kind: agentports.RunStepOwnerAssistantTurn,
 				ID:   turnID,
 			},
-			delegation: &serviceports.Delegation{CallID: "call_7", StepScope: "scope"},
+			delegation: &agentports.Delegation{CallID: "call_7", StepScope: "scope"},
 			want:       AnchorFor(AnchorDelegate, turnID.String()+":call_7"),
 		},
 		{
 			name: "a delegation without a call is the owner's own work",
-			owner: serviceports.RunStepOwner{
-				Kind: serviceports.RunStepOwnerAssistantTurn,
+			owner: agentports.RunStepOwner{
+				Kind: agentports.RunStepOwnerAssistantTurn,
 				ID:   turnID,
 			},
-			delegation: &serviceports.Delegation{},
+			delegation: &agentports.Delegation{},
 			want:       AnchorFor(AnchorAssistantTurn, turnID.String()),
 		},
 		{
 			name:  "no owner",
-			owner: serviceports.RunStepOwner{Kind: serviceports.RunStepOwnerAgentRun},
+			owner: agentports.RunStepOwner{Kind: agentports.RunStepOwnerAgentRun},
 		},
 		{
 			name:  "an unknown owner kind",
-			owner: serviceports.RunStepOwner{Kind: "Plan", ID: runID},
+			owner: agentports.RunStepOwner{Kind: "Plan", ID: runID},
 		},
 	}
 
@@ -176,29 +177,29 @@ func TestForAttribution_AgreesWithForRun(t *testing.T) {
 	assert.Equal(
 		t,
 		ForRun(
-			serviceports.RunStepOwner{Kind: serviceports.RunStepOwnerAssistantTurn, ID: turnID},
+			agentports.RunStepOwner{Kind: agentports.RunStepOwnerAssistantTurn, ID: turnID},
 			nil,
 		),
-		ForAttribution(&serviceports.AIUsageAttribution{
-			OwnerKind: serviceports.RunStepOwnerAssistantTurn,
+		ForAttribution(&aiusageports.AIUsageAttribution{
+			OwnerKind: agentports.RunStepOwnerAssistantTurn,
 			OwnerID:   turnID,
 		}),
 	)
 	assert.Equal(t,
 		ForRun(
-			serviceports.RunStepOwner{Kind: serviceports.RunStepOwnerAssistantTurn, ID: turnID},
-			&serviceports.Delegation{CallID: "call_2"},
+			agentports.RunStepOwner{Kind: agentports.RunStepOwnerAssistantTurn, ID: turnID},
+			&agentports.Delegation{CallID: "call_2"},
 		),
-		ForAttribution(&serviceports.AIUsageAttribution{
-			OwnerKind:      serviceports.RunStepOwnerAssistantTurn,
+		ForAttribution(&aiusageports.AIUsageAttribution{
+			OwnerKind:      agentports.RunStepOwnerAssistantTurn,
 			OwnerID:        turnID,
 			DelegateCallID: "call_2",
 		}))
 	assert.Equal(t,
 		AnchorFor(AnchorAgentRun, runID.String()),
-		ForAttribution(&serviceports.AIUsageAttribution{RunID: runID}),
+		ForAttribution(&aiusageports.AIUsageAttribution{RunID: runID}),
 		"a caller that names only the run is traced to the run")
-	assert.False(t, ForAttribution(&serviceports.AIUsageAttribution{
+	assert.False(t, ForAttribution(&aiusageports.AIUsageAttribution{
 		ThreadID: pulid.MustNew("ath_"),
 	}).IsValid())
 }

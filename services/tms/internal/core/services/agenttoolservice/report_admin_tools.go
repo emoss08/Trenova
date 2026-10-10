@@ -9,10 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -77,8 +77,8 @@ type reportAdministrator interface {
 
 var _ reportAdministrator = (*reporting.Service)(nil)
 
-func reportTarget(key string) func(map[string]any) (serviceports.ToolTarget, bool) {
-	return func(params map[string]any) (serviceports.ToolTarget, bool) {
+func reportTarget(key string) func(map[string]any) (agentports.ToolTarget, bool) {
+	return func(params map[string]any) (agentports.ToolTarget, bool) {
 		return targetOf(params, key, permission.ResourceReport)
 	}
 }
@@ -93,8 +93,8 @@ type reportRunView struct {
 	Status string `json:"status"`
 }
 
-func newCancelReportRunTool(reports reportAdministrator) serviceports.AgentTool {
-	request := func(params *serviceports.ToolExecuteParams) (*reporting.GetRunRequest, error) {
+func newCancelReportRunTool(reports reportAdministrator) agentports.AgentTool {
+	request := func(params *agentports.ToolExecuteParams) (*reporting.GetRunRequest, error) {
 		id, err := requirePulid(params.Params, paramReportRunID)
 		if err != nil {
 			return nil, err
@@ -123,7 +123,7 @@ func newCancelReportRunTool(reports reportAdministrator) serviceports.AgentTool 
 		plan: func(
 			ctx context.Context,
 			req *reporting.GetRunRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*reporting.RunChange, error) {
 			return reports.PlanCancelRun(ctx, req)
 		},
@@ -152,7 +152,7 @@ func newCancelReportRunTool(reports reportAdministrator) serviceports.AgentTool 
 		run: func(
 			ctx context.Context,
 			req *reporting.GetRunRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := reports.CancelRun(ctx, req)
 
@@ -162,7 +162,7 @@ func newCancelReportRunTool(reports reportAdministrator) serviceports.AgentTool 
 }
 
 func definitionRequestFrom(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*reporting.GetDefinitionRequest, error) {
 	id, err := requirePulid(params.Params, paramDefinitionID)
 	if err != nil {
@@ -175,7 +175,7 @@ func definitionRequestFrom(
 	}, nil
 }
 
-func newDeleteReportTool(reports reportAdministrator) serviceports.AgentTool {
+func newDeleteReportTool(reports reportAdministrator) agentports.AgentTool {
 	return newReceivableTool(reportInternalSpec(&receivableSpec{
 		name: "delete_report",
 		description: "Propose deleting a saved report the person owns. Its schedules stop " +
@@ -198,7 +198,7 @@ func newDeleteReportTool(reports reportAdministrator) serviceports.AgentTool {
 		plan: func(
 			ctx context.Context,
 			req *reporting.GetDefinitionRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*report.ReportDefinition, error) {
 			return reports.PlanDeleteDefinition(ctx, req)
 		},
@@ -226,14 +226,14 @@ func newDeleteReportTool(reports reportAdministrator) serviceports.AgentTool {
 		run: func(
 			ctx context.Context,
 			req *reporting.GetDefinitionRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			return nil, reports.DeleteDefinition(ctx, req)
 		},
 	})
 }
 
-func newResetReportForkTool(reports reportAdministrator) serviceports.AgentTool {
+func newResetReportForkTool(reports reportAdministrator) agentports.AgentTool {
 	return newReceivableTool(reportInternalSpec(&receivableSpec{
 		name: "reset_report_fork",
 		description: "Put a report copied from a built-in one with fork_report back to the " +
@@ -256,7 +256,7 @@ func newResetReportForkTool(reports reportAdministrator) serviceports.AgentTool 
 		plan: func(
 			ctx context.Context,
 			req *reporting.GetDefinitionRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*reporting.DefinitionChange, error) {
 			return reports.PlanResetCannedFork(ctx, req)
 		},
@@ -286,7 +286,7 @@ func newResetReportForkTool(reports reportAdministrator) serviceports.AgentTool 
 		run: func(
 			ctx context.Context,
 			req *reporting.GetDefinitionRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := reports.ResetCannedFork(ctx, req)
 
@@ -295,7 +295,7 @@ func newResetReportForkTool(reports reportAdministrator) serviceports.AgentTool 
 	})
 }
 
-func newDeleteDashboardTool(reports reportAdministrator) serviceports.AgentTool {
+func newDeleteDashboardTool(reports reportAdministrator) agentports.AgentTool {
 	return newReceivableTool(reportInternalSpec(&receivableSpec{
 		name:        "delete_dashboard",
 		searchTerms: []string{"remove dashboard", "delete dashboard and its tiles"},
@@ -312,11 +312,11 @@ func newDeleteDashboardTool(reports reportAdministrator) serviceports.AgentTool 
 			),
 		},
 		required: []string{paramDashboardID},
-		target: func(params map[string]any) (serviceports.ToolTarget, bool) {
+		target: func(params map[string]any) (agentports.ToolTarget, bool) {
 			return targetOf(params, paramDashboardID, permission.ResourceDashboard)
 		},
 	}), receivablePlan[*reporting.GetDashboardRequest, *report.Dashboard]{
-		request: func(params *serviceports.ToolExecuteParams) (*reporting.GetDashboardRequest, error) {
+		request: func(params *agentports.ToolExecuteParams) (*reporting.GetDashboardRequest, error) {
 			id, err := requirePulid(params.Params, paramDashboardID)
 			if err != nil {
 				return nil, err
@@ -330,7 +330,7 @@ func newDeleteDashboardTool(reports reportAdministrator) serviceports.AgentTool 
 		plan: func(
 			ctx context.Context,
 			req *reporting.GetDashboardRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*report.Dashboard, error) {
 			return reports.PlanDeleteDashboard(ctx, req)
 		},
@@ -358,7 +358,7 @@ func newDeleteDashboardTool(reports reportAdministrator) serviceports.AgentTool 
 		run: func(
 			ctx context.Context,
 			req *reporting.GetDashboardRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			return nil, reports.DeleteDashboard(ctx, req)
 		},
@@ -410,7 +410,7 @@ type scheduleEdit struct {
 func (e scheduleEdit) request(
 	ctx context.Context,
 	reports reportAdministrator,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*reporting.SaveScheduleRequest, error) {
 	base := reporting.Request{TenantInfo: tenantFrom(*params)}
 	stored, err := reports.GetSchedule(ctx, &reporting.GetScheduleRequest{
@@ -495,7 +495,7 @@ func (e scheduleEdit) apply(req *reporting.SaveScheduleRequest) error {
 	return nil
 }
 
-func scheduleIDFrom(params *serviceports.ToolExecuteParams) (scheduleEdit, error) {
+func scheduleIDFrom(params *agentports.ToolExecuteParams) (scheduleEdit, error) {
 	id, err := requirePulid(params.Params, paramReportScheduleID)
 	if err != nil {
 		return scheduleEdit{}, err
@@ -510,7 +510,7 @@ func scheduleIDFrom(params *serviceports.ToolExecuteParams) (scheduleEdit, error
 	return scheduleEdit{id: id, values: values}, nil
 }
 
-func newUpdateReportScheduleTool(reports reportAdministrator) serviceports.AgentTool {
+func newUpdateReportScheduleTool(reports reportAdministrator) agentports.AgentTool {
 	return newReceivableTool(&receivableSpec{
 		name: "update_report_schedule",
 		description: "Change a report schedule the person set up: when it runs, its zone, " +
@@ -561,7 +561,7 @@ func newUpdateReportScheduleTool(reports reportAdministrator) serviceports.Agent
 		plan: func(
 			ctx context.Context,
 			edit scheduleEdit,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*reporting.ScheduleChange, error) {
 			req, err := edit.request(ctx, reports, params)
 			if err != nil {
@@ -597,7 +597,7 @@ func newUpdateReportScheduleTool(reports reportAdministrator) serviceports.Agent
 		run: func(
 			ctx context.Context,
 			edit scheduleEdit,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			req, err := edit.request(ctx, reports, params)
 			if err != nil {
@@ -610,7 +610,7 @@ func newUpdateReportScheduleTool(reports reportAdministrator) serviceports.Agent
 	})
 }
 
-func newDeleteReportScheduleTool(reports reportAdministrator) serviceports.AgentTool {
+func newDeleteReportScheduleTool(reports reportAdministrator) agentports.AgentTool {
 	return newReceivableTool(reportInternalSpec(&receivableSpec{
 		name: "delete_report_schedule",
 		description: "Propose removing a report schedule the person set up, so the report " +
@@ -627,7 +627,7 @@ func newDeleteReportScheduleTool(reports reportAdministrator) serviceports.Agent
 		target:      reportTarget(paramReportScheduleID),
 		searchTerms: []string{"scheduled", "unsubscribe", "emailing"},
 	}), receivablePlan[*reporting.GetScheduleRequest, *report.ReportSchedule]{
-		request: func(params *serviceports.ToolExecuteParams) (*reporting.GetScheduleRequest, error) {
+		request: func(params *agentports.ToolExecuteParams) (*reporting.GetScheduleRequest, error) {
 			id, err := requirePulid(params.Params, paramReportScheduleID)
 			if err != nil {
 				return nil, err
@@ -641,7 +641,7 @@ func newDeleteReportScheduleTool(reports reportAdministrator) serviceports.Agent
 		plan: func(
 			ctx context.Context,
 			req *reporting.GetScheduleRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*report.ReportSchedule, error) {
 			return reports.PlanDeleteSchedule(ctx, req)
 		},
@@ -668,7 +668,7 @@ func newDeleteReportScheduleTool(reports reportAdministrator) serviceports.Agent
 		run: func(
 			ctx context.Context,
 			req *reporting.GetScheduleRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			return nil, reports.DeleteSchedule(ctx, req)
 		},

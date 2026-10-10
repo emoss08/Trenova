@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -14,12 +14,12 @@ type Params struct {
 	fx.In
 
 	Logger *zap.Logger
-	Repo   repositories.RoleAssignmentRepository
+	Repo   permissionports.RoleAssignmentRepository
 }
 
 type Service struct {
 	l    *zap.Logger
-	repo repositories.RoleAssignmentRepository
+	repo permissionports.RoleAssignmentRepository
 }
 
 func New(p Params) *Service {
@@ -31,14 +31,14 @@ func New(p Params) *Service {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListRoleAssignmentsRequest,
+	req *permissionports.ListRoleAssignmentsRequest,
 ) (*pagination.ListResult[*permission.UserRoleAssignment], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) GetByID(
 	ctx context.Context,
-	req repositories.GetRoleAssignmentByIDRequest,
+	req permissionports.GetRoleAssignmentByIDRequest,
 ) (*permission.UserRoleAssignment, error) {
 	return s.repo.GetByID(ctx, req)
 }

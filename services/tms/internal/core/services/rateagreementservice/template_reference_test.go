@@ -6,7 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -15,13 +16,13 @@ import (
 )
 
 type stubTemplateRepo struct {
-	repositories.FormulaTemplateRepository
+	formulatemplateports.FormulaTemplateRepository
 	templates []*formulatemplate.FormulaTemplate
 }
 
 func (s *stubTemplateRepo) GetByIDs(
 	_ context.Context,
-	_ repositories.GetFormulaTemplatesByIDsRequest,
+	_ formulatemplateports.GetFormulaTemplatesByIDsRequest,
 ) ([]*formulatemplate.FormulaTemplate, error) {
 	return s.templates, nil
 }
@@ -180,7 +181,7 @@ func TestValidateAmendmentChecksTemplateReferences(t *testing.T) {
 	multiErr := validator.ValidateAmendment(
 		t.Context(),
 		agreement,
-		&repositories.AmendRateAgreementRulesRequest{
+		&rateagreementports.AmendRateAgreementRulesRequest{
 			EffectiveFrom: 1_700_000_000,
 			Rules:         agreement.Rules,
 		},

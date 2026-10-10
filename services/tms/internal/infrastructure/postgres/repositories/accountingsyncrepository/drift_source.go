@@ -11,9 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
@@ -45,7 +45,7 @@ type driftSource struct {
 	l  *zap.Logger
 }
 
-func NewDriftSource(p DriftSourceParams) repositories.AccountingDriftSource {
+func NewDriftSource(p DriftSourceParams) accountingsyncports.AccountingDriftSource {
 	return &driftSource{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.accounting-drift-source"),
@@ -114,7 +114,7 @@ func (s *driftSource) latestSynced(
 
 func (s *driftSource) ListRecords(
 	ctx context.Context,
-	req *repositories.ListAccountingDriftRecordsRequest,
+	req *accountingsyncports.ListAccountingDriftRecordsRequest,
 ) ([]*accountingsync.AccountingSyncRecord, error) {
 	return dbtx.Read(ctx, s.db, func(ctx context.Context) ([]*accountingsync.AccountingSyncRecord, error) {
 		limit := req.Limit
@@ -154,10 +154,10 @@ func (s *driftSource) ListRecords(
 
 func (s *driftSource) ListStates(
 	ctx context.Context,
-	req *repositories.ListAccountingDriftStatesRequest,
-) ([]*repositories.AccountingDriftState, error) {
-	return dbtx.Read(ctx, s.db, func(ctx context.Context) ([]*repositories.AccountingDriftState, error) {
-		states := make([]*repositories.AccountingDriftState, 0, len(req.ObjectIDs))
+	req *accountingsyncports.ListAccountingDriftStatesRequest,
+) ([]*accountingsyncports.AccountingDriftState, error) {
+	return dbtx.Read(ctx, s.db, func(ctx context.Context) ([]*accountingsyncports.AccountingDriftState, error) {
+		states := make([]*accountingsyncports.AccountingDriftState, 0, len(req.ObjectIDs))
 		if len(req.ObjectIDs) == 0 {
 			return states, nil
 		}
@@ -220,7 +220,7 @@ func (s *driftSource) reflectedMemos(
 
 func (s *driftSource) salesStates(
 	dba bun.IDB,
-	req *repositories.ListAccountingDriftStatesRequest,
+	req *accountingsyncports.ListAccountingDriftStatesRequest,
 ) *bun.SelectQuery {
 	inv := buncolgen.InvoiceColumns
 	cus := buncolgen.CustomerColumns
@@ -253,7 +253,7 @@ func (s *driftSource) salesStates(
 
 func (s *driftSource) paymentStates(
 	dba bun.IDB,
-	req *repositories.ListAccountingDriftStatesRequest,
+	req *accountingsyncports.ListAccountingDriftStatesRequest,
 ) *bun.SelectQuery {
 	cp := buncolgen.PaymentColumns
 	cus := buncolgen.CustomerColumns
@@ -282,7 +282,7 @@ func (s *driftSource) paymentStates(
 
 func (s *driftSource) applicationStates(
 	dba bun.IDB,
-	req *repositories.ListAccountingDriftStatesRequest,
+	req *accountingsyncports.ListAccountingDriftStatesRequest,
 ) *bun.SelectQuery {
 	cma := buncolgen.CreditMemoApplicationColumns
 	inv := buncolgen.InvoiceColumns
@@ -332,7 +332,7 @@ func settlementVoided(
 
 func (s *driftSource) carrierStates(
 	dba bun.IDB,
-	req *repositories.ListAccountingDriftStatesRequest,
+	req *accountingsyncports.ListAccountingDriftStatesRequest,
 ) *bun.SelectQuery {
 	cs := buncolgen.CarrierSettlementColumns
 	carr := buncolgen.CarrierColumns
@@ -365,7 +365,7 @@ func (s *driftSource) carrierStates(
 
 func (s *driftSource) driverStates(
 	dba bun.IDB,
-	req *repositories.ListAccountingDriftStatesRequest,
+	req *accountingsyncports.ListAccountingDriftStatesRequest,
 ) *bun.SelectQuery {
 	ds := buncolgen.SettlementColumns
 	wrk := buncolgen.WorkerColumns
@@ -401,7 +401,7 @@ func (s *driftSource) driverStates(
 
 func (s *driftSource) balanceDocuments(
 	dba bun.IDB,
-	req *repositories.ListAccountingDriftBalancesRequest,
+	req *accountingsyncports.ListAccountingDriftBalancesRequest,
 ) *bun.SelectQuery {
 	records := buncolgen.AccountingSyncRecordColumns
 	inv := buncolgen.InvoiceColumns
@@ -426,9 +426,9 @@ func (s *driftSource) balanceDocuments(
 
 func (s *driftSource) ListBalances(
 	ctx context.Context,
-	req *repositories.ListAccountingDriftBalancesRequest,
-) ([]*repositories.AccountingDriftBalanceLine, error) {
-	return dbtx.Read(ctx, s.db, func(ctx context.Context) ([]*repositories.AccountingDriftBalanceLine, error) {
+	req *accountingsyncports.ListAccountingDriftBalancesRequest,
+) ([]*accountingsyncports.AccountingDriftBalanceLine, error) {
+	return dbtx.Read(ctx, s.db, func(ctx context.Context) ([]*accountingsyncports.AccountingDriftBalanceLine, error) {
 		customers := req.Customers
 		if customers <= 0 {
 			customers = defaultDriftCustomers
@@ -453,7 +453,7 @@ func (s *driftSource) ListBalances(
 			return nil, fmt.Errorf("list customers to balance: %w", err)
 		}
 
-		lines := make([]*repositories.AccountingDriftBalanceLine, 0, len(ids))
+		lines := make([]*accountingsyncports.AccountingDriftBalanceLine, 0, len(ids))
 		if len(ids) == 0 {
 			return lines, nil
 		}
@@ -488,7 +488,7 @@ func (s *driftSource) ListBalances(
 
 func (s *driftSource) ListPendingCustomers(
 	ctx context.Context,
-	req *repositories.ListAccountingDriftPendingCustomersRequest,
+	req *accountingsyncports.ListAccountingDriftPendingCustomersRequest,
 ) ([]pulid.ID, error) {
 	return dbtx.Read(ctx, s.db, func(ctx context.Context) ([]pulid.ID, error) {
 		ids := make([]pulid.ID, 0, len(req.CustomerIDs))
@@ -522,7 +522,7 @@ func (s *driftSource) ListPendingCustomers(
 
 func (s *driftSource) waitingInbound(
 	dba bun.IDB,
-	req *repositories.ListAccountingDriftPendingCustomersRequest,
+	req *accountingsyncports.ListAccountingDriftPendingCustomersRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.AccountingInboundChangeColumns
 	return dba.NewSelect().
@@ -540,7 +540,7 @@ func (s *driftSource) waitingInbound(
 
 func (s *driftSource) unsettledRecords(
 	dba bun.IDB,
-	req *repositories.ListAccountingDriftPendingCustomersRequest,
+	req *accountingsyncports.ListAccountingDriftPendingCustomersRequest,
 	objectTypes []accountingsync.SyncObjectType,
 ) *bun.SelectQuery {
 	records := buncolgen.AccountingSyncRecordColumns
@@ -554,7 +554,7 @@ func (s *driftSource) unsettledRecords(
 
 func (s *driftSource) unsettledSales(
 	dba bun.IDB,
-	req *repositories.ListAccountingDriftPendingCustomersRequest,
+	req *accountingsyncports.ListAccountingDriftPendingCustomersRequest,
 ) *bun.SelectQuery {
 	records := buncolgen.AccountingSyncRecordColumns
 	inv := buncolgen.InvoiceColumns
@@ -576,7 +576,7 @@ func (s *driftSource) unsettledSales(
 
 func (s *driftSource) unsettledPayments(
 	dba bun.IDB,
-	req *repositories.ListAccountingDriftPendingCustomersRequest,
+	req *accountingsyncports.ListAccountingDriftPendingCustomersRequest,
 ) *bun.SelectQuery {
 	records := buncolgen.AccountingSyncRecordColumns
 	cp := buncolgen.PaymentColumns
@@ -596,7 +596,7 @@ func (s *driftSource) unsettledPayments(
 
 func (s *driftSource) unsettledApplications(
 	dba bun.IDB,
-	req *repositories.ListAccountingDriftPendingCustomersRequest,
+	req *accountingsyncports.ListAccountingDriftPendingCustomersRequest,
 ) *bun.SelectQuery {
 	records := buncolgen.AccountingSyncRecordColumns
 	cma := buncolgen.CreditMemoApplicationColumns

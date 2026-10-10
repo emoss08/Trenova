@@ -8,9 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/driverpayservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -45,7 +46,7 @@ func TestDriverPayTools_AreAlwaysAPersonsDecision(t *testing.T) {
 		assert.Equal(t, agent.TierPropose, policy.DefaultTier, tool.Name())
 		assert.Equal(t, agent.TierPropose, policy.MaxTier, tool.Name())
 		assert.True(t, policy.HasEgress(agent.EgressMoney), tool.Name())
-		_, previews := tool.(serviceports.ToolPreviewer)
+		_, previews := tool.(agentports.ToolPreviewer)
 		assert.True(t, previews, tool.Name())
 	}
 }
@@ -60,7 +61,7 @@ type fakeAdvances struct {
 func (f *fakeAdvances) IssueAdvance(
 	_ context.Context,
 	entity *driverpay.PayAdvance,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*driverpay.PayAdvance, error) {
 	f.issued = entity
 
@@ -69,7 +70,7 @@ func (f *fakeAdvances) IssueAdvance(
 
 func (f *fakeAdvances) GetAdvance(
 	context.Context,
-	repositories.GetPayAdvanceByIDRequest,
+	driverpayports.GetPayAdvanceByIDRequest,
 ) (*driverpay.PayAdvance, error) {
 	return f.advance, nil
 }
@@ -79,7 +80,7 @@ func (f *fakeAdvances) WriteOffAdvance(
 	_ pagination.TenantInfo,
 	advanceID pulid.ID,
 	reason string,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*driverpay.PayAdvance, error) {
 	f.writtenOff, f.writeReason = advanceID, reason
 
@@ -192,7 +193,7 @@ type fakeEscrow struct {
 
 func (f *fakeEscrow) GetEscrowAccount(
 	context.Context,
-	repositories.GetEscrowAccountByIDRequest,
+	driverpayports.GetEscrowAccountByIDRequest,
 ) (*driverpay.EscrowAccount, error) {
 	return f.account, nil
 }
@@ -220,7 +221,7 @@ func (f *fakeEscrow) PlanOpenEscrowAccount(
 func (f *fakeEscrow) OpenEscrowAccount(
 	_ context.Context,
 	entity *driverpay.EscrowAccount,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*driverpay.EscrowAccount, error) {
 	f.opened = entity
 
@@ -237,7 +238,7 @@ func (f *fakeEscrow) PlanUpdateEscrowAccount(
 func (f *fakeEscrow) UpdateEscrowAccount(
 	_ context.Context,
 	entity *driverpay.EscrowAccount,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*driverpay.EscrowAccount, error) {
 	f.updated = entity
 
@@ -247,7 +248,7 @@ func (f *fakeEscrow) UpdateEscrowAccount(
 func (f *fakeEscrow) AdjustEscrowAccount(
 	_ context.Context,
 	req *driverpayservice.EscrowAdjustmentRequest,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*driverpay.EscrowAccount, error) {
 	f.adjusted = req
 
@@ -258,7 +259,7 @@ func (f *fakeEscrow) CloseEscrowAccount(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	accountID pulid.ID,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*driverpay.EscrowAccount, error) {
 	f.closed = accountID
 

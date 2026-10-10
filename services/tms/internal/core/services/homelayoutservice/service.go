@@ -4,8 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/homelayout"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/homelayoutports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -30,18 +31,18 @@ type Params struct {
 	fx.In
 
 	Logger           *zap.Logger
-	Repo             repositories.HomeLayoutRepository
-	RBACRepo         repositories.RBACRepository
-	RoleRepo         repositories.RoleRepository
-	PermissionEngine services.PermissionEngine
+	Repo             homelayoutports.HomeLayoutRepository
+	RBACRepo         permissionports.RBACRepository
+	RoleRepo         permissionports.RoleRepository
+	PermissionEngine permissionports.PermissionEngine
 }
 
 type Service struct {
 	l           *zap.Logger
-	repo        repositories.HomeLayoutRepository
-	rbac        repositories.RBACRepository
-	roles       repositories.RoleRepository
-	permissions services.PermissionEngine
+	repo        homelayoutports.HomeLayoutRepository
+	rbac        permissionports.RBACRepository
+	roles       permissionports.RoleRepository
+	permissions permissionports.PermissionEngine
 }
 
 func New(p Params) *Service {
@@ -56,7 +57,7 @@ func New(p Params) *Service {
 
 type Request struct {
 	TenantInfo pagination.TenantInfo
-	Principal  services.PrincipalInfo
+	Principal  kernelports.PrincipalInfo
 }
 
 type UpdateRequest struct {
@@ -96,7 +97,7 @@ func (s *Service) GetEffective(ctx context.Context, req *Request) (*EffectiveLay
 
 	preference, found, err := s.repo.GetPreference(
 		ctx,
-		&repositories.GetHomePreferenceRequest{TenantInfo: req.TenantInfo},
+		&homelayoutports.GetHomePreferenceRequest{TenantInfo: req.TenantInfo},
 	)
 	if err != nil {
 		log.Error("failed to get home preference", zap.Error(err))
@@ -215,7 +216,7 @@ func (s *Service) Reset(ctx context.Context, req *Request) (*EffectiveLayout, er
 
 	preference, found, err := s.repo.GetPreference(
 		ctx,
-		&repositories.GetHomePreferenceRequest{TenantInfo: req.TenantInfo},
+		&homelayoutports.GetHomePreferenceRequest{TenantInfo: req.TenantInfo},
 	)
 	if err != nil {
 		log.Error("failed to get home preference", zap.Error(err))
@@ -252,7 +253,7 @@ func (s *Service) save(
 ) (*homelayout.Preference, error) {
 	entity, found, err := s.repo.GetPreference(
 		ctx,
-		&repositories.GetHomePreferenceRequest{TenantInfo: req.TenantInfo},
+		&homelayoutports.GetHomePreferenceRequest{TenantInfo: req.TenantInfo},
 	)
 	if err != nil {
 		return nil, err

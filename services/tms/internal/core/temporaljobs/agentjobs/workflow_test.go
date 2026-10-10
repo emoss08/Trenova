@@ -5,16 +5,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -126,7 +125,7 @@ func (s *AgentRunWorkflowTestSuite) stubOpen() {
 	s.env.OnActivity(a.OpenRunActivity, mock.Anything, mock.Anything).
 		Return(func(ctx context.Context, input *OpenRunInput) (*OpenRunResult, error) {
 			s.opened = input
-			req := &serviceports.RunRequest{
+			req := &agentports.RunRequest{
 				Definition: input.Definition,
 				Actor:      agentActor(input.Payload.TenantInfo()),
 				Input:      "A scheduled run.",
@@ -146,7 +145,7 @@ func (s *AgentRunWorkflowTestSuite) stubAnswer(text string) {
 	s.env.OnActivity(fa.ModelCallActivity, mock.Anything, mock.Anything).Return(
 		func(_ context.Context, in *agentflow.ModelCallInput) (*agentruntime.ModelReply, error) {
 			s.False(in.Stream, "nobody watches a background run, so nothing is streamed")
-			return &agentruntime.ModelReply{Completion: &serviceports.ChatCompletionResult{
+			return &agentruntime.ModelReply{Completion: &agentports.ChatCompletionResult{
 				Text:            text,
 				ModelIdentifier: "test-model",
 			}}, nil

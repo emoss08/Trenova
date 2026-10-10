@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/ratesimulation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/ratesimulationservice"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratesimulationports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -86,7 +86,7 @@ func (h *Handler) list(c *gin.Context) {
 		req,
 		h.eh,
 		func() (*pagination.ListResult[*ratesimulation.RateSimulation], error) {
-			return h.service.List(c.Request.Context(), &repositories.ListRateSimulationsRequest{
+			return h.service.List(c.Request.Context(), &ratesimulationports.ListRateSimulationsRequest{
 				Filter:          req,
 				RateAgreementID: agreementID,
 			})
@@ -117,7 +117,7 @@ func (h *Handler) get(c *gin.Context) {
 
 	entity, err := h.service.GetByID(
 		c.Request.Context(),
-		&repositories.GetRateSimulationByIDRequest{
+		&ratesimulationports.GetRateSimulationByIDRequest{
 			RateSimulationID: simulationID,
 			TenantInfo:       tenantOf(authCtx),
 		},
@@ -162,7 +162,7 @@ func (h *Handler) listResults(c *gin.Context) {
 		func() (*pagination.ListResult[*ratesimulation.RateSimulationResult], error) {
 			return h.service.ListResults(
 				c.Request.Context(),
-				&repositories.ListRateSimulationResultsRequest{
+				&ratesimulationports.ListRateSimulationResultsRequest{
 					RateSimulationID: simulationID,
 					TenantInfo:       tenantOf(authCtx),
 					Filter:           req,

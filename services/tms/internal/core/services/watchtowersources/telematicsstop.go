@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -13,13 +13,13 @@ import (
 const stopVisitWindow = 7 * 24 * 60 * 60
 
 type TelematicsStopVisitSource struct {
-	repo repositories.TelematicsRepository
+	repo telematicsports.TelematicsRepository
 	now  func() int64
 }
 
 func NewTelematicsStopVisitSource(
-	repo repositories.TelematicsRepository,
-) services.WatchtowerSource {
+	repo telematicsports.TelematicsRepository,
+) watchtowerports.WatchtowerSource {
 	return &TelematicsStopVisitSource{repo: repo, now: timeutils.NowUnix}
 }
 
@@ -30,8 +30,8 @@ func (s *TelematicsStopVisitSource) Kind() watchtower.SourceKind {
 func (s *TelematicsStopVisitSource) Snapshot(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-) ([]services.WatchtowerItemInput, error) {
-	reviews, err := s.repo.ListOpenStopReviews(ctx, &repositories.ListOpenStopReviewsRequest{
+) ([]watchtowerports.WatchtowerItemInput, error) {
+	reviews, err := s.repo.ListOpenStopReviews(ctx, &telematicsports.ListOpenStopReviewsRequest{
 		TenantInfo: tenant,
 		Since:      s.now() - stopVisitWindow,
 		Limit:      snapshotLimit,
@@ -44,9 +44,9 @@ func (s *TelematicsStopVisitSource) Snapshot(
 }
 
 func DescribeTelematicsStopVisits(
-	reviews []*repositories.StopReview,
-) []services.WatchtowerItemInput {
-	items := make([]services.WatchtowerItemInput, 0, len(reviews))
+	reviews []*telematicsports.StopReview,
+) []watchtowerports.WatchtowerItemInput {
+	items := make([]watchtowerports.WatchtowerItemInput, 0, len(reviews))
 	seen := make(map[string]struct{}, len(reviews))
 	for _, review := range reviews {
 		if review == nil || review.Event == nil {

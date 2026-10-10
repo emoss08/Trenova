@@ -7,9 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 
 const (
@@ -29,7 +29,7 @@ type detentionDisputer interface {
 	) (*detentionservice.OccurrenceChange, error)
 }
 
-func newDisputeDetentionTool(detentions detentionDisputer) serviceports.AgentTool {
+func newDisputeDetentionTool(detentions detentionDisputer) agentports.AgentTool {
 	return newReportingReceivableTool(&receivableSpec{
 		name:     "dispute_detention",
 		artifact: detentionRecordEntity,
@@ -55,11 +55,11 @@ func newDisputeDetentionTool(detentions detentionDisputer) serviceports.AgentToo
 				"you have them.", maxOperationNoteChars),
 		},
 		required: []string{paramOccurrenceID, paramNote},
-		target: func(params map[string]any) (serviceports.ToolTarget, bool) {
+		target: func(params map[string]any) (agentports.ToolTarget, bool) {
 			return targetOf(params, paramOccurrenceID, permission.ResourceDetentionPolicy)
 		},
 	}, receivablePlan[*detentionservice.DisputeParams, *detentionservice.OccurrenceChange]{
-		request: func(params *serviceports.ToolExecuteParams) (*detentionservice.DisputeParams, error) {
+		request: func(params *agentports.ToolExecuteParams) (*detentionservice.DisputeParams, error) {
 			occurrenceID, err := requirePulid(params.Params, paramOccurrenceID)
 			if err != nil {
 				return nil, err
@@ -79,7 +79,7 @@ func newDisputeDetentionTool(detentions detentionDisputer) serviceports.AgentToo
 		plan: func(
 			ctx context.Context,
 			req *detentionservice.DisputeParams,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*detentionservice.OccurrenceChange, error) {
 			return detentions.PreviewDispute(ctx, req)
 		},
@@ -103,7 +103,7 @@ func newDisputeDetentionTool(detentions detentionDisputer) serviceports.AgentToo
 		run: func(
 			ctx context.Context,
 			req *detentionservice.DisputeParams,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			saved, err := detentions.Dispute(ctx, *req)
 			if err != nil {

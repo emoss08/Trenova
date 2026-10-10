@@ -6,27 +6,30 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/reportjobs/reportcontract"
-	"github.com/emoss08/trenova/shared/i18n"
-
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/services/reporting/canned"
 	reportingcompiler "github.com/emoss08/trenova/internal/core/services/reporting/compiler"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/reportjobs/reportcontract"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/reporting/render"
 	"github.com/emoss08/trenova/internal/infrastructure/storage/uploadpipe"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/sdk/activity"
@@ -44,46 +47,46 @@ const rowsSidecarSuffix = ".rows.json"
 type ActivitiesParams struct {
 	fx.In
 
-	RunRepo             repositories.ReportRunRepository
-	DefinitionRepo      repositories.ReportDefinitionRepository
-	ScheduleRepo        repositories.ReportScheduleRepository
-	WorkflowStarter     services.WorkflowStarter
-	OrganizationRepo    repositories.OrganizationRepository
-	UserRepo            repositories.UserRepository
-	Compiler            services.ReportCompiler
-	Executor            services.ReportDatasetExecutor
-	Renderers           services.ReportRendererRegistry
+	RunRepo             reportports.ReportRunRepository
+	DefinitionRepo      reportports.ReportDefinitionRepository
+	ScheduleRepo        reportports.ReportScheduleRepository
+	WorkflowStarter     kernelports.WorkflowStarter
+	OrganizationRepo    tenantports.OrganizationRepository
+	UserRepo            tenantports.UserRepository
+	Compiler            reportports.ReportCompiler
+	Executor            reportports.ReportDatasetExecutor
+	Renderers           reportports.ReportRendererRegistry
 	ReportingDB         *postgres.ReportingConnection
-	Storage             storage.Client
+	Storage             kernelports.Client
 	NotificationService *notificationservice.Service
-	EmailService        services.EmailService `optional:"true"`
-	Templates           services.DocumentTemplateResolver
-	RealtimeService     services.RealtimeService   `optional:"true"`
-	ResultCache         services.ReportResultCache `optional:"true"`
-	AuditService        services.AuditService
+	EmailService        emailports.EmailService `optional:"true"`
+	Templates           documenttemplateports.DocumentTemplateResolver
+	RealtimeService     agentports.RealtimeService    `optional:"true"`
+	ResultCache         reportports.ReportResultCache `optional:"true"`
+	AuditService        auditports.AuditService
 	Metrics             *metrics.Registry `optional:"true"`
 	Config              *config.Config
 	Logger              *zap.Logger
 }
 
 type Activities struct {
-	runRepo      repositories.ReportRunRepository
-	defRepo      repositories.ReportDefinitionRepository
-	scheduleRepo repositories.ReportScheduleRepository
-	workflows    services.WorkflowStarter
-	orgRepo      repositories.OrganizationRepository
-	userRepo     repositories.UserRepository
-	compiler     services.ReportCompiler
-	executor     services.ReportDatasetExecutor
-	renderers    services.ReportRendererRegistry
+	runRepo      reportports.ReportRunRepository
+	defRepo      reportports.ReportDefinitionRepository
+	scheduleRepo reportports.ReportScheduleRepository
+	workflows    kernelports.WorkflowStarter
+	orgRepo      tenantports.OrganizationRepository
+	userRepo     tenantports.UserRepository
+	compiler     reportports.ReportCompiler
+	executor     reportports.ReportDatasetExecutor
+	renderers    reportports.ReportRendererRegistry
 	reportingDB  *postgres.ReportingConnection
-	storage      storage.Client
+	storage      kernelports.Client
 	notification *notificationservice.Service
-	email        services.EmailService
-	templates    services.DocumentTemplateResolver
-	realtime     services.RealtimeService
-	resultCache  services.ReportResultCache
-	audit        services.AuditService
+	email        emailports.EmailService
+	templates    documenttemplateports.DocumentTemplateResolver
+	realtime     agentports.RealtimeService
+	resultCache  reportports.ReportResultCache
+	audit        auditports.AuditService
 	metrics      *metrics.Report
 	canned       *canned.Registry
 	cfg          *config.ReportingConfig
@@ -149,7 +152,7 @@ func (a *Activities) PrepareRunActivity(
 		BuID:  payload.BusinessUnitID,
 	}
 
-	run, err := a.runRepo.GetByID(ctx, &repositories.GetReportRunRequest{
+	run, err := a.runRepo.GetByID(ctx, &reportports.GetReportRunRequest{
 		TenantInfo: tenant,
 		RunID:      payload.RunID,
 	})
@@ -184,7 +187,7 @@ func (a *Activities) PrepareRunActivity(
 		return nil, err
 	}
 
-	org, err := a.orgRepo.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+	org, err := a.orgRepo.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  payload.OrganizationID,
 			BuID:   payload.BusinessUnitID,
@@ -201,7 +204,7 @@ func (a *Activities) PrepareRunActivity(
 		UserID: run.RequestedByID,
 	}
 
-	if _, err = a.compiler.ValidateAndAuthorize(ctx, &services.ReportCompileRequest{
+	if _, err = a.compiler.ValidateAndAuthorize(ctx, &reportports.ReportCompileRequest{
 		Definition:  definition,
 		Tenant:      runnerTenant,
 		Params:      run.Params,
@@ -245,7 +248,7 @@ func (a *Activities) scheduleWantsDigest(
 	if scheduleID.IsNil() {
 		return false
 	}
-	schedule, err := a.scheduleRepo.GetByID(ctx, &repositories.GetReportScheduleRequest{
+	schedule, err := a.scheduleRepo.GetByID(ctx, &reportports.GetReportScheduleRequest{
 		TenantInfo: tenant,
 		ScheduleID: scheduleID,
 	})
@@ -269,7 +272,7 @@ func (a *Activities) resolveDefinition(
 	cannedKey string,
 ) (*report.Definition, error) {
 	if !revisionID.IsNil() {
-		revision, err := a.defRepo.GetRevision(ctx, &repositories.GetReportRevisionRequest{
+		revision, err := a.defRepo.GetRevision(ctx, &reportports.GetReportRevisionRequest{
 			TenantInfo: tenant,
 			RevisionID: revisionID,
 		})
@@ -301,7 +304,7 @@ func (a *Activities) runDisplayMetadata(
 	run *report.ReportRun,
 	runnerTenant pagination.TenantInfo,
 ) (requestedBy, locale, title, description string) {
-	if user, userErr := a.userRepo.GetByID(ctx, repositories.GetUserByIDRequest{
+	if user, userErr := a.userRepo.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo:   runnerTenant,
 		LookupUserID: run.RequestedByID,
 	}); userErr == nil {
@@ -324,7 +327,7 @@ func (a *Activities) reportTitle(
 
 	switch {
 	case !run.DefinitionID.IsNil():
-		if def, defErr := a.defRepo.GetByID(ctx, &repositories.GetReportDefinitionRequest{
+		if def, defErr := a.defRepo.GetByID(ctx, &reportports.GetReportDefinitionRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: run.OrganizationID,
 				BuID:  run.BusinessUnitID,
@@ -361,7 +364,7 @@ func (a *Activities) ExecuteAndRenderActivity(
 
 	ctx = withRunLocale(ctx, prepared)
 
-	compiled, err := a.compiler.Compile(ctx, &services.ReportCompileRequest{
+	compiled, err := a.compiler.Compile(ctx, &reportports.ReportCompileRequest{
 		Definition:  definition,
 		Tenant:      tenant,
 		Params:      prepared.Params,
@@ -395,7 +398,7 @@ func (a *Activities) ExecuteAndRenderActivity(
 		maxRows = a.cfg.GetPDFMaxRows() + 1
 	}
 
-	reader, err := a.executor.Open(ctx, &services.OpenReportDatasetRequest{
+	reader, err := a.executor.Open(ctx, &reportports.OpenReportDatasetRequest{
 		Compiled: compiled,
 		MaxRows:  maxRows,
 		Timeout:  a.cfg.GetStatementTimeout(),
@@ -435,7 +438,7 @@ func (a *Activities) ExecuteAndRenderActivity(
 	if a.resultCache != nil && cacheKey != "" {
 		expiresAt := timeutils.NowUnix() + int64(a.cfg.GetArtifactRetention().Seconds())
 		result.ArtifactExpiresAt = expiresAt
-		if storeErr := a.resultCache.Store(ctx, cacheKey, &services.ReportCacheEntry{
+		if storeErr := a.resultCache.Store(ctx, cacheKey, &reportports.ReportCacheEntry{
 			ArtifactKey:       result.ArtifactKey,
 			RowsKey:           result.RowsKey,
 			RowCount:          result.RowCount,
@@ -456,7 +459,7 @@ func (a *Activities) ExecuteAndRenderActivity(
 // to store a fresh result under on a miss.
 func (a *Activities) cachedResult(
 	ctx context.Context,
-	compiled *services.CompiledReportQuery,
+	compiled *reportports.CompiledReportQuery,
 	prepared *PreparedRun,
 ) (cached *ExecuteResult, cacheKey string) {
 	if a.resultCache == nil {
@@ -514,11 +517,11 @@ func (a *Activities) cachedResult(
 func (a *Activities) renderToStorage(
 	ctx context.Context,
 	prepared *PreparedRun,
-	renderer services.ReportRenderer,
-	dataset services.ReportDatasetReader,
+	renderer reportports.ReportRenderer,
+	dataset reportports.ReportDatasetReader,
 	artifactKey string,
 ) (*ExecuteResult, error) {
-	meta := services.ReportRunMeta{
+	meta := reportports.ReportRunMeta{
 		Title:           prepared.Title,
 		Description:     prepared.Description,
 		GeneratedAtUnix: timeutils.NowUnix(),
@@ -550,7 +553,7 @@ func (a *Activities) renderToStorage(
 	})
 	sidecar := render.NewRowsSidecar(dataset, rowsUpload.Writer(), meta)
 
-	stats, renderErr := renderer.Render(ctx, &services.ReportRenderRequest{
+	stats, renderErr := renderer.Render(ctx, &reportports.ReportRenderRequest{
 		Dataset: sidecar,
 		Sink:    artifact.Writer(),
 		Meta:    meta,
@@ -630,7 +633,7 @@ func (a *Activities) FinalizeRunActivity(
 		BuID:  payload.BusinessUnitID,
 	}
 
-	run, err := a.runRepo.GetByID(ctx, &repositories.GetReportRunRequest{
+	run, err := a.runRepo.GetByID(ctx, &reportports.GetReportRunRequest{
 		TenantInfo: tenant,
 		RunID:      payload.RunID,
 	})
@@ -681,7 +684,7 @@ func (a *Activities) FinalizeRunActivity(
 }
 
 func (a *Activities) emitAudit(run *report.ReportRun) {
-	if err := a.audit.LogAction(&services.LogActionParams{
+	if err := a.audit.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceReport,
 		ResourceID:     run.ID.String(),
 		Operation:      permission.OpExport,
@@ -772,7 +775,7 @@ func (a *Activities) emitInvalidation(ctx context.Context, run *report.ReportRun
 	}
 	if err := a.realtime.PublishResourceInvalidation(
 		ctx,
-		&services.PublishResourceInvalidationRequest{
+		&agentports.PublishResourceInvalidationRequest{
 			OrganizationID: run.OrganizationID,
 			BusinessUnitID: run.BusinessUnitID,
 			Resource:       "report-run",
@@ -801,7 +804,7 @@ func (a *Activities) CleanupExpiredArtifactsActivity(
 	now := timeutils.NowUnix()
 
 	for {
-		expired, err := a.runRepo.ListExpired(ctx, &repositories.ListExpiredReportRunsRequest{
+		expired, err := a.runRepo.ListExpired(ctx, &reportports.ListExpiredReportRunsRequest{
 			CutoffUnix: now,
 			Limit:      100,
 		})
@@ -863,7 +866,7 @@ func (a *Activities) ReconcileZombieRunsActivity(
 	staleCutoff := timeutils.NowUnix() -
 		int64((a.cfg.GetMaxRunDuration() + time.Hour).Seconds())
 
-	stale, err := a.runRepo.ListStale(ctx, &repositories.ListStaleReportRunsRequest{
+	stale, err := a.runRepo.ListStale(ctx, &reportports.ListStaleReportRunsRequest{
 		Statuses:          []report.RunStatus{report.RunStatusQueued, report.RunStatusRunning},
 		UpdatedBeforeUnix: staleCutoff,
 		Limit:             200,
@@ -903,16 +906,16 @@ var errArtifactTooLarge = uploadpipe.ErrTooLarge
 // email table — a bounded tee of the rows.
 func wrapReader(
 	ctx context.Context,
-	reader services.ReportDatasetReader,
+	reader reportports.ReportDatasetReader,
 	prepared *PreparedRun,
-) (services.ReportDatasetReader, *digestReader) {
-	var source services.ReportDatasetReader = uploadpipe.NewHeartbeatingReader(
+) (reportports.ReportDatasetReader, *digestReader) {
+	var source reportports.ReportDatasetReader = uploadpipe.NewHeartbeatingReader(
 		ctx, reader, heartbeatEveryRows, activity.RecordHeartbeat,
 	)
 	if !prepared.WantDigest {
 		return source, nil
 	}
-	digesting := newDigestReader(source, services.MaxDigestRows)
+	digesting := newDigestReader(source, reportports.MaxDigestRows)
 	return digesting, digesting
 }
 
@@ -920,36 +923,36 @@ func wrapReader(
 // renderer, so an inline email digest costs one pass over data the run is
 // already streaming rather than a second query.
 type digestReader struct {
-	inner   services.ReportDatasetReader
-	rows    []services.ReportRow
+	inner   reportports.ReportDatasetReader
+	rows    []reportports.ReportRow
 	limit   int
 	dropped bool
 }
 
-func newDigestReader(inner services.ReportDatasetReader, limit int) *digestReader {
-	if limit > services.MaxDigestRows {
-		limit = services.MaxDigestRows
+func newDigestReader(inner reportports.ReportDatasetReader, limit int) *digestReader {
+	if limit > reportports.MaxDigestRows {
+		limit = reportports.MaxDigestRows
 	}
 	return &digestReader{inner: inner, limit: limit}
 }
 
-func (r *digestReader) Schema() []services.ReportResultColumn { return r.inner.Schema() }
+func (r *digestReader) Schema() []reportports.ReportResultColumn { return r.inner.Schema() }
 
-func (r *digestReader) Next(ctx context.Context) (services.ReportRow, error) {
+func (r *digestReader) Next(ctx context.Context) (reportports.ReportRow, error) {
 	row, err := r.inner.Next(ctx)
 	if err != nil {
 		return row, err
 	}
 	if len(r.rows) < r.limit {
 		// The renderer owns the slice it was handed, so the digest keeps a copy.
-		r.rows = append(r.rows, append(services.ReportRow(nil), row...))
+		r.rows = append(r.rows, append(reportports.ReportRow(nil), row...))
 	} else {
 		r.dropped = true
 	}
 	return row, nil
 }
 
-func (r *digestReader) Totals(ctx context.Context) (services.ReportRow, error) {
+func (r *digestReader) Totals(ctx context.Context) (reportports.ReportRow, error) {
 	return r.inner.Totals(ctx)
 }
 
@@ -961,8 +964,8 @@ func (r *digestReader) Close() error { return r.inner.Close() }
 
 // digest assembles what was captured. Totals are read after the stream so the
 // grand total covers every matching row, not only the sampled ones.
-func (r *digestReader) digest(ctx context.Context) *services.ReportDigest {
-	digest := &services.ReportDigest{
+func (r *digestReader) digest(ctx context.Context) *reportports.ReportDigest {
+	digest := &reportports.ReportDigest{
 		Columns:   r.inner.Schema(),
 		Rows:      r.rows,
 		Truncated: r.dropped,

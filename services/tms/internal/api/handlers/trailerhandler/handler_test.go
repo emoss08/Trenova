@@ -1,6 +1,8 @@
 package trailerhandler_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/customfieldportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/trailerportsmock"
 	"context"
 	"errors"
 	"net/http"
@@ -11,10 +13,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/customfield"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
 	"github.com/emoss08/trenova/internal/core/services/trailerservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -31,17 +33,17 @@ var errService = errors.New("service error")
 
 type trailerDeps struct {
 	handler   *trailerhandler.Handler
-	cfDefRepo *mocks.MockCustomFieldDefinitionRepository
-	cfValRepo *mocks.MockCustomFieldValueRepository
+	cfDefRepo *customfieldportsmock.MockCustomFieldDefinitionRepository
+	cfValRepo *customfieldportsmock.MockCustomFieldValueRepository
 }
 
-func setupTrailerHandler(t *testing.T, repo *mocks.MockTrailerRepository) *trailerDeps {
+func setupTrailerHandler(t *testing.T, repo *trailerportsmock.MockTrailerRepository) *trailerDeps {
 	t.Helper()
 
 	logger := zap.NewNop()
 
-	cfDefRepo := mocks.NewMockCustomFieldDefinitionRepository(t)
-	cfValRepo := mocks.NewMockCustomFieldValueRepository(t)
+	cfDefRepo := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
+	cfValRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
 
 	cfValuesService := customfieldservice.NewValuesService(customfieldservice.ValuesServiceParams{
 		Logger:         logger,
@@ -93,7 +95,7 @@ func TestTrailerHandler_List_Success(t *testing.T) {
 	t.Parallel()
 
 	trID := pulid.MustNew("tr_")
-	repo := mocks.NewMockTrailerRepository(t)
+	repo := trailerportsmock.NewMockTrailerRepository(t)
 	repo.On("List", mock.Anything, mock.Anything).Return(
 		pagination.NewCursorListResult([]*trailer.Trailer{
 			{
@@ -130,8 +132,8 @@ func TestTrailerHandler_List_Success(t *testing.T) {
 func TestTrailerHandler_List_WithPagination(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockTrailerRepository(t)
-	repo.On("List", mock.Anything, mock.MatchedBy(func(req *repositories.ListTrailersRequest) bool {
+	repo := trailerportsmock.NewMockTrailerRepository(t)
+	repo.On("List", mock.Anything, mock.MatchedBy(func(req *trailerports.ListTrailersRequest) bool {
 		return req.Cursor.Limit == 10 && req.Cursor.After == ""
 	})).Return(pagination.NewCursorListResult([]*trailer.Trailer{}, 10), nil)
 
@@ -156,7 +158,7 @@ func TestTrailerHandler_List_WithPagination(t *testing.T) {
 func TestTrailerHandler_List_Error(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockTrailerRepository(t)
+	repo := trailerportsmock.NewMockTrailerRepository(t)
 	repo.On("List", mock.Anything, mock.Anything).Return(nil, errService)
 
 	deps := setupTrailerHandler(t, repo)
@@ -175,7 +177,7 @@ func TestTrailerHandler_List_Error(t *testing.T) {
 func TestTrailerHandler_List_WithQueryParams(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockTrailerRepository(t)
+	repo := trailerportsmock.NewMockTrailerRepository(t)
 	repo.On("List", mock.Anything, mock.Anything).Return(
 		pagination.NewCursorListResult([]*trailer.Trailer{}, pagination.DefaultLimit),
 		nil,
@@ -203,7 +205,7 @@ func TestTrailerHandler_Get_Success(t *testing.T) {
 	t.Parallel()
 
 	trID := pulid.MustNew("tr_")
-	repo := mocks.NewMockTrailerRepository(t)
+	repo := trailerportsmock.NewMockTrailerRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(&trailer.Trailer{
 		ID:             trID,
 		OrganizationID: testutil.TestOrgID,
@@ -235,7 +237,7 @@ func TestTrailerHandler_Get_NotFound(t *testing.T) {
 	t.Parallel()
 
 	trID := pulid.MustNew("tr_")
-	repo := mocks.NewMockTrailerRepository(t)
+	repo := trailerportsmock.NewMockTrailerRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(nil, errNotFound)
 
 	deps := setupTrailerHandler(t, repo)
@@ -254,7 +256,7 @@ func TestTrailerHandler_Get_NotFound(t *testing.T) {
 func TestTrailerHandler_Get_InvalidID(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockTrailerRepository(t)
+	repo := trailerportsmock.NewMockTrailerRepository(t)
 	deps := setupTrailerHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -273,7 +275,7 @@ func TestTrailerHandler_Create_Success(t *testing.T) {
 
 	eqTypeID := pulid.MustNew("eqt_")
 	eqMfgID := pulid.MustNew("eqm_")
-	repo := mocks.NewMockTrailerRepository(t)
+	repo := trailerportsmock.NewMockTrailerRepository(t)
 	repo.On("Create", mock.Anything, mock.Anything).
 		Return(func(_ context.Context, entity *trailer.Trailer) *trailer.Trailer {
 			entity.ID = pulid.MustNew("tr_")
@@ -306,7 +308,7 @@ func TestTrailerHandler_Create_Success(t *testing.T) {
 func TestTrailerHandler_Create_BadJSON(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockTrailerRepository(t)
+	repo := trailerportsmock.NewMockTrailerRepository(t)
 	deps := setupTrailerHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -326,7 +328,7 @@ func TestTrailerHandler_Create_ServiceError(t *testing.T) {
 
 	eqTypeID := pulid.MustNew("eqt_")
 	eqMfgID := pulid.MustNew("eqm_")
-	repo := mocks.NewMockTrailerRepository(t)
+	repo := trailerportsmock.NewMockTrailerRepository(t)
 	repo.On("Create", mock.Anything, mock.Anything).Return(nil, errService)
 
 	deps := setupTrailerHandler(t, repo)
@@ -354,7 +356,7 @@ func TestTrailerHandler_Update_Success(t *testing.T) {
 	trID := pulid.MustNew("tr_")
 	eqTypeID := pulid.MustNew("eqt_")
 	eqMfgID := pulid.MustNew("eqm_")
-	repo := mocks.NewMockTrailerRepository(t)
+	repo := trailerportsmock.NewMockTrailerRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(&trailer.Trailer{
 		ID:                      trID,
 		OrganizationID:          testutil.TestOrgID,
@@ -395,7 +397,7 @@ func TestTrailerHandler_Update_Success(t *testing.T) {
 func TestTrailerHandler_Update_InvalidID(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockTrailerRepository(t)
+	repo := trailerportsmock.NewMockTrailerRepository(t)
 	deps := setupTrailerHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -416,7 +418,7 @@ func TestTrailerHandler_Update_BadJSON(t *testing.T) {
 	t.Parallel()
 
 	trID := pulid.MustNew("tr_")
-	repo := mocks.NewMockTrailerRepository(t)
+	repo := trailerportsmock.NewMockTrailerRepository(t)
 	deps := setupTrailerHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -437,7 +439,7 @@ func TestTrailerHandler_Update_ServiceError(t *testing.T) {
 	trID := pulid.MustNew("tr_")
 	eqTypeID := pulid.MustNew("eqt_")
 	eqMfgID := pulid.MustNew("eqm_")
-	repo := mocks.NewMockTrailerRepository(t)
+	repo := trailerportsmock.NewMockTrailerRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(&trailer.Trailer{
 		ID:                      trID,
 		OrganizationID:          testutil.TestOrgID,
@@ -474,7 +476,7 @@ func TestTrailerHandler_Patch_Success(t *testing.T) {
 	trID := pulid.MustNew("tr_")
 	eqTypeID := pulid.MustNew("eqt_")
 	eqMfgID := pulid.MustNew("eqm_")
-	repo := mocks.NewMockTrailerRepository(t)
+	repo := trailerportsmock.NewMockTrailerRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(&trailer.Trailer{
 		ID:                      trID,
 		OrganizationID:          testutil.TestOrgID,
@@ -517,7 +519,7 @@ func TestTrailerHandler_Patch_Success(t *testing.T) {
 func TestTrailerHandler_Patch_InvalidID(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockTrailerRepository(t)
+	repo := trailerportsmock.NewMockTrailerRepository(t)
 	deps := setupTrailerHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -538,7 +540,7 @@ func TestTrailerHandler_Patch_GetError(t *testing.T) {
 	t.Parallel()
 
 	trID := pulid.MustNew("tr_")
-	repo := mocks.NewMockTrailerRepository(t)
+	repo := trailerportsmock.NewMockTrailerRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(nil, errNotFound)
 
 	deps := setupTrailerHandler(t, repo)
@@ -563,7 +565,7 @@ func TestTrailerHandler_Patch_BadJSON(t *testing.T) {
 	trID := pulid.MustNew("tr_")
 	eqTypeID := pulid.MustNew("eqt_")
 	eqMfgID := pulid.MustNew("eqm_")
-	repo := mocks.NewMockTrailerRepository(t)
+	repo := trailerportsmock.NewMockTrailerRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(&trailer.Trailer{
 		ID:                      trID,
 		OrganizationID:          testutil.TestOrgID,
@@ -596,7 +598,7 @@ func TestTrailerHandler_Patch_UpdateError(t *testing.T) {
 	trID := pulid.MustNew("tr_")
 	eqTypeID := pulid.MustNew("eqt_")
 	eqMfgID := pulid.MustNew("eqm_")
-	repo := mocks.NewMockTrailerRepository(t)
+	repo := trailerportsmock.NewMockTrailerRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(&trailer.Trailer{
 		ID:                      trID,
 		OrganizationID:          testutil.TestOrgID,
@@ -631,7 +633,7 @@ func TestTrailerHandler_BulkUpdateStatus_Success(t *testing.T) {
 
 	trID1 := pulid.MustNew("tr_")
 	trID2 := pulid.MustNew("tr_")
-	repo := mocks.NewMockTrailerRepository(t)
+	repo := trailerportsmock.NewMockTrailerRepository(t)
 	repo.On("GetByIDs", mock.Anything, mock.Anything).Return([]*trailer.Trailer{
 		{
 			ID:             trID1,
@@ -689,7 +691,7 @@ func TestTrailerHandler_BulkUpdateStatus_Success(t *testing.T) {
 func TestTrailerHandler_BulkUpdateStatus_BadJSON(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockTrailerRepository(t)
+	repo := trailerportsmock.NewMockTrailerRepository(t)
 	deps := setupTrailerHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -708,7 +710,7 @@ func TestTrailerHandler_BulkUpdateStatus_ServiceError(t *testing.T) {
 	t.Parallel()
 
 	trID1 := pulid.MustNew("tr_")
-	repo := mocks.NewMockTrailerRepository(t)
+	repo := trailerportsmock.NewMockTrailerRepository(t)
 	repo.On("GetByIDs", mock.Anything, mock.Anything).Return(nil, errService)
 
 	deps := setupTrailerHandler(t, repo)

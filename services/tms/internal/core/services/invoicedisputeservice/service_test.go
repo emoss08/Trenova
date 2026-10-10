@@ -1,15 +1,18 @@
 package invoicedisputeservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceadjustmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -30,7 +33,7 @@ func (fakeDisputeDB) DBForContext(context.Context) bun.IDB { return nil }
 
 func (fakeDisputeDB) WithTx(
 	ctx context.Context,
-	_ ports.TxOptions,
+	_ kernelports.TxOptions,
 	fn func(context.Context, bun.Tx) error,
 ) error {
 	return fn(ctx, bun.Tx{})
@@ -42,11 +45,11 @@ func (fakeDisputeDB) Close() error                      { return nil }
 type disputeFixture struct {
 	orgID, buID, userID pulid.ID
 	tenantInfo          pagination.TenantInfo
-	actor               *servicesports.RequestActor
+	actor               *permissionports.RequestActor
 	inv                 *invoice.Invoice
-	repo                *mocks.MockInvoiceDisputeRepository
-	invoiceRepo         *mocks.MockInvoiceRepository
-	adjustmentRepo      *mocks.MockInvoiceAdjustmentRepository
+	repo                *invoiceportsmock.MockInvoiceDisputeRepository
+	invoiceRepo         *invoiceportsmock.MockInvoiceRepository
+	adjustmentRepo      *invoiceadjustmentportsmock.MockInvoiceAdjustmentRepository
 	svc                 *Service
 }
 
@@ -71,9 +74,9 @@ func newDisputeFixture(t *testing.T) *disputeFixture {
 		TotalAmountMinor: 10000,
 		DisputeStatus:    invoice.DisputeStatusNone,
 	}
-	f.repo = mocks.NewMockInvoiceDisputeRepository(t)
-	f.invoiceRepo = mocks.NewMockInvoiceRepository(t)
-	f.adjustmentRepo = mocks.NewMockInvoiceAdjustmentRepository(t)
+	f.repo = invoiceportsmock.NewMockInvoiceDisputeRepository(t)
+	f.invoiceRepo = invoiceportsmock.NewMockInvoiceRepository(t)
+	f.adjustmentRepo = invoiceadjustmentportsmock.NewMockInvoiceAdjustmentRepository(t)
 	f.svc = &Service{
 		l:              zap.NewNop(),
 		db:             fakeDisputeDB{},
@@ -89,7 +92,7 @@ func newDisputeFixture(t *testing.T) *disputeFixture {
 
 func (f *disputeFixture) lockInvoice() {
 	f.invoiceRepo.EXPECT().
-		LockForUpdate(mock.Anything, repositories.GetInvoiceByIDRequest{ID: f.inv.ID, TenantInfo: f.tenantInfo}).
+		LockForUpdate(mock.Anything, invoiceports.GetInvoiceByIDRequest{ID: f.inv.ID, TenantInfo: f.tenantInfo}).
 		Return(f.inv, nil).
 		Once()
 }
@@ -105,8 +108,8 @@ func (f *disputeFixture) expectFlag(status invoice.DisputeStatus) {
 		Once()
 }
 
-func (f *disputeFixture) openRequest(amount string) *servicesports.OpenInvoiceDisputeRequest {
-	return &servicesports.OpenInvoiceDisputeRequest{
+func (f *disputeFixture) openRequest(amount string) *invoiceports.OpenInvoiceDisputeRequest {
+	return &invoiceports.OpenInvoiceDisputeRequest{
 		InvoiceID:      f.inv.ID,
 		TenantInfo:     f.tenantInfo,
 		ReasonCode:     invoice.DisputeReasonRateDiscrepancy,
@@ -137,7 +140,7 @@ func TestOpenDisputeFlagsTheInvoice(t *testing.T) {
 	f := newDisputeFixture(t)
 	f.lockInvoice()
 	f.repo.EXPECT().
-		GetOpenByInvoiceID(mock.Anything, repositories.GetOpenInvoiceDisputeRequest{InvoiceID: f.inv.ID, TenantInfo: f.tenantInfo}).
+		GetOpenByInvoiceID(mock.Anything, invoiceports.GetOpenInvoiceDisputeRequest{InvoiceID: f.inv.ID, TenantInfo: f.tenantInfo}).
 		Return(nil, errortypes.NewNotFoundError("none")).
 		Once()
 	f.repo.EXPECT().
@@ -179,7 +182,7 @@ func TestOpenDisputeRejectsBadRequests(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "greater than zero")
 
-	_, err = f.svc.Open(t.Context(), f.openRequest("10"), &servicesports.RequestActor{})
+	_, err = f.svc.Open(t.Context(), f.openRequest("10"), &permissionports.RequestActor{})
 	require.Error(t, err)
 }
 
@@ -261,7 +264,7 @@ func TestResolveDisputeClearsTheFlag(t *testing.T) {
 	f.inv.DisputeStatus = invoice.DisputeStatusDisputed
 	dispute := f.openCase()
 	f.repo.EXPECT().
-		GetByID(mock.Anything, repositories.GetInvoiceDisputeByIDRequest{ID: dispute.ID, TenantInfo: f.tenantInfo}).
+		GetByID(mock.Anything, invoiceports.GetInvoiceDisputeByIDRequest{ID: dispute.ID, TenantInfo: f.tenantInfo}).
 		Return(dispute, nil).
 		Once()
 	f.lockInvoice()
@@ -279,7 +282,7 @@ func TestResolveDisputeClearsTheFlag(t *testing.T) {
 		Once()
 	f.expectFlag(invoice.DisputeStatusNone)
 
-	resolved, err := f.svc.Resolve(t.Context(), &servicesports.ResolveInvoiceDisputeRequest{
+	resolved, err := f.svc.Resolve(t.Context(), &invoiceports.ResolveInvoiceDisputeRequest{
 		DisputeID:       dispute.ID,
 		TenantInfo:      f.tenantInfo,
 		Resolution:      invoice.DisputeResolutionInvoiceUpheld,
@@ -332,12 +335,12 @@ func TestResolveDisputeCreditIssuedNeedsAnExecutedAdjustmentOnTheInvoice(t *test
 					}
 				}
 				f.adjustmentRepo.EXPECT().
-					GetByID(mock.Anything, repositories.GetInvoiceAdjustmentRequest{ID: adjustmentID, TenantInfo: f.tenantInfo}).
+					GetByID(mock.Anything, invoiceadjustmentports.GetInvoiceAdjustmentRequest{ID: adjustmentID, TenantInfo: f.tenantInfo}).
 					Return(adjustment, nil).
 					Once()
 			}
 
-			req := &servicesports.ResolveInvoiceDisputeRequest{
+			req := &invoiceports.ResolveInvoiceDisputeRequest{
 				DisputeID:  dispute.ID,
 				TenantInfo: f.tenantInfo,
 				Resolution: invoice.DisputeResolutionCreditIssued,
@@ -373,7 +376,7 @@ func TestResolveDisputeWrittenOffWithExecutedAdjustmentSucceeds(t *testing.T) {
 		Once()
 	f.expectFlag(invoice.DisputeStatusNone)
 
-	resolved, err := f.svc.Resolve(t.Context(), &servicesports.ResolveInvoiceDisputeRequest{
+	resolved, err := f.svc.Resolve(t.Context(), &invoiceports.ResolveInvoiceDisputeRequest{
 		DisputeID:              dispute.ID,
 		TenantInfo:             f.tenantInfo,
 		Resolution:             invoice.DisputeResolutionWrittenOff,
@@ -392,7 +395,7 @@ func TestResolveAndWithdrawRefuseAClosedCase(t *testing.T) {
 	closed.Status = invoice.DisputeCaseStatusWithdrawn
 	f.repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(closed, nil).Twice()
 
-	_, err := f.svc.Resolve(t.Context(), &servicesports.ResolveInvoiceDisputeRequest{
+	_, err := f.svc.Resolve(t.Context(), &invoiceports.ResolveInvoiceDisputeRequest{
 		DisputeID:  closed.ID,
 		TenantInfo: f.tenantInfo,
 		Resolution: invoice.DisputeResolutionInvoiceUpheld,
@@ -400,7 +403,7 @@ func TestResolveAndWithdrawRefuseAClosedCase(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "Only an open dispute can be resolved")
 
-	_, err = f.svc.Withdraw(t.Context(), &servicesports.WithdrawInvoiceDisputeRequest{
+	_, err = f.svc.Withdraw(t.Context(), &invoiceports.WithdrawInvoiceDisputeRequest{
 		DisputeID:  closed.ID,
 		TenantInfo: f.tenantInfo,
 	}, f.actor)
@@ -428,7 +431,7 @@ func TestWithdrawDisputeClearsTheFlag(t *testing.T) {
 		Once()
 	f.expectFlag(invoice.DisputeStatusNone)
 
-	withdrawn, err := f.svc.Withdraw(t.Context(), &servicesports.WithdrawInvoiceDisputeRequest{
+	withdrawn, err := f.svc.Withdraw(t.Context(), &invoiceports.WithdrawInvoiceDisputeRequest{
 		DisputeID:  dispute.ID,
 		TenantInfo: f.tenantInfo,
 		Notes:      "Customer paid in full",

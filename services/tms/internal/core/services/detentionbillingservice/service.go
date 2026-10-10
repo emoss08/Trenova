@@ -9,10 +9,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -27,27 +29,27 @@ type Params struct {
 	fx.In
 
 	Logger         *zap.Logger
-	OccurrenceRepo repositories.DetentionOccurrenceRepository
-	EvidenceRepo   repositories.DetentionEvidenceRepository
-	InvoiceRepo    repositories.InvoiceRepository
-	AuditService   services.AuditService
-	Watchtower     services.WatchtowerProjector `optional:"true"`
+	OccurrenceRepo detentionports.DetentionOccurrenceRepository
+	EvidenceRepo   detentionports.DetentionEvidenceRepository
+	InvoiceRepo    invoiceports.InvoiceRepository
+	AuditService   auditports.AuditService
+	Watchtower     watchtowerports.WatchtowerProjector `optional:"true"`
 }
 
 type Service struct {
 	l              *zap.Logger
-	occurrenceRepo repositories.DetentionOccurrenceRepository
-	evidenceRepo   repositories.DetentionEvidenceRepository
-	invoiceRepo    repositories.InvoiceRepository
-	auditService   services.AuditService
-	watchtower     services.WatchtowerProjector
+	occurrenceRepo detentionports.DetentionOccurrenceRepository
+	evidenceRepo   detentionports.DetentionEvidenceRepository
+	invoiceRepo    invoiceports.InvoiceRepository
+	auditService   auditports.AuditService
+	watchtower     watchtowerports.WatchtowerProjector
 	now            func() int64
 }
 
-var _ services.DetentionBillingService = (*Service)(nil)
+var _ detentionports.DetentionBillingService = (*Service)(nil)
 
 //nolint:gocritic // dependency injection
-func New(p Params) services.DetentionBillingService {
+func New(p Params) detentionports.DetentionBillingService {
 	return &Service{
 		l:              p.Logger.Named("service.detention-billing"),
 		occurrenceRepo: p.OccurrenceRepo,
@@ -61,7 +63,7 @@ func New(p Params) services.DetentionBillingService {
 
 func (s *Service) HoldsForShipments(
 	ctx context.Context,
-	req *services.DetentionBillingHoldsRequest,
+	req *detentionports.DetentionBillingHoldsRequest,
 ) ([]*detention.DetentionOccurrence, error) {
 	if req == nil {
 		return []*detention.DetentionOccurrence{}, nil
@@ -74,7 +76,7 @@ func (s *Service) HoldsForShipments(
 
 	return s.occurrenceRepo.ListBillingHoldsByShipments(
 		ctx,
-		&repositories.ListDetentionBillingHoldsRequest{
+		&detentionports.ListDetentionBillingHoldsRequest{
 			TenantInfo:  req.TenantInfo,
 			ShipmentIDs: shipmentIDs,
 		},
@@ -83,7 +85,7 @@ func (s *Service) HoldsForShipments(
 
 func (s *Service) GuardShipments(
 	ctx context.Context,
-	req *services.DetentionBillingHoldsRequest,
+	req *detentionports.DetentionBillingHoldsRequest,
 ) error {
 	holds, err := s.HoldsForShipments(ctx, req)
 	if err != nil {
@@ -95,7 +97,7 @@ func (s *Service) GuardShipments(
 
 func (s *Service) SyncInvoiceBilling(
 	ctx context.Context,
-	req *services.SyncDetentionInvoiceBillingRequest,
+	req *detentionports.SyncDetentionInvoiceBillingRequest,
 ) error {
 	if req == nil {
 		return nil
@@ -106,7 +108,7 @@ func (s *Service) SyncInvoiceBilling(
 		return nil
 	}
 
-	charges, err := s.invoiceRepo.ListLineCharges(ctx, &repositories.ListInvoiceLineChargesRequest{
+	charges, err := s.invoiceRepo.ListLineCharges(ctx, &invoiceports.ListInvoiceLineChargesRequest{
 		TenantInfo: req.TenantInfo,
 		InvoiceIDs: invoiceIDs,
 	})
@@ -127,7 +129,7 @@ func (s *Service) SyncInvoiceBilling(
 
 	occurrences, err := s.occurrenceRepo.ListByAdditionalCharges(
 		ctx,
-		&repositories.ListOccurrencesByChargesRequest{
+		&detentionports.ListOccurrencesByChargesRequest{
 			TenantInfo:  req.TenantInfo,
 			ShipmentIDs: distinctIDs(shipmentIDs),
 			ChargeIDs:   chargeIDs,
@@ -140,7 +142,7 @@ func (s *Service) SyncInvoiceBilling(
 		return nil
 	}
 
-	net, err := s.invoiceRepo.NetBilledByCharge(ctx, &repositories.NetBilledByChargeRequest{
+	net, err := s.invoiceRepo.NetBilledByCharge(ctx, &invoiceports.NetBilledByChargeRequest{
 		TenantInfo: req.TenantInfo,
 		ChargeIDs:  chargeIDs,
 	})
@@ -171,7 +173,7 @@ func (s *Service) SyncInvoiceBilling(
 type settleParams struct {
 	occurrence *detention.DetentionOccurrence
 	billed     bool
-	req        *services.SyncDetentionInvoiceBillingRequest
+	req        *detentionports.SyncDetentionInvoiceBillingRequest
 	now        int64
 }
 
@@ -212,7 +214,7 @@ func (s *Service) settle(ctx context.Context, p settleParams) error {
 	}
 
 	if s.evidenceRepo != nil {
-		if _, err = s.evidenceRepo.Append(ctx, &repositories.AppendEvidenceRequest{
+		if _, err = s.evidenceRepo.Append(ctx, &detentionports.AppendEvidenceRequest{
 			Entry: &detention.DetentionEvidence{
 				OrganizationID:        saved.OrganizationID,
 				BusinessUnitID:        saved.BusinessUnitID,
@@ -230,7 +232,7 @@ func (s *Service) settle(ctx context.Context, p settleParams) error {
 	}
 
 	updated := *saved
-	ports.AfterCommit(ctx, func(runCtx context.Context) {
+	kernelports.AfterCommit(ctx, func(runCtx context.Context) {
 		s.audit(&original, &updated, p.req.ActorUserID, comment)
 		if updated.Status == detention.OccurrenceStatusBilled && s.watchtower != nil {
 			s.watchtower.Resolve(
@@ -245,16 +247,16 @@ func (s *Service) settle(ctx context.Context, p settleParams) error {
 	return nil
 }
 
-func releaseSummary(req *services.SyncDetentionInvoiceBillingRequest) string {
+func releaseSummary(req *detentionports.SyncDetentionInvoiceBillingRequest) string {
 	number := invoiceLabel(req.InvoiceNumber)
 	switch req.Event {
-	case services.DetentionBillingInvoiceVoided:
+	case detentionports.DetentionBillingInvoiceVoided:
 		return "Billing released: invoice " + number +
 			" was voided and no other invoice bills this charge"
-	case services.DetentionBillingInvoiceAdjusted:
+	case detentionports.DetentionBillingInvoiceAdjusted:
 		return "Billing released: invoice " + number +
 			" was credited and no other invoice bills this charge"
-	case services.DetentionBillingInvoiceCreated:
+	case detentionports.DetentionBillingInvoiceCreated:
 		return "Billing released: no standing invoice bills this charge"
 	default:
 		return "Billing released: no standing invoice bills this charge"
@@ -278,7 +280,7 @@ func (s *Service) audit(
 		return
 	}
 
-	if err := s.auditService.LogAction(&services.LogActionParams{
+	if err := s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceDetentionPolicy,
 		ResourceID:     updated.ID.String(),
 		Operation:      permission.OpUpdate,

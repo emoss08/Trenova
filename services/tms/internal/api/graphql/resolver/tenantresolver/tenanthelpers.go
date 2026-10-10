@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -32,7 +32,7 @@ func (r *MutationResolver) applyOrganizationCapabilities(
 	brokerageEnabled, assetOperationsEnabled *bool,
 ) error {
 	if brokerageEnabled == nil || assetOperationsEnabled == nil {
-		current, err := r.OrganizationService.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+		current, err := r.OrganizationService.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.ID,
 				BuID:  entity.BusinessUnitID,

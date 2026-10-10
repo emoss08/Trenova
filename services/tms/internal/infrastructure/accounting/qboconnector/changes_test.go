@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/shared/quickbooks"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/shopspring/decimal"
@@ -79,8 +79,8 @@ const cdcPaymentAndCustomer = `{"CDCResponse":[{"QueryResponse":[
 {"Vendor":[{"Id":"81","status":"Deleted","MetaData":{"LastUpdatedTime":"2026-09-24T13:00:00Z"}}]}
 ]}]}`
 
-func readRequest(cursor string, now time.Time) *services.ReadAccountingChangesRequest {
-	return &services.ReadAccountingChangesRequest{
+func readRequest(cursor string, now time.Time) *accountingsyncports.ReadAccountingChangesRequest {
+	return &accountingsyncports.ReadAccountingChangesRequest{
 		Auth:         auth(),
 		Cursor:       cursor,
 		Now:          now,
@@ -147,7 +147,7 @@ func TestReadChangesMapsProviderDocumentsToNeutralOnes(t *testing.T) {
 	require.Len(t, page.Payments, 4)
 	paid := page.Payments[0]
 	assert.Equal(t, accountingsync.InboundCustomerPayment, paid.Kind)
-	assert.Equal(t, services.AccountingChangeUpsert, paid.Operation)
+	assert.Equal(t, accountingsyncports.AccountingChangeUpsert, paid.Operation)
 	assert.Equal(t, "301", paid.ExternalID)
 	assert.Equal(t, "10442", paid.Number)
 	assert.Equal(t, "58", paid.PartyExternalID)
@@ -161,8 +161,8 @@ func TestReadChangesMapsProviderDocumentsToNeutralOnes(t *testing.T) {
 	assert.Equal(t, accountingsync.InboundDocCreditMemo, paid.Lines[1].DocumentKind)
 	assert.Equal(t, accountingsync.InboundDocOther, paid.Lines[2].DocumentKind)
 
-	assert.Equal(t, services.AccountingChangeVoid, page.Payments[1].Operation)
-	assert.Equal(t, services.AccountingChangeDelete, page.Payments[2].Operation)
+	assert.Equal(t, accountingsyncports.AccountingChangeVoid, page.Payments[1].Operation)
+	assert.Equal(t, accountingsyncports.AccountingChangeDelete, page.Payments[2].Operation)
 
 	bill := page.Payments[3]
 	assert.Equal(t, accountingsync.InboundBillPayment, bill.Kind)

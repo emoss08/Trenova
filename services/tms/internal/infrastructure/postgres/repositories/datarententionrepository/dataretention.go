@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -28,7 +28,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.DataRetentionRepository {
+func New(p Params) tenantports.DataRetentionRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.data-retention-repository"),
@@ -58,7 +58,7 @@ func (r *repository) List(
 
 func (r *repository) Get(
 	ctx context.Context,
-	req repositories.GetDataRetentionRequest,
+	req tenantports.GetDataRetentionRequest,
 ) (*tenant.DataRetention, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.DataRetention, error) {
 		entity := new(tenant.DataRetention)
@@ -116,7 +116,7 @@ func (r *repository) Upsert(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.DataRetention, error) {
 		log := r.l.With(zap.String("operation", "Upsert"))
 
-		existing, err := r.Get(ctx, repositories.GetDataRetentionRequest{
+		existing, err := r.Get(ctx, tenantports.GetDataRetentionRequest{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
 		})

@@ -1,6 +1,10 @@
 package journalreversalservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/journalreversalportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"testing"
 
@@ -8,9 +12,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/journalentry"
 	"github.com/emoss08/trenova/internal/core/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalreversalports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -30,30 +35,30 @@ func TestCreateJournalReversalPendingApprovalWhenConfigured(t *testing.T) {
 	entryID := pulid.MustNew("je_")
 	periodID := pulid.MustNew("fp_")
 	fyID := pulid.MustNew("fy_")
-	entryRepo := mocks.NewMockJournalEntryRepository(t)
+	entryRepo := journalentryportsmock.NewMockJournalEntryRepository(t)
 	entryRepo.EXPECT().
 		GetByID(
 			mock.Anything,
-			repositories.GetJournalEntryByIDRequest{
+			journalentryports.GetJournalEntryByIDRequest{
 				ID:         entryID,
 				TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
 			},
 		).
 		Return(postedEntry(entryID, orgID, buID), nil)
-	reversalRepo := mocks.NewMockJournalReversalRepository(t)
+	reversalRepo := journalreversalportsmock.NewMockJournalReversalRepository(t)
 	reversalRepo.EXPECT().
 		Create(mock.Anything, mock.AnythingOfType("*journalreversal.Reversal")).
 		RunAndReturn(func(_ context.Context, entity *journalreversal.Reversal) (*journalreversal.Reversal, error) {
 			copy := *entity
 			return &copy, nil
 		})
-	accountingRepo := mocks.NewMockAccountingControlRepository(t)
+	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
 		Return(&tenant.AccountingControl{JournalReversalPolicy: tenant.JournalReversalPolicyNextOpenPeriod, RequireManualJEApproval: true}, nil)
-	fiscalRepo := mocks.NewMockFiscalPeriodRepository(t)
+	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
-		GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 1_700_000_000}).
+		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 1_700_000_000}).
 		Return(&fiscalperiod.FiscalPeriod{ID: periodID, FiscalYearID: fyID, Status: fiscalperiod.StatusOpen}, nil)
 
 	svc := &Service{
@@ -65,7 +70,7 @@ func TestCreateJournalReversalPendingApprovalWhenConfigured(t *testing.T) {
 	}
 	result, err := svc.Create(
 		t.Context(),
-		&serviceports.CreateJournalReversalRequest{
+		&journalreversalports.CreateJournalReversalRequest{
 			OriginalJournalEntryID:  entryID,
 			RequestedAccountingDate: 1_700_000_000,
 			ReasonCode:              "ERR",
@@ -92,18 +97,18 @@ func TestCreateJournalReversalBlockedWhenPolicyDisallows(t *testing.T) {
 	buID := pulid.MustNew("bu_")
 	userID := pulid.MustNew("usr_")
 	entryID := pulid.MustNew("je_")
-	entryRepo := mocks.NewMockJournalEntryRepository(t)
+	entryRepo := journalentryportsmock.NewMockJournalEntryRepository(t)
 	entryRepo.EXPECT().
 		GetByID(
 			mock.Anything,
-			repositories.GetJournalEntryByIDRequest{
+			journalentryports.GetJournalEntryByIDRequest{
 				ID:         entryID,
 				TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
 			},
 		).
 		Return(postedEntry(entryID, orgID, buID), nil)
-	reversalRepo := mocks.NewMockJournalReversalRepository(t)
-	accountingRepo := mocks.NewMockAccountingControlRepository(t)
+	reversalRepo := journalreversalportsmock.NewMockJournalReversalRepository(t)
+	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
 		Return(&tenant.AccountingControl{JournalReversalPolicy: tenant.JournalReversalPolicyDisallow}, nil)
@@ -117,7 +122,7 @@ func TestCreateJournalReversalBlockedWhenPolicyDisallows(t *testing.T) {
 	}
 	result, err := svc.Create(
 		t.Context(),
-		&serviceports.CreateJournalReversalRequest{
+		&journalreversalports.CreateJournalReversalRequest{
 			OriginalJournalEntryID:  entryID,
 			RequestedAccountingDate: 1_700_000_000,
 			ReasonCode:              "ERR",
@@ -143,7 +148,7 @@ func TestListAndGetJournalReversal(t *testing.T) {
 		ID:     pulid.MustNew("jrev_"),
 		Status: journalreversal.StatusRequested,
 	}
-	repo := mocks.NewMockJournalReversalRepository(t)
+	repo := journalreversalportsmock.NewMockJournalReversalRepository(t)
 	repo.EXPECT().
 		List(mock.Anything, mock.Anything).
 		Return(
@@ -156,7 +161,7 @@ func TestListAndGetJournalReversal(t *testing.T) {
 	repo.EXPECT().
 		GetByID(
 			mock.Anything,
-			repositories.GetJournalReversalByIDRequest{
+			journalreversalports.GetJournalReversalByIDRequest{
 				ID:         entity.ID,
 				TenantInfo: pagination.TenantInfo{},
 			},
@@ -166,7 +171,7 @@ func TestListAndGetJournalReversal(t *testing.T) {
 
 	list, err := svc.List(
 		t.Context(),
-		&repositories.ListJournalReversalsRequest{
+		&journalreversalports.ListJournalReversalsRequest{
 			Filter: &pagination.QueryOptions{Pagination: pagination.Info{Limit: 10}},
 		},
 	)
@@ -175,7 +180,7 @@ func TestListAndGetJournalReversal(t *testing.T) {
 
 	got, err := svc.Get(
 		t.Context(),
-		&serviceports.GetJournalReversalRequest{
+		&journalreversalports.GetJournalReversalRequest{
 			ReversalID: entity.ID,
 			TenantInfo: pagination.TenantInfo{},
 		},
@@ -198,11 +203,11 @@ func TestApproveRejectAndCancelJournalReversal(t *testing.T) {
 		Status:         journalreversal.StatusRequested,
 	}
 
-	approveRepo := mocks.NewMockJournalReversalRepository(t)
+	approveRepo := journalreversalportsmock.NewMockJournalReversalRepository(t)
 	approveRepo.EXPECT().
 		GetByID(
 			mock.Anything,
-			repositories.GetJournalReversalByIDRequest{
+			journalreversalports.GetJournalReversalByIDRequest{
 				ID:         base.ID,
 				TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
 			},
@@ -221,7 +226,7 @@ func TestApproveRejectAndCancelJournalReversal(t *testing.T) {
 	}
 	approved, err := svcApprove.Approve(
 		t.Context(),
-		&serviceports.GetJournalReversalRequest{
+		&journalreversalports.GetJournalReversalRequest{
 			ReversalID: base.ID,
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
 		},
@@ -237,11 +242,11 @@ func TestApproveRejectAndCancelJournalReversal(t *testing.T) {
 		BusinessUnitID: buID,
 		Status:         journalreversal.StatusRequested,
 	}
-	rejectRepo := mocks.NewMockJournalReversalRepository(t)
+	rejectRepo := journalreversalportsmock.NewMockJournalReversalRepository(t)
 	rejectRepo.EXPECT().
 		GetByID(
 			mock.Anything,
-			repositories.GetJournalReversalByIDRequest{
+			journalreversalports.GetJournalReversalByIDRequest{
 				ID:         rejectEntity.ID,
 				TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
 			},
@@ -260,7 +265,7 @@ func TestApproveRejectAndCancelJournalReversal(t *testing.T) {
 	}
 	rejected, err := svcReject.Reject(
 		t.Context(),
-		&serviceports.RejectJournalReversalRequest{
+		&journalreversalports.RejectJournalReversalRequest{
 			ReversalID: rejectEntity.ID,
 			Reason:     "bad",
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
@@ -277,11 +282,11 @@ func TestApproveRejectAndCancelJournalReversal(t *testing.T) {
 		BusinessUnitID: buID,
 		Status:         journalreversal.StatusApproved,
 	}
-	cancelRepo := mocks.NewMockJournalReversalRepository(t)
+	cancelRepo := journalreversalportsmock.NewMockJournalReversalRepository(t)
 	cancelRepo.EXPECT().
 		GetByID(
 			mock.Anything,
-			repositories.GetJournalReversalByIDRequest{
+			journalreversalports.GetJournalReversalByIDRequest{
 				ID:         cancelEntity.ID,
 				TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
 			},
@@ -300,7 +305,7 @@ func TestApproveRejectAndCancelJournalReversal(t *testing.T) {
 	}
 	cancelled, err := svcCancel.Cancel(
 		t.Context(),
-		&serviceports.CancelJournalReversalRequest{
+		&journalreversalports.CancelJournalReversalRequest{
 			ReversalID: cancelEntity.ID,
 			Reason:     "stop",
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
@@ -335,21 +340,21 @@ func TestPostBlocksAlreadyReversedEntry(t *testing.T) {
 		RequestedByID:           userID,
 	}
 
-	entryRepo := mocks.NewMockJournalEntryRepository(t)
+	entryRepo := journalentryportsmock.NewMockJournalEntryRepository(t)
 	entryRepo.EXPECT().
 		GetByID(
 			mock.Anything,
-			repositories.GetJournalEntryByIDRequest{
+			journalentryports.GetJournalEntryByIDRequest{
 				ID:         entryID,
 				TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
 			},
 		).
 		Return(cloneEntry(original), nil)
-	reversalRepo := mocks.NewMockJournalReversalRepository(t)
+	reversalRepo := journalreversalportsmock.NewMockJournalReversalRepository(t)
 	reversalRepo.EXPECT().
 		GetByID(
 			mock.Anything,
-			repositories.GetJournalReversalByIDRequest{
+			journalreversalports.GetJournalReversalByIDRequest{
 				ID:         reversal.ID,
 				TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
 			},
@@ -359,13 +364,13 @@ func TestPostBlocksAlreadyReversedEntry(t *testing.T) {
 		db:                  fakeReversalDB{},
 		journalEntryRepo:    entryRepo,
 		journalReversalRepo: reversalRepo,
-		journalPostingRepo:  mocks.NewMockJournalPostingRepository(t),
+		journalPostingRepo:  journalentryportsmock.NewMockJournalPostingRepository(t),
 		sequenceGenerator:   testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
 		auditService:        &mocks.NoopAuditService{},
 	}
 	result, err := svc.Post(
 		t.Context(),
-		&serviceports.GetJournalReversalRequest{
+		&journalreversalports.GetJournalReversalRequest{
 			ReversalID: reversal.ID,
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
 		},
@@ -400,11 +405,11 @@ func TestPostCreatesReversalAndMarksOriginalReversed(t *testing.T) {
 		RequestedByID:           userID,
 	}
 
-	reversalRepo := mocks.NewMockJournalReversalRepository(t)
+	reversalRepo := journalreversalportsmock.NewMockJournalReversalRepository(t)
 	reversalRepo.EXPECT().
 		GetByID(
 			mock.Anything,
-			repositories.GetJournalReversalByIDRequest{
+			journalreversalports.GetJournalReversalByIDRequest{
 				ID:         reversalID,
 				TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
 			},
@@ -416,35 +421,35 @@ func TestPostCreatesReversalAndMarksOriginalReversed(t *testing.T) {
 			copy := *entity
 			return &copy, nil
 		})
-	entryRepo := mocks.NewMockJournalEntryRepository(t)
+	entryRepo := journalentryportsmock.NewMockJournalEntryRepository(t)
 	entryRepo.EXPECT().
 		GetByID(
 			mock.Anything,
-			repositories.GetJournalEntryByIDRequest{
+			journalentryports.GetJournalEntryByIDRequest{
 				ID:         entryID,
 				TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
 			},
 		).
 		Return(cloneEntry(original), nil)
-	var markReq *repositories.MarkJournalEntryReversedRequest
+	var markReq *journalentryports.MarkJournalEntryReversedRequest
 	entryRepo.EXPECT().
 		MarkReversed(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req repositories.MarkJournalEntryReversedRequest) error {
+		RunAndReturn(func(_ context.Context, req journalentryports.MarkJournalEntryReversedRequest) error {
 			copy := req
 			markReq = &copy
 			return nil
 		})
-	postingRepo := mocks.NewMockJournalPostingRepository(t)
-	var postingParams *repositories.CreateJournalPostingParams
+	postingRepo := journalentryportsmock.NewMockJournalPostingRepository(t)
+	var postingParams *journalentryports.CreateJournalPostingParams
 	postingRepo.EXPECT().
 		CreatePosting(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, params repositories.CreateJournalPostingParams) error {
+		RunAndReturn(func(_ context.Context, params journalentryports.CreateJournalPostingParams) error {
 			copyParams := params
-			copyParams.Lines = append([]repositories.JournalPostingLine(nil), params.Lines...)
+			copyParams.Lines = append([]journalentryports.JournalPostingLine(nil), params.Lines...)
 			postingParams = &copyParams
 			return nil
 		})
-	accountingRepo := mocks.NewMockAccountingControlRepository(t)
+	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
 		Return(&tenant.AccountingControl{FunctionalCurrencyCode: "USD"}, nil)
@@ -460,7 +465,7 @@ func TestPostCreatesReversalAndMarksOriginalReversed(t *testing.T) {
 
 	result, err := svc.Post(
 		t.Context(),
-		&serviceports.GetJournalReversalRequest{
+		&journalreversalports.GetJournalReversalRequest{
 			ReversalID: reversalID,
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
 		},
@@ -488,7 +493,7 @@ func (fakeReversalDB) DBForContext(context.Context) bun.IDB { return nil }
 
 func (fakeReversalDB) WithTx(
 	ctx context.Context,
-	_ ports.TxOptions,
+	_ kernelports.TxOptions,
 	fn func(context.Context, bun.Tx) error,
 ) error {
 	return fn(ctx, bun.Tx{})

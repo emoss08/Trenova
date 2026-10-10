@@ -5,7 +5,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -26,7 +26,7 @@ func TestGetAutoCancelableShipments_UsesTenantAndThreshold(t *testing.T) {
 
 	entities, err := repo.GetAutoCancelableShipments(
 		t.Context(),
-		&repositories.GetAutoCancelableShipmentsRequest{
+		&shipmentports.GetAutoCancelableShipmentsRequest{
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		},
 		30,
@@ -63,7 +63,7 @@ func TestAutoCancelShipments_UpdatesEligibleShipmentsAndComponents(t *testing.T)
 		WillReturnResult(sqlmock.NewResult(0, 2))
 	mock.ExpectCommit()
 
-	entities, err := repo.AutoCancelShipments(t.Context(), &repositories.AutoCancelShipmentsRequest{
+	entities, err := repo.AutoCancelShipments(t.Context(), &shipmentports.AutoCancelShipmentsRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 	}, 30)
 

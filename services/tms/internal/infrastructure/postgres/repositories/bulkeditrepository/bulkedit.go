@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/bulkedit"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/bulkeditports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/uptrace/bun"
@@ -28,7 +28,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.BulkEditRepository {
+func New(p Params) bulkeditports.BulkEditRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.bulk-edit-repository")}
 }
 
@@ -47,7 +47,7 @@ func (r *repository) Create(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req *repositories.GetBulkEditRequest,
+	req *bulkeditports.GetBulkEditRequest,
 ) (*bulkedit.BulkEdit, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*bulkedit.BulkEdit, error) {
 		entity := new(bulkedit.BulkEdit)
@@ -96,7 +96,7 @@ func (r *repository) Update(
 
 func (r *repository) ListForUser(
 	ctx context.Context,
-	req *repositories.ListBulkEditsRequest,
+	req *bulkeditports.ListBulkEditsRequest,
 ) ([]*bulkedit.BulkEdit, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*bulkedit.BulkEdit, error) {
 		cols := buncolgen.BulkEditColumns

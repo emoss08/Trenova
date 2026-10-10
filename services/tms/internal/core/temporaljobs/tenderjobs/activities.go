@@ -4,8 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -15,18 +16,18 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	Lifecycle   serviceports.TenderLifecycle
-	Repo        repositories.TenderRepository
-	RateConRepo repositories.RateConfirmationRepository
-	Workflows   serviceports.WorkflowStarter
+	Lifecycle   tenderports.TenderLifecycle
+	Repo        tenderports.TenderRepository
+	RateConRepo rateconfirmationports.RateConfirmationRepository
+	Workflows   kernelports.WorkflowStarter
 	Logger      *zap.Logger
 }
 
 type Activities struct {
-	lifecycle   serviceports.TenderLifecycle
-	repo        repositories.TenderRepository
-	rateConRepo repositories.RateConfirmationRepository
-	workflows   serviceports.WorkflowStarter
+	lifecycle   tenderports.TenderLifecycle
+	repo        tenderports.TenderRepository
+	rateConRepo rateconfirmationports.RateConfirmationRepository
+	workflows   kernelports.WorkflowStarter
 	l           *zap.Logger
 }
 
@@ -55,14 +56,14 @@ type TenderActivityInput struct {
 func (a *Activities) LoadPlanActivity(
 	ctx context.Context,
 	in *TenderActivityInput,
-) (*serviceports.TenderPlan, error) {
+) (*tenderports.TenderPlan, error) {
 	return a.lifecycle.LoadPlan(ctx, in.TenantInfo, in.TenderID)
 }
 
 func (a *Activities) DispatchOfferActivity(
 	ctx context.Context,
 	in *TenderActivityInput,
-) (*serviceports.TenderDispatchResult, error) {
+) (*tenderports.TenderDispatchResult, error) {
 	return a.lifecycle.DispatchOffer(ctx, in.TenantInfo, in.OfferID)
 }
 
@@ -86,7 +87,7 @@ func (a *Activities) DeclineOfferActivity(
 func (a *Activities) AcceptOfferActivity(
 	ctx context.Context,
 	in *TenderActivityInput,
-) (*serviceports.TenderAcceptResult, error) {
+) (*tenderports.TenderAcceptResult, error) {
 	if !in.ActorUserID.IsNil() {
 		in.TenantInfo.UserID = in.ActorUserID
 	}

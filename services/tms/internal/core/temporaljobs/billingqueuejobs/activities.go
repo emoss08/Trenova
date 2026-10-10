@@ -3,11 +3,11 @@ package billingqueuejobs
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/billingqueuejobs/billingqueuecontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/billingqueuejobs/billingqueuecontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,16 +20,16 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	ReviewRepo repositories.BillingQueueReviewRepository
-	Review     services.BillingQueueReviewService
-	Realtime   services.RealtimeService `optional:"true"`
+	ReviewRepo billingqueueports.BillingQueueReviewRepository
+	Review     billingqueueports.BillingQueueReviewService
+	Realtime   agentports.RealtimeService `optional:"true"`
 	Logger     *zap.Logger
 }
 
 type Activities struct {
-	repo     repositories.BillingQueueReviewRepository
-	review   services.BillingQueueReviewService
-	realtime services.RealtimeService
+	repo     billingqueueports.BillingQueueReviewRepository
+	review   billingqueueports.BillingQueueReviewService
+	realtime agentports.RealtimeService
 	l        *zap.Logger
 }
 
@@ -49,7 +49,7 @@ func (a *Activities) StartApprovalRunActivity(
 	payload *billingqueuecontract.ApprovalRunPayload,
 ) (bool, error) {
 	info := activity.GetInfo(ctx)
-	started, err := a.repo.MarkApprovalRunRunning(ctx, &repositories.MarkApprovalRunRunningRequest{
+	started, err := a.repo.MarkApprovalRunRunning(ctx, &billingqueueports.MarkApprovalRunRunningRequest{
 		TenantInfo:         payload.Tenant(),
 		RunID:              payload.RunID,
 		TemporalWorkflowID: info.WorkflowExecution.ID,
@@ -91,15 +91,15 @@ func (a *Activities) ApproveQueueItemActivity(
 	payload *ApproveItemPayload,
 ) (*ApproveItemResult, error) {
 	tenant := payload.tenant()
-	actor := &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeUser,
+	actor := &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    payload.UserID,
 		UserID:         payload.UserID,
 		OrganizationID: payload.OrganizationID,
 		BusinessUnitID: payload.BusinessUnitID,
 	}
 
-	outcome, err := a.review.ApproveIfReady(ctx, &services.ApproveIfReadyRequest{
+	outcome, err := a.review.ApproveIfReady(ctx, &billingqueueports.ApproveIfReadyRequest{
 		ItemID:         payload.ItemID,
 		TenantInfo:     tenant,
 		AssignApprover: payload.AssignApprover,
@@ -130,7 +130,7 @@ func (a *Activities) ApproveQueueItemActivity(
 		record.ErrorMessage = outcome.Reason
 	}
 
-	if recErr := a.repo.RecordApprovalRunItem(ctx, &repositories.RecordApprovalRunItemRequest{
+	if recErr := a.repo.RecordApprovalRunItem(ctx, &billingqueueports.RecordApprovalRunItemRequest{
 		TenantInfo: tenant,
 		Item:       record,
 	}); recErr != nil {
@@ -159,7 +159,7 @@ func (a *Activities) RecordApprovalItemFailureActivity(
 		BuID:   payload.BusinessUnitID,
 		UserID: payload.UserID,
 	}
-	if err := a.repo.RecordApprovalRunItem(ctx, &repositories.RecordApprovalRunItemRequest{
+	if err := a.repo.RecordApprovalRunItem(ctx, &billingqueueports.RecordApprovalRunItemRequest{
 		TenantInfo: tenant,
 		Item: &billingqueue.ApprovalRunItem{
 			RunID:        payload.RunID,
@@ -185,7 +185,7 @@ func (a *Activities) FinalizeApprovalRunActivity(
 		BuID:   payload.BusinessUnitID,
 		UserID: payload.UserID,
 	}
-	run, err := a.repo.FinalizeApprovalRun(ctx, &repositories.FinalizeApprovalRunRequest{
+	run, err := a.repo.FinalizeApprovalRun(ctx, &billingqueueports.FinalizeApprovalRunRequest{
 		TenantInfo:     tenant,
 		RunID:          payload.RunID,
 		Status:         payload.Status,
@@ -215,7 +215,7 @@ func (a *Activities) publishRunChanged(
 	if a.realtime == nil {
 		return
 	}
-	if err := a.realtime.PublishResourceInvalidation(ctx, &services.PublishResourceInvalidationRequest{
+	if err := a.realtime.PublishResourceInvalidation(ctx, &agentports.PublishResourceInvalidationRequest{
 		OrganizationID: tenant.OrgID,
 		BusinessUnitID: tenant.BuID,
 		Resource:       invalidationResource,

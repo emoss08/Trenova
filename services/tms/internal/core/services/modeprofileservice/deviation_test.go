@@ -5,8 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/modeprofile"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/modeprofileports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,23 +15,23 @@ import (
 )
 
 type recordingDeviationRepo struct {
-	repositories.DeviationRepository
+	modeprofileports.DeviationRepository
 
 	liveKeys   []string
 	recorded   []*modeprofile.Deviation
-	superseded *repositories.SupersedeDeviationsRequest
+	superseded *modeprofileports.SupersedeDeviationsRequest
 }
 
 func (r *recordingDeviationRepo) LiveRuleKeysForResource(
 	_ context.Context,
-	_ *repositories.LiveDeviationKeysRequest,
+	_ *modeprofileports.LiveDeviationKeysRequest,
 ) ([]string, error) {
 	return r.liveKeys, nil
 }
 
 func (r *recordingDeviationRepo) SupersedeOpenForResource(
 	_ context.Context,
-	req *repositories.SupersedeDeviationsRequest,
+	req *modeprofileports.SupersedeDeviationsRequest,
 ) error {
 	r.superseded = req
 
@@ -63,7 +62,7 @@ func policyWith(keys ...modeprofile.RuleKey) *modeprofile.ResolvedPolicy {
 func recordRequest(
 	policy *modeprofile.ResolvedPolicy,
 	keys ...modeprofile.RuleKey,
-) *services.RecordDeviationsRequest {
+) *modeprofileports.RecordDeviationsRequest {
 	advisories := make([]*errortypes.AdvisoryError, 0, len(keys))
 	for _, key := range keys {
 		advisories = append(advisories, &errortypes.AdvisoryError{
@@ -73,7 +72,7 @@ func recordRequest(
 		})
 	}
 
-	return &services.RecordDeviationsRequest{
+	return &modeprofileports.RecordDeviationsRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),
@@ -85,7 +84,7 @@ func recordRequest(
 	}
 }
 
-func newTestService(repo repositories.DeviationRepository) *service {
+func newTestService(repo modeprofileports.DeviationRepository) *service {
 	return &service{deviationRepo: repo, l: zap.NewNop()}
 }
 

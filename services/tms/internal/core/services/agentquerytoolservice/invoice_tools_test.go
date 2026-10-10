@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -15,16 +15,16 @@ import (
 )
 
 type fakeInvoiceRepo struct {
-	repositories.InvoiceRepository
+	invoiceports.InvoiceRepository
 
 	items       []*invoice.Invoice
-	captured    *repositories.ListInvoicesRequest
+	captured    *invoiceports.ListInvoicesRequest
 	batchTenant pagination.TenantInfo
 }
 
 func (f *fakeInvoiceRepo) List(
 	_ context.Context,
-	req *repositories.ListInvoicesRequest,
+	req *invoiceports.ListInvoicesRequest,
 ) (*pagination.ListResult[*invoice.Invoice], error) {
 	f.captured = req
 
@@ -33,7 +33,7 @@ func (f *fakeInvoiceRepo) List(
 
 func (f *fakeInvoiceRepo) GetByID(
 	_ context.Context,
-	req repositories.GetInvoiceByIDRequest,
+	req invoiceports.GetInvoiceByIDRequest,
 ) (*invoice.Invoice, error) {
 	for _, item := range f.items {
 		if item.ID == req.ID {
@@ -182,7 +182,7 @@ func TestGetInvoice_RefusesSomethingThatIsNotAnID(t *testing.T) {
 
 func (f *fakeInvoiceRepo) GetByIDs(
 	_ context.Context,
-	req repositories.GetInvoicesByIDsRequest,
+	req invoiceports.GetInvoicesByIDsRequest,
 ) ([]*invoice.Invoice, error) {
 	f.batchTenant = req.TenantInfo
 	out := make([]*invoice.Invoice, 0, len(req.InvoiceIDs))

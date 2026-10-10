@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -29,9 +29,9 @@ func TestCommitPlannedMove_DeadheadIsMeasuredFromThePriorDestination(t *testing.
 			tractorID: {TractorID: tractorID, Latitude: denverLat, Longitude: denverLon},
 		},
 	}
-	driver := &repositories.BoardDriver{WorkerID: workerID, TractorID: tractorID}
+	driver := &shipmentports.BoardDriver{WorkerID: workerID, TractorID: tractorID}
 
-	nextMove := &repositories.BoardMove{
+	nextMove := &shipmentports.BoardMove{
 		Distance:        ptr(200),
 		OriginLatitude:  ptr(chicagoLat),
 		OriginLongitude: ptr(chicagoLon),
@@ -44,7 +44,7 @@ func TestCommitPlannedMove_DeadheadIsMeasuredFromThePriorDestination(t *testing.
 
 	CommitPlannedMove(&CommitPlannedMoveRequest{
 		Snapshot: snapshot,
-		Move: &repositories.BoardMove{
+		Move: &shipmentports.BoardMove{
 			MoveID:               pulid.MustNew("mov_"),
 			DestinationLatitude:  ptr(chicagoLat),
 			DestinationLongitude: ptr(chicagoLon),
@@ -71,12 +71,12 @@ func TestCommitPlannedMove_AdvancesDeparture(t *testing.T) {
 	workerID := pulid.MustNew("wrk_")
 
 	snapshot := &FleetSnapshot{Now: now}
-	driver := &repositories.BoardDriver{WorkerID: workerID}
+	driver := &shipmentports.BoardDriver{WorkerID: workerID}
 
 	completion := now + 8*3600
 	CommitPlannedMove(&CommitPlannedMoveRequest{
 		Snapshot: snapshot,
-		Move: &repositories.BoardMove{
+		Move: &shipmentports.BoardMove{
 			MoveID:               pulid.MustNew("mov_"),
 			DestinationWindowEnd: &completion,
 		},
@@ -85,7 +85,7 @@ func TestCommitPlannedMove_AdvancesDeparture(t *testing.T) {
 
 	trip := svc.computeTrip(
 		driver,
-		&repositories.BoardMove{Distance: ptr(100)},
+		&shipmentports.BoardMove{Distance: ptr(100)},
 		snapshot,
 	)
 
@@ -104,7 +104,7 @@ func TestCommitPlannedMove_CarriesTheTrailerForward(t *testing.T) {
 
 	CommitPlannedMove(&CommitPlannedMoveRequest{
 		Snapshot: snapshot,
-		Move:     &repositories.BoardMove{MoveID: pulid.MustNew("mov_")},
+		Move:     &shipmentports.BoardMove{MoveID: pulid.MustNew("mov_")},
 		Score: &CandidateScore{
 			WorkerID:           workerID,
 			TrailerID:          trailerID,
@@ -122,7 +122,7 @@ func TestCommitPlannedMove_IgnoresIncompleteRequests(t *testing.T) {
 	t.Parallel()
 
 	workerID := pulid.MustNew("wrk_")
-	move := &repositories.BoardMove{MoveID: pulid.MustNew("mov_")}
+	move := &shipmentports.BoardMove{MoveID: pulid.MustNew("mov_")}
 
 	tests := []struct {
 		name string
@@ -170,13 +170,13 @@ func TestPlannedCompletion(t *testing.T) {
 
 	tests := []struct {
 		name  string
-		move  *repositories.BoardMove
+		move  *shipmentports.BoardMove
 		score *CandidateScore
 		want  int64
 	}{
 		{
 			name: "no destination window falls back to finishing the drive",
-			move: &repositories.BoardMove{},
+			move: &shipmentports.BoardMove{},
 			score: &CandidateScore{
 				ProjectedAvailable: now,
 				EstimatedDriveMs:   6 * 3600 * 1000,
@@ -185,7 +185,7 @@ func TestPlannedCompletion(t *testing.T) {
 		},
 		{
 			name: "a later appointment wins over the drive time",
-			move: &repositories.BoardMove{DestinationWindowStart: now + 20*3600},
+			move: &shipmentports.BoardMove{DestinationWindowStart: now + 20*3600},
 			score: &CandidateScore{
 				ProjectedAvailable: now,
 				EstimatedDriveMs:   6 * 3600 * 1000,
@@ -194,7 +194,7 @@ func TestPlannedCompletion(t *testing.T) {
 		},
 		{
 			name: "a drive running past the appointment wins",
-			move: &repositories.BoardMove{DestinationWindowStart: now + 2*3600},
+			move: &shipmentports.BoardMove{DestinationWindowStart: now + 2*3600},
 			score: &CandidateScore{
 				ProjectedAvailable: now,
 				EstimatedDriveMs:   9 * 3600 * 1000,
@@ -202,7 +202,7 @@ func TestPlannedCompletion(t *testing.T) {
 			want: now + 9*3600,
 		},
 		{name: "nil move", move: nil, score: &CandidateScore{}, want: 0},
-		{name: "nil score", move: &repositories.BoardMove{}, score: nil, want: 0},
+		{name: "nil score", move: &shipmentports.BoardMove{}, score: nil, want: 0},
 	}
 
 	for _, tt := range tests {
@@ -222,8 +222,8 @@ func TestScoreCandidate_RejectsIncompleteRequests(t *testing.T) {
 	assert.Nil(t, svc.ScoreCandidate(nil))
 	assert.Nil(t, svc.ScoreCandidate(&ScoreCandidateRequest{}))
 	assert.Nil(t, svc.ScoreCandidate(&ScoreCandidateRequest{
-		Driver:   &repositories.BoardDriver{},
-		Move:     &repositories.BoardMove{},
+		Driver:   &shipmentports.BoardDriver{},
+		Move:     &shipmentports.BoardMove{},
 		Snapshot: &FleetSnapshot{},
 	}), "a snapshot without a control has no scoring weights to resolve")
 }

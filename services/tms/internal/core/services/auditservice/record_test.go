@@ -1,11 +1,14 @@
 package auditservice_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -18,25 +21,25 @@ type state struct {
 	Width float64 `json:"width"`
 }
 
-func capture(t *testing.T) (*mocks.MockAuditService, func() (*services.LogActionParams, int)) {
+func capture(t *testing.T) (*auditportsmock.MockAuditService, func() (*auditports.LogActionParams, int)) {
 	t.Helper()
 
-	auditService := mocks.NewMockAuditService(t)
+	auditService := auditportsmock.NewMockAuditService(t)
 
 	var (
-		params   *services.LogActionParams
+		params   *auditports.LogActionParams
 		optCount int
 	)
 	auditService.EXPECT().
 		LogAction(mock.Anything, mock.Anything).
-		RunAndReturn(func(p *services.LogActionParams, opts ...services.LogOption) error {
+		RunAndReturn(func(p *auditports.LogActionParams, opts ...auditports.LogOption) error {
 			params = p
 			optCount = len(opts)
 			return nil
 		}).
 		Maybe()
 
-	return auditService, func() (*services.LogActionParams, int) { return params, optCount }
+	return auditService, func() (*auditports.LogActionParams, int) { return params, optCount }
 }
 
 func TestRecord_CarriesTheActorAndScope(t *testing.T) {
@@ -47,9 +50,9 @@ func TestRecord_CarriesTheActorAndScope(t *testing.T) {
 		Resource:   permission.ResourcePermit,
 		ResourceID: "pmt_1",
 		Operation:  permission.OpCreate,
-		Actor: services.AuditActor{
+		Actor: kernelports.AuditActor{
 			UserID:        userID,
-			PrincipalType: services.PrincipalTypeUser,
+			PrincipalType: permissionports.PrincipalTypeUser,
 		},
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
@@ -140,7 +143,7 @@ func TestRecord_IsSafeWithoutAnAuditServiceOrParams(t *testing.T) {
 		auditservice.Record(nil, zap.NewNop(), &auditservice.RecordParams{ResourceID: "x"})
 	})
 
-	auditService := mocks.NewMockAuditService(t)
+	auditService := auditportsmock.NewMockAuditService(t)
 	assert.NotPanics(t, func() {
 		auditservice.Record(auditService, zap.NewNop(), nil)
 	})

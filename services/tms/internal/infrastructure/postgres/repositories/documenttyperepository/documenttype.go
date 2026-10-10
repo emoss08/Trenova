@@ -5,9 +5,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -30,7 +30,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.DocumentTypeRepository {
+func New(p Params) documenttypeports.DocumentTypeRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.document-type-repository"),
@@ -39,7 +39,7 @@ func New(p Params) repositories.DocumentTypeRepository {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListDocumentTypesRequest,
+	req *documenttypeports.ListDocumentTypesRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.DocumentTypeColumns
 	q = querybuilder.ApplyFilters(
@@ -56,7 +56,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListDocumentTypesRequest,
+	req *documenttypeports.ListDocumentTypesRequest,
 ) (*pagination.ListResult[*documenttype.DocumentType], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*documenttype.DocumentType], error) {
 		log := r.l.With(
@@ -85,7 +85,7 @@ func (r *repository) List(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListDocumentTypeConnectionRequest,
+	req *documenttypeports.ListDocumentTypeConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -98,7 +98,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListDocumentTypeConnectionRequest,
+	req *documenttypeports.ListDocumentTypeConnectionRequest,
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -118,7 +118,7 @@ func applyDocumentTypeColumns(q *bun.SelectQuery, columns []string) *bun.SelectQ
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListDocumentTypeConnectionRequest,
+	req *documenttypeports.ListDocumentTypeConnectionRequest,
 ) (*pagination.CursorListResult[*documenttype.DocumentType], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*documenttype.DocumentType], error) {
 		log := r.l.With(
@@ -224,7 +224,7 @@ func (r *repository) Update(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetDocumentTypeByIDRequest,
+	req documenttypeports.GetDocumentTypeByIDRequest,
 ) (*documenttype.DocumentType, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*documenttype.DocumentType, error) {
 		log := r.l.With(
@@ -253,7 +253,7 @@ func (r *repository) GetByID(
 
 func (r *repository) GetByCode(
 	ctx context.Context,
-	req repositories.GetDocumentTypeByCodeRequest,
+	req documenttypeports.GetDocumentTypeByCodeRequest,
 ) (*documenttype.DocumentType, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*documenttype.DocumentType, error) {
 		log := r.l.With(
@@ -282,7 +282,7 @@ func (r *repository) GetByCode(
 
 func (r *repository) GetByName(
 	ctx context.Context,
-	req repositories.GetDocumentTypeByNameRequest,
+	req documenttypeports.GetDocumentTypeByNameRequest,
 ) (*documenttype.DocumentType, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*documenttype.DocumentType, error) {
 		log := r.l.With(

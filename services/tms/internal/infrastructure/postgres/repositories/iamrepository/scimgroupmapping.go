@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/iam"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -18,7 +18,7 @@ import (
 
 func (r *repository) filterSCIMGroupRoleMappings(
 	q *bun.SelectQuery,
-	req *repositories.ListSCIMGroupRoleMappingsRequest,
+	req *iamports.ListSCIMGroupRoleMappingsRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
@@ -32,7 +32,7 @@ func (r *repository) filterSCIMGroupRoleMappings(
 
 func (r *repository) ListSCIMGroupRoleMappings(
 	ctx context.Context,
-	req *repositories.ListSCIMGroupRoleMappingsRequest,
+	req *iamports.ListSCIMGroupRoleMappingsRequest,
 ) (*pagination.ListResult[*iam.SCIMGroupRoleMapping], error) {
 	return dbtx.Read(
 		ctx,
@@ -72,7 +72,7 @@ func (r *repository) ListSCIMGroupRoleMappings(
 
 func (r *repository) applyGroupRoleMappingCursorFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListSCIMGroupRoleMappingConnectionRequest,
+	req *iamports.ListSCIMGroupRoleMappingConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	q, err := querybuilder.ApplyCursorFilters(
 		q,
@@ -89,7 +89,7 @@ func (r *repository) applyGroupRoleMappingCursorFilters(
 
 func (r *repository) applyGroupRoleMappingCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListSCIMGroupRoleMappingConnectionRequest,
+	req *iamports.ListSCIMGroupRoleMappingConnectionRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -102,7 +102,7 @@ func (r *repository) applyGroupRoleMappingCountFilters(
 
 func (r *repository) ListSCIMGroupRoleMappingsConnection(
 	ctx context.Context,
-	req *repositories.ListSCIMGroupRoleMappingConnectionRequest,
+	req *iamports.ListSCIMGroupRoleMappingConnectionRequest,
 ) (*pagination.CursorListResult[*iam.SCIMGroupRoleMapping], error) {
 	return dbtx.Write(
 		ctx,

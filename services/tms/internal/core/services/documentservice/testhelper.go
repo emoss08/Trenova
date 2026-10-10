@@ -3,14 +3,15 @@ package documentservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
 	"github.com/emoss08/trenova/internal/core/services/workflowstarter"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/uptrace/bun"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/zap"
@@ -25,7 +26,7 @@ func (noopDBConnection) IsHealthy(context.Context) bool       { return true }
 func (noopDBConnection) Close() error                         { return nil }
 func (noopDBConnection) WithTx(
 	ctx context.Context,
-	_ ports.TxOptions,
+	_ kernelports.TxOptions,
 	fn func(context.Context, bun.Tx) error,
 ) error {
 	return fn(ctx, bun.Tx{})
@@ -33,12 +34,12 @@ func (noopDBConnection) WithTx(
 
 func NewTestService(
 	logger *zap.Logger,
-	repo repositories.DocumentRepository,
-	cacheRepo repositories.DocumentCacheRepository,
-	sessionRepo repositories.DocumentUploadSessionRepository,
-	storageClient storage.Client,
+	repo documentports.DocumentRepository,
+	cacheRepo customerports.DocumentCacheRepository,
+	sessionRepo documentuploadports.DocumentUploadSessionRepository,
+	storageClient kernelports.Client,
 	validator *Validator,
-	auditService services.AuditService,
+	auditService auditports.AuditService,
 	cfg *config.StorageConfig,
 	thumbnailGenerator *thumbnailservice.Generator,
 	temporalClient client.Client,

@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,16 +19,16 @@ import (
 type Params struct {
 	fx.In
 
-	DB     ports.DBConnection
+	DB     kernelports.DBConnection
 	Logger *zap.Logger
 }
 
 type repository struct {
-	db ports.DBConnection
+	db kernelports.DBConnection
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.InvoiceDisputeRepository {
+func New(p Params) invoiceports.InvoiceDisputeRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("repository.invoice-dispute"),
@@ -79,7 +79,7 @@ func (r *repository) Update(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetInvoiceDisputeByIDRequest,
+	req invoiceports.GetInvoiceDisputeByIDRequest,
 ) (*invoice.InvoiceDispute, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*invoice.InvoiceDispute, error) {
 		cols := buncolgen.InvoiceDisputeColumns
@@ -100,7 +100,7 @@ func (r *repository) GetByID(
 
 func (r *repository) GetOpenByInvoiceID(
 	ctx context.Context,
-	req repositories.GetOpenInvoiceDisputeRequest,
+	req invoiceports.GetOpenInvoiceDisputeRequest,
 ) (*invoice.InvoiceDispute, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*invoice.InvoiceDispute, error) {
 		cols := buncolgen.InvoiceDisputeColumns
@@ -123,7 +123,7 @@ func (r *repository) GetOpenByInvoiceID(
 
 func (r *repository) ListByInvoiceIDs(
 	ctx context.Context,
-	req *repositories.ListInvoiceDisputesByInvoiceIDsRequest,
+	req *invoiceports.ListInvoiceDisputesByInvoiceIDsRequest,
 ) (map[pulid.ID][]*invoice.InvoiceDispute, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID][]*invoice.InvoiceDispute, error) {
 		result := make(map[pulid.ID][]*invoice.InvoiceDispute, len(req.InvoiceIDs))

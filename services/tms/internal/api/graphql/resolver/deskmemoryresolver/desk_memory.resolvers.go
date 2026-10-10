@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -25,7 +25,7 @@ func (r *MutationResolver) CreateDeskMemory(ctx context.Context, input gqlmodel.
 		return nil, err
 	}
 
-	created, err := r.AgentMemoryService.CreateDesk(ctx, &services.CreateDeskMemoryRequest{
+	created, err := r.AgentMemoryService.CreateDesk(ctx, &agentports.CreateDeskMemoryRequest{
 		Actor:   actor,
 		Content: input.Content,
 		Scope:   input.Scope,
@@ -52,7 +52,7 @@ func (r *MutationResolver) ReviseDeskMemory(ctx context.Context, id string, inpu
 		return nil, err
 	}
 
-	req := &services.ReviseDeskMemoryRequest{
+	req := &agentports.ReviseDeskMemoryRequest{
 		Actor:   actor,
 		ID:      memoryID,
 		RoleID:  roleID,
@@ -83,7 +83,7 @@ func (r *MutationResolver) SetDeskMemoryStatus(ctx context.Context, id string, s
 		return nil, err
 	}
 
-	changed, err := r.AgentMemoryService.SetDeskStatus(ctx, &services.SetDeskMemoryStatusRequest{
+	changed, err := r.AgentMemoryService.SetDeskStatus(ctx, &agentports.SetDeskMemoryStatusRequest{
 		Actor:  actor,
 		ID:     memoryID,
 		Status: status,
@@ -109,7 +109,7 @@ func (r *MutationResolver) ConfirmDeskMemory(ctx context.Context, id string, inp
 		return nil, err
 	}
 
-	confirmed, err := r.AgentMemoryService.ConfirmDesk(ctx, &services.ConfirmDeskMemoryRequest{
+	confirmed, err := r.AgentMemoryService.ConfirmDesk(ctx, &agentports.ConfirmDeskMemoryRequest{
 		Actor:   actor,
 		ID:      memoryID,
 		Content: input.Content,
@@ -134,7 +134,7 @@ func (r *MutationResolver) DismissDeskMemory(ctx context.Context, id string) (*g
 		return nil, err
 	}
 
-	dismissed, err := r.AgentMemoryService.DismissDesk(ctx, services.DeskMemoryRef{
+	dismissed, err := r.AgentMemoryService.DismissDesk(ctx, agentports.DeskMemoryRef{
 		Actor: actor,
 		ID:    memoryID,
 	})
@@ -169,7 +169,7 @@ func (r *QueryResolver) DeskMemories(ctx context.Context, input gqlmodel.DeskMem
 		return nil, err
 	}
 
-	req := &services.ListDeskMemoriesRequest{Actor: actor, RoleID: roleID}
+	req := &agentports.ListDeskMemoriesRequest{Actor: actor, RoleID: roleID}
 	if input.Scope != nil {
 		req.Scope = *input.Scope
 	}

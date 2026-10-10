@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -15,7 +15,7 @@ import (
 )
 
 type fakeDriftRepo struct {
-	repositories.AccountingDriftFindingRepository
+	accountingsyncports.AccountingDriftFindingRepository
 
 	found  *accountingsync.AccountingDriftFinding
 	lastID pulid.ID
@@ -23,7 +23,7 @@ type fakeDriftRepo struct {
 
 func (f *fakeDriftRepo) GetByID(
 	_ context.Context,
-	req repositories.GetAccountingDriftFindingRequest,
+	req accountingsyncports.GetAccountingDriftFindingQuery,
 ) (*accountingsync.AccountingDriftFinding, error) {
 	f.lastID = req.ID
 

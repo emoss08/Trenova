@@ -4,7 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -43,9 +43,9 @@ func accountingSyncObjectIDs(raw []string) ([]pulid.ID, error) {
 
 func orderedAccountingSyncStates(
 	ids []pulid.ID,
-	states map[pulid.ID]*services.AccountingSyncObjectState,
-) []*services.AccountingSyncObjectState {
-	ordered := make([]*services.AccountingSyncObjectState, 0, len(states))
+	states map[pulid.ID]*accountingsyncports.AccountingSyncObjectState,
+) []*accountingsyncports.AccountingSyncObjectState {
+	ordered := make([]*accountingsyncports.AccountingSyncObjectState, 0, len(states))
 	seen := make(map[pulid.ID]struct{}, len(states))
 	for _, id := range ids {
 		state, ok := states[id]

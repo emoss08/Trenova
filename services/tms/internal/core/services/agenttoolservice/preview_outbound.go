@@ -5,10 +5,10 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/shopspring/decimal"
 )
 
@@ -55,9 +55,9 @@ func warnSensitiveContent(preview *agent.ToolPreview, texts ...string) {
 // fail. A deployment without a resolver names no sender.
 func resolveEmailSender(
 	ctx context.Context,
-	senders serviceports.EmailSenderResolver,
-	req *serviceports.SendEmailRequest,
-) (*serviceports.EmailSender, error) {
+	senders emailports.EmailSenderResolver,
+	req *emailports.SendEmailRequest,
+) (*emailports.EmailSender, error) {
 	if senders == nil {
 		return nil, nil //nolint:nilnil // a deployment without a resolver names no sender
 	}
@@ -65,7 +65,7 @@ func resolveEmailSender(
 	return senders.ResolveSender(ctx, req)
 }
 
-func warnSuppressedRecipients(preview *agent.ToolPreview, sender *serviceports.EmailSender) {
+func warnSuppressedRecipients(preview *agent.ToolPreview, sender *emailports.EmailSender) {
 	if sender == nil || len(sender.Suppressed) == 0 {
 		return
 	}
@@ -77,7 +77,7 @@ func warnSuppressedRecipients(preview *agent.ToolPreview, sender *serviceports.E
 }
 
 func emailMessagePreview(
-	sender *serviceports.EmailSender,
+	sender *emailports.EmailSender,
 	message *agent.MessagePreview,
 ) *agent.MessagePreview {
 	message.Channel = agent.MessageChannelEmail

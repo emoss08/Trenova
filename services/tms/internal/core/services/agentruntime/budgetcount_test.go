@@ -3,7 +3,7 @@ package agentruntime
 import (
 	"testing"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,7 +13,7 @@ import (
 func TestExecutedCount_CountsOnlyThisToolsRealWrites(t *testing.T) {
 	t.Parallel()
 
-	actions := []serviceports.PendingAction{
+	actions := []agentports.PendingAction{
 		{ToolName: "assign_move", Executed: true},
 		{ToolName: "assign_move", Executed: true},
 		{ToolName: "assign_move"},

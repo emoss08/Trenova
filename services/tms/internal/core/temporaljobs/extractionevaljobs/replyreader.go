@@ -2,17 +2,17 @@ package extractionevaljobs
 
 import (
 	"github.com/emoss08/trenova/internal/core/domain/aicorrection"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/documentintelligencejobs"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
 )
 
-var _ services.ExtractionReplyReader = ReplyReader{}
+var _ aicorrectionports.ExtractionReplyReader = ReplyReader{}
 
 type ReplyReader struct {
-	contract services.ExtractionContract
+	contract aicorrectionports.ExtractionContract
 }
 
-func NewReplyReader(contract services.ExtractionContract) ReplyReader {
+func NewReplyReader(contract aicorrectionports.ExtractionContract) ReplyReader {
 	return ReplyReader{contract: contract}
 }
 

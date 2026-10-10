@@ -9,9 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/rateimport"
 	"github.com/emoss08/trenova/internal/core/domain/ratesimulation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/rateimportservice"
 	"github.com/emoss08/trenova/internal/core/services/ratesimulationservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -86,7 +86,7 @@ func TestRateImportTools_ApplyingASheetIsAPersonsCallAndDiscardingIsNot(t *testi
 
 	commit := newCommitRateImportTool(imports)
 	preview := previewWithoutWrites(t, imports.guard, func() (*agent.ToolPreview, error) {
-		return commit.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return commit.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would apply the rate sheet acme-2027.csv from ")
 	assert.Contains(t, preview.Summary, "close out 1 lane and add 2 lanes")
@@ -103,7 +103,7 @@ func TestRateImportTools_ApplyingASheetIsAPersonsCallAndDiscardingIsNot(t *testi
 
 	discard := newDiscardRateImportTool(imports)
 	preview = previewWithoutWrites(t, imports.guard, func() (*agent.ToolPreview, error) {
-		return discard.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return discard.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, "Discarded", fieldByPath(t, previewChange(t, preview, 0), "status").After)
 	require.NoError(t, discard.Execute(t.Context(), params))
@@ -155,12 +155,12 @@ func TestRunRateSimulation_ReplaysTheWholeLastDayAndChangesNothing(t *testing.T)
 	})
 
 	preview := previewWithoutWrites(t, simulations.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would replay Customer shipments shipped ")
 	assert.Contains(t, preview.Summary, "against the Draft rate agreement ACME-2026")
 
-	result, err := tool.(serviceports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	assert.Equal(t, "started", result.Action)
 	assert.Equal(t, agreementID.String(), result.IDs[paramRateAgreementID])
@@ -172,5 +172,5 @@ func TestRunRateSimulation_ReplaysTheWholeLastDayAndChangesNothing(t *testing.T)
 	assert.Equal(t, agent.TierAutoExecute, policy.MaxTier)
 
 	params.Params[paramSampleLimit] = maxSampleShipments + 1
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
 }

@@ -1,12 +1,13 @@
 package invoiceadjustmentservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -14,8 +15,8 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func newAttachmentPreview() *serviceports.InvoiceAdjustmentPreview {
-	return &serviceports.InvoiceAdjustmentPreview{Errors: make(map[string][]string)}
+func newAttachmentPreview() *invoiceadjustmentports.InvoiceAdjustmentPreview {
+	return &invoiceadjustmentports.InvoiceAdjustmentPreview{Errors: make(map[string][]string)}
 }
 
 func TestValidateAttachmentsNeverRequiresDocuments(t *testing.T) {
@@ -27,10 +28,10 @@ func TestValidateAttachmentsNeverRequiresDocuments(t *testing.T) {
 	}
 	for _, kind := range kinds {
 		t.Run(string(kind), func(t *testing.T) {
-			svc := &Service{documentRepo: mocks.NewMockDocumentRepository(t)}
+			svc := &Service{documentRepo: documentportsmock.NewMockDocumentRepository(t)}
 			preview := newAttachmentPreview()
 
-			svc.validateAttachments(t.Context(), &serviceports.InvoiceAdjustmentRequest{
+			svc.validateAttachments(t.Context(), &invoiceadjustmentports.InvoiceAdjustmentRequest{
 				Kind: kind,
 				TenantInfo: pagination.TenantInfo{
 					OrgID: pulid.MustNew("org_"),
@@ -45,16 +46,16 @@ func TestValidateAttachmentsNeverRequiresDocuments(t *testing.T) {
 
 func TestValidateAttachmentsRejectsArchivedDocuments(t *testing.T) {
 	docID := pulid.MustNew("doc_")
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.EXPECT().
-		GetByIDs(mock.Anything, mock.MatchedBy(func(req repositories.BulkDeleteDocumentRequest) bool {
+		GetByIDs(mock.Anything, mock.MatchedBy(func(req documentports.BulkDeleteDocumentRequest) bool {
 			return len(req.IDs) == 1 && req.IDs[0] == docID
 		})).
 		Return([]*document.Document{{ID: docID, Status: document.StatusArchived}}, nil)
 	svc := &Service{documentRepo: repo}
 	preview := newAttachmentPreview()
 
-	svc.validateAttachments(t.Context(), &serviceports.InvoiceAdjustmentRequest{
+	svc.validateAttachments(t.Context(), &invoiceadjustmentports.InvoiceAdjustmentRequest{
 		Kind:          invoiceadjustment.KindCreditOnly,
 		AttachmentIDs: []pulid.ID{docID},
 	}, preview)
@@ -64,14 +65,14 @@ func TestValidateAttachmentsRejectsArchivedDocuments(t *testing.T) {
 
 func TestValidateAttachmentsAcceptsActiveDocuments(t *testing.T) {
 	docID := pulid.MustNew("doc_")
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.EXPECT().
 		GetByIDs(mock.Anything, mock.Anything).
 		Return([]*document.Document{{ID: docID, Status: document.StatusActive}}, nil)
 	svc := &Service{documentRepo: repo}
 	preview := newAttachmentPreview()
 
-	svc.validateAttachments(t.Context(), &serviceports.InvoiceAdjustmentRequest{
+	svc.validateAttachments(t.Context(), &invoiceadjustmentports.InvoiceAdjustmentRequest{
 		Kind:          invoiceadjustment.KindWriteOff,
 		AttachmentIDs: []pulid.ID{docID},
 	}, preview)

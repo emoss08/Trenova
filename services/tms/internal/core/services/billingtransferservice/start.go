@@ -3,12 +3,11 @@ package billingtransferservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/billingtransferjobs/billingtransfercontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/billingtransferjobs/billingtransfercontract"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingtransferports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -75,7 +74,7 @@ func (s *Service) Start(
 	// A Selected run knows its shipments now, so its report is complete and
 	// ordered before the worker has even picked the job up.
 	if created.Scope == billingtransfer.RunScopeSelected {
-		if _, err = s.runRepo.SeedItems(ctx, &repositories.SeedBillingTransferRunItemsRequest{
+		if _, err = s.runRepo.SeedItems(ctx, &billingtransferports.SeedBillingTransferRunItemsRequest{
 			TenantInfo:  req.TenantInfo,
 			RunID:       created.ID,
 			ShipmentIDs: req.ShipmentIDs,

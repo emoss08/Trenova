@@ -3,7 +3,7 @@ package agentruntime
 import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 
 type runtimePolicySpec struct {
@@ -72,8 +72,8 @@ var runtimePolicySpecs = []runtimePolicySpec{
 	},
 }
 
-func RuntimePolicies() serviceports.RuntimeToolPolicies {
-	policies := make(serviceports.RuntimeToolPolicies, 0, len(runtimePolicySpecs))
+func RuntimePolicies() agentports.RuntimeToolPolicies {
+	policies := make(agentports.RuntimeToolPolicies, 0, len(runtimePolicySpecs))
 	for idx := range runtimePolicySpecs {
 		policies = append(policies, runtimePolicySpecs[idx].policy())
 	}
@@ -81,18 +81,18 @@ func RuntimePolicies() serviceports.RuntimeToolPolicies {
 	return policies
 }
 
-func runtimePolicyNamed(name string) (serviceports.ToolPolicy, bool) {
+func runtimePolicyNamed(name string) (agentports.ToolPolicy, bool) {
 	for idx := range runtimePolicySpecs {
 		if runtimePolicySpecs[idx].name == name {
 			return runtimePolicySpecs[idx].policy(), true
 		}
 	}
 
-	return serviceports.ToolPolicy{}, false
+	return agentports.ToolPolicy{}, false
 }
 
-func (s runtimePolicySpec) policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (s runtimePolicySpec) policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          s.name,
 		Kind:          agent.ToolKindRuntime,
 		Resource:      permission.ResourceAssistant,

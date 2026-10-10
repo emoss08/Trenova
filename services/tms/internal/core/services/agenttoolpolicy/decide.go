@@ -8,7 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 )
 
 const (
@@ -25,8 +26,8 @@ const (
 )
 
 type DecideInput struct {
-	Policy          serviceports.ToolPolicy
-	Params          serviceports.ToolExecuteParams
+	Policy          agentports.ToolPolicy
+	Params          agentports.ToolExecuteParams
 	Definition      *agentdefinition.Definition
 	Unattended      bool
 	TierSetByPerson bool
@@ -82,7 +83,7 @@ func Decide(ctx context.Context, in DecideInput) Decision {
 	return decision
 }
 
-func Promotable(policy serviceports.ToolPolicy) agent.AutonomyTier {
+func Promotable(policy agentports.ToolPolicy) agent.AutonomyTier {
 	return maxTier(policy).AtMost(policy.EgressCeiling())
 }
 
@@ -95,7 +96,7 @@ func Promotable(policy serviceports.ToolPolicy) agent.AutonomyTier {
 // condition or what it reached held for a person contradicted it.
 func AlwaysProposes(
 	definition *agentdefinition.Definition,
-	policy serviceports.ToolPolicy,
+	policy agentports.ToolPolicy,
 ) bool {
 	if agent.TierAutoExecute.Above(Promotable(policy)) {
 		return true
@@ -109,12 +110,12 @@ func AlwaysProposes(
 
 func StaticTier(
 	definition *agentdefinition.Definition,
-	policy serviceports.ToolPolicy,
+	policy agentports.ToolPolicy,
 ) agent.AutonomyTier {
 	return effectiveTier(definition, policy).AtMost(maxTier(policy))
 }
 
-func ExplainTier(policy serviceports.ToolPolicy) string {
+func ExplainTier(policy agentports.ToolPolicy) string {
 	parts := make([]string, 0, 6)
 	if limit := Promotable(policy); limit != agent.TierAutoExecute {
 		parts = append(parts, fmt.Sprintf(
@@ -191,23 +192,23 @@ func SeeksPersonalExemption(in DecideInput) bool {
 	return personalCall(in, in.Policy.Classified(in.Params))
 }
 
-func runsUnasked(in DecideInput, call serviceports.CallPolicy) bool {
+func runsUnasked(in DecideInput, call agentports.CallPolicy) bool {
 	return personalCall(in, call) && !in.TierSetByPerson
 }
 
-func personalCall(in DecideInput, call serviceports.CallPolicy) bool {
+func personalCall(in DecideInput, call agentports.CallPolicy) bool {
 	actor := in.Params.Actor
 
 	return in.Policy.PersonalRunsUnasked &&
 		call.Egress == agent.EgressPersonal &&
 		!in.Unattended &&
 		actor != nil &&
-		actor.PrincipalType == serviceports.PrincipalTypeUser
+		actor.PrincipalType == permissionports.PrincipalTypeUser
 }
 
 func toolTier(
 	definition *agentdefinition.Definition,
-	policy serviceports.ToolPolicy,
+	policy agentports.ToolPolicy,
 ) agent.AutonomyTier {
 	requested := policy.DefaultTier
 	if definition != nil {
@@ -224,7 +225,7 @@ func toolTier(
 
 func effectiveTier(
 	definition *agentdefinition.Definition,
-	policy serviceports.ToolPolicy,
+	policy agentports.ToolPolicy,
 ) agent.AutonomyTier {
 	if definition == nil {
 		return toolTier(nil, policy)
@@ -233,7 +234,7 @@ func effectiveTier(
 	return definition.EffectiveTier(policy.Name, policy.DefaultTier)
 }
 
-func maxTier(policy serviceports.ToolPolicy) agent.AutonomyTier {
+func maxTier(policy agentports.ToolPolicy) agent.AutonomyTier {
 	if policy.MaxTier.IsValid() {
 		return policy.MaxTier
 	}
@@ -243,8 +244,8 @@ func maxTier(policy serviceports.ToolPolicy) agent.AutonomyTier {
 
 func conditionLimit(
 	ctx context.Context,
-	condition *serviceports.TierCondition,
-	params serviceports.ToolExecuteParams,
+	condition *agentports.TierCondition,
+	params agentports.ToolExecuteParams,
 ) agent.AutonomyTier {
 	limit := condition.Limit(ctx, params)
 	if !limit.IsValid() {

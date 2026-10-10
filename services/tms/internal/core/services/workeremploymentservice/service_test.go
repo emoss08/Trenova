@@ -1,6 +1,10 @@
 package workeremploymentservice_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/fleetcodeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"context"
 	"errors"
 	"testing"
@@ -8,11 +12,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/core/services/ptopolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/workeremploymentservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -35,7 +40,7 @@ func newFakeEventRepo() *fakeEventRepo {
 
 func (f *fakeEventRepo) List(
 	_ context.Context,
-	req *repositories.ListWorkerEmploymentEventsRequest,
+	req *workerports.ListWorkerEmploymentEventsRequest,
 ) ([]*worker.WorkerEmploymentEvent, error) {
 	out := make([]*worker.WorkerEmploymentEvent, 0, len(f.order))
 	for _, id := range f.order {
@@ -49,7 +54,7 @@ func (f *fakeEventRepo) List(
 
 func (f *fakeEventRepo) GetByID(
 	_ context.Context,
-	req *repositories.GetWorkerEmploymentEventByIDRequest,
+	req *workerports.GetWorkerEmploymentEventByIDRequest,
 ) (*worker.WorkerEmploymentEvent, error) {
 	event, ok := f.events[req.ID]
 	if !ok {
@@ -85,7 +90,7 @@ type fakeWorkers struct {
 func (f *fakeWorkers) UpdateFromEmployment(
 	_ context.Context,
 	entity *worker.Worker,
-	_ *services.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*worker.Worker, error) {
 	f.updated = append(f.updated, entity)
 	return entity, nil
@@ -99,7 +104,7 @@ type fakePolicies struct {
 
 func (f *fakePolicies) ListAssignments(
 	context.Context,
-	*repositories.ListPTOAssignmentsRequest,
+	*workerports.ListPTOAssignmentsRequest,
 ) ([]*worker.WorkerPTOPolicyAssignment, error) {
 	if f.open == nil {
 		return nil, nil
@@ -127,14 +132,14 @@ func (f *fakePolicies) AssignDefaultPolicy(
 }
 
 type fakePTO struct {
-	services.WorkerPTOService
+	workerports.WorkerPTOService
 	upcoming  []*worker.WorkerPTO
-	cancelled []*repositories.UpdatePTOStatusRequest
+	cancelled []*workerports.UpdatePTOStatusRequest
 }
 
 func (f *fakePTO) List(
 	_ context.Context,
-	req *repositories.ListPTORequest,
+	req *workerports.ListPTORequest,
 ) (*pagination.CursorListResult[*worker.WorkerPTO], error) {
 	items := make([]*worker.WorkerPTO, 0, len(f.upcoming))
 	for _, pto := range f.upcoming {
@@ -147,21 +152,21 @@ func (f *fakePTO) List(
 
 func (f *fakePTO) Cancel(
 	_ context.Context,
-	req *repositories.UpdatePTOStatusRequest,
+	req *workerports.UpdatePTOStatusRequest,
 ) (*worker.WorkerPTO, error) {
 	f.cancelled = append(f.cancelled, req)
 	return &worker.WorkerPTO{ID: req.ID}, nil
 }
 
 type fakePayRepo struct {
-	repositories.WorkerPayAssignmentRepository
+	driverpayports.WorkerPayAssignmentRepository
 	assignment *driverpay.WorkerPayAssignment
 	err        error
 }
 
 func (f *fakePayRepo) GetEffectiveForWorker(
 	context.Context,
-	repositories.GetWorkerPayAssignmentRequest,
+	driverpayports.GetWorkerPayAssignmentRequest,
 ) (*driverpay.WorkerPayAssignment, error) {
 	if f.err != nil {
 		return nil, f.err
@@ -178,7 +183,7 @@ func (f *fakePay) EndAssignment(
 	_ pagination.TenantInfo,
 	assignmentID pulid.ID,
 	_ int64,
-	_ *services.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*driverpay.WorkerPayAssignment, error) {
 	f.ended = append(f.ended, assignmentID)
 	return &driverpay.WorkerPayAssignment{ID: assignmentID}, nil
@@ -213,7 +218,7 @@ func (f *fakePortal) RevokeOnTermination(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	workerID pulid.ID,
-	_ *services.RequestActor,
+	_ *permissionports.RequestActor,
 ) (bool, error) {
 	f.revoked = append(f.revoked, workerID)
 	if f.err != nil {
@@ -232,7 +237,7 @@ type harness struct {
 	pay      *fakePay
 	payRepo  *fakePayRepo
 	portal   *fakePortal
-	fleet    *mocks.MockFleetCodeRepository
+	fleet    *fleetcodeportsmock.MockFleetCodeRepository
 	lists    *fakeChecklists
 	tenant   pagination.TenantInfo
 	wrk      *worker.Worker
@@ -256,12 +261,12 @@ func newHarness(t *testing.T) *harness {
 		Profile:              &worker.WorkerProfile{HireDate: 1_600_000_000},
 	}
 
-	workerRepo := mocks.NewMockWorkerRepository(t)
+	workerRepo := workerportsmock.NewMockWorkerRepository(t)
 	workerRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(wrk, nil).Maybe()
-	docRepo := mocks.NewMockDocumentRepository(t)
+	docRepo := documentportsmock.NewMockDocumentRepository(t)
 	payRepo := &fakePayRepo{err: errortypes.NewNotFoundError("none")}
-	fleet := mocks.NewMockFleetCodeRepository(t)
-	audit := mocks.NewMockAuditService(t)
+	fleet := fleetcodeportsmock.NewMockFleetCodeRepository(t)
+	audit := auditportsmock.NewMockAuditService(t)
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Maybe()
 
 	h := &harness{

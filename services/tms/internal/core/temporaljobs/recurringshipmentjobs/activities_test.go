@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
 	"github.com/emoss08/trenova/internal/core/domain/recurringshipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/recurringshipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -14,21 +14,21 @@ import (
 )
 
 type refusingRepo struct {
-	repositories.RecurringShipmentRepository
+	recurringshipmentports.RecurringShipmentRepository
 
 	failures int
 }
 
 func (r *refusingRepo) Generate(
 	context.Context,
-	*repositories.GenerateRecurringShipmentRequest,
-) (*repositories.GenerateRecurringShipmentResult, error) {
+	*recurringshipmentports.GenerateRecurringShipmentRequest,
+) (*recurringshipmentports.GenerateRecurringShipmentResult, error) {
 	return nil, errortypes.NewPlanRestrictionError("", platformplan.ReasonSubscriptionReadOnly, "free_demo")
 }
 
 func (r *refusingRepo) RecordGenerationFailure(
 	context.Context,
-	*repositories.RecordRecurringGenerationFailureRequest,
+	*recurringshipmentports.RecordRecurringGenerationFailureRequest,
 ) (*recurringshipment.RecurringShipment, error) {
 	r.failures++
 	return &recurringshipment.RecurringShipment{}, nil

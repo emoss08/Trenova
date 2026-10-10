@@ -5,8 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -110,10 +109,10 @@ func sweptSince(
 
 func candidateRequest(
 	conn *accountingsync.AccountingConnection,
-	candidate *repositories.AccountingSyncCandidate,
+	candidate *accountingsyncports.AccountingSyncCandidate,
 	source accountingsync.SyncSourceEvent,
-) *services.AccountingSyncEnqueueRequest {
-	return &services.AccountingSyncEnqueueRequest{
+) *accountingsyncports.AccountingSyncEnqueueRequest {
+	return &accountingsyncports.AccountingSyncEnqueueRequest{
 		TenantInfo:   tenantOf(conn),
 		ObjectType:   candidate.ObjectType,
 		ObjectID:     candidate.ObjectID,
@@ -128,10 +127,10 @@ func candidateRequest(
 func (s *Service) enqueueCandidates(
 	ctx context.Context,
 	conn *accountingsync.AccountingConnection,
-	candidates []repositories.AccountingSyncCandidate,
+	candidates []accountingsyncports.AccountingSyncCandidate,
 	source accountingsync.SyncSourceEvent,
 	loc *time.Location,
-) (*repositories.EnqueueAccountingSyncRecordsResult, error) {
+) (*accountingsyncports.EnqueueAccountingSyncRecordsResult, error) {
 	now := timeutils.NowUnix()
 	records := make([]*accountingsync.AccountingSyncRecord, 0, len(candidates))
 	days := make(map[pulid.ID]struct{}, len(candidates))
@@ -152,9 +151,9 @@ func (s *Service) enqueueCandidates(
 
 func (s *Service) SafetyNet(
 	ctx context.Context,
-	ref services.AccountingSyncConnectionRef,
-) (*services.AccountingSafetyNetResult, error) {
-	result := new(services.AccountingSafetyNetResult)
+	ref accountingsyncports.AccountingSyncConnectionRef,
+) (*accountingsyncports.AccountingSafetyNetResult, error) {
+	result := new(accountingsyncports.AccountingSafetyNetResult)
 	conn, err := s.connectionByID(ctx, ref.TenantInfo, ref.ConnectionID)
 	if err != nil {
 		return nil, err
@@ -177,7 +176,7 @@ func (s *Service) SafetyNet(
 		for range safetyNetMaxPages {
 			candidates, listErr := s.records.ListCandidates(
 				ctx,
-				&repositories.ListAccountingSyncCandidatesRequest{
+				&accountingsyncports.ListAccountingSyncCandidatesRequest{
 					TenantInfo:   ref.TenantInfo,
 					ConnectionID: conn.ID,
 					ObjectType:   kind.objectType,
@@ -229,9 +228,9 @@ func (s *Service) BackfillStep(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	backfillID pulid.ID,
-) (*services.AccountingBackfillStepResult, error) {
-	result := new(services.AccountingBackfillStepResult)
-	backfill, err := s.backfills.GetByID(ctx, repositories.GetAccountingBackfillRequest{
+) (*accountingsyncports.AccountingBackfillStepResult, error) {
+	result := new(accountingsyncports.AccountingBackfillStepResult)
+	backfill, err := s.backfills.GetByID(ctx, accountingsyncports.GetAccountingBackfillRequest{
 		TenantInfo: tenantInfo,
 		ID:         backfillID,
 	})
@@ -271,7 +270,7 @@ func (s *Service) BackfillStep(
 	undoneBefore := backfill.RangeEnd
 	candidates, err := s.records.ListCandidates(
 		ctx,
-		&repositories.ListAccountingSyncCandidatesRequest{
+		&accountingsyncports.ListAccountingSyncCandidatesRequest{
 			TenantInfo:   tenantInfo,
 			ConnectionID: conn.ID,
 			ObjectType:   backfill.Cursor.ObjectType,
@@ -329,10 +328,10 @@ func (s *Service) BackfillStep(
 
 func (s *Service) PurgeHistory(
 	ctx context.Context,
-) (*repositories.PurgeAccountingSyncHistoryResult, error) {
-	total := new(repositories.PurgeAccountingSyncHistoryResult)
+) (*accountingsyncports.PurgeAccountingSyncHistoryResult, error) {
+	total := new(accountingsyncports.PurgeAccountingSyncHistoryResult)
 	now := time.Now()
-	req := repositories.PurgeAccountingSyncHistoryRequest{
+	req := accountingsyncports.PurgeAccountingSyncHistoryRequest{
 		PayloadsSyncedBefore: now.Add(-accountingsync.SyncPayloadRetention).Unix(),
 		AttemptsBefore:       now.Add(-accountingsync.SyncAttemptRetention).Unix(),
 		Limit:                purgeBatch,
@@ -354,8 +353,8 @@ func (s *Service) PurgeHistory(
 func (s *Service) ListDueConnections(
 	ctx context.Context,
 	limit int,
-) ([]repositories.AccountingSyncDueConnection, error) {
-	return s.records.ListDueConnections(ctx, repositories.ListDueAccountingSyncConnectionsRequest{
+) ([]accountingsyncports.AccountingSyncDueConnection, error) {
+	return s.records.ListDueConnections(ctx, accountingsyncports.ListDueAccountingSyncConnectionsRequest{
 		Now:   timeutils.NowUnix(),
 		Limit: limit,
 	})
@@ -364,9 +363,9 @@ func (s *Service) ListDueConnections(
 func (s *Service) skipBackfillType(
 	ctx context.Context,
 	backfill *accountingsync.AccountingBackfill,
-	result *services.AccountingBackfillStepResult,
+	result *accountingsyncports.AccountingBackfillStepResult,
 	now int64,
-) (*services.AccountingBackfillStepResult, error) {
+) (*accountingsyncports.AccountingBackfillStepResult, error) {
 	if !backfill.NextObjectType() {
 		backfill.Complete(now)
 		result.Done = true

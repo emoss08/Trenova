@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/statuschange"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -25,18 +25,18 @@ func (s *Service) PlanCreate(
 func (s *Service) PlanUpdate(
 	ctx context.Context,
 	entity *carrier.Carrier,
-) (*services.RecordChange[carrier.Carrier], error) {
+) (*kernelports.RecordChange[carrier.Carrier], error) {
 	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetByID(ctx, repositories.GetCarrierByIDRequest{
+	original, err := s.repo.GetByID(ctx, carrierports.GetCarrierByIDRequest{
 		ID: entity.GetID(),
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.GetOrganizationID(),
 			BuID:  entity.GetBusinessUnitID(),
 		},
-		CarrierFilterOptions: repositories.CarrierFilterOptions{
+		CarrierFilterOptions: carrierports.CarrierFilterOptions{
 			IncludeContacts:          true,
 			IncludeInsurancePolicies: true,
 		},
@@ -45,14 +45,14 @@ func (s *Service) PlanUpdate(
 		return nil, err
 	}
 
-	return &services.RecordChange[carrier.Carrier]{Before: original, After: entity}, nil
+	return &kernelports.RecordChange[carrier.Carrier]{Before: original, After: entity}, nil
 }
 
 func (s *Service) PlanBulkUpdateStatus(
 	ctx context.Context,
-	req *repositories.BulkUpdateCarrierStatusRequest,
-) ([]services.RecordChange[carrier.Carrier], error) {
-	found, err := s.repo.GetByIDs(ctx, repositories.GetCarriersByIDsRequest{
+	req *carrierports.BulkUpdateCarrierStatusRequest,
+) ([]kernelports.RecordChange[carrier.Carrier], error) {
+	found, err := s.repo.GetByIDs(ctx, carrierports.GetCarriersByIDsRequest{
 		TenantInfo: req.TenantInfo,
 		CarrierIDs: req.CarrierIDs,
 	})

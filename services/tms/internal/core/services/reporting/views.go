@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -110,7 +110,7 @@ func (s *Service) UpdateView(
 	ctx context.Context,
 	req *SaveViewRequest,
 ) (*report.ReportView, error) {
-	existing, err := s.viewRepo.GetByID(ctx, &repositories.GetReportViewRequest{
+	existing, err := s.viewRepo.GetByID(ctx, &reportports.GetReportViewRequest{
 		TenantInfo: req.TenantInfo,
 		ViewID:     req.ViewID,
 	})
@@ -151,7 +151,7 @@ func (s *Service) GetView(
 	ctx context.Context,
 	req *GetViewRequest,
 ) (*report.ReportView, error) {
-	view, err := s.viewRepo.GetByID(ctx, &repositories.GetReportViewRequest{
+	view, err := s.viewRepo.GetByID(ctx, &reportports.GetReportViewRequest{
 		TenantInfo: req.TenantInfo,
 		ViewID:     req.ViewID,
 	})
@@ -187,7 +187,7 @@ func (s *Service) ListViews(
 		}
 	}
 
-	return s.viewRepo.List(ctx, &repositories.ListReportViewsRequest{
+	return s.viewRepo.List(ctx, &reportports.ListReportViewsRequest{
 		TenantInfo:   req.TenantInfo,
 		DefinitionID: req.DefinitionID,
 		VisibleToID:  req.TenantInfo.UserID,
@@ -197,7 +197,7 @@ func (s *Service) ListViews(
 }
 
 func (s *Service) DeleteView(ctx context.Context, req *GetViewRequest) error {
-	existing, err := s.viewRepo.GetByID(ctx, &repositories.GetReportViewRequest{
+	existing, err := s.viewRepo.GetByID(ctx, &reportports.GetReportViewRequest{
 		TenantInfo: req.TenantInfo,
 		ViewID:     req.ViewID,
 	})
@@ -208,7 +208,7 @@ func (s *Service) DeleteView(ctx context.Context, req *GetViewRequest) error {
 		return errortypes.NewAuthorizationError("Only the view owner can delete this view")
 	}
 
-	return s.viewRepo.Delete(ctx, &repositories.GetReportViewRequest{
+	return s.viewRepo.Delete(ctx, &reportports.GetReportViewRequest{
 		TenantInfo: req.TenantInfo,
 		ViewID:     req.ViewID,
 	})
@@ -221,7 +221,7 @@ func (s *Service) RecordViewRun(ctx context.Context, req *GetViewRequest) {
 	if req.ViewID.IsNil() {
 		return
 	}
-	err := s.viewRepo.RecordRun(ctx, &repositories.RecordReportViewRunRequest{
+	err := s.viewRepo.RecordRun(ctx, &reportports.RecordReportViewRunRequest{
 		TenantInfo: req.TenantInfo,
 		ViewID:     req.ViewID,
 		RanAt:      timeutils.NowUnix(),

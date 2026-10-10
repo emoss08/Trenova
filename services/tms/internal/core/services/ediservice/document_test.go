@@ -1,6 +1,10 @@
 package ediservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmenteventportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"database/sql"
 	"testing"
 
@@ -8,7 +12,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -25,9 +32,9 @@ func TestResolvePayloadInvoiceIDResolves210Payload(t *testing.T) {
 	}
 	invoiceID := pulid.MustNew("inv_")
 	shipmentID := pulid.MustNew("sp_")
-	invoiceRepo := mocks.NewMockInvoiceRepository(t)
+	invoiceRepo := invoiceportsmock.NewMockInvoiceRepository(t)
 	invoiceRepo.EXPECT().
-		GetByID(mock.Anything, repositories.GetInvoiceByIDRequest{
+		GetByID(mock.Anything, invoiceports.GetInvoiceByIDRequest{
 			ID:         invoiceID,
 			TenantInfo: tenantInfo,
 		}).
@@ -67,10 +74,10 @@ func TestResolvePayloadShipmentEventIDResolves214Payload(t *testing.T) {
 	}
 	eventID := pulid.MustNew("se_")
 	shipmentID := pulid.MustNew("sp_")
-	eventRepo := mocks.NewMockShipmentEventRepository(t)
-	shipmentSvc := mocks.NewMockShipmentService(t)
+	eventRepo := shipmenteventportsmock.NewMockShipmentEventRepository(t)
+	shipmentSvc := shipmentportsmock.NewMockShipmentService(t)
 	eventRepo.EXPECT().
-		GetByID(mock.Anything, repositories.GetShipmentEventByIDRequest{
+		GetByID(mock.Anything, shipmenteventports.GetShipmentEventByIDRequest{
 			ID:         eventID,
 			TenantInfo: tenantInfo,
 		}).
@@ -82,7 +89,7 @@ func TestResolvePayloadShipmentEventIDResolves214Payload(t *testing.T) {
 		}, nil).
 		Once()
 	shipmentSvc.EXPECT().
-		Get(mock.Anything, mock.MatchedBy(func(req *repositories.GetShipmentByIDRequest) bool {
+		Get(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetShipmentByIDRequest) bool {
 			return req.ID == shipmentID && req.ExpandShipmentDetails
 		})).
 		Return(&shipment.Shipment{ID: shipmentID, BOL: "BOL-214"}, nil).
@@ -120,9 +127,9 @@ func TestResolvePayloadRejectsShipmentEventMismatch(t *testing.T) {
 	eventID := pulid.MustNew("se_")
 	eventShipmentID := pulid.MustNew("sp_")
 	requestShipmentID := pulid.MustNew("sp_")
-	eventRepo := mocks.NewMockShipmentEventRepository(t)
+	eventRepo := shipmenteventportsmock.NewMockShipmentEventRepository(t)
 	eventRepo.EXPECT().
-		GetByID(mock.Anything, repositories.GetShipmentEventByIDRequest{
+		GetByID(mock.Anything, shipmenteventports.GetShipmentEventByIDRequest{
 			ID:         eventID,
 			TenantInfo: tenantInfo,
 		}).
@@ -157,16 +164,16 @@ func TestUpsertPartnerDocumentProfile_AllowsInactiveProfileWithoutActiveTemplate
 	versionID := pulid.MustNew("editplv_")
 	documentTypeID := pulid.MustNew("edidt_")
 	partnerID := pulid.MustNew("edip_")
-	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo := ediportsmock.NewMockEDIDocumentRepository(t)
 	repo.EXPECT().
-		GetActiveTemplateVersion(mock.Anything, repositories.GetActiveEDITemplateVersionRequest{
+		GetActiveTemplateVersion(mock.Anything, ediports.GetActiveEDITemplateVersionRequest{
 			TemplateID: templateID,
 			TenantInfo: tenantInfo,
 		}).
 		Return(nil, errortypes.NewNotFoundError("template version not found")).
 		Once()
 	repo.EXPECT().
-		ListTemplateVersions(mock.Anything, repositories.ListEDITemplateVersionsRequest{
+		ListTemplateVersions(mock.Anything, ediports.ListEDITemplateVersionsRequest{
 			TemplateID: templateID,
 			TenantInfo: tenantInfo,
 		}).
@@ -178,7 +185,7 @@ func TestUpsertPartnerDocumentProfile_AllowsInactiveProfileWithoutActiveTemplate
 		}}, nil).
 		Once()
 	repo.EXPECT().
-		GetTemplateByID(mock.Anything, repositories.GetEDITemplateByIDRequest{
+		GetTemplateByID(mock.Anything, ediports.GetEDITemplateByIDRequest{
 			ID:         templateID,
 			TenantInfo: tenantInfo,
 		}).
@@ -259,9 +266,9 @@ func TestUpsertPartnerDocumentProfile_ActiveProfileRequiresActiveTemplateVersion
 		BuID:  pulid.MustNew("bu_"),
 	}
 	templateID := pulid.MustNew("editpl_")
-	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo := ediportsmock.NewMockEDIDocumentRepository(t)
 	repo.EXPECT().
-		GetActiveTemplateVersion(mock.Anything, repositories.GetActiveEDITemplateVersionRequest{
+		GetActiveTemplateVersion(mock.Anything, ediports.GetActiveEDITemplateVersionRequest{
 			TemplateID: templateID,
 			TenantInfo: tenantInfo,
 		}).

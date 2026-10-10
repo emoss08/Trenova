@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/workerservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -98,7 +98,7 @@ func (h *Handler) list(c *gin.Context) {
 		func(cursor pagination.CursorInfo) (*pagination.CursorListResult[*worker.Worker], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListWorkersRequest{
+				&workerports.ListWorkersRequest{
 					Filter: req,
 					Cursor: cursor,
 				},
@@ -127,7 +127,7 @@ func (h *Handler) getOption(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.Get(c.Request.Context(), repositories.GetWorkerByIDRequest{
+	entity, err := h.service.Get(c.Request.Context(), workerports.GetWorkerByIDRequest{
 		ID:         workerID,
 		TenantInfo: pagination.FromAuth(authCtx),
 	})
@@ -163,7 +163,7 @@ func (h *Handler) selectOptions(c *gin.Context) {
 		func() (*pagination.ListResult[*worker.Worker], error) {
 			return h.service.SelectOptions(
 				c.Request.Context(),
-				&repositories.WorkerSelectOptionsRequest{
+				&workerports.WorkerSelectOptionsRequest{
 					SelectQueryRequest: req,
 					IncludeProfile:     helpers.QueryBool(c, "includeProfile", false),
 				},
@@ -195,7 +195,7 @@ func (h *Handler) get(c *gin.Context) {
 
 	entity, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetWorkerByIDRequest{
+		workerports.GetWorkerByIDRequest{
 			ID:             workerID,
 			TenantInfo:     pagination.FromAuth(authCtx),
 			IncludeProfile: true,
@@ -310,7 +310,7 @@ func (h *Handler) patch(c *gin.Context) {
 
 	existing, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetWorkerByIDRequest{
+		workerports.GetWorkerByIDRequest{
 			ID:             workerID,
 			TenantInfo:     pagination.FromAuthAsUser(authCtx),
 			IncludeProfile: true,

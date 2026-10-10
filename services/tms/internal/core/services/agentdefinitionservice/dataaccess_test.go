@@ -7,7 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -16,7 +17,7 @@ import (
 )
 
 type sensitivityEngine struct {
-	serviceports.PermissionEngine
+	permissionports.PermissionEngine
 
 	max permission.FieldSensitivity
 	err error
@@ -26,19 +27,19 @@ func (e *sensitivityEngine) GetResourcePermissions(
 	_ context.Context,
 	_, _ pulid.ID,
 	resource string,
-) (*serviceports.ResourcePermissionDetail, error) {
+) (*permissionports.ResourcePermissionDetail, error) {
 	if e.err != nil {
 		return nil, e.err
 	}
 
-	return &serviceports.ResourcePermissionDetail{Resource: resource, MaxSensitivity: e.max}, nil
+	return &permissionports.ResourcePermissionDetail{Resource: resource, MaxSensitivity: e.max}, nil
 }
 
-func personActor() *serviceports.RequestActor {
+func personActor() *permissionports.RequestActor {
 	user := pulid.MustNew("usr_")
 
-	return &serviceports.RequestActor{
-		PrincipalType:  serviceports.PrincipalTypeUser,
+	return &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    user,
 		UserID:         user,
 		OrganizationID: pulid.MustNew("org_"),
@@ -103,14 +104,14 @@ func TestApply_KeepsTheDataAccessWhenARequestLeavesItOut(t *testing.T) {
 	t.Parallel()
 
 	existing := withDataAccess(agentdefinition.DataAccessRestricted)
-	apply(existing, &serviceports.SaveAgentDefinitionRequest{Name: "Payroll desk"})
+	apply(existing, &agentdefinitionports.SaveAgentDefinitionRequest{Name: "Payroll desk"})
 	assert.Equal(t, agentdefinition.DataAccessRestricted, existing.DataAccessCeiling)
 
 	created := &agentdefinition.Definition{}
-	apply(created, &serviceports.SaveAgentDefinitionRequest{Name: "New desk"})
+	apply(created, &agentdefinitionports.SaveAgentDefinitionRequest{Name: "New desk"})
 	assert.Equal(t, agentdefinition.DataAccessInternal, created.DataAccessCeiling)
 
-	apply(existing, &serviceports.SaveAgentDefinitionRequest{
+	apply(existing, &agentdefinitionports.SaveAgentDefinitionRequest{
 		Name:              "Payroll desk",
 		DataAccessCeiling: agentdefinition.DataAccessInternal,
 	})

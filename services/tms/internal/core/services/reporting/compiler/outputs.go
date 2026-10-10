@@ -3,13 +3,13 @@ package compiler
 
 import (
 	"fmt"
-	"github.com/emoss08/trenova/shared/i18n"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/pkg/reportfmt"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 )
@@ -410,7 +410,7 @@ func (e *emitter) outputResultColumn(
 	col *validatedColumn,
 	pivotValue string,
 	labelOverride string,
-) services.ReportResultColumn {
+) reportports.ReportResultColumn {
 	if col.spec.Kind == report.ColumnKindComputed {
 		return e.computedResultColumn(col, pivotValue, labelOverride)
 	}
@@ -447,7 +447,7 @@ func (e *emitter) computedResultColumn(
 	col *validatedColumn,
 	pivotValue string,
 	labelOverride string,
-) services.ReportResultColumn {
+) reportports.ReportResultColumn {
 	// A constant carries no field, so it contributes no sensitivity; the
 	// calculation is only ever as sensitive as the columns it reads.
 	sensitivity := permission.SensitivityPublic
@@ -468,7 +468,7 @@ func (e *emitter) computedResultColumn(
 
 	resultType := columnValueType(e.v, col)
 
-	return services.ReportResultColumn{
+	return reportports.ReportResultColumn{
 		ID:          outputColumnID(col, pivotValue),
 		Label:       label,
 		Type:        resultType,
@@ -482,7 +482,7 @@ func (e *emitter) resultColumn(
 	col *validatedColumn,
 	pivotValue string,
 	labelOverride string,
-) services.ReportResultColumn {
+) reportports.ReportResultColumn {
 	label := labelOverride
 	if label == "" {
 		label = e.labels.defaultLabel(col)
@@ -497,7 +497,7 @@ func (e *emitter) resultColumn(
 
 	resultType := columnValueType(e.v, col)
 
-	return services.ReportResultColumn{
+	return reportports.ReportResultColumn{
 		ID:          outputColumnID(col, pivotValue),
 		Label:       label,
 		Type:        resultType,

@@ -5,9 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/locationcategory"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationcategoryports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"go.temporal.io/sdk/client"
@@ -19,17 +20,17 @@ type Params struct {
 	fx.In
 
 	Logger         *zap.Logger
-	Repo           repositories.LocationCategoryRepository
+	Repo           locationcategoryports.LocationCategoryRepository
 	Validator      *Validator
-	AuditService   services.AuditService
+	AuditService   auditports.AuditService
 	TemporalClient client.Client
 }
 
 type Service struct {
 	l              *zap.Logger
-	repo           repositories.LocationCategoryRepository
+	repo           locationcategoryports.LocationCategoryRepository
 	validator      *Validator
-	auditService   services.AuditService
+	auditService   auditports.AuditService
 	temporalClient client.Client
 }
 
@@ -45,21 +46,21 @@ func New(p Params) *Service {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListLocationCategoriesRequest,
+	req *locationcategoryports.ListLocationCategoriesRequest,
 ) (*pagination.ListResult[*locationcategory.LocationCategory], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListLocationCategoryConnectionRequest,
+	req *locationcategoryports.ListLocationCategoryConnectionRequest,
 ) (*pagination.CursorListResult[*locationcategory.LocationCategory], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	req repositories.GetLocationCategoryByIDRequest,
+	req locationcategoryports.GetLocationCategoryByIDRequest,
 ) (*locationcategory.LocationCategory, error) {
 	return s.repo.GetByID(ctx, req)
 }
@@ -74,7 +75,7 @@ func (s *Service) SelectOptions(
 func (s *Service) Create(
 	ctx context.Context,
 	entity *locationcategory.LocationCategory,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*locationcategory.LocationCategory, error) {
 	auditActor := actor.AuditActor()
 	log := s.l.With(
@@ -94,7 +95,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceLocationCategory,
 		ResourceID:     createdEntity.GetID().String(),
 		Operation:      permission.OpCreate,
@@ -115,7 +116,7 @@ func (s *Service) Create(
 func (s *Service) Update(
 	ctx context.Context,
 	entity *locationcategory.LocationCategory,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*locationcategory.LocationCategory, error) {
 	auditActor := actor.AuditActor()
 	log := s.l.With(
@@ -129,7 +130,7 @@ func (s *Service) Update(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetByID(ctx, repositories.GetLocationCategoryByIDRequest{
+	original, err := s.repo.GetByID(ctx, locationcategoryports.GetLocationCategoryByIDRequest{
 		ID: entity.GetID(),
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.GetOrganizationID(),
@@ -147,7 +148,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceLocationCategory,
 		ResourceID:     updatedEntity.GetID().String(),
 		Operation:      permission.OpUpdate,

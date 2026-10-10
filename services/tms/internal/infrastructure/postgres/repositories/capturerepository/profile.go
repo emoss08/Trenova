@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/capture"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -21,7 +21,7 @@ type profileRepository struct {
 	l  *zap.Logger
 }
 
-func NewProfileRepository(p Params) repositories.CaptureProfileRepository {
+func NewProfileRepository(p Params) captureports.CaptureProfileRepository {
 	return &profileRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.capture-profile-repository"),
@@ -30,7 +30,7 @@ func NewProfileRepository(p Params) repositories.CaptureProfileRepository {
 
 func (r *profileRepository) List(
 	ctx context.Context,
-	req *repositories.ListCaptureProfilesRequest,
+	req *captureports.ListCaptureProfilesRequest,
 ) (*pagination.ListResult[*capture.CaptureProfile], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*capture.CaptureProfile], error) {
 		entities := make([]*capture.CaptureProfile, 0, req.Filter.Pagination.SafeLimit())
@@ -61,7 +61,7 @@ func (r *profileRepository) List(
 
 func (r *profileRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetCaptureProfileByIDRequest,
+	req captureports.GetCaptureProfileByIDRequest,
 ) (*capture.CaptureProfile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capture.CaptureProfile, error) {
 		entity := new(capture.CaptureProfile)
@@ -106,7 +106,7 @@ func (r *profileRepository) Create(
 	entity *capture.CaptureProfile,
 ) (*capture.CaptureProfile, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*capture.CaptureProfile, error) {
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
 			if entity.IsDefault {
 				if err := r.clearDefault(txCtx, tx, entity); err != nil {
 					return err
@@ -132,7 +132,7 @@ func (r *profileRepository) Update(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*capture.CaptureProfile, error) {
 		ov := entity.Version
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
 			if entity.IsDefault {
 				if err := r.clearDefault(txCtx, tx, entity); err != nil {
 					return err
@@ -194,7 +194,7 @@ func (r *profileRepository) clearDefault(
 
 func (r *profileRepository) Delete(
 	ctx context.Context,
-	req repositories.DeleteCaptureProfileRequest,
+	req captureports.DeleteCaptureProfileRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		results, err := r.db.DBForContext(ctx).

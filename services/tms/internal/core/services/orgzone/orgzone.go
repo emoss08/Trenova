@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -14,7 +14,7 @@ import (
 type OrganizationReader interface {
 	GetByID(
 		ctx context.Context,
-		req repositories.GetOrganizationByIDRequest,
+		req tenantports.GetOrganizationByIDRequest,
 	) (*tenant.Organization, error)
 }
 
@@ -23,7 +23,7 @@ func Location(
 	organizations OrganizationReader,
 	info pagination.TenantInfo,
 ) (*time.Location, error) {
-	org, err := organizations.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+	org, err := organizations.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: info,
 	})
 	if err != nil {

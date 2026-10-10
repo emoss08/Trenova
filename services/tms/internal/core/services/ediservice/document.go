@@ -10,10 +10,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/edix12"
 	"github.com/emoss08/trenova/internal/core/services/edix12inspect"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -37,49 +41,49 @@ type resolvedDocumentContext struct {
 
 func (s *Service) ListDocumentTypes(
 	ctx context.Context,
-	req repositories.ListEDIDocumentTypesRequest,
+	req ediports.ListEDIDocumentTypesRequest,
 ) ([]*edi.EDIDocumentType, error) {
 	return s.documentTypeRepo.ListDocumentTypes(ctx, req)
 }
 
 func (s *Service) SelectDocumentTypeOptions(
 	ctx context.Context,
-	req *repositories.EDIDocumentTypeSelectOptionsRequest,
+	req *ediports.EDIDocumentTypeSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDIDocumentType], error) {
 	return s.documentTypeRepo.SelectDocumentTypeOptions(ctx, req)
 }
 
 func (s *Service) ListTemplates(
 	ctx context.Context,
-	req *repositories.ListEDITemplatesRequest,
+	req *ediports.ListEDITemplatesRequest,
 ) (*pagination.ListResult[*edi.EDITemplate], error) {
 	return s.templateRepo.ListTemplates(ctx, req)
 }
 
 func (s *Service) SelectTemplateOptions(
 	ctx context.Context,
-	req *repositories.EDITemplateSelectOptionsRequest,
+	req *ediports.EDITemplateSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDITemplate], error) {
 	return s.templateRepo.SelectTemplateOptions(ctx, req)
 }
 
 func (s *Service) ListPartnerDocumentProfiles(
 	ctx context.Context,
-	req *repositories.ListEDIPartnerDocumentProfilesRequest,
+	req *ediports.ListEDIPartnerDocumentProfilesRequest,
 ) (*pagination.ListResult[*edi.EDIPartnerDocumentProfile], error) {
 	return s.documentProfileRepo.ListPartnerDocumentProfiles(ctx, req)
 }
 
 func (s *Service) SelectPartnerDocumentProfileOptions(
 	ctx context.Context,
-	req *repositories.EDIPartnerDocumentProfileSelectOptionsRequest,
+	req *ediports.EDIPartnerDocumentProfileSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDIPartnerDocumentProfile], error) {
 	return s.documentProfileRepo.SelectPartnerDocumentProfileOptions(ctx, req)
 }
 
 func (s *Service) GetPartnerDocumentProfile(
 	ctx context.Context,
-	req repositories.GetEDIPartnerDocumentProfileByIDRequest,
+	req ediports.GetEDIPartnerDocumentProfileByIDRequest,
 ) (*edi.EDIPartnerDocumentProfile, error) {
 	return s.documentProfileRepo.GetPartnerDocumentProfileByID(ctx, req)
 }
@@ -88,7 +92,7 @@ func (s *Service) GetPartnerDocumentProfile(
 func (s *Service) UpsertPartnerDocumentProfile(
 	ctx context.Context,
 	req *UpsertEDIPartnerDocumentProfileRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*edi.EDIPartnerDocumentProfile, error) {
 	if req == nil {
 		return nil, s.validator.ValidatePartnerDocumentProfileRequest(req)
@@ -113,7 +117,7 @@ func (s *Service) UpsertPartnerDocumentProfile(
 	if err = validateProfileTemplateVersionCompatibility(req.Status, templateVersion); err != nil {
 		return nil, err
 	}
-	template, err := s.templateRepo.GetTemplateByID(ctx, repositories.GetEDITemplateByIDRequest{
+	template, err := s.templateRepo.GetTemplateByID(ctx, ediports.GetEDITemplateByIDRequest{
 		ID:         req.TemplateID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -124,7 +128,7 @@ func (s *Service) UpsertPartnerDocumentProfile(
 	if documentType == nil {
 		documentTypes, listErr := s.documentTypeRepo.ListDocumentTypes(
 			ctx,
-			repositories.ListEDIDocumentTypesRequest{
+			ediports.ListEDIDocumentTypesRequest{
 				Standard:       template.Standard,
 				TransactionSet: template.TransactionSet,
 				Direction:      template.Direction,
@@ -230,7 +234,7 @@ func (s *Service) resolveProfileTemplateVersion(
 	if req.TemplateVersionID.IsNotNil() {
 		return s.templateRepo.GetTemplateVersionByID(
 			ctx,
-			repositories.GetEDITemplateVersionByIDRequest{
+			ediports.GetEDITemplateVersionByIDRequest{
 				TemplateID: req.TemplateID,
 				VersionID:  req.TemplateVersionID,
 				TenantInfo: req.TenantInfo,
@@ -240,7 +244,7 @@ func (s *Service) resolveProfileTemplateVersion(
 
 	version, err := s.templateRepo.GetActiveTemplateVersion(
 		ctx,
-		repositories.GetActiveEDITemplateVersionRequest{
+		ediports.GetActiveEDITemplateVersionRequest{
 			TemplateID: req.TemplateID,
 			TenantInfo: req.TenantInfo,
 		},
@@ -262,7 +266,7 @@ func (s *Service) resolveProfileTemplateVersion(
 
 	versions, listErr := s.templateRepo.ListTemplateVersions(
 		ctx,
-		repositories.ListEDITemplateVersionsRequest{
+		ediports.ListEDITemplateVersionsRequest{
 			TemplateID: req.TemplateID,
 			TenantInfo: req.TenantInfo,
 		},
@@ -450,7 +454,7 @@ func (s *Service) GenerateDocument(
 
 	controlNumbers, err := s.controlNumberRepo.AllocateControlNumbers(
 		ctx,
-		repositories.AllocateEDIControlNumbersRequest{
+		ediports.AllocateEDIControlNumbersRequest{
 			TenantInfo:     req.TenantInfo,
 			PartnerID:      resolved.profile.EDIPartnerID,
 			DocumentTypeID: resolved.profile.DocumentTypeID,
@@ -525,7 +529,7 @@ func (s *Service) GenerateDocument(
 	}
 	created, err := s.messageRepo.CreateMessageWithDiagnostics(
 		ctx,
-		repositories.CreateEDIMessageWithDiagnosticsRequest{
+		ediports.CreateEDIMessageWithDiagnosticsRequest{
 			Message:     message,
 			Diagnostics: messageDiagnostics,
 		},
@@ -569,7 +573,7 @@ func (s *Service) generatedDocument(
 
 	existing, err := s.messageRepo.GetMessageByIdempotencyKey(
 		ctx,
-		repositories.GetEDIMessageByIdempotencyKeyRequest{
+		ediports.GetEDIMessageByIdempotencyKeyRequest{
 			TenantInfo:     req.TenantInfo,
 			IdempotencyKey: req.IdempotencyKey,
 		},
@@ -615,14 +619,14 @@ func generatedMessageAckStatus(
 
 func (s *Service) ListMessages(
 	ctx context.Context,
-	req *repositories.ListEDIMessagesRequest,
+	req *ediports.ListEDIMessagesRequest,
 ) (*pagination.ListResult[*edi.EDIMessage], error) {
 	return s.messageRepo.ListMessages(ctx, req)
 }
 
 func (s *Service) GetMessage(
 	ctx context.Context,
-	req repositories.GetEDIMessageByIDRequest,
+	req ediports.GetEDIMessageByIDRequest,
 ) (*edi.EDIMessage, error) {
 	return s.messageRepo.GetMessageByID(ctx, req)
 }
@@ -650,7 +654,7 @@ func (s *Service) InspectX12(
 
 func (s *Service) InspectMessage(
 	ctx context.Context,
-	req repositories.GetEDIMessageByIDRequest,
+	req ediports.GetEDIMessageByIDRequest,
 ) (*EDIMessageInspection, error) {
 	message, err := s.messageRepo.GetMessageByID(ctx, req)
 	if err != nil {
@@ -691,7 +695,7 @@ func (s *Service) InspectMessage(
 
 func (s *Service) ListTestCases(
 	ctx context.Context,
-	req *repositories.ListEDITestCasesRequest,
+	req *ediports.ListEDITestCasesRequest,
 ) (*pagination.ListResult[*edi.EDITestCase], error) {
 	return s.testCaseRepo.ListTestCases(ctx, req)
 }
@@ -701,7 +705,7 @@ func (s *Service) PreviewTestCase(
 	testCaseID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) (*EDIDocumentPreview, error) {
-	testCase, err := s.testCaseRepo.GetTestCaseByID(ctx, repositories.GetEDITestCaseByIDRequest{
+	testCase, err := s.testCaseRepo.GetTestCaseByID(ctx, ediports.GetEDITestCaseByIDRequest{
 		ID:         testCaseID,
 		TenantInfo: tenantInfo,
 	})
@@ -727,7 +731,7 @@ func (s *Service) recordTestCaseRun(
 	preview *EDIDocumentPreview,
 ) {
 	verdict := EvaluateTestCaseRun(testCase, preview.Diagnostics)
-	if err := s.testCaseRepo.RecordTestCaseRun(ctx, &repositories.RecordEDITestCaseRunRequest{
+	if err := s.testCaseRepo.RecordTestCaseRun(ctx, &ediports.RecordEDITestCaseRunRequest{
 		ID:         testCase.ID,
 		TenantInfo: tenantInfo,
 		RanAt:      timeutils.NowUnix(),
@@ -774,7 +778,7 @@ func (s *Service) resolveDocumentContext(
 	}
 	templateVersion, err := s.templateRepo.GetActiveTemplateVersion(
 		ctx,
-		repositories.GetActiveEDITemplateVersionRequest{
+		ediports.GetActiveEDITemplateVersionRequest{
 			TemplateID: profile.TemplateID,
 			TenantInfo: req.TenantInfo,
 			VersionID:  profile.TemplateVersionID,
@@ -821,7 +825,7 @@ func (s *Service) resolveProfile(
 	if !req.PartnerDocumentProfileID.IsNil() {
 		return s.documentProfileRepo.GetPartnerDocumentProfileByID(
 			ctx,
-			repositories.GetEDIPartnerDocumentProfileByIDRequest{
+			ediports.GetEDIPartnerDocumentProfileByIDRequest{
 				ID:         req.PartnerDocumentProfileID,
 				TenantInfo: req.TenantInfo,
 			},
@@ -836,7 +840,7 @@ func (s *Service) resolveProfile(
 	}
 	profile, err := s.documentProfileRepo.GetActivePartnerDocumentProfile(
 		ctx,
-		repositories.GetActiveEDIPartnerDocumentProfileRequest{
+		ediports.GetActiveEDIPartnerDocumentProfileRequest{
 			PartnerID:      req.EDIPartnerID,
 			TenantInfo:     req.TenantInfo,
 			TransactionSet: req.TransactionSet,
@@ -881,7 +885,7 @@ func (s *Service) resolvePayload(
 				edi.TransactionSet990,
 			)
 		}
-		transfer, err := s.transferRepo.GetTransferByID(ctx, repositories.GetEDITransferByIDRequest{
+		transfer, err := s.transferRepo.GetTransferByID(ctx, ediports.GetEDITransferByIDRequest{
 			ID:         req.TransferID,
 			TenantInfo: req.TenantInfo,
 			Direction:  "outbound",
@@ -915,7 +919,7 @@ func (s *Service) resolvePayload(
 				edi.TransactionSet210,
 			)
 		}
-		invoiceEntity, err := s.invoiceRepo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+		invoiceEntity, err := s.invoiceRepo.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 			ID:         req.InvoiceID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -941,7 +945,7 @@ func (s *Service) resolvePayload(
 				edi.TransactionSet214,
 			)
 		}
-		event, err := s.shipmentEventRepo.GetByID(ctx, repositories.GetShipmentEventByIDRequest{
+		event, err := s.shipmentEventRepo.GetByID(ctx, shipmenteventports.GetShipmentEventByIDRequest{
 			ID:         req.ShipmentEventID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -955,10 +959,10 @@ func (s *Service) resolvePayload(
 				"Shipment ID must match the shipment event",
 			)
 		}
-		source, err := s.shipmentSvc.Get(ctx, &repositories.GetShipmentByIDRequest{
+		source, err := s.shipmentSvc.Get(ctx, &shipmentports.GetShipmentByIDRequest{
 			ID:         event.ShipmentID,
 			TenantInfo: req.TenantInfo,
-			ShipmentOptions: repositories.ShipmentOptions{
+			ShipmentOptions: shipmentports.ShipmentOptions{
 				ExpandShipmentDetails: true,
 			},
 		})
@@ -978,7 +982,7 @@ func (s *Service) resolvePayload(
 		}
 		result, err := s.BuildShipmentStatusPayloadForServiceFailure(
 			ctx,
-			&services.BuildServiceFailureEDIPayloadRequest{
+			&servicefailureports.BuildServiceFailureEDIPayloadRequest{
 				TenantInfo:       req.TenantInfo,
 				ServiceFailureID: req.ServiceFailureID,
 			},
@@ -1000,10 +1004,10 @@ func (s *Service) resolvePayload(
 			edi.TransactionSet214,
 		)
 	}
-	source, err := s.shipmentSvc.Get(ctx, &repositories.GetShipmentByIDRequest{
+	source, err := s.shipmentSvc.Get(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         req.ShipmentID,
 		TenantInfo: req.TenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})

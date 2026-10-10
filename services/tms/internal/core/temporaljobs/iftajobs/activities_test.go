@@ -1,13 +1,12 @@
 package iftajobs
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/iftajobs/iftacontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/iftajobs/iftacontract"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -60,9 +59,9 @@ func TestAttributeMovesActivityCountsResults(t *testing.T) {
 	}
 	ids := moveIDs(3)
 
-	distanceCalc := mocks.NewMockDistanceCalculationService(t)
+	distanceCalc := shipmentportsmock.NewMockDistanceCalculationService(t)
 	distanceCalc.EXPECT().
-		RecalculateMoveJurisdictionMiles(mock.Anything, services.RecalculateMoveJurisdictionMilesRequest{
+		RecalculateMoveJurisdictionMiles(mock.Anything, shipmentports.RecalculateMoveJurisdictionMilesRequest{
 			TenantInfo:     tenantInfo,
 			ShipmentMoveID: ids[0],
 			UserID:         tenantInfo.UserID,
@@ -72,14 +71,14 @@ func TestAttributeMovesActivityCountsResults(t *testing.T) {
 			{JurisdictionCode: "OK", Distance: 160.9344, DistanceUnits: "Kilometers"},
 		}, nil)
 	distanceCalc.EXPECT().
-		RecalculateMoveJurisdictionMiles(mock.Anything, services.RecalculateMoveJurisdictionMilesRequest{
+		RecalculateMoveJurisdictionMiles(mock.Anything, shipmentports.RecalculateMoveJurisdictionMilesRequest{
 			TenantInfo:     tenantInfo,
 			ShipmentMoveID: ids[1],
 			UserID:         tenantInfo.UserID,
 		}).
 		Return(nil, assert.AnError)
 	distanceCalc.EXPECT().
-		RecalculateMoveJurisdictionMiles(mock.Anything, services.RecalculateMoveJurisdictionMilesRequest{
+		RecalculateMoveJurisdictionMiles(mock.Anything, shipmentports.RecalculateMoveJurisdictionMilesRequest{
 			TenantInfo:     tenantInfo,
 			ShipmentMoveID: ids[2],
 			UserID:         tenantInfo.UserID,
@@ -113,16 +112,16 @@ func TestListMovesMissingBreakdownActivityMapsPage(t *testing.T) {
 
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	ids := moveIDs(2)
-	repo := mocks.NewMockShipmentMoveJurisdictionMileRepository(t)
+	repo := shipmentportsmock.NewMockShipmentMoveJurisdictionMileRepository(t)
 	repo.EXPECT().
-		ListUnattributedMoves(mock.Anything, repositories.UnattributedMovesRequest{
+		ListUnattributedMoves(mock.Anything, shipmentports.UnattributedMovesRequest{
 			TenantInfo: tenantInfo,
 			Start:      100,
 			End:        200,
 			Limit:      ListMovesPageSize,
 			Offset:     3,
 		}).
-		Return(&repositories.UnattributedMovesPage{
+		Return(&shipmentports.UnattributedMovesPage{
 			MoveIDs:    ids,
 			TotalMoves: 5,
 			TotalMiles: decimal.NewFromFloat(812.5),

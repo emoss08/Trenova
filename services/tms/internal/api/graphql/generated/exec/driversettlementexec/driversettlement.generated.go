@@ -13,9 +13,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/settlementshared"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -4515,7 +4515,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.UnsettledWorkerSummary)
+					obj := o.(*driversettlementports.UnsettledWorkerSummary)
 					return obj.WorkerID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -4525,7 +4525,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.UnsettledWorkerSummary)
+					obj := o.(*driversettlementports.UnsettledWorkerSummary)
 					return obj.WorkerName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -4535,7 +4535,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.UnsettledWorkerSummary)
+					obj := o.(*driversettlementports.UnsettledWorkerSummary)
 					return obj.EventCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -4545,7 +4545,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.UnsettledWorkerSummary)
+					obj := o.(*driversettlementports.UnsettledWorkerSummary)
 					return obj.GrossAmountMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -4555,7 +4555,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.UnsettledWorkerSummary)
+					obj := o.(*driversettlementports.UnsettledWorkerSummary)
 					return obj.HeldCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -4565,7 +4565,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.UnsettledWorkerSummary)
+					obj := o.(*driversettlementports.UnsettledWorkerSummary)
 					return obj.HeldGrossMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -4575,7 +4575,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.UnsettledWorkerSummary)
+					obj := o.(*driversettlementports.UnsettledWorkerSummary)
 					return obj.HasSettlement, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -5049,7 +5049,7 @@ type resolverQuery interface {
 	SettlementControl(ctx context.Context) (*tenant.SettlementControl, error)
 	CurrentSettlementPeriod(ctx context.Context) (*settlementshared.PeriodBounds, error)
 	SettlementWorkspaceSummary(ctx context.Context, periodStart *int, periodEnd *int) (*driversettlementservice.WorkspaceSummary, error)
-	UnsettledWorkerSummaries(ctx context.Context, periodStart *int, periodEnd *int) ([]*repositories.UnsettledWorkerSummary, error)
+	UnsettledWorkerSummaries(ctx context.Context, periodStart *int, periodEnd *int) ([]*driversettlementports.UnsettledWorkerSummary, error)
 	PreviewDriverSettlement(ctx context.Context, workerID string, periodStart *int, periodEnd *int) (*driversettlement.Settlement, error)
 	ExportSettlementBatchCSV(ctx context.Context, batchID string) (string, error)
 }
@@ -8914,15 +8914,15 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalNUnsettledWorkerSummary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐUnsettledWorkerSummaryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*repositories.UnsettledWorkerSummary) graphql.Marshaler {
-	return gqlexec.List[*repositories.UnsettledWorkerSummary]{
+func marshalNUnsettledWorkerSummary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐUnsettledWorkerSummaryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driversettlementports.UnsettledWorkerSummary) graphql.Marshaler {
+	return gqlexec.List[*driversettlementports.UnsettledWorkerSummary]{
 		Elem:        marshalNUnsettledWorkerSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐUnsettledWorkerSummary,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNUnsettledWorkerSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐUnsettledWorkerSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *repositories.UnsettledWorkerSummary) graphql.Marshaler {
+func marshalNUnsettledWorkerSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐUnsettledWorkerSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driversettlementports.UnsettledWorkerSummary) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

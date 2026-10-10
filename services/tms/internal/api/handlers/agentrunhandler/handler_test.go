@@ -9,9 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -23,19 +24,19 @@ import (
 )
 
 type grantEngine struct {
-	services.PermissionEngine
+	permissionports.PermissionEngine
 
 	allowed bool
-	asked   []*services.PermissionCheckRequest
+	asked   []*permissionports.PermissionCheckRequest
 }
 
 func (e *grantEngine) Check(
 	_ context.Context,
-	req *services.PermissionCheckRequest,
-) (*services.PermissionCheckResult, error) {
+	req *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
 	e.asked = append(e.asked, req)
 
-	return &services.PermissionCheckResult{
+	return &permissionports.PermissionCheckResult{
 		Allowed: e.allowed &&
 			req.Resource == permission.ResourceAgentRun.String() &&
 			req.Operation == permission.OpRead,
@@ -43,15 +44,15 @@ func (e *grantEngine) Check(
 }
 
 type stubTranscripts struct {
-	requests []repositories.GetAgentRunByIDRequest
+	requests []agentports.GetAgentRunByIDRequest
 	scopes   []dbscope.Tenant
 	err      error
 }
 
 func (s *stubTranscripts) RunTranscript(
 	ctx context.Context,
-	req repositories.GetAgentRunByIDRequest,
-) (*services.TranscriptFile, error) {
+	req agentports.GetAgentRunByIDRequest,
+) (*kernelports.TranscriptFile, error) {
 	s.requests = append(s.requests, req)
 	if tenant, ok := dbscope.TenantFrom(ctx); ok {
 		s.scopes = append(s.scopes, tenant)
@@ -60,7 +61,7 @@ func (s *stubTranscripts) RunTranscript(
 		return nil, s.err
 	}
 
-	return &services.TranscriptFile{
+	return &kernelports.TranscriptFile{
 		FileName: "overnight-check-run-0run0001.md",
 		Body:     "# Overnight check run\n",
 	}, nil

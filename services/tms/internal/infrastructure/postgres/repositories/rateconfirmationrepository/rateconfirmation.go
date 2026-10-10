@@ -6,9 +6,10 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -34,7 +35,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.RateConfirmationRepository {
+func New(p Params) rateconfirmationports.RateConfirmationRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.rate-confirmation-repository"),
@@ -43,7 +44,7 @@ func New(p Params) repositories.RateConfirmationRepository {
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req *repositories.GetRateConfirmationByIDRequest,
+	req *rateconfirmationports.GetRateConfirmationByIDRequest,
 ) (*rateconfirmation.RateConfirmation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*rateconfirmation.RateConfirmation, error) {
 		cols := buncolgen.RateConfirmationColumns
@@ -98,7 +99,7 @@ func (r *repository) GetActiveByAssignmentID(
 
 func (r *repository) ListByMoveID(
 	ctx context.Context,
-	req *repositories.ListRateConfirmationsByMoveRequest,
+	req *rateconfirmationports.ListRateConfirmationsByMoveRequest,
 ) ([]*rateconfirmation.RateConfirmation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*rateconfirmation.RateConfirmation, error) {
 		cols := buncolgen.RateConfirmationColumns
@@ -251,7 +252,7 @@ func (r *repository) GetTokenByHash(
 // update only wins for the first caller.
 func (r *repository) MarkTokenUsed(
 	ctx context.Context,
-	req *repositories.MarkRateConfirmationTokenUsedRequest,
+	req *rateconfirmationports.MarkRateConfirmationTokenUsedRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
 		cols := buncolgen.RateConfirmationTokenColumns
@@ -314,7 +315,7 @@ func (r *repository) RevokeTokensForRateConfirmation(
 // expires_at, so it can never match.
 func (r *repository) PurgeDeadSignTokens(
 	ctx context.Context,
-	req repositories.PurgeDeadTokensRequest,
+	req tenderports.PurgeDeadTokensRequest,
 ) (int64, error) {
 	ctx = dbscope.WithSystem(ctx, "purge dead rate confirmation tokens across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {

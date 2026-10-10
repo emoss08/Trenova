@@ -6,8 +6,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -15,8 +17,8 @@ import (
 )
 
 type (
-	DisputeChange = serviceports.RecordChange[driversettlement.Dispute]
-	ExpenseChange = serviceports.RecordChange[driverpay.Expense]
+	DisputeChange = kernelports.RecordChange[driversettlement.Dispute]
+	ExpenseChange = kernelports.RecordChange[driverpay.Expense]
 )
 
 type ResolveDisputePlan struct {
@@ -34,12 +36,12 @@ func (s *Service) PlanStartDisputeReview(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	disputeID pulid.ID,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*DisputeChange, error) {
 	if err := requireActor(actor, "Dispute review"); err != nil {
 		return nil, err
 	}
-	original, err := s.disputeRepo.GetByID(ctx, repositories.GetSettlementDisputeByIDRequest{
+	original, err := s.disputeRepo.GetByID(ctx, driversettlementports.GetSettlementDisputeByIDRequest{
 		ID:         disputeID,
 		TenantInfo: tenantInfo,
 	})
@@ -62,7 +64,7 @@ func (s *Service) PlanStartDisputeReview(
 func (s *Service) PlanResolveDispute(
 	ctx context.Context,
 	req *ResolveDisputeRequest,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*ResolveDisputePlan, error) {
 	if err := requireActor(actor, "Dispute resolution"); err != nil {
 		return nil, err
@@ -82,7 +84,7 @@ func (s *Service) PlanResolveDispute(
 		)
 	}
 
-	original, err := s.disputeRepo.GetByID(ctx, repositories.GetSettlementDisputeByIDRequest{
+	original, err := s.disputeRepo.GetByID(ctx, driversettlementports.GetSettlementDisputeByIDRequest{
 		ID:         req.DisputeID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -128,7 +130,7 @@ func (s *Service) openDraftFor(
 ) (*driversettlement.Settlement, error) {
 	target, err := s.settlementRepo.GetOpenDraftForWorker(
 		ctx,
-		repositories.GetOpenDraftForWorkerRequest{TenantInfo: tenantInfo, WorkerID: workerID},
+		driversettlementports.GetOpenDraftForWorkerRequest{TenantInfo: tenantInfo, WorkerID: workerID},
 	)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
@@ -142,7 +144,7 @@ func (s *Service) openDraftFor(
 func (s *Service) PlanReviewExpense(
 	ctx context.Context,
 	req *ReviewExpenseRequest,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*ReviewExpensePlan, error) {
 	if err := requireActor(actor, "Expense review"); err != nil {
 		return nil, err
@@ -155,7 +157,7 @@ func (s *Service) PlanReviewExpense(
 		)
 	}
 
-	original, err := s.expenseRepo.GetByID(ctx, repositories.GetDriverExpenseByIDRequest{
+	original, err := s.expenseRepo.GetByID(ctx, driverpayports.GetDriverExpenseByIDRequest{
 		ID:         req.ExpenseID,
 		TenantInfo: req.TenantInfo,
 	})

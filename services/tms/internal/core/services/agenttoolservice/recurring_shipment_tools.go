@@ -10,11 +10,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/recurringshipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/recurringshipmentservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/recurringshipmentports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -73,7 +73,7 @@ var (
 type recurringShipmentKeeper interface {
 	Get(
 		ctx context.Context,
-		req *repositories.GetRecurringShipmentByIDRequest,
+		req *recurringshipmentports.GetRecurringShipmentByIDRequest,
 	) (*recurringshipment.RecurringShipment, error)
 	Create(
 		ctx context.Context,
@@ -96,21 +96,21 @@ type recurringShipmentKeeper interface {
 	) (*recurringshipmentservice.SeriesChange, error)
 	UpdateStatus(
 		ctx context.Context,
-		req *repositories.UpdateRecurringShipmentStatusRequest,
+		req *recurringshipmentports.UpdateRecurringShipmentStatusRequest,
 		userID pulid.ID,
 	) (*recurringshipment.RecurringShipment, error)
 	PreviewUpdateStatus(
 		ctx context.Context,
-		req *repositories.UpdateRecurringShipmentStatusRequest,
+		req *recurringshipmentports.UpdateRecurringShipmentStatusRequest,
 	) (*recurringshipmentservice.SeriesChange, error)
 	Generate(
 		ctx context.Context,
-		req *repositories.GenerateRecurringShipmentRequest,
-	) (*repositories.GenerateRecurringShipmentResult, error)
+		req *recurringshipmentports.GenerateRecurringShipmentRequest,
+	) (*recurringshipmentports.GenerateRecurringShipmentResult, error)
 	PreviewGenerate(
 		ctx context.Context,
-		req *repositories.GenerateRecurringShipmentRequest,
-	) (*repositories.RecurringShipmentGenerationPlan, error)
+		req *recurringshipmentports.GenerateRecurringShipmentRequest,
+	) (*recurringshipmentports.RecurringShipmentGenerationPlan, error)
 }
 
 func recurringShipmentIDProperty(what string) map[string]any {
@@ -118,7 +118,7 @@ func recurringShipmentIDProperty(what string) map[string]any {
 		"list_recurring_shipments")
 }
 
-func targetRecurringShipment(params map[string]any) (serviceports.ToolTarget, bool) {
+func targetRecurringShipment(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, paramRecurringShipmentID, permission.ResourceRecurringShipment)
 }
 
@@ -364,7 +364,7 @@ func renderSeriesChange(
 		plan.Before.Name), change), nil
 }
 
-func newCreateRecurringShipmentTool(series recurringShipmentKeeper) serviceports.AgentTool {
+func newCreateRecurringShipmentTool(series recurringShipmentKeeper) agentports.AgentTool {
 	properties := seriesProperties()
 	properties[paramSourceShipmentID] = shipmentIDProperty("The shipment every one copies " +
 		"(customer, stops, commodities and charges)")
@@ -390,7 +390,7 @@ func newCreateRecurringShipmentTool(series recurringShipmentKeeper) serviceports
 		},
 	}, receivablePlan[*recurringshipment.RecurringShipment, *recurringshipmentservice.SeriesChange]{
 		request: func(
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*recurringshipment.RecurringShipment, error) {
 			sourceID, err := requirePulid(params.Params, paramSourceShipmentID)
 			if err != nil {
@@ -418,7 +418,7 @@ func newCreateRecurringShipmentTool(series recurringShipmentKeeper) serviceports
 		plan: func(
 			ctx context.Context,
 			entity *recurringshipment.RecurringShipment,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*recurringshipmentservice.SeriesChange, error) {
 			probe := *entity
 
@@ -436,7 +436,7 @@ func newCreateRecurringShipmentTool(series recurringShipmentKeeper) serviceports
 		run: func(
 			ctx context.Context,
 			entity *recurringshipment.RecurringShipment,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			created, err := series.Create(ctx, entity, params.Actor.UserID)
 			if err != nil {
@@ -449,7 +449,7 @@ func newCreateRecurringShipmentTool(series recurringShipmentKeeper) serviceports
 }
 
 type seriesEdit struct {
-	get    repositories.GetRecurringShipmentByIDRequest
+	get    recurringshipmentports.GetRecurringShipmentByIDRequest
 	params map[string]any
 }
 
@@ -468,7 +468,7 @@ func (e *seriesEdit) entity(
 	return current, nil
 }
 
-func newUpdateRecurringShipmentTool(series recurringShipmentKeeper) serviceports.AgentTool {
+func newUpdateRecurringShipmentTool(series recurringShipmentKeeper) agentports.AgentTool {
 	properties := seriesProperties()
 	properties[paramRecurringShipmentID] = recurringShipmentIDProperty("The series to change")
 
@@ -490,7 +490,7 @@ func newUpdateRecurringShipmentTool(series recurringShipmentKeeper) serviceports
 		required:   []string{paramRecurringShipmentID},
 		target:     targetRecurringShipment,
 	}, receivablePlan[*seriesEdit, *recurringshipmentservice.SeriesChange]{
-		request: func(params *serviceports.ToolExecuteParams) (*seriesEdit, error) {
+		request: func(params *agentports.ToolExecuteParams) (*seriesEdit, error) {
 			id, err := requirePulid(params.Params, paramRecurringShipmentID)
 			if err != nil {
 				return nil, err
@@ -504,7 +504,7 @@ func newUpdateRecurringShipmentTool(series recurringShipmentKeeper) serviceports
 			}
 
 			return &seriesEdit{
-				get: repositories.GetRecurringShipmentByIDRequest{
+				get: recurringshipmentports.GetRecurringShipmentByIDRequest{
 					ID:         id,
 					TenantInfo: tenantFrom(*params),
 				},
@@ -514,7 +514,7 @@ func newUpdateRecurringShipmentTool(series recurringShipmentKeeper) serviceports
 		plan: func(
 			ctx context.Context,
 			edit *seriesEdit,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*recurringshipmentservice.SeriesChange, error) {
 			entity, err := edit.entity(ctx, series)
 			if err != nil {
@@ -533,7 +533,7 @@ func newUpdateRecurringShipmentTool(series recurringShipmentKeeper) serviceports
 		run: func(
 			ctx context.Context,
 			edit *seriesEdit,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			entity, err := edit.entity(ctx, series)
 			if err != nil {
@@ -550,20 +550,20 @@ func newUpdateRecurringShipmentTool(series recurringShipmentKeeper) serviceports
 }
 
 type seriesStatusChange struct {
-	get    repositories.GetRecurringShipmentByIDRequest
+	get    recurringshipmentports.GetRecurringShipmentByIDRequest
 	status recurringshipment.Status
 }
 
 func (c *seriesStatusChange) request(
 	ctx context.Context,
 	series recurringShipmentKeeper,
-) (*repositories.UpdateRecurringShipmentStatusRequest, error) {
+) (*recurringshipmentports.UpdateRecurringShipmentStatusRequest, error) {
 	current, err := series.Get(ctx, &c.get)
 	if err != nil {
 		return nil, err
 	}
 
-	return &repositories.UpdateRecurringShipmentStatusRequest{
+	return &recurringshipmentports.UpdateRecurringShipmentStatusRequest{
 		TenantInfo:          c.get.TenantInfo,
 		RecurringShipmentID: c.get.ID,
 		Status:              c.status,
@@ -571,7 +571,7 @@ func (c *seriesStatusChange) request(
 	}, nil
 }
 
-func newSetRecurringShipmentStatusTool(series recurringShipmentKeeper) serviceports.AgentTool {
+func newSetRecurringShipmentStatusTool(series recurringShipmentKeeper) agentports.AgentTool {
 	return newReceivableTool(&receivableSpec{
 		name: "set_recurring_shipment_status",
 		description: "Pause a recurring shipment so it creates nothing, resume it (Active) " +
@@ -592,7 +592,7 @@ func newSetRecurringShipmentStatusTool(series recurringShipmentKeeper) servicepo
 		required: []string{paramRecurringShipmentID, fieldStatus},
 		target:   targetRecurringShipment,
 	}, receivablePlan[*seriesStatusChange, *recurringshipmentservice.SeriesChange]{
-		request: func(params *serviceports.ToolExecuteParams) (*seriesStatusChange, error) {
+		request: func(params *agentports.ToolExecuteParams) (*seriesStatusChange, error) {
 			id, err := requirePulid(params.Params, paramRecurringShipmentID)
 			if err != nil {
 				return nil, err
@@ -603,7 +603,7 @@ func newSetRecurringShipmentStatusTool(series recurringShipmentKeeper) servicepo
 			}
 
 			return &seriesStatusChange{
-				get: repositories.GetRecurringShipmentByIDRequest{
+				get: recurringshipmentports.GetRecurringShipmentByIDRequest{
 					ID:         id,
 					TenantInfo: tenantFrom(*params),
 				},
@@ -613,7 +613,7 @@ func newSetRecurringShipmentStatusTool(series recurringShipmentKeeper) servicepo
 		plan: func(
 			ctx context.Context,
 			change *seriesStatusChange,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*recurringshipmentservice.SeriesChange, error) {
 			req, err := change.request(ctx, series)
 			if err != nil {
@@ -634,7 +634,7 @@ func newSetRecurringShipmentStatusTool(series recurringShipmentKeeper) servicepo
 		run: func(
 			ctx context.Context,
 			change *seriesStatusChange,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			req, err := change.request(ctx, series)
 			if err != nil {
@@ -650,7 +650,7 @@ func newSetRecurringShipmentStatusTool(series recurringShipmentKeeper) servicepo
 	})
 }
 
-func newGenerateRecurringShipmentTool(series recurringShipmentKeeper) serviceports.AgentTool {
+func newGenerateRecurringShipmentTool(series recurringShipmentKeeper) agentports.AgentTool {
 	return newReportingReceivableTool(&receivableSpec{
 		name:        "generate_recurring_shipment",
 		searchTerms: []string{"next occurrence", "generate early", "next slot", "spin up"},
@@ -673,10 +673,10 @@ func newGenerateRecurringShipmentTool(series recurringShipmentKeeper) servicepor
 		},
 		required: []string{paramRecurringShipmentID},
 		target:   targetRecurringShipment,
-	}, receivablePlan[*repositories.GenerateRecurringShipmentRequest, *repositories.RecurringShipmentGenerationPlan]{
+	}, receivablePlan[*recurringshipmentports.GenerateRecurringShipmentRequest, *recurringshipmentports.RecurringShipmentGenerationPlan]{
 		request: func(
-			params *serviceports.ToolExecuteParams,
-		) (*repositories.GenerateRecurringShipmentRequest, error) {
+			params *agentports.ToolExecuteParams,
+		) (*recurringshipmentports.GenerateRecurringShipmentRequest, error) {
 			id, err := requirePulid(params.Params, paramRecurringShipmentID)
 			if err != nil {
 				return nil, err
@@ -686,7 +686,7 @@ func newGenerateRecurringShipmentTool(series recurringShipmentKeeper) servicepor
 				return nil, err
 			}
 
-			return &repositories.GenerateRecurringShipmentRequest{
+			return &recurringshipmentports.GenerateRecurringShipmentRequest{
 				TenantInfo:          tenantFrom(*params),
 				RecurringShipmentID: id,
 				OccurrenceAt:        occurrence,
@@ -696,21 +696,21 @@ func newGenerateRecurringShipmentTool(series recurringShipmentKeeper) servicepor
 		},
 		plan: func(
 			ctx context.Context,
-			req *repositories.GenerateRecurringShipmentRequest,
-			_ *serviceports.ToolExecuteParams,
-		) (*repositories.RecurringShipmentGenerationPlan, error) {
+			req *recurringshipmentports.GenerateRecurringShipmentRequest,
+			_ *agentports.ToolExecuteParams,
+		) (*recurringshipmentports.RecurringShipmentGenerationPlan, error) {
 			probe := *req
 
 			return series.PreviewGenerate(ctx, &probe)
 		},
-		refused: func(*repositories.GenerateRecurringShipmentRequest) string {
+		refused: func(*recurringshipmentports.GenerateRecurringShipmentRequest) string {
 			return "Would create a shipment from the recurring shipment."
 		},
 		render: renderGenerate,
 		run: func(
 			ctx context.Context,
-			req *repositories.GenerateRecurringShipmentRequest,
-			_ *serviceports.ToolExecuteParams,
+			req *recurringshipmentports.GenerateRecurringShipmentRequest,
+			_ *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			generated, err := series.Generate(ctx, req)
 			if err != nil {
@@ -732,8 +732,8 @@ func newGenerateRecurringShipmentTool(series recurringShipmentKeeper) servicepor
 }
 
 func renderGenerate(
-	_ *repositories.GenerateRecurringShipmentRequest,
-	plan *repositories.RecurringShipmentGenerationPlan,
+	_ *recurringshipmentports.GenerateRecurringShipmentRequest,
+	plan *recurringshipmentports.RecurringShipmentGenerationPlan,
 ) (*agent.ToolPreview, error) {
 	slot := time.Unix(plan.Occurrence.At, 0).UTC().Format(time.RFC3339)
 	if plan.AlreadyGenerated {

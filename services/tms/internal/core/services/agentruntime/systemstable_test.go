@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -16,7 +16,7 @@ func TestTurn_CarriesTheSharedPartOfItsPromptThroughItsState(t *testing.T) {
 	t.Parallel()
 
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
-	req := &serviceports.RunRequest{
+	req := &agentports.RunRequest{
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Input:      "Where is S1?",

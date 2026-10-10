@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -33,7 +33,7 @@ type appCredentialRepository struct {
 
 func NewAppCredentialRepository(
 	p AppCredentialParams,
-) repositories.AccountingAppCredentialRepository {
+) accountingsyncports.AccountingAppCredentialRepository {
 	return &appCredentialRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.accounting-app-credential-repository"),
@@ -42,7 +42,7 @@ func NewAppCredentialRepository(
 
 func (r *appCredentialRepository) GetByType(
 	ctx context.Context,
-	req repositories.GetAccountingAppCredentialRequest,
+	req accountingsyncports.GetAccountingAppCredentialRequest,
 ) (*accountingsync.AccountingAppCredential, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingAppCredential, error) {
 		entity := new(accountingsync.AccountingAppCredential)
@@ -136,7 +136,7 @@ func (r *appCredentialRepository) Update(
 
 func (r *appCredentialRepository) Delete(
 	ctx context.Context,
-	req repositories.GetAccountingAppCredentialRequest,
+	req accountingsyncports.GetAccountingAppCredentialRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.AccountingAppCredentialColumns

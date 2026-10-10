@@ -8,9 +8,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -47,7 +47,7 @@ type suiteRunRepository struct {
 	l  *zap.Logger
 }
 
-func NewSuiteRuns(p SuiteRunParams) repositories.AgentSuiteRunRepository {
+func NewSuiteRuns(p SuiteRunParams) agentqualityports.AgentSuiteRunRepository {
 	return &suiteRunRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.agentsuiterun-repository"),
@@ -74,9 +74,9 @@ func (r *suiteRunRepository) Create(
 			Exec(ctx); err != nil {
 			switch dberror.ExtractConstraintName(err) {
 			case constraintOneRunning:
-				return nil, repositories.ErrSuiteRunAlreadyRunning
+				return nil, agentqualityports.ErrSuiteRunAlreadyRunning
 			case constraintSweepKey:
-				return nil, repositories.ErrSuiteRunSweepKeyTaken
+				return nil, agentqualityports.ErrSuiteRunSweepKeyTaken
 			}
 			r.l.Error("failed to create agent suite run", zap.Error(err))
 
@@ -148,7 +148,7 @@ func (r *suiteRunRepository) Update(
 
 func (r *suiteRunRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetAgentSuiteRunRequest,
+	req agentqualityports.GetAgentSuiteRunRequest,
 ) (*agentquality.SuiteRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentquality.SuiteRun, error) {
 		cols := buncolgen.SuiteRunColumns
@@ -171,7 +171,7 @@ func (r *suiteRunRepository) GetByID(
 
 func (r *suiteRunRepository) GetBySweepKey(
 	ctx context.Context,
-	req repositories.GetAgentSuiteRunBySweepKeyRequest,
+	req agentqualityports.GetAgentSuiteRunBySweepKeyRequest,
 ) (*agentquality.SuiteRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentquality.SuiteRun, error) {
 		cols := buncolgen.SuiteRunColumns
@@ -194,7 +194,7 @@ func (r *suiteRunRepository) GetBySweepKey(
 
 func (r *suiteRunRepository) Last(
 	ctx context.Context,
-	req repositories.LastAgentSuiteRunRequest,
+	req agentqualityports.LastAgentSuiteRunRequest,
 ) (*agentquality.SuiteRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentquality.SuiteRun, error) {
 		cols := buncolgen.SuiteRunColumns
@@ -234,9 +234,9 @@ func (r *suiteRunRepository) Last(
 
 func (r *suiteRunRepository) List(
 	ctx context.Context,
-	req repositories.ListAgentSuiteRunsRequest,
-) (*repositories.AgentSuiteRunPage, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.AgentSuiteRunPage, error) {
+	req agentqualityports.ListAgentSuiteRunsRequest,
+) (*agentqualityports.AgentSuiteRunPage, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentqualityports.AgentSuiteRunPage, error) {
 		cols := buncolgen.SuiteRunColumns
 		limit := clampLimit(req.Limit, defaultPageLimit, maxPageLimit-1)
 		dba := r.db.DBForContext(ctx)
@@ -253,7 +253,7 @@ func (r *suiteRunRepository) List(
 			return sq
 		}
 
-		page := &repositories.AgentSuiteRunPage{}
+		page := &agentqualityports.AgentSuiteRunPage{}
 		if req.IncludeTotalCount {
 			total, err := dba.NewSelect().
 				Model((*agentquality.SuiteRun)(nil)).
@@ -288,7 +288,7 @@ func (r *suiteRunRepository) List(
 
 func (r *suiteRunRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListAgentSuiteRunConnectionRequest,
+	req *agentqualityports.ListAgentSuiteRunConnectionRequest,
 ) (*pagination.CursorListResult[*agentquality.SuiteRun], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*agentquality.SuiteRun], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -350,7 +350,7 @@ func (r *suiteRunRepository) ListConnection(
 
 func suiteRunScope(
 	sq *bun.SelectQuery,
-	req *repositories.ListAgentSuiteRunConnectionRequest,
+	req *agentqualityports.ListAgentSuiteRunConnectionRequest,
 ) *bun.SelectQuery {
 	if req.AgentDefinitionID.IsNil() {
 		return sq
@@ -361,7 +361,7 @@ func suiteRunScope(
 
 func (r *suiteRunRepository) History(
 	ctx context.Context,
-	req repositories.AgentSuiteRunHistoryRequest,
+	req agentqualityports.AgentSuiteRunHistoryRequest,
 ) ([]*agentquality.SuiteRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentquality.SuiteRun, error) {
 		if len(req.AgentDefinitionIDs) == 0 {
@@ -414,7 +414,7 @@ func scoredStatuses() []agentquality.SuiteRunStatus {
 
 func (r *suiteRunRepository) Latest(
 	ctx context.Context,
-	req repositories.LatestAgentSuiteRunsRequest,
+	req agentqualityports.LatestAgentSuiteRunsRequest,
 ) ([]*agentquality.SuiteRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentquality.SuiteRun, error) {
 		cols := buncolgen.SuiteRunColumns
@@ -448,11 +448,11 @@ func (r *suiteRunRepository) Latest(
 
 func (r *suiteRunRepository) Overview(
 	ctx context.Context,
-	req repositories.AgentSuiteRunOverviewRequest,
-) (*repositories.AgentSuiteRunOverview, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.AgentSuiteRunOverview, error) {
+	req agentqualityports.AgentSuiteRunOverviewRequest,
+) (*agentqualityports.AgentSuiteRunOverview, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentqualityports.AgentSuiteRunOverview, error) {
 		cols := buncolgen.SuiteRunColumns
-		overview := new(repositories.AgentSuiteRunOverview)
+		overview := new(agentqualityports.AgentSuiteRunOverview)
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -473,9 +473,9 @@ func (r *suiteRunRepository) Overview(
 
 func (r *suiteRunRepository) ListAgents(
 	ctx context.Context,
-	req repositories.ListAgentQualityAgentsRequest,
-) (*repositories.AgentQualityAgentRows, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.AgentQualityAgentRows, error) {
+	req agentqualityports.ListAgentQualityAgentsQuery,
+) (*agentqualityports.AgentQualityAgentRows, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentqualityports.AgentQualityAgentRows, error) {
 		cols := buncolgen.DefinitionColumns
 		limit := clampLimit(req.Limit, defaultPageLimit, maxPageLimit-1)
 		dba := r.db.DBForContext(ctx)
@@ -484,7 +484,7 @@ func (r *suiteRunRepository) ListAgents(
 			return buncolgen.DefinitionScopeTenant(sq, req.TenantInfo)
 		}
 
-		result := &repositories.AgentQualityAgentRows{}
+		result := &agentqualityports.AgentQualityAgentRows{}
 		if req.IncludeTotalCount {
 			total, err := dba.NewSelect().
 				Model((*agentdefinition.Definition)(nil)).
@@ -496,7 +496,7 @@ func (r *suiteRunRepository) ListAgents(
 			result.TotalCount = &total
 		}
 
-		rows := make([]*repositories.AgentQualityAgentRow, 0, limit+1)
+		rows := make([]*agentqualityports.AgentQualityAgentRow, 0, limit+1)
 		if err := dba.NewSelect().
 			Model((*agentdefinition.Definition)(nil)).
 			ColumnExpr(cols.ID.As("id")).

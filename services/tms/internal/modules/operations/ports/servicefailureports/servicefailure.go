@@ -1,0 +1,475 @@
+package servicefailureports
+
+import (
+	"context"
+
+	"github.com/emoss08/trenova/internal/core/domain/edi"
+	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/services/edix12"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+)
+
+type CreateManualServiceFailureRequest struct {
+	TenantInfo            pagination.TenantInfo `json:"-"`
+	ShipmentID            pulid.ID              `json:"shipmentId"`
+	ShipmentMoveID        pulid.ID              `json:"shipmentMoveId"`
+	StopID                pulid.ID              `json:"stopId"`
+	ReasonCodeID          pulid.ID              `json:"reasonCodeId"`
+	Type                  servicefailure.Type   `json:"type"`
+	Notes                 string                `json:"notes"`
+	InternalNotes         string                `json:"internalNotes"`
+	X12StatusCodeOverride string                `json:"x12StatusCodeOverride"`
+	X12ReasonCodeOverride string                `json:"x12ReasonCodeOverride"`
+	X12ExceptionCode      string                `json:"x12ExceptionCode"`
+	ScheduledCutoff       *int64                `json:"scheduledCutoff"`
+	ActualArrival         *int64                `json:"actualArrival"`
+	GracePeriodMinutes    *int                  `json:"gracePeriodMinutes"`
+	LateMinutes           *int64                `json:"lateMinutes"`
+}
+
+func (r *CreateManualServiceFailureRequest) Validate() *errortypes.MultiError {
+	multiErr := errortypes.NewMultiError()
+	if r == nil {
+		multiErr.Add(
+			"request",
+			errortypes.ErrRequired,
+			"Manual service failure request is required",
+		)
+		return multiErr
+	}
+	validateServiceTenantInfo(multiErr, r.TenantInfo)
+	if r.ShipmentID.IsNil() {
+		multiErr.Add("shipmentId", errortypes.ErrRequired, "Shipment ID is required")
+	}
+	if r.ShipmentMoveID.IsNil() {
+		multiErr.Add("shipmentMoveId", errortypes.ErrRequired, "Shipment move ID is required")
+	}
+	if r.StopID.IsNil() {
+		multiErr.Add("stopId", errortypes.ErrRequired, "Stop ID is required")
+	}
+	if r.ReasonCodeID.IsNil() {
+		multiErr.Add("reasonCodeId", errortypes.ErrRequired, "Reason code is required")
+	}
+	if !r.Type.IsValid() {
+		multiErr.Add("type", errortypes.ErrInvalid, "Service failure type is invalid")
+	}
+	if r.ScheduledCutoff != nil && *r.ScheduledCutoff <= 0 {
+		multiErr.Add(
+			"scheduledCutoff",
+			errortypes.ErrInvalid,
+			"Scheduled cutoff must be greater than zero",
+		)
+	}
+	if r.ActualArrival != nil && *r.ActualArrival <= 0 {
+		multiErr.Add(
+			"actualArrival",
+			errortypes.ErrInvalid,
+			"Actual arrival must be greater than zero",
+		)
+	}
+	if r.GracePeriodMinutes != nil && *r.GracePeriodMinutes <= 0 {
+		multiErr.Add(
+			"gracePeriodMinutes",
+			errortypes.ErrInvalid,
+			"Grace period must be greater than zero",
+		)
+	}
+	if r.LateMinutes != nil && *r.LateMinutes <= 0 {
+		multiErr.Add("lateMinutes", errortypes.ErrInvalid, "Late minutes must be greater than zero")
+	}
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+	return nil
+}
+
+type EvaluateShipmentServiceFailuresRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	ShipmentID pulid.ID              `json:"shipmentId"`
+	Force      bool                  `json:"force"`
+}
+
+func (r *EvaluateShipmentServiceFailuresRequest) Validate() *errortypes.MultiError {
+	multiErr := errortypes.NewMultiError()
+	if r == nil {
+		multiErr.Add(
+			"request",
+			errortypes.ErrRequired,
+			"Service failure evaluation request is required",
+		)
+		return multiErr
+	}
+	validateServiceTenantInfo(multiErr, r.TenantInfo)
+	if r.ShipmentID.IsNil() {
+		multiErr.Add("shipmentId", errortypes.ErrRequired, "Shipment ID is required")
+	}
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+	return nil
+}
+
+type EvaluateStopServiceFailuresRequest struct {
+	TenantInfo     pagination.TenantInfo `json:"-"`
+	ShipmentID     pulid.ID              `json:"shipmentId"`
+	ShipmentMoveID pulid.ID              `json:"shipmentMoveId"`
+	StopID         pulid.ID              `json:"stopId"`
+	Force          bool                  `json:"force"`
+}
+
+func (r *EvaluateStopServiceFailuresRequest) Validate() *errortypes.MultiError {
+	multiErr := errortypes.NewMultiError()
+	if r == nil {
+		multiErr.Add(
+			"request",
+			errortypes.ErrRequired,
+			"Service failure stop evaluation request is required",
+		)
+		return multiErr
+	}
+	validateServiceTenantInfo(multiErr, r.TenantInfo)
+	if r.ShipmentID.IsNil() {
+		multiErr.Add("shipmentId", errortypes.ErrRequired, "Shipment ID is required")
+	}
+	if r.StopID.IsNil() {
+		multiErr.Add("stopId", errortypes.ErrRequired, "Stop ID is required")
+	}
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+	return nil
+}
+
+type BulkEvaluateServiceFailuresRequest struct {
+	TenantInfo  pagination.TenantInfo `json:"-"`
+	ShipmentIDs []pulid.ID            `json:"shipmentIds"`
+	Force       bool                  `json:"force"`
+}
+
+func (r *BulkEvaluateServiceFailuresRequest) Validate() *errortypes.MultiError {
+	multiErr := errortypes.NewMultiError()
+	if r == nil {
+		multiErr.Add(
+			"request",
+			errortypes.ErrRequired,
+			"Bulk service failure evaluation request is required",
+		)
+		return multiErr
+	}
+	validateServiceTenantInfo(multiErr, r.TenantInfo)
+	if len(r.ShipmentIDs) == 0 {
+		multiErr.Add("shipmentIds", errortypes.ErrRequired, "Shipment IDs are required")
+	}
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+	return nil
+}
+
+type UpdateServiceFailureRequest struct {
+	TenantInfo            pagination.TenantInfo `json:"-"`
+	ID                    pulid.ID              `json:"id"`
+	ShipmentID            pulid.ID              `json:"shipmentId"`
+	ReasonCodeID          pulid.ID              `json:"reasonCodeId"`
+	ClearReasonCode       bool                  `json:"clearReasonCode"`
+	Notes                 string                `json:"notes"`
+	InternalNotes         string                `json:"internalNotes"`
+	X12StatusCodeOverride string                `json:"x12StatusCodeOverride"`
+	X12ReasonCodeOverride string                `json:"x12ReasonCodeOverride"`
+	X12ExceptionCode      string                `json:"x12ExceptionCode"`
+	Version               int64                 `json:"version"`
+}
+
+func (r *UpdateServiceFailureRequest) Validate() *errortypes.MultiError {
+	multiErr := errortypes.NewMultiError()
+	if r == nil {
+		multiErr.Add(
+			"request",
+			errortypes.ErrRequired,
+			"Service failure update request is required",
+		)
+		return multiErr
+	}
+	validateServiceTenantInfo(multiErr, r.TenantInfo)
+	if r.ID.IsNil() {
+		multiErr.Add("id", errortypes.ErrRequired, "Service failure ID is required")
+	}
+	if r.ShipmentID.IsNil() {
+		multiErr.Add("shipmentId", errortypes.ErrRequired, "Shipment ID is required")
+	}
+	if r.Version < 0 {
+		multiErr.Add("version", errortypes.ErrInvalid, "Version is required")
+	}
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+	return nil
+}
+
+type ServiceFailureLifecycleRequest struct {
+	TenantInfo   pagination.TenantInfo `json:"-"`
+	ID           pulid.ID              `json:"id"`
+	ShipmentID   pulid.ID              `json:"shipmentId"`
+	ReasonCodeID pulid.ID              `json:"reasonCodeId"`
+	Notes        string                `json:"notes"`
+	Version      int64                 `json:"version"`
+}
+
+func (r *ServiceFailureLifecycleRequest) Validate() *errortypes.MultiError {
+	multiErr := errortypes.NewMultiError()
+	if r == nil {
+		multiErr.Add(
+			"request",
+			errortypes.ErrRequired,
+			"Service failure lifecycle request is required",
+		)
+		return multiErr
+	}
+	validateServiceTenantInfo(multiErr, r.TenantInfo)
+	if r.ID.IsNil() {
+		multiErr.Add("id", errortypes.ErrRequired, "Service failure ID is required")
+	}
+	if r.ShipmentID.IsNil() {
+		multiErr.Add("shipmentId", errortypes.ErrRequired, "Shipment ID is required")
+	}
+	if r.Version < 0 {
+		multiErr.Add("version", errortypes.ErrInvalid, "Version is required")
+	}
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+	return nil
+}
+
+type BuildServiceFailureEDIPayloadRequest struct {
+	TenantInfo       pagination.TenantInfo `json:"-"`
+	ServiceFailureID pulid.ID              `json:"serviceFailureId"`
+}
+
+func (r *BuildServiceFailureEDIPayloadRequest) Validate() *errortypes.MultiError {
+	multiErr := errortypes.NewMultiError()
+	if r == nil {
+		multiErr.Add(
+			"request",
+			errortypes.ErrRequired,
+			"Service failure EDI payload request is required",
+		)
+		return multiErr
+	}
+	validateServiceTenantInfo(multiErr, r.TenantInfo)
+	if r.ServiceFailureID.IsNil() {
+		multiErr.Add("serviceFailureId", errortypes.ErrRequired, "Service failure ID is required")
+	}
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+	return nil
+}
+
+type ServiceFailureEvaluationResult struct {
+	CreatedIDs   []pulid.ID                           `json:"createdIds"`
+	UpdatedIDs   []pulid.ID                           `json:"updatedIds"`
+	CreatedStops []ServiceFailureEvaluatedStopSummary `json:"createdStops"`
+	UpdatedStops []ServiceFailureEvaluatedStopSummary `json:"updatedStops"`
+	SkippedStops []ServiceFailureSkippedStop          `json:"skippedStops"`
+	Skipped      int                                  `json:"skipped"`
+}
+
+type ServiceFailureEvaluatedStopSummary struct {
+	ShipmentID         pulid.ID          `json:"shipmentId"`
+	ShipmentMoveID     pulid.ID          `json:"shipmentMoveId,omitempty"`
+	StopID             pulid.ID          `json:"stopId,omitempty"`
+	StopSequence       int64             `json:"stopSequence,omitempty"`
+	StopType           shipment.StopType `json:"stopType,omitempty"`
+	LocationID         pulid.ID          `json:"locationId,omitempty"`
+	LocationName       string            `json:"locationName,omitempty"`
+	LocationCode       string            `json:"locationCode,omitempty"`
+	City               string            `json:"city,omitempty"`
+	StateCode          string            `json:"stateCode,omitempty"`
+	ScheduledCutoff    int64             `json:"scheduledCutoff,omitempty"`
+	ActualArrival      int64             `json:"actualArrival,omitempty"`
+	GracePeriodMinutes int               `json:"gracePeriodMinutes,omitempty"`
+	LateMinutes        int64             `json:"lateMinutes,omitempty"`
+	ServiceFailureID   pulid.ID          `json:"serviceFailureId,omitempty"`
+	Reason             string            `json:"reason,omitempty"`
+}
+
+type ServiceFailureSkippedStop = ServiceFailureEvaluatedStopSummary
+
+type DetectedServiceFailure struct {
+	Failure  *servicefailure.ServiceFailure
+	Existing *servicefailure.ServiceFailure
+}
+
+type ServiceFailureDetectionPlan struct {
+	Shipment     *shipment.Shipment
+	Detected     []DetectedServiceFailure
+	SkippedStops []ServiceFailureSkippedStop
+	MarksDelayed bool
+}
+
+type ServiceFailureEDIPayloadResult struct {
+	Payload     edi.DocumentPayload `json:"payload"`
+	Diagnostics []edix12.Diagnostic `json:"diagnostics"`
+}
+
+type ServiceFailureEvaluator interface {
+	EvaluateShipment(
+		ctx context.Context,
+		req *EvaluateShipmentServiceFailuresRequest,
+		actor *permissionports.RequestActor,
+	) (*ServiceFailureEvaluationResult, error)
+	EvaluateStop(
+		ctx context.Context,
+		req *EvaluateStopServiceFailuresRequest,
+		actor *permissionports.RequestActor,
+	) (*ServiceFailureEvaluationResult, error)
+}
+
+// ServiceFailureLifecyclePreview is a service failure before and after a
+// lifecycle change, and the EDI 214 the change would send the customer's
+// trading partner. EDI is nil when no 214 applies.
+type ServiceFailureLifecyclePreview struct {
+	Before *servicefailure.ServiceFailure
+	After  *servicefailure.ServiceFailure
+	EDI    *ServiceFailure214LifecycleResult
+}
+
+type ServiceFailureService interface {
+	ServiceFailureEvaluator
+	List(
+		ctx context.Context,
+		req *ListServiceFailuresRequest,
+	) (*pagination.ListResult[*servicefailure.ServiceFailure], error)
+	ListConnection(
+		ctx context.Context,
+		req *ListServiceFailureConnectionRequest,
+	) (*pagination.CursorListResult[*servicefailure.ServiceFailure], error)
+	GetByID(
+		ctx context.Context,
+		req *GetServiceFailureByIDRequest,
+	) (*servicefailure.ServiceFailure, error)
+	GetByShipment(
+		ctx context.Context,
+		req *GetServiceFailureByShipmentRequest,
+	) (*servicefailure.ServiceFailure, error)
+	CountUnresolved(
+		ctx context.Context,
+		req *CountUnresolvedServiceFailuresRequest,
+	) (int, error)
+	CreateManual(
+		ctx context.Context,
+		req *CreateManualServiceFailureRequest,
+		actor *permissionports.RequestActor,
+	) (*servicefailure.ServiceFailure, error)
+	BulkEvaluate(
+		ctx context.Context,
+		req *BulkEvaluateServiceFailuresRequest,
+		actor *permissionports.RequestActor,
+	) (*ServiceFailureEvaluationResult, error)
+	PreviewEvaluateShipment(
+		ctx context.Context,
+		req *EvaluateShipmentServiceFailuresRequest,
+	) (*ServiceFailureDetectionPlan, error)
+	Update(
+		ctx context.Context,
+		req *UpdateServiceFailureRequest,
+		actor *permissionports.RequestActor,
+	) (*servicefailure.ServiceFailure, error)
+	Review(
+		ctx context.Context,
+		req *ServiceFailureLifecycleRequest,
+		actor *permissionports.RequestActor,
+	) (*servicefailure.ServiceFailure, error)
+	Resolve(
+		ctx context.Context,
+		req *ServiceFailureLifecycleRequest,
+		actor *permissionports.RequestActor,
+	) (*servicefailure.ServiceFailure, error)
+	// PreviewResolve checks a resolution as Resolve does and returns the
+	// failure as it would leave it and the EDI 214 it would generate,
+	// writing nothing.
+	PreviewResolve(
+		ctx context.Context,
+		req *ServiceFailureLifecycleRequest,
+		actor *permissionports.RequestActor,
+	) (*ServiceFailureLifecyclePreview, error)
+	Void(
+		ctx context.Context,
+		req *ServiceFailureLifecycleRequest,
+		actor *permissionports.RequestActor,
+	) (*servicefailure.ServiceFailure, error)
+	PreviewReview(
+		ctx context.Context,
+		req *ServiceFailureLifecycleRequest,
+		actor *permissionports.RequestActor,
+	) (*ServiceFailureLifecyclePreview, error)
+	PreviewVoid(
+		ctx context.Context,
+		req *ServiceFailureLifecycleRequest,
+		actor *permissionports.RequestActor,
+	) (*ServiceFailureLifecyclePreview, error)
+	PreviewUpdate(
+		ctx context.Context,
+		req *UpdateServiceFailureRequest,
+	) (*ServiceFailureLifecyclePreview, error)
+}
+
+type ServiceFailureReasonCodeService interface {
+	List(
+		ctx context.Context,
+		req *ListServiceFailureReasonCodesRequest,
+	) (*pagination.ListResult[*servicefailure.ReasonCode], error)
+	ListConnection(
+		ctx context.Context,
+		req *ListServiceFailureReasonCodeConnectionRequest,
+	) (*pagination.CursorListResult[*servicefailure.ReasonCode], error)
+	Get(
+		ctx context.Context,
+		req GetServiceFailureReasonCodeByIDRequest,
+	) (*servicefailure.ReasonCode, error)
+	SelectOptions(
+		ctx context.Context,
+		req *ServiceFailureReasonCodeSelectOptionsRequest,
+	) (*pagination.ListResult[*servicefailure.ReasonCode], error)
+	Create(
+		ctx context.Context,
+		entity *servicefailure.ReasonCode,
+		actor *permissionports.RequestActor,
+	) (*servicefailure.ReasonCode, error)
+	Update(
+		ctx context.Context,
+		entity *servicefailure.ReasonCode,
+		actor *permissionports.RequestActor,
+	) (*servicefailure.ReasonCode, error)
+	Archive(
+		ctx context.Context,
+		id pulid.ID,
+		tenantInfo pagination.TenantInfo,
+		actor *permissionports.RequestActor,
+	) (*servicefailure.ReasonCode, error)
+	Activate(
+		ctx context.Context,
+		id pulid.ID,
+		tenantInfo pagination.TenantInfo,
+		actor *permissionports.RequestActor,
+	) (*servicefailure.ReasonCode, error)
+	Reorder(
+		ctx context.Context,
+		req *ReorderServiceFailureReasonCodesRequest,
+		actor *permissionports.RequestActor,
+	) ([]*servicefailure.ReasonCode, error)
+}
+
+func validateServiceTenantInfo(multiErr *errortypes.MultiError, tenantInfo pagination.TenantInfo) {
+	if tenantInfo.OrgID.IsNil() {
+		multiErr.Add("orgId", errortypes.ErrRequired, "Organization ID is required")
+	}
+	if tenantInfo.BuID.IsNil() {
+		multiErr.Add("buId", errortypes.ErrRequired, "Business unit ID is required")
+	}
+}

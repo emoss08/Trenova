@@ -15,7 +15,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
@@ -123,7 +124,7 @@ func (s *Service) RefreshEIAPrices(
 
 	allCurrent := true
 	for _, index := range indices {
-		has, hErr := s.priceRepo.HasPriceForDate(ctx, &repositories.HasFuelPriceForDateRequest{
+		has, hErr := s.priceRepo.HasPriceForDate(ctx, &fuelsurchargeports.HasFuelPriceForDateRequest{
 			FuelIndexID: index.ID,
 			TenantInfo:  tenantInfo,
 			Date:        currentMonday,
@@ -281,7 +282,7 @@ func (s *Service) notifyPriceUpdate(
 
 	exists, err := s.notificationService.ExistsRecent(
 		ctx,
-		repositories.ExistsRecentNotificationRequest{
+		notificationports.ExistsRecentNotificationRequest{
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
 			EventType:      fuelPriceEventType,
@@ -342,7 +343,7 @@ func (s *Service) buildPriceUpdateMessage(
 		usIndex = indices[0]
 	}
 
-	prices, err := s.priceRepo.GetLatestOnOrBefore(ctx, &repositories.GetLatestFuelPricesRequest{
+	prices, err := s.priceRepo.GetLatestOnOrBefore(ctx, &fuelsurchargeports.GetLatestFuelPricesRequest{
 		FuelIndexID: usIndex.ID,
 		TenantInfo:  tenantInfo,
 		Date:        currentMonday,
@@ -380,7 +381,7 @@ func (s *Service) buildPriceUpdateMessage(
 
 func EnsureEIAIndices(
 	ctx context.Context,
-	repo repositories.FuelIndexRepository,
+	repo fuelsurchargeports.FuelIndexRepository,
 	tenantInfo pagination.TenantInfo,
 	seriesIDs []string,
 ) error {

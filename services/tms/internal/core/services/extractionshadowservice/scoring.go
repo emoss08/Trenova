@@ -5,8 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/core/domain/extractionshadow"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,19 +17,19 @@ import (
 
 const scoreAttempts = 3
 
-var _ services.ExtractionShadowScorer = (*Scorer)(nil)
+var _ extractionshadowports.ExtractionShadowScorer = (*Scorer)(nil)
 
 type ScorerParams struct {
 	fx.In
 
-	Results     repositories.ExtractionShadowResultRepository
-	Corrections repositories.AICorrectionRepository
-	Contents    repositories.DocumentContentRepository
+	Results     extractionshadowports.ExtractionShadowResultRepository
+	Corrections aicorrectionports.AICorrectionRepository
+	Contents    documentcontentports.DocumentContentRepository
 }
 
 type Scorer struct {
-	results     repositories.ExtractionShadowResultRepository
-	corrections repositories.AICorrectionRepository
+	results     extractionshadowports.ExtractionShadowResultRepository
+	corrections aicorrectionports.AICorrectionRepository
 	contents    contentReader
 	now         func() int64
 }
@@ -42,7 +43,7 @@ func NewScorer(p ScorerParams) *Scorer {
 	}
 }
 
-func AsScorer(s *Scorer) services.ExtractionShadowScorer { return s }
+func AsScorer(s *Scorer) extractionshadowports.ExtractionShadowScorer { return s }
 
 func (s *Scorer) ScoreCorrection(ctx context.Context, correction *aicorrection.Correction) error {
 	if correction == nil ||
@@ -64,7 +65,7 @@ func (s *Scorer) ScoreCorrection(ctx context.Context, correction *aicorrection.C
 	for range scoreAttempts {
 		result, getErr := s.results.GetByExtraction(
 			ctx,
-			repositories.GetExtractionShadowResultByExtractionRequest{
+			extractionshadowports.GetExtractionShadowResultByExtractionRequest{
 				TenantInfo:  tenant,
 				DocumentID:  *correction.DocumentID,
 				ExtractedAt: extractedAt,
@@ -95,7 +96,7 @@ func (s *Scorer) scoreAgainstCorrection(
 ) error {
 	correction, err := s.corrections.GetLatestByDocument(
 		ctx,
-		&repositories.GetLatestAICorrectionByDocumentRequest{
+		&aicorrectionports.GetLatestAICorrectionByDocumentRequest{
 			TenantInfo: tenantOf(result),
 			Task:       aicorrection.TaskShipmentDraftExtraction,
 			DocumentID: result.DocumentID,

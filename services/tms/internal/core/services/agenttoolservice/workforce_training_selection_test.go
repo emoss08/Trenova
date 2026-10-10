@@ -3,7 +3,7 @@ package agenttoolservice
 import (
 	"testing"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,7 +26,7 @@ func TestRecordTrainingCompletion_TakesTheAssignmentsOwnWorkerAndCourseBesideIt(
 		paramCourseID:   training.record.CourseID.String(),
 	})
 
-	require.NoError(t, tool.(serviceports.ToolValidator).Validate(t.Context(), params))
+	require.NoError(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, training.completed)
 	assert.Equal(t, training.record.ID, training.completed.ID)
@@ -43,7 +43,7 @@ func TestRecordTrainingCompletion_ARefusalForAnotherWorkersAssignmentShowsBothCa
 		paramCourseID:   training.record.CourseID.String(),
 	})
 
-	err := tool.(serviceports.ToolValidator).Validate(t.Context(), params)
+	err := tool.(agentports.ToolValidator).Validate(t.Context(), params)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "send trainingId without workerId and courseId")
 	assert.Contains(t, err.Error(), "send workerId with courseId and no trainingId")

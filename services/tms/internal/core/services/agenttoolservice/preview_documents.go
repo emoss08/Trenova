@@ -7,12 +7,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
-var _ serviceports.ToolPreviewer = (*attachDocumentTool)(nil)
+var _ agentports.ToolPreviewer = (*attachDocumentTool)(nil)
 
 var documentHomeLabels = map[string]string{
 	"resourceType":  "Filed under",
@@ -44,7 +44,7 @@ func documentHomeOptions() []toolpreview.Option {
 
 func (t *attachDocumentTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	if err := guardPreview(t, &params); err != nil {
 		return nil, err

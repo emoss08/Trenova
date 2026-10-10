@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -21,7 +21,7 @@ import (
 // period whose invoices already exist and bill the same freight twice.
 func (r *repository) AdvanceBilledPeriod(
 	ctx context.Context,
-	req *repositories.AdvanceBilledPeriodRequest,
+	req *customerports.AdvanceBilledPeriodRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cbp := buncolgen.CustomerBillingProfileColumns
@@ -55,19 +55,19 @@ func (r *repository) AdvanceBilledPeriod(
 // cannot express portably.
 func (r *repository) ListDueBillingSchedules(
 	ctx context.Context,
-	req *repositories.ListBillingSchedulesRequest,
-) ([]*repositories.DueBillingSchedule, error) {
+	req *customerports.ListBillingSchedulesRequest,
+) ([]*customerports.DueBillingSchedule, error) {
 	if req.TenantInfo.OrgID.IsNil() {
 		ctx = dbscope.WithSystem(ctx, "list billing schedules due across every organization")
 	}
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*repositories.DueBillingSchedule, error) {
+		func(ctx context.Context) ([]*customerports.DueBillingSchedule, error) {
 			cbp := buncolgen.CustomerBillingProfileColumns
 			cus := buncolgen.CustomerColumns
 
-			schedules := make([]*repositories.DueBillingSchedule, 0)
+			schedules := make([]*customerports.DueBillingSchedule, 0)
 			q := r.db.DBForContext(ctx).
 				NewSelect().
 				Model((*customer.CustomerBillingProfile)(nil)).

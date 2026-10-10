@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/tablechangealert"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/tablechangealertports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
@@ -25,7 +25,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.TCAAllowlistRepository {
+func New(p Params) tablechangealertports.TCAAllowlistRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.tca-allowlist-repository"),

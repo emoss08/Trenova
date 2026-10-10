@@ -20,14 +20,18 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/infrastructure/captureqr"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/pdfassembly"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -61,7 +65,7 @@ type world struct {
 	control     *tenant.DocumentControl
 	denied      map[string]bool
 	ownScope    bool
-	inspections map[string]*services.CapturePageInspection
+	inspections map[string]*captureports.CapturePageInspection
 	inspected   int
 	sessions    map[pulid.ID]*documentupload.DocumentUploadSession
 	uploaded    map[pulid.ID][]byte
@@ -89,7 +93,7 @@ func newWorld() *world {
 		objects:     map[string][]byte{},
 		control:     tenant.NewDefaultDocumentControl(orgID, buID),
 		denied:      map[string]bool{},
-		inspections: map[string]*services.CapturePageInspection{},
+		inspections: map[string]*captureports.CapturePageInspection{},
 		sessions:    map[pulid.ID]*documentupload.DocumentUploadSession{},
 		uploaded:    map[pulid.ID][]byte{},
 	}
@@ -167,7 +171,7 @@ func (fakeDB) DBForContext(context.Context) bun.IDB { return nil }
 func (fakeDB) HealthCheck(context.Context) error    { return nil }
 func (fakeDB) IsHealthy(context.Context) bool       { return true }
 func (fakeDB) Close() error                         { return nil }
-func (fakeDB) WithTx(ctx context.Context, _ ports.TxOptions, fn func(context.Context, bun.Tx) error) error {
+func (fakeDB) WithTx(ctx context.Context, _ kernelports.TxOptions, fn func(context.Context, bun.Tx) error) error {
 	return fn(ctx, bun.Tx{})
 }
 
@@ -194,7 +198,7 @@ func (f *fakeDevices) Update(_ context.Context, e *capture.CaptureDevice) (*capt
 	return e, nil
 }
 
-func (f *fakeDevices) GetByID(_ context.Context, req repositories.GetCaptureDeviceByIDRequest) (*capture.CaptureDevice, error) {
+func (f *fakeDevices) GetByID(_ context.Context, req captureports.GetCaptureDeviceByIDRequest) (*capture.CaptureDevice, error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 	d, ok := f.w.devices[req.ID]
@@ -205,7 +209,7 @@ func (f *fakeDevices) GetByID(_ context.Context, req repositories.GetCaptureDevi
 	return clone(d), nil
 }
 
-func (f *fakeDevices) List(_ context.Context, req *repositories.ListCaptureDevicesRequest) (*pagination.ListResult[*capture.CaptureDevice], error) {
+func (f *fakeDevices) List(_ context.Context, req *captureports.ListCaptureDevicesRequest) (*pagination.ListResult[*capture.CaptureDevice], error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 	out := []*capture.CaptureDevice{}
@@ -243,7 +247,7 @@ func (f *fakeDevices) GetByPreviousRefreshHash(_ context.Context, h string) (*ca
 	return f.byHash(func(d *capture.CaptureDevice) bool { return h != "" && d.PreviousRefreshHash == h })
 }
 
-func (f *fakeDevices) Touch(_ context.Context, req repositories.TouchCaptureDeviceRequest) error {
+func (f *fakeDevices) Touch(_ context.Context, req captureports.TouchCaptureDeviceRequest) error {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 	if d, ok := f.w.devices[req.ID]; ok {
@@ -321,7 +325,7 @@ func (f *fakePairings) ExpireStale(_ context.Context, now int64) (int, error) {
 
 type fakeProfiles struct{ w *world }
 
-func (f *fakeProfiles) List(_ context.Context, req *repositories.ListCaptureProfilesRequest) (*pagination.ListResult[*capture.CaptureProfile], error) {
+func (f *fakeProfiles) List(_ context.Context, req *captureports.ListCaptureProfilesRequest) (*pagination.ListResult[*capture.CaptureProfile], error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 
@@ -350,7 +354,7 @@ func (f *fakeProfiles) List(_ context.Context, req *repositories.ListCaptureProf
 	return &pagination.ListResult[*capture.CaptureProfile]{Items: out, Total: len(out)}, nil
 }
 
-func (f *fakeProfiles) GetByID(_ context.Context, req repositories.GetCaptureProfileByIDRequest) (*capture.CaptureProfile, error) {
+func (f *fakeProfiles) GetByID(_ context.Context, req captureports.GetCaptureProfileByIDRequest) (*capture.CaptureProfile, error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 	p, ok := f.w.profiles[req.ID]
@@ -413,7 +417,7 @@ func (f *fakeProfiles) Update(_ context.Context, e *capture.CaptureProfile) (*ca
 	return e, nil
 }
 
-func (f *fakeProfiles) Delete(_ context.Context, req repositories.DeleteCaptureProfileRequest) error {
+func (f *fakeProfiles) Delete(_ context.Context, req captureports.DeleteCaptureProfileRequest) error {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 	p, ok := f.w.profiles[req.ID]
@@ -451,7 +455,7 @@ func (f *fakeRequests) Update(_ context.Context, e *capture.CaptureRequest) (*ca
 	return e, nil
 }
 
-func (f *fakeRequests) GetByID(_ context.Context, req repositories.GetCaptureRequestByIDRequest) (*capture.CaptureRequest, error) {
+func (f *fakeRequests) GetByID(_ context.Context, req captureports.GetCaptureRequestByIDRequest) (*capture.CaptureRequest, error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 	r, ok := f.w.requests[req.ID]
@@ -462,7 +466,7 @@ func (f *fakeRequests) GetByID(_ context.Context, req repositories.GetCaptureReq
 	return clone(r), nil
 }
 
-func (f *fakeRequests) ListOpen(_ context.Context, req repositories.ListOpenCaptureRequestsRequest) ([]*capture.CaptureRequest, error) {
+func (f *fakeRequests) ListOpen(_ context.Context, req captureports.ListOpenCaptureRequestsRequest) ([]*capture.CaptureRequest, error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 	out := []*capture.CaptureRequest{}
@@ -476,7 +480,7 @@ func (f *fakeRequests) ListOpen(_ context.Context, req repositories.ListOpenCapt
 	return out, nil
 }
 
-func (f *fakeRequests) ListForTarget(context.Context, repositories.ListCaptureRequestsForTargetRequest) ([]*capture.CaptureRequest, error) {
+func (f *fakeRequests) ListForTarget(context.Context, captureports.ListCaptureRequestsForTargetRequest) ([]*capture.CaptureRequest, error) {
 	return nil, nil
 }
 
@@ -524,7 +528,7 @@ func (f *fakeBatches) Update(_ context.Context, e *capture.CaptureBatch) (*captu
 	return e, nil
 }
 
-func (f *fakeBatches) GetByID(_ context.Context, req *repositories.GetCaptureBatchByIDRequest) (*capture.CaptureBatch, error) {
+func (f *fakeBatches) GetByID(_ context.Context, req *captureports.GetCaptureBatchByIDRequest) (*capture.CaptureBatch, error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 	b, ok := f.w.batches[req.ID]
@@ -566,7 +570,7 @@ func (w *world) itemsOf(batchID pulid.ID) []*capture.CaptureItem {
 	return out
 }
 
-func (f *fakeBatches) GetByClientKey(_ context.Context, req repositories.GetCaptureBatchByClientKeyRequest) (*capture.CaptureBatch, error) {
+func (f *fakeBatches) GetByClientKey(_ context.Context, req captureports.GetCaptureBatchByClientKeyRequest) (*capture.CaptureBatch, error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 	for _, b := range f.w.batches {
@@ -578,7 +582,7 @@ func (f *fakeBatches) GetByClientKey(_ context.Context, req repositories.GetCapt
 	return nil, notFound("Capture batch")
 }
 
-func (f *fakeBatches) ListCursor(_ context.Context, req *repositories.ListCaptureBatchesRequest) (*pagination.CursorListResult[*capture.CaptureBatch], error) {
+func (f *fakeBatches) ListCursor(_ context.Context, req *captureports.ListCaptureBatchesRequest) (*pagination.CursorListResult[*capture.CaptureBatch], error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 	out := []*capture.CaptureBatch{}
@@ -594,7 +598,7 @@ func (f *fakeBatches) ListCursor(_ context.Context, req *repositories.ListCaptur
 	return &pagination.CursorListResult[*capture.CaptureBatch]{Items: out, TotalCount: &total}, nil
 }
 
-func (f *fakeBatches) ListStale(_ context.Context, req repositories.ListStaleCaptureBatchesRequest) ([]*capture.CaptureBatch, error) {
+func (f *fakeBatches) ListStale(_ context.Context, req captureports.ListStaleCaptureBatchesRequest) ([]*capture.CaptureBatch, error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 	out := []*capture.CaptureBatch{}
@@ -607,7 +611,7 @@ func (f *fakeBatches) ListStale(_ context.Context, req repositories.ListStaleCap
 	return out, nil
 }
 
-func (f *fakeBatches) ListRetentionDue(_ context.Context, req repositories.ListRetentionDueCaptureBatchesRequest) ([]*capture.CaptureBatch, error) {
+func (f *fakeBatches) ListRetentionDue(_ context.Context, req captureports.ListRetentionDueCaptureBatchesRequest) ([]*capture.CaptureBatch, error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 	out := []*capture.CaptureBatch{}
@@ -621,7 +625,7 @@ func (f *fakeBatches) ListRetentionDue(_ context.Context, req repositories.ListR
 	return out, nil
 }
 
-func (f *fakeBatches) ListRetentionReminders(_ context.Context, req repositories.ListRetentionReminderCaptureBatchesRequest) ([]*capture.CaptureBatch, error) {
+func (f *fakeBatches) ListRetentionReminders(_ context.Context, req captureports.ListRetentionReminderCaptureBatchesRequest) ([]*capture.CaptureBatch, error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 	out := []*capture.CaptureBatch{}
@@ -635,7 +639,7 @@ func (f *fakeBatches) ListRetentionReminders(_ context.Context, req repositories
 	return out, nil
 }
 
-func (f *fakeBatches) ClaimRetentionReminder(_ context.Context, req repositories.ClaimRetentionReminderRequest) (bool, error) {
+func (f *fakeBatches) ClaimRetentionReminder(_ context.Context, req captureports.ClaimRetentionReminderRequest) (bool, error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 	b, ok := f.w.batches[req.ID]
@@ -648,7 +652,7 @@ func (f *fakeBatches) ClaimRetentionReminder(_ context.Context, req repositories
 	return true, nil
 }
 
-func (f *fakeBatches) IncrementReceived(_ context.Context, req repositories.IncrementCaptureBatchPagesRequest) error {
+func (f *fakeBatches) IncrementReceived(_ context.Context, req captureports.IncrementCaptureBatchPagesRequest) error {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 	f.w.batches[req.ID].ReceivedPageCount++
@@ -656,7 +660,7 @@ func (f *fakeBatches) IncrementReceived(_ context.Context, req repositories.Incr
 	return nil
 }
 
-func (f *fakeBatches) Delete(_ context.Context, req repositories.DeleteCaptureBatchRequest) error {
+func (f *fakeBatches) Delete(_ context.Context, req captureports.DeleteCaptureBatchRequest) error {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 	delete(f.w.batches, req.ID)
@@ -720,7 +724,7 @@ func (f *fakePages) RecordInspection(_ context.Context, e *capture.CapturePage) 
 	return true, nil
 }
 
-func (f *fakePages) GetByID(_ context.Context, req repositories.GetCapturePageByIDRequest) (*capture.CapturePage, error) {
+func (f *fakePages) GetByID(_ context.Context, req captureports.GetCapturePageByIDRequest) (*capture.CapturePage, error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 	p, ok := f.w.pages[req.ID]
@@ -731,7 +735,7 @@ func (f *fakePages) GetByID(_ context.Context, req repositories.GetCapturePageBy
 	return clone(p), nil
 }
 
-func (f *fakePages) GetBySequence(_ context.Context, req repositories.GetCapturePageBySequenceRequest) (*capture.CapturePage, error) {
+func (f *fakePages) GetBySequence(_ context.Context, req captureports.GetCapturePageBySequenceRequest) (*capture.CapturePage, error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 	for _, p := range f.w.pages {
@@ -743,7 +747,7 @@ func (f *fakePages) GetBySequence(_ context.Context, req repositories.GetCapture
 	return nil, notFound("Capture page")
 }
 
-func (f *fakePages) ListByBatch(_ context.Context, req repositories.ListCapturePagesRequest) ([]*capture.CapturePage, error) {
+func (f *fakePages) ListByBatch(_ context.Context, req captureports.ListCapturePagesRequest) ([]*capture.CapturePage, error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 
@@ -771,7 +775,7 @@ func (f *fakeItems) Update(_ context.Context, e *capture.CaptureItem) (*capture.
 	return e, nil
 }
 
-func (f *fakeItems) GetByID(_ context.Context, req repositories.GetCaptureItemByIDRequest) (*capture.CaptureItem, error) {
+func (f *fakeItems) GetByID(_ context.Context, req captureports.GetCaptureItemByIDRequest) (*capture.CaptureItem, error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 	i, ok := f.w.items[req.ID]
@@ -782,14 +786,14 @@ func (f *fakeItems) GetByID(_ context.Context, req repositories.GetCaptureItemBy
 	return clone(i), nil
 }
 
-func (f *fakeItems) ListByBatch(_ context.Context, req repositories.ListCaptureItemsRequest) ([]*capture.CaptureItem, error) {
+func (f *fakeItems) ListByBatch(_ context.Context, req captureports.ListCaptureItemsRequest) ([]*capture.CaptureItem, error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 
 	return f.w.itemsOf(req.BatchID), nil
 }
 
-func (f *fakeItems) ReplaceOpen(_ context.Context, req *repositories.ReplaceOpenCaptureItemsRequest) error {
+func (f *fakeItems) ReplaceOpen(_ context.Context, req *captureports.ReplaceOpenCaptureItemsRequest) error {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 	for id, i := range f.w.items {
@@ -814,7 +818,7 @@ func (f *fakeCoverSheets) CreateMany(_ context.Context, sheets []*capture.Captur
 	return nil
 }
 
-func (f *fakeCoverSheets) GetByID(_ context.Context, req repositories.GetCaptureCoverSheetByIDRequest) (*capture.CaptureCoverSheet, error) {
+func (f *fakeCoverSheets) GetByID(_ context.Context, req captureports.GetCaptureCoverSheetByIDRequest) (*capture.CaptureCoverSheet, error) {
 	s, ok := f.w.coverSheets[req.ID]
 	if !ok {
 		return nil, notFound("Cover sheet")
@@ -823,7 +827,7 @@ func (f *fakeCoverSheets) GetByID(_ context.Context, req repositories.GetCapture
 	return clone(s), nil
 }
 
-func (f *fakeCoverSheets) GetByTokenHash(_ context.Context, req repositories.GetCaptureCoverSheetByTokenRequest) (*capture.CaptureCoverSheet, error) {
+func (f *fakeCoverSheets) GetByTokenHash(_ context.Context, req captureports.GetCaptureCoverSheetByTokenRequest) (*capture.CaptureCoverSheet, error) {
 	for _, s := range f.w.coverSheets {
 		if s.TokenHash == req.TokenHash && inTenant(s.OrganizationID, s.BusinessUnitID, req.TenantInfo) {
 			return clone(s), nil
@@ -833,7 +837,7 @@ func (f *fakeCoverSheets) GetByTokenHash(_ context.Context, req repositories.Get
 	return nil, notFound("Cover sheet")
 }
 
-func (f *fakeCoverSheets) MarkUsed(_ context.Context, req repositories.MarkCaptureCoverSheetUsedRequest) error {
+func (f *fakeCoverSheets) MarkUsed(_ context.Context, req captureports.MarkCaptureCoverSheetUsedRequest) error {
 	if s, ok := f.w.coverSheets[req.ID]; ok {
 		s.UseCount++
 	}
@@ -849,12 +853,12 @@ func (f *fakeRecords) Exists(_ context.Context, _ pagination.TenantInfo, resourc
 
 func (f *fakeRecords) Labels(
 	_ context.Context,
-	req *repositories.ListCaptureRecordLabelsRequest,
-) ([]*repositories.CaptureRecordLabel, error) {
-	labels := make([]*repositories.CaptureRecordLabel, 0, len(req.IDs))
+	req *captureports.ListCaptureRecordLabelsRequest,
+) ([]*captureports.CaptureRecordLabel, error) {
+	labels := make([]*captureports.CaptureRecordLabel, 0, len(req.IDs))
 	for _, id := range req.IDs {
 		if f.w.records[req.ResourceType+":"+id.String()] {
-			labels = append(labels, &repositories.CaptureRecordLabel{
+			labels = append(labels, &captureports.CaptureRecordLabel{
 				ResourceType: req.ResourceType,
 				ID:           id,
 				Title:        id.String(),
@@ -866,22 +870,22 @@ func (f *fakeRecords) Labels(
 }
 
 type fakeControls struct {
-	repositories.DocumentControlRepository
+	tenantports.DocumentControlRepository
 
 	w *world
 }
 
-func (f *fakeControls) Get(context.Context, repositories.GetDocumentControlRequest) (*tenant.DocumentControl, error) {
+func (f *fakeControls) Get(context.Context, tenantports.GetDocumentControlRequest) (*tenant.DocumentControl, error) {
 	return clone(f.w.control), nil
 }
 
 type fakeDocTypes struct {
-	repositories.DocumentTypeRepository
+	documenttypeports.DocumentTypeRepository
 
 	w *world
 }
 
-func (f *fakeDocTypes) GetByID(_ context.Context, req repositories.GetDocumentTypeByIDRequest) (*documenttype.DocumentType, error) {
+func (f *fakeDocTypes) GetByID(_ context.Context, req documenttypeports.GetDocumentTypeByIDRequest) (*documenttype.DocumentType, error) {
 	dt, ok := f.w.docTypes[req.ID]
 	if !ok {
 		return nil, notFound("Document type")
@@ -890,7 +894,7 @@ func (f *fakeDocTypes) GetByID(_ context.Context, req repositories.GetDocumentTy
 	return dt, nil
 }
 
-func (f *fakeDocTypes) GetByCode(_ context.Context, req repositories.GetDocumentTypeByCodeRequest) (*documenttype.DocumentType, error) {
+func (f *fakeDocTypes) GetByCode(_ context.Context, req documenttypeports.GetDocumentTypeByCodeRequest) (*documenttype.DocumentType, error) {
 	for _, dt := range f.w.docTypes {
 		if dt.Code == req.Code {
 			return dt, nil
@@ -901,30 +905,30 @@ func (f *fakeDocTypes) GetByCode(_ context.Context, req repositories.GetDocument
 }
 
 type fakePermissions struct {
-	services.PermissionEngine
+	permissionports.PermissionEngine
 
 	w *world
 }
 
-func (f *fakePermissions) Check(_ context.Context, req *services.PermissionCheckRequest) (*services.PermissionCheckResult, error) {
+func (f *fakePermissions) Check(_ context.Context, req *permissionports.PermissionCheckRequest) (*permissionports.PermissionCheckResult, error) {
 	if f.w.denied[req.Resource+":"+string(req.Operation)] {
-		return &services.PermissionCheckResult{Allowed: false, Reason: "no_permission"}, nil
+		return &permissionports.PermissionCheckResult{Allowed: false, Reason: "no_permission"}, nil
 	}
 	scope := permission.DataScopeOrganization
 	if f.w.ownScope {
 		scope = permission.DataScopeOwn
 	}
 
-	return &services.PermissionCheckResult{Allowed: true, DataScope: scope}, nil
+	return &permissionports.PermissionCheckResult{Allowed: true, DataScope: scope}, nil
 }
 
 type fakeStorage struct {
-	storage.Client
+	kernelports.Client
 
 	w *world
 }
 
-func (f *fakeStorage) Upload(_ context.Context, p *storage.UploadParams) (*storage.FileInfo, error) {
+func (f *fakeStorage) Upload(_ context.Context, p *kernelports.UploadParams) (*kernelports.FileInfo, error) {
 	data, err := io.ReadAll(p.Body)
 	if err != nil {
 		return nil, err
@@ -933,10 +937,10 @@ func (f *fakeStorage) Upload(_ context.Context, p *storage.UploadParams) (*stora
 	defer f.w.mu.Unlock()
 	f.w.objects[p.Key] = data
 
-	return &storage.FileInfo{}, nil
+	return &kernelports.FileInfo{}, nil
 }
 
-func (f *fakeStorage) Download(_ context.Context, key string) (*storage.DownloadResult, error) {
+func (f *fakeStorage) Download(_ context.Context, key string) (*kernelports.DownloadResult, error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 	data, ok := f.w.objects[key]
@@ -944,7 +948,7 @@ func (f *fakeStorage) Download(_ context.Context, key string) (*storage.Download
 		return nil, fmt.Errorf("no object %s", key)
 	}
 
-	return &storage.DownloadResult{Body: io.NopCloser(bytes.NewReader(data))}, nil
+	return &kernelports.DownloadResult{Body: io.NopCloser(bytes.NewReader(data))}, nil
 }
 
 func (f *fakeStorage) Exists(_ context.Context, key string) (bool, error) {
@@ -982,7 +986,7 @@ func (fakeCipher) DecryptBytesWithAAD(value string, aad encryptionservice.AAD) (
 
 type fakeUploads struct{ w *world }
 
-func (f *fakeUploads) CreateSession(_ context.Context, req *services.CreateSessionRequest) (*documentupload.DocumentUploadSession, error) {
+func (f *fakeUploads) CreateSession(_ context.Context, req *documentuploadports.CreateSessionRequest) (*documentupload.DocumentUploadSession, error) {
 	session := &documentupload.DocumentUploadSession{
 		ID:           pulid.MustNew("dus_"),
 		ResourceID:   req.ResourceID,
@@ -994,7 +998,7 @@ func (f *fakeUploads) CreateSession(_ context.Context, req *services.CreateSessi
 	return session, nil
 }
 
-func (f *fakeUploads) UploadPart(_ context.Context, req *services.UploadPartRequest) (*documentupload.DocumentUploadSession, error) {
+func (f *fakeUploads) UploadPart(_ context.Context, req *documentuploadports.UploadPartRequest) (*documentupload.DocumentUploadSession, error) {
 	data, err := io.ReadAll(req.Body)
 	if err != nil {
 		return nil, err
@@ -1004,7 +1008,7 @@ func (f *fakeUploads) UploadPart(_ context.Context, req *services.UploadPartRequ
 	return f.w.sessions[req.SessionID], nil
 }
 
-func (f *fakeUploads) Complete(_ context.Context, req *services.CompletionRequest) (*documentupload.DocumentUploadSession, error) {
+func (f *fakeUploads) Complete(_ context.Context, req *documentuploadports.CompletionRequest) (*documentupload.DocumentUploadSession, error) {
 	session := f.w.sessions[req.SessionID]
 	docID := pulid.MustNew("doc_")
 	session.DocumentID = &docID
@@ -1016,7 +1020,7 @@ func (f *fakeUploads) Complete(_ context.Context, req *services.CompletionReques
 // ordinary page of text.
 type fakeInspector struct{ w *world }
 
-func (f *fakeInspector) Inspect(_ context.Context, pdf []byte) (*services.CapturePageInspection, error) {
+func (f *fakeInspector) Inspect(_ context.Context, pdf []byte) (*captureports.CapturePageInspection, error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 	f.w.inspected++
@@ -1024,12 +1028,12 @@ func (f *fakeInspector) Inspect(_ context.Context, pdf []byte) (*services.Captur
 		return inspection, nil
 	}
 
-	return &services.CapturePageInspection{WidthPx: 100, HeightPx: 130, Thumbnail: []byte("jpeg"), InkCoverage: 0.2}, nil
+	return &captureports.CapturePageInspection{WidthPx: 100, HeightPx: 130, Thumbnail: []byte("jpeg"), InkCoverage: 0.2}, nil
 }
 
 type fakeRealtime struct{ w *world }
 
-func (f *fakeRealtime) PublishResourceInvalidation(_ context.Context, req *services.PublishResourceInvalidationRequest) error {
+func (f *fakeRealtime) PublishResourceInvalidation(_ context.Context, req *agentports.PublishResourceInvalidationRequest) error {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 	f.w.published = append(f.w.published, req.Resource+":"+req.Action)
@@ -1071,7 +1075,7 @@ type fakeUsers struct{ w *world }
 
 func (f fakeUsers) GetByID(
 	_ context.Context,
-	req repositories.GetUserByIDRequest,
+	req tenantports.GetUserByIDRequest,
 ) (*tenant.User, error) {
 	if req.LookupUserID != f.w.tenant.UserID {
 		return nil, errortypes.NewNotFoundError("User not found")
@@ -1088,7 +1092,7 @@ type fakeOrganizations struct{ w *world }
 
 func (f fakeOrganizations) GetByID(
 	_ context.Context,
-	req repositories.GetOrganizationByIDRequest,
+	req tenantports.GetOrganizationByIDRequest,
 ) (*tenant.Organization, error) {
 	if req.TenantInfo.OrgID != f.w.tenant.OrgID {
 		return nil, errortypes.NewNotFoundError("Organization not found")
@@ -1099,11 +1103,11 @@ func (f fakeOrganizations) GetByID(
 
 // fakeAudit records each action as "<operation>:<comment>".
 type fakeAudit struct {
-	services.AuditService
+	auditports.AuditService
 	w *world
 }
 
-func (f *fakeAudit) LogAction(params *services.LogActionParams, opts ...services.LogOption) error {
+func (f *fakeAudit) LogAction(params *auditports.LogActionParams, opts ...auditports.LogOption) error {
 	entry := &audit.Entry{}
 	for _, opt := range opts {
 		if err := opt(entry); err != nil {

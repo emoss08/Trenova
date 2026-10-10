@@ -3,7 +3,7 @@ package loaders
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -13,11 +13,11 @@ import (
 type PayProfileActiveAssignmentCountLoaderFactoryParams struct {
 	fx.In
 
-	PayProfileRepo repositories.PayProfileRepository
+	PayProfileRepo driverpayports.PayProfileRepository
 }
 
 type PayProfileActiveAssignmentCountLoaderFactory struct {
-	payProfileRepo repositories.PayProfileRepository
+	payProfileRepo driverpayports.PayProfileRepository
 }
 
 func NewPayProfileActiveAssignmentCountLoaderFactory(
@@ -38,7 +38,7 @@ func (f *PayProfileActiveAssignmentCountLoaderFactory) batchFunc(
 	return batchCountFunc(func(ctx context.Context, ids []pulid.ID) (map[pulid.ID]int, error) {
 		return f.payProfileRepo.CountActiveAssignmentsByIDs(
 			ctx,
-			repositories.CountActivePayAssignmentsRequest{
+			driverpayports.CountActivePayAssignmentsRequest{
 				TenantInfo: tenantInfo,
 				ProfileIDs: ids,
 			},

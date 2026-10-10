@@ -7,7 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
 	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -20,7 +22,7 @@ func (r *Deps) resolveDocumentTypeSelectOptions(
 		for _, id := range req.IDs {
 			entity, err := r.DocumentTypeService.Get(
 				ctx,
-				repositories.GetDocumentTypeByIDRequest{
+				documenttypeports.GetDocumentTypeByIDRequest{
 					ID:         id,
 					TenantInfo: req.TenantInfo,
 				},
@@ -58,7 +60,7 @@ func (r *Deps) resolveFormulaTemplateSelectOptions(
 		for _, id := range req.IDs {
 			entity, err := r.FormulaTemplateService.GetByID(
 				ctx,
-				repositories.GetFormulaTemplateByIDRequest{
+				formulatemplateports.GetFormulaTemplateByIDRequest{
 					TemplateID: id,
 					TenantInfo: req.TenantInfo,
 				},
@@ -74,7 +76,7 @@ func (r *Deps) resolveFormulaTemplateSelectOptions(
 
 	result, err := r.FormulaTemplateService.SelectOptions(
 		ctx,
-		&repositories.FormulaTemplateSelectOptionsRequest{
+		&formulatemplateports.FormulaTemplateSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
 		},
 	)
@@ -98,7 +100,7 @@ func (r *Deps) resolveEmailProfileSelectOptions(
 		for _, id := range req.IDs {
 			entity, err := r.EmailService.GetProfile(
 				ctx,
-				repositories.GetEmailEntityRequest{
+				emailports.GetEmailEntityRequest{
 					ID:         id,
 					TenantInfo: req.TenantInfo,
 				},
@@ -114,7 +116,7 @@ func (r *Deps) resolveEmailProfileSelectOptions(
 
 	result, err := r.EmailService.SelectProfileOptions(
 		ctx,
-		&repositories.EmailProfileSelectOptionsRequest{
+		&emailports.EmailProfileSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
 		},
 	)

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -22,13 +22,13 @@ func TestSeedBillToFromAgreement(t *testing.T) {
 	tests := []struct {
 		name   string
 		entity *shipment.Shipment
-		rated  *services.RatedShipment
+		rated  *ratequoteports.RatedShipment
 		want   *pulid.ID
 	}{
 		{
 			name:   "seeds when the agreement is newly applied and no bill-to is set",
 			entity: &shipment.Shipment{CustomerID: customerID},
-			rated: &services.RatedShipment{
+			rated: &ratequoteports.RatedShipment{
 				AgreementID:      &agreementID,
 				BillToCustomerID: &thirdParty,
 			},
@@ -37,7 +37,7 @@ func TestSeedBillToFromAgreement(t *testing.T) {
 		{
 			name:   "seeds when a different agreement priced the shipment before",
 			entity: &shipment.Shipment{CustomerID: customerID, RateAgreementID: &otherAgreement},
-			rated: &services.RatedShipment{
+			rated: &ratequoteports.RatedShipment{
 				AgreementID:      &agreementID,
 				BillToCustomerID: &thirdParty,
 			},
@@ -46,7 +46,7 @@ func TestSeedBillToFromAgreement(t *testing.T) {
 		{
 			name:   "never overwrites a bill-to somebody set",
 			entity: &shipment.Shipment{CustomerID: customerID, BillToCustomerID: &manual},
-			rated: &services.RatedShipment{
+			rated: &ratequoteports.RatedShipment{
 				AgreementID:      &agreementID,
 				BillToCustomerID: &thirdParty,
 			},
@@ -55,7 +55,7 @@ func TestSeedBillToFromAgreement(t *testing.T) {
 		{
 			name:   "does not re-seed on a recalculation under the same agreement",
 			entity: &shipment.Shipment{CustomerID: customerID, RateAgreementID: &agreementID},
-			rated: &services.RatedShipment{
+			rated: &ratequoteports.RatedShipment{
 				AgreementID:      &agreementID,
 				BillToCustomerID: &thirdParty,
 			},
@@ -64,7 +64,7 @@ func TestSeedBillToFromAgreement(t *testing.T) {
 		{
 			name:   "ignores an agreement that bills the customer themselves",
 			entity: &shipment.Shipment{CustomerID: customerID},
-			rated: &services.RatedShipment{
+			rated: &ratequoteports.RatedShipment{
 				AgreementID:      &agreementID,
 				BillToCustomerID: &customerID,
 			},
@@ -73,13 +73,13 @@ func TestSeedBillToFromAgreement(t *testing.T) {
 		{
 			name:   "ignores an agreement with no bill-to",
 			entity: &shipment.Shipment{CustomerID: customerID},
-			rated:  &services.RatedShipment{AgreementID: &agreementID},
+			rated:  &ratequoteports.RatedShipment{AgreementID: &agreementID},
 			want:   nil,
 		},
 		{
 			name:   "ignores a rating that named no agreement",
 			entity: &shipment.Shipment{CustomerID: customerID},
-			rated:  &services.RatedShipment{BillToCustomerID: &thirdParty},
+			rated:  &ratequoteports.RatedShipment{BillToCustomerID: &thirdParty},
 			want:   nil,
 		},
 	}
@@ -110,7 +110,7 @@ func TestApplyQuoteSeedsTheAgreementBillTo(t *testing.T) {
 	thirdParty := pulid.MustNew("cus_")
 	agreementID := pulid.MustNew("ragr_")
 
-	(&Calculator{}).applyQuote(entity, &services.RatedShipment{
+	(&Calculator{}).applyQuote(entity, &ratequoteports.RatedShipment{
 		AgreementID:      &agreementID,
 		BillToCustomerID: &thirdParty,
 	})

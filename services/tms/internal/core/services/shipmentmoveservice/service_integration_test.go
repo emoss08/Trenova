@@ -3,21 +3,20 @@
 package shipmentmoveservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"testing"
-
-	"github.com/emoss08/trenova/internal/core/services/rateengine/rateenginetest"
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/formula"
 	"github.com/emoss08/trenova/internal/core/services/formula/engine"
 	"github.com/emoss08/trenova/internal/core/services/formula/resolver"
 	"github.com/emoss08/trenova/internal/core/services/formula/schema"
+	"github.com/emoss08/trenova/internal/core/services/rateengine/rateenginetest"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accessorialchargerepository"
@@ -27,6 +26,9 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentcommodityrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentmoverepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentrepository"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -70,7 +72,7 @@ func TestUpdateStatusIntegrationRecomputesShipmentStatus(t *testing.T) {
 		},
 	)
 
-	updated, err := svc.UpdateStatus(ctx, &repositories.UpdateMoveStatusRequest{
+	updated, err := svc.UpdateStatus(ctx, &shipmentports.UpdateMoveStatusRequest{
 		TenantInfo: tenantInfo,
 		MoveID:     graph.Moves[0].ID,
 		Status:     shipment.MoveStatusAssigned,
@@ -79,10 +81,10 @@ func TestUpdateStatusIntegrationRecomputesShipmentStatus(t *testing.T) {
 	require.NotNil(t, updated)
 	assert.Equal(t, shipment.MoveStatusAssigned, updated.Status)
 
-	persisted, err := shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	persisted, err := shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         graph.Shipment.ID,
 		TenantInfo: tenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -116,7 +118,7 @@ func TestBulkUpdateStatusIntegrationRollsBackOnInvalidMove(t *testing.T) {
 		},
 	)
 
-	updated, err := svc.BulkUpdateStatus(ctx, &repositories.BulkUpdateMoveStatusRequest{
+	updated, err := svc.BulkUpdateStatus(ctx, &shipmentports.BulkUpdateMoveStatusRequest{
 		TenantInfo: tenantInfo,
 		MoveIDs:    []pulid.ID{graph.Moves[0].ID, graph.Moves[1].ID},
 		Status:     shipment.MoveStatusAssigned,
@@ -127,7 +129,7 @@ func TestBulkUpdateStatusIntegrationRollsBackOnInvalidMove(t *testing.T) {
 
 	persistedMoves, err := moveRepo.GetMovesByShipmentID(
 		ctx,
-		&repositories.GetMovesByShipmentIDRequest{
+		&shipmentports.GetMovesByShipmentIDRequest{
 			ShipmentID:        graph.Shipment.ID,
 			TenantInfo:        tenantInfo,
 			ExpandMoveDetails: true,
@@ -178,17 +180,17 @@ func TestSplitMoveIntegrationPersistsTwoLegHandoff(t *testing.T) {
 	)
 
 	originalDelivery := graph.Moves[0].Stops[1]
-	response, err := svc.SplitMove(ctx, &repositories.SplitMoveRequest{
+	response, err := svc.SplitMove(ctx, &shipmentports.SplitMoveRequest{
 		TenantInfo:            tenantInfo,
 		MoveID:                graph.Moves[0].ID,
 		NewDeliveryLocationID: newDestination.ID,
-		SplitPickupTimes: repositories.SplitStopTimes{
+		SplitPickupTimes: shipmentports.SplitStopTimes{
 			ScheduledWindowStart: originalDelivery.EffectiveScheduledWindowEnd() + 1_800,
 			ScheduledWindowEnd: integrationInt64Ptr(
 				originalDelivery.EffectiveScheduledWindowEnd() + 3_600,
 			),
 		},
-		NewDeliveryTimes: repositories.SplitStopTimes{
+		NewDeliveryTimes: shipmentports.SplitStopTimes{
 			ScheduledWindowStart: originalDelivery.EffectiveScheduledWindowEnd() + 7_200,
 			ScheduledWindowEnd: integrationInt64Ptr(
 				originalDelivery.EffectiveScheduledWindowEnd() + 9_000,
@@ -198,10 +200,10 @@ func TestSplitMoveIntegrationPersistsTwoLegHandoff(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, response)
 
-	persisted, err := shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	persisted, err := shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         graph.Shipment.ID,
 		TenantInfo: tenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -256,11 +258,11 @@ func TestRecordStopActualIntegrationPersistsBackdatedActuals(t *testing.T) {
 	stopID := graph.Moves[0].Stops[0].ID
 
 	arrivedAt := timeutils.NowUnix() - 7_200
-	updated, err := svc.RecordStopActual(ctx, &repositories.RecordStopActualRequest{
+	updated, err := svc.RecordStopActual(ctx, &shipmentports.RecordStopActualRequest{
 		TenantInfo: tenantInfo,
 		MoveID:     moveID,
 		StopID:     stopID,
-		Action:     repositories.StopActualActionArrive,
+		Action:     shipmentports.StopActualActionArrive,
 		OccurredAt: &arrivedAt,
 	})
 	require.NoError(t, err)
@@ -268,11 +270,11 @@ func TestRecordStopActualIntegrationPersistsBackdatedActuals(t *testing.T) {
 	assert.Equal(t, shipment.MoveStatusInTransit, updated.Status)
 
 	departedAt := arrivedAt + 1_800
-	updated, err = svc.RecordStopActual(ctx, &repositories.RecordStopActualRequest{
+	updated, err = svc.RecordStopActual(ctx, &shipmentports.RecordStopActualRequest{
 		TenantInfo: tenantInfo,
 		MoveID:     moveID,
 		StopID:     stopID,
-		Action:     repositories.StopActualActionDepart,
+		Action:     shipmentports.StopActualActionDepart,
 		OccurredAt: &departedAt,
 	})
 	require.NoError(t, err)
@@ -280,7 +282,7 @@ func TestRecordStopActualIntegrationPersistsBackdatedActuals(t *testing.T) {
 
 	persistedMoves, err := moveRepo.GetMovesByShipmentID(
 		ctx,
-		&repositories.GetMovesByShipmentIDRequest{
+		&shipmentports.GetMovesByShipmentIDRequest{
 			ShipmentID:        graph.Shipment.ID,
 			TenantInfo:        tenantInfo,
 			ExpandMoveDetails: true,
@@ -308,12 +310,12 @@ func newIntegrationService(
 	ctx context.Context,
 	db *bun.DB,
 ) (
-	portservices.ShipmentMoveService,
-	repositories.ShipmentRepository,
-	repositories.ShipmentMoveRepository,
+	shipmentports.ShipmentMoveService,
+	shipmentports.ShipmentRepository,
+	shipmentports.ShipmentMoveRepository,
 	pagination.TenantInfo,
 	*testutil.ShipmentIntegrationFixture,
-	*mocks.MockShipmentControlRepository,
+	*tenantportsmock.MockShipmentControlRepository,
 ) {
 	t.Helper()
 
@@ -351,13 +353,13 @@ func newIntegrationService(
 			chargeallocationrepository.Params{DB: conn, Logger: zap.NewNop()},
 		),
 	})
-	controlRepo := mocks.NewMockShipmentControlRepository(t)
-	assignmentRepo := mocks.NewMockAssignmentRepository(t)
+	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
+	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
 	assignmentRepo.EXPECT().
 		GetByMoveID(mock.Anything, mock.Anything, mock.Anything).
 		Return(nil, nil).
 		Maybe()
-	holdRepo := mocks.NewMockShipmentHoldRepository(t)
+	holdRepo := shipmentportsmock.NewMockShipmentHoldRepository(t)
 	holdRepo.EXPECT().
 		HasActiveDeliveryHold(mock.Anything, mock.Anything).
 		Return(false, nil).
@@ -424,31 +426,31 @@ func integrationInt64Ptr(value int64) *int64 {
 }
 
 type moveIntgStubVersionRepo struct {
-	repositories.FormulaTemplateVersionRepository
+	formulatemplateports.FormulaTemplateVersionRepository
 }
 
 func (moveIntgStubVersionRepo) GetEffectiveVersion(
 	_ context.Context,
-	_ *repositories.GetEffectiveVersionRequest,
+	_ *formulatemplateports.GetEffectiveVersionRequest,
 ) (*formulatemplate.FormulaTemplateVersion, error) {
 	return nil, nil
 }
 
 func (moveIntgStubVersionRepo) ListScheduled(
 	_ context.Context,
-	_ *repositories.ListScheduledVersionsRequest,
+	_ *formulatemplateports.ListScheduledVersionsRequest,
 ) ([]*formulatemplate.FormulaTemplateVersion, error) {
 	return nil, nil
 }
 
 type moveIntgStubMatrixRepo struct {
-	repositories.RateMatrixRepository
+	ratematrixports.RateMatrixRepository
 }
 
 func (moveIntgStubMatrixRepo) GetLookupData(
 	_ context.Context,
-	_ *repositories.GetRateMatrixLookupDataRequest,
-) ([]*repositories.RateMatrixLookupData, error) {
+	_ *ratematrixports.GetRateMatrixLookupDataRequest,
+) ([]*ratematrixports.RateMatrixLookupData, error) {
 	return nil, nil
 }
 

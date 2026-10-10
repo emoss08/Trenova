@@ -12,8 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/documentintelligencejobs/documentintelligencecontract"
-
 	"github.com/disintegration/imaging"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
@@ -21,14 +19,24 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
 	"github.com/emoss08/trenova/internal/core/domain/documentupload"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	services "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/documentintelligencejobs/documentintelligencecontract"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentparsingruleports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentsearchprojectionports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/documentshipmentdraftports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -51,48 +59,48 @@ type ActivitiesParams struct {
 	Logger              *zap.Logger
 	Config              *config.Config
 	Metrics             *metrics.Registry
-	DocumentRepo        repositories.DocumentRepository
-	DocumentControlRepo repositories.DocumentControlRepository
-	DocumentTypeRepo    repositories.DocumentTypeRepository
-	ContentRepo         repositories.DocumentContentRepository
-	AIExtractionRepo    repositories.DocumentAIExtractionRepository
-	DraftRepo           repositories.DocumentShipmentDraftRepository
-	AIDocumentService   services.AIDocumentService
-	SearchProjection    services.DocumentSearchProjectionService
-	Storage             storage.Client
-	WorkflowStarter     services.WorkflowStarter
-	ParsingRuleRuntime  services.DocumentParsingRuleRuntime
+	DocumentRepo        documentports.DocumentRepository
+	DocumentControlRepo tenantports.DocumentControlRepository
+	DocumentTypeRepo    documenttypeports.DocumentTypeRepository
+	ContentRepo         documentcontentports.DocumentContentRepository
+	AIExtractionRepo    documentaiextractionports.DocumentAIExtractionRepository
+	DraftRepo           documentshipmentdraftports.DocumentShipmentDraftRepository
+	AIDocumentService   documentaiextractionports.AIDocumentService
+	SearchProjection    documentsearchprojectionports.DocumentSearchProjectionService
+	Storage             kernelports.Client
+	WorkflowStarter     kernelports.WorkflowStarter
+	ParsingRuleRuntime  documentparsingruleports.DocumentParsingRuleRuntime
 	TemporalClient      client.Client `optional:"true"`
 	Encryption          *encryptionservice.Service
-	AgentEvents         services.AgentEventPublisher     `optional:"true"`
-	ShadowSampler       services.ExtractionShadowSampler `optional:"true"`
-	Rollout             services.ExtractionRolloutRouter `optional:"true"`
-	PDFReader           services.PDFReader
-	OfficeReader        services.OfficeDocumentReader
+	AgentEvents         agentports.AgentEventPublisher                 `optional:"true"`
+	ShadowSampler       extractionshadowports.ExtractionShadowSampler  `optional:"true"`
+	Rollout             extractionrolloutports.ExtractionRolloutRouter `optional:"true"`
+	PDFReader           kernelports.PDFReader
+	OfficeReader        kernelports.OfficeDocumentReader
 }
 
 type Activities struct {
 	logger              *zap.Logger
 	cfg                 *config.AIConfig
 	metrics             *metrics.Registry
-	documentRepo        repositories.DocumentRepository
-	documentControlRepo repositories.DocumentControlRepository
-	documentTypeRepo    repositories.DocumentTypeRepository
-	contentRepo         repositories.DocumentContentRepository
-	aiExtractionRepo    repositories.DocumentAIExtractionRepository
-	draftRepo           repositories.DocumentShipmentDraftRepository
-	aiDocumentService   services.AIDocumentService
-	searchProjection    services.DocumentSearchProjectionService
-	storage             storage.Client
-	workflowStarter     services.WorkflowStarter
-	parsingRuleRuntime  services.DocumentParsingRuleRuntime
+	documentRepo        documentports.DocumentRepository
+	documentControlRepo tenantports.DocumentControlRepository
+	documentTypeRepo    documenttypeports.DocumentTypeRepository
+	contentRepo         documentcontentports.DocumentContentRepository
+	aiExtractionRepo    documentaiextractionports.DocumentAIExtractionRepository
+	draftRepo           documentshipmentdraftports.DocumentShipmentDraftRepository
+	aiDocumentService   documentaiextractionports.AIDocumentService
+	searchProjection    documentsearchprojectionports.DocumentSearchProjectionService
+	storage             kernelports.Client
+	workflowStarter     kernelports.WorkflowStarter
+	parsingRuleRuntime  documentparsingruleports.DocumentParsingRuleRuntime
 	temporalClient      client.Client
 	encryption          *encryptionservice.Service
-	agentEvents         services.AgentEventPublisher
-	shadowSampler       services.ExtractionShadowSampler
-	rollout             services.ExtractionRolloutRouter
-	pdfReader           services.PDFReader
-	officeReader        services.OfficeDocumentReader
+	agentEvents         agentports.AgentEventPublisher
+	shadowSampler       extractionshadowports.ExtractionShadowSampler
+	rollout             extractionrolloutports.ExtractionRolloutRouter
+	pdfReader           kernelports.PDFReader
+	officeReader        kernelports.OfficeDocumentReader
 }
 
 //nolint:gocritic // dependency injection param
@@ -152,7 +160,7 @@ func (a *Activities) ProcessDocumentIntelligenceActivity(
 		UserID: payload.UserID,
 	}
 
-	doc, err := a.documentRepo.GetByID(ctx, repositories.GetDocumentByIDRequest{
+	doc, err := a.documentRepo.GetByID(ctx, documentports.GetDocumentByIDRequest{
 		ID:         payload.DocumentID,
 		TenantInfo: tenantInfo,
 	})
@@ -269,7 +277,7 @@ func (a *Activities) prepareExtractionContentAndStart(
 	doc.ContentStatus = document.ContentStatusExtracting
 	doc.ContentError = ""
 	if err := a.documentRepo.UpdateIntelligence(ctx,
-		&repositories.UpdateDocumentIntelligenceRequest{
+		&documentports.UpdateDocumentIntelligenceRequest{
 			ID:                  doc.ID,
 			TenantInfo:          tenantInfo,
 			ContentStatus:       doc.ContentStatus,
@@ -303,7 +311,7 @@ func (a *Activities) finalizeProcessDocumentIntelligence(
 	}
 
 	p.Document.ShipmentDraftStatus = draftStatus
-	if err = a.documentRepo.UpdateIntelligence(ctx, &repositories.UpdateDocumentIntelligenceRequest{
+	if err = a.documentRepo.UpdateIntelligence(ctx, &documentports.UpdateDocumentIntelligenceRequest{
 		ID:                  p.Document.ID,
 		TenantInfo:          p.TenantInfo,
 		ContentStatus:       p.Document.ContentStatus,
@@ -560,7 +568,7 @@ func (a *Activities) ReconcileDocumentIntelligenceActivity(
 	olderThan := time.Now().Add(-time.Duration(payload.OlderThanSeconds) * time.Second).Unix()
 	docs, err := a.contentRepo.ListPendingExtraction(
 		ctx,
-		&repositories.ListPendingDocumentExtractionRequest{
+		&documentcontentports.ListPendingDocumentExtractionRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: payload.OrganizationID,
 				BuID:  payload.BusinessUnitID,
@@ -612,7 +620,7 @@ func (a *Activities) ListDocumentIntelligenceTenantsActivity(
 	olderThan := time.Now().Add(-time.Duration(payload.OlderThanSeconds) * time.Second).Unix()
 	tenants, err := a.contentRepo.ListPendingExtractionTenants(
 		ctx,
-		&repositories.ListPendingDocumentExtractionRequest{
+		&documentcontentports.ListPendingDocumentExtractionRequest{
 			OlderThan: olderThan,
 			Limit:     temporaljobs.DefaultTenantScanLimit,
 		},
@@ -634,7 +642,7 @@ func (a *Activities) extractContent(
 ) (*ExtractionResult, error) {
 	contentType := strings.ToLower(doc.FileType)
 	ext := strings.ToLower(filepath.Ext(doc.OriginalName))
-	officeFormat, isOffice := services.OfficeFormatOf(contentType, doc.OriginalName)
+	officeFormat, isOffice := kernelports.OfficeFormatOf(contentType, doc.OriginalName)
 
 	switch {
 	case isPlainTextType(contentType, ext):
@@ -725,7 +733,7 @@ func (a *Activities) extractPDF(
 
 func (a *Activities) nativePDFPage(
 	ctx context.Context,
-	doc services.PDFDocument,
+	doc kernelports.PDFDocument,
 	page int,
 	text string,
 ) *PageExtractionResult {
@@ -750,7 +758,7 @@ func (a *Activities) nativePDFPage(
 func (a *Activities) extractOffice(
 	ctx context.Context,
 	data []byte,
-	format services.OfficeFormat,
+	format kernelports.OfficeFormat,
 	enableOCR bool,
 ) (*ExtractionResult, error) {
 	officePages, err := a.officeReader.Read(ctx, data, format)
@@ -789,7 +797,7 @@ func (a *Activities) extractOffice(
 
 func (a *Activities) ocrOfficeImages(
 	ctx context.Context,
-	images []services.OfficeImage,
+	images []kernelports.OfficeImage,
 	pageNumber int,
 ) *PageExtractionResult {
 	if len(images) == 1 {
@@ -874,7 +882,7 @@ func skippedOCRPage(pageNumber int) *PageExtractionResult {
 	}
 }
 
-func renderPagePNG(ctx context.Context, doc services.PDFDocument, page int) ([]byte, error) {
+func renderPagePNG(ctx context.Context, doc kernelports.PDFDocument, page int) ([]byte, error) {
 	img, err := doc.RenderPage(ctx, page, ocrRenderDPI)
 	if err != nil {
 		return nil, err
@@ -1030,7 +1038,7 @@ func (a *Activities) markFailed(
 	doc.ShipmentDraftStatus = document.ShipmentDraftStatusFailed
 	if err := a.documentRepo.UpdateIntelligence(
 		ctx,
-		&repositories.UpdateDocumentIntelligenceRequest{
+		&documentports.UpdateDocumentIntelligenceRequest{
 			ID: doc.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: doc.OrganizationID,
@@ -1085,12 +1093,12 @@ func (a *Activities) enrichWithAI(
 		BuID:   payload.Document.BusinessUnitID,
 		UserID: payload.Payload.UserID,
 	}
-	pages := make([]services.AIDocumentPage, 0, len(payload.Extracted.Pages))
+	pages := make([]documentaiextractionports.AIDocumentPage, 0, len(payload.Extracted.Pages))
 	for _, page := range payload.Extracted.Pages {
 		if strings.TrimSpace(page.Text) == "" {
 			continue
 		}
-		pages = append(pages, services.AIDocumentPage{
+		pages = append(pages, documentaiextractionports.AIDocumentPage{
 			PageNumber: page.PageNumber,
 			Text: stringutils.TruncateAndTrim(
 				page.Text,
@@ -1099,10 +1107,10 @@ func (a *Activities) enrichWithAI(
 		})
 	}
 
-	var route *services.AIRouteResult
+	var route *documentaiextractionports.AIRouteResult
 	err := a.runWithHeartbeat(ctx, "ai-route", func() error {
 		var routeErr error
-		route, routeErr = a.aiDocumentService.RouteDocument(ctx, &services.AIRouteRequest{
+		route, routeErr = a.aiDocumentService.RouteDocument(ctx, &documentaiextractionports.AIRouteRequest{
 			TenantInfo: tenantInfo,
 			DocumentID: payload.Document.ID,
 			FileName:   payload.Document.OriginalName,
@@ -1111,7 +1119,7 @@ func (a *Activities) enrichWithAI(
 				a.cfg.GetMaxInputChars(),
 			),
 			Pages: pages,
-			Features: &services.AIDocumentFeatureSet{
+			Features: &documentaiextractionports.AIDocumentFeatureSet{
 				TitleCandidates:  payload.Features.TitleCandidates,
 				SectionLabels:    payload.Features.SectionLabels,
 				PartyLabels:      payload.Features.PartyLabels,
@@ -1277,7 +1285,7 @@ func (a *Activities) associateDocumentType(
 		return nil
 	}
 
-	existing, err := a.documentTypeRepo.GetByCode(ctx, repositories.GetDocumentTypeByCodeRequest{
+	existing, err := a.documentTypeRepo.GetByCode(ctx, documenttypeports.GetDocumentTypeByCodeRequest{
 		Code:       inferred.Code,
 		TenantInfo: tenantInfo,
 	})
@@ -1291,7 +1299,7 @@ func (a *Activities) associateDocumentType(
 		return err
 	}
 
-	existing, err = a.documentTypeRepo.GetByName(ctx, repositories.GetDocumentTypeByNameRequest{
+	existing, err = a.documentTypeRepo.GetByName(ctx, documenttypeports.GetDocumentTypeByNameRequest{
 		Name:       inferred.Name,
 		TenantInfo: tenantInfo,
 	})
@@ -1322,7 +1330,7 @@ func (a *Activities) associateDocumentType(
 		DocumentClassification: inferred.Classification,
 	})
 	if createErr != nil {
-		existing, err = a.documentTypeRepo.GetByCode(ctx, repositories.GetDocumentTypeByCodeRequest{
+		existing, err = a.documentTypeRepo.GetByCode(ctx, documenttypeports.GetDocumentTypeByCodeRequest{
 			Code:       inferred.Code,
 			TenantInfo: tenantInfo,
 		})
@@ -1336,7 +1344,7 @@ func (a *Activities) associateDocumentType(
 			return createErr
 		}
 
-		existing, err = a.documentTypeRepo.GetByName(ctx, repositories.GetDocumentTypeByNameRequest{
+		existing, err = a.documentTypeRepo.GetByName(ctx, documenttypeports.GetDocumentTypeByNameRequest{
 			Name:       inferred.Name,
 			TenantInfo: tenantInfo,
 		})

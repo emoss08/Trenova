@@ -5,24 +5,25 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type taintRun struct {
-	result *serviceports.RunResult
-	events []serviceports.StreamEvent
+	result *agentports.RunResult
+	events []kernelports.StreamEvent
 }
 
-func (r taintRun) tainted() []serviceports.AssistantRunTaintedEvent {
-	out := make([]serviceports.AssistantRunTaintedEvent, 0, len(r.events))
+func (r taintRun) tainted() []agentports.AssistantRunTaintedEvent {
+	out := make([]agentports.AssistantRunTaintedEvent, 0, len(r.events))
 	for _, event := range r.events {
-		if data, ok := event.Data.(serviceports.AssistantRunTaintedEvent); ok &&
-			event.Event == serviceports.AssistantEventRunTainted {
+		if data, ok := event.Data.(agentports.AssistantRunTaintedEvent); ok &&
+			event.Event == agentports.AssistantEventRunTainted {
 			out = append(out, data)
 		}
 	}
@@ -33,12 +34,12 @@ func (r taintRun) tainted() []serviceports.AssistantRunTaintedEvent {
 func runTainted(
 	t *testing.T,
 	rt *Service,
-	req *serviceports.RunRequest,
+	req *agentports.RunRequest,
 ) taintRun {
 	t.Helper()
 
-	var events []serviceports.StreamEvent
-	req.Emit = func(event serviceports.StreamEvent) { events = append(events, event) }
+	var events []kernelports.StreamEvent
+	req.Emit = func(event kernelports.StreamEvent) { events = append(events, event) }
 	result, err := rt.Run(t.Context(), req)
 	require.NoError(t, err)
 
@@ -77,7 +78,7 @@ func TestOpenTurn_ASubjectWrittenOutsideTheOrganizationTaintsTheTurn(t *testing.
 		rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 		subjectID := pulid.MustNew("sub_").String()
 
-		turn := rt.OpenTurn(t.Context(), &serviceports.RunRequest{
+		turn := rt.OpenTurn(t.Context(), &agentports.RunRequest{
 			Definition: testDefinition(),
 			Actor:      testActor(),
 			Input:      "Work the subject.",
@@ -103,7 +104,7 @@ func TestOpenTurn_MasterDataIsNotOutsideContent(t *testing.T) {
 	t.Parallel()
 
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
-	turn := rt.OpenTurn(t.Context(), &serviceports.RunRequest{
+	turn := rt.OpenTurn(t.Context(), &agentports.RunRequest{
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Input:      "Cover the move.",
@@ -129,7 +130,7 @@ func TestOpenTurn_AttachmentsAndTaintedMemoriesTaintTheTurn(t *testing.T) {
 	documentID := pulid.MustNew("doc_").String()
 	memory := &agent.Memory{ID: pulid.MustNew("amem_"), Content: "From an email.", Tainted: true}
 
-	turn := rt.OpenTurn(t.Context(), &serviceports.RunRequest{
+	turn := rt.OpenTurn(t.Context(), &agentports.RunRequest{
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Input:      "What does this say?",
@@ -160,7 +161,7 @@ func TestOpenTurn_AReviewedMemoryDoesNotTaintTheTurn(t *testing.T) {
 	reviewer := pulid.MustNew("usr_")
 	at := int64(1_791_600_000)
 
-	turn := rt.OpenTurn(t.Context(), &serviceports.RunRequest{
+	turn := rt.OpenTurn(t.Context(), &agentports.RunRequest{
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Input:      "Run the on-time report.",
@@ -191,7 +192,7 @@ func TestOpenTurn_AThreadAlreadyTaintedOpensTaintedWithoutAnnouncingItAgain(t *t
 	})
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 
-	turn := rt.OpenTurn(t.Context(), &serviceports.RunRequest{
+	turn := rt.OpenTurn(t.Context(), &agentports.RunRequest{
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Input:      "And now?",
@@ -209,12 +210,12 @@ func TestOpenTurn_ADelegateOfATurnWithUnknownTaintInheritsTheUnknown(t *testing.
 	t.Parallel()
 
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
-	turn := rt.OpenTurn(t.Context(), &serviceports.RunRequest{
+	turn := rt.OpenTurn(t.Context(), &agentports.RunRequest{
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Input:      "Create the report.",
 		ThreadID:   pulid.MustNew("athr_"),
-		Delegation: &serviceports.Delegation{CallID: "call_1", StepScope: "scope"},
+		Delegation: &agentports.Delegation{CallID: "call_1", StepScope: "scope"},
 	})
 
 	assert.Nil(t, turn.Taint(), "nil counts as tainted wherever it matters")
@@ -230,16 +231,16 @@ func TestRun_AToolThatReadsOutsideContentTaintsTheRunAndHoldsMoney(t *testing.T)
 		Source:   agent.TaintSourceInboundMessage,
 	}
 	pay := moneyTool()
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		toolTurn("get_inbound_message", map[string]any{"messageId": "imsg_1"}),
 		toolTurn("apply_payment", map[string]any{"invoiceId": "inv_88"}),
 		textTurn("The payment waits for approval."),
 	}}
 	rt := newRuntime(completion,
-		&stubQueryRegistry{Tools: []serviceports.AgentQueryTool{email}},
-		&stubActionRegistry{Tools: []serviceports.AgentTool{pay}}, nil)
+		&stubQueryRegistry{Tools: []agentports.AgentQueryTool{email}},
+		&stubActionRegistry{Tools: []agentports.AgentTool{pay}}, nil)
 
-	run := runTainted(t, rt, &serviceports.RunRequest{
+	run := runTainted(t, rt, &agentports.RunRequest{
 		Definition: autoDefinition("get_inbound_message", "apply_payment"),
 		Actor:      testActor(),
 		Input:      "Handle the email.",
@@ -271,14 +272,14 @@ func TestRun_ACleanRunStillMovesMoneyOnItsOwn(t *testing.T) {
 	t.Parallel()
 
 	pay := moneyTool()
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		toolTurn("apply_payment", map[string]any{"invoiceId": "inv_88"}),
 		textTurn("Applied."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []serviceports.AgentTool{pay}}, nil)
+		&stubActionRegistry{Tools: []agentports.AgentTool{pay}}, nil)
 
-	run := runTainted(t, rt, &serviceports.RunRequest{
+	run := runTainted(t, rt, &agentports.RunRequest{
 		Definition: autoDefinition("apply_payment"),
 		Actor:      testActor(),
 		Input:      "Apply the payment.",
@@ -311,15 +312,15 @@ func TestRun_AMarkedToolTaintsOnlyWhenWhatItReturnedCarriesTaint(t *testing.T) {
 			Reads:    agent.ExternalReadMarked,
 			Source:   agent.TaintSourceRunRecord,
 		}
-		completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+		completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 			toolTurn("get_agent_run", map[string]any{"runId": tc.result.ID.String()}),
 			textTurn("Read."),
 		}}
 		rt := newRuntime(completion,
-			&stubQueryRegistry{Tools: []serviceports.AgentQueryTool{lookup}},
+			&stubQueryRegistry{Tools: []agentports.AgentQueryTool{lookup}},
 			&stubActionRegistry{}, nil)
 
-		run := runTainted(t, rt, &serviceports.RunRequest{
+		run := runTainted(t, rt, &agentports.RunRequest{
 			Definition: testDefinition("get_agent_run"),
 			Actor:      testActor(),
 			Input:      "What did that run do?",
@@ -347,15 +348,15 @@ func TestRun_AFailedReadTaintsNothing(t *testing.T) {
 		Reads:    agent.ExternalReadAlways,
 		Source:   agent.TaintSourceInboundMessage,
 	}
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		toolTurn("get_inbound_message", map[string]any{"messageId": "imsg_1"}),
 		textTurn("It could not be read."),
 	}}
 	rt := newRuntime(completion,
-		&stubQueryRegistry{Tools: []serviceports.AgentQueryTool{email}},
+		&stubQueryRegistry{Tools: []agentports.AgentQueryTool{email}},
 		&stubActionRegistry{}, nil)
 
-	run := runTainted(t, rt, &serviceports.RunRequest{
+	run := runTainted(t, rt, &agentports.RunRequest{
 		Definition: testDefinition("get_inbound_message"),
 		Actor:      testActor(),
 		Input:      "Read the email.",
@@ -367,11 +368,11 @@ func TestRun_AFailedReadTaintsNothing(t *testing.T) {
 func TestRun_AnnouncesWhatTheOpeningAddedBeforeTheFirstReply(t *testing.T) {
 	t.Parallel()
 
-	rt := newRuntime(&scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	rt := newRuntime(&scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		textTurn("It is a rate confirmation."),
 	}}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 
-	run := runTainted(t, rt, &serviceports.RunRequest{
+	run := runTainted(t, rt, &agentports.RunRequest{
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Input:      "What is this?",
@@ -383,7 +384,7 @@ func TestRun_AnnouncesWhatTheOpeningAddedBeforeTheFirstReply(t *testing.T) {
 	})
 
 	require.NotEmpty(t, run.events)
-	assert.Equal(t, serviceports.AssistantEventRunTainted, run.events[0].Event)
+	assert.Equal(t, agentports.AssistantEventRunTainted, run.events[0].Event)
 	announced := run.tainted()
 	require.Len(t, announced, 1)
 	assert.Equal(t, agent.TaintSourceAttachment, announced[0].Mark.Source)
@@ -404,17 +405,17 @@ func TestRun_TheRememberToolIsHandedTheRunsTaint(t *testing.T) {
 		CarriesTaint: true,
 	}
 	other := &agentruntimetest.StubActionTool{ToolName: "assign_move", Tier: agent.TierAutoExecute}
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		toolTurn("get_inbound_message", map[string]any{"messageId": "imsg_1"}),
 		toolTurn("remember", map[string]any{"content": "Ship to dock 9."}),
 		toolTurn("assign_move", map[string]any{"moveId": "smv_1"}),
 		textTurn("Noted."),
 	}}
 	rt := newRuntime(completion,
-		&stubQueryRegistry{Tools: []serviceports.AgentQueryTool{email}},
-		&stubActionRegistry{Tools: []serviceports.AgentTool{remember, other}}, nil)
+		&stubQueryRegistry{Tools: []agentports.AgentQueryTool{email}},
+		&stubActionRegistry{Tools: []agentports.AgentTool{remember, other}}, nil)
 
-	runTainted(t, rt, &serviceports.RunRequest{
+	runTainted(t, rt, &agentports.RunRequest{
 		Definition: autoDefinition("get_inbound_message", "remember", "assign_move"),
 		Actor:      testActor(),
 		Input:      "Handle the email.",
@@ -431,8 +432,8 @@ func TestDecideCall_UsesTheTaintTheCallWasMadeWith(t *testing.T) {
 
 	pay := moneyTool()
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []serviceports.AgentTool{pay}}, nil)
-	req := &serviceports.RunRequest{
+		&stubActionRegistry{Tools: []agentports.AgentTool{pay}}, nil)
+	req := &agentports.RunRequest{
 		Definition: autoDefinition("apply_payment"),
 		Actor:      testActor(),
 		Input:      "Apply it.",
@@ -449,7 +450,7 @@ func TestDecideCall_UsesTheTaintTheCallWasMadeWith(t *testing.T) {
 		"unknown": {taint: nil, tier: agent.TierActWithApproval},
 	} {
 		outcome := rt.DispatchStep(t.Context(), req, DispatchCall{
-			Call:  serviceports.ToolCall{ID: "call_" + name, Name: "apply_payment"},
+			Call:  agentports.ToolCall{ID: "call_" + name, Name: "apply_payment"},
 			Taint: tc.taint,
 		})
 		require.NotNil(t, outcome.Action, name)

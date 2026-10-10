@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -16,14 +16,14 @@ import (
 )
 
 type reviewRepo struct {
-	repositories.AgentMemoryRepository
+	agentports.AgentMemoryRepository
 	memory   *agent.Memory
-	reviewed []repositories.ReviewAgentMemoryRequest
+	reviewed []agentports.ReviewAgentMemoryQuery
 }
 
 func (f *reviewRepo) GetByID(
 	context.Context,
-	repositories.GetAgentMemoryByIDRequest,
+	agentports.GetAgentMemoryByIDRequest,
 ) (*agent.Memory, error) {
 	copied := *f.memory
 
@@ -32,7 +32,7 @@ func (f *reviewRepo) GetByID(
 
 func (f *reviewRepo) Review(
 	_ context.Context,
-	req repositories.ReviewAgentMemoryRequest,
+	req agentports.ReviewAgentMemoryQuery,
 ) (*agent.Memory, error) {
 	f.reviewed = append(f.reviewed, req)
 	reviewed := *f.memory
@@ -45,10 +45,10 @@ func (f *reviewRepo) Review(
 }
 
 type recordedChanges struct {
-	changes []*services.SecurityChange
+	changes []*permissionports.SecurityChange
 }
 
-func (r *recordedChanges) RecordChange(_ context.Context, change *services.SecurityChange) {
+func (r *recordedChanges) RecordChange(_ context.Context, change *permissionports.SecurityChange) {
 	r.changes = append(r.changes, change)
 }
 
@@ -85,7 +85,7 @@ func TestReview_ClearsTheTaintAndRecordsWhoCleared(t *testing.T) {
 	svc := &Service{l: zap.NewNop(), repo: repo, security: security}
 	actor := userActor()
 
-	reviewed, err := svc.Review(t.Context(), services.ReviewAgentMemoryRequest{
+	reviewed, err := svc.Review(t.Context(), agentports.ReviewAgentMemoryRequest{
 		ID:         repo.memory.ID,
 		TenantInfo: tenant(),
 		Version:    4,
@@ -125,7 +125,7 @@ func TestReview_RefusesWhatThereIsNothingToReview(t *testing.T) {
 
 		_, err := (&Service{l: zap.NewNop(), repo: repo}).Review(
 			t.Context(),
-			services.ReviewAgentMemoryRequest{ID: memory.ID, TenantInfo: tenant(), Version: 4},
+			agentports.ReviewAgentMemoryRequest{ID: memory.ID, TenantInfo: tenant(), Version: 4},
 			userActor(),
 		)
 
@@ -141,8 +141,8 @@ func TestReview_OnlyAPerson(t *testing.T) {
 
 	_, err := (&Service{l: zap.NewNop(), repo: repo}).Review(
 		t.Context(),
-		services.ReviewAgentMemoryRequest{ID: repo.memory.ID, TenantInfo: tenant(), Version: 4},
-		&services.RequestActor{PrincipalType: services.PrincipalTypeAgent},
+		agentports.ReviewAgentMemoryRequest{ID: repo.memory.ID, TenantInfo: tenant(), Version: 4},
+		&permissionports.RequestActor{PrincipalType: permissionports.PrincipalTypeAgent},
 	)
 
 	require.Error(t, err, "an agent never clears the taint on what it will read")
@@ -161,7 +161,7 @@ func TestApproveSuggestion_OfATaintedSuggestionIsItsReview(t *testing.T) {
 	security := &recordedChanges{}
 	svc := &Service{l: zap.NewNop(), repo: repo, security: security}
 
-	_, err := svc.ApproveSuggestion(t.Context(), &services.ApproveAgentMemorySuggestionRequest{
+	_, err := svc.ApproveSuggestion(t.Context(), &agentports.ApproveAgentMemorySuggestionRequest{
 		ID:         memory.ID,
 		TenantInfo: tenant(),
 		Content:    "State only rates a tool returned.",

@@ -1,10 +1,15 @@
 package invoiceservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"testing"
-
-	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp/exchangeratestamptest"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
@@ -12,8 +17,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp/exchangeratestamptest"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -37,11 +46,11 @@ type postFixture struct {
 	invoice    *invoice.Invoice
 	leg        *shipment.Shipment
 	item       *billingqueue.BillingQueueItem
-	repo       *mocks.MockInvoiceRepository
-	shipments  *mocks.MockShipmentRepository
-	queue      *mocks.MockBillingQueueRepository
-	journal    *mocks.MockJournalPostingRepository
-	accounting *mocks.MockAccountingControlRepository
+	repo       *invoiceportsmock.MockInvoiceRepository
+	shipments  *shipmentportsmock.MockShipmentRepository
+	queue      *billingqueueportsmock.MockBillingQueueRepository
+	journal    *journalentryportsmock.MockJournalPostingRepository
+	accounting *tenantportsmock.MockAccountingControlRepository
 	svc        *Service
 }
 
@@ -101,33 +110,33 @@ func newPostFixture(t *testing.T) *postFixture {
 		}},
 	}
 
-	f.repo = mocks.NewMockInvoiceRepository(t)
+	f.repo = invoiceportsmock.NewMockInvoiceRepository(t)
 	f.repo.EXPECT().GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(context.Context, repositories.GetInvoiceByIDRequest) (*invoice.Invoice, error) {
+		RunAndReturn(func(context.Context, invoiceports.GetInvoiceByIDRequest) (*invoice.Invoice, error) {
 			copied := *f.invoice
 			return &copied, nil
 		}).Maybe()
 
-	f.shipments = mocks.NewMockShipmentRepository(t)
+	f.shipments = shipmentportsmock.NewMockShipmentRepository(t)
 	f.shipments.EXPECT().GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(context.Context, *repositories.GetShipmentByIDRequest) (*shipment.Shipment, error) {
+		RunAndReturn(func(context.Context, *shipmentports.GetShipmentByIDRequest) (*shipment.Shipment, error) {
 			copied := *f.leg
 			return &copied, nil
 		}).Maybe()
 
-	f.queue = mocks.NewMockBillingQueueRepository(t)
+	f.queue = billingqueueportsmock.NewMockBillingQueueRepository(t)
 	f.queue.EXPECT().ListActiveInvoiceItemsByShipmentIDs(mock.Anything, mock.Anything).
 		Return(nil, nil).Maybe()
 	f.queue.EXPECT().GetByID(mock.Anything, mock.Anything).
 		RunAndReturn(func(
 			context.Context,
-			*repositories.GetBillingQueueItemByIDRequest,
+			*billingqueueports.GetBillingQueueItemByIDRequest,
 		) (*billingqueue.BillingQueueItem, error) {
 			copied := *f.item
 			return &copied, nil
 		}).Maybe()
 
-	f.accounting = mocks.NewMockAccountingControlRepository(t)
+	f.accounting = tenantportsmock.NewMockAccountingControlRepository(t)
 	f.accounting.EXPECT().GetByOrgID(mock.Anything, f.tenant.OrgID).Return(&tenant.AccountingControl{
 		AccountingBasis:          tenant.AccountingBasisAccrual,
 		RevenueRecognitionPolicy: tenant.RevenueRecognitionOnInvoicePost,
@@ -140,14 +149,14 @@ func newPostFixture(t *testing.T) *postFixture {
 		DefaultARAccountID:      f.arID,
 	}, nil).Maybe()
 
-	periods := mocks.NewMockFiscalPeriodRepository(t)
+	periods := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	periods.EXPECT().GetPeriodByDate(mock.Anything, mock.Anything).Return(&fiscalperiod.FiscalPeriod{
 		ID:           f.periodID,
 		FiscalYearID: pulid.MustNew("fy_"),
 		Status:       fiscalperiod.StatusOpen,
 	}, nil).Maybe()
 
-	f.journal = mocks.NewMockJournalPostingRepository(t)
+	f.journal = journalentryportsmock.NewMockJournalPostingRepository(t)
 	f.svc = &Service{
 		l:                 zap.NewNop(),
 		db:                fakeInvoiceDB{},
@@ -170,11 +179,11 @@ func newPostFixture(t *testing.T) *postFixture {
 	return f
 }
 
-func (f *postFixture) request() *servicesports.PostInvoiceRequest {
-	return &servicesports.PostInvoiceRequest{InvoiceID: f.invoice.ID, TenantInfo: f.tenant}
+func (f *postFixture) request() *invoiceports.PostInvoiceRequest {
+	return &invoiceports.PostInvoiceRequest{InvoiceID: f.invoice.ID, TenantInfo: f.tenant}
 }
 
-func (f *postFixture) actor() *servicesports.RequestActor {
+func (f *postFixture) actor() *permissionports.RequestActor {
 	return testutil.NewSessionActor(f.userID, f.tenant.OrgID, f.tenant.BuID)
 }
 
@@ -220,9 +229,9 @@ func TestPreviewPost_AgreesWithThePostItPlans(t *testing.T) {
 	preview, err := f.svc.PreviewPost(t.Context(), f.request(), f.actor())
 	require.NoError(t, err)
 
-	var booked *repositories.CreateJournalPostingParams
+	var booked *journalentryports.CreateJournalPostingParams
 	f.journal.EXPECT().CreatePosting(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, params repositories.CreateJournalPostingParams) error {
+		RunAndReturn(func(_ context.Context, params journalentryports.CreateJournalPostingParams) error {
 			booked = &params
 			return nil
 		}).Once()
@@ -298,22 +307,22 @@ func TestPreviewApprovalInvoice_PlansTheDraftApprovalWouldSave(t *testing.T) {
 		TotalChargeAmount:   decimal.NewNullDecimal(decimal.NewFromInt(100)),
 	}
 
-	repo := mocks.NewMockInvoiceRepository(t)
+	repo := invoiceportsmock.NewMockInvoiceRepository(t)
 	repo.EXPECT().GetByBillingQueueItemID(mock.Anything, mock.Anything).
 		Return(nil, errortypes.NewNotFoundError("invoice not found")).Once()
-	queue := mocks.NewMockBillingQueueRepository(t)
+	queue := billingqueueportsmock.NewMockBillingQueueRepository(t)
 	queue.EXPECT().GetByID(mock.Anything, mock.MatchedBy(
-		func(req *repositories.GetBillingQueueItemByIDRequest) bool {
+		func(req *billingqueueports.GetBillingQueueItemByIDRequest) bool {
 			return req.ItemID == item.ID && req.ExpandShipmentDetails
 		},
 	)).Return(item, nil).Once()
-	customers := mocks.NewMockCustomerRepository(t)
+	customers := customerportsmock.NewMockCustomerRepository(t)
 	customers.EXPECT().GetByID(mock.Anything, mock.Anything).Return(&customer.Customer{
 		ID:             customerID,
 		Name:           "Acme Logistics",
 		BillingProfile: &customer.CustomerBillingProfile{AutoBill: true, BillingCurrency: "USD"},
 	}, nil).Once()
-	billing := mocks.NewMockBillingControlRepository(t)
+	billing := tenantportsmock.NewMockBillingControlRepository(t)
 	billing.EXPECT().GetByOrgID(mock.Anything, orgID).
 		Return(nil, errortypes.NewNotFoundError("no billing control")).Twice()
 
@@ -321,7 +330,7 @@ func TestPreviewApprovalInvoice_PlansTheDraftApprovalWouldSave(t *testing.T) {
 		l:                zap.NewNop(),
 		repo:             repo,
 		billingQueueRepo: queue,
-		shipmentRepo:     mocks.NewMockShipmentRepository(t),
+		shipmentRepo:     shipmentportsmock.NewMockShipmentRepository(t),
 		customerRepo:     customers,
 		billingRepo:      billing,
 		validator: &Validator{
@@ -331,7 +340,7 @@ func TestPreviewApprovalInvoice_PlansTheDraftApprovalWouldSave(t *testing.T) {
 
 	result, err := svc.PreviewApprovalInvoice(
 		t.Context(),
-		&servicesports.CreateInvoiceFromBillingQueueRequest{
+		&invoiceports.CreateInvoiceFromBillingQueueRequest{
 			BillingQueueItemID: item.ID,
 			TenantInfo:         tenantInfo,
 			DeferToStatement:   true,

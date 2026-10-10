@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
 
 // The helpers here drive a turn in process through the same steps the turn
@@ -18,10 +20,10 @@ func (s *Service) run(ctx context.Context, req *TurnRequest) (*TurnResult, error
 func (s *Service) runObserved(
 	ctx context.Context,
 	req *TurnRequest,
-	emit serviceports.AssistantStreamEmitter,
+	emit kernelports.AssistantStreamEmitter,
 ) (*TurnResult, error) {
 	if emit == nil {
-		emit = func(serviceports.StreamEvent) {}
+		emit = func(kernelports.StreamEvent) {}
 	}
 
 	decision, runReq := s.admit(ctx, req)
@@ -38,12 +40,12 @@ func (s *Service) runObserved(
 
 func (s *Service) sendMessage(
 	ctx context.Context,
-	req *serviceports.SendMessageRequest,
-	actor *serviceports.RequestActor,
-	emit serviceports.AssistantStreamEmitter,
-) (*serviceports.SendMessageResult, error) {
+	req *agentports.SendMessageRequest,
+	actor *permissionports.RequestActor,
+	emit kernelports.AssistantStreamEmitter,
+) (*agentports.SendMessageResult, error) {
 	if emit == nil {
-		emit = func(serviceports.StreamEvent) {}
+		emit = func(kernelports.StreamEvent) {}
 	}
 
 	plan, runReq, err := s.prepareTurn(ctx, req, actor)
@@ -52,14 +54,14 @@ func (s *Service) sendMessage(
 	}
 	emit(plan.Opening())
 
-	var run *serviceports.RunResult
+	var run *agentports.RunResult
 	var runErr error
 	var artifacts []*assistantartifact.Artifact
 	if runReq != nil {
 		runReq.Emit = emit
 		runReq.ToolObserver = func(
-			observation serviceports.ToolObservation,
-		) (*serviceports.ShownArtifact, error) {
+			observation agentports.ToolObservation,
+		) (*agentports.ShownArtifact, error) {
 			shown, kept, err := s.ObserveTool(ctx, plan.ThreadID, actor, observation, emit)
 			artifacts = append(artifacts, kept...)
 
@@ -85,21 +87,21 @@ func (s *Service) sendMessage(
 
 func (s *Service) ask(
 	ctx context.Context,
-	req *serviceports.AskRequest,
-	actor *serviceports.RequestActor,
-	emit serviceports.AssistantStreamEmitter,
-) (*serviceports.SendMessageResult, error) {
+	req *agentports.AskRequest,
+	actor *permissionports.RequestActor,
+	emit kernelports.AssistantStreamEmitter,
+) (*agentports.SendMessageResult, error) {
 	if emit == nil {
-		emit = func(serviceports.StreamEvent) {}
+		emit = func(kernelports.StreamEvent) {}
 	}
 
 	thread, err := s.StartAsk(ctx, req, actor)
 	if err != nil {
 		return nil, err
 	}
-	emit(serviceports.StreamEvent{Event: serviceports.AssistantEventThread, Data: thread})
+	emit(kernelports.StreamEvent{Event: agentports.AssistantEventThread, Data: thread})
 
-	return s.sendMessage(ctx, &serviceports.SendMessageRequest{
+	return s.sendMessage(ctx, &agentports.SendMessageRequest{
 		ThreadID:   thread.ID,
 		Content:    req.Content,
 		Page:       req.Page,

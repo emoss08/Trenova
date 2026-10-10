@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	lru "github.com/hashicorp/golang-lru/v2"
 	"go.uber.org/zap"
@@ -50,13 +50,13 @@ but the cache would be the wrong place to discover that they had started to.
 */
 type verdictCache struct {
 	entries *lru.Cache[string, ClassifierResult]
-	shared  repositories.ScopeVerdictCacheRepository
+	shared  agentports.ScopeVerdictCacheRepository
 	ttl     time.Duration
 	logger  *zap.Logger
 }
 
 func newVerdictCache(
-	shared repositories.ScopeVerdictCacheRepository,
+	shared agentports.ScopeVerdictCacheRepository,
 	ttl time.Duration,
 	logger *zap.Logger,
 ) *verdictCache {
@@ -138,7 +138,7 @@ func (c *verdictCache) put(
 	// pays for again.
 	bounded, cancel := context.WithTimeout(context.WithoutCancel(ctx), sharedTimeout)
 	defer cancel()
-	err := c.shared.Set(bounded, key, &repositories.CachedScopeVerdict{
+	err := c.shared.Set(bounded, key, &agentports.CachedScopeVerdict{
 		Category:  result.Category,
 		Reasoning: result.Reasoning,
 	}, c.ttl)

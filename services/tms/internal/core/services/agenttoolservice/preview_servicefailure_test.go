@@ -7,7 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,9 +20,9 @@ import (
 // write stays empty unless the tool resolves.
 func (f *fakeFailureDecider) PreviewResolve(
 	_ context.Context,
-	req *serviceports.ServiceFailureLifecycleRequest,
-	actor *serviceports.RequestActor,
-) (*serviceports.ServiceFailureLifecyclePreview, error) {
+	req *servicefailureports.ServiceFailureLifecycleRequest,
+	actor *permissionports.RequestActor,
+) (*servicefailureports.ServiceFailureLifecyclePreview, error) {
 	after := *f.existing
 	after.Status = servicefailure.StatusResolved
 	after.InternalNotes = req.Notes
@@ -33,11 +36,11 @@ func (f *fakeFailureDecider) PreviewResolve(
 		}
 	}
 
-	return &serviceports.ServiceFailureLifecyclePreview{
+	return &servicefailureports.ServiceFailureLifecyclePreview{
 		Before: f.existing,
 		After:  &after,
-		EDI: &serviceports.ServiceFailure214LifecycleResult{
-			Action:        serviceports.ServiceFailureEDIActionSkipped,
+		EDI: &servicefailureports.ServiceFailure214LifecycleResult{
+			Action:        ediports.ServiceFailureEDIActionSkipped,
 			SkippedReason: ediReadyForGeneration,
 			EDIPartnerID:  pulid.MustNew("edip_"),
 		},
@@ -56,7 +59,7 @@ func TestResolveServiceFailurePreview_ShowsTheResolutionAndTheCustomer214(t *tes
 		"notes":            "Shipper closed early; driver waited until opening.",
 	})
 
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.Nil(t, failures.resolved, "a preview must not resolve")
 	assert.Contains(t, preview.Summary, "SF-7")

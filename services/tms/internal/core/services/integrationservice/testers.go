@@ -11,7 +11,8 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/shared/pcmiler"
 	sharedsamsara "github.com/emoss08/trenova/shared/samsara"
 	"github.com/emoss08/trenova/shared/samsara/drivers"
@@ -34,7 +35,7 @@ var connectionTesters = map[integration.Type]connectionTester{
 // "Test Connection" exercises the same dial, the same credentials and the same
 // directory listing a scheduled run would.
 type fuelCardConnectionTester struct {
-	connector services.FuelCardProvider
+	connector fuelpurchaseports.FuelCardProvider
 }
 
 func (t *fuelCardConnectionTester) Test(ctx context.Context, cfg map[string]string) error {
@@ -42,7 +43,7 @@ func (t *fuelCardConnectionTester) Test(ctx context.Context, cfg map[string]stri
 }
 
 type carrierIntelConnectionTester struct {
-	connector services.CarrierIntelConnector
+	connector carrierintelports.CarrierIntelConnector
 }
 
 func (t *carrierIntelConnectionTester) Test(ctx context.Context, cfg map[string]string) error {

@@ -3,16 +3,19 @@ package shipmentjobs
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs/shipmentcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs/shipmentcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -26,20 +29,20 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	Repo         repositories.ShipmentRepository
-	AuditService services.AuditService
-	EventService services.ShipmentEventService
-	Invalidator  services.ShipmentInvalidator
-	AgentEvents  services.AgentEventPublisher `optional:"true"`
+	Repo         shipmentports.ShipmentRepository
+	AuditService auditports.AuditService
+	EventService shipmenteventports.ShipmentEventService
+	Invalidator  shipmentports.ShipmentInvalidator
+	AgentEvents  agentports.AgentEventPublisher `optional:"true"`
 	Logger       *zap.Logger
 }
 
 type Activities struct {
-	repo         repositories.ShipmentRepository
-	auditService services.AuditService
-	eventService services.ShipmentEventService
-	invalidator  services.ShipmentInvalidator
-	agentEvents  services.AgentEventPublisher
+	repo         shipmentports.ShipmentRepository
+	auditService auditports.AuditService
+	eventService shipmenteventports.ShipmentEventService
+	invalidator  shipmentports.ShipmentInvalidator
+	agentEvents  agentports.AgentEventPublisher
 	logger       *zap.Logger
 }
 
@@ -66,7 +69,7 @@ func (a *Activities) BulkDuplicateShipmentsActivity(
 
 	recordActivityHeartbeat(ctx, "duplicating shipments")
 
-	duplicated, err := a.repo.BulkDuplicate(ctx, &repositories.BulkDuplicateShipmentRequest{
+	duplicated, err := a.repo.BulkDuplicate(ctx, &shipmentports.BulkDuplicateShipmentRequest{
 		TenantInfo:    paginationTenantInfoFromPayload(payload),
 		ShipmentID:    payload.ShipmentID,
 		Count:         payload.Count,
@@ -83,7 +86,7 @@ func (a *Activities) BulkDuplicateShipmentsActivity(
 		shipmentIDs = append(shipmentIDs, entity.ID)
 
 		if auditErr := a.auditService.LogAction(
-			&services.LogActionParams{
+			&auditports.LogActionParams{
 				Resource:       permission.ResourceShipment,
 				ResourceID:     entity.GetID().String(),
 				Operation:      permission.OpCreate,
@@ -104,9 +107,9 @@ func (a *Activities) BulkDuplicateShipmentsActivity(
 					BusinessUnitID: entity.BusinessUnitID,
 				},
 				entity,
-				services.AuditActor{
+				kernelports.AuditActor{
 					UserID:        payload.RequestedBy,
-					PrincipalType: services.PrincipalTypeUser,
+					PrincipalType: permissionports.PrincipalTypeUser,
 					PrincipalID:   payload.RequestedBy,
 				},
 			)); eventErr != nil {
@@ -114,7 +117,7 @@ func (a *Activities) BulkDuplicateShipmentsActivity(
 			}
 		}
 
-		services.PublishAgentEvent(ctx, a.agentEvents, services.AgentEvent{
+		agentports.PublishAgentEvent(ctx, a.agentEvents, agentports.AgentEvent{
 			Kind:      agent.EventShipmentCreated,
 			SubjectID: entity.ID,
 			TenantInfo: pagination.TenantInfo{
@@ -125,11 +128,11 @@ func (a *Activities) BulkDuplicateShipmentsActivity(
 	}
 
 	if len(duplicated) > 0 {
-		services.InvalidateShipments(ctx, a.invalidator, &services.ShipmentInvalidation{
+		shipmentports.InvalidateShipments(ctx, a.invalidator, &shipmentports.ShipmentInvalidation{
 			OrganizationID: payload.OrganizationID,
 			BusinessUnitID: payload.BusinessUnitID,
 			ActorUserID:    payload.RequestedBy,
-			ActorType:      services.PrincipalTypeUser,
+			ActorType:      permissionports.PrincipalTypeUser,
 			ActorID:        payload.RequestedBy,
 			Action:         "bulk_created",
 		})
@@ -167,7 +170,7 @@ func (a *Activities) AutoDelayShipmentsActivity(
 	for _, entity := range delayedShipments {
 		shipmentIDs = append(shipmentIDs, entity.ID)
 
-		services.InvalidateShipments(ctx, a.invalidator, &services.ShipmentInvalidation{
+		shipmentports.InvalidateShipments(ctx, a.invalidator, &shipmentports.ShipmentInvalidation{
 			OrganizationID: entity.OrganizationID,
 			BusinessUnitID: entity.BusinessUnitID,
 			Action:         "delayed",
@@ -223,7 +226,7 @@ func (a *Activities) AutoDelayTenantShipmentsActivity(
 	for _, entity := range delayedShipments {
 		shipmentIDs = append(shipmentIDs, entity.ID)
 
-		services.InvalidateShipments(ctx, a.invalidator, &services.ShipmentInvalidation{
+		shipmentports.InvalidateShipments(ctx, a.invalidator, &shipmentports.ShipmentInvalidation{
 			OrganizationID: entity.OrganizationID,
 			BusinessUnitID: entity.BusinessUnitID,
 			Action:         "delayed",
@@ -263,7 +266,7 @@ func (a *Activities) AutoCancelShipmentsActivity(
 
 	if len(canceledShipments) > 0 {
 		for _, tenantInfo := range uniqueShipmentTenants(canceledShipments) {
-			services.InvalidateShipments(ctx, a.invalidator, &services.ShipmentInvalidation{
+			shipmentports.InvalidateShipments(ctx, a.invalidator, &shipmentports.ShipmentInvalidation{
 				OrganizationID: tenantInfo.OrgID,
 				BusinessUnitID: tenantInfo.BuID,
 				Action:         "bulk_canceled",
@@ -320,7 +323,7 @@ func (a *Activities) AutoCancelTenantShipmentsActivity(
 	}
 
 	if len(canceledShipments) > 0 {
-		services.InvalidateShipments(ctx, a.invalidator, &services.ShipmentInvalidation{
+		shipmentports.InvalidateShipments(ctx, a.invalidator, &shipmentports.ShipmentInvalidation{
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
 			Action:         "bulk_canceled",

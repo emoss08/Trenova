@@ -7,9 +7,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipmentbrief"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -32,7 +32,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.ShipmentBriefRepository {
+func New(p Params) shipmentbriefports.ShipmentBriefRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.shipment-brief-repository"),
@@ -41,7 +41,7 @@ func New(p Params) repositories.ShipmentBriefRepository {
 
 func (r *repository) Latest(
 	ctx context.Context,
-	req *repositories.GetLatestShipmentBriefRequest,
+	req *shipmentbriefports.GetLatestShipmentBriefRequest,
 ) (*shipmentbrief.Brief, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipmentbrief.Brief, error) {
 		return latest(ctx, r.db.DBForContext(ctx), req)
@@ -51,7 +51,7 @@ func (r *repository) Latest(
 func latest(
 	ctx context.Context,
 	db bun.IDB,
-	req *repositories.GetLatestShipmentBriefRequest,
+	req *shipmentbriefports.GetLatestShipmentBriefRequest,
 ) (*shipmentbrief.Brief, error) {
 	cols := buncolgen.BriefColumns
 	brief := new(shipmentbrief.Brief)
@@ -93,7 +93,7 @@ func (r *repository) Insert(
 			return brief, nil
 		}
 
-		return latest(ctx, db, &repositories.GetLatestShipmentBriefRequest{
+		return latest(ctx, db, &shipmentbriefports.GetLatestShipmentBriefRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: brief.OrganizationID,
 				BuID:  brief.BusinessUnitID,
@@ -105,7 +105,7 @@ func (r *repository) Insert(
 
 func (r *repository) DeleteBefore(
 	ctx context.Context,
-	req *repositories.DeleteShipmentBriefsBeforeRequest,
+	req *shipmentbriefports.DeleteShipmentBriefsBeforeRequest,
 ) (int, error) {
 	ctx = dbscope.WithSystem(
 		ctx,

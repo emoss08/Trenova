@@ -7,7 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/insight"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -16,26 +17,26 @@ import (
 )
 
 type fakeInsightDismisser struct {
-	dismissed *serviceports.DismissInsightRequest
+	dismissed *insightports.DismissInsightRequest
 	finding   *insight.Insight
 	guard     writeGuard
 }
 
 func (f *fakeInsightDismisser) GetDetail(
 	_ context.Context,
-	req serviceports.GetInsightDetailRequest,
-) (*serviceports.InsightDetail, error) {
+	req insightports.GetInsightDetailRequest,
+) (*insightports.InsightDetail, error) {
 	if f.finding == nil || f.finding.ID != req.ID {
 		return nil, errortypes.NewNotFoundError("Insight not found")
 	}
 	copied := *f.finding
 
-	return &serviceports.InsightDetail{Insight: &copied}, nil
+	return &insightports.InsightDetail{Insight: &copied}, nil
 }
 
 func (f *fakeInsightDismisser) Dismiss(
 	_ context.Context,
-	req serviceports.DismissInsightRequest,
+	req insightports.DismissInsightRequest,
 ) (*insight.Insight, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -98,7 +99,7 @@ func TestDismissInsight_IsAnApprovedUpdateOnTheInsight(t *testing.T) {
 	assert.Equal(t, permission.ResourceInsight, tool.Policy().Resource)
 	assert.Equal(t, permission.OpUpdate, tool.Policy().Operation)
 
-	targeted, ok := tool.(serviceports.TargetedTool)
+	targeted, ok := tool.(agentports.TargetedTool)
 	require.True(t, ok)
 	target, ok := targeted.Target(map[string]any{"insightId": id.String()})
 	require.True(t, ok)

@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/ratematrix"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -53,7 +53,7 @@ func columnsForAxis(position int16) (axisColumns, bool) {
 // write.
 func (r *repository) LookupCells(
 	ctx context.Context,
-	req *repositories.LookupRateMatrixCellsRequest,
+	req *ratematrixports.LookupRateMatrixCellsRequest,
 ) ([]*ratematrix.RateMatrixCell, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*ratematrix.RateMatrixCell, error) {
 		log := r.l.With(
@@ -89,7 +89,7 @@ func (r *repository) LookupCells(
 
 func applyAxisFilter(
 	q *bun.SelectQuery,
-	axis repositories.MatrixAxisQuery,
+	axis ratematrixports.MatrixAxisQuery,
 ) *bun.SelectQuery {
 	columns, ok := columnsForAxis(axis.Position)
 	if !ok {
@@ -122,7 +122,7 @@ func applyAxisFilter(
 
 func (r *repository) ListCells(
 	ctx context.Context,
-	req *repositories.ListRateMatrixCellsRequest,
+	req *ratematrixports.ListRateMatrixCellsRequest,
 ) (*pagination.ListResult[*ratematrix.RateMatrixCell], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*ratematrix.RateMatrixCell], error) {
 		log := r.l.With(
@@ -170,7 +170,7 @@ func (r *repository) ListCells(
 // statement would hold locks far longer than the work deserves.
 func (r *repository) ReplaceCells(
 	ctx context.Context,
-	req *repositories.ReplaceRateMatrixCellsRequest,
+	req *ratematrixports.ReplaceRateMatrixCellsRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		log := r.l.With(
@@ -181,7 +181,7 @@ func (r *repository) ReplaceCells(
 
 		cols := buncolgen.RateMatrixCellColumns
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			if _, dErr := r.db.DBForContext(c).
 				NewDelete().
 				Model((*ratematrix.RateMatrixCell)(nil)).
@@ -256,9 +256,9 @@ func (r *repository) insertCellBatches(
 // whole is affordable here and nowhere else.
 func (r *repository) GetLookupData(
 	ctx context.Context,
-	req *repositories.GetRateMatrixLookupDataRequest,
-) ([]*repositories.RateMatrixLookupData, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.RateMatrixLookupData, error) {
+	req *ratematrixports.GetRateMatrixLookupDataRequest,
+) ([]*ratematrixports.RateMatrixLookupData, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*ratematrixports.RateMatrixLookupData, error) {
 		log := r.l.With(zap.String("operation", "GetLookupData"))
 
 		matrixCols := buncolgen.RateMatrixColumns
@@ -316,9 +316,9 @@ func (r *repository) GetLookupData(
 			cellsByMatrix[cell.RateMatrixID] = append(cellsByMatrix[cell.RateMatrixID], cell)
 		}
 
-		data := make([]*repositories.RateMatrixLookupData, 0, len(matrices))
+		data := make([]*ratematrixports.RateMatrixLookupData, 0, len(matrices))
 		for _, matrix := range matrices {
-			data = append(data, &repositories.RateMatrixLookupData{
+			data = append(data, &ratematrixports.RateMatrixLookupData{
 				Matrix: matrix,
 				Cells:  cellsByMatrix[matrix.ID],
 			})
@@ -333,7 +333,7 @@ func (r *repository) GetLookupData(
 // sheet as a new matrix.
 func (r *repository) bumpMatrixVersion(
 	ctx context.Context,
-	req *repositories.ReplaceRateMatrixCellsRequest,
+	req *ratematrixports.ReplaceRateMatrixCellsRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		matrixCols := buncolgen.RateMatrixColumns

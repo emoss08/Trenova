@@ -5,10 +5,10 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -39,7 +39,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.ShipmentMoveJurisdictionMileRepository {
+func New(p Params) shipmentports.ShipmentMoveJurisdictionMileRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.shipment-move-jurisdiction-mile-repository"),
@@ -68,7 +68,7 @@ func (r *repository) ReplaceForMove(ctx context.Context, move *shipment.Shipment
 		}
 
 		cols := buncolgen.ShipmentMoveJurisdictionMileColumns
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 			if _, err := tx.NewDelete().
 				Model((*shipment.ShipmentMoveJurisdictionMile)(nil)).
 				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
@@ -100,7 +100,7 @@ func (r *repository) ReplaceForMove(ctx context.Context, move *shipment.Shipment
 
 func (r *repository) ListByMoveIDs(
 	ctx context.Context,
-	req repositories.ListJurisdictionMilesByMoveIDsRequest,
+	req shipmentports.ListJurisdictionMilesByMoveIDsRequest,
 ) ([]*shipment.ShipmentMoveJurisdictionMile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipment.ShipmentMoveJurisdictionMile, error) {
 		entities := make([]*shipment.ShipmentMoveJurisdictionMile, 0, len(req.MoveIDs)*4)
@@ -128,9 +128,9 @@ func (r *repository) ListByMoveIDs(
 
 func (r *repository) ListUnattributedMoves(
 	ctx context.Context,
-	req repositories.UnattributedMovesRequest,
-) (*repositories.UnattributedMovesPage, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.UnattributedMovesPage, error) {
+	req shipmentports.UnattributedMovesRequest,
+) (*shipmentports.UnattributedMovesPage, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipmentports.UnattributedMovesPage, error) {
 		if req.Start >= req.End {
 			return nil, errortypes.NewBusinessError("Period start must be before period end")
 		}
@@ -152,7 +152,7 @@ func (r *repository) ListUnattributedMoves(
 			return nil, fmt.Errorf("count unattributed moves: %w", err)
 		}
 
-		page := &repositories.UnattributedMovesPage{
+		page := &shipmentports.UnattributedMovesPage{
 			MoveIDs:    make([]pulid.ID, 0, req.PageSize()),
 			TotalMoves: totals.TotalMoves,
 			TotalMiles: totals.TotalMiles,

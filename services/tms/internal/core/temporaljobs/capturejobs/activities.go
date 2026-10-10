@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/capture"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/captureservice"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.temporal.io/sdk/activity"
 	"go.uber.org/fx"
@@ -16,13 +16,13 @@ type ActivitiesParams struct {
 	fx.In
 
 	Capture *captureservice.Service
-	Items   repositories.CaptureItemRepository
+	Items   captureports.CaptureItemRepository
 	Logger  *zap.Logger
 }
 
 type Activities struct {
 	capture *captureservice.Service
-	items   repositories.CaptureItemRepository
+	items   captureports.CaptureItemRepository
 	l       *zap.Logger
 }
 
@@ -68,7 +68,7 @@ func (a *Activities) AutoFileCaptureItemActivity(
 
 	item, err := a.items.GetByID(
 		ctx,
-		repositories.GetCaptureItemByIDRequest{ID: payload.ItemID, TenantInfo: tenantInfo},
+		captureports.GetCaptureItemByIDRequest{ID: payload.ItemID, TenantInfo: tenantInfo},
 	)
 	if err != nil {
 		return err

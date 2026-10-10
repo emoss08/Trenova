@@ -5,7 +5,6 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/core/domain/location"
@@ -14,13 +13,25 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -34,59 +45,59 @@ type Params struct {
 	fx.In
 
 	Logger              *zap.Logger
-	DB                  ports.DBConnection
-	Repo                repositories.AssignmentRepository
-	ShipmentRepo        repositories.ShipmentRepository
-	OrgRepo             repositories.OrganizationRepository
-	HoldRepo            repositories.ShipmentHoldRepository
-	ControlRepo         repositories.ShipmentControlRepository
-	DispatchControlRepo repositories.DispatchControlRepository
-	WorkerRepo          repositories.WorkerRepository
-	TelematicsRepo      repositories.TelematicsRepository
-	IntegrationRepo     repositories.IntegrationRepository
-	CommodityRepo       repositories.CommodityRepository
-	ContinuityRepo      repositories.EquipmentContinuityRepository
-	TrailerRepo         repositories.TrailerRepository
-	TractorRepo         repositories.TractorRepository `optional:"true"`
-	LocationRepo        repositories.LocationRepository
+	DB                  kernelports.DBConnection
+	Repo                shipmentports.AssignmentRepository
+	ShipmentRepo        shipmentports.ShipmentRepository
+	OrgRepo             tenantports.OrganizationRepository
+	HoldRepo            shipmentports.ShipmentHoldRepository
+	ControlRepo         tenantports.ShipmentControlRepository
+	DispatchControlRepo dispatchcontrolports.DispatchControlRepository
+	WorkerRepo          workerports.WorkerRepository
+	TelematicsRepo      telematicsports.TelematicsRepository
+	IntegrationRepo     integrationports.IntegrationRepository
+	CommodityRepo       commodityports.CommodityRepository
+	ContinuityRepo      equipmentcontinuityports.EquipmentContinuityRepository
+	TrailerRepo         trailerports.TrailerRepository
+	TractorRepo         tractorports.TractorRepository `optional:"true"`
+	LocationRepo        locationports.LocationRepository
 	ShipmentValidator   *shipmentservice.Validator
 	Coordinator         *shipmentstate.Coordinator
 	Commercial          *shipmentcommercial.Calculator
-	EventService        portservices.ShipmentEventService
-	Invalidator         portservices.ShipmentInvalidator
+	EventService        shipmenteventports.ShipmentEventService
+	Invalidator         shipmentports.ShipmentInvalidator
 	DriverNotify        *drivernotificationservice.Service
-	TenderGuard         portservices.TenderGuard         `optional:"true"`
-	AgentEvents         portservices.AgentEventPublisher `optional:"true"`
+	TenderGuard         tenderports.TenderGuard        `optional:"true"`
+	AgentEvents         agentports.AgentEventPublisher `optional:"true"`
 }
 
 type service struct {
 	l                   *zap.Logger
-	db                  ports.DBConnection
-	repo                repositories.AssignmentRepository
-	shipmentRepo        repositories.ShipmentRepository
-	orgRepo             repositories.OrganizationRepository
-	holdRepo            repositories.ShipmentHoldRepository
-	controlRepo         repositories.ShipmentControlRepository
-	dispatchControlRepo repositories.DispatchControlRepository
-	workerRepo          repositories.WorkerRepository
-	telematicsRepo      repositories.TelematicsRepository
-	integrationRepo     repositories.IntegrationRepository
-	commodityRepo       repositories.CommodityRepository
-	continuityRepo      repositories.EquipmentContinuityRepository
-	trailerRepo         repositories.TrailerRepository
-	tractorRepo         repositories.TractorRepository
-	locationRepo        repositories.LocationRepository
+	db                  kernelports.DBConnection
+	repo                shipmentports.AssignmentRepository
+	shipmentRepo        shipmentports.ShipmentRepository
+	orgRepo             tenantports.OrganizationRepository
+	holdRepo            shipmentports.ShipmentHoldRepository
+	controlRepo         tenantports.ShipmentControlRepository
+	dispatchControlRepo dispatchcontrolports.DispatchControlRepository
+	workerRepo          workerports.WorkerRepository
+	telematicsRepo      telematicsports.TelematicsRepository
+	integrationRepo     integrationports.IntegrationRepository
+	commodityRepo       commodityports.CommodityRepository
+	continuityRepo      equipmentcontinuityports.EquipmentContinuityRepository
+	trailerRepo         trailerports.TrailerRepository
+	tractorRepo         tractorports.TractorRepository
+	locationRepo        locationports.LocationRepository
 	shipmentValidator   *shipmentservice.Validator
 	coordinator         *shipmentstate.Coordinator
 	commercial          *shipmentcommercial.Calculator
-	eventService        portservices.ShipmentEventService
-	invalidator         portservices.ShipmentInvalidator
+	eventService        shipmenteventports.ShipmentEventService
+	invalidator         shipmentports.ShipmentInvalidator
 	driverNotify        *drivernotificationservice.Service
-	tenderGuard         portservices.TenderGuard
-	agentEvents         portservices.AgentEventPublisher
+	tenderGuard         tenderports.TenderGuard
+	agentEvents         agentports.AgentEventPublisher
 }
 
-func New(p Params) portservices.AssignmentService {
+func New(p Params) shipmentports.AssignmentService {
 	return &service{
 		l:                   p.Logger.Named("service.assignment"),
 		db:                  p.DB,
@@ -191,7 +202,7 @@ func workerIDSet(ids []pulid.ID) map[pulid.ID]struct{} {
 
 func (s *service) recordAssignmentEvent(
 	ctx context.Context,
-	params *portservices.RecordShipmentEventParams,
+	params *shipmenteventports.RecordShipmentEventParams,
 ) {
 	if params == nil {
 		return
@@ -232,21 +243,21 @@ func driverDisplayName(assignment *shipment.Assignment) string {
 
 func (s *service) List(
 	ctx context.Context,
-	req *repositories.ListAssignmentsRequest,
+	req *shipmentports.ListAssignmentsRequest,
 ) (*pagination.ListResult[*shipment.Assignment], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *service) Get(
 	ctx context.Context,
-	req *repositories.GetAssignmentByIDRequest,
+	req *shipmentports.GetAssignmentByIDRequest,
 ) (*shipment.Assignment, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *service) AssignToMove(
 	ctx context.Context,
-	req *repositories.AssignShipmentMoveRequest,
+	req *shipmentports.AssignShipmentMoveRequest,
 ) (*shipment.Assignment, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
@@ -277,10 +288,10 @@ func (s *service) AssignToMove(
 			driverDisplayName(result),
 			shipmenteventservice.ActorFor(req.TenantInfo),
 		))
-		portservices.InvalidateShipments(
+		shipmentports.InvalidateShipments(
 			ctx,
 			s.invalidator,
-			portservices.ShipmentInvalidationByUser(req.TenantInfo, ref.ShipmentID, "assigned"),
+			shipmentports.ShipmentInvalidationByUser(req.TenantInfo, ref.ShipmentID, "assigned"),
 		)
 		s.notifyAssignedWorkers(ctx, req.TenantInfo, result, nil)
 	}
@@ -306,7 +317,7 @@ func (s *service) withdrawLiveTender(
 
 func (s *service) Reassign(
 	ctx context.Context,
-	req *repositories.ReassignShipmentMoveRequest,
+	req *shipmentports.ReassignShipmentMoveRequest,
 ) (*shipment.Assignment, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
@@ -350,10 +361,10 @@ func (s *service) Reassign(
 			driverDisplayName(result),
 			shipmenteventservice.ActorFor(req.TenantInfo),
 		))
-		portservices.InvalidateShipments(
+		shipmentports.InvalidateShipments(
 			ctx,
 			s.invalidator,
-			portservices.ShipmentInvalidationByUser(req.TenantInfo, ref.ShipmentID, "reassigned"),
+			shipmentports.ShipmentInvalidationByUser(req.TenantInfo, ref.ShipmentID, "reassigned"),
 		)
 		currentWorkers := assignmentWorkerIDs(result)
 		s.notifyAssignedWorkers(ctx, req.TenantInfo, result, workerIDSet(previousWorkers))
@@ -365,7 +376,7 @@ func (s *service) Reassign(
 
 func (s *service) Unassign(
 	ctx context.Context,
-	req *repositories.UnassignShipmentMoveRequest,
+	req *shipmentports.UnassignShipmentMoveRequest,
 ) error {
 	if multiErr := req.Validate(); multiErr != nil {
 		return multiErr
@@ -382,13 +393,13 @@ func (s *service) Unassign(
 			*ref,
 			shipmenteventservice.ActorFor(req.TenantInfo),
 		))
-		portservices.InvalidateShipments(
+		shipmentports.InvalidateShipments(
 			ctx,
 			s.invalidator,
-			portservices.ShipmentInvalidationByUser(req.TenantInfo, ref.ShipmentID, "unassigned"),
+			shipmentports.ShipmentInvalidationByUser(req.TenantInfo, ref.ShipmentID, "unassigned"),
 		)
 		s.notifyUnassignedWorkers(ctx, req.TenantInfo, previousWorkers, nil)
-		portservices.PublishAgentEvent(ctx, s.agentEvents, portservices.AgentEvent{
+		agentports.PublishAgentEvent(ctx, s.agentEvents, agentports.AgentEvent{
 			Kind:      agent.EventShipmentMoveUnassigned,
 			SubjectID: ref.MoveID,
 			TenantInfo: pagination.TenantInfo{
@@ -403,12 +414,12 @@ func (s *service) Unassign(
 
 func (s *service) unassignWithinTx(
 	ctx context.Context,
-	req *repositories.UnassignShipmentMoveRequest,
+	req *shipmentports.UnassignShipmentMoveRequest,
 ) (*shipmenteventservice.AssignmentRef, []pulid.ID, error) {
 	var ref *shipmenteventservice.AssignmentRef
 	var previousWorkers []pulid.ID
 
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		plan, err := s.planUnassign(txCtx, req)
 		if err != nil {
 			return err
@@ -444,7 +455,7 @@ func (s *service) unassignWithinTx(
 
 func (s *service) CheckWorkerCompliance(
 	ctx context.Context,
-	req *repositories.CheckWorkerComplianceRequest,
+	req *shipmentports.CheckWorkerComplianceRequest,
 ) error {
 	if multiErr := req.Validate(); multiErr != nil {
 		return multiErr
@@ -463,7 +474,7 @@ func (s *service) CheckWorkerCompliance(
 		return nil
 	}
 
-	primaryWorker, err := s.workerRepo.GetByID(ctx, repositories.GetWorkerByIDRequest{
+	primaryWorker, err := s.workerRepo.GetByID(ctx, workerports.GetWorkerByIDRequest{
 		ID:             req.PrimaryWorkerID,
 		TenantInfo:     req.TenantInfo,
 		IncludeProfile: true,
@@ -474,7 +485,7 @@ func (s *service) CheckWorkerCompliance(
 
 	var secondaryWorker *worker.Worker
 	if req.SecondaryWorkerID != nil && !req.SecondaryWorkerID.IsNil() {
-		secondaryWorker, err = s.workerRepo.GetByID(ctx, repositories.GetWorkerByIDRequest{
+		secondaryWorker, err = s.workerRepo.GetByID(ctx, workerports.GetWorkerByIDRequest{
 			ID:             *req.SecondaryWorkerID,
 			TenantInfo:     req.TenantInfo,
 			IncludeProfile: true,
@@ -534,10 +545,10 @@ func (s *service) shipmentMoveHasHazmat(
 		return false, err
 	}
 
-	shp, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	shp, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         move.ShipmentID,
 		TenantInfo: tenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -560,7 +571,7 @@ func (s *service) shipmentMoveHasHazmat(
 		return false, nil
 	}
 
-	commodities, err := s.commodityRepo.GetByIDs(ctx, repositories.GetCommoditiesByIDsRequest{
+	commodities, err := s.commodityRepo.GetByIDs(ctx, commodityports.GetCommoditiesByIDsRequest{
 		TenantInfo:   tenantInfo,
 		CommodityIDs: commodityIDs,
 	})
@@ -586,9 +597,9 @@ func (s *service) upsertAssignment( //nolint:gocognit // legacy workflow
 ) (*shipment.Assignment, error) {
 	var result *shipment.Assignment
 
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		plan, err := s.planAssignment(
-			txCtx, tenantInfo, moveID, repositories.CapabilityLockShare, build,
+			txCtx, tenantInfo, moveID, tenantports.CapabilityLockShare, build,
 		)
 		if err != nil {
 			return err
@@ -611,7 +622,7 @@ func (s *service) upsertAssignment( //nolint:gocognit // legacy workflow
 		if _, err = s.shipmentRepo.Update(txCtx, updatedShipment); err != nil {
 			return err
 		}
-		result, err = s.repo.GetByID(txCtx, &repositories.GetAssignmentByIDRequest{
+		result, err = s.repo.GetByID(txCtx, &shipmentports.GetAssignmentByIDRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: tenantInfo.OrgID,
 				BuID:  tenantInfo.BuID,
@@ -655,7 +666,7 @@ func (s *service) validateTrailerContinuity(
 
 	effective, err := s.continuityRepo.GetEffectiveCurrent(
 		ctx,
-		repositories.GetCurrentEquipmentContinuityRequest{
+		equipmentcontinuityports.GetCurrentEquipmentContinuityRequest{
 			TenantInfo:    tenantInfo,
 			EquipmentType: equipmentcontinuity.EquipmentTypeTrailer,
 			EquipmentID:   *candidate.TrailerID,
@@ -699,7 +710,7 @@ func (s *service) resolveTrailerContinuityMessageParts(
 	trailerID pulid.ID,
 	locationID pulid.ID,
 ) (*trailer.Trailer, *location.Location, error) {
-	trailerEntity, err := s.trailerRepo.GetByID(ctx, repositories.GetTrailerByIDRequest{
+	trailerEntity, err := s.trailerRepo.GetByID(ctx, trailerports.GetTrailerByIDRequest{
 		ID:         trailerID,
 		TenantInfo: tenantInfo,
 	})
@@ -707,7 +718,7 @@ func (s *service) resolveTrailerContinuityMessageParts(
 		return nil, nil, err
 	}
 
-	locationEntity, err := s.locationRepo.GetByID(ctx, repositories.GetLocationByIDRequest{
+	locationEntity, err := s.locationRepo.GetByID(ctx, locationports.GetLocationByIDRequest{
 		ID:         locationID,
 		TenantInfo: tenantInfo,
 	})

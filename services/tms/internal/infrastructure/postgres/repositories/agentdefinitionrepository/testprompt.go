@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/uptrace/bun"
@@ -24,13 +24,13 @@ type testPromptRepository struct {
 	db *postgres.Connection
 }
 
-func NewTestPromptRepository(p TestPromptParams) repositories.AgentTestPromptRepository {
+func NewTestPromptRepository(p TestPromptParams) agentdefinitionports.AgentTestPromptRepository {
 	return &testPromptRepository{db: p.DB}
 }
 
 func (r *testPromptRepository) List(
 	ctx context.Context,
-	req *repositories.ListAgentTestPromptsRequest,
+	req *agentdefinitionports.ListAgentTestPromptsRequest,
 ) ([]*agentdefinition.TestPrompt, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentdefinition.TestPrompt, error) {
 		cols := buncolgen.TestPromptColumns
@@ -54,7 +54,7 @@ func (r *testPromptRepository) List(
 
 func (r *testPromptRepository) Count(
 	ctx context.Context,
-	req *repositories.ListAgentTestPromptsRequest,
+	req *agentdefinitionports.ListAgentTestPromptsRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		cols := buncolgen.TestPromptColumns
@@ -84,7 +84,7 @@ func (r *testPromptRepository) Create(ctx context.Context, prompt *agentdefiniti
 
 func (r *testPromptRepository) Delete(
 	ctx context.Context,
-	req *repositories.DeleteAgentTestPromptRequest,
+	req *agentdefinitionports.DeleteAgentTestPromptRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.TestPromptColumns

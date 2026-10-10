@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/tablechangealert"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/tablechangealertports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,14 +16,14 @@ type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	SubRepo       repositories.TCASubscriptionRepository
-	AllowlistRepo repositories.TCAAllowlistRepository
+	SubRepo       tablechangealertports.TCASubscriptionRepository
+	AllowlistRepo tablechangealertports.TCAAllowlistRepository
 }
 
 type Service struct {
 	l             *zap.Logger
-	subRepo       repositories.TCASubscriptionRepository
-	allowlistRepo repositories.TCAAllowlistRepository
+	subRepo       tablechangealertports.TCASubscriptionRepository
+	allowlistRepo tablechangealertports.TCAAllowlistRepository
 }
 
 func New(p Params) *Service {
@@ -87,21 +87,21 @@ func (s *Service) UpdateSubscription(
 
 func (s *Service) GetSubscriptionByID(
 	ctx context.Context,
-	req repositories.GetTCASubscriptionByIDRequest,
+	req tablechangealertports.GetTCASubscriptionByIDRequest,
 ) (*tablechangealert.TCASubscription, error) {
 	return s.subRepo.GetByID(ctx, req)
 }
 
 func (s *Service) ListSubscriptions(
 	ctx context.Context,
-	req *repositories.ListTCASubscriptionsRequest,
+	req *tablechangealertports.ListTCASubscriptionsRequest,
 ) (*pagination.ListResult[*tablechangealert.TCASubscription], error) {
 	return s.subRepo.List(ctx, req)
 }
 
 func (s *Service) ListSubscriptionsConnection(
 	ctx context.Context,
-	req *repositories.ListTCASubscriptionConnectionRequest,
+	req *tablechangealertports.ListTCASubscriptionConnectionRequest,
 ) (*pagination.CursorListResult[*tablechangealert.TCASubscription], error) {
 	return s.subRepo.ListConnection(ctx, req)
 }

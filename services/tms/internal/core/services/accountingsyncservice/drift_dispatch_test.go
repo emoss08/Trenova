@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,7 +19,7 @@ func (h *harness) driftRecord(
 	revision int64,
 	dated int64,
 ) *accountingsync.AccountingSyncRecord {
-	record := NewRecordFor(h.conn, &services.AccountingSyncEnqueueRequest{
+	record := NewRecordFor(h.conn, &accountingsyncports.AccountingSyncEnqueueRequest{
 		TenantInfo:   h.tenant,
 		ObjectType:   objectType,
 		ObjectID:     objectID,
@@ -33,11 +33,11 @@ func (h *harness) driftRecord(
 	return record
 }
 
-func updatedSalesDoc(t *testing.T, h *harness) *services.AccountingSalesDocument {
+func updatedSalesDoc(t *testing.T, h *harness) *accountingsyncports.AccountingSalesDocument {
 	t.Helper()
 	calls := h.writer.callsTo("UpdateSalesDocument")
 	require.Len(t, calls, 1)
-	doc, ok := calls[0].doc.(*services.AccountingSalesDocument)
+	doc, ok := calls[0].doc.(*accountingsyncports.AccountingSalesDocument)
 	require.True(t, ok)
 	return doc
 }
@@ -94,7 +94,7 @@ func TestUpdateOfAnInvoicePaidInOneProviderPaymentWithOthersIsRefused(t *testing
 
 	h := newHarness(t)
 	inv := mappedInvoice(t, h)
-	created := NewRecordFor(h.conn, services.InvoiceSyncRequest(inv, accountingsync.PostedSourceEvent(inv.BillType)), inv.InvoiceDate)
+	created := NewRecordFor(h.conn, accountingsyncports.InvoiceSyncRequest(inv, accountingsync.PostedSourceEvent(inv.BillType)), inv.InvoiceDate)
 	created.MarkSynced(&accountingsync.SyncResult{
 		ExternalID:   "qb-inv-1",
 		ExternalRefs: map[string]string{accountingsync.ExternalRefCombined: "qb-pay-7"},
@@ -115,7 +115,7 @@ func TestRecreateSendsTheInvoiceAgainAndLaterVoidsUseTheNewDocument(t *testing.T
 
 	h := newHarness(t)
 	inv := mappedInvoice(t, h)
-	created := NewRecordFor(h.conn, services.InvoiceSyncRequest(inv, accountingsync.PostedSourceEvent(inv.BillType)), inv.InvoiceDate)
+	created := NewRecordFor(h.conn, accountingsyncports.InvoiceSyncRequest(inv, accountingsync.PostedSourceEvent(inv.BillType)), inv.InvoiceDate)
 	created.MarkSynced(&accountingsync.SyncResult{
 		ExternalID:   "qb-inv-1",
 		ExternalRefs: map[string]string{accountingsync.ExternalRefDocument: "qb-inv-1"},
@@ -128,7 +128,7 @@ func TestRecreateSendsTheInvoiceAgainAndLaterVoidsUseTheNewDocument(t *testing.T
 
 	calls := h.writer.callsTo("CreateSalesDocument")
 	require.Len(t, calls, 1)
-	doc, ok := calls[0].doc.(*services.AccountingSalesDocument)
+	doc, ok := calls[0].doc.(*accountingsyncports.AccountingSalesDocument)
 	require.True(t, ok)
 	assert.Empty(t, doc.Refs[accountingsync.ExternalRefDocument],
 		"a recreate never reuses the document the provider lost")
@@ -142,7 +142,7 @@ func TestRecreateSendsTheInvoiceAgainAndLaterVoidsUseTheNewDocument(t *testing.T
 
 	voids := h.writer.callsTo("VoidSalesDocument")
 	require.Len(t, voids, 1)
-	ref, ok := voids[0].doc.(*services.AccountingDocumentRef)
+	ref, ok := voids[0].doc.(*accountingsyncports.AccountingDocumentRef)
 	require.True(t, ok)
 	assert.Equal(t, recreated.ExternalID, ref.ExternalID, "the void acts on the document that exists now")
 	assert.Equal(t, accountingsync.SyncStatusSynced, h.records.get(void.ID).Status)
@@ -169,7 +169,7 @@ func TestBillUpdateAndBillPaymentUpdateNameTheSyncedDocuments(t *testing.T) {
 
 	bills := h.writer.callsTo("UpdatePurchaseDocument")
 	require.Len(t, bills, 1)
-	bill, ok := bills[0].doc.(*services.AccountingPurchaseDocument)
+	bill, ok := bills[0].doc.(*accountingsyncports.AccountingPurchaseDocument)
 	require.True(t, ok)
 	assert.Equal(t, "qb-bill-1", bill.ExternalID)
 	assert.Equal(t, billUpdate.RequestID, bill.RequestID)
@@ -177,7 +177,7 @@ func TestBillUpdateAndBillPaymentUpdateNameTheSyncedDocuments(t *testing.T) {
 
 	payments := h.writer.callsTo("UpdateBillPayment")
 	require.Len(t, payments, 1)
-	payment, ok := payments[0].doc.(*services.AccountingBillPaymentDocument)
+	payment, ok := payments[0].doc.(*accountingsyncports.AccountingBillPaymentDocument)
 	require.True(t, ok)
 	assert.Equal(t, "qb-bp-1", payment.ExternalID)
 	assert.Equal(t, "qb-bill-1", payment.BillExternalID)

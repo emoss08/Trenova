@@ -3,13 +3,12 @@ package tenderservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/tenderjobs/tendercontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/tenderjobs/tendercontract"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -81,7 +80,7 @@ func (s *Service) CancelLiveTenderForMove(
 	moveID pulid.ID,
 	reason string,
 ) error {
-	live, err := s.repo.GetLiveByMoveID(ctx, repositories.GetLiveTenderByMoveRequest{
+	live, err := s.repo.GetLiveByMoveID(ctx, tenderports.GetLiveTenderByMoveRequest{
 		TenantInfo: tenantInfo,
 		MoveID:     moveID,
 	})
@@ -138,7 +137,7 @@ func (s *Service) CancelDirect(
 ) error {
 	now := timeutils.NowUnix()
 
-	moved, err := s.repo.UpdateTenderStatus(ctx, &repositories.UpdateTenderStatusRequest{
+	moved, err := s.repo.UpdateTenderStatus(ctx, &tenderports.UpdateTenderStatusRequest{
 		TenantInfo: tenantInfo,
 		TenderID:   entity.ID,
 		FromStatus: []tender.Status{
@@ -159,7 +158,7 @@ func (s *Service) CancelDirect(
 	}
 
 	for _, withdrawal := range offerWithdrawals {
-		if _, err = s.repo.BulkUpdateOfferStatus(ctx, &repositories.BulkOfferStatusRequest{
+		if _, err = s.repo.BulkUpdateOfferStatus(ctx, &tenderports.BulkOfferStatusRequest{
 			TenantInfo: tenantInfo,
 			TenderID:   entity.ID,
 			FromStatus: []tender.OfferStatus{withdrawal.from},
@@ -199,10 +198,10 @@ func (s *Service) CancelDirect(
 		Previous:   entity,
 		Current:    withdrawnTender(entity, tenantInfo, reason, now),
 	})
-	portservices.InvalidateShipments(
+	shipmentports.InvalidateShipments(
 		ctx,
 		s.invalidator,
-		portservices.ShipmentInvalidationByUser(tenantInfo, entity.ShipmentID, "tender_canceled"),
+		shipmentports.ShipmentInvalidationByUser(tenantInfo, entity.ShipmentID, "tender_canceled"),
 	)
 
 	return nil

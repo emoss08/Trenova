@@ -1,6 +1,7 @@
 package ratesimulationservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/rateagreementportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
@@ -24,7 +25,7 @@ func TestPlanCreate_NamesTheAgreementAndSavesNothing(t *testing.T) {
 		PartyType: rateagreement.PartyTypeCustomer,
 		Status:    rateagreement.StatusDraft,
 	}
-	agreements := mocks.NewMockRateAgreementRepository(t)
+	agreements := rateagreementportsmock.NewMockRateAgreementRepository(t)
 	agreements.EXPECT().GetByID(mock.Anything, mock.Anything).Return(agreement, nil).Once()
 	agreements.EXPECT().
 		GetByID(mock.Anything, mock.Anything).

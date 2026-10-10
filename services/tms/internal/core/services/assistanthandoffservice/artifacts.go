@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
 )
@@ -23,7 +23,7 @@ func (s *Service) pinnedArtifacts(
 	if s.artifacts == nil {
 		return nil, nil
 	}
-	page, err := s.artifacts.ListPage(ctx, repositories.ListArtifactsRequest{
+	page, err := s.artifacts.ListPage(ctx, assistantartifactports.ListArtifactsRequest{
 		ThreadID:   origin.ID,
 		TenantInfo: tenant,
 		Limit:      artifactScan,

@@ -7,9 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -34,7 +34,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.ChargeAllocationRepository {
+func New(p Params) shipmentports.ChargeAllocationRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.charge-allocation-repository"),
@@ -342,7 +342,7 @@ func (r *repository) dropOrphans(
 func (r *repository) SyncForOrderCharge(
 	ctx context.Context,
 	tx bun.IDB,
-	req *repositories.SyncOrderChargeAllocationsRequest,
+	req *shipmentports.SyncOrderChargeAllocationsRequest,
 ) error {
 	if req == nil || req.Allocations == nil {
 		return nil
@@ -428,7 +428,7 @@ func (r *repository) SyncForOrderCharge(
 
 func (r *repository) ListByShipmentIDs(
 	ctx context.Context,
-	req *repositories.ListChargeAllocationsByShipmentIDsRequest,
+	req *shipmentports.ListChargeAllocationsByShipmentIDsRequest,
 ) (map[pulid.ID][]*shipment.ChargeAllocation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID][]*shipment.ChargeAllocation, error) {
 		result := make(map[pulid.ID][]*shipment.ChargeAllocation, len(req.ShipmentIDs))
@@ -464,7 +464,7 @@ func (r *repository) ListByShipmentIDs(
 
 func (r *repository) ListByOrderChargeIDs(
 	ctx context.Context,
-	req *repositories.ListChargeAllocationsByOrderChargeIDsRequest,
+	req *shipmentports.ListChargeAllocationsByOrderChargeIDsRequest,
 ) (map[pulid.ID][]*shipment.ChargeAllocation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID][]*shipment.ChargeAllocation, error) {
 		result := make(map[pulid.ID][]*shipment.ChargeAllocation, len(req.OrderChargeIDs))
@@ -500,7 +500,7 @@ func (r *repository) ListByOrderChargeIDs(
 
 func (r *repository) MarkInvoiced(
 	ctx context.Context,
-	req *repositories.MarkChargeAllocationsInvoicedRequest,
+	req *shipmentports.MarkChargeAllocationsInvoicedRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
 		if req == nil || len(req.AllocationIDs) == 0 || req.InvoiceID.IsNil() {
@@ -529,7 +529,7 @@ func (r *repository) MarkInvoiced(
 
 func (r *repository) ClearInvoice(
 	ctx context.Context,
-	req *repositories.ClearChargeAllocationsInvoiceRequest,
+	req *shipmentports.ClearChargeAllocationsInvoiceRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
 		if req == nil || req.InvoiceID.IsNil() {

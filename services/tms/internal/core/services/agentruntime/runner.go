@@ -7,13 +7,16 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentguard"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -28,62 +31,62 @@ type Params struct {
 	fx.In
 
 	Logger      *zap.Logger
-	Completion  serviceports.CompletionService
-	QueryTools  serviceports.AgentQueryToolRegistry
-	ActionTools serviceports.AgentToolRegistry
-	Permissions serviceports.PermissionEngine
+	Completion  agentports.CompletionService
+	QueryTools  agentports.AgentQueryToolRegistry
+	ActionTools agentports.AgentToolRegistry
+	Permissions permissionports.PermissionEngine
 	Catalog     *agenttoolcatalog.Catalog
 	// Versions is optional. Without it proposals are still made, just without
 	// the record pinned; with it the executor can refuse a change to a record
 	// that moved on since the proposal.
-	Versions serviceports.RecordVersionReader `optional:"true"`
+	Versions agentports.RecordVersionReader `optional:"true"`
 	// Budgets is optional. With it an automatic write past its tool's daily
 	// cap is refused before it runs.
-	Budgets serviceports.AgentBudgetService       `optional:"true"`
-	Trust   repositories.AgentToolTrustRepository `optional:"true"`
+	Budgets agentports.AgentBudgetService       `optional:"true"`
+	Trust   agentports.AgentToolTrustRepository `optional:"true"`
 	// Extensions is optional. Without it no extension's tools are offered.
-	Extensions serviceports.AgentExtensionGate `optional:"true"`
+	Extensions agentextensionports.AgentExtensionGate `optional:"true"`
 	// Memories is optional. With it every memory a prompt carries is
 	// counted as used; without it the prompt still carries them.
-	Memories       serviceports.AgentMemoryService `optional:"true"`
-	Vectorizer     serviceports.QueryVectorizer    `optional:"true"`
-	CatalogVectors serviceports.CatalogVectorIndex `optional:"true"`
+	Memories       agentports.AgentMemoryService `optional:"true"`
+	Vectorizer     agentports.QueryVectorizer    `optional:"true"`
+	CatalogVectors agentports.CatalogVectorIndex `optional:"true"`
 	// Previews is optional. With it a held write's target is pinned, and
 	// what it would do kept as its baseline, in one read-only snapshot;
 	// without it the target is pinned alone.
-	Previews serviceports.ProposalPreviewService `optional:"true"`
+	Previews agentports.ProposalPreviewService `optional:"true"`
 	// Rules is optional. With it a tool an organization holds lower than its
 	// declared rule is decided and tainted by the organization's rule.
-	Rules serviceports.ToolRuleOverrides `optional:"true"`
+	Rules agentports.ToolRuleOverrides `optional:"true"`
 	// Changes is optional. With it a turn is told when a record it is
 	// working with changes elsewhere while it works.
-	Changes serviceports.RecordChangeFeed `optional:"true"`
+	Changes agentports.RecordChangeFeed `optional:"true"`
 	// Metrics is optional. With it every tool call is counted by tool and by
 	// what became of it; without it nothing is counted.
 	Metrics *metrics.Registry `optional:"true"`
 	// Definitions is optional. With it a search for a tool the agent does not
 	// hold names the person's other agents that hold it.
-	Definitions repositories.AgentDefinitionRepository `optional:"true"`
+	Definitions agentdefinitionports.AgentDefinitionRepository `optional:"true"`
 }
 
 type Service struct {
 	logger      *zap.Logger
-	completion  serviceports.CompletionService
-	queryTools  serviceports.AgentQueryToolRegistry
-	actionTools serviceports.AgentToolRegistry
-	permissions serviceports.PermissionEngine
-	definitions repositories.AgentDefinitionRepository
+	completion  agentports.CompletionService
+	queryTools  agentports.AgentQueryToolRegistry
+	actionTools agentports.AgentToolRegistry
+	permissions permissionports.PermissionEngine
+	definitions agentdefinitionports.AgentDefinitionRepository
 	catalog     *agenttoolcatalog.Catalog
-	versions    serviceports.RecordVersionReader
-	budgets     serviceports.AgentBudgetService
-	trust       repositories.AgentToolTrustRepository
-	extensions  serviceports.AgentExtensionGate
-	memories    serviceports.AgentMemoryService
-	vectorizer  serviceports.QueryVectorizer
-	vectors     serviceports.CatalogVectorIndex
-	previews    serviceports.ProposalPreviewService
-	rules       serviceports.ToolRuleOverrides
-	changes     serviceports.RecordChangeFeed
+	versions    agentports.RecordVersionReader
+	budgets     agentports.AgentBudgetService
+	trust       agentports.AgentToolTrustRepository
+	extensions  agentextensionports.AgentExtensionGate
+	memories    agentports.AgentMemoryService
+	vectorizer  agentports.QueryVectorizer
+	vectors     agentports.CatalogVectorIndex
+	previews    agentports.ProposalPreviewService
+	rules       agentports.ToolRuleOverrides
+	changes     agentports.RecordChangeFeed
 	metrics     *metrics.Assistant
 	// arguments holds each tool's compiled schema, against which every
 	// call's arguments are checked before the tool sees them.
@@ -116,11 +119,11 @@ func New(p Params) *Service {
 
 func (s *Service) Run(
 	ctx context.Context,
-	req *serviceports.RunRequest,
-) (*serviceports.RunResult, error) {
+	req *agentports.RunRequest,
+) (*agentports.RunResult, error) {
 	emit := req.Emit
 	if emit == nil {
-		emit = func(serviceports.StreamEvent) {}
+		emit = func(kernelports.StreamEvent) {}
 	}
 
 	return s.Drive(s.OpenTurn(ctx, req), &localEffects{
@@ -136,7 +139,7 @@ func (s *Service) Run(
 //
 // Nothing here reaches outside the turn except through fx, which is what lets
 // the same loop run in process and as durable workflow code.
-func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error) {
+func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) {
 	definition := t.req.Definition
 	budget := t.budget
 	result := t.result
@@ -166,22 +169,22 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 			)
 			if retries < maxReplyRetries {
 				retries++
-				fx.Emit(serviceports.StreamEvent{
-					Event: serviceports.AssistantEventRetrying,
-					Data: serviceports.AssistantRetryingEvent{
+				fx.Emit(kernelports.StreamEvent{
+					Event: agentports.AssistantEventRetrying,
+					Data: agentports.AssistantRetryingEvent{
 						Attempt: retries,
 						Reason:  loopRestartReason,
-						Kind:    serviceports.RetryKindRestart,
+						Kind:    agentports.RetryKindRestart,
 					},
 				})
 				continue
 			}
-			fx.Emit(serviceports.StreamEvent{
-				Event: serviceports.AssistantEventRetrying,
-				Data: serviceports.AssistantRetryingEvent{
+			fx.Emit(kernelports.StreamEvent{
+				Event: agentports.AssistantEventRetrying,
+				Data: agentports.AssistantRetryingEvent{
 					Attempt: retries + 1,
 					Reason:  loopRestartReason,
-					Kind:    serviceports.RetryKindRestart,
+					Kind:    agentports.RetryKindRestart,
 				},
 			})
 			fx.Emit(deltaEvent(loopedReply))
@@ -253,15 +256,15 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 		result.Messages = append(result.Messages, assistantTurn)
 		// The thinking goes back with the calls it produced. Anthropic and the
 		// Responses API both refuse a tool result whose reasoning is missing.
-		t.messages = append(t.messages, serviceports.Message{
-			Role:      serviceports.RoleAssistant,
+		t.messages = append(t.messages, agentports.Message{
+			Role:      agentports.RoleAssistant,
 			Content:   completion.Text,
 			ToolCalls: completion.ToolCalls,
 			Reasoning: completion.Reasoning,
 		})
-		fx.Emit(serviceports.StreamEvent{
-			Event: serviceports.AssistantEventMessage,
-			Data: serviceports.AssistantMessageEvent{
+		fx.Emit(kernelports.StreamEvent{
+			Event: agentports.AssistantEventMessage,
+			Data: agentports.AssistantMessageEvent{
 				Content:      assistantTurn.Content,
 				ToolCalls:    s.callsWithEffects(assistantTurn.ToolCalls),
 				Model:        assistantTurn.Model,
@@ -271,9 +274,9 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 		})
 
 		for _, call := range completion.ToolCalls {
-			fx.Emit(serviceports.StreamEvent{
-				Event: serviceports.AssistantEventToolStarted,
-				Data: serviceports.AssistantToolStartedEvent{
+			fx.Emit(kernelports.StreamEvent{
+				Event: agentports.AssistantEventToolStarted,
+				Data: agentports.AssistantToolStartedEvent{
 					CallID:    call.ID,
 					Name:      call.Name,
 					Arguments: call.Arguments,
@@ -549,13 +552,13 @@ const budgetSpentNote = "You have used every tool call this turn allows. Answer 
 func (s *Service) finalAnswer(
 	t *Turn,
 	fx TurnEffects,
-	result *serviceports.RunResult,
+	result *agentports.RunResult,
 	note string,
-) *serviceports.ChatCompletionResult {
+) *agentports.ChatCompletionResult {
 	req := t.completionRequest()
 	req.Tools = nil
-	req.Messages = append(slices.Clone(req.Messages), serviceports.Message{
-		Role:    serviceports.RoleUser,
+	req.Messages = append(slices.Clone(req.Messages), agentports.Message{
+		Role:    agentports.RoleUser,
 		Content: note,
 	})
 
@@ -582,12 +585,12 @@ func (s *Service) finalAnswer(
 func (s *Service) recordToolResult(
 	t *Turn,
 	fx TurnEffects,
-	call serviceports.ToolCall,
+	call agentports.ToolCall,
 	outcome toolOutcome,
 ) {
 	result := t.result
 	if outcome.failed && !outcome.dispatched && outcome.verdict != "" {
-		result.LoopRefusals = append(result.LoopRefusals, serviceports.LoopRefusal{
+		result.LoopRefusals = append(result.LoopRefusals, agentports.LoopRefusal{
 			CallID:   call.ID,
 			ToolName: call.Name,
 			Verdict:  outcome.verdict,
@@ -605,9 +608,9 @@ func (s *Service) recordToolResult(
 	effect := s.ToolEffect(call.Name)
 	summary := summarizeOutcome(call, outcome)
 
-	fx.Emit(serviceports.StreamEvent{
-		Event: serviceports.AssistantEventToolFinished,
-		Data: serviceports.AssistantToolFinishedEvent{
+	fx.Emit(kernelports.StreamEvent{
+		Event: agentports.AssistantEventToolFinished,
+		Data: agentports.AssistantToolFinishedEvent{
 			CallID:        call.ID,
 			Name:          call.Name,
 			Failed:        outcome.failed,
@@ -634,8 +637,8 @@ func (s *Service) recordToolResult(
 		DelegateReport: outcome.delegateReport,
 		CreatedAt:      fx.Now(),
 	})
-	t.messages = append(t.messages, serviceports.Message{
-		Role:       serviceports.RoleTool,
+	t.messages = append(t.messages, agentports.Message{
+		Role:       agentports.RoleTool,
 		Content:    outcome.content,
 		ToolCallID: call.ID,
 		ToolName:   call.Name,
@@ -649,12 +652,12 @@ func NewCallID() string { return "call_" + pulid.MustNew("tc_").String() }
 // observe hands a finished call to the observer and folds what it showed the
 // person back into the result the model reads.
 func (s *Service) observe(
-	observe serviceports.ToolObserver,
-	call serviceports.ToolCall,
+	observe agentports.ToolObserver,
+	call agentports.ToolCall,
 	outcome toolOutcome,
 	earlier []string,
 ) toolOutcome {
-	if request, requested := outcome.data.(serviceports.DecisionRequest); requested &&
+	if request, requested := outcome.data.(agentports.DecisionRequest); requested &&
 		outcome.publishes {
 		return decisionRequested(observe, &call, request)
 	}
@@ -665,7 +668,7 @@ func (s *Service) observe(
 		return outcome
 	}
 
-	shown, err := observe(serviceports.ToolObservation{
+	shown, err := observe(agentports.ToolObservation{
 		Call:    call,
 		Data:    outcome.data,
 		Failed:  outcome.failed,
@@ -698,10 +701,10 @@ func (s *Service) observe(
 }
 
 func (s *Service) finish(
-	result *serviceports.RunResult,
-	completion *serviceports.ChatCompletionResult,
+	result *agentports.RunResult,
+	completion *agentports.ChatCompletionResult,
 	fx TurnEffects,
-) *serviceports.RunResult {
+) *agentports.RunResult {
 	guarded, outputDecision := agentguard.EvaluateOutput(completion.Text)
 	if outputDecision.Altered {
 		s.logger.Warn("agent reply altered by output guard",
@@ -754,7 +757,7 @@ func (s *Service) finish(
 const outputAlteredReason = "The reply held a code block, which was left out."
 
 // fallbackOf is the provider asked first, when another one gave the reply.
-func fallbackOf(completion *serviceports.ChatCompletionResult) *conversation.ProviderFallback {
+func fallbackOf(completion *agentports.ChatCompletionResult) *conversation.ProviderFallback {
 	if completion == nil || completion.FallbackFrom == nil {
 		return nil
 	}
@@ -771,10 +774,10 @@ func fallbackOf(completion *serviceports.ChatCompletionResult) *conversation.Pro
 // cannedCompletion stands a fixed line in for a reply the model could not
 // give, keeping the provider and usage the attempt was charged under.
 func cannedCompletion(
-	attempt *serviceports.ChatCompletionResult,
+	attempt *agentports.ChatCompletionResult,
 	text string,
-) *serviceports.ChatCompletionResult {
-	canned := &serviceports.ChatCompletionResult{Text: text}
+) *agentports.ChatCompletionResult {
+	canned := &agentports.ChatCompletionResult{Text: text}
 	if attempt != nil {
 		canned.ModelIdentifier = attempt.ModelIdentifier
 		canned.ProviderID = attempt.ProviderID
@@ -844,7 +847,7 @@ func (s *Service) summarize(
 }
 
 func batchOf(tool any) string {
-	if batch, ok := tool.(serviceports.BatchTool); ok {
+	if batch, ok := tool.(agentports.BatchTool); ok {
 		return batch.BatchOf()
 	}
 
@@ -860,7 +863,7 @@ func tierSetFor(definition *agentdefinition.Definition, name string) bool {
 }
 
 func recipeOf(tool any) []string {
-	if recipe, ok := tool.(serviceports.RecipeTool); ok {
+	if recipe, ok := tool.(agentports.RecipeTool); ok {
 		return recipe.Recipe()
 	}
 
@@ -876,7 +879,7 @@ func recipeOf(tool any) []string {
 // candidates before any preference is applied — so this decides ordering, never
 // access.
 func preferredProvider(
-	req *serviceports.RunRequest,
+	req *agentports.RunRequest,
 	definition *agentdefinition.Definition,
 ) pulid.ID {
 	if !req.PreferredProviderID.IsNil() {
@@ -890,7 +893,7 @@ func preferredProvider(
 // another kind knows not to send it back as its own.
 // tagToolCalls names the provider on each call it made, so what the
 // provider attached to the call is replayed to it and to nobody else.
-func tagToolCalls(completion *serviceports.ChatCompletionResult) {
+func tagToolCalls(completion *agentports.ChatCompletionResult) {
 	for idx := range completion.ToolCalls {
 		completion.ToolCalls[idx].ProviderID = completion.ProviderID
 	}
@@ -939,7 +942,7 @@ type callIDMinter struct {
 // before them was overwritten by the next call_0. So a synthesized id is
 // always replaced. A provider's own unique ids are kept as they are.
 func distinctCallIDs(
-	completion *serviceports.ChatCompletionResult,
+	completion *agentports.ChatCompletionResult,
 	used map[string]struct{},
 	minter callIDMinter,
 ) {
@@ -958,7 +961,7 @@ func distinctCallIDs(
 	}
 }
 
-func tagReasoning(completion *serviceports.ChatCompletionResult) {
+func tagReasoning(completion *agentports.ChatCompletionResult) {
 	if completion.Reasoning != nil && completion.Reasoning.ProviderKind == "" {
 		completion.Reasoning.ProviderKind = string(completion.ProviderKind)
 	}

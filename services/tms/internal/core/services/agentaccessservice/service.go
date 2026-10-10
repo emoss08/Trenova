@@ -7,11 +7,13 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,7 +26,7 @@ import (
 const maxGrantsPerWrite = 100
 
 type toolPolicies interface {
-	Get(name string) (services.ToolPolicy, bool)
+	Get(name string) (agentports.ToolPolicy, bool)
 }
 
 func policyLookup(catalog *agenttoolpolicy.Catalog) toolPolicies {
@@ -39,34 +41,34 @@ type Params struct {
 	fx.In
 
 	Logger          *zap.Logger
-	DB              ports.DBConnection
-	Definitions     repositories.AgentDefinitionRepository
-	Grants          repositories.RoleAgentGrantRepository
-	Roles           repositories.RoleRepository
-	PermissionCache repositories.PermissionCacheRepository
-	Permissions     services.PermissionEngine
-	AuditService    services.AuditService
-	Runtime         services.AgentRuntime
+	DB              kernelports.DBConnection
+	Definitions     agentdefinitionports.AgentDefinitionRepository
+	Grants          permissionports.RoleAgentGrantRepository
+	Roles           permissionports.RoleRepository
+	PermissionCache permissionports.PermissionCacheRepository
+	Permissions     permissionports.PermissionEngine
+	AuditService    auditports.AuditService
+	Runtime         agentports.AgentRuntime
 	Policies        *agenttoolpolicy.Catalog `optional:"true"`
 	Registry        *permission.Registry
 }
 
 type Service struct {
 	l           *zap.Logger
-	db          ports.DBConnection
-	definitions repositories.AgentDefinitionRepository
-	grants      repositories.RoleAgentGrantRepository
-	roles       repositories.RoleRepository
-	cache       repositories.PermissionCacheRepository
-	permissions services.PermissionEngine
-	audit       services.AuditService
-	runtime     services.AgentRuntime
+	db          kernelports.DBConnection
+	definitions agentdefinitionports.AgentDefinitionRepository
+	grants      permissionports.RoleAgentGrantRepository
+	roles       permissionports.RoleRepository
+	cache       permissionports.PermissionCacheRepository
+	permissions permissionports.PermissionEngine
+	audit       auditports.AuditService
+	runtime     agentports.AgentRuntime
 	policies    toolPolicies
 	sensitive   SensitiveToolRule
 }
 
 //nolint:gocritic // dependency injection
-func New(p Params) services.AgentAccessService {
+func New(p Params) agentdefinitionports.AgentAccessService {
 	return &Service{
 		l:           p.Logger.Named("service.agentaccess"),
 		db:          p.DB,
@@ -84,15 +86,15 @@ func New(p Params) services.AgentAccessService {
 
 func (s *Service) SetAgentAccess(
 	ctx context.Context,
-	req *services.SetAgentAccessRequest,
-	actor *services.RequestActor,
-) (*services.AgentAccess, error) {
+	req *agentdefinitionports.SetAgentAccessRequest,
+	actor *permissionports.RequestActor,
+) (*agentdefinitionports.AgentAccess, error) {
 	if err := s.authorize(ctx, actor, req.TenantInfo,
 		permission.ResourceAgentDefinition, permission.ResourceRole); err != nil {
 		return nil, err
 	}
 
-	roleIDs, err := validateAccessWrite(services.AgentAccessWrite{
+	roleIDs, err := validateAccessWrite(agentdefinitionports.AgentAccessWrite{
 		Mode:    req.Mode,
 		RoleIDs: req.RoleIDs,
 	})
@@ -101,8 +103,8 @@ func (s *Service) SetAgentAccess(
 	}
 
 	var written *accessWrite
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		definition, txErr := s.definitions.GetByID(txCtx, repositories.GetAgentDefinitionByIDRequest{
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		definition, txErr := s.definitions.GetByID(txCtx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 			ID:         req.AgentID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -126,7 +128,7 @@ func (s *Service) SetAgentAccess(
 
 	s.settleAccess(ctx, req.TenantInfo, written, actor)
 
-	return &services.AgentAccess{Agent: written.definition, Roles: written.roles}, nil
+	return &agentdefinitionports.AgentAccess{Agent: written.definition, Roles: written.roles}, nil
 }
 
 // SaveWithAccess saves an agent and who may use it in one transaction, so an
@@ -138,8 +140,8 @@ func (s *Service) SetAgentAccess(
 // save an agent whose access they did not touch.
 func (s *Service) SaveWithAccess(
 	ctx context.Context,
-	req *services.SaveAgentWithAccessRequest,
-	actor *services.RequestActor,
+	req *agentdefinitionports.SaveAgentWithAccessRequest,
+	actor *permissionports.RequestActor,
 ) (*agentdefinition.Definition, error) {
 	if req.Save == nil {
 		return nil, errortypes.NewBusinessError("Nothing was given to save")
@@ -159,7 +161,7 @@ func (s *Service) SaveWithAccess(
 	}
 
 	var written *accessWrite
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		saved, txErr := req.Save(txCtx)
 		if txErr != nil {
 			return txErr
@@ -203,7 +205,7 @@ type accessChange struct {
 	definition *agentdefinition.Definition
 	mode       agentdefinition.AccessMode
 	roleIDs    []pulid.ID
-	actor      *services.RequestActor
+	actor      *permissionports.RequestActor
 }
 
 // accessWrite is what setting who may use an agent changed.
@@ -212,7 +214,7 @@ type accessWrite struct {
 	roles        []*permission.Role
 	roleIDs      []pulid.ID
 	previousMode agentdefinition.AccessMode
-	change       repositories.GrantChange
+	change       permissionports.GrantChange
 }
 
 func (w *accessWrite) changed() bool {
@@ -235,7 +237,7 @@ func (s *Service) applyAccess(ctx context.Context, req accessChange) (*accessWri
 
 	previousMode := definition.EffectiveAccessMode()
 	if definition.AccessMode != req.mode {
-		if err = s.definitions.SetAccessMode(ctx, repositories.SetAgentDefinitionAccessModeRequest{
+		if err = s.definitions.SetAccessMode(ctx, agentdefinitionports.SetAgentDefinitionAccessModeRequest{
 			ID:         definition.ID,
 			TenantInfo: req.tenant,
 			Mode:       req.mode,
@@ -244,7 +246,7 @@ func (s *Service) applyAccess(ctx context.Context, req accessChange) (*accessWri
 		}
 	}
 
-	change, err := s.grants.ReplaceForAgent(ctx, repositories.ReplaceAgentGrantsRequest{
+	change, err := s.grants.ReplaceForAgent(ctx, permissionports.ReplaceAgentGrantsRequest{
 		TenantInfo: req.tenant,
 		AgentID:    definition.ID,
 		RoleIDs:    req.roleIDs,
@@ -272,7 +274,7 @@ func (s *Service) settleAccess(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	written *accessWrite,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) {
 	s.invalidate(ctx, written.change.Added, written.change.Removed)
 	if written.changed() {
@@ -294,7 +296,7 @@ func (s *Service) settleAccess(
 	})
 }
 
-func validateAccessWrite(access services.AgentAccessWrite) ([]pulid.ID, error) {
+func validateAccessWrite(access agentdefinitionports.AgentAccessWrite) ([]pulid.ID, error) {
 	roleIDs, err := validateIDs(idList{
 		field:     "roleIds",
 		ids:       access.RoleIDs,
@@ -315,9 +317,9 @@ func validateAccessWrite(access services.AgentAccessWrite) ([]pulid.ID, error) {
 
 func (s *Service) SetRoleAgents(
 	ctx context.Context,
-	req *services.SetRoleAgentsRequest,
-	actor *services.RequestActor,
-) (*services.RoleAgents, error) {
+	req *agentdefinitionports.SetRoleAgentsRequest,
+	actor *permissionports.RequestActor,
+) (*agentdefinitionports.RoleAgents, error) {
 	if err := s.authorize(ctx, actor, req.TenantInfo, permission.ResourceRole); err != nil {
 		return nil, err
 	}
@@ -335,10 +337,10 @@ func (s *Service) SetRoleAgents(
 	var (
 		role   *permission.Role
 		agents []*agentdefinition.Definition
-		change repositories.GrantChange
+		change permissionports.GrantChange
 	)
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		roles, txErr := s.grants.ListGrantableRoles(txCtx, repositories.ListGrantableRolesRequest{
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		roles, txErr := s.grants.ListGrantableRoles(txCtx, permissionports.ListGrantableRolesRequest{
 			TenantInfo: req.TenantInfo,
 			RoleIDs:    []pulid.ID{req.RoleID},
 		})
@@ -355,7 +357,7 @@ func (s *Service) SetRoleAgents(
 			return txErr
 		}
 
-		change, txErr = s.grants.ReplaceForRole(txCtx, repositories.ReplaceRoleGrantsRequest{
+		change, txErr = s.grants.ReplaceForRole(txCtx, permissionports.ReplaceRoleGrantsRequest{
 			TenantInfo: req.TenantInfo,
 			RoleID:     role.ID,
 			AgentIDs:   agentIDs,
@@ -374,12 +376,12 @@ func (s *Service) SetRoleAgents(
 		s.logAgentGrantAudits(req.TenantInfo, role, change, actor)
 	}
 
-	return &services.RoleAgents{Role: role, Agents: agents}, nil
+	return &agentdefinitionports.RoleAgents{Role: role, Agents: agents}, nil
 }
 
 func (s *Service) authorize(
 	ctx context.Context,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	tenant pagination.TenantInfo,
 	resources ...permission.Resource,
 ) error {
@@ -411,7 +413,7 @@ func (s *Service) authorize(
 // allowed reports whether the actor may update the resource.
 func (s *Service) allowed(
 	ctx context.Context,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	resource permission.Resource,
 ) (bool, error) {
 	result, err := s.permissions.Check(ctx, actor.PermissionCheck(resource, permission.OpUpdate))
@@ -487,7 +489,7 @@ func (s *Service) tenantRoles(
 		return []*permission.Role{}, nil
 	}
 
-	roles, err := s.grants.ListGrantableRoles(ctx, repositories.ListGrantableRolesRequest{
+	roles, err := s.grants.ListGrantableRoles(ctx, permissionports.ListGrantableRolesRequest{
 		TenantInfo: tenant,
 		RoleIDs:    roleIDs,
 	})
@@ -523,7 +525,7 @@ func (s *Service) tenantAgents(
 		return []*agentdefinition.Definition{}, nil
 	}
 
-	agents, err := s.definitions.ListByIDs(ctx, repositories.ListAgentDefinitionsByIDsRequest{
+	agents, err := s.definitions.ListByIDs(ctx, agentdefinitionports.ListAgentDefinitionsByIDsRequest{
 		IDs:        agentIDs,
 		TenantInfo: tenant,
 	})
@@ -591,12 +593,12 @@ type agentAuditEntry struct {
 	previousIDs  []pulid.ID
 	currentIDs   []pulid.ID
 	idsKey       string
-	actor        *services.RequestActor
+	actor        *permissionports.RequestActor
 }
 
 func (s *Service) logAgentAudit(entry agentAuditEntry) {
 	auditActor := entry.actor.AuditActor()
-	if err := s.audit.LogAction(&services.LogActionParams{
+	if err := s.audit.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceAgentDefinition,
 		ResourceID:     entry.definition.ID.String(),
 		Operation:      permission.OpUpdate,
@@ -625,7 +627,7 @@ type roleGrantAudit struct {
 	agent   *agentdefinition.Definition
 	added   []pulid.ID
 	removed []pulid.ID
-	actor   *services.RequestActor
+	actor   *permissionports.RequestActor
 }
 
 func (s *Service) logRoleGrantAudits(entry roleGrantAudit) {
@@ -644,7 +646,7 @@ func (s *Service) logRoleGrant(entry roleGrantAudit, roleID pulid.ID, granted bo
 	}
 
 	auditActor := entry.actor.AuditActor()
-	if err := s.audit.LogAction(&services.LogActionParams{
+	if err := s.audit.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceRole,
 		ResourceID:     roleID.String(),
 		Operation:      permission.OpUpdate,
@@ -667,12 +669,12 @@ func (s *Service) logRoleGrant(entry roleGrantAudit, roleID pulid.ID, granted bo
 
 func (s *Service) logRoleAudit(
 	role *permission.Role,
-	change repositories.GrantChange,
+	change permissionports.GrantChange,
 	agentIDs []pulid.ID,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) {
 	auditActor := actor.AuditActor()
-	if err := s.audit.LogAction(&services.LogActionParams{
+	if err := s.audit.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceRole,
 		ResourceID:     role.ID.String(),
 		Operation:      permission.OpUpdate,
@@ -693,8 +695,8 @@ func (s *Service) logRoleAudit(
 func (s *Service) logAgentGrantAudits(
 	tenant pagination.TenantInfo,
 	role *permission.Role,
-	change repositories.GrantChange,
-	actor *services.RequestActor,
+	change permissionports.GrantChange,
+	actor *permissionports.RequestActor,
 ) {
 	changed := sliceutils.Dedupe(append(append([]pulid.ID{}, change.Added...), change.Removed...))
 	auditActor := actor.AuditActor()
@@ -704,7 +706,7 @@ func (s *Service) logAgentGrantAudits(
 		if granted {
 			comment = "Role granted this agent"
 		}
-		if err := s.audit.LogAction(&services.LogActionParams{
+		if err := s.audit.LogAction(&auditports.LogActionParams{
 			Resource:       permission.ResourceAgentDefinition,
 			ResourceID:     agentID.String(),
 			Operation:      permission.OpUpdate,

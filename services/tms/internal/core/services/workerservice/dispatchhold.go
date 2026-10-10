@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,7 +19,7 @@ type DispatchHoldRequest struct {
 	// Held is what canBeAssigned becomes: true takes them off dispatch.
 	Held   bool
 	Reason string
-	Actor  *services.RequestActor
+	Actor  *permissionports.RequestActor
 }
 
 /*
@@ -41,7 +41,7 @@ func (s *Service) SetDispatchHold(
 		return nil, errDispatchHoldReason()
 	}
 
-	entity, err := s.repo.GetByID(ctx, repositories.GetWorkerByIDRequest{
+	entity, err := s.repo.GetByID(ctx, workerports.GetWorkerByIDRequest{
 		ID:         req.WorkerID,
 		TenantInfo: req.TenantInfo,
 	})

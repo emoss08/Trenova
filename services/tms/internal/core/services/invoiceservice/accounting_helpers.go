@@ -5,9 +5,9 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/invoiceledger"
 	"github.com/emoss08/trenova/internal/core/services/journalposting"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 )
 
 func (s *Service) invoiceLedger() (*invoiceledger.Poster, bool) {
@@ -33,7 +33,7 @@ func (s *Service) invoiceLedger() (*invoiceledger.Poster, bool) {
 
 func invoiceLedgerRequest(
 	entity *invoice.Invoice,
-	actor *servicesports.RequestActor,
+	actor *permissionports.RequestActor,
 ) *invoiceledger.Request {
 	req := &invoiceledger.Request{Invoice: entity}
 	if actor != nil {
@@ -45,7 +45,7 @@ func invoiceLedgerRequest(
 func (s *Service) planInvoiceJournal(
 	ctx context.Context,
 	entity *invoice.Invoice,
-	actor *servicesports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*invoiceledger.Plan, error) {
 	poster, ok := s.invoiceLedger()
 	if !ok || entity == nil || entity.PostedAt == nil {
@@ -57,7 +57,7 @@ func (s *Service) planInvoiceJournal(
 func (s *Service) createInvoiceJournalPosting(
 	ctx context.Context,
 	entity *invoice.Invoice,
-	actor *servicesports.RequestActor,
+	actor *permissionports.RequestActor,
 ) error {
 	poster, ok := s.invoiceLedger()
 	if !ok || entity == nil || entity.PostedAt == nil {

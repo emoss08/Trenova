@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/ratematrix"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/formula"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func exactLookupMatrix(code string, entries map[string]string) *repositories.RateMatrixLookupData {
+func exactLookupMatrix(code string, entries map[string]string) *ratematrixports.RateMatrixLookupData {
 	matrixID := pulid.MustNew("rmx_")
 
 	cells := make([]*ratematrix.RateMatrixCell, 0, len(entries))
@@ -29,7 +29,7 @@ func exactLookupMatrix(code string, entries map[string]string) *repositories.Rat
 		})
 	}
 
-	return &repositories.RateMatrixLookupData{
+	return &ratematrixports.RateMatrixLookupData{
 		Matrix: &ratematrix.RateMatrix{
 			ID:   matrixID,
 			Code: code,
@@ -49,7 +49,7 @@ type bandDef struct {
 	value string
 }
 
-func rangeLookupMatrix(code string, bands []bandDef) *repositories.RateMatrixLookupData {
+func rangeLookupMatrix(code string, bands []bandDef) *ratematrixports.RateMatrixLookupData {
 	matrixID := pulid.MustNew("rmx_")
 
 	cells := make([]*ratematrix.RateMatrixCell, 0, len(bands))
@@ -66,7 +66,7 @@ func rangeLookupMatrix(code string, bands []bandDef) *repositories.RateMatrixLoo
 		cells = append(cells, cell)
 	}
 
-	return &repositories.RateMatrixLookupData{
+	return &ratematrixports.RateMatrixLookupData{
 		Matrix: &ratematrix.RateMatrix{
 			ID:   matrixID,
 			Code: code,
@@ -83,7 +83,7 @@ func rangeLookupMatrix(code string, bands []bandDef) *repositories.RateMatrixLoo
 func TestMatrixLookup_ResolvesAnExactKey(t *testing.T) {
 	t.Parallel()
 
-	lookup := formula.NewMatrixLookup([]*repositories.RateMatrixLookupData{
+	lookup := formula.NewMatrixLookup([]*ratematrixports.RateMatrixLookupData{
 		exactLookupMatrix("lane_rate", map[string]string{
 			"ATL-MIA": "1450",
 			"ATL-JAX": "980",
@@ -100,7 +100,7 @@ func TestMatrixLookup_ResolvesAnExactKey(t *testing.T) {
 func TestMatrixLookup_UnknownKeyOnAnExactTableErrors(t *testing.T) {
 	t.Parallel()
 
-	lookup := formula.NewMatrixLookup([]*repositories.RateMatrixLookupData{
+	lookup := formula.NewMatrixLookup([]*ratematrixports.RateMatrixLookupData{
 		exactLookupMatrix("lane_rate", map[string]string{"ATL-MIA": "1450"}),
 	})
 
@@ -113,7 +113,7 @@ func TestMatrixLookup_UnknownKeyOnAnExactTableErrors(t *testing.T) {
 func TestMatrixLookup_PicksTheBandContainingTheQuantity(t *testing.T) {
 	t.Parallel()
 
-	lookup := formula.NewMatrixLookup([]*repositories.RateMatrixLookupData{
+	lookup := formula.NewMatrixLookup([]*ratematrixports.RateMatrixLookupData{
 		rangeLookupMatrix("fuel_surcharge", []bandDef{
 			{min: "0", max: "3", value: "0"},
 			{min: "3", max: "3.5", value: "0.12"},
@@ -135,7 +135,7 @@ func TestMatrixLookup_PicksTheBandContainingTheQuantity(t *testing.T) {
 func TestMatrixLookup_UpperBoundBelongsToTheNextBand(t *testing.T) {
 	t.Parallel()
 
-	lookup := formula.NewMatrixLookup([]*repositories.RateMatrixLookupData{
+	lookup := formula.NewMatrixLookup([]*ratematrixports.RateMatrixLookupData{
 		rangeLookupMatrix("fuel_surcharge", []bandDef{
 			{min: "3", max: "3.5", value: "0.12"},
 			{min: "3.5", max: "4", value: "0.18"},
@@ -151,7 +151,7 @@ func TestMatrixLookup_UpperBoundBelongsToTheNextBand(t *testing.T) {
 func TestMatrixLookup_OpenEndedTopBandCatchesEverythingAbove(t *testing.T) {
 	t.Parallel()
 
-	lookup := formula.NewMatrixLookup([]*repositories.RateMatrixLookupData{
+	lookup := formula.NewMatrixLookup([]*ratematrixports.RateMatrixLookupData{
 		rangeLookupMatrix("fuel_surcharge", []bandDef{
 			{min: "0", max: "4", value: "0.10"},
 			{min: "4", value: "0.25"},
@@ -188,7 +188,7 @@ func TestMatrixLookup_TwoAxisMatrixIsNotAddressableBySingleKeyLookup(t *testing.
 		MatchMode: ratematrix.MatchModeRange,
 	})
 
-	lookup := formula.NewMatrixLookup([]*repositories.RateMatrixLookupData{data})
+	lookup := formula.NewMatrixLookup([]*ratematrixports.RateMatrixLookupData{data})
 
 	assert.False(t, lookup.Has("class_tariff"))
 	assert.True(t, lookup.Has2("class_tariff"))
@@ -217,7 +217,7 @@ func TestMatrixLookup_IgnoresAMatrixWithMoreThanTwoAxes(t *testing.T) {
 		},
 	)
 
-	lookup := formula.NewMatrixLookup([]*repositories.RateMatrixLookupData{data})
+	lookup := formula.NewMatrixLookup([]*ratematrixports.RateMatrixLookupData{data})
 
 	assert.False(t, lookup.Has("triple_tariff"))
 	assert.False(t, lookup.Has2("triple_tariff"))
@@ -226,7 +226,7 @@ func TestMatrixLookup_IgnoresAMatrixWithMoreThanTwoAxes(t *testing.T) {
 func TestMatrixLookup_NumericKeysMatchExactTables(t *testing.T) {
 	t.Parallel()
 
-	lookup := formula.NewMatrixLookup([]*repositories.RateMatrixLookupData{
+	lookup := formula.NewMatrixLookup([]*ratematrixports.RateMatrixLookupData{
 		exactLookupMatrix("zone_rate", map[string]string{"3": "215"}),
 	})
 
@@ -250,7 +250,7 @@ func twoAxisLookupMatrix(
 	code string,
 	rowMode, colMode ratematrix.MatchMode,
 	defs []twoAxisCellDef,
-) *repositories.RateMatrixLookupData {
+) *ratematrixports.RateMatrixLookupData {
 	matrixID := pulid.MustNew("rmx_")
 
 	cells := make([]*ratematrix.RateMatrixCell, 0, len(defs))
@@ -277,7 +277,7 @@ func twoAxisLookupMatrix(
 		cells = append(cells, cell)
 	}
 
-	return &repositories.RateMatrixLookupData{
+	return &ratematrixports.RateMatrixLookupData{
 		Matrix: &ratematrix.RateMatrix{
 			ID:   matrixID,
 			Code: code,
@@ -291,7 +291,7 @@ func twoAxisLookupMatrix(
 }
 
 func classRatesLookup() formulatemplatetypes.RateTableLookup {
-	return formula.NewMatrixLookup([]*repositories.RateMatrixLookupData{
+	return formula.NewMatrixLookup([]*ratematrixports.RateMatrixLookupData{
 		twoAxisLookupMatrix(
 			"class_rates",
 			ratematrix.MatchModeExact,
@@ -364,7 +364,7 @@ func TestMatrixLookup2_NonNumericColumnKeyAgainstRangeAxisErrors(t *testing.T) {
 func TestMatrixLookup2_ExactRowExactColumn(t *testing.T) {
 	t.Parallel()
 
-	lookup := formula.NewMatrixLookup([]*repositories.RateMatrixLookupData{
+	lookup := formula.NewMatrixLookup([]*ratematrixports.RateMatrixLookupData{
 		twoAxisLookupMatrix(
 			"lane_class",
 			ratematrix.MatchModeExact,
@@ -388,7 +388,7 @@ func TestMatrixLookup2_ExactRowExactColumn(t *testing.T) {
 func TestMatrixLookup2_RangeRowExactColumn(t *testing.T) {
 	t.Parallel()
 
-	lookup := formula.NewMatrixLookup([]*repositories.RateMatrixLookupData{
+	lookup := formula.NewMatrixLookup([]*ratematrixports.RateMatrixLookupData{
 		twoAxisLookupMatrix(
 			"distance_zone",
 			ratematrix.MatchModeRange,
@@ -410,7 +410,7 @@ func TestMatrixLookup2_RangeRowExactColumn(t *testing.T) {
 func TestMatrixLookup2_RangeRowRangeColumn(t *testing.T) {
 	t.Parallel()
 
-	lookup := formula.NewMatrixLookup([]*repositories.RateMatrixLookupData{
+	lookup := formula.NewMatrixLookup([]*ratematrixports.RateMatrixLookupData{
 		twoAxisLookupMatrix(
 			"distance_weight",
 			ratematrix.MatchModeRange,
@@ -433,7 +433,7 @@ func TestMatrixLookup2_RangeRowRangeColumn(t *testing.T) {
 func TestMatrixLookup2_SingleAxisTableErrorsWithGuidance(t *testing.T) {
 	t.Parallel()
 
-	lookup := formula.NewMatrixLookup([]*repositories.RateMatrixLookupData{
+	lookup := formula.NewMatrixLookup([]*ratematrixports.RateMatrixLookupData{
 		exactLookupMatrix("lane_rate", map[string]string{"ATL-MIA": "1450"}),
 	})
 
@@ -456,7 +456,7 @@ func TestMatrixLookup2_UnknownTableErrors(t *testing.T) {
 func validateLookupTablesService(t *testing.T) *formula.Service {
 	t.Helper()
 
-	return setupServiceWithMatrixData(t, []*repositories.RateMatrixLookupData{
+	return setupServiceWithMatrixData(t, []*ratematrixports.RateMatrixLookupData{
 		exactLookupMatrix("lane_rate", map[string]string{"ATL-MIA": "1450"}),
 		twoAxisLookupMatrix(
 			"class_rates",
@@ -528,7 +528,7 @@ func TestService_ValidateLookupTables_RejectsUnknownTwoAxisTable(t *testing.T) {
 func TestMatrixLookup_MissIsDistinguishableFromMissingTable(t *testing.T) {
 	t.Parallel()
 
-	lookup := formula.NewMatrixLookup([]*repositories.RateMatrixLookupData{
+	lookup := formula.NewMatrixLookup([]*ratematrixports.RateMatrixLookupData{
 		exactLookupMatrix("fsc", map[string]string{"DIESEL": "0.35"}),
 		rangeLookupMatrix("miles", []bandDef{{min: "0", max: "500", value: "2.5"}}),
 	})
@@ -554,7 +554,7 @@ func normalizedExactMatrix(
 	code string,
 	mode ratematrix.KeyNormalization,
 	entries map[string]string,
-) *repositories.RateMatrixLookupData {
+) *ratematrixports.RateMatrixLookupData {
 	data := exactLookupMatrix(code, entries)
 	data.Matrix.Dimensions[0].KeyNormalization = mode
 	return data
@@ -564,7 +564,7 @@ func overflowRangeMatrix(
 	code string,
 	overflow ratematrix.RangeOverflow,
 	bands []bandDef,
-) *repositories.RateMatrixLookupData {
+) *ratematrixports.RateMatrixLookupData {
 	data := rangeLookupMatrix(code, bands)
 	data.Matrix.Dimensions[0].RangeOverflow = overflow
 	return data
@@ -573,7 +573,7 @@ func overflowRangeMatrix(
 func TestMatrixLookup_KeyNormalizationModes(t *testing.T) {
 	t.Parallel()
 
-	lookup := formula.NewMatrixLookup([]*repositories.RateMatrixLookupData{
+	lookup := formula.NewMatrixLookup([]*ratematrixports.RateMatrixLookupData{
 		normalizedExactMatrix("zip3_zone", ratematrix.KeyNormalizationZip3, map[string]string{
 			"752": "1.10",
 			"300": "1.00",
@@ -615,7 +615,7 @@ func TestMatrixLookup_RangeOverflowModes(t *testing.T) {
 		{min: "500", max: "1000", value: "1.50"},
 		{min: "1000", max: "5000", value: "1.00"},
 	}
-	lookup := formula.NewMatrixLookup([]*repositories.RateMatrixLookupData{
+	lookup := formula.NewMatrixLookup([]*ratematrixports.RateMatrixLookupData{
 		overflowRangeMatrix("strict", ratematrix.RangeOverflowError, bands),
 		overflowRangeMatrix("clamped", ratematrix.RangeOverflowClampToTopBand, bands),
 		overflowRangeMatrix("nearest", ratematrix.RangeOverflowNearest, bands),
@@ -665,7 +665,7 @@ func TestMatrixLookup_TwoAxisRowOverflowAndColumnNormalization(t *testing.T) {
 		}
 		return c
 	}
-	lookup := formula.NewMatrixLookup([]*repositories.RateMatrixLookupData{{
+	lookup := formula.NewMatrixLookup([]*ratematrixports.RateMatrixLookupData{{
 		Matrix: &ratematrix.RateMatrix{
 			ID:   matrixID,
 			Code: "weight_zone",
@@ -708,7 +708,7 @@ func TestMatrixLookup_TwoAxisRowOverflowAndColumnNormalization(t *testing.T) {
 func TestMatrixLookup_LookupInterpBetweenBandFloors(t *testing.T) {
 	t.Parallel()
 
-	lookup := formula.NewMatrixLookup([]*repositories.RateMatrixLookupData{
+	lookup := formula.NewMatrixLookup([]*ratematrixports.RateMatrixLookupData{
 		rangeLookupMatrix("fuel_curve", []bandDef{
 			{min: "2.00", max: "3.00", value: "0.10"},
 			{min: "3.00", max: "4.00", value: "0.20"},
@@ -751,7 +751,7 @@ func TestMatrixLookup_DeficitWeightRatesAsNextBreakWhenCheaper(t *testing.T) {
 		{min: "1000", max: "2000", value: "15"},
 		{min: "2000", max: "", value: "12"},
 	}
-	lookup := formula.NewMatrixLookup([]*repositories.RateMatrixLookupData{
+	lookup := formula.NewMatrixLookup([]*ratematrixports.RateMatrixLookupData{
 		rangeLookupMatrix("cwt", cwt),
 		rangeLookupMatrix("capped", cwt[:3]),
 	})
@@ -802,7 +802,7 @@ func TestMatrixLookup_TwoAxisRangeRowsResolveAcrossManyBandsAndOverlaps(t *testi
 		Value:        decimal.NewFromInt(999999),
 	})
 
-	lookup := formula.NewMatrixLookup([]*repositories.RateMatrixLookupData{{
+	lookup := formula.NewMatrixLookup([]*ratematrixports.RateMatrixLookupData{{
 		Matrix: &ratematrix.RateMatrix{
 			ID:   matrixID,
 			Code: "big_grid",

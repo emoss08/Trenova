@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -16,7 +16,7 @@ type StatusChange struct {
 	At       int64
 }
 
-func StatusActor(actor *services.RequestActor) pulid.ID {
+func StatusActor(actor *permissionports.RequestActor) pulid.ID {
 	if actor != nil && actor.IsUser() {
 		return actor.UserID
 	}

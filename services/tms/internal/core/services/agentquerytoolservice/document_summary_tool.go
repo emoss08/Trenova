@@ -10,9 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -40,17 +41,17 @@ type contentReader interface {
 // they may read: its text, what it looks like, and the fields document
 // intelligence pulled from it.
 type getDocumentSummaryTool struct {
-	documents repositories.DocumentRepository
+	documents documentports.DocumentRepository
 	contents  contentReader
 	access    fieldAccess
 }
 
 func newGetDocumentSummaryTool(
-	documents repositories.DocumentRepository,
+	documents documentports.DocumentRepository,
 	contents contentReader,
-	permissions serviceports.PermissionEngine,
-	threads repositories.ThreadOwnerRepository,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+	threads agentports.ThreadOwnerRepository,
+) agentports.AgentQueryTool {
 	return &getDocumentSummaryTool{
 		documents: documents,
 		contents:  contents,
@@ -100,7 +101,7 @@ func (t *getDocumentSummaryTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *getDocumentSummaryTool) Policy() serviceports.ToolPolicy {
+func (t *getDocumentSummaryTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceDocument,
 		reads:    agent.ExternalReadAlways,
@@ -134,7 +135,7 @@ type documentSummary struct {
 
 func (t *getDocumentSummaryTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -151,7 +152,7 @@ func (t *getDocumentSummaryTool) Query(
 	}
 
 	tenant := tenantOf(params)
-	doc, err := t.documents.GetByID(ctx, repositories.GetDocumentByIDRequest{
+	doc, err := t.documents.GetByID(ctx, documentports.GetDocumentByIDRequest{
 		ID:         documentID,
 		TenantInfo: tenant,
 	})

@@ -6,11 +6,16 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -23,27 +28,27 @@ type Params struct {
 	fx.In
 
 	Logger                    *zap.Logger
-	DB                        ports.DBConnection
-	Repo                      repositories.TractorRepository
-	AssignmentRepo            repositories.AssignmentRepository
-	ContinuityRepo            repositories.EquipmentContinuityRepository
-	LocationRepo              repositories.LocationRepository
+	DB                        kernelports.DBConnection
+	Repo                      tractorports.TractorRepository
+	AssignmentRepo            shipmentports.AssignmentRepository
+	ContinuityRepo            equipmentcontinuityports.EquipmentContinuityRepository
+	LocationRepo              locationports.LocationRepository
 	Validator                 *Validator
-	AuditService              services.AuditService
-	Realtime                  services.RealtimeService
+	AuditService              auditports.AuditService
+	Realtime                  agentports.RealtimeService
 	CustomFieldsValuesService *customfieldservice.ValuesService
 }
 
 type Service struct {
 	l                         *zap.Logger
-	db                        ports.DBConnection
-	repo                      repositories.TractorRepository
-	assignmentRepo            repositories.AssignmentRepository
-	continuityRepo            repositories.EquipmentContinuityRepository
-	locationRepo              repositories.LocationRepository
+	db                        kernelports.DBConnection
+	repo                      tractorports.TractorRepository
+	assignmentRepo            shipmentports.AssignmentRepository
+	continuityRepo            equipmentcontinuityports.EquipmentContinuityRepository
+	locationRepo              locationports.LocationRepository
 	validator                 *Validator
-	auditService              services.AuditService
-	realtime                  services.RealtimeService
+	auditService              auditports.AuditService
+	realtime                  agentports.RealtimeService
 	customFieldsValuesService *customfieldservice.ValuesService
 }
 
@@ -64,7 +69,7 @@ func New(p Params) *Service {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListTractorsRequest,
+	req *tractorports.ListTractorsRequest,
 ) (*pagination.CursorListResult[*tractor.Tractor], error) {
 	log := s.l.With(
 		zap.String("operation", "List"),
@@ -88,14 +93,14 @@ func (s *Service) List(
 
 func (s *Service) SelectOptions(
 	ctx context.Context,
-	req *repositories.TractorSelectOptionsRequest,
+	req *tractorports.TractorSelectOptionsRequest,
 ) (*pagination.ListResult[*tractor.Tractor], error) {
 	return s.repo.SelectOptions(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	req repositories.GetTractorByIDRequest,
+	req tractorports.GetTractorByIDRequest,
 ) (*tractor.Tractor, error) {
 	entity, err := s.repo.GetByID(ctx, req)
 	if err != nil {
@@ -121,7 +126,7 @@ func (s *Service) Get(
 
 func (s *Service) GetByIDs(
 	ctx context.Context,
-	req repositories.GetTractorsByIDsRequest,
+	req tractorports.GetTractorsByIDsRequest,
 ) ([]*tractor.Tractor, error) {
 	entities, err := s.repo.GetByIDs(ctx, req)
 	if err != nil {
@@ -174,7 +179,7 @@ func (s *Service) attachCustomFields(
 func (s *Service) Create(
 	ctx context.Context,
 	entity *tractor.Tractor,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*tractor.Tractor, error) {
 	auditActor := actor.AuditActor()
 	log := s.l.With(
@@ -213,7 +218,7 @@ func (s *Service) Create(
 		createdEntity.CustomFields = entity.CustomFields
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceTractor,
 		ResourceID:     createdEntity.GetID().String(),
 		Operation:      permission.OpCreate,
@@ -250,7 +255,7 @@ func (s *Service) Create(
 func (s *Service) Update(
 	ctx context.Context,
 	entity *tractor.Tractor,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*tractor.Tractor, error) {
 	auditActor := actor.AuditActor()
 	log := s.l.With(
@@ -290,7 +295,7 @@ func (s *Service) Update(
 		updatedEntity.CustomFields = entity.CustomFields
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceTractor,
 		ResourceID:     updatedEntity.GetID().String(),
 		Operation:      permission.OpUpdate,
@@ -330,14 +335,14 @@ func (s *Service) Update(
 
 func (s *Service) BulkUpdateStatus(
 	ctx context.Context,
-	req *repositories.BulkUpdateTractorStatusRequest,
+	req *tractorports.BulkUpdateTractorStatusRequest,
 ) ([]*tractor.Tractor, error) {
 	log := s.l.With(
 		zap.String("operation", "BulkUpdateStatus"),
 		zap.Any("request", req),
 	)
 
-	originalEntities, err := s.repo.GetByIDs(ctx, repositories.GetTractorsByIDsRequest{
+	originalEntities, err := s.repo.GetByIDs(ctx, tractorports.GetTractorsByIDsRequest{
 		TenantInfo: req.TenantInfo,
 		TractorIDs: req.TractorIDs,
 	})
@@ -382,14 +387,14 @@ func (s *Service) BulkUpdateStatus(
 
 func (s *Service) Locate(
 	ctx context.Context,
-	req *repositories.LocateTractorRequest,
+	req *tractorports.LocateTractorRequest,
 ) (*equipmentcontinuity.EquipmentContinuity, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
 	}
 
 	var result *equipmentcontinuity.EquipmentContinuity
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		if _, err := s.planLocate(txCtx, req); err != nil {
 			return err
 		}
@@ -397,7 +402,7 @@ func (s *Service) Locate(
 		var advanceErr error
 		result, advanceErr = s.continuityRepo.Advance(
 			txCtx,
-			repositories.CreateEquipmentContinuityRequest{
+			equipmentcontinuityports.CreateEquipmentContinuityRequest{
 				TenantInfo:        req.TenantInfo,
 				EquipmentType:     equipmentcontinuity.EquipmentTypeTractor,
 				EquipmentID:       req.TractorID,
@@ -414,6 +419,6 @@ func (s *Service) Locate(
 	return result, nil
 }
 
-func shouldIncludeTractorCustomFields(includes repositories.TractorRelationIncludes) bool {
+func shouldIncludeTractorCustomFields(includes tractorports.TractorRelationIncludes) bool {
 	return includes.IncludeCustomFields || len(includes.TractorColumns) == 0
 }

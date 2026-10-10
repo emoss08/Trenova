@@ -4,8 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
 )
@@ -16,7 +15,7 @@ import (
 func (s *Service) Backfill(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-) (*services.WatchtowerSweepResult, error) {
+) (*watchtowerports.WatchtowerSweepResult, error) {
 	return s.sweep(ctx, tenant, false)
 }
 
@@ -28,7 +27,7 @@ func (s *Service) Backfill(
 func (s *Service) Reconcile(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-) (*services.WatchtowerSweepResult, error) {
+) (*watchtowerports.WatchtowerSweepResult, error) {
 	return s.sweep(ctx, tenant, true)
 }
 
@@ -36,8 +35,8 @@ func (s *Service) sweep(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	resolveMissing bool,
-) (*services.WatchtowerSweepResult, error) {
-	result := &services.WatchtowerSweepResult{Failed: []string{}}
+) (*watchtowerports.WatchtowerSweepResult, error) {
+	result := &watchtowerports.WatchtowerSweepResult{Failed: []string{}}
 	for _, kind := range watchtower.AllSourceKinds() {
 		source, ok := s.sources[kind]
 		if !ok {
@@ -77,7 +76,7 @@ func (s *Service) sweep(
 		}
 		resolved, rErr := s.repo.ResolveMissing(
 			ctx,
-			repositories.ResolveMissingWatchtowerItemsRequest{
+			watchtowerports.ResolveMissingWatchtowerItemsRequest{
 				TenantInfo:    tenant,
 				SourceKind:    kind,
 				OpenSourceIDs: open,

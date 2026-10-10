@@ -3,16 +3,16 @@ package shipmentresolver
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/floatutils"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/sliceutils"
 )
 
-func shipmentAnalyticsToModel(data services.AnalyticsData) (*gqlmodel.ShipmentAnalytics, error) {
-	page := services.ShipmentAnalyticsPage
+func shipmentAnalyticsToModel(data kernelports.AnalyticsData) (*gqlmodel.ShipmentAnalytics, error) {
+	page := kernelports.ShipmentAnalyticsPage
 	if value, ok := data["page"].(string); ok && value != "" {
-		page = services.AnalyticsPage(value)
+		page = kernelports.AnalyticsPage(value)
 	}
 	return &gqlmodel.ShipmentAnalytics{
 		Page:               string(page),
@@ -31,11 +31,11 @@ func shipmentAnalyticsToModel(data services.AnalyticsData) (*gqlmodel.ShipmentAn
 	}, nil
 }
 
-func analyticsDateRange(startDate, endDate *int) *services.DateRange {
+func analyticsDateRange(startDate, endDate *int) *kernelports.DateRange {
 	if startDate == nil && endDate == nil {
 		return nil
 	}
-	return &services.DateRange{
+	return &kernelports.DateRange{
 		StartDate: base.Int64Value(startDate),
 		EndDate:   base.Int64Value(endDate),
 	}

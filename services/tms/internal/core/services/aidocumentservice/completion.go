@@ -8,8 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/planservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -24,14 +25,14 @@ type structuredCall struct {
 	metric     string
 	system     string
 	schemaName string
-	context    serviceports.DelimitedContext
+	context    agentports.DelimitedContext
 	schema     map[string]any
 	providerID pulid.ID
 	evaluation bool
 }
 
-func (c *structuredCall) request() *serviceports.StructuredCompletionRequest {
-	request := &serviceports.StructuredCompletionRequest{
+func (c *structuredCall) request() *agentports.StructuredCompletionRequest {
+	request := &agentports.StructuredCompletionRequest{
 		TenantInfo:   c.tenant,
 		Task:         c.task,
 		System:       c.system,
@@ -43,7 +44,7 @@ func (c *structuredCall) request() *serviceports.StructuredCompletionRequest {
 	request.PreferredProviderID = c.providerID
 	if c.evaluation {
 		request.RequireProvider = true
-		request.Attribution.Purpose = serviceports.AIUsagePurposeEvaluation
+		request.Attribution.Purpose = aiusageports.AIUsagePurposeEvaluation
 	}
 
 	return request
@@ -53,8 +54,8 @@ func documentAttribution(
 	tenant pagination.TenantInfo,
 	documentID pulid.ID,
 	feature aiusage.Feature,
-) serviceports.AIUsageAttribution {
-	attribution := serviceports.AIUsageAttribution{
+) aiusageports.AIUsageAttribution {
+	attribution := aiusageports.AIUsageAttribution{
 		UserID:  tenant.UserID,
 		Feature: feature,
 	}
@@ -72,7 +73,7 @@ func (s *Service) runStructured(
 	ctx context.Context,
 	call *structuredCall,
 	out any,
-) (*serviceports.StructuredCompletionResult, error) {
+) (*agentports.StructuredCompletionResult, error) {
 	if err := s.requireDocumentIntelligence(ctx, call.tenant); err != nil {
 		return nil, err
 	}
@@ -104,7 +105,7 @@ func decodeStructured(text string, out any) error {
 	}
 
 	if err := sonic.Unmarshal([]byte(text), out); err != nil {
-		return errors.Join(serviceports.ErrModelSchemaValidation, err)
+		return errors.Join(agentports.ErrModelSchemaValidation, err)
 	}
 
 	return nil
@@ -116,9 +117,9 @@ func decodeStructured(text string, out any) error {
 // the same thing to do about it.
 func failureOutcome(err error) string {
 	switch {
-	case errors.Is(err, serviceports.ErrNoProviderConfigured):
+	case errors.Is(err, agentports.ErrNoProviderConfigured):
 		return "missing_config"
-	case errors.Is(err, serviceports.ErrModelSchemaValidation):
+	case errors.Is(err, agentports.ErrModelSchemaValidation):
 		return "invalid_output"
 	default:
 		return "error"

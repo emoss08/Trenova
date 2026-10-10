@@ -6,15 +6,17 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 type invoiceLoader func(
 	ctx context.Context,
-	req repositories.GetInvoiceByIDRequest,
+	req invoiceports.GetInvoiceByIDRequest,
 ) (*invoice.Invoice, error)
 
 type creditPlan struct {
@@ -28,8 +30,8 @@ type creditPlan struct {
 
 func (s *Service) checkCreditRequest(
 	ctx context.Context,
-	req *serviceports.ApplyCreditMemoRequest,
-	actor *serviceports.RequestActor,
+	req *customerpaymentports.ApplyCreditMemoRequest,
+	actor *permissionports.RequestActor,
 ) error {
 	if err := requireRequest(req == nil); err != nil {
 		return err
@@ -44,7 +46,7 @@ func (s *Service) checkCreditRequest(
 	}
 	if _, err := s.validator.fiscalPeriodRepo.GetPeriodByDate(
 		ctx,
-		repositories.GetPeriodByDateRequest{
+		fiscalperiodports.GetPeriodByDateRequest{
 			OrgID: req.TenantInfo.OrgID,
 			BuID:  req.TenantInfo.BuID,
 			Date:  req.AccountingDate,
@@ -64,11 +66,11 @@ func (s *Service) checkCreditRequest(
 
 func (s *Service) planCreditApplication(
 	ctx context.Context,
-	req *serviceports.ApplyCreditMemoRequest,
-	actor *serviceports.RequestActor,
+	req *customerpaymentports.ApplyCreditMemoRequest,
+	actor *permissionports.RequestActor,
 	load invoiceLoader,
 ) (*creditPlan, error) {
-	memo, err := load(ctx, repositories.GetInvoiceByIDRequest{
+	memo, err := load(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         req.CreditMemoID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -101,7 +103,7 @@ func (s *Service) planCreditApplication(
 		applications:  make([]*customerpayment.CreditMemoApplication, 0, len(req.Applications)),
 	}
 	for idx, app := range req.Applications {
-		target, loadErr := load(ctx, repositories.GetInvoiceByIDRequest{
+		target, loadErr := load(ctx, invoiceports.GetInvoiceByIDRequest{
 			ID:         app.InvoiceID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -140,13 +142,13 @@ func (s *Service) planCreditApplication(
 
 func (s *Service) planUnapplyCredit(
 	ctx context.Context,
-	req *serviceports.UnapplyCreditMemoApplicationRequest,
-	actor *serviceports.RequestActor,
+	req *customerpaymentports.UnapplyCreditMemoApplicationRequest,
+	actor *permissionports.RequestActor,
 	load invoiceLoader,
 ) (*creditPlan, error) {
 	application, err := s.repo.GetCreditMemoApplicationByID(
 		ctx,
-		repositories.GetCreditMemoApplicationRequest{
+		customerpaymentports.GetCreditMemoApplicationRequest{
 			ID:         req.ApplicationID,
 			TenantInfo: req.TenantInfo,
 		},
@@ -162,14 +164,14 @@ func (s *Service) planUnapplyCredit(
 		)
 	}
 
-	memo, err := load(ctx, repositories.GetInvoiceByIDRequest{
+	memo, err := load(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         application.CreditMemoInvoiceID,
 		TenantInfo: req.TenantInfo,
 	})
 	if err != nil {
 		return nil, err
 	}
-	target, err := load(ctx, repositories.GetInvoiceByIDRequest{
+	target, err := load(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         application.InvoiceID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -207,8 +209,8 @@ func (s *Service) planUnapplyCredit(
 }
 
 func checkUnapplyRequest(
-	req *serviceports.UnapplyCreditMemoApplicationRequest,
-	actor *serviceports.RequestActor,
+	req *customerpaymentports.UnapplyCreditMemoApplicationRequest,
+	actor *permissionports.RequestActor,
 ) error {
 	if err := requireRequest(req == nil); err != nil {
 		return err
@@ -229,8 +231,8 @@ func checkUnapplyRequest(
 	return nil
 }
 
-func (p *creditPlan) preview() *serviceports.CreditMemoApplicationPreview {
-	return &serviceports.CreditMemoApplicationPreview{
+func (p *creditPlan) preview() *customerpaymentports.CreditMemoApplicationPreview {
+	return &customerpaymentports.CreditMemoApplicationPreview{
 		CreditMemoBefore:  p.memoBefore,
 		CreditMemoAfter:   p.memo,
 		InvoicesBefore:    p.targetsBefore,
@@ -242,9 +244,9 @@ func (p *creditPlan) preview() *serviceports.CreditMemoApplicationPreview {
 
 func (s *Service) PreviewApplyCreditMemo(
 	ctx context.Context,
-	req *serviceports.ApplyCreditMemoRequest,
-	actor *serviceports.RequestActor,
-) (*serviceports.CreditMemoApplicationPreview, error) {
+	req *customerpaymentports.ApplyCreditMemoRequest,
+	actor *permissionports.RequestActor,
+) (*customerpaymentports.CreditMemoApplicationPreview, error) {
 	if err := s.checkCreditRequest(ctx, req, actor); err != nil {
 		return nil, err
 	}
@@ -259,9 +261,9 @@ func (s *Service) PreviewApplyCreditMemo(
 
 func (s *Service) PreviewUnapplyCreditMemoApplication(
 	ctx context.Context,
-	req *serviceports.UnapplyCreditMemoApplicationRequest,
-	actor *serviceports.RequestActor,
-) (*serviceports.CreditMemoApplicationPreview, error) {
+	req *customerpaymentports.UnapplyCreditMemoApplicationRequest,
+	actor *permissionports.RequestActor,
+) (*customerpaymentports.CreditMemoApplicationPreview, error) {
 	if err := checkUnapplyRequest(req, actor); err != nil {
 		return nil, err
 	}

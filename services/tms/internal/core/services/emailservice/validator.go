@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/email"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -34,7 +34,7 @@ func (v *Validator) ValidateProfile(
 
 func (v *Validator) ValidateSend(
 	_ context.Context,
-	req *services.SendEmailRequest,
+	req *emailports.SendEmailRequest,
 ) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	if req == nil {

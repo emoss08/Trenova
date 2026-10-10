@@ -4,8 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentroster"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentrosterports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -14,15 +13,15 @@ import (
 type Params struct {
 	fx.In
 
-	Facts repositories.AIControlFactsRepository
+	Facts agentrosterports.AIControlFactsRepository
 }
 
 type Service struct {
-	facts repositories.AIControlFactsRepository
+	facts agentrosterports.AIControlFactsRepository
 	now   func() int64
 }
 
-var _ services.AgentRosterService = (*Service)(nil)
+var _ agentrosterports.AgentRosterService = (*Service)(nil)
 
 func New(p Params) *Service {
 	return &Service{facts: p.Facts, now: timeutils.NowUnix}
@@ -33,7 +32,7 @@ func (s *Service) Roster(
 	tenantInfo pagination.TenantInfo,
 ) ([]*agentroster.Stat, error) {
 	now := s.now()
-	return s.facts.AgentRoster(ctx, &repositories.AgentRosterRequest{
+	return s.facts.AgentRoster(ctx, &agentrosterports.AgentRosterRequest{
 		TenantInfo:     tenantInfo,
 		RunsSince:      agentroster.RunsSince(now),
 		DecisionsSince: agentroster.DecisionsSince(now),

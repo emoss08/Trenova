@@ -8,8 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	portservices "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -19,32 +21,32 @@ import (
 )
 
 type auditEntry struct {
-	params  *portservices.LogActionParams
-	options []portservices.LogOption
+	params  *auditports.LogActionParams
+	options []auditports.LogOption
 }
 
 type recordingAuditService struct {
-	portservices.AuditService
+	auditports.AuditService
 
 	entries []auditEntry
 }
 
 func (r *recordingAuditService) LogAction(
-	params *portservices.LogActionParams,
-	opts ...portservices.LogOption,
+	params *auditports.LogActionParams,
+	opts ...auditports.LogOption,
 ) error {
 	r.entries = append(r.entries, auditEntry{params: params, options: opts})
 	return nil
 }
 
-func (r *recordingAuditService) only(t *testing.T) *portservices.LogActionParams {
+func (r *recordingAuditService) only(t *testing.T) *auditports.LogActionParams {
 	t.Helper()
 	require.Len(t, r.entries, 1)
 	return r.entries[0].params
 }
 
 type acceptingTenderRepo struct {
-	repositories.TenderRepository
+	tenderports.TenderRepository
 
 	offer          *tender.TenderOffer
 	revokedOfferID pulid.ID
@@ -52,7 +54,7 @@ type acceptingTenderRepo struct {
 
 func (f *acceptingTenderRepo) GetOfferByID(
 	_ context.Context,
-	_ repositories.GetTenderOfferByIDRequest,
+	_ tenderports.GetTenderOfferByIDRequest,
 ) (*tender.TenderOffer, error) {
 	return f.offer, nil
 }
@@ -68,7 +70,7 @@ func (f *acceptingTenderRepo) RevokeTokensForOffer(
 }
 
 type stubCarrierAssignmentRepo struct {
-	repositories.CarrierAssignmentRepository
+	shipmentports.CarrierAssignmentRepository
 
 	active *shipment.CarrierAssignment
 }
@@ -82,7 +84,7 @@ func (f *stubCarrierAssignmentRepo) GetActiveByMoveID(
 }
 
 type stubMoveAssigner struct {
-	portservices.CarrierMoveAssigner
+	tenderports.CarrierMoveAssigner
 
 	confirmedID pulid.ID
 }
@@ -234,33 +236,33 @@ func TestMarkNeedsReviewLogsSystemTenderAudit(t *testing.T) {
 	assert.Equal(t, permission.OpUpdate, entry.Operation)
 	assert.Equal(t, offer.TenderID.String(), entry.ResourceID)
 	assert.True(t, entry.UserID.IsNil())
-	assert.Equal(t, portservices.PrincipalTypeSystem, entry.PrincipalType)
-	assert.Equal(t, portservices.SystemPrincipalID, entry.PrincipalID)
+	assert.Equal(t, permissionports.PrincipalTypeSystem, entry.PrincipalType)
+	assert.Equal(t, permissionports.SystemPrincipalID, entry.PrincipalID)
 }
 
 type needsReviewTenderRepo struct {
-	repositories.TenderRepository
+	tenderports.TenderRepository
 
 	offer *tender.TenderOffer
 }
 
 func (f *needsReviewTenderRepo) UpdateTenderStatus(
 	_ context.Context,
-	_ *repositories.UpdateTenderStatusRequest,
+	_ *tenderports.UpdateTenderStatusRequest,
 ) (bool, error) {
 	return true, nil
 }
 
 func (f *needsReviewTenderRepo) BulkUpdateOfferStatus(
 	_ context.Context,
-	_ *repositories.BulkOfferStatusRequest,
+	_ *tenderports.BulkOfferStatusRequest,
 ) (int64, error) {
 	return 0, nil
 }
 
 func (f *needsReviewTenderRepo) GetByID(
 	_ context.Context,
-	_ repositories.GetTenderByIDRequest,
+	_ tenderports.GetTenderByIDRequest,
 ) (*tender.Tender, error) {
 	return f.offer.Tender, nil
 }
@@ -276,7 +278,7 @@ func (f *needsReviewTenderRepo) RevokeTokensForOffer(
 
 func (f *needsReviewTenderRepo) GetOfferByID(
 	_ context.Context,
-	_ repositories.GetTenderOfferByIDRequest,
+	_ tenderports.GetTenderOfferByIDRequest,
 ) (*tender.TenderOffer, error) {
 	return f.offer, nil
 }

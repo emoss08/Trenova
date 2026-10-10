@@ -8,17 +8,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/shared/intutils"
-
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
+	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -37,7 +36,7 @@ type OccurrenceDetail struct {
 
 func (s *Service) GetOccurrenceDetail(
 	ctx context.Context,
-	req *repositories.GetDetentionOccurrenceByIDRequest,
+	req *detentionports.GetDetentionOccurrenceByIDRequest,
 ) (*OccurrenceDetail, error) {
 	req.IncludeEvidence = true
 	req.IncludeNotices = true
@@ -65,14 +64,14 @@ func (s *Service) GetOccurrenceDetail(
 
 func (s *Service) ListOccurrences(
 	ctx context.Context,
-	req *repositories.ListDetentionOccurrencesRequest,
+	req *detentionports.ListDetentionOccurrencesRequest,
 ) (*pagination.ListResult[*detention.DetentionOccurrence], error) {
 	return s.occurrenceRepo.List(ctx, req)
 }
 
 func (s *Service) ListByShipment(
 	ctx context.Context,
-	req *repositories.GetOccurrencesByShipmentRequest,
+	req *detentionports.GetOccurrencesByShipmentRequest,
 ) ([]*detention.DetentionOccurrence, error) {
 	return s.occurrenceRepo.GetByShipment(ctx, req)
 }
@@ -187,7 +186,7 @@ func (s *Service) priceOpenClocks(
 	priced := make(map[pulid.ID]ComputeResult, len(open))
 	for _, shipmentID := range shipments {
 		occurrences, listErr := s.occurrenceRepo.GetByShipment(ctx,
-			&repositories.GetOccurrencesByShipmentRequest{
+			&detentionports.GetOccurrencesByShipmentRequest{
 				ShipmentID: shipmentID,
 				TenantInfo: tenantInfo,
 			})
@@ -450,7 +449,7 @@ func (s *Service) Escalate(
 ) (*detention.DetentionOccurrence, error) {
 	occurrence, err := s.occurrenceRepo.GetByID(
 		ctx,
-		&repositories.GetDetentionOccurrenceByIDRequest{
+		&detentionports.GetDetentionOccurrenceByIDRequest{
 			OccurrenceID: p.OccurrenceID,
 			TenantInfo:   p.TenantInfo,
 		},
@@ -503,7 +502,7 @@ func (s *Service) BuildDisputePacket(
 	occurrenceID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) (*DisputePacket, error) {
-	detail, err := s.GetOccurrenceDetail(ctx, &repositories.GetDetentionOccurrenceByIDRequest{
+	detail, err := s.GetOccurrenceDetail(ctx, &detentionports.GetDetentionOccurrenceByIDRequest{
 		OccurrenceID: occurrenceID,
 		TenantInfo:   tenantInfo,
 	})
@@ -542,7 +541,7 @@ func (s *Service) publishBillingHoldChange(
 	}
 
 	orgID, buID, shipmentID := saved.OrganizationID, saved.BusinessUnitID, saved.ShipmentID
-	ports.AfterCommit(ctx, func(runCtx context.Context) {
+	kernelports.AfterCommit(ctx, func(runCtx context.Context) {
 		if err := realtimeinvalidation.Publish(
 			runCtx,
 			s.realtime,
@@ -570,7 +569,7 @@ func (s *Service) audit(
 		return
 	}
 
-	if err := s.auditService.LogAction(&services.LogActionParams{
+	if err := s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceDetentionPolicy,
 		ResourceID:     updated.ID.String(),
 		Operation:      permission.OpUpdate,

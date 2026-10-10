@@ -5,8 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/invoicerun"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -31,11 +32,11 @@ type periodKey struct {
 // losing them.
 func (s *Service) SweepDueSchedules(
 	ctx context.Context,
-	actor *servicesports.RequestActor,
-) (*servicesports.InvoiceRunSweepResult, error) {
+	actor *permissionports.RequestActor,
+) (*invoicerunports.InvoiceRunSweepResult, error) {
 	schedules, err := s.customerRepo.ListDueBillingSchedules(
 		ctx,
-		&repositories.ListBillingSchedulesRequest{},
+		&customerports.ListBillingSchedulesRequest{},
 	)
 	if err != nil {
 		return nil, err
@@ -62,7 +63,7 @@ func (s *Service) SweepDueSchedules(
 		}
 	}
 
-	result := &servicesports.InvoiceRunSweepResult{}
+	result := &invoicerunports.InvoiceRunSweepResult{}
 	for _, key := range order {
 		result.SchedulesDue += len(batches[key])
 		periodCtx := dbscope.WithTenant(ctx, dbscope.Tenant{
@@ -80,15 +81,15 @@ func (s *Service) sweepPeriod(
 	key periodKey,
 	periodStart int64,
 	customerIDs []pulid.ID,
-	actor *servicesports.RequestActor,
-	result *servicesports.InvoiceRunSweepResult,
+	actor *permissionports.RequestActor,
+	result *invoicerunports.InvoiceRunSweepResult,
 ) {
 	tenantInfo := pagination.TenantInfo{OrgID: key.orgID, BuID: key.buID}
 
 	// A tick that re-fires, or two workers racing the same schedule, must not
 	// build the period twice. The unique index would refuse the second insert;
 	// finding the existing run first turns that into a resume.
-	run, err := s.repo.GetOpenScheduledRun(ctx, repositories.GetOpenScheduledRunRequest{
+	run, err := s.repo.GetOpenScheduledRun(ctx, invoicerunports.GetOpenScheduledRunRequest{
 		TenantInfo: tenantInfo,
 		Cycle:      string(key.cycle),
 		PeriodEnd:  key.periodEnd,
@@ -96,14 +97,14 @@ func (s *Service) sweepPeriod(
 	if err == nil {
 		// Re-read with groups: whether the run may bill without review is a
 		// property of its groups, not of the run row.
-		run, err = s.repo.GetByID(ctx, repositories.GetInvoiceRunByIDRequest{
+		run, err = s.repo.GetByID(ctx, invoicerunports.GetInvoiceRunByIDRequest{
 			ID:            run.ID,
 			TenantInfo:    tenantInfo,
 			IncludeGroups: true,
 		})
 	}
 	if err != nil {
-		run, err = s.Preview(ctx, &servicesports.PreviewInvoiceRunRequest{
+		run, err = s.Preview(ctx, &invoicerunports.PreviewInvoiceRunRequest{
 			TenantInfo:  tenantInfo,
 			CustomerIDs: customerIDs,
 			PeriodStart: periodStart,
@@ -130,7 +131,7 @@ func (s *Service) sweepPeriod(
 		return
 	}
 
-	commit, err := s.Commit(ctx, &servicesports.CommitInvoiceRunRequest{
+	commit, err := s.Commit(ctx, &invoicerunports.CommitInvoiceRunRequest{
 		TenantInfo: tenantInfo,
 		RunID:      run.ID,
 	}, actor)

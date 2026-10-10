@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -34,7 +34,7 @@ type Service struct {
 	httpClient *http.Client
 
 	mu           sync.RWMutex
-	cachedStatus *serviceports.UpdateStatus
+	cachedStatus *kernelports.UpdateStatus
 	lastCheck    time.Time
 }
 
@@ -48,16 +48,16 @@ func New(p Params) *Service {
 	}
 }
 
-func (s *Service) GetVersionInfo(_ context.Context) (*serviceports.VersionInfo, error) {
-	return &serviceports.VersionInfo{
+func (s *Service) GetVersionInfo(_ context.Context) (*kernelports.VersionInfo, error) {
+	return &kernelports.VersionInfo{
 		Version:     s.cfg.App.Version,
 		Environment: s.cfg.App.Env,
 	}, nil
 }
 
-func (s *Service) GetUpdateStatus(ctx context.Context) (*serviceports.UpdateStatus, error) {
+func (s *Service) GetUpdateStatus(ctx context.Context) (*kernelports.UpdateStatus, error) {
 	if !s.cfg.Update.Enabled {
-		return &serviceports.UpdateStatus{
+		return &kernelports.UpdateStatus{
 			CurrentVersion:  s.cfg.App.Version,
 			UpdateAvailable: false,
 			LastChecked:     0,
@@ -76,9 +76,9 @@ func (s *Service) GetUpdateStatus(ctx context.Context) (*serviceports.UpdateStat
 	return s.CheckForUpdates(ctx)
 }
 
-func (s *Service) CheckForUpdates(ctx context.Context) (*serviceports.UpdateStatus, error) {
+func (s *Service) CheckForUpdates(ctx context.Context) (*kernelports.UpdateStatus, error) {
 	if !s.cfg.Update.Enabled {
-		return &serviceports.UpdateStatus{
+		return &kernelports.UpdateStatus{
 			CurrentVersion:  s.cfg.App.Version,
 			UpdateAvailable: false,
 			LastChecked:     timeutils.NowUnix(),
@@ -87,7 +87,7 @@ func (s *Service) CheckForUpdates(ctx context.Context) (*serviceports.UpdateStat
 
 	if s.cfg.Update.OfflineMode {
 		s.l.Debug("offline mode enabled, skipping remote update check")
-		return &serviceports.UpdateStatus{
+		return &kernelports.UpdateStatus{
 			CurrentVersion:  s.cfg.App.Version,
 			UpdateAvailable: false,
 			LastChecked:     timeutils.NowUnix(),
@@ -97,21 +97,21 @@ func (s *Service) CheckForUpdates(ctx context.Context) (*serviceports.UpdateStat
 	release, err := s.fetchLatestRelease(ctx)
 	if err != nil {
 		if errors.Is(err, ErrNoReleaseFound) {
-			return &serviceports.UpdateStatus{
+			return &kernelports.UpdateStatus{
 				CurrentVersion:  s.cfg.App.Version,
 				UpdateAvailable: false,
 				LastChecked:     timeutils.NowUnix(),
 			}, nil
 		}
 		s.l.Warn("failed to fetch latest release", zap.Error(err))
-		return &serviceports.UpdateStatus{
+		return &kernelports.UpdateStatus{
 			CurrentVersion:  s.cfg.App.Version,
 			UpdateAvailable: false,
 			LastChecked:     timeutils.NowUnix(),
 		}, nil
 	}
 
-	status := &serviceports.UpdateStatus{
+	status := &kernelports.UpdateStatus{
 		CurrentVersion:  s.cfg.App.Version,
 		LatestVersion:   release.Version,
 		UpdateAvailable: s.isNewerVersion(release.Version, s.cfg.App.Version),
@@ -127,7 +127,7 @@ func (s *Service) CheckForUpdates(ctx context.Context) (*serviceports.UpdateStat
 	return status, nil
 }
 
-func (s *Service) fetchLatestRelease(ctx context.Context) (*serviceports.ReleaseInfo, error) {
+func (s *Service) fetchLatestRelease(ctx context.Context) (*kernelports.ReleaseInfo, error) {
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/latest",
 		s.cfg.Update.GetGitHubOwner(),
 		s.cfg.Update.GetGitHubRepo(),
@@ -160,7 +160,7 @@ func (s *Service) fetchLatestRelease(ctx context.Context) (*serviceports.Release
 		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	var ghRelease serviceports.GitHubRelease
+	var ghRelease kernelports.GitHubRelease
 	if err = sonic.Unmarshal(body, &ghRelease); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
@@ -183,7 +183,7 @@ func (s *Service) fetchLatestRelease(ctx context.Context) (*serviceports.Release
 		}
 	}
 
-	return &serviceports.ReleaseInfo{
+	return &kernelports.ReleaseInfo{
 		Version:      strings.TrimPrefix(ghRelease.TagName, "v"),
 		TagName:      ghRelease.TagName,
 		PublishedAt:  publishedAt.Unix(),

@@ -8,9 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/tenderservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 )
 
@@ -33,10 +34,10 @@ type tenderManager interface {
 		ctx context.Context,
 		req *tenderservice.CancelTenderRequest,
 	) (*tenderservice.CancelPreview, error)
-	RecordResponse(ctx context.Context, req *serviceports.TenderResponseRequest) error
+	RecordResponse(ctx context.Context, req *tenderports.TenderResponseRequest) error
 	PreviewResponse(
 		ctx context.Context,
-		req *serviceports.TenderResponseRequest,
+		req *tenderports.TenderResponseRequest,
 	) (*tenderservice.ResponsePreview, error)
 }
 
@@ -46,7 +47,7 @@ type cancelTenderTool struct {
 	tenders tenderManager
 }
 
-func newCancelTenderTool(tenders tenderManager) serviceports.AgentTool {
+func newCancelTenderTool(tenders tenderManager) agentports.AgentTool {
 	return &cancelTenderTool{tenders: tenders}
 }
 
@@ -76,8 +77,8 @@ func (t *cancelTenderTool) ParamSchema() map[string]any {
 	}, fieldTenderID, fieldReason)
 }
 
-func (t *cancelTenderTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *cancelTenderTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceTender,
@@ -88,7 +89,7 @@ func (t *cancelTenderTool) Policy() serviceports.ToolPolicy {
 		Egress:        []agent.EgressClass{agent.EgressExternalRecipient},
 		Effect:        agent.ToolEffectChange,
 		ReadsExternal: agent.ExternalReadNever,
-		Condition: &serviceports.TierCondition{
+		Condition: &agentports.TierCondition{
 			Description: "A tender waiting on review holds a carrier's acceptance, so " +
 				"withdrawing it is a proposal a person decides, as is one the service would " +
 				"refuse or that cannot be read; an active tender is withdrawn once a person " +
@@ -103,7 +104,7 @@ func (t *cancelTenderTool) Policy() serviceports.ToolPolicy {
 
 func (t *cancelTenderTool) tierLimit(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
 ) agent.AutonomyTier {
 	request, err := t.request(&params)
 	if err != nil {
@@ -120,7 +121,7 @@ func (t *cancelTenderTool) tierLimit(
 
 func (t *cancelTenderTool) Validate(
 	_ context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	request, err := t.request(&params)
 	if err != nil {
@@ -135,7 +136,7 @@ func (t *cancelTenderTool) Validate(
 
 func (t *cancelTenderTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -150,7 +151,7 @@ func (t *cancelTenderTool) Execute(
 }
 
 func (t *cancelTenderTool) request(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*tenderservice.CancelTenderRequest, error) {
 	if err := guardPreview(t, params); err != nil {
 		return nil, err
@@ -172,7 +173,7 @@ func (t *cancelTenderTool) request(
 	}, nil
 }
 
-func (t *cancelTenderTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *cancelTenderTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, fieldTenderID, permission.ResourceTender)
 }
 
@@ -189,7 +190,7 @@ type recordTenderResponseTool struct {
 	tenders tenderManager
 }
 
-func newRecordTenderResponseTool(tenders tenderManager) serviceports.AgentTool {
+func newRecordTenderResponseTool(tenders tenderManager) agentports.AgentTool {
 	return &recordTenderResponseTool{tenders: tenders}
 }
 
@@ -224,8 +225,8 @@ func (t *recordTenderResponseTool) ParamSchema() map[string]any {
 	}, fieldOfferID, fieldAction)
 }
 
-func (t *recordTenderResponseTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *recordTenderResponseTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:      t.Name(),
 		Kind:      agent.ToolKindAction,
 		Resource:  permission.ResourceTender,
@@ -242,7 +243,7 @@ func (t *recordTenderResponseTool) Policy() serviceports.ToolPolicy {
 		Classify:      classifyTenderResponse,
 		Effect:        agent.ToolEffectChange,
 		ReadsExternal: agent.ExternalReadNever,
-		Condition: &serviceports.TierCondition{
+		Condition: &agentports.TierCondition{
 			Description: "Recording an acceptance commits the load to the carrier at the " +
 				"offered rate, so it is a proposal a person decides; a decline runs once a " +
 				"person approves it.",
@@ -258,19 +259,19 @@ func (t *recordTenderResponseTool) Policy() serviceports.ToolPolicy {
 // anything else sends the next offer. An answer that cannot be read is taken
 // as the one that reaches furthest.
 func classifyTenderResponse(
-	params serviceports.ToolExecuteParams, //nolint:gocritic // a policy's Classify passes params by value
-) serviceports.CallPolicy {
+	params agentports.ToolExecuteParams, //nolint:gocritic // a policy's Classify passes params by value
+) agentports.CallPolicy {
 	if tender.ResponseAction(optionalString(params.Params, fieldAction)) ==
 		tender.ResponseActionDecline {
-		return serviceports.CallPolicy{Egress: agent.EgressExternalRecipient}
+		return agentports.CallPolicy{Egress: agent.EgressExternalRecipient}
 	}
 
-	return serviceports.CallPolicy{Egress: agent.EgressMoney}
+	return agentports.CallPolicy{Egress: agent.EgressMoney}
 }
 
 func tenderResponseTierLimit(
 	_ context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
 ) agent.AutonomyTier {
 	if tender.ResponseAction(optionalString(params.Params, fieldAction)) ==
 		tender.ResponseActionDecline {
@@ -282,7 +283,7 @@ func tenderResponseTierLimit(
 
 func (t *recordTenderResponseTool) Validate(
 	_ context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	_, err := t.request(&params)
 
@@ -291,7 +292,7 @@ func (t *recordTenderResponseTool) Validate(
 
 func (t *recordTenderResponseTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -308,8 +309,8 @@ func (t *recordTenderResponseTool) Execute(
 // request is the console's manual response: the source is always Manual,
 // since the answer arrived outside the offer's own channels.
 func (t *recordTenderResponseTool) request(
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.TenderResponseRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*tenderports.TenderResponseRequest, error) {
 	if err := guardPreview(t, params); err != nil {
 		return nil, err
 	}
@@ -337,7 +338,7 @@ func (t *recordTenderResponseTool) request(
 		)
 	}
 
-	return &serviceports.TenderResponseRequest{
+	return &tenderports.TenderResponseRequest{
 		TenantInfo:    tenantFrom(*params),
 		OfferID:       offerID,
 		Action:        action,

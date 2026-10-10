@@ -5,9 +5,8 @@ import (
 	"sort"
 
 	"github.com/emoss08/trenova/internal/core/services/formula/contextvariablecache"
-
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/formula/effectiveversioncache"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetablecache"
@@ -62,7 +61,7 @@ func (s *Service) ApprovalImpact(
 
 	shipments, err := s.shipmentRepo.ListRatedByFormulaTemplate(
 		ctx,
-		&repositories.ListRatedByFormulaTemplateRequest{
+		&shipmentports.ListRatedByFormulaTemplateRequest{
 			TemplateID: req.TemplateID,
 			TenantInfo: req.TenantInfo,
 			Limit:      limit,

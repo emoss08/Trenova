@@ -7,8 +7,9 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -308,7 +309,7 @@ func TestListReportDatasets_ListsOnlyWhatTheActorMayRead(t *testing.T) {
 	t.Parallel()
 
 	_, permissions, tools := reportingTools(t)
-	permissions.readable = map[string]*serviceports.ResourcePermissionDetail{
+	permissions.readable = map[string]*permissionports.ResourcePermissionDetail{
 		"shipment": {
 			Resource:       "shipment",
 			Operations:     []permission.Operation{permission.OpRead},
@@ -364,7 +365,7 @@ func TestDescribeReportDataset_NamesFieldsAndWhatTheActorMayReadOfThem(t *testin
 	t.Parallel()
 
 	_, permissions, tools := reportingTools(t)
-	permissions.readable = map[string]*serviceports.ResourcePermissionDetail{
+	permissions.readable = map[string]*permissionports.ResourcePermissionDetail{
 		"shipment": {
 			Resource:         "shipment",
 			Operations:       []permission.Operation{permission.OpRead},
@@ -573,7 +574,7 @@ func TestDescribeReportDataset_HidesADatasetTheActorCannotRead(t *testing.T) {
 	t.Parallel()
 
 	_, permissions, tools := reportingTools(t)
-	permissions.readable = map[string]*serviceports.ResourcePermissionDetail{}
+	permissions.readable = map[string]*permissionports.ResourcePermissionDetail{}
 
 	_, err := tools["describe_report_dataset"].Query(t.Context(), testParams(map[string]any{
 		"dataset": "shipment",
@@ -608,7 +609,7 @@ func TestPreviewReport_RunsAnInlineDefinitionAndKeysRowsByLabel(t *testing.T) {
 
 	service, _, tools := reportingTools(t)
 	service.preview = &reporting.PreviewResult{
-		Columns: []serviceports.ReportResultColumn{
+		Columns: []reportports.ReportResultColumn{
 			{ID: "c1", Label: "Customer", Type: reportcatalog.FieldString},
 			{
 				ID:     "c2",
@@ -617,11 +618,11 @@ func TestPreviewReport_RunsAnInlineDefinitionAndKeysRowsByLabel(t *testing.T) {
 				Format: reportcatalog.FormatMoney,
 			},
 		},
-		Rows: []serviceports.ReportRow{
+		Rows: []reportports.ReportRow{
 			{"Acme", "1200.00"},
 			{"Globex", "800.00"},
 		},
-		Totals: serviceports.ReportRow{nil, "2000.00"},
+		Totals: reportports.ReportRow{nil, "2000.00"},
 	}
 
 	result, err := tools["preview_report"].Query(t.Context(), testParams(map[string]any{
@@ -668,12 +669,12 @@ func TestPreviewReport_CapsTheRowsItHandsBack(t *testing.T) {
 	t.Parallel()
 
 	service, _, tools := reportingTools(t)
-	rows := make([]serviceports.ReportRow, 0, maxPreviewRows+5)
+	rows := make([]reportports.ReportRow, 0, maxPreviewRows+5)
 	for i := 0; i < maxPreviewRows+5; i++ {
-		rows = append(rows, serviceports.ReportRow{i})
+		rows = append(rows, reportports.ReportRow{i})
 	}
 	service.preview = &reporting.PreviewResult{
-		Columns: []serviceports.ReportResultColumn{{ID: "c1", Label: "N"}},
+		Columns: []reportports.ReportResultColumn{{ID: "c1", Label: "N"}},
 		Rows:    rows,
 	}
 
@@ -816,11 +817,11 @@ func TestPreviewReport_WritesDateColumnsAsReadableDates(t *testing.T) {
 
 	service, _, tools := reportingTools(t)
 	service.preview = &reporting.PreviewResult{
-		Columns: []serviceports.ReportResultColumn{
+		Columns: []reportports.ReportResultColumn{
 			{ID: "c1", Label: "Driver", Type: reportcatalog.FieldString},
 			{ID: "c2", Label: "Last Move", Type: reportcatalog.FieldEpoch},
 		},
-		Rows: []serviceports.ReportRow{
+		Rows: []reportports.ReportRow{
 			{"Mike Johnson", int64(1789996617)},
 			{"Nobody", nil},
 		},

@@ -9,8 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/iam"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -37,7 +38,7 @@ func (m *mockAuditRepository) InsertAuditEntries(
 
 func (m *mockAuditRepository) List(
 	ctx context.Context,
-	req *repositories.ListAuditEntriesRequest,
+	req *auditports.ListAuditEntriesRequest,
 ) (*pagination.ListResult[*audit.Entry], error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
@@ -48,7 +49,7 @@ func (m *mockAuditRepository) List(
 
 func (m *mockAuditRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListAuditEntriesConnectionRequest,
+	req *auditports.ListAuditEntriesConnectionRequest,
 ) (*pagination.CursorListResult[*audit.Entry], error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
@@ -59,7 +60,7 @@ func (m *mockAuditRepository) ListConnection(
 
 func (m *mockAuditRepository) ListByResourceID(
 	ctx context.Context,
-	req *repositories.ListByResourceIDRequest,
+	req *auditports.ListByResourceIDRequest,
 ) (*pagination.ListResult[*audit.Entry], error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
@@ -70,7 +71,7 @@ func (m *mockAuditRepository) ListByResourceID(
 
 func (m *mockAuditRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetAuditEntryByIDOptions,
+	req auditports.GetAuditEntryByIDOptions,
 ) (*audit.Entry, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
@@ -81,7 +82,7 @@ func (m *mockAuditRepository) GetByID(
 
 func (m *mockAuditRepository) GetByResourceAndOperation(
 	ctx context.Context,
-	req *repositories.GetAuditByResourceRequest,
+	req *auditports.GetAuditByResourceRequest,
 ) ([]*audit.Entry, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
@@ -92,7 +93,7 @@ func (m *mockAuditRepository) GetByResourceAndOperation(
 
 func (m *mockAuditRepository) GetRecentEntries(
 	ctx context.Context,
-	req *repositories.GetRecentEntriesRequest,
+	req *auditports.GetRecentEntriesRequest,
 ) ([]*audit.Entry, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
@@ -103,7 +104,7 @@ func (m *mockAuditRepository) GetRecentEntries(
 
 func (m *mockAuditRepository) DeleteAuditEntries(
 	ctx context.Context,
-	req repositories.DeleteAuditEntriesRequest,
+	req auditports.DeleteAuditEntriesRequest,
 ) (int64, error) {
 	args := m.Called(ctx, req)
 	return args.Get(0).(int64), args.Error(1)
@@ -136,7 +137,7 @@ func (m *mockDataRetentionRepository) List(
 
 func (m *mockDataRetentionRepository) Get(
 	ctx context.Context,
-	req repositories.GetDataRetentionRequest,
+	req tenantports.GetDataRetentionRequest,
 ) (*tenant.DataRetention, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
@@ -534,7 +535,7 @@ func TestDeleteAuditEntriesActivity_WithRetention(t *testing.T) {
 
 	expectedTimestamp := time.Now().AddDate(0, 0, -30).Unix()
 	mockAuditRepo.On("DeleteAuditEntries", mock.Anything, mock.MatchedBy(
-		func(req repositories.DeleteAuditEntriesRequest) bool {
+		func(req auditports.DeleteAuditEntriesRequest) bool {
 			criticalFloor := time.Now().AddDate(0, 0, -audit.CriticalRetentionDays).Unix()
 			return req.OrgID == orgID && req.BuID == buID &&
 				req.Before <= expectedTimestamp+60 && req.Before >= expectedTimestamp-60 &&

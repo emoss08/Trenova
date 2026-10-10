@@ -1,14 +1,14 @@
 package apikeyservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/apikeyportsmock"
 	"context"
 	"testing"
 	"time"
 	"unicode/utf8"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -17,7 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func newTestUsageBuffer(t *testing.T, repo *mocks.MockAPIKeyRepository) *UsageBuffer {
+func newTestUsageBuffer(t *testing.T, repo *apikeyportsmock.MockAPIKeyRepository) *UsageBuffer {
 	t.Helper()
 
 	return NewUsageBuffer(repo, zap.NewNop(), &config.Config{
@@ -34,7 +34,7 @@ func newTestUsageBuffer(t *testing.T, repo *mocks.MockAPIKeyRepository) *UsageBu
 func TestUsageBufferAggregatesSameKeyAndFlushesMetadata(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockAPIKeyRepository(t)
+	repo := apikeyportsmock.NewMockAPIKeyRepository(t)
 	buf := newTestUsageBuffer(t, repo)
 
 	keyID := pulid.MustNew("ak_")
@@ -43,7 +43,7 @@ func TestUsageBufferAggregatesSameKeyAndFlushesMetadata(t *testing.T) {
 	occurredAt := time.Date(2026, 3, 6, 10, 15, 0, 0, time.UTC)
 
 	for range 5 {
-		buf.RecordUsage(services.APIKeyUsageEvent{
+		buf.RecordUsage(apikeyports.APIKeyUsageEvent{
 			APIKeyID:       keyID,
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
@@ -56,7 +56,7 @@ func TestUsageBufferAggregatesSameKeyAndFlushesMetadata(t *testing.T) {
 	repo.EXPECT().IncrementDailyUsage(
 		mock.Anything, keyID, orgID, buID, bucketUsageDate(occurredAt), int64(5),
 	).Return(nil).Once()
-	repo.EXPECT().UpdateUsage(mock.Anything, keyID, repositories.APIKeyUsageMetadata{
+	repo.EXPECT().UpdateUsage(mock.Anything, keyID, apikeyports.APIKeyUsageMetadata{
 		LastUsedAt:        occurredAt.Unix(),
 		LastUsedIP:        "192.0.2.10",
 		LastUsedUserAgent: "integration-test",
@@ -70,7 +70,7 @@ func TestUsageBufferAggregatesSameKeyAndFlushesMetadata(t *testing.T) {
 func TestUsageBufferUsesLatestMetadataPerAPIKey(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockAPIKeyRepository(t)
+	repo := apikeyportsmock.NewMockAPIKeyRepository(t)
 	buf := newTestUsageBuffer(t, repo)
 
 	keyID := pulid.MustNew("ak_")
@@ -81,7 +81,7 @@ func TestUsageBufferUsesLatestMetadataPerAPIKey(t *testing.T) {
 	longAgent := "abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789"
 	expectedAgent := clampString(longAgent, maxUserAgentLength)
 
-	buf.RecordUsage(services.APIKeyUsageEvent{
+	buf.RecordUsage(apikeyports.APIKeyUsageEvent{
 		APIKeyID:       keyID,
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
@@ -89,7 +89,7 @@ func TestUsageBufferUsesLatestMetadataPerAPIKey(t *testing.T) {
 		IPAddress:      "192.0.2.10",
 		UserAgent:      "older-agent",
 	})
-	buf.RecordUsage(services.APIKeyUsageEvent{
+	buf.RecordUsage(apikeyports.APIKeyUsageEvent{
 		APIKeyID:       keyID,
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
@@ -102,7 +102,7 @@ func TestUsageBufferUsesLatestMetadataPerAPIKey(t *testing.T) {
 		mock.Anything, keyID, orgID, buID, bucketUsageDate(firstSeen), int64(2),
 	).Return(nil).Once()
 	repo.EXPECT().UpdateUsage(mock.Anything, keyID, mock.MatchedBy(func(
-		metadata repositories.APIKeyUsageMetadata,
+		metadata apikeyports.APIKeyUsageMetadata,
 	) bool {
 		return metadata.LastUsedAt == laterSeen.Unix() &&
 			metadata.LastUsedIP == "198.51.100.7" &&
@@ -115,7 +115,7 @@ func TestUsageBufferUsesLatestMetadataPerAPIKey(t *testing.T) {
 func TestUsageBufferFlushRequeuesFailures(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockAPIKeyRepository(t)
+	repo := apikeyportsmock.NewMockAPIKeyRepository(t)
 	buf := newTestUsageBuffer(t, repo)
 
 	keyID := pulid.MustNew("ak_")
@@ -123,13 +123,13 @@ func TestUsageBufferFlushRequeuesFailures(t *testing.T) {
 	buID := pulid.MustNew("bu_")
 	occurredAt := time.Date(2026, 3, 6, 10, 15, 0, 0, time.UTC)
 	expectedDate := bucketUsageDate(occurredAt)
-	expectedMetadata := repositories.APIKeyUsageMetadata{
+	expectedMetadata := apikeyports.APIKeyUsageMetadata{
 		LastUsedAt:        occurredAt.Unix(),
 		LastUsedIP:        "192.0.2.10",
 		LastUsedUserAgent: "integration-test",
 	}
 
-	buf.RecordUsage(services.APIKeyUsageEvent{
+	buf.RecordUsage(apikeyports.APIKeyUsageEvent{
 		APIKeyID:       keyID,
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
@@ -160,7 +160,7 @@ func TestUsageBufferFlushRequeuesFailures(t *testing.T) {
 func TestUsageBufferStopFlushesRemaining(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockAPIKeyRepository(t)
+	repo := apikeyportsmock.NewMockAPIKeyRepository(t)
 	buf := newTestUsageBuffer(t, repo)
 
 	keyID := pulid.MustNew("ak_")
@@ -168,7 +168,7 @@ func TestUsageBufferStopFlushesRemaining(t *testing.T) {
 	buID := pulid.MustNew("bu_")
 	occurredAt := time.Date(2026, 3, 6, 10, 15, 0, 0, time.UTC)
 
-	buf.RecordUsage(services.APIKeyUsageEvent{
+	buf.RecordUsage(apikeyports.APIKeyUsageEvent{
 		APIKeyID:       keyID,
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
@@ -180,7 +180,7 @@ func TestUsageBufferStopFlushesRemaining(t *testing.T) {
 	repo.EXPECT().IncrementDailyUsage(
 		mock.Anything, keyID, orgID, buID, bucketUsageDate(occurredAt), int64(1),
 	).Return(nil).Once()
-	repo.EXPECT().UpdateUsage(mock.Anything, keyID, repositories.APIKeyUsageMetadata{
+	repo.EXPECT().UpdateUsage(mock.Anything, keyID, apikeyports.APIKeyUsageMetadata{
 		LastUsedAt:        occurredAt.Unix(),
 		LastUsedIP:        "192.0.2.10",
 		LastUsedUserAgent: "integration-test",
@@ -196,7 +196,7 @@ func TestUsageBufferStopFlushesRemaining(t *testing.T) {
 func TestUsageBufferBucketsDatesInUTC(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockAPIKeyRepository(t)
+	repo := apikeyportsmock.NewMockAPIKeyRepository(t)
 	buf := newTestUsageBuffer(t, repo)
 
 	keyID := pulid.MustNew("ak_")
@@ -206,7 +206,7 @@ func TestUsageBufferBucketsDatesInUTC(t *testing.T) {
 	occurredAt := time.Date(2026, 3, 6, 23, 30, 0, 0, loc)
 	expectedDate := time.Date(2026, 3, 7, 0, 0, 0, 0, time.UTC)
 
-	buf.RecordUsage(services.APIKeyUsageEvent{
+	buf.RecordUsage(apikeyports.APIKeyUsageEvent{
 		APIKeyID:       keyID,
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
@@ -226,7 +226,7 @@ func TestUsageBufferBucketsDatesInUTC(t *testing.T) {
 func TestUsageBufferDropsNewKeysWhenPendingBufferIsFull(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockAPIKeyRepository(t)
+	repo := apikeyportsmock.NewMockAPIKeyRepository(t)
 	buf := NewUsageBuffer(repo, zap.NewNop(), &config.Config{
 		Security: config.SecurityConfig{
 			APIToken: config.APITokenConfig{
@@ -237,13 +237,13 @@ func TestUsageBufferDropsNewKeysWhenPendingBufferIsFull(t *testing.T) {
 		},
 	})
 
-	firstEvent := services.APIKeyUsageEvent{
+	firstEvent := apikeyports.APIKeyUsageEvent{
 		APIKeyID:       pulid.MustNew("ak_"),
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
 		OccurredAt:     time.Date(2026, 3, 6, 10, 15, 0, 0, time.UTC),
 	}
-	secondEvent := services.APIKeyUsageEvent{
+	secondEvent := apikeyports.APIKeyUsageEvent{
 		APIKeyID:       pulid.MustNew("ak_"),
 		OrganizationID: firstEvent.OrganizationID,
 		BusinessUnitID: firstEvent.BusinessUnitID,
@@ -267,7 +267,7 @@ func TestUsageBufferDropsNewKeysWhenPendingBufferIsFull(t *testing.T) {
 func TestUsageBufferFlushCancellationRequeuesRemainingItems(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockAPIKeyRepository(t)
+	repo := apikeyportsmock.NewMockAPIKeyRepository(t)
 	buf := newTestUsageBuffer(t, repo)
 
 	firstKeyID := pulid.MustNew("ak_")
@@ -277,7 +277,7 @@ func TestUsageBufferFlushCancellationRequeuesRemainingItems(t *testing.T) {
 	occurredAt := time.Date(2026, 3, 6, 10, 15, 0, 0, time.UTC)
 	blocked := make(chan struct{}, 1)
 
-	buf.RecordUsage(services.APIKeyUsageEvent{
+	buf.RecordUsage(apikeyports.APIKeyUsageEvent{
 		APIKeyID:       firstKeyID,
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
@@ -285,7 +285,7 @@ func TestUsageBufferFlushCancellationRequeuesRemainingItems(t *testing.T) {
 		IPAddress:      "192.0.2.10",
 		UserAgent:      "integration-test",
 	})
-	buf.RecordUsage(services.APIKeyUsageEvent{
+	buf.RecordUsage(apikeyports.APIKeyUsageEvent{
 		APIKeyID:       secondKeyID,
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
@@ -331,7 +331,7 @@ func TestUsageBufferFlushCancellationRequeuesRemainingItems(t *testing.T) {
 func TestUsageBufferStopCancelsInFlightFlush(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockAPIKeyRepository(t)
+	repo := apikeyportsmock.NewMockAPIKeyRepository(t)
 	buf := NewUsageBuffer(repo, zap.NewNop(), &config.Config{
 		Security: config.SecurityConfig{
 			APIToken: config.APITokenConfig{
@@ -349,7 +349,7 @@ func TestUsageBufferStopCancelsInFlightFlush(t *testing.T) {
 	started := make(chan struct{}, 2)
 	finished := make(chan struct{}, 2)
 
-	buf.RecordUsage(services.APIKeyUsageEvent{
+	buf.RecordUsage(apikeyports.APIKeyUsageEvent{
 		APIKeyID:       keyID,
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
@@ -405,7 +405,7 @@ func TestUsageBufferStopCancelsInFlightFlush(t *testing.T) {
 func TestUsageBufferRetryRequeueHonorsCapacity(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockAPIKeyRepository(t)
+	repo := apikeyportsmock.NewMockAPIKeyRepository(t)
 	buf := NewUsageBuffer(repo, zap.NewNop(), &config.Config{
 		Security: config.SecurityConfig{
 			APIToken: config.APITokenConfig{
@@ -481,7 +481,7 @@ func TestClampStringPreservesValidUTF8(t *testing.T) {
 func TestUsageBufferStopWithoutStartIsNoop(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockAPIKeyRepository(t)
+	repo := apikeyportsmock.NewMockAPIKeyRepository(t)
 	buf := newTestUsageBuffer(t, repo)
 
 	ctx, cancel := context.WithTimeout(t.Context(), time.Second)

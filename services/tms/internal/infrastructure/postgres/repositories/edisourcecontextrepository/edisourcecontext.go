@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -30,7 +30,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.EDISourceContextRepository {
+func New(p Params) ediports.EDISourceContextRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.edi-source-context-repository"),
@@ -39,7 +39,7 @@ func New(p Params) repositories.EDISourceContextRepository {
 
 func (r *repository) ListSourceContextSchemas(
 	ctx context.Context,
-	req *repositories.ListEDISourceContextSchemasRequest,
+	req *ediports.ListEDISourceContextSchemasRequest,
 ) (*pagination.ListResult[*edi.EDISourceContextSchema], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDISourceContextSchema], error) {
 		entities := make([]*edi.EDISourceContextSchema, 0, req.Filter.Pagination.SafeLimit())
@@ -71,7 +71,7 @@ func (r *repository) ListSourceContextSchemas(
 
 func (r *repository) GetSourceContextSchema(
 	ctx context.Context,
-	req repositories.GetEDISourceContextSchemaRequest,
+	req ediports.GetEDISourceContextSchemaRequest,
 ) (*edi.EDISourceContextSchema, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDISourceContextSchema, error) {
 		entity := new(edi.EDISourceContextSchema)
@@ -95,7 +95,7 @@ func (r *repository) GetSourceContextSchema(
 //nolint:gocritic // EDI repository request structs are passed by value consistently.
 func (r *repository) GetActiveSourceContextSchema(
 	ctx context.Context,
-	req repositories.GetActiveEDISourceContextSchemaRequest,
+	req ediports.GetActiveEDISourceContextSchemaRequest,
 ) (*edi.EDISourceContextSchema, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDISourceContextSchema, error) {
 		entity := new(edi.EDISourceContextSchema)
@@ -127,28 +127,28 @@ func (r *repository) GetActiveSourceContextSchema(
 
 func (r *repository) ListSourceContextFields(
 	ctx context.Context,
-	req *repositories.ListEDISourceContextFieldsRequest,
+	req *ediports.ListEDISourceContextFieldsRequest,
 ) (*pagination.ListResult[*edi.EDISourceContextField], error) {
 	return r.searchSourceContextFields(ctx, req)
 }
 
 func (r *repository) SearchSourceContextFields(
 	ctx context.Context,
-	req *repositories.ListEDISourceContextFieldsRequest,
+	req *ediports.ListEDISourceContextFieldsRequest,
 ) (*pagination.ListResult[*edi.EDISourceContextField], error) {
 	return r.searchSourceContextFields(ctx, req)
 }
 
 func (r *repository) SelectSourceContextFieldOptions(
 	ctx context.Context,
-	req *repositories.ListEDISourceContextFieldsRequest,
+	req *ediports.ListEDISourceContextFieldsRequest,
 ) (*pagination.ListResult[*edi.EDISourceContextField], error) {
 	return r.searchSourceContextFields(ctx, req)
 }
 
 func (r *repository) searchSourceContextFields(
 	ctx context.Context,
-	req *repositories.ListEDISourceContextFieldsRequest,
+	req *ediports.ListEDISourceContextFieldsRequest,
 ) (*pagination.ListResult[*edi.EDISourceContextField], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDISourceContextField], error) {
 		entities := make([]*edi.EDISourceContextField, 0, req.Filter.Pagination.SafeLimit())
@@ -177,7 +177,7 @@ func (r *repository) searchSourceContextFields(
 
 func filterSourceContextSchemasQuery(
 	query *bun.SelectQuery,
-	req *repositories.ListEDISourceContextSchemasRequest,
+	req *ediports.ListEDISourceContextSchemasRequest,
 ) *bun.SelectQuery {
 	query = sourceContextSchemaTenantScope(query, req.Filter.TenantInfo)
 	cols := buncolgen.EDISourceContextSchemaColumns
@@ -217,7 +217,7 @@ func filterSourceContextSchemasQuery(
 
 func filterSourceContextFieldsQuery(
 	query *bun.SelectQuery,
-	req *repositories.ListEDISourceContextFieldsRequest,
+	req *ediports.ListEDISourceContextFieldsRequest,
 ) *bun.SelectQuery {
 	query = sourceContextSchemaTenantScope(query, req.Filter.TenantInfo)
 	fieldCols := buncolgen.EDISourceContextFieldColumns

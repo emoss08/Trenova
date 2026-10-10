@@ -5,10 +5,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/uptrace/bun"
@@ -28,7 +28,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.EDIControlNumberRepository {
+func New(p Params) ediports.EDIControlNumberRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.edi-control-number-repository"),
@@ -37,13 +37,13 @@ func New(p Params) repositories.EDIControlNumberRepository {
 
 func (r *repository) AllocateControlNumbers(
 	ctx context.Context,
-	req repositories.AllocateEDIControlNumbersRequest,
+	req ediports.AllocateEDIControlNumbersRequest,
 ) (map[edi.ControlNumberKind]int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (map[edi.ControlNumberKind]int64, error) {
 		allocated := make(map[edi.ControlNumberKind]int64, len(req.Kinds))
 		cols := buncolgen.EDIControlNumberSequenceColumns
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			for _, kind := range req.Kinds {
 				sequence := &edi.EDIControlNumberSequence{
 					BusinessUnitID: req.TenantInfo.BuID,
@@ -99,7 +99,7 @@ func (r *repository) AllocateControlNumbers(
 
 func (r *repository) ResetControlNumber(
 	ctx context.Context,
-	req *repositories.ResetEDIControlNumberRequest,
+	req *ediports.ResetEDIControlNumberRequest,
 ) (*edi.EDIControlNumberSequence, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIControlNumberSequence, error) {
 		cols := buncolgen.EDIControlNumberSequenceColumns

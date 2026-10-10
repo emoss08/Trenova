@@ -6,17 +6,18 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 var (
-	_ serviceports.ToolPreviewer = (*resolveAccountingDriftTool)(nil)
-	_ serviceports.ToolPreviewer = (*dismissAccountingDriftTool)(nil)
-	_ serviceports.ToolPreviewer = (*checkAccountingDriftTool)(nil)
+	_ agentports.ToolPreviewer = (*resolveAccountingDriftTool)(nil)
+	_ agentports.ToolPreviewer = (*dismissAccountingDriftTool)(nil)
+	_ agentports.ToolPreviewer = (*checkAccountingDriftTool)(nil)
 )
 
 const (
@@ -62,7 +63,7 @@ func driftFindingRecord(finding *accountingsync.AccountingDriftFinding) toolprev
 
 func applyDriftFix(
 	finding *accountingsync.AccountingDriftFinding,
-	fix *serviceports.AccountingDriftFixPreview,
+	fix *accountingsyncports.AccountingDriftFixPreview,
 	actorID pulid.ID,
 	now int64,
 ) error {
@@ -79,7 +80,7 @@ func applyDriftFix(
 
 func (t *resolveAccountingDriftTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	const refusedSummary = "Would fix a difference between the accounting system and Trenova."
 
@@ -108,7 +109,7 @@ func (t *resolveAccountingDriftTool) Preview(
 
 func (t *dismissAccountingDriftTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	const refusedSummary = "Would dismiss a difference between the accounting system and Trenova."
 
@@ -137,7 +138,7 @@ func (t *dismissAccountingDriftTool) Preview(
 
 func (t *checkAccountingDriftTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	const refusedSummary = "Would compare the accounting system with Trenova now."
 

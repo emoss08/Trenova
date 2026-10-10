@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/journalentry"
 	"github.com/emoss08/trenova/internal/core/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -17,11 +17,11 @@ import (
 type ValidatorParams struct {
 	fx.In
 
-	FiscalRepo repositories.FiscalPeriodRepository
+	FiscalRepo fiscalperiodports.FiscalPeriodRepository
 }
 
 type Validator struct {
-	fiscalRepo repositories.FiscalPeriodRepository
+	fiscalRepo fiscalperiodports.FiscalPeriodRepository
 }
 
 func NewValidator(p ValidatorParams) *Validator { return &Validator{fiscalRepo: p.FiscalRepo} }
@@ -87,7 +87,7 @@ func (v *Validator) ResolvePostingPeriod(
 	me := errortypes.NewMultiError()
 	period, err := v.fiscalRepo.GetPeriodByDate(
 		ctx,
-		repositories.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: accountingDate},
+		fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: accountingDate},
 	)
 	if err != nil {
 		me.Add(
@@ -110,7 +110,7 @@ func (v *Validator) ResolvePostingPeriod(
 		}
 		periods, listErr := v.fiscalRepo.ListByFiscalYearID(
 			ctx,
-			repositories.ListByFiscalYearIDRequest{
+			fiscalperiodports.ListByFiscalYearIDRequest{
 				FiscalYearID: period.FiscalYearID,
 				OrgID:        orgID,
 				BuID:         buID,

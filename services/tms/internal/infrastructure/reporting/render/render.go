@@ -6,23 +6,23 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"go.uber.org/fx"
 )
 
 type Registry struct {
-	renderers map[report.Format]services.ReportRenderer
+	renderers map[report.Format]reportports.ReportRenderer
 }
 
 type RegistryParams struct {
 	fx.In
 
-	Renderers []services.ReportRenderer `group:"report_renderers"`
+	Renderers []reportports.ReportRenderer `group:"report_renderers"`
 }
 
 func NewRegistry(p RegistryParams) *Registry {
 	registry := &Registry{
-		renderers: make(map[report.Format]services.ReportRenderer, len(p.Renderers)),
+		renderers: make(map[report.Format]reportports.ReportRenderer, len(p.Renderers)),
 	}
 	for _, renderer := range p.Renderers {
 		registry.renderers[renderer.Format()] = renderer
@@ -30,7 +30,7 @@ func NewRegistry(p RegistryParams) *Registry {
 	return registry
 }
 
-func (r *Registry) For(format report.Format) (services.ReportRenderer, error) {
+func (r *Registry) For(format report.Format) (reportports.ReportRenderer, error) {
 	renderer, ok := r.renderers[format]
 	if !ok {
 		return nil, fmt.Errorf("no renderer registered for format %q", format)
@@ -41,7 +41,7 @@ func (r *Registry) For(format report.Format) (services.ReportRenderer, error) {
 func asRenderer(constructor any) fx.Option {
 	return fx.Provide(fx.Annotate(
 		constructor,
-		fx.As(new(services.ReportRenderer)),
+		fx.As(new(reportports.ReportRenderer)),
 		fx.ResultTags(`group:"report_renderers"`),
 	))
 }
@@ -54,12 +54,12 @@ var Module = fx.Module("report-renderers",
 	fx.Provide(
 		fx.Annotate(
 			NewRegistry,
-			fx.As(new(services.ReportRendererRegistry)),
+			fx.As(new(reportports.ReportRendererRegistry)),
 		),
 	),
 )
 
-func metaLocation(meta *services.ReportRunMeta) *time.Location {
+func metaLocation(meta *reportports.ReportRunMeta) *time.Location {
 	if meta.Timezone == "" {
 		return time.UTC
 	}
@@ -71,7 +71,7 @@ func metaLocation(meta *services.ReportRunMeta) *time.Location {
 }
 
 func formatCell(
-	column *services.ReportResultColumn,
+	column *reportports.ReportResultColumn,
 	value any,
 	loc *time.Location,
 ) string {
@@ -88,7 +88,7 @@ const totalsLabel = "Total"
 // not ask for one. Grouping columns come back blank apart from the label.
 func totalsCells(
 	ctx context.Context,
-	dataset services.ReportDatasetReader,
+	dataset reportports.ReportDatasetReader,
 	loc *time.Location,
 ) ([]string, error) {
 	row, err := dataset.Totals(ctx)

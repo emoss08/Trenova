@@ -2,8 +2,9 @@ package ediservice
 
 import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -15,7 +16,7 @@ func (s *Service) logAction(
 		GetOrganizationID() pulid.ID
 		GetBusinessUnitID() pulid.ID
 	},
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	operation permission.Operation,
 	previous any,
 	current any,
@@ -26,7 +27,7 @@ func (s *Service) logAction(
 	}
 
 	auditActor := actor.AuditActor()
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceEDI,
 		ResourceID:     entity.GetID().String(),
 		Operation:      operation,

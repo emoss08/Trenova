@@ -5,8 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/httpsafe"
@@ -14,14 +13,14 @@ import (
 
 func (s *Service) ListModels(
 	ctx context.Context,
-	req *services.ListAIProviderModelsRequest,
-) ([]services.AIProviderModelOption, error) {
+	req *agentports.ListAIProviderModelsRequest,
+) ([]agentports.AIProviderModelOption, error) {
 	sealed, err := s.seal(ctx, req.TenantInfo, &req.Endpoint)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.tester.ListModels(ctx, &services.ProbeAIProviderModelsRequest{
+	return s.tester.ListModels(ctx, &agentports.ProbeAIProviderModelsRequest{
 		TenantInfo: req.TenantInfo,
 		Endpoint:   sealed,
 	})
@@ -29,8 +28,8 @@ func (s *Service) ListModels(
 
 func (s *Service) TestDraft(
 	ctx context.Context,
-	req *services.TestAIProviderDraftRequest,
-) (*services.AIProviderDraftTestResult, error) {
+	req *agentports.TestAIProviderDraftRequest,
+) (*agentports.AIProviderDraftTestResult, error) {
 	multiErr := errortypes.NewMultiError()
 	validateDraft(req, multiErr)
 	if multiErr.HasErrors() {
@@ -47,7 +46,7 @@ func (s *Service) TestDraft(
 		timeout = *req.TimeoutSeconds
 	}
 
-	return s.tester.TestDraft(ctx, &services.ProbeAIProviderDraftRequest{
+	return s.tester.TestDraft(ctx, &agentports.ProbeAIProviderDraftRequest{
 		TenantInfo:           req.TenantInfo,
 		Endpoint:             sealed,
 		Model:                strings.TrimSpace(req.Model),
@@ -61,8 +60,8 @@ func (s *Service) TestDraft(
 
 func (s *Service) RunListModels(
 	ctx context.Context,
-	req *services.ProbeAIProviderModelsRequest,
-) ([]services.AIProviderModelOption, error) {
+	req *agentports.ProbeAIProviderModelsRequest,
+) ([]agentports.AIProviderModelOption, error) {
 	provider := endpointProvider(&req.Endpoint)
 	apiKey, err := s.unseal(&req.Endpoint)
 	if err != nil {
@@ -74,8 +73,8 @@ func (s *Service) RunListModels(
 
 func (s *Service) RunTestDraft(
 	ctx context.Context,
-	req *services.ProbeAIProviderDraftRequest,
-) (*services.AIProviderDraftTestResult, error) {
+	req *agentports.ProbeAIProviderDraftRequest,
+) (*agentports.AIProviderDraftTestResult, error) {
 	provider := endpointProvider(&req.Endpoint)
 	provider.Name = "Draft"
 	provider.Model = req.Model
@@ -104,7 +103,7 @@ func (s *Service) RunTestDraft(
 	return s.prober.Probe(ctx, provider, apiKey), nil
 }
 
-func validateDraft(req *services.TestAIProviderDraftRequest, multiErr *errortypes.MultiError) {
+func validateDraft(req *agentports.TestAIProviderDraftRequest, multiErr *errortypes.MultiError) {
 	if strings.TrimSpace(req.Model) == "" {
 		multiErr.Add("model", errortypes.ErrRequired, "Model is required")
 	}
@@ -134,13 +133,13 @@ func validateDraft(req *services.TestAIProviderDraftRequest, multiErr *errortype
 func (s *Service) seal(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	endpoint *services.AIProviderEndpoint,
-) (services.SealedAIProviderEndpoint, error) {
+	endpoint *agentports.AIProviderEndpoint,
+) (agentports.SealedAIProviderEndpoint, error) {
 	if err := s.checkPrivateNetwork(endpoint.AllowPrivateNetwork); err != nil {
-		return services.SealedAIProviderEndpoint{}, err
+		return agentports.SealedAIProviderEndpoint{}, err
 	}
 
-	sealed := services.SealedAIProviderEndpoint{
+	sealed := agentports.SealedAIProviderEndpoint{
 		Kind:                endpoint.Kind,
 		BaseURL:             strings.TrimSpace(endpoint.BaseURL),
 		AllowPrivateNetwork: endpoint.AllowPrivateNetwork,
@@ -148,7 +147,7 @@ func (s *Service) seal(
 
 	key, err := s.sealedKey(ctx, tenantInfo, endpoint, &sealed)
 	if err != nil {
-		return services.SealedAIProviderEndpoint{}, err
+		return agentports.SealedAIProviderEndpoint{}, err
 	}
 	sealed.SealedAPIKey = key
 
@@ -157,7 +156,7 @@ func (s *Service) seal(
 	multiErr := errortypes.NewMultiError()
 	draft.ValidateEndpoint(multiErr)
 	if multiErr.HasErrors() {
-		return services.SealedAIProviderEndpoint{}, multiErr
+		return agentports.SealedAIProviderEndpoint{}, multiErr
 	}
 
 	return sealed, nil
@@ -166,8 +165,8 @@ func (s *Service) seal(
 func (s *Service) sealedKey(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	endpoint *services.AIProviderEndpoint,
-	sealed *services.SealedAIProviderEndpoint,
+	endpoint *agentports.AIProviderEndpoint,
+	sealed *agentports.SealedAIProviderEndpoint,
 ) (string, error) {
 	if endpoint.APIKey != nil {
 		if typed := strings.TrimSpace(*endpoint.APIKey); typed != "" {
@@ -185,7 +184,7 @@ func (s *Service) sealedKey(
 		return "", nil
 	}
 
-	stored, err := s.repo.GetByID(ctx, repositories.GetAIProviderByIDRequest{
+	stored, err := s.repo.GetByID(ctx, agentports.GetAIProviderByIDRequest{
 		ID:         endpoint.ProviderID,
 		TenantInfo: tenantInfo,
 	})
@@ -201,7 +200,7 @@ func (s *Service) sealedKey(
 	return stored.APIKey, nil
 }
 
-func (s *Service) unseal(endpoint *services.SealedAIProviderEndpoint) (string, error) {
+func (s *Service) unseal(endpoint *agentports.SealedAIProviderEndpoint) (string, error) {
 	if strings.TrimSpace(endpoint.SealedAPIKey) == "" {
 		return "", nil
 	}
@@ -216,7 +215,7 @@ func (s *Service) unseal(endpoint *services.SealedAIProviderEndpoint) (string, e
 	return apiKey, nil
 }
 
-func endpointProvider(endpoint *services.SealedAIProviderEndpoint) *aiprovider.Provider {
+func endpointProvider(endpoint *agentports.SealedAIProviderEndpoint) *aiprovider.Provider {
 	return &aiprovider.Provider{
 		Kind:                endpoint.Kind,
 		BaseURL:             endpoint.BaseURL,

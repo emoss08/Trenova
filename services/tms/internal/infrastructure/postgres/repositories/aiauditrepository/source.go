@@ -9,10 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -25,9 +25,9 @@ import (
 // step (a refusal before anything was claimed) and the edges of a delegated
 // task.
 var projectedEventKinds = []string{
-	serviceports.AssistantEventToolFinished,
-	serviceports.AssistantEventDelegateStarted,
-	serviceports.AssistantEventDelegateFinished,
+	agentports.AssistantEventToolFinished,
+	agentports.AssistantEventDelegateStarted,
+	agentports.AssistantEventDelegateFinished,
 }
 
 type sourceRepository struct {
@@ -35,7 +35,7 @@ type sourceRepository struct {
 	l  *zap.Logger
 }
 
-func NewSource(p Params) repositories.AIAuditSourceRepository {
+func NewSource(p Params) aiauditports.AIAuditSourceRepository {
 	return &sourceRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.aiaudit-source-repository"),
@@ -45,7 +45,7 @@ func NewSource(p Params) repositories.AIAuditSourceRepository {
 func keyset(
 	q *bun.SelectQuery,
 	ts, id *buncolgen.Column,
-	page repositories.AIAuditSourcePage,
+	page aiauditports.AIAuditSourcePage,
 ) *bun.SelectQuery {
 	return q.
 		Where(buncolgen.Expr("({0}, {1}) > (?, ?)", *ts, *id), page.AfterTS, page.AfterID).
@@ -56,7 +56,7 @@ func keyset(
 
 func (r *sourceRepository) ListRuns(
 	ctx context.Context,
-	page repositories.AIAuditSourcePage,
+	page aiauditports.AIAuditSourcePage,
 ) ([]*agent.AgentRun, error) {
 	ctx = dbscope.WithSystem(ctx, "project agent runs into the AI audit chain across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRun, error) {
@@ -78,7 +78,7 @@ func (r *sourceRepository) ListRuns(
 
 func (r *sourceRepository) ListTurns(
 	ctx context.Context,
-	page repositories.AIAuditSourcePage,
+	page aiauditports.AIAuditSourcePage,
 ) ([]*conversation.AssistantTurn, error) {
 	ctx = dbscope.WithSystem(ctx, "project assistant turns into the AI audit chain across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*conversation.AssistantTurn, error) {
@@ -98,7 +98,7 @@ func (r *sourceRepository) ListTurns(
 
 func (r *sourceRepository) ListUsage(
 	ctx context.Context,
-	page repositories.AIAuditSourcePage,
+	page aiauditports.AIAuditSourcePage,
 ) ([]*aiusage.AIUsageRecord, error) {
 	ctx = dbscope.WithSystem(ctx, "project AI usage into the AI audit chain across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiusage.AIUsageRecord, error) {
@@ -118,7 +118,7 @@ func (r *sourceRepository) ListUsage(
 
 func (r *sourceRepository) ListSteps(
 	ctx context.Context,
-	page repositories.AIAuditSourcePage,
+	page aiauditports.AIAuditSourcePage,
 ) ([]*agent.AgentRunStep, error) {
 	ctx = dbscope.WithSystem(ctx, "project agent steps into the AI audit chain across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRunStep, error) {
@@ -127,7 +127,7 @@ func (r *sourceRepository) ListSteps(
 
 		q := r.db.DBForContext(ctx).NewSelect().
 			Model(&rows).
-			Where(cols.Kind.Eq(), string(serviceports.RunStepTool))
+			Where(cols.Kind.Eq(), string(agentports.RunStepTool))
 		if err := keyset(q, &cols.UpdatedAt, &cols.ID, page).Scan(ctx); err != nil {
 			return nil, fmt.Errorf("read agent run steps for the AI audit trail: %w", err)
 		}
@@ -138,7 +138,7 @@ func (r *sourceRepository) ListSteps(
 
 func (r *sourceRepository) ListEvents(
 	ctx context.Context,
-	page repositories.AIAuditSourcePage,
+	page aiauditports.AIAuditSourcePage,
 ) ([]*agent.AgentRunEvent, error) {
 	ctx = dbscope.WithSystem(ctx, "project agent events into the AI audit chain across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRunEvent, error) {
@@ -158,7 +158,7 @@ func (r *sourceRepository) ListEvents(
 
 func (r *sourceRepository) ListProposals(
 	ctx context.Context,
-	page repositories.AIAuditSourcePage,
+	page aiauditports.AIAuditSourcePage,
 ) ([]*agent.AgentProposal, error) {
 	ctx = dbscope.WithSystem(ctx, "project proposals into the AI audit chain across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentProposal, error) {
@@ -178,7 +178,7 @@ func (r *sourceRepository) ListProposals(
 
 func (r *sourceRepository) ListDecisions(
 	ctx context.Context,
-	page repositories.AIAuditSourcePage,
+	page aiauditports.AIAuditSourcePage,
 ) ([]*agent.AgentDecision, error) {
 	ctx = dbscope.WithSystem(ctx, "project proposal decisions into the AI audit chain across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentDecision, error) {
@@ -268,7 +268,7 @@ func (r *sourceRepository) TurnsByRunIDs(
 
 func (r *sourceRepository) TurnsInWindow(
 	ctx context.Context,
-	req *repositories.AIAuditTurnWindow,
+	req *aiauditports.AIAuditTurnWindow,
 ) ([]*conversation.AssistantTurn, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*conversation.AssistantTurn, error) {
 		if req == nil || len(req.ThreadIDs) == 0 {
@@ -397,8 +397,8 @@ func (r *sourceRepository) StartedToolSteps(
 			Model(&rows).
 			Apply(buncolgen.AgentRunStepApplyTenant(tenantInfo)).
 			Where(cols.OwnerID.In(), bun.List(ownerIDs)).
-			Where(cols.Kind.Eq(), string(serviceports.RunStepTool)).
-			Where(cols.Status.Eq(), string(serviceports.RunStepStarted)).
+			Where(cols.Kind.Eq(), string(agentports.RunStepTool)).
+			Where(cols.Status.Eq(), string(agentports.RunStepStarted)).
 			Scan(ctx); err != nil {
 			return nil, fmt.Errorf("read unsettled agent run steps: %w", err)
 		}
@@ -410,10 +410,10 @@ func (r *sourceRepository) StartedToolSteps(
 func (r *sourceRepository) ToolStepCalls(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	calls []repositories.OwnerCall,
-) (map[repositories.OwnerCall]struct{}, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[repositories.OwnerCall]struct{}, error) {
-		found := make(map[repositories.OwnerCall]struct{}, len(calls))
+	calls []aiauditports.OwnerCall,
+) (map[aiauditports.OwnerCall]struct{}, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[aiauditports.OwnerCall]struct{}, error) {
+		found := make(map[aiauditports.OwnerCall]struct{}, len(calls))
 		if len(calls) == 0 {
 			return found, nil
 		}
@@ -438,13 +438,13 @@ func (r *sourceRepository) ToolStepCalls(
 			Apply(buncolgen.AgentRunStepApplyTenant(tenantInfo)).
 			Where(cols.OwnerID.In(), bun.List(owners)).
 			Where(cols.CallID.In(), bun.List(callIDs)).
-			Where(cols.Kind.Eq(), string(serviceports.RunStepTool)).
+			Where(cols.Kind.Eq(), string(agentports.RunStepTool)).
 			Scan(ctx, &rows); err != nil {
 			return nil, fmt.Errorf("read the tool calls agent run steps claimed: %w", err)
 		}
 
 		for _, row := range rows {
-			found[repositories.OwnerCall{OwnerID: row.OwnerID, CallID: row.CallID}] = struct{}{}
+			found[aiauditports.OwnerCall{OwnerID: row.OwnerID, CallID: row.CallID}] = struct{}{}
 		}
 
 		return found, nil

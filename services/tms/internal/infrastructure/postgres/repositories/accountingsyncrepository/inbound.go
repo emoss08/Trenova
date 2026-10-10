@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -44,7 +44,7 @@ type inboundChangeRepository struct {
 
 func NewInboundChangeRepository(
 	p InboundChangeParams,
-) repositories.AccountingInboundChangeRepository {
+) accountingsyncports.AccountingInboundChangeRepository {
 	return &inboundChangeRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.accounting-inbound-change-repository"),
@@ -103,7 +103,7 @@ func (r *inboundChangeRepository) Update(
 
 func (r *inboundChangeRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetAccountingInboundChangeRequest,
+	req accountingsyncports.GetAccountingInboundChangeQuery,
 ) (*accountingsync.AccountingInboundChange, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingInboundChange, error) {
 		entity := new(accountingsync.AccountingInboundChange)
@@ -127,7 +127,7 @@ func (r *inboundChangeRepository) GetByID(
 
 func (r *inboundChangeRepository) ListByExternalIDs(
 	ctx context.Context,
-	req *repositories.ListAccountingInboundChangesByExternalIDsRequest,
+	req *accountingsyncports.ListAccountingInboundChangesByExternalIDsRequest,
 ) ([]*accountingsync.AccountingInboundChange, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*accountingsync.AccountingInboundChange, error) {
 		entities := make([]*accountingsync.AccountingInboundChange, 0, len(req.ExternalIDs))
@@ -153,7 +153,7 @@ func (r *inboundChangeRepository) ListByExternalIDs(
 
 func (r *inboundChangeRepository) ListDetected(
 	ctx context.Context,
-	req *repositories.ListDetectedAccountingInboundChangesRequest,
+	req *accountingsyncports.ListDetectedAccountingInboundChangesRequest,
 ) ([]*accountingsync.AccountingInboundChange, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*accountingsync.AccountingInboundChange, error) {
 		limit := req.Limit
@@ -183,7 +183,7 @@ func (r *inboundChangeRepository) ListDetected(
 
 func (r *inboundChangeRepository) applyListFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListAccountingInboundChangesConnectionRequest,
+	req *accountingsyncports.ListAccountingInboundChangesConnectionRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.AccountingInboundChangeColumns
 	if req.Filter != nil {
@@ -212,7 +212,7 @@ func (r *inboundChangeRepository) applyListFilters(
 
 func (r *inboundChangeRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListAccountingInboundChangesConnectionRequest,
+	req *accountingsyncports.ListAccountingInboundChangesConnectionRequest,
 ) (*pagination.CursorListResult[*accountingsync.AccountingInboundChange], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*accountingsync.AccountingInboundChange], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -283,11 +283,11 @@ func (r *inboundChangeRepository) ListConnection(
 
 func (r *inboundChangeRepository) Summarize(
 	ctx context.Context,
-	req *repositories.SummarizeAccountingInboundChangesRequest,
-) (*repositories.AccountingInboundSummary, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.AccountingInboundSummary, error) {
+	req *accountingsyncports.SummarizeAccountingInboundChangesRequest,
+) (*accountingsyncports.AccountingInboundSummary, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*accountingsyncports.AccountingInboundSummary, error) {
 		cols := buncolgen.AccountingInboundChangeColumns
-		summary := new(repositories.AccountingInboundSummary)
+		summary := new(accountingsyncports.AccountingInboundSummary)
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -316,12 +316,12 @@ func (r *inboundChangeRepository) Summarize(
 
 func (r *inboundChangeRepository) ListAttention(
 	ctx context.Context,
-	req *repositories.ListAccountingInboundAttentionRequest,
-) ([]repositories.AccountingInboundAttentionGroup, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.AccountingInboundAttentionGroup, error) {
+	req *accountingsyncports.ListAccountingInboundAttentionRequest,
+) ([]accountingsyncports.AccountingInboundAttentionGroup, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]accountingsyncports.AccountingInboundAttentionGroup, error) {
 		cols := buncolgen.AccountingInboundChangeColumns
 		groups := make(
-			[]repositories.AccountingInboundAttentionGroup,
+			[]accountingsyncports.AccountingInboundAttentionGroup,
 			0,
 			len(accountingsync.AllInboundChangeReasons()),
 		)

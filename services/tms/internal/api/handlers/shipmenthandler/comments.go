@@ -6,8 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	_ "github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -41,7 +40,7 @@ func (h *Handler) getCommentCount(c *gin.Context) {
 
 	count, err := h.commentService.GetCountByShipmentID(
 		c.Request.Context(),
-		&repositories.GetShipmentCommentCountRequest{
+		&shipmentports.GetShipmentCommentCountRequest{
 			ShipmentID: shipmentID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -86,7 +85,7 @@ func (h *Handler) listComments(c *gin.Context) {
 		func(cursor pagination.CursorInfo) (*pagination.CursorListResult[*shipment.ShipmentComment], error) {
 			return h.commentService.ListByShipmentID(
 				c.Request.Context(),
-				&repositories.ListShipmentCommentsRequest{
+				&shipmentports.ListShipmentCommentsRequest{
 					Filter:     req,
 					Cursor:     cursor,
 					ShipmentID: shipmentID,
@@ -177,7 +176,7 @@ func (h *Handler) updateComment(c *gin.Context) {
 
 	updated, err := h.commentService.Update(
 		c.Request.Context(),
-		&services.UpdateShipmentCommentRequest{Entity: entity},
+		&shipmentports.UpdateShipmentCommentRequest{Entity: entity},
 		actorutil.FromAuthContext(authCtx),
 	)
 	if err != nil {
@@ -216,7 +215,7 @@ func (h *Handler) deleteComment(c *gin.Context) {
 
 	if err = h.commentService.Delete(
 		c.Request.Context(),
-		&services.DeleteShipmentCommentRequest{
+		&shipmentports.DeleteShipmentCommentRequest{
 			ShipmentID: shipmentID,
 			CommentID:  commentID,
 			TenantInfo: pagination.FromAuth(authCtx),

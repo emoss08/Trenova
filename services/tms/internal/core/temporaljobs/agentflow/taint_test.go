@@ -6,10 +6,10 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.temporal.io/sdk/activity"
@@ -65,7 +65,7 @@ func TestRun_ATurnOpenedBeforeTaintWasKeptCountsAsTainted(t *testing.T) {
 
 	pay := paymentTool()
 	move := &agentruntimetest.StubActionTool{ToolName: "assign_move", Tier: agent.TierAutoExecute}
-	h := newHarness(t, harnessParams{action: []serviceports.AgentTool{pay, move}})
+	h := newHarness(t, harnessParams{action: []agentports.AgentTool{pay, move}})
 	h.replies(
 		toolReply("post_customer_payment", map[string]any{"invoiceId": "inv_88"}),
 		toolReply("assign_move", map[string]any{"moveId": "smv_1"}),
@@ -87,7 +87,7 @@ func TestRun_ATurnOpenedBeforeTaintWasKeptCountsAsTainted(t *testing.T) {
 	assert.Contains(t, payment.HeldBy, agenttoolpolicy.HeldByTainted)
 	assert.False(t, payment.Tainted, "unknown is held, not recorded as a known taint")
 	assert.Nil(t, result.Outcome.Result.Taint, "the unknown stays unknown")
-	assert.NotContains(t, eventNames(result.Outcome), serviceports.AssistantEventRunTainted)
+	assert.NotContains(t, eventNames(result.Outcome), agentports.AssistantEventRunTainted)
 }
 
 /*
@@ -106,8 +106,8 @@ func TestRun_TaintChangesNoCommand(t *testing.T) {
 	) ([]string, *turnResult, *agentruntimetest.StubActionTool) {
 		pay := paymentTool()
 		h := newHarness(t, harnessParams{
-			query:  []serviceports.AgentQueryTool{receiptTool(reads)},
-			action: []serviceports.AgentTool{pay},
+			query:  []agentports.AgentQueryTool{receiptTool(reads)},
+			action: []agentports.AgentTool{pay},
 		})
 		h.replies(
 			toolReply("get_bank_receipt", map[string]any{"receiptId": "brc_1"}),
@@ -144,9 +144,9 @@ func TestRun_TaintChangesNoCommand(t *testing.T) {
 	require.True(t, tainted.Outcome.Result.Taint.Tainted())
 	assert.False(t, tainted.Outcome.Result.Actions[0].Executed)
 	assert.True(t, tainted.Outcome.Result.Actions[0].Tainted)
-	assert.Contains(t, eventNames(tainted.Outcome), serviceports.AssistantEventRunTainted,
+	assert.Contains(t, eventNames(tainted.Outcome), agentports.AssistantEventRunTainted,
 		"the trajectory keeps when the run became tainted")
-	assert.NotContains(t, eventNames(clean.Outcome), serviceports.AssistantEventRunTainted)
+	assert.NotContains(t, eventNames(clean.Outcome), agentports.AssistantEventRunTainted)
 }
 
 /*
@@ -172,7 +172,7 @@ func TestTurnState_TaintSurvivesTheDataConverter(t *testing.T) {
 	assert.Nil(t, restored.Result.Taint, "a state from before the release carries no taint")
 
 	now, err := dc.ToPayload(agentruntime.TurnState{
-		Result: serviceports.RunResult{Taint: &agent.RunTaint{}},
+		Result: agentports.RunResult{Taint: &agent.RunTaint{}},
 	})
 	require.NoError(t, err)
 	var kept agentruntime.TurnState

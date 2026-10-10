@@ -1,18 +1,22 @@
 package agentjobs
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"testing"
-
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -26,13 +30,13 @@ import (
 )
 
 type evalStore struct {
-	repositories.AgentEvaluationRepository
+	agentports.AgentEvaluationRepository
 	stored *agent.Evaluation
 }
 
 func (s *evalStore) GetByID(
 	context.Context,
-	repositories.GetAgentEvaluationByIDRequest,
+	agentports.GetAgentEvaluationByIDRequest,
 ) (*agent.Evaluation, error) {
 	copied := *s.stored
 
@@ -51,62 +55,62 @@ func (s *evalStore) Update(
 }
 
 type definitionStore struct {
-	repositories.AgentDefinitionRepository
+	agentdefinitionports.AgentDefinitionRepository
 	definition *agentdefinition.Definition
 }
 
 func (s *definitionStore) GetByID(
 	context.Context,
-	repositories.GetAgentDefinitionByIDRequest,
+	agentdefinitionports.GetAgentDefinitionByIDRequest,
 ) (*agentdefinition.Definition, error) {
 	return s.definition, nil
 }
 
 type runStore struct {
-	repositories.AgentRunRepository
+	agentports.AgentRunRepository
 	run *agent.AgentRun
 }
 
 func (s *runStore) GetByID(
 	context.Context,
-	repositories.GetAgentRunByIDRequest,
+	agentports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	return s.run, nil
 }
 
 type proposalStore struct {
-	repositories.AgentProposalRepository
+	agentports.AgentProposalRepository
 	proposals []*agent.AgentProposal
 }
 
 func (s *proposalStore) ListByRun(
 	context.Context,
-	repositories.ListAgentProposalsByRunRequest,
+	agentports.ListAgentProposalsByRunRequest,
 ) ([]*agent.AgentProposal, error) {
 	return s.proposals, nil
 }
 
 type decisionStore struct {
-	repositories.AgentDecisionRepository
+	agentports.AgentDecisionRepository
 	decisions []*agent.AgentDecision
 }
 
 func (s *decisionStore) ListByProposals(
 	context.Context,
-	repositories.ListAgentDecisionsByProposalsRequest,
+	agentports.ListAgentDecisionsByProposalsRequest,
 ) ([]*agent.AgentDecision, error) {
 	return s.decisions, nil
 }
 
 type conversationStore struct {
-	repositories.ConversationRepository
+	agentports.ConversationRepository
 	thread   *conversation.Thread
 	messages []conversation.Message
 }
 
 func (s *conversationStore) GetThreadOwned(
 	context.Context,
-	repositories.GetThreadOwnedRequest,
+	agentports.GetThreadOwnedRequest,
 ) (*conversation.Thread, error) {
 	if s.thread == nil {
 		return nil, errortypes.NewNotFoundError("Thread not found")
@@ -117,19 +121,19 @@ func (s *conversationStore) GetThreadOwned(
 
 func (s *conversationStore) ListMessages(
 	context.Context,
-	repositories.ListMessagesRequest,
+	agentports.ListMessagesRequest,
 ) ([]conversation.Message, error) {
 	return s.messages, nil
 }
 
 type caseStore struct {
-	repositories.AgentEvalCaseRepository
+	agentqualityports.AgentEvalCaseRepository
 	evalCase *agentquality.EvalCase
 }
 
 func (s *caseStore) GetByID(
 	context.Context,
-	repositories.GetAgentEvalCaseByIDRequest,
+	agentqualityports.GetAgentEvalCaseByIDRequest,
 ) (*agentquality.EvalCase, error) {
 	if s.evalCase == nil {
 		return nil, errortypes.NewNotFoundError("AgentEvalCase not found")
@@ -139,12 +143,12 @@ func (s *caseStore) GetByID(
 }
 
 type recordingContexts struct {
-	requests []*serviceports.RuntimeContextRequest
+	requests []*agentports.RuntimeContextRequest
 }
 
 func (c *recordingContexts) Build(
 	_ context.Context,
-	req *serviceports.RuntimeContextRequest,
+	req *agentports.RuntimeContextRequest,
 ) (agentdefinition.RuntimeContext, error) {
 	c.requests = append(c.requests, req)
 
@@ -158,7 +162,7 @@ type replayWorld struct {
 	conversations *conversationStore
 	cases         *caseStore
 	contexts      *recordingContexts
-	users         *mocks.MockUserRepository
+	users         *tenantportsmock.MockUserRepository
 	activities    *Activities
 	payload       *agentcontract.AgentEvaluationPayload
 }
@@ -221,7 +225,7 @@ func newReplayWorld(t *testing.T) *replayWorld {
 	}
 	cases := &caseStore{}
 	contexts := &recordingContexts{}
-	users := mocks.NewMockUserRepository(t)
+	users := tenantportsmock.NewMockUserRepository(t)
 
 	activities := NewActivities(ActivitiesParams{
 		Logger:       zap.NewNop(),
@@ -262,7 +266,7 @@ func newReplayWorld(t *testing.T) *replayWorld {
 func (w *replayWorld) member(status domaintypes.Status) {
 	w.users.EXPECT().
 		GetTenantMember(mock.Anything, mock.MatchedBy(
-			func(req repositories.GetTenantMemberRequest) bool {
+			func(req tenantports.GetTenantMemberRequest) bool {
 				return req.UserID == w.owner && req.TenantInfo == w.tenant
 			},
 		)).
@@ -281,7 +285,7 @@ func TestOpenReplay_AChatRunReplaysAsThePersonWhoAsked(t *testing.T) {
 	require.NotNil(t, opened)
 
 	actor := opened.request.Actor
-	assert.Equal(t, serviceports.PrincipalTypeUser, actor.PrincipalType)
+	assert.Equal(t, permissionports.PrincipalTypeUser, actor.PrincipalType)
 	assert.Equal(t, w.owner, actor.UserID)
 	assert.Equal(t, w.owner, actor.PrincipalID)
 	assert.Equal(t, w.tenant.OrgID, actor.OrganizationID)
@@ -289,8 +293,8 @@ func TestOpenReplay_AChatRunReplaysAsThePersonWhoAsked(t *testing.T) {
 	assert.Equal(t, w.owner, w.contexts.requests[0].Actor.UserID,
 		"the tools offered are the person's, resolved now")
 
-	assert.Equal(t, serviceports.AIUsagePurposeEvaluation, opened.request.UsagePurpose)
-	assert.Equal(t, serviceports.AIUsagePurposeEvaluation, opened.request.AttributedPurpose())
+	assert.Equal(t, aiusageports.AIUsagePurposeEvaluation, opened.request.UsagePurpose)
+	assert.Equal(t, aiusageports.AIUsagePurposeEvaluation, opened.request.AttributedPurpose())
 	assert.True(t, opened.request.Definition.SimulationMode)
 	assert.Equal(t, agent.EvaluationStatusRunning, w.evaluations.stored.Status)
 	require.NotNil(t, w.evaluations.stored.Fingerprint)
@@ -311,7 +315,7 @@ func TestOpenReplay_JudgesAgainstWhatThePersonApproved(t *testing.T) {
 	assert.Equal(t, float64(1350), original.CorrectedParams["rate"])
 
 	_, err = w.activities.storeReplay(t.Context(), w.evaluations.stored, opened.originals,
-		&serviceports.RunResult{Actions: []serviceports.PendingAction{{
+		&agentports.RunResult{Actions: []agentports.PendingAction{{
 			ToolName:  "update_rate",
 			Arguments: map[string]any{"shipmentId": "shp_1", "rate": 1350},
 		}}})
@@ -435,7 +439,7 @@ func TestStoreReplay_ScoresACaseReplay(t *testing.T) {
 
 	originals := expectedOriginals(evalCase)
 	_, err := w.activities.storeReplay(t.Context(), w.evaluations.stored, originals,
-		&serviceports.RunResult{
+		&agentports.RunResult{
 			Reply: "I proposed the new rate.",
 			Messages: []conversation.Message{
 				{
@@ -452,7 +456,7 @@ func TestStoreReplay_ScoresACaseReplay(t *testing.T) {
 					ToolCalls: []conversation.ToolCallRecord{{ID: "call_9", Name: "outside_tool"}},
 				},
 			},
-			Actions: []serviceports.PendingAction{{
+			Actions: []agentports.PendingAction{{
 				ToolName:  "update_rate",
 				Arguments: map[string]any{"shipmentId": "shp_1", "rate": 1350},
 			}},
@@ -474,15 +478,15 @@ func TestStoreReplay_ScoresACaseReplay(t *testing.T) {
 func TestObserveReplay_ReadsRefusals(t *testing.T) {
 	t.Parallel()
 
-	altered := observeReplay(&serviceports.RunResult{OutputAltered: true})
+	altered := observeReplay(&agentports.RunResult{OutputAltered: true})
 	assert.False(t, altered.refused, "a reply the guard took code out of was still given")
 
-	flagged := observeReplay(&serviceports.RunResult{Messages: []conversation.Message{
+	flagged := observeReplay(&agentports.RunResult{Messages: []conversation.Message{
 		{Role: conversation.RoleAssistant, Refused: true},
 	}})
 	assert.True(t, flagged.refused)
 
-	answered := observeReplay(&serviceports.RunResult{Messages: []conversation.Message{
+	answered := observeReplay(&agentports.RunResult{Messages: []conversation.Message{
 		{Role: conversation.RoleTool, Content: `{"rate": 1350}`},
 	}})
 	assert.False(t, answered.refused)
@@ -492,7 +496,7 @@ func TestObserveReplay_ReadsRefusals(t *testing.T) {
 func TestObserveReplay_TracesWhichCallsWouldHaveRunUnasked(t *testing.T) {
 	t.Parallel()
 
-	observed := observeReplay(&serviceports.RunResult{
+	observed := observeReplay(&agentports.RunResult{
 		Messages: []conversation.Message{{
 			Role: conversation.RoleAssistant,
 			ToolCalls: []conversation.ToolCallRecord{
@@ -501,7 +505,7 @@ func TestObserveReplay_TracesWhichCallsWouldHaveRunUnasked(t *testing.T) {
 				{ID: "call_3", Name: "update_rate"},
 			},
 		}},
-		Actions: []serviceports.PendingAction{
+		Actions: []agentports.PendingAction{
 			{ToolName: "send_customer_email", ToolCallID: "call_2", Tier: agent.TierAutoExecute},
 			{ToolName: "update_rate", ToolCallID: "call_3", Tier: agent.TierActWithApproval},
 		},
@@ -535,10 +539,10 @@ func TestOpenReplay_ABackgroundCaseReplaysAsTheAgentAttributedToTheSystemUser(t 
 	require.NotNil(t, opened)
 
 	actor := opened.request.Actor
-	assert.Equal(t, serviceports.PrincipalTypeAgent, actor.PrincipalType)
+	assert.Equal(t, permissionports.PrincipalTypeAgent, actor.PrincipalType)
 	require.NotNil(t, opened.request.Definition)
 	assert.Equal(t, opened.request.Definition.ID, actor.PrincipalID)
 	assert.Equal(t, system, actor.UserID)
 	require.Len(t, w.contexts.requests, 1)
-	assert.Equal(t, serviceports.PrincipalTypeAgent, w.contexts.requests[0].Actor.PrincipalType)
+	assert.Equal(t, permissionports.PrincipalTypeAgent, w.contexts.requests[0].Actor.PrincipalType)
 }

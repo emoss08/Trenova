@@ -6,9 +6,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,15 +22,15 @@ import (
 const fixedNow = 1_700_000_000
 
 type stubScorecards struct {
-	repositories.AgentScorecardRepository
+	agentports.AgentScorecardRepository
 
-	asked  repositories.ScorecardRequest
+	asked  agentports.ScorecardRequest
 	totals *agent.ScorecardTotals
 }
 
 func (s *stubScorecards) Aggregate(
 	_ context.Context,
-	req repositories.ScorecardRequest,
+	req agentports.ScorecardRequest,
 ) (*agent.ScorecardTotals, error) {
 	s.asked = req
 	if s.totals == nil {
@@ -40,27 +41,27 @@ func (s *stubScorecards) Aggregate(
 }
 
 type stubTrust struct {
-	repositories.AgentToolTrustRepository
+	agentports.AgentToolTrustRepository
 
 	rows []*agent.ToolTrust
 }
 
 func (s *stubTrust) ListByDefinition(
 	_ context.Context,
-	_ repositories.ListToolTrustRequest,
+	_ agentports.ListToolTrustRequest,
 ) ([]*agent.ToolTrust, error) {
 	return s.rows, nil
 }
 
 type stubDefinitions struct {
-	repositories.AgentDefinitionRepository
+	agentdefinitionports.AgentDefinitionRepository
 
 	missing bool
 }
 
 func (s *stubDefinitions) GetByID(
 	_ context.Context,
-	req repositories.GetAgentDefinitionByIDRequest,
+	req agentdefinitionports.GetAgentDefinitionByIDRequest,
 ) (*agentdefinition.Definition, error) {
 	if s.missing {
 		return nil, errortypes.NewNotFoundError("Agent not found")
@@ -87,9 +88,9 @@ func newService(
 	return svc
 }
 
-func actor() *services.RequestActor {
-	return &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeUser,
+func actor() *permissionports.RequestActor {
+	return &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    pulid.MustNew("usr_"),
 		UserID:         pulid.MustNew("usr_"),
 		OrganizationID: pulid.MustNew("org_"),
@@ -97,8 +98,8 @@ func actor() *services.RequestActor {
 	}
 }
 
-func request(window agent.ScorecardWindow) services.AgentScorecardRequest {
-	return services.AgentScorecardRequest{
+func request(window agent.ScorecardWindow) agentports.AgentScorecardRequest {
+	return agentports.AgentScorecardRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),

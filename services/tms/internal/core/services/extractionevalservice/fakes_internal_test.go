@@ -12,8 +12,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/core/domain/extractioneval"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -32,12 +37,12 @@ func testTenant() pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: testOrg, BuID: testBU, UserID: testUser}
 }
 
-func testActor() *services.RequestActor {
-	return &services.RequestActor{PrincipalType: services.PrincipalTypeUser, PrincipalID: testUser, UserID: testUser}
+func testActor() *permissionports.RequestActor {
+	return &permissionports.RequestActor{PrincipalType: permissionports.PrincipalTypeUser, PrincipalID: testUser, UserID: testUser}
 }
 
 type caseStore struct {
-	repositories.ExtractionEvalCaseRepository
+	extractionevalports.ExtractionEvalCaseRepository
 	items []*extractioneval.ExtractionCase
 }
 
@@ -57,7 +62,7 @@ func (f *caseStore) Create(
 
 func (f *caseStore) GetByID(
 	_ context.Context,
-	req repositories.GetExtractionEvalCaseRequest,
+	req extractionevalports.GetExtractionEvalCaseRequest,
 ) (*extractioneval.ExtractionCase, error) {
 	for _, item := range f.items {
 		if item.ID == req.ID {
@@ -95,7 +100,7 @@ func (f *caseStore) Update(
 	return nil, errortypes.NewNotFoundError("case not found")
 }
 
-func (f *caseStore) Delete(_ context.Context, req repositories.GetExtractionEvalCaseRequest) error {
+func (f *caseStore) Delete(_ context.Context, req extractionevalports.GetExtractionEvalCaseRequest) error {
 	f.items = slices.DeleteFunc(f.items, func(item *extractioneval.ExtractionCase) bool {
 		return item.ID == req.ID
 	})
@@ -104,7 +109,7 @@ func (f *caseStore) Delete(_ context.Context, req repositories.GetExtractionEval
 
 func (f *caseStore) ListActive(
 	_ context.Context,
-	req repositories.ListActiveExtractionEvalCasesRequest,
+	req extractionevalports.ListActiveExtractionEvalCasesRequest,
 ) ([]*extractioneval.ExtractionCase, error) {
 	out := make([]*extractioneval.ExtractionCase, 0, len(f.items))
 	for _, item := range f.items {
@@ -117,9 +122,9 @@ func (f *caseStore) ListActive(
 
 func (f *caseStore) Counts(
 	context.Context,
-	repositories.CountExtractionEvalCasesRequest,
-) (*repositories.ExtractionEvalCaseCounts, error) {
-	counts := &repositories.ExtractionEvalCaseCounts{}
+	extractionevalports.CountExtractionEvalCasesRequest,
+) (*extractionevalports.ExtractionEvalCaseCounts, error) {
+	counts := &extractionevalports.ExtractionEvalCaseCounts{}
 	for _, item := range f.items {
 		switch item.Status {
 		case extractioneval.CaseStatusCandidate:
@@ -134,11 +139,11 @@ func (f *caseStore) Counts(
 }
 
 type runStore struct {
-	repositories.ExtractionEvalRunRepository
+	extractionevalports.ExtractionEvalRunRepository
 	runs      map[pulid.ID]*extractioneval.ExtractionRun
 	results   *resultStore
 	createErr error
-	purged    []repositories.PurgeExtractionEvalRunsRequest
+	purged    []extractionevalports.PurgeExtractionEvalRunsRequest
 }
 
 func (f *runStore) Create(
@@ -163,7 +168,7 @@ func (f *runStore) Create(
 
 func (f *runStore) GetByID(
 	_ context.Context,
-	req repositories.GetExtractionEvalRunRequest,
+	req extractionevalports.GetExtractionEvalRunRequest,
 ) (*extractioneval.ExtractionRun, error) {
 	run, ok := f.runs[req.ID]
 	if !ok {
@@ -194,20 +199,20 @@ func (f *runStore) ListRecentFinished(
 
 func (f *runStore) PurgeBefore(
 	_ context.Context,
-	req repositories.PurgeExtractionEvalRunsRequest,
+	req extractionevalports.PurgeExtractionEvalRunsRequest,
 ) (int64, error) {
 	f.purged = append(f.purged, req)
 	return 3, nil
 }
 
 type resultStore struct {
-	repositories.ExtractionEvalResultRepository
+	extractionevalports.ExtractionEvalResultRepository
 	items []*extractioneval.ExtractionResult
 }
 
 func (f *resultStore) GetByID(
 	_ context.Context,
-	req repositories.GetExtractionEvalResultRequest,
+	req extractionevalports.GetExtractionEvalResultRequest,
 ) (*extractioneval.ExtractionResult, error) {
 	for _, item := range f.items {
 		if item.ID == req.ID {
@@ -234,7 +239,7 @@ func (f *resultStore) Save(
 
 func (f *resultStore) ListPending(
 	_ context.Context,
-	req repositories.ListPendingExtractionEvalResultsRequest,
+	req extractionevalports.ListPendingExtractionEvalResultsRequest,
 ) ([]*extractioneval.ExtractionResult, error) {
 	out := make([]*extractioneval.ExtractionResult, 0, len(f.items))
 	for _, item := range f.items {
@@ -276,7 +281,7 @@ func (f *resultStore) SkipPending(
 }
 
 type correctionStore struct {
-	repositories.AICorrectionRepository
+	aicorrectionports.AICorrectionRepository
 	items       map[pulid.ID]*aicorrection.Correction
 	since       int64
 	rows        []*aicorrection.Correction
@@ -287,7 +292,7 @@ type correctionStore struct {
 
 func (f *correctionStore) WeeklyTotalsByProvider(
 	_ context.Context,
-	req *repositories.WeeklyAICorrectionTotalsRequest,
+	req *aicorrectionports.WeeklyAICorrectionTotalsRequest,
 ) ([]aicorrection.WeekTotal, error) {
 	f.weeklySince = req.Since
 	return f.weekly, f.weeklyErr
@@ -295,7 +300,7 @@ func (f *correctionStore) WeeklyTotalsByProvider(
 
 func (f *correctionStore) GetByID(
 	_ context.Context,
-	req repositories.GetAICorrectionRequest,
+	req aicorrectionports.GetAICorrectionRequest,
 ) (*aicorrection.Correction, error) {
 	item, ok := f.items[req.ID]
 	if !ok {
@@ -306,20 +311,20 @@ func (f *correctionStore) GetByID(
 
 func (f *correctionStore) ListForAccuracy(
 	_ context.Context,
-	req repositories.ListAICorrectionsForAccuracyRequest,
+	req aicorrectionports.ListAICorrectionsForAccuracyRequest,
 ) ([]*aicorrection.Correction, error) {
 	f.since = req.Since
 	return f.rows, nil
 }
 
 type documentStore struct {
-	repositories.DocumentRepository
+	documentports.DocumentRepository
 	docs map[pulid.ID]*document.Document
 }
 
 func (f *documentStore) GetByID(
 	_ context.Context,
-	req repositories.GetDocumentByIDRequest,
+	req documentports.GetDocumentByIDRequest,
 ) (*document.Document, error) {
 	doc, ok := f.docs[req.ID]
 	if !ok {
@@ -329,7 +334,7 @@ func (f *documentStore) GetByID(
 }
 
 type contentStore struct {
-	repositories.DocumentContentRepository
+	documentcontentports.DocumentContentRepository
 	pages []*documentcontent.Page
 }
 
@@ -342,14 +347,14 @@ func (f *contentStore) ListPagesByDocumentID(
 }
 
 type providerStore struct {
-	repositories.AIProviderRepository
+	agentports.AIProviderRepository
 	providers map[pulid.ID]*aiprovider.Provider
 	err       error
 }
 
 func (f *providerStore) GetByID(
 	_ context.Context,
-	req repositories.GetAIProviderByIDRequest,
+	req agentports.GetAIProviderByIDRequest,
 ) (*aiprovider.Provider, error) {
 	if f.err != nil {
 		return nil, f.err
@@ -362,13 +367,13 @@ func (f *providerStore) GetByID(
 }
 
 type retentionStore struct {
-	repositories.DataRetentionRepository
+	tenantports.DataRetentionRepository
 	settings *tenant.DataRetention
 }
 
 func (f *retentionStore) Get(
 	context.Context,
-	repositories.GetDataRetentionRequest,
+	tenantports.GetDataRetentionRequest,
 ) (*tenant.DataRetention, error) {
 	if f.settings == nil {
 		return nil, errortypes.NewNotFoundError("data retention not found")
@@ -388,15 +393,15 @@ func (f *fakeBudget) CheckEvaluationBudget(
 }
 
 type fakePredictor struct {
-	prediction *services.ExtractionPrediction
+	prediction *extractionevalports.ExtractionPrediction
 	err        error
-	requests   []*services.PredictExtractionRequest
+	requests   []*extractionevalports.PredictExtractionRequest
 }
 
 func (f *fakePredictor) Predict(
 	_ context.Context,
-	req *services.PredictExtractionRequest,
-) (*services.ExtractionPrediction, error) {
+	req *extractionevalports.PredictExtractionRequest,
+) (*extractionevalports.ExtractionPrediction, error) {
 	f.requests = append(f.requests, req)
 	if f.err != nil {
 		return nil, f.err
@@ -405,13 +410,13 @@ func (f *fakePredictor) Predict(
 }
 
 type fakeStarter struct {
-	started []*services.ExtractionEvalRunStart
+	started []*extractionevalports.ExtractionEvalRunStart
 	err     error
 }
 
 func (f *fakeStarter) StartExtractionEvalRun(
 	_ context.Context,
-	start *services.ExtractionEvalRunStart,
+	start *extractionevalports.ExtractionEvalRunStart,
 ) (string, error) {
 	if f.err != nil {
 		return "", f.err

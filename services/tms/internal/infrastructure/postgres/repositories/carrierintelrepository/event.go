@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -57,7 +57,7 @@ type eventRepository struct {
 	l  *zap.Logger
 }
 
-func NewEventRepository(p Params) repositories.CarrierIntelEventRepository {
+func NewEventRepository(p Params) carrierintelports.CarrierIntelEventRepository {
 	return &eventRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.carrier-intel-event-repository"),
@@ -99,7 +99,7 @@ func (r *eventRepository) InsertIgnoreDuplicates(
 
 func (r *eventRepository) applyEventFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListCarrierIntelEventsRequest,
+	req *carrierintelports.ListCarrierIntelEventsRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.CarrierIntelEventColumns
 	if len(req.Statuses) > 0 {
@@ -129,7 +129,7 @@ func (r *eventRepository) applyEventFilters(
 
 func (r *eventRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListCarrierIntelEventsRequest,
+	req *carrierintelports.ListCarrierIntelEventsRequest,
 ) (*pagination.CursorListResult[*carrierintel.CarrierIntelEvent], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*carrierintel.CarrierIntelEvent], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -255,7 +255,7 @@ func (r *eventRepository) Update(
 
 func (r *eventRepository) BulkAcknowledge(
 	ctx context.Context,
-	req *repositories.BulkAcknowledgeCarrierIntelEventsRequest,
+	req *carrierintelports.BulkAcknowledgeCarrierIntelEventsRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		if len(req.EventIDs) == 0 {
@@ -324,10 +324,10 @@ func (r *eventRepository) CountOpenByCarrierIDs(
 func (r *eventRepository) CountOpen(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*repositories.CarrierIntelEventCounts, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.CarrierIntelEventCounts, error) {
+) (*carrierintelports.CarrierIntelEventCounts, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carrierintelports.CarrierIntelEventCounts, error) {
 		cols := buncolgen.CarrierIntelEventColumns
-		counts := &repositories.CarrierIntelEventCounts{
+		counts := &carrierintelports.CarrierIntelEventCounts{
 			BySeverity: make(map[carrierintel.Severity]int, len(eventSeverityOrder)),
 		}
 		severityCounts := make([]int, len(eventSeverityOrder))
@@ -369,7 +369,7 @@ func (r *eventRepository) CountOpen(
 
 func (r *eventRepository) ListForDigest(
 	ctx context.Context,
-	req *repositories.ListCarrierIntelDigestEventsRequest,
+	req *carrierintelports.ListCarrierIntelDigestEventsRequest,
 ) ([]*carrierintel.CarrierIntelEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carrierintel.CarrierIntelEvent, error) {
 		cols := buncolgen.CarrierIntelEventColumns

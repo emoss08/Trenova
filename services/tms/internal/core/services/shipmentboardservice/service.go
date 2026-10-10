@@ -4,9 +4,11 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/integrationservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 )
@@ -22,35 +24,35 @@ type MapsReadiness interface {
 type Params struct {
 	fx.In
 
-	Repo            repositories.ShipmentBoardRepository
-	QuickFilters    services.ShipmentQuickFilterBasisResolver
-	AIProviders     repositories.AIProviderRepository
-	Organizations   repositories.OrganizationRepository
-	Integrations    repositories.IntegrationRepository
+	Repo            shipmentports.ShipmentBoardRepository
+	QuickFilters    shipmentports.ShipmentQuickFilterBasisResolver
+	AIProviders     agentports.AIProviderRepository
+	Organizations   tenantports.OrganizationRepository
+	Integrations    integrationports.IntegrationRepository
 	IntegrationsSvc *integrationservice.Service
 }
 
 type Service struct {
-	repo          repositories.ShipmentBoardRepository
-	quickFilters  services.ShipmentQuickFilterBasisResolver
-	aiProviders   repositories.AIProviderRepository
-	organizations repositories.OrganizationRepository
-	integrations  repositories.IntegrationRepository
+	repo          shipmentports.ShipmentBoardRepository
+	quickFilters  shipmentports.ShipmentQuickFilterBasisResolver
+	aiProviders   agentports.AIProviderRepository
+	organizations tenantports.OrganizationRepository
+	integrations  integrationports.IntegrationRepository
 	maps          MapsReadiness
 }
 
 var (
-	_ services.ShipmentBoardCapabilitiesReader = (*Service)(nil)
-	_ services.ShipmentStageSummaryReader      = (*Service)(nil)
-	_ services.ShipmentQuickFilterCounter      = (*Service)(nil)
+	_ shipmentports.ShipmentBoardCapabilitiesReader = (*Service)(nil)
+	_ shipmentports.ShipmentStageSummaryReader      = (*Service)(nil)
+	_ shipmentports.ShipmentQuickFilterCounter      = (*Service)(nil)
 )
 
 type Dependencies struct {
-	Repo          repositories.ShipmentBoardRepository
-	QuickFilters  services.ShipmentQuickFilterBasisResolver
-	AIProviders   repositories.AIProviderRepository
-	Organizations repositories.OrganizationRepository
-	Integrations  repositories.IntegrationRepository
+	Repo          shipmentports.ShipmentBoardRepository
+	QuickFilters  shipmentports.ShipmentQuickFilterBasisResolver
+	AIProviders   agentports.AIProviderRepository
+	Organizations tenantports.OrganizationRepository
+	Integrations  integrationports.IntegrationRepository
 	Maps          MapsReadiness
 }
 

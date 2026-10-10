@@ -1,12 +1,14 @@
 package ediservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/notificationportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/notification"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
@@ -17,8 +19,8 @@ import (
 func TestNotifyOperationalFailureSendsOneNotificationAndThrottlesDuplicates(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockNotificationRepository(t)
-	realtime := mocks.NewMockRealtimeService(t)
+	repo := notificationportsmock.NewMockNotificationRepository(t)
+	realtime := agentportsmock.NewMockRealtimeService(t)
 	notifications := notificationservice.New(notificationservice.Params{
 		Logger:   zap.NewNop(),
 		Repo:     repo,
@@ -43,7 +45,7 @@ func TestNotifyOperationalFailureSendsOneNotificationAndThrottlesDuplicates(t *t
 	expectedCorrelation := EDIAlertEventMessageDeadLettered + ":" + partnerID.String()
 
 	repo.EXPECT().
-		ExistsRecent(mock.Anything, mock.MatchedBy(func(req repositories.ExistsRecentNotificationRequest) bool {
+		ExistsRecent(mock.Anything, mock.MatchedBy(func(req notificationports.ExistsRecentNotificationRequest) bool {
 			return req.OrganizationID == orgID &&
 				req.BusinessUnitID == buID &&
 				req.EventType == EDIAlertEventMessageDeadLettered &&
@@ -75,7 +77,7 @@ func TestNotifyOperationalFailureSendsOneNotificationAndThrottlesDuplicates(t *t
 	service.NotifyOperationalFailure(t.Context(), alert)
 
 	repo.EXPECT().
-		ExistsRecent(mock.Anything, mock.MatchedBy(func(req repositories.ExistsRecentNotificationRequest) bool {
+		ExistsRecent(mock.Anything, mock.MatchedBy(func(req notificationports.ExistsRecentNotificationRequest) bool {
 			return req.CorrelationID == expectedCorrelation
 		})).
 		Return(true, nil).

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -14,18 +14,18 @@ import (
 )
 
 type fakeUsage struct {
-	repositories.AIUsageRepository
+	aiusageports.AIUsageRepository
 
-	summary     *repositories.AIUsageSummary
-	failures    []repositories.AIUsageFailure
-	summarised  repositories.AIUsageSummaryRequest
-	failuresFor repositories.AIUsageFailuresRequest
+	summary     *aiusageports.AIUsageSummaryRow
+	failures    []aiusageports.AIUsageFailureRow
+	summarised  aiusageports.AIUsageSummaryRequest
+	failuresFor aiusageports.AIUsageFailuresRequest
 }
 
 func (f *fakeUsage) Summary(
 	_ context.Context,
-	req repositories.AIUsageSummaryRequest,
-) (*repositories.AIUsageSummary, error) {
+	req aiusageports.AIUsageSummaryRequest,
+) (*aiusageports.AIUsageSummaryRow, error) {
 	f.summarised = req
 
 	return f.summary, nil
@@ -33,8 +33,8 @@ func (f *fakeUsage) Summary(
 
 func (f *fakeUsage) RecentFailures(
 	_ context.Context,
-	req repositories.AIUsageFailuresRequest,
-) ([]repositories.AIUsageFailure, error) {
+	req aiusageports.AIUsageFailuresRequest,
+) ([]aiusageports.AIUsageFailureRow, error) {
 	f.failuresFor = req
 
 	return f.failures, nil
@@ -51,12 +51,12 @@ func tenant() pagination.TenantInfo {
 func TestSummary_BreaksUsageDownByFeature(t *testing.T) {
 	t.Parallel()
 
-	usage := &fakeUsage{summary: &repositories.AIUsageSummary{
-		Totals: repositories.AIUsageTotals{Calls: 12, Failed: 1, CostUSD: "0.42", PricedCalls: 10},
-		ByFeature: []repositories.AIUsageFeatureTotals{
+	usage := &fakeUsage{summary: &aiusageports.AIUsageSummaryRow{
+		Totals: aiusageports.AIUsageTotals{Calls: 12, Failed: 1, CostUSD: "0.42", PricedCalls: 10},
+		ByFeature: []aiusageports.AIUsageFeatureTotals{
 			{
 				Feature: aiusage.FeatureDocumentIntelligenceExtract,
-				AIUsageTotals: repositories.AIUsageTotals{
+				AIUsageTotals: aiusageports.AIUsageTotals{
 					Calls:        7,
 					Failed:       1,
 					InputTokens:  9000,
@@ -68,7 +68,7 @@ func TestSummary_BreaksUsageDownByFeature(t *testing.T) {
 				},
 			},
 			{
-				AIUsageTotals: repositories.AIUsageTotals{
+				AIUsageTotals: aiusageports.AIUsageTotals{
 					Calls:       5,
 					CostUSD:     "0.02",
 					PricedCalls: 3,
@@ -108,7 +108,7 @@ func TestSummary_BreaksUsageDownByFeature(t *testing.T) {
 func TestSummary_AnEmptyWindowHasAnEmptyBreakdown(t *testing.T) {
 	t.Parallel()
 
-	svc := New(Params{Usage: &fakeUsage{summary: &repositories.AIUsageSummary{}}})
+	svc := New(Params{Usage: &fakeUsage{summary: &aiusageports.AIUsageSummaryRow{}}})
 
 	summary, err := svc.Summary(t.Context(), tenant(), 0)
 	require.NoError(t, err)

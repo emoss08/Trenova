@@ -12,8 +12,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/temporaljobs/decisioncommitjobs/decisioncommitcontract"
-
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
@@ -58,7 +57,7 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 // commit that finds nothing left to do, never a commit of something undone.
 func ProposalCommitWorkflow(
 	ctx workflow.Context,
-	req *services.CommitApprovalRequest,
+	req *agentports.CommitApprovalRequest,
 ) (*CommitResult, error) {
 	wait := time.Unix(req.CommitsAt, 0).Sub(workflow.Now(ctx))
 	if wait < 0 {

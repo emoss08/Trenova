@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -14,9 +14,9 @@ import (
 
 func (s *service) PreviewResolve(
 	ctx context.Context,
-	req *services.ServiceFailureLifecycleRequest,
-	actor *services.RequestActor,
-) (*services.ServiceFailureLifecyclePreview, error) {
+	req *servicefailureports.ServiceFailureLifecycleRequest,
+	actor *permissionports.RequestActor,
+) (*servicefailureports.ServiceFailureLifecyclePreview, error) {
 	plan, err := s.planLifecycle(ctx, lifecycleTransitionParams{
 		req:     req,
 		actor:   actor,
@@ -27,7 +27,7 @@ func (s *service) PreviewResolve(
 		return nil, err
 	}
 
-	return &services.ServiceFailureLifecyclePreview{
+	return &servicefailureports.ServiceFailureLifecyclePreview{
 		Before: plan.original,
 		After:  plan.updated,
 		EDI:    plan.edi,
@@ -36,9 +36,9 @@ func (s *service) PreviewResolve(
 
 func (s *service) PreviewReview(
 	ctx context.Context,
-	req *services.ServiceFailureLifecycleRequest,
-	actor *services.RequestActor,
-) (*services.ServiceFailureLifecyclePreview, error) {
+	req *servicefailureports.ServiceFailureLifecycleRequest,
+	actor *permissionports.RequestActor,
+) (*servicefailureports.ServiceFailureLifecyclePreview, error) {
 	return s.previewLifecycle(ctx, lifecycleTransitionParams{
 		req:     req,
 		actor:   actor,
@@ -49,9 +49,9 @@ func (s *service) PreviewReview(
 
 func (s *service) PreviewVoid(
 	ctx context.Context,
-	req *services.ServiceFailureLifecycleRequest,
-	actor *services.RequestActor,
-) (*services.ServiceFailureLifecyclePreview, error) {
+	req *servicefailureports.ServiceFailureLifecycleRequest,
+	actor *permissionports.RequestActor,
+) (*servicefailureports.ServiceFailureLifecyclePreview, error) {
 	return s.previewLifecycle(ctx, lifecycleTransitionParams{
 		req:     req,
 		actor:   actor,
@@ -62,26 +62,26 @@ func (s *service) PreviewVoid(
 
 func (s *service) PreviewUpdate(
 	ctx context.Context,
-	req *services.UpdateServiceFailureRequest,
-) (*services.ServiceFailureLifecyclePreview, error) {
+	req *servicefailureports.UpdateServiceFailureRequest,
+) (*servicefailureports.ServiceFailureLifecyclePreview, error) {
 	original, updated, err := s.planUpdate(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	return &services.ServiceFailureLifecyclePreview{Before: original, After: updated}, nil
+	return &servicefailureports.ServiceFailureLifecyclePreview{Before: original, After: updated}, nil
 }
 
 func (s *service) previewLifecycle(
 	ctx context.Context,
 	params lifecycleTransitionParams,
-) (*services.ServiceFailureLifecyclePreview, error) {
+) (*servicefailureports.ServiceFailureLifecyclePreview, error) {
 	plan, err := s.planLifecycle(ctx, params)
 	if err != nil {
 		return nil, err
 	}
 
-	return &services.ServiceFailureLifecyclePreview{
+	return &servicefailureports.ServiceFailureLifecyclePreview{
 		Before: plan.original,
 		After:  plan.updated,
 		EDI:    plan.edi,
@@ -91,7 +91,7 @@ func (s *service) previewLifecycle(
 type lifecyclePlan struct {
 	original *servicefailure.ServiceFailure
 	updated  *servicefailure.ServiceFailure
-	edi      *services.ServiceFailure214LifecycleResult
+	edi      *servicefailureports.ServiceFailure214LifecycleResult
 }
 
 // planLifecycle is everything a lifecycle change decides before it saves:
@@ -111,7 +111,7 @@ func (s *service) planLifecycle(
 		)
 	}
 
-	original, err := s.repo.GetByShipment(ctx, &repositories.GetServiceFailureByShipmentRequest{
+	original, err := s.repo.GetByShipment(ctx, &servicefailureports.GetServiceFailureByShipmentRequest{
 		ID:         params.req.ID,
 		ShipmentID: params.req.ShipmentID,
 		TenantInfo: params.req.TenantInfo,

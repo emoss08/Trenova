@@ -1,6 +1,11 @@
 package invoicevoid_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/detentionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/orderportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"context"
 	"errors"
 	"strings"
@@ -9,9 +14,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/invoicevoid"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,12 +34,12 @@ type releaseFixture struct {
 	inv          *invoice.Invoice
 	shipmentID   pulid.ID
 	orderID      pulid.ID
-	queueRepo    *mocks.MockBillingQueueRepository
-	orderRepo    *mocks.MockOrderRepository
-	allocRepo    *mocks.MockChargeAllocationRepository
-	shipmentRepo *mocks.MockShipmentRepository
-	invoiceRepo  *mocks.MockInvoiceRepository
-	derivation   *mocks.MockOrderDerivationService
+	queueRepo    *billingqueueportsmock.MockBillingQueueRepository
+	orderRepo    *orderportsmock.MockOrderRepository
+	allocRepo    *shipmentportsmock.MockChargeAllocationRepository
+	shipmentRepo *shipmentportsmock.MockShipmentRepository
+	invoiceRepo  *invoiceportsmock.MockInvoiceRepository
+	derivation   *orderportsmock.MockOrderDerivationService
 }
 
 func newReleaseFixture(t *testing.T) *releaseFixture {
@@ -43,12 +51,12 @@ func newReleaseFixture(t *testing.T) *releaseFixture {
 		userID:       pulid.MustNew("usr_"),
 		shipmentID:   pulid.MustNew("shp_"),
 		orderID:      pulid.MustNew("ord_"),
-		queueRepo:    mocks.NewMockBillingQueueRepository(t),
-		orderRepo:    mocks.NewMockOrderRepository(t),
-		allocRepo:    mocks.NewMockChargeAllocationRepository(t),
-		shipmentRepo: mocks.NewMockShipmentRepository(t),
-		invoiceRepo:  mocks.NewMockInvoiceRepository(t),
-		derivation:   mocks.NewMockOrderDerivationService(t),
+		queueRepo:    billingqueueportsmock.NewMockBillingQueueRepository(t),
+		orderRepo:    orderportsmock.NewMockOrderRepository(t),
+		allocRepo:    shipmentportsmock.NewMockChargeAllocationRepository(t),
+		shipmentRepo: shipmentportsmock.NewMockShipmentRepository(t),
+		invoiceRepo:  invoiceportsmock.NewMockInvoiceRepository(t),
+		derivation:   orderportsmock.NewMockOrderDerivationService(t),
 	}
 	f.inv = &invoice.Invoice{
 		ID:                 pulid.MustNew("inv_"),
@@ -82,7 +90,7 @@ func (f *releaseFixture) expectCommonReleases(
 	released ...*billingqueue.BillingQueueItem,
 ) {
 	f.queueRepo.EXPECT().
-		ReleaseForInvoice(mock.Anything, mock.MatchedBy(func(req *repositories.ReleaseForInvoiceRequest) bool {
+		ReleaseForInvoice(mock.Anything, mock.MatchedBy(func(req *billingqueueports.ReleaseForInvoiceRequest) bool {
 			return req.Rebill == rebill &&
 				req.InvoiceID == f.inv.ID &&
 				req.AnchorItemID == f.inv.BillingQueueItemID &&
@@ -94,11 +102,11 @@ func (f *releaseFixture) expectCommonReleases(
 		Return(released, nil).
 		Once()
 	f.orderRepo.EXPECT().
-		ClearChargesInvoice(mock.Anything, &repositories.ClearOrderChargesInvoiceRequest{TenantInfo: f.tenantInfo, InvoiceID: f.inv.ID}).
+		ClearChargesInvoice(mock.Anything, &orderports.ClearOrderChargesInvoiceRequest{TenantInfo: f.tenantInfo, InvoiceID: f.inv.ID}).
 		Return(1, nil).
 		Once()
 	f.allocRepo.EXPECT().
-		ClearInvoice(mock.Anything, &repositories.ClearChargeAllocationsInvoiceRequest{TenantInfo: f.tenantInfo, InvoiceID: f.inv.ID}).
+		ClearInvoice(mock.Anything, &shipmentports.ClearChargeAllocationsInvoiceRequest{TenantInfo: f.tenantInfo, InvoiceID: f.inv.ID}).
 		Return(2, nil).
 		Once()
 }
@@ -162,14 +170,14 @@ func TestReleasePostedRebillReturnsShipmentsToReadyToInvoice(t *testing.T) {
 		BilledAt: &billedAt,
 	}
 	f.invoiceRepo.EXPECT().
-		ListByShipmentIDs(mock.Anything, repositories.ListInvoicesByShipmentIDsRequest{TenantInfo: f.tenantInfo, ShipmentIDs: []pulid.ID{f.shipmentID}}).
+		ListByShipmentIDs(mock.Anything, invoiceports.ListInvoicesByShipmentIDsRequest{TenantInfo: f.tenantInfo, ShipmentIDs: []pulid.ID{f.shipmentID}}).
 		Return(map[pulid.ID][]*invoice.Invoice{}, nil).
 		Once()
 	f.shipmentRepo.EXPECT().
-		GetByID(mock.Anything, &repositories.GetShipmentByIDRequest{
+		GetByID(mock.Anything, &shipmentports.GetShipmentByIDRequest{
 			ID:              f.shipmentID,
 			TenantInfo:      f.tenantInfo,
-			ShipmentOptions: repositories.ShipmentOptions{ExpandShipmentDetails: true},
+			ShipmentOptions: shipmentports.ShipmentOptions{ExpandShipmentDetails: true},
 		}).
 		Return(shp, nil).
 		Once()
@@ -266,7 +274,7 @@ func TestReleaseCancelReasonIsPrefixedAndCapped(t *testing.T) {
 	var got string
 	f.queueRepo.EXPECT().
 		ReleaseForInvoice(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req *repositories.ReleaseForInvoiceRequest) ([]*billingqueue.BillingQueueItem, error) {
+		RunAndReturn(func(_ context.Context, req *billingqueueports.ReleaseForInvoiceRequest) ([]*billingqueue.BillingQueueItem, error) {
 			got = req.CancelReason
 			return nil, nil
 		}).
@@ -290,13 +298,13 @@ func TestReleaseSettlesTheDetentionChargesTheVoidedInvoiceBilled(t *testing.T) {
 
 	f := newReleaseFixture(t)
 	f.expectCommonReleases(false)
-	detention := mocks.NewMockDetentionBillingService(t)
+	detention := detentionportsmock.NewMockDetentionBillingService(t)
 	detention.EXPECT().
-		SyncInvoiceBilling(mock.Anything, &servicesports.SyncDetentionInvoiceBillingRequest{
+		SyncInvoiceBilling(mock.Anything, &detentionports.SyncDetentionInvoiceBillingRequest{
 			TenantInfo:    f.tenantInfo,
 			InvoiceIDs:    []pulid.ID{f.inv.ID},
 			InvoiceNumber: f.inv.Number,
-			Event:         servicesports.DetentionBillingInvoiceVoided,
+			Event:         detentionports.DetentionBillingInvoiceVoided,
 			ActorUserID:   f.userID,
 		}).
 		Return(nil).
@@ -318,7 +326,7 @@ func TestReleaseFailsWhenTheDetentionChargesCannotBeSettled(t *testing.T) {
 
 	f := newReleaseFixture(t)
 	f.expectCommonReleases(true)
-	detention := mocks.NewMockDetentionBillingService(t)
+	detention := detentionportsmock.NewMockDetentionBillingService(t)
 	detention.EXPECT().
 		SyncInvoiceBilling(mock.Anything, mock.Anything).
 		Return(errors.New("occurrence changed underneath")).

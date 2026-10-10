@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
@@ -67,7 +67,7 @@ func (s *Service) UpdateDashboard(
 	ctx context.Context,
 	req *SaveDashboardRequest,
 ) (*report.Dashboard, error) {
-	existing, err := s.dashboardRepo.GetByID(ctx, &repositories.GetReportDashboardRequest{
+	existing, err := s.dashboardRepo.GetByID(ctx, &reportports.GetReportDashboardRequest{
 		TenantInfo:  req.TenantInfo,
 		DashboardID: req.DashboardID,
 	})
@@ -104,7 +104,7 @@ func (s *Service) GetDashboard(
 	ctx context.Context,
 	req *GetDashboardRequest,
 ) (*report.Dashboard, error) {
-	entity, err := s.dashboardRepo.GetByID(ctx, &repositories.GetReportDashboardRequest{
+	entity, err := s.dashboardRepo.GetByID(ctx, &reportports.GetReportDashboardRequest{
 		TenantInfo:  req.TenantInfo,
 		DashboardID: req.DashboardID,
 	})
@@ -123,7 +123,7 @@ func (s *Service) ListDashboards(
 	ctx context.Context,
 	req *ListDashboardsRequest,
 ) ([]*report.Dashboard, error) {
-	return s.dashboardRepo.List(ctx, &repositories.ListReportDashboardsRequest{
+	return s.dashboardRepo.List(ctx, &reportports.ListReportDashboardsRequest{
 		TenantInfo: req.TenantInfo,
 		ViewerID:   req.TenantInfo.UserID,
 		Limit:      req.Limit,
@@ -136,7 +136,7 @@ func (s *Service) DeleteDashboard(ctx context.Context, req *GetDashboardRequest)
 		return err
 	}
 
-	return s.dashboardRepo.Delete(ctx, &repositories.GetReportDashboardRequest{
+	return s.dashboardRepo.Delete(ctx, &reportports.GetReportDashboardRequest{
 		TenantInfo:  req.TenantInfo,
 		DashboardID: req.DashboardID,
 	})
@@ -173,7 +173,7 @@ func (s *Service) UnavailableTileTargets(
 			continue
 		}
 
-		_, err := s.defRepo.GetByID(ctx, &repositories.GetReportDefinitionRequest{
+		_, err := s.defRepo.GetByID(ctx, &reportports.GetReportDefinitionRequest{
 			TenantInfo:   tenant,
 			DefinitionID: tile.DefinitionID,
 		})

@@ -8,7 +8,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/ifta"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
@@ -79,7 +81,7 @@ func returnTenant(ret *ifta.Return) pagination.TenantInfo {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListReturnsRequest,
+	req *iftaports.ListReturnsRequest,
 ) (*pagination.CursorListResult[*ifta.Return], error) {
 	return s.repo.ListReturns(ctx, req)
 }
@@ -89,7 +91,7 @@ func (s *Service) Get(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*ifta.Return, error) {
-	return s.repo.GetReturnByID(ctx, &repositories.GetReturnByIDRequest{
+	return s.repo.GetReturnByID(ctx, &iftaports.GetReturnByIDRequest{
 		ID:                   id,
 		TenantInfo:           tenantInfo,
 		IncludeLines:         true,
@@ -99,7 +101,7 @@ func (s *Service) Get(
 
 func (s *Service) GetReturnsByIDs(
 	ctx context.Context,
-	req *repositories.GetReturnsByIDsRequest,
+	req *iftaports.GetReturnsByIDsRequest,
 ) ([]*ifta.Return, error) {
 	return s.repo.GetReturnsByIDs(ctx, req)
 }
@@ -114,7 +116,7 @@ func (s *Service) GetForPeriod(
 	}
 	latest, err := s.repo.GetLatestReturnForPeriod(
 		ctx,
-		&repositories.GetLatestReturnForPeriodRequest{
+		&iftaports.GetLatestReturnForPeriodRequest{
 			TenantInfo: tenantInfo,
 			Year:       period.Year,
 			Quarter:    period.Quarter,
@@ -171,7 +173,7 @@ func (s *Service) loadReturn(
 	id pulid.ID,
 	version int64,
 ) (*ifta.Return, error) {
-	ret, err := s.repo.GetReturnByID(ctx, &repositories.GetReturnByIDRequest{
+	ret, err := s.repo.GetReturnByID(ctx, &iftaports.GetReturnByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
@@ -205,7 +207,7 @@ func (s *Service) tractorProfiles(
 	if len(ids) == 0 {
 		return out, nil
 	}
-	tractors, err := s.tractorRepo.GetByIDs(ctx, repositories.GetTractorsByIDsRequest{
+	tractors, err := s.tractorRepo.GetByIDs(ctx, tractorports.GetTractorsByIDsRequest{
 		TenantInfo: tenantInfo,
 		TractorIDs: ids,
 	})
@@ -245,7 +247,7 @@ func (s *Service) compute(ctx context.Context, ret *ifta.Return) (*ComputeResult
 		return nil, err
 	}
 
-	miles, err := s.repo.AccumulateMiles(ctx, &repositories.AccumulateMilesRequest{
+	miles, err := s.repo.AccumulateMiles(ctx, &iftaports.AccumulateMilesRequest{
 		TenantInfo: tenantInfo,
 		Start:      ret.PeriodStart,
 		End:        ret.PeriodEnd,
@@ -256,7 +258,7 @@ func (s *Service) compute(ctx context.Context, ret *ifta.Return) (*ComputeResult
 		return nil, err
 	}
 
-	fuel, err := s.fuel.AccumulateFuel(ctx, &repositories.AccumulateFuelRequest{
+	fuel, err := s.fuel.AccumulateFuel(ctx, &fuelpurchaseports.AccumulateFuelRequest{
 		TenantInfo: tenantInfo,
 		Start:      ret.PeriodStart,
 		End:        ret.PeriodEnd,
@@ -265,7 +267,7 @@ func (s *Service) compute(ctx context.Context, ret *ifta.Return) (*ComputeResult
 		return nil, err
 	}
 
-	rates, err := s.repo.ResolveRates(ctx, &repositories.ResolveRatesRequest{
+	rates, err := s.repo.ResolveRates(ctx, &iftaports.ResolveRatesRequest{
 		Year:    ret.Year,
 		Quarter: ret.Quarter,
 	})
@@ -361,7 +363,7 @@ func (s *Service) newDraft(
 		return nil, errortypes.NewValidationError("quarter", errortypes.ErrInvalid, err.Error())
 	}
 
-	open, err := s.repo.GetOpenReturnForPeriod(ctx, &repositories.GetOpenReturnForPeriodRequest{
+	open, err := s.repo.GetOpenReturnForPeriod(ctx, &iftaports.GetOpenReturnForPeriodRequest{
 		TenantInfo: tenantInfo,
 		Year:       period.Year,
 		Quarter:    period.Quarter,
@@ -442,7 +444,7 @@ func (s *Service) planDraft(
 ) (*ifta.Return, error) {
 	latest, err := s.repo.GetLatestReturnForPeriod(
 		ctx,
-		&repositories.GetLatestReturnForPeriodRequest{
+		&iftaports.GetLatestReturnForPeriodRequest{
 			TenantInfo: req.TenantInfo,
 			Year:       req.Period.Year,
 			Quarter:    req.Period.Quarter,
@@ -760,7 +762,7 @@ func (s *Service) amendment(
 		return nil, err
 	}
 
-	filed, err := s.repo.GetReturnByID(ctx, &repositories.GetReturnByIDRequest{
+	filed, err := s.repo.GetReturnByID(ctx, &iftaports.GetReturnByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -837,7 +839,7 @@ func (s *Service) Delete(ctx context.Context, req *ReturnActionRequest) error {
 		return err
 	}
 
-	if err = s.repo.DeleteReturn(ctx, &repositories.DeleteReturnRequest{
+	if err = s.repo.DeleteReturn(ctx, &iftaports.DeleteReturnRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 		Version:    req.Version,

@@ -15,14 +15,19 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -59,40 +64,40 @@ type Params struct {
 
 	Logger          *zap.Logger
 	Config          *config.Config
-	DB              ports.DBConnection
-	Devices         repositories.CaptureDeviceRepository
-	Pairings        repositories.CapturePairingRepository
-	Profiles        repositories.CaptureProfileRepository
-	Requests        repositories.CaptureRequestRepository
-	Batches         repositories.CaptureBatchRepository
-	Pages           repositories.CapturePageRepository
-	Items           repositories.CaptureItemRepository
-	CoverSheets     repositories.CaptureCoverSheetRepository
-	Records         repositories.CaptureRecordFinder
-	DocumentControl repositories.DocumentControlRepository
-	DocumentTypes   repositories.DocumentTypeRepository
-	Users           repositories.UserRepository
-	Organizations   repositories.OrganizationRepository
-	Permissions     services.PermissionEngine
-	Storage         storage.Client
+	DB              kernelports.DBConnection
+	Devices         captureports.CaptureDeviceRepository
+	Pairings        captureports.CapturePairingRepository
+	Profiles        captureports.CaptureProfileRepository
+	Requests        captureports.CaptureRequestRepository
+	Batches         captureports.CaptureBatchRepository
+	Pages           captureports.CapturePageRepository
+	Items           captureports.CaptureItemRepository
+	CoverSheets     captureports.CaptureCoverSheetRepository
+	Records         captureports.CaptureRecordFinder
+	DocumentControl tenantports.DocumentControlRepository
+	DocumentTypes   documenttypeports.DocumentTypeRepository
+	Users           tenantports.UserRepository
+	Organizations   tenantports.OrganizationRepository
+	Permissions     permissionports.PermissionEngine
+	Storage         kernelports.Client
 	Encryption      *encryptionservice.Service
-	Uploads         services.DocumentUploadService
-	Assembler       services.CapturePDFAssembler
-	Inspector       services.CapturePageInspector
-	QRCodes         services.CaptureQREncoder
+	Uploads         documentuploadports.DocumentUploadService
+	Assembler       captureports.CapturePDFAssembler
+	Inspector       captureports.CapturePageInspector
+	QRCodes         captureports.CaptureQREncoder
 	// Workflows is optional so an installation without a worker still
 	// receives pages. A sealed batch then waits, and the reconcile sweep
 	// starts its processing once a worker appears.
-	Workflows services.WorkflowStarter `optional:"true"`
+	Workflows kernelports.WorkflowStarter `optional:"true"`
 	// Realtime keeps the intake queue and the device's stream current. Without
 	// it both are right on their next load, and the device polls.
-	Realtime services.RealtimeService `optional:"true"`
-	Audit    services.AuditService    `optional:"true"`
+	Realtime agentports.RealtimeService `optional:"true"`
+	Audit    auditports.AuditService    `optional:"true"`
 	// Analyzer suggests what a document is and which shipment it belongs to.
 	// Without it every item waits for a person to say.
-	Analyzer services.CaptureAnalyzer `optional:"true"`
+	Analyzer captureports.CaptureAnalyzer `optional:"true"`
 	// Shipments resolves a reference number the analyzer found to a shipment.
-	Shipments repositories.InboundShipmentFinder `optional:"true"`
+	Shipments inboundmessageports.InboundShipmentFinder `optional:"true"`
 	// Notifications tells an owner their unfiled pages are about to go.
 	// Without it the pages are still kept and deleted on time; nobody is told.
 	Notifications *notificationservice.Service `optional:"true"`
@@ -101,13 +106,13 @@ type Params struct {
 // userReader and organizationReader name the person and organization a device
 // acts for, so the companion can say who it is signed in as.
 type userReader interface {
-	GetByID(ctx context.Context, req repositories.GetUserByIDRequest) (*tenant.User, error)
+	GetByID(ctx context.Context, req tenantports.GetUserByIDRequest) (*tenant.User, error)
 }
 
 type organizationReader interface {
 	GetByID(
 		ctx context.Context,
-		req repositories.GetOrganizationByIDRequest,
+		req tenantports.GetOrganizationByIDRequest,
 	) (*tenant.Organization, error)
 }
 
@@ -122,33 +127,33 @@ type notifier interface {
 type Service struct {
 	l             *zap.Logger
 	cfg           *config.Config
-	db            ports.DBConnection
-	devices       repositories.CaptureDeviceRepository
-	pairings      repositories.CapturePairingRepository
-	profiles      repositories.CaptureProfileRepository
-	requests      repositories.CaptureRequestRepository
-	batches       repositories.CaptureBatchRepository
-	pages         repositories.CapturePageRepository
-	items         repositories.CaptureItemRepository
-	coverSheets   repositories.CaptureCoverSheetRepository
-	records       repositories.CaptureRecordFinder
-	controls      repositories.DocumentControlRepository
-	documentTypes repositories.DocumentTypeRepository
+	db            kernelports.DBConnection
+	devices       captureports.CaptureDeviceRepository
+	pairings      captureports.CapturePairingRepository
+	profiles      captureports.CaptureProfileRepository
+	requests      captureports.CaptureRequestRepository
+	batches       captureports.CaptureBatchRepository
+	pages         captureports.CapturePageRepository
+	items         captureports.CaptureItemRepository
+	coverSheets   captureports.CaptureCoverSheetRepository
+	records       captureports.CaptureRecordFinder
+	controls      tenantports.DocumentControlRepository
+	documentTypes documenttypeports.DocumentTypeRepository
 	users         userReader
 	organizations organizationReader
-	permissions   services.PermissionEngine
-	storage       storage.Client
+	permissions   permissionports.PermissionEngine
+	storage       kernelports.Client
 	cipher        envelopeCipher
-	uploads       services.DocumentUploadService
-	assembler     services.CapturePDFAssembler
-	inspector     services.CapturePageInspector
-	qrCodes       services.CaptureQREncoder
+	uploads       documentuploadports.DocumentUploadService
+	assembler     captureports.CapturePDFAssembler
+	inspector     captureports.CapturePageInspector
+	qrCodes       captureports.CaptureQREncoder
 	notifications notifier
-	workflows     services.WorkflowStarter
-	realtime      services.RealtimeService
-	audit         services.AuditService
-	analyzer      services.CaptureAnalyzer
-	shipments     repositories.InboundShipmentFinder
+	workflows     kernelports.WorkflowStarter
+	realtime      agentports.RealtimeService
+	audit         auditports.AuditService
+	analyzer      captureports.CaptureAnalyzer
+	shipments     inboundmessageports.InboundShipmentFinder
 	received      *receivedAnnouncer
 	arrivals      *arrivalReaders
 }
@@ -205,7 +210,7 @@ func (s *Service) control(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*tenant.DocumentControl, error) {
-	control, err := s.controls.Get(ctx, repositories.GetDocumentControlRequest{
+	control, err := s.controls.Get(ctx, tenantports.GetDocumentControlRequest{
 		TenantInfo: tenantInfo,
 	})
 	if err == nil {
@@ -244,12 +249,12 @@ func (s *Service) allowed(
 	tenantInfo pagination.TenantInfo,
 	resource permission.Resource,
 	op permission.Operation,
-) (*services.PermissionCheckResult, error) {
+) (*permissionports.PermissionCheckResult, error) {
 	if tenantInfo.UserID.IsNil() {
-		return &services.PermissionCheckResult{Allowed: false, Reason: "no_user"}, nil
+		return &permissionports.PermissionCheckResult{Allowed: false, Reason: "no_user"}, nil
 	}
 
-	return s.permissions.Check(ctx, services.UserActor(tenantInfo).PermissionCheck(resource, op))
+	return s.permissions.Check(ctx, permissionports.UserActor(tenantInfo).PermissionCheck(resource, op))
 }
 
 // require is allowed, turned into the error a handler maps to 403.
@@ -258,7 +263,7 @@ func (s *Service) require(
 	tenantInfo pagination.TenantInfo,
 	resource permission.Resource,
 	op permission.Operation,
-) (*services.PermissionCheckResult, error) {
+) (*permissionports.PermissionCheckResult, error) {
 	result, err := s.allowed(ctx, tenantInfo, resource, op)
 	if err != nil {
 		return nil, err
@@ -274,7 +279,7 @@ func (s *Service) require(
 
 // seesEveryone reports whether a permission result reaches past the person's
 // own records.
-func seesEveryone(result *services.PermissionCheckResult) bool {
+func seesEveryone(result *permissionports.PermissionCheckResult) bool {
 	return result != nil && result.DataScope != permission.DataScopeOwn
 }
 
@@ -296,7 +301,7 @@ func (s *Service) publish(
 
 	if err := s.realtime.PublishResourceInvalidation(
 		ctx,
-		&services.PublishResourceInvalidationRequest{
+		&agentports.PublishResourceInvalidationRequest{
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
 			AudienceUserID: audience,
@@ -305,7 +310,7 @@ func (s *Service) publish(
 			RecordID:       recordID,
 			Entity:         entity,
 			ActorUserID:    tenantInfo.UserID,
-			ActorType:      services.PrincipalTypeUser,
+			ActorType:      permissionports.PrincipalTypeUser,
 			ActorID:        tenantInfo.UserID,
 		},
 	); err != nil {
@@ -318,7 +323,7 @@ func (s *Service) publish(
 
 // logAudit records an action in the audit trail. A failure to record is
 // logged, never returned: the action already happened.
-func (s *Service) logAudit(params *services.LogActionParams, comment string) {
+func (s *Service) logAudit(params *auditports.LogActionParams, comment string) {
 	if s.audit == nil {
 		return
 	}

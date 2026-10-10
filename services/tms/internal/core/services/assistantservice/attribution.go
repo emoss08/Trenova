@@ -5,7 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
@@ -75,7 +76,7 @@ func (s *Service) agentDefinitions(
 		return nil
 	}
 
-	definitions, err := s.definitions.ListByIDs(ctx, repositories.ListAgentDefinitionsByIDsRequest{
+	definitions, err := s.definitions.ListByIDs(ctx, agentdefinitionports.ListAgentDefinitionsByIDsRequest{
 		IDs:        ids,
 		TenantInfo: tenant,
 	})
@@ -101,7 +102,7 @@ func (s *Service) proposersOf(
 		return proposers
 	}
 
-	runs, err := s.runs.ListByIDs(ctx, repositories.ListAgentRunsByIDsRequest{
+	runs, err := s.runs.ListByIDs(ctx, agentports.ListAgentRunsByIDsRequest{
 		IDs:        sliceutils.Dedupe(runIDs),
 		TenantInfo: tenant,
 	})

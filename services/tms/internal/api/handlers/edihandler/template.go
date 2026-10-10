@@ -8,9 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -118,7 +118,7 @@ func (h *Handler) listTemplates(c *gin.Context) {
 	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*edi.EDITemplate], error) {
 		return h.service.ListTemplates(
 			c.Request.Context(),
-			&repositories.ListEDITemplatesRequest{
+			&ediports.ListEDITemplatesRequest{
 				Filter:         req,
 				TransactionSet: edi.TransactionSet(helpers.QueryString(c, "transactionSet", "")),
 				Direction: edi.DocumentDirection(
@@ -141,7 +141,7 @@ func (h *Handler) selectTemplateOptions(c *gin.Context) {
 		func() (*pagination.ListResult[*edi.EDITemplate], error) {
 			return h.service.SelectTemplateOptions(
 				c.Request.Context(),
-				&repositories.EDITemplateSelectOptionsRequest{
+				&ediports.EDITemplateSelectOptionsRequest{
 					SelectQueryRequest: req,
 					TransactionSet: edi.TransactionSet(
 						helpers.QueryString(c, "transactionSet", ""),
@@ -189,7 +189,7 @@ func (h *Handler) getTemplate(c *gin.Context) {
 	}
 	template, err := h.service.GetTemplate(
 		c.Request.Context(),
-		repositories.GetEDITemplateByIDRequest{
+		ediports.GetEDITemplateByIDRequest{
 			ID:         templateID,
 			TenantInfo: tenantInfoFromAuth(authCtx),
 		},
@@ -264,7 +264,7 @@ func (h *Handler) listTemplateVersions(c *gin.Context) {
 	}
 	versions, err := h.service.ListTemplateVersions(
 		c.Request.Context(),
-		repositories.ListEDITemplateVersionsRequest{
+		ediports.ListEDITemplateVersionsRequest{
 			TemplateID: templateID,
 			TenantInfo: tenantInfoFromAuth(authCtx),
 		},
@@ -285,7 +285,7 @@ func (h *Handler) getTemplateVersion(c *gin.Context) {
 	}
 	version, err := h.service.GetTemplateVersion(
 		c.Request.Context(),
-		repositories.GetEDITemplateVersionByIDRequest{
+		ediports.GetEDITemplateVersionByIDRequest{
 			TemplateID: templateID,
 			VersionID:  versionID,
 			TenantInfo: tenantInfoFromAuth(authCtx),
@@ -361,7 +361,7 @@ func (h *Handler) listTemplateScriptLibraries(c *gin.Context) {
 	}
 	libraries, err := h.service.ListTemplateScriptLibraries(
 		c.Request.Context(),
-		repositories.ListEDITemplateScriptLibrariesRequest{
+		ediports.ListEDITemplateScriptLibrariesRequest{
 			TemplateID: templateID,
 			VersionID:  versionID,
 			TenantInfo: tenantInfoFromAuth(authCtx),
@@ -433,7 +433,7 @@ func (h *Handler) rollbackTemplateVersion(c *gin.Context) {
 
 func (h *Handler) templateVersionAction(
 	c *gin.Context,
-	fn func(context.Context, *ediservice.EDIActionNotesRequest, *services.RequestActor) (*edi.EDITemplateVersion, error),
+	fn func(context.Context, *ediservice.EDIActionNotesRequest, *permissionports.RequestActor) (*edi.EDITemplateVersion, error),
 ) {
 	authCtx := authctx.GetAuthContext(c)
 	req, err := h.templateActionRequest(c)

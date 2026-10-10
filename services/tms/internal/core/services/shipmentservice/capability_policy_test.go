@@ -1,10 +1,13 @@
 package shipmentservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/commodityportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/equipmenttypeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/hazmatsegregationruleportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"testing"
-
-	"github.com/emoss08/trenova/internal/core/services/shipmentservice/shipmentservicetest"
 
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/core/domain/jurisdictionrule"
@@ -12,8 +15,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permit"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/shipmentservice/shipmentservicetest"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmenttypeports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/modeprofileports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -28,36 +36,36 @@ type stubModeProfileService struct {
 
 func (s *stubModeProfileService) Resolve(
 	_ context.Context,
-	_ *services.ResolveModeProfileRequest,
+	_ *modeprofileports.ResolveModeProfileRequest,
 ) (*modeprofile.ResolvedPolicy, error) {
 	return s.policy, nil
 }
 
 func (s *stubModeProfileService) RecordDeviations(
 	_ context.Context,
-	_ *services.RecordDeviationsRequest,
+	_ *modeprofileports.RecordDeviationsRequest,
 ) error {
 	return nil
 }
 
 func (s *stubModeProfileService) Acknowledge(
 	_ context.Context,
-	_ *services.AcknowledgeDeviationServiceRequest,
+	_ *modeprofileports.AcknowledgeDeviationServiceRequest,
 ) (*modeprofile.Deviation, error) {
 	return nil, nil
 }
 
 func (s *stubModeProfileService) ListDeviations(
 	_ context.Context,
-	_ *repositories.ListDeviationsRequest,
+	_ *modeprofileports.ListDeviationsRequest,
 ) (*pagination.ListResult[*modeprofile.Deviation], error) {
 	return nil, nil
 }
 
 func (s *stubModeProfileService) Ledger(
 	_ context.Context,
-	_ *repositories.DeviationLedgerRequest,
-) ([]*repositories.DeviationLedgerEntry, error) {
+	_ *modeprofileports.DeviationLedgerRequest,
+) ([]*modeprofileports.DeviationLedgerEntry, error) {
 	return nil, nil
 }
 
@@ -96,13 +104,13 @@ func validatorWithProfileAndEquipment(
 	entity *shipment.Shipment,
 	policy *modeprofile.ResolvedPolicy,
 	control *tenant.ShipmentControl,
-	equipmentTypeRepo repositories.EquipmentTypeRepository,
+	equipmentTypeRepo equipmenttypeports.EquipmentTypeRepository,
 ) *Validator {
 	t.Helper()
 
-	controlRepo := mocks.NewMockShipmentControlRepository(t)
+	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
-		Get(mock.Anything, repositories.GetShipmentControlRequest{
+		Get(mock.Anything, tenantports.GetShipmentControlRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
 				BuID:  entity.BusinessUnitID,
@@ -115,9 +123,9 @@ func validatorWithProfileAndEquipment(
 		validator: newValidatorBuilder(validatorDeps{
 			ControlRepo:       controlRepo,
 			CustomerRepo:      shipmentservicetest.NewCustomerRepository(t),
-			CommodityRepo:     mocks.NewMockCommodityRepository(t),
-			HazmatRuleRepo:    mocks.NewMockHazmatSegregationRuleRepository(t),
-			ShipmentRepo:      mocks.NewMockShipmentRepository(t),
+			CommodityRepo:     commodityportsmock.NewMockCommodityRepository(t),
+			HazmatRuleRepo:    hazmatsegregationruleportsmock.NewMockHazmatSegregationRuleRepository(t),
+			ShipmentRepo:      shipmentportsmock.NewMockShipmentRepository(t),
 			EquipmentTypeRepo: equipmentTypeRepo,
 			ProfileService:    &stubModeProfileService{policy: policy},
 		}).Build(),
@@ -449,12 +457,12 @@ func equipmentRepoWithDeck(
 	t *testing.T,
 	entity *shipment.Shipment,
 	deckLengthFeet float64,
-) repositories.EquipmentTypeRepository {
+) equipmenttypeports.EquipmentTypeRepository {
 	t.Helper()
 
-	repo := mocks.NewMockEquipmentTypeRepository(t)
+	repo := equipmenttypeportsmock.NewMockEquipmentTypeRepository(t)
 	repo.EXPECT().
-		GetByID(mock.Anything, repositories.GetEquipmentTypeByIDRequest{
+		GetByID(mock.Anything, equipmenttypeports.GetEquipmentTypeByIDRequest{
 			ID: entity.TrailerTypeID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
@@ -542,18 +550,18 @@ func TestCapabilityPolicy_DeckFitSkippedWithoutEnvelope(t *testing.T) {
 }
 
 type stubPermitService struct {
-	assessment *services.PermitAssessment
+	assessment *permitports.PermitAssessment
 }
 
 func (s *stubPermitService) Assess(
 	_ context.Context, _ *shipment.Shipment,
-) (*services.PermitAssessment, error) {
+) (*permitports.PermitAssessment, error) {
 	return s.assessment, nil
 }
 
 func (s *stubPermitService) Sync(
-	_ context.Context, _ *shipment.Shipment, _ *services.RequestActor,
-) (*services.PermitAssessment, error) {
+	_ context.Context, _ *shipment.Shipment, _ *permissionports.RequestActor,
+) (*permitports.PermitAssessment, error) {
 	return s.assessment, nil
 }
 
@@ -570,13 +578,13 @@ func (s *stubPermitService) ListRequirements(
 }
 
 func (s *stubPermitService) CreatePermit(
-	_ context.Context, e *permit.Permit, _ *services.RequestActor,
+	_ context.Context, e *permit.Permit, _ *permissionports.RequestActor,
 ) (*permit.Permit, error) {
 	return e, nil
 }
 
 func (s *stubPermitService) UpdatePermit(
-	_ context.Context, e *permit.Permit, _ *services.RequestActor,
+	_ context.Context, e *permit.Permit, _ *permissionports.RequestActor,
 ) (*permit.Permit, error) {
 	return e, nil
 }
@@ -589,12 +597,12 @@ func (s *stubPermitService) PlanCreatePermit(
 
 func (s *stubPermitService) PlanUpdatePermit(
 	_ context.Context, e *permit.Permit,
-) (*services.RecordChange[permit.Permit], error) {
-	return &services.RecordChange[permit.Permit]{Before: e, After: e}, nil
+) (*kernelports.RecordChange[permit.Permit], error) {
+	return &kernelports.RecordChange[permit.Permit]{Before: e, After: e}, nil
 }
 
 func (s *stubPermitService) WaiveRequirement(
-	_ context.Context, _ *services.WaiveRequirementRequest,
+	_ context.Context, _ *permitports.WaiveRequirementRequest,
 ) (*permit.Requirement, error) {
 	return nil, nil
 }
@@ -640,13 +648,13 @@ func validatorWithPermits(
 	t *testing.T,
 	entity *shipment.Shipment,
 	policy *modeprofile.ResolvedPolicy,
-	assessment *services.PermitAssessment,
+	assessment *permitports.PermitAssessment,
 ) *Validator {
 	t.Helper()
 
-	controlRepo := mocks.NewMockShipmentControlRepository(t)
+	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
-		Get(mock.Anything, repositories.GetShipmentControlRequest{
+		Get(mock.Anything, tenantports.GetShipmentControlRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
 				BuID:  entity.BusinessUnitID,
@@ -659,9 +667,9 @@ func validatorWithPermits(
 		validator: newValidatorBuilder(validatorDeps{
 			ControlRepo:    controlRepo,
 			CustomerRepo:   shipmentservicetest.NewCustomerRepository(t),
-			CommodityRepo:  mocks.NewMockCommodityRepository(t),
-			HazmatRuleRepo: mocks.NewMockHazmatSegregationRuleRepository(t),
-			ShipmentRepo:   mocks.NewMockShipmentRepository(t),
+			CommodityRepo:  commodityportsmock.NewMockCommodityRepository(t),
+			HazmatRuleRepo: hazmatsegregationruleportsmock.NewMockHazmatSegregationRuleRepository(t),
+			ShipmentRepo:   shipmentportsmock.NewMockShipmentRepository(t),
 			ProfileService: &stubModeProfileService{policy: policy},
 			PermitService:  &stubPermitService{assessment: assessment},
 		}).Build(),
@@ -676,7 +684,7 @@ func TestPermitRule_MissingPermitBlocks(t *testing.T) {
 
 	v := validatorWithPermits(t, entity,
 		permittingPolicy(tenant.EnforcementLevelBlock, modeprofile.RuleKeyPermitRequired),
-		&services.PermitAssessment{Requirements: open, Open: open},
+		&permitports.PermitAssessment{Requirements: open, Open: open},
 	)
 
 	multiErr, _ := v.ValidateCreateWithAdvisories(t.Context(), entity)
@@ -694,7 +702,7 @@ func TestPermitRule_WarnRecordsAdvisoryInsteadOfBlocking(t *testing.T) {
 
 	v := validatorWithPermits(t, entity,
 		permittingPolicy(tenant.EnforcementLevelWarn, modeprofile.RuleKeyPermitRequired),
-		&services.PermitAssessment{Requirements: open, Open: open},
+		&permitports.PermitAssessment{Requirements: open, Open: open},
 	)
 
 	multiErr, advisories := v.ValidateCreateWithAdvisories(t.Context(), entity)
@@ -715,7 +723,7 @@ func TestPermitRule_SatisfiedRequirementsDoNotFire(t *testing.T) {
 
 	v := validatorWithPermits(t, entity,
 		permittingPolicy(tenant.EnforcementLevelBlock, modeprofile.RuleKeyPermitRequired),
-		&services.PermitAssessment{Requirements: satisfied},
+		&permitports.PermitAssessment{Requirements: satisfied},
 	)
 
 	multiErr, advisories := v.ValidateCreateWithAdvisories(t.Context(), entity)
@@ -732,7 +740,7 @@ func TestPermitRule_ExpiryBeforeDeliveryBlocks(t *testing.T) {
 
 	v := validatorWithPermits(t, entity,
 		permittingPolicy(tenant.EnforcementLevelBlock, modeprofile.RuleKeyPermitExpiry),
-		&services.PermitAssessment{ExpiringBeforeDelivery: expiring},
+		&permitports.PermitAssessment{ExpiringBeforeDelivery: expiring},
 	)
 
 	multiErr, _ := v.ValidateCreateWithAdvisories(t.Context(), entity)
@@ -751,7 +759,7 @@ func TestPermitRule_EscortsDefaultToReview(t *testing.T) {
 		permittingPolicy(
 			tenant.EnforcementLevelRequireReview, modeprofile.RuleKeyPermitEscorts,
 		),
-		&services.PermitAssessment{TotalEscorts: 2},
+		&permitports.PermitAssessment{TotalEscorts: 2},
 	)
 
 	multiErr, advisories := v.ValidateCreateWithAdvisories(t.Context(), entity)
@@ -775,7 +783,7 @@ func TestPermitRule_CurfewReportsRestrictionsWithoutClaimingAConflict(t *testing
 		permittingPolicy(
 			tenant.EnforcementLevelWarn, modeprofile.RuleKeyPermitCurfewConflict,
 		),
-		&services.PermitAssessment{Requirements: []*permit.Requirement{restricted}},
+		&permitports.PermitAssessment{Requirements: []*permit.Requirement{restricted}},
 	)
 
 	multiErr, advisories := v.ValidateCreateWithAdvisories(t.Context(), entity)
@@ -801,7 +809,7 @@ func TestPermitRule_IgnoredWithoutPermittingCapability(t *testing.T) {
 	policy.Capabilities = []modeprofile.Capability{modeprofile.CapabilityCore}
 
 	v := validatorWithPermits(t, entity, policy,
-		&services.PermitAssessment{Requirements: open, Open: open},
+		&permitports.PermitAssessment{Requirements: open, Open: open},
 	)
 
 	multiErr, advisories := v.ValidateCreateWithAdvisories(t.Context(), entity)
@@ -819,7 +827,7 @@ func TestPermitRule_NoEscortsRequiredProducesNothing(t *testing.T) {
 		permittingPolicy(
 			tenant.EnforcementLevelRequireReview, modeprofile.RuleKeyPermitEscorts,
 		),
-		&services.PermitAssessment{TotalEscorts: 0},
+		&permitports.PermitAssessment{TotalEscorts: 0},
 	)
 
 	multiErr, advisories := v.ValidateCreateWithAdvisories(t.Context(), entity)
@@ -838,7 +846,7 @@ func TestPermitRule_LeadTimeWarnsWhenPickupIsTooSoon(t *testing.T) {
 		permittingPolicy(
 			tenant.EnforcementLevelWarn, modeprofile.RuleKeyPermitLeadTime,
 		),
-		&services.PermitAssessment{
+		&permitports.PermitAssessment{
 			MaxLeadTimeDays: 5,
 			EarliestPickup:  pickup + 1,
 		},
@@ -861,7 +869,7 @@ func TestPermitRule_LeadTimeSilentWhenPickupIsFarEnoughOut(t *testing.T) {
 		permittingPolicy(
 			tenant.EnforcementLevelWarn, modeprofile.RuleKeyPermitLeadTime,
 		),
-		&services.PermitAssessment{
+		&permitports.PermitAssessment{
 			MaxLeadTimeDays: 5,
 			EarliestPickup:  pickup - 1,
 		},

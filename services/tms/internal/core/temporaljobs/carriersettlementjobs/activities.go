@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/settlementshared"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -18,13 +18,13 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	SettlementControl repositories.CarrierSettlementControlRepository
+	SettlementControl tenantports.CarrierSettlementControlRepository
 	SettlementService *carriersettlementservice.Service
 	Logger            *zap.Logger
 }
 
 type Activities struct {
-	settlementControl repositories.CarrierSettlementControlRepository
+	settlementControl tenantports.CarrierSettlementControlRepository
 	settlementService *carriersettlementservice.Service
 	logger            *zap.Logger
 }
@@ -37,11 +37,11 @@ func NewActivities(p ActivitiesParams) *Activities {
 	}
 }
 
-func systemActor() *services.RequestActor {
-	return &services.RequestActor{
-		PrincipalType: services.PrincipalTypeSystem,
-		PrincipalID:   services.SystemPrincipalID,
-		UserID:        services.SystemPrincipalID,
+func systemActor() *permissionports.RequestActor {
+	return &permissionports.RequestActor{
+		PrincipalType: permissionports.PrincipalTypeSystem,
+		PrincipalID:   permissionports.SystemPrincipalID,
+		UserID:        permissionports.SystemPrincipalID,
 	}
 }
 

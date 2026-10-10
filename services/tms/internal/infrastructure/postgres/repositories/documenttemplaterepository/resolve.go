@@ -6,8 +6,8 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
@@ -109,7 +109,7 @@ type resolvedScan struct {
 	AssignmentID *pulid.ID `bun:"assignment_id"`
 }
 
-func (s *resolvedScan) toRow() *repositories.ResolvedTemplateRow {
+func (s *resolvedScan) toRow() *documenttemplateports.ResolvedTemplateRow {
 	version := &documenttemplate.DocumentTemplateVersion{
 		ID:              s.VersionID,
 		OrganizationID:  s.OrganizationID,
@@ -164,7 +164,7 @@ func (s *resolvedScan) toRow() *repositories.ResolvedTemplateRow {
 		source = documenttemplate.SourceAssigned
 	}
 
-	return &repositories.ResolvedTemplateRow{
+	return &documenttemplateports.ResolvedTemplateRow{
 		Template: template,
 		Version:  version,
 		Source:   source,
@@ -176,9 +176,9 @@ func (s *resolvedScan) toRow() *repositories.ResolvedTemplateRow {
 // the built-in starter.
 func (r *templateRepository) Resolve(
 	ctx context.Context,
-	req *repositories.ResolveDocumentTemplateRequest,
-) (*repositories.ResolvedTemplateRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.ResolvedTemplateRow, error) {
+	req *documenttemplateports.ResolveDocumentTemplateRequest,
+) (*documenttemplateports.ResolvedTemplateRow, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*documenttemplateports.ResolvedTemplateRow, error) {
 		log := r.l.With(
 			zap.String("operation", "Resolve"),
 			zap.String("kind", string(req.Kind)),

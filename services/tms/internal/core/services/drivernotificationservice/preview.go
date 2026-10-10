@@ -7,8 +7,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 )
 
 var errRenderingNotConfigured = errors.New(
@@ -21,7 +22,7 @@ var errRenderingNotConfigured = errors.New(
 func (s *Service) Preview(
 	ctx context.Context,
 	req *DriverNotification,
-) (*services.DriverNotificationPreview, error) {
+) (*notificationports.DriverNotificationPreview, error) {
 	if req == nil || req.WorkerID.IsNil() {
 		return nil, errors.New("a driver notification needs a driver")
 	}
@@ -36,7 +37,7 @@ func (s *Service) Preview(
 		return nil, err
 	}
 
-	return &services.DriverNotificationPreview{
+	return &notificationports.DriverNotificationPreview{
 		WorkerID:   wrk.ID,
 		WorkerName: strings.TrimSpace(wrk.FirstName + " " + wrk.LastName),
 		Reachable:  reachable(wrk),
@@ -48,7 +49,7 @@ func (s *Service) Preview(
 }
 
 func (s *Service) recipient(ctx context.Context, req *DriverNotification) (*worker.Worker, error) {
-	return s.workerRepo.GetByID(ctx, repositories.GetWorkerByIDRequest{
+	return s.workerRepo.GetByID(ctx, workerports.GetWorkerByIDRequest{
 		ID:         req.WorkerID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -80,7 +81,7 @@ func (s *Service) renderNotification(
 		return "", "", errRenderingNotConfigured
 	}
 
-	rendered, err := s.templates.RenderMessage(ctx, &services.RenderMessageRequest{
+	rendered, err := s.templates.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
 		TenantInfo:        req.TenantInfo,
 		Kind:              notificationKind(req.EventType),
 		Data:              fillRecipient(req.Context, wrk),

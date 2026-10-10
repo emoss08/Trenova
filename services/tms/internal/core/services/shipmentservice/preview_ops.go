@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -13,8 +13,8 @@ import (
 
 func (s *service) PreviewUncancel(
 	ctx context.Context,
-	req *repositories.UncancelShipmentRequest,
-) (*services.ShipmentChangePreview, error) {
+	req *shipmentports.UncancelShipmentRequest,
+) (*shipmentports.ShipmentChangePreview, error) {
 	if req == nil {
 		return nil, uncancelRequestRequired()
 	}
@@ -25,12 +25,12 @@ func (s *service) PreviewUncancel(
 		return nil, err
 	}
 
-	return &services.ShipmentChangePreview{Before: original, After: restored}, nil
+	return &shipmentports.ShipmentChangePreview{Before: original, After: restored}, nil
 }
 
 func (s *service) planUncancel(
 	ctx context.Context,
-	req *repositories.UncancelShipmentRequest,
+	req *shipmentports.UncancelShipmentRequest,
 ) (original, restored *shipment.Shipment, err error) {
 	if req == nil {
 		return nil, nil, uncancelRequestRequired()
@@ -45,10 +45,10 @@ func (s *service) planUncancel(
 		BuID:  req.TenantInfo.BuID,
 	}
 
-	original, err = s.repo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	original, err = s.repo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:              req.ShipmentID,
 		TenantInfo:      tenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{ExpandShipmentDetails: true},
+		ShipmentOptions: shipmentports.ShipmentOptions{ExpandShipmentDetails: true},
 	})
 	if err != nil {
 		return nil, nil, err
@@ -82,9 +82,9 @@ func uncancelRequestRequired() error {
 
 func (s *service) PreviewTransferOwnership(
 	ctx context.Context,
-	req *repositories.TransferOwnershipRequest,
-	actor *services.RequestActor,
-) (*services.ShipmentChangePreview, error) {
+	req *shipmentports.TransferOwnershipRequest,
+	actor *permissionports.RequestActor,
+) (*shipmentports.ShipmentChangePreview, error) {
 	original, err := s.planTransferOwnership(ctx, req, actor)
 	if err != nil {
 		return nil, err
@@ -93,13 +93,13 @@ func (s *service) PreviewTransferOwnership(
 	after := *original
 	after.OwnerID = req.OwnerID
 
-	return &services.ShipmentChangePreview{Before: original, After: &after}, nil
+	return &shipmentports.ShipmentChangePreview{Before: original, After: &after}, nil
 }
 
 func (s *service) planTransferOwnership(
 	ctx context.Context,
-	req *repositories.TransferOwnershipRequest,
-	actor *services.RequestActor,
+	req *shipmentports.TransferOwnershipRequest,
+	actor *permissionports.RequestActor,
 ) (*shipment.Shipment, error) {
 	if req == nil {
 		multiErr := errortypes.NewMultiError()
@@ -120,7 +120,7 @@ func (s *service) planTransferOwnership(
 		)
 	}
 
-	original, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	original, err := s.repo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID: req.ShipmentID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: req.TenantInfo.OrgID,
@@ -154,7 +154,7 @@ func (s *service) PreviewRecalculateDistance(
 	ctx context.Context,
 	shipmentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) (*services.ShipmentDistancePreview, error) {
+) (*shipmentports.ShipmentDistancePreview, error) {
 	if s.distanceCalculation == nil {
 		return nil, errortypes.NewBusinessError("distance calculation service is not configured")
 	}
@@ -164,20 +164,20 @@ func (s *service) PreviewRecalculateDistance(
 
 func (s *service) PreviewDuplicate(
 	ctx context.Context,
-	req *repositories.BulkDuplicateShipmentRequest,
-) (*services.ShipmentDuplicatePreview, error) {
+	req *shipmentports.BulkDuplicateShipmentRequest,
+) (*shipmentports.ShipmentDuplicatePreview, error) {
 	plan, err := s.planDuplicate(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	return &services.ShipmentDuplicatePreview{Source: plan.Source, Copies: plan.Copies}, nil
+	return &shipmentports.ShipmentDuplicatePreview{Source: plan.Source, Copies: plan.Copies}, nil
 }
 
 func (s *service) planDuplicate(
 	ctx context.Context,
-	req *repositories.BulkDuplicateShipmentRequest,
-) (*repositories.ShipmentDuplicatePlan, error) {
+	req *shipmentports.BulkDuplicateShipmentRequest,
+) (*shipmentports.ShipmentDuplicatePlan, error) {
 	if err := s.guardDuplicate(req); err != nil {
 		return nil, err
 	}
@@ -194,7 +194,7 @@ func (s *service) planDuplicate(
 	return plan, nil
 }
 
-func (s *service) guardDuplicate(req *repositories.BulkDuplicateShipmentRequest) error {
+func (s *service) guardDuplicate(req *shipmentports.BulkDuplicateShipmentRequest) error {
 	if multiErr := req.Validate(); multiErr != nil {
 		return multiErr
 	}
@@ -208,9 +208,9 @@ func (s *service) guardDuplicate(req *repositories.BulkDuplicateShipmentRequest)
 
 func uncancelRestores(
 	original, restored *shipment.Shipment,
-) ([]repositories.MoveStatusRestore, []repositories.StopStatusRestore) {
-	moves := make([]repositories.MoveStatusRestore, 0, len(restored.Moves))
-	stops := make([]repositories.StopStatusRestore, 0)
+) ([]shipmentports.MoveStatusRestore, []shipmentports.StopStatusRestore) {
+	moves := make([]shipmentports.MoveStatusRestore, 0, len(restored.Moves))
+	stops := make([]shipmentports.StopStatusRestore, 0)
 
 	for moveIndex, move := range restored.Moves {
 		if move == nil || moveIndex >= len(original.Moves) || original.Moves[moveIndex] == nil {
@@ -219,7 +219,7 @@ func uncancelRestores(
 
 		before := original.Moves[moveIndex]
 		if before.IsCanceled() && !move.IsCanceled() {
-			moves = append(moves, repositories.MoveStatusRestore{
+			moves = append(moves, shipmentports.MoveStatusRestore{
 				MoveID: move.ID,
 				Status: move.Status,
 			})
@@ -231,7 +231,7 @@ func uncancelRestores(
 			}
 
 			if before.Stops[stopIndex].IsCanceled() && !stop.IsCanceled() {
-				stops = append(stops, repositories.StopStatusRestore{
+				stops = append(stops, shipmentports.StopStatusRestore{
 					StopID: stop.ID,
 					Status: stop.Status,
 				})

@@ -5,8 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/temporaljobs/tenderjobs/tendercontract"
-
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/sdk/client"
@@ -63,7 +62,7 @@ func (a *Activities) SweepStalledTendersActivity(
 	result := new(TenderSweepResult)
 
 	overdueBy := timeutils.NowUnix() - sweepGraceSeconds
-	tenders, err := a.repo.ListForSweep(ctx, repositories.ListTendersForSweepRequest{
+	tenders, err := a.repo.ListForSweep(ctx, tenderports.ListTendersForSweepRequest{
 		ExpiredBy: overdueBy,
 		Limit:     sweepBatchLimit,
 	})

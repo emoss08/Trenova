@@ -11,8 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -880,7 +880,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ShipmentSummary)
+					obj := o.(*shipmentports.ShipmentSummary)
 					return obj.ShipmentID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -890,7 +890,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ShipmentSummary)
+					obj := o.(*shipmentports.ShipmentSummary)
 					return obj.ProNumber, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -900,7 +900,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ShipmentSummary)
+					obj := o.(*shipmentports.ShipmentSummary)
 					return obj.BOL, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -910,7 +910,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ShipmentSummary)
+					obj := o.(*shipmentports.ShipmentSummary)
 					return obj.PONumber, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -920,7 +920,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ShipmentSummary)
+					obj := o.(*shipmentports.ShipmentSummary)
 					return obj.OriginCity, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -930,7 +930,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ShipmentSummary)
+					obj := o.(*shipmentports.ShipmentSummary)
 					return obj.OriginState, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -940,7 +940,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ShipmentSummary)
+					obj := o.(*shipmentports.ShipmentSummary)
 					return obj.DestinationCity, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -950,7 +950,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ShipmentSummary)
+					obj := o.(*shipmentports.ShipmentSummary)
 					return obj.DestinationState, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1145,7 +1145,7 @@ type resolverInboundMessage interface {
 	Attachments(ctx context.Context, obj *inboundmessage.InboundMessage) ([]*inboundmessage.InboundAttachment, error)
 	AttachmentCount(ctx context.Context, obj *inboundmessage.InboundMessage) (int, error)
 	Preview(ctx context.Context, obj *inboundmessage.InboundMessage) (string, error)
-	MatchedShipment(ctx context.Context, obj *inboundmessage.InboundMessage) (*repositories.ShipmentSummary, error)
+	MatchedShipment(ctx context.Context, obj *inboundmessage.InboundMessage) (*shipmentports.ShipmentSummary, error)
 	MatchedCustomer(ctx context.Context, obj *inboundmessage.InboundMessage) (*customer.Customer, error)
 	NeedsReview(ctx context.Context, obj *inboundmessage.InboundMessage) (bool, error)
 }
@@ -1972,7 +1972,7 @@ func marshalOInboundMailbox2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcor
 	return ec.MarshalType(ctx, sel, "InboundMailbox", v)
 }
 
-func marshalOInboundShipmentRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐShipmentSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *repositories.ShipmentSummary) graphql.Marshaler {
+func marshalOInboundShipmentRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐShipmentSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *shipmentports.ShipmentSummary) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

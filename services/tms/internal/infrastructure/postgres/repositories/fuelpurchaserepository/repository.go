@@ -1,8 +1,8 @@
 package fuelpurchaserepository
 
 import (
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -27,7 +27,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.FuelPurchaseRepository {
+func New(p Params) fuelpurchaseports.FuelPurchaseRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.fuel-purchase-repository"),

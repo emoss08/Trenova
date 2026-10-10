@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -52,7 +52,7 @@ func (h *Handler) listSourceContextSchemas(c *gin.Context) {
 		func() (*pagination.ListResult[*edi.EDISourceContextSchema], error) {
 			return h.service.ListSourceContextSchemas(
 				c.Request.Context(),
-				&repositories.ListEDISourceContextSchemasRequest{
+				&ediports.ListEDISourceContextSchemasRequest{
 					Filter:   req,
 					Standard: edi.EDIStandard(helpers.QueryString(c, "standard", "")),
 					TransactionSet: edi.TransactionSet(
@@ -83,7 +83,7 @@ func (h *Handler) getSourceContextSchema(c *gin.Context) {
 
 	schema, err := h.service.GetSourceContextSchema(
 		c.Request.Context(),
-		repositories.GetEDISourceContextSchemaRequest{
+		ediports.GetEDISourceContextSchemaRequest{
 			ID:         schemaID,
 			TenantInfo: tenantInfoFromAuth(authCtx),
 		},
@@ -151,8 +151,8 @@ func (h *Handler) selectSourceContextFieldOptions(c *gin.Context) {
 func (h *Handler) sourceContextFieldRequest(
 	c *gin.Context,
 	req *pagination.QueryOptions,
-) *repositories.ListEDISourceContextFieldsRequest {
-	fieldReq := &repositories.ListEDISourceContextFieldsRequest{
+) *ediports.ListEDISourceContextFieldsRequest {
+	fieldReq := &ediports.ListEDISourceContextFieldsRequest{
 		Filter: req,
 		Status: edi.SourceContextFieldStatus(
 			helpers.QueryString(c, "status", ""),

@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -35,7 +35,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalAvailability)
+					obj := o.(*agentports.AIRetrievalAvailability)
 					return obj.Available, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -44,7 +44,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "reason",
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalAvailability)
+					obj := o.(*agentports.AIRetrievalAvailability)
 					return obj.Reason, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOAIRetrievalUnavailableReason2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋairetrievalᚐUnavailableReason),
@@ -54,7 +54,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalAvailability)
+					obj := o.(*agentports.AIRetrievalAvailability)
 					return obj.ExtensionInstalled, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -63,7 +63,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "extensionVersion",
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalAvailability)
+					obj := o.(*agentports.AIRetrievalAvailability)
 					return obj.ExtensionVersion, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
@@ -75,7 +75,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalFailedEntry)
+					obj := o.(*agentports.AIRetrievalFailedEntry)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2string),
@@ -85,7 +85,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalFailedEntry)
+					obj := o.(*agentports.AIRetrievalFailedEntry)
 					return obj.SourceType, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNAIRetrievalSourceType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋairetrievalᚐSourceType),
@@ -95,7 +95,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalFailedEntry)
+					obj := o.(*agentports.AIRetrievalFailedEntry)
 					return obj.SourceID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -105,7 +105,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalFailedEntry)
+					obj := o.(*agentports.AIRetrievalFailedEntry)
 					return obj.ModelKey, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -115,7 +115,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalFailedEntry)
+					obj := o.(*agentports.AIRetrievalFailedEntry)
 					return obj.Status, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNAIRetrievalIndexStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋairetrievalᚐIndexStatus),
@@ -125,7 +125,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalFailedEntry)
+					obj := o.(*agentports.AIRetrievalFailedEntry)
 					return obj.Attempts, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -135,7 +135,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalFailedEntry)
+					obj := o.(*agentports.AIRetrievalFailedEntry)
 					return obj.Error, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -144,7 +144,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "lastAttemptAt",
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalFailedEntry)
+					obj := o.(*agentports.AIRetrievalFailedEntry)
 					return obj.LastAttemptAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -153,7 +153,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "nextAttemptAt",
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalFailedEntry)
+					obj := o.(*agentports.AIRetrievalFailedEntry)
 					return obj.NextAttemptAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -221,7 +221,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalModelChange)
+					obj := o.(*agentports.AIRetrievalModelChange)
 					return obj.FromModelKey, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -231,7 +231,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalModelChange)
+					obj := o.(*agentports.AIRetrievalModelChange)
 					return obj.ToModelKey, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -241,7 +241,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalModelChange)
+					obj := o.(*agentports.AIRetrievalModelChange)
 					return obj.Dimensions, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -251,7 +251,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalModelChange)
+					obj := o.(*agentports.AIRetrievalModelChange)
 					return obj.Total, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -261,7 +261,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalModelChange)
+					obj := o.(*agentports.AIRetrievalModelChange)
 					return obj.Indexed, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -271,7 +271,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalModelChange)
+					obj := o.(*agentports.AIRetrievalModelChange)
 					return obj.Pending, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -281,7 +281,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalModelChange)
+					obj := o.(*agentports.AIRetrievalModelChange)
 					return obj.Failed, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -293,7 +293,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalReindexEstimate)
+					obj := o.(*agentports.AIRetrievalReindexEstimate)
 					return obj.SourceType, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNAIRetrievalSourceType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋairetrievalᚐSourceType),
@@ -302,7 +302,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "modelKey",
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalReindexEstimate)
+					obj := o.(*agentports.AIRetrievalReindexEstimate)
 					return obj.ModelKey, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
@@ -312,7 +312,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalReindexEstimate)
+					obj := o.(*agentports.AIRetrievalReindexEstimate)
 					return obj.Sources, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -322,7 +322,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalReindexEstimate)
+					obj := o.(*agentports.AIRetrievalReindexEstimate)
 					return obj.AverageChunks, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
@@ -332,7 +332,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalReindexEstimate)
+					obj := o.(*agentports.AIRetrievalReindexEstimate)
 					return obj.ChunksMeasured, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -342,7 +342,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalReindexEstimate)
+					obj := o.(*agentports.AIRetrievalReindexEstimate)
 					return obj.AverageTokensPerChunk, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
@@ -352,7 +352,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalReindexEstimate)
+					obj := o.(*agentports.AIRetrievalReindexEstimate)
 					return obj.EstimatedTokens, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -361,7 +361,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "inputCostPerMillionUsd",
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalReindexEstimate)
+					obj := o.(*agentports.AIRetrievalReindexEstimate)
 					return obj.InputCostPerMillionUSD, nil
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
@@ -370,7 +370,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "estimatedCostUsd",
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalReindexEstimate)
+					obj := o.(*agentports.AIRetrievalReindexEstimate)
 					return obj.EstimatedCostUSD, nil
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
@@ -380,7 +380,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalReindexEstimate)
+					obj := o.(*agentports.AIRetrievalReindexEstimate)
 					return obj.RemainingBudgetUSD, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -392,7 +392,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalSettings)
+					obj := o.(*agentports.AIRetrievalSettings)
 					return obj.MemoryEnabled, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -402,7 +402,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalSettings)
+					obj := o.(*agentports.AIRetrievalSettings)
 					return obj.DocumentsEnabled, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -412,7 +412,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalSettings)
+					obj := o.(*agentports.AIRetrievalSettings)
 					return obj.InboundMessagesEnabled, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -422,7 +422,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalSettings)
+					obj := o.(*agentports.AIRetrievalSettings)
 					return obj.MonthlyIndexingBudgetUSD, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -432,7 +432,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalSettings)
+					obj := o.(*agentports.AIRetrievalSettings)
 					return obj.Paused, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -441,7 +441,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "pausedReason",
 				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalSettings)
+					obj := o.(*agentports.AIRetrievalSettings)
 					return obj.PausedReason, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOAIRetrievalPauseReason2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋairetrievalᚐPauseReason),
@@ -450,7 +450,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "pausedAt",
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalSettings)
+					obj := o.(*agentports.AIRetrievalSettings)
 					return obj.PausedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -459,7 +459,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "activeModelKey",
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalSettings)
+					obj := o.(*agentports.AIRetrievalSettings)
 					return obj.ActiveModelKey, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
@@ -468,7 +468,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "dimensions",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalSettings)
+					obj := o.(*agentports.AIRetrievalSettings)
 					return obj.Dimensions, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
@@ -477,7 +477,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "pendingModelKey",
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalSettings)
+					obj := o.(*agentports.AIRetrievalSettings)
 					return obj.PendingModelKey, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
@@ -486,7 +486,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "pendingDimensions",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalSettings)
+					obj := o.(*agentports.AIRetrievalSettings)
 					return obj.PendingDimensions, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
@@ -496,7 +496,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalSettings)
+					obj := o.(*agentports.AIRetrievalSettings)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -505,7 +505,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "updatedAt",
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalSettings)
+					obj := o.(*agentports.AIRetrievalSettings)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -517,7 +517,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalSourceStatus)
+					obj := o.(*agentports.AIRetrievalSourceStatus)
 					return obj.SourceType, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNAIRetrievalSourceType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋairetrievalᚐSourceType),
@@ -527,7 +527,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalSourceStatus)
+					obj := o.(*agentports.AIRetrievalSourceStatus)
 					return obj.Enabled, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -537,7 +537,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalSourceStatus)
+					obj := o.(*agentports.AIRetrievalSourceStatus)
 					return obj.Total, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -547,7 +547,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalSourceStatus)
+					obj := o.(*agentports.AIRetrievalSourceStatus)
 					return obj.Indexed, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -557,7 +557,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalSourceStatus)
+					obj := o.(*agentports.AIRetrievalSourceStatus)
 					return obj.Pending, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -567,7 +567,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalSourceStatus)
+					obj := o.(*agentports.AIRetrievalSourceStatus)
 					return obj.Failed, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -577,7 +577,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalSourceStatus)
+					obj := o.(*agentports.AIRetrievalSourceStatus)
 					return obj.Skipped, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -586,7 +586,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "lastIndexedAt",
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalSourceStatus)
+					obj := o.(*agentports.AIRetrievalSourceStatus)
 					return obj.LastIndexedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -595,7 +595,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "lastAttemptAt",
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalSourceStatus)
+					obj := o.(*agentports.AIRetrievalSourceStatus)
 					return obj.LastAttemptAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -608,7 +608,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "AIRetrievalAvailability",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalStatus)
+					obj := o.(*agentports.AIRetrievalStatus)
 					return obj.Availability, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNAIRetrievalAvailability2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIRetrievalAvailability),
@@ -619,7 +619,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "AIRetrievalSettings",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalStatus)
+					obj := o.(*agentports.AIRetrievalStatus)
 					return obj.Settings, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNAIRetrievalSettings2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIRetrievalSettings),
@@ -630,7 +630,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "AIRetrievalSourceStatus",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalStatus)
+					obj := o.(*agentports.AIRetrievalStatus)
 					return obj.Sources, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNAIRetrievalSourceStatus2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIRetrievalSourceStatusᚄ),
@@ -640,7 +640,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalStatus)
+					obj := o.(*agentports.AIRetrievalStatus)
 					return obj.MonthStartedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -650,7 +650,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalStatus)
+					obj := o.(*agentports.AIRetrievalStatus)
 					return obj.IndexingCostMonthUSD, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -660,7 +660,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalStatus)
+					obj := o.(*agentports.AIRetrievalStatus)
 					return obj.IndexingUnpricedCalls, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -670,7 +670,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalStatus)
+					obj := o.(*agentports.AIRetrievalStatus)
 					return obj.RetrievalCostMonthUSD, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -680,7 +680,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalStatus)
+					obj := o.(*agentports.AIRetrievalStatus)
 					return obj.RetrievalUnpricedCalls, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -689,7 +689,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "lastIndexedAt",
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalStatus)
+					obj := o.(*agentports.AIRetrievalStatus)
 					return obj.LastIndexedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -699,7 +699,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "AIRetrievalModelChange",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalStatus)
+					obj := o.(*agentports.AIRetrievalStatus)
 					return obj.ModelChange, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOAIRetrievalModelChange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIRetrievalModelChange),
@@ -708,7 +708,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "configuredModelKey",
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalStatus)
+					obj := o.(*agentports.AIRetrievalStatus)
 					return obj.ConfiguredModelKey, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
@@ -718,7 +718,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIRetrievalStatus)
+					obj := o.(*agentports.AIRetrievalStatus)
 					return obj.ConfiguredModelDiffers, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -805,13 +805,13 @@ var Shard = &gqlexec.Shard{
 }
 
 type resolverMutation interface {
-	UpdateAIRetrievalSettings(ctx context.Context, input gqlmodel.AIRetrievalSettingsPatchInput) (*services.AIRetrievalStatus, error)
-	ReindexAIRetrievalSource(ctx context.Context, sourceType airetrieval.SourceType) (*services.AIRetrievalStatus, error)
+	UpdateAIRetrievalSettings(ctx context.Context, input gqlmodel.AIRetrievalSettingsPatchInput) (*agentports.AIRetrievalStatus, error)
+	ReindexAIRetrievalSource(ctx context.Context, sourceType airetrieval.SourceType) (*agentports.AIRetrievalStatus, error)
 }
 
 type resolverQuery interface {
-	AiRetrievalStatus(ctx context.Context) (*services.AIRetrievalStatus, error)
-	AiRetrievalReindexEstimate(ctx context.Context, sourceType airetrieval.SourceType) (*services.AIRetrievalReindexEstimate, error)
+	AiRetrievalStatus(ctx context.Context) (*agentports.AIRetrievalStatus, error)
+	AiRetrievalReindexEstimate(ctx context.Context, sourceType airetrieval.SourceType) (*agentports.AIRetrievalReindexEstimate, error)
 	AiRetrievalFailedEntryConnection(ctx context.Context, sourceType *airetrieval.SourceType, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIRetrievalFailedEntryConnection, error)
 }
 
@@ -992,7 +992,7 @@ func unmarshalODecimal2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func marshalNAIRetrievalAvailability2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIRetrievalAvailability(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.AIRetrievalAvailability) graphql.Marshaler {
+func marshalNAIRetrievalAvailability2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIRetrievalAvailability(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentports.AIRetrievalAvailability) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1000,7 +1000,7 @@ func marshalNAIRetrievalAvailability2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return ec.MarshalType(ctx, sel, "AIRetrievalAvailability", v)
 }
 
-func marshalNAIRetrievalFailedEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIRetrievalFailedEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.AIRetrievalFailedEntry) graphql.Marshaler {
+func marshalNAIRetrievalFailedEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIRetrievalFailedEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentports.AIRetrievalFailedEntry) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1040,7 +1040,7 @@ func marshalNAIRetrievalIndexStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNAIRetrievalReindexEstimate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIRetrievalReindexEstimate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.AIRetrievalReindexEstimate) graphql.Marshaler {
+func marshalNAIRetrievalReindexEstimate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIRetrievalReindexEstimate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentports.AIRetrievalReindexEstimate) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1048,7 +1048,7 @@ func marshalNAIRetrievalReindexEstimate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋin
 	return ec.MarshalType(ctx, sel, "AIRetrievalReindexEstimate", v)
 }
 
-func marshalNAIRetrievalSettings2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIRetrievalSettings(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.AIRetrievalSettings) graphql.Marshaler {
+func marshalNAIRetrievalSettings2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIRetrievalSettings(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentports.AIRetrievalSettings) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1056,15 +1056,15 @@ func marshalNAIRetrievalSettings2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "AIRetrievalSettings", v)
 }
 
-func marshalNAIRetrievalSourceStatus2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIRetrievalSourceStatusᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*services.AIRetrievalSourceStatus) graphql.Marshaler {
-	return gqlexec.List[*services.AIRetrievalSourceStatus]{
+func marshalNAIRetrievalSourceStatus2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIRetrievalSourceStatusᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*agentports.AIRetrievalSourceStatus) graphql.Marshaler {
+	return gqlexec.List[*agentports.AIRetrievalSourceStatus]{
 		Elem:        marshalNAIRetrievalSourceStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIRetrievalSourceStatus,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAIRetrievalSourceStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIRetrievalSourceStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.AIRetrievalSourceStatus) graphql.Marshaler {
+func marshalNAIRetrievalSourceStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIRetrievalSourceStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentports.AIRetrievalSourceStatus) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1080,7 +1080,7 @@ func marshalNAIRetrievalSourceType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNAIRetrievalStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIRetrievalStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.AIRetrievalStatus) graphql.Marshaler {
+func marshalNAIRetrievalStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIRetrievalStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentports.AIRetrievalStatus) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1168,7 +1168,7 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalOAIRetrievalModelChange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIRetrievalModelChange(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.AIRetrievalModelChange) graphql.Marshaler {
+func marshalOAIRetrievalModelChange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIRetrievalModelChange(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentports.AIRetrievalModelChange) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

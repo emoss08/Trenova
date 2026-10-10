@@ -6,8 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
-
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/sdk/client"
 )
@@ -71,13 +70,13 @@ func (q *turnQueue) next(ctx context.Context, wait <-chan time.Time) (StartedTur
 }
 
 type TurnWatcher struct {
-	serviceports.WorkflowStarter
+	kernelports.WorkflowStarter
 
 	mu     sync.Mutex
 	queues map[pulid.ID]*turnQueue
 }
 
-func NewTurnWatcher(inner serviceports.WorkflowStarter) *TurnWatcher {
+func NewTurnWatcher(inner kernelports.WorkflowStarter) *TurnWatcher {
 	return &TurnWatcher{
 		WorkflowStarter: inner,
 		queues:          make(map[pulid.ID]*turnQueue),

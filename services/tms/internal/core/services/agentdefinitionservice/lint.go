@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/agentlint"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -17,7 +17,7 @@ var resourceNames = permission.NewRegistry()
 // returns each thing they ask for that none of those tools can do.
 func (s *Service) LintInstructions(
 	ctx context.Context,
-	req *services.LintAgentInstructionsRequest,
+	req *agentdefinitionports.LintAgentInstructionsRequest,
 ) ([]agentlint.Finding, error) {
 	if utf8.RuneCountInString(req.Instructions) > agentdefinition.MaxInstructionsRunes {
 		return nil, errortypes.NewValidationError(
@@ -40,8 +40,8 @@ func (s *Service) LintInstructions(
 // prerequisites with it, and core tools and those an extension gives every
 // agent are held by all.
 func lintRegistry(
-	catalog []services.ToolCatalogEntry,
-	req *services.LintAgentInstructionsRequest,
+	catalog []agentdefinitionports.ToolCatalogEntry,
+	req *agentdefinitionports.LintAgentInstructionsRequest,
 ) []agentlint.Tool {
 	held := make(map[string]struct{}, len(req.ToolNames))
 	for _, name := range req.ToolNames {

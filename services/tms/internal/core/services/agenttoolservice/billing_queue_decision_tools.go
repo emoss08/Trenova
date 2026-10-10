@@ -9,10 +9,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/billingqueueservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -48,17 +49,17 @@ var ErrDecisionNeedsAPerson = errors.New(
 type billingQueueDecider interface {
 	GetByID(
 		ctx context.Context,
-		req *repositories.GetBillingQueueItemByIDRequest,
+		req *billingqueueports.GetBillingQueueItemByIDRequest,
 	) (*billingqueue.BillingQueueItem, error)
 	UpdateStatus(
 		ctx context.Context,
-		req *serviceports.UpdateBillingQueueStatusRequest,
-		actor *serviceports.RequestActor,
+		req *billingqueueports.UpdateBillingQueueStatusRequest,
+		actor *permissionports.RequestActor,
 	) (*billingqueue.BillingQueueItem, error)
 	AssignBiller(
 		ctx context.Context,
-		req *serviceports.AssignBillerRequest,
-		actor *serviceports.RequestActor,
+		req *billingqueueports.AssignBillerRequest,
+		actor *permissionports.RequestActor,
 	) (*billingqueue.BillingQueueItem, error)
 	CheckBiller(ctx context.Context, tenantInfo pagination.TenantInfo, billerID pulid.ID) error
 }
@@ -82,7 +83,7 @@ type queueDecision struct {
 	rationale        string
 	properties       map[string]any
 	required         []string
-	fill             func(params map[string]any, req *serviceports.UpdateBillingQueueStatusRequest) error
+	fill             func(params map[string]any, req *billingqueueports.UpdateBillingQueueStatusRequest) error
 	searchTerms      []string
 }
 
@@ -92,9 +93,9 @@ type billingQueueDecisionTool struct {
 }
 
 var (
-	_ serviceports.ToolPreviewer = (*billingQueueDecisionTool)(nil)
-	_ serviceports.ToolValidator = (*billingQueueDecisionTool)(nil)
-	_ serviceports.TargetedTool  = (*billingQueueDecisionTool)(nil)
+	_ agentports.ToolPreviewer = (*billingQueueDecisionTool)(nil)
+	_ agentports.ToolValidator = (*billingQueueDecisionTool)(nil)
+	_ agentports.TargetedTool  = (*billingQueueDecisionTool)(nil)
 )
 
 func (t *billingQueueDecisionTool) Name() string { return t.decision.name }
@@ -125,8 +126,8 @@ func (t *billingQueueDecisionTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *billingQueueDecisionTool) Policy() serviceports.ToolPolicy {
-	policy := serviceports.ToolPolicy{
+func (t *billingQueueDecisionTool) Policy() agentports.ToolPolicy {
+	policy := agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceBillingQueue,
@@ -141,23 +142,23 @@ func (t *billingQueueDecisionTool) Policy() serviceports.ToolPolicy {
 		Rationale:     t.decision.rationale,
 	}
 	if t.decision.holdsWhenTainted {
-		policy.TaintHold = &serviceports.TaintHold{
+		policy.TaintHold = &agentports.TaintHold{
 			Description: "Its notes are what a biller or operations reads next, so a run " +
 				"that has read outside text proposes it rather than writing it.",
-			Applies: func(serviceports.ToolExecuteParams) bool { return true },
+			Applies: func(agentports.ToolExecuteParams) bool { return true },
 		}
 	}
 
 	return policy
 }
 
-func (t *billingQueueDecisionTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *billingQueueDecisionTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, paramBillingQueueItemID, permission.ResourceBillingQueue)
 }
 
 func (t *billingQueueDecisionTool) request(
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.UpdateBillingQueueStatusRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*billingqueueports.UpdateBillingQueueStatusRequest, error) {
 	if err := guardPreview(t, params); err != nil {
 		return nil, err
 	}
@@ -167,7 +168,7 @@ func (t *billingQueueDecisionTool) request(
 		return nil, err
 	}
 
-	req := &serviceports.UpdateBillingQueueStatusRequest{
+	req := &billingqueueports.UpdateBillingQueueStatusRequest{
 		ItemID:     itemID,
 		NewStatus:  t.decision.status,
 		TenantInfo: tenantFrom(*params),
@@ -186,8 +187,8 @@ func (t *billingQueueDecisionTool) request(
 // the person who will approve it, since that person is who makes it.
 func (t *billingQueueDecisionTool) plan(
 	item *billingqueue.BillingQueueItem,
-	req *serviceports.UpdateBillingQueueStatusRequest,
-	actor *serviceports.RequestActor,
+	req *billingqueueports.UpdateBillingQueueStatusRequest,
+	actor *permissionports.RequestActor,
 	now int64,
 ) error {
 	var err error
@@ -228,9 +229,9 @@ func (t *billingQueueDecisionTool) requiredFields(item *billingqueue.BillingQueu
 
 func (t *billingQueueDecisionTool) load(
 	ctx context.Context,
-	req *serviceports.UpdateBillingQueueStatusRequest,
+	req *billingqueueports.UpdateBillingQueueStatusRequest,
 ) (*billingqueue.BillingQueueItem, error) {
-	return t.billing.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
+	return t.billing.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
 		ItemID:                req.ItemID,
 		TenantInfo:            req.TenantInfo,
 		ExpandShipmentDetails: t.decision.status == billingqueue.StatusApproved,
@@ -239,7 +240,7 @@ func (t *billingQueueDecisionTool) load(
 
 func (t *billingQueueDecisionTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	req, err := t.request(&params)
 	if err != nil {
@@ -297,7 +298,7 @@ func issueSummaries(issues []*billingqueue.Issue) string {
 
 func (t *billingQueueDecisionTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -346,7 +347,7 @@ func notesProperty(description string) map[string]any {
 
 // fillException reads the reason and notes an exception or a send-back
 // records. The billing queue's own rule decides which need notes.
-func fillException(params map[string]any, req *serviceports.UpdateBillingQueueStatusRequest) error {
+func fillException(params map[string]any, req *billingqueueports.UpdateBillingQueueStatusRequest) error {
 	raw, err := requireString(params, paramExceptionReasonCode)
 	if err != nil {
 		return err
@@ -366,7 +367,7 @@ func fillException(params map[string]any, req *serviceports.UpdateBillingQueueSt
 	return nil
 }
 
-func fillHold(params map[string]any, req *serviceports.UpdateBillingQueueStatusRequest) error {
+func fillHold(params map[string]any, req *billingqueueports.UpdateBillingQueueStatusRequest) error {
 	notes, err := requireString(params, paramDecisionNotes)
 	if err != nil {
 		return err
@@ -376,13 +377,13 @@ func fillHold(params map[string]any, req *serviceports.UpdateBillingQueueStatusR
 	return nil
 }
 
-func fillApproval(params map[string]any, req *serviceports.UpdateBillingQueueStatusRequest) error {
+func fillApproval(params map[string]any, req *billingqueueports.UpdateBillingQueueStatusRequest) error {
 	req.ReviewNotes = strings.TrimSpace(optionalString(params, paramReviewNotes))
 
 	return nil
 }
 
-func fillCancel(params map[string]any, req *serviceports.UpdateBillingQueueStatusRequest) error {
+func fillCancel(params map[string]any, req *billingqueueports.UpdateBillingQueueStatusRequest) error {
 	reason, err := requireString(params, paramCancelReason)
 	if err != nil {
 		return err
@@ -400,7 +401,7 @@ func fillCancel(params map[string]any, req *serviceports.UpdateBillingQueueStatu
 	return nil
 }
 
-func newSendBackToOpsTool(billing billingQueueDecider) serviceports.AgentTool {
+func newSendBackToOpsTool(billing billingQueueDecider) agentports.AgentTool {
 	return &billingQueueDecisionTool{billing: billing, decision: queueDecision{
 		name: "send_billing_item_back_to_ops",
 		description: "Send a billing queue item in review back to operations to fix, with a " +
@@ -425,7 +426,7 @@ func newSendBackToOpsTool(billing billingQueueDecider) serviceports.AgentTool {
 	}}
 }
 
-func newMoveToExceptionTool(billing billingQueueDecider) serviceports.AgentTool {
+func newMoveToExceptionTool(billing billingQueueDecider) agentports.AgentTool {
 	return &billingQueueDecisionTool{billing: billing, decision: queueDecision{
 		name: "move_billing_item_to_exception",
 		description: "Move a billing queue item in review into exception for a biller to " +
@@ -449,7 +450,7 @@ func newMoveToExceptionTool(billing billingQueueDecider) serviceports.AgentTool 
 	}}
 }
 
-func newHoldBillingQueueItemTool(billing billingQueueDecider) serviceports.AgentTool {
+func newHoldBillingQueueItemTool(billing billingQueueDecider) agentports.AgentTool {
 	return &billingQueueDecisionTool{billing: billing, decision: queueDecision{
 		name:        "hold_billing_queue_item",
 		searchTerms: []string{"park item", "park until"},
@@ -473,7 +474,7 @@ func newHoldBillingQueueItemTool(billing billingQueueDecider) serviceports.Agent
 	}}
 }
 
-func newCancelBillingQueueItemTool(billing billingQueueDecider) serviceports.AgentTool {
+func newCancelBillingQueueItemTool(billing billingQueueDecider) agentports.AgentTool {
 	return &billingQueueDecisionTool{billing: billing, decision: queueDecision{
 		name: "cancel_billing_queue_item",
 		description: "Propose canceling a billing queue item that should never be billed, " +
@@ -506,12 +507,12 @@ type assignBillerTool struct {
 }
 
 var (
-	_ serviceports.ToolPreviewer = (*assignBillerTool)(nil)
-	_ serviceports.ToolValidator = (*assignBillerTool)(nil)
-	_ serviceports.TargetedTool  = (*assignBillerTool)(nil)
+	_ agentports.ToolPreviewer = (*assignBillerTool)(nil)
+	_ agentports.ToolValidator = (*assignBillerTool)(nil)
+	_ agentports.TargetedTool  = (*assignBillerTool)(nil)
 )
 
-func newAssignBillerTool(billing billingQueueDecider) serviceports.AgentTool {
+func newAssignBillerTool(billing billingQueueDecider) agentports.AgentTool {
 	return &assignBillerTool{billing: billing}
 }
 
@@ -564,7 +565,7 @@ func billerProperty() map[string]any {
 func billerOf(
 	ctx context.Context,
 	billing billingQueueDecider,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (biller pulid.ID, asker bool, err error) {
 	named, ok, err := optionalPulid(params.Params, paramBillerID)
 	if err != nil {
@@ -605,8 +606,8 @@ func billerClause(asker bool) string {
 	return "a biller"
 }
 
-func (t *assignBillerTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *assignBillerTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceBillingQueue,
@@ -623,14 +624,14 @@ func (t *assignBillerTool) Policy() serviceports.ToolPolicy {
 	}
 }
 
-func (t *assignBillerTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *assignBillerTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, paramBillingQueueItemID, permission.ResourceBillingQueue)
 }
 
 func (t *assignBillerTool) request(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
-) (req *serviceports.AssignBillerRequest, asker bool, err error) {
+	params *agentports.ToolExecuteParams,
+) (req *billingqueueports.AssignBillerRequest, asker bool, err error) {
 	if err = guardPreview(t, params); err != nil {
 		return nil, false, err
 	}
@@ -644,7 +645,7 @@ func (t *assignBillerTool) request(
 		return nil, false, err
 	}
 
-	return &serviceports.AssignBillerRequest{
+	return &billingqueueports.AssignBillerRequest{
 		ItemID:     itemID,
 		BillerID:   billerID,
 		TenantInfo: tenantFrom(*params),
@@ -653,9 +654,9 @@ func (t *assignBillerTool) request(
 
 func (t *assignBillerTool) load(
 	ctx context.Context,
-	req *serviceports.AssignBillerRequest,
+	req *billingqueueports.AssignBillerRequest,
 ) (*billingqueue.BillingQueueItem, error) {
-	return t.billing.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
+	return t.billing.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
 		ItemID:     req.ItemID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -663,7 +664,7 @@ func (t *assignBillerTool) load(
 
 func (t *assignBillerTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	req, _, err := t.request(ctx, &params)
 	if err != nil {
@@ -680,7 +681,7 @@ func (t *assignBillerTool) Validate(
 
 func (t *assignBillerTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err

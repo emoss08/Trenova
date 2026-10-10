@@ -8,8 +8,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -74,7 +77,7 @@ func (s *Service) PreviewGenerate(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	moveID pulid.ID,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*GeneratePreview, error) {
 	plan, err := s.planGenerate(ctx, tenantInfo, moveID)
 	if err != nil {
@@ -129,7 +132,7 @@ func (s *Service) PreviewSend(
 		return nil, err
 	}
 
-	message, err := s.templates.RenderMessage(ctx, &services.RenderMessageRequest{
+	message, err := s.templates.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
 		TenantInfo:  tenantInfo,
 		Kind:        documenttemplate.KindRateConfirmationEmail,
 		Data:        plan.templateContext,
@@ -244,10 +247,10 @@ func (s *Service) planGenerate(
 		).WithParam("shipmentMoveId", moveID.String())
 	}
 
-	carrierEntity, err := s.carrierRepo.GetByID(ctx, repositories.GetCarrierByIDRequest{
+	carrierEntity, err := s.carrierRepo.GetByID(ctx, carrierports.GetCarrierByIDRequest{
 		ID:         assignment.CarrierID,
 		TenantInfo: tenantInfo,
-		CarrierFilterOptions: repositories.CarrierFilterOptions{
+		CarrierFilterOptions: carrierports.CarrierFilterOptions{
 			IncludeContacts: true,
 		},
 	})
@@ -279,7 +282,7 @@ func (s *Service) planSend(
 		)
 	}
 
-	entity, err := s.repo.GetByID(ctx, &repositories.GetRateConfirmationByIDRequest{
+	entity, err := s.repo.GetByID(ctx, &rateconfirmationports.GetRateConfirmationByIDRequest{
 		TenantInfo:         tenantInfo,
 		RateConfirmationID: rateConfirmationID,
 	})
@@ -329,7 +332,7 @@ func (s *Service) planVoid(
 			"reason", errortypes.ErrRequired, "A void reason is required")
 	}
 
-	return s.repo.GetByID(ctx, &repositories.GetRateConfirmationByIDRequest{
+	return s.repo.GetByID(ctx, &rateconfirmationports.GetRateConfirmationByIDRequest{
 		TenantInfo:         tenantInfo,
 		RateConfirmationID: rateConfirmationID,
 	})
@@ -341,7 +344,7 @@ func (s *Service) planConfirm(
 	rateConfirmationID pulid.ID,
 	confirmedByName string,
 ) (*rateconfirmation.RateConfirmation, error) {
-	entity, err := s.repo.GetByID(ctx, &repositories.GetRateConfirmationByIDRequest{
+	entity, err := s.repo.GetByID(ctx, &rateconfirmationports.GetRateConfirmationByIDRequest{
 		TenantInfo:         tenantInfo,
 		RateConfirmationID: rateConfirmationID,
 	})
@@ -372,7 +375,7 @@ func (s *Service) previewAssignment(
 ) error {
 	assignment, err := s.carrierAssignmentRepo.GetByID(
 		ctx,
-		&repositories.GetCarrierAssignmentByIDRequest{
+		&shipmentports.GetCarrierAssignmentByIDRequest{
 			TenantInfo:          tenantInfo,
 			CarrierAssignmentID: out.Before.CarrierAssignmentID,
 		},
@@ -401,7 +404,7 @@ func newRevision(
 	tenantInfo pagination.TenantInfo,
 	plan *generatePlan,
 	revision int64,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	opts *generateOptions,
 ) *rateconfirmation.RateConfirmation {
 	entity := &rateconfirmation.RateConfirmation{

@@ -7,18 +7,23 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/documentintelligencejobs/documentintelligencecontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/core/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/planservice"
 	workflowstarterservice "github.com/emoss08/trenova/internal/core/services/workflowstarter"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/documentintelligencejobs/documentintelligencecontract"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentsearchprojectionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/documentshipmentdraftports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -36,33 +41,33 @@ type Params struct {
 	Logger              *zap.Logger
 	Config              *config.Config
 	Metrics             *metrics.Registry
-	DocumentControlRepo repositories.DocumentControlRepository
-	DocumentRepo        repositories.DocumentRepository
-	ContentRepo         repositories.DocumentContentRepository
-	DraftRepo           repositories.DocumentShipmentDraftRepository
-	SearchRepo          repositories.SearchRepository
-	SearchProjection    serviceports.DocumentSearchProjectionService
-	WorkflowStarter     serviceports.WorkflowStarter
-	Plans               serviceports.PlanService `optional:"true"`
+	DocumentControlRepo tenantports.DocumentControlRepository
+	DocumentRepo        documentports.DocumentRepository
+	ContentRepo         documentcontentports.DocumentContentRepository
+	DraftRepo           documentshipmentdraftports.DocumentShipmentDraftRepository
+	SearchRepo          customerports.SearchRepository
+	SearchProjection    documentsearchprojectionports.DocumentSearchProjectionService
+	WorkflowStarter     kernelports.WorkflowStarter
+	Plans               platformplanports.PlanService `optional:"true"`
 }
 
 type Service struct {
 	logger              *zap.Logger
 	metrics             *metrics.Registry
 	searchConfig        *config.SearchConfig
-	documentControlRepo repositories.DocumentControlRepository
-	documentRepo        repositories.DocumentRepository
-	contentRepo         repositories.DocumentContentRepository
-	draftRepo           repositories.DocumentShipmentDraftRepository
-	searchRepo          repositories.SearchRepository
-	searchProjection    serviceports.DocumentSearchProjectionService
-	workflowStarter     serviceports.WorkflowStarter
-	plans               serviceports.PlanService
+	documentControlRepo tenantports.DocumentControlRepository
+	documentRepo        documentports.DocumentRepository
+	contentRepo         documentcontentports.DocumentContentRepository
+	draftRepo           documentshipmentdraftports.DocumentShipmentDraftRepository
+	searchRepo          customerports.SearchRepository
+	searchProjection    documentsearchprojectionports.DocumentSearchProjectionService
+	workflowStarter     kernelports.WorkflowStarter
+	plans               platformplanports.PlanService
 }
 
-var _ serviceports.DocumentContentService = (*Service)(nil)
+var _ documentports.DocumentContentService = (*Service)(nil)
 
-func New(p Params) serviceports.DocumentContentService {
+func New(p Params) documentports.DocumentContentService {
 	searchProjection := p.SearchProjection
 	if searchProjection == nil {
 		searchProjection = noopDocumentSearchProjectionService{}
@@ -133,7 +138,7 @@ func (s *Service) SearchDocuments(
 		s.metrics.Document.RecordSearchQuery("postgres", "fallback")
 	}
 
-	return s.contentRepo.SearchByResource(ctx, &repositories.DocumentContentSearchRequest{
+	return s.contentRepo.SearchByResource(ctx, &documentcontentports.DocumentContentSearchRequest{
 		TenantInfo:   tenantInfo,
 		ResourceID:   resourceID,
 		ResourceType: resourceType,
@@ -147,7 +152,7 @@ func (s *Service) Reextract(
 	documentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) error {
-	doc, err := s.documentRepo.GetByID(ctx, repositories.GetDocumentByIDRequest{
+	doc, err := s.documentRepo.GetByID(ctx, documentports.GetDocumentByIDRequest{
 		ID:         documentID,
 		TenantInfo: tenantInfo,
 	})
@@ -173,7 +178,7 @@ func (s *Service) Reextract(
 	doc.HasExtractedText = false
 	doc.DetectedKind = ""
 	doc.ShipmentDraftStatus = document.ShipmentDraftStatusUnavailable
-	if err = s.documentRepo.UpdateIntelligence(ctx, &repositories.UpdateDocumentIntelligenceRequest{
+	if err = s.documentRepo.UpdateIntelligence(ctx, &documentports.UpdateDocumentIntelligenceRequest{
 		ID:                  doc.ID,
 		TenantInfo:          tenantInfo,
 		ContentStatus:       doc.ContentStatus,
@@ -293,7 +298,7 @@ func (s *Service) searchDocumentsViaSearchIndex(
 		resourceID,
 	)
 
-	hits, err := s.searchRepo.Search(ctx, repositories.SearchRequest{
+	hits, err := s.searchRepo.Search(ctx, customerports.SearchRequest{
 		Index:  documentIndex,
 		Query:  query,
 		Limit:  250,
@@ -324,7 +329,7 @@ func (s *Service) searchDocumentsViaSearchIndex(
 		return []*document.Document{}, nil
 	}
 
-	docs, err := s.documentRepo.GetByIDs(ctx, repositories.BulkDeleteDocumentRequest{
+	docs, err := s.documentRepo.GetByIDs(ctx, documentports.BulkDeleteDocumentRequest{
 		IDs:        ids,
 		TenantInfo: tenantInfo,
 	})

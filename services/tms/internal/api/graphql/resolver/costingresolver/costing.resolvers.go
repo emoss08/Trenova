@@ -14,8 +14,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/costingcontrolports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -27,7 +27,7 @@ func (r *MutationResolver) UpdateCostingControl(ctx context.Context, input gqlmo
 		return nil, err
 	}
 
-	existing, err := r.CostingService.Get(ctx, &repositories.GetCostingControlRequest{
+	existing, err := r.CostingService.Get(ctx, &costingcontrolports.GetCostingControlRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 	})
 	if err != nil {
@@ -43,7 +43,7 @@ func (r *MutationResolver) UpdateCostingControl(ctx context.Context, input gqlmo
 		return nil, err
 	}
 
-	updated, err := r.CostingService.Get(ctx, &repositories.GetCostingControlRequest{
+	updated, err := r.CostingService.Get(ctx, &costingcontrolports.GetCostingControlRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 	})
 	if err != nil {
@@ -64,7 +64,7 @@ func (r *MutationResolver) UpdateCostCategory(ctx context.Context, input gqlmode
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Invalid cost category")
 	}
 
-	control, err := r.CostingService.Get(ctx, &repositories.GetCostingControlRequest{
+	control, err := r.CostingService.Get(ctx, &costingcontrolports.GetCostingControlRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 	})
 	if err != nil {
@@ -95,7 +95,7 @@ func (r *MutationResolver) UpdateCostCategory(ctx context.Context, input gqlmode
 		return nil, err
 	}
 
-	refreshed, err := r.CostingService.Get(ctx, &repositories.GetCostingControlRequest{
+	refreshed, err := r.CostingService.Get(ctx, &costingcontrolports.GetCostingControlRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 	})
 	if err != nil {
@@ -116,7 +116,7 @@ func (r *QueryResolver) CostingControl(ctx context.Context) (*gqlmodel.CostingCo
 		return nil, err
 	}
 
-	control, err := r.CostingService.Get(ctx, &repositories.GetCostingControlRequest{
+	control, err := r.CostingService.Get(ctx, &costingcontrolports.GetCostingControlRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 	})
 	if err != nil {

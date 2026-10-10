@@ -1,17 +1,16 @@
 package shipmentcommercial
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/fuelsurchargeportsmock"
 	"testing"
-
-	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial/shipmentcommercialtest"
-
-	"go.uber.org/zap"
 
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial/shipmentcommercialtest"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,6 +18,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 func TestRecalculate_GeneratesDetentionCharge(t *testing.T) {
@@ -37,9 +37,9 @@ func TestRecalculate_GeneratesDetentionCharge(t *testing.T) {
 
 	rateEngine := shipmentcommercialtest.StubRateEngine(t, 100)
 
-	accessorialRepo := mocks.NewMockAccessorialChargeRepository(t)
+	accessorialRepo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
 	accessorialRepo.EXPECT().
-		GetByID(mock.Anything, repositories.GetAccessorialChargeByIDRequest{
+		GetByID(mock.Anything, accessorialchargeports.GetAccessorialChargeByIDRequest{
 			ID: *control.DetentionChargeID,
 			TenantInfo: &pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
@@ -95,7 +95,7 @@ func TestRecalculate_RemovesGeneratedDetentionChargeWhenNoLongerEligible(t *test
 
 	rateEngine := shipmentcommercialtest.StubRateEngine(t, 100)
 
-	accessorialRepo := mocks.NewMockAccessorialChargeRepository(t)
+	accessorialRepo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
 	accessorialRepo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
 		Return(&accessorialcharge.AccessorialCharge{
@@ -147,7 +147,7 @@ func TestRecalculate_UpdatesExistingGeneratedDetentionChargeWithoutDuplicating(t
 
 	rateEngine := shipmentcommercialtest.StubRateEngine(t, 100)
 
-	accessorialRepo := mocks.NewMockAccessorialChargeRepository(t)
+	accessorialRepo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
 	accessorialRepo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
 		Return(&accessorialcharge.AccessorialCharge{
@@ -208,7 +208,7 @@ func TestRecalculate_PreservesUserEditedDetentionChargeAmount(t *testing.T) {
 
 	rateEngine := shipmentcommercialtest.StubRateEngine(t, 100)
 
-	accessorialRepo := mocks.NewMockAccessorialChargeRepository(t)
+	accessorialRepo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
 	accessorialRepo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
 		Return(&accessorialcharge.AccessorialCharge{
@@ -268,7 +268,7 @@ func TestCalculateTotals_PreservesOverriddenDetentionChargeAmounts(t *testing.T)
 
 	rateEngine := shipmentcommercialtest.StubRateEngine(t, 100)
 
-	accessorialRepo := mocks.NewMockAccessorialChargeRepository(t)
+	accessorialRepo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
 
 	calculator := New(Params{
 		Logger:          zap.NewNop(),
@@ -296,10 +296,10 @@ func TestCalculateTotals_IncludesFuelSurchargeEstimate(t *testing.T) {
 
 	rateEngine := shipmentcommercialtest.StubRateEngine(t, 1000)
 
-	resolver := mocks.NewMockFuelSurchargeResolver(t)
+	resolver := fuelsurchargeportsmock.NewMockFuelSurchargeResolver(t)
 	resolver.EXPECT().
 		ResolveShipmentCharge(mock.Anything, fuelChargeRequest(entity, "1000", "0")).
-		Return(&services.ResolvedFuelSurcharge{
+		Return(&fuelsurchargeports.ResolvedFuelSurcharge{
 			ProgramID:           programID,
 			AccessorialChargeID: fuelChargeID,
 			Amount:              decimal.RequireFromString("245.50"),
@@ -310,7 +310,7 @@ func TestCalculateTotals_IncludesFuelSurchargeEstimate(t *testing.T) {
 	calculator := New(Params{
 		Logger:          zap.NewNop(),
 		RateEngine:      rateEngine,
-		AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
+		AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		FuelSurcharge:   resolver,
 	})
 
@@ -350,7 +350,7 @@ func TestCalculateTotals_ReplacesStaleFuelSurchargeFromPayload(t *testing.T) {
 
 	rateEngine := shipmentcommercialtest.StubRateEngine(t, 1000)
 
-	resolver := mocks.NewMockFuelSurchargeResolver(t)
+	resolver := fuelsurchargeportsmock.NewMockFuelSurchargeResolver(t)
 	resolver.EXPECT().
 		ResolveShipmentCharge(mock.Anything, fuelChargeRequest(entity, "1000", "0")).
 		Return(nil, nil).
@@ -359,7 +359,7 @@ func TestCalculateTotals_ReplacesStaleFuelSurchargeFromPayload(t *testing.T) {
 	calculator := New(Params{
 		Logger:          zap.NewNop(),
 		RateEngine:      rateEngine,
-		AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
+		AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		FuelSurcharge:   resolver,
 	})
 
@@ -398,8 +398,8 @@ func TestCalculateTotals_LockedFuelSurchargeIsPreserved(t *testing.T) {
 	calculator := New(Params{
 		Logger:          zap.NewNop(),
 		RateEngine:      rateEngine,
-		AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
-		FuelSurcharge:   mocks.NewMockFuelSurchargeResolver(t),
+		AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
+		FuelSurcharge:   fuelsurchargeportsmock.NewMockFuelSurchargeResolver(t),
 	})
 
 	resp, err := calculator.CalculateTotals(
@@ -423,10 +423,10 @@ func TestRecalculate_GeneratesFuelSurchargeCharge(t *testing.T) {
 
 	rateEngine := shipmentcommercialtest.StubRateEngine(t, 1000)
 
-	resolver := mocks.NewMockFuelSurchargeResolver(t)
+	resolver := fuelsurchargeportsmock.NewMockFuelSurchargeResolver(t)
 	resolver.EXPECT().
 		ResolveShipmentCharge(mock.Anything, fuelChargeRequest(entity, "1000", "0")).
-		Return(&services.ResolvedFuelSurcharge{
+		Return(&fuelsurchargeports.ResolvedFuelSurcharge{
 			ProgramID:           programID,
 			AccessorialChargeID: fuelChargeID,
 			Amount:              decimal.RequireFromString("245.50"),
@@ -437,7 +437,7 @@ func TestRecalculate_GeneratesFuelSurchargeCharge(t *testing.T) {
 	calculator := New(Params{
 		Logger:          zap.NewNop(),
 		RateEngine:      rateEngine,
-		AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
+		AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		FuelSurcharge:   resolver,
 	})
 
@@ -486,10 +486,10 @@ func TestRecalculate_ReplacesFuelSurchargeOnProgramSwap(t *testing.T) {
 
 	rateEngine := shipmentcommercialtest.StubRateEngine(t, 1000)
 
-	resolver := mocks.NewMockFuelSurchargeResolver(t)
+	resolver := fuelsurchargeportsmock.NewMockFuelSurchargeResolver(t)
 	resolver.EXPECT().
 		ResolveShipmentCharge(mock.Anything, fuelChargeRequest(entity, "1000", "0")).
-		Return(&services.ResolvedFuelSurcharge{
+		Return(&fuelsurchargeports.ResolvedFuelSurcharge{
 			ProgramID:           newProgramID,
 			AccessorialChargeID: newChargeID,
 			Amount:              decimal.NewFromInt(300),
@@ -499,7 +499,7 @@ func TestRecalculate_ReplacesFuelSurchargeOnProgramSwap(t *testing.T) {
 	calculator := New(Params{
 		Logger:          zap.NewNop(),
 		RateEngine:      rateEngine,
-		AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
+		AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		FuelSurcharge:   resolver,
 	})
 
@@ -547,7 +547,7 @@ func TestRecalculate_RemovesFuelSurchargeWhenNoLongerApplicable(t *testing.T) {
 
 	rateEngine := shipmentcommercialtest.StubRateEngine(t, 1000)
 
-	resolver := mocks.NewMockFuelSurchargeResolver(t)
+	resolver := fuelsurchargeportsmock.NewMockFuelSurchargeResolver(t)
 	resolver.EXPECT().
 		ResolveShipmentCharge(mock.Anything, fuelChargeRequest(entity, "1000", "75")).
 		Return(nil, nil).
@@ -556,7 +556,7 @@ func TestRecalculate_RemovesFuelSurchargeWhenNoLongerApplicable(t *testing.T) {
 	calculator := New(Params{
 		Logger:          zap.NewNop(),
 		RateEngine:      rateEngine,
-		AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
+		AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		FuelSurcharge:   resolver,
 	})
 
@@ -593,10 +593,10 @@ func TestRecalculate_RemovesFuelSurchargeWhenAmountIsZero(t *testing.T) {
 
 	rateEngine := shipmentcommercialtest.StubRateEngine(t, 1000)
 
-	resolver := mocks.NewMockFuelSurchargeResolver(t)
+	resolver := fuelsurchargeportsmock.NewMockFuelSurchargeResolver(t)
 	resolver.EXPECT().
 		ResolveShipmentCharge(mock.Anything, fuelChargeRequest(entity, "1000", "0")).
-		Return(&services.ResolvedFuelSurcharge{
+		Return(&fuelsurchargeports.ResolvedFuelSurcharge{
 			ProgramID:           programID,
 			AccessorialChargeID: pulid.MustNew("acc_"),
 			Amount:              decimal.Zero,
@@ -606,7 +606,7 @@ func TestRecalculate_RemovesFuelSurchargeWhenAmountIsZero(t *testing.T) {
 	calculator := New(Params{
 		Logger:          zap.NewNop(),
 		RateEngine:      rateEngine,
-		AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
+		AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		FuelSurcharge:   resolver,
 	})
 
@@ -626,7 +626,7 @@ func fuelChargeRequest(
 	linehaul string,
 	accessorialTotal string,
 ) any {
-	return mock.MatchedBy(func(req *services.ResolveShipmentChargeRequest) bool {
+	return mock.MatchedBy(func(req *fuelsurchargeports.ResolveShipmentChargeRequest) bool {
 		return req != nil && req.Shipment == entity &&
 			decimal.RequireFromString(linehaul).Equal(req.Linehaul) &&
 			decimal.RequireFromString(accessorialTotal).Equal(req.AccessorialTotal)

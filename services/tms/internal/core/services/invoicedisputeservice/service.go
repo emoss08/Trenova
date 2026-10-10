@@ -7,10 +7,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -29,12 +32,12 @@ type Params struct {
 	fx.In
 
 	Logger         *zap.Logger
-	DB             ports.DBConnection
-	Repo           repositories.InvoiceDisputeRepository
-	InvoiceRepo    repositories.InvoiceRepository
-	AdjustmentRepo repositories.InvoiceAdjustmentRepository
-	AuditService   servicesports.AuditService
-	Realtime       servicesports.RealtimeService
+	DB             kernelports.DBConnection
+	Repo           invoiceports.InvoiceDisputeRepository
+	InvoiceRepo    invoiceports.InvoiceRepository
+	AdjustmentRepo invoiceadjustmentports.InvoiceAdjustmentRepository
+	AuditService   auditports.AuditService
+	Realtime       agentports.RealtimeService
 }
 
 // Service runs the dispute case lifecycle. The invoice's DisputeStatus flag
@@ -42,15 +45,15 @@ type Params struct {
 // changed together under the invoice row lock.
 type Service struct {
 	l              *zap.Logger
-	db             ports.DBConnection
-	repo           repositories.InvoiceDisputeRepository
-	invoiceRepo    repositories.InvoiceRepository
-	adjustmentRepo repositories.InvoiceAdjustmentRepository
-	auditService   servicesports.AuditService
-	realtime       servicesports.RealtimeService
+	db             kernelports.DBConnection
+	repo           invoiceports.InvoiceDisputeRepository
+	invoiceRepo    invoiceports.InvoiceRepository
+	adjustmentRepo invoiceadjustmentports.InvoiceAdjustmentRepository
+	auditService   auditports.AuditService
+	realtime       agentports.RealtimeService
 }
 
-func New(p Params) servicesports.InvoiceDisputeService {
+func New(p Params) invoiceports.InvoiceDisputeService {
 	return &Service{
 		l:              p.Logger.Named("service.invoice-dispute"),
 		db:             p.DB,
@@ -64,8 +67,8 @@ func New(p Params) servicesports.InvoiceDisputeService {
 
 func (s *Service) Open(
 	ctx context.Context,
-	req *servicesports.OpenInvoiceDisputeRequest,
-	actor *servicesports.RequestActor,
+	req *invoiceports.OpenInvoiceDisputeRequest,
+	actor *permissionports.RequestActor,
 ) (*invoice.InvoiceDispute, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
@@ -84,8 +87,8 @@ func (s *Service) Open(
 	}
 
 	var created *invoice.InvoiceDispute
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		inv, txErr := s.invoiceRepo.LockForUpdate(txCtx, repositories.GetInvoiceByIDRequest{
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		inv, txErr := s.invoiceRepo.LockForUpdate(txCtx, invoiceports.GetInvoiceByIDRequest{
 			ID:         req.InvoiceID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -115,8 +118,8 @@ func (s *Service) Open(
 
 func (s *Service) Resolve(
 	ctx context.Context,
-	req *servicesports.ResolveInvoiceDisputeRequest,
-	actor *servicesports.RequestActor,
+	req *invoiceports.ResolveInvoiceDisputeRequest,
+	actor *permissionports.RequestActor,
 ) (*invoice.InvoiceDispute, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
@@ -135,7 +138,7 @@ func (s *Service) Resolve(
 	}
 
 	var previous, updated *invoice.InvoiceDispute
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		entity, inv, txErr := s.loadCase(txCtx, req.DisputeID, req.TenantInfo, true, verbResolved)
 		if txErr != nil {
 			return txErr
@@ -172,8 +175,8 @@ func (s *Service) Resolve(
 
 func (s *Service) Withdraw(
 	ctx context.Context,
-	req *servicesports.WithdrawInvoiceDisputeRequest,
-	actor *servicesports.RequestActor,
+	req *invoiceports.WithdrawInvoiceDisputeRequest,
+	actor *permissionports.RequestActor,
 ) (*invoice.InvoiceDispute, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
@@ -192,7 +195,7 @@ func (s *Service) Withdraw(
 	}
 
 	var previous, updated *invoice.InvoiceDispute
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		entity, inv, txErr := s.loadCase(txCtx, req.DisputeID, req.TenantInfo, true, verbWithdrawn)
 		if txErr != nil {
 			return txErr
@@ -224,7 +227,7 @@ func (s *Service) Withdraw(
 // points at an adjustment that actually executed against this invoice.
 func (s *Service) validateResolutionAdjustment(
 	ctx context.Context,
-	req *servicesports.ResolveInvoiceDisputeRequest,
+	req *invoiceports.ResolveInvoiceDisputeRequest,
 	inv *invoice.Invoice,
 ) error {
 	if req.ResolutionAdjustmentID.IsNil() {
@@ -238,7 +241,7 @@ func (s *Service) validateResolutionAdjustment(
 		return nil
 	}
 
-	adjustment, err := s.adjustmentRepo.GetByID(ctx, repositories.GetInvoiceAdjustmentRequest{
+	adjustment, err := s.adjustmentRepo.GetByID(ctx, invoiceadjustmentports.GetInvoiceAdjustmentRequest{
 		ID:         req.ResolutionAdjustmentID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -270,7 +273,7 @@ func (s *Service) setInvoiceDisputeFlag(
 	ctx context.Context,
 	inv *invoice.Invoice,
 	status invoice.DisputeStatus,
-	actor *servicesports.RequestActor,
+	actor *permissionports.RequestActor,
 ) error {
 	if inv.DisputeStatus == status {
 		return nil
@@ -282,7 +285,7 @@ func (s *Service) setInvoiceDisputeFlag(
 		return err
 	}
 
-	params := &servicesports.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceInvoice,
 		ResourceID:     updated.ID.String(),
 		Operation:      permission.OpUpdate,
@@ -322,7 +325,7 @@ func (s *Service) setInvoiceDisputeFlag(
 
 func (s *Service) logAudit(
 	entity *invoice.InvoiceDispute,
-	actor *servicesports.RequestActor,
+	actor *permissionports.RequestActor,
 	op permission.Operation,
 	previous *invoice.InvoiceDispute,
 	comment string,
@@ -330,7 +333,7 @@ func (s *Service) logAudit(
 	if entity == nil {
 		return
 	}
-	params := &servicesports.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceInvoiceDispute,
 		ResourceID:     entity.ID.String(),
 		Operation:      op,
@@ -342,7 +345,7 @@ func (s *Service) logAudit(
 		BusinessUnitID: entity.BusinessUnitID,
 		CurrentState:   jsonutils.MustToJSON(entity),
 	}
-	opts := []servicesports.LogOption{auditservice.WithComment(comment)}
+	opts := []auditports.LogOption{auditservice.WithComment(comment)}
 	if previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(previous)
 		opts = append(opts, auditservice.WithDiff(previous, entity))
@@ -355,7 +358,7 @@ func (s *Service) logAudit(
 func (s *Service) publish(
 	ctx context.Context,
 	entity *invoice.InvoiceDispute,
-	actor *servicesports.RequestActor,
+	actor *permissionports.RequestActor,
 	action string,
 ) {
 	if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
@@ -374,7 +377,7 @@ func (s *Service) publish(
 	}
 }
 
-func validateOpenRequest(req *servicesports.OpenInvoiceDisputeRequest) *errortypes.MultiError {
+func validateOpenRequest(req *invoiceports.OpenInvoiceDisputeRequest) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	if req.InvoiceID.IsNil() {
 		multiErr.Add("invoiceId", errortypes.ErrRequired, "Invoice is required")
@@ -405,7 +408,7 @@ func validateOpenRequest(req *servicesports.OpenInvoiceDisputeRequest) *errortyp
 }
 
 func validateResolveRequest(
-	req *servicesports.ResolveInvoiceDisputeRequest,
+	req *invoiceports.ResolveInvoiceDisputeRequest,
 ) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	if req.DisputeID.IsNil() {

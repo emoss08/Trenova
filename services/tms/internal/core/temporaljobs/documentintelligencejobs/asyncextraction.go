@@ -16,10 +16,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/core/domain/extractionrollout"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	services "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentparsingruleports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -45,17 +49,17 @@ const (
 )
 
 type AsyncAIExtractionCompletion struct {
-	ResponseID      string                                `json:"responseId"`
-	Model           string                                `json:"model"`
-	ExtractedAt     int64                                 `json:"extractedAt"`
-	Status          services.AIBackgroundExtractionStatus `json:"status"`
-	RawStatus       string                                `json:"rawStatus"`
-	ExtractResult   *services.AIExtractResult             `json:"extractResult,omitempty"`
-	FailureCode     string                                `json:"failureCode,omitempty"`
-	FailureMessage  string                                `json:"failureMessage,omitempty"`
-	SubmittedAt     *int64                                `json:"submittedAt,omitempty"`
-	LastPolledAt    *int64                                `json:"lastPolledAt,omitempty"`
-	AcceptanceState string                                `json:"acceptanceState,omitempty"`
+	ResponseID      string                                                 `json:"responseId"`
+	Model           string                                                 `json:"model"`
+	ExtractedAt     int64                                                  `json:"extractedAt"`
+	Status          documentaiextractionports.AIBackgroundExtractionStatus `json:"status"`
+	RawStatus       string                                                 `json:"rawStatus"`
+	ExtractResult   *documentaiextractionports.AIExtractResult             `json:"extractResult,omitempty"`
+	FailureCode     string                                                 `json:"failureCode,omitempty"`
+	FailureMessage  string                                                 `json:"failureMessage,omitempty"`
+	SubmittedAt     *int64                                                 `json:"submittedAt,omitempty"`
+	LastPolledAt    *int64                                                 `json:"lastPolledAt,omitempty"`
+	AcceptanceState string                                                 `json:"acceptanceState,omitempty"`
 }
 
 type ApplyDocumentAIExtractionPayload struct {
@@ -73,7 +77,7 @@ func (a *Activities) startAIExtractionWorkflow(
 	extractedAt int64,
 ) error {
 	if a.workflowStarter == nil || !a.workflowStarter.Enabled() {
-		return services.ErrWorkflowStarterDisabled
+		return kernelports.ErrWorkflowStarterDisabled
 	}
 
 	_, err := a.workflowStarter.StartWorkflow(
@@ -140,7 +144,7 @@ func (a *Activities) submitAIExtraction( //nolint:funlen // async submission wit
 		UserID: payload.UserID,
 	}
 
-	doc, err := a.documentRepo.GetByID(ctx, repositories.GetDocumentByIDRequest{
+	doc, err := a.documentRepo.GetByID(ctx, documentports.GetDocumentByIDRequest{
 		ID:         payload.DocumentID,
 		TenantInfo: tenantInfo,
 	})
@@ -155,7 +159,7 @@ func (a *Activities) submitAIExtraction( //nolint:funlen // async submission wit
 	if content.LastExtractedAt == nil || *content.LastExtractedAt != payload.ExtractedAt {
 		return &AsyncAIExtractionCompletion{
 			ExtractedAt:     payload.ExtractedAt,
-			Status:          services.AIBackgroundExtractionStatusFailed,
+			Status:          documentaiextractionports.AIBackgroundExtractionStatusFailed,
 			FailureCode:     "stale_extraction",
 			FailureMessage:  "document extraction has been superseded",
 			AcceptanceState: string(aiAcceptanceStatusRejected),
@@ -192,7 +196,7 @@ func (a *Activities) submitAIExtraction( //nolint:funlen // async submission wit
 			ResponseID:      row.ResponseID,
 			Model:           row.Model,
 			ExtractedAt:     payload.ExtractedAt,
-			Status:          services.AIBackgroundExtractionStatusCompleted,
+			Status:          documentaiextractionports.AIBackgroundExtractionStatusCompleted,
 			RawStatus:       string(row.Status),
 			SubmittedAt:     row.SubmittedAt,
 			LastPolledAt:    row.LastPolledAt,
@@ -205,7 +209,7 @@ func (a *Activities) submitAIExtraction( //nolint:funlen // async submission wit
 			ResponseID:      row.ResponseID,
 			Model:           row.Model,
 			ExtractedAt:     payload.ExtractedAt,
-			Status:          services.AIBackgroundExtractionStatusFailed,
+			Status:          documentaiextractionports.AIBackgroundExtractionStatusFailed,
 			RawStatus:       string(row.Status),
 			SubmittedAt:     row.SubmittedAt,
 			LastPolledAt:    row.LastPolledAt,
@@ -221,7 +225,7 @@ func (a *Activities) submitAIExtraction( //nolint:funlen // async submission wit
 	if strings.TrimSpace(row.ResponseID) == "" {
 		submission, submitErr := a.aiDocumentService.SubmitRateConfirmationBackgroundExtraction(
 			ctx,
-			&services.AIExtractRequest{
+			&documentaiextractionports.AIExtractRequest{
 				TenantInfo: tenantInfo,
 				DocumentID: doc.ID,
 				FileName:   doc.OriginalName,
@@ -259,7 +263,7 @@ func (a *Activities) submitAIExtraction( //nolint:funlen // async submission wit
 			return &AsyncAIExtractionCompletion{
 				Model:           submission.Model,
 				ExtractedAt:     payload.ExtractedAt,
-				Status:          services.AIBackgroundExtractionStatusCompleted,
+				Status:          documentaiextractionports.AIBackgroundExtractionStatusCompleted,
 				RawStatus:       "inline",
 				ExtractResult:   submission.ExtractResult,
 				SubmittedAt:     &now,
@@ -332,7 +336,7 @@ func (a *Activities) PollDocumentAIExtractionActivity(
 	payload := input.Payload
 	row, err := a.aiExtractionRepo.GetByDocumentExtractedAt(
 		ctx,
-		repositories.GetDocumentAIExtractionRequest{
+		documentaiextractionports.GetDocumentAIExtractionRequest{
 			DocumentID:  payload.DocumentID,
 			ExtractedAt: payload.ExtractedAt,
 			TenantInfo: pagination.TenantInfo{
@@ -378,7 +382,7 @@ func (a *Activities) PollPendingDocumentAIExtractionsActivity(
 	now := time.Now()
 	rows, err := a.aiExtractionRepo.ListPollable(
 		ctx,
-		&repositories.ListPollableDocumentAIExtractionRequest{
+		&documentaiextractionports.ListPollableDocumentAIExtractionRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: payload.OrganizationID,
 				BuID:  payload.BusinessUnitID,
@@ -405,7 +409,7 @@ func (a *Activities) PollPendingDocumentAIExtractionsActivity(
 		}
 
 		a.settleExtraction(ctx, row, completion, now.Unix())
-		if completion.Status == services.AIBackgroundExtractionStatusCompleted {
+		if completion.Status == documentaiextractionports.AIBackgroundExtractionStatusCompleted {
 			result.Completed++
 		} else {
 			result.Failed++
@@ -434,7 +438,7 @@ func (a *Activities) pollExtraction(
 
 	poll, err := a.aiDocumentService.PollRateConfirmationBackgroundExtraction(
 		ctx,
-		&services.AIBackgroundExtractPollRequest{
+		&documentaiextractionports.AIBackgroundExtractPollRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID:  row.OrganizationID,
 				BuID:   row.BusinessUnitID,
@@ -455,7 +459,7 @@ func (a *Activities) pollExtraction(
 
 		return nil
 	}
-	if poll.Status == services.AIBackgroundExtractionStatusPending {
+	if poll.Status == documentaiextractionports.AIBackgroundExtractionStatusPending {
 		return nil
 	}
 
@@ -472,7 +476,7 @@ func (a *Activities) pollExtraction(
 		LastPolledAt:    row.LastPolledAt,
 		AcceptanceState: string(aiAcceptanceStatusRejected),
 	}
-	if poll.Status == services.AIBackgroundExtractionStatusCompleted {
+	if poll.Status == documentaiextractionports.AIBackgroundExtractionStatusCompleted {
 		completion.AcceptanceState = string(aiAcceptanceStatusAccepted)
 	}
 
@@ -485,7 +489,7 @@ func timedOutExtraction(row *documentaiextraction.Extraction) *AsyncAIExtraction
 		ResponseID:      row.ResponseID,
 		Model:           row.Model,
 		ExtractedAt:     row.ExtractedAt,
-		Status:          services.AIBackgroundExtractionStatusFailed,
+		Status:          documentaiextractionports.AIBackgroundExtractionStatusFailed,
 		RawStatus:       "expired",
 		FailureCode:     "ai_extract_timeout",
 		FailureMessage:  "Background AI extraction exceeded the maximum wait time",
@@ -515,7 +519,7 @@ func (a *Activities) settleExtraction(
 	settledAt int64,
 ) {
 	row.CompletedAt = &settledAt
-	if completion.Status == services.AIBackgroundExtractionStatusCompleted {
+	if completion.Status == documentaiextractionports.AIBackgroundExtractionStatusCompleted {
 		row.Status = documentaiextraction.StatusCompleted
 		row.FailureCode = ""
 		row.FailureMessage = ""
@@ -544,7 +548,7 @@ func (a *Activities) ListPollableDocumentAIExtractionTenantsActivity(
 
 	tenants, err := a.aiExtractionRepo.ListPollableTenants(
 		ctx,
-		&repositories.ListPollableDocumentAIExtractionRequest{
+		&documentaiextractionports.ListPollableDocumentAIExtractionRequest{
 			OlderThan: time.Now().Add(-documentAIExtractionPollInterval).Unix(),
 			Limit:     temporaljobs.DefaultTenantScanLimit,
 		},
@@ -576,7 +580,7 @@ func (a *Activities) ApplyDocumentAIExtractionResultActivity(
 		BuID:   payload.BusinessUnitID,
 		UserID: payload.UserID,
 	}
-	doc, err := a.documentRepo.GetByID(ctx, repositories.GetDocumentByIDRequest{
+	doc, err := a.documentRepo.GetByID(ctx, documentports.GetDocumentByIDRequest{
 		ID:         payload.DocumentID,
 		TenantInfo: tenantInfo,
 	})
@@ -656,9 +660,9 @@ func (a *Activities) ApplyDocumentAIExtractionResultActivity(
 func (a *Activities) ConsiderDocumentAIExtractionShadowActivity(
 	ctx context.Context,
 	input *ConsiderDocumentAIExtractionShadowInput,
-) (*services.ExtractionShadowDecision, error) {
+) (*extractionshadowports.ExtractionShadowDecision, error) {
 	if a.shadowSampler == nil {
-		return &services.ExtractionShadowDecision{Reason: "unavailable"}, nil
+		return &extractionshadowports.ExtractionShadowDecision{Reason: "unavailable"}, nil
 	}
 
 	tenantInfo := pagination.TenantInfo{
@@ -666,7 +670,7 @@ func (a *Activities) ConsiderDocumentAIExtractionShadowActivity(
 		BuID:   input.BusinessUnitID,
 		UserID: input.UserID,
 	}
-	req := &services.ConsiderExtractionShadowRequest{
+	req := &extractionshadowports.ConsiderExtractionShadowRequest{
 		TenantInfo:  tenantInfo,
 		DocumentID:  input.DocumentID,
 		ExtractedAt: input.ExtractedAt,
@@ -674,7 +678,7 @@ func (a *Activities) ConsiderDocumentAIExtractionShadowActivity(
 	if a.aiExtractionRepo != nil {
 		row, err := a.aiExtractionRepo.GetByDocumentExtractedAt(
 			ctx,
-			repositories.GetDocumentAIExtractionRequest{
+			documentaiextractionports.GetDocumentAIExtractionRequest{
 				DocumentID:  input.DocumentID,
 				ExtractedAt: input.ExtractedAt,
 				TenantInfo:  tenantInfo,
@@ -702,7 +706,7 @@ func (a *Activities) markExtractionSkipped(
 	}
 	row, repoErr := a.aiExtractionRepo.GetByDocumentExtractedAt(
 		ctx,
-		repositories.GetDocumentAIExtractionRequest{
+		documentaiextractionports.GetDocumentAIExtractionRequest{
 			DocumentID:  payload.DocumentID,
 			ExtractedAt: payload.ExtractedAt,
 			TenantInfo:  tenantInfo,
@@ -735,7 +739,7 @@ func (a *Activities) markExtractionApplied(
 	}
 	row, repoErr := a.aiExtractionRepo.GetByDocumentExtractedAt(
 		ctx,
-		repositories.GetDocumentAIExtractionRequest{
+		documentaiextractionports.GetDocumentAIExtractionRequest{
 			DocumentID:  payload.DocumentID,
 			ExtractedAt: payload.ExtractedAt,
 			TenantInfo:  tenantInfo,
@@ -758,7 +762,7 @@ func (a *Activities) markExtractionApplied(
 
 func (a *Activities) mergeCompletionIntoIntelligence(
 	content *documentcontent.Content,
-	pages []services.AIDocumentPage,
+	pages []documentaiextractionports.AIDocumentPage,
 	payload *ApplyDocumentAIExtractionPayload,
 ) (*DocumentIntelligenceAnalysis, *AIDiagnostics) {
 	fallback := analysisFromStructuredData(content.StructuredData)
@@ -772,7 +776,7 @@ func (a *Activities) mergeCompletionIntoIntelligence(
 	}
 
 	updatedIntelligence := fallback
-	if payload.Completion.Status == services.AIBackgroundExtractionStatusCompleted &&
+	if payload.Completion.Status == documentaiextractionports.AIBackgroundExtractionStatusCompleted &&
 		payload.Completion.ExtractResult != nil {
 		extract := withFieldEvidence(payload.Completion.ExtractResult, pages)
 		diagnostics.CandidateAnalysis = analysisFromAIExtract(extract)
@@ -843,14 +847,14 @@ func hashAIExtractionRequest(fileName, text string, pages []*documentcontent.Pag
 	return hex.EncodeToString(sum.Sum(nil))
 }
 
-func toAIDocumentPages(pages []*documentcontent.Page, maxChars int) []services.AIDocumentPage {
-	out := make([]services.AIDocumentPage, 0, len(pages))
+func toAIDocumentPages(pages []*documentcontent.Page, maxChars int) []documentaiextractionports.AIDocumentPage {
+	out := make([]documentaiextractionports.AIDocumentPage, 0, len(pages))
 	pageLimit := maxChars / max(len(pages), 1)
 	for _, page := range pages {
 		if strings.TrimSpace(page.ExtractedText) == "" {
 			continue
 		}
-		out = append(out, services.AIDocumentPage{
+		out = append(out, documentaiextractionports.AIDocumentPage{
 			PageNumber: page.PageNumber,
 			Text:       stringutils.TruncateAndTrim(page.ExtractedText, pageLimit),
 		})
@@ -992,7 +996,7 @@ func analysisFromMap(data map[string]any) *DocumentIntelligenceAnalysis {
 	return analysis
 }
 
-func parseParsingRuleMetadata(data map[string]any) *services.DocumentParsingRuleMetadata {
+func parseParsingRuleMetadata(data map[string]any) *documentparsingruleports.DocumentParsingRuleMetadata {
 	ruleSetID, err := pulid.Parse(sliceutils.StringValue(data["ruleSetId"]))
 	if err != nil {
 		return nil
@@ -1001,7 +1005,7 @@ func parseParsingRuleMetadata(data map[string]any) *services.DocumentParsingRule
 	if err != nil {
 		return nil
 	}
-	return &services.DocumentParsingRuleMetadata{
+	return &documentparsingruleports.DocumentParsingRuleMetadata{
 		RuleSetID:        ruleSetID,
 		RuleSetName:      sliceutils.StringValue(data["ruleSetName"]),
 		RuleVersionID:    ruleVersionID,
@@ -1026,7 +1030,7 @@ func (a *Activities) updateShipmentDraftFromIntelligence(
 	}
 
 	doc.ShipmentDraftStatus = draftStatus
-	return a.documentRepo.UpdateIntelligence(ctx, &repositories.UpdateDocumentIntelligenceRequest{
+	return a.documentRepo.UpdateIntelligence(ctx, &documentports.UpdateDocumentIntelligenceRequest{
 		ID: doc.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: doc.OrganizationID,
@@ -1067,7 +1071,7 @@ func (a *Activities) upsertDraft(
 		return "", err
 	}
 
-	services.PublishAgentEvent(ctx, a.agentEvents, services.AgentEvent{
+	agentports.PublishAgentEvent(ctx, a.agentEvents, agentports.AgentEvent{
 		Kind:      agent.EventDocumentExtracted,
 		SubjectID: doc.ID,
 		TenantInfo: pagination.TenantInfo{

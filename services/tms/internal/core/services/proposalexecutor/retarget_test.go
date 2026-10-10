@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -18,14 +18,14 @@ type targetedSchemaTool struct {
 	schemaTool
 }
 
-func (t *targetedSchemaTool) Target(params map[string]any) (services.ToolTarget, bool) {
+func (t *targetedSchemaTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	raw, _ := params["workerId"].(string)
 	id, err := pulid.Parse(raw)
 	if err != nil {
-		return services.ToolTarget{}, false
+		return agentports.ToolTarget{}, false
 	}
 
-	return services.ToolTarget{Resource: permission.ResourceWorker, ID: id}, true
+	return agentports.ToolTarget{Resource: permission.ResourceWorker, ID: id}, true
 }
 
 func retargetFixture() (*targetedSchemaTool, *Service, pulid.ID) {
@@ -107,7 +107,7 @@ func TestProposalFields_MakesTheTargetReadOnly(t *testing.T) {
 
 	tool, _, driver := retargetFixture()
 
-	fields := services.ProposalFields(tool, map[string]any{
+	fields := agentports.ProposalFields(tool, map[string]any{
 		"workerId": driver.String(),
 		"message":  "Call in",
 	})

@@ -5,17 +5,17 @@ import (
 	"mime/multipart"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/services/documentservice"
-
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/documentservice"
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/ptoledgerservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -125,7 +125,7 @@ func (s *Service) CancelMyPTO(
 		return nil, err
 	}
 
-	pto, err := s.ptoRepo.GetByID(ctx, &repositories.GetPTOByIDRequest{
+	pto, err := s.ptoRepo.GetByID(ctx, &workerports.GetPTOByIDRequest{
 		ID:         ptoID,
 		TenantInfo: tenantInfo,
 	})
@@ -143,7 +143,7 @@ func (s *Service) CancelMyPTO(
 		)
 	}
 
-	return s.ptoService.CancelRequested(ctx, &repositories.UpdatePTOStatusRequest{
+	return s.ptoService.CancelRequested(ctx, &workerports.UpdatePTOStatusRequest{
 		ID:         ptoID,
 		TenantInfo: tenantInfo,
 		Status:     worker.PTOStatusCancelled,
@@ -171,7 +171,7 @@ func (s *Service) MyExpenses(
 	}
 	return s.settlementService.ListExpensesForWorker(
 		ctx,
-		&repositories.ListDriverExpensesForWorkerRequest{
+		&driverpayports.ListDriverExpensesForWorkerRequest{
 			TenantInfo: tenantInfo,
 			WorkerID:   wrk.ID,
 		},
@@ -239,7 +239,7 @@ func (s *Service) UploadMyExpenseReceipt(
 	tenantInfo pagination.TenantInfo,
 	expenseID pulid.ID,
 	file *multipart.FileHeader,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driverpay.Expense, error) {
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
@@ -253,7 +253,7 @@ func (s *Service) UploadMyExpenseReceipt(
 
 	expense, err := s.settlementService.GetExpense(
 		ctx,
-		repositories.GetDriverExpenseByIDRequest{ID: expenseID, TenantInfo: tenantInfo},
+		driverpayports.GetDriverExpenseByIDRequest{ID: expenseID, TenantInfo: tenantInfo},
 	)
 	if err != nil {
 		return nil, err

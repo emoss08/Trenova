@@ -5,9 +5,9 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,30 +19,30 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	Connections           services.AccountingConnectionService
-	ConnectionsRepository repositories.AccountingConnectionRepository
-	Mappings              services.AccountingMappingService
-	Sync                  services.AccountingSyncService
-	Dispatcher            services.AccountingSyncDispatcher
-	Inbound               services.AccountingInboundService
-	Poller                services.AccountingChangePoller
-	Drift                 services.AccountingDriftReconciler
-	DriftChecker          services.AccountingDriftChecker
-	Publisher             services.AgentEventPublisher `optional:"true"`
+	Connections           accountingsyncports.AccountingConnectionService
+	ConnectionsRepository accountingsyncports.AccountingConnectionRepository
+	Mappings              accountingsyncports.AccountingMappingService
+	Sync                  accountingsyncports.AccountingSyncService
+	Dispatcher            accountingsyncports.AccountingSyncDispatcher
+	Inbound               accountingsyncports.AccountingInboundService
+	Poller                accountingsyncports.AccountingChangePoller
+	Drift                 accountingsyncports.AccountingDriftReconciler
+	DriftChecker          accountingsyncports.AccountingDriftChecker
+	Publisher             agentports.AgentEventPublisher `optional:"true"`
 	Logger                *zap.Logger
 }
 
 type Activities struct {
-	connections  services.AccountingConnectionService
-	connRepo     repositories.AccountingConnectionRepository
-	mappings     services.AccountingMappingService
-	sync         services.AccountingSyncService
-	dispatcher   services.AccountingSyncDispatcher
-	inbound      services.AccountingInboundService
-	poller       services.AccountingChangePoller
-	drift        services.AccountingDriftReconciler
-	driftChecker services.AccountingDriftChecker
-	publisher    services.AgentEventPublisher
+	connections  accountingsyncports.AccountingConnectionService
+	connRepo     accountingsyncports.AccountingConnectionRepository
+	mappings     accountingsyncports.AccountingMappingService
+	sync         accountingsyncports.AccountingSyncService
+	dispatcher   accountingsyncports.AccountingSyncDispatcher
+	inbound      accountingsyncports.AccountingInboundService
+	poller       accountingsyncports.AccountingChangePoller
+	drift        accountingsyncports.AccountingDriftReconciler
+	driftChecker accountingsyncports.AccountingDriftChecker
+	publisher    agentports.AgentEventPublisher
 	l            *zap.Logger
 }
 
@@ -184,7 +184,7 @@ func (a *Activities) ListAccountingReferenceConnectionsActivity(
 	ctx context.Context,
 	afterID pulid.ID,
 ) (*ReferenceSweepPage, error) {
-	conns, err := a.connRepo.ListActive(ctx, repositories.ListActiveAccountingConnectionsRequest{
+	conns, err := a.connRepo.ListActive(ctx, accountingsyncports.ListActiveAccountingConnectionsRequest{
 		AfterID: afterID,
 		Limit:   referenceSweepPageSize,
 	})

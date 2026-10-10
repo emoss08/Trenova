@@ -6,15 +6,14 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp"
 	"github.com/emoss08/trenova/internal/core/services/journalposting"
 	"github.com/emoss08/trenova/internal/core/services/settlementshared"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -109,7 +108,7 @@ func (s *Service) Post(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	settlementID pulid.ID,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*carriersettlement.CarrierSettlement, error) {
 	if err := requireActor(actor, "Carrier settlement posting"); err != nil {
 		return nil, err
@@ -117,7 +116,7 @@ func (s *Service) Post(
 
 	var updated *carriersettlement.CarrierSettlement
 	var previous carriersettlement.CarrierSettlement
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		entity, txErr := s.getForUpdate(txCtx, tenantInfo, settlementID)
 		if txErr != nil {
 			return txErr
@@ -178,7 +177,7 @@ func (s *Service) Post(
 func (s *Service) postVoidReversal(
 	ctx context.Context,
 	entity *carriersettlement.CarrierSettlement,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) error {
 	batchID, err := s.postSettlementJournal(ctx, entity, actor, true)
 	if err != nil {
@@ -338,7 +337,7 @@ type journalDraft struct {
 func (s *Service) postSettlementJournal(
 	ctx context.Context,
 	entity *carriersettlement.CarrierSettlement,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 	reversal bool,
 ) (*pulid.ID, error) {
 	draft, err := s.planSettlementJournal(ctx, entity, actor.UserID, reversal)
@@ -410,7 +409,7 @@ func (s *Service) planSettlementJournal(
 func (s *Service) postPaymentJournal(
 	ctx context.Context,
 	entity *carriersettlement.CarrierSettlement,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 	paidAt int64,
 ) (*pulid.ID, error) {
 	draft, err := s.planPaymentJournal(ctx, entity, actor.UserID, paidAt)
@@ -529,7 +528,7 @@ func (s *Service) draftJournal(
 func (s *Service) writeJournal(
 	ctx context.Context,
 	_ *carriersettlement.CarrierSettlement,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 	draft *journalDraft,
 ) (*pulid.ID, error) {
 	result, err := s.journalWriter().WritePlan(ctx, draft.request, draft.posting)
@@ -553,7 +552,7 @@ type ledgerEntryParams struct {
 	JournalBatchID  *pulid.ID
 	AmountMinor     int64
 	TransactionDate int64
-	Actor           *serviceports.RequestActor
+	Actor           *permissionports.RequestActor
 }
 
 func (s *Service) appendLedgerEntry(

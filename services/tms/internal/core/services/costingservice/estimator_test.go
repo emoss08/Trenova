@@ -1,14 +1,18 @@
 package costingservice_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/costingcontrolportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/fuelsurchargeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"testing"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/costingcontrolports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -69,13 +73,13 @@ func newEstimatorService(
 ) *costingservice.Service {
 	t.Helper()
 
-	controlRepo := mocks.NewMockCostingControlRepository(t)
+	controlRepo := costingcontrolportsmock.NewMockCostingControlRepository(t)
 	controlRepo.EXPECT().
 		GetByOrgID(mock.Anything, mock.Anything).
 		Return(control, nil).
 		Once()
 
-	shipmentRepo := mocks.NewMockShipmentRepository(t)
+	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	if entity != nil {
 		shipmentRepo.EXPECT().
 			GetByID(mock.Anything, mock.Anything).
@@ -177,15 +181,15 @@ func TestEstimateShipment_LiveFuelPrice(t *testing.T) {
 		{Loaded: true, Distance: float64Ptr(100)},
 	}, "1000")
 
-	controlRepo := mocks.NewMockCostingControlRepository(t)
+	controlRepo := costingcontrolportsmock.NewMockCostingControlRepository(t)
 	controlRepo.EXPECT().GetByOrgID(mock.Anything, mock.Anything).Return(control, nil)
 
-	shipmentRepo := mocks.NewMockShipmentRepository(t)
+	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(entity, nil)
 
-	priceRepo := mocks.NewMockFuelIndexPriceRepository(t)
+	priceRepo := fuelsurchargeportsmock.NewMockFuelIndexPriceRepository(t)
 	priceRepo.EXPECT().
-		GetLatestOnOrBefore(mock.Anything, mock.MatchedBy(func(req *repositories.GetLatestFuelPricesRequest) bool {
+		GetLatestOnOrBefore(mock.Anything, mock.MatchedBy(func(req *fuelsurchargeports.GetLatestFuelPricesRequest) bool {
 			return req.FuelIndexID == testFuelIndexID && req.Date == "2026-07-20" && req.Limit == 1
 		})).
 		Return([]*fuelsurcharge.FuelIndexPrice{
@@ -239,13 +243,13 @@ func TestEstimateShipment_LiveFuelFallsBackWithoutPrice(t *testing.T) {
 		{Loaded: true, Distance: float64Ptr(100)},
 	}, "1000")
 
-	controlRepo := mocks.NewMockCostingControlRepository(t)
+	controlRepo := costingcontrolportsmock.NewMockCostingControlRepository(t)
 	controlRepo.EXPECT().GetByOrgID(mock.Anything, mock.Anything).Return(control, nil)
 
-	shipmentRepo := mocks.NewMockShipmentRepository(t)
+	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(entity, nil)
 
-	priceRepo := mocks.NewMockFuelIndexPriceRepository(t)
+	priceRepo := fuelsurchargeportsmock.NewMockFuelIndexPriceRepository(t)
 	priceRepo.EXPECT().
 		GetLatestOnOrBefore(mock.Anything, mock.Anything).
 		Return([]*fuelsurcharge.FuelIndexPrice{}, nil)
@@ -317,18 +321,18 @@ func TestEstimateShipment_GLActualRate(t *testing.T) {
 		{Loaded: true, Distance: float64Ptr(100)},
 	}, "1000")
 
-	controlRepo := mocks.NewMockCostingControlRepository(t)
+	controlRepo := costingcontrolportsmock.NewMockCostingControlRepository(t)
 	controlRepo.EXPECT().GetByOrgID(mock.Anything, mock.Anything).Return(control, nil)
 
-	shipmentRepo := mocks.NewMockShipmentRepository(t)
+	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(entity, nil)
 
-	actualsRepo := mocks.NewMockCostingActualsRepository(t)
+	actualsRepo := costingcontrolportsmock.NewMockCostingActualsRepository(t)
 	actualsRepo.EXPECT().
 		FleetMiles(mock.Anything, mock.Anything).
-		Return(&repositories.FleetMilesResult{TotalMiles: 10000, LoadedMiles: 9000, DeadheadMiles: 1000}, nil)
+		Return(&costingcontrolports.FleetMilesResult{TotalMiles: 10000, LoadedMiles: 9000, DeadheadMiles: 1000}, nil)
 	actualsRepo.EXPECT().
-		SumExpenseByAccounts(mock.Anything, mock.MatchedBy(func(req *repositories.SumExpenseByAccountsRequest) bool {
+		SumExpenseByAccounts(mock.Anything, mock.MatchedBy(func(req *costingcontrolports.SumExpenseByAccountsRequest) bool {
 			return len(req.GLAccountIDs) == 1 && req.GLAccountIDs[0] == glAccountID
 		})).
 		Return(map[pulid.ID]decimal.Decimal{
@@ -377,16 +381,16 @@ func TestEstimateShipment_GLActualNoPostingsFallsBack(t *testing.T) {
 		{Loaded: true, Distance: float64Ptr(100)},
 	}, "1000")
 
-	controlRepo := mocks.NewMockCostingControlRepository(t)
+	controlRepo := costingcontrolportsmock.NewMockCostingControlRepository(t)
 	controlRepo.EXPECT().GetByOrgID(mock.Anything, mock.Anything).Return(control, nil)
 
-	shipmentRepo := mocks.NewMockShipmentRepository(t)
+	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(entity, nil)
 
-	actualsRepo := mocks.NewMockCostingActualsRepository(t)
+	actualsRepo := costingcontrolportsmock.NewMockCostingActualsRepository(t)
 	actualsRepo.EXPECT().
 		FleetMiles(mock.Anything, mock.Anything).
-		Return(&repositories.FleetMilesResult{}, nil)
+		Return(&costingcontrolports.FleetMilesResult{}, nil)
 	actualsRepo.EXPECT().
 		SumExpenseByAccounts(mock.Anything, mock.Anything).
 		Return(map[pulid.ID]decimal.Decimal{}, nil)
@@ -481,16 +485,16 @@ func TestFleetSummary(t *testing.T) {
 
 	control := benchmarkControl()
 
-	controlRepo := mocks.NewMockCostingControlRepository(t)
+	controlRepo := costingcontrolportsmock.NewMockCostingControlRepository(t)
 	controlRepo.EXPECT().GetByOrgID(mock.Anything, mock.Anything).Return(control, nil)
 
-	actualsRepo := mocks.NewMockCostingActualsRepository(t)
+	actualsRepo := costingcontrolportsmock.NewMockCostingActualsRepository(t)
 	actualsRepo.EXPECT().
-		FleetCostAggregates(mock.Anything, mock.MatchedBy(func(req *repositories.FleetCostAggregatesRequest) bool {
+		FleetCostAggregates(mock.Anything, mock.MatchedBy(func(req *costingcontrolports.FleetCostAggregatesRequest) bool {
 			return req.CostPerMile.Equal(decimal.RequireFromString("2.435")) &&
 				req.IncludeDeadheadMiles
 		})).
-		Return(&repositories.FleetCostAggregatesResult{
+		Return(&costingcontrolports.FleetCostAggregatesResult{
 			ShipmentCount:     20,
 			UnprofitableCount: 4,
 			TotalRevenue:      decimal.RequireFromString("60000"),
@@ -549,16 +553,16 @@ func TestEstimateShipment_GLActualFixedCategoryUsesPlannedMiles(t *testing.T) {
 		{Loaded: true, Distance: float64Ptr(100)},
 	}, "1000")
 
-	controlRepo := mocks.NewMockCostingControlRepository(t)
+	controlRepo := costingcontrolportsmock.NewMockCostingControlRepository(t)
 	controlRepo.EXPECT().GetByOrgID(mock.Anything, mock.Anything).Return(control, nil)
 
-	shipmentRepo := mocks.NewMockShipmentRepository(t)
+	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(entity, nil)
 
-	actualsRepo := mocks.NewMockCostingActualsRepository(t)
+	actualsRepo := costingcontrolportsmock.NewMockCostingActualsRepository(t)
 	actualsRepo.EXPECT().
 		FleetMiles(mock.Anything, mock.Anything).
-		Return(&repositories.FleetMilesResult{TotalMiles: 1000, LoadedMiles: 1000}, nil)
+		Return(&costingcontrolports.FleetMilesResult{TotalMiles: 1000, LoadedMiles: 1000}, nil)
 	actualsRepo.EXPECT().
 		SumExpenseByAccounts(mock.Anything, mock.Anything).
 		Return(map[pulid.ID]decimal.Decimal{

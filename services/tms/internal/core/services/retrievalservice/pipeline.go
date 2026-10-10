@@ -9,8 +9,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -33,17 +33,17 @@ const (
 	maxOutcomeMessage = 500
 )
 
-func unavailable(reason airetrieval.UnavailableReason) serviceports.RetrievalIndexPlan {
-	return serviceports.RetrievalIndexPlan{Reason: reason}
+func unavailable(reason airetrieval.UnavailableReason) agentports.RetrievalIndexPlan {
+	return agentports.RetrievalIndexPlan{Reason: reason}
 }
 
 func (s *Service) Plan(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-) (serviceports.RetrievalIndexPlan, error) {
+) (agentports.RetrievalIndexPlan, error) {
 	availability, err := s.repo.VectorAvailability(ctx)
 	if err != nil {
-		return serviceports.RetrievalIndexPlan{}, fmt.Errorf("check vector storage: %w", err)
+		return agentports.RetrievalIndexPlan{}, fmt.Errorf("check vector storage: %w", err)
 	}
 	if !availability.Available {
 		return unavailable(availability.Reason), nil
@@ -51,7 +51,7 @@ func (s *Service) Plan(
 
 	settings, err := s.repo.GetSettings(ctx, tenant)
 	if err != nil {
-		return serviceports.RetrievalIndexPlan{}, fmt.Errorf("read retrieval settings: %w", err)
+		return agentports.RetrievalIndexPlan{}, fmt.Errorf("read retrieval settings: %w", err)
 	}
 
 	sourceTypes := settings.EnabledSourceTypes()
@@ -66,7 +66,7 @@ func (s *Service) Plan(
 
 	settings, within, err := s.applyBudget(ctx, tenant, settings)
 	if err != nil {
-		return serviceports.RetrievalIndexPlan{}, err
+		return agentports.RetrievalIndexPlan{}, err
 	}
 	if !within {
 		return unavailable(airetrieval.UnavailableReasonBudgetPaused), nil
@@ -74,10 +74,10 @@ func (s *Service) Plan(
 
 	retired, err := s.retiredKeys(ctx, tenant, settings)
 	if err != nil {
-		return serviceports.RetrievalIndexPlan{}, err
+		return agentports.RetrievalIndexPlan{}, err
 	}
 
-	return serviceports.RetrievalIndexPlan{
+	return agentports.RetrievalIndexPlan{
 		Active:          true,
 		ActiveModelKey:  settings.ActiveModelKey,
 		PendingModelKey: settings.PendingModelKey,
@@ -164,7 +164,7 @@ func (s *Service) spentThisMonth(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 ) (decimal.Decimal, error) {
-	cost, err := s.usage.SurfaceCost(ctx, repositories.AIUsageSurfaceCostRequest{
+	cost, err := s.usage.SurfaceCost(ctx, aiusageports.AIUsageSurfaceCostRequest{
 		TenantInfo: tenant,
 		Surface:    aiusage.SurfaceIndexing,
 		Since:      timeutils.MonthStartUTC(s.now()),
@@ -203,7 +203,7 @@ func (s *Service) setBudgetPause(
 	settings *airetrieval.Settings,
 	paused bool,
 ) (*airetrieval.Settings, bool, error) {
-	req := &repositories.SetAIRetrievalPausedRequest{
+	req := &agentports.SetAIRetrievalPausedRequest{
 		TenantInfo: tenant,
 		Paused:     paused,
 		Now:        s.now(),
@@ -230,7 +230,7 @@ func (s *Service) retiredKeys(
 	tenant pagination.TenantInfo,
 	settings *airetrieval.Settings,
 ) ([]string, error) {
-	keys, err := s.sources.ListModelKeys(ctx, repositories.ListRetrievalModelKeysRequest{
+	keys, err := s.sources.ListModelKeys(ctx, agentports.ListRetrievalModelKeysRequest{
 		TenantInfo:        tenant,
 		IncludeEmbeddings: true,
 	})
@@ -247,9 +247,9 @@ func (s *Service) retiredKeys(
 
 func (s *Service) IndexBatch(
 	ctx context.Context,
-	req *serviceports.RetrievalIndexBatchRequest,
-) (serviceports.RetrievalIndexBatchResult, error) {
-	result := serviceports.RetrievalIndexBatchResult{CostUSD: decimal.Zero}
+	req *agentports.RetrievalIndexBatchRequest,
+) (agentports.RetrievalIndexBatchResult, error) {
+	result := agentports.RetrievalIndexBatchResult{CostUSD: decimal.Zero}
 
 	if req == nil {
 		return result, fmt.Errorf(
@@ -298,7 +298,7 @@ func (s *Service) IndexBatch(
 		limit = DefaultBatchSize
 	}
 
-	entries, err := s.repo.ClaimIndexEntries(ctx, &repositories.ClaimIndexEntriesRequest{
+	entries, err := s.repo.ClaimIndexEntries(ctx, &agentports.ClaimIndexEntriesRequest{
 		TenantInfo:  req.TenantInfo,
 		ModelKey:    req.ModelKey,
 		SourceTypes: sourceTypes,
@@ -367,8 +367,8 @@ func (s *Service) CompleteModelChange(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	pendingModelKey string,
-) (serviceports.RetrievalModelChangeResult, error) {
-	var result serviceports.RetrievalModelChangeResult
+) (agentports.RetrievalModelChangeResult, error) {
+	var result agentports.RetrievalModelChangeResult
 
 	settings, err := s.repo.GetSettings(ctx, tenant)
 	if err != nil {
@@ -383,7 +383,7 @@ func (s *Service) CompleteModelChange(
 		return result, err
 	}
 
-	swapped, err := s.repo.SwapModel(ctx, repositories.SwapAIRetrievalModelRequest{
+	swapped, err := s.repo.SwapModel(ctx, agentports.SwapAIRetrievalModelRequest{
 		TenantInfo:      tenant,
 		PendingModelKey: pendingModelKey,
 	})
@@ -401,7 +401,7 @@ func (s *Service) CompleteModelChange(
 		zap.String("retiredModelKey", swapped.RetiredModelKey),
 	)
 
-	return serviceports.RetrievalModelChangeResult{
+	return agentports.RetrievalModelChangeResult{
 		Swapped:         true,
 		RetiredModelKey: swapped.RetiredModelKey,
 	}, nil
@@ -413,7 +413,7 @@ func (s *Service) pendingModelComplete(
 	settings *airetrieval.Settings,
 ) (bool, error) {
 	for _, sourceType := range settings.EnabledSourceTypes() {
-		stale, err := s.repo.FindStaleSources(ctx, &repositories.FindStaleAIRetrievalSourcesRequest{
+		stale, err := s.repo.FindStaleSources(ctx, &agentports.FindStaleAIRetrievalSourcesRequest{
 			TenantInfo: tenant,
 			SourceType: sourceType,
 			ModelKey:   settings.PendingModelKey,
@@ -431,7 +431,7 @@ func (s *Service) pendingModelComplete(
 		}
 	}
 
-	counts, err := s.repo.CountIndexEntries(ctx, repositories.CountIndexEntriesRequest{
+	counts, err := s.repo.CountIndexEntries(ctx, agentports.CountIndexEntriesRequest{
 		TenantInfo: tenant,
 		ModelKey:   settings.PendingModelKey,
 	})
@@ -439,7 +439,7 @@ func (s *Service) pendingModelComplete(
 		return false, fmt.Errorf("count pending model entries: %w", err)
 	}
 
-	return !slices.ContainsFunc(counts, func(count repositories.IndexEntryCount) bool {
+	return !slices.ContainsFunc(counts, func(count agentports.IndexEntryCount) bool {
 		return count.Status == airetrieval.IndexStatusPending && count.Count > 0
 	}), nil
 }
@@ -448,11 +448,11 @@ func (s *Service) PurgeRetiredModel(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	modelKey string,
-) (serviceports.RetrievalPurgeResult, error) {
-	var result serviceports.RetrievalPurgeResult
+) (agentports.RetrievalPurgeResult, error) {
+	var result agentports.RetrievalPurgeResult
 
 	for range maxPurgeBatches {
-		purged, err := s.repo.PurgeModel(ctx, repositories.PurgeAIRetrievalModelRequest{
+		purged, err := s.repo.PurgeModel(ctx, agentports.PurgeAIRetrievalModelRequest{
 			TenantInfo: tenant,
 			ModelKey:   modelKey,
 			BatchSize:  purgeBatchSize,
@@ -484,7 +484,7 @@ func (s *Service) ListIndexedTenants(
 	after *pagination.TenantInfo,
 	limit int,
 ) ([]pagination.TenantInfo, error) {
-	tenants, err := s.repo.ListIndexedTenants(ctx, repositories.ListIndexedRetrievalTenantsRequest{
+	tenants, err := s.repo.ListIndexedTenants(ctx, agentports.ListIndexedRetrievalTenantsRequest{
 		After: after,
 		Limit: limit,
 	})
@@ -498,8 +498,8 @@ func (s *Service) ListIndexedTenants(
 func (s *Service) Sweep(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-) (serviceports.RetrievalSweepResult, error) {
-	var result serviceports.RetrievalSweepResult
+) (agentports.RetrievalSweepResult, error) {
+	var result agentports.RetrievalSweepResult
 
 	settings, err := s.repo.GetSettings(ctx, tenant)
 	if err != nil {
@@ -521,7 +521,7 @@ func (s *Service) Sweep(
 	}
 
 	for _, modelKey := range keys {
-		counts, countErr := s.repo.CountIndexEntries(ctx, repositories.CountIndexEntriesRequest{
+		counts, countErr := s.repo.CountIndexEntries(ctx, agentports.CountIndexEntriesRequest{
 			TenantInfo: tenant,
 			ModelKey:   modelKey,
 		})
@@ -547,7 +547,7 @@ func (s *Service) sweepSource(
 	marked := 0
 	after := pulid.Nil
 	for range maxSweepPages {
-		ids, err := s.repo.FindStaleSources(ctx, &repositories.FindStaleAIRetrievalSourcesRequest{
+		ids, err := s.repo.FindStaleSources(ctx, &agentports.FindStaleAIRetrievalSourcesRequest{
 			TenantInfo: tenant,
 			SourceType: sourceType,
 			ModelKey:   modelKey,
@@ -574,9 +574,9 @@ func (s *Service) sweepSource(
 
 func (s *Service) ReindexPage(
 	ctx context.Context,
-	req *serviceports.RetrievalReindexPageRequest,
-) (serviceports.RetrievalReindexPage, error) {
-	var page serviceports.RetrievalReindexPage
+	req *agentports.RetrievalReindexPageRequest,
+) (agentports.RetrievalReindexPage, error) {
+	var page agentports.RetrievalReindexPage
 
 	if req == nil {
 		return page, fmt.Errorf(
@@ -601,7 +601,7 @@ func (s *Service) ReindexPage(
 		limit = reindexPageSize
 	}
 
-	ids, err := s.sources.ListSourceIDs(ctx, &repositories.ListRetrievalSourceIDsRequest{
+	ids, err := s.sources.ListSourceIDs(ctx, &agentports.ListRetrievalSourceIDsRequest{
 		TenantInfo: req.TenantInfo,
 		SourceType: req.SourceType,
 		AfterID:    req.AfterID,

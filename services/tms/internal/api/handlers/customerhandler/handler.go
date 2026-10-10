@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/customerservice"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -119,9 +119,9 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*customer.Customer], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListCustomerRequest{
+				&customerports.ListCustomerRequest{
 					Filter: req,
-					CustomerFilterOptions: repositories.CustomerFilterOptions{
+					CustomerFilterOptions: customerports.CustomerFilterOptions{
 						IncludeState:          helpers.QueryBool(c, "includeState"),
 						IncludeBillingProfile: helpers.QueryBool(c, "includeBillingProfile"),
 						IncludeEmailProfile:   helpers.QueryBool(c, "includeEmailProfile"),
@@ -155,7 +155,7 @@ func (h *Handler) bulkUpdateStatus(c *gin.Context) {
 		return
 	}
 
-	req := new(repositories.BulkUpdateCustomerStatusRequest)
+	req := new(customerports.BulkUpdateCustomerStatusRequest)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -197,7 +197,7 @@ func (h *Handler) getOption(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.Get(c.Request.Context(), repositories.GetCustomerByIDRequest{
+	entity, err := h.service.Get(c.Request.Context(), customerports.GetCustomerByIDRequest{
 		ID:         customerID,
 		TenantInfo: pagination.FromAuth(authCtx),
 	})
@@ -232,7 +232,7 @@ func (h *Handler) selectOptions(c *gin.Context) {
 		func() (*pagination.ListResult[*customer.Customer], error) {
 			return h.service.SelectOptions(
 				c.Request.Context(),
-				&repositories.CustomerSelectOptionsRequest{
+				&customerports.CustomerSelectOptionsRequest{
 					SelectQueryRequest: req,
 				},
 			)
@@ -263,7 +263,7 @@ func (h *Handler) get(c *gin.Context) {
 
 	entity, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetCustomerByIDRequest{
+		customerports.GetCustomerByIDRequest{
 			ID:         customerID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -287,7 +287,7 @@ func (h *Handler) getBillingProfile(c *gin.Context) {
 
 	entity, err := h.service.GetBillingProfile(
 		c.Request.Context(),
-		repositories.GetCustomerBillingProfileRequest{
+		customerports.GetCustomerBillingProfileRequest{
 			CustomerID: customerID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -360,7 +360,7 @@ func (h *Handler) patch(c *gin.Context) {
 
 	existing, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetCustomerByIDRequest{
+		customerports.GetCustomerByIDRequest{
 			ID:         customerID,
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 		},

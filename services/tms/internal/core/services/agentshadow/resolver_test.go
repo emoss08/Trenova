@@ -7,8 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/agentshadow"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,7 +18,7 @@ import (
 )
 
 type fakeControl struct {
-	repositories.AgentControlRepository
+	tenantports.AgentControlRepository
 	shadow bool
 }
 
@@ -28,26 +30,26 @@ func (f fakeControl) GetOrCreate(
 }
 
 type fakeRuns struct {
-	repositories.AgentRunRepository
+	agentports.AgentRunRepository
 	run *agent.AgentRun
 }
 
 func (f fakeRuns) GetByID(
 	context.Context,
-	repositories.GetAgentRunByIDRequest,
+	agentports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	return f.run, nil
 }
 
 type fakeDefinitions struct {
-	repositories.AgentDefinitionRepository
+	agentdefinitionports.AgentDefinitionRepository
 	definition *agentdefinition.Definition
 	reads      *int
 }
 
 func (f fakeDefinitions) GetByID(
 	context.Context,
-	repositories.GetAgentDefinitionByIDRequest,
+	agentdefinitionports.GetAgentDefinitionByIDRequest,
 ) (*agentdefinition.Definition, error) {
 	if f.reads != nil {
 		*f.reads++

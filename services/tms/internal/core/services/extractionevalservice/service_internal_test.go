@@ -11,8 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/core/domain/extractioneval"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -62,7 +63,7 @@ func (w *world) seedCorrection() *aicorrection.Correction {
 func (w *world) seedActiveCase(t *testing.T) *extractioneval.ExtractionCase {
 	t.Helper()
 	correction := w.seedCorrection()
-	created, err := w.svc.PromoteCorrection(t.Context(), &services.PromoteCorrectionRequest{
+	created, err := w.svc.PromoteCorrection(t.Context(), &extractionevalports.PromoteCorrectionRequest{
 		TenantInfo:   testTenant(),
 		CorrectionID: correction.ID,
 		Activate:     true,
@@ -89,7 +90,7 @@ func TestPromoteCorrection_FreezesTheDocumentAndConfirmedValues(t *testing.T) {
 	w := newWorld()
 	correction := w.seedCorrection()
 
-	created, err := w.svc.PromoteCorrection(t.Context(), &services.PromoteCorrectionRequest{
+	created, err := w.svc.PromoteCorrection(t.Context(), &extractionevalports.PromoteCorrectionRequest{
 		TenantInfo:   testTenant(),
 		CorrectionID: correction.ID,
 	}, testActor())
@@ -115,7 +116,7 @@ func TestPromoteCorrection_RefusesTwiceAndWithoutText(t *testing.T) {
 
 	w := newWorld()
 	correction := w.seedCorrection()
-	request := &services.PromoteCorrectionRequest{TenantInfo: testTenant(), CorrectionID: correction.ID}
+	request := &extractionevalports.PromoteCorrectionRequest{TenantInfo: testTenant(), CorrectionID: correction.ID}
 
 	_, err := w.svc.PromoteCorrection(t.Context(), request, testActor())
 	require.NoError(t, err)
@@ -126,7 +127,7 @@ func TestPromoteCorrection_RefusesTwiceAndWithoutText(t *testing.T) {
 	other := newWorld()
 	second := other.seedCorrection()
 	other.contents.pages = nil
-	_, err = other.svc.PromoteCorrection(t.Context(), &services.PromoteCorrectionRequest{
+	_, err = other.svc.PromoteCorrection(t.Context(), &extractionevalports.PromoteCorrectionRequest{
 		TenantInfo:   testTenant(),
 		CorrectionID: second.ID,
 	}, testActor())
@@ -136,7 +137,7 @@ func TestPromoteCorrection_RefusesTwiceAndWithoutText(t *testing.T) {
 	deleted := newWorld()
 	third := deleted.seedCorrection()
 	clear(deleted.documents.docs)
-	_, err = deleted.svc.PromoteCorrection(t.Context(), &services.PromoteCorrectionRequest{
+	_, err = deleted.svc.PromoteCorrection(t.Context(), &extractionevalports.PromoteCorrectionRequest{
 		TenantInfo:   testTenant(),
 		CorrectionID: third.ID,
 	}, testActor())
@@ -151,7 +152,7 @@ func TestUpdateCase_FollowsTheStatusLifecycle(t *testing.T) {
 	created := w.seedActiveCase(t)
 
 	retired := extractioneval.CaseStatusRetired
-	updated, err := w.svc.UpdateCase(t.Context(), &services.UpdateExtractionCaseRequest{
+	updated, err := w.svc.UpdateCase(t.Context(), &extractionevalports.UpdateExtractionCaseRequest{
 		TenantInfo: testTenant(),
 		ID:         created.ID,
 		Version:    created.Version,
@@ -162,7 +163,7 @@ func TestUpdateCase_FollowsTheStatusLifecycle(t *testing.T) {
 	assert.Equal(t, extractioneval.CaseStatusRetired, updated.Status)
 
 	candidate := extractioneval.CaseStatusCandidate
-	_, err = w.svc.UpdateCase(t.Context(), &services.UpdateExtractionCaseRequest{
+	_, err = w.svc.UpdateCase(t.Context(), &extractionevalports.UpdateExtractionCaseRequest{
 		TenantInfo: testTenant(),
 		ID:         created.ID,
 		Version:    updated.Version,
@@ -170,7 +171,7 @@ func TestUpdateCase_FollowsTheStatusLifecycle(t *testing.T) {
 	}, testActor())
 	require.Error(t, err, "a retired case cannot go back to candidate")
 
-	_, err = w.svc.UpdateCase(t.Context(), &services.UpdateExtractionCaseRequest{
+	_, err = w.svc.UpdateCase(t.Context(), &extractionevalports.UpdateExtractionCaseRequest{
 		TenantInfo: testTenant(),
 		ID:         created.ID,
 		Version:    created.Version,
@@ -186,7 +187,7 @@ func TestStartRun_CreatesPendingResultsAndStartsTheWorkflow(t *testing.T) {
 	evalCase := w.seedActiveCase(t)
 	provider := w.seedProvider()
 
-	run, err := w.svc.StartRun(t.Context(), &services.StartExtractionEvalRunRequest{
+	run, err := w.svc.StartRun(t.Context(), &extractionevalports.StartExtractionEvalRunRequest{
 		TenantInfo: testTenant(),
 		ProviderID: provider.ID,
 	}, testActor())
@@ -211,7 +212,7 @@ func TestStartRun_RefusesWhatCannotRun(t *testing.T) {
 	w := newWorld()
 	provider := w.seedProvider()
 
-	_, err := w.svc.StartRun(t.Context(), &services.StartExtractionEvalRunRequest{
+	_, err := w.svc.StartRun(t.Context(), &extractionevalports.StartExtractionEvalRunRequest{
 		TenantInfo: testTenant(),
 		ProviderID: provider.ID,
 	}, testActor())
@@ -219,13 +220,13 @@ func TestStartRun_RefusesWhatCannotRun(t *testing.T) {
 	assert.True(t, errortypes.IsBusinessError(err))
 
 	w.seedActiveCase(t)
-	_, err = w.svc.StartRun(t.Context(), &services.StartExtractionEvalRunRequest{
+	_, err = w.svc.StartRun(t.Context(), &extractionevalports.StartExtractionEvalRunRequest{
 		TenantInfo: testTenant(),
 	}, testActor())
 	require.Error(t, err, "no provider chosen")
 
 	provider.Enabled = false
-	_, err = w.svc.StartRun(t.Context(), &services.StartExtractionEvalRunRequest{
+	_, err = w.svc.StartRun(t.Context(), &extractionevalports.StartExtractionEvalRunRequest{
 		TenantInfo: testTenant(),
 		ProviderID: provider.ID,
 	}, testActor())
@@ -233,7 +234,7 @@ func TestStartRun_RefusesWhatCannotRun(t *testing.T) {
 
 	provider.Enabled = true
 	provider.Tasks = []aiprovider.Task{aiprovider.TaskGeneral}
-	_, err = w.svc.StartRun(t.Context(), &services.StartExtractionEvalRunRequest{
+	_, err = w.svc.StartRun(t.Context(), &extractionevalports.StartExtractionEvalRunRequest{
 		TenantInfo: testTenant(),
 		ProviderID: provider.ID,
 	}, testActor())
@@ -249,7 +250,7 @@ func TestStartRun_MarksTheRunFailedWhenTheWorkflowCannotStart(t *testing.T) {
 	provider := w.seedProvider()
 	w.starter.err = errUpstream
 
-	_, err := w.svc.StartRun(t.Context(), &services.StartExtractionEvalRunRequest{
+	_, err := w.svc.StartRun(t.Context(), &extractionevalports.StartExtractionEvalRunRequest{
 		TenantInfo: testTenant(),
 		ProviderID: provider.ID,
 	}, testActor())
@@ -267,12 +268,12 @@ func startedRun(t *testing.T, w *world) *extractioneval.ExtractionRun {
 	t.Helper()
 	w.seedActiveCase(t)
 	provider := w.seedProvider()
-	run, err := w.svc.StartRun(t.Context(), &services.StartExtractionEvalRunRequest{
+	run, err := w.svc.StartRun(t.Context(), &extractionevalports.StartExtractionEvalRunRequest{
 		TenantInfo: testTenant(),
 		ProviderID: provider.ID,
 	}, testActor())
 	require.NoError(t, err)
-	_, err = w.svc.BeginRun(t.Context(), repositories.GetExtractionEvalRunRequest{
+	_, err = w.svc.BeginRun(t.Context(), extractionevalports.GetExtractionEvalRunRequest{
 		TenantInfo: testTenant(),
 		ID:         run.ID,
 	})
@@ -286,7 +287,7 @@ func TestEvaluateResult_ScoresThePredictionAgainstTheCase(t *testing.T) {
 	w := newWorld()
 	run := startedRun(t, w)
 	cost := decimal.RequireFromString("0.0031")
-	w.predictor.prediction = &services.ExtractionPrediction{
+	w.predictor.prediction = &extractionevalports.ExtractionPrediction{
 		DraftData: map[string]any{
 			"fields": map[string]any{
 				"referenceNumber": map[string]any{"value": "LD-10442", "source": "ai", "confidence": 0.9},
@@ -305,7 +306,7 @@ func TestEvaluateResult_ScoresThePredictionAgainstTheCase(t *testing.T) {
 	}
 	resultID := w.results.items[0].ID
 
-	err := w.svc.EvaluateResult(t.Context(), &services.EvaluateExtractionResultRequest{
+	err := w.svc.EvaluateResult(t.Context(), &extractionevalports.EvaluateExtractionResultRequest{
 		TenantInfo: testTenant(),
 		ResultID:   resultID,
 	})
@@ -326,7 +327,7 @@ func TestEvaluateResult_ScoresThePredictionAgainstTheCase(t *testing.T) {
 	require.NotNil(t, result.Predicted)
 	assert.Len(t, result.Predicted.Stops, 1)
 
-	finished, err := w.svc.FinishRun(t.Context(), &services.FinishExtractionEvalRunRequest{
+	finished, err := w.svc.FinishRun(t.Context(), &extractionevalports.FinishExtractionEvalRunRequest{
 		TenantInfo: testTenant(),
 		RunID:      run.ID,
 		Status:     extractioneval.RunStatusCompleted,
@@ -351,14 +352,14 @@ func TestEvaluateResult_RetriesTransientFailuresThenRecordsThem(t *testing.T) {
 	w.predictor.err = errUpstream
 	resultID := w.results.items[0].ID
 
-	err := w.svc.EvaluateResult(t.Context(), &services.EvaluateExtractionResultRequest{
+	err := w.svc.EvaluateResult(t.Context(), &extractionevalports.EvaluateExtractionResultRequest{
 		TenantInfo: testTenant(),
 		ResultID:   resultID,
 	})
 	require.ErrorIs(t, err, errUpstream, "a transient failure is retried")
 	assert.Equal(t, extractioneval.ResultStatusPending, w.results.items[0].Status)
 
-	err = w.svc.EvaluateResult(t.Context(), &services.EvaluateExtractionResultRequest{
+	err = w.svc.EvaluateResult(t.Context(), &extractionevalports.EvaluateExtractionResultRequest{
 		TenantInfo:   testTenant(),
 		ResultID:     resultID,
 		FinalAttempt: true,
@@ -367,7 +368,7 @@ func TestEvaluateResult_RetriesTransientFailuresThenRecordsThem(t *testing.T) {
 	assert.Equal(t, extractioneval.ResultStatusFailed, w.results.items[0].Status)
 	assert.NotEmpty(t, w.results.items[0].ErrorMessage)
 
-	err = w.svc.EvaluateResult(t.Context(), &services.EvaluateExtractionResultRequest{
+	err = w.svc.EvaluateResult(t.Context(), &extractionevalports.EvaluateExtractionResultRequest{
 		TenantInfo: testTenant(),
 		ResultID:   resultID,
 	})
@@ -380,9 +381,9 @@ func TestEvaluateResult_ASchemaFailureIsNotRetried(t *testing.T) {
 
 	w := newWorld()
 	startedRun(t, w)
-	w.predictor.err = services.ErrModelSchemaValidation
+	w.predictor.err = agentports.ErrModelSchemaValidation
 
-	err := w.svc.EvaluateResult(t.Context(), &services.EvaluateExtractionResultRequest{
+	err := w.svc.EvaluateResult(t.Context(), &extractionevalports.EvaluateExtractionResultRequest{
 		TenantInfo: testTenant(),
 		ResultID:   w.results.items[0].ID,
 	})
@@ -396,7 +397,7 @@ func TestCheckContinue_StopsForTheBudgetAndForACancel(t *testing.T) {
 
 	w := newWorld()
 	run := startedRun(t, w)
-	request := repositories.GetExtractionEvalRunRequest{TenantInfo: testTenant(), ID: run.ID}
+	request := extractionevalports.GetExtractionEvalRunRequest{TenantInfo: testTenant(), ID: run.ID}
 
 	decision, err := w.svc.CheckContinue(t.Context(), request)
 	require.NoError(t, err)
@@ -421,7 +422,7 @@ func TestCheckContinue_StopsForTheBudgetAndForACancel(t *testing.T) {
 	_, err = w.svc.CancelRun(t.Context(), request, testActor())
 	require.Error(t, err, "a finished run cannot be canceled")
 
-	finished, err := w.svc.FinishRun(t.Context(), &services.FinishExtractionEvalRunRequest{
+	finished, err := w.svc.FinishRun(t.Context(), &extractionevalports.FinishExtractionEvalRunRequest{
 		TenantInfo: testTenant(),
 		RunID:      run.ID,
 		Status:     extractioneval.RunStatusCanceled,
@@ -452,7 +453,7 @@ func TestAccuracy_GroupsProductionCorrectionsByModelAndKind(t *testing.T) {
 		},
 	}
 
-	report, err := w.svc.Accuracy(t.Context(), &services.ExtractionAccuracyRequest{TenantInfo: testTenant()})
+	report, err := w.svc.Accuracy(t.Context(), &extractionevalports.ExtractionAccuracyRequest{TenantInfo: testTenant()})
 	require.NoError(t, err)
 
 	assert.Equal(t, 30, report.WindowDays)
@@ -471,7 +472,7 @@ func TestAccuracy_GroupsProductionCorrectionsByModelAndKind(t *testing.T) {
 	assert.InDelta(t, 0.5, report.Fields[0].Accuracy, 1e-9)
 	assert.Equal(t, 1, report.Cases.Active)
 
-	_, err = w.svc.Accuracy(t.Context(), &services.ExtractionAccuracyRequest{
+	_, err = w.svc.Accuracy(t.Context(), &extractionevalports.ExtractionAccuracyRequest{
 		TenantInfo: testTenant(),
 		WindowDays: 400,
 	})
@@ -484,7 +485,7 @@ func TestPurgeExpiredRuns_UsesTheCorrectionRetention(t *testing.T) {
 	w := newWorld()
 	w.retention.settings = &tenant.DataRetention{AICorrectionRetentionPeriod: 90}
 
-	purged, err := w.svc.PurgeExpiredRuns(t.Context(), services.PurgeExpiredAICorrectionsRequest{
+	purged, err := w.svc.PurgeExpiredRuns(t.Context(), kernelports.PurgeExpiredAICorrectionsRequest{
 		TenantInfo: testTenant(),
 		Now:        testNow,
 	})
@@ -500,7 +501,7 @@ func TestDeleteCase_RemovesIt(t *testing.T) {
 	w := newWorld()
 	created := w.seedActiveCase(t)
 
-	require.NoError(t, w.svc.DeleteCase(t.Context(), repositories.GetExtractionEvalCaseRequest{
+	require.NoError(t, w.svc.DeleteCase(t.Context(), extractionevalports.GetExtractionEvalCaseRequest{
 		TenantInfo: testTenant(),
 		ID:         created.ID,
 	}, testActor()))

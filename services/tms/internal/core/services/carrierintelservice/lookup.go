@@ -6,8 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
@@ -15,7 +14,7 @@ import (
 
 type FetchRequest struct {
 	TenantInfo    pagination.TenantInfo
-	Subject       repositories.CarrierIntelSubject
+	Subject       carrierintelports.CarrierIntelSubject
 	MinDepth      carrierintel.LookupDepth
 	MaxAgeSeconds int64
 	Purpose       carrierintel.Purpose
@@ -67,7 +66,7 @@ func (s *Service) Fetch(ctx context.Context, req *FetchRequest) (*FetchResult, e
 	current, err := s.snapshotRepo.GetCurrent(
 		ctx,
 		req.TenantInfo,
-		repositories.CarrierIntelSubjectRef{
+		carrierintelports.CarrierIntelSubjectRef{
 			SubjectType: req.Subject.SubjectType,
 			SubjectID:   req.Subject.SubjectID,
 		},
@@ -137,14 +136,14 @@ type lookupAttempt struct {
 	tenant  pagination.TenantInfo
 	control *carrierintel.CarrierIntelControl
 	primary *boundProvider
-	subject repositories.CarrierIntelSubject
+	subject carrierintelports.CarrierIntelSubject
 	wanted  carrierintel.LookupDepth
 }
 
 func (s *Service) lookupWithFallback(
 	ctx context.Context,
 	attempt *lookupAttempt,
-) (*services.CarrierIntelLookupResult, *boundProvider, error) {
+) (*carrierintelports.CarrierIntelLookupResult, *boundProvider, error) {
 	if s.providerAvailable(attempt.primary) {
 		result, err := s.lookup(ctx, attempt, attempt.primary)
 		if err == nil {
@@ -183,9 +182,9 @@ func providerUnavailableError(provider integration.Type) error {
 	return errortypes.NewBusinessError(
 		"{0} is currently unavailable and no fallback provider could answer. Try again shortly",
 		provider.String(),
-	).WithInternal(&services.CarrierIntelProviderError{
+	).WithInternal(&carrierintelports.CarrierIntelProviderError{
 		Provider: provider,
-		Kind:     services.CarrierIntelErrorUnavailable,
+		Kind:     carrierintelports.CarrierIntelErrorUnavailable,
 	})
 }
 
@@ -226,12 +225,12 @@ func (s *Service) lookup(
 	ctx context.Context,
 	attempt *lookupAttempt,
 	bound *boundProvider,
-) (*services.CarrierIntelLookupResult, error) {
+) (*carrierintelports.CarrierIntelLookupResult, error) {
 	depth := s.chooseDepth(ctx, attempt, bound)
 	if depth == "" {
-		return nil, &services.CarrierIntelProviderError{
+		return nil, &carrierintelports.CarrierIntelProviderError{
 			Provider: bound.provider,
-			Kind:     services.CarrierIntelErrorUnsupported,
+			Kind:     carrierintelports.CarrierIntelErrorUnsupported,
 			Message:  "provider has no lookup capability",
 		}
 	}
@@ -248,8 +247,8 @@ func (s *Service) lookup(
 		return nil, err
 	}
 
-	request := &services.CarrierIntelLookupRequest{
-		Identifier: services.CarrierIntelIdentifier{
+	request := &carrierintelports.CarrierIntelLookupRequest{
+		Identifier: carrierintelports.CarrierIntelIdentifier{
 			DOTNumber:    attempt.subject.DOTNumber,
 			DocketNumber: attempt.subject.DocketNumber,
 		},
@@ -259,15 +258,15 @@ func (s *Service) lookup(
 		request.Identifier.DocketNumber = ""
 	}
 
-	var result *services.CarrierIntelLookupResult
+	var result *carrierintelports.CarrierIntelLookupResult
 	err := s.withRateLimitWait(ctx, func() error {
 		var lookupErr error
 		result, lookupErr = bound.client.Lookup(ctx, request)
 		return lookupErr
 	})
 	if err != nil {
-		if services.IsCarrierIntelErrorKind(err, services.CarrierIntelErrorNotFound) {
-			return &services.CarrierIntelLookupResult{
+		if carrierintelports.IsCarrierIntelErrorKind(err, carrierintelports.CarrierIntelErrorNotFound) {
+			return &carrierintelports.CarrierIntelLookupResult{
 				NotFound: true,
 				Depth:    depth,
 				Endpoint: depthEndpoint(depth),

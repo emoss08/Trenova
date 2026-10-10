@@ -10,8 +10,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,41 +25,41 @@ import (
 const testNow = int64(1_767_225_600)
 
 type shipmentReader struct {
-	repositories.ShipmentRepository
+	shipmentports.ShipmentRepository
 	entity *shipment.Shipment
 }
 
 func (f *shipmentReader) GetByID(
 	context.Context,
-	*repositories.GetShipmentByIDRequest,
+	*shipmentports.GetShipmentByIDRequest,
 ) (*shipment.Shipment, error) {
 	return f.entity, nil
 }
 
 type customerReader struct {
-	repositories.CustomerRepository
+	customerports.CustomerRepository
 	entity *customer.Customer
 }
 
 func (f *customerReader) GetByID(
 	context.Context,
-	repositories.GetCustomerByIDRequest,
+	customerports.GetCustomerByIDRequest,
 ) (*customer.Customer, error) {
 	return f.entity, nil
 }
 
 type renderer struct {
-	services.DocumentTemplateResolver
+	documenttemplateports.DocumentTemplateResolver
 	data documenttemplate.AgentEmailContext
 }
 
 func (f *renderer) RenderMessage(
 	_ context.Context,
-	req *services.RenderMessageRequest,
-) (*services.RenderedMessage, error) {
+	req *documenttemplateports.RenderMessageRequest,
+) (*documenttemplateports.RenderedMessage, error) {
 	f.data = req.Data.(documenttemplate.AgentEmailContext)
 
-	return &services.RenderedMessage{
+	return &documenttemplateports.RenderedMessage{
 		Subject: f.data.AgentSubject,
 		HTML:    "<p>" + f.data.AgentBody + "</p>",
 		Text:    f.data.AgentBody,
@@ -64,12 +67,12 @@ func (f *renderer) RenderMessage(
 }
 
 type mailer struct {
-	services.EmailService
-	sent []*services.SendEmailRequest
+	emailports.EmailService
+	sent []*emailports.SendEmailRequest
 	err  error
 }
 
-func (f *mailer) Send(_ context.Context, req *services.SendEmailRequest) (*email.Message, error) {
+func (f *mailer) Send(_ context.Context, req *emailports.SendEmailRequest) (*email.Message, error) {
 	f.sent = append(f.sent, req)
 	if f.err != nil {
 		return nil, f.err
@@ -79,21 +82,21 @@ func (f *mailer) Send(_ context.Context, req *services.SendEmailRequest) (*email
 }
 
 type commentBook struct {
-	services.ShipmentCommentService
+	shipmentports.ShipmentCommentService
 	existing []*shipment.ShipmentComment
-	created  []*services.CreateSystemShipmentCommentRequest
+	created  []*shipmentports.CreateSystemShipmentCommentRequest
 }
 
 func (f *commentBook) ListByShipmentID(
 	context.Context,
-	*repositories.ListShipmentCommentsRequest,
+	*shipmentports.ListShipmentCommentsRequest,
 ) (*pagination.CursorListResult[*shipment.ShipmentComment], error) {
 	return &pagination.CursorListResult[*shipment.ShipmentComment]{Items: f.existing}, nil
 }
 
 func (f *commentBook) CreateSystem(
 	_ context.Context,
-	req *services.CreateSystemShipmentCommentRequest,
+	req *shipmentports.CreateSystemShipmentCommentRequest,
 ) (*shipment.ShipmentComment, error) {
 	f.created = append(f.created, req)
 
@@ -106,7 +109,7 @@ type fixture struct {
 	comments *commentBook
 	renderer *renderer
 	request  *NotifyDelayRequest
-	actor    *services.RequestActor
+	actor    *permissionports.RequestActor
 }
 
 func newFixture(recipients string) *fixture {
@@ -116,7 +119,7 @@ func newFixture(recipients string) *fixture {
 		mailer:   &mailer{},
 		comments: &commentBook{},
 		renderer: &renderer{},
-		actor:    &services.RequestActor{UserID: pulid.MustNew("usr_")},
+		actor:    &permissionports.RequestActor{UserID: pulid.MustNew("usr_")},
 	}
 	f.service = &Service{
 		email:     f.mailer,

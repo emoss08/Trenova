@@ -8,10 +8,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -41,67 +42,67 @@ var commentUserRefs = map[string]permission.Resource{
 type commentModerator interface {
 	GetByID(
 		ctx context.Context,
-		req *repositories.GetShipmentCommentByIDRequest,
+		req *shipmentports.GetShipmentCommentByIDRequest,
 	) (*shipment.ShipmentComment, error)
 	Pin(
 		ctx context.Context,
-		req *serviceports.ToggleShipmentCommentRequest,
-		actor *serviceports.RequestActor,
+		req *shipmentports.ToggleShipmentCommentRequest,
+		actor *permissionports.RequestActor,
 	) (*shipment.ShipmentComment, error)
 	Unpin(
 		ctx context.Context,
-		req *serviceports.ToggleShipmentCommentRequest,
-		actor *serviceports.RequestActor,
+		req *shipmentports.ToggleShipmentCommentRequest,
+		actor *permissionports.RequestActor,
 	) (*shipment.ShipmentComment, error)
 	Resolve(
 		ctx context.Context,
-		req *serviceports.ToggleShipmentCommentRequest,
-		actor *serviceports.RequestActor,
+		req *shipmentports.ToggleShipmentCommentRequest,
+		actor *permissionports.RequestActor,
 	) (*shipment.ShipmentComment, error)
 	Unresolve(
 		ctx context.Context,
-		req *serviceports.ToggleShipmentCommentRequest,
-		actor *serviceports.RequestActor,
+		req *shipmentports.ToggleShipmentCommentRequest,
+		actor *permissionports.RequestActor,
 	) (*shipment.ShipmentComment, error)
 	Update(
 		ctx context.Context,
-		req *serviceports.UpdateShipmentCommentRequest,
-		actor *serviceports.RequestActor,
+		req *shipmentports.UpdateShipmentCommentRequest,
+		actor *permissionports.RequestActor,
 	) (*shipment.ShipmentComment, error)
 	Delete(
 		ctx context.Context,
-		req *serviceports.DeleteShipmentCommentRequest,
-		actor *serviceports.RequestActor,
+		req *shipmentports.DeleteShipmentCommentRequest,
+		actor *permissionports.RequestActor,
 	) error
 	PreviewPin(
 		ctx context.Context,
-		req *serviceports.ToggleShipmentCommentRequest,
-		actor *serviceports.RequestActor,
+		req *shipmentports.ToggleShipmentCommentRequest,
+		actor *permissionports.RequestActor,
 		pinned bool,
-	) (*serviceports.ShipmentCommentChange, error)
+	) (*shipmentports.ShipmentCommentChange, error)
 	PreviewResolve(
 		ctx context.Context,
-		req *serviceports.ToggleShipmentCommentRequest,
-		actor *serviceports.RequestActor,
+		req *shipmentports.ToggleShipmentCommentRequest,
+		actor *permissionports.RequestActor,
 		resolved bool,
-	) (*serviceports.ShipmentCommentChange, error)
+	) (*shipmentports.ShipmentCommentChange, error)
 	PreviewUpdate(
 		ctx context.Context,
-		req *serviceports.UpdateShipmentCommentRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.ShipmentCommentChange, error)
+		req *shipmentports.UpdateShipmentCommentRequest,
+		actor *permissionports.RequestActor,
+	) (*shipmentports.ShipmentCommentChange, error)
 	PreviewDelete(
 		ctx context.Context,
-		req *serviceports.DeleteShipmentCommentRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.ShipmentCommentDeletion, error)
+		req *shipmentports.DeleteShipmentCommentRequest,
+		actor *permissionports.RequestActor,
+	) (*shipmentports.ShipmentCommentDeletion, error)
 }
 
 type commentPermissions interface {
 	Check(
 		ctx context.Context,
-		req *serviceports.PermissionCheckRequest,
-	) (*serviceports.PermissionCheckResult, error)
+		req *permissionports.PermissionCheckRequest,
+	) (*permissionports.PermissionCheckResult, error)
 }
 
 func commentIDProperty() map[string]any {
@@ -137,8 +138,8 @@ func commentResult(action string, comment *shipment.ShipmentComment) *agent.Tool
 }
 
 func toggleCommentRequest(
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.ToggleShipmentCommentRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*shipmentports.ToggleShipmentCommentRequest, error) {
 	shipmentID, err := requirePulid(params.Params, paramShipmentID)
 	if err != nil {
 		return nil, err
@@ -148,7 +149,7 @@ func toggleCommentRequest(
 		return nil, err
 	}
 
-	return &serviceports.ToggleShipmentCommentRequest{
+	return &shipmentports.ToggleShipmentCommentRequest{
 		TenantInfo: tenantFrom(*params),
 		ShipmentID: shipmentID,
 		CommentID:  commentID,
@@ -158,10 +159,10 @@ func toggleCommentRequest(
 func renderCommentToggle(
 	verb string,
 	fields []string,
-) func(*serviceports.ToggleShipmentCommentRequest, *serviceports.ShipmentCommentChange) (*agent.ToolPreview, error) {
+) func(*shipmentports.ToggleShipmentCommentRequest, *shipmentports.ShipmentCommentChange) (*agent.ToolPreview, error) {
 	return func(
-		_ *serviceports.ToggleShipmentCommentRequest,
-		plan *serviceports.ShipmentCommentChange,
+		_ *shipmentports.ToggleShipmentCommentRequest,
+		plan *shipmentports.ShipmentCommentChange,
 	) (*agent.ToolPreview, error) {
 		change, err := toolpreview.Changed(
 			commentRecord(plan.Before),
@@ -195,7 +196,7 @@ type commentToggleSpec struct {
 func newCommentToggleTool(
 	comments commentModerator,
 	spec *commentToggleSpec,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	properties := map[string]any{
 		paramShipmentID: shipmentIDProperty("The shipment the comment is on"),
 		paramCommentID:  commentIDProperty(),
@@ -219,27 +220,27 @@ func newCommentToggleTool(
 		properties:  properties,
 		required:    []string{paramShipmentID, paramCommentID},
 		target:      targetComment,
-	}, receivablePlan[*serviceports.ToggleShipmentCommentRequest, *serviceports.ShipmentCommentChange]{
+	}, receivablePlan[*shipmentports.ToggleShipmentCommentRequest, *shipmentports.ShipmentCommentChange]{
 		request: toggleCommentRequest,
 		plan: func(
 			ctx context.Context,
-			req *serviceports.ToggleShipmentCommentRequest,
-			params *serviceports.ToolExecuteParams,
-		) (*serviceports.ShipmentCommentChange, error) {
+			req *shipmentports.ToggleShipmentCommentRequest,
+			params *agentports.ToolExecuteParams,
+		) (*shipmentports.ShipmentCommentChange, error) {
 			if spec.pinned != nil {
 				return comments.PreviewPin(ctx, req, params.Actor, *spec.pinned)
 			}
 
 			return comments.PreviewResolve(ctx, req, params.Actor, spec.resolved(params.Params))
 		},
-		refused: func(*serviceports.ToggleShipmentCommentRequest) string {
+		refused: func(*shipmentports.ToggleShipmentCommentRequest) string {
 			return "Would " + spec.verb + " the comment on the shipment."
 		},
 		render: renderCommentToggle(spec.verb, spec.fields),
 		run: func(
 			ctx context.Context,
-			req *serviceports.ToggleShipmentCommentRequest,
-			params *serviceports.ToolExecuteParams,
+			req *shipmentports.ToggleShipmentCommentRequest,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			var (
 				saved *shipment.ShipmentComment
@@ -264,13 +265,13 @@ func newCommentToggleTool(
 	})
 }
 
-func targetComment(params map[string]any) (serviceports.ToolTarget, bool) {
+func targetComment(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, paramCommentID, permission.ResourceShipmentComment)
 }
 
 func boolPointer(value bool) *bool { return &value }
 
-func newPinShipmentCommentTool(comments commentModerator) serviceports.AgentTool {
+func newPinShipmentCommentTool(comments commentModerator) agentports.AgentTool {
 	return newCommentToggleTool(comments, &commentToggleSpec{
 		name: "pin_shipment_comment",
 		description: "Pin a comment to the top of a shipment's thread so dispatch sees " +
@@ -287,7 +288,7 @@ func newPinShipmentCommentTool(comments commentModerator) serviceports.AgentTool
 	})
 }
 
-func newUnpinShipmentCommentTool(comments commentModerator) serviceports.AgentTool {
+func newUnpinShipmentCommentTool(comments commentModerator) agentports.AgentTool {
 	return newCommentToggleTool(comments, &commentToggleSpec{
 		name: "unpin_shipment_comment",
 		description: "Take a pinned comment off the top of a shipment's thread once " +
@@ -302,7 +303,7 @@ func newUnpinShipmentCommentTool(comments commentModerator) serviceports.AgentTo
 	})
 }
 
-func newResolveShipmentCommentTool(comments commentModerator) serviceports.AgentTool {
+func newResolveShipmentCommentTool(comments commentModerator) agentports.AgentTool {
 	return newCommentToggleTool(comments, &commentToggleSpec{
 		name: "resolve_shipment_comment",
 		description: "Mark a comment on a shipment resolved once what it asked for is " +
@@ -327,14 +328,14 @@ func newResolveShipmentCommentTool(comments commentModerator) serviceports.Agent
 }
 
 type commentEdit struct {
-	get         repositories.GetShipmentCommentByIDRequest
+	get         shipmentports.GetShipmentCommentByIDRequest
 	text        *string
 	visibility  *shipment.CommentVisibility
 	priority    *shipment.CommentPriority
 	requiresAck *bool
 }
 
-func readCommentEdit(params *serviceports.ToolExecuteParams) (*commentEdit, error) {
+func readCommentEdit(params *agentports.ToolExecuteParams) (*commentEdit, error) {
 	shipmentID, err := requirePulid(params.Params, paramShipmentID)
 	if err != nil {
 		return nil, err
@@ -344,7 +345,7 @@ func readCommentEdit(params *serviceports.ToolExecuteParams) (*commentEdit, erro
 		return nil, err
 	}
 
-	edit := &commentEdit{get: repositories.GetShipmentCommentByIDRequest{
+	edit := &commentEdit{get: shipmentports.GetShipmentCommentByIDRequest{
 		CommentID:  commentID,
 		ShipmentID: shipmentID,
 		TenantInfo: tenantFrom(*params),
@@ -391,7 +392,7 @@ func readCommentEdit(params *serviceports.ToolExecuteParams) (*commentEdit, erro
 
 func (e *commentEdit) entity(
 	current *shipment.ShipmentComment,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) *shipment.ShipmentComment {
 	next := &shipment.ShipmentComment{
 		ID:                     current.ID,
@@ -438,20 +439,20 @@ func (e *commentEdit) entity(
 }
 
 func classifyCommentEditVisibility(
-	params serviceports.ToolExecuteParams, //nolint:gocritic // ToolPolicy.Classify passes params by value
-) serviceports.CallPolicy {
+	params agentports.ToolExecuteParams, //nolint:gocritic // ToolPolicy.Classify passes params by value
+) agentports.CallPolicy {
 	return classifyCommentVisibility(params)
 }
 
 type commentEditPlan struct {
-	change *serviceports.ShipmentCommentChange
+	change *shipmentports.ShipmentCommentChange
 }
 
 func moderatorFor(
 	ctx context.Context,
 	permissions commentPermissions,
 	current *shipment.ShipmentComment,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (bool, error) {
 	if current.UserID == actor.UserID {
 		return false, nil
@@ -474,7 +475,7 @@ func moderatorFor(
 func newEditShipmentCommentTool(
 	comments commentModerator,
 	permissions commentPermissions,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	base := newReportingReceivableTool(&receivableSpec{
 		name:        "edit_shipment_comment",
 		searchTerms: []string{"fix comment", "reword comment", "typo"},
@@ -510,7 +511,7 @@ func newEditShipmentCommentTool(
 		plan: func(
 			ctx context.Context,
 			edit *commentEdit,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*commentEditPlan, error) {
 			req, err := commentUpdateRequest(ctx, comments, permissions, edit, params.Actor)
 			if err != nil {
@@ -547,7 +548,7 @@ func newEditShipmentCommentTool(
 		run: func(
 			ctx context.Context,
 			edit *commentEdit,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			req, err := commentUpdateRequest(ctx, comments, permissions, edit, params.Actor)
 			if err != nil {
@@ -578,8 +579,8 @@ func commentUpdateRequest(
 	comments commentModerator,
 	permissions commentPermissions,
 	edit *commentEdit,
-	actor *serviceports.RequestActor,
-) (*serviceports.UpdateShipmentCommentRequest, error) {
+	actor *permissionports.RequestActor,
+) (*shipmentports.UpdateShipmentCommentRequest, error) {
 	current, err := comments.GetByID(ctx, &edit.get)
 	if err != nil {
 		return nil, err
@@ -589,20 +590,20 @@ func commentUpdateRequest(
 		return nil, err
 	}
 
-	return &serviceports.UpdateShipmentCommentRequest{
+	return &shipmentports.UpdateShipmentCommentRequest{
 		Entity:      edit.entity(current, actor),
 		AsModerator: moderator,
 	}, nil
 }
 
 type commentDeletion struct {
-	get repositories.GetShipmentCommentByIDRequest
+	get shipmentports.GetShipmentCommentByIDRequest
 }
 
 func newDeleteShipmentCommentTool(
 	comments commentModerator,
 	permissions commentPermissions,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newReportingReceivableTool(&receivableSpec{
 		name:     "delete_shipment_comment",
 		artifact: shipmentRecordEntity,
@@ -623,14 +624,14 @@ func newDeleteShipmentCommentTool(
 		},
 		required: []string{paramShipmentID, paramCommentID},
 		target:   targetComment,
-	}, receivablePlan[*commentDeletion, *serviceports.ShipmentCommentDeletion]{
-		request: func(params *serviceports.ToolExecuteParams) (*commentDeletion, error) {
+	}, receivablePlan[*commentDeletion, *shipmentports.ShipmentCommentDeletion]{
+		request: func(params *agentports.ToolExecuteParams) (*commentDeletion, error) {
 			toggle, err := toggleCommentRequest(params)
 			if err != nil {
 				return nil, err
 			}
 
-			return &commentDeletion{get: repositories.GetShipmentCommentByIDRequest{
+			return &commentDeletion{get: shipmentports.GetShipmentCommentByIDRequest{
 				CommentID:  toggle.CommentID,
 				ShipmentID: toggle.ShipmentID,
 				TenantInfo: toggle.TenantInfo,
@@ -639,8 +640,8 @@ func newDeleteShipmentCommentTool(
 		plan: func(
 			ctx context.Context,
 			deletion *commentDeletion,
-			params *serviceports.ToolExecuteParams,
-		) (*serviceports.ShipmentCommentDeletion, error) {
+			params *agentports.ToolExecuteParams,
+		) (*shipmentports.ShipmentCommentDeletion, error) {
 			req, err := commentDeleteRequest(ctx, comments, permissions, deletion, params.Actor)
 			if err != nil {
 				return nil, err
@@ -651,7 +652,7 @@ func newDeleteShipmentCommentTool(
 		refused: func(*commentDeletion) string { return "Would delete the comment." },
 		render: func(
 			_ *commentDeletion,
-			plan *serviceports.ShipmentCommentDeletion,
+			plan *shipmentports.ShipmentCommentDeletion,
 		) (*agent.ToolPreview, error) {
 			change, err := toolpreview.Delete(commentRecord(plan.Comment), plan.Comment,
 				toolpreview.Only(fieldCommentText, fieldCommentVisib, fieldPriority))
@@ -669,7 +670,7 @@ func newDeleteShipmentCommentTool(
 		run: func(
 			ctx context.Context,
 			deletion *commentDeletion,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			req, err := commentDeleteRequest(ctx, comments, permissions, deletion, params.Actor)
 			if err != nil {
@@ -696,8 +697,8 @@ func commentDeleteRequest(
 	comments commentModerator,
 	permissions commentPermissions,
 	deletion *commentDeletion,
-	actor *serviceports.RequestActor,
-) (*serviceports.DeleteShipmentCommentRequest, error) {
+	actor *permissionports.RequestActor,
+) (*shipmentports.DeleteShipmentCommentRequest, error) {
 	current, err := comments.GetByID(ctx, &deletion.get)
 	if err != nil {
 		return nil, err
@@ -707,7 +708,7 @@ func commentDeleteRequest(
 		return nil, err
 	}
 
-	return &serviceports.DeleteShipmentCommentRequest{
+	return &shipmentports.DeleteShipmentCommentRequest{
 		TenantInfo:  deletion.get.TenantInfo,
 		ShipmentID:  deletion.get.ShipmentID,
 		CommentID:   deletion.get.CommentID,

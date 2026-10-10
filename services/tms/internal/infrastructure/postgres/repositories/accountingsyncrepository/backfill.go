@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/intutils"
@@ -34,7 +34,7 @@ type backfillRepository struct {
 	l  *zap.Logger
 }
 
-func NewBackfillRepository(p BackfillParams) repositories.AccountingBackfillRepository {
+func NewBackfillRepository(p BackfillParams) accountingsyncports.AccountingBackfillRepository {
 	return &backfillRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.accounting-backfill-repository"),
@@ -62,7 +62,7 @@ func (r *backfillRepository) Create(
 			Returning("*").
 			Exec(ctx); err != nil {
 			if dberror.IsUniqueConstraintViolation(err) {
-				return nil, repositories.ErrAccountingBackfillActive
+				return nil, accountingsyncports.ErrAccountingBackfillActive
 			}
 			return nil, fmt.Errorf("create accounting backfill: %w", err)
 		}
@@ -73,7 +73,7 @@ func (r *backfillRepository) Create(
 
 func (r *backfillRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetAccountingBackfillRequest,
+	req accountingsyncports.GetAccountingBackfillRequest,
 ) (*accountingsync.AccountingBackfill, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingBackfill, error) {
 		entity := new(accountingsync.AccountingBackfill)
@@ -94,7 +94,7 @@ func (r *backfillRepository) GetByID(
 
 func (r *backfillRepository) GetActive(
 	ctx context.Context,
-	req repositories.AccountingSyncConnectionRequest,
+	req accountingsyncports.AccountingSyncConnectionRequest,
 ) (*accountingsync.AccountingBackfill, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingBackfill, error) {
 		entity := new(accountingsync.AccountingBackfill)
@@ -117,7 +117,7 @@ func (r *backfillRepository) GetActive(
 
 func (r *backfillRepository) ListByConnection(
 	ctx context.Context,
-	req repositories.ListAccountingBackfillsRequest,
+	req accountingsyncports.ListAccountingBackfillsRequest,
 ) ([]*accountingsync.AccountingBackfill, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*accountingsync.AccountingBackfill, error) {
 		limit := req.Limit
@@ -162,7 +162,7 @@ func (r *backfillRepository) Update(
 		if err != nil {
 			entity.Version = ov
 			if dberror.IsUniqueConstraintViolation(err) {
-				return nil, repositories.ErrAccountingBackfillActive
+				return nil, accountingsyncports.ErrAccountingBackfillActive
 			}
 			return nil, err
 		}

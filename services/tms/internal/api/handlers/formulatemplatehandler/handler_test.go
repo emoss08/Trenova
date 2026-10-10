@@ -1,6 +1,7 @@
 package formulatemplatehandler_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"context"
 	"errors"
 	"net/http"
@@ -11,15 +12,17 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/formula"
 	"github.com/emoss08/trenova/internal/core/services/formula/engine"
 	"github.com/emoss08/trenova/internal/core/services/formula/resolver"
 	"github.com/emoss08/trenova/internal/core/services/formula/schema"
 	"github.com/emoss08/trenova/internal/core/services/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -36,20 +39,20 @@ import (
 var errNotFound = errors.New("formula template not found")
 
 type mockFormulaTemplateRepo struct {
-	listFunc             func(ctx context.Context, req *repositories.ListFormulaTemplatesRequest) (*pagination.ListResult[*formulatemplate.FormulaTemplate], error)
-	getByIDFunc          func(ctx context.Context, req repositories.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error)
-	getByIDsFunc         func(ctx context.Context, req repositories.GetFormulaTemplatesByIDsRequest) ([]*formulatemplate.FormulaTemplate, error)
+	listFunc             func(ctx context.Context, req *formulatemplateports.ListFormulaTemplatesRequest) (*pagination.ListResult[*formulatemplate.FormulaTemplate], error)
+	getByIDFunc          func(ctx context.Context, req formulatemplateports.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error)
+	getByIDsFunc         func(ctx context.Context, req formulatemplateports.GetFormulaTemplatesByIDsRequest) ([]*formulatemplate.FormulaTemplate, error)
 	createFunc           func(ctx context.Context, entity *formulatemplate.FormulaTemplate) (*formulatemplate.FormulaTemplate, error)
 	updateFunc           func(ctx context.Context, entity *formulatemplate.FormulaTemplate) (*formulatemplate.FormulaTemplate, error)
-	bulkUpdateStatusFunc func(ctx context.Context, req *repositories.BulkUpdateFormulaTemplateStatusRequest) ([]*formulatemplate.FormulaTemplate, error)
-	bulkDuplicateFunc    func(ctx context.Context, req *repositories.BulkDuplicateFormulaTemplateRequest) ([]*formulatemplate.FormulaTemplate, error)
-	countUsagesFunc      func(ctx context.Context, req *repositories.GetTemplateUsageRequest) (*repositories.GetTemplateUsageResponse, error)
-	selectOptionsFunc    func(ctx context.Context, req *repositories.FormulaTemplateSelectOptionsRequest) (*pagination.ListResult[*formulatemplate.FormulaTemplate], error)
+	bulkUpdateStatusFunc func(ctx context.Context, req *formulatemplateports.BulkUpdateFormulaTemplateStatusRequest) ([]*formulatemplate.FormulaTemplate, error)
+	bulkDuplicateFunc    func(ctx context.Context, req *formulatemplateports.BulkDuplicateFormulaTemplateRequest) ([]*formulatemplate.FormulaTemplate, error)
+	countUsagesFunc      func(ctx context.Context, req *formulatemplateports.GetTemplateUsageRequest) (*formulatemplateports.GetTemplateUsageResponse, error)
+	selectOptionsFunc    func(ctx context.Context, req *formulatemplateports.FormulaTemplateSelectOptionsRequest) (*pagination.ListResult[*formulatemplate.FormulaTemplate], error)
 }
 
 func (m *mockFormulaTemplateRepo) List(
 	ctx context.Context,
-	req *repositories.ListFormulaTemplatesRequest,
+	req *formulatemplateports.ListFormulaTemplatesRequest,
 ) (*pagination.ListResult[*formulatemplate.FormulaTemplate], error) {
 	if m.listFunc != nil {
 		return m.listFunc(ctx, req)
@@ -62,7 +65,7 @@ func (m *mockFormulaTemplateRepo) List(
 
 func (m *mockFormulaTemplateRepo) ListConnection(
 	_ context.Context,
-	_ *repositories.ListFormulaTemplateConnectionRequest,
+	_ *formulatemplateports.ListFormulaTemplateConnectionRequest,
 ) (*pagination.CursorListResult[*formulatemplate.FormulaTemplate], error) {
 	return &pagination.CursorListResult[*formulatemplate.FormulaTemplate]{
 		Items: []*formulatemplate.FormulaTemplate{},
@@ -71,7 +74,7 @@ func (m *mockFormulaTemplateRepo) ListConnection(
 
 func (m *mockFormulaTemplateRepo) GetByID(
 	ctx context.Context,
-	req repositories.GetFormulaTemplateByIDRequest,
+	req formulatemplateports.GetFormulaTemplateByIDRequest,
 ) (*formulatemplate.FormulaTemplate, error) {
 	if m.getByIDFunc != nil {
 		return m.getByIDFunc(ctx, req)
@@ -81,7 +84,7 @@ func (m *mockFormulaTemplateRepo) GetByID(
 
 func (m *mockFormulaTemplateRepo) GetByIDs(
 	ctx context.Context,
-	req repositories.GetFormulaTemplatesByIDsRequest,
+	req formulatemplateports.GetFormulaTemplatesByIDsRequest,
 ) ([]*formulatemplate.FormulaTemplate, error) {
 	if m.getByIDsFunc != nil {
 		return m.getByIDsFunc(ctx, req)
@@ -91,7 +94,7 @@ func (m *mockFormulaTemplateRepo) GetByIDs(
 
 func (m *mockFormulaTemplateRepo) FindByNames(
 	_ context.Context,
-	_ repositories.GetFormulaTemplatesByNamesRequest,
+	_ formulatemplateports.GetFormulaTemplatesByNamesRequest,
 ) ([]*formulatemplate.FormulaTemplate, error) {
 	return nil, nil
 }
@@ -118,7 +121,7 @@ func (m *mockFormulaTemplateRepo) Update(
 
 func (m *mockFormulaTemplateRepo) BulkUpdateStatus(
 	ctx context.Context,
-	req *repositories.BulkUpdateFormulaTemplateStatusRequest,
+	req *formulatemplateports.BulkUpdateFormulaTemplateStatusRequest,
 ) ([]*formulatemplate.FormulaTemplate, error) {
 	if m.bulkUpdateStatusFunc != nil {
 		return m.bulkUpdateStatusFunc(ctx, req)
@@ -128,7 +131,7 @@ func (m *mockFormulaTemplateRepo) BulkUpdateStatus(
 
 func (m *mockFormulaTemplateRepo) BulkDuplicate(
 	ctx context.Context,
-	req *repositories.BulkDuplicateFormulaTemplateRequest,
+	req *formulatemplateports.BulkDuplicateFormulaTemplateRequest,
 ) ([]*formulatemplate.FormulaTemplate, error) {
 	if m.bulkDuplicateFunc != nil {
 		return m.bulkDuplicateFunc(ctx, req)
@@ -138,20 +141,20 @@ func (m *mockFormulaTemplateRepo) BulkDuplicate(
 
 func (m *mockFormulaTemplateRepo) CountUsages(
 	ctx context.Context,
-	req *repositories.GetTemplateUsageRequest,
-) (*repositories.GetTemplateUsageResponse, error) {
+	req *formulatemplateports.GetTemplateUsageRequest,
+) (*formulatemplateports.GetTemplateUsageResponse, error) {
 	if m.countUsagesFunc != nil {
 		return m.countUsagesFunc(ctx, req)
 	}
-	return &repositories.GetTemplateUsageResponse{
+	return &formulatemplateports.GetTemplateUsageResponse{
 		InUse:  false,
-		Usages: []repositories.TemplateUsageCount{},
+		Usages: []formulatemplateports.TemplateUsageCount{},
 	}, nil
 }
 
 func (m *mockFormulaTemplateRepo) SelectOptions(
 	ctx context.Context,
-	req *repositories.FormulaTemplateSelectOptionsRequest,
+	req *formulatemplateports.FormulaTemplateSelectOptionsRequest,
 ) (*pagination.ListResult[*formulatemplate.FormulaTemplate], error) {
 	if m.selectOptionsFunc != nil {
 		return m.selectOptionsFunc(ctx, req)
@@ -164,15 +167,15 @@ func (m *mockFormulaTemplateRepo) SelectOptions(
 
 type mockVersionRepo struct {
 	createFunc                func(ctx context.Context, version *formulatemplate.FormulaTemplateVersion) (*formulatemplate.FormulaTemplateVersion, error)
-	getByTemplateAndVersionFn func(ctx context.Context, req *repositories.GetVersionRequest) (*formulatemplate.FormulaTemplateVersion, error)
-	listFunc                  func(ctx context.Context, req *repositories.ListVersionsRequest) (*pagination.ListResult[*formulatemplate.FormulaTemplateVersion], error)
-	getVersionRangeFunc       func(ctx context.Context, req *repositories.GetVersionRangeRequest) ([]*formulatemplate.FormulaTemplateVersion, error)
+	getByTemplateAndVersionFn func(ctx context.Context, req *formulatemplateports.GetVersionRequest) (*formulatemplate.FormulaTemplateVersion, error)
+	listFunc                  func(ctx context.Context, req *formulatemplateports.ListVersionsRequest) (*pagination.ListResult[*formulatemplate.FormulaTemplateVersion], error)
+	getVersionRangeFunc       func(ctx context.Context, req *formulatemplateports.GetVersionRangeRequest) ([]*formulatemplate.FormulaTemplateVersion, error)
 	getLatestVersionFunc      func(ctx context.Context, templateID pulid.ID, tenantInfo pagination.TenantInfo) (*formulatemplate.FormulaTemplateVersion, error)
-	getForkedTemplatesFunc    func(ctx context.Context, req *repositories.GetForkedTemplatesRequest) ([]*formulatemplate.FormulaTemplate, error)
-	updateTagsFunc            func(ctx context.Context, req *repositories.UpdateVersionTagsRequest) (*formulatemplate.FormulaTemplateVersion, error)
-	getEffectiveVersionFunc   func(ctx context.Context, req *repositories.GetEffectiveVersionRequest) (*formulatemplate.FormulaTemplateVersion, error)
-	updateEffectiveDateFunc   func(ctx context.Context, req *repositories.UpdateEffectiveDateRequest) (*formulatemplate.FormulaTemplateVersion, error)
-	listScheduledFunc         func(ctx context.Context, req *repositories.ListScheduledVersionsRequest) ([]*formulatemplate.FormulaTemplateVersion, error)
+	getForkedTemplatesFunc    func(ctx context.Context, req *formulatemplateports.GetForkedTemplatesRequest) ([]*formulatemplate.FormulaTemplate, error)
+	updateTagsFunc            func(ctx context.Context, req *formulatemplateports.UpdateVersionTagsRequest) (*formulatemplate.FormulaTemplateVersion, error)
+	getEffectiveVersionFunc   func(ctx context.Context, req *formulatemplateports.GetEffectiveVersionRequest) (*formulatemplate.FormulaTemplateVersion, error)
+	updateEffectiveDateFunc   func(ctx context.Context, req *formulatemplateports.UpdateEffectiveDateRequest) (*formulatemplate.FormulaTemplateVersion, error)
+	listScheduledFunc         func(ctx context.Context, req *formulatemplateports.ListScheduledVersionsRequest) ([]*formulatemplate.FormulaTemplateVersion, error)
 }
 
 func (m *mockVersionRepo) Create(
@@ -188,7 +191,7 @@ func (m *mockVersionRepo) Create(
 
 func (m *mockVersionRepo) GetByTemplateAndVersion(
 	ctx context.Context,
-	req *repositories.GetVersionRequest,
+	req *formulatemplateports.GetVersionRequest,
 ) (*formulatemplate.FormulaTemplateVersion, error) {
 	if m.getByTemplateAndVersionFn != nil {
 		return m.getByTemplateAndVersionFn(ctx, req)
@@ -198,7 +201,7 @@ func (m *mockVersionRepo) GetByTemplateAndVersion(
 
 func (m *mockVersionRepo) List(
 	ctx context.Context,
-	req *repositories.ListVersionsRequest,
+	req *formulatemplateports.ListVersionsRequest,
 ) (*pagination.ListResult[*formulatemplate.FormulaTemplateVersion], error) {
 	if m.listFunc != nil {
 		return m.listFunc(ctx, req)
@@ -211,7 +214,7 @@ func (m *mockVersionRepo) List(
 
 func (m *mockVersionRepo) GetVersionRange(
 	ctx context.Context,
-	req *repositories.GetVersionRangeRequest,
+	req *formulatemplateports.GetVersionRangeRequest,
 ) ([]*formulatemplate.FormulaTemplateVersion, error) {
 	if m.getVersionRangeFunc != nil {
 		return m.getVersionRangeFunc(ctx, req)
@@ -232,7 +235,7 @@ func (m *mockVersionRepo) GetLatestVersion(
 
 func (m *mockVersionRepo) GetForkedTemplates(
 	ctx context.Context,
-	req *repositories.GetForkedTemplatesRequest,
+	req *formulatemplateports.GetForkedTemplatesRequest,
 ) ([]*formulatemplate.FormulaTemplate, error) {
 	if m.getForkedTemplatesFunc != nil {
 		return m.getForkedTemplatesFunc(ctx, req)
@@ -242,7 +245,7 @@ func (m *mockVersionRepo) GetForkedTemplates(
 
 func (m *mockVersionRepo) UpdateTags(
 	ctx context.Context,
-	req *repositories.UpdateVersionTagsRequest,
+	req *formulatemplateports.UpdateVersionTagsRequest,
 ) (*formulatemplate.FormulaTemplateVersion, error) {
 	if m.updateTagsFunc != nil {
 		return m.updateTagsFunc(ctx, req)
@@ -252,7 +255,7 @@ func (m *mockVersionRepo) UpdateTags(
 
 func (m *mockVersionRepo) GetEffectiveVersion(
 	ctx context.Context,
-	req *repositories.GetEffectiveVersionRequest,
+	req *formulatemplateports.GetEffectiveVersionRequest,
 ) (*formulatemplate.FormulaTemplateVersion, error) {
 	if m.getEffectiveVersionFunc != nil {
 		return m.getEffectiveVersionFunc(ctx, req)
@@ -262,7 +265,7 @@ func (m *mockVersionRepo) GetEffectiveVersion(
 
 func (m *mockVersionRepo) UpdateEffectiveDate(
 	ctx context.Context,
-	req *repositories.UpdateEffectiveDateRequest,
+	req *formulatemplateports.UpdateEffectiveDateRequest,
 ) (*formulatemplate.FormulaTemplateVersion, error) {
 	if m.updateEffectiveDateFunc != nil {
 		return m.updateEffectiveDateFunc(ctx, req)
@@ -272,7 +275,7 @@ func (m *mockVersionRepo) UpdateEffectiveDate(
 
 func (m *mockVersionRepo) ListScheduled(
 	ctx context.Context,
-	req *repositories.ListScheduledVersionsRequest,
+	req *formulatemplateports.ListScheduledVersionsRequest,
 ) ([]*formulatemplate.FormulaTemplateVersion, error) {
 	if m.listScheduledFunc != nil {
 		return m.listScheduledFunc(ctx, req)
@@ -307,31 +310,31 @@ func newTestFormulaService(t *testing.T) *formula.Service {
 }
 
 type stubFormulaVersionRepo struct {
-	repositories.FormulaTemplateVersionRepository
+	formulatemplateports.FormulaTemplateVersionRepository
 }
 
 func (s *stubFormulaVersionRepo) GetEffectiveVersion(
 	_ context.Context,
-	_ *repositories.GetEffectiveVersionRequest,
+	_ *formulatemplateports.GetEffectiveVersionRequest,
 ) (*formulatemplate.FormulaTemplateVersion, error) {
 	return nil, nil
 }
 
 func (s *stubFormulaVersionRepo) ListScheduled(
 	_ context.Context,
-	_ *repositories.ListScheduledVersionsRequest,
+	_ *formulatemplateports.ListScheduledVersionsRequest,
 ) ([]*formulatemplate.FormulaTemplateVersion, error) {
 	return nil, nil
 }
 
 type stubRateMatrixRepo struct {
-	repositories.RateMatrixRepository
+	ratematrixports.RateMatrixRepository
 }
 
 func (s *stubRateMatrixRepo) GetLookupData(
 	_ context.Context,
-	_ *repositories.GetRateMatrixLookupDataRequest,
-) ([]*repositories.RateMatrixLookupData, error) {
+	_ *ratematrixports.GetRateMatrixLookupDataRequest,
+) ([]*ratematrixports.RateMatrixLookupData, error) {
 	return nil, nil
 }
 
@@ -378,14 +381,14 @@ func registerShipmentSchema(registry *schema.Registry) {
 }
 
 type mockShipmentRepo struct {
-	repositories.ShipmentRepository
-	getByIDFunc   func(ctx context.Context, req *repositories.GetShipmentByIDRequest) (*shipment.Shipment, error)
-	listRatedFunc func(ctx context.Context, req *repositories.ListRatedByFormulaTemplateRequest) ([]*shipment.Shipment, error)
+	shipmentports.ShipmentRepository
+	getByIDFunc   func(ctx context.Context, req *shipmentports.GetShipmentByIDRequest) (*shipment.Shipment, error)
+	listRatedFunc func(ctx context.Context, req *shipmentports.ListRatedByFormulaTemplateRequest) ([]*shipment.Shipment, error)
 }
 
 func (m *mockShipmentRepo) GetByID(
 	ctx context.Context,
-	req *repositories.GetShipmentByIDRequest,
+	req *shipmentports.GetShipmentByIDRequest,
 ) (*shipment.Shipment, error) {
 	if m.getByIDFunc != nil {
 		return m.getByIDFunc(ctx, req)
@@ -395,7 +398,7 @@ func (m *mockShipmentRepo) GetByID(
 
 func (m *mockShipmentRepo) ListRatedByFormulaTemplate(
 	ctx context.Context,
-	req *repositories.ListRatedByFormulaTemplateRequest,
+	req *shipmentports.ListRatedByFormulaTemplateRequest,
 ) ([]*shipment.Shipment, error) {
 	if m.listRatedFunc != nil {
 		return m.listRatedFunc(ctx, req)
@@ -404,13 +407,13 @@ func (m *mockShipmentRepo) ListRatedByFormulaTemplate(
 }
 
 type stubTestCaseRepo struct {
-	repositories.FormulaTemplateTestCaseRepository
+	formulatemplateports.FormulaTemplateTestCaseRepository
 	cases []*formulatemplate.TestCase
 }
 
 func (s *stubTestCaseRepo) ListByTemplate(
 	_ context.Context,
-	_ repositories.ListTestCasesRequest,
+	_ formulatemplateports.ListTestCasesRequest,
 ) ([]*formulatemplate.TestCase, error) {
 	return s.cases, nil
 }
@@ -424,7 +427,7 @@ func (testDBConnection) IsHealthy(context.Context) bool       { return true }
 func (testDBConnection) Close() error                         { return nil }
 func (testDBConnection) WithTx(
 	ctx context.Context,
-	_ ports.TxOptions,
+	_ kernelports.TxOptions,
 	fn func(context.Context, bun.Tx) error,
 ) error {
 	return fn(ctx, bun.Tx{})
@@ -450,7 +453,7 @@ func setupHandlerWithPermissions(
 	t *testing.T,
 	repo *mockFormulaTemplateRepo,
 	versionRepo *mockVersionRepo,
-	permEngine serviceports.PermissionEngine,
+	permEngine permissionports.PermissionEngine,
 ) *formulatemplatehandler.Handler {
 	t.Helper()
 
@@ -461,8 +464,8 @@ func setupHandlerWithDeps(
 	t *testing.T,
 	repo *mockFormulaTemplateRepo,
 	versionRepo *mockVersionRepo,
-	shipmentRepo repositories.ShipmentRepository,
-	permEngine serviceports.PermissionEngine,
+	shipmentRepo shipmentports.ShipmentRepository,
+	permEngine permissionports.PermissionEngine,
 ) *formulatemplatehandler.Handler {
 	t.Helper()
 
@@ -509,7 +512,7 @@ func TestFormulaTemplateHandler_List_Success(t *testing.T) {
 
 	ftID := pulid.MustNew("ft_")
 	repo := &mockFormulaTemplateRepo{
-		listFunc: func(_ context.Context, _ *repositories.ListFormulaTemplatesRequest) (*pagination.ListResult[*formulatemplate.FormulaTemplate], error) {
+		listFunc: func(_ context.Context, _ *formulatemplateports.ListFormulaTemplatesRequest) (*pagination.ListResult[*formulatemplate.FormulaTemplate], error) {
 			return &pagination.ListResult[*formulatemplate.FormulaTemplate]{
 				Items: []*formulatemplate.FormulaTemplate{
 					{
@@ -550,7 +553,7 @@ func TestFormulaTemplateHandler_List_Error(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockFormulaTemplateRepo{
-		listFunc: func(_ context.Context, _ *repositories.ListFormulaTemplatesRequest) (*pagination.ListResult[*formulatemplate.FormulaTemplate], error) {
+		listFunc: func(_ context.Context, _ *formulatemplateports.ListFormulaTemplatesRequest) (*pagination.ListResult[*formulatemplate.FormulaTemplate], error) {
 			return nil, errors.New("database error")
 		},
 	}
@@ -573,7 +576,7 @@ func TestFormulaTemplateHandler_Get_Success(t *testing.T) {
 
 	ftID := pulid.MustNew("ft_")
 	repo := &mockFormulaTemplateRepo{
-		getByIDFunc: func(_ context.Context, req repositories.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
+		getByIDFunc: func(_ context.Context, req formulatemplateports.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
 			return &formulatemplate.FormulaTemplate{
 				ID:             req.TemplateID,
 				OrganizationID: testutil.TestOrgID,
@@ -625,7 +628,7 @@ func TestFormulaTemplateHandler_Get_NotFound(t *testing.T) {
 
 	ftID := pulid.MustNew("ft_")
 	repo := &mockFormulaTemplateRepo{
-		getByIDFunc: func(_ context.Context, _ repositories.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
+		getByIDFunc: func(_ context.Context, _ formulatemplateports.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
 			return nil, errNotFound
 		},
 	}
@@ -648,10 +651,10 @@ func TestFormulaTemplateHandler_GetUsage_Success(t *testing.T) {
 
 	ftID := pulid.MustNew("ft_")
 	repo := &mockFormulaTemplateRepo{
-		countUsagesFunc: func(_ context.Context, _ *repositories.GetTemplateUsageRequest) (*repositories.GetTemplateUsageResponse, error) {
-			return &repositories.GetTemplateUsageResponse{
+		countUsagesFunc: func(_ context.Context, _ *formulatemplateports.GetTemplateUsageRequest) (*formulatemplateports.GetTemplateUsageResponse, error) {
+			return &formulatemplateports.GetTemplateUsageResponse{
 				InUse: true,
-				Usages: []repositories.TemplateUsageCount{
+				Usages: []formulatemplateports.TemplateUsageCount{
 					{Type: "accessorial_charge", Count: 3},
 				},
 			}, nil
@@ -696,7 +699,7 @@ func TestFormulaTemplateHandler_GetUsage_Error(t *testing.T) {
 
 	ftID := pulid.MustNew("ft_")
 	repo := &mockFormulaTemplateRepo{
-		countUsagesFunc: func(_ context.Context, _ *repositories.GetTemplateUsageRequest) (*repositories.GetTemplateUsageResponse, error) {
+		countUsagesFunc: func(_ context.Context, _ *formulatemplateports.GetTemplateUsageRequest) (*formulatemplateports.GetTemplateUsageResponse, error) {
 			return nil, errors.New("database error")
 		},
 	}
@@ -797,10 +800,10 @@ func TestFormulaTemplateHandler_Create_ServiceError(t *testing.T) {
 func TestFormulaTemplateHandler_Create_PermissionDenied(t *testing.T) {
 	t.Parallel()
 
-	permEngine := mocks.NewMockPermissionEngine(t)
+	permEngine := permissionportsmock.NewMockPermissionEngine(t)
 	permEngine.EXPECT().
 		Check(mock.Anything, mock.Anything).
-		Return(&serviceports.PermissionCheckResult{Allowed: false}, nil)
+		Return(&permissionports.PermissionCheckResult{Allowed: false}, nil)
 
 	createCalled := false
 	repo := &mockFormulaTemplateRepo{
@@ -836,7 +839,7 @@ func TestFormulaTemplateHandler_Update_Success(t *testing.T) {
 
 	ftID := pulid.MustNew("ft_")
 	repo := &mockFormulaTemplateRepo{
-		getByIDFunc: func(_ context.Context, req repositories.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
+		getByIDFunc: func(_ context.Context, req formulatemplateports.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
 			return &formulatemplate.FormulaTemplate{
 				ID:                   req.TemplateID,
 				OrganizationID:       testutil.TestOrgID,
@@ -924,7 +927,7 @@ func TestFormulaTemplateHandler_Update_ServiceError(t *testing.T) {
 
 	ftID := pulid.MustNew("ft_")
 	repo := &mockFormulaTemplateRepo{
-		getByIDFunc: func(_ context.Context, req repositories.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
+		getByIDFunc: func(_ context.Context, req formulatemplateports.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
 			return &formulatemplate.FormulaTemplate{
 				ID:                   req.TemplateID,
 				OrganizationID:       testutil.TestOrgID,
@@ -967,7 +970,7 @@ func TestFormulaTemplateHandler_Duplicate_Success(t *testing.T) {
 
 	ftID := pulid.MustNew("ft_")
 	repo := &mockFormulaTemplateRepo{
-		bulkDuplicateFunc: func(_ context.Context, _ *repositories.BulkDuplicateFormulaTemplateRequest) ([]*formulatemplate.FormulaTemplate, error) {
+		bulkDuplicateFunc: func(_ context.Context, _ *formulatemplateports.BulkDuplicateFormulaTemplateRequest) ([]*formulatemplate.FormulaTemplate, error) {
 			return []*formulatemplate.FormulaTemplate{
 				{
 					ID:             pulid.MustNew("ft_"),
@@ -1026,7 +1029,7 @@ func TestFormulaTemplateHandler_Duplicate_ServiceError(t *testing.T) {
 
 	ftID := pulid.MustNew("ft_")
 	repo := &mockFormulaTemplateRepo{
-		bulkDuplicateFunc: func(_ context.Context, _ *repositories.BulkDuplicateFormulaTemplateRequest) ([]*formulatemplate.FormulaTemplate, error) {
+		bulkDuplicateFunc: func(_ context.Context, _ *formulatemplateports.BulkDuplicateFormulaTemplateRequest) ([]*formulatemplate.FormulaTemplate, error) {
 			return nil, errors.New("duplicate failed")
 		},
 	}
@@ -1053,7 +1056,7 @@ func TestFormulaTemplateHandler_BulkUpdateStatus_Success(t *testing.T) {
 	ftID1 := pulid.MustNew("ft_")
 	ftID2 := pulid.MustNew("ft_")
 	repo := &mockFormulaTemplateRepo{
-		bulkUpdateStatusFunc: func(_ context.Context, _ *repositories.BulkUpdateFormulaTemplateStatusRequest) ([]*formulatemplate.FormulaTemplate, error) {
+		bulkUpdateStatusFunc: func(_ context.Context, _ *formulatemplateports.BulkUpdateFormulaTemplateStatusRequest) ([]*formulatemplate.FormulaTemplate, error) {
 			return []*formulatemplate.FormulaTemplate{
 				{
 					ID:             ftID1,
@@ -1116,7 +1119,7 @@ func TestFormulaTemplateHandler_BulkUpdateStatus_ServiceError(t *testing.T) {
 
 	ftID := pulid.MustNew("ft_")
 	repo := &mockFormulaTemplateRepo{
-		bulkUpdateStatusFunc: func(_ context.Context, _ *repositories.BulkUpdateFormulaTemplateStatusRequest) ([]*formulatemplate.FormulaTemplate, error) {
+		bulkUpdateStatusFunc: func(_ context.Context, _ *formulatemplateports.BulkUpdateFormulaTemplateStatusRequest) ([]*formulatemplate.FormulaTemplate, error) {
 			return nil, errors.New("bulk update failed")
 		},
 	}
@@ -1160,7 +1163,7 @@ func TestFormulaTemplateHandler_Patch_UpdatesOnlyProvidedFields(t *testing.T) {
 	var updatedEntity *formulatemplate.FormulaTemplate
 
 	repo := &mockFormulaTemplateRepo{
-		getByIDFunc: func(_ context.Context, _ repositories.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
+		getByIDFunc: func(_ context.Context, _ formulatemplateports.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
 			copied := *existingTemplate
 			return &copied, nil
 		},
@@ -1199,7 +1202,7 @@ func TestFormulaTemplateHandler_Patch_ReturnsNotFoundForMissingEntity(t *testing
 	templateID := pulid.MustNew("ft_")
 
 	repo := &mockFormulaTemplateRepo{
-		getByIDFunc: func(_ context.Context, _ repositories.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
+		getByIDFunc: func(_ context.Context, _ formulatemplateports.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
 			return nil, errNotFound
 		},
 	}
@@ -1245,7 +1248,7 @@ func TestFormulaTemplateHandler_Patch_BadJSON(t *testing.T) {
 	templateID := pulid.MustNew("ft_")
 
 	repo := &mockFormulaTemplateRepo{
-		getByIDFunc: func(_ context.Context, _ repositories.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
+		getByIDFunc: func(_ context.Context, _ formulatemplateports.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
 			return &formulatemplate.FormulaTemplate{
 				ID:                   templateID,
 				OrganizationID:       testutil.TestOrgID,
@@ -1280,7 +1283,7 @@ func TestFormulaTemplateHandler_Patch_ServiceError(t *testing.T) {
 	templateID := pulid.MustNew("ft_")
 
 	repo := &mockFormulaTemplateRepo{
-		getByIDFunc: func(_ context.Context, _ repositories.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
+		getByIDFunc: func(_ context.Context, _ formulatemplateports.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
 			return &formulatemplate.FormulaTemplate{
 				ID:                   templateID,
 				OrganizationID:       testutil.TestOrgID,
@@ -1336,7 +1339,7 @@ func TestFormulaTemplateHandler_Patch_PreservesAllFields(t *testing.T) {
 	var updatedEntity *formulatemplate.FormulaTemplate
 
 	repo := &mockFormulaTemplateRepo{
-		getByIDFunc: func(_ context.Context, _ repositories.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
+		getByIDFunc: func(_ context.Context, _ formulatemplateports.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
 			copied := *existingTemplate
 			return &copied, nil
 		},
@@ -1396,7 +1399,7 @@ func TestFormulaTemplateHandler_Update_RejectsStatusChange(t *testing.T) {
 
 	updateCalled := false
 	repo := &mockFormulaTemplateRepo{
-		getByIDFunc: func(_ context.Context, _ repositories.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
+		getByIDFunc: func(_ context.Context, _ formulatemplateports.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
 			copied := *existingTemplate
 			return &copied, nil
 		},
@@ -1531,7 +1534,7 @@ func TestFormulaTemplateHandler_ListVersions_Success(t *testing.T) {
 
 	ftID := pulid.MustNew("ft_")
 	versionRepo := &mockVersionRepo{
-		listFunc: func(_ context.Context, _ *repositories.ListVersionsRequest) (*pagination.ListResult[*formulatemplate.FormulaTemplateVersion], error) {
+		listFunc: func(_ context.Context, _ *formulatemplateports.ListVersionsRequest) (*pagination.ListResult[*formulatemplate.FormulaTemplateVersion], error) {
 			return &pagination.ListResult[*formulatemplate.FormulaTemplateVersion]{
 				Items: []*formulatemplate.FormulaTemplateVersion{
 					{
@@ -1590,7 +1593,7 @@ func TestFormulaTemplateHandler_GetVersion_Success(t *testing.T) {
 
 	ftID := pulid.MustNew("ft_")
 	versionRepo := &mockVersionRepo{
-		getByTemplateAndVersionFn: func(_ context.Context, req *repositories.GetVersionRequest) (*formulatemplate.FormulaTemplateVersion, error) {
+		getByTemplateAndVersionFn: func(_ context.Context, req *formulatemplateports.GetVersionRequest) (*formulatemplate.FormulaTemplateVersion, error) {
 			return &formulatemplate.FormulaTemplateVersion{
 				ID:            pulid.MustNew("ftv_"),
 				TemplateID:    req.TemplateID,
@@ -1660,7 +1663,7 @@ func TestFormulaTemplateHandler_GetVersion_NotFound(t *testing.T) {
 
 	ftID := pulid.MustNew("ft_")
 	versionRepo := &mockVersionRepo{
-		getByTemplateAndVersionFn: func(_ context.Context, _ *repositories.GetVersionRequest) (*formulatemplate.FormulaTemplateVersion, error) {
+		getByTemplateAndVersionFn: func(_ context.Context, _ *formulatemplateports.GetVersionRequest) (*formulatemplate.FormulaTemplateVersion, error) {
 			return nil, errNotFound
 		},
 	}
@@ -1683,7 +1686,7 @@ func TestFormulaTemplateHandler_CreateVersion_Success(t *testing.T) {
 
 	ftID := pulid.MustNew("ft_")
 	repo := &mockFormulaTemplateRepo{
-		getByIDFunc: func(_ context.Context, _ repositories.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
+		getByIDFunc: func(_ context.Context, _ formulatemplateports.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
 			return &formulatemplate.FormulaTemplate{
 				ID:                   ftID,
 				OrganizationID:       testutil.TestOrgID,
@@ -1702,7 +1705,7 @@ func TestFormulaTemplateHandler_CreateVersion_Success(t *testing.T) {
 	}
 
 	versionRepo := &mockVersionRepo{
-		getByTemplateAndVersionFn: func(_ context.Context, _ *repositories.GetVersionRequest) (*formulatemplate.FormulaTemplateVersion, error) {
+		getByTemplateAndVersionFn: func(_ context.Context, _ *formulatemplateports.GetVersionRequest) (*formulatemplate.FormulaTemplateVersion, error) {
 			return &formulatemplate.FormulaTemplateVersion{
 				ID:            pulid.MustNew("ftv_"),
 				TemplateID:    ftID,
@@ -1782,7 +1785,7 @@ func TestFormulaTemplateHandler_CreateVersion_ServiceError(t *testing.T) {
 
 	ftID := pulid.MustNew("ft_")
 	repo := &mockFormulaTemplateRepo{
-		getByIDFunc: func(_ context.Context, _ repositories.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
+		getByIDFunc: func(_ context.Context, _ formulatemplateports.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
 			return nil, errors.New("not found")
 		},
 	}
@@ -1808,7 +1811,7 @@ func TestFormulaTemplateHandler_Rollback_Success(t *testing.T) {
 
 	ftID := pulid.MustNew("ft_")
 	repo := &mockFormulaTemplateRepo{
-		getByIDFunc: func(_ context.Context, _ repositories.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
+		getByIDFunc: func(_ context.Context, _ formulatemplateports.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
 			return &formulatemplate.FormulaTemplate{
 				ID:                   ftID,
 				OrganizationID:       testutil.TestOrgID,
@@ -1827,7 +1830,7 @@ func TestFormulaTemplateHandler_Rollback_Success(t *testing.T) {
 	}
 
 	versionRepo := &mockVersionRepo{
-		getByTemplateAndVersionFn: func(_ context.Context, req *repositories.GetVersionRequest) (*formulatemplate.FormulaTemplateVersion, error) {
+		getByTemplateAndVersionFn: func(_ context.Context, req *formulatemplateports.GetVersionRequest) (*formulatemplate.FormulaTemplateVersion, error) {
 			return &formulatemplate.FormulaTemplateVersion{
 				ID:            pulid.MustNew("ftv_"),
 				TemplateID:    ftID,
@@ -1908,7 +1911,7 @@ func TestFormulaTemplateHandler_Rollback_ServiceError(t *testing.T) {
 
 	ftID := pulid.MustNew("ft_")
 	versionRepo := &mockVersionRepo{
-		getByTemplateAndVersionFn: func(_ context.Context, _ *repositories.GetVersionRequest) (*formulatemplate.FormulaTemplateVersion, error) {
+		getByTemplateAndVersionFn: func(_ context.Context, _ *formulatemplateports.GetVersionRequest) (*formulatemplate.FormulaTemplateVersion, error) {
 			return nil, errors.New("version not found")
 		},
 	}
@@ -1935,7 +1938,7 @@ func TestFormulaTemplateHandler_Fork_Success(t *testing.T) {
 
 	ftID := pulid.MustNew("ft_")
 	repo := &mockFormulaTemplateRepo{
-		getByIDFunc: func(_ context.Context, _ repositories.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
+		getByIDFunc: func(_ context.Context, _ formulatemplateports.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
 			return &formulatemplate.FormulaTemplate{
 				ID:                   ftID,
 				OrganizationID:       testutil.TestOrgID,
@@ -2001,7 +2004,7 @@ func TestFormulaTemplateHandler_Fork_WithSourceVersion(t *testing.T) {
 	ftID := pulid.MustNew("ft_")
 	sourceVersion := int64(1)
 	repo := &mockFormulaTemplateRepo{
-		getByIDFunc: func(_ context.Context, _ repositories.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
+		getByIDFunc: func(_ context.Context, _ formulatemplateports.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
 			return &formulatemplate.FormulaTemplate{
 				ID:                   ftID,
 				OrganizationID:       testutil.TestOrgID,
@@ -2021,7 +2024,7 @@ func TestFormulaTemplateHandler_Fork_WithSourceVersion(t *testing.T) {
 	}
 
 	versionRepo := &mockVersionRepo{
-		getByTemplateAndVersionFn: func(_ context.Context, req *repositories.GetVersionRequest) (*formulatemplate.FormulaTemplateVersion, error) {
+		getByTemplateAndVersionFn: func(_ context.Context, req *formulatemplateports.GetVersionRequest) (*formulatemplate.FormulaTemplateVersion, error) {
 			if req.VersionNumber == sourceVersion {
 				return &formulatemplate.FormulaTemplateVersion{
 					ID:            pulid.MustNew("ftv_"),
@@ -2107,7 +2110,7 @@ func TestFormulaTemplateHandler_Fork_ServiceError(t *testing.T) {
 
 	ftID := pulid.MustNew("ft_")
 	repo := &mockFormulaTemplateRepo{
-		getByIDFunc: func(_ context.Context, _ repositories.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
+		getByIDFunc: func(_ context.Context, _ formulatemplateports.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
 			return nil, errors.New("not found")
 		},
 	}
@@ -2134,7 +2137,7 @@ func TestFormulaTemplateHandler_CompareVersions_Success(t *testing.T) {
 
 	ftID := pulid.MustNew("ft_")
 	versionRepo := &mockVersionRepo{
-		getVersionRangeFunc: func(_ context.Context, _ *repositories.GetVersionRangeRequest) ([]*formulatemplate.FormulaTemplateVersion, error) {
+		getVersionRangeFunc: func(_ context.Context, _ *formulatemplateports.GetVersionRangeRequest) ([]*formulatemplate.FormulaTemplateVersion, error) {
 			return []*formulatemplate.FormulaTemplateVersion{
 				{
 					ID:            pulid.MustNew("ftv_"),
@@ -2256,7 +2259,7 @@ func TestFormulaTemplateHandler_CompareVersions_ServiceError(t *testing.T) {
 
 	ftID := pulid.MustNew("ft_")
 	versionRepo := &mockVersionRepo{
-		getVersionRangeFunc: func(_ context.Context, _ *repositories.GetVersionRangeRequest) ([]*formulatemplate.FormulaTemplateVersion, error) {
+		getVersionRangeFunc: func(_ context.Context, _ *formulatemplateports.GetVersionRangeRequest) ([]*formulatemplate.FormulaTemplateVersion, error) {
 			return nil, errors.New("database error")
 		},
 	}
@@ -2281,7 +2284,7 @@ func TestFormulaTemplateHandler_GetLineage_Success(t *testing.T) {
 	ftID := pulid.MustNew("ft_")
 	forkedID := pulid.MustNew("ft_")
 	repo := &mockFormulaTemplateRepo{
-		getByIDFunc: func(_ context.Context, _ repositories.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
+		getByIDFunc: func(_ context.Context, _ formulatemplateports.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
 			return &formulatemplate.FormulaTemplate{
 				ID:                   ftID,
 				OrganizationID:       testutil.TestOrgID,
@@ -2298,7 +2301,7 @@ func TestFormulaTemplateHandler_GetLineage_Success(t *testing.T) {
 
 	sourceVersion := int64(1)
 	versionRepo := &mockVersionRepo{
-		getForkedTemplatesFunc: func(_ context.Context, _ *repositories.GetForkedTemplatesRequest) ([]*formulatemplate.FormulaTemplate, error) {
+		getForkedTemplatesFunc: func(_ context.Context, _ *formulatemplateports.GetForkedTemplatesRequest) ([]*formulatemplate.FormulaTemplate, error) {
 			return []*formulatemplate.FormulaTemplate{
 				{
 					ID:                  forkedID,
@@ -2350,7 +2353,7 @@ func TestFormulaTemplateHandler_GetLineage_ServiceError(t *testing.T) {
 
 	ftID := pulid.MustNew("ft_")
 	repo := &mockFormulaTemplateRepo{
-		getByIDFunc: func(_ context.Context, _ repositories.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
+		getByIDFunc: func(_ context.Context, _ formulatemplateports.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
 			return nil, errors.New("not found")
 		},
 	}
@@ -2373,7 +2376,7 @@ func TestFormulaTemplateHandler_UpdateVersionTags_Success(t *testing.T) {
 
 	ftID := pulid.MustNew("ft_")
 	versionRepo := &mockVersionRepo{
-		updateTagsFunc: func(_ context.Context, req *repositories.UpdateVersionTagsRequest) (*formulatemplate.FormulaTemplateVersion, error) {
+		updateTagsFunc: func(_ context.Context, req *formulatemplateports.UpdateVersionTagsRequest) (*formulatemplate.FormulaTemplateVersion, error) {
 			return &formulatemplate.FormulaTemplateVersion{
 				ID:            pulid.MustNew("ftv_"),
 				TemplateID:    req.TemplateID,
@@ -2392,7 +2395,7 @@ func TestFormulaTemplateHandler_UpdateVersionTags_Success(t *testing.T) {
 	}
 
 	repo := &mockFormulaTemplateRepo{
-		getByIDFunc: func(_ context.Context, req repositories.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
+		getByIDFunc: func(_ context.Context, req formulatemplateports.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
 			return &formulatemplate.FormulaTemplate{
 				ID:             req.TemplateID,
 				OrganizationID: req.TenantInfo.OrgID,
@@ -2508,7 +2511,7 @@ func TestFormulaTemplateHandler_UpdateVersionTags_ServiceError(t *testing.T) {
 
 	ftID := pulid.MustNew("ft_")
 	versionRepo := &mockVersionRepo{
-		updateTagsFunc: func(_ context.Context, _ *repositories.UpdateVersionTagsRequest) (*formulatemplate.FormulaTemplateVersion, error) {
+		updateTagsFunc: func(_ context.Context, _ *formulatemplateports.UpdateVersionTagsRequest) (*formulatemplate.FormulaTemplateVersion, error) {
 			return nil, errors.New("update tags failed")
 		},
 	}
@@ -2534,7 +2537,7 @@ func newApprovalTemplateRepo(
 ) (*mockFormulaTemplateRepo, *pulid.ID) {
 	ftID := pulid.MustNew("ft_")
 	repo := &mockFormulaTemplateRepo{
-		getByIDFunc: func(_ context.Context, req repositories.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
+		getByIDFunc: func(_ context.Context, req formulatemplateports.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
 			return &formulatemplate.FormulaTemplate{
 				ID:                   req.TemplateID,
 				OrganizationID:       testutil.TestOrgID,
@@ -2599,10 +2602,10 @@ func TestFormulaTemplateHandler_Submit_InvalidStatus(t *testing.T) {
 func TestFormulaTemplateHandler_Submit_PermissionDenied(t *testing.T) {
 	t.Parallel()
 
-	permEngine := mocks.NewMockPermissionEngine(t)
+	permEngine := permissionportsmock.NewMockPermissionEngine(t)
 	permEngine.EXPECT().
 		Check(mock.Anything, mock.Anything).
-		Return(&serviceports.PermissionCheckResult{Allowed: false}, nil)
+		Return(&permissionports.PermissionCheckResult{Allowed: false}, nil)
 
 	repo, ftID := newApprovalTemplateRepo(formulatemplate.StatusDraft)
 	handler := setupHandlerWithPermissions(t, repo, &mockVersionRepo{}, permEngine)
@@ -2690,13 +2693,13 @@ func TestFormulaTemplateHandler_UpdateEffectiveDate_Success(t *testing.T) {
 	future := timeutils.NowUnix() + 7200
 
 	versionRepo := &mockVersionRepo{
-		getByTemplateAndVersionFn: func(_ context.Context, req *repositories.GetVersionRequest) (*formulatemplate.FormulaTemplateVersion, error) {
+		getByTemplateAndVersionFn: func(_ context.Context, req *formulatemplateports.GetVersionRequest) (*formulatemplate.FormulaTemplateVersion, error) {
 			return &formulatemplate.FormulaTemplateVersion{
 				VersionNumber: req.VersionNumber,
 				Status:        formulatemplate.StatusActive,
 			}, nil
 		},
-		updateEffectiveDateFunc: func(_ context.Context, req *repositories.UpdateEffectiveDateRequest) (*formulatemplate.FormulaTemplateVersion, error) {
+		updateEffectiveDateFunc: func(_ context.Context, req *formulatemplateports.UpdateEffectiveDateRequest) (*formulatemplate.FormulaTemplateVersion, error) {
 			return &formulatemplate.FormulaTemplateVersion{
 				VersionNumber: req.VersionNumber,
 				EffectiveFrom: req.EffectiveFrom,
@@ -2747,7 +2750,7 @@ func TestFormulaTemplateHandler_ListScheduledVersions_Success(t *testing.T) {
 	future := timeutils.NowUnix() + 7200
 
 	versionRepo := &mockVersionRepo{
-		listScheduledFunc: func(_ context.Context, _ *repositories.ListScheduledVersionsRequest) ([]*formulatemplate.FormulaTemplateVersion, error) {
+		listScheduledFunc: func(_ context.Context, _ *formulatemplateports.ListScheduledVersionsRequest) ([]*formulatemplate.FormulaTemplateVersion, error) {
 			return []*formulatemplate.FormulaTemplateVersion{
 				{VersionNumber: 3, EffectiveFrom: &future},
 			}, nil
@@ -2777,7 +2780,7 @@ func TestFormulaTemplateHandler_Backtest_Success(t *testing.T) {
 
 	ftID := pulid.MustNew("ft_")
 	repo := &mockFormulaTemplateRepo{
-		getByIDFunc: func(_ context.Context, req repositories.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
+		getByIDFunc: func(_ context.Context, req formulatemplateports.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
 			return &formulatemplate.FormulaTemplate{
 				ID:             req.TemplateID,
 				OrganizationID: testutil.TestOrgID,
@@ -2795,7 +2798,7 @@ func TestFormulaTemplateHandler_Backtest_Success(t *testing.T) {
 	}
 
 	shipmentRepo := &mockShipmentRepo{
-		listRatedFunc: func(_ context.Context, _ *repositories.ListRatedByFormulaTemplateRequest) ([]*shipment.Shipment, error) {
+		listRatedFunc: func(_ context.Context, _ *shipmentports.ListRatedByFormulaTemplateRequest) ([]*shipment.Shipment, error) {
 			return []*shipment.Shipment{
 				{ID: pulid.MustNew("shp_"), ProNumber: "PRO-1", CreatedAt: 1700000000},
 			}, nil
@@ -2856,7 +2859,7 @@ func TestFormulaTemplateHandler_TestExpression_WithShipment_Success(t *testing.T
 
 	shipmentID := pulid.MustNew("shp_")
 	shipmentRepo := &mockShipmentRepo{
-		getByIDFunc: func(_ context.Context, req *repositories.GetShipmentByIDRequest) (*shipment.Shipment, error) {
+		getByIDFunc: func(_ context.Context, req *shipmentports.GetShipmentByIDRequest) (*shipment.Shipment, error) {
 			return &shipment.Shipment{ID: req.ID, ProNumber: "PRO-1"}, nil
 		},
 	}
@@ -2895,20 +2898,20 @@ func TestFormulaTemplateHandler_TestExpression_WithShipment_Success(t *testing.T
 func TestFormulaTemplateHandler_TestExpression_WithShipment_PermissionDenied(t *testing.T) {
 	t.Parallel()
 
-	permEngine := mocks.NewMockPermissionEngine(t)
+	permEngine := permissionportsmock.NewMockPermissionEngine(t)
 	permEngine.EXPECT().
-		Check(mock.Anything, mock.MatchedBy(func(req *serviceports.PermissionCheckRequest) bool {
+		Check(mock.Anything, mock.MatchedBy(func(req *permissionports.PermissionCheckRequest) bool {
 			return req.Resource == "shipment"
 		})).
-		Return(&serviceports.PermissionCheckResult{Allowed: false}, nil)
+		Return(&permissionports.PermissionCheckResult{Allowed: false}, nil)
 	permEngine.EXPECT().
-		Check(mock.Anything, mock.MatchedBy(func(req *serviceports.PermissionCheckRequest) bool {
+		Check(mock.Anything, mock.MatchedBy(func(req *permissionports.PermissionCheckRequest) bool {
 			return req.Resource != "shipment"
 		})).
-		Return(&serviceports.PermissionCheckResult{Allowed: true}, nil)
+		Return(&permissionports.PermissionCheckResult{Allowed: true}, nil)
 
 	shipmentRepo := &mockShipmentRepo{
-		getByIDFunc: func(_ context.Context, req *repositories.GetShipmentByIDRequest) (*shipment.Shipment, error) {
+		getByIDFunc: func(_ context.Context, req *shipmentports.GetShipmentByIDRequest) (*shipment.Shipment, error) {
 			t.Fatal("shipment must not be loaded when read permission is denied")
 			return nil, nil
 		},
@@ -2941,14 +2944,14 @@ func TestFormulaTemplateHandler_TestExpression_WithShipment_PermissionDenied(t *
 
 func (m *mockVersionRepo) GetLatestByStatus(
 	_ context.Context,
-	_ *repositories.GetLatestVersionByStatusRequest,
+	_ *formulatemplateports.GetLatestVersionByStatusRequest,
 ) (*formulatemplate.FormulaTemplateVersion, error) {
 	return nil, nil
 }
 
 func (m *mockVersionRepo) ClearScheduled(
 	_ context.Context,
-	_ *repositories.ListScheduledVersionsRequest,
+	_ *formulatemplateports.ListScheduledVersionsRequest,
 ) (int64, error) {
 	return 0, nil
 }
@@ -3055,9 +3058,9 @@ func TestFormulaTemplateHandler_Readiness_DraftWithoutScenarios(t *testing.T) {
 
 func (m *mockFormulaTemplateRepo) CountStatsByIDs(
 	_ context.Context,
-	_ *repositories.GetFormulaTemplateStatsRequest,
-) (map[pulid.ID]repositories.TemplateStats, error) {
-	return map[pulid.ID]repositories.TemplateStats{}, nil
+	_ *formulatemplateports.GetFormulaTemplateStatsRequest,
+) (map[pulid.ID]formulatemplateports.TemplateStats, error) {
+	return map[pulid.ID]formulatemplateports.TemplateStats{}, nil
 }
 
 func TestFormulaTemplateHandler_ReviewDiff_FirstApproval(t *testing.T) {
@@ -3115,7 +3118,7 @@ func (*stubRateMatrixRepo) GetLookupStamp(context.Context, pagination.TenantInfo
 }
 
 type stubReviewRepo struct {
-	repositories.FormulaTemplateReviewRepository
+	formulatemplateports.FormulaTemplateReviewRepository
 	created []*formulatemplate.Review
 }
 
@@ -3129,7 +3132,7 @@ func (s *stubReviewRepo) Create(
 
 func (s *stubReviewRepo) ListByTemplate(
 	context.Context,
-	*repositories.ListTemplateReviewsRequest,
+	*formulatemplateports.ListTemplateReviewsRequest,
 ) ([]*formulatemplate.Review, error) {
 	return s.created, nil
 }

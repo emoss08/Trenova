@@ -4,16 +4,16 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/services/shipmentinvalidation"
-
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
-	coreports "github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/internaledilifecycle"
+	"github.com/emoss08/trenova/internal/core/services/shipmentinvalidation"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
@@ -597,7 +597,7 @@ func (fakeDBConnection) IsHealthy(context.Context) bool       { return true }
 func (fakeDBConnection) Close() error                         { return nil }
 func (fakeDBConnection) WithTx(
 	ctx context.Context,
-	_ coreports.TxOptions,
+	_ kernelports.TxOptions,
 	fn func(context.Context, bun.Tx) error,
 ) error {
 	return fn(ctx, bun.Tx{})
@@ -605,21 +605,21 @@ func (fakeDBConnection) WithTx(
 
 type fakeShipmentRepository struct {
 	shipments        map[pulid.ID]*shipment.Shipment
-	updates          []*repositories.UpdateShipmentStatusRequest
+	updates          []*shipmentports.UpdateShipmentStatusRequest
 	lifecycleUpdates []*shipment.Shipment
-	cancels          []*repositories.CancelShipmentRequest
+	cancels          []*shipmentports.CancelShipmentRequest
 }
 
 func (r *fakeShipmentRepository) GetByID(
 	_ context.Context,
-	req *repositories.GetShipmentByIDRequest,
+	req *shipmentports.GetShipmentByIDRequest,
 ) (*shipment.Shipment, error) {
 	return r.shipments[req.ID], nil
 }
 
 func (r *fakeShipmentRepository) UpdateStatus(
 	_ context.Context,
-	req *repositories.UpdateShipmentStatusRequest,
+	req *shipmentports.UpdateShipmentStatusRequest,
 ) (*shipment.Shipment, error) {
 	r.updates = append(r.updates, req)
 	entity := r.shipments[req.ShipmentID]
@@ -640,7 +640,7 @@ func (r *fakeShipmentRepository) UpdateOperationalLifecycle(
 
 func (r *fakeShipmentRepository) Cancel(
 	_ context.Context,
-	req *repositories.CancelShipmentRequest,
+	req *shipmentports.CancelShipmentRequest,
 ) (*shipment.Shipment, error) {
 	r.cancels = append(r.cancels, req)
 	entity := r.shipments[req.ShipmentID]
@@ -659,7 +659,7 @@ type fakeShipmentLinkRepository struct {
 
 func (r *fakeShipmentLinkRepository) GetShipmentLinksByShipmentID(
 	context.Context,
-	repositories.GetEDIShipmentLinksByShipmentIDRequest,
+	ediports.GetEDIShipmentLinksByShipmentIDRequest,
 ) ([]*edi.ShipmentLink, error) {
 	r.calls++
 	return r.links, nil
@@ -673,9 +673,9 @@ type fakeTransferChangeRepository struct {
 func (r *fakeTransferChangeRepository) CreateTransferChangeIdempotent(
 	_ context.Context,
 	entity *edi.TransferChange,
-) (*repositories.CreateEDITransferChangeIdempotentResult, error) {
+) (*ediports.CreateEDITransferChangeIdempotentResult, error) {
 	if existing := r.existing[entity.IdempotencyKey]; existing != nil {
-		return &repositories.CreateEDITransferChangeIdempotentResult{
+		return &ediports.CreateEDITransferChangeIdempotentResult{
 			TransferChange: existing,
 			Created:        false,
 		}, nil
@@ -685,7 +685,7 @@ func (r *fakeTransferChangeRepository) CreateTransferChangeIdempotent(
 	}
 	r.existing[entity.IdempotencyKey] = entity
 	r.created = append(r.created, entity)
-	return &repositories.CreateEDITransferChangeIdempotentResult{
+	return &ediports.CreateEDITransferChangeIdempotentResult{
 		TransferChange: entity,
 		Created:        true,
 	}, nil
@@ -707,12 +707,12 @@ func (r *fakeShipmentEventRepository) Insert(
 }
 
 type fakeRealtimeService struct {
-	published []*services.PublishResourceInvalidationRequest
+	published []*agentports.PublishResourceInvalidationRequest
 }
 
 func (s *fakeRealtimeService) PublishResourceInvalidation(
 	_ context.Context,
-	req *services.PublishResourceInvalidationRequest,
+	req *agentports.PublishResourceInvalidationRequest,
 ) error {
 	s.published = append(s.published, req)
 	return nil

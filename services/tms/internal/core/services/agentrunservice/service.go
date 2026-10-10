@@ -5,18 +5,21 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/planservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -45,29 +48,29 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.AgentRunRepository
-	Definitions  repositories.AgentDefinitionRepository
-	Workflows    services.WorkflowStarter
+	Repo         agentports.AgentRunRepository
+	Definitions  agentdefinitionports.AgentDefinitionRepository
+	Workflows    kernelports.WorkflowStarter
 	Validator    *Validator
-	AuditService services.AuditService
-	Budgets      services.AgentBudgetService     `optional:"true"`
-	Activity     services.AgentActivityPublisher `optional:"true"`
-	Plans        services.PlanService            `optional:"true"`
+	AuditService auditports.AuditService
+	Budgets      agentports.AgentBudgetService     `optional:"true"`
+	Activity     agentports.AgentActivityPublisher `optional:"true"`
+	Plans        platformplanports.PlanService     `optional:"true"`
 }
 
 type Service struct {
 	l           *zap.Logger
-	repo        repositories.AgentRunRepository
-	definitions repositories.AgentDefinitionRepository
+	repo        agentports.AgentRunRepository
+	definitions agentdefinitionports.AgentDefinitionRepository
 	validator   *Validator
-	workflows   services.WorkflowStarter
-	audit       services.AuditService
-	budgets     services.AgentBudgetService
-	activity    services.AgentActivityPublisher
-	plans       services.PlanService
+	workflows   kernelports.WorkflowStarter
+	audit       auditports.AuditService
+	budgets     agentports.AgentBudgetService
+	activity    agentports.AgentActivityPublisher
+	plans       platformplanports.PlanService
 }
 
-func New(p Params) services.AgentRunService {
+func New(p Params) agentports.AgentRunService {
 	return &Service{
 		l:           p.Logger.Named("service.agentrun"),
 		repo:        p.Repo,
@@ -82,8 +85,8 @@ func New(p Params) services.AgentRunService {
 }
 func (s *Service) StartForDefinition(
 	ctx context.Context,
-	req *services.StartAgentRunForDefinitionRequest,
-	actor *services.RequestActor,
+	req *agentports.StartAgentRunForDefinitionRequest,
+	actor *permissionports.RequestActor,
 ) (*agent.AgentRun, error) {
 	if !s.workflows.Enabled() {
 		return nil, errortypes.NewBusinessError("The workflow engine is not available")
@@ -185,7 +188,7 @@ func (s *Service) StartForDefinition(
 	}, agentcontract.AgentRunWorkflowName, payload); err != nil {
 		var started *serviceerror.WorkflowExecutionAlreadyStarted
 		if errors.As(err, &started) {
-			return nil, services.ErrAgentRunAlreadyOpen
+			return nil, agentports.ErrAgentRunAlreadyOpen
 		}
 
 		return nil, err
@@ -211,7 +214,7 @@ func (s *Service) StartForDefinition(
 		fmt.Sprintf("Run of agent %s started (%s)", definition.Name, trigger),
 	)
 	if s.activity != nil {
-		s.activity.RunChanged(ctx, updated, actor.AuditActorOrSystem(), services.ActivityCreated)
+		s.activity.RunChanged(ctx, updated, actor.AuditActorOrSystem(), agentports.ActivityCreated)
 	}
 
 	return updated, nil
@@ -241,16 +244,16 @@ func (s *Service) assertWithinBudget(
 
 func (s *Service) resolveDefinition(
 	ctx context.Context,
-	req *services.StartAgentRunForDefinitionRequest,
+	req *agentports.StartAgentRunForDefinitionRequest,
 ) (*agentdefinition.Definition, error) {
 	if req.DefinitionID.IsNotNil() {
-		return s.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+		return s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 			ID:         req.DefinitionID,
 			TenantInfo: req.TenantInfo,
 		})
 	}
 	if req.SystemKey != "" {
-		return s.definitions.GetBySystemKey(ctx, repositories.GetAgentDefinitionBySystemKeyRequest{
+		return s.definitions.GetBySystemKey(ctx, agentdefinitionports.GetAgentDefinitionBySystemKeyRequest{
 			SystemKey:  req.SystemKey,
 			TenantInfo: req.TenantInfo,
 		})
@@ -264,8 +267,8 @@ func (s *Service) resolveDefinition(
 }
 func (s *Service) StartInline(
 	ctx context.Context,
-	req *services.StartInlineAgentRunRequest,
-	actor *services.RequestActor,
+	req *agentports.StartInlineAgentRunRequest,
+	actor *permissionports.RequestActor,
 ) (*agent.AgentRun, error) {
 	promptVersion := req.PromptVersion
 	if promptVersion == "" {
@@ -307,21 +310,21 @@ func (s *Service) StartInline(
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListAgentRunConnectionRequest,
+	req *agentports.ListAgentRunConnectionRequest,
 ) (*pagination.CursorListResult[*agent.AgentRun], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) GetByID(
 	ctx context.Context,
-	req repositories.GetAgentRunByIDRequest,
+	req agentports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
-func (s *Service) logStart(run *agent.AgentRun, actor *services.RequestActor, comment string) {
+func (s *Service) logStart(run *agent.AgentRun, actor *permissionports.RequestActor, comment string) {
 	auditActor := actor.AuditActorOrSystem()
-	if err := s.audit.LogAction(&services.LogActionParams{
+	if err := s.audit.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceAgentRun,
 		ResourceID:     run.GetID().String(),
 		Operation:      permission.OpCreate,
@@ -392,7 +395,7 @@ func agentTypeFor(definition *agentdefinition.Definition) agent.Type {
 	}
 }
 
-func inlineTrigger(requested agent.RunTrigger, actor *services.RequestActor) agent.RunTrigger {
+func inlineTrigger(requested agent.RunTrigger, actor *permissionports.RequestActor) agent.RunTrigger {
 	if requested != "" {
 		return requested
 	}
@@ -400,7 +403,7 @@ func inlineTrigger(requested agent.RunTrigger, actor *services.RequestActor) age
 	return runTrigger(actor)
 }
 
-func runTrigger(actor *services.RequestActor) agent.RunTrigger {
+func runTrigger(actor *permissionports.RequestActor) agent.RunTrigger {
 	if actor != nil && actor.IsUser() {
 		return agent.RunTriggerManual
 	}

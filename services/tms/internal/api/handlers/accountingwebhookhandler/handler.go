@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
@@ -18,14 +18,14 @@ const maxWebhookBodyBytes = 1 << 20
 type Params struct {
 	fx.In
 
-	Service      services.AccountingConnectionService
-	Connectors   services.AccountingConnectorRegistry
+	Service      accountingsyncports.AccountingConnectionService
+	Connectors   accountingsyncports.AccountingConnectorRegistry
 	ErrorHandler *helpers.ErrorHandler
 }
 
 type Handler struct {
-	service    services.AccountingConnectionService
-	connectors services.AccountingConnectorRegistry
+	service    accountingsyncports.AccountingConnectionService
+	connectors accountingsyncports.AccountingConnectorRegistry
 	eh         *helpers.ErrorHandler
 }
 
@@ -65,7 +65,7 @@ func (h *Handler) receive(c *gin.Context) {
 		return
 	}
 
-	err = h.service.ReceiveWebhook(c.Request.Context(), &services.ReceiveAccountingWebhookRequest{
+	err = h.service.ReceiveWebhook(c.Request.Context(), &accountingsyncports.ReceiveAccountingWebhookRequest{
 		IntegrationType: typ,
 		AppID:           c.Param("app"),
 		Signature:       c.GetHeader(provider.WebhookSignatureHeader()),

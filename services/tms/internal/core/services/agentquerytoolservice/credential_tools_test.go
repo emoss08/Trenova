@@ -6,22 +6,22 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type fakeCredentialRepo struct {
-	repositories.WorkerCredentialRepository
+	workerports.WorkerCredentialRepository
 
-	captured *repositories.ListExpiringWorkerCredentialsRequest
+	captured *workerports.ListExpiringWorkerCredentialsRequest
 	items    []*worker.WorkerCredential
 }
 
 func (f *fakeCredentialRepo) ListExpiring(
 	_ context.Context,
-	req *repositories.ListExpiringWorkerCredentialsRequest,
+	req *workerports.ListExpiringWorkerCredentialsRequest,
 ) ([]*worker.WorkerCredential, error) {
 	f.captured = req
 

@@ -1,6 +1,10 @@
 package documentoperationsservice_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentsearchprojectionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentuploadportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
 	"context"
 	"testing"
 
@@ -8,8 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/core/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/core/domain/documentupload"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/documentoperationsservice"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -30,8 +35,8 @@ func TestGetDiagnostics(t *testing.T) {
 	sessionID := pulid.MustNew("dus_")
 	tenantInfo := pagination.TenantInfo{OrgID: testutil.TestOrgID, BuID: testutil.TestBuID}
 
-	docRepo := mocks.NewMockDocumentRepository(t)
-	docRepo.EXPECT().GetByID(mock.Anything, repositories.GetDocumentByIDRequest{
+	docRepo := documentportsmock.NewMockDocumentRepository(t)
+	docRepo.EXPECT().GetByID(mock.Anything, documentports.GetDocumentByIDRequest{
 		ID:         documentID,
 		TenantInfo: tenantInfo,
 	}).Return(&document.Document{
@@ -44,16 +49,16 @@ func TestGetDiagnostics(t *testing.T) {
 		ResourceType:   "trailer",
 		ContentError:   "ocr failed once",
 	}, nil)
-	docRepo.EXPECT().ListVersions(mock.Anything, repositories.ListDocumentVersionsRequest{
+	docRepo.EXPECT().ListVersions(mock.Anything, documentports.ListDocumentVersionsRequest{
 		LineageID:  lineageID,
 		TenantInfo: tenantInfo,
 	}).Return([]*document.Document{
 		{ID: documentID, LineageID: lineageID},
 	}, nil)
 
-	sessionRepo := mocks.NewMockDocumentUploadSessionRepository(t)
+	sessionRepo := documentuploadportsmock.NewMockDocumentUploadSessionRepository(t)
 	sessionRepo.EXPECT().
-		ListRelated(mock.Anything, &repositories.ListRelatedDocumentUploadSessionsRequest{
+		ListRelated(mock.Anything, &documentuploadports.ListRelatedDocumentUploadSessionsRequest{
 			TenantInfo: tenantInfo,
 			DocumentID: documentID,
 			LineageID:  lineageID,
@@ -68,7 +73,7 @@ func TestGetDiagnostics(t *testing.T) {
 			},
 		}, nil)
 
-	contentService := mocks.NewMockDocumentContentService(t)
+	contentService := documentportsmock.NewMockDocumentContentService(t)
 	contentService.EXPECT().
 		GetContent(mock.Anything, documentID, tenantInfo).
 		Return(&documentcontent.Content{
@@ -81,8 +86,8 @@ func TestGetDiagnostics(t *testing.T) {
 			DocumentID: documentID,
 		}, nil)
 
-	searchProjection := mocks.NewMockDocumentSearchProjectionService(t)
-	workflowStarter := mocks.NewMockWorkflowStarter(t)
+	searchProjection := documentsearchprojectionportsmock.NewMockDocumentSearchProjectionService(t)
+	workflowStarter := kernelportsmock.NewMockWorkflowStarter(t)
 
 	svc := documentoperationsservice.New(documentoperationsservice.Params{
 		Logger:           zap.NewNop(),
@@ -116,31 +121,31 @@ func TestResyncSearchIgnoresMissingContent(t *testing.T) {
 	documentID := pulid.MustNew("doc_")
 	tenantInfo := pagination.TenantInfo{OrgID: testutil.TestOrgID, BuID: testutil.TestBuID}
 
-	docRepo := mocks.NewMockDocumentRepository(t)
+	docRepo := documentportsmock.NewMockDocumentRepository(t)
 	doc := &document.Document{
 		ID:             documentID,
 		OrganizationID: testutil.TestOrgID,
 		BusinessUnitID: testutil.TestBuID,
 	}
-	docRepo.EXPECT().GetByID(mock.Anything, repositories.GetDocumentByIDRequest{
+	docRepo.EXPECT().GetByID(mock.Anything, documentports.GetDocumentByIDRequest{
 		ID:         documentID,
 		TenantInfo: tenantInfo,
 	}).Return(doc, nil)
 
-	contentService := mocks.NewMockDocumentContentService(t)
+	contentService := documentportsmock.NewMockDocumentContentService(t)
 	contentService.EXPECT().GetContent(mock.Anything, documentID, tenantInfo).
 		Return(nil, errortypes.NewNotFoundError("content not found"))
 
-	searchProjection := mocks.NewMockDocumentSearchProjectionService(t)
+	searchProjection := documentsearchprojectionportsmock.NewMockDocumentSearchProjectionService(t)
 	searchProjection.EXPECT().Upsert(mock.Anything, doc, "").Return(nil)
 
 	svc := documentoperationsservice.New(documentoperationsservice.Params{
 		Logger:           zap.NewNop(),
 		DocumentRepo:     docRepo,
-		SessionRepo:      mocks.NewMockDocumentUploadSessionRepository(t),
+		SessionRepo:      documentuploadportsmock.NewMockDocumentUploadSessionRepository(t),
 		ContentService:   contentService,
 		SearchProjection: searchProjection,
-		WorkflowStarter:  mocks.NewMockWorkflowStarter(t),
+		WorkflowStarter:  kernelportsmock.NewMockWorkflowStarter(t),
 	})
 
 	require.NoError(t, svc.ResyncSearch(t.Context(), documentID, tenantInfo))
@@ -152,8 +157,8 @@ func TestRegeneratePreviewQueuesWorkflow(t *testing.T) {
 	documentID := pulid.MustNew("doc_")
 	tenantInfo := pagination.TenantInfo{OrgID: testutil.TestOrgID, BuID: testutil.TestBuID}
 
-	docRepo := mocks.NewMockDocumentRepository(t)
-	docRepo.EXPECT().GetByID(mock.Anything, repositories.GetDocumentByIDRequest{
+	docRepo := documentportsmock.NewMockDocumentRepository(t)
+	docRepo.EXPECT().GetByID(mock.Anything, documentports.GetDocumentByIDRequest{
 		ID:         documentID,
 		TenantInfo: tenantInfo,
 	}).Return(&document.Document{
@@ -164,14 +169,14 @@ func TestRegeneratePreviewQueuesWorkflow(t *testing.T) {
 		StoragePath:    "org/trailer/file.pdf",
 		ResourceType:   "trailer",
 	}, nil)
-	docRepo.EXPECT().UpdatePreview(mock.Anything, &repositories.UpdateDocumentPreviewRequest{
+	docRepo.EXPECT().UpdatePreview(mock.Anything, &documentports.UpdateDocumentPreviewRequest{
 		ID:                 documentID,
 		TenantInfo:         tenantInfo,
 		PreviewStatus:      document.PreviewStatusPending,
 		PreviewStoragePath: "",
 	}).Return(nil)
 
-	workflowStarter := mocks.NewMockWorkflowStarter(t)
+	workflowStarter := kernelportsmock.NewMockWorkflowStarter(t)
 	workflowStarter.EXPECT().Enabled().Return(true)
 	workflowStarter.EXPECT().
 		StartWorkflow(mock.Anything, mock.Anything, "GenerateThumbnailWorkflow", mock.Anything).
@@ -180,9 +185,9 @@ func TestRegeneratePreviewQueuesWorkflow(t *testing.T) {
 	svc := documentoperationsservice.New(documentoperationsservice.Params{
 		Logger:           zap.NewNop(),
 		DocumentRepo:     docRepo,
-		SessionRepo:      mocks.NewMockDocumentUploadSessionRepository(t),
-		ContentService:   mocks.NewMockDocumentContentService(t),
-		SearchProjection: mocks.NewMockDocumentSearchProjectionService(t),
+		SessionRepo:      documentuploadportsmock.NewMockDocumentUploadSessionRepository(t),
+		ContentService:   documentportsmock.NewMockDocumentContentService(t),
+		SearchProjection: documentsearchprojectionportsmock.NewMockDocumentSearchProjectionService(t),
 		WorkflowStarter:  workflowStarter,
 	})
 
@@ -195,8 +200,8 @@ func TestRegeneratePreviewRequiresSupportedType(t *testing.T) {
 	documentID := pulid.MustNew("doc_")
 	tenantInfo := pagination.TenantInfo{OrgID: testutil.TestOrgID, BuID: testutil.TestBuID}
 
-	docRepo := mocks.NewMockDocumentRepository(t)
-	docRepo.EXPECT().GetByID(mock.Anything, repositories.GetDocumentByIDRequest{
+	docRepo := documentportsmock.NewMockDocumentRepository(t)
+	docRepo.EXPECT().GetByID(mock.Anything, documentports.GetDocumentByIDRequest{
 		ID:         documentID,
 		TenantInfo: tenantInfo,
 	}).Return(&document.Document{
@@ -204,15 +209,15 @@ func TestRegeneratePreviewRequiresSupportedType(t *testing.T) {
 		FileType: "text/plain",
 	}, nil)
 
-	workflowStarter := mocks.NewMockWorkflowStarter(t)
+	workflowStarter := kernelportsmock.NewMockWorkflowStarter(t)
 	workflowStarter.EXPECT().Enabled().Return(true)
 
 	svc := documentoperationsservice.New(documentoperationsservice.Params{
 		Logger:           zap.NewNop(),
 		DocumentRepo:     docRepo,
-		SessionRepo:      mocks.NewMockDocumentUploadSessionRepository(t),
-		ContentService:   mocks.NewMockDocumentContentService(t),
-		SearchProjection: mocks.NewMockDocumentSearchProjectionService(t),
+		SessionRepo:      documentuploadportsmock.NewMockDocumentUploadSessionRepository(t),
+		ContentService:   documentportsmock.NewMockDocumentContentService(t),
+		SearchProjection: documentsearchprojectionportsmock.NewMockDocumentSearchProjectionService(t),
 		WorkflowStarter:  workflowStarter,
 	})
 

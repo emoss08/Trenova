@@ -12,22 +12,22 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/bankreceiptservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/shopspring/decimal"
 )
 
 var (
-	_ serviceports.ToolPreviewer = (*matchBankReceiptTool)(nil)
-	_ serviceports.ToolPreviewer = (*postCustomerPaymentTool)(nil)
+	_ agentports.ToolPreviewer = (*matchBankReceiptTool)(nil)
+	_ agentports.ToolPreviewer = (*postCustomerPaymentTool)(nil)
 )
 
 func (t *matchBankReceiptTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	request, err := t.request(params)
 	if err != nil {
@@ -56,7 +56,7 @@ func (t *matchBankReceiptTool) Preview(
 
 func (t *postCustomerPaymentTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	args, err := t.arguments(ctx, params)
 	if err != nil {

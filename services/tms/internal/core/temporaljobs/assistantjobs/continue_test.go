@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -13,14 +13,14 @@ import (
 )
 
 type recordedQueue struct {
-	asked []*serviceports.SettleQueueRequest
-	next  *serviceports.QueuedTurn
+	asked []*agentports.SettleQueueRequest
+	next  *agentports.QueuedTurn
 }
 
 func (q *recordedQueue) SettleQueue(
 	_ context.Context,
-	req *serviceports.SettleQueueRequest,
-) *serviceports.QueuedTurn {
+	req *agentports.SettleQueueRequest,
+) *agentports.QueuedTurn {
 	q.asked = append(q.asked, req)
 	if !req.Dispatch {
 		return nil
@@ -33,7 +33,7 @@ type recordedFollowUps struct {
 	resumed int
 }
 
-func (f *recordedFollowUps) ResumeFollowUps(context.Context, serviceports.ResumeFollowUpsRequest) {
+func (f *recordedFollowUps) ResumeFollowUps(context.Context, agentports.ResumeFollowUpsRequest) {
 	f.resumed++
 }
 
@@ -51,7 +51,7 @@ func continuation(status conversation.AssistantTurnStatus) *conversationContinua
 func TestContinueConversation_WhatThePersonQueuedGoesFirst(t *testing.T) {
 	t.Parallel()
 
-	queue := &recordedQueue{next: &serviceports.QueuedTurn{TurnID: pulid.MustNew("atrn_")}}
+	queue := &recordedQueue{next: &agentports.QueuedTurn{TurnID: pulid.MustNew("atrn_")}}
 	followUps := &recordedFollowUps{}
 	a := &Activities{queue: queue, followUps: followUps}
 	c := continuation(conversation.AssistantTurnStatusCompleted)
@@ -83,7 +83,7 @@ func TestContinueConversation_AStoppedOrFailedTurnHoldsTheQueue(t *testing.T) {
 		conversation.AssistantTurnStatusStopped,
 		conversation.AssistantTurnStatusFailed,
 	} {
-		queue := &recordedQueue{next: &serviceports.QueuedTurn{TurnID: pulid.MustNew("atrn_")}}
+		queue := &recordedQueue{next: &agentports.QueuedTurn{TurnID: pulid.MustNew("atrn_")}}
 		followUps := &recordedFollowUps{}
 		a := &Activities{queue: queue, followUps: followUps}
 

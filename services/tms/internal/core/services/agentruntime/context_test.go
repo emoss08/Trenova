@@ -7,8 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/productguide"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,7 +17,7 @@ import (
 )
 
 type stubOrganizations struct {
-	repositories.OrganizationRepository
+	tenantports.OrganizationRepository
 
 	org   *tenant.Organization
 	calls int
@@ -24,7 +25,7 @@ type stubOrganizations struct {
 
 func (s *stubOrganizations) GetByID(
 	context.Context,
-	repositories.GetOrganizationByIDRequest,
+	tenantports.GetOrganizationByIDRequest,
 ) (*tenant.Organization, error) {
 	s.calls++
 
@@ -55,7 +56,7 @@ func TestContextBuilder_ResolvesTheTimezoneWhateverThePromptWants(t *testing.T) 
 	definition := testDefinition()
 	definition.ContextProviders = []agentdefinition.ContextProvider{agentdefinition.ContextPage}
 
-	rc, err := builder.Build(t.Context(), &serviceports.RuntimeContextRequest{
+	rc, err := builder.Build(t.Context(), &agentports.RuntimeContextRequest{
 		Definition: definition,
 		Actor:      testActor(),
 	})
@@ -67,7 +68,7 @@ func TestContextBuilder_ResolvesTheTimezoneWhateverThePromptWants(t *testing.T) 
 }
 
 type stubPageGuide struct {
-	serviceports.ProductGuide
+	agentports.ProductGuide
 
 	pages map[string]*productguide.Page
 }
@@ -79,19 +80,19 @@ func (s *stubPageGuide) PageForPath(path string) (*productguide.Page, bool) {
 }
 
 type stubUsers struct {
-	repositories.UserRepository
+	tenantports.UserRepository
 
 	user *tenant.User
 }
 
 func (s *stubUsers) GetByID(
 	context.Context,
-	repositories.GetUserByIDRequest,
+	tenantports.GetUserByIDRequest,
 ) (*tenant.User, error) {
 	return s.user, nil
 }
 
-func guideBuilder(guide serviceports.ProductGuide) *ContextBuilder {
+func guideBuilder(guide agentports.ProductGuide) *ContextBuilder {
 	return &ContextBuilder{
 		logger:        zap.NewNop(),
 		organizations: &stubOrganizations{org: &tenant.Organization{Name: "Acme"}},
@@ -115,7 +116,7 @@ func TestContextBuilder_DescribesThePageFromTheGuide(t *testing.T) {
 		},
 	}})
 
-	rc, err := builder.Build(t.Context(), &serviceports.RuntimeContextRequest{
+	rc, err := builder.Build(t.Context(), &agentports.RuntimeContextRequest{
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Trigger:    agent.RunTriggerChat,
@@ -137,7 +138,7 @@ func TestContextBuilder_OffersTheGuideOnlyToAPersonInAConversation(t *testing.T)
 
 	builder := guideBuilder(&stubPageGuide{})
 
-	scheduled, err := builder.Build(t.Context(), &serviceports.RuntimeContextRequest{
+	scheduled, err := builder.Build(t.Context(), &agentports.RuntimeContextRequest{
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Trigger:    agent.RunTriggerScheduled,
@@ -147,8 +148,8 @@ func TestContextBuilder_OffersTheGuideOnlyToAPersonInAConversation(t *testing.T)
 	assert.Nil(t, scheduled.PageGuide)
 
 	actor := testActor()
-	actor.PrincipalType = serviceports.PrincipalTypeAgent
-	byAgent, err := builder.Build(t.Context(), &serviceports.RuntimeContextRequest{
+	actor.PrincipalType = permissionports.PrincipalTypeAgent
+	byAgent, err := builder.Build(t.Context(), &agentports.RuntimeContextRequest{
 		Definition: testDefinition(),
 		Actor:      actor,
 		Trigger:    agent.RunTriggerChat,

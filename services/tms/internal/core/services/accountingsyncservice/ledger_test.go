@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/journalentry"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -64,8 +64,8 @@ func (h *harness) mapLedger(accts ledgerAccounts, customerID pulid.ID) ledgerMap
 	}
 }
 
-func arLine(accts ledgerAccounts, debit, credit int64) repositories.LedgerJournalLine {
-	return repositories.LedgerJournalLine{
+func arLine(accts ledgerAccounts, debit, credit int64) journalentryports.LedgerJournalLine {
+	return journalentryports.LedgerJournalLine{
 		AccountID:   accts.ar,
 		AccountCode: "1100",
 		AccountName: "Accounts receivable",
@@ -74,8 +74,8 @@ func arLine(accts ledgerAccounts, debit, credit int64) repositories.LedgerJourna
 	}
 }
 
-func revenueLine(accts ledgerAccounts, debit, credit int64) repositories.LedgerJournalLine {
-	return repositories.LedgerJournalLine{
+func revenueLine(accts ledgerAccounts, debit, credit int64) journalentryports.LedgerJournalLine {
+	return journalentryports.LedgerJournalLine{
 		AccountID:   accts.revenue,
 		AccountCode: "4000",
 		AccountName: "Freight revenue",
@@ -85,8 +85,8 @@ func revenueLine(accts ledgerAccounts, debit, credit int64) repositories.LedgerJ
 	}
 }
 
-func cashLine(accts ledgerAccounts, debit, credit int64) repositories.LedgerJournalLine {
-	return repositories.LedgerJournalLine{
+func cashLine(accts ledgerAccounts, debit, credit int64) journalentryports.LedgerJournalLine {
+	return journalentryports.LedgerJournalLine{
 		AccountID:   accts.cash,
 		AccountCode: "1000",
 		AccountName: "Operating cash",
@@ -101,8 +101,8 @@ func invoiceJournal(
 	number string,
 	date int64,
 	amount int64,
-) *repositories.LedgerJournal {
-	return &repositories.LedgerJournal{
+) *journalentryports.LedgerJournal {
+	return &journalentryports.LedgerJournal{
 		ID:                   pulid.MustNew("je_"),
 		EntryNumber:          number,
 		EntryType:            journalentry.EntryTypeStandard.String(),
@@ -111,12 +111,12 @@ func invoiceJournal(
 		PostedAt:             date + 60,
 		SourceObjectType:     "Invoice",
 		SourceDocumentNumber: "INV-" + number,
-		Party: repositories.LedgerParty{
-			Kind: repositories.LedgerPartyCustomer,
+		Party: journalentryports.LedgerParty{
+			Kind: journalentryports.LedgerPartyCustomer,
 			ID:   customerID,
 			Name: "Acme Freight",
 		},
-		Lines: []repositories.LedgerJournalLine{
+		Lines: []journalentryports.LedgerJournalLine{
 			arLine(accts, amount, 0),
 			revenueLine(accts, 0, amount),
 		},
@@ -125,11 +125,11 @@ func invoiceJournal(
 
 func (h *harness) postJournal(
 	t *testing.T,
-	journal *repositories.LedgerJournal,
+	journal *journalentryports.LedgerJournal,
 ) {
 	t.Helper()
 	h.ledger.add(journal)
-	require.NoError(t, h.enqueuer.EnqueueJournal(t.Context(), &services.AccountingJournalPosted{
+	require.NoError(t, h.enqueuer.EnqueueJournal(t.Context(), &accountingsyncports.AccountingJournalPosted{
 		TenantInfo:     h.tenant,
 		EntryID:        journal.ID,
 		EntryNumber:    journal.EntryNumber,
@@ -138,11 +138,11 @@ func (h *harness) postJournal(
 	}))
 }
 
-func onlyJournalDoc(t *testing.T, h *harness, method string) *services.AccountingJournalDocument {
+func onlyJournalDoc(t *testing.T, h *harness, method string) *accountingsyncports.AccountingJournalDocument {
 	t.Helper()
 	calls := h.writer.callsTo(method)
 	require.Len(t, calls, 1)
-	doc, ok := calls[0].doc.(*services.AccountingJournalDocument)
+	doc, ok := calls[0].doc.(*accountingsyncports.AccountingJournalDocument)
 	require.True(t, ok)
 	return doc
 }
@@ -173,27 +173,27 @@ func TestEnqueueJournalLeavesWhatTheLedgerDoesNotSend(t *testing.T) {
 	cases := []struct {
 		name   string
 		mode   accountingsync.SyncMode
-		mutate func(*repositories.LedgerJournal)
+		mutate func(*journalentryports.LedgerJournal)
 	}{
 		{name: "a document connection", mode: accountingsync.SyncModeDocument},
 		{
 			name: "a closing entry",
 			mode: accountingsync.SyncModeLedger,
-			mutate: func(j *repositories.LedgerJournal) {
+			mutate: func(j *journalentryports.LedgerJournal) {
 				j.EntryType = journalentry.EntryTypeClosing.String()
 			},
 		},
 		{
 			name: "an opening entry",
 			mode: accountingsync.SyncModeLedger,
-			mutate: func(j *repositories.LedgerJournal) {
+			mutate: func(j *journalentryports.LedgerJournal) {
 				j.EntryType = journalentry.EntryTypeOpening.String()
 			},
 		},
 		{
 			name: "an entry dated before the start date",
 			mode: accountingsync.SyncModeLedger,
-			mutate: func(j *repositories.LedgerJournal) {
+			mutate: func(j *journalentryports.LedgerJournal) {
 				j.AccountingDate = syncStartDate - 86_400
 			},
 		},
@@ -230,7 +230,7 @@ func TestDocumentsAreNotQueuedForALedgerConnection(t *testing.T) {
 
 	require.NoError(t, h.enqueuer.Enqueue(
 		t.Context(),
-		services.InvoiceSyncRequest(inv, accountingsync.PostedSourceEvent(inv.BillType)),
+		accountingsyncports.InvoiceSyncRequest(inv, accountingsync.PostedSourceEvent(inv.BillType)),
 	))
 
 	assert.Empty(t, h.records.all())
@@ -297,13 +297,13 @@ func TestDetailedJournalEntryIsSentWithAccountsAndTheCustomer(t *testing.T) {
 	assert.Equal(t, "USD", doc.CurrencyCode)
 	assert.Equal(t, "Trenova journal entry JE-1001 (INV-JE-1001): Invoice INV-JE-1001", doc.PrivateNote)
 	require.Len(t, doc.Lines, 2)
-	assert.Equal(t, services.AccountingJournalDebit, doc.Lines[0].Posting)
+	assert.Equal(t, accountingsyncports.AccountingJournalDebit, doc.Lines[0].Posting)
 	assert.Equal(t, "qb-ar", doc.Lines[0].AccountExternalID)
 	assert.Equal(t, "1500", doc.Lines[0].Amount.String())
 	assert.Equal(t, "Invoice INV-JE-1001", doc.Lines[0].Description)
-	assert.Equal(t, services.AccountingJournalCustomer, doc.Lines[0].PartyKind)
+	assert.Equal(t, accountingsyncports.AccountingJournalCustomer, doc.Lines[0].PartyKind)
 	assert.Equal(t, "qb-cust-58", doc.Lines[0].PartyExternalID)
-	assert.Equal(t, services.AccountingJournalCredit, doc.Lines[1].Posting)
+	assert.Equal(t, accountingsyncports.AccountingJournalCredit, doc.Lines[1].Posting)
 	assert.Equal(t, "qb-income", doc.Lines[1].AccountExternalID, "the revenue account falls back to its role")
 	assert.Equal(t, "1500", doc.Lines[1].Amount.String())
 	assert.Empty(t, doc.Lines[1].PartyKind, "only receivable and payable lines name a party")
@@ -331,7 +331,7 @@ func TestJournalLinePartyWinsOverTheEntrysSource(t *testing.T) {
 	other := pulid.MustNew("cus_")
 	h.confirm(customerTarget(other, "Other Shipper"), "qb-cust-77")
 	journal := invoiceJournal(accts, customerID, "JE-1002", aprilTenth, 5_000)
-	journal.Lines[0].Party = repositories.LedgerParty{Kind: repositories.LedgerPartyCustomer, ID: other}
+	journal.Lines[0].Party = journalentryports.LedgerParty{Kind: journalentryports.LedgerPartyCustomer, ID: other}
 	h.postJournal(t, journal)
 
 	h.drain(t)
@@ -348,7 +348,7 @@ func TestJournalEntryBlocksWhenAReceivableLineHasNoCustomer(t *testing.T) {
 	accts := newLedgerAccounts()
 	h.mapLedger(accts, pulid.MustNew("cus_"))
 	journal := invoiceJournal(accts, pulid.MustNew("cus_"), "JE-1003", aprilTenth, 5_000)
-	journal.Party = repositories.LedgerParty{}
+	journal.Party = journalentryports.LedgerParty{}
 	h.postJournal(t, journal)
 	record := h.only(t, accountingsync.SyncObjectJournalEntry, journal.ID, accountingsync.SyncOperationCreate)
 
@@ -370,8 +370,8 @@ func TestJournalEntryBlocksOnAPartyOfTheWrongKind(t *testing.T) {
 	accts := newLedgerAccounts()
 	h.mapLedger(accts, pulid.MustNew("cus_"))
 	journal := invoiceJournal(accts, pulid.MustNew("cus_"), "JE-1004", aprilTenth, 5_000)
-	journal.Party = repositories.LedgerParty{
-		Kind: repositories.LedgerPartyCarrier,
+	journal.Party = journalentryports.LedgerParty{
+		Kind: journalentryports.LedgerPartyCarrier,
 		ID:   pulid.MustNew("car_"),
 		Name: "Swift Haul",
 	}
@@ -475,7 +475,7 @@ func TestDailySummarySumsTheDayPerAccountAndCustomer(t *testing.T) {
 	assert.Equal(t, "2026-04-10", doc.TxnDate)
 	assert.Equal(t, "Trenova journal entries posted for 2026-04-10", doc.PrivateNote)
 	type want struct {
-		posting services.AccountingJournalPosting
+		posting accountingsyncports.AccountingJournalPosting
 		account string
 		amount  string
 		party   string
@@ -490,9 +490,9 @@ func TestDailySummarySumsTheDayPerAccountAndCustomer(t *testing.T) {
 		})
 	}
 	assert.Equal(t, []want{
-		{posting: services.AccountingJournalDebit, account: "qb-ar", amount: "1500", party: "qb-cust-58"},
-		{posting: services.AccountingJournalCredit, account: "qb-income", amount: "1700"},
-		{posting: services.AccountingJournalDebit, account: "qb-ar", amount: "200", party: "qb-cust-90"},
+		{posting: accountingsyncports.AccountingJournalDebit, account: "qb-ar", amount: "1500", party: "qb-cust-58"},
+		{posting: accountingsyncports.AccountingJournalCredit, account: "qb-income", amount: "1700"},
+		{posting: accountingsyncports.AccountingJournalDebit, account: "qb-ar", amount: "200", party: "qb-cust-90"},
 	}, got)
 	assert.Equal(t, "1100 Accounts receivable, Acme Freight", doc.Lines[0].Description)
 
@@ -540,7 +540,7 @@ func TestDailySummaryThatNowNetsToZeroDeletesTheProviderEntry(t *testing.T) {
 	reversal := invoiceJournal(accts, customerID, "JE-2", aprilTenth+60, 5_000)
 	reversal.IsReversal = true
 	reversal.ReversalOfNumber = "JE-1"
-	reversal.Lines = []repositories.LedgerJournalLine{
+	reversal.Lines = []journalentryports.LedgerJournalLine{
 		arLine(accts, 0, 5_000),
 		revenueLine(accts, 5_000, 0),
 	}
@@ -552,7 +552,7 @@ func TestDailySummaryThatNowNetsToZeroDeletesTheProviderEntry(t *testing.T) {
 
 	calls := h.writer.callsTo("DeleteJournalEntry")
 	require.Len(t, calls, 1)
-	ref, ok := calls[0].doc.(*services.AccountingDocumentRef)
+	ref, ok := calls[0].doc.(*accountingsyncports.AccountingDocumentRef)
 	require.True(t, ok)
 	assert.Equal(t, "qb-CreateJournalEntry-1", ref.ExternalID)
 	assert.Equal(t, update.RequestID, ref.RequestID)
@@ -599,7 +599,7 @@ func TestEnableSyncQueuesOpeningBalancesForTheLedgerOnce(t *testing.T) {
 	h.ledgerMode(accountingsync.LedgerDetailed)
 	start := time.Date(2026, time.April, 1, 0, 0, 0, 0, time.UTC).Unix()
 
-	conn, err := h.svc.EnableSync(t.Context(), &services.EnableAccountingSyncRequest{
+	conn, err := h.svc.EnableSync(t.Context(), &accountingsyncports.EnableAccountingSyncRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: integration.TypeQuickBooksOnline,
@@ -618,7 +618,7 @@ func TestEnableSyncQueuesOpeningBalancesForTheLedgerOnce(t *testing.T) {
 	assert.Equal(t, time.Date(2026, time.March, 31, 0, 0, 0, 0, time.UTC).Unix(), *record.DocumentDate)
 	assert.Equal(t, "Started sending journal entries to QuickBooks Online", h.audit.lastComment())
 
-	_, err = h.svc.EnableSync(t.Context(), &services.EnableAccountingSyncRequest{
+	_, err = h.svc.EnableSync(t.Context(), &accountingsyncports.EnableAccountingSyncRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: integration.TypeQuickBooksOnline,
@@ -635,7 +635,7 @@ func TestEnableSyncRefusesOpeningBalancesAndAnUnchosenMode(t *testing.T) {
 
 	h := newHarness(t)
 	h.atStartDateStep()
-	_, err := h.svc.EnableSync(t.Context(), &services.EnableAccountingSyncRequest{
+	_, err := h.svc.EnableSync(t.Context(), &accountingsyncports.EnableAccountingSyncRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: integration.TypeQuickBooksOnline,
@@ -665,24 +665,24 @@ func TestOpeningBalancesSendEveryBalanceBeforeTheStartDate(t *testing.T) {
 	before := syncStartDate - 10*86_400
 
 	h.ledger.add(invoiceJournal(accts, acme, "JE-OLD-1", before, 80_000))
-	payment := &repositories.LedgerJournal{
+	payment := &journalentryports.LedgerJournal{
 		ID:             pulid.MustNew("je_"),
 		EntryNumber:    "JE-OLD-2",
 		EntryType:      journalentry.EntryTypeStandard.String(),
 		AccountingDate: before + 86_400,
-		Party:          repositories.LedgerParty{Kind: repositories.LedgerPartyCustomer, ID: acme},
-		Lines: []repositories.LedgerJournalLine{
+		Party:          journalentryports.LedgerParty{Kind: journalentryports.LedgerPartyCustomer, ID: acme},
+		Lines: []journalentryports.LedgerJournalLine{
 			cashLine(accts, 30_000, 0),
 			arLine(accts, 0, 30_000),
 		},
 	}
 	h.ledger.add(payment)
-	closing := &repositories.LedgerJournal{
+	closing := &journalentryports.LedgerJournal{
 		ID:             pulid.MustNew("je_"),
 		EntryNumber:    "JE-CLOSE",
 		EntryType:      journalentry.EntryTypeClosing.String(),
 		AccountingDate: before + 2*86_400,
-		Lines: []repositories.LedgerJournalLine{
+		Lines: []journalentryports.LedgerJournalLine{
 			revenueLine(accts, 80_000, 0),
 			cashLine(accts, 0, 80_000),
 		},
@@ -690,7 +690,7 @@ func TestOpeningBalancesSendEveryBalanceBeforeTheStartDate(t *testing.T) {
 	h.ledger.add(closing)
 	h.ledger.add(invoiceJournal(accts, acme, "JE-AFTER", syncStartDate+86_400, 5_000))
 
-	record := NewRecordFor(h.conn, &services.AccountingSyncEnqueueRequest{
+	record := NewRecordFor(h.conn, &accountingsyncports.AccountingSyncEnqueueRequest{
 		TenantInfo:   h.tenant,
 		ObjectType:   accountingsync.SyncObjectJournalSummary,
 		ObjectID:     "jopen_20260101",
@@ -711,7 +711,7 @@ func TestOpeningBalancesSendEveryBalanceBeforeTheStartDate(t *testing.T) {
 	amounts := map[string]string{}
 	for _, line := range doc.Lines {
 		sign := ""
-		if line.Posting == services.AccountingJournalCredit {
+		if line.Posting == accountingsyncports.AccountingJournalCredit {
 			sign = "-"
 		}
 		amounts[line.AccountExternalID+"|"+line.PartyExternalID] = sign + line.Amount.String()
@@ -766,7 +766,7 @@ func TestChooseModeRecordsTheChoice(t *testing.T) {
 		conn.SyncStartDate = nil
 	})
 
-	conn, err := h.svc.ChooseMode(t.Context(), &services.ChooseAccountingSyncModeRequest{
+	conn, err := h.svc.ChooseMode(t.Context(), &accountingsyncports.ChooseAccountingSyncModeRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: integration.TypeQuickBooksOnline,
@@ -784,7 +784,7 @@ func TestChooseModeRecordsTheChoice(t *testing.T) {
 	assert.Equal(t, "Chose to send journal entries to QuickBooks Online, summed by day",
 		h.audit.lastComment())
 
-	_, err = h.svc.ChooseMode(t.Context(), &services.ChooseAccountingSyncModeRequest{
+	_, err = h.svc.ChooseMode(t.Context(), &accountingsyncports.ChooseAccountingSyncModeRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: integration.TypeQuickBooksOnline,
@@ -792,7 +792,7 @@ func TestChooseModeRecordsTheChoice(t *testing.T) {
 	})
 	requireValidationField(t, err, "granularity")
 
-	_, err = h.svc.ChooseMode(t.Context(), &services.ChooseAccountingSyncModeRequest{
+	_, err = h.svc.ChooseMode(t.Context(), &accountingsyncports.ChooseAccountingSyncModeRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: integration.TypeQuickBooksOnline,
@@ -806,7 +806,7 @@ func TestChooseModeIsRefusedOnceSyncIsEnabled(t *testing.T) {
 
 	h := newHarness(t)
 
-	_, err := h.svc.ChooseMode(t.Context(), &services.ChooseAccountingSyncModeRequest{
+	_, err := h.svc.ChooseMode(t.Context(), &accountingsyncports.ChooseAccountingSyncModeRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: integration.TypeQuickBooksOnline,
@@ -820,8 +820,8 @@ func TestChooseModeIsRefusedOnceSyncIsEnabled(t *testing.T) {
 
 func (h *harness) postReversal(
 	t *testing.T,
-	reversal *repositories.LedgerJournal,
-	original *repositories.LedgerJournal,
+	reversal *journalentryports.LedgerJournal,
+	original *journalentryports.LedgerJournal,
 ) {
 	t.Helper()
 	reversal.IsReversal = true
@@ -829,7 +829,7 @@ func (h *harness) postReversal(
 	reversal.ReversalOfNumber = original.EntryNumber
 	reversal.ReversesEntryType = original.EntryType
 	h.ledger.add(reversal)
-	require.NoError(t, h.enqueuer.EnqueueJournal(t.Context(), &services.AccountingJournalPosted{
+	require.NoError(t, h.enqueuer.EnqueueJournal(t.Context(), &accountingsyncports.AccountingJournalPosted{
 		TenantInfo:     h.tenant,
 		EntryID:        reversal.ID,
 		EntryNumber:    reversal.EntryNumber,
@@ -873,7 +873,7 @@ func TestReversalOfAnOrdinaryEntryIsSent(t *testing.T) {
 	original := invoiceJournal(accts, customerID, "JE-1", aprilTenth, 900)
 	h.ledger.add(original)
 	reversal := invoiceJournal(accts, customerID, "JE-2", aprilTenth, 900)
-	reversal.Lines = []repositories.LedgerJournalLine{arLine(accts, 0, 900), revenueLine(accts, 900, 0)}
+	reversal.Lines = []journalentryports.LedgerJournalLine{arLine(accts, 0, 900), revenueLine(accts, 900, 0)}
 
 	h.postReversal(t, reversal, original)
 	record := h.only(t, accountingsync.SyncObjectJournalEntry, reversal.ID, accountingsync.SyncOperationCreate)
@@ -922,7 +922,7 @@ func TestDailySummaryUpdateFollowsTheLatestSendNotTheHighestRevision(t *testing.
 	create := h.only(t, accountingsync.SyncObjectJournalSummary, dayID, accountingsync.SyncOperationCreate)
 
 	reversal := invoiceJournal(accts, customerID, "JE-2", aprilTenth+60, 5_000)
-	reversal.Lines = []repositories.LedgerJournalLine{arLine(accts, 0, 5_000), revenueLine(accts, 5_000, 0)}
+	reversal.Lines = []journalentryports.LedgerJournalLine{arLine(accts, 0, 5_000), revenueLine(accts, 5_000, 0)}
 	h.postJournal(t, reversal)
 	h.drain(t)
 	require.Len(t, h.writer.callsTo("DeleteJournalEntry"), 1)
@@ -996,7 +996,7 @@ func TestEnableSyncKeepsTheStartDateOnceOpeningBalancesAreSent(t *testing.T) {
 	h.atStartDateStep()
 	h.ledgerMode(accountingsync.LedgerDetailed)
 	start := time.Date(2026, time.April, 1, 0, 0, 0, 0, time.UTC).Unix()
-	_, err := h.svc.EnableSync(t.Context(), &services.EnableAccountingSyncRequest{
+	_, err := h.svc.EnableSync(t.Context(), &accountingsyncports.EnableAccountingSyncRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: integration.TypeQuickBooksOnline,

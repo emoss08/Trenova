@@ -6,9 +6,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/costingcontrolports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,22 +22,22 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.CostingControlRepository
-	ActualsRepo  repositories.CostingActualsRepository
-	PriceRepo    repositories.FuelIndexPriceRepository
-	ShipmentRepo repositories.ShipmentRepository
+	Repo         costingcontrolports.CostingControlRepository
+	ActualsRepo  costingcontrolports.CostingActualsRepository
+	PriceRepo    fuelsurchargeports.FuelIndexPriceRepository
+	ShipmentRepo shipmentports.ShipmentRepository
 	Validator    *Validator
-	AuditService services.AuditService
+	AuditService auditports.AuditService
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.CostingControlRepository
-	actualsRepo  repositories.CostingActualsRepository
-	priceRepo    repositories.FuelIndexPriceRepository
-	shipmentRepo repositories.ShipmentRepository
+	repo         costingcontrolports.CostingControlRepository
+	actualsRepo  costingcontrolports.CostingActualsRepository
+	priceRepo    fuelsurchargeports.FuelIndexPriceRepository
+	shipmentRepo shipmentports.ShipmentRepository
 	validator    *Validator
-	auditService services.AuditService
+	auditService auditports.AuditService
 	now          func() time.Time
 }
 
@@ -54,7 +56,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 
 func (s *Service) Get(
 	ctx context.Context,
-	req *repositories.GetCostingControlRequest,
+	req *costingcontrolports.GetCostingControlRequest,
 ) (*costingcontrol.CostingControl, error) {
 	return s.repo.GetByOrgID(ctx, req)
 }
@@ -73,7 +75,7 @@ func (s *Service) Update(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetByOrgID(ctx, &repositories.GetCostingControlRequest{
+	original, err := s.repo.GetByOrgID(ctx, &costingcontrolports.GetCostingControlRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -91,7 +93,7 @@ func (s *Service) Update(
 	}
 
 	if err = s.auditService.LogAction(
-		&services.LogActionParams{
+		&auditports.LogActionParams{
 			Resource:       permission.ResourceCostingControl,
 			ResourceID:     updatedEntity.GetID().String(),
 			Operation:      permission.OpUpdate,
@@ -139,7 +141,7 @@ func (s *Service) UpdateCategory(
 
 	if err = s.repo.ReplaceCategoryGLAccounts(
 		ctx,
-		&repositories.ReplaceCategoryGLAccountsRequest{
+		&costingcontrolports.ReplaceCategoryGLAccountsRequest{
 			TenantInfo:     params.TenantInfo,
 			CostCategoryID: updatedCategory.ID,
 			GLAccountIDs:   params.GLAccountIDs,
@@ -150,7 +152,7 @@ func (s *Service) UpdateCategory(
 	}
 
 	if err = s.auditService.LogAction(
-		&services.LogActionParams{
+		&auditports.LogActionParams{
 			Resource:       permission.ResourceCostingControl,
 			ResourceID:     updatedCategory.GetID().String(),
 			Operation:      permission.OpUpdate,

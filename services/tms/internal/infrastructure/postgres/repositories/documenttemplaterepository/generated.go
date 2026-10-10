@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -28,7 +28,7 @@ type generatedRepository struct {
 	l  *zap.Logger
 }
 
-func NewGeneratedRepository(p GeneratedParams) repositories.GeneratedDocumentRepository {
+func NewGeneratedRepository(p GeneratedParams) documenttemplateports.GeneratedDocumentRepository {
 	return &generatedRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.generated-document-repository"),
@@ -37,7 +37,7 @@ func NewGeneratedRepository(p GeneratedParams) repositories.GeneratedDocumentRep
 
 func (r *generatedRepository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListGeneratedDocumentsRequest,
+	req *documenttemplateports.ListGeneratedDocumentsRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
@@ -65,7 +65,7 @@ func (r *generatedRepository) filterQuery(
 
 func (r *generatedRepository) List(
 	ctx context.Context,
-	req *repositories.ListGeneratedDocumentsRequest,
+	req *documenttemplateports.ListGeneratedDocumentsRequest,
 ) (*pagination.ListResult[*documenttemplate.GeneratedDocument], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*documenttemplate.GeneratedDocument], error) {
 		log := r.l.With(zap.String("operation", "List"))
@@ -95,7 +95,7 @@ func (r *generatedRepository) List(
 // the whole reason the row exists: answering what exactly was sent, months later.
 func (r *generatedRepository) GetByID(
 	ctx context.Context,
-	req *repositories.GetGeneratedDocumentByIDRequest,
+	req *documenttemplateports.GetGeneratedDocumentByIDRequest,
 ) (*documenttemplate.GeneratedDocument, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*documenttemplate.GeneratedDocument, error) {
 		log := r.l.With(

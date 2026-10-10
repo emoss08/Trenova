@@ -13,8 +13,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
@@ -92,9 +98,9 @@ type workerRow struct {
 }
 
 func newListWorkersTool(
-	repo repositories.WorkerRepository,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	repo workerports.WorkerRepository,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "list_workers",
 		entityPlural: "workers",
@@ -150,7 +156,7 @@ func newListWorkersTool(
 			opts *pagination.QueryOptions,
 			gate *fieldGate,
 		) ([]any, error) {
-			result, err := repo.List(ctx, &repositories.ListWorkersRequest{Filter: opts})
+			result, err := repo.List(ctx, &workerports.ListWorkersRequest{Filter: opts})
 			if err != nil {
 				return nil, err
 			}
@@ -183,7 +189,7 @@ type shipmentRow struct {
 	BillingStatus      string       `json:"billingStatus,omitempty"`
 }
 
-func newListShipmentsTool(repo repositories.ShipmentRepository) serviceports.AgentQueryTool {
+func newListShipmentsTool(repo shipmentports.ShipmentRepository) agentports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "list_shipments",
 		entityPlural: "shipments",
@@ -223,9 +229,9 @@ func newListShipmentsTool(repo repositories.ShipmentRepository) serviceports.Age
 			{Name: "createdAt", Kind: filterDate, Sortable: true},
 		},
 		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
-			result, err := repo.List(ctx, &repositories.ListShipmentsRequest{
+			result, err := repo.List(ctx, &shipmentports.ListShipmentsRequest{
 				Filter:          opts,
-				ShipmentOptions: repositories.ShipmentOptions{IncludeCustomer: true, IncludeRoute: true},
+				ShipmentOptions: shipmentports.ShipmentOptions{IncludeCustomer: true, IncludeRoute: true},
 			})
 			if err != nil {
 				return nil, err
@@ -236,7 +242,7 @@ func newListShipmentsTool(repo repositories.ShipmentRepository) serviceports.Age
 			}), nil
 		},
 		count: func(ctx context.Context, opts *pagination.QueryOptions) (int, error) {
-			return countShipments(ctx, repo, opts, repositories.ShipmentOptions{})
+			return countShipments(ctx, repo, opts, shipmentports.ShipmentOptions{})
 		},
 	})
 }
@@ -245,15 +251,15 @@ var errNoTotal = errors.New("the shipment count was not returned")
 
 func countShipments(
 	ctx context.Context,
-	repo repositories.ShipmentRepository,
+	repo shipmentports.ShipmentRepository,
 	opts *pagination.QueryOptions,
-	options repositories.ShipmentOptions,
+	options shipmentports.ShipmentOptions,
 ) (int, error) {
 	probe := *opts
 	probe.Pagination = pagination.Info{Limit: 1}
 	probe.Sort = nil
 
-	result, err := repo.List(ctx, &repositories.ListShipmentsRequest{
+	result, err := repo.List(ctx, &shipmentports.ListShipmentsRequest{
 		Filter:          &probe,
 		Cursor:          pagination.CursorInfo{Limit: 1, IncludeTotalCount: true},
 		ShipmentOptions: options,
@@ -348,9 +354,9 @@ func equipmentFields() []listField {
 }
 
 func newListTractorsTool(
-	repo repositories.TractorRepository,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	repo tractorports.TractorRepository,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "list_tractors",
 		entityPlural: "tractors",
@@ -371,9 +377,9 @@ func newListTractorsTool(
 			mayRead func(permission.Resource) bool,
 		) ([]any, error) {
 			nameDrivers := mayRead(permission.ResourceWorker)
-			result, err := repo.List(ctx, &repositories.ListTractorsRequest{
+			result, err := repo.List(ctx, &tractorports.ListTractorsRequest{
 				Filter: opts,
-				TractorRelationIncludes: repositories.TractorRelationIncludes{
+				TractorRelationIncludes: tractorports.TractorRelationIncludes{
 					IncludePrimaryWorker: nameDrivers,
 					IncludeEquipmentType: true,
 				},
@@ -407,7 +413,7 @@ func newListTractorsTool(
 	})
 }
 
-func newListTrailersTool(repo repositories.TrailerRepository) serviceports.AgentQueryTool {
+func newListTrailersTool(repo trailerports.TrailerRepository) agentports.AgentQueryTool {
 	fields := append(equipmentFields(), listField{
 		Name:     "lastInspectionDate",
 		Kind:     filterDate,
@@ -429,9 +435,9 @@ func newListTrailersTool(repo repositories.TrailerRepository) serviceports.Agent
 		config:   querybuilder.GetFieldConfiguration((*trailer.Trailer)(nil)),
 		fields:   fields,
 		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
-			result, err := repo.List(ctx, &repositories.ListTrailersRequest{
+			result, err := repo.List(ctx, &trailerports.ListTrailersRequest{
 				Filter: opts,
-				TrailerRelationIncludes: repositories.TrailerRelationIncludes{
+				TrailerRelationIncludes: trailerports.TrailerRelationIncludes{
 					IncludeEquipmentType: true,
 				},
 			})
@@ -472,7 +478,7 @@ type customerRow struct {
 	MCNumber  string `json:"mcNumber,omitempty"`
 }
 
-func newListCustomersTool(repo repositories.CustomerRepository) serviceports.AgentQueryTool {
+func newListCustomersTool(repo customerports.CustomerRepository) agentports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "list_customers",
 		entityPlural: "customers",
@@ -491,7 +497,7 @@ func newListCustomersTool(repo repositories.CustomerRepository) serviceports.Age
 			{Name: "createdAt", Kind: filterDate, Sortable: true},
 		},
 		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
-			result, err := repo.List(ctx, &repositories.ListCustomerRequest{Filter: opts})
+			result, err := repo.List(ctx, &customerports.ListCustomerRequest{Filter: opts})
 			if err != nil {
 				return nil, err
 			}
@@ -520,7 +526,7 @@ type locationRow struct {
 	City    string `json:"city,omitempty"`
 }
 
-func newListLocationsTool(repo repositories.LocationRepository) serviceports.AgentQueryTool {
+func newListLocationsTool(repo locationports.LocationRepository) agentports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "list_locations",
 		entityPlural: "locations",
@@ -537,7 +543,7 @@ func newListLocationsTool(repo repositories.LocationRepository) serviceports.Age
 			{Name: "createdAt", Kind: filterDate, Sortable: true},
 		},
 		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
-			result, err := repo.List(ctx, &repositories.ListLocationRequest{Filter: opts})
+			result, err := repo.List(ctx, &locationports.ListLocationRequest{Filter: opts})
 			if err != nil {
 				return nil, err
 			}
@@ -592,7 +598,7 @@ func listCatalogSpecs() []listSpec {
 	}
 }
 
-func specOf(tool serviceports.AgentQueryTool) listSpec {
+func specOf(tool agentports.AgentQueryTool) listSpec {
 	return tool.(*listTool).spec //nolint:errcheck,forcetypeassert // constructed above
 }
 

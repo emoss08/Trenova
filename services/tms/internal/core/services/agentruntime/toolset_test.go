@@ -2,14 +2,15 @@ package agentruntime
 
 import (
 	"fmt"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolcatalog"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -46,7 +47,7 @@ func wideRuntime(t *testing.T) (*Service, []string) {
 		describedTool("run_report", "Start a report run."),
 	}
 
-	registryTools := make([]serviceports.AgentQueryTool, 0, len(tools))
+	registryTools := make([]agentports.AgentQueryTool, 0, len(tools))
 	names := make([]string, 0, len(tools))
 	for _, tool := range tools {
 		registryTools = append(registryTools, tool)
@@ -70,7 +71,7 @@ func wideRuntime(t *testing.T) (*Service, []string) {
 	return service, names
 }
 
-func specNames(specs []serviceports.ToolSpec) []string {
+func specNames(specs []kernelports.ToolSpec) []string {
 	out := make([]string, 0, len(specs))
 	for _, spec := range specs {
 		out = append(out, spec.Name)
@@ -472,7 +473,7 @@ func TestRun_SavesTheAgentsFindToolsNamedOnItsResult(t *testing.T) {
 		definition.ID: definition,
 	}}
 
-	req := &serviceports.RunRequest{
+	req := &agentports.RunRequest{
 		Definition: definition,
 		Actor:      testActor(),
 		Input:      "when does the driver's medical card expire?",
@@ -486,9 +487,9 @@ func TestRun_SavesTheAgentsFindToolsNamedOnItsResult(t *testing.T) {
 	assert.Equal(t, findToolsName, result.Messages[2].ToolName)
 	assert.Equal(t, []pulid.ID{compliance.ID}, result.Messages[2].HandOffAgents)
 
-	var finished []serviceports.AssistantToolFinishedEvent
+	var finished []agentports.AssistantToolFinishedEvent
 	for _, event := range *events {
-		if data, ok := event.Data.(serviceports.AssistantToolFinishedEvent); ok {
+		if data, ok := event.Data.(agentports.AssistantToolFinishedEvent); ok {
 			finished = append(finished, data)
 		}
 	}
@@ -583,10 +584,10 @@ func TestRun_TellsThePromptWhichToolsAreLoaded(t *testing.T) {
 
 	service, names := wideRuntime(t)
 	definition := testDefinition(names...)
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{textTurn("ok")}}
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{textTurn("ok")}}
 	service.completion = completion
 
-	_, err := service.Run(t.Context(), &serviceports.RunRequest{
+	_, err := service.Run(t.Context(), &agentports.RunRequest{
 		Definition: definition,
 		Actor:      testActor(),
 		Input:      "which drivers have a medical card expiring soon",
@@ -797,7 +798,7 @@ func TestResolveFind_ListsTheCallableMatchesFirst(t *testing.T) {
 func weakMatchRuntime(t *testing.T) *Service {
 	t.Helper()
 
-	tools := []serviceports.AgentQueryTool{
+	tools := []agentports.AgentQueryTool{
 		&agentruntimetest.StubQueryTool{
 			ToolName: "list_shipments",
 			Desc:     "List shipments by status or dates.",

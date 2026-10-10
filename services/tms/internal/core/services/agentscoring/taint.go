@@ -4,10 +4,10 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 
-type PolicyLookup func(tool string) (serviceports.ToolPolicy, bool)
+type PolicyLookup func(tool string) (agentports.ToolPolicy, bool)
 
 type TracedCall struct {
 	ToolName  string
@@ -75,12 +75,12 @@ func (c *taintedEgressCheck) caseTainted(in *Input) bool {
 	return false
 }
 
-func readsOutside(policy serviceports.ToolPolicy) bool {
+func readsOutside(policy agentports.ToolPolicy) bool {
 	return policy.ReadsExternal.IsValid() && policy.ReadsExternal != agent.ExternalReadNever
 }
 
-func leaves(policy serviceports.ToolPolicy, arguments map[string]any) bool {
-	call := policy.Classified(serviceports.ToolExecuteParams{Params: arguments})
+func leaves(policy agentports.ToolPolicy, arguments map[string]any) bool {
+	call := policy.Classified(agentports.ToolExecuteParams{Params: arguments})
 
 	return call.Egress.Leaves()
 }

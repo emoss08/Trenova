@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/referenceutils"
@@ -23,8 +23,8 @@ const maxReferenceCandidates = 12
 // ShipmentFinder and PartyFinder are the lookups matching and linking need.
 // They are the repository ports under the names this package reads them by.
 type (
-	ShipmentFinder = repositories.InboundShipmentFinder
-	PartyFinder    = repositories.InboundPartyFinder
+	ShipmentFinder = inboundmessageports.InboundShipmentFinder
+	PartyFinder    = inboundmessageports.InboundPartyFinder
 )
 
 // Match is what the message turned out to be about, and why.

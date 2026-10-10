@@ -7,9 +7,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -55,7 +55,7 @@ func (s *Service) resolveAcceptedTenderOffer(
 	}
 	return s.tenderRepo.GetAcceptedOfferForPartnerReference(
 		ctx,
-		repositories.GetAcceptedOfferForPartnerReferenceRequest{
+		tenderports.GetAcceptedOfferForPartnerReferenceRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: file.OrganizationID,
 				BuID:  file.BusinessUnitID,
@@ -182,7 +182,7 @@ func (s *Service) autoMatchInboundFreightInvoice(
 	}
 	result, err := s.invoiceMatcher.AutoMatchInboundInvoice(
 		ctx,
-		&services.AutoMatchInboundInvoiceRequest{
+		&carrierports.AutoMatchInboundInvoiceRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: file.OrganizationID,
 				BuID:  file.BusinessUnitID,

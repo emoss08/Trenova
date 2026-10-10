@@ -9,8 +9,8 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -95,16 +95,16 @@ func responsesProvider(t *testing.T, name, baseURL string, priority int) *aiprov
 	}
 }
 
-func extractionRequest() *serviceports.StructuredCompletionRequest {
-	return &serviceports.StructuredCompletionRequest{
+func extractionRequest() *agentports.StructuredCompletionRequest {
+	return &agentports.StructuredCompletionRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),
 		},
 		Task:   aiprovider.TaskDocumentExtraction,
 		System: "Extract the rate confirmation.",
-		Context: serviceports.DelimitedContext{
-			Sections: []serviceports.ContextSection{
+		Context: agentports.DelimitedContext{
+			Sections: []agentports.ContextSection{
 				{Title: "Document", Trusted: false, Content: "PRO 12345"},
 			},
 		},
@@ -200,8 +200,8 @@ func pollService(
 	return svc, provider, server
 }
 
-func pollRequest(provider *aiprovider.Provider) *serviceports.BackgroundPollRequest {
-	return &serviceports.BackgroundPollRequest{
+func pollRequest(provider *aiprovider.Provider) *agentports.BackgroundPollRequest {
+	return &agentports.BackgroundPollRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),
@@ -221,7 +221,7 @@ func TestPollBackground_Pending(t *testing.T) {
 	outcome, err := svc.PollBackground(t.Context(), pollRequest(provider))
 	require.NoError(t, err)
 
-	assert.Equal(t, serviceports.BackgroundPending, outcome.State)
+	assert.Equal(t, agentports.BackgroundPending, outcome.State)
 	assert.Equal(t, "in_progress", outcome.RawStatus)
 	assert.Nil(t, outcome.Result)
 	assert.True(t,
@@ -246,7 +246,7 @@ func TestPollBackground_Completed(t *testing.T) {
 	outcome, err := svc.PollBackground(t.Context(), pollRequest(provider))
 	require.NoError(t, err)
 
-	assert.Equal(t, serviceports.BackgroundCompleted, outcome.State)
+	assert.Equal(t, agentports.BackgroundCompleted, outcome.State)
 	require.NotNil(t, outcome.Result)
 	assert.Equal(t, `{"documentKind":"RateConfirmation"}`, outcome.Result.Text)
 	assert.Equal(t, 120, outcome.Result.InputTokens)
@@ -265,7 +265,7 @@ func TestPollBackground_TerminalFailureCarriesTheReason(t *testing.T) {
 	outcome, err := svc.PollBackground(t.Context(), pollRequest(provider))
 	require.NoError(t, err)
 
-	assert.Equal(t, serviceports.BackgroundFailed, outcome.State)
+	assert.Equal(t, agentports.BackgroundFailed, outcome.State)
 	assert.Equal(t, "max_output_tokens", outcome.FailureCode)
 	assert.NotEmpty(t, outcome.FailureMessage)
 }
@@ -280,7 +280,7 @@ func TestPollBackground_CompletedWithoutOutputIsAFailure(t *testing.T) {
 	outcome, err := svc.PollBackground(t.Context(), pollRequest(provider))
 	require.NoError(t, err)
 
-	assert.Equal(t, serviceports.BackgroundFailed, outcome.State)
+	assert.Equal(t, agentports.BackgroundFailed, outcome.State)
 	assert.Equal(t, "empty_output", outcome.FailureCode)
 }
 

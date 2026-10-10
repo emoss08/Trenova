@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -62,7 +62,7 @@ func (s *Service) workerCalcContext(
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 ) (hire int64, termination *int64, loc *time.Location, err error) {
-	wrk, err := s.workerRepo.GetByID(ctx, repositories.GetWorkerByIDRequest{
+	wrk, err := s.workerRepo.GetByID(ctx, workerports.GetWorkerByIDRequest{
 		ID:             workerID,
 		TenantInfo:     tenantInfo,
 		IncludeProfile: true,
@@ -99,7 +99,7 @@ func (s *Service) CheckAvailability(
 	result.Policy = resolved
 	result.Enforced = resolved.Policy.EnforceBalance
 
-	key := &repositories.PTOBalanceKey{
+	key := &workerports.PTOBalanceKey{
 		TenantInfo: req.TenantInfo,
 		WorkerID:   req.WorkerID,
 		PTOType:    req.PTOType,
@@ -112,7 +112,7 @@ func (s *Service) CheckAvailability(
 		result.BalanceDays = bal.BalanceDays
 	}
 
-	pending, err := s.ledgerRepo.PendingDays(ctx, &repositories.PendingPTODaysRequest{
+	pending, err := s.ledgerRepo.PendingDays(ctx, &workerports.PendingPTODaysRequest{
 		TenantInfo: req.TenantInfo,
 		WorkerID:   req.WorkerID,
 		PTOType:    req.PTOType,
@@ -198,7 +198,7 @@ func (s *Service) GetBalances(
 		return nil, err
 	}
 
-	balances, err := s.ledgerRepo.ListBalances(ctx, &repositories.ListPTOBalancesRequest{
+	balances, err := s.ledgerRepo.ListBalances(ctx, &workerports.ListPTOBalancesRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
 	})
@@ -261,7 +261,7 @@ func (s *Service) GetBalances(
 			lastRollover = bal.LastRolloverKey
 		}
 
-		pending, pErr := s.ledgerRepo.PendingDays(ctx, &repositories.PendingPTODaysRequest{
+		pending, pErr := s.ledgerRepo.PendingDays(ctx, &workerports.PendingPTODaysRequest{
 			TenantInfo: tenantInfo,
 			WorkerID:   workerID,
 			PTOType:    ptoType,

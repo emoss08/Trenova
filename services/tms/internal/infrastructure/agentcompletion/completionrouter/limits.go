@@ -9,8 +9,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -31,9 +30,9 @@ var errProviderTimedOut = fmt.Errorf("the AI provider did not answer within its 
 	context.DeadlineExceeded)
 
 type providerLimits struct {
-	spend serviceports.AIProviderSpendService
-	slots repositories.ProviderSlotRepository
-	keys  repositories.AIProviderKeyRepository
+	spend agentports.AIProviderSpendService
+	slots agentports.ProviderSlotRepository
+	keys  agentports.AIProviderKeyRepository
 
 	mu      sync.Mutex
 	touched map[pulid.ID]time.Time
@@ -102,7 +101,7 @@ func capReachedError(provider *aiprovider.Provider) error {
 	return errortypes.NewBusinessError(
 		"{0} has reached its monthly spending cap. Raise the cap or add another provider for this task",
 		provider.Name,
-	).WithInternal(serviceports.ErrProviderCapReached)
+	).WithInternal(agentports.ErrProviderCapReached)
 }
 
 func (s *Service) claimSlot(
@@ -124,7 +123,7 @@ func (s *Service) claimSlot(
 		return func() {}, nil
 	}
 	if !acquired {
-		return nil, fmt.Errorf("%s: %w", provider.Name, serviceports.ErrProviderBusy)
+		return nil, fmt.Errorf("%s: %w", provider.Name, agentports.ErrProviderBusy)
 	}
 
 	stop := make(chan struct{})
@@ -136,7 +135,7 @@ func (s *Service) claimSlot(
 			close(stop)
 			releaseCtx, release := context.WithTimeout(context.WithoutCancel(ctx), slotStoreTimeout)
 			defer release()
-			if releaseErr := s.limits.slots.Release(releaseCtx, repositories.ProviderSlotRequest{
+			if releaseErr := s.limits.slots.Release(releaseCtx, agentports.ProviderSlotRequest{
 				ProviderID: provider.ID,
 				Token:      token,
 			}); releaseErr != nil {
@@ -185,7 +184,7 @@ func (s *Service) awaitSlot(
 	}
 	for {
 		storeCtx, cancel := context.WithTimeout(ctx, slotStoreTimeout)
-		acquired, err := s.limits.slots.Acquire(storeCtx, repositories.AcquireProviderSlotRequest{
+		acquired, err := s.limits.slots.Acquire(storeCtx, agentports.AcquireProviderSlotRequest{
 			ProviderID: provider.ID,
 			Token:      token,
 			Limit:      provider.ResolvedMaxConcurrent(),
@@ -214,7 +213,7 @@ func (s *Service) holdSlot(providerID pulid.ID, token string, ttl time.Duration,
 			return
 		case <-ticker.C:
 			refreshCtx, cancel := context.WithTimeout(context.Background(), slotStoreTimeout)
-			_, err := s.limits.slots.Refresh(refreshCtx, repositories.ProviderSlotRequest{
+			_, err := s.limits.slots.Refresh(refreshCtx, agentports.ProviderSlotRequest{
 				ProviderID: providerID,
 				Token:      token,
 				TTL:        ttl,
@@ -281,7 +280,7 @@ func (s *Service) withKeyFallback(
 }
 
 func keyRefused(err error) bool {
-	var failure serviceports.ProviderFailure
+	var failure agentports.ProviderFailure
 	if !errors.As(err, &failure) {
 		return false
 	}
@@ -311,7 +310,7 @@ func (s *Service) touchKey(ctx context.Context, provider *aiprovider.Provider, t
 
 	touchCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), slotStoreTimeout)
 	defer cancel()
-	if err := s.limits.keys.TouchUsed(touchCtx, repositories.TouchAIProviderKeyRequest{
+	if err := s.limits.keys.TouchUsed(touchCtx, agentports.TouchAIProviderKeyRequest{
 		ID:         provider.ID,
 		TenantInfo: tenant,
 		UsedAt:     now.Unix(),

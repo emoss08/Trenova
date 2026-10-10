@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -29,7 +29,7 @@ type rawPayloadRepository struct {
 	l  *zap.Logger
 }
 
-func NewRawPayloadRepository(p Params) repositories.CarrierIntelRawPayloadRepository {
+func NewRawPayloadRepository(p Params) carrierintelports.CarrierIntelRawPayloadRepository {
 	return &rawPayloadRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.carrier-intel-raw-payload-repository"),

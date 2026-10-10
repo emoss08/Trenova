@@ -5,13 +5,12 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/assistantservice"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,7 +23,7 @@ import (
 type turnRecords struct {
 	mu        sync.Mutex
 	turn      *conversation.AssistantTurn
-	completed []repositories.CompleteAssistantTurnRequest
+	completed []agentports.CompleteAssistantTurnRequest
 }
 
 func (r *turnRecords) Start(
@@ -36,7 +35,7 @@ func (r *turnRecords) Start(
 
 func (r *turnRecords) GetByID(
 	context.Context,
-	repositories.GetAssistantTurnRequest,
+	agentports.GetAssistantTurnRequest,
 ) (*conversation.AssistantTurn, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -46,21 +45,21 @@ func (r *turnRecords) GetByID(
 
 func (r *turnRecords) Active(
 	context.Context,
-	repositories.ActiveAssistantTurnRequest,
+	agentports.ActiveAssistantTurnRequest,
 ) (*conversation.AssistantTurn, error) {
 	return nil, nil
 }
 
 func (r *turnRecords) ListLive(
 	context.Context,
-	repositories.ListLiveAssistantTurnsRequest,
-) ([]*repositories.LiveAssistantTurn, error) {
+	agentports.ListLiveAssistantTurnsRequest,
+) ([]*agentports.LiveAssistantTurn, error) {
 	return nil, nil
 }
 
 func (r *turnRecords) Complete(
 	_ context.Context,
-	req repositories.CompleteAssistantTurnRequest,
+	req agentports.CompleteAssistantTurnRequest,
 ) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -79,11 +78,11 @@ func (r *turnRecords) MarkWorkflow(context.Context, pulid.ID, pagination.TenantI
 // later claim of it is told how it went.
 type ledger struct {
 	mu    sync.Mutex
-	steps map[string]serviceports.RunStep
+	steps map[string]agentports.RunStep
 }
 
-func newLedger(steps ...serviceports.RunStep) *ledger {
-	l := &ledger{steps: map[string]serviceports.RunStep{}}
+func newLedger(steps ...agentports.RunStep) *ledger {
+	l := &ledger{steps: map[string]agentports.RunStep{}}
 	for _, step := range steps {
 		l.steps[step.Key] = step
 	}
@@ -94,28 +93,28 @@ func newLedger(steps ...serviceports.RunStep) *ledger {
 func (l *ledger) Claim(
 	_ context.Context,
 	_ pagination.TenantInfo,
-	step serviceports.RunStep,
-) (serviceports.StepVerdict, error) {
+	step agentports.RunStep,
+) (agentports.StepVerdict, error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
 	if held, ok := l.steps[step.Key]; ok {
-		if held.Status == serviceports.RunStepCompleted {
-			return serviceports.StepVerdict{State: serviceports.StepCompleted}, nil
+		if held.Status == agentports.RunStepCompleted {
+			return agentports.StepVerdict{State: agentports.StepCompleted}, nil
 		}
 
-		return serviceports.StepVerdict{State: serviceports.StepUnknown}, nil
+		return agentports.StepVerdict{State: agentports.StepUnknown}, nil
 	}
-	step.Status = serviceports.RunStepStarted
+	step.Status = agentports.RunStepStarted
 	l.steps[step.Key] = step
 
-	return serviceports.StepVerdict{State: serviceports.StepFresh}, nil
+	return agentports.StepVerdict{State: agentports.StepFresh}, nil
 }
 
 func (l *ledger) Settle(
 	_ context.Context,
 	_ pagination.TenantInfo,
-	step serviceports.RunStep,
+	step agentports.RunStep,
 ) error {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -125,19 +124,19 @@ func (l *ledger) Settle(
 	return nil
 }
 
-func (l *ledger) Record(context.Context, pagination.TenantInfo, serviceports.RunStep) error {
+func (l *ledger) Record(context.Context, pagination.TenantInfo, agentports.RunStep) error {
 	return nil
 }
 
 func (l *ledger) Loaded(
 	context.Context,
 	pagination.TenantInfo,
-	serviceports.RunStepOwner,
-) ([]serviceports.RunStep, error) {
+	agentports.RunStepOwner,
+) ([]agentports.RunStep, error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	steps := make([]serviceports.RunStep, 0, len(l.steps))
+	steps := make([]agentports.RunStep, 0, len(l.steps))
 	for _, step := range l.steps {
 		steps = append(steps, step)
 	}
@@ -167,7 +166,7 @@ func finishInput(turn *conversation.AssistantTurn) *FinishTurnInput {
 			},
 			TurnID:   turn.ID,
 			ThreadID: turn.ThreadID,
-			Actor:    serviceports.RequestActor{UserID: pulid.MustNew("usr_")},
+			Actor:    permissionports.RequestActor{UserID: pulid.MustNew("usr_")},
 		},
 		Rejection: "This conversation is full. Start a new one.",
 	}
@@ -209,7 +208,7 @@ func TestFinishTurn_TellsTheReaderWhyTheQuestionWasTurnedAway(t *testing.T) {
 
 	ending := finish(t, a, finishInput(turn))
 
-	assert.Equal(t, serviceports.AssistantEventError, ending.Event.Event)
+	assert.Equal(t, agentports.AssistantEventError, ending.Event.Event)
 	assert.Equal(t, "This conversation is full. Start a new one.", ending.Result.Message)
 	require.Len(t, records.completed, 1)
 	assert.Equal(t, conversation.AssistantTurnStatusFailed, records.completed[0].Status)
@@ -217,7 +216,7 @@ func TestFinishTurn_TellsTheReaderWhyTheQuestionWasTurnedAway(t *testing.T) {
 	saved := steps.steps[turnFinishKey+":1"]
 	assert.Equal(
 		t,
-		serviceports.RunStepCompleted,
+		agentports.RunStepCompleted,
 		saved.Status,
 		"the save is settled in the ledger",
 	)
@@ -230,17 +229,17 @@ func TestFinishTurn_NeverSavesATurnTwice(t *testing.T) {
 
 	turn := runningTurn()
 	turn.Status = conversation.AssistantTurnStatusCompleted
-	steps := newLedger(serviceports.RunStep{
-		Kind:   serviceports.RunStepCompletion,
+	steps := newLedger(agentports.RunStep{
+		Kind:   agentports.RunStepCompletion,
 		Key:    turnFinishKey + ":1",
-		Status: serviceports.RunStepCompleted,
+		Status: agentports.RunStepCompleted,
 	})
 	a, records := finishActivities(turn, steps)
 
 	ending := finish(t, a, finishInput(turn))
 
 	assert.Empty(t, records.completed, "nothing is saved or closed a second time")
-	assert.Equal(t, serviceports.AssistantEventDone, ending.Event.Event)
+	assert.Equal(t, agentports.AssistantEventDone, ending.Event.Event)
 	assert.Equal(t, true, ending.Event.Data.(map[string]any)["replay"])
 }
 
@@ -250,10 +249,10 @@ func TestFinishTurn_DoesNotRepeatASaveThatMayHaveLanded(t *testing.T) {
 	t.Parallel()
 
 	turn := runningTurn()
-	steps := newLedger(serviceports.RunStep{
-		Kind:   serviceports.RunStepCompletion,
+	steps := newLedger(agentports.RunStep{
+		Kind:   agentports.RunStepCompletion,
 		Key:    turnFinishKey + ":1",
-		Status: serviceports.RunStepStarted,
+		Status: agentports.RunStepStarted,
 	})
 	a, records := finishActivities(turn, steps)
 
@@ -266,7 +265,7 @@ func TestFinishTurn_DoesNotRepeatASaveThatMayHaveLanded(t *testing.T) {
 	*/
 	require.Len(t, records.completed, 1)
 	assert.Equal(t, conversation.AssistantTurnStatusCompleted, records.completed[0].Status)
-	assert.Equal(t, serviceports.AssistantEventDone, ending.Event.Event)
+	assert.Equal(t, agentports.AssistantEventDone, ending.Event.Event)
 }
 
 // A save that failed cleanly appended nothing, so a later attempt saves.
@@ -274,10 +273,10 @@ func TestFinishTurn_SavesAfterAnAttemptThatFailedCleanly(t *testing.T) {
 	t.Parallel()
 
 	turn := runningTurn()
-	steps := newLedger(serviceports.RunStep{
-		Kind:   serviceports.RunStepCompletion,
+	steps := newLedger(agentports.RunStep{
+		Kind:   agentports.RunStepCompletion,
 		Key:    turnFinishKey + ":0",
-		Status: serviceports.RunStepFailed,
+		Status: agentports.RunStepFailed,
 	})
 	a, records := finishActivities(turn, steps)
 
@@ -325,12 +324,12 @@ func TestCloseTurn_LeavesARecordThatAlreadyEnded(t *testing.T) {
 
 type resumedFollowUps struct {
 	mu      sync.Mutex
-	resumed []serviceports.ResumeFollowUpsRequest
+	resumed []agentports.ResumeFollowUpsRequest
 }
 
 func (r *resumedFollowUps) ResumeFollowUps(
 	_ context.Context,
-	req serviceports.ResumeFollowUpsRequest,
+	req agentports.ResumeFollowUpsRequest,
 ) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -346,10 +345,10 @@ func TestFinishTurn_ResumesTheFollowUpsItKeptOut(t *testing.T) {
 
 	turn := runningTurn()
 	turn.Status = conversation.AssistantTurnStatusCompleted
-	steps := newLedger(serviceports.RunStep{
-		Kind:   serviceports.RunStepCompletion,
+	steps := newLedger(agentports.RunStep{
+		Kind:   agentports.RunStepCompletion,
 		Key:    turnFinishKey + ":1",
-		Status: serviceports.RunStepCompleted,
+		Status: agentports.RunStepCompleted,
 	})
 	a, _ := finishActivities(turn, steps)
 	followUps := &resumedFollowUps{}
@@ -407,7 +406,7 @@ func TestFinishTurn_DoesNotResumeFromAFollowUpThatNeverStarted(t *testing.T) {
 
 func (r *turnRecords) RecordFingerprint(
 	context.Context,
-	repositories.RecordAssistantTurnFingerprintRequest,
+	agentports.RecordAssistantTurnFingerprintRequest,
 ) error {
 	return nil
 }

@@ -3,15 +3,10 @@
 package invoiceadjustmentservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"context"
 	"fmt"
 	"testing"
-
-	"github.com/emoss08/trenova/internal/core/temporaljobs/invoiceadjustmentjobs/invoiceadjustmentcontract"
-
-	"github.com/emoss08/trenova/internal/core/services/rateengine/rateenginetest"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/chargeallocationrepository"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/customerledgerrepository"
 
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
@@ -23,10 +18,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/billingqueueservice"
+	"github.com/emoss08/trenova/internal/core/services/rateengine/rateenginetest"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/invoiceadjustmentjobs/invoiceadjustmentcontract"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
@@ -35,6 +30,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accountingcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/billingcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/billingqueuerepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/chargeallocationrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/customerledgerrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/customerrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fiscalperiodrepository"
@@ -49,6 +46,16 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentmoverepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentrepository"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -68,13 +75,13 @@ type integrationHarness struct {
 	ctx                context.Context
 	db                 *bun.DB
 	conn               *postgres.Connection
-	service            servicesports.InvoiceAdjustmentService
-	customerRepo       repositories.CustomerRepository
-	invoiceRepo        repositories.InvoiceRepository
-	adjustmentRepo     repositories.InvoiceAdjustmentRepository
-	billingQueueRepo   repositories.BillingQueueRepository
-	adjustmentCtrlRepo repositories.InvoiceAdjustmentControlRepository
-	accountingRepo     repositories.AccountingControlRepository
+	service            invoiceadjustmentports.InvoiceAdjustmentService
+	customerRepo       customerports.CustomerRepository
+	invoiceRepo        invoiceports.InvoiceRepository
+	adjustmentRepo     invoiceadjustmentports.InvoiceAdjustmentRepository
+	billingQueueRepo   billingqueueports.BillingQueueRepository
+	adjustmentCtrlRepo tenantports.InvoiceAdjustmentControlRepository
+	accountingRepo     tenantports.AccountingControlRepository
 	orgID              pulid.ID
 	buID               pulid.ID
 	userID             pulid.ID
@@ -180,14 +187,14 @@ type fakeAccessorialRepo struct{}
 
 func (fakeAccessorialRepo) List(
 	context.Context,
-	*repositories.ListAccessorialChargeRequest,
+	*accessorialchargeports.ListAccessorialChargeRequest,
 ) (*pagination.ListResult[*accessorialcharge.AccessorialCharge], error) {
 	return nil, nil
 }
 
 func (fakeAccessorialRepo) ListConnection(
 	context.Context,
-	*repositories.ListAccessorialChargeConnectionRequest,
+	*accessorialchargeports.ListAccessorialChargeConnectionRequest,
 ) (*pagination.CursorListResult[*accessorialcharge.AccessorialCharge], error) {
 	return nil, nil
 }
@@ -201,7 +208,7 @@ func (fakeAccessorialRepo) SelectOptions(
 
 func (fakeAccessorialRepo) GetByID(
 	context.Context,
-	repositories.GetAccessorialChargeByIDRequest,
+	accessorialchargeports.GetAccessorialChargeByIDRequest,
 ) (*accessorialcharge.AccessorialCharge, error) {
 	return nil, nil
 }
@@ -220,40 +227,40 @@ func (fakeAccessorialRepo) Update(
 	return nil, nil
 }
 
-type noopAuditService struct{ *mocks.MockAuditService }
+type noopAuditService struct{ *auditportsmock.MockAuditService }
 
 func (noopAuditService) List(
 	context.Context,
-	*repositories.ListAuditEntriesRequest,
+	*auditports.ListAuditEntriesRequest,
 ) (*pagination.ListResult[*audit.Entry], error) {
 	return nil, nil
 }
 
 func (noopAuditService) ListByResourceID(
 	context.Context,
-	*repositories.ListByResourceIDRequest,
+	*auditports.ListByResourceIDRequest,
 ) (*pagination.ListResult[*audit.Entry], error) {
 	return nil, nil
 }
 
 func (noopAuditService) GetByID(
 	context.Context,
-	repositories.GetAuditEntryByIDOptions,
+	auditports.GetAuditEntryByIDOptions,
 ) (*audit.Entry, error) {
 	return nil, nil
 }
 
 func (noopAuditService) LogAction(
-	*servicesports.LogActionParams,
-	...servicesports.LogOption,
+	*auditports.LogActionParams,
+	...auditports.LogOption,
 ) error {
 	return nil
 }
-func (noopAuditService) LogActions([]servicesports.BulkLogEntry) error { return nil }
+func (noopAuditService) LogActions([]auditports.BulkLogEntry) error { return nil }
 
 func (noopAuditService) RegisterSensitiveFields(
 	permission.Resource,
-	[]servicesports.SensitiveField,
+	[]auditports.SensitiveField,
 ) error {
 	return nil
 }
@@ -262,7 +269,7 @@ type noopRealtimeService struct{}
 
 func (noopRealtimeService) PublishResourceInvalidation(
 	context.Context,
-	*servicesports.PublishResourceInvalidationRequest,
+	*agentports.PublishResourceInvalidationRequest,
 ) error {
 	return nil
 }
@@ -352,7 +359,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 			makeInvoiceLine(2, invoice.InvoiceLineTypeAccessorial, "Fuel", 1, 25),
 		}, invoice.SettlementStatusUnpaid, decimal.Zero)
 
-		adjustment, submitErr := h.service.Submit(h.ctx, &servicesports.InvoiceAdjustmentRequest{
+		adjustment, submitErr := h.service.Submit(h.ctx, &invoiceadjustmentports.InvoiceAdjustmentRequest{
 			InvoiceID:      entity.ID,
 			Kind:           invoiceadjustment.KindCreditOnly,
 			IdempotencyKey: "credit-only-" + entity.ID.String(),
@@ -393,14 +400,14 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 			makeInvoiceLine(2, invoice.InvoiceLineTypeAccessorial, "Fuel", 1, 50),
 		}, invoice.SettlementStatusUnpaid, decimal.Zero)
 
-		adjustment, submitErr := h.service.Submit(h.ctx, &servicesports.InvoiceAdjustmentRequest{
+		adjustment, submitErr := h.service.Submit(h.ctx, &invoiceadjustmentports.InvoiceAdjustmentRequest{
 			InvoiceID:      entity.ID,
 			Kind:           invoiceadjustment.KindCreditRebill,
 			RebillStrategy: invoiceadjustment.RebillStrategyManual,
 			IdempotencyKey: "credit-rebill-" + entity.ID.String(),
 			Reason:         "Rate correction",
 			TenantInfo:     h.tenantInfo(),
-			Lines: []*servicesports.InvoiceAdjustmentLineInput{
+			Lines: []*invoiceadjustmentports.InvoiceAdjustmentLineInput{
 				{
 					OriginalLineID: entity.Lines[0].ID,
 					CreditQuantity: decimal.NewFromInt(1),
@@ -428,7 +435,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 			adjustment.ReplacementReviewStatus,
 		)
 
-		replacement, getErr := h.invoiceRepo.GetByID(h.ctx, repositories.GetInvoiceByIDRequest{
+		replacement, getErr := h.invoiceRepo.GetByID(h.ctx, invoiceports.GetInvoiceByIDRequest{
 			ID:         adjustment.ReplacementInvoiceID,
 			TenantInfo: h.tenantInfo(),
 		})
@@ -438,7 +445,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 
 		queueItem, queueErr := h.billingQueueRepo.GetByID(
 			h.ctx,
-			&repositories.GetBillingQueueItemByIDRequest{
+			&billingqueueports.GetBillingQueueItemByIDRequest{
 				ItemID:     adjustment.RebillQueueItemID,
 				TenantInfo: h.tenantInfo(),
 			},
@@ -459,7 +466,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 
 		_, statusErr := h.buildBillingQueueService().UpdateStatus(
 			h.ctx,
-			&servicesports.UpdateBillingQueueStatusRequest{
+			&billingqueueports.UpdateBillingQueueStatusRequest{
 				ItemID:     queueItem.ID,
 				NewStatus:  billingqueue.StatusApproved,
 				TenantInfo: h.tenantInfo(),
@@ -470,7 +477,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 
 		completed, completedErr := h.adjustmentRepo.GetByID(
 			h.ctx,
-			repositories.GetInvoiceAdjustmentRequest{
+			invoiceadjustmentports.GetInvoiceAdjustmentRequest{
 				ID:         adjustment.ID,
 				TenantInfo: h.tenantInfo(),
 			},
@@ -494,13 +501,13 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 			makeInvoiceLine(2, invoice.InvoiceLineTypeAccessorial, "Fuel", 1, 50),
 		}, invoice.SettlementStatusUnpaid, decimal.Zero)
 
-		preview, previewErr := h.service.Preview(h.ctx, &servicesports.InvoiceAdjustmentRequest{
+		preview, previewErr := h.service.Preview(h.ctx, &invoiceadjustmentports.InvoiceAdjustmentRequest{
 			InvoiceID:      entity.ID,
 			Kind:           invoiceadjustment.KindFullReversal,
 			IdempotencyKey: "full-reversal-preview-" + entity.ID.String(),
 			Reason:         "Reverse the invoice",
 			TenantInfo:     h.tenantInfo(),
-			Lines: []*servicesports.InvoiceAdjustmentLineInput{{
+			Lines: []*invoiceadjustmentports.InvoiceAdjustmentLineInput{{
 				OriginalLineID: entity.Lines[0].ID,
 				CreditQuantity: decimal.NewFromInt(1),
 				CreditAmount:   decimal.NewFromInt(25),
@@ -514,13 +521,13 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 		assert.True(t, decimal.NewFromInt(150).Equal(preview.CreditTotalAmount))
 		assert.True(t, preview.RebillTotalAmount.IsZero())
 
-		adjustment, submitErr := h.service.Submit(h.ctx, &servicesports.InvoiceAdjustmentRequest{
+		adjustment, submitErr := h.service.Submit(h.ctx, &invoiceadjustmentports.InvoiceAdjustmentRequest{
 			InvoiceID:      entity.ID,
 			Kind:           invoiceadjustment.KindFullReversal,
 			IdempotencyKey: "full-reversal-submit-" + entity.ID.String(),
 			Reason:         "Reverse the invoice",
 			TenantInfo:     h.tenantInfo(),
-			Lines: []*servicesports.InvoiceAdjustmentLineInput{{
+			Lines: []*invoiceadjustmentports.InvoiceAdjustmentLineInput{{
 				OriginalLineID: entity.Lines[0].ID,
 				CreditQuantity: decimal.NewFromInt(1),
 				CreditAmount:   decimal.NewFromInt(25),
@@ -541,13 +548,13 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 			makeInvoiceLine(2, invoice.InvoiceLineTypeAccessorial, "Fuel", 1, 50),
 		}, invoice.SettlementStatusUnpaid, decimal.Zero)
 
-		preview, previewErr := h.service.Preview(h.ctx, &servicesports.InvoiceAdjustmentRequest{
+		preview, previewErr := h.service.Preview(h.ctx, &invoiceadjustmentports.InvoiceAdjustmentRequest{
 			InvoiceID:      entity.ID,
 			Kind:           invoiceadjustment.KindCreditOnly,
 			IdempotencyKey: "credit-only-partial-preview-" + entity.ID.String(),
 			Reason:         "Partial concession",
 			TenantInfo:     h.tenantInfo(),
-			Lines: []*servicesports.InvoiceAdjustmentLineInput{{
+			Lines: []*invoiceadjustmentports.InvoiceAdjustmentLineInput{{
 				OriginalLineID: entity.Lines[0].ID,
 				CreditQuantity: decimal.NewFromInt(1),
 				CreditAmount:   decimal.NewFromInt(40),
@@ -570,7 +577,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 			makeInvoiceLine(1, invoice.InvoiceLineTypeFreight, "Open balance", 1, 80),
 		}, invoice.SettlementStatusUnpaid, decimal.Zero)
 
-		pending, submitErr := h.service.Submit(h.ctx, &servicesports.InvoiceAdjustmentRequest{
+		pending, submitErr := h.service.Submit(h.ctx, &invoiceadjustmentports.InvoiceAdjustmentRequest{
 			InvoiceID:      entity.ID,
 			Kind:           invoiceadjustment.KindWriteOff,
 			IdempotencyKey: "writeoff-" + entity.ID.String(),
@@ -582,7 +589,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 
 		approved, approveErr := h.service.Approve(
 			h.ctx,
-			&servicesports.ApproveInvoiceAdjustmentRequest{
+			&invoiceadjustmentports.ApproveInvoiceAdjustmentRequest{
 				AdjustmentID: pending.ID,
 				TenantInfo:   h.tenantInfo(),
 			},
@@ -658,7 +665,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 			makeInvoiceLine(1, invoice.InvoiceLineTypeFreight, "Base freight", 1, 100),
 		}, invoice.SettlementStatusUnpaid, decimal.Zero)
 
-		pending, submitErr := h.service.Submit(h.ctx, &servicesports.InvoiceAdjustmentRequest{
+		pending, submitErr := h.service.Submit(h.ctx, &invoiceadjustmentports.InvoiceAdjustmentRequest{
 			InvoiceID:      entity.ID,
 			Kind:           invoiceadjustment.KindCreditOnly,
 			IdempotencyKey: "pending-" + entity.ID.String(),
@@ -672,7 +679,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 			control.StandardAdjustmentApprovalPolicy = tenant.ApprovalPolicyAmountThreshold
 			control.StandardAdjustmentApprovalThreshold = decimal.NewFromInt(10_000)
 		})
-		_, executeErr := h.service.Submit(h.ctx, &servicesports.InvoiceAdjustmentRequest{
+		_, executeErr := h.service.Submit(h.ctx, &invoiceadjustmentports.InvoiceAdjustmentRequest{
 			InvoiceID:      entity.ID,
 			Kind:           invoiceadjustment.KindCreditOnly,
 			IdempotencyKey: "consume-" + entity.ID.String(),
@@ -683,7 +690,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 
 		failed, approveErr := h.service.Approve(
 			h.ctx,
-			&servicesports.ApproveInvoiceAdjustmentRequest{
+			&invoiceadjustmentports.ApproveInvoiceAdjustmentRequest{
 				AdjustmentID: pending.ID,
 				TenantInfo:   h.tenantInfo(),
 			},
@@ -703,7 +710,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 			makeInvoiceLine(1, invoice.InvoiceLineTypeFreight, "Base freight", 1, 100),
 		}, invoice.SettlementStatusUnpaid, decimal.Zero)
 
-		pending, submitErr := h.service.Submit(h.ctx, &servicesports.InvoiceAdjustmentRequest{
+		pending, submitErr := h.service.Submit(h.ctx, &invoiceadjustmentports.InvoiceAdjustmentRequest{
 			InvoiceID:      entity.ID,
 			Kind:           invoiceadjustment.KindCreditOnly,
 			IdempotencyKey: "reject-" + entity.ID.String(),
@@ -715,7 +722,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 
 		rejected, rejectErr := h.service.Reject(
 			h.ctx,
-			&servicesports.RejectInvoiceAdjustmentRequest{
+			&invoiceadjustmentports.RejectInvoiceAdjustmentRequest{
 				AdjustmentID: pending.ID,
 				TenantInfo:   h.tenantInfo(),
 				Reason:       "Denied by finance",
@@ -737,13 +744,13 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 			makeInvoiceLine(1, invoice.InvoiceLineTypeFreight, "Base freight", 1, 100),
 		}, invoice.SettlementStatusUnpaid, decimal.Zero)
 
-		firstReq := &servicesports.InvoiceAdjustmentRequest{
+		firstReq := &invoiceadjustmentports.InvoiceAdjustmentRequest{
 			InvoiceID:      entity.ID,
 			Kind:           invoiceadjustment.KindCreditOnly,
 			IdempotencyKey: "idem-" + entity.ID.String(),
 			Reason:         "First partial",
 			TenantInfo:     h.tenantInfo(),
-			Lines: []*servicesports.InvoiceAdjustmentLineInput{{
+			Lines: []*invoiceadjustmentports.InvoiceAdjustmentLineInput{{
 				OriginalLineID: entity.Lines[0].ID,
 				CreditQuantity: decimal.NewFromInt(1),
 				CreditAmount:   decimal.NewFromInt(40),
@@ -755,13 +762,13 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 		require.NoError(t, retryErr)
 		assert.Equal(t, first.ID, second.ID)
 
-		_, submitSecondErr := h.service.Submit(h.ctx, &servicesports.InvoiceAdjustmentRequest{
+		_, submitSecondErr := h.service.Submit(h.ctx, &invoiceadjustmentports.InvoiceAdjustmentRequest{
 			InvoiceID:      entity.ID,
 			Kind:           invoiceadjustment.KindCreditOnly,
 			IdempotencyKey: "idem-second-" + entity.ID.String(),
 			Reason:         "Second partial",
 			TenantInfo:     h.tenantInfo(),
-			Lines: []*servicesports.InvoiceAdjustmentLineInput{{
+			Lines: []*invoiceadjustmentports.InvoiceAdjustmentLineInput{{
 				OriginalLineID: entity.Lines[0].ID,
 				CreditQuantity: decimal.NewFromInt(1),
 				CreditAmount:   decimal.NewFromInt(60),
@@ -778,7 +785,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 		h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
 			control.PaidInvoiceAdjustmentPolicy = tenant.AdjustmentEligibilityDisallow
 		})
-		blocked, blockedErr := h.service.Preview(h.ctx, &servicesports.InvoiceAdjustmentRequest{
+		blocked, blockedErr := h.service.Preview(h.ctx, &invoiceadjustmentports.InvoiceAdjustmentRequest{
 			InvoiceID:      entity.ID,
 			Kind:           invoiceadjustment.KindCreditOnly,
 			IdempotencyKey: "paid-blocked-" + entity.ID.String(),
@@ -791,7 +798,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 		h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
 			control.PaidInvoiceAdjustmentPolicy = tenant.AdjustmentEligibilityAllowWithApproval
 		})
-		allowed, allowedErr := h.service.Preview(h.ctx, &servicesports.InvoiceAdjustmentRequest{
+		allowed, allowedErr := h.service.Preview(h.ctx, &invoiceadjustmentports.InvoiceAdjustmentRequest{
 			InvoiceID:      entity.ID,
 			Kind:           invoiceadjustment.KindCreditOnly,
 			IdempotencyKey: "paid-approval-" + entity.ID.String(),
@@ -814,7 +821,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 			makeInvoiceLine(1, invoice.InvoiceLineTypeFreight, "Undocumented adjustment", 1, 100),
 		}, invoice.SettlementStatusUnpaid, decimal.Zero)
 
-		_, missingErr := h.service.Submit(h.ctx, &servicesports.InvoiceAdjustmentRequest{
+		_, missingErr := h.service.Submit(h.ctx, &invoiceadjustmentports.InvoiceAdjustmentRequest{
 			InvoiceID:      entity.ID,
 			Kind:           invoiceadjustment.KindCreditOnly,
 			IdempotencyKey: "policy-missing-" + entity.ID.String(),
@@ -824,7 +831,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 		assert.Contains(t, missingErr.Error(), "reason")
 		assert.NotContains(t, missingErr.Error(), "Supporting documents")
 
-		valid, validErr := h.service.Submit(h.ctx, &servicesports.InvoiceAdjustmentRequest{
+		valid, validErr := h.service.Submit(h.ctx, &invoiceadjustmentports.InvoiceAdjustmentRequest{
 			InvoiceID:      entity.ID,
 			Kind:           invoiceadjustment.KindCreditOnly,
 			IdempotencyKey: "policy-valid-" + entity.ID.String(),
@@ -855,14 +862,14 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 			t.Run(string(kind), func(t *testing.T) {
 				preview, previewErr := h.service.Preview(
 					h.ctx,
-					&servicesports.InvoiceAdjustmentRequest{
+					&invoiceadjustmentports.InvoiceAdjustmentRequest{
 						InvoiceID:      entity.ID,
 						Kind:           kind,
 						RebillStrategy: invoiceadjustment.RebillStrategyManual,
 						IdempotencyKey: "no-docs-" + string(kind),
 						Reason:         "No documents attached",
 						TenantInfo:     h.tenantInfo(),
-						Lines: []*servicesports.InvoiceAdjustmentLineInput{{
+						Lines: []*invoiceadjustmentports.InvoiceAdjustmentLineInput{{
 							OriginalLineID: entity.Lines[0].ID,
 							CreditQuantity: decimal.NewFromInt(1),
 							CreditAmount:   decimal.NewFromInt(100),
@@ -884,7 +891,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 		}, invoice.SettlementStatusUnpaid, decimal.Zero)
 
 		archived := h.createDocument(t, document.StatusArchived)
-		preview, previewErr := h.service.Preview(h.ctx, &servicesports.InvoiceAdjustmentRequest{
+		preview, previewErr := h.service.Preview(h.ctx, &invoiceadjustmentports.InvoiceAdjustmentRequest{
 			InvoiceID:      entity.ID,
 			Kind:           invoiceadjustment.KindCreditOnly,
 			IdempotencyKey: "archived-doc-" + entity.ID.String(),
@@ -896,7 +903,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 		assert.Contains(t, preview.Errors, "attachmentIds")
 
 		active := h.createDocument(t, document.StatusActive)
-		executed, submitErr := h.service.Submit(h.ctx, &servicesports.InvoiceAdjustmentRequest{
+		executed, submitErr := h.service.Submit(h.ctx, &invoiceadjustmentports.InvoiceAdjustmentRequest{
 			InvoiceID:      entity.ID,
 			Kind:           invoiceadjustment.KindCreditOnly,
 			IdempotencyKey: "active-doc-" + entity.ID.String(),
@@ -924,10 +931,10 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 
 			batch, batchErr := h.service.BulkSubmit(
 				h.ctx,
-				&servicesports.InvoiceAdjustmentBulkRequest{
+				&invoiceadjustmentports.InvoiceAdjustmentBulkRequest{
 					IdempotencyKey: "bulk-inline",
 					TenantInfo:     h.tenantInfo(),
-					Items: []*servicesports.InvoiceAdjustmentRequest{
+					Items: []*invoiceadjustmentports.InvoiceAdjustmentRequest{
 						{
 							InvoiceID:      first.ID,
 							Kind:           invoiceadjustment.KindCreditOnly,
@@ -939,7 +946,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 							Kind:           invoiceadjustment.KindCreditOnly,
 							IdempotencyKey: "bulk-inline-2",
 							Reason:         "Invalid",
-							Lines: []*servicesports.InvoiceAdjustmentLineInput{{
+							Lines: []*invoiceadjustmentports.InvoiceAdjustmentLineInput{{
 								OriginalLineID: second.Lines[0].ID,
 								CreditQuantity: decimal.NewFromInt(1),
 								CreditAmount:   decimal.NewFromInt(150),
@@ -956,9 +963,9 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 
 			temporalStarter := &fakeWorkflowStarter{enabled: true}
 			h.service = h.buildService(t, temporalStarter, decimal.NewFromInt(100))
-			items := make([]*servicesports.InvoiceAdjustmentRequest, 0, batchInlineThreshold+1)
+			items := make([]*invoiceadjustmentports.InvoiceAdjustmentRequest, 0, batchInlineThreshold+1)
 			for i := range batchInlineThreshold + 1 {
-				items = append(items, &servicesports.InvoiceAdjustmentRequest{
+				items = append(items, &invoiceadjustmentports.InvoiceAdjustmentRequest{
 					InvoiceID:      first.ID,
 					Kind:           invoiceadjustment.KindCreditOnly,
 					IdempotencyKey: fmt.Sprintf("bulk-temporal-%d", i),
@@ -968,7 +975,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 
 			queued, queuedErr := h.service.BulkSubmit(
 				h.ctx,
-				&servicesports.InvoiceAdjustmentBulkRequest{
+				&invoiceadjustmentports.InvoiceAdjustmentBulkRequest{
 					IdempotencyKey: "bulk-temporal",
 					TenantInfo:     h.tenantInfo(),
 					Items:          items,
@@ -991,7 +998,7 @@ func newIntegrationHarness(
 	t *testing.T,
 	ctx context.Context,
 	db *bun.DB,
-	starter servicesports.WorkflowStarter,
+	starter kernelports.WorkflowStarter,
 	formulaAmount decimal.Decimal,
 ) *integrationHarness {
 	t.Helper()
@@ -1155,9 +1162,9 @@ func newIntegrationHarness(
 
 func (h *integrationHarness) buildService(
 	t *testing.T,
-	starter servicesports.WorkflowStarter,
+	starter kernelports.WorkflowStarter,
 	formulaAmount decimal.Decimal,
-) servicesports.InvoiceAdjustmentService {
+) invoiceadjustmentports.InvoiceAdjustmentService {
 	t.Helper()
 
 	return New(Params{
@@ -1212,7 +1219,7 @@ func (h *integrationHarness) buildService(
 	})
 }
 
-func (h *integrationHarness) buildBillingQueueService() servicesports.BillingQueueService {
+func (h *integrationHarness) buildBillingQueueService() billingqueueports.BillingQueueService {
 	logger := zap.NewNop()
 	shipmentRepo := shipmentrepository.New(shipmentrepository.Params{
 		DB: h.conn,
@@ -1480,9 +1487,9 @@ func (h *integrationHarness) tenantInfo() pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: h.orgID, BuID: h.buID, UserID: h.userID}
 }
 
-func (h *integrationHarness) actor() *servicesports.RequestActor {
-	return &servicesports.RequestActor{
-		PrincipalType:  servicesports.PrincipalTypeUser,
+func (h *integrationHarness) actor() *permissionports.RequestActor {
+	return &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    h.userID,
 		UserID:         h.userID,
 		OrganizationID: h.orgID,

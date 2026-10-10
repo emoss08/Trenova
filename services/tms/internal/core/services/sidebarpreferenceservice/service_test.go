@@ -1,12 +1,15 @@
 package sidebarpreferenceservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/sidebarpreferenceportsmock"
 	"context"
 	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/sidebarpreference"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -19,11 +22,11 @@ import (
 
 func newTestService(
 	t *testing.T,
-) (*Service, *mocks.MockSidebarPreferenceRepository, *mocks.MockPermissionEngine) {
+) (*Service, *sidebarpreferenceportsmock.MockSidebarPreferenceRepository, *permissionportsmock.MockPermissionEngine) {
 	t.Helper()
 
-	repo := mocks.NewMockSidebarPreferenceRepository(t)
-	engine := mocks.NewMockPermissionEngine(t)
+	repo := sidebarpreferenceportsmock.NewMockSidebarPreferenceRepository(t)
+	engine := permissionportsmock.NewMockPermissionEngine(t)
 	svc := New(Params{
 		Logger:           zap.NewNop(),
 		Repo:             repo,
@@ -40,20 +43,20 @@ func testRequest() *Request {
 			BuID:   pulid.MustNew("bu_"),
 			UserID: pulid.MustNew("usr_"),
 		},
-		Principal: services.PrincipalInfo{UserID: pulid.MustNew("usr_")},
+		Principal: kernelports.PrincipalInfo{UserID: pulid.MustNew("usr_")},
 	}
 }
 
-func allowBatch(engine *mocks.MockPermissionEngine, denied map[string]struct{}) {
+func allowBatch(engine *permissionportsmock.MockPermissionEngine, denied map[string]struct{}) {
 	engine.EXPECT().
 		CheckBatch(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req *services.BatchPermissionCheckRequest) (*services.BatchPermissionCheckResult, error) {
-			results := make([]services.PermissionCheckResult, 0, len(req.Checks))
+		RunAndReturn(func(_ context.Context, req *permissionports.BatchPermissionCheckRequest) (*permissionports.BatchPermissionCheckResult, error) {
+			results := make([]permissionports.PermissionCheckResult, 0, len(req.Checks))
 			for _, check := range req.Checks {
 				_, deny := denied[check.Resource]
-				results = append(results, services.PermissionCheckResult{Allowed: !deny})
+				results = append(results, permissionports.PermissionCheckResult{Allowed: !deny})
 			}
-			return &services.BatchPermissionCheckResult{Results: results}, nil
+			return &permissionports.BatchPermissionCheckResult{Results: results}, nil
 		})
 }
 

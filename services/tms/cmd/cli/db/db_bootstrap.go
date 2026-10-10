@@ -12,7 +12,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/bootstrap/infrastructure"
 	"github.com/emoss08/trenova/internal/core/domain/instancebootstrap"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/instancebootstrapservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -22,6 +21,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/instancebootstraprepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tenantbootstraprepository"
 	redisrepositories "github.com/emoss08/trenova/internal/infrastructure/redis/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/instancebootstrapports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/fatih/color"
 	goredis "github.com/redis/go-redis/v9"
@@ -176,7 +177,7 @@ type bootstrapDeps struct {
 	auditor func(
 		ctx context.Context,
 		conn *postgres.Connection,
-	) (services.SecurityAuditor, func(), error)
+	) (permissionports.SecurityAuditor, func(), error)
 	cfg    *config.Config
 	logger *zap.Logger
 	out    io.Writer
@@ -250,7 +251,7 @@ func bootstrapInstance(
 	}
 
 	switch {
-	case plan.Status == services.InstanceBootstrapCompleted:
+	case plan.Status == instancebootstrapports.InstanceBootstrapCompleted:
 		printBootstrapCompleted(deps.out, &plan.Inputs, plan.Record.CompletedAt)
 		return nil
 	case preview:
@@ -276,13 +277,13 @@ func bootstrapInstance(
 
 	result, err := newInstanceBootstrapService(deps, auditor).Bootstrap(
 		ctx,
-		&services.InstanceBootstrapRequest{Inputs: plan.Inputs, Password: secret},
+		&instancebootstrapports.InstanceBootstrapRequest{Inputs: plan.Inputs, Password: secret},
 	)
 	if err != nil {
 		return describeBootstrapError(err)
 	}
 
-	if result.Status == services.InstanceBootstrapCompleted {
+	if result.Status == instancebootstrapports.InstanceBootstrapCompleted {
 		printBootstrapCompleted(deps.out, &plan.Inputs, result.CompletedAt)
 		return nil
 	}
@@ -293,7 +294,7 @@ func bootstrapInstance(
 
 func newInstanceBootstrapService(
 	deps bootstrapDeps,
-	auditor services.SecurityAuditor,
+	auditor permissionports.SecurityAuditor,
 ) *instancebootstrapservice.Service {
 	return instancebootstrapservice.New(instancebootstrapservice.Params{
 		DB: deps.conn,
@@ -314,7 +315,7 @@ func newInstanceBootstrapService(
 func redisSecurityAuditor(
 	ctx context.Context,
 	conn *postgres.Connection,
-) (services.SecurityAuditor, func(), error) {
+) (permissionports.SecurityAuditor, func(), error) {
 	logger := zap.L()
 
 	var client *goredis.Client
@@ -475,7 +476,7 @@ func printBootstrapCreated(
 	out io.Writer,
 	appCfg *config.Config,
 	inputs *instancebootstrap.Inputs,
-	result *services.InstanceBootstrapResult,
+	result *instancebootstrapports.InstanceBootstrapResult,
 ) {
 	fmt.Fprintln(out, color.GreenString("Created organization %q", inputs.OrganizationName))
 	fmt.Fprintf(out, "  Administrator: %s <%s>\n", inputs.AdminName, result.AdminEmail)

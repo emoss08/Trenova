@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -232,7 +232,7 @@ func formulaTemplateName(shp *shipment.Shipment) string {
 
 func HydrateAccessorials(
 	ctx context.Context,
-	repo repositories.AccessorialChargeRepository,
+	repo accessorialchargeports.AccessorialChargeRepository,
 	tenantInfo pagination.TenantInfo,
 	shipments ...*shipment.Shipment,
 ) error {
@@ -254,7 +254,7 @@ func HydrateAccessorials(
 			definition, ok := resolved[charge.AccessorialChargeID]
 			if !ok {
 				var err error
-				definition, err = repo.GetByID(ctx, repositories.GetAccessorialChargeByIDRequest{
+				definition, err = repo.GetByID(ctx, accessorialchargeports.GetAccessorialChargeByIDRequest{
 					ID:         charge.AccessorialChargeID,
 					TenantInfo: &tenantInfo,
 				})

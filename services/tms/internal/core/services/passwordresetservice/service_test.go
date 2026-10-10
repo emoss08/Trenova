@@ -6,8 +6,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -65,20 +66,20 @@ func (r *stubTokenRepo) CountSince(_ context.Context, _ pulid.ID, _ int64) (int,
 }
 
 type stubUserRepo struct {
-	repositories.UserRepository
+	tenantports.UserRepository
 
 	user       *tenant.User
 	findErr    error
 	getErr     error
 	lookedUp   pulid.ID
-	updated    *repositories.UpdateUserPasswordRequest
+	updated    *tenantports.UpdateUserPasswordRequest
 	updateErr  error
 	findCalled int
 }
 
 func (r *stubUserRepo) GetByID(
 	_ context.Context,
-	req repositories.GetUserByIDRequest,
+	req tenantports.GetUserByIDRequest,
 ) (*tenant.User, error) {
 	r.lookedUp = req.LookupUserID
 	if r.getErr != nil {
@@ -97,14 +98,14 @@ func (r *stubUserRepo) FindByEmail(_ context.Context, _ string) (*tenant.User, e
 
 func (r *stubUserRepo) UpdatePassword(
 	_ context.Context,
-	req repositories.UpdateUserPasswordRequest,
+	req tenantports.UpdateUserPasswordRequest,
 ) error {
 	r.updated = &req
 	return r.updateErr
 }
 
 type stubSessionRepo struct {
-	repositories.SessionRepository
+	sessionports.SessionRepository
 
 	deletedFor []pulid.ID
 	deleteErr  error

@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/detention"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -33,7 +33,7 @@ type occurrenceRepository struct {
 
 func NewOccurrenceRepository(
 	p OccurrenceParams,
-) repositories.DetentionOccurrenceRepository {
+) detentionports.DetentionOccurrenceRepository {
 	return &occurrenceRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.detention-occurrence-repository"),
@@ -70,7 +70,7 @@ func withOccurrenceNames(q *bun.SelectQuery) *bun.SelectQuery {
 
 func (r *occurrenceRepository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListDetentionOccurrencesRequest,
+	req *detentionports.ListDetentionOccurrencesRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
@@ -106,7 +106,7 @@ func (r *occurrenceRepository) filterQuery(
 
 func (r *occurrenceRepository) List(
 	ctx context.Context,
-	req *repositories.ListDetentionOccurrencesRequest,
+	req *detentionports.ListDetentionOccurrencesRequest,
 ) (*pagination.ListResult[*detention.DetentionOccurrence], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*detention.DetentionOccurrence], error) {
 		log := r.l.With(zap.String("operation", "List"))
@@ -133,7 +133,7 @@ func (r *occurrenceRepository) List(
 
 func (r *occurrenceRepository) GetByID(
 	ctx context.Context,
-	req *repositories.GetDetentionOccurrenceByIDRequest,
+	req *detentionports.GetDetentionOccurrenceByIDRequest,
 ) (*detention.DetentionOccurrence, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*detention.DetentionOccurrence, error) {
 		log := r.l.With(
@@ -178,7 +178,7 @@ func (r *occurrenceRepository) GetByID(
 
 func (r *occurrenceRepository) GetByStop(
 	ctx context.Context,
-	req *repositories.GetOccurrenceByStopRequest,
+	req *detentionports.GetOccurrenceByStopRequest,
 ) (*detention.DetentionOccurrence, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*detention.DetentionOccurrence, error) {
 		cols := buncolgen.DetentionOccurrenceColumns
@@ -206,7 +206,7 @@ func (r *occurrenceRepository) GetByStop(
 
 func (r *occurrenceRepository) GetByShipment(
 	ctx context.Context,
-	req *repositories.GetOccurrencesByShipmentRequest,
+	req *detentionports.GetOccurrencesByShipmentRequest,
 ) ([]*detention.DetentionOccurrence, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detention.DetentionOccurrence, error) {
 		cols := buncolgen.DetentionOccurrenceColumns
@@ -265,7 +265,7 @@ func (r *occurrenceRepository) ListOpen(
 
 func (r *occurrenceRepository) ListBillingHoldsByShipments(
 	ctx context.Context,
-	req *repositories.ListDetentionBillingHoldsRequest,
+	req *detentionports.ListDetentionBillingHoldsRequest,
 ) ([]*detention.DetentionOccurrence, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detention.DetentionOccurrence, error) {
 		if req == nil || len(req.ShipmentIDs) == 0 {
@@ -330,7 +330,7 @@ func applyBillingHold(q *bun.SelectQuery) *bun.SelectQuery {
 
 func (r *occurrenceRepository) ListByAdditionalCharges(
 	ctx context.Context,
-	req *repositories.ListOccurrencesByChargesRequest,
+	req *detentionports.ListOccurrencesByChargesRequest,
 ) ([]*detention.DetentionOccurrence, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detention.DetentionOccurrence, error) {
 		if req == nil || len(req.ChargeIDs) == 0 || len(req.ShipmentIDs) == 0 {
@@ -368,7 +368,7 @@ func (r *occurrenceRepository) ListByAdditionalCharges(
 // window has opened but whose notice has not gone out yet.
 func (r *occurrenceRepository) ListNoticesDue(
 	ctx context.Context,
-	req *repositories.ListNoticesDueRequest,
+	req *detentionports.ListNoticesDueRequest,
 ) ([]*detention.DetentionOccurrence, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detention.DetentionOccurrence, error) {
 		cols := buncolgen.DetentionOccurrenceColumns
@@ -407,7 +407,7 @@ func (r *occurrenceRepository) Upsert(
 			zap.String("stopId", entity.StopID.String()),
 		)
 
-		existing, err := r.GetByStop(ctx, &repositories.GetOccurrenceByStopRequest{
+		existing, err := r.GetByStop(ctx, &detentionports.GetOccurrenceByStopRequest{
 			StopID: entity.StopID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
@@ -477,7 +477,7 @@ func (r *occurrenceRepository) Update(
 // shipment so a per-shipment cap can be applied across stops.
 func (r *occurrenceRepository) ShipmentAccrued(
 	ctx context.Context,
-	req *repositories.GetOccurrencesByShipmentRequest,
+	req *detentionports.GetOccurrencesByShipmentRequest,
 ) (decimal.Decimal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (decimal.Decimal, error) {
 		cols := buncolgen.DetentionOccurrenceColumns
@@ -508,7 +508,7 @@ func (r *occurrenceRepository) ShipmentAccrued(
 func (r *occurrenceRepository) LinkCharges(
 	ctx context.Context,
 	tx bun.IDB,
-	req *repositories.LinkOccurrenceChargesRequest,
+	req *detentionports.LinkOccurrenceChargesRequest,
 ) error {
 	if req == nil || req.ShipmentID.IsNil() {
 		return nil

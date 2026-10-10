@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -32,7 +32,7 @@ type settlementRepository struct {
 	l  *zap.Logger
 }
 
-func NewSettlement(p Params) repositories.DriverSettlementRepository {
+func NewSettlement(p Params) driversettlementports.DriverSettlementRepository {
 	return &settlementRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.driver-settlement-repository"),
@@ -41,7 +41,7 @@ func NewSettlement(p Params) repositories.DriverSettlementRepository {
 
 func (r *settlementRepository) List(
 	ctx context.Context,
-	req *repositories.ListDriverSettlementsRequest,
+	req *driversettlementports.ListDriverSettlementsRequest,
 ) (*pagination.ListResult[*driversettlement.Settlement], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*driversettlement.Settlement], error) {
 		limit := req.Filter.Pagination.SafeLimit()
@@ -95,7 +95,7 @@ func (r *settlementRepository) List(
 
 func (r *settlementRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListDriverSettlementConnectionRequest,
+	req *driversettlementports.ListDriverSettlementConnectionRequest,
 ) (*pagination.CursorListResult[*driversettlement.Settlement], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*driversettlement.Settlement], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -156,7 +156,7 @@ func (r *settlementRepository) ListConnection(
 
 func (r *settlementRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetDriverSettlementByIDRequest,
+	req driversettlementports.GetDriverSettlementByIDRequest,
 ) (*driversettlement.Settlement, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driversettlement.Settlement, error) {
 		entity := new(driversettlement.Settlement)
@@ -181,7 +181,7 @@ func (r *settlementRepository) GetByID(
 
 func (r *settlementRepository) GetLatestForWorker(
 	ctx context.Context,
-	req repositories.GetLatestSettlementForWorkerRequest,
+	req driversettlementports.GetLatestSettlementForWorkerRequest,
 ) (*driversettlement.Settlement, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driversettlement.Settlement, error) {
 		entity := new(driversettlement.Settlement)
@@ -204,7 +204,7 @@ func (r *settlementRepository) GetLatestForWorker(
 
 func (r *settlementRepository) GetOpenDraftForWorker(
 	ctx context.Context,
-	req repositories.GetOpenDraftForWorkerRequest,
+	req driversettlementports.GetOpenDraftForWorkerRequest,
 ) (*driversettlement.Settlement, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driversettlement.Settlement, error) {
 		entity := new(driversettlement.Settlement)
@@ -227,10 +227,10 @@ func (r *settlementRepository) GetOpenDraftForWorker(
 
 func (r *settlementRepository) GetWorkspaceCounts(
 	ctx context.Context,
-	req *repositories.GetWorkspaceCountsRequest,
-) (*repositories.SettlementWorkspaceCounts, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.SettlementWorkspaceCounts, error) {
-		counts := new(repositories.SettlementWorkspaceCounts)
+	req *driversettlementports.GetWorkspaceCountsRequest,
+) (*driversettlementports.SettlementWorkspaceCounts, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driversettlementports.SettlementWorkspaceCounts, error) {
+		counts := new(driversettlementports.SettlementWorkspaceCounts)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*driversettlement.Settlement)(nil)).
@@ -265,7 +265,7 @@ func (r *settlementRepository) GetWorkspaceCounts(
 
 func (r *settlementRepository) ListTrailingNetPay(
 	ctx context.Context,
-	req *repositories.ListTrailingNetPayRequest,
+	req *driversettlementports.ListTrailingNetPayRequest,
 ) ([]int64, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]int64, error) {
 		nets := make([]int64, 0, req.Limit)
@@ -332,7 +332,7 @@ func (r *settlementRepository) Create(
 				return nil, fmt.Errorf("create driver settlement lines: %w", err)
 			}
 		}
-		return r.GetByID(ctx, repositories.GetDriverSettlementByIDRequest{
+		return r.GetByID(ctx, driversettlementports.GetDriverSettlementByIDRequest{
 			ID: entity.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
@@ -395,7 +395,7 @@ func (r *settlementRepository) Update(
 		if err = dberror.CheckRowsAffected(res, "DriverSettlement", entity.ID.String()); err != nil {
 			return nil, err
 		}
-		return r.GetByID(ctx, repositories.GetDriverSettlementByIDRequest{
+		return r.GetByID(ctx, driversettlementports.GetDriverSettlementByIDRequest{
 			ID: entity.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,

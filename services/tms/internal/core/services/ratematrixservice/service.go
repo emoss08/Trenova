@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/ratematrix"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetablecache"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -20,18 +20,18 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.RateMatrixRepository
-	DensityRepo  repositories.DensityScaleRepository
+	Repo         ratematrixports.RateMatrixRepository
+	DensityRepo  ratematrixports.DensityScaleRepository
 	Validator    *Validator
-	AuditService services.AuditService
+	AuditService auditports.AuditService
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.RateMatrixRepository
-	densityRepo  repositories.DensityScaleRepository
+	repo         ratematrixports.RateMatrixRepository
+	densityRepo  ratematrixports.DensityScaleRepository
 	validator    *Validator
-	auditService services.AuditService
+	auditService auditports.AuditService
 }
 
 func New(p Params) *Service {
@@ -46,14 +46,14 @@ func New(p Params) *Service {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListRateMatrixRequest,
+	req *ratematrixports.ListRateMatrixRequest,
 ) (*pagination.ListResult[*ratematrix.RateMatrix], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListRateMatrixConnectionRequest,
+	req *ratematrixports.ListRateMatrixConnectionRequest,
 ) (*pagination.CursorListResult[*ratematrix.RateMatrix], error) {
 	return s.repo.ListConnection(ctx, req)
 }
@@ -67,7 +67,7 @@ func (s *Service) SelectOptions(
 
 func (s *Service) GetByID(
 	ctx context.Context,
-	req *repositories.GetRateMatrixByIDRequest,
+	req *ratematrixports.GetRateMatrixByIDRequest,
 ) (*ratematrix.RateMatrix, error) {
 	return s.repo.GetByID(ctx, req)
 }
@@ -116,7 +116,7 @@ func (s *Service) Update(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetByID(ctx, &repositories.GetRateMatrixByIDRequest{
+	original, err := s.repo.GetByID(ctx, &ratematrixports.GetRateMatrixByIDRequest{
 		RateMatrixID: entity.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -143,7 +143,7 @@ func (s *Service) Update(
 
 func (s *Service) Delete(
 	ctx context.Context,
-	req *repositories.GetRateMatrixByIDRequest,
+	req *ratematrixports.GetRateMatrixByIDRequest,
 	userID pulid.ID,
 ) error {
 	log := s.l.With(
@@ -170,7 +170,7 @@ func (s *Service) Delete(
 
 func (s *Service) ListCells(
 	ctx context.Context,
-	req *repositories.ListRateMatrixCellsRequest,
+	req *ratematrixports.ListRateMatrixCellsRequest,
 ) (*pagination.ListResult[*ratematrix.RateMatrixCell], error) {
 	return s.repo.ListCells(ctx, req)
 }
@@ -183,7 +183,7 @@ func (s *Service) ListCells(
 // rates with nothing on screen to suggest they exist.
 func (s *Service) ReplaceCells(
 	ctx context.Context,
-	req *repositories.ReplaceRateMatrixCellsRequest,
+	req *ratematrixports.ReplaceRateMatrixCellsRequest,
 	userID pulid.ID,
 ) error {
 	log := s.l.With(
@@ -192,7 +192,7 @@ func (s *Service) ReplaceCells(
 		zap.Int("cells", len(req.Cells)),
 	)
 
-	matrix, err := s.repo.GetByID(ctx, &repositories.GetRateMatrixByIDRequest{
+	matrix, err := s.repo.GetByID(ctx, &ratematrixports.GetRateMatrixByIDRequest{
 		RateMatrixID:      req.RateMatrixID,
 		TenantInfo:        req.TenantInfo,
 		IncludeDimensions: true,
@@ -219,14 +219,14 @@ func (s *Service) ReplaceCells(
 
 func (s *Service) ListDensityScales(
 	ctx context.Context,
-	req *repositories.ListRateMatrixRequest,
+	req *ratematrixports.ListRateMatrixRequest,
 ) (*pagination.ListResult[*ratematrix.DensityScale], error) {
 	return s.densityRepo.List(ctx, req)
 }
 
 func (s *Service) GetDensityScale(
 	ctx context.Context,
-	req *repositories.GetDensityScaleRequest,
+	req *ratematrixports.GetDensityScaleRequest,
 ) (*ratematrix.DensityScale, error) {
 	return s.densityRepo.GetByID(ctx, req)
 }
@@ -239,7 +239,7 @@ func (s *Service) audit(
 	userID pulid.ID,
 	comment string,
 ) {
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceRateMatrix,
 		ResourceID:     entity.GetID().String(),
 		Operation:      operation,
@@ -254,7 +254,7 @@ func (s *Service) audit(
 		params.CurrentState = jsonutils.MustToJSON(entity)
 	}
 
-	opts := []services.LogOption{auditservice.WithComment(comment)}
+	opts := []auditports.LogOption{auditservice.WithComment(comment)}
 
 	if original != nil {
 		params.PreviousState = jsonutils.MustToJSON(original)

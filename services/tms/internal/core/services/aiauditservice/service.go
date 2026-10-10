@@ -5,8 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiaudit"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -23,23 +24,23 @@ const PersonFilterField = "personId"
 
 // Service is the trail as the API reads it, verifies it and exports it.
 type Service struct {
-	ledger    repositories.AIAuditRepository
+	ledger    aiauditports.AIAuditRepository
 	projector *Projector
 	verifier  *Verifier
 	exports   *Exports
-	workflows serviceports.WorkflowStarter
+	workflows kernelports.WorkflowStarter
 	traceURL  func(string) string
 	l         *zap.Logger
 }
 
-var _ serviceports.AIAuditService = (*Service)(nil)
+var _ aiauditports.AIAuditService = (*Service)(nil)
 
 type ServiceParams struct {
-	Ledger    repositories.AIAuditRepository
+	Ledger    aiauditports.AIAuditRepository
 	Projector *Projector
 	Verifier  *Verifier
 	Exports   *Exports
-	Workflows serviceports.WorkflowStarter
+	Workflows kernelports.WorkflowStarter
 	TraceURL  func(string) string
 	Logger    *zap.Logger
 }
@@ -58,7 +59,7 @@ func NewService(p ServiceParams) *Service {
 
 func (s *Service) ListEvents(
 	ctx context.Context,
-	req *serviceports.ListAIAuditEventsRequest,
+	req *aiauditports.ListAIAuditEventsRequest,
 ) (*pagination.CursorListResult[*aiaudit.AIAuditEvent], error) {
 	if req.Filter == nil {
 		return nil, errortypes.NewValidationError(
@@ -72,7 +73,7 @@ func (s *Service) ListEvents(
 		req.Filter.FilterGroups,
 	)
 
-	return s.ledger.ListConnection(ctx, &repositories.ListAIAuditEventsRequest{
+	return s.ledger.ListConnection(ctx, &aiauditports.ListAIAuditEventsQuery{
 		Filter:  req.Filter,
 		Cursor:  req.Cursor,
 		Columns: req.Columns,
@@ -109,7 +110,7 @@ func NormalizePersonFilters(
 
 func (s *Service) GetEvent(
 	ctx context.Context,
-	req repositories.GetAIAuditEventRequest,
+	req aiauditports.GetAIAuditEventRequest,
 ) (*aiaudit.AIAuditEvent, error) {
 	return s.ledger.GetByID(ctx, req)
 }
@@ -117,7 +118,7 @@ func (s *Service) GetEvent(
 func (s *Service) ReaderArguments(
 	ctx context.Context,
 	event *aiaudit.AIAuditEvent,
-	ceilings serviceports.FieldCeilings,
+	ceilings aiauditports.FieldCeilings,
 ) map[string]any {
 	return ReaderArguments(ctx, event, ceilings)
 }
@@ -125,7 +126,7 @@ func (s *Service) ReaderArguments(
 func (s *Service) ChainStatus(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*serviceports.AIAuditChainStatus, error) {
+) (*aiauditports.AIAuditChainStatus, error) {
 	return s.verifier.ChainStatus(ctx, tenantInfo)
 }
 
@@ -133,8 +134,8 @@ func (s *Service) ChainStatus(
 // already running is joined rather than started twice.
 func (s *Service) RequestVerification(
 	ctx context.Context,
-	actor *serviceports.RequestActor,
-) (*serviceports.AIAuditChainStatus, error) {
+	actor *permissionports.RequestActor,
+) (*aiauditports.AIAuditChainStatus, error) {
 	if actor == nil {
 		return nil, errortypes.NewAuthenticationError("Authentication required")
 	}
@@ -146,8 +147,8 @@ func (s *Service) RequestVerification(
 				actor.OrganizationID, actor.BusinessUnitID),
 			TaskQueue: temporaltype.AuditTaskQueue,
 		},
-		serviceports.AIAuditVerifyWorkflowName,
-		&serviceports.AIAuditVerifyPayload{
+		aiauditports.AIAuditVerifyWorkflowName,
+		&aiauditports.AIAuditVerifyPayload{
 			OrganizationID: actor.OrganizationID,
 			BusinessUnitID: actor.BusinessUnitID,
 			RequestedBy:    actor.UserID,
@@ -171,7 +172,7 @@ func (s *Service) RequestVerification(
 
 func (s *Service) RequestExport(
 	ctx context.Context,
-	req *serviceports.RequestAIAuditExportRequest,
+	req *aiauditports.RequestAIAuditExportRequest,
 ) (*aiaudit.AIAuditExport, error) {
 	if req.Filter != nil {
 		req.Filter.FieldFilters, req.Filter.FilterGroups = NormalizePersonFilters(
@@ -185,22 +186,22 @@ func (s *Service) RequestExport(
 
 func (s *Service) GetExport(
 	ctx context.Context,
-	req repositories.GetAIAuditExportRequest,
+	req aiauditports.GetAIAuditExportRequest,
 ) (*aiaudit.AIAuditExport, error) {
 	return s.exports.exports.GetByID(ctx, req)
 }
 
 func (s *Service) ListExports(
 	ctx context.Context,
-	req *repositories.ListAIAuditExportsRequest,
+	req *aiauditports.ListAIAuditExportsRequest,
 ) (*pagination.CursorListResult[*aiaudit.AIAuditExport], error) {
 	return s.exports.exports.ListConnection(ctx, req)
 }
 
 func (s *Service) ExportDownload(
 	ctx context.Context,
-	req *serviceports.GetAIAuditExportDownloadRequest,
-) (*serviceports.AIAuditExportDownload, error) {
+	req *aiauditports.GetAIAuditExportDownloadRequest,
+) (*aiauditports.AIAuditExportDownload, error) {
 	return s.exports.Download(ctx, req)
 }
 

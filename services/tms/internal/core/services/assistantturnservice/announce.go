@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
 )
@@ -54,7 +54,7 @@ func (s *Service) announce(
 
 	err := s.realtime.PublishResourceInvalidation(
 		publishCtx,
-		&serviceports.PublishResourceInvalidationRequest{
+		&agentports.PublishResourceInvalidationRequest{
 			OrganizationID: turn.OrganizationID,
 			BusinessUnitID: turn.BusinessUnitID,
 			AudienceUserID: turn.UserID,

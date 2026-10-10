@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/reportjobs"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -30,10 +30,10 @@ func TestWorkflowsAreRegisteredUnderTheNamesTheServiceStarts(t *testing.T) {
 
 	assert.Equal(
 		t,
-		serviceports.AIAuditVerifyWorkflowName,
+		aiauditports.AIAuditVerifyWorkflowName,
 		functionName(VerifyAIAuditChainWorkflow),
 	)
-	assert.Equal(t, serviceports.AIAuditExportWorkflowName, functionName(AIAuditExportWorkflow))
+	assert.Equal(t, aiauditports.AIAuditExportWorkflowName, functionName(AIAuditExportWorkflow))
 
 	for _, wf := range append(RegisterWorkflows(), RegisterExportWorkflows()...) {
 		assert.Equal(t, wf.Name, functionName(wf.Fn))
@@ -105,7 +105,7 @@ func TestVerifyWorkflow_ChecksEveryTenantAndKeepsGoingPastAFailure(t *testing.T)
 	env.OnActivity("VerifyAIAuditTenantActivity", mock.Anything, &tenants[1]).
 		Return(nil, assert.AnError)
 
-	env.ExecuteWorkflow(VerifyAIAuditChainWorkflow, &serviceports.AIAuditVerifyPayload{})
+	env.ExecuteWorkflow(VerifyAIAuditChainWorkflow, &aiauditports.AIAuditVerifyPayload{})
 
 	require.True(t, env.IsWorkflowCompleted())
 	require.NoError(t, env.GetWorkflowError())
@@ -123,7 +123,7 @@ func TestVerifyWorkflow_OneTenantOnDemand(t *testing.T) {
 	env.OnActivity("VerifyAIAuditTenantActivity", mock.Anything, &tenant).
 		Return(&TenantVerification{OrganizationID: "org_a", Status: "Mismatch"}, nil)
 
-	env.ExecuteWorkflow(VerifyAIAuditChainWorkflow, &serviceports.AIAuditVerifyPayload{
+	env.ExecuteWorkflow(VerifyAIAuditChainWorkflow, &aiauditports.AIAuditVerifyPayload{
 		OrganizationID: tenant.OrgID,
 		BusinessUnitID: tenant.BuID,
 	})
@@ -139,7 +139,7 @@ func TestExportWorkflow_RunsTheExport(t *testing.T) {
 	t.Parallel()
 
 	env := newEnv()
-	payload := &serviceports.AIAuditExportPayload{
+	payload := &aiauditports.AIAuditExportPayload{
 		ExportID:       pulid.ID("aiax_1"),
 		OrganizationID: pulid.ID("org_a"),
 		BusinessUnitID: pulid.ID("bu_a"),

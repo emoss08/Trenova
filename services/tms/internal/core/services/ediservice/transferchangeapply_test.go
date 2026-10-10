@@ -1,6 +1,9 @@
 package ediservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmenteventportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"context"
 	"testing"
 
@@ -8,10 +11,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
-	coreports "github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/internaledilifecycle"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -35,7 +39,7 @@ func TestService_ApplyTransferChange_CancelsLinkedShipment(t *testing.T) {
 	fixture.expectLoadLink(3)
 	fixture.expectLoadShipments()
 	fixture.shipmentRepo.EXPECT().
-		Cancel(mock.Anything, mock.MatchedBy(func(req *repositories.CancelShipmentRequest) bool {
+		Cancel(mock.Anything, mock.MatchedBy(func(req *shipmentports.CancelShipmentRequest) bool {
 			return req.TenantInfo.OrgID == fixture.link.TargetOrganizationID &&
 				req.TenantInfo.BuID == fixture.link.BusinessUnitID &&
 				req.ShipmentID == fixture.link.TargetShipmentID &&
@@ -104,7 +108,7 @@ func TestService_ApplyTransferChange_StatusRegressionAppliesLinkedShipmentStatus
 	fixture.expectLoadLink(3)
 	fixture.expectLoadShipments()
 	fixture.shipmentRepo.EXPECT().
-		UpdateStatus(mock.Anything, mock.MatchedBy(func(req *repositories.UpdateShipmentStatusRequest) bool {
+		UpdateStatus(mock.Anything, mock.MatchedBy(func(req *shipmentports.UpdateShipmentStatusRequest) bool {
 			return req.TenantInfo.OrgID == fixture.link.SourceOrganizationID &&
 				req.TenantInfo.BuID == fixture.link.BusinessUnitID &&
 				req.ShipmentID == fixture.link.SourceShipmentID &&
@@ -184,12 +188,12 @@ type transferChangeApplyFixture struct {
 	link               *edi.ShipmentLink
 	source             *shipment.Shipment
 	target             *shipment.Shipment
-	actor              *services.RequestActor
+	actor              *permissionports.RequestActor
 	direction          edi.TransferChangeDirection
-	transferChangeRepo *mocks.MockEDITransferChangeRepository
-	shipmentLinkRepo   *mocks.MockEDIShipmentLinkRepository
-	shipmentRepo       *mocks.MockShipmentRepository
-	eventRepo          *mocks.MockShipmentEventRepository
+	transferChangeRepo *ediportsmock.MockEDITransferChangeRepository
+	shipmentLinkRepo   *ediportsmock.MockEDIShipmentLinkRepository
+	shipmentRepo       *shipmentportsmock.MockShipmentRepository
+	eventRepo          *shipmenteventportsmock.MockShipmentEventRepository
 }
 
 func newTransferChangeApplyFixture(
@@ -231,17 +235,17 @@ func newTransferChangeApplyFixture(
 			Status:         shipment.StatusNew,
 			Version:        5,
 		},
-		actor: &services.RequestActor{
+		actor: &permissionports.RequestActor{
 			UserID:         pulid.MustNew("usr_"),
-			PrincipalType:  services.PrincipalTypeUser,
+			PrincipalType:  permissionports.PrincipalTypeUser,
 			OrganizationID: sourceOrgID,
 			BusinessUnitID: buID,
 		},
 		direction:          direction,
-		transferChangeRepo: mocks.NewMockEDITransferChangeRepository(t),
-		shipmentLinkRepo:   mocks.NewMockEDIShipmentLinkRepository(t),
-		shipmentRepo:       mocks.NewMockShipmentRepository(t),
-		eventRepo:          mocks.NewMockShipmentEventRepository(t),
+		transferChangeRepo: ediportsmock.NewMockEDITransferChangeRepository(t),
+		shipmentLinkRepo:   ediportsmock.NewMockEDIShipmentLinkRepository(t),
+		shipmentRepo:       shipmentportsmock.NewMockShipmentRepository(t),
+		eventRepo:          shipmenteventportsmock.NewMockShipmentEventRepository(t),
 	}
 	fixture.service = &Service{
 		db:                 transferChangeApplyDB{},
@@ -295,7 +299,7 @@ func (f *transferChangeApplyFixture) expectLoadPendingChange(change *edi.Transfe
 	f.transferChangeRepo.EXPECT().
 		GetTransferChangeByID(
 			mock.Anything,
-			repositories.GetEDITransferChangeByIDRequest{
+			ediports.GetEDITransferChangeByIDRequest{
 				ID:         change.ID,
 				TenantInfo: f.tenantInfo(),
 			},
@@ -308,7 +312,7 @@ func (f *transferChangeApplyFixture) expectLoadLink(times int) {
 	f.shipmentLinkRepo.EXPECT().
 		GetShipmentLinkByID(
 			mock.Anything,
-			repositories.GetEDIShipmentLinkByIDRequest{
+			ediports.GetEDIShipmentLinkByIDRequest{
 				ID:         f.link.ID,
 				TenantInfo: f.tenantInfo(),
 			},
@@ -319,14 +323,14 @@ func (f *transferChangeApplyFixture) expectLoadLink(times int) {
 
 func (f *transferChangeApplyFixture) expectLoadShipments() {
 	f.shipmentRepo.EXPECT().
-		GetByID(mock.Anything, mock.MatchedBy(func(req *repositories.GetShipmentByIDRequest) bool {
+		GetByID(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetShipmentByIDRequest) bool {
 			return req.ID == f.link.SourceShipmentID &&
 				req.TenantInfo.OrgID == f.link.SourceOrganizationID
 		})).
 		Return(f.source, nil).
 		Once()
 	f.shipmentRepo.EXPECT().
-		GetByID(mock.Anything, mock.MatchedBy(func(req *repositories.GetShipmentByIDRequest) bool {
+		GetByID(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetShipmentByIDRequest) bool {
 			return req.ID == f.link.TargetShipmentID &&
 				req.TenantInfo.OrgID == f.link.TargetOrganizationID
 		})).
@@ -427,7 +431,7 @@ func (transferChangeApplyDB) IsHealthy(context.Context) bool       { return true
 func (transferChangeApplyDB) Close() error                         { return nil }
 func (transferChangeApplyDB) WithTx(
 	ctx context.Context,
-	_ coreports.TxOptions,
+	_ kernelports.TxOptions,
 	fn func(context.Context, bun.Tx) error,
 ) error {
 	return fn(ctx, bun.Tx{})

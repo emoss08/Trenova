@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/onboarding"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/onboardingports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -30,7 +30,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.OnboardingRepository {
+func New(p Params) onboardingports.OnboardingRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.onboarding-repository"),
@@ -39,7 +39,7 @@ func New(p Params) repositories.OnboardingRepository {
 
 func (r *repository) Get(
 	ctx context.Context,
-	req repositories.GetOnboardingRequest,
+	req onboardingports.GetOnboardingRequest,
 ) (*onboarding.Onboarding, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*onboarding.Onboarding, error) {
 		entity := new(onboarding.Onboarding)

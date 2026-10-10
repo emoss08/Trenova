@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -36,7 +36,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.RateQuoteRepository {
+func New(p Params) ratequoteports.RateQuoteRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.ratequote-repository"),
@@ -45,7 +45,7 @@ func New(p Params) repositories.RateQuoteRepository {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListRateQuotesRequest,
+	req *ratequoteports.ListRateQuotesRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.RateQuoteColumns
 	q = querybuilder.ApplyFilters(
@@ -63,7 +63,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListRateQuotesRequest,
+	req *ratequoteports.ListRateQuotesRequest,
 ) (*pagination.ListResult[*ratequote.RateQuote], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*ratequote.RateQuote], error) {
 		log := r.l.With(zap.String("operation", "List"))
@@ -87,7 +87,7 @@ func (r *repository) List(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListRateQuoteConnectionRequest,
+	req *ratequoteports.ListRateQuoteConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -100,7 +100,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListRateQuoteConnectionRequest,
+	req *ratequoteports.ListRateQuoteConnectionRequest,
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -112,7 +112,7 @@ func (r *repository) applyTotalCountFilters(
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListRateQuoteConnectionRequest,
+	req *ratequoteports.ListRateQuoteConnectionRequest,
 ) (*pagination.CursorListResult[*ratequote.RateQuote], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*ratequote.RateQuote], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -161,7 +161,7 @@ func (r *repository) ListConnection(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req *repositories.GetRateQuoteByIDRequest,
+	req *ratequoteports.GetRateQuoteByIDRequest,
 ) (*ratequote.RateQuote, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ratequote.RateQuote, error) {
 		log := r.l.With(
@@ -192,7 +192,7 @@ func (r *repository) GetByID(
 
 func (r *repository) GetAppliedForShipment(
 	ctx context.Context,
-	req *repositories.GetShipmentRateQuoteRequest,
+	req *ratequoteports.GetShipmentRateQuoteRequest,
 ) (*ratequote.RateQuote, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ratequote.RateQuote, error) {
 		log := r.l.With(
@@ -227,7 +227,7 @@ func (r *repository) GetAppliedForShipment(
 
 func (r *repository) ListForShipment(
 	ctx context.Context,
-	req *repositories.ListShipmentRateQuotesRequest,
+	req *ratequoteports.ListShipmentRateQuotesRequest,
 ) ([]*ratequote.RateQuote, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*ratequote.RateQuote, error) {
 		log := r.l.With(
@@ -305,7 +305,7 @@ func (r *repository) Record(
 			BuID:  entity.BusinessUnitID,
 		}
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			if _, uErr := r.db.DBForContext(c).
 				NewUpdate().
 				Model((*ratequote.RateQuote)(nil)).

@@ -5,10 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/tableinsight"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -21,11 +21,11 @@ type InsightParams struct {
 	fx.In
 
 	DB           *postgres.Connection
-	QuickFilters services.ShipmentQuickFilterBasisResolver
+	QuickFilters shipmentports.ShipmentQuickFilterBasisResolver
 }
 
 type insightSource struct {
-	quickFilters services.ShipmentQuickFilterBasisResolver
+	quickFilters shipmentports.ShipmentQuickFilterBasisResolver
 }
 
 type insightOptions struct {
@@ -85,7 +85,7 @@ func NewInsightSource(p InsightParams) tableinsight.Result {
 func (s *insightSource) baseQuery(
 	ctx context.Context,
 	dba bun.IDB,
-	scope *repositories.TableInsightScope,
+	scope *permissionports.TableInsightScope,
 ) (*bun.SelectQuery, error) {
 	options := new(insightOptions)
 	if len(scope.Options) > 0 {
@@ -98,9 +98,9 @@ func (s *insightSource) baseQuery(
 		}
 	}
 
-	req := &repositories.ListShipmentsRequest{
+	req := &shipmentports.ListShipmentsRequest{
 		Filter: scope.Filter,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			Status:                  options.Status,
 			ActivityWindowStart:     options.ActivityWindowStart,
 			ActivityWindowEnd:       options.ActivityWindowEnd,

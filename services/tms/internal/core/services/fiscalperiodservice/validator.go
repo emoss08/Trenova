@@ -6,8 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -18,15 +19,15 @@ type ValidatorParams struct {
 	fx.In
 
 	DB             *postgres.Connection
-	InvoiceRepo    repositories.InvoiceRepository
-	AccountingRepo repositories.AccountingControlRepository
+	InvoiceRepo    invoiceports.InvoiceRepository
+	AccountingRepo tenantports.AccountingControlRepository
 }
 
 type Validator struct {
 	validator      *validationframework.TenantedValidator[*fiscalperiod.FiscalPeriod]
 	db             *postgres.Connection
-	invoiceRepo    repositories.InvoiceRepository
-	accountingRepo repositories.AccountingControlRepository
+	invoiceRepo    invoiceports.InvoiceRepository
+	accountingRepo tenantports.AccountingControlRepository
 }
 
 func NewValidator(p ValidatorParams) *Validator {
@@ -102,7 +103,7 @@ func (v *Validator) ValidateClose(
 
 	count, err := v.invoiceRepo.CountPostedReconciliationDiscrepancies(
 		ctx,
-		repositories.CountPostedInvoiceReconciliationDiscrepanciesRequest{
+		invoiceports.CountPostedInvoiceReconciliationDiscrepanciesRequest{
 			OrgID:           entity.OrganizationID,
 			BuID:            entity.BusinessUnitID,
 			PeriodStartDate: entity.StartDate,

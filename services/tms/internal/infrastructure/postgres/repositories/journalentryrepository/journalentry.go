@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/journalentry"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -28,13 +28,13 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.JournalEntryRepository {
+func New(p Params) journalentryports.JournalEntryRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.journal-entry-repository")}
 }
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListJournalEntriesRequest,
+	req *journalentryports.ListJournalEntriesRequest,
 ) (*pagination.ListResult[*journalentry.JournalEntry], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*journalentry.JournalEntry], error) {
 		limit := req.Filter.Pagination.SafeLimit()
@@ -90,7 +90,7 @@ func (r *repository) List(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetJournalEntryByIDRequest,
+	req journalentryports.GetJournalEntryByIDRequest,
 ) (*journalentry.JournalEntry, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*journalentry.JournalEntry, error) {
 		cols := buncolgen.JournalEntryColumns
@@ -117,7 +117,7 @@ func (r *repository) GetByID(
 //nolint:gocritic // repository contract uses value request types
 func (r *repository) MarkReversed(
 	ctx context.Context,
-	req repositories.MarkJournalEntryReversedRequest,
+	req journalentryports.MarkJournalEntryReversedRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.JournalEntryColumns

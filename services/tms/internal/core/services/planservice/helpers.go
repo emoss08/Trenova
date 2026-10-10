@@ -4,12 +4,12 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
-func OrUnlimited(plans services.PlanService) services.PlanService {
+func OrUnlimited(plans platformplanports.PlanService) platformplanports.PlanService {
 	if plans == nil {
 		return NewUnlimited()
 	}
@@ -19,7 +19,7 @@ func OrUnlimited(plans services.PlanService) services.PlanService {
 
 func RequireCapability(
 	ctx context.Context,
-	plans services.PlanService,
+	plans platformplanports.PlanService,
 	tenantInfo pagination.TenantInfo,
 	capability platformplan.Capability,
 ) error {
@@ -32,7 +32,7 @@ func RequireCapability(
 
 func Allows(
 	ctx context.Context,
-	plans services.PlanService,
+	plans platformplanports.PlanService,
 	tenantInfo pagination.TenantInfo,
 	capability platformplan.Capability,
 ) (bool, error) {
@@ -49,7 +49,7 @@ func Allows(
 
 func RequireWritable(
 	ctx context.Context,
-	plans services.PlanService,
+	plans platformplanports.PlanService,
 	tenantInfo pagination.TenantInfo,
 ) error {
 	if plans == nil {

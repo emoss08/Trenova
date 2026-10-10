@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/postgis"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -122,8 +122,8 @@ func paginationRequest(
 	locationID pulid.ID,
 	orgID pulid.ID,
 	buID pulid.ID,
-) repositories.GetLocationByIDRequest {
-	return repositories.GetLocationByIDRequest{
+) locationports.GetLocationByIDRequest {
+	return locationports.GetLocationByIDRequest{
 		ID: locationID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: orgID,

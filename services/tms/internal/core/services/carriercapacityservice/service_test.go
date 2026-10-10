@@ -1,12 +1,13 @@
 package carriercapacityservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/carriercapacity"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carriercapacityports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,14 +18,14 @@ import (
 )
 
 type memoryRepo struct {
-	repositories.CarrierCapacityPostingRepository
+	carriercapacityports.CarrierCapacityPostingRepository
 	stored  map[pulid.ID]*carriercapacity.Posting
 	deleted []pulid.ID
 }
 
 func (m *memoryRepo) GetByID(
 	_ context.Context,
-	req *repositories.GetCarrierCapacityPostingRequest,
+	req *carriercapacityports.GetCarrierCapacityPostingRequest,
 ) (*carriercapacity.Posting, error) {
 	entity, ok := m.stored[req.ID]
 	if !ok {
@@ -55,7 +56,7 @@ func (m *memoryRepo) Update(
 
 func (m *memoryRepo) Delete(
 	_ context.Context,
-	req *repositories.DeleteCarrierCapacityPostingRequest,
+	req *carriercapacityports.DeleteCarrierCapacityPostingRequest,
 ) error {
 	m.deleted = append(m.deleted, req.ID)
 	delete(m.stored, req.ID)
@@ -63,12 +64,12 @@ func (m *memoryRepo) Delete(
 }
 
 type recordingInvalidator struct {
-	calls []*services.ShipmentInvalidation
+	calls []*shipmentports.ShipmentInvalidation
 }
 
 func (r *recordingInvalidator) InvalidateShipments(
 	_ context.Context,
-	req *services.ShipmentInvalidation,
+	req *shipmentports.ShipmentInvalidation,
 ) {
 	r.calls = append(r.calls, req)
 }
@@ -76,7 +77,7 @@ func (r *recordingInvalidator) InvalidateShipments(
 func newTestService(t *testing.T) (*Service, *memoryRepo, *recordingInvalidator) {
 	t.Helper()
 
-	audit := mocks.NewMockAuditService(t)
+	audit := auditportsmock.NewMockAuditService(t)
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Maybe()
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 
@@ -111,7 +112,7 @@ func TestDeleteAuditsAndInvalidates(t *testing.T) {
 	bu := pulid.MustNew("bu_")
 	repo.stored[id] = &carriercapacity.Posting{ID: id, OrganizationID: org, BusinessUnitID: bu}
 
-	err := svc.Delete(t.Context(), &repositories.DeleteCarrierCapacityPostingRequest{
+	err := svc.Delete(t.Context(), &carriercapacityports.DeleteCarrierCapacityPostingRequest{
 		ID:         id,
 		Version:    0,
 		TenantInfo: pagination.TenantInfo{OrgID: org, BuID: bu},
@@ -122,6 +123,6 @@ func TestDeleteAuditsAndInvalidates(t *testing.T) {
 	assert.Equal(t, org, invalidator.calls[0].OrganizationID)
 	assert.Equal(t, invalidationAction, invalidator.calls[0].Action)
 
-	err = svc.Delete(t.Context(), &repositories.DeleteCarrierCapacityPostingRequest{ID: id}, nil)
+	err = svc.Delete(t.Context(), &carriercapacityports.DeleteCarrierCapacityPostingRequest{ID: id}, nil)
 	require.Error(t, err)
 }

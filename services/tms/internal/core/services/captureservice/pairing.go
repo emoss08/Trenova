@@ -8,8 +8,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -366,7 +367,7 @@ func (s *Service) ExchangePairing(ctx context.Context, deviceCode string) (*Toke
 		ctx,
 		"exchange an approved pairing, which belongs to no organization until now, for its device",
 	)
-	err = s.db.WithTx(exchangeCtx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(exchangeCtx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		device, issued, issueErr := newDeviceFromPairing(pairing, now)
 		if issueErr != nil {
 			return issueErr
@@ -402,12 +403,12 @@ func (s *Service) ExchangePairing(ctx context.Context, deviceCode string) (*Toke
 		BuID:   pair.BusinessUnitID,
 		UserID: pair.UserID,
 	}
-	s.logAudit(&services.LogActionParams{
+	s.logAudit(&auditports.LogActionParams{
 		Resource:       permission.ResourceCaptureDevice,
 		ResourceID:     pair.DeviceID.String(),
 		Operation:      permission.OpCreate,
 		UserID:         pair.UserID,
-		PrincipalType:  services.PrincipalTypeUser,
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    pair.UserID,
 		OrganizationID: pair.OrganizationID,
 		BusinessUnitID: pair.BusinessUnitID,

@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -16,7 +16,7 @@ func (r *Deps) resolveFuelCardSelectOptions(
 	if len(req.IDs) > 0 {
 		entities, err := r.FuelPurchaseService.GetCardsByIDs(
 			ctx,
-			&repositories.GetFuelCardsByIDsRequest{
+			&fuelpurchaseports.GetFuelCardsByIDsRequest{
 				TenantInfo: req.TenantInfo,
 				IDs:        req.IDs,
 			},
@@ -32,7 +32,7 @@ func (r *Deps) resolveFuelCardSelectOptions(
 
 	entities, err := r.FuelPurchaseService.ListActiveCards(
 		ctx,
-		&repositories.ListActiveFuelCardsRequest{
+		&fuelpurchaseports.ListActiveFuelCardsRequest{
 			TenantInfo: req.SelectQuery.TenantInfo,
 			Query:      req.SelectQuery.Query,
 			Limit:      req.SelectQuery.Pagination.Limit,

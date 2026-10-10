@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,7 +26,7 @@ func (s *service) activeReasonCode(
 ) (*servicefailure.ReasonCode, error) {
 	reason, err := s.reasonCodeRepo.GetByID(
 		ctx,
-		repositories.GetServiceFailureReasonCodeByIDRequest{
+		servicefailureports.GetServiceFailureReasonCodeByIDRequest{
 			ID:         params.reasonCodeID,
 			TenantInfo: params.tenantInfo,
 		},
@@ -92,8 +92,8 @@ func validateServiceFailure(entity *servicefailure.ServiceFailure) *errortypes.M
 
 func activeStopRequest(
 	entity *servicefailure.ServiceFailure,
-) *repositories.ServiceFailureActiveStopRequest {
-	return &repositories.ServiceFailureActiveStopRequest{
+) *servicefailureports.ServiceFailureActiveStopRequest {
+	return &servicefailureports.ServiceFailureActiveStopRequest{
 		TenantInfo:     serviceFailureTenantInfo(entity),
 		ShipmentID:     entity.ShipmentID,
 		ShipmentMoveID: entity.ShipmentMoveID,

@@ -9,8 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
@@ -18,6 +16,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/workerdrugalcoholservice"
 	"github.com/emoss08/trenova/internal/core/services/workersafetyservice"
 	"github.com/emoss08/trenova/internal/core/services/workertrainingservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -48,39 +51,39 @@ var reminderSteps = []int64{30, 14, 7}
 type ActivitiesParams struct {
 	fx.In
 
-	CredentialRepo  repositories.WorkerCredentialRepository
+	CredentialRepo  workerports.WorkerCredentialRepository
 	Credentials     *workercredentialservice.Service
-	TrainingRepo    repositories.WorkerTrainingRepository
+	TrainingRepo    workerports.WorkerTrainingRepository
 	Training        *workertrainingservice.Service
-	SafetyRepo      repositories.WorkerSafetyRepository
+	SafetyRepo      workerports.WorkerSafetyRepository
 	Safety          *workersafetyservice.Service
-	DrugAlcoholRepo repositories.WorkerDrugAlcoholRepository
+	DrugAlcoholRepo workerports.WorkerDrugAlcoholRepository
 	DrugAlcohol     *workerdrugalcoholservice.Service
-	DashControlRepo repositories.DashControlRepository
+	DashControlRepo tenantports.DashControlRepository
 	Notifications   *notificationservice.Service
 	DriverNotify    *drivernotificationservice.Service
 	// Watchtower puts a driver whose papers are running out on the feed.
-	Watchtower services.WatchtowerProjector `optional:"true"`
+	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
 	// Publisher wakes whichever agent covers credentials, once for the
 	// driver rather than once for each paper.
-	Publisher services.AgentEventPublisher `optional:"true"`
+	Publisher agentports.AgentEventPublisher `optional:"true"`
 	Logger    *zap.Logger
 }
 
 type Activities struct {
-	credentialRepo  repositories.WorkerCredentialRepository
+	credentialRepo  workerports.WorkerCredentialRepository
 	credentials     *workercredentialservice.Service
-	trainingRepo    repositories.WorkerTrainingRepository
-	safetyRepo      repositories.WorkerSafetyRepository
-	drugAlcoholRepo repositories.WorkerDrugAlcoholRepository
+	trainingRepo    workerports.WorkerTrainingRepository
+	safetyRepo      workerports.WorkerSafetyRepository
+	drugAlcoholRepo workerports.WorkerDrugAlcoholRepository
 	training        *workertrainingservice.Service
 	safety          *workersafetyservice.Service
 	drugAlcohol     *workerdrugalcoholservice.Service
-	dashControlRepo repositories.DashControlRepository
+	dashControlRepo tenantports.DashControlRepository
 	notifications   *notificationservice.Service
 	driverNotify    *drivernotificationservice.Service
-	watchtower      services.WatchtowerProjector
-	publisher       services.AgentEventPublisher
+	watchtower      watchtowerports.WatchtowerProjector
+	publisher       agentports.AgentEventPublisher
 	logger          *zap.Logger
 }
 
@@ -136,7 +139,7 @@ func (a *Activities) CredentialExpirySweepActivity(
 	for {
 		page, err := a.credentialRepo.ListExpiring(
 			ctx,
-			&repositories.ListExpiringWorkerCredentialsRequest{
+			&workerports.ListExpiringWorkerCredentialsRequest{
 				HorizonDays: sweepHorizonDays,
 				GraceDays:   sweepGraceDays,
 				AfterID:     after,
@@ -218,7 +221,7 @@ func (a *Activities) raiseDueDrivers(ctx context.Context, state *sweepState) {
 				},
 			))
 		}
-		services.PublishAgentEvent(tenantCtx, a.publisher, services.AgentEvent{
+		agentports.PublishAgentEvent(tenantCtx, a.publisher, agentports.AgentEvent{
 			Kind:       agent.EventWorkerCredentialExpiring,
 			SubjectID:  workerID,
 			TenantInfo: driver.tenantInfo,
@@ -343,7 +346,7 @@ func (a *Activities) alreadySent(
 ) (bool, error) {
 	return a.notifications.ExistsRecent(
 		ctx,
-		repositories.ExistsRecentNotificationRequest{
+		notificationports.ExistsRecentNotificationRequest{
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
 			EventType:      eventType,

@@ -5,8 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,13 +18,13 @@ import (
 type DismisserParams struct {
 	fx.In
 
-	Repo        repositories.WatchtowerRepository
+	Repo        watchtowerports.WatchtowerRepository
 	Projector   *Projector
-	Permissions services.PermissionEngine
+	Permissions permissionports.PermissionEngine
 }
 
 type Dismisser struct {
-	repo      repositories.WatchtowerRepository
+	repo      watchtowerports.WatchtowerRepository
 	projector *Projector
 	access    kindAccess
 	now       func() int64
@@ -39,7 +40,7 @@ func NewDismisser(p DismisserParams) *Dismisser {
 }
 
 type kindAccess struct {
-	permissions services.PermissionEngine
+	permissions permissionports.PermissionEngine
 }
 
 // visibleKinds is the kinds this reader may be shown: those whose source
@@ -47,7 +48,7 @@ type kindAccess struct {
 // they may see; naming none means all of them.
 func (a kindAccess) visibleKinds(
 	ctx context.Context,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	requested []watchtower.SourceKind,
 ) ([]watchtower.SourceKind, error) {
 	candidates := requested
@@ -68,7 +69,7 @@ func (a kindAccess) visibleKinds(
 		resource := kind.ReadResource()
 		ok, seen := allowed[resource]
 		if !seen {
-			result, err := a.permissions.Check(ctx, &services.PermissionCheckRequest{
+			result, err := a.permissions.Check(ctx, &permissionports.PermissionCheckRequest{
 				PrincipalType:  actor.PrincipalType,
 				PrincipalID:    actor.PrincipalID,
 				UserID:         actor.UserID,
@@ -98,7 +99,7 @@ func (d *Dismisser) Dismiss(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	id pulid.ID,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*watchtower.Item, error) {
 	change, err := d.PlanDismiss(ctx, tenant, id, actor)
 	if err != nil {
@@ -110,7 +111,7 @@ func (d *Dismisser) Dismiss(
 
 	resolved, err := d.repo.ResolveByID(
 		ctx,
-		repositories.GetWatchtowerItemRequest{ID: id, TenantInfo: tenant},
+		watchtowerports.GetWatchtowerItemRequest{ID: id, TenantInfo: tenant},
 		d.now(),
 	)
 	if err != nil {
@@ -125,11 +126,11 @@ func (d *Dismisser) PlanDismiss(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	id pulid.ID,
-	actor *services.RequestActor,
-) (*services.RecordChange[watchtower.Item], error) {
+	actor *permissionports.RequestActor,
+) (*kernelports.RecordChange[watchtower.Item], error) {
 	item, err := d.repo.GetByID(
 		ctx,
-		repositories.GetWatchtowerItemRequest{ID: id, TenantInfo: tenant},
+		watchtowerports.GetWatchtowerItemRequest{ID: id, TenantInfo: tenant},
 	)
 	if err != nil {
 		return nil, err
@@ -144,12 +145,12 @@ func (d *Dismisser) PlanDismiss(
 		dismissed.ResolvedAt = &now
 	}
 
-	return &services.RecordChange[watchtower.Item]{Before: item, After: &dismissed}, nil
+	return &kernelports.RecordChange[watchtower.Item]{Before: item, After: &dismissed}, nil
 }
 
 func (a kindAccess) assertMaySee(
 	ctx context.Context,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	item *watchtower.Item,
 ) error {
 	kinds, err := a.visibleKinds(ctx, actor, []watchtower.SourceKind{item.SourceKind})

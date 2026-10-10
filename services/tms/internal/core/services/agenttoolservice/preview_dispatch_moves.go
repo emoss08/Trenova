@@ -8,17 +8,17 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 var (
-	_ serviceports.ToolPreviewer = (*unassignMovesTool)(nil)
-	_ serviceports.ToolPreviewer = (*updateMoveStatusTool)(nil)
-	_ serviceports.ToolValidator = (*unassignMovesTool)(nil)
-	_ serviceports.ToolValidator = (*updateMoveStatusTool)(nil)
+	_ agentports.ToolPreviewer = (*unassignMovesTool)(nil)
+	_ agentports.ToolPreviewer = (*updateMoveStatusTool)(nil)
+	_ agentports.ToolValidator = (*unassignMovesTool)(nil)
+	_ agentports.ToolValidator = (*updateMoveStatusTool)(nil)
 )
 
 type moveStatusView struct {
@@ -27,7 +27,7 @@ type moveStatusView struct {
 
 func (t *unassignMovesTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	requests, err := t.requests(&params)
 	if err != nil {
@@ -89,7 +89,7 @@ func (t *unassignMovesTool) Preview(
 
 func (t *updateMoveStatusTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	request, err := t.request(&params)
 	if err != nil {

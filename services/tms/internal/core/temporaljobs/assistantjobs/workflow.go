@@ -4,15 +4,14 @@ import (
 	"errors"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/assistantservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
@@ -230,8 +229,8 @@ func (w *Workflows) answer(
 	}
 
 	run := agentflow.NewRunContext(plan.RunRequest(&payload.Actor), agentflowcontract.PriorityInteractive)
-	run.StepOwner = serviceports.RunStepOwner{
-		Kind: serviceports.RunStepOwnerAssistantTurn,
+	run.StepOwner = agentports.RunStepOwner{
+		Kind: agentports.RunStepOwnerAssistantTurn,
 		ID:   payload.TurnID,
 	}
 
@@ -252,15 +251,15 @@ func announceNext(
 	ctx workflow.Context,
 	stream *agentflow.Stream,
 	payload *assistantcontract.AssistantTurnPayload,
-	next *serviceports.QueuedTurn,
+	next *agentports.QueuedTurn,
 ) {
 	if next == nil || next.TurnID.IsNil() {
 		return
 	}
 
 	stream.Publish(ctx, temporaltype.StreamItem{
-		Event: serviceports.AssistantEventNextTurn,
-		Data: serviceports.AssistantNextTurnEvent{
+		Event: agentports.AssistantEventNextTurn,
+		Data: agentports.AssistantNextTurnEvent{
 			TurnID:   next.TurnID,
 			ThreadID: payload.ThreadID,
 			QueuedID: next.QueuedID,
@@ -412,8 +411,8 @@ func (w *Workflows) compactIfFull(
 	}
 
 	stream.Publish(ctx, temporaltype.StreamItem{
-		Event: serviceports.AssistantEventCompactionStarted,
-		Data: serviceports.AssistantCompactionEvent{
+		Event: agentports.AssistantEventCompactionStarted,
+		Data: agentports.AssistantCompactionEvent{
 			TurnID:   started.TurnID,
 			ThreadID: payload.ThreadID,
 			Auto:     true,

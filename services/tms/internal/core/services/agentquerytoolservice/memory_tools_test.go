@@ -5,38 +5,38 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type fakeRecall struct {
-	serviceports.AgentMemoryService
-	captured serviceports.RecallAgentMemoriesRequest
+	agentports.AgentMemoryService
+	captured agentports.RecallAgentMemoriesRequest
 	items    []*agent.Memory
 	used     []pulid.ID
 }
 
 func (f *fakeRecall) Recall(
 	_ context.Context,
-	req serviceports.RecallAgentMemoriesRequest,
-) ([]serviceports.RecalledMemory, error) {
+	req agentports.RecallAgentMemoriesRequest,
+) ([]agentports.RecalledMemory, error) {
 	f.captured = req
 
 	var match agent.MemoryMatch
 	if req.Query != "" {
 		match = agent.MemoryMatchWords
 	}
-	recalled := make([]serviceports.RecalledMemory, 0, len(f.items))
+	recalled := make([]agentports.RecalledMemory, 0, len(f.items))
 	for _, item := range f.items {
-		recalled = append(recalled, serviceports.RecalledMemory{Memory: item, Match: match})
+		recalled = append(recalled, agentports.RecalledMemory{Memory: item, Match: match})
 	}
 
 	return recalled, nil
 }
 
-func (f *fakeRecall) RecordUse(_ context.Context, req serviceports.RecordMemoryUseRequest) error {
+func (f *fakeRecall) RecordUse(_ context.Context, req agentports.RecordMemoryUseRequest) error {
 	f.used = append(f.used, req.IDs...)
 
 	return nil
@@ -237,7 +237,7 @@ func TestRecallMemory_ReadsForThePersonAndNamesWhatItUsed(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, params.Actor.PersonUserID(), recall.captured.ReaderUserID)
-	used, ok := result.(serviceports.MemoryRecall)
+	used, ok := result.(agentports.MemoryRecall)
 	require.True(t, ok, "the runtime reads which memories a recall used")
 	assert.Equal(t, []pulid.ID{first, second}, used.RecalledMemoryIDs())
 	assert.Equal(t, []pulid.ID{first, second}, recall.used)

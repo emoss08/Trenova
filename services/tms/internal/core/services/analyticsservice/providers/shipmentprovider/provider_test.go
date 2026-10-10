@@ -1,6 +1,8 @@
 package shipmentprovider
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/costingcontrolportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
 	"testing"
 	"time"
 
@@ -8,10 +10,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/costingcontrolports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -33,7 +36,7 @@ func TestGetAnalyticsData_ReturnsSupportedShipmentKPIsOnly(t *testing.T) {
 		Return(newTestCostingControl(), nil)
 	deps.costingActualsRepo.EXPECT().
 		FleetCostAggregates(mock.Anything, mock.Anything).
-		Return(&repositories.FleetCostAggregatesResult{}, nil)
+		Return(&costingcontrolports.FleetCostAggregatesResult{}, nil)
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 	target := 96.5
@@ -68,7 +71,7 @@ func TestGetAnalyticsData_ReturnsSupportedShipmentKPIsOnly(t *testing.T) {
 		}).AddRow(10, 9, 8, 7, 70, 63))
 
 	dispatchRepo.EXPECT().
-		GetByOrgID(t.Context(), repositories.GetDispatchControlRequest{
+		GetByOrgID(t.Context(), dispatchcontrolports.GetDispatchControlRequest{
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		}).
 		Return(&dispatchcontrol.DispatchControl{ServiceFailureTarget: &target}, nil).
@@ -129,7 +132,7 @@ func TestGetAnalyticsData_ReturnsSupportedShipmentKPIsOnly(t *testing.T) {
 			"has_primary_worker",
 		}))
 
-	data, err := provider.GetAnalyticsData(t.Context(), &services.AnalyticsRequestOptions{
+	data, err := provider.GetAnalyticsData(t.Context(), &kernelports.AnalyticsRequestOptions{
 		OrgID:    orgID,
 		BuID:     buID,
 		Timezone: "UTC",
@@ -149,9 +152,9 @@ func TestGetAnalyticsData_ReturnsSupportedShipmentKPIsOnly(t *testing.T) {
 type providerDeps struct {
 	provider           *Provider
 	mockDB             sqlmock.Sqlmock
-	dispatchRepo       *mocks.MockDispatchControlRepository
-	costingControlRepo *mocks.MockCostingControlRepository
-	costingActualsRepo *mocks.MockCostingActualsRepository
+	dispatchRepo       *dispatchcontrolportsmock.MockDispatchControlRepository
+	costingControlRepo *costingcontrolportsmock.MockCostingControlRepository
+	costingActualsRepo *costingcontrolportsmock.MockCostingActualsRepository
 }
 
 func newTestProvider(t *testing.T) *providerDeps {
@@ -166,11 +169,11 @@ func newTestProvider(t *testing.T) *providerDeps {
 		require.NoError(t, bunDB.Close())
 	})
 
-	dispatchRepo := mocks.NewMockDispatchControlRepository(t)
+	dispatchRepo := dispatchcontrolportsmock.NewMockDispatchControlRepository(t)
 
-	costingControlRepo := mocks.NewMockCostingControlRepository(t)
+	costingControlRepo := costingcontrolportsmock.NewMockCostingControlRepository(t)
 
-	costingActualsRepo := mocks.NewMockCostingActualsRepository(t)
+	costingActualsRepo := costingcontrolportsmock.NewMockCostingActualsRepository(t)
 
 	costingService := costingservice.NewTestService(costingservice.TestServiceParams{
 		Repo:        costingControlRepo,

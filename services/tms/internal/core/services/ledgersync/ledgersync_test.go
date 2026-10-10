@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/journalentry"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -17,11 +17,11 @@ import (
 var errWrite = errors.New("write failed")
 
 type fakeLedger struct {
-	posted []*services.AccountingJournalPosted
+	posted []*accountingsyncports.AccountingJournalPosted
 	err    error
 }
 
-func (f *fakeLedger) EnqueueJournal(_ context.Context, posted *services.AccountingJournalPosted) error {
+func (f *fakeLedger) EnqueueJournal(_ context.Context, posted *accountingsyncports.AccountingJournalPosted) error {
 	f.posted = append(f.posted, posted)
 	return f.err
 }
@@ -32,42 +32,42 @@ type fakePosting struct {
 }
 
 //nolint:gocritic // matches the repository contract
-func (f *fakePosting) CreatePosting(context.Context, repositories.CreateJournalPostingParams) error {
+func (f *fakePosting) CreatePosting(context.Context, journalentryports.CreateJournalPostingParams) error {
 	f.calls++
 	return f.err
 }
 
 type fakeReview struct {
-	repositories.JournalReviewRepository
+	journalentryports.JournalReviewRepository
 
-	posted []*repositories.PostJournalEntryParams
+	posted []*journalentryports.PostJournalEntryParams
 	err    error
 }
 
-func (f *fakeReview) PostEntry(_ context.Context, params *repositories.PostJournalEntryParams) error {
+func (f *fakeReview) PostEntry(_ context.Context, params *journalentryports.PostJournalEntryParams) error {
 	f.posted = append(f.posted, params)
 	return f.err
 }
 
 type fakeEntries struct {
-	repositories.JournalEntryRepository
+	journalentryports.JournalEntryRepository
 
 	entry *journalentry.JournalEntry
 	err   error
-	asked []repositories.GetJournalEntryByIDRequest
+	asked []journalentryports.GetJournalEntryByIDRequest
 }
 
 //nolint:gocritic // matches the repository contract
 func (f *fakeEntries) GetByID(
 	_ context.Context,
-	req repositories.GetJournalEntryByIDRequest,
+	req journalentryports.GetJournalEntryByIDRequest,
 ) (*journalentry.JournalEntry, error) {
 	f.asked = append(f.asked, req)
 	return f.entry, f.err
 }
 
-func postingParams(posted bool) repositories.CreateJournalPostingParams {
-	return repositories.CreateJournalPostingParams{
+func postingParams(posted bool) journalentryports.CreateJournalPostingParams {
+	return journalentryports.CreateJournalPostingParams{
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
 		EntryID:        pulid.MustNew("je_"),
@@ -90,7 +90,7 @@ func TestCreatePostingQueuesAPostedEntryForTheLedger(t *testing.T) {
 
 	assert.Equal(t, 1, next.calls)
 	require.Len(t, ledger.posted, 1)
-	assert.Equal(t, &services.AccountingJournalPosted{
+	assert.Equal(t, &accountingsyncports.AccountingJournalPosted{
 		TenantInfo:     pagination.TenantInfo{OrgID: params.OrganizationID, BuID: params.BusinessUnitID},
 		EntryID:        params.EntryID,
 		EntryNumber:    "JE-1001",
@@ -134,7 +134,7 @@ func TestPostEntryQueuesTheReviewedEntry(t *testing.T) {
 	ledger := &fakeLedger{}
 	repo := DecorateReview(review, entries, ledger)
 
-	require.NoError(t, repo.PostEntry(t.Context(), &repositories.PostJournalEntryParams{
+	require.NoError(t, repo.PostEntry(t.Context(), &journalentryports.PostJournalEntryParams{
 		TenantInfo: tenantInfo,
 		EntryID:    entry.ID,
 	}))
@@ -144,7 +144,7 @@ func TestPostEntryQueuesTheReviewedEntry(t *testing.T) {
 	assert.Equal(t, entry.ID, entries.asked[0].ID)
 	assert.Equal(t, tenantInfo, entries.asked[0].TenantInfo)
 	require.Len(t, ledger.posted, 1)
-	assert.Equal(t, &services.AccountingJournalPosted{
+	assert.Equal(t, &accountingsyncports.AccountingJournalPosted{
 		TenantInfo:     tenantInfo,
 		EntryID:        entry.ID,
 		EntryNumber:    "JE-2002",
@@ -160,7 +160,7 @@ func TestPostEntryQueuesNothingWhenPostingFails(t *testing.T) {
 	entries := &fakeEntries{}
 	err := DecorateReview(&fakeReview{err: errWrite}, entries, ledger).PostEntry(
 		t.Context(),
-		&repositories.PostJournalEntryParams{EntryID: pulid.MustNew("je_")},
+		&journalentryports.PostJournalEntryParams{EntryID: pulid.MustNew("je_")},
 	)
 	require.ErrorIs(t, err, errWrite)
 	assert.Empty(t, entries.asked)
@@ -194,7 +194,7 @@ func TestAReversalCarriesTheEntryItReverses(t *testing.T) {
 		ReversalOfID: pulid.MustNew("je_"),
 	}
 	repo := DecorateReview(&fakeReview{}, &fakeEntries{entry: reviewed}, ledger)
-	require.NoError(t, repo.PostEntry(t.Context(), &repositories.PostJournalEntryParams{
+	require.NoError(t, repo.PostEntry(t.Context(), &journalentryports.PostJournalEntryParams{
 		TenantInfo: tenantInfo,
 		EntryID:    reviewed.ID,
 	}))

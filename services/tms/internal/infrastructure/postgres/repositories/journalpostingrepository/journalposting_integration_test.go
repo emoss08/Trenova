@@ -9,7 +9,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
@@ -17,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fiscalyearrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -56,7 +56,7 @@ func TestCreateManualJournalPostingPersistsPostedRecords(t *testing.T) {
 	orgID, buID, userID, fiscalYearID, periodID, accountIDs := setupPostingFixture(t, ctx, conn)
 	now := time.Date(2027, time.January, 15, 0, 0, 0, 0, time.UTC).Unix()
 
-	err = repo.CreatePosting(ctx, repositories.CreateJournalPostingParams{
+	err = repo.CreatePosting(ctx, journalentryports.CreateJournalPostingParams{
 		BatchID:              pulid.MustNew("jb_"),
 		OrganizationID:       orgID,
 		BusinessUnitID:       buID,
@@ -94,7 +94,7 @@ func TestCreateManualJournalPostingPersistsPostedRecords(t *testing.T) {
 		SourceStatus:         "Posted",
 		SourceDocumentNumber: "MJR-1",
 		SourceIdempotencyKey: "manual-journal-posted:test-1",
-		Lines: []repositories.JournalPostingLine{
+		Lines: []journalentryports.JournalPostingLine{
 			{
 				ID:          pulid.MustNew("jel_"),
 				GLAccountID: accountIDs[0],
@@ -236,7 +236,7 @@ func TestCreateManualJournalPostingPersistsPendingRecordsWithoutPostedAudit(t *t
 	orgID, buID, userID, fiscalYearID, periodID, accountIDs := setupPostingFixture(t, ctx, conn)
 	now := time.Date(2027, time.January, 15, 0, 0, 0, 0, time.UTC).Unix()
 
-	err = repo.CreatePosting(ctx, repositories.CreateJournalPostingParams{
+	err = repo.CreatePosting(ctx, journalentryports.CreateJournalPostingParams{
 		BatchID:              pulid.MustNew("jb_"),
 		OrganizationID:       orgID,
 		BusinessUnitID:       buID,
@@ -274,7 +274,7 @@ func TestCreateManualJournalPostingPersistsPendingRecordsWithoutPostedAudit(t *t
 		SourceStatus:         "Pending",
 		SourceDocumentNumber: "WO-1",
 		SourceIdempotencyKey: "invoice-writeoff:test-1",
-		Lines: []repositories.JournalPostingLine{
+		Lines: []journalentryports.JournalPostingLine{
 			{
 				ID:          pulid.MustNew("jel_"),
 				GLAccountID: accountIDs[0],

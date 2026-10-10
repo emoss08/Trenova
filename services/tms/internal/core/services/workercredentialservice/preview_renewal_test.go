@@ -1,16 +1,20 @@
 package workercredentialservice_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/notificationportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/services/workercredentialservice"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -32,21 +36,21 @@ func TestPreviewRenewal_IsTheAskRequestRenewalSends(t *testing.T) {
 	cdl.Status = worker.CredentialStatusActive
 	h.repo.credentials[cdl.ID] = cdl
 
-	resolver := mocks.NewMockDocumentTemplateResolver(t)
+	resolver := documenttemplateportsmock.NewMockDocumentTemplateResolver(t)
 	resolver.EXPECT().
 		RenderMessage(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req *services.RenderMessageRequest) (*services.RenderedMessage, error) {
+		RunAndReturn(func(_ context.Context, req *documenttemplateports.RenderMessageRequest) (*documenttemplateports.RenderedMessage, error) {
 			data, ok := req.Data.(documenttemplate.DriverNotificationContext)
 			require.True(t, ok)
-			return &services.RenderedMessage{
+			return &documenttemplateports.RenderedMessage{
 				Subject: "Renew your " + data.CredentialName,
 				Text:    data.FullName + ": " + data.Reason,
 			}, nil
 		})
-	notifications := mocks.NewMockNotificationRepository(t)
-	realtime := mocks.NewMockRealtimeService(t)
+	notifications := notificationportsmock.NewMockNotificationRepository(t)
+	realtime := agentportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Maybe()
-	audit := mocks.NewMockAuditService(t)
+	audit := auditportsmock.NewMockAuditService(t)
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Maybe()
 
 	svc := workercredentialservice.New(workercredentialservice.Params{

@@ -1,10 +1,11 @@
 package shipmentservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -528,7 +529,7 @@ func TestValidateCreate_AllowsLegacyCompatibleMixedStopSequence(t *testing.T) {
 func TestValidateUpdate_RejectsActualArrivalBeforePreviousTractorEvent(t *testing.T) {
 	t.Parallel()
 
-	assignmentRepo := mocks.NewMockAssignmentRepository(t)
+	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
 	allowNoExternalTimelineOverlap(assignmentRepo)
 	v := newTestValidatorWithAssignmentRepo(t, assignmentRepo)
 
@@ -550,25 +551,25 @@ func TestValidateUpdate_RejectsActualArrivalBeforePreviousTractorEvent(t *testin
 	assignmentRepo.EXPECT().
 		FindNearestActualEventByTractorID(
 			mock.Anything,
-			mock.MatchedBy(func(req repositories.FindNearestActualTimelineEventRequest) bool {
+			mock.MatchedBy(func(req shipmentports.FindNearestActualTimelineEventRequest) bool {
 				return req.TenantInfo.OrgID == entity.OrganizationID &&
 					req.TenantInfo.BuID == entity.BusinessUnitID &&
 					req.ExcludeShipmentID == entity.ID &&
 					req.Timestamp == actualArrival &&
-					req.Direction == repositories.ActualTimelineDirectionPrevious
+					req.Direction == shipmentports.ActualTimelineDirectionPrevious
 			}),
 			*entity.Moves[0].Assignment.TractorID,
 		).
-		Return(&repositories.ActualTimelineEvent{
+		Return(&shipmentports.ActualTimelineEvent{
 			Timestamp: 100,
-			EventType: repositories.ActualTimelineEventTypeDeparture,
+			EventType: shipmentports.ActualTimelineEventTypeDeparture,
 		}, nil).
 		Once()
 	assignmentRepo.EXPECT().
 		FindNearestActualEventByTractorID(
 			mock.Anything,
-			mock.MatchedBy(func(req repositories.FindNearestActualTimelineEventRequest) bool {
-				return req.Direction == repositories.ActualTimelineDirectionNext &&
+			mock.MatchedBy(func(req shipmentports.FindNearestActualTimelineEventRequest) bool {
+				return req.Direction == shipmentports.ActualTimelineDirectionNext &&
 					req.Timestamp == actualArrival
 			}),
 			*entity.Moves[0].Assignment.TractorID,
@@ -593,7 +594,7 @@ func TestValidateUpdate_RejectsActualArrivalBeforePreviousTractorEvent(t *testin
 func TestValidateUpdate_RejectsActualDepartureAfterNextPrimaryWorkerEvent(t *testing.T) {
 	t.Parallel()
 
-	assignmentRepo := mocks.NewMockAssignmentRepository(t)
+	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
 	allowNoExternalTimelineOverlap(assignmentRepo)
 	v := newTestValidatorWithAssignmentRepo(t, assignmentRepo)
 
@@ -615,12 +616,12 @@ func TestValidateUpdate_RejectsActualDepartureAfterNextPrimaryWorkerEvent(t *tes
 	assignmentRepo.EXPECT().
 		FindNearestActualEventByPrimaryWorkerID(
 			mock.Anything,
-			mock.MatchedBy(func(req repositories.FindNearestActualTimelineEventRequest) bool {
+			mock.MatchedBy(func(req shipmentports.FindNearestActualTimelineEventRequest) bool {
 				return req.TenantInfo.OrgID == entity.OrganizationID &&
 					req.TenantInfo.BuID == entity.BusinessUnitID &&
 					req.ExcludeShipmentID == entity.ID &&
 					req.Timestamp == actualDeparture &&
-					req.Direction == repositories.ActualTimelineDirectionPrevious
+					req.Direction == shipmentports.ActualTimelineDirectionPrevious
 			}),
 			*entity.Moves[0].Assignment.PrimaryWorkerID,
 		).
@@ -629,15 +630,15 @@ func TestValidateUpdate_RejectsActualDepartureAfterNextPrimaryWorkerEvent(t *tes
 	assignmentRepo.EXPECT().
 		FindNearestActualEventByPrimaryWorkerID(
 			mock.Anything,
-			mock.MatchedBy(func(req repositories.FindNearestActualTimelineEventRequest) bool {
-				return req.Direction == repositories.ActualTimelineDirectionNext &&
+			mock.MatchedBy(func(req shipmentports.FindNearestActualTimelineEventRequest) bool {
+				return req.Direction == shipmentports.ActualTimelineDirectionNext &&
 					req.Timestamp == actualDeparture
 			}),
 			*entity.Moves[0].Assignment.PrimaryWorkerID,
 		).
-		Return(&repositories.ActualTimelineEvent{
+		Return(&shipmentports.ActualTimelineEvent{
 			Timestamp: 200,
-			EventType: repositories.ActualTimelineEventTypeArrival,
+			EventType: shipmentports.ActualTimelineEventTypeArrival,
 		}, nil).
 		Once()
 	assignmentRepo.EXPECT().
@@ -658,7 +659,7 @@ func TestValidateUpdate_RejectsActualDepartureAfterNextPrimaryWorkerEvent(t *tes
 func TestValidateUpdate_RejectsOverlappingActualTimesWithinShipmentForSameTractor(t *testing.T) {
 	t.Parallel()
 
-	assignmentRepo := mocks.NewMockAssignmentRepository(t)
+	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
 	allowNoExternalTimelineOverlap(assignmentRepo)
 	assignmentRepo.EXPECT().
 		FindNearestActualEventByTractorID(
@@ -720,7 +721,7 @@ func TestValidateUpdate_RejectsOverlappingActualTimesWithinShipmentForSameTracto
 func TestValidateUpdate_RejectsActualArrivalWithinPersistedTractorWindow(t *testing.T) {
 	t.Parallel()
 
-	assignmentRepo := mocks.NewMockAssignmentRepository(t)
+	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
 	v := newTestValidatorWithAssignmentRepo(t, assignmentRepo)
 
 	entity := validShipmentForValidation()
@@ -758,7 +759,7 @@ func TestValidateUpdate_RejectsActualArrivalWithinPersistedTractorWindow(t *test
 	assignmentRepo.EXPECT().
 		FindOverlappingActualWindowByTractorID(
 			mock.Anything,
-			mock.MatchedBy(func(req repositories.FindOverlappingActualTimelineWindowRequest) bool {
+			mock.MatchedBy(func(req shipmentports.FindOverlappingActualTimelineWindowRequest) bool {
 				return req.TenantInfo.OrgID == entity.OrganizationID &&
 					req.TenantInfo.BuID == entity.BusinessUnitID &&
 					req.ExcludeShipmentID == entity.ID &&
@@ -766,7 +767,7 @@ func TestValidateUpdate_RejectsActualArrivalWithinPersistedTractorWindow(t *test
 			}),
 			*entity.Moves[0].Assignment.TractorID,
 		).
-		Return(&repositories.ActualTimelineWindow{
+		Return(&shipmentports.ActualTimelineWindow{
 			StartTimestamp: 1773835200,
 			EndTimestamp:   1773837120,
 			ShipmentID:     pulid.MustNew("shp_"),
@@ -791,7 +792,7 @@ func TestValidateUpdate_RejectsActualArrivalWithinPersistedTractorWindow(t *test
 func TestValidateUpdateWithOriginal_SkipsExternalTimelineLookupForUnchangedActuals(t *testing.T) {
 	t.Parallel()
 
-	assignmentRepo := mocks.NewMockAssignmentRepository(t)
+	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
 	v := newTestValidatorWithAssignmentRepo(t, assignmentRepo)
 
 	original := validShipmentForValidation()
@@ -934,7 +935,7 @@ func assertNoErrorField(t *testing.T, multiErr *errortypes.MultiError, field str
 }
 
 func allowNoExternalTimelineOverlap(
-	assignmentRepo *mocks.MockAssignmentRepository,
+	assignmentRepo *shipmentportsmock.MockAssignmentRepository,
 ) {
 	assignmentRepo.EXPECT().
 		FindOverlappingActualWindowByTractorID(

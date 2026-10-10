@@ -8,10 +8,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -41,13 +42,13 @@ type payEventHolder interface {
 		tenantInfo pagination.TenantInfo,
 		eventID pulid.ID,
 		reason string,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*driversettlement.PayEvent, error)
 	ReleasePayEvent(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		eventID pulid.ID,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*driversettlement.PayEvent, error)
 }
 
@@ -57,15 +58,15 @@ type payEventHoldTool struct {
 }
 
 var (
-	_ serviceports.ToolPreviewer = (*payEventHoldTool)(nil)
-	_ serviceports.ToolValidator = (*payEventHoldTool)(nil)
+	_ agentports.ToolPreviewer = (*payEventHoldTool)(nil)
+	_ agentports.ToolValidator = (*payEventHoldTool)(nil)
 )
 
-func provideHoldDriverPayEventTool(s *driversettlementservice.Service) serviceports.AgentTool {
+func provideHoldDriverPayEventTool(s *driversettlementservice.Service) agentports.AgentTool {
 	return &payEventHoldTool{events: s, hold: true}
 }
 
-func provideReleaseDriverPayEventTool(s *driversettlementservice.Service) serviceports.AgentTool {
+func provideReleaseDriverPayEventTool(s *driversettlementservice.Service) agentports.AgentTool {
 	return &payEventHoldTool{events: s}
 }
 
@@ -113,8 +114,8 @@ func (t *payEventHoldTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *payEventHoldTool) Policy() serviceports.ToolPolicy {
-	policy := serviceports.ToolPolicy{
+func (t *payEventHoldTool) Policy() agentports.ToolPolicy {
+	policy := agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceDriverSettlement,
@@ -146,7 +147,7 @@ type payEventHoldRequest struct {
 }
 
 func (t *payEventHoldTool) request(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*payEventHoldRequest, error) {
 	if err := guardPreview(t, params); err != nil {
 		return nil, err
@@ -172,7 +173,7 @@ func (t *payEventHoldTool) request(
 
 func (t *payEventHoldTool) plan(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*driversettlementservice.PayEventPlan, error) {
 	req, err := t.request(params)
 	if err != nil {
@@ -184,7 +185,7 @@ func (t *payEventHoldTool) plan(
 
 func (t *payEventHoldTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
@@ -196,7 +197,7 @@ func (t *payEventHoldTool) Validate(
 
 func (t *payEventHoldTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -239,7 +240,7 @@ func payEventDriver(event *driversettlement.PayEvent) string {
 
 func (t *payEventHoldTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
@@ -305,13 +306,13 @@ type payEventTransferrer interface {
 		tenantInfo pagination.TenantInfo,
 		settlementID pulid.ID,
 		eventIDs []pulid.ID,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*driversettlement.Settlement, error)
 	DetachPayEvent(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		settlementID, eventID pulid.ID,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*driversettlement.Settlement, error)
 }
 
@@ -321,16 +322,16 @@ type payEventTransferTool struct {
 }
 
 var (
-	_ serviceports.ToolPreviewer = (*payEventTransferTool)(nil)
-	_ serviceports.ToolValidator = (*payEventTransferTool)(nil)
-	_ serviceports.TargetedTool  = (*payEventTransferTool)(nil)
+	_ agentports.ToolPreviewer = (*payEventTransferTool)(nil)
+	_ agentports.ToolValidator = (*payEventTransferTool)(nil)
+	_ agentports.TargetedTool  = (*payEventTransferTool)(nil)
 )
 
-func provideAttachPayEventsTool(s *driversettlementservice.Service) serviceports.AgentTool {
+func provideAttachPayEventsTool(s *driversettlementservice.Service) agentports.AgentTool {
 	return &payEventTransferTool{events: s}
 }
 
-func provideDetachPayEventTool(s *driversettlementservice.Service) serviceports.AgentTool {
+func provideDetachPayEventTool(s *driversettlementservice.Service) agentports.AgentTool {
 	return &payEventTransferTool{events: s, detach: true}
 }
 
@@ -388,8 +389,8 @@ func (t *payEventTransferTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *payEventTransferTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *payEventTransferTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceDriverSettlement,
@@ -406,12 +407,12 @@ func (t *payEventTransferTool) Policy() serviceports.ToolPolicy {
 	}
 }
 
-func (t *payEventTransferTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *payEventTransferTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, paramSettlementID, permission.ResourceDriverSettlement)
 }
 
 func (t *payEventTransferTool) request(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*driversettlementservice.EventTransferRequest, error) {
 	if err := guardPreview(t, params); err != nil {
 		return nil, err
@@ -447,7 +448,7 @@ func (t *payEventTransferTool) request(
 
 func (t *payEventTransferTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	req, err := t.request(&params)
 	if err != nil {
@@ -463,7 +464,7 @@ func (t *payEventTransferTool) Validate(
 
 func (t *payEventTransferTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -496,7 +497,7 @@ func (t *payEventTransferTool) Execute(
 
 func (t *payEventTransferTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	req, err := t.request(&params)
 	if err != nil {

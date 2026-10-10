@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -37,7 +37,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIAuditChainStatus)
+					obj := o.(*aiauditports.AIAuditChainStatus)
 					return obj.Signed, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -46,7 +46,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "activeKeyId",
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIAuditChainStatus)
+					obj := o.(*aiauditports.AIAuditChainStatus)
 					return obj.ActiveKeyID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -56,7 +56,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIAuditChainStatus)
+					obj := o.(*aiauditports.AIAuditChainStatus)
 					return obj.FirstSeq, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -66,7 +66,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIAuditChainStatus)
+					obj := o.(*aiauditports.AIAuditChainStatus)
 					return obj.LastSeq, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -76,7 +76,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIAuditChainStatus)
+					obj := o.(*aiauditports.AIAuditChainStatus)
 					return obj.LastHash, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -86,7 +86,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIAuditChainStatus)
+					obj := o.(*aiauditports.AIAuditChainStatus)
 					return obj.SealedThroughSeq, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -96,7 +96,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIAuditChainStatus)
+					obj := o.(*aiauditports.AIAuditChainStatus)
 					return obj.LastVerifiedSeq, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -105,7 +105,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "lastVerifiedAt",
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIAuditChainStatus)
+					obj := o.(*aiauditports.AIAuditChainStatus)
 					return obj.LastVerifiedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -116,7 +116,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIAuditChainStatus)
+					obj := o.(*aiauditports.AIAuditChainStatus)
 					return gqlexec.Resolver[resolverAIAuditChainStatus](ec, "AIAuditChainStatus").LastVerificationStatus(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOAIAuditVerificationStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiauditᚐVerificationStatus),
@@ -125,7 +125,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "failedSeq",
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIAuditChainStatus)
+					obj := o.(*aiauditports.AIAuditChainStatus)
 					return obj.FailedSeq, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint64),
@@ -134,7 +134,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "detail",
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIAuditChainStatus)
+					obj := o.(*aiauditports.AIAuditChainStatus)
 					return obj.Detail, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -144,7 +144,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIAuditChainStatus)
+					obj := o.(*aiauditports.AIAuditChainStatus)
 					return obj.Verifying, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -156,7 +156,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIAuditExportDownload)
+					obj := o.(*aiauditports.AIAuditExportDownload)
 					return obj.URL, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -166,7 +166,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIAuditExportDownload)
+					obj := o.(*aiauditports.AIAuditExportDownload)
 					return obj.FileName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -176,7 +176,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIAuditExportDownload)
+					obj := o.(*aiauditports.AIAuditExportDownload)
 					return obj.ExpiresAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -186,7 +186,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AIAuditExportDownload)
+					obj := o.(*aiauditports.AIAuditExportDownload)
 					return obj.SHA256, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1431,7 +1431,7 @@ var Shard = &gqlexec.Shard{
 }
 
 type resolverAIAuditChainStatus interface {
-	LastVerificationStatus(ctx context.Context, obj *services.AIAuditChainStatus) (*aiaudit.VerificationStatus, error)
+	LastVerificationStatus(ctx context.Context, obj *aiauditports.AIAuditChainStatus) (*aiaudit.VerificationStatus, error)
 }
 
 type resolverAIAuditEvent interface {
@@ -1455,14 +1455,14 @@ type resolverAIAuditExport interface {
 
 type resolverMutation interface {
 	RequestAIAuditExport(ctx context.Context, input gqlmodel.RequestAIAuditExportInput) (*aiaudit.AIAuditExport, error)
-	AiAuditExportDownload(ctx context.Context, id string) (*services.AIAuditExportDownload, error)
-	VerifyAIAuditChain(ctx context.Context) (*services.AIAuditChainStatus, error)
+	AiAuditExportDownload(ctx context.Context, id string) (*aiauditports.AIAuditExportDownload, error)
+	VerifyAIAuditChain(ctx context.Context) (*aiauditports.AIAuditChainStatus, error)
 }
 
 type resolverQuery interface {
 	AiAuditEvents(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIAuditEventConnection, error)
 	AiAuditEvent(ctx context.Context, id string) (*aiaudit.AIAuditEvent, error)
-	AiAuditChainStatus(ctx context.Context) (*services.AIAuditChainStatus, error)
+	AiAuditChainStatus(ctx context.Context) (*aiauditports.AIAuditChainStatus, error)
 	AiAuditExports(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIAuditExportConnection, error)
 	AiAuditExport(ctx context.Context, id string) (*aiaudit.AIAuditExport, error)
 }
@@ -1721,7 +1721,7 @@ func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func marshalNAIAuditChainStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIAuditChainStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.AIAuditChainStatus) graphql.Marshaler {
+func marshalNAIAuditChainStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIAuditChainStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiauditports.AIAuditChainStatus) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1729,7 +1729,7 @@ func marshalNAIAuditChainStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "AIAuditChainStatus", v)
 }
 
-func marshalNAIAuditDownload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIAuditExportDownload(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.AIAuditExportDownload) graphql.Marshaler {
+func marshalNAIAuditDownload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIAuditExportDownload(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiauditports.AIAuditExportDownload) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

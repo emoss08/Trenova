@@ -1,11 +1,11 @@
 package rateengine
 
 import (
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"go.uber.org/fx"
 )
 
-func asRateEngine(s *Service) services.RateEngine {
+func asRateEngine(s *Service) ratequoteports.RateEngine {
 	return s
 }
 

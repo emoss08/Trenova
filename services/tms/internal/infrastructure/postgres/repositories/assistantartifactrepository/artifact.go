@@ -7,9 +7,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -41,7 +41,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.AssistantArtifactRepository {
+func New(p Params) assistantartifactports.AssistantArtifactRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.assistantartifact-repository"),
@@ -113,7 +113,7 @@ func buildUpsert(db bun.IDB, artifact *assistantartifact.Artifact, target string
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetArtifactRequest,
+	req assistantartifactports.GetArtifactRequest,
 ) (*assistantartifact.Artifact, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*assistantartifact.Artifact, error) {
 		entity := new(assistantartifact.Artifact)
@@ -136,7 +136,7 @@ func (r *repository) GetByID(
 
 func (r *repository) LatestInLineage(
 	ctx context.Context,
-	req repositories.LatestInLineageRequest,
+	req assistantartifactports.LatestInLineageRequest,
 ) (*assistantartifact.Artifact, error) {
 	if req.LineageKey == "" {
 		return nil, nil
@@ -170,7 +170,7 @@ func (r *repository) LatestInLineage(
 
 func (r *repository) ListByToolCalls(
 	ctx context.Context,
-	req *repositories.ListArtifactsByToolCallsRequest,
+	req *assistantartifactports.ListArtifactsByToolCallsRequest,
 ) ([]*assistantartifact.Artifact, error) {
 	if len(req.CallIDs) == 0 {
 		return []*assistantartifact.Artifact{}, nil
@@ -201,7 +201,7 @@ func (r *repository) ListByToolCalls(
 	})
 }
 
-func (r *repository) Delete(ctx context.Context, req *repositories.DeleteArtifactsRequest) error {
+func (r *repository) Delete(ctx context.Context, req *assistantartifactports.DeleteArtifactsRequest) error {
 	if len(req.IDs) == 0 {
 		return nil
 	}
@@ -231,7 +231,7 @@ func (r *repository) Delete(ctx context.Context, req *repositories.DeleteArtifac
 
 func (r *repository) SetPinned(
 	ctx context.Context,
-	req repositories.SetArtifactPinnedRequest,
+	req assistantartifactports.SetArtifactPinnedRequest,
 ) (*assistantartifact.Artifact, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*assistantartifact.Artifact, error) {
 		cols := buncolgen.ArtifactColumns
@@ -274,7 +274,7 @@ func (r *repository) SetPinned(
 
 func (r *repository) UpdateStatus(
 	ctx context.Context,
-	req repositories.UpdateArtifactStatusRequest,
+	req assistantartifactports.UpdateArtifactStatusRequest,
 ) (*assistantartifact.Artifact, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*assistantartifact.Artifact, error) {
 		cols := buncolgen.ArtifactColumns

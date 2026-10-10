@@ -4,15 +4,16 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/settingversion"
-	"github.com/emoss08/trenova/internal/testutil/dbtest"
-	"github.com/emoss08/trenova/pkg/dberror"
-
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/core/domain/settingversion"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/settingversionports"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -59,7 +60,7 @@ func (v *settingVersions) Create(_ context.Context, version *settingversion.Sett
 
 func (v *settingVersions) LatestAt(
 	_ context.Context,
-	req *repositories.GetSettingVersionAtRequest,
+	req *settingversionports.GetSettingVersionAtRequest,
 ) (*settingversion.SettingVersion, error) {
 	var best *settingversion.SettingVersion
 	for _, version := range v.created {
@@ -71,12 +72,12 @@ func (v *settingVersions) LatestAt(
 }
 
 type absentDefinitions struct {
-	repositories.AgentDefinitionRepository
+	agentdefinitionports.AgentDefinitionRepository
 }
 
 func (absentDefinitions) GetBySystemKey(
 	context.Context,
-	repositories.GetAgentDefinitionBySystemKeyRequest,
+	agentdefinitionports.GetAgentDefinitionBySystemKeyRequest,
 ) (*agentdefinition.Definition, error) {
 	return nil, errortypes.NewNotFoundError("agent definition not found")
 }
@@ -106,8 +107,8 @@ func defaultControl() *tenant.AgentControl {
 	}
 }
 
-func userActor(id pulid.ID) *services.RequestActor {
-	return &services.RequestActor{PrincipalType: services.PrincipalTypeUser, PrincipalID: id, UserID: id}
+func userActor(id pulid.ID) *permissionports.RequestActor {
+	return &permissionports.RequestActor{PrincipalType: permissionports.PrincipalTypeUser, PrincipalID: id, UserID: id}
 }
 
 func TestUpdate_GrantingTrainingConsentRecordsWhoAndWhen(t *testing.T) {
@@ -116,7 +117,7 @@ func TestUpdate_GrantingTrainingConsentRecordsWhoAndWhen(t *testing.T) {
 	svc, controls := newTestService(defaultControl())
 	userID := pulid.ID("usr_admin")
 
-	updated, err := svc.Update(t.Context(), &services.UpdateAgentControlRequest{
+	updated, err := svc.Update(t.Context(), &agentports.UpdateAgentControlRequest{
 		AITrainingConsent: boolPtr(true),
 	}, userActor(userID))
 
@@ -140,7 +141,7 @@ func TestUpdate_LeavesTrainingConsentAloneWhenNotSent(t *testing.T) {
 	control.AITrainingConsentChangedByID = &changedBy
 	svc, _ := newTestService(control)
 
-	updated, err := svc.Update(t.Context(), &services.UpdateAgentControlRequest{
+	updated, err := svc.Update(t.Context(), &agentports.UpdateAgentControlRequest{
 		ShadowMode: true,
 	}, userActor(pulid.ID("usr_other")))
 
@@ -155,9 +156,9 @@ func TestUpdate_SendingTheSameConsentDoesNotRestampIt(t *testing.T) {
 
 	svc, _ := newTestService(defaultControl())
 
-	updated, err := svc.Update(t.Context(), &services.UpdateAgentControlRequest{
+	updated, err := svc.Update(t.Context(), &agentports.UpdateAgentControlRequest{
 		AITrainingConsent: boolPtr(false),
-	}, &services.RequestActor{PrincipalType: services.PrincipalTypeAPIKey, APIKeyID: "key_1"})
+	}, &permissionports.RequestActor{PrincipalType: permissionports.PrincipalTypeAPIKey, APIKeyID: "key_1"})
 
 	require.NoError(t, err)
 	assert.False(t, updated.AITrainingConsent)
@@ -170,9 +171,9 @@ func TestUpdate_RefusesAConsentChangeWithoutAPerson(t *testing.T) {
 
 	svc, controls := newTestService(defaultControl())
 
-	_, err := svc.Update(t.Context(), &services.UpdateAgentControlRequest{
+	_, err := svc.Update(t.Context(), &agentports.UpdateAgentControlRequest{
 		AITrainingConsent: boolPtr(true),
-	}, &services.RequestActor{PrincipalType: services.PrincipalTypeAPIKey, APIKeyID: "key_1"})
+	}, &permissionports.RequestActor{PrincipalType: permissionports.PrincipalTypeAPIKey, APIKeyID: "key_1"})
 
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
@@ -186,10 +187,10 @@ func TestUpdate_RefusesAConsentChangeFromAnAgentCarryingTheSystemUser(t *testing
 
 	svc, controls := newTestService(defaultControl())
 
-	_, err := svc.Update(t.Context(), &services.UpdateAgentControlRequest{
+	_, err := svc.Update(t.Context(), &agentports.UpdateAgentControlRequest{
 		AITrainingConsent: boolPtr(true),
-	}, &services.RequestActor{
-		PrincipalType: services.PrincipalTypeAgent,
+	}, &permissionports.RequestActor{
+		PrincipalType: permissionports.PrincipalTypeAgent,
 		PrincipalID:   pulid.ID("agdef_dispatch"),
 		UserID:        pulid.ID("usr_system"),
 	})
@@ -209,7 +210,7 @@ func TestUpdate_WithdrawingConsentIsRecorded(t *testing.T) {
 	svc, _ := newTestService(control)
 	userID := pulid.ID("usr_admin")
 
-	updated, err := svc.Update(t.Context(), &services.UpdateAgentControlRequest{
+	updated, err := svc.Update(t.Context(), &agentports.UpdateAgentControlRequest{
 		AITrainingConsent: boolPtr(false),
 	}, userActor(userID))
 
@@ -235,7 +236,7 @@ func TestUpdateRecordsTheVersionTheControlsBecome(t *testing.T) {
 	svc, _ := newTestService(defaultControl())
 	author := pulid.MustNew("usr_")
 
-	updated, err := svc.Update(t.Context(), &services.UpdateAgentControlRequest{
+	updated, err := svc.Update(t.Context(), &agentports.UpdateAgentControlRequest{
 		ShadowMode: true,
 		TenantInfo: pagination.TenantInfo{OrgID: "org_test", BuID: "bu_test"},
 	}, userActor(author))
@@ -254,7 +255,7 @@ func TestUpdateOnAStaleVersionSaysWhoChangedWhat(t *testing.T) {
 
 	svc, _ := newTestService(defaultControl())
 	tenantInfo := pagination.TenantInfo{OrgID: "org_test", BuID: "bu_test"}
-	_, err := svc.Update(t.Context(), &services.UpdateAgentControlRequest{
+	_, err := svc.Update(t.Context(), &agentports.UpdateAgentControlRequest{
 		ShadowMode: false,
 		Version:    int64Ptr(0),
 		TenantInfo: tenantInfo,
@@ -272,7 +273,7 @@ func TestUpdateOnAStaleVersionSaysWhoChangedWhat(t *testing.T) {
 	})
 	versions.created[0].Version = 0
 
-	_, err = svc.Update(t.Context(), &services.UpdateAgentControlRequest{
+	_, err = svc.Update(t.Context(), &agentports.UpdateAgentControlRequest{
 		ShadowMode: true,
 		Version:    int64Ptr(0),
 		TenantInfo: tenantInfo,

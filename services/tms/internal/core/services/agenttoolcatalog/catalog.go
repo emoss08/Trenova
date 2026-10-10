@@ -13,8 +13,8 @@ import (
 	"sort"
 	"strings"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentsearch"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 
 const (
@@ -29,7 +29,7 @@ const (
 )
 
 type indexed struct {
-	descriptor  serviceports.AgentToolDescriptor
+	descriptor  agentports.AgentToolDescriptor
 	nameTokens  map[string]struct{}
 	bodyTokens  map[string]struct{}
 	paramTokens map[string]struct{}
@@ -40,11 +40,11 @@ type Catalog struct {
 	entries []indexed
 	byName  map[string]int
 	family  map[string][]string
-	items   []serviceports.EmbeddingCatalogItem
+	items   []agentports.EmbeddingCatalogItem
 }
 
-func New(descriptors []serviceports.AgentToolDescriptor) *Catalog {
-	sorted := make([]serviceports.AgentToolDescriptor, len(descriptors))
+func New(descriptors []agentports.AgentToolDescriptor) *Catalog {
+	sorted := make([]agentports.AgentToolDescriptor, len(descriptors))
 	copy(sorted, descriptors)
 	sort.Slice(sorted, func(i, j int) bool { return sorted[i].Name < sorted[j].Name })
 
@@ -52,7 +52,7 @@ func New(descriptors []serviceports.AgentToolDescriptor) *Catalog {
 		entries: make([]indexed, 0, len(sorted)),
 		byName:  make(map[string]int, len(sorted)),
 		family:  indexFamilies(),
-		items:   make([]serviceports.EmbeddingCatalogItem, 0, len(sorted)),
+		items:   make([]agentports.EmbeddingCatalogItem, 0, len(sorted)),
 	}
 
 	for i, descriptor := range sorted {
@@ -68,7 +68,7 @@ func New(descriptors []serviceports.AgentToolDescriptor) *Catalog {
 		})
 		catalog.items = append(
 			catalog.items,
-			serviceports.NewEmbeddingCatalogItem(descriptor.Name, DescriptorText(&descriptor)),
+			agentports.NewEmbeddingCatalogItem(descriptor.Name, DescriptorText(&descriptor)),
 		)
 	}
 
@@ -76,10 +76,10 @@ func New(descriptors []serviceports.AgentToolDescriptor) *Catalog {
 }
 
 // Descriptor returns one tool by its exact name.
-func (c *Catalog) Descriptor(name string) (serviceports.AgentToolDescriptor, bool) {
+func (c *Catalog) Descriptor(name string) (agentports.AgentToolDescriptor, bool) {
 	index, ok := c.byName[name]
 	if !ok {
-		return serviceports.AgentToolDescriptor{}, false
+		return agentports.AgentToolDescriptor{}, false
 	}
 
 	return c.entries[index].descriptor, true
@@ -95,7 +95,7 @@ func (c *Catalog) Rank(
 	allowed []string,
 	query string,
 	limit int,
-) []serviceports.AgentToolDescriptor {
+) []agentports.AgentToolDescriptor {
 	return c.rank(allowed, query, limit, 0, false)
 }
 
@@ -105,7 +105,7 @@ func (c *Catalog) rank(
 	limit int,
 	minScore int,
 	strong bool,
-) []serviceports.AgentToolDescriptor {
+) []agentports.AgentToolDescriptor {
 	if limit <= 0 {
 		return nil
 	}
@@ -119,7 +119,7 @@ func (c *Catalog) rank(
 		candidates = candidates[:limit]
 	}
 
-	out := make([]serviceports.AgentToolDescriptor, 0, len(candidates))
+	out := make([]agentports.AgentToolDescriptor, 0, len(candidates))
 	for _, candidate := range candidates {
 		out = append(out, candidate.entry.descriptor)
 	}
@@ -203,7 +203,7 @@ func (c *Catalog) Find(
 	allowed []string,
 	query string,
 	limit int,
-) []serviceports.AgentToolDescriptor {
+) []agentports.AgentToolDescriptor {
 	return c.withFamilies(c.allowedSet(allowed), c.rank(allowed, query, limit, 1, false))
 }
 

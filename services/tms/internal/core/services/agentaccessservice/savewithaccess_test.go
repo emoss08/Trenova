@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -58,9 +58,9 @@ func TestSaveWithAccess_CreatesARestrictedAgentInOneStep(t *testing.T) {
 	saved := &savedIn{agent: newAgent(f)}
 	f.cache.On("InvalidateByRole", mock.Anything, f.roleA.ID, mock.Anything).Return(nil).Once()
 
-	agent, err := f.service.SaveWithAccess(t.Context(), &services.SaveAgentWithAccessRequest{
+	agent, err := f.service.SaveWithAccess(t.Context(), &agentdefinitionports.SaveAgentWithAccessRequest{
 		TenantInfo: f.tenant,
-		Access: services.AgentAccessWrite{
+		Access: agentdefinitionports.AgentAccessWrite{
 			Mode:    agentdefinition.AccessRoles,
 			RoleIDs: []pulid.ID{f.roleA.ID},
 		},
@@ -99,9 +99,9 @@ func TestSaveWithAccess_RefusesAnAccessChangeWithoutRoleUpdate(t *testing.T) {
 	f.permissions.denied["role:update"] = true
 	saved := &savedIn{agent: newAgent(f)}
 
-	_, err := f.service.SaveWithAccess(t.Context(), &services.SaveAgentWithAccessRequest{
+	_, err := f.service.SaveWithAccess(t.Context(), &agentdefinitionports.SaveAgentWithAccessRequest{
 		TenantInfo: f.tenant,
-		Access: services.AgentAccessWrite{
+		Access: agentdefinitionports.AgentAccessWrite{
 			Mode:    agentdefinition.AccessRoles,
 			RoleIDs: []pulid.ID{f.roleA.ID},
 		},
@@ -127,9 +127,9 @@ func TestSaveWithAccess_UnchangedAccessNeedsNoRoleUpdate(t *testing.T) {
 	f.grants.agentRoles[agent.ID] = []pulid.ID{f.roleA.ID}
 	saved := &savedIn{agent: agent}
 
-	result, err := f.service.SaveWithAccess(t.Context(), &services.SaveAgentWithAccessRequest{
+	result, err := f.service.SaveWithAccess(t.Context(), &agentdefinitionports.SaveAgentWithAccessRequest{
 		TenantInfo: f.tenant,
-		Access: services.AgentAccessWrite{
+		Access: agentdefinitionports.AgentAccessWrite{
 			Mode:    agentdefinition.AccessRoles,
 			RoleIDs: []pulid.ID{f.roleA.ID},
 		},
@@ -151,9 +151,9 @@ func TestSaveWithAccess_TheDefaultNeedsNoRoleUpdate(t *testing.T) {
 	f.permissions.denied["role:update"] = true
 	saved := &savedIn{agent: newAgent(f)}
 
-	result, err := f.service.SaveWithAccess(t.Context(), &services.SaveAgentWithAccessRequest{
+	result, err := f.service.SaveWithAccess(t.Context(), &agentdefinitionports.SaveAgentWithAccessRequest{
 		TenantInfo: f.tenant,
-		Access:     services.AgentAccessWrite{Mode: agentdefinition.AccessEveryone},
+		Access:     agentdefinitionports.AgentAccessWrite{Mode: agentdefinition.AccessEveryone},
 		Save:       saved.save,
 	}, f.actor)
 
@@ -168,9 +168,9 @@ func TestSaveWithAccess_AFailedSaveSetsNoAccess(t *testing.T) {
 	refusal := errors.New("version conflict")
 	saved := &savedIn{agent: newAgent(f), err: refusal}
 
-	_, err := f.service.SaveWithAccess(t.Context(), &services.SaveAgentWithAccessRequest{
+	_, err := f.service.SaveWithAccess(t.Context(), &agentdefinitionports.SaveAgentWithAccessRequest{
 		TenantInfo: f.tenant,
-		Access: services.AgentAccessWrite{
+		Access: agentdefinitionports.AgentAccessWrite{
 			Mode:    agentdefinition.AccessRoles,
 			RoleIDs: []pulid.ID{f.roleA.ID},
 		},
@@ -185,12 +185,12 @@ func TestSaveWithAccess_AFailedSaveSetsNoAccess(t *testing.T) {
 func TestSaveWithAccess_RefusesBadAccessBeforeSaving(t *testing.T) {
 	t.Parallel()
 
-	for name, access := range map[string]func(f *fixture) services.AgentAccessWrite{
-		"unknown mode": func(*fixture) services.AgentAccessWrite {
-			return services.AgentAccessWrite{Mode: "Somebody"}
+	for name, access := range map[string]func(f *fixture) agentdefinitionports.AgentAccessWrite{
+		"unknown mode": func(*fixture) agentdefinitionports.AgentAccessWrite {
+			return agentdefinitionports.AgentAccessWrite{Mode: "Somebody"}
 		},
-		"duplicate role": func(f *fixture) services.AgentAccessWrite {
-			return services.AgentAccessWrite{
+		"duplicate role": func(f *fixture) agentdefinitionports.AgentAccessWrite {
+			return agentdefinitionports.AgentAccessWrite{
 				Mode:    agentdefinition.AccessRoles,
 				RoleIDs: []pulid.ID{f.roleA.ID, f.roleA.ID},
 			}
@@ -202,7 +202,7 @@ func TestSaveWithAccess_RefusesBadAccessBeforeSaving(t *testing.T) {
 			f := newFixture(t)
 			saved := &savedIn{agent: newAgent(f)}
 
-			_, err := f.service.SaveWithAccess(t.Context(), &services.SaveAgentWithAccessRequest{
+			_, err := f.service.SaveWithAccess(t.Context(), &agentdefinitionports.SaveAgentWithAccessRequest{
 				TenantInfo: f.tenant,
 				Access:     access(f),
 				Save:       saved.save,
@@ -222,9 +222,9 @@ func TestSaveWithAccess_RefusesAnotherTenantsRole(t *testing.T) {
 	f := newFixture(t)
 	saved := &savedIn{agent: newAgent(f)}
 
-	_, err := f.service.SaveWithAccess(t.Context(), &services.SaveAgentWithAccessRequest{
+	_, err := f.service.SaveWithAccess(t.Context(), &agentdefinitionports.SaveAgentWithAccessRequest{
 		TenantInfo: f.tenant,
-		Access: services.AgentAccessWrite{
+		Access: agentdefinitionports.AgentAccessWrite{
 			Mode:    agentdefinition.AccessRoles,
 			RoleIDs: []pulid.ID{pulid.MustNew("rol_")},
 		},

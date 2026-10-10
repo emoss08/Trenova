@@ -5,9 +5,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/uptrace/bun"
@@ -27,7 +27,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.EDIDocumentTypeRepository {
+func New(p Params) ediports.EDIDocumentTypeRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.edi-document-type-repository"),
@@ -36,7 +36,7 @@ func New(p Params) repositories.EDIDocumentTypeRepository {
 
 func (r *repository) ListDocumentTypes(
 	ctx context.Context,
-	req repositories.ListEDIDocumentTypesRequest,
+	req ediports.ListEDIDocumentTypesRequest,
 ) ([]*edi.EDIDocumentType, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDIDocumentType, error) {
 		entities := make([]*edi.EDIDocumentType, 0, 8)
@@ -52,7 +52,7 @@ func (r *repository) ListDocumentTypes(
 
 func (r *repository) SelectDocumentTypeOptions(
 	ctx context.Context,
-	req *repositories.EDIDocumentTypeSelectOptionsRequest,
+	req *ediports.EDIDocumentTypeSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDIDocumentType], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDIDocumentType], error) {
 		entities := make([]*edi.EDIDocumentType, 0, req.SelectQueryRequest.Pagination.SafeLimit())
@@ -73,7 +73,7 @@ func (r *repository) SelectDocumentTypeOptions(
 				cols.CreatedAt.Bare(),
 			).
 			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return filterDocumentTypesQuery(sq, repositories.ListEDIDocumentTypesRequest{
+				return filterDocumentTypesQuery(sq, ediports.ListEDIDocumentTypesRequest{
 					Standard:       req.Standard,
 					TransactionSet: req.TransactionSet,
 					Direction:      req.Direction,
@@ -99,7 +99,7 @@ func (r *repository) SelectDocumentTypeOptions(
 
 func filterDocumentTypesQuery(
 	query *bun.SelectQuery,
-	req repositories.ListEDIDocumentTypesRequest,
+	req ediports.ListEDIDocumentTypesRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.EDIDocumentTypeColumns
 	if req.Standard != "" {

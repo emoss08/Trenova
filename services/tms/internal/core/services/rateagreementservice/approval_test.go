@@ -1,11 +1,13 @@
 package rateagreementservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/rateagreementportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -50,7 +52,7 @@ func TestApprove_RefusesFromTheWrongStatus(t *testing.T) {
 
 	agreement := draftAgreement(rateagreement.StatusDraft)
 
-	repo := mocks.NewMockRateAgreementRepository(t)
+	repo := rateagreementportsmock.NewMockRateAgreementRepository(t)
 	repo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetRateAgreementByIDRequest")).
 		Return(agreement, nil).
@@ -60,7 +62,7 @@ func TestApprove_RefusesFromTheWrongStatus(t *testing.T) {
 		Logger:       zap.NewNop(),
 		Repo:         repo,
 		Validator:    NewTestValidator(),
-		AuditService: mocks.NewMockAuditService(t),
+		AuditService: auditportsmock.NewMockAuditService(t),
 	})
 
 	_, err := svc.Approve(t.Context(), &ApprovalActionRequest{
@@ -79,13 +81,13 @@ func TestApprove_RefusesFromTheWrongStatus(t *testing.T) {
 func TestReject_RequiresAReason(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockRateAgreementRepository(t)
+	repo := rateagreementportsmock.NewMockRateAgreementRepository(t)
 
 	svc := New(Params{
 		Logger:       zap.NewNop(),
 		Repo:         repo,
 		Validator:    NewTestValidator(),
-		AuditService: mocks.NewMockAuditService(t),
+		AuditService: auditportsmock.NewMockAuditService(t),
 	})
 
 	_, err := svc.Reject(t.Context(), &ApprovalActionRequest{
@@ -154,7 +156,7 @@ func TestCreate_AlwaysStartsInDraft(t *testing.T) {
 	agreement := draftAgreement(rateagreement.StatusActive)
 	agreement.ID = pulid.Nil
 
-	repo := mocks.NewMockRateAgreementRepository(t)
+	repo := rateagreementportsmock.NewMockRateAgreementRepository(t)
 	repo.EXPECT().
 		Create(mock.Anything, mock.AnythingOfType("*rateagreement.RateAgreement")).
 		RunAndReturn(func(
@@ -174,7 +176,7 @@ func TestCreate_AlwaysStartsInDraft(t *testing.T) {
 		}).
 		Once()
 
-	audit := mocks.NewMockAuditService(t)
+	audit := auditportsmock.NewMockAuditService(t)
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Once()
 
 	svc := New(Params{
@@ -213,15 +215,15 @@ func draftAgreement(status rateagreement.Status) *rateagreement.RateAgreement {
 func serviceFor(
 	t *testing.T,
 	agreement *rateagreement.RateAgreement,
-) (*Service, *mocks.MockRateAgreementRepository) {
+) (*Service, *rateagreementportsmock.MockRateAgreementRepository) {
 	t.Helper()
 
-	repo := mocks.NewMockRateAgreementRepository(t)
+	repo := rateagreementportsmock.NewMockRateAgreementRepository(t)
 	repo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetRateAgreementByIDRequest")).
 		RunAndReturn(func(
 			_ context.Context,
-			req *repositories.GetRateAgreementByIDRequest,
+			req *rateagreementports.GetRateAgreementByIDRequest,
 		) (*rateagreement.RateAgreement, error) {
 			require.Equal(t, agreement.ID, req.RateAgreementID)
 			return agreement, nil
@@ -237,7 +239,7 @@ func serviceFor(
 		}).
 		Maybe()
 
-	audit := mocks.NewMockAuditService(t)
+	audit := auditportsmock.NewMockAuditService(t)
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Maybe()
 
 	return New(Params{

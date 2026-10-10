@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -16,7 +16,7 @@ import (
 
 func (f *disputeFixture) readInvoice() {
 	f.invoiceRepo.EXPECT().
-		GetByID(mock.Anything, repositories.GetInvoiceByIDRequest{ID: f.inv.ID, TenantInfo: f.tenantInfo}).
+		GetByID(mock.Anything, invoiceports.GetInvoiceByIDRequest{ID: f.inv.ID, TenantInfo: f.tenantInfo}).
 		Return(f.inv, nil).
 		Once()
 }
@@ -27,7 +27,7 @@ func TestPreviewOpenPlansTheCaseAndTheFlagWithoutWriting(t *testing.T) {
 	f := newDisputeFixture(t)
 	f.readInvoice()
 	f.repo.EXPECT().
-		GetOpenByInvoiceID(mock.Anything, repositories.GetOpenInvoiceDisputeRequest{InvoiceID: f.inv.ID, TenantInfo: f.tenantInfo}).
+		GetOpenByInvoiceID(mock.Anything, invoiceports.GetOpenInvoiceDisputeRequest{InvoiceID: f.inv.ID, TenantInfo: f.tenantInfo}).
 		Return(nil, errortypes.NewNotFoundError("none")).
 		Once()
 
@@ -50,7 +50,7 @@ func TestPreviewOpenRefusesWhatOpenRefuses(t *testing.T) {
 	f := newDisputeFixture(t)
 	f.readInvoice()
 	f.repo.EXPECT().
-		GetOpenByInvoiceID(mock.Anything, repositories.GetOpenInvoiceDisputeRequest{InvoiceID: f.inv.ID, TenantInfo: f.tenantInfo}).
+		GetOpenByInvoiceID(mock.Anything, invoiceports.GetOpenInvoiceDisputeRequest{InvoiceID: f.inv.ID, TenantInfo: f.tenantInfo}).
 		Return(f.openCase(), nil).
 		Once()
 
@@ -73,12 +73,12 @@ func TestPreviewResolveClosesTheCaseAndClearsTheFlag(t *testing.T) {
 	existing := f.openCase()
 	adjustmentID := pulid.MustNew("iadj_")
 	f.repo.EXPECT().
-		GetByID(mock.Anything, repositories.GetInvoiceDisputeByIDRequest{ID: existing.ID, TenantInfo: f.tenantInfo}).
+		GetByID(mock.Anything, invoiceports.GetInvoiceDisputeByIDRequest{ID: existing.ID, TenantInfo: f.tenantInfo}).
 		Return(existing, nil).
 		Once()
 	f.readInvoice()
 	f.adjustmentRepo.EXPECT().
-		GetByID(mock.Anything, repositories.GetInvoiceAdjustmentRequest{ID: adjustmentID, TenantInfo: f.tenantInfo}).
+		GetByID(mock.Anything, invoiceadjustmentports.GetInvoiceAdjustmentRequest{ID: adjustmentID, TenantInfo: f.tenantInfo}).
 		Return(&invoiceadjustment.InvoiceAdjustment{
 			ID:                adjustmentID,
 			OriginalInvoiceID: f.inv.ID,
@@ -86,7 +86,7 @@ func TestPreviewResolveClosesTheCaseAndClearsTheFlag(t *testing.T) {
 		}, nil).
 		Once()
 
-	preview, err := f.svc.PreviewResolve(t.Context(), &servicesports.ResolveInvoiceDisputeRequest{
+	preview, err := f.svc.PreviewResolve(t.Context(), &invoiceports.ResolveInvoiceDisputeRequest{
 		DisputeID:              existing.ID,
 		TenantInfo:             f.tenantInfo,
 		Resolution:             invoice.DisputeResolutionCreditIssued,
@@ -109,12 +109,12 @@ func TestPreviewResolveRefusesACreditWithoutItsAdjustment(t *testing.T) {
 	f := newDisputeFixture(t)
 	existing := f.openCase()
 	f.repo.EXPECT().
-		GetByID(mock.Anything, repositories.GetInvoiceDisputeByIDRequest{ID: existing.ID, TenantInfo: f.tenantInfo}).
+		GetByID(mock.Anything, invoiceports.GetInvoiceDisputeByIDRequest{ID: existing.ID, TenantInfo: f.tenantInfo}).
 		Return(existing, nil).
 		Once()
 	f.readInvoice()
 
-	_, err := f.svc.PreviewResolve(t.Context(), &servicesports.ResolveInvoiceDisputeRequest{
+	_, err := f.svc.PreviewResolve(t.Context(), &invoiceports.ResolveInvoiceDisputeRequest{
 		DisputeID:  existing.ID,
 		TenantInfo: f.tenantInfo,
 		Resolution: invoice.DisputeResolutionWrittenOff,
@@ -130,11 +130,11 @@ func TestPreviewWithdrawRefusesAClosedCaseBeforeReadingTheInvoice(t *testing.T) 
 	closed := f.openCase()
 	closed.Status = invoice.DisputeCaseStatusWithdrawn
 	f.repo.EXPECT().
-		GetByID(mock.Anything, repositories.GetInvoiceDisputeByIDRequest{ID: closed.ID, TenantInfo: f.tenantInfo}).
+		GetByID(mock.Anything, invoiceports.GetInvoiceDisputeByIDRequest{ID: closed.ID, TenantInfo: f.tenantInfo}).
 		Return(closed, nil).
 		Once()
 
-	_, err := f.svc.PreviewWithdraw(t.Context(), &servicesports.WithdrawInvoiceDisputeRequest{
+	_, err := f.svc.PreviewWithdraw(t.Context(), &invoiceports.WithdrawInvoiceDisputeRequest{
 		DisputeID:  closed.ID,
 		TenantInfo: f.tenantInfo,
 	}, f.actor)
@@ -148,12 +148,12 @@ func TestPreviewWithdrawKeepsTheNotes(t *testing.T) {
 	f := newDisputeFixture(t)
 	existing := f.openCase()
 	f.repo.EXPECT().
-		GetByID(mock.Anything, repositories.GetInvoiceDisputeByIDRequest{ID: existing.ID, TenantInfo: f.tenantInfo}).
+		GetByID(mock.Anything, invoiceports.GetInvoiceDisputeByIDRequest{ID: existing.ID, TenantInfo: f.tenantInfo}).
 		Return(existing, nil).
 		Once()
 	f.readInvoice()
 
-	preview, err := f.svc.PreviewWithdraw(t.Context(), &servicesports.WithdrawInvoiceDisputeRequest{
+	preview, err := f.svc.PreviewWithdraw(t.Context(), &invoiceports.WithdrawInvoiceDisputeRequest{
 		DisputeID:  existing.ID,
 		TenantInfo: f.tenantInfo,
 		Notes:      "Customer paid in full",

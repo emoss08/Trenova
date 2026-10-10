@@ -7,8 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/holdreason"
 	"github.com/emoss08/trenova/internal/core/domain/permit"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
@@ -29,7 +30,7 @@ func (s *service) activePermitHold(
 	entity *shipment.Shipment,
 	reason *holdreason.HoldReason,
 ) *shipment.ShipmentHold {
-	result, err := s.holdRepo.ListByShipmentID(ctx, &repositories.ListShipmentHoldsRequest{
+	result, err := s.holdRepo.ListByShipmentID(ctx, &shipmentports.ListShipmentHoldsRequest{
 		ShipmentID: entity.ID,
 		Filter: &pagination.QueryOptions{
 			TenantInfo: pagination.TenantInfo{
@@ -61,8 +62,8 @@ func (s *service) activePermitHold(
 func (s *service) reconcileHold(
 	ctx context.Context,
 	entity *shipment.Shipment,
-	assessment *services.PermitAssessment,
-	_ *services.RequestActor,
+	assessment *permitports.PermitAssessment,
+	_ *permissionports.RequestActor,
 ) {
 	tenantInfo := pagination.TenantInfo{
 		OrgID: entity.OrganizationID,

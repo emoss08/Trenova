@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -41,13 +41,13 @@ func accessorialTierUnit(unit accessorialcharge.RateUnit) detention.TierRateUnit
 
 func (s *Service) detentionWatch(
 	ctx context.Context,
-	req *repositories.ShipmentWatchlistRequest,
+	req *shipmentports.ShipmentWatchlistRequest,
 	control *tenant.ShipmentControl,
-) (services.ShipmentDetentionWatch, error) {
+) (shipmentports.ShipmentDetentionWatch, error) {
 	now := req.Basis.Now.Unix()
 
 	var (
-		accruals []services.DetentionAccrual
+		accruals []shipmentports.DetentionAccrual
 		moveIDs  []pulid.ID
 		err      error
 	)
@@ -57,21 +57,21 @@ func (s *Service) detentionWatch(
 		accruals, moveIDs, err = s.dwellAccruals(ctx, req, control, now)
 	}
 	if err != nil {
-		return services.ShipmentDetentionWatch{}, err
+		return shipmentports.ShipmentDetentionWatch{}, err
 	}
 
 	if err = s.nameCoverage(ctx, req.TenantInfo, accruals, moveIDs); err != nil {
-		return services.ShipmentDetentionWatch{}, err
+		return shipmentports.ShipmentDetentionWatch{}, err
 	}
 
 	return SummarizeDetention(accruals, now), nil
 }
 
 func SummarizeDetention(
-	accruals []services.DetentionAccrual,
+	accruals []shipmentports.DetentionAccrual,
 	now int64,
-) services.ShipmentDetentionWatch {
-	watch := services.ShipmentDetentionWatch{
+) shipmentports.ShipmentDetentionWatch {
+	watch := shipmentports.ShipmentDetentionWatch{
 		StopCount:   len(accruals),
 		Amount:      decimal.Zero,
 		RatePerHour: decimal.Zero,
@@ -83,7 +83,7 @@ func SummarizeDetention(
 	}
 
 	sorted := slices.Clone(accruals)
-	slices.SortStableFunc(sorted, func(a, b services.DetentionAccrual) int {
+	slices.SortStableFunc(sorted, func(a, b shipmentports.DetentionAccrual) int {
 		if c := b.Amount.Cmp(a.Amount); c != 0 {
 			return c
 		}
@@ -98,13 +98,13 @@ func (s *Service) engineAccruals(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	now int64,
-) ([]services.DetentionAccrual, []pulid.ID, error) {
+) ([]shipmentports.DetentionAccrual, []pulid.ID, error) {
 	entries, err := s.detention.ListDesk(ctx, tenantInfo)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	accruals := make([]services.DetentionAccrual, 0, len(entries))
+	accruals := make([]shipmentports.DetentionAccrual, 0, len(entries))
 	moveIDs := make([]pulid.ID, 0, len(entries))
 	for _, entry := range entries {
 		if entry == nil || entry.Occurrence == nil {
@@ -121,7 +121,7 @@ func (s *Service) engineAccruals(
 			amount = occurrence.BillableAmount
 		}
 		occurrenceID := occurrence.ID
-		accruals = append(accruals, services.DetentionAccrual{
+		accruals = append(accruals, shipmentports.DetentionAccrual{
 			ShipmentID:    occurrence.ShipmentID,
 			StopID:        occurrence.StopID,
 			OccurrenceID:  &occurrenceID,
@@ -138,16 +138,16 @@ func (s *Service) engineAccruals(
 
 func (s *Service) dwellAccruals(
 	ctx context.Context,
-	req *repositories.ShipmentWatchlistRequest,
+	req *shipmentports.ShipmentWatchlistRequest,
 	control *tenant.ShipmentControl,
 	now int64,
-) ([]services.DetentionAccrual, []pulid.ID, error) {
+) ([]shipmentports.DetentionAccrual, []pulid.ID, error) {
 	rows, err := s.watchlist.ListDwellingStops(ctx, req)
 	if err != nil {
 		return nil, nil, err
 	}
 	if len(rows) == 0 {
-		return []services.DetentionAccrual{}, nil, nil
+		return []shipmentports.DetentionAccrual{}, nil, nil
 	}
 
 	rate, err := s.defaultDetentionRate(ctx, req.TenantInfo, control)
@@ -156,11 +156,11 @@ func (s *Service) dwellAccruals(
 	}
 
 	threshold := req.Basis.Detention.ThresholdMinutes * secondsPerMinute
-	accruals := make([]services.DetentionAccrual, 0, len(rows))
+	accruals := make([]shipmentports.DetentionAccrual, 0, len(rows))
 	moveIDs := make([]pulid.ID, 0, len(rows))
 	for _, row := range rows {
 		since := row.ActualArrival + threshold
-		accruals = append(accruals, services.DetentionAccrual{
+		accruals = append(accruals, shipmentports.DetentionAccrual{
 			ShipmentID:    row.ShipmentID,
 			StopID:        row.StopID,
 			FacilityName:  row.FacilityName,
@@ -183,7 +183,7 @@ func (s *Service) defaultDetentionRate(
 		return decimal.Zero, nil
 	}
 
-	charge, err := s.accessorials.GetByID(ctx, repositories.GetAccessorialChargeByIDRequest{
+	charge, err := s.accessorials.GetByID(ctx, accessorialchargeports.GetAccessorialChargeByIDRequest{
 		ID:         *control.DetentionChargeID,
 		TenantInfo: &tenantInfo,
 	})
@@ -197,14 +197,14 @@ func (s *Service) defaultDetentionRate(
 func (s *Service) nameCoverage(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	accruals []services.DetentionAccrual,
+	accruals []shipmentports.DetentionAccrual,
 	moveIDs []pulid.ID,
 ) error {
 	if len(moveIDs) == 0 || s.moves == nil {
 		return nil
 	}
 
-	moves, err := s.moves.ListBoardMoves(ctx, &repositories.DispatchBoardFilter{
+	moves, err := s.moves.ListBoardMoves(ctx, &shipmentports.DispatchBoardFilter{
 		TenantInfo:     tenantInfo,
 		MoveIDs:        moveIDs,
 		IncludeCovered: true,

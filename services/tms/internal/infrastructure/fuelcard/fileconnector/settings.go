@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/fuelimport"
 	"github.com/emoss08/trenova/pkg/rateimport"
@@ -29,8 +29,8 @@ type settings struct {
 	defaultCurrency  string
 }
 
-func (s *settings) emptyResult() *services.FetchFuelTransactionsResult {
-	return &services.FetchFuelTransactionsResult{
+func (s *settings) emptyResult() *fuelpurchaseports.FetchFuelTransactionsResult {
+	return &fuelpurchaseports.FetchFuelTransactionsResult{
 		Staged: &fuelimport.StageResult{},
 		Format: s.sourceFormat,
 	}

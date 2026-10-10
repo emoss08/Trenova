@@ -9,8 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -50,12 +52,12 @@ func (s *Service) VerifyEquipment(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceEquipmentVerification,
 		ResourceID:     created.ID.String(),
 		Operation:      permission.OpCreate,
 		UserID:         req.TenantInfo.UserID,
-		PrincipalType:  services.PrincipalTypeUser,
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    req.TenantInfo.UserID,
 		CurrentState:   jsonutils.MustToJSON(created),
 		OrganizationID: created.OrganizationID,
@@ -92,7 +94,7 @@ func (s *Service) runEquipmentLookup(
 	}
 	entity.Provider = bound.provider
 
-	lookup, ok := bound.client.(services.CarrierIntelEquipmentLookup)
+	lookup, ok := bound.client.(carrierintelports.CarrierIntelEquipmentLookup)
 	if !ok || !bound.capabilities().Has(carrierintel.CapabilityEquipmentLookup) {
 		entity.Result = carrierintel.VerificationResultUnverifiable
 		entity.MismatchReason = bound.provider.String() + " cannot look up equipment by VIN or plate"
@@ -115,10 +117,10 @@ func (s *Service) runEquipmentLookup(
 		return
 	}
 
-	var result *services.CarrierIntelEquipmentResult
+	var result *carrierintelports.CarrierIntelEquipmentResult
 	err = s.withRateLimitWait(ctx, func() error {
 		var callErr error
-		result, callErr = lookup.FindByEquipment(ctx, &services.CarrierIntelEquipmentRequest{
+		result, callErr = lookup.FindByEquipment(ctx, &carrierintelports.CarrierIntelEquipmentRequest{
 			VIN:         entity.VIN,
 			PlateNumber: entity.PlateNumber,
 			PlateState:  entity.PlateState,
@@ -128,7 +130,7 @@ func (s *Service) runEquipmentLookup(
 		return callErr
 	})
 	if err != nil {
-		if services.IsCarrierIntelErrorKind(err, services.CarrierIntelErrorNotFound) {
+		if carrierintelports.IsCarrierIntelErrorKind(err, carrierintelports.CarrierIntelErrorNotFound) {
 			entity.Result = carrierintel.VerificationResultNotFound
 			entity.MismatchReason = "No carrier is registered to this equipment"
 			return
@@ -143,7 +145,7 @@ func (s *Service) runEquipmentLookup(
 
 func applyEquipmentMatches(
 	entity *carrierintel.CarrierEquipmentVerification,
-	result *services.CarrierIntelEquipmentResult,
+	result *carrierintelports.CarrierIntelEquipmentResult,
 	carrierName string,
 ) {
 	if result == nil || len(result.Matches) == 0 {
@@ -269,12 +271,12 @@ func (s *Service) OverrideVerification(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceEquipmentVerification,
 		ResourceID:     updated.ID.String(),
 		Operation:      permission.OpApprove,
 		UserID:         req.TenantInfo.UserID,
-		PrincipalType:  services.PrincipalTypeUser,
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    req.TenantInfo.UserID,
 		CurrentState:   jsonutils.MustToJSON(updated),
 		PreviousState:  jsonutils.MustToJSON(&original),

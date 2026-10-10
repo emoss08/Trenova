@@ -7,10 +7,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentproposalservice"
 	"github.com/emoss08/trenova/internal/core/services/agentshadow"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,30 +20,30 @@ import (
 )
 
 type fakeControl struct {
-	repositories.AgentControlRepository
+	tenantports.AgentControlRepository
 	shadow bool
 }
 
 type fakeRuns struct {
-	repositories.AgentRunRepository
+	agentports.AgentRunRepository
 	run *agent.AgentRun
 }
 
 func (f fakeRuns) GetByID(
 	context.Context,
-	repositories.GetAgentRunByIDRequest,
+	agentports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	return f.run, nil
 }
 
 type fakeDefinitions struct {
-	repositories.AgentDefinitionRepository
+	agentdefinitionports.AgentDefinitionRepository
 	definition *agentdefinition.Definition
 }
 
 func (f fakeDefinitions) GetByID(
 	context.Context,
-	repositories.GetAgentDefinitionByIDRequest,
+	agentdefinitionports.GetAgentDefinitionByIDRequest,
 ) (*agentdefinition.Definition, error) {
 	if f.definition == nil {
 		return nil, errortypes.NewNotFoundError("Agent definition not found")
@@ -65,7 +66,7 @@ type fakeProposalRepo struct {
 
 func (f *fakeProposalRepo) List(
 	_ context.Context,
-	req *repositories.ListAgentProposalRequest,
+	req *agentports.ListAgentProposalRequest,
 ) (*pagination.ListResult[*agent.AgentProposal], error) {
 	f.lastExclude = req.ExcludeShadowDefinitions
 	return &pagination.ListResult[*agent.AgentProposal]{Items: f.items, Total: len(f.items)}, nil
@@ -73,7 +74,7 @@ func (f *fakeProposalRepo) List(
 
 func (f *fakeProposalRepo) ListConnection(
 	_ context.Context,
-	req *repositories.ListAgentProposalConnectionRequest,
+	req *agentports.ListAgentProposalConnectionRequest,
 ) (*pagination.CursorListResult[*agent.AgentProposal], error) {
 	f.lastExclude = req.ExcludeShadowDefinitions
 	return &pagination.CursorListResult[*agent.AgentProposal]{Items: f.items}, nil
@@ -81,7 +82,7 @@ func (f *fakeProposalRepo) ListConnection(
 
 func (f *fakeProposalRepo) GetByID(
 	context.Context,
-	repositories.GetAgentProposalByIDRequest,
+	agentports.GetAgentProposalByIDRequest,
 ) (*agent.AgentProposal, error) {
 	if len(f.items) == 0 {
 		return nil, errortypes.NewNotFoundError("Agent proposal not found")
@@ -98,49 +99,49 @@ func (f *fakeProposalRepo) Create(
 
 func (f *fakeProposalRepo) RecordExecution(
 	context.Context,
-	repositories.RecordAgentProposalExecutionRequest,
+	agentports.RecordAgentProposalExecutionRequest,
 ) (*agent.AgentProposal, error) {
 	return nil, nil
 }
 
 func (f *fakeProposalRepo) ListByThread(
 	context.Context,
-	repositories.ListAgentProposalsByThreadRequest,
+	agentports.ListAgentProposalsByThreadRequest,
 ) ([]*agent.AgentProposal, error) {
 	return nil, nil
 }
 
 func (f *fakeProposalRepo) UpdateStatus(
 	context.Context,
-	repositories.UpdateAgentProposalStatusRequest,
+	agentports.UpdateAgentProposalStatusRequest,
 ) (*agent.AgentProposal, error) {
 	return nil, nil
 }
 
 func (f *fakeProposalRepo) ExpirePending(
 	context.Context,
-	repositories.ExpireAgentProposalsRequest,
+	agentports.ExpireAgentProposalsRequest,
 ) (int, error) {
 	return 0, nil
 }
 
 func (f *fakeProposalRepo) ExpirePendingByDefinition(
 	context.Context,
-	repositories.ExpireAgentProposalsByDefinitionRequest,
+	agentports.ExpireAgentProposalsByDefinitionRequest,
 ) (int, error) {
 	return 0, nil
 }
 
 func (f *fakeProposalRepo) ExpirePendingByRun(
 	context.Context,
-	repositories.ExpireAgentProposalsByRunRequest,
+	agentports.ExpireAgentProposalsByRunRequest,
 ) (int, error) {
 	return 0, nil
 }
 
 type serviceFixture struct {
 	repo *fakeProposalRepo
-	svc  serviceports.AgentProposalService
+	svc  agentports.AgentProposalService
 }
 
 func newFixture(orgShadow bool, def *agentdefinition.Definition) serviceFixture {
@@ -165,7 +166,7 @@ func newFixture(orgShadow bool, def *agentdefinition.Definition) serviceFixture 
 	}
 }
 
-func newService(shadow bool) serviceports.AgentProposalService {
+func newService(shadow bool) agentports.AgentProposalService {
 	return newFixture(shadow, nil).svc
 }
 
@@ -173,8 +174,8 @@ func liveTenant() *pagination.TenantInfo {
 	return &pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 }
 
-func listRequest() *repositories.ListAgentProposalRequest {
-	return &repositories.ListAgentProposalRequest{
+func listRequest() *agentports.ListAgentProposalRequest {
+	return &agentports.ListAgentProposalRequest{
 		Filter: &pagination.QueryOptions{},
 	}
 }
@@ -198,8 +199,8 @@ func TestList_NonShadowMode_SurfacesProposals(t *testing.T) {
 	require.Equal(t, 1, result.Total, "non-shadow mode must surface persisted proposals")
 }
 
-func connectionRequest() *repositories.ListAgentProposalConnectionRequest {
-	return &repositories.ListAgentProposalConnectionRequest{
+func connectionRequest() *agentports.ListAgentProposalConnectionRequest {
+	return &agentports.ListAgentProposalConnectionRequest{
 		Filter: &pagination.QueryOptions{},
 	}
 }
@@ -245,7 +246,7 @@ func TestGetByID_ShadowDefinition_IsNotFound(t *testing.T) {
 	def := &agentdefinition.Definition{ID: pulid.MustNew("agd_"), ShadowMode: true}
 	fixture := newFixture(false, def)
 
-	_, err := fixture.svc.GetByID(t.Context(), repositories.GetAgentProposalByIDRequest{
+	_, err := fixture.svc.GetByID(t.Context(), agentports.GetAgentProposalByIDRequest{
 		ID:         pulid.MustNew("agp_"),
 		TenantInfo: liveTenant(),
 	})
@@ -258,7 +259,7 @@ func TestGetByID_LiveDefinition_ReturnsProposal(t *testing.T) {
 	def := &agentdefinition.Definition{ID: pulid.MustNew("agd_"), ShadowMode: false}
 	fixture := newFixture(false, def)
 
-	proposal, err := fixture.svc.GetByID(t.Context(), repositories.GetAgentProposalByIDRequest{
+	proposal, err := fixture.svc.GetByID(t.Context(), agentports.GetAgentProposalByIDRequest{
 		ID:         pulid.MustNew("agp_"),
 		TenantInfo: liveTenant(),
 	})
@@ -269,70 +270,70 @@ func TestGetByID_LiveDefinition_ReturnsProposal(t *testing.T) {
 
 func (r *fakeProposalRepo) CountExecutedTool(
 	context.Context,
-	repositories.CountExecutedToolRequest,
+	agentports.CountExecutedToolRequest,
 ) (int, error) {
 	return 0, nil
 }
 
 func (r *fakeProposalRepo) RecordSimulation(
 	context.Context,
-	repositories.RecordAgentProposalSimulationRequest,
+	agentports.RecordAgentProposalSimulationRequest,
 ) (*agent.AgentProposal, error) {
 	return nil, nil
 }
 
 func (r *fakeProposalRepo) SetPendingModifications(
 	context.Context,
-	repositories.SetPendingModificationsRequest,
+	agentports.SetPendingModificationsRequest,
 ) (*agent.AgentProposal, error) {
 	return nil, nil
 }
 
 func (r *fakeProposalRepo) ListByRun(
 	context.Context,
-	repositories.ListAgentProposalsByRunRequest,
+	agentports.ListAgentProposalsByRunRequest,
 ) ([]*agent.AgentProposal, error) {
 	return nil, nil
 }
 
 func (r *fakeProposalRepo) ListByIDs(
 	context.Context,
-	repositories.ListAgentProposalsByIDsRequest,
+	agentports.ListAgentProposalsByIDsRequest,
 ) ([]*agent.AgentProposal, error) {
 	return nil, nil
 }
 
 func (r *fakeProposalRepo) ListByPlan(
 	context.Context,
-	repositories.ListAgentProposalsByPlanRequest,
+	agentports.ListAgentProposalsByPlanRequest,
 ) ([]*agent.AgentProposal, error) {
 	return nil, nil
 }
 
 func (r *fakeProposalRepo) SkipPendingByPlan(
 	context.Context,
-	repositories.SkipPendingByPlanRequest,
+	agentports.SkipPendingByPlanRequest,
 ) (int, error) {
 	return 0, nil
 }
 
 func (r *fakeProposalRepo) ListPendingForReminder(
 	context.Context,
-	repositories.ListPendingProposalsForReminderRequest,
+	agentports.ListPendingProposalsForReminderRequest,
 ) ([]*agent.AgentProposal, error) {
 	return nil, nil
 }
 
 func (r *fakeProposalRepo) MarkReminded(
 	context.Context,
-	repositories.MarkProposalsRemindedRequest,
+	agentports.MarkProposalsRemindedRequest,
 ) (int, error) {
 	return 0, nil
 }
 
 func (f *fakeProposalRepo) ExpirePendingByThread(
 	context.Context,
-	repositories.ExpireAgentProposalsByThreadRequest,
+	agentports.ExpireAgentProposalsByThreadRequest,
 ) (int, error) {
 	return 0, nil
 }

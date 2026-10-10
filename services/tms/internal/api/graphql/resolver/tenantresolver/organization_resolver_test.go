@@ -1,16 +1,16 @@
 package tenantresolver
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"testing"
-
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -31,9 +31,9 @@ func TestQueryResolver_Organization_DelegatesToService(t *testing.T) {
 		BusinessUnitID: buID,
 		Name:           "Acme Logistics",
 	}
-	organizationService := mocks.NewMockOrganizationService(t)
+	organizationService := tenantportsmock.NewMockOrganizationService(t)
 	organizationService.EXPECT().
-		GetByID(mock.Anything, mock.MatchedBy(func(req repositories.GetOrganizationByIDRequest) bool {
+		GetByID(mock.Anything, mock.MatchedBy(func(req tenantports.GetOrganizationByIDRequest) bool {
 			return req.TenantInfo.OrgID == orgID &&
 				req.TenantInfo.BuID == buID &&
 				req.TenantInfo.UserID == userID &&
@@ -85,7 +85,7 @@ func TestMutationResolver_UpdateOrganization_MapsInputToService(t *testing.T) {
 		Name:           "Acme Logistics",
 		Version:        3,
 	}
-	organizationService := mocks.NewMockOrganizationService(t)
+	organizationService := tenantportsmock.NewMockOrganizationService(t)
 	organizationService.EXPECT().
 		Update(mock.Anything, mock.MatchedBy(func(entity *tenant.Organization) bool {
 			return entity.ID == orgID &&
@@ -162,9 +162,9 @@ func TestMutationResolver_UpdateOrganization_PreservesOmittedCapabilityFlags(t *
 		BrokerageEnabled:       false,
 		AssetOperationsEnabled: true,
 	}
-	organizationService := mocks.NewMockOrganizationService(t)
+	organizationService := tenantportsmock.NewMockOrganizationService(t)
 	organizationService.EXPECT().
-		GetByID(mock.Anything, repositories.GetOrganizationByIDRequest{
+		GetByID(mock.Anything, tenantports.GetOrganizationByIDRequest{
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		}).
 		Return(stored, nil).

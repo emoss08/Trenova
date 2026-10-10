@@ -8,9 +8,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	repoports "github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/productguide"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,20 +28,20 @@ type Params struct {
 
 	Logger       *zap.Logger
 	Config       *config.Config
-	SearchRepo   repoports.SearchRepository
-	ShipmentRepo repoports.ShipmentRepository
-	Permissions  serviceports.PermissionEngine
+	SearchRepo   customerports.SearchRepository
+	ShipmentRepo shipmentports.ShipmentRepository
+	Permissions  permissionports.PermissionEngine
 }
 
 type Service struct {
 	logger       *zap.Logger
 	config       *config.SearchConfig
-	searchRepo   repoports.SearchRepository
-	shipmentRepo repoports.ShipmentRepository
-	permissions  serviceports.PermissionEngine
+	searchRepo   customerports.SearchRepository
+	shipmentRepo shipmentports.ShipmentRepository
+	permissions  permissionports.PermissionEngine
 }
 
-var _ serviceports.GlobalSearchService = (*Service)(nil)
+var _ kernelports.GlobalSearchService = (*Service)(nil)
 
 type entitySearchDefinition struct {
 	entityType search.EntityType
@@ -50,7 +52,7 @@ type entitySearchDefinition struct {
 
 const maxSearchLimit = 25
 
-func New(p Params) serviceports.GlobalSearchService {
+func New(p Params) kernelports.GlobalSearchService {
 	return &Service{
 		logger:       p.Logger.Named("service.global-search"),
 		config:       p.Config.GetSearchConfig(),
@@ -62,19 +64,19 @@ func New(p Params) serviceports.GlobalSearchService {
 
 func (s *Service) Search(
 	ctx context.Context,
-	req *serviceports.GlobalSearchRequest,
-) (*serviceports.GlobalSearchResult, error) {
+	req *kernelports.GlobalSearchRequest,
+) (*kernelports.GlobalSearchResult, error) {
 	query := strings.TrimSpace(req.Query)
 	if query == "" {
-		return &serviceports.GlobalSearchResult{
+		return &kernelports.GlobalSearchResult{
 			Query:  "",
-			Groups: []*serviceports.GlobalSearchGroup{},
+			Groups: []*kernelports.GlobalSearchGroup{},
 		}, nil
 	}
 	if !s.searchRepo.Enabled() {
-		return &serviceports.GlobalSearchResult{
+		return &kernelports.GlobalSearchResult{
 			Query:  query,
-			Groups: []*serviceports.GlobalSearchGroup{},
+			Groups: []*kernelports.GlobalSearchGroup{},
 		}, nil
 	}
 
@@ -83,8 +85,8 @@ func (s *Service) Search(
 		return nil, err
 	}
 
-	groups := make([]*serviceports.GlobalSearchGroup, 0, len(allowed))
-	results := make([]*serviceports.GlobalSearchGroup, len(allowed))
+	groups := make([]*kernelports.GlobalSearchGroup, 0, len(allowed))
+	results := make([]*kernelports.GlobalSearchGroup, len(allowed))
 	limit := limitForRequest(req.Limit, s.config.GetDefaultLimit())
 	filter := tenantFilter(req)
 
@@ -95,7 +97,7 @@ func (s *Service) Search(
 		}
 
 		searchPool.Go(func(c context.Context) error {
-			documents, searchErr := s.searchRepo.Search(c, repoports.SearchRequest{
+			documents, searchErr := s.searchRepo.Search(c, customerports.SearchRequest{
 				Index:  definition.index,
 				Query:  query,
 				Limit:  limit,
@@ -116,7 +118,7 @@ func (s *Service) Search(
 				return nil
 			}
 
-			results[idx] = &serviceports.GlobalSearchGroup{
+			results[idx] = &kernelports.GlobalSearchGroup{
 				EntityType: definition.entityType,
 				Label:      definition.label,
 				Hits:       hits,
@@ -134,7 +136,7 @@ func (s *Service) Search(
 
 	s.enrichShipmentHits(ctx, req.TenantInfo, groups)
 
-	return &serviceports.GlobalSearchResult{
+	return &kernelports.GlobalSearchResult{
 		Query:  query,
 		Groups: groups,
 	}, nil
@@ -143,9 +145,9 @@ func (s *Service) Search(
 func (s *Service) enrichShipmentHits(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	groups []*serviceports.GlobalSearchGroup,
+	groups []*kernelports.GlobalSearchGroup,
 ) {
-	var shipmentHits []*serviceports.GlobalSearchHit
+	var shipmentHits []*kernelports.GlobalSearchHit
 	for _, group := range groups {
 		if group.EntityType == search.EntityTypeShipment {
 			shipmentHits = append(shipmentHits, group.Hits...)
@@ -168,7 +170,7 @@ func (s *Service) enrichShipmentHits(
 		return
 	}
 
-	shipments, err := s.shipmentRepo.GetByIDs(ctx, &repoports.GetShipmentsByIDsRequest{
+	shipments, err := s.shipmentRepo.GetByIDs(ctx, &shipmentports.GetShipmentsByIDsRequest{
 		TenantInfo:  tenantInfo,
 		ShipmentIDs: ids,
 	})
@@ -212,7 +214,7 @@ func (s *Service) enrichShipmentHits(
 
 func (s *Service) allowedDefinitions(
 	ctx context.Context,
-	req *serviceports.GlobalSearchRequest,
+	req *kernelports.GlobalSearchRequest,
 ) ([]entitySearchDefinition, error) {
 	definitions := s.definitions()
 	if len(req.EntityTypes) > 0 {
@@ -225,15 +227,15 @@ func (s *Service) allowedDefinitions(
 		definitions = filtered
 	}
 
-	checks := make([]serviceports.ResourceOperationCheck, 0, len(definitions))
+	checks := make([]permissionports.ResourceOperationCheck, 0, len(definitions))
 	for _, definition := range definitions {
-		checks = append(checks, serviceports.ResourceOperationCheck{
+		checks = append(checks, permissionports.ResourceOperationCheck{
 			Resource:  definition.resource.String(),
 			Operation: permission.OpRead,
 		})
 	}
 
-	result, err := s.permissions.CheckBatch(ctx, &serviceports.BatchPermissionCheckRequest{
+	result, err := s.permissions.CheckBatch(ctx, &permissionports.BatchPermissionCheckRequest{
 		PrincipalType:  req.Principal.Type,
 		PrincipalID:    req.Principal.ID,
 		UserID:         req.Principal.UserID,
@@ -288,8 +290,8 @@ func (s *Service) definitions() []entitySearchDefinition {
 func (s *Service) mapHits(
 	definition entitySearchDefinition,
 	documents []map[string]any,
-) []*serviceports.GlobalSearchHit {
-	hits := make([]*serviceports.GlobalSearchHit, 0, len(documents))
+) []*kernelports.GlobalSearchHit {
+	hits := make([]*kernelports.GlobalSearchHit, 0, len(documents))
 	for _, document := range documents {
 		hit := mapHit(definition.entityType, document)
 		if hit == nil || hit.Href == "" {
@@ -300,7 +302,7 @@ func (s *Service) mapHits(
 	return hits
 }
 
-func mapHit(entityType search.EntityType, document map[string]any) *serviceports.GlobalSearchHit {
+func mapHit(entityType search.EntityType, document map[string]any) *kernelports.GlobalSearchHit {
 	id := stringValue(document, "id")
 	if id == "" {
 		return nil
@@ -313,7 +315,7 @@ func mapHit(entityType search.EntityType, document map[string]any) *serviceports
 			stringValue(document, "bol"),
 			id,
 		)
-		return &serviceports.GlobalSearchHit{
+		return &kernelports.GlobalSearchHit{
 			ID:         id,
 			EntityType: entityType,
 			Title:      title,
@@ -332,7 +334,7 @@ func mapHit(entityType search.EntityType, document map[string]any) *serviceports
 			stringValue(document, "code"),
 			stringValue(document, "city"),
 		)
-		return &serviceports.GlobalSearchHit{
+		return &kernelports.GlobalSearchHit{
 			ID:         id,
 			EntityType: entityType,
 			Title:      title,
@@ -351,7 +353,7 @@ func mapHit(entityType search.EntityType, document map[string]any) *serviceports
 			stringValue(document, "type"),
 			stringValue(document, "status"),
 		)
-		return &serviceports.GlobalSearchHit{
+		return &kernelports.GlobalSearchHit{
 			ID:         id,
 			EntityType: entityType,
 			Title:      title,
@@ -375,7 +377,7 @@ func mapHit(entityType search.EntityType, document map[string]any) *serviceports
 		if href == "" {
 			return nil
 		}
-		return &serviceports.GlobalSearchHit{
+		return &kernelports.GlobalSearchHit{
 			ID:         id,
 			EntityType: entityType,
 			Title:      title,
@@ -404,7 +406,7 @@ func recordHref(entity, id string) string {
 	return path
 }
 
-func tenantFilter(req *serviceports.GlobalSearchRequest) string {
+func tenantFilter(req *kernelports.GlobalSearchRequest) string {
 	return fmt.Sprintf(
 		"organization_id = %q AND business_unit_id = %q",
 		req.TenantInfo.OrgID.String(),

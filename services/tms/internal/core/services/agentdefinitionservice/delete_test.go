@@ -6,9 +6,11 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,7 +28,7 @@ type txConnection struct {
 
 func (txConnection) WithTx(
 	ctx context.Context,
-	_ ports.TxOptions,
+	_ kernelports.TxOptions,
 	fn func(context.Context, bun.Tx) error,
 ) error {
 	return fn(context.WithValue(ctx, inTxKey{}, true), bun.Tx{})
@@ -49,36 +51,36 @@ func (l *deleteLog) record(ctx context.Context, step string) {
 }
 
 type deletableDefinitions struct {
-	repositories.AgentDefinitionRepository
+	agentdefinitionports.AgentDefinitionRepository
 	log      *deleteLog
 	existing *agentdefinition.Definition
 }
 
 func (d *deletableDefinitions) GetByID(
 	context.Context,
-	repositories.GetAgentDefinitionByIDRequest,
+	agentdefinitionports.GetAgentDefinitionByIDRequest,
 ) (*agentdefinition.Definition, error) {
 	return d.existing, nil
 }
 
 func (d *deletableDefinitions) Delete(
 	ctx context.Context,
-	_ repositories.DeleteAgentDefinitionRequest,
+	_ agentdefinitionports.DeleteAgentDefinitionRequest,
 ) error {
 	d.log.record(ctx, "delete agent")
 	return nil
 }
 
 type withdrawnProposals struct {
-	repositories.AgentProposalRepository
+	agentports.AgentProposalRepository
 	log *deleteLog
-	req repositories.ExpireAgentProposalsByDefinitionRequest
+	req agentports.ExpireAgentProposalsByDefinitionRequest
 	err error
 }
 
 func (p *withdrawnProposals) ExpirePendingByDefinition(
 	ctx context.Context,
-	req repositories.ExpireAgentProposalsByDefinitionRequest,
+	req agentports.ExpireAgentProposalsByDefinitionRequest,
 ) (int, error) {
 	p.log.record(ctx, "withdraw proposals")
 	p.req = req
@@ -86,14 +88,14 @@ func (p *withdrawnProposals) ExpirePendingByDefinition(
 }
 
 type withdrawnPlans struct {
-	repositories.AgentPlanRepository
+	agentports.AgentPlanRepository
 	log *deleteLog
-	req repositories.ExpireAgentPlansByDefinitionRequest
+	req agentports.ExpireAgentPlansByDefinitionRequest
 }
 
 func (p *withdrawnPlans) ExpirePendingByDefinition(
 	ctx context.Context,
-	req repositories.ExpireAgentPlansByDefinitionRequest,
+	req agentports.ExpireAgentPlansByDefinitionRequest,
 ) (int, error) {
 	p.log.record(ctx, "withdraw plans")
 	p.req = req
@@ -111,11 +113,11 @@ func (s *removedSchedules) Remove(_ context.Context, id pulid.ID) {
 }
 
 type silentAudit struct {
-	serviceports.AuditService
+	auditports.AuditService
 	logged int
 }
 
-func (a *silentAudit) LogAction(*serviceports.LogActionParams, ...serviceports.LogOption) error {
+func (a *silentAudit) LogAction(*auditports.LogActionParams, ...auditports.LogOption) error {
 	a.logged++
 	return nil
 }
@@ -160,10 +162,10 @@ func TestDeleteWithdrawsOpenProposalsAndPlansWithTheAgent(t *testing.T) {
 	f := newDeleteFixture()
 	tenantInfo := testTenant()
 
-	err := f.svc.Delete(t.Context(), repositories.DeleteAgentDefinitionRequest{
+	err := f.svc.Delete(t.Context(), agentdefinitionports.DeleteAgentDefinitionRequest{
 		ID:         f.agent.ID,
 		TenantInfo: tenantInfo,
-	}, &serviceports.RequestActor{})
+	}, &permissionports.RequestActor{})
 	require.NoError(t, err)
 
 	assert.Equal(t, []string{
@@ -185,10 +187,10 @@ func TestDeleteKeepsTheAgentWhenItsProposalsCannotBeWithdrawn(t *testing.T) {
 	f := newDeleteFixture()
 	f.proposals.err = errors.New("database is down")
 
-	err := f.svc.Delete(t.Context(), repositories.DeleteAgentDefinitionRequest{
+	err := f.svc.Delete(t.Context(), agentdefinitionports.DeleteAgentDefinitionRequest{
 		ID:         f.agent.ID,
 		TenantInfo: testTenant(),
-	}, &serviceports.RequestActor{})
+	}, &permissionports.RequestActor{})
 
 	require.Error(t, err)
 	assert.Equal(t, []string{"withdraw proposals in tx"}, f.log.steps)
@@ -202,10 +204,10 @@ func TestDeleteRefusesASystemAgentWithoutWithdrawingAnything(t *testing.T) {
 	f := newDeleteFixture()
 	f.agent.SystemKey = "load_monitor"
 
-	err := f.svc.Delete(t.Context(), repositories.DeleteAgentDefinitionRequest{
+	err := f.svc.Delete(t.Context(), agentdefinitionports.DeleteAgentDefinitionRequest{
 		ID:         f.agent.ID,
 		TenantInfo: testTenant(),
-	}, &serviceports.RequestActor{})
+	}, &permissionports.RequestActor{})
 
 	require.Error(t, err)
 	assert.True(t, errortypes.IsBusinessError(err))

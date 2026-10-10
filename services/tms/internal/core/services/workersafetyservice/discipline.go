@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/workeremploymentservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,7 +23,7 @@ func (s *Service) ListActions(
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 ) ([]*worker.WorkerDisciplinaryAction, error) {
-	return s.repo.ListActions(ctx, &repositories.ListWorkerDisciplinaryActionsRequest{
+	return s.repo.ListActions(ctx, &workerports.ListWorkerDisciplinaryActionsRequest{
 		TenantInfo:    tenantInfo,
 		WorkerID:      workerID,
 		IncludeEvent:  true,
@@ -37,7 +37,7 @@ func (s *Service) Ladder(
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 ) (*worker.DisciplinaryLadder, error) {
-	actions, err := s.repo.ListActions(ctx, &repositories.ListWorkerDisciplinaryActionsRequest{
+	actions, err := s.repo.ListActions(ctx, &workerports.ListWorkerDisciplinaryActionsRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
 	})
@@ -88,7 +88,7 @@ func (s *Service) IssueAction(
 		return nil, err
 	}
 	if !req.SafetyEventID.IsNil() {
-		event, eventErr := s.repo.GetEventByID(ctx, &repositories.GetWorkerSafetyEventByIDRequest{
+		event, eventErr := s.repo.GetEventByID(ctx, &workerports.GetWorkerSafetyEventByIDRequest{
 			ID:         req.SafetyEventID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -285,7 +285,7 @@ func (s *Service) loadAction(
 	id pulid.ID,
 	version int64,
 ) (*worker.WorkerDisciplinaryAction, error) {
-	original, err := s.repo.GetActionByID(ctx, &repositories.GetWorkerDisciplinaryActionByIDRequest{
+	original, err := s.repo.GetActionByID(ctx, &workerports.GetWorkerDisciplinaryActionByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})

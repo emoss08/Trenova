@@ -5,10 +5,10 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/apikey"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -32,7 +32,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.APIKeyRepository {
+func New(p Params) apikeyports.APIKeyRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.api-key-repository"),
@@ -41,7 +41,7 @@ func New(p Params) repositories.APIKeyRepository {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListAPIKeysRequest,
+	req *apikeyports.ListAPIKeysRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(q, "ak", req.Filter, (*apikey.Key)(nil))
 
@@ -52,7 +52,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListAPIKeysRequest,
+	req *apikeyports.ListAPIKeysRequest,
 ) (*pagination.ListResult[*apikey.Key], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*apikey.Key], error) {
 		log := r.l.With(
@@ -82,7 +82,7 @@ func (r *repository) List(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListAPIKeyConnectionRequest,
+	req *apikeyports.ListAPIKeyConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -95,7 +95,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListAPIKeyConnectionRequest,
+	req *apikeyports.ListAPIKeyConnectionRequest,
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -107,7 +107,7 @@ func (r *repository) applyTotalCountFilters(
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListAPIKeyConnectionRequest,
+	req *apikeyports.ListAPIKeyConnectionRequest,
 ) (*pagination.CursorListResult[*apikey.Key], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*apikey.Key], error) {
 		log := r.l.With(
@@ -245,7 +245,7 @@ func (r *repository) UpdateWithPermissions(
 	key *apikey.Key,
 	permissions []*apikey.Permission,
 ) error {
-	return r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+	return r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 		if _, err := r.db.DBForContext(c).NewUpdate().Model(key).
 			WherePK().
 			ExcludeColumn("created_at").
@@ -289,7 +289,7 @@ func (r *repository) CountActiveByCreator(
 func (r *repository) UpdateUsage(
 	ctx context.Context,
 	id pulid.ID,
-	metadata repositories.APIKeyUsageMetadata,
+	metadata apikeyports.APIKeyUsageMetadata,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		_, err := r.db.DBForContext(ctx).

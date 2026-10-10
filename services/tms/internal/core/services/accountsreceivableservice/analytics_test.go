@@ -3,7 +3,7 @@ package accountsreceivableservice
 import (
 	"testing"
 
-	repositoryports "github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,7 +27,7 @@ func TestComputeCEI(t *testing.T) {
 	})
 
 	t.Run("everything collected returns 100", func(t *testing.T) {
-		totals := &repositoryports.ARCollectionTotals{
+		totals := &customerledgerports.ARCollectionTotals{
 			BeginningOpenMinor: 100_000,
 			CreditSalesMinor:   200_000,
 			EndingOpenMinor:    0,
@@ -37,7 +37,7 @@ func TestComputeCEI(t *testing.T) {
 	})
 
 	t.Run("nothing collected returns zero", func(t *testing.T) {
-		totals := &repositoryports.ARCollectionTotals{
+		totals := &customerledgerports.ARCollectionTotals{
 			BeginningOpenMinor: 100_000,
 			CreditSalesMinor:   200_000,
 			EndingOpenMinor:    300_000,
@@ -47,7 +47,7 @@ func TestComputeCEI(t *testing.T) {
 	})
 
 	t.Run("partial collection between bounds", func(t *testing.T) {
-		totals := &repositoryports.ARCollectionTotals{
+		totals := &customerledgerports.ARCollectionTotals{
 			BeginningOpenMinor: 100_000,
 			CreditSalesMinor:   100_000,
 			EndingOpenMinor:    100_000,
@@ -57,7 +57,7 @@ func TestComputeCEI(t *testing.T) {
 	})
 
 	t.Run("zero denominator returns zero", func(t *testing.T) {
-		totals := &repositoryports.ARCollectionTotals{}
+		totals := &customerledgerports.ARCollectionTotals{}
 		assert.Zero(t, computeCEI(totals))
 	})
 }
@@ -66,22 +66,22 @@ func TestWorklistSeverity(t *testing.T) {
 	assert.Equal(
 		t,
 		worklistSeverityCritical,
-		worklistSeverity(&repositoryports.ARCollectionsWorklistItem{DaysPastDue: 30}),
+		worklistSeverity(&customerledgerports.ARCollectionsWorklistItem{DaysPastDue: 30}),
 	)
 	assert.Equal(
 		t,
 		worklistSeverityWarning,
-		worklistSeverity(&repositoryports.ARCollectionsWorklistItem{DaysPastDue: 15}),
+		worklistSeverity(&customerledgerports.ARCollectionsWorklistItem{DaysPastDue: 15}),
 	)
 	assert.Equal(
 		t,
 		worklistSeverityWarning,
-		worklistSeverity(&repositoryports.ARCollectionsWorklistItem{IsDisputed: true}),
+		worklistSeverity(&customerledgerports.ARCollectionsWorklistItem{IsDisputed: true}),
 	)
 	assert.Equal(
 		t,
 		worklistSeverityWatch,
-		worklistSeverity(&repositoryports.ARCollectionsWorklistItem{HasShortPay: true}),
+		worklistSeverity(&customerledgerports.ARCollectionsWorklistItem{HasShortPay: true}),
 	)
 }
 
@@ -91,11 +91,11 @@ func TestComputeDelinquencyScore(t *testing.T) {
 	})
 
 	t.Run("no open balance returns zero", func(t *testing.T) {
-		assert.Zero(t, computeDelinquencyScore(&repositoryports.ARCustomerSnapshot{}))
+		assert.Zero(t, computeDelinquencyScore(&customerledgerports.ARCustomerSnapshot{}))
 	})
 
 	t.Run("fully overdue aged customer maxes out", func(t *testing.T) {
-		score := computeDelinquencyScore(&repositoryports.ARCustomerSnapshot{
+		score := computeDelinquencyScore(&customerledgerports.ARCustomerSnapshot{
 			TotalOpenMinor:    100_000,
 			OverdueMinor:      100_000,
 			OldestDaysPastDue: 120,
@@ -105,7 +105,7 @@ func TestComputeDelinquencyScore(t *testing.T) {
 	})
 
 	t.Run("current customer scores low", func(t *testing.T) {
-		score := computeDelinquencyScore(&repositoryports.ARCustomerSnapshot{
+		score := computeDelinquencyScore(&customerledgerports.ARCustomerSnapshot{
 			TotalOpenMinor: 100_000,
 			OverdueMinor:   0,
 			AvgDaysToPay:   25,

@@ -11,10 +11,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -121,7 +124,7 @@ func (s *Service) agentsToPlan(
 	if req.AgentDefinitionID.IsNil() {
 		withCases, err := s.cases.ListAgentsWithActiveCases(
 			ctx,
-			repositories.ListAgentsWithActiveEvalCasesRequest{TenantInfo: req.TenantInfo},
+			agentqualityports.ListAgentsWithActiveEvalCasesRequest{TenantInfo: req.TenantInfo},
 		)
 		if err != nil {
 			return nil, err
@@ -132,7 +135,7 @@ func (s *Service) agentsToPlan(
 		return nil, nil
 	}
 
-	definitions, err := s.definitions.ListByIDs(ctx, repositories.ListAgentDefinitionsByIDsRequest{
+	definitions, err := s.definitions.ListByIDs(ctx, agentdefinitionports.ListAgentDefinitionsByIDsRequest{
 		IDs:        ids,
 		TenantInfo: req.TenantInfo,
 	})
@@ -193,7 +196,7 @@ func (s *Service) chatProvider(
 		return resolvedProvider{}, nil
 	}
 
-	candidates, err := s.providers.ListForTask(ctx, repositories.ListAIProvidersForTaskRequest{
+	candidates, err := s.providers.ListForTask(ctx, agentports.ListAIProvidersForTaskRequest{
 		Task:       aiprovider.TaskAssistantChat,
 		TenantInfo: tenant,
 	})
@@ -234,7 +237,7 @@ func (s *Service) fingerprint(
 
 func (s *Service) planAgent(ctx context.Context, p planAgentParams) (*PlannedAgent, error) {
 	fingerprint := s.fingerprint(p.definition, p.provider)
-	cases, err := s.cases.ListSamplingCases(ctx, repositories.ListEvalCaseSamplingRequest{
+	cases, err := s.cases.ListSamplingCases(ctx, agentqualityports.ListEvalCaseSamplingRequest{
 		TenantInfo:        p.tenant,
 		AgentDefinitionID: p.definition.ID,
 	})
@@ -257,7 +260,7 @@ func (s *Service) planAgent(ctx context.Context, p planAgentParams) (*PlannedAge
 		return planned, nil
 	}
 
-	last, err := s.suiteRuns.Last(ctx, repositories.LastAgentSuiteRunRequest{
+	last, err := s.suiteRuns.Last(ctx, agentqualityports.LastAgentSuiteRunRequest{
 		AgentDefinitionID: p.definition.ID,
 		TenantInfo:        p.tenant,
 		Statuses:          []agentquality.SuiteRunStatus{agentquality.SuiteRunStatusCompleted},
@@ -325,7 +328,7 @@ func (s *Service) OpenSuite(ctx context.Context, req *OpenSuiteRequest) (*Opened
 		return openedFrom(existing), nil
 	}
 
-	cases, err := s.cases.ListSamplingCases(ctx, repositories.ListEvalCaseSamplingRequest{
+	cases, err := s.cases.ListSamplingCases(ctx, agentqualityports.ListEvalCaseSamplingRequest{
 		TenantInfo:        req.TenantInfo,
 		AgentDefinitionID: req.Agent.AgentDefinitionID,
 	})
@@ -338,7 +341,7 @@ func (s *Service) OpenSuite(ctx context.Context, req *OpenSuiteRequest) (*Opened
 		)
 	}
 
-	baseline, err := s.suiteRuns.Last(ctx, repositories.LastAgentSuiteRunRequest{
+	baseline, err := s.suiteRuns.Last(ctx, agentqualityports.LastAgentSuiteRunRequest{
 		AgentDefinitionID: req.Agent.AgentDefinitionID,
 		TenantInfo:        req.TenantInfo,
 		Statuses:          scoredStatuses(),
@@ -367,14 +370,14 @@ func (s *Service) OpenSuite(ctx context.Context, req *OpenSuiteRequest) (*Opened
 
 	evaluations := suiteEvaluations(run, sample, req.Agent.Fingerprint)
 	created, err := s.createSuite(ctx, run, evaluations)
-	if errors.Is(err, repositories.ErrSuiteRunAlreadyRunning) {
+	if errors.Is(err, agentqualityports.ErrSuiteRunAlreadyRunning) {
 		if cleared, clearErr := s.clearStaleRunning(ctx, req); clearErr != nil {
 			return nil, clearErr
 		} else if cleared {
 			created, err = s.createSuite(ctx, run, evaluations)
 		}
 	}
-	if errors.Is(err, repositories.ErrSuiteRunSweepKeyTaken) {
+	if errors.Is(err, agentqualityports.ErrSuiteRunSweepKeyTaken) {
 		existing, getErr := s.bySweepKey(ctx, req.TenantInfo, req.SweepKey)
 		if getErr != nil || existing == nil {
 			return nil, errors.Join(err, getErr)
@@ -382,7 +385,7 @@ func (s *Service) OpenSuite(ctx context.Context, req *OpenSuiteRequest) (*Opened
 
 		return openedFrom(existing), nil
 	}
-	if errors.Is(err, repositories.ErrSuiteRunAlreadyRunning) {
+	if errors.Is(err, agentqualityports.ErrSuiteRunAlreadyRunning) {
 		return nil, errortypes.NewBusinessError(
 			"This agent's suite is already running; wait for it to finish",
 		).WithInternal(err)
@@ -403,7 +406,7 @@ func (s *Service) bySweepKey(
 		return nil, nil
 	}
 
-	existing, err := s.suiteRuns.GetBySweepKey(ctx, repositories.GetAgentSuiteRunBySweepKeyRequest{
+	existing, err := s.suiteRuns.GetBySweepKey(ctx, agentqualityports.GetAgentSuiteRunBySweepKeyRequest{
 		SweepKey:   sweepKey,
 		TenantInfo: tenant,
 	})
@@ -504,7 +507,7 @@ func (s *Service) createSuite(
 	evaluations []*agent.Evaluation,
 ) (*agentquality.SuiteRun, error) {
 	var created *agentquality.SuiteRun
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		saved, err := s.suiteRuns.Create(txCtx, run)
 		if err != nil {
 			return err
@@ -524,7 +527,7 @@ func (s *Service) createSuite(
 }
 
 func (s *Service) clearStaleRunning(ctx context.Context, req *OpenSuiteRequest) (bool, error) {
-	running, err := s.suiteRuns.Last(ctx, repositories.LastAgentSuiteRunRequest{
+	running, err := s.suiteRuns.Last(ctx, agentqualityports.LastAgentSuiteRunRequest{
 		AgentDefinitionID: req.Agent.AgentDefinitionID,
 		TenantInfo:        req.TenantInfo,
 		Statuses:          []agentquality.SuiteRunStatus{agentquality.SuiteRunStatusRunning},
@@ -595,7 +598,7 @@ func (s *Service) RecordSkipped(
 	}
 
 	created, err := s.suiteRuns.Create(ctx, run)
-	if errors.Is(err, repositories.ErrSuiteRunSweepKeyTaken) {
+	if errors.Is(err, agentqualityports.ErrSuiteRunSweepKeyTaken) {
 		existing, getErr := s.bySweepKey(ctx, req.TenantInfo, req.SweepKey)
 		if getErr != nil || existing == nil {
 			return nil, errors.Join(err, getErr)
@@ -612,8 +615,8 @@ func (s *Service) RecordSkipped(
 
 func (s *Service) RunSuite(
 	ctx context.Context,
-	req *services.RunAgentSuiteRequest,
-	actor *services.RequestActor,
+	req *agentqualityports.RunAgentSuiteRequest,
+	actor *permissionports.RequestActor,
 ) (*agentquality.SuiteRun, error) {
 	if s.starter == nil {
 		return nil, errortypes.NewBusinessError("The workflow engine is not available")
@@ -649,7 +652,7 @@ func (s *Service) RunSuite(
 		return nil, err
 	}
 
-	run, err := s.suiteRuns.GetByID(ctx, repositories.GetAgentSuiteRunRequest{
+	run, err := s.suiteRuns.GetByID(ctx, agentqualityports.GetAgentSuiteRunRequest{
 		ID:         opened.SuiteRunID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -657,7 +660,7 @@ func (s *Service) RunSuite(
 		return nil, err
 	}
 
-	if _, err = s.starter.StartSuiteRun(ctx, &services.AgentSuiteRunStart{
+	if _, err = s.starter.StartSuiteRun(ctx, &agentqualityports.AgentSuiteRunStart{
 		TenantInfo:        req.TenantInfo,
 		UserID:            actor.UserIDOrNil(),
 		SuiteRunID:        run.ID,
@@ -683,9 +686,9 @@ func (s *Service) RunSuite(
 	return run, nil
 }
 
-func (s *Service) logRun(run *agentquality.SuiteRun, actor *services.RequestActor) {
+func (s *Service) logRun(run *agentquality.SuiteRun, actor *permissionports.RequestActor) {
 	auditActor := actor.AuditActorOrSystem()
-	if err := s.audit.LogAction(&services.LogActionParams{
+	if err := s.audit.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceAgentEvalSuite,
 		ResourceID:     run.ID.String(),
 		Operation:      permission.OpCreate,

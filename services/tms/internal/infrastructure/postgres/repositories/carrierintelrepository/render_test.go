@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -27,7 +27,7 @@ func testTenant() pagination.TenantInfo {
 func TestUpdateCarrierSummaryLeavesVersionAndUpdatedAtAlone(t *testing.T) {
 	t.Parallel()
 
-	sql := buildCarrierSummaryUpdate(renderDB(), &repositories.UpdateCarrierIntelSummaryRequest{
+	sql := buildCarrierSummaryUpdate(renderDB(), &carrierintelports.UpdateCarrierIntelSummaryRequest{
 		TenantInfo:     testTenant(),
 		CarrierID:      pulid.MustNew("car_"),
 		RiskLevel:      string(carrierintel.RiskLevelHigh),
@@ -46,7 +46,7 @@ func TestUpdateCarrierSummaryLeavesVersionAndUpdatedAtAlone(t *testing.T) {
 func TestUpdateCarrierSummaryClearsAnEmptyRiskLevel(t *testing.T) {
 	t.Parallel()
 
-	sql := buildCarrierSummaryUpdate(renderDB(), &repositories.UpdateCarrierIntelSummaryRequest{
+	sql := buildCarrierSummaryUpdate(renderDB(), &carrierintelports.UpdateCarrierIntelSummaryRequest{
 		TenantInfo: testTenant(),
 		CarrierID:  pulid.MustNew("car_"),
 	}).String()

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmenttypeports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
 )
@@ -19,7 +19,7 @@ func (s *service) deckHeightFeetForShipment(
 
 	equipmentType, err := s.equipmentTypeRepo.GetByID(
 		ctx,
-		repositories.GetEquipmentTypeByIDRequest{
+		equipmenttypeports.GetEquipmentTypeByIDRequest{
 			ID: entity.TrailerTypeID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,

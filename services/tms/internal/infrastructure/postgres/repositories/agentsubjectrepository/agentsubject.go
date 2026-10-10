@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
@@ -21,9 +20,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/uptrace/bun"
@@ -43,7 +42,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.AgentSubjectRepository {
+func New(p Params) agentports.AgentSubjectRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.agent-subject-repository"),
@@ -166,7 +165,7 @@ var subjectTables = map[agent.SubjectType]subjectTable{
 
 func (r *repository) Exists(
 	ctx context.Context,
-	req repositories.AgentSubjectExistsRequest,
+	req agentports.AgentSubjectExistsRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
 		if req.SubjectID.IsNil() {

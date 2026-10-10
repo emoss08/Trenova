@@ -9,9 +9,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/invoiceservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 )
 
@@ -38,26 +40,26 @@ var (
 type invoicePoster interface {
 	Post(
 		ctx context.Context,
-		req *serviceports.PostInvoiceRequest,
-		actor *serviceports.RequestActor,
+		req *invoiceports.PostInvoiceRequest,
+		actor *permissionports.RequestActor,
 	) (*invoice.Invoice, error)
 	PreviewPost(
 		ctx context.Context,
-		req *serviceports.PostInvoiceRequest,
-		actor *serviceports.RequestActor,
+		req *invoiceports.PostInvoiceRequest,
+		actor *permissionports.RequestActor,
 	) (*invoiceservice.PostPreview, error)
 }
 
 type invoiceSender interface {
 	PlanSend(
 		ctx context.Context,
-		req *serviceports.InvoiceSendPlanRequest,
-	) (*serviceports.InvoiceSendPlan, error)
+		req *invoiceports.InvoiceSendPlanRequest,
+	) (*invoiceports.InvoiceSendPlan, error)
 	Send(
 		ctx context.Context,
-		req *serviceports.InvoiceSendRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.InvoiceSendResult, error)
+		req *invoiceports.InvoiceSendRequest,
+		actor *permissionports.RequestActor,
+	) (*invoiceports.InvoiceSendResult, error)
 }
 
 func invoiceSchema(description string) map[string]any {
@@ -72,9 +74,9 @@ func invoiceSchema(description string) map[string]any {
 }
 
 func invoiceRequest(
-	tool serviceports.AgentTool,
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.PostInvoiceRequest, error) {
+	tool agentports.AgentTool,
+	params *agentports.ToolExecuteParams,
+) (*invoiceports.PostInvoiceRequest, error) {
 	if err := guardPreview(tool, params); err != nil {
 		return nil, err
 	}
@@ -84,7 +86,7 @@ func invoiceRequest(
 		return nil, err
 	}
 
-	return &serviceports.PostInvoiceRequest{
+	return &invoiceports.PostInvoiceRequest{
 		InvoiceID:  invoiceID,
 		TenantInfo: tenantFrom(*params),
 	}, nil
@@ -100,12 +102,12 @@ type postInvoiceTool struct {
 }
 
 var (
-	_ serviceports.ToolPreviewer = (*postInvoiceTool)(nil)
-	_ serviceports.ToolValidator = (*postInvoiceTool)(nil)
-	_ serviceports.TargetedTool  = (*postInvoiceTool)(nil)
+	_ agentports.ToolPreviewer = (*postInvoiceTool)(nil)
+	_ agentports.ToolValidator = (*postInvoiceTool)(nil)
+	_ agentports.TargetedTool  = (*postInvoiceTool)(nil)
 )
 
-func newPostInvoiceTool(invoices invoicePoster) serviceports.AgentTool {
+func newPostInvoiceTool(invoices invoicePoster) agentports.AgentTool {
 	return &postInvoiceTool{invoices: invoices}
 }
 
@@ -125,8 +127,8 @@ func (t *postInvoiceTool) ParamSchema() map[string]any {
 		"get_billing_queue_item or list_invoices.")
 }
 
-func (t *postInvoiceTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *postInvoiceTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceInvoice,
@@ -144,13 +146,13 @@ func (t *postInvoiceTool) Policy() serviceports.ToolPolicy {
 	}
 }
 
-func (t *postInvoiceTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *postInvoiceTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, paramInvoiceID, permission.ResourceInvoice)
 }
 
 func (t *postInvoiceTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	req, err := invoiceRequest(t, &params)
 	if err != nil {
@@ -173,7 +175,7 @@ func (t *postInvoiceTool) Validate(
 
 func (t *postInvoiceTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -197,7 +199,7 @@ func (t *postInvoiceTool) Execute(
 // than sending them to look.
 func (t *postInvoiceTool) ExecuteWithResult(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
 	if err := guardExecute(t, params); err != nil {
 		return nil, err
@@ -248,12 +250,12 @@ type sendInvoiceTool struct {
 }
 
 var (
-	_ serviceports.ToolPreviewer = (*sendInvoiceTool)(nil)
-	_ serviceports.ToolValidator = (*sendInvoiceTool)(nil)
-	_ serviceports.TargetedTool  = (*sendInvoiceTool)(nil)
+	_ agentports.ToolPreviewer = (*sendInvoiceTool)(nil)
+	_ agentports.ToolValidator = (*sendInvoiceTool)(nil)
+	_ agentports.TargetedTool  = (*sendInvoiceTool)(nil)
 )
 
-func newSendInvoiceTool(invoices invoiceSender) serviceports.AgentTool {
+func newSendInvoiceTool(invoices invoiceSender) agentports.AgentTool {
 	return &sendInvoiceTool{invoices: invoices}
 }
 
@@ -271,8 +273,8 @@ func (t *sendInvoiceTool) ParamSchema() map[string]any {
 	return invoiceSchema("The invoice, from list_invoices or post_invoice's proposal.")
 }
 
-func (t *sendInvoiceTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *sendInvoiceTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceInvoice,
@@ -288,27 +290,27 @@ func (t *sendInvoiceTool) Policy() serviceports.ToolPolicy {
 	}
 }
 
-func (t *sendInvoiceTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *sendInvoiceTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, paramInvoiceID, permission.ResourceInvoice)
 }
 
 // sendPlan is the send as PlanSend lays it out, and why it cannot go when it
 // cannot.
 type sendPlan struct {
-	plan    *serviceports.InvoiceSendPlan
+	plan    *invoiceports.InvoiceSendPlan
 	refusal error
 }
 
 func (t *sendInvoiceTool) plan(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (sendPlan, error) {
 	req, err := invoiceRequest(t, params)
 	if err != nil {
 		return sendPlan{}, err
 	}
 
-	plan, err := t.invoices.PlanSend(ctx, &serviceports.InvoiceSendPlanRequest{
+	plan, err := t.invoices.PlanSend(ctx, &invoiceports.InvoiceSendPlanRequest{
 		InvoiceID:  req.InvoiceID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -319,7 +321,7 @@ func (t *sendInvoiceTool) plan(
 	return sendPlan{plan: plan, refusal: sendRefusal(plan)}, nil
 }
 
-func sendRefusal(plan *serviceports.InvoiceSendPlan) error {
+func sendRefusal(plan *invoiceports.InvoiceSendPlan) error {
 	if len(plan.Errors) > 0 {
 		return errors.New(strings.Join(plan.Errors, "; "))
 	}
@@ -334,7 +336,7 @@ func sendRefusal(plan *serviceports.InvoiceSendPlan) error {
 
 func (t *sendInvoiceTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	send, err := t.plan(ctx, &params)
 	if err != nil {
@@ -346,7 +348,7 @@ func (t *sendInvoiceTool) Validate(
 
 func (t *sendInvoiceTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -363,7 +365,7 @@ func (t *sendInvoiceTool) Execute(
 		return send.refusal
 	}
 
-	_, err = t.invoices.Send(ctx, &serviceports.InvoiceSendRequest{
+	_, err = t.invoices.Send(ctx, &invoiceports.InvoiceSendRequest{
 		InvoiceID:  send.plan.InvoiceID,
 		TenantInfo: tenantFrom(params),
 	}, params.Actor)

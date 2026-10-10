@@ -10,8 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
 )
@@ -41,11 +42,11 @@ func (s *Service) summarize(
 		return fallback
 	}
 
-	result, err := s.completion.CompleteStructured(ctx, &services.StructuredCompletionRequest{
+	result, err := s.completion.CompleteStructured(ctx, &agentports.StructuredCompletionRequest{
 		TenantInfo: tenant,
 		Task:       aiprovider.TaskAssistantChat,
 		System:     summarySystem,
-		Context: services.DelimitedContext{Sections: []services.ContextSection{{
+		Context: agentports.DelimitedContext{Sections: []agentports.ContextSection{{
 			Title:   "Conversation with " + source.Name,
 			Content: transcript,
 		}}},
@@ -62,7 +63,7 @@ func (s *Service) summarize(
 		},
 		SchemaName: "handoff_summary",
 		MaxTokens:  summaryTokens,
-		Attribution: services.AIUsageAttribution{
+		Attribution: aiusageports.AIUsageAttribution{
 			UserID:            tenant.UserID,
 			AgentDefinitionID: source.ID,
 			ThreadID:          origin.ID,
@@ -70,7 +71,7 @@ func (s *Service) summarize(
 		},
 	})
 	if err != nil {
-		if !errors.Is(err, services.ErrNoProviderConfigured) {
+		if !errors.Is(err, agentports.ErrNoProviderConfigured) {
 			s.l.Warn("hand-off summary failed; carrying the last exchanges", zap.Error(err))
 		}
 		return fallback

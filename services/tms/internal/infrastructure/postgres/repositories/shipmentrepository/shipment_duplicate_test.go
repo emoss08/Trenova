@@ -5,8 +5,8 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -45,7 +45,7 @@ func TestBulkDuplicate_CreatesShipmentMoveAndStopCopies(t *testing.T) {
 	shipmentID := pulid.MustNew("shp_")
 	moveID := pulid.MustNew("sm_")
 
-	req := &repositories.BulkDuplicateShipmentRequest{
+	req := &shipmentports.BulkDuplicateShipmentRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  orgID,
 			BuID:   buID,

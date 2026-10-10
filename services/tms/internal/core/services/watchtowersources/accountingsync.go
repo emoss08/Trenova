@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -32,7 +32,7 @@ func AccountingSyncAttentionKeys() []string {
 	return append(keys, accountingDeadLetterKey)
 }
 
-func AccountingSyncAttentionKey(group *repositories.AccountingSyncAttentionGroup) string {
+func AccountingSyncAttentionKey(group *accountingsyncports.AccountingSyncAttentionGroup) string {
 	if group.Status == accountingsync.SyncStatusDeadLettered {
 		return accountingDeadLetterKey
 	}
@@ -65,10 +65,10 @@ func documentsLabel(count int) string {
 func DescribeAccountingSyncAttention(
 	conn *accountingsync.AccountingConnection,
 	key string,
-	groups []repositories.AccountingSyncAttentionGroup,
-) (services.WatchtowerItemInput, bool) {
+	groups []accountingsyncports.AccountingSyncAttentionGroup,
+) (watchtowerports.WatchtowerItemInput, bool) {
 	if len(groups) == 0 {
-		return services.WatchtowerItemInput{}, false
+		return watchtowerports.WatchtowerItemInput{}, false
 	}
 
 	total := 0
@@ -82,7 +82,7 @@ func DescribeAccountingSyncAttention(
 		oldest = min(oldest, groups[idx].OldestQueuedAt)
 	}
 	if total == 0 {
-		return services.WatchtowerItemInput{}, false
+		return watchtowerports.WatchtowerItemInput{}, false
 	}
 
 	provider := accountingsync.ProviderName(conn.IntegrationType)
@@ -103,7 +103,7 @@ func DescribeAccountingSyncAttention(
 		summary += " " + strconv.Itoa(len(groups)-1) + " other causes are in the ledger."
 	}
 
-	return services.WatchtowerItemInput{
+	return watchtowerports.WatchtowerItemInput{
 		TenantInfo:  tenantOf(conn),
 		SourceKind:  watchtower.SourceAccountingSync,
 		SourceID:    AccountingSyncAttentionSourceID(conn, key),
@@ -121,9 +121,9 @@ func DescribeAccountingSyncAttention(
 func DescribeAccountingSyncPaused(
 	conn *accountingsync.AccountingConnection,
 	now int64,
-) (services.WatchtowerItemInput, bool) {
+) (watchtowerports.WatchtowerItemInput, bool) {
 	if conn.PausedAt == nil || !conn.IsActive() || now-*conn.PausedAt < accountingPausedAfter {
-		return services.WatchtowerItemInput{}, false
+		return watchtowerports.WatchtowerItemInput{}, false
 	}
 
 	provider := accountingsync.ProviderName(conn.IntegrationType)
@@ -131,7 +131,7 @@ func DescribeAccountingSyncPaused(
 	if conn.PausedReason != "" {
 		summary = "Paused: " + conn.PausedReason + ". " + summary
 	}
-	return services.WatchtowerItemInput{
+	return watchtowerports.WatchtowerItemInput{
 		TenantInfo:  tenantOf(conn),
 		SourceKind:  watchtower.SourceAccountingSync,
 		SourceID:    AccountingSyncPausedSourceID(conn),
@@ -150,11 +150,11 @@ func DescribeAccountingSafetyNet(
 	conn *accountingsync.AccountingConnection,
 	found int,
 	at int64,
-) (services.WatchtowerItemInput, bool) {
+) (watchtowerports.WatchtowerItemInput, bool) {
 	if found <= 0 {
-		return services.WatchtowerItemInput{}, false
+		return watchtowerports.WatchtowerItemInput{}, false
 	}
-	return services.WatchtowerItemInput{
+	return watchtowerports.WatchtowerItemInput{
 		TenantInfo: tenantOf(conn),
 		SourceKind: watchtower.SourceAccountingSync,
 		SourceID:   AccountingSafetyNetSourceID(conn),
@@ -171,9 +171,9 @@ func DescribeAccountingSafetyNet(
 }
 
 func GroupAccountingSyncAttention(
-	groups []repositories.AccountingSyncAttentionGroup,
-) map[string][]repositories.AccountingSyncAttentionGroup {
-	byKey := make(map[string][]repositories.AccountingSyncAttentionGroup, len(groups))
+	groups []accountingsyncports.AccountingSyncAttentionGroup,
+) map[string][]accountingsyncports.AccountingSyncAttentionGroup {
+	byKey := make(map[string][]accountingsyncports.AccountingSyncAttentionGroup, len(groups))
 	for idx := range groups {
 		key := AccountingSyncAttentionKey(&groups[idx])
 		byKey[key] = append(byKey[key], groups[idx])

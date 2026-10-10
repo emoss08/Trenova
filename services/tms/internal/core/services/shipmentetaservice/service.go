@@ -7,9 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/shipmenttracking"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -21,39 +22,39 @@ const positionLookbackSeconds = int64(24 * 60 * 60)
 type BoardMoveLister interface {
 	ListBoardMoves(
 		ctx context.Context,
-		filter *repositories.DispatchBoardFilter,
-	) ([]*repositories.BoardMove, error)
+		filter *shipmentports.DispatchBoardFilter,
+	) ([]*shipmentports.BoardMove, error)
 }
 
 type TelematicsReader interface {
 	ListVehiclePositions(
 		ctx context.Context,
-		req *repositories.ListVehiclePositionsRequest,
+		req *telematicsports.ListVehiclePositionsRequest,
 	) ([]*telematics.VehiclePosition, error)
 	ListWorkerHOSStates(
 		ctx context.Context,
-		req *repositories.ListWorkerHOSStatesRequest,
+		req *telematicsports.ListWorkerHOSStatesRequest,
 	) ([]*telematics.WorkerHOSState, error)
 }
 
 type ServiceFailureLister interface {
 	ListUnresolvedByShipmentIDs(
 		ctx context.Context,
-		req *repositories.ServiceFailuresByShipmentIDsRequest,
+		req *servicefailureports.ServiceFailuresByShipmentIDsRequest,
 	) ([]*servicefailure.ServiceFailure, error)
 }
 
 type Params struct {
 	fx.In
 
-	Shipments       repositories.ShipmentTrackingRepository
-	Console         repositories.DispatchConsoleRepository
-	Telematics      repositories.TelematicsRepository
-	ServiceFailures repositories.ServiceFailureRepository
+	Shipments       shipmentports.ShipmentTrackingRepository
+	Console         shipmentports.DispatchConsoleRepository
+	Telematics      telematicsports.TelematicsRepository
+	ServiceFailures servicefailureports.ServiceFailureRepository
 }
 
 type Dependencies struct {
-	Shipments       repositories.ShipmentTrackingRepository
+	Shipments       shipmentports.ShipmentTrackingRepository
 	Board           BoardMoveLister
 	Telematics      TelematicsReader
 	ServiceFailures ServiceFailureLister
@@ -61,7 +62,7 @@ type Dependencies struct {
 }
 
 type Service struct {
-	shipments repositories.ShipmentTrackingRepository
+	shipments shipmentports.ShipmentTrackingRepository
 	board     BoardMoveLister
 	telem     TelematicsReader
 	failures  ServiceFailureLister
@@ -69,15 +70,15 @@ type Service struct {
 }
 
 var (
-	_ services.ShipmentEtaReader      = (*Service)(nil)
-	_ services.ShipmentTrackingReader = (*Service)(nil)
+	_ shipmentports.ShipmentEtaReader      = (*Service)(nil)
+	_ shipmentports.ShipmentTrackingReader = (*Service)(nil)
 )
 
-func New(p Params) services.ShipmentEtaReader {
+func New(p Params) shipmentports.ShipmentEtaReader {
 	return fromParams(p)
 }
 
-func NewTrackingReader(p Params) services.ShipmentTrackingReader {
+func NewTrackingReader(p Params) shipmentports.ShipmentTrackingReader {
 	return fromParams(p)
 }
 
@@ -102,7 +103,7 @@ func NewWithDependencies(d *Dependencies) *Service {
 }
 
 type trackingSources struct {
-	assignments map[pulid.ID]*repositories.BoardMove
+	assignments map[pulid.ID]*shipmentports.BoardMove
 	positions   map[pulid.ID]*telematics.VehiclePosition
 	hos         map[pulid.ID]*telematics.WorkerHOSState
 	reasons     map[pulid.ID]string
@@ -112,8 +113,8 @@ func (s *Service) EtasByShipmentIDs(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	shipmentIDs []pulid.ID,
-) (map[pulid.ID]*services.ShipmentEta, error) {
-	out := make(map[pulid.ID]*services.ShipmentEta, len(shipmentIDs))
+) (map[pulid.ID]*shipmentports.ShipmentEta, error) {
+	out := make(map[pulid.ID]*shipmentports.ShipmentEta, len(shipmentIDs))
 	err := s.eachSnapshot(ctx, &snapshotRequest{
 		tenant:   tenantInfo,
 		ids:      shipmentIDs,
@@ -168,7 +169,7 @@ func (s *Service) eachSnapshot(
 
 	entities, err := s.shipments.ListTrackingShipments(
 		ctx,
-		&repositories.ListTrackingShipmentsRequest{
+		&shipmentports.ListTrackingShipmentsRequest{
 			TenantInfo:  req.tenant,
 			ShipmentIDs: req.ids,
 		},
@@ -204,7 +205,7 @@ func (s *Service) collect(
 	entities []*shipment.Shipment,
 ) (*trackingSources, error) {
 	sources := &trackingSources{
-		assignments: make(map[pulid.ID]*repositories.BoardMove),
+		assignments: make(map[pulid.ID]*shipmentports.BoardMove),
 		positions:   make(map[pulid.ID]*telematics.VehiclePosition),
 		hos:         make(map[pulid.ID]*telematics.WorkerHOSState),
 		reasons:     make(map[pulid.ID]string),
@@ -233,7 +234,7 @@ func (s *Service) collect(
 
 	failures, err := s.failures.ListUnresolvedByShipmentIDs(
 		ctx,
-		&repositories.ServiceFailuresByShipmentIDsRequest{
+		&servicefailureports.ServiceFailuresByShipmentIDsRequest{
 			TenantInfo:  tenantInfo,
 			ShipmentIDs: shipmentIDs,
 		},
@@ -263,7 +264,7 @@ func (s *Service) collectAssignments(
 		return nil
 	}
 
-	moves, err := s.board.ListBoardMoves(ctx, &repositories.DispatchBoardFilter{
+	moves, err := s.board.ListBoardMoves(ctx, &shipmentports.DispatchBoardFilter{
 		TenantInfo:     tenantInfo,
 		MoveIDs:        moveIDs,
 		MoveStatuses:   shipment.MoveStatuses(),
@@ -301,7 +302,7 @@ func (s *Service) collectTelematics(
 	if len(tractorIDs) > 0 {
 		positions, err := s.telem.ListVehiclePositions(
 			ctx,
-			&repositories.ListVehiclePositionsRequest{
+			&telematicsports.ListVehiclePositionsRequest{
 				TenantInfo:    tenantInfo,
 				TractorIDs:    tractorIDs,
 				MaxAgeSeconds: positionLookbackSeconds,
@@ -318,7 +319,7 @@ func (s *Service) collectTelematics(
 	}
 
 	if len(workerIDs) > 0 {
-		states, err := s.telem.ListWorkerHOSStates(ctx, &repositories.ListWorkerHOSStatesRequest{
+		states, err := s.telem.ListWorkerHOSStates(ctx, &telematicsports.ListWorkerHOSStatesRequest{
 			TenantInfo: tenantInfo,
 			WorkerIDs:  workerIDs,
 			Limit:      len(workerIDs),
@@ -352,12 +353,12 @@ func EtaOf(
 	entity *shipment.Shipment,
 	snapshot *shipmenttracking.Snapshot,
 	failureReason string,
-) *services.ShipmentEta {
+) *shipmentports.ShipmentEta {
 	if snapshot == nil || snapshot.NextStop == nil || entity.Status == shipment.StatusCanceled {
 		return nil
 	}
 
-	eta := &services.ShipmentEta{
+	eta := &shipmentports.ShipmentEta{
 		ShipmentID: entity.ID,
 		Verdict:    shipmenttracking.VerdictUnknown,
 	}

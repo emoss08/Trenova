@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aicontrolsummary"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/aituneup"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -551,7 +551,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AITuneUpAgent)
+					obj := o.(*aituneupports.AITuneUpAgent)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -561,7 +561,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AITuneUpAgent)
+					obj := o.(*aituneupports.AITuneUpAgent)
 					return obj.Name, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -571,7 +571,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AITuneUpAgent)
+					obj := o.(*aituneupports.AITuneUpAgent)
 					return obj.Icon, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -581,7 +581,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AITuneUpAgent)
+					obj := o.(*aituneupports.AITuneUpAgent)
 					return obj.Accent, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -766,7 +766,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AITuneUpProvider)
+					obj := o.(*aituneupports.AITuneUpProvider)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -776,7 +776,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AITuneUpProvider)
+					obj := o.(*aituneupports.AITuneUpProvider)
 					return obj.Name, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -786,7 +786,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AITuneUpProvider)
+					obj := o.(*aituneupports.AITuneUpProvider)
 					return obj.Kind, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNAIProviderKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiproviderᚐKind),
@@ -1363,14 +1363,14 @@ func marshalOAITask2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdoma
 	return res
 }
 
-func marshalOAITuneUpAgent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAITuneUpAgent(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.AITuneUpAgent) graphql.Marshaler {
+func marshalOAITuneUpAgent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAITuneUpAgent(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aituneupports.AITuneUpAgent) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "AITuneUpAgent", v)
 }
 
-func marshalOAITuneUpProvider2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAITuneUpProvider(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.AITuneUpProvider) graphql.Marshaler {
+func marshalOAITuneUpProvider2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAITuneUpProvider(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aituneupports.AITuneUpProvider) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

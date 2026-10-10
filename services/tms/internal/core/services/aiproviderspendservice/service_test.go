@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -15,15 +15,15 @@ import (
 )
 
 type usageRepo struct {
-	repositories.AIUsageRepository
+	aiusageports.AIUsageRepository
 	spend    map[pulid.ID]decimal.Decimal
-	requests []repositories.AIUsageProviderSpendRequest
+	requests []aiusageports.AIUsageProviderSpendRequest
 	fail     error
 }
 
 func (u *usageRepo) SpendByProvider(
 	_ context.Context,
-	req repositories.AIUsageProviderSpendRequest,
+	req aiusageports.AIUsageProviderSpendRequest,
 ) (map[pulid.ID]decimal.Decimal, error) {
 	u.requests = append(u.requests, req)
 	if u.fail != nil {

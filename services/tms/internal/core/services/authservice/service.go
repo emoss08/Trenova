@@ -15,10 +15,16 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/apikey"
 	"github.com/emoss08/trenova/internal/core/domain/session"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/sessiontoken"
@@ -32,50 +38,50 @@ import (
 type Params struct {
 	fx.In
 
-	UserRepository    repositories.UserRepository
-	OrganizationRepo  repositories.OrganizationRepository
-	SessionRepository repositories.SessionRepository
-	RBACRepository    repositories.RBACRepository
-	SSOConfigRepo     repositories.SSOConfigRepository
-	SSOStateRepo      repositories.SSOLoginStateRepository
-	SSOIdentityLinks  repositories.SSOIdentityLinkRepository
-	APIKeyRepository  repositories.APIKeyRepository
-	PortalRepo        repositories.PortalAccessRepository
-	UsageRecorder     services.UsageRecorder
-	TurnStopper       services.AssistantTurnStopper
-	AuthEvents        services.AuthEventRecorder
-	LoginThrottle     repositories.LoginThrottleStore     `optional:"true"`
-	Plans             services.PlanService                `optional:"true"`
-	MFA               services.MFAService                 `optional:"true"`
-	MFAChallenges     repositories.MFAChallengeRepository `optional:"true"`
+	UserRepository    tenantports.UserRepository
+	OrganizationRepo  tenantports.OrganizationRepository
+	SessionRepository sessionports.SessionRepository
+	RBACRepository    permissionports.RBACRepository
+	SSOConfigRepo     tenantports.SSOConfigRepository
+	SSOStateRepo      tenantports.SSOLoginStateRepository
+	SSOIdentityLinks  tenantports.SSOIdentityLinkRepository
+	APIKeyRepository  apikeyports.APIKeyRepository
+	PortalRepo        workerports.PortalAccessRepository
+	UsageRecorder     apikeyports.UsageRecorder
+	TurnStopper       agentports.AssistantTurnStopper
+	AuthEvents        iamports.AuthEventRecorder
+	LoginThrottle     sessionports.LoginThrottleStore `optional:"true"`
+	Plans             platformplanports.PlanService   `optional:"true"`
+	MFA               sessionports.MFAService         `optional:"true"`
+	MFAChallenges     iamports.MFAChallengeRepository `optional:"true"`
 	Encryption        *encryptionservice.Service
 	Config            *config.Config
 	Logger            *zap.Logger
 }
 
 type Service struct {
-	ur         repositories.UserRepository
-	or         repositories.OrganizationRepository
-	sr         repositories.SessionRepository
-	rbacRepo   repositories.RBACRepository
-	ssoRepo    repositories.SSOConfigRepository
-	stateRepo  repositories.SSOLoginStateRepository
-	links      repositories.SSOIdentityLinkRepository
-	akr        repositories.APIKeyRepository
-	portalRepo repositories.PortalAccessRepository
-	usageBuf   services.UsageRecorder
-	turns      services.AssistantTurnStopper
-	authEvents services.AuthEventRecorder
-	throttle   repositories.LoginThrottleStore
-	plans      services.PlanService
-	mfa        services.MFAService
-	challenges repositories.MFAChallengeRepository
+	ur         tenantports.UserRepository
+	or         tenantports.OrganizationRepository
+	sr         sessionports.SessionRepository
+	rbacRepo   permissionports.RBACRepository
+	ssoRepo    tenantports.SSOConfigRepository
+	stateRepo  tenantports.SSOLoginStateRepository
+	links      tenantports.SSOIdentityLinkRepository
+	akr        apikeyports.APIKeyRepository
+	portalRepo workerports.PortalAccessRepository
+	usageBuf   apikeyports.UsageRecorder
+	turns      agentports.AssistantTurnStopper
+	authEvents iamports.AuthEventRecorder
+	throttle   sessionports.LoginThrottleStore
+	plans      platformplanports.PlanService
+	mfa        sessionports.MFAService
+	challenges iamports.MFAChallengeRepository
 	enc        *encryptionservice.Service
 	cfg        *config.Config
 	l          *zap.Logger
 }
 
-func New(p Params) services.AuthService {
+func New(p Params) tenantports.AuthService {
 	return &Service{
 		ur:         p.UserRepository,
 		or:         p.OrganizationRepo,
@@ -125,13 +131,13 @@ type loginSessionContext struct {
 
 func (s *Service) Login(
 	ctx context.Context,
-	req services.LoginRequest,
-) (resp *services.LoginResponse, err error) {
+	req tenantports.LoginRequest,
+) (resp *tenantports.LoginResponse, err error) {
 	if err = req.Validate(); err != nil {
 		return nil, err
 	}
 
-	attempt := newAuthAttempt(services.AuthEventProviderPassword)
+	attempt := newAuthAttempt(iamports.AuthEventProviderPassword)
 	defer func() { s.recordAuthAttempt(ctx, attempt, err) }()
 
 	throttleKey := loginThrottleKey(ctx, req.EmailAddress)
@@ -190,7 +196,7 @@ func (s *Service) Login(
 	}
 
 	return s.finishLogin(scoped, usr, targetOrg, loginSessionContext{
-		AuthProvider:          services.AuthEventProviderPassword,
+		AuthProvider:          iamports.AuthEventProviderPassword,
 		AuthenticatorAAL:      1,
 		FederationFAL:         1,
 		LastReauthenticatedAt: timeutils.NowUnix(),
@@ -203,7 +209,7 @@ func (s *Service) finishLogin(
 	usr *tenant.User,
 	targetOrg *tenant.Organization,
 	authn loginSessionContext,
-) (*services.LoginResponse, error) {
+) (*tenantports.LoginResponse, error) {
 	if targetOrg != nil && targetOrg.ID != usr.CurrentOrganizationID {
 		if err := s.ur.UpdateCurrentOrganization(
 			organizationScope(ctx, targetOrg.ID, targetOrg.BusinessUnitID, usr.ID),
@@ -224,14 +230,14 @@ func (s *Service) finishLogin(
 func (s *Service) GetTenantLoginMetadata(
 	ctx context.Context,
 	organizationSlug string,
-) (*services.TenantLoginMetadataResponse, error) {
+) (*tenantports.TenantLoginMetadataResponse, error) {
 	loginConfig, err := s.enabledTenantSSOConfiguration(ctx, organizationSlug)
 	if err != nil {
 		return nil, err
 	}
 
 	org := loginConfig.organization
-	resp := &services.TenantLoginMetadataResponse{
+	resp := &tenantports.TenantLoginMetadataResponse{
 		OrganizationID:   org.ID.String(),
 		OrganizationName: org.Name,
 		OrganizationSlug: org.LoginSlug,
@@ -256,15 +262,15 @@ func (s *Service) GetTenantLoginMetadata(
 func (s *Service) ListAuthProviders(
 	ctx context.Context,
 	organizationSlug string,
-) ([]services.AuthProviderSummary, error) {
+) ([]tenantports.AuthProviderSummary, error) {
 	loginConfig, err := s.enabledTenantSSOConfiguration(ctx, organizationSlug)
 	if err != nil {
 		return nil, err
 	}
 
-	providers := make([]services.AuthProviderSummary, 0, len(loginConfig.configs))
+	providers := make([]tenantports.AuthProviderSummary, 0, len(loginConfig.configs))
 	for _, cfg := range loginConfig.configs {
-		providers = append(providers, services.AuthProviderSummary{
+		providers = append(providers, tenantports.AuthProviderSummary{
 			ID:       cfg.ID,
 			Name:     cfg.Name,
 			Provider: cfg.Provider,
@@ -278,7 +284,7 @@ func (s *Service) ListAuthProviders(
 
 func (s *Service) StartSSOLogin(
 	ctx context.Context,
-	req services.StartSSOLoginRequest,
+	req tenantports.StartSSOLoginRequest,
 ) (string, error) {
 	if s.or == nil || s.ssoRepo == nil || s.stateRepo == nil {
 		return "", errortypes.NewBusinessError(
@@ -320,7 +326,7 @@ func (s *Service) StartSSOLogin(
 	nonce := randomURLToken(32)
 	verifier := oauth2.GenerateVerifier()
 
-	if err = s.stateRepo.Save(ctx, &repositories.SSOLoginState{
+	if err = s.stateRepo.Save(ctx, &tenantports.SSOLoginState{
 		State:            state,
 		Provider:         req.Provider,
 		ProviderID:       ssoConfig.ID,
@@ -344,7 +350,7 @@ func (s *Service) StartSSOLogin(
 func (s *Service) resolveSSOConfig(
 	ctx context.Context,
 	orgID pulid.ID,
-	req services.StartSSOLoginRequest,
+	req tenantports.StartSSOLoginRequest,
 ) (*tenant.SSOConfig, error) {
 	if req.ProviderID.IsNotNil() {
 		cfg, err := s.ssoRepo.GetEnabledByID(ctx, req.ProviderID)
@@ -364,8 +370,8 @@ func (s *Service) resolveSSOConfig(
 
 func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 	ctx context.Context,
-	req services.SSOCallbackRequest,
-) (resp *services.SSOCallbackResponse, err error) {
+	req tenantports.SSOCallbackRequest,
+) (resp *tenantports.SSOCallbackResponse, err error) {
 	if s.or == nil || s.ssoRepo == nil || s.stateRepo == nil {
 		return nil, errortypes.NewBusinessError("SSO is not configured")
 	}
@@ -522,7 +528,7 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 		return nil, err
 	}
 
-	return &services.SSOCallbackResponse{
+	return &tenantports.SSOCallbackResponse{
 		LoginResponse: loginResp,
 		RedirectTo:    loginState.ReturnTo,
 	}, nil
@@ -531,7 +537,7 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 func (s *Service) GetSSOLoginState(
 	ctx context.Context,
 	state string,
-) (*repositories.SSOLoginState, error) {
+) (*tenantports.SSOLoginState, error) {
 	if s.stateRepo == nil {
 		return nil, errortypes.NewBusinessError("SSO is not configured")
 	}
@@ -567,7 +573,7 @@ func (s *Service) enabledTenantSSOConfiguration(
 
 func (s *Service) resolveSSOConfigForCallback(
 	ctx context.Context,
-	loginState *repositories.SSOLoginState,
+	loginState *tenantports.SSOLoginState,
 ) (*tenant.SSOConfig, error) {
 	if loginState.ProviderID.IsNotNil() {
 		cfg, err := s.ssoRepo.GetEnabledByID(ctx, loginState.ProviderID)
@@ -637,7 +643,7 @@ func (s *Service) AuthenticateSession(
 func (s *Service) ListAuthorizedSessionRoles(
 	ctx context.Context,
 	sessionID pulid.ID,
-) (*services.AuthorizedSessionRolesResponse, error) {
+) (*tenantports.AuthorizedSessionRolesResponse, error) {
 	sess, err := s.ValidateSession(ctx, sessionID)
 	if err != nil {
 		return nil, err
@@ -650,7 +656,7 @@ func (s *Service) ListAuthorizedSessionRoles(
 	}
 
 	authorizedRoleIDs := roleSummaryIDs(authorizedRoles)
-	return &services.AuthorizedSessionRolesResponse{
+	return &tenantports.AuthorizedSessionRolesResponse{
 		RoleIDs:           authorizedRoleIDs,
 		AuthorizedRoleIDs: authorizedRoleIDs,
 		AuthorizedRoles:   authorizedRoles,
@@ -659,8 +665,8 @@ func (s *Service) ListAuthorizedSessionRoles(
 
 func (s *Service) ActivateSessionRoles(
 	ctx context.Context,
-	req services.ActivateSessionRolesRequest,
-) (*services.ActivateSessionRolesResponse, error) {
+	req tenantports.ActivateSessionRolesRequest,
+) (*tenantports.ActivateSessionRolesResponse, error) {
 	sess, err := s.ValidateSession(ctx, req.SessionID)
 	if err != nil {
 		return nil, err
@@ -719,7 +725,7 @@ func (s *Service) ActivateSessionRoles(
 		return nil, err
 	}
 
-	return &services.ActivateSessionRolesResponse{
+	return &tenantports.ActivateSessionRolesResponse{
 		ActiveRoleIDs:          activeRoleIDs,
 		AuthorizedRoleIDs:      authorizedRoleIDs,
 		ActiveRoles:            activeRoleSummaries(activeRoleIDs, authorizedRoles),
@@ -748,7 +754,7 @@ func (s *Service) Logout(ctx context.Context, sessionID pulid.ID) error {
 		sess = nil
 	}
 
-	attempt := newAuthAttempt(services.AuthEventProviderLogout)
+	attempt := newAuthAttempt(iamports.AuthEventProviderLogout)
 	if sess != nil {
 		attempt.userID = sess.UserID
 		attempt.forOrganization(sess.OrganizationID, sess.BusinessUnitID)
@@ -778,7 +784,7 @@ func (s *Service) stopTurns(ctx context.Context, sess *session.Session) {
 	)
 	defer cancel()
 
-	err := s.turns.StopAllForUser(stopCtx, services.StopUserTurnsRequest{
+	err := s.turns.StopAllForUser(stopCtx, agentports.StopUserTurnsRequest{
 		UserID: sess.UserID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  sess.OrganizationID,
@@ -798,7 +804,7 @@ func (s *Service) AuthenticateAPIKey(
 	ctx context.Context,
 	token string,
 	ipAddress, userAgent string,
-) (*services.AuthenticatedPrincipal, error) {
+) (*tenantports.AuthenticatedPrincipal, error) {
 	if !s.cfg.Security.APIToken.Enabled {
 		return nil, errortypes.NewAuthenticationError("API token authentication is disabled")
 	}
@@ -826,7 +832,7 @@ func (s *Service) AuthenticateAPIKey(
 		return nil, errortypes.NewAuthenticationError("Invalid bearer token")
 	}
 
-	s.usageBuf.RecordUsage(services.APIKeyUsageEvent{
+	s.usageBuf.RecordUsage(apikeyports.APIKeyUsageEvent{
 		APIKeyID:       key.ID,
 		OrganizationID: key.OrganizationID,
 		BusinessUnitID: key.BusinessUnitID,
@@ -835,8 +841,8 @@ func (s *Service) AuthenticateAPIKey(
 		UserAgent:      userAgent,
 	})
 
-	return &services.AuthenticatedPrincipal{
-		Type:           services.PrincipalTypeAPIKey,
+	return &tenantports.AuthenticatedPrincipal{
+		Type:           permissionports.PrincipalTypeAPIKey,
 		PrincipalID:    key.ID,
 		APIKeyID:       key.ID,
 		BusinessUnitID: key.BusinessUnitID,
@@ -897,7 +903,7 @@ func (s *Service) createLoginResponse(
 	ctx context.Context,
 	user *tenant.User,
 	authn loginSessionContext,
-) (*services.LoginResponse, error) {
+) (*tenantports.LoginResponse, error) {
 	sess, token, err := s.createSession(ctx, user, authn)
 	if err != nil {
 		return nil, err
@@ -913,7 +919,7 @@ func (s *Service) createLoginResponse(
 	}
 	authorizedRoleIDs := roleSummaryIDs(authorizedRoles)
 
-	return &services.LoginResponse{
+	return &tenantports.LoginResponse{
 		User:                  user,
 		ExpiresAt:             sess.ExpiresAt,
 		SessionID:             sess.ID.String(),
@@ -938,15 +944,15 @@ func (s *Service) authorizedRoleSummaries(
 	ctx context.Context,
 	userID pulid.ID,
 	orgID pulid.ID,
-) ([]services.RoleSummary, error) {
+) ([]permissionports.RoleSummary, error) {
 	roles, err := s.rbacRepo.GetAuthorizedRoles(ctx, userID, orgID)
 	if err != nil {
 		return nil, err
 	}
-	summaries := make([]services.RoleSummary, 0, len(roles))
+	summaries := make([]permissionports.RoleSummary, 0, len(roles))
 	for _, role := range roles {
 		if role != nil {
-			summaries = append(summaries, services.NewRoleSummary(role))
+			summaries = append(summaries, permissionports.NewRoleSummary(role))
 		}
 	}
 
@@ -954,12 +960,12 @@ func (s *Service) authorizedRoleSummaries(
 	if err != nil {
 		return nil, err
 	}
-	services.ApplyRolePermissionCounts(summaries, counts)
+	permissionports.ApplyRolePermissionCounts(summaries, counts)
 
 	return summaries, nil
 }
 
-func roleSummaryIDs(roles []services.RoleSummary) []pulid.ID {
+func roleSummaryIDs(roles []permissionports.RoleSummary) []pulid.ID {
 	roleIDs := make([]pulid.ID, len(roles))
 	for i, role := range roles {
 		roleIDs[i] = role.ID
@@ -969,18 +975,18 @@ func roleSummaryIDs(roles []services.RoleSummary) []pulid.ID {
 
 func activeRoleSummaries(
 	activeRoleIDs []pulid.ID,
-	authorizedRoles []services.RoleSummary,
-) []services.RoleSummary {
+	authorizedRoles []permissionports.RoleSummary,
+) []permissionports.RoleSummary {
 	if len(activeRoleIDs) == 0 || len(authorizedRoles) == 0 {
-		return []services.RoleSummary{}
+		return []permissionports.RoleSummary{}
 	}
 
-	byID := make(map[pulid.ID]services.RoleSummary, len(authorizedRoles))
+	byID := make(map[pulid.ID]permissionports.RoleSummary, len(authorizedRoles))
 	for _, role := range authorizedRoles {
 		byID[role.ID] = role
 	}
 
-	activeRoles := make([]services.RoleSummary, 0, len(activeRoleIDs))
+	activeRoles := make([]permissionports.RoleSummary, 0, len(activeRoleIDs))
 	for _, roleID := range activeRoleIDs {
 		role, ok := byID[roleID]
 		if ok {

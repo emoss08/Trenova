@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -34,11 +34,11 @@ func (r *QueryResolver) Carriers(ctx context.Context, input gqlmodel.DataTableCo
 
 	result, err := r.CarrierService.ListConnection(
 		ctx,
-		&repositories.ListCarrierConnectionRequest{
+		&carrierports.ListCarrierConnectionRequest{
 			Filter:         tableInput.Filter,
 			Cursor:         tableInput.Cursor,
 			CarrierColumns: carrierColumns(ctx, "edges.node"),
-			CarrierFilterOptions: repositories.CarrierFilterOptions{
+			CarrierFilterOptions: carrierports.CarrierFilterOptions{
 				IncludeState: graphql.FieldRequested(ctx, "edges.node.state") ||
 					graphql.FieldRequested(ctx, "edges.node.remitState"),
 				IncludeContacts:          graphql.FieldRequested(ctx, "edges.node.contacts"),
@@ -64,10 +64,10 @@ func (r *QueryResolver) Carrier(ctx context.Context, id string) (*carrier.Carrie
 		return nil, err
 	}
 
-	return r.CarrierService.Get(ctx, repositories.GetCarrierByIDRequest{
+	return r.CarrierService.Get(ctx, carrierports.GetCarrierByIDRequest{
 		ID:         carrierID,
 		TenantInfo: base.TenantInfo(authCtx),
-		CarrierFilterOptions: repositories.CarrierFilterOptions{
+		CarrierFilterOptions: carrierports.CarrierFilterOptions{
 			IncludeState:             true,
 			IncludeContacts:          true,
 			IncludeInsurancePolicies: true,

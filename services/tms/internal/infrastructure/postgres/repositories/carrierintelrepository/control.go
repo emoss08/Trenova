@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -28,7 +28,7 @@ type controlRepository struct {
 	l  *zap.Logger
 }
 
-func NewControlRepository(p Params) repositories.CarrierIntelControlRepository {
+func NewControlRepository(p Params) carrierintelports.CarrierIntelControlRepository {
 	return &controlRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.carrier-intel-control-repository"),
@@ -119,7 +119,7 @@ func (r *controlRepository) Update(
 
 func (r *controlRepository) ListConfigured(
 	ctx context.Context,
-	req *repositories.ListCarrierIntelTenantsRequest,
+	req *carrierintelports.ListCarrierIntelTenantsRequest,
 ) ([]*carrierintel.CarrierIntelControl, error) {
 	ctx = dbscope.WithSystem(ctx, "list organizations with carrier intelligence configured")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carrierintel.CarrierIntelControl, error) {

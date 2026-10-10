@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/uptrace/bun"
@@ -28,7 +28,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.WorkerEmploymentEventRepository {
+func New(p Params) workerports.WorkerEmploymentEventRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.worker-employment-event-repository"),
@@ -37,7 +37,7 @@ func New(p Params) repositories.WorkerEmploymentEventRepository {
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListWorkerEmploymentEventsRequest,
+	req *workerports.ListWorkerEmploymentEventsRequest,
 ) ([]*worker.WorkerEmploymentEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerEmploymentEvent, error) {
 		cols := buncolgen.WorkerEmploymentEventColumns
@@ -83,7 +83,7 @@ func (r *repository) List(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req *repositories.GetWorkerEmploymentEventByIDRequest,
+	req *workerports.GetWorkerEmploymentEventByIDRequest,
 ) (*worker.WorkerEmploymentEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerEmploymentEvent, error) {
 		entity := new(worker.WorkerEmploymentEvent)

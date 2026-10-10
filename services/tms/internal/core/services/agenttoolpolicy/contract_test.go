@@ -5,10 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/deskcase"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy/registered"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -22,7 +22,7 @@ func buildRegistered(t *testing.T) registered.Tools {
 	return tools
 }
 
-func registeredPolicy(t *testing.T, name string) serviceports.ToolPolicy {
+func registeredPolicy(t *testing.T, name string) agentports.ToolPolicy {
 	t.Helper()
 
 	tools := buildRegistered(t)
@@ -38,7 +38,7 @@ func registeredPolicy(t *testing.T, name string) serviceports.ToolPolicy {
 	}
 	t.Fatalf("%q is not a registered tool", name)
 
-	return serviceports.ToolPolicy{}
+	return agentports.ToolPolicy{}
 }
 
 /*

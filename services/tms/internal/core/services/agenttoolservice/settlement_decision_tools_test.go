@@ -10,10 +10,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/settlementshared"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/providertest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -28,7 +29,7 @@ type fakeSettlementBook[E any] struct {
 	plan      func(req *settlementshared.ActionRequest) *settlementshared.ActionPlan[*E]
 	planned   *settlementshared.ActionRequest
 	performed *settlementshared.ActionRequest
-	actor     *serviceports.RequestActor
+	actor     *permissionports.RequestActor
 	locked    bool
 }
 
@@ -44,7 +45,7 @@ func (f *fakeSettlementBook[E]) PlanAction(
 func (f *fakeSettlementBook[E]) Perform(
 	_ context.Context,
 	req *settlementshared.ActionRequest,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*E, error) {
 	if f.locked {
 		return nil, errPerformedDuringPreview
@@ -55,10 +56,10 @@ func (f *fakeSettlementBook[E]) Perform(
 	return f.plan(req).After, nil
 }
 
-func buildTool(t *testing.T, provider any) serviceports.AgentTool {
+func buildTool(t *testing.T, provider any) agentports.AgentTool {
 	t.Helper()
 
-	tool, ok := providertest.Build(t, provider, nil).(serviceports.AgentTool)
+	tool, ok := providertest.Build(t, provider, nil).(agentports.AgentTool)
 	require.Truef(t, ok, "%T does not build a tool", provider)
 
 	return tool
@@ -137,16 +138,16 @@ func driverPlanner(
 	}
 }
 
-func settlementTool(t *testing.T, provider any, book any) serviceports.AgentTool {
+func settlementTool(t *testing.T, provider any, book any) agentports.AgentTool {
 	t.Helper()
 
 	switch build := provider.(type) {
-	case func(*driversettlementservice.Service) serviceports.AgentTool:
+	case func(*driversettlementservice.Service) agentports.AgentTool:
 		tool := build(nil).(*settlementDecisionTool[driversettlement.Settlement])
 		tool.book = book.(settlementBook[driversettlement.Settlement])
 
 		return tool
-	case func(*carriersettlementservice.Service) serviceports.AgentTool:
+	case func(*carriersettlementservice.Service) agentports.AgentTool:
 		tool := build(nil).(*settlementDecisionTool[carriersettlement.CarrierSettlement])
 		tool.book = book.(settlementBook[carriersettlement.CarrierSettlement])
 
@@ -207,7 +208,7 @@ func TestSettlementDecisions_MoneyAndFinalOnesAreAPersonsDecision(t *testing.T) 
 	driverPost := buildTool(t, providePostDriverSettlementTool).Policy()
 	assert.True(t, driverPost.HasEgress(agent.EgressDriverVisible))
 	require.NotNil(t, driverPost.Classify)
-	assert.Equal(t, agent.EgressMoney, driverPost.Classify(serviceports.ToolExecuteParams{}).Egress)
+	assert.Equal(t, agent.EgressMoney, driverPost.Classify(agentports.ToolExecuteParams{}).Egress)
 	assert.Equal(t, permission.ResourceCarrierSettlement,
 		buildTool(t, provideVoidCarrierSettlementTool).Policy().Resource)
 	assert.NotNil(t, buildTool(t, provideRejectDriverSettlementTool).Policy().TaintHold)
@@ -234,7 +235,7 @@ func TestApproveDriverSettlement_RunsOnlyFromAPersonsApproval(t *testing.T) {
 	assert.Equal(t, params.Actor, book.actor)
 
 	agentParams := executeParams(map[string]any{paramSettlementID: entity.ID.String()})
-	agentParams.Actor.PrincipalType = serviceports.PrincipalTypeAgent
+	agentParams.Actor.PrincipalType = permissionports.PrincipalTypeAgent
 	agentParams.ProposalID = pulid.MustNew("ap_")
 	require.ErrorIs(t, tool.Execute(t.Context(), agentParams), ErrAgentCannotApprove)
 }
@@ -248,13 +249,13 @@ func TestSubmitDriverSettlement_RunsWithoutAProposal(t *testing.T) {
 	tool := settlementTool(t, provideSubmitDriverSettlementTool, book)
 	params := executeParams(map[string]any{paramSettlementID: entity.ID.String()})
 
-	require.NoError(t, tool.(serviceports.ToolValidator).Validate(t.Context(), params))
+	require.NoError(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.Equal(t, settlementshared.ActionSubmit, book.performed.Action)
 
-	target, ok := tool.(serviceports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
-	assert.Equal(t, serviceports.ToolTarget{
+	assert.Equal(t, agentports.ToolTarget{
 		Resource: permission.ResourceDriverSettlement,
 		ID:       entity.ID,
 	}, target)
@@ -282,7 +283,7 @@ func TestPostDriverSettlement_PreviewShowsTheStatusMoneyAndJournal(t *testing.T)
 	tool := settlementTool(t, providePostDriverSettlementTool, book)
 	params := executeParams(map[string]any{paramSettlementID: entity.ID.String()})
 
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 
 	assert.Empty(t, preview.Warnings)
@@ -317,12 +318,12 @@ func TestSettlementDecision_ARefusalIsAWouldFail(t *testing.T) {
 	tool := settlementTool(t, provideApproveDriverSettlementTool, book)
 	params := executeParams(map[string]any{paramSettlementID: entity.ID.String()})
 
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	requireWarning(t, preview, agent.PreviewWarningWouldFail)
 	assert.Empty(t, preview.Changes)
 
-	err = tool.(serviceports.ToolValidator).Validate(t.Context(), params)
+	err = tool.(agentports.ToolValidator).Validate(t.Context(), params)
 	require.Error(t, err)
 	assert.True(t, errortypes.IsError(err))
 }
@@ -349,7 +350,7 @@ func TestRejectDriverSettlement_NeedsABoundedReason(t *testing.T) {
 		paramSettlementID:     entity.ID.String(),
 		paramSettlementReason: "  Detention line is doubled  ",
 	})
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	assert.Equal(t, "Draft", fieldByPath(t, previewChange(t, preview, 0), "status").After)
 
@@ -426,7 +427,7 @@ func TestAddDriverSettlementAdjustment_PreviewsTheNewNet(t *testing.T) {
 		paramAdjustmentAmount:      "-50.00",
 		paramPayCodeID:             payCode.String(),
 	})
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	change := previewChange(t, preview, 0)
 	require.NotNil(t, change.Money)

@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -15,7 +15,7 @@ import (
 // hoursBudgets answers only the business-hours question; the runtime asks
 // nothing else of it in these tests.
 type hoursBudgets struct {
-	serviceports.AgentBudgetService
+	agentports.AgentBudgetService
 
 	within bool
 }
@@ -26,9 +26,9 @@ func (b hoursBudgets) WithinBusinessHours(context.Context, *agentdefinition.Defi
 
 func (b hoursBudgets) CheckTool(
 	context.Context,
-	serviceports.CheckToolBudgetRequest,
-) (serviceports.BudgetRefusal, error) {
-	return serviceports.BudgetRefusal{}, nil
+	agentports.CheckToolBudgetRequest,
+) (agentports.BudgetRefusal, error) {
+	return agentports.BudgetRefusal{}, nil
 }
 
 func batchSchema() map[string]any {
@@ -66,10 +66,10 @@ func runOneCall(
 	t *testing.T,
 	rt *Service,
 	definition *agentdefinition.Definition,
-) *serviceports.RunResult {
+) *agentports.RunResult {
 	t.Helper()
 
-	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+	result, err := rt.Run(t.Context(), &agentports.RunRequest{
 		Definition: definition,
 		Actor:      testActor(),
 		Input:      "approve these",
@@ -120,12 +120,12 @@ func TestRun_RefusesAChangeBiggerThanTheAgentsLargest(t *testing.T) {
 
 	tool := actionTool("approve_billing_items", agent.TierAutoExecute, nil)
 	tool.Schema = batchSchema()
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		toolTurn("approve_billing_items", map[string]any{"billingQueueItemIds": ids(12)}),
 		textTurn("I will split it."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []serviceports.AgentTool{tool}}, nil)
+		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
 	definition := autoChangeDefinition("approve_billing_items")
 	definition.MaxChangeItems = 10
 
@@ -143,12 +143,12 @@ func TestRun_AChangeWithinTheLimitRuns(t *testing.T) {
 
 	tool := actionTool("approve_billing_items", agent.TierAutoExecute, nil)
 	tool.Schema = batchSchema()
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		toolTurn("approve_billing_items", map[string]any{"billingQueueItemIds": ids(10)}),
 		textTurn("Done."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []serviceports.AgentTool{tool}}, nil)
+		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
 	definition := autoChangeDefinition("approve_billing_items")
 	definition.MaxChangeItems = 10
 
@@ -165,12 +165,12 @@ func TestRun_HoldsAnAutomaticChangeOutsideBusinessHours(t *testing.T) {
 	t.Parallel()
 
 	tool := actionTool("assign_move", agent.TierAutoExecute, nil)
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		toolTurn("assign_move", map[string]any{"moveId": "mv_1"}),
 		textTurn("It is waiting for you."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []serviceports.AgentTool{tool}}, nil)
+		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
 	rt.budgets = hoursBudgets{within: false}
 	definition := autoChangeDefinition("assign_move")
 	definition.BusinessHoursOnly = true
@@ -189,12 +189,12 @@ func TestRun_RunsAnAutomaticChangeInsideBusinessHours(t *testing.T) {
 	t.Parallel()
 
 	tool := actionTool("assign_move", agent.TierAutoExecute, nil)
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		toolTurn("assign_move", map[string]any{"moveId": "mv_1"}),
 		textTurn("Assigned."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []serviceports.AgentTool{tool}}, nil)
+		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
 	rt.budgets = hoursBudgets{within: true}
 	definition := autoChangeDefinition("assign_move")
 	definition.BusinessHoursOnly = true

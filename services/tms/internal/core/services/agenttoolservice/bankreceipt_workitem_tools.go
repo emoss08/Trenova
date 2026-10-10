@@ -8,10 +8,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/bankreceiptworkitemservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptworkitemports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -39,23 +41,23 @@ var (
 type workItemRouter interface {
 	PlanAssign(
 		ctx context.Context,
-		req *serviceports.AssignBankReceiptWorkItemRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.BankReceiptWorkItemChange, error)
+		req *bankreceiptworkitemports.AssignBankReceiptWorkItemRequest,
+		actor *permissionports.RequestActor,
+	) (*bankreceiptworkitemports.BankReceiptWorkItemChange, error)
 	Assign(
 		ctx context.Context,
-		req *serviceports.AssignBankReceiptWorkItemRequest,
-		actor *serviceports.RequestActor,
+		req *bankreceiptworkitemports.AssignBankReceiptWorkItemRequest,
+		actor *permissionports.RequestActor,
 	) (*bankreceiptworkitem.WorkItem, error)
 	PlanStartReview(
 		ctx context.Context,
-		req *serviceports.GetBankReceiptWorkItemRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.BankReceiptWorkItemChange, error)
+		req *bankreceiptworkitemports.GetBankReceiptWorkItemRequest,
+		actor *permissionports.RequestActor,
+	) (*bankreceiptworkitemports.BankReceiptWorkItemChange, error)
 	StartReview(
 		ctx context.Context,
-		req *serviceports.GetBankReceiptWorkItemRequest,
-		actor *serviceports.RequestActor,
+		req *bankreceiptworkitemports.GetBankReceiptWorkItemRequest,
+		actor *permissionports.RequestActor,
 	) (*bankreceiptworkitem.WorkItem, error)
 }
 
@@ -65,10 +67,10 @@ type workItemRoute struct {
 	move     workItemMove
 	id       pulid.ID
 	assignee pulid.ID
-	params   *serviceports.ToolExecuteParams
+	params   *agentports.ToolExecuteParams
 }
 
-func workItemRouteFrom(params *serviceports.ToolExecuteParams) (*workItemRoute, error) {
+func workItemRouteFrom(params *agentports.ToolExecuteParams) (*workItemRoute, error) {
 	id, err := requirePulid(params.Params, paramWorkItemID)
 	if err != nil {
 		return nil, err
@@ -98,17 +100,17 @@ func workItemRouteFrom(params *serviceports.ToolExecuteParams) (*workItemRoute, 
 func (r *workItemRoute) plan(
 	ctx context.Context,
 	items workItemRouter,
-) (*serviceports.BankReceiptWorkItemChange, error) {
+) (*bankreceiptworkitemports.BankReceiptWorkItemChange, error) {
 	tenant := tenantFrom(*r.params)
 	if r.move == workItemAssign {
-		return items.PlanAssign(ctx, &serviceports.AssignBankReceiptWorkItemRequest{
+		return items.PlanAssign(ctx, &bankreceiptworkitemports.AssignBankReceiptWorkItemRequest{
 			WorkItemID:       r.id,
 			AssignedToUserID: r.assignee,
 			TenantInfo:       tenant,
 		}, r.params.Actor)
 	}
 
-	return items.PlanStartReview(ctx, &serviceports.GetBankReceiptWorkItemRequest{
+	return items.PlanStartReview(ctx, &bankreceiptworkitemports.GetBankReceiptWorkItemRequest{
 		WorkItemID: r.id,
 		TenantInfo: tenant,
 	}, r.params.Actor)
@@ -117,7 +119,7 @@ func (r *workItemRoute) plan(
 func (r *workItemRoute) run(ctx context.Context, items workItemRouter) error {
 	tenant := tenantFrom(*r.params)
 	if r.move == workItemAssign {
-		_, err := items.Assign(ctx, &serviceports.AssignBankReceiptWorkItemRequest{
+		_, err := items.Assign(ctx, &bankreceiptworkitemports.AssignBankReceiptWorkItemRequest{
 			WorkItemID:       r.id,
 			AssignedToUserID: r.assignee,
 			TenantInfo:       tenant,
@@ -126,7 +128,7 @@ func (r *workItemRoute) run(ctx context.Context, items workItemRouter) error {
 		return err
 	}
 
-	_, err := items.StartReview(ctx, &serviceports.GetBankReceiptWorkItemRequest{
+	_, err := items.StartReview(ctx, &bankreceiptworkitemports.GetBankReceiptWorkItemRequest{
 		WorkItemID: r.id,
 		TenantInfo: tenant,
 	}, r.params.Actor)
@@ -134,7 +136,7 @@ func (r *workItemRoute) run(ctx context.Context, items workItemRouter) error {
 	return err
 }
 
-func newTriageBankReceiptWorkItemTool(items workItemRouter) serviceports.AgentTool {
+func newTriageBankReceiptWorkItemTool(items workItemRouter) agentports.AgentTool {
 	return newReceivableTool(&receivableSpec{
 		name:   "triage_bank_receipt_work_item",
 		recipe: []string{"get_bank_receipt", "triage_bank_receipt_work_item"},
@@ -165,16 +167,16 @@ func newTriageBankReceiptWorkItemTool(items workItemRouter) serviceports.AgentTo
 			),
 		},
 		required: []string{paramWorkItemID, paramWorkItemMove},
-		target: func(params map[string]any) (serviceports.ToolTarget, bool) {
+		target: func(params map[string]any) (agentports.ToolTarget, bool) {
 			return targetOf(params, paramWorkItemID, permission.ResourceBankReceiptWorkItem)
 		},
-	}, receivablePlan[*workItemRoute, *serviceports.BankReceiptWorkItemChange]{
+	}, receivablePlan[*workItemRoute, *bankreceiptworkitemports.BankReceiptWorkItemChange]{
 		request: workItemRouteFrom,
 		plan: func(
 			ctx context.Context,
 			route *workItemRoute,
-			_ *serviceports.ToolExecuteParams,
-		) (*serviceports.BankReceiptWorkItemChange, error) {
+			_ *agentports.ToolExecuteParams,
+		) (*bankreceiptworkitemports.BankReceiptWorkItemChange, error) {
 			return route.plan(ctx, items)
 		},
 		refused: func(route *workItemRoute) string {
@@ -188,7 +190,7 @@ func newTriageBankReceiptWorkItemTool(items workItemRouter) serviceports.AgentTo
 		run: func(
 			ctx context.Context,
 			route *workItemRoute,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			return nil, route.run(ctx, items)
 		},
@@ -197,7 +199,7 @@ func newTriageBankReceiptWorkItemTool(items workItemRouter) serviceports.AgentTo
 
 func renderWorkItemRoute(
 	route *workItemRoute,
-	change *serviceports.BankReceiptWorkItemChange,
+	change *bankreceiptworkitemports.BankReceiptWorkItemChange,
 ) (*agent.ToolPreview, error) {
 	recorded, err := toolpreview.Changed(
 		toolpreview.Record{
@@ -235,6 +237,6 @@ func renderWorkItemRoute(
 
 func provideTriageBankReceiptWorkItemTool(
 	items *bankreceiptworkitemservice.Service,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newTriageBankReceiptWorkItemTool(items)
 }

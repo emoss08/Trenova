@@ -8,8 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentextension"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,7 +22,7 @@ type inboundDesk struct {
 
 func (d *inboundDesk) GetByID(
 	_ context.Context,
-	req repositories.GetInboundMessageByIDRequest,
+	req inboundmessageports.GetInboundMessageByIDRequest,
 ) (*inboundmessage.InboundMessage, error) {
 	d.rec.read(ReadInboundBox, "GetByID", req.TenantInfo)
 
@@ -42,14 +43,14 @@ func (d *inboundDesk) GetByID(
 }
 
 type inboundMessageRepository struct {
-	repositories.InboundMessageRepository
+	inboundmessageports.InboundMessageRepository
 
 	desk *inboundDesk
 }
 
 func (r *inboundMessageRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetInboundMessageByIDRequest,
+	req inboundmessageports.GetInboundMessageByIDRequest,
 ) (*inboundmessage.InboundMessage, error) {
 	return r.desk.GetByID(ctx, req)
 }
@@ -64,7 +65,7 @@ func (d *inboundDesk) Link(
 	ctx context.Context,
 	req inboundmessageservice.LinkRequest,
 ) (*inboundmessage.InboundMessage, error) {
-	return d.GetByID(ctx, repositories.GetInboundMessageByIDRequest{
+	return d.GetByID(ctx, inboundmessageports.GetInboundMessageByIDRequest{
 		ID:         req.MessageID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -74,14 +75,14 @@ func (d *inboundDesk) Review(
 	ctx context.Context,
 	req inboundmessageservice.ReviewRequest,
 ) (*inboundmessage.InboundMessage, error) {
-	return d.GetByID(ctx, repositories.GetInboundMessageByIDRequest{
+	return d.GetByID(ctx, inboundmessageports.GetInboundMessageByIDRequest{
 		ID:         req.MessageID,
 		TenantInfo: req.TenantInfo,
 	})
 }
 
 type memoryRepository struct {
-	repositories.AgentMemoryRepository
+	agentports.AgentMemoryRepository
 
 	rec      *recorder
 	mu       sync.Mutex
@@ -110,7 +111,7 @@ func (r *memoryRepository) Create(_ context.Context, entity *agent.Memory) (*age
 
 func (r *memoryRepository) FindActive(
 	_ context.Context,
-	req repositories.FindActiveAgentMemoryRequest,
+	req agentports.FindActiveAgentMemoryRequest,
 ) (*agent.Memory, error) {
 	r.rec.read(ReadMemoryRepo, "FindActive", req.TenantInfo)
 
@@ -135,7 +136,7 @@ func (r *memoryRepository) FindActive(
 // which tenant was touched.
 func (r *memoryRepository) MarkUsed(
 	_ context.Context,
-	req repositories.MarkAgentMemoriesUsedRequest,
+	req agentports.MarkAgentMemoriesUsedRequest,
 ) error {
 	r.rec.read(ReadMemoryRepo, "MarkUsed", req.TenantInfo)
 
@@ -147,7 +148,7 @@ func (r *memoryRepository) MarkUsed(
 // as they do by default.
 func (r *memoryRepository) GetPreference(
 	_ context.Context,
-	req repositories.GetAgentMemoryPreferenceRequest,
+	req agentports.GetAgentMemoryPreferenceRequest,
 ) (*agent.MemoryPreference, error) {
 	r.rec.read(ReadMemoryRepo, "GetPreference", req.TenantInfo)
 
@@ -156,7 +157,7 @@ func (r *memoryRepository) GetPreference(
 
 func (r *memoryRepository) GetByID(
 	_ context.Context,
-	req repositories.GetAgentMemoryByIDRequest,
+	req agentports.GetAgentMemoryByIDRequest,
 ) (*agent.Memory, error) {
 	r.rec.read(ReadMemoryRepo, "GetByID", req.TenantInfo)
 
@@ -174,7 +175,7 @@ func (r *memoryRepository) GetByID(
 
 func (r *memoryRepository) Search(
 	_ context.Context,
-	req repositories.SearchAgentMemoriesRequest,
+	req agentports.SearchAgentMemoriesRequest,
 ) ([]*agent.Memory, error) {
 	r.rec.read(ReadMemoryRepo, "Search", req.TenantInfo)
 
@@ -183,7 +184,7 @@ func (r *memoryRepository) Search(
 
 func (r *memoryRepository) ListActive(
 	_ context.Context,
-	req repositories.ListActiveAgentMemoriesRequest,
+	req agentports.ListActiveAgentMemoriesRequest,
 ) ([]*agent.Memory, error) {
 	r.rec.read(ReadMemoryRepo, "ListActive", req.TenantInfo)
 
@@ -195,14 +196,14 @@ func sameTenant(memory *agent.Memory, tenant pagination.TenantInfo) bool {
 }
 
 type runRepository struct {
-	repositories.AgentRunRepository
+	agentports.AgentRunRepository
 
 	rec *recorder
 }
 
 func (r *runRepository) GetByID(
 	_ context.Context,
-	req repositories.GetAgentRunByIDRequest,
+	req agentports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	tenant := pagination.TenantInfo{}
 	if req.TenantInfo != nil {

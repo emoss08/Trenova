@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -47,7 +47,7 @@ func (s *Service) Enroll(
 		zap.String("workerId", req.WorkerID.String()),
 	)
 
-	plan, err := s.repo.GetPlanByID(ctx, &repositories.GetBenefitPlanByIDRequest{
+	plan, err := s.repo.GetPlanByID(ctx, &driverpayports.GetBenefitPlanByIDRequest{
 		ID:         req.PlanID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -182,7 +182,7 @@ func (s *Service) EndEnrollment(
 	ctx context.Context,
 	req *EndEnrollmentRequest,
 ) (*driverpay.WorkerBenefitEnrollment, error) {
-	original, err := s.repo.GetEnrollmentByID(ctx, &repositories.GetBenefitEnrollmentByIDRequest{
+	original, err := s.repo.GetEnrollmentByID(ctx, &driverpayports.GetBenefitEnrollmentByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -253,7 +253,7 @@ func (s *Service) closeContribution(
 
 	deduction, err := s.deductionRepo.GetByID(
 		ctx,
-		repositories.GetRecurringDeductionByIDRequest{
+		driverpayports.GetRecurringDeductionByIDRequest{
 			ID:         enrollment.RecurringDeductionID,
 			TenantInfo: tenantInfo,
 		},
@@ -312,7 +312,7 @@ func (s *Service) TotalCompensation(
 	ctx context.Context,
 	req *TotalCompensationRequest,
 ) (*TotalCompensation, error) {
-	enrollments, err := s.repo.ListEnrollments(ctx, &repositories.ListBenefitEnrollmentsRequest{
+	enrollments, err := s.repo.ListEnrollments(ctx, &driverpayports.ListBenefitEnrollmentsRequest{
 		TenantInfo:  req.TenantInfo,
 		WorkerID:    req.WorkerID,
 		OpenOnly:    true,

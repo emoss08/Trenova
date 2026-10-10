@@ -6,8 +6,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/extractionrollout"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -16,8 +18,8 @@ import (
 
 func (s *Service) Update(
 	ctx context.Context,
-	req *services.UpdateExtractionRolloutRequest,
-	actor *services.RequestActor,
+	req *extractionrolloutports.UpdateExtractionRolloutRequest,
+	actor *permissionports.RequestActor,
 ) (*extractionrollout.ExtractionRollout, error) {
 	current, err := s.Get(ctx, req.TenantInfo)
 	if err != nil {
@@ -63,7 +65,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	s.logAction(actor, &services.LogActionParams{
+	s.logAction(actor, &auditports.LogActionParams{
 		Resource:       permission.ResourceAIProvider,
 		ResourceID:     saved.ID.String(),
 		Operation:      permission.OpUpdate,
@@ -82,7 +84,7 @@ func (s *Service) checkCandidate(
 	providerID pulid.ID,
 	enabled bool,
 ) error {
-	provider, err := s.providers.GetByID(ctx, repositories.GetAIProviderByIDRequest{
+	provider, err := s.providers.GetByID(ctx, agentports.GetAIProviderByIDRequest{
 		ID:         providerID,
 		TenantInfo: tenant,
 	})

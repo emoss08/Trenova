@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate/starters"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/pkg/templateengine"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -26,9 +26,9 @@ type stubInliner struct {
 
 func (s *stubInliner) InlineAssets(
 	_ context.Context,
-	req *services.AssetInlineRequest,
-) (*services.AssetInlineResult, error) {
-	return &services.AssetInlineResult{HTML: req.HTML}, nil
+	req *documenttemplateports.AssetInlineRequest,
+) (*documenttemplateports.AssetInlineResult, error) {
+	return &documenttemplateports.AssetInlineResult{HTML: req.HTML}, nil
 }
 
 func (s *stubInliner) ResolveImageDataURI(_ context.Context, src string) (string, error) {
@@ -37,7 +37,7 @@ func (s *stubInliner) ResolveImageDataURI(_ context.Context, src string) (string
 	return s.dataURI, s.err
 }
 
-var _ services.AssetInliner = (*stubInliner)(nil)
+var _ documenttemplateports.AssetInliner = (*stubInliner)(nil)
 
 // The organization logo is the one field an organization controls that lands in
 // a template.URL slot, where html/template will not escape it. It must therefore

@@ -7,7 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/core/domain/ifta"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/fuelimport"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -16,7 +18,7 @@ import (
 
 func (s *Service) ListPurchases(
 	ctx context.Context,
-	req *repositories.ListFuelPurchasesRequest,
+	req *fuelpurchaseports.ListFuelPurchasesRequest,
 ) (*pagination.CursorListResult[*fuelpurchase.FuelPurchase], error) {
 	return s.repo.ListPurchases(ctx, req)
 }
@@ -26,7 +28,7 @@ func (s *Service) GetPurchase(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*fuelpurchase.FuelPurchase, error) {
-	return s.repo.GetPurchaseByID(ctx, &repositories.GetFuelPurchaseByIDRequest{
+	return s.repo.GetPurchaseByID(ctx, &fuelpurchaseports.GetFuelPurchaseByIDRequest{
 		ID:                  id,
 		TenantInfo:          tenantInfo,
 		IncludeTractor:      true,
@@ -123,7 +125,7 @@ func (s *Service) DeletePurchase(ctx context.Context, req *DeletePurchaseRequest
 		return err
 	}
 
-	if err = s.repo.DeletePurchase(ctx, &repositories.DeleteFuelPurchaseRequest{
+	if err = s.repo.DeletePurchase(ctx, &fuelpurchaseports.DeleteFuelPurchaseRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	}); err != nil {
@@ -159,7 +161,7 @@ func (s *Service) resolvePurchaseReferences(
 			"Tractor is required",
 		)
 	}
-	if _, err := s.tractorRepo.GetByID(ctx, repositories.GetTractorByIDRequest{
+	if _, err := s.tractorRepo.GetByID(ctx, tractorports.GetTractorByIDRequest{
 		ID:         purchase.TractorID,
 		TenantInfo: tenantInfo,
 	}); err != nil {
@@ -167,7 +169,7 @@ func (s *Service) resolvePurchaseReferences(
 	}
 
 	if purchase.WorkerID != nil && !purchase.WorkerID.IsNil() {
-		if _, err := s.workerRepo.GetByID(ctx, repositories.GetWorkerByIDRequest{
+		if _, err := s.workerRepo.GetByID(ctx, workerports.GetWorkerByIDRequest{
 			ID:         *purchase.WorkerID,
 			TenantInfo: tenantInfo,
 		}); err != nil {
@@ -243,7 +245,7 @@ func (s *Service) resolvePurchaseCard(
 	purchase *fuelpurchase.FuelPurchase,
 ) error {
 	if purchase.FuelCardID != nil && !purchase.FuelCardID.IsNil() {
-		card, err := s.repo.GetCardByID(ctx, &repositories.GetFuelCardByIDRequest{
+		card, err := s.repo.GetCardByID(ctx, &fuelpurchaseports.GetFuelCardByIDRequest{
 			ID:         *purchase.FuelCardID,
 			TenantInfo: tenantInfo,
 		})
@@ -268,7 +270,7 @@ func (s *Service) resolvePurchaseCard(
 		return nil
 	}
 
-	card, err := s.repo.FindCardByLastFour(ctx, &repositories.FindFuelCardByLastFourRequest{
+	card, err := s.repo.FindCardByLastFour(ctx, &fuelpurchaseports.FindFuelCardByLastFourRequest{
 		TenantInfo: tenantInfo,
 		LastFour:   purchase.CardLastFour,
 	})

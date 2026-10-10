@@ -12,8 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/workerinjuryservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -143,7 +143,7 @@ func (r *QueryResolver) WorkerInjuries(ctx context.Context, workerID string) ([]
 			"Worker is invalid",
 		)
 	}
-	return r.WorkerInjuryService.ListInjuries(ctx, &repositories.ListWorkerInjuriesRequest{
+	return r.WorkerInjuryService.ListInjuries(ctx, &workerports.ListWorkerInjuriesRequest{
 		TenantInfo:      base.TenantInfo(authCtx),
 		WorkerID:        id,
 		IncludeDocument: true,

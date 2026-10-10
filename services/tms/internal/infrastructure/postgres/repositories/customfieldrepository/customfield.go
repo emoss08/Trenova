@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/customfield"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/customfieldports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -29,7 +29,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.CustomFieldDefinitionRepository {
+func New(p Params) customfieldports.CustomFieldDefinitionRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.custom-field-definition-repository"),
@@ -38,7 +38,7 @@ func New(p Params) repositories.CustomFieldDefinitionRepository {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListCustomFieldDefinitionsRequest,
+	req *customfieldports.ListCustomFieldDefinitionsRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
@@ -56,7 +56,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListCustomFieldDefinitionsRequest,
+	req *customfieldports.ListCustomFieldDefinitionsRequest,
 ) (*pagination.ListResult[*customfield.CustomFieldDefinition], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*customfield.CustomFieldDefinition], error) {
 		log := r.l.With(
@@ -87,7 +87,7 @@ func (r *repository) List(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListCustomFieldDefinitionConnectionRequest,
+	req *customfieldports.ListCustomFieldDefinitionConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -100,7 +100,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListCustomFieldDefinitionConnectionRequest,
+	req *customfieldports.ListCustomFieldDefinitionConnectionRequest,
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -123,7 +123,7 @@ func applyCustomFieldDefinitionColumns(
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListCustomFieldDefinitionConnectionRequest,
+	req *customfieldports.ListCustomFieldDefinitionConnectionRequest,
 ) (*pagination.CursorListResult[*customfield.CustomFieldDefinition], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*customfield.CustomFieldDefinition], error) {
 		log := r.l.With(
@@ -180,7 +180,7 @@ func (r *repository) ListConnection(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetCustomFieldDefinitionByIDRequest,
+	req customfieldports.GetCustomFieldDefinitionByIDRequest,
 ) (*customfield.CustomFieldDefinition, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*customfield.CustomFieldDefinition, error) {
 		log := r.l.With(
@@ -209,7 +209,7 @@ func (r *repository) GetByID(
 
 func (r *repository) GetActiveByResourceType(
 	ctx context.Context,
-	req repositories.GetActiveByResourceTypeRequest,
+	req customfieldports.GetActiveByResourceTypeRequest,
 ) ([]*customfield.CustomFieldDefinition, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*customfield.CustomFieldDefinition, error) {
 		log := r.l.With(
@@ -297,7 +297,7 @@ func (r *repository) Update(
 
 func (r *repository) Delete(
 	ctx context.Context,
-	req repositories.GetCustomFieldDefinitionByIDRequest,
+	req customfieldports.GetCustomFieldDefinitionByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		log := r.l.With(
@@ -325,7 +325,7 @@ func (r *repository) Delete(
 
 func (r *repository) CountByResourceType(
 	ctx context.Context,
-	req repositories.CountByResourceTypeRequest,
+	req customfieldports.CountByResourceTypeRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		log := r.l.With(

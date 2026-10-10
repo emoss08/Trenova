@@ -10,8 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/accountingcontrolpolicyservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/testutil/agenteventstest"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -109,7 +109,7 @@ func newHarness(t *testing.T, opts ...harnessOption) *harness {
 	}
 	h.conn = h.addConnection(syncingConnection)
 
-	var dispatcher services.AccountingSyncDispatcher = h.dispatcher
+	var dispatcher accountingsyncports.AccountingSyncDispatcher = h.dispatcher
 	if cfg.withoutDispatcher {
 		dispatcher = nil
 	}
@@ -286,7 +286,7 @@ func chargeLine(chargeID pulid.ID, amount string) *invoice.InvoiceLine {
 	}
 }
 
-func (h *harness) enqueue(t *testing.T, req *services.AccountingSyncEnqueueRequest) {
+func (h *harness) enqueue(t *testing.T, req *accountingsyncports.AccountingSyncEnqueueRequest) {
 	t.Helper()
 	req.TenantInfo = h.tenant
 	require.NoError(t, h.enqueuer.Enqueue(t.Context(), req))
@@ -296,7 +296,7 @@ func (h *harness) enqueueInvoice(t *testing.T, inv *invoice.Invoice) *accounting
 	t.Helper()
 	require.NoError(t, h.enqueuer.Enqueue(
 		t.Context(),
-		services.InvoiceSyncRequest(inv, accountingsync.PostedSourceEvent(inv.BillType)),
+		accountingsyncports.InvoiceSyncRequest(inv, accountingsync.PostedSourceEvent(inv.BillType)),
 	))
 	return h.only(t, accountingsync.SyncObjectTypeForBill(inv.BillType), inv.ID, accountingsync.SyncOperationCreate)
 }
@@ -313,9 +313,9 @@ func (h *harness) only(
 	return found[0]
 }
 
-func (h *harness) drain(t *testing.T) *services.AccountingSyncDrainResult {
+func (h *harness) drain(t *testing.T) *accountingsyncports.AccountingSyncDrainResult {
 	t.Helper()
-	result, err := h.svc.Drain(t.Context(), &services.DrainAccountingSyncRequest{
+	result, err := h.svc.Drain(t.Context(), &accountingsyncports.DrainAccountingSyncRequest{
 		TenantInfo:   h.tenant,
 		ConnectionID: h.conn.ID,
 		Lease:        time.Minute,
@@ -325,7 +325,7 @@ func (h *harness) drain(t *testing.T) *services.AccountingSyncDrainResult {
 }
 
 func (h *harness) syncedInvoiceRecord(inv *invoice.Invoice, externalID string) *accountingsync.AccountingSyncRecord {
-	req := services.InvoiceSyncRequest(inv, accountingsync.PostedSourceEvent(inv.BillType))
+	req := accountingsyncports.InvoiceSyncRequest(inv, accountingsync.PostedSourceEvent(inv.BillType))
 	record := NewRecordFor(h.conn, req, inv.InvoiceDate)
 	record.MarkSynced(&accountingsync.SyncResult{ExternalID: externalID}, inv.InvoiceDate)
 	h.records.put(record)

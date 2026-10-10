@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -21,7 +21,7 @@ const (
 // for the same change: the record it touched, the principal the write was
 // audited as, and the event's time window. A decision is audited against its
 // proposal. Events that change nothing have no match.
-func CorrelationMatches(event *aiaudit.AIAuditEvent) []repositories.AuditEntryMatch {
+func CorrelationMatches(event *aiaudit.AIAuditEvent) []aiauditports.AuditEntryMatch {
 	if event == nil || event.WindowStart <= 0 {
 		return nil
 	}
@@ -43,9 +43,9 @@ func CorrelationMatches(event *aiaudit.AIAuditEvent) []repositories.AuditEntryMa
 	}
 
 	principals := correlationPrincipals(event)
-	matches := make([]repositories.AuditEntryMatch, 0, len(principals))
+	matches := make([]aiauditports.AuditEntryMatch, 0, len(principals))
 	for _, principal := range principals {
-		matches = append(matches, repositories.AuditEntryMatch{
+		matches = append(matches, aiauditports.AuditEntryMatch{
 			ResourceID:  resource,
 			PrincipalID: principal,
 			WindowStart: event.WindowStart,
@@ -64,14 +64,14 @@ func correlationPrincipals(event *aiaudit.AIAuditEvent) []pulid.ID {
 		return []pulid.ID{event.ActingUserID()}
 	case event.PrincipalType == aiaudit.PrincipalAgent:
 		agentID := pulid.ID(event.PrincipalID)
-		if agentID.IsNil() || agentID == serviceports.AgentPrincipalID {
+		if agentID.IsNil() || agentID == permissionports.AgentPrincipalID {
 			agentID = event.AgentDefinitionID
 		}
-		if agentID.IsNil() || agentID == serviceports.AgentPrincipalID {
-			return []pulid.ID{serviceports.AgentPrincipalID}
+		if agentID.IsNil() || agentID == permissionports.AgentPrincipalID {
+			return []pulid.ID{permissionports.AgentPrincipalID}
 		}
 
-		return []pulid.ID{agentID, serviceports.AgentPrincipalID}
+		return []pulid.ID{agentID, permissionports.AgentPrincipalID}
 	default:
 		return nil
 	}
@@ -86,14 +86,14 @@ func (m matchKey) holds(entry *audit.Entry) bool {
 
 type matchKey struct {
 	eventID pulid.ID
-	match   repositories.AuditEntryMatch
+	match   aiauditports.AuditEntryMatch
 }
 
 // CorrelationSource reads the audit log rows a set of matches names.
 type CorrelationSource interface {
 	ListCorrelatedAuditEntries(
 		ctx context.Context,
-		req *repositories.ListCorrelatedAuditEntriesRequest,
+		req *aiauditports.ListCorrelatedAuditEntriesRequest,
 	) ([]*audit.Entry, error)
 }
 
@@ -106,7 +106,7 @@ func Correlate(
 	events []*aiaudit.AIAuditEvent,
 ) (map[pulid.ID][]*audit.Entry, error) {
 	keys := make([]matchKey, 0, len(events))
-	matches := make([]repositories.AuditEntryMatch, 0, len(events))
+	matches := make([]aiauditports.AuditEntryMatch, 0, len(events))
 	for _, event := range events {
 		for _, match := range CorrelationMatches(event) {
 			keys = append(keys, matchKey{eventID: event.ID, match: match})
@@ -121,7 +121,7 @@ func Correlate(
 
 	entries, err := ledger.ListCorrelatedAuditEntries(
 		ctx,
-		&repositories.ListCorrelatedAuditEntriesRequest{
+		&aiauditports.ListCorrelatedAuditEntriesRequest{
 			TenantInfo: tenantInfo,
 			Matches:    matches,
 			Limit:      min(len(matches)*correlationPerEvent, maxCorrelationsPerPage),

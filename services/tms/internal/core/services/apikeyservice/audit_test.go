@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/apikey"
 	permissiondomain "github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/internal/testutil/securityaudittest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -36,9 +36,9 @@ func TestCreateAPIKeyRecordsTheCreation(t *testing.T) {
 		CreateWithPermissions(mock.Anything, mock.AnythingOfType("*apikey.Key"), mock.AnythingOfType("[]*apikey.Permission")).
 		Return(nil)
 
-	result, err := svc.CreateAPIKey(t.Context(), tenantInfo, &services.CreateAPIKeyRequest{
+	result, err := svc.CreateAPIKey(t.Context(), tenantInfo, &apikeyports.CreateAPIKeyRequest{
 		Name:        "Customer Sync",
-		Permissions: []services.APIKeyPermissionInput{newAllowedPermission()},
+		Permissions: []apikeyports.APIKeyPermissionInput{newAllowedPermission()},
 	}, creator)
 	require.NoError(t, err)
 
@@ -48,7 +48,7 @@ func TestCreateAPIKeyRecordsTheCreation(t *testing.T) {
 	assert.Equal(t, creator, change.Actor.UserID)
 	assert.Equal(t, tenantInfo.OrgID, change.OrganizationID)
 	assert.Nil(t, change.Before)
-	after, ok := change.After.(services.APIKeyResponse)
+	after, ok := change.After.(apikeyports.APIKeyResponse)
 	require.True(t, ok)
 	assert.Equal(t, result.KeyPrefix, after.KeyPrefix)
 	assert.NotContains(t, change.Metadata, "token")
@@ -105,7 +105,7 @@ func TestRotateAndRevokeAPIKeyRecordTheChange(t *testing.T) {
 			assert.Equal(t, tt.comment, change.Comment)
 			assert.Equal(t, key.ID.String(), change.ResourceID)
 			assert.Equal(t, tenantInfo.UserID, change.Actor.UserID)
-			before, ok := change.Before.(services.APIKeyResponse)
+			before, ok := change.Before.(apikeyports.APIKeyResponse)
 			require.True(t, ok)
 			assert.Equal(t, string(apikey.StatusActive), before.Status)
 			assert.NotNil(t, change.After)

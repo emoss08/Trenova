@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/selfserviceservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,7 +16,7 @@ import (
 )
 
 type fakeRepo struct {
-	repositories.SelfServiceRepository
+	workerports.SelfServiceRepository
 
 	policy     *worker.WorkerPolicy
 	policies   []*worker.WorkerPolicy
@@ -27,19 +27,19 @@ type fakeRepo struct {
 	request    *worker.WorkerProfileChangeRequest
 	created    *worker.WorkerProfileChangeRequest
 	updated    *worker.WorkerProfileChangeRequest
-	compliance []repositories.PolicyComplianceRow
+	compliance []workerports.PolicyComplianceRow
 }
 
 func (r *fakeRepo) GetPolicyByID(
 	_ context.Context,
-	_ *repositories.GetWorkerPolicyByIDRequest,
+	_ *workerports.GetWorkerPolicyByIDRequest,
 ) (*worker.WorkerPolicy, error) {
 	return r.policy, nil
 }
 
 func (r *fakeRepo) ListPolicies(
 	_ context.Context,
-	_ *repositories.ListWorkerPoliciesRequest,
+	_ *workerports.ListWorkerPoliciesRequest,
 ) ([]*worker.WorkerPolicy, error) {
 	return r.policies, nil
 }
@@ -63,7 +63,7 @@ func (r *fakeRepo) CountAcknowledgements(
 
 func (r *fakeRepo) ListAcknowledgements(
 	_ context.Context,
-	req *repositories.ListPolicyAcknowledgementsRequest,
+	req *workerports.ListPolicyAcknowledgementsRequest,
 ) ([]*worker.WorkerPolicyAcknowledgement, error) {
 	out := make([]*worker.WorkerPolicyAcknowledgement, 0, len(r.acks))
 	for _, ack := range r.acks {
@@ -89,21 +89,21 @@ func (r *fakeRepo) CreateAcknowledgement(
 
 func (r *fakeRepo) PolicyCompliance(
 	_ context.Context,
-	_ *repositories.PolicyComplianceRequest,
-) ([]repositories.PolicyComplianceRow, error) {
+	_ *workerports.PolicyComplianceRequest,
+) ([]workerports.PolicyComplianceRow, error) {
 	return r.compliance, nil
 }
 
 func (r *fakeRepo) ListChangeRequests(
 	_ context.Context,
-	_ *repositories.ListProfileChangeRequestsRequest,
+	_ *workerports.ListProfileChangeRequestsRequest,
 ) ([]*worker.WorkerProfileChangeRequest, error) {
 	return r.pending, nil
 }
 
 func (r *fakeRepo) GetChangeRequestByID(
 	_ context.Context,
-	_ *repositories.GetProfileChangeRequestByIDRequest,
+	_ *workerports.GetProfileChangeRequestByIDRequest,
 ) (*worker.WorkerProfileChangeRequest, error) {
 	return r.request, nil
 }
@@ -132,7 +132,7 @@ type fakeWorkers struct {
 
 func (f *fakeWorkers) GetByID(
 	_ context.Context,
-	_ repositories.GetWorkerByIDRequest,
+	_ workerports.GetWorkerByIDRequest,
 ) (*worker.Worker, error) {
 	return f.wrk, nil
 }
@@ -140,7 +140,7 @@ func (f *fakeWorkers) GetByID(
 func (f *fakeWorkers) Update(
 	_ context.Context,
 	entity *worker.Worker,
-	_ *services.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*worker.Worker, error) {
 	f.written = entity
 	return entity, nil
@@ -433,7 +433,7 @@ func TestPolicyCompliance_CountsBothSides(t *testing.T) {
 
 	repo := &fakeRepo{
 		policy: handbook(),
-		compliance: []repositories.PolicyComplianceRow{
+		compliance: []workerports.PolicyComplianceRow{
 			{WorkerID: "wrk_1", AcknowledgedAt: 1},
 			{WorkerID: "wrk_2"},
 			{WorkerID: "wrk_3"},

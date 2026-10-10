@@ -8,11 +8,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/settlementshared"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -60,7 +60,7 @@ func (f *fakeWorkerGenerator) PlanGenerateForWorker(
 func (f *fakeWorkerGenerator) GenerateOffCycle(
 	_ context.Context,
 	req *driversettlementservice.GenerateForWorkerRequest,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*driversettlement.Settlement, error) {
 	f.generated = req
 
@@ -155,7 +155,7 @@ func (f *fakeDriverBatch) PlanBatch(
 func (f *fakeDriverBatch) GenerateBatch(
 	_ context.Context,
 	req *driversettlementservice.GenerateBatchRequest,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*driversettlement.SettlementBatch, error) {
 	f.generated = req
 
@@ -170,7 +170,7 @@ func TestGenerateDriverSettlementBatch_PreviewsEachDriverStillToSettle(t *testin
 		ExistingBatch: &driversettlement.SettlementBatch{
 			Name: "Pay period ending Sep 7",
 		},
-		Workers: []*repositories.UnsettledWorkerSummary{
+		Workers: []*driversettlementports.UnsettledWorkerSummary{
 			{WorkerID: pulid.MustNew("wrk_"), WorkerName: "Ana Ruiz", EventCount: 4,
 				GrossAmountMinor: 250000},
 			{WorkerID: pulid.MustNew("wrk_"), WorkerName: "Settled", EventCount: 2,
@@ -217,7 +217,7 @@ func (f *fakeCarrierBatch) PlanBatch(
 func (f *fakeCarrierBatch) GenerateBatch(
 	context.Context,
 	*carriersettlementservice.GenerateBatchRequest,
-	*serviceports.RequestActor,
+	*permissionports.RequestActor,
 ) (*carriersettlement.CarrierSettlementBatch, error) {
 	return &carriersettlement.CarrierSettlementBatch{}, nil
 }
@@ -267,7 +267,7 @@ func (f *fakeInstantPayer) PlanPayWorkerNow(
 func (f *fakeInstantPayer) PayWorkerNow(
 	_ context.Context,
 	req *driversettlementservice.PayWorkerNowRequest,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*driversettlement.Settlement, error) {
 	f.paid = req
 

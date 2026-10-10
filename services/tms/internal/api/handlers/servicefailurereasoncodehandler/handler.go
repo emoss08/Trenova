@@ -8,8 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,13 +19,13 @@ import (
 type Params struct {
 	fx.In
 
-	Service              services.ServiceFailureReasonCodeService
+	Service              servicefailureports.ServiceFailureReasonCodeService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	service services.ServiceFailureReasonCodeService
+	service servicefailureports.ServiceFailureReasonCodeService
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
 }
@@ -126,7 +125,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*servicefailure.ReasonCode], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListServiceFailureReasonCodesRequest{
+				&servicefailureports.ListServiceFailureReasonCodesRequest{
 					Filter: req,
 				},
 			)
@@ -144,7 +143,7 @@ func (h *Handler) get(c *gin.Context) {
 
 	entity, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetServiceFailureReasonCodeByIDRequest{
+		servicefailureports.GetServiceFailureReasonCodeByIDRequest{
 			ID:         id,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -213,7 +212,7 @@ func (h *Handler) patch(c *gin.Context) {
 	}
 	entity, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetServiceFailureReasonCodeByIDRequest{
+		servicefailureports.GetServiceFailureReasonCodeByIDRequest{
 			ID:         id,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -283,7 +282,7 @@ func (h *Handler) toggleActive(c *gin.Context, active bool) {
 
 func (h *Handler) reorder(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
-	req := new(repositories.ReorderServiceFailureReasonCodesRequest)
+	req := new(servicefailureports.ReorderServiceFailureReasonCodesRequest)
 	req.TenantInfo = pagination.TenantInfo{
 		OrgID: authCtx.OrganizationID,
 		BuID:  authCtx.BusinessUnitID,
@@ -312,7 +311,7 @@ func (h *Handler) selectOptions(c *gin.Context) {
 		func() (*pagination.ListResult[*servicefailure.ReasonCode], error) {
 			return h.service.SelectOptions(
 				c.Request.Context(),
-				&repositories.ServiceFailureReasonCodeSelectOptionsRequest{
+				&servicefailureports.ServiceFailureReasonCodeSelectOptionsRequest{
 					SelectQueryRequest: req,
 					AppliesTo:          appliesTo,
 				},

@@ -6,9 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -38,7 +38,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.TenderRepository {
+func New(p Params) tenderports.TenderRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.tender-repository"),
@@ -91,7 +91,7 @@ func (r *repository) Create(ctx context.Context, entity *tender.Tender) (*tender
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetTenderByIDRequest,
+	req tenderports.GetTenderByIDRequest,
 ) (*tender.Tender, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tender.Tender, error) {
 		cols := buncolgen.TenderColumns
@@ -121,7 +121,7 @@ func (r *repository) GetByID(
 
 func (r *repository) GetLiveByMoveID(
 	ctx context.Context,
-	req repositories.GetLiveTenderByMoveRequest,
+	req tenderports.GetLiveTenderByMoveRequest,
 ) (*tender.Tender, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tender.Tender, error) {
 		cols := buncolgen.TenderColumns
@@ -153,7 +153,7 @@ func (r *repository) GetLiveByMoveID(
 
 func (r *repository) ListLiveByMoveIDs(
 	ctx context.Context,
-	req *repositories.ListLiveTendersByMovesRequest,
+	req *tenderports.ListLiveTendersByMovesRequest,
 ) ([]*tender.Tender, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*tender.Tender, error) {
 		if len(req.MoveIDs) == 0 {
@@ -186,7 +186,7 @@ func (r *repository) ListLiveByMoveIDs(
 
 func (r *repository) GetOfferByID(
 	ctx context.Context,
-	req repositories.GetTenderOfferByIDRequest,
+	req tenderports.GetTenderOfferByIDRequest,
 ) (*tender.TenderOffer, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tender.TenderOffer, error) {
 		cols := buncolgen.TenderOfferColumns
@@ -221,7 +221,7 @@ func (r *repository) GetOfferByID(
 // carrier's status or invoice document arrives.
 func (r *repository) GetAcceptedOfferForPartnerReference(
 	ctx context.Context,
-	req repositories.GetAcceptedOfferForPartnerReferenceRequest,
+	req tenderports.GetAcceptedOfferForPartnerReferenceRequest,
 ) (*tender.TenderOffer, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tender.TenderOffer, error) {
 		if req.OfferID.IsNil() && len(req.References) == 0 {
@@ -278,7 +278,7 @@ func (r *repository) GetAcceptedOfferForPartnerReference(
 
 func (r *repository) ListByShipment(
 	ctx context.Context,
-	req repositories.ListTendersByShipmentRequest,
+	req tenderports.ListTendersByShipmentRequest,
 ) ([]*tender.Tender, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*tender.Tender, error) {
 		cols := buncolgen.TenderColumns
@@ -307,7 +307,7 @@ func (r *repository) ListByShipment(
 // recover their workflows.
 func (r *repository) ListForSweep(
 	ctx context.Context,
-	req repositories.ListTendersForSweepRequest,
+	req tenderports.ListTendersForSweepRequest,
 ) ([]*tender.Tender, error) {
 	if req.TenantInfo == nil {
 		ctx = dbscope.WithSystem(ctx, "list stalled tenders across every organization for the tender sweep")
@@ -395,7 +395,7 @@ func (r *repository) SetWorkflowID(
 // which callers treat as "another actor already moved it".
 func (r *repository) UpdateTenderStatus(
 	ctx context.Context,
-	req *repositories.UpdateTenderStatusRequest,
+	req *tenderports.UpdateTenderStatusRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
 		cols := buncolgen.TenderColumns
@@ -455,7 +455,7 @@ func (r *repository) UpdateTenderStatus(
 // returning false when the offer had already left the expected status.
 func (r *repository) UpdateOfferStatus(
 	ctx context.Context,
-	req *repositories.UpdateOfferStatusRequest,
+	req *tenderports.UpdateOfferStatusRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
 		cols := buncolgen.TenderOfferColumns
@@ -513,7 +513,7 @@ func (r *repository) UpdateOfferStatus(
 
 func (r *repository) BulkUpdateOfferStatus(
 	ctx context.Context,
-	req *repositories.BulkOfferStatusRequest,
+	req *tenderports.BulkOfferStatusRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
 		cols := buncolgen.TenderOfferColumns
@@ -548,7 +548,7 @@ func (r *repository) BulkUpdateOfferStatus(
 // offer without touching its status.
 func (r *repository) RecordLateOfferResponse(
 	ctx context.Context,
-	req *repositories.RecordLateOfferResponseRequest,
+	req *tenderports.RecordLateOfferResponseRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.TenderOfferColumns
@@ -621,7 +621,7 @@ func (r *repository) GetTokenByHash(
 // conditional update only wins for the first caller.
 func (r *repository) MarkTokenUsed(
 	ctx context.Context,
-	req *repositories.MarkTokenUsedRequest,
+	req *tenderports.MarkTokenUsedRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
 		cols := buncolgen.TenderOfferTokenColumns
@@ -686,7 +686,7 @@ func (r *repository) RevokeTokensForOffer(
 // those moves have no matching-carrier assignment at all.
 func (r *repository) ListAcceptedMissingRateConfirmation(
 	ctx context.Context,
-	req repositories.ListAcceptedMissingRateConfirmationRequest,
+	req tenderports.ListAcceptedMissingRateConfirmationRequest,
 ) ([]*tender.Tender, error) {
 	ctx = dbscope.WithSystem(ctx, "list accepted tenders missing a rate confirmation across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*tender.Tender, error) {
@@ -752,7 +752,7 @@ func (r *repository) ListAcceptedMissingRateConfirmation(
 // expires_at, so it can never match.
 func (r *repository) PurgeDeadOfferTokens(
 	ctx context.Context,
-	req repositories.PurgeDeadTokensRequest,
+	req tenderports.PurgeDeadTokensRequest,
 ) (int64, error) {
 	ctx = dbscope.WithSystem(ctx, "purge dead tender offer tokens across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {

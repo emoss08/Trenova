@@ -20,8 +20,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/customerservice"
 	"github.com/emoss08/trenova/internal/core/services/equipmentmanufacturerservice"
 	"github.com/emoss08/trenova/internal/core/services/equipmenttypeservice"
@@ -33,6 +31,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/tractorservice"
 	"github.com/emoss08/trenova/internal/core/services/trailerservice"
 	"github.com/emoss08/trenova/internal/core/services/workerservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -57,12 +59,12 @@ const (
 
 type SampleDataRequest struct {
 	TenantInfo   pagination.TenantInfo
-	Actor        *services.RequestActor
+	Actor        *permissionports.RequestActor
 	Organization *tenant.Organization
 }
 
 type entityCreator[T any] interface {
-	Create(ctx context.Context, entity T, actor *services.RequestActor) (T, error)
+	Create(ctx context.Context, entity T, actor *permissionports.RequestActor) (T, error)
 }
 
 type formulaTemplates interface {
@@ -79,7 +81,7 @@ type stateFinder interface {
 type formulaTemplateFinder interface {
 	FindByNames(
 		ctx context.Context,
-		req repositories.GetFormulaTemplatesByNamesRequest,
+		req formulatemplateports.GetFormulaTemplatesByNamesRequest,
 	) ([]*formulatemplate.FormulaTemplate, error)
 }
 
@@ -97,9 +99,9 @@ type SampleDataParams struct {
 	ServiceTypes     *servicetypeservice.Service
 	ShipmentTypes    *shipmenttypeservice.Service
 	FormulaTemplates *formulatemplateservice.Service
-	TemplateFinder   repositories.FormulaTemplateRepository
-	States           repositories.UsStateRepository
-	Shipments        services.ShipmentService
+	TemplateFinder   formulatemplateports.FormulaTemplateRepository
+	States           usstateports.UsStateRepository
+	Shipments        shipmentports.ShipmentService
 }
 
 type SampleData struct {
@@ -352,7 +354,7 @@ func (d *SampleData) flatRateTemplate(
 		}
 	}
 
-	existing, err := d.templateFinder.FindByNames(ctx, repositories.GetFormulaTemplatesByNamesRequest{
+	existing, err := d.templateFinder.FindByNames(ctx, formulatemplateports.GetFormulaTemplatesByNamesRequest{
 		TenantInfo: tenantInfo,
 		Names:      []string{flatRateTemplateName},
 	})

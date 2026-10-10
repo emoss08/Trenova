@@ -5,7 +5,7 @@ package dispatchguard
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -15,11 +15,11 @@ import (
 // active dispatch-blocking hold.
 func EnsureNoDispatchHold(
 	ctx context.Context,
-	holdRepo repositories.ShipmentHoldRepository,
+	holdRepo shipmentports.ShipmentHoldRepository,
 	tenantInfo pagination.TenantInfo,
 	shipmentID pulid.ID,
 ) error {
-	hasHold, err := holdRepo.HasActiveDispatchHold(ctx, &repositories.ActiveShipmentHoldRequest{
+	hasHold, err := holdRepo.HasActiveDispatchHold(ctx, &shipmentports.ActiveShipmentHoldRequest{
 		ShipmentID: shipmentID,
 		TenantInfo: tenantInfo,
 	})

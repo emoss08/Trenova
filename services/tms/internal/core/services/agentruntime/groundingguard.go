@@ -8,7 +8,8 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/numberguard"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -59,7 +60,7 @@ type schemaLabel struct {
 func (s *Service) reground(
 	t *Turn,
 	fx TurnEffects,
-	completion *serviceports.ChatCompletionResult,
+	completion *agentports.ChatCompletionResult,
 	state *groundingState,
 ) bool {
 	if completion == nil || len(t.result.Actions) == 0 {
@@ -73,24 +74,24 @@ func (s *Service) reground(
 
 	if !state.rewritten {
 		state.rewritten = true
-		fx.Emit(serviceports.StreamEvent{
-			Event: serviceports.AssistantEventRetrying,
-			Data: serviceports.AssistantRetryingEvent{
+		fx.Emit(kernelports.StreamEvent{
+			Event: agentports.AssistantEventRetrying,
+			Data: agentports.AssistantRetryingEvent{
 				Attempt: 1,
 				Reason:  groundingRetryReason,
-				Kind:    serviceports.RetryKindRestart,
+				Kind:    agentports.RetryKindRestart,
 			},
 		})
-		fx.Emit(regroundedEvent(serviceports.RegroundRewrite, finding, groundingRetryReason))
+		fx.Emit(regroundedEvent(agentports.RegroundRewrite, finding, groundingRetryReason))
 		t.messages = append(t.messages,
-			serviceports.Message{Role: serviceports.RoleAssistant, Content: completion.Text},
-			serviceports.Message{Role: serviceports.RoleUser, Content: finding.correction()},
+			agentports.Message{Role: agentports.RoleAssistant, Content: completion.Text},
+			agentports.Message{Role: agentports.RoleUser, Content: finding.correction()},
 		)
 
 		return true
 	}
 
-	fx.Emit(regroundedEvent(serviceports.RegroundNote, finding, groundingNoteReason))
+	fx.Emit(regroundedEvent(agentports.RegroundNote, finding, groundingNoteReason))
 	completion.Text += groundingNote
 	fx.Emit(deltaEvent(groundingNote))
 
@@ -98,13 +99,13 @@ func (s *Service) reground(
 }
 
 func regroundedEvent(
-	action serviceports.RegroundAction,
+	action agentports.RegroundAction,
 	finding groundingFinding,
 	reason string,
-) serviceports.StreamEvent {
-	return serviceports.StreamEvent{
-		Event: serviceports.AssistantEventReplyRegrounded,
-		Data: serviceports.AssistantReplyRegroundedEvent{
+) kernelports.StreamEvent {
+	return kernelports.StreamEvent{
+		Event: agentports.AssistantEventReplyRegrounded,
+		Data: agentports.AssistantReplyRegroundedEvent{
 			Action:  action,
 			Figures: finding.figures,
 			Fields:  finding.fields,
@@ -199,7 +200,7 @@ func (t *Turn) groundingTexts() []string {
 	texts = append(texts, t.system)
 	for idx := range t.messages {
 		message := &t.messages[idx]
-		if message.Role == serviceports.RoleAssistant ||
+		if message.Role == agentports.RoleAssistant ||
 			strings.HasPrefix(message.Content, groundingCorrectionLead) {
 			continue
 		}
@@ -214,7 +215,7 @@ func (t *Turn) groundingTexts() []string {
 	return texts
 }
 
-func filedTools(actions []serviceports.PendingAction) []string {
+func filedTools(actions []agentports.PendingAction) []string {
 	tools := make([]string, 0, len(actions))
 	for idx := range actions {
 		if actions[idx].Withdrawn {

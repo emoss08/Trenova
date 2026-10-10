@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -60,7 +60,7 @@ func (h *Handler) listPartnerDocumentProfiles(c *gin.Context) {
 		func() (*pagination.ListResult[*edi.EDIPartnerDocumentProfile], error) {
 			return h.service.ListPartnerDocumentProfiles(
 				c.Request.Context(),
-				&repositories.ListEDIPartnerDocumentProfilesRequest{
+				&ediports.ListEDIPartnerDocumentProfilesRequest{
 					Filter: req,
 					TransactionSet: edi.TransactionSet(
 						helpers.QueryString(c, "transactionSet", ""),
@@ -87,7 +87,7 @@ func (h *Handler) selectPartnerDocumentProfileOptions(c *gin.Context) {
 		func() (*pagination.ListResult[*edi.EDIPartnerDocumentProfile], error) {
 			return h.service.SelectPartnerDocumentProfileOptions(
 				c.Request.Context(),
-				&repositories.EDIPartnerDocumentProfileSelectOptionsRequest{
+				&ediports.EDIPartnerDocumentProfileSelectOptionsRequest{
 					SelectQueryRequest: req,
 					TransactionSet: edi.TransactionSet(
 						helpers.QueryString(c, "transactionSet", ""),
@@ -116,7 +116,7 @@ func (h *Handler) getPartnerDocumentProfile(c *gin.Context) {
 	}
 	entity, err := h.service.GetPartnerDocumentProfile(
 		c.Request.Context(),
-		repositories.GetEDIPartnerDocumentProfileByIDRequest{
+		ediports.GetEDIPartnerDocumentProfileByIDRequest{
 			ID:         profileID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},

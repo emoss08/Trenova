@@ -8,10 +8,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -43,7 +43,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.TenantBootstrapRepository {
+func New(p Params) tenantports.TenantBootstrapRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.tenant-bootstrap-repository"),
@@ -66,8 +66,8 @@ func (r *repository) LockProvisioning(ctx context.Context) error {
 
 func (r *repository) Bootstrap(
 	ctx context.Context,
-	req *repositories.BootstrapTenantRequest,
-) (*repositories.BootstrapTenantResult, error) {
+	req *tenantports.BootstrapTenantRequest,
+) (*tenantports.BootstrapTenantResult, error) {
 	if req.Organization == nil {
 		return nil, ErrOrganizationRequired
 	}
@@ -77,7 +77,7 @@ func (r *repository) Bootstrap(
 
 	ctx = dbscope.WithSystem(ctx, bootstrapScopeReason)
 
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.BootstrapTenantResult, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenantports.BootstrapTenantResult, error) {
 		db := r.db.DBForContext(ctx)
 
 		if req.Organization.StateID.IsNil() {
@@ -117,7 +117,7 @@ func (r *repository) Bootstrap(
 			return nil, err
 		}
 
-		return &repositories.BootstrapTenantResult{
+		return &tenantports.BootstrapTenantResult{
 			BusinessUnit: result.BusinessUnit,
 			Organization: result.Organization,
 			Owner:        result.Owner,

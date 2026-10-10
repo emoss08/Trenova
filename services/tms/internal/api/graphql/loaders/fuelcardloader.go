@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/fuelpurchaseservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -15,7 +15,7 @@ import (
 type fuelCardsByIDsGetter interface {
 	GetCardsByIDs(
 		ctx context.Context,
-		req *repositories.GetFuelCardsByIDsRequest,
+		req *fuelpurchaseports.GetFuelCardsByIDsRequest,
 	) ([]*fuelpurchase.FuelCard, error)
 }
 
@@ -48,7 +48,7 @@ func (f *FuelCardByIDLoaderFactory) batchFunc(
 ) batchFetchFunc[*fuelpurchase.FuelCard] {
 	return batchByIDFunc(
 		func(ctx context.Context, ids []pulid.ID) ([]*fuelpurchase.FuelCard, error) {
-			return f.cards.GetCardsByIDs(ctx, &repositories.GetFuelCardsByIDsRequest{
+			return f.cards.GetCardsByIDs(ctx, &fuelpurchaseports.GetFuelCardsByIDsRequest{
 				TenantInfo: tenantInfo,
 				IDs:        ids,
 			})

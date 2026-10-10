@@ -9,7 +9,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"golang.org/x/net/html"
 )
 
@@ -29,7 +29,7 @@ var htmlSkipped = map[string]struct{}{
 	"head": {}, "script": {}, "style": {}, "noscript": {}, "template": {},
 }
 
-func readEPUB(ctx context.Context, pkg *archive) ([]services.OfficePage, error) {
+func readEPUB(ctx context.Context, pkg *archive) ([]kernelports.OfficePage, error) {
 	opf, err := epubRootFile(pkg)
 	if err != nil {
 		return nil, err

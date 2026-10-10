@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/ratematrix"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"go.uber.org/fx"
@@ -75,7 +75,7 @@ func (v *Validator) ValidateUpdate(
 // one the lookup can never reach.
 func (v *Validator) ValidateCells(
 	matrix *ratematrix.RateMatrix,
-	req *repositories.ReplaceRateMatrixCellsRequest,
+	req *ratematrixports.ReplaceRateMatrixCellsRequest,
 ) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 

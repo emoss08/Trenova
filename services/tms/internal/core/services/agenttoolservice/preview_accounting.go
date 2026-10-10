@@ -8,18 +8,18 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/accountingmappingservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 var (
-	_ serviceports.ToolPreviewer = (*checkAccountingConnectionTool)(nil)
-	_ serviceports.ToolPreviewer = (*setAccountingMappingTool)(nil)
-	_ serviceports.ToolPreviewer = (*clearAccountingMappingTool)(nil)
-	_ serviceports.ToolPreviewer = (*createAccountingReferenceRecordTool)(nil)
-	_ serviceports.ToolPreviewer = (*refreshAccountingReferenceDataTool)(nil)
+	_ agentports.ToolPreviewer = (*checkAccountingConnectionTool)(nil)
+	_ agentports.ToolPreviewer = (*setAccountingMappingTool)(nil)
+	_ agentports.ToolPreviewer = (*clearAccountingMappingTool)(nil)
+	_ agentports.ToolPreviewer = (*createAccountingReferenceRecordTool)(nil)
+	_ agentports.ToolPreviewer = (*refreshAccountingReferenceDataTool)(nil)
 )
 
 var accountingCheckVolatileFields = []string{"lastCheckedAt", "lastSuccessAt"}
@@ -69,7 +69,7 @@ func mappingOptions() []toolpreview.Option {
 
 func (t *checkAccountingConnectionTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	conn, err := t.connection(ctx, &params)
 	if err != nil {
@@ -114,7 +114,7 @@ func (t *checkAccountingConnectionTool) Preview(
 
 func (t *setAccountingMappingTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	req, row, ref, err := t.request(ctx, &params)
 	if err != nil {
@@ -168,7 +168,7 @@ func (t *setAccountingMappingTool) Preview(
 
 func (t *clearAccountingMappingTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	row, err := t.mapping(ctx, &params)
 	if err != nil {
@@ -216,7 +216,7 @@ type accountingRecordDraft struct {
 
 func (t *createAccountingReferenceRecordTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	row, err := t.mapping(ctx, &params)
 	if err != nil {
@@ -281,7 +281,7 @@ func (t *createAccountingReferenceRecordTool) Preview(
 }
 
 func (t *createAccountingReferenceRecordTool) requestedName(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 	row *accountingsync.AccountingMapping,
 ) string {
 	if name := strings.TrimSpace(optionalString(params.Params, "name")); name != "" {
@@ -293,7 +293,7 @@ func (t *createAccountingReferenceRecordTool) requestedName(
 
 func (t *refreshAccountingReferenceDataTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	_, summary, err := t.setup(ctx, &params)
 	if err != nil {

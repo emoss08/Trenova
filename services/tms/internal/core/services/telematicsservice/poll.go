@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -38,7 +38,7 @@ func (s *Service) PollTenant(
 func (s *Service) pollVehiclePositions(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	provider services.TelematicsProvider,
+	provider telematicsports.TelematicsProvider,
 	result *TenantPollResult,
 ) error {
 	providerType := string(provider.Type())
@@ -105,7 +105,7 @@ func (s *Service) pollVehiclePositions(
 func (s *Service) pollHOSClocks(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	provider services.TelematicsProvider,
+	provider telematicsports.TelematicsProvider,
 	result *TenantPollResult,
 ) error {
 	workersByExternalID, err := s.workersByExternalID(ctx, tenantInfo)

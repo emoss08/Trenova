@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/apikey"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
@@ -17,7 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var _ services.AnalyticsPageProvider = (*Provider)(nil)
+var _ kernelports.AnalyticsPageProvider = (*Provider)(nil)
 
 type ProviderParams struct {
 	fx.In
@@ -38,14 +38,14 @@ func NewProvider(p ProviderParams) *Provider {
 	}
 }
 
-func (p *Provider) GetPage() services.AnalyticsPage {
-	return services.APIKeyAnalyticsPage
+func (p *Provider) GetPage() kernelports.AnalyticsPage {
+	return kernelports.APIKeyAnalyticsPage
 }
 
 func (p *Provider) GetAnalyticsData(
 	ctx context.Context,
-	opts *services.AnalyticsRequestOptions,
-) (services.AnalyticsData, error) {
+	opts *kernelports.AnalyticsRequestOptions,
+) (kernelports.AnalyticsData, error) {
 	log := p.l.With(zap.String("operation", "GetAnalyticsData"), zap.Any("opts", opts))
 
 	tz := timeutils.NormalizeTimezone(opts.Timezone)
@@ -74,7 +74,7 @@ func (p *Provider) GetAnalyticsData(
 		return nil, err
 	}
 
-	return services.AnalyticsData{
+	return kernelports.AnalyticsData{
 		"totalKeys":   totalKeys,
 		"activeKeys":  activeKeys,
 		"revokedKeys": revokedKeys,

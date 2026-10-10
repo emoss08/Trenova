@@ -13,10 +13,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/driverportalservice"
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/ptoledgerservice"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -5309,9 +5309,9 @@ func unmarshalNPortalPtoType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNPortalStopAction2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐStopActualAction(ctx context.Context, ec *gqlexec.Exec, v any) (repositories.StopActualAction, error) {
+func unmarshalNPortalStopAction2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐStopActualAction(ctx context.Context, ec *gqlexec.Exec, v any) (shipmentports.StopActualAction, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := repositories.StopActualAction(tmp)
+	res := shipmentports.StopActualAction(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 

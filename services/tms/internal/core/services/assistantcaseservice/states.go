@@ -7,8 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentwait"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/deskcase"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -20,18 +21,18 @@ type StatesParams struct {
 	fx.In
 
 	Logger *zap.Logger
-	Cases  repositories.AssistantCaseRepository
-	Waits  repositories.AgentWaitRepository
-	Etas   serviceports.ShipmentEtaReader `optional:"true"`
+	Cases  deskcaseports.AssistantCaseRepository
+	Waits  agentwaitports.AgentWaitRepository
+	Etas   shipmentports.ShipmentEtaReader `optional:"true"`
 }
 
 // States works out where cases stand. It holds nothing it could not read
 // again: a case's state is the record's, the open waits' and the snooze's,
 // read together each time.
 type States struct {
-	cases repositories.AssistantCaseRepository
-	waits repositories.AgentWaitRepository
-	etas  serviceports.ShipmentEtaReader
+	cases deskcaseports.AssistantCaseRepository
+	waits agentwaitports.AgentWaitRepository
+	etas  shipmentports.ShipmentEtaReader
 	now   func() int64
 	l     *zap.Logger
 }
@@ -46,7 +47,7 @@ func NewStates(p StatesParams) *States {
 	}
 }
 
-func ProvideStates(s *States) serviceports.AssistantCaseStates { return s }
+func ProvideStates(s *States) deskcaseports.AssistantCaseStates { return s }
 
 // Attach sets Case on every conversation in the page that is a case: one
 // query per kind of record, one for the open waits, and one for the
@@ -74,14 +75,14 @@ func (s *States) Attach(
 		threadIDs = append(threadIDs, thread.ID)
 	}
 
-	records, err := s.cases.ListRecords(ctx, &repositories.ListCaseRecordsRequest{
+	records, err := s.cases.ListRecords(ctx, &deskcaseports.ListCaseRecordsRequest{
 		TenantInfo: tenant,
 		Refs:       refs,
 	})
 	if err != nil {
 		return err
 	}
-	waits, err := s.waits.ListOpenByThreads(ctx, &repositories.ListOpenWaitsByThreadsRequest{
+	waits, err := s.waits.ListOpenByThreads(ctx, &agentwaitports.ListOpenWaitsByThreadsRequest{
 		TenantInfo: tenant,
 		UserID:     userID,
 		ThreadIDs:  threadIDs,

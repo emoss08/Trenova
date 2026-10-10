@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -17,7 +17,7 @@ import (
 )
 
 type fakeControlRepo struct {
-	repositories.CarrierIntelControlRepository
+	carrierintelports.CarrierIntelControlRepository
 	control *carrierintel.CarrierIntelControl
 }
 
@@ -29,7 +29,7 @@ func (f *fakeControlRepo) GetOrCreate(
 }
 
 type fakeSnapshotRepo struct {
-	repositories.CarrierIntelSnapshotRepository
+	carrierintelports.CarrierIntelSnapshotRepository
 	byCarrier map[pulid.ID]*carrierintel.CarrierIntelSnapshot
 }
 
@@ -48,7 +48,7 @@ func (f *fakeSnapshotRepo) GetCurrentByCarrierIDs(
 }
 
 type fakeOverrideRepo struct {
-	repositories.CarrierIntelOverrideRepository
+	carrierintelports.CarrierIntelOverrideRepository
 	overrides []*carrierintel.CarrierIntelOverride
 }
 
@@ -72,18 +72,18 @@ func (f *fakeOverrideRepo) ListActiveByCarrierIDs(
 }
 
 type fakeSubjectRepo struct {
-	repositories.CarrierIntelSubjectRepository
+	carrierintelports.CarrierIntelSubjectRepository
 	requested [][]pulid.ID
 }
 
 func (f *fakeSubjectRepo) ListCarrierSubjects(
 	_ context.Context,
-	req *repositories.ListCarrierIntelSubjectsRequest,
-) ([]repositories.CarrierIntelSubject, error) {
+	req *carrierintelports.ListCarrierIntelSubjectsRequest,
+) ([]carrierintelports.CarrierIntelSubject, error) {
 	f.requested = append(f.requested, req.CarrierIDs)
-	out := make([]repositories.CarrierIntelSubject, 0, len(req.CarrierIDs))
+	out := make([]carrierintelports.CarrierIntelSubject, 0, len(req.CarrierIDs))
 	for _, id := range req.CarrierIDs {
-		out = append(out, repositories.CarrierIntelSubject{
+		out = append(out, carrierintelports.CarrierIntelSubject{
 			SubjectType: carrierintel.SubjectTypeCarrier,
 			SubjectID:   id.String(),
 			CarrierID:   id,

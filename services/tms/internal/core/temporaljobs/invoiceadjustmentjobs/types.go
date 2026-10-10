@@ -1,19 +1,19 @@
 package invoiceadjustmentjobs
 
 import (
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 type ProcessBatchItemPayload struct {
-	BatchID        pulid.ID                    `json:"batchId"`
-	ItemID         pulid.ID                    `json:"itemId"`
-	OrganizationID pulid.ID                    `json:"organizationId"`
-	BusinessUnitID pulid.ID                    `json:"businessUnitId"`
-	UserID         pulid.ID                    `json:"userId"`
-	PrincipalType  servicesports.PrincipalType `json:"principalType"`
-	PrincipalID    pulid.ID                    `json:"principalId"`
-	APIKeyID       pulid.ID                    `json:"apiKeyId"`
+	BatchID        pulid.ID                  `json:"batchId"`
+	ItemID         pulid.ID                  `json:"itemId"`
+	OrganizationID pulid.ID                  `json:"organizationId"`
+	BusinessUnitID pulid.ID                  `json:"businessUnitId"`
+	UserID         pulid.ID                  `json:"userId"`
+	PrincipalType  kernelports.PrincipalType `json:"principalType"`
+	PrincipalID    pulid.ID                  `json:"principalId"`
+	APIKeyID       pulid.ID                  `json:"apiKeyId"`
 }
 
 type ProcessBatchItemResult struct {

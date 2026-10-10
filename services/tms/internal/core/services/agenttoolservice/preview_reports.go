@@ -8,17 +8,17 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/reporting/canned"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 var (
-	_ serviceports.ToolPreviewer = (*createReportTool)(nil)
-	_ serviceports.ToolPreviewer = (*updateReportTool)(nil)
-	_ serviceports.ToolPreviewer = (*forkReportTool)(nil)
+	_ agentports.ToolPreviewer = (*createReportTool)(nil)
+	_ agentports.ToolPreviewer = (*updateReportTool)(nil)
+	_ agentports.ToolPreviewer = (*forkReportTool)(nil)
 )
 
 var reportViewLabels = map[string]string{
@@ -115,7 +115,7 @@ func reportAudience(visibility report.Visibility) string {
 
 func (t *createReportTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	save, err := t.prepare(params)
 	if err != nil {
@@ -155,7 +155,7 @@ func warnUnsaveableReport(
 
 func (t *updateReportTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	save, existing, err := t.prepare(ctx, params)
 	if err != nil {
@@ -184,7 +184,7 @@ func (t *updateReportTool) Preview(
 }
 
 func (t *forkReportTool) request(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*reporting.ForkCannedRequest, *canned.Entry, error) {
 	key, err := requireString(params.Params, "reportKey")
 	if err != nil {
@@ -209,7 +209,7 @@ func (t *forkReportTool) request(
 
 func (t *forkReportTool) Preview(
 	_ context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	if err := guardPreview(t, &params); err != nil {
 		return nil, err

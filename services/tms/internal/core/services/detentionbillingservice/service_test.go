@@ -1,13 +1,15 @@
 package detentionbillingservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/detention"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -20,18 +22,18 @@ import (
 )
 
 type fakeOccurrences struct {
-	repositories.DetentionOccurrenceRepository
+	detentionports.DetentionOccurrenceRepository
 
 	holds       []*detention.DetentionOccurrence
-	holdsReq    *repositories.ListDetentionBillingHoldsRequest
+	holdsReq    *detentionports.ListDetentionBillingHoldsRequest
 	byCharge    []*detention.DetentionOccurrence
-	byChargeReq *repositories.ListOccurrencesByChargesRequest
+	byChargeReq *detentionports.ListOccurrencesByChargesRequest
 	updated     []*detention.DetentionOccurrence
 }
 
 func (f *fakeOccurrences) ListBillingHoldsByShipments(
 	_ context.Context,
-	req *repositories.ListDetentionBillingHoldsRequest,
+	req *detentionports.ListDetentionBillingHoldsRequest,
 ) ([]*detention.DetentionOccurrence, error) {
 	f.holdsReq = req
 	return f.holds, nil
@@ -39,7 +41,7 @@ func (f *fakeOccurrences) ListBillingHoldsByShipments(
 
 func (f *fakeOccurrences) ListByAdditionalCharges(
 	_ context.Context,
-	req *repositories.ListOccurrencesByChargesRequest,
+	req *detentionports.ListOccurrencesByChargesRequest,
 ) ([]*detention.DetentionOccurrence, error) {
 	f.byChargeReq = req
 	return f.byCharge, nil
@@ -55,14 +57,14 @@ func (f *fakeOccurrences) Update(
 }
 
 type fakeEvidence struct {
-	repositories.DetentionEvidenceRepository
+	detentionports.DetentionEvidenceRepository
 
 	appended []*detention.DetentionEvidence
 }
 
 func (f *fakeEvidence) Append(
 	_ context.Context,
-	req *repositories.AppendEvidenceRequest,
+	req *detentionports.AppendEvidenceRequest,
 ) (*detention.DetentionEvidence, error) {
 	f.appended = append(f.appended, req.Entry)
 	return req.Entry, nil
@@ -75,8 +77,8 @@ type recordingAudit struct {
 }
 
 func (a *recordingAudit) LogAction(
-	params *services.LogActionParams,
-	_ ...services.LogOption,
+	params *auditports.LogActionParams,
+	_ ...auditports.LogOption,
 ) error {
 	a.comments = append(a.comments, params.ResourceID)
 	return nil
@@ -91,7 +93,7 @@ type fixture struct {
 	occurrences *fakeOccurrences
 	evidence    *fakeEvidence
 	audit       *recordingAudit
-	invoices    *mocks.MockInvoiceRepository
+	invoices    *invoiceportsmock.MockInvoiceRepository
 	svc         *Service
 }
 
@@ -107,7 +109,7 @@ func newFixture(t *testing.T) *fixture {
 		occurrences: &fakeOccurrences{},
 		evidence:    &fakeEvidence{},
 		audit:       &recordingAudit{},
-		invoices:    mocks.NewMockInvoiceRepository(t),
+		invoices:    invoiceportsmock.NewMockInvoiceRepository(t),
 	}
 	f.svc = &Service{
 		l:              zap.NewNop(),
@@ -138,16 +140,16 @@ func (f *fixture) occurrence(status detention.OccurrenceStatus) *detention.Deten
 
 func (f *fixture) expectCharges(net decimal.Decimal) {
 	f.invoices.EXPECT().
-		ListLineCharges(mock.Anything, &repositories.ListInvoiceLineChargesRequest{
+		ListLineCharges(mock.Anything, &invoiceports.ListInvoiceLineChargesRequest{
 			TenantInfo: f.tenant,
 			InvoiceIDs: []pulid.ID{f.invoiceID},
 		}).
-		Return([]repositories.InvoiceLineCharge{
+		Return([]invoiceports.InvoiceLineCharge{
 			{AdditionalChargeID: f.chargeID, ShipmentID: f.shipmentID},
 		}, nil).
 		Once()
 	f.invoices.EXPECT().
-		NetBilledByCharge(mock.Anything, &repositories.NetBilledByChargeRequest{
+		NetBilledByCharge(mock.Anything, &invoiceports.NetBilledByChargeRequest{
 			TenantInfo: f.tenant,
 			ChargeIDs:  []pulid.ID{f.chargeID},
 		}).
@@ -157,12 +159,12 @@ func (f *fixture) expectCharges(net decimal.Decimal) {
 
 func (f *fixture) sync(
 	t *testing.T,
-	event services.DetentionBillingEvent,
-) (*ports.AfterCommitHooks, context.Context) {
+	event detentionports.DetentionBillingEvent,
+) (*kernelports.AfterCommitHooks, context.Context) {
 	t.Helper()
 
-	ctx, hooks := ports.WithAfterCommitHooks(t.Context())
-	require.NoError(t, f.svc.SyncInvoiceBilling(ctx, &services.SyncDetentionInvoiceBillingRequest{
+	ctx, hooks := kernelports.WithAfterCommitHooks(t.Context())
+	require.NoError(t, f.svc.SyncInvoiceBilling(ctx, &detentionports.SyncDetentionInvoiceBillingRequest{
 		TenantInfo:    f.tenant,
 		InvoiceIDs:    []pulid.ID{f.invoiceID, f.invoiceID},
 		InvoiceNumber: "INV-1001",
@@ -182,7 +184,7 @@ func TestSyncInvoiceBillingMarksTheChargesOnANewInvoiceBilled(t *testing.T) {
 	f.occurrences.byCharge = []*detention.DetentionOccurrence{pending, approved}
 	f.expectCharges(decimal.NewFromInt(360))
 
-	hooks, ctx := f.sync(t, services.DetentionBillingInvoiceCreated)
+	hooks, ctx := f.sync(t, detentionports.DetentionBillingInvoiceCreated)
 
 	require.NotNil(t, f.occurrences.byChargeReq)
 	assert.Equal(t, []pulid.ID{f.chargeID}, f.occurrences.byChargeReq.ChargeIDs)
@@ -217,7 +219,7 @@ func TestSyncInvoiceBillingReleasesBilledChargesWhenNoInvoiceStands(t *testing.T
 	f.occurrences.byCharge = []*detention.DetentionOccurrence{billed}
 	f.expectCharges(decimal.Zero)
 
-	f.sync(t, services.DetentionBillingInvoiceVoided)
+	f.sync(t, detentionports.DetentionBillingInvoiceVoided)
 
 	require.Len(t, f.occurrences.updated, 1)
 	assert.Equal(t, detention.OccurrenceStatusApproved, f.occurrences.updated[0].Status)
@@ -238,7 +240,7 @@ func TestSyncInvoiceBillingKeepsAChargeAnotherPayersInvoiceStillBills(t *testing
 	f.occurrences.byCharge = []*detention.DetentionOccurrence{billed}
 	f.expectCharges(decimal.NewFromInt(90))
 
-	f.sync(t, services.DetentionBillingInvoiceVoided)
+	f.sync(t, detentionports.DetentionBillingInvoiceVoided)
 
 	assert.Empty(t, f.occurrences.updated)
 	assert.Empty(t, f.evidence.appended)
@@ -251,10 +253,10 @@ func TestSyncInvoiceBillingDoesNothingForAnInvoiceWithoutDetention(t *testing.T)
 	f := newFixture(t)
 	f.invoices.EXPECT().
 		ListLineCharges(mock.Anything, mock.Anything).
-		Return([]repositories.InvoiceLineCharge{}, nil).
+		Return([]invoiceports.InvoiceLineCharge{}, nil).
 		Once()
 
-	f.sync(t, services.DetentionBillingInvoiceCreated)
+	f.sync(t, detentionports.DetentionBillingInvoiceCreated)
 
 	assert.Nil(t, f.occurrences.byChargeReq)
 	assert.Empty(t, f.occurrences.updated)
@@ -270,7 +272,7 @@ func TestGuardShipmentsRefusesAndNamesEveryHeldCharge(t *testing.T) {
 	second.RequiresApproval = true
 	f.occurrences.holds = []*detention.DetentionOccurrence{first, second}
 
-	err := f.svc.GuardShipments(t.Context(), &services.DetentionBillingHoldsRequest{
+	err := f.svc.GuardShipments(t.Context(), &detentionports.DetentionBillingHoldsRequest{
 		TenantInfo:  f.tenant,
 		ShipmentIDs: []pulid.ID{f.shipmentID, f.shipmentID, pulid.Nil},
 	})
@@ -297,7 +299,7 @@ func TestGuardShipmentsPassesAPendingChargeThatNeedsNoApproval(t *testing.T) {
 	f := newFixture(t)
 	f.occurrences.holds = []*detention.DetentionOccurrence{}
 
-	require.NoError(t, f.svc.GuardShipments(t.Context(), &services.DetentionBillingHoldsRequest{
+	require.NoError(t, f.svc.GuardShipments(t.Context(), &detentionports.DetentionBillingHoldsRequest{
 		TenantInfo:  f.tenant,
 		ShipmentIDs: []pulid.ID{f.shipmentID},
 	}))

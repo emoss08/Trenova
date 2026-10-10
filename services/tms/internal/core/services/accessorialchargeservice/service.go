@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,18 +19,18 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.AccessorialChargeRepository
+	Repo         accessorialchargeports.AccessorialChargeRepository
 	Validator    *Validator
-	AuditService services.AuditService
-	Transformer  services.DataTransformer
+	AuditService auditports.AuditService
+	Transformer  accessorialchargeports.DataTransformer
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.AccessorialChargeRepository
+	repo         accessorialchargeports.AccessorialChargeRepository
 	validator    *Validator
-	auditService services.AuditService
-	transformer  services.DataTransformer
+	auditService auditports.AuditService
+	transformer  accessorialchargeports.DataTransformer
 }
 
 func New(p Params) *Service {
@@ -45,21 +45,21 @@ func New(p Params) *Service {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListAccessorialChargeRequest,
+	req *accessorialchargeports.ListAccessorialChargeRequest,
 ) (*pagination.ListResult[*accessorialcharge.AccessorialCharge], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListAccessorialChargeConnectionRequest,
+	req *accessorialchargeports.ListAccessorialChargeConnectionRequest,
 ) (*pagination.CursorListResult[*accessorialcharge.AccessorialCharge], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	req repositories.GetAccessorialChargeByIDRequest,
+	req accessorialchargeports.GetAccessorialChargeByIDRequest,
 ) (*accessorialcharge.AccessorialCharge, error) {
 	return s.repo.GetByID(ctx, req)
 }
@@ -96,7 +96,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceAccessorialCharge,
 		ResourceID:     createdEntity.GetID().String(),
 		Operation:      permission.OpCreate,
@@ -132,7 +132,7 @@ func (s *Service) Update(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetByID(ctx, repositories.GetAccessorialChargeByIDRequest{
+	original, err := s.repo.GetByID(ctx, accessorialchargeports.GetAccessorialChargeByIDRequest{
 		ID: entity.GetID(),
 		TenantInfo: &pagination.TenantInfo{
 			OrgID: entity.GetOrganizationID(),
@@ -150,7 +150,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceAccessorialCharge,
 		ResourceID:     updatedEntity.GetID().String(),
 		Operation:      permission.OpUpdate,

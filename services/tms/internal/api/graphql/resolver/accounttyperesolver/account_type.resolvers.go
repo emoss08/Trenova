@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/accounttype"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accounttypeports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -29,7 +29,7 @@ func (r *QueryResolver) AccountTypes(ctx context.Context, input gqlmodel.DataTab
 
 	result, err := r.AccountTypeService.ListConnection(
 		ctx,
-		&repositories.ListAccountTypesConnectionRequest{
+		&accounttypeports.ListAccountTypesConnectionRequest{
 			Filter:             tableInput.Filter,
 			Cursor:             tableInput.Cursor,
 			AccountTypeColumns: accountTypeColumns(ctx, "edges.node"),
@@ -53,7 +53,7 @@ func (r *QueryResolver) AccountType(ctx context.Context, id string) (*accounttyp
 		return nil, err
 	}
 
-	return r.AccountTypeService.Get(ctx, repositories.GetAccountTypeByIDRequest{
+	return r.AccountTypeService.Get(ctx, accounttypeports.GetAccountTypeByIDRequest{
 		ID:         accountTypeID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})

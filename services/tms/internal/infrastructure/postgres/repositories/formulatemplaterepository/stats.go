@@ -3,8 +3,8 @@ package formulatemplaterepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
@@ -22,7 +22,7 @@ type statsRow struct {
 // the page costs one round trip however many rows it holds.
 func statsQuery(
 	q *bun.SelectQuery,
-	req *repositories.GetFormulaTemplateStatsRequest,
+	req *formulatemplateports.GetFormulaTemplateStatsRequest,
 ) *bun.SelectQuery {
 	ft := buncolgen.FormulaTemplateColumns
 
@@ -56,10 +56,10 @@ func statsQuery(
 
 func (r *repository) CountStatsByIDs(
 	ctx context.Context,
-	req *repositories.GetFormulaTemplateStatsRequest,
-) (map[pulid.ID]repositories.TemplateStats, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]repositories.TemplateStats, error) {
-		stats := make(map[pulid.ID]repositories.TemplateStats, len(req.TemplateIDs))
+	req *formulatemplateports.GetFormulaTemplateStatsRequest,
+) (map[pulid.ID]formulatemplateports.TemplateStats, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]formulatemplateports.TemplateStats, error) {
+		stats := make(map[pulid.ID]formulatemplateports.TemplateStats, len(req.TemplateIDs))
 		if len(req.TemplateIDs) == 0 {
 			return stats, nil
 		}
@@ -73,7 +73,7 @@ func (r *repository) CountStatsByIDs(
 		}
 
 		for _, row := range rows {
-			stats[row.ID] = repositories.TemplateStats{
+			stats[row.ID] = formulatemplateports.TemplateStats{
 				UsageCount:    row.UsageCount,
 				ScenarioCount: row.ScenarioCount,
 			}

@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -29,7 +29,7 @@ func (r *QueryResolver) Roles(ctx context.Context, input gqlmodel.DataTableConne
 
 	result, err := r.RoleService.ListConnection(
 		ctx,
-		&repositories.ListRoleConnectionRequest{
+		&permissionports.ListRoleConnectionRequest{
 			Filter: tableInput.Filter,
 			Cursor: tableInput.Cursor,
 		},
@@ -52,7 +52,7 @@ func (r *QueryResolver) Role(ctx context.Context, id string) (*permission.Role, 
 		return nil, err
 	}
 
-	return r.RoleService.GetRoleByID(ctx, repositories.GetRoleByIDRequest{
+	return r.RoleService.GetRoleByID(ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})

@@ -5,9 +5,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/recurringshipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/recurringshipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -25,20 +28,20 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.RecurringShipmentRepository
+	Repo         recurringshipmentports.RecurringShipmentRepository
 	Validator    *Validator
-	AuditService services.AuditService
-	Realtime     services.RealtimeService `optional:"true"`
-	Invalidator  services.ShipmentInvalidator
+	AuditService auditports.AuditService
+	Realtime     agentports.RealtimeService `optional:"true"`
+	Invalidator  shipmentports.ShipmentInvalidator
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.RecurringShipmentRepository
+	repo         recurringshipmentports.RecurringShipmentRepository
 	validator    *Validator
-	auditService services.AuditService
-	realtime     services.RealtimeService
-	invalidator  services.ShipmentInvalidator
+	auditService auditports.AuditService
+	realtime     agentports.RealtimeService
+	invalidator  shipmentports.ShipmentInvalidator
 }
 
 func New(p Params) *Service {
@@ -54,28 +57,28 @@ func New(p Params) *Service {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListRecurringShipmentsRequest,
+	req *recurringshipmentports.ListRecurringShipmentsRequest,
 ) (*pagination.ListResult[*recurringshipment.RecurringShipment], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListRecurringShipmentConnectionRequest,
+	req *recurringshipmentports.ListRecurringShipmentConnectionRequest,
 ) (*pagination.CursorListResult[*recurringshipment.RecurringShipment], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	req *repositories.GetRecurringShipmentByIDRequest,
+	req *recurringshipmentports.GetRecurringShipmentByIDRequest,
 ) (*recurringshipment.RecurringShipment, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) SelectOptions(
 	ctx context.Context,
-	req *repositories.RecurringShipmentSelectOptionsRequest,
+	req *recurringshipmentports.RecurringShipmentSelectOptionsRequest,
 ) (*pagination.ListResult[*recurringshipment.RecurringShipment], error) {
 	return s.repo.SelectOptions(ctx, req)
 }
@@ -100,7 +103,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceRecurringShipment,
 		ResourceID:     createdEntity.GetID().String(),
 		Operation:      permission.OpCreate,
@@ -141,7 +144,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceRecurringShipment,
 		ResourceID:     updatedEntity.GetID().String(),
 		Operation:      permission.OpUpdate,
@@ -164,7 +167,7 @@ func (s *Service) Update(
 
 func (s *Service) UpdateStatus(
 	ctx context.Context,
-	req *repositories.UpdateRecurringShipmentStatusRequest,
+	req *recurringshipmentports.UpdateRecurringShipmentStatusRequest,
 	userID pulid.ID,
 ) (*recurringshipment.RecurringShipment, error) {
 	log := s.l.With(
@@ -178,7 +181,7 @@ func (s *Service) UpdateStatus(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceRecurringShipment,
 		ResourceID:     updatedEntity.GetID().String(),
 		Operation:      permission.OpUpdate,
@@ -199,8 +202,8 @@ func (s *Service) UpdateStatus(
 
 func (s *Service) Match(
 	ctx context.Context,
-	req *repositories.MatchRecurringShipmentsRequest,
-) (*repositories.MatchRecurringShipmentsResponse, error) {
+	req *recurringshipmentports.MatchRecurringShipmentsRequest,
+) (*recurringshipmentports.MatchRecurringShipmentsResponse, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -210,12 +213,12 @@ func (s *Service) Match(
 		return nil, err
 	}
 
-	response := &repositories.MatchRecurringShipmentsResponse{Matches: matches}
+	response := &recurringshipmentports.MatchRecurringShipmentsResponse{Matches: matches}
 
 	// Only hunt for a historical lane pattern when no active series covers the
 	// lane — the pattern hint exists to prompt series creation.
 	if len(matches) == 0 {
-		pattern, patternErr := s.repo.DetectLanePattern(ctx, &repositories.DetectLanePatternRequest{
+		pattern, patternErr := s.repo.DetectLanePattern(ctx, &recurringshipmentports.DetectLanePatternRequest{
 			TenantInfo:            req.TenantInfo,
 			CustomerID:            req.CustomerID,
 			OriginLocationID:      req.OriginLocationID,
@@ -235,8 +238,8 @@ func (s *Service) Match(
 
 func (s *Service) Generate(
 	ctx context.Context,
-	req *repositories.GenerateRecurringShipmentRequest,
-) (*repositories.GenerateRecurringShipmentResult, error) {
+	req *recurringshipmentports.GenerateRecurringShipmentRequest,
+) (*recurringshipmentports.GenerateRecurringShipmentResult, error) {
 	log := s.l.With(
 		zap.String("operation", "Generate"),
 		zap.String("recurringShipmentId", req.RecurringShipmentID.String()),
@@ -257,7 +260,7 @@ func (s *Service) Generate(
 	}
 
 	if result.Shipment != nil {
-		if err = s.auditService.LogAction(&services.LogActionParams{
+		if err = s.auditService.LogAction(&auditports.LogActionParams{
 			Resource:       permission.ResourceShipment,
 			ResourceID:     result.Shipment.GetID().String(),
 			Operation:      permission.OpCreate,
@@ -271,11 +274,11 @@ func (s *Service) Generate(
 			log.Error("failed to log audit action", zap.Error(err))
 		}
 
-		services.InvalidateShipments(ctx, s.invalidator, &services.ShipmentInvalidation{
+		shipmentports.InvalidateShipments(ctx, s.invalidator, &shipmentports.ShipmentInvalidation{
 			OrganizationID: result.Shipment.OrganizationID,
 			BusinessUnitID: result.Shipment.BusinessUnitID,
 			ActorUserID:    req.RequestedBy,
-			ActorType:      services.PrincipalTypeUser,
+			ActorType:      permissionports.PrincipalTypeUser,
 			ActorID:        req.RequestedBy,
 			Action:         "created",
 			RecordID:       result.Shipment.ID,
@@ -292,7 +295,7 @@ func (s *Service) Generate(
 
 func (s *Service) ListRuns(
 	ctx context.Context,
-	req *repositories.ListRecurringShipmentRunsRequest,
+	req *recurringshipmentports.ListRecurringShipmentRunsRequest,
 ) (*pagination.ListResult[*recurringshipment.RecurringShipmentRun], error) {
 	return s.repo.ListRuns(ctx, req)
 }
@@ -314,7 +317,7 @@ func (s *Service) publishInvalidation(
 			OrganizationID: entity.OrganizationID,
 			BusinessUnitID: entity.BusinessUnitID,
 			ActorUserID:    userID,
-			ActorType:      services.PrincipalTypeUser,
+			ActorType:      permissionports.PrincipalTypeUser,
 			ActorID:        userID,
 			Resource:       "recurring-shipments",
 			Action:         action,

@@ -9,7 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/rategeo"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/modeprofileports"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -28,7 +29,7 @@ var ErrNoParty = errors.New("rating has no party to price against")
 // edited, the mileage engine upgraded and the commodity reclassified since.
 func (s *Service) buildContext(
 	ctx context.Context,
-	req *services.RateShipmentRequest,
+	req *ratequoteports.RateShipmentRequest,
 ) (*RateContext, error) {
 	entity := req.Shipment
 	if entity == nil {
@@ -103,7 +104,7 @@ func (s *Service) applyMode(
 		return
 	}
 
-	policy, err := s.modeProfile.Resolve(ctx, &services.ResolveModeProfileRequest{
+	policy, err := s.modeProfile.Resolve(ctx, &modeprofileports.ResolveModeProfileRequest{
 		TenantInfo:     rateCtx.TenantInfo,
 		CustomerID:     entity.CustomerID,
 		ServiceTypeID:  entity.ServiceTypeID,
@@ -113,7 +114,7 @@ func (s *Service) applyMode(
 		At:             rateCtx.AsOf,
 	})
 	if err != nil {
-		if !errors.Is(err, services.ErrNoModeProfileConfigured) {
+		if !errors.Is(err, modeprofileports.ErrNoModeProfileConfigured) {
 			s.l.Warn("failed to resolve mode profile for rating",
 				zap.String("shipmentId", entity.ID.String()),
 				zap.Error(err),
@@ -131,7 +132,7 @@ func (s *Service) applyMode(
 	rateCtx.EquipmentClass = policy.EquipmentClass
 }
 
-func partyFor(req *services.RateShipmentRequest) (pulid.ID, error) {
+func partyFor(req *ratequoteports.RateShipmentRequest) (pulid.ID, error) {
 	if req.PartyType == rateagreement.PartyTypeCarrier {
 		if req.PartyID.IsNil() {
 			return pulid.Nil, ErrNoParty

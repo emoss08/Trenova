@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -24,7 +24,7 @@ type savingPTO struct {
 	guard   writeGuard
 }
 
-func (f *savingPTO) approve(req *repositories.UpdatePTOStatusRequest) (*worker.WorkerPTO, error) {
+func (f *savingPTO) approve(req *workerports.UpdatePTOStatusRequest) (*worker.WorkerPTO, error) {
 	if !f.pto.Status.CanTransitionTo(worker.PTOStatusApproved) {
 		return nil, errortypes.NewValidationError(
 			"status", errortypes.ErrInvalidOperation, "PTO cannot be approved",
@@ -40,18 +40,18 @@ func (f *savingPTO) approve(req *repositories.UpdatePTOStatusRequest) (*worker.W
 
 func (f *savingPTO) PreviewApprove(
 	_ context.Context,
-	req *repositories.UpdatePTOStatusRequest,
-) (*serviceports.WorkerPTOTransitionPreview, error) {
+	req *workerports.UpdatePTOStatusRequest,
+) (*workerports.WorkerPTOTransitionPreview, error) {
 	approved, err := f.approve(req)
 	if err != nil {
 		return nil, err
 	}
 	current := *f.pto
 
-	return &serviceports.WorkerPTOTransitionPreview{
+	return &workerports.WorkerPTOTransitionPreview{
 		Before: &current,
 		After:  approved,
-		Driver: &serviceports.DriverNotificationPreview{
+		Driver: &notificationports.DriverNotificationPreview{
 			WorkerID:   current.WorkerID,
 			WorkerName: "Ana Reyes",
 			Reachable:  true,
@@ -63,7 +63,7 @@ func (f *savingPTO) PreviewApprove(
 
 func (f *savingPTO) Approve(
 	_ context.Context,
-	req *repositories.UpdatePTOStatusRequest,
+	req *workerports.UpdatePTOStatusRequest,
 ) (*worker.WorkerPTO, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err

@@ -13,8 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -33,7 +32,7 @@ func (r *MutationResolver) SetMyAIFeedback(ctx context.Context, input gqlmodel.S
 		return nil, err
 	}
 
-	return r.AiFeedbackService.SetMine(ctx, &services.SetAIFeedbackRequest{
+	return r.AiFeedbackService.SetMine(ctx, &aifeedbackports.SetAIFeedbackRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		Target:     target,
 		Rating:     aiFeedbackRating(input.Rating),
@@ -53,7 +52,7 @@ func (r *MutationResolver) ClearMyAIFeedback(ctx context.Context, input gqlmodel
 		return false, err
 	}
 
-	return r.AiFeedbackService.ClearMine(ctx, services.ClearAIFeedbackRequest{
+	return r.AiFeedbackService.ClearMine(ctx, aifeedbackports.ClearAIFeedbackRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		Target:     target,
 	}, actorutil.FromAuthContext(authCtx))
@@ -70,7 +69,7 @@ func (r *QueryResolver) MyAIFeedback(ctx context.Context, input gqlmodel.MyAIFee
 		return nil, err
 	}
 
-	return r.AiFeedbackService.ListMine(ctx, services.ListMyAIFeedbackRequest{
+	return r.AiFeedbackService.ListMine(ctx, aifeedbackports.ListMyAIFeedbackRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		Targets:    targets,
 	}, actorutil.FromAuthContext(authCtx))
@@ -89,7 +88,7 @@ func (r *QueryResolver) AiFeedback(ctx context.Context, input gqlmodel.DataTable
 
 	result, err := r.AiFeedbackService.ListConnection(
 		ctx,
-		&repositories.ListAIFeedbackConnectionRequest{
+		&aifeedbackports.ListAIFeedbackConnectionRequest{
 			Filter:  tableInput.Filter,
 			Cursor:  tableInput.Cursor,
 			Columns: aiFeedbackColumns(ctx, "edges.node"),
@@ -102,7 +101,7 @@ func (r *QueryResolver) AiFeedback(ctx context.Context, input gqlmodel.DataTable
 	return aiFeedbackConnectionToModel(result)
 }
 
-func (r *QueryResolver) AgentFeedbackSummary(ctx context.Context, agentDefinitionID string, window *int) (*services.AgentFeedbackSummary, error) {
+func (r *QueryResolver) AgentFeedbackSummary(ctx context.Context, agentDefinitionID string, window *int) (*aifeedbackports.AgentFeedbackSummary, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentFeedback, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -113,12 +112,12 @@ func (r *QueryResolver) AgentFeedbackSummary(ctx context.Context, agentDefinitio
 		return nil, err
 	}
 
-	windowDays := services.DefaultAgentFeedbackWindowDays
+	windowDays := aifeedbackports.DefaultAgentFeedbackWindowDays
 	if window != nil {
 		windowDays = *window
 	}
 
-	return r.AiFeedbackService.AgentSummary(ctx, services.AgentFeedbackSummaryRequest{
+	return r.AiFeedbackService.AgentSummary(ctx, aifeedbackports.AgentFeedbackSummaryRequest{
 		TenantInfo:        base.TenantInfo(authCtx),
 		AgentDefinitionID: definitionID,
 		WindowDays:        windowDays,

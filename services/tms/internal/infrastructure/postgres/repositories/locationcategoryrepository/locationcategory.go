@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/locationcategory"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationcategoryports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -29,7 +29,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.LocationCategoryRepository {
+func New(p Params) locationcategoryports.LocationCategoryRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.location-category-repository"),
@@ -38,7 +38,7 @@ func New(p Params) repositories.LocationCategoryRepository {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListLocationCategoriesRequest,
+	req *locationcategoryports.ListLocationCategoriesRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
@@ -54,7 +54,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListLocationCategoriesRequest,
+	req *locationcategoryports.ListLocationCategoriesRequest,
 ) (*pagination.ListResult[*locationcategory.LocationCategory], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*locationcategory.LocationCategory], error) {
 		log := r.l.With(
@@ -83,7 +83,7 @@ func (r *repository) List(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListLocationCategoryConnectionRequest,
+	req *locationcategoryports.ListLocationCategoryConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -96,7 +96,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListLocationCategoryConnectionRequest,
+	req *locationcategoryports.ListLocationCategoryConnectionRequest,
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -116,7 +116,7 @@ func applyLocationCategoryColumns(q *bun.SelectQuery, columns []string) *bun.Sel
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListLocationCategoryConnectionRequest,
+	req *locationcategoryports.ListLocationCategoryConnectionRequest,
 ) (*pagination.CursorListResult[*locationcategory.LocationCategory], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*locationcategory.LocationCategory], error) {
 		log := r.l.With(
@@ -226,7 +226,7 @@ func (r *repository) Update(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetLocationCategoryByIDRequest,
+	req locationcategoryports.GetLocationCategoryByIDRequest,
 ) (*locationcategory.LocationCategory, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*locationcategory.LocationCategory, error) {
 		log := r.l.With(

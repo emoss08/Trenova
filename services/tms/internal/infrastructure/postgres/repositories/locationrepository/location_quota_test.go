@@ -1,11 +1,12 @@
 package locationrepository
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -20,7 +21,7 @@ func TestCreateRefusesALocationPastTheQuota(t *testing.T) {
 	t.Parallel()
 
 	conn, sqlMock := dbtest.NewSQLMock(t)
-	guard := mocks.NewMockQuotaGuard(t)
+	guard := platformplanportsmock.NewMockQuotaGuard(t)
 	repo := &repository{db: conn, l: zap.NewNop(), quota: guard}
 	entity := &location.Location{
 		OrganizationID: pulid.MustNew("org_"),
@@ -28,7 +29,7 @@ func TestCreateRefusesALocationPastTheQuota(t *testing.T) {
 		Name:           "Dock 4",
 	}
 
-	guard.EXPECT().Enforce(mock.Anything, &services.QuotaRequest{
+	guard.EXPECT().Enforce(mock.Anything, &platformplanports.QuotaRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
 		Meter:      platformcatalog.MeterLocationsTotal,
 		Quantity:   1,

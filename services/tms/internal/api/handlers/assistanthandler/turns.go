@@ -3,13 +3,11 @@ package assistanthandler
 import (
 	"net/http"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
-
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -32,7 +30,7 @@ func (h *Handler) activeTurn(c *gin.Context) {
 		return
 	}
 
-	turn, err := h.turns.Active(c.Request.Context(), repositories.ActiveAssistantTurnRequest{
+	turn, err := h.turns.Active(c.Request.Context(), agentports.ActiveAssistantTurnRequest{
 		ThreadID:   req.ID,
 		UserID:     req.UserID,
 		TenantInfo: req.TenantInfo,
@@ -61,7 +59,7 @@ type liveTurnsResponse struct {
 	Items []liveTurn `json:"items"`
 }
 
-func liveTurnsFrom(turns []*repositories.LiveAssistantTurn) liveTurnsResponse {
+func liveTurnsFrom(turns []*agentports.LiveAssistantTurn) liveTurnsResponse {
 	items := make([]liveTurn, 0, len(turns))
 	for _, turn := range turns {
 		items = append(items, liveTurn{
@@ -85,7 +83,7 @@ func (h *Handler) activeTurns(c *gin.Context) {
 
 	turns, err := h.turns.ListLive(
 		c.Request.Context(),
-		repositories.ListLiveAssistantTurnsRequest{
+		agentports.ListLiveAssistantTurnsRequest{
 			UserID:         authCtx.UserID,
 			TenantInfo:     tenantFromAuthContext(authCtx),
 			ExcludeOrigins: conversation.PageBoundOrigins(),
@@ -113,7 +111,7 @@ func (h *Handler) streamTurn(c *gin.Context) {
 		return
 	}
 
-	turn, err := h.turns.Get(c.Request.Context(), repositories.GetAssistantTurnRequest{
+	turn, err := h.turns.Get(c.Request.Context(), agentports.GetAssistantTurnRequest{
 		ID:         turnID,
 		TenantInfo: tenantFromAuthContext(authCtx),
 		UserID:     authCtx.UserID,
@@ -133,7 +131,7 @@ func (h *Handler) streamTurn(c *gin.Context) {
 	err = h.turns.Relay(c.Request.Context(), assistantturnservice.RelayRequest{
 		Turn:   turn,
 		Cursor: cursorFrom(c),
-	}, func(frame serviceports.TurnStreamFrame) error {
+	}, func(frame agentports.TurnStreamFrame) error {
 		// The frame's payload arrives already encoded and leaves the same
 		// way: decoding it here to encode it again would spend the stream's
 		// throughput learning nothing.
@@ -146,7 +144,7 @@ func (h *Handler) streamTurn(c *gin.Context) {
 			zap.String("turn", turnID.String()),
 			zap.Error(err),
 		)
-		_ = stream.Emit(serviceports.AssistantEventError, gin.H{
+		_ = stream.Emit(agentports.AssistantEventError, gin.H{
 			"message": "The live view of this reply ended. It will appear in the conversation.",
 		})
 	}
@@ -271,7 +269,7 @@ func (h *Handler) ask(c *gin.Context) {
 	}
 
 	actor := requestActorFromAuthContext(authCtx)
-	thread, err := h.service.StartAsk(c.Request.Context(), &serviceports.AskRequest{
+	thread, err := h.service.StartAsk(c.Request.Context(), &agentports.AskRequest{
 		Content:    body.Content,
 		Page:       body.Context.page(),
 		Surface:    body.Surface,
@@ -311,7 +309,7 @@ func (h *Handler) askWorker(
 	// slot is taken. Recording the turn first let anyone who knew a thread's
 	// id hold it, and the owner saw "already working on a reply" until the
 	// stranger's workflow failed.
-	if _, err := h.service.GetThread(c.Request.Context(), repositories.GetThreadRequest{
+	if _, err := h.service.GetThread(c.Request.Context(), agentports.GetThreadRequest{
 		ID:         threadID,
 		UserID:     authCtx.UserID,
 		TenantInfo: tenantFromAuthContext(authCtx),
@@ -427,7 +425,7 @@ func (h *Handler) stopTurn(c *gin.Context) {
 		return
 	}
 
-	turn, err := h.turns.Get(c.Request.Context(), repositories.GetAssistantTurnRequest{
+	turn, err := h.turns.Get(c.Request.Context(), agentports.GetAssistantTurnRequest{
 		ID:         turnID,
 		TenantInfo: tenantFromAuthContext(authCtx),
 		UserID:     authCtx.UserID,

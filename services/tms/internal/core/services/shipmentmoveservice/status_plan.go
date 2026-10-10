@@ -5,8 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -35,8 +34,8 @@ type moveStatusPlan struct {
 // shipment with its state re-derived by the coordinator.
 func (s *service) PreviewUpdateStatus(
 	ctx context.Context,
-	req *repositories.BulkUpdateMoveStatusRequest,
-) (*services.MoveStatusPlan, error) {
+	req *shipmentports.BulkUpdateMoveStatusRequest,
+) (*shipmentports.MoveStatusPlan, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
 	}
@@ -53,7 +52,7 @@ func (s *service) PreviewUpdateStatus(
 		return nil, err
 	}
 
-	out := &services.MoveStatusPlan{
+	out := &shipmentports.MoveStatusPlan{
 		MovesBefore:     plan.moves,
 		MovesAfter:      make([]*shipment.ShipmentMove, 0, len(plan.moves)),
 		ShipmentsBefore: make([]*shipment.Shipment, 0, len(plan.shipmentIDs)),
@@ -98,7 +97,7 @@ func (s *service) planMoveStatus(
 	seenShipments := make(map[pulid.ID]struct{}, len(req.moveIDs))
 
 	for _, moveID := range req.moveIDs {
-		move, err := s.repo.GetByID(ctx, &repositories.GetMoveByIDRequest{
+		move, err := s.repo.GetByID(ctx, &shipmentports.GetMoveByIDRequest{
 			MoveID:            moveID,
 			TenantInfo:        req.tenantInfo,
 			ExpandMoveDetails: false,
@@ -150,7 +149,7 @@ func (s *service) planMoveStatus(
 func (s *service) projectShipmentState(
 	ctx context.Context,
 	shipmentID pulid.ID,
-	req *repositories.BulkUpdateMoveStatusRequest,
+	req *shipmentports.BulkUpdateMoveStatusRequest,
 ) (before, after *shipment.Shipment, err error) {
 	before, err = s.loadShipment(ctx, shipmentID, req.TenantInfo)
 	if err != nil {

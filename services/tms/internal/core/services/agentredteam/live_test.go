@@ -15,12 +15,11 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentevalgate"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionrouter"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -65,14 +64,14 @@ type liveReport struct {
 }
 
 type liveProviders struct {
-	repositories.AIProviderRepository
+	agentports.AIProviderRepository
 
 	provider *aiprovider.Provider
 }
 
 func (p liveProviders) ListForTask(
 	context.Context,
-	repositories.ListAIProvidersForTaskRequest,
+	agentports.ListAIProvidersForTaskRequest,
 ) ([]*aiprovider.Provider, error) {
 	return []*aiprovider.Provider{p.provider}, nil
 }
@@ -85,7 +84,7 @@ func envOr(key, fallback string) string {
 	return fallback
 }
 
-func liveCompletion(t *testing.T, key string) (serviceports.CompletionService, string) {
+func liveCompletion(t *testing.T, key string) (agentports.CompletionService, string) {
 	t.Helper()
 
 	encryption := encryptionservice.NewWithKeyManager(
@@ -186,7 +185,7 @@ func TestLiveRedTeam(t *testing.T) {
 func runLive(
 	t *testing.T,
 	c *Case,
-	completion serviceports.CompletionService,
+	completion agentports.CompletionService,
 ) liveCaseResult {
 	t.Helper()
 

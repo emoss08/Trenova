@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/iam"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -14,13 +14,13 @@ import (
 )
 
 type accessPolicyValidatorRepo struct {
-	repositories.IAMRepository
+	iamports.IAMRepository
 	policies []*iam.AccessPolicy
 }
 
 func (r *accessPolicyValidatorRepo) ListEnabledAccessPolicies(
 	context.Context,
-	repositories.IAMPolicyLookupRequest,
+	iamports.IAMPolicyLookupRequest,
 ) ([]*iam.AccessPolicy, error) {
 	return r.policies, nil
 }

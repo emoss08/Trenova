@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -17,18 +18,18 @@ import (
 const sweepNow = int64(1_767_225_600)
 
 type recordingPublisher struct {
-	events []services.AgentEvent
+	events []agentports.AgentEvent
 }
 
-func (r *recordingPublisher) Publish(_ context.Context, event services.AgentEvent) {
+func (r *recordingPublisher) Publish(_ context.Context, event agentports.AgentEvent) {
 	r.events = append(r.events, event)
 }
 
 type recordingProjector struct {
-	items []services.WatchtowerItemInput
+	items []watchtowerports.WatchtowerItemInput
 }
 
-func (r *recordingProjector) Upsert(_ context.Context, item services.WatchtowerItemInput) {
+func (r *recordingProjector) Upsert(_ context.Context, item watchtowerports.WatchtowerItemInput) {
 	r.items = append(r.items, item)
 }
 

@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/ratesimulation"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratesimulationports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -34,7 +34,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.RateSimulationRepository {
+func New(p Params) ratesimulationports.RateSimulationRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.ratesimulation-repository"),
@@ -43,7 +43,7 @@ func New(p Params) repositories.RateSimulationRepository {
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req *repositories.GetRateSimulationByIDRequest,
+	req *ratesimulationports.GetRateSimulationByIDRequest,
 ) (*ratesimulation.RateSimulation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ratesimulation.RateSimulation, error) {
 		log := r.l.With(
@@ -77,7 +77,7 @@ func (r *repository) GetByID(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListRateSimulationsRequest,
+	req *ratesimulationports.ListRateSimulationsRequest,
 ) (*pagination.ListResult[*ratesimulation.RateSimulation], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*ratesimulation.RateSimulation], error) {
 		cols := buncolgen.RateSimulationColumns
@@ -113,7 +113,7 @@ func (r *repository) List(
 
 func (r *repository) ListResults(
 	ctx context.Context,
-	req *repositories.ListRateSimulationResultsRequest,
+	req *ratesimulationports.ListRateSimulationResultsRequest,
 ) (*pagination.ListResult[*ratesimulation.RateSimulationResult], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*ratesimulation.RateSimulationResult], error) {
 		entities := make([]*ratesimulation.RateSimulationResult, 0)
@@ -237,9 +237,9 @@ func (r *repository) AppendResults(
 // so ordering by id is also ordering by age.
 func (r *repository) ListShipments(
 	ctx context.Context,
-	req *repositories.ListSimulationShipmentsRequest,
-) (*repositories.SimulationShipmentPage, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.SimulationShipmentPage, error) {
+	req *ratesimulationports.ListSimulationShipmentsRequest,
+) (*ratesimulationports.SimulationShipmentPage, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ratesimulationports.SimulationShipmentPage, error) {
 		cols := buncolgen.ShipmentColumns
 
 		entities := make([]*shipment.Shipment, 0, req.Limit)
@@ -281,7 +281,7 @@ func (r *repository) ListShipments(
 			ids = append(ids, entity.ID)
 		}
 
-		result := &repositories.SimulationShipmentPage{ShipmentIDs: ids}
+		result := &ratesimulationports.SimulationShipmentPage{ShipmentIDs: ids}
 
 		// A full page means there is probably another. A short one is the end, and
 		// saying so saves a round trip that would return nothing.

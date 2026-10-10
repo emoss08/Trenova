@@ -6,10 +6,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/core/domain/extractioneval"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -32,7 +32,7 @@ type runRepository struct {
 	l  *zap.Logger
 }
 
-func NewRuns(p Params) repositories.ExtractionEvalRunRepository {
+func NewRuns(p Params) extractionevalports.ExtractionEvalRunRepository {
 	return &runRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.extractioneval-run-repository"),
@@ -45,7 +45,7 @@ func (r *runRepository) Create(
 	results []*extractioneval.ExtractionResult,
 ) (*extractioneval.ExtractionRun, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*extractioneval.ExtractionRun, error) {
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
 			if _, err := tx.NewInsert().Model(run).Returning("*").Exec(txCtx); err != nil {
 				if dberror.IsUniqueConstraintViolation(err) {
 					return errortypes.NewBusinessError(
@@ -81,7 +81,7 @@ func (r *runRepository) Create(
 
 func (r *runRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetExtractionEvalRunRequest,
+	req extractionevalports.GetExtractionEvalRunRequest,
 ) (*extractioneval.ExtractionRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*extractioneval.ExtractionRun, error) {
 		entity := new(extractioneval.ExtractionRun)
@@ -145,7 +145,7 @@ func (r *runRepository) Update(
 
 func (r *runRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListExtractionEvalRunConnectionRequest,
+	req *extractionevalports.ListExtractionEvalRunConnectionRequest,
 ) (*pagination.CursorListResult[*extractioneval.ExtractionRun], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*extractioneval.ExtractionRun], error) {
 		dba := r.db.DBForContext(ctx)
@@ -246,7 +246,7 @@ func (r *runRepository) ListRecentFinished(
 
 func (r *runRepository) PurgeBefore(
 	ctx context.Context,
-	req repositories.PurgeExtractionEvalRunsRequest,
+	req extractionevalports.PurgeExtractionEvalRunsRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
 		cols := buncolgen.ExtractionRunColumns

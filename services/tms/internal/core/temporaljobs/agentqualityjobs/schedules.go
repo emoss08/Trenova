@@ -9,9 +9,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -38,19 +37,19 @@ type QualitySchedulesParams struct {
 	fx.In
 
 	Client   client.Client
-	Controls repositories.AgentQualityControlRepository
+	Controls agentqualityports.AgentQualityControlRepository
 	Logger   *zap.Logger
 }
 
 type QualitySchedules struct {
 	client   client.Client
-	controls repositories.AgentQualityControlRepository
+	controls agentqualityports.AgentQualityControlRepository
 	l        *zap.Logger
 }
 
 var (
-	_ serviceports.AgentQualityScheduler = (*QualitySchedules)(nil)
-	_ serviceports.AgentSuiteStarter     = (*QualitySchedules)(nil)
+	_ agentqualityports.AgentQualityScheduler = (*QualitySchedules)(nil)
+	_ agentqualityports.AgentSuiteStarter     = (*QualitySchedules)(nil)
 )
 
 func NewQualitySchedules(p QualitySchedulesParams) *QualitySchedules {
@@ -61,7 +60,7 @@ func NewQualitySchedules(p QualitySchedulesParams) *QualitySchedules {
 	}
 }
 
-func Wanted(target *repositories.QualityScheduleTarget) bool {
+func Wanted(target *agentqualityports.QualityScheduleTarget) bool {
 	if !target.HasActiveCases {
 		return false
 	}
@@ -69,7 +68,7 @@ func Wanted(target *repositories.QualityScheduleTarget) bool {
 	return target.Control == nil || target.Control.Enabled
 }
 
-func sweepControl(target *repositories.QualityScheduleTarget) *agentquality.Control {
+func sweepControl(target *agentqualityports.QualityScheduleTarget) *agentquality.Control {
 	if target.Control != nil {
 		return target.Control
 	}
@@ -77,7 +76,7 @@ func sweepControl(target *repositories.QualityScheduleTarget) *agentquality.Cont
 	return agentquality.DefaultControl(target.OrganizationID, target.BusinessUnitID)
 }
 
-func SweepScheduleOptions(target *repositories.QualityScheduleTarget) client.ScheduleOptions {
+func SweepScheduleOptions(target *agentqualityports.QualityScheduleTarget) client.ScheduleOptions {
 	control := sweepControl(target)
 	timezone := control.EffectiveTimezone(target.OrganizationTimezone)
 
@@ -123,7 +122,7 @@ func (s *QualitySchedules) Sync(ctx context.Context, tenant pagination.TenantInf
 
 func (s *QualitySchedules) sync(
 	ctx context.Context,
-	target *repositories.QualityScheduleTarget,
+	target *agentqualityports.QualityScheduleTarget,
 ) error {
 	id := agentquality.SweepScheduleID(target.OrganizationID)
 	if !Wanted(target) {
@@ -188,7 +187,7 @@ func (s *QualitySchedules) Reconcile(ctx context.Context) (*ReconcileResult, err
 	for {
 		page, err := s.controls.ListScheduleTargets(
 			ctx,
-			repositories.ListQualityScheduleTargetsRequest{
+			agentqualityports.ListQualityScheduleTargetsRequest{
 				AfterOrganizationID: after,
 				Limit:               reconcilePageSize,
 			},
@@ -251,7 +250,7 @@ func (s *QualitySchedules) Reconcile(ctx context.Context) (*ReconcileResult, err
 
 func (s *QualitySchedules) StartSuiteRun(
 	ctx context.Context,
-	start *serviceports.AgentSuiteRunStart,
+	start *agentqualityports.AgentSuiteRunStart,
 ) (string, error) {
 	workflowID := agentquality.SuiteRunWorkflowID(start.SuiteRunID)
 	if _, err := s.client.ExecuteWorkflow(ctx, client.StartWorkflowOptions{

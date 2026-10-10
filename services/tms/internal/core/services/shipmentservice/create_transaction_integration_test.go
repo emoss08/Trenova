@@ -9,7 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -24,7 +24,7 @@ type failingShipmentEventService struct {
 
 func (failingShipmentEventService) Record(
 	_ context.Context,
-	_ *services.RecordShipmentEventParams,
+	_ *shipmenteventports.RecordShipmentEventParams,
 ) error {
 	return errors.New("event store unavailable")
 }

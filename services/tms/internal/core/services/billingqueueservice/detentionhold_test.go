@@ -1,14 +1,21 @@
 package billingqueueservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/detentionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -23,9 +30,9 @@ import (
 type holdFixture struct {
 	tenantInfo pagination.TenantInfo
 	item       *billingqueue.BillingQueueItem
-	repo       *mocks.MockBillingQueueRepository
-	invoices   *mocks.MockInvoiceService
-	detention  *mocks.MockDetentionBillingService
+	repo       *billingqueueportsmock.MockBillingQueueRepository
+	invoices   *invoiceportsmock.MockInvoiceService
+	detention  *detentionportsmock.MockDetentionBillingService
 	svc        *service
 }
 
@@ -50,14 +57,14 @@ func newHoldFixture(t *testing.T, billType billingqueue.BillType) *holdFixture {
 			Status:           billingqueue.StatusInReview,
 			BillType:         billType,
 		},
-		repo:      mocks.NewMockBillingQueueRepository(t),
-		invoices:  mocks.NewMockInvoiceService(t),
-		detention: mocks.NewMockDetentionBillingService(t),
+		repo:      billingqueueportsmock.NewMockBillingQueueRepository(t),
+		invoices:  invoiceportsmock.NewMockInvoiceService(t),
+		detention: detentionportsmock.NewMockDetentionBillingService(t),
 	}
 
-	audit := mocks.NewMockAuditService(t)
+	audit := auditportsmock.NewMockAuditService(t)
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
-	realtime := mocks.NewMockRealtimeService(t)
+	realtime := agentportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Maybe()
 
 	f.svc = &service{
@@ -77,7 +84,7 @@ func newHoldFixture(t *testing.T, billType billingqueue.BillType) *holdFixture {
 func (f *holdFixture) expectRead() {
 	f.repo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(context.Context, *repositories.GetBillingQueueItemByIDRequest) (*billingqueue.BillingQueueItem, error) {
+		RunAndReturn(func(context.Context, *billingqueueports.GetBillingQueueItemByIDRequest) (*billingqueue.BillingQueueItem, error) {
 			clone := *f.item
 			return &clone, nil
 		}).
@@ -86,7 +93,7 @@ func (f *holdFixture) expectRead() {
 
 func (f *holdFixture) expectHolds(holds ...*detention.DetentionOccurrence) {
 	f.detention.EXPECT().
-		HoldsForShipments(mock.Anything, &services.DetentionBillingHoldsRequest{
+		HoldsForShipments(mock.Anything, &detentionports.DetentionBillingHoldsRequest{
 			TenantInfo:  f.tenantInfo,
 			ShipmentIDs: []pulid.ID{f.item.ShipmentID},
 		}).
@@ -110,7 +117,7 @@ func (f *holdFixture) heldCharge() *detention.DetentionOccurrence {
 func (f *holdFixture) approve(t *testing.T) (*billingqueue.BillingQueueItem, error) {
 	t.Helper()
 
-	return f.svc.UpdateStatus(t.Context(), &services.UpdateBillingQueueStatusRequest{
+	return f.svc.UpdateStatus(t.Context(), &billingqueueports.UpdateBillingQueueStatusRequest{
 		ItemID:     f.item.ID,
 		NewStatus:  billingqueue.StatusApproved,
 		TenantInfo: f.tenantInfo,
@@ -154,7 +161,7 @@ func TestUpdateStatus_ApprovesWhenNoDetentionChargeIsHeld(t *testing.T) {
 		Once()
 	f.invoices.EXPECT().
 		CreateFromApprovedBillingQueueItem(mock.Anything, mock.Anything, mock.Anything).
-		Return(&services.CreateInvoiceFromBillingQueueResult{
+		Return(&invoiceports.CreateInvoiceFromBillingQueueResult{
 			Invoice: &invoice.Invoice{ID: pulid.MustNew("inv_")},
 		}, nil).
 		Once()
@@ -178,7 +185,7 @@ func TestUpdateStatus_CreditMemoApprovalIsNeverHeldByDetention(t *testing.T) {
 		Once()
 	f.invoices.EXPECT().
 		CreateFromApprovedBillingQueueItem(mock.Anything, mock.Anything, mock.Anything).
-		Return(&services.CreateInvoiceFromBillingQueueResult{}, nil).
+		Return(&invoiceports.CreateInvoiceFromBillingQueueResult{}, nil).
 		Once()
 
 	updated, err := f.approve(t)
@@ -210,14 +217,14 @@ func TestGetByID_ListsTheDetentionChargesHoldingTheItem(t *testing.T) {
 	held.LocationName = "Riverside DC"
 	f.expectRead()
 	f.expectHolds(held)
-	shipments := mocks.NewMockShipmentRepository(t)
+	shipments := shipmentportsmock.NewMockShipmentRepository(t)
 	shipments.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
 		Return(nil, errortypes.NewNotFoundError("shipment not found")).
 		Once()
 	f.svc.shipmentRepo = shipments
 
-	item, err := f.svc.GetByID(t.Context(), &repositories.GetBillingQueueItemByIDRequest{
+	item, err := f.svc.GetByID(t.Context(), &billingqueueports.GetBillingQueueItemByIDRequest{
 		ItemID:                f.item.ID,
 		TenantInfo:            f.tenantInfo,
 		ExpandShipmentDetails: true,

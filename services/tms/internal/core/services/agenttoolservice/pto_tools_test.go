@@ -7,22 +7,23 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type fakePTODecider struct {
-	approved  *repositories.UpdatePTOStatusRequest
-	rejected  *repositories.UpdatePTOStatusRequest
-	cancelled *repositories.UpdatePTOStatusRequest
+	approved  *workerports.UpdatePTOStatusRequest
+	rejected  *workerports.UpdatePTOStatusRequest
+	cancelled *workerports.UpdatePTOStatusRequest
 }
 
 func (f *fakePTODecider) Approve(
 	_ context.Context,
-	req *repositories.UpdatePTOStatusRequest,
+	req *workerports.UpdatePTOStatusRequest,
 ) (*worker.WorkerPTO, error) {
 	f.approved = req
 
@@ -31,19 +32,19 @@ func (f *fakePTODecider) Approve(
 
 func (f *fakePTODecider) PreviewApprove(
 	_ context.Context,
-	req *repositories.UpdatePTOStatusRequest,
-) (*serviceports.WorkerPTOTransitionPreview, error) {
+	req *workerports.UpdatePTOStatusRequest,
+) (*workerports.WorkerPTOTransitionPreview, error) {
 	current := &worker.WorkerPTO{ID: req.ID, Status: worker.PTOStatusRequested}
 	approved := *current
 	approved.Status = worker.PTOStatusApproved
 	approved.ApproverID = req.UserID
 
-	return &serviceports.WorkerPTOTransitionPreview{Before: current, After: &approved}, nil
+	return &workerports.WorkerPTOTransitionPreview{Before: current, After: &approved}, nil
 }
 
 func (f *fakePTODecider) Reject(
 	_ context.Context,
-	req *repositories.UpdatePTOStatusRequest,
+	req *workerports.UpdatePTOStatusRequest,
 ) (*worker.WorkerPTO, error) {
 	f.rejected = req
 
@@ -52,7 +53,7 @@ func (f *fakePTODecider) Reject(
 
 func (f *fakePTODecider) Cancel(
 	_ context.Context,
-	req *repositories.UpdatePTOStatusRequest,
+	req *workerports.UpdatePTOStatusRequest,
 ) (*worker.WorkerPTO, error) {
 	f.cancelled = req
 
@@ -108,7 +109,7 @@ func TestApproveWorkerPTO_RefusesAnAgentPrincipal(t *testing.T) {
 
 	pto := &fakePTODecider{}
 	params := executeParams(map[string]any{"ptoId": pulid.MustNew("wpto_").String()})
-	params.Actor.PrincipalType = serviceports.PrincipalTypeAgent
+	params.Actor.PrincipalType = permissionports.PrincipalTypeAgent
 
 	err := newApproveWorkerPTOTool(pto).Execute(t.Context(), params)
 
@@ -180,7 +181,7 @@ func TestPTOTools_DeclareTheirAuthorizationAndReversibility(t *testing.T) {
 func TestPTOTools_NeverAutoExecute(t *testing.T) {
 	t.Parallel()
 
-	for _, tool := range []serviceports.AgentTool{
+	for _, tool := range []agentports.AgentTool{
 		newApproveWorkerPTOTool(&fakePTODecider{}),
 		newRejectWorkerPTOTool(&fakePTODecider{}),
 		newCancelWorkerPTOTool(&fakePTODecider{}),

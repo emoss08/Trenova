@@ -7,8 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -21,13 +20,13 @@ import (
 type Params struct {
 	fx.In
 
-	Service              services.OrganizationService
+	Service              tenantports.OrganizationService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	service services.OrganizationService
+	service tenantports.OrganizationService
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
 }
@@ -105,7 +104,7 @@ func (h *Handler) selectOptions(c *gin.Context) {
 		func() (*pagination.ListResult[*tenant.Organization], error) {
 			return h.service.SelectOptions(
 				c.Request.Context(),
-				&repositories.SelectOrganizationOptionsRequest{
+				&tenantports.SelectOrganizationOptionsRequest{
 					SelectQueryRequest: req,
 					Scope:              helpers.QueryString(c, "scope", ""),
 					ExcludeCurrent:     helpers.QueryBool(c, "excludeCurrent", false),
@@ -138,7 +137,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.GetByID(c.Request.Context(), repositories.GetOrganizationByIDRequest{
+	entity, err := h.service.GetByID(c.Request.Context(), tenantports.GetOrganizationByIDRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: orgID,
 			BuID:  authCtx.BusinessUnitID,
@@ -177,7 +176,7 @@ func (h *Handler) update(c *gin.Context) {
 		return
 	}
 
-	current, err := h.service.GetByID(c.Request.Context(), repositories.GetOrganizationByIDRequest{
+	current, err := h.service.GetByID(c.Request.Context(), tenantports.GetOrganizationByIDRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  orgID,
 			BuID:   authCtx.BusinessUnitID,
@@ -239,7 +238,7 @@ func (h *Handler) uploadLogo(c *gin.Context) {
 
 	updatedEntity, err := h.service.UploadLogo(
 		c.Request.Context(),
-		&services.UploadLogoRequest{
+		&tenantports.UploadLogoRequest{
 			TenantInfo:     pagination.FromAuthAsUser(authCtx),
 			OrganizationID: orgID,
 			File:           file,
@@ -275,7 +274,7 @@ func (h *Handler) getLogoURL(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.service.GetLogoURL(c.Request.Context(), services.GetLogoURLRequest{
+	resp, err := h.service.GetLogoURL(c.Request.Context(), tenantports.GetLogoURLRequest{
 		TenantInfo:     pagination.FromAuth(authCtx),
 		OrganizationID: orgID,
 	})
@@ -310,7 +309,7 @@ func (h *Handler) deleteLogo(c *gin.Context) {
 
 	updatedEntity, err := h.service.DeleteLogo(
 		c.Request.Context(),
-		services.DeleteLogoRequest{
+		tenantports.DeleteLogoRequest{
 			TenantInfo:     pagination.FromAuthAsUser(authCtx),
 			OrganizationID: orgID,
 		},
@@ -350,7 +349,7 @@ func (h *Handler) upsertMicrosoftSSOConfig(c *gin.Context) {
 		return
 	}
 
-	req := new(services.MicrosoftSSOConfig)
+	req := new(tenantports.MicrosoftSSOConfig)
 	if err = authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -402,7 +401,7 @@ func (h *Handler) upsertOktaSSOConfig(c *gin.Context) {
 		return
 	}
 
-	req := new(services.OktaSSOConfig)
+	req := new(tenantports.OktaSSOConfig)
 	if err = authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return

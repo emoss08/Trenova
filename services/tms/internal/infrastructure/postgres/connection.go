@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domainregistry"
@@ -23,7 +23,6 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
-
 	_ "modernc.org/sqlite"
 )
 
@@ -33,7 +32,7 @@ const (
 	sqliteMaxOpenConns = 8
 )
 
-var _ ports.DBConnection = (*Connection)(nil)
+var _ kernelports.DBConnection = (*Connection)(nil)
 
 type ConnectionParams struct {
 	fx.In
@@ -257,7 +256,7 @@ func (c *Connection) RunScoped(
 
 	return c.WithTx(
 		ctx,
-		ports.TxOptions{ReadOnly: readOnly},
+		kernelports.TxOptions{ReadOnly: readOnly},
 		func(ctx context.Context, _ bun.Tx) error {
 			return fn(ctx)
 		},
@@ -426,7 +425,7 @@ func (c *Connection) poolForContext(ctx context.Context) *bun.DB {
 //nolint:govet // existing scoped variable reuse is local and behavior-preserving
 func (c *Connection) WithTx(
 	ctx context.Context,
-	opts ports.TxOptions,
+	opts kernelports.TxOptions,
 	fn func(context.Context, bun.Tx) error,
 ) (err error) {
 	if c.db == nil {
@@ -443,7 +442,7 @@ func (c *Connection) WithTx(
 		}
 
 		if opts.ReadOnly {
-			ctx = ports.WithReadOnly(ctx)
+			ctx = kernelports.WithReadOnly(ctx)
 		}
 
 		return fn(ctx, existingTx)
@@ -469,9 +468,9 @@ func (c *Connection) WithTx(
 
 	baseCtx := context.WithValue(ctx, txContextKey{}, txBinding{tx: tx, scope: dbscope.From(ctx)})
 	if opts.ReadOnly {
-		baseCtx = ports.WithReadOnly(baseCtx)
+		baseCtx = kernelports.WithReadOnly(baseCtx)
 	}
-	txCtx, hooks := ports.WithAfterCommitHooks(baseCtx)
+	txCtx, hooks := kernelports.WithAfterCommitHooks(baseCtx)
 
 	if err = fn(txCtx, tx); err != nil {
 		return err
@@ -497,7 +496,7 @@ func applyLockTimeout(ctx context.Context, tx bun.Tx, timeout time.Duration) err
 	return nil
 }
 
-func (c *Connection) txOptions(opts ports.TxOptions) *sql.TxOptions {
+func (c *Connection) txOptions(opts kernelports.TxOptions) *sql.TxOptions {
 	if c.cfg != nil && c.cfg.Database.GetDialect().IsSQLite() {
 		return &sql.TxOptions{ReadOnly: opts.ReadOnly}
 	}

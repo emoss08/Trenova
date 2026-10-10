@@ -6,9 +6,9 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentrepository"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
@@ -74,12 +74,12 @@ func lastDeliveryLateral(dba bun.IDB) *bun.SelectQuery {
 
 func (r *Repository) ListDeliveriesToday(
 	ctx context.Context,
-	req *repositories.ShipmentWatchlistRequest,
-) ([]*repositories.ShipmentDeliveryRow, error) {
+	req *shipmentports.ShipmentWatchlistRequest,
+) ([]*shipmentports.ShipmentDeliveryRow, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*repositories.ShipmentDeliveryRow, error) {
+		func(ctx context.Context) ([]*shipmentports.ShipmentDeliveryRow, error) {
 			dba := r.db.DBForContext(ctx)
 			sp := buncolgen.ShipmentColumns
 			cus := buncolgen.CustomerColumns
@@ -93,7 +93,7 @@ func (r *Repository) ListDeliveriesToday(
 				return nil, err
 			}
 
-			rows := make([]*repositories.ShipmentDeliveryRow, 0, 64)
+			rows := make([]*shipmentports.ShipmentDeliveryRow, 0, 64)
 			q := dba.NewSelect().
 				Model((*shipment.Shipment)(nil)).
 				ColumnExpr(sp.ID.As("shipment_id")).
@@ -122,9 +122,9 @@ func (r *Repository) ListDeliveriesToday(
 
 func (r *Repository) NextUncoveredPickup(
 	ctx context.Context,
-	req *repositories.ShipmentWatchlistRequest,
-) (*repositories.ShipmentPickupRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.ShipmentPickupRow, error) {
+	req *shipmentports.ShipmentWatchlistRequest,
+) (*shipmentports.ShipmentPickupRow, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipmentports.ShipmentPickupRow, error) {
 		dba := r.db.DBForContext(ctx)
 		sp := buncolgen.ShipmentColumns
 		stp := buncolgen.StopColumns
@@ -134,7 +134,7 @@ func (r *Repository) NextUncoveredPickup(
 			ColumnExpr(stp.ScheduledWindowStart.As(fpPickupAt.Name)).
 			ColumnExpr(loc.City.As(fpCity.Name))
 
-		row := new(repositories.ShipmentPickupRow)
+		row := new(shipmentports.ShipmentPickupRow)
 		err := dba.NewSelect().
 			Model((*shipment.Shipment)(nil)).
 			ColumnExpr(sp.ID.As("shipment_id")).
@@ -163,12 +163,12 @@ func (r *Repository) NextUncoveredPickup(
 
 func (r *Repository) ListDwellingStops(
 	ctx context.Context,
-	req *repositories.ShipmentWatchlistRequest,
-) ([]*repositories.ShipmentDwellRow, error) {
+	req *shipmentports.ShipmentWatchlistRequest,
+) ([]*shipmentports.ShipmentDwellRow, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*repositories.ShipmentDwellRow, error) {
+		func(ctx context.Context) ([]*shipmentports.ShipmentDwellRow, error) {
 			if req.Basis == nil || req.Basis.Detention == nil {
 				return nil, shipmentrepository.ErrQuickFilterDetentionMissing
 			}
@@ -189,7 +189,7 @@ func (r *Repository) ListDwellingStops(
 				ColumnExpr(loc.Name.Expr("COALESCE({}, '') AS " + dwFacility.Name)).
 				ColumnExpr(stp.ActualArrival.As(dwArrival.Name))
 
-			rows := make([]*repositories.ShipmentDwellRow, 0, 16)
+			rows := make([]*shipmentports.ShipmentDwellRow, 0, 16)
 			err := dba.NewSelect().
 				Model((*shipment.Shipment)(nil)).
 				ColumnExpr(sp.ID.As("shipment_id")).
@@ -214,12 +214,12 @@ func (r *Repository) ListDwellingStops(
 
 func (r *Repository) ListReadyToBillCustomers(
 	ctx context.Context,
-	req *repositories.ListReadyToBillCustomersRequest,
-) ([]*repositories.ShipmentBillingCustomerRow, error) {
+	req *shipmentports.ListReadyToBillCustomersRequest,
+) ([]*shipmentports.ShipmentBillingCustomerRow, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*repositories.ShipmentBillingCustomerRow, error) {
+		func(ctx context.Context) ([]*shipmentports.ShipmentBillingCustomerRow, error) {
 			sp := buncolgen.ShipmentColumns
 			cus := buncolgen.CustomerColumns
 
@@ -228,7 +228,7 @@ func (r *Repository) ListReadyToBillCustomers(
 				limit = maxBillingCustomer
 			}
 
-			rows := make([]*repositories.ShipmentBillingCustomerRow, 0, limit)
+			rows := make([]*shipmentports.ShipmentBillingCustomerRow, 0, limit)
 			err := r.db.DBForContext(ctx).NewSelect().
 				Model((*shipment.Shipment)(nil)).
 				ColumnExpr(sp.CustomerID.As("customer_id")).

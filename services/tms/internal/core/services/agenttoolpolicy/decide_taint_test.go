@@ -6,13 +6,13 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 )
 
-func policyReaching(class agent.EgressClass) serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func policyReaching(class agent.EgressClass) agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          "write_" + class.String(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceShipment,

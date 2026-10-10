@@ -8,9 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -27,12 +28,12 @@ type fakeTransfers struct {
 	rejected   *ediservice.RejectTransferRequest
 	canceled   *ediservice.CancelTransferRequest
 	expired    *ediservice.ExpireTransferRequest
-	actor      *serviceports.RequestActor
+	actor      *permissionports.RequestActor
 }
 
 func (f *fakeTransfers) GetTransfer(
 	_ context.Context,
-	req repositories.GetEDITransferByIDRequest,
+	req ediports.GetEDITransferByIDRequest,
 ) (*edi.EDITransfer, error) {
 	f.directions = append(f.directions, req.Direction)
 	if req.ID != f.transfer.ID {
@@ -46,9 +47,9 @@ func (f *fakeTransfers) GetTransfer(
 func (f *fakeTransfers) PlanApproveTransfer(
 	ctx context.Context,
 	req *ediservice.ApproveTransferRequest,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*ediservice.TransferApprovalPlan, error) {
-	transfer, err := f.GetTransfer(ctx, repositories.GetEDITransferByIDRequest{
+	transfer, err := f.GetTransfer(ctx, ediports.GetEDITransferByIDRequest{
 		ID:        req.TransferID,
 		Direction: ediservice.TransferDirectionInbound,
 	})
@@ -91,7 +92,7 @@ func (f *fakeTransfers) PlanApproveTransfer(
 func (f *fakeTransfers) ApproveTransfer(
 	_ context.Context,
 	req *ediservice.ApproveTransferRequest,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*edi.EDITransfer, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -104,7 +105,7 @@ func (f *fakeTransfers) ApproveTransfer(
 func (f *fakeTransfers) RejectTransfer(
 	_ context.Context,
 	req *ediservice.RejectTransferRequest,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*edi.EDITransfer, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -117,7 +118,7 @@ func (f *fakeTransfers) RejectTransfer(
 func (f *fakeTransfers) CancelTransfer(
 	_ context.Context,
 	req *ediservice.CancelTransferRequest,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*edi.EDITransfer, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -130,7 +131,7 @@ func (f *fakeTransfers) CancelTransfer(
 func (f *fakeTransfers) ExpireTransfer(
 	_ context.Context,
 	req *ediservice.ExpireTransferRequest,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*edi.EDITransfer, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -173,7 +174,7 @@ func tenderParams(transfer *edi.EDITransfer, extra map[string]any) map[string]an
 func TestEDITenderDecisions_ArePersonOnlyProposalsOnTheEDIResource(t *testing.T) {
 	t.Parallel()
 
-	for _, tool := range []serviceports.AgentTool{
+	for _, tool := range []agentports.AgentTool{
 		newAcceptEDILoadTenderTool(nil),
 		newDeclineEDILoadTenderTool(nil),
 		newCancelEDILoadTenderTool(nil),
@@ -192,11 +193,11 @@ func TestEDITenderDecisions_ArePersonOnlyProposalsOnTheEDIResource(t *testing.T)
 		)
 
 		id := pulid.MustNew("edilt_")
-		target, ok := tool.(serviceports.TargetedTool).Target(
+		target, ok := tool.(agentports.TargetedTool).Target(
 			map[string]any{paramEDITransferID: id.String()},
 		)
 		require.True(t, ok, tool.Name())
-		assert.Equal(t, serviceports.ToolTarget{Resource: permission.ResourceEDI, ID: id}, target)
+		assert.Equal(t, agentports.ToolTarget{Resource: permission.ResourceEDI, ID: id}, target)
 	}
 }
 
@@ -300,7 +301,7 @@ func TestCancelAndExpireEDILoadTender_ReadTheSideTheServiceActsOn(t *testing.T) 
 	t.Parallel()
 
 	cases := map[string]struct {
-		build     func(ediTransferDecider) serviceports.AgentTool
+		build     func(ediTransferDecider) agentports.AgentTool
 		direction string
 		status    string
 		wrote     func(*fakeTransfers) bool
@@ -347,7 +348,7 @@ func TestCancelAndExpireEDILoadTender_ReadTheSideTheServiceActsOn(t *testing.T) 
 func TestEDITenderDecisions_RefuseAFinalizedTransfer(t *testing.T) {
 	t.Parallel()
 
-	for _, build := range []func(ediTransferDecider) serviceports.AgentTool{
+	for _, build := range []func(ediTransferDecider) agentports.AgentTool{
 		newAcceptEDILoadTenderTool,
 		newDeclineEDILoadTenderTool,
 		newCancelEDILoadTenderTool,

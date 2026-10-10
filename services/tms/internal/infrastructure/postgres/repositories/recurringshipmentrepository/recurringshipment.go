@@ -5,12 +5,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/core/domain/recurringshipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/quotaservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/quotatx"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/recurringshipmentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -30,17 +30,17 @@ type Params struct {
 	DB        *postgres.Connection
 	Logger    *zap.Logger
 	Generator seqgen.Generator
-	Quota     services.QuotaGuard `optional:"true"`
+	Quota     platformplanports.QuotaGuard `optional:"true"`
 }
 
 type repository struct {
 	db        *postgres.Connection
 	l         *zap.Logger
 	generator seqgen.Generator
-	quota     services.QuotaGuard
+	quota     platformplanports.QuotaGuard
 }
 
-func New(p Params) repositories.RecurringShipmentRepository {
+func New(p Params) recurringshipmentports.RecurringShipmentRepository {
 	return &repository{
 		db:        p.DB,
 		l:         p.Logger.Named("postgres.recurring-shipment-repository"),
@@ -51,7 +51,7 @@ func New(p Params) repositories.RecurringShipmentRepository {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListRecurringShipmentsRequest,
+	req *recurringshipmentports.ListRecurringShipmentsRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
@@ -65,7 +65,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListRecurringShipmentsRequest,
+	req *recurringshipmentports.ListRecurringShipmentsRequest,
 ) (*pagination.ListResult[*recurringshipment.RecurringShipment], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*recurringshipment.RecurringShipment], error) {
 		log := r.l.With(zap.String("operation", "List"))
@@ -98,7 +98,7 @@ func (r *repository) List(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListRecurringShipmentConnectionRequest,
+	req *recurringshipmentports.ListRecurringShipmentConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -111,7 +111,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListRecurringShipmentConnectionRequest,
+	req *recurringshipmentports.ListRecurringShipmentConnectionRequest,
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -131,7 +131,7 @@ func applyRecurringShipmentColumns(q *bun.SelectQuery, columns []string) *bun.Se
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListRecurringShipmentConnectionRequest,
+	req *recurringshipmentports.ListRecurringShipmentConnectionRequest,
 ) (*pagination.CursorListResult[*recurringshipment.RecurringShipment], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*recurringshipment.RecurringShipment], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -185,7 +185,7 @@ func (r *repository) ListConnection(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req *repositories.GetRecurringShipmentByIDRequest,
+	req *recurringshipmentports.GetRecurringShipmentByIDRequest,
 ) (*recurringshipment.RecurringShipment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*recurringshipment.RecurringShipment, error) {
 		log := r.l.With(
@@ -251,7 +251,7 @@ func (r *repository) insertSeries(
 			Returning("*").
 			Exec(c)
 		return err
-	}, services.QuotaRequest{
+	}, platformplanports.QuotaRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -304,7 +304,7 @@ func (r *repository) Update(
 
 func (r *repository) UpdateStatus(
 	ctx context.Context,
-	req *repositories.UpdateRecurringShipmentStatusRequest,
+	req *recurringshipmentports.UpdateRecurringShipmentStatusRequest,
 ) (*recurringshipment.RecurringShipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*recurringshipment.RecurringShipment, error) {
 		log := r.l.With(
@@ -313,7 +313,7 @@ func (r *repository) UpdateStatus(
 			zap.String("status", string(req.Status)),
 		)
 
-		entity, err := r.GetByID(ctx, &repositories.GetRecurringShipmentByIDRequest{
+		entity, err := r.GetByID(ctx, &recurringshipmentports.GetRecurringShipmentByIDRequest{
 			ID:         req.RecurringShipmentID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -364,7 +364,7 @@ func (r *repository) UpdateStatus(
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
-	req *repositories.RecurringShipmentSelectOptionsRequest,
+	req *recurringshipmentports.RecurringShipmentSelectOptionsRequest,
 ) (*pagination.ListResult[*recurringshipment.RecurringShipment], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*recurringshipment.RecurringShipment], error) {
 		return dbhelper.SelectOptions[*recurringshipment.RecurringShipment](
@@ -391,7 +391,7 @@ func (r *repository) SelectOptions(
 
 func (r *repository) Match(
 	ctx context.Context,
-	req *repositories.MatchRecurringShipmentsRequest,
+	req *recurringshipmentports.MatchRecurringShipmentsRequest,
 ) ([]*recurringshipment.RecurringShipment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*recurringshipment.RecurringShipment, error) {
 		log := r.l.With(zap.String("operation", "Match"))
@@ -424,9 +424,9 @@ func (r *repository) Match(
 
 func (r *repository) DetectLanePattern(
 	ctx context.Context,
-	req *repositories.DetectLanePatternRequest,
-) (*repositories.LanePatternSummary, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.LanePatternSummary, error) {
+	req *recurringshipmentports.DetectLanePatternRequest,
+) (*recurringshipmentports.LanePatternSummary, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*recurringshipmentports.LanePatternSummary, error) {
 		log := r.l.With(zap.String("operation", "DetectLanePattern"))
 
 		lookbackDays := req.LookbackDays
@@ -436,7 +436,7 @@ func (r *repository) DetectLanePattern(
 
 		cutoff := timeutils.DaysAgoUnix(lookbackDays)
 
-		summary := new(repositories.LanePatternSummary)
+		summary := new(recurringshipmentports.LanePatternSummary)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			TableExpr("shipments AS sp").
@@ -483,7 +483,7 @@ func (r *repository) DetectLanePattern(
 
 func (r *repository) ListDue(
 	ctx context.Context,
-	req *repositories.ListDueRecurringShipmentsRequest,
+	req *recurringshipmentports.ListDueRecurringShipmentsRequest,
 ) ([]*recurringshipment.RecurringShipment, error) {
 	ctx = dbscope.WithSystem(ctx, "list recurring shipments due across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*recurringshipment.RecurringShipment, error) {
@@ -514,7 +514,7 @@ func (r *repository) ListDue(
 
 func (r *repository) ListRuns(
 	ctx context.Context,
-	req *repositories.ListRecurringShipmentRunsRequest,
+	req *recurringshipmentports.ListRecurringShipmentRunsRequest,
 ) (*pagination.ListResult[*recurringshipment.RecurringShipmentRun], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*recurringshipment.RecurringShipmentRun], error) {
 		log := r.l.With(

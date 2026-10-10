@@ -10,8 +10,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/weatheralert"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -33,20 +32,20 @@ type Params struct {
 	fx.In
 
 	Logger    *zap.Logger
-	Repo      repositories.WeatherAlertRepository
-	FeedState repositories.WeatherAlertFeedStateStore
+	Repo      weatheralertports.WeatherAlertRepository
+	FeedState weatheralertports.WeatherAlertFeedStateStore
 }
 
 type Service struct {
 	logger     *zap.Logger
-	repo       repositories.WeatherAlertRepository
-	feedState  repositories.WeatherAlertFeedStateStore
+	repo       weatheralertports.WeatherAlertRepository
+	feedState  weatheralertports.WeatherAlertFeedStateStore
 	httpClient *http.Client
 	feedURL    string
 }
 
 type nwsFeed struct {
-	state       repositories.WeatherAlertFeedState
+	state       weatheralertports.WeatherAlertFeedState
 	notModified bool
 	alerts      []*weatheralert.WeatherAlert
 	nwsIDs      []string
@@ -96,15 +95,15 @@ func New(p Params) *Service {
 
 func (s *Service) PollNWSAlerts(
 	ctx context.Context,
-	heartbeat serviceports.WeatherAlertPollHeartbeat,
-) (*serviceports.PollNWSAlertsResult, error) {
+	heartbeat weatheralertports.WeatherAlertPollHeartbeat,
+) (*weatheralertports.PollNWSAlertsResult, error) {
 	tenants, err := s.repo.ListTenants(ctx)
 	if err != nil {
 		return nil, errortypes.NewBusinessError("failed to list tenants for weather alerts").
 			WithInternal(err)
 	}
 
-	result := &serviceports.PollNWSAlertsResult{TenantsScanned: len(tenants)}
+	result := &weatheralertports.PollNWSAlertsResult{TenantsScanned: len(tenants)}
 	if len(tenants) == 0 {
 		return result, nil
 	}
@@ -120,7 +119,7 @@ func (s *Service) PollNWSAlerts(
 	}
 
 	result.AlertsInFeed = len(feed.alerts)
-	result.Tenants = make([]serviceports.WeatherAlertTenantSync, 0, len(tenants))
+	result.Tenants = make([]weatheralertports.WeatherAlertTenantSync, 0, len(tenants))
 	allSynced := true
 	for _, tenantInfo := range tenants {
 		if err = ctx.Err(); err != nil {
@@ -175,12 +174,12 @@ func (s *Service) syncTenant(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	feed *nwsFeed,
-	heartbeat serviceports.WeatherAlertPollHeartbeat,
-) serviceports.WeatherAlertTenantSync {
-	synced := serviceports.WeatherAlertTenantSync{TenantInfo: tenantInfo}
+	heartbeat weatheralertports.WeatherAlertPollHeartbeat,
+) weatheralertports.WeatherAlertTenantSync {
+	synced := weatheralertports.WeatherAlertTenantSync{TenantInfo: tenantInfo}
 	tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
 
-	stored, err := s.repo.ListByNWSIDs(tenantCtx, repositories.ListWeatherAlertsByNWSIDsRequest{
+	stored, err := s.repo.ListByNWSIDs(tenantCtx, weatheralertports.ListWeatherAlertsByNWSIDsRequest{
 		TenantInfo: tenantInfo,
 		NWSIDs:     feed.nwsIDs,
 	})
@@ -220,7 +219,7 @@ func (s *Service) syncTenant(
 func (s *Service) knownFeedState(
 	ctx context.Context,
 	tenantsDigest string,
-) *repositories.WeatherAlertFeedState {
+) *weatheralertports.WeatherAlertFeedState {
 	state, err := s.feedState.Get(ctx)
 	if err != nil {
 		s.logger.Warn("failed to read NWS feed state; fetching the full feed", zap.Error(err))
@@ -233,7 +232,7 @@ func (s *Service) knownFeedState(
 	return state
 }
 
-func (s *Service) saveFeedState(ctx context.Context, state *repositories.WeatherAlertFeedState) {
+func (s *Service) saveFeedState(ctx context.Context, state *weatheralertports.WeatherAlertFeedState) {
 	if state.ETag == "" && state.LastModified == "" {
 		return
 	}
@@ -257,8 +256,8 @@ func digestTenants(tenants []pagination.TenantInfo) string {
 }
 
 func isSameFeed(
-	known *repositories.WeatherAlertFeedState,
-	received *repositories.WeatherAlertFeedState,
+	known *weatheralertports.WeatherAlertFeedState,
+	received *weatheralertports.WeatherAlertFeedState,
 ) bool {
 	if known == nil {
 		return false
@@ -270,7 +269,7 @@ func isSameFeed(
 	return received.LastModified != "" && received.LastModified == known.LastModified
 }
 
-func beat(heartbeat serviceports.WeatherAlertPollHeartbeat, details ...any) {
+func beat(heartbeat weatheralertports.WeatherAlertPollHeartbeat, details ...any) {
 	if heartbeat != nil {
 		heartbeat(details...)
 	}
@@ -288,14 +287,14 @@ func (s *Service) ExpireStaleWeatherAlerts(ctx context.Context) error {
 func (s *Service) GetActiveAlerts(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*serviceports.WeatherAlertFeatureCollection, error) {
+) (*weatheralertports.WeatherAlertFeatureCollection, error) {
 	alerts, err := s.repo.GetActiveAlerts(ctx, tenantInfo)
 	if err != nil {
 		return nil, errortypes.NewBusinessError("failed to retrieve active weather alerts").
 			WithInternal(err)
 	}
 
-	features := make([]*serviceports.WeatherAlertFeature, 0, len(alerts))
+	features := make([]*weatheralertports.WeatherAlertFeature, 0, len(alerts))
 	now := time.Now().UTC().Unix()
 	for _, alert := range alerts {
 		if !isAlertActive(alert, now) {
@@ -309,7 +308,7 @@ func (s *Service) GetActiveAlerts(
 		features = append(features, feature)
 	}
 
-	return &serviceports.WeatherAlertFeatureCollection{
+	return &weatheralertports.WeatherAlertFeatureCollection{
 		Type:     "FeatureCollection",
 		Features: features,
 	}, nil
@@ -333,9 +332,9 @@ func isAlertActive(alert *weatheralert.WeatherAlert, now int64) bool {
 
 func (s *Service) GetAlertDetail(
 	ctx context.Context,
-	req *serviceports.GetWeatherAlertDetailRequest,
-) (*serviceports.WeatherAlertDetail, error) {
-	alert, err := s.repo.GetByID(ctx, repositories.GetWeatherAlertByIDRequest{
+	req *weatheralertports.GetWeatherAlertDetailRequest,
+) (*weatheralertports.WeatherAlertDetail, error) {
+	alert, err := s.repo.GetByID(ctx, weatheralertports.GetWeatherAlertByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -343,7 +342,7 @@ func (s *Service) GetAlertDetail(
 		return nil, err
 	}
 
-	activities, err := s.repo.GetActivities(ctx, repositories.GetWeatherAlertByIDRequest{
+	activities, err := s.repo.GetActivities(ctx, weatheralertports.GetWeatherAlertByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -357,7 +356,7 @@ func (s *Service) GetAlertDetail(
 		return nil, err
 	}
 
-	return &serviceports.WeatherAlertDetail{
+	return &weatheralertports.WeatherAlertDetail{
 		Feature:    feature,
 		Activities: activities,
 	}, nil
@@ -365,7 +364,7 @@ func (s *Service) GetAlertDetail(
 
 func (s *Service) fetchActiveAlerts(
 	ctx context.Context,
-	known *repositories.WeatherAlertFeedState,
+	known *weatheralertports.WeatherAlertFeedState,
 ) (*nwsFeed, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.feedURL, http.NoBody)
 	if err != nil {
@@ -392,7 +391,7 @@ func (s *Service) fetchActiveAlerts(
 	defer resp.Body.Close()
 
 	feed := &nwsFeed{
-		state: repositories.WeatherAlertFeedState{
+		state: weatheralertports.WeatherAlertFeedState{
 			ETag:         resp.Header.Get("ETag"),
 			LastModified: resp.Header.Get("Last-Modified"),
 		},
@@ -606,7 +605,7 @@ func parseNWSTime(value string) (*int64, error) {
 	return &unix, nil
 }
 
-func toFeature(alert *weatheralert.WeatherAlert) (*serviceports.WeatherAlertFeature, error) {
+func toFeature(alert *weatheralert.WeatherAlert) (*weatheralertports.WeatherAlertFeature, error) {
 	if !alert.AlertCategory.IsValid() {
 		return nil, errortypes.NewBusinessError("failed to convert weather alert category")
 	}
@@ -617,11 +616,11 @@ func toFeature(alert *weatheralert.WeatherAlert) (*serviceports.WeatherAlertFeat
 			WithInternal(err)
 	}
 
-	return &serviceports.WeatherAlertFeature{
+	return &weatheralertports.WeatherAlertFeature{
 		Type:     "Feature",
 		ID:       alert.ID,
 		Geometry: geometry,
-		Properties: serviceports.WeatherAlertFeatureProperties{
+		Properties: weatheralertports.WeatherAlertFeatureProperties{
 			ID:            alert.ID,
 			NWSID:         alert.NWSID,
 			Event:         alert.Event,

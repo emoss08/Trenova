@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/settlementshared"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -89,7 +89,7 @@ func (s *Service) PlanGenerateForWorker(
 ) (*GenerationPlan, error) {
 	plan := &GenerationPlan{}
 	if req.BatchID != nil && !req.BatchID.IsNil() {
-		batch, err := s.batchRepo.GetByID(ctx, repositories.GetSettlementBatchByIDRequest{
+		batch, err := s.batchRepo.GetByID(ctx, driversettlementports.GetSettlementBatchByIDRequest{
 			ID:         *req.BatchID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -135,7 +135,7 @@ func (s *Service) PlanGenerateForWorker(
 type BatchPlan struct {
 	Bounds        PeriodBounds
 	ExistingBatch *driversettlement.SettlementBatch
-	Workers       []*repositories.UnsettledWorkerSummary
+	Workers       []*driversettlementports.UnsettledWorkerSummary
 	AutoApprove   bool
 	Refusal       error
 }
@@ -172,7 +172,7 @@ func (s *Service) PlanBatch(ctx context.Context, req *GenerateBatchRequest) (*Ba
 
 	plan.Workers, err = s.payEventRepo.ListUnsettledWorkerSummaries(
 		ctx,
-		&repositories.ListUnsettledWorkerSummariesRequest{
+		&driversettlementports.ListUnsettledWorkerSummariesRequest{
 			TenantInfo:  req.TenantInfo,
 			PeriodStart: plan.Bounds.PeriodStart,
 			PeriodEnd:   plan.Bounds.PeriodEnd,

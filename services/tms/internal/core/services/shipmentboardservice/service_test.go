@@ -9,9 +9,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/integrationservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -19,18 +21,18 @@ import (
 )
 
 type stubBoardRepo struct {
-	stageRows   []*repositories.ShipmentStageSummaryRow
+	stageRows   []*shipmentports.ShipmentStageSummaryRow
 	counts      map[shipment.QuickFilter]int
-	groupRows   []*repositories.ShipmentBoardGroupRow
-	lastScope   *repositories.ShipmentBoardScope
+	groupRows   []*shipmentports.ShipmentBoardGroupRow
+	lastScope   *shipmentports.ShipmentBoardScope
 	lastFilters []shipment.QuickFilterSpec
-	lastGroups  *repositories.SummarizeShipmentBoardGroupsRequest
+	lastGroups  *shipmentports.SummarizeShipmentBoardGroupsQuery
 }
 
 func (s *stubBoardRepo) GroupSummary(
 	_ context.Context,
-	req *repositories.SummarizeShipmentBoardGroupsRequest,
-) ([]*repositories.ShipmentBoardGroupRow, error) {
+	req *shipmentports.SummarizeShipmentBoardGroupsQuery,
+) ([]*shipmentports.ShipmentBoardGroupRow, error) {
 	s.lastScope = req.Scope
 	s.lastGroups = req
 	return s.groupRows, nil
@@ -38,19 +40,19 @@ func (s *stubBoardRepo) GroupSummary(
 
 func (s *stubBoardRepo) StageSummary(
 	_ context.Context,
-	scope *repositories.ShipmentBoardScope,
-) ([]*repositories.ShipmentStageSummaryRow, error) {
+	scope *shipmentports.ShipmentBoardScope,
+) ([]*shipmentports.ShipmentStageSummaryRow, error) {
 	s.lastScope = scope
 	return s.stageRows, nil
 }
 
 func (s *stubBoardRepo) QuickFilterTotals(
 	_ context.Context,
-	req *repositories.CountShipmentQuickFiltersRequest,
-) ([]repositories.ShipmentQuickFilterTotal, error) {
+	req *shipmentports.CountShipmentQuickFiltersRequest,
+) ([]shipmentports.ShipmentQuickFilterTotal, error) {
 	s.lastScope = req.Scope
 	s.lastFilters = req.Filters
-	totals := make([]repositories.ShipmentQuickFilterTotal, len(req.Filters))
+	totals := make([]shipmentports.ShipmentQuickFilterTotal, len(req.Filters))
 	for i, spec := range req.Filters {
 		totals[i].Count = s.counts[spec.Filter]
 	}
@@ -58,33 +60,33 @@ func (s *stubBoardRepo) QuickFilterTotals(
 }
 
 type stubBasis struct {
-	last *services.ResolveShipmentQuickFilterBasisRequest
+	last *shipmentports.ResolveShipmentQuickFilterBasisRequest
 }
 
 func (s *stubBasis) Resolve(
 	_ context.Context,
-	req *services.ResolveShipmentQuickFilterBasisRequest,
-) (*repositories.ShipmentQuickFilterBasis, error) {
+	req *shipmentports.ResolveShipmentQuickFilterBasisRequest,
+) (*shipmentports.ShipmentQuickFilterBasis, error) {
 	s.last = req
-	return &repositories.ShipmentQuickFilterBasis{Now: time.Unix(0, 0), Location: time.UTC}, nil
+	return &shipmentports.ShipmentQuickFilterBasis{Now: time.Unix(0, 0), Location: time.UTC}, nil
 }
 
 func (s *stubBasis) Prepare(
 	context.Context,
 	pagination.TenantInfo,
-	*repositories.ShipmentOptions,
+	*shipmentports.ShipmentOptions,
 ) error {
 	return nil
 }
 
 type stubAI struct {
-	repositories.AIProviderRepository
+	agentports.AIProviderRepository
 	tasks map[aiprovider.Task]bool
 }
 
 func (s *stubAI) ListForTask(
 	_ context.Context,
-	req repositories.ListAIProvidersForTaskRequest,
+	req agentports.ListAIProvidersForTaskRequest,
 ) ([]*aiprovider.Provider, error) {
 	if s.tasks[req.Task] {
 		return []*aiprovider.Provider{{}}, nil
@@ -93,19 +95,19 @@ func (s *stubAI) ListForTask(
 }
 
 type stubOrgs struct {
-	repositories.OrganizationRepository
-	caps *repositories.OrganizationCapabilities
+	tenantports.OrganizationRepository
+	caps *tenantports.OrganizationCapabilities
 }
 
 func (s *stubOrgs) GetCapabilities(
 	context.Context,
-	repositories.GetOrganizationCapabilitiesRequest,
-) (*repositories.OrganizationCapabilities, error) {
+	tenantports.GetOrganizationCapabilitiesRequest,
+) (*tenantports.OrganizationCapabilities, error) {
 	return s.caps, nil
 }
 
 type stubIntegrations struct {
-	repositories.IntegrationRepository
+	integrationports.IntegrationRepository
 	records []*integration.Integration
 }
 
@@ -126,8 +128,8 @@ func (s stubMaps) GetClientRuntimeConfig(
 	return &integrationservice.RuntimeConfig{Ready: s.ready}, nil
 }
 
-func scopeRequest(filters ...shipment.QuickFilterSpec) *services.ShipmentBoardScopeRequest {
-	return &services.ShipmentBoardScopeRequest{
+func scopeRequest(filters ...shipment.QuickFilterSpec) *shipmentports.ShipmentBoardScopeRequest {
+	return &shipmentports.ShipmentBoardScopeRequest{
 		Filter:       &pagination.QueryOptions{},
 		QuickFilters: filters,
 		Timezone:     "UTC",
@@ -141,7 +143,7 @@ func TestCapabilities(t *testing.T) {
 		AIProviders: &stubAI{
 			tasks: map[aiprovider.Task]bool{aiprovider.TaskOperationalInsights: true},
 		},
-		Organizations: &stubOrgs{caps: &repositories.OrganizationCapabilities{
+		Organizations: &stubOrgs{caps: &tenantports.OrganizationCapabilities{
 			BrokerageEnabled: true,
 		}},
 		Integrations: &stubIntegrations{records: []*integration.Integration{{
@@ -161,7 +163,7 @@ func TestCapabilities(t *testing.T) {
 
 	svc = NewWithDependencies(&Dependencies{
 		AIProviders: &stubAI{},
-		Organizations: &stubOrgs{caps: &repositories.OrganizationCapabilities{
+		Organizations: &stubOrgs{caps: &tenantports.OrganizationCapabilities{
 			AssetOperationsEnabled: true,
 		}},
 		Integrations: &stubIntegrations{},
@@ -178,7 +180,7 @@ func TestCapabilities(t *testing.T) {
 func TestStageSummaryZeroFillsEveryStage(t *testing.T) {
 	t.Parallel()
 
-	repo := &stubBoardRepo{stageRows: []*repositories.ShipmentStageSummaryRow{
+	repo := &stubBoardRepo{stageRows: []*shipmentports.ShipmentStageSummaryRow{
 		{StageRank: shipment.StageMoving.Rank(), Count: 4, Revenue: decimal.NewFromInt(900)},
 	}}
 	basis := &stubBasis{}
@@ -218,7 +220,7 @@ func TestQuickFilterCountsCountsEveryCountableFilter(t *testing.T) {
 func TestGroupSummaryCountsGroupsInTheBoardsScopeAndZone(t *testing.T) {
 	t.Parallel()
 
-	repo := &stubBoardRepo{groupRows: []*repositories.ShipmentBoardGroupRow{
+	repo := &stubBoardRepo{groupRows: []*shipmentports.ShipmentBoardGroupRow{
 		{Key: "2026-10-07", Count: 5, Revenue: decimal.NewFromInt(4200)},
 		{Key: "", Count: 1, Revenue: decimal.Zero},
 	}}
@@ -226,7 +228,7 @@ func TestGroupSummaryCountsGroupsInTheBoardsScopeAndZone(t *testing.T) {
 	svc := NewWithDependencies(&Dependencies{Repo: repo, QuickFilters: basis})
 
 	req := scopeRequest(shipment.Quick(shipment.QuickFilterLate))
-	groups, err := svc.GroupSummary(t.Context(), &services.SummarizeShipmentBoardGroupsRequest{
+	groups, err := svc.GroupSummary(t.Context(), &shipmentports.SummarizeShipmentBoardGroupsRequest{
 		Scope:   req,
 		GroupBy: shipment.BoardGroupingDeliveryDate,
 	})
@@ -247,7 +249,7 @@ func TestGroupSummaryRefusesAGroupingTheBoardDoesNotOffer(t *testing.T) {
 	repo := &stubBoardRepo{}
 	svc := NewWithDependencies(&Dependencies{Repo: repo, QuickFilters: &stubBasis{}})
 
-	_, err := svc.GroupSummary(t.Context(), &services.SummarizeShipmentBoardGroupsRequest{
+	_, err := svc.GroupSummary(t.Context(), &shipmentports.SummarizeShipmentBoardGroupsRequest{
 		Scope:   scopeRequest(),
 		GroupBy: shipment.BoardGrouping("Stage"),
 	})

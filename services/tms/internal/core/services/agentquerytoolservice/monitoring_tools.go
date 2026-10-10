@@ -9,10 +9,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
@@ -22,14 +23,14 @@ import (
 type serviceFailureLister interface {
 	List(
 		ctx context.Context,
-		req *repositories.ListServiceFailuresRequest,
+		req *servicefailureports.ListServiceFailuresRequest,
 	) (*pagination.ListResult[*servicefailure.ServiceFailure], error)
 }
 
 type reasonCodeSelector interface {
 	SelectOptions(
 		ctx context.Context,
-		req *repositories.ServiceFailureReasonCodeSelectOptionsRequest,
+		req *servicefailureports.ServiceFailureReasonCodeSelectOptionsRequest,
 	) (*pagination.ListResult[*servicefailure.ReasonCode], error)
 }
 
@@ -48,7 +49,7 @@ type weatherReader interface {
 	GetActiveAlerts(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-	) (*serviceports.WeatherAlertFeatureCollection, error)
+	) (*weatheralertports.WeatherAlertFeatureCollection, error)
 }
 
 var (
@@ -81,7 +82,7 @@ type serviceFailureRow struct {
 	Version         int64  `json:"version"`
 }
 
-func newListServiceFailuresTool(failures serviceFailureLister) serviceports.AgentQueryTool {
+func newListServiceFailuresTool(failures serviceFailureLister) agentports.AgentQueryTool {
 	spec := listSpec{
 		name:         "list_service_failures",
 		entityPlural: "service failures",
@@ -112,7 +113,7 @@ func newListServiceFailuresTool(failures serviceFailureLister) serviceports.Agen
 		opts *pagination.QueryOptions,
 		clk clock,
 	) ([]any, error) {
-		result, err := failures.List(ctx, &repositories.ListServiceFailuresRequest{Filter: opts})
+		result, err := failures.List(ctx, &servicefailureports.ListServiceFailuresRequest{Filter: opts})
 		if err != nil {
 			return nil, err
 		}
@@ -169,7 +170,7 @@ type listReasonCodesTool struct {
 	codes reasonCodeSelector
 }
 
-func newListServiceFailureReasonCodesTool(codes reasonCodeSelector) serviceports.AgentQueryTool {
+func newListServiceFailureReasonCodesTool(codes reasonCodeSelector) agentports.AgentQueryTool {
 	return &listReasonCodesTool{codes: codes}
 }
 
@@ -198,7 +199,7 @@ func (t *listReasonCodesTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listReasonCodesTool) Policy() serviceports.ToolPolicy {
+func (t *listReasonCodesTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceServiceFailureReasonCode,
 	})
@@ -206,7 +207,7 @@ func (t *listReasonCodesTool) Policy() serviceports.ToolPolicy {
 
 func (t *listReasonCodesTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -220,7 +221,7 @@ func (t *listReasonCodesTool) Query(
 
 	result, err := t.codes.SelectOptions(
 		ctx,
-		&repositories.ServiceFailureReasonCodeSelectOptionsRequest{
+		&servicefailureports.ServiceFailureReasonCodeSelectOptionsRequest{
 			SelectQueryRequest: &pagination.SelectQueryRequest{
 				TenantInfo: tenantOf(params),
 				Pagination: pagination.Info{Limit: maxListLimit},
@@ -278,7 +279,7 @@ type listDetentionDeskTool struct {
 	desk detentionDeskReader
 }
 
-func newListDetentionDeskTool(desk detentionDeskReader) serviceports.AgentQueryTool {
+func newListDetentionDeskTool(desk detentionDeskReader) agentports.AgentQueryTool {
 	return &listDetentionDeskTool{desk: desk}
 }
 
@@ -317,7 +318,7 @@ func (t *listDetentionDeskTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listDetentionDeskTool) Policy() serviceports.ToolPolicy {
+func (t *listDetentionDeskTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceDetentionPolicy,
 	})
@@ -325,7 +326,7 @@ func (t *listDetentionDeskTool) Policy() serviceports.ToolPolicy {
 
 func (t *listDetentionDeskTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -466,7 +467,7 @@ type listWeatherAlertsTool struct {
 	weather weatherReader
 }
 
-func newListWeatherAlertsTool(weather weatherReader) serviceports.AgentQueryTool {
+func newListWeatherAlertsTool(weather weatherReader) agentports.AgentQueryTool {
 	return &listWeatherAlertsTool{weather: weather}
 }
 
@@ -497,7 +498,7 @@ func (t *listWeatherAlertsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listWeatherAlertsTool) Policy() serviceports.ToolPolicy {
+func (t *listWeatherAlertsTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceShipment,
 		reads:    agent.ExternalReadAlways,
@@ -514,7 +515,7 @@ var severityRank = map[string]int{
 
 func (t *listWeatherAlertsTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

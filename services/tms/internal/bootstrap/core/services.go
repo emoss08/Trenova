@@ -6,8 +6,6 @@ import (
 
 	permissiondomain "github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/accessorialchargeservice"
 	"github.com/emoss08/trenova/internal/core/services/accountingconnectionservice"
 	"github.com/emoss08/trenova/internal/core/services/accountingcontrolpolicyservice"
@@ -262,9 +260,46 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/workertrainingservice"
 	"github.com/emoss08/trenova/internal/core/services/workflowstarter"
 	"github.com/emoss08/trenova/internal/infrastructure/inboundmail"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentrosterports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aicontrolsummaryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptbatchports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentparsingruleports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratesimulationports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/exchangerateports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/seqgen"
-
 	"go.uber.org/fx"
 )
 
@@ -288,7 +323,7 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	homelayoutservice.New,
 	fx.Annotate(
 		reportingcompiler.New,
-		fx.As(new(services.ReportCompiler)),
+		fx.As(new(reportports.ReportCompiler)),
 	),
 	billingtransferservice.New,
 	reportingservice.New,
@@ -319,15 +354,15 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	permissiondomain.NewRouteRegistry,
 	fx.Annotate(
 		entitlementservice.NewLocalEntitlementProvider,
-		fx.As(new(services.EntitlementProvider)),
+		fx.As(new(platformcatalogports.EntitlementProvider)),
 	),
 	fx.Annotate(
 		platformbillingservice.NewLocalBillingProvider,
-		fx.As(new(services.BillingProvider)),
+		fx.As(new(platformcatalogports.BillingProvider)),
 	),
 	fx.Annotate(
 		usageservice.NewNoopUsageProvider,
-		fx.As(new(services.UsageProvider)),
+		fx.As(new(platformcatalogports.UsageProvider)),
 	),
 	editioninfo.SelfHosted,
 	roleassignmentservice.New,
@@ -344,36 +379,38 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	documentoperationsservice.New,
 	documentsearchprojectionservice.New,
 	documentservice.New,
-	func(s *documentservice.Service) services.InvoiceDocumentService { return s },
+	func(s *documentservice.Service) documentports.InvoiceDocumentService { return s },
 	documentuploadservice.New,
-	func(s *documentuploadservice.Service) services.DocumentUploadService { return s },
+	func(s *documentuploadservice.Service) documentuploadports.DocumentUploadService { return s },
 	accessorialchargeservice.New,
 	agentcontrolservice.New,
 	agentdefinitionservice.New,
 	agentdraftservice.New,
-	func(s *agentdraftservice.Service) services.AgentDraftingService { return s },
+	func(s *agentdraftservice.Service) agentports.AgentDraftingService { return s },
 	agentcapabilityservice.New,
 	assistanthandoffservice.New,
-	func(s services.AgentDefinitionService) services.SystemAgentProvisioner { return s },
+	func(s agentdefinitionports.AgentDefinitionService) agentdefinitionports.SystemAgentProvisioner {
+		return s
+	},
 	agentaccessservice.New,
 	agentsafetyservice.New,
 	agenttoolruleservice.New,
-	func(s *agenttoolruleservice.Service) services.AgentToolRuleService { return s },
+	func(s *agenttoolruleservice.Service) agentports.AgentToolRuleService { return s },
 	aiproviderservice.NewModelPriceReference,
 	aiproviderservice.NewProber,
 	aiproviderservice.New,
-	func(s *aiproviderservice.Service) services.AIProviderService { return s },
+	func(s *aiproviderservice.Service) agentports.AIProviderService { return s },
 	agentshadowservice.New,
-	func(s *agentshadowservice.Service) services.AgentShadowService { return s },
+	func(s *agentshadowservice.Service) agentshadowports.AgentShadowService { return s },
 	aicontrolsummaryservice.New,
-	func(s *aicontrolsummaryservice.Service) services.AIControlSummaryService { return s },
+	func(s *aicontrolsummaryservice.Service) aicontrolsummaryports.AIControlSummaryService { return s },
 	agentrosterservice.New,
-	func(s *agentrosterservice.Service) services.AgentRosterService { return s },
+	func(s *agentrosterservice.Service) agentrosterports.AgentRosterService { return s },
 	aituneupservice.New,
-	func(s *aituneupservice.Service) services.AITuneUpService { return s },
+	func(s *aituneupservice.Service) aituneupports.AITuneUpService { return s },
 	agenttestpromptservice.New,
-	func(s *agenttestpromptservice.Service) services.AgentTestPromptService { return s },
-	func(s *aiproviderservice.Service) services.AIProviderProbe { return s },
+	func(s *agenttestpromptservice.Service) agentdefinitionports.AgentTestPromptService { return s },
+	func(s *aiproviderservice.Service) agentports.AIProviderProbe { return s },
 	aiusageservice.New,
 	agentrunservice.New,
 	agentsubjectservice.New,
@@ -444,19 +481,19 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	assignmentservice.New,
 	fx.Annotate(
 		dispatchautoassignservice.New,
-		fx.As(new(services.DispatchAutoAssignService)),
+		fx.As(new(agentports.DispatchAutoAssignService)),
 	),
 	dispatchcandidateservice.New,
 	fx.Annotate(
 		dispatchconsoleservice.New,
-		fx.As(new(services.DispatchConsoleService)),
+		fx.As(new(agentports.DispatchConsoleService)),
 	),
 	fx.Annotate(
 		bankreceiptbatchservice.New,
-		fx.As(new(services.BankReceiptBatchService)),
+		fx.As(new(bankreceiptbatchports.BankReceiptBatchService)),
 	),
 	bankreceiptservice.New,
-	func(s *bankreceiptservice.Service) services.BankReceiptService { return s },
+	func(s *bankreceiptservice.Service) bankreceiptports.BankReceiptService { return s },
 	bankreceiptworkitemservice.New,
 	passwordresetservice.New,
 	onboardingservice.New,
@@ -472,29 +509,29 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	shipmenteventservice.New,
 	fx.Annotate(
 		internaledistatussync.New,
-		fx.As(new(services.ShipmentEventObserver)),
+		fx.As(new(shipmenteventports.ShipmentEventObserver)),
 		fx.ResultTags(`group:"shipment_event_observers"`),
 	),
 	fx.Annotate(
 		orderderivation.New,
-		fx.As(new(services.ShipmentEventObserver)),
+		fx.As(new(shipmenteventports.ShipmentEventObserver)),
 		fx.ResultTags(`group:"shipment_event_observers"`),
 	),
 	fx.Annotate(
 		orderderivation.New,
-		fx.As(new(services.OrderDerivationService)),
+		fx.As(new(orderports.OrderDerivationService)),
 	),
 	shipmentholdservice.New,
 	fx.Annotate(
 		servicefailureservice.New,
 		fx.As(new(servicefailureservice.EDIServiceSetter)),
-		fx.As(new(services.ServiceFailureService)),
-		fx.As(new(services.ServiceFailureEvaluator)),
+		fx.As(new(servicefailureports.ServiceFailureService)),
+		fx.As(new(servicefailureports.ServiceFailureEvaluator)),
 	),
 	shipmentmoveservice.New,
 	fx.Annotate(
 		shipmentservice.New,
-		fx.As(new(services.ShipmentService)),
+		fx.As(new(shipmentports.ShipmentService)),
 		fx.As(new(shipmentservice.MutationObserverSetter)),
 	),
 	shipmenttypeservice.New,
@@ -507,18 +544,18 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	inboundmessageservice.New,
 	inboundmail.New,
 	captureservice.New,
-	func(s *ediservice.Service) services.EDIService { return s },
+	func(s *ediservice.Service) ediports.EDIService { return s },
 	fx.Annotate(
-		func(s *ediservice.Service) services.ShipmentMutationObserver { return s },
+		func(s *ediservice.Service) shipmentports.ShipmentMutationObserver { return s },
 		fx.ResultTags(`group:"shipment_mutation_observers"`),
 	),
 	emailservice.New,
-	func(s *emailservice.Service) services.EmailService { return s },
-	func(s *emailservice.Service) services.EmailSenderResolver { return s },
+	func(s *emailservice.Service) emailports.EmailService { return s },
+	func(s *emailservice.Service) emailports.EmailSenderResolver { return s },
 	commodityservice.New,
 	fx.Annotate(
 		customerpaymentservice.New,
-		fx.As(new(services.CustomerPaymentService)),
+		fx.As(new(customerpaymentports.CustomerPaymentService)),
 	),
 	driverpayservice.New,
 	settlementcontrolservice.New,
@@ -528,43 +565,43 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	driversettlementservice.New,
 	driverportalservice.New,
 	fx.Annotate(
-		func(s *driversettlementservice.Service) services.ShipmentMutationObserver { return s },
+		func(s *driversettlementservice.Service) shipmentports.ShipmentMutationObserver { return s },
 		fx.ResultTags(`group:"shipment_mutation_observers"`),
 	),
 	fx.Annotate(
-		func(s *driversettlementservice.Service) services.MoveStatusObserver { return s },
+		func(s *driversettlementservice.Service) shipmentports.MoveStatusObserver { return s },
 		fx.ResultTags(`group:"move_status_observers"`),
 	),
 	carriersettlementservice.New,
 	fx.Annotate(
-		func(s *carriersettlementservice.Service) services.ShipmentMutationObserver { return s },
+		func(s *carriersettlementservice.Service) shipmentports.ShipmentMutationObserver { return s },
 		fx.ResultTags(`group:"shipment_mutation_observers"`),
 	),
 	fx.Annotate(
-		func(s *carriersettlementservice.Service) services.MoveStatusObserver { return s },
+		func(s *carriersettlementservice.Service) shipmentports.MoveStatusObserver { return s },
 		fx.ResultTags(`group:"move_status_observers"`),
 	),
-	func(s *carriersettlementservice.Service) services.CarrierCostAccrual { return s },
-	func(s *carriersettlementservice.Service) services.CarrierInvoiceAutoMatcher { return s },
+	func(s *carriersettlementservice.Service) carrierports.CarrierCostAccrual { return s },
+	func(s *carriersettlementservice.Service) carrierports.CarrierInvoiceAutoMatcher { return s },
 	carrierassignmentservice.New,
-	func(s *carrierassignmentservice.Service) services.CarrierMoveAssigner { return s },
+	func(s *carrierassignmentservice.Service) tenderports.CarrierMoveAssigner { return s },
 	carrierservice.New,
 	rateconfirmationservice.New,
-	func(s *rateconfirmationservice.Service) services.RateConfirmationIssuer { return s },
+	func(s *rateconfirmationservice.Service) rateconfirmationports.RateConfirmationIssuer { return s },
 	routingguideservice.NewValidator,
 	routingguideservice.New,
 	tenderservice.New,
 	carrierintelservice.New,
-	func(s *carrierintelservice.Service) services.CarrierIntelGate { return s },
-	func(s *carrierintelservice.Service) services.CarrierLifecycleObserver { return s },
-	func(s *tenderservice.Service) services.TenderGuard { return s },
-	func(s *tenderservice.Service) services.TenderResponseRecorder { return s },
-	func(s *tenderservice.Service) services.TenderLifecycle { return s },
+	func(s *carrierintelservice.Service) carrierintelports.CarrierIntelGate { return s },
+	func(s *carrierintelservice.Service) carrierintelports.CarrierLifecycleObserver { return s },
+	func(s *tenderservice.Service) tenderports.TenderGuard { return s },
+	func(s *tenderservice.Service) tenderports.TenderResponseRecorder { return s },
+	func(s *tenderservice.Service) tenderports.TenderLifecycle { return s },
 	customerservice.New,
 	googlemapsservice.NewAutoCompleteService,
 	fx.Annotate(
 		weatheralertservice.New,
-		fx.As(new(services.WeatherAlertService)),
+		fx.As(new(weatheralertports.WeatherAlertService)),
 	),
 	accountingcontrolservice.New,
 	accountingcontrolpolicyservice.New,
@@ -589,53 +626,53 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	ratequoteservice.New,
 	ratesimulationservice.New,
 	rateimportservice.New,
-	func(s *ratesimulationservice.Service) services.RateSimulationRunner { return s },
+	func(s *ratesimulationservice.Service) ratesimulationports.RateSimulationRunner { return s },
 	modeprofileservice.NewService,
 	permitservice.NewService,
 	jurisdictionruleservice.NewService,
 	referencedataguard.New,
 	detentionservice.New,
 	accountingconnectionservice.New,
-	func(s *accountingconnectionservice.Service) services.AccountingConnectionService { return s },
+	func(s *accountingconnectionservice.Service) accountingsyncports.AccountingConnectionService { return s },
 	accountingmappingservice.New,
-	func(s *accountingmappingservice.Service) services.AccountingMappingService { return s },
+	func(s *accountingmappingservice.Service) accountingsyncports.AccountingMappingService { return s },
 	accountingsyncservice.NewEnqueuer,
-	func(e *accountingsyncservice.Enqueuer) services.AccountingSyncEnqueuer { return e },
-	func(e *accountingsyncservice.Enqueuer) services.AccountingLedgerEnqueuer { return e },
+	func(e *accountingsyncservice.Enqueuer) accountingsyncports.AccountingSyncEnqueuer { return e },
+	func(e *accountingsyncservice.Enqueuer) accountingsyncports.AccountingLedgerEnqueuer { return e },
 	accountingsyncservice.New,
-	func(s *accountingsyncservice.Service) services.AccountingSyncService { return s },
+	func(s *accountingsyncservice.Service) accountingsyncports.AccountingSyncService { return s },
 	accountinginboundservice.New,
-	func(s *accountinginboundservice.Service) services.AccountingInboundService { return s },
+	func(s *accountinginboundservice.Service) accountingsyncports.AccountingInboundService { return s },
 	accountingdriftservice.New,
-	func(s *accountingdriftservice.Service) services.AccountingDriftReconciler { return s },
-	func(s *accountingdriftservice.Service) services.AccountingDriftRechecker { return s },
-	func(s *accountingdriftservice.Service) services.AccountingDriftService { return s },
-	func(s *carriersettlementservice.Service) services.CarrierSettlementPayer { return s },
-	func(s *driversettlementservice.Service) services.DriverSettlementPayer { return s },
+	func(s *accountingdriftservice.Service) accountingsyncports.AccountingDriftReconciler { return s },
+	func(s *accountingdriftservice.Service) accountingsyncports.AccountingDriftRechecker { return s },
+	func(s *accountingdriftservice.Service) accountingsyncports.AccountingDriftService { return s },
+	func(s *carriersettlementservice.Service) carriersettlementports.CarrierSettlementPayer { return s },
+	func(s *driversettlementservice.Service) carriersettlementports.DriverSettlementPayer { return s },
 	detentionbillingservice.New,
 	invoiceadjustmentcontrolservice.New,
 	fx.Annotate(
-		func(g seqgen.Generator) services.InvoiceAdjustGenerator { return g },
+		func(g seqgen.Generator) invoiceadjustmentports.InvoiceAdjustGenerator { return g },
 	),
 	invoiceadjustmentservice.New,
 	// Provided concrete and narrowed to the port: the run service consolidates
 	// through CreateConsolidated, which the port does not carry, and both must
 	// resolve to the same instance.
 	invoiceservice.NewService,
-	func(s *invoiceservice.Service) services.InvoiceService { return s },
+	func(s *invoiceservice.Service) invoiceports.InvoiceService { return s },
 	invoicerunservice.New,
 	invoicedisputeservice.New,
 	latechargeservice.New,
 	// The billing job takes the sweeper interface rather than the concrete
 	// service, because the job package is imported by the invoice service the
 	// run service itself depends on.
-	func(s *invoicerunservice.Service) services.InvoiceRunSweeper { return s },
+	func(s *invoicerunservice.Service) invoicerunports.InvoiceRunSweeper { return s },
 	invoiceshareservice.New,
-	func(s *invoiceshareservice.Service) services.InvoiceShareService { return s },
+	func(s *invoiceshareservice.Service) invoiceports.InvoiceShareService { return s },
 	journalentryservice.New,
 	journalreversalservice.New,
 	journalreviewservice.New,
-	func(s *journalreviewservice.Service) services.JournalReviewService { return s },
+	func(s *journalreviewservice.Service) journalentryports.JournalReviewService { return s },
 	manualjournalservice.New,
 	billingcontrolservice.New,
 	costingservice.New,
@@ -658,10 +695,10 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	shipmentbriefingservice.New,
 	shipmentbriefingservice.NewReader,
 	shipmentbriefingservice.NewWriter,
-	func(s *shipmentboardservice.Service) services.ShipmentBoardCapabilitiesReader { return s },
-	func(s *shipmentboardservice.Service) services.ShipmentStageSummaryReader { return s },
-	func(s *shipmentboardservice.Service) services.ShipmentBoardGroupSummarizer { return s },
-	func(s *shipmentboardservice.Service) services.ShipmentQuickFilterCounter { return s },
+	func(s *shipmentboardservice.Service) shipmentports.ShipmentBoardCapabilitiesReader { return s },
+	func(s *shipmentboardservice.Service) shipmentports.ShipmentStageSummaryReader { return s },
+	func(s *shipmentboardservice.Service) shipmentports.ShipmentBoardGroupSummarizer { return s },
+	func(s *shipmentboardservice.Service) shipmentports.ShipmentQuickFilterCounter { return s },
 	billingcontrolpolicyservice.New,
 	billingqueueservice.New,
 	billingqueueservice.NewReview,
@@ -670,8 +707,12 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	dispatchcontrolservice.New,
 	documentcontrolservice.New,
 	documentparsingruleservice.New,
-	func(s *documentparsingruleservice.Service) services.DocumentParsingRuleRuntime { return s },
-	func(s *documentparsingruleservice.Service) services.DocumentParsingRuleAdminService { return s },
+	func(s *documentparsingruleservice.Service) documentparsingruleports.DocumentParsingRuleRuntime {
+		return s
+	},
+	func(s *documentparsingruleservice.Service) documentparsingruleports.DocumentParsingRuleAdminService {
+		return s
+	},
 	documentpacketruleservice.New,
 	documenttemplateservice.New,
 	// The concrete builder is provided once and fed into the group separately:
@@ -680,26 +721,26 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	// builder through the group.
 	invoiceservice.NewContextBuilder,
 	fx.Annotate(
-		func(b *invoiceservice.ContextBuilder) services.ContextBuilder { return b },
-		fx.ResultTags(services.ContextBuilderGroup),
+		func(b *invoiceservice.ContextBuilder) documenttemplateports.ContextBuilder { return b },
+		fx.ResultTags(documenttemplateports.ContextBuilderGroup),
 	),
 	// The detention service starts the workflow that files a notice PDF, so it
 	// imports the jobs package; the activities depend on this port rather than on
 	// the service so the import does not close a cycle.
-	func(s *detentionservice.Service) services.DetentionNoticeService { return s },
+	func(s *detentionservice.Service) detentionports.DetentionNoticeService { return s },
 	detentionservice.NewContextBuilder,
 	fx.Annotate(
-		func(b *detentionservice.ContextBuilder) services.ContextBuilder { return b },
-		fx.ResultTags(services.ContextBuilderGroup),
+		func(b *detentionservice.ContextBuilder) documenttemplateports.ContextBuilder { return b },
+		fx.ResultTags(documenttemplateports.ContextBuilderGroup),
 	),
 	// The notice PDF renders the same figures as the email, so it shares one
 	// builder rather than growing a second source for the numbers a dispute
 	// turns on.
 	fx.Annotate(
 		detentionservice.NewPDFContextBuilder,
-		fx.ResultTags(services.ContextBuilderGroup),
+		fx.ResultTags(documenttemplateports.ContextBuilderGroup),
 	),
-	func(s *documenttemplateservice.Service) services.DocumentTemplateResolver { return s },
+	func(s *documenttemplateservice.Service) documenttemplateports.DocumentTemplateResolver { return s },
 	ptoledgerservice.New,
 	ptopolicyservice.New,
 	workercredentialservice.New,
@@ -719,7 +760,7 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	timesheetservice.New,
 	workersafetyservice.New,
 	performancereviewservice.New,
-	func(s *workertrainingservice.Service) services.TrainingAssigner { return s },
+	func(s *workertrainingservice.Service) workerports.TrainingAssigner { return s },
 	workerchecklistservice.New,
 	workeroverviewservice.New,
 	// The overview composes the roll-ups each HR area already builds, so it
@@ -732,19 +773,19 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	func(s *workerdrugalcoholservice.Service) workerdqfservice.DrugAlcoholStander { return s },
 	func(s *workerchecklistservice.Service) workeroverviewservice.ChecklistLister { return s },
 	func(s *ptoledgerservice.Service) workeroverviewservice.BalanceReader { return s },
-	func(r repositories.PerformanceReviewRepository) workeroverviewservice.ReviewCounter {
+	func(r workerports.PerformanceReviewRepository) workeroverviewservice.ReviewCounter {
 		return r
 	},
 	func(s *performancereviewservice.Service) workeroverviewservice.ReviewLister { return s },
 	func(s *workerleaveservice.Service) workeroverviewservice.LeaveCounter { return s },
 	func(s *workerleaveservice.Service) driverportalservice.LeaveReader { return s },
 	orgholidayservice.New,
-	func(s *workerchecklistservice.Service) services.ChecklistSpawner { return s },
+	func(s *workerchecklistservice.Service) workerports.ChecklistSpawner { return s },
 	workeremploymentservice.New,
-	func(s *workeremploymentservice.Service) services.EmploymentEventRecorder { return s },
+	func(s *workeremploymentservice.Service) workerports.EmploymentEventRecorder { return s },
 	fx.Annotate(
 		workerptoservice.New,
-		fx.As(new(services.WorkerPTOService)),
+		fx.As(new(workerports.WorkerPTOService)),
 	),
 	distancecalculationservice.New,
 	distancecontrolservice.New,
@@ -752,9 +793,9 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	distanceprofileservice.New,
 	storedmileageservice.New,
 	exchangerateservice.New,
-	func(s *exchangerateservice.Service) services.ExchangeRateService { return s },
+	func(s *exchangerateservice.Service) exchangerateports.ExchangeRateService { return s },
 	fuelsurchargeservice.New,
-	func(s *fuelsurchargeservice.Service) services.FuelSurchargeResolver { return s },
+	func(s *fuelsurchargeservice.Service) fuelsurchargeports.FuelSurchargeResolver { return s },
 	fx.Annotate(
 		func(s *fuelsurchargeservice.Service) formulatemplatetypes.ContextVariableProvider { return s },
 		fx.ResultTags(`group:"formula_context_variables"`),
@@ -763,14 +804,14 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	notificationservice.New,
 	aidocumentservice.New,
 	shipmentimportassistantservice.New,
-	func(s *shipmentimportassistantservice.Service) services.ShipmentImportAssistantService {
+	func(s *shipmentimportassistantservice.Service) shipmentports.ShipmentImportAssistantService {
 		return s
 	},
 	tablechangealertservice.New,
 	tablechangealertservice.NewConsumer,
 	fx.Annotate(
 		apikeyservice.NewUsageBufferWithLifecycle,
-		fx.As(new(services.UsageRecorder)),
+		fx.As(new(apikeyports.UsageRecorder)),
 	),
 ), fx.Invoke(
 	// The table-change-alert consumer reads the tca:events stream GTC fills
@@ -788,10 +829,10 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 			},
 		})
 	},
-	func(setter servicefailureservice.EDIServiceSetter, service services.EDIService) {
+	func(setter servicefailureservice.EDIServiceSetter, service ediports.EDIService) {
 		setter.SetEDIService(service)
 	},
-	func(s *tenderservice.Service, assigner services.CarrierMoveAssigner) {
+	func(s *tenderservice.Service, assigner tenderports.CarrierMoveAssigner) {
 		s.SetCarrierMoveAssigner(assigner)
 	},
 	// Carrier intelligence writes carrier records back through the carrier
@@ -800,8 +841,8 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	func(
 		tenders *tenderservice.Service,
 		assignments *carrierassignmentservice.Service,
-		gate services.CarrierIntelGate,
-		observer services.CarrierLifecycleObserver,
+		gate carrierintelports.CarrierIntelGate,
+		observer carrierintelports.CarrierLifecycleObserver,
 	) {
 		tenders.SetIntelGate(gate)
 		tenders.SetLifecycleObserver(observer)
@@ -811,7 +852,7 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	// Injecting the recorder through FX would close the constructor cycle
 	// workerservice -> EmploymentEventRecorder -> workeremploymentservice ->
 	// workerservice, so it arrives after both services are built.
-	func(s *workerservice.Service, recorder services.EmploymentEventRecorder) {
+	func(s *workerservice.Service, recorder workerports.EmploymentEventRecorder) {
 		s.SetEmploymentRecorder(recorder)
 	},
 	// The portal service reaches back into the employment service through the
@@ -829,7 +870,7 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	fx.Annotate(
 		func(
 			setter shipmentservice.MutationObserverSetter,
-			observers []services.ShipmentMutationObserver,
+			observers []shipmentports.ShipmentMutationObserver,
 		) {
 			setter.SetShipmentMutationObservers(observers)
 		},

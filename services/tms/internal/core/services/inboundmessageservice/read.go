@@ -8,7 +8,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -74,7 +74,7 @@ type LinkRequest struct {
 // provider redelivered late would otherwise sit above one that arrived after it.
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListInboundMessagesRequest,
+	req *inboundmessageports.ListInboundMessagesRequest,
 ) (*pagination.CursorListResult[*inboundmessage.InboundMessage], error) {
 	if req.Filter != nil {
 		req.Filter.Sort = []domaintypes.SortField{
@@ -88,14 +88,14 @@ func (s *Service) List(
 
 func (s *Service) GetByID(
 	ctx context.Context,
-	req repositories.GetInboundMessageByIDRequest,
+	req inboundmessageports.GetInboundMessageByIDRequest,
 ) (*inboundmessage.InboundMessage, error) {
 	return s.messageRepo.GetByID(ctx, req)
 }
 
 func (s *Service) ListMailboxes(
 	ctx context.Context,
-	req *repositories.ListMailboxesRequest,
+	req *inboundmessageports.ListMailboxesRequest,
 ) (*pagination.ListResult[*inboundmessage.Mailbox], error) {
 	return s.mailboxRepo.List(ctx, req)
 }
@@ -107,7 +107,7 @@ func (s *Service) Counts(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*Counts, error) {
-	rows, err := s.messageRepo.CountBreakdown(ctx, repositories.CountInboundMessagesRequest{
+	rows, err := s.messageRepo.CountBreakdown(ctx, inboundmessageports.CountInboundMessagesRequest{
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {
@@ -135,7 +135,7 @@ func (s *Service) Counts(
 	return counts, nil
 }
 
-func waitingCount(row repositories.InboundMessageCount) int {
+func waitingCount(row inboundmessageports.InboundMessageCount) int {
 	if row.Status == inboundmessage.StatusInReview ||
 		row.Status == inboundmessage.StatusQuarantined {
 		return row.Count
@@ -147,7 +147,7 @@ func waitingCount(row repositories.InboundMessageCount) int {
 // countByClassification lists every kind, in the enum's order, so a kind with
 // no mail reads as empty rather than missing. Mail nothing has read yet is in
 // the lanes but in no kind: it has not been told apart.
-func countByClassification(rows []repositories.InboundMessageCount) []ClassificationCount {
+func countByClassification(rows []inboundmessageports.InboundMessageCount) []ClassificationCount {
 	kinds := inboundmessage.AllClassifications()
 	indexByKind := make(map[inboundmessage.Classification]int, len(kinds))
 	counts := make([]ClassificationCount, len(kinds))
@@ -169,7 +169,7 @@ func countByClassification(rows []repositories.InboundMessageCount) []Classifica
 }
 
 // countByMailbox lists only the mailboxes that have mail, in a stable order.
-func countByMailbox(rows []repositories.InboundMessageCount) []MailboxCount {
+func countByMailbox(rows []inboundmessageports.InboundMessageCount) []MailboxCount {
 	indexByMailbox := make(map[pulid.ID]int, len(rows))
 	counts := make([]MailboxCount, 0, len(rows))
 
@@ -204,7 +204,7 @@ func (s *Service) Review(
 		return nil, err
 	}
 
-	message, err := s.messageRepo.GetByID(ctx, repositories.GetInboundMessageByIDRequest{
+	message, err := s.messageRepo.GetByID(ctx, inboundmessageports.GetInboundMessageByIDRequest{
 		ID:         req.MessageID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -242,7 +242,7 @@ func (s *Service) Link(
 		return nil, err
 	}
 
-	message, err := s.messageRepo.GetByID(ctx, repositories.GetInboundMessageByIDRequest{
+	message, err := s.messageRepo.GetByID(ctx, inboundmessageports.GetInboundMessageByIDRequest{
 		ID:         req.MessageID,
 		TenantInfo: req.TenantInfo,
 	})

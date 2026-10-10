@@ -7,12 +7,12 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -93,7 +93,7 @@ func TestGetNeighborsWalksTheQueueInItsOwnOrder(t *testing.T) {
 	filter := &pagination.QueryOptions{TenantInfo: tenant}
 
 	// With posted items: 3, 2, 1, 0 — item 2 sits second.
-	all, err := repo.GetNeighbors(ctx, &repositories.GetBillingQueueNeighborsRequest{
+	all, err := repo.GetNeighbors(ctx, &billingqueueports.GetBillingQueueNeighborsRequest{
 		ItemID: ids[2], Filter: filter, IncludePosted: true,
 	})
 	require.NoError(t, err)
@@ -104,14 +104,14 @@ func TestGetNeighborsWalksTheQueueInItsOwnOrder(t *testing.T) {
 	require.Equal(t, 2, all.Position)
 
 	// Without posted items: 3, 2, 0 — item 1 is skipped over.
-	open, err := repo.GetNeighbors(ctx, &repositories.GetBillingQueueNeighborsRequest{
+	open, err := repo.GetNeighbors(ctx, &billingqueueports.GetBillingQueueNeighborsRequest{
 		ItemID: ids[2], Filter: filter,
 	})
 	require.NoError(t, err)
 	require.Equal(t, ids[0], *open.NextID)
 	require.Equal(t, 2, open.Position)
 
-	first, err := repo.GetNeighbors(ctx, &repositories.GetBillingQueueNeighborsRequest{
+	first, err := repo.GetNeighbors(ctx, &billingqueueports.GetBillingQueueNeighborsRequest{
 		ItemID: ids[3], Filter: filter,
 	})
 	require.NoError(t, err)

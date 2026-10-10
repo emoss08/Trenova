@@ -3,7 +3,7 @@ package agenttoolservice
 import (
 	"testing"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -30,7 +30,7 @@ func TestApplyRateIncrease_SetsAsideTheScopesNamedAgreementsWereFoundBy(t *testi
 		paramPercentChange: "3.5",
 	}
 
-	resolved, err := tool.(serviceports.ToolSelectionResolver).ResolveSelection(
+	resolved, err := tool.(agentports.ToolSelectionResolver).ResolveSelection(
 		t.Context(), executeParams(params),
 	)
 	require.NoError(t, err)
@@ -41,7 +41,7 @@ func TestApplyRateIncrease_SetsAsideTheScopesNamedAgreementsWereFoundBy(t *testi
 	}, resolved)
 	assert.Len(t, params, 6, "the model's own call is left as it sent it")
 
-	require.NoError(t, tool.(serviceports.ToolValidator).Validate(t.Context(), executeParams(params)),
+	require.NoError(t, tool.(agentports.ToolValidator).Validate(t.Context(), executeParams(params)),
 		"a scope beside named agreements is never read, so it cannot refuse the call")
 
 	approved := executeParams(params)
@@ -64,13 +64,13 @@ func TestApplyRateIncrease_LeavesAScopedCallAsItIs(t *testing.T) {
 		paramPercentChange: "3.5",
 	}
 
-	resolved, err := tool.(serviceports.ToolSelectionResolver).ResolveSelection(
+	resolved, err := tool.(agentports.ToolSelectionResolver).ResolveSelection(
 		t.Context(), executeParams(params),
 	)
 	require.NoError(t, err)
 	assert.Equal(t, params, resolved)
 
 	params[paramCustomerID] = "acme"
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), executeParams(params)),
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), executeParams(params)),
 		"without named agreements the scope is read, and a bad one is refused")
 }

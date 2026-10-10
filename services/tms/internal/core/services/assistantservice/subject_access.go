@@ -5,14 +5,14 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/subjectaccess"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
 func (s *Service) mayReadSubject(
 	ctx context.Context,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	subjectType agent.SubjectType,
 ) (bool, error) {
 	return subjectaccess.MayRead(ctx, s.permissions, actor, subjectType)
@@ -20,7 +20,7 @@ func (s *Service) mayReadSubject(
 
 func (s *Service) assertSubjectReadable(
 	ctx context.Context,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	subjectType agent.SubjectType,
 ) error {
 	return subjectaccess.AssertReadable(ctx, s.permissions, actor, subjectType)

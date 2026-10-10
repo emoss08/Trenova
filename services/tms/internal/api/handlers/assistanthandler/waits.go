@@ -5,8 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agentwait"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -32,7 +31,7 @@ func (h *Handler) listWaits(c *gin.Context) {
 		return
 	}
 
-	items, err := h.waits.List(c.Request.Context(), &repositories.ListThreadWaitsRequest{
+	items, err := h.waits.List(c.Request.Context(), &agentwaitports.ListThreadWaitsRequest{
 		ThreadID:   req.ID,
 		UserID:     req.UserID,
 		TenantInfo: req.TenantInfo,
@@ -57,7 +56,7 @@ func (h *Handler) cancelWait(c *gin.Context) {
 		return
 	}
 
-	wait, err := h.waits.Cancel(c.Request.Context(), &serviceports.CancelWaitRequest{
+	wait, err := h.waits.Cancel(c.Request.Context(), &agentwaitports.CancelWaitRequest{
 		ID:         waitID,
 		TenantInfo: req.TenantInfo,
 		ThreadID:   req.ID,

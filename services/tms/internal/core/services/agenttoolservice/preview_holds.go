@@ -8,14 +8,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 )
 
 var (
-	_ serviceports.ToolPreviewer = (*placeShipmentHoldTool)(nil)
-	_ serviceports.ToolPreviewer = (*releaseShipmentHoldTool)(nil)
+	_ agentports.ToolPreviewer = (*placeShipmentHoldTool)(nil)
+	_ agentports.ToolPreviewer = (*releaseShipmentHoldTool)(nil)
 )
 
 var placedHoldFields = []string{
@@ -70,7 +70,7 @@ func holdBlocks(hold *shipment.ShipmentHold) string {
 
 func (t *placeShipmentHoldTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	if err := guardPreview(t, &params); err != nil {
 		return nil, err
@@ -107,7 +107,7 @@ func (t *placeShipmentHoldTool) Preview(
 
 func (t *releaseShipmentHoldTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	if err := guardPreview(t, &params); err != nil {
 		return nil, err
@@ -118,7 +118,7 @@ func (t *releaseShipmentHoldTool) Preview(
 		return nil, err
 	}
 
-	current, err := t.holds.GetByID(ctx, &repositories.GetShipmentHoldByIDRequest{
+	current, err := t.holds.GetByID(ctx, &shipmentports.GetShipmentHoldByIDRequest{
 		HoldID:     request.HoldID,
 		ShipmentID: request.ShipmentID,
 		TenantInfo: request.TenantInfo,

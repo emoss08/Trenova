@@ -5,8 +5,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
 	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/memtable"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -24,14 +27,14 @@ const (
 
 func windowDays(requested int) (int, error) {
 	if requested == 0 {
-		return services.DefaultAgentQualityWindowDays, nil
+		return agentqualityports.DefaultAgentQualityWindowDays, nil
 	}
-	if requested < 1 || requested > services.MaxAgentQualityWindowDays {
+	if requested < 1 || requested > agentqualityports.MaxAgentQualityWindowDays {
 		return 0, errortypes.NewValidationError(
 			"window",
 			errortypes.ErrInvalid,
 			"The window must be between 1 and {0} days",
-			services.MaxAgentQualityWindowDays,
+			agentqualityports.MaxAgentQualityWindowDays,
 		)
 	}
 
@@ -40,10 +43,10 @@ func windowDays(requested int) (int, error) {
 
 func pageSize(requested int) int {
 	if requested <= 0 {
-		return services.DefaultAgentQualityPageSize
+		return agentqualityports.DefaultAgentQualityPageSize
 	}
 
-	return min(requested, services.MaxAgentQualityPageSize)
+	return min(requested, agentqualityports.MaxAgentQualityPageSize)
 }
 
 func decodeOffset(scope, after string) (int, error) {
@@ -71,8 +74,8 @@ func satisfaction(positive, negative int) *float64 {
 
 func (s *Service) Overview(
 	ctx context.Context,
-	req *services.AgentQualityOverviewRequest,
-) (*services.AgentQualityOverview, error) {
+	req *agentqualityports.AgentQualityOverviewRequest,
+) (*agentqualityports.AgentQualityOverview, error) {
 	window, err := windowDays(req.WindowDays)
 	if err != nil {
 		return nil, err
@@ -91,7 +94,7 @@ func (s *Service) Overview(
 		return nil, err
 	}
 
-	overview := &services.AgentQualityOverview{
+	overview := &agentqualityports.AgentQualityOverview{
 		WindowDays:          window,
 		Since:               since,
 		RatingsVisible:      req.IncludeRatings,
@@ -107,7 +110,7 @@ func (s *Service) Overview(
 	if req.IncludeRatings {
 		totals, totalsErr := s.feedback.TotalsByAgent(
 			ctx,
-			repositories.AIFeedbackAgentTotalsRequest{
+			aifeedbackports.AIFeedbackAgentTotalsRequest{
 				TenantInfo: req.TenantInfo,
 				Since:      since,
 			},
@@ -124,7 +127,7 @@ func (s *Service) Overview(
 		overview.Satisfaction = satisfaction(positive, negative)
 	}
 
-	runs, err := s.suiteRuns.Overview(ctx, repositories.AgentSuiteRunOverviewRequest{
+	runs, err := s.suiteRuns.Overview(ctx, agentqualityports.AgentSuiteRunOverviewRequest{
 		TenantInfo: req.TenantInfo,
 		Since:      since,
 	})
@@ -134,7 +137,7 @@ func (s *Service) Overview(
 	overview.SuiteRuns = runs.Runs
 	overview.Regressions = runs.Regressions
 
-	latest, err := s.suiteRuns.Latest(ctx, repositories.LatestAgentSuiteRunsRequest{
+	latest, err := s.suiteRuns.Latest(ctx, agentqualityports.LatestAgentSuiteRunsRequest{
 		TenantInfo: req.TenantInfo,
 		Statuses:   scoredStatuses(),
 	})
@@ -156,14 +159,14 @@ func (s *Service) Overview(
 
 	withCases, err := s.cases.ListAgentsWithActiveCases(
 		ctx,
-		repositories.ListAgentsWithActiveEvalCasesRequest{TenantInfo: req.TenantInfo},
+		agentqualityports.ListAgentsWithActiveEvalCasesRequest{TenantInfo: req.TenantInfo},
 	)
 	if err != nil {
 		return nil, err
 	}
 	overview.AgentsWithCases = len(withCases)
 
-	spend, err := s.usage.EvaluationCost(ctx, repositories.AIUsageEvaluationCostRequest{
+	spend, err := s.usage.EvaluationCost(ctx, aiusageports.AIUsageEvaluationCostRequest{
 		TenantInfo: req.TenantInfo,
 		Since:      monthStart,
 	})
@@ -198,8 +201,8 @@ func regressionDrop(run *agentquality.SuiteRun) float64 {
 	return *run.BaselineScore - *run.QualityScore
 }
 
-func qualityPoints(runs []*agentquality.SuiteRun) []*services.AgentQualityPoint {
-	points := make([]*services.AgentQualityPoint, 0, len(runs))
+func qualityPoints(runs []*agentquality.SuiteRun) []*agentqualityports.AgentQualityPoint {
+	points := make([]*agentqualityports.AgentQualityPoint, 0, len(runs))
 	for _, run := range runs {
 		if run.QualityScore == nil {
 			continue
@@ -208,7 +211,7 @@ func qualityPoints(runs []*agentquality.SuiteRun) []*services.AgentQualityPoint 
 		if run.FinishedAt != nil {
 			at = *run.FinishedAt
 		}
-		points = append(points, &services.AgentQualityPoint{
+		points = append(points, &agentqualityports.AgentQualityPoint{
 			SuiteRunID:   run.ID,
 			At:           at,
 			QualityScore: *run.QualityScore,
@@ -222,14 +225,14 @@ func qualityPoints(runs []*agentquality.SuiteRun) []*services.AgentQualityPoint 
 
 func (s *Service) AgentQuality(
 	ctx context.Context,
-	req *services.AgentQualityRequest,
-) (*services.AgentQualityDetail, error) {
+	req *agentqualityports.AgentQualityRequest,
+) (*agentqualityports.AgentQualityDetail, error) {
 	window, err := windowDays(req.WindowDays)
 	if err != nil {
 		return nil, err
 	}
 
-	definition, err := s.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	definition, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         req.AgentDefinitionID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -239,15 +242,15 @@ func (s *Service) AgentQuality(
 
 	now := s.now()
 	since := now - int64(window)*secondsPerDay
-	detail := &services.AgentQualityDetail{
+	detail := &agentqualityports.AgentQualityDetail{
 		AgentDefinitionID:  definition.ID,
 		AgentName:          definition.Name,
 		Enabled:            definition.Enabled,
 		WindowDays:         window,
 		Since:              since,
 		RatingsVisible:     req.IncludeRatings,
-		SatisfactionPoints: []*services.AgentFeedbackDay{},
-		WorstRated:         []*services.AgentWorstRatedAnswer{},
+		SatisfactionPoints: []*aifeedbackports.AgentFeedbackDay{},
+		WorstRated:         []*agentqualityports.AgentWorstRatedAnswer{},
 	}
 
 	if req.IncludeRatings {
@@ -256,18 +259,18 @@ func (s *Service) AgentQuality(
 		}
 	}
 
-	history, err := s.suiteRuns.History(ctx, repositories.AgentSuiteRunHistoryRequest{
+	history, err := s.suiteRuns.History(ctx, agentqualityports.AgentSuiteRunHistoryRequest{
 		TenantInfo:         req.TenantInfo,
 		AgentDefinitionIDs: []pulid.ID{definition.ID},
 		Since:              since,
-		PerAgent:           services.AgentQualityHistoryPoints,
+		PerAgent:           agentqualityports.AgentQualityHistoryPoints,
 	})
 	if err != nil {
 		return nil, err
 	}
 	detail.QualityPoints = qualityPoints(history)
 
-	last, err := s.suiteRuns.Last(ctx, repositories.LastAgentSuiteRunRequest{
+	last, err := s.suiteRuns.Last(ctx, agentqualityports.LastAgentSuiteRunRequest{
 		AgentDefinitionID: definition.ID,
 		TenantInfo:        req.TenantInfo,
 	})
@@ -276,7 +279,7 @@ func (s *Service) AgentQuality(
 	}
 	detail.LastSuiteRun = last
 
-	cases, err := s.cases.ListSamplingCases(ctx, repositories.ListEvalCaseSamplingRequest{
+	cases, err := s.cases.ListSamplingCases(ctx, agentqualityports.ListEvalCaseSamplingRequest{
 		TenantInfo:        req.TenantInfo,
 		AgentDefinitionID: definition.ID,
 	})
@@ -290,8 +293,8 @@ func (s *Service) AgentQuality(
 
 func (s *Service) fillRatings(
 	ctx context.Context,
-	detail *services.AgentQualityDetail,
-	req *services.AgentQualityRequest,
+	detail *agentqualityports.AgentQualityDetail,
+	req *agentqualityports.AgentQualityRequest,
 	since int64,
 ) error {
 	control, err := s.control(ctx, req.TenantInfo)
@@ -299,7 +302,7 @@ func (s *Service) fillRatings(
 		return err
 	}
 
-	windowReq := repositories.AIFeedbackWindowRequest{
+	windowReq := aifeedbackports.AIFeedbackWindowRequest{
 		TenantInfo:        req.TenantInfo,
 		AgentDefinitionID: req.AgentDefinitionID,
 		Since:             since,
@@ -315,7 +318,7 @@ func (s *Service) fillRatings(
 	for _, day := range days {
 		positive += day.Positive
 		negative += day.Negative
-		detail.SatisfactionPoints = append(detail.SatisfactionPoints, &services.AgentFeedbackDay{
+		detail.SatisfactionPoints = append(detail.SatisfactionPoints, &aifeedbackports.AgentFeedbackDay{
 			Day:          day.Day,
 			Positive:     day.Positive,
 			Negative:     day.Negative,
@@ -336,9 +339,9 @@ func (s *Service) fillRatings(
 
 func (s *Service) worstRated(
 	ctx context.Context,
-	req repositories.AIFeedbackWindowRequest,
+	req aifeedbackports.AIFeedbackWindowRequest,
 	viewerID pulid.ID,
-) ([]*services.AgentWorstRatedAnswer, bool, error) {
+) ([]*agentqualityports.AgentWorstRatedAnswer, bool, error) {
 	limit := req.Limit
 	req.Limit = limit + 1
 	scores, err := s.feedback.WorstRated(ctx, req)
@@ -358,7 +361,7 @@ func (s *Service) worstRated(
 		return nil, false, err
 	}
 
-	answers := make([]*services.AgentWorstRatedAnswer, 0, len(rows))
+	answers := make([]*agentqualityports.AgentWorstRatedAnswer, 0, len(rows))
 	for idx := range rows {
 		answers = append(answers, rows[idx].answer)
 	}
@@ -388,7 +391,7 @@ func (s *Service) agentNames(
 		return names, nil
 	}
 
-	definitions, err := s.definitions.ListByIDs(ctx, repositories.ListAgentDefinitionsByIDsRequest{
+	definitions, err := s.definitions.ListByIDs(ctx, agentdefinitionports.ListAgentDefinitionsByIDsRequest{
 		IDs:        ids,
 		TenantInfo: tenant,
 	})
@@ -404,9 +407,9 @@ func (s *Service) agentNames(
 
 func (s *Service) ListWorstRated(
 	ctx context.Context,
-	req *services.ListAgentWorstRatedRequest,
-) (*services.AgentWorstRatedPage, error) {
-	return s.ListWorstRatedTable(ctx, &services.ListAgentWorstRatedTableRequest{
+	req *agentqualityports.ListAgentWorstRatedRequest,
+) (*agentqualityports.AgentWorstRatedPage, error) {
+	return s.ListWorstRatedTable(ctx, &agentqualityports.ListAgentWorstRatedTableRequest{
 		TenantInfo:        req.TenantInfo,
 		AgentDefinitionID: req.AgentDefinitionID,
 		WindowDays:        req.WindowDays,
@@ -420,9 +423,9 @@ func (s *Service) ListWorstRated(
 
 func (s *Service) ListAgents(
 	ctx context.Context,
-	req *services.ListAgentQualityAgentsRequest,
-) (*services.AgentQualityAgentPage, error) {
-	return s.ListAgentTable(ctx, &services.ListAgentQualityAgentTableRequest{
+	req *agentqualityports.ListAgentQualityAgentsRequest,
+) (*agentqualityports.AgentQualityAgentPage, error) {
+	return s.ListAgentTable(ctx, &agentqualityports.ListAgentQualityAgentTableRequest{
 		TenantInfo:     req.TenantInfo,
 		WindowDays:     req.WindowDays,
 		IncludeRatings: req.IncludeRatings,
@@ -465,11 +468,11 @@ func (s *Service) agentPageData(ctx context.Context, req agentPageRequest) (*age
 	}
 
 	if !req.skipHistory {
-		history, err := s.suiteRuns.History(ctx, repositories.AgentSuiteRunHistoryRequest{
+		history, err := s.suiteRuns.History(ctx, agentqualityports.AgentSuiteRunHistoryRequest{
 			TenantInfo:         req.tenant,
 			AgentDefinitionIDs: req.ids,
 			Since:              req.since,
-			PerAgent:           services.AgentQualityHistoryPoints,
+			PerAgent:           agentqualityports.AgentQualityHistoryPoints,
 		})
 		if err != nil {
 			return nil, err
@@ -480,7 +483,7 @@ func (s *Service) agentPageData(ctx context.Context, req agentPageRequest) (*age
 	}
 
 	if !req.skipLatest {
-		latest, err := s.suiteRuns.Latest(ctx, repositories.LatestAgentSuiteRunsRequest{
+		latest, err := s.suiteRuns.Latest(ctx, agentqualityports.LatestAgentSuiteRunsRequest{
 			TenantInfo:         req.tenant,
 			AgentDefinitionIDs: req.ids,
 		})
@@ -512,7 +515,7 @@ func (s *Service) fillTotals(
 	since, until int64,
 	into map[pulid.ID]ratingTotals,
 ) error {
-	totals, err := s.feedback.TotalsByAgent(ctx, repositories.AIFeedbackAgentTotalsRequest{
+	totals, err := s.feedback.TotalsByAgent(ctx, aifeedbackports.AIFeedbackAgentTotalsRequest{
 		TenantInfo:         req.tenant,
 		AgentDefinitionIDs: req.ids,
 		Since:              since,
@@ -533,8 +536,8 @@ func (s *Service) fillTotals(
 
 func (s *Service) ListSuiteRuns(
 	ctx context.Context,
-	req *services.ListAgentSuiteRunsInput,
-) (*services.AgentSuiteRunConnection, error) {
+	req *agentqualityports.ListAgentSuiteRunsInput,
+) (*agentqualityports.AgentSuiteRunConnection, error) {
 	offset, err := decodeOffset(suiteRunsCursorScope, req.After)
 	if err != nil {
 		return nil, err
@@ -549,7 +552,7 @@ func (s *Service) ListSuiteRuns(
 		}
 	}
 
-	page, err := s.suiteRuns.List(ctx, repositories.ListAgentSuiteRunsRequest{
+	page, err := s.suiteRuns.List(ctx, agentqualityports.ListAgentSuiteRunsRequest{
 		TenantInfo:        req.TenantInfo,
 		AgentDefinitionID: req.AgentDefinitionID,
 		Statuses:          req.Statuses,
@@ -561,13 +564,13 @@ func (s *Service) ListSuiteRuns(
 		return nil, err
 	}
 
-	connection := &services.AgentSuiteRunConnection{
-		Edges:       make([]*services.AgentSuiteRunEdge, 0, len(page.Items)),
+	connection := &agentqualityports.AgentSuiteRunConnection{
+		Edges:       make([]*agentqualityports.AgentSuiteRunEdge, 0, len(page.Items)),
 		HasNextPage: page.HasNextPage,
 		TotalCount:  page.TotalCount,
 	}
 	for idx, run := range page.Items {
-		connection.Edges = append(connection.Edges, &services.AgentSuiteRunEdge{
+		connection.Edges = append(connection.Edges, &agentqualityports.AgentSuiteRunEdge{
 			Node:   run,
 			Cursor: pagination.EncodeOffsetCursor(suiteRunsCursorScope, offset+idx+1),
 		})
@@ -578,14 +581,14 @@ func (s *Service) ListSuiteRuns(
 
 func (s *Service) ListSuiteRunCases(
 	ctx context.Context,
-	req *services.ListAgentSuiteRunCasesRequest,
-) (*services.AgentSuiteRunCasePage, error) {
+	req *agentqualityports.ListAgentSuiteRunCasesRequest,
+) (*agentqualityports.AgentSuiteRunCasePage, error) {
 	after, err := decodeOffset(suiteCasesCursorScope, req.After)
 	if err != nil {
 		return nil, err
 	}
 
-	run, err := s.suiteRuns.GetByID(ctx, repositories.GetAgentSuiteRunRequest{
+	run, err := s.suiteRuns.GetByID(ctx, agentqualityports.GetAgentSuiteRunRequest{
 		ID:         req.SuiteRunID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -594,7 +597,7 @@ func (s *Service) ListSuiteRunCases(
 	}
 
 	limit := pageSize(req.First)
-	evaluations, err := s.evaluations.ListBySuiteRun(ctx, repositories.ListSuiteEvaluationsRequest{
+	evaluations, err := s.evaluations.ListBySuiteRun(ctx, agentports.ListSuiteEvaluationsRequest{
 		TenantInfo:   req.TenantInfo,
 		SuiteRunID:   run.ID,
 		AfterOrdinal: after,
@@ -604,7 +607,7 @@ func (s *Service) ListSuiteRunCases(
 		return nil, err
 	}
 
-	page := &services.AgentSuiteRunCasePage{HasNextPage: len(evaluations) > limit}
+	page := &agentqualityports.AgentSuiteRunCasePage{HasNextPage: len(evaluations) > limit}
 	if page.HasNextPage {
 		evaluations = evaluations[:limit]
 	}
@@ -612,13 +615,13 @@ func (s *Service) ListSuiteRunCases(
 		total := run.CasesTotal
 		page.TotalCount = &total
 	}
-	page.Edges = make([]*services.AgentSuiteRunCaseEdge, 0, len(evaluations))
+	page.Edges = make([]*agentqualityports.AgentSuiteRunCaseEdge, 0, len(evaluations))
 	for _, evaluation := range evaluations {
 		ordinal := 0
 		if evaluation.SuiteOrdinal != nil {
 			ordinal = *evaluation.SuiteOrdinal
 		}
-		page.Edges = append(page.Edges, &services.AgentSuiteRunCaseEdge{
+		page.Edges = append(page.Edges, &agentqualityports.AgentSuiteRunCaseEdge{
 			Node:   evaluation,
 			Cursor: pagination.EncodeOffsetCursor(suiteCasesCursorScope, ordinal),
 		})
@@ -632,7 +635,7 @@ func (s *Service) GetSuiteRun(
 	id pulid.ID,
 	tenant pagination.TenantInfo,
 ) (*agentquality.SuiteRun, error) {
-	return s.suiteRuns.GetByID(ctx, repositories.GetAgentSuiteRunRequest{
+	return s.suiteRuns.GetByID(ctx, agentqualityports.GetAgentSuiteRunRequest{
 		ID:         id,
 		TenantInfo: tenant,
 	})

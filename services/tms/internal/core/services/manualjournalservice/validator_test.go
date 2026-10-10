@@ -1,13 +1,16 @@
 package manualjournalservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/glaccountportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/glaccount"
 	"github.com/emoss08/trenova/internal/core/domain/manualjournal"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -37,17 +40,17 @@ func TestValidateDraftUpsertDefaultsCurrencyAndAssignsPeriod(t *testing.T) {
 		},
 	}
 
-	fiscalRepo := mocks.NewMockFiscalPeriodRepository(t)
+	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
-		GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: entity.AccountingDate}).
+		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: entity.AccountingDate}).
 		Return(&fiscalperiod.FiscalPeriod{
 			ID:           periodID,
 			FiscalYearID: fyID,
 			PeriodType:   fiscalperiod.PeriodTypeAdjusting,
 		}, nil)
-	glRepo := mocks.NewMockGLAccountRepository(t)
+	glRepo := glaccountportsmock.NewMockGLAccountRepository(t)
 	glRepo.EXPECT().
-		GetByIDs(mock.Anything, repositories.GetGLAccountsByIDsRequest{TenantInfo: repositoriesTenantInfo(orgID, buID), GLAccountIDs: []pulid.ID{accountID1, accountID2}}).
+		GetByIDs(mock.Anything, glaccountports.GetGLAccountsByIDsRequest{TenantInfo: repositoriesTenantInfo(orgID, buID), GLAccountIDs: []pulid.ID{accountID1, accountID2}}).
 		Return([]*glaccount.GLAccount{
 			{ID: accountID1, Status: domaintypes.StatusActive, AllowManualJE: true},
 			{ID: accountID2, Status: domaintypes.StatusActive, AllowManualJE: true},
@@ -85,7 +88,7 @@ func TestValidateDraftUpsertBlocksNonAdjustingPeriodWhenPolicyRequiresIt(t *test
 		},
 	}
 
-	fiscalRepo := mocks.NewMockFiscalPeriodRepository(t)
+	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
 		GetPeriodByDate(mock.Anything, mock.Anything).
 		Return(&fiscalperiod.FiscalPeriod{
@@ -93,7 +96,7 @@ func TestValidateDraftUpsertBlocksNonAdjustingPeriodWhenPolicyRequiresIt(t *test
 			FiscalYearID: pulid.MustNew("fy_"),
 			PeriodType:   fiscalperiod.PeriodTypeMonth,
 		}, nil)
-	glRepo := mocks.NewMockGLAccountRepository(t)
+	glRepo := glaccountportsmock.NewMockGLAccountRepository(t)
 	glRepo.EXPECT().GetByIDs(mock.Anything, mock.Anything).Return([]*glaccount.GLAccount{
 		{ID: accountID1, Status: domaintypes.StatusActive, AllowManualJE: true},
 		{ID: accountID2, Status: domaintypes.StatusActive, AllowManualJE: true},

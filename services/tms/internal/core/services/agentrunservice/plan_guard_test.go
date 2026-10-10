@@ -1,10 +1,11 @@
 package agentrunservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -14,14 +15,14 @@ import (
 func TestStartForDefinitionRefusesBackgroundRunsThePlanRestricts(t *testing.T) {
 	t.Parallel()
 
-	workflows := mocks.NewMockWorkflowStarter(t)
+	workflows := kernelportsmock.NewMockWorkflowStarter(t)
 	workflows.EXPECT().Enabled().Return(true)
 	svc := &Service{
 		workflows: workflows,
 		plans:     plantest.Restricting(t, platformplan.CapabilityAgentAutomation),
 	}
 
-	run, err := svc.StartForDefinition(t.Context(), &services.StartAgentRunForDefinitionRequest{
+	run, err := svc.StartForDefinition(t.Context(), &agentports.StartAgentRunForDefinitionRequest{
 		TenantInfo: plantest.Tenant(),
 		SystemKey:  "billing_exception",
 	}, nil)

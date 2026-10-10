@@ -1,6 +1,7 @@
 package ediservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
@@ -12,8 +13,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/editransport"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -99,7 +100,7 @@ func as2DeliveryProfile(
 
 type mdnTestHarness struct {
 	service     *Service
-	messageRepo *mocks.MockEDIMessageRepository
+	messageRepo *ediportsmock.MockEDIMessageRepository
 }
 
 func newMDNTestHarness(
@@ -109,17 +110,17 @@ func newMDNTestHarness(
 ) *mdnTestHarness {
 	t.Helper()
 
-	messageRepo := mocks.NewMockEDIMessageRepository(t)
+	messageRepo := ediportsmock.NewMockEDIMessageRepository(t)
 	messageRepo.EXPECT().
 		GetOutboundMessageByAS2MessageID(mock.Anything, message.AS2MessageID).
 		Return(message, nil).
 		Once()
 
-	profileRepo := mocks.NewMockEDICommunicationProfileRepository(t)
+	profileRepo := ediportsmock.NewMockEDICommunicationProfileRepository(t)
 	profileRepo.EXPECT().
 		GetActiveProfileByPartner(
 			mock.Anything,
-			mock.MatchedBy(func(req repositories.GetActiveEDICommunicationProfileByPartnerRequest) bool {
+			mock.MatchedBy(func(req ediports.GetActiveEDICommunicationProfileByPartnerRequest) bool {
 				return req.PartnerID == message.EDIPartnerID &&
 					req.TenantInfo.OrgID == message.OrganizationID
 			}),
@@ -127,7 +128,7 @@ func newMDNTestHarness(
 		Return(as2DeliveryProfile(message, partner), nil).
 		Once()
 
-	tenderChangeRepo := mocks.NewMockEDITenderChangeRepository(t)
+	tenderChangeRepo := ediportsmock.NewMockEDITenderChangeRepository(t)
 	tenderChangeRepo.EXPECT().
 		GetTenderChangeByOutboundMessageID(mock.Anything, mock.Anything).
 		Return(nil, errortypes.NewNotFoundError("tender change not found")).
@@ -151,11 +152,11 @@ func (h *mdnTestHarness) expectDeliveryStatus(
 	h.messageRepo.EXPECT().
 		UpdateMessageDelivery(
 			mock.Anything,
-			mock.MatchedBy(func(req *repositories.UpdateEDIMessageDeliveryRequest) bool {
+			mock.MatchedBy(func(req *ediports.UpdateEDIMessageDeliveryRequest) bool {
 				return req.ID == message.ID && req.DeliveryStatus == status
 			}),
 		).
-		RunAndReturn(func(_ context.Context, req *repositories.UpdateEDIMessageDeliveryRequest) (*edi.EDIMessage, error) {
+		RunAndReturn(func(_ context.Context, req *ediports.UpdateEDIMessageDeliveryRequest) (*edi.EDIMessage, error) {
 			message.DeliveryStatus = req.DeliveryStatus
 			return message, nil
 		}).

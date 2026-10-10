@@ -2,9 +2,9 @@ package dispatchconsoleservice
 
 import (
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/core/services/dispatcheligibility"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -30,7 +30,7 @@ type MoveTenderSummary struct {
 }
 
 type BoardMove struct {
-	*repositories.BoardMove
+	*shipmentports.BoardMove
 
 	Urgency         UrgencyBucket      `json:"urgency"`
 	MinutesToPickup int64              `json:"minutesToPickup"`
@@ -50,7 +50,7 @@ const (
 )
 
 type BoardDriver struct {
-	*repositories.BoardDriver
+	*shipmentports.BoardDriver
 
 	Availability     DriverAvailability `json:"availability"`
 	DutyStatus       string             `json:"dutyStatus"`
@@ -66,21 +66,21 @@ type BoardDriver struct {
 	FormattedLocation string   `json:"formattedLocation"`
 	PositionAt        int64    `json:"positionRecordedAt"`
 
-	ProjectedTimeAvailable int64                            `json:"projectedTimeAvailable"`
-	Commitments            []*repositories.WorkerCommitment `json:"commitments"`
-	TimeOff                []*repositories.WorkerTimeOff    `json:"timeOff"`
-	Findings               []dispatcheligibility.Finding    `json:"findings"`
-	CommittedMiles         float64                          `json:"committedMiles"`
-	CommittedRevenue       float64                          `json:"committedRevenue"`
+	ProjectedTimeAvailable int64                             `json:"projectedTimeAvailable"`
+	Commitments            []*shipmentports.WorkerCommitment `json:"commitments"`
+	TimeOff                []*shipmentports.WorkerTimeOff    `json:"timeOff"`
+	Findings               []dispatcheligibility.Finding     `json:"findings"`
+	CommittedMiles         float64                           `json:"committedMiles"`
+	CommittedRevenue       float64                           `json:"committedRevenue"`
 }
 
 type Board struct {
-	Moves       []*BoardMove               `json:"moves"`
-	Drivers     []*BoardDriver             `json:"drivers"`
-	Summary     *repositories.BoardSummary `json:"summary"`
-	WindowStart int64                      `json:"windowStart"`
-	WindowEnd   int64                      `json:"windowEnd"`
-	GeneratedAt int64                      `json:"generatedAt"`
+	Moves       []*BoardMove                `json:"moves"`
+	Drivers     []*BoardDriver              `json:"drivers"`
+	Summary     *shipmentports.BoardSummary `json:"summary"`
+	WindowStart int64                       `json:"windowStart"`
+	WindowEnd   int64                       `json:"windowEnd"`
+	GeneratedAt int64                       `json:"generatedAt"`
 }
 
 type GetBoardRequest struct {

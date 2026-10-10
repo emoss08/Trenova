@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,7 +23,7 @@ func (s *Service) ListRecognitions(
 	workerID pulid.ID,
 	visibleOnly bool,
 ) ([]*worker.WorkerRecognition, error) {
-	return s.repo.ListRecognitions(ctx, &repositories.ListWorkerRecognitionsRequest{
+	return s.repo.ListRecognitions(ctx, &workerports.ListWorkerRecognitionsRequest{
 		TenantInfo:    tenantInfo,
 		WorkerID:      workerID,
 		VisibleOnly:   visibleOnly,
@@ -120,7 +120,7 @@ func (s *Service) DeleteRecognition(
 	if err != nil {
 		return err
 	}
-	if err = s.repo.DeleteRecognition(ctx, &repositories.GetWorkerRecognitionByIDRequest{
+	if err = s.repo.DeleteRecognition(ctx, &workerports.GetWorkerRecognitionByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	}); err != nil {

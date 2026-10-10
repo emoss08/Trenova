@@ -4,11 +4,10 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/billingqueuejobs/billingqueuecontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/billingqueuejobs/billingqueuecontract"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -26,18 +25,18 @@ const workflowIDPrefix = "billing-queue-approval/"
 type Params struct {
 	fx.In
 
-	Repo      repositories.BillingQueueReviewRepository
-	Workflows services.WorkflowStarter
+	Repo      billingqueueports.BillingQueueReviewRepository
+	Workflows kernelports.WorkflowStarter
 	Logger    *zap.Logger
 }
 
 type Service struct {
-	repo      repositories.BillingQueueReviewRepository
-	workflows services.WorkflowStarter
+	repo      billingqueueports.BillingQueueReviewRepository
+	workflows kernelports.WorkflowStarter
 	l         *zap.Logger
 }
 
-func New(p Params) services.BillingQueueApprovalService {
+func New(p Params) billingqueueports.BillingQueueApprovalService {
 	return &Service{
 		repo:      p.Repo,
 		workflows: p.Workflows,
@@ -53,7 +52,7 @@ func New(p Params) services.BillingQueueApprovalService {
 // and returns it, so the same items are never approved by two runs.
 func (s *Service) Start(
 	ctx context.Context,
-	req *services.StartBillingQueueApprovalRequest,
+	req *billingqueueports.StartBillingQueueApprovalRequest,
 ) (*billingqueue.ApprovalRun, error) {
 	if req.TenantInfo.UserID.IsNil() {
 		return nil, errortypes.NewAuthenticationError("A user is required to approve")
@@ -86,7 +85,7 @@ func (s *Service) Start(
 		)
 	}
 
-	run, err := s.repo.CreateApprovalRun(ctx, &repositories.CreateApprovalRunRequest{
+	run, err := s.repo.CreateApprovalRun(ctx, &billingqueueports.CreateApprovalRunRequest{
 		Run: &billingqueue.ApprovalRun{
 			OrganizationID: req.TenantInfo.OrgID,
 			BusinessUnitID: req.TenantInfo.BuID,
@@ -137,7 +136,7 @@ func (s *Service) startWorkflow(
 	)
 	if err == nil {
 		if wf != nil {
-			if setErr := s.repo.SetApprovalRunWorkflow(ctx, &repositories.MarkApprovalRunRunningRequest{
+			if setErr := s.repo.SetApprovalRunWorkflow(ctx, &billingqueueports.MarkApprovalRunRunningRequest{
 				TenantInfo:         tenantOf(run),
 				RunID:              run.ID,
 				TemporalWorkflowID: wf.GetID(),
@@ -153,7 +152,7 @@ func (s *Service) startWorkflow(
 
 	s.l.Error("failed to start billing queue approval workflow",
 		zap.String("runId", run.ID.String()), zap.Error(err))
-	if _, finErr := s.repo.FinalizeApprovalRun(ctx, &repositories.FinalizeApprovalRunRequest{
+	if _, finErr := s.repo.FinalizeApprovalRun(ctx, &billingqueueports.FinalizeApprovalRunRequest{
 		TenantInfo:     tenantOf(run),
 		RunID:          run.ID,
 		Status:         billingqueue.ApprovalRunFailed,
@@ -168,9 +167,9 @@ func (s *Service) startWorkflow(
 
 func (s *Service) Get(
 	ctx context.Context,
-	req *services.BillingQueueApprovalRunRequest,
+	req *billingqueueports.BillingQueueApprovalRunRequest,
 ) (*billingqueue.ApprovalRun, error) {
-	return s.repo.GetApprovalRun(ctx, &repositories.GetApprovalRunRequest{
+	return s.repo.GetApprovalRun(ctx, &billingqueueports.GetApprovalRunRequest{
 		TenantInfo:   req.TenantInfo,
 		RunID:        req.RunID,
 		IncludeItems: true,
@@ -182,7 +181,7 @@ func (s *Service) Get(
 // waiting for the window to close.
 func (s *Service) Undo(
 	ctx context.Context,
-	req *services.BillingQueueApprovalRunRequest,
+	req *billingqueueports.BillingQueueApprovalRunRequest,
 ) (*billingqueue.ApprovalRun, error) {
 	run, err := s.Get(ctx, req)
 	if err != nil {
@@ -192,7 +191,7 @@ func (s *Service) Undo(
 		return nil, errortypes.NewAuthorizationError("Only the person who approved can undo it")
 	}
 
-	stopped, err := s.repo.RequestApprovalRunUndo(ctx, &repositories.RequestApprovalRunUndoRequest{
+	stopped, err := s.repo.RequestApprovalRunUndo(ctx, &billingqueueports.RequestApprovalRunUndoRequest{
 		TenantInfo:    req.TenantInfo,
 		RunID:         run.ID,
 		RequestedByID: req.TenantInfo.UserID,

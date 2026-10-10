@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -26,7 +26,7 @@ type fakeRepo struct {
 	seqErr    error
 }
 
-func (f *fakeRepo) Append(_ context.Context, req repositories.AppendAgentRunEventsRequest) error {
+func (f *fakeRepo) Append(_ context.Context, req agentports.AppendAgentRunEventsRequest) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
@@ -56,21 +56,21 @@ func (f *fakeRepo) NextSequence(
 
 func (f *fakeRepo) List(
 	_ context.Context,
-	_ repositories.ListAgentRunEventsRequest,
+	_ agentports.ListAgentRunEventsRequest,
 ) ([]*agent.AgentRunEvent, error) {
 	return nil, nil
 }
 
 func (f *fakeRepo) ListConnection(
 	_ context.Context,
-	_ *repositories.ListAgentRunEventConnectionRequest,
+	_ *agentports.ListAgentRunEventConnectionRequest,
 ) (*pagination.CursorListResult[*agent.AgentRunEvent], error) {
 	return nil, nil
 }
 
 func (f *fakeRepo) Prune(
 	_ context.Context,
-	_ repositories.PruneAgentRunEventsRequest,
+	_ agentports.PruneAgentRunEventsRequest,
 ) (int, error) {
 	return 0, nil
 }
@@ -82,15 +82,15 @@ func (f *fakeRepo) rows() []*agent.AgentRunEvent {
 	return append([]*agent.AgentRunEvent(nil), f.appended...)
 }
 
-func newRecorder(t *testing.T, repo *fakeRepo) serviceports.AgentRunEventRecorder {
+func newRecorder(t *testing.T, repo *fakeRepo) agentports.AgentRunEventRecorder {
 	t.Helper()
 
 	return New(Params{Logger: zap.NewNop(), Repo: repo})
 }
 
-func owner() serviceports.RunStepOwner {
-	return serviceports.RunStepOwner{
-		Kind: serviceports.RunStepOwnerAgentRun,
+func owner() agentports.RunStepOwner {
+	return agentports.RunStepOwner{
+		Kind: agentports.RunStepOwnerAgentRun,
 		ID:   pulid.MustNew("ar_"),
 	}
 }
@@ -108,7 +108,7 @@ func TestRecorder_NumbersEventsInTheOrderTheyHappened(t *testing.T) {
 	writer := newRecorder(t, repo).Recorder(t.Context(), tenant(), owner())
 
 	for _, kind := range []string{"accepted", "tool_started", "tool_finished", "done"} {
-		writer.Record(t.Context(), serviceports.StreamEvent{Event: kind})
+		writer.Record(t.Context(), kernelports.StreamEvent{Event: kind})
 	}
 	writer.Flush(t.Context())
 
@@ -130,7 +130,7 @@ func TestRecorder_ResumesNumberingAfterARetry(t *testing.T) {
 	repo := &fakeRepo{next: 12}
 	writer := newRecorder(t, repo).Recorder(t.Context(), tenant(), owner())
 
-	writer.Record(t.Context(), serviceports.StreamEvent{Event: "accepted"})
+	writer.Record(t.Context(), kernelports.StreamEvent{Event: "accepted"})
 	writer.Flush(t.Context())
 
 	rows := repo.rows()
@@ -147,7 +147,7 @@ func TestRecorder_AFailedWriteDoesNotReachTheCaller(t *testing.T) {
 	writer := newRecorder(t, repo).Recorder(t.Context(), tenant(), owner())
 
 	assert.NotPanics(t, func() {
-		writer.Record(t.Context(), serviceports.StreamEvent{Event: "tool_started"})
+		writer.Record(t.Context(), kernelports.StreamEvent{Event: "tool_started"})
 		writer.Flush(t.Context())
 	})
 	assert.Empty(t, repo.rows())
@@ -162,7 +162,7 @@ func TestRecorder_SurvivesNotKnowingWhereItLeftOff(t *testing.T) {
 
 	require.NotNil(t, writer, "a recorder that cannot resume still has to be callable")
 	assert.NotPanics(t, func() {
-		writer.Record(t.Context(), serviceports.StreamEvent{Event: "done"})
+		writer.Record(t.Context(), kernelports.StreamEvent{Event: "done"})
 		writer.Flush(t.Context())
 	})
 	assert.Empty(t, repo.rows())
@@ -176,7 +176,7 @@ func TestRecorder_SaysWhenAPayloadWasTooLargeToKeep(t *testing.T) {
 	repo := &fakeRepo{}
 	writer := newRecorder(t, repo).Recorder(t.Context(), tenant(), owner())
 
-	writer.Record(t.Context(), serviceports.StreamEvent{
+	writer.Record(t.Context(), kernelports.StreamEvent{
 		Event: "tool_finished",
 		Data:  map[string]any{"content": strings.Repeat("x", maxPayloadChars+1)},
 	})
@@ -196,9 +196,9 @@ func TestRecorder_LiftsTheCallIDOutOfAToolEvent(t *testing.T) {
 	repo := &fakeRepo{}
 	writer := newRecorder(t, repo).Recorder(t.Context(), tenant(), owner())
 
-	writer.Record(t.Context(), serviceports.StreamEvent{
+	writer.Record(t.Context(), kernelports.StreamEvent{
 		Event: "tool_started",
-		Data:  serviceports.AssistantToolStartedEvent{CallID: "call_42", Name: "assign_worker"},
+		Data:  agentports.AssistantToolStartedEvent{CallID: "call_42", Name: "assign_worker"},
 	})
 	writer.Flush(t.Context())
 
@@ -212,13 +212,13 @@ func TestRecorder_RecordsAConversationTurnToo(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeRepo{}
-	turn := serviceports.RunStepOwner{
-		Kind: serviceports.RunStepOwnerAssistantTurn,
+	turn := agentports.RunStepOwner{
+		Kind: agentports.RunStepOwnerAssistantTurn,
 		ID:   pulid.MustNew("at_"),
 	}
 	writer := newRecorder(t, repo).Recorder(t.Context(), tenant(), turn)
 
-	writer.Record(t.Context(), serviceports.StreamEvent{Event: "delta", Data: "hello"})
+	writer.Record(t.Context(), kernelports.StreamEvent{Event: "delta", Data: "hello"})
 	writer.Flush(t.Context())
 
 	rows := repo.rows()
@@ -235,7 +235,7 @@ func TestRecorder_WritesOnceItHasEnoughToBeWorthWriting(t *testing.T) {
 	writer := newRecorder(t, repo).Recorder(t.Context(), tenant(), owner())
 
 	for range flushAt {
-		writer.Record(t.Context(), serviceports.StreamEvent{Event: "delta"})
+		writer.Record(t.Context(), kernelports.StreamEvent{Event: "delta"})
 	}
 
 	assert.Len(t, repo.rows(), flushAt, "the buffer writes itself out once full")
@@ -246,8 +246,8 @@ func TestRecordTrajectory_IsSafeWithoutARecorder(t *testing.T) {
 	t.Parallel()
 
 	assert.NotPanics(t, func() {
-		serviceports.RecordTrajectory(nil, t.Context(), serviceports.StreamEvent{Event: "done"})
-		serviceports.FlushTrajectory(nil, t.Context())
+		agentports.RecordTrajectory(nil, t.Context(), kernelports.StreamEvent{Event: "done"})
+		agentports.FlushTrajectory(nil, t.Context())
 	})
 }
 
@@ -256,23 +256,23 @@ func TestRecord_KeepsWhenTheEventHappened(t *testing.T) {
 
 	repo := &fakeRepo{}
 	writer := newRecorder(t, repo).Recorder(t.Context(), pagination.TenantInfo{},
-		serviceports.RunStepOwner{
-			Kind: serviceports.RunStepOwnerAgentRun,
+		agentports.RunStepOwner{
+			Kind: agentports.RunStepOwnerAgentRun,
 			ID:   pulid.MustNew("ar_"),
 		})
 
 	started := int64(1_790_000_000)
-	writer.Record(t.Context(), serviceports.StreamEvent{
-		Event: serviceports.AssistantEventToolStarted,
-		Data:  serviceports.AssistantToolStartedEvent{CallID: "call_1"},
+	writer.Record(t.Context(), kernelports.StreamEvent{
+		Event: agentports.AssistantEventToolStarted,
+		Data:  agentports.AssistantToolStartedEvent{CallID: "call_1"},
 		At:    started,
 	})
-	writer.Record(t.Context(), serviceports.StreamEvent{
-		Event: serviceports.AssistantEventToolFinished,
-		Data:  serviceports.AssistantToolFinishedEvent{CallID: "call_1"},
+	writer.Record(t.Context(), kernelports.StreamEvent{
+		Event: agentports.AssistantEventToolFinished,
+		Data:  agentports.AssistantToolFinishedEvent{CallID: "call_1"},
 		At:    started + 95,
 	})
-	writer.Record(t.Context(), serviceports.StreamEvent{Event: serviceports.AssistantEventDone})
+	writer.Record(t.Context(), kernelports.StreamEvent{Event: agentports.AssistantEventDone})
 	writer.Flush(t.Context())
 
 	rows := repo.rows()

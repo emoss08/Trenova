@@ -132,7 +132,7 @@ host) for a one-minute cooldown, so a turn stops paying for attempts on a
 provider that is down. The count of failures is per process; the rest is
 shared. When a worker opens the breaker it also writes `ai:breaker:{providerID}`
 to Redis with a TTL equal to the cooldown, through the
-`repositories.ProviderBreakerRepository` port
+`agentports.ProviderBreakerRepository` port
 (`redis/repositories/providerbreaker.go`, provided in `RedisRepositoriesModule`
 and injected `optional:"true"`). The key is the provider row's id, so a
 tenant-owned provider is its own breaker, and the value is a marker: nothing
@@ -468,7 +468,7 @@ The records a turn is about come first; the ones they name follow in the order
 a person reads the record. The links are batched reads
 (`agentmemorysubjectrepository.ListRecordLinks`, one query per kind per hop). Up
 to 500 active, unexpired candidates are then read, subject rows first, and
-ordered by `services.MemoryRanker`: `retrievalservice.MemoryRanker` fuses
+ordered by `agentports.MemoryRanker`: `retrievalservice.MemoryRanker` fuses
 recency and use count (`agentmemoryservice.RankByRecencyAndUse`) with the
 memories nearest the turn's query vector, and falls back to recency and use
 alone when the organization is not indexed or the search fails. The ranker
@@ -735,7 +735,7 @@ the workflow does, so a reader can never attach ahead of it.
 Every tool call a reader sees says what it does. `tool_started`, `tool_finished`
 and the tool calls on `message` carry `effect` (`lookup`, `change`, `navigate`,
 `discover`, `present`, `ask` or `delegate`), read from the tool's metadata
-(`serviceports.EffectOf`, which reads `Effect` from the tool's `Policy()`;
+(`agentports.EffectOf`, which reads `Effect` from the tool's `Policy()`;
 `find_tools`, `ask_user`, `publish_artifact` and `delegate_task` declare theirs in
 `agentruntime/runtimepolicies.go`). `tool_finished` also carries `summary`, a one-line label worked out
 where the tool ran from what it returned, or from a write's name or title. The
@@ -873,7 +873,7 @@ subject always sorts first, and the kind is read off the id's prefix
 (`permission.RecordKindOfIDPrefix`), so an id of no known kind is never kept.
 
 Every turn reads them again while it is prepared, beside the subject
-(`checkTurn` → `anchorRecords` → `services.RecordAnchorReader`,
+(`checkTurn` → `anchorRecords` → `agentports.RecordAnchorReader`,
 `recordanchorservice`): this turn's mentions and page record first, then the
 working set, leaving out the subject, which `<subject_context>` already reads
 fresh. Access is checked per kind on every turn (`subjectaccess.MayReadResource`);
@@ -1089,7 +1089,7 @@ condition, outside content, business hours), a permission denial says what to
 tell the person and not to try another way (`deniedAdvice`), and `remember`
 says whether the memory is kept or only offered on a card
 (`savedMemoryContent`). A tool done as a sequence declares it
-(`serviceports.RecipeTool`), and the order is shown in the prompt's tool
+(`agentports.RecipeTool`), and the order is shown in the prompt's tool
 section and under the tool in a `find_tools` answer, with the prerequisite
 reads that were loaded alongside it. A `find_tools` need that names a tool the
 agent holds outright (`search_worker`) loads that tool first, ahead of the ranked
@@ -1351,7 +1351,7 @@ it.
   whose run is still open is refused by Temporal, where two requests reading a
   count of open runs could both have passed. The refusal is
   `ErrAgentRunAlreadyOpen`, which the publisher treats as a skip.
-  `PublishAgentEvent` defers through `ports.AfterCommit`: an event raised
+  `PublishAgentEvent` defers through `kernelports.AfterCommit`: an event raised
   inside `WithTx` is queued on the outermost transaction and published only
   once it commits, and dropped if it rolls back, so no run starts for a record
   that was never saved. Outside a transaction it publishes at once.

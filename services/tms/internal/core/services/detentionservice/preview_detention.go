@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/email"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -99,7 +99,7 @@ func (s *Service) planOccurrence(
 ) (*OccurrenceChange, error) {
 	occurrence, err := s.occurrenceRepo.GetByID(
 		ctx,
-		&repositories.GetDetentionOccurrenceByIDRequest{
+		&detentionports.GetDetentionOccurrenceByIDRequest{
 			OccurrenceID: occurrenceID,
 			TenantInfo:   tenantInfo,
 		},
@@ -125,7 +125,7 @@ func (s *Service) withShipmentOccurrences(
 ) (*OccurrenceChange, error) {
 	occurrences, err := s.occurrenceRepo.GetByShipment(
 		ctx,
-		&repositories.GetOccurrencesByShipmentRequest{
+		&detentionports.GetOccurrencesByShipmentRequest{
 			ShipmentID: change.Before.ShipmentID,
 			TenantInfo: tenantInfo,
 		},
@@ -148,7 +148,7 @@ type NoticePreview struct {
 	Recipients []string
 	Content    NoticeContent
 	Attachment string
-	Sender     *services.EmailSender
+	Sender     *emailports.EmailSender
 }
 
 // PreviewOccurrenceNotice renders the notice without scheduling or sending
@@ -190,7 +190,7 @@ func (s *Service) PreviewOccurrenceNotice(
 	}
 
 	if s.senders != nil {
-		sender, sErr := s.senders.ResolveSender(ctx, &services.SendEmailRequest{
+		sender, sErr := s.senders.ResolveSender(ctx, &emailports.SendEmailRequest{
 			TenantInfo: p.TenantInfo,
 			Purpose:    email.PurposeNotifications,
 			To:         schedule.Recipients,
@@ -218,7 +218,7 @@ func (s *Service) planOccurrenceNotice(
 ) (*occurrenceNoticePlan, error) {
 	occurrence, err := s.occurrenceRepo.GetByID(
 		ctx,
-		&repositories.GetDetentionOccurrenceByIDRequest{
+		&detentionports.GetDetentionOccurrenceByIDRequest{
 			OccurrenceID: p.OccurrenceID,
 			TenantInfo:   p.TenantInfo,
 		},

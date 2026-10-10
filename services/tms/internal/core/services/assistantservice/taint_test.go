@@ -9,10 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,14 +19,14 @@ import (
 )
 
 type taintingConversations struct {
-	repositories.ConversationRepository
+	agentports.ConversationRepository
 
-	marked []repositories.MarkThreadTaintedRequest
+	marked []agentports.MarkThreadTaintedRequest
 }
 
 func (r *taintingConversations) MarkThreadTainted(
 	_ context.Context,
-	req repositories.MarkThreadTaintedRequest,
+	req agentports.MarkThreadTaintedRequest,
 ) error {
 	r.marked = append(r.marked, req)
 
@@ -75,7 +74,7 @@ func TestAdmit_ATurnOpensWithItsConversationsTaint(t *testing.T) {
 func TestSendMessage_AnAttachmentTaintsTheConversation(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		textTurn("The rate confirmation is for Acme."),
 	}}
 	svc, conversations := newConversationService(completion, testDefinition())
@@ -87,7 +86,7 @@ func TestSendMessage_AnAttachmentTaintsTheConversation(t *testing.T) {
 		ContentText: "RATE CONFIRMATION Acme Foods $1,200",
 	}}
 
-	_, err := svc.sendMessage(t.Context(), &serviceports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
 		ThreadID:              conversations.thread.ID,
 		Content:               "Does this match what we quoted?",
 		TenantInfo:            actor.TenantInfo(),
@@ -106,13 +105,13 @@ func TestSendMessage_AnAttachmentTaintsTheConversation(t *testing.T) {
 func TestSendMessage_AnUntaintedTurnWritesNoTaint(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		textTurn("Twelve loads are late."),
 	}}
 	svc, conversations := newConversationService(completion, testDefinition())
 	actor := testActor()
 
-	_, err := svc.sendMessage(t.Context(), &serviceports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
 		ThreadID:   conversations.thread.ID,
 		Content:    "How many loads are late?",
 		TenantInfo: actor.TenantInfo(),
@@ -149,14 +148,14 @@ func TestTurnTaint_FallsBackToWhatTheTurnOpenedWith(t *testing.T) {
 
 	opened := inboundTaint()
 	plan := &TurnPlan{Turn: agentruntime.TurnState{
-		Result: serviceports.RunResult{Taint: opened},
+		Result: agentports.RunResult{Taint: opened},
 	}}
 
 	assert.Same(t, opened, turnTaint(plan, nil),
 		"a turn that failed before the runtime answered still read what it opened with")
 
 	ran := &agent.RunTaint{}
-	assert.Same(t, ran, turnTaint(plan, &serviceports.RunResult{Taint: ran}))
+	assert.Same(t, ran, turnTaint(plan, &agentports.RunResult{Taint: ran}))
 }
 
 func TestPersistProposals_ADelegatesWritesCarryItsTaint(t *testing.T) {
@@ -169,7 +168,7 @@ func TestPersistProposals_ADelegatesWritesCarryItsTaint(t *testing.T) {
 
 	params := proposalTestParams(nil, nil)
 	params.Taint = &agent.RunTaint{}
-	params.Delegations = []serviceports.DelegatedRun{{
+	params.Delegations = []agentports.DelegatedRun{{
 		Definition: &agentdefinition.Definition{
 			ID:              pulid.MustNew("agd_"),
 			Name:            "Report Builder",
@@ -177,7 +176,7 @@ func TestPersistProposals_ADelegatesWritesCarryItsTaint(t *testing.T) {
 		},
 		CallID: "call_1",
 		Input:  "Share the report with the customer.",
-		Actions: []serviceports.PendingAction{{
+		Actions: []agentports.PendingAction{{
 			ToolName:  "share_report",
 			Rationale: "The customer asked for it.",
 			Tier:      agent.TierActWithApproval,
@@ -208,12 +207,12 @@ func TestPersistProposals_TieTheRunsToTheTurnAndADelegatesToItsTask(t *testing.T
 
 	params := proposalTestParams(nil, nil)
 	params.TurnID = turnID
-	params.Actions = []serviceports.PendingAction{{
+	params.Actions = []agentports.PendingAction{{
 		ToolName:  "assign_move",
 		Rationale: "Cover the move.",
 		Tier:      agent.TierPropose,
 	}}
-	params.Delegations = []serviceports.DelegatedRun{{
+	params.Delegations = []agentports.DelegatedRun{{
 		Definition: &agentdefinition.Definition{
 			ID:              pulid.MustNew("agd_"),
 			Name:            "Report Builder",
@@ -221,7 +220,7 @@ func TestPersistProposals_TieTheRunsToTheTurnAndADelegatesToItsTask(t *testing.T
 		},
 		CallID: "call_task_3",
 		Input:  "Build the report.",
-		Actions: []serviceports.PendingAction{{
+		Actions: []agentports.PendingAction{{
 			ToolName:  "create_report",
 			Rationale: "Asked for it.",
 			Tier:      agent.TierPropose,

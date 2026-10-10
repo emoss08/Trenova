@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentshadow"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -17,23 +17,23 @@ import (
 )
 
 type fakePlans struct {
-	repositories.AgentPlanRepository
+	agentports.AgentPlanRepository
 
 	plan     *agent.AgentPlan
-	statuses []repositories.UpdateAgentPlanStatusRequest
-	progress []repositories.RecordAgentPlanProgressRequest
+	statuses []agentports.UpdateAgentPlanStatusRequest
+	progress []agentports.RecordAgentPlanProgressRequest
 }
 
 func (f *fakePlans) GetByID(
 	context.Context,
-	repositories.GetAgentPlanByIDRequest,
+	agentports.GetAgentPlanByIDRequest,
 ) (*agent.AgentPlan, error) {
 	return f.plan, nil
 }
 
 func (f *fakePlans) UpdateStatus(
 	_ context.Context,
-	req repositories.UpdateAgentPlanStatusRequest,
+	req agentports.UpdateAgentPlanStatusRequest,
 ) (*agent.AgentPlan, error) {
 	f.statuses = append(f.statuses, req)
 	f.plan.Status = req.Status
@@ -43,7 +43,7 @@ func (f *fakePlans) UpdateStatus(
 
 func (f *fakePlans) RecordProgress(
 	_ context.Context,
-	req repositories.RecordAgentPlanProgressRequest,
+	req agentports.RecordAgentPlanProgressRequest,
 ) (*agent.AgentPlan, error) {
 	f.progress = append(f.progress, req)
 	f.plan.Status = req.Status
@@ -55,7 +55,7 @@ func (f *fakePlans) RecordProgress(
 }
 
 type fakeSteps struct {
-	repositories.AgentProposalRepository
+	agentports.AgentProposalRepository
 
 	steps   []*agent.AgentProposal
 	skipped int
@@ -63,14 +63,14 @@ type fakeSteps struct {
 
 func (f *fakeSteps) ListByPlan(
 	context.Context,
-	repositories.ListAgentProposalsByPlanRequest,
+	agentports.ListAgentProposalsByPlanRequest,
 ) ([]*agent.AgentProposal, error) {
 	return f.steps, nil
 }
 
 func (f *fakeSteps) SkipPendingByPlan(
 	context.Context,
-	repositories.SkipPendingByPlanRequest,
+	agentports.SkipPendingByPlanRequest,
 ) (int, error) {
 	f.skipped++
 
@@ -79,18 +79,18 @@ func (f *fakeSteps) SkipPendingByPlan(
 
 type fakeDecider struct {
 	failAt   pulid.ID
-	decided  []services.DecideAgentProposalRequest
+	decided  []agentports.DecideAgentProposalRequest
 	signals  int
-	lastSent *services.DecideAgentProposalRequest
+	lastSent *agentports.DecideAgentProposalRequest
 }
 
 func (f *fakeDecider) DecideWithOutcome(
 	_ context.Context,
-	req *services.DecideAgentProposalRequest,
-	_ *services.RequestActor,
-) (*services.DecisionOutcome, error) {
+	req *agentports.DecideAgentProposalRequest,
+	_ *permissionports.RequestActor,
+) (*agentports.DecisionOutcome, error) {
 	f.decided = append(f.decided, *req)
-	outcome := &services.DecisionOutcome{Decision: &agent.AgentDecision{ID: pulid.MustNew("ad_")}}
+	outcome := &agentports.DecisionOutcome{Decision: &agent.AgentDecision{ID: pulid.MustNew("ad_")}}
 	if req.ProposalID == f.failAt {
 		outcome.ExecutionError = errors.New("the record changed since this was proposed")
 	}
@@ -100,7 +100,7 @@ func (f *fakeDecider) DecideWithOutcome(
 
 func (f *fakeDecider) SignalRun(
 	_ context.Context,
-	req *services.DecideAgentProposalRequest,
+	req *agentports.DecideAgentProposalRequest,
 	_ *agent.AgentDecision,
 	_ pulid.ID,
 ) error {
@@ -140,8 +140,8 @@ type harness struct {
 	plans   *fakePlans
 	steps   *fakeSteps
 	decider *fakeDecider
-	actor   *services.RequestActor
-	req     *services.DecideAgentPlanRequest
+	actor   *permissionports.RequestActor
+	req     *agentports.DecideAgentPlanRequest
 }
 
 func newHarness(t *testing.T, stepCount int, shadow bool) *harness {
@@ -165,11 +165,11 @@ func newHarness(t *testing.T, stepCount int, shadow bool) *harness {
 		plans:   &fakePlans{plan: plan},
 		steps:   &fakeSteps{steps: steps},
 		decider: &fakeDecider{},
-		actor: &services.RequestActor{
-			PrincipalType: services.PrincipalTypeUser, PrincipalID: pulid.MustNew("usr_"),
+		actor: &permissionports.RequestActor{
+			PrincipalType: permissionports.PrincipalTypeUser, PrincipalID: pulid.MustNew("usr_"),
 			UserID: pulid.MustNew("usr_"), OrganizationID: orgID, BusinessUnitID: buID,
 		},
-		req: &services.DecideAgentPlanRequest{
+		req: &agentports.DecideAgentPlanRequest{
 			PlanID: plan.ID, Decision: agent.DecisionAccepted, ReasonCode: "looks right",
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		},
@@ -267,7 +267,7 @@ func TestDecide_RefusesWhatCannotBeDecided(t *testing.T) {
 	require.ErrorContains(t, err, "as a whole")
 
 	agentActor := newHarness(t, 2, false)
-	agentActor.actor.PrincipalType = services.PrincipalTypeAgent
+	agentActor.actor.PrincipalType = permissionports.PrincipalTypeAgent
 	agentActor.actor.UserID = pulid.Nil
 	_, err = agentActor.svc.Decide(t.Context(), agentActor.req, agentActor.actor)
 	require.ErrorContains(t, err, "human")

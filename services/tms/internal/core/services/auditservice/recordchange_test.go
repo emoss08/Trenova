@@ -6,7 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -14,12 +15,12 @@ import (
 
 type recordingRealtimeService struct {
 	mu       sync.Mutex
-	requests []*services.PublishResourceInvalidationRequest
+	requests []*agentports.PublishResourceInvalidationRequest
 }
 
 func (s *recordingRealtimeService) PublishResourceInvalidation(
 	_ context.Context,
-	req *services.PublishResourceInvalidationRequest,
+	req *agentports.PublishResourceInvalidationRequest,
 ) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -27,10 +28,10 @@ func (s *recordingRealtimeService) PublishResourceInvalidation(
 	return nil
 }
 
-func (s *recordingRealtimeService) recordChanges() []*services.PublishResourceInvalidationRequest {
+func (s *recordingRealtimeService) recordChanges() []*agentports.PublishResourceInvalidationRequest {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	changes := make([]*services.PublishResourceInvalidationRequest, 0, len(s.requests))
+	changes := make([]*agentports.PublishResourceInvalidationRequest, 0, len(s.requests))
 	for _, req := range s.requests {
 		if req.Resource != "audit-logs" {
 			changes = append(changes, req)
@@ -84,7 +85,7 @@ func TestLogActions_PublishesOneBulkChangePerResource(t *testing.T) {
 	other.Resource = permission.ResourceCommodity
 	other.Operation = permission.OpDelete
 
-	require.NoError(t, srv.LogActions([]services.BulkLogEntry{
+	require.NoError(t, srv.LogActions([]auditports.BulkLogEntry{
 		{Params: first},
 		{Params: &second},
 		{Params: &other},
@@ -92,7 +93,7 @@ func TestLogActions_PublishesOneBulkChangePerResource(t *testing.T) {
 
 	changes := realtime.recordChanges()
 	require.Len(t, changes, 2)
-	byResource := map[string]*services.PublishResourceInvalidationRequest{}
+	byResource := map[string]*agentports.PublishResourceInvalidationRequest{}
 	for _, change := range changes {
 		byResource[change.Resource] = change
 	}

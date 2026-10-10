@@ -1,6 +1,8 @@
 package telematicsservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"context"
 	"testing"
 
@@ -8,8 +10,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -21,7 +26,7 @@ import (
 )
 
 type outcomeRecorder struct {
-	repositories.TelematicsRepository
+	telematicsports.TelematicsRepository
 	recorded []*telematics.TelematicsEvent
 }
 
@@ -35,11 +40,11 @@ func (r *outcomeRecorder) RecordStopOutcome(
 }
 
 type towerRecorder struct {
-	upserts  []services.WatchtowerItemInput
+	upserts  []watchtowerports.WatchtowerItemInput
 	resolved []string
 }
 
-func (w *towerRecorder) Upsert(_ context.Context, input services.WatchtowerItemInput) {
+func (w *towerRecorder) Upsert(_ context.Context, input watchtowerports.WatchtowerItemInput) {
 	w.upserts = append(w.upserts, input)
 }
 
@@ -58,7 +63,7 @@ type stopHarness struct {
 	service *Service
 	repo    *outcomeRecorder
 	tower   *towerRecorder
-	moves   *mocks.MockShipmentMoveService
+	moves   *shipmentportsmock.MockShipmentMoveService
 	move    *shipment.ShipmentMove
 	tenant  pagination.TenantInfo
 	tractor pulid.ID
@@ -76,18 +81,18 @@ func newStopHarness(t *testing.T, stops ...*shipment.Stop) *stopHarness {
 		Stops:      stops,
 	}
 
-	dispatch := mocks.NewMockDispatchControlRepository(t)
+	dispatch := dispatchcontrolportsmock.NewMockDispatchControlRepository(t)
 	dispatch.EXPECT().GetOrCreate(mock.Anything, tenant.OrgID, tenant.BuID).
 		Return(&dispatchcontrol.DispatchControl{EnableAutoStopActuals: true}, nil).Maybe()
 
-	assignments := mocks.NewMockAssignmentRepository(t)
+	assignments := shipmentportsmock.NewMockAssignmentRepository(t)
 	assignments.EXPECT().FindActiveByTractorID(mock.Anything, tenant, tractor).
 		Return(&shipment.Assignment{ShipmentMoveID: move.ID}, nil).Maybe()
 
-	moveRepo := mocks.NewMockShipmentMoveRepository(t)
+	moveRepo := shipmentportsmock.NewMockShipmentMoveRepository(t)
 	moveRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(move, nil).Maybe()
 
-	moves := mocks.NewMockShipmentMoveService(t)
+	moves := shipmentportsmock.NewMockShipmentMoveService(t)
 	repo := &outcomeRecorder{}
 	tower := &towerRecorder{}
 
@@ -150,9 +155,9 @@ func TestApplyStopEvent_RecordsTheMatchedStopAtTheEventTime(t *testing.T) {
 	event := h.event(location, shipment.VisitArrival, false)
 
 	h.moves.EXPECT().RecordStopActual(mock.Anything, mock.MatchedBy(
-		func(req *repositories.RecordStopActualRequest) bool {
+		func(req *shipmentports.RecordStopActualRequest) bool {
 			return req.StopID == second.ID &&
-				req.Action == repositories.StopActualActionArrive &&
+				req.Action == shipmentports.StopActualActionArrive &&
 				req.OccurredAt != nil && *req.OccurredAt == 1_700_000_000
 		},
 	)).Return(h.move, nil).Once()
@@ -255,7 +260,7 @@ func TestApplyStopEvent_DoesNothingWhenAutoStopActualsAreOff(t *testing.T) {
 	t.Parallel()
 
 	h := newStopHarness(t, openStop(1, pulid.MustNew("loc_")))
-	dispatch := mocks.NewMockDispatchControlRepository(t)
+	dispatch := dispatchcontrolportsmock.NewMockDispatchControlRepository(t)
 	dispatch.EXPECT().GetOrCreate(mock.Anything, h.tenant.OrgID, h.tenant.BuID).
 		Return(&dispatchcontrol.DispatchControl{}, nil).Once()
 	h.service.dispatchControlRepo = dispatch
@@ -267,11 +272,11 @@ func TestApplyStopEvent_DoesNothingWhenAutoStopActualsAreOff(t *testing.T) {
 }
 
 type recordedWaitNotices struct {
-	services.AgentWaitNotifier
-	events []*services.AgentEvent
+	agentwaitports.AgentWaitNotifier
+	events []*agentports.AgentEvent
 }
 
-func (r *recordedWaitNotices) NotifyEvent(_ context.Context, event *services.AgentEvent) {
+func (r *recordedWaitNotices) NotifyEvent(_ context.Context, event *agentports.AgentEvent) {
 	r.events = append(r.events, event)
 }
 
@@ -281,7 +286,7 @@ func TestApplyStopEvent_ReachesTheWaitsWhenAutoStopActualsAreOff(t *testing.T) {
 	location := pulid.MustNew("loc_")
 	stop := openStop(1, location)
 	h := newStopHarness(t, stop)
-	dispatch := mocks.NewMockDispatchControlRepository(t)
+	dispatch := dispatchcontrolportsmock.NewMockDispatchControlRepository(t)
 	dispatch.EXPECT().GetOrCreate(mock.Anything, h.tenant.OrgID, h.tenant.BuID).
 		Return(&dispatchcontrol.DispatchControl{}, nil).Once()
 	h.service.dispatchControlRepo = dispatch
@@ -301,7 +306,7 @@ func TestApplyStopEvent_AVisitAtNoStopOfTheMoveReachesNoWait(t *testing.T) {
 	t.Parallel()
 
 	h := newStopHarness(t, openStop(1, pulid.MustNew("loc_")))
-	dispatch := mocks.NewMockDispatchControlRepository(t)
+	dispatch := dispatchcontrolportsmock.NewMockDispatchControlRepository(t)
 	dispatch.EXPECT().GetOrCreate(mock.Anything, h.tenant.OrgID, h.tenant.BuID).
 		Return(&dispatchcontrol.DispatchControl{}, nil).Once()
 	h.service.dispatchControlRepo = dispatch

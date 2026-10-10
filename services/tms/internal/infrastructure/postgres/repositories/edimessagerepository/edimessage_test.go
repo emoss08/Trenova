@@ -5,8 +5,8 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -97,7 +97,7 @@ func TestGetServiceFailure214LifecycleMessageMatchesLifecycleIdentity(t *testing
 
 	message, err := repo.GetServiceFailure214LifecycleMessage(
 		t.Context(),
-		repositories.GetServiceFailure214LifecycleMessageRequest{
+		ediports.GetServiceFailure214LifecycleMessageRequest{
 			TenantInfo:       tenantInfo,
 			ServiceFailureID: serviceFailureID,
 			Trigger:          "Reviewed",
@@ -126,7 +126,7 @@ func TestGetServiceFailure214LifecycleMessageReturnsNotFoundForNonMatchingLifecy
 
 	message, err := repo.GetServiceFailure214LifecycleMessage(
 		t.Context(),
-		repositories.GetServiceFailure214LifecycleMessageRequest{
+		ediports.GetServiceFailure214LifecycleMessageRequest{
 			TenantInfo:       tenantInfo,
 			ServiceFailureID: serviceFailureID,
 			Trigger:          "Resolved",

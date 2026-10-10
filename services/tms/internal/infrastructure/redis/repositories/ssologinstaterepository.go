@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	corerepositories "github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/redishelpers"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
@@ -28,7 +28,7 @@ type ssoLoginStateRepository struct {
 
 func NewSSOLoginStateRepository(
 	p SSOLoginStateRepositoryParams,
-) corerepositories.SSOLoginStateRepository {
+) tenantports.SSOLoginStateRepository {
 	return &ssoLoginStateRepository{
 		client: p.Client,
 		l:      p.Logger.Named("redis.sso-login-state-repository"),
@@ -37,7 +37,7 @@ func NewSSOLoginStateRepository(
 
 func (r *ssoLoginStateRepository) Save(
 	ctx context.Context,
-	state *corerepositories.SSOLoginState,
+	state *tenantports.SSOLoginState,
 	ttl time.Duration,
 ) error {
 	return redishelpers.SetJSON(ctx, r.client, r.getKey(state.State), state, ttl)
@@ -46,8 +46,8 @@ func (r *ssoLoginStateRepository) Save(
 func (r *ssoLoginStateRepository) Get(
 	ctx context.Context,
 	state string,
-) (*corerepositories.SSOLoginState, error) {
-	entity := new(corerepositories.SSOLoginState)
+) (*tenantports.SSOLoginState, error) {
+	entity := new(tenantports.SSOLoginState)
 	if err := redishelpers.GetJSON(ctx, r.client, r.getKey(state), entity); err != nil {
 		return nil, err
 	}

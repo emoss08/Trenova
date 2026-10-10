@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/tenderservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -98,7 +98,7 @@ func TestTenderToRoutingGuidePreview_ShowsTheOffersInOrder(t *testing.T) {
 	params := executeParams(map[string]any{"shipmentMoveId": pulid.MustNew("smv_").String()})
 	params.IdempotencyKey = "idem-1"
 
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.Nil(t, tenders.waterfall, "a preview must not start a tender")
 	assert.Contains(t, preview.Summary, "Dallas outbound")
@@ -141,7 +141,7 @@ func TestTenderToCarriersPreview_WarnsOfTheRefusalWithoutAnOverride(t *testing.T
 	})
 	params.IdempotencyKey = "idem-1"
 
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.Nil(t, tenders.spot)
 	assert.Contains(t, preview.Summary, "all at once")

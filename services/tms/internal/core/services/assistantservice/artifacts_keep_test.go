@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -21,13 +21,13 @@ type deletingArtifactRepo struct {
 	deleted []pulid.ID
 }
 
-func (r *deletingArtifactRepo) Delete(_ context.Context, req *repositories.DeleteArtifactsRequest) error {
+func (r *deletingArtifactRepo) Delete(_ context.Context, req *assistantartifactports.DeleteArtifactsRequest) error {
 	r.deleted = append(r.deleted, req.IDs...)
 
 	return nil
 }
 
-func keepRecorder(t *testing.T, repo repositories.AssistantArtifactRepository) *artifactRecorder {
+func keepRecorder(t *testing.T, repo assistantartifactports.AssistantArtifactRepository) *artifactRecorder {
 	t.Helper()
 	svc := &Service{logger: zap.NewNop(), artifacts: repo}
 
@@ -49,7 +49,7 @@ func TestArtifactRecorder_KeepsOnlyTheLookupsTheReplyPointsTo(t *testing.T) {
 	recorder := keepRecorder(t, repo)
 	used, _ := recorder.observe(observation("get_customer", map[string]any{"id": "cus_1", "name": "Acme"}))
 	unused, _ := recorder.observe(observation("get_worker", map[string]any{"id": "wrk_1", "name": "Dana"}))
-	document, _ := recorder.observe(observation("publish_artifact", serviceports.PublishedDocument{
+	document, _ := recorder.observe(observation("publish_artifact", agentports.PublishedDocument{
 		Title: "Brief", Body: "# Brief",
 	}))
 	require.NotNil(t, used)
@@ -106,16 +106,16 @@ func TestArtifactRecorder_AnUnchangedLookupReusesItsLastVersion(t *testing.T) {
 
 	repo := &stubArtifactRepo{}
 	recorder := keepRecorder(t, repo)
-	first, _ := recorder.observe(serviceports.ToolObservation{
-		Call: serviceports.ToolCall{ID: "call_1", Name: "get_customer", Arguments: map[string]any{"id": "cus_1"}},
+	first, _ := recorder.observe(agentports.ToolObservation{
+		Call: agentports.ToolCall{ID: "call_1", Name: "get_customer", Arguments: map[string]any{"id": "cus_1"}},
 		Data: map[string]any{"id": "cus_1", "name": "Acme"},
 	})
-	again, _ := recorder.observe(serviceports.ToolObservation{
-		Call: serviceports.ToolCall{ID: "call_2", Name: "get_customer", Arguments: map[string]any{"id": "cus_1"}},
+	again, _ := recorder.observe(agentports.ToolObservation{
+		Call: agentports.ToolCall{ID: "call_2", Name: "get_customer", Arguments: map[string]any{"id": "cus_1"}},
 		Data: map[string]any{"id": "cus_1", "name": "Acme"},
 	})
-	changed, _ := recorder.observe(serviceports.ToolObservation{
-		Call: serviceports.ToolCall{ID: "call_3", Name: "get_customer", Arguments: map[string]any{"id": "cus_1"}},
+	changed, _ := recorder.observe(agentports.ToolObservation{
+		Call: agentports.ToolCall{ID: "call_3", Name: "get_customer", Arguments: map[string]any{"id": "cus_1"}},
 		Data: map[string]any{"id": "cus_1", "name": "Acme Manufacturing"},
 	})
 

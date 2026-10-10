@@ -8,7 +8,7 @@ import (
 	"unicode"
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -104,8 +104,8 @@ func comparableQuestion(question string) string {
 // part of holding a conversation rather than a capability an organization grants.
 // An agent that may read shipments but may not ask which shipment is an agent
 // that has to guess, and guessing is what this exists to stop.
-func askUserSpec() serviceports.ToolSpec {
-	return serviceports.ToolSpec{
+func askUserSpec() kernelports.ToolSpec {
+	return kernelports.ToolSpec{
 		Name:        askUserName,
 		Description: askUserDescription,
 		Parameters: map[string]any{

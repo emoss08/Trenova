@@ -13,9 +13,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/bankreceiptservice"
 	"github.com/emoss08/trenova/internal/core/services/bankreceiptworkitemservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptworkitemports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -27,22 +31,22 @@ import (
 type fakeReceiptMatcher struct {
 	receipt       *bankreceipt.BankReceipt
 	paymentAmount int64
-	matched       *serviceports.MatchBankReceiptRequest
-	previewed     *serviceports.MatchBankReceiptRequest
-	actor         *serviceports.RequestActor
+	matched       *bankreceiptports.MatchBankReceiptRequest
+	previewed     *bankreceiptports.MatchBankReceiptRequest
+	actor         *permissionports.RequestActor
 }
 
 func (f *fakeReceiptMatcher) Get(
 	_ context.Context,
-	_ *serviceports.GetBankReceiptRequest,
+	_ *bankreceiptports.GetBankReceiptRequest,
 ) (*bankreceipt.BankReceipt, error) {
 	return f.receipt, nil
 }
 
 func (f *fakeReceiptMatcher) PreviewMatch(
 	_ context.Context,
-	req *serviceports.MatchBankReceiptRequest,
-	actor *serviceports.RequestActor,
+	req *bankreceiptports.MatchBankReceiptRequest,
+	actor *permissionports.RequestActor,
 ) (*bankreceiptservice.MatchPreview, error) {
 	f.previewed = req
 
@@ -57,14 +61,14 @@ func (f *fakeReceiptMatcher) PreviewMatch(
 func (f *fakeReceiptMatcher) PreviewMatchPayment(
 	_ context.Context,
 	req *bankreceiptservice.PreviewMatchPaymentRequest,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*bankreceiptservice.MatchPreview, error) {
 	return f.previewMatch(req.Payment, actor)
 }
 
 func (f *fakeReceiptMatcher) previewMatch(
 	payment *customerpayment.Payment,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*bankreceiptservice.MatchPreview, error) {
 	if f.receipt.AmountMinor != payment.AmountMinor {
 		return nil, errors.New("Bank receipt amount must match customer payment amount")
@@ -93,8 +97,8 @@ func (f *fakeReceiptMatcher) previewMatch(
 
 func (f *fakeReceiptMatcher) Match(
 	_ context.Context,
-	req *serviceports.MatchBankReceiptRequest,
-	actor *serviceports.RequestActor,
+	req *bankreceiptports.MatchBankReceiptRequest,
+	actor *permissionports.RequestActor,
 ) (*bankreceipt.BankReceipt, error) {
 	f.matched = req
 	f.actor = actor
@@ -103,16 +107,16 @@ func (f *fakeReceiptMatcher) Match(
 }
 
 type fakePaymentPoster struct {
-	posted    *serviceports.PostCustomerPaymentRequest
-	previewed *serviceports.PostCustomerPaymentRequest
+	posted    *customerpaymentports.PostCustomerPaymentRequest
+	previewed *customerpaymentports.PostCustomerPaymentRequest
 	id        pulid.ID
 }
 
 func (f *fakePaymentPoster) PreviewPostAndApply(
 	_ context.Context,
-	req *serviceports.PostCustomerPaymentRequest,
-	_ *serviceports.RequestActor,
-) (*serviceports.CustomerPaymentPostPreview, error) {
+	req *customerpaymentports.PostCustomerPaymentRequest,
+	_ *permissionports.RequestActor,
+) (*customerpaymentports.CustomerPaymentPostPreview, error) {
 	f.previewed = req
 	payment := &customerpayment.Payment{
 		CustomerID:      req.CustomerID,
@@ -143,7 +147,7 @@ func (f *fakePaymentPoster) PreviewPostAndApply(
 	}
 	payment.SyncAmounts()
 
-	return &serviceports.CustomerPaymentPostPreview{
+	return &customerpaymentports.CustomerPaymentPostPreview{
 		Payment:        payment,
 		InvoicesBefore: before,
 		InvoicesAfter:  after,
@@ -152,8 +156,8 @@ func (f *fakePaymentPoster) PreviewPostAndApply(
 
 func (f *fakePaymentPoster) PostAndApply(
 	_ context.Context,
-	req *serviceports.PostCustomerPaymentRequest,
-	_ *serviceports.RequestActor,
+	req *customerpaymentports.PostCustomerPaymentRequest,
+	_ *permissionports.RequestActor,
 ) (*customerpayment.Payment, error) {
 	f.posted = req
 	if f.id.IsNil() {
@@ -165,14 +169,14 @@ func (f *fakePaymentPoster) PostAndApply(
 
 type fakeWorkItemResolver struct {
 	item      *bankreceiptworkitem.WorkItem
-	resolved  *serviceports.ResolveBankReceiptWorkItemRequest
-	dismissed *serviceports.DismissBankReceiptWorkItemRequest
+	resolved  *bankreceiptworkitemports.ResolveBankReceiptWorkItemRequest
+	dismissed *bankreceiptworkitemports.DismissBankReceiptWorkItemRequest
 	guard     writeGuard
 }
 
 func (f *fakeWorkItemResolver) Get(
 	_ context.Context,
-	_ *serviceports.GetBankReceiptWorkItemRequest,
+	_ *bankreceiptworkitemports.GetBankReceiptWorkItemRequest,
 ) (*bankreceiptworkitem.WorkItem, error) {
 	if f.item == nil {
 		return nil, errortypes.NewNotFoundError("Bank receipt work item not found")
@@ -184,8 +188,8 @@ func (f *fakeWorkItemResolver) Get(
 
 func (f *fakeWorkItemResolver) Resolve(
 	_ context.Context,
-	req *serviceports.ResolveBankReceiptWorkItemRequest,
-	actor *serviceports.RequestActor,
+	req *bankreceiptworkitemports.ResolveBankReceiptWorkItemRequest,
+	actor *permissionports.RequestActor,
 ) (*bankreceiptworkitem.WorkItem, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -208,8 +212,8 @@ func (f *fakeWorkItemResolver) Resolve(
 
 func (f *fakeWorkItemResolver) Dismiss(
 	_ context.Context,
-	req *serviceports.DismissBankReceiptWorkItemRequest,
-	actor *serviceports.RequestActor,
+	req *bankreceiptworkitemports.DismissBankReceiptWorkItemRequest,
+	actor *permissionports.RequestActor,
 ) (*bankreceiptworkitem.WorkItem, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -231,21 +235,21 @@ func (f *fakeWorkItemResolver) Dismiss(
 }
 
 type allowingPermissions struct {
-	serviceports.PermissionEngine
+	permissionports.PermissionEngine
 
 	allowed  bool
-	lastReq  *serviceports.PermissionCheckRequest
+	lastReq  *permissionports.PermissionCheckRequest
 	requests int
 }
 
 func (p *allowingPermissions) Check(
 	_ context.Context,
-	req *serviceports.PermissionCheckRequest,
-) (*serviceports.PermissionCheckResult, error) {
+	req *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
 	p.lastReq = req
 	p.requests++
 
-	return &serviceports.PermissionCheckResult{Allowed: p.allowed}, nil
+	return &permissionports.PermissionCheckResult{Allowed: p.allowed}, nil
 }
 
 func unmatchedReceipt(amountMinor int64) *bankreceipt.BankReceipt {
@@ -276,7 +280,7 @@ func TestMatchBankReceipt_MatchesAsTheApprover(t *testing.T) {
 	assert.Equal(t, params.OrganizationID, receipts.matched.TenantInfo.OrgID)
 	assert.Same(t, params.Actor, receipts.actor)
 
-	target, ok := tool.(serviceports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, permission.ResourceBankReceipt, target.Resource)
 	assert.Equal(t, receiptID, target.ID)
@@ -291,7 +295,7 @@ func TestMatchBankReceipt_PreviewRefusesAnAmountMismatch(t *testing.T) {
 	receipt := unmatchedReceipt(125_000)
 	receipts := &fakeReceiptMatcher{receipt: receipt, paymentAmount: 120_000}
 	tool := newMatchBankReceiptTool(receipts)
-	previewer := tool.(serviceports.ToolPreviewer)
+	previewer := tool.(agentports.ToolPreviewer)
 	params := memoryParams(map[string]any{
 		"bankReceiptId":     receipt.ID.String(),
 		"customerPaymentId": pulid.MustNew("cpay_").String(),
@@ -415,7 +419,7 @@ func TestPostCustomerPayment_MatchesTheReceiptItRecords(t *testing.T) {
 	assert.Equal(t, permission.OpUpdate, perms.lastReq.Operation)
 	assert.Equal(t, params.Actor.UserID, perms.lastReq.UserID)
 
-	target, ok := tool.(serviceports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, receipt.ID, target.ID)
 }
@@ -474,7 +478,7 @@ func TestPostCustomerPayment_PreviewShowsWhatStaysUnapplied(t *testing.T) {
 		},
 	})
 
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	assert.Nil(t, poster.posted, "a preview must not post")
 	assert.Nil(t, receipts.matched, "a preview must not match")

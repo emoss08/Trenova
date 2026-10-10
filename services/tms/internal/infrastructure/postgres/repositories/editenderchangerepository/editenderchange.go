@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
@@ -27,7 +27,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.EDITenderChangeRepository {
+func New(p Params) ediports.EDITenderChangeRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.edi-tender-change-repository"),
@@ -36,7 +36,7 @@ func New(p Params) repositories.EDITenderChangeRepository {
 
 func (r *repository) ListTenderChanges(
 	ctx context.Context,
-	req *repositories.ListEDITenderChangesRequest,
+	req *ediports.ListEDITenderChangesRequest,
 ) (*pagination.ListResult[*edi.TenderChange], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.TenderChange], error) {
 		entities := make([]*edi.TenderChange, 0, req.Filter.Pagination.SafeLimit())
@@ -70,7 +70,7 @@ func (r *repository) ListTenderChanges(
 
 func (r *repository) GetTenderChangeByID(
 	ctx context.Context,
-	req repositories.GetEDITenderChangeByIDRequest,
+	req ediports.GetEDITenderChangeByIDRequest,
 ) (*edi.TenderChange, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.TenderChange, error) {
 		entity := new(edi.TenderChange)
@@ -92,7 +92,7 @@ func (r *repository) GetTenderChangeByID(
 
 func (r *repository) GetTenderChangeByOutboundMessageID(
 	ctx context.Context,
-	req repositories.GetEDITenderChangeByOutboundMessageIDRequest,
+	req ediports.GetEDITenderChangeByOutboundMessageIDRequest,
 ) (*edi.TenderChange, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.TenderChange, error) {
 		entity := new(edi.TenderChange)
@@ -115,8 +115,8 @@ func (r *repository) GetTenderChangeByOutboundMessageID(
 func (r *repository) CreateTenderChangeIdempotent(
 	ctx context.Context,
 	entity *edi.TenderChange,
-) (*repositories.CreateEDITenderChangeIdempotentResult, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.CreateEDITenderChangeIdempotentResult, error) {
+) (*ediports.CreateEDITenderChangeIdempotentResult, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*ediports.CreateEDITenderChangeIdempotentResult, error) {
 		results, err := r.db.DBForContext(ctx).
 			NewInsert().
 			Model(entity).
@@ -131,7 +131,7 @@ func (r *repository) CreateTenderChangeIdempotent(
 			return nil, err
 		}
 		if rowsAffected > 0 {
-			return &repositories.CreateEDITenderChangeIdempotentResult{
+			return &ediports.CreateEDITenderChangeIdempotentResult{
 				TenderChange: entity,
 				Created:      true,
 			}, nil
@@ -148,7 +148,7 @@ func (r *repository) CreateTenderChangeIdempotent(
 			Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, "EDITenderChange")
 		}
-		return &repositories.CreateEDITenderChangeIdempotentResult{
+		return &ediports.CreateEDITenderChangeIdempotentResult{
 			TenderChange: existing,
 			Created:      false,
 		}, nil
@@ -157,7 +157,7 @@ func (r *repository) CreateTenderChangeIdempotent(
 
 func (r *repository) SupersedeActionableTenderChanges(
 	ctx context.Context,
-	req repositories.SupersedeActionableEDITenderChangesRequest,
+	req ediports.SupersedeActionableEDITenderChangesRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if len(req.Statuses) == 0 {

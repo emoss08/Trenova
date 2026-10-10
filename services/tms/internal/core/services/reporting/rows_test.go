@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/storage"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -24,19 +24,19 @@ import (
 // be forty methods of noise around the four that matter.
 
 type stubRunRepo struct {
-	repositories.ReportRunRepository
+	reportports.ReportRunRepository
 
 	run *report.ReportRun
 }
 
 func (s *stubRunRepo) GetByID(
-	_ context.Context, _ *repositories.GetReportRunRequest,
+	_ context.Context, _ *reportports.GetReportRunRequest,
 ) (*report.ReportRun, error) {
 	return s.run, nil
 }
 
 type stubRowsStorage struct {
-	storage.Client
+	kernelports.Client
 
 	body        []byte
 	size        int64
@@ -45,7 +45,7 @@ type stubRowsStorage struct {
 	downloaded  string
 }
 
-func (s *stubRowsStorage) GetFileInfo(_ context.Context, key string) (*storage.FileInfo, error) {
+func (s *stubRowsStorage) GetFileInfo(_ context.Context, key string) (*kernelports.FileInfo, error) {
 	if s.statErr != nil {
 		return nil, s.statErr
 	}
@@ -54,18 +54,18 @@ func (s *stubRowsStorage) GetFileInfo(_ context.Context, key string) (*storage.F
 		size = int64(len(s.body))
 	}
 
-	return &storage.FileInfo{Key: key, Size: size}, nil
+	return &kernelports.FileInfo{Key: key, Size: size}, nil
 }
 
 func (s *stubRowsStorage) Download(
 	_ context.Context, key string,
-) (*storage.DownloadResult, error) {
+) (*kernelports.DownloadResult, error) {
 	if s.downloadErr != nil {
 		return nil, s.downloadErr
 	}
 	s.downloaded = key
 
-	return &storage.DownloadResult{
+	return &kernelports.DownloadResult{
 		Body: io.NopCloser(bytes.NewReader(s.body)),
 		Size: int64(len(s.body)),
 	}, nil

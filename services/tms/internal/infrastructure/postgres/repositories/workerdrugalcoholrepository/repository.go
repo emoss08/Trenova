@@ -8,10 +8,10 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -43,7 +43,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.WorkerDrugAlcoholRepository {
+func New(p Params) workerports.WorkerDrugAlcoholRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.worker-drug-alcohol-repository"),
@@ -59,7 +59,7 @@ func limitOr(requested, fallback int) int {
 
 func (r *repository) ListTests(
 	ctx context.Context,
-	req *repositories.ListWorkerDOTTestsRequest,
+	req *workerports.ListWorkerDOTTestsRequest,
 ) ([]*worker.WorkerDOTTest, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerDOTTest, error) {
 		cols := buncolgen.WorkerDOTTestColumns
@@ -117,7 +117,7 @@ func (r *repository) ListTests(
 
 func (r *repository) GetTestByID(
 	ctx context.Context,
-	req *repositories.GetWorkerDOTTestByIDRequest,
+	req *workerports.GetWorkerDOTTestByIDRequest,
 ) (*worker.WorkerDOTTest, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerDOTTest, error) {
 		entity := new(worker.WorkerDOTTest)
@@ -202,7 +202,7 @@ func (r *repository) UpdateTest(
 
 func (r *repository) ListViolations(
 	ctx context.Context,
-	req *repositories.ListWorkerDOTViolationsRequest,
+	req *workerports.ListWorkerDOTViolationsRequest,
 ) ([]*worker.WorkerDOTViolation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerDOTViolation, error) {
 		cols := buncolgen.WorkerDOTViolationColumns
@@ -242,7 +242,7 @@ func (r *repository) ListViolations(
 
 func (r *repository) GetViolationByID(
 	ctx context.Context,
-	req *repositories.GetWorkerDOTViolationByIDRequest,
+	req *workerports.GetWorkerDOTViolationByIDRequest,
 ) (*worker.WorkerDOTViolation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerDOTViolation, error) {
 		entity := new(worker.WorkerDOTViolation)
@@ -357,7 +357,7 @@ func (r *repository) UpdateViolation(
 
 func (r *repository) ListQueries(
 	ctx context.Context,
-	req *repositories.ListClearinghouseQueriesRequest,
+	req *workerports.ListClearinghouseQueriesRequest,
 ) ([]*worker.WorkerClearinghouseQuery, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerClearinghouseQuery, error) {
 		cols := buncolgen.WorkerClearinghouseQueryColumns
@@ -393,7 +393,7 @@ func (r *repository) ListQueries(
 
 func (r *repository) GetQueryByID(
 	ctx context.Context,
-	req *repositories.GetClearinghouseQueryByIDRequest,
+	req *workerports.GetClearinghouseQueryByIDRequest,
 ) (*worker.WorkerClearinghouseQuery, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerClearinghouseQuery, error) {
 		entity := new(worker.WorkerClearinghouseQuery)
@@ -464,7 +464,7 @@ func (r *repository) UpdateQuery(
 
 func (r *repository) applyPoolFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListDOTRandomPoolsRequest,
+	req *workerports.ListDOTRandomPoolsRequest,
 ) *bun.SelectQuery {
 	if req.Status != "" {
 		q = q.Where(buncolgen.DOTRandomPoolColumns.Status.Eq(), req.Status)
@@ -474,7 +474,7 @@ func (r *repository) applyPoolFilters(
 
 func (r *repository) ListPools(
 	ctx context.Context,
-	req *repositories.ListDOTRandomPoolsRequest,
+	req *workerports.ListDOTRandomPoolsRequest,
 ) (*pagination.CursorListResult[*worker.DOTRandomPool], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*worker.DOTRandomPool], error) {
 		dba := r.db.DBForContext(ctx)
@@ -535,7 +535,7 @@ func (r *repository) ListPools(
 
 func (r *repository) GetPoolByID(
 	ctx context.Context,
-	req *repositories.GetDOTRandomPoolByIDRequest,
+	req *workerports.GetDOTRandomPoolByIDRequest,
 ) (*worker.DOTRandomPool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.DOTRandomPool, error) {
 		entity := new(worker.DOTRandomPool)
@@ -589,7 +589,7 @@ func (r *repository) GetDefaultPool(
 
 func (r *repository) PoolCodeExists(
 	ctx context.Context,
-	req *repositories.DOTRandomPoolCodeExistsRequest,
+	req *workerports.DOTRandomPoolCodeExistsRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
 		cols := buncolgen.DOTRandomPoolColumns
@@ -705,7 +705,7 @@ func (r *repository) ClearDefaultPool(
 
 func (r *repository) ListDraws(
 	ctx context.Context,
-	req *repositories.ListDOTRandomDrawsRequest,
+	req *workerports.ListDOTRandomDrawsRequest,
 ) ([]*worker.DOTRandomDraw, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.DOTRandomDraw, error) {
 		cols := buncolgen.DOTRandomDrawColumns
@@ -742,7 +742,7 @@ func (r *repository) ListDraws(
 
 func (r *repository) GetDrawByID(
 	ctx context.Context,
-	req *repositories.GetDOTRandomDrawByIDRequest,
+	req *workerports.GetDOTRandomDrawByIDRequest,
 ) (*worker.DOTRandomDraw, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.DOTRandomDraw, error) {
 		entity := new(worker.DOTRandomDraw)
@@ -783,7 +783,7 @@ func (r *repository) GetDrawByID(
 // voided.
 func (r *repository) GetDrawByPeriod(
 	ctx context.Context,
-	req *repositories.GetDOTRandomDrawByPeriodRequest,
+	req *workerports.GetDOTRandomDrawByPeriodRequest,
 ) (*worker.DOTRandomDraw, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.DOTRandomDraw, error) {
 		cols := buncolgen.DOTRandomDrawColumns
@@ -818,7 +818,7 @@ func (r *repository) CreateDrawWithEntries(
 	entries []*worker.DOTRandomDrawEntry,
 ) (*worker.DOTRandomDraw, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.DOTRandomDraw, error) {
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
 			if _, iErr := tx.NewInsert().Model(draw).Returning("*").Exec(txCtx); iErr != nil {
 				return iErr
 			}
@@ -883,7 +883,7 @@ func (r *repository) UpdateDraw(
 // that cannot be tested would put the round under target for no reason.
 func (r *repository) ListPoolCandidates(
 	ctx context.Context,
-	req *repositories.ListPoolCandidatesRequest,
+	req *workerports.ListPoolCandidatesRequest,
 ) ([]pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
 		workerCols := buncolgen.WorkerColumns
@@ -919,7 +919,7 @@ func (r *repository) ListPoolCandidates(
 
 func (r *repository) ListDrawEntries(
 	ctx context.Context,
-	req *repositories.ListDOTRandomDrawEntriesRequest,
+	req *workerports.ListDOTRandomDrawEntriesRequest,
 ) ([]*worker.DOTRandomDrawEntry, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.DOTRandomDrawEntry, error) {
 		cols := buncolgen.DOTRandomDrawEntryColumns
@@ -964,7 +964,7 @@ func (r *repository) ListDrawEntries(
 
 func (r *repository) GetDrawEntryByID(
 	ctx context.Context,
-	req *repositories.GetDOTRandomDrawEntryByIDRequest,
+	req *workerports.GetDOTRandomDrawEntryByIDRequest,
 ) (*worker.DOTRandomDrawEntry, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.DOTRandomDrawEntry, error) {
 		entity := new(worker.DOTRandomDrawEntry)
@@ -1017,7 +1017,7 @@ func (r *repository) UpdateDrawEntry(
 
 func (r *repository) UpdateProfileRollup(
 	ctx context.Context,
-	req *repositories.UpdateDrugAlcoholRollupRequest,
+	req *workerports.UpdateDrugAlcoholRollupRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.WorkerProfileColumns
@@ -1048,14 +1048,14 @@ func (r *repository) UpdateProfileRollup(
 // a driver nobody has ever asked about is the one most worth chasing.
 func (r *repository) ListWorkersWithClearinghouseDue(
 	ctx context.Context,
-	req *repositories.ListWorkersWithClearinghouseDueRequest,
-) ([]repositories.WorkerTenantRef, error) {
+	req *workerports.ListWorkersWithClearinghouseDueRequest,
+) ([]workerports.WorkerTenantRef, error) {
 	ctx = dbscope.WithSystem(ctx, "list workers due a clearinghouse query across every organization")
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.WorkerTenantRef, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.WorkerTenantRef, error) {
 		workerCols := buncolgen.WorkerColumns
 		profileCols := buncolgen.WorkerProfileColumns
 
-		refs := make([]repositories.WorkerTenantRef, 0, 64)
+		refs := make([]workerports.WorkerTenantRef, 0, 64)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*worker.Worker)(nil)).

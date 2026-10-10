@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
@@ -25,7 +25,7 @@ type aiTuneUpFreshness struct {
 	client *redis.Client
 }
 
-func NewAITuneUpFreshness(p AITuneUpFreshnessParams) repositories.AITuneUpFreshness {
+func NewAITuneUpFreshness(p AITuneUpFreshnessParams) aituneupports.AITuneUpFreshness {
 	return &aiTuneUpFreshness{client: p.Client}
 }
 

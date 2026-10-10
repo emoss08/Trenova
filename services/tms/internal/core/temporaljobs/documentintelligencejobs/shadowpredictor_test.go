@@ -1,14 +1,17 @@
 package documentintelligencejobs
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentcontentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	services "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,30 +22,30 @@ import (
 )
 
 type shadowExtractor struct {
-	services.AIDocumentService
-	result   *services.AIEvaluationExtractResult
-	requests []*services.AIShadowExtractRequest
+	documentaiextractionports.AIDocumentService
+	result   *documentaiextractionports.AIEvaluationExtractResult
+	requests []*documentaiextractionports.AIShadowExtractRequest
 }
 
 func (f *shadowExtractor) ExtractRateConfirmationForShadow(
 	_ context.Context,
-	req *services.AIShadowExtractRequest,
-) (*services.AIEvaluationExtractResult, error) {
+	req *documentaiextractionports.AIShadowExtractRequest,
+) (*documentaiextractionports.AIEvaluationExtractResult, error) {
 	f.requests = append(f.requests, req)
 	return f.result, nil
 }
 
-func acceptableExtract() *services.AIExtractResult {
-	return &services.AIExtractResult{
+func acceptableExtract() *documentaiextractionports.AIExtractResult {
+	return &documentaiextractionports.AIExtractResult{
 		DocumentKind:      "RateConfirmation",
 		OverallConfidence: 0.9,
 		ReviewStatus:      "Ready",
-		Fields: map[string]services.AIDocumentField{
+		Fields: map[string]documentaiextractionports.AIDocumentField{
 			"shipper":   {Value: "Juniper Manufacturing", Confidence: 0.9, PageNumber: 1},
 			"consignee": {Value: "Granite Brands", Confidence: 0.9, PageNumber: 1},
 			"rate":      {Value: "2563.12", Confidence: 0.9, PageNumber: 2},
 		},
-		Stops: []*services.AIDocumentStop{
+		Stops: []*documentaiextractionports.AIDocumentStop{
 			{
 				Sequence: 1, Role: "pickup", Name: "Juniper Manufacturing", PageNumber: 1,
 				EvidenceExcerpt: "Shipper: Juniper Manufacturing", Confidence: 0.9,
@@ -58,22 +61,22 @@ func acceptableExtract() *services.AIExtractResult {
 type shadowFixture struct {
 	predictor *ShadowPredictor
 	extractor *shadowExtractor
-	request   *services.PredictShadowDraftRequest
+	request   *extractionshadowports.PredictShadowDraftRequest
 }
 
 func newShadowFixture(t *testing.T, lastExtractedAt int64, fallback map[string]any) *shadowFixture {
 	t.Helper()
 
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	request := &services.PredictShadowDraftRequest{
+	request := &extractionshadowports.PredictShadowDraftRequest{
 		TenantInfo:  tenant,
 		DocumentID:  pulid.MustNew("doc_"),
 		ExtractedAt: 1_700_000_000,
 		ProviderID:  pulid.MustNew("aip_"),
 	}
 
-	docRepo := mocks.NewMockDocumentRepository(t)
-	docRepo.EXPECT().GetByID(mock.Anything, repositories.GetDocumentByIDRequest{
+	docRepo := documentportsmock.NewMockDocumentRepository(t)
+	docRepo.EXPECT().GetByID(mock.Anything, documentports.GetDocumentByIDRequest{
 		ID:         request.DocumentID,
 		TenantInfo: tenant,
 	}).Return(&document.Document{ID: request.DocumentID, OriginalName: "rc-4411.pdf"}, nil)
@@ -82,7 +85,7 @@ func newShadowFixture(t *testing.T, lastExtractedAt int64, fallback map[string]a
 	for _, page := range evidencePages {
 		pages = append(pages, &documentcontent.Page{PageNumber: page.PageNumber, ExtractedText: page.Text})
 	}
-	contentRepo := mocks.NewMockDocumentContentRepository(t)
+	contentRepo := documentcontentportsmock.NewMockDocumentContentRepository(t)
 	contentRepo.EXPECT().GetByDocumentID(mock.Anything, request.DocumentID, tenant).
 		Return(&documentcontent.Content{
 			DocumentID:      request.DocumentID,
@@ -124,7 +127,7 @@ func TestShadowPredictorSendsProductionsInputToThePinnedProvider(t *testing.T) {
 
 	fixture := newShadowFixture(t, 1_700_000_000, parserFallback())
 	cost := decimal.RequireFromString("0.01")
-	fixture.extractor.result = &services.AIEvaluationExtractResult{
+	fixture.extractor.result = &documentaiextractionports.AIEvaluationExtractResult{
 		Extract:      acceptableExtract(),
 		Model:        "trenova-extract",
 		ProviderID:   fixture.request.ProviderID,
@@ -165,7 +168,7 @@ func TestShadowPredictorFallsBackToTheParserWhenTheAnswerIsRejected(t *testing.T
 	fixture := newShadowFixture(t, 1_700_000_000, parserFallback())
 	rejected := acceptableExtract()
 	delete(rejected.Fields, "rate")
-	fixture.extractor.result = &services.AIEvaluationExtractResult{Extract: rejected}
+	fixture.extractor.result = &documentaiextractionports.AIEvaluationExtractResult{Extract: rejected}
 
 	prediction, err := fixture.predictor.PredictShadowDraft(t.Context(), fixture.request)
 	require.NoError(t, err)
@@ -185,6 +188,6 @@ func TestShadowPredictorRefusesASupersededExtraction(t *testing.T) {
 	fixture := newShadowFixture(t, 1_700_000_500, parserFallback())
 
 	_, err := fixture.predictor.PredictShadowDraft(t.Context(), fixture.request)
-	require.ErrorIs(t, err, services.ErrShadowSuperseded)
+	require.ErrorIs(t, err, extractionshadowports.ErrShadowSuperseded)
 	assert.Empty(t, fixture.extractor.requests)
 }

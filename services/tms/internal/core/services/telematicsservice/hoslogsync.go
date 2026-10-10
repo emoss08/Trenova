@@ -5,8 +5,7 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -21,7 +20,7 @@ const hosLogLookbackSeconds = int64(9 * 86400)
 func (s *Service) syncHOSLogs(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	provider services.TelematicsProvider,
+	provider telematicsports.TelematicsProvider,
 	drivers *sweepDrivers,
 	result *TenantSweepResult,
 ) error {
@@ -84,7 +83,7 @@ func (s *Service) syncHOSLogs(
 		return nil
 	}
 
-	synced, err := s.repo.SyncWorkerHOSLogs(ctx, &repositories.SyncWorkerHOSLogsRequest{
+	synced, err := s.repo.SyncWorkerHOSLogs(ctx, &telematicsports.SyncWorkerHOSLogsRequest{
 		TenantInfo:  tenantInfo,
 		WorkerIDs:   workerIDs,
 		WindowStart: windowStart,
@@ -101,7 +100,7 @@ func partialDriverFailures(err error) (map[string]struct{}, bool) {
 	if err == nil {
 		return nil, true
 	}
-	batchErr, ok := errors.AsType[*services.ProviderDriverBatchError](err)
+	batchErr, ok := errors.AsType[*telematicsports.ProviderDriverBatchError](err)
 	if !ok {
 		return nil, false
 	}

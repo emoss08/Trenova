@@ -7,28 +7,28 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type fakeDrift struct {
 	mu     sync.Mutex
-	calls  []services.RecheckAccountingDriftRequest
+	calls  []accountingsyncports.RecheckAccountingDriftRequest
 	failed error
 }
 
 func (f *fakeDrift) RecheckDocuments(
 	_ context.Context,
-	req *services.RecheckAccountingDriftRequest,
-) (*services.AccountingDriftBatchResult, error) {
+	req *accountingsyncports.RecheckAccountingDriftRequest,
+) (*accountingsyncports.AccountingDriftBatchResult, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.calls = append(f.calls, *req)
 	if f.failed != nil {
 		return nil, f.failed
 	}
-	return &services.AccountingDriftBatchResult{Compared: len(req.Documents)}, nil
+	return &accountingsyncports.AccountingDriftBatchResult{Compared: len(req.Documents)}, nil
 }
 
 func withDrift(t *testing.T, h *harness) *fakeDrift {
@@ -38,14 +38,14 @@ func withDrift(t *testing.T, h *harness) *fakeDrift {
 	return drift
 }
 
-func edited(externalID string) services.AccountingChangedDocument {
-	return services.AccountingChangedDocument{
+func edited(externalID string) accountingsyncports.AccountingChangedDocument {
+	return accountingsyncports.AccountingChangedDocument{
 		ObjectTypes: []accountingsync.SyncObjectType{
 			accountingsync.SyncObjectInvoice,
 			accountingsync.SyncObjectDebitMemo,
 		},
 		ExternalID: externalID,
-		Operation:  services.AccountingChangeUpsert,
+		Operation:  accountingsyncports.AccountingChangeUpsert,
 	}
 }
 
@@ -53,12 +53,12 @@ func TestPollAsksForDocumentsAndComparesTheOnesThatChanged(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t, accountingsync.InboundPaymentsPropose)
 	drift := withDrift(t, h)
-	h.connector.pages = append(h.connector.pages, &services.AccountingChangePage{
-		Documents:  []services.AccountingChangedDocument{edited("145"), edited("146")},
+	h.connector.pages = append(h.connector.pages, &accountingsyncports.AccountingChangePage{
+		Documents:  []accountingsyncports.AccountingChangedDocument{edited("145"), edited("146")},
 		NextCursor: "next",
 	})
 
-	result, err := h.svc.PollChanges(t.Context(), &services.PollAccountingChangesRequest{
+	result, err := h.svc.PollChanges(t.Context(), &accountingsyncports.PollAccountingChangesRequest{
 		TenantInfo:   h.tenant,
 		ConnectionID: h.conn.ID,
 	})
@@ -88,12 +88,12 @@ func TestPollKeepsItsCursorWhenTheDriftCompareFails(t *testing.T) {
 	h := newHarness(t, accountingsync.InboundPaymentsPropose)
 	drift := withDrift(t, h)
 	drift.failed = errors.New("QuickBooks did not answer")
-	h.connector.pages = append(h.connector.pages, &services.AccountingChangePage{
-		Documents:  []services.AccountingChangedDocument{edited("145")},
+	h.connector.pages = append(h.connector.pages, &accountingsyncports.AccountingChangePage{
+		Documents:  []accountingsyncports.AccountingChangedDocument{edited("145")},
 		NextCursor: "next",
 	})
 
-	result, err := h.svc.PollChanges(t.Context(), &services.PollAccountingChangesRequest{
+	result, err := h.svc.PollChanges(t.Context(), &accountingsyncports.PollAccountingChangesRequest{
 		TenantInfo:   h.tenant,
 		ConnectionID: h.conn.ID,
 	})

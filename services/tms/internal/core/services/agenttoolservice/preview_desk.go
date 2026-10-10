@@ -9,20 +9,20 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/internal/core/services/workerservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 var (
-	_ serviceports.ToolPreviewer = (*escalateDetentionTool)(nil)
-	_ serviceports.ToolPreviewer = (*placeWorkerDispatchHoldTool)(nil)
-	_ serviceports.ToolPreviewer = (*acknowledgeCarrierIntelEventTool)(nil)
-	_ serviceports.ToolPreviewer = (*resolveCarrierIntelEventTool)(nil)
+	_ agentports.ToolPreviewer = (*escalateDetentionTool)(nil)
+	_ agentports.ToolPreviewer = (*placeWorkerDispatchHoldTool)(nil)
+	_ agentports.ToolPreviewer = (*acknowledgeCarrierIntelEventTool)(nil)
+	_ agentports.ToolPreviewer = (*resolveCarrierIntelEventTool)(nil)
 )
 
 var detentionEscalationFields = []string{"requiresApproval", "notificationStatus"}
@@ -40,7 +40,7 @@ func detentionOccurrenceRecord(occurrence *detention.DetentionOccurrence) toolpr
 
 func (t *escalateDetentionTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	occurrenceID, reason, err := t.arguments(params)
 	if err != nil {
@@ -85,14 +85,14 @@ func (t *escalateDetentionTool) Preview(
 
 func (t *placeWorkerDispatchHoldTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	request, err := t.arguments(params)
 	if err != nil {
 		return nil, err
 	}
 
-	driver, err := t.workers.Get(ctx, repositories.GetWorkerByIDRequest{
+	driver, err := t.workers.Get(ctx, workerports.GetWorkerByIDRequest{
 		ID:         request.WorkerID,
 		TenantInfo: request.TenantInfo,
 	})
@@ -132,7 +132,7 @@ func carrierIntelRecord(event *carrierintel.CarrierIntelEvent) toolpreview.Recor
 
 func (t *carrierIntelEventTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	request, err := t.arguments(params)
 	if err != nil {

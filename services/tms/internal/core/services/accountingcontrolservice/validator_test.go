@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -63,7 +63,7 @@ func (s *stubAccountingControlIntegrationRepo) Upsert(
 	return nil, nil
 }
 
-var _ repositories.IntegrationRepository = (*stubAccountingControlIntegrationRepo)(nil)
+var _ integrationports.IntegrationRepository = (*stubAccountingControlIntegrationRepo)(nil)
 
 func TestNewTestValidator(t *testing.T) {
 	t.Parallel()

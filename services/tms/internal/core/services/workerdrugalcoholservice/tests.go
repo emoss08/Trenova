@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,7 +17,7 @@ import (
 
 func (s *Service) ListTests(
 	ctx context.Context,
-	req *repositories.ListWorkerDOTTestsRequest,
+	req *workerports.ListWorkerDOTTestsRequest,
 ) ([]*worker.WorkerDOTTest, error) {
 	return s.repo.ListTests(ctx, req)
 }
@@ -27,7 +27,7 @@ func (s *Service) GetTest(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*worker.WorkerDOTTest, error) {
-	return s.repo.GetTestByID(ctx, &repositories.GetWorkerDOTTestByIDRequest{
+	return s.repo.GetTestByID(ctx, &workerports.GetWorkerDOTTestByIDRequest{
 		ID:              id,
 		TenantInfo:      tenantInfo,
 		IncludeWorker:   true,
@@ -120,7 +120,7 @@ func (s *Service) prepareRecordTest(
 	userID pulid.ID,
 ) error {
 	tenantInfo := testTenant(entity)
-	if _, err := s.workerRepo.GetByID(ctx, repositories.GetWorkerByIDRequest{
+	if _, err := s.workerRepo.GetByID(ctx, workerports.GetWorkerByIDRequest{
 		ID:         entity.WorkerID,
 		TenantInfo: tenantInfo,
 	}); err != nil {
@@ -169,7 +169,7 @@ func (s *Service) RecordResult(
 		zap.String("testId", req.TestID.String()),
 	)
 
-	entity, err := s.repo.GetTestByID(ctx, &repositories.GetWorkerDOTTestByIDRequest{
+	entity, err := s.repo.GetTestByID(ctx, &workerports.GetWorkerDOTTestByIDRequest{
 		ID:         req.TestID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -402,7 +402,7 @@ func (s *Service) closeDrawEntry(
 	}
 
 	tenantInfo := testTenant(entity)
-	dbEntry, err := s.repo.GetDrawEntryByID(ctx, &repositories.GetDOTRandomDrawEntryByIDRequest{
+	dbEntry, err := s.repo.GetDrawEntryByID(ctx, &workerports.GetDOTRandomDrawEntryByIDRequest{
 		ID:         entity.DrawEntryID,
 		TenantInfo: tenantInfo,
 	})

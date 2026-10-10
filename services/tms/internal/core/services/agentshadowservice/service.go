@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentshadow"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 )
@@ -13,17 +13,17 @@ import (
 type Params struct {
 	fx.In
 
-	Definitions repositories.AgentDefinitionRepository
-	Shadow      repositories.AgentShadowRepository
+	Definitions agentdefinitionports.AgentDefinitionRepository
+	Shadow      agentshadowports.AgentShadowRepository
 }
 
 type Service struct {
-	definitions repositories.AgentDefinitionRepository
-	shadow      repositories.AgentShadowRepository
+	definitions agentdefinitionports.AgentDefinitionRepository
+	shadow      agentshadowports.AgentShadowRepository
 	now         func() int64
 }
 
-var _ services.AgentShadowService = (*Service)(nil)
+var _ agentshadowports.AgentShadowService = (*Service)(nil)
 
 func New(p Params) *Service {
 	return &Service{definitions: p.Definitions, shadow: p.Shadow, now: timeutils.NowUnix}
@@ -31,8 +31,8 @@ func New(p Params) *Service {
 
 // Report sets the writes an agent recorded in shadow over the last days
 // beside what people did to the same records.
-func (s *Service) Report(ctx context.Context, req *services.AgentShadowReportRequest) (*agentshadow.Report, error) {
-	if _, err := s.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+func (s *Service) Report(ctx context.Context, req *agentshadowports.AgentShadowReportRequest) (*agentshadow.Report, error) {
+	if _, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         req.AgentID,
 		TenantInfo: req.TenantInfo,
 	}); err != nil {
@@ -43,7 +43,7 @@ func (s *Service) Report(ctx context.Context, req *services.AgentShadowReportReq
 	now := s.now()
 	since := now - int64(days)*24*60*60
 
-	proposals, err := s.shadow.ListShadowProposals(ctx, &repositories.ListShadowProposalsRequest{
+	proposals, err := s.shadow.ListShadowProposals(ctx, &agentshadowports.ListShadowProposalsRequest{
 		TenantInfo:        req.TenantInfo,
 		AgentDefinitionID: req.AgentID,
 		Since:             since,
@@ -53,7 +53,7 @@ func (s *Service) Report(ctx context.Context, req *services.AgentShadowReportReq
 		return nil, err
 	}
 
-	changes, err := s.shadow.ListPersonChanges(ctx, &repositories.ListPersonChangesRequest{
+	changes, err := s.shadow.ListPersonChanges(ctx, &agentshadowports.ListPersonChangesRequest{
 		TenantInfo:  req.TenantInfo,
 		ResourceIDs: targets(proposals),
 		Since:       since,

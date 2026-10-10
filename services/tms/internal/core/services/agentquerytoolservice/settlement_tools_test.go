@@ -11,8 +11,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -26,12 +28,12 @@ type fakeDriverSettlements struct {
 	disputes    []*driversettlement.Dispute
 	summary     *driversettlementservice.WorkerEarningsSummary
 
-	listed *repositories.ListDriverSettlementsRequest
+	listed *driversettlementports.ListDriverSettlementsRequest
 }
 
 func (f *fakeDriverSettlements) List(
 	_ context.Context,
-	req *repositories.ListDriverSettlementsRequest,
+	req *driversettlementports.ListDriverSettlementsRequest,
 ) (*pagination.ListResult[*driversettlement.Settlement], error) {
 	f.listed = req
 
@@ -40,14 +42,14 @@ func (f *fakeDriverSettlements) List(
 
 func (f *fakeDriverSettlements) Get(
 	context.Context,
-	repositories.GetDriverSettlementByIDRequest,
+	driversettlementports.GetDriverSettlementByIDRequest,
 ) (*driversettlement.Settlement, error) {
 	return f.settlements[0], nil
 }
 
 func (f *fakeDriverSettlements) ListPayEvents(
 	context.Context,
-	*repositories.ListPayEventsRequest,
+	*driversettlementports.ListPayEventsRequest,
 ) (*pagination.ListResult[*driversettlement.PayEvent], error) {
 	return &pagination.ListResult[*driversettlement.PayEvent]{Items: f.events}, nil
 }
@@ -62,14 +64,14 @@ func (f *fakeDriverSettlements) GetWorkerEarningsSummary(
 
 func (f *fakeDriverSettlements) GetDispute(
 	context.Context,
-	repositories.GetSettlementDisputeByIDRequest,
+	driversettlementports.GetSettlementDisputeByIDRequest,
 ) (*driversettlement.Dispute, error) {
 	return f.disputes[0], nil
 }
 
 func (f *fakeDriverSettlements) ListDisputesForWorker(
 	context.Context,
-	*repositories.ListSettlementDisputesForWorkerRequest,
+	*driversettlementports.ListSettlementDisputesForWorkerRequest,
 ) ([]*driversettlement.Dispute, error) {
 	return f.disputes, nil
 }
@@ -223,12 +225,12 @@ type fakeCarrierSettlements struct {
 	matches     []*carriersettlement.InvoiceMatch
 	invoices    []*edi.CarrierInvoice
 	suggested   *carrier.Carrier
-	listedEDI   *repositories.ListEDICarrierInvoicesRequest
+	listedEDI   *ediports.ListEDICarrierInvoicesRequest
 }
 
 func (f *fakeCarrierSettlements) ListUnmatchedEDIInvoices(
 	_ context.Context,
-	req *repositories.ListEDICarrierInvoicesRequest,
+	req *ediports.ListEDICarrierInvoicesRequest,
 ) (*pagination.ListResult[*edi.CarrierInvoice], error) {
 	f.listedEDI = req
 
@@ -245,21 +247,21 @@ func (f *fakeCarrierSettlements) SuggestCarrierForInvoice(
 
 func (f *fakeCarrierSettlements) List(
 	context.Context,
-	*repositories.ListCarrierSettlementsRequest,
+	*carriersettlementports.ListCarrierSettlementsRequest,
 ) (*pagination.ListResult[*carriersettlement.CarrierSettlement], error) {
 	return &pagination.ListResult[*carriersettlement.CarrierSettlement]{Items: f.settlements}, nil
 }
 
 func (f *fakeCarrierSettlements) Get(
 	context.Context,
-	repositories.GetCarrierSettlementByIDRequest,
+	carriersettlementports.GetCarrierSettlementByIDRequest,
 ) (*carriersettlement.CarrierSettlement, error) {
 	return f.settlements[0], nil
 }
 
 func (f *fakeCarrierSettlements) ListInvoiceMatches(
 	context.Context,
-	*repositories.ListCarrierInvoiceMatchesRequest,
+	*carriersettlementports.ListCarrierInvoiceMatchesRequest,
 ) (*pagination.ListResult[*carriersettlement.InvoiceMatch], error) {
 	return &pagination.ListResult[*carriersettlement.InvoiceMatch]{Items: f.matches}, nil
 }
@@ -396,7 +398,7 @@ type statusFilteringSettlements struct {
 
 func (f *statusFilteringSettlements) List(
 	_ context.Context,
-	req *repositories.ListDriverSettlementsRequest,
+	req *driversettlementports.ListDriverSettlementsRequest,
 ) (*pagination.ListResult[*driversettlement.Settlement], error) {
 	f.listed = req
 	if len(req.Statuses) > 0 || req.Status != "" {

@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/pkg/docrender"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -29,10 +29,10 @@ const (
 // PDF, printed by the same renderer as invoices, or as a Word file.
 func (s *Service) ExportDocument(
 	ctx context.Context,
-	req repositories.GetThreadRequest,
+	req agentports.GetThreadRequest,
 	artifactID pulid.ID,
 	format string,
-) (*services.ArtifactFile, error) {
+) (*agentports.ArtifactFile, error) {
 	versions, err := s.documentLineage(ctx, req, artifactID)
 	if err != nil {
 		return nil, err
@@ -51,18 +51,18 @@ func (s *Service) ExportDocument(
 		if s.pdfs == nil {
 			return nil, errortypes.NewBusinessError("PDF export is not available here")
 		}
-		body, renderErr := s.pdfs.Render(ctx, &services.PDFRenderRequest{
+		body, renderErr := s.pdfs.Render(ctx, &documenttemplateports.PDFRenderRequest{
 			HTML:  docrender.HTML(doc),
 			Title: version.Title,
 		})
 		if renderErr != nil {
-			if errors.Is(renderErr, services.ErrPDFRendererUnavailable) {
+			if errors.Is(renderErr, documenttemplateports.ErrPDFRendererUnavailable) {
 				return nil, errortypes.NewBusinessError("PDF export is not available right now")
 			}
 			return nil, renderErr
 		}
 
-		return &services.ArtifactFile{
+		return &agentports.ArtifactFile{
 			FileName: name + ".pdf", ContentType: "application/pdf", Body: body,
 		}, nil
 	case DocumentExportDOCX:
@@ -71,7 +71,7 @@ func (s *Service) ExportDocument(
 			return nil, renderErr
 		}
 
-		return &services.ArtifactFile{
+		return &agentports.ArtifactFile{
 			FileName: name + ".docx", ContentType: docxContentType, Body: body,
 		}, nil
 	default:

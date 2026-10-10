@@ -1,6 +1,7 @@
 package edihandler_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
 	"context"
 	"net/http"
 	"testing"
@@ -9,10 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/internal/core/services/edix12"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -25,7 +26,7 @@ import (
 
 func setupEDIHandler(
 	t *testing.T,
-	repo *mocks.MockEDIDocumentRepository,
+	repo *ediportsmock.MockEDIDocumentRepository,
 	applyParams ...func(*ediservice.Params),
 ) *edihandler.Handler {
 	t.Helper()
@@ -68,7 +69,7 @@ func TestEDIHandler_PartnerSettingRoutes(t *testing.T) {
 	t.Parallel()
 
 	schemaID := pulid.MustNew("edips_")
-	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo := ediportsmock.NewMockEDIDocumentRepository(t)
 	repo.On("ListPartnerSettingSchemas", mock.Anything, mock.Anything).
 		Return(&pagination.ListResult[*edi.EDIPartnerSettingSchema]{
 			Items: []*edi.EDIPartnerSettingSchema{{
@@ -87,7 +88,7 @@ func TestEDIHandler_PartnerSettingRoutes(t *testing.T) {
 	repo.On(
 		"GetPartnerSettingSchema",
 		mock.Anything,
-		mock.MatchedBy(func(req repositories.GetEDIPartnerSettingSchemaRequest) bool {
+		mock.MatchedBy(func(req ediports.GetEDIPartnerSettingSchemaRequest) bool {
 			return req.ID == schemaID
 		}),
 	).Return(&edi.EDIPartnerSettingSchema{
@@ -99,7 +100,7 @@ func TestEDIHandler_PartnerSettingRoutes(t *testing.T) {
 	repo.On(
 		"ListPartnerSettingFields",
 		mock.Anything,
-		mock.MatchedBy(func(req *repositories.ListEDIPartnerSettingFieldsRequest) bool {
+		mock.MatchedBy(func(req *ediports.ListEDIPartnerSettingFieldsRequest) bool {
 			return req.SchemaID == schemaID
 		}),
 	).Return(&pagination.ListResult[*edi.EDIPartnerSettingField]{
@@ -116,7 +117,7 @@ func TestEDIHandler_PartnerSettingRoutes(t *testing.T) {
 	repo.On(
 		"SearchPartnerSettingFields",
 		mock.Anything,
-		mock.MatchedBy(func(req *repositories.ListEDIPartnerSettingFieldsRequest) bool {
+		mock.MatchedBy(func(req *ediports.ListEDIPartnerSettingFieldsRequest) bool {
 			return req.Filter.Query == "referenceQualifiers" && req.PathPrefix == "carrier."
 		}),
 	).Return(&pagination.ListResult[*edi.EDIPartnerSettingField]{
@@ -126,7 +127,7 @@ func TestEDIHandler_PartnerSettingRoutes(t *testing.T) {
 	repo.On(
 		"SearchPartnerSettingFields",
 		mock.Anything,
-		mock.MatchedBy(func(req *repositories.ListEDIPartnerSettingFieldsRequest) bool {
+		mock.MatchedBy(func(req *ediports.ListEDIPartnerSettingFieldsRequest) bool {
 			return req.Filter.Query == "contact"
 		}),
 	).Return(&pagination.ListResult[*edi.EDIPartnerSettingField]{
@@ -193,14 +194,14 @@ func TestEDIHandler_ValidatePartnerSettings(t *testing.T) {
 	t.Parallel()
 
 	schemaID := pulid.MustNew("edips_")
-	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo := ediportsmock.NewMockEDIDocumentRepository(t)
 	repo.On("GetActivePartnerSettingSchema", mock.Anything, mock.Anything).
 		Return(&edi.EDIPartnerSettingSchema{ID: schemaID, SchemaVersion: 1}, nil).
 		Once()
 	repo.On(
 		"ListPartnerSettingFields",
 		mock.Anything,
-		mock.MatchedBy(func(req *repositories.ListEDIPartnerSettingFieldsRequest) bool {
+		mock.MatchedBy(func(req *ediports.ListEDIPartnerSettingFieldsRequest) bool {
 			return req.SchemaID == schemaID
 		}),
 	).Return(&pagination.ListResult[*edi.EDIPartnerSettingField]{
@@ -243,11 +244,11 @@ func TestEDIHandler_SelectOptionsRoutes(t *testing.T) {
 	templateID := pulid.MustNew("editpl_")
 	profileID := pulid.MustNew("edipdp_")
 	partnerID := pulid.MustNew("edip_")
-	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo := ediportsmock.NewMockEDIDocumentRepository(t)
 	repo.On(
 		"SelectDocumentTypeOptions",
 		mock.Anything,
-		mock.MatchedBy(func(req *repositories.EDIDocumentTypeSelectOptionsRequest) bool {
+		mock.MatchedBy(func(req *ediports.EDIDocumentTypeSelectOptionsRequest) bool {
 			return req.SelectQueryRequest.Query == "204" &&
 				req.TransactionSet == edi.TransactionSet204 &&
 				req.Direction == edi.DocumentDirectionOutbound
@@ -268,7 +269,7 @@ func TestEDIHandler_SelectOptionsRoutes(t *testing.T) {
 	repo.On(
 		"SelectTemplateOptions",
 		mock.Anything,
-		mock.MatchedBy(func(req *repositories.EDITemplateSelectOptionsRequest) bool {
+		mock.MatchedBy(func(req *ediports.EDITemplateSelectOptionsRequest) bool {
 			return req.SelectQueryRequest.Query == "load" &&
 				req.TransactionSet == edi.TransactionSet204 &&
 				req.Direction == edi.DocumentDirectionOutbound
@@ -287,7 +288,7 @@ func TestEDIHandler_SelectOptionsRoutes(t *testing.T) {
 	repo.On(
 		"SelectPartnerDocumentProfileOptions",
 		mock.Anything,
-		mock.MatchedBy(func(req *repositories.EDIPartnerDocumentProfileSelectOptionsRequest) bool {
+		mock.MatchedBy(func(req *ediports.EDIPartnerDocumentProfileSelectOptionsRequest) bool {
 			return req.SelectQueryRequest.Query == "profile" &&
 				req.TransactionSet == edi.TransactionSet204 &&
 				req.Direction == edi.DocumentDirectionOutbound &&
@@ -306,7 +307,7 @@ func TestEDIHandler_SelectOptionsRoutes(t *testing.T) {
 	repo.On(
 		"SelectSourceContextFieldOptions",
 		mock.Anything,
-		mock.MatchedBy(func(req *repositories.ListEDISourceContextFieldsRequest) bool {
+		mock.MatchedBy(func(req *ediports.ListEDISourceContextFieldsRequest) bool {
 			return req.Filter.Query == "bol" &&
 				req.Status == edi.SourceContextFieldStatusActive &&
 				req.TransactionSet == edi.TransactionSet204
@@ -323,7 +324,7 @@ func TestEDIHandler_SelectOptionsRoutes(t *testing.T) {
 	repo.On(
 		"SelectPartnerSettingFieldOptions",
 		mock.Anything,
-		mock.MatchedBy(func(req *repositories.ListEDIPartnerSettingFieldsRequest) bool {
+		mock.MatchedBy(func(req *ediports.ListEDIPartnerSettingFieldsRequest) bool {
 			return req.Filter.Query == "receiver" &&
 				req.Status == edi.PartnerSettingStatusActive &&
 				req.TransactionSet == edi.TransactionSet204
@@ -404,11 +405,11 @@ func TestEDIHandler_TransactionSetCatalogRoutes(t *testing.T) {
 		DefaultVersion: edi.DefaultX12204Version,
 		Status:         edi.DocumentStatusActive,
 	}
-	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo := ediportsmock.NewMockEDIDocumentRepository(t)
 	repo.On(
 		"SelectTransactionSetOptions",
 		mock.Anything,
-		mock.MatchedBy(func(req *repositories.EDITransactionSetSelectOptionsRequest) bool {
+		mock.MatchedBy(func(req *ediports.EDITransactionSetSelectOptionsRequest) bool {
 			return req.SelectQueryRequest.Query == "204" &&
 				req.Standard == edi.EDIStandardX12 &&
 				req.Status == edi.DocumentStatusActive &&
@@ -421,7 +422,7 @@ func TestEDIHandler_TransactionSetCatalogRoutes(t *testing.T) {
 	repo.On(
 		"SelectTransactionSetOptions",
 		mock.Anything,
-		mock.MatchedBy(func(req *repositories.EDITransactionSetSelectOptionsRequest) bool {
+		mock.MatchedBy(func(req *ediports.EDITransactionSetSelectOptionsRequest) bool {
 			return len(req.IDs) == 1 &&
 				req.IDs[0] == tender.ID &&
 				req.SelectQueryRequest.Query == "" &&
@@ -434,7 +435,7 @@ func TestEDIHandler_TransactionSetCatalogRoutes(t *testing.T) {
 	repo.On(
 		"SelectTransactionSetOptions",
 		mock.Anything,
-		mock.MatchedBy(func(req *repositories.EDITransactionSetSelectOptionsRequest) bool {
+		mock.MatchedBy(func(req *ediports.EDITransactionSetSelectOptionsRequest) bool {
 			return len(req.IDs) == 1 && req.IDs[0] == pulid.ID("edits_x12_000")
 		}),
 	).Return(&pagination.ListResult[*edi.EDITransactionSet]{}, nil).Once()
@@ -485,9 +486,9 @@ func TestEDIHandler_TransactionSetCatalogRoutes(t *testing.T) {
 func TestEDIHandler_DocumentTypeOptionAcceptsCatalogID(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo := ediportsmock.NewMockEDIDocumentRepository(t)
 	repo.EXPECT().
-		ListDocumentTypes(mock.Anything, repositories.ListEDIDocumentTypesRequest{}).
+		ListDocumentTypes(mock.Anything, ediports.ListEDIDocumentTypesRequest{}).
 		Return([]*edi.EDIDocumentType{{
 			ID:             pulid.ID("edidt_x12_204_outbound"),
 			Code:           "X12-204-OUT",
@@ -520,11 +521,11 @@ func TestEDIHandler_DocumentProfileSelectOptionsReturnsProfiles(t *testing.T) {
 	t.Parallel()
 
 	profileID := pulid.MustNew("edipdp_")
-	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo := ediportsmock.NewMockEDIDocumentRepository(t)
 	repo.On(
 		"SelectPartnerDocumentProfileOptions",
 		mock.Anything,
-		mock.MatchedBy(func(req *repositories.EDIPartnerDocumentProfileSelectOptionsRequest) bool {
+		mock.MatchedBy(func(req *ediports.EDIPartnerDocumentProfileSelectOptionsRequest) bool {
 			return req.SelectQueryRequest.Pagination.Limit == 20 &&
 				req.SelectQueryRequest.Pagination.Offset == 0 &&
 				req.SelectQueryRequest.Query == "" &&
@@ -568,13 +569,13 @@ func TestEDIHandler_ProfileSelectOptionsRoutes(t *testing.T) {
 	partnerID := pulid.MustNew("edip_")
 	communicationProfileID := pulid.MustNew("edicp_")
 	mappingProfileID := pulid.MustNew("edimp_")
-	repo := mocks.NewMockEDIDocumentRepository(t)
-	profileRepo := mocks.NewMockEDICommunicationProfileRepository(t)
-	partnerRepo := mocks.NewMockEDIPartnerRepository(t)
-	mappingProfileRepo := mocks.NewMockEDIMappingProfileRepository(t)
+	repo := ediportsmock.NewMockEDIDocumentRepository(t)
+	profileRepo := ediportsmock.NewMockEDICommunicationProfileRepository(t)
+	partnerRepo := ediportsmock.NewMockEDIPartnerRepository(t)
+	mappingProfileRepo := ediportsmock.NewMockEDIMappingProfileRepository(t)
 
 	profileRepo.EXPECT().
-		SelectProfileOptions(mock.Anything, mock.MatchedBy(func(req *repositories.EDICommunicationProfileSelectOptionsRequest) bool {
+		SelectProfileOptions(mock.Anything, mock.MatchedBy(func(req *ediports.EDICommunicationProfileSelectOptionsRequest) bool {
 			return req.SelectQueryRequest.Query == "sftp" &&
 				req.Status == "Active" &&
 				req.Method == edi.ConnectionMethodSFTP &&
@@ -592,7 +593,7 @@ func TestEDIHandler_ProfileSelectOptionsRoutes(t *testing.T) {
 		}, nil).
 		Once()
 	mappingProfileRepo.EXPECT().
-		SelectMappingProfileOptions(mock.Anything, mock.MatchedBy(func(req *repositories.EDIMappingProfileSelectOptionsRequest) bool {
+		SelectMappingProfileOptions(mock.Anything, mock.MatchedBy(func(req *ediports.EDIMappingProfileSelectOptionsRequest) bool {
 			return req.SelectQueryRequest.Query == "carrier" && req.PartnerID == partnerID
 		})).
 		Return(&pagination.ListResult[*edi.EDIMappingProfile]{
@@ -639,16 +640,16 @@ func TestEDIHandler_ProfileSelectOptionsRoutes(t *testing.T) {
 func TestEDIHandler_TransferListDirectionRoutes(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockEDIDocumentRepository(t)
-	transferRepo := mocks.NewMockEDILoadTenderTransferRepository(t)
+	repo := ediportsmock.NewMockEDIDocumentRepository(t)
+	transferRepo := ediportsmock.NewMockEDILoadTenderTransferRepository(t)
 	transferRepo.EXPECT().
-		ListInbound(mock.Anything, mock.MatchedBy(func(req *repositories.ListEDITransfersRequest) bool {
+		ListInbound(mock.Anything, mock.MatchedBy(func(req *ediports.ListEDITransfersRequest) bool {
 			return req.Filter != nil
 		})).
 		Return(&pagination.ListResult[*edi.EDITransfer]{Items: []*edi.EDITransfer{}, Total: 0}, nil).
 		Once()
 	transferRepo.EXPECT().
-		ListOutbound(mock.Anything, mock.MatchedBy(func(req *repositories.ListEDITransfersRequest) bool {
+		ListOutbound(mock.Anything, mock.MatchedBy(func(req *ediports.ListEDITransfersRequest) bool {
 			return req.Filter != nil
 		})).
 		Return(&pagination.ListResult[*edi.EDITransfer]{Items: []*edi.EDITransfer{}, Total: 0}, nil).
@@ -690,8 +691,8 @@ func TestEDIHandler_TransferListDirectionRoutes(t *testing.T) {
 func TestEDIHandler_CreatePartnerDefaultsAndExplicitFalseFlags(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockEDIDocumentRepository(t)
-	partnerRepo := mocks.NewMockEDIPartnerRepository(t)
+	repo := ediportsmock.NewMockEDIDocumentRepository(t)
+	partnerRepo := ediportsmock.NewMockEDIPartnerRepository(t)
 	partnerRepo.EXPECT().
 		Create(mock.Anything, mock.MatchedBy(func(entity *edi.EDIPartner) bool {
 			return entity.Kind == edi.PartnerKindExternal &&
@@ -758,13 +759,13 @@ func TestEDIHandler_SelectedValueRoutesReturnAutocompleteFields(t *testing.T) {
 	profileID := pulid.MustNew("edipdp_")
 	communicationProfileID := pulid.MustNew("edicp_")
 	mappingProfileID := pulid.MustNew("edimp_")
-	repo := mocks.NewMockEDIDocumentRepository(t)
-	partnerRepo := mocks.NewMockEDIPartnerRepository(t)
-	profileRepo := mocks.NewMockEDICommunicationProfileRepository(t)
-	mappingProfileRepo := mocks.NewMockEDIMappingProfileRepository(t)
+	repo := ediportsmock.NewMockEDIDocumentRepository(t)
+	partnerRepo := ediportsmock.NewMockEDIPartnerRepository(t)
+	profileRepo := ediportsmock.NewMockEDICommunicationProfileRepository(t)
+	mappingProfileRepo := ediportsmock.NewMockEDIMappingProfileRepository(t)
 
 	partnerRepo.EXPECT().
-		GetByID(mock.Anything, mock.MatchedBy(func(req repositories.GetEDIPartnerByIDRequest) bool {
+		GetByID(mock.Anything, mock.MatchedBy(func(req ediports.GetEDIPartnerByIDRequest) bool {
 			return req.ID == partnerID && req.TenantInfo.OrgID.IsNotNil() &&
 				req.TenantInfo.BuID.IsNotNil()
 		})).
@@ -776,7 +777,7 @@ func TestEDIHandler_SelectedValueRoutesReturnAutocompleteFields(t *testing.T) {
 		}, nil).
 		Once()
 	repo.EXPECT().
-		GetTemplateByID(mock.Anything, mock.MatchedBy(func(req repositories.GetEDITemplateByIDRequest) bool {
+		GetTemplateByID(mock.Anything, mock.MatchedBy(func(req ediports.GetEDITemplateByIDRequest) bool {
 			return req.ID == templateID && req.TenantInfo.OrgID.IsNotNil() &&
 				req.TenantInfo.BuID.IsNotNil()
 		})).
@@ -790,7 +791,7 @@ func TestEDIHandler_SelectedValueRoutesReturnAutocompleteFields(t *testing.T) {
 	repo.EXPECT().
 		GetPartnerDocumentProfileByID(
 			mock.Anything,
-			mock.MatchedBy(func(req repositories.GetEDIPartnerDocumentProfileByIDRequest) bool {
+			mock.MatchedBy(func(req ediports.GetEDIPartnerDocumentProfileByIDRequest) bool {
 				return req.ID == profileID && req.TenantInfo.OrgID.IsNotNil() &&
 					req.TenantInfo.BuID.IsNotNil()
 			}),
@@ -806,7 +807,7 @@ func TestEDIHandler_SelectedValueRoutesReturnAutocompleteFields(t *testing.T) {
 		}, nil).
 		Once()
 	repo.EXPECT().
-		ListDocumentTypes(mock.Anything, repositories.ListEDIDocumentTypesRequest{}).
+		ListDocumentTypes(mock.Anything, ediports.ListEDIDocumentTypesRequest{}).
 		Return([]*edi.EDIDocumentType{{
 			ID:             documentTypeID,
 			Code:           "204",
@@ -819,7 +820,7 @@ func TestEDIHandler_SelectedValueRoutesReturnAutocompleteFields(t *testing.T) {
 		}}, nil).
 		Once()
 	profileRepo.EXPECT().
-		GetProfileByID(mock.Anything, mock.MatchedBy(func(req repositories.GetEDICommunicationProfileByIDRequest) bool {
+		GetProfileByID(mock.Anything, mock.MatchedBy(func(req ediports.GetEDICommunicationProfileByIDRequest) bool {
 			return req.ID == communicationProfileID && req.TenantInfo.OrgID.IsNotNil() &&
 				req.TenantInfo.BuID.IsNotNil()
 		})).
@@ -831,7 +832,7 @@ func TestEDIHandler_SelectedValueRoutesReturnAutocompleteFields(t *testing.T) {
 		}, nil).
 		Once()
 	mappingProfileRepo.EXPECT().
-		GetMappingProfileByID(mock.Anything, mock.MatchedBy(func(req repositories.GetMappingProfileByIDRequest) bool {
+		GetMappingProfileByID(mock.Anything, mock.MatchedBy(func(req ediports.GetMappingProfileByIDRequest) bool {
 			return req.ProfileID == mappingProfileID && req.TenantInfo.OrgID.IsNotNil() &&
 				req.TenantInfo.BuID.IsNotNil()
 		})).

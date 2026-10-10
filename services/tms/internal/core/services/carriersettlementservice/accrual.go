@@ -8,9 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/settlementshared"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,7 +22,7 @@ func (s *Service) AfterShipmentUpdate(
 	ctx context.Context,
 	original *shipment.Shipment,
 	updated *shipment.Shipment,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) error {
 	if updated == nil {
 		return nil
@@ -134,10 +134,10 @@ func (s *Service) accrueShipmentMoves(
 	shipmentID pulid.ID,
 	onlyMoveID *pulid.ID,
 ) error {
-	sp, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	sp, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         shipmentID,
 		TenantInfo: tenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -318,10 +318,10 @@ func (s *Service) ReaccrueMove(
 		return err
 	}
 
-	sp, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	sp, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         shipmentID,
 		TenantInfo: tenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -376,7 +376,7 @@ func (s *Service) shipmentIDForAssignment(
 	if assignment.ShipmentMove != nil {
 		return assignment.ShipmentMove.ShipmentID, nil
 	}
-	full, err := s.assignmentRepo.GetByID(ctx, &repositories.GetCarrierAssignmentByIDRequest{
+	full, err := s.assignmentRepo.GetByID(ctx, &shipmentports.GetCarrierAssignmentByIDRequest{
 		TenantInfo:          tenantInfo,
 		CarrierAssignmentID: assignment.ID,
 	})

@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -113,11 +113,11 @@ func (r *QueryResolver) Customers(ctx context.Context, input gqlmodel.DataTableC
 
 	result, err := r.CustomerService.ListConnection(
 		ctx,
-		&repositories.ListCustomerConnectionRequest{
+		&customerports.ListCustomerConnectionRequest{
 			Filter:          tableInput.Filter,
 			Cursor:          tableInput.Cursor,
 			CustomerColumns: customerColumns(ctx, "edges.node"),
-			CustomerFilterOptions: repositories.CustomerFilterOptions{
+			CustomerFilterOptions: customerports.CustomerFilterOptions{
 				IncludeState:          graphql.FieldRequested(ctx, "edges.node.state"),
 				IncludeBillingProfile: graphql.FieldRequested(ctx, "edges.node.billingProfile"),
 				IncludeEmailProfile:   graphql.FieldRequested(ctx, "edges.node.emailProfile"),
@@ -142,10 +142,10 @@ func (r *QueryResolver) Customer(ctx context.Context, id string) (*customer.Cust
 		return nil, err
 	}
 
-	return r.CustomerService.Get(ctx, repositories.GetCustomerByIDRequest{
+	return r.CustomerService.Get(ctx, customerports.GetCustomerByIDRequest{
 		ID:         customerID,
 		TenantInfo: base.TenantInfo(authCtx),
-		CustomerFilterOptions: repositories.CustomerFilterOptions{
+		CustomerFilterOptions: customerports.CustomerFilterOptions{
 			IncludeState:          true,
 			IncludeBillingProfile: true,
 			IncludeEmailProfile:   true,

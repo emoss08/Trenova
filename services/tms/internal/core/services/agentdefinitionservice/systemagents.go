@@ -7,8 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -17,7 +17,7 @@ const maxSystemNameAttempts = 5
 
 func (s *Service) EnsureSystem(
 	ctx context.Context,
-	req services.EnsureSystemAgentRequest,
+	req agentdefinitionports.EnsureSystemAgentRequest,
 ) (*agentdefinition.Definition, error) {
 	template, ok := agentdefinition.PageAgentTemplate(req.SystemKey)
 	if !ok {
@@ -73,9 +73,9 @@ func (s *Service) EnsureSystem(
 
 func (s *Service) systemAgent(
 	ctx context.Context,
-	req services.EnsureSystemAgentRequest,
+	req agentdefinitionports.EnsureSystemAgentRequest,
 ) (*agentdefinition.Definition, error) {
-	found, err := s.repo.GetBySystemKey(ctx, repositories.GetAgentDefinitionBySystemKeyRequest{
+	found, err := s.repo.GetBySystemKey(ctx, agentdefinitionports.GetAgentDefinitionBySystemKeyRequest{
 		SystemKey: req.SystemKey,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: req.TenantInfo.OrgID,
@@ -103,9 +103,9 @@ func systemAgentName(template agentdefinition.Template, attempt int) string {
 	}
 }
 
-func systemActor(tenant pagination.TenantInfo) *services.RequestActor {
-	return &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeUser,
+func systemActor(tenant pagination.TenantInfo) *permissionports.RequestActor {
+	return &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    tenant.UserID,
 		UserID:         tenant.UserID,
 		BusinessUnitID: tenant.BuID,

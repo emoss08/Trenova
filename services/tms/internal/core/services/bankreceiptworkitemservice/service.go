@@ -5,9 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptworkitemports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -20,13 +21,13 @@ import (
 type Params struct {
 	fx.In
 	Logger       *zap.Logger
-	Repo         repositories.BankReceiptWorkItemRepository
-	AuditService serviceports.AuditService
+	Repo         bankreceiptworkitemports.BankReceiptWorkItemRepository
+	AuditService auditports.AuditService
 }
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.BankReceiptWorkItemRepository
-	auditService serviceports.AuditService
+	repo         bankreceiptworkitemports.BankReceiptWorkItemRepository
+	auditService auditports.AuditService
 }
 
 func New(p Params) *Service {
@@ -46,11 +47,11 @@ func (s *Service) ListActive(
 
 func (s *Service) Get(
 	ctx context.Context,
-	req *serviceports.GetBankReceiptWorkItemRequest,
+	req *bankreceiptworkitemports.GetBankReceiptWorkItemRequest,
 ) (*bankreceiptworkitem.WorkItem, error) {
 	return s.repo.GetByID(
 		ctx,
-		repositories.GetBankReceiptWorkItemByIDRequest{
+		bankreceiptworkitemports.GetBankReceiptWorkItemByIDRequest{
 			ID:         req.WorkItemID,
 			TenantInfo: req.TenantInfo,
 		},
@@ -59,16 +60,16 @@ func (s *Service) Get(
 
 func (s *Service) PlanAssign(
 	ctx context.Context,
-	req *serviceports.AssignBankReceiptWorkItemRequest,
-	actor *serviceports.RequestActor,
-) (*serviceports.BankReceiptWorkItemChange, error) {
+	req *bankreceiptworkitemports.AssignBankReceiptWorkItemRequest,
+	actor *permissionports.RequestActor,
+) (*bankreceiptworkitemports.BankReceiptWorkItemChange, error) {
 	userID, err := requireWorkItemUser(actor)
 	if err != nil {
 		return nil, err
 	}
 	entity, err := s.repo.GetByID(
 		ctx,
-		repositories.GetBankReceiptWorkItemByIDRequest{
+		bankreceiptworkitemports.GetBankReceiptWorkItemByIDRequest{
 			ID:         req.WorkItemID,
 			TenantInfo: req.TenantInfo,
 		},
@@ -87,13 +88,13 @@ func (s *Service) PlanAssign(
 	after.AssignedToUserID = req.AssignedToUserID
 	after.AssignedAt = &now
 	after.UpdatedByID = userID
-	return &serviceports.BankReceiptWorkItemChange{Before: entity, After: &after}, nil
+	return &bankreceiptworkitemports.BankReceiptWorkItemChange{Before: entity, After: &after}, nil
 }
 
 func (s *Service) Assign(
 	ctx context.Context,
-	req *serviceports.AssignBankReceiptWorkItemRequest,
-	actor *serviceports.RequestActor,
+	req *bankreceiptworkitemports.AssignBankReceiptWorkItemRequest,
+	actor *permissionports.RequestActor,
 ) (*bankreceiptworkitem.WorkItem, error) {
 	change, err := s.PlanAssign(ctx, req, actor)
 	if err != nil {
@@ -104,7 +105,7 @@ func (s *Service) Assign(
 
 func (s *Service) save(
 	ctx context.Context,
-	change *serviceports.BankReceiptWorkItemChange,
+	change *bankreceiptworkitemports.BankReceiptWorkItemChange,
 	comment string,
 ) (*bankreceiptworkitem.WorkItem, error) {
 	updated, err := s.repo.Update(ctx, change.After)
@@ -117,16 +118,16 @@ func (s *Service) save(
 
 func (s *Service) PlanStartReview(
 	ctx context.Context,
-	req *serviceports.GetBankReceiptWorkItemRequest,
-	actor *serviceports.RequestActor,
-) (*serviceports.BankReceiptWorkItemChange, error) {
+	req *bankreceiptworkitemports.GetBankReceiptWorkItemRequest,
+	actor *permissionports.RequestActor,
+) (*bankreceiptworkitemports.BankReceiptWorkItemChange, error) {
 	userID, err := requireWorkItemUser(actor)
 	if err != nil {
 		return nil, err
 	}
 	entity, err := s.repo.GetByID(
 		ctx,
-		repositories.GetBankReceiptWorkItemByIDRequest{
+		bankreceiptworkitemports.GetBankReceiptWorkItemByIDRequest{
 			ID:         req.WorkItemID,
 			TenantInfo: req.TenantInfo,
 		},
@@ -142,13 +143,13 @@ func (s *Service) PlanStartReview(
 	after := *entity
 	after.Status = bankreceiptworkitem.StatusInReview
 	after.UpdatedByID = userID
-	return &serviceports.BankReceiptWorkItemChange{Before: entity, After: &after}, nil
+	return &bankreceiptworkitemports.BankReceiptWorkItemChange{Before: entity, After: &after}, nil
 }
 
 func (s *Service) StartReview(
 	ctx context.Context,
-	req *serviceports.GetBankReceiptWorkItemRequest,
-	actor *serviceports.RequestActor,
+	req *bankreceiptworkitemports.GetBankReceiptWorkItemRequest,
+	actor *permissionports.RequestActor,
 ) (*bankreceiptworkitem.WorkItem, error) {
 	change, err := s.PlanStartReview(ctx, req, actor)
 	if err != nil {
@@ -159,8 +160,8 @@ func (s *Service) StartReview(
 
 func (s *Service) Resolve(
 	ctx context.Context,
-	req *serviceports.ResolveBankReceiptWorkItemRequest,
-	actor *serviceports.RequestActor,
+	req *bankreceiptworkitemports.ResolveBankReceiptWorkItemRequest,
+	actor *permissionports.RequestActor,
 ) (*bankreceiptworkitem.WorkItem, error) {
 	userID, err := requireWorkItemUser(actor)
 	if err != nil {
@@ -168,7 +169,7 @@ func (s *Service) Resolve(
 	}
 	entity, err := s.repo.GetByID(
 		ctx,
-		repositories.GetBankReceiptWorkItemByIDRequest{
+		bankreceiptworkitemports.GetBankReceiptWorkItemByIDRequest{
 			ID:         req.WorkItemID,
 			TenantInfo: req.TenantInfo,
 		},
@@ -190,8 +191,8 @@ func (s *Service) Resolve(
 
 func (s *Service) Dismiss(
 	ctx context.Context,
-	req *serviceports.DismissBankReceiptWorkItemRequest,
-	actor *serviceports.RequestActor,
+	req *bankreceiptworkitemports.DismissBankReceiptWorkItemRequest,
+	actor *permissionports.RequestActor,
 ) (*bankreceiptworkitem.WorkItem, error) {
 	userID, err := requireWorkItemUser(actor)
 	if err != nil {
@@ -199,7 +200,7 @@ func (s *Service) Dismiss(
 	}
 	entity, err := s.repo.GetByID(
 		ctx,
-		repositories.GetBankReceiptWorkItemByIDRequest{
+		bankreceiptworkitemports.GetBankReceiptWorkItemByIDRequest{
 			ID:         req.WorkItemID,
 			TenantInfo: req.TenantInfo,
 		},
@@ -219,7 +220,7 @@ func (s *Service) Dismiss(
 	return updated, nil
 }
 
-func requireWorkItemUser(actor *serviceports.RequestActor) (pulid.ID, error) {
+func requireWorkItemUser(actor *permissionports.RequestActor) (pulid.ID, error) {
 	if actor == nil || actor.UserID.IsNil() {
 		return pulid.Nil, errortypes.NewAuthorizationError(
 			"Bank receipt work item action requires an authenticated user",
@@ -233,7 +234,7 @@ func (s *Service) logAudit(
 	userID pulid.ID,
 	comment string,
 ) {
-	params := &serviceports.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceBankReceiptWorkItem,
 		ResourceID:     current.ID.String(),
 		Operation:      permission.OpUpdate,
@@ -245,7 +246,7 @@ func (s *Service) logAudit(
 	if previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(previous)
 	}
-	options := []serviceports.LogOption{auditservice.WithComment(comment)}
+	options := []auditports.LogOption{auditservice.WithComment(comment)}
 	if previous != nil {
 		options = append(options, auditservice.WithDiff(previous, current))
 	}

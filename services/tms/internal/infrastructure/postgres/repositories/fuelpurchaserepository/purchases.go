@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -21,7 +21,7 @@ import (
 
 func (r *repository) applyPurchaseFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListFuelPurchasesRequest,
+	req *fuelpurchaseports.ListFuelPurchasesRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.FuelPurchaseColumns
 
@@ -83,7 +83,7 @@ func applyPurchaseRelations(
 
 func (r *repository) ListPurchases(
 	ctx context.Context,
-	req *repositories.ListFuelPurchasesRequest,
+	req *fuelpurchaseports.ListFuelPurchasesRequest,
 ) (*pagination.CursorListResult[*fuelpurchase.FuelPurchase], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*fuelpurchase.FuelPurchase], error) {
 		dba := r.db.DBForContext(ctx)
@@ -154,7 +154,7 @@ func (r *repository) ListPurchases(
 
 func (r *repository) GetPurchaseByID(
 	ctx context.Context,
-	req *repositories.GetFuelPurchaseByIDRequest,
+	req *fuelpurchaseports.GetFuelPurchaseByIDRequest,
 ) (*fuelpurchase.FuelPurchase, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*fuelpurchase.FuelPurchase, error) {
 		entity := new(fuelpurchase.FuelPurchase)
@@ -183,7 +183,7 @@ func (r *repository) GetPurchaseByID(
 
 func (r *repository) GetPurchasesByIDs(
 	ctx context.Context,
-	req *repositories.GetFuelPurchasesByIDsRequest,
+	req *fuelpurchaseports.GetFuelPurchasesByIDsRequest,
 ) ([]*fuelpurchase.FuelPurchase, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*fuelpurchase.FuelPurchase, error) {
 		entities := make([]*fuelpurchase.FuelPurchase, 0, len(req.IDs))
@@ -215,7 +215,7 @@ type referenceRow struct {
 
 func (r *repository) FindReferences(
 	ctx context.Context,
-	req *repositories.FindFuelPurchaseReferencesRequest,
+	req *fuelpurchaseports.FindFuelPurchaseReferencesRequest,
 ) (map[string]pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[string]pulid.ID, error) {
 		refs := make([]string, 0, len(req.References))
@@ -307,7 +307,7 @@ func (r *repository) UpdatePurchase(
 
 func (r *repository) DeletePurchase(
 	ctx context.Context,
-	req *repositories.DeleteFuelPurchaseRequest,
+	req *fuelpurchaseports.DeleteFuelPurchaseRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		results, err := r.db.DBForContext(ctx).
@@ -329,11 +329,11 @@ func (r *repository) DeletePurchase(
 
 func (r *repository) AccumulateFuel(
 	ctx context.Context,
-	req *repositories.AccumulateFuelRequest,
-) ([]*repositories.FuelAccumulationRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.FuelAccumulationRow, error) {
+	req *fuelpurchaseports.AccumulateFuelRequest,
+) ([]*fuelpurchaseports.FuelAccumulationRow, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*fuelpurchaseports.FuelAccumulationRow, error) {
 		cols := buncolgen.FuelPurchaseColumns
-		rows := make([]*repositories.FuelAccumulationRow, 0, 64)
+		rows := make([]*fuelpurchaseports.FuelAccumulationRow, 0, 64)
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().

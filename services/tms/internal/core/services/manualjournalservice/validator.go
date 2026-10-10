@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/manualjournal"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -18,13 +19,13 @@ import (
 type ValidatorParams struct {
 	fx.In
 
-	FiscalRepo    repositories.FiscalPeriodRepository
-	GLAccountRepo repositories.GLAccountRepository
+	FiscalRepo    fiscalperiodports.FiscalPeriodRepository
+	GLAccountRepo glaccountports.GLAccountRepository
 }
 
 type Validator struct {
-	fiscalRepo    repositories.FiscalPeriodRepository
-	glAccountRepo repositories.GLAccountRepository
+	fiscalRepo    fiscalperiodports.FiscalPeriodRepository
+	glAccountRepo glaccountports.GLAccountRepository
 }
 
 func NewValidator(p ValidatorParams) *Validator {
@@ -61,7 +62,7 @@ func (v *Validator) ValidateDraftUpsert(
 		return multiErr
 	}
 
-	period, err := v.fiscalRepo.GetPeriodByDate(ctx, repositories.GetPeriodByDateRequest{
+	period, err := v.fiscalRepo.GetPeriodByDate(ctx, fiscalperiodports.GetPeriodByDateRequest{
 		OrgID: entity.OrganizationID,
 		BuID:  entity.BusinessUnitID,
 		Date:  entity.AccountingDate,
@@ -93,7 +94,7 @@ func (v *Validator) ValidateDraftUpsert(
 	}
 
 	accountIDs := uniqueAccountIDs(entity.Lines)
-	accounts, glErr := v.glAccountRepo.GetByIDs(ctx, repositories.GetGLAccountsByIDsRequest{
+	accounts, glErr := v.glAccountRepo.GetByIDs(ctx, glaccountports.GetGLAccountsByIDsRequest{
 		TenantInfo:   paginationFromEntity(entity),
 		GLAccountIDs: accountIDs,
 	})

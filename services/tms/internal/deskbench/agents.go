@@ -11,7 +11,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"gopkg.in/yaml.v3"
 )
@@ -120,7 +120,7 @@ func (s *Session) syncAgent(ctx context.Context, spec *AgentSpec, outcome *Agent
 	tools := agentdefinition.WithoutCoreTools(spec.Tools)
 
 	if existing == nil {
-		_, err = s.bench.AgentDefinitions.Create(ctx, &serviceports.SaveAgentDefinitionRequest{
+		_, err = s.bench.AgentDefinitions.Create(ctx, &agentdefinitionports.SaveAgentDefinitionRequest{
 			Name:            spec.Name,
 			Description:     spec.Description,
 			Template:        agentdefinition.Template(spec.Template),
@@ -145,7 +145,7 @@ func (s *Session) syncAgent(ctx context.Context, spec *AgentSpec, outcome *Agent
 		return nil
 	}
 
-	_, err = s.bench.AgentDefinitions.Patch(ctx, &serviceports.PatchAgentDefinitionRequest{
+	_, err = s.bench.AgentDefinitions.Patch(ctx, &agentdefinitionports.PatchAgentDefinitionRequest{
 		ID:         existing.ID,
 		TenantInfo: s.Tenant,
 		Version:    existing.Version,
@@ -214,7 +214,7 @@ func (s *Session) syncDelegates(ctx context.Context, spec *AgentSpec) error {
 		return nil
 	}
 
-	_, err = s.bench.AgentDefinitions.Patch(ctx, &serviceports.PatchAgentDefinitionRequest{
+	_, err = s.bench.AgentDefinitions.Patch(ctx, &agentdefinitionports.PatchAgentDefinitionRequest{
 		ID:         existing.ID,
 		TenantInfo: s.Tenant,
 		Version:    existing.Version,

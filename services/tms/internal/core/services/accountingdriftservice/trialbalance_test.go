@@ -11,8 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accounttype"
 	"github.com/emoss08/trenova/internal/core/domain/journalentry"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -23,8 +24,8 @@ import (
 
 func (f *fakeReader) ReadTrialBalance(
 	_ context.Context,
-	req *services.ReadTrialBalanceRequest,
-) ([]services.AccountingTrialBalanceRow, error) {
+	req *accountingsyncports.ReadTrialBalanceRequest,
+) ([]accountingsyncports.AccountingTrialBalanceRow, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.trialReq = append(f.trialReq, *req)
@@ -34,7 +35,7 @@ func (f *fakeReader) ReadTrialBalance(
 	return slices.Clone(f.trial), nil
 }
 
-func (f *fakeReader) trialRequests() []services.ReadTrialBalanceRequest {
+func (f *fakeReader) trialRequests() []accountingsyncports.ReadTrialBalanceRequest {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return slices.Clone(f.trialReq)
@@ -42,62 +43,62 @@ func (f *fakeReader) trialRequests() []services.ReadTrialBalanceRequest {
 
 func (f *fakeRecords) CountByStatus(
 	context.Context,
-	repositories.AccountingSyncConnectionRequest,
-) ([]repositories.AccountingSyncStatusCount, error) {
+	accountingsyncports.AccountingSyncConnectionRequest,
+) ([]accountingsyncports.AccountingSyncStatusCount, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	counts := map[accountingsync.SyncStatus]int{}
 	for _, row := range f.rows {
 		counts[row.Status]++
 	}
-	out := make([]repositories.AccountingSyncStatusCount, 0, len(counts))
+	out := make([]accountingsyncports.AccountingSyncStatusCount, 0, len(counts))
 	for status, count := range counts {
-		out = append(out, repositories.AccountingSyncStatusCount{Status: status, Count: count})
+		out = append(out, accountingsyncports.AccountingSyncStatusCount{Status: status, Count: count})
 	}
 	return out, nil
 }
 
 type trialLedger struct {
 	mu       sync.Mutex
-	opening  []repositories.LedgerAccountBalance
-	during   []repositories.LedgerAccountBalance
-	income   []repositories.LedgerAccountBalance
+	opening  []journalentryports.LedgerAccountBalance
+	during   []journalentryports.LedgerAccountBalance
+	income   []journalentryports.LedgerAccountBalance
 	start    int64
-	requests []repositories.SumLedgerRequest
+	requests []journalentryports.SumLedgerRequest
 }
 
 func (f *trialLedger) GetJournal(
 	context.Context,
-	*repositories.GetLedgerJournalRequest,
-) (*repositories.LedgerJournal, error) {
+	*journalentryports.GetLedgerJournalRequest,
+) (*journalentryports.LedgerJournal, error) {
 	return nil, nil
 }
 
 func (f *trialLedger) GetEntryType(
 	context.Context,
-	*repositories.GetLedgerJournalRequest,
+	*journalentryports.GetLedgerJournalRequest,
 ) (journalentry.EntryType, error) {
 	return "", nil
 }
 
 func (f *trialLedger) ListJournals(
 	context.Context,
-	*repositories.ListLedgerJournalsRequest,
-) ([]*repositories.LedgerJournal, error) {
+	*journalentryports.ListLedgerJournalsRequest,
+) ([]*journalentryports.LedgerJournal, error) {
 	return nil, nil
 }
 
 func (f *trialLedger) ListActiveAccounts(
 	context.Context,
-	*repositories.ListLedgerAccountsRequest,
-) ([]repositories.LedgerAccount, error) {
+	*journalentryports.ListLedgerAccountsRequest,
+) ([]journalentryports.LedgerAccount, error) {
 	return nil, nil
 }
 
 func (f *trialLedger) SumLines(
 	_ context.Context,
-	req *repositories.SumLedgerRequest,
-) ([]repositories.LedgerAccountBalance, error) {
+	req *journalentryports.SumLedgerRequest,
+) ([]journalentryports.LedgerAccountBalance, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.requests = append(f.requests, *req)
@@ -111,20 +112,20 @@ func (f *trialLedger) SumLines(
 	}
 }
 
-func (f *trialLedger) sums() []repositories.SumLedgerRequest {
+func (f *trialLedger) sums() []journalentryports.SumLedgerRequest {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return slices.Clone(f.requests)
 }
 
 type trialMappings struct {
-	repositories.AccountingMappingRepository
+	accountingsyncports.AccountingMappingRepository
 	rows []*accountingsync.AccountingMapping
 }
 
 func (f *trialMappings) ListByConnection(
 	_ context.Context,
-	req *repositories.ListAccountingMappingsRequest,
+	req *accountingsyncports.ListAccountingMappingsQuery,
 ) ([]*accountingsync.AccountingMapping, error) {
 	out := []*accountingsync.AccountingMapping{}
 	for _, row := range f.rows {
@@ -136,13 +137,13 @@ func (f *trialMappings) ListByConnection(
 }
 
 type trialReferences struct {
-	repositories.AccountingReferenceObjectRepository
+	accountingsyncports.AccountingReferenceObjectRepository
 	rows []*accountingsync.AccountingReferenceObject
 }
 
 func (f *trialReferences) GetByExternalIDs(
 	_ context.Context,
-	req *repositories.GetAccountingReferenceObjectsRequest,
+	req *accountingsyncports.GetAccountingReferenceObjectsRequest,
 ) ([]*accountingsync.AccountingReferenceObject, error) {
 	out := []*accountingsync.AccountingReferenceObject{}
 	for _, row := range f.rows {
@@ -154,13 +155,13 @@ func (f *trialReferences) GetByExternalIDs(
 }
 
 type trialOrganizations struct {
-	repositories.OrganizationRepository
+	tenantports.OrganizationRepository
 	timezone string
 }
 
 func (f trialOrganizations) GetByID(
 	_ context.Context,
-	req repositories.GetOrganizationByIDRequest,
+	req tenantports.GetOrganizationByIDRequest,
 ) (*tenant.Organization, error) {
 	return &tenant.Organization{ID: req.TenantInfo.OrgID, Timezone: f.timezone}, nil
 }
@@ -177,8 +178,8 @@ type trialFixture struct {
 	retained pulid.ID
 }
 
-func balance(id pulid.ID, code, name string, category accounttype.Category, net int64) repositories.LedgerAccountBalance {
-	out := repositories.LedgerAccountBalance{
+func balance(id pulid.ID, code, name string, category accounttype.Category, net int64) journalentryports.LedgerAccountBalance {
+	out := journalentryports.LedgerAccountBalance{
 		AccountID:   id,
 		AccountCode: code,
 		AccountName: name,
@@ -208,8 +209,8 @@ func glMapping(
 	}
 }
 
-func providerRow(externalID, name, debit, credit string) services.AccountingTrialBalanceRow {
-	row := services.AccountingTrialBalanceRow{AccountExternalID: externalID, AccountName: name}
+func providerRow(externalID, name, debit, credit string) accountingsyncports.AccountingTrialBalanceRow {
+	row := accountingsyncports.AccountingTrialBalanceRow{AccountExternalID: externalID, AccountName: name}
 	if debit != "" {
 		row.Debit = decimal.RequireFromString(debit)
 	}
@@ -237,13 +238,13 @@ func newTrialFixture(t *testing.T) *trialFixture {
 	}
 	f.ledger = &trialLedger{start: *h.conn.SyncStartDate}
 	h.controls.cash = f.cash
-	f.ledger.during = []repositories.LedgerAccountBalance{
+	f.ledger.during = []journalentryports.LedgerAccountBalance{
 		balance(f.ar, "1100", "Accounts receivable", accounttype.CategoryAsset, 150_000),
 		balance(f.cash, "1000", "Operating cash", accounttype.CategoryAsset, 50_000),
 		balance(f.revenue, "4000", "Freight revenue", accounttype.CategoryRevenue, -999_999),
 		balance(f.retained, "3000", "Retained earnings", accounttype.CategoryEquity, -7_000),
 	}
-	f.ledger.income = []repositories.LedgerAccountBalance{
+	f.ledger.income = []journalentryports.LedgerAccountBalance{
 		balance(f.revenue, "4000", "Freight revenue", accounttype.CategoryRevenue, -120_000),
 		balance(f.fuel, "4010", "Fuel surcharge revenue", accounttype.CategoryRevenue, -80_000),
 		balance(f.ar, "1100", "Accounts receivable", accounttype.CategoryAsset, 999_999),
@@ -282,7 +283,7 @@ func newTrialFixture(t *testing.T) *trialFixture {
 			State:        accountingsync.MappingStateConfirmed,
 		},
 	}}
-	h.reader.trial = []services.AccountingTrialBalanceRow{
+	h.reader.trial = []accountingsyncports.AccountingTrialBalanceRow{
 		providerRow("qb-ar", "Accounts Receivable (A/R)", "1500.00", ""),
 		providerRow("qb-bank", "Checking", "400.00", ""),
 		providerRow("qb-income", "Freight income", "", "2000.00"),
@@ -319,9 +320,9 @@ func newTrialFixture(t *testing.T) *trialFixture {
 	return f
 }
 
-func (f *trialFixture) reconcile(t *testing.T) *services.AccountingDriftBalanceResult {
+func (f *trialFixture) reconcile(t *testing.T) *accountingsyncports.AccountingDriftBalanceResult {
 	t.Helper()
-	result, err := f.h.svc.ReconcileBalances(t.Context(), &services.ReconcileAccountingDriftBalancesRequest{
+	result, err := f.h.svc.ReconcileBalances(t.Context(), &accountingsyncports.ReconcileAccountingDriftBalancesRequest{
 		TenantInfo:   f.h.tenant,
 		ConnectionID: f.h.conn.ID,
 		EventBudget:  20,
@@ -424,7 +425,7 @@ func TestTrialBalanceCountsOpeningBalancesWhenTheyWereSent(t *testing.T) {
 	f := newTrialFixture(t)
 	sent := f.h.now.Add(-24 * time.Hour).Unix()
 	f.h.conns.conn.LedgerOpeningBalancesSentAt = &sent
-	f.ledger.opening = []repositories.LedgerAccountBalance{
+	f.ledger.opening = []journalentryports.LedgerAccountBalance{
 		balance(f.cash, "1000", "Operating cash", accounttype.CategoryAsset, -10_000),
 		balance(f.revenue, "4000", "Freight revenue", accounttype.CategoryRevenue, -555_555),
 	}

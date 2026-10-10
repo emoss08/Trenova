@@ -6,9 +6,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/equipmentcontinuity"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -29,7 +29,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.EquipmentContinuityRepository {
+func New(p Params) equipmentcontinuityports.EquipmentContinuityRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.equipment-continuity-repository"),
@@ -38,7 +38,7 @@ func New(p Params) repositories.EquipmentContinuityRepository {
 
 func (r *repository) GetCurrent(
 	ctx context.Context,
-	req repositories.GetCurrentEquipmentContinuityRequest,
+	req equipmentcontinuityports.GetCurrentEquipmentContinuityRequest,
 ) (*equipmentcontinuity.EquipmentContinuity, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*equipmentcontinuity.EquipmentContinuity, error) {
 		entity := new(equipmentcontinuity.EquipmentContinuity)
@@ -65,7 +65,7 @@ func (r *repository) GetCurrent(
 //nolint:govet // existing scoped variable reuse is local and behavior-preserving
 func (r *repository) GetEffectiveCurrent(
 	ctx context.Context,
-	req repositories.GetCurrentEquipmentContinuityRequest,
+	req equipmentcontinuityports.GetCurrentEquipmentContinuityRequest,
 ) (*equipmentcontinuity.EquipmentContinuity, error) {
 	current, err := r.GetCurrent(ctx, req)
 	if err != nil || current == nil {
@@ -123,10 +123,10 @@ func (r *repository) GetByID(
 
 func (r *repository) Advance(
 	ctx context.Context,
-	req repositories.CreateEquipmentContinuityRequest,
+	req equipmentcontinuityports.CreateEquipmentContinuityRequest,
 ) (*equipmentcontinuity.EquipmentContinuity, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*equipmentcontinuity.EquipmentContinuity, error) {
-		current, err := r.GetCurrent(ctx, repositories.GetCurrentEquipmentContinuityRequest{
+		current, err := r.GetCurrent(ctx, equipmentcontinuityports.GetCurrentEquipmentContinuityRequest{
 			TenantInfo:    req.TenantInfo,
 			EquipmentType: req.EquipmentType,
 			EquipmentID:   req.EquipmentID,
@@ -165,9 +165,9 @@ func (r *repository) Advance(
 
 func (r *repository) RollbackCurrentByMove(
 	ctx context.Context,
-	req repositories.RollbackEquipmentContinuityByMoveRequest,
+	req equipmentcontinuityports.RollbackEquipmentContinuityByMoveRequest,
 ) error {
-	current, err := r.GetCurrent(ctx, repositories.GetCurrentEquipmentContinuityRequest{
+	current, err := r.GetCurrent(ctx, equipmentcontinuityports.GetCurrentEquipmentContinuityRequest{
 		TenantInfo:    req.TenantInfo,
 		EquipmentType: req.EquipmentType,
 		EquipmentID:   req.EquipmentID,
@@ -185,7 +185,7 @@ func (r *repository) RollbackCurrentByMove(
 
 func (r *repository) RollbackCurrentByShipment(
 	ctx context.Context,
-	req repositories.RollbackEquipmentContinuityByShipmentRequest,
+	req equipmentcontinuityports.RollbackEquipmentContinuityByShipmentRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		rows := make([]*equipmentcontinuity.EquipmentContinuity, 0)

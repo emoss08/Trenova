@@ -4,17 +4,20 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/uptrace/bun"
-
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -23,23 +26,23 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.CarrierRepository
+	Repo         carrierports.CarrierRepository
 	Validator    *Validator
-	AuditService services.AuditService
-	Realtime     services.RealtimeService
-	DB           ports.DBConnection              `optional:"true"`
-	Sync         services.AccountingSyncEnqueuer `optional:"true"`
+	AuditService auditports.AuditService
+	Realtime     agentports.RealtimeService
+	DB           kernelports.DBConnection                   `optional:"true"`
+	Sync         accountingsyncports.AccountingSyncEnqueuer `optional:"true"`
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.CarrierRepository
+	repo         carrierports.CarrierRepository
 	validator    *Validator
-	auditService services.AuditService
-	realtime     services.RealtimeService
-	observer     services.CarrierLifecycleObserver
-	db           ports.DBConnection
-	sync         services.AccountingSyncEnqueuer
+	auditService auditports.AuditService
+	realtime     agentports.RealtimeService
+	observer     carrierintelports.CarrierLifecycleObserver
+	db           kernelports.DBConnection
+	sync         accountingsyncports.AccountingSyncEnqueuer
 }
 
 func New(p Params) *Service {
@@ -64,7 +67,7 @@ func (s *Service) updateAndQueueSync(
 	}
 
 	var updated *carrier.Carrier
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		var txErr error
 		if updated, txErr = s.repo.Update(txCtx, entity); txErr != nil {
 			return txErr
@@ -72,7 +75,7 @@ func (s *Service) updateAndQueueSync(
 		if updated.SamePartyDetails(original) {
 			return nil
 		}
-		return services.EnqueueAccountingSync(txCtx, s.sync, services.VendorSyncRequest(
+		return accountingsyncports.EnqueueAccountingSync(txCtx, s.sync, accountingsyncports.VendorSyncRequest(
 			pagination.TenantInfo{OrgID: updated.OrganizationID, BuID: updated.BusinessUnitID},
 			accountingsync.SyncObjectCarrierVendor,
 			updated.ID,
@@ -88,35 +91,35 @@ func (s *Service) updateAndQueueSync(
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListCarrierRequest,
+	req *carrierports.ListCarrierRequest,
 ) (*pagination.ListResult[*carrier.Carrier], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListCarrierConnectionRequest,
+	req *carrierports.ListCarrierConnectionRequest,
 ) (*pagination.CursorListResult[*carrier.Carrier], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	req repositories.GetCarrierByIDRequest,
+	req carrierports.GetCarrierByIDRequest,
 ) (*carrier.Carrier, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) SelectOptions(
 	ctx context.Context,
-	req *repositories.CarrierSelectOptionsRequest,
+	req *carrierports.CarrierSelectOptionsRequest,
 ) (*pagination.ListResult[*carrier.Carrier], error) {
 	return s.repo.SelectOptions(ctx, req)
 }
 
 func (s *Service) BulkUpdateStatus(
 	ctx context.Context,
-	req *repositories.BulkUpdateCarrierStatusRequest,
+	req *carrierports.BulkUpdateCarrierStatusRequest,
 ) ([]*carrier.Carrier, error) {
 	log := s.l.With(
 		zap.String("operation", "BulkUpdateStatus"),
@@ -127,7 +130,7 @@ func (s *Service) BulkUpdateStatus(
 	if err != nil {
 		return nil, err
 	}
-	originalEntities := services.Befores(changes)
+	originalEntities := kernelports.Befores(changes)
 
 	entities, err := s.repo.BulkUpdateStatus(ctx, req)
 	if err != nil {
@@ -165,7 +168,7 @@ func (s *Service) BulkUpdateStatus(
 		previous[original.ID.String()] = original.Status
 	}
 	for _, entity := range entities {
-		s.notifyObserver(ctx, &services.CarrierLifecycleEvent{
+		s.notifyObserver(ctx, &carrierintelports.CarrierLifecycleEvent{
 			TenantInfo:     req.TenantInfo,
 			Carrier:        entity,
 			PreviousStatus: previous[entity.ID.String()],
@@ -178,7 +181,7 @@ func (s *Service) BulkUpdateStatus(
 func (s *Service) Create(
 	ctx context.Context,
 	entity *carrier.Carrier,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*carrier.Carrier, error) {
 	auditActor := actor.AuditActor()
 	log := s.l.With(
@@ -198,7 +201,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceCarrier,
 		ResourceID:     createdEntity.GetID().String(),
 		Operation:      permission.OpCreate,
@@ -230,7 +233,7 @@ func (s *Service) Create(
 		log.Warn("failed to publish carrier invalidation", zap.Error(err))
 	}
 
-	s.notifyObserver(ctx, &services.CarrierLifecycleEvent{
+	s.notifyObserver(ctx, &carrierintelports.CarrierLifecycleEvent{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  createdEntity.OrganizationID,
 			BuID:   createdEntity.BusinessUnitID,
@@ -246,7 +249,7 @@ func (s *Service) Create(
 func (s *Service) Update(
 	ctx context.Context,
 	entity *carrier.Carrier,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*carrier.Carrier, error) {
 	auditActor := actor.AuditActor()
 	log := s.l.With(
@@ -267,7 +270,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceCarrier,
 		ResourceID:     updatedEntity.GetID().String(),
 		Operation:      permission.OpUpdate,
@@ -301,8 +304,8 @@ func (s *Service) Update(
 		log.Warn("failed to publish carrier invalidation", zap.Error(err))
 	}
 
-	if auditActor.PrincipalType != services.PrincipalTypeSystem {
-		s.notifyObserver(ctx, &services.CarrierLifecycleEvent{
+	if auditActor.PrincipalType != permissionports.PrincipalTypeSystem {
+		s.notifyObserver(ctx, &carrierintelports.CarrierLifecycleEvent{
 			TenantInfo: pagination.TenantInfo{
 				OrgID:  updatedEntity.OrganizationID,
 				BuID:   updatedEntity.BusinessUnitID,
@@ -316,11 +319,11 @@ func (s *Service) Update(
 	return updatedEntity, nil
 }
 
-func (s *Service) SetLifecycleObserver(observer services.CarrierLifecycleObserver) {
+func (s *Service) SetLifecycleObserver(observer carrierintelports.CarrierLifecycleObserver) {
 	s.observer = observer
 }
 
-func (s *Service) notifyObserver(ctx context.Context, event *services.CarrierLifecycleEvent) {
+func (s *Service) notifyObserver(ctx context.Context, event *carrierintelports.CarrierLifecycleEvent) {
 	if s.observer == nil {
 		return
 	}

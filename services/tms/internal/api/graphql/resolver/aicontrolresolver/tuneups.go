@@ -8,10 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/aituneup"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
 )
 
-func tuneUpModel(view *services.AITuneUpView) *gqlmodel.AITuneUp {
+func tuneUpModel(view *aituneupports.AITuneUpView) *gqlmodel.AITuneUp {
 	tuneUp := view.TuneUp
 	out := &gqlmodel.AITuneUp{
 		ID:            tuneUp.ID.String(),

@@ -5,10 +5,10 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/invoicerun"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -31,7 +31,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.InvoiceRunRepository {
+func New(p Params) invoicerunports.InvoiceRunRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.invoice-run-repository"),
@@ -40,7 +40,7 @@ func New(p Params) repositories.InvoiceRunRepository {
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListInvoiceRunsRequest,
+	req *invoicerunports.ListInvoiceRunsRequest,
 ) (*pagination.ListResult[*invoicerun.InvoiceRun], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*invoicerun.InvoiceRun], error) {
 		entities := make([]*invoicerun.InvoiceRun, 0, req.Filter.Pagination.SafeLimit())
@@ -69,7 +69,7 @@ func (r *repository) List(
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListInvoiceRunConnectionRequest,
+	req *invoicerunports.ListInvoiceRunConnectionRequest,
 ) (*pagination.CursorListResult[*invoicerun.InvoiceRun], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.
 
@@ -130,7 +130,7 @@ func (r *repository) ListConnection(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetInvoiceRunByIDRequest,
+	req invoicerunports.GetInvoiceRunByIDRequest,
 ) (*invoicerun.InvoiceRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*invoicerun.InvoiceRun, error) {
 		run := buncolgen.InvoiceRunColumns
@@ -162,7 +162,7 @@ func (r *repository) GetByID(
 
 func (r *repository) GetOpenScheduledRun(
 	ctx context.Context,
-	req repositories.GetOpenScheduledRunRequest,
+	req invoicerunports.GetOpenScheduledRunRequest,
 ) (*invoicerun.InvoiceRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*invoicerun.InvoiceRun, error) {
 		run := buncolgen.InvoiceRunColumns
@@ -241,12 +241,12 @@ func (r *repository) Update(
 // and the new set written in one transaction.
 func (r *repository) ReplaceGroups(
 	ctx context.Context,
-	req *repositories.ReplaceGroupsRequest,
+	req *invoicerunports.ReplaceGroupsRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		grp := buncolgen.InvoiceRunGroupColumns
 
-		return r.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
+		return r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
 			// The item rows cascade from the group delete.
 			if _, err := tx.NewDelete().
 				Model((*invoicerun.InvoiceRunGroup)(nil)).

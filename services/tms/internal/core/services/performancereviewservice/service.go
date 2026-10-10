@@ -10,10 +10,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -34,21 +37,21 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.PerformanceReviewRepository
-	WorkerRepo   repositories.WorkerRepository
-	UserRepo     repositories.UserRepository
-	AuditService services.AuditService
-	Realtime     services.RealtimeService           `optional:"true"`
+	Repo         workerports.PerformanceReviewRepository
+	WorkerRepo   workerports.WorkerRepository
+	UserRepo     tenantports.UserRepository
+	AuditService auditports.AuditService
+	Realtime     agentports.RealtimeService         `optional:"true"`
 	DriverNotify *drivernotificationservice.Service `optional:"true"`
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.PerformanceReviewRepository
-	workerRepo   repositories.WorkerRepository
-	userRepo     repositories.UserRepository
-	auditService services.AuditService
-	realtime     services.RealtimeService
+	repo         workerports.PerformanceReviewRepository
+	workerRepo   workerports.WorkerRepository
+	userRepo     tenantports.UserRepository
+	auditService auditports.AuditService
+	realtime     agentports.RealtimeService
 	driverNotify *drivernotificationservice.Service
 }
 
@@ -80,7 +83,7 @@ func (s *Service) audit(p *auditParams) {
 	if s.auditService == nil || p.userID.IsNil() {
 		return
 	}
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       p.resource,
 		ResourceID:     p.resourceID,
 		Operation:      p.operation,
@@ -89,7 +92,7 @@ func (s *Service) audit(p *auditParams) {
 		OrganizationID: p.tenant.OrgID,
 		BusinessUnitID: p.tenant.BuID,
 	}
-	opts := []services.LogOption{auditservice.WithComment(p.comment)}
+	opts := []auditports.LogOption{auditservice.WithComment(p.comment)}
 	if p.previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(p.previous)
 		opts = append(opts, auditservice.WithDiff(p.previous, p.current))
@@ -110,9 +113,9 @@ func (s *Service) publish(
 	if s.realtime == nil {
 		return
 	}
-	actorType := services.PrincipalTypeUser
+	actorType := permissionports.PrincipalTypeUser
 	if userID.IsNil() {
-		actorType = services.PrincipalTypeSystem
+		actorType = permissionports.PrincipalTypeSystem
 	}
 	if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
 		OrganizationID: tenantInfo.OrgID,
@@ -157,7 +160,7 @@ func (s *Service) loadWorker(
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 ) (*worker.Worker, error) {
-	return s.workerRepo.GetByID(ctx, repositories.GetWorkerByIDRequest{
+	return s.workerRepo.GetByID(ctx, workerports.GetWorkerByIDRequest{
 		ID:             workerID,
 		TenantInfo:     tenantInfo,
 		IncludeProfile: true,

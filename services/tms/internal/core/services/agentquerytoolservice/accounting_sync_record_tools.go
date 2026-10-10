@@ -6,8 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -55,7 +56,7 @@ var syncDocumentKinds = []permission.RecordKind{
 type accountingSyncLedgerReader interface {
 	ListRecords(
 		ctx context.Context,
-		req *serviceports.ListAccountingSyncRecordsRequest,
+		req *accountingsyncports.ListAccountingSyncRecordsRequest,
 	) (*pagination.CursorListResult[*accountingsync.AccountingSyncRecord], error)
 	GetRecord(
 		ctx context.Context,
@@ -71,7 +72,7 @@ type accountingSyncLedgerReader interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		objectIDs []pulid.ID,
-	) (map[pulid.ID]*serviceports.AccountingSyncObjectState, error)
+	) (map[pulid.ID]*accountingsyncports.AccountingSyncObjectState, error)
 }
 
 type accountingSyncRecordRow struct {
@@ -196,13 +197,13 @@ type listAccountingSyncRecordsTool struct {
 
 func newListAccountingSyncRecordsTool(
 	ledger accountingSyncLedgerReader,
-) serviceports.AgentQueryTool {
+) agentports.AgentQueryTool {
 	return &listAccountingSyncRecordsTool{ledger: ledger}
 }
 
 func provideListAccountingSyncRecordsTool(
-	ledger serviceports.AccountingSyncService,
-) serviceports.AgentQueryTool {
+	ledger accountingsyncports.AccountingSyncService,
+) agentports.AgentQueryTool {
 	return newListAccountingSyncRecordsTool(ledger)
 }
 
@@ -258,13 +259,13 @@ func (t *listAccountingSyncRecordsTool) ParamSchema() map[string]any {
 	}, paramAccountingSystem)
 }
 
-func (t *listAccountingSyncRecordsTool) Policy() serviceports.ToolPolicy {
+func (t *listAccountingSyncRecordsTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceAccountingSync})
 }
 
 func (t *listAccountingSyncRecordsTool) request(
-	params *serviceports.QueryToolParams,
-) (*serviceports.ListAccountingSyncRecordsRequest, error) {
+	params *agentports.QueryToolParams,
+) (*accountingsyncports.ListAccountingSyncRecordsRequest, error) {
 	system, err := requireAccountingSystem(params.Params)
 	if err != nil {
 		return nil, err
@@ -311,7 +312,7 @@ func (t *listAccountingSyncRecordsTool) request(
 	}
 	cursor.IncludeTotalCount = false
 
-	return &serviceports.ListAccountingSyncRecordsRequest{
+	return &accountingsyncports.ListAccountingSyncRecordsRequest{
 		TenantInfo:      tenantOf(params),
 		IntegrationType: system,
 		Statuses:        statuses,
@@ -325,7 +326,7 @@ func (t *listAccountingSyncRecordsTool) request(
 
 func (t *listAccountingSyncRecordsTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -362,13 +363,13 @@ type getAccountingSyncRecordTool struct {
 	ledger accountingSyncLedgerReader
 }
 
-func newGetAccountingSyncRecordTool(ledger accountingSyncLedgerReader) serviceports.AgentQueryTool {
+func newGetAccountingSyncRecordTool(ledger accountingSyncLedgerReader) agentports.AgentQueryTool {
 	return &getAccountingSyncRecordTool{ledger: ledger}
 }
 
 func provideGetAccountingSyncRecordTool(
-	ledger serviceports.AccountingSyncService,
-) serviceports.AgentQueryTool {
+	ledger accountingsyncports.AccountingSyncService,
+) agentports.AgentQueryTool {
 	return newGetAccountingSyncRecordTool(ledger)
 }
 
@@ -395,13 +396,13 @@ func (t *getAccountingSyncRecordTool) ParamSchema() map[string]any {
 	}, paramSyncRecordID)
 }
 
-func (t *getAccountingSyncRecordTool) Policy() serviceports.ToolPolicy {
+func (t *getAccountingSyncRecordTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceAccountingSync})
 }
 
 func (t *getAccountingSyncRecordTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -449,13 +450,13 @@ type getRecordAccountingSyncStateTool struct {
 
 func newGetRecordAccountingSyncStateTool(
 	ledger accountingSyncLedgerReader,
-) serviceports.AgentQueryTool {
+) agentports.AgentQueryTool {
 	return &getRecordAccountingSyncStateTool{ledger: ledger}
 }
 
 func provideGetRecordAccountingSyncStateTool(
-	ledger serviceports.AccountingSyncService,
-) serviceports.AgentQueryTool {
+	ledger accountingsyncports.AccountingSyncService,
+) agentports.AgentQueryTool {
 	return newGetRecordAccountingSyncStateTool(ledger)
 }
 
@@ -494,12 +495,12 @@ func (t *getRecordAccountingSyncStateTool) ParamSchema() map[string]any {
 	}, paramSyncDocumentIDs)
 }
 
-func (t *getRecordAccountingSyncStateTool) Policy() serviceports.ToolPolicy {
+func (t *getRecordAccountingSyncStateTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceAccountingSync})
 }
 
 func (t *getRecordAccountingSyncStateTool) documentIDs(
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) ([]pulid.ID, error) {
 	raw := sliceutils.DedupeStrings(optionalStrings(params.Params, paramSyncDocumentIDs))
 	if len(raw) == 0 {
@@ -534,7 +535,7 @@ func (t *getRecordAccountingSyncStateTool) documentIDs(
 
 func (t *getRecordAccountingSyncStateTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

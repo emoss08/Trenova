@@ -3,9 +3,9 @@ package aiauditjobs
 import (
 	"time"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/schedule"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 )
@@ -49,7 +49,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 			Spec:          schedule.Cron("37 3 * * *"),
 			Workflow:      VerifyAIAuditChainWorkflow,
 			TaskQueue:     temporaltype.AuditTaskQueue,
-			Args:          []any{&serviceports.AIAuditVerifyPayload{}},
+			Args:          []any{&aiauditports.AIAuditVerifyPayload{}},
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
 			Memo: map[string]any{
 				memoKeyPurpose: "ai-audit-verification",

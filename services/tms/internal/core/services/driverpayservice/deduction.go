@@ -5,9 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,21 +17,21 @@ import (
 
 func (s *Service) ListDeductions(
 	ctx context.Context,
-	req *repositories.ListRecurringDeductionsRequest,
+	req *driverpayports.ListRecurringDeductionsRequest,
 ) (*pagination.ListResult[*driverpay.RecurringDeduction], error) {
 	return s.deductionRepo.List(ctx, req)
 }
 
 func (s *Service) ListDeductionsConnection(
 	ctx context.Context,
-	req *repositories.ListRecurringDeductionConnectionRequest,
+	req *driverpayports.ListRecurringDeductionConnectionRequest,
 ) (*pagination.CursorListResult[*driverpay.RecurringDeduction], error) {
 	return s.deductionRepo.ListConnection(ctx, req)
 }
 
 func (s *Service) GetDeduction(
 	ctx context.Context,
-	req repositories.GetRecurringDeductionByIDRequest,
+	req driverpayports.GetRecurringDeductionByIDRequest,
 ) (*driverpay.RecurringDeduction, error) {
 	return s.deductionRepo.GetByID(ctx, req)
 }
@@ -39,7 +40,7 @@ func (s *Service) CreateDeduction(
 	ctx context.Context,
 	entity *driverpay.RecurringDeduction,
 	autoLinkEscrow bool,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driverpay.RecurringDeduction, error) {
 	if err := requireActor(actor, "Recurring deduction creation"); err != nil {
 		return nil, err
@@ -61,7 +62,7 @@ func (s *Service) CreateDeduction(
 func (s *Service) UpdateDeduction(
 	ctx context.Context,
 	entity *driverpay.RecurringDeduction,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driverpay.RecurringDeduction, error) {
 	if err := requireActor(actor, "Recurring deduction update"); err != nil {
 		return nil, err
@@ -70,7 +71,7 @@ func (s *Service) UpdateDeduction(
 		return nil, err
 	}
 
-	previous, err := s.deductionRepo.GetByID(ctx, repositories.GetRecurringDeductionByIDRequest{
+	previous, err := s.deductionRepo.GetByID(ctx, driverpayports.GetRecurringDeductionByIDRequest{
 		ID: entity.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -97,7 +98,7 @@ func (s *Service) logDeductionAudit(
 	operation permission.Operation,
 	comment string,
 ) {
-	params := &serviceports.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceRecurringDeduction,
 		ResourceID:     current.ID.String(),
 		Operation:      operation,
@@ -106,7 +107,7 @@ func (s *Service) logDeductionAudit(
 		OrganizationID: current.OrganizationID,
 		BusinessUnitID: current.BusinessUnitID,
 	}
-	options := []serviceports.LogOption{auditservice.WithComment(comment)}
+	options := []auditports.LogOption{auditservice.WithComment(comment)}
 	if previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(previous)
 		options = append(options, auditservice.WithDiff(previous, current))

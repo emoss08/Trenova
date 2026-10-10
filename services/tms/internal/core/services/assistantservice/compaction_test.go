@@ -6,8 +6,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -180,9 +181,9 @@ func TestMeasureAfterTurn_KeepsTheMeasureAndTellsTheReader(t *testing.T) {
 	plan := &TurnPlan{Turn: agentruntime.TurnState{System: strings.Repeat("s", 8000)}}
 	saved := []conversation.Message{{Role: conversation.RoleAssistant, Model: "gpt-4o"}}
 
-	var events []serviceports.StreamEvent
+	var events []kernelports.StreamEvent
 	svc.measureAfterTurn(t.Context(), conversations.thread, plan, saved, 0, actor.TenantInfo(),
-		func(event serviceports.StreamEvent) { events = append(events, event) })
+		func(event kernelports.StreamEvent) { events = append(events, event) })
 
 	require.NotNil(t, conversations.thread.ContextUsage)
 	usage := conversations.thread.ContextUsage
@@ -191,8 +192,8 @@ func TestMeasureAfterTurn_KeepsTheMeasureAndTellsTheReader(t *testing.T) {
 	require.Len(t, conversations.contexts, 1)
 
 	require.Len(t, events, 1)
-	assert.Equal(t, serviceports.AssistantEventContext, events[0].Event)
-	data, ok := events[0].Data.(serviceports.AssistantContextEvent)
+	assert.Equal(t, agentports.AssistantEventContext, events[0].Event)
+	data, ok := events[0].Data.(agentports.AssistantContextEvent)
 	require.True(t, ok)
 	assert.Equal(t, conversations.thread.ID, data.ThreadID)
 	assert.Equal(t, usage.Total(), data.Usage.Total())

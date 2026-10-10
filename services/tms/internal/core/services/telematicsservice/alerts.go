@@ -8,8 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -29,7 +30,7 @@ func (s *Service) notifyCriticalHOSTransitions(
 		return nil
 	}
 
-	previous, err := s.repo.ListWorkerHOSStates(ctx, &repositories.ListWorkerHOSStatesRequest{
+	previous, err := s.repo.ListWorkerHOSStates(ctx, &telematicsports.ListWorkerHOSStatesRequest{
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {
@@ -141,7 +142,7 @@ func (s *Service) sendHOSAlert(
 	correlation := fmt.Sprintf("hos-%s-%s", alert.Kind, workerID)
 	exists, err := s.notifications.ExistsRecent(
 		ctx,
-		repositories.ExistsRecentNotificationRequest{
+		notificationports.ExistsRecentNotificationRequest{
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
 			EventType:      "hos_alert",

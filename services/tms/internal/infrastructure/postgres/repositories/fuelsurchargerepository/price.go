@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/fuelsurcharge"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -27,7 +27,7 @@ type priceRepository struct {
 	l  *zap.Logger
 }
 
-func NewPriceRepository(p PriceParams) repositories.FuelIndexPriceRepository {
+func NewPriceRepository(p PriceParams) fuelsurchargeports.FuelIndexPriceRepository {
 	return &priceRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.fuel-index-price-repository"),
@@ -81,7 +81,7 @@ func (r *priceRepository) UpsertPrices(
 
 func (r *priceRepository) ListByIndex(
 	ctx context.Context,
-	req *repositories.ListFuelIndexPricesRequest,
+	req *fuelsurchargeports.ListFuelIndexPricesRequest,
 ) ([]*fuelsurcharge.FuelIndexPrice, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*fuelsurcharge.FuelIndexPrice, error) {
 		log := r.l.With(
@@ -122,7 +122,7 @@ func (r *priceRepository) ListByIndex(
 
 func (r *priceRepository) GetLatestOnOrBefore(
 	ctx context.Context,
-	req *repositories.GetLatestFuelPricesRequest,
+	req *fuelsurchargeports.GetLatestFuelPricesRequest,
 ) ([]*fuelsurcharge.FuelIndexPrice, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*fuelsurcharge.FuelIndexPrice, error) {
 		log := r.l.With(
@@ -160,7 +160,7 @@ func (r *priceRepository) GetLatestOnOrBefore(
 
 func (r *priceRepository) LatestPerIndex(
 	ctx context.Context,
-	req *repositories.LatestPricesPerIndexRequest,
+	req *fuelsurchargeports.LatestPricesPerIndexRequest,
 ) (map[pulid.ID][]*fuelsurcharge.FuelIndexPrice, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID][]*fuelsurcharge.FuelIndexPrice, error) {
 		log := r.l.With(zap.String("operation", "LatestPerIndex"))
@@ -203,7 +203,7 @@ func (r *priceRepository) LatestPerIndex(
 
 func (r *priceRepository) HasPriceForDate(
 	ctx context.Context,
-	req *repositories.HasFuelPriceForDateRequest,
+	req *fuelsurchargeports.HasFuelPriceForDateRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
 		cols := buncolgen.FuelIndexPriceColumns
@@ -277,7 +277,7 @@ func (r *priceRepository) Update(
 
 func (r *priceRepository) Delete(
 	ctx context.Context,
-	req *repositories.GetFuelIndexPriceByIDRequest,
+	req *fuelsurchargeports.GetFuelIndexPriceByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		log := r.l.With(
@@ -305,7 +305,7 @@ func (r *priceRepository) Delete(
 
 func (r *priceRepository) GetByID(
 	ctx context.Context,
-	req *repositories.GetFuelIndexPriceByIDRequest,
+	req *fuelsurchargeports.GetFuelIndexPriceByIDRequest,
 ) (*fuelsurcharge.FuelIndexPrice, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*fuelsurcharge.FuelIndexPrice, error) {
 		cols := buncolgen.FuelIndexPriceColumns

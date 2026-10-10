@@ -10,10 +10,17 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/core/domain/extractioneval"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -25,43 +32,43 @@ import (
 )
 
 var (
-	_ services.ExtractionEvalService = (*Service)(nil)
-	_ services.ExtractionEvalRunner  = (*Service)(nil)
+	_ extractionevalports.ExtractionEvalService = (*Service)(nil)
+	_ extractionevalports.ExtractionEvalRunner  = (*Service)(nil)
 )
 
 type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Cases         repositories.ExtractionEvalCaseRepository
-	Runs          repositories.ExtractionEvalRunRepository
-	Results       repositories.ExtractionEvalResultRepository
-	Corrections   repositories.AICorrectionRepository
-	Documents     repositories.DocumentRepository
-	Contents      repositories.DocumentContentRepository
-	Providers     repositories.AIProviderRepository
-	Audit         services.AuditService
-	Retention     repositories.DataRetentionRepository
-	Budget        services.EvaluationBudget         `optional:"true"`
-	Predictor     services.ExtractionPredictor      `optional:"true"`
-	Starter       services.ExtractionEvalRunStarter `optional:"true"`
-	Notifications *notificationservice.Service      `optional:"true"`
+	Cases         extractionevalports.ExtractionEvalCaseRepository
+	Runs          extractionevalports.ExtractionEvalRunRepository
+	Results       extractionevalports.ExtractionEvalResultRepository
+	Corrections   aicorrectionports.AICorrectionRepository
+	Documents     documentports.DocumentRepository
+	Contents      documentcontentports.DocumentContentRepository
+	Providers     agentports.AIProviderRepository
+	Audit         auditports.AuditService
+	Retention     tenantports.DataRetentionRepository
+	Budget        agentqualityports.EvaluationBudget           `optional:"true"`
+	Predictor     extractionevalports.ExtractionPredictor      `optional:"true"`
+	Starter       extractionevalports.ExtractionEvalRunStarter `optional:"true"`
+	Notifications *notificationservice.Service                 `optional:"true"`
 }
 
 type Service struct {
 	l           *zap.Logger
-	cases       repositories.ExtractionEvalCaseRepository
-	runs        repositories.ExtractionEvalRunRepository
-	results     repositories.ExtractionEvalResultRepository
-	corrections repositories.AICorrectionRepository
-	documents   repositories.DocumentRepository
-	contents    repositories.DocumentContentRepository
-	providers   repositories.AIProviderRepository
-	audit       services.AuditService
-	retention   repositories.DataRetentionRepository
-	budget      services.EvaluationBudget
-	predictor   services.ExtractionPredictor
-	starter     services.ExtractionEvalRunStarter
+	cases       extractionevalports.ExtractionEvalCaseRepository
+	runs        extractionevalports.ExtractionEvalRunRepository
+	results     extractionevalports.ExtractionEvalResultRepository
+	corrections aicorrectionports.AICorrectionRepository
+	documents   documentports.DocumentRepository
+	contents    documentcontentports.DocumentContentRepository
+	providers   agentports.AIProviderRepository
+	audit       auditports.AuditService
+	retention   tenantports.DataRetentionRepository
+	budget      agentqualityports.EvaluationBudget
+	predictor   extractionevalports.ExtractionPredictor
+	starter     extractionevalports.ExtractionEvalRunStarter
 	notifier    driftNotifier
 	now         func() int64
 }
@@ -98,18 +105,18 @@ func New(p Params) *Service {
 	}
 }
 
-func AsService(s *Service) services.ExtractionEvalService { return s }
+func AsService(s *Service) extractionevalports.ExtractionEvalService { return s }
 
-func AsRunner(s *Service) services.ExtractionEvalRunner { return s }
+func AsRunner(s *Service) extractionevalports.ExtractionEvalRunner { return s }
 
-func AsDriftChecker(s *Service) services.ExtractionDriftChecker { return s }
+func AsDriftChecker(s *Service) extractionevalports.ExtractionDriftChecker { return s }
 
 func (s *Service) PromoteCorrection(
 	ctx context.Context,
-	req *services.PromoteCorrectionRequest,
-	actor *services.RequestActor,
+	req *extractionevalports.PromoteCorrectionRequest,
+	actor *permissionports.RequestActor,
 ) (*extractioneval.ExtractionCase, error) {
-	correction, err := s.corrections.GetByID(ctx, repositories.GetAICorrectionRequest{
+	correction, err := s.corrections.GetByID(ctx, aicorrectionports.GetAICorrectionRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.CorrectionID,
 	})
@@ -132,7 +139,7 @@ func (s *Service) PromoteCorrection(
 		return nil, err
 	}
 
-	doc, err := s.documents.GetByID(ctx, repositories.GetDocumentByIDRequest{
+	doc, err := s.documents.GetByID(ctx, documentports.GetDocumentByIDRequest{
 		ID:         *correction.DocumentID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -243,10 +250,10 @@ func caseTitle(requested string, correction *aicorrection.Correction, doc *docum
 
 func (s *Service) UpdateCase(
 	ctx context.Context,
-	req *services.UpdateExtractionCaseRequest,
-	actor *services.RequestActor,
+	req *extractionevalports.UpdateExtractionCaseRequest,
+	actor *permissionports.RequestActor,
 ) (*extractioneval.ExtractionCase, error) {
-	entity, err := s.cases.GetByID(ctx, repositories.GetExtractionEvalCaseRequest{
+	entity, err := s.cases.GetByID(ctx, extractionevalports.GetExtractionEvalCaseRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.ID,
 	})
@@ -298,8 +305,8 @@ func (s *Service) UpdateCase(
 
 func (s *Service) DeleteCase(
 	ctx context.Context,
-	req repositories.GetExtractionEvalCaseRequest,
-	actor *services.RequestActor,
+	req extractionevalports.GetExtractionEvalCaseRequest,
+	actor *permissionports.RequestActor,
 ) error {
 	entity, err := s.cases.GetByID(ctx, req)
 	if err != nil {
@@ -316,39 +323,39 @@ func (s *Service) DeleteCase(
 
 func (s *Service) GetCase(
 	ctx context.Context,
-	req repositories.GetExtractionEvalCaseRequest,
+	req extractionevalports.GetExtractionEvalCaseRequest,
 ) (*extractioneval.ExtractionCase, error) {
 	return s.cases.GetByID(ctx, req)
 }
 
 func (s *Service) ListCases(
 	ctx context.Context,
-	req *repositories.ListExtractionEvalCaseConnectionRequest,
+	req *extractionevalports.ListExtractionEvalCaseConnectionRequest,
 ) (*pagination.CursorListResult[*extractioneval.ExtractionCase], error) {
 	return s.cases.ListConnection(ctx, req)
 }
 
 func (s *Service) GetCorrection(
 	ctx context.Context,
-	req repositories.GetAICorrectionRequest,
+	req aicorrectionports.GetAICorrectionRequest,
 ) (*aicorrection.Correction, error) {
 	return s.corrections.GetByID(ctx, req)
 }
 
 func (s *Service) ListCorrections(
 	ctx context.Context,
-	req *repositories.ListAICorrectionConnectionRequest,
+	req *aicorrectionports.ListAICorrectionConnectionRequest,
 ) (*pagination.CursorListResult[*aicorrection.Correction], error) {
 	return s.corrections.ListConnection(ctx, req)
 }
 
 func (s *Service) logCase(
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	current, previous *extractioneval.ExtractionCase,
 	operation permission.Operation,
 	comment string,
 ) {
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceAgentEvalSuite,
 		ResourceID:     current.ID.String(),
 		Operation:      operation,
@@ -363,8 +370,8 @@ func (s *Service) logCase(
 }
 
 func (s *Service) logAction(
-	actor *services.RequestActor,
-	params *services.LogActionParams,
+	actor *permissionports.RequestActor,
+	params *auditports.LogActionParams,
 	comment string,
 ) {
 	auditActor := actor.AuditActorOrSystem()
@@ -393,7 +400,7 @@ func auditableCase(entity *extractioneval.ExtractionCase) map[string]any {
 	}
 }
 
-func actorID(actor *services.RequestActor, tenant pagination.TenantInfo) pulid.ID {
+func actorID(actor *permissionports.RequestActor, tenant pagination.TenantInfo) pulid.ID {
 	auditActor := actor.AuditActorOrSystem()
 	return pulid.FirstNotNil(auditActor.UserID, auditActor.PrincipalID, tenant.UserID)
 }

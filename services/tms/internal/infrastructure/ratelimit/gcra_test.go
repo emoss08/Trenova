@@ -4,18 +4,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
 )
 
-func policy(rate, burst int) repositories.RateLimitPolicy {
-	return repositories.RateLimitPolicy{Rate: rate, Period: time.Minute, Burst: burst}
+func policy(rate, burst int) kernelports.RateLimitPolicy {
+	return kernelports.RateLimitPolicy{Rate: rate, Period: time.Minute, Burst: burst}
 }
 
 func TestEvaluateGCRA_FreshKeyAllowsFullBurst(t *testing.T) {
 	t.Parallel()
 
-	req := repositories.RateLimitRequest{Key: "k", Policy: policy(60, 3), Cost: 1}
+	req := kernelports.RateLimitRequest{Key: "k", Policy: policy(60, 3), Cost: 1}
 	now := int64(1_000_000_000)
 
 	res := evaluateGCRA(now, 0, req)
@@ -28,7 +28,7 @@ func TestEvaluateGCRA_FreshKeyAllowsFullBurst(t *testing.T) {
 func TestEvaluateGCRA_DeniesWhenBurstExhausted(t *testing.T) {
 	t.Parallel()
 
-	req := repositories.RateLimitRequest{Key: "k", Policy: policy(60, 1), Cost: 1}
+	req := kernelports.RateLimitRequest{Key: "k", Policy: policy(60, 1), Cost: 1}
 	now := int64(1_000_000_000)
 
 	first := evaluateGCRA(now, 0, req)
@@ -47,7 +47,7 @@ func TestEvaluateGCRA_DeniesWhenBurstExhausted(t *testing.T) {
 func TestEvaluateGCRA_StaleTATIsClampedToNow(t *testing.T) {
 	t.Parallel()
 
-	req := repositories.RateLimitRequest{Key: "k", Policy: policy(60, 5), Cost: 1}
+	req := kernelports.RateLimitRequest{Key: "k", Policy: policy(60, 5), Cost: 1}
 	now := int64(10_000_000_000)
 
 	res := evaluateGCRA(now, now-time.Hour.Microseconds(), req)
@@ -58,7 +58,7 @@ func TestEvaluateGCRA_StaleTATIsClampedToNow(t *testing.T) {
 func TestEvaluateGCRA_CostConsumesMultipleTokens(t *testing.T) {
 	t.Parallel()
 
-	req := repositories.RateLimitRequest{Key: "k", Policy: policy(60, 5), Cost: 3}
+	req := kernelports.RateLimitRequest{Key: "k", Policy: policy(60, 5), Cost: 3}
 	now := int64(1_000_000_000)
 
 	res := evaluateGCRA(now, 0, req)
@@ -73,7 +73,7 @@ func TestEvaluateGCRA_CostConsumesMultipleTokens(t *testing.T) {
 func TestEmissionInterval_NeverBelowOneMicrosecond(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, int64(1), emissionInterval(repositories.RateLimitPolicy{
+	assert.Equal(t, int64(1), emissionInterval(kernelports.RateLimitPolicy{
 		Rate: 1_000_000_000, Period: time.Millisecond, Burst: 1,
 	}))
 	assert.Equal(t, time.Second.Microseconds(), emissionInterval(policy(60, 1)))
@@ -83,10 +83,10 @@ func TestValidateRequests(t *testing.T) {
 	t.Parallel()
 
 	assert.NoError(t, validateRequests(nil))
-	assert.ErrorIs(t, validateRequests([]repositories.RateLimitRequest{
+	assert.ErrorIs(t, validateRequests([]kernelports.RateLimitRequest{
 		{Key: "", Policy: policy(1, 1)},
 	}), ErrEmptyKey)
-	assert.ErrorIs(t, validateRequests([]repositories.RateLimitRequest{
-		{Key: "k", Policy: repositories.RateLimitPolicy{Rate: 1, Burst: 0, Period: time.Minute}},
+	assert.ErrorIs(t, validateRequests([]kernelports.RateLimitRequest{
+		{Key: "k", Policy: kernelports.RateLimitPolicy{Rate: 1, Burst: 0, Period: time.Minute}},
 	}), ErrInvalidPolicy)
 }

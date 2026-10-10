@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/productguide"
 	"github.com/stretchr/testify/assert"
@@ -12,17 +12,17 @@ import (
 )
 
 type stubGuide struct {
-	matches     []serviceports.ProductGuideMatch
-	destination *serviceports.ProductGuideDestination
+	matches     []agentports.ProductGuideMatch
+	destination *agentports.ProductGuideDestination
 	err         error
-	searched    *serviceports.ProductGuideSearchRequest
-	resolved    *serviceports.ProductGuideDestinationRequest
+	searched    *agentports.ProductGuideSearchRequest
+	resolved    *agentports.ProductGuideDestinationRequest
 }
 
 func (s *stubGuide) Search(
 	_ context.Context,
-	req *serviceports.ProductGuideSearchRequest,
-) ([]serviceports.ProductGuideMatch, error) {
+	req *agentports.ProductGuideSearchRequest,
+) ([]agentports.ProductGuideMatch, error) {
 	s.searched = req
 
 	return s.matches, s.err
@@ -30,8 +30,8 @@ func (s *stubGuide) Search(
 
 func (s *stubGuide) Destination(
 	_ context.Context,
-	req *serviceports.ProductGuideDestinationRequest,
-) (*serviceports.ProductGuideDestination, error) {
+	req *agentports.ProductGuideDestinationRequest,
+) (*agentports.ProductGuideDestination, error) {
 	s.resolved = req
 
 	return s.destination, s.err
@@ -59,7 +59,7 @@ func TestFindInTrenova_AnswersWithTheBestPagesStepsAndTheOthersNamed(t *testing.
 		Breadcrumb: []string{"Billing", "Configuration files", "Rate zones"},
 		Tasks:      []productguide.Task{{Title: "Add a rate zone", Steps: []string{"Open it."}}},
 	}
-	guide := &stubGuide{matches: []serviceports.ProductGuideMatch{
+	guide := &stubGuide{matches: []agentports.ProductGuideMatch{
 		{
 			Page:    best,
 			Task:    &productguide.Task{Title: "Add a rate matrix", Steps: []string{"Open it.", "Save."}},
@@ -143,7 +143,7 @@ func TestOpenPage_ReturnsWhereTheAppIsGoing(t *testing.T) {
 	t.Parallel()
 
 	page := rateMatrices()
-	guide := &stubGuide{destination: &serviceports.ProductGuideDestination{
+	guide := &stubGuide{destination: &agentports.ProductGuideDestination{
 		Path:  page.Path + "?panelType=create",
 		Page:  page,
 		Label: page.Name,
@@ -172,7 +172,7 @@ func TestOpenPage_PassesARecordThrough(t *testing.T) {
 	t.Parallel()
 
 	page := rateMatrices()
-	guide := &stubGuide{destination: &serviceports.ProductGuideDestination{
+	guide := &stubGuide{destination: &agentports.ProductGuideDestination{
 		Path: "/billing/invoices?item=inv_1", Page: page, Label: "Invoice",
 	}}
 
@@ -206,8 +206,8 @@ func TestOpenPage_CarriesTheRefusal(t *testing.T) {
 func TestGuideTools_AreSelfScoped(t *testing.T) {
 	t.Parallel()
 
-	assert.True(t, serviceports.IsSelfScoped(newFindInTrenovaTool(&stubGuide{})))
-	assert.True(t, serviceports.IsSelfScoped(newOpenPageTool(&stubGuide{})))
+	assert.True(t, agentports.IsSelfScoped(newFindInTrenovaTool(&stubGuide{})))
+	assert.True(t, agentports.IsSelfScoped(newOpenPageTool(&stubGuide{})))
 }
 
 // The record kinds open_page offers are exactly the ones the registry knows
@@ -243,7 +243,7 @@ func TestFindInTrenova_AnswersAQuestionAboutOnePageFromAllOfIt(t *testing.T) {
 			{Title: "Snooze a case", Steps: []string{"Select Case."}},
 		},
 	}
-	guide := &stubGuide{matches: []serviceports.ProductGuideMatch{
+	guide := &stubGuide{matches: []agentports.ProductGuideMatch{
 		{Page: desk, Task: &desk.Tasks[1], CanOpen: true},
 	}}
 
@@ -277,7 +277,7 @@ func TestFindInTrenova_KeepsAnswersShortWhenNoPageWasNamed(t *testing.T) {
 		{Title: "Add a rate matrix", Steps: []string{"Open it."}},
 		{Title: "Retire a rate matrix", Steps: []string{"Set Status."}},
 	}
-	guide := &stubGuide{matches: []serviceports.ProductGuideMatch{
+	guide := &stubGuide{matches: []agentports.ProductGuideMatch{
 		{Page: page, Task: &page.Tasks[0], CanOpen: true},
 	}}
 

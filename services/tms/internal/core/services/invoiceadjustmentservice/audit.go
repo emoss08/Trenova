@@ -3,8 +3,9 @@ package invoiceadjustmentservice
 import (
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -12,7 +13,7 @@ import (
 
 func (s *Service) logAudit(
 	entity *invoiceadjustment.InvoiceAdjustment,
-	actor *servicesports.RequestActor,
+	actor *permissionports.RequestActor,
 	op permission.Operation,
 	comment string,
 ) {
@@ -20,7 +21,7 @@ func (s *Service) logAudit(
 		return
 	}
 	if err := s.auditService.LogAction(
-		&servicesports.LogActionParams{
+		&auditports.LogActionParams{
 			Resource:       permission.ResourceInvoice,
 			ResourceID:     entity.ID.String(),
 			Operation:      op,

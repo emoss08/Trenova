@@ -12,9 +12,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -32,70 +37,70 @@ type caseStore interface {
 	Update(ctx context.Context, entity *agentquality.EvalCase) (*agentquality.EvalCase, error)
 	GetByID(
 		ctx context.Context,
-		req repositories.GetAgentEvalCaseByIDRequest,
+		req agentqualityports.GetAgentEvalCaseByIDRequest,
 	) (*agentquality.EvalCase, error)
 	GetByContent(
 		ctx context.Context,
-		req repositories.GetAgentEvalCaseByContentRequest,
+		req agentqualityports.GetAgentEvalCaseByContentRequest,
 	) (*agentquality.EvalCase, error)
 	GetByProposal(
 		ctx context.Context,
-		req repositories.GetAgentEvalCaseByProposalRequest,
+		req agentqualityports.GetAgentEvalCaseByProposalRequest,
 	) (*agentquality.EvalCase, error)
 	ListConnection(
 		ctx context.Context,
-		req *repositories.ListAgentEvalCaseConnectionRequest,
+		req *agentqualityports.ListAgentEvalCaseConnectionRequest,
 	) (*pagination.CursorListResult[*agentquality.EvalCase], error)
 	ListCaptureCandidates(
 		ctx context.Context,
-		req repositories.ListEvalCaseCaptureCandidatesRequest,
-	) ([]repositories.EvalCaseCaptureCandidate, error)
-	PurgeExpired(ctx context.Context, req repositories.PurgeExpiredEvalCasesRequest) (int, error)
-	PurgeOrphaned(ctx context.Context, req repositories.PurgeOrphanedEvalCasesRequest) (int, error)
+		req agentqualityports.ListEvalCaseCaptureCandidatesRequest,
+	) ([]agentqualityports.EvalCaseCaptureCandidate, error)
+	PurgeExpired(ctx context.Context, req agentqualityports.PurgeExpiredEvalCasesRequest) (int, error)
+	PurgeOrphaned(ctx context.Context, req agentqualityports.PurgeOrphanedEvalCasesRequest) (int, error)
 }
 
 type proposalReader interface {
 	GetByID(
 		ctx context.Context,
-		req repositories.GetAgentProposalByIDRequest,
+		req agentports.GetAgentProposalByIDRequest,
 	) (*agent.AgentProposal, error)
 }
 
 type decisionReader interface {
 	ListByProposals(
 		ctx context.Context,
-		req repositories.ListAgentDecisionsByProposalsRequest,
+		req agentports.ListAgentDecisionsByProposalsRequest,
 	) ([]*agent.AgentDecision, error)
 }
 
 type runReader interface {
-	GetByID(ctx context.Context, req repositories.GetAgentRunByIDRequest) (*agent.AgentRun, error)
+	GetByID(ctx context.Context, req agentports.GetAgentRunByIDRequest) (*agent.AgentRun, error)
 }
 
 type definitionReader interface {
 	GetByID(
 		ctx context.Context,
-		req repositories.GetAgentDefinitionByIDRequest,
+		req agentdefinitionports.GetAgentDefinitionByIDRequest,
 	) (*agentdefinition.Definition, error)
 }
 
 type conversationReader interface {
 	GetThreadOwned(
 		ctx context.Context,
-		req repositories.GetThreadOwnedRequest,
+		req agentports.GetThreadOwnedRequest,
 	) (*conversation.Thread, error)
 	ListMessages(
 		ctx context.Context,
-		req repositories.ListMessagesRequest,
+		req agentports.ListMessagesRequest,
 	) ([]conversation.Message, error)
 }
 
 type feedbackStore interface {
 	ListByIDs(
 		ctx context.Context,
-		req repositories.ListAIFeedbackByIDsRequest,
+		req aifeedbackports.ListAIFeedbackByIDsRequest,
 	) ([]*aifeedback.Feedback, error)
-	LinkEvalCase(ctx context.Context, req repositories.LinkAIFeedbackEvalCaseRequest) error
+	LinkEvalCase(ctx context.Context, req aifeedbackports.LinkAIFeedbackEvalCaseRequest) error
 }
 
 type retentionReader interface {
@@ -106,19 +111,19 @@ type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Cases         repositories.AgentEvalCaseRepository
-	Proposals     repositories.AgentProposalRepository
-	Decisions     repositories.AgentDecisionRepository
-	Runs          repositories.AgentRunRepository
-	Definitions   repositories.AgentDefinitionRepository
-	Conversations repositories.ConversationRepository
-	Feedback      repositories.AIFeedbackRepository
-	Retention     repositories.DataRetentionRepository
+	Cases         agentqualityports.AgentEvalCaseRepository
+	Proposals     agentports.AgentProposalRepository
+	Decisions     agentports.AgentDecisionRepository
+	Runs          agentports.AgentRunRepository
+	Definitions   agentdefinitionports.AgentDefinitionRepository
+	Conversations agentports.ConversationRepository
+	Feedback      aifeedbackports.AIFeedbackRepository
+	Retention     tenantports.DataRetentionRepository
 	Registry      *permission.Registry
-	QueryTools    services.AgentQueryToolRegistry
-	ActionTools   services.AgentToolRegistry
-	Subjects      services.AgentSubjectDescriber `optional:"true"`
-	AuditService  services.AuditService
+	QueryTools    agentports.AgentQueryToolRegistry
+	ActionTools   agentports.AgentToolRegistry
+	Subjects      agentports.AgentSubjectDescriber `optional:"true"`
+	AuditService  auditports.AuditService
 }
 
 type Service struct {
@@ -132,12 +137,12 @@ type Service struct {
 	feedback      feedbackStore
 	retention     retentionReader
 	redactor      *Redactor
-	subjects      services.AgentSubjectDescriber
-	audit         services.AuditService
+	subjects      agentports.AgentSubjectDescriber
+	audit         auditports.AuditService
 	now           func() int64
 }
 
-func New(p Params) services.AgentEvalCaseService {
+func New(p Params) agentports.AgentEvalCaseService {
 	return &Service{
 		l:             p.Logger.Named("service.agentevalcase"),
 		cases:         p.Cases,
@@ -157,24 +162,24 @@ func New(p Params) services.AgentEvalCaseService {
 
 func (s *Service) GetByID(
 	ctx context.Context,
-	req repositories.GetAgentEvalCaseByIDRequest,
+	req agentqualityports.GetAgentEvalCaseByIDRequest,
 ) (*agentquality.EvalCase, error) {
 	return s.cases.GetByID(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListAgentEvalCaseConnectionRequest,
+	req *agentqualityports.ListAgentEvalCaseConnectionRequest,
 ) (*pagination.CursorListResult[*agentquality.EvalCase], error) {
 	return s.cases.ListConnection(ctx, req)
 }
 
 func (s *Service) CreateCurated(
 	ctx context.Context,
-	req *services.CreateCuratedEvalCaseRequest,
-	actor *services.RequestActor,
-) (*services.EvalCaseCapture, error) {
-	definition, err := s.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	req *agentports.CreateCuratedEvalCaseRequest,
+	actor *permissionports.RequestActor,
+) (*agentports.EvalCaseCapture, error) {
+	definition, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         req.AgentDefinitionID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -216,10 +221,10 @@ func (s *Service) CreateCurated(
 
 func (s *Service) Update(
 	ctx context.Context,
-	req *services.UpdateEvalCaseRequest,
-	actor *services.RequestActor,
+	req *agentports.UpdateEvalCaseRequest,
+	actor *permissionports.RequestActor,
 ) (*agentquality.EvalCase, error) {
-	evalCase, err := s.cases.GetByID(ctx, repositories.GetAgentEvalCaseByIDRequest{
+	evalCase, err := s.cases.GetByID(ctx, agentqualityports.GetAgentEvalCaseByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -269,8 +274,8 @@ func (s *Service) Update(
 
 func (s *Service) SetStatus(
 	ctx context.Context,
-	req *services.SetEvalCaseStatusRequest,
-	actor *services.RequestActor,
+	req *agentports.SetEvalCaseStatusRequest,
+	actor *permissionports.RequestActor,
 ) (*agentquality.EvalCase, error) {
 	if !req.Status.IsValid() {
 		return nil, errortypes.NewValidationError(
@@ -280,7 +285,7 @@ func (s *Service) SetStatus(
 		)
 	}
 
-	evalCase, err := s.cases.GetByID(ctx, repositories.GetAgentEvalCaseByIDRequest{
+	evalCase, err := s.cases.GetByID(ctx, agentqualityports.GetAgentEvalCaseByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -338,8 +343,8 @@ func (s *Service) prepare(evalCase *agentquality.EvalCase) error {
 func (s *Service) save(
 	ctx context.Context,
 	evalCase *agentquality.EvalCase,
-	actor *services.RequestActor,
-) (*services.EvalCaseCapture, error) {
+	actor *permissionports.RequestActor,
+) (*agentports.EvalCaseCapture, error) {
 	if actor != nil && actor.IsUser() && actor.UserID.IsNotNil() {
 		userID := actor.UserID
 		evalCase.CreatedByUserID = &userID
@@ -353,7 +358,7 @@ func (s *Service) save(
 		BuID:  evalCase.BusinessUnitID,
 	}
 	if existing, found, err := s.byContent(ctx, evalCase, tenantInfo); err != nil || found {
-		return &services.EvalCaseCapture{Case: existing, Duplicate: found}, err
+		return &agentports.EvalCaseCapture{Case: existing, Duplicate: found}, err
 	}
 
 	created, err := s.cases.Create(ctx, evalCase)
@@ -368,7 +373,7 @@ func (s *Service) save(
 		if !found && evalCase.SourceProposalID != nil {
 			existing, lookupErr = s.cases.GetByProposal(
 				ctx,
-				repositories.GetAgentEvalCaseByProposalRequest{
+				agentqualityports.GetAgentEvalCaseByProposalRequest{
 					ProposalID: *evalCase.SourceProposalID,
 					TenantInfo: tenantInfo,
 				},
@@ -382,13 +387,13 @@ func (s *Service) save(
 			return nil, err
 		}
 
-		return &services.EvalCaseCapture{Case: existing, Duplicate: true}, nil
+		return &agentports.EvalCaseCapture{Case: existing, Duplicate: true}, nil
 	}
 
 	s.log(created, nil, actor, permission.OpCreate,
 		fmt.Sprintf("Evaluation case captured from %s", created.Source))
 
-	return &services.EvalCaseCapture{Case: created}, nil
+	return &agentports.EvalCaseCapture{Case: created}, nil
 }
 
 func (s *Service) byContent(
@@ -396,7 +401,7 @@ func (s *Service) byContent(
 	evalCase *agentquality.EvalCase,
 	tenantInfo pagination.TenantInfo,
 ) (*agentquality.EvalCase, bool, error) {
-	existing, err := s.cases.GetByContent(ctx, repositories.GetAgentEvalCaseByContentRequest{
+	existing, err := s.cases.GetByContent(ctx, agentqualityports.GetAgentEvalCaseByContentRequest{
 		AgentDefinitionID: evalCase.AgentDefinitionID,
 		ContentHash:       evalCase.ContentHash,
 		TenantInfo:        tenantInfo,
@@ -414,7 +419,7 @@ func (s *Service) byContent(
 func (s *Service) log(
 	current *agentquality.EvalCase,
 	previous *agentquality.EvalCase,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	operation permission.Operation,
 	comment string,
 ) {
@@ -423,7 +428,7 @@ func (s *Service) log(
 	}
 
 	auditActor := actor.AuditActorOrSystem()
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceAgentEvalSuite,
 		ResourceID:     current.ID.String(),
 		Operation:      operation,

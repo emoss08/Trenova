@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -15,7 +15,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var _ repositories.AIRetrievalRepository = (*repository)(nil)
+var _ agentports.AIRetrievalRepository = (*repository)(nil)
 
 type Params struct {
 	fx.In
@@ -31,7 +31,7 @@ type repository struct {
 	l     *zap.Logger
 }
 
-func New(p Params) repositories.AIRetrievalRepository {
+func New(p Params) agentports.AIRetrievalRepository {
 	return &repository{
 		db:    p.DB,
 		probe: p.Probe,
@@ -116,7 +116,7 @@ func validateModelKey(modelKey string) error {
 	}
 }
 
-func validateSource(source *repositories.AIRetrievalSourceRef) error {
+func validateSource(source *agentports.AIRetrievalSourceRef) error {
 	if source == nil {
 		return invalid("a source is required")
 	}

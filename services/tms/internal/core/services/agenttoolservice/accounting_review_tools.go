@@ -9,9 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -30,25 +31,25 @@ const (
 
 var backfillActions = agenttoolschema.Source(
 	"accountingSync.backfillAction",
-	serviceports.AccountingBackfillActionValues(),
+	accountingsyncports.AccountingBackfillActionValues(),
 )
 
 type accountingMappingReviewer interface {
 	PlanConfirm(
 		ctx context.Context,
-		req *serviceports.ConfirmAccountingMappingsRequest,
-	) (*serviceports.AccountingMappingConfirmPlan, error)
+		req *accountingsyncports.ConfirmAccountingMappingsRequest,
+	) (*accountingsyncports.AccountingMappingConfirmPlan, error)
 	Confirm(
 		ctx context.Context,
-		req *serviceports.ConfirmAccountingMappingsRequest,
+		req *accountingsyncports.ConfirmAccountingMappingsRequest,
 	) ([]*accountingsync.AccountingMapping, error)
 	PlanReject(
 		ctx context.Context,
-		req *serviceports.AccountingMappingActionRequest,
-	) (*serviceports.AccountingMappingChange, error)
+		req *accountingsyncports.AccountingMappingActionRequest,
+	) (*accountingsyncports.AccountingMappingChange, error)
 	Reject(
 		ctx context.Context,
-		req *serviceports.AccountingMappingActionRequest,
+		req *accountingsyncports.AccountingMappingActionRequest,
 	) (*accountingsync.AccountingMapping, error)
 }
 
@@ -57,13 +58,13 @@ type accountingSyncReleaser interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		integrationType integration.Type,
-	) (*serviceports.AccountingSyncSummary, error)
+	) (*accountingsyncports.AccountingSyncSummary, error)
 	GetRecord(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		id pulid.ID,
 	) (*accountingsync.AccountingSyncRecord, error)
-	Release(ctx context.Context, req *serviceports.ReleaseAccountingSyncRequest) (int64, error)
+	Release(ctx context.Context, req *accountingsyncports.ReleaseAccountingSyncRequest) (int64, error)
 }
 
 type accountingBackfillChanger interface {
@@ -71,21 +72,21 @@ type accountingBackfillChanger interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		integrationType integration.Type,
-	) (*serviceports.AccountingSyncSummary, error)
+	) (*accountingsyncports.AccountingSyncSummary, error)
 	ChangeBackfill(
 		ctx context.Context,
-		req *serviceports.ChangeAccountingBackfillRequest,
+		req *accountingsyncports.ChangeAccountingBackfillRequest,
 	) (*accountingsync.AccountingBackfill, error)
 }
 
 type releasePlan struct {
-	req      *serviceports.ReleaseAccountingSyncRequest
+	req      *accountingsyncports.ReleaseAccountingSyncRequest
 	provider string
 	records  []*accountingsync.AccountingSyncRecord
 }
 
 type backfillChange struct {
-	req      *serviceports.ChangeAccountingBackfillRequest
+	req      *accountingsyncports.ChangeAccountingBackfillRequest
 	provider string
 	before   *accountingsync.AccountingBackfill
 	after    *accountingsync.AccountingBackfill
@@ -114,8 +115,8 @@ func mappingProposalsProperty() map[string]any {
 }
 
 func confirmMappingsRequest(
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.ConfirmAccountingMappingsRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*accountingsyncports.ConfirmAccountingMappingsRequest, error) {
 	raw, ok := params.Params[paramMappingProposals].([]any)
 	if !ok || len(raw) == 0 {
 		return nil, fmt.Errorf(
@@ -130,7 +131,7 @@ func confirmMappingsRequest(
 		)
 	}
 
-	items := make([]serviceports.AccountingMappingConfirmation, 0, len(raw))
+	items := make([]accountingsyncports.AccountingMappingConfirmation, 0, len(raw))
 	seen := make(map[pulid.ID]struct{}, len(raw))
 	for idx, item := range raw {
 		fields, isObject := item.(map[string]any)
@@ -149,13 +150,13 @@ func confirmMappingsRequest(
 		if err != nil {
 			return nil, fmt.Errorf("%s[%d]: %w", paramMappingProposals, idx, err)
 		}
-		items = append(items, serviceports.AccountingMappingConfirmation{
+		items = append(items, accountingsyncports.AccountingMappingConfirmation{
 			ID:         id,
 			ExternalID: strings.TrimSpace(externalID),
 		})
 	}
 
-	return &serviceports.ConfirmAccountingMappingsRequest{
+	return &accountingsyncports.ConfirmAccountingMappingsRequest{
 		TenantInfo: tenantFrom(*params),
 		UserID:     params.Actor.UserID,
 		Items:      items,
@@ -176,7 +177,7 @@ func mappingReviewSpec(spec *receivableSpec) *receivableSpec {
 
 func newConfirmAccountingMappingProposalsTool(
 	mappings accountingMappingReviewer,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newReceivableTool(mappingReviewSpec(&receivableSpec{
 		name:   "confirm_accounting_mapping_proposals",
 		recipe: []string{"list_accounting_mapping_gaps", "confirm_accounting_mapping_proposals"},
@@ -188,24 +189,24 @@ func newConfirmAccountingMappingProposalsTool(
 			"books, so a person approves it; clearing or changing a mapping undoes it.",
 		properties: map[string]any{paramMappingProposals: mappingProposalsProperty()},
 		required:   []string{paramMappingProposals},
-	}), receivablePlan[*serviceports.ConfirmAccountingMappingsRequest, *serviceports.AccountingMappingConfirmPlan]{
+	}), receivablePlan[*accountingsyncports.ConfirmAccountingMappingsRequest, *accountingsyncports.AccountingMappingConfirmPlan]{
 		request: confirmMappingsRequest,
 		plan: func(
 			ctx context.Context,
-			req *serviceports.ConfirmAccountingMappingsRequest,
-			_ *serviceports.ToolExecuteParams,
-		) (*serviceports.AccountingMappingConfirmPlan, error) {
+			req *accountingsyncports.ConfirmAccountingMappingsRequest,
+			_ *agentports.ToolExecuteParams,
+		) (*accountingsyncports.AccountingMappingConfirmPlan, error) {
 			return mappings.PlanConfirm(ctx, req)
 		},
-		refused: func(req *serviceports.ConfirmAccountingMappingsRequest) string {
+		refused: func(req *accountingsyncports.ConfirmAccountingMappingsRequest) string {
 			return fmt.Sprintf("Would confirm %s.",
 				countOf(len(req.Items), "proposed accounting mapping"))
 		},
 		render: renderMappingConfirmations,
 		run: func(
 			ctx context.Context,
-			req *serviceports.ConfirmAccountingMappingsRequest,
-			_ *serviceports.ToolExecuteParams,
+			req *accountingsyncports.ConfirmAccountingMappingsRequest,
+			_ *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := mappings.Confirm(ctx, req)
 
@@ -216,7 +217,7 @@ func newConfirmAccountingMappingProposalsTool(
 
 func newRejectAccountingMappingProposalTool(
 	mappings accountingMappingReviewer,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newReceivableTool(mappingReviewSpec(&receivableSpec{
 		name: "reject_accounting_mapping_proposal",
 		description: "Turn down the wrong record Trenova proposed for an accounting mapping, " +
@@ -230,16 +231,16 @@ func newRejectAccountingMappingProposalTool(
 				permission.KindAccountingMapping),
 		},
 		required: []string{paramMappingID},
-	}), receivablePlan[*serviceports.AccountingMappingActionRequest, *serviceports.AccountingMappingChange]{
+	}), receivablePlan[*accountingsyncports.AccountingMappingActionRequest, *accountingsyncports.AccountingMappingChange]{
 		request: func(
-			params *serviceports.ToolExecuteParams,
-		) (*serviceports.AccountingMappingActionRequest, error) {
+			params *agentports.ToolExecuteParams,
+		) (*accountingsyncports.AccountingMappingActionRequest, error) {
 			id, err := requirePulid(params.Params, paramMappingID)
 			if err != nil {
 				return nil, err
 			}
 
-			return &serviceports.AccountingMappingActionRequest{
+			return &accountingsyncports.AccountingMappingActionRequest{
 				TenantInfo: tenantFrom(*params),
 				UserID:     params.Actor.UserID,
 				ID:         id,
@@ -248,19 +249,19 @@ func newRejectAccountingMappingProposalTool(
 		},
 		plan: func(
 			ctx context.Context,
-			req *serviceports.AccountingMappingActionRequest,
-			_ *serviceports.ToolExecuteParams,
-		) (*serviceports.AccountingMappingChange, error) {
+			req *accountingsyncports.AccountingMappingActionRequest,
+			_ *agentports.ToolExecuteParams,
+		) (*accountingsyncports.AccountingMappingChange, error) {
 			return mappings.PlanReject(ctx, req)
 		},
-		refused: func(*serviceports.AccountingMappingActionRequest) string {
+		refused: func(*accountingsyncports.AccountingMappingActionRequest) string {
 			return "Would turn down a proposed accounting mapping."
 		},
 		render: renderMappingRejection,
 		run: func(
 			ctx context.Context,
-			req *serviceports.AccountingMappingActionRequest,
-			_ *serviceports.ToolExecuteParams,
+			req *accountingsyncports.AccountingMappingActionRequest,
+			_ *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := mappings.Reject(ctx, req)
 
@@ -270,8 +271,8 @@ func newRejectAccountingMappingProposalTool(
 }
 
 func releaseRequest(
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.ReleaseAccountingSyncRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*accountingsyncports.ReleaseAccountingSyncRequest, error) {
 	system, err := accountingSystemFrom(params.Params)
 	if err != nil {
 		return nil, err
@@ -281,7 +282,7 @@ func releaseRequest(
 		return nil, err
 	}
 
-	return &serviceports.ReleaseAccountingSyncRequest{
+	return &accountingsyncports.ReleaseAccountingSyncRequest{
 		TenantInfo:      tenantFrom(*params),
 		UserID:          params.Actor.UserID,
 		IntegrationType: system,
@@ -292,7 +293,7 @@ func releaseRequest(
 func planRelease(
 	ctx context.Context,
 	sync accountingSyncReleaser,
-	req *serviceports.ReleaseAccountingSyncRequest,
+	req *accountingsyncports.ReleaseAccountingSyncRequest,
 ) (*releasePlan, error) {
 	summary, err := syncingConnectionFor(ctx, sync, req.TenantInfo, req.IntegrationType)
 	if err != nil {
@@ -318,7 +319,7 @@ func planRelease(
 	return &releasePlan{req: req, provider: summary.ProviderName, records: records}, nil
 }
 
-func newReleaseAccountingSyncTool(sync accountingSyncReleaser) serviceports.AgentTool {
+func newReleaseAccountingSyncTool(sync accountingSyncReleaser) agentports.AgentTool {
 	return newReceivableTool(&receivableSpec{
 		name: "release_accounting_sync",
 		recipe: []string{
@@ -350,24 +351,24 @@ func newReleaseAccountingSyncTool(sync accountingSyncReleaser) serviceports.Agen
 			),
 		},
 		required: []string{paramAccountingSystem, paramSyncRecordIDs},
-	}, receivablePlan[*serviceports.ReleaseAccountingSyncRequest, *releasePlan]{
+	}, receivablePlan[*accountingsyncports.ReleaseAccountingSyncRequest, *releasePlan]{
 		request: releaseRequest,
 		plan: func(
 			ctx context.Context,
-			req *serviceports.ReleaseAccountingSyncRequest,
-			_ *serviceports.ToolExecuteParams,
+			req *accountingsyncports.ReleaseAccountingSyncRequest,
+			_ *agentports.ToolExecuteParams,
 		) (*releasePlan, error) {
 			return planRelease(ctx, sync, req)
 		},
-		refused: func(req *serviceports.ReleaseAccountingSyncRequest) string {
+		refused: func(req *accountingsyncports.ReleaseAccountingSyncRequest) string {
 			return fmt.Sprintf("Would release %s to the accounting system.",
 				countOf(len(req.IDs), "held document"))
 		},
 		render: renderRelease,
 		run: func(
 			ctx context.Context,
-			req *serviceports.ReleaseAccountingSyncRequest,
-			_ *serviceports.ToolExecuteParams,
+			req *accountingsyncports.ReleaseAccountingSyncRequest,
+			_ *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			if _, err := planRelease(ctx, sync, req); err != nil {
 				return nil, err
@@ -380,8 +381,8 @@ func newReleaseAccountingSyncTool(sync accountingSyncReleaser) serviceports.Agen
 }
 
 func backfillChangeRequest(
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.ChangeAccountingBackfillRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*accountingsyncports.ChangeAccountingBackfillRequest, error) {
 	if _, err := accountingSystemFrom(params.Params); err != nil {
 		return nil, err
 	}
@@ -390,7 +391,7 @@ func backfillChangeRequest(
 		return nil, err
 	}
 
-	return &serviceports.ChangeAccountingBackfillRequest{
+	return &accountingsyncports.ChangeAccountingBackfillRequest{
 		TenantInfo: tenantFrom(*params),
 		UserID:     params.Actor.UserID,
 		Action:     action,
@@ -400,8 +401,8 @@ func backfillChangeRequest(
 func planBackfillChange(
 	ctx context.Context,
 	sync accountingBackfillChanger,
-	req *serviceports.ChangeAccountingBackfillRequest,
-	params *serviceports.ToolExecuteParams,
+	req *accountingsyncports.ChangeAccountingBackfillRequest,
+	params *agentports.ToolExecuteParams,
 ) (*backfillChange, error) {
 	if !params.Actor.IsUser() || params.Actor.UserID.IsNil() {
 		return nil, errortypes.NewBusinessError(
@@ -427,11 +428,11 @@ func planBackfillChange(
 	after := *before
 	changed := false
 	switch req.Action {
-	case serviceports.AccountingBackfillPause:
+	case accountingsyncports.AccountingBackfillPause:
 		changed = after.Pause()
-	case serviceports.AccountingBackfillResume:
+	case accountingsyncports.AccountingBackfillResume:
 		changed = after.Resume()
-	case serviceports.AccountingBackfillCancel:
+	case accountingsyncports.AccountingBackfillCancel:
 		changed = after.Cancel(timeutils.NowUnix())
 	}
 	if !changed {
@@ -451,7 +452,7 @@ func planBackfillChange(
 	}, nil
 }
 
-func newChangeAccountingBackfillTool(sync accountingBackfillChanger) serviceports.AgentTool {
+func newChangeAccountingBackfillTool(sync accountingBackfillChanger) agentports.AgentTool {
 	return newReceivableTool(&receivableSpec{
 		name: "change_accounting_backfill",
 		description: "Pause, resume or cancel the accounting backfill in progress when a " +
@@ -472,24 +473,24 @@ func newChangeAccountingBackfillTool(sync accountingBackfillChanger) serviceport
 				"carries on from where it stopped, Cancel ends it for good.", backfillActions),
 		},
 		required: []string{paramAccountingSystem, paramBackfillAction},
-	}, receivablePlan[*serviceports.ChangeAccountingBackfillRequest, *backfillChange]{
+	}, receivablePlan[*accountingsyncports.ChangeAccountingBackfillRequest, *backfillChange]{
 		request: backfillChangeRequest,
 		plan: func(
 			ctx context.Context,
-			req *serviceports.ChangeAccountingBackfillRequest,
-			params *serviceports.ToolExecuteParams,
+			req *accountingsyncports.ChangeAccountingBackfillRequest,
+			params *agentports.ToolExecuteParams,
 		) (*backfillChange, error) {
 			return planBackfillChange(ctx, sync, req, params)
 		},
-		refused: func(req *serviceports.ChangeAccountingBackfillRequest) string {
+		refused: func(req *accountingsyncports.ChangeAccountingBackfillRequest) string {
 			return fmt.Sprintf("Would %s the accounting backfill.",
 				strings.ToLower(string(req.Action)))
 		},
 		render: renderBackfillChange,
 		run: func(
 			ctx context.Context,
-			req *serviceports.ChangeAccountingBackfillRequest,
-			params *serviceports.ToolExecuteParams,
+			req *accountingsyncports.ChangeAccountingBackfillRequest,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			change, err := planBackfillChange(ctx, sync, req, params)
 			if err != nil {
@@ -503,8 +504,8 @@ func newChangeAccountingBackfillTool(sync accountingBackfillChanger) serviceport
 }
 
 func renderMappingConfirmations(
-	req *serviceports.ConfirmAccountingMappingsRequest,
-	plan *serviceports.AccountingMappingConfirmPlan,
+	req *accountingsyncports.ConfirmAccountingMappingsRequest,
+	plan *accountingsyncports.AccountingMappingConfirmPlan,
 ) (*agent.ToolPreview, error) {
 	changes := make([]*agent.RecordChange, 0, len(plan.Changes))
 	for _, change := range plan.Changes {
@@ -532,8 +533,8 @@ func renderMappingConfirmations(
 }
 
 func renderMappingRejection(
-	_ *serviceports.AccountingMappingActionRequest,
-	change *serviceports.AccountingMappingChange,
+	_ *accountingsyncports.AccountingMappingActionRequest,
+	change *accountingsyncports.AccountingMappingChange,
 ) (*agent.ToolPreview, error) {
 	recorded, err := toolpreview.Changed(
 		mappingRecord(change.Before),
@@ -555,7 +556,7 @@ func renderMappingRejection(
 }
 
 func renderRelease(
-	_ *serviceports.ReleaseAccountingSyncRequest,
+	_ *accountingsyncports.ReleaseAccountingSyncRequest,
 	plan *releasePlan,
 ) (*agent.ToolPreview, error) {
 	changes := make([]*agent.RecordChange, 0, len(plan.records))
@@ -584,7 +585,7 @@ func renderRelease(
 }
 
 func renderBackfillChange(
-	req *serviceports.ChangeAccountingBackfillRequest,
+	req *accountingsyncports.ChangeAccountingBackfillRequest,
 	change *backfillChange,
 ) (*agent.ToolPreview, error) {
 	recorded, err := toolpreview.Changed(
@@ -603,11 +604,11 @@ func renderBackfillChange(
 
 	outcome := "what is left waits until someone resumes it"
 	switch req.Action {
-	case serviceports.AccountingBackfillResume:
+	case accountingsyncports.AccountingBackfillResume:
 		outcome = "it carries on sending history to the books from where it stopped"
-	case serviceports.AccountingBackfillCancel:
+	case accountingsyncports.AccountingBackfillCancel:
 		outcome = "what is left is never sent; documents already sent stay in the books"
-	case serviceports.AccountingBackfillPause:
+	case accountingsyncports.AccountingBackfillPause:
 	}
 
 	return toolpreview.Build(fmt.Sprintf(

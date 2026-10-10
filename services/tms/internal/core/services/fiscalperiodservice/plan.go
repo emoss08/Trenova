@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -85,28 +85,28 @@ func (s *Service) Transition(
 ) (*fiscalperiod.FiscalPeriod, error) {
 	switch req.Transition {
 	case TransitionClose:
-		return s.Close(ctx, repositories.CloseFiscalPeriodRequest{
+		return s.Close(ctx, fiscalperiodports.CloseFiscalPeriodRequest{
 			ID:         req.ID,
 			TenantInfo: req.TenantInfo,
 		}, userID)
 	case TransitionReopen:
-		return s.Reopen(ctx, repositories.ReopenFiscalPeriodRequest{
+		return s.Reopen(ctx, fiscalperiodports.ReopenFiscalPeriodRequest{
 			ID:           req.ID,
 			TenantInfo:   req.TenantInfo,
 			ReopenReason: req.Reason,
 		}, userID)
 	case TransitionLock:
-		return s.Lock(ctx, &repositories.LockFiscalPeriodRequest{
+		return s.Lock(ctx, &fiscalperiodports.LockFiscalPeriodRequest{
 			ID:         req.ID,
 			TenantInfo: req.TenantInfo,
 		}, userID)
 	case TransitionUnlock:
-		return s.Unlock(ctx, repositories.UnlockFiscalPeriodRequest{
+		return s.Unlock(ctx, fiscalperiodports.UnlockFiscalPeriodRequest{
 			ID:         req.ID,
 			TenantInfo: req.TenantInfo,
 		}, userID)
 	case TransitionActivate:
-		return s.Activate(ctx, repositories.ActivateFiscalPeriodRequest{
+		return s.Activate(ctx, fiscalperiodports.ActivateFiscalPeriodRequest{
 			ID:         req.ID,
 			TenantInfo: req.TenantInfo,
 		}, userID)

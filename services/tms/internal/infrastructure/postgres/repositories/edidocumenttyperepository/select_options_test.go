@@ -5,8 +5,8 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -65,7 +65,7 @@ func TestSelectDocumentTypeOptions_AppliesSearchAndFilters(t *testing.T) {
 
 	result, err := repo.SelectDocumentTypeOptions(
 		t.Context(),
-		&repositories.EDIDocumentTypeSelectOptionsRequest{
+		&ediports.EDIDocumentTypeSelectOptionsRequest{
 			SelectQueryRequest: &pagination.SelectQueryRequest{
 				Pagination: pagination.Info{Limit: 10},
 				Query:      "204",

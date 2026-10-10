@@ -3,7 +3,7 @@ package agentquerytoolservice
 import (
 	"testing"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
@@ -55,7 +55,7 @@ func TestListTool_LastNDaysOpensOnADayBoundary(t *testing.T) {
 	assert.Less(t, timeutils.NowUnix()-lower, int64(8*secondsPerDay))
 }
 
-func testParamsIn(timezone string, params map[string]any) *serviceports.QueryToolParams {
+func testParamsIn(timezone string, params map[string]any) *agentports.QueryToolParams {
 	out := testParams(params)
 	out.Timezone = timezone
 

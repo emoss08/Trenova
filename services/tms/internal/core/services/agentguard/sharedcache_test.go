@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/agentguard"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -17,7 +17,7 @@ import (
 // fakeShared is the store every replica would share, in memory.
 type fakeShared struct {
 	mu     sync.Mutex
-	rows   map[string]*repositories.CachedScopeVerdict
+	rows   map[string]*agentports.CachedScopeVerdict
 	ttls   map[string]time.Duration
 	getErr error
 	setErr error
@@ -27,12 +27,12 @@ type fakeShared struct {
 
 func newFakeShared() *fakeShared {
 	return &fakeShared{
-		rows: map[string]*repositories.CachedScopeVerdict{},
+		rows: map[string]*agentports.CachedScopeVerdict{},
 		ttls: map[string]time.Duration{},
 	}
 }
 
-func (f *fakeShared) Get(_ context.Context, key string) (*repositories.CachedScopeVerdict, error) {
+func (f *fakeShared) Get(_ context.Context, key string) (*agentports.CachedScopeVerdict, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.gets++
@@ -46,7 +46,7 @@ func (f *fakeShared) Get(_ context.Context, key string) (*repositories.CachedSco
 func (f *fakeShared) Set(
 	_ context.Context,
 	key string,
-	v *repositories.CachedScopeVerdict,
+	v *agentports.CachedScopeVerdict,
 	ttl time.Duration,
 ) error {
 	f.mu.Lock()
@@ -64,7 +64,7 @@ func (f *fakeShared) Set(
 func guardSharing(
 	t *testing.T,
 	stub *stubCompletion,
-	shared repositories.ScopeVerdictCacheRepository,
+	shared agentports.ScopeVerdictCacheRepository,
 ) *agentguard.Service {
 	t.Helper()
 

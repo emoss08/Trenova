@@ -1,18 +1,23 @@
 package formulatemplateservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/formulatemplateportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"context"
 	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/formula"
 	"github.com/emoss08/trenova/internal/core/services/formula/engine"
 	"github.com/emoss08/trenova/internal/core/services/formula/resolver"
 	"github.com/emoss08/trenova/internal/core/services/formula/schema"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
@@ -29,11 +34,11 @@ import (
 )
 
 type testDeps struct {
-	repo         *mocks.MockFormulaTemplateRepository
-	versionRepo  *mocks.MockFormulaTemplateVersionRepository
+	repo         *formulatemplateportsmock.MockFormulaTemplateRepository
+	versionRepo  *formulatemplateportsmock.MockFormulaTemplateVersionRepository
 	testCaseRepo *stubTestCaseRepo
-	shipmentRepo *mocks.MockShipmentRepository
-	auditSvc     *mocks.MockAuditService
+	shipmentRepo *shipmentportsmock.MockShipmentRepository
+	auditSvc     *auditportsmock.MockAuditService
 	svc          *Service
 }
 
@@ -66,7 +71,7 @@ func (s *stubTestCaseRepo) Update(
 
 func (s *stubTestCaseRepo) Delete(
 	_ context.Context,
-	req repositories.GetTestCaseByIDRequest,
+	req formulatemplateports.GetTestCaseByIDRequest,
 ) error {
 	s.deleted = append(s.deleted, req.TestCaseID)
 	return nil
@@ -74,7 +79,7 @@ func (s *stubTestCaseRepo) Delete(
 
 func (s *stubTestCaseRepo) GetByID(
 	_ context.Context,
-	req repositories.GetTestCaseByIDRequest,
+	req formulatemplateports.GetTestCaseByIDRequest,
 ) (*formulatemplate.TestCase, error) {
 	for _, testCase := range s.cases {
 		if testCase.ID == req.TestCaseID {
@@ -86,7 +91,7 @@ func (s *stubTestCaseRepo) GetByID(
 
 func (s *stubTestCaseRepo) ListByTemplate(
 	_ context.Context,
-	_ repositories.ListTestCasesRequest,
+	_ formulatemplateports.ListTestCasesRequest,
 ) ([]*formulatemplate.TestCase, error) {
 	return s.cases, nil
 }
@@ -100,39 +105,39 @@ func (testDBConnection) IsHealthy(context.Context) bool       { return true }
 func (testDBConnection) Close() error                         { return nil }
 func (testDBConnection) WithTx(
 	ctx context.Context,
-	_ ports.TxOptions,
+	_ kernelports.TxOptions,
 	fn func(context.Context, bun.Tx) error,
 ) error {
 	return fn(ctx, bun.Tx{})
 }
 
 type stubFormulaVersionRepo struct {
-	repositories.FormulaTemplateVersionRepository
+	formulatemplateports.FormulaTemplateVersionRepository
 }
 
 func (s *stubFormulaVersionRepo) GetEffectiveVersion(
 	_ context.Context,
-	_ *repositories.GetEffectiveVersionRequest,
+	_ *formulatemplateports.GetEffectiveVersionRequest,
 ) (*formulatemplate.FormulaTemplateVersion, error) {
 	return nil, nil
 }
 
 func (s *stubFormulaVersionRepo) ListScheduled(
 	_ context.Context,
-	_ *repositories.ListScheduledVersionsRequest,
+	_ *formulatemplateports.ListScheduledVersionsRequest,
 ) ([]*formulatemplate.FormulaTemplateVersion, error) {
 	return nil, nil
 }
 
 type stubMatrixLookupRepo struct {
-	repositories.RateMatrixRepository
-	data []*repositories.RateMatrixLookupData
+	ratematrixports.RateMatrixRepository
+	data []*ratematrixports.RateMatrixLookupData
 }
 
 func (s *stubMatrixLookupRepo) GetLookupData(
 	_ context.Context,
-	_ *repositories.GetRateMatrixLookupDataRequest,
-) ([]*repositories.RateMatrixLookupData, error) {
+	_ *ratematrixports.GetRateMatrixLookupDataRequest,
+) ([]*ratematrixports.RateMatrixLookupData, error) {
 	return s.data, nil
 }
 
@@ -143,7 +148,7 @@ func newFormulaService(t *testing.T) *formula.Service {
 
 func newFormulaServiceWithMatrices(
 	t *testing.T,
-	matrices []*repositories.RateMatrixLookupData,
+	matrices []*ratematrixports.RateMatrixLookupData,
 ) *formula.Service {
 	t.Helper()
 
@@ -220,13 +225,13 @@ func setupTest(t *testing.T) *testDeps {
 
 func setupTestWithMatrices(
 	t *testing.T,
-	matrices []*repositories.RateMatrixLookupData,
+	matrices []*ratematrixports.RateMatrixLookupData,
 ) *testDeps {
 	t.Helper()
-	repo := mocks.NewMockFormulaTemplateRepository(t)
-	versionRepo := mocks.NewMockFormulaTemplateVersionRepository(t)
-	shipmentRepo := mocks.NewMockShipmentRepository(t)
-	auditSvc := mocks.NewMockAuditService(t)
+	repo := formulatemplateportsmock.NewMockFormulaTemplateRepository(t)
+	versionRepo := formulatemplateportsmock.NewMockFormulaTemplateVersionRepository(t)
+	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
+	auditSvc := auditportsmock.NewMockAuditService(t)
 	testCaseRepo := &stubTestCaseRepo{}
 	svc := &Service{
 		l:              zap.NewNop(),
@@ -282,7 +287,7 @@ func TestList_Success(t *testing.T) {
 		Items: []*formulatemplate.FormulaTemplate{newTestTemplate()},
 		Total: 1,
 	}
-	req := &repositories.ListFormulaTemplatesRequest{
+	req := &formulatemplateports.ListFormulaTemplatesRequest{
 		Filter: &pagination.QueryOptions{},
 	}
 
@@ -301,7 +306,7 @@ func TestList_Error(t *testing.T) {
 	deps := setupTest(t)
 	ctx := t.Context()
 
-	req := &repositories.ListFormulaTemplatesRequest{
+	req := &formulatemplateports.ListFormulaTemplatesRequest{
 		Filter: &pagination.QueryOptions{},
 	}
 	repoErr := errors.New("database error")
@@ -322,7 +327,7 @@ func TestGetByID_Success(t *testing.T) {
 	ctx := t.Context()
 
 	entity := newTestTemplate()
-	req := repositories.GetFormulaTemplateByIDRequest{
+	req := formulatemplateports.GetFormulaTemplateByIDRequest{
 		TemplateID: entity.ID,
 		TenantInfo: newTenantInfo(),
 	}
@@ -342,7 +347,7 @@ func TestGetByID_NotFound(t *testing.T) {
 	deps := setupTest(t)
 	ctx := t.Context()
 
-	req := repositories.GetFormulaTemplateByIDRequest{
+	req := formulatemplateports.GetFormulaTemplateByIDRequest{
 		TemplateID: pulid.MustNew("ft_"),
 		TenantInfo: newTenantInfo(),
 	}
@@ -635,13 +640,13 @@ func TestDuplicate_Success(t *testing.T) {
 
 	tenant := newTenantInfo()
 	source := newTestTemplate()
-	req := &repositories.BulkDuplicateFormulaTemplateRequest{
+	req := &formulatemplateports.BulkDuplicateFormulaTemplateRequest{
 		TenantInfo:  tenant,
 		TemplateIDs: []pulid.ID{source.ID},
 	}
 	duplicated := []*formulatemplate.FormulaTemplate{newTestTemplate()}
 
-	deps.repo.On("GetByIDs", mock.Anything, repositories.GetFormulaTemplatesByIDsRequest{
+	deps.repo.On("GetByIDs", mock.Anything, formulatemplateports.GetFormulaTemplatesByIDsRequest{
 		TenantInfo:  tenant,
 		TemplateIDs: req.TemplateIDs,
 	}).Return([]*formulatemplate.FormulaTemplate{source}, nil)
@@ -664,7 +669,7 @@ func TestDuplicate_Error(t *testing.T) {
 	ctx := t.Context()
 
 	source := newTestTemplate()
-	req := &repositories.BulkDuplicateFormulaTemplateRequest{
+	req := &formulatemplateports.BulkDuplicateFormulaTemplateRequest{
 		TenantInfo:  newTenantInfo(),
 		TemplateIDs: []pulid.ID{source.ID},
 	}
@@ -688,13 +693,13 @@ func TestBulkUpdateStatus_Success(t *testing.T) {
 	ctx := t.Context()
 
 	entities := []*formulatemplate.FormulaTemplate{newTestTemplate()}
-	req := &repositories.BulkUpdateFormulaTemplateStatusRequest{
+	req := &formulatemplateports.BulkUpdateFormulaTemplateStatusRequest{
 		TenantInfo:  newTenantInfo(),
 		TemplateIDs: []pulid.ID{entities[0].ID},
 		Status:      formulatemplate.StatusInactive,
 	}
 
-	deps.repo.On("GetByIDs", mock.Anything, repositories.GetFormulaTemplatesByIDsRequest{
+	deps.repo.On("GetByIDs", mock.Anything, formulatemplateports.GetFormulaTemplatesByIDsRequest{
 		TenantInfo:  req.TenantInfo,
 		TemplateIDs: req.TemplateIDs,
 	}).Return(entities, nil)
@@ -712,7 +717,7 @@ func TestBulkUpdateStatus_RejectsReactivation(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
 
-	req := &repositories.BulkUpdateFormulaTemplateStatusRequest{
+	req := &formulatemplateports.BulkUpdateFormulaTemplateStatusRequest{
 		TenantInfo:  newTenantInfo(),
 		TemplateIDs: []pulid.ID{pulid.MustNew("ft_")},
 		Status:      formulatemplate.StatusActive,
@@ -729,7 +734,7 @@ func TestBulkUpdateStatus_RejectsUnsupportedTarget(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
 
-	req := &repositories.BulkUpdateFormulaTemplateStatusRequest{
+	req := &formulatemplateports.BulkUpdateFormulaTemplateStatusRequest{
 		TenantInfo:  newTenantInfo(),
 		TemplateIDs: []pulid.ID{pulid.MustNew("ft_")},
 		Status:      formulatemplate.StatusDraft,
@@ -750,7 +755,7 @@ func TestBulkUpdateStatus_RejectsNonActiveInactiveTemplates(t *testing.T) {
 	draftTemplate := newTestTemplate()
 	draftTemplate.Status = formulatemplate.StatusDraft
 
-	req := &repositories.BulkUpdateFormulaTemplateStatusRequest{
+	req := &formulatemplateports.BulkUpdateFormulaTemplateStatusRequest{
 		TenantInfo:  newTenantInfo(),
 		TemplateIDs: []pulid.ID{draftTemplate.ID},
 		Status:      formulatemplate.StatusInactive,
@@ -771,13 +776,13 @@ func TestGetUsage_Success(t *testing.T) {
 	deps := setupTest(t)
 	ctx := t.Context()
 
-	req := &repositories.GetTemplateUsageRequest{
+	req := &formulatemplateports.GetTemplateUsageRequest{
 		TemplateID: pulid.MustNew("ft_"),
 		TenantInfo: newTenantInfo(),
 	}
-	expected := &repositories.GetTemplateUsageResponse{
+	expected := &formulatemplateports.GetTemplateUsageResponse{
 		InUse: true,
-		Usages: []repositories.TemplateUsageCount{
+		Usages: []formulatemplateports.TemplateUsageCount{
 			{Type: "accessorial_charges", Count: 3},
 		},
 	}
@@ -807,7 +812,7 @@ func TestCreateVersion_Success(t *testing.T) {
 	template.BusinessUnitID = tenant.BuID
 	template.CurrentVersionNumber = 2
 
-	req := &repositories.CreateVersionRequest{
+	req := &formulatemplateports.CreateVersionRequest{
 		TenantInfo:    tenant,
 		TemplateID:    templateID,
 		ChangeMessage: "New version",
@@ -855,7 +860,7 @@ func TestCreateVersion_TemplateNotFound(t *testing.T) {
 	deps := setupTest(t)
 	ctx := t.Context()
 
-	req := &repositories.CreateVersionRequest{
+	req := &formulatemplateports.CreateVersionRequest{
 		TenantInfo:    newTenantInfo(),
 		TemplateID:    pulid.MustNew("ft_"),
 		ChangeMessage: "Test",
@@ -876,7 +881,7 @@ func TestListVersions_Success(t *testing.T) {
 	deps := setupTest(t)
 	ctx := t.Context()
 
-	req := &repositories.ListVersionsRequest{
+	req := &formulatemplateports.ListVersionsRequest{
 		TemplateID: pulid.MustNew("ft_"),
 		Filter:     &pagination.QueryOptions{},
 	}
@@ -902,7 +907,7 @@ func TestGetVersion_Success(t *testing.T) {
 	deps := setupTest(t)
 	ctx := t.Context()
 
-	req := &repositories.GetVersionRequest{
+	req := &formulatemplateports.GetVersionRequest{
 		TenantInfo:    newTenantInfo(),
 		TemplateID:    pulid.MustNew("ft_"),
 		VersionNumber: 2,
@@ -955,7 +960,7 @@ func TestRollback_Success(t *testing.T) {
 	updatedTemplate.Expression = "totalWeight * 1.5"
 	updatedTemplate.CurrentVersionNumber = 4
 
-	req := &repositories.RollbackRequest{
+	req := &formulatemplateports.RollbackRequest{
 		TenantInfo:    tenant,
 		TemplateID:    templateID,
 		TargetVersion: 1,
@@ -984,7 +989,7 @@ func TestRollback_TargetVersionNotFound(t *testing.T) {
 	deps := setupTest(t)
 	ctx := t.Context()
 
-	req := &repositories.RollbackRequest{
+	req := &formulatemplateports.RollbackRequest{
 		TenantInfo:    newTenantInfo(),
 		TemplateID:    pulid.MustNew("ft_"),
 		TargetVersion: 99,
@@ -1030,7 +1035,7 @@ func TestRollback_DefaultChangeMessage(t *testing.T) {
 	updatedTemplate.ID = templateID
 	updatedTemplate.CurrentVersionNumber = 3
 
-	req := &repositories.RollbackRequest{
+	req := &formulatemplateports.RollbackRequest{
 		TenantInfo:    tenant,
 		TemplateID:    templateID,
 		TargetVersion: 1,
@@ -1082,7 +1087,7 @@ func TestFork_Success(t *testing.T) {
 	forkedTemplate.Name = "Forked Template"
 	forkedTemplate.SourceTemplateID = &sourceTemplateID
 
-	req := &repositories.ForkTemplateRequest{
+	req := &formulatemplateports.ForkTemplateRequest{
 		TenantInfo:       tenant,
 		SourceTemplateID: sourceTemplateID,
 		NewName:          "Forked Template",
@@ -1110,7 +1115,7 @@ func TestFork_SourceNotFound(t *testing.T) {
 	deps := setupTest(t)
 	ctx := t.Context()
 
-	req := &repositories.ForkTemplateRequest{
+	req := &formulatemplateports.ForkTemplateRequest{
 		TenantInfo:       newTenantInfo(),
 		SourceTemplateID: pulid.MustNew("ft_"),
 		NewName:          "Fork",
@@ -1156,7 +1161,7 @@ func TestFork_WithSpecificVersion(t *testing.T) {
 	forkedTemplate := newTestTemplate()
 	forkedTemplate.Name = "Forked From V1"
 
-	req := &repositories.ForkTemplateRequest{
+	req := &formulatemplateports.ForkTemplateRequest{
 		TenantInfo:       tenant,
 		SourceTemplateID: sourceTemplateID,
 		SourceVersion:    &sourceVersion,
@@ -1208,7 +1213,7 @@ func TestCompareVersions_Success(t *testing.T) {
 		SchemaID:      "shipment",
 	}
 
-	req := &repositories.CompareVersionsRequest{
+	req := &formulatemplateports.CompareVersionsRequest{
 		TenantInfo:  tenant,
 		TemplateID:  templateID,
 		FromVersion: 1,
@@ -1233,7 +1238,7 @@ func TestCompareVersions_NotEnoughVersions(t *testing.T) {
 	deps := setupTest(t)
 	ctx := t.Context()
 
-	req := &repositories.CompareVersionsRequest{
+	req := &formulatemplateports.CompareVersionsRequest{
 		TenantInfo:  newTenantInfo(),
 		TemplateID:  pulid.MustNew("ft_"),
 		FromVersion: 1,
@@ -1257,7 +1262,7 @@ func TestCompareVersions_VersionRangeError(t *testing.T) {
 	deps := setupTest(t)
 	ctx := t.Context()
 
-	req := &repositories.CompareVersionsRequest{
+	req := &formulatemplateports.CompareVersionsRequest{
 		TenantInfo:  newTenantInfo(),
 		TemplateID:  pulid.MustNew("ft_"),
 		FromVersion: 1,
@@ -1279,7 +1284,7 @@ func TestCompareVersions_VersionNotFoundInRange(t *testing.T) {
 	deps := setupTest(t)
 	ctx := t.Context()
 
-	req := &repositories.CompareVersionsRequest{
+	req := &formulatemplateports.CompareVersionsRequest{
 		TenantInfo:  newTenantInfo(),
 		TemplateID:  pulid.MustNew("ft_"),
 		FromVersion: 1,
@@ -1315,7 +1320,7 @@ func TestGetLineage_Success(t *testing.T) {
 	forkedChild := newTestTemplate()
 	forkedChild.SourceTemplateID = &templateID
 
-	req := &repositories.GetLineageRequest{
+	req := &formulatemplateports.GetLineageRequest{
 		TenantInfo: tenant,
 		TemplateID: templateID,
 	}
@@ -1339,7 +1344,7 @@ func TestGetLineage_TemplateNotFound(t *testing.T) {
 	deps := setupTest(t)
 	ctx := t.Context()
 
-	req := &repositories.GetLineageRequest{
+	req := &formulatemplateports.GetLineageRequest{
 		TenantInfo: newTenantInfo(),
 		TemplateID: pulid.MustNew("ft_"),
 	}
@@ -1359,7 +1364,7 @@ func TestUpdateVersionTags_Success(t *testing.T) {
 	deps := setupTest(t)
 	ctx := t.Context()
 
-	req := &repositories.UpdateVersionTagsRequest{
+	req := &formulatemplateports.UpdateVersionTagsRequest{
 		TenantInfo:    newTenantInfo(),
 		TemplateID:    pulid.MustNew("ft_"),
 		VersionNumber: 1,
@@ -1391,7 +1396,7 @@ func TestUpdateVersionTags_InvalidTag(t *testing.T) {
 	deps := setupTest(t)
 	ctx := t.Context()
 
-	req := &repositories.UpdateVersionTagsRequest{
+	req := &formulatemplateports.UpdateVersionTagsRequest{
 		TenantInfo:    newTenantInfo(),
 		TemplateID:    pulid.MustNew("ft_"),
 		VersionNumber: 1,
@@ -1608,10 +1613,10 @@ func TestValidateTemplate_InvalidExpression(t *testing.T) {
 func TestNew(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockFormulaTemplateRepository(t)
-	versionRepo := mocks.NewMockFormulaTemplateVersionRepository(t)
-	shipmentRepo := mocks.NewMockShipmentRepository(t)
-	auditSvc := mocks.NewMockAuditService(t)
+	repo := formulatemplateportsmock.NewMockFormulaTemplateRepository(t)
+	versionRepo := formulatemplateportsmock.NewMockFormulaTemplateVersionRepository(t)
+	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
+	auditSvc := auditportsmock.NewMockAuditService(t)
 	formulaSvc := newFormulaService(t)
 
 	svc := New(Params{
@@ -1892,7 +1897,7 @@ func TestReject_ClearsScheduledVersions(t *testing.T) {
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
 	deps.repo.On("Update", mock.Anything, mock.Anything).Return(template, nil)
 	deps.versionRepo.On("ClearScheduled", mock.Anything, mock.MatchedBy(
-		func(req *repositories.ListScheduledVersionsRequest) bool {
+		func(req *formulatemplateports.ListScheduledVersionsRequest) bool {
 			return req.TemplateID == template.ID &&
 				req.TenantInfo.OrgID == template.OrganizationID
 		},
@@ -1968,7 +1973,7 @@ func TestUpdate_MaterialChangeRevertsApproval(t *testing.T) {
 	deps.versionRepo.On("Create", mock.Anything, mock.Anything).
 		Return(&formulatemplate.FormulaTemplateVersion{}, nil)
 	deps.versionRepo.On("ClearScheduled", mock.Anything, mock.MatchedBy(
-		func(req *repositories.ListScheduledVersionsRequest) bool {
+		func(req *formulatemplateports.ListScheduledVersionsRequest) bool {
 			return req.TemplateID == original.ID
 		},
 	)).Return(int64(1), nil).Once()
@@ -2036,7 +2041,7 @@ func TestUpdateVersionEffectiveDate_VersionNotFound(t *testing.T) {
 	future := timeutils.NowUnix() + 7200
 	result, err := deps.svc.UpdateVersionEffectiveDate(
 		t.Context(),
-		&repositories.UpdateEffectiveDateRequest{
+		&formulatemplateports.UpdateEffectiveDateRequest{
 			TenantInfo:    newTenantInfo(),
 			TemplateID:    pulid.MustNew("ft_"),
 			VersionNumber: 2,
@@ -2063,7 +2068,7 @@ func TestUpdateVersionEffectiveDate_RequiresActiveTemplate(t *testing.T) {
 	future := timeutils.NowUnix() + 7200
 	result, err := deps.svc.UpdateVersionEffectiveDate(
 		t.Context(),
-		&repositories.UpdateEffectiveDateRequest{
+		&formulatemplateports.UpdateEffectiveDateRequest{
 			TenantInfo:    newTenantInfo(),
 			TemplateID:    template.ID,
 			VersionNumber: 2,
@@ -2089,7 +2094,7 @@ func TestUpdateVersionEffectiveDate_RejectsStaleDate(t *testing.T) {
 	stale := timeutils.NowUnix() - 7200
 	result, err := deps.svc.UpdateVersionEffectiveDate(
 		t.Context(),
-		&repositories.UpdateEffectiveDateRequest{
+		&formulatemplateports.UpdateEffectiveDateRequest{
 			TenantInfo:    newTenantInfo(),
 			TemplateID:    template.ID,
 			VersionNumber: 2,
@@ -2125,7 +2130,7 @@ func TestUpdateVersionEffectiveDate_Success(t *testing.T) {
 
 	result, err := deps.svc.UpdateVersionEffectiveDate(
 		t.Context(),
-		&repositories.UpdateEffectiveDateRequest{
+		&formulatemplateports.UpdateEffectiveDateRequest{
 			TenantInfo:    newTenantInfo(),
 			TemplateID:    template.ID,
 			VersionNumber: 2,
@@ -2155,7 +2160,7 @@ func TestUpdateVersionEffectiveDate_RejectsUnapprovedSnapshot(t *testing.T) {
 
 	result, err := deps.svc.UpdateVersionEffectiveDate(
 		t.Context(),
-		&repositories.UpdateEffectiveDateRequest{
+		&formulatemplateports.UpdateEffectiveDateRequest{
 			TenantInfo:    newTenantInfo(),
 			TemplateID:    template.ID,
 			VersionNumber: 3,
@@ -2186,7 +2191,7 @@ func TestUpdateVersionEffectiveDate_ClearAllowsAnyStatus(t *testing.T) {
 
 	result, err := deps.svc.UpdateVersionEffectiveDate(
 		t.Context(),
-		&repositories.UpdateEffectiveDateRequest{
+		&formulatemplateports.UpdateEffectiveDateRequest{
 			TenantInfo:    newTenantInfo(),
 			TemplateID:    template.ID,
 			VersionNumber: 2,
@@ -2202,7 +2207,7 @@ func TestListScheduledVersions_Passthrough(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
 
-	req := &repositories.ListScheduledVersionsRequest{
+	req := &formulatemplateports.ListScheduledVersionsRequest{
 		TenantInfo: newTenantInfo(),
 		TemplateID: pulid.MustNew("ft_"),
 	}
@@ -2278,7 +2283,7 @@ func TestBacktest_SummaryMath(t *testing.T) {
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
 	deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.Anything).Return(nil, nil)
 	deps.shipmentRepo.On("ListRatedByFormulaTemplate", mock.Anything, mock.MatchedBy(
-		func(req *repositories.ListRatedByFormulaTemplateRequest) bool {
+		func(req *shipmentports.ListRatedByFormulaTemplateRequest) bool {
 			return req.TemplateID == template.ID && req.Limit == 50
 		},
 	)).Return(newBacktestShipments(), nil)
@@ -2365,7 +2370,7 @@ func TestBacktest_WithVersionNumber(t *testing.T) {
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
 	deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.Anything).Return(nil, nil)
 	deps.versionRepo.On("GetByTemplateAndVersion", mock.Anything, mock.MatchedBy(
-		func(req *repositories.GetVersionRequest) bool {
+		func(req *formulatemplateports.GetVersionRequest) bool {
 			return req.VersionNumber == versionNumber
 		},
 	)).Return(candidateVersion, nil)
@@ -2422,7 +2427,7 @@ func TestTestExpression_WithShipment(t *testing.T) {
 	entity := &shipment.Shipment{ID: shipmentID, ProNumber: "PRO-1"}
 
 	deps.shipmentRepo.On("GetByID", mock.Anything, mock.MatchedBy(
-		func(req *repositories.GetShipmentByIDRequest) bool {
+		func(req *shipmentports.GetShipmentByIDRequest) bool {
 			return req.ID == shipmentID && req.ExpandShipmentDetails
 		},
 	)).Return(entity, nil)
@@ -2508,10 +2513,10 @@ func TestFork_MissingRequestedVersionFails(t *testing.T) {
 
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(source, nil)
 	deps.versionRepo.On("GetByTemplateAndVersion", mock.Anything, mock.MatchedBy(
-		func(req *repositories.GetVersionRequest) bool { return req.VersionNumber == requested },
+		func(req *formulatemplateports.GetVersionRequest) bool { return req.VersionNumber == requested },
 	)).Return(nil, errortypes.NewNotFoundError("FormulaTemplateVersion not found"))
 
-	result, err := deps.svc.Fork(t.Context(), &repositories.ForkTemplateRequest{
+	result, err := deps.svc.Fork(t.Context(), &formulatemplateports.ForkTemplateRequest{
 		TenantInfo:       newTenantInfo(),
 		SourceTemplateID: source.ID,
 		SourceVersion:    &requested,
@@ -2542,7 +2547,7 @@ func TestRollback_RejectsSnapshotThatNoLongerValidates(t *testing.T) {
 	deps.versionRepo.On("GetByTemplateAndVersion", mock.Anything, mock.Anything).Return(broken, nil)
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(current, nil)
 
-	result, err := deps.svc.Rollback(t.Context(), &repositories.RollbackRequest{
+	result, err := deps.svc.Rollback(t.Context(), &formulatemplateports.RollbackRequest{
 		TenantInfo:    newTenantInfo(),
 		TemplateID:    current.ID,
 		TargetVersion: 1,
@@ -2564,7 +2569,7 @@ func TestDuplicate_RejectsOversizedBatch(t *testing.T) {
 
 	result, err := deps.svc.Duplicate(
 		t.Context(),
-		&repositories.BulkDuplicateFormulaTemplateRequest{
+		&formulatemplateports.BulkDuplicateFormulaTemplateRequest{
 			TenantInfo:  newTenantInfo(),
 			TemplateIDs: ids,
 		},
@@ -2581,7 +2586,7 @@ func TestBulkUpdateStatus_RejectsEmptyAndOversizedBatches(t *testing.T) {
 
 	_, err := deps.svc.BulkUpdateStatus(
 		t.Context(),
-		&repositories.BulkUpdateFormulaTemplateStatusRequest{
+		&formulatemplateports.BulkUpdateFormulaTemplateStatusRequest{
 			TenantInfo: newTenantInfo(),
 			Status:     formulatemplate.StatusInactive,
 		},
@@ -2594,7 +2599,7 @@ func TestBulkUpdateStatus_RejectsEmptyAndOversizedBatches(t *testing.T) {
 	}
 	_, err = deps.svc.BulkUpdateStatus(
 		t.Context(),
-		&repositories.BulkUpdateFormulaTemplateStatusRequest{
+		&formulatemplateports.BulkUpdateFormulaTemplateStatusRequest{
 			TenantInfo:  newTenantInfo(),
 			TemplateIDs: ids,
 			Status:      formulatemplate.StatusInactive,

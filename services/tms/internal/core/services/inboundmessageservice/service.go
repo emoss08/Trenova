@@ -8,11 +8,15 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -54,19 +58,19 @@ type Params struct {
 	fx.In
 
 	Logger      *zap.Logger
-	MailboxRepo repositories.InboundMailboxRepository
-	MessageRepo repositories.InboundMessageRepository
-	Storage     storage.Client
+	MailboxRepo inboundmessageports.InboundMailboxRepository
+	MessageRepo inboundmessageports.InboundMessageRepository
+	Storage     kernelports.Client
 	Encryption  *encryptionservice.Service
 	// Completion is optional so the ingest path still works on an installation
 	// with no provider configured. Mail lands and waits for a person instead of
 	// being classified, which is the behaviour a mailbox on AlwaysReview has
 	// anyway.
-	Completion services.CompletionService `optional:"true"`
+	Completion agentports.CompletionService `optional:"true"`
 	// Workflows is optional so an installation without a worker still receives
 	// mail. It lands at Received and waits, which is what a mailbox on
 	// AlwaysReview does with every message anyway.
-	Workflows services.WorkflowStarter `optional:"true"`
+	Workflows kernelports.WorkflowStarter `optional:"true"`
 	// Shipments and Parties resolve what a message is about. Both are optional:
 	// an unmatched message is still one a person can read and link by hand.
 	Shipments ShipmentFinder `optional:"true"`
@@ -75,25 +79,25 @@ type Params struct {
 	// Without them a message still lands with its attachment rows recorded —
 	// the file names, types and sizes the sender attached — and each row says
 	// it was never read, which is a truthful inbox rather than an empty one.
-	Uploads   services.DocumentUploadService  `optional:"true"`
-	Documents repositories.DocumentRepository `optional:"true"`
+	Uploads   documentuploadports.DocumentUploadService `optional:"true"`
+	Documents documentports.DocumentRepository          `optional:"true"`
 	// Watchtower and Events are how a message that needs a person, or a desk,
 	// gets one. Both are optional: without them the inbox still holds every
 	// message and its reason, and nothing else is told about it.
-	Watchtower services.WatchtowerProjector `optional:"true"`
-	Events     services.AgentEventPublisher `optional:"true"`
+	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
+	Events     agentports.AgentEventPublisher      `optional:"true"`
 	// Audit records mailbox configuration changes.
-	Audit services.AuditService `optional:"true"`
+	Audit auditports.AuditService `optional:"true"`
 	// Realtime keeps an open inbox current, and Notifications tells the people
 	// who read the inbox that a message is waiting on them. Both optional: the
 	// inbox is still right on the next load without either.
-	Realtime      services.RealtimeService     `optional:"true"`
+	Realtime      agentports.RealtimeService   `optional:"true"`
 	Notifications *notificationservice.Service `optional:"true"`
-	Indexer       services.RetrievalIndexer    `optional:"true"`
+	Indexer       agentports.RetrievalIndexer  `optional:"true"`
 	// ContentFetcher reads what a metadata-only webhook leaves out. Without it
 	// a Resend message lands with its sender, recipients and subject and is
 	// sent to review saying its content could not be read.
-	ContentFetcher services.InboundContentFetcher `optional:"true"`
+	ContentFetcher inboundmessageports.InboundContentFetcher `optional:"true"`
 }
 
 // reviewNotifier is the slice of the notification service the inbox uses.
@@ -106,23 +110,23 @@ type reviewNotifier interface {
 
 type Service struct {
 	l           *zap.Logger
-	mailboxRepo repositories.InboundMailboxRepository
-	messageRepo repositories.InboundMessageRepository
-	storage     storage.Client
+	mailboxRepo inboundmessageports.InboundMailboxRepository
+	messageRepo inboundmessageports.InboundMessageRepository
+	storage     kernelports.Client
 	encryption  secretKeeper
-	completion  services.CompletionService
-	workflows   services.WorkflowStarter
+	completion  agentports.CompletionService
+	workflows   kernelports.WorkflowStarter
 	shipments   ShipmentFinder
 	parties     PartyFinder
-	uploads     services.DocumentUploadService
-	documents   repositories.DocumentRepository
-	watchtower  services.WatchtowerProjector
-	events      services.AgentEventPublisher
-	audit       services.AuditService
-	realtime    services.RealtimeService
+	uploads     documentuploadports.DocumentUploadService
+	documents   documentports.DocumentRepository
+	watchtower  watchtowerports.WatchtowerProjector
+	events      agentports.AgentEventPublisher
+	audit       auditports.AuditService
+	realtime    agentports.RealtimeService
 	notifier    reviewNotifier
-	indexer     services.RetrievalIndexer
-	fetcher     services.InboundContentFetcher
+	indexer     agentports.RetrievalIndexer
+	fetcher     inboundmessageports.InboundContentFetcher
 }
 
 func New(p Params) *Service {
@@ -236,7 +240,7 @@ func (s *Service) resolveMailbox(
 
 	mailbox, err := s.mailboxRepo.GetByTokenHash(
 		ctx,
-		repositories.GetMailboxByTokenHashRequest{
+		inboundmessageports.GetMailboxByTokenHashRequest{
 			TokenHash: hashutils.SHA256Hex(token),
 		},
 	)
@@ -325,7 +329,7 @@ func (s *Service) stage(
 ) (*ReceiveWebhookResult, error) {
 	existing, err := s.messageRepo.GetByProviderID(
 		ctx,
-		repositories.GetInboundMessageByProviderIDRequest{
+		inboundmessageports.GetInboundMessageByProviderIDRequest{
 			MailboxID:         mailbox.ID,
 			ProviderMessageID: parsed.ProviderMessageID,
 		},
@@ -415,7 +419,7 @@ func (s *Service) storeRawBody(
 		providerMessageID+".html",
 	)
 
-	if _, err := s.storage.Upload(ctx, &storage.UploadParams{
+	if _, err := s.storage.Upload(ctx, &kernelports.UploadParams{
 		Key:         key,
 		ContentType: "text/html; charset=utf-8",
 		Size:        int64(len(htmlBody)),

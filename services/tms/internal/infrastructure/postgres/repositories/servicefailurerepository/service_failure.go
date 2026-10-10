@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -33,7 +33,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.ServiceFailureRepository {
+func New(p Params) servicefailureports.ServiceFailureRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.service-failure-repository"),
@@ -42,7 +42,7 @@ func New(p Params) repositories.ServiceFailureRepository {
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListServiceFailuresRequest,
+	req *servicefailureports.ListServiceFailuresRequest,
 ) (*pagination.ListResult[*servicefailure.ServiceFailure], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*servicefailure.ServiceFailure], error) {
 		req.EnsureFilter()
@@ -87,7 +87,7 @@ func (r *repository) List(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListServiceFailureConnectionRequest,
+	req *servicefailureports.ListServiceFailureConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	q, err := querybuilder.ApplyCursorFilters(
 		q,
@@ -105,7 +105,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListServiceFailureConnectionRequest,
+	req *servicefailureports.ListServiceFailureConnectionRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -127,7 +127,7 @@ func applyShipmentFilter(q *bun.SelectQuery, shipmentID *pulid.ID) *bun.SelectQu
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListServiceFailureConnectionRequest,
+	req *servicefailureports.ListServiceFailureConnectionRequest,
 ) (*pagination.CursorListResult[*servicefailure.ServiceFailure], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*servicefailure.ServiceFailure], error) {
 		log := r.l.With(
@@ -184,7 +184,7 @@ func (r *repository) ListConnection(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req *repositories.GetServiceFailureByIDRequest,
+	req *servicefailureports.GetServiceFailureByIDRequest,
 ) (*servicefailure.ServiceFailure, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*servicefailure.ServiceFailure, error) {
 		entity := new(servicefailure.ServiceFailure)
@@ -203,7 +203,7 @@ func (r *repository) GetByID(
 
 func (r *repository) GetByShipment(
 	ctx context.Context,
-	req *repositories.GetServiceFailureByShipmentRequest,
+	req *servicefailureports.GetServiceFailureByShipmentRequest,
 ) (*servicefailure.ServiceFailure, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*servicefailure.ServiceFailure, error) {
 		entity := new(servicefailure.ServiceFailure)
@@ -249,7 +249,7 @@ func (r *repository) Create(
 			return nil, mapServiceFailureConstraint(err, entity)
 		}
 
-		return r.GetByID(ctx, &repositories.GetServiceFailureByIDRequest{
+		return r.GetByID(ctx, &servicefailureports.GetServiceFailureByIDRequest{
 			ID:         entity.ID,
 			TenantInfo: serviceFailureTenantInfo(entity),
 		})
@@ -293,7 +293,7 @@ func (r *repository) Update(
 			return nil, err
 		}
 
-		return r.GetByID(ctx, &repositories.GetServiceFailureByIDRequest{
+		return r.GetByID(ctx, &servicefailureports.GetServiceFailureByIDRequest{
 			ID:         entity.ID,
 			TenantInfo: serviceFailureTenantInfo(entity),
 		})
@@ -329,7 +329,7 @@ func (r *repository) UpdateDetectionSnapshot(
 			return nil, err
 		}
 
-		return r.GetByID(ctx, &repositories.GetServiceFailureByIDRequest{
+		return r.GetByID(ctx, &servicefailureports.GetServiceFailureByIDRequest{
 			ID:         entity.ID,
 			TenantInfo: serviceFailureTenantInfo(entity),
 		})
@@ -338,7 +338,7 @@ func (r *repository) UpdateDetectionSnapshot(
 
 func (r *repository) FindUnresolvedByStop(
 	ctx context.Context,
-	req *repositories.ServiceFailureActiveStopRequest,
+	req *servicefailureports.ServiceFailureActiveStopRequest,
 ) (*servicefailure.ServiceFailure, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*servicefailure.ServiceFailure, error) {
 		entity := new(servicefailure.ServiceFailure)
@@ -362,7 +362,7 @@ func (r *repository) FindUnresolvedByStop(
 
 func (r *repository) ListUnresolvedByShipment(
 	ctx context.Context,
-	req *repositories.ServiceFailuresByShipmentRequest,
+	req *servicefailureports.ServiceFailuresByShipmentRequest,
 ) ([]*servicefailure.ServiceFailure, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*servicefailure.ServiceFailure, error) {
 		entities := make([]*servicefailure.ServiceFailure, 0)
@@ -386,7 +386,7 @@ func (r *repository) ListUnresolvedByShipment(
 
 func (r *repository) ListUnresolvedByShipmentIDs(
 	ctx context.Context,
-	req *repositories.ServiceFailuresByShipmentIDsRequest,
+	req *servicefailureports.ServiceFailuresByShipmentIDsRequest,
 ) ([]*servicefailure.ServiceFailure, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*servicefailure.ServiceFailure, error) {
 		entities := make([]*servicefailure.ServiceFailure, 0, len(req.ShipmentIDs))
@@ -416,7 +416,7 @@ func (r *repository) ListUnresolvedByShipmentIDs(
 
 func (r *repository) CountUnresolvedByShipment(
 	ctx context.Context,
-	req *repositories.ServiceFailuresByShipmentRequest,
+	req *servicefailureports.ServiceFailuresByShipmentRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		count, err := r.db.DBForContext(ctx).
@@ -437,7 +437,7 @@ func (r *repository) CountUnresolvedByShipment(
 
 func (r *repository) CountUnresolved(
 	ctx context.Context,
-	req *repositories.CountUnresolvedServiceFailuresRequest,
+	req *servicefailureports.CountUnresolvedServiceFailuresRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		count, err := r.db.DBForContext(ctx).

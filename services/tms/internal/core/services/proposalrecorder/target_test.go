@@ -6,7 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,12 +24,12 @@ func (s *capturingStore) Create(
 	return p, nil
 }
 
-func recordOne(t *testing.T, action serviceports.PendingAction) *agent.AgentProposal {
+func recordOne(t *testing.T, action agentports.PendingAction) *agent.AgentProposal {
 	t.Helper()
 
 	store := &capturingStore{}
-	actor := &serviceports.RequestActor{
-		PrincipalType:  serviceports.PrincipalTypeUser,
+	actor := &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    pulid.MustNew("usr_"),
 		UserID:         pulid.MustNew("usr_"),
 		OrganizationID: pulid.MustNew("org_"),
@@ -38,7 +39,7 @@ func recordOne(t *testing.T, action serviceports.PendingAction) *agent.AgentProp
 	_, err := NewWithStores(nil, nil, store).Record(t.Context(), &RecordRequest{
 		Actor:    actor,
 		Run:      &agent.AgentRun{ID: pulid.MustNew("arun_")},
-		Actions:  []serviceports.PendingAction{action},
+		Actions:  []agentports.PendingAction{action},
 		Evidence: messageEvidence,
 	})
 	require.NoError(t, err)
@@ -54,12 +55,12 @@ func TestRecord_KeepsThePinnedTargetOnTheProposal(t *testing.T) {
 	t.Parallel()
 
 	id := pulid.MustNew("shp_")
-	proposal := recordOne(t, serviceports.PendingAction{
+	proposal := recordOne(t, agentports.PendingAction{
 		ToolName:  "place_shipment_hold",
 		Arguments: map[string]any{"shipmentId": id.String()},
 		Rationale: "it is late",
 		Tier:      agent.TierPropose,
-		Target: &serviceports.ProposalTarget{
+		Target: &agentports.ProposalTarget{
 			Resource: permission.ResourceShipment,
 			ID:       id,
 			Version:  4,
@@ -74,7 +75,7 @@ func TestRecord_KeepsThePinnedTargetOnTheProposal(t *testing.T) {
 func TestRecord_LeavesAnUnpinnedActionUnpinned(t *testing.T) {
 	t.Parallel()
 
-	proposal := recordOne(t, serviceports.PendingAction{
+	proposal := recordOne(t, agentports.PendingAction{
 		ToolName:  "raise_exception",
 		Arguments: map[string]any{},
 		Rationale: "something is off",

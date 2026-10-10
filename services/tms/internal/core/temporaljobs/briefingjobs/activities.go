@@ -8,12 +8,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentbrief"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/orgzone"
 	"github.com/emoss08/trenova/internal/core/services/planservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -37,26 +39,26 @@ type ActivitiesParams struct {
 	fx.In
 
 	Logger    *zap.Logger
-	Briefings services.BriefingService
-	Repo      repositories.BriefingRepository
-	Board     services.ShipmentBriefWriter
-	BoardRepo repositories.ShipmentBriefRepository
-	Controls  repositories.AgentControlRepository
-	Tenants   repositories.TenantSyncRepository
-	Orgs      repositories.OrganizationRepository
-	Plans     services.PlanService `optional:"true"`
+	Briefings briefingports.BriefingService
+	Repo      briefingports.BriefingRepository
+	Board     shipmentbriefports.ShipmentBriefWriter
+	BoardRepo shipmentbriefports.ShipmentBriefRepository
+	Controls  tenantports.AgentControlRepository
+	Tenants   tenantports.TenantSyncRepository
+	Orgs      tenantports.OrganizationRepository
+	Plans     platformplanports.PlanService `optional:"true"`
 }
 
 type Activities struct {
 	l         *zap.Logger
-	briefings services.BriefingService
-	repo      repositories.BriefingRepository
-	board     services.ShipmentBriefWriter
-	boardRepo repositories.ShipmentBriefRepository
-	controls  repositories.AgentControlRepository
-	tenants   repositories.TenantSyncRepository
-	orgs      repositories.OrganizationRepository
-	plans     services.PlanService
+	briefings briefingports.BriefingService
+	repo      briefingports.BriefingRepository
+	board     shipmentbriefports.ShipmentBriefWriter
+	boardRepo shipmentbriefports.ShipmentBriefRepository
+	controls  tenantports.AgentControlRepository
+	tenants   tenantports.TenantSyncRepository
+	orgs      tenantports.OrganizationRepository
+	plans     platformplanports.PlanService
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -114,7 +116,7 @@ func (a *Activities) WriteDueBriefingsActivity(
 		}
 
 		result.OrganizationsDue++
-		written, wErr := a.briefings.WriteForDay(tenantCtx, services.WriteBriefingRequest{
+		written, wErr := a.briefings.WriteForDay(tenantCtx, briefingports.WriteBriefingRequest{
 			TenantInfo: tenantInfo,
 			Now:        now,
 		})
@@ -187,7 +189,7 @@ func (a *Activities) WriteOrganizationBriefingActivity(
 	stop := modelcall.Heartbeat(ctx)
 	defer stop()
 
-	written, err := a.briefings.WriteForDay(ctx, services.WriteBriefingRequest{
+	written, err := a.briefings.WriteForDay(ctx, briefingports.WriteBriefingRequest{
 		TenantInfo: input.TenantInfo(),
 		Now:        input.Now,
 	})
@@ -205,7 +207,7 @@ func (a *Activities) WriteShipmentBriefActivity(
 	stop := modelcall.Heartbeat(ctx)
 	defer stop()
 
-	brief, err := a.board.WriteBrief(ctx, &services.WriteShipmentBriefRequest{
+	brief, err := a.board.WriteBrief(ctx, &shipmentbriefports.WriteShipmentBriefRequest{
 		TenantInfo: input.TenantInfo(),
 		Trigger:    shipmentbrief.TriggerScheduled,
 	})
@@ -230,7 +232,7 @@ func (a *Activities) BriefingRetentionActivity(
 	for pass := range retentionPasses {
 		activity.RecordHeartbeat(ctx, pass)
 
-		deleted, err := a.repo.DeleteBefore(ctx, repositories.DeleteBriefingsBeforeRequest{
+		deleted, err := a.repo.DeleteBefore(ctx, briefingports.DeleteBriefingsBeforeRequest{
 			BeforeDate: cutoff,
 			Limit:      retentionBatch,
 		})
@@ -248,7 +250,7 @@ func (a *Activities) BriefingRetentionActivity(
 
 		deleted, err := a.boardRepo.DeleteBefore(
 			ctx,
-			&repositories.DeleteShipmentBriefsBeforeRequest{
+			&shipmentbriefports.DeleteShipmentBriefsBeforeRequest{
 				BeforeDate: cutoff,
 				Limit:      retentionBatch,
 			},

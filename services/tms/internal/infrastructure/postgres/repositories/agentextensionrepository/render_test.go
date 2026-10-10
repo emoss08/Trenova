@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentextension"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -24,7 +24,7 @@ func testTenant() pagination.TenantInfo {
 func TestReserveIncrementsOnlyBelowTheLimit(t *testing.T) {
 	t.Parallel()
 
-	sql := buildReserve(renderDB(), repositories.ReserveExtensionRequestParams{
+	sql := buildReserve(renderDB(), agentextensionports.ReserveExtensionRequestParams{
 		TenantInfo: testTenant(),
 		Type:       agentextension.TypeExa,
 		Day:        20260923,
@@ -45,7 +45,7 @@ func TestRecordOutcomeAddsToTheTenantsDay(t *testing.T) {
 	t.Parallel()
 
 	tenant := testTenant()
-	sql := buildRecordOutcome(renderDB(), repositories.RecordExtensionOutcomeParams{
+	sql := buildRecordOutcome(renderDB(), agentextensionports.RecordExtensionOutcomeParams{
 		TenantInfo: tenant,
 		Type:       agentextension.TypeExa,
 		Day:        20260923,
@@ -64,7 +64,7 @@ func TestRecordOutcomeAddsToTheTenantsDay(t *testing.T) {
 func TestRecordOutcomeNeverSubtractsCost(t *testing.T) {
 	t.Parallel()
 
-	sql := buildRecordOutcome(renderDB(), repositories.RecordExtensionOutcomeParams{
+	sql := buildRecordOutcome(renderDB(), agentextensionports.RecordExtensionOutcomeParams{
 		TenantInfo: testTenant(),
 		Type:       agentextension.TypeExa,
 		Day:        20260923,
@@ -79,7 +79,7 @@ func TestSummarizeReadsTheMonthForOneTenant(t *testing.T) {
 	t.Parallel()
 
 	tenant := testTenant()
-	sql := buildSummarize(renderDB(), repositories.SummarizeExtensionUsageParams{
+	sql := buildSummarize(renderDB(), agentextensionports.SummarizeExtensionUsageParams{
 		TenantInfo: tenant,
 		FromDay:    20260901,
 		Today:      20260923,

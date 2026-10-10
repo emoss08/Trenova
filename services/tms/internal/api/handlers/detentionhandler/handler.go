@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -153,7 +153,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*detention.DetentionOccurrence], error) {
 			return h.service.ListOccurrences(
 				c.Request.Context(),
-				&repositories.ListDetentionOccurrencesRequest{
+				&detentionports.ListDetentionOccurrencesRequest{
 					Filter:     req,
 					ShipmentID: shipmentID,
 					CustomerID: customerID,
@@ -186,7 +186,7 @@ func (h *Handler) get(c *gin.Context) {
 
 	detail, err := h.service.GetOccurrenceDetail(
 		c.Request.Context(),
-		&repositories.GetDetentionOccurrenceByIDRequest{
+		&detentionports.GetDetentionOccurrenceByIDRequest{
 			OccurrenceID: occurrenceID,
 			TenantInfo:   h.tenant(c),
 		},
@@ -355,8 +355,8 @@ func (h *Handler) dispute(c *gin.Context) {
 	c.JSON(http.StatusOK, occurrence)
 }
 
-func (h *Handler) statsRequest(c *gin.Context) *repositories.DetentionStatsRequest {
-	req := &repositories.DetentionStatsRequest{TenantInfo: h.tenant(c)}
+func (h *Handler) statsRequest(c *gin.Context) *detentionports.DetentionStatsRequest {
+	req := &detentionports.DetentionStatsRequest{TenantInfo: h.tenant(c)}
 
 	if raw := helpers.QueryString(c, "from"); raw != "" {
 		if parsed, err := strconv.ParseInt(raw, 10, 64); err == nil {

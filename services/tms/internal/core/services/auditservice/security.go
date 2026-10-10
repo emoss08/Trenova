@@ -4,8 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/audit"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/requestmeta"
@@ -19,18 +20,18 @@ const securityChangeKind = "security_change"
 type SecurityAuditorParams struct {
 	fx.In
 
-	AuditService services.AuditService
+	AuditService auditports.AuditService
 	Metrics      *metrics.Registry
 	Logger       *zap.Logger
 }
 
 type SecurityAuditor struct {
-	audit   services.AuditService
+	audit   auditports.AuditService
 	metrics *metrics.Registry
 	l       *zap.Logger
 }
 
-func NewSecurityAuditor(p SecurityAuditorParams) services.SecurityAuditor {
+func NewSecurityAuditor(p SecurityAuditorParams) permissionports.SecurityAuditor {
 	return &SecurityAuditor{
 		audit:   p.AuditService,
 		metrics: p.Metrics,
@@ -38,10 +39,10 @@ func NewSecurityAuditor(p SecurityAuditorParams) services.SecurityAuditor {
 	}
 }
 
-func (a *SecurityAuditor) RecordChange(ctx context.Context, change *services.SecurityChange) {
+func (a *SecurityAuditor) RecordChange(ctx context.Context, change *permissionports.SecurityChange) {
 	change = withRequestTenant(ctx, change)
 
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       change.Resource,
 		ResourceID:     change.ResourceID,
 		Operation:      change.Operation,
@@ -56,7 +57,7 @@ func (a *SecurityAuditor) RecordChange(ctx context.Context, change *services.Sec
 	params.PreviousState = a.stateOf(change.Before, "before")
 	params.CurrentState = a.stateOf(change.After, "after")
 
-	opts := make([]services.LogOption, 0, 5)
+	opts := make([]auditports.LogOption, 0, 5)
 	opts = append(opts, WithCategory(audit.CategoryUser), WithRequest(ctx))
 	if change.Comment != "" {
 		opts = append(opts, WithComment(change.Comment))
@@ -93,13 +94,13 @@ func (a *SecurityAuditor) RecordChange(ctx context.Context, change *services.Sec
 
 func withRequestTenant(
 	ctx context.Context,
-	source *services.SecurityChange,
-) *services.SecurityChange {
+	source *permissionports.SecurityChange,
+) *permissionports.SecurityChange {
 	change := *source
 	tenant, ok := dbscope.From(ctx).Tenant()
 	if !ok {
 		if change.Actor.PrincipalType == "" {
-			change.Actor = services.SystemAuditActor()
+			change.Actor = permissionports.SystemAuditActor()
 		}
 		return &change
 	}
@@ -111,13 +112,13 @@ func withRequestTenant(
 
 	if change.Actor.PrincipalType == "" {
 		if tenant.UserID.IsNotNil() {
-			change.Actor = services.UserActor(pagination.TenantInfo{
+			change.Actor = permissionports.UserActor(pagination.TenantInfo{
 				OrgID:  tenant.OrganizationID,
 				BuID:   tenant.BusinessUnitID,
 				UserID: tenant.UserID,
 			}).AuditActor()
 		} else {
-			change.Actor = services.SystemAuditActor()
+			change.Actor = permissionports.SystemAuditActor()
 		}
 	}
 

@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -46,7 +46,7 @@ func (f *fakeRepo) List(context.Context, pagination.TenantInfo) ([]*agent.ToolRu
 	return out, nil
 }
 
-func (f *fakeRepo) Get(_ context.Context, req repositories.GetToolRuleOverrideRequest) (*agent.ToolRuleOverride, error) {
+func (f *fakeRepo) Get(_ context.Context, req agentports.GetToolRuleOverrideRequest) (*agent.ToolRuleOverride, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	row, ok := f.rows[req.ToolName]
@@ -80,24 +80,24 @@ func (f *fakeRepo) Update(_ context.Context, override *agent.ToolRuleOverride) (
 	return &copied, nil
 }
 
-type fakePolicies map[string]services.ToolPolicy
+type fakePolicies map[string]agentports.ToolPolicy
 
-func (f fakePolicies) Get(name string) (services.ToolPolicy, bool) {
+func (f fakePolicies) Get(name string) (agentports.ToolPolicy, bool) {
 	policy, ok := f[name]
 
 	return policy, ok
 }
 
 type fakeImpact struct {
-	requests []services.RuleImpactRequest
+	requests []agentports.RuleImpactRequest
 }
 
 func (f *fakeImpact) RuleImpact(
 	_ context.Context,
-	req *services.RuleImpactRequest,
-) ([]services.AgentToolRuleImpact, error) {
+	req *agentports.RuleImpactRequest,
+) ([]agentports.AgentToolRuleImpact, error) {
 	f.requests = append(f.requests, *req)
-	answer := func(policy services.ToolPolicy) agent.AutonomyAnswer {
+	answer := func(policy agentports.ToolPolicy) agent.AutonomyAnswer {
 		if policy.MaxTier == agent.TierAutoExecute {
 			return agent.AutonomyRunsOnItsOwn
 		}
@@ -105,17 +105,17 @@ func (f *fakeImpact) RuleImpact(
 		return agent.AutonomyNeedsApproval
 	}
 
-	return []services.AgentToolRuleImpact{
+	return []agentports.AgentToolRuleImpact{
 		{AgentID: "agd_moved", AgentName: "Dispatcher", Before: answer(req.Before), After: answer(req.After)},
 		{AgentID: "agd_same", AgentName: "Clerk", Before: agent.AutonomyNeedsApproval, After: agent.AutonomyNeedsApproval},
 	}, nil
 }
 
 type fakeAuditor struct {
-	changes []*services.SecurityChange
+	changes []*permissionports.SecurityChange
 }
 
-func (f *fakeAuditor) RecordChange(_ context.Context, change *services.SecurityChange) {
+func (f *fakeAuditor) RecordChange(_ context.Context, change *permissionports.SecurityChange) {
 	f.changes = append(f.changes, change)
 }
 
@@ -155,15 +155,15 @@ func newFixture(t *testing.T) *fixture {
 	}
 }
 
-func (f *fixture) save(t *testing.T, req *services.SaveToolRuleRequest) (*services.SaveToolRuleResult, error) {
+func (f *fixture) save(t *testing.T, req *agentports.SaveToolRuleRequest) (*agentports.SaveToolRuleResult, error) {
 	t.Helper()
 	req.TenantInfo = f.tenant
 	if req.ToolName == "" {
 		req.ToolName = shipmentTool
 	}
 
-	return f.service.Save(t.Context(), req, &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeUser,
+	return f.service.Save(t.Context(), req, &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    "usr_1",
 		UserID:         "usr_1",
 		OrganizationID: f.tenant.OrgID,
@@ -175,8 +175,8 @@ func TestSave_HoldsAToolLowerAndRecordsWhoItMoves(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t)
-	result, err := f.save(t, &services.SaveToolRuleRequest{
-		Change: services.ToolRuleChange{MaxTier: agent.TierActWithApproval},
+	result, err := f.save(t, &agentports.SaveToolRuleRequest{
+		Change: agentports.ToolRuleChange{MaxTier: agent.TierActWithApproval},
 		Reason: "  Carrier changes need a person this quarter  ",
 	})
 	require.NoError(t, err)
@@ -204,8 +204,8 @@ func TestSave_RequiresAReasonWhenTheMostFreedomChanges(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t)
-	_, err := f.save(t, &services.SaveToolRuleRequest{
-		Change: services.ToolRuleChange{MaxTier: agent.TierPropose},
+	_, err := f.save(t, &agentports.SaveToolRuleRequest{
+		Change: agentports.ToolRuleChange{MaxTier: agent.TierPropose},
 		Reason: "   ",
 	})
 
@@ -220,8 +220,8 @@ func TestSave_TakesOutsideTextWithoutAReason(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t)
-	result, err := f.save(t, &services.SaveToolRuleRequest{
-		Change: services.ToolRuleChange{ReadsExternal: agent.ExternalReadAlways},
+	result, err := f.save(t, &agentports.SaveToolRuleRequest{
+		Change: agentports.ToolRuleChange{ReadsExternal: agent.ExternalReadAlways},
 	})
 	require.NoError(t, err)
 	assert.Equal(t, agent.ExternalReadAlways, result.Override.ReadsExternal)
@@ -232,14 +232,14 @@ func TestSave_RefusesAStaleVersion(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t)
-	_, err := f.save(t, &services.SaveToolRuleRequest{
-		Change: services.ToolRuleChange{MaxTier: agent.TierPropose},
+	_, err := f.save(t, &agentports.SaveToolRuleRequest{
+		Change: agentports.ToolRuleChange{MaxTier: agent.TierPropose},
 		Reason: "first",
 	})
 	require.NoError(t, err)
 
-	_, err = f.save(t, &services.SaveToolRuleRequest{
-		Change:  services.ToolRuleChange{MaxTier: agent.TierActWithApproval},
+	_, err = f.save(t, &agentports.SaveToolRuleRequest{
+		Change:  agentports.ToolRuleChange{MaxTier: agent.TierActWithApproval},
 		Reason:  "second",
 		Version: 1,
 	})
@@ -247,8 +247,8 @@ func TestSave_RefusesAStaleVersion(t *testing.T) {
 	assert.Contains(t, err.Error(), "Version mismatch")
 	assert.Equal(t, agent.TierPropose, f.repo.rows[shipmentTool].MaxTier)
 
-	_, err = f.save(t, &services.SaveToolRuleRequest{
-		Change:  services.ToolRuleChange{MaxTier: agent.TierActWithApproval},
+	_, err = f.save(t, &agentports.SaveToolRuleRequest{
+		Change:  agentports.ToolRuleChange{MaxTier: agent.TierActWithApproval},
 		Reason:  "second",
 		Version: 0,
 	})
@@ -261,14 +261,14 @@ func TestSave_ReturningToTheDeclaredRuleKeepsTheRow(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t)
-	_, err := f.save(t, &services.SaveToolRuleRequest{
-		Change: services.ToolRuleChange{MaxTier: agent.TierPropose},
+	_, err := f.save(t, &agentports.SaveToolRuleRequest{
+		Change: agentports.ToolRuleChange{MaxTier: agent.TierPropose},
 		Reason: "hold",
 	})
 	require.NoError(t, err)
 
-	result, err := f.save(t, &services.SaveToolRuleRequest{
-		Change: services.ToolRuleChange{MaxTier: agent.TierAutoExecute},
+	result, err := f.save(t, &agentports.SaveToolRuleRequest{
+		Change: agentports.ToolRuleChange{MaxTier: agent.TierAutoExecute},
 		Reason: "release",
 	})
 	require.NoError(t, err)
@@ -280,15 +280,15 @@ func TestSave_RefusesLooseningAndUnknownTools(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t)
-	_, err := f.save(t, &services.SaveToolRuleRequest{
-		Change: services.ToolRuleChange{ReadsExternal: agent.ExternalReadNever, MaxTier: "Anything"},
+	_, err := f.save(t, &agentports.SaveToolRuleRequest{
+		Change: agentports.ToolRuleChange{ReadsExternal: agent.ExternalReadNever, MaxTier: "Anything"},
 		Reason: "loosen",
 	})
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
 	assert.Equal(t, "maxTier", multiErr.Errors[0].Field)
 
-	_, err = f.save(t, &services.SaveToolRuleRequest{ToolName: "no_such_tool", Reason: "x"})
+	_, err = f.save(t, &agentports.SaveToolRuleRequest{ToolName: "no_such_tool", Reason: "x"})
 	require.Error(t, err)
 	assert.Empty(t, f.repo.rows)
 }
@@ -301,8 +301,8 @@ func TestSave_ForgetsTheCachedRules(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, rules)
 
-	_, err = f.save(t, &services.SaveToolRuleRequest{
-		Change: services.ToolRuleChange{MaxTier: agent.TierPropose},
+	_, err = f.save(t, &agentports.SaveToolRuleRequest{
+		Change: agentports.ToolRuleChange{MaxTier: agent.TierPropose},
 		Reason: "hold",
 	})
 	require.NoError(t, err)
@@ -317,17 +317,17 @@ func TestImpact_ComparesTheCurrentRuleWithTheProposedOne(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t)
-	_, err := f.save(t, &services.SaveToolRuleRequest{
-		Change: services.ToolRuleChange{MaxTier: agent.TierActWithApproval},
+	_, err := f.save(t, &agentports.SaveToolRuleRequest{
+		Change: agentports.ToolRuleChange{MaxTier: agent.TierActWithApproval},
 		Reason: "hold",
 	})
 	require.NoError(t, err)
 	f.impact.requests = nil
 
-	impacts, err := f.service.Impact(t.Context(), &services.ToolRuleImpactRequest{
+	impacts, err := f.service.Impact(t.Context(), &agentports.ToolRuleImpactRequest{
 		TenantInfo: f.tenant,
 		ToolName:   shipmentTool,
-		Change:     services.ToolRuleChange{MaxTier: agent.TierPropose},
+		Change:     agentports.ToolRuleChange{MaxTier: agent.TierPropose},
 	})
 	require.NoError(t, err)
 	assert.Len(t, impacts, 2, "the preview lists every holder, moved or not")

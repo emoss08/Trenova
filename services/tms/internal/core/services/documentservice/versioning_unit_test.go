@@ -1,6 +1,12 @@
 package documentservice_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentsearchprojectionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentshipmentdraftportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentuploadportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"context"
 	"testing"
 	"time"
@@ -8,12 +14,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentshipmentdraft"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
 	"github.com/emoss08/trenova/internal/core/services/workflowstarter"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,13 +32,13 @@ import (
 )
 
 type recordingCorrections struct {
-	requests []*services.CaptureShipmentDraftCorrectionRequest
+	requests []*aicorrectionports.CaptureShipmentDraftCorrectionRequest
 	err      error
 }
 
 func (r *recordingCorrections) CaptureShipmentDraft(
 	_ context.Context,
-	req *services.CaptureShipmentDraftCorrectionRequest,
+	req *aicorrectionports.CaptureShipmentDraftCorrectionRequest,
 ) (*aicorrection.Correction, error) {
 	r.requests = append(r.requests, req)
 	if r.err != nil {
@@ -41,7 +49,7 @@ func (r *recordingCorrections) CaptureShipmentDraft(
 
 func (r *recordingCorrections) PurgeExpired(
 	context.Context,
-	services.PurgeExpiredAICorrectionsRequest,
+	kernelports.PurgeExpiredAICorrectionsRequest,
 ) (int64, error) {
 	return 0, nil
 }
@@ -104,7 +112,7 @@ func attachLineageToShipment(t *testing.T, corrections *recordingCorrections) {
 
 	getByIDCalls := 0
 	repo := &mockDocRepo{
-		GetByIDFn: func(_ context.Context, req repositories.GetDocumentByIDRequest) (*document.Document, error) {
+		GetByIDFn: func(_ context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			assert.Equal(t, tenantInfo, req.TenantInfo)
 			getByIDCalls++
 			if getByIDCalls == 1 {
@@ -112,7 +120,7 @@ func attachLineageToShipment(t *testing.T, corrections *recordingCorrections) {
 			}
 			return updated, nil
 		},
-		MoveLineageToResourceFn: func(_ context.Context, req *repositories.MoveDocumentLineageRequest) error {
+		MoveLineageToResourceFn: func(_ context.Context, req *documentports.MoveDocumentLineageRequest) error {
 			assert.Equal(t, documentID, req.DocumentID)
 			assert.Equal(t, shipmentID.String(), req.ResourceID)
 			assert.Equal(t, "shipment", req.ResourceType)
@@ -121,22 +129,22 @@ func attachLineageToShipment(t *testing.T, corrections *recordingCorrections) {
 		},
 	}
 
-	cacheRepo := mocks.NewMockDocumentCacheRepository(t)
-	sessionRepo := mocks.NewMockDocumentUploadSessionRepository(t)
-	contentService := mocks.NewMockDocumentContentService(t)
+	cacheRepo := customerportsmock.NewMockDocumentCacheRepository(t)
+	sessionRepo := documentuploadportsmock.NewMockDocumentUploadSessionRepository(t)
+	contentService := documentportsmock.NewMockDocumentContentService(t)
 	contentService.EXPECT().
 		GetContent(mock.Anything, documentID, tenantInfo).
 		Return(nil, assert.AnError)
-	searchProjection := mocks.NewMockDocumentSearchProjectionService(t)
+	searchProjection := documentsearchprojectionportsmock.NewMockDocumentSearchProjectionService(t)
 	searchProjection.EXPECT().Upsert(mock.Anything, updated, "").Return(nil)
-	draftRepo := mocks.NewMockDocumentShipmentDraftRepository(t)
-	shipments := mocks.NewMockShipmentRepository(t)
+	draftRepo := documentshipmentdraftportsmock.NewMockDocumentShipmentDraftRepository(t)
+	shipments := shipmentportsmock.NewMockShipmentRepository(t)
 	shipments.EXPECT().
-		ListSummariesByIDs(mock.Anything, &repositories.ListShipmentSummariesRequest{
+		ListSummariesByIDs(mock.Anything, &shipmentports.ListShipmentSummariesRequest{
 			TenantInfo:  tenantInfo,
 			ShipmentIDs: []pulid.ID{shipmentID},
 		}).
-		Return([]*repositories.ShipmentSummary{{ShipmentID: shipmentID}}, nil)
+		Return([]*shipmentports.ShipmentSummary{{ShipmentID: shipmentID}}, nil)
 
 	draft := &documentshipmentdraft.DocumentShipmentDraft{
 		ID:             pulid.MustNew("dsd_"),
@@ -205,7 +213,7 @@ func attachLineageToShipment(t *testing.T, corrections *recordingCorrections) {
 	}
 }
 
-func correctionService(corrections *recordingCorrections) services.AICorrectionService {
+func correctionService(corrections *recordingCorrections) aicorrectionports.AICorrectionService {
 	if corrections == nil {
 		return nil
 	}
@@ -227,22 +235,22 @@ func TestAttachLineageToResourceRefusesAShipmentTheTenantDoesNotHave(t *testing.
 
 	moved := false
 	repo := &mockDocRepo{
-		GetByIDFn: func(context.Context, repositories.GetDocumentByIDRequest) (*document.Document, error) {
+		GetByIDFn: func(context.Context, documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return &document.Document{
 				ID:           documentID,
 				ResourceType: "worker",
 				ResourceID:   "wrk_1",
 			}, nil
 		},
-		MoveLineageToResourceFn: func(context.Context, *repositories.MoveDocumentLineageRequest) error {
+		MoveLineageToResourceFn: func(context.Context, *documentports.MoveDocumentLineageRequest) error {
 			moved = true
 			return nil
 		},
 	}
-	shipments := mocks.NewMockShipmentRepository(t)
+	shipments := shipmentportsmock.NewMockShipmentRepository(t)
 	shipments.EXPECT().
 		ListSummariesByIDs(mock.Anything, mock.Anything).
-		Return([]*repositories.ShipmentSummary{}, nil)
+		Return([]*shipmentports.ShipmentSummary{}, nil)
 
 	cfg := &config.Config{}
 	service := documentservice.New(documentservice.Params{

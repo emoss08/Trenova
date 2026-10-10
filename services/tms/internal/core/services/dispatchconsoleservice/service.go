@@ -4,11 +4,13 @@ import (
 	"context"
 	"sort"
 
-	"github.com/emoss08/trenova/internal/core/services/orgzone"
-
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/dispatchcandidateservice"
+	"github.com/emoss08/trenova/internal/core/services/orgzone"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -29,19 +31,19 @@ const (
 type Params struct {
 	fx.In
 
-	ConsoleRepo         repositories.DispatchConsoleRepository
-	DispatchControlRepo repositories.DispatchControlRepository
-	Organizations       repositories.OrganizationRepository
-	TenderRepo          repositories.TenderRepository
+	ConsoleRepo         shipmentports.DispatchConsoleRepository
+	DispatchControlRepo dispatchcontrolports.DispatchControlRepository
+	Organizations       tenantports.OrganizationRepository
+	TenderRepo          tenderports.TenderRepository
 	CandidateService    *dispatchcandidateservice.Service
 	Logger              *zap.Logger
 }
 
 type Service struct {
-	consoleRepo         repositories.DispatchConsoleRepository
-	dispatchControlRepo repositories.DispatchControlRepository
-	organizations       repositories.OrganizationRepository
-	tenderRepo          repositories.TenderRepository
+	consoleRepo         shipmentports.DispatchConsoleRepository
+	dispatchControlRepo dispatchcontrolports.DispatchControlRepository
+	organizations       tenantports.OrganizationRepository
+	tenderRepo          tenderports.TenderRepository
 	candidates          *dispatchcandidateservice.Service
 	l                   *zap.Logger
 }
@@ -80,7 +82,7 @@ func (s *Service) attachLiveTenders(
 
 	tenders, err := s.tenderRepo.ListLiveByMoveIDs(
 		ctx,
-		&repositories.ListLiveTendersByMovesRequest{
+		&tenderports.ListLiveTendersByMovesRequest{
 			TenantInfo: tenantInfo,
 			MoveIDs:    moveIDs,
 		},
@@ -145,7 +147,7 @@ func (s *Service) GetBoard(ctx context.Context, req *GetBoardRequest) (*Board, e
 		return nil, err
 	}
 
-	filter := &repositories.DispatchBoardFilter{
+	filter := &shipmentports.DispatchBoardFilter{
 		TenantInfo:     req.TenantInfo,
 		WindowStart:    windowStart,
 		WindowEnd:      windowEnd,
@@ -225,7 +227,7 @@ func (s *Service) GetMoveCandidates(
 		TenantInfo:   req.TenantInfo,
 		Control:      control,
 		FleetCodeIDs: req.FleetCodeIDs,
-		Moves:        []*repositories.BoardMove{move},
+		Moves:        []*shipmentports.BoardMove{move},
 	})
 	if err != nil {
 		return nil, err
@@ -265,7 +267,7 @@ func (s *Service) GetDriverMoves(
 		now,
 	)
 
-	moveFilter := &repositories.DispatchBoardFilter{
+	moveFilter := &shipmentports.DispatchBoardFilter{
 		TenantInfo:  req.TenantInfo,
 		WindowStart: windowStart,
 		WindowEnd:   windowEnd,
@@ -333,12 +335,12 @@ func (s *Service) PreviewAssignment(
 	}
 
 	now := timeutils.NowUnix()
-	moves := []*repositories.BoardMove{move}
+	moves := []*shipmentports.BoardMove{move}
 	windowStart, windowEnd := spanOf(moves, now)
 
 	snapshot, err := s.candidates.BuildSnapshot(ctx, &dispatchcandidateservice.SnapshotRequest{
 		TenantInfo: req.TenantInfo,
-		Filter: &repositories.DispatchBoardFilter{
+		Filter: &shipmentports.DispatchBoardFilter{
 			TenantInfo:  req.TenantInfo,
 			WorkerIDs:   []pulid.ID{req.WorkerID},
 			WindowStart: windowStart,
@@ -382,8 +384,8 @@ func (s *Service) loadMove(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	moveID pulid.ID,
-) (*repositories.BoardMove, error) {
-	moves, err := s.consoleRepo.ListBoardMoves(ctx, &repositories.DispatchBoardFilter{
+) (*shipmentports.BoardMove, error) {
+	moves, err := s.consoleRepo.ListBoardMoves(ctx, &shipmentports.DispatchBoardFilter{
 		TenantInfo:     tenantInfo,
 		MoveIDs:        []pulid.ID{moveID},
 		IncludeCovered: true,
@@ -402,7 +404,7 @@ type snapshotForMovesParams struct {
 	TenantInfo   pagination.TenantInfo
 	Control      *dispatchcontrol.DispatchControl
 	FleetCodeIDs []pulid.ID
-	Moves        []*repositories.BoardMove
+	Moves        []*shipmentports.BoardMove
 }
 
 func (s *Service) buildSnapshotForMoves(
@@ -413,7 +415,7 @@ func (s *Service) buildSnapshotForMoves(
 
 	return s.candidates.BuildSnapshot(ctx, &dispatchcandidateservice.SnapshotRequest{
 		TenantInfo: p.TenantInfo,
-		Filter: &repositories.DispatchBoardFilter{
+		Filter: &shipmentports.DispatchBoardFilter{
 			TenantInfo:   p.TenantInfo,
 			FleetCodeIDs: p.FleetCodeIDs,
 			WindowStart:  windowStart,
@@ -432,7 +434,7 @@ func firstNonNil(preferred, fallback pulid.ID) pulid.ID {
 	return fallback
 }
 
-func spanOf(moves []*repositories.BoardMove, now int64) (spanStart, spanEnd int64) {
+func spanOf(moves []*shipmentports.BoardMove, now int64) (spanStart, spanEnd int64) {
 	var start, end int64
 	for _, move := range moves {
 		if move.OriginWindowStart > 0 && (start == 0 || move.OriginWindowStart < start) {

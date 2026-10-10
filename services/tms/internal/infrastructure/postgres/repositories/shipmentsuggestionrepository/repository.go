@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipmentsuggestion"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -30,7 +30,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.ShipmentSuggestionDecisionRepository {
+func New(p Params) shipmentsuggestionports.ShipmentSuggestionDecisionRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.shipment-suggestion-decision-repository"),
@@ -52,7 +52,7 @@ func scoped(
 
 func (r *repository) ListSince(
 	ctx context.Context,
-	req *repositories.ListSuggestionDecisionsRequest,
+	req *shipmentsuggestionports.ListSuggestionDecisionsRequest,
 ) ([]*shipmentsuggestion.DecisionRecord, error) {
 	return dbtx.Read(
 		ctx,
@@ -113,7 +113,7 @@ func (r *repository) Upsert(
 
 func (r *repository) Delete(
 	ctx context.Context,
-	req *repositories.DeleteSuggestionDecisionRequest,
+	req *shipmentsuggestionports.DeleteSuggestionDecisionRequest,
 ) (*shipmentsuggestion.DecisionRecord, error) {
 	return dbtx.Write(
 		ctx,
@@ -144,7 +144,7 @@ func (r *repository) Delete(
 
 func (r *repository) Prune(
 	ctx context.Context,
-	req *repositories.PruneSuggestionDecisionsRequest,
+	req *shipmentsuggestionports.PruneSuggestionDecisionsRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.DecisionRecordColumns

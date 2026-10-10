@@ -11,10 +11,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tablechangealert"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/captureservice"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/tablechangealertports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -49,7 +53,7 @@ func (f *fakeDocumentKeeper) PlanDelete(
 
 func (f *fakeDocumentKeeper) Delete(
 	_ context.Context,
-	req repositories.DeleteDocumentRequest,
+	req documentports.DeleteDocumentRequest,
 	_ pulid.ID,
 ) error {
 	if err := f.guard.write(); err != nil {
@@ -124,7 +128,7 @@ func TestDeleteDocuments_OneGoesThroughDeleteAndMoreThroughBulk(t *testing.T) {
 
 	one := executeParams(map[string]any{paramDocumentIDs: []any{docs[0].ID.String()}})
 	preview := previewWithoutWrites(t, documents.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), one)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), one)
 	})
 	assert.Equal(t, agent.PreviewOperationDelete, previewChange(t, preview, 0).Operation)
 	require.NoError(t, tool.Execute(t.Context(), one))
@@ -159,7 +163,7 @@ func TestRestoreDocumentVersion_FindsTheVersionByItsNumber(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, documents.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would make version 1 of pod.pdf the current one")
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -169,10 +173,10 @@ func TestRestoreDocumentVersion_FindsTheVersionByItsNumber(t *testing.T) {
 		paramDocumentID:    versions[0].ID.String(),
 		paramVersionNumber: 5,
 	})
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), missing))
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), missing))
 
 	documents.unchanged = true
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
 }
 
 type fakeInsightRestorer struct {
@@ -184,30 +188,30 @@ type fakeInsightRestorer struct {
 
 func (f *fakeInsightRestorer) GetDetail(
 	context.Context,
-	serviceports.GetInsightDetailRequest,
-) (*serviceports.InsightDetail, error) {
+	insightports.GetInsightDetailRequest,
+) (*insightports.InsightDetail, error) {
 	if f.hidden {
 		return nil, errortypes.NewAuthorizationError("You cannot see this insight")
 	}
 
-	return &serviceports.InsightDetail{Insight: f.found}, nil
+	return &insightports.InsightDetail{Insight: f.found}, nil
 }
 
 func (f *fakeInsightRestorer) PlanRestore(
 	context.Context,
-	serviceports.RestoreInsightRequest,
-) (*serviceports.RecordChange[insight.Insight], error) {
+	insightports.RestoreInsightRequest,
+) (*kernelports.RecordChange[insight.Insight], error) {
 	restored := *f.found
 	if err := restored.Restore(); err != nil {
 		return nil, err
 	}
 
-	return &serviceports.RecordChange[insight.Insight]{Before: f.found, After: &restored}, nil
+	return &kernelports.RecordChange[insight.Insight]{Before: f.found, After: &restored}, nil
 }
 
 func (f *fakeInsightRestorer) Restore(
 	context.Context,
-	serviceports.RestoreInsightRequest,
+	insightports.RestoreInsightRequest,
 ) (*insight.Insight, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -233,7 +237,7 @@ func TestRestoreInsight_OnlyADismissedFindingTheReaderMaySee(t *testing.T) {
 	params := executeParams(map[string]any{paramInsightID: insights.found.ID.String()})
 
 	preview := previewWithoutWrites(t, insights.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, string(insight.StatusActive),
 		fieldByPath(t, previewChange(t, preview, 0), fieldStatus).After)
@@ -241,7 +245,7 @@ func TestRestoreInsight_OnlyADismissedFindingTheReaderMaySee(t *testing.T) {
 	assert.True(t, insights.restored)
 
 	insights.found.Status = insight.StatusActive
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
 
 	insights.hidden = true
 	insights.restored = false
@@ -252,7 +256,7 @@ func TestRestoreInsight_OnlyADismissedFindingTheReaderMaySee(t *testing.T) {
 type fakeAlerts struct {
 	guard      *writeGuard
 	stored     *tablechangealert.TCASubscription
-	getRequest repositories.GetTCASubscriptionByIDRequest
+	getRequest tablechangealertports.GetTCASubscriptionByIDRequest
 	updated    *tablechangealert.TCASubscription
 	paused     bool
 	resumed    bool
@@ -261,7 +265,7 @@ type fakeAlerts struct {
 
 func (f *fakeAlerts) GetSubscriptionByID(
 	_ context.Context,
-	req repositories.GetTCASubscriptionByIDRequest,
+	req tablechangealertports.GetTCASubscriptionByIDRequest,
 ) (*tablechangealert.TCASubscription, error) {
 	f.getRequest = req
 	copied := *f.stored
@@ -272,13 +276,13 @@ func (f *fakeAlerts) GetSubscriptionByID(
 func (f *fakeAlerts) PlanUpdateSubscription(
 	_ context.Context,
 	entity *tablechangealert.TCASubscription,
-) (*serviceports.RecordChange[tablechangealert.TCASubscription], error) {
+) (*kernelports.RecordChange[tablechangealert.TCASubscription], error) {
 	if entity.TableName == "secrets" {
 		return nil, errortypes.NewValidationError("tableName", errortypes.ErrInvalid,
 			"Table is not eligible for change alerts")
 	}
 
-	return &serviceports.RecordChange[tablechangealert.TCASubscription]{
+	return &kernelports.RecordChange[tablechangealert.TCASubscription]{
 		Before: f.stored,
 		After:  entity,
 	}, nil
@@ -301,11 +305,11 @@ func (f *fakeAlerts) PlanSetSubscriptionStatus(
 	_ pulid.ID,
 	_ pagination.TenantInfo,
 	status tablechangealert.SubscriptionStatus,
-) (*serviceports.RecordChange[tablechangealert.TCASubscription], error) {
+) (*kernelports.RecordChange[tablechangealert.TCASubscription], error) {
 	changed := *f.stored
 	changed.Status = status
 
-	return &serviceports.RecordChange[tablechangealert.TCASubscription]{
+	return &kernelports.RecordChange[tablechangealert.TCASubscription]{
 		Before: f.stored,
 		After:  &changed,
 	}, nil
@@ -368,7 +372,7 @@ func TestTableChangeAlertTools_ActOnlyOnTheCallersOwnAlert(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, alerts.guard, func() (*agent.ToolPreview, error) {
-		return update.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return update.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would change the alert")
 	require.NoError(t, update.Execute(t.Context(), params))
@@ -377,7 +381,7 @@ func TestTableChangeAlertTools_ActOnlyOnTheCallersOwnAlert(t *testing.T) {
 	assert.Equal(t, []string{"UPDATE", "INSERT"}, alerts.updated.EventTypes)
 	assert.Equal(t, "Delayed loads", alerts.updated.Name)
 
-	require.Error(t, update.(serviceports.ToolValidator).Validate(t.Context(), executeParams(
+	require.Error(t, update.(agentports.ToolValidator).Validate(t.Context(), executeParams(
 		map[string]any{paramAlertID: alerts.stored.ID.String(), "tableName": "secrets"},
 	)))
 
@@ -395,7 +399,7 @@ func TestTableChangeAlertTools_ActOnlyOnTheCallersOwnAlert(t *testing.T) {
 
 	remove := newDeleteTableChangeAlertTool(alerts)
 	deletePreview := previewWithoutWrites(t, alerts.guard, func() (*agent.ToolPreview, error) {
-		return remove.(serviceports.ToolPreviewer).Preview(t.Context(), executeParams(
+		return remove.(agentports.ToolPreviewer).Preview(t.Context(), executeParams(
 			map[string]any{paramAlertID: alerts.stored.ID.String()}))
 	})
 	assert.Equal(t, agent.PreviewOperationDelete, previewChange(t, deletePreview, 0).Operation)
@@ -414,20 +418,20 @@ func (f *fakeWatchtower) PlanDismiss(
 	context.Context,
 	pagination.TenantInfo,
 	pulid.ID,
-	*serviceports.RequestActor,
-) (*serviceports.RecordChange[watchtower.Item], error) {
+	*permissionports.RequestActor,
+) (*kernelports.RecordChange[watchtower.Item], error) {
 	after := *f.item
 	now := int64(1_790_000_000)
 	after.ResolvedAt = &now
 
-	return &serviceports.RecordChange[watchtower.Item]{Before: f.item, After: &after}, nil
+	return &kernelports.RecordChange[watchtower.Item]{Before: f.item, After: &after}, nil
 }
 
 func (f *fakeWatchtower) Dismiss(
 	context.Context,
 	pagination.TenantInfo,
 	pulid.ID,
-	*serviceports.RequestActor,
+	*permissionports.RequestActor,
 ) (*watchtower.Item, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -451,7 +455,7 @@ func TestDismissWatchtowerItem_LeavesAgentOversightForAPerson(t *testing.T) {
 	params := executeParams(map[string]any{paramWatchtowerItemID: items.item.ID.String()})
 
 	preview := previewWithoutWrites(t, items.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, agent.PreviewOperationArchive, previewChange(t, preview, 0).Operation)
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -461,7 +465,7 @@ func TestDismissWatchtowerItem_LeavesAgentOversightForAPerson(t *testing.T) {
 	items.item.SourceKind = watchtower.SourceAgentRunFailed
 	require.Error(t, tool.Execute(t.Context(), params))
 	assert.False(t, items.dismissed)
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
 }
 
 type fakeCaptures struct {
@@ -615,7 +619,7 @@ func TestFileCaptureItems_FilesWithTheVersionItReadAndReportsWhatDidNotFile(t *t
 	one := executeParams(map[string]any{paramCaptureItems: []any{entry(captures.item.ID)}})
 
 	preview := previewWithoutWrites(t, captures.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), one)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), one)
 	})
 	change := previewChange(t, preview, 0)
 	assert.Equal(t, permission.ResourceCaptureBatch, change.Resource)
@@ -642,7 +646,7 @@ func TestFileCaptureItems_FilesWithTheVersionItReadAndReportsWhatDidNotFile(t *t
 		}},
 		"the same document twice": {entry(captures.item.ID), entry(captures.item.ID)},
 	} {
-		require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+		require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 			executeParams(map[string]any{paramCaptureItems: bad})), name)
 	}
 }
@@ -654,7 +658,7 @@ func TestDiscardCaptureTools_SendTheVersionTheyRead(t *testing.T) {
 	item := newDiscardCaptureItemTool(captures)
 	itemParams := executeParams(map[string]any{paramCaptureItemIDOne: captures.item.ID.String()})
 	preview := previewWithoutWrites(t, captures.guard, func() (*agent.ToolPreview, error) {
-		return item.(serviceports.ToolPreviewer).Preview(t.Context(), itemParams)
+		return item.(agentports.ToolPreviewer).Preview(t.Context(), itemParams)
 	})
 	assert.Equal(t, agent.PreviewOperationArchive, previewChange(t, preview, 0).Operation)
 	require.NoError(t, item.Execute(t.Context(), itemParams))
@@ -663,7 +667,7 @@ func TestDiscardCaptureTools_SendTheVersionTheyRead(t *testing.T) {
 	batch := newDiscardCaptureBatchTool(captures)
 	batchParams := executeParams(map[string]any{paramCaptureBatchID: captures.batch.ID.String()})
 	batchPreview := previewWithoutWrites(t, captures.guard, func() (*agent.ToolPreview, error) {
-		return batch.(serviceports.ToolPreviewer).Preview(t.Context(), batchParams)
+		return batch.(agentports.ToolPreviewer).Preview(t.Context(), batchParams)
 	})
 	assert.Contains(t, batchPreview.Summary, "Would discard 1 unfiled document of Morning PODs")
 	require.NoError(t, batch.Execute(t.Context(), batchParams))
@@ -671,5 +675,5 @@ func TestDiscardCaptureTools_SendTheVersionTheyRead(t *testing.T) {
 	assert.Equal(t, agent.TierPropose, batch.Policy().MaxTier)
 
 	captures.batch.Status = capture.BatchDiscarded
-	require.Error(t, batch.(serviceports.ToolValidator).Validate(t.Context(), batchParams))
+	require.Error(t, batch.(agentports.ToolValidator).Validate(t.Context(), batchParams))
 }

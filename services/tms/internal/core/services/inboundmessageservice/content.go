@@ -8,8 +8,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/htmlutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -36,7 +35,7 @@ func (s *Service) FetchContent(
 	messageID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) error {
-	message, err := s.messageRepo.GetByID(ctx, repositories.GetInboundMessageByIDRequest{
+	message, err := s.messageRepo.GetByID(ctx, inboundmessageports.GetInboundMessageByIDRequest{
 		ID:                 messageID,
 		TenantInfo:         tenantInfo,
 		IncludeAttachments: true,
@@ -71,10 +70,10 @@ func (s *Service) fetchContent(
 	}
 	if s.fetcher == nil {
 		return fmt.Errorf("%w: this installation cannot read %s messages",
-			services.ErrInboundContentRejected, mailbox.Provider)
+			inboundmessageports.ErrInboundContentRejected, mailbox.Provider)
 	}
 
-	content, err := s.fetcher.Fetch(ctx, &services.InboundContentRequest{
+	content, err := s.fetcher.Fetch(ctx, &inboundmessageports.InboundContentRequest{
 		Provider:          mailbox.Provider,
 		APIKey:            apiKey,
 		ProviderMessageID: message.ProviderMessageID,
@@ -104,7 +103,7 @@ func (s *Service) fetchContent(
 func (s *Service) mailboxAPIKey(mailbox *inboundmessage.Mailbox) (string, error) {
 	if mailbox.ProviderAPIKey == "" {
 		return "", fmt.Errorf("%w: the mailbox has no %s API key",
-			services.ErrInboundContentRejected, mailbox.Provider)
+			inboundmessageports.ErrInboundContentRejected, mailbox.Provider)
 	}
 
 	apiKey, err := s.encryption.DecryptString(mailbox.ProviderAPIKey)
@@ -113,7 +112,7 @@ func (s *Service) mailboxAPIKey(mailbox *inboundmessage.Mailbox) (string, error)
 			zap.String("mailboxId", mailbox.ID.String()), zap.Error(err))
 
 		return "", fmt.Errorf("%w: the mailbox's %s API key could not be read",
-			services.ErrInboundContentRejected, mailbox.Provider)
+			inboundmessageports.ErrInboundContentRejected, mailbox.Provider)
 	}
 
 	return apiKey, nil
@@ -125,7 +124,7 @@ func (s *Service) mailboxAPIKey(mailbox *inboundmessage.Mailbox) (string, error)
 func (s *Service) applyContent(
 	ctx context.Context,
 	message *inboundmessage.InboundMessage,
-	content *services.InboundContent,
+	content *inboundmessageports.InboundContent,
 ) (*inboundmessage.InboundMessage, error) {
 	text := content.Text
 	if strings.TrimSpace(text) == "" {
@@ -170,14 +169,14 @@ func (s *Service) applyContent(
 func (s *Service) stageFetchedAttachments(
 	ctx context.Context,
 	message *inboundmessage.InboundMessage,
-	content *services.InboundContent,
+	content *inboundmessageports.InboundContent,
 	tenantInfo pagination.TenantInfo,
 ) {
 	if len(message.Attachments) == 0 {
 		return
 	}
 
-	byID := make(map[string]*services.InboundContentAttachment, len(content.Attachments))
+	byID := make(map[string]*inboundmessageports.InboundContentAttachment, len(content.Attachments))
 	for i := range content.Attachments {
 		byID[content.Attachments[i].ProviderID] = &content.Attachments[i]
 	}
@@ -236,15 +235,15 @@ func (s *Service) MarkContentUnavailable(
 func ContentFailureText(cause error) string {
 	detail := cause.Error()
 	for _, sentinel := range []error{
-		services.ErrInboundContentRejected,
-		services.ErrInboundContentUnavailable,
+		inboundmessageports.ErrInboundContentRejected,
+		inboundmessageports.ErrInboundContentUnavailable,
 	} {
 		detail = strings.TrimPrefix(detail, sentinel.Error()+": ")
 	}
 
 	text := "The body and attachments of this message could not be read from the provider: " +
 		detail + "."
-	if errors.Is(cause, services.ErrInboundContentRejected) {
+	if errors.Is(cause, inboundmessageports.ErrInboundContentRejected) {
 		text += " Set a full access API key on the mailbox in Inbound mailboxes; mail that " +
 			"arrives afterwards is read in full."
 	}

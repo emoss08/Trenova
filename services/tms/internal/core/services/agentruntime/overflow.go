@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 
 /*
@@ -60,7 +60,7 @@ func (t *Turn) window() int {
 // is over turnWindowShare of window. The results after the latest assistant
 // message, which the model has not answered yet, are never cut. The request's
 // messages are copied before the first cut, so the turn's own are untouched.
-func fitWindow(req *serviceports.ChatCompletionRequest, window int) {
+func fitWindow(req *agentports.ChatCompletionRequest, window int) {
 	if req == nil || window <= 0 {
 		return
 	}
@@ -72,10 +72,10 @@ func fitWindow(req *serviceports.ChatCompletionRequest, window int) {
 	}
 
 	latest := latestResults(req.Messages)
-	var messages []serviceports.Message
+	var messages []agentports.Message
 	for idx := 0; idx < latest && total > budget; idx++ {
 		message := &req.Messages[idx]
-		if message.Role != serviceports.RoleTool ||
+		if message.Role != agentports.RoleTool ||
 			dataTokens(message.Content) <= squeezeFloorTokens {
 			continue
 		}
@@ -97,16 +97,16 @@ func fitWindow(req *serviceports.ChatCompletionRequest, window int) {
 
 // requestTokens estimates a request the way the context meter estimates a
 // conversation: the prompt and tool definitions, then the messages.
-func requestTokens(req *serviceports.ChatCompletionRequest) int {
+func requestTokens(req *agentports.ChatCompletionRequest) int {
 	return proseTokens(req.System) + specTokens(req.Tools) + replayTokens(req.Messages)
 }
 
 // latestResults is where the results the model has yet to answer begin: just
 // after the latest assistant message, or the end of the request when it has
 // none.
-func latestResults(messages []serviceports.Message) int {
+func latestResults(messages []agentports.Message) int {
 	for idx := len(messages) - 1; idx >= 0; idx-- {
-		if messages[idx].Role == serviceports.RoleAssistant {
+		if messages[idx].Role == agentports.RoleAssistant {
 			return idx + 1
 		}
 	}

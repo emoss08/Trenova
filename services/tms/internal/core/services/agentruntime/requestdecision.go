@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -34,8 +34,8 @@ const (
 	paramPlanID           = "planId"
 )
 
-func requestDecisionSpec() serviceports.ToolSpec {
-	return serviceports.ToolSpec{
+func requestDecisionSpec() kernelports.ToolSpec {
+	return kernelports.ToolSpec{
 		Name:        requestDecisionName,
 		Description: requestDecisionDescription,
 		Parameters: map[string]any{
@@ -67,7 +67,7 @@ func requestDecisionSpec() serviceports.ToolSpec {
 	}
 }
 
-func pendingDecisions(proposals []serviceports.ProposalOutcome) bool {
+func pendingDecisions(proposals []agentports.ProposalOutcome) bool {
 	for idx := range proposals {
 		if proposals[idx].Pending() && proposals[idx].ProposalID.IsNotNil() {
 			return true
@@ -174,7 +174,7 @@ func (t *Turn) requestProposalDecision(id pulid.ID) toolOutcome {
 	}
 	t.decisions[id] = struct{}{}
 
-	return decisionOutcome(serviceports.DecisionRequest{ProposalID: id, ToolName: outcome.ToolName})
+	return decisionOutcome(agentports.DecisionRequest{ProposalID: id, ToolName: outcome.ToolName})
 }
 
 func (t *Turn) filedThisTurn(id pulid.ID) (toolOutcome, bool) {
@@ -214,7 +214,7 @@ func (t *Turn) requestPlanDecision(planID pulid.ID) toolOutcome {
 	}
 	t.decisions[planID] = struct{}{}
 
-	return decisionOutcome(serviceports.DecisionRequest{
+	return decisionOutcome(agentports.DecisionRequest{
 		ProposalID:  steps[0],
 		ProposalIDs: steps,
 		PlanID:      planID,
@@ -263,7 +263,7 @@ func (t *Turn) requestBunchDecision(ids []pulid.ID) toolOutcome {
 		t.decisions[id] = struct{}{}
 	}
 
-	return decisionOutcome(serviceports.DecisionRequest{
+	return decisionOutcome(agentports.DecisionRequest{
 		ProposalID:  ids[0],
 		ProposalIDs: ids,
 		ToolName:    tool,
@@ -271,19 +271,19 @@ func (t *Turn) requestBunchDecision(ids []pulid.ID) toolOutcome {
 }
 
 func proposalOutcome(
-	proposals []serviceports.ProposalOutcome,
+	proposals []agentports.ProposalOutcome,
 	id pulid.ID,
-) (serviceports.ProposalOutcome, bool) {
+) (agentports.ProposalOutcome, bool) {
 	for idx := range proposals {
 		if proposals[idx].ProposalID == id {
 			return proposals[idx], true
 		}
 	}
 
-	return serviceports.ProposalOutcome{}, false
+	return agentports.ProposalOutcome{}, false
 }
 
-func decisionOutcome(request serviceports.DecisionRequest) toolOutcome {
+func decisionOutcome(request agentports.DecisionRequest) toolOutcome {
 	return toolOutcome{publishes: true, data: request}
 }
 
@@ -293,28 +293,28 @@ func decisionStepOutcome(arguments map[string]any) toolOutcome {
 		return failedOutcome("%s", refusal)
 	}
 	if request.planID.IsNotNil() {
-		return decisionOutcome(serviceports.DecisionRequest{PlanID: request.planID})
+		return decisionOutcome(agentports.DecisionRequest{PlanID: request.planID})
 	}
 	if len(request.proposalIDs) == 1 {
-		return decisionOutcome(serviceports.DecisionRequest{ProposalID: request.proposalIDs[0]})
+		return decisionOutcome(agentports.DecisionRequest{ProposalID: request.proposalIDs[0]})
 	}
 
-	return decisionOutcome(serviceports.DecisionRequest{
+	return decisionOutcome(agentports.DecisionRequest{
 		ProposalID:  request.proposalIDs[0],
 		ProposalIDs: request.proposalIDs,
 	})
 }
 
 func decisionRequested(
-	observe serviceports.ToolObserver,
-	call *serviceports.ToolCall,
-	request serviceports.DecisionRequest,
+	observe agentports.ToolObserver,
+	call *agentports.ToolCall,
+	request agentports.DecisionRequest,
 ) toolOutcome {
 	if observe == nil {
 		return failedOutcome("%s", undecidableRefusal)
 	}
 
-	shown, err := observe(serviceports.ToolObservation{Call: *call, Data: request})
+	shown, err := observe(agentports.ToolObservation{Call: *call, Data: request})
 	switch {
 	case err != nil:
 		return failedOutcome("Proposal %s could not be opened in the approval box: %s. Tell "+

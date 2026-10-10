@@ -4,10 +4,14 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/extractionrollout"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -16,10 +20,10 @@ import (
 )
 
 var (
-	_ services.ExtractionRolloutService   = (*Service)(nil)
-	_ services.ExtractionRolloutRouter    = (*Service)(nil)
-	_ services.ExtractionRolloutGuard     = (*Service)(nil)
-	_ services.ExtractionRolloutRetention = (*Service)(nil)
+	_ extractionrolloutports.ExtractionRolloutService   = (*Service)(nil)
+	_ extractionrolloutports.ExtractionRolloutRouter    = (*Service)(nil)
+	_ extractionrolloutports.ExtractionRolloutGuard     = (*Service)(nil)
+	_ extractionrolloutports.ExtractionRolloutRetention = (*Service)(nil)
 )
 
 type haltNotifier interface {
@@ -33,23 +37,23 @@ type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Rollouts      repositories.ExtractionRolloutRepository
-	Assignments   repositories.RolloutAssignmentRepository
-	Corrections   repositories.AICorrectionRepository
-	Providers     repositories.AIProviderRepository
-	Retention     repositories.DataRetentionRepository
-	Audit         services.AuditService
+	Rollouts      extractionrolloutports.ExtractionRolloutRepository
+	Assignments   extractionrolloutports.RolloutAssignmentRepository
+	Corrections   aicorrectionports.AICorrectionRepository
+	Providers     agentports.AIProviderRepository
+	Retention     tenantports.DataRetentionRepository
+	Audit         auditports.AuditService
 	Notifications *notificationservice.Service `optional:"true"`
 }
 
 type Service struct {
 	l           *zap.Logger
-	rollouts    repositories.ExtractionRolloutRepository
-	assignments repositories.RolloutAssignmentRepository
-	corrections repositories.AICorrectionRepository
-	providers   repositories.AIProviderRepository
-	retention   repositories.DataRetentionRepository
-	audit       services.AuditService
+	rollouts    extractionrolloutports.ExtractionRolloutRepository
+	assignments extractionrolloutports.RolloutAssignmentRepository
+	corrections aicorrectionports.AICorrectionRepository
+	providers   agentports.AIProviderRepository
+	retention   tenantports.DataRetentionRepository
+	audit       auditports.AuditService
 	notifier    haltNotifier
 	now         func() int64
 }
@@ -74,13 +78,13 @@ func New(p Params) *Service {
 	}
 }
 
-func AsService(s *Service) services.ExtractionRolloutService { return s }
+func AsService(s *Service) extractionrolloutports.ExtractionRolloutService { return s }
 
-func AsRouter(s *Service) services.ExtractionRolloutRouter { return s }
+func AsRouter(s *Service) extractionrolloutports.ExtractionRolloutRouter { return s }
 
-func AsGuard(s *Service) services.ExtractionRolloutGuard { return s }
+func AsGuard(s *Service) extractionrolloutports.ExtractionRolloutGuard { return s }
 
-func AsRetention(s *Service) services.ExtractionRolloutRetention { return s }
+func AsRetention(s *Service) extractionrolloutports.ExtractionRolloutRetention { return s }
 
 func (s *Service) Get(
 	ctx context.Context,
@@ -98,8 +102,8 @@ func (s *Service) Get(
 }
 
 func (s *Service) logAction(
-	actor *services.RequestActor,
-	params *services.LogActionParams,
+	actor *permissionports.RequestActor,
+	params *auditports.LogActionParams,
 	comment string,
 ) {
 	auditActor := actor.AuditActorOrSystem()

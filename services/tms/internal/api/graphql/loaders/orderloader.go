@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/order"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/orderservice"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -40,7 +40,7 @@ func (f *OrderByIDLoaderFactory) batchFunc(
 	tenantInfo pagination.TenantInfo,
 ) batchFetchFunc[*order.Order] {
 	return batchByIDFunc(func(ctx context.Context, ids []pulid.ID) ([]*order.Order, error) {
-		return f.orderService.GetByIDs(ctx, repositories.GetOrdersByIDsRequest{
+		return f.orderService.GetByIDs(ctx, orderports.GetOrdersByIDsRequest{
 			TenantInfo: tenantInfo,
 			OrderIDs:   ids,
 		})

@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/core/ports"
-
 	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -25,19 +25,19 @@ type Params struct {
 	fx.In
 
 	Logger    *zap.Logger
-	Repo      repositories.ShipmentEventRepository
-	Realtime  services.RealtimeService
-	Observers []services.ShipmentEventObserver `group:"shipment_event_observers"`
+	Repo      shipmenteventports.ShipmentEventRepository
+	Realtime  agentports.RealtimeService
+	Observers []shipmenteventports.ShipmentEventObserver `group:"shipment_event_observers"`
 }
 
 type service struct {
 	l         *zap.Logger
-	repo      repositories.ShipmentEventRepository
-	realtime  services.RealtimeService
-	observers []services.ShipmentEventObserver
+	repo      shipmenteventports.ShipmentEventRepository
+	realtime  agentports.RealtimeService
+	observers []shipmenteventports.ShipmentEventObserver
 }
 
-func New(p Params) services.ShipmentEventService {
+func New(p Params) shipmenteventports.ShipmentEventService {
 	return &service{
 		l:         p.Logger.Named("service.shipment-event"),
 		repo:      p.Repo,
@@ -48,7 +48,7 @@ func New(p Params) services.ShipmentEventService {
 
 func (s *service) Record(
 	ctx context.Context,
-	params *services.RecordShipmentEventParams,
+	params *shipmenteventports.RecordShipmentEventParams,
 ) error {
 	if params == nil {
 		return ErrRecordParamsRequired
@@ -63,7 +63,7 @@ func (s *service) Record(
 		return err
 	}
 
-	ports.AfterCommit(ctx, func(committed context.Context) {
+	kernelports.AfterCommit(ctx, func(committed context.Context) {
 		s.announce(committed, entity, params.Actor)
 	})
 
@@ -73,7 +73,7 @@ func (s *service) Record(
 func (s *service) announce(
 	ctx context.Context,
 	entity *shipmentevent.Event,
-	actor services.AuditActor,
+	actor kernelports.AuditActor,
 ) {
 	s.notifyObservers(ctx, entity)
 
@@ -115,7 +115,7 @@ func (s *service) notifyObservers(ctx context.Context, event *shipmentevent.Even
 
 func (s *service) List(
 	ctx context.Context,
-	req *repositories.ListShipmentEventsRequest,
+	req *shipmenteventports.ListShipmentEventsRequest,
 ) ([]*shipmentevent.Event, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
@@ -131,7 +131,7 @@ func (s *service) List(
 	return s.repo.List(ctx, req)
 }
 
-func buildEntity(params *services.RecordShipmentEventParams) (*shipmentevent.Event, error) {
+func buildEntity(params *shipmenteventports.RecordShipmentEventParams) (*shipmentevent.Event, error) {
 	if params.OrganizationID.IsNil() {
 		return nil, errortypes.NewValidationError(
 			"organizationId",
@@ -201,11 +201,11 @@ func buildEntity(params *services.RecordShipmentEventParams) (*shipmentevent.Eve
 	}, nil
 }
 
-func resolveActor(actor services.AuditActor) (shipmentevent.ActorType, pulid.ID) {
+func resolveActor(actor kernelports.AuditActor) (shipmentevent.ActorType, pulid.ID) {
 	switch actor.PrincipalType {
-	case services.PrincipalTypeUser:
+	case permissionports.PrincipalTypeUser:
 		return shipmentevent.ActorUser, actor.UserID
-	case services.PrincipalTypeAPIKey:
+	case permissionports.PrincipalTypeAPIKey:
 		return shipmentevent.ActorAPIKey, actor.APIKeyID
 	default:
 		return shipmentevent.ActorSystem, pulid.Nil

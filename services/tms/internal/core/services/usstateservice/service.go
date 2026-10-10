@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -14,12 +14,12 @@ type Params struct {
 	fx.In
 
 	Logger *zap.Logger
-	Repo   repositories.UsStateRepository
+	Repo   usstateports.UsStateRepository
 }
 
 type Service struct {
 	l    *zap.Logger
-	repo repositories.UsStateRepository
+	repo usstateports.UsStateRepository
 }
 
 func New(p Params) *Service {
@@ -31,7 +31,7 @@ func New(p Params) *Service {
 
 func (s *Service) Get(
 	ctx context.Context,
-	req repositories.GetUsStateByIDRequest,
+	req usstateports.GetUsStateByIDRequest,
 ) (*usstate.UsState, error) {
 	return s.repo.GetByID(ctx, req)
 }

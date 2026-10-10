@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -25,7 +25,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.InvoiceAdjustmentControlRepository {
+func New(p Params) tenantports.InvoiceAdjustmentControlRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.invoiceadjustmentcontrol-repository"),

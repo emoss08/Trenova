@@ -8,8 +8,8 @@ import (
 	_ "github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	_ "github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/carrierassignmentservice"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -168,7 +168,7 @@ func (h *Handler) assign(c *gin.Context) {
 		return
 	}
 
-	req := new(repositories.AssignMoveToCarrierRequest)
+	req := new(shipmentports.AssignMoveToCarrierRequest)
 	if err = c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -225,7 +225,7 @@ func (h *Handler) cancel(c *gin.Context) {
 
 	if err = h.service.Cancel(
 		c.Request.Context(),
-		&repositories.CancelCarrierAssignmentRequest{
+		&shipmentports.CancelCarrierAssignmentRequest{
 			TenantInfo:     pagination.FromAuthAsUser(authCtx),
 			ShipmentMoveID: moveID,
 			Reason:         body.Reason,

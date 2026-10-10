@@ -6,9 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -28,12 +28,12 @@ cancel one.
 // --- add_shipment_comment ---------------------------------------------------
 
 type addShipmentCommentTool struct {
-	comments serviceports.ShipmentCommentService
+	comments shipmentports.ShipmentCommentService
 }
 
 func newAddShipmentCommentTool(
-	comments serviceports.ShipmentCommentService,
-) serviceports.AgentTool {
+	comments shipmentports.ShipmentCommentService,
+) agentports.AgentTool {
 	return &addShipmentCommentTool{comments: comments}
 }
 
@@ -74,8 +74,8 @@ func (t *addShipmentCommentTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *addShipmentCommentTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *addShipmentCommentTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:        t.Name(),
 		Kind:        agent.ToolKindAction,
 		Resource:    permission.ResourceShipmentComment,
@@ -101,7 +101,7 @@ func (t *addShipmentCommentTool) Policy() serviceports.ToolPolicy {
 
 func (t *addShipmentCommentTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	entity, err := t.comment(&params)
 	if err != nil {
@@ -115,7 +115,7 @@ func (t *addShipmentCommentTool) Execute(
 
 // comment is the note the preview shows and the write creates.
 func (t *addShipmentCommentTool) comment(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*shipment.ShipmentComment, error) {
 	if err := guardExecute(t, *params); err != nil {
 		return nil, err
@@ -174,12 +174,12 @@ func (t *addShipmentCommentTool) comment(
 // service would refuse is refused to the model before it runs.
 func (t *addShipmentCommentTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	return previewValidates(ctx, t, &params)
 }
 
-func commentTaintMetadata(params serviceports.ToolExecuteParams) map[string]any {
+func commentTaintMetadata(params agentports.ToolExecuteParams) map[string]any {
 	if params.ApprovedFromProposal() || !params.CarriedTaint(timeutils.NowUnix()).Tainted() {
 		return nil
 	}
@@ -210,10 +210,10 @@ func commentType(visibility shipment.CommentVisibility) shipment.CommentType {
 // --- place_shipment_hold ----------------------------------------------------
 
 type placeShipmentHoldTool struct {
-	holds serviceports.ShipmentHoldService
+	holds shipmentports.ShipmentHoldService
 }
 
-func newPlaceShipmentHoldTool(holds serviceports.ShipmentHoldService) serviceports.AgentTool {
+func newPlaceShipmentHoldTool(holds shipmentports.ShipmentHoldService) agentports.AgentTool {
 	return &placeShipmentHoldTool{holds: holds}
 }
 
@@ -248,8 +248,8 @@ func (t *placeShipmentHoldTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *placeShipmentHoldTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *placeShipmentHoldTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceShipmentHold,
@@ -268,7 +268,7 @@ func (t *placeShipmentHoldTool) Policy() serviceports.ToolPolicy {
 
 func (t *placeShipmentHoldTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -285,8 +285,8 @@ func (t *placeShipmentHoldTool) Execute(
 }
 
 func (t *placeShipmentHoldTool) request(
-	params *serviceports.ToolExecuteParams,
-) (*repositories.CreateShipmentHoldRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*shipmentports.CreateShipmentHoldRequest, error) {
 	shipmentID, err := requirePulid(params.Params, "shipmentId")
 	if err != nil {
 		return nil, err
@@ -300,7 +300,7 @@ func (t *placeShipmentHoldTool) request(
 	// The blocking flags and severity are left unset on purpose: they default
 	// from the hold reason, which is policy the organization already decided.
 	// An agent choosing them would be quietly overriding that.
-	return &repositories.CreateShipmentHoldRequest{
+	return &shipmentports.CreateShipmentHoldRequest{
 		TenantInfo:   tenantFrom(*params),
 		ShipmentID:   shipmentID,
 		HoldReasonID: reasonID,
@@ -311,10 +311,10 @@ func (t *placeShipmentHoldTool) request(
 // --- release_shipment_hold --------------------------------------------------
 
 type releaseShipmentHoldTool struct {
-	holds serviceports.ShipmentHoldService
+	holds shipmentports.ShipmentHoldService
 }
 
-func newReleaseShipmentHoldTool(holds serviceports.ShipmentHoldService) serviceports.AgentTool {
+func newReleaseShipmentHoldTool(holds shipmentports.ShipmentHoldService) agentports.AgentTool {
 	return &releaseShipmentHoldTool{holds: holds}
 }
 
@@ -342,8 +342,8 @@ func (t *releaseShipmentHoldTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *releaseShipmentHoldTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *releaseShipmentHoldTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceShipmentHold,
@@ -361,7 +361,7 @@ func (t *releaseShipmentHoldTool) Policy() serviceports.ToolPolicy {
 
 func (t *releaseShipmentHoldTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -378,8 +378,8 @@ func (t *releaseShipmentHoldTool) Execute(
 }
 
 func (t *releaseShipmentHoldTool) request(
-	params *serviceports.ToolExecuteParams,
-) (*repositories.ReleaseShipmentHoldRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*shipmentports.ReleaseShipmentHoldRequest, error) {
 	shipmentID, err := requirePulid(params.Params, "shipmentId")
 	if err != nil {
 		return nil, err
@@ -390,7 +390,7 @@ func (t *releaseShipmentHoldTool) request(
 		return nil, err
 	}
 
-	return &repositories.ReleaseShipmentHoldRequest{
+	return &shipmentports.ReleaseShipmentHoldRequest{
 		TenantInfo: tenantFrom(*params),
 		ShipmentID: shipmentID,
 		HoldID:     holdID,
@@ -400,16 +400,16 @@ func (t *releaseShipmentHoldTool) request(
 // --- cancel_shipment --------------------------------------------------------
 
 type cancelShipmentTool struct {
-	shipments serviceports.ShipmentService
+	shipments shipmentports.ShipmentService
 	partners  shipmentPartnerNotices
 	tenders   liveTenderReader
 }
 
 func newCancelShipmentTool(
-	shipments serviceports.ShipmentService,
+	shipments shipmentports.ShipmentService,
 	partners shipmentPartnerNotices,
 	tenders liveTenderReader,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return &cancelShipmentTool{shipments: shipments, partners: partners, tenders: tenders}
 }
 
@@ -439,8 +439,8 @@ func (t *cancelShipmentTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *cancelShipmentTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *cancelShipmentTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceShipment,
@@ -458,7 +458,7 @@ func (t *cancelShipmentTool) Policy() serviceports.ToolPolicy {
 
 func (t *cancelShipmentTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	request, err := t.request(&params)
 	if err != nil {
@@ -471,8 +471,8 @@ func (t *cancelShipmentTool) Execute(
 }
 
 func (t *cancelShipmentTool) request(
-	params *serviceports.ToolExecuteParams,
-) (*repositories.CancelShipmentRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*shipmentports.CancelShipmentRequest, error) {
 	if err := guardExecute(t, *params); err != nil {
 		return nil, err
 	}
@@ -487,7 +487,7 @@ func (t *cancelShipmentTool) request(
 		return nil, err
 	}
 
-	return &repositories.CancelShipmentRequest{
+	return &shipmentports.CancelShipmentRequest{
 		TenantInfo:   tenantFrom(*params),
 		ShipmentID:   shipmentID,
 		CanceledByID: params.Actor.UserID,
@@ -498,24 +498,24 @@ func (t *cancelShipmentTool) request(
 
 // Target names the record this call would change, so a proposal to change it
 // can be checked against the record's version before it runs.
-func (t *addShipmentCommentTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *addShipmentCommentTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, "shipmentId", permission.ResourceShipment)
 }
 
 // Target names the record this call would change, so a proposal to change it
 // can be checked against the record's version before it runs.
-func (t *placeShipmentHoldTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *placeShipmentHoldTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, "shipmentId", permission.ResourceShipment)
 }
 
 // Target names the record this call would change, so a proposal to change it
 // can be checked against the record's version before it runs.
-func (t *releaseShipmentHoldTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *releaseShipmentHoldTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, "shipmentId", permission.ResourceShipment)
 }
 
 // Target names the record this call would change, so a proposal to change it
 // can be checked against the record's version before it runs.
-func (t *cancelShipmentTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *cancelShipmentTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, "shipmentId", permission.ResourceShipment)
 }

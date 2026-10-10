@@ -4,10 +4,11 @@ package driversettlementresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	repositories "github.com/emoss08/trenova/internal/core/ports/repositories"
 	driverpayservice "github.com/emoss08/trenova/internal/core/services/driverpayservice"
 	driversettlementservice "github.com/emoss08/trenova/internal/core/services/driversettlementservice"
 	settlementcontrolservice "github.com/emoss08/trenova/internal/core/services/settlementcontrolservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 )
 
 type Deps struct {
@@ -15,14 +16,14 @@ type Deps struct {
 	DriverPayService         *driverpayservice.Service
 	DriverSettlementService  *driversettlementservice.Service
 	SettlementControlService *settlementcontrolservice.Service
-	PayProfileRepo           repositories.PayProfileRepository
-	RecurringDeductionRepo   repositories.RecurringDeductionRepository
-	RecurringEarningRepo     repositories.RecurringEarningRepository
-	PayAdvanceRepo           repositories.PayAdvanceRepository
-	EscrowAccountRepo        repositories.EscrowAccountRepository
-	DriverSettlementRepo     repositories.DriverSettlementRepository
-	SettlementBatchRepo      repositories.SettlementBatchRepository
-	PayEventRepo             repositories.PayEventRepository
+	PayProfileRepo           driverpayports.PayProfileRepository
+	RecurringDeductionRepo   driverpayports.RecurringDeductionRepository
+	RecurringEarningRepo     driverpayports.RecurringEarningRepository
+	PayAdvanceRepo           driverpayports.PayAdvanceRepository
+	EscrowAccountRepo        driverpayports.EscrowAccountRepository
+	DriverSettlementRepo     driversettlementports.DriverSettlementRepository
+	SettlementBatchRepo      driversettlementports.SettlementBatchRepository
+	PayEventRepo             driversettlementports.PayEventRepository
 }
 
 type DriverPayEventComponentResolver struct{ *Deps }

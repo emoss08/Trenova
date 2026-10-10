@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -27,7 +27,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.EDICarrierInvoiceRepository {
+func New(p Params) ediports.EDICarrierInvoiceRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.edi-carrier-invoice-repository"),
@@ -36,7 +36,7 @@ func New(p Params) repositories.EDICarrierInvoiceRepository {
 
 func (r *repository) ListCarrierInvoices(
 	ctx context.Context,
-	req *repositories.ListEDICarrierInvoicesRequest,
+	req *ediports.ListEDICarrierInvoicesRequest,
 ) (*pagination.ListResult[*edi.CarrierInvoice], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.CarrierInvoice], error) {
 		entities := make([]*edi.CarrierInvoice, 0, req.Filter.Pagination.SafeLimit())
@@ -70,7 +70,7 @@ func (r *repository) ListCarrierInvoices(
 
 func (r *repository) GetCarrierInvoiceByID(
 	ctx context.Context,
-	req repositories.GetEDICarrierInvoiceByIDRequest,
+	req ediports.GetEDICarrierInvoiceByIDRequest,
 ) (*edi.CarrierInvoice, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.CarrierInvoice, error) {
 		entity := new(edi.CarrierInvoice)
@@ -91,7 +91,7 @@ func (r *repository) GetCarrierInvoiceByID(
 
 func (r *repository) GetCarrierInvoiceByNumber(
 	ctx context.Context,
-	req *repositories.GetEDICarrierInvoiceByNumberRequest,
+	req *ediports.GetEDICarrierInvoiceByNumberRequest,
 ) (*edi.CarrierInvoice, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.CarrierInvoice, error) {
 		entity := new(edi.CarrierInvoice)

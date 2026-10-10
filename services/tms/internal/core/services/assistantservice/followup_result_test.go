@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -38,7 +38,7 @@ func TestSendMessageStream_NamesWhatAnApprovedChangeMade(t *testing.T) {
 	svc, conversations, _ := followUpService(t, proposal)
 	actor := testActor()
 
-	_, err := svc.sendMessage(t.Context(), &serviceports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
 		ThreadID:           conversations.thread.ID,
 		FollowUpProposalID: proposal.ID,
 		TenantInfo:         actor.TenantInfo(),
@@ -146,7 +146,7 @@ func TestSendMessageStream_NamesWhatEachStepOfAPlanMade(t *testing.T) {
 	svc.plans = &stubPlanStore{plans: []*agent.AgentPlan{plan}}
 	actor := testActor()
 
-	_, err := svc.sendMessage(t.Context(), &serviceports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
 		ThreadID:       conversations.thread.ID,
 		FollowUpPlanID: plan.ID,
 		TenantInfo:     actor.TenantInfo(),

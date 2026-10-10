@@ -9,9 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/rategeo"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/rateagreementservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -35,7 +35,7 @@ type fakeAgreements struct {
 	updated   *rateagreement.RateAgreement
 	copied    *rateagreementservice.DuplicateRateAgreementRequest
 	reviewed  []rateagreementservice.Review
-	amended   *repositories.AmendRateAgreementRulesRequest
+	amended   *rateagreementports.AmendRateAgreementRulesRequest
 	increased *rateagreementservice.RateIncreaseRequest
 }
 
@@ -75,7 +75,7 @@ func storedAgreement(status rateagreement.Status) *rateagreement.RateAgreement {
 
 func (f *fakeAgreements) GetByID(
 	context.Context,
-	*repositories.GetRateAgreementByIDRequest,
+	*rateagreementports.GetRateAgreementByIDRequest,
 ) (*rateagreement.RateAgreement, error) {
 	copied := *f.stored
 
@@ -179,7 +179,7 @@ func (f *fakeAgreements) Review(
 
 func (f *fakeAgreements) PlanAmendRules(
 	_ context.Context,
-	req *repositories.AmendRateAgreementRulesRequest,
+	req *rateagreementports.AmendRateAgreementRulesRequest,
 ) (*rateagreementservice.AmendmentPlan, error) {
 	return &rateagreementservice.AmendmentPlan{
 		Agreement:     f.stored,
@@ -191,7 +191,7 @@ func (f *fakeAgreements) PlanAmendRules(
 
 func (f *fakeAgreements) AmendRules(
 	_ context.Context,
-	req *repositories.AmendRateAgreementRulesRequest,
+	req *rateagreementports.AmendRateAgreementRulesRequest,
 	_ pulid.ID,
 ) (*rateagreement.RateAgreement, error) {
 	if err := f.guard.write(); err != nil {
@@ -259,13 +259,13 @@ func TestDraftRateAgreement_DraftsLanesItCanReadAndPricesNothing(t *testing.T) {
 	params := executeParams(agreementDraftParams(customerID))
 
 	preview := previewWithoutWrites(t, agreements.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would draft the customer rate agreement ACME-2027 "+
 		"with 1 lane")
 	assert.Contains(t, preview.Summary, "it prices nothing until it is approved")
 
-	result, err := tool.(serviceports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	assert.Equal(t, "drafted", result.Action)
 	require.Len(t, agreements.created.Rules, 1)
@@ -310,7 +310,7 @@ func TestDraftRateAgreement_RefusesWhatItCannotRead(t *testing.T) {
 			t.Parallel()
 			params := agreementDraftParams(pulid.MustNew("cus_"))
 			change(params)
-			require.Error(t, tool.(serviceports.ToolValidator).Validate(
+			require.Error(t, tool.(agentports.ToolValidator).Validate(
 				t.Context(),
 				executeParams(params),
 			))
@@ -336,9 +336,9 @@ func TestReviseRateAgreementDraft_KeepsNamedLanesAndRevisesOnlyDrafts(t *testing
 	})
 
 	previewWithoutWrites(t, agreements.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
-	_, err := tool.(serviceports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	_, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	require.Len(t, agreements.updated.Rules, 1)
 	assert.Equal(t, kept.ID, agreements.updated.Rules[0].ID)
@@ -351,13 +351,13 @@ func TestReviseRateAgreementDraft_KeepsNamedLanesAndRevisesOnlyDrafts(t *testing
 		paramRateAgreementID: agreements.stored.ID.String(),
 		paramLanes:           []any{map[string]any{paramRuleID: pulid.MustNew("rar_").String()}},
 	})
-	require.ErrorContains(t, tool.(serviceports.ToolValidator).Validate(t.Context(), unknown),
+	require.ErrorContains(t, tool.(agentports.ToolValidator).Validate(t.Context(), unknown),
 		"is not a lane of this agreement")
 
 	active := newReviseRateAgreementDraftTool(&fakeAgreements{
 		stored: storedAgreement(rateagreement.StatusActive),
 	}, texasStates())
-	require.ErrorIs(t, active.(serviceports.ToolValidator).Validate(t.Context(), params),
+	require.ErrorIs(t, active.(agentports.ToolValidator).Validate(t.Context(), params),
 		errOnlyDraftsRevise)
 }
 
@@ -375,19 +375,19 @@ func TestDuplicateRateAgreement_CopiesIntoADraft(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, agreements.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, "Would copy the rate agreement ACME-2026 into the draft ACME-2027 with 1 lane.",
 		preview.Summary)
 
-	result, err := tool.(serviceports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	assert.Equal(t, "duplicated", result.Action)
 	assert.Equal(t, "ACME-2027", agreements.copied.Code)
 	assert.Equal(t, permission.OpDuplicate, tool.Policy().Operation)
 }
 
-func reviewTool(t *testing.T, agreements *fakeAgreements, name string) serviceports.AgentTool {
+func reviewTool(t *testing.T, agreements *fakeAgreements, name string) agentports.AgentTool {
 	t.Helper()
 
 	for _, step := range agreementReviewSteps() {
@@ -411,14 +411,14 @@ func TestAgreementReviewTools_OnlyAPersonTurnsPricingOnOrOff(t *testing.T) {
 
 	approve := reviewTool(t, agreements, "approve_rate_agreement")
 	preview := previewWithoutWrites(t, agreements.guard, func() (*agent.ToolPreview, error) {
-		return approve.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return approve.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would approve the rate agreement ACME-2026")
 	assert.Equal(t, "Active", fieldByPath(t, previewChange(t, preview, 0), "status").After)
 	require.ErrorIs(t, approve.Execute(t.Context(), params), ErrNeedsAPersonsApproval)
 	assert.Empty(t, agreements.reviewed)
 
-	_, err := approve.(serviceports.ToolPreviewer).Preview(
+	_, err := approve.(agentports.ToolPreviewer).Preview(
 		t.Context(),
 		agentParamsFor(params.Params),
 	)
@@ -447,7 +447,7 @@ func TestAgreementReviewTools_OnlyAPersonTurnsPricingOnOrOff(t *testing.T) {
 	}
 
 	for _, name := range []string{"reject_rate_agreement", "suspend_rate_agreement"} {
-		require.Error(t, reviewTool(t, agreements, name).(serviceports.ToolValidator).Validate(
+		require.Error(t, reviewTool(t, agreements, name).(agentports.ToolValidator).Validate(
 			t.Context(), params,
 		), name)
 	}
@@ -479,7 +479,7 @@ func TestAmendRateAgreementRules_ShowsTheRatesBeforeAndAfter(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, agreements.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "close out 1 lane and add 1 lane")
 	change := previewChange(t, preview, 0)
@@ -509,7 +509,7 @@ func TestApplyRateIncrease_ProposesTheLaneMovesItWouldMake(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, agreements.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary,
 		"Would move 1 lane rate on 1 rate agreement by 3.5% from ")
@@ -525,5 +525,5 @@ func TestApplyRateIncrease_ProposesTheLaneMovesItWouldMake(t *testing.T) {
 	assert.False(t, agreements.increased.Adjustment.FlatChange.Valid)
 
 	params.Params[paramPartyType] = "Shipper"
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
 }

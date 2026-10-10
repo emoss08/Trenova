@@ -6,10 +6,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/allocationcheck"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/decimalutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -46,9 +47,9 @@ type reassignPlan struct {
 // total is refreshed.
 func (s *service) ReassignCharge(
 	ctx context.Context,
-	req *services.ReassignChargeRequest,
-	actor *services.RequestActor,
-) (*services.ReassignChargeResult, error) {
+	req *billingqueueports.ReassignChargeRequest,
+	actor *permissionports.RequestActor,
+) (*billingqueueports.ReassignChargeResult, error) {
 	item, plan, err := s.planReassignCharge(ctx, req, actor)
 	if err != nil {
 		return nil, err
@@ -64,15 +65,15 @@ func (s *service) ReassignCharge(
 
 func (s *service) PreviewReassignCharge(
 	ctx context.Context,
-	req *services.ReassignChargeRequest,
-	actor *services.RequestActor,
-) (*services.ReassignChargePreview, error) {
+	req *billingqueueports.ReassignChargeRequest,
+	actor *permissionports.RequestActor,
+) (*billingqueueports.ReassignChargePreview, error) {
 	item, plan, err := s.planReassignCharge(ctx, req, actor)
 	if err != nil {
 		return nil, err
 	}
 
-	return &services.ReassignChargePreview{
+	return &billingqueueports.ReassignChargePreview{
 		Item:        item,
 		Shipment:    plan.shipment,
 		Description: plan.description,
@@ -84,14 +85,14 @@ func (s *service) PreviewReassignCharge(
 
 func (s *service) planReassignCharge(
 	ctx context.Context,
-	req *services.ReassignChargeRequest,
-	actor *services.RequestActor,
+	req *billingqueueports.ReassignChargeRequest,
+	actor *permissionports.RequestActor,
 ) (*billingqueue.BillingQueueItem, *reassignPlan, error) {
 	if multiErr := validateReassignRequest(req, actor); multiErr != nil {
 		return nil, nil, multiErr
 	}
 
-	item, err := s.repo.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
+	item, err := s.repo.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
 		ItemID:     req.ItemID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -125,8 +126,8 @@ func (s *service) planReassignCharge(
 }
 
 func validateReassignRequest(
-	req *services.ReassignChargeRequest,
-	actor *services.RequestActor,
+	req *billingqueueports.ReassignChargeRequest,
+	actor *permissionports.RequestActor,
 ) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	if req == nil {
@@ -172,12 +173,12 @@ func validateReassignRequest(
 func (s *service) planReassignment(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
-	req *services.ReassignChargeRequest,
+	req *billingqueueports.ReassignChargeRequest,
 ) (*reassignPlan, error) {
-	shp, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	shp, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         item.ShipmentID,
 		TenantInfo: req.TenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -221,7 +222,7 @@ func (s *service) planReassignment(
 
 	activeByShipment, err := s.repo.ListActiveInvoiceItemsByShipmentIDs(
 		ctx,
-		&repositories.ListActiveInvoiceItemsRequest{
+		&billingqueueports.ListActiveInvoiceItemsRequest{
 			TenantInfo:  req.TenantInfo,
 			ShipmentIDs: []pulid.ID{shp.ID},
 		},
@@ -261,7 +262,7 @@ func (s *service) planReassignment(
 // reassignTarget finds the charge being reassigned and its total.
 func reassignTarget(
 	shp *shipment.Shipment,
-	req *services.ReassignChargeRequest,
+	req *billingqueueports.ReassignChargeRequest,
 ) (total decimal.Decimal, description string, err error) {
 	freight := shp.FreightChargeAmount.Decimal
 	if req.ChargeKind == shipment.ChargeAllocationKindFreight {
@@ -290,7 +291,7 @@ func reassignTarget(
 
 func targetsCharge(
 	allocation *shipment.ChargeAllocation,
-	req *services.ReassignChargeRequest,
+	req *billingqueueports.ReassignChargeRequest,
 ) bool {
 	if allocation.ChargeKind != req.ChargeKind {
 		return false
@@ -308,7 +309,7 @@ func targetsCharge(
 // giving the whole charge to the shipment's own payer is the same as no rows.
 func reassignRows(
 	shp *shipment.Shipment,
-	req *services.ReassignChargeRequest,
+	req *billingqueueports.ReassignChargeRequest,
 	chargeTotal decimal.Decimal,
 ) ([]*shipment.ChargeAllocation, error) {
 	existing := make(map[pulid.ID]*shipment.ChargeAllocation, len(shp.ChargeAllocations))
@@ -420,8 +421,8 @@ func reconcileQueueItems(
 func (s *service) applyReassignment(
 	ctx context.Context,
 	plan *reassignPlan,
-	req *services.ReassignChargeRequest,
-	actor *services.RequestActor,
+	req *billingqueueports.ReassignChargeRequest,
+	actor *permissionports.RequestActor,
 ) (created, canceled []*billingqueue.BillingQueueItem, err error) {
 	newItems := make([]*billingqueue.BillingQueueItem, 0, len(plan.toCreate))
 	for _, share := range plan.toCreate {
@@ -454,7 +455,7 @@ func (s *service) applyReassignment(
 
 	now := timeutils.NowUnix()
 	userID := actor.UserID
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
 		if txErr := s.chargeAllocationRepo.SyncForShipment(txCtx, tx, plan.shipment); txErr != nil {
 			return txErr
 		}
@@ -493,13 +494,13 @@ func (s *service) reassignmentResult(
 	item *billingqueue.BillingQueueItem,
 	plan *reassignPlan,
 	created, canceled []*billingqueue.BillingQueueItem,
-	req *services.ReassignChargeRequest,
-	actor *services.RequestActor,
-) (*services.ReassignChargeResult, error) {
+	req *billingqueueports.ReassignChargeRequest,
+	actor *permissionports.RequestActor,
+) (*billingqueueports.ReassignChargeResult, error) {
 	auditActor := actor.AuditActor()
 	comment := "Charge reassigned from billing queue: " + plan.description
 
-	result := &services.ReassignChargeResult{
+	result := &billingqueueports.ReassignChargeResult{
 		CreatedItemIDs:  make([]pulid.ID, 0, len(created)),
 		CanceledItemIDs: make([]pulid.ID, 0, len(canceled)),
 	}
@@ -526,7 +527,7 @@ func (s *service) reassignmentResult(
 		s.publishInvalidation(ctx, item, auditActor, "updated", item)
 	}
 
-	reloaded, err := s.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
+	reloaded, err := s.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
 		ItemID:                item.ID,
 		TenantInfo:            req.TenantInfo,
 		ExpandShipmentDetails: true,
@@ -538,7 +539,7 @@ func (s *service) reassignmentResult(
 
 	active, err := s.repo.ListActiveInvoiceItemsByShipmentIDs(
 		ctx,
-		&repositories.ListActiveInvoiceItemsRequest{
+		&billingqueueports.ListActiveInvoiceItemsRequest{
 			TenantInfo:  req.TenantInfo,
 			ShipmentIDs: []pulid.ID{plan.shipment.ID},
 		},

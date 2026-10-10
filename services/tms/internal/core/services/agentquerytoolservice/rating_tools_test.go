@@ -9,8 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/ratematrix"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/fuelsurchargeservice"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -20,12 +21,12 @@ import (
 
 type fakeRateAgreements struct {
 	agreement *rateagreement.RateAgreement
-	listed    *repositories.ListRateAgreementRequest
+	listed    *rateagreementports.ListRateAgreementRequest
 }
 
 func (f *fakeRateAgreements) List(
 	_ context.Context,
-	req *repositories.ListRateAgreementRequest,
+	req *rateagreementports.ListRateAgreementRequest,
 ) (*pagination.ListResult[*rateagreement.RateAgreement], error) {
 	f.listed = req
 
@@ -36,14 +37,14 @@ func (f *fakeRateAgreements) List(
 
 func (f *fakeRateAgreements) GetByID(
 	context.Context,
-	*repositories.GetRateAgreementByIDRequest,
+	*rateagreementports.GetRateAgreementByIDRequest,
 ) (*rateagreement.RateAgreement, error) {
 	return f.agreement, nil
 }
 
 func (f *fakeRateAgreements) ListVersions(
 	context.Context,
-	*repositories.ListRateAgreementVersionsRequest,
+	*rateagreementports.ListRateAgreementVersionsRequest,
 ) (*pagination.ListResult[*rateagreement.RateAgreementVersion], error) {
 	return &pagination.ListResult[*rateagreement.RateAgreementVersion]{
 		Items: []*rateagreement.RateAgreementVersion{{
@@ -143,14 +144,14 @@ type fakeRateMatrices struct {
 
 func (f *fakeRateMatrices) GetByID(
 	context.Context,
-	*repositories.GetRateMatrixByIDRequest,
+	*ratematrixports.GetRateMatrixByIDRequest,
 ) (*ratematrix.RateMatrix, error) {
 	return f.matrix, nil
 }
 
 func (f *fakeRateMatrices) ListCells(
 	_ context.Context,
-	req *repositories.ListRateMatrixCellsRequest,
+	req *ratematrixports.ListRateMatrixCellsRequest,
 ) (*pagination.ListResult[*ratematrix.RateMatrixCell], error) {
 	f.pages++
 	offset := min(req.Filter.Pagination.Offset, len(f.cells))

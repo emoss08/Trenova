@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -40,7 +40,7 @@ func TestPlanBulkUpdateStatus_RefusesAStatusAndARecordItDoesNotKnow(t *testing.T
 		[]*commodity.Commodity{entity}, nil,
 	)
 
-	_, err := deps.svc.PlanBulkUpdateStatus(t.Context(), &repositories.BulkUpdateCommodityStatusRequest{
+	_, err := deps.svc.PlanBulkUpdateStatus(t.Context(), &commodityports.BulkUpdateCommodityStatusRequest{
 		TenantInfo:   pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
 		CommodityIDs: []pulid.ID{entity.ID, pulid.MustNew("com_")},
 		Status:       domaintypes.Status("Retired"),

@@ -9,10 +9,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/settlementshared"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
@@ -46,7 +47,7 @@ func ResolveCurrentPeriod(control *tenant.SettlementControl, now int64) PeriodBo
 func (s *Service) GenerateBatch(
 	ctx context.Context,
 	req *GenerateBatchRequest,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driversettlement.SettlementBatch, error) {
 	if err := requireActor(actor, "Settlement batch generation"); err != nil {
 		return nil, err
@@ -69,7 +70,7 @@ func (s *Service) GenerateBatch(
 
 	workerIDs, err := s.payEventRepo.ListWorkerIDsWithAccruedEvents(
 		ctx,
-		repositories.ListWorkersWithAccruedEventsRequest{
+		driversettlementports.ListWorkersWithAccruedEventsRequest{
 			TenantInfo: req.TenantInfo,
 			PeriodEnd:  bounds.PeriodEnd,
 		},
@@ -115,7 +116,7 @@ func (s *Service) resolveOpenBatch(
 	ctx context.Context,
 	req *GenerateBatchRequest,
 	bounds PeriodBounds,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 	now int64,
 ) (*driversettlement.SettlementBatch, error) {
 	existing, err := s.openBatchForPeriod(ctx, req.TenantInfo, bounds)
@@ -156,11 +157,11 @@ func (s *Service) resolveOpenBatch(
 func (s *Service) GenerateOffCycle(
 	ctx context.Context,
 	req *GenerateForWorkerRequest,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driversettlement.Settlement, error) {
 	hasBatch := req.BatchID != nil && !req.BatchID.IsNil()
 	if hasBatch {
-		batch, err := s.batchRepo.GetByID(ctx, repositories.GetSettlementBatchByIDRequest{
+		batch, err := s.batchRepo.GetByID(ctx, driversettlementports.GetSettlementBatchByIDRequest{
 			ID:         *req.BatchID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -210,7 +211,7 @@ type GenerateForWorkerRequest struct {
 func (s *Service) GenerateForWorker(
 	ctx context.Context,
 	req *GenerateForWorkerRequest,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driversettlement.Settlement, error) {
 	if err := requireActor(actor, "Settlement generation"); err != nil {
 		return nil, err
@@ -229,7 +230,7 @@ func (s *Service) GenerateForWorker(
 	}
 
 	var created *driversettlement.Settlement
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		settlement, events, buildErr := s.buildSettlement(txCtx, req, control)
 		if buildErr != nil {
 			return buildErr
@@ -320,7 +321,7 @@ func (s *Service) buildSettlement(
 ) (*driversettlement.Settlement, []*driversettlement.PayEvent, error) {
 	events, err := s.payEventRepo.ListAccruedForWorker(
 		ctx,
-		&repositories.ListAccruedPayEventsRequest{
+		&driversettlementports.ListAccruedPayEventsRequest{
 			TenantInfo:   req.TenantInfo,
 			WorkerID:     req.WorkerID,
 			PeriodEnd:    req.PeriodEnd,
@@ -357,7 +358,7 @@ func (s *Service) buildSettlement(
 
 	assignment, assignErr := s.assignmentRepo.GetEffectiveForWorker(
 		ctx,
-		repositories.GetWorkerPayAssignmentRequest{
+		driverpayports.GetWorkerPayAssignmentRequest{
 			TenantInfo: req.TenantInfo,
 			WorkerID:   req.WorkerID,
 			AsOf:       req.PeriodEnd,
@@ -518,7 +519,7 @@ func (s *Service) resolveCarryForward(
 ) int64 {
 	latest, err := s.settlementRepo.GetLatestForWorker(
 		ctx,
-		repositories.GetLatestSettlementForWorkerRequest{
+		driversettlementports.GetLatestSettlementForWorkerRequest{
 			TenantInfo: req.TenantInfo,
 			WorkerID:   req.WorkerID,
 		},
@@ -555,7 +556,7 @@ func (s *Service) buildEarningLines(
 ) (lines []*driversettlement.SettlementLine, capped bool, guaranteeExcluded int64, err error) {
 	earnings, err := s.earningRepo.ListActiveForWorker(
 		ctx,
-		repositories.ListActiveEarningsForWorkerRequest{
+		driverpayports.ListActiveEarningsForWorkerRequest{
 			TenantInfo: req.TenantInfo,
 			WorkerID:   req.WorkerID,
 			AsOf:       req.PeriodEnd,
@@ -608,7 +609,7 @@ func (s *Service) buildDeductionLines(
 ) ([]*driversettlement.SettlementLine, bool, error) {
 	deductions, err := s.deductionRepo.ListActiveForWorker(
 		ctx,
-		repositories.ListActiveDeductionsForWorkerRequest{
+		driverpayports.ListActiveDeductionsForWorkerRequest{
 			TenantInfo: req.TenantInfo,
 			WorkerID:   req.WorkerID,
 			AsOf:       req.PeriodEnd,
@@ -641,7 +642,7 @@ func (s *Service) buildDeductionLines(
 			escrowAccountID = deduction.EscrowAccountID
 			if account, escErr := s.escrowRepo.GetActiveForWorker(
 				ctx,
-				repositories.GetActiveEscrowAccountForWorkerRequest{
+				driverpayports.GetActiveEscrowAccountForWorkerRequest{
 					TenantInfo: req.TenantInfo,
 					WorkerID:   req.WorkerID,
 				},
@@ -674,7 +675,7 @@ func (s *Service) monthlyRecurrenceApplies(
 ) bool {
 	latest, err := s.settlementRepo.GetLatestForWorker(
 		ctx,
-		repositories.GetLatestSettlementForWorkerRequest{
+		driversettlementports.GetLatestSettlementForWorkerRequest{
 			TenantInfo: req.TenantInfo,
 			WorkerID:   req.WorkerID,
 		},
@@ -698,7 +699,7 @@ func (s *Service) buildAdvanceLines(
 ) ([]*driversettlement.SettlementLine, error) {
 	advances, err := s.advanceRepo.ListOutstandingForWorker(
 		ctx,
-		repositories.ListOutstandingAdvancesForWorkerRequest{
+		driverpayports.ListOutstandingAdvancesForWorkerRequest{
 			TenantInfo: req.TenantInfo,
 			WorkerID:   req.WorkerID,
 		},
@@ -767,7 +768,7 @@ func (s *Service) flagVarianceException(
 	}
 	nets, err := s.settlementRepo.ListTrailingNetPay(
 		ctx,
-		&repositories.ListTrailingNetPayRequest{
+		&driversettlementports.ListTrailingNetPayRequest{
 			TenantInfo: req.TenantInfo,
 			WorkerID:   req.WorkerID,
 			Limit:      control.VarianceLookbackWeeks,

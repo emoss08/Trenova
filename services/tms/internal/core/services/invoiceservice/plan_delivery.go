@@ -6,8 +6,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -25,7 +27,7 @@ func refuseNonDraftUpdate(entity *invoice.Invoice) error {
 	)
 }
 
-func applyDraftUpdate(entity *invoice.Invoice, req *servicesports.UpdateInvoiceDraftRequest) {
+func applyDraftUpdate(entity *invoice.Invoice, req *invoiceports.UpdateInvoiceDraftRequest) {
 	if req.Memo != nil {
 		entity.Memo = strings.TrimSpace(*req.Memo)
 	}
@@ -51,8 +53,8 @@ func applyDraftUpdate(entity *invoice.Invoice, req *servicesports.UpdateInvoiceD
 
 func (s *Service) PreviewUpdateDraft(
 	ctx context.Context,
-	req *servicesports.UpdateInvoiceDraftRequest,
-) (*servicesports.InvoiceDraftUpdatePreview, error) {
+	req *invoiceports.UpdateInvoiceDraftRequest,
+) (*invoiceports.InvoiceDraftUpdatePreview, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"request",
@@ -61,7 +63,7 @@ func (s *Service) PreviewUpdateDraft(
 		)
 	}
 
-	entity, err := s.repo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+	entity, err := s.repo.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         req.InvoiceID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -74,7 +76,7 @@ func (s *Service) PreviewUpdateDraft(
 
 	after := *entity
 	applyDraftUpdate(&after, req)
-	preview := &servicesports.InvoiceDraftUpdatePreview{
+	preview := &invoiceports.InvoiceDraftUpdatePreview{
 		Before:            entity,
 		After:             &after,
 		AttachmentsBefore: attachmentDocumentIDs(entity.Attachments),
@@ -100,13 +102,13 @@ func attachmentDocumentIDs(attachments []*invoice.Attachment) []pulid.ID {
 
 func (s *Service) planPDFGeneration(
 	ctx context.Context,
-	req *servicesports.InvoicePreviewRequest,
-	actor *servicesports.RequestActor,
+	req *invoiceports.InvoicePreviewRequest,
+	actor *permissionports.RequestActor,
 ) (*invoice.Invoice, pulid.ID, error) {
 	if s.workflowStarter == nil || !s.workflowStarter.Enabled() {
 		return nil, pulid.Nil, errortypes.NewBusinessError(
 			"Invoice PDF generation requires workflow processing to be enabled",
-		).WithInternal(servicesports.ErrWorkflowStarterDisabled)
+		).WithInternal(kernelports.ErrWorkflowStarterDisabled)
 	}
 	if req == nil {
 		return nil, pulid.Nil, errortypes.NewValidationError(
@@ -131,7 +133,7 @@ func (s *Service) planPDFGeneration(
 		)
 	}
 
-	entity, err := s.repo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+	entity, err := s.repo.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         req.InvoiceID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -158,18 +160,18 @@ func autoSendsOnGeneration(cus *customer.Customer, entity *invoice.Invoice) bool
 
 func (s *Service) PlanPDFGeneration(
 	ctx context.Context,
-	req *servicesports.InvoicePreviewRequest,
-	actor *servicesports.RequestActor,
-) (*servicesports.InvoicePDFGenerationPlan, error) {
+	req *invoiceports.InvoicePreviewRequest,
+	actor *permissionports.RequestActor,
+) (*invoiceports.InvoicePDFGenerationPlan, error) {
 	entity, _, err := s.planPDFGeneration(ctx, req, actor)
 	if err != nil {
 		return nil, err
 	}
 
-	cus, err := s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
+	cus, err := s.customerRepo.GetByID(ctx, customerports.GetCustomerByIDRequest{
 		ID:         entity.CustomerID,
 		TenantInfo: req.TenantInfo,
-		CustomerFilterOptions: repositories.CustomerFilterOptions{
+		CustomerFilterOptions: customerports.CustomerFilterOptions{
 			IncludeBillingProfile: true,
 		},
 	})
@@ -177,7 +179,7 @@ func (s *Service) PlanPDFGeneration(
 		return nil, err
 	}
 
-	return &servicesports.InvoicePDFGenerationPlan{
+	return &invoiceports.InvoicePDFGenerationPlan{
 		Invoice:   entity,
 		AutoSends: autoSendsOnGeneration(cus, entity),
 	}, nil
@@ -185,9 +187,9 @@ func (s *Service) PlanPDFGeneration(
 
 func (s *Service) planEDISend(
 	ctx context.Context,
-	req *servicesports.SendInvoiceEDIRequest,
-	actor *servicesports.RequestActor,
-) (*invoice.Invoice, *servicesports.InvoiceEDISendPlan, error) {
+	req *invoiceports.SendInvoiceEDIRequest,
+	actor *permissionports.RequestActor,
+) (*invoice.Invoice, *invoiceports.InvoiceEDISendPlan, error) {
 	if req == nil {
 		return nil, nil, errortypes.NewValidationError(
 			"request",
@@ -202,7 +204,7 @@ func (s *Service) planEDISend(
 			"Actor is required",
 		)
 	}
-	entity, err := s.repo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+	entity, err := s.repo.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         req.InvoiceID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -216,7 +218,7 @@ func (s *Service) planEDISend(
 			"Only a posted invoice can be sent by EDI",
 		)
 	}
-	plans, err := s.ResolveEDISendPlans(ctx, &servicesports.ResolveInvoiceEDISendPlansRequest{
+	plans, err := s.ResolveEDISendPlans(ctx, &invoiceports.ResolveInvoiceEDISendPlansRequest{
 		TenantInfo: req.TenantInfo,
 		Invoices:   []*invoice.Invoice{entity},
 	})
@@ -262,9 +264,9 @@ func (s *Service) planEDISend(
 
 func (s *Service) PreviewSendEDI(
 	ctx context.Context,
-	req *servicesports.SendInvoiceEDIRequest,
-	actor *servicesports.RequestActor,
-) (*servicesports.InvoiceEDISendPreview, error) {
+	req *invoiceports.SendInvoiceEDIRequest,
+	actor *permissionports.RequestActor,
+) (*invoiceports.InvoiceEDISendPreview, error) {
 	entity, plan, err := s.planEDISend(ctx, req, actor)
 	if err != nil {
 		return nil, err
@@ -272,8 +274,8 @@ func (s *Service) PreviewSendEDI(
 	if s.workflowStarter == nil || !s.workflowStarter.Enabled() {
 		return nil, errortypes.NewBusinessError(
 			"Invoice EDI delivery requires workflow processing to be enabled",
-		).WithInternal(servicesports.ErrWorkflowStarterDisabled)
+		).WithInternal(kernelports.ErrWorkflowStarterDisabled)
 	}
 
-	return &servicesports.InvoiceEDISendPreview{Invoice: entity, Plan: plan}, nil
+	return &invoiceports.InvoiceEDISendPreview{Invoice: entity, Plan: plan}, nil
 }

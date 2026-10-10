@@ -3,6 +3,7 @@
 package shipmentservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"context"
 	"fmt"
 	"regexp"
@@ -16,8 +17,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/billingqueueservice"
 	"github.com/emoss08/trenova/internal/core/services/orderderivation"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
@@ -34,6 +33,9 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentmoverepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/userrepository"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -124,15 +126,15 @@ func (g *countingGenerator) GenerateInvoiceNumber(
 const maxStatementsPerShipment = 26
 
 type bulkTransferHarness struct {
-	svc        portservices.ShipmentService
+	svc        shipmentports.ShipmentService
 	counter    *queryCounter
 	db         *bun.DB
 	ctx        context.Context
 	tenantInfo pagination.TenantInfo
 	fixture    *testutil.ShipmentIntegrationFixture
 	data       *seedtest.TestData
-	shipments  repositories.ShipmentRepository
-	orders     repositories.OrderRepository
+	shipments  shipmentports.ShipmentRepository
+	orders     orderports.OrderRepository
 }
 
 func newBulkTransferHarness(t *testing.T) *bulkTransferHarness {
@@ -181,7 +183,7 @@ func newBulkTransferHarness(t *testing.T) *bulkTransferHarness {
 		Logger:    logger,
 		Repo:      shipmenteventrepository.New(shipmenteventrepository.Params{DB: conn, Logger: logger}),
 		Realtime:  realtime,
-		Observers: []portservices.ShipmentEventObserver{derivation},
+		Observers: []shipmenteventports.ShipmentEventObserver{derivation},
 	})
 
 	billingQueue := billingqueueservice.New(billingqueueservice.Params{
@@ -210,7 +212,7 @@ func newBulkTransferHarness(t *testing.T) *bulkTransferHarness {
 		DocumentRepo:         documentrepository.New(documentrepository.Params{DB: conn, Logger: logger}),
 		BillingRepo:          billingcontrolrepository.New(billingcontrolrepository.Params{DB: conn, Logger: logger}),
 		BillingQueueService:  billingQueue,
-		Permissions:          mocks.NewMockPermissionEngine(t),
+		Permissions:          permissionportsmock.NewMockPermissionEngine(t),
 		AuditService:         &mocks.NoopAuditService{},
 		EventService:         events,
 		Coordinator:          newStateCoordinator(),
@@ -309,7 +311,7 @@ func TestBulkTransferToBillingIntegration_QueriesPerShipment(t *testing.T) {
 	for i := range count {
 		ids = append(ids, h.completedShipment(t, i).ID)
 	}
-	charged, err := h.shipments.GetByID(h.ctx, &repositories.GetShipmentByIDRequest{
+	charged, err := h.shipments.GetByID(h.ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         ids[0],
 		TenantInfo: h.tenantInfo,
 	})
@@ -318,7 +320,7 @@ func TestBulkTransferToBillingIntegration_QueriesPerShipment(t *testing.T) {
 
 	actor := testutil.NewSessionActor(h.data.User.ID, h.tenantInfo.OrgID, h.tenantInfo.BuID)
 	h.counter.start()
-	resp, transferErr := h.svc.BulkTransferToBilling(h.ctx, &portservices.BulkTransferShipmentToBillingRequest{
+	resp, transferErr := h.svc.BulkTransferToBilling(h.ctx, &shipmentports.BulkTransferShipmentToBillingRequest{
 		ShipmentIDs:                    ids,
 		BillType:                       billingqueue.BillTypeInvoice,
 		MarkCompletedReadyToInvoice:    true,
@@ -346,7 +348,7 @@ func TestBulkTransferToBillingIntegration_QueriesPerShipment(t *testing.T) {
 	assert.Equal(t, charge.Version, kept.Version)
 
 	for _, id := range ids {
-		shp, getErr := h.shipments.GetByID(h.ctx, &repositories.GetShipmentByIDRequest{
+		shp, getErr := h.shipments.GetByID(h.ctx, &shipmentports.GetShipmentByIDRequest{
 			ID:         id,
 			TenantInfo: h.tenantInfo,
 		})
@@ -356,7 +358,7 @@ func TestBulkTransferToBillingIntegration_QueriesPerShipment(t *testing.T) {
 		assert.False(t, shp.BillingTransferStatus.IsOutsideBillingQueue(),
 			"the shipment reads as transferred")
 
-		ord, ordErr := h.orders.GetByID(h.ctx, repositories.GetOrderByIDRequest{
+		ord, ordErr := h.orders.GetByID(h.ctx, orderports.GetOrderByIDRequest{
 			ID:         shp.OrderID,
 			TenantInfo: h.tenantInfo,
 		})

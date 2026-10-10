@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permit"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -188,39 +188,39 @@ func TestCarryWaiversForward_ToleratesNilEntries(t *testing.T) {
 }
 
 type assessPermitRepoStub struct {
-	repositories.PermitRepository
+	permitports.PermitRepository
 
-	resolveRouteStates func(*repositories.ResolveRouteStatesRequest) (map[pulid.ID]pulid.ID, error)
-	listByShipment     func(*repositories.ListPermitsRequest) ([]*permit.Permit, error)
-	listRequirements   func(*repositories.ListRequirementsRequest) ([]*permit.Requirement, error)
+	resolveRouteStates func(*permitports.ResolveRouteStatesRequest) (map[pulid.ID]pulid.ID, error)
+	listByShipment     func(*permitports.ListPermitsRequest) ([]*permit.Permit, error)
+	listRequirements   func(*permitports.ListRequirementsRequest) ([]*permit.Requirement, error)
 }
 
 func (s *assessPermitRepoStub) ResolveRouteStates(
-	_ context.Context, req *repositories.ResolveRouteStatesRequest,
+	_ context.Context, req *permitports.ResolveRouteStatesRequest,
 ) (map[pulid.ID]pulid.ID, error) {
 	return s.resolveRouteStates(req)
 }
 
 func (s *assessPermitRepoStub) ListByShipment(
-	_ context.Context, req *repositories.ListPermitsRequest,
+	_ context.Context, req *permitports.ListPermitsRequest,
 ) ([]*permit.Permit, error) {
 	return s.listByShipment(req)
 }
 
 func (s *assessPermitRepoStub) ListRequirements(
-	_ context.Context, req *repositories.ListRequirementsRequest,
+	_ context.Context, req *permitports.ListRequirementsRequest,
 ) ([]*permit.Requirement, error) {
 	return s.listRequirements(req)
 }
 
 type jurisdictionRepoStub struct {
-	repositories.JurisdictionRuleRepository
+	permitports.JurisdictionRuleRepository
 
 	rules []*jurisdictionrule.JurisdictionRule
 }
 
 func (s *jurisdictionRepoStub) GetActiveByStateIDs(
-	context.Context, *repositories.GetJurisdictionRulesRequest,
+	context.Context, *permitports.GetJurisdictionRulesRequest,
 ) ([]*jurisdictionrule.JurisdictionRule, error) {
 	return s.rules, nil
 }
@@ -271,13 +271,13 @@ func TestAssess_ReflectsAPersistedWaiver(t *testing.T) {
 
 	svc := &service{
 		permitRepo: &assessPermitRepoStub{
-			resolveRouteStates: func(*repositories.ResolveRouteStatesRequest) (map[pulid.ID]pulid.ID, error) {
+			resolveRouteStates: func(*permitports.ResolveRouteStatesRequest) (map[pulid.ID]pulid.ID, error) {
 				return map[pulid.ID]pulid.ID{locationID: georgia}, nil
 			},
-			listByShipment: func(*repositories.ListPermitsRequest) ([]*permit.Permit, error) {
+			listByShipment: func(*permitports.ListPermitsRequest) ([]*permit.Permit, error) {
 				return nil, nil
 			},
-			listRequirements: func(*repositories.ListRequirementsRequest) ([]*permit.Requirement, error) {
+			listRequirements: func(*permitports.ListRequirementsRequest) ([]*permit.Requirement, error) {
 				return []*permit.Requirement{
 					waivedRequirement(georgia, waiver, reason),
 				}, nil
@@ -309,13 +309,13 @@ func TestAssess_SkipsPersistedLookupForUnsavedShipments(t *testing.T) {
 
 	svc := &service{
 		permitRepo: &assessPermitRepoStub{
-			resolveRouteStates: func(*repositories.ResolveRouteStatesRequest) (map[pulid.ID]pulid.ID, error) {
+			resolveRouteStates: func(*permitports.ResolveRouteStatesRequest) (map[pulid.ID]pulid.ID, error) {
 				return map[pulid.ID]pulid.ID{locationID: georgia}, nil
 			},
-			listByShipment: func(*repositories.ListPermitsRequest) ([]*permit.Permit, error) {
+			listByShipment: func(*permitports.ListPermitsRequest) ([]*permit.Permit, error) {
 				return nil, nil
 			},
-			listRequirements: func(*repositories.ListRequirementsRequest) ([]*permit.Requirement, error) {
+			listRequirements: func(*permitports.ListRequirementsRequest) ([]*permit.Requirement, error) {
 				panic("unexpected ListRequirements call for an unsaved shipment")
 			},
 		},
@@ -336,11 +336,11 @@ func TestAssess_SkipsPersistedLookupForUnsavedShipments(t *testing.T) {
 // requirement set. Serving them to the panel shows the same jurisdiction once
 // per save, which reads as the requirement coming back.
 func TestListRequirements_ExcludesSupersededRows(t *testing.T) {
-	var captured *repositories.ListRequirementsRequest
+	var captured *permitports.ListRequirementsRequest
 
 	svc := &service{
 		permitRepo: &assessPermitRepoStub{
-			listRequirements: func(req *repositories.ListRequirementsRequest) ([]*permit.Requirement, error) {
+			listRequirements: func(req *permitports.ListRequirementsRequest) ([]*permit.Requirement, error) {
 				captured = req
 				return nil, nil
 			},

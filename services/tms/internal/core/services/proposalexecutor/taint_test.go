@@ -6,7 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,7 +21,7 @@ type egressTool struct {
 	carriesTaint bool
 }
 
-func (t *egressTool) Policy() services.ToolPolicy {
+func (t *egressTool) Policy() agentports.ToolPolicy {
 	policy := t.recordingTool.Policy()
 	policy.Egress = []agent.EgressClass{t.egress}
 	policy.CarriesTaint = t.carriesTaint
@@ -27,7 +29,7 @@ func (t *egressTool) Policy() services.ToolPolicy {
 	return policy
 }
 
-func (t *egressTool) Execute(ctx context.Context, params services.ToolExecuteParams) error {
+func (t *egressTool) Execute(ctx context.Context, params agentports.ToolExecuteParams) error {
 	return t.recordingTool.Execute(ctx, params)
 }
 
@@ -64,14 +66,14 @@ func taintedProposal(tool string, orgID, buID pulid.ID) *agent.AgentProposal {
 	}
 }
 
-func principal(kind services.PrincipalType, orgID, buID pulid.ID) *services.RequestActor {
-	actor := &services.RequestActor{
+func principal(kind kernelports.PrincipalType, orgID, buID pulid.ID) *permissionports.RequestActor {
+	actor := &permissionports.RequestActor{
 		PrincipalType:  kind,
 		PrincipalID:    pulid.MustNew("prn_"),
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 	}
-	if kind == services.PrincipalTypeUser {
+	if kind == permissionports.PrincipalTypeUser {
 		actor.UserID = actor.PrincipalID
 	}
 
@@ -83,13 +85,13 @@ func TestExecute_ATaintedWriteThatLeavesRunsOnlyOnAPersonsDecision(t *testing.T)
 
 	orgID, buID := pulid.MustNew("org_"), pulid.MustNew("bu_")
 	for name, tc := range map[string]struct {
-		actor *services.RequestActor
+		actor *permissionports.RequestActor
 		runs  bool
 	}{
-		"a person": {actor: principal(services.PrincipalTypeUser, orgID, buID), runs: true},
-		"an agent": {actor: principal(services.PrincipalTypeAgent, orgID, buID)},
+		"a person": {actor: principal(permissionports.PrincipalTypeUser, orgID, buID), runs: true},
+		"an agent": {actor: principal(permissionports.PrincipalTypeAgent, orgID, buID)},
 		"an API key": {
-			actor: principal(services.PrincipalTypeAPIKey, orgID, buID),
+			actor: principal(permissionports.PrincipalTypeAPIKey, orgID, buID),
 		},
 	} {
 		tool := newEgressTool("post_customer_payment", agent.EgressMoney)
@@ -125,7 +127,7 @@ func TestExecute_ATaintedInternalWriteIsNotHeld(t *testing.T) {
 	proposal.HeldBy = nil
 
 	err := executor.Execute(t.Context(), proposal, nil,
-		principal(services.PrincipalTypeAgent, orgID, buID))
+		principal(permissionports.PrincipalTypeAgent, orgID, buID))
 
 	require.NoError(t, err)
 	assert.Equal(t, 1, tool.calls)
@@ -143,7 +145,7 @@ func TestExecute_AnApproversChangeCannotTalkTheGuardOutOfTheProposedClass(t *tes
 	proposal.EgressClass = agent.EgressCustomerVisible
 
 	err := executor.Execute(t.Context(), proposal, nil,
-		principal(services.PrincipalTypeAPIKey, orgID, buID))
+		principal(permissionports.PrincipalTypeAPIKey, orgID, buID))
 
 	require.ErrorIs(t, err, ErrTaintedNeedsPerson)
 	assert.Zero(t, tool.calls)
@@ -161,7 +163,7 @@ func TestExecute_ACleanWriteThatLeavesMayRunUnattended(t *testing.T) {
 	proposal.Taint = nil
 
 	err := executor.Execute(t.Context(), proposal, nil,
-		principal(services.PrincipalTypeAgent, orgID, buID))
+		principal(permissionports.PrincipalTypeAgent, orgID, buID))
 
 	require.NoError(t, err)
 	assert.Equal(t, 1, tool.calls)
@@ -180,7 +182,7 @@ func TestExecute_AToolThatCarriesTaintIsHandedTheProposalsTaint(t *testing.T) {
 	proposal.Taint = nil
 
 	err := executor.Execute(t.Context(), proposal, nil,
-		principal(services.PrincipalTypeUser, orgID, buID))
+		principal(permissionports.PrincipalTypeUser, orgID, buID))
 
 	require.NoError(t, err)
 	require.True(t, remember.lastParams.Taint.Tainted(),
@@ -200,7 +202,7 @@ func TestExecute_ToolsThatDoNotCarryTaintAreNotHandedIt(t *testing.T) {
 	proposal.EgressClass = agent.EgressInternal
 
 	require.NoError(t, executor.Execute(t.Context(), proposal, nil,
-		principal(services.PrincipalTypeUser, orgID, buID)))
+		principal(permissionports.PrincipalTypeUser, orgID, buID)))
 	assert.Nil(t, tool.lastParams.Taint)
 }
 
@@ -217,7 +219,7 @@ func TestExecute_AnUnattendedExecutionIsRecordedAgainstTheSystemUser(t *testing.
 	proposal.EgressClass = agent.EgressInternal
 	proposal.HeldBy = nil
 
-	unattended := principal(services.PrincipalTypeAgent, orgID, buID)
+	unattended := principal(permissionports.PrincipalTypeAgent, orgID, buID)
 	unattended.UserID = pulid.MustNew("usr_")
 
 	require.NoError(t, executor.Execute(t.Context(), proposal, nil, unattended))
@@ -229,7 +231,7 @@ func TestExecute_AnUnattendedExecutionIsRecordedAgainstTheSystemUser(t *testing.
 	bare := &fakeProposalRepo{}
 	tool = newEgressTool("assign_move", agent.EgressInternal)
 	require.NoError(t, newExecutor(tool, bare, &fakePermissions{allowed: true}).
-		Execute(t.Context(), proposal, nil, principal(services.PrincipalTypeAgent, orgID, buID)))
+		Execute(t.Context(), proposal, nil, principal(permissionports.PrincipalTypeAgent, orgID, buID)))
 	require.Len(t, bare.recorded, 1)
 	assert.True(t, bare.recorded[0].by.IsNil(), "an agent with no account names nobody")
 }

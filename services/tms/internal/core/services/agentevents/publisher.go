@@ -7,9 +7,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/planservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -19,21 +21,21 @@ type Params struct {
 	fx.In
 
 	Logger      *zap.Logger
-	Definitions repositories.AgentDefinitionRepository
-	RunService  services.AgentRunService
-	Plans       services.PlanService       `optional:"true"`
-	Waits       services.AgentWaitNotifier `optional:"true"`
+	Definitions agentdefinitionports.AgentDefinitionRepository
+	RunService  agentports.AgentRunService
+	Plans       platformplanports.PlanService    `optional:"true"`
+	Waits       agentwaitports.AgentWaitNotifier `optional:"true"`
 }
 
 type Publisher struct {
 	l           *zap.Logger
-	definitions repositories.AgentDefinitionRepository
-	runService  services.AgentRunService
-	plans       services.PlanService
-	waits       services.AgentWaitNotifier
+	definitions agentdefinitionports.AgentDefinitionRepository
+	runService  agentports.AgentRunService
+	plans       platformplanports.PlanService
+	waits       agentwaitports.AgentWaitNotifier
 }
 
-func New(p Params) services.AgentEventPublisher {
+func New(p Params) agentports.AgentEventPublisher {
 	return &Publisher{
 		l:           p.Logger.Named("service.agentevents"),
 		definitions: p.Definitions,
@@ -43,7 +45,7 @@ func New(p Params) services.AgentEventPublisher {
 	}
 }
 
-func (p *Publisher) Publish(ctx context.Context, event services.AgentEvent) {
+func (p *Publisher) Publish(ctx context.Context, event agentports.AgentEvent) {
 	log := p.l.With(
 		zap.String("kind", string(event.Kind)),
 		zap.String("subjectId", event.SubjectID.String()),
@@ -84,7 +86,7 @@ func (p *Publisher) Publish(ctx context.Context, event services.AgentEvent) {
 
 	definitions, err := p.definitions.ListEnabledByTrigger(
 		ctx,
-		repositories.ListAgentDefinitionsByTriggerRequest{
+		agentdefinitionports.ListAgentDefinitionsByTriggerRequest{
 			TenantInfo: event.TenantInfo,
 			Mode:       agentdefinition.TriggerEvent,
 			EventKind:  event.Kind,
@@ -104,7 +106,7 @@ func (p *Publisher) startFor(
 	ctx context.Context,
 	log *zap.Logger,
 	definition *agentdefinition.Definition,
-	event services.AgentEvent,
+	event agentports.AgentEvent,
 ) {
 	log = log.With(zap.String("definitionId", definition.ID.String()))
 
@@ -113,7 +115,7 @@ func (p *Publisher) startFor(
 	// pass a check and start two.
 	_, err := p.runService.StartForDefinition(
 		ctx,
-		&services.StartAgentRunForDefinitionRequest{
+		&agentports.StartAgentRunForDefinitionRequest{
 			DefinitionID: definition.ID,
 			SubjectType:  event.Kind.SubjectType(),
 			SubjectID:    event.SubjectID,
@@ -124,7 +126,7 @@ func (p *Publisher) startFor(
 		nil,
 	)
 	switch {
-	case errors.Is(err, services.ErrAgentRunAlreadyOpen):
+	case errors.Is(err, agentports.ErrAgentRunAlreadyOpen):
 		log.Debug("agent already has an open run for this subject; event skipped")
 	case err != nil:
 		log.Error("failed to start agent run for event", zap.Error(err))

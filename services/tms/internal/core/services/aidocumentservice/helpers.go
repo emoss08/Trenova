@@ -4,16 +4,16 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/aicorrection"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 )
 
-func convertExtractResponse(parsed *extractResponse) *serviceports.AIExtractResult {
-	result := &serviceports.AIExtractResult{
+func convertExtractResponse(parsed *extractResponse) *documentaiextractionports.AIExtractResult {
+	result := &documentaiextractionports.AIExtractResult{
 		MissingFields: []string{},
 		Signals:       []string{},
-		Fields:        map[string]serviceports.AIDocumentField{},
-		Stops:         []*serviceports.AIDocumentStop{},
-		Conflicts:     []*serviceports.AIDocumentConflict{},
+		Fields:        map[string]documentaiextractionports.AIDocumentField{},
+		Stops:         []*documentaiextractionports.AIDocumentStop{},
+		Conflicts:     []*documentaiextractionports.AIDocumentConflict{},
 	}
 	if parsed == nil {
 		return result
@@ -39,7 +39,7 @@ func convertExtractResponse(parsed *extractResponse) *serviceports.AIExtractResu
 			continue
 		}
 		_, conflict := conflicted[aicorrection.CanonicalFieldKey(key)]
-		result.Fields[key] = serviceports.AIDocumentField{
+		result.Fields[key] = documentaiextractionports.AIDocumentField{
 			Label:           aicorrection.FieldLabel(key),
 			Value:           field.Value,
 			Confidence:      field.Confidence,
@@ -47,21 +47,21 @@ func convertExtractResponse(parsed *extractResponse) *serviceports.AIExtractResu
 			PageNumber:      field.PageNumber,
 			ReviewRequired:  field.ReviewRequired,
 			Conflict:        conflict,
-			Source:          serviceports.AIDocumentSourceAI,
+			Source:          documentaiextractionports.AIDocumentSourceAI,
 		}
 	}
 
 	return result
 }
 
-func derivedStops(stops []*serviceports.AIDocumentStop) []*serviceports.AIDocumentStop {
-	derived := make([]*serviceports.AIDocumentStop, 0, len(stops))
+func derivedStops(stops []*documentaiextractionports.AIDocumentStop) []*documentaiextractionports.AIDocumentStop {
+	derived := make([]*documentaiextractionports.AIDocumentStop, 0, len(stops))
 	for _, stop := range stops {
 		if stop == nil {
 			continue
 		}
 		stop.Sequence = len(derived) + 1
-		stop.Source = serviceports.AIDocumentSourceAI
+		stop.Source = documentaiextractionports.AIDocumentSourceAI
 		derived = append(derived, stop)
 	}
 
@@ -69,16 +69,16 @@ func derivedStops(stops []*serviceports.AIDocumentStop) []*serviceports.AIDocume
 }
 
 func derivedConflicts(
-	conflicts []*serviceports.AIDocumentConflict,
-) []*serviceports.AIDocumentConflict {
-	derived := make([]*serviceports.AIDocumentConflict, 0, len(conflicts))
+	conflicts []*documentaiextractionports.AIDocumentConflict,
+) []*documentaiextractionports.AIDocumentConflict {
+	derived := make([]*documentaiextractionports.AIDocumentConflict, 0, len(conflicts))
 	for _, conflict := range conflicts {
 		if conflict == nil {
 			continue
 		}
 		conflict.Key = aicorrection.CanonicalFieldKey(conflict.Key)
 		conflict.Label = aicorrection.FieldLabel(conflict.Key)
-		conflict.Source = serviceports.AIDocumentSourceAI
+		conflict.Source = documentaiextractionports.AIDocumentSourceAI
 		derived = append(derived, conflict)
 	}
 

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,7 +25,7 @@ func TestSettleModifications_RecordsOnlyRealChangesAndAnUnchangedFormAsApproval(
 	unchanged, err := service.settleModifications(
 		t.Context(),
 		proposal,
-		&services.DecideAgentProposalRequest{
+		&agentports.DecideAgentProposalRequest{
 			Decision: agent.DecisionModified,
 			Modifications: map[string]any{
 				"workerId": "wrk_1",
@@ -42,7 +42,7 @@ func TestSettleModifications_RecordsOnlyRealChangesAndAnUnchangedFormAsApproval(
 	changed, err := service.settleModifications(
 		t.Context(),
 		proposal,
-		&services.DecideAgentProposalRequest{
+		&agentports.DecideAgentProposalRequest{
 			Decision: agent.DecisionModified,
 			Modifications: map[string]any{
 				"workerId": "wrk_1",
@@ -60,7 +60,7 @@ func TestSettleModifications_RecordsOnlyRealChangesAndAnUnchangedFormAsApproval(
 func TestSettleModifications_LeavesOtherDecisionsAlone(t *testing.T) {
 	t.Parallel()
 
-	req := &services.DecideAgentProposalRequest{Decision: agent.DecisionRejected, ReasonCode: "no"}
+	req := &agentports.DecideAgentProposalRequest{Decision: agent.DecisionRejected, ReasonCode: "no"}
 	settled, err := (&Service{}).settleModifications(t.Context(), &agent.AgentProposal{}, req, nil)
 
 	require.NoError(t, err)

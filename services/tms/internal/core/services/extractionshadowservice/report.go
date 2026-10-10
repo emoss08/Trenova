@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/core/domain/extractionshadow"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,8 +23,8 @@ const (
 
 func (s *Service) Report(
 	ctx context.Context,
-	req *services.ExtractionShadowReportRequest,
-) (*services.ExtractionShadowReport, error) {
+	req *extractionshadowports.ExtractionShadowReportRequest,
+) (*extractionshadowports.ExtractionShadowReport, error) {
 	window := req.WindowDays
 	if window == 0 {
 		window = defaultReportWindowDays
@@ -49,7 +49,7 @@ func (s *Service) Report(
 	}
 
 	since := s.now() - int64(window)*timeutils.SecondsPerDay
-	report := &services.ExtractionShadowReport{
+	report := &extractionshadowports.ExtractionShadowReport{
 		WindowDays: window,
 		Since:      since,
 		ProviderID: pulid.PtrOrNil(providerID),
@@ -63,7 +63,7 @@ func (s *Service) Report(
 		return nil, err
 	}
 
-	scored, err := s.results.ListScored(ctx, &repositories.ListScoredExtractionShadowResultsRequest{
+	scored, err := s.results.ListScored(ctx, &extractionshadowports.ListScoredExtractionShadowResultsRequest{
 		TenantInfo: req.TenantInfo,
 		ProviderID: providerID,
 		Since:      since,
@@ -83,12 +83,12 @@ func (s *Service) Report(
 
 func (s *Service) addTotals(
 	ctx context.Context,
-	report *services.ExtractionShadowReport,
+	report *extractionshadowports.ExtractionShadowReport,
 	tenant pagination.TenantInfo,
 	providerID pulid.ID,
 	since int64,
 ) error {
-	totals, err := s.results.TotalsByStatus(ctx, repositories.TotalExtractionShadowResultsRequest{
+	totals, err := s.results.TotalsByStatus(ctx, extractionshadowports.TotalExtractionShadowResultsRequest{
 		TenantInfo: tenant,
 		ProviderID: providerID,
 		Since:      since,
@@ -122,7 +122,7 @@ func (s *Service) addTotals(
 	return nil
 }
 
-func addScored(report *services.ExtractionShadowReport, scored []*extractionshadow.ShadowResult) {
+func addScored(report *extractionshadowports.ExtractionShadowReport, scored []*extractionshadow.ShadowResult) {
 	candidate := aicorrection.NewAccuracyAggregator()
 	production := aicorrection.NewAccuracyAggregator()
 	for _, result := range scored {
@@ -167,7 +167,7 @@ func addScored(report *services.ExtractionShadowReport, scored []*extractionshad
 	report.Fields = aicorrection.CompareFields(candidate.Fields(), production.Fields())
 }
 
-func addSide(side *services.ExtractionShadowSide, scored, correct, corrected, missed int) {
+func addSide(side *extractionshadowports.ExtractionShadowSide, scored, correct, corrected, missed int) {
 	side.Scored += scored
 	side.Correct += correct
 	side.Corrected += corrected
@@ -179,7 +179,7 @@ func (s *Service) providerName(
 	tenant pagination.TenantInfo,
 	providerID pulid.ID,
 ) string {
-	provider, err := s.providers.GetByID(ctx, repositories.GetAIProviderByIDRequest{
+	provider, err := s.providers.GetByID(ctx, agentports.GetAIProviderByIDRequest{
 		ID:         providerID,
 		TenantInfo: tenant,
 	})
@@ -199,14 +199,14 @@ func (s *Service) providerName(
 
 func (s *Service) ListResults(
 	ctx context.Context,
-	req *repositories.ListExtractionShadowResultConnectionRequest,
+	req *extractionshadowports.ListExtractionShadowResultConnectionRequest,
 ) (*pagination.CursorListResult[*extractionshadow.ShadowResult], error) {
 	return s.results.ListConnection(ctx, req)
 }
 
 func (s *Service) GetResult(
 	ctx context.Context,
-	req repositories.GetExtractionShadowResultRequest,
+	req extractionshadowports.GetExtractionShadowResultRequest,
 ) (*extractionshadow.ShadowResult, error) {
 	return s.results.GetByID(ctx, req)
 }

@@ -8,10 +8,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/shipmenttracking"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -46,8 +47,8 @@ type telematicsReader interface {
 type boardMoveLister interface {
 	ListBoardMoves(
 		ctx context.Context,
-		filter *repositories.DispatchBoardFilter,
-	) ([]*repositories.BoardMove, error)
+		filter *shipmentports.DispatchBoardFilter,
+	) ([]*shipmentports.BoardMove, error)
 }
 
 const (
@@ -61,16 +62,16 @@ const (
 )
 
 type getShipmentTrackingTool struct {
-	shipments  repositories.ShipmentRepository
+	shipments  shipmentports.ShipmentRepository
 	board      boardMoveLister
 	telematics telematicsReader
 }
 
 func newGetShipmentTrackingTool(
-	shipments repositories.ShipmentRepository,
+	shipments shipmentports.ShipmentRepository,
 	board boardMoveLister,
 	telematics telematicsReader,
-) serviceports.AgentQueryTool {
+) agentports.AgentQueryTool {
 	return &getShipmentTrackingTool{shipments: shipments, board: board, telematics: telematics}
 }
 
@@ -104,7 +105,7 @@ func (t *getShipmentTrackingTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *getShipmentTrackingTool) Policy() serviceports.ToolPolicy {
+func (t *getShipmentTrackingTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceShipment,
 	})
@@ -112,7 +113,7 @@ func (t *getShipmentTrackingTool) Policy() serviceports.ToolPolicy {
 
 func (t *getShipmentTrackingTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -175,7 +176,7 @@ func (t *getShipmentTrackingTool) load(
 	tenant pagination.TenantInfo,
 	params map[string]any,
 ) (*shipment.Shipment, error) {
-	options := repositories.ShipmentOptions{
+	options := shipmentports.ShipmentOptions{
 		ExpandShipmentDetails: true,
 		IncludeCustomer:       true,
 	}
@@ -186,7 +187,7 @@ func (t *getShipmentTrackingTool) load(
 			return nil, fmt.Errorf("parameter \"shipmentId\" is not a valid id: %w", err)
 		}
 
-		return t.shipments.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+		return t.shipments.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 			ID:              id,
 			TenantInfo:      tenant,
 			ShipmentOptions: options,
@@ -198,7 +199,7 @@ func (t *getShipmentTrackingTool) load(
 		return nil, fmt.Errorf("give shipmentId or proNumber")
 	}
 
-	result, err := t.shipments.List(ctx, &repositories.ListShipmentsRequest{
+	result, err := t.shipments.List(ctx, &shipmentports.ListShipmentsRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenant,
 			Pagination: pagination.Info{Limit: 10},
@@ -241,13 +242,13 @@ func (t *getShipmentTrackingTool) assignments(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	moveIDs []pulid.ID,
-) (map[pulid.ID]*repositories.BoardMove, error) {
-	out := make(map[pulid.ID]*repositories.BoardMove, len(moveIDs))
+) (map[pulid.ID]*shipmentports.BoardMove, error) {
+	out := make(map[pulid.ID]*shipmentports.BoardMove, len(moveIDs))
 	if t.board == nil || len(moveIDs) == 0 {
 		return out, nil
 	}
 
-	moves, err := t.board.ListBoardMoves(ctx, &repositories.DispatchBoardFilter{
+	moves, err := t.board.ListBoardMoves(ctx, &shipmentports.DispatchBoardFilter{
 		TenantInfo:     tenant,
 		MoveIDs:        moveIDs,
 		MoveStatuses:   shipment.MoveStatuses(),
@@ -317,7 +318,7 @@ func (t *getShipmentTrackingTool) hours(
 	return out, nil
 }
 
-func tenantOf(params *serviceports.QueryToolParams) pagination.TenantInfo {
+func tenantOf(params *agentports.QueryToolParams) pagination.TenantInfo {
 	return pagination.TenantInfo{
 		OrgID:  params.OrganizationID,
 		BuID:   params.BusinessUnitID,
@@ -345,8 +346,8 @@ type listVehiclePositionsTool struct {
 
 func newListVehiclePositionsTool(
 	telematics telematicsReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &listVehiclePositionsTool{telematics: telematics, access: newFieldAccess(permissions)}
 }
 
@@ -386,7 +387,7 @@ func (t *listVehiclePositionsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listVehiclePositionsTool) Policy() serviceports.ToolPolicy {
+func (t *listVehiclePositionsTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceTractor,
 	})
@@ -394,7 +395,7 @@ func (t *listVehiclePositionsTool) Policy() serviceports.ToolPolicy {
 
 func (t *listVehiclePositionsTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -494,7 +495,7 @@ type getWorkerHOSTool struct {
 	telematics telematicsReader
 }
 
-func newGetWorkerHOSTool(telematics telematicsReader) serviceports.AgentQueryTool {
+func newGetWorkerHOSTool(telematics telematicsReader) agentports.AgentQueryTool {
 	return &getWorkerHOSTool{telematics: telematics}
 }
 
@@ -525,7 +526,7 @@ func (t *getWorkerHOSTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *getWorkerHOSTool) Policy() serviceports.ToolPolicy {
+func (t *getWorkerHOSTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceWorker,
 	})
@@ -533,7 +534,7 @@ func (t *getWorkerHOSTool) Policy() serviceports.ToolPolicy {
 
 func (t *getWorkerHOSTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

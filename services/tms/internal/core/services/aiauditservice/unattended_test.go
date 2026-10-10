@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -154,7 +154,7 @@ func TestCorrelate_AnUnattendedWriteMatchesTheSystemUsersAuditRows(t *testing.T)
 	ledger.entries = []*audit.Entry{
 		{
 			ID: "ae_unattended", ResourceID: executed.EntityID,
-			PrincipalType: string(serviceports.PrincipalTypeAgent), PrincipalID: u.agentID,
+			PrincipalType: string(permissionports.PrincipalTypeAgent), PrincipalID: u.agentID,
 			UserID: u.systemUser, Timestamp: executed.WindowEnd,
 		},
 		{
@@ -188,13 +188,13 @@ func TestCorrelationMatches_AnAgentsCallMatchesItsDefinitionAndTheGenericAgent(t
 	matches := CorrelationMatches(event)
 	require.Len(t, matches, 2)
 	assert.Equal(t, definition, matches[0].PrincipalID, "rows an unattended run wrote")
-	assert.Equal(t, serviceports.AgentPrincipalID, matches[1].PrincipalID, "rows written before")
+	assert.Equal(t, permissionports.AgentPrincipalID, matches[1].PrincipalID, "rows written before")
 
 	ledger := newFakeLedger()
 	ledger.entries = []*audit.Entry{
 		{ID: "ae_named", ResourceID: "shp_1", PrincipalID: definition, Timestamp: testNow},
 		{
-			ID: "ae_generic", ResourceID: "shp_1", PrincipalID: serviceports.AgentPrincipalID,
+			ID: "ae_generic", ResourceID: "shp_1", PrincipalID: permissionports.AgentPrincipalID,
 			Timestamp: testNow - 5,
 		},
 		{
@@ -215,7 +215,7 @@ func TestCorrelationMatches_AnAgentsCallMatchesItsDefinitionAndTheGenericAgent(t
 	generic.AgentDefinitionID = pulid.Nil
 	matches = CorrelationMatches(&generic)
 	require.Len(t, matches, 1)
-	assert.Equal(t, serviceports.AgentPrincipalID, matches[0].PrincipalID)
+	assert.Equal(t, permissionports.AgentPrincipalID, matches[0].PrincipalID)
 }
 
 func executedKey(proposal *agent.AgentProposal) string {

@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
@@ -14,22 +14,22 @@ import (
 )
 
 type fakePayCodeRepo struct {
-	repositories.PayCodeRepository
+	driverpayports.PayCodeRepository
 	getByID func(
 		ctx context.Context,
-		req repositories.GetPayCodeByIDRequest,
+		req driverpayports.GetPayCodeByIDRequest,
 	) (*driverpay.PayCode, error)
 }
 
 func (f *fakePayCodeRepo) GetByID(
 	ctx context.Context,
-	req repositories.GetPayCodeByIDRequest,
+	req driverpayports.GetPayCodeByIDRequest,
 ) (*driverpay.PayCode, error) {
 	return f.getByID(ctx, req)
 }
 
 type fakeDeductionRepo struct {
-	repositories.RecurringDeductionRepository
+	driverpayports.RecurringDeductionRepository
 	create func(
 		ctx context.Context,
 		entity *driverpay.RecurringDeduction,
@@ -72,7 +72,7 @@ func TestCreateDeduction_RejectsEarningPayCode(t *testing.T) {
 	svc, _ := newTestService()
 
 	svc.payCodeRepo = &fakePayCodeRepo{
-		getByID: func(context.Context, repositories.GetPayCodeByIDRequest) (*driverpay.PayCode, error) {
+		getByID: func(context.Context, driverpayports.GetPayCodeByIDRequest) (*driverpay.PayCode, error) {
 			return deductionPayCode(driverpay.PayCodeDirectionEarning), nil
 		},
 	}
@@ -88,12 +88,12 @@ func TestCreateDeduction_AutoLinksActiveEscrowAccount(t *testing.T) {
 
 	account := activeEscrowAccount(0)
 	svc.payCodeRepo = &fakePayCodeRepo{
-		getByID: func(context.Context, repositories.GetPayCodeByIDRequest) (*driverpay.PayCode, error) {
+		getByID: func(context.Context, driverpayports.GetPayCodeByIDRequest) (*driverpay.PayCode, error) {
 			return deductionPayCode(driverpay.PayCodeDirectionDeduction), nil
 		},
 	}
 	svc.escrowRepo = &fakeEscrowRepo{
-		getActiveForWorker: func(context.Context, repositories.GetActiveEscrowAccountForWorkerRequest) (*driverpay.EscrowAccount, error) {
+		getActiveForWorker: func(context.Context, driverpayports.GetActiveEscrowAccountForWorkerRequest) (*driverpay.EscrowAccount, error) {
 			return account, nil
 		},
 	}
@@ -120,12 +120,12 @@ func TestCreateDeduction_AutoLinkFailsWithoutActiveEscrowAccount(t *testing.T) {
 	svc, _ := newTestService()
 
 	svc.payCodeRepo = &fakePayCodeRepo{
-		getByID: func(context.Context, repositories.GetPayCodeByIDRequest) (*driverpay.PayCode, error) {
+		getByID: func(context.Context, driverpayports.GetPayCodeByIDRequest) (*driverpay.PayCode, error) {
 			return deductionPayCode(driverpay.PayCodeDirectionDeduction), nil
 		},
 	}
 	svc.escrowRepo = &fakeEscrowRepo{
-		getActiveForWorker: func(context.Context, repositories.GetActiveEscrowAccountForWorkerRequest) (*driverpay.EscrowAccount, error) {
+		getActiveForWorker: func(context.Context, driverpayports.GetActiveEscrowAccountForWorkerRequest) (*driverpay.EscrowAccount, error) {
 			return nil, errors.New("not found")
 		},
 	}

@@ -5,8 +5,8 @@ import (
 	"errors"
 	"io"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/ports/storage"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 )
 
 // ErrTooLarge is returned by a pipe's writer once what was written would pass
@@ -31,7 +31,7 @@ type Pipe struct {
 	bytes  int64
 }
 
-func Open(ctx context.Context, client storage.Client, params Params) *Pipe {
+func Open(ctx context.Context, client kernelports.Client, params Params) *Pipe {
 	pipeReader, pipeWriter := io.Pipe()
 
 	var sink io.Writer = pipeWriter
@@ -46,7 +46,7 @@ func Open(ctx context.Context, client storage.Client, params Params) *Pipe {
 	}
 
 	go func() {
-		info, err := client.Upload(ctx, &storage.UploadParams{
+		info, err := client.Upload(ctx, &kernelports.UploadParams{
 			Key:         params.Key,
 			ContentType: params.ContentType,
 			Size:        -1,
@@ -149,22 +149,22 @@ func (h *RowHeartbeat) Rows() int64 {
 
 // HeartbeatingReader beats as rows are read from a report dataset.
 type HeartbeatingReader struct {
-	inner     services.ReportDatasetReader
+	inner     reportports.ReportDatasetReader
 	heartbeat *RowHeartbeat
 }
 
 func NewHeartbeatingReader(
 	ctx context.Context,
-	inner services.ReportDatasetReader,
+	inner reportports.ReportDatasetReader,
 	every int64,
 	beat Heartbeat,
 ) *HeartbeatingReader {
 	return &HeartbeatingReader{inner: inner, heartbeat: NewRowHeartbeat(ctx, every, beat)}
 }
 
-func (r *HeartbeatingReader) Schema() []services.ReportResultColumn { return r.inner.Schema() }
+func (r *HeartbeatingReader) Schema() []reportports.ReportResultColumn { return r.inner.Schema() }
 
-func (r *HeartbeatingReader) Next(ctx context.Context) (services.ReportRow, error) {
+func (r *HeartbeatingReader) Next(ctx context.Context) (reportports.ReportRow, error) {
 	row, err := r.inner.Next(ctx)
 	if err == nil {
 		r.heartbeat.Tick()
@@ -173,7 +173,7 @@ func (r *HeartbeatingReader) Next(ctx context.Context) (services.ReportRow, erro
 	return row, err
 }
 
-func (r *HeartbeatingReader) Totals(ctx context.Context) (services.ReportRow, error) {
+func (r *HeartbeatingReader) Totals(ctx context.Context) (reportports.ReportRow, error) {
 	return r.inner.Totals(ctx)
 }
 

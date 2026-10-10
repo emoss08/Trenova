@@ -8,9 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/internaledilifecycle"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -27,7 +28,7 @@ func (s *Service) applyApprovedTransferChange(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	change *edi.TransferChange,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	appliedAt int64,
 ) error {
 	switch change.ChangeType {
@@ -56,7 +57,7 @@ func (s *Service) applyApprovedTransferChange(
 		if err = shipmentstate.ValidateCancel(applyCtx.opposite); err != nil {
 			return err
 		}
-		updated, err = s.shipmentRepo.Cancel(ctx, &repositories.CancelShipmentRequest{
+		updated, err = s.shipmentRepo.Cancel(ctx, &shipmentports.CancelShipmentRequest{
 			TenantInfo:      applyCtx.oppositeInfo,
 			ShipmentID:      applyCtx.oppositeID,
 			CanceledByID:    actor.UserID,
@@ -67,7 +68,7 @@ func (s *Service) applyApprovedTransferChange(
 	case edi.TransferChangeTypeShipmentStatus214:
 		updated, err = s.shipmentRepo.UpdateStatus(
 			ctx,
-			&repositories.UpdateShipmentStatusRequest{
+			&shipmentports.UpdateShipmentStatusRequest{
 				TenantInfo: applyCtx.oppositeInfo,
 				ShipmentID: applyCtx.oppositeID,
 				Status:     applyCtx.nextStatus,
@@ -117,7 +118,7 @@ func (s *Service) applyApprovedLifecycleTransferChange(
 ) error {
 	link, err := s.shipmentLinkRepo.GetShipmentLinkByID(
 		ctx,
-		repositories.GetEDIShipmentLinkByIDRequest{
+		ediports.GetEDIShipmentLinkByIDRequest{
 			ID:         change.ShipmentLinkID,
 			TenantInfo: tenantInfo,
 		},
@@ -175,7 +176,7 @@ func (s *Service) buildApprovedTransferChangeContext(
 ) (approvedTransferChangeContext, error) {
 	link, err := s.shipmentLinkRepo.GetShipmentLinkByID(
 		ctx,
-		repositories.GetEDIShipmentLinkByIDRequest{
+		ediports.GetEDIShipmentLinkByIDRequest{
 			ID:         change.ShipmentLinkID,
 			TenantInfo: tenantInfo,
 		},
@@ -227,7 +228,7 @@ func (s *Service) getTransferChangeShipments(
 	ctx context.Context,
 	link *edi.ShipmentLink,
 ) (*shipment.Shipment, *shipment.Shipment, error) {
-	source, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	source, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID: link.SourceShipmentID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: link.SourceOrganizationID,
@@ -238,7 +239,7 @@ func (s *Service) getTransferChangeShipments(
 		return nil, nil, err
 	}
 
-	target, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	target, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID: link.TargetShipmentID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: link.TargetOrganizationID,

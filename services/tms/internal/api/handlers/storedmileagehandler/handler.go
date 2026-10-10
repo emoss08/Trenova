@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/storedmileage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/storedmileageservice"
+	"github.com/emoss08/trenova/internal/modules/places/ports/storedmileageports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -63,7 +63,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*storedmileage.StoredMileage], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListStoredMileageRequest{Filter: req},
+				&storedmileageports.ListStoredMileageRequest{Filter: req},
 			)
 		},
 	)
@@ -76,7 +76,7 @@ func (h *Handler) get(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	entity, err := h.service.Get(c.Request.Context(), repositories.GetStoredMileageByIDRequest{
+	entity, err := h.service.Get(c.Request.Context(), storedmileageports.GetStoredMileageByIDRequest{
 		ID:         id,
 		TenantInfo: pagination.FromAuth(authCtx),
 	})
@@ -94,7 +94,7 @@ func (h *Handler) delete(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	if err = h.service.Deactivate(c.Request.Context(), repositories.DeleteStoredMileageRequest{
+	if err = h.service.Deactivate(c.Request.Context(), storedmileageports.DeleteStoredMileageRequest{
 		ID:         id,
 		TenantInfo: pagination.FromAuthAsUser(authCtx),
 	}, authCtx.UserID); err != nil {

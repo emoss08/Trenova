@@ -6,9 +6,13 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -47,8 +51,8 @@ type getTool struct {
 
 func newGetTool(
 	spec *getSpec,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &getTool{spec: *spec, access: newFieldAccess(permissions)}
 }
 
@@ -58,7 +62,7 @@ func (t *getTool) Description() string { return t.spec.summary }
 
 func (t *getTool) SearchTerms() []string { return t.spec.searchTerms }
 
-func (t *getTool) Policy() serviceports.ToolPolicy {
+func (t *getTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource:  t.spec.resource,
 		reads:     t.spec.reads,
@@ -93,7 +97,7 @@ func (s getSpec) idDescription() string {
 
 func (t *getTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -121,9 +125,9 @@ func (t *getTool) Query(
 }
 
 func newGetCustomerTool(
-	repo repositories.CustomerRepository,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	repo customerports.CustomerRepository,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newGetTool(&getSpec{
 		name:        "get_customer",
 		entity:      labelCustomer,
@@ -134,10 +138,10 @@ func newGetCustomerTool(
 		paramName: "customerId",
 		idSource:  "from list_customers",
 		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
-			return repo.GetByID(ctx, repositories.GetCustomerByIDRequest{
+			return repo.GetByID(ctx, customerports.GetCustomerByIDRequest{
 				ID:         id,
 				TenantInfo: tenant,
-				CustomerFilterOptions: repositories.CustomerFilterOptions{
+				CustomerFilterOptions: customerports.CustomerFilterOptions{
 					IncludeState:          true,
 					IncludeBillingProfile: true,
 				},
@@ -147,9 +151,9 @@ func newGetCustomerTool(
 }
 
 func newGetCarrierTool(
-	repo repositories.CarrierRepository,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	repo carrierports.CarrierRepository,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newGetTool(&getSpec{
 		name:     "get_carrier",
 		entity:   "carrier",
@@ -159,7 +163,7 @@ func newGetCarrierTool(
 		paramName: "carrierId",
 		idSource:  "from list_carriers",
 		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
-			return repo.GetByID(ctx, repositories.GetCarrierByIDRequest{
+			return repo.GetByID(ctx, carrierports.GetCarrierByIDRequest{
 				ID:         id,
 				TenantInfo: tenant,
 			})
@@ -168,9 +172,9 @@ func newGetCarrierTool(
 }
 
 func newGetTractorTool(
-	repo repositories.TractorRepository,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	repo tractorports.TractorRepository,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newGetTool(&getSpec{
 		name:     "get_tractor",
 		entity:   "tractor",
@@ -180,19 +184,19 @@ func newGetTractorTool(
 		paramName: "tractorId",
 		idSource:  "from list_tractors",
 		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
-			return repo.GetByID(ctx, repositories.GetTractorByIDRequest{
+			return repo.GetByID(ctx, tractorports.GetTractorByIDRequest{
 				ID:                      id,
 				TenantInfo:              tenant,
-				TractorRelationIncludes: repositories.FullTractorRelationIncludes(),
+				TractorRelationIncludes: tractorports.FullTractorRelationIncludes(),
 			})
 		},
 	}, permissions)
 }
 
 func newGetTrailerTool(
-	repo repositories.TrailerRepository,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	repo trailerports.TrailerRepository,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newGetTool(&getSpec{
 		name:     "get_trailer",
 		entity:   "trailer",
@@ -202,7 +206,7 @@ func newGetTrailerTool(
 		paramName: "trailerId",
 		idSource:  "from list_trailers",
 		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
-			return repo.GetByID(ctx, repositories.GetTrailerByIDRequest{
+			return repo.GetByID(ctx, trailerports.GetTrailerByIDRequest{
 				ID:         id,
 				TenantInfo: tenant,
 			})
@@ -221,7 +225,7 @@ func getCatalogSpecs() []getSpec {
 	}
 }
 
-func specOfGet(tool serviceports.AgentQueryTool) getSpec {
+func specOfGet(tool agentports.AgentQueryTool) getSpec {
 	return tool.(*getTool).spec //nolint:errcheck,forcetypeassert // constructed above
 }
 

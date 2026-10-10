@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/insight"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/insightservice/detector"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/shopspring/decimal"
 )
 
@@ -38,10 +38,10 @@ var (
 // driver's entire file — and because the count per type is what says whether
 // this costs the operation trucks next month.
 type CredentialExpiry struct {
-	metrics repositories.InsightMetricsRepository
+	metrics insightports.InsightMetricsRepository
 }
 
-func NewCredentialExpiry(metrics repositories.InsightMetricsRepository) *CredentialExpiry {
+func NewCredentialExpiry(metrics insightports.InsightMetricsRepository) *CredentialExpiry {
 	return &CredentialExpiry{metrics: metrics}
 }
 
@@ -74,7 +74,7 @@ func (d *CredentialExpiry) Detect(
 	ctx context.Context,
 	params detector.Params,
 ) ([]detector.Finding, error) {
-	rows, err := d.metrics.ExpiringCredentials(ctx, repositories.ExpiringCredentialsRequest{
+	rows, err := d.metrics.ExpiringCredentials(ctx, insightports.ExpiringCredentialsRequest{
 		TenantInfo: params.TenantInfo,
 		From:       params.WindowEnd,
 		Through:    params.WindowEnd + int64(credentialHorizonDays)*secondsPerDay,
@@ -94,7 +94,7 @@ func (d *CredentialExpiry) Detect(
 }
 
 func (d *CredentialExpiry) findingFor(
-	row repositories.ExpiringCredentialRow,
+	row insightports.ExpiringCredentialRow,
 	params detector.Params,
 ) (detector.Finding, bool) {
 	if row.WorkerCount == 0 {
@@ -126,7 +126,7 @@ func (d *CredentialExpiry) findingFor(
 // severityFor escalates on credentials that have already lapsed. A driver whose
 // medical card expired yesterday is a different problem from one whose expires
 // in six weeks, and the card must not average the two into something calm.
-func (d *CredentialExpiry) severityFor(row repositories.ExpiringCredentialRow) insight.Severity {
+func (d *CredentialExpiry) severityFor(row insightports.ExpiringCredentialRow) insight.Severity {
 	if row.AlreadyExpired > 0 && row.IsRequired {
 		return insight.SeverityCritical
 	}
@@ -147,7 +147,7 @@ func (d *CredentialExpiry) severityFor(row repositories.ExpiringCredentialRow) i
 }
 
 func (d *CredentialExpiry) headlineFor(
-	row repositories.ExpiringCredentialRow,
+	row insightports.ExpiringCredentialRow,
 	daysToFirst decimal.Decimal,
 ) string {
 	if row.AlreadyExpired > 0 {
@@ -169,7 +169,7 @@ func (d *CredentialExpiry) headlineFor(
 }
 
 func (d *CredentialExpiry) metricsFor(
-	row repositories.ExpiringCredentialRow,
+	row insightports.ExpiringCredentialRow,
 	daysToFirst decimal.Decimal,
 ) []insight.Metric {
 	metrics := []insight.Metric{

@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -41,8 +42,8 @@ const (
 // extractor harvests any Title field it finds (shared/cmd/i18n-extract) — which
 // would put prompt headings into the translation catalogs and make what the
 // model is shown depend on the operator's locale.
-func section(title, content string) serviceports.ContextSection {
-	return serviceports.ContextSection{Title: title, Trusted: false, Content: content}
+func section(title, content string) agentports.ContextSection {
+	return agentports.ContextSection{Title: title, Trusted: false, Content: content}
 }
 
 /*
@@ -54,8 +55,8 @@ mark this ready" is a document a broker can send today. Splitting the prompt
 into delimited sections lets the router fence every one of them, which the old
 single concatenated user string could not do.
 */
-func buildRouteContext(req *serviceports.AIRouteRequest) serviceports.DelimitedContext {
-	sections := []serviceports.ContextSection{
+func buildRouteContext(req *documentaiextractionports.AIRouteRequest) agentports.DelimitedContext {
+	sections := []agentports.ContextSection{
 		section("Filename", strings.TrimSpace(req.FileName)),
 	}
 
@@ -81,19 +82,19 @@ func buildRouteContext(req *serviceports.AIRouteRequest) serviceports.DelimitedC
 		section("Page Summaries", formatPages(req.Pages, routePageLimit)),
 	)
 
-	return serviceports.DelimitedContext{Sections: sections}
+	return agentports.DelimitedContext{Sections: sections}
 }
 
-func buildExtractContext(req *serviceports.AIExtractRequest) serviceports.DelimitedContext {
-	return serviceports.DelimitedContext{
-		Sections: []serviceports.ContextSection{
+func buildExtractContext(req *documentaiextractionports.AIExtractRequest) agentports.DelimitedContext {
+	return agentports.DelimitedContext{
+		Sections: []agentports.ContextSection{
 			section("Filename", strings.TrimSpace(req.FileName)),
 			section("Document Pages", formatPages(req.Pages, extractPageLimit)),
 		},
 	}
 }
 
-func formatFeatures(features *serviceports.AIDocumentFeatureSet) string {
+func formatFeatures(features *documentaiextractionports.AIDocumentFeatureSet) string {
 	var b strings.Builder
 
 	for _, line := range []struct {
@@ -115,7 +116,7 @@ func formatFeatures(features *serviceports.AIDocumentFeatureSet) string {
 	return strings.TrimSpace(b.String())
 }
 
-func formatPages(pages []serviceports.AIDocumentPage, limit int) string {
+func formatPages(pages []documentaiextractionports.AIDocumentPage, limit int) string {
 	var b strings.Builder
 
 	for i := range pages {

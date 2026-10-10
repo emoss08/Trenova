@@ -6,8 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -16,14 +15,14 @@ import (
 
 type stubDelegated struct {
 	userID pulid.ID
-	perms  *repositories.CachedPermissions
+	perms  *permissionports.CachedPermissions
 	err    error
 }
 
 func (s *stubDelegated) DelegatedPermissions(
 	_ context.Context,
 	userID, _ pulid.ID,
-) (*repositories.CachedPermissions, bool, error) {
+) (*permissionports.CachedPermissions, bool, error) {
 	if s.err != nil {
 		return nil, false, s.err
 	}
@@ -41,9 +40,9 @@ func TestCheckUsesADelegatedPermissionSetWithoutTouchingRoles(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	eng.delegated = &stubDelegated{
 		userID: userID,
-		perms: &repositories.CachedPermissions{
+		perms: &permissionports.CachedPermissions{
 			MaxSensitivity: string(permission.SensitivityConfidential),
-			Resources: map[string]*repositories.CachedResourcePermission{
+			Resources: map[string]*permissionports.CachedResourcePermission{
 				permission.ResourceShipment.String(): {
 					Operations: []string{string(permission.OpRead)},
 					DataScope:  string(permission.DataScopeOrganization),
@@ -52,8 +51,8 @@ func TestCheckUsesADelegatedPermissionSetWithoutTouchingRoles(t *testing.T) {
 		},
 	}
 
-	read, err := eng.Check(t.Context(), &services.PermissionCheckRequest{
-		PrincipalType:  services.PrincipalTypeUser,
+	read, err := eng.Check(t.Context(), &permissionports.PermissionCheckRequest{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    userID,
 		UserID:         userID,
 		OrganizationID: orgID,
@@ -63,8 +62,8 @@ func TestCheckUsesADelegatedPermissionSetWithoutTouchingRoles(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, read.Allowed)
 
-	update, err := eng.Check(t.Context(), &services.PermissionCheckRequest{
-		PrincipalType:  services.PrincipalTypeUser,
+	update, err := eng.Check(t.Context(), &permissionports.PermissionCheckRequest{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    userID,
 		UserID:         userID,
 		OrganizationID: orgID,
@@ -89,8 +88,8 @@ func TestCheckFallsBackToRolesWhenTheSourceDeclines(t *testing.T) {
 		Return([]*permission.UserRoleAssignment{}, nil)
 	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).Return(nil)
 
-	result, err := eng.Check(ctx, &services.PermissionCheckRequest{
-		PrincipalType:  services.PrincipalTypeUser,
+	result, err := eng.Check(ctx, &permissionports.PermissionCheckRequest{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    userID,
 		UserID:         userID,
 		OrganizationID: orgID,
@@ -107,8 +106,8 @@ func TestCheckFailsClosedWhenTheSourceErrors(t *testing.T) {
 	eng, _, _, _ := setupTestEngine(t)
 	eng.delegated = &stubDelegated{err: errors.New("session store unavailable")}
 
-	_, err := eng.Check(t.Context(), &services.PermissionCheckRequest{
-		PrincipalType:  services.PrincipalTypeUser,
+	_, err := eng.Check(t.Context(), &permissionports.PermissionCheckRequest{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		UserID:         pulid.MustNew("usr_"),
 		OrganizationID: pulid.MustNew("org_"),
 		Resource:       permission.ResourceShipment.String(),

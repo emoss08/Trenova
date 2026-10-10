@@ -8,10 +8,13 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -34,28 +37,28 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	DB           ports.DBConnection
-	LedgerRepo   repositories.PTOLedgerRepository
-	PolicyRepo   repositories.PTOPolicyRepository
-	WorkerRepo   repositories.WorkerRepository
-	OrgRepo      repositories.OrganizationRepository
-	Settlement   repositories.SettlementControlRepository `optional:"true"`
-	Holidays     repositories.OrgHolidayRepository        `optional:"true"`
-	AuditService services.AuditService
-	Realtime     services.RealtimeService `optional:"true"`
+	DB           kernelports.DBConnection
+	LedgerRepo   workerports.PTOLedgerRepository
+	PolicyRepo   workerports.PTOPolicyRepository
+	WorkerRepo   workerports.WorkerRepository
+	OrgRepo      tenantports.OrganizationRepository
+	Settlement   tenantports.SettlementControlRepository `optional:"true"`
+	Holidays     workerports.OrgHolidayRepository        `optional:"true"`
+	AuditService auditports.AuditService
+	Realtime     agentports.RealtimeService `optional:"true"`
 }
 
 type Service struct {
 	l            *zap.Logger
-	db           ports.DBConnection
-	ledgerRepo   repositories.PTOLedgerRepository
-	policyRepo   repositories.PTOPolicyRepository
-	workerRepo   repositories.WorkerRepository
-	orgRepo      repositories.OrganizationRepository
-	settlement   repositories.SettlementControlRepository
-	holidays     repositories.OrgHolidayRepository
-	auditService services.AuditService
-	realtime     services.RealtimeService
+	db           kernelports.DBConnection
+	ledgerRepo   workerports.PTOLedgerRepository
+	policyRepo   workerports.PTOPolicyRepository
+	workerRepo   workerports.WorkerRepository
+	orgRepo      tenantports.OrganizationRepository
+	settlement   tenantports.SettlementControlRepository
+	holidays     workerports.OrgHolidayRepository
+	auditService auditports.AuditService
+	realtime     agentports.RealtimeService
 }
 
 func New(p Params) *Service {
@@ -73,7 +76,7 @@ func New(p Params) *Service {
 	}
 }
 
-func (s *Service) DB() ports.DBConnection { return s.db }
+func (s *Service) DB() kernelports.DBConnection { return s.db }
 
 // PayPeriodSpec reads the organisation's settlement calendar for per-pay-period
 // accrual; nil when settlement is not configured.
@@ -103,7 +106,7 @@ func (s *Service) HolidayCalendar(
 	if s.holidays == nil {
 		return worker.NewHolidayCalendar(nil), nil
 	}
-	rows, err := s.holidays.List(ctx, &repositories.ListOrgHolidaysRequest{TenantInfo: tenantInfo})
+	rows, err := s.holidays.List(ctx, &workerports.ListOrgHolidaysRequest{TenantInfo: tenantInfo})
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +144,7 @@ func (s *Service) ResolvePolicy(
 	workerID pulid.ID,
 	asOf int64,
 ) (*ResolvedPolicy, error) {
-	assignment, err := s.policyRepo.GetActiveAssignment(ctx, &repositories.GetPTOAssignmentRequest{
+	assignment, err := s.policyRepo.GetActiveAssignment(ctx, &workerports.GetPTOAssignmentRequest{
 		TenantInfo:    tenantInfo,
 		WorkerID:      workerID,
 		AsOf:          asOf,
@@ -163,7 +166,7 @@ func (s *Service) OrgLocation(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*time.Location, error) {
-	org, err := s.orgRepo.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+	org, err := s.orgRepo.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {
@@ -182,7 +185,7 @@ func (s *Service) OrgLocation(
 }
 
 type postParams struct {
-	key       repositories.PTOBalanceKey
+	key       workerports.PTOBalanceKey
 	entry     *worker.WorkerPTOLedgerEntry
 	actor     Actor
 	rule      *worker.PTOPolicyRule
@@ -199,7 +202,7 @@ func (s *Service) post(
 
 	err := s.db.WithTx(
 		ctx,
-		ports.TxOptions{LockTimeout: lockTimeout},
+		kernelports.TxOptions{LockTimeout: lockTimeout},
 		func(txCtx context.Context, _ bun.Tx) error {
 			if err := s.ledgerRepo.EnsureBalance(txCtx, &p.key); err != nil {
 				return err
@@ -282,15 +285,15 @@ func (s *Service) skipEntry(
 	return ErrCapped
 }
 
-func (s *Service) publish(ctx context.Context, key repositories.PTOBalanceKey, actor Actor) {
+func (s *Service) publish(ctx context.Context, key workerports.PTOBalanceKey, actor Actor) {
 	if s.realtime == nil {
 		return
 	}
-	actorType := services.PrincipalTypeUser
+	actorType := permissionports.PrincipalTypeUser
 	actorID := actor.UserID
 	if actor.Type == worker.PTOLedgerActorSystem {
-		actorType = services.PrincipalTypeSystem
-		actorID = services.SystemPrincipalID
+		actorType = permissionports.PrincipalTypeSystem
+		actorID = permissionports.SystemPrincipalID
 	}
 	if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
 		OrganizationID: key.TenantInfo.OrgID,
@@ -324,7 +327,7 @@ func (s *Service) PostUsage(
 	}
 
 	entry, err := s.post(ctx, postParams{
-		key: repositories.PTOBalanceKey{
+		key: workerports.PTOBalanceKey{
 			TenantInfo: tenantInfo,
 			WorkerID:   pto.WorkerID,
 			PTOType:    pto.Type,
@@ -339,7 +342,7 @@ func (s *Service) PostUsage(
 			PTOPolicyID:  resolved.Policy.ID,
 		},
 	})
-	if errors.Is(err, repositories.ErrDuplicatePTOLedgerEntry) {
+	if errors.Is(err, workerports.ErrDuplicatePTOLedgerEntry) {
 		return nil, nil
 	}
 	return entry, err
@@ -351,7 +354,7 @@ func (s *Service) PostReversal(
 	pto *worker.WorkerPTO,
 	actor Actor,
 ) (*worker.WorkerPTOLedgerEntry, error) {
-	hasUsage, err := s.ledgerRepo.HasEntry(ctx, &repositories.HasPTOLedgerEntryRequest{
+	hasUsage, err := s.ledgerRepo.HasEntry(ctx, &workerports.HasPTOLedgerEntryRequest{
 		TenantInfo:  tenantInfo,
 		SourcePTOID: pto.ID,
 		EntryType:   worker.PTOLedgerEntryUsage,
@@ -364,7 +367,7 @@ func (s *Service) PostReversal(
 	}
 
 	entry, err := s.post(ctx, postParams{
-		key: repositories.PTOBalanceKey{
+		key: workerports.PTOBalanceKey{
 			TenantInfo: tenantInfo,
 			WorkerID:   pto.WorkerID,
 			PTOType:    pto.Type,
@@ -377,7 +380,7 @@ func (s *Service) PostReversal(
 			SourcePTOID: pto.ID,
 		},
 	})
-	if errors.Is(err, repositories.ErrDuplicatePTOLedgerEntry) {
+	if errors.Is(err, workerports.ErrDuplicatePTOLedgerEntry) {
 		return nil, nil
 	}
 	return entry, err
@@ -402,7 +405,7 @@ func (s *Service) Adjust(
 	}
 
 	entry, err := s.post(ctx, postParams{
-		key: repositories.PTOBalanceKey{
+		key: workerports.PTOBalanceKey{
 			TenantInfo: req.TenantInfo,
 			WorkerID:   req.WorkerID,
 			PTOType:    req.PTOType,
@@ -419,7 +422,7 @@ func (s *Service) Adjust(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceWorkerPTO,
 		ResourceID:     req.WorkerID.String(),
 		Operation:      permission.OpManage,
@@ -454,7 +457,7 @@ func (s *Service) PostOpeningBalances(
 			continue
 		}
 		_, err := s.post(ctx, postParams{
-			key: repositories.PTOBalanceKey{
+			key: workerports.PTOBalanceKey{
 				TenantInfo: tenantInfo,
 				WorkerID:   assignment.WorkerID,
 				PTOType:    ob.PTOType,
@@ -469,7 +472,7 @@ func (s *Service) PostOpeningBalances(
 				PTOPolicyID:  assignment.PTOPolicyID,
 			},
 		})
-		if err != nil && !errors.Is(err, repositories.ErrDuplicatePTOLedgerEntry) {
+		if err != nil && !errors.Is(err, workerports.ErrDuplicatePTOLedgerEntry) {
 			return err
 		}
 	}
@@ -486,7 +489,7 @@ func (s *Service) EnsureBalances(
 		if rule == nil {
 			continue
 		}
-		if err := s.ledgerRepo.EnsureBalance(ctx, &repositories.PTOBalanceKey{
+		if err := s.ledgerRepo.EnsureBalance(ctx, &workerports.PTOBalanceKey{
 			TenantInfo: tenantInfo,
 			WorkerID:   workerID,
 			PTOType:    rule.PTOType,
@@ -499,7 +502,7 @@ func (s *Service) EnsureBalances(
 
 func (s *Service) ListLedger(
 	ctx context.Context,
-	req *repositories.ListPTOLedgerRequest,
+	req *workerports.ListPTOLedgerRequest,
 ) (*pagination.CursorListResult[*worker.WorkerPTOLedgerEntry], error) {
 	return s.ledgerRepo.ListEntries(ctx, req)
 }
@@ -507,18 +510,18 @@ func (s *Service) ListLedger(
 func (s *Service) Summary(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*repositories.PTOBalanceSummary, error) {
+) (*workerports.PTOBalanceSummary, error) {
 	return s.ledgerRepo.Summary(ctx, tenantInfo)
 }
 
 func (s *Service) RebuildBalance(
 	ctx context.Context,
-	key *repositories.PTOBalanceKey,
+	key *workerports.PTOBalanceKey,
 ) (*worker.WorkerPTOBalance, error) {
 	var rebuilt *worker.WorkerPTOBalance
 	err := s.db.WithTx(
 		ctx,
-		ports.TxOptions{LockTimeout: lockTimeout},
+		kernelports.TxOptions{LockTimeout: lockTimeout},
 		func(txCtx context.Context, _ bun.Tx) error {
 			if err := s.ledgerRepo.EnsureBalance(txCtx, key); err != nil {
 				return err

@@ -3,6 +3,7 @@
 package db
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"bytes"
 	"context"
 	"errors"
@@ -12,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/instancebootstrap"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/instancebootstrapservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/auditrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/userrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/stretchr/testify/assert"
@@ -68,10 +69,10 @@ func integrationBootstrapDeps(t *testing.T, conn *postgres.Connection, out *byte
 		auditor: func(
 			_ context.Context,
 			conn *postgres.Connection,
-		) (services.SecurityAuditor, func(), error) {
+		) (permissionports.SecurityAuditor, func(), error) {
 			audits := auditservice.New(auditservice.Params{
 				AuditRepository:       auditrepository.New(auditrepository.Params{DB: conn, Logger: logger}),
-				AuditBufferRepository: mocks.NewMockAuditBufferRepository(t),
+				AuditBufferRepository: auditportsmock.NewMockAuditBufferRepository(t),
 				Logger:                logger,
 				Config:                appCfg,
 				Metrics:               registry,

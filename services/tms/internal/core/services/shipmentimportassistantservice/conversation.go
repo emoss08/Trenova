@@ -5,7 +5,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipmentimportchat"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
 )
@@ -28,14 +29,14 @@ const maxReplayedTurns = 12
 // the history panel, so replaying it costs a read we were making anyway.
 func (s *Service) buildMessages(
 	ctx context.Context,
-	req *serviceports.ShipmentImportChatRequest,
+	req *shipmentports.ShipmentImportChatRequest,
 	conversation *shipmentimportchat.Conversation,
-) []serviceports.Message {
-	messages := make([]serviceports.Message, 0, maxReplayedTurns*2+1)
+) []agentports.Message {
+	messages := make([]agentports.Message, 0, maxReplayedTurns*2+1)
 	messages = append(messages, s.replayTurns(ctx, req.TenantInfo, conversation)...)
 
-	return append(messages, serviceports.Message{
-		Role:    serviceports.RoleUser,
+	return append(messages, agentports.Message{
+		Role:    agentports.RoleUser,
 		Content: req.UserMessage,
 	})
 }
@@ -44,7 +45,7 @@ func (s *Service) replayTurns(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	conversation *shipmentimportchat.Conversation,
-) []serviceports.Message {
+) []agentports.Message {
 	if conversation == nil || conversation.ID.IsNil() {
 		return nil
 	}
@@ -66,18 +67,18 @@ func (s *Service) replayTurns(
 		history = history[len(history)-maxReplayedTurns*2:]
 	}
 
-	messages := make([]serviceports.Message, 0, len(history))
+	messages := make([]agentports.Message, 0, len(history))
 	for i := range history {
 		message := &history[i]
 		if strings.TrimSpace(message.Text) == "" {
 			continue
 		}
 
-		role := serviceports.RoleAssistant
+		role := agentports.RoleAssistant
 		if message.Role == "user" {
-			role = serviceports.RoleUser
+			role = agentports.RoleUser
 		}
-		messages = append(messages, serviceports.Message{Role: role, Content: message.Text})
+		messages = append(messages, agentports.Message{Role: role, Content: message.Text})
 	}
 
 	return messages

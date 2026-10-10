@@ -8,9 +8,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -41,7 +41,7 @@ type controlRepository struct {
 	l  *zap.Logger
 }
 
-func NewControls(p ControlParams) repositories.AgentQualityControlRepository {
+func NewControls(p ControlParams) agentqualityports.AgentQualityControlRepository {
 	return &controlRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.agentqualitycontrol-repository"),
@@ -172,12 +172,12 @@ func (r *controlRepository) scheduleTargetQuery(
 func (r *controlRepository) ScheduleTarget(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*repositories.QualityScheduleTarget, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.QualityScheduleTarget, error) {
+) (*agentqualityports.QualityScheduleTarget, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentqualityports.QualityScheduleTarget, error) {
 		org := buncolgen.OrganizationColumns
 		dba := r.db.DBForContext(ctx)
 
-		target := new(repositories.QualityScheduleTarget)
+		target := new(agentqualityports.QualityScheduleTarget)
 		if err := r.scheduleTargetQuery(dba).
 			Where(org.ID.Eq(), tenantInfo.OrgID).
 			Where(org.BusinessUnitID.Eq(), tenantInfo.BuID).
@@ -200,10 +200,10 @@ func (r *controlRepository) ScheduleTarget(
 
 func (r *controlRepository) ListScheduleTargets(
 	ctx context.Context,
-	req repositories.ListQualityScheduleTargetsRequest,
-) ([]*repositories.QualityScheduleTarget, error) {
+	req agentqualityports.ListQualityScheduleTargetsRequest,
+) ([]*agentqualityports.QualityScheduleTarget, error) {
 	ctx = dbscope.WithSystem(ctx, "list agent quality schedules across every organization")
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.QualityScheduleTarget, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentqualityports.QualityScheduleTarget, error) {
 		org := buncolgen.OrganizationColumns
 		limit := clampLimit(req.Limit, defaultScheduleTargetCap, maxScheduleTargetCap)
 		dba := r.db.DBForContext(ctx)
@@ -213,7 +213,7 @@ func (r *controlRepository) ListScheduleTargets(
 			q = q.Where(org.ID.Gt(), req.AfterOrganizationID)
 		}
 
-		targets := make([]*repositories.QualityScheduleTarget, 0, limit)
+		targets := make([]*agentqualityports.QualityScheduleTarget, 0, limit)
 		if err := q.OrderExpr(org.ID.OrderAsc()).Limit(limit).Scan(ctx, &targets); err != nil {
 			return nil, fmt.Errorf("list organizations to schedule: %w", err)
 		}

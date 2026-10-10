@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/iam"
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/require"
@@ -17,7 +17,7 @@ func TestSSOAndSCIMWritesRefuseWhenThePlanRestrictsSSO(t *testing.T) {
 	svc := &service{plans: plantest.Restricting(t, platformplan.CapabilitySSO)}
 	tenant := plantest.Tenant()
 
-	provider, err := svc.CreateIdentityProvider(t.Context(), tenant, &services.IdentityProviderRequest{})
+	provider, err := svc.CreateIdentityProvider(t.Context(), tenant, &iamports.IdentityProviderRequest{})
 	require.Nil(t, provider)
 	require.True(t, errortypes.IsPlanRestrictionError(err))
 

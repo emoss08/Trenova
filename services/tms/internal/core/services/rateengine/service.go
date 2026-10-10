@@ -6,8 +6,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratezoneports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/exchangerateports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/modeprofileports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/ratetypes"
@@ -22,28 +28,28 @@ type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	AgreementRepo repositories.RateAgreementRepository
-	ZoneRepo      repositories.RateZoneRepository
-	MatrixRepo    repositories.RateMatrixRepository
-	DensityRepo   repositories.DensityScaleRepository
-	QuoteRepo     repositories.RateQuoteRepository
-	Formula       services.FormulaCalculator
-	Exchange      services.ExchangeRateService
-	ModeProfile   services.ModeProfileService
-	RoutingGuides repositories.RoutingGuideRepository
+	AgreementRepo rateagreementports.RateAgreementRepository
+	ZoneRepo      ratezoneports.RateZoneRepository
+	MatrixRepo    ratematrixports.RateMatrixRepository
+	DensityRepo   ratematrixports.DensityScaleRepository
+	QuoteRepo     ratequoteports.RateQuoteRepository
+	Formula       formulatemplateports.FormulaCalculator
+	Exchange      exchangerateports.ExchangeRateService
+	ModeProfile   modeprofileports.ModeProfileService
+	RoutingGuides tenderports.RoutingGuideRepository
 }
 
 type Service struct {
 	l             *zap.Logger
-	agreementRepo repositories.RateAgreementRepository
-	zoneRepo      repositories.RateZoneRepository
-	matrixRepo    repositories.RateMatrixRepository
-	densityRepo   repositories.DensityScaleRepository
-	quoteRepo     repositories.RateQuoteRepository
-	formula       services.FormulaCalculator
-	exchange      services.ExchangeRateService
-	modeProfile   services.ModeProfileService
-	routingGuides repositories.RoutingGuideRepository
+	agreementRepo rateagreementports.RateAgreementRepository
+	zoneRepo      ratezoneports.RateZoneRepository
+	matrixRepo    ratematrixports.RateMatrixRepository
+	densityRepo   ratematrixports.DensityScaleRepository
+	quoteRepo     ratequoteports.RateQuoteRepository
+	formula       formulatemplateports.FormulaCalculator
+	exchange      exchangerateports.ExchangeRateService
+	modeProfile   modeprofileports.ModeProfileService
+	routingGuides tenderports.RoutingGuideRepository
 	now           func() int64
 }
 
@@ -72,8 +78,8 @@ func New(p Params) *Service {
 // exists on the happy path explains nothing.
 func (s *Service) RateShipment(
 	ctx context.Context,
-	req *services.RateShipmentRequest,
-) (*services.RatedShipment, error) {
+	req *ratequoteports.RateShipmentRequest,
+) (*ratequoteports.RatedShipment, error) {
 	rateCtx, err := s.buildContext(ctx, req)
 	if err != nil {
 		return nil, err
@@ -131,11 +137,11 @@ func (s *Service) RateShipment(
 
 func (s *Service) rateFromAgreement(
 	ctx context.Context,
-	req *services.RateShipmentRequest,
+	req *ratequoteports.RateShipmentRequest,
 	rateCtx *RateContext,
 	resolution *Resolution,
 	trace *ratetypes.Trace,
-) (*services.RatedShipment, error) {
+) (*ratequoteports.RatedShipment, error) {
 	winner := resolution.Winner
 
 	priced, err := s.price(ctx, rateCtx, winner, trace)
@@ -183,10 +189,10 @@ func (s *Service) rateFromAgreement(
 // exists, every shipment rates exactly as it did before.
 func (s *Service) rateWithoutAgreement(
 	ctx context.Context,
-	req *services.RateShipmentRequest,
+	req *ratequoteports.RateShipmentRequest,
 	rateCtx *RateContext,
 	trace *ratetypes.Trace,
-) (*services.RatedShipment, error) {
+) (*ratequoteports.RatedShipment, error) {
 	// The buy side never falls back to a formula template. The one a shipment
 	// carries is the customer's rating method, so falling back to it would pay
 	// the carrier whatever the customer is charged: a load sold at $2,000 would
@@ -232,10 +238,10 @@ func (s *Service) rateWithoutAgreement(
 
 func (s *Service) rateFromFallbackTemplate(
 	ctx context.Context,
-	req *services.RateShipmentRequest,
+	req *ratequoteports.RateShipmentRequest,
 	rateCtx *RateContext,
 	trace *ratetypes.Trace,
-) (*services.RatedShipment, error) {
+) (*ratequoteports.RatedShipment, error) {
 	templateID := fallbackTemplateID(req)
 
 	if templateID.IsNil() {
@@ -289,7 +295,7 @@ func (s *Service) rateFromFallbackTemplate(
 // fallbackTemplateID prefers the template on the shipment over the
 // organization's, because a template chosen for this load is a more specific
 // statement of intent than a default chosen for all of them.
-func fallbackTemplateID(req *services.RateShipmentRequest) pulid.ID {
+func fallbackTemplateID(req *ratequoteports.RateShipmentRequest) pulid.ID {
 	if req.Shipment != nil && !req.Shipment.FormulaTemplateID.IsNil() {
 		return req.Shipment.FormulaTemplateID
 	}
@@ -321,11 +327,11 @@ type quoteFields struct {
 
 func (s *Service) finish(
 	ctx context.Context,
-	req *services.RateShipmentRequest,
+	req *ratequoteports.RateShipmentRequest,
 	rateCtx *RateContext,
 	trace *ratetypes.Trace,
 	fields *quoteFields,
-) (*services.RatedShipment, error) {
+) (*ratequoteports.RatedShipment, error) {
 	quote := s.buildQuote(req, rateCtx, trace, fields)
 
 	if req.Persist {
@@ -343,7 +349,7 @@ func (s *Service) finish(
 		quote = recorded
 	}
 
-	rated := &services.RatedShipment{
+	rated := &ratequoteports.RatedShipment{
 		Amount:            fields.Amount,
 		Currency:          rateCtx.BillingCurrency,
 		Outcome:           fields.Outcome,
@@ -366,7 +372,7 @@ func (s *Service) finish(
 // matrix names the matrix, and the template that gives its cells meaning
 // belongs to the matrix. The trace is where the two meet, because it records
 // what was actually evaluated rather than what was configured.
-func applyLinehaulPricing(rated *services.RatedShipment, trace *ratetypes.Trace) {
+func applyLinehaulPricing(rated *ratequoteports.RatedShipment, trace *ratetypes.Trace) {
 	if trace == nil {
 		return
 	}
@@ -393,7 +399,7 @@ func applyLinehaulPricing(rated *services.RatedShipment, trace *ratetypes.Trace)
 }
 
 func (s *Service) buildQuote(
-	req *services.RateShipmentRequest,
+	req *ratequoteports.RateShipmentRequest,
 	rateCtx *RateContext,
 	trace *ratetypes.Trace,
 	fields *quoteFields,

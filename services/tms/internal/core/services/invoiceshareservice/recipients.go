@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -86,7 +86,7 @@ func (s *Service) resolveRecipients(
 	tenantInfo pagination.TenantInfo,
 	userIDs []pulid.ID,
 ) ([]*tenant.User, error) {
-	users, err := s.userRepo.GetByIDs(ctx, repositories.GetUsersByIDsRequest{
+	users, err := s.userRepo.GetByIDs(ctx, tenantports.GetUsersByIDsRequest{
 		TenantInfo: tenantInfo,
 		UserIDs:    userIDs,
 	})
@@ -145,8 +145,8 @@ func (s *Service) canViewInvoices(
 ) (bool, error) {
 	result, err := s.permissions.Check(
 		authctx.WithoutSessionRoleActivation(ctx),
-		&servicesports.PermissionCheckRequest{
-			PrincipalType:  servicesports.PrincipalTypeUser,
+		&permissionports.PermissionCheckRequest{
+			PrincipalType:  permissionports.PrincipalTypeUser,
 			PrincipalID:    user.ID,
 			UserID:         user.ID,
 			OrganizationID: tenantInfo.OrgID,

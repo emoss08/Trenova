@@ -5,9 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/uptrace/bun"
 )
@@ -16,20 +17,20 @@ const draftPreviewIdempotencyKey = "draft-preview"
 
 func (s *Service) SaveDraft(
 	ctx context.Context,
-	req *servicesports.SaveInvoiceAdjustmentDraftRequest,
-	actor *servicesports.RequestActor,
+	req *invoiceadjustmentports.SaveInvoiceAdjustmentDraftRequest,
+	actor *permissionports.RequestActor,
 ) (*invoiceadjustment.InvoiceAdjustment, error) {
 	if err := validateSaveDraftRequest(req); err != nil {
 		return nil, err
 	}
 
 	var saved *invoiceadjustment.InvoiceAdjustment
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		adjustmentID := req.AdjustmentID
 		if adjustmentID.IsNil() {
 			created, createErr := s.CreateDraft(
 				txCtx,
-				&servicesports.CreateDraftInvoiceAdjustmentRequest{
+				&invoiceadjustmentports.CreateDraftInvoiceAdjustmentRequest{
 					InvoiceID:  req.InvoiceID,
 					TenantInfo: req.TenantInfo,
 				},
@@ -42,7 +43,7 @@ func (s *Service) SaveDraft(
 		}
 
 		var updateErr error
-		saved, updateErr = s.UpdateDraft(txCtx, &servicesports.UpdateDraftInvoiceAdjustmentRequest{
+		saved, updateErr = s.UpdateDraft(txCtx, &invoiceadjustmentports.UpdateDraftInvoiceAdjustmentRequest{
 			AdjustmentID:          adjustmentID,
 			Kind:                  req.Kind,
 			RebillStrategy:        req.RebillStrategy,
@@ -61,7 +62,7 @@ func (s *Service) SaveDraft(
 	return saved, nil
 }
 
-func validateSaveDraftRequest(req *servicesports.SaveInvoiceAdjustmentDraftRequest) error {
+func validateSaveDraftRequest(req *invoiceadjustmentports.SaveInvoiceAdjustmentDraftRequest) error {
 	if req == nil {
 		return errortypes.NewValidationError(
 			"request",
@@ -92,9 +93,9 @@ func validateSaveDraftRequest(req *servicesports.SaveInvoiceAdjustmentDraftReque
 
 func (s *Service) PreviewSaveDraft(
 	ctx context.Context,
-	req *servicesports.SaveInvoiceAdjustmentDraftRequest,
-	actor *servicesports.RequestActor,
-) (*servicesports.InvoiceAdjustmentDraftPreview, error) {
+	req *invoiceadjustmentports.SaveInvoiceAdjustmentDraftRequest,
+	actor *permissionports.RequestActor,
+) (*invoiceadjustmentports.InvoiceAdjustmentDraftPreview, error) {
 	if err := validateSaveDraftRequest(req); err != nil {
 		return nil, err
 	}
@@ -102,7 +103,7 @@ func (s *Service) PreviewSaveDraft(
 	var before *invoiceadjustment.InvoiceAdjustment
 	invoiceID := req.InvoiceID
 	if req.AdjustmentID.IsNotNil() {
-		existing, err := s.repo.GetByID(ctx, repositories.GetInvoiceAdjustmentRequest{
+		existing, err := s.repo.GetByID(ctx, invoiceadjustmentports.GetInvoiceAdjustmentRequest{
 			ID:         req.AdjustmentID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -120,7 +121,7 @@ func (s *Service) PreviewSaveDraft(
 		invoiceID = existing.OriginalInvoiceID
 	}
 
-	sourceInvoice, err := s.invoiceRepo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+	sourceInvoice, err := s.invoiceRepo.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         invoiceID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -142,7 +143,7 @@ func (s *Service) PreviewSaveDraft(
 	after := draftAfter(before, sourceInvoice, req)
 	after.Lines = s.buildAdjustmentLines(after.ID, sourceInvoice.ID, req.Lines, req.TenantInfo)
 
-	computation, err := s.computePreview(ctx, &servicesports.InvoiceAdjustmentRequest{
+	computation, err := s.computePreview(ctx, &invoiceadjustmentports.InvoiceAdjustmentRequest{
 		AdjustmentID:   req.AdjustmentID,
 		InvoiceID:      sourceInvoice.ID,
 		Kind:           req.Kind,
@@ -157,7 +158,7 @@ func (s *Service) PreviewSaveDraft(
 		return nil, err
 	}
 
-	return &servicesports.InvoiceAdjustmentDraftPreview{
+	return &invoiceadjustmentports.InvoiceAdjustmentDraftPreview{
 		Before:  before,
 		After:   after,
 		Invoice: sourceInvoice,
@@ -168,7 +169,7 @@ func (s *Service) PreviewSaveDraft(
 func draftAfter(
 	before *invoiceadjustment.InvoiceAdjustment,
 	sourceInvoice *invoice.Invoice,
-	req *servicesports.SaveInvoiceAdjustmentDraftRequest,
+	req *invoiceadjustmentports.SaveInvoiceAdjustmentDraftRequest,
 ) *invoiceadjustment.InvoiceAdjustment {
 	after := &invoiceadjustment.InvoiceAdjustment{
 		OrganizationID:          req.TenantInfo.OrgID,
@@ -192,8 +193,8 @@ func draftAfter(
 
 func (s *Service) PreviewDecision(
 	ctx context.Context,
-	req *servicesports.InvoiceAdjustmentDecisionRequest,
-) (*servicesports.InvoiceAdjustmentDecisionPreview, error) {
+	req *invoiceadjustmentports.InvoiceAdjustmentDecisionRequest,
+) (*invoiceadjustmentports.InvoiceAdjustmentDecisionPreview, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"request",
@@ -202,7 +203,7 @@ func (s *Service) PreviewDecision(
 		)
 	}
 
-	adjustment, err := s.GetDetail(ctx, &servicesports.GetInvoiceAdjustmentDetailRequest{
+	adjustment, err := s.GetDetail(ctx, &invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest{
 		AdjustmentID: req.AdjustmentID,
 		TenantInfo:   req.TenantInfo,
 	})
@@ -218,7 +219,7 @@ func (s *Service) PreviewDecision(
 		)
 	}
 
-	sourceInvoice, err := s.invoiceRepo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+	sourceInvoice, err := s.invoiceRepo.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         adjustment.OriginalInvoiceID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -226,7 +227,7 @@ func (s *Service) PreviewDecision(
 		return nil, err
 	}
 
-	decision := &servicesports.InvoiceAdjustmentDecisionPreview{
+	decision := &invoiceadjustmentports.InvoiceAdjustmentDecisionPreview{
 		Adjustment: adjustment,
 		Invoice:    sourceInvoice,
 	}
@@ -234,7 +235,7 @@ func (s *Service) PreviewDecision(
 		return decision, nil
 	}
 
-	computation, err := s.computePreview(ctx, &servicesports.InvoiceAdjustmentRequest{
+	computation, err := s.computePreview(ctx, &invoiceadjustmentports.InvoiceAdjustmentRequest{
 		InvoiceID:      adjustment.OriginalInvoiceID,
 		Kind:           adjustment.Kind,
 		RebillStrategy: adjustment.RebillStrategy,

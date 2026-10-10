@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -29,7 +29,7 @@ func (r *Deps) resolveShiftTemplateSelectOptions(
 
 	templates, err := r.SchedulingService.ListTemplates(
 		ctx,
-		&repositories.ListShiftTemplatesRequest{TenantInfo: req.TenantInfo, ActiveOnly: true},
+		&workerports.ListShiftTemplatesRequest{TenantInfo: req.TenantInfo, ActiveOnly: true},
 	)
 	if err != nil {
 		return nil, err
@@ -87,7 +87,7 @@ func (r *Deps) resolveWorkerPolicySelectOptions(
 
 	policies, err := r.SelfServiceService.ListPolicies(
 		ctx,
-		&repositories.ListWorkerPoliciesRequest{TenantInfo: req.TenantInfo},
+		&workerports.ListWorkerPoliciesRequest{TenantInfo: req.TenantInfo},
 	)
 	if err != nil {
 		return nil, err
@@ -148,7 +148,7 @@ func (r *Deps) resolveJobPositionSelectOptions(
 
 	positions, err := r.OrgStructureService.ListPositions(
 		ctx,
-		&repositories.ListJobPositionsRequest{
+		&workerports.ListJobPositionsRequest{
 			TenantInfo:  req.TenantInfo,
 			ActiveOnly:  true,
 			DrivingOnly: selectOptionBoolFilter(req.Filters, "drivingOnly"),

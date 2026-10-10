@@ -16,8 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
@@ -28,11 +27,11 @@ func (r *AccountingAppCredentialResolver) HasWebhookVerifier(ctx context.Context
 	return obj.HasWebhookVerifier(), nil
 }
 
-func (r *AccountingAppSettingsResolver) ActiveSource(ctx context.Context, obj *services.AccountingAppSettings) (*accountingsync.AppSource, error) {
+func (r *AccountingAppSettingsResolver) ActiveSource(ctx context.Context, obj *accountingsyncports.AccountingAppSettings) (*accountingsync.AppSource, error) {
 	return stringutils.NilIfEmpty(obj.ActiveSource), nil
 }
 
-func (r *AccountingAppSettingsResolver) InstanceEnvironment(ctx context.Context, obj *services.AccountingAppSettings) (*accountingsync.AppEnvironment, error) {
+func (r *AccountingAppSettingsResolver) InstanceEnvironment(ctx context.Context, obj *accountingsyncports.AccountingAppSettings) (*accountingsync.AppEnvironment, error) {
 	return stringutils.NilIfEmpty(obj.InstanceEnvironment), nil
 }
 
@@ -129,7 +128,7 @@ func (r *AccountingDriftFindingResolver) ResolvedBy(ctx context.Context, obj *ac
 	return base.LoadUser(ctx, obj.ResolvedByID)
 }
 
-func (r *AccountingDriftFixPreviewResolver) Direction(ctx context.Context, obj *services.AccountingDriftFixPreview) (*accountingsync.DriftDirection, error) {
+func (r *AccountingDriftFixPreviewResolver) Direction(ctx context.Context, obj *accountingsyncports.AccountingDriftFixPreview) (*accountingsync.DriftDirection, error) {
 	if obj.Direction == "" {
 		return nil, nil
 	}
@@ -138,7 +137,7 @@ func (r *AccountingDriftFixPreviewResolver) Direction(ctx context.Context, obj *
 	return &direction, nil
 }
 
-func (r *AccountingDriftFixPreviewResolver) FixObject(ctx context.Context, obj *services.AccountingDriftFixPreview) (*accountingsync.DriftFixObject, error) {
+func (r *AccountingDriftFixPreviewResolver) FixObject(ctx context.Context, obj *accountingsyncports.AccountingDriftFixPreview) (*accountingsync.DriftFixObject, error) {
 	if obj.FixObject == "" {
 		return nil, nil
 	}
@@ -147,7 +146,7 @@ func (r *AccountingDriftFixPreviewResolver) FixObject(ctx context.Context, obj *
 	return &fix, nil
 }
 
-func (r *AccountingDriftFixPreviewResolver) Operation(ctx context.Context, obj *services.AccountingDriftFixPreview) (*accountingsync.SyncOperation, error) {
+func (r *AccountingDriftFixPreviewResolver) Operation(ctx context.Context, obj *accountingsyncports.AccountingDriftFixPreview) (*accountingsync.SyncOperation, error) {
 	if obj.Operation == "" {
 		return nil, nil
 	}
@@ -265,7 +264,7 @@ func (r *AccountingSyncAttemptResolver) ErrorCategory(ctx context.Context, obj *
 	return stringutils.NilIfEmpty(obj.ErrorCategory), nil
 }
 
-func (r *AccountingSyncAttentionGroupResolver) ErrorCategory(ctx context.Context, obj *repositories.AccountingSyncAttentionGroup) (*accountingsync.SyncErrorCategory, error) {
+func (r *AccountingSyncAttentionGroupResolver) ErrorCategory(ctx context.Context, obj *accountingsyncports.AccountingSyncAttentionGroup) (*accountingsync.SyncErrorCategory, error) {
 	return stringutils.NilIfEmpty(obj.ErrorCategory), nil
 }
 
@@ -285,7 +284,7 @@ func (r *AccountingSyncRecordResolver) SkippedBy(ctx context.Context, obj *accou
 	return base.LoadUser(ctx, obj.SkippedByID)
 }
 
-func (r *MutationResolver) SaveAccountingApp(ctx context.Context, input gqlmodel.SaveAccountingAppInput) (*services.AccountingSyncStatus, error) {
+func (r *MutationResolver) SaveAccountingApp(ctx context.Context, input gqlmodel.SaveAccountingAppInput) (*accountingsyncports.AccountingSyncStatus, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpManage)
 	if err != nil {
 		return nil, err
@@ -294,7 +293,7 @@ func (r *MutationResolver) SaveAccountingApp(ctx context.Context, input gqlmodel
 		return nil, errAccountingNeedsAPerson()
 	}
 
-	return r.AccountingConnections.SaveApp(ctx, &services.SaveAccountingAppRequest{
+	return r.AccountingConnections.SaveApp(ctx, &accountingsyncports.SaveAccountingAppRequest{
 		TenantInfo:                base.TenantInfo(authCtx),
 		UserID:                    authCtx.UserID,
 		IntegrationType:           input.IntegrationType,
@@ -306,7 +305,7 @@ func (r *MutationResolver) SaveAccountingApp(ctx context.Context, input gqlmodel
 	})
 }
 
-func (r *MutationResolver) RemoveAccountingApp(ctx context.Context, integrationType integration.Type) (*services.AccountingSyncStatus, error) {
+func (r *MutationResolver) RemoveAccountingApp(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingSyncStatus, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpManage)
 	if err != nil {
 		return nil, err
@@ -315,14 +314,14 @@ func (r *MutationResolver) RemoveAccountingApp(ctx context.Context, integrationT
 		return nil, errAccountingNeedsAPerson()
 	}
 
-	return r.AccountingConnections.RemoveApp(ctx, &services.RemoveAccountingAppRequest{
+	return r.AccountingConnections.RemoveApp(ctx, &accountingsyncports.RemoveAccountingAppRequest{
 		TenantInfo:      base.TenantInfo(authCtx),
 		UserID:          authCtx.UserID,
 		IntegrationType: integrationType,
 	})
 }
 
-func (r *MutationResolver) StartAccountingAuthorization(ctx context.Context, integrationType integration.Type) (*services.AccountingAuthorizationStart, error) {
+func (r *MutationResolver) StartAccountingAuthorization(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingAuthorizationStart, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpManage)
 	if err != nil {
 		return nil, err
@@ -331,7 +330,7 @@ func (r *MutationResolver) StartAccountingAuthorization(ctx context.Context, int
 		return nil, errAccountingNeedsAPerson()
 	}
 
-	return r.AccountingConnections.StartAuthorization(ctx, &services.StartAccountingAuthorizationRequest{
+	return r.AccountingConnections.StartAuthorization(ctx, &accountingsyncports.StartAccountingAuthorizationRequest{
 		TenantInfo:      base.TenantInfo(authCtx),
 		UserID:          authCtx.UserID,
 		IntegrationType: integrationType,
@@ -349,7 +348,7 @@ func (r *MutationResolver) CompleteAccountingAuthorization(ctx context.Context, 
 	return completion.Connection, nil
 }
 
-func (r *MutationResolver) FinishAccountingAuthorization(ctx context.Context, input gqlmodel.CompleteAccountingAuthorizationInput) (*services.AccountingAuthorizationCompletion, error) {
+func (r *MutationResolver) FinishAccountingAuthorization(ctx context.Context, input gqlmodel.CompleteAccountingAuthorizationInput) (*accountingsyncports.AccountingAuthorizationCompletion, error) {
 	return r.finishAccountingAuthorization(ctx, input)
 }
 
@@ -362,7 +361,7 @@ func (r *MutationResolver) ChooseAccountingCompany(ctx context.Context, input gq
 		return nil, errAccountingNeedsAPerson()
 	}
 
-	return r.AccountingConnections.ChooseCompany(ctx, &services.ChooseAccountingCompanyRequest{
+	return r.AccountingConnections.ChooseCompany(ctx, &accountingsyncports.ChooseAccountingCompanyRequest{
 		TenantInfo:      base.TenantInfo(authCtx),
 		UserID:          authCtx.UserID,
 		IntegrationType: input.IntegrationType,
@@ -380,7 +379,7 @@ func (r *MutationResolver) DisconnectAccountingSystem(ctx context.Context, integ
 		return nil, errAccountingNeedsAPerson()
 	}
 
-	return r.AccountingConnections.Disconnect(ctx, &services.DisconnectAccountingRequest{
+	return r.AccountingConnections.Disconnect(ctx, &accountingsyncports.DisconnectAccountingRequest{
 		TenantInfo:      base.TenantInfo(authCtx),
 		UserID:          authCtx.UserID,
 		IntegrationType: integrationType,
@@ -415,7 +414,7 @@ func (r *MutationResolver) ConfirmAccountingMappings(ctx context.Context, input 
 		return nil, err
 	}
 
-	return r.AccountingMappingService.Confirm(ctx, &services.ConfirmAccountingMappingsRequest{
+	return r.AccountingMappingService.Confirm(ctx, &accountingsyncports.ConfirmAccountingMappingsRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 		Items:      items,
@@ -436,7 +435,7 @@ func (r *MutationResolver) SetAccountingMapping(ctx context.Context, input gqlmo
 		return nil, err
 	}
 
-	return r.AccountingMappingService.Set(ctx, &services.SetAccountingMappingRequest{
+	return r.AccountingMappingService.Set(ctx, &accountingsyncports.SetAccountingMappingRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 		MappingID:  mappingID,
@@ -460,7 +459,7 @@ func (r *MutationResolver) CreateAccountingReferenceRecord(ctx context.Context, 
 		return nil, err
 	}
 
-	return r.AccountingMappingService.CreateReferenceRecord(ctx, &services.CreateAccountingReferenceRecordRequest{
+	return r.AccountingMappingService.CreateReferenceRecord(ctx, &accountingsyncports.CreateAccountingReferenceRecordRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 		MappingID:  mappingID,
@@ -474,7 +473,7 @@ func (r *MutationResolver) RefreshAccountingReferenceData(ctx context.Context, i
 		return nil, err
 	}
 
-	return r.AccountingMappingService.RequestRefresh(ctx, &services.AccountingSetupRequest{
+	return r.AccountingMappingService.RequestRefresh(ctx, &accountingsyncports.AccountingSetupRequest{
 		TenantInfo:      base.TenantInfo(authCtx),
 		UserID:          authCtx.UserID,
 		IntegrationType: integrationType,
@@ -487,7 +486,7 @@ func (r *MutationResolver) CompleteAccountingSetup(ctx context.Context, integrat
 		return nil, err
 	}
 
-	return r.AccountingMappingService.CompleteSetup(ctx, &services.AccountingSetupRequest{
+	return r.AccountingMappingService.CompleteSetup(ctx, &accountingsyncports.AccountingSetupRequest{
 		TenantInfo:      base.TenantInfo(authCtx),
 		UserID:          authCtx.UserID,
 		IntegrationType: integrationType,
@@ -507,7 +506,7 @@ func (r *MutationResolver) ChooseAccountingSyncMode(ctx context.Context, input g
 	if input.Granularity != nil {
 		granularity = *input.Granularity
 	}
-	return r.AccountingSync.ChooseMode(ctx, &services.ChooseAccountingSyncModeRequest{
+	return r.AccountingSync.ChooseMode(ctx, &accountingsyncports.ChooseAccountingSyncModeRequest{
 		TenantInfo:      base.TenantInfo(authCtx),
 		UserID:          authCtx.UserID,
 		IntegrationType: input.IntegrationType,
@@ -525,7 +524,7 @@ func (r *MutationResolver) EnableAccountingSync(ctx context.Context, input gqlmo
 		return nil, errAccountingNeedsAPerson()
 	}
 
-	return r.AccountingSync.EnableSync(ctx, &services.EnableAccountingSyncRequest{
+	return r.AccountingSync.EnableSync(ctx, &accountingsyncports.EnableAccountingSyncRequest{
 		TenantInfo:        base.TenantInfo(authCtx),
 		UserID:            authCtx.UserID,
 		IntegrationType:   input.IntegrationType,
@@ -546,7 +545,7 @@ func (r *MutationResolver) UpdateAccountingSyncSettings(ctx context.Context, inp
 		return nil, errAccountingNeedsAPerson()
 	}
 
-	return r.AccountingSync.UpdateSettings(ctx, &services.UpdateAccountingSyncSettingsRequest{
+	return r.AccountingSync.UpdateSettings(ctx, &accountingsyncports.UpdateAccountingSyncSettingsRequest{
 		TenantInfo:        base.TenantInfo(authCtx),
 		UserID:            authCtx.UserID,
 		IntegrationType:   input.IntegrationType,
@@ -562,7 +561,7 @@ func (r *MutationResolver) PauseAccountingSync(ctx context.Context, input gqlmod
 		return nil, err
 	}
 
-	return r.AccountingSync.Pause(ctx, &services.PauseAccountingSyncRequest{
+	return r.AccountingSync.Pause(ctx, &accountingsyncports.PauseAccountingSyncRequest{
 		TenantInfo:      base.TenantInfo(authCtx),
 		UserID:          authCtx.UserID,
 		IntegrationType: input.IntegrationType,
@@ -576,7 +575,7 @@ func (r *MutationResolver) ResumeAccountingSync(ctx context.Context, integration
 		return nil, err
 	}
 
-	return r.AccountingSync.Resume(ctx, &services.PauseAccountingSyncRequest{
+	return r.AccountingSync.Resume(ctx, &accountingsyncports.PauseAccountingSyncRequest{
 		TenantInfo:      base.TenantInfo(authCtx),
 		UserID:          authCtx.UserID,
 		IntegrationType: integrationType,
@@ -593,7 +592,7 @@ func (r *MutationResolver) RetryAccountingSync(ctx context.Context, input gqlmod
 		return nil, err
 	}
 
-	affected, err := r.AccountingSync.Retry(ctx, &services.RetryAccountingSyncRequest{
+	affected, err := r.AccountingSync.Retry(ctx, &accountingsyncports.RetryAccountingSyncRequest{
 		TenantInfo:      base.TenantInfo(authCtx),
 		UserID:          authCtx.UserID,
 		IntegrationType: input.IntegrationType,
@@ -617,7 +616,7 @@ func (r *MutationResolver) ReleaseAccountingSync(ctx context.Context, input gqlm
 		return nil, err
 	}
 
-	affected, err := r.AccountingSync.Release(ctx, &services.ReleaseAccountingSyncRequest{
+	affected, err := r.AccountingSync.Release(ctx, &accountingsyncports.ReleaseAccountingSyncRequest{
 		TenantInfo:      base.TenantInfo(authCtx),
 		UserID:          authCtx.UserID,
 		IntegrationType: input.IntegrationType,
@@ -640,7 +639,7 @@ func (r *MutationResolver) SkipAccountingSync(ctx context.Context, input gqlmode
 		return nil, err
 	}
 
-	return r.AccountingSync.Skip(ctx, &services.SkipAccountingSyncRequest{
+	return r.AccountingSync.Skip(ctx, &accountingsyncports.SkipAccountingSyncRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 		ID:         id,
@@ -658,7 +657,7 @@ func (r *MutationResolver) RedateAccountingSync(ctx context.Context, id string) 
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Invalid sync record")
 	}
 
-	return r.AccountingSync.Redate(ctx, &services.RedateAccountingSyncRequest{
+	return r.AccountingSync.Redate(ctx, &accountingsyncports.RedateAccountingSyncRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 		ID:         recordID,
@@ -674,7 +673,7 @@ func (r *MutationResolver) RequestAccountingBackfill(ctx context.Context, input 
 		return nil, errAccountingNeedsAPerson()
 	}
 
-	return r.AccountingSync.RequestBackfill(ctx, &services.RequestAccountingBackfillRequest{
+	return r.AccountingSync.RequestBackfill(ctx, &accountingsyncports.RequestAccountingBackfillRequest{
 		TenantInfo:      base.TenantInfo(authCtx),
 		UserID:          authCtx.UserID,
 		IntegrationType: input.IntegrationType,
@@ -694,7 +693,7 @@ func (r *MutationResolver) ChangeAccountingBackfill(ctx context.Context, input g
 		return nil, err
 	}
 
-	return r.AccountingSync.ChangeBackfill(ctx, &services.ChangeAccountingBackfillRequest{
+	return r.AccountingSync.ChangeBackfill(ctx, &accountingsyncports.ChangeAccountingBackfillRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 		ID:         id,
@@ -715,7 +714,7 @@ func (r *MutationResolver) ApplyAccountingInboundChange(ctx context.Context, id 
 		return nil, err
 	}
 
-	return r.AccountingInbound.Apply(ctx, &services.DecideAccountingInboundChangeRequest{
+	return r.AccountingInbound.Apply(ctx, &accountingsyncports.DecideAccountingInboundChangeRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		ID:         changeID,
 	}, actorutil.FromAuthContext(authCtx))
@@ -734,7 +733,7 @@ func (r *MutationResolver) IgnoreAccountingInboundChange(ctx context.Context, in
 		return nil, err
 	}
 
-	return r.AccountingInbound.Ignore(ctx, &services.DecideAccountingInboundChangeRequest{
+	return r.AccountingInbound.Ignore(ctx, &accountingsyncports.DecideAccountingInboundChangeRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		ID:         changeID,
 		Note:       strings.TrimSpace(input.Note),
@@ -754,7 +753,7 @@ func (r *MutationResolver) ResolveAccountingDrift(ctx context.Context, input gql
 		return nil, err
 	}
 
-	return r.AccountingDrift.Resolve(ctx, &services.ResolveAccountingDriftRequest{
+	return r.AccountingDrift.Resolve(ctx, &accountingsyncports.ResolveAccountingDriftRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		ID:         findingID,
 		Direction:  input.Direction,
@@ -774,14 +773,14 @@ func (r *MutationResolver) DismissAccountingDrift(ctx context.Context, input gql
 		return nil, err
 	}
 
-	return r.AccountingDrift.Dismiss(ctx, &services.DismissAccountingDriftRequest{
+	return r.AccountingDrift.Dismiss(ctx, &accountingsyncports.DismissAccountingDriftRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		ID:         findingID,
 		Note:       strings.TrimSpace(input.Note),
 	}, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *MutationResolver) CheckAccountingDrift(ctx context.Context, integrationType integration.Type) (*services.AccountingDriftOverview, error) {
+func (r *MutationResolver) CheckAccountingDrift(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingDriftOverview, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingSync, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -790,7 +789,7 @@ func (r *MutationResolver) CheckAccountingDrift(ctx context.Context, integration
 	return r.AccountingDrift.CheckNow(ctx, base.TenantInfo(authCtx), integrationType)
 }
 
-func (r *QueryResolver) AccountingSyncStatus(ctx context.Context, integrationType integration.Type) (*services.AccountingSyncStatus, error) {
+func (r *QueryResolver) AccountingSyncStatus(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingSyncStatus, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -799,7 +798,7 @@ func (r *QueryResolver) AccountingSyncStatus(ctx context.Context, integrationTyp
 	return r.AccountingConnections.Status(ctx, base.TenantInfo(authCtx), integrationType)
 }
 
-func (r *QueryResolver) AccountingMappingSummary(ctx context.Context, integrationType integration.Type) (*services.AccountingMappingSummary, error) {
+func (r *QueryResolver) AccountingMappingSummary(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingMappingSummary, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -818,7 +817,7 @@ func (r *QueryResolver) AccountingMappings(ctx context.Context, integrationType 
 		return nil, err
 	}
 
-	req := &services.ListAccountingMappingsRequest{
+	req := &accountingsyncports.ListAccountingMappingsRequest{
 		TenantInfo:      base.TenantInfo(authCtx),
 		IntegrationType: integrationType,
 		Cursor:          page.Cursor,
@@ -838,7 +837,7 @@ func (r *QueryResolver) AccountingMappings(ctx context.Context, integrationType 
 	return accountingMappingConnectionToModel(result)
 }
 
-func (r *QueryResolver) AccountingSyncSummary(ctx context.Context, integrationType integration.Type) (*services.AccountingSyncSummary, error) {
+func (r *QueryResolver) AccountingSyncSummary(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingSyncSummary, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingSync, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -857,7 +856,7 @@ func (r *QueryResolver) AccountingSyncRecords(ctx context.Context, integrationTy
 		return nil, err
 	}
 
-	req := &services.ListAccountingSyncRecordsRequest{
+	req := &accountingsyncports.ListAccountingSyncRecordsRequest{
 		TenantInfo:      base.TenantInfo(authCtx),
 		IntegrationType: integrationType,
 		Cursor:          page.Cursor,
@@ -892,7 +891,7 @@ func (r *QueryResolver) AccountingSyncRecordTable(ctx context.Context, integrati
 		return nil, err
 	}
 
-	result, err := r.AccountingSync.ListRecords(ctx, &services.ListAccountingSyncRecordsRequest{
+	result, err := r.AccountingSync.ListRecords(ctx, &accountingsyncports.ListAccountingSyncRecordsRequest{
 		TenantInfo:      base.TenantInfo(authCtx),
 		IntegrationType: integrationType,
 		Filter:          tableInput.Filter,
@@ -931,7 +930,7 @@ func (r *QueryResolver) AccountingSyncAttempts(ctx context.Context, recordID str
 	return r.AccountingSync.ListAttempts(ctx, base.TenantInfo(authCtx), id)
 }
 
-func (r *QueryResolver) AccountingSyncObjectStates(ctx context.Context, objectIds []string) ([]*services.AccountingSyncObjectState, error) {
+func (r *QueryResolver) AccountingSyncObjectStates(ctx context.Context, objectIds []string) ([]*accountingsyncports.AccountingSyncObjectState, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingSync, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -958,13 +957,13 @@ func (r *QueryResolver) AccountingBackfills(ctx context.Context, integrationType
 	return r.AccountingSync.ListBackfills(ctx, base.TenantInfo(authCtx), integrationType)
 }
 
-func (r *QueryResolver) AccountingInboundOverview(ctx context.Context, integrationType integration.Type) (*services.AccountingInboundOverview, error) {
+func (r *QueryResolver) AccountingInboundOverview(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingInboundOverview, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingSync, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.AccountingInbound.Overview(ctx, &services.AccountingInboundOverviewRequest{
+	return r.AccountingInbound.Overview(ctx, &accountingsyncports.AccountingInboundOverviewRequest{
 		TenantInfo:      base.TenantInfo(authCtx),
 		IntegrationType: integrationType,
 	})
@@ -980,7 +979,7 @@ func (r *QueryResolver) AccountingInboundChangeTable(ctx context.Context, integr
 		return nil, err
 	}
 
-	result, err := r.AccountingInbound.List(ctx, &services.ListAccountingInboundChangesRequest{
+	result, err := r.AccountingInbound.List(ctx, &accountingsyncports.ListAccountingInboundChangesRequest{
 		TenantInfo:      base.TenantInfo(authCtx),
 		Filter:          tableInput.Filter,
 		Cursor:          tableInput.Cursor,
@@ -1003,13 +1002,13 @@ func (r *QueryResolver) AccountingInboundChange(ctx context.Context, id string) 
 		return nil, err
 	}
 
-	return r.AccountingInbound.Get(ctx, &services.GetAccountingInboundChangeRequest{
+	return r.AccountingInbound.Get(ctx, &accountingsyncports.GetAccountingInboundChangeRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		ID:         changeID,
 	})
 }
 
-func (r *QueryResolver) AccountingInboundApplyPreview(ctx context.Context, id string) (*services.AccountingInboundApplyPreview, error) {
+func (r *QueryResolver) AccountingInboundApplyPreview(ctx context.Context, id string) (*accountingsyncports.AccountingInboundApplyPreview, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingSync, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -1019,19 +1018,19 @@ func (r *QueryResolver) AccountingInboundApplyPreview(ctx context.Context, id st
 		return nil, err
 	}
 
-	return r.AccountingInbound.PreviewApply(ctx, &services.GetAccountingInboundChangeRequest{
+	return r.AccountingInbound.PreviewApply(ctx, &accountingsyncports.GetAccountingInboundChangeRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		ID:         changeID,
 	})
 }
 
-func (r *QueryResolver) AccountingDriftOverview(ctx context.Context, integrationType integration.Type) (*services.AccountingDriftOverview, error) {
+func (r *QueryResolver) AccountingDriftOverview(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingDriftOverview, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingSync, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.AccountingDrift.Overview(ctx, &services.AccountingDriftOverviewRequest{
+	return r.AccountingDrift.Overview(ctx, &accountingsyncports.AccountingDriftOverviewRequest{
 		TenantInfo:      base.TenantInfo(authCtx),
 		IntegrationType: integrationType,
 	})
@@ -1047,7 +1046,7 @@ func (r *QueryResolver) AccountingDriftFindingTable(ctx context.Context, integra
 		return nil, err
 	}
 
-	result, err := r.AccountingDrift.List(ctx, &services.ListAccountingDriftFindingsRequest{
+	result, err := r.AccountingDrift.List(ctx, &accountingsyncports.ListAccountingDriftFindingsRequest{
 		TenantInfo:      base.TenantInfo(authCtx),
 		Filter:          tableInput.Filter,
 		Cursor:          tableInput.Cursor,
@@ -1070,13 +1069,13 @@ func (r *QueryResolver) AccountingDriftFinding(ctx context.Context, id string) (
 		return nil, err
 	}
 
-	return r.AccountingDrift.Get(ctx, &services.GetAccountingDriftFindingRequest{
+	return r.AccountingDrift.Get(ctx, &accountingsyncports.GetAccountingDriftFindingRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		ID:         findingID,
 	})
 }
 
-func (r *QueryResolver) AccountingDriftFixPreview(ctx context.Context, input gqlmodel.ResolveAccountingDriftInput) (*services.AccountingDriftFixPreview, error) {
+func (r *QueryResolver) AccountingDriftFixPreview(ctx context.Context, input gqlmodel.ResolveAccountingDriftInput) (*accountingsyncports.AccountingDriftFixPreview, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingSync, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -1086,7 +1085,7 @@ func (r *QueryResolver) AccountingDriftFixPreview(ctx context.Context, input gql
 		return nil, err
 	}
 
-	return r.AccountingDrift.PreviewResolve(ctx, &services.ResolveAccountingDriftRequest{
+	return r.AccountingDrift.PreviewResolve(ctx, &accountingsyncports.ResolveAccountingDriftRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		ID:         findingID,
 		Direction:  input.Direction,
@@ -1099,7 +1098,7 @@ func (r *QueryResolver) AccountingReferenceObjects(ctx context.Context, integrat
 		return nil, err
 	}
 
-	return r.AccountingMappingService.SearchReference(ctx, &services.SearchAccountingReferenceRequest{
+	return r.AccountingMappingService.SearchReference(ctx, &accountingsyncports.SearchAccountingReferenceRequest{
 		TenantInfo:      base.TenantInfo(authCtx),
 		IntegrationType: integrationType,
 		Kind:            kind,

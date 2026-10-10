@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/fuelsurcharge"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -15,7 +15,7 @@ import (
 )
 
 type stubIndexRepo struct {
-	repositories.FuelIndexRepository
+	fuelsurchargeports.FuelIndexRepository
 	indices []*fuelsurcharge.FuelIndex
 }
 
@@ -27,13 +27,13 @@ func (s *stubIndexRepo) ListActive(
 }
 
 type stubLatestPriceRepo struct {
-	repositories.FuelIndexPriceRepository
+	fuelsurchargeports.FuelIndexPriceRepository
 	latest map[pulid.ID][]*fuelsurcharge.FuelIndexPrice
 }
 
 func (s *stubLatestPriceRepo) LatestPerIndex(
 	context.Context,
-	*repositories.LatestPricesPerIndexRequest,
+	*fuelsurchargeports.LatestPricesPerIndexRequest,
 ) (map[pulid.ID][]*fuelsurcharge.FuelIndexPrice, error) {
 	return s.latest, nil
 }

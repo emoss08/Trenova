@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -15,12 +15,12 @@ import (
 type Params struct {
 	fx.In
 
-	Service      serviceports.WeatherAlertService
+	Service      weatheralertports.WeatherAlertService
 	ErrorHandler *helpers.ErrorHandler
 }
 
 type Handler struct {
-	service serviceports.WeatherAlertService
+	service weatheralertports.WeatherAlertService
 	eh      *helpers.ErrorHandler
 }
 
@@ -63,7 +63,7 @@ func (h *Handler) get(c *gin.Context) {
 
 	result, err := h.service.GetAlertDetail(
 		c.Request.Context(),
-		&serviceports.GetWeatherAlertDetailRequest{
+		&weatheralertports.GetWeatherAlertDetailRequest{
 			ID: alertID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID:  ac.OrganizationID,

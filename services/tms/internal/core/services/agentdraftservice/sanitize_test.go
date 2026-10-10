@@ -7,37 +7,38 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func testCatalog() []serviceports.ToolCatalogEntry {
-	return []serviceports.ToolCatalogEntry{
+func testCatalog() []agentdefinitionports.ToolCatalogEntry {
+	return []agentdefinitionports.ToolCatalogEntry{
 		{
 			Name:      "get_shipment",
-			Kind:      serviceports.ToolCatalogKindQuery,
+			Kind:      agentdefinitionports.ToolCatalogKindQuery,
 			Resource:  permission.ResourceShipment,
 			Operation: permission.OpRead,
 		},
 		{
 			Name:            "update_customer",
-			Kind:            serviceports.ToolCatalogKindAction,
+			Kind:            agentdefinitionports.ToolCatalogKindAction,
 			Resource:        permission.ResourceCustomer,
 			Operation:       permission.OpUpdate,
 			MaxAutonomyTier: agent.TierAutoExecute,
 		},
 		{
 			Name:            "send_customer_email",
-			Kind:            serviceports.ToolCatalogKindAction,
+			Kind:            agentdefinitionports.ToolCatalogKindAction,
 			Resource:        permission.ResourceCustomer,
 			Operation:       permission.OpUpdate,
 			MaxAutonomyTier: agent.TierActWithApproval,
 		},
 		{
 			Name:      "remember",
-			Kind:      serviceports.ToolCatalogKindAction,
+			Kind:      agentdefinitionports.ToolCatalogKindAction,
 			Core:      true,
 			Resource:  permission.ResourceAgentDefinition,
 			Operation: permission.OpUpdate,
@@ -63,7 +64,7 @@ func chatReply() *draftReply {
 func sanitize(
 	t *testing.T,
 	reply *draftReply,
-) (*serviceports.SaveAgentDefinitionRequest, []serviceports.AgentDraftNote) {
+) (*agentdefinitionports.SaveAgentDefinitionRequest, []agentports.AgentDraftNote) {
 	t.Helper()
 
 	req, notes, err := sanitizeDraft(&sanitizeInput{
@@ -77,7 +78,7 @@ func sanitize(
 	return req, notes
 }
 
-func noteFields(notes []serviceports.AgentDraftNote) []string {
+func noteFields(notes []agentports.AgentDraftNote) []string {
 	fields := make([]string, 0, len(notes))
 	for _, note := range notes {
 		fields = append(fields, note.Field)

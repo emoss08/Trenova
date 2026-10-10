@@ -5,8 +5,7 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,24 +25,24 @@ type Params struct {
 	fx.In
 
 	Logger           *zap.Logger
-	RoleRepo         repositories.RoleRepository
-	RBACRepo         repositories.RBACRepository
-	PermissionCache  repositories.PermissionCacheRepository
-	PermissionEngine services.PermissionEngine
+	RoleRepo         permissionports.RoleRepository
+	RBACRepo         permissionports.RBACRepository
+	PermissionCache  permissionports.PermissionCacheRepository
+	PermissionEngine permissionports.PermissionEngine
 	Validator        *Validator
 	Registry         *permission.Registry
-	Auditor          services.SecurityAuditor
+	Auditor          permissionports.SecurityAuditor
 }
 
 type Service struct {
 	l          *zap.Logger
-	roleRepo   repositories.RoleRepository
-	rbacRepo   repositories.RBACRepository
-	permCache  repositories.PermissionCacheRepository
-	permEngine services.PermissionEngine
+	roleRepo   permissionports.RoleRepository
+	rbacRepo   permissionports.RBACRepository
+	permCache  permissionports.PermissionCacheRepository
+	permEngine permissionports.PermissionEngine
 	validator  *Validator
 	registry   *permission.Registry
-	auditor    services.SecurityAuditor
+	auditor    permissionports.SecurityAuditor
 }
 
 //nolint:gocritic // dependencies injection
@@ -158,7 +157,7 @@ func (s *Service) UpdateRole(ctx context.Context, req UpdateRoleRequest) error {
 		zap.String("roleID", req.Role.ID.String()),
 	)
 
-	existingRole, err := s.roleRepo.GetByID(ctx, repositories.GetRoleByIDRequest{
+	existingRole, err := s.roleRepo.GetByID(ctx, permissionports.GetRoleByIDRequest{
 		ID: req.Role.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: req.OrganizationID,
@@ -219,14 +218,14 @@ func (s *Service) UpdateRole(ctx context.Context, req UpdateRoleRequest) error {
 
 func (s *Service) ListRoles(
 	ctx context.Context,
-	req *repositories.ListRolesRequest,
+	req *permissionports.ListRolesRequest,
 ) (*pagination.ListResult[*permission.Role], error) {
 	return s.roleRepo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListRoleConnectionRequest,
+	req *permissionports.ListRoleConnectionRequest,
 ) (*pagination.CursorListResult[*permission.Role], error) {
 	return s.roleRepo.ListConnection(ctx, req)
 }
@@ -240,7 +239,7 @@ func (s *Service) SelectRoleOptions(
 
 func (s *Service) GetRoleByID(
 	ctx context.Context,
-	req repositories.GetRoleByIDRequest,
+	req permissionports.GetRoleByIDRequest,
 ) (*permission.Role, error) {
 	return s.roleRepo.GetByID(ctx, req)
 }
@@ -248,7 +247,7 @@ func (s *Service) GetRoleByID(
 func (s *Service) GetImpactedUsers(
 	ctx context.Context,
 	roleID pulid.ID,
-) ([]repositories.ImpactedUser, error) {
+) ([]permissionports.ImpactedUser, error) {
 	return s.roleRepo.GetUsersWithRole(ctx, roleID)
 }
 
@@ -312,7 +311,7 @@ func (s *Service) validateAssignmentPrivileges(
 	req *AssignRoleRequest,
 	log *zap.Logger,
 ) error {
-	role, err := s.roleRepo.GetByID(ctx, repositories.GetRoleByIDRequest{
+	role, err := s.roleRepo.GetByID(ctx, permissionports.GetRoleByIDRequest{
 		ID: req.Assignment.RoleID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: req.OrganizationID,
@@ -379,14 +378,14 @@ func (s *Service) UpsertRoleHierarchyEdge(
 	ctx context.Context,
 	req *UpsertHierarchyEdgeRequest,
 ) error {
-	if err := s.rbacRepo.UpsertRoleHierarchyEdge(ctx, &repositories.UpsertRoleHierarchyEdgeRequest{
+	if err := s.rbacRepo.UpsertRoleHierarchyEdge(ctx, &permissionports.UpsertRoleHierarchyEdgeRequest{
 		ActorID:        req.ActorID,
 		OrganizationID: req.OrganizationID,
 		BusinessUnitID: req.BusinessUnitID,
 		SeniorRoleID:   req.SeniorRoleID,
 		JuniorRoleID:   req.JuniorRoleID,
 	}); err != nil {
-		if errors.Is(err, repositories.ErrCircularRoleHierarchy) {
+		if errors.Is(err, permissionports.ErrCircularRoleHierarchy) {
 			return ErrCircularInheritance
 		}
 		return err
@@ -416,7 +415,7 @@ func (s *Service) DeleteRoleHierarchyEdge(
 	orgID pulid.ID,
 	edgeID pulid.ID,
 ) error {
-	if err := s.rbacRepo.DeleteRoleHierarchyEdge(ctx, repositories.DeleteRoleHierarchyEdgeRequest{
+	if err := s.rbacRepo.DeleteRoleHierarchyEdge(ctx, permissionports.DeleteRoleHierarchyEdgeRequest{
 		OrganizationID: orgID,
 		EdgeID:         edgeID,
 	}); err != nil {
@@ -436,7 +435,7 @@ func (s *Service) DeleteRoleHierarchyEdge(
 
 func (s *Service) ListRoleConstraints(
 	ctx context.Context,
-	req repositories.ListRoleConstraintsRequest,
+	req permissionports.ListRoleConstraintsRequest,
 ) ([]*permission.RoleConstraint, error) {
 	return s.rbacRepo.ListRoleConstraints(ctx, req)
 }
@@ -464,7 +463,7 @@ func (s *Service) SaveRoleConstraint(ctx context.Context, req *SaveConstraintReq
 	req.Constraint.BusinessUnitID = req.BusinessUnitID
 	req.Constraint.CreatedBy = req.ActorID
 
-	if err := s.rbacRepo.SaveRoleConstraint(ctx, &repositories.SaveRoleConstraintRequest{
+	if err := s.rbacRepo.SaveRoleConstraint(ctx, &permissionports.SaveRoleConstraintRequest{
 		Constraint: req.Constraint,
 		RoleIDs:    req.RoleIDs,
 	}); err != nil {
@@ -520,7 +519,7 @@ func (s *Service) validateConstraintRoleIDs(
 	}
 
 	for _, roleID := range roleIDs {
-		if _, err := s.roleRepo.GetByID(ctx, repositories.GetRoleByIDRequest{
+		if _, err := s.roleRepo.GetByID(ctx, permissionports.GetRoleByIDRequest{
 			ID: roleID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: orgID,
@@ -556,7 +555,7 @@ func (s *Service) DeleteRoleConstraint(
 func (s *Service) RunRBACPreflight(
 	ctx context.Context,
 	orgID pulid.ID,
-) (*repositories.RBACPreflightReport, error) {
+) (*permissionports.RBACPreflightReport, error) {
 	return s.rbacRepo.RunPreflight(ctx, orgID)
 }
 
@@ -573,7 +572,7 @@ func (s *Service) UnassignRole(ctx context.Context, req UnassignRoleRequest) err
 		zap.String("assignmentID", req.AssignmentID.String()),
 	)
 
-	deleted, err := s.roleRepo.DeleteAssignment(ctx, repositories.DeleteRoleAssignmentRequest{
+	deleted, err := s.roleRepo.DeleteAssignment(ctx, permissionports.DeleteRoleAssignmentRequest{
 		AssignmentID:   req.AssignmentID,
 		OrganizationID: req.OrganizationID,
 	})
@@ -689,7 +688,7 @@ func (s *Service) validateNoCircularInheritance(
 			return true
 		}
 
-		role, err := s.roleRepo.GetByID(ctx, repositories.GetRoleByIDRequest{ID: id})
+		role, err := s.roleRepo.GetByID(ctx, permissionports.GetRoleByIDRequest{ID: id})
 		if err != nil {
 			return false
 		}
@@ -731,7 +730,7 @@ func (s *Service) CreateResourcePermission(
 		zap.String("resource", rp.Resource),
 	)
 
-	role, err := s.roleRepo.GetByID(ctx, repositories.GetRoleByIDRequest{
+	role, err := s.roleRepo.GetByID(ctx, permissionports.GetRoleByIDRequest{
 		ID: rp.RoleID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: orgID,
@@ -785,7 +784,7 @@ func (s *Service) UpdateResourcePermission(
 		zap.String("id", rp.ID.String()),
 	)
 
-	role, err := s.roleRepo.GetByID(ctx, repositories.GetRoleByIDRequest{
+	role, err := s.roleRepo.GetByID(ctx, permissionports.GetRoleByIDRequest{
 		ID: rp.RoleID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: orgID,
@@ -841,7 +840,7 @@ func (s *Service) DeleteResourcePermission(
 		zap.String("id", permID.String()),
 	)
 
-	role, err := s.roleRepo.GetByID(ctx, repositories.GetRoleByIDRequest{
+	role, err := s.roleRepo.GetByID(ctx, permissionports.GetRoleByIDRequest{
 		ID: roleID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: orgID,
@@ -855,7 +854,7 @@ func (s *Service) DeleteResourcePermission(
 		return ErrCannotModifySystemRole
 	}
 
-	if err = s.roleRepo.DeleteResourcePermission(ctx, repositories.DeleteResourcePermissionRequest{
+	if err = s.roleRepo.DeleteResourcePermission(ctx, permissionports.DeleteResourcePermissionRequest{
 		PermissionID: permID,
 		RoleID:       role.ID,
 	}); err != nil {

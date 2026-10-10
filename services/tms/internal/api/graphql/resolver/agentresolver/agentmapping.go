@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -331,8 +331,8 @@ func agentExceptionConnectionToModel(
 func settleApprovalRequest(
 	proposalID, planID *string,
 	tenant pagination.TenantInfo,
-) (*services.SettleApprovalRequest, error) {
-	req := &services.SettleApprovalRequest{TenantInfo: tenant}
+) (*agentports.SettleApprovalRequest, error) {
+	req := &agentports.SettleApprovalRequest{TenantInfo: tenant}
 	hasProposal := proposalID != nil && *proposalID != ""
 	hasPlan := planID != nil && *planID != ""
 	if hasProposal == hasPlan {

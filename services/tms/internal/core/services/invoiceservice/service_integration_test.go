@@ -3,6 +3,7 @@
 package invoiceservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"context"
 	"fmt"
 	"testing"
@@ -14,8 +15,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
@@ -27,6 +26,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fiscalyearrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoicerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/journalpostingrepository"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -89,7 +90,7 @@ func TestPostCreatesInvoiceJournalSourceAndBalances(t *testing.T) {
 	journalRepo := journalpostingrepository.New(
 		journalpostingrepository.Params{DB: conn, Logger: logger},
 	)
-	shipmentRepo := mocks.NewMockShipmentRepository(t)
+	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	store := seqgen.NewSequenceStore(seqgen.SequenceStoreParams{DB: conn, Logger: logger})
 	provider := seqgen.NewFormatProvider(seqgen.FormatProviderParams{DB: conn, Logger: logger})
 	generator := seqgen.NewGenerator(
@@ -227,7 +228,7 @@ func TestPostCreatesInvoiceJournalSourceAndBalances(t *testing.T) {
 	require.NoError(t, err)
 
 	shipmentRepo.EXPECT().
-		GetByID(mock.Anything, mock.MatchedBy(func(req *repositories.GetShipmentByIDRequest) bool {
+		GetByID(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetShipmentByIDRequest) bool {
 			return req != nil && req.ID == shp.ID && req.TenantInfo.OrgID == org.ID &&
 				req.TenantInfo.BuID == org.BusinessUnitID
 		})).
@@ -269,7 +270,7 @@ func TestPostCreatesInvoiceJournalSourceAndBalances(t *testing.T) {
 
 	posted, err := svc.Post(
 		ctx,
-		&serviceports.PostInvoiceRequest{
+		&invoiceports.PostInvoiceRequest{
 			InvoiceID: entity.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID:  org.ID,
@@ -382,7 +383,7 @@ func TestPostSkipsInvoiceLedgerWhenRevenueRecognitionIsCashReceipt(t *testing.T)
 	journalRepo := journalpostingrepository.New(
 		journalpostingrepository.Params{DB: conn, Logger: logger},
 	)
-	shipmentRepo := mocks.NewMockShipmentRepository(t)
+	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	store := seqgen.NewSequenceStore(seqgen.SequenceStoreParams{DB: conn, Logger: logger})
 	provider := seqgen.NewFormatProvider(seqgen.FormatProviderParams{DB: conn, Logger: logger})
 	generator := seqgen.NewGenerator(
@@ -561,7 +562,7 @@ func TestPostSkipsInvoiceLedgerWhenRevenueRecognitionIsCashReceipt(t *testing.T)
 	}
 	posted, err := svc.Post(
 		ctx,
-		&serviceports.PostInvoiceRequest{
+		&invoiceports.PostInvoiceRequest{
 			InvoiceID: entity.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID:  org.ID,

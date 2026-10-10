@@ -5,9 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -18,21 +19,21 @@ import (
 
 func (s *Service) ListAdvances(
 	ctx context.Context,
-	req *repositories.ListPayAdvancesRequest,
+	req *driverpayports.ListPayAdvancesRequest,
 ) (*pagination.ListResult[*driverpay.PayAdvance], error) {
 	return s.advanceRepo.List(ctx, req)
 }
 
 func (s *Service) ListAdvancesConnection(
 	ctx context.Context,
-	req *repositories.ListPayAdvanceConnectionRequest,
+	req *driverpayports.ListPayAdvanceConnectionRequest,
 ) (*pagination.CursorListResult[*driverpay.PayAdvance], error) {
 	return s.advanceRepo.ListConnection(ctx, req)
 }
 
 func (s *Service) GetAdvance(
 	ctx context.Context,
-	req repositories.GetPayAdvanceByIDRequest,
+	req driverpayports.GetPayAdvanceByIDRequest,
 ) (*driverpay.PayAdvance, error) {
 	return s.advanceRepo.GetByID(ctx, req)
 }
@@ -40,7 +41,7 @@ func (s *Service) GetAdvance(
 func (s *Service) IssueAdvance(
 	ctx context.Context,
 	entity *driverpay.PayAdvance,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driverpay.PayAdvance, error) {
 	if err := requireActor(actor, "Pay advance issuance"); err != nil {
 		return nil, err
@@ -60,12 +61,12 @@ func (s *Service) IssueAdvance(
 func (s *Service) UpdateAdvance(
 	ctx context.Context,
 	entity *driverpay.PayAdvance,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driverpay.PayAdvance, error) {
 	if err := requireActor(actor, "Pay advance update"); err != nil {
 		return nil, err
 	}
-	previous, err := s.advanceRepo.GetByID(ctx, repositories.GetPayAdvanceByIDRequest{
+	previous, err := s.advanceRepo.GetByID(ctx, driverpayports.GetPayAdvanceByIDRequest{
 		ID: entity.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -106,7 +107,7 @@ func (s *Service) WriteOffAdvance(
 	tenantInfo pagination.TenantInfo,
 	advanceID pulid.ID,
 	reason string,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driverpay.PayAdvance, error) {
 	if err := requireActor(actor, "Pay advance write-off"); err != nil {
 		return nil, err
@@ -118,7 +119,7 @@ func (s *Service) WriteOffAdvance(
 			"A write-off reason is required",
 		)
 	}
-	entity, err := s.advanceRepo.GetByID(ctx, repositories.GetPayAdvanceByIDRequest{
+	entity, err := s.advanceRepo.GetByID(ctx, driverpayports.GetPayAdvanceByIDRequest{
 		ID:         advanceID,
 		TenantInfo: tenantInfo,
 	})
@@ -145,7 +146,7 @@ func (s *Service) logAdvanceAudit(
 	operation permission.Operation,
 	comment string,
 ) {
-	params := &serviceports.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourcePayAdvance,
 		ResourceID:     current.ID.String(),
 		Operation:      operation,
@@ -154,7 +155,7 @@ func (s *Service) logAdvanceAudit(
 		OrganizationID: current.OrganizationID,
 		BusinessUnitID: current.BusinessUnitID,
 	}
-	options := []serviceports.LogOption{auditservice.WithComment(comment)}
+	options := []auditports.LogOption{auditservice.WithComment(comment)}
 	if previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(previous)
 		options = append(options, auditservice.WithDiff(previous, current))

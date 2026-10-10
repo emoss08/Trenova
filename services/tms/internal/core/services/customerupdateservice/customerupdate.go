@@ -9,8 +9,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -32,7 +34,7 @@ var ErrAlreadyTold = errors.New(
 
 func AlreadyTold(
 	ctx context.Context,
-	comments services.ShipmentCommentService,
+	comments shipmentports.ShipmentCommentService,
 	tenant pagination.TenantInfo,
 	shipmentID pulid.ID,
 	now int64,
@@ -41,14 +43,14 @@ func AlreadyTold(
 		return false, nil
 	}
 
-	page, err := comments.ListByShipmentID(ctx, &repositories.ListShipmentCommentsRequest{
+	page, err := comments.ListByShipmentID(ctx, &shipmentports.ListShipmentCommentsRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenant,
 			Pagination: pagination.Info{Limit: recentPageSize},
 		},
 		Cursor:     pagination.CursorInfo{Limit: recentPageSize},
 		ShipmentID: shipmentID,
-		Filters: repositories.ShipmentCommentListFilters{
+		Filters: shipmentports.ShipmentCommentListFilters{
 			Types: []shipment.CommentType{shipment.CommentTypeCustomerUpdate},
 		},
 	})
@@ -79,7 +81,7 @@ func WasEmailed(comment *shipment.ShipmentComment) bool {
 
 func Recipients(
 	ctx context.Context,
-	customers repositories.CustomerRepository,
+	customers customerports.CustomerRepository,
 	sp *shipment.Shipment,
 	tenant pagination.TenantInfo,
 ) (recipients []string, customerName string, err error) {
@@ -87,10 +89,10 @@ func Recipients(
 		return nil, "", errors.New("the shipment has no customer to write to")
 	}
 
-	entity, err := customers.GetByID(ctx, repositories.GetCustomerByIDRequest{
+	entity, err := customers.GetByID(ctx, customerports.GetCustomerByIDRequest{
 		ID:                    sp.CustomerID,
 		TenantInfo:            tenant,
-		CustomerFilterOptions: repositories.CustomerFilterOptions{IncludeEmailProfile: true},
+		CustomerFilterOptions: customerports.CustomerFilterOptions{IncludeEmailProfile: true},
 	})
 	if err != nil {
 		return nil, "", err
@@ -112,8 +114,8 @@ func Recipients(
 
 func Brand(
 	ctx context.Context,
-	orgRepo repositories.OrganizationRepository,
-	inliner services.AssetInliner,
+	orgRepo tenantports.OrganizationRepository,
+	inliner documenttemplateports.AssetInliner,
 	tenantInfo pagination.TenantInfo,
 	out *documenttemplate.AgentEmailContext,
 ) {
@@ -121,7 +123,7 @@ func Brand(
 		return
 	}
 
-	org, err := orgRepo.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+	org, err := orgRepo.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: tenantInfo,
 	})
 	if err != nil || org == nil {
@@ -130,7 +132,7 @@ func Brand(
 
 	out.CompanyName = org.Name
 
-	if dataURI, logoErr := services.ResolveLogoDataURI(ctx, inliner, org.LogoURL); logoErr == nil {
+	if dataURI, logoErr := documenttemplateports.ResolveLogoDataURI(ctx, inliner, org.LogoURL); logoErr == nil {
 		out.LogoDataURI = dataURI
 	}
 }
@@ -146,7 +148,7 @@ type CommentParams struct {
 	Extra      map[string]any
 }
 
-func Comment(p *CommentParams) *services.CreateSystemShipmentCommentRequest {
+func Comment(p *CommentParams) *shipmentports.CreateSystemShipmentCommentRequest {
 	metadata := map[string]any{
 		shipment.CommentMetadataOrigin: p.Origin,
 		metadataSource:                 p.Source,
@@ -157,7 +159,7 @@ func Comment(p *CommentParams) *services.CreateSystemShipmentCommentRequest {
 		metadata[key] = value
 	}
 
-	return &services.CreateSystemShipmentCommentRequest{
+	return &shipmentports.CreateSystemShipmentCommentRequest{
 		TenantInfo: p.Tenant,
 		ShipmentID: p.ShipmentID,
 		Comment: fmt.Sprintf(

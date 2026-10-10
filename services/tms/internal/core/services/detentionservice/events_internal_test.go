@@ -7,8 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -16,10 +17,10 @@ import (
 )
 
 type recordingPublisher struct {
-	events []services.AgentEvent
+	events []agentports.AgentEvent
 }
 
-func (r *recordingPublisher) Publish(_ context.Context, event services.AgentEvent) {
+func (r *recordingPublisher) Publish(_ context.Context, event agentports.AgentEvent) {
 	r.events = append(r.events, event)
 }
 
@@ -37,7 +38,7 @@ func (r *recordingPublisher) kinds() []agent.EventKind {
 
 type silentProjector struct{}
 
-func (silentProjector) Upsert(context.Context, services.WatchtowerItemInput) {}
+func (silentProjector) Upsert(context.Context, watchtowerports.WatchtowerItemInput) {}
 
 func (silentProjector) Resolve(
 	context.Context,
@@ -51,7 +52,7 @@ func testTenant() pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 }
 
-func eventService(publisher services.AgentEventPublisher) *Service {
+func eventService(publisher agentports.AgentEventPublisher) *Service {
 	return &Service{l: zap.NewNop(), watchtower: silentProjector{}, publisher: publisher}
 }
 
@@ -114,25 +115,25 @@ func TestPublishOccurrenceOpened_FiresOnlyWhenTheClockStarts(t *testing.T) {
 }
 
 type stubOccurrenceRepo struct {
-	repositories.DetentionOccurrenceRepository
+	detentionports.DetentionOccurrenceRepository
 	due []*detention.DetentionOccurrence
 }
 
 func (s stubOccurrenceRepo) ListNoticesDue(
 	context.Context,
-	*repositories.ListNoticesDueRequest,
+	*detentionports.ListNoticesDueRequest,
 ) ([]*detention.DetentionOccurrence, error) {
 	return s.due, nil
 }
 
 type stubPolicyRepo struct {
-	repositories.DetentionPolicyRepository
+	detentionports.DetentionPolicyRepository
 	policy *detention.DetentionPolicy
 }
 
 func (s stubPolicyRepo) GetByID(
 	context.Context,
-	*repositories.GetDetentionPolicyByIDRequest,
+	*detentionports.GetDetentionPolicyByIDRequest,
 ) (*detention.DetentionPolicy, error) {
 	return s.policy, nil
 }

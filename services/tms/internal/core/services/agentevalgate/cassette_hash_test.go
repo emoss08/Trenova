@@ -3,7 +3,7 @@ package agentevalgate
 import (
 	"testing"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -13,11 +13,11 @@ import (
 func TestHashRequest_IgnoresMintedIDsButNotRecordIDs(t *testing.T) {
 	t.Parallel()
 
-	request := func(proposal, shipment string) *serviceports.ChatCompletionRequest {
-		return &serviceports.ChatCompletionRequest{
+	request := func(proposal, shipment string) *agentports.ChatCompletionRequest {
+		return &agentports.ChatCompletionRequest{
 			System: "sys",
-			Messages: []serviceports.Message{{
-				Role:    serviceports.RoleTool,
+			Messages: []agentports.Message{{
+				Role:    agentports.RoleTool,
 				Content: "Recorded a proposal (proposal " + proposal + ") on " + shipment,
 			}},
 		}

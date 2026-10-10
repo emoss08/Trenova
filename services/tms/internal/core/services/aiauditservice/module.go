@@ -2,14 +2,17 @@ package aiauditservice
 
 import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -17,18 +20,18 @@ import (
 type Params struct {
 	fx.In
 
-	Ledger        repositories.AIAuditRepository
-	Source        repositories.AIAuditSourceRepository
-	ExportRepo    repositories.AIAuditExportRepository
-	Retention     repositories.DataRetentionRepository
+	Ledger        aiauditports.AIAuditRepository
+	Source        aiauditports.AIAuditSourceRepository
+	ExportRepo    aiauditports.AIAuditExportRepository
+	Retention     tenantports.DataRetentionRepository
 	Policies      *agenttoolpolicy.Catalog
 	Registry      *permission.Registry
-	Permissions   serviceports.PermissionEngine
-	Storage       storage.Client
-	Workflows     serviceports.WorkflowStarter
+	Permissions   permissionports.PermissionEngine
+	Storage       kernelports.Client
+	Workflows     kernelports.WorkflowStarter
 	Notifications *notificationservice.Service
-	Realtime      serviceports.RealtimeService `optional:"true"`
-	Audit         serviceports.AuditService
+	Realtime      agentports.RealtimeService `optional:"true"`
+	Audit         auditports.AuditService
 	Metrics       *metrics.Registry `optional:"true"`
 	Config        *config.Config
 	Logger        *zap.Logger
@@ -39,7 +42,7 @@ type Params struct {
 type Components struct {
 	fx.Out
 
-	Service   serviceports.AIAuditService
+	Service   aiauditports.AIAuditService
 	Projector *Projector
 	Verifier  *Verifier
 	Exports   *Exports

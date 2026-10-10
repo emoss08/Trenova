@@ -7,8 +7,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentbrief"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/shipmentnarration"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 	"github.com/emoss08/trenova/shared/numberguard"
@@ -46,7 +48,7 @@ type narratedItem struct {
 func (s *Service) wordSuggestions(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	items []*services.ShipmentSuggestion,
+	items []*shipmentsuggestionports.ShipmentSuggestion,
 ) map[string]shipmentbrief.Wording {
 	if len(items) == 0 {
 		return nil
@@ -57,7 +59,7 @@ func (s *Service) wordSuggestions(
 		ctx,
 		s.completion,
 		s.l,
-		&services.StructuredCompletionRequest{
+		&agentports.StructuredCompletionRequest{
 			TenantInfo:   tenantInfo,
 			Task:         aiprovider.TaskOperationalInsights,
 			System:       wordingSystemPrompt,
@@ -65,7 +67,7 @@ func (s *Service) wordSuggestions(
 			OutputSchema: wordingSchema(),
 			SchemaName:   wordingSchemaName,
 			MaxTokens:    maxWordingOutputTokens,
-			Attribution:  services.AIUsageAttribution{UserID: tenantInfo.UserID},
+			Attribution:  aiusageports.AIUsageAttribution{UserID: tenantInfo.UserID},
 		},
 	)
 	if !ok {
@@ -75,7 +77,7 @@ func (s *Service) wordSuggestions(
 	return acceptedWording(items, narration.Draft.Items)
 }
 
-func wordingContext(items []*services.ShipmentSuggestion) services.DelimitedContext {
+func wordingContext(items []*shipmentsuggestionports.ShipmentSuggestion) agentports.DelimitedContext {
 	var builder strings.Builder
 	for _, item := range items {
 		builder.WriteString("key: ")
@@ -91,8 +93,8 @@ func wordingContext(items []*services.ShipmentSuggestion) services.DelimitedCont
 		builder.WriteString("\n\n")
 	}
 
-	return services.DelimitedContext{
-		Sections: []services.ContextSection{{
+	return agentports.DelimitedContext{
+		Sections: []agentports.ContextSection{{
 			Title:   "Suggested actions",
 			Trusted: false,
 			Content: builder.String(),
@@ -113,7 +115,7 @@ func wordingSchema() map[string]any {
 }
 
 func acceptedWording(
-	items []*services.ShipmentSuggestion,
+	items []*shipmentsuggestionports.ShipmentSuggestion,
 	drafts []narratedItem,
 ) map[string]shipmentbrief.Wording {
 	byKey := make(map[string]narratedItem, len(drafts))
@@ -137,7 +139,7 @@ func acceptedWording(
 	return out
 }
 
-func acceptable(item *services.ShipmentSuggestion, draft narratedItem) bool {
+func acceptable(item *shipmentsuggestionports.ShipmentSuggestion, draft narratedItem) bool {
 	title := strings.TrimSpace(draft.Title)
 	reason := strings.TrimSpace(draft.Reason)
 	if title == "" || reason == "" ||

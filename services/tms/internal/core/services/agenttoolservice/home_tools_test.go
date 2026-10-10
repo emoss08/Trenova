@@ -6,9 +6,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/homelayout"
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/homelayoutservice"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -111,10 +112,10 @@ func homeFixture(t *testing.T) (*fakeHomeLayouts, homeEditor) {
 
 // homeParams is a call as the runtime hands it over: the person's own, with the
 // owner the runtime recorded.
-func homeParams(args map[string]any) serviceports.ToolExecuteParams {
+func homeParams(args map[string]any) agentports.ToolExecuteParams {
 	params := executeParams(args)
-	params.Actor.PrincipalType = serviceports.PrincipalTypeUser
-	params.Params[serviceports.SelfScopeOwnerParam] = params.Actor.UserID.String()
+	params.Actor.PrincipalType = permissionports.PrincipalTypeUser
+	params.Params[agentports.SelfScopeOwnerParam] = params.Actor.UserID.String()
 	return params
 }
 
@@ -225,10 +226,10 @@ func TestHomeEdit_RunsOnlyForThePersonItWasProposedFor(t *testing.T) {
 	tool := &removeHomeWidgetTool{homeToolBase{editor: editor}}
 
 	params := homeParams(map[string]any{"version": float64(3), "widgetId": "widget_1"})
-	params.Params[serviceports.SelfScopeOwnerParam] = pulid.MustNew("usr_").String()
+	params.Params[agentports.SelfScopeOwnerParam] = pulid.MustNew("usr_").String()
 	require.Error(t, tool.Execute(t.Context(), params))
 
-	delete(params.Params, serviceports.SelfScopeOwnerParam)
+	delete(params.Params, agentports.SelfScopeOwnerParam)
 	require.Error(t, tool.Execute(t.Context(), params))
 	assert.Nil(t, layouts.updated)
 }

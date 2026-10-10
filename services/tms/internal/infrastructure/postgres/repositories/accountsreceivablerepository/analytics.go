@@ -5,8 +5,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -54,9 +54,9 @@ type balanceOverviewRecord struct {
 
 func (r *repository) GetBalanceOverview(
 	ctx context.Context,
-	req repositories.GetARAnalyticsRequest,
-) (*repositories.ARBalanceOverview, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.ARBalanceOverview, error) {
+	req customerledgerports.GetARAnalyticsRequest,
+) (*customerledgerports.ARBalanceOverview, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*customerledgerports.ARBalanceOverview, error) {
 		rec := new(balanceOverviewRecord)
 		err := r.db.DBForContext(ctx).NewRaw(`
 		SELECT
@@ -97,7 +97,7 @@ func (r *repository) GetBalanceOverview(
 			return nil, fmt.Errorf("get ar balance overview: %w", err)
 		}
 
-		return &repositories.ARBalanceOverview{
+		return &customerledgerports.ARBalanceOverview{
 			TotalOpenMinor:       rec.TotalOpenMinor,
 			OverdueMinor:         rec.OverdueMinor,
 			UnappliedCashMinor:   rec.UnappliedCashMinor,
@@ -106,7 +106,7 @@ func (r *repository) GetBalanceOverview(
 			OverdueInvoiceCount:  rec.OverdueInvoiceCount,
 			DisputedInvoiceCount: rec.DisputedInvoiceCount,
 			AvgDaysPastDue:       rec.AvgDaysPastDue,
-			Buckets: repositories.ARAgingBucketTotals{
+			Buckets: customerledgerports.ARAgingBucketTotals{
 				CurrentMinor:    rec.CurrentMinor,
 				Days1To30Minor:  rec.Days1To30Minor,
 				Days31To60Minor: rec.Days31To60Minor,
@@ -129,9 +129,9 @@ type paymentStatsRecord struct {
 
 func (r *repository) GetPaymentStats(
 	ctx context.Context,
-	req repositories.GetARAnalyticsRequest,
-) (*repositories.ARPaymentStats, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.ARPaymentStats, error) {
+	req customerledgerports.GetARAnalyticsRequest,
+) (*customerledgerports.ARPaymentStats, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*customerledgerports.ARPaymentStats, error) {
 		dayStart := req.AsOfDate - (req.AsOfDate % secondsPerDay)
 		rec := new(paymentStatsRecord)
 		err := r.db.DBForContext(ctx).NewRaw(`
@@ -153,7 +153,7 @@ func (r *repository) GetPaymentStats(
 			return nil, fmt.Errorf("get ar payment stats: %w", err)
 		}
 
-		return &repositories.ARPaymentStats{
+		return &customerledgerports.ARPaymentStats{
 			PostedTodayMinor:      rec.PostedTodayMinor,
 			PostedTodayCount:      rec.PostedTodayCount,
 			UnappliedCashMinor:    rec.UnappliedCashMinor,
@@ -172,9 +172,9 @@ type balancePointRecord struct {
 
 func (r *repository) ListBalanceSeries(
 	ctx context.Context,
-	req repositories.ListARSeriesRequest,
-) ([]*repositories.ARBalancePoint, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*repositories.ARBalancePoint, error) {
+	req customerledgerports.ListARSeriesRequest,
+) ([]*customerledgerports.ARBalancePoint, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*customerledgerports.ARBalancePoint, error) {
 		records := make([]*balancePointRecord, 0, req.Weeks)
 		err := r.db.DBForContext(ctx).NewRaw(`
 		WITH points AS (
@@ -216,9 +216,9 @@ func (r *repository) ListBalanceSeries(
 			return nil, fmt.Errorf("list ar balance series: %w", err)
 		}
 
-		points := make([]*repositories.ARBalancePoint, 0, len(records))
+		points := make([]*customerledgerports.ARBalancePoint, 0, len(records))
 		for _, rec := range records {
-			points = append(points, &repositories.ARBalancePoint{
+			points = append(points, &customerledgerports.ARBalancePoint{
 				PeriodEnd:      rec.PeriodEnd,
 				ARBalanceMinor: rec.ARBalanceMinor,
 				BilledMinor:    rec.BilledMinor,
@@ -240,9 +240,9 @@ type agingTrendRecord struct {
 
 func (r *repository) ListAgingTrend(
 	ctx context.Context,
-	req repositories.ListARSeriesRequest,
-) ([]*repositories.ARAgingTrendPoint, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*repositories.ARAgingTrendPoint, error) {
+	req customerledgerports.ListARSeriesRequest,
+) ([]*customerledgerports.ARAgingTrendPoint, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*customerledgerports.ARAgingTrendPoint, error) {
 		records := make([]*agingTrendRecord, 0, req.Weeks)
 		err := r.db.DBForContext(ctx).NewRaw(`
 		WITH points AS (
@@ -283,11 +283,11 @@ func (r *repository) ListAgingTrend(
 			return nil, fmt.Errorf("list ar aging trend: %w", err)
 		}
 
-		points := make([]*repositories.ARAgingTrendPoint, 0, len(records))
+		points := make([]*customerledgerports.ARAgingTrendPoint, 0, len(records))
 		for _, rec := range records {
-			points = append(points, &repositories.ARAgingTrendPoint{
+			points = append(points, &customerledgerports.ARAgingTrendPoint{
 				PeriodEnd: rec.PeriodEnd,
-				Buckets: repositories.ARAgingBucketTotals{
+				Buckets: customerledgerports.ARAgingBucketTotals{
 					CurrentMinor:    rec.CurrentMinor,
 					Days1To30Minor:  rec.Days1To30Minor,
 					Days31To60Minor: rec.Days31To60Minor,
@@ -311,9 +311,9 @@ type cashFlowRecord struct {
 
 func (r *repository) ListCashFlow(
 	ctx context.Context,
-	req repositories.ListARCashFlowRequest,
-) ([]*repositories.ARCashFlowPoint, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*repositories.ARCashFlowPoint, error) {
+	req customerledgerports.ListARCashFlowRequest,
+) ([]*customerledgerports.ARCashFlowPoint, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*customerledgerports.ARCashFlowPoint, error) {
 		records := make([]*cashFlowRecord, 0, req.PastWeeks+req.FutureWeeks)
 		err := r.db.DBForContext(ctx).NewRaw(`
 		WITH weeks AS (
@@ -365,9 +365,9 @@ func (r *repository) ListCashFlow(
 			return nil, fmt.Errorf("list ar cash flow: %w", err)
 		}
 
-		points := make([]*repositories.ARCashFlowPoint, 0, len(records))
+		points := make([]*customerledgerports.ARCashFlowPoint, 0, len(records))
 		for _, rec := range records {
-			points = append(points, &repositories.ARCashFlowPoint{
+			points = append(points, &customerledgerports.ARCashFlowPoint{
 				WeekStart:     rec.WeekStart,
 				ExpectedMinor: rec.ExpectedMinor,
 				OpenDueMinor:  rec.OpenDueMinor,
@@ -513,9 +513,9 @@ const collectionTotalsSQL = `
 
 func (r *repository) GetCollectionTotals(
 	ctx context.Context,
-	req repositories.GetARCollectionMetricsRequest,
-) (*repositories.ARCollectionTotals, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.ARCollectionTotals, error) {
+	req customerledgerports.GetARCollectionMetricsRequest,
+) (*customerledgerports.ARCollectionTotals, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*customerledgerports.ARCollectionTotals, error) {
 		periodStart := req.AsOfDate - int64(req.PeriodDays)*secondsPerDay
 		rec := new(collectionTotalsRecord)
 		err := r.db.DBForContext(ctx).NewRaw(collectionTotalsSQL,
@@ -536,7 +536,7 @@ func (r *repository) GetCollectionTotals(
 			return nil, fmt.Errorf("get ar collection totals: %w", err)
 		}
 
-		return &repositories.ARCollectionTotals{
+		return &customerledgerports.ARCollectionTotals{
 			PeriodStart:              periodStart,
 			PeriodEnd:                req.AsOfDate,
 			BeginningOpenMinor:       rec.BeginningOpenMinor,
@@ -565,9 +565,9 @@ type topOverdueRecord struct {
 
 func (r *repository) ListTopOverdueCustomers(
 	ctx context.Context,
-	req repositories.ListARTopOverdueCustomersRequest,
-) ([]*repositories.ARTopOverdueCustomer, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*repositories.ARTopOverdueCustomer, error) {
+	req customerledgerports.ListARTopOverdueCustomersRequest,
+) ([]*customerledgerports.ARTopOverdueCustomer, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*customerledgerports.ARTopOverdueCustomer, error) {
 		records := make([]*topOverdueRecord, 0, req.Limit)
 		err := r.db.DBForContext(ctx).NewRaw(`
 		SELECT
@@ -593,9 +593,9 @@ func (r *repository) ListTopOverdueCustomers(
 			return nil, fmt.Errorf("list ar top overdue customers: %w", err)
 		}
 
-		items := make([]*repositories.ARTopOverdueCustomer, 0, len(records))
+		items := make([]*customerledgerports.ARTopOverdueCustomer, 0, len(records))
 		for _, rec := range records {
-			items = append(items, &repositories.ARTopOverdueCustomer{
+			items = append(items, &customerledgerports.ARTopOverdueCustomer{
 				CustomerID:        pulid.ID(rec.CustomerID),
 				CustomerName:      rec.CustomerName,
 				OverdueMinor:      rec.OverdueMinor,
@@ -625,9 +625,9 @@ type worklistRecord struct {
 
 func (r *repository) ListCollectionsWorklist(
 	ctx context.Context,
-	req repositories.ListARCollectionsWorklistRequest,
-) ([]*repositories.ARCollectionsWorklistItem, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*repositories.ARCollectionsWorklistItem, error) {
+	req customerledgerports.ListARCollectionsWorklistRequest,
+) ([]*customerledgerports.ARCollectionsWorklistItem, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*customerledgerports.ARCollectionsWorklistItem, error) {
 		records := make([]*worklistRecord, 0, req.Limit)
 		err := r.db.DBForContext(ctx).NewRaw(`
 		SELECT *
@@ -687,9 +687,9 @@ func (r *repository) ListCollectionsWorklist(
 			return nil, fmt.Errorf("list ar collections worklist: %w", err)
 		}
 
-		items := make([]*repositories.ARCollectionsWorklistItem, 0, len(records))
+		items := make([]*customerledgerports.ARCollectionsWorklistItem, 0, len(records))
 		for _, rec := range records {
-			items = append(items, &repositories.ARCollectionsWorklistItem{
+			items = append(items, &customerledgerports.ARCollectionsWorklistItem{
 				InvoiceID:       pulid.ID(rec.InvoiceID),
 				CustomerID:      pulid.ID(rec.CustomerID),
 				CustomerName:    rec.CustomerName,
@@ -844,10 +844,10 @@ const customerMonthlyCollectionsSQL = `
 
 func (r *repository) GetCustomerSnapshot(
 	ctx context.Context,
-	req repositories.GetARCustomerSnapshotRequest,
-) (*repositories.ARCustomerSnapshot, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.ARCustomerSnapshot, error) {
-		aging, err := r.GetCustomerAging(ctx, repositories.GetARCustomerAgingRequest(req))
+	req customerledgerports.GetARCustomerSnapshotRequest,
+) (*customerledgerports.ARCustomerSnapshot, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*customerledgerports.ARCustomerSnapshot, error) {
+		aging, err := r.GetCustomerAging(ctx, customerledgerports.GetARCustomerAgingRequest(req))
 		if err != nil {
 			return nil, err
 		}
@@ -872,15 +872,15 @@ func (r *repository) GetCustomerSnapshot(
 			return nil, fmt.Errorf("get ar customer monthly collections: %w", err)
 		}
 
-		points := make([]*repositories.ARMonthlyCollectionPoint, 0, len(monthly))
+		points := make([]*customerledgerports.ARMonthlyCollectionPoint, 0, len(monthly))
 		for _, m := range monthly {
-			points = append(points, &repositories.ARMonthlyCollectionPoint{
+			points = append(points, &customerledgerports.ARMonthlyCollectionPoint{
 				MonthStart:  m.MonthStart,
 				AmountMinor: m.AmountMinor,
 			})
 		}
 
-		snapshot := &repositories.ARCustomerSnapshot{
+		snapshot := &customerledgerports.ARCustomerSnapshot{
 			CustomerID:            req.CustomerID,
 			CustomerName:          rec.CustomerName,
 			UnappliedCashMinor:    rec.UnappliedCashMinor,

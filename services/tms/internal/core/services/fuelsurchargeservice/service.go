@@ -7,11 +7,13 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/integrationservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -26,27 +28,27 @@ type Params struct {
 	fx.In
 
 	Logger              *zap.Logger
-	IndexRepo           repositories.FuelIndexRepository
-	PriceRepo           repositories.FuelIndexPriceRepository
-	ProgramRepo         repositories.FuelSurchargeProgramRepository
-	CustomerRepo        repositories.CustomerRepository
-	Organizations       repositories.OrganizationRepository
+	IndexRepo           fuelsurchargeports.FuelIndexRepository
+	PriceRepo           fuelsurchargeports.FuelIndexPriceRepository
+	ProgramRepo         fuelsurchargeports.FuelSurchargeProgramRepository
+	CustomerRepo        customerports.CustomerRepository
+	Organizations       tenantports.OrganizationRepository
 	IntegrationService  *integrationservice.Service
 	NotificationService *notificationservice.Service
-	AuditService        services.AuditService
+	AuditService        auditports.AuditService
 	HTTPClient          *http.Client `optional:"true"`
 }
 
 type Service struct {
 	l                   *zap.Logger
-	indexRepo           repositories.FuelIndexRepository
-	priceRepo           repositories.FuelIndexPriceRepository
-	programRepo         repositories.FuelSurchargeProgramRepository
-	customerRepo        repositories.CustomerRepository
-	organizations       repositories.OrganizationRepository
+	indexRepo           fuelsurchargeports.FuelIndexRepository
+	priceRepo           fuelsurchargeports.FuelIndexPriceRepository
+	programRepo         fuelsurchargeports.FuelSurchargeProgramRepository
+	customerRepo        customerports.CustomerRepository
+	organizations       tenantports.OrganizationRepository
 	integrationService  *integrationservice.Service
 	notificationService *notificationservice.Service
-	auditService        services.AuditService
+	auditService        auditports.AuditService
 	httpClient          *http.Client
 	now                 func() int64
 }
@@ -124,7 +126,7 @@ func (s *Service) UpdateIndex(
 		return nil, multiErr
 	}
 
-	original, err := s.indexRepo.GetByID(ctx, &repositories.GetFuelIndexByIDRequest{
+	original, err := s.indexRepo.GetByID(ctx, &fuelsurchargeports.GetFuelIndexByIDRequest{
 		FuelIndexID: entity.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -165,7 +167,7 @@ func (s *Service) UpdateIndex(
 
 func (s *Service) DeleteIndex(
 	ctx context.Context,
-	req *repositories.GetFuelIndexByIDRequest,
+	req *fuelsurchargeports.GetFuelIndexByIDRequest,
 	userID pulid.ID,
 ) error {
 	existing, err := s.indexRepo.GetByID(ctx, req)
@@ -201,7 +203,7 @@ func (s *Service) PlanAddManualPrice(
 	entity *fuelsurcharge.FuelIndexPrice,
 	userID pulid.ID,
 ) (*fuelsurcharge.FuelIndexPrice, error) {
-	index, err := s.indexRepo.GetByID(ctx, &repositories.GetFuelIndexByIDRequest{
+	index, err := s.indexRepo.GetByID(ctx, &fuelsurchargeports.GetFuelIndexByIDRequest{
 		FuelIndexID: entity.FuelIndexID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -257,7 +259,7 @@ func (s *Service) PlanUpdateManualPrice(
 	entity *fuelsurcharge.FuelIndexPrice,
 	userID pulid.ID,
 ) (*PriceChange, error) {
-	existing, err := s.priceRepo.GetByID(ctx, &repositories.GetFuelIndexPriceByIDRequest{
+	existing, err := s.priceRepo.GetByID(ctx, &fuelsurchargeports.GetFuelIndexPriceByIDRequest{
 		PriceID: entity.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -311,7 +313,7 @@ func (s *Service) UpdateManualPrice(
 
 func (s *Service) DeleteManualPrice(
 	ctx context.Context,
-	req *repositories.GetFuelIndexPriceByIDRequest,
+	req *fuelsurchargeports.GetFuelIndexPriceByIDRequest,
 ) error {
 	existing, err := s.priceRepo.GetByID(ctx, req)
 	if err != nil {
@@ -369,7 +371,7 @@ func (s *Service) UpdateProgram(
 		return nil, multiErr
 	}
 
-	original, err := s.programRepo.GetByID(ctx, &repositories.GetFuelSurchargeProgramByIDRequest{
+	original, err := s.programRepo.GetByID(ctx, &fuelsurchargeports.GetFuelSurchargeProgramByIDRequest{
 		ProgramID: entity.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -403,7 +405,7 @@ func (s *Service) UpdateProgram(
 
 func (s *Service) DeleteProgram(
 	ctx context.Context,
-	req *repositories.GetFuelSurchargeProgramByIDRequest,
+	req *fuelsurchargeports.GetFuelSurchargeProgramByIDRequest,
 	userID pulid.ID,
 ) error {
 	existing, err := s.programRepo.GetByID(ctx, req)
@@ -444,7 +446,7 @@ func (s *Service) Dashboard(
 		return nil, err
 	}
 
-	pricesByIndex, err := s.priceRepo.LatestPerIndex(ctx, &repositories.LatestPricesPerIndexRequest{
+	pricesByIndex, err := s.priceRepo.LatestPerIndex(ctx, &fuelsurchargeports.LatestPricesPerIndexRequest{
 		TenantInfo: tenantInfo,
 		PerIndex:   2,
 	})
@@ -496,7 +498,7 @@ func (s *Service) ProgramCurrentRates(
 
 		prices, pErr := s.priceRepo.GetLatestOnOrBefore(
 			ctx,
-			&repositories.GetLatestFuelPricesRequest{
+			&fuelsurchargeports.GetLatestFuelPricesRequest{
 				FuelIndexID: program.FuelIndexID,
 				TenantInfo:  tenantInfo,
 				Date:        today.Format(fuelsurcharge.PriceDateLayout),
@@ -577,7 +579,7 @@ type auditParams struct {
 }
 
 func (s *Service) logAudit(p auditParams) {
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceFuelSurchargeProgram,
 		ResourceID:     p.resourceID,
 		Operation:      p.operation,

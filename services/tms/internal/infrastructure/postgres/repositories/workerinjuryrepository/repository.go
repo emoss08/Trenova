@@ -7,9 +7,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -35,7 +35,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.WorkerInjuryRepository {
+func New(p Params) workerports.WorkerInjuryRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.worker-injury-repository"),
@@ -51,7 +51,7 @@ func limitOr(requested, fallback int) int {
 
 func (r *repository) ListInjuries(
 	ctx context.Context,
-	req *repositories.ListWorkerInjuriesRequest,
+	req *workerports.ListWorkerInjuriesRequest,
 ) ([]*worker.WorkerInjury, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerInjury, error) {
 		cols := buncolgen.WorkerInjuryColumns
@@ -109,7 +109,7 @@ func (r *repository) ListInjuries(
 
 func (r *repository) GetInjuryByID(
 	ctx context.Context,
-	req *repositories.GetWorkerInjuryByIDRequest,
+	req *workerports.GetWorkerInjuryByIDRequest,
 ) (*worker.WorkerInjury, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerInjury, error) {
 		entity := new(worker.WorkerInjury)
@@ -195,7 +195,7 @@ func (r *repository) UpdateInjury(
 
 func (r *repository) DeleteInjury(
 	ctx context.Context,
-	req *repositories.GetWorkerInjuryByIDRequest,
+	req *workerports.GetWorkerInjuryByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		results, err := r.db.DBForContext(ctx).
@@ -221,7 +221,7 @@ func (r *repository) DeleteInjury(
 // case 4s has no way to tell which is which.
 func (r *repository) NextCaseNumber(
 	ctx context.Context,
-	req *repositories.NextCaseNumberRequest,
+	req *workerports.NextCaseNumberRequest,
 ) (int32, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int32, error) {
 		cols := buncolgen.WorkerInjuryColumns
@@ -247,7 +247,7 @@ func (r *repository) NextCaseNumber(
 
 func (r *repository) GetSummary(
 	ctx context.Context,
-	req *repositories.GetOSHASummaryRequest,
+	req *workerports.GetOSHASummaryRequest,
 ) (*worker.OSHAAnnualSummary, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.OSHAAnnualSummary, error) {
 		entity := new(worker.OSHAAnnualSummary)
@@ -275,7 +275,7 @@ func (r *repository) GetSummary(
 
 func (r *repository) ListSummaries(
 	ctx context.Context,
-	req *repositories.ListOSHASummariesRequest,
+	req *workerports.ListOSHASummariesRequest,
 ) ([]*worker.OSHAAnnualSummary, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.OSHAAnnualSummary, error) {
 		entities := make([]*worker.OSHAAnnualSummary, 0, 8)

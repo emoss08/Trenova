@@ -4,9 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/exchangerateservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.temporal.io/sdk/activity"
@@ -35,15 +36,15 @@ type ActivitiesParams struct {
 	fx.In
 
 	ExchangeRateService   *exchangerateservice.Service
-	AccountingControlRepo repositories.AccountingControlRepository
-	IntegrationRepo       repositories.IntegrationRepository
+	AccountingControlRepo tenantports.AccountingControlRepository
+	IntegrationRepo       integrationports.IntegrationRepository
 	Logger                *zap.Logger
 }
 
 type Activities struct {
 	exchangeRateSvc       *exchangerateservice.Service
-	accountingControlRepo repositories.AccountingControlRepository
-	integrationRepo       repositories.IntegrationRepository
+	accountingControlRepo tenantports.AccountingControlRepository
+	integrationRepo       integrationports.IntegrationRepository
 	logger                *zap.Logger
 }
 

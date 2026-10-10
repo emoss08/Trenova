@@ -9,9 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentroster"
 	"github.com/emoss08/trenova/internal/core/domain/aicontrolsummary"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentrosterports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
@@ -28,7 +28,7 @@ type repository struct {
 	db *postgres.Connection
 }
 
-func New(p Params) repositories.AIControlFactsRepository {
+func New(p Params) agentrosterports.AIControlFactsRepository {
 	return &repository{db: p.DB}
 }
 
@@ -41,7 +41,7 @@ var workingStatuses = []agent.RunStatus{
 
 func (r *repository) AgentCounts(
 	ctx context.Context,
-	req *repositories.AgentCountsRequest,
+	req *agentrosterports.AgentCountsRequest,
 ) (aicontrolsummary.AgentCounts, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (aicontrolsummary.AgentCounts, error) {
 		db := r.db.DBForContext(ctx)
@@ -115,9 +115,9 @@ type failureRow struct {
 
 func (r *repository) ProviderFailures(
 	ctx context.Context,
-	req *repositories.ProviderFailuresRequest,
-) ([]repositories.ProviderFailureCount, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.ProviderFailureCount, error) {
+	req *agentrosterports.ProviderFailuresRequest,
+) ([]agentrosterports.ProviderFailureCount, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentrosterports.ProviderFailureCount, error) {
 		cols := buncolgen.AIUsageRecordColumns
 		var rows []failureRow
 		err := r.db.DBForContext(ctx).NewSelect().
@@ -139,13 +139,13 @@ func (r *repository) ProviderFailures(
 			return nil, fmt.Errorf("list failing providers: %w", err)
 		}
 
-		out := make([]repositories.ProviderFailureCount, 0, len(rows))
+		out := make([]agentrosterports.ProviderFailureCount, 0, len(rows))
 		for idx := range rows {
 			id, parseErr := pulid.Parse(rows[idx].ProviderID)
 			if parseErr != nil {
 				continue
 			}
-			out = append(out, repositories.ProviderFailureCount{
+			out = append(out, agentrosterports.ProviderFailureCount{
 				ProviderID:    id,
 				FailedCalls:   rows[idx].FailedCalls,
 				LastFailureAt: rows[idx].LastFailureAt,
@@ -172,7 +172,7 @@ type rosterDecisionRow struct {
 
 func (r *repository) AgentRoster(
 	ctx context.Context,
-	req *repositories.AgentRosterRequest,
+	req *agentrosterports.AgentRosterRequest,
 ) ([]*agentroster.Stat, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentroster.Stat, error) {
 		db := r.db.DBForContext(ctx)

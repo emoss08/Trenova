@@ -9,8 +9,8 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentscoring"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -62,14 +62,14 @@ func judgeSchema() map[string]any {
 	}
 }
 
-func judgeContext(evalCase *agentquality.EvalCase, reply string) services.DelimitedContext {
+func judgeContext(evalCase *agentquality.EvalCase, reply string) agentports.DelimitedContext {
 	rubric := strings.TrimSpace(evalCase.Rubric)
 	if rubric == "" {
 		rubric = defaultJudgeRubric
 	}
 
-	return services.DelimitedContext{
-		Sections: []services.ContextSection{
+	return agentports.DelimitedContext{
+		Sections: []agentports.ContextSection{
 			{Title: "Rubric", Trusted: true, Content: rubric},
 			{Title: "What a good answer does", Trusted: true, Content: describeExpected(evalCase)},
 			{

@@ -7,9 +7,9 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
 	"go.uber.org/fx"
@@ -31,19 +31,19 @@ type Params struct {
 	fx.In
 
 	Logger  *zap.Logger
-	Repo    repositories.AgentRunStepRepository
+	Repo    agentports.AgentRunStepRepository
 	Metrics *metrics.Registry `optional:"true"`
 }
 
 type Service struct {
 	l       *zap.Logger
-	repo    repositories.AgentRunStepRepository
+	repo    agentports.AgentRunStepRepository
 	metrics *metrics.Assistant
 }
 
-var _ serviceports.RunStepLedger = (*Service)(nil)
+var _ agentports.RunStepLedger = (*Service)(nil)
 
-func New(p Params) serviceports.RunStepLedger {
+func New(p Params) agentports.RunStepLedger {
 	service := &Service{
 		l:    p.Logger.Named("service.runstepledger"),
 		repo: p.Repo,
@@ -66,37 +66,37 @@ func New(p Params) serviceports.RunStepLedger {
 func (s *Service) Claim(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	step serviceports.RunStep,
-) (serviceports.StepVerdict, error) {
-	held, err := s.repo.Claim(ctx, toEntity(tenant, step, serviceports.RunStepStarted))
+	step agentports.RunStep,
+) (agentports.StepVerdict, error) {
+	held, err := s.repo.Claim(ctx, toEntity(tenant, step, agentports.RunStepStarted))
 	if err == nil {
-		return serviceports.StepVerdict{State: serviceports.StepFresh}, nil
+		return agentports.StepVerdict{State: agentports.StepFresh}, nil
 	}
-	if !errors.Is(err, repositories.ErrRunStepClaimed) {
-		return serviceports.StepVerdict{}, fmt.Errorf("claim run step: %w", err)
+	if !errors.Is(err, agentports.ErrRunStepClaimed) {
+		return agentports.StepVerdict{}, fmt.Errorf("claim run step: %w", err)
 	}
 
 	// The key is taken and the holder could not be read. Unknown is the only
 	// safe answer: something ran, and this attempt cannot say what it did.
 	if held == nil {
-		s.countReplayed(step, serviceports.StepUnknown)
+		s.countReplayed(step, agentports.StepUnknown)
 
-		return serviceports.StepVerdict{State: serviceports.StepUnknown}, nil
+		return agentports.StepVerdict{State: agentports.StepUnknown}, nil
 	}
 
-	switch serviceports.RunStepStatus(held.Status) {
-	case serviceports.RunStepCompleted:
-		s.countReplayed(step, serviceports.StepCompleted)
+	switch agentports.RunStepStatus(held.Status) {
+	case agentports.RunStepCompleted:
+		s.countReplayed(step, agentports.StepCompleted)
 
-		return serviceports.StepVerdict{
-			State:   serviceports.StepCompleted,
+		return agentports.StepVerdict{
+			State:   agentports.StepCompleted,
 			Outcome: decodeOutcome(s.l, held),
 		}, nil
-	case serviceports.RunStepFailed:
-		s.countReplayed(step, serviceports.StepFailed)
+	case agentports.RunStepFailed:
+		s.countReplayed(step, agentports.StepFailed)
 
-		return serviceports.StepVerdict{
-			State:   serviceports.StepFailed,
+		return agentports.StepVerdict{
+			State:   agentports.StepFailed,
 			Outcome: decodeOutcome(s.l, held),
 		}, nil
 	default:
@@ -106,9 +106,9 @@ func (s *Service) Claim(
 			zap.Int("claimedOnAttempt", held.Attempt),
 		)
 
-		s.countReplayed(step, serviceports.StepUnknown)
+		s.countReplayed(step, agentports.StepUnknown)
 
-		return serviceports.StepVerdict{State: serviceports.StepUnknown}, nil
+		return agentports.StepVerdict{State: agentports.StepUnknown}, nil
 	}
 }
 
@@ -117,14 +117,14 @@ func (s *Service) Claim(
 // This is the reliability figure worth having: each one is a write that a
 // retry would otherwise have made twice, so the count is a direct measure of
 // what the ledger is preventing rather than a proxy for it.
-func (s *Service) countReplayed(step serviceports.RunStep, state serviceports.StepState) {
+func (s *Service) countReplayed(step agentports.RunStep, state agentports.StepState) {
 	s.metrics.RecordStepReplayed(string(step.OwnerKind), string(state))
 }
 
 func (s *Service) Settle(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	step serviceports.RunStep,
+	step agentports.RunStep,
 ) error {
 	if len(step.Outcome.Content) > maxStoredOutcomeChars {
 		s.l.Debug("a step's answer was too large to keep",
@@ -147,7 +147,7 @@ func (s *Service) Settle(
 		encoded = map[string]any{}
 	}
 
-	return s.repo.Settle(ctx, repositories.SettleAgentRunStepRequest{
+	return s.repo.Settle(ctx, agentports.SettleAgentRunStepRequest{
 		TenantInfo: tenant,
 		OwnerID:    step.OwnerID,
 		StepKey:    step.Key,
@@ -159,7 +159,7 @@ func (s *Service) Settle(
 func (s *Service) Record(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	step serviceports.RunStep,
+	step agentports.RunStep,
 ) error {
 	return s.repo.Record(ctx, toEntity(tenant, step, step.Status))
 }
@@ -167,9 +167,9 @@ func (s *Service) Record(
 func (s *Service) Loaded(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	owner serviceports.RunStepOwner,
-) ([]serviceports.RunStep, error) {
-	rows, err := s.repo.List(ctx, repositories.ListAgentRunStepsRequest{
+	owner agentports.RunStepOwner,
+) ([]agentports.RunStep, error) {
+	rows, err := s.repo.List(ctx, agentports.ListAgentRunStepsRequest{
 		TenantInfo: tenant,
 		OwnerKind:  string(owner.Kind),
 		OwnerID:    owner.ID,
@@ -178,14 +178,14 @@ func (s *Service) Loaded(
 		return nil, err
 	}
 
-	steps := make([]serviceports.RunStep, 0, len(rows))
+	steps := make([]agentports.RunStep, 0, len(rows))
 	for _, row := range rows {
-		steps = append(steps, serviceports.RunStep{
-			OwnerKind:         serviceports.RunStepOwnerKind(row.OwnerKind),
+		steps = append(steps, agentports.RunStep{
+			OwnerKind:         kernelports.RunStepOwnerKind(row.OwnerKind),
 			OwnerID:           row.OwnerID,
 			Attempt:           row.Attempt,
-			Kind:              serviceports.RunStepKind(row.Kind),
-			Status:            serviceports.RunStepStatus(row.Status),
+			Kind:              agentports.RunStepKind(row.Kind),
+			Status:            agentports.RunStepStatus(row.Status),
 			Key:               row.StepKey,
 			ToolName:          row.ToolName,
 			CallID:            row.CallID,
@@ -204,8 +204,8 @@ func (s *Service) Loaded(
 
 func toEntity(
 	tenant pagination.TenantInfo,
-	step serviceports.RunStep,
-	status serviceports.RunStepStatus,
+	step agentports.RunStep,
+	status agentports.RunStepStatus,
 ) *agent.AgentRunStep {
 	args := step.Args
 	if args == nil {
@@ -241,7 +241,7 @@ func toEntity(
 // encodeOutcome and decodeOutcome move the outcome through the jsonb column.
 // It goes in as a map rather than raw bytes so an operator reading the table
 // can see what a tool answered without decoding anything.
-func encodeOutcome(outcome serviceports.RunStepOutcome) (map[string]any, error) {
+func encodeOutcome(outcome agentports.RunStepOutcome) (map[string]any, error) {
 	encoded, err := sonic.Marshal(outcome)
 	if err != nil {
 		return nil, fmt.Errorf("encode outcome: %w", err)
@@ -255,14 +255,14 @@ func encodeOutcome(outcome serviceports.RunStepOutcome) (map[string]any, error) 
 	return decoded, nil
 }
 
-func decodeOutcome(logger *zap.Logger, row *agent.AgentRunStep) serviceports.RunStepOutcome {
+func decodeOutcome(logger *zap.Logger, row *agent.AgentRunStep) agentports.RunStepOutcome {
 	if len(row.Outcome) == 0 {
-		return serviceports.RunStepOutcome{}
+		return agentports.RunStepOutcome{}
 	}
 
 	encoded, err := sonic.Marshal(row.Outcome)
 	if err == nil {
-		var outcome serviceports.RunStepOutcome
+		var outcome agentports.RunStepOutcome
 		if err = sonic.Unmarshal(encoded, &outcome); err == nil {
 			return outcome
 		}
@@ -277,5 +277,5 @@ func decodeOutcome(logger *zap.Logger, row *agent.AgentRunStep) serviceports.Run
 		zap.Error(err),
 	)
 
-	return serviceports.RunStepOutcome{}
+	return agentports.RunStepOutcome{}
 }

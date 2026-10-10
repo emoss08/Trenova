@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
@@ -40,8 +40,8 @@ func customerPaymentConnectionToModel(
 
 func customerPaymentApplicationsFromInput(
 	inputs []*gqlmodel.CustomerPaymentApplicationInput,
-) ([]*serviceports.CustomerPaymentApplicationInput, error) {
-	applications := make([]*serviceports.CustomerPaymentApplicationInput, 0, len(inputs))
+) ([]*customerpaymentports.CustomerPaymentApplicationInput, error) {
+	applications := make([]*customerpaymentports.CustomerPaymentApplicationInput, 0, len(inputs))
 	for idx, input := range inputs {
 		if input == nil {
 			continue
@@ -54,7 +54,7 @@ func customerPaymentApplicationsFromInput(
 				"Invalid invoice",
 			)
 		}
-		application := &serviceports.CustomerPaymentApplicationInput{
+		application := &customerpaymentports.CustomerPaymentApplicationInput{
 			InvoiceID:          invoiceID,
 			AppliedAmountMinor: int64(input.AppliedAmountMinor),
 		}
@@ -69,7 +69,7 @@ func customerPaymentApplicationsFromInput(
 func postCustomerPaymentRequestFromInput(
 	input *gqlmodel.PostCustomerPaymentInput,
 	tenantInfo pagination.TenantInfo,
-) (*serviceports.PostCustomerPaymentRequest, error) {
+) (*customerpaymentports.PostCustomerPaymentRequest, error) {
 	customerID, err := pulid.MustParse(input.CustomerID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
@@ -89,7 +89,7 @@ func postCustomerPaymentRequestFromInput(
 		currencyCode = money.DefaultCurrencyCode
 	}
 
-	return &serviceports.PostCustomerPaymentRequest{
+	return &customerpaymentports.PostCustomerPaymentRequest{
 		CustomerID:      customerID,
 		PaymentDate:     int64(input.PaymentDate),
 		AccountingDate:  int64(input.AccountingDate),
@@ -106,7 +106,7 @@ func postCustomerPaymentRequestFromInput(
 func applyCustomerPaymentRequestFromInput(
 	input *gqlmodel.ApplyCustomerPaymentInput,
 	tenantInfo pagination.TenantInfo,
-) (*serviceports.ApplyCustomerPaymentRequest, error) {
+) (*customerpaymentports.ApplyCustomerPaymentRequest, error) {
 	paymentID, err := pulid.MustParse(input.PaymentID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
@@ -121,7 +121,7 @@ func applyCustomerPaymentRequestFromInput(
 		return nil, err
 	}
 
-	return &serviceports.ApplyCustomerPaymentRequest{
+	return &customerpaymentports.ApplyCustomerPaymentRequest{
 		PaymentID:      paymentID,
 		AccountingDate: int64(input.AccountingDate),
 		Applications:   applications,
@@ -132,7 +132,7 @@ func applyCustomerPaymentRequestFromInput(
 func reverseCustomerPaymentRequestFromInput(
 	input *gqlmodel.ReverseCustomerPaymentInput,
 	tenantInfo pagination.TenantInfo,
-) (*serviceports.ReverseCustomerPaymentRequest, error) {
+) (*customerpaymentports.ReverseCustomerPaymentRequest, error) {
 	paymentID, err := pulid.MustParse(input.PaymentID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
@@ -142,7 +142,7 @@ func reverseCustomerPaymentRequestFromInput(
 		)
 	}
 
-	return &serviceports.ReverseCustomerPaymentRequest{
+	return &customerpaymentports.ReverseCustomerPaymentRequest{
 		PaymentID:      paymentID,
 		AccountingDate: int64(input.AccountingDate),
 		Reason:         base.StringValue(input.Reason),

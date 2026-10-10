@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -56,7 +56,7 @@ func (s *Service) Rota(ctx context.Context, req *RotaRequest) (*worker.Rota, err
 	weekStart := worker.StartOfWeekUTC(at, time.UTC)
 	weekEnd := time.Unix(weekStart, 0).UTC().AddDate(0, 0, daysInWeek*weeks).Unix()
 
-	query := &repositories.RotaQuery{
+	query := &workerports.RotaQuery{
 		TenantInfo:  req.TenantInfo,
 		WeekStart:   weekStart,
 		WeekEnd:     weekEnd,
@@ -66,10 +66,10 @@ func (s *Service) Rota(ctx context.Context, req *RotaRequest) (*worker.Rota, err
 	}
 
 	var (
-		workers   []repositories.RotaWorkerRow
-		timeOff   []repositories.RotaRangeRow
-		leave     []repositories.RotaRangeRow
-		assigned  []repositories.RotaDayRow
+		workers   []workerports.RotaWorkerRow
+		timeOff   []workerports.RotaRangeRow
+		leave     []workerports.RotaRangeRow
+		assigned  []workerports.RotaDayRow
 		templates map[pulid.ID]*worker.ShiftTemplate
 	)
 
@@ -109,7 +109,7 @@ func (s *Service) Rota(ctx context.Context, req *RotaRequest) (*worker.Rota, err
 	// The patterns are read whole rather than joined per worker: a carrier has
 	// a handful of them and every roster line points at one of the same few.
 	group.Go(func() error {
-		rows, err := s.repo.ListTemplates(groupCtx, &repositories.ListShiftTemplatesRequest{
+		rows, err := s.repo.ListTemplates(groupCtx, &workerports.ListShiftTemplatesRequest{
 			TenantInfo: req.TenantInfo,
 		})
 		if err != nil {
@@ -171,14 +171,14 @@ func (s *Service) Rota(ctx context.Context, req *RotaRequest) (*worker.Rota, err
 func (s *Service) gatherPreferences(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	workers []repositories.RotaWorkerRow,
+	workers []workerports.RotaWorkerRow,
 ) (map[pulid.ID]map[int16]worker.AvailabilityPreference, error) {
 	out := make(map[pulid.ID]map[int16]worker.AvailabilityPreference, len(workers))
 	if len(workers) == 0 {
 		return out, nil
 	}
 
-	rows, err := s.repo.ListPreferences(ctx, &repositories.ListAvailabilityPreferencesRequest{
+	rows, err := s.repo.ListPreferences(ctx, &workerports.ListAvailabilityPreferencesRequest{
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {
@@ -198,15 +198,15 @@ func (s *Service) gatherPreferences(
 }
 
 func filterWorkers(
-	rows []repositories.RotaWorkerRow,
+	rows []workerports.RotaWorkerRow,
 	ids []pulid.ID,
-) []repositories.RotaWorkerRow {
+) []workerports.RotaWorkerRow {
 	wanted := make(map[pulid.ID]struct{}, len(ids))
 	for _, id := range ids {
 		wanted[id] = struct{}{}
 	}
 
-	out := make([]repositories.RotaWorkerRow, 0, len(ids))
+	out := make([]workerports.RotaWorkerRow, 0, len(ids))
 	for _, row := range rows {
 		if _, ok := wanted[row.WorkerID]; ok {
 			out = append(out, row)
@@ -220,7 +220,7 @@ func filterWorkers(
 // zero end is an open span — a leave case with no return date — and runs to the
 // end of the window rather than stopping on its start day.
 func expandRanges(
-	rows []repositories.RotaRangeRow,
+	rows []workerports.RotaRangeRow,
 	windowStart, windowEnd int64,
 ) map[pulid.ID]map[int64]bool {
 	out := make(map[pulid.ID]map[int64]bool, len(rows))
@@ -252,7 +252,7 @@ func expandRanges(
 	return out
 }
 
-func indexDays(rows []repositories.RotaDayRow) map[pulid.ID]map[int64]int {
+func indexDays(rows []workerports.RotaDayRow) map[pulid.ID]map[int64]int {
 	out := make(map[pulid.ID]map[int64]int, len(rows))
 
 	for _, row := range rows {

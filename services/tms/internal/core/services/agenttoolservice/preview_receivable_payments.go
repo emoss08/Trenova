@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/shared/money"
 )
 
@@ -32,7 +32,7 @@ func paymentRecord(payment *customerpayment.Payment) toolpreview.Record {
 	}
 }
 
-func paymentChange(plan *serviceports.CustomerPaymentChangePreview) (*agent.RecordChange, error) {
+func paymentChange(plan *customerpaymentports.CustomerPaymentChangePreview) (*agent.RecordChange, error) {
 	before, after := plan.PaymentBefore, plan.PaymentAfter
 	change, err := toolpreview.Changed(
 		paymentRecord(before),
@@ -82,7 +82,7 @@ func invoiceBalanceChanges(before, after []*invoice.Invoice) ([]*agent.RecordCha
 }
 
 func paymentPreview(
-	plan *serviceports.CustomerPaymentChangePreview,
+	plan *customerpaymentports.CustomerPaymentChangePreview,
 	summary string,
 ) (*agent.ToolPreview, error) {
 	payment, err := paymentChange(plan)
@@ -113,8 +113,8 @@ func paymentPreview(
 }
 
 func renderApplyPayment(
-	req *serviceports.ApplyCustomerPaymentRequest,
-	plan *serviceports.CustomerPaymentChangePreview,
+	req *customerpaymentports.ApplyCustomerPaymentRequest,
+	plan *customerpaymentports.CustomerPaymentChangePreview,
 ) (*agent.ToolPreview, error) {
 	currency := plan.PaymentBefore.CurrencyCode
 	return paymentPreview(plan, fmt.Sprintf(
@@ -130,8 +130,8 @@ func renderApplyPayment(
 }
 
 func renderReversePayment(
-	_ *serviceports.ReverseCustomerPaymentRequest,
-	plan *serviceports.CustomerPaymentChangePreview,
+	_ *customerpaymentports.ReverseCustomerPaymentRequest,
+	plan *customerpaymentports.CustomerPaymentChangePreview,
 ) (*agent.ToolPreview, error) {
 	return paymentPreview(plan, fmt.Sprintf(
 		"Would reverse payment %s for %s, reopening %s by what it paid and booking a "+
@@ -143,7 +143,7 @@ func renderReversePayment(
 }
 
 func creditMemoChange(
-	plan *serviceports.CreditMemoApplicationPreview,
+	plan *customerpaymentports.CreditMemoApplicationPreview,
 ) (*agent.RecordChange, error) {
 	before, after := plan.CreditMemoBefore, plan.CreditMemoAfter
 	change, err := toolpreview.Changed(
@@ -181,7 +181,7 @@ var creditApplicationRefs = map[string]permission.Resource{
 }
 
 func creditApplicationChange(
-	plan *serviceports.CreditMemoApplicationPreview,
+	plan *customerpaymentports.CreditMemoApplicationPreview,
 	application *customerpayment.CreditMemoApplication,
 ) (*agent.RecordChange, error) {
 	record := toolpreview.Record{
@@ -230,7 +230,7 @@ func creditApplicationChange(
 }
 
 func creditPreview(
-	plan *serviceports.CreditMemoApplicationPreview,
+	plan *customerpaymentports.CreditMemoApplicationPreview,
 	summary string,
 ) (*agent.ToolPreview, error) {
 	memo, err := creditMemoChange(plan)
@@ -256,7 +256,7 @@ func creditPreview(
 	return toolpreview.Build(summary, changes...), nil
 }
 
-func creditAppliedMinor(plan *serviceports.CreditMemoApplicationPreview) int64 {
+func creditAppliedMinor(plan *customerpaymentports.CreditMemoApplicationPreview) int64 {
 	var total int64
 	for _, application := range plan.Applications {
 		total += application.AppliedAmountMinor
@@ -266,8 +266,8 @@ func creditAppliedMinor(plan *serviceports.CreditMemoApplicationPreview) int64 {
 }
 
 func renderApplyCredit(
-	req *serviceports.ApplyCreditMemoRequest,
-	plan *serviceports.CreditMemoApplicationPreview,
+	req *customerpaymentports.ApplyCreditMemoRequest,
+	plan *customerpaymentports.CreditMemoApplicationPreview,
 ) (*agent.ToolPreview, error) {
 	currency := plan.CreditMemoBefore.CurrencyCode
 	return creditPreview(plan, fmt.Sprintf(
@@ -280,8 +280,8 @@ func renderApplyCredit(
 }
 
 func renderUnapplyCredit(
-	_ *serviceports.UnapplyCreditMemoApplicationRequest,
-	plan *serviceports.CreditMemoApplicationPreview,
+	_ *customerpaymentports.UnapplyCreditMemoApplicationRequest,
+	plan *customerpaymentports.CreditMemoApplicationPreview,
 ) (*agent.ToolPreview, error) {
 	target := "the invoice"
 	if len(plan.InvoicesBefore) > 0 && plan.InvoicesBefore[0] != nil {

@@ -10,9 +10,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/briefing"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -60,36 +62,36 @@ func oversightToolProviders() []any {
 type watchtowerFeedReader interface {
 	List(
 		ctx context.Context,
-		req serviceports.ListWatchtowerItemsRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.WatchtowerPage, error)
+		req watchtowerports.ListWatchtowerItemsRequest,
+		actor *permissionports.RequestActor,
+	) (*watchtowerports.WatchtowerPage, error)
 }
 
 type agentRunsByIDs interface {
 	ListByIDs(
 		ctx context.Context,
-		req repositories.ListAgentRunsByIDsRequest,
+		req agentports.ListAgentRunsByIDsRequest,
 	) ([]*agent.AgentRun, error)
 }
 
 type agentProposalsByIDs interface {
 	ListByIDs(
 		ctx context.Context,
-		req repositories.ListAgentProposalsByIDsRequest,
+		req agentports.ListAgentProposalsByIDsRequest,
 	) ([]*agent.AgentProposal, error)
 }
 
 type agentPlansByIDs interface {
 	ListByIDs(
 		ctx context.Context,
-		req repositories.ListAgentPlansByIDsRequest,
+		req agentports.ListAgentPlansByIDsRequest,
 	) ([]*agent.AgentPlan, error)
 }
 
 type agentExceptionsByIDs interface {
 	ListByIDs(
 		ctx context.Context,
-		req repositories.ListAgentExceptionsByIDsRequest,
+		req agentports.ListAgentExceptionsByIDsRequest,
 	) ([]*agent.AgentException, error)
 }
 
@@ -103,10 +105,10 @@ type watchtowerRunLinks struct {
 type watchtowerRunRepositories struct {
 	fx.In
 
-	Runs       repositories.AgentRunRepository
-	Proposals  repositories.AgentProposalRepository
-	Plans      repositories.AgentPlanRepository
-	Exceptions repositories.AgentExceptionRepository
+	Runs       agentports.AgentRunRepository
+	Proposals  agentports.AgentProposalRepository
+	Plans      agentports.AgentPlanRepository
+	Exceptions agentports.AgentExceptionRepository
 }
 
 type listWatchtowerItemsTool struct {
@@ -115,9 +117,9 @@ type listWatchtowerItemsTool struct {
 }
 
 func provideListWatchtowerItemsTool(
-	feed serviceports.WatchtowerService,
+	feed watchtowerports.WatchtowerService,
 	repos watchtowerRunRepositories,
-) serviceports.AgentQueryTool {
+) agentports.AgentQueryTool {
 	return newListWatchtowerItemsTool(feed, watchtowerRunLinks{
 		runs:       repos.Runs,
 		proposals:  repos.Proposals,
@@ -182,7 +184,7 @@ func (t *listWatchtowerItemsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listWatchtowerItemsTool) Policy() serviceports.ToolPolicy {
+func (t *listWatchtowerItemsTool) Policy() agentports.ToolPolicy {
 	policy := readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceWatchtower,
 		reads:    agent.ExternalReadMarked,
@@ -230,7 +232,7 @@ func (f *watchtowerFeed) TaintedMarks() []agent.SourcedRef { return f.marks }
 
 func (t *listWatchtowerItemsTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -248,7 +250,7 @@ func (t *listWatchtowerItemsTool) Query(
 	person := params.Actor.IsUser()
 	tenant := tenantOf(params)
 	window := readPage(params.Params, watchtowerDefaultLimit, watchtowerMaxLimit)
-	page, err := t.feed.List(ctx, serviceports.ListWatchtowerItemsRequest{
+	page, err := t.feed.List(ctx, watchtowerports.ListWatchtowerItemsRequest{
 		TenantInfo:     tenant,
 		Kinds:          kinds,
 		Severities:     severities,
@@ -260,7 +262,7 @@ func (t *listWatchtowerItemsTool) Query(
 		return nil, err
 	}
 	if page == nil {
-		page = &serviceports.WatchtowerPage{}
+		page = &watchtowerports.WatchtowerPage{}
 	}
 
 	items, hasMore := page.Items, page.HasNextPage
@@ -538,7 +540,7 @@ func (l watchtowerRunLinks) resolve(
 		len(links.exceptions))
 
 	if ids := sourceIDs(links.proposals); len(ids) > 0 {
-		proposals, err := l.proposals.ListByIDs(ctx, repositories.ListAgentProposalsByIDsRequest{
+		proposals, err := l.proposals.ListByIDs(ctx, agentports.ListAgentProposalsByIDsRequest{
 			IDs:        ids,
 			TenantInfo: tenant,
 		})
@@ -550,7 +552,7 @@ func (l watchtowerRunLinks) resolve(
 		}
 	}
 	if ids := sourceIDs(links.plans); len(ids) > 0 {
-		plans, err := l.plans.ListByIDs(ctx, repositories.ListAgentPlansByIDsRequest{
+		plans, err := l.plans.ListByIDs(ctx, agentports.ListAgentPlansByIDsRequest{
 			IDs:        ids,
 			TenantInfo: tenant,
 		})
@@ -562,7 +564,7 @@ func (l watchtowerRunLinks) resolve(
 		}
 	}
 	if ids := sourceIDs(links.exceptions); len(ids) > 0 {
-		exceptions, err := l.exceptions.ListByIDs(ctx, repositories.ListAgentExceptionsByIDsRequest{
+		exceptions, err := l.exceptions.ListByIDs(ctx, agentports.ListAgentExceptionsByIDsRequest{
 			IDs:        ids,
 			TenantInfo: tenant,
 		})
@@ -611,7 +613,7 @@ func (l watchtowerRunLinks) taintedRuns(
 		ids = append(ids, runID)
 	}
 
-	runs, err := l.runs.ListByIDs(ctx, repositories.ListAgentRunsByIDsRequest{
+	runs, err := l.runs.ListByIDs(ctx, agentports.ListAgentRunsByIDsRequest{
 		IDs:        ids,
 		TenantInfo: tenant,
 	})
@@ -644,8 +646,8 @@ func sourceIDs(bucket map[pulid.ID][]pulid.ID) []pulid.ID {
 type briefingReader interface {
 	Today(
 		ctx context.Context,
-		req serviceports.GetBriefingRequest,
-		actor *serviceports.RequestActor,
+		req briefingports.GetBriefingRequest,
+		actor *permissionports.RequestActor,
 	) (*briefing.Briefing, error)
 }
 
@@ -666,15 +668,15 @@ type getDailyBriefingTool struct {
 }
 
 func provideGetDailyBriefingTool(
-	briefings serviceports.BriefingService,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	briefings briefingports.BriefingService,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newGetDailyBriefingTool(briefings, permissions)
 }
 
 func newGetDailyBriefingTool(
 	briefings briefingReader,
-	permissions serviceports.PermissionEngine,
+	permissions permissionports.PermissionEngine,
 ) *getDailyBriefingTool {
 	return &getDailyBriefingTool{briefings: briefings, access: newFieldAccess(permissions)}
 }
@@ -705,7 +707,7 @@ func (t *getDailyBriefingTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *getDailyBriefingTool) Policy() serviceports.ToolPolicy {
+func (t *getDailyBriefingTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceBriefing,
 		rationale: "Reads the morning's computed figures, and only the sections the caller " +
@@ -747,7 +749,7 @@ type dailyBriefingView struct {
 
 func (t *getDailyBriefingTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -766,7 +768,7 @@ func (t *getDailyBriefingTool) Query(
 		return nil, fmt.Errorf("parameter %q must be a day written as YYYY-MM-DD", paramDate)
 	}
 
-	page, err := t.briefings.Today(ctx, serviceports.GetBriefingRequest{
+	page, err := t.briefings.Today(ctx, briefingports.GetBriefingRequest{
 		TenantInfo:   tenantOf(params),
 		RoleKey:      role,
 		BriefingDate: day,
@@ -788,7 +790,7 @@ func (t *getDailyBriefingTool) Query(
 
 func (t *getDailyBriefingTool) readableBriefing(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 	page *briefing.Briefing,
 ) dailyBriefingView {
 	readable := make(map[permission.Resource]bool, len(briefingSectionResources)+4)

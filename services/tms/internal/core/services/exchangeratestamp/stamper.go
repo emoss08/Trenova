@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/accountingcontrolpolicyservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/exchangerateports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -43,15 +43,15 @@ type Params struct {
 	fx.In
 
 	Logger   *zap.Logger
-	Controls repositories.AccountingControlRepository
-	Rates    services.ExchangeRateService
+	Controls tenantports.AccountingControlRepository
+	Rates    exchangerateports.ExchangeRateService
 	Policy   *accountingcontrolpolicyservice.Service
 }
 
 type Stamper struct {
 	l        *zap.Logger
-	controls repositories.AccountingControlRepository
-	rates    services.ExchangeRateService
+	controls tenantports.AccountingControlRepository
+	rates    exchangerateports.ExchangeRateService
 	policy   *accountingcontrolpolicyservice.Service
 }
 
@@ -113,7 +113,7 @@ func (s *Stamper) Stamp(ctx context.Context, req *Request) (*Stamp, error) {
 
 	date := QuoteDate(s.policy, control, req.DocumentDate, req.AccountingDate)
 	result, err := s.rates.CachedRate(ctx, req.TenantInfo, code, functional, time.Unix(date, 0).UTC())
-	if err != nil && !errors.Is(err, services.ErrExchangeRateNotCached) {
+	if err != nil && !errors.Is(err, exchangerateports.ErrExchangeRateNotCached) {
 		return nil, err
 	}
 	if result == nil {

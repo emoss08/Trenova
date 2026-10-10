@@ -4,13 +4,13 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-type InjuryChange = services.RecordChange[worker.WorkerInjury]
+type InjuryChange = kernelports.RecordChange[worker.WorkerInjury]
 
 func (s *Service) prepareRecord(
 	ctx context.Context,
@@ -18,7 +18,7 @@ func (s *Service) prepareRecord(
 	userID pulid.ID,
 ) error {
 	tenantInfo := injuryTenant(entity)
-	if _, err := s.workerRepo.GetByID(ctx, repositories.GetWorkerByIDRequest{
+	if _, err := s.workerRepo.GetByID(ctx, workerports.GetWorkerByIDRequest{
 		ID:         entity.WorkerID,
 		TenantInfo: tenantInfo,
 	}); err != nil {
@@ -30,7 +30,7 @@ func (s *Service) prepareRecord(
 		entity.CaseYear = yearOf(entity.OccurredAt)
 	}
 	if entity.CaseNumber <= 0 {
-		next, err := s.repo.NextCaseNumber(ctx, &repositories.NextCaseNumberRequest{
+		next, err := s.repo.NextCaseNumber(ctx, &workerports.NextCaseNumberRequest{
 			TenantInfo: tenantInfo,
 			CaseYear:   entity.CaseYear,
 		})
@@ -58,7 +58,7 @@ func (s *Service) PlanUpdateInjury(
 	ctx context.Context,
 	req *UpdateInjuryRequest,
 ) (*InjuryChange, error) {
-	original, err := s.repo.GetInjuryByID(ctx, &repositories.GetWorkerInjuryByIDRequest{
+	original, err := s.repo.GetInjuryByID(ctx, &workerports.GetWorkerInjuryByIDRequest{
 		ID:         req.InjuryID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -78,7 +78,7 @@ func (s *Service) PlanDeleteInjury(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*worker.WorkerInjury, error) {
-	return s.repo.GetInjuryByID(ctx, &repositories.GetWorkerInjuryByIDRequest{
+	return s.repo.GetInjuryByID(ctx, &workerports.GetWorkerInjuryByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})

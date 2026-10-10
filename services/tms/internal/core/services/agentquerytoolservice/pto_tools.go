@@ -7,9 +7,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -29,7 +29,7 @@ const (
 type ptoLister interface {
 	List(
 		ctx context.Context,
-		req *repositories.ListPTORequest,
+		req *workerports.ListPTORequest,
 	) (*pagination.CursorListResult[*worker.WorkerPTO], error)
 }
 
@@ -57,7 +57,7 @@ type listTimeOffTool struct {
 	pto ptoLister
 }
 
-func newListTimeOffTool(pto ptoLister) serviceports.AgentQueryTool {
+func newListTimeOffTool(pto ptoLister) agentports.AgentQueryTool {
 	return &listTimeOffTool{pto: pto}
 }
 
@@ -119,7 +119,7 @@ func (t *listTimeOffTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listTimeOffTool) Policy() serviceports.ToolPolicy {
+func (t *listTimeOffTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceWorkerPTO,
 	})
@@ -127,7 +127,7 @@ func (t *listTimeOffTool) Policy() serviceports.ToolPolicy {
 
 func (t *listTimeOffTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -138,7 +138,7 @@ func (t *listTimeOffTool) Query(
 		limit = defaultTimeOffLimit
 	}
 
-	request := &repositories.ListPTORequest{
+	request := &workerports.ListPTORequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: pagination.TenantInfo{
 				OrgID:  params.OrganizationID,
@@ -200,7 +200,7 @@ func (t *listTimeOffTool) Query(
 // otherRequests names the requests a status or leave-type filter left out, so an empty answer is not read as "nothing pending". A model that fills
 // every parameter sent type: Vacation for a personal-day request, then tried
 // each type in turn.
-func (t *listTimeOffTool) otherRequests(ctx context.Context, request *repositories.ListPTORequest) string {
+func (t *listTimeOffTool) otherRequests(ctx context.Context, request *workerports.ListPTORequest) string {
 	if request.Status == "" && request.Type == "" {
 		return ""
 	}
@@ -247,7 +247,7 @@ func (t *listTimeOffTool) otherRequests(ctx context.Context, request *repositori
 // and what keeps the answer from being last year's vacations.
 func applyTimeOffWindow(
 	params map[string]any,
-	request *repositories.ListPTORequest,
+	request *workerports.ListPTORequest,
 	criteria *filtercatalog.Criteria,
 ) {
 	from := int64(optionalInt(params, "startingFrom", 0))

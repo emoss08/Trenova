@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -16,9 +16,9 @@ const (
 
 func (s *Service) PurgeExpired(
 	ctx context.Context,
-	req services.PurgeExpiredAIFeedbackRequest,
+	req aifeedbackports.PurgeExpiredAIFeedbackRequest,
 ) (int64, error) {
-	settings, err := s.retention.Get(ctx, repositories.GetDataRetentionRequest{
+	settings, err := s.retention.Get(ctx, tenantports.GetDataRetentionRequest{
 		OrgID: req.TenantInfo.OrgID,
 		BuID:  req.TenantInfo.BuID,
 	})
@@ -37,7 +37,7 @@ func (s *Service) PurgeExpired(
 
 	var total int64
 	for range purgeMaxBatches {
-		purged, pErr := s.repo.PurgeBefore(ctx, repositories.PurgeAIFeedbackRequest{
+		purged, pErr := s.repo.PurgeBefore(ctx, aifeedbackports.PurgeAIFeedbackRequest{
 			TenantInfo: req.TenantInfo,
 			Before:     before,
 			Limit:      purgeBatchSize,

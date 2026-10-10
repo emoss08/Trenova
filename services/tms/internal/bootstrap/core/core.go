@@ -5,7 +5,6 @@ import (
 	"github.com/emoss08/trenova/internal/bootstrap/infrastructure"
 	"github.com/emoss08/trenova/internal/bootstrap/modules"
 	modulesinfra "github.com/emoss08/trenova/internal/bootstrap/modules/infrastructure"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentextensionservice"
 	"github.com/emoss08/trenova/internal/core/services/agentguard"
 	"github.com/emoss08/trenova/internal/core/services/agentruneventservice"
@@ -48,6 +47,7 @@ import (
 	reportingrender "github.com/emoss08/trenova/internal/infrastructure/reporting/render"
 	reportingresultcache "github.com/emoss08/trenova/internal/infrastructure/reporting/resultcache"
 	telematicsinfra "github.com/emoss08/trenova/internal/infrastructure/telematics"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"go.uber.org/fx"
 )
 
@@ -74,7 +74,7 @@ func OptionsFor(e *edition.Edition) fx.Option {
 		fx.Provide(encryptionservice.New),
 		fx.Provide(integrationservice.New),
 		fx.Provide(fx.Annotate(
-			func(svc *integrationservice.Service) services.FuelCardFeedResolver { return svc },
+			func(svc *integrationservice.Service) fuelpurchaseports.FuelCardFeedResolver { return svc },
 		)),
 		fuelcard.Module,
 		carrierintelinfra.Module,

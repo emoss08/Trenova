@@ -6,8 +6,9 @@ import (
 	"testing"
 	"time"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -35,8 +36,8 @@ func newEnv(t *testing.T) *testsuite.TestWorkflowEnvironment {
 	return env
 }
 
-func request() *serviceports.StructuredCompletionRequest {
-	return &serviceports.StructuredCompletionRequest{
+func request() *agentports.StructuredCompletionRequest {
+	return &agentports.StructuredCompletionRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 		System:     "Answer in JSON.",
 	}
@@ -48,7 +49,7 @@ func TestStructuredCompletionWorkflow_ReturnsTheModelsAnswer(t *testing.T) {
 	env := newEnv(t)
 	var a *Activities
 	env.OnActivity(a.CompleteStructuredActivity, mock.Anything, mock.Anything).
-		Return(&serviceports.StructuredCompletionResult{Text: `{"ok":true}`, ModelIdentifier: "m"}, nil).
+		Return(&agentports.StructuredCompletionResult{Text: `{"ok":true}`, ModelIdentifier: "m"}, nil).
 		Once()
 
 	env.ExecuteWorkflow(
@@ -58,7 +59,7 @@ func TestStructuredCompletionWorkflow_ReturnsTheModelsAnswer(t *testing.T) {
 
 	require.True(t, env.IsWorkflowCompleted())
 	require.NoError(t, env.GetWorkflowError())
-	var result serviceports.StructuredCompletionResult
+	var result agentports.StructuredCompletionResult
 	require.NoError(t, env.GetWorkflowResult(&result))
 	assert.JSONEq(t, `{"ok":true}`, result.Text)
 	env.AssertExpectations(t)
@@ -72,13 +73,13 @@ func TestStructuredCompletionWorkflow_RetriesATransientFailure(t *testing.T) {
 	var a *Activities
 	calls := 0
 	env.OnActivity(a.CompleteStructuredActivity, mock.Anything, mock.Anything).
-		Return(func(context.Context, *serviceports.StructuredCompletionRequest) (*serviceports.StructuredCompletionResult, error) {
+		Return(func(context.Context, *agentports.StructuredCompletionRequest) (*agentports.StructuredCompletionResult, error) {
 			calls++
 			if calls == 1 {
 				return nil, modelcall.Classify(context.DeadlineExceeded)
 			}
 
-			return &serviceports.StructuredCompletionResult{Text: "{}"}, nil
+			return &agentports.StructuredCompletionResult{Text: "{}"}, nil
 		})
 
 	env.ExecuteWorkflow(
@@ -99,7 +100,7 @@ func TestStructuredCompletionWorkflow_DoesNotRetryARejection(t *testing.T) {
 	var a *Activities
 	calls := 0
 	env.OnActivity(a.CompleteStructuredActivity, mock.Anything, mock.Anything).
-		Return(func(context.Context, *serviceports.StructuredCompletionRequest) (*serviceports.StructuredCompletionResult, error) {
+		Return(func(context.Context, *agentports.StructuredCompletionRequest) (*agentports.StructuredCompletionResult, error) {
 			calls++
 
 			return nil, modelcall.Classify(rejected{})
@@ -114,7 +115,7 @@ func TestStructuredCompletionWorkflow_DoesNotRetryARejection(t *testing.T) {
 	require.Error(t, err)
 	assert.Equal(t, 1, calls)
 
-	var failure serviceports.ProviderFailure
+	var failure agentports.ProviderFailure
 	require.ErrorAs(t, modelcall.Err(err), &failure)
 	assert.Equal(t, http.StatusBadRequest, failure.ProviderStatus())
 }
@@ -147,7 +148,7 @@ func TestTestAIProviderWorkflow_ProbesOnce(t *testing.T) {
 	var a *Activities
 	calls := 0
 	env.OnActivity(a.TestAIProviderActivity, mock.Anything, mock.Anything).
-		Return(func(context.Context, *TestAIProviderPayload) (*serviceports.TestAIProviderResult, error) {
+		Return(func(context.Context, *TestAIProviderPayload) (*agentports.TestAIProviderResult, error) {
 			calls++
 
 			return nil, modelcall.Classify(context.DeadlineExceeded)
@@ -165,13 +166,13 @@ func TestWriteBriefingWorkflow_ReturnsWhatWasWritten(t *testing.T) {
 	env := newEnv(t)
 	var a *Activities
 	env.OnActivity(a.WriteBriefingActivity, mock.Anything, mock.Anything).
-		Return(&serviceports.WriteBriefingResult{Written: 1, Narrated: 1}, nil).
+		Return(&briefingports.WriteBriefingResult{Written: 1, Narrated: 1}, nil).
 		Once()
 
 	env.ExecuteWorkflow(WriteBriefingWorkflow, &WriteBriefingPayload{})
 
 	require.NoError(t, env.GetWorkflowError())
-	var result serviceports.WriteBriefingResult
+	var result briefingports.WriteBriefingResult
 	require.NoError(t, env.GetWorkflowResult(&result))
 	assert.Equal(t, 1, result.Written)
 }

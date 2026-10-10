@@ -3,9 +3,10 @@ package edijobs
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/ediinboundservice"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -15,18 +16,18 @@ type ActivitiesParams struct {
 
 	EDIService        *ediservice.Service
 	InboundService    *ediinboundservice.Service
-	DataRetentionRepo repositories.DataRetentionRepository
-	InboundFileRepo   repositories.EDIInboundFileRepository
-	MessageRepo       repositories.EDIMessageRepository
+	DataRetentionRepo tenantports.DataRetentionRepository
+	InboundFileRepo   ediports.EDIInboundFileRepository
+	MessageRepo       ediports.EDIMessageRepository
 	Logger            *zap.Logger
 }
 
 type Activities struct {
 	ediService        *ediservice.Service
 	inboundService    *ediinboundservice.Service
-	dataRetentionRepo repositories.DataRetentionRepository
-	inboundFileRepo   repositories.EDIInboundFileRepository
-	messageRepo       repositories.EDIMessageRepository
+	dataRetentionRepo tenantports.DataRetentionRepository
+	inboundFileRepo   ediports.EDIInboundFileRepository
+	messageRepo       ediports.EDIMessageRepository
 	logger            *zap.Logger
 }
 

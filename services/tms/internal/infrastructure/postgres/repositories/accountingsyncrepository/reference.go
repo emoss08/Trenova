@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/uptrace/bun"
@@ -34,7 +34,7 @@ type referenceRepository struct {
 	l  *zap.Logger
 }
 
-func NewReferenceRepository(p ReferenceParams) repositories.AccountingReferenceObjectRepository {
+func NewReferenceRepository(p ReferenceParams) accountingsyncports.AccountingReferenceObjectRepository {
 	return &referenceRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.accounting-reference-repository"),
@@ -43,7 +43,7 @@ func NewReferenceRepository(p ReferenceParams) repositories.AccountingReferenceO
 
 func (r *referenceRepository) Upsert(
 	ctx context.Context,
-	req *repositories.UpsertAccountingReferenceObjectsRequest,
+	req *accountingsyncports.UpsertAccountingReferenceObjectsRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if len(req.Objects) == 0 {
@@ -103,7 +103,7 @@ func (r *referenceRepository) Upsert(
 
 func (r *referenceRepository) MarkRemoved(
 	ctx context.Context,
-	req *repositories.MarkAccountingReferencesRemovedRequest,
+	req *accountingsyncports.MarkAccountingReferencesRemovedRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
 		if len(req.ExternalIDs) == 0 {
@@ -134,7 +134,7 @@ func (r *referenceRepository) MarkRemoved(
 
 func (r *referenceRepository) MarkRemovedUnseen(
 	ctx context.Context,
-	req *repositories.MarkAccountingReferenceRemovedRequest,
+	req *accountingsyncports.MarkAccountingReferenceRemovedRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
 		cols := buncolgen.AccountingReferenceObjectColumns
@@ -161,7 +161,7 @@ func (r *referenceRepository) MarkRemovedUnseen(
 
 func (r *referenceRepository) ListByKind(
 	ctx context.Context,
-	req *repositories.ListAccountingReferenceObjectsRequest,
+	req *accountingsyncports.ListAccountingReferenceObjectsRequest,
 ) ([]*accountingsync.AccountingReferenceObject, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*accountingsync.AccountingReferenceObject, error) {
 		entities := make([]*accountingsync.AccountingReferenceObject, 0)
@@ -187,7 +187,7 @@ func (r *referenceRepository) ListByKind(
 
 func (r *referenceRepository) Search(
 	ctx context.Context,
-	req *repositories.SearchAccountingReferenceObjectsRequest,
+	req *accountingsyncports.SearchAccountingReferenceObjectsRequest,
 ) ([]*accountingsync.AccountingReferenceObject, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*accountingsync.AccountingReferenceObject, error) {
 		limit := req.Limit
@@ -233,7 +233,7 @@ func (r *referenceRepository) Search(
 
 func (r *referenceRepository) GetByExternalIDs(
 	ctx context.Context,
-	req *repositories.GetAccountingReferenceObjectsRequest,
+	req *accountingsyncports.GetAccountingReferenceObjectsRequest,
 ) ([]*accountingsync.AccountingReferenceObject, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*accountingsync.AccountingReferenceObject, error) {
 		if len(req.ExternalIDs) == 0 {

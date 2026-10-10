@@ -9,8 +9,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	accountingcontrol "github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -24,7 +24,7 @@ type ValidatorParams struct {
 	fx.In
 
 	DB              *postgres.Connection
-	IntegrationRepo repositories.IntegrationRepository
+	IntegrationRepo integrationports.IntegrationRepository
 }
 
 type Validator struct {
@@ -55,7 +55,7 @@ func newValidatorBuilder() *validationframework.TenantedValidatorBuilder[*accoun
 }
 
 func newValidatorBuilderWithIntegrationRepo(
-	integrationRepo repositories.IntegrationRepository,
+	integrationRepo integrationports.IntegrationRepository,
 ) *validationframework.TenantedValidatorBuilder[*accountingcontrol.AccountingControl] {
 	return validationframework.
 		NewTenantedValidatorBuilder[*accountingcontrol.AccountingControl]().
@@ -333,7 +333,7 @@ func createManualJournalEntryRule() validationframework.TenantedRule[*accounting
 }
 
 func createCurrencyRule(
-	integrationRepo repositories.IntegrationRepository,
+	integrationRepo integrationports.IntegrationRepository,
 ) validationframework.TenantedRule[*accountingcontrol.AccountingControl] {
 	return validationframework.NewTenantedRule[*accountingcontrol.AccountingControl]("currency").
 		OnUpdate().
@@ -399,7 +399,7 @@ func createCurrencyRule(
 
 func requireEnabledOANDAIntegration(
 	ctx context.Context,
-	integrationRepo repositories.IntegrationRepository,
+	integrationRepo integrationports.IntegrationRepository,
 	entity *accountingcontrol.AccountingControl,
 	multiErr *errortypes.MultiError,
 ) error {

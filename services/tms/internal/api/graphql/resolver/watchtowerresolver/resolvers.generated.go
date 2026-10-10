@@ -4,12 +4,12 @@ package watchtowerresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	services "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 )
 
 type Deps struct {
 	*base.Core
-	WatchtowerService services.WatchtowerService
+	WatchtowerService watchtowerports.WatchtowerService
 }
 
 type MutationResolver struct{ *Deps }

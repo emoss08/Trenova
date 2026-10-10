@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -81,7 +81,7 @@ func (a *Activities) refreshTrainingRollups(ctx context.Context, state *training
 
 type trainingLister func(
 	ctx context.Context,
-	req *repositories.ListTrainingRemindersRequest,
+	req *workerports.ListTrainingRemindersRequest,
 ) ([]*worker.WorkerTrainingRecord, error)
 
 func (a *Activities) walkTraining(
@@ -92,7 +92,7 @@ func (a *Activities) walkTraining(
 ) error {
 	var after pulid.ID
 	for {
-		page, err := list(ctx, &repositories.ListTrainingRemindersRequest{
+		page, err := list(ctx, &workerports.ListTrainingRemindersRequest{
 			HorizonDays: sweepHorizonDays,
 			GraceDays:   sweepGraceDays,
 			AfterID:     after,

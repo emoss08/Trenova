@@ -10,8 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -49,10 +49,10 @@ type sourceWork struct {
 	retryAt int64
 }
 
-func (w *sourceWork) ref() repositories.AIRetrievalSourceRef {
+func (w *sourceWork) ref() agentports.AIRetrievalSourceRef {
 	key := w.entry.Key()
 
-	return repositories.AIRetrievalSourceRef{
+	return agentports.AIRetrievalSourceRef{
 		TenantInfo: key.TenantInfo(),
 		SourceType: w.entry.SourceType,
 		SourceID:   w.entry.SourceID,
@@ -134,7 +134,7 @@ func (b *indexBatch) readMemories(ctx context.Context) error {
 		return nil
 	}
 
-	memories, err := b.service.sources.GetMemories(ctx, repositories.RetrievalSourcesRequest{
+	memories, err := b.service.sources.GetMemories(ctx, agentports.RetrievalSourcesRequest{
 		TenantInfo: b.tenant,
 		IDs:        ids,
 	})
@@ -167,7 +167,7 @@ func (b *indexBatch) readDocuments(ctx context.Context) error {
 		return nil
 	}
 
-	sources, err := b.service.sources.GetDocuments(ctx, &repositories.RetrievalDocumentsRequest{
+	sources, err := b.service.sources.GetDocuments(ctx, &agentports.RetrievalDocumentsRequest{
 		TenantInfo:   b.tenant,
 		IDs:          ids,
 		IncludePages: true,
@@ -176,7 +176,7 @@ func (b *indexBatch) readDocuments(ctx context.Context) error {
 		return fmt.Errorf("read documents: %w", err)
 	}
 
-	found := make(map[pulid.ID]*repositories.RetrievalDocumentSource, len(sources))
+	found := make(map[pulid.ID]*agentports.RetrievalDocumentSource, len(sources))
 	for _, source := range sources {
 		found[source.Document.ID] = source
 	}
@@ -208,7 +208,7 @@ func (b *indexBatch) readMessages(ctx context.Context) error {
 
 	messages, err := b.service.sources.GetInboundMessages(
 		ctx,
-		repositories.RetrievalSourcesRequest{TenantInfo: b.tenant, IDs: ids},
+		agentports.RetrievalSourcesRequest{TenantInfo: b.tenant, IDs: ids},
 	)
 	if err != nil {
 		return fmt.Errorf("read inbound messages: %w", err)
@@ -259,7 +259,7 @@ func (b *indexBatch) diff(ctx context.Context) error {
 
 		stored, err := b.service.repo.ListChunkHashes(
 			ctx,
-			&repositories.ListEmbeddingChunkHashesRequest{
+			&agentports.ListEmbeddingChunkHashesRequest{
 				Source:   work.ref(),
 				ModelKey: b.modelKey,
 			},
@@ -274,7 +274,7 @@ func (b *indexBatch) diff(ctx context.Context) error {
 	return nil
 }
 
-func ChangedChunks(chunks []Chunk, stored []repositories.EmbeddingChunkHash) []int {
+func ChangedChunks(chunks []Chunk, stored []agentports.EmbeddingChunkHash) []int {
 	hashes := make(map[int]string, len(stored))
 	for _, chunk := range stored {
 		hashes[chunk.ChunkIndex] = chunk.ContentHash
@@ -308,9 +308,9 @@ func (b *indexBatch) embed(ctx context.Context) {
 		return
 	}
 
-	result, err := b.service.embeddings.Embed(ctx, &serviceports.EmbedRequest{
+	result, err := b.service.embeddings.Embed(ctx, &aiusageports.EmbedRequest{
 		TenantInfo: b.tenant,
-		Purpose:    serviceports.EmbeddingPurposeDocument,
+		Purpose:    aiusageports.EmbeddingPurposeDocument,
 		Inputs:     inputs,
 		ModelKey:   b.modelKey,
 		Surface:    aiusage.SurfaceIndexing,
@@ -320,7 +320,7 @@ func (b *indexBatch) embed(ctx context.Context) {
 	}
 	if err == nil && len(result.Vectors) != len(inputs) {
 		err = fmt.Errorf("%w: %d vectors for %d inputs",
-			serviceports.ErrEmbeddingResponseInvalid, len(result.Vectors), len(inputs))
+			aiusageports.ErrEmbeddingResponseInvalid, len(result.Vectors), len(inputs))
 	}
 	if err != nil {
 		b.failEmbedding(err, owners)
@@ -344,7 +344,7 @@ func (b *indexBatch) failEmbedding(err error, owners []*sourceWork) {
 	)
 
 	permanent := errortypes.IsBusinessError(err) &&
-		!errors.Is(err, serviceports.ErrNoProviderConfigured)
+		!errors.Is(err, agentports.ErrNoProviderConfigured)
 	for _, work := range owners {
 		if work.outcome == outcomeFailed {
 			continue
@@ -370,9 +370,9 @@ func (b *indexBatch) write(ctx context.Context) error {
 				return err
 			}
 		case outcomeIndexed:
-			chunks := make([]repositories.EmbeddingChunk, 0, len(work.chunks))
+			chunks := make([]agentports.EmbeddingChunk, 0, len(work.chunks))
 			for idx, chunk := range work.chunks {
-				chunks = append(chunks, repositories.EmbeddingChunk{
+				chunks = append(chunks, agentports.EmbeddingChunk{
 					ChunkIndex:  chunk.Index,
 					ContentHash: chunk.Hash,
 					Vector:      work.vectors[idx],
@@ -391,9 +391,9 @@ func (b *indexBatch) write(ctx context.Context) error {
 func (b *indexBatch) replace(
 	ctx context.Context,
 	work *sourceWork,
-	chunks []repositories.EmbeddingChunk,
+	chunks []agentports.EmbeddingChunk,
 ) error {
-	_, err := b.service.repo.ReplaceChunks(ctx, &repositories.ReplaceEmbeddingChunksRequest{
+	_, err := b.service.repo.ReplaceChunks(ctx, &agentports.ReplaceEmbeddingChunksRequest{
 		Source:     work.ref(),
 		ModelKey:   b.modelKey,
 		Dimensions: b.dimensions,
@@ -410,13 +410,13 @@ func (b *indexBatch) replace(
 	}
 }
 
-func (b *indexBatch) outcomes(outcome sourceOutcome) []repositories.IndexEntryOutcome {
-	outcomes := make([]repositories.IndexEntryOutcome, 0, len(b.works))
+func (b *indexBatch) outcomes(outcome sourceOutcome) []agentports.IndexEntryOutcome {
+	outcomes := make([]agentports.IndexEntryOutcome, 0, len(b.works))
 	for _, work := range b.works {
 		if work.outcome != outcome {
 			continue
 		}
-		outcomes = append(outcomes, repositories.IndexEntryOutcome{
+		outcomes = append(outcomes, agentports.IndexEntryOutcome{
 			Key:        work.entry.Key(),
 			Generation: work.entry.Generation,
 			ChunkCount: len(work.chunks),
@@ -431,7 +431,7 @@ func (b *indexBatch) outcomes(outcome sourceOutcome) []repositories.IndexEntryOu
 func (b *indexBatch) mark(ctx context.Context) error {
 	marks := []struct {
 		outcome sourceOutcome
-		apply   func(context.Context, repositories.MarkIndexEntriesRequest) (repositories.MarkIndexEntriesResult, error)
+		apply   func(context.Context, agentports.MarkIndexEntriesRequest) (agentports.MarkIndexEntriesResult, error)
 	}{
 		{outcome: outcomeIndexed, apply: b.service.repo.MarkIndexed},
 		{outcome: outcomeSkipped, apply: b.service.repo.MarkSkipped},
@@ -443,7 +443,7 @@ func (b *indexBatch) mark(ctx context.Context) error {
 		if len(outcomes) == 0 {
 			continue
 		}
-		applied, err := mark.apply(ctx, repositories.MarkIndexEntriesRequest{
+		applied, err := mark.apply(ctx, agentports.MarkIndexEntriesRequest{
 			Outcomes: outcomes,
 			Now:      b.service.now(),
 		})
@@ -456,7 +456,7 @@ func (b *indexBatch) mark(ctx context.Context) error {
 	return nil
 }
 
-func (b *indexBatch) fill(result *serviceports.RetrievalIndexBatchResult) {
+func (b *indexBatch) fill(result *agentports.RetrievalIndexBatchResult) {
 	for _, work := range b.works {
 		switch work.outcome {
 		case outcomeIndexed:

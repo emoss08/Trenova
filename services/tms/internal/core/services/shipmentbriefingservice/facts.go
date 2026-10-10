@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentbrief"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -52,20 +52,20 @@ func (f Facts) Filters() []shipment.QuickFilter {
 	return out
 }
 
-func text(value string) services.ShipmentBriefingSegment {
-	return services.ShipmentBriefingSegment{Text: value}
+func text(value string) shipmentbriefports.ShipmentBriefingSegment {
+	return shipmentbriefports.ShipmentBriefingSegment{Text: value}
 }
 
-func linked(value string, filter shipment.QuickFilter) services.ShipmentBriefingSegment {
-	return services.ShipmentBriefingSegment{Text: value, Filter: &filter}
+func linked(value string, filter shipment.QuickFilter) shipmentbriefports.ShipmentBriefingSegment {
+	return shipmentbriefports.ShipmentBriefingSegment{Text: value, Filter: &filter}
 }
 
 func loads(count int) string {
 	return stringutils.CountNoun(count, "load", "loads")
 }
 
-func joinClauses(clauses [][]services.ShipmentBriefingSegment) []services.ShipmentBriefingSegment {
-	segments := make([]services.ShipmentBriefingSegment, 0, len(clauses)*2+1)
+func joinClauses(clauses [][]shipmentbriefports.ShipmentBriefingSegment) []shipmentbriefports.ShipmentBriefingSegment {
+	segments := make([]shipmentbriefports.ShipmentBriefingSegment, 0, len(clauses)*2+1)
 	for i, clause := range clauses {
 		switch {
 		case i == 0:
@@ -82,28 +82,28 @@ func joinClauses(clauses [][]services.ShipmentBriefingSegment) []services.Shipme
 	return segments
 }
 
-func Deterministic(f Facts) []services.ShipmentBriefingSegment {
+func Deterministic(f Facts) []shipmentbriefports.ShipmentBriefingSegment {
 	if f.DeliveringToday == 0 && f.Moving == 0 && f.Late == 0 && f.Uncovered == 0 &&
 		f.Detention == 0 && f.ReadyToBill == 0 {
-		return []services.ShipmentBriefingSegment{text("Nothing on the board needs you right now.")}
+		return []shipmentbriefports.ShipmentBriefingSegment{text("Nothing on the board needs you right now.")}
 	}
 
-	board := make([][]services.ShipmentBriefingSegment, 0, 3)
+	board := make([][]shipmentbriefports.ShipmentBriefingSegment, 0, 3)
 	if f.DeliveringToday > 0 {
-		board = append(board, []services.ShipmentBriefingSegment{linked(
+		board = append(board, []shipmentbriefports.ShipmentBriefingSegment{linked(
 			loads(f.DeliveringToday)+" "+
 				stringutils.Pluralize("delivers", "deliver", f.DeliveringToday)+" today",
 			shipment.QuickFilterDeliveringToday,
 		)})
 	}
 	if f.Moving > 0 {
-		board = append(board, []services.ShipmentBriefingSegment{linked(
+		board = append(board, []shipmentbriefports.ShipmentBriefingSegment{linked(
 			loads(f.Moving)+" "+stringutils.Pluralize("is", "are", f.Moving)+" moving on schedule",
 			shipment.QuickFilterMoving,
 		)})
 	}
 	if f.Late > 0 {
-		clause := []services.ShipmentBriefingSegment{linked(
+		clause := []shipmentbriefports.ShipmentBriefingSegment{linked(
 			loads(f.Late)+" "+stringutils.Pluralize("is", "are", f.Late)+" late",
 			shipment.QuickFilterLate,
 		)}
@@ -113,23 +113,23 @@ func Deterministic(f Facts) []services.ShipmentBriefingSegment {
 		board = append(board, clause)
 	}
 
-	followUp := make([][]services.ShipmentBriefingSegment, 0, 3)
+	followUp := make([][]shipmentbriefports.ShipmentBriefingSegment, 0, 3)
 	if f.Uncovered > 0 {
-		followUp = append(followUp, []services.ShipmentBriefingSegment{linked(
+		followUp = append(followUp, []shipmentbriefports.ShipmentBriefingSegment{linked(
 			loads(f.Uncovered)+" still "+stringutils.Pluralize("needs", "need", f.Uncovered)+" "+
 				f.OperationType.CoverageNoun(),
 			shipment.QuickFilterUncovered,
 		)})
 	}
 	if f.Detention > 0 {
-		followUp = append(followUp, []services.ShipmentBriefingSegment{linked(
+		followUp = append(followUp, []shipmentbriefports.ShipmentBriefingSegment{linked(
 			loads(f.Detention)+" "+stringutils.Pluralize("is", "are", f.Detention)+
 				" accruing detention",
 			shipment.QuickFilterDetention,
 		)})
 	}
 	if f.ReadyToBill > 0 {
-		followUp = append(followUp, []services.ShipmentBriefingSegment{linked(
+		followUp = append(followUp, []shipmentbriefports.ShipmentBriefingSegment{linked(
 			loads(f.ReadyToBill)+" "+stringutils.Pluralize("is", "are", f.ReadyToBill)+
 				" ready to bill",
 			shipment.QuickFilterReadyToBill,

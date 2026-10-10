@@ -4,12 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/memtable"
@@ -20,14 +19,14 @@ import (
 func TestToolPolicyViewToModel(t *testing.T) {
 	t.Parallel()
 
-	condition := &services.TierCondition{
+	condition := &agentports.TierCondition{
 		Description: "Runs only as far as its mailbox allows.",
-		Limit: func(context.Context, services.ToolExecuteParams) agent.AutonomyTier {
+		Limit: func(context.Context, agentports.ToolExecuteParams) agent.AutonomyTier {
 			return agent.TierPropose
 		},
 	}
-	view := services.AgentToolPolicyView{
-		Policy: services.ToolPolicy{
+	view := agentports.AgentToolPolicyView{
+		Policy: agentports.ToolPolicy{
 			Name:          "reply_to_inbound_message",
 			Kind:          agent.ToolKindAction,
 			Scope:         agent.ToolScopeTenant,
@@ -41,7 +40,7 @@ func TestToolPolicyViewToModel(t *testing.T) {
 			Rationale:     "A reply reaches the sender.",
 		},
 		Title: "Reply to inbound message",
-		Needs: &services.ToolGrant{
+		Needs: &agentports.ToolGrant{
 			Resource:  permission.ResourceInboundMessage,
 			Operation: permission.OpUpdate,
 		},
@@ -71,8 +70,8 @@ func TestToolPolicyViewToModel(t *testing.T) {
 	assert.Equal(t, agent.EgressExternalRecipient, model.Egress[0],
 		"the model keeps its own copy of the classes")
 
-	selfScoped := ToolPolicyViewToModel(&services.AgentToolPolicyView{
-		Policy: services.ToolPolicy{Name: "add_home_widget", Kind: agent.ToolKindAction},
+	selfScoped := ToolPolicyViewToModel(&agentports.AgentToolPolicyView{
+		Policy: agentports.ToolPolicy{Name: "add_home_widget", Kind: agent.ToolKindAction},
 	})
 	assert.Nil(t, selfScoped.Needs)
 	assert.Nil(t, selfScoped.Source)

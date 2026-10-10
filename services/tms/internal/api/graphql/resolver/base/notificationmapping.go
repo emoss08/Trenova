@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -13,7 +13,7 @@ type NotificationActionParams struct {
 	IDs          []string
 	TenantInfo   pagination.TenantInfo
 	PersonalOnly bool
-	Action       func(context.Context, repositories.NotificationActionRequest) error
+	Action       func(context.Context, notificationports.NotificationActionRequest) error
 }
 
 func (r *Core) ApplyNotificationAction(
@@ -25,7 +25,7 @@ func (r *Core) ApplyNotificationAction(
 		return false, err
 	}
 
-	if err = params.Action(ctx, repositories.NotificationActionRequest{
+	if err = params.Action(ctx, notificationports.NotificationActionRequest{
 		IDs:          notificationIDs,
 		TenantInfo:   params.TenantInfo,
 		PersonalOnly: params.PersonalOnly,
@@ -37,7 +37,7 @@ func (r *Core) ApplyNotificationAction(
 }
 
 func ApplyNotificationFilter(
-	req *repositories.ListNotificationConnectionRequest,
+	req *notificationports.ListNotificationConnectionRequest,
 	filter *gqlmodel.NotificationFilterInput,
 ) {
 	if filter == nil {

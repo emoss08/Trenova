@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -33,7 +33,7 @@ func (s *Service) invoice(
 		return subject, nil
 	}
 
-	found, err := s.invoices.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+	found, err := s.invoices.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         invoiceID,
 		TenantInfo: tenant,
 	})
@@ -81,7 +81,7 @@ func (s *Service) invoiceDispute(
 		return subject, nil
 	}
 
-	found, err := s.disputes.GetByID(ctx, repositories.GetInvoiceDisputeByIDRequest{
+	found, err := s.disputes.GetByID(ctx, invoiceports.GetInvoiceDisputeByIDRequest{
 		ID:         disputeID,
 		TenantInfo: tenant,
 	})
@@ -102,7 +102,7 @@ func (s *Service) invoiceDispute(
 		noteCustomerID:    found.CustomerID,
 	}
 	if s.invoices != nil {
-		billed, invErr := s.invoices.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+		billed, invErr := s.invoices.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 			ID:         found.InvoiceID,
 			TenantInfo: tenant,
 		})

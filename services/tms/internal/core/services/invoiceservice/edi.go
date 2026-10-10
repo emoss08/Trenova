@@ -4,13 +4,15 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs/billingcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs/billingcontract"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -35,9 +37,9 @@ const (
 // partner, so a page of invoices costs a handful of queries.
 func (s *Service) ResolveEDISendPlans(
 	ctx context.Context,
-	req *servicesports.ResolveInvoiceEDISendPlansRequest,
-) (map[pulid.ID]*servicesports.InvoiceEDISendPlan, error) {
-	plans := make(map[pulid.ID]*servicesports.InvoiceEDISendPlan, len(req.Invoices))
+	req *invoiceports.ResolveInvoiceEDISendPlansRequest,
+) (map[pulid.ID]*invoiceports.InvoiceEDISendPlan, error) {
+	plans := make(map[pulid.ID]*invoiceports.InvoiceEDISendPlan, len(req.Invoices))
 	if len(req.Invoices) == 0 {
 		return plans, nil
 	}
@@ -48,7 +50,7 @@ func (s *Service) ResolveEDISendPlans(
 			if inv == nil {
 				continue
 			}
-			plans[inv.ID] = &servicesports.InvoiceEDISendPlan{
+			plans[inv.ID] = &invoiceports.InvoiceEDISendPlan{
 				InvoiceID: inv.ID,
 				Status:    inv.EDISendStatus,
 				Blockers:  []string{ediBlockerNotWired},
@@ -70,10 +72,10 @@ func (s *Service) ResolveEDISendPlans(
 		customerIDs = append(customerIDs, inv.CustomerID)
 	}
 
-	customers, err := s.customerRepo.GetByIDs(ctx, repositories.GetCustomersByIDsRequest{
+	customers, err := s.customerRepo.GetByIDs(ctx, customerports.GetCustomersByIDsRequest{
 		TenantInfo:            req.TenantInfo,
 		CustomerIDs:           customerIDs,
-		CustomerFilterOptions: repositories.CustomerFilterOptions{IncludeBillingProfile: true},
+		CustomerFilterOptions: customerports.CustomerFilterOptions{IncludeBillingProfile: true},
 	})
 	if err != nil {
 		return nil, err
@@ -133,7 +135,7 @@ func (s *Service) outboundPartnersByCustomer(
 	}
 	partners, err := s.ediPartnerRepo.ListOutboundPartnersByCustomerIDs(
 		ctx,
-		repositories.ListEDIPartnersByCustomerIDsRequest{
+		ediports.ListEDIPartnersByCustomerIDsRequest{
 			CustomerIDs: customerIDs,
 			TenantInfo:  tenantInfo,
 		},
@@ -164,7 +166,7 @@ func (s *Service) resolvePartnerTarget(
 	if s.ediDocumentProfileRepo != nil {
 		profile, err := s.ediDocumentProfileRepo.GetActivePartnerDocumentProfile(
 			ctx,
-			repositories.GetActiveEDIPartnerDocumentProfileRequest{
+			ediports.GetActiveEDIPartnerDocumentProfileRequest{
 				PartnerID:      partner.ID,
 				TenantInfo:     tenantInfo,
 				TransactionSet: edi.TransactionSet210,
@@ -193,7 +195,7 @@ func (s *Service) resolvePartnerTarget(
 	}
 	commProfile, err := s.ediCommunicationProfileRepo.GetActiveProfileByPartner(
 		ctx,
-		repositories.GetActiveEDICommunicationProfileByPartnerRequest{
+		ediports.GetActiveEDICommunicationProfileByPartnerRequest{
 			PartnerID:  partner.ID,
 			TenantInfo: tenantInfo,
 		},
@@ -214,8 +216,8 @@ func buildEDISendPlan(
 	inv *invoice.Invoice,
 	profile *customer.CustomerBillingProfile,
 	target *ediPartnerTarget,
-) *servicesports.InvoiceEDISendPlan {
-	plan := &servicesports.InvoiceEDISendPlan{
+) *invoiceports.InvoiceEDISendPlan {
+	plan := &invoiceports.InvoiceEDISendPlan{
 		InvoiceID:     inv.ID,
 		Status:        inv.EDISendStatus,
 		LastMessageID: inv.LastEDIMessageID,
@@ -258,9 +260,9 @@ func buildEDISendPlan(
 // that already went, which is what a partner asks for after losing a file.
 func (s *Service) SendEDI(
 	ctx context.Context,
-	req *servicesports.SendInvoiceEDIRequest,
-	actor *servicesports.RequestActor,
-) (*servicesports.InvoiceEDISendResult, error) {
+	req *invoiceports.SendInvoiceEDIRequest,
+	actor *permissionports.RequestActor,
+) (*invoiceports.InvoiceEDISendResult, error) {
 	entity, _, err := s.planEDISend(ctx, req, actor)
 	if err != nil {
 		return nil, err
@@ -276,12 +278,12 @@ func (s *Service) enqueueEDIAfterPost(
 	ctx context.Context,
 	entity *invoice.Invoice,
 	tenantInfo pagination.TenantInfo,
-	actor *servicesports.RequestActor,
+	actor *permissionports.RequestActor,
 ) {
 	if entity == nil || s.ediPartnerRepo == nil {
 		return
 	}
-	plans, err := s.ResolveEDISendPlans(ctx, &servicesports.ResolveInvoiceEDISendPlansRequest{
+	plans, err := s.ResolveEDISendPlans(ctx, &invoiceports.ResolveInvoiceEDISendPlansRequest{
 		TenantInfo: tenantInfo,
 		Invoices:   []*invoice.Invoice{entity},
 	})
@@ -316,13 +318,13 @@ func (s *Service) startEDISendWorkflow(
 	ctx context.Context,
 	entity *invoice.Invoice,
 	tenantInfo pagination.TenantInfo,
-	actor *servicesports.RequestActor,
+	actor *permissionports.RequestActor,
 	force bool,
-) (*servicesports.InvoiceEDISendResult, error) {
+) (*invoiceports.InvoiceEDISendResult, error) {
 	if s.workflowStarter == nil || !s.workflowStarter.Enabled() {
 		return nil, errortypes.NewBusinessError(
 			"Invoice EDI delivery requires workflow processing to be enabled",
-		).WithInternal(servicesports.ErrWorkflowStarterDisabled)
+		).WithInternal(kernelports.ErrWorkflowStarterDisabled)
 	}
 	auditActor := actor.AuditActorOrSystem()
 	run, err := s.workflowStarter.StartWorkflow(
@@ -357,7 +359,7 @@ func (s *Service) startEDISendWorkflow(
 	}
 	s.recordEDIStatus(ctx, entity, tenantInfo, invoice.EDISendStatusQueued, "")
 
-	return &servicesports.InvoiceEDISendResult{
+	return &invoiceports.InvoiceEDISendResult{
 		InvoiceID:     entity.ID,
 		Status:        invoice.EDISendStatusQueued,
 		WorkflowID:    run.GetID(),
@@ -372,7 +374,7 @@ func (s *Service) recordEDIStatus(
 	status invoice.EDISendStatus,
 	reason string,
 ) {
-	if err := s.repo.UpdateEDISendStatus(ctx, repositories.UpdateInvoiceEDISendStatusRequest{
+	if err := s.repo.UpdateEDISendStatus(ctx, invoiceports.UpdateInvoiceEDISendStatusRequest{
 		TenantInfo: tenantInfo,
 		InvoiceID:  entity.ID,
 		MessageID:  entity.LastEDIMessageID,

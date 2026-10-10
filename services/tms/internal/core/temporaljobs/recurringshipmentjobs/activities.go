@@ -7,10 +7,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/recurringshipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/recurringshipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -36,18 +37,18 @@ const (
 type ActivitiesParams struct {
 	fx.In
 
-	Repo                repositories.RecurringShipmentRepository
-	AuditService        services.AuditService
+	Repo                recurringshipmentports.RecurringShipmentRepository
+	AuditService        auditports.AuditService
 	NotificationService *notificationservice.Service
-	Invalidator         services.ShipmentInvalidator
+	Invalidator         shipmentports.ShipmentInvalidator
 	Logger              *zap.Logger
 }
 
 type Activities struct {
-	repo         repositories.RecurringShipmentRepository
-	auditService services.AuditService
+	repo         recurringshipmentports.RecurringShipmentRepository
+	auditService auditports.AuditService
 	notification *notificationservice.Service
-	invalidator  services.ShipmentInvalidator
+	invalidator  shipmentports.ShipmentInvalidator
 	logger       *zap.Logger
 }
 
@@ -67,7 +68,7 @@ func (a *Activities) DispatchDueRecurringShipmentsActivity(
 	result := &DispatchDueRecurringShipmentsResult{}
 	now := timeutils.NowUnix()
 
-	due, err := a.repo.ListDue(ctx, &repositories.ListDueRecurringShipmentsRequest{
+	due, err := a.repo.ListDue(ctx, &recurringshipmentports.ListDueRecurringShipmentsRequest{
 		Now:   now,
 		Limit: maxDueSeriesPerTick,
 	})
@@ -103,7 +104,7 @@ func (a *Activities) dispatchSeries(
 	}
 	tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
 
-	generation, err := a.repo.Generate(tenantCtx, &repositories.GenerateRecurringShipmentRequest{
+	generation, err := a.repo.Generate(tenantCtx, &recurringshipmentports.GenerateRecurringShipmentRequest{
 		TenantInfo:          tenantInfo,
 		RecurringShipmentID: series.ID,
 		Trigger:             recurringshipment.RunTriggerAuto,
@@ -144,7 +145,7 @@ func (a *Activities) dispatchSeries(
 	result.Dispatched++
 
 	if auditErr := a.auditService.LogAction(
-		&services.LogActionParams{
+		&auditports.LogActionParams{
 			Resource:       permission.ResourceShipment,
 			ResourceID:     generation.Shipment.GetID().String(),
 			Operation:      permission.OpCreate,
@@ -160,7 +161,7 @@ func (a *Activities) dispatchSeries(
 		log.Error("failed to log generated shipment audit action", zap.Error(auditErr))
 	}
 
-	services.InvalidateShipments(tenantCtx, a.invalidator, &services.ShipmentInvalidation{
+	shipmentports.InvalidateShipments(tenantCtx, a.invalidator, &shipmentports.ShipmentInvalidation{
 		OrganizationID: generation.Shipment.OrganizationID,
 		BusinessUnitID: generation.Shipment.BusinessUnitID,
 		Action:         "created",
@@ -184,7 +185,7 @@ func (a *Activities) recordFailure(
 
 	updated, err := a.repo.RecordGenerationFailure(
 		ctx,
-		&repositories.RecordRecurringGenerationFailureRequest{
+		&recurringshipmentports.RecordRecurringGenerationFailureRequest{
 			TenantInfo:          tenantInfo,
 			RecurringShipmentID: series.ID,
 			OccurrenceAt:        occurrenceAt,

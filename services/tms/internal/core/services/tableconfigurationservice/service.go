@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/tableconfiguration"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/tableconfigurationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,12 +16,12 @@ type Params struct {
 	fx.In
 
 	Logger *zap.Logger
-	Repo   repositories.TableConfigurationRepository
+	Repo   tableconfigurationports.TableConfigurationRepository
 }
 
 type Service struct {
 	l    *zap.Logger
-	repo repositories.TableConfigurationRepository
+	repo tableconfigurationports.TableConfigurationRepository
 }
 
 func New(p Params) *Service {
@@ -89,7 +89,7 @@ func (s *Service) Update(
 		return nil, multiErr
 	}
 
-	existing, err := s.repo.GetByID(ctx, repositories.GetTableConfigurationByIDRequest{
+	existing, err := s.repo.GetByID(ctx, tableconfigurationports.GetTableConfigurationByIDRequest{
 		ConfigurationID: entity.ID,
 		TenantInfo:      tenantInfo,
 	})
@@ -135,21 +135,21 @@ func (s *Service) Update(
 
 func (s *Service) GetByID(
 	ctx context.Context,
-	req repositories.GetTableConfigurationByIDRequest,
+	req tableconfigurationports.GetTableConfigurationByIDRequest,
 ) (*tableconfiguration.TableConfiguration, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListTableConfigurationsRequest,
+	req *tableconfigurationports.ListTableConfigurationsRequest,
 ) (*pagination.ListResult[*tableconfiguration.TableConfiguration], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListTableConfigurationConnectionRequest,
+	req *tableconfigurationports.ListTableConfigurationConnectionRequest,
 ) (*pagination.CursorListResult[*tableconfiguration.TableConfiguration], error) {
 	return s.repo.ListConnection(ctx, req)
 }
@@ -164,7 +164,7 @@ func (s *Service) Delete(
 		zap.String("id", id.String()),
 	)
 
-	existing, err := s.repo.GetByID(ctx, repositories.GetTableConfigurationByIDRequest{
+	existing, err := s.repo.GetByID(ctx, tableconfigurationports.GetTableConfigurationByIDRequest{
 		ConfigurationID: id,
 		TenantInfo:      tenantInfo,
 	})
@@ -187,7 +187,7 @@ func (s *Service) Delete(
 
 func (s *Service) GetDefaultForResource(
 	ctx context.Context,
-	req repositories.GetDefaultTableConfigurationRequest,
+	req tableconfigurationports.GetDefaultTableConfigurationRequest,
 ) (*tableconfiguration.TableConfiguration, error) {
 	return s.repo.GetDefaultForResource(ctx, req)
 }
@@ -202,7 +202,7 @@ func (s *Service) SetDefault(
 		zap.String("id", id.String()),
 	)
 
-	entity, err := s.repo.GetByID(ctx, repositories.GetTableConfigurationByIDRequest{
+	entity, err := s.repo.GetByID(ctx, tableconfigurationports.GetTableConfigurationByIDRequest{
 		ConfigurationID: id,
 		TenantInfo:      tenantInfo,
 	})
@@ -250,7 +250,7 @@ func (s *Service) SetOrgDefault(
 		zap.Bool("enabled", enabled),
 	)
 
-	entity, err := s.repo.GetByID(ctx, repositories.GetTableConfigurationByIDRequest{
+	entity, err := s.repo.GetByID(ctx, tableconfigurationports.GetTableConfigurationByIDRequest{
 		ConfigurationID: id,
 		TenantInfo:      tenantInfo,
 	})

@@ -11,13 +11,19 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/services/shipmentservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -33,18 +39,18 @@ type Params struct {
 	fx.In
 
 	Logger                    *zap.Logger
-	DB                        ports.DBConnection
-	Repo                      repositories.TrailerRepository
-	AssignmentRepo            repositories.AssignmentRepository
-	ContinuityRepo            repositories.EquipmentContinuityRepository
-	ShipmentRepo              repositories.ShipmentRepository
-	UserRepo                  repositories.UserRepository
-	ShipmentCommentRepo       repositories.ShipmentCommentRepository
-	ControlRepo               repositories.ShipmentControlRepository
-	LocationRepo              repositories.LocationRepository
+	DB                        kernelports.DBConnection
+	Repo                      trailerports.TrailerRepository
+	AssignmentRepo            shipmentports.AssignmentRepository
+	ContinuityRepo            equipmentcontinuityports.EquipmentContinuityRepository
+	ShipmentRepo              shipmentports.ShipmentRepository
+	UserRepo                  tenantports.UserRepository
+	ShipmentCommentRepo       shipmentports.ShipmentCommentRepository
+	ControlRepo               tenantports.ShipmentControlRepository
+	LocationRepo              locationports.LocationRepository
 	Validator                 *Validator
-	AuditService              services.AuditService
-	Realtime                  services.RealtimeService
+	AuditService              auditports.AuditService
+	Realtime                  agentports.RealtimeService
 	CustomFieldsValuesService *customfieldservice.ValuesService
 	ShipmentValidator         *shipmentservice.Validator
 	Coordinator               *shipmentstate.Coordinator
@@ -53,18 +59,18 @@ type Params struct {
 
 type Service struct {
 	l                         *zap.Logger
-	db                        ports.DBConnection
-	repo                      repositories.TrailerRepository
-	assignmentRepo            repositories.AssignmentRepository
-	continuityRepo            repositories.EquipmentContinuityRepository
-	shipmentRepo              repositories.ShipmentRepository
-	userRepo                  repositories.UserRepository
-	shipmentCommentRepo       repositories.ShipmentCommentRepository
-	controlRepo               repositories.ShipmentControlRepository
-	locationRepo              repositories.LocationRepository
+	db                        kernelports.DBConnection
+	repo                      trailerports.TrailerRepository
+	assignmentRepo            shipmentports.AssignmentRepository
+	continuityRepo            equipmentcontinuityports.EquipmentContinuityRepository
+	shipmentRepo              shipmentports.ShipmentRepository
+	userRepo                  tenantports.UserRepository
+	shipmentCommentRepo       shipmentports.ShipmentCommentRepository
+	controlRepo               tenantports.ShipmentControlRepository
+	locationRepo              locationports.LocationRepository
 	validator                 *Validator
-	auditService              services.AuditService
-	realtime                  services.RealtimeService
+	auditService              auditports.AuditService
+	realtime                  agentports.RealtimeService
 	customFieldsValuesService *customfieldservice.ValuesService
 	shipmentValidator         *shipmentservice.Validator
 	coordinator               *shipmentstate.Coordinator
@@ -95,7 +101,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListTrailersRequest,
+	req *trailerports.ListTrailersRequest,
 ) (*pagination.CursorListResult[*trailer.Trailer], error) {
 	log := s.l.With(
 		zap.String("operation", "List"),
@@ -126,7 +132,7 @@ func (s *Service) SelectOptions(
 
 func (s *Service) Get(
 	ctx context.Context,
-	req repositories.GetTrailerByIDRequest,
+	req trailerports.GetTrailerByIDRequest,
 ) (*trailer.Trailer, error) {
 	entity, err := s.repo.GetByID(ctx, req)
 	if err != nil {
@@ -152,7 +158,7 @@ func (s *Service) Get(
 
 func (s *Service) GetByIDs(
 	ctx context.Context,
-	req repositories.GetTrailersByIDsRequest,
+	req trailerports.GetTrailersByIDsRequest,
 ) ([]*trailer.Trailer, error) {
 	entities, err := s.repo.GetByIDs(ctx, req)
 	if err != nil {
@@ -205,7 +211,7 @@ func (s *Service) attachCustomFields(
 func (s *Service) Create(
 	ctx context.Context,
 	entity *trailer.Trailer,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*trailer.Trailer, error) {
 	auditActor := actor.AuditActor()
 	log := s.l.With(
@@ -244,7 +250,7 @@ func (s *Service) Create(
 		createdEntity.CustomFields = entity.CustomFields
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceTrailer,
 		ResourceID:     createdEntity.GetResourceID(),
 		Operation:      permission.OpCreate,
@@ -281,7 +287,7 @@ func (s *Service) Create(
 func (s *Service) Update(
 	ctx context.Context,
 	entity *trailer.Trailer,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*trailer.Trailer, error) {
 	auditActor := actor.AuditActor()
 	log := s.l.With(
@@ -322,7 +328,7 @@ func (s *Service) Update(
 	}
 
 	if err = s.auditService.LogAction(
-		&services.LogActionParams{
+		&auditports.LogActionParams{
 			Resource:       permission.ResourceTrailer,
 			ResourceID:     updatedEntity.GetID().String(),
 			Operation:      permission.OpUpdate,
@@ -362,14 +368,14 @@ func (s *Service) Update(
 
 func (s *Service) BulkUpdateStatus(
 	ctx context.Context,
-	req *repositories.BulkUpdateTrailerStatusRequest,
+	req *trailerports.BulkUpdateTrailerStatusRequest,
 ) ([]*trailer.Trailer, error) {
 	log := s.l.With(
 		zap.String("operation", "BulkUpdateStatus"),
 		zap.Any("request", req),
 	)
 
-	originalEntities, err := s.repo.GetByIDs(ctx, repositories.GetTrailersByIDsRequest{
+	originalEntities, err := s.repo.GetByIDs(ctx, trailerports.GetTrailersByIDsRequest{
 		TenantInfo: req.TenantInfo,
 		TrailerIDs: req.TrailerIDs,
 	})
@@ -414,15 +420,15 @@ func (s *Service) BulkUpdateStatus(
 
 func (s *Service) Locate( //nolint:gocognit // legacy workflow
 	ctx context.Context,
-	req *repositories.LocateTrailerRequest,
-	actor *services.RequestActor,
+	req *trailerports.LocateTrailerRequest,
+	actor *permissionports.RequestActor,
 ) (*equipmentcontinuity.EquipmentContinuity, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
 	}
 
 	var result *equipmentcontinuity.EquipmentContinuity
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		actorUserID := actor.AuditActor().UserID
 
 		plan, err := s.planLocate(txCtx, req, actorUserID)
@@ -463,7 +469,7 @@ func (s *Service) Locate( //nolint:gocognit // legacy workflow
 		); err != nil {
 			return err
 		}
-		result, err = s.continuityRepo.Advance(txCtx, repositories.CreateEquipmentContinuityRequest{
+		result, err = s.continuityRepo.Advance(txCtx, equipmentcontinuityports.CreateEquipmentContinuityRequest{
 			TenantInfo:           req.TenantInfo,
 			EquipmentType:        equipmentcontinuity.EquipmentTypeTrailer,
 			EquipmentID:          req.TrailerID,
@@ -485,7 +491,7 @@ func (s *Service) Locate( //nolint:gocognit // legacy workflow
 func appendLocateMove(
 	entity *shipment.Shipment,
 	current *equipmentcontinuity.EquipmentContinuity,
-	req *repositories.LocateTrailerRequest,
+	req *trailerports.LocateTrailerRequest,
 	timing locateTiming,
 ) {
 	entity.Moves = append(entity.Moves, &shipment.ShipmentMove{
@@ -546,14 +552,14 @@ func locateMoveTiming() locateTiming {
 
 func (s *Service) createLocateComment(
 	ctx context.Context,
-	req *repositories.LocateTrailerRequest,
+	req *trailerports.LocateTrailerRequest,
 	actorUserID pulid.ID,
 	trailerEntity *trailer.Trailer,
 	shipmentEntity *shipment.Shipment,
 	fromLocationID pulid.ID,
 	toLocationID pulid.ID,
 ) error {
-	fromLocation, err := s.locationRepo.GetByID(ctx, repositories.GetLocationByIDRequest{
+	fromLocation, err := s.locationRepo.GetByID(ctx, locationports.GetLocationByIDRequest{
 		ID: fromLocationID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: req.TenantInfo.OrgID,
@@ -564,7 +570,7 @@ func (s *Service) createLocateComment(
 		return err
 	}
 
-	toLocation, err := s.locationRepo.GetByID(ctx, repositories.GetLocationByIDRequest{
+	toLocation, err := s.locationRepo.GetByID(ctx, locationports.GetLocationByIDRequest{
 		ID: toLocationID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: req.TenantInfo.OrgID,

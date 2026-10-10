@@ -5,8 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -43,7 +44,7 @@ func (c *Calculator) loadAgreementByID(
 		return nil
 	}
 
-	agreement, err := c.agreementRepo.GetByID(ctx, &repositories.GetRateAgreementByIDRequest{
+	agreement, err := c.agreementRepo.GetByID(ctx, &rateagreementports.GetRateAgreementByIDRequest{
 		RateAgreementID: *agreementID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -66,14 +67,14 @@ func (c *Calculator) loadAgreementByID(
 
 // fuelOverride translates the contract's fuel binding into the neutral form the
 // fuel service takes, so the fuel service never learns about rate agreements.
-func fuelOverride(agreement *rateagreement.RateAgreement) *services.FuelProgramOverride {
+func fuelOverride(agreement *rateagreement.RateAgreement) *fuelsurchargeports.FuelProgramOverride {
 	if agreement == nil || agreement.FuelBinding == nil {
 		return nil
 	}
 
 	binding := agreement.FuelBinding
 
-	return &services.FuelProgramOverride{
+	return &fuelsurchargeports.FuelProgramOverride{
 		AgreementID:   agreement.ID,
 		ProgramID:     binding.FuelSurchargeProgramID,
 		Waived:        binding.Waived,
@@ -161,7 +162,7 @@ func (c *Calculator) conditionHolds(
 		return false
 	}
 
-	holds, err := c.predicate.EvaluatePredicate(ctx, &services.EvaluatePredicateRequest{
+	holds, err := c.predicate.EvaluatePredicate(ctx, &formulatemplateports.EvaluatePredicateRequest{
 		Expression: accessorial.ApplyCondition,
 		SchemaID:   shipmentSchemaID,
 		Entity:     entity,

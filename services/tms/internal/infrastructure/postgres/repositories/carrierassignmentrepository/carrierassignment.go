@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -29,7 +29,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.CarrierAssignmentRepository {
+func New(p Params) shipmentports.CarrierAssignmentRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.carrier-assignment-repository"),
@@ -38,7 +38,7 @@ func New(p Params) repositories.CarrierAssignmentRepository {
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req *repositories.GetCarrierAssignmentByIDRequest,
+	req *shipmentports.GetCarrierAssignmentByIDRequest,
 ) (*shipment.CarrierAssignment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipment.CarrierAssignment, error) {
 		cols := buncolgen.CarrierAssignmentColumns
@@ -96,7 +96,7 @@ func (r *repository) GetActiveByMoveID(
 
 func (r *repository) FindForMatching(
 	ctx context.Context,
-	req *repositories.FindCarrierAssignmentForMatchingRequest,
+	req *shipmentports.FindCarrierAssignmentForMatchingRequest,
 ) (*shipment.CarrierAssignment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipment.CarrierAssignment, error) {
 		if req.ProNumber == "" && req.ShipmentID.IsNil() {

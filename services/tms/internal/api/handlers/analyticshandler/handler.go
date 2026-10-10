@@ -6,7 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/gin-gonic/gin"
@@ -27,24 +28,24 @@ const (
 // analytics page will answer. Every page must appear here: an unlisted page is
 // refused rather than served, so adding a provider without deciding who may see
 // it fails closed.
-var pagePermissions = map[services.AnalyticsPage]permission.Resource{
-	services.ShipmentAnalyticsPage:        permission.ResourceShipment,
-	services.BillingClientAnalyticsPage:   permission.ResourceBillingQueue,
-	services.DedicatedLaneSuggestionsPage: permission.ResourceShipment,
-	services.APIKeyAnalyticsPage:          permission.ResourceAPIKey,
+var pagePermissions = map[kernelports.AnalyticsPage]permission.Resource{
+	kernelports.ShipmentAnalyticsPage:        permission.ResourceShipment,
+	kernelports.BillingClientAnalyticsPage:   permission.ResourceBillingQueue,
+	kernelports.DedicatedLaneSuggestionsPage: permission.ResourceShipment,
+	kernelports.APIKeyAnalyticsPage:          permission.ResourceAPIKey,
 }
 
 type Params struct {
 	fx.In
 
-	Service          services.AnalyticsService
-	PermissionEngine services.PermissionEngine
+	Service          kernelports.AnalyticsService
+	PermissionEngine permissionports.PermissionEngine
 	ErrorHandler     *helpers.ErrorHandler
 }
 
 type Handler struct {
-	service     services.AnalyticsService
-	permissions services.PermissionEngine
+	service     kernelports.AnalyticsService
+	permissions permissionports.PermissionEngine
 	eh          *helpers.ErrorHandler
 }
 
@@ -84,7 +85,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 func (h *Handler) get(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	req := new(services.AnaltyicsRequest)
+	req := new(kernelports.AnaltyicsRequest)
 
 	if err := c.ShouldBindQuery(req); err != nil {
 		h.eh.HandleError(c, err)
@@ -103,7 +104,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	opts := &services.AnalyticsRequestOptions{
+	opts := &kernelports.AnalyticsRequestOptions{
 		OrgID:      authCtx.OrganizationID,
 		BuID:       authCtx.BusinessUnitID,
 		UserID:     authCtx.UserID,
@@ -116,7 +117,7 @@ func (h *Handler) get(c *gin.Context) {
 	}
 
 	if req.StartDate > 0 && req.EndDate > 0 {
-		opts.DateRange = &services.DateRange{
+		opts.DateRange = &kernelports.DateRange{
 			StartDate: req.StartDate,
 			EndDate:   req.EndDate,
 		}
@@ -131,7 +132,7 @@ func (h *Handler) get(c *gin.Context) {
 	c.JSON(http.StatusOK, data)
 }
 
-func (h *Handler) authorizePage(c *gin.Context, page services.AnalyticsPage) error {
+func (h *Handler) authorizePage(c *gin.Context, page kernelports.AnalyticsPage) error {
 	resource, ok := pagePermissions[page]
 	if !ok {
 		return errortypes.NewAuthorizationError(
@@ -160,7 +161,7 @@ func (h *Handler) authorizePage(c *gin.Context, page services.AnalyticsPage) err
 	return nil
 }
 
-func validateAnalyticsRequest(req *services.AnaltyicsRequest) error {
+func validateAnalyticsRequest(req *kernelports.AnaltyicsRequest) error {
 	if req.WindowDays == 0 {
 		req.WindowDays = defaultAnalyticsWindowDays
 	}

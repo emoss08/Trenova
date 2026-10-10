@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,7 +18,7 @@ import (
 // sees it before anything is written.
 func (s *Service) guardDetentionRebill(
 	ctx context.Context,
-	preview *servicesports.InvoiceAdjustmentPreview,
+	preview *invoiceadjustmentports.InvoiceAdjustmentPreview,
 	tenantInfo pagination.TenantInfo,
 	source *invoice.Invoice,
 ) error {
@@ -29,7 +31,7 @@ func (s *Service) guardDetentionRebill(
 		return nil
 	}
 
-	err := s.detentionBilling.GuardShipments(ctx, &servicesports.DetentionBillingHoldsRequest{
+	err := s.detentionBilling.GuardShipments(ctx, &detentionports.DetentionBillingHoldsRequest{
 		TenantInfo:  tenantInfo,
 		ShipmentIDs: shipmentIDs,
 	})
@@ -49,7 +51,7 @@ func (s *Service) guardDetentionRebill(
 func (s *Service) syncDetentionBilling(
 	ctx context.Context,
 	source *invoice.Invoice,
-	actor *servicesports.RequestActor,
+	actor *permissionports.RequestActor,
 	documents ...*invoice.Invoice,
 ) error {
 	if s.detentionBilling == nil || source == nil {
@@ -71,14 +73,14 @@ func (s *Service) syncDetentionBilling(
 
 	return s.detentionBilling.SyncInvoiceBilling(
 		ctx,
-		&servicesports.SyncDetentionInvoiceBillingRequest{
+		&detentionports.SyncDetentionInvoiceBillingRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: source.OrganizationID,
 				BuID:  source.BusinessUnitID,
 			},
 			InvoiceIDs:    invoiceIDs,
 			InvoiceNumber: source.Number,
-			Event:         servicesports.DetentionBillingInvoiceAdjusted,
+			Event:         detentionports.DetentionBillingInvoiceAdjusted,
 			ActorUserID:   actorUserID,
 		},
 	)

@@ -4,16 +4,18 @@ package shipmentresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	services "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 )
 
 type Deps struct {
 	*base.Core
-	AnalyticsService        services.AnalyticsService
-	ShipmentService         services.ShipmentService
-	ShipmentCommentService  services.ShipmentCommentService
-	ShipmentEventService    services.ShipmentEventService
-	ShipmentImportAssistant services.ShipmentImportAssistantService
+	AnalyticsService        kernelports.AnalyticsService
+	ShipmentService         shipmentports.ShipmentService
+	ShipmentCommentService  shipmentports.ShipmentCommentService
+	ShipmentEventService    shipmenteventports.ShipmentEventService
+	ShipmentImportAssistant shipmentports.ShipmentImportAssistantService
 }
 
 type CarrierAssignmentAccessorialResolver struct{ *Deps }

@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/workercredentialservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -159,13 +159,13 @@ func TestRecordWorkerCredential_RenewalShowsWhatItSupersedes(t *testing.T) {
 		"expiresAt":           "2028-09-30",
 	}
 
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), executeParams(raw)),
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), executeParams(raw)),
 		"a second active credential of a type is refused without renew")
 
 	raw[paramRenew] = true
 	params := executeParams(raw)
 	preview := previewWithoutWrites(t, credentials.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	require.Len(t, preview.Changes, 2)
 	assert.Contains(t, preview.Summary, "archived as superseded")
@@ -187,7 +187,7 @@ func TestUpdateWorkerCredential_SaysWhenVerificationClears(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, credentials.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "verification is cleared")
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -209,7 +209,7 @@ func TestAttachWorkerCredentialDocument_NamesTheDocument(t *testing.T) {
 	})))
 	require.NotNil(t, credentials.attached)
 	assert.Equal(t, documentID, credentials.attached.DocumentID)
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 		executeParams(map[string]any{paramCredentialID: credentials.credential.ID.String()})))
 }
 
@@ -224,7 +224,7 @@ func TestArchiveWorkerCredential_IsOnlyProposed(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, credentials.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, "Would archive Medical card.", preview.Summary)
 	require.NoError(t, tool.Execute(t.Context(), params))

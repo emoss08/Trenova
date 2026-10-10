@@ -7,8 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentsearch"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/productguide"
 	"github.com/emoss08/trenova/shared/rankfusion"
 	"go.uber.org/zap"
@@ -19,11 +19,11 @@ const (
 	minVectorCandidates   = 24
 )
 
-func CatalogItems(catalog *productguide.Catalog) []serviceports.EmbeddingCatalogItem {
-	items := make([]serviceports.EmbeddingCatalogItem, 0, len(catalog.Pages))
+func CatalogItems(catalog *productguide.Catalog) []agentports.EmbeddingCatalogItem {
+	items := make([]agentports.EmbeddingCatalogItem, 0, len(catalog.Pages))
 	for i := range catalog.Pages {
 		page := &catalog.Pages[i]
-		items = append(items, serviceports.NewEmbeddingCatalogItem(page.Path, PageText(page)))
+		items = append(items, agentports.NewEmbeddingCatalogItem(page.Path, PageText(page)))
 	}
 
 	return items
@@ -73,7 +73,7 @@ func NewOffline(catalog *productguide.Catalog) *Service {
 		index:     buildIndex(catalog),
 		resources: permission.NewRegistry(),
 		items:     CatalogItems(catalog),
-		floor:     serviceports.DefaultCatalogSimilarityFloor,
+		floor:     agentports.DefaultCatalogSimilarityFloor,
 	}
 }
 
@@ -112,7 +112,7 @@ func (s *Service) ranked(
 
 func (s *Service) similarities(
 	ctx context.Context,
-	req *serviceports.ProductGuideSearchRequest,
+	req *agentports.ProductGuideSearchRequest,
 ) map[string]float64 {
 	if s.vectorizer == nil || s.vectors == nil || len(s.items) == 0 ||
 		strings.TrimSpace(req.Query) == "" ||
@@ -120,7 +120,7 @@ func (s *Service) similarities(
 		return nil
 	}
 
-	query, err := s.vectorizer.Vectorize(ctx, &serviceports.QueryVectorRequest{
+	query, err := s.vectorizer.Vectorize(ctx, &agentports.QueryVectorRequest{
 		TenantInfo:  req.TenantInfo,
 		Text:        req.Query,
 		Attribution: req.Attribution,
@@ -134,7 +134,7 @@ func (s *Service) similarities(
 		return nil
 	}
 
-	found, err := s.vectors.Similarities(ctx, &serviceports.CatalogSimilarityRequest{
+	found, err := s.vectors.Similarities(ctx, &agentports.CatalogSimilarityRequest{
 		TenantInfo: req.TenantInfo,
 		Corpus:     airetrieval.CatalogCorpusProductGuide,
 		Items:      s.items,

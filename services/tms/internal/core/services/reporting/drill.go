@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
@@ -415,7 +415,7 @@ func (s *Service) detailColumns(
 }
 
 func (s *Service) fieldVisible(
-	detail *services.ResourcePermissionDetail,
+	detail *permissionports.ResourcePermissionDetail,
 	entity *reportcatalog.Entity,
 	field *reportcatalog.Field,
 ) bool {

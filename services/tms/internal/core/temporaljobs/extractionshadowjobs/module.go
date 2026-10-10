@@ -1,10 +1,10 @@
 package extractionshadowjobs
 
 import (
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/documentintelligencejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -49,7 +49,7 @@ var Module = fx.Module("extraction-shadow-jobs",
 	fx.Provide(
 		NewActivities,
 		NewStarter,
-		func(s *Starter) services.ExtractionShadowStarter { return s },
+		func(s *Starter) extractionshadowports.ExtractionShadowStarter { return s },
 	),
 	fx.Provide(fx.Annotate(
 		NewRegistry,

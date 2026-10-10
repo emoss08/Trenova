@@ -5,20 +5,20 @@ import (
 	"sort"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"go.uber.org/fx"
 )
 
 type Params struct {
 	fx.In
 
-	QueryTools  serviceports.AgentQueryToolRegistry
-	ActionTools serviceports.AgentToolRegistry
-	Runtime     serviceports.RuntimeToolPolicies
+	QueryTools  agentports.AgentQueryToolRegistry
+	ActionTools agentports.AgentToolRegistry
+	Runtime     agentports.RuntimeToolPolicies
 }
 
 type Catalog struct {
-	ordered []serviceports.ToolPolicy
+	ordered []agentports.ToolPolicy
 	byName  map[string]int
 }
 
@@ -27,9 +27,9 @@ func NewCatalog(p Params) (*Catalog, error) {
 }
 
 func Build(
-	queries []serviceports.AgentQueryTool,
-	actions []serviceports.AgentTool,
-	runtime []serviceports.ToolPolicy,
+	queries []agentports.AgentQueryTool,
+	actions []agentports.AgentTool,
+	runtime []agentports.ToolPolicy,
 ) (*Catalog, error) {
 	specs := Specs(queries, actions, runtime)
 	if err := Validate(specs); err != nil {
@@ -37,7 +37,7 @@ func Build(
 	}
 
 	catalog := &Catalog{
-		ordered: make([]serviceports.ToolPolicy, 0, len(specs)),
+		ordered: make([]agentports.ToolPolicy, 0, len(specs)),
 		byName:  make(map[string]int, len(specs)),
 	}
 	for idx := range specs {
@@ -54,16 +54,16 @@ func Build(
 }
 
 func Specs(
-	queries []serviceports.AgentQueryTool,
-	actions []serviceports.AgentTool,
-	runtime []serviceports.ToolPolicy,
+	queries []agentports.AgentQueryTool,
+	actions []agentports.AgentTool,
+	runtime []agentports.ToolPolicy,
 ) []Spec {
 	specs := make([]Spec, 0, len(queries)+len(actions)+len(runtime))
 	for _, tool := range queries {
 		specs = append(specs, Spec{ToolName: tool.Name(), Policy: tool.Policy()})
 	}
 	for _, tool := range actions {
-		_, reports := tool.(serviceports.ToolResultReporter)
+		_, reports := tool.(agentports.ToolResultReporter)
 		specs = append(specs, Spec{ToolName: tool.Name(), Policy: tool.Policy(), Reports: reports})
 	}
 	for idx := range runtime {
@@ -73,26 +73,26 @@ func Specs(
 	return specs
 }
 
-func (c *Catalog) Get(name string) (serviceports.ToolPolicy, bool) {
+func (c *Catalog) Get(name string) (agentports.ToolPolicy, bool) {
 	idx, ok := c.byName[name]
 	if !ok {
-		return serviceports.ToolPolicy{}, false
+		return agentports.ToolPolicy{}, false
 	}
 
 	return c.ordered[idx], true
 }
 
-func (c *Catalog) All() []serviceports.ToolPolicy {
-	out := make([]serviceports.ToolPolicy, len(c.ordered))
+func (c *Catalog) All() []agentports.ToolPolicy {
+	out := make([]agentports.ToolPolicy, len(c.ordered))
 	copy(out, c.ordered)
 
 	return out
 }
 
 func ApplyOverride(
-	policy serviceports.ToolPolicy,
+	policy agentports.ToolPolicy,
 	override *agent.ToolRuleOverride,
-) serviceports.ToolPolicy {
+) agentports.ToolPolicy {
 	if override.Empty() {
 		return policy
 	}
@@ -109,8 +109,8 @@ func ApplyOverride(
 }
 
 func ApplyOverrides(
-	policy serviceports.ToolPolicy,
+	policy agentports.ToolPolicy,
 	overrides map[string]*agent.ToolRuleOverride,
-) serviceports.ToolPolicy {
+) agentports.ToolPolicy {
 	return ApplyOverride(policy, overrides[policy.Name])
 }

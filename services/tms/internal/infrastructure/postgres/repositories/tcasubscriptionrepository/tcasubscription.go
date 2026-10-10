@@ -5,9 +5,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/tablechangealert"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/tablechangealertports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -31,7 +31,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.TCASubscriptionRepository {
+func New(p Params) tablechangealertports.TCASubscriptionRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.tca-subscription-repository"),
@@ -40,7 +40,7 @@ func New(p Params) repositories.TCASubscriptionRepository {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListTCASubscriptionsRequest,
+	req *tablechangealertports.ListTCASubscriptionsRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.TCASubscriptionColumns
 	q = querybuilder.ApplyFilters(
@@ -60,7 +60,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListTCASubscriptionsRequest,
+	req *tablechangealertports.ListTCASubscriptionsRequest,
 ) (*pagination.ListResult[*tablechangealert.TCASubscription], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*tablechangealert.TCASubscription], error) {
 		log := r.l.With(zap.String("operation", "List"))
@@ -86,7 +86,7 @@ func (r *repository) List(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListTCASubscriptionConnectionRequest,
+	req *tablechangealertports.ListTCASubscriptionConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	q, err := querybuilder.ApplyCursorFilters(
 		q,
@@ -104,7 +104,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListTCASubscriptionConnectionRequest,
+	req *tablechangealertports.ListTCASubscriptionConnectionRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -118,7 +118,7 @@ func (r *repository) applyTotalCountFilters(
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListTCASubscriptionConnectionRequest,
+	req *tablechangealertports.ListTCASubscriptionConnectionRequest,
 ) (*pagination.CursorListResult[*tablechangealert.TCASubscription], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*tablechangealert.TCASubscription], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -220,7 +220,7 @@ func (r *repository) Update(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetTCASubscriptionByIDRequest,
+	req tablechangealertports.GetTCASubscriptionByIDRequest,
 ) (*tablechangealert.TCASubscription, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tablechangealert.TCASubscription, error) {
 		log := r.l.With(
@@ -279,7 +279,7 @@ func (r *repository) Delete(
 
 func (r *repository) FindMatchingSubscriptions(
 	ctx context.Context,
-	req repositories.FindMatchingTCASubscriptionsRequest,
+	req tablechangealertports.FindMatchingTCASubscriptionsRequest,
 ) ([]*tablechangealert.TCASubscription, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*tablechangealert.TCASubscription, error) {
 		log := r.l.With(

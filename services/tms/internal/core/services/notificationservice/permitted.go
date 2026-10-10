@@ -6,7 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
 )
@@ -42,7 +43,7 @@ func (s *Service) NotifyPermitted(ctx context.Context, req NotifyPermittedReques
 		correlation = *req.Notification.CorrelationID
 	}
 	if req.DedupeSince > 0 && correlation != "" {
-		recent, err := s.repo.ExistsRecent(ctx, repositories.ExistsRecentNotificationRequest{
+		recent, err := s.repo.ExistsRecent(ctx, notificationports.ExistsRecentNotificationRequest{
 			OrganizationID: req.Tenant.OrgID,
 			BusinessUnitID: req.Tenant.BuID,
 			EventType:      req.Notification.EventType,
@@ -59,7 +60,7 @@ func (s *Service) NotifyPermitted(ctx context.Context, req NotifyPermittedReques
 
 	recipients, err := s.roles.ListUsersWithPermission(
 		ctx,
-		repositories.ListUsersWithPermissionRequest{
+		permissionports.ListUsersWithPermissionRequest{
 			OrganizationID: req.Tenant.OrgID,
 			BusinessUnitID: req.Tenant.BuID,
 			Resource:       req.Resource,

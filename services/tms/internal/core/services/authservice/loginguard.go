@@ -5,8 +5,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/requestmeta"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,8 +25,8 @@ var errSubscriptionExpired = errortypes.NewAuthorizationError(
 		"no longer available. Start a new trial or contact support to recover it.",
 )
 
-func loginThrottleKey(ctx context.Context, emailAddress string) repositories.LoginThrottleKey {
-	key := repositories.LoginThrottleKey{
+func loginThrottleKey(ctx context.Context, emailAddress string) sessionports.LoginThrottleKey {
+	key := sessionports.LoginThrottleKey{
 		Account: strings.ToLower(strings.TrimSpace(emailAddress)),
 	}
 	if meta, ok := requestmeta.From(ctx); ok {
@@ -37,7 +38,7 @@ func loginThrottleKey(ctx context.Context, emailAddress string) repositories.Log
 
 func (s *Service) checkLoginThrottle(
 	ctx context.Context,
-	key repositories.LoginThrottleKey,
+	key sessionports.LoginThrottleKey,
 	attempt *authAttempt,
 ) error {
 	if s.throttle == nil {
@@ -53,8 +54,8 @@ func (s *Service) checkLoginThrottle(
 		return nil
 	}
 
-	attempt.provider = services.AuthEventProviderLoginThrottled
-	if decision.Scope == repositories.LoginThrottleScopeIP {
+	attempt.provider = iamports.AuthEventProviderLoginThrottled
+	if decision.Scope == sessionports.LoginThrottleScopeIP {
 		attempt.fail(authErrorThrottledIP)
 		attempt.riskSignals = []string{riskSignalIPThrottle}
 	} else {
@@ -68,7 +69,7 @@ func (s *Service) checkLoginThrottle(
 	).WithRetryAfter(decision.RetryAfter)
 }
 
-func (s *Service) recordLoginFailure(ctx context.Context, key repositories.LoginThrottleKey) {
+func (s *Service) recordLoginFailure(ctx context.Context, key sessionports.LoginThrottleKey) {
 	if s.throttle == nil {
 		return
 	}
@@ -82,20 +83,20 @@ func (s *Service) recordLoginFailure(ctx context.Context, key repositories.Login
 		return
 	}
 
-	rec := &services.AuthEventRecord{
-		Provider:    services.AuthEventProviderLoginThrottled,
+	rec := &iamports.AuthEventRecord{
+		Provider:    iamports.AuthEventProviderLoginThrottled,
 		Outcome:     authOutcome(errortypes.NewRateLimitError("", "throttled")),
 		RiskSignals: []string{riskSignalAccountThrottle},
 		ErrorCode:   authErrorThrottledAccount,
 	}
-	if decision.Scope == repositories.LoginThrottleScopeIP {
+	if decision.Scope == sessionports.LoginThrottleScopeIP {
 		rec.RiskSignals = []string{riskSignalIPThrottle}
 		rec.ErrorCode = authErrorThrottledIP
 	}
 	s.authEvents.Record(ctx, rec)
 }
 
-func (s *Service) resetLoginThrottle(ctx context.Context, key repositories.LoginThrottleKey) {
+func (s *Service) resetLoginThrottle(ctx context.Context, key sessionports.LoginThrottleKey) {
 	if s.throttle == nil {
 		return
 	}
@@ -180,8 +181,8 @@ func (s *Service) organizationAllowsLogin(
 
 func (s *Service) CreateSessionForUser(
 	ctx context.Context,
-	req *services.CreateSessionForUserRequest,
-) (resp *services.LoginResponse, err error) {
+	req *tenantports.CreateSessionForUserRequest,
+) (resp *tenantports.LoginResponse, err error) {
 	if req == nil || req.User == nil {
 		return nil, errortypes.NewAuthenticationError("A user is required to start a session")
 	}
@@ -189,7 +190,7 @@ func (s *Service) CreateSessionForUser(
 	usr := req.User
 	provider := strings.TrimSpace(req.AuthProvider)
 	if provider == "" {
-		provider = services.AuthEventProviderPassword
+		provider = iamports.AuthEventProviderPassword
 	}
 
 	attempt := newAuthAttempt(provider)

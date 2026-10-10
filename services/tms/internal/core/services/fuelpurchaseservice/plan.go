@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -86,7 +86,7 @@ func (s *Service) PlanUpdatePurchase(
 		)
 	}
 
-	stored, err := s.repo.GetPurchaseByID(ctx, &repositories.GetFuelPurchaseByIDRequest{
+	stored, err := s.repo.GetPurchaseByID(ctx, &fuelpurchaseports.GetFuelPurchaseByIDRequest{
 		ID:         req.Purchase.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -134,7 +134,7 @@ func (s *Service) PlanDeletePurchase(
 	ctx context.Context,
 	req *DeletePurchaseRequest,
 ) (*fuelpurchase.FuelPurchase, error) {
-	stored, err := s.repo.GetPurchaseByID(ctx, &repositories.GetFuelPurchaseByIDRequest{
+	stored, err := s.repo.GetPurchaseByID(ctx, &fuelpurchaseports.GetFuelPurchaseByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -149,7 +149,7 @@ func (s *Service) PlanDeletePurchase(
 }
 
 func (s *Service) PlanAssignCard(ctx context.Context, req *AssignCardRequest) (*CardChange, error) {
-	stored, err := s.repo.GetCardByID(ctx, &repositories.GetFuelCardByIDRequest{
+	stored, err := s.repo.GetCardByID(ctx, &fuelpurchaseports.GetFuelCardByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -183,7 +183,7 @@ func (s *Service) PlanAssignCard(ctx context.Context, req *AssignCardRequest) (*
 
 func (s *Service) loadBatch(
 	ctx context.Context,
-	req *repositories.GetImportBatchByIDRequest,
+	req *fuelpurchaseports.GetImportBatchByIDRequest,
 	version int64,
 ) (*fuelpurchase.ImportBatch, error) {
 	batch, err := s.repo.GetImportBatchByID(ctx, req)
@@ -198,7 +198,7 @@ func (s *Service) loadBatch(
 }
 
 func (s *Service) PlanCommit(ctx context.Context, req *CommitRequest) (*CommitPlan, error) {
-	batch, err := s.loadBatch(ctx, &repositories.GetImportBatchByIDRequest{
+	batch, err := s.loadBatch(ctx, &fuelpurchaseports.GetImportBatchByIDRequest{
 		ID:          req.BatchID,
 		TenantInfo:  req.TenantInfo,
 		IncludeRows: true,
@@ -265,7 +265,7 @@ func (s *Service) PlanDiscard(
 	ctx context.Context,
 	req *DiscardRequest,
 ) (*ImportBatchChange, error) {
-	batch, err := s.loadBatch(ctx, &repositories.GetImportBatchByIDRequest{
+	batch, err := s.loadBatch(ctx, &fuelpurchaseports.GetImportBatchByIDRequest{
 		ID:         req.BatchID,
 		TenantInfo: req.TenantInfo,
 	}, req.Version)
@@ -290,7 +290,7 @@ func (s *Service) PlanResolveRows(
 	ctx context.Context,
 	req *ResolveRowsRequest,
 ) (*ResolveRowsPlan, error) {
-	batch, err := s.loadBatch(ctx, &repositories.GetImportBatchByIDRequest{
+	batch, err := s.loadBatch(ctx, &fuelpurchaseports.GetImportBatchByIDRequest{
 		ID:          req.BatchID,
 		TenantInfo:  req.TenantInfo,
 		IncludeRows: true,

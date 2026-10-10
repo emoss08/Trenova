@@ -7,10 +7,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/driverpayservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -42,7 +43,7 @@ type payAssigner interface {
 	AssignProfileToWorker(
 		ctx context.Context,
 		entity *driverpay.WorkerPayAssignment,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*driverpay.WorkerPayAssignment, error)
 }
 
@@ -51,11 +52,11 @@ type assignPayProfileTool struct {
 }
 
 var (
-	_ serviceports.ToolPreviewer = (*assignPayProfileTool)(nil)
-	_ serviceports.ToolValidator = (*assignPayProfileTool)(nil)
+	_ agentports.ToolPreviewer = (*assignPayProfileTool)(nil)
+	_ agentports.ToolValidator = (*assignPayProfileTool)(nil)
 )
 
-func provideAssignPayProfileTool(s *driverpayservice.Service) serviceports.AgentTool {
+func provideAssignPayProfileTool(s *driverpayservice.Service) agentports.AgentTool {
 	return &assignPayProfileTool{assignments: s}
 }
 
@@ -85,7 +86,7 @@ func (t *assignPayProfileTool) ParamSchema() map[string]any {
 	}, paramWorkerID, paramPayProfileID, paramEffectiveFrom)
 }
 
-func (t *assignPayProfileTool) Policy() serviceports.ToolPolicy {
+func (t *assignPayProfileTool) Policy() agentports.ToolPolicy {
 	return (&personOnlyPolicy{
 		name:      t.Name(),
 		resource:  payAssignmentResource,
@@ -96,7 +97,7 @@ func (t *assignPayProfileTool) Policy() serviceports.ToolPolicy {
 }
 
 func (t *assignPayProfileTool) entity(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*driverpay.WorkerPayAssignment, error) {
 	if err := guardPreview(t, params); err != nil {
 		return nil, err
@@ -153,7 +154,7 @@ type assignmentPlan struct {
 
 func (t *assignPayProfileTool) planned(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*assignmentPlan, error) {
 	entity, err := t.entity(params)
 	if err != nil {
@@ -174,7 +175,7 @@ func (t *assignPayProfileTool) planned(
 
 func (t *assignPayProfileTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	plan, err := t.planned(ctx, &params)
 	if err != nil {
@@ -186,7 +187,7 @@ func (t *assignPayProfileTool) Validate(
 
 func (t *assignPayProfileTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -214,7 +215,7 @@ func assignmentRecord(assignment *driverpay.WorkerPayAssignment, label string) t
 
 func (t *assignPayProfileTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	plan, err := t.planned(ctx, &params)
 	if err != nil {
@@ -291,7 +292,7 @@ type assignmentEnder interface {
 		tenantInfo pagination.TenantInfo,
 		assignmentID pulid.ID,
 		endDate int64,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*driverpay.WorkerPayAssignment, error)
 }
 
@@ -300,11 +301,11 @@ type endPayAssignmentTool struct {
 }
 
 var (
-	_ serviceports.ToolPreviewer = (*endPayAssignmentTool)(nil)
-	_ serviceports.ToolValidator = (*endPayAssignmentTool)(nil)
+	_ agentports.ToolPreviewer = (*endPayAssignmentTool)(nil)
+	_ agentports.ToolValidator = (*endPayAssignmentTool)(nil)
 )
 
-func provideEndPayAssignmentTool(s *driverpayservice.Service) serviceports.AgentTool {
+func provideEndPayAssignmentTool(s *driverpayservice.Service) agentports.AgentTool {
 	return &endPayAssignmentTool{assignments: s}
 }
 
@@ -327,7 +328,7 @@ func (t *endPayAssignmentTool) ParamSchema() map[string]any {
 	}, paramAssignmentID, paramEndDate)
 }
 
-func (t *endPayAssignmentTool) Policy() serviceports.ToolPolicy {
+func (t *endPayAssignmentTool) Policy() agentports.ToolPolicy {
 	return (&personOnlyPolicy{
 		name:      t.Name(),
 		resource:  payAssignmentResource,
@@ -346,7 +347,7 @@ type assignmentEnding struct {
 
 func (t *endPayAssignmentTool) planned(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*assignmentEnding, error) {
 	if err := guardPreview(t, params); err != nil {
 		return nil, err
@@ -372,7 +373,7 @@ func (t *endPayAssignmentTool) planned(
 
 func (t *endPayAssignmentTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	plan, err := t.planned(ctx, &params)
 	if err != nil {
@@ -384,7 +385,7 @@ func (t *endPayAssignmentTool) Validate(
 
 func (t *endPayAssignmentTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -409,7 +410,7 @@ func (t *endPayAssignmentTool) Execute(
 
 func (t *endPayAssignmentTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	plan, err := t.planned(ctx, &params)
 	if err != nil {

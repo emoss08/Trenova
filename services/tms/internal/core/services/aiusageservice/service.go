@@ -4,8 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -14,15 +13,15 @@ import (
 type Params struct {
 	fx.In
 
-	Usage repositories.AIUsageRepository
+	Usage aiusageports.AIUsageRepository
 }
 
 type Service struct {
-	usage repositories.AIUsageRepository
+	usage aiusageports.AIUsageRepository
 	clock func() time.Time
 }
 
-func New(p Params) services.AIUsageService {
+func New(p Params) aiusageports.AIUsageService {
 	return &Service{usage: p.Usage, clock: time.Now}
 }
 
@@ -38,7 +37,7 @@ func (s *Service) Summary(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	since int64,
-) (*services.AIUsageSummary, error) {
+) (*aiusageports.AIUsageSummary, error) {
 	now := timeutils.NowUnix()
 	if since <= 0 || since > now {
 		since = now - 7*24*60*60
@@ -47,7 +46,7 @@ func (s *Service) Summary(
 		since = now - maxWindow
 	}
 
-	summary, err := s.usage.Summary(ctx, repositories.AIUsageSummaryRequest{
+	summary, err := s.usage.Summary(ctx, aiusageports.AIUsageSummaryRequest{
 		TenantInfo: tenant,
 		Since:      since,
 	})
@@ -55,7 +54,7 @@ func (s *Service) Summary(
 		return nil, err
 	}
 
-	summary.RecentFailures, err = s.usage.RecentFailures(ctx, repositories.AIUsageFailuresRequest{
+	summary.RecentFailures, err = s.usage.RecentFailures(ctx, aiusageports.AIUsageFailuresRequest{
 		TenantInfo: tenant,
 		Since:      since,
 		Limit:      recentFailuresShown,
@@ -64,5 +63,5 @@ func (s *Service) Summary(
 		return nil, err
 	}
 
-	return services.SummaryFromRepository(since, summary), nil
+	return aiusageports.SummaryFromRepository(since, summary), nil
 }

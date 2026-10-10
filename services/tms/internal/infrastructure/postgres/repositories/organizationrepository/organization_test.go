@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -153,7 +153,7 @@ func TestAssetDependencyCountsScopeEveryQueryToTheTenant(t *testing.T) {
 		OrgID: pulid.MustNew("org_"),
 		BuID:  pulid.MustNew("bu_"),
 	}
-	counts := new(repositories.AssetDependencyCounts)
+	counts := new(tenantports.AssetDependencyCounts)
 
 	deps := assetDependencyCounts(tenantInfo, counts)
 	require.Len(t, deps, 3)
@@ -181,7 +181,7 @@ func TestAssetDependencyCountsNarrowToBlockingRows(t *testing.T) {
 		OrgID: pulid.MustNew("org_"),
 		BuID:  pulid.MustNew("bu_"),
 	}
-	counts := new(repositories.AssetDependencyCounts)
+	counts := new(tenantports.AssetDependencyCounts)
 
 	rendered := make(map[string]string, 3)
 	targets := make(map[string]*int, 3)

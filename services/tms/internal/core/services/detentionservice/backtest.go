@@ -6,7 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -97,7 +98,7 @@ func (s *Service) Backtest(
 		limit = defaultBacktestLimit
 	}
 
-	facts, err := s.analyticsRepo.ListStopFacts(ctx, &repositories.ListStopFactsRequest{
+	facts, err := s.analyticsRepo.ListStopFacts(ctx, &detentionports.ListStopFactsRequest{
 		TenantInfo: tenantInfo,
 		From:       req.From,
 		To:         req.To,
@@ -122,7 +123,7 @@ func (s *Service) Backtest(
 		facts = facts[:limit]
 	}
 
-	accessorial, err := s.accessorialRepo.GetByID(ctx, repositories.GetAccessorialChargeByIDRequest{
+	accessorial, err := s.accessorialRepo.GetByID(ctx, accessorialchargeports.GetAccessorialChargeByIDRequest{
 		ID:         req.Policy.AccessorialChargeID,
 		TenantInfo: &tenantInfo,
 	})
@@ -262,7 +263,7 @@ func (s *Service) labelBuckets(
 		}
 	}
 
-	names, err := s.analyticsRepo.EntityNames(ctx, &repositories.DetentionEntityNamesRequest{
+	names, err := s.analyticsRepo.EntityNames(ctx, &detentionports.DetentionEntityNamesRequest{
 		TenantInfo:  tenantInfo,
 		LocationIDs: locationIDs,
 		CustomerIDs: customerIDs,
@@ -301,7 +302,7 @@ func (s *Service) baselineByStop(
 	tenantInfo pagination.TenantInfo,
 	from, to int64,
 ) (map[string]decimal.Decimal, error) {
-	rows, err := s.analyticsRepo.BaselineByStop(ctx, &repositories.DetentionStatsRequest{
+	rows, err := s.analyticsRepo.BaselineByStop(ctx, &detentionports.DetentionStatsRequest{
 		TenantInfo: tenantInfo,
 		From:       from,
 		To:         to,
@@ -375,7 +376,7 @@ func noticeSentFor(assumeCompliance bool, arrival *int64) *int64 {
 	return arrival
 }
 
-func appointmentStartFromFact(fact *repositories.StopFact) *int64 {
+func appointmentStartFromFact(fact *detentionports.StopFact) *int64 {
 	if fact.ScheduledWindowStart <= 0 {
 		return nil
 	}
@@ -395,8 +396,8 @@ func derefOr(value *int64, fallback int64) int64 {
 // Friday afternoons that blow through free time.
 func (s *Service) FacilityProfiles(
 	ctx context.Context,
-	req *repositories.DetentionStatsRequest,
-) ([]*repositories.FacilityDetentionStat, error) {
+	req *detentionports.DetentionStatsRequest,
+) ([]*detentionports.FacilityDetentionStat, error) {
 	if s.analyticsRepo == nil {
 		return nil, errortypes.NewValidationError(
 			"analytics", errortypes.ErrSystemError, "Detention analytics are not available")
@@ -408,8 +409,8 @@ func (s *Service) FacilityProfiles(
 // ledger so an unprofitable detention arrangement is visible.
 func (s *Service) CustomerProfiles(
 	ctx context.Context,
-	req *repositories.DetentionStatsRequest,
-) ([]*repositories.CustomerDetentionStat, error) {
+	req *detentionports.DetentionStatsRequest,
+) ([]*detentionports.CustomerDetentionStat, error) {
 	if s.analyticsRepo == nil {
 		return nil, errortypes.NewValidationError(
 			"analytics", errortypes.ErrSystemError, "Detention analytics are not available")
@@ -420,8 +421,8 @@ func (s *Service) CustomerProfiles(
 // WaiverLeakage reports where discretionary revenue went, by coded reason.
 func (s *Service) WaiverLeakage(
 	ctx context.Context,
-	req *repositories.DetentionStatsRequest,
-) ([]*repositories.WaiverLeakageStat, error) {
+	req *detentionports.DetentionStatsRequest,
+) ([]*detentionports.WaiverLeakageStat, error) {
 	if s.analyticsRepo == nil {
 		return nil, errortypes.NewValidationError(
 			"analytics", errortypes.ErrSystemError, "Detention analytics are not available")

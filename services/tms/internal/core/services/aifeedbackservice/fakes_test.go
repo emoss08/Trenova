@@ -11,8 +11,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,10 +27,10 @@ import (
 
 type fakeStore struct {
 	upserted  []*aifeedback.Feedback
-	deleted   []repositories.DeleteAIFeedbackRequest
-	listed    []repositories.ListAIFeedbackForTargetsRequest
+	deleted   []aifeedbackports.DeleteAIFeedbackRequest
+	listed    []aifeedbackports.ListAIFeedbackForTargetsRequest
 	negatives []*aifeedback.Feedback
-	purges    []repositories.PurgeAIFeedbackRequest
+	purges    []aifeedbackports.PurgeAIFeedbackRequest
 	purgeRows []int64
 }
 
@@ -42,7 +48,7 @@ func (f *fakeStore) Upsert(
 
 func (f *fakeStore) Delete(
 	_ context.Context,
-	req repositories.DeleteAIFeedbackRequest,
+	req aifeedbackports.DeleteAIFeedbackRequest,
 ) (bool, error) {
 	f.deleted = append(f.deleted, req)
 
@@ -51,7 +57,7 @@ func (f *fakeStore) Delete(
 
 func (f *fakeStore) ListForTargets(
 	_ context.Context,
-	req repositories.ListAIFeedbackForTargetsRequest,
+	req aifeedbackports.ListAIFeedbackForTargetsRequest,
 ) ([]*aifeedback.Feedback, error) {
 	f.listed = append(f.listed, req)
 
@@ -60,42 +66,42 @@ func (f *fakeStore) ListForTargets(
 
 func (f *fakeStore) ListByIDs(
 	context.Context,
-	repositories.ListAIFeedbackByIDsRequest,
+	aifeedbackports.ListAIFeedbackByIDsRequest,
 ) ([]*aifeedback.Feedback, error) {
 	return []*aifeedback.Feedback{}, nil
 }
 
 func (f *fakeStore) ListConnection(
 	context.Context,
-	*repositories.ListAIFeedbackConnectionRequest,
+	*aifeedbackports.ListAIFeedbackConnectionRequest,
 ) (*pagination.CursorListResult[*aifeedback.Feedback], error) {
 	return &pagination.CursorListResult[*aifeedback.Feedback]{}, nil
 }
 
 func (f *fakeStore) DailySatisfaction(
 	context.Context,
-	repositories.AIFeedbackWindowRequest,
-) ([]*repositories.AIFeedbackDay, error) {
-	return []*repositories.AIFeedbackDay{}, nil
+	aifeedbackports.AIFeedbackWindowRequest,
+) ([]*aifeedbackports.AIFeedbackDay, error) {
+	return []*aifeedbackports.AIFeedbackDay{}, nil
 }
 
 func (f *fakeStore) WorstRated(
 	context.Context,
-	repositories.AIFeedbackWindowRequest,
-) ([]*repositories.AIFeedbackTargetScore, error) {
-	return []*repositories.AIFeedbackTargetScore{}, nil
+	aifeedbackports.AIFeedbackWindowRequest,
+) ([]*aifeedbackports.AIFeedbackTargetScore, error) {
+	return []*aifeedbackports.AIFeedbackTargetScore{}, nil
 }
 
 func (f *fakeStore) ListNegativeSince(
 	context.Context,
-	repositories.ListNegativeAIFeedbackRequest,
+	aifeedbackports.ListNegativeAIFeedbackRequest,
 ) ([]*aifeedback.Feedback, error) {
 	return f.negatives, nil
 }
 
 func (f *fakeStore) PurgeBefore(
 	_ context.Context,
-	req repositories.PurgeAIFeedbackRequest,
+	req aifeedbackports.PurgeAIFeedbackRequest,
 ) (int64, error) {
 	f.purges = append(f.purges, req)
 	if len(f.purgeRows) == 0 {
@@ -108,14 +114,14 @@ func (f *fakeStore) PurgeBefore(
 }
 
 type fakeMessages struct {
-	context *repositories.AIFeedbackMessageContext
+	context *aifeedbackports.AIFeedbackMessageContext
 	err     error
 }
 
 func (f *fakeMessages) GetMessageContext(
 	context.Context,
-	repositories.GetAIFeedbackMessageRequest,
-) (*repositories.AIFeedbackMessageContext, error) {
+	aifeedbackports.GetAIFeedbackMessageRequest,
+) (*aifeedbackports.AIFeedbackMessageContext, error) {
 	return f.context, f.err
 }
 
@@ -123,7 +129,7 @@ type fakeBriefings struct{ entity *briefing.Briefing }
 
 func (f *fakeBriefings) GetByID(
 	context.Context,
-	repositories.GetBriefingByIDRequest,
+	briefingports.GetBriefingByIDRequest,
 ) (*briefing.Briefing, error) {
 	if f.entity == nil {
 		return nil, errortypes.NewNotFoundError("Briefing not found")
@@ -136,7 +142,7 @@ type fakeInsights struct{ byID map[pulid.ID]*insight.Insight }
 
 func (f *fakeInsights) GetByID(
 	_ context.Context,
-	req repositories.GetInsightByIDRequest,
+	req insightports.GetInsightByIDRequest,
 ) (*insight.Insight, error) {
 	if entity, ok := f.byID[req.ID]; ok {
 		return entity, nil
@@ -149,7 +155,7 @@ type fakeWatchtower struct{ item *watchtower.Item }
 
 func (f *fakeWatchtower) GetByID(
 	context.Context,
-	repositories.GetWatchtowerItemRequest,
+	watchtowerports.GetWatchtowerItemRequest,
 ) (*watchtower.Item, error) {
 	if f.item == nil {
 		return nil, errortypes.NewNotFoundError("Item not found")
@@ -162,7 +168,7 @@ type fakeProposals struct{ proposal *agent.AgentProposal }
 
 func (f *fakeProposals) GetByID(
 	context.Context,
-	repositories.GetAgentProposalByIDRequest,
+	agentports.GetAgentProposalByIDRequest,
 ) (*agent.AgentProposal, error) {
 	return f.proposal, nil
 }
@@ -171,7 +177,7 @@ type fakePlans struct{ plan *agent.AgentPlan }
 
 func (f *fakePlans) GetByID(
 	context.Context,
-	repositories.GetAgentPlanByIDRequest,
+	agentports.GetAgentPlanByIDRequest,
 ) (*agent.AgentPlan, error) {
 	return f.plan, nil
 }
@@ -180,7 +186,7 @@ type fakeRuns struct{ run *agent.AgentRun }
 
 func (f *fakeRuns) GetByID(
 	context.Context,
-	repositories.GetAgentRunByIDRequest,
+	agentports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	if f.run == nil {
 		return nil, errortypes.NewNotFoundError("Run not found")
@@ -193,7 +199,7 @@ type fakeExceptions struct{ exception *agent.AgentException }
 
 func (f *fakeExceptions) GetByID(
 	context.Context,
-	repositories.GetAgentExceptionByIDRequest,
+	agentports.GetAgentExceptionByIDRequest,
 ) (*agent.AgentException, error) {
 	return f.exception, nil
 }
@@ -202,7 +208,7 @@ type fakeDefinitions struct{ definition *agentdefinition.Definition }
 
 func (f *fakeDefinitions) GetByID(
 	context.Context,
-	repositories.GetAgentDefinitionByIDRequest,
+	agentdefinitionports.GetAgentDefinitionByIDRequest,
 ) (*agentdefinition.Definition, error) {
 	if f.definition == nil {
 		return nil, errortypes.NewNotFoundError("Agent not found")
@@ -214,7 +220,7 @@ func (f *fakeDefinitions) GetByID(
 type fakeMemories struct {
 	existing []*agent.Memory
 	created  []*agent.Memory
-	asked    []repositories.ListAgentMemorySuggestionContextRequest
+	asked    []agentports.ListAgentMemorySuggestionContextRequest
 }
 
 func (f *fakeMemories) Create(_ context.Context, entity *agent.Memory) (*agent.Memory, error) {
@@ -226,7 +232,7 @@ func (f *fakeMemories) Create(_ context.Context, entity *agent.Memory) (*agent.M
 
 func (f *fakeMemories) ListSuggestionContext(
 	_ context.Context,
-	req repositories.ListAgentMemorySuggestionContextRequest,
+	req agentports.ListAgentMemorySuggestionContextRequest,
 ) ([]*agent.Memory, error) {
 	f.asked = append(f.asked, req)
 
@@ -237,7 +243,7 @@ type fakeRetention struct{ row *tenant.DataRetention }
 
 func (f *fakeRetention) Get(
 	context.Context,
-	repositories.GetDataRetentionRequest,
+	tenantports.GetDataRetentionRequest,
 ) (*tenant.DataRetention, error) {
 	if f.row == nil {
 		return nil, errortypes.NewNotFoundError("Data Retention not found")
@@ -250,7 +256,7 @@ type fakeOrganizations struct{}
 
 func (fakeOrganizations) GetByID(
 	context.Context,
-	repositories.GetOrganizationByIDRequest,
+	tenantports.GetOrganizationByIDRequest,
 ) (*tenant.Organization, error) {
 	return &tenant.Organization{Timezone: "America/Chicago"}, nil
 }
@@ -262,11 +268,11 @@ type fakePermissions struct {
 
 func (f *fakePermissions) Check(
 	_ context.Context,
-	req *services.PermissionCheckRequest,
-) (*services.PermissionCheckResult, error) {
+	req *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
 	f.asked = append(f.asked, req.Resource)
 
-	return &services.PermissionCheckResult{
+	return &permissionports.PermissionCheckResult{
 		Allowed: f.allowed[permission.Resource(req.Resource)],
 	}, nil
 }
@@ -349,11 +355,11 @@ func testTenant() pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 }
 
-func person(tenant pagination.TenantInfo) *services.RequestActor {
+func person(tenant pagination.TenantInfo) *permissionports.RequestActor {
 	userID := pulid.MustNew("usr_")
 
-	return &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeUser,
+	return &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    userID,
 		UserID:         userID,
 		OrganizationID: tenant.OrgID,
@@ -363,7 +369,7 @@ func person(tenant pagination.TenantInfo) *services.RequestActor {
 
 func (f *fakeStore) TotalsByAgent(
 	context.Context,
-	repositories.AIFeedbackAgentTotalsRequest,
-) ([]*repositories.AIFeedbackAgentTotals, error) {
+	aifeedbackports.AIFeedbackAgentTotalsRequest,
+) ([]*aifeedbackports.AIFeedbackAgentTotals, error) {
 	return nil, nil
 }

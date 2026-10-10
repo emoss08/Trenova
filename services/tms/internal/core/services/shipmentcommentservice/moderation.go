@@ -5,32 +5,32 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 func (s *service) Pin(
 	ctx context.Context,
-	req *services.ToggleShipmentCommentRequest,
-	actor *services.RequestActor,
+	req *shipmentports.ToggleShipmentCommentRequest,
+	actor *permissionports.RequestActor,
 ) (*shipment.ShipmentComment, error) {
 	return s.setPinned(ctx, req, actor, true)
 }
 
 func (s *service) Unpin(
 	ctx context.Context,
-	req *services.ToggleShipmentCommentRequest,
-	actor *services.RequestActor,
+	req *shipmentports.ToggleShipmentCommentRequest,
+	actor *permissionports.RequestActor,
 ) (*shipment.ShipmentComment, error) {
 	return s.setPinned(ctx, req, actor, false)
 }
 
 func (s *service) setPinned(
 	ctx context.Context,
-	req *services.ToggleShipmentCommentRequest,
-	actor *services.RequestActor,
+	req *shipmentports.ToggleShipmentCommentRequest,
+	actor *permissionports.RequestActor,
 	pinned bool,
 ) (*shipment.ShipmentComment, error) {
 	comment, userID, err := s.planPin(ctx, req, actor, pinned)
@@ -42,7 +42,7 @@ func (s *service) setPinned(
 		return comment, nil
 	}
 
-	updated, err := s.repo.SetPinned(ctx, &repositories.SetShipmentCommentPinnedRequest{
+	updated, err := s.repo.SetPinned(ctx, &shipmentports.SetShipmentCommentPinnedRequest{
 		TenantInfo: req.TenantInfo,
 		ShipmentID: req.ShipmentID,
 		CommentID:  req.CommentID,
@@ -75,24 +75,24 @@ func (s *service) setPinned(
 
 func (s *service) Resolve(
 	ctx context.Context,
-	req *services.ToggleShipmentCommentRequest,
-	actor *services.RequestActor,
+	req *shipmentports.ToggleShipmentCommentRequest,
+	actor *permissionports.RequestActor,
 ) (*shipment.ShipmentComment, error) {
 	return s.setResolved(ctx, req, actor, true)
 }
 
 func (s *service) Unresolve(
 	ctx context.Context,
-	req *services.ToggleShipmentCommentRequest,
-	actor *services.RequestActor,
+	req *shipmentports.ToggleShipmentCommentRequest,
+	actor *permissionports.RequestActor,
 ) (*shipment.ShipmentComment, error) {
 	return s.setResolved(ctx, req, actor, false)
 }
 
 func (s *service) setResolved(
 	ctx context.Context,
-	req *services.ToggleShipmentCommentRequest,
-	actor *services.RequestActor,
+	req *shipmentports.ToggleShipmentCommentRequest,
+	actor *permissionports.RequestActor,
 	resolved bool,
 ) (*shipment.ShipmentComment, error) {
 	comment, userID, err := s.getToggleTarget(ctx, req, actor)
@@ -104,7 +104,7 @@ func (s *service) setResolved(
 		return comment, nil
 	}
 
-	updated, err := s.repo.SetResolved(ctx, &repositories.SetShipmentCommentResolvedRequest{
+	updated, err := s.repo.SetResolved(ctx, &shipmentports.SetShipmentCommentResolvedRequest{
 		TenantInfo: req.TenantInfo,
 		ShipmentID: req.ShipmentID,
 		CommentID:  req.CommentID,
@@ -135,8 +135,8 @@ func (s *service) setResolved(
 
 func (s *service) Acknowledge(
 	ctx context.Context,
-	req *services.ToggleShipmentCommentRequest,
-	actor *services.RequestActor,
+	req *shipmentports.ToggleShipmentCommentRequest,
+	actor *permissionports.RequestActor,
 ) (*shipment.ShipmentComment, error) {
 	comment, userID, err := s.getToggleTarget(ctx, req, actor)
 	if err != nil {
@@ -151,7 +151,7 @@ func (s *service) Acknowledge(
 		)
 	}
 
-	inserted, err := s.repo.Acknowledge(ctx, &repositories.AcknowledgeShipmentCommentRequest{
+	inserted, err := s.repo.Acknowledge(ctx, &shipmentports.AcknowledgeShipmentCommentRequest{
 		TenantInfo: req.TenantInfo,
 		ShipmentID: req.ShipmentID,
 		CommentID:  req.CommentID,
@@ -161,7 +161,7 @@ func (s *service) Acknowledge(
 		return nil, err
 	}
 
-	updated, err := s.repo.GetByID(ctx, &repositories.GetShipmentCommentByIDRequest{
+	updated, err := s.repo.GetByID(ctx, &shipmentports.GetShipmentCommentByIDRequest{
 		CommentID:  req.CommentID,
 		ShipmentID: req.ShipmentID,
 		TenantInfo: req.TenantInfo,
@@ -193,8 +193,8 @@ func (s *service) Acknowledge(
 
 func (s *service) getToggleTarget(
 	ctx context.Context,
-	req *services.ToggleShipmentCommentRequest,
-	actor *services.RequestActor,
+	req *shipmentports.ToggleShipmentCommentRequest,
+	actor *permissionports.RequestActor,
 ) (*shipment.ShipmentComment, pulid.ID, error) {
 	if req == nil {
 		return nil, pulid.Nil, errortypes.NewValidationError(
@@ -204,7 +204,7 @@ func (s *service) getToggleTarget(
 		)
 	}
 
-	getReq := &repositories.GetShipmentCommentByIDRequest{
+	getReq := &shipmentports.GetShipmentCommentByIDRequest{
 		CommentID:  req.CommentID,
 		ShipmentID: req.ShipmentID,
 		TenantInfo: req.TenantInfo,

@@ -8,9 +8,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -57,7 +60,7 @@ var (
 type billingQueueLister interface {
 	List(
 		ctx context.Context,
-		req *repositories.ListBillingQueueItemsRequest,
+		req *billingqueueports.ListBillingQueueItemsRequest,
 	) (*pagination.ListResult[*billingqueue.BillingQueueItem], error)
 }
 
@@ -80,16 +83,16 @@ type billingQueueRow struct {
 // billing queue page lists from. The page hides posted items unless asked;
 // so does this, unless a status filter names Posted.
 func newListBillingQueueItemsTool(
-	repo repositories.BillingQueueRepository,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	repo billingqueueports.BillingQueueRepository,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return buildBillingQueueList(repo, newFieldAccess(permissions))
 }
 
 func buildBillingQueueList(
 	lister billingQueueLister,
 	access fieldAccess,
-) serviceports.AgentQueryTool {
+) agentports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "list_billing_queue_items",
 		entityPlural: "billing queue items",
@@ -137,7 +140,7 @@ func buildBillingQueueList(
 			if lister == nil {
 				return nil, errortypes.NewConflictError("The billing queue is unavailable")
 			}
-			result, err := lister.List(ctx, &repositories.ListBillingQueueItemsRequest{
+			result, err := lister.List(ctx, &billingqueueports.ListBillingQueueItemsRequest{
 				Filter:        opts,
 				IncludePosted: asksForPosted(opts.FieldFilters),
 			})
@@ -224,7 +227,7 @@ func billingQueueRowFrom(
 type billingQueueReader interface {
 	GetByID(
 		ctx context.Context,
-		req *repositories.GetBillingQueueItemByIDRequest,
+		req *billingqueueports.GetBillingQueueItemByIDRequest,
 	) (*billingqueue.BillingQueueItem, error)
 }
 
@@ -233,13 +236,13 @@ type billingReadinessReader interface {
 		ctx context.Context,
 		shipmentID pulid.ID,
 		tenantInfo pagination.TenantInfo,
-	) (*serviceports.ShipmentBillingReadiness, error)
+	) (*shipmentports.ShipmentBillingReadiness, error)
 }
 
 type queueInvoiceReader interface {
 	GetByBillingQueueItemID(
 		ctx context.Context,
-		req repositories.GetInvoiceByBillingQueueItemIDRequest,
+		req invoiceports.GetInvoiceByBillingQueueItemIDRequest,
 	) (*invoice.Invoice, error)
 }
 
@@ -251,11 +254,11 @@ type getBillingQueueItemTool struct {
 }
 
 func newGetBillingQueueItemTool(
-	items serviceports.BillingQueueService,
-	shipments serviceports.ShipmentService,
-	invoices repositories.InvoiceRepository,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	items billingqueueports.BillingQueueService,
+	shipments shipmentports.ShipmentService,
+	invoices invoiceports.InvoiceRepository,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &getBillingQueueItemTool{
 		items:     items,
 		readiness: shipments,
@@ -284,7 +287,7 @@ func (t *getBillingQueueItemTool) ParamSchema() map[string]any {
 	)
 }
 
-func (t *getBillingQueueItemTool) Policy() serviceports.ToolPolicy {
+func (t *getBillingQueueItemTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceBillingQueue})
 }
 
@@ -334,7 +337,7 @@ type billingQueueDetail struct {
 
 func (t *getBillingQueueItemTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -373,7 +376,7 @@ func (r queueDetailReader) detail(
 	id pulid.ID,
 	gate *fieldGate,
 ) (*billingQueueDetail, error) {
-	item, err := r.items.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
+	item, err := r.items.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
 		ItemID:                id,
 		TenantInfo:            tenant,
 		ExpandShipmentDetails: true,
@@ -406,7 +409,7 @@ func (r queueDetailReader) detail(
 	if detail.InvoiceID == "" && item.Status == billingqueue.StatusApproved && r.invoices != nil {
 		if inv, invErr := r.invoices.GetByBillingQueueItemID(
 			ctx,
-			repositories.GetInvoiceByBillingQueueItemIDRequest{
+			invoiceports.GetInvoiceByBillingQueueItemIDRequest{
 				BillingQueueItemID: item.ID,
 				TenantInfo:         tenant,
 			},
@@ -493,7 +496,7 @@ func holdsOf(holds []*billingqueue.DetentionHold, showAmount bool) []billingQueu
 	return out
 }
 
-func readinessOf(readiness *serviceports.ShipmentBillingReadiness) *billingQueueReadiness {
+func readinessOf(readiness *shipmentports.ShipmentBillingReadiness) *billingQueueReadiness {
 	if readiness == nil {
 		return nil
 	}

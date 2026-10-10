@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/modeprofile"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/modeprofileports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -40,7 +40,7 @@ func TestResolve_SelectsMostSpecificProfile(t *testing.T) {
 	svc := &service{}
 	policy := svc.resolveFromCandidates(
 		[]*modeprofile.Profile{scoped, orgDefault},
-		&services.ResolveModeProfileRequest{CustomerID: customerID},
+		&modeprofileports.ResolveModeProfileRequest{CustomerID: customerID},
 		100,
 	)
 
@@ -64,7 +64,7 @@ func TestResolve_RejectsProfileTargetingAnotherCustomer(t *testing.T) {
 	svc := &service{}
 	policy := svc.resolveFromCandidates(
 		[]*modeprofile.Profile{scoped, orgDefault},
-		&services.ResolveModeProfileRequest{CustomerID: pulid.MustNew("cus_")},
+		&modeprofileports.ResolveModeProfileRequest{CustomerID: pulid.MustNew("cus_")},
 		100,
 	)
 
@@ -82,7 +82,7 @@ func TestResolve_RejectsProfileOutsideEffectiveWindow(t *testing.T) {
 	svc := &service{}
 	policy := svc.resolveFromCandidates(
 		[]*modeprofile.Profile{expired},
-		&services.ResolveModeProfileRequest{},
+		&modeprofileports.ResolveModeProfileRequest{},
 		100,
 	)
 
@@ -95,7 +95,7 @@ func TestResolve_UsesCatalogDefaultsForUnconfiguredRules(t *testing.T) {
 	svc := &service{}
 	policy := svc.resolveFromCandidates(
 		[]*modeprofile.Profile{profile},
-		&services.ResolveModeProfileRequest{},
+		&modeprofileports.ResolveModeProfileRequest{},
 		100,
 	)
 
@@ -122,7 +122,7 @@ func TestResolve_OmitsRulesWhoseCapabilityIsNotDeclared(t *testing.T) {
 	svc := &service{}
 	policy := svc.resolveFromCandidates(
 		[]*modeprofile.Profile{profile},
-		&services.ResolveModeProfileRequest{},
+		&modeprofileports.ResolveModeProfileRequest{},
 		100,
 	)
 
@@ -151,7 +151,7 @@ func TestResolve_ConfiguredRuleOverridesCarryProvenance(t *testing.T) {
 	svc := &service{}
 	policy := svc.resolveFromCandidates(
 		[]*modeprofile.Profile{profile},
-		&services.ResolveModeProfileRequest{},
+		&modeprofileports.ResolveModeProfileRequest{},
 		100,
 	)
 
@@ -189,7 +189,7 @@ func TestResolve_IgnoredRuleDoesNotApply(t *testing.T) {
 	svc := &service{}
 	policy := svc.resolveFromCandidates(
 		[]*modeprofile.Profile{profile},
-		&services.ResolveModeProfileRequest{},
+		&modeprofileports.ResolveModeProfileRequest{},
 		100,
 	)
 
@@ -225,7 +225,7 @@ func TestResolve_RequiredFieldsAreNarrowerThanTargetedFields(t *testing.T) {
 	svc := &service{}
 	policy := svc.resolveFromCandidates(
 		[]*modeprofile.Profile{coreProfile("OTR", true)},
-		&services.ResolveModeProfileRequest{},
+		&modeprofileports.ResolveModeProfileRequest{},
 		100,
 	)
 	require.NotNil(t, policy)
@@ -257,7 +257,7 @@ func TestResolve_TemperatureMaxIsRequiredOnlyWhenBothBoundsAre(t *testing.T) {
 	// raises ErrRequired on temperatureMax.
 	policy := svc.resolveFromCandidates(
 		[]*modeprofile.Profile{coreProfile("OTR", true)},
-		&services.ResolveModeProfileRequest{},
+		&modeprofileports.ResolveModeProfileRequest{},
 		100,
 	)
 	require.NotNil(t, policy)
@@ -280,7 +280,7 @@ func TestResolve_TemperatureMaxIsRequiredOnlyWhenBothBoundsAre(t *testing.T) {
 
 	policy = svc.resolveFromCandidates(
 		[]*modeprofile.Profile{minOnly},
-		&services.ResolveModeProfileRequest{},
+		&modeprofileports.ResolveModeProfileRequest{},
 		100,
 	)
 	require.NotNil(t, policy)
@@ -309,7 +309,7 @@ func TestResolve_AWarningRuleRequiresNothing(t *testing.T) {
 	svc := &service{}
 	policy := svc.resolveFromCandidates(
 		[]*modeprofile.Profile{warning},
-		&services.ResolveModeProfileRequest{},
+		&modeprofileports.ResolveModeProfileRequest{},
 		100,
 	)
 	require.NotNil(t, policy)
@@ -332,7 +332,7 @@ func TestResolve_ADisabledRuleRequiresNothing(t *testing.T) {
 	svc := &service{}
 	policy := svc.resolveFromCandidates(
 		[]*modeprofile.Profile{disabled},
-		&services.ResolveModeProfileRequest{},
+		&modeprofileports.ResolveModeProfileRequest{},
 		100,
 	)
 	require.NotNil(t, policy)

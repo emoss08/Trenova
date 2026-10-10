@@ -6,17 +6,18 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 )
 
 type correctChargeCodeTool struct {
-	billing serviceports.BillingQueueService
+	billing billingqueueports.BillingQueueService
 }
 
-func newCorrectChargeCodeTool(billing serviceports.BillingQueueService) serviceports.AgentTool {
+func newCorrectChargeCodeTool(billing billingqueueports.BillingQueueService) agentports.AgentTool {
 	return &correctChargeCodeTool{billing: billing}
 }
 
@@ -95,8 +96,8 @@ func chargeLineSchema() map[string]any {
 	}
 }
 
-func (t *correctChargeCodeTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *correctChargeCodeTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceBillingQueue,
@@ -115,7 +116,7 @@ func (t *correctChargeCodeTool) Policy() serviceports.ToolPolicy {
 
 func (t *correctChargeCodeTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	request, err := t.request(&params)
 	if err != nil {
@@ -132,7 +133,7 @@ func (t *correctChargeCodeTool) Execute(
 // model before it is proposed.
 func (t *correctChargeCodeTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	return previewValidates(ctx, t, &params)
 }
@@ -140,8 +141,8 @@ func (t *correctChargeCodeTool) Validate(
 // request is the charge edit the preview and the write both make: the
 // item's additional charges replaced by the set the call sends.
 func (t *correctChargeCodeTool) request(
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.UpdateChargesRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*billingqueueports.UpdateChargesRequest, error) {
 	if err := guardExecute(t, *params); err != nil {
 		return nil, err
 	}
@@ -156,7 +157,7 @@ func (t *correctChargeCodeTool) request(
 		return nil, err
 	}
 
-	return &serviceports.UpdateChargesRequest{
+	return &billingqueueports.UpdateChargesRequest{
 		ItemID:            itemID,
 		AdditionalCharges: charges,
 		TenantInfo: pagination.TenantInfo{
@@ -168,6 +169,6 @@ func (t *correctChargeCodeTool) request(
 
 // Target names the record this call would change, so a proposal to change it
 // can be checked against the record's version before it runs.
-func (t *correctChargeCodeTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *correctChargeCodeTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, "billingQueueItemId", permission.ResourceBillingQueue)
 }

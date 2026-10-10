@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -43,7 +43,7 @@ func withCatalog() *LocalEntitlementProvider {
 func TestLocalEntitlementProvider_CheckFeature(t *testing.T) {
 	t.Parallel()
 
-	result, err := withCatalog().CheckFeature(t.Context(), &services.FeatureCheckRequest{
+	result, err := withCatalog().CheckFeature(t.Context(), &platformcatalogports.FeatureCheckRequest{
 		FeatureKey: platformcatalog.FeatureCoreTMS,
 	})
 
@@ -56,7 +56,7 @@ func TestLocalEntitlementProvider_CheckFeature(t *testing.T) {
 func TestLocalEntitlementProvider_CheckFeatureUnknown(t *testing.T) {
 	t.Parallel()
 
-	result, err := withCatalog().CheckFeature(t.Context(), &services.FeatureCheckRequest{
+	result, err := withCatalog().CheckFeature(t.Context(), &platformcatalogports.FeatureCheckRequest{
 		FeatureKey: platformcatalog.FeatureKey("unknown"),
 	})
 
@@ -70,7 +70,7 @@ func TestLocalEntitlementProvider_WithoutACatalogAllowsEverything(t *testing.T) 
 
 	provider := NewLocalEntitlementProvider(LocalEntitlementProviderParams{})
 
-	result, err := provider.CheckFeature(t.Context(), &services.FeatureCheckRequest{
+	result, err := provider.CheckFeature(t.Context(), &platformcatalogports.FeatureCheckRequest{
 		FeatureKey: platformcatalog.FeatureKey("anything"),
 		CheckedAt:  42,
 	})
@@ -79,7 +79,7 @@ func TestLocalEntitlementProvider_WithoutACatalogAllowsEverything(t *testing.T) 
 	assert.Equal(t, reasonCommunityMode, result.Reason)
 	assert.Equal(t, int64(42), result.CheckedAt)
 
-	list, err := provider.ListEntitlements(t.Context(), &services.EntitlementsRequest{})
+	list, err := provider.ListEntitlements(t.Context(), &platformcatalogports.EntitlementsRequest{})
 	require.NoError(t, err)
 	assert.Empty(t, list.Features)
 	assert.NotZero(t, list.CheckedAt)
@@ -88,7 +88,7 @@ func TestLocalEntitlementProvider_WithoutACatalogAllowsEverything(t *testing.T) 
 func TestLocalEntitlementProvider_ListsEveryCatalogFeatureAsAllowed(t *testing.T) {
 	t.Parallel()
 
-	list, err := withCatalog().ListEntitlements(t.Context(), &services.EntitlementsRequest{})
+	list, err := withCatalog().ListEntitlements(t.Context(), &platformcatalogports.EntitlementsRequest{})
 	require.NoError(t, err)
 	require.Len(t, list.Features, 2)
 	for _, feature := range list.Features {

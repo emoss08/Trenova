@@ -19,9 +19,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -36,7 +36,7 @@ type recordingCreator[T any] struct {
 	err     error
 }
 
-func (r *recordingCreator[T]) Create(_ context.Context, entity T, _ *services.RequestActor) (T, error) {
+func (r *recordingCreator[T]) Create(_ context.Context, entity T, _ *permissionports.RequestActor) (T, error) {
 	if r.err != nil && len(r.created) == r.failAt {
 		var zero T
 		return zero, r.err
@@ -65,7 +65,7 @@ type fakeTemplateFinder struct {
 
 func (f *fakeTemplateFinder) FindByNames(
 	context.Context,
-	repositories.GetFormulaTemplatesByNamesRequest,
+	formulatemplateports.GetFormulaTemplatesByNamesRequest,
 ) ([]*formulatemplate.FormulaTemplate, error) {
 	return f.found, nil
 }
@@ -142,7 +142,7 @@ func sampleRequest() *SampleDataRequest {
 	}
 	return &SampleDataRequest{
 		TenantInfo: info,
-		Actor:      &services.RequestActor{UserID: info.UserID},
+		Actor:      &permissionports.RequestActor{UserID: info.UserID},
 		Organization: &tenant.Organization{
 			ID:           info.OrgID,
 			AddressLine1: "1 Main St",

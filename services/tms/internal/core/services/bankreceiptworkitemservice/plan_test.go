@@ -1,12 +1,12 @@
 package bankreceiptworkitemservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/bankreceiptworkitemportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/bankreceiptworkitem"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptworkitemports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -30,11 +30,11 @@ func TestPlansShowTheMoveWithoutSavingIt(t *testing.T) {
 		BusinessUnitID: buID,
 		Status:         bankreceiptworkitem.StatusOpen,
 	}
-	repo := mocks.NewMockBankReceiptWorkItemRepository(t)
+	repo := bankreceiptworkitemportsmock.NewMockBankReceiptWorkItemRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).RunAndReturn(
 		func(
 			_ context.Context,
-			_ repositories.GetBankReceiptWorkItemByIDRequest,
+			_ bankreceiptworkitemports.GetBankReceiptWorkItemByIDRequest,
 		) (*bankreceiptworkitem.WorkItem, error) {
 			copied := *work
 			return &copied, nil
@@ -44,7 +44,7 @@ func TestPlansShowTheMoveWithoutSavingIt(t *testing.T) {
 	tenant := pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}
 	actor := testutil.NewSessionActor(userID, orgID, buID)
 
-	assigned, err := svc.PlanAssign(t.Context(), &serviceports.AssignBankReceiptWorkItemRequest{
+	assigned, err := svc.PlanAssign(t.Context(), &bankreceiptworkitemports.AssignBankReceiptWorkItemRequest{
 		WorkItemID:       work.ID,
 		AssignedToUserID: assignee,
 		TenantInfo:       tenant,
@@ -54,7 +54,7 @@ func TestPlansShowTheMoveWithoutSavingIt(t *testing.T) {
 	assert.Equal(t, bankreceiptworkitem.StatusAssigned, assigned.After.Status)
 	assert.Equal(t, assignee, assigned.After.AssignedToUserID)
 
-	review, err := svc.PlanStartReview(t.Context(), &serviceports.GetBankReceiptWorkItemRequest{
+	review, err := svc.PlanStartReview(t.Context(), &bankreceiptworkitemports.GetBankReceiptWorkItemRequest{
 		WorkItemID: work.ID,
 		TenantInfo: tenant,
 	}, actor)

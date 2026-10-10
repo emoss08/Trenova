@@ -1,12 +1,15 @@
 package servicefailureservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/servicefailureportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -24,9 +27,9 @@ type detectionFixture struct {
 	onTime  pulid.ID
 	grace   int
 	svc     *service
-	repo    *mocks.MockServiceFailureRepository
+	repo    *servicefailureportsmock.MockServiceFailureRepository
 	marker  *fakeDelayedShipmentMarker
-	request *serviceports.EvaluateShipmentServiceFailuresRequest
+	request *servicefailureports.EvaluateShipmentServiceFailuresRequest
 }
 
 func newDetectionFixture(t *testing.T) *detectionFixture {
@@ -62,15 +65,15 @@ func newDetectionFixture(t *testing.T) *detectionFixture {
 		lateID: late.ID,
 		onTime: onTime.ID,
 		grace:  5,
-		repo:   mocks.NewMockServiceFailureRepository(t),
+		repo:   servicefailureportsmock.NewMockServiceFailureRepository(t),
 		marker: &fakeDelayedShipmentMarker{},
 	}
-	shipmentRepo := mocks.NewMockShipmentRepository(t)
+	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
 		Return(source, nil).
 		Once()
-	dispatchRepo := mocks.NewMockDispatchControlRepository(t)
+	dispatchRepo := dispatchcontrolportsmock.NewMockDispatchControlRepository(t)
 	dispatchRepo.EXPECT().
 		GetOrCreate(mock.Anything, orgID, buID).
 		Return(&dispatchcontrol.DispatchControl{
@@ -78,7 +81,7 @@ func newDetectionFixture(t *testing.T) *detectionFixture {
 			ServiceFailureGracePeriod: &fixture.grace,
 		}, nil).
 		Once()
-	reasonRepo := mocks.NewMockServiceFailureReasonCodeRepository(t)
+	reasonRepo := servicefailureportsmock.NewMockServiceFailureReasonCodeRepository(t)
 	reasonRepo.EXPECT().
 		FindDefault(mock.Anything, fixture.tenant, servicefailure.ReasonCodeAppliesToDelivery).
 		Return(nil, errortypes.NewNotFoundError("not found")).
@@ -92,7 +95,7 @@ func newDetectionFixture(t *testing.T) *detectionFixture {
 		dispatchRepo:   dispatchRepo,
 		delayedMarker:  fixture.marker,
 	}
-	fixture.request = &serviceports.EvaluateShipmentServiceFailuresRequest{
+	fixture.request = &servicefailureports.EvaluateShipmentServiceFailuresRequest{
 		TenantInfo: fixture.tenant,
 		ShipmentID: shipmentID,
 	}

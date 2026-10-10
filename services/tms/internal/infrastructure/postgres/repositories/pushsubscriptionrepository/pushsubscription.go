@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/notification"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -26,7 +26,7 @@ type pushSubscriptionRepository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.PushSubscriptionRepository {
+func New(p Params) notificationports.PushSubscriptionRepository {
 	return &pushSubscriptionRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.push-subscription-repository"),
@@ -35,7 +35,7 @@ func New(p Params) repositories.PushSubscriptionRepository {
 
 func (r *pushSubscriptionRepository) Save(
 	ctx context.Context,
-	req *repositories.SavePushSubscriptionRequest,
+	req *notificationports.SavePushSubscriptionRequest,
 ) (*notification.PushSubscription, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*notification.PushSubscription, error) {
 		cols := buncolgen.PushSubscriptionColumns

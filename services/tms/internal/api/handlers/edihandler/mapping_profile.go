@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -57,7 +57,7 @@ func (h *Handler) getMappingProfile(c *gin.Context) {
 
 	profile, err := h.service.GetMappingProfile(
 		c.Request.Context(),
-		repositories.GetMappingProfileRequest{
+		ediports.GetMappingProfileRequest{
 			PartnerID:  partnerID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -88,7 +88,7 @@ func (h *Handler) updateMappingProfile(c *gin.Context) {
 
 	items, err := h.service.SaveMappingProfile(
 		c.Request.Context(),
-		&repositories.SaveMappingItemsRequest{
+		&ediports.SaveMappingItemsRequest{
 			PartnerID:  partnerID,
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 			ActorID:    authCtx.UserID,
@@ -118,7 +118,7 @@ func (h *Handler) deleteMappingItem(c *gin.Context) {
 
 	err = h.service.DeleteMappingItem(
 		c.Request.Context(),
-		repositories.DeleteMappingItemRequest{
+		ediports.DeleteMappingItemRequest{
 			PartnerID:     partnerID,
 			MappingItemID: mappingItemID,
 			TenantInfo:    pagination.FromAuth(authCtx),
@@ -139,7 +139,7 @@ func (h *Handler) listMappingProfiles(c *gin.Context) {
 	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*edi.EDIMappingProfile], error) {
 		return h.service.ListMappingProfiles(
 			c.Request.Context(),
-			&repositories.ListEDIMappingProfilesRequest{Filter: req},
+			&ediports.ListEDIMappingProfilesRequest{Filter: req},
 		)
 	})
 }
@@ -155,7 +155,7 @@ func (h *Handler) selectMappingProfileOptions(c *gin.Context) {
 		func() (*pagination.ListResult[*edi.EDIMappingProfile], error) {
 			return h.service.SelectMappingProfileOptions(
 				c.Request.Context(),
-				&repositories.EDIMappingProfileSelectOptionsRequest{
+				&ediports.EDIMappingProfileSelectOptionsRequest{
 					SelectQueryRequest: req,
 					PartnerID:          helpers.QueryPulid(c, "partnerId"),
 				},
@@ -178,7 +178,7 @@ func (h *Handler) getMappingProfileByID(c *gin.Context) {
 
 	profile, err := h.service.GetMappingProfileByID(
 		c.Request.Context(),
-		repositories.GetMappingProfileByIDRequest{
+		ediports.GetMappingProfileByIDRequest{
 			ProfileID:  profileID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -209,7 +209,7 @@ func (h *Handler) updateMappingProfileItems(c *gin.Context) {
 
 	items, err := h.service.SaveMappingProfileItems(
 		c.Request.Context(),
-		&repositories.SaveMappingProfileItemsRequest{
+		&ediports.SaveMappingProfileItemsRequest{
 			ProfileID:  profileID,
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 			ActorID:    authCtx.UserID,
@@ -239,7 +239,7 @@ func (h *Handler) deleteMappingProfileItem(c *gin.Context) {
 
 	err = h.service.DeleteMappingProfileItem(
 		c.Request.Context(),
-		repositories.DeleteMappingProfileItemRequest{
+		ediports.DeleteMappingProfileItemRequest{
 			ProfileID:     profileID,
 			MappingItemID: mappingItemID,
 			TenantInfo:    pagination.FromAuth(authCtx),

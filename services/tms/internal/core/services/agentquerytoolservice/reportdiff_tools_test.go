@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/pkg/reportrows"
@@ -39,7 +39,7 @@ func succeededRun(id pulid.ID, rowsKey string) *report.ReportRun {
 
 type comparisonFixture struct {
 	service *fakeReporting
-	tools   map[string]serviceports.AgentQueryTool
+	tools   map[string]agentports.AgentQueryTool
 	earlier pulid.ID
 	later   pulid.ID
 }

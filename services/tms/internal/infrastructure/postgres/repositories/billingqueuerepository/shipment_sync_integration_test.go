@@ -4,21 +4,21 @@ package billingqueuerepository
 
 import (
 	"context"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/chargeallocationrepository"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentadditionalchargerepository"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentcommodityrepository"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentmoverepository"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/chargeallocationrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentadditionalchargerepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentcommodityrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentmoverepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentrepository"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -46,7 +46,7 @@ type syncFixture struct {
 	ctx          context.Context
 	db           *bun.DB
 	repo         *repository
-	shipmentRepo repositories.ShipmentRepository
+	shipmentRepo shipmentports.ShipmentRepository
 	tenant       pagination.TenantInfo
 	shipmentID   pulid.ID
 	payerID      pulid.ID
@@ -232,10 +232,10 @@ func TestShipmentWritesCannotOverwriteTheMirror(t *testing.T) {
 	f.createItem(t, "BQ-SYNC-0301", billingqueue.StatusInReview, billingqueue.BillTypeInvoice)
 	transferredAt := f.shipmentRow(t).TransferredToBillingAt
 
-	entity, err := f.shipmentRepo.GetByID(f.ctx, &repositories.GetShipmentByIDRequest{
+	entity, err := f.shipmentRepo.GetByID(f.ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:              f.shipmentID,
 		TenantInfo:      f.tenant,
-		ShipmentOptions: repositories.ShipmentOptions{ExpandShipmentDetails: true},
+		ShipmentOptions: shipmentports.ShipmentOptions{ExpandShipmentDetails: true},
 	})
 	require.NoError(t, err)
 

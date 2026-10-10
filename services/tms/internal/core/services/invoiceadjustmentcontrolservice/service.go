@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -18,16 +18,16 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.InvoiceAdjustmentControlRepository
+	Repo         tenantports.InvoiceAdjustmentControlRepository
 	Validator    *Validator
-	AuditService services.AuditService
+	AuditService auditports.AuditService
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.InvoiceAdjustmentControlRepository
+	repo         tenantports.InvoiceAdjustmentControlRepository
 	validator    *Validator
-	auditService services.AuditService
+	auditService auditports.AuditService
 }
 
 func New(p Params) *Service {
@@ -41,7 +41,7 @@ func New(p Params) *Service {
 
 func (s *Service) Get(
 	ctx context.Context,
-	req repositories.GetInvoiceAdjustmentControlRequest,
+	req tenantports.GetInvoiceAdjustmentControlRequest,
 ) (*tenant.InvoiceAdjustmentControl, error) {
 	return s.repo.GetByOrgID(ctx, req.TenantInfo.OrgID)
 }
@@ -73,7 +73,7 @@ func (s *Service) Update(
 	}
 
 	if err = s.auditService.LogAction(
-		&services.LogActionParams{
+		&auditports.LogActionParams{
 			Resource:       permission.ResourceInvoiceAdjustmentControl,
 			ResourceID:     updatedEntity.GetID().String(),
 			Operation:      permission.OpUpdate,

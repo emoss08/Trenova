@@ -5,7 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
 
 // CompactionKeepTurns is how many of the newest turns a compaction keeps
@@ -27,12 +28,12 @@ type ContextRequest struct {
 	// just ran. Empty after a compaction, which does not build a prompt;
 	// Instructions then carries the figure an earlier measure took.
 	System       string
-	Tools        []serviceports.ToolSpec
+	Tools        []kernelports.ToolSpec
 	Instructions int
 	// History is the conversation as it is read for the next turn: from its
 	// latest summary on.
 	History   []conversation.Message
-	Proposals []serviceports.ProposalOutcome
+	Proposals []agentports.ProposalOutcome
 	// Model is the model the conversation is answered by, whose window the
 	// use is measured against. Window is the window its provider is
 	// configured with, which wins over the one Model names; zero reads it
@@ -64,7 +65,7 @@ func MeasureContext(req ContextRequest) conversation.ContextUsage {
 	for idx := range messages {
 		message := &messages[idx]
 		switch message.Role {
-		case serviceports.RoleTool:
+		case agentports.RoleTool:
 			if _, file := fileTools[message.ToolName]; file {
 				usage.Files += dataTokens(message.Content)
 			} else {
@@ -112,11 +113,11 @@ func SplitForCompaction(history []conversation.Message) (older []conversation.Me
 	return older, older[len(older)-1].Sequence
 }
 
-func replayTokens(messages []serviceports.Message) int {
+func replayTokens(messages []agentports.Message) int {
 	total := 0
 	for idx := range messages {
 		message := &messages[idx]
-		if message.Role == serviceports.RoleTool {
+		if message.Role == agentports.RoleTool {
 			total += dataTokens(message.Content)
 			continue
 		}
@@ -137,7 +138,7 @@ func dataTokens(text string) int {
 	return (len(text) + 2) / 3
 }
 
-func callTokens(calls []serviceports.ToolCall) int {
+func callTokens(calls []agentports.ToolCall) int {
 	total := 0
 	for idx := range calls {
 		encoded, err := json.Marshal(calls[idx].Arguments)
@@ -150,7 +151,7 @@ func callTokens(calls []serviceports.ToolCall) int {
 	return total
 }
 
-func specTokens(specs []serviceports.ToolSpec) int {
+func specTokens(specs []kernelports.ToolSpec) int {
 	if len(specs) == 0 {
 		return 0
 	}

@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/latecharge"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -21,16 +21,16 @@ import (
 type Params struct {
 	fx.In
 
-	DB     ports.DBConnection
+	DB     kernelports.DBConnection
 	Logger *zap.Logger
 }
 
 type repository struct {
-	db ports.DBConnection
+	db kernelports.DBConnection
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.LateChargeRepository {
+func New(p Params) latechargeports.LateChargeRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("repository.late-charge"),
@@ -100,9 +100,9 @@ const listCandidatesSQL = `
 
 func (r *repository) ListCandidates(
 	ctx context.Context,
-	req *repositories.ListLateChargeCandidatesRequest,
-) ([]*repositories.LateChargeCandidate, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*repositories.LateChargeCandidate, error) {
+	req *latechargeports.ListLateChargeCandidatesRequest,
+) ([]*latechargeports.LateChargeCandidate, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*latechargeports.LateChargeCandidate, error) {
 		query := listCandidatesSQL
 		args := []any{req.TenantInfo.OrgID, req.TenantInfo.BuID, req.AsOfDate}
 		if len(req.CustomerIDs) > 0 {
@@ -116,13 +116,13 @@ func (r *repository) ListCandidates(
 			return nil, fmt.Errorf("list late charge candidates: %w", err)
 		}
 
-		candidates := make([]*repositories.LateChargeCandidate, 0, len(records))
+		candidates := make([]*latechargeports.LateChargeCandidate, 0, len(records))
 		for _, rec := range records {
 			assessed := make([]int, 0, len(rec.AssessedPeriods))
 			for _, idx := range rec.AssessedPeriods {
 				assessed = append(assessed, int(idx))
 			}
-			candidates = append(candidates, &repositories.LateChargeCandidate{
+			candidates = append(candidates, &latechargeports.LateChargeCandidate{
 				CustomerID:       pulid.ID(rec.CustomerID),
 				CustomerName:     rec.CustomerName,
 				InvoiceID:        pulid.ID(rec.InvoiceID),
@@ -234,7 +234,7 @@ func (r *repository) DeleteByRunKey(
 
 func (r *repository) ListBySourceInvoiceIDs(
 	ctx context.Context,
-	req *repositories.ListLateChargeAssessmentsByInvoiceIDsRequest,
+	req *latechargeports.ListLateChargeAssessmentsByInvoiceIDsRequest,
 ) (map[pulid.ID][]*latecharge.LateChargeAssessment, error) {
 	cols := buncolgen.LateChargeAssessmentColumns
 	return r.listGrouped(
@@ -249,7 +249,7 @@ func (r *repository) ListBySourceInvoiceIDs(
 
 func (r *repository) ListByDebitMemoIDs(
 	ctx context.Context,
-	req *repositories.ListLateChargeAssessmentsByInvoiceIDsRequest,
+	req *latechargeports.ListLateChargeAssessmentsByInvoiceIDsRequest,
 ) (map[pulid.ID][]*latecharge.LateChargeAssessment, error) {
 	cols := buncolgen.LateChargeAssessmentColumns
 	return r.listGrouped(
@@ -264,7 +264,7 @@ func (r *repository) ListByDebitMemoIDs(
 
 func (r *repository) listGrouped(
 	ctx context.Context,
-	req *repositories.ListLateChargeAssessmentsByInvoiceIDsRequest,
+	req *latechargeports.ListLateChargeAssessmentsByInvoiceIDsRequest,
 	column buncolgen.Column,
 	keyOf func(*latecharge.LateChargeAssessment) pulid.ID,
 ) (map[pulid.ID][]*latecharge.LateChargeAssessment, error) {

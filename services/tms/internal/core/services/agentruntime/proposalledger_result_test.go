@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,7 +19,7 @@ turn now reads the report's name and the id to use.
 func TestProposalOutcomeText_NamesWhatAnExecutedWriteMade(t *testing.T) {
 	t.Parallel()
 
-	text := proposalOutcomeText("create_report", serviceports.ProposalOutcome{
+	text := proposalOutcomeText("create_report", agentports.ProposalOutcome{
 		Status: agent.ProposalStatusExecuted,
 		ExecutionResult: &agent.ToolExecutionResult{
 			Action: "created",
@@ -41,7 +41,7 @@ func TestProposalOutcomeText_NamesWhatAnExecutedWriteMade(t *testing.T) {
 func TestProposalOutcomeText_ReadsAsBeforeWithoutAResult(t *testing.T) {
 	t.Parallel()
 
-	text := proposalOutcomeText("create_dashboard", serviceports.ProposalOutcome{
+	text := proposalOutcomeText("create_dashboard", agentports.ProposalOutcome{
 		Status: agent.ProposalStatusExecuted,
 	})
 
@@ -58,7 +58,7 @@ func TestProposalOutcomeText_ReadsAsBeforeWithoutAResult(t *testing.T) {
 func TestProposalOutcomeText_DoesNotCallAnAutomaticWriteApproved(t *testing.T) {
 	t.Parallel()
 
-	text := proposalOutcomeText("create_report", serviceports.ProposalOutcome{
+	text := proposalOutcomeText("create_report", agentports.ProposalOutcome{
 		Status:       agent.ProposalStatusExecuted,
 		AutonomyTier: agent.TierAutoExecute,
 		ExecutionResult: &agent.ToolExecutionResult{
@@ -77,7 +77,7 @@ func TestProposalOutcomeText_DoesNotCallAnAutomaticWriteApproved(t *testing.T) {
 		text,
 	)
 
-	failed := proposalOutcomeText("create_report", serviceports.ProposalOutcome{
+	failed := proposalOutcomeText("create_report", agentports.ProposalOutcome{
 		Status:         agent.ProposalStatusExecutionFailed,
 		AutonomyTier:   agent.TierAutoExecute,
 		ExecutionError: "name taken",

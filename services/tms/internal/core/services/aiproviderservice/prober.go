@@ -12,9 +12,10 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -34,7 +35,7 @@ type Prober struct {
 	logger   *zap.Logger
 	cfg      *config.AIConfig
 	adapters *modeladapter.Registry
-	prices   services.ModelPriceReference
+	prices   agentports.ModelPriceReference
 
 	clientsMu sync.Mutex
 	clients   map[bool]*http.Client
@@ -45,7 +46,7 @@ type ProberParams struct {
 
 	Logger *zap.Logger
 	Config *config.Config
-	Prices services.ModelPriceReference `optional:"true"`
+	Prices agentports.ModelPriceReference `optional:"true"`
 }
 
 func NewProber(p ProberParams) *Prober {
@@ -94,14 +95,14 @@ func (p *Prober) Probe(
 	ctx context.Context,
 	provider *aiprovider.Provider,
 	apiKey string,
-) *services.TestAIProviderResult {
+) *agentports.TestAIProviderResult {
 	if provider.ServesOnlyEmbedding() {
 		return p.probeEmbedding(ctx, provider, apiKey)
 	}
 
 	adapter, err := p.adapters.Get(provider.Kind)
 	if err != nil {
-		return &services.TestAIProviderResult{
+		return &agentports.TestAIProviderResult{
 			Success: false,
 			Message: "This provider's protocol is not supported",
 			Detail:  err.Error(),
@@ -141,7 +142,7 @@ func (p *Prober) Probe(
 	}
 
 	if resp.Refused {
-		return &services.TestAIProviderResult{
+		return &agentports.TestAIProviderResult{
 			Success:         false,
 			Message:         "The model declined the test request",
 			ModelIdentifier: resp.ModelIdentifier,
@@ -150,7 +151,7 @@ func (p *Prober) Probe(
 	}
 
 	if strings.TrimSpace(resp.Text) == "" {
-		return &services.TestAIProviderResult{
+		return &agentports.TestAIProviderResult{
 			Success:         false,
 			Message:         "The endpoint replied with no content",
 			ModelIdentifier: resp.ModelIdentifier,
@@ -172,9 +173,9 @@ func (p *Prober) Probe(
 // the second is a wrong URL, a blocked network or a dead host. Reporting a
 // timeout as "could not reach the endpoint" sent people to check a base URL
 // that was right all along.
-func (p *Prober) unreachable(err error, latency int64) *services.TestAIProviderResult {
+func (p *Prober) unreachable(err error, latency int64) *agentports.TestAIProviderResult {
 	if isTimeout(err) {
-		return &services.TestAIProviderResult{
+		return &agentports.TestAIProviderResult{
 			Success:   false,
 			Message:   "The endpoint did not answer in time",
 			LatencyMS: latency,
@@ -189,7 +190,7 @@ func (p *Prober) unreachable(err error, latency int64) *services.TestAIProviderR
 		}
 	}
 
-	return &services.TestAIProviderResult{
+	return &agentports.TestAIProviderResult{
 		Success:   false,
 		Message:   "Could not reach the endpoint",
 		LatencyMS: latency,
@@ -200,7 +201,7 @@ func (p *Prober) unreachable(err error, latency int64) *services.TestAIProviderR
 
 // transportHint names the setting a failed call points at.
 func transportHint(err error) string {
-	var failure services.ProviderFailure
+	var failure agentports.ProviderFailure
 	if !errors.As(err, &failure) {
 		return "Check the base URL, and that this server can reach that address"
 	}
@@ -251,8 +252,8 @@ func (p *Prober) evaluate(
 	provider *aiprovider.Provider,
 	resp *modeladapter.Response,
 	latency int64,
-) *services.TestAIProviderResult {
-	result := &services.TestAIProviderResult{
+) *agentports.TestAIProviderResult {
+	result := &agentports.TestAIProviderResult{
 		Success:         true,
 		ModelIdentifier: resp.ModelIdentifier,
 		LatencyMS:       latency,
@@ -368,10 +369,10 @@ func (p *Prober) probeEmbedding(
 	ctx context.Context,
 	provider *aiprovider.Provider,
 	apiKey string,
-) *services.TestAIProviderResult {
+) *agentports.TestAIProviderResult {
 	embedder, err := p.adapters.Embedder(provider.Kind)
 	if err != nil {
-		return &services.TestAIProviderResult{
+		return &agentports.TestAIProviderResult{
 			Success: false,
 			Message: "This provider's protocol has no embedding endpoint",
 			Detail:  err.Error(),
@@ -382,7 +383,7 @@ func (p *Prober) probeEmbedding(
 		Provider: provider,
 		APIKey:   apiKey,
 		Client:   p.clientFor(provider),
-		Purpose:  services.EmbeddingPurposeQuery,
+		Purpose:  aiusageports.EmbeddingPurposeQuery,
 		Inputs:   []string{embeddingProbeText},
 	}
 
@@ -395,7 +396,7 @@ func (p *Prober) probeEmbedding(
 
 	switch {
 	case err == nil:
-		return &services.TestAIProviderResult{
+		return &agentports.TestAIProviderResult{
 			Success:         true,
 			SchemaHonoured:  true,
 			ModelIdentifier: resp.ModelIdentifier,
@@ -406,16 +407,16 @@ func (p *Prober) probeEmbedding(
 				provider.ResolvedEmbeddingDimensions(),
 			),
 		}
-	case errors.Is(err, services.ErrEmbeddingDimensionMismatch):
-		return &services.TestAIProviderResult{
+	case errors.Is(err, aiusageports.ErrEmbeddingDimensionMismatch):
+		return &agentports.TestAIProviderResult{
 			Success:   false,
 			Message:   "Connected, but the model returned a different dimension than configured",
 			LatencyMS: latency,
 			Detail:    err.Error(),
 			Hint:      "Set the embedding size to the one this model returns",
 		}
-	case errors.Is(err, services.ErrEmbeddingResponseInvalid):
-		return &services.TestAIProviderResult{
+	case errors.Is(err, aiusageports.ErrEmbeddingResponseInvalid):
+		return &agentports.TestAIProviderResult{
 			Success:   false,
 			Message:   "Connected, but the reply was not a usable embedding",
 			LatencyMS: latency,
@@ -432,7 +433,7 @@ func (p *Prober) ListModels(
 	ctx context.Context,
 	provider *aiprovider.Provider,
 	apiKey string,
-) ([]services.AIProviderModelOption, error) {
+) ([]agentports.AIProviderModelOption, error) {
 	ctx, cancel := context.WithTimeout(ctx, p.cfg.GetProbeTimeout())
 	defer cancel()
 
@@ -445,7 +446,7 @@ func (p *Prober) ListModels(
 		return nil, modelListError(err)
 	}
 
-	options := make([]services.AIProviderModelOption, 0, len(models))
+	options := make([]agentports.AIProviderModelOption, 0, len(models))
 	for idx := range models {
 		options = append(options, modelOption(&models[idx]))
 	}
@@ -460,7 +461,7 @@ func (p *Prober) ListModels(
 func (p *Prober) estimateMissingPrices(
 	ctx context.Context,
 	kind aiprovider.Kind,
-	options []services.AIProviderModelOption,
+	options []agentports.AIProviderModelOption,
 ) {
 	if p.prices == nil {
 		return
@@ -486,12 +487,12 @@ func (p *Prober) estimateMissingPrices(
 		input := estimate.InputCostPerMillion
 		option.InputCostPerMillion = &input
 		option.OutputCostPerMillion = estimate.OutputCostPerMillion
-		option.PriceSource = services.ModelPriceSourceOpenRouter
+		option.PriceSource = agentports.ModelPriceSourceOpenRouter
 	}
 }
 
-func modelOption(model *modeladapter.ModelInfo) services.AIProviderModelOption {
-	option := services.AIProviderModelOption{
+func modelOption(model *modeladapter.ModelInfo) agentports.AIProviderModelOption {
+	option := agentports.AIProviderModelOption{
 		ID:                   model.ID,
 		DisplayName:          stringutils.FirstNonEmptyTrimmed(model.DisplayName, model.ID),
 		Loaded:               model.Loaded,
@@ -500,7 +501,7 @@ func modelOption(model *modeladapter.ModelInfo) services.AIProviderModelOption {
 		OutputCostPerMillion: model.OutputCostPerMillion,
 	}
 	if model.InputCostPerMillion != nil {
-		option.PriceSource = services.ModelPriceSourceProvider
+		option.PriceSource = agentports.ModelPriceSourceProvider
 	}
 	if model.ContextWindow > 0 {
 		window := model.ContextWindow
@@ -530,7 +531,7 @@ func modelListMessage(err error) string {
 		return "The endpoint did not list its models in time"
 	}
 
-	var failure services.ProviderFailure
+	var failure agentports.ProviderFailure
 	if errors.As(err, &failure) {
 		switch failure.ProviderStatus() {
 		case http.StatusUnauthorized, http.StatusForbidden:

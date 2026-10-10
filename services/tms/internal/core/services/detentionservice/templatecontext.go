@@ -7,8 +7,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -21,17 +22,17 @@ import (
 // the detention service renders through the template resolver, and a builder
 // routed through the service would close that fx cycle.
 type ContextBuilder struct {
-	occurrenceRepo repositories.DetentionOccurrenceRepository
-	orgRepo        repositories.OrganizationRepository
-	inliner        services.AssetInliner
+	occurrenceRepo detentionports.DetentionOccurrenceRepository
+	orgRepo        tenantports.OrganizationRepository
+	inliner        documenttemplateports.AssetInliner
 }
 
 type ContextBuilderParams struct {
 	fx.In
 
-	OccurrenceRepo repositories.DetentionOccurrenceRepository
-	OrgRepo        repositories.OrganizationRepository
-	Inliner        services.AssetInliner
+	OccurrenceRepo detentionports.DetentionOccurrenceRepository
+	OrgRepo        tenantports.OrganizationRepository
+	Inliner        documenttemplateports.AssetInliner
 }
 
 func NewContextBuilder(p ContextBuilderParams) *ContextBuilder {
@@ -42,7 +43,7 @@ func NewContextBuilder(p ContextBuilderParams) *ContextBuilder {
 	}
 }
 
-var _ services.ContextBuilder = (*ContextBuilder)(nil)
+var _ documenttemplateports.ContextBuilder = (*ContextBuilder)(nil)
 
 // Kind reports the email notice. The PDF variant shares the same context, and
 // the resolver looks up a builder by the kind being rendered, so the PDF kind is
@@ -53,11 +54,11 @@ func (b *ContextBuilder) Kind() documenttemplate.Kind {
 
 func (b *ContextBuilder) Build(
 	ctx context.Context,
-	req *services.BuildContextRequest,
+	req *documenttemplateports.BuildContextRequest,
 ) (any, error) {
 	occurrence, err := b.occurrenceRepo.GetByID(
 		ctx,
-		&repositories.GetDetentionOccurrenceByIDRequest{
+		&detentionports.GetDetentionOccurrenceByIDRequest{
 			OccurrenceID: req.ReferenceID,
 			TenantInfo:   req.TenantInfo,
 		},
@@ -80,7 +81,7 @@ func (b *ContextBuilder) Build(
 // numbers in a dispute to disagree.
 type pdfContextBuilder struct{ *ContextBuilder }
 
-func NewPDFContextBuilder(b *ContextBuilder) services.ContextBuilder {
+func NewPDFContextBuilder(b *ContextBuilder) documenttemplateports.ContextBuilder {
 	return pdfContextBuilder{ContextBuilder: b}
 }
 
@@ -174,7 +175,7 @@ func (b *ContextBuilder) applyBranding(
 		return nil
 	}
 
-	org, err := b.orgRepo.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+	org, err := b.orgRepo.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 	})
 	if err != nil || org == nil {
@@ -185,7 +186,7 @@ func (b *ContextBuilder) applyBranding(
 
 	out.CompanyName = org.Name
 
-	dataURI, err := services.ResolveLogoDataURI(ctx, b.inliner, org.LogoURL)
+	dataURI, err := documenttemplateports.ResolveLogoDataURI(ctx, b.inliner, org.LogoURL)
 	if err != nil {
 		return err
 	}

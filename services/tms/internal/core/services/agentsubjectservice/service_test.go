@@ -10,8 +10,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/core/domain/insight"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptworkitemports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,7 +25,7 @@ import (
 )
 
 type fakeContent struct {
-	serviceports.DocumentContentService
+	documentports.DocumentContentService
 
 	draft  *documentshipmentdraft.DocumentShipmentDraft
 	lastID pulid.ID
@@ -90,7 +93,7 @@ func TestService_DocumentWithoutContentServiceStillHasAnID(t *testing.T) {
 }
 
 type fakeInsightRepo struct {
-	repositories.InsightRepository
+	insightports.InsightRepository
 
 	found  *insight.Insight
 	lastID pulid.ID
@@ -98,7 +101,7 @@ type fakeInsightRepo struct {
 
 func (f *fakeInsightRepo) GetByID(
 	_ context.Context,
-	req repositories.GetInsightByIDRequest,
+	req insightports.GetInsightByIDRequest,
 ) (*insight.Insight, error) {
 	f.lastID = req.ID
 
@@ -179,28 +182,28 @@ func TestService_InsightWithoutRepositoryStillHasAnID(t *testing.T) {
 }
 
 type fakeReceiptService struct {
-	serviceports.BankReceiptService
+	bankreceiptports.BankReceiptService
 
 	receipt     *bankreceipt.BankReceipt
-	suggestions []*serviceports.BankReceiptMatchSuggestion
+	suggestions []*bankreceiptports.BankReceiptMatchSuggestion
 }
 
 func (f *fakeReceiptService) Get(
 	_ context.Context,
-	_ *serviceports.GetBankReceiptRequest,
+	_ *bankreceiptports.GetBankReceiptRequest,
 ) (*bankreceipt.BankReceipt, error) {
 	return f.receipt, nil
 }
 
 func (f *fakeReceiptService) SuggestMatches(
 	_ context.Context,
-	_ *serviceports.GetBankReceiptRequest,
-) ([]*serviceports.BankReceiptMatchSuggestion, error) {
+	_ *bankreceiptports.GetBankReceiptRequest,
+) ([]*bankreceiptports.BankReceiptMatchSuggestion, error) {
 	return f.suggestions, nil
 }
 
 type fakeWorkItemRepo struct {
-	repositories.BankReceiptWorkItemRepository
+	bankreceiptworkitemports.BankReceiptWorkItemRepository
 
 	item *bankreceiptworkitem.WorkItem
 }
@@ -239,7 +242,7 @@ func TestService_DescribesABankReceiptWithItsCandidates(t *testing.T) {
 	subjects := &Service{
 		receipts: &fakeReceiptService{
 			receipt: receipt,
-			suggestions: []*serviceports.BankReceiptMatchSuggestion{{
+			suggestions: []*bankreceiptports.BankReceiptMatchSuggestion{{
 				CustomerPaymentID: paymentID, AmountMinor: 125_000, Score: 60, Reason: "Reference matches",
 			}},
 		},
@@ -299,14 +302,14 @@ func TestService_BankReceiptWithoutServiceStillHasAnID(t *testing.T) {
 }
 
 type fakeWorkers struct {
-	repositories.WorkerRepository
+	workerports.WorkerRepository
 
 	worker *worker.Worker
 }
 
 func (f *fakeWorkers) GetByID(
 	context.Context,
-	repositories.GetWorkerByIDRequest,
+	workerports.GetWorkerByIDRequest,
 ) (*worker.Worker, error) {
 	return f.worker, nil
 }

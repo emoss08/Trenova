@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -51,7 +51,7 @@ func (s *Service) loadPolicy(
 
 	definition, err := s.definitionRepo.GetBySystemKey(
 		ctx,
-		repositories.GetAgentDefinitionBySystemKeyRequest{
+		agentdefinitionports.GetAgentDefinitionBySystemKeyRequest{
 			SystemKey:  systemKeyDispatchAssignment,
 			TenantInfo: tenantInfo,
 		},

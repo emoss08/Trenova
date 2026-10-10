@@ -7,9 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -18,14 +19,14 @@ import (
 )
 
 type fakeDefinitions struct {
-	repositories.AgentDefinitionRepository
+	agentdefinitionports.AgentDefinitionRepository
 
 	byID map[pulid.ID]*agentdefinition.Definition
 }
 
 func (f *fakeDefinitions) GetByID(
 	_ context.Context,
-	req repositories.GetAgentDefinitionByIDRequest,
+	req agentdefinitionports.GetAgentDefinitionByIDRequest,
 ) (*agentdefinition.Definition, error) {
 	definition, ok := f.byID[req.ID]
 	if !ok {
@@ -38,7 +39,7 @@ func (f *fakeDefinitions) GetByID(
 
 func (f *fakeDefinitions) ListByIDs(
 	_ context.Context,
-	req repositories.ListAgentDefinitionsByIDsRequest,
+	req agentdefinitionports.ListAgentDefinitionsByIDsRequest,
 ) ([]*agentdefinition.Definition, error) {
 	out := make([]*agentdefinition.Definition, 0, len(req.IDs))
 	for _, id := range req.IDs {
@@ -53,7 +54,7 @@ func (f *fakeDefinitions) ListByIDs(
 // fakeAgents saves a patch the way the definition service does, minus the
 // database: the edit on a copy, validated, then stored.
 type fakeAgents struct {
-	services.AgentDefinitionService
+	agentdefinitionports.AgentDefinitionService
 
 	definitions *fakeDefinitions
 	patches     int
@@ -61,8 +62,8 @@ type fakeAgents struct {
 
 func (f *fakeAgents) Patch(
 	_ context.Context,
-	req *services.PatchAgentDefinitionRequest,
-	_ *services.RequestActor,
+	req *agentdefinitionports.PatchAgentDefinitionRequest,
+	_ *permissionports.RequestActor,
 ) (*agentdefinition.Definition, error) {
 	f.patches++
 	updated := *f.definitions.byID[req.ID]
@@ -86,7 +87,7 @@ type irreversibleTool struct {
 	*agentruntimetest.StubActionTool
 }
 
-func (t irreversibleTool) Policy() services.ToolPolicy {
+func (t irreversibleTool) Policy() agentports.ToolPolicy {
 	policy := t.StubActionTool.Policy()
 	policy.Reversible = false
 
@@ -142,14 +143,14 @@ func newFixture() *fixture {
 		Logger:      zap.NewNop(),
 		Definitions: definitions,
 		Agents:      agents,
-		Tools: &agentruntimetest.StubActionRegistry{Tools: []services.AgentTool{
+		Tools: &agentruntimetest.StubActionRegistry{Tools: []agentports.AgentTool{
 			&agentruntimetest.StubActionTool{ToolName: "assign_biller", Tier: agent.TierActWithApproval},
 			irreversibleTool{&agentruntimetest.StubActionTool{
 				ToolName: "post_invoices", Tier: agent.TierActWithApproval,
 			}},
 			&agentruntimetest.StubActionTool{ToolName: "void_invoice", Tier: agent.TierActWithApproval},
 		}},
-		QueryTools: &agentruntimetest.StubQueryRegistry{Tools: []services.AgentQueryTool{
+		QueryTools: &agentruntimetest.StubQueryRegistry{Tools: []agentports.AgentQueryTool{
 			&agentruntimetest.StubQueryTool{ToolName: "list_invoices"},
 		}},
 		Permissions: permissions,
@@ -161,9 +162,9 @@ func newFixture() *fixture {
 	}
 }
 
-func (f *fixture) actor() *services.RequestActor {
-	return &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeUser,
+func (f *fixture) actor() *permissionports.RequestActor {
+	return &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    pulid.MustNew("usr_"),
 		UserID:         pulid.MustNew("usr_"),
 		OrganizationID: f.agent.OrganizationID,
@@ -171,10 +172,10 @@ func (f *fixture) actor() *services.RequestActor {
 	}
 }
 
-func (f *fixture) get(t *testing.T) *services.AgentCapabilities {
+func (f *fixture) get(t *testing.T) *agentports.AgentCapabilities {
 	t.Helper()
 
-	caps, err := f.svc.Get(t.Context(), &services.GetAgentCapabilitiesRequest{
+	caps, err := f.svc.Get(t.Context(), &agentports.GetAgentCapabilitiesRequest{
 		AgentID: f.agent.ID,
 	}, f.actor())
 	require.NoError(t, err)
@@ -182,14 +183,14 @@ func (f *fixture) get(t *testing.T) *services.AgentCapabilities {
 	return caps
 }
 
-func toolByKey(tools []services.AgentCapabilityTool, key string) services.AgentCapabilityTool {
+func toolByKey(tools []agentports.AgentCapabilityTool, key string) agentports.AgentCapabilityTool {
 	for _, tool := range tools {
 		if tool.Key == key {
 			return tool
 		}
 	}
 
-	return services.AgentCapabilityTool{}
+	return agentports.AgentCapabilityTool{}
 }
 
 func TestGet_MapsTiersToTheModesAPersonReads(t *testing.T) {
@@ -200,23 +201,23 @@ func TestGet_MapsTiersToTheModesAPersonReads(t *testing.T) {
 	require.Len(t, caps.ReadTools, 1)
 	read := caps.ReadTools[0]
 	assert.Equal(t, "List invoices", read.Label)
-	assert.Equal(t, services.AgentCapabilityAllowed, read.Mode)
-	assert.Equal(t, []services.AgentCapabilityMode{
-		services.AgentCapabilityAllowed, services.AgentCapabilityOff,
+	assert.Equal(t, agentports.AgentCapabilityAllowed, read.Mode)
+	assert.Equal(t, []agentports.AgentCapabilityMode{
+		agentports.AgentCapabilityAllowed, agentports.AgentCapabilityOff,
 	}, read.AllowedModes, "a read never asks first")
 
 	assign := toolByKey(caps.WriteTools, "assign_biller")
-	assert.Equal(t, services.AgentCapabilityAllowed, assign.Mode, "AutoExecute is Allowed")
+	assert.Equal(t, agentports.AgentCapabilityAllowed, assign.Mode, "AutoExecute is Allowed")
 	assert.Len(t, assign.AllowedModes, 3)
 	assert.Empty(t, assign.LockReason)
 
 	post := toolByKey(caps.WriteTools, "post_invoices")
-	assert.Equal(t, services.AgentCapabilityAskFirst, post.Mode, "ActWithApproval is Ask first")
+	assert.Equal(t, agentports.AgentCapabilityAskFirst, post.Mode, "ActWithApproval is Ask first")
 	assert.Equal(t, "Always asks · this can't be undone", post.LockReason)
-	assert.NotContains(t, post.AllowedModes, services.AgentCapabilityAllowed)
+	assert.NotContains(t, post.AllowedModes, agentports.AgentCapabilityAllowed)
 
 	void := toolByKey(caps.WriteTools, "void_invoice")
-	assert.Equal(t, services.AgentCapabilityOff, void.Mode, "a switched-off tool is still offered")
+	assert.Equal(t, agentports.AgentCapabilityOff, void.Mode, "a switched-off tool is still offered")
 
 	require.Len(t, caps.Handoffs, 1)
 	assert.Equal(t, "People records and pay", caps.Handoffs[0].Topic,
@@ -232,7 +233,7 @@ func TestGet_AnAgentThatAlwaysAsksLocksAllowed(t *testing.T) {
 	f.agent.AutonomyCeiling = agent.TierPropose
 
 	assign := toolByKey(f.get(t).WriteTools, "assign_biller")
-	assert.Equal(t, services.AgentCapabilityAskFirst, assign.Mode,
+	assert.Equal(t, agentports.AgentCapabilityAskFirst, assign.Mode,
 		"the agent's ceiling holds the tool whatever its own tier says")
 	assert.Equal(t, "Always asks · this agent asks before every change", assign.LockReason)
 }
@@ -243,7 +244,7 @@ func TestGet_RefusedToSomeoneWhoMayNotUseTheAgent(t *testing.T) {
 	f := newFixture()
 	f.permissions.Denied[permission.ResourceAssistant.String()+":"+string(permission.OpCreate)] = true
 
-	_, err := f.svc.Get(t.Context(), &services.GetAgentCapabilitiesRequest{
+	_, err := f.svc.Get(t.Context(), &agentports.GetAgentCapabilitiesRequest{
 		AgentID: f.agent.ID,
 	}, f.actor())
 	require.Error(t, err)
@@ -257,9 +258,9 @@ func TestGet_ReadOnlyWithoutPermissionToUpdateAgents(t *testing.T) {
 
 	assert.False(t, f.get(t).CanEdit)
 
-	_, err := f.svc.Update(t.Context(), &services.UpdateAgentCapabilitiesRequest{
+	_, err := f.svc.Update(t.Context(), &agentports.UpdateAgentCapabilitiesRequest{
 		AgentID: f.agent.ID,
-		Tools:   []services.AgentCapabilityToolChange{{Key: "assign_biller", Mode: services.AgentCapabilityOff}},
+		Tools:   []agentports.AgentCapabilityToolChange{{Key: "assign_biller", Mode: agentports.AgentCapabilityOff}},
 	}, f.actor())
 	require.Error(t, err)
 	assert.Zero(t, f.agents.patches, "nothing is saved for a reader")
@@ -273,14 +274,14 @@ func TestUpdate_ChangesModesAndLimits(t *testing.T) {
 	limit := 150
 	items := 40
 	hours := true
-	caps, err := f.svc.Update(t.Context(), &services.UpdateAgentCapabilitiesRequest{
+	caps, err := f.svc.Update(t.Context(), &agentports.UpdateAgentCapabilitiesRequest{
 		AgentID: f.agent.ID,
 		Version: 3,
 		Enabled: &off,
-		Tools: []services.AgentCapabilityToolChange{
-			{Key: "assign_biller", Mode: services.AgentCapabilityAskFirst},
-			{Key: "list_invoices", Mode: services.AgentCapabilityOff},
-			{Key: "void_invoice", Mode: services.AgentCapabilityAllowed},
+		Tools: []agentports.AgentCapabilityToolChange{
+			{Key: "assign_biller", Mode: agentports.AgentCapabilityAskFirst},
+			{Key: "list_invoices", Mode: agentports.AgentCapabilityOff},
+			{Key: "void_invoice", Mode: agentports.AgentCapabilityAllowed},
 		},
 		DailyRequestLimit: &limit,
 		MaxChangeItems:    &items,
@@ -300,7 +301,7 @@ func TestUpdate_ChangesModesAndLimits(t *testing.T) {
 	assert.Equal(t, 40, saved.MaxChangeItems)
 	assert.True(t, saved.BusinessHoursOnly)
 
-	assert.Equal(t, services.AgentCapabilityOff, toolByKey(caps.ReadTools, "list_invoices").Mode)
+	assert.Equal(t, agentports.AgentCapabilityOff, toolByKey(caps.ReadTools, "list_invoices").Mode)
 	assert.Equal(t, "Pay rates, people records", caps.Handoffs[0].Topic)
 }
 
@@ -309,25 +310,25 @@ func TestUpdate_RefusesAModeTheRowDoesNotOffer(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		change services.AgentCapabilityToolChange
+		change agentports.AgentCapabilityToolChange
 	}{
 		{"a locked write cannot be allowed",
-			services.AgentCapabilityToolChange{Key: "post_invoices", Mode: services.AgentCapabilityAllowed}},
+			agentports.AgentCapabilityToolChange{Key: "post_invoices", Mode: agentports.AgentCapabilityAllowed}},
 		{"a read cannot ask first",
-			services.AgentCapabilityToolChange{Key: "list_invoices", Mode: services.AgentCapabilityAskFirst}},
+			agentports.AgentCapabilityToolChange{Key: "list_invoices", Mode: agentports.AgentCapabilityAskFirst}},
 		{"a tool the agent never had",
-			services.AgentCapabilityToolChange{Key: "delete_everything", Mode: services.AgentCapabilityAllowed}},
+			agentports.AgentCapabilityToolChange{Key: "delete_everything", Mode: agentports.AgentCapabilityAllowed}},
 		{"a mode that does not exist",
-			services.AgentCapabilityToolChange{Key: "assign_biller", Mode: "Sometimes"}},
+			agentports.AgentCapabilityToolChange{Key: "assign_biller", Mode: "Sometimes"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
 			f := newFixture()
-			_, err := f.svc.Update(t.Context(), &services.UpdateAgentCapabilitiesRequest{
+			_, err := f.svc.Update(t.Context(), &agentports.UpdateAgentCapabilitiesRequest{
 				AgentID: f.agent.ID,
-				Tools:   []services.AgentCapabilityToolChange{tt.change},
+				Tools:   []agentports.AgentCapabilityToolChange{tt.change},
 			}, f.actor())
 			require.Error(t, err)
 			assert.Zero(t, f.agents.patches)

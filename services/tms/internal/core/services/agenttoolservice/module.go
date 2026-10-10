@@ -1,8 +1,6 @@
 package agenttoolservice
 
 import (
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/bankreceiptservice"
 	"github.com/emoss08/trenova/internal/core/services/bankreceiptworkitemservice"
 	"github.com/emoss08/trenova/internal/core/services/billingtransferservice"
@@ -24,6 +22,20 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/trailerservice"
 	"github.com/emoss08/trenova/internal/core/services/workercredentialservice"
 	"github.com/emoss08/trenova/internal/core/services/workerservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationcategoryports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -189,57 +201,57 @@ func grouped() []any {
 // services.WorkerPTOService is in the graph and asking for the struct builds
 // fine and fails at startup.
 
-func provideUpdateTractorStatusTool(tractors *tractorservice.Service) services.AgentTool {
+func provideUpdateTractorStatusTool(tractors *tractorservice.Service) agentports.AgentTool {
 	return newUpdateTractorStatusTool(tractors)
 }
 
-func provideUpdateTrailerStatusTool(trailers *trailerservice.Service) services.AgentTool {
+func provideUpdateTrailerStatusTool(trailers *trailerservice.Service) agentports.AgentTool {
 	return newUpdateTrailerStatusTool(trailers)
 }
 
-func provideApproveWorkerPTOTool(pto services.WorkerPTOService) services.AgentTool {
+func provideApproveWorkerPTOTool(pto workerports.WorkerPTOService) agentports.AgentTool {
 	return newApproveWorkerPTOTool(pto)
 }
 
-func provideRejectWorkerPTOTool(pto services.WorkerPTOService) services.AgentTool {
+func provideRejectWorkerPTOTool(pto workerports.WorkerPTOService) agentports.AgentTool {
 	return newRejectWorkerPTOTool(pto)
 }
 
-func provideCancelWorkerPTOTool(pto services.WorkerPTOService) services.AgentTool {
+func provideCancelWorkerPTOTool(pto workerports.WorkerPTOService) agentports.AgentTool {
 	return newCancelWorkerPTOTool(pto)
 }
 
-func provideCreateReportTool(reports *reporting.Service) services.AgentTool {
+func provideCreateReportTool(reports *reporting.Service) agentports.AgentTool {
 	return newCreateReportTool(reports)
 }
 
-func provideUpdateReportTool(reports *reporting.Service) services.AgentTool {
+func provideUpdateReportTool(reports *reporting.Service) agentports.AgentTool {
 	return newUpdateReportTool(reports)
 }
 
-func provideForkReportTool(reports *reporting.Service) services.AgentTool {
+func provideForkReportTool(reports *reporting.Service) agentports.AgentTool {
 	return newForkReportTool(reports)
 }
 
 func provideEvaluateServiceFailuresTool(
-	failures services.ServiceFailureService,
-) services.AgentTool {
+	failures servicefailureports.ServiceFailureService,
+) agentports.AgentTool {
 	return newEvaluateServiceFailuresTool(failures)
 }
 
-func provideResolveServiceFailureTool(failures services.ServiceFailureService) services.AgentTool {
+func provideResolveServiceFailureTool(failures servicefailureports.ServiceFailureService) agentports.AgentTool {
 	return newResolveServiceFailureTool(failures)
 }
 
-func provideNotifyDriverTool(drivers *drivernotificationservice.Service) services.AgentTool {
+func provideNotifyDriverTool(drivers *drivernotificationservice.Service) agentports.AgentTool {
 	return newNotifyDriverTool(drivers)
 }
 
-func provideSendDetentionNoticeTool(detention *detentionservice.Service) services.AgentTool {
+func provideSendDetentionNoticeTool(detention *detentionservice.Service) agentports.AgentTool {
 	return newSendDetentionNoticeTool(detention)
 }
 
-func provideWaiveDetentionTool(detention *detentionservice.Service) services.AgentTool {
+func provideWaiveDetentionTool(detention *detentionservice.Service) agentports.AgentTool {
 	return newWaiveDetentionTool(detention)
 }
 
@@ -250,12 +262,12 @@ type intakeToolParams struct {
 	fx.In
 
 	Logger    *zap.Logger
-	Shipments services.ShipmentService
-	Locations repositories.LocationRepository
-	Imports   services.ShipmentImportAssistantService `optional:"true"`
+	Shipments shipmentports.ShipmentService
+	Locations locationports.LocationRepository
+	Imports   shipmentports.ShipmentImportAssistantService `optional:"true"`
 }
 
-func provideCreateShipmentTool(p intakeToolParams) services.AgentTool {
+func provideCreateShipmentTool(p intakeToolParams) agentports.AgentTool {
 	deps := createShipmentDeps{
 		Shipments: p.Shipments,
 		Contracts: p.Shipments,
@@ -271,79 +283,79 @@ func provideCreateShipmentTool(p intakeToolParams) services.AgentTool {
 
 func provideCreateLocationTool(
 	locations *locationservice.Service,
-	states repositories.UsStateRepository,
-	categories repositories.LocationCategoryRepository,
-) services.AgentTool {
+	states usstateports.UsStateRepository,
+	categories locationcategoryports.LocationCategoryRepository,
+) agentports.AgentTool {
 	return newCreateLocationTool(locations, states, categories)
 }
 
 func provideUpdateShipmentTool(
-	shipments services.ShipmentService,
+	shipments shipmentports.ShipmentService,
 	partners *ediservice.Service,
-) services.AgentTool {
+) agentports.AgentTool {
 	return newUpdateShipmentTool(shipments, partners)
 }
 
 func provideRescheduleStopTool(
-	shipments services.ShipmentService,
+	shipments shipmentports.ShipmentService,
 	partners *ediservice.Service,
-) services.AgentTool {
+) agentports.AgentTool {
 	return newRescheduleStopTool(shipments, partners)
 }
 
 func provideAddShipmentChargeTool(
-	shipments services.ShipmentService,
-	accessorials repositories.AccessorialChargeRepository,
-) services.AgentTool {
+	shipments shipmentports.ShipmentService,
+	accessorials accessorialchargeports.AccessorialChargeRepository,
+) agentports.AgentTool {
 	return newAddShipmentChargeTool(shipments, accessorials)
 }
 
 func provideCancelShipmentTool(
-	shipments services.ShipmentService,
+	shipments shipmentports.ShipmentService,
 	partners *ediservice.Service,
 	tenders *tenderservice.Service,
-) services.AgentTool {
+) agentports.AgentTool {
 	return newCancelShipmentTool(shipments, partners, tenders)
 }
 
-func provideTenderToRoutingGuideTool(tenders *tenderservice.Service) services.AgentTool {
+func provideTenderToRoutingGuideTool(tenders *tenderservice.Service) agentports.AgentTool {
 	return newTenderToRoutingGuideTool(tenders)
 }
 
-func provideTenderToCarriersTool(tenders *tenderservice.Service) services.AgentTool {
+func provideTenderToCarriersTool(tenders *tenderservice.Service) agentports.AgentTool {
 	return newTenderToCarriersTool(tenders)
 }
 
-func provideDismissInsightTool(insights *insightservice.Service) services.AgentTool {
+func provideDismissInsightTool(insights *insightservice.Service) agentports.AgentTool {
 	return newDismissInsightTool(insights)
 }
 
-func provideMatchBankReceiptTool(receipts *bankreceiptservice.Service) services.AgentTool {
+func provideMatchBankReceiptTool(receipts *bankreceiptservice.Service) agentports.AgentTool {
 	return newMatchBankReceiptTool(receipts)
 }
 
 func providePostCustomerPaymentTool(
-	payments services.CustomerPaymentService,
+	payments customerpaymentports.CustomerPaymentService,
 	receipts *bankreceiptservice.Service,
-	permissions services.PermissionEngine,
-) services.AgentTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentTool {
 	return newPostCustomerPaymentTool(payments, receipts, permissions)
 }
 
 func provideResolveBankReceiptWorkItemTool(
 	items *bankreceiptworkitemservice.Service,
-) services.AgentTool {
+) agentports.AgentTool {
 	return newResolveBankReceiptWorkItemTool(items)
 }
 
-func provideEscalateDetentionTool(detention *detentionservice.Service) services.AgentTool {
+func provideEscalateDetentionTool(detention *detentionservice.Service) agentports.AgentTool {
 	return newEscalateDetentionTool(detention)
 }
 
 func provideTransferToBillingTool(
-	shipments services.ShipmentService,
+	shipments shipmentports.ShipmentService,
 	runs *billingtransferservice.Service,
-) services.AgentTool {
+) agentports.AgentTool {
 	return newTransferToBillingTool(shipments, runs)
 }
 
@@ -351,110 +363,110 @@ func provideTransferToBillingTool(
 // holds the service port, so the widening happens here.
 
 func provideApproveBillingQueueItemTool(
-	billing services.BillingQueueService,
+	billing billingqueueports.BillingQueueService,
 	invoices *invoiceservice.Service,
-) services.AgentTool {
+) agentports.AgentTool {
 	return newApproveBillingQueueItemTool(billing, invoices)
 }
 
-func provideSendBackToOpsTool(billing services.BillingQueueService) services.AgentTool {
+func provideSendBackToOpsTool(billing billingqueueports.BillingQueueService) agentports.AgentTool {
 	return newSendBackToOpsTool(billing)
 }
 
-func provideMoveToExceptionTool(billing services.BillingQueueService) services.AgentTool {
+func provideMoveToExceptionTool(billing billingqueueports.BillingQueueService) agentports.AgentTool {
 	return newMoveToExceptionTool(billing)
 }
 
-func provideHoldBillingQueueItemTool(billing services.BillingQueueService) services.AgentTool {
+func provideHoldBillingQueueItemTool(billing billingqueueports.BillingQueueService) agentports.AgentTool {
 	return newHoldBillingQueueItemTool(billing)
 }
 
-func provideCancelBillingQueueItemTool(billing services.BillingQueueService) services.AgentTool {
+func provideCancelBillingQueueItemTool(billing billingqueueports.BillingQueueService) agentports.AgentTool {
 	return newCancelBillingQueueItemTool(billing)
 }
 
-func provideAssignBillerTool(billing services.BillingQueueService) services.AgentTool {
+func provideAssignBillerTool(billing billingqueueports.BillingQueueService) agentports.AgentTool {
 	return newAssignBillerTool(billing)
 }
 
-func provideAssignBillersTool(billing services.BillingQueueService) services.AgentTool {
+func provideAssignBillersTool(billing billingqueueports.BillingQueueService) agentports.AgentTool {
 	return newAssignBillersTool(billing)
 }
 
-func provideTransitionToInReviewTool(billing services.BillingQueueService) services.AgentTool {
+func provideTransitionToInReviewTool(billing billingqueueports.BillingQueueService) agentports.AgentTool {
 	return newTransitionToInReviewTool(billing)
 }
 
 func provideTransitionItemsToInReviewTool(
-	billing services.BillingQueueService,
-) services.AgentTool {
+	billing billingqueueports.BillingQueueService,
+) agentports.AgentTool {
 	return newTransitionItemsToInReviewTool(billing)
 }
 
-func providePostInvoiceTool(invoices *invoiceservice.Service) services.AgentTool {
+func providePostInvoiceTool(invoices *invoiceservice.Service) agentports.AgentTool {
 	return newPostInvoiceTool(invoices)
 }
 
-func provideSendInvoiceTool(invoices *invoiceservice.Service) services.AgentTool {
+func provideSendInvoiceTool(invoices *invoiceservice.Service) agentports.AgentTool {
 	return newSendInvoiceTool(invoices)
 }
 
 func providePostInvoicesTool(
 	invoices *invoiceservice.Service,
-	numbers repositories.InvoiceRepository,
-) services.AgentTool {
+	numbers invoiceports.InvoiceRepository,
+) agentports.AgentTool {
 	return newPostInvoicesTool(invoices, numbers)
 }
 
 func provideSendInvoicesTool(
 	invoices *invoiceservice.Service,
-	numbers repositories.InvoiceRepository,
-) services.AgentTool {
+	numbers invoiceports.InvoiceRepository,
+) agentports.AgentTool {
 	return newSendInvoicesTool(invoices, numbers)
 }
 
 func provideApproveBillingQueueItemsTool(
-	billing services.BillingQueueService,
+	billing billingqueueports.BillingQueueService,
 	invoices *invoiceservice.Service,
-) services.AgentTool {
+) agentports.AgentTool {
 	return newApproveBillingQueueItemsTool(billing, invoices)
 }
 
-func provideApproveDetentionTool(detention *detentionservice.Service) services.AgentTool {
+func provideApproveDetentionTool(detention *detentionservice.Service) agentports.AgentTool {
 	return newApproveDetentionTool(detention)
 }
 
 func provideRequestCredentialRenewalTool(
 	credentials *workercredentialservice.Service,
-) services.AgentTool {
+) agentports.AgentTool {
 	return newRequestCredentialRenewalTool(credentials)
 }
 
-func providePlaceWorkerDispatchHoldTool(workers *workerservice.Service) services.AgentTool {
+func providePlaceWorkerDispatchHoldTool(workers *workerservice.Service) agentports.AgentTool {
 	return newPlaceWorkerDispatchHoldTool(workers)
 }
 
 func provideAcknowledgeCarrierIntelEventTool(
 	intel *carrierintelservice.Service,
-) services.AgentTool {
+) agentports.AgentTool {
 	return newAcknowledgeCarrierIntelEventTool(intel)
 }
 
-func provideResolveCarrierIntelEventTool(intel *carrierintelservice.Service) services.AgentTool {
+func provideResolveCarrierIntelEventTool(intel *carrierintelservice.Service) agentports.AgentTool {
 	return newResolveCarrierIntelEventTool(intel)
 }
 
 // The tool takes a narrow interface so it can be tested without the whole
 // document stack; fx holds the concrete service, so the widening happens here.
-func provideAttachDocumentTool(documents *documentservice.Service) services.AgentTool {
+func provideAttachDocumentTool(documents *documentservice.Service) agentports.AgentTool {
 	return newAttachDocumentTool(documents)
 }
 
-func provideLinkInboundMessageTool(inbox *inboundmessageservice.Service) services.AgentTool {
+func provideLinkInboundMessageTool(inbox *inboundmessageservice.Service) agentports.AgentTool {
 	return newLinkInboundMessageTool(inbox)
 }
 
-func provideMarkInboundMessageTool(inbox *inboundmessageservice.Service) services.AgentTool {
+func provideMarkInboundMessageTool(inbox *inboundmessageservice.Service) agentports.AgentTool {
 	return newMarkInboundMessageTool(inbox)
 }
 
@@ -474,152 +486,152 @@ func ediToolProviders() []any {
 	}
 }
 
-func provideAcceptEDILoadTenderTool(edi *ediservice.Service) services.AgentTool {
+func provideAcceptEDILoadTenderTool(edi *ediservice.Service) agentports.AgentTool {
 	return newAcceptEDILoadTenderTool(edi)
 }
 
-func provideDeclineEDILoadTenderTool(edi *ediservice.Service) services.AgentTool {
+func provideDeclineEDILoadTenderTool(edi *ediservice.Service) agentports.AgentTool {
 	return newDeclineEDILoadTenderTool(edi)
 }
 
-func provideCancelEDILoadTenderTool(edi *ediservice.Service) services.AgentTool {
+func provideCancelEDILoadTenderTool(edi *ediservice.Service) agentports.AgentTool {
 	return newCancelEDILoadTenderTool(edi)
 }
 
-func provideExpireEDILoadTenderTool(edi *ediservice.Service) services.AgentTool {
+func provideExpireEDILoadTenderTool(edi *ediservice.Service) agentports.AgentTool {
 	return newExpireEDILoadTenderTool(edi)
 }
 
-func provideReviewEDITenderChangeTool(edi *ediservice.Service) services.AgentTool {
+func provideReviewEDITenderChangeTool(edi *ediservice.Service) agentports.AgentTool {
 	return newReviewEDITenderChangeTool(edi)
 }
 
-func provideReviewEDITransferChangeTool(edi *ediservice.Service) services.AgentTool {
+func provideReviewEDITransferChangeTool(edi *ediservice.Service) agentports.AgentTool {
 	return newReviewEDITransferChangeTool(edi)
 }
 
-func provideRetryEDIMessageDeliveryTool(edi *ediservice.Service) services.AgentTool {
+func provideRetryEDIMessageDeliveryTool(edi *ediservice.Service) agentports.AgentTool {
 	return newRetryEDIMessageDeliveryTool(edi)
 }
 
-func provideReplayEDIMessageTool(edi *ediservice.Service) services.AgentTool {
+func provideReplayEDIMessageTool(edi *ediservice.Service) agentports.AgentTool {
 	return newReplayEDIMessageTool(edi)
 }
 
-func provideReprocessEDIInboundFilesTool(inbound *ediinboundservice.Service) services.AgentTool {
+func provideReprocessEDIInboundFilesTool(inbound *ediinboundservice.Service) agentports.AgentTool {
 	return newReprocessEDIInboundFilesTool(inbound)
 }
 
-func provideSendEDILoadTenderTool(edi *ediservice.Service) services.AgentTool {
+func provideSendEDILoadTenderTool(edi *ediservice.Service) agentports.AgentTool {
 	return newSendEDILoadTenderTool(edi)
 }
 
-func provideSendEDIStatusUpdateTool(edi *ediservice.Service) services.AgentTool {
+func provideSendEDIStatusUpdateTool(edi *ediservice.Service) agentports.AgentTool {
 	return newSendEDIStatusUpdateTool(edi)
 }
 
-func provideOpenInvoiceDisputeTool(disputes services.InvoiceDisputeService) services.AgentTool {
+func provideOpenInvoiceDisputeTool(disputes invoiceports.InvoiceDisputeService) agentports.AgentTool {
 	return newOpenInvoiceDisputeTool(disputes)
 }
 
-func provideResolveInvoiceDisputeTool(disputes services.InvoiceDisputeService) services.AgentTool {
+func provideResolveInvoiceDisputeTool(disputes invoiceports.InvoiceDisputeService) agentports.AgentTool {
 	return newResolveInvoiceDisputeTool(disputes)
 }
 
-func provideWithdrawInvoiceDisputeTool(disputes services.InvoiceDisputeService) services.AgentTool {
+func provideWithdrawInvoiceDisputeTool(disputes invoiceports.InvoiceDisputeService) agentports.AgentTool {
 	return newWithdrawInvoiceDisputeTool(disputes)
 }
 
-func provideApplyCustomerPaymentTool(payments services.CustomerPaymentService) services.AgentTool {
+func provideApplyCustomerPaymentTool(payments customerpaymentports.CustomerPaymentService) agentports.AgentTool {
 	return newApplyCustomerPaymentTool(payments)
 }
 
 func provideReverseCustomerPaymentTool(
-	payments services.CustomerPaymentService,
-) services.AgentTool {
+	payments customerpaymentports.CustomerPaymentService,
+) agentports.AgentTool {
 	return newReverseCustomerPaymentTool(payments)
 }
 
-func provideApplyCreditMemoTool(payments services.CustomerPaymentService) services.AgentTool {
+func provideApplyCreditMemoTool(payments customerpaymentports.CustomerPaymentService) agentports.AgentTool {
 	return newApplyCreditMemoTool(payments)
 }
 
-func provideUnapplyCreditMemoTool(payments services.CustomerPaymentService) services.AgentTool {
+func provideUnapplyCreditMemoTool(payments customerpaymentports.CustomerPaymentService) agentports.AgentTool {
 	return newUnapplyCreditMemoTool(payments)
 }
 
 func provideSaveInvoiceAdjustmentDraftTool(
-	adjustments services.InvoiceAdjustmentService,
-) services.AgentTool {
+	adjustments invoiceadjustmentports.InvoiceAdjustmentService,
+) agentports.AgentTool {
 	return newSaveInvoiceAdjustmentDraftTool(adjustments)
 }
 
 func provideSubmitInvoiceAdjustmentTool(
-	adjustments services.InvoiceAdjustmentService,
-) services.AgentTool {
+	adjustments invoiceadjustmentports.InvoiceAdjustmentService,
+) agentports.AgentTool {
 	return newSubmitInvoiceAdjustmentTool(adjustments)
 }
 
 func provideApproveInvoiceAdjustmentTool(
-	adjustments services.InvoiceAdjustmentService,
-) services.AgentTool {
+	adjustments invoiceadjustmentports.InvoiceAdjustmentService,
+) agentports.AgentTool {
 	return newApproveInvoiceAdjustmentTool(adjustments)
 }
 
 func provideRejectInvoiceAdjustmentTool(
-	adjustments services.InvoiceAdjustmentService,
-) services.AgentTool {
+	adjustments invoiceadjustmentports.InvoiceAdjustmentService,
+) agentports.AgentTool {
 	return newRejectInvoiceAdjustmentTool(adjustments)
 }
 
-func provideBuildInvoiceRunTool(runs *invoicerunservice.Service) services.AgentTool {
+func provideBuildInvoiceRunTool(runs *invoicerunservice.Service) agentports.AgentTool {
 	return newBuildInvoiceRunTool(runs)
 }
 
-func provideAdjustInvoiceRunMembershipTool(runs *invoicerunservice.Service) services.AgentTool {
+func provideAdjustInvoiceRunMembershipTool(runs *invoicerunservice.Service) agentports.AgentTool {
 	return newAdjustInvoiceRunMembershipTool(runs)
 }
 
-func provideCommitInvoiceRunTool(runs *invoicerunservice.Service) services.AgentTool {
+func provideCommitInvoiceRunTool(runs *invoicerunservice.Service) agentports.AgentTool {
 	return newCommitInvoiceRunTool(runs)
 }
 
-func provideCancelInvoiceRunTool(runs *invoicerunservice.Service) services.AgentTool {
+func provideCancelInvoiceRunTool(runs *invoicerunservice.Service) agentports.AgentTool {
 	return newCancelInvoiceRunTool(runs)
 }
 
-func provideBillStatementNowTool(runs *invoicerunservice.Service) services.AgentTool {
+func provideBillStatementNowTool(runs *invoicerunservice.Service) agentports.AgentTool {
 	return newBillStatementNowTool(runs)
 }
 
-func provideAssessLateChargesTool(charges services.LateChargeService) services.AgentTool {
+func provideAssessLateChargesTool(charges latechargeports.LateChargeService) agentports.AgentTool {
 	return newAssessLateChargesTool(charges)
 }
 
-func provideShareInvoiceTool(shares *invoiceshareservice.Service) services.AgentTool {
+func provideShareInvoiceTool(shares *invoiceshareservice.Service) agentports.AgentTool {
 	return newShareInvoiceTool(shares)
 }
 
-func provideUpdateInvoiceDraftTool(invoices *invoiceservice.Service) services.AgentTool {
+func provideUpdateInvoiceDraftTool(invoices *invoiceservice.Service) agentports.AgentTool {
 	return newUpdateInvoiceDraftTool(invoices)
 }
 
-func provideGenerateInvoicePDFTool(invoices *invoiceservice.Service) services.AgentTool {
+func provideGenerateInvoicePDFTool(invoices *invoiceservice.Service) agentports.AgentTool {
 	return newGenerateInvoicePDFTool(invoices)
 }
 
-func provideCreateInvoiceTool(invoices *invoiceservice.Service) services.AgentTool {
+func provideCreateInvoiceTool(invoices *invoiceservice.Service) agentports.AgentTool {
 	return newCreateInvoiceTool(invoices)
 }
 
-func provideCreateInvoiceMemoTool(invoices *invoiceservice.Service) services.AgentTool {
+func provideCreateInvoiceMemoTool(invoices *invoiceservice.Service) agentports.AgentTool {
 	return newCreateInvoiceMemoTool(invoices)
 }
 
-func provideVoidInvoiceTool(invoices *invoiceservice.Service) services.AgentTool {
+func provideVoidInvoiceTool(invoices *invoiceservice.Service) agentports.AgentTool {
 	return newVoidInvoiceTool(invoices)
 }
 
-func provideSendInvoiceEDITool(invoices *invoiceservice.Service) services.AgentTool {
+func provideSendInvoiceEDITool(invoices *invoiceservice.Service) agentports.AgentTool {
 	return newSendInvoiceEDITool(invoices)
 }

@@ -9,8 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/billingtransferservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -20,21 +22,21 @@ import (
 
 type fakeReassigner struct {
 	guard      *writeGuard
-	reassigned *serviceports.ReassignChargeRequest
+	reassigned *billingqueueports.ReassignChargeRequest
 	canceled   *billingqueue.BillingQueueItem
 }
 
 func (f *fakeReassigner) ReassignCharge(
 	_ context.Context,
-	req *serviceports.ReassignChargeRequest,
-	_ *serviceports.RequestActor,
-) (*serviceports.ReassignChargeResult, error) {
+	req *billingqueueports.ReassignChargeRequest,
+	_ *permissionports.RequestActor,
+) (*billingqueueports.ReassignChargeResult, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
 	}
 	f.reassigned = req
 
-	return &serviceports.ReassignChargeResult{
+	return &billingqueueports.ReassignChargeResult{
 		CreatedItemIDs:  []pulid.ID{pulid.MustNew("bqi_")},
 		CanceledItemIDs: []pulid.ID{f.canceled.ID},
 	}, nil
@@ -42,16 +44,16 @@ func (f *fakeReassigner) ReassignCharge(
 
 func (f *fakeReassigner) PreviewReassignCharge(
 	_ context.Context,
-	req *serviceports.ReassignChargeRequest,
-	_ *serviceports.RequestActor,
-) (*serviceports.ReassignChargePreview, error) {
+	req *billingqueueports.ReassignChargeRequest,
+	_ *permissionports.RequestActor,
+) (*billingqueueports.ReassignChargePreview, error) {
 	share := &shipment.PayerShare{
 		PayerID:       req.Allocations[0].BillToCustomerID,
 		FreightAmount: decimal.RequireFromString("900"),
 		TotalAmount:   decimal.RequireFromString("900"),
 	}
 
-	return &serviceports.ReassignChargePreview{
+	return &billingqueueports.ReassignChargePreview{
 		Item:        &billingqueue.BillingQueueItem{ID: req.ItemID},
 		Shipment:    &shipment.Shipment{ProNumber: "PRO-4040"},
 		Description: "Freight",
@@ -85,7 +87,7 @@ func TestReassignBillingCharge_ShowsTheItemsItOpensAndCancels(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, billing.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	require.Len(t, preview.Changes, 2)
 	assert.Equal(t, agent.PreviewOperationCreate, previewChange(t, preview, 0).Operation)
@@ -119,7 +121,7 @@ func TestReassignBillingCharge_ShowsTheItemsItOpensAndCancels(t *testing.T) {
 			paramAllocations: []any{},
 		},
 	} {
-		require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+		require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 			executeParams(raw)), name)
 	}
 }
@@ -204,7 +206,7 @@ func TestManageBillingTransferRun_StopsOrRetries(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, runs.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), stop)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), stop)
 	})
 	assert.Contains(t, preview.Summary, "120 of 400")
 	require.NoError(t, tool.Execute(t.Context(), stop))
@@ -215,7 +217,7 @@ func TestManageBillingTransferRun_StopsOrRetries(t *testing.T) {
 		paramRunAction: "Retry",
 	})
 	retryPreview := previewWithoutWrites(t, runs.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), retry)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), retry)
 	})
 	assert.Contains(t, retryPreview.Summary, "4 shipments")
 	assert.Equal(t, agent.PreviewOperationCreate, previewChange(t, retryPreview, 0).Operation)
@@ -227,9 +229,9 @@ func TestManageBillingTransferRun_StopsOrRetries(t *testing.T) {
 	assert.Equal(t, permission.OpUpdate, policy.Operation)
 
 	runs.refusal = errortypes.NewAuthorizationError("Only the person who started a transfer can stop it")
-	refused, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), stop)
+	refused, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), stop)
 	require.NoError(t, err)
 	requireWarning(t, refused, agent.PreviewWarningWouldFail)
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 		executeParams(map[string]any{resultRunID: runs.run.ID.String(), paramRunAction: "Pause"})))
 }

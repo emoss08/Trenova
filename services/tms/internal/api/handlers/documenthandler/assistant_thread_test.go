@@ -11,8 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -22,7 +23,7 @@ import (
 )
 
 type grantedEngine struct {
-	serviceports.PermissionEngine
+	permissionports.PermissionEngine
 
 	granted map[string]bool
 	asked   []string
@@ -30,30 +31,30 @@ type grantedEngine struct {
 
 func (e *grantedEngine) Check(
 	_ context.Context,
-	req *serviceports.PermissionCheckRequest,
-) (*serviceports.PermissionCheckResult, error) {
+	req *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
 	key := req.Resource + ":" + string(req.Operation)
 	e.asked = append(e.asked, key)
 
-	return &serviceports.PermissionCheckResult{Allowed: e.granted[key]}, nil
+	return &permissionports.PermissionCheckResult{Allowed: e.granted[key]}, nil
 }
 
 type pageAssistant struct {
-	opened []*serviceports.OpenPageThreadRequest
-	actor  *serviceports.RequestActor
+	opened []*agentports.OpenPageThreadRequest
+	actor  *permissionports.RequestActor
 }
 
 func (p *pageAssistant) OpenPageThread(
 	_ context.Context,
-	req *serviceports.OpenPageThreadRequest,
-	actor *serviceports.RequestActor,
-) (*serviceports.PageThread, error) {
+	req *agentports.OpenPageThreadRequest,
+	actor *permissionports.RequestActor,
+) (*agentports.PageThread, error) {
 	p.opened = append(p.opened, req)
 	p.actor = actor
 
 	agentID := pulid.MustNew("agdef_")
 
-	return &serviceports.PageThread{
+	return &agentports.PageThread{
 		Thread: &conversation.Thread{
 			ID:                pulid.MustNew("athr_"),
 			AgentDefinitionID: agentID,
@@ -62,7 +63,7 @@ func (p *pageAssistant) OpenPageThread(
 			SubjectID:         req.SubjectID,
 			CanContinue:       true,
 		},
-		Agent: serviceports.PageAgent{
+		Agent: agentports.PageAgent{
 			ID:        agentID,
 			Name:      "Shipment import assistant",
 			SystemKey: "import_assistant",

@@ -5,8 +5,8 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/core/domain/homelayout"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/homelayoutports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -147,7 +147,7 @@ func TestDeletePresetMapsMissingRowsToNotFound(t *testing.T) {
 	mock.ExpectExec(`DELETE FROM "home_layout_presets"`).
 		WillReturnResult(sqlmock.NewResult(0, 0))
 
-	err := repo.DeletePreset(t.Context(), &repositories.DeleteHomeLayoutPresetRequest{
+	err := repo.DeletePreset(t.Context(), &homelayoutports.DeleteHomeLayoutPresetRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),

@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -47,7 +47,7 @@ func (r *repository) UpsertFormSubmission(
 
 func (r *repository) ListFormSubmissions(
 	ctx context.Context,
-	req *repositories.ListFormSubmissionsRequest,
+	req *telematicsports.ListFormSubmissionsRequest,
 ) ([]*telematics.FormSubmission, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*telematics.FormSubmission, error) {
 		cols := buncolgen.FormSubmissionColumns
@@ -83,7 +83,7 @@ func (r *repository) ListFormSubmissions(
 
 func (r *repository) ListFormMappings(
 	ctx context.Context,
-	req *repositories.ListFormMappingsRequest,
+	req *telematicsports.ListFormMappingsRequest,
 ) ([]*telematics.FormMapping, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*telematics.FormMapping, error) {
 		cols := buncolgen.FormMappingColumns

@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/email"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -50,7 +50,7 @@ const profileReturningColumns = `
 	updated_at
 `
 
-func New(p Params) repositories.EmailRepository {
+func New(p Params) emailports.EmailRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.email-repository")}
 }
 
@@ -61,7 +61,7 @@ func applyTenant(q *bun.SelectQuery, alias string, ti pagination.TenantInfo) *bu
 
 func (r *repository) ListProfiles(
 	ctx context.Context,
-	req *repositories.ListEmailProfilesRequest,
+	req *emailports.ListEmailProfilesRequest,
 ) (*pagination.ListResult[*email.Profile], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*email.Profile], error) {
 		entities := make([]*email.Profile, 0, req.Filter.Pagination.SafeLimit())
@@ -84,7 +84,7 @@ func (r *repository) ListProfiles(
 
 func (r *repository) applyProfileCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListEmailProfileConnectionRequest,
+	req *emailports.ListEmailProfileConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -97,7 +97,7 @@ func (r *repository) applyProfileCursorPageFilters(
 
 func (r *repository) applyProfileTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListEmailProfileConnectionRequest,
+	req *emailports.ListEmailProfileConnectionRequest,
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -117,7 +117,7 @@ func applyEmailProfileColumns(q *bun.SelectQuery, columns []string) *bun.SelectQ
 
 func (r *repository) ListProfilesConnection(
 	ctx context.Context,
-	req *repositories.ListEmailProfileConnectionRequest,
+	req *emailports.ListEmailProfileConnectionRequest,
 ) (*pagination.CursorListResult[*email.Profile], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*email.Profile], error) {
 		log := r.l.With(
@@ -171,7 +171,7 @@ func (r *repository) ListProfilesConnection(
 
 func (r *repository) SelectProfileOptions(
 	ctx context.Context,
-	req *repositories.EmailProfileSelectOptionsRequest,
+	req *emailports.EmailProfileSelectOptionsRequest,
 ) (*pagination.ListResult[*email.Profile], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*email.Profile], error) {
 		return dbhelper.SelectOptions[*email.Profile](
@@ -210,7 +210,7 @@ func (r *repository) SelectProfileOptions(
 
 func (r *repository) GetProfile(
 	ctx context.Context,
-	req repositories.GetEmailEntityRequest,
+	req emailports.GetEmailEntityRequest,
 ) (*email.Profile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*email.Profile, error) {
 		entity := new(email.Profile)
@@ -260,7 +260,7 @@ func (r *repository) UpdateProfile(
 
 func (r *repository) DeleteProfile(
 	ctx context.Context,
-	req repositories.GetEmailEntityRequest,
+	req emailports.GetEmailEntityRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		result, err := r.db.DBForContext(ctx).NewDelete().
@@ -442,7 +442,7 @@ func (r *repository) UpdateMessage(
 
 func (r *repository) GetMessage(
 	ctx context.Context,
-	req repositories.GetEmailEntityRequest,
+	req emailports.GetEmailEntityRequest,
 ) (*email.Message, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*email.Message, error) {
 		entity := new(email.Message)
@@ -459,7 +459,7 @@ func (r *repository) GetMessage(
 
 func (r *repository) GetMessageByProviderID(
 	ctx context.Context,
-	req repositories.GetEmailMessageByProviderIDRequest,
+	req emailports.GetEmailMessageByProviderIDRequest,
 ) (*email.Message, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*email.Message, error) {
 		entity := new(email.Message)
@@ -489,7 +489,7 @@ func (r *repository) CreateAttachments(
 
 func (r *repository) ListAttachments(
 	ctx context.Context,
-	req repositories.ListEmailAttachmentsRequest,
+	req emailports.ListEmailAttachmentsRequest,
 ) ([]*email.Attachment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*email.Attachment, error) {
 		entities := make([]*email.Attachment, 0)
@@ -506,10 +506,10 @@ func (r *repository) ListAttachments(
 
 func (r *repository) GetEmailWebhookConfig(
 	ctx context.Context,
-	req repositories.GetEmailWebhookConfigRequest,
-) (*repositories.EmailWebhookConfig, error) {
+	req emailports.GetEmailWebhookConfigRequest,
+) (*emailports.EmailWebhookConfig, error) {
 	ctx = dbscope.WithSystem(ctx, "resolve the email provider webhook that was called before its tenant is known")
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.EmailWebhookConfig, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*emailports.EmailWebhookConfig, error) {
 		var row struct {
 			OrganizationID       string `bun:"organization_id"`
 			BusinessUnitID       string `bun:"business_unit_id"`
@@ -537,7 +537,7 @@ func (r *repository) GetEmailWebhookConfig(
 			return nil, fmt.Errorf("parse webhook business unit id: %w", err)
 		}
 
-		return &repositories.EmailWebhookConfig{
+		return &emailports.EmailWebhookConfig{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: orgID,
 				BuID:  buID,
@@ -549,7 +549,7 @@ func (r *repository) GetEmailWebhookConfig(
 
 func (r *repository) ListMessages(
 	ctx context.Context,
-	req *repositories.ListEmailMessagesRequest,
+	req *emailports.ListEmailMessagesRequest,
 ) (*pagination.ListResult[*email.Message], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*email.Message], error) {
 		entities := make([]*email.Message, 0, req.Filter.Pagination.SafeLimit())
@@ -587,7 +587,7 @@ func (r *repository) CreateEvent(ctx context.Context, entity *email.Event) (bool
 
 func (r *repository) ListSuppressions(
 	ctx context.Context,
-	req *repositories.ListEmailSuppressionsRequest,
+	req *emailports.ListEmailSuppressionsRequest,
 ) (*pagination.ListResult[*email.Suppression], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*email.Suppression], error) {
 		entities := make([]*email.Suppression, 0, req.Filter.Pagination.SafeLimit())
@@ -628,7 +628,7 @@ func (r *repository) CreateSuppression(
 
 func (r *repository) DeleteSuppression(
 	ctx context.Context,
-	req repositories.GetEmailEntityRequest,
+	req emailports.GetEmailEntityRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		result, err := r.db.DBForContext(ctx).NewDelete().

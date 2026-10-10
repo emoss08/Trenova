@@ -6,9 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,16 +19,16 @@ type privateActionTool struct {
 	private bool
 }
 
-func (t *privateActionTool) Policy() serviceports.ToolPolicy {
+func (t *privateActionTool) Policy() agentports.ToolPolicy {
 	policy := t.StubActionTool.Policy()
 	policy.Egress = []agent.EgressClass{agent.EgressPersonal, agent.EgressInternal}
 	policy.PersonalRunsUnasked = true
-	policy.Classify = func(serviceports.ToolExecuteParams) serviceports.CallPolicy {
+	policy.Classify = func(agentports.ToolExecuteParams) agentports.CallPolicy {
 		if t.private {
-			return serviceports.CallPolicy{Egress: agent.EgressPersonal}
+			return agentports.CallPolicy{Egress: agent.EgressPersonal}
 		}
 
-		return serviceports.CallPolicy{Egress: agent.EgressInternal}
+		return agentports.CallPolicy{Egress: agent.EgressInternal}
 	}
 
 	return policy
@@ -38,8 +37,8 @@ func (t *privateActionTool) Policy() serviceports.ToolPolicy {
 func runPrivate(
 	t *testing.T,
 	tool *privateActionTool,
-	configure func(*serviceports.RunRequest),
-) *serviceports.RunResult {
+	configure func(*agentports.RunRequest),
+) *agentports.RunResult {
 	t.Helper()
 
 	return runPrivateWithTrust(t, tool, nil, configure)
@@ -48,19 +47,19 @@ func runPrivate(
 func runPrivateWithTrust(
 	t *testing.T,
 	tool *privateActionTool,
-	trust repositories.AgentToolTrustRepository,
-	configure func(*serviceports.RunRequest),
-) *serviceports.RunResult {
+	trust agentports.AgentToolTrustRepository,
+	configure func(*agentports.RunRequest),
+) *agentports.RunResult {
 	t.Helper()
 
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		toolTurn("create_report", map[string]any{"name": "Late loads"}),
 		textTurn("Saved."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []serviceports.AgentTool{tool}}, nil)
+		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
 	rt.trust = trust
-	req := &serviceports.RunRequest{
+	req := &agentports.RunRequest{
 		Definition: testDefinition("create_report"),
 		Actor:      testActor(),
 		Input:      "Save a report of late loads",
@@ -119,19 +118,19 @@ func TestRun_APrivateWriteKeepsAnAgentsOwnSettingAndNeedsAPerson(t *testing.T) {
 		}
 	}
 
-	set := runPrivate(t, newTool(), func(req *serviceports.RunRequest) {
+	set := runPrivate(t, newTool(), func(req *agentports.RunRequest) {
 		req.Definition.ToolTiers = map[string]agent.AutonomyTier{"create_report": agent.TierPropose}
 	})
 	assert.Equal(t, agent.TierPropose, set.Actions[0].Tier)
 
-	unattended := runPrivate(t, newTool(), func(req *serviceports.RunRequest) {
+	unattended := runPrivate(t, newTool(), func(req *agentports.RunRequest) {
 		req.Unattended = true
 	})
 	assert.Equal(t, agent.TierPropose, unattended.Actions[0].Tier)
 }
 
 type ledgerTrust struct {
-	repositories.AgentToolTrustRepository
+	agentports.AgentToolTrustRepository
 
 	rows []*agent.ToolTrust
 	err  error
@@ -140,15 +139,15 @@ type ledgerTrust struct {
 
 func (l *ledgerTrust) ListByDefinition(
 	_ context.Context,
-	_ repositories.ListToolTrustRequest,
+	_ agentports.ListToolTrustRequest,
 ) ([]*agent.ToolTrust, error) {
 	l.asks++
 
 	return l.rows, l.err
 }
 
-func onRecordedAgent(tier agent.AutonomyTier) func(*serviceports.RunRequest) {
-	return func(req *serviceports.RunRequest) {
+func onRecordedAgent(tier agent.AutonomyTier) func(*agentports.RunRequest) {
+	return func(req *agentports.RunRequest) {
 		req.Definition.ID = pulid.MustNew("agdef_")
 		req.Definition.OrganizationID = pulid.MustNew("org_")
 		req.Definition.BusinessUnitID = pulid.MustNew("bu_")

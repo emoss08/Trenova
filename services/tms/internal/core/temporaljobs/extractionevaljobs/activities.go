@@ -5,9 +5,8 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/extractioneval"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -15,12 +14,12 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	Runner services.ExtractionEvalRunner
+	Runner extractionevalports.ExtractionEvalRunner
 	Logger *zap.Logger
 }
 
 type Activities struct {
-	runner services.ExtractionEvalRunner
+	runner extractionevalports.ExtractionEvalRunner
 	l      *zap.Logger
 }
 
@@ -32,7 +31,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 }
 
 func (a *Activities) BeginExtractionEvalRunActivity(ctx context.Context, input *RunInput) error {
-	if _, err := a.runner.BeginRun(ctx, repositories.GetExtractionEvalRunRequest{
+	if _, err := a.runner.BeginRun(ctx, extractionevalports.GetExtractionEvalRunRequest{
 		TenantInfo: input.tenant(),
 		ID:         input.RunID,
 	}); err != nil {
@@ -46,7 +45,7 @@ func (a *Activities) ListPendingExtractionEvalCasesActivity(
 	ctx context.Context,
 	input *ListPendingInput,
 ) ([]PendingCase, error) {
-	results, err := a.runner.ListPending(ctx, repositories.ListPendingExtractionEvalResultsRequest{
+	results, err := a.runner.ListPending(ctx, extractionevalports.ListPendingExtractionEvalResultsRequest{
 		TenantInfo:   input.tenant(),
 		RunID:        input.RunID,
 		AfterOrdinal: input.AfterOrdinal,
@@ -68,7 +67,7 @@ func (a *Activities) CheckExtractionEvalBudgetActivity(
 	ctx context.Context,
 	input *RunInput,
 ) (*ContinueDecision, error) {
-	decision, err := a.runner.CheckContinue(ctx, repositories.GetExtractionEvalRunRequest{
+	decision, err := a.runner.CheckContinue(ctx, extractionevalports.GetExtractionEvalRunRequest{
 		TenantInfo: input.tenant(),
 		ID:         input.RunID,
 	})
@@ -87,7 +86,7 @@ func (a *Activities) EvaluateExtractionEvalCaseActivity(ctx context.Context, inp
 	stop := modelcall.Heartbeat(ctx)
 	defer stop()
 
-	return a.runner.EvaluateResult(ctx, &services.EvaluateExtractionResultRequest{
+	return a.runner.EvaluateResult(ctx, &extractionevalports.EvaluateExtractionResultRequest{
 		TenantInfo:   input.tenant(),
 		ResultID:     input.ResultID,
 		FinalAttempt: modelcall.FinalAttempt(ctx, evaluateAttempts),
@@ -95,7 +94,7 @@ func (a *Activities) EvaluateExtractionEvalCaseActivity(ctx context.Context, inp
 }
 
 func (a *Activities) FinishExtractionEvalRunActivity(ctx context.Context, input *FinishInput) (*RunOutcome, error) {
-	run, err := a.runner.FinishRun(ctx, &services.FinishExtractionEvalRunRequest{
+	run, err := a.runner.FinishRun(ctx, &extractionevalports.FinishExtractionEvalRunRequest{
 		TenantInfo: input.tenant(),
 		RunID:      input.RunID,
 		Status:     extractioneval.RunStatus(input.Status),
@@ -116,7 +115,7 @@ func (a *Activities) FinishExtractionEvalRunActivity(ctx context.Context, input 
 }
 
 func (a *Activities) FailExtractionEvalRunActivity(ctx context.Context, input *FailInput) error {
-	if err := a.runner.FailRun(ctx, repositories.GetExtractionEvalRunRequest{
+	if err := a.runner.FailRun(ctx, extractionevalports.GetExtractionEvalRunRequest{
 		TenantInfo: input.tenant(),
 		ID:         input.RunID,
 	}, input.Message); err != nil {

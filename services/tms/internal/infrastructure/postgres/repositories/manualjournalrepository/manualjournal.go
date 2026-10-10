@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/manualjournal"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/manualjournalports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -31,13 +31,13 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.ManualJournalRepository {
+func New(p Params) manualjournalports.ManualJournalRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.manual-journal-repository")}
 }
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListManualJournalRequest,
+	req *manualjournalports.ListManualJournalRequest,
 ) (*pagination.ListResult[*manualjournal.Request], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*manualjournal.Request], error) {
 		limit := req.Filter.Pagination.SafeLimit()
@@ -71,7 +71,7 @@ func (r *repository) List(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListManualJournalConnectionRequest,
+	req *manualjournalports.ListManualJournalConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -84,7 +84,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListManualJournalConnectionRequest,
+	req *manualjournalports.ListManualJournalConnectionRequest,
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -104,7 +104,7 @@ func applyManualJournalColumns(q *bun.SelectQuery, columns []string) *bun.Select
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListManualJournalConnectionRequest,
+	req *manualjournalports.ListManualJournalConnectionRequest,
 ) (*pagination.CursorListResult[*manualjournal.Request], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*manualjournal.Request], error) {
 		log := r.l.With(
@@ -156,7 +156,7 @@ func (r *repository) ListConnection(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetManualJournalByIDRequest,
+	req manualjournalports.GetManualJournalByIDRequest,
 ) (*manualjournal.Request, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*manualjournal.Request, error) {
 		entity := new(manualjournal.Request)
@@ -202,7 +202,7 @@ func (r *repository) Create(
 			}
 		}
 
-		return r.GetByID(ctx, repositories.GetManualJournalByIDRequest{
+		return r.GetByID(ctx, manualjournalports.GetManualJournalByIDRequest{
 			ID: entity.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
@@ -282,7 +282,7 @@ func (r *repository) Update(
 			}
 		}
 
-		return r.GetByID(ctx, repositories.GetManualJournalByIDRequest{
+		return r.GetByID(ctx, manualjournalports.GetManualJournalByIDRequest{
 			ID: entity.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,

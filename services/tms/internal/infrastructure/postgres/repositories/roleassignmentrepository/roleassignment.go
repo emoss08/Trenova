@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/uptrace/bun"
@@ -26,7 +26,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.RoleAssignmentRepository {
+func New(p Params) permissionports.RoleAssignmentRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.role-assignment-repository"),
@@ -35,7 +35,7 @@ func New(p Params) repositories.RoleAssignmentRepository {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListRoleAssignmentsRequest,
+	req *permissionports.ListRoleAssignmentsRequest,
 ) *bun.SelectQuery {
 	if req.ExpandRoles {
 		q = q.Relation("Role")
@@ -48,7 +48,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListRoleAssignmentsRequest,
+	req *permissionports.ListRoleAssignmentsRequest,
 ) (*pagination.ListResult[*permission.UserRoleAssignment], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*permission.UserRoleAssignment], error) {
 		log := r.l.With(
@@ -77,7 +77,7 @@ func (r *repository) List(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetRoleAssignmentByIDRequest,
+	req permissionports.GetRoleAssignmentByIDRequest,
 ) (*permission.UserRoleAssignment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*permission.UserRoleAssignment, error) {
 		entity := new(permission.UserRoleAssignment)

@@ -3,6 +3,7 @@
 package fiscalperiodservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"testing"
 	"time"
@@ -10,11 +11,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fiscalyearrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	inttestutil "github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -79,9 +81,9 @@ func TestCloseReturnsConflictWhenFiscalPeriodIsLocked(t *testing.T) {
 	lock := inttestutil.HoldTxLock(
 		t,
 		conn,
-		ports.TxOptions{},
+		kernelports.TxOptions{},
 		func(lockCtx context.Context, _ bun.Tx) error {
-			_, err := fpRepo.GetByIDForUpdate(lockCtx, repositories.GetFiscalPeriodByIDRequest{
+			_, err := fpRepo.GetByIDForUpdate(lockCtx, fiscalperiodports.GetFiscalPeriodByIDRequest{
 				ID:         period.ID,
 				TenantInfo: tenantInfo,
 			})
@@ -90,7 +92,7 @@ func TestCloseReturnsConflictWhenFiscalPeriodIsLocked(t *testing.T) {
 	)
 	lock.WaitLocked(t)
 
-	closed, err := svc.Close(ctx, repositories.CloseFiscalPeriodRequest{
+	closed, err := svc.Close(ctx, fiscalperiodports.CloseFiscalPeriodRequest{
 		ID:         period.ID,
 		TenantInfo: tenantInfo,
 	}, data.User.ID)
@@ -103,7 +105,7 @@ func TestCloseReturnsConflictWhenFiscalPeriodIsLocked(t *testing.T) {
 	lock.Release()
 	lock.Wait(t)
 
-	periodAfter, err := fpRepo.GetByID(ctx, repositories.GetFiscalPeriodByIDRequest{
+	periodAfter, err := fpRepo.GetByID(ctx, fiscalperiodports.GetFiscalPeriodByIDRequest{
 		ID:         period.ID,
 		TenantInfo: tenantInfo,
 	})
@@ -174,7 +176,7 @@ func TestCloseBlockedByApprovedManualJournalRequest(t *testing.T) {
 
 	closed, err := svc.Close(
 		ctx,
-		repositories.CloseFiscalPeriodRequest{
+		fiscalperiodports.CloseFiscalPeriodRequest{
 			ID: period.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: data.Organization.ID,
@@ -281,7 +283,7 @@ func TestCloseBlockedByPendingJournalSource(t *testing.T) {
 
 	closed, err := svc.Close(
 		ctx,
-		repositories.CloseFiscalPeriodRequest{
+		fiscalperiodports.CloseFiscalPeriodRequest{
 			ID: period.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: data.Organization.ID,
@@ -354,7 +356,7 @@ func TestGetCloseBlockersReturnsManualJournalBlocker(t *testing.T) {
 
 	result, err := svc.GetCloseBlockers(
 		ctx,
-		repositories.GetFiscalPeriodByIDRequest{
+		fiscalperiodports.GetFiscalPeriodByIDRequest{
 			ID: period.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: data.Organization.ID,
@@ -411,7 +413,7 @@ func TestLockSucceedsFromOpenStatus(t *testing.T) {
 
 	locked, err := svc.Lock(
 		ctx,
-		&repositories.LockFiscalPeriodRequest{
+		&fiscalperiodports.LockFiscalPeriodRequest{
 			ID: period.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: data.Organization.ID,
@@ -434,7 +436,7 @@ func TestCloseBlockedWhenPeriodCloseModeIsSystemScheduled(t *testing.T) {
 	fpRepo := fiscalperiodrepository.New(
 		fiscalperiodrepository.Params{DB: conn, Logger: zap.NewNop()},
 	)
-	accountingRepo := mocks.NewMockAccountingControlRepository(t)
+	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	validator := &Validator{db: conn, accountingRepo: accountingRepo}
 	svc := &Service{
 		l:              zap.NewNop(),
@@ -484,7 +486,7 @@ func TestCloseBlockedWhenPeriodCloseModeIsSystemScheduled(t *testing.T) {
 
 	closed, err := svc.Close(
 		ctx,
-		repositories.CloseFiscalPeriodRequest{
+		fiscalperiodports.CloseFiscalPeriodRequest{
 			ID: period.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: data.Organization.ID,
@@ -507,7 +509,7 @@ func TestCloseBlockedWhenPeriodCloseApprovalRequired(t *testing.T) {
 	fpRepo := fiscalperiodrepository.New(
 		fiscalperiodrepository.Params{DB: conn, Logger: zap.NewNop()},
 	)
-	accountingRepo := mocks.NewMockAccountingControlRepository(t)
+	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	validator := &Validator{db: conn, accountingRepo: accountingRepo}
 	svc := &Service{
 		l:              zap.NewNop(),
@@ -557,7 +559,7 @@ func TestCloseBlockedWhenPeriodCloseApprovalRequired(t *testing.T) {
 
 	closed, err := svc.Close(
 		ctx,
-		repositories.CloseFiscalPeriodRequest{
+		fiscalperiodports.CloseFiscalPeriodRequest{
 			ID: period.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: data.Organization.ID,
@@ -644,7 +646,7 @@ type journalSourceRecord struct {
 func mustCreateIntegrationFiscalYear(
 	t *testing.T,
 	ctx context.Context,
-	repo repositories.FiscalYearRepository,
+	repo fiscalyearports.FiscalYearRepository,
 	entity *fiscalyear.FiscalYear,
 ) *fiscalyear.FiscalYear {
 	t.Helper()
@@ -657,7 +659,7 @@ func mustCreateIntegrationFiscalYear(
 func mustCreateFiscalPeriod(
 	t *testing.T,
 	ctx context.Context,
-	repo repositories.FiscalPeriodRepository,
+	repo fiscalperiodports.FiscalPeriodRepository,
 	entity *fiscalperiod.FiscalPeriod,
 ) *fiscalperiod.FiscalPeriod {
 	t.Helper()

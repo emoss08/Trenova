@@ -5,7 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/ifta"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,7 +25,7 @@ func entryTenant(entity *ifta.JurisdictionMileageEntry) pagination.TenantInfo {
 
 func (s *Service) ListMileageEntries(
 	ctx context.Context,
-	req *repositories.ListMileageEntriesRequest,
+	req *iftaports.ListMileageEntriesRequest,
 ) (*pagination.CursorListResult[*ifta.JurisdictionMileageEntry], error) {
 	return s.repo.ListMileageEntries(ctx, req)
 }
@@ -34,7 +35,7 @@ func (s *Service) GetMileageEntry(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*ifta.JurisdictionMileageEntry, error) {
-	return s.repo.GetMileageEntryByID(ctx, &repositories.GetMileageEntryByIDRequest{
+	return s.repo.GetMileageEntryByID(ctx, &iftaports.GetMileageEntryByIDRequest{
 		ID:                  id,
 		TenantInfo:          tenantInfo,
 		IncludeTractor:      true,
@@ -51,7 +52,7 @@ func (s *Service) prepareMileageEntry(
 
 	if entity.TractorID.IsNil() {
 		multiErr.Add("tractorId", errortypes.ErrRequired, "Tractor is required")
-	} else if _, err := s.tractorRepo.GetByID(ctx, repositories.GetTractorByIDRequest{
+	} else if _, err := s.tractorRepo.GetByID(ctx, tractorports.GetTractorByIDRequest{
 		ID:         entity.TractorID,
 		TenantInfo: tenantInfo,
 	}); err != nil {
@@ -117,7 +118,7 @@ func (s *Service) PlanUpdateMileageEntry(
 	entity *ifta.JurisdictionMileageEntry,
 	_ pulid.ID,
 ) (*MileageEntryChange, error) {
-	existing, err := s.repo.GetMileageEntryByID(ctx, &repositories.GetMileageEntryByIDRequest{
+	existing, err := s.repo.GetMileageEntryByID(ctx, &iftaports.GetMileageEntryByIDRequest{
 		ID:         entity.ID,
 		TenantInfo: entryTenant(entity),
 	})
@@ -145,7 +146,7 @@ func (s *Service) PlanDeleteMileageEntry(
 	ctx context.Context,
 	req *DeleteMileageEntryRequest,
 ) (*ifta.JurisdictionMileageEntry, error) {
-	existing, err := s.repo.GetMileageEntryByID(ctx, &repositories.GetMileageEntryByIDRequest{
+	existing, err := s.repo.GetMileageEntryByID(ctx, &iftaports.GetMileageEntryByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -228,7 +229,7 @@ func (s *Service) DeleteMileageEntry(ctx context.Context, req *DeleteMileageEntr
 		return err
 	}
 
-	if err = s.repo.DeleteMileageEntry(ctx, &repositories.DeleteMileageEntryRequest{
+	if err = s.repo.DeleteMileageEntry(ctx, &iftaports.DeleteMileageEntryRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 		Version:    req.Version,

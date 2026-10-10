@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/hazmatsegregationrule"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/hazmatsegregationruleports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -30,7 +30,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.HazmatSegregationRuleRepository {
+func New(p Params) hazmatsegregationruleports.HazmatSegregationRuleRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.hazmat-segregation-rule-repository"),
@@ -39,7 +39,7 @@ func New(p Params) repositories.HazmatSegregationRuleRepository {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListHazmatSegregationRuleRequest,
+	req *hazmatsegregationruleports.ListHazmatSegregationRuleRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
@@ -53,7 +53,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListHazmatSegregationRuleRequest,
+	req *hazmatsegregationruleports.ListHazmatSegregationRuleRequest,
 ) (*pagination.ListResult[*hazmatsegregationrule.HazmatSegregationRule], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*hazmatsegregationrule.HazmatSegregationRule], error) {
 		log := r.l.With(
@@ -87,7 +87,7 @@ func (r *repository) List(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetHazmatSegregationRuleByIDRequest,
+	req hazmatsegregationruleports.GetHazmatSegregationRuleByIDRequest,
 ) (*hazmatsegregationrule.HazmatSegregationRule, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*hazmatsegregationrule.HazmatSegregationRule, error) {
 		log := r.l.With(
@@ -136,7 +136,7 @@ func (r *repository) ListActiveByTenant(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListHazmatSegregationRuleConnectionRequest,
+	req *hazmatsegregationruleports.ListHazmatSegregationRuleConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -149,7 +149,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListHazmatSegregationRuleConnectionRequest,
+	req *hazmatsegregationruleports.ListHazmatSegregationRuleConnectionRequest,
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -172,7 +172,7 @@ func applyHazmatSegregationRuleColumns(
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListHazmatSegregationRuleConnectionRequest,
+	req *hazmatsegregationruleports.ListHazmatSegregationRuleConnectionRequest,
 ) (*pagination.CursorListResult[*hazmatsegregationrule.HazmatSegregationRule], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*hazmatsegregationrule.HazmatSegregationRule], error) {
 		log := r.l.With(

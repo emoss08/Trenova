@@ -8,9 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -27,7 +28,7 @@ type fakeTenderChanges struct {
 
 func (f *fakeTenderChanges) GetTenderChange(
 	_ context.Context,
-	req repositories.GetEDITenderChangeByIDRequest,
+	req ediports.GetEDITenderChangeByIDRequest,
 ) (*edi.TenderChange, error) {
 	if req.ID != f.change.ID {
 		return nil, errortypes.NewNotFoundError("EDITenderChange not found")
@@ -40,7 +41,7 @@ func (f *fakeTenderChanges) GetTenderChange(
 func (f *fakeTenderChanges) ApplyTenderChange(
 	_ context.Context,
 	req *ediservice.TenderChangeActionRequest,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*edi.TenderChange, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -53,7 +54,7 @@ func (f *fakeTenderChanges) ApplyTenderChange(
 func (f *fakeTenderChanges) RejectTenderChange(
 	_ context.Context,
 	req *ediservice.TenderChangeActionRequest,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*edi.TenderChange, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -74,7 +75,7 @@ type fakeTransferChanges struct {
 
 func (f *fakeTransferChanges) GetTransferChange(
 	_ context.Context,
-	req repositories.GetEDITransferChangeByIDRequest,
+	req ediports.GetEDITransferChangeByIDRequest,
 ) (*edi.TransferChange, error) {
 	if req.ID != f.change.ID {
 		return nil, errortypes.NewNotFoundError("EDITransferChange not found")
@@ -114,7 +115,7 @@ func (f *fakeTransferChanges) PlanTransferChangeEffect(
 func (f *fakeTransferChanges) ApplyTransferChange(
 	_ context.Context,
 	req *ediservice.TransferChangeActionRequest,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*edi.TransferChange, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -127,7 +128,7 @@ func (f *fakeTransferChanges) ApplyTransferChange(
 func (f *fakeTransferChanges) RejectTransferChange(
 	_ context.Context,
 	req *ediservice.TransferChangeActionRequest,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*edi.TransferChange, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -158,7 +159,7 @@ func pendingTenderChange(orgID, buID pulid.ID) *edi.TenderChange {
 func TestEDIChangeReviews_ArePersonOnlyProposalsTargetingTheChange(t *testing.T) {
 	t.Parallel()
 
-	for _, tool := range []serviceports.AgentTool{
+	for _, tool := range []agentports.AgentTool{
 		newReviewEDITenderChangeTool(nil),
 		newReviewEDITransferChangeTool(nil),
 	} {
@@ -174,11 +175,11 @@ func TestEDIChangeReviews_ArePersonOnlyProposalsTargetingTheChange(t *testing.T)
 		)
 
 		id := pulid.MustNew("editcg_")
-		target, ok := tool.(serviceports.TargetedTool).Target(
+		target, ok := tool.(agentports.TargetedTool).Target(
 			map[string]any{paramEDIChangeID: id.String()},
 		)
 		require.True(t, ok, tool.Name())
-		assert.Equal(t, serviceports.ToolTarget{Resource: permission.ResourceEDI, ID: id}, target)
+		assert.Equal(t, agentports.ToolTarget{Resource: permission.ResourceEDI, ID: id}, target)
 	}
 }
 
@@ -320,7 +321,7 @@ func TestReviewEDIChanges_RefuseAnUnknownDecision(t *testing.T) {
 	tool := newReviewEDITransferChangeTool(&fakeTransferChanges{
 		change: &edi.TransferChange{ID: pulid.MustNew("editc_")},
 	})
-	err := tool.(serviceports.ToolValidator).Validate(t.Context(), agentParamsFor(map[string]any{
+	err := tool.(agentports.ToolValidator).Validate(t.Context(), agentParamsFor(map[string]any{
 		paramEDIChangeID:       pulid.MustNew("editc_").String(),
 		paramEDIReviewDecision: "Approve",
 	}))

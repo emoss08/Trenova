@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/fuelpurchaseservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
@@ -102,7 +102,7 @@ func fuelImportRowCursorConnectionToModel(
 func fuelCardsRequestFromGraphQL(
 	connection *base.GqlDataTableConnection,
 	input gqlmodel.FuelCardsInput,
-) (*repositories.ListFuelCardsRequest, error) {
+) (*fuelpurchaseports.ListFuelCardsRequest, error) {
 	tractorID, err := base.OptionalScopedID("assignedTractorId", input.AssignedTractorID)
 	if err != nil {
 		return nil, err
@@ -113,7 +113,7 @@ func fuelCardsRequestFromGraphQL(
 		return nil, err
 	}
 
-	req := &repositories.ListFuelCardsRequest{
+	req := &fuelpurchaseports.ListFuelCardsRequest{
 		Filter:             connection.Filter,
 		Cursor:             connection.Cursor,
 		AssignedTractorID:  tractorID,
@@ -139,7 +139,7 @@ func fuelCardsRequestFromGraphQL(
 func fuelPurchasesRequestFromGraphQL(
 	connection *base.GqlDataTableConnection,
 	input gqlmodel.FuelPurchasesInput,
-) (*repositories.ListFuelPurchasesRequest, error) {
+) (*fuelpurchaseports.ListFuelPurchasesRequest, error) {
 	tractorID, err := base.OptionalScopedID("tractorId", input.TractorID)
 	if err != nil {
 		return nil, err
@@ -155,7 +155,7 @@ func fuelPurchasesRequestFromGraphQL(
 		return nil, err
 	}
 
-	return &repositories.ListFuelPurchasesRequest{
+	return &fuelpurchaseports.ListFuelPurchasesRequest{
 		Filter:              connection.Filter,
 		Cursor:              connection.Cursor,
 		TractorID:           tractorID,
@@ -378,7 +378,7 @@ func fuelImportRowsRequest(
 	batch *fuelpurchase.ImportBatch,
 	input *gqlmodel.FuelPurchaseImportRowsInput,
 	tenant pagination.TenantInfo,
-) (*repositories.ListImportRowsRequest, error) {
+) (*fuelpurchaseports.ListImportRowsRequest, error) {
 	pageInput := base.GqlCursorPageInput{}
 	var statuses []fuelpurchase.ImportRowStatus
 	if input != nil {
@@ -392,7 +392,7 @@ func fuelImportRowsRequest(
 		return nil, err
 	}
 
-	return &repositories.ListImportRowsRequest{
+	return &fuelpurchaseports.ListImportRowsRequest{
 		BatchID:    batch.ID,
 		TenantInfo: tenant,
 		Filter: base.QueryOptionsFromGraphQL(&base.GqlListOptions{
@@ -526,8 +526,8 @@ func epochPtr(value int64) *int {
 func fuelImportsRequestFromGraphQL(
 	connection *base.GqlDataTableConnection,
 	input gqlmodel.FuelPurchaseImportsInput,
-) *repositories.ListImportBatchesRequest {
-	req := &repositories.ListImportBatchesRequest{
+) *fuelpurchaseports.ListImportBatchesRequest {
+	req := &fuelpurchaseports.ListImportBatchesRequest{
 		Filter:             connection.Filter,
 		Cursor:             connection.Cursor,
 		Statuses:           input.Statuses,

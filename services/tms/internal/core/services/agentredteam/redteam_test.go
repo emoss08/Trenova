@@ -8,8 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -112,7 +112,7 @@ func TestDecideNamesTaintForEveryWriteThatLeaves(t *testing.T) {
 			Tools:      []string{policy.Name},
 			Unattended: true,
 		}, MainAgentID, Tenant{OrganizationID: OrganizationID, BusinessUnitID: BusinessUnitID})
-		params := serviceports.ToolExecuteParams{
+		params := agentports.ToolExecuteParams{
 			OrganizationID: OrganizationID,
 			BusinessUnitID: BusinessUnitID,
 			Actor:          actor,

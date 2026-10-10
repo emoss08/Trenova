@@ -5,9 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -18,18 +19,18 @@ import (
 
 func (s *Service) Approve(
 	ctx context.Context,
-	req *servicesports.ApproveInvoiceAdjustmentRequest,
-	actor *servicesports.RequestActor,
+	req *invoiceadjustmentports.ApproveInvoiceAdjustmentRequest,
+	actor *permissionports.RequestActor,
 ) (*invoiceadjustment.InvoiceAdjustment, error) {
 	var result *invoiceadjustment.InvoiceAdjustment
 	err := s.db.WithTx(
 		ctx,
-		ports.TxOptions{LockTimeout: 5 * 1000000000},
+		kernelports.TxOptions{LockTimeout: 5 * 1000000000},
 		func(txCtx context.Context, _ bun.Tx) error {
 			executed, execErr := s.executeApprovedAdjustment(
 				txCtx,
 				req.AdjustmentID,
-				&servicesports.InvoiceAdjustmentRequest{
+				&invoiceadjustmentports.InvoiceAdjustmentRequest{
 					TenantInfo: req.TenantInfo,
 				},
 				actor,
@@ -54,10 +55,10 @@ func (s *Service) Approve(
 
 func (s *Service) Reject(
 	ctx context.Context,
-	req *servicesports.RejectInvoiceAdjustmentRequest,
-	actor *servicesports.RequestActor,
+	req *invoiceadjustmentports.RejectInvoiceAdjustmentRequest,
+	actor *permissionports.RequestActor,
 ) (*invoiceadjustment.InvoiceAdjustment, error) {
-	entity, err := s.repo.GetByID(ctx, repositories.GetInvoiceAdjustmentRequest{
+	entity, err := s.repo.GetByID(ctx, invoiceadjustmentports.GetInvoiceAdjustmentRequest{
 		ID:         req.AdjustmentID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -91,9 +92,9 @@ func (s *Service) Reject(
 
 func (s *Service) GetDetail(
 	ctx context.Context,
-	req *servicesports.GetInvoiceAdjustmentDetailRequest,
+	req *invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest,
 ) (*invoiceadjustment.InvoiceAdjustment, error) {
-	entity, err := s.repo.GetByID(ctx, repositories.GetInvoiceAdjustmentRequest{
+	entity, err := s.repo.GetByID(ctx, invoiceadjustmentports.GetInvoiceAdjustmentRequest{
 		ID:         req.AdjustmentID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -103,7 +104,7 @@ func (s *Service) GetDetail(
 
 	adjustmentDocs, err := s.documentRepo.GetByResourceID(
 		ctx,
-		&repositories.GetDocumentsByResourceRequest{
+		&documentports.GetDocumentsByResourceRequest{
 			TenantInfo:          req.TenantInfo,
 			ResourceID:          req.AdjustmentID.String(),
 			ResourceType:        adjustmentDocumentResourceType,
@@ -119,13 +120,13 @@ func (s *Service) GetDetail(
 
 func (s *Service) GetLineage(
 	ctx context.Context,
-	req *servicesports.GetInvoiceAdjustmentLineageRequest,
-) (*servicesports.InvoiceAdjustmentLineage, error) {
+	req *invoiceadjustmentports.GetInvoiceAdjustmentLineageRequest,
+) (*invoiceadjustmentports.InvoiceAdjustmentLineage, error) {
 	lineage, err := s.repo.GetLineage(ctx, req.CorrectionGroupID, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
-	return &servicesports.InvoiceAdjustmentLineage{
+	return &invoiceadjustmentports.InvoiceAdjustmentLineage{
 		CorrectionGroup: lineage.CorrectionGroup,
 		Invoices:        lineage.Invoices,
 		Adjustments:     lineage.Adjustments,
@@ -137,7 +138,7 @@ func (s *Service) GetBatch(
 	batchID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) (*invoiceadjustment.InvoiceAdjustmentBatch, error) {
-	return s.repo.GetBatchByID(ctx, repositories.GetBatchRequest{
+	return s.repo.GetBatchByID(ctx, invoiceadjustmentports.GetBatchRequest{
 		ID:         batchID,
 		TenantInfo: tenantInfo,
 	})
@@ -145,18 +146,18 @@ func (s *Service) GetBatch(
 
 func (s *Service) ListApprovals(
 	ctx context.Context,
-	req *repositories.ListApprovalQueueRequest,
-) (*pagination.CursorListResult[*repositories.InvoiceAdjustmentApprovalQueueItem], error) {
+	req *invoiceadjustmentports.ListApprovalQueueRequest,
+) (*pagination.CursorListResult[*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem], error) {
 	return s.repo.ListApprovalQueue(ctx, req)
 }
 
 func (s *Service) ListReconciliationExceptions(
 	ctx context.Context,
 	filter pagination.QueryOptions, //nolint:gocritic // stable API shape
-) (*pagination.ListResult[*repositories.InvoiceAdjustmentReconciliationQueueItem], error) {
+) (*pagination.ListResult[*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem], error) {
 	return s.repo.ListReconciliationQueue(
 		ctx,
-		repositories.ListReconciliationQueueRequest{Filter: filter},
+		invoiceadjustmentports.ListReconciliationQueueRequest{Filter: filter},
 	)
 }
 
@@ -164,12 +165,12 @@ func (s *Service) ListBatches(
 	ctx context.Context,
 	filter pagination.QueryOptions, //nolint:gocritic // stable API shape
 ) (*pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch], error) {
-	return s.repo.ListBatchQueue(ctx, repositories.ListBatchQueueRequest{Filter: filter})
+	return s.repo.ListBatchQueue(ctx, invoiceadjustmentports.ListBatchQueueRequest{Filter: filter})
 }
 
 func (s *Service) GetOperationsSummary(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*repositories.InvoiceAdjustmentOperationsSummary, error) {
+) (*invoiceadjustmentports.InvoiceAdjustmentOperationsSummary, error) {
 	return s.repo.GetOperationsSummary(ctx, tenantInfo)
 }

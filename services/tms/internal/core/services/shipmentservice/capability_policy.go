@@ -10,10 +10,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permit"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/modeprofileservice"
 	"github.com/emoss08/trenova/internal/core/services/permitservice"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmenttypeports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/modeprofileports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -25,14 +29,14 @@ import (
 // choice stays visible at the call site rather than buried here.
 func resolveProfileForShipment(
 	ctx context.Context,
-	profileSvc services.ModeProfileService,
+	profileSvc modeprofileports.ModeProfileService,
 	entity *shipment.Shipment,
 ) (*modeprofile.ResolvedPolicy, error) {
 	if profileSvc == nil {
-		return nil, services.ErrNoModeProfileConfigured
+		return nil, modeprofileports.ErrNoModeProfileConfigured
 	}
 
-	policy, err := profileSvc.Resolve(ctx, &services.ResolveModeProfileRequest{
+	policy, err := profileSvc.Resolve(ctx, &modeprofileports.ResolveModeProfileRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -60,7 +64,7 @@ func (s *service) recordCapabilityDeviations(
 	}
 
 	policy, err := resolveProfileForShipment(ctx, s.modeProfileService, entity)
-	if errors.Is(err, services.ErrNoModeProfileConfigured) {
+	if errors.Is(err, modeprofileports.ErrNoModeProfileConfigured) {
 		return nil
 	}
 	if err != nil {
@@ -70,7 +74,7 @@ func (s *service) recordCapabilityDeviations(
 		return nil
 	}
 
-	if err = s.modeProfileService.RecordDeviations(ctx, &services.RecordDeviationsRequest{
+	if err = s.modeProfileService.RecordDeviations(ctx, &modeprofileports.RecordDeviationsRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -88,7 +92,7 @@ func (s *service) recordCapabilityDeviations(
 func (s *service) syncPermits(
 	ctx context.Context,
 	entity *shipment.Shipment,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) error {
 	if s.permitService == nil || entity == nil {
 		return nil
@@ -183,11 +187,11 @@ func moveRemovalRuleFor(
 }
 
 func createCapabilityPolicyRule(
-	profileSvc services.ModeProfileService,
-	controlRepo repositories.ShipmentControlRepository,
-	shipmentRepo repositories.ShipmentRepository,
-	equipmentTypeRepo repositories.EquipmentTypeRepository,
-	permitSvc services.PermitService,
+	profileSvc modeprofileports.ModeProfileService,
+	controlRepo tenantports.ShipmentControlRepository,
+	shipmentRepo shipmentports.ShipmentRepository,
+	equipmentTypeRepo equipmenttypeports.EquipmentTypeRepository,
+	permitSvc permitports.PermitService,
 ) validationframework.TenantedRule[*shipment.Shipment] {
 	return validationframework.NewTenantedRule[*shipment.Shipment]("capability_policy").
 		OnBoth().
@@ -286,7 +290,7 @@ func validateMoveRemoval(
 	valCtx *validationframework.TenantedValidationContext,
 	policy *modeprofile.ResolvedPolicy,
 	control *tenant.ShipmentControl,
-	shipmentRepo repositories.ShipmentRepository,
+	shipmentRepo shipmentports.ShipmentRepository,
 	multiErr *errortypes.MultiError,
 ) error {
 	if valCtx.IsCreate() {
@@ -346,13 +350,13 @@ func validateDimensions(
 func deckLengthFeet(
 	ctx context.Context,
 	entity *shipment.Shipment,
-	equipmentTypeRepo repositories.EquipmentTypeRepository,
+	equipmentTypeRepo equipmenttypeports.EquipmentTypeRepository,
 ) float64 {
 	if entity.TrailerTypeID.IsNil() || equipmentTypeRepo == nil {
 		return 0
 	}
 
-	equipmentType, err := equipmentTypeRepo.GetByID(ctx, repositories.GetEquipmentTypeByIDRequest{
+	equipmentType, err := equipmentTypeRepo.GetByID(ctx, equipmenttypeports.GetEquipmentTypeByIDRequest{
 		ID: entity.TrailerTypeID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -370,7 +374,7 @@ func validateDeckFit(
 	ctx context.Context,
 	entity *shipment.Shipment,
 	policy *modeprofile.ResolvedPolicy,
-	equipmentTypeRepo repositories.EquipmentTypeRepository,
+	equipmentTypeRepo equipmenttypeports.EquipmentTypeRepository,
 	multiErr *errortypes.MultiError,
 ) {
 	rule, ok := policy.Rule(modeprofile.RuleKeyEnvelopeExceedsEquipment)
@@ -408,10 +412,10 @@ func validateDeckFit(
 
 func permitAssessmentFor(
 	ctx context.Context,
-	permitSvc services.PermitService,
+	permitSvc permitports.PermitService,
 	policy *modeprofile.ResolvedPolicy,
 	entity *shipment.Shipment,
-) *services.PermitAssessment {
+) *permitports.PermitAssessment {
 	if permitSvc == nil || policy == nil {
 		return nil
 	}
@@ -441,7 +445,7 @@ func jurisdictionList(requirements []*permit.Requirement) string {
 func validatePermits(
 	entity *shipment.Shipment,
 	policy *modeprofile.ResolvedPolicy,
-	assessment *services.PermitAssessment,
+	assessment *permitports.PermitAssessment,
 	multiErr *errortypes.MultiError,
 ) {
 	if assessment == nil {
@@ -457,7 +461,7 @@ func validatePermits(
 
 func validatePermitRequired(
 	policy *modeprofile.ResolvedPolicy,
-	assessment *services.PermitAssessment,
+	assessment *permitports.PermitAssessment,
 	multiErr *errortypes.MultiError,
 ) {
 	rule, ok := policy.Rule(modeprofile.RuleKeyPermitRequired)
@@ -472,7 +476,7 @@ func validatePermitRequired(
 
 func validatePermitExpiry(
 	policy *modeprofile.ResolvedPolicy,
-	assessment *services.PermitAssessment,
+	assessment *permitports.PermitAssessment,
 	multiErr *errortypes.MultiError,
 ) {
 	rule, ok := policy.Rule(modeprofile.RuleKeyPermitExpiry)
@@ -487,7 +491,7 @@ func validatePermitExpiry(
 
 func validatePermitEscorts(
 	policy *modeprofile.ResolvedPolicy,
-	assessment *services.PermitAssessment,
+	assessment *permitports.PermitAssessment,
 	multiErr *errortypes.MultiError,
 ) {
 	rule, ok := policy.Rule(modeprofile.RuleKeyPermitEscorts)
@@ -503,7 +507,7 @@ func validatePermitEscorts(
 func validatePermitLeadTime(
 	entity *shipment.Shipment,
 	policy *modeprofile.ResolvedPolicy,
-	assessment *services.PermitAssessment,
+	assessment *permitports.PermitAssessment,
 	multiErr *errortypes.MultiError,
 ) {
 	rule, ok := policy.Rule(modeprofile.RuleKeyPermitLeadTime)
@@ -528,7 +532,7 @@ func validatePermitLeadTime(
 // precise conflict from a boolean would be worse than saying nothing.
 func validatePermitCurfew(
 	policy *modeprofile.ResolvedPolicy,
-	assessment *services.PermitAssessment,
+	assessment *permitports.PermitAssessment,
 	multiErr *errortypes.MultiError,
 ) {
 	rule, ok := policy.Rule(modeprofile.RuleKeyPermitCurfewConflict)

@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/bankreceipt"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -47,13 +47,13 @@ type summaryRecord struct {
 	DaysOver7Amount       int64 `bun:"days_over_7_amount"`
 }
 
-func New(p Params) repositories.BankReceiptRepository {
+func New(p Params) bankreceiptports.BankReceiptRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.bank-receipt-repository")}
 }
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetBankReceiptByIDRequest,
+	req bankreceiptports.GetBankReceiptByIDRequest,
 ) (*bankreceipt.BankReceipt, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*bankreceipt.BankReceipt, error) {
 		entity := new(bankreceipt.BankReceipt)
@@ -73,7 +73,7 @@ func (r *repository) GetByID(
 
 func (r *repository) ListByImportBatchID(
 	ctx context.Context,
-	req repositories.ListBankReceiptsByImportBatchRequest,
+	req bankreceiptports.ListBankReceiptsByImportBatchRequest,
 ) ([]*bankreceipt.BankReceipt, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*bankreceipt.BankReceipt, error) {
 		items := make([]*bankreceipt.BankReceipt, 0)
@@ -116,9 +116,9 @@ func (r *repository) ListExceptions(
 
 func (r *repository) GetSummary(
 	ctx context.Context,
-	req repositories.GetBankReceiptSummaryRequest,
-) (*repositories.BankReceiptReconciliationSummary, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.BankReceiptReconciliationSummary, error) {
+	req bankreceiptports.GetBankReceiptSummaryRequest,
+) (*bankreceiptports.BankReceiptReconciliationSummary, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*bankreceiptports.BankReceiptReconciliationSummary, error) {
 		rec := new(summaryRecord)
 		err := r.db.DBForContext(ctx).NewRaw(`
 		SELECT
@@ -147,7 +147,7 @@ func (r *repository) GetSummary(
 		if err != nil {
 			return nil, fmt.Errorf("get bank receipt summary: %w", err)
 		}
-		return &repositories.BankReceiptReconciliationSummary{
+		return &bankreceiptports.BankReceiptReconciliationSummary{
 			AsOfDate:              req.AsOfDate,
 			ImportedCount:         rec.ImportedCount,
 			ImportedAmount:        rec.ImportedAmount,
@@ -158,7 +158,7 @@ func (r *repository) GetSummary(
 			ActiveWorkItemCount:   rec.ActiveWorkItemCount,
 			AssignedWorkItemCount: rec.AssignedWorkItemCount,
 			InReviewWorkItemCount: rec.InReviewWorkItemCount,
-			ExceptionAging: repositories.BankReceiptExceptionAging{
+			ExceptionAging: bankreceiptports.BankReceiptExceptionAging{
 				CurrentCount:    rec.CurrentCount,
 				CurrentAmount:   rec.CurrentAmount,
 				Days1To3Count:   rec.Days1To3Count,
@@ -182,7 +182,7 @@ func (r *repository) Create(
 		}
 		return r.GetByID(
 			ctx,
-			repositories.GetBankReceiptByIDRequest{
+			bankreceiptports.GetBankReceiptByIDRequest{
 				ID: entity.ID,
 				TenantInfo: pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
@@ -223,7 +223,7 @@ func (r *repository) Update(
 		}
 		return r.GetByID(
 			ctx,
-			repositories.GetBankReceiptByIDRequest{
+			bankreceiptports.GetBankReceiptByIDRequest{
 				ID: entity.ID,
 				TenantInfo: pagination.TenantInfo{
 					OrgID: entity.OrganizationID,

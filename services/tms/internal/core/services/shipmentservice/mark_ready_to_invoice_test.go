@@ -1,13 +1,17 @@
 package shipmentservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/orderportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmenteventportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -19,26 +23,26 @@ import (
 )
 
 type markReadyFixture struct {
-	repo       *mocks.MockShipmentRepository
-	derivation *mocks.MockOrderDerivationService
-	events     *mocks.MockShipmentEventService
+	repo       *shipmentportsmock.MockShipmentRepository
+	derivation *orderportsmock.MockOrderDerivationService
+	events     *shipmenteventportsmock.MockShipmentEventService
 	svc        *service
 	tenantInfo pagination.TenantInfo
-	actor      services.AuditActor
+	actor      kernelports.AuditActor
 }
 
 func newMarkReadyFixture(t *testing.T) *markReadyFixture {
 	t.Helper()
 
 	f := &markReadyFixture{
-		repo:       mocks.NewMockShipmentRepository(t),
-		derivation: mocks.NewMockOrderDerivationService(t),
-		events:     mocks.NewMockShipmentEventService(t),
+		repo:       shipmentportsmock.NewMockShipmentRepository(t),
+		derivation: orderportsmock.NewMockOrderDerivationService(t),
+		events:     shipmenteventportsmock.NewMockShipmentEventService(t),
 		tenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),
 		},
-		actor: services.AuditActor{UserID: pulid.MustNew("usr_")},
+		actor: kernelports.AuditActor{UserID: pulid.MustNew("usr_")},
 	}
 	f.svc = &service{
 		l:               zap.NewNop(),
@@ -87,10 +91,10 @@ func TestMarkReadyToInvoice_SavesTheLoadedShipmentAndLeavesTheOrderToItsEvent(t 
 	entity := f.completed()
 	f.expectSave(entity)
 
-	var recorded *services.RecordShipmentEventParams
+	var recorded *shipmenteventports.RecordShipmentEventParams
 	f.events.EXPECT().
 		Record(mock.Anything, mock.Anything).
-		Run(func(_ context.Context, params *services.RecordShipmentEventParams) {
+		Run(func(_ context.Context, params *shipmenteventports.RecordShipmentEventParams) {
 			recorded = params
 		}).
 		Return(nil).
@@ -126,7 +130,7 @@ func TestMarkReadyToInvoice_WithoutAnEventRecomputesTheOrderItself(t *testing.T)
 	entity := f.completed()
 
 	f.repo.EXPECT().
-		GetByID(mock.Anything, mock.MatchedBy(func(req *repositories.GetShipmentByIDRequest) bool {
+		GetByID(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetShipmentByIDRequest) bool {
 			return req.ID == entity.ID && req.TenantInfo == f.tenantInfo &&
 				req.ExpandShipmentDetails
 		})).
@@ -185,7 +189,7 @@ func TestMarkReadyToInvoice_ReloadsAShipmentThatDoesNotMatchTheRequest(t *testin
 	foreign.OrganizationID = pulid.MustNew("org_")
 
 	f.repo.EXPECT().
-		GetByID(mock.Anything, mock.MatchedBy(func(req *repositories.GetShipmentByIDRequest) bool {
+		GetByID(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetShipmentByIDRequest) bool {
 			return req.ID == requested.ID && req.TenantInfo == f.tenantInfo
 		})).
 		Return(requested, nil).

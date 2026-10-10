@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/iam"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -31,7 +31,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.IAMRepository {
+func New(p Params) iamports.IAMRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.iam-repository"),
@@ -47,7 +47,7 @@ func safeLimit(limit int) int {
 
 func (r *repository) ListIdentityProviders(
 	ctx context.Context,
-	req repositories.ListIAMRequest,
+	req iamports.ListIAMRequest,
 ) ([]*iam.IdentityProvider, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*iam.IdentityProvider, error) {
 		entities := make([]*iam.IdentityProvider, 0)
@@ -158,7 +158,7 @@ func (r *repository) DeleteIdentityProvider(
 
 func (r *repository) ListSCIMDirectories(
 	ctx context.Context,
-	req *repositories.ListSCIMDirectoryRequest,
+	req *iamports.ListSCIMDirectoryRequest,
 ) (*pagination.ListResult[*iam.SCIMDirectory], error) {
 	return dbtx.Read(
 		ctx,
@@ -187,7 +187,7 @@ func (r *repository) ListSCIMDirectories(
 
 func (r *repository) GetSCIMDirectory(
 	ctx context.Context,
-	req repositories.GetSCIMDirectoryRequest,
+	req iamports.GetSCIMDirectoryRequest,
 ) (*iam.SCIMDirectory, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*iam.SCIMDirectory, error) {
 		entity := new(iam.SCIMDirectory)
@@ -337,7 +337,7 @@ func (r *repository) ListProvisioningAuditRecords(
 
 func (r *repository) ListAccessPolicies(
 	ctx context.Context,
-	req repositories.ListIAMRequest,
+	req iamports.ListIAMRequest,
 ) ([]*iam.AccessPolicy, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*iam.AccessPolicy, error) {
 		entities := make([]*iam.AccessPolicy, 0)
@@ -354,7 +354,7 @@ func (r *repository) ListAccessPolicies(
 
 func (r *repository) ListEnabledAccessPolicies(
 	ctx context.Context,
-	req repositories.IAMPolicyLookupRequest,
+	req iamports.IAMPolicyLookupRequest,
 ) ([]*iam.AccessPolicy, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*iam.AccessPolicy, error) {
 		entities := make([]*iam.AccessPolicy, 0)
@@ -373,7 +373,7 @@ func (r *repository) ListEnabledAccessPolicies(
 
 func (r *repository) ListEnabledTenantAccessPolicies(
 	ctx context.Context,
-	req repositories.IAMTenantPolicyLookupRequest,
+	req iamports.IAMTenantPolicyLookupRequest,
 ) ([]*iam.AccessPolicy, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*iam.AccessPolicy, error) {
 		entities := make([]*iam.AccessPolicy, 0)
@@ -500,7 +500,7 @@ func (r *repository) ListRiskDecisions(
 
 func (r *repository) ListExternalIdentities(
 	ctx context.Context,
-	req repositories.ListIAMRequest,
+	req iamports.ListIAMRequest,
 ) ([]*iam.ExternalIdentity, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*iam.ExternalIdentity, error) {
 		entities := make([]*iam.ExternalIdentity, 0)

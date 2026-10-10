@@ -7,8 +7,7 @@ import (
 	"sync"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,10 +15,10 @@ import (
 )
 
 type fakeConnections struct {
-	repositories.AccountingConnectionRepository
+	accountingsyncports.AccountingConnectionRepository
 	mu     sync.Mutex
 	conn   *accountingsync.AccountingConnection
-	checks []repositories.SaveAccountingDriftCheckRequest
+	checks []accountingsyncports.SaveAccountingDriftCheckRequest
 }
 
 func (f *fakeConnections) current() *accountingsync.AccountingConnection {
@@ -31,7 +30,7 @@ func (f *fakeConnections) current() *accountingsync.AccountingConnection {
 
 func (f *fakeConnections) GetByID(
 	_ context.Context,
-	req repositories.GetAccountingConnectionByIDRequest,
+	req accountingsyncports.GetAccountingConnectionByIDRequest,
 ) (*accountingsync.AccountingConnection, error) {
 	if req.ID != f.conn.ID {
 		return nil, errortypes.NewNotFoundError("Accounting connection not found")
@@ -41,7 +40,7 @@ func (f *fakeConnections) GetByID(
 
 func (f *fakeConnections) SaveDriftCheck(
 	_ context.Context,
-	req *repositories.SaveAccountingDriftCheckRequest,
+	req *accountingsyncports.SaveAccountingDriftCheckRequest,
 ) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -61,38 +60,38 @@ type readCall struct {
 }
 
 type fakeReader struct {
-	services.AccountingConnector
+	accountingsyncports.AccountingConnector
 	mu       sync.Mutex
 	maxRead  int
-	docs     map[string]*services.AccountingDocumentState
+	docs     map[string]*accountingsyncports.AccountingDocumentState
 	omit     map[string]bool
 	calls    []readCall
 	failWith error
-	trial    []services.AccountingTrialBalanceRow
-	trialReq []services.ReadTrialBalanceRequest
+	trial    []accountingsyncports.AccountingTrialBalanceRow
+	trialReq []accountingsyncports.ReadTrialBalanceRequest
 }
 
-func (f *fakeReader) set(kind accountingsync.SyncObjectType, state *services.AccountingDocumentState) {
+func (f *fakeReader) set(kind accountingsync.SyncObjectType, state *accountingsyncports.AccountingDocumentState) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.docs[string(kind)+":"+state.ExternalID] = state
 }
 
-func (f *fakeReader) DocumentReadLimits() services.AccountingDocumentReadLimits {
-	return services.AccountingDocumentReadLimits{MaxPerRead: f.maxRead}
+func (f *fakeReader) DocumentReadLimits() accountingsyncports.AccountingDocumentReadLimits {
+	return accountingsyncports.AccountingDocumentReadLimits{MaxPerRead: f.maxRead}
 }
 
 func (f *fakeReader) ReadDocuments(
 	_ context.Context,
-	req *services.ReadAccountingDocumentsRequest,
-) ([]*services.AccountingDocumentState, error) {
+	req *accountingsyncports.ReadAccountingDocumentsRequest,
+) ([]*accountingsyncports.AccountingDocumentState, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.failWith != nil {
 		return nil, f.failWith
 	}
 	call := readCall{kind: req.Kind}
-	out := make([]*services.AccountingDocumentState, 0, len(req.Targets))
+	out := make([]*accountingsyncports.AccountingDocumentState, 0, len(req.Targets))
 	for _, target := range req.Targets {
 		call.ids = append(call.ids, target.ExternalID)
 		call.refs = append(call.refs, target.Refs)
@@ -104,14 +103,14 @@ func (f *fakeReader) ReadDocuments(
 			out = append(out, &copied)
 			continue
 		}
-		out = append(out, &services.AccountingDocumentState{ExternalID: target.ExternalID})
+		out = append(out, &accountingsyncports.AccountingDocumentState{ExternalID: target.ExternalID})
 	}
 	f.calls = append(f.calls, call)
 	return out, nil
 }
 
 func (f *fakeReader) DocumentURL(
-	_ services.AccountingDocumentAuth,
+	_ accountingsyncports.AccountingDocumentAuth,
 	kind accountingsync.SyncObjectType,
 	externalID string,
 ) string {
@@ -127,15 +126,15 @@ func (f *fakeReader) ClassifyDocumentError(err error) *accountingsync.SyncError 
 
 type readerConnector struct {
 	*fakeReader
-	services.AccountingDocumentWriter
+	accountingsyncports.AccountingDocumentWriter
 }
 
 func (r readerConnector) DocumentURL(
-	_ services.AccountingDocumentAuth,
+	_ accountingsyncports.AccountingDocumentAuth,
 	kind accountingsync.SyncObjectType,
 	externalID string,
 ) string {
-	return r.fakeReader.DocumentURL(services.AccountingDocumentAuth{}, kind, externalID)
+	return r.fakeReader.DocumentURL(accountingsyncports.AccountingDocumentAuth{}, kind, externalID)
 }
 
 func (r readerConnector) ClassifyDocumentError(err error) *accountingsync.SyncError {
@@ -143,7 +142,7 @@ func (r readerConnector) ClassifyDocumentError(err error) *accountingsync.SyncEr
 }
 
 type fakeConnService struct {
-	services.AccountingConnectionService
+	accountingsyncports.AccountingConnectionService
 	connections *fakeConnections
 	reader      *fakeReader
 	failSession bool
@@ -153,11 +152,11 @@ func (f *fakeConnService) Session(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	_ pulid.ID,
-) (*services.AccountingSession, error) {
+) (*accountingsyncports.AccountingSession, error) {
 	if f.failSession {
 		return nil, errors.New("the connection needs to be reconnected")
 	}
-	return &services.AccountingSession{
+	return &accountingsyncports.AccountingSession{
 		Connection:  f.connections.current(),
 		AccessToken: "token",
 		Connector:   readerConnector{fakeReader: f.reader},
@@ -165,7 +164,7 @@ func (f *fakeConnService) Session(
 }
 
 type fakeRecords struct {
-	repositories.AccountingSyncRecordRepository
+	accountingsyncports.AccountingSyncRecordRepository
 	mu   sync.Mutex
 	rows []*accountingsync.AccountingSyncRecord
 }
@@ -185,7 +184,7 @@ func (f *fakeRecords) all() []*accountingsync.AccountingSyncRecord {
 
 func (f *fakeRecords) ListByExternalIDs(
 	_ context.Context,
-	req *repositories.ListAccountingSyncRecordsByExternalIDsRequest,
+	req *accountingsyncports.ListAccountingSyncRecordsByExternalIDsRequest,
 ) ([]*accountingsync.AccountingSyncRecord, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -204,7 +203,7 @@ func (f *fakeRecords) ListByExternalIDs(
 
 func (f *fakeRecords) ListByObjects(
 	_ context.Context,
-	req *repositories.ListAccountingSyncRecordsByObjectsRequest,
+	req *accountingsyncports.ListAccountingSyncRecordsByObjectsRequest,
 ) ([]*accountingsync.AccountingSyncRecord, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -221,10 +220,10 @@ func (f *fakeRecords) ListByObjects(
 }
 
 type fakeFindings struct {
-	repositories.AccountingDriftFindingRepository
+	accountingsyncports.AccountingDriftFindingRepository
 	mu       sync.Mutex
 	rows     []*accountingsync.AccountingDriftFinding
-	lastList *repositories.ListAccountingDriftFindingsConnectionRequest
+	lastList *accountingsyncports.ListAccountingDriftFindingsConnectionRequest
 }
 
 func cloneFinding(f *accountingsync.AccountingDriftFinding) *accountingsync.AccountingDriftFinding {
@@ -288,7 +287,7 @@ func (f *fakeFindings) Update(
 
 func (f *fakeFindings) GetByID(
 	_ context.Context,
-	req repositories.GetAccountingDriftFindingRequest,
+	req accountingsyncports.GetAccountingDriftFindingQuery,
 ) (*accountingsync.AccountingDriftFinding, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -302,7 +301,7 @@ func (f *fakeFindings) GetByID(
 
 func (f *fakeFindings) ListOpen(
 	_ context.Context,
-	req *repositories.ListOpenAccountingDriftFindingsRequest,
+	req *accountingsyncports.ListOpenAccountingDriftFindingsRequest,
 ) ([]*accountingsync.AccountingDriftFinding, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -320,10 +319,10 @@ type fakeSource struct {
 	mu        sync.Mutex
 	scope     int64
 	records   []*accountingsync.AccountingSyncRecord
-	states    map[pulid.ID]*repositories.AccountingDriftState
-	balances  []*repositories.AccountingDriftBalanceLine
+	states    map[pulid.ID]*accountingsyncports.AccountingDriftState
+	balances  []*accountingsyncports.AccountingDriftBalanceLine
 	pending   []pulid.ID
-	listCalls []repositories.ListAccountingDriftRecordsRequest
+	listCalls []accountingsyncports.ListAccountingDriftRecordsRequest
 }
 
 func (f *fakeSource) ScopeStart(context.Context, pagination.TenantInfo) (int64, error) {
@@ -332,7 +331,7 @@ func (f *fakeSource) ScopeStart(context.Context, pagination.TenantInfo) (int64, 
 
 func (f *fakeSource) ListRecords(
 	_ context.Context,
-	req *repositories.ListAccountingDriftRecordsRequest,
+	req *accountingsyncports.ListAccountingDriftRecordsRequest,
 ) ([]*accountingsync.AccountingSyncRecord, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -353,11 +352,11 @@ func (f *fakeSource) ListRecords(
 
 func (f *fakeSource) ListStates(
 	_ context.Context,
-	req *repositories.ListAccountingDriftStatesRequest,
-) ([]*repositories.AccountingDriftState, error) {
+	req *accountingsyncports.ListAccountingDriftStatesRequest,
+) ([]*accountingsyncports.AccountingDriftState, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	out := []*repositories.AccountingDriftState{}
+	out := []*accountingsyncports.AccountingDriftState{}
 	for _, id := range req.ObjectIDs {
 		if state, ok := f.states[id]; ok {
 			copied := *state
@@ -369,11 +368,11 @@ func (f *fakeSource) ListStates(
 
 func (f *fakeSource) ListBalances(
 	_ context.Context,
-	req *repositories.ListAccountingDriftBalancesRequest,
-) ([]*repositories.AccountingDriftBalanceLine, error) {
+	req *accountingsyncports.ListAccountingDriftBalancesRequest,
+) ([]*accountingsyncports.AccountingDriftBalanceLine, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	out := []*repositories.AccountingDriftBalanceLine{}
+	out := []*accountingsyncports.AccountingDriftBalanceLine{}
 	customers := 0
 	var last pulid.ID
 	for _, line := range f.balances {
@@ -395,7 +394,7 @@ func (f *fakeSource) ListBalances(
 
 func (f *fakeSource) ListPendingCustomers(
 	_ context.Context,
-	req *repositories.ListAccountingDriftPendingCustomersRequest,
+	req *accountingsyncports.ListAccountingDriftPendingCustomersRequest,
 ) ([]pulid.ID, error) {
 	out := []pulid.ID{}
 	for _, id := range f.pending {

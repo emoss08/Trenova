@@ -10,8 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -28,12 +29,12 @@ type CarrierWriter interface {
 	Create(
 		ctx context.Context,
 		entity *carrier.Carrier,
-		actor *services.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*carrier.Carrier, error)
 	Update(
 		ctx context.Context,
 		entity *carrier.Carrier,
-		actor *services.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*carrier.Carrier, error)
 }
 
@@ -44,14 +45,14 @@ type NotificationSender interface {
 	) (*notification.Notification, error)
 	ExistsRecent(
 		ctx context.Context,
-		req repositories.ExistsRecentNotificationRequest,
+		req notificationports.ExistsRecentNotificationRequest,
 	) (bool, error)
 }
 
 type boundProvider struct {
 	provider   integration.Type
-	connector  services.CarrierIntelConnector
-	client     services.CarrierIntelClient
+	connector  carrierintelports.CarrierIntelConnector
+	client     carrierintelports.CarrierIntelClient
 	descriptor carrierintel.ProviderDescriptor
 	prices     carrierintel.PriceBook
 	fallback   bool
@@ -133,7 +134,7 @@ func (s *Service) bind(
 		tenant:     tenantInfo,
 	}
 
-	client, err := connector.Bind(&services.CarrierIntelBindParams{
+	client, err := connector.Bind(&carrierintelports.CarrierIntelBindParams{
 		TenantInfo: tenantInfo,
 		Config:     runtime.Config,
 		Limiter:    s.limiter,
@@ -180,8 +181,8 @@ func (s *Service) resolveFallback(
 	return bound, true
 }
 
-func (s *Service) recorderFor(bound *boundProvider) services.CarrierIntelCallRecorder {
-	return func(ctx context.Context, call services.CarrierIntelCall) {
+func (s *Service) recorderFor(bound *boundProvider) carrierintelports.CarrierIntelCallRecorder {
+	return func(ctx context.Context, call carrierintelports.CarrierIntelCall) {
 		s.recordCall(ctx, bound, call)
 	}
 }
@@ -189,7 +190,7 @@ func (s *Service) recorderFor(bound *boundProvider) services.CarrierIntelCallRec
 func (s *Service) recordCall(
 	ctx context.Context,
 	bound *boundProvider,
-	call services.CarrierIntelCall,
+	call carrierintelports.CarrierIntelCall,
 ) {
 	now := s.now()
 	price := bound.prices.Price(call.Endpoint)
@@ -211,7 +212,7 @@ func (s *Service) recordCall(
 		CreatedAt:      now,
 	}
 	if bound.tenant.UserID.IsNotNil() && purpose.IsInteractive() {
-		record.InitiatedByType = string(services.PrincipalTypeUser)
+		record.InitiatedByType = string(permissionports.PrincipalTypeUser)
 		record.InitiatedByID = bound.tenant.UserID
 	}
 
@@ -246,7 +247,7 @@ func (s *Service) recordCall(
 	s.breaker.record(key, failed, time.Unix(now, 0))
 }
 
-func isBillable(price carrierintel.EndpointPrice, call services.CarrierIntelCall) (bool, int) {
+func isBillable(price carrierintel.EndpointPrice, call carrierintelports.CarrierIntelCall) (bool, int) {
 	if price.Model == carrierintel.BillingModelFree || !price.UnitCost.IsPositive() {
 		return false, 0
 	}
@@ -264,25 +265,25 @@ func isBillable(price carrierintel.EndpointPrice, call services.CarrierIntelCall
 	}
 }
 
-func usageOutcome(call services.CarrierIntelCall) carrierintel.UsageOutcome {
+func usageOutcome(call carrierintelports.CarrierIntelCall) carrierintel.UsageOutcome {
 	if call.Err == nil {
 		if call.Found {
 			return carrierintel.UsageOutcomeSuccess
 		}
 		return carrierintel.UsageOutcomeNotFound
 	}
-	kind, ok := services.CarrierIntelErrorKindOf(call.Err)
+	kind, ok := carrierintelports.CarrierIntelErrorKindOf(call.Err)
 	var limited *restx.RateLimitedError
 	switch {
 	case errors.As(call.Err, &limited):
 		return carrierintel.UsageOutcomeDenied
 	case !ok:
 		return carrierintel.UsageOutcomeTransport
-	case kind == services.CarrierIntelErrorNotFound:
+	case kind == carrierintelports.CarrierIntelErrorNotFound:
 		return carrierintel.UsageOutcomeNotFound
-	case kind == services.CarrierIntelErrorRateLimited:
+	case kind == carrierintelports.CarrierIntelErrorRateLimited:
 		return carrierintel.UsageOutcomeRateLimited
-	case kind == services.CarrierIntelErrorUnavailable:
+	case kind == carrierintelports.CarrierIntelErrorUnavailable:
 		return carrierintel.UsageOutcomeServerError
 	default:
 		return carrierintel.UsageOutcomeClientError
@@ -294,11 +295,11 @@ func isOutageError(err error) bool {
 	if errors.As(err, &limited) {
 		return false
 	}
-	kind, ok := services.CarrierIntelErrorKindOf(err)
+	kind, ok := carrierintelports.CarrierIntelErrorKindOf(err)
 	if !ok {
 		return !errors.Is(err, context.Canceled)
 	}
-	return kind == services.CarrierIntelErrorUnavailable
+	return kind == carrierintelports.CarrierIntelErrorUnavailable
 }
 
 func (s *Service) providerAvailable(bound *boundProvider) bool {
@@ -329,8 +330,8 @@ func retryAfter(err error) (time.Duration, bool) {
 	if errors.As(err, &limited) {
 		return limited.RetryAfter, true
 	}
-	var providerErr *services.CarrierIntelProviderError
-	if errors.As(err, &providerErr) && providerErr.Kind == services.CarrierIntelErrorRateLimited {
+	var providerErr *carrierintelports.CarrierIntelProviderError
+	if errors.As(err, &providerErr) && providerErr.Kind == carrierintelports.CarrierIntelErrorRateLimited {
 		return providerErr.RetryAfter, true
 	}
 	return 0, false
@@ -350,22 +351,22 @@ func toBusinessError(provider integration.Type, err error) error {
 			"{0} rate limit reached. Try again in {1} seconds", provider.String(), seconds,
 		).WithInternal(err)
 	}
-	kind, _ := services.CarrierIntelErrorKindOf(err)
+	kind, _ := carrierintelports.CarrierIntelErrorKindOf(err)
 	switch kind {
-	case services.CarrierIntelErrorUnauthorized:
+	case carrierintelports.CarrierIntelErrorUnauthorized:
 		return errortypes.NewBusinessError(
 			"{0} rejected the API key. Update the key in Integrations", provider.String(),
 		).WithInternal(err)
-	case services.CarrierIntelErrorPaymentRequired:
+	case carrierintelports.CarrierIntelErrorPaymentRequired:
 		return errortypes.NewBusinessError(
 			"{0} declined the request because the account's payment failed. Update billing with {0}",
 			provider.String(),
 		).WithInternal(err)
-	case services.CarrierIntelErrorInvalidRequest:
+	case carrierintelports.CarrierIntelErrorInvalidRequest:
 		return errortypes.NewBusinessError(
 			"{0} could not process the request", provider.String(),
 		).WithInternal(err)
-	case services.CarrierIntelErrorUnsupported:
+	case carrierintelports.CarrierIntelErrorUnsupported:
 		return errortypes.NewBusinessError(
 			"{0} does not support this capability", provider.String(),
 		).WithInternal(err)

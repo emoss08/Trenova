@@ -10,8 +10,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/orgstructureservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -27,8 +27,8 @@ var (
 type Permissions interface {
 	Check(
 		ctx context.Context,
-		req *services.PermissionCheckRequest,
-	) (*services.PermissionCheckResult, error)
+		req *permissionports.PermissionCheckRequest,
+	) (*permissionports.PermissionCheckResult, error)
 }
 
 type Teams interface {
@@ -46,7 +46,7 @@ type Guard struct {
 }
 
 type Request struct {
-	Actor      *services.RequestActor
+	Actor      *permissionports.RequestActor
 	TenantInfo pagination.TenantInfo
 	Resource   permission.Resource
 	Operation  permission.Operation

@@ -9,8 +9,8 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/insight"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/insightservice/detector"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -19,17 +19,17 @@ import (
 )
 
 type stubCompletion struct {
-	result   *services.StructuredCompletionResult
+	result   *agentports.StructuredCompletionResult
 	err      error
 	calls    int
-	lastReq  *services.StructuredCompletionRequest
-	requests []*services.StructuredCompletionRequest
+	lastReq  *agentports.StructuredCompletionRequest
+	requests []*agentports.StructuredCompletionRequest
 }
 
 func (c *stubCompletion) CompleteStructured(
 	_ context.Context,
-	req *services.StructuredCompletionRequest,
-) (*services.StructuredCompletionResult, error) {
+	req *agentports.StructuredCompletionRequest,
+) (*agentports.StructuredCompletionResult, error) {
 	c.calls++
 	c.lastReq = req
 	c.requests = append(c.requests, req)
@@ -39,20 +39,20 @@ func (c *stubCompletion) CompleteStructured(
 
 func (c *stubCompletion) CompleteChat(
 	context.Context,
-	*services.ChatCompletionRequest,
-) (*services.ChatCompletionResult, error) {
+	*agentports.ChatCompletionRequest,
+) (*agentports.ChatCompletionResult, error) {
 	return nil, errors.New("not used")
 }
 
 func (c *stubCompletion) StreamChat(
 	context.Context,
-	*services.ChatCompletionRequest,
-	services.ChatStreamSink,
-) (*services.ChatCompletionResult, error) {
+	*agentports.ChatCompletionRequest,
+	agentports.ChatStreamSink,
+) (*agentports.ChatCompletionResult, error) {
 	return nil, errors.New("not used")
 }
 
-func newNarrator(completion services.CompletionService) *Service {
+func newNarrator(completion agentports.CompletionService) *Service {
 	return &Service{l: zap.NewNop(), completion: completion}
 }
 
@@ -92,7 +92,7 @@ func completionReturning(insights ...map[string]string) *stubCompletion {
 		panic(err)
 	}
 
-	return &stubCompletion{result: &services.StructuredCompletionResult{
+	return &stubCompletion{result: &agentports.StructuredCompletionResult{
 		Text:            encoded,
 		ModelIdentifier: "test-model",
 		ProviderID:      pulid.MustNew("aip_"),
@@ -186,7 +186,7 @@ func TestNarrate_FallsBackWhenNoProviderIsConfigured(t *testing.T) {
 	t.Parallel()
 
 	finding := testFinding()
-	completion := &stubCompletion{err: services.ErrNoProviderConfigured}
+	completion := &stubCompletion{err: agentports.ErrNoProviderConfigured}
 
 	result := newNarrator(completion).Narrate(t.Context(), &NarrateRequest{
 		Findings: []detector.Finding{finding},
@@ -215,7 +215,7 @@ func TestNarrate_FallsBackWhenTheModelReturnsUnparseableOutput(t *testing.T) {
 	t.Parallel()
 
 	finding := testFinding()
-	completion := &stubCompletion{result: &services.StructuredCompletionResult{
+	completion := &stubCompletion{result: &agentports.StructuredCompletionResult{
 		Text:            "I'm afraid I can't help with that.",
 		ModelIdentifier: "test-model",
 	}}
@@ -392,19 +392,19 @@ func TestNarrate_KeepsTheDetectorHeadlineWhenTheModelReturnsNone(t *testing.T) {
 // to poll.
 func (c *stubCompletion) SubmitBackground(
 	ctx context.Context,
-	req *services.StructuredCompletionRequest,
-) (*services.BackgroundSubmission, error) {
+	req *agentports.StructuredCompletionRequest,
+) (*agentports.BackgroundSubmission, error) {
 	result, err := c.CompleteStructured(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	return &services.BackgroundSubmission{Result: result}, nil
+	return &agentports.BackgroundSubmission{Result: result}, nil
 }
 
 func (c *stubCompletion) PollBackground(
 	context.Context,
-	*services.BackgroundPollRequest,
-) (*services.BackgroundOutcome, error) {
+	*agentports.BackgroundPollRequest,
+) (*agentports.BackgroundOutcome, error) {
 	return nil, errors.New("this completion runs inline and issues no handle to poll")
 }

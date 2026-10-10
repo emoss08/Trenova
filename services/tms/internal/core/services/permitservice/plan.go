@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/permit"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -32,11 +32,11 @@ func (s *service) PlanCreatePermit(
 func (s *service) PlanUpdatePermit(
 	ctx context.Context,
 	entity *permit.Permit,
-) (*services.RecordChange[permit.Permit], error) {
+) (*kernelports.RecordChange[permit.Permit], error) {
 	if err := validatePermit(entity); err != nil {
 		return nil, err
 	}
-	existing, err := s.permitRepo.GetByID(ctx, &repositories.GetPermitByIDRequest{
+	existing, err := s.permitRepo.GetByID(ctx, &permitports.GetPermitByIDRequest{
 		PermitID: entity.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -53,5 +53,5 @@ func (s *service) PlanUpdatePermit(
 			"This permit belongs to another shipment",
 		)
 	}
-	return &services.RecordChange[permit.Permit]{Before: existing, After: entity}, nil
+	return &kernelports.RecordChange[permit.Permit]{Before: existing, After: entity}, nil
 }

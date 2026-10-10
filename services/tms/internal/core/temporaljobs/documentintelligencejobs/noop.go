@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
-	services "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentparsingruleports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/sdk/client"
@@ -14,43 +16,43 @@ type noopAIDocumentService struct{}
 
 func (noopAIDocumentService) RouteDocument(
 	context.Context,
-	*services.AIRouteRequest,
-) (*services.AIRouteResult, error) {
+	*documentaiextractionports.AIRouteRequest,
+) (*documentaiextractionports.AIRouteResult, error) {
 	return nil, nil //nolint:nilnil // intentional noop
 }
 
 func (noopAIDocumentService) ExtractRateConfirmation(
 	context.Context,
-	*services.AIExtractRequest,
-) (*services.AIExtractResult, error) {
+	*documentaiextractionports.AIExtractRequest,
+) (*documentaiextractionports.AIExtractResult, error) {
 	return nil, nil //nolint:nilnil // intentional noop
 }
 
 func (noopAIDocumentService) SubmitRateConfirmationBackgroundExtraction(
 	context.Context,
-	*services.AIExtractRequest,
-) (*services.AIBackgroundExtractSubmission, error) {
+	*documentaiextractionports.AIExtractRequest,
+) (*documentaiextractionports.AIBackgroundExtractSubmission, error) {
 	return nil, nil //nolint:nilnil // intentional noop
 }
 
 func (noopAIDocumentService) PollRateConfirmationBackgroundExtraction(
 	context.Context,
-	*services.AIBackgroundExtractPollRequest,
-) (*services.AIBackgroundExtractPollResult, error) {
+	*documentaiextractionports.AIBackgroundExtractPollRequest,
+) (*documentaiextractionports.AIBackgroundExtractPollResult, error) {
 	return nil, nil //nolint:nilnil // intentional noop
 }
 
 func (noopAIDocumentService) ExtractRateConfirmationForEvaluation(
 	context.Context,
-	*services.AIEvaluationExtractRequest,
-) (*services.AIEvaluationExtractResult, error) {
+	*documentaiextractionports.AIEvaluationExtractRequest,
+) (*documentaiextractionports.AIEvaluationExtractResult, error) {
 	return nil, nil //nolint:nilnil // intentional noop
 }
 
 func (noopAIDocumentService) ExtractRateConfirmationForShadow(
 	context.Context,
-	*services.AIShadowExtractRequest,
-) (*services.AIEvaluationExtractResult, error) {
+	*documentaiextractionports.AIShadowExtractRequest,
+) (*documentaiextractionports.AIEvaluationExtractResult, error) {
 	return nil, nil //nolint:nilnil // intentional noop
 }
 
@@ -80,7 +82,7 @@ func (noopWorkflowStarter) StartWorkflow(
 	any,
 	...any,
 ) (client.WorkflowRun, error) {
-	return nil, services.ErrWorkflowStarterDisabled
+	return nil, kernelports.ErrWorkflowStarterDisabled
 }
 
 func (noopWorkflowStarter) CancelWorkflow(context.Context, string, string) error {
@@ -99,15 +101,15 @@ type noopDocumentParsingRuleRuntime struct{}
 
 func (noopDocumentParsingRuleRuntime) ApplyPublished(
 	context.Context,
-	*services.DocumentParsingRuntimeInput,
-	*services.DocumentParsingAnalysis,
-) (*services.DocumentParsingAnalysis, error) {
+	*documentparsingruleports.DocumentParsingRuntimeInput,
+	*documentparsingruleports.DocumentParsingAnalysis,
+) (*documentparsingruleports.DocumentParsingAnalysis, error) {
 	return nil, nil //nolint:nilnil // intentional noop
 }
 
 func (noopDocumentParsingRuleRuntime) SimulateVersion(
 	context.Context,
-	*services.DocumentParsingSimulationRequest,
-) (*services.DocumentParsingSimulationResult, error) {
+	*documentparsingruleports.DocumentParsingSimulationRequest,
+) (*documentparsingruleports.DocumentParsingSimulationResult, error) {
 	return nil, nil //nolint:nilnil // intentional noop
 }

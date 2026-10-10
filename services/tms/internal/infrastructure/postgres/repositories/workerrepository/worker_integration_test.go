@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -68,7 +68,7 @@ func TestCreateAndGetByID(t *testing.T) {
 	assert.True(t, created.ID.IsNotNil())
 	assert.Equal(t, "John", created.FirstName)
 
-	fetched, err := repo.GetByID(ctx, repositories.GetWorkerByIDRequest{
+	fetched, err := repo.GetByID(ctx, workerports.GetWorkerByIDRequest{
 		ID: created.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: data.Organization.ID,
@@ -92,7 +92,7 @@ func TestGetByIDNotFoundForWrongTenant(t *testing.T) {
 	created, err := repo.Create(ctx, newTestWorker(data))
 	require.NoError(t, err)
 
-	_, err = repo.GetByID(ctx, repositories.GetWorkerByIDRequest{
+	_, err = repo.GetByID(ctx, workerports.GetWorkerByIDRequest{
 		ID: created.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
@@ -116,13 +116,13 @@ func TestUpdateReturnsVersionMismatchForStaleEntity(t *testing.T) {
 		BuID:  data.BusinessUnit.ID,
 	}
 
-	firstCopy, err := repo.GetByID(ctx, repositories.GetWorkerByIDRequest{
+	firstCopy, err := repo.GetByID(ctx, workerports.GetWorkerByIDRequest{
 		ID:         created.ID,
 		TenantInfo: tenantInfo,
 	})
 	require.NoError(t, err)
 
-	secondCopy, err := repo.GetByID(ctx, repositories.GetWorkerByIDRequest{
+	secondCopy, err := repo.GetByID(ctx, workerports.GetWorkerByIDRequest{
 		ID:         created.ID,
 		TenantInfo: tenantInfo,
 	})
@@ -156,7 +156,7 @@ func TestListFiltersWorkersByTenant(t *testing.T) {
 	_, err = repo.Create(ctx, w2)
 	require.NoError(t, err)
 
-	result, err := repo.List(ctx, &repositories.ListWorkersRequest{
+	result, err := repo.List(ctx, &workerports.ListWorkersRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: data.Organization.ID,

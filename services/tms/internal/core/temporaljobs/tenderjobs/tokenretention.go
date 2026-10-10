@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/temporal"
@@ -84,9 +84,9 @@ func (a *Activities) PurgeDeadTokensActivity(
 func purgeTokensInBatches(
 	ctx context.Context,
 	deadBefore int64,
-	purge func(context.Context, repositories.PurgeDeadTokensRequest) (int64, error),
+	purge func(context.Context, tenderports.PurgeDeadTokensRequest) (int64, error),
 ) (int64, error) {
-	req := repositories.PurgeDeadTokensRequest{
+	req := tenderports.PurgeDeadTokensRequest{
 		DeadBefore: deadBefore,
 		Limit:      tokenPurgeBatchSize,
 	}

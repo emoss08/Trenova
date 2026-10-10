@@ -6,8 +6,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -18,30 +20,30 @@ import (
 const maxRecomputeAttempts = 4
 
 var (
-	_ services.ShipmentEventObserver  = (*Observer)(nil)
-	_ services.OrderDerivationService = (*Observer)(nil)
+	_ shipmenteventports.ShipmentEventObserver = (*Observer)(nil)
+	_ orderports.OrderDerivationService        = (*Observer)(nil)
 )
 
 type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	ShipmentRepo repositories.ShipmentRepository
-	OrderRepo    repositories.OrderRepository
-	Realtime     services.RealtimeService
+	ShipmentRepo shipmentports.ShipmentRepository
+	OrderRepo    orderports.OrderRepository
+	Realtime     agentports.RealtimeService
 }
 
 type Observer struct {
 	l            *zap.Logger
 	shipmentRepo shipmentReader
-	orderRepo    repositories.OrderRepository
-	realtime     services.RealtimeService
+	orderRepo    orderports.OrderRepository
+	realtime     agentports.RealtimeService
 }
 
 type shipmentReader interface {
 	GetByID(
 		ctx context.Context,
-		req *repositories.GetShipmentByIDRequest,
+		req *shipmentports.GetShipmentByIDRequest,
 	) (*shipment.Shipment, error)
 }
 
@@ -78,7 +80,7 @@ func (o *Observer) RecomputeForShipment(
 	tenantInfo pagination.TenantInfo,
 	shipmentID pulid.ID,
 ) error {
-	shp, err := o.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	shp, err := o.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         shipmentID,
 		TenantInfo: tenantInfo,
 	})
@@ -111,7 +113,7 @@ func (o *Observer) RecomputeOrder(
 
 	var lastErr error
 	for attempt := 0; attempt < maxRecomputeAttempts; attempt++ {
-		ord, err := o.orderRepo.GetByID(ctx, repositories.GetOrderByIDRequest{
+		ord, err := o.orderRepo.GetByID(ctx, orderports.GetOrderByIDRequest{
 			ID:         orderID,
 			TenantInfo: tenantInfo,
 		})
@@ -134,7 +136,7 @@ func (o *Observer) RecomputeOrder(
 			return nil
 		}
 
-		updated, err := o.orderRepo.UpdateStatus(ctx, &repositories.UpdateOrderStatusRequest{
+		updated, err := o.orderRepo.UpdateStatus(ctx, &orderports.UpdateOrderStatusRequest{
 			TenantInfo: tenantInfo,
 			OrderID:    orderID,
 			Status:     next,

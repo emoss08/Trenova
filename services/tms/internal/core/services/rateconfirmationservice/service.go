@@ -13,10 +13,18 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -33,35 +41,35 @@ type Params struct {
 	fx.In
 
 	Logger                *zap.Logger
-	DB                    ports.DBConnection
-	Repo                  repositories.RateConfirmationRepository
-	CarrierAssignmentRepo repositories.CarrierAssignmentRepository
-	CarrierRepo           repositories.CarrierRepository
-	ShipmentRepo          repositories.ShipmentRepository
-	OrgRepo               repositories.OrganizationRepository
-	DocumentTypeRepo      repositories.DocumentTypeRepository
-	Templates             services.DocumentTemplateResolver
-	EmailService          services.EmailService
-	UploadService         services.DocumentUploadService
-	Inliner               services.AssetInliner
-	AuditService          services.AuditService
+	DB                    kernelports.DBConnection
+	Repo                  rateconfirmationports.RateConfirmationRepository
+	CarrierAssignmentRepo shipmentports.CarrierAssignmentRepository
+	CarrierRepo           carrierports.CarrierRepository
+	ShipmentRepo          shipmentports.ShipmentRepository
+	OrgRepo               tenantports.OrganizationRepository
+	DocumentTypeRepo      documenttypeports.DocumentTypeRepository
+	Templates             documenttemplateports.DocumentTemplateResolver
+	EmailService          emailports.EmailService
+	UploadService         documentuploadports.DocumentUploadService
+	Inliner               documenttemplateports.AssetInliner
+	AuditService          auditports.AuditService
 	Config                *config.Config
 }
 
 type Service struct {
 	l                     *zap.Logger
-	db                    ports.DBConnection
-	repo                  repositories.RateConfirmationRepository
-	carrierAssignmentRepo repositories.CarrierAssignmentRepository
-	carrierRepo           repositories.CarrierRepository
-	shipmentRepo          repositories.ShipmentRepository
-	orgRepo               repositories.OrganizationRepository
-	documentTypeRepo      repositories.DocumentTypeRepository
-	templates             services.DocumentTemplateResolver
-	emailService          services.EmailService
-	uploadService         services.DocumentUploadService
-	inliner               services.AssetInliner
-	auditService          services.AuditService
+	db                    kernelports.DBConnection
+	repo                  rateconfirmationports.RateConfirmationRepository
+	carrierAssignmentRepo shipmentports.CarrierAssignmentRepository
+	carrierRepo           carrierports.CarrierRepository
+	shipmentRepo          shipmentports.ShipmentRepository
+	orgRepo               tenantports.OrganizationRepository
+	documentTypeRepo      documenttypeports.DocumentTypeRepository
+	templates             documenttemplateports.DocumentTemplateResolver
+	emailService          emailports.EmailService
+	uploadService         documentuploadports.DocumentUploadService
+	inliner               documenttemplateports.AssetInliner
+	auditService          auditports.AuditService
 	cfg                   *config.Config
 }
 
@@ -86,14 +94,14 @@ func New(p Params) *Service {
 
 func (s *Service) Get(
 	ctx context.Context,
-	req *repositories.GetRateConfirmationByIDRequest,
+	req *rateconfirmationports.GetRateConfirmationByIDRequest,
 ) (*rateconfirmation.RateConfirmation, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) ListByMove(
 	ctx context.Context,
-	req *repositories.ListRateConfirmationsByMoveRequest,
+	req *rateconfirmationports.ListRateConfirmationsByMoveRequest,
 ) ([]*rateconfirmation.RateConfirmation, error) {
 	return s.repo.ListByMoveID(ctx, req)
 }
@@ -112,7 +120,7 @@ func (s *Service) Generate(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	moveID pulid.ID,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*rateconfirmation.RateConfirmation, error) {
 	created, err := s.generate(ctx, tenantInfo, moveID, actor, nil)
 	if err != nil {
@@ -134,7 +142,7 @@ func (s *Service) generate(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	moveID pulid.ID,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	opts *generateOptions,
 ) (*rateconfirmation.RateConfirmation, error) {
 	plan, err := s.planGenerate(ctx, tenantInfo, moveID)
@@ -148,8 +156,8 @@ func (s *Service) generate(
 	// concurrent generates cannot both claim the same revision; the loser hits
 	// the unique index and surfaces as a retryable business error.
 	var created *rateconfirmation.RateConfirmation
-	var rendered *services.RenderedDocument
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	var rendered *documenttemplateports.RenderedDocument
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		maxRevision, txErr := s.repo.MaxRevisionForAssignment(txCtx, tenantInfo, assignment.ID)
 		if txErr != nil {
 			return txErr
@@ -166,7 +174,7 @@ func (s *Service) generate(
 		})
 		s.applyLogo(txCtx, tenantInfo, templateContext)
 
-		rendered, txErr = s.templates.RenderDocument(txCtx, &services.RenderDocumentRequest{
+		rendered, txErr = s.templates.RenderDocument(txCtx, &documenttemplateports.RenderDocumentRequest{
 			TenantInfo:  tenantInfo,
 			Kind:        documenttemplate.KindRateConfirmationPDF,
 			Data:        templateContext,
@@ -251,7 +259,7 @@ func (s *Service) Send(
 		}
 	}
 
-	message, err := s.templates.RenderMessage(ctx, &services.RenderMessageRequest{
+	message, err := s.templates.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
 		TenantInfo:  tenantInfo,
 		Kind:        documenttemplate.KindRateConfirmationEmail,
 		Data:        templateContext,
@@ -261,7 +269,7 @@ func (s *Service) Send(
 		return nil, err
 	}
 
-	rendered, err := s.templates.RenderDocument(ctx, &services.RenderDocumentRequest{
+	rendered, err := s.templates.RenderDocument(ctx, &documenttemplateports.RenderDocumentRequest{
 		TenantInfo:  tenantInfo,
 		Kind:        documenttemplate.KindRateConfirmationPDF,
 		Data:        templateContext,
@@ -272,14 +280,14 @@ func (s *Service) Send(
 		return nil, err
 	}
 
-	if _, err = s.emailService.Send(ctx, &services.SendEmailRequest{
+	if _, err = s.emailService.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo: tenantInfo,
 		Purpose:    email.PurposeNotifications,
 		To:         recipients,
 		Subject:    message.Subject,
 		Text:       message.Text,
 		HTML:       message.HTML,
-		Attachments: []services.EmailAttachment{
+		Attachments: []emailports.EmailAttachment{
 			{
 				FileName:    fileName(entity),
 				ContentType: "application/pdf",
@@ -296,8 +304,8 @@ func (s *Service) Send(
 	// transition (e.g. a void) is kept rather than clobbered — and never turned
 	// into an error that would invite a duplicate send on retry.
 	var updated *rateconfirmation.RateConfirmation
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		fresh, txErr := s.repo.GetByID(txCtx, &repositories.GetRateConfirmationByIDRequest{
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		fresh, txErr := s.repo.GetByID(txCtx, &rateconfirmationports.GetRateConfirmationByIDRequest{
 			TenantInfo:         tenantInfo,
 			RateConfirmationID: rateConfirmationID,
 		})
@@ -382,7 +390,7 @@ func (s *Service) markConfirmed(
 	entity.Confirm(p)
 
 	var updated *rateconfirmation.RateConfirmation
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		var txErr error
 		updated, txErr = s.repo.Update(txCtx, entity)
 		if txErr != nil {
@@ -419,7 +427,7 @@ func (s *Service) Void(
 	entity.Void(timeutils.NowUnix(), reason)
 
 	var updated *rateconfirmation.RateConfirmation
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		var txErr error
 		updated, txErr = s.repo.Update(txCtx, entity)
 		if txErr != nil {
@@ -504,7 +512,7 @@ func (s *Service) confirmAssignment(
 ) error {
 	assignment, err := s.carrierAssignmentRepo.GetByID(
 		ctx,
-		&repositories.GetCarrierAssignmentByIDRequest{
+		&shipmentports.GetCarrierAssignmentByIDRequest{
 			TenantInfo:          tenantInfo,
 			CarrierAssignmentID: assignmentID,
 		},
@@ -529,7 +537,7 @@ func (s *Service) revertAssignmentConfirmation(
 ) error {
 	assignment, err := s.carrierAssignmentRepo.GetByID(
 		ctx,
-		&repositories.GetCarrierAssignmentByIDRequest{
+		&shipmentports.GetCarrierAssignmentByIDRequest{
 			TenantInfo:          tenantInfo,
 			CarrierAssignmentID: assignmentID,
 		},
@@ -550,10 +558,10 @@ func (s *Service) recipients(
 	tenantInfo pagination.TenantInfo,
 	entity *rateconfirmation.RateConfirmation,
 ) ([]string, error) {
-	carrierEntity, err := s.carrierRepo.GetByID(ctx, repositories.GetCarrierByIDRequest{
+	carrierEntity, err := s.carrierRepo.GetByID(ctx, carrierports.GetCarrierByIDRequest{
 		ID:         entity.CarrierID,
 		TenantInfo: tenantInfo,
-		CarrierFilterOptions: repositories.CarrierFilterOptions{
+		CarrierFilterOptions: carrierports.CarrierFilterOptions{
 			IncludeContacts: true,
 		},
 	})
@@ -589,10 +597,10 @@ func (s *Service) loadShipmentAndMove(
 		return nil, nil, err
 	}
 
-	shipmentEntity, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	shipmentEntity, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         shipmentID,
 		TenantInfo: tenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -625,7 +633,7 @@ func (s *Service) shipmentIDForMove(
 	if assignment != nil {
 		full, gErr := s.carrierAssignmentRepo.GetByID(
 			ctx,
-			&repositories.GetCarrierAssignmentByIDRequest{
+			&shipmentports.GetCarrierAssignmentByIDRequest{
 				TenantInfo:          tenantInfo,
 				CarrierAssignmentID: assignment.ID,
 			},
@@ -651,7 +659,7 @@ func (s *Service) companyName(
 		return ""
 	}
 
-	org, err := s.orgRepo.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+	org, err := s.orgRepo.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: tenantInfo,
 	})
 	if err != nil || org == nil {
@@ -669,14 +677,14 @@ func (s *Service) applyLogo(
 		return
 	}
 
-	org, err := s.orgRepo.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+	org, err := s.orgRepo.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: tenantInfo,
 	})
 	if err != nil || org == nil {
 		return
 	}
 
-	dataURI, err := services.ResolveLogoDataURI(ctx, s.inliner, org.LogoURL)
+	dataURI, err := documenttemplateports.ResolveLogoDataURI(ctx, s.inliner, org.LogoURL)
 	if err != nil {
 		return
 	}
@@ -691,8 +699,8 @@ func (s *Service) fileDocument(
 	tenantInfo pagination.TenantInfo,
 	entity *rateconfirmation.RateConfirmation,
 	shipmentEntity *shipment.Shipment,
-	rendered *services.RenderedDocument,
-	actor *services.RequestActor,
+	rendered *documenttemplateports.RenderedDocument,
+	actor *permissionports.RequestActor,
 ) {
 	log := s.l.With(
 		zap.String("operation", "fileDocument"),
@@ -704,7 +712,7 @@ func (s *Service) fileDocument(
 		return
 	}
 
-	docType, err := s.documentTypeRepo.GetByCode(ctx, repositories.GetDocumentTypeByCodeRequest{
+	docType, err := s.documentTypeRepo.GetByCode(ctx, documenttypeports.GetDocumentTypeByCodeRequest{
 		Code:       documenttype.CodeRateConfirmation,
 		TenantInfo: tenantInfo,
 	})
@@ -713,9 +721,9 @@ func (s *Service) fileDocument(
 		return
 	}
 
-	requestActor := services.RequestActor{
-		PrincipalType:  services.PrincipalTypeSystem,
-		PrincipalID:    services.SystemPrincipalID,
+	requestActor := permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeSystem,
+		PrincipalID:    permissionports.SystemPrincipalID,
 		UserID:         tenantInfo.UserID,
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
@@ -724,7 +732,7 @@ func (s *Service) fileDocument(
 		requestActor = *actor
 	}
 
-	session, err := s.uploadService.CreateSession(ctx, &services.CreateSessionRequest{
+	session, err := s.uploadService.CreateSession(ctx, &documentuploadports.CreateSessionRequest{
 		TenantInfo:     tenantInfo,
 		Actor:          requestActor,
 		ResourceID:     shipmentEntity.ID.String(),
@@ -741,7 +749,7 @@ func (s *Service) fileDocument(
 		return
 	}
 
-	if _, err = s.uploadService.UploadPart(ctx, &services.UploadPartRequest{
+	if _, err = s.uploadService.UploadPart(ctx, &documentuploadports.UploadPartRequest{
 		TenantInfo: tenantInfo,
 		SessionID:  session.ID,
 		PartNumber: 1,
@@ -752,7 +760,7 @@ func (s *Service) fileDocument(
 		return
 	}
 
-	completed, err := s.uploadService.Complete(ctx, &services.CompletionRequest{
+	completed, err := s.uploadService.Complete(ctx, &documentuploadports.CompletionRequest{
 		TenantInfo: tenantInfo,
 		Actor:      requestActor,
 		SessionID:  session.ID,
@@ -774,7 +782,7 @@ func (s *Service) fileDocument(
 	provenance := *rendered
 	provenance.PDF = nil
 	provenance.HTML = ""
-	if _, err = s.templates.RecordGeneratedDocument(ctx, &services.RecordGeneratedDocumentRequest{
+	if _, err = s.templates.RecordGeneratedDocument(ctx, &documenttemplateports.RecordGeneratedDocumentRequest{
 		TenantInfo:    tenantInfo,
 		Kind:          documenttemplate.KindRateConfirmationPDF,
 		Rendered:      &provenance,

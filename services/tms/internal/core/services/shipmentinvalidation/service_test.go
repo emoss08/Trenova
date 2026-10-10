@@ -5,7 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -14,12 +15,12 @@ import (
 )
 
 type recordingRealtime struct {
-	requests []*services.PublishResourceInvalidationRequest
+	requests []*agentports.PublishResourceInvalidationRequest
 }
 
 func (r *recordingRealtime) PublishResourceInvalidation(
 	_ context.Context,
-	req *services.PublishResourceInvalidationRequest,
+	req *agentports.PublishResourceInvalidationRequest,
 ) error {
 	r.requests = append(r.requests, req)
 	return nil
@@ -51,7 +52,7 @@ func TestInvalidateShipmentsBumpsAndPublishes(t *testing.T) {
 
 	svc.InvalidateShipments(
 		t.Context(),
-		services.ShipmentInvalidationByUser(tenant, recordID, "updated"),
+		shipmentports.ShipmentInvalidationByUser(tenant, recordID, "updated"),
 	)
 
 	require.Len(t, realtime.requests, 1)
@@ -67,7 +68,7 @@ func TestInvalidateShipmentsPublishesWhenTheEpochCannotMove(t *testing.T) {
 	realtime := &recordingRealtime{}
 	svc := NewWithDependencies(realtime, &recordingEpochs{err: errors.New("down")}, zap.NewNop())
 
-	svc.InvalidateShipments(t.Context(), &services.ShipmentInvalidation{
+	svc.InvalidateShipments(t.Context(), &shipmentports.ShipmentInvalidation{
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
 		Action:         "bulk_created",
@@ -75,6 +76,6 @@ func TestInvalidateShipmentsPublishesWhenTheEpochCannotMove(t *testing.T) {
 	assert.Len(t, realtime.requests, 1)
 
 	svc.InvalidateShipments(t.Context(), nil)
-	svc.InvalidateShipments(t.Context(), &services.ShipmentInvalidation{Action: "x"})
+	svc.InvalidateShipments(t.Context(), &shipmentports.ShipmentInvalidation{Action: "x"})
 	assert.Len(t, realtime.requests, 1)
 }

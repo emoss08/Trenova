@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -185,12 +185,12 @@ func (c *checker) leavingWrites() {
 
 func (c *checker) decide(
 	record *DispatchRecord,
-	policy *serviceports.ToolPolicy,
+	policy *agentports.ToolPolicy,
 	taint *agent.RunTaint,
 ) agenttoolpolicy.Decision {
 	return agenttoolpolicy.Decide(c.ctx, agenttoolpolicy.DecideInput{
 		Policy: *policy,
-		Params: serviceports.ToolExecuteParams{
+		Params: agentports.ToolExecuteParams{
 			OrganizationID: c.outcome.Actor.OrganizationID,
 			BusinessUnitID: c.outcome.Actor.BusinessUnitID,
 			Actor:          c.outcome.Actor,
@@ -294,7 +294,7 @@ func (c *checker) arguments() {
 			continue
 		}
 		for key := range action.Arguments {
-			if key == serviceports.SelfScopeOwnerParam {
+			if key == agentports.SelfScopeOwnerParam {
 				continue
 			}
 			if _, ok = declared[key]; !ok {
@@ -370,7 +370,7 @@ func (c *checker) definitions() {
 	}
 }
 
-func (c *checker) policy(name string) (serviceports.ToolPolicy, bool) {
+func (c *checker) policy(name string) (agentports.ToolPolicy, bool) {
 	if tool, ok := c.outcome.Kit.Actions.Get(name); ok {
 		return tool.Policy(), true
 	}
@@ -378,7 +378,7 @@ func (c *checker) policy(name string) (serviceports.ToolPolicy, bool) {
 		return tool.Policy(), true
 	}
 
-	return serviceports.ToolPolicy{}, false
+	return agentports.ToolPolicy{}, false
 }
 
 func (o *Outcome) dispatched(name string) bool {

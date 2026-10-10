@@ -1,13 +1,14 @@
 package invoiceadjustmentservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceadjustmentportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -27,7 +28,7 @@ func (*fakeAdjustmentDB) DBForContext(context.Context) bun.IDB { return nil }
 
 func (f *fakeAdjustmentDB) WithTx(
 	ctx context.Context,
-	_ ports.TxOptions,
+	_ kernelports.TxOptions,
 	fn func(context.Context, bun.Tx) error,
 ) error {
 	f.transactions++
@@ -41,13 +42,13 @@ func TestSaveDraftRefusesARequestWithoutADraftOrAnInvoice(t *testing.T) {
 	t.Parallel()
 
 	svc := &Service{db: &fakeAdjustmentDB{}}
-	_, err := svc.SaveDraft(t.Context(), &serviceports.SaveInvoiceAdjustmentDraftRequest{
+	_, err := svc.SaveDraft(t.Context(), &invoiceadjustmentports.SaveInvoiceAdjustmentDraftRequest{
 		Kind: invoiceadjustment.KindCreditOnly,
 	}, testutil.NewSessionActor(pulid.MustNew("usr_"), pulid.MustNew("org_"), pulid.MustNew("bu_")))
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "Name the invoice")
 
-	_, err = svc.PreviewSaveDraft(t.Context(), &serviceports.SaveInvoiceAdjustmentDraftRequest{
+	_, err = svc.PreviewSaveDraft(t.Context(), &invoiceadjustmentports.SaveInvoiceAdjustmentDraftRequest{
 		InvoiceID: pulid.MustNew("inv_"),
 		Kind:      invoiceadjustment.Kind("Refund"),
 	}, nil)
@@ -63,15 +64,15 @@ func TestSaveDraftOfAnExistingDraftOnlyUpdatesItInOneTransaction(t *testing.T) {
 		ID:     pulid.MustNew("iadj_"),
 		Status: invoiceadjustment.StatusPendingApproval,
 	}
-	repo := mocks.NewMockInvoiceAdjustmentRepository(t)
+	repo := invoiceadjustmentportsmock.NewMockInvoiceAdjustmentRepository(t)
 	repo.EXPECT().
-		GetByID(mock.Anything, repositories.GetInvoiceAdjustmentRequest{ID: submitted.ID, TenantInfo: tenantInfo}).
+		GetByID(mock.Anything, invoiceadjustmentports.GetInvoiceAdjustmentRequest{ID: submitted.ID, TenantInfo: tenantInfo}).
 		Return(submitted, nil).
 		Once()
 	db := &fakeAdjustmentDB{}
 	svc := &Service{db: db, repo: repo}
 
-	_, err := svc.SaveDraft(t.Context(), &serviceports.SaveInvoiceAdjustmentDraftRequest{
+	_, err := svc.SaveDraft(t.Context(), &invoiceadjustmentports.SaveInvoiceAdjustmentDraftRequest{
 		AdjustmentID: submitted.ID,
 		Kind:         invoiceadjustment.KindCreditOnly,
 		TenantInfo:   tenantInfo,
@@ -89,14 +90,14 @@ func TestPreviewSaveDraftRefusesAnAdjustmentThatIsNoLongerADraft(t *testing.T) {
 		ID:     pulid.MustNew("iadj_"),
 		Status: invoiceadjustment.StatusExecuted,
 	}
-	repo := mocks.NewMockInvoiceAdjustmentRepository(t)
+	repo := invoiceadjustmentportsmock.NewMockInvoiceAdjustmentRepository(t)
 	repo.EXPECT().
-		GetByID(mock.Anything, repositories.GetInvoiceAdjustmentRequest{ID: executed.ID, TenantInfo: tenantInfo}).
+		GetByID(mock.Anything, invoiceadjustmentports.GetInvoiceAdjustmentRequest{ID: executed.ID, TenantInfo: tenantInfo}).
 		Return(executed, nil).
 		Once()
 	svc := &Service{db: &fakeAdjustmentDB{}, repo: repo}
 
-	_, err := svc.PreviewSaveDraft(t.Context(), &serviceports.SaveInvoiceAdjustmentDraftRequest{
+	_, err := svc.PreviewSaveDraft(t.Context(), &invoiceadjustmentports.SaveInvoiceAdjustmentDraftRequest{
 		AdjustmentID: executed.ID,
 		Kind:         invoiceadjustment.KindCreditOnly,
 		TenantInfo:   tenantInfo,
@@ -113,16 +114,16 @@ func TestPreviewDecisionRefusesAnAdjustmentNotPendingApproval(t *testing.T) {
 		ID:     pulid.MustNew("iadj_"),
 		Status: invoiceadjustment.StatusRejected,
 	}
-	repo := mocks.NewMockInvoiceAdjustmentRepository(t)
+	repo := invoiceadjustmentportsmock.NewMockInvoiceAdjustmentRepository(t)
 	repo.EXPECT().
-		GetByID(mock.Anything, repositories.GetInvoiceAdjustmentRequest{ID: rejected.ID, TenantInfo: tenantInfo}).
+		GetByID(mock.Anything, invoiceadjustmentports.GetInvoiceAdjustmentRequest{ID: rejected.ID, TenantInfo: tenantInfo}).
 		Return(rejected, nil).
 		Once()
-	documents := mocks.NewMockDocumentRepository(t)
+	documents := documentportsmock.NewMockDocumentRepository(t)
 	documents.EXPECT().GetByResourceID(mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	svc := &Service{repo: repo, documentRepo: documents}
 
-	_, err := svc.PreviewDecision(t.Context(), &serviceports.InvoiceAdjustmentDecisionRequest{
+	_, err := svc.PreviewDecision(t.Context(), &invoiceadjustmentports.InvoiceAdjustmentDecisionRequest{
 		AdjustmentID: rejected.ID,
 		Approve:      true,
 		TenantInfo:   tenantInfo,

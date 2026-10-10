@@ -2,7 +2,6 @@ package agenttoolservice
 
 import (
 	"context"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -10,10 +9,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/billingqueueservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -27,8 +29,8 @@ import (
 type fakeQueue struct {
 	item    *billingqueue.BillingQueueItem
 	guard   *writeGuard
-	updated *serviceports.UpdateBillingQueueStatusRequest
-	actor   *serviceports.RequestActor
+	updated *billingqueueports.UpdateBillingQueueStatusRequest
+	actor   *permissionports.RequestActor
 	unknown map[pulid.ID]bool
 }
 
@@ -43,7 +45,7 @@ func (f *fakeQueue) CheckBiller(_ context.Context, _ pagination.TenantInfo, bill
 
 func (f *fakeQueue) GetByID(
 	_ context.Context,
-	req *repositories.GetBillingQueueItemByIDRequest,
+	req *billingqueueports.GetBillingQueueItemByIDRequest,
 ) (*billingqueue.BillingQueueItem, error) {
 	if req.ItemID != f.item.ID {
 		return nil, errortypes.NewNotFoundError("Billing queue item not found")
@@ -55,8 +57,8 @@ func (f *fakeQueue) GetByID(
 
 func (f *fakeQueue) UpdateStatus(
 	_ context.Context,
-	req *serviceports.UpdateBillingQueueStatusRequest,
-	actor *serviceports.RequestActor,
+	req *billingqueueports.UpdateBillingQueueStatusRequest,
+	actor *permissionports.RequestActor,
 ) (*billingqueue.BillingQueueItem, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -73,8 +75,8 @@ func (f *fakeQueue) UpdateStatus(
 
 func (f *fakeQueue) AssignBiller(
 	_ context.Context,
-	req *serviceports.AssignBillerRequest,
-	_ *serviceports.RequestActor,
+	req *billingqueueports.AssignBillerRequest,
+	_ *permissionports.RequestActor,
 ) (*billingqueue.BillingQueueItem, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -89,14 +91,14 @@ func (f *fakeQueue) AssignBiller(
 }
 
 type fakeApprovalInvoices struct {
-	result *serviceports.CreateInvoiceFromBillingQueueResult
+	result *invoiceports.CreateInvoiceFromBillingQueueResult
 	err    error
 }
 
 func (f *fakeApprovalInvoices) PreviewApprovalInvoice(
 	context.Context,
-	*serviceports.CreateInvoiceFromBillingQueueRequest,
-) (*serviceports.CreateInvoiceFromBillingQueueResult, error) {
+	*invoiceports.CreateInvoiceFromBillingQueueRequest,
+) (*invoiceports.CreateInvoiceFromBillingQueueResult, error) {
 	return f.result, f.err
 }
 
@@ -114,7 +116,7 @@ func reviewedItem(status billingqueue.Status) *billingqueue.BillingQueueItem {
 	}
 }
 
-func agentParamsFor(params map[string]any) serviceports.ToolExecuteParams {
+func agentParamsFor(params map[string]any) agentports.ToolExecuteParams {
 	out := executeParams(params)
 	out.Actor = agentActorFor(out.OrganizationID, out.BusinessUnitID)
 
@@ -185,7 +187,7 @@ func TestBillingDecisions_RefuseWhatTheQueueWouldRefuse(t *testing.T) {
 	t.Parallel()
 
 	cases := map[string]struct {
-		build  func(billingQueueDecider) serviceports.AgentTool
+		build  func(billingQueueDecider) agentports.AgentTool
 		status billingqueue.Status
 		params map[string]any
 	}{
@@ -226,7 +228,7 @@ func TestBillingDecisions_RefuseWhatTheQueueWouldRefuse(t *testing.T) {
 			queue := &fakeQueue{item: reviewedItem(tc.status), guard: &writeGuard{}}
 			params := tc.params
 			params[paramBillingQueueItemID] = queue.item.ID.String()
-			tool := tc.build(queue).(serviceports.ToolValidator)
+			tool := tc.build(queue).(agentports.ToolValidator)
 
 			require.Error(t, tool.Validate(t.Context(), agentParamsFor(params)))
 		})
@@ -264,7 +266,7 @@ func TestApproveBillingQueueItem_PreviewShowsTheDraftInvoiceAndAutoPost(t *testi
 	t.Parallel()
 
 	queue, tool := approveFixture(t, &fakeApprovalInvoices{
-		result: &serviceports.CreateInvoiceFromBillingQueueResult{
+		result: &invoiceports.CreateInvoiceFromBillingQueueResult{
 			Invoice:  draftInvoice(),
 			AutoPost: true,
 		},
@@ -343,7 +345,7 @@ func TestApproveBillingQueueItem_RunsOnlyFromAPersonsApproval(t *testing.T) {
 	made := draftInvoice()
 	made.ID = pulid.MustNew("inv_")
 	queue, tool := approveFixture(t, &fakeApprovalInvoices{
-		result: &serviceports.CreateInvoiceFromBillingQueueResult{Invoice: made},
+		result: &invoiceports.CreateInvoiceFromBillingQueueResult{Invoice: made},
 	})
 
 	unattended := agentParamsFor(map[string]any{paramBillingQueueItemID: queue.item.ID.String()})
@@ -426,7 +428,7 @@ func TestBillingDecisions_DeclareWhoMayMakeThem(t *testing.T) {
 	t.Parallel()
 
 	queue := &fakeQueue{item: reviewedItem(billingqueue.StatusInReview)}
-	personal := []serviceports.AgentTool{
+	personal := []agentports.AgentTool{
 		newApproveBillingQueueItemTool(queue, &fakeApprovalInvoices{}),
 		newCancelBillingQueueItemTool(queue),
 	}
@@ -437,7 +439,7 @@ func TestBillingDecisions_DeclareWhoMayMakeThem(t *testing.T) {
 		assert.False(t, policy.Reversible, tool.Name())
 	}
 
-	for _, tool := range []serviceports.AgentTool{
+	for _, tool := range []agentports.AgentTool{
 		newHoldBillingQueueItemTool(queue),
 		newMoveToExceptionTool(queue),
 		newSendBackToOpsTool(queue),

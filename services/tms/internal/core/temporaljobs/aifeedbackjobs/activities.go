@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -14,14 +14,14 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	Maintenance services.AIFeedbackMaintenance
-	Tenants     repositories.TenantSyncRepository
+	Maintenance aifeedbackports.AIFeedbackMaintenance
+	Tenants     tenantports.TenantSyncRepository
 	Logger      *zap.Logger
 }
 
 type Activities struct {
-	maintenance services.AIFeedbackMaintenance
-	tenants     repositories.TenantSyncRepository
+	maintenance aifeedbackports.AIFeedbackMaintenance
+	tenants     tenantports.TenantSyncRepository
 	l           *zap.Logger
 }
 
@@ -51,7 +51,7 @@ func (a *Activities) MaintainOrganizationAIFeedbackActivity(
 ) (*OrganizationAIFeedbackResult, error) {
 	tenant := input.TenantInfo()
 
-	purged, err := a.maintenance.PurgeExpired(ctx, services.PurgeExpiredAIFeedbackRequest{
+	purged, err := a.maintenance.PurgeExpired(ctx, aifeedbackports.PurgeExpiredAIFeedbackRequest{
 		TenantInfo: tenant,
 		Now:        input.Now,
 	})
@@ -59,7 +59,7 @@ func (a *Activities) MaintainOrganizationAIFeedbackActivity(
 		return nil, fmt.Errorf("purge expired ai feedback: %w", err)
 	}
 
-	suggested, err := a.maintenance.SuggestMemories(ctx, services.SuggestAgentMemoriesRequest{
+	suggested, err := a.maintenance.SuggestMemories(ctx, aifeedbackports.SuggestAgentMemoriesRequest{
 		TenantInfo: tenant,
 		Now:        input.Now,
 	})

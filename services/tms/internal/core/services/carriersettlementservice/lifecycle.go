@@ -4,14 +4,13 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -33,7 +32,7 @@ func (s *Service) getForUpdate(
 	tenantInfo pagination.TenantInfo,
 	settlementID pulid.ID,
 ) (*carriersettlement.CarrierSettlement, error) {
-	return s.settlementRepo.GetByID(ctx, repositories.GetCarrierSettlementByIDRequest{
+	return s.settlementRepo.GetByID(ctx, carriersettlementports.GetCarrierSettlementByIDRequest{
 		ID:           settlementID,
 		TenantInfo:   tenantInfo,
 		IncludeLines: true,
@@ -44,7 +43,7 @@ func (s *Service) SubmitForApproval(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	settlementID pulid.ID,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*carriersettlement.CarrierSettlement, error) {
 	if err := requireActor(actor, "Carrier settlement submission"); err != nil {
 		return nil, err
@@ -71,7 +70,7 @@ func (s *Service) Approve(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	settlementID pulid.ID,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*carriersettlement.CarrierSettlement, error) {
 	return s.approveInternal(ctx, tenantInfo, settlementID, actor, false)
 }
@@ -80,7 +79,7 @@ func (s *Service) approveInternal(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	settlementID pulid.ID,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 	fromDraft bool,
 ) (*carriersettlement.CarrierSettlement, error) {
 	if err := requireActor(actor, "Carrier settlement approval"); err != nil {
@@ -89,7 +88,7 @@ func (s *Service) approveInternal(
 
 	var updated *carriersettlement.CarrierSettlement
 	var previous carriersettlement.CarrierSettlement
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		entity, txErr := s.getForUpdate(txCtx, tenantInfo, settlementID)
 		if txErr != nil {
 			return txErr
@@ -142,7 +141,7 @@ func (s *Service) Reject(
 	tenantInfo pagination.TenantInfo,
 	settlementID pulid.ID,
 	reason string,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*carriersettlement.CarrierSettlement, error) {
 	if err := requireActor(actor, "Carrier settlement rejection"); err != nil {
 		return nil, err
@@ -178,8 +177,8 @@ func (s *Service) Reject(
 // the carrier ledger so AP credited at posting time actually clears.
 func (s *Service) MarkPaid(
 	ctx context.Context,
-	req *serviceports.MarkSettlementPaidRequest,
-	actor *serviceports.RequestActor,
+	req *carriersettlementports.MarkSettlementPaidRequest,
+	actor *permissionports.RequestActor,
 ) (*carriersettlement.CarrierSettlement, error) {
 	if err := requireActor(actor, "Carrier settlement payment"); err != nil {
 		return nil, err
@@ -195,7 +194,7 @@ func (s *Service) MarkPaid(
 
 	var updated *carriersettlement.CarrierSettlement
 	var previous carriersettlement.CarrierSettlement
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		entity, txErr := s.getForUpdate(txCtx, req.TenantInfo, req.SettlementID)
 		if txErr != nil {
 			return txErr
@@ -269,7 +268,7 @@ func (s *Service) Void(
 	tenantInfo pagination.TenantInfo,
 	settlementID pulid.ID,
 	reason string,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*carriersettlement.CarrierSettlement, error) {
 	if err := requireActor(actor, "Carrier settlement void"); err != nil {
 		return nil, err
@@ -284,7 +283,7 @@ func (s *Service) Void(
 
 	var updated *carriersettlement.CarrierSettlement
 	var previous carriersettlement.CarrierSettlement
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		entity, txErr := s.getForUpdate(txCtx, tenantInfo, settlementID)
 		if txErr != nil {
 			return txErr
@@ -334,7 +333,7 @@ func (s *Service) Recalculate(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	settlementID pulid.ID,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*carriersettlement.CarrierSettlement, error) {
 	if err := requireActor(actor, "Carrier settlement recalculation"); err != nil {
 		return nil, err
@@ -342,7 +341,7 @@ func (s *Service) Recalculate(
 
 	var updated *carriersettlement.CarrierSettlement
 	var previous carriersettlement.CarrierSettlement
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		entity, txErr := s.getForUpdate(txCtx, tenantInfo, settlementID)
 		if txErr != nil {
 			return txErr
@@ -412,7 +411,7 @@ func (s *Service) AddAdjustmentLine(
 	tenantInfo pagination.TenantInfo,
 	settlementID pulid.ID,
 	input *AdjustmentLineInput,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*carriersettlement.CarrierSettlement, error) {
 	if err := requireActor(actor, "Carrier settlement adjustment"); err != nil {
 		return nil, err
@@ -432,7 +431,7 @@ func (s *Service) AddAdjustmentLine(
 	}
 
 	var updated *carriersettlement.CarrierSettlement
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		if txErr := s.settlementRepo.ReplaceLines(txCtx, entity); txErr != nil {
 			return txErr
 		}
@@ -452,7 +451,7 @@ func (s *Service) RemoveAdjustmentLine(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	settlementID, lineID pulid.ID,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*carriersettlement.CarrierSettlement, error) {
 	if err := requireActor(actor, "Carrier settlement adjustment removal"); err != nil {
 		return nil, err
@@ -467,7 +466,7 @@ func (s *Service) RemoveAdjustmentLine(
 	}
 
 	var updated *carriersettlement.CarrierSettlement
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		if txErr := s.settlementRepo.ReplaceLines(txCtx, entity); txErr != nil {
 			return txErr
 		}

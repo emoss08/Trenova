@@ -8,9 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -29,7 +28,7 @@ func TestDrainClaimsCustomersThenSalesDocumentsThenPayments(t *testing.T) {
 
 	h := newHarness(t)
 	customerID, _ := h.mappedCustomer("Acme")
-	h.mappings.parties[customerID] = &services.AccountingPartyDraft{DisplayName: "Acme"}
+	h.mappings.parties[customerID] = &accountingsyncports.AccountingPartyDraft{DisplayName: "Acme"}
 	h.confirm(freightTarget(), "qb-item-freight")
 	h.mapPaymentAccounts(customerpayment.MethodCheck)
 	inv := h.postedInvoice(customerID, invoiceSpec{number: "INV-1"})
@@ -39,7 +38,7 @@ func TestDrainClaimsCustomersThenSalesDocumentsThenPayments(t *testing.T) {
 	})
 	h.enqueuePayment(t, payment, accountingsync.SyncOperationCreate)
 	h.enqueueInvoice(t, inv)
-	require.NoError(t, h.enqueuer.Enqueue(t.Context(), services.CustomerSyncRequest(h.tenant, customerID, "Acme", 2)))
+	require.NoError(t, h.enqueuer.Enqueue(t.Context(), accountingsyncports.CustomerSyncRequest(h.tenant, customerID, "Acme", 2)))
 
 	result := h.drain(t)
 
@@ -60,7 +59,7 @@ func TestDrainMarksASuccessfulPushSyncedAndRecordsTheAttempt(t *testing.T) {
 	record := h.readyInvoice(t)
 	heartbeats := 0
 
-	result, err := h.svc.Drain(t.Context(), &services.DrainAccountingSyncRequest{
+	result, err := h.svc.Drain(t.Context(), &accountingsyncports.DrainAccountingSyncRequest{
 		TenantInfo:   h.tenant,
 		ConnectionID: h.conn.ID,
 		Heartbeat:    func() { heartbeats++ },
@@ -231,7 +230,7 @@ func TestBlockedPushRefreshesTheWatchtowerAttention(t *testing.T) {
 
 	h := newHarness(t)
 	record := h.readyInvoice(t)
-	h.records.attention = []repositories.AccountingSyncAttentionGroup{{
+	h.records.attention = []accountingsyncports.AccountingSyncAttentionGroup{{
 		Status:         accountingsync.SyncStatusBlocked,
 		ErrorCategory:  accountingsync.SyncErrorValidation,
 		Resolution:     "Correct the document",
@@ -338,7 +337,7 @@ func TestDrainCountsALostLeaseAndCarriesOn(t *testing.T) {
 	h.confirm(freightTarget(), "qb-item-freight")
 	lost := h.enqueueInvoice(t, h.postedInvoice(customerID, invoiceSpec{number: "INV-1"}))
 	kept := h.enqueueInvoice(t, h.postedInvoice(customerID, invoiceSpec{number: "INV-2"}))
-	h.records.finishErr[lost.ID] = repositories.ErrAccountingSyncLeaseLost
+	h.records.finishErr[lost.ID] = accountingsyncports.ErrAccountingSyncLeaseLost
 
 	result := h.drain(t)
 
@@ -356,7 +355,7 @@ func TestDrainStopsOnAnUnexpectedFinishError(t *testing.T) {
 	record := h.readyInvoice(t)
 	h.records.finishErr[record.ID] = errors.New("database unavailable")
 
-	_, err := h.svc.Drain(t.Context(), &services.DrainAccountingSyncRequest{
+	_, err := h.svc.Drain(t.Context(), &accountingsyncports.DrainAccountingSyncRequest{
 		TenantInfo:   h.tenant,
 		ConnectionID: h.conn.ID,
 	})

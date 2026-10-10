@@ -7,9 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -45,7 +45,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.AgentEvalCaseRepository {
+func New(p Params) agentqualityports.AgentEvalCaseRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.agentevalcase-repository"),
@@ -127,7 +127,7 @@ func (r *repository) Update(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetAgentEvalCaseByIDRequest,
+	req agentqualityports.GetAgentEvalCaseByIDRequest,
 ) (*agentquality.EvalCase, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentquality.EvalCase, error) {
 		entity := new(agentquality.EvalCase)
@@ -148,7 +148,7 @@ func (r *repository) GetByID(
 
 func (r *repository) GetByContent(
 	ctx context.Context,
-	req repositories.GetAgentEvalCaseByContentRequest,
+	req agentqualityports.GetAgentEvalCaseByContentRequest,
 ) (*agentquality.EvalCase, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentquality.EvalCase, error) {
 		cols := buncolgen.EvalCaseColumns
@@ -171,7 +171,7 @@ func (r *repository) GetByContent(
 
 func (r *repository) GetByProposal(
 	ctx context.Context,
-	req repositories.GetAgentEvalCaseByProposalRequest,
+	req agentqualityports.GetAgentEvalCaseByProposalRequest,
 ) (*agentquality.EvalCase, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentquality.EvalCase, error) {
 		entity := new(agentquality.EvalCase)
@@ -192,7 +192,7 @@ func (r *repository) GetByProposal(
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListAgentEvalCaseConnectionRequest,
+	req *agentqualityports.ListAgentEvalCaseConnectionRequest,
 ) (*pagination.CursorListResult[*agentquality.EvalCase], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*agentquality.EvalCase], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -265,7 +265,7 @@ func (r *repository) ListConnection(
 
 func applyScope(
 	sq *bun.SelectQuery,
-	req *repositories.ListAgentEvalCaseConnectionRequest,
+	req *agentqualityports.ListAgentEvalCaseConnectionRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.EvalCaseColumns
 	if req.AgentDefinitionID.IsNotNil() {
@@ -283,7 +283,7 @@ func applyScope(
 
 func (r *repository) ListByAgent(
 	ctx context.Context,
-	req repositories.ListAgentEvalCasesRequest,
+	req agentqualityports.ListAgentEvalCasesRequest,
 ) ([]*agentquality.EvalCase, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentquality.EvalCase, error) {
 		cols := buncolgen.EvalCaseColumns
@@ -314,10 +314,10 @@ func (r *repository) ListByAgent(
 
 func (r *repository) ListCaptureCandidates(
 	ctx context.Context,
-	req repositories.ListEvalCaseCaptureCandidatesRequest,
-) ([]repositories.EvalCaseCaptureCandidate, error) {
+	req agentqualityports.ListEvalCaseCaptureCandidatesRequest,
+) ([]agentqualityports.EvalCaseCaptureCandidate, error) {
 	ctx = dbscope.WithSystem(ctx, "list evaluation case candidates across every organization")
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.EvalCaseCaptureCandidate, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentqualityports.EvalCaseCaptureCandidate, error) {
 		decision := buncolgen.AgentDecisionColumns
 		proposal := buncolgen.AgentProposalColumns
 		run := buncolgen.AgentRunColumns
@@ -332,7 +332,7 @@ func (r *repository) ListCaptureCandidates(
 			Where(evalCase.BusinessUnitID.EqColumn(decision.BusinessUnitID)).
 			Where(evalCase.SourceProposalID.EqColumn(decision.ProposalID))
 
-		rows := make([]repositories.EvalCaseCaptureCandidate, 0, limit)
+		rows := make([]agentqualityports.EvalCaseCaptureCandidate, 0, limit)
 		if err := db.NewSelect().
 			Model((*agent.AgentDecision)(nil)).
 			ColumnExpr(decision.OrganizationID.As("organization_id")).
@@ -371,7 +371,7 @@ func (r *repository) ListCaptureCandidates(
 
 func (r *repository) PurgeExpired(
 	ctx context.Context,
-	req repositories.PurgeExpiredEvalCasesRequest,
+	req agentqualityports.PurgeExpiredEvalCasesRequest,
 ) (int, error) {
 	if req.AllTenants {
 		ctx = dbscope.WithSystem(ctx, "purge expired evaluation cases across every organization")
@@ -410,7 +410,7 @@ func (r *repository) PurgeExpired(
 
 func (r *repository) PurgeOrphaned(
 	ctx context.Context,
-	req repositories.PurgeOrphanedEvalCasesRequest,
+	req agentqualityports.PurgeOrphanedEvalCasesRequest,
 ) (int, error) {
 	ctx = dbscope.WithSystem(ctx, "purge orphaned evaluation cases across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
@@ -481,7 +481,7 @@ func pgArray(values []string) any {
 
 func (r *repository) ListAgentsWithActiveCases(
 	ctx context.Context,
-	req repositories.ListAgentsWithActiveEvalCasesRequest,
+	req agentqualityports.ListAgentsWithActiveEvalCasesRequest,
 ) ([]pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
 		cols := buncolgen.EvalCaseColumns
@@ -508,7 +508,7 @@ func (r *repository) ListAgentsWithActiveCases(
 
 func (r *repository) ListSamplingCases(
 	ctx context.Context,
-	req repositories.ListEvalCaseSamplingRequest,
+	req agentqualityports.ListEvalCaseSamplingRequest,
 ) ([]agentquality.SamplingCase, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentquality.SamplingCase, error) {
 		cols := buncolgen.EvalCaseColumns

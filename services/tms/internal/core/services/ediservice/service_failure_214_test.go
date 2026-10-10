@@ -1,14 +1,16 @@
 package ediservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"database/sql"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -36,10 +38,10 @@ func TestShipmentStatusCapabilityEnabledDefaultsTrueForMissingConnection(t *test
 	t.Parallel()
 
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	connectionRepo := mocks.NewMockEDIConnectionRepository(t)
+	connectionRepo := ediportsmock.NewMockEDIConnectionRepository(t)
 	connectionID := pulid.MustNew("edic_")
 	connectionRepo.EXPECT().
-		GetConnectionByID(mock.Anything, repositories.GetEDIConnectionByIDRequest{
+		GetConnectionByID(mock.Anything, ediports.GetEDIConnectionByIDRequest{
 			ID:         connectionID,
 			TenantInfo: tenantInfo,
 		}).
@@ -63,7 +65,7 @@ func TestResolveServiceFailure214CandidateSkippedReasons(t *testing.T) {
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	customerID := pulid.MustNew("cus_")
 	partnerID := pulid.MustNew("edip_")
-	trigger := services.ServiceFailureEDITriggerReviewed
+	trigger := servicefailureports.ServiceFailureEDITriggerReviewed
 
 	tests := []struct {
 		name       string
@@ -71,19 +73,19 @@ func TestResolveServiceFailure214CandidateSkippedReasons(t *testing.T) {
 		partners   []*edi.EDIPartner
 		profiles   []*edi.EDIPartnerDocumentProfile
 		wantReason string
-		wantAction services.ServiceFailureEDIAction
+		wantAction servicefailureports.ServiceFailureEDIAction
 	}{
 		{
 			name:       "no customer",
 			source:     &shipment.Shipment{},
 			wantReason: "shipment customer is not linked to an EDI partner",
-			wantAction: services.ServiceFailureEDIActionSkipped,
+			wantAction: ediports.ServiceFailureEDIActionSkipped,
 		},
 		{
 			name:       "no partner",
 			source:     &shipment.Shipment{CustomerID: customerID},
 			wantReason: "no outbound EDI partner for shipment customer",
-			wantAction: services.ServiceFailureEDIActionSkipped,
+			wantAction: ediports.ServiceFailureEDIActionSkipped,
 		},
 		{
 			name:   "inactive or outbound disabled partner",
@@ -94,7 +96,7 @@ func TestResolveServiceFailure214CandidateSkippedReasons(t *testing.T) {
 				EnabledForOutbound: true,
 			}},
 			wantReason: "EDI partner is inactive or outbound disabled",
-			wantAction: services.ServiceFailureEDIActionSkipped,
+			wantAction: ediports.ServiceFailureEDIActionSkipped,
 		},
 		{
 			name:   "inactive profile",
@@ -109,7 +111,7 @@ func TestResolveServiceFailure214CandidateSkippedReasons(t *testing.T) {
 				Status: edi.DocumentStatusInactive,
 			}},
 			wantReason: "service failure 214 partner document profile inactive",
-			wantAction: services.ServiceFailureEDIActionSkipped,
+			wantAction: ediports.ServiceFailureEDIActionSkipped,
 		},
 		{
 			name:   "trigger disabled",
@@ -127,7 +129,7 @@ func TestResolveServiceFailure214CandidateSkippedReasons(t *testing.T) {
 				},
 			}},
 			wantReason: "service failure 214 trigger disabled",
-			wantAction: services.ServiceFailureEDIActionSkipped,
+			wantAction: ediports.ServiceFailureEDIActionSkipped,
 		},
 		{
 			name:   "ambiguous mandatory profiles block",
@@ -142,14 +144,14 @@ func TestResolveServiceFailure214CandidateSkippedReasons(t *testing.T) {
 				activeServiceFailure214Profile(true),
 			},
 			wantReason: "ambiguous service failure 214 partner document profile",
-			wantAction: services.ServiceFailureEDIActionBlocked,
+			wantAction: ediports.ServiceFailureEDIActionBlocked,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			partnerRepo := mocks.NewMockEDIPartnerRepository(t)
-			documentProfileRepo := mocks.NewMockEDIPartnerDocumentProfileRepository(t)
+			partnerRepo := ediportsmock.NewMockEDIPartnerRepository(t)
+			documentProfileRepo := ediportsmock.NewMockEDIPartnerDocumentProfileRepository(t)
 			svc := &Service{
 				partnerRepo:         partnerRepo,
 				documentProfileRepo: documentProfileRepo,
@@ -178,7 +180,7 @@ func TestResolveServiceFailure214CandidateSkippedReasons(t *testing.T) {
 
 			candidate, result, err := svc.resolveServiceFailure214Candidate(
 				t.Context(),
-				&services.ServiceFailure214LifecycleRequest{
+				&ediports.ServiceFailure214LifecycleRequest{
 					TenantInfo: tenantInfo,
 					Trigger:    trigger,
 				},
@@ -210,10 +212,10 @@ func TestPreviewServiceFailure214ForLifecycleReadyForGeneration(t *testing.T) {
 		LateMinutes: 1,
 		ReasonCode:  &servicefailure.ReasonCode{DefaultReasonCode: "NS"},
 	}
-	messageRepo := mocks.NewMockEDIMessageRepository(t)
-	shipmentSvc := mocks.NewMockShipmentService(t)
-	partnerRepo := mocks.NewMockEDIPartnerRepository(t)
-	documentProfileRepo := mocks.NewMockEDIPartnerDocumentProfileRepository(t)
+	messageRepo := ediportsmock.NewMockEDIMessageRepository(t)
+	shipmentSvc := shipmentportsmock.NewMockShipmentService(t)
+	partnerRepo := ediportsmock.NewMockEDIPartnerRepository(t)
+	documentProfileRepo := ediportsmock.NewMockEDIPartnerDocumentProfileRepository(t)
 	svc := &Service{
 		l:                   zap.NewNop(),
 		messageRepo:         messageRepo,
@@ -254,17 +256,17 @@ func TestPreviewServiceFailure214ForLifecycleReadyForGeneration(t *testing.T) {
 
 	result, err := svc.PreviewServiceFailure214ForLifecycle(
 		t.Context(),
-		&services.ServiceFailure214LifecycleRequest{
+		&ediports.ServiceFailure214LifecycleRequest{
 			TenantInfo:       tenantInfo,
 			ServiceFailureID: failure.ID,
 			ShipmentID:       shipmentID,
-			Trigger:          services.ServiceFailureEDITriggerReviewed,
+			Trigger:          servicefailureports.ServiceFailureEDITriggerReviewed,
 			ServiceFailure:   failure,
 		},
 	)
 
 	require.NoError(t, err)
-	require.Equal(t, services.ServiceFailureEDIActionSkipped, result.Action)
+	require.Equal(t, ediports.ServiceFailureEDIActionSkipped, result.Action)
 	require.Equal(t, "ready_for_generation", result.SkippedReason)
 }
 

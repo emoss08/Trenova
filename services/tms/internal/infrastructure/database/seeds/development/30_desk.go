@@ -12,9 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/insight"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -262,7 +262,7 @@ func (s *DeskSeed) insertItems(
 	tx bun.Tx,
 	refs *deskSeedRefs,
 ) error {
-	inputs := make([]services.WatchtowerItemInput, 0, 24)
+	inputs := make([]watchtowerports.WatchtowerItemInput, 0, 24)
 	for _, message := range refs.messages {
 		inputs = append(inputs, watchtowersources.DescribeInboundMessage(message))
 	}

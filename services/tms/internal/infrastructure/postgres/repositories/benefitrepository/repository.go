@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -36,7 +36,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.BenefitRepository {
+func New(p Params) driverpayports.BenefitRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.benefit-repository"),
@@ -52,7 +52,7 @@ func limitOr(requested, fallback int) int {
 
 func (r *repository) ListPlans(
 	ctx context.Context,
-	req *repositories.ListBenefitPlansRequest,
+	req *driverpayports.ListBenefitPlansRequest,
 ) ([]*driverpay.BenefitPlan, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driverpay.BenefitPlan, error) {
 		cols := buncolgen.BenefitPlanColumns
@@ -91,7 +91,7 @@ func (r *repository) ListPlans(
 
 func (r *repository) PlanSelectOptions(
 	ctx context.Context,
-	req *repositories.BenefitPlanSelectOptionsRequest,
+	req *driverpayports.BenefitPlanSelectOptionsRequest,
 ) (*pagination.ListResult[*driverpay.BenefitPlan], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*driverpay.BenefitPlan], error) {
 		cols := buncolgen.BenefitPlanColumns
@@ -139,7 +139,7 @@ func (r *repository) PlanSelectOptions(
 
 func (r *repository) GetPlanByID(
 	ctx context.Context,
-	req *repositories.GetBenefitPlanByIDRequest,
+	req *driverpayports.GetBenefitPlanByIDRequest,
 ) (*driverpay.BenefitPlan, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driverpay.BenefitPlan, error) {
 		entity := new(driverpay.BenefitPlan)
@@ -237,7 +237,7 @@ func (r *repository) CountPlanEnrollments(
 
 func (r *repository) ListEnrollments(
 	ctx context.Context,
-	req *repositories.ListBenefitEnrollmentsRequest,
+	req *driverpayports.ListBenefitEnrollmentsRequest,
 ) ([]*driverpay.WorkerBenefitEnrollment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driverpay.WorkerBenefitEnrollment, error) {
 		cols := buncolgen.WorkerBenefitEnrollmentColumns
@@ -286,7 +286,7 @@ func (r *repository) ListEnrollments(
 
 func (r *repository) GetEnrollmentByID(
 	ctx context.Context,
-	req *repositories.GetBenefitEnrollmentByIDRequest,
+	req *driverpayports.GetBenefitEnrollmentByIDRequest,
 ) (*driverpay.WorkerBenefitEnrollment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driverpay.WorkerBenefitEnrollment, error) {
 		entity := new(driverpay.WorkerBenefitEnrollment)
@@ -365,9 +365,9 @@ func (r *repository) BenefitCosts(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	planYear int16,
-) ([]repositories.BenefitCostRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.BenefitCostRow, error) {
-		rows := make([]repositories.BenefitCostRow, 0, 8)
+) ([]driverpayports.BenefitCostRow, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]driverpayports.BenefitCostRow, error) {
+		rows := make([]driverpayports.BenefitCostRow, 0, 8)
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().

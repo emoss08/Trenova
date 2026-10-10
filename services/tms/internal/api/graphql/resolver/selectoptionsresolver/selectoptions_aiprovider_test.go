@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,16 +20,16 @@ import (
 )
 
 type fakeAIProviderSelectService struct {
-	services.AIProviderService
+	agentports.AIProviderService
 	byID       map[pulid.ID]*aiprovider.Provider
-	selectReq  *repositories.AIProviderSelectOptionsRequest
+	selectReq  *agentports.AIProviderSelectOptionsRequest
 	selectList []*aiprovider.Provider
-	lookups    []repositories.GetAIProviderByIDRequest
+	lookups    []agentports.GetAIProviderByIDRequest
 }
 
 func (f *fakeAIProviderSelectService) SelectOptions(
 	_ context.Context,
-	req *repositories.AIProviderSelectOptionsRequest,
+	req *agentports.AIProviderSelectOptionsRequest,
 ) (*pagination.ListResult[*aiprovider.Provider], error) {
 	f.selectReq = req
 	return &pagination.ListResult[*aiprovider.Provider]{
@@ -40,7 +40,7 @@ func (f *fakeAIProviderSelectService) SelectOptions(
 
 func (f *fakeAIProviderSelectService) GetByID(
 	_ context.Context,
-	req repositories.GetAIProviderByIDRequest,
+	req agentports.GetAIProviderByIDRequest,
 ) (*aiprovider.Provider, error) {
 	f.lookups = append(f.lookups, req)
 	provider, ok := f.byID[req.ID]
@@ -51,17 +51,17 @@ func (f *fakeAIProviderSelectService) GetByID(
 }
 
 type decidingPermissionEngine struct {
-	services.PermissionEngine
+	permissionports.PermissionEngine
 	allowed bool
-	checked []*services.PermissionCheckRequest
+	checked []*permissionports.PermissionCheckRequest
 }
 
 func (e *decidingPermissionEngine) Check(
 	_ context.Context,
-	req *services.PermissionCheckRequest,
-) (*services.PermissionCheckResult, error) {
+	req *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
 	e.checked = append(e.checked, req)
-	return &services.PermissionCheckResult{Allowed: e.allowed}, nil
+	return &permissionports.PermissionCheckResult{Allowed: e.allowed}, nil
 }
 
 func aiProviderResolver(

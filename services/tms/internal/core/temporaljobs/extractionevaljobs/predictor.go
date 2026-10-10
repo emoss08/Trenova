@@ -3,21 +3,22 @@ package extractionevaljobs
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/documentintelligencejobs"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
 	"go.uber.org/fx"
 )
 
-var _ services.ExtractionPredictor = (*Predictor)(nil)
+var _ extractionevalports.ExtractionPredictor = (*Predictor)(nil)
 
 type PredictorParams struct {
 	fx.In
 
-	Documents services.AIDocumentService
+	Documents documentaiextractionports.AIDocumentService
 }
 
 type Predictor struct {
-	documents services.AIDocumentService
+	documents documentaiextractionports.AIDocumentService
 }
 
 func NewPredictor(p PredictorParams) *Predictor {
@@ -26,16 +27,16 @@ func NewPredictor(p PredictorParams) *Predictor {
 
 func (p *Predictor) Predict(
 	ctx context.Context,
-	req *services.PredictExtractionRequest,
-) (*services.ExtractionPrediction, error) {
-	pages := make([]services.AIDocumentPage, 0, len(req.Pages))
+	req *extractionevalports.PredictExtractionRequest,
+) (*extractionevalports.ExtractionPrediction, error) {
+	pages := make([]documentaiextractionports.AIDocumentPage, 0, len(req.Pages))
 	for _, page := range req.Pages {
-		pages = append(pages, services.AIDocumentPage{PageNumber: page.Number, Text: page.Text})
+		pages = append(pages, documentaiextractionports.AIDocumentPage{PageNumber: page.Number, Text: page.Text})
 	}
 
 	result, err := p.documents.ExtractRateConfirmationForEvaluation(
 		ctx,
-		&services.AIEvaluationExtractRequest{
+		&documentaiextractionports.AIEvaluationExtractRequest{
 			TenantInfo: req.TenantInfo,
 			ProviderID: req.ProviderID,
 			FileName:   req.FileName,
@@ -46,7 +47,7 @@ func (p *Predictor) Predict(
 		return nil, err
 	}
 
-	return &services.ExtractionPrediction{
+	return &extractionevalports.ExtractionPrediction{
 		DraftData:    documentintelligencejobs.ShipmentDraftDataFromAIExtract(result.Extract),
 		Model:        result.Model,
 		ProviderID:   result.ProviderID,

@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/timesheetservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -109,7 +109,7 @@ func TestGeneratePayrollExport_TakesTheLastDayInclusive(t *testing.T) {
 	}
 
 	preview := previewWithoutWrites(t, payroll.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), executeParams(raw))
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), executeParams(raw))
 	})
 	assert.Equal(t, "Would lock 3 approved timesheet weeks into a payroll run.", preview.Summary)
 
@@ -125,10 +125,10 @@ func TestGeneratePayrollExport_TakesTheLastDayInclusive(t *testing.T) {
 	assert.Equal(t, []agent.EgressClass{agent.EgressMoney}, policy.Egress)
 	assert.Equal(t, agent.TierPropose, policy.MaxTier)
 
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 		executeParams(map[string]any{paramFirstDay: "2026-09-27", paramLastDay: "2026-09-14"})))
 	payroll.ready = 0
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 		executeParams(raw)), "validation runs the service's plan")
 }
 
@@ -143,7 +143,7 @@ func TestVoidPayrollExport_KeepsTheReason(t *testing.T) {
 	}
 
 	preview := previewWithoutWrites(t, payroll.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), executeParams(raw))
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), executeParams(raw))
 	})
 	assert.Contains(t, preview.Summary, "return its 12 timesheet weeks to approved")
 	require.NoError(t, tool.Execute(t.Context(), approvedParams(raw)))
@@ -151,7 +151,7 @@ func TestVoidPayrollExport_KeepsTheReason(t *testing.T) {
 	assert.Equal(t, "Two weeks were approved in error", payroll.voided.Reason)
 
 	payroll.export.Status = worker.PayrollExportVoided
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), executeParams(raw)))
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), executeParams(raw)))
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 		executeParams(map[string]any{paramPayrollExportID: payroll.export.ID.String()})))
 }

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -33,16 +33,16 @@ const retentionPasses = 20
 type ActivitiesParams struct {
 	fx.In
 
-	Watchtower services.WatchtowerService
-	Repo       repositories.WatchtowerRepository
-	Tenants    repositories.TenantSyncRepository
+	Watchtower watchtowerports.WatchtowerService
+	Repo       watchtowerports.WatchtowerRepository
+	Tenants    tenantports.TenantSyncRepository
 	Logger     *zap.Logger
 }
 
 type Activities struct {
-	watchtower services.WatchtowerService
-	repo       repositories.WatchtowerRepository
-	tenants    repositories.TenantSyncRepository
+	watchtower watchtowerports.WatchtowerService
+	repo       watchtowerports.WatchtowerRepository
+	tenants    tenantports.TenantSyncRepository
 	l          *zap.Logger
 }
 
@@ -106,7 +106,7 @@ func (a *Activities) WatchtowerRetentionActivity(
 
 		deleted, err := a.repo.DeleteResolvedBefore(
 			ctx,
-			repositories.DeleteResolvedWatchtowerItemsRequest{
+			watchtowerports.DeleteResolvedWatchtowerItemsRequest{
 				Before: before,
 				Limit:  retentionBatch,
 			},
@@ -130,7 +130,7 @@ func (a *Activities) WatchtowerRetentionActivity(
 // the next run picks it up without anyone intervening.
 func (a *Activities) sweepAll(
 	ctx context.Context,
-	sweep func(context.Context, pagination.TenantInfo) (*services.WatchtowerSweepResult, error),
+	sweep func(context.Context, pagination.TenantInfo) (*watchtowerports.WatchtowerSweepResult, error),
 ) (*WatchtowerSweepResult, error) {
 	organizations, err := a.tenants.ListOrganizations(ctx)
 	if err != nil {
@@ -175,7 +175,7 @@ func newSweepResult() *WatchtowerSweepResult {
 	}
 }
 
-func absorb(result *WatchtowerSweepResult, swept *services.WatchtowerSweepResult) {
+func absorb(result *WatchtowerSweepResult, swept *watchtowerports.WatchtowerSweepResult) {
 	if swept == nil {
 		return
 	}

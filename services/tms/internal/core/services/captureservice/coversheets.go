@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -34,9 +34,9 @@ type CreateCoverSheetsInput struct {
 // drawn from it. The payload is returned once, to be printed; only its hash is
 // kept.
 type IssuedCoverSheet struct {
-	Sheet   *capture.CaptureCoverSheet `json:"sheet"`
-	Payload string                     `json:"payload"`
-	QRCode  *services.CaptureQRCode    `json:"qrCode"`
+	Sheet   *capture.CaptureCoverSheet  `json:"sheet"`
+	Payload string                      `json:"payload"`
+	QRCode  *captureports.CaptureQRCode `json:"qrCode"`
 }
 
 // CreateCoverSheets issues sheets for printing. Each routing sheet is checked

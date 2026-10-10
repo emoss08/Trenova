@@ -9,13 +9,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoicerepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -136,7 +136,7 @@ func TestSyncRecordRepository_ListCandidatesFindsPostedDocumentsWithoutARecord(t
 	createInvoice(1, "INV-CAND-2", invoice.StatusPosted, start-86_400, &postedEarly)
 	live := createInvoice(2, "INV-CAND-3", invoice.StatusPosted, enabled+10, &postedLate)
 
-	list := func(req *repositories.ListAccountingSyncCandidatesRequest) []repositories.AccountingSyncCandidate {
+	list := func(req *accountingsyncports.ListAccountingSyncCandidatesRequest) []accountingsyncports.AccountingSyncCandidate {
 		t.Helper()
 		req.TenantInfo = tenant
 		req.ConnectionID = connection.ID
@@ -145,7 +145,7 @@ func TestSyncRecordRepository_ListCandidatesFindsPostedDocumentsWithoutARecord(t
 		require.NoError(t, listErr)
 		return candidates
 	}
-	ids := func(candidates []repositories.AccountingSyncCandidate) []pulid.ID {
+	ids := func(candidates []accountingsyncports.AccountingSyncCandidate) []pulid.ID {
 		out := make([]pulid.ID, 0, len(candidates))
 		for _, candidate := range candidates {
 			out = append(out, candidate.ObjectID)
@@ -154,7 +154,7 @@ func TestSyncRecordRepository_ListCandidatesFindsPostedDocumentsWithoutARecord(t
 	}
 
 	before := enabled
-	backfill := list(&repositories.ListAccountingSyncCandidatesRequest{
+	backfill := list(&accountingsyncports.ListAccountingSyncCandidatesRequest{
 		ObjectType:   accountingsync.SyncObjectInvoice,
 		Operation:    accountingsync.SyncOperationCreate,
 		PostedBefore: &before,
@@ -165,14 +165,14 @@ func TestSyncRecordRepository_ListCandidatesFindsPostedDocumentsWithoutARecord(t
 	assert.Equal(t, postedEarly, backfill[0].PostedAt)
 
 	from := enabled
-	safetyNet := list(&repositories.ListAccountingSyncCandidatesRequest{
+	safetyNet := list(&accountingsyncports.ListAccountingSyncCandidatesRequest{
 		ObjectType: accountingsync.SyncObjectInvoice,
 		Operation:  accountingsync.SyncOperationCreate,
 		PostedFrom: &from,
 	})
 	assert.Equal(t, []pulid.ID{live.ID}, ids(safetyNet))
 
-	assert.Empty(t, list(&repositories.ListAccountingSyncCandidatesRequest{
+	assert.Empty(t, list(&accountingsyncports.ListAccountingSyncCandidatesRequest{
 		ObjectType: accountingsync.SyncObjectInvoice,
 		Operation:  accountingsync.SyncOperationCreate,
 		AfterAt:    postedLate,
@@ -193,7 +193,7 @@ func TestSyncRecordRepository_ListCandidatesFindsPostedDocumentsWithoutARecord(t
 		}),
 	})
 	require.NoError(t, err)
-	assert.Empty(t, list(&repositories.ListAccountingSyncCandidatesRequest{
+	assert.Empty(t, list(&accountingsyncports.ListAccountingSyncCandidatesRequest{
 		ObjectType: accountingsync.SyncObjectInvoice,
 		Operation:  accountingsync.SyncOperationCreate,
 		PostedFrom: &from,
@@ -247,7 +247,7 @@ func TestSyncRecordRepository_ListCandidatesFindsPostedDocumentsWithoutARecord(t
 		require.NoError(t, err)
 	}
 
-	payments := list(&repositories.ListAccountingSyncCandidatesRequest{
+	payments := list(&accountingsyncports.ListAccountingSyncCandidatesRequest{
 		ObjectType:   accountingsync.SyncObjectCustomerPayment,
 		Operation:    accountingsync.SyncOperationCreate,
 		PostedBefore: &before,
@@ -256,7 +256,7 @@ func TestSyncRecordRepository_ListCandidatesFindsPostedDocumentsWithoutARecord(t
 	assert.Equal(t, []pulid.ID{kept.ID}, ids(payments), "a payment reversed before sync began nets to nothing")
 	assert.Empty(t, payments[0].ObjectNumber)
 
-	voids := list(&repositories.ListAccountingSyncCandidatesRequest{
+	voids := list(&accountingsyncports.ListAccountingSyncCandidatesRequest{
 		ObjectType: accountingsync.SyncObjectCustomerPayment,
 		Operation:  accountingsync.SyncOperationVoid,
 	})
@@ -264,7 +264,7 @@ func TestSyncRecordRepository_ListCandidatesFindsPostedDocumentsWithoutARecord(t
 	assert.Equal(t, "ACH-UNDONE", voids[0].ObjectNumber)
 	assert.Equal(t, reversedAt, voids[0].PostedAt)
 
-	_, err = records.ListCandidates(ctx, &repositories.ListAccountingSyncCandidatesRequest{
+	_, err = records.ListCandidates(ctx, &accountingsyncports.ListAccountingSyncCandidatesRequest{
 		TenantInfo:   tenant,
 		ConnectionID: connection.ID,
 		ObjectType:   accountingsync.SyncObjectCustomer,
@@ -273,7 +273,7 @@ func TestSyncRecordRepository_ListCandidatesFindsPostedDocumentsWithoutARecord(t
 	assert.Error(t, err, "customers are dependencies, never swept")
 
 	stranger := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: org.BusinessUnitID}
-	none, err := records.ListCandidates(ctx, &repositories.ListAccountingSyncCandidatesRequest{
+	none, err := records.ListCandidates(ctx, &accountingsyncports.ListAccountingSyncCandidatesRequest{
 		TenantInfo:   stranger,
 		ConnectionID: connection.ID,
 		ObjectType:   accountingsync.SyncObjectInvoice,

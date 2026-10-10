@@ -5,10 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -32,7 +32,7 @@ type programRepository struct {
 	l  *zap.Logger
 }
 
-func NewProgramRepository(p ProgramParams) repositories.FuelSurchargeProgramRepository {
+func NewProgramRepository(p ProgramParams) fuelsurchargeports.FuelSurchargeProgramRepository {
 	return &programRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.fuel-surcharge-program-repository"),
@@ -55,7 +55,7 @@ func applyProgramColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery 
 
 func (r *programRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListFuelSurchargeProgramConnectionRequest,
+	req *fuelsurchargeports.ListFuelSurchargeProgramConnectionRequest,
 ) (*pagination.CursorListResult[*fuelsurcharge.FuelSurchargeProgram], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*fuelsurcharge.FuelSurchargeProgram], error) {
 		log := r.l.With(
@@ -147,7 +147,7 @@ func (r *programRepository) ListActive(
 
 func (r *programRepository) GetByID(
 	ctx context.Context,
-	req *repositories.GetFuelSurchargeProgramByIDRequest,
+	req *fuelsurchargeports.GetFuelSurchargeProgramByIDRequest,
 ) (*fuelsurcharge.FuelSurchargeProgram, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*fuelsurcharge.FuelSurchargeProgram, error) {
 		log := r.l.With(
@@ -226,7 +226,7 @@ func (r *programRepository) Create(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fuelsurcharge.FuelSurchargeProgram, error) {
 		log := r.l.With(zap.String("operation", "Create"))
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			if _, iErr := r.db.DBForContext(c).
 				NewInsert().
 				Model(entity).
@@ -265,7 +265,7 @@ func (r *programRepository) Update(
 		entity.Version++
 
 		cols := buncolgen.FuelSurchargeTableRowColumns
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			results, uErr := r.db.DBForContext(c).
 				NewUpdate().
 				Model(entity).
@@ -317,7 +317,7 @@ func (r *programRepository) Update(
 
 func (r *programRepository) Delete(
 	ctx context.Context,
-	req *repositories.GetFuelSurchargeProgramByIDRequest,
+	req *fuelsurchargeports.GetFuelSurchargeProgramByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		log := r.l.With(
@@ -381,7 +381,7 @@ func (r *programRepository) ListFallbackShipmentIDs(
 
 func (r *programRepository) SelectOptions(
 	ctx context.Context,
-	req *repositories.FuelSurchargeProgramSelectOptionsRequest,
+	req *fuelsurchargeports.FuelSurchargeProgramSelectOptionsRequest,
 ) (*pagination.ListResult[*fuelsurcharge.FuelSurchargeProgram], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*fuelsurcharge.FuelSurchargeProgram], error) {
 		cols := buncolgen.FuelSurchargeProgramColumns

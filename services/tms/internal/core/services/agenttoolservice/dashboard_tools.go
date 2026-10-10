@@ -7,9 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -61,7 +61,7 @@ type createDashboardTool struct {
 	dashboards dashboardWriter
 }
 
-func newCreateDashboardTool(dashboards *reporting.Service) serviceports.AgentTool {
+func newCreateDashboardTool(dashboards *reporting.Service) agentports.AgentTool {
 	return &createDashboardTool{dashboards: dashboards}
 }
 
@@ -172,8 +172,8 @@ func tileSchema() map[string]any {
 	}
 }
 
-func (t *createDashboardTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *createDashboardTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceDashboard,
@@ -192,7 +192,7 @@ func (t *createDashboardTool) Policy() serviceports.ToolPolicy {
 
 func (t *createDashboardTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	if err := t.validateArgs(params.Params); err != nil {
 		return err
@@ -271,7 +271,7 @@ func validateTiles(tiles []map[string]any, multiErr *errortypes.MultiError) {
 
 func (t *createDashboardTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -288,7 +288,7 @@ func (t *createDashboardTool) Execute(
 }
 
 func (t *createDashboardTool) request(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*reporting.SaveDashboardRequest, error) {
 	visibility := report.VisibilityPrivate
 	if optionalBool(params.Params, "shared") {
@@ -314,7 +314,7 @@ type addDashboardTileTool struct {
 	dashboards dashboardWriter
 }
 
-func newAddDashboardTileTool(dashboards *reporting.Service) serviceports.AgentTool {
+func newAddDashboardTileTool(dashboards *reporting.Service) agentports.AgentTool {
 	return &addDashboardTileTool{dashboards: dashboards}
 }
 
@@ -357,8 +357,8 @@ func (t *addDashboardTileTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *addDashboardTileTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *addDashboardTileTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceDashboard,
@@ -376,7 +376,7 @@ func (t *addDashboardTileTool) Policy() serviceports.ToolPolicy {
 
 func (t *addDashboardTileTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	if err := t.validateArgs(params.Params); err != nil {
 		return err
@@ -426,7 +426,7 @@ func (t *addDashboardTileTool) validateArgs(params map[string]any) error {
 
 func (t *addDashboardTileTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -444,7 +444,7 @@ func (t *addDashboardTileTool) Execute(
 
 func (t *addDashboardTileTool) request(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*reporting.SaveDashboardRequest, *report.Dashboard, error) {
 	dashboardID, err := requirePulid(params.Params, "dashboardId")
 	if err != nil {
@@ -496,7 +496,7 @@ func (t *addDashboardTileTool) request(
 	}, existing, nil
 }
 
-func (t *addDashboardTileTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *addDashboardTileTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, "dashboardId", permission.ResourceDashboard)
 }
 

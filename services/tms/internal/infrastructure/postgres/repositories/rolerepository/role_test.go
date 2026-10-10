@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
@@ -85,7 +85,7 @@ func (r *testRepository) Update(ctx context.Context, role *permission.Role) erro
 
 func (r *testRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetRoleByIDRequest,
+	req permissionports.GetRoleByIDRequest,
 ) (*permission.Role, error) {
 	role := new(permission.Role)
 	err := r.db.
@@ -106,7 +106,7 @@ func (r *testRepository) GetByID(
 
 func (r *testRepository) List(
 	ctx context.Context,
-	req *repositories.ListRolesRequest,
+	req *permissionports.ListRolesRequest,
 ) (*pagination.ListResult[*permission.Role], error) {
 	roles := make([]*permission.Role, 0)
 	q := r.db.
@@ -160,8 +160,8 @@ func (r *testRepository) GetRolesWithInheritance(
 func (r *testRepository) GetUsersWithRole(
 	ctx context.Context,
 	roleID pulid.ID,
-) ([]repositories.ImpactedUser, error) {
-	var results []repositories.ImpactedUser
+) ([]permissionports.ImpactedUser, error) {
+	var results []permissionports.ImpactedUser
 	err := r.db.NewSelect().
 		TableExpr("user_role_assignments AS ura").
 		ColumnExpr("ura.user_id").
@@ -200,7 +200,7 @@ func (r *testRepository) CreateAssignment(
 
 func (r *testRepository) DeleteAssignment(
 	ctx context.Context,
-	req repositories.DeleteRoleAssignmentRequest,
+	req permissionports.DeleteRoleAssignmentRequest,
 ) (*permission.UserRoleAssignment, error) {
 	deleted := new(permission.UserRoleAssignment)
 	_, err := r.db.NewDelete().
@@ -236,7 +236,7 @@ func (r *testRepository) UpdateResourcePermission(
 
 func (r *testRepository) DeleteResourcePermission(
 	ctx context.Context,
-	req repositories.DeleteResourcePermissionRequest,
+	req permissionports.DeleteResourcePermissionRequest,
 ) error {
 	_, err := r.db.NewDelete().
 		Model((*permission.ResourcePermission)(nil)).
@@ -422,7 +422,7 @@ func TestRoleRepository_GetByID_Integration(t *testing.T) {
 	err := repo.Create(tc.Ctx, role)
 	require.NoError(t, err)
 
-	retrieved, err := repo.GetByID(tc.Ctx, repositories.GetRoleByIDRequest{
+	retrieved, err := repo.GetByID(tc.Ctx, permissionports.GetRoleByIDRequest{
 		ID:         role.ID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	})
@@ -479,7 +479,7 @@ func TestRoleRepository_List_Integration(t *testing.T) {
 	}
 
 	t.Run("list roles", func(t *testing.T) {
-		result, err := repo.List(tc.Ctx, &repositories.ListRolesRequest{
+		result, err := repo.List(tc.Ctx, &permissionports.ListRolesRequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: pagination.TenantInfo{OrgID: orgID},
 				Pagination: pagination.Info{Limit: 100},
@@ -522,7 +522,7 @@ func TestRoleRepository_Update_Integration(t *testing.T) {
 	err = repo.Update(tc.Ctx, role)
 	require.NoError(t, err)
 
-	retrieved, err := repo.GetByID(tc.Ctx, repositories.GetRoleByIDRequest{
+	retrieved, err := repo.GetByID(tc.Ctx, permissionports.GetRoleByIDRequest{
 		ID:         role.ID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	})
@@ -582,7 +582,7 @@ func TestRoleRepository_RoleAssignments_Integration(t *testing.T) {
 	})
 
 	t.Run("delete assignment", func(t *testing.T) {
-		_, err := repo.DeleteAssignment(tc.Ctx, repositories.DeleteRoleAssignmentRequest{
+		_, err := repo.DeleteAssignment(tc.Ctx, permissionports.DeleteRoleAssignmentRequest{
 			AssignmentID:   assignment.ID,
 			OrganizationID: orgID,
 		})
@@ -857,7 +857,7 @@ func TestRoleRepository_ResourcePermissions_Integration(t *testing.T) {
 	})
 
 	t.Run("delete resource permission", func(t *testing.T) {
-		err := repo.DeleteResourcePermission(tc.Ctx, repositories.DeleteResourcePermissionRequest{
+		err := repo.DeleteResourcePermission(tc.Ctx, permissionports.DeleteResourcePermissionRequest{
 			PermissionID: rp.ID,
 			RoleID:       role.ID,
 		})

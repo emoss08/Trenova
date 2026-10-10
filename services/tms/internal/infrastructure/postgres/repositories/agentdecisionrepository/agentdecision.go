@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -28,7 +28,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.AgentDecisionRepository {
+func New(p Params) agentports.AgentDecisionRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.agentdecision-repository"),
@@ -37,7 +37,7 @@ func New(p Params) repositories.AgentDecisionRepository {
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetAgentDecisionByIDRequest,
+	req agentports.GetAgentDecisionByIDRequest,
 ) (*agent.AgentDecision, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.AgentDecision, error) {
 		log := r.l.With(zap.String("operation", "GetByID"), zap.String("id", req.ID.String()))
@@ -79,7 +79,7 @@ func (r *repository) Create(
 
 func (r *repository) ListByProposals(
 	ctx context.Context,
-	req repositories.ListAgentDecisionsByProposalsRequest,
+	req agentports.ListAgentDecisionsByProposalsRequest,
 ) ([]*agent.AgentDecision, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentDecision, error) {
 		if len(req.ProposalIDs) == 0 {
@@ -110,7 +110,7 @@ func (r *repository) ListByProposals(
 
 func (r *repository) ListByCommitWorkflow(
 	ctx context.Context,
-	req repositories.ListAgentDecisionsByCommitWorkflowRequest,
+	req agentports.ListAgentDecisionsByCommitWorkflowRequest,
 ) ([]*agent.AgentDecision, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentDecision, error) {
 		if req.WorkflowID == "" {
@@ -140,14 +140,14 @@ func (r *repository) ListByCommitWorkflow(
 
 func (r *repository) MarkCommitted(
 	ctx context.Context,
-	req repositories.SettleAgentDecisionsRequest,
+	req agentports.SettleAgentDecisionsRequest,
 ) ([]pulid.ID, error) {
 	return r.settle(ctx, req, false)
 }
 
 func (r *repository) MarkUndone(
 	ctx context.Context,
-	req repositories.SettleAgentDecisionsRequest,
+	req agentports.SettleAgentDecisionsRequest,
 ) ([]pulid.ID, error) {
 	return r.settle(ctx, req, true)
 }
@@ -156,7 +156,7 @@ func (r *repository) MarkUndone(
 // a commit and an undo racing each other each take all of a batch or none.
 func (r *repository) settle(
 	ctx context.Context,
-	req repositories.SettleAgentDecisionsRequest,
+	req agentports.SettleAgentDecisionsRequest,
 	undo bool,
 ) ([]pulid.ID, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {

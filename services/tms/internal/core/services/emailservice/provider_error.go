@@ -5,8 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/email"
-
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 )
 
 const providerErrorBodyLimit = 2048
@@ -27,7 +26,7 @@ func providerStatusError(base error, provider string, statusCode int, body []byt
 func providerConfigurationError(provider email.Provider, err error) error {
 	return fmt.Errorf(
 		"%w: %s provider configuration could not be loaded or decrypted; verify integration credentials and encryption key configuration: %w",
-		serviceports.ErrNonRetryableEmailSend,
+		emailports.ErrNonRetryableEmailSend,
 		provider,
 		err,
 	)

@@ -6,12 +6,12 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"
@@ -51,7 +51,7 @@ func TestUpdate_SavesAnAgentWithNoAccentIconOrTemplate(t *testing.T) {
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 	tenant := pagination.TenantInfo{OrgID: row.OrganizationID, BuID: row.BusinessUnitID}
 
-	definition, err := repo.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	definition, err := repo.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         row.ID,
 		TenantInfo: tenant,
 	})
@@ -63,7 +63,7 @@ func TestUpdate_SavesAnAgentWithNoAccentIconOrTemplate(t *testing.T) {
 	_, err = repo.Update(ctx, definition)
 	require.NoError(t, err)
 
-	saved, err := repo.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	saved, err := repo.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         row.ID,
 		TenantInfo: tenant,
 	})
@@ -96,7 +96,7 @@ func TestUpdate_SavesBudgetsLimitsAndSimulation(t *testing.T) {
 
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 	tenant := pagination.TenantInfo{OrgID: row.OrganizationID, BuID: row.BusinessUnitID}
-	request := repositories.GetAgentDefinitionByIDRequest{ID: row.ID, TenantInfo: tenant}
+	request := agentdefinitionports.GetAgentDefinitionByIDRequest{ID: row.ID, TenantInfo: tenant}
 
 	definition, err := repo.GetByID(ctx, request)
 	require.NoError(t, err)
@@ -151,7 +151,7 @@ func TestUpdate_SavesTheDataAccessCeiling(t *testing.T) {
 
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 	tenant := pagination.TenantInfo{OrgID: row.OrganizationID, BuID: row.BusinessUnitID}
-	request := repositories.GetAgentDefinitionByIDRequest{ID: row.ID, TenantInfo: tenant}
+	request := agentdefinitionports.GetAgentDefinitionByIDRequest{ID: row.ID, TenantInfo: tenant}
 
 	definition, err := repo.GetByID(ctx, request)
 	require.NoError(t, err)

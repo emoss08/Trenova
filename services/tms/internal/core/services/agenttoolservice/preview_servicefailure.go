@@ -8,11 +8,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 )
 
-var _ serviceports.ToolPreviewer = (*resolveServiceFailureTool)(nil)
+var _ agentports.ToolPreviewer = (*resolveServiceFailureTool)(nil)
 
 // serviceFailureResolver is what resolving a failure previews through: the
 // lifecycle's own checks, and the EDI 214 it would send.
@@ -20,9 +23,9 @@ type serviceFailureResolver interface {
 	serviceFailureDecider
 	PreviewResolve(
 		ctx context.Context,
-		req *serviceports.ServiceFailureLifecycleRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.ServiceFailureLifecyclePreview, error)
+		req *servicefailureports.ServiceFailureLifecycleRequest,
+		actor *permissionports.RequestActor,
+	) (*servicefailureports.ServiceFailureLifecyclePreview, error)
 }
 
 // ediReadyForGeneration is the 214 preflight's word for a 214 that would be
@@ -31,7 +34,7 @@ const ediReadyForGeneration = "ready_for_generation"
 
 func (t *resolveServiceFailureTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	request, existing, err := t.request(ctx, &params)
 	if err != nil {
@@ -72,14 +75,14 @@ func (t *resolveServiceFailureTool) Preview(
 func serviceFailureLifecyclePreview(
 	summary string,
 	change *agent.RecordChange,
-	preview *serviceports.ServiceFailureLifecyclePreview,
+	preview *servicefailureports.ServiceFailureLifecyclePreview,
 	transition string,
 ) *agent.ToolPreview {
 	changes := []*agent.RecordChange{change}
 
 	switch edi := preview.EDI; {
 	case edi == nil:
-	case edi.Action == serviceports.ServiceFailureEDIActionSkipped &&
+	case edi.Action == ediports.ServiceFailureEDIActionSkipped &&
 		edi.SkippedReason == ediReadyForGeneration:
 		body := "Reason: " + reasonCodeWords(preview.After) + ". " +
 			strings.TrimSpace(preview.After.InternalNotes)
@@ -100,9 +103,9 @@ func serviceFailureLifecyclePreview(
 			},
 		))
 		summary += " The customer's trading partner is sent an EDI 214 with the reason."
-	case edi.Action == serviceports.ServiceFailureEDIActionDuplicate:
+	case edi.Action == ediports.ServiceFailureEDIActionDuplicate:
 		summary += " The EDI 214 for this was already sent and is not sent again."
-	case edi.Action == serviceports.ServiceFailureEDIActionBlocked:
+	case edi.Action == ediports.ServiceFailureEDIActionBlocked:
 		summary += " The EDI 214 would not be sent: " + edi.SkippedReason + "."
 	}
 

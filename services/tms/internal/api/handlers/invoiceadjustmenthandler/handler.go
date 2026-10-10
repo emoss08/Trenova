@@ -8,8 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,13 +19,13 @@ import (
 type Params struct {
 	fx.In
 
-	Service              services.InvoiceAdjustmentService
+	Service              invoiceadjustmentports.InvoiceAdjustmentService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	service services.InvoiceAdjustmentService
+	service invoiceadjustmentports.InvoiceAdjustmentService
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
 }
@@ -141,7 +140,7 @@ func (h *Handler) createDraft(c *gin.Context) {
 
 	resp, err := h.service.CreateDraft(
 		c.Request.Context(),
-		&services.CreateDraftInvoiceAdjustmentRequest{
+		&invoiceadjustmentports.CreateDraftInvoiceAdjustmentRequest{
 			InvoiceID:  body.InvoiceID,
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 		},
@@ -156,7 +155,7 @@ func (h *Handler) createDraft(c *gin.Context) {
 
 func (h *Handler) updateDraft(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
-	req := new(services.UpdateDraftInvoiceAdjustmentRequest)
+	req := new(invoiceadjustmentports.UpdateDraftInvoiceAdjustmentRequest)
 	if err := authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -190,7 +189,7 @@ func (h *Handler) previewDraft(c *gin.Context) {
 	}
 	resp, err := h.service.PreviewDraft(
 		c.Request.Context(),
-		&services.GetInvoiceAdjustmentDetailRequest{
+		&invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest{
 			AdjustmentID: adjustmentID,
 			TenantInfo:   pagination.FromAuthAsUser(authCtx),
 		},
@@ -212,7 +211,7 @@ func (h *Handler) submitDraft(c *gin.Context) {
 	}
 	resp, err := h.service.SubmitDraft(
 		c.Request.Context(),
-		&services.GetInvoiceAdjustmentDetailRequest{
+		&invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest{
 			AdjustmentID: adjustmentID,
 			TenantInfo:   pagination.FromAuthAsUser(authCtx),
 		},
@@ -227,7 +226,7 @@ func (h *Handler) submitDraft(c *gin.Context) {
 
 func (h *Handler) preview(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
-	req := new(services.InvoiceAdjustmentRequest)
+	req := new(invoiceadjustmentports.InvoiceAdjustmentRequest)
 	if err := authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -247,7 +246,7 @@ func (h *Handler) preview(c *gin.Context) {
 
 func (h *Handler) submit(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
-	req := new(services.InvoiceAdjustmentRequest)
+	req := new(invoiceadjustmentports.InvoiceAdjustmentRequest)
 	if err := authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -267,7 +266,7 @@ func (h *Handler) submit(c *gin.Context) {
 
 func (h *Handler) bulkPreview(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
-	req := new(services.InvoiceAdjustmentBulkRequest)
+	req := new(invoiceadjustmentports.InvoiceAdjustmentBulkRequest)
 	if err := authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -287,7 +286,7 @@ func (h *Handler) bulkPreview(c *gin.Context) {
 
 func (h *Handler) bulkSubmit(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
-	req := new(services.InvoiceAdjustmentBulkRequest)
+	req := new(invoiceadjustmentports.InvoiceAdjustmentBulkRequest)
 	if err := authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -327,10 +326,10 @@ func (h *Handler) approvals(c *gin.Context) {
 		h.eh,
 		func(
 			cursor pagination.CursorInfo,
-		) (*pagination.CursorListResult[*repositories.InvoiceAdjustmentApprovalQueueItem], error) {
+		) (*pagination.CursorListResult[*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem], error) {
 			return h.service.ListApprovals(
 				c.Request.Context(),
-				&repositories.ListApprovalQueueRequest{Filter: req, Cursor: cursor},
+				&invoiceadjustmentports.ListApprovalQueueRequest{Filter: req, Cursor: cursor},
 			)
 		},
 	)
@@ -343,7 +342,7 @@ func (h *Handler) reconciliationExceptions(c *gin.Context) {
 		c,
 		req,
 		h.eh,
-		func() (*pagination.ListResult[*repositories.InvoiceAdjustmentReconciliationQueueItem], error) {
+		func() (*pagination.ListResult[*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem], error) {
 			return h.service.ListReconciliationExceptions(c.Request.Context(), *req)
 		},
 	)
@@ -389,7 +388,7 @@ func (h *Handler) get(c *gin.Context) {
 	}
 	resp, err := h.service.GetDetail(
 		c.Request.Context(),
-		&services.GetInvoiceAdjustmentDetailRequest{
+		&invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest{
 			AdjustmentID: adjustmentID,
 			TenantInfo:   pagination.FromAuth(authCtx),
 		},
@@ -408,7 +407,7 @@ func (h *Handler) approve(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	resp, err := h.service.Approve(c.Request.Context(), &services.ApproveInvoiceAdjustmentRequest{
+	resp, err := h.service.Approve(c.Request.Context(), &invoiceadjustmentports.ApproveInvoiceAdjustmentRequest{
 		AdjustmentID: adjustmentID,
 		TenantInfo:   pagination.FromAuth(authCtx),
 	}, actorutil.FromAuthContext(authCtx))
@@ -433,7 +432,7 @@ func (h *Handler) reject(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	resp, err := h.service.Reject(c.Request.Context(), &services.RejectInvoiceAdjustmentRequest{
+	resp, err := h.service.Reject(c.Request.Context(), &invoiceadjustmentports.RejectInvoiceAdjustmentRequest{
 		AdjustmentID: adjustmentID,
 		Reason:       body.Reason,
 		TenantInfo:   pagination.FromAuth(authCtx),
@@ -454,7 +453,7 @@ func (h *Handler) lineage(c *gin.Context) {
 	}
 	detail, err := h.service.GetDetail(
 		c.Request.Context(),
-		&services.GetInvoiceAdjustmentDetailRequest{
+		&invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest{
 			AdjustmentID: adjustmentID,
 			TenantInfo:   pagination.FromAuth(authCtx),
 		},
@@ -465,7 +464,7 @@ func (h *Handler) lineage(c *gin.Context) {
 	}
 	resp, err := h.service.GetLineage(
 		c.Request.Context(),
-		&services.GetInvoiceAdjustmentLineageRequest{
+		&invoiceadjustmentports.GetInvoiceAdjustmentLineageRequest{
 			CorrectionGroupID: detail.CorrectionGroupID,
 			TenantInfo:        pagination.FromAuth(authCtx),
 		},
@@ -486,7 +485,7 @@ func (h *Handler) groupLineage(c *gin.Context) {
 	}
 	resp, err := h.service.GetLineage(
 		c.Request.Context(),
-		&services.GetInvoiceAdjustmentLineageRequest{
+		&invoiceadjustmentports.GetInvoiceAdjustmentLineageRequest{
 			CorrectionGroupID: groupID,
 			TenantInfo:        pagination.FromAuth(authCtx),
 		},

@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipmentimportchat"
-	repoports "github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentimportchatports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -16,14 +16,14 @@ import (
 )
 
 type chatRepoStub struct {
-	getConversationByDocumentFn      func(context.Context, repoports.GetShipmentImportConversationRequest) (*shipmentimportchat.Conversation, error)
-	listTurnsFn                      func(context.Context, repoports.ListShipmentImportTurnsRequest) ([]*shipmentimportchat.Turn, error)
+	getConversationByDocumentFn      func(context.Context, shipmentimportchatports.GetShipmentImportConversationRequest) (*shipmentimportchat.Conversation, error)
+	listTurnsFn                      func(context.Context, shipmentimportchatports.ListShipmentImportTurnsRequest) ([]*shipmentimportchat.Turn, error)
 	updateActiveConversationStatusFn func(context.Context, pulid.ID, pagination.TenantInfo, shipmentimportchat.ConversationStatus, shipmentimportchat.ConversationStatusReason) error
 }
 
 func (s *chatRepoStub) GetConversationByDocument(
 	ctx context.Context,
-	req repoports.GetShipmentImportConversationRequest,
+	req shipmentimportchatports.GetShipmentImportConversationRequest,
 ) (*shipmentimportchat.Conversation, error) {
 	return s.getConversationByDocumentFn(ctx, req)
 }
@@ -51,7 +51,7 @@ func (s *chatRepoStub) AppendTurn(
 
 func (s *chatRepoStub) ListTurns(
 	ctx context.Context,
-	req repoports.ListShipmentImportTurnsRequest,
+	req shipmentimportchatports.ListShipmentImportTurnsRequest,
 ) ([]*shipmentimportchat.Turn, error) {
 	return s.listTurnsFn(ctx, req)
 }
@@ -128,7 +128,7 @@ func TestGetHistoryIncludesCompletedConversationMetadata(t *testing.T) {
 	svc := &Service{
 		logger: zap.NewNop(),
 		chatRepo: &chatRepoStub{
-			getConversationByDocumentFn: func(_ context.Context, req repoports.GetShipmentImportConversationRequest) (*shipmentimportchat.Conversation, error) {
+			getConversationByDocumentFn: func(_ context.Context, req shipmentimportchatports.GetShipmentImportConversationRequest) (*shipmentimportchat.Conversation, error) {
 				require.Equal(t, shipmentimportchat.ConversationStatus(""), req.Status)
 
 				return &shipmentimportchat.Conversation{
@@ -142,7 +142,7 @@ func TestGetHistoryIncludesCompletedConversationMetadata(t *testing.T) {
 					UpdatedAt:              1_717_171_800,
 				}, nil
 			},
-			listTurnsFn: func(_ context.Context, req repoports.ListShipmentImportTurnsRequest) ([]*shipmentimportchat.Turn, error) {
+			listTurnsFn: func(_ context.Context, req shipmentimportchatports.ListShipmentImportTurnsRequest) ([]*shipmentimportchat.Turn, error) {
 				require.Equal(t, conversationID, req.ConversationID)
 
 				return []*shipmentimportchat.Turn{{
@@ -201,10 +201,10 @@ func TestCompleteHistoryMarksConversationCompletedAndClearsCache(t *testing.T) {
 	svc := &Service{
 		logger: zap.NewNop(),
 		chatRepo: &chatRepoStub{
-			getConversationByDocumentFn: func(context.Context, repoports.GetShipmentImportConversationRequest) (*shipmentimportchat.Conversation, error) {
+			getConversationByDocumentFn: func(context.Context, shipmentimportchatports.GetShipmentImportConversationRequest) (*shipmentimportchat.Conversation, error) {
 				return nil, errors.New("unexpected GetConversationByDocument call")
 			},
-			listTurnsFn: func(context.Context, repoports.ListShipmentImportTurnsRequest) ([]*shipmentimportchat.Turn, error) {
+			listTurnsFn: func(context.Context, shipmentimportchatports.ListShipmentImportTurnsRequest) ([]*shipmentimportchat.Turn, error) {
 				return nil, errors.New("unexpected ListTurns call")
 			},
 			updateActiveConversationStatusFn: func(_ context.Context, gotDocumentID pulid.ID, gotTenant pagination.TenantInfo, status shipmentimportchat.ConversationStatus, reason shipmentimportchat.ConversationStatusReason) error {
@@ -233,6 +233,6 @@ func TestCompleteHistoryMarksConversationCompletedAndClearsCache(t *testing.T) {
 	assert.True(t, deleted)
 }
 
-var _ repoports.ShipmentImportChatRepository = (*chatRepoStub)(nil)
-var _ repoports.ShipmentImportChatCacheRepository = (*chatCacheRepoStub)(nil)
-var _ serviceports.ShipmentImportAssistantService = (*Service)(nil)
+var _ shipmentimportchatports.ShipmentImportChatRepository = (*chatRepoStub)(nil)
+var _ shipmentimportchatports.ShipmentImportChatCacheRepository = (*chatCacheRepoStub)(nil)
+var _ shipmentports.ShipmentImportAssistantService = (*Service)(nil)

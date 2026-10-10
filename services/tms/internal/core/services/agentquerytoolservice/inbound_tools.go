@@ -8,9 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -39,11 +39,11 @@ const (
 type inboundMessageReader interface {
 	GetByID(
 		ctx context.Context,
-		req repositories.GetInboundMessageByIDRequest,
+		req inboundmessageports.GetInboundMessageByIDRequest,
 	) (*inboundmessage.InboundMessage, error)
 	List(
 		ctx context.Context,
-		req *repositories.ListInboundMessagesRequest,
+		req *inboundmessageports.ListInboundMessagesRequest,
 	) (*pagination.CursorListResult[*inboundmessage.InboundMessage], error)
 }
 
@@ -128,7 +128,7 @@ type getInboundMessageTool struct {
 	messages inboundMessageReader
 }
 
-func newGetInboundMessageTool(messages inboundMessageReader) serviceports.AgentQueryTool {
+func newGetInboundMessageTool(messages inboundMessageReader) agentports.AgentQueryTool {
 	return &getInboundMessageTool{messages: messages}
 }
 
@@ -157,7 +157,7 @@ func (t *getInboundMessageTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *getInboundMessageTool) Policy() serviceports.ToolPolicy {
+func (t *getInboundMessageTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource:  permission.ResourceInboundMessage,
 		reads:     agent.ExternalReadAlways,
@@ -168,7 +168,7 @@ func (t *getInboundMessageTool) Policy() serviceports.ToolPolicy {
 
 func (t *getInboundMessageTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -179,7 +179,7 @@ func (t *getInboundMessageTool) Query(
 		return nil, err
 	}
 
-	message, err := t.messages.GetByID(ctx, repositories.GetInboundMessageByIDRequest{
+	message, err := t.messages.GetByID(ctx, inboundmessageports.GetInboundMessageByIDRequest{
 		ID:                 id,
 		TenantInfo:         tenantOf(params),
 		IncludeAttachments: true,
@@ -209,7 +209,7 @@ type listInboundMessagesTool struct {
 	messages inboundMessageReader
 }
 
-func newListInboundMessagesTool(messages inboundMessageReader) serviceports.AgentQueryTool {
+func newListInboundMessagesTool(messages inboundMessageReader) agentports.AgentQueryTool {
 	return &listInboundMessagesTool{messages: messages}
 }
 
@@ -254,7 +254,7 @@ func (t *listInboundMessagesTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listInboundMessagesTool) Policy() serviceports.ToolPolicy {
+func (t *listInboundMessagesTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceInboundMessage,
 		reads:    agent.ExternalReadAlways,
@@ -316,7 +316,7 @@ func inboundClassificationFilter(value string) (inboundmessage.Classification, e
 
 func (t *listInboundMessagesTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -350,7 +350,7 @@ func (t *listInboundMessagesTool) Query(
 	}
 
 	tenant := tenantOf(params)
-	req := &repositories.ListInboundMessagesRequest{
+	req := &inboundmessageports.ListInboundMessagesRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenant,
 			Cursor:     cursor,

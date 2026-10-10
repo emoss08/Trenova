@@ -8,7 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentmanufacturerports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmenttypeports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -22,7 +25,7 @@ func (r *Deps) resolveEquipmentTypeSelectOptions(
 		for _, id := range req.IDs {
 			entity, err := r.EquipmentTypeService.Get(
 				ctx,
-				repositories.GetEquipmentTypeByIDRequest{
+				equipmenttypeports.GetEquipmentTypeByIDRequest{
 					ID:         id,
 					TenantInfo: req.TenantInfo,
 				},
@@ -38,7 +41,7 @@ func (r *Deps) resolveEquipmentTypeSelectOptions(
 
 	result, err := r.EquipmentTypeService.SelectOptions(
 		ctx,
-		&repositories.EquipmentTypeSelectOptionsRequest{
+		&equipmenttypeports.EquipmentTypeSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
 			Classes:            equipmentTypeClassesFilter(req.Filters),
 		},
@@ -61,7 +64,7 @@ func (r *Deps) resolveEquipmentManufacturerSelectOptions(
 	if len(req.IDs) > 0 {
 		entities, err := r.EquipmentManufacturerService.GetByIDs(
 			ctx,
-			repositories.GetEquipmentManufacturersByIDsRequest{
+			equipmentmanufacturerports.GetEquipmentManufacturersByIDsRequest{
 				TenantInfo:               req.TenantInfo,
 				EquipmentManufacturerIDs: req.IDs,
 			},
@@ -98,7 +101,7 @@ func (r *Deps) resolveTrailerSelectOptions(
 	if len(req.IDs) > 0 {
 		entities, err := r.TrailerService.GetByIDs(
 			ctx,
-			repositories.GetTrailersByIDsRequest{
+			trailerports.GetTrailersByIDsRequest{
 				TenantInfo: req.TenantInfo,
 				TrailerIDs: req.IDs,
 			},
@@ -130,7 +133,7 @@ func (r *Deps) resolveTractorSelectOptions(
 	if len(req.IDs) > 0 {
 		entities, err := r.TractorService.GetByIDs(
 			ctx,
-			repositories.GetTractorsByIDsRequest{
+			tractorports.GetTractorsByIDsRequest{
 				TenantInfo: req.TenantInfo,
 				TractorIDs: req.IDs,
 			},
@@ -145,7 +148,7 @@ func (r *Deps) resolveTractorSelectOptions(
 
 	result, err := r.TractorService.SelectOptions(
 		ctx,
-		&repositories.TractorSelectOptionsRequest{
+		&tractorports.TractorSelectOptionsRequest{
 			SelectOptionsRequest: req.SelectQuery,
 		},
 	)

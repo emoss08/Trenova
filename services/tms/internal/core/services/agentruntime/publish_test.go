@@ -3,27 +3,28 @@ package agentruntime
 import (
 	"testing"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type recordingObserver struct {
-	seen  []serviceports.ToolObservation
-	shown *serviceports.ShownArtifact
+	seen  []agentports.ToolObservation
+	shown *agentports.ShownArtifact
 	err   error
 }
 
 func (o *recordingObserver) observe(
-	observation serviceports.ToolObservation,
-) (*serviceports.ShownArtifact, error) {
+	observation agentports.ToolObservation,
+) (*agentports.ShownArtifact, error) {
 	o.seen = append(o.seen, observation)
 
 	return o.shown, o.err
 }
 
-func offeredNames(specs []serviceports.ToolSpec) []string {
+func offeredNames(specs []kernelports.ToolSpec) []string {
 	names := make([]string, 0, len(specs))
 	for _, spec := range specs {
 		names = append(names, spec.Name)
@@ -34,10 +35,10 @@ func offeredNames(specs []serviceports.ToolSpec) []string {
 
 func runWithObserver(
 	t *testing.T,
-	observer serviceports.ToolObserver,
-	tools []serviceports.AgentQueryTool,
-	turns ...*serviceports.ChatCompletionResult,
-) (*serviceports.RunResult, *scriptedCompletion) {
+	observer agentports.ToolObserver,
+	tools []agentports.AgentQueryTool,
+	turns ...*agentports.ChatCompletionResult,
+) (*agentports.RunResult, *scriptedCompletion) {
 	t.Helper()
 
 	completion := &scriptedCompletion{Turns: turns}
@@ -47,7 +48,7 @@ func runWithObserver(
 		names = append(names, tool.Name())
 	}
 
-	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+	result, err := rt.Run(t.Context(), &agentports.RunRequest{
 		Definition:   testDefinition(names...),
 		Actor:        testActor(),
 		Input:        "Tell me about SEED-SHP-007 and publish the details in an artifact.",
@@ -100,7 +101,7 @@ func TestRun_PublishesADocumentAndReturnsItsID(t *testing.T) {
 	t.Parallel()
 
 	id := pulid.MustNew("art_")
-	observer := &recordingObserver{shown: &serviceports.ShownArtifact{
+	observer := &recordingObserver{shown: &agentports.ShownArtifact{
 		ID: id, Kind: "document", Title: "SEED-SHP-007 brief",
 	}}
 	result, _ := runWithObserver(t, observer.observe, nil,
@@ -112,7 +113,7 @@ func TestRun_PublishesADocumentAndReturnsItsID(t *testing.T) {
 	)
 
 	require.Len(t, observer.seen, 1)
-	document, ok := observer.seen[0].Data.(serviceports.PublishedDocument)
+	document, ok := observer.seen[0].Data.(agentports.PublishedDocument)
 	require.True(t, ok)
 	assert.Equal(t, "SEED-SHP-007 brief", document.Title)
 	assert.Contains(t, document.Body, "Range Logistics")
@@ -163,11 +164,11 @@ carries a note that it is on screen and what to do instead.
 func TestRun_TellsTheModelWhatThePersonAlreadySees(t *testing.T) {
 	t.Parallel()
 
-	observer := &recordingObserver{shown: &serviceports.ShownArtifact{
+	observer := &recordingObserver{shown: &agentports.ShownArtifact{
 		ID: pulid.MustNew("art_"), Kind: "table_view", Title: "Shipments", Rows: 25,
 	}}
 	tool := queryTool("search_shipments", map[string]any{"items": []any{}}, nil)
-	result, _ := runWithObserver(t, observer.observe, []serviceports.AgentQueryTool{tool},
+	result, _ := runWithObserver(t, observer.observe, []agentports.AgentQueryTool{tool},
 		toolTurn("search_shipments", map[string]any{"query": ""}),
 		textTurn("Twenty-five shipments; two are delayed."),
 	)
@@ -193,11 +194,11 @@ pointer to write.
 func TestRun_ShortListsAreAnsweredInTheReply(t *testing.T) {
 	t.Parallel()
 
-	observer := &recordingObserver{shown: &serviceports.ShownArtifact{
+	observer := &recordingObserver{shown: &agentports.ShownArtifact{
 		ID: pulid.MustNew("art_"), Kind: "table_view", Title: "Billing queue items", Rows: 9,
 	}}
 	tool := queryTool("list_billing_queue_items", map[string]any{"items": []any{}}, nil)
-	result, _ := runWithObserver(t, observer.observe, []serviceports.AgentQueryTool{tool},
+	result, _ := runWithObserver(t, observer.observe, []agentports.AgentQueryTool{tool},
 		toolTurn("list_billing_queue_items", map[string]any{"query": ""}),
 		textTurn("Nine items."),
 	)
@@ -218,12 +219,12 @@ ones selected. Two items answered as a markdown table leave nothing to select.
 func TestRun_AnActionableTableIsPointedToHoweverShort(t *testing.T) {
 	t.Parallel()
 
-	observer := &recordingObserver{shown: &serviceports.ShownArtifact{
+	observer := &recordingObserver{shown: &agentports.ShownArtifact{
 		ID: pulid.MustNew("art_"), Kind: "table_view", Title: "Billing queue items", Rows: 2,
 		Actionable: true,
 	}}
 	tool := queryTool("list_billing_queue_items", map[string]any{"items": []any{}}, nil)
-	result, _ := runWithObserver(t, observer.observe, []serviceports.AgentQueryTool{tool},
+	result, _ := runWithObserver(t, observer.observe, []agentports.AgentQueryTool{tool},
 		toolTurn("list_billing_queue_items", map[string]any{"query": ""}),
 		textTurn("Two items."),
 	)
@@ -239,12 +240,12 @@ func TestRun_AnActionableTableIsPointedToHoweverShort(t *testing.T) {
 func TestRun_AViewIsPointedToAsAView(t *testing.T) {
 	t.Parallel()
 
-	observer := &recordingObserver{shown: &serviceports.ShownArtifact{
+	observer := &recordingObserver{shown: &agentports.ShownArtifact{
 		ID: pulid.MustNew("art_"), Kind: "table_view", Title: "Late loads", Rows: 3,
 		Actionable: true, Opens: true,
 	}}
 	tool := queryTool("compose_table_view", map[string]any{"path": "/shipments"}, nil)
-	result, _ := runWithObserver(t, observer.observe, []serviceports.AgentQueryTool{tool},
+	result, _ := runWithObserver(t, observer.observe, []agentports.AgentQueryTool{tool},
 		toolTurn("compose_table_view", map[string]any{"entity": "shipments", "description": "late"}),
 		textTurn("Three loads are late."),
 	)
@@ -266,12 +267,12 @@ driver did not. A ranked table is now one the model points to by its pick.
 func TestRun_ARankingIsPointedToHoweverShort(t *testing.T) {
 	t.Parallel()
 
-	observer := &recordingObserver{shown: &serviceports.ShownArtifact{
+	observer := &recordingObserver{shown: &agentports.ShownArtifact{
 		ID: pulid.MustNew("art_"), Kind: "table_view", Title: "Drivers ranked for the move",
 		Rows: 5, Ranked: true,
 	}}
 	tool := queryTool("rank_move_candidates", map[string]any{"candidates": []any{}}, nil)
-	result, _ := runWithObserver(t, observer.observe, []serviceports.AgentQueryTool{tool},
+	result, _ := runWithObserver(t, observer.observe, []agentports.AgentQueryTool{tool},
 		toolTurn("rank_move_candidates", map[string]any{"shipmentMoveId": "smv_1"}),
 		textTurn("Emily Chen is the best fit."),
 	)

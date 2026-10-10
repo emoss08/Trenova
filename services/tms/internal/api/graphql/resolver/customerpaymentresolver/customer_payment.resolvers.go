@@ -16,8 +16,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -37,7 +38,7 @@ func (r *CustomerPaymentResolver) Customer(ctx context.Context, obj *customerpay
 		return l.CustomerByID.Load(ctx, obj.CustomerID.String())
 	}
 
-	return r.CustomerService.Get(ctx, repositories.GetCustomerByIDRequest{
+	return r.CustomerService.Get(ctx, customerports.GetCustomerByIDRequest{
 		ID:         obj.CustomerID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})
@@ -53,7 +54,7 @@ func (r *CustomerPaymentApplicationResolver) Invoice(ctx context.Context, obj *c
 		return l.InvoiceByID.Load(ctx, obj.InvoiceID.String())
 	}
 
-	return r.InvoiceService.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+	return r.InvoiceService.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         obj.InvoiceID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})
@@ -152,7 +153,7 @@ func (r *MutationResolver) UnapplyCreditMemoApplication(ctx context.Context, inp
 
 	return r.CustomerPaymentService.UnapplyCreditMemoApplication(
 		ctx,
-		&serviceports.UnapplyCreditMemoApplicationRequest{
+		&customerpaymentports.UnapplyCreditMemoApplicationRequest{
 			ApplicationID: applicationID,
 			Reason:        stringutils.FromPtr(input.Reason),
 			TenantInfo:    base.TenantInfo(authCtx),
@@ -174,7 +175,7 @@ func (r *QueryResolver) CustomerPayments(ctx context.Context, input gqlmodel.Dat
 
 	result, err := r.CustomerPaymentRepo.ListConnection(
 		ctx,
-		&repositories.ListCustomerPaymentConnectionRequest{
+		&customerpaymentports.ListCustomerPaymentConnectionRequest{
 			Filter: tableInput.Filter,
 			Cursor: tableInput.Cursor,
 		},
@@ -201,7 +202,7 @@ func (r *QueryResolver) CustomerPayment(ctx context.Context, id string) (*custom
 		)
 	}
 
-	return r.CustomerPaymentService.Get(ctx, &serviceports.GetCustomerPaymentRequest{
+	return r.CustomerPaymentService.Get(ctx, &customerpaymentports.GetCustomerPaymentRequest{
 		PaymentID:  paymentID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})

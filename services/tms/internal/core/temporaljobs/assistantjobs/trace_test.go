@@ -4,17 +4,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
 	"github.com/emoss08/trenova/internal/core/services/assistantservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace/aitracetest"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -48,11 +49,11 @@ func TestFinish_TheTurnIsOneTraceUnderItsRoot(t *testing.T) {
 	runtime := agentruntime.New(agentruntime.Params{
 		Logger: zap.NewNop(),
 		Completion: &agentruntimetest.ScriptedCompletion{
-			Turns: []*serviceports.ChatCompletionResult{
+			Turns: []*agentports.ChatCompletionResult{
 				{Text: "Done.", ModelIdentifier: "model-a"},
 			},
 		},
-		QueryTools: &agentruntimetest.StubQueryRegistry{Tools: []serviceports.AgentQueryTool{
+		QueryTools: &agentruntimetest.StubQueryRegistry{Tools: []agentports.AgentQueryTool{
 			&agentruntimetest.StubQueryTool{ToolName: replayToolName, Result: map[string]any{}},
 		}},
 		ActionTools: &agentruntimetest.StubActionRegistry{},
@@ -60,20 +61,20 @@ func TestFinish_TheTurnIsOneTraceUnderItsRoot(t *testing.T) {
 	})
 	plan := replayPlan(t, runtime, payload)
 	req := plan.RunRequest(&payload.Actor)
-	req.StepOwner = serviceports.RunStepOwner{
-		Kind: serviceports.RunStepOwnerAssistantTurn,
+	req.StepOwner = agentports.RunStepOwner{
+		Kind: agentports.RunStepOwnerAssistantTurn,
 		ID:   payload.TurnID,
 	}
 
-	_, err := runtime.StreamCompletion(t.Context(), &serviceports.ChatCompletionRequest{
-		Attribution: serviceports.AIUsageAttribution{
-			OwnerKind: serviceports.RunStepOwnerAssistantTurn,
+	_, err := runtime.StreamCompletion(t.Context(), &agentports.ChatCompletionRequest{
+		Attribution: aiusageports.AIUsageAttribution{
+			OwnerKind: agentports.RunStepOwnerAssistantTurn,
 			OwnerID:   payload.TurnID,
 		},
-	}, func(serviceports.StreamEvent) {})
+	}, func(kernelports.StreamEvent) {})
 	require.NoError(t, err)
 	runtime.DispatchStep(t.Context(), req, agentruntime.DispatchCall{
-		Call: serviceports.ToolCall{
+		Call: agentports.ToolCall{
 			ID:        "call_1",
 			Name:      replayToolName,
 			Arguments: map[string]any{},
@@ -84,9 +85,9 @@ func TestFinish_TheTurnIsOneTraceUnderItsRoot(t *testing.T) {
 	emitTurnRoots(t.Context(), &FinishTurnInput{
 		Payload: payload,
 		Plan:    plan,
-		Run: &serviceports.RunResult{
+		Run: &agentports.RunResult{
 			ToolCallsUsed: 1,
-			Usage: &serviceports.RunUsage{
+			Usage: &agentports.RunUsage{
 				ModelCalls: 2, InputTokens: 2500, OutputTokens: 52, CostUSD: &cost,
 			},
 		},
@@ -100,7 +101,7 @@ func TestFinish_TheTurnIsOneTraceUnderItsRoot(t *testing.T) {
 	for _, want := range []attribute.KeyValue{
 		aitrace.GenAIConversationID.String(payload.ThreadID.String()),
 		aitrace.AITurnID.String(payload.TurnID.String()),
-		aitrace.AIOwnerKind.String(string(serviceports.RunStepOwnerAssistantTurn)),
+		aitrace.AIOwnerKind.String(string(agentports.RunStepOwnerAssistantTurn)),
 		aitrace.UserID.String(payload.Actor.UserID.String()),
 		aitrace.AITrigger.String(string(conversation.AssistantTurnOriginPerson)),
 		aitrace.AIStatus.String(string(conversation.AssistantTurnStatusCompleted)),
@@ -144,12 +145,12 @@ func TestFinish_ADelegateHasItsOwnRootAndBothLinkEachOther(t *testing.T) {
 	emitTurnRoots(t.Context(), &FinishTurnInput{
 		Payload: payload,
 		Plan:    &assistantservice.TurnPlan{Definition: &agentdefinition.Definition{Name: "Desk"}},
-		Run: &serviceports.RunResult{
-			Delegations: []serviceports.DelegatedRun{{
+		Run: &agentports.RunResult{
+			Delegations: []agentports.DelegatedRun{{
 				Definition: delegateDefinition,
 				CallID:     "call_task_9",
 				Taint:      delegateTaint,
-				Usage: &serviceports.RunUsage{
+				Usage: &agentports.RunUsage{
 					ModelCalls:   1,
 					InputTokens:  700,
 					OutputTokens: 20,
@@ -158,12 +159,12 @@ func TestFinish_ADelegateHasItsOwnRootAndBothLinkEachOther(t *testing.T) {
 		},
 		Events: []temporaltype.StreamItem{
 			{
-				Event: serviceports.AssistantEventDelegateStarted,
+				Event: agentports.AssistantEventDelegateStarted,
 				Data:  map[string]any{"delegateCallId": "call_task_9"},
 				At:    1_790_000_010,
 			},
 			{
-				Event: serviceports.AssistantEventDelegateFinished,
+				Event: agentports.AssistantEventDelegateFinished,
 				Data: map[string]any{
 					"delegateCallId": "call_task_9",
 					"status":         "completed",

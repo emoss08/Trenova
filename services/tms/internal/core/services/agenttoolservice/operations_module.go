@@ -1,8 +1,6 @@
 package agenttoolservice
 
 import (
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/billingtransferservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
@@ -10,6 +8,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/orgstructureservice"
 	"github.com/emoss08/trenova/internal/core/services/recurringshipmentservice"
 	"github.com/emoss08/trenova/internal/core/services/schedulingservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 )
 
 func operationsToolProviders() []any {
@@ -63,30 +67,30 @@ func operationsToolProviders() []any {
 	}
 }
 
-func provideUncancelShipmentTool(shipments serviceports.ShipmentService) serviceports.AgentTool {
+func provideUncancelShipmentTool(shipments shipmentports.ShipmentService) agentports.AgentTool {
 	return newUncancelShipmentTool(shipments)
 }
 
 func provideTransferShipmentOwnershipTool(
-	shipments serviceports.ShipmentService,
-) serviceports.AgentTool {
+	shipments shipmentports.ShipmentService,
+) agentports.AgentTool {
 	return newTransferShipmentOwnershipTool(shipments)
 }
 
-func provideRerateShipmentTool(shipments serviceports.ShipmentService) serviceports.AgentTool {
+func provideRerateShipmentTool(shipments shipmentports.ShipmentService) agentports.AgentTool {
 	return newRerateShipmentTool(shipments)
 }
 
 func provideRecalculateShipmentDistanceTool(
-	shipments serviceports.ShipmentService,
-) serviceports.AgentTool {
+	shipments shipmentports.ShipmentService,
+) agentports.AgentTool {
 	return newRecalculateShipmentDistanceTool(shipments)
 }
 
 func provideDuplicateShipmentTool(
-	shipments serviceports.ShipmentService,
-	locations repositories.LocationRepository,
-) serviceports.AgentTool {
+	shipments shipmentports.ShipmentService,
+	locations locationports.LocationRepository,
+) agentports.AgentTool {
 	return newDuplicateShipmentTool(duplicateShipmentDeps{
 		Shipments: shipments,
 		Sources:   shipments,
@@ -94,145 +98,145 @@ func provideDuplicateShipmentTool(
 	})
 }
 
-func provideUpdateShipmentHoldTool(holds serviceports.ShipmentHoldService) serviceports.AgentTool {
+func provideUpdateShipmentHoldTool(holds shipmentports.ShipmentHoldService) agentports.AgentTool {
 	return newUpdateShipmentHoldTool(holds)
 }
 
-func provideSplitMoveTool(moves serviceports.ShipmentMoveService) serviceports.AgentTool {
+func provideSplitMoveTool(moves shipmentports.ShipmentMoveService) agentports.AgentTool {
 	return newSplitMoveTool(moves)
 }
 
 func providePinShipmentCommentTool(
-	comments serviceports.ShipmentCommentService,
-) serviceports.AgentTool {
+	comments shipmentports.ShipmentCommentService,
+) agentports.AgentTool {
 	return newPinShipmentCommentTool(comments)
 }
 
 func provideUnpinShipmentCommentTool(
-	comments serviceports.ShipmentCommentService,
-) serviceports.AgentTool {
+	comments shipmentports.ShipmentCommentService,
+) agentports.AgentTool {
 	return newUnpinShipmentCommentTool(comments)
 }
 
 func provideResolveShipmentCommentTool(
-	comments serviceports.ShipmentCommentService,
-) serviceports.AgentTool {
+	comments shipmentports.ShipmentCommentService,
+) agentports.AgentTool {
 	return newResolveShipmentCommentTool(comments)
 }
 
 func provideEditShipmentCommentTool(
-	comments serviceports.ShipmentCommentService,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentTool {
+	comments shipmentports.ShipmentCommentService,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentTool {
 	return newEditShipmentCommentTool(comments, permissions)
 }
 
 func provideDeleteShipmentCommentTool(
-	comments serviceports.ShipmentCommentService,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentTool {
+	comments shipmentports.ShipmentCommentService,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentTool {
 	return newDeleteShipmentCommentTool(comments, permissions)
 }
 
 func provideUpdateServiceFailureTool(
-	failures serviceports.ServiceFailureService,
-) serviceports.AgentTool {
+	failures servicefailureports.ServiceFailureService,
+) agentports.AgentTool {
 	return newUpdateServiceFailureTool(failures)
 }
 
 func provideReviewServiceFailureTool(
-	failures serviceports.ServiceFailureService,
-) serviceports.AgentTool {
+	failures servicefailureports.ServiceFailureService,
+) agentports.AgentTool {
 	return newReviewServiceFailureTool(failures)
 }
 
 func provideVoidServiceFailureTool(
-	failures serviceports.ServiceFailureService,
-) serviceports.AgentTool {
+	failures servicefailureports.ServiceFailureService,
+) agentports.AgentTool {
 	return newVoidServiceFailureTool(failures)
 }
 
-func provideDisputeDetentionTool(detentions *detentionservice.Service) serviceports.AgentTool {
+func provideDisputeDetentionTool(detentions *detentionservice.Service) agentports.AgentTool {
 	return newDisputeDetentionTool(detentions)
 }
 
-func provideCreateOrderTool(orders *orderservice.Service) serviceports.AgentTool {
+func provideCreateOrderTool(orders *orderservice.Service) agentports.AgentTool {
 	return newCreateOrderTool(orders)
 }
 
-func provideUpdateOrderTool(orders *orderservice.Service) serviceports.AgentTool {
+func provideUpdateOrderTool(orders *orderservice.Service) agentports.AgentTool {
 	return newUpdateOrderTool(orders)
 }
 
-func provideAttachOrderShipmentsTool(orders *orderservice.Service) serviceports.AgentTool {
+func provideAttachOrderShipmentsTool(orders *orderservice.Service) agentports.AgentTool {
 	return newAttachOrderShipmentsTool(orders)
 }
 
-func provideDetachOrderShipmentTool(orders *orderservice.Service) serviceports.AgentTool {
+func provideDetachOrderShipmentTool(orders *orderservice.Service) agentports.AgentTool {
 	return newDetachOrderShipmentTool(orders)
 }
 
-func provideCloseOrderTool(orders *orderservice.Service) serviceports.AgentTool {
+func provideCloseOrderTool(orders *orderservice.Service) agentports.AgentTool {
 	return newCloseOrderTool(orders)
 }
 
-func provideCancelOrderTool(orders *orderservice.Service) serviceports.AgentTool {
+func provideCancelOrderTool(orders *orderservice.Service) agentports.AgentTool {
 	return newCancelOrderTool(orders)
 }
 
-func provideAddOrderChargeTool(orders *orderservice.Service) serviceports.AgentTool {
+func provideAddOrderChargeTool(orders *orderservice.Service) agentports.AgentTool {
 	return newAddOrderChargeTool(orders)
 }
 
-func provideUpdateOrderChargeTool(orders *orderservice.Service) serviceports.AgentTool {
+func provideUpdateOrderChargeTool(orders *orderservice.Service) agentports.AgentTool {
 	return newUpdateOrderChargeTool(orders)
 }
 
-func provideSetOrderChargeAllocationsTool(orders *orderservice.Service) serviceports.AgentTool {
+func provideSetOrderChargeAllocationsTool(orders *orderservice.Service) agentports.AgentTool {
 	return newSetOrderChargeAllocationsTool(orders)
 }
 
-func provideRemoveOrderChargeTool(orders *orderservice.Service) serviceports.AgentTool {
+func provideRemoveOrderChargeTool(orders *orderservice.Service) agentports.AgentTool {
 	return newRemoveOrderChargeTool(orders)
 }
 
 func provideCreateRecurringShipmentTool(
 	series *recurringshipmentservice.Service,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newCreateRecurringShipmentTool(series)
 }
 
 func provideUpdateRecurringShipmentTool(
 	series *recurringshipmentservice.Service,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newUpdateRecurringShipmentTool(series)
 }
 
 func provideSetRecurringShipmentStatusTool(
 	series *recurringshipmentservice.Service,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newSetRecurringShipmentStatusTool(series)
 }
 
 func provideGenerateRecurringShipmentTool(
 	series *recurringshipmentservice.Service,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newGenerateRecurringShipmentTool(series)
 }
 
 func provideAssignWorkerShiftTool(
 	schedules *schedulingservice.Service,
-	permissions serviceports.PermissionEngine,
+	permissions permissionports.PermissionEngine,
 	teams *orgstructureservice.Service,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newAssignWorkerShiftTool(schedules, newTeamScope(permissions, teams))
 }
 
 func provideEndWorkerShiftAssignmentTool(
 	schedules *schedulingservice.Service,
-	permissions serviceports.PermissionEngine,
+	permissions permissionports.PermissionEngine,
 	teams *orgstructureservice.Service,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newEndWorkerShiftAssignmentTool(
 		schedules,
 		newTeamScope(permissions, teams),
@@ -241,77 +245,77 @@ func provideEndWorkerShiftAssignmentTool(
 
 func provideSetWorkerAvailabilityPreferenceTool(
 	schedules *schedulingservice.Service,
-	permissions serviceports.PermissionEngine,
+	permissions permissionports.PermissionEngine,
 	teams *orgstructureservice.Service,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newSetWorkerAvailabilityPreferenceTool(
 		schedules,
 		newTeamScope(permissions, teams),
 	)
 }
 
-func provideProposeShiftSwapTool(schedules *schedulingservice.Service) serviceports.AgentTool {
+func provideProposeShiftSwapTool(schedules *schedulingservice.Service) agentports.AgentTool {
 	return newProposeShiftSwapTool(schedules)
 }
 
-func provideApproveShiftSwapTool(schedules *schedulingservice.Service) serviceports.AgentTool {
+func provideApproveShiftSwapTool(schedules *schedulingservice.Service) agentports.AgentTool {
 	return newApproveShiftSwapTool(schedules)
 }
 
-func provideRejectShiftSwapTool(schedules *schedulingservice.Service) serviceports.AgentTool {
+func provideRejectShiftSwapTool(schedules *schedulingservice.Service) agentports.AgentTool {
 	return newRejectShiftSwapTool(schedules)
 }
 
-func provideWithdrawShiftSwapTool(schedules *schedulingservice.Service) serviceports.AgentTool {
+func provideWithdrawShiftSwapTool(schedules *schedulingservice.Service) agentports.AgentTool {
 	return newWithdrawShiftSwapTool(schedules)
 }
 
-func provideVetCarrierTool(intel *carrierintelservice.Service) serviceports.AgentTool {
+func provideVetCarrierTool(intel *carrierintelservice.Service) agentports.AgentTool {
 	return newVetCarrierTool(intel)
 }
 
-func provideVetCustomerBrokerTool(intel *carrierintelservice.Service) serviceports.AgentTool {
+func provideVetCustomerBrokerTool(intel *carrierintelservice.Service) agentports.AgentTool {
 	return newVetCustomerBrokerTool(intel)
 }
 
-func provideSetCarrierMonitoringTool(intel *carrierintelservice.Service) serviceports.AgentTool {
+func provideSetCarrierMonitoringTool(intel *carrierintelservice.Service) agentports.AgentTool {
 	return newSetCarrierMonitoringTool(intel)
 }
 
 func provideMarkCarrierIntelReviewedTool(
 	intel *carrierintelservice.Service,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newMarkCarrierIntelReviewedTool(intel)
 }
 
 func provideApplyCarrierIntelSuggestionsTool(
 	intel *carrierintelservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentTool {
 	return newApplyCarrierIntelSuggestionsTool(intel, permissions)
 }
 
 func provideImportSourcedCarrierTool(
 	intel *carrierintelservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentTool {
 	return newImportSourcedCarrierTool(intel, permissions)
 }
 
 func provideVerifyCarrierEquipmentTool(
 	intel *carrierintelservice.Service,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newVerifyCarrierEquipmentTool(intel)
 }
 
 func provideReassignBillingChargeTool(
-	billing serviceports.BillingQueueService,
-) serviceports.AgentTool {
+	billing billingqueueports.BillingQueueService,
+) agentports.AgentTool {
 	return newReassignBillingChargeTool(billing)
 }
 
 func provideManageBillingTransferRunTool(
 	runs *billingtransferservice.Service,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newManageBillingTransferRunTool(runs)
 }

@@ -8,9 +8,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -25,21 +29,21 @@ import (
 
 func (s *Service) ListInvoiceMatches(
 	ctx context.Context,
-	req *repositories.ListCarrierInvoiceMatchesRequest,
+	req *carriersettlementports.ListCarrierInvoiceMatchesRequest,
 ) (*pagination.ListResult[*carriersettlement.InvoiceMatch], error) {
 	return s.invoiceMatchRepo.List(ctx, req)
 }
 
 func (s *Service) GetInvoiceMatch(
 	ctx context.Context,
-	req repositories.GetCarrierInvoiceMatchByIDRequest,
+	req carriersettlementports.GetCarrierInvoiceMatchByIDRequest,
 ) (*carriersettlement.InvoiceMatch, error) {
 	return s.invoiceMatchRepo.GetByID(ctx, req)
 }
 
 func (s *Service) ListUnmatchedEDIInvoices(
 	ctx context.Context,
-	req *repositories.ListEDICarrierInvoicesRequest,
+	req *ediports.ListEDICarrierInvoicesRequest,
 ) (*pagination.ListResult[*edi.CarrierInvoice], error) {
 	return s.ediInvoiceRepo.ListCarrierInvoices(ctx, req)
 }
@@ -53,13 +57,13 @@ func (s *Service) SuggestCarrierForInvoice(
 ) (*carrier.Carrier, error) {
 	invoice, err := s.ediInvoiceRepo.GetCarrierInvoiceByID(
 		ctx,
-		repositories.GetEDICarrierInvoiceByIDRequest{ID: invoiceID, TenantInfo: tenantInfo},
+		ediports.GetEDICarrierInvoiceByIDRequest{ID: invoiceID, TenantInfo: tenantInfo},
 	)
 	if err != nil {
 		return nil, err
 	}
 	if !invoice.CarrierID.IsNil() {
-		return s.carrierRepo.GetByID(ctx, repositories.GetCarrierByIDRequest{
+		return s.carrierRepo.GetByID(ctx, carrierports.GetCarrierByIDRequest{
 			ID:         invoice.CarrierID,
 			TenantInfo: tenantInfo,
 		})
@@ -70,7 +74,7 @@ func (s *Service) SuggestCarrierForInvoice(
 	if scac == "" && dot == "" {
 		return nil, nil //nolint:nilnil // no identity on the invoice means no suggestion
 	}
-	return s.carrierRepo.FindByIdentity(ctx, &repositories.FindCarrierByIdentityRequest{
+	return s.carrierRepo.FindByIdentity(ctx, &carrierports.FindCarrierByIdentityRequest{
 		TenantInfo: tenantInfo,
 		SCAC:       scac,
 		DOTNumber:  dot,
@@ -90,7 +94,7 @@ func (s *Service) LinkInvoiceToCarrier(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	invoiceID, carrierID pulid.ID,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*edi.CarrierInvoice, error) {
 	if err := requireActor(actor, "Carrier invoice linking"); err != nil {
 		return nil, err
@@ -130,7 +134,7 @@ type CreateMatchRequest struct {
 func (s *Service) CreateMatch(
 	ctx context.Context,
 	req *CreateMatchRequest,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*carriersettlement.InvoiceMatch, error) {
 	if err := requireActor(actor, "Carrier invoice match creation"); err != nil {
 		return nil, err
@@ -200,14 +204,14 @@ func (s *Service) resolveMatchAssignment(
 	shipmentID pulid.ID,
 ) (*shipment.CarrierAssignment, error) {
 	if req.CarrierAssignmentID != nil && !req.CarrierAssignmentID.IsNil() {
-		return s.assignmentRepo.GetByID(ctx, &repositories.GetCarrierAssignmentByIDRequest{
+		return s.assignmentRepo.GetByID(ctx, &shipmentports.GetCarrierAssignmentByIDRequest{
 			TenantInfo:          req.TenantInfo,
 			CarrierAssignmentID: *req.CarrierAssignmentID,
 		})
 	}
 	assignment, err := s.assignmentRepo.FindForMatching(
 		ctx,
-		&repositories.FindCarrierAssignmentForMatchingRequest{
+		&shipmentports.FindCarrierAssignmentForMatchingRequest{
 			TenantInfo: req.TenantInfo,
 			CarrierID:  carrierID,
 			ProNumber:  proNumber,
@@ -232,14 +236,14 @@ func (s *Service) AcceptMatch(
 	tenantInfo pagination.TenantInfo,
 	matchID pulid.ID,
 	note string,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*carriersettlement.InvoiceMatch, error) {
 	if err := requireActor(actor, "Carrier invoice match acceptance"); err != nil {
 		return nil, err
 	}
 	match, err := s.invoiceMatchRepo.GetByID(
 		ctx,
-		repositories.GetCarrierInvoiceMatchByIDRequest{ID: matchID, TenantInfo: tenantInfo},
+		carriersettlementports.GetCarrierInvoiceMatchByIDRequest{ID: matchID, TenantInfo: tenantInfo},
 	)
 	if err != nil {
 		return nil, err
@@ -270,14 +274,14 @@ func (s *Service) AcceptWithVariance(
 	tenantInfo pagination.TenantInfo,
 	matchID pulid.ID,
 	note string,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*carriersettlement.InvoiceMatch, error) {
 	if err := requireActor(actor, "Carrier invoice match acceptance"); err != nil {
 		return nil, err
 	}
 	match, err := s.invoiceMatchRepo.GetByID(
 		ctx,
-		repositories.GetCarrierInvoiceMatchByIDRequest{ID: matchID, TenantInfo: tenantInfo},
+		carriersettlementports.GetCarrierInvoiceMatchByIDRequest{ID: matchID, TenantInfo: tenantInfo},
 	)
 	if err != nil {
 		return nil, err
@@ -348,7 +352,7 @@ func (s *Service) RejectMatch(
 	tenantInfo pagination.TenantInfo,
 	matchID pulid.ID,
 	note string,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*carriersettlement.InvoiceMatch, error) {
 	if err := requireActor(actor, "Carrier invoice match rejection"); err != nil {
 		return nil, err
@@ -358,7 +362,7 @@ func (s *Service) RejectMatch(
 	}
 	match, err := s.invoiceMatchRepo.GetByID(
 		ctx,
-		repositories.GetCarrierInvoiceMatchByIDRequest{ID: matchID, TenantInfo: tenantInfo},
+		carriersettlementports.GetCarrierInvoiceMatchByIDRequest{ID: matchID, TenantInfo: tenantInfo},
 	)
 	if err != nil {
 		return nil, err
@@ -406,7 +410,7 @@ func (s *Service) markEDIInvoiceReconciled(
 	}
 	invoice, err := s.ediInvoiceRepo.GetCarrierInvoiceByID(
 		ctx,
-		repositories.GetEDICarrierInvoiceByIDRequest{
+		ediports.GetEDICarrierInvoiceByIDRequest{
 			ID:         *match.EDICarrierInvoiceID,
 			TenantInfo: tenantInfo,
 		},
@@ -439,7 +443,7 @@ func (s *Service) logInvoiceMatchAudit(
 		current.BusinessUnitID,
 		userID,
 	)
-	params := &serviceports.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceCarrierInvoiceMatch,
 		ResourceID:     current.ID.String(),
 		Operation:      operation,
@@ -449,10 +453,10 @@ func (s *Service) logInvoiceMatchAudit(
 		BusinessUnitID: current.BusinessUnitID,
 	}
 	if userID.IsNil() {
-		params.PrincipalType = serviceports.PrincipalTypeSystem
-		params.PrincipalID = serviceports.SystemPrincipalID
+		params.PrincipalType = permissionports.PrincipalTypeSystem
+		params.PrincipalID = permissionports.SystemPrincipalID
 	}
-	options := []serviceports.LogOption{auditservice.WithComment(comment)}
+	options := []auditports.LogOption{auditservice.WithComment(comment)}
 	if previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(previous)
 		options = append(options, auditservice.WithDiff(previous, current))

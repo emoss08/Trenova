@@ -11,9 +11,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentevalgate"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/stretchr/testify/require"
 )
 
@@ -46,7 +46,7 @@ func TestRecordEmbeddingFixture(t *testing.T) {
 
 	embed := func(
 		ctx context.Context,
-		purpose serviceports.EmbeddingPurpose,
+		purpose aiusageports.EmbeddingPurpose,
 		inputs []string,
 	) ([][]float32, error) {
 		response, embedErr := embedder.Embed(ctx, &modeladapter.EmbedCall{

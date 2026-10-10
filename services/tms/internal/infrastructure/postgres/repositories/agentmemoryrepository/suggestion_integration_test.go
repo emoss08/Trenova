@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -69,7 +69,7 @@ func TestMemoryReaders_NeverReturnASuggestion(t *testing.T) {
 	_, err = repo.Create(ctx, dismissed)
 	require.NoError(t, err)
 
-	listed, err := repo.ListActive(ctx, repositories.ListActiveAgentMemoriesRequest{
+	listed, err := repo.ListActive(ctx, agentports.ListActiveAgentMemoriesRequest{
 		TenantInfo:       tenant,
 		Now:              now,
 		OrganizationWide: true,
@@ -78,7 +78,7 @@ func TestMemoryReaders_NeverReturnASuggestion(t *testing.T) {
 	require.Len(t, listed, 1)
 	assert.Equal(t, active.ID, listed[0].ID)
 
-	found, err := repo.Search(ctx, repositories.SearchAgentMemoriesRequest{
+	found, err := repo.Search(ctx, agentports.SearchAgentMemoriesRequest{
 		TenantInfo: tenant,
 		Now:        now,
 		Query:      "lane",
@@ -87,14 +87,14 @@ func TestMemoryReaders_NeverReturnASuggestion(t *testing.T) {
 	require.Len(t, found, 1)
 	assert.Equal(t, active.ID, found[0].ID)
 
-	same, err := repo.FindActive(ctx, repositories.FindActiveAgentMemoryRequest{
+	same, err := repo.FindActive(ctx, agentports.FindActiveAgentMemoryRequest{
 		TenantInfo: tenant,
 		Content:    suggested.Content,
 	})
 	require.NoError(t, err)
 	assert.Nil(t, same, "a pending suggestion is not an active memory")
 
-	_, err = repo.SetStatus(ctx, repositories.SetAgentMemoryStatusRequest{
+	_, err = repo.SetStatus(ctx, agentports.SetAgentMemoryStatusQuery{
 		ID:         suggested.ID,
 		TenantInfo: tenant,
 		Status:     agent.MemoryStatusActive,
@@ -104,7 +104,7 @@ func TestMemoryReaders_NeverReturnASuggestion(t *testing.T) {
 
 	surrounding, err := repo.ListSuggestionContext(
 		ctx,
-		repositories.ListAgentMemorySuggestionContextRequest{
+		agentports.ListAgentMemorySuggestionContextRequest{
 			TenantInfo:        tenant,
 			AgentDefinitionID: agentID,
 			Now:               now,
@@ -114,7 +114,7 @@ func TestMemoryReaders_NeverReturnASuggestion(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, surrounding, 3, "active, pending and recently dismissed memories all count")
 
-	approved, err := repo.ResolveSuggestion(ctx, repositories.ResolveAgentMemorySuggestionRequest{
+	approved, err := repo.ResolveSuggestion(ctx, agentports.ResolveAgentMemorySuggestionRequest{
 		ID:         suggested.ID,
 		TenantInfo: tenant,
 		Status:     agent.MemoryStatusActive,
@@ -128,7 +128,7 @@ func TestMemoryReaders_NeverReturnASuggestion(t *testing.T) {
 	assert.Equal(t, agent.MemoryStatusActive, approved.Status)
 	assert.Equal(t, "Confirm the lane before quoting a rate.", approved.Content)
 
-	_, err = repo.ResolveSuggestion(ctx, repositories.ResolveAgentMemorySuggestionRequest{
+	_, err = repo.ResolveSuggestion(ctx, agentports.ResolveAgentMemorySuggestionRequest{
 		ID:         suggested.ID,
 		TenantInfo: tenant,
 		Status:     agent.MemoryStatusDismissed,

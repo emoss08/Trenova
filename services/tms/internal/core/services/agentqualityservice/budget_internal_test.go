@@ -6,7 +6,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,7 +18,7 @@ import (
 )
 
 type budgetControls struct {
-	repositories.AgentQualityControlRepository
+	agentqualityports.AgentQualityControlRepository
 	control *agentquality.Control
 }
 
@@ -29,17 +30,17 @@ func (f *budgetControls) Get(context.Context, pagination.TenantInfo) (*agentqual
 }
 
 type windowedUsage struct {
-	repositories.AIUsageRepository
+	aiusageports.AIUsageRepository
 	since []int64
 	spent decimal.Decimal
 }
 
 func (f *windowedUsage) EvaluationCost(
 	_ context.Context,
-	req repositories.AIUsageEvaluationCostRequest,
-) (*repositories.AIUsageCost, error) {
+	req aiusageports.AIUsageEvaluationCostRequest,
+) (*aiusageports.AIUsageCost, error) {
 	f.since = append(f.since, req.Since)
-	return &repositories.AIUsageCost{CostUSD: f.spent}, nil
+	return &aiusageports.AIUsageCost{CostUSD: f.spent}, nil
 }
 
 func budgetService(control *agentquality.Control, usage *windowedUsage, now int64) *Service {

@@ -10,9 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -67,7 +67,7 @@ type subjectRepository struct {
 	l  *zap.Logger
 }
 
-func NewSubjectRepository(p Params) repositories.CarrierIntelSubjectRepository {
+func NewSubjectRepository(p Params) carrierintelports.CarrierIntelSubjectRepository {
 	return &subjectRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.carrier-intel-subject-repository"),
@@ -96,7 +96,7 @@ func tenderOfferActivityQuery(db bun.IDB) *bun.SelectQuery {
 
 func buildCarrierSubjectsQuery(
 	db bun.IDB,
-	req *repositories.ListCarrierIntelSubjectsRequest,
+	req *carrierintelports.ListCarrierIntelSubjectsRequest,
 	limit int,
 ) *bun.SelectQuery {
 	cols := buncolgen.CarrierColumns
@@ -163,9 +163,9 @@ func buildCarrierSubjectsQuery(
 
 func (r *subjectRepository) ListCarrierSubjects(
 	ctx context.Context,
-	req *repositories.ListCarrierIntelSubjectsRequest,
-) ([]repositories.CarrierIntelSubject, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.CarrierIntelSubject, error) {
+	req *carrierintelports.ListCarrierIntelSubjectsRequest,
+) ([]carrierintelports.CarrierIntelSubject, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]carrierintelports.CarrierIntelSubject, error) {
 		limit := intutils.Clamp(
 			intutils.WithDefault(max(req.Limit, 0), defaultCarrierSubjectLimit),
 			1,
@@ -179,10 +179,10 @@ func (r *subjectRepository) ListCarrierSubjects(
 			return nil, fmt.Errorf("list carrier intel carrier subjects: %w", err)
 		}
 
-		subjects := make([]repositories.CarrierIntelSubject, 0, len(rows))
+		subjects := make([]carrierintelports.CarrierIntelSubject, 0, len(rows))
 		for i := range rows {
 			row := &rows[i]
-			subjects = append(subjects, repositories.CarrierIntelSubject{
+			subjects = append(subjects, carrierintelports.CarrierIntelSubject{
 				SubjectType:  carrierintel.SubjectTypeCarrier,
 				SubjectID:    row.ID.String(),
 				CarrierID:    row.ID,
@@ -199,8 +199,8 @@ func (r *subjectRepository) ListCarrierSubjects(
 	})
 }
 
-func customerSubject(row *customerSubjectRow) repositories.CarrierIntelSubject {
-	return repositories.CarrierIntelSubject{
+func customerSubject(row *customerSubjectRow) carrierintelports.CarrierIntelSubject {
+	return carrierintelports.CarrierIntelSubject{
 		SubjectType:  carrierintel.SubjectTypeCustomer,
 		SubjectID:    row.ID.String(),
 		Name:         row.Name,
@@ -223,8 +223,8 @@ func customerSubjectColumns(q *bun.SelectQuery) *bun.SelectQuery {
 func (r *subjectRepository) ListBrokerCustomerSubjects(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) ([]repositories.CarrierIntelSubject, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.CarrierIntelSubject, error) {
+) ([]carrierintelports.CarrierIntelSubject, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]carrierintelports.CarrierIntelSubject, error) {
 		cols := buncolgen.CustomerColumns
 		rows := make([]customerSubjectRow, 0, brokerCustomerCapacity)
 		err := r.db.DBForContext(ctx).
@@ -243,7 +243,7 @@ func (r *subjectRepository) ListBrokerCustomerSubjects(
 			return nil, fmt.Errorf("list carrier intel broker customer subjects: %w", err)
 		}
 
-		subjects := make([]repositories.CarrierIntelSubject, 0, len(rows))
+		subjects := make([]carrierintelports.CarrierIntelSubject, 0, len(rows))
 		for i := range rows {
 			subjects = append(subjects, customerSubject(&rows[i]))
 		}
@@ -255,8 +255,8 @@ func (r *subjectRepository) ListBrokerCustomerSubjects(
 func (r *subjectRepository) GetOrganizationSubject(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*repositories.CarrierIntelSubject, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.CarrierIntelSubject, error) {
+) (*carrierintelports.CarrierIntelSubject, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carrierintelports.CarrierIntelSubject, error) {
 		cols := buncolgen.OrganizationColumns
 		var (
 			name      string
@@ -280,7 +280,7 @@ func (r *subjectRepository) GetOrganizationSubject(
 			return nil, nil //nolint:nilnil // an organization without a DOT number cannot be monitored
 		}
 
-		return &repositories.CarrierIntelSubject{
+		return &carrierintelports.CarrierIntelSubject{
 			SubjectType: carrierintel.SubjectTypeOrganization,
 			SubjectID:   tenantInfo.OrgID.String(),
 			Name:        name,
@@ -293,8 +293,8 @@ func (r *subjectRepository) GetCustomerSubject(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	customerID pulid.ID,
-) (*repositories.CarrierIntelSubject, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.CarrierIntelSubject, error) {
+) (*carrierintelports.CarrierIntelSubject, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carrierintelports.CarrierIntelSubject, error) {
 		row := new(customerSubjectRow)
 		err := r.db.DBForContext(ctx).
 			NewSelect().

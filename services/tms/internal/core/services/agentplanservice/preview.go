@@ -4,7 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -19,7 +20,7 @@ type shownPlan struct {
 // annotate hands a step the preview the plan was approved on, so its
 // decision records the step as the decider saw it, projected from the steps
 // before it, rather than as it reads once they have run.
-func (p *shownPlan) annotate(req *services.DecideAgentProposalRequest, proposalID pulid.ID) {
+func (p *shownPlan) annotate(req *agentports.DecideAgentProposalRequest, proposalID pulid.ID) {
 	if p == nil || p.preview == nil {
 		return
 	}
@@ -35,19 +36,19 @@ func (p *shownPlan) annotate(req *services.DecideAgentProposalRequest, proposalI
 // recorded and nothing runs. A rejection needs no preview.
 func (s *Service) settlePreview(
 	ctx context.Context,
-	req *services.DecideAgentPlanRequest,
+	req *agentports.DecideAgentPlanRequest,
 	plan *agent.AgentPlan,
 	steps []*agent.AgentProposal,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*shownPlan, error) {
 	if req.Decision != agent.DecisionAccepted || s.previews == nil {
 		return nil, nil //nolint:nilnil // no preview settles a rejection
 	}
 
-	preview, err := s.previews.ForPlan(ctx, &services.PlanPreviewRequest{
+	preview, err := s.previews.ForPlan(ctx, &agentports.PlanPreviewRequest{
 		Plan:   plan,
 		Steps:  steps,
-		Viewer: &services.PreviewViewer{Actor: actor},
+		Viewer: &agentports.PreviewViewer{Actor: actor},
 	})
 	if err != nil {
 		return nil, err

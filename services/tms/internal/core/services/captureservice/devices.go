@@ -6,8 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -312,12 +313,12 @@ func (s *Service) revoke(
 	}
 
 	actor := updated.UserID
-	principal := services.PrincipalTypeSystem
+	principal := permissionports.PrincipalTypeSystem
 	if by != nil {
 		actor = *by
-		principal = services.PrincipalTypeUser
+		principal = permissionports.PrincipalTypeUser
 	}
-	s.logAudit(&services.LogActionParams{
+	s.logAudit(&auditports.LogActionParams{
 		Resource:       permission.ResourceCaptureDevice,
 		ResourceID:     updated.ID.String(),
 		Operation:      permission.OpUpdate,
@@ -370,7 +371,7 @@ func (s *Service) RevokeDevice(
 	ctx context.Context,
 	req *RevokeDeviceRequest,
 ) (*capture.CaptureDevice, error) {
-	device, err := s.devices.GetByID(ctx, repositories.GetCaptureDeviceByIDRequest{
+	device, err := s.devices.GetByID(ctx, captureports.GetCaptureDeviceByIDRequest{
 		ID:         req.DeviceID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -428,7 +429,7 @@ func (s *Service) ListDevices(
 	ctx context.Context,
 	req *ListDevicesRequest,
 ) (*pagination.ListResult[*capture.CaptureDevice], error) {
-	repoReq := &repositories.ListCaptureDevicesRequest{Filter: req.Filter, Status: req.Status}
+	repoReq := &captureports.ListCaptureDevicesRequest{Filter: req.Filter, Status: req.Status}
 	if req.Mine {
 		repoReq.UserID = req.TenantInfo.UserID
 	} else if _, err := s.require(ctx, req.TenantInfo, permission.ResourceCaptureDevice, permission.OpRead); err != nil {
@@ -486,7 +487,7 @@ func (s *Service) Heartbeat(ctx context.Context, principal *DevicePrincipal, cli
 		return
 	}
 
-	if err := s.devices.Touch(ctx, repositories.TouchCaptureDeviceRequest{
+	if err := s.devices.Touch(ctx, captureports.TouchCaptureDeviceRequest{
 		ID: device.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: device.OrganizationID,

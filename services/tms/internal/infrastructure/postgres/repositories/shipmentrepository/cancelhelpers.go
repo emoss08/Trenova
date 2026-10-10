@@ -5,14 +5,14 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/uptrace/bun"
 )
 
-func restoredShipmentStatus(req *repositories.UncancelShipmentRequest) shipment.Status {
+func restoredShipmentStatus(req *shipmentports.UncancelShipmentRequest) shipment.Status {
 	if req.RestoredStatus == "" || req.RestoredStatus == shipment.StatusCanceled {
 		return shipment.StatusNew
 	}
@@ -77,7 +77,7 @@ func (r *repository) cancelShipmentComponents(
 func (r *repository) uncancelShipmentComponents(
 	ctx context.Context,
 	tx bun.IDB,
-	req *repositories.UncancelShipmentRequest,
+	req *shipmentports.UncancelShipmentRequest,
 ) error {
 	moveIDs, err := r.getMoveIDsForShipment(ctx, tx, req.ShipmentID)
 	if err != nil {
@@ -111,12 +111,12 @@ func restoreMoveStatuses(
 	ctx context.Context,
 	tx bun.IDB,
 	moveIDs []pulid.ID,
-	restores []repositories.MoveStatusRestore,
+	restores []shipmentports.MoveStatusRestore,
 ) error {
 	cols := buncolgen.ShipmentMoveColumns
 	groups := sliceutils.GroupBy(
 		restores,
-		func(item repositories.MoveStatusRestore) shipment.MoveStatus {
+		func(item shipmentports.MoveStatusRestore) shipment.MoveStatus {
 			return item.Status
 		},
 	)
@@ -150,12 +150,12 @@ func restoreStopStatuses(
 	ctx context.Context,
 	tx bun.IDB,
 	moveIDs []pulid.ID,
-	restores []repositories.StopStatusRestore,
+	restores []shipmentports.StopStatusRestore,
 ) error {
 	cols := buncolgen.StopColumns
 	groups := sliceutils.GroupBy(
 		restores,
-		func(item repositories.StopStatusRestore) shipment.StopStatus {
+		func(item shipmentports.StopStatusRestore) shipment.StopStatus {
 			return item.Status
 		},
 	)

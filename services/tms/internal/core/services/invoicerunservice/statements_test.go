@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -82,9 +82,9 @@ func statementCandidate(
 	customerID pulid.ID,
 	pro string,
 	amount string,
-	mutate func(*repositories.ConsolidationCandidate),
-) *repositories.ConsolidationCandidate {
-	candidate := &repositories.ConsolidationCandidate{
+	mutate func(*billingqueueports.ConsolidationCandidate),
+) *billingqueueports.ConsolidationCandidate {
+	candidate := &billingqueueports.ConsolidationCandidate{
 		BillingQueueItemID: pulid.MustNew("bqi_"),
 		ShipmentID:         pulid.MustNew("shp_"),
 		CustomerID:         customerID,
@@ -105,7 +105,7 @@ func TestNewStatementGroupSumsItsOwnMembers(t *testing.T) {
 	t.Parallel()
 
 	customerID := pulid.MustNew("cus_")
-	groups := GroupCandidates([]*repositories.ConsolidationCandidate{
+	groups := GroupCandidates([]*billingqueueports.ConsolidationCandidate{
 		statementCandidate(customerID, "PRO-1", "125.50", nil),
 		statementCandidate(customerID, "PRO-2", "74.50", nil),
 	})
@@ -124,7 +124,7 @@ func TestNewStatementGroupOmitsShipmentsForTheListView(t *testing.T) {
 	t.Parallel()
 
 	customerID := pulid.MustNew("cus_")
-	groups := GroupCandidates([]*repositories.ConsolidationCandidate{
+	groups := GroupCandidates([]*billingqueueports.ConsolidationCandidate{
 		statementCandidate(customerID, "PRO-1", "125.50", nil),
 	})
 
@@ -138,10 +138,10 @@ func TestNewStatementGroupFlagsTheCustomerMinimum(t *testing.T) {
 	t.Parallel()
 
 	customerID := pulid.MustNew("cus_")
-	withMinimum := func(c *repositories.ConsolidationCandidate) {
+	withMinimum := func(c *billingqueueports.ConsolidationCandidate) {
 		c.MinConsolidatedAmount = decimal.NewNullDecimal(decimal.RequireFromString("250"))
 	}
-	groups := GroupCandidates([]*repositories.ConsolidationCandidate{
+	groups := GroupCandidates([]*billingqueueports.ConsolidationCandidate{
 		statementCandidate(customerID, "PRO-1", "125.50", withMinimum),
 	})
 
@@ -153,8 +153,8 @@ func TestNewStatementGroupFlagsTheCustomerMinimum(t *testing.T) {
 func TestSyncStatementTotalsHoldsOnlyWhenEveryGroupIsHeld(t *testing.T) {
 	t.Parallel()
 
-	statement := &servicesports.OpenStatement{
-		Groups: []*servicesports.StatementGroup{
+	statement := &invoicerunports.OpenStatement{
+		Groups: []*invoicerunports.StatementGroup{
 			{ShipmentCount: 1, TotalAmount: decimal.RequireFromString("100"), BelowMinimum: true},
 			{ShipmentCount: 3, TotalAmount: decimal.RequireFromString("900"), BelowMinimum: false},
 		},
@@ -171,8 +171,8 @@ func TestSyncStatementTotalsHoldsOnlyWhenEveryGroupIsHeld(t *testing.T) {
 func TestSyncStatementTotalsHoldsWhenAllGroupsAreHeld(t *testing.T) {
 	t.Parallel()
 
-	statement := &servicesports.OpenStatement{
-		Groups: []*servicesports.StatementGroup{
+	statement := &invoicerunports.OpenStatement{
+		Groups: []*invoicerunports.StatementGroup{
 			{ShipmentCount: 1, TotalAmount: decimal.RequireFromString("100"), BelowMinimum: true},
 		},
 	}
@@ -187,7 +187,7 @@ func TestSyncStatementTotalsHoldsWhenAllGroupsAreHeld(t *testing.T) {
 func TestSyncStatementTotalsOnAnEmptyStatement(t *testing.T) {
 	t.Parallel()
 
-	statement := &servicesports.OpenStatement{}
+	statement := &invoicerunports.OpenStatement{}
 
 	syncStatementTotals(statement)
 

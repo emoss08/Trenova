@@ -9,8 +9,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -24,16 +23,16 @@ var fixedLocationCodePeriod = time.Date(2000, time.January, 1, 0, 0, 0, 0, time.
 type Params struct {
 	fx.In
 
-	SequenceConfigRepo repositories.SequenceConfigRepository
+	SequenceConfigRepo tenantports.SequenceConfigRepository
 	SequenceGenerator  seqgen.Generator
 }
 
 type Generator struct {
-	sequenceConfigRepo repositories.SequenceConfigRepository
+	sequenceConfigRepo tenantports.SequenceConfigRepository
 	sequenceGenerator  seqgen.Generator
 }
 
-func New(p Params) services.LocationCodeGenerator {
+func New(p Params) tenantports.LocationCodeGenerator {
 	return &Generator{
 		sequenceConfigRepo: p.SequenceConfigRepo,
 		sequenceGenerator:  p.SequenceGenerator,
@@ -42,7 +41,7 @@ func New(p Params) services.LocationCodeGenerator {
 
 func (g *Generator) Generate(
 	ctx context.Context,
-	req services.LocationCodeGenerateRequest,
+	req tenantports.LocationCodeGenerateRequest,
 ) (string, error) {
 	if req.OrganizationID.IsNil() || req.BusinessUnitID.IsNil() {
 		return "", errLocationCodeRequestRequired
@@ -90,7 +89,7 @@ func (g *Generator) Generate(
 }
 
 func (g *Generator) BuildPrefix(
-	input services.LocationCodeInput,
+	input tenantports.LocationCodeInput,
 	strategy *tenant.LocationCodeStrategy,
 ) (string, error) {
 	strategy = tenant.EffectiveLocationCodeStrategy(strategy)
@@ -129,9 +128,9 @@ func (g *Generator) BuildPrefix(
 
 func (g *Generator) resolveStrategy(
 	ctx context.Context,
-	req services.LocationCodeGenerateRequest,
+	req tenantports.LocationCodeGenerateRequest,
 ) (*tenant.LocationCodeStrategy, error) {
-	doc, err := g.sequenceConfigRepo.GetByTenant(ctx, repositories.GetSequenceConfigRequest{
+	doc, err := g.sequenceConfigRepo.GetByTenant(ctx, tenantports.GetSequenceConfigRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: req.OrganizationID,
 			BuID:  req.BusinessUnitID,
@@ -156,7 +155,7 @@ func (g *Generator) resolveStrategy(
 }
 
 func componentValue(
-	input services.LocationCodeInput,
+	input tenantports.LocationCodeInput,
 	component tenant.LocationCodeComponent,
 ) string {
 	switch component {

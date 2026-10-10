@@ -10,13 +10,13 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documenttemplaterepository"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -28,9 +28,9 @@ import (
 type fixture struct {
 	ctx         context.Context
 	db          *bun.DB
-	templates   repositories.DocumentTemplateRepository
-	versions    repositories.DocumentTemplateVersionRepository
-	assignments repositories.DocumentTemplateAssignmentRepository
+	templates   documenttemplateports.DocumentTemplateRepository
+	versions    documenttemplateports.DocumentTemplateVersionRepository
+	assignments documenttemplateports.DocumentTemplateAssignmentRepository
 	tenantInfo  pagination.TenantInfo
 	userID      pulid.ID
 }
@@ -149,7 +149,7 @@ func TestResolveWalksAllThreeTiers(t *testing.T) {
 
 	// Tier three. The seed leaves every template a draft, so nothing is live and
 	// the caller is told to render the built-in.
-	row, err := f.templates.Resolve(f.ctx, &repositories.ResolveDocumentTemplateRequest{
+	row, err := f.templates.Resolve(f.ctx, &documenttemplateports.ResolveDocumentTemplateRequest{
 		TenantInfo: f.tenantInfo,
 		Kind:       kind,
 	})
@@ -162,7 +162,7 @@ func TestResolveWalksAllThreeTiers(t *testing.T) {
 
 	published, err := f.versions.Publish(
 		f.ctx,
-		&repositories.PublishDocumentTemplateVersionRequest{
+		&documenttemplateports.PublishDocumentTemplateVersionRequest{
 			TenantInfo:    f.tenantInfo,
 			VersionID:     orgTemplate.Versions[0].ID,
 			PublishedByID: f.userID,
@@ -173,7 +173,7 @@ func TestResolveWalksAllThreeTiers(t *testing.T) {
 	require.Equal(t, documenttemplate.VersionStatusActive, published.Status)
 
 	// Tier two.
-	row, err = f.templates.Resolve(f.ctx, &repositories.ResolveDocumentTemplateRequest{
+	row, err = f.templates.Resolve(f.ctx, &documenttemplateports.ResolveDocumentTemplateRequest{
 		TenantInfo: f.tenantInfo,
 		Kind:       kind,
 	})
@@ -200,7 +200,7 @@ func TestResolveWalksAllThreeTiers(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	row, err = f.templates.Resolve(f.ctx, &repositories.ResolveDocumentTemplateRequest{
+	row, err = f.templates.Resolve(f.ctx, &documenttemplateports.ResolveDocumentTemplateRequest{
 		TenantInfo: f.tenantInfo,
 		Kind:       kind,
 		CustomerID: &customerID,
@@ -213,7 +213,7 @@ func TestResolveWalksAllThreeTiers(t *testing.T) {
 	// A customer without an assignment must still land on the organization
 	// default, not on someone else's override.
 	other := f.otherCustomerID(t, customerID)
-	row, err = f.templates.Resolve(f.ctx, &repositories.ResolveDocumentTemplateRequest{
+	row, err = f.templates.Resolve(f.ctx, &documenttemplateports.ResolveDocumentTemplateRequest{
 		TenantInfo: f.tenantInfo,
 		Kind:       kind,
 		CustomerID: &other,
@@ -227,14 +227,14 @@ func TestResolveWalksAllThreeTiers(t *testing.T) {
 	// than to the built-in.
 	require.NoError(t, f.assignments.Unassign(
 		f.ctx,
-		&repositories.UnassignDocumentTemplateRequest{
+		&documenttemplateports.UnassignDocumentTemplateRequest{
 			TenantInfo: f.tenantInfo,
 			Kind:       kind,
 			CustomerID: customerID,
 		},
 	))
 
-	row, err = f.templates.Resolve(f.ctx, &repositories.ResolveDocumentTemplateRequest{
+	row, err = f.templates.Resolve(f.ctx, &documenttemplateports.ResolveDocumentTemplateRequest{
 		TenantInfo: f.tenantInfo,
 		Kind:       kind,
 		CustomerID: &customerID,
@@ -261,7 +261,7 @@ func (f *fixture) publishSecondTemplate(
 
 	version, err := f.versions.Create(
 		f.ctx,
-		&repositories.CreateDocumentTemplateVersionRequest{
+		&documenttemplateports.CreateDocumentTemplateVersionRequest{
 			Version: &documenttemplate.DocumentTemplateVersion{
 				OrganizationID: f.tenantInfo.OrgID,
 				BusinessUnitID: f.tenantInfo.BuID,
@@ -273,7 +273,7 @@ func (f *fixture) publishSecondTemplate(
 	)
 	require.NoError(t, err)
 
-	_, err = f.versions.Publish(f.ctx, &repositories.PublishDocumentTemplateVersionRequest{
+	_, err = f.versions.Publish(f.ctx, &documenttemplateports.PublishDocumentTemplateVersionRequest{
 		TenantInfo:    f.tenantInfo,
 		VersionID:     version.ID,
 		PublishedByID: f.userID,
@@ -335,7 +335,7 @@ func TestOnlyOneDraftPerTemplateIsAccepted(t *testing.T) {
 	require.Len(t, template.Versions, 1)
 	require.Equal(t, documenttemplate.VersionStatusDraft, template.Versions[0].Status)
 
-	_, err := f.versions.Create(f.ctx, &repositories.CreateDocumentTemplateVersionRequest{
+	_, err := f.versions.Create(f.ctx, &documenttemplateports.CreateDocumentTemplateVersionRequest{
 		Version: &documenttemplate.DocumentTemplateVersion{
 			OrganizationID: f.tenantInfo.OrgID,
 			BusinessUnitID: f.tenantInfo.BuID,

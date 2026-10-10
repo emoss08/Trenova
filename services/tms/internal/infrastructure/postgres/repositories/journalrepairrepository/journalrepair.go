@@ -11,9 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/journalsource"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -36,11 +36,11 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.JournalRepairRepository {
+func New(p Params) driversettlementports.JournalRepairRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.journal-repair-repository")}
 }
 
-func limitOf(req *repositories.ListJournalRepairRequest) int {
+func limitOf(req *driversettlementports.ListJournalRepairRequest) int {
 	if req.Limit <= 0 || req.Limit > 1000 {
 		return defaultLimit
 	}
@@ -49,9 +49,9 @@ func limitOf(req *repositories.ListJournalRepairRequest) int {
 
 func (r *repository) ListUnjournaledAdjustmentMemos(
 	ctx context.Context,
-	req *repositories.ListJournalRepairRequest,
-) ([]*repositories.AdjustmentMemoRepair, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*repositories.AdjustmentMemoRepair, error) {
+	req *driversettlementports.ListJournalRepairRequest,
+) ([]*driversettlementports.AdjustmentMemoRepair, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*driversettlementports.AdjustmentMemoRepair, error) {
 		dba := r.db.DBForContext(ctx)
 		cols := buncolgen.InvoiceColumns
 		ledgerCols := buncolgen.CustomerLedgerEntryColumns
@@ -118,18 +118,18 @@ func (r *repository) ListUnjournaledAdjustmentMemos(
 			return nil, err
 		}
 
-		repairs := make([]*repositories.AdjustmentMemoRepair, 0, len(memos))
+		repairs := make([]*driversettlementports.AdjustmentMemoRepair, 0, len(memos))
 		for _, memo := range memos {
 			adjustment, ok := byID[memo.SourceInvoiceAdjustmentID]
 			if !ok || adjustment.OrganizationID != memo.OrganizationID ||
 				adjustment.BusinessUnitID != memo.BusinessUnitID {
-				repairs = append(repairs, &repositories.AdjustmentMemoRepair{
+				repairs = append(repairs, &driversettlementports.AdjustmentMemoRepair{
 					Memo:          memo,
 					SourceMissing: true,
 				})
 				continue
 			}
-			repairs = append(repairs, &repositories.AdjustmentMemoRepair{
+			repairs = append(repairs, &driversettlementports.AdjustmentMemoRepair{
 				Memo:            memo,
 				Kind:            adjustment.Kind,
 				SourceInvoiceID: adjustment.OriginalInvoiceID,
@@ -142,9 +142,9 @@ func (r *repository) ListUnjournaledAdjustmentMemos(
 
 func (r *repository) ListUnjournaledDriverPayments(
 	ctx context.Context,
-	req *repositories.ListJournalRepairRequest,
-) ([]*repositories.DriverPaymentRepair, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*repositories.DriverPaymentRepair, error) {
+	req *driversettlementports.ListJournalRepairRequest,
+) ([]*driversettlementports.DriverPaymentRepair, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*driversettlementports.DriverPaymentRepair, error) {
 		dba := r.db.DBForContext(ctx)
 		cols := buncolgen.SettlementColumns
 		settlements := make([]*driversettlement.Settlement, 0, limitOf(req))
@@ -182,9 +182,9 @@ func (r *repository) ListUnjournaledDriverPayments(
 			return nil, err
 		}
 
-		repairs := make([]*repositories.DriverPaymentRepair, 0, len(settlements))
+		repairs := make([]*driversettlementports.DriverPaymentRepair, 0, len(settlements))
 		for _, settlement := range settlements {
-			repairs = append(repairs, &repositories.DriverPaymentRepair{
+			repairs = append(repairs, &driversettlementports.DriverPaymentRepair{
 				Settlement: settlement,
 				JournalBatchID: batches[journalKey(
 					settlement.OrganizationID,
@@ -257,7 +257,7 @@ func existingJournalBatches(
 
 func (r *repository) SetDriverSettlementPaidBatch(
 	ctx context.Context,
-	params *repositories.SetDriverSettlementPaidBatchParams,
+	params *driversettlementports.SetDriverSettlementPaidBatchParams,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.SettlementColumns

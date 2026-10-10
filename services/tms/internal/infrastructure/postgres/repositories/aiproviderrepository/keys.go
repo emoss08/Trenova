@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/uptrace/bun"
@@ -24,13 +24,13 @@ type keyRepository struct {
 	db *postgres.Connection
 }
 
-func NewKeyRepository(p KeyParams) repositories.AIProviderKeyRepository {
+func NewKeyRepository(p KeyParams) agentports.AIProviderKeyRepository {
 	return &keyRepository{db: p.DB}
 }
 
 func (r *keyRepository) RecordFingerprint(
 	ctx context.Context,
-	req repositories.RecordAIProviderKeyFingerprintRequest,
+	req agentports.RecordAIProviderKeyFingerprintRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.ProviderColumns
@@ -57,7 +57,7 @@ func (r *keyRepository) RecordFingerprint(
 
 func (r *keyRepository) TouchUsed(
 	ctx context.Context,
-	req repositories.TouchAIProviderKeyRequest,
+	req agentports.TouchAIProviderKeyRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.ProviderColumns
@@ -85,7 +85,7 @@ func (r *keyRepository) TouchUsed(
 
 func (r *keyRepository) ClearExpiredPrevious(
 	ctx context.Context,
-	req repositories.ClearExpiredAIProviderKeysRequest,
+	req agentports.ClearExpiredAIProviderKeysRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		cols := buncolgen.ProviderColumns

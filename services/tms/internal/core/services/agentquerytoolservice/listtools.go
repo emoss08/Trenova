@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
@@ -86,7 +86,7 @@ type listTool struct {
 	description string
 }
 
-func newListTool(spec listSpec) serviceports.AgentQueryTool {
+func newListTool(spec listSpec) agentports.AgentQueryTool {
 	return buildListTool(&spec)
 }
 
@@ -199,7 +199,7 @@ func (t *listTool) Description() string { return t.description }
 
 func (t *listTool) SearchTerms() []string { return t.spec.searchTerms }
 
-func (t *listTool) Policy() serviceports.ToolPolicy {
+func (t *listTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: t.spec.resource,
 	})
@@ -252,7 +252,7 @@ func (t *listTool) ParamSchema() map[string]any {
 
 func (t *listTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -330,7 +330,7 @@ func (t *listTool) Query(
 // or plainly.
 func (t *listTool) fetchRows(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 	opts *pagination.QueryOptions,
 	gate *fieldGate,
 	criteria *filtercatalog.Criteria,
@@ -363,7 +363,7 @@ type viewRun struct {
 // row past limit to say whether there are more.
 func (t *listTool) runView(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 	query string,
 	filters []domaintypes.FieldFilter,
 	sorting []domaintypes.SortField,

@@ -7,8 +7,8 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
@@ -19,7 +19,7 @@ import (
 // next move is the same either way: read from the fallback window.
 func (r *repository) GetFeedState(
 	ctx context.Context,
-	req *repositories.GetFuelFeedStateRequest,
+	req *fuelpurchaseports.GetFuelFeedStateRequest,
 ) (*fuelpurchase.CardFeedState, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*fuelpurchase.CardFeedState, error) {
 		cols := buncolgen.CardFeedStateColumns

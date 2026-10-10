@@ -12,8 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -66,7 +67,7 @@ func (s *Service) ModelPass(
 		mappingIDs = mappingIDs[:maxModelTargets]
 	}
 
-	rows, err := s.mappings.GetByIDs(ctx, repositories.GetAccountingMappingsByIDsRequest{
+	rows, err := s.mappings.GetByIDs(ctx, accountingsyncports.GetAccountingMappingsByIDsRequest{
 		TenantInfo: tenantInfo,
 		IDs:        mappingIDs,
 	})
@@ -86,7 +87,7 @@ func (s *Service) ModelPass(
 		batch := newModelBatch(pending[start:min(start+modelBatchSize, len(pending))])
 		changed, reviewed, batchErr := s.runModelBatch(ctx, tenantInfo, connectionID, batch)
 		if batchErr != nil {
-			if errors.Is(batchErr, services.ErrNoProviderConfigured) {
+			if errors.Is(batchErr, agentports.ErrNoProviderConfigured) {
 				return applied, nil
 			}
 			return applied, batchErr
@@ -125,7 +126,7 @@ func newModelBatch(rows []*accountingsync.AccountingMapping) *modelBatch {
 	return batch
 }
 
-func (b *modelBatch) context() services.DelimitedContext {
+func (b *modelBatch) context() agentports.DelimitedContext {
 	var body strings.Builder
 	for idx, row := range b.rows {
 		label := "T" + strconv.Itoa(idx+1)
@@ -135,8 +136,8 @@ func (b *modelBatch) context() services.DelimitedContext {
 			fmt.Fprintf(&body, "  C%d: %s\n", cidx+1, candidate.Name)
 		}
 	}
-	return services.DelimitedContext{
-		Sections: []services.ContextSection{{
+	return agentports.DelimitedContext{
+		Sections: []agentports.ContextSection{{
 			Title:   "Targets and their candidates",
 			Trusted: false,
 			Content: body.String(),
@@ -162,7 +163,7 @@ func (s *Service) runModelBatch(
 	connectionID pulid.ID,
 	batch *modelBatch,
 ) ([]*accountingsync.AccountingMapping, bool, error) {
-	result, err := s.completion.CompleteStructured(ctx, &services.StructuredCompletionRequest{
+	result, err := s.completion.CompleteStructured(ctx, &agentports.StructuredCompletionRequest{
 		TenantInfo:   tenantInfo,
 		Task:         aiprovider.TaskAccountingMapping,
 		System:       modelSystemPrompt,
@@ -170,7 +171,7 @@ func (s *Service) runModelBatch(
 		OutputSchema: modelSchema(),
 		SchemaName:   modelSchemaName,
 		MaxTokens:    modelMaxTokens,
-		Attribution: services.AIUsageAttribution{
+		Attribution: aiusageports.AIUsageAttribution{
 			Feature: aiusage.FeatureAccountingMapping,
 			Subject: aiusage.Subject{
 				Type: aiusage.SubjectTypeAccountingConnection,

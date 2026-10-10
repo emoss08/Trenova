@@ -5,10 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdryrun"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/assistantservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -21,21 +21,21 @@ func TestDryRunStepsSetEachCallBesideTheWriteItBecame(t *testing.T) {
 		Turn: agentruntime.TurnState{Held: []string{"get_invoice", "update_invoice"}},
 	}
 	outcome := &agentflow.Outcome{
-		Result: &serviceports.RunResult{Actions: []serviceports.PendingAction{
+		Result: &agentports.RunResult{Actions: []agentports.PendingAction{
 			{ToolCallID: "2", ToolName: "update_invoice", Tier: agent.TierActWithApproval},
 		}},
 		Events: []temporaltype.StreamItem{
-			{Event: serviceports.AssistantEventToolStarted, Data: map[string]any{"callId": "1"}},
-			{Event: serviceports.AssistantEventToolFinished, Data: serviceports.AssistantToolFinishedEvent{
+			{Event: agentports.AssistantEventToolStarted, Data: map[string]any{"callId": "1"}},
+			{Event: agentports.AssistantEventToolFinished, Data: agentports.AssistantToolFinishedEvent{
 				CallID: "1", Name: "get_invoice", Verdict: "ran",
 			}},
-			{Event: serviceports.AssistantEventToolFinished, Data: &serviceports.AssistantToolFinishedEvent{
+			{Event: agentports.AssistantEventToolFinished, Data: &agentports.AssistantToolFinishedEvent{
 				CallID: "2", Name: "update_invoice", Verdict: "proposed", Proposed: true,
 			}},
-			{Event: serviceports.AssistantEventToolFinished, Data: map[string]any{
+			{Event: agentports.AssistantEventToolFinished, Data: map[string]any{
 				"callId": "3", "name": "cancel_shipment", "verdict": "denied", "failed": true,
 			}},
-			{Event: serviceports.AssistantEventToolFinished, Data: serviceports.AssistantToolFinishedEvent{
+			{Event: agentports.AssistantEventToolFinished, Data: agentports.AssistantToolFinishedEvent{
 				CallID: "4", Name: "get_shipment", Verdict: "ran", AgentID: pulid.MustNew("agdef_"),
 			}},
 		},

@@ -5,9 +5,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/servicetype"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/servicetypeports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"go.uber.org/fx"
@@ -18,18 +20,18 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.ServiceTypeRepository
+	Repo         servicetypeports.ServiceTypeRepository
 	Validator    *Validator
-	AuditService services.AuditService
-	Transformer  services.DataTransformer
+	AuditService auditports.AuditService
+	Transformer  accessorialchargeports.DataTransformer
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.ServiceTypeRepository
+	repo         servicetypeports.ServiceTypeRepository
 	validator    *Validator
-	auditService services.AuditService
-	transformer  services.DataTransformer
+	auditService auditports.AuditService
+	transformer  accessorialchargeports.DataTransformer
 }
 
 func New(p Params) *Service {
@@ -44,42 +46,42 @@ func New(p Params) *Service {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListServiceTypesRequest,
+	req *servicetypeports.ListServiceTypesRequest,
 ) (*pagination.ListResult[*servicetype.ServiceType], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListServiceTypesConnectionRequest,
+	req *servicetypeports.ListServiceTypesConnectionRequest,
 ) (*pagination.CursorListResult[*servicetype.ServiceType], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	req repositories.GetServiceTypeByIDRequest,
+	req servicetypeports.GetServiceTypeByIDRequest,
 ) (*servicetype.ServiceType, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) SelectOptions(
 	ctx context.Context,
-	req *repositories.ServiceTypeSelectOptionsRequest,
+	req *servicetypeports.ServiceTypeSelectOptionsRequest,
 ) (*pagination.ListResult[*servicetype.ServiceType], error) {
 	return s.repo.SelectOptions(ctx, req)
 }
 
 func (s *Service) BulkUpdateStatus(
 	ctx context.Context,
-	req *repositories.BulkUpdateServiceTypeStatusRequest,
+	req *servicetypeports.BulkUpdateServiceTypeStatusRequest,
 ) ([]*servicetype.ServiceType, error) {
 	log := s.l.With(
 		zap.String("operation", "BulkUpdateStatus"),
 		zap.Any("request", req),
 	)
 
-	originalEntities, err := s.repo.GetByIDs(ctx, repositories.GetServiceTypesByIDsRequest{
+	originalEntities, err := s.repo.GetByIDs(ctx, servicetypeports.GetServiceTypesByIDsRequest{
 		TenantInfo:     req.TenantInfo,
 		ServiceTypeIDs: req.ServiceTypeIDs,
 	})
@@ -115,7 +117,7 @@ func (s *Service) BulkUpdateStatus(
 func (s *Service) Create(
 	ctx context.Context,
 	entity *servicetype.ServiceType,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*servicetype.ServiceType, error) {
 	auditActor := actor.AuditActor()
 	if err := s.transformer.TransformServiceType(ctx, entity); err != nil {
@@ -133,7 +135,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceServiceType,
 		ResourceID:     createdEntity.GetID().String(),
 		Operation:      permission.OpCreate,
@@ -156,7 +158,7 @@ func (s *Service) Create(
 func (s *Service) Update(
 	ctx context.Context,
 	entity *servicetype.ServiceType,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*servicetype.ServiceType, error) {
 	auditActor := actor.AuditActor()
 	if err := s.transformer.TransformServiceType(ctx, entity); err != nil {
@@ -168,7 +170,7 @@ func (s *Service) Update(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetByID(ctx, repositories.GetServiceTypeByIDRequest{
+	original, err := s.repo.GetByID(ctx, servicetypeports.GetServiceTypeByIDRequest{
 		ID: entity.GetID(),
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.GetOrganizationID(),
@@ -186,7 +188,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceServiceType,
 		ResourceID:     updatedEntity.GetID().String(),
 		Operation:      permission.OpUpdate,

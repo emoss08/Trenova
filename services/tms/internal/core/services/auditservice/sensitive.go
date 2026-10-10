@@ -18,8 +18,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/atomic"
 )
@@ -50,7 +50,7 @@ type SensitiveDataManager struct {
 type SensitiveFieldConfig struct {
 	Path   string
 	Name   string
-	Action services.SensitiveFieldAction
+	Action auditports.SensitiveFieldAction
 }
 
 var sensitivePatternsMu sync.RWMutex
@@ -125,7 +125,7 @@ func (s *SensitiveDataManager) precompileFieldPatterns() {
 
 func (s *SensitiveDataManager) RegisterSensitiveFields(
 	resource permission.Resource,
-	fields []services.SensitiveField,
+	fields []auditports.SensitiveField,
 ) error {
 	if len(fields) == 0 {
 		return nil
@@ -211,22 +211,22 @@ func (s *SensitiveDataManager) sanitizeChangesMap( //nolint:gocognit // TODO: re
 		if isSensitive { //nolint:nestif // TODO: refactor this
 			if changeMap, ok := changeData.(map[string]any); ok {
 				if from, exists := changeMap["from"]; exists && from != nil {
-					changeMap["from"] = s.maskValue(from, services.SensitiveFieldMask)
+					changeMap["from"] = s.maskValue(from, auditports.SensitiveFieldMask)
 				}
 				if to, exists := changeMap["to"]; exists && to != nil {
-					changeMap["to"] = s.maskValue(to, services.SensitiveFieldMask)
+					changeMap["to"] = s.maskValue(to, auditports.SensitiveFieldMask)
 				}
 			}
 		} else if changeMap, ok := changeData.(map[string]any); ok {
 			if s.autoDetect.Load() {
 				if from, exists := changeMap["from"]; exists && from != nil {
 					if s.shouldMaskValue(from) {
-						changeMap["from"] = s.maskValue(from, services.SensitiveFieldMask)
+						changeMap["from"] = s.maskValue(from, auditports.SensitiveFieldMask)
 					}
 				}
 				if to, exists := changeMap["to"]; exists && to != nil {
 					if s.shouldMaskValue(to) {
-						changeMap["to"] = s.maskValue(to, services.SensitiveFieldMask)
+						changeMap["to"] = s.maskValue(to, auditports.SensitiveFieldMask)
 					}
 				}
 			}
@@ -348,13 +348,13 @@ func (s *SensitiveDataManager) sanitizeMap(
 
 		if s.autoDetect.Load() &&
 			(s.isSensitiveFieldName(key) || s.isSensitiveFieldPath(fullPath)) {
-			data[key] = s.maskValue(value, services.SensitiveFieldMask)
+			data[key] = s.maskValue(value, auditports.SensitiveFieldMask)
 			continue
 		}
 
 		if s.autoDetect.Load() {
 			if strValue, ok := value.(string); ok && s.containsSensitivePattern(strValue) {
-				data[key] = s.maskValue(value, services.SensitiveFieldMask)
+				data[key] = s.maskValue(value, auditports.SensitiveFieldMask)
 				continue
 			}
 		}
@@ -382,7 +382,7 @@ func (s *SensitiveDataManager) sanitizeSlice(
 			s.sanitizeMapInArray(v, registeredFields, parentPath, arrayPath)
 		case string:
 			if s.autoDetect.Load() && s.containsSensitivePattern(v) {
-				slice[i] = s.maskValue(v, services.SensitiveFieldMask)
+				slice[i] = s.maskValue(v, auditports.SensitiveFieldMask)
 			}
 		case []any:
 			s.sanitizeSlice(v, registeredFields, arrayPath)
@@ -426,13 +426,13 @@ func (s *SensitiveDataManager) sanitizeMapInArray(
 
 		if s.autoDetect.Load() &&
 			(s.isSensitiveFieldName(key) || s.isSensitiveFieldPath(genericFieldPath)) {
-			data[key] = s.maskValue(value, services.SensitiveFieldMask)
+			data[key] = s.maskValue(value, auditports.SensitiveFieldMask)
 			continue
 		}
 
 		if s.autoDetect.Load() {
 			if strValue, ok := value.(string); ok && s.containsSensitivePattern(strValue) {
-				data[key] = s.maskValue(value, services.SensitiveFieldMask)
+				data[key] = s.maskValue(value, auditports.SensitiveFieldMask)
 				continue
 			}
 		}
@@ -518,18 +518,18 @@ func (s *SensitiveDataManager) getCompiledPattern(pattern string) (*regexp.Regex
 	return regex, nil
 }
 
-func (s *SensitiveDataManager) maskValue(value any, action services.SensitiveFieldAction) any {
+func (s *SensitiveDataManager) maskValue(value any, action auditports.SensitiveFieldAction) any {
 	switch action {
-	case services.SensitiveFieldOmit:
+	case auditports.SensitiveFieldOmit:
 		return nil
 
-	case services.SensitiveFieldMask:
+	case auditports.SensitiveFieldMask:
 		return s.applyMaskStrategy(value)
 
-	case services.SensitiveFieldHash:
+	case auditports.SensitiveFieldHash:
 		return s.applyHashStrategy(value)
 
-	case services.SensitiveFieldEncrypt:
+	case auditports.SensitiveFieldEncrypt:
 		return s.applyEncryptStrategy(value)
 
 	default:

@@ -12,8 +12,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/weatheralert"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -50,21 +49,21 @@ func (s *repoStub) GetActiveAlerts(
 
 func (s *repoStub) GetByID(
 	context.Context,
-	repositories.GetWeatherAlertByIDRequest,
+	weatheralertports.GetWeatherAlertByIDRequest,
 ) (*weatheralert.WeatherAlert, error) {
 	return s.alert, nil
 }
 
 func (s *repoStub) GetActivities(
 	context.Context,
-	repositories.GetWeatherAlertByIDRequest,
+	weatheralertports.GetWeatherAlertByIDRequest,
 ) ([]*weatheralert.Activity, error) {
 	return s.activities, nil
 }
 
 func (s *repoStub) ListByNWSIDs(
 	_ context.Context,
-	req repositories.ListWeatherAlertsByNWSIDsRequest,
+	req weatheralertports.ListWeatherAlertsByNWSIDsRequest,
 ) ([]*weatheralert.WeatherAlert, error) {
 	s.listByNWSIDsCalls++
 	alerts := make([]*weatheralert.WeatherAlert, 0, len(req.NWSIDs))
@@ -80,7 +79,7 @@ func (s *repoStub) ListByNWSIDs(
 func (s *repoStub) UpsertAlert(
 	_ context.Context,
 	alert *weatheralert.WeatherAlert,
-) (*repositories.UpsertWeatherAlertResult, error) {
+) (*weatheralertports.UpsertWeatherAlertResult, error) {
 	if !s.failUpsertFor.IsNil() && alert.OrganizationID == s.failUpsertFor {
 		return nil, errors.New("database unavailable")
 	}
@@ -91,22 +90,22 @@ func (s *repoStub) UpsertAlert(
 	}
 	s.stored[storedKey(alert.OrganizationID, alert.NWSID)] = alert
 
-	return &repositories.UpsertWeatherAlertResult{Alert: alert}, nil
+	return &weatheralertports.UpsertWeatherAlertResult{Alert: alert}, nil
 }
 
 func (s *repoStub) ExpireStaleAlerts(
 	context.Context,
-) (*repositories.ExpireWeatherAlertsResult, error) {
+) (*weatheralertports.ExpireWeatherAlertsResult, error) {
 	s.expireCalls++
-	return &repositories.ExpireWeatherAlertsResult{}, nil
+	return &weatheralertports.ExpireWeatherAlertsResult{}, nil
 }
 
 type feedStateStub struct {
-	state *repositories.WeatherAlertFeedState
+	state *weatheralertports.WeatherAlertFeedState
 	saves int
 }
 
-func (s *feedStateStub) Get(context.Context) (*repositories.WeatherAlertFeedState, error) {
+func (s *feedStateStub) Get(context.Context) (*weatheralertports.WeatherAlertFeedState, error) {
 	if s.state == nil {
 		return nil, nil //nolint:nilnil // nil means no state was saved
 	}
@@ -117,7 +116,7 @@ func (s *feedStateStub) Get(context.Context) (*repositories.WeatherAlertFeedStat
 
 func (s *feedStateStub) Save(
 	_ context.Context,
-	state *repositories.WeatherAlertFeedState,
+	state *weatheralertports.WeatherAlertFeedState,
 	_ time.Duration,
 ) error {
 	saved := *state
@@ -355,7 +354,7 @@ func TestPollNWSAlertsTreatsNotModifiedAsUnchanged(t *testing.T) {
 	), `"feed-1"`)
 	srv.honorsIfNoneMatch = true
 	repo := &repoStub{tenants: newTenants(2)}
-	feedState := &feedStateStub{state: &repositories.WeatherAlertFeedState{
+	feedState := &feedStateStub{state: &weatheralertports.WeatherAlertFeedState{
 		ETag:          `"feed-1"`,
 		TenantsDigest: digestTenants(repo.tenants),
 	}}
@@ -381,7 +380,7 @@ func TestPollNWSAlertsSyncsEveryTenantWhenTheTenantsChange(t *testing.T) {
 	), `W/"feed-1"`)
 	srv.honorsIfNoneMatch = true
 	repo := &repoStub{tenants: newTenants(2)}
-	feedState := &feedStateStub{state: &repositories.WeatherAlertFeedState{
+	feedState := &feedStateStub{state: &weatheralertports.WeatherAlertFeedState{
 		ETag:          `W/"feed-1"`,
 		TenantsDigest: digestTenants(repo.tenants[:1]),
 	}}
@@ -640,7 +639,7 @@ func TestGetAlertDetailReturnsActivities(t *testing.T) {
 
 	result, err := service.GetAlertDetail(
 		t.Context(),
-		&serviceports.GetWeatherAlertDetailRequest{ID: alertID},
+		&weatheralertports.GetWeatherAlertDetailRequest{ID: alertID},
 	)
 	require.NoError(t, err)
 	require.NotNil(t, result.Feature)

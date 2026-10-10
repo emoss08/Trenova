@@ -9,10 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -75,7 +75,7 @@ func (s *Service) planRenewal(
 			fmt.Sprintf("Ask for at most %d credentials at a time", maxRenewalCredentials))
 	}
 
-	held, err := s.repo.ListForWorker(ctx, &repositories.ListWorkerCredentialsRequest{
+	held, err := s.repo.ListForWorker(ctx, &workerports.ListWorkerCredentialsRequest{
 		TenantInfo:  req.TenantInfo,
 		WorkerID:    req.WorkerID,
 		IncludeType: true,
@@ -203,7 +203,7 @@ func (s *Service) auditRenewal(req RenewalRequest, named []*worker.WorkerCredent
 		ids = append(ids, credential.ID.String())
 	}
 
-	if err := s.auditService.LogAction(&serviceports.LogActionParams{
+	if err := s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceWorkerCredential,
 		ResourceID:     req.WorkerID.String(),
 		Operation:      permission.OpUpdate,

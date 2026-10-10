@@ -4,17 +4,18 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
@@ -38,7 +39,7 @@ func (s *Service) getForUpdate(
 	tenantInfo pagination.TenantInfo,
 	settlementID pulid.ID,
 ) (*driversettlement.Settlement, error) {
-	return s.settlementRepo.GetByID(ctx, repositories.GetDriverSettlementByIDRequest{
+	return s.settlementRepo.GetByID(ctx, driversettlementports.GetDriverSettlementByIDRequest{
 		ID:           settlementID,
 		TenantInfo:   tenantInfo,
 		IncludeLines: true,
@@ -49,7 +50,7 @@ func (s *Service) SubmitForApproval(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	settlementID pulid.ID,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driversettlement.Settlement, error) {
 	if err := requireActor(actor, "Settlement submission"); err != nil {
 		return nil, err
@@ -76,7 +77,7 @@ func (s *Service) Approve(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	settlementID pulid.ID,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driversettlement.Settlement, error) {
 	return s.approveInternal(ctx, tenantInfo, settlementID, actor, false)
 }
@@ -85,7 +86,7 @@ func (s *Service) approveInternal(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	settlementID pulid.ID,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 	fromDraft bool,
 ) (*driversettlement.Settlement, error) {
 	if err := requireActor(actor, "Settlement approval"); err != nil {
@@ -94,7 +95,7 @@ func (s *Service) approveInternal(
 
 	var updated *driversettlement.Settlement
 	var previous driversettlement.Settlement
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		entity, txErr := s.getForUpdate(txCtx, tenantInfo, settlementID)
 		if txErr != nil {
 			return txErr
@@ -143,7 +144,7 @@ func (s *Service) Reject(
 	tenantInfo pagination.TenantInfo,
 	settlementID pulid.ID,
 	reason string,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driversettlement.Settlement, error) {
 	if err := requireActor(actor, "Settlement rejection"); err != nil {
 		return nil, err
@@ -175,8 +176,8 @@ func (s *Service) Reject(
 
 func (s *Service) MarkPaid(
 	ctx context.Context,
-	req *serviceports.MarkSettlementPaidRequest,
-	actor *serviceports.RequestActor,
+	req *carriersettlementports.MarkSettlementPaidRequest,
+	actor *permissionports.RequestActor,
 ) (*driversettlement.Settlement, error) {
 	if err := requireActor(actor, "Settlement payment"); err != nil {
 		return nil, err
@@ -193,7 +194,7 @@ func (s *Service) MarkPaid(
 
 	var updated *driversettlement.Settlement
 	var previous driversettlement.Settlement
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		entity, txErr := s.getForUpdate(txCtx, tenantInfo, req.SettlementID)
 		if txErr != nil {
 			return txErr
@@ -274,7 +275,7 @@ func (s *Service) Void(
 	tenantInfo pagination.TenantInfo,
 	settlementID pulid.ID,
 	reason string,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driversettlement.Settlement, error) {
 	if err := requireActor(actor, "Settlement void"); err != nil {
 		return nil, err
@@ -289,7 +290,7 @@ func (s *Service) Void(
 
 	var updated *driversettlement.Settlement
 	var previous driversettlement.Settlement
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		entity, txErr := s.getForUpdate(txCtx, tenantInfo, settlementID)
 		if txErr != nil {
 			return txErr
@@ -346,7 +347,7 @@ func (s *Service) Recalculate(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	settlementID pulid.ID,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driversettlement.Settlement, error) {
 	if err := requireActor(actor, "Settlement recalculation"); err != nil {
 		return nil, err
@@ -354,7 +355,7 @@ func (s *Service) Recalculate(
 
 	var updated *driversettlement.Settlement
 	var previous driversettlement.Settlement
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		entity, txErr := s.getForUpdate(txCtx, tenantInfo, settlementID)
 		if txErr != nil {
 			return txErr
@@ -424,7 +425,7 @@ func (s *Service) refreshOpenDraftForWorker(
 ) error {
 	draft, err := s.settlementRepo.GetOpenDraftForWorker(
 		ctx,
-		repositories.GetOpenDraftForWorkerRequest{
+		driversettlementports.GetOpenDraftForWorkerRequest{
 			TenantInfo: tenantInfo,
 			WorkerID:   workerID,
 		},
@@ -432,7 +433,7 @@ func (s *Service) refreshOpenDraftForWorker(
 	if err != nil || draft == nil {
 		return nil //nolint:nilerr // no open draft means nothing to attach to
 	}
-	return s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	return s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		entity, txErr := s.getForUpdate(txCtx, tenantInfo, draft.ID)
 		if txErr != nil {
 			return txErr
@@ -458,7 +459,7 @@ func (s *Service) AddAdjustmentLine(
 	tenantInfo pagination.TenantInfo,
 	settlementID pulid.ID,
 	input *AdjustmentLineInput,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driversettlement.Settlement, error) {
 	if err := requireActor(actor, "Settlement adjustment"); err != nil {
 		return nil, err
@@ -476,7 +477,7 @@ func (s *Service) AddAdjustmentLine(
 	}
 
 	if input.PayCodeID != nil && !input.PayCodeID.IsNil() {
-		if _, err = s.payCodeRepo.GetByID(ctx, repositories.GetPayCodeByIDRequest{
+		if _, err = s.payCodeRepo.GetByID(ctx, driverpayports.GetPayCodeByIDRequest{
 			ID:         *input.PayCodeID,
 			TenantInfo: tenantInfo,
 		}); err != nil {
@@ -505,7 +506,7 @@ func (s *Service) RemoveAdjustmentLine(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	settlementID, lineID pulid.ID,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driversettlement.Settlement, error) {
 	if err := requireActor(actor, "Settlement adjustment removal"); err != nil {
 		return nil, err
@@ -534,7 +535,7 @@ func (s *Service) RemoveAdjustmentLine(
 func (s *Service) applyDeductionSideEffects(
 	ctx context.Context,
 	entity *driversettlement.Settlement,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) error {
 	for _, line := range entity.Lines {
 		if line == nil {
@@ -578,7 +579,7 @@ func (s *Service) applyRecurringEarning(
 	}
 	earning, err := s.earningRepo.GetByID(
 		ctx,
-		repositories.GetRecurringEarningByIDRequest{
+		driverpayports.GetRecurringEarningByIDRequest{
 			ID: *line.RecurringEarningID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
@@ -608,7 +609,7 @@ func (s *Service) applyRecurringDeduction(
 	}
 	deduction, err := s.deductionRepo.GetByID(
 		ctx,
-		repositories.GetRecurringDeductionByIDRequest{
+		driverpayports.GetRecurringDeductionByIDRequest{
 			ID: *line.RecurringDeductionID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
@@ -632,7 +633,7 @@ func (s *Service) applyEscrowContribution(
 	entity *driversettlement.Settlement,
 	line *driversettlement.SettlementLine,
 	amount int64,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) error {
 	if line.EscrowAccountID == nil || line.EscrowAccountID.IsNil() {
 		return nil
@@ -654,7 +655,7 @@ func (s *Service) applyAdvanceRecovery(
 	if line.AdvanceID == nil || line.AdvanceID.IsNil() {
 		return nil
 	}
-	advance, err := s.advanceRepo.GetByID(ctx, repositories.GetPayAdvanceByIDRequest{
+	advance, err := s.advanceRepo.GetByID(ctx, driverpayports.GetPayAdvanceByIDRequest{
 		ID: *line.AdvanceID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -673,7 +674,7 @@ func (s *Service) applyAdvanceRecovery(
 func (s *Service) reverseDeductionSideEffects(
 	ctx context.Context,
 	entity *driversettlement.Settlement,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) error {
 	for _, line := range entity.Lines {
 		if line == nil {
@@ -724,7 +725,7 @@ func (s *Service) reverseRecurringEarning(
 	}
 	earning, err := s.earningRepo.GetByID(
 		ctx,
-		repositories.GetRecurringEarningByIDRequest{
+		driverpayports.GetRecurringEarningByIDRequest{
 			ID: *line.RecurringEarningID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
@@ -756,7 +757,7 @@ func (s *Service) reverseRecurringDeduction(
 	}
 	deduction, err := s.deductionRepo.GetByID(
 		ctx,
-		repositories.GetRecurringDeductionByIDRequest{
+		driverpayports.GetRecurringDeductionByIDRequest{
 			ID: *line.RecurringDeductionID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
@@ -786,7 +787,7 @@ func (s *Service) reverseAdvanceRecovery(
 	if line.AdvanceID == nil || line.AdvanceID.IsNil() {
 		return nil
 	}
-	advance, err := s.advanceRepo.GetByID(ctx, repositories.GetPayAdvanceByIDRequest{
+	advance, err := s.advanceRepo.GetByID(ctx, driverpayports.GetPayAdvanceByIDRequest{
 		ID: *line.AdvanceID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -809,9 +810,9 @@ func (s *Service) appendEscrowTransaction(
 	txType driverpay.EscrowTransactionType,
 	amount int64,
 	description string,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) error {
-	account, err := s.escrowRepo.GetByID(ctx, repositories.GetEscrowAccountByIDRequest{
+	account, err := s.escrowRepo.GetByID(ctx, driverpayports.GetEscrowAccountByIDRequest{
 		ID: accountID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,

@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -34,7 +34,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.AgentEvaluationRepository {
+func New(p Params) agentports.AgentEvaluationRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.agentevaluation-repository"),
@@ -117,7 +117,7 @@ func (r *repository) Update(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetAgentEvaluationByIDRequest,
+	req agentports.GetAgentEvaluationByIDRequest,
 ) (*agent.Evaluation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.Evaluation, error) {
 		entity := new(agent.Evaluation)
@@ -140,7 +140,7 @@ func (r *repository) GetByID(
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListAgentEvaluationConnectionRequest,
+	req *agentports.ListAgentEvaluationConnectionRequest,
 ) (*pagination.CursorListResult[*agent.Evaluation], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*agent.Evaluation], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -231,7 +231,7 @@ func (r *repository) CreateMany(ctx context.Context, entities []*agent.Evaluatio
 
 func (r *repository) ListBySuiteRun(
 	ctx context.Context,
-	req repositories.ListSuiteEvaluationsRequest,
+	req agentports.ListSuiteEvaluationsRequest,
 ) ([]*agent.Evaluation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.Evaluation, error) {
 		cols := buncolgen.EvaluationColumns
@@ -261,7 +261,7 @@ func (r *repository) ListBySuiteRun(
 
 func (r *repository) SkipPendingBySuiteRun(
 	ctx context.Context,
-	req repositories.SkipPendingSuiteEvaluationsRequest,
+	req agentports.SkipPendingSuiteEvaluationsRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		cols := buncolgen.EvaluationColumns

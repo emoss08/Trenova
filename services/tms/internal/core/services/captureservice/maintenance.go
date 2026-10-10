@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/productguide"
@@ -73,7 +73,7 @@ func (s *Service) RestartStaleProcessing(ctx context.Context) (int, error) {
 		return 0, nil
 	}
 
-	stale, err := s.batches.ListStale(ctx, repositories.ListStaleCaptureBatchesRequest{
+	stale, err := s.batches.ListStale(ctx, captureports.ListStaleCaptureBatchesRequest{
 		Statuses:      []capture.BatchStatus{capture.BatchSealed, capture.BatchProcessing},
 		UpdatedBefore: timeutils.NowUnix() - staleProcessingSeconds,
 		Limit:         maintenanceBatchSize,
@@ -93,7 +93,7 @@ func (s *Service) RestartStaleProcessing(ctx context.Context) (int, error) {
 // The pages that did arrive are kept, and the batch can still be split and
 // filed by hand.
 func (s *Service) AbandonStaleUploads(ctx context.Context) (int, error) {
-	stale, err := s.batches.ListStale(ctx, repositories.ListStaleCaptureBatchesRequest{
+	stale, err := s.batches.ListStale(ctx, captureports.ListStaleCaptureBatchesRequest{
 		Statuses:      []capture.BatchStatus{capture.BatchReceiving},
 		UpdatedBefore: timeutils.NowUnix() - staleReceivingSeconds,
 		Limit:         maintenanceBatchSize,
@@ -132,7 +132,7 @@ func (s *Service) AbandonStaleUploads(ctx context.Context) (int, error) {
 // removes the stored pages of every batch past its retention. Filed documents
 // are untouched: they live on as documents, with their own copies.
 func (s *Service) EnforceRetention(ctx context.Context) (expired, purged int, err error) {
-	due, err := s.batches.ListRetentionDue(ctx, repositories.ListRetentionDueCaptureBatchesRequest{
+	due, err := s.batches.ListRetentionDue(ctx, captureports.ListRetentionDueCaptureBatchesRequest{
 		Now:   timeutils.NowUnix(),
 		Limit: maintenanceBatchSize,
 	})
@@ -172,7 +172,7 @@ func (s *Service) EnforceRetention(ctx context.Context) (expired, purged int, er
 func (s *Service) purgeBatchPages(ctx context.Context, batch *capture.CaptureBatch) error {
 	tenantInfo := pagination.TenantInfo{OrgID: batch.OrganizationID, BuID: batch.BusinessUnitID}
 	tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
-	pages, err := s.pages.ListByBatch(tenantCtx, repositories.ListCapturePagesRequest{
+	pages, err := s.pages.ListByBatch(tenantCtx, captureports.ListCapturePagesRequest{
 		BatchID:    batch.ID,
 		TenantInfo: tenantInfo,
 	})
@@ -191,7 +191,7 @@ func (s *Service) purgeBatchPages(ctx context.Context, batch *capture.CaptureBat
 
 	return s.batches.Delete(
 		tenantCtx,
-		repositories.DeleteCaptureBatchRequest{ID: batch.ID, TenantInfo: tenantInfo},
+		captureports.DeleteCaptureBatchRequest{ID: batch.ID, TenantInfo: tenantInfo},
 	)
 }
 
@@ -216,7 +216,7 @@ func (s *Service) RemindRetention(ctx context.Context) (int, error) {
 	now := timeutils.NowUnix()
 	due, err := s.batches.ListRetentionReminders(
 		ctx,
-		repositories.ListRetentionReminderCaptureBatchesRequest{
+		captureports.ListRetentionReminderCaptureBatchesRequest{
 			From:  now,
 			Until: now + retentionReminderSeconds,
 			Limit: maintenanceBatchSize,
@@ -232,7 +232,7 @@ func (s *Service) RemindRetention(ctx context.Context) (int, error) {
 		tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
 		claimed, claimErr := s.batches.ClaimRetentionReminder(
 			tenantCtx,
-			repositories.ClaimRetentionReminderRequest{
+			captureports.ClaimRetentionReminderRequest{
 				ID:         batch.ID,
 				TenantInfo: tenantInfo,
 				At:         now,

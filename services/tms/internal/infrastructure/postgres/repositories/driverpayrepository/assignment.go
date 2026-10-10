@@ -7,9 +7,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,7 +22,7 @@ type workerPayAssignmentRepository struct {
 	l  *zap.Logger
 }
 
-func NewWorkerPayAssignment(p Params) repositories.WorkerPayAssignmentRepository {
+func NewWorkerPayAssignment(p Params) driverpayports.WorkerPayAssignmentRepository {
 	return &workerPayAssignmentRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.worker-pay-assignment-repository"),
@@ -53,7 +53,7 @@ func (r *workerPayAssignmentRepository) GetByID(
 
 func (r *workerPayAssignmentRepository) GetEffectiveForWorker(
 	ctx context.Context,
-	req repositories.GetWorkerPayAssignmentRequest,
+	req driverpayports.GetWorkerPayAssignmentRequest,
 ) (*driverpay.WorkerPayAssignment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driverpay.WorkerPayAssignment, error) {
 		entity := new(driverpay.WorkerPayAssignment)
@@ -84,7 +84,7 @@ func (r *workerPayAssignmentRepository) GetEffectiveForWorker(
 
 func (r *workerPayAssignmentRepository) ListForWorker(
 	ctx context.Context,
-	req repositories.ListWorkerPayAssignmentsRequest,
+	req driverpayports.ListWorkerPayAssignmentsRequest,
 ) ([]*driverpay.WorkerPayAssignment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driverpay.WorkerPayAssignment, error) {
 		items := make([]*driverpay.WorkerPayAssignment, 0)

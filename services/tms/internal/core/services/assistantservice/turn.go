@@ -9,10 +9,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentguard"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -47,8 +48,8 @@ type TurnPlan struct {
 	// in.
 	Timezone string `json:"timezone,omitempty"`
 	// PreferredProviderID is the model the conversation asked for.
-	PreferredProviderID pulid.ID                   `json:"preferredProviderId,omitzero"`
-	Proposals           []services.ProposalOutcome `json:"proposals,omitempty"`
+	PreferredProviderID pulid.ID                     `json:"preferredProviderId,omitzero"`
+	Proposals           []agentports.ProposalOutcome `json:"proposals,omitempty"`
 	// Records are the records the question is about, so an agent the turn
 	// hands a task to reads their memories too.
 	Records []agent.EntityRef `json:"records,omitempty"`
@@ -61,18 +62,18 @@ func (p *TurnPlan) Refused() bool { return !p.Decision.Allowed }
 
 // Opening is the first thing the reader is told: that the question was taken,
 // or why it was not.
-func (p *TurnPlan) Opening() services.StreamEvent {
+func (p *TurnPlan) Opening() kernelports.StreamEvent {
 	return openingEvent(p.Input, p.Decision)
 }
 
-func openingEvent(input string, decision agentguard.Decision) services.StreamEvent {
+func openingEvent(input string, decision agentguard.Decision) kernelports.StreamEvent {
 	if !decision.Allowed {
 		return refusedEvent(decision)
 	}
 
-	return services.StreamEvent{
-		Event: services.AssistantEventAccepted,
-		Data: services.AssistantAcceptedEvent{
+	return kernelports.StreamEvent{
+		Event: agentports.AssistantEventAccepted,
+		Data: agentports.AssistantAcceptedEvent{
 			Content:       input,
 			ScopeStage:    string(decision.Stage),
 			ScopeCategory: string(decision.Category),
@@ -82,8 +83,8 @@ func openingEvent(input string, decision agentguard.Decision) services.StreamEve
 
 // RunRequest is the plan as the runtime reads it, less the services a caller
 // supplies for itself.
-func (p *TurnPlan) RunRequest(actor *services.RequestActor) *services.RunRequest {
-	return &services.RunRequest{
+func (p *TurnPlan) RunRequest(actor *permissionports.RequestActor) *agentports.RunRequest {
+	return &agentports.RunRequest{
 		Definition:          p.Definition,
 		Actor:               actor,
 		Context:             agentdefinition.RuntimeContext{Timezone: p.Timezone},
@@ -111,8 +112,8 @@ func (p *TurnPlan) turnContext() turnContext {
 // answer never reaches the model.
 func (s *Service) PrepareTurn(
 	ctx context.Context,
-	req *services.SendMessageRequest,
-	actor *services.RequestActor,
+	req *agentports.SendMessageRequest,
+	actor *permissionports.RequestActor,
 ) (*TurnPlan, error) {
 	plan, _, err := s.prepareTurn(ctx, req, actor)
 
@@ -123,9 +124,9 @@ func (s *Service) PrepareTurn(
 // opened from, for a caller that drives the turn in process.
 func (s *Service) prepareTurn(
 	ctx context.Context,
-	req *services.SendMessageRequest,
-	actor *services.RequestActor,
-) (*TurnPlan, *services.RunRequest, error) {
+	req *agentports.SendMessageRequest,
+	actor *permissionports.RequestActor,
+) (*TurnPlan, *agentports.RunRequest, error) {
 	content := strings.TrimSpace(req.Content)
 	followUp := req.FollowUpProposalID.IsNotNil() || req.FollowUpPlanID.IsNotNil()
 	resumesWait := req.ResumeWaitID.IsNotNil()
@@ -161,7 +162,7 @@ func (s *Service) prepareTurn(
 		return nil, nil, multiErr
 	}
 
-	thread, err := s.conversations.GetThread(ctx, repositories.GetThreadRequest{
+	thread, err := s.conversations.GetThread(ctx, agentports.GetThreadRequest{
 		ID:         req.ThreadID,
 		UserID:     actor.UserID,
 		TenantInfo: req.TenantInfo,
@@ -252,8 +253,8 @@ func (s *Service) prepareTurn(
 func (s *Service) keepProviderChoice(
 	ctx context.Context,
 	thread *conversation.Thread,
-	req *services.SendMessageRequest,
-	actor *services.RequestActor,
+	req *agentports.SendMessageRequest,
+	actor *permissionports.RequestActor,
 ) {
 	if !req.ProviderChosen {
 		return
@@ -277,11 +278,11 @@ func (s *Service) keepProviderChoice(
 type FinishTurnRequest struct {
 	TurnID     pulid.ID
 	Plan       *TurnPlan
-	Actor      *services.RequestActor
+	Actor      *permissionports.RequestActor
 	TenantInfo pagination.TenantInfo
 	// Run is what the runtime did. It is nil for a refused question, and may
 	// be nil for a turn that failed before the runtime handed anything back.
-	Run *services.RunResult
+	Run *agentports.RunResult
 	// Failure is why the turn ended before it finished, nil when it did
 	// finish. A stop is context.Canceled.
 	Failure error
@@ -301,11 +302,11 @@ type FinishTurnRequest struct {
 func (s *Service) FinishTurn(
 	ctx context.Context,
 	req *FinishTurnRequest,
-	emit services.AssistantStreamEmitter,
-) (*services.SendMessageResult, error) {
+	emit kernelports.AssistantStreamEmitter,
+) (*agentports.SendMessageResult, error) {
 	plan := req.Plan
 
-	thread, err := s.conversations.GetThread(ctx, repositories.GetThreadRequest{
+	thread, err := s.conversations.GetThread(ctx, agentports.GetThreadRequest{
 		ID:         plan.ThreadID,
 		UserID:     req.Actor.UserID,
 		TenantInfo: req.TenantInfo,
@@ -327,7 +328,7 @@ func (s *Service) FinishTurn(
 		markInput(turn.Messages, conversation.MessageKindWaitNote)
 	}
 
-	saved, err := s.conversations.AppendTurn(ctx, repositories.AppendTurnRequest{
+	saved, err := s.conversations.AppendTurn(ctx, agentports.AppendTurnRequest{
 		ThreadID:   thread.ID,
 		TenantInfo: req.TenantInfo,
 		Messages:   turn.Messages,
@@ -359,7 +360,7 @@ func (s *Service) FinishTurn(
 	}, req.TenantInfo)
 
 	thread.MarkContinuable()
-	result := &services.SendMessageResult{
+	result := &agentports.SendMessageResult{
 		Thread:   thread,
 		Messages: saved,
 		Reply:    turn.Reply,
@@ -400,7 +401,7 @@ func (s *Service) FinishTurn(
 
 // runWindow is the window the turn's answering provider is configured with,
 // zero for a turn the runtime handed nothing back from.
-func runWindow(run *services.RunResult) int {
+func runWindow(run *agentports.RunResult) int {
 	if run == nil {
 		return 0
 	}
@@ -411,7 +412,7 @@ func runWindow(run *services.RunResult) int {
 // turnTaint is the outside content the turn read: what the runtime handed
 // back, or, for a turn that failed before it handed anything back, what it
 // opened with.
-func turnTaint(plan *TurnPlan, run *services.RunResult) *agent.RunTaint {
+func turnTaint(plan *TurnPlan, run *agentports.RunResult) *agent.RunTaint {
 	if run != nil {
 		return run.Taint
 	}
@@ -419,7 +420,7 @@ func turnTaint(plan *TurnPlan, run *services.RunResult) *agent.RunTaint {
 	return plan.Turn.Result.Taint
 }
 
-func TurnFingerprint(plan *TurnPlan, run *services.RunResult) *agent.Fingerprint {
+func TurnFingerprint(plan *TurnPlan, run *agentports.RunResult) *agent.Fingerprint {
 	if run != nil && run.Fingerprint != nil {
 		return run.ServedFingerprint()
 	}
@@ -443,7 +444,7 @@ func (s *Service) keepThreadTaint(
 		return
 	}
 
-	if err := s.conversations.MarkThreadTainted(ctx, repositories.MarkThreadTaintedRequest{
+	if err := s.conversations.MarkThreadTainted(ctx, agentports.MarkThreadTaintedRequest{
 		ThreadID:   thread.ID,
 		TenantInfo: tenant,
 		Taint:      thread.Taint,
@@ -464,10 +465,10 @@ func (s *Service) keepThreadTaint(
 func (s *Service) ObserveTool(
 	ctx context.Context,
 	threadID pulid.ID,
-	actor *services.RequestActor,
-	observation services.ToolObservation,
-	emit services.AssistantStreamEmitter,
-) (*services.ShownArtifact, []*assistantartifact.Artifact, error) {
+	actor *permissionports.RequestActor,
+	observation agentports.ToolObservation,
+	emit kernelports.AssistantStreamEmitter,
+) (*agentports.ShownArtifact, []*assistantartifact.Artifact, error) {
 	thread := &conversation.Thread{ID: threadID}
 	recorder := s.newArtifactRecorder(ctx, thread, actor.TenantInfo(), actor, emit)
 	if recorder == nil {

@@ -8,10 +8,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -94,66 +95,66 @@ func ediDecisionToolProviders() []any {
 type ediTransferDetailReader interface {
 	GetTransfer(
 		ctx context.Context,
-		req repositories.GetEDITransferByIDRequest,
+		req ediports.GetEDITransferByIDRequest,
 	) (*edi.EDITransfer, error)
 	MappingPreview(
 		ctx context.Context,
-		req repositories.GetEDITransferByIDRequest,
+		req ediports.GetEDITransferByIDRequest,
 	) (*ediservice.MappingPreview, error)
 }
 
 type ediMessageLister interface {
 	ListMessagesCursor(
 		ctx context.Context,
-		req *repositories.ListEDIMessagesRequest,
+		req *ediports.ListEDIMessagesRequest,
 	) (*pagination.CursorListResult[*edi.EDIMessage], error)
 }
 
 type ediTenderChangeLister interface {
 	ListTenderChanges(
 		ctx context.Context,
-		req *repositories.ListEDITenderChangesRequest,
+		req *ediports.ListEDITenderChangesRequest,
 	) (*pagination.ListResult[*edi.TenderChange], error)
 }
 
 type ediTransferChangeLister interface {
 	ListTransferChanges(
 		ctx context.Context,
-		req *repositories.ListEDITransferChangesRequest,
+		req *ediports.ListEDITransferChangesRequest,
 	) (*pagination.ListResult[*edi.TransferChange], error)
 }
 
 type ediPartnerLister interface {
 	ListPartnersCursor(
 		ctx context.Context,
-		req *repositories.ListEDIPartnersRequest,
+		req *ediports.ListEDIPartnersRequest,
 	) (*pagination.CursorListResult[*edi.EDIPartner], error)
 }
 
 func provideGetEDITransferTool(
 	ediSvc *ediservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newGetEDITransferTool(ediSvc, permissions)
 }
 
-func provideListEDIMessagesTool(ediSvc *ediservice.Service) serviceports.AgentQueryTool {
+func provideListEDIMessagesTool(ediSvc *ediservice.Service) agentports.AgentQueryTool {
 	return newListEDIMessagesTool(ediSvc)
 }
 
-func provideListEDITenderChangesTool(ediSvc *ediservice.Service) serviceports.AgentQueryTool {
+func provideListEDITenderChangesTool(ediSvc *ediservice.Service) agentports.AgentQueryTool {
 	return newListEDITenderChangesTool(ediSvc)
 }
 
-func provideListEDITransferChangesTool(ediSvc *ediservice.Service) serviceports.AgentQueryTool {
+func provideListEDITransferChangesTool(ediSvc *ediservice.Service) agentports.AgentQueryTool {
 	return newListEDITransferChangesTool(ediSvc)
 }
 
-func provideListEDIPartnersTool(ediSvc *ediservice.Service) serviceports.AgentQueryTool {
+func provideListEDIPartnersTool(ediSvc *ediservice.Service) agentports.AgentQueryTool {
 	return newListEDIPartnersTool(ediSvc)
 }
 
-func cursorPage(params *serviceports.QueryToolParams) (pagination.CursorInfo, error) {
+func cursorPage(params *agentports.QueryToolParams) (pagination.CursorInfo, error) {
 	limit := optionalInt(params.Params, paramLimit, defaultListLimit)
 	if limit <= 0 {
 		limit = defaultListLimit
@@ -205,8 +206,8 @@ type getEDITransferTool struct {
 
 func newGetEDITransferTool(
 	transfers ediTransferDetailReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &getEDITransferTool{transfers: transfers, access: newFieldAccess(permissions)}
 }
 
@@ -229,7 +230,7 @@ func (t *getEDITransferTool) ParamSchema() map[string]any {
 	)
 }
 
-func (t *getEDITransferTool) Policy() serviceports.ToolPolicy {
+func (t *getEDITransferTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceEDI,
 		reads:    agent.ExternalReadAlways,
@@ -302,7 +303,7 @@ func (v *ediTransferView) TaintedRecords() []agent.RecordRef { return v.outside 
 
 func (t *getEDITransferTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -313,7 +314,7 @@ func (t *getEDITransferTool) Query(
 		return nil, err
 	}
 
-	req := repositories.GetEDITransferByIDRequest{ID: id, TenantInfo: tenantOf(params)}
+	req := ediports.GetEDITransferByIDRequest{ID: id, TenantInfo: tenantOf(params)}
 	transfer, err := t.transfers.GetTransfer(ctx, req)
 	if err != nil {
 		return nil, err
@@ -444,7 +445,7 @@ type listEDIMessagesTool struct {
 	messages ediMessageLister
 }
 
-func newListEDIMessagesTool(messages ediMessageLister) serviceports.AgentQueryTool {
+func newListEDIMessagesTool(messages ediMessageLister) agentports.AgentQueryTool {
 	return &listEDIMessagesTool{messages: messages}
 }
 
@@ -471,7 +472,7 @@ func (t *listEDIMessagesTool) ParamSchema() map[string]any {
 	}))
 }
 
-func (t *listEDIMessagesTool) Policy() serviceports.ToolPolicy {
+func (t *listEDIMessagesTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceEDI,
 		reads:    agent.ExternalReadAlways,
@@ -496,7 +497,7 @@ type ediMessageListRow struct {
 
 func (t *listEDIMessagesTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -523,7 +524,7 @@ func (t *listEDIMessagesTool) Query(
 		return nil, err
 	}
 
-	req := &repositories.ListEDIMessagesRequest{
+	req := &ediports.ListEDIMessagesRequest{
 		Filter:         &pagination.QueryOptions{TenantInfo: tenantOf(params)},
 		Cursor:         cursor,
 		Direction:      edi.DocumentDirection(direction),
@@ -586,7 +587,7 @@ type listEDITenderChangesTool struct {
 	changes ediTenderChangeLister
 }
 
-func newListEDITenderChangesTool(changes ediTenderChangeLister) serviceports.AgentQueryTool {
+func newListEDITenderChangesTool(changes ediTenderChangeLister) agentports.AgentQueryTool {
 	return &listEDITenderChangesTool{changes: changes}
 }
 
@@ -609,7 +610,7 @@ func (t *listEDITenderChangesTool) ParamSchema() map[string]any {
 	}, defaultListLimit, maxListLimit))
 }
 
-func (t *listEDITenderChangesTool) Policy() serviceports.ToolPolicy {
+func (t *listEDITenderChangesTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceEDI,
 		reads:    agent.ExternalReadAlways,
@@ -642,7 +643,7 @@ type ediTenderChangeRow struct {
 
 func (t *listEDITenderChangesTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -666,7 +667,7 @@ func (t *listEDITenderChangesTool) Query(
 		criteria.Field("shipment", shipmentID.String())
 	}
 
-	result, err := t.changes.ListTenderChanges(ctx, &repositories.ListEDITenderChangesRequest{
+	result, err := t.changes.ListTenderChanges(ctx, &ediports.ListEDITenderChangesRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenantOf(params),
 			Pagination: pagination.Info{Limit: window.fetch(), Offset: window.offset},
@@ -752,7 +753,7 @@ type listEDITransferChangesTool struct {
 	changes ediTransferChangeLister
 }
 
-func newListEDITransferChangesTool(changes ediTransferChangeLister) serviceports.AgentQueryTool {
+func newListEDITransferChangesTool(changes ediTransferChangeLister) agentports.AgentQueryTool {
 	return &listEDITransferChangesTool{changes: changes}
 }
 
@@ -775,7 +776,7 @@ func (t *listEDITransferChangesTool) ParamSchema() map[string]any {
 	}, defaultListLimit, maxListLimit))
 }
 
-func (t *listEDITransferChangesTool) Policy() serviceports.ToolPolicy {
+func (t *listEDITransferChangesTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceEDI,
 		reads:    agent.ExternalReadAlways,
@@ -801,7 +802,7 @@ type ediTransferChangeRow struct {
 
 func (t *listEDITransferChangesTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -817,7 +818,7 @@ func (t *listEDITransferChangesTool) Query(
 	}
 	window := readPage(params.Params, defaultListLimit, maxListLimit)
 
-	req := &repositories.ListEDITransferChangesRequest{
+	req := &ediports.ListEDITransferChangesRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenantOf(params),
 			Pagination: pagination.Info{Limit: window.fetch(), Offset: window.offset},
@@ -881,7 +882,7 @@ type listEDIPartnersTool struct {
 	partners ediPartnerLister
 }
 
-func newListEDIPartnersTool(partners ediPartnerLister) serviceports.AgentQueryTool {
+func newListEDIPartnersTool(partners ediPartnerLister) agentports.AgentQueryTool {
 	return &listEDIPartnersTool{partners: partners}
 }
 
@@ -904,7 +905,7 @@ func (t *listEDIPartnersTool) ParamSchema() map[string]any {
 	}))
 }
 
-func (t *listEDIPartnersTool) Policy() serviceports.ToolPolicy {
+func (t *listEDIPartnersTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceEDI})
 }
 
@@ -922,7 +923,7 @@ type ediPartnerRow struct {
 
 func (t *listEDIPartnersTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -941,7 +942,7 @@ func (t *listEDIPartnersTool) Query(
 		return nil, err
 	}
 
-	req := &repositories.ListEDIPartnersRequest{
+	req := &ediports.ListEDIPartnersRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenantOf(params),
 			Query:      optionalString(params.Params, paramQuery),

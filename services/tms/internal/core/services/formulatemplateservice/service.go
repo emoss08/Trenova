@@ -6,12 +6,13 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/formula"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -25,27 +26,27 @@ type Params struct {
 	fx.In
 
 	Logger         *zap.Logger
-	DB             ports.DBConnection
-	Repo           repositories.FormulaTemplateRepository
-	VersionRepo    repositories.FormulaTemplateVersionRepository
-	TestCaseRepo   repositories.FormulaTemplateTestCaseRepository
-	ReviewRepo     repositories.FormulaTemplateReviewRepository
-	ShipmentRepo   repositories.ShipmentRepository
+	DB             kernelports.DBConnection
+	Repo           formulatemplateports.FormulaTemplateRepository
+	VersionRepo    formulatemplateports.FormulaTemplateVersionRepository
+	TestCaseRepo   formulatemplateports.FormulaTemplateTestCaseRepository
+	ReviewRepo     formulatemplateports.FormulaTemplateReviewRepository
+	ShipmentRepo   shipmentports.ShipmentRepository
 	FormulaService *formula.Service
-	AuditService   services.AuditService
+	AuditService   auditports.AuditService
 	Notifications  *notificationservice.Service `optional:"true"`
 }
 
 type Service struct {
 	l              *zap.Logger
-	db             ports.DBConnection
-	repo           repositories.FormulaTemplateRepository
-	versionRepo    repositories.FormulaTemplateVersionRepository
-	testCaseRepo   repositories.FormulaTemplateTestCaseRepository
-	reviewRepo     repositories.FormulaTemplateReviewRepository
-	shipmentRepo   repositories.ShipmentRepository
+	db             kernelports.DBConnection
+	repo           formulatemplateports.FormulaTemplateRepository
+	versionRepo    formulatemplateports.FormulaTemplateVersionRepository
+	testCaseRepo   formulatemplateports.FormulaTemplateTestCaseRepository
+	reviewRepo     formulatemplateports.FormulaTemplateReviewRepository
+	shipmentRepo   shipmentports.ShipmentRepository
 	formulaService *formula.Service
-	auditService   services.AuditService
+	auditService   auditports.AuditService
 	notifications  *notificationservice.Service
 }
 
@@ -87,7 +88,7 @@ func (s *Service) Create(
 	entity.CurrentVersionNumber = 1
 
 	var createdEntity *formulatemplate.FormulaTemplate
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		created, txErr := s.repo.Create(txCtx, entity)
 		if txErr != nil {
 			log.Error("failed to create formula template", zap.Error(txErr))
@@ -185,7 +186,7 @@ func (s *Service) Update(
 	}
 
 	var updatedEntity *formulatemplate.FormulaTemplate
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		updated, txErr := s.repo.Update(txCtx, entity)
 		if txErr != nil {
 			log.Error("failed to update formula template", zap.Error(txErr))
@@ -231,7 +232,7 @@ func (s *Service) Update(
 
 func (s *Service) Duplicate(
 	ctx context.Context,
-	req *repositories.BulkDuplicateFormulaTemplateRequest,
+	req *formulatemplateports.BulkDuplicateFormulaTemplateRequest,
 ) ([]*formulatemplate.FormulaTemplate, error) {
 	log := s.l.With(
 		zap.String("operation", "Duplicate"),
@@ -242,7 +243,7 @@ func (s *Service) Duplicate(
 		return nil, err
 	}
 
-	sources, err := s.repo.GetByIDs(ctx, repositories.GetFormulaTemplatesByIDsRequest{
+	sources, err := s.repo.GetByIDs(ctx, formulatemplateports.GetFormulaTemplatesByIDsRequest{
 		TenantInfo:  req.TenantInfo,
 		TemplateIDs: req.TemplateIDs,
 	})
@@ -260,7 +261,7 @@ func (s *Service) Duplicate(
 	}
 
 	var entities []*formulatemplate.FormulaTemplate
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		duplicated, txErr := s.repo.BulkDuplicate(txCtx, req)
 		if txErr != nil {
 			log.Error("failed to duplicate formula template", zap.Error(txErr))
@@ -311,7 +312,7 @@ func (s *Service) Duplicate(
 
 func (s *Service) BulkUpdateStatus(
 	ctx context.Context,
-	req *repositories.BulkUpdateFormulaTemplateStatusRequest,
+	req *formulatemplateports.BulkUpdateFormulaTemplateStatusRequest,
 ) ([]*formulatemplate.FormulaTemplate, error) {
 	if req.Status != formulatemplate.StatusInactive {
 		return nil, errortypes.NewValidationError(
@@ -326,7 +327,7 @@ func (s *Service) BulkUpdateStatus(
 		return nil, err
 	}
 
-	templates, err := s.repo.GetByIDs(ctx, repositories.GetFormulaTemplatesByIDsRequest{
+	templates, err := s.repo.GetByIDs(ctx, formulatemplateports.GetFormulaTemplatesByIDsRequest{
 		TenantInfo:  req.TenantInfo,
 		TemplateIDs: req.TemplateIDs,
 	})
@@ -376,35 +377,35 @@ func (s *Service) BulkUpdateStatus(
 
 func (s *Service) GetByID(
 	ctx context.Context,
-	req repositories.GetFormulaTemplateByIDRequest,
+	req formulatemplateports.GetFormulaTemplateByIDRequest,
 ) (*formulatemplate.FormulaTemplate, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListFormulaTemplatesRequest,
+	req *formulatemplateports.ListFormulaTemplatesRequest,
 ) (*pagination.ListResult[*formulatemplate.FormulaTemplate], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListFormulaTemplateConnectionRequest,
+	req *formulatemplateports.ListFormulaTemplateConnectionRequest,
 ) (*pagination.CursorListResult[*formulatemplate.FormulaTemplate], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) GetUsage(
 	ctx context.Context,
-	req *repositories.GetTemplateUsageRequest,
-) (*repositories.GetTemplateUsageResponse, error) {
+	req *formulatemplateports.GetTemplateUsageRequest,
+) (*formulatemplateports.GetTemplateUsageResponse, error) {
 	return s.repo.CountUsages(ctx, req)
 }
 
 func (s *Service) SelectOptions(
 	ctx context.Context,
-	req *repositories.FormulaTemplateSelectOptionsRequest,
+	req *formulatemplateports.FormulaTemplateSelectOptionsRequest,
 ) (*pagination.ListResult[*formulatemplate.FormulaTemplate], error) {
 	return s.repo.SelectOptions(ctx, req)
 }
@@ -413,7 +414,7 @@ func (s *Service) getTemplateByID(
 	ctx context.Context,
 	id, orgID, buID pulid.ID,
 ) (*formulatemplate.FormulaTemplate, error) {
-	return s.repo.GetByID(ctx, repositories.GetFormulaTemplateByIDRequest{
+	return s.repo.GetByID(ctx, formulatemplateports.GetFormulaTemplateByIDRequest{
 		TemplateID: id,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 	})
@@ -424,7 +425,7 @@ func (s *Service) getTemplateByIDWithTenant(
 	id pulid.ID,
 	tenant pagination.TenantInfo,
 ) (*formulatemplate.FormulaTemplate, error) {
-	return s.repo.GetByID(ctx, repositories.GetFormulaTemplateByIDRequest{
+	return s.repo.GetByID(ctx, formulatemplateports.GetFormulaTemplateByIDRequest{
 		TemplateID: id,
 		TenantInfo: tenant,
 	})
@@ -437,9 +438,9 @@ func (s *Service) logAuditAction(
 	userID pulid.ID,
 	previousState *formulatemplate.FormulaTemplate,
 	comment string,
-	extraOpts ...services.LogOption,
+	extraOpts ...auditports.LogOption,
 ) {
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceFormulaTemplate,
 		ResourceID:     entity.GetID().String(),
 		Operation:      operation,
@@ -449,7 +450,7 @@ func (s *Service) logAuditAction(
 		BusinessUnitID: entity.BusinessUnitID,
 	}
 
-	opts := []services.LogOption{auditservice.WithComment(comment)}
+	opts := []auditports.LogOption{auditservice.WithComment(comment)}
 
 	if previousState != nil {
 		params.PreviousState = jsonutils.MustToJSON(previousState)

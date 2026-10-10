@@ -4,16 +4,16 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func unattendedSystemActor() *services.RequestActor {
-	return &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeAgent,
-		PrincipalID:    services.AgentPrincipalID,
+func unattendedSystemActor() *permissionports.RequestActor {
+	return &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeAgent,
+		PrincipalID:    permissionports.AgentPrincipalID,
 		UserID:         pulid.MustNew("usr_"),
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
@@ -88,13 +88,13 @@ func TestCheckBatch_AnUnattendedActorWithTheSystemUserIsJudgedByTheAgentTable(t 
 	eng, roleRepo, cacheRepo, _ := setupTestEngine(t)
 	actor := unattendedSystemActor()
 
-	result, err := eng.CheckBatch(t.Context(), &services.BatchPermissionCheckRequest{
+	result, err := eng.CheckBatch(t.Context(), &permissionports.BatchPermissionCheckRequest{
 		PrincipalType:  actor.PrincipalType,
 		PrincipalID:    actor.PrincipalID,
 		UserID:         actor.UserID,
 		OrganizationID: actor.OrganizationID,
 		BusinessUnitID: actor.BusinessUnitID,
-		Checks: []services.ResourceOperationCheck{
+		Checks: []permissionports.ResourceOperationCheck{
 			{Resource: permission.ResourceShipment.String(), Operation: permission.OpCreate},
 			{Resource: permission.ResourceRole.String(), Operation: permission.OpRead},
 			{Resource: permission.ResourceShipment.String(), Operation: permission.OpApprove},

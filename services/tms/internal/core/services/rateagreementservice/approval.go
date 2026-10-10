@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/pkg/approvalworkflow"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -165,7 +165,7 @@ func (s *Service) archiveTransition(
 	ctx context.Context,
 	req *ApprovalActionRequest,
 ) (agreementTransition, error) {
-	agreement, err := s.repo.GetByID(ctx, &repositories.GetRateAgreementByIDRequest{
+	agreement, err := s.repo.GetByID(ctx, &rateagreementports.GetRateAgreementByIDRequest{
 		RateAgreementID: req.EntityID,
 		TenantInfo:      req.TenantInfo,
 	})
@@ -200,7 +200,7 @@ func (s *Service) approvals() approvalworkflow.Engine[*rateagreement.RateAgreeme
 			id pulid.ID,
 			tenant pagination.TenantInfo,
 		) (*rateagreement.RateAgreement, error) {
-			return s.repo.GetByID(ctx, &repositories.GetRateAgreementByIDRequest{
+			return s.repo.GetByID(ctx, &rateagreementports.GetRateAgreementByIDRequest{
 				RateAgreementID: id,
 				TenantInfo:      tenant,
 			})

@@ -19,7 +19,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/shared/httpsafe"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -66,7 +66,7 @@ type Fetcher struct {
 	l             *zap.Logger
 }
 
-func New(p Params) services.InboundContentFetcher {
+func New(p Params) inboundmessageports.InboundContentFetcher {
 	return NewFetcher(&Options{Logger: p.Logger})
 }
 
@@ -117,17 +117,17 @@ func limitRedirects(req *http.Request, via []*http.Request) error {
 
 func (f *Fetcher) Fetch(
 	ctx context.Context,
-	req *services.InboundContentRequest,
-) (*services.InboundContent, error) {
+	req *inboundmessageports.InboundContentRequest,
+) (*inboundmessageports.InboundContent, error) {
 	switch req.Provider {
 	case inboundmessage.ProviderResend:
 		return f.fetchResend(ctx, req)
 	case inboundmessage.ProviderPostmark:
 		return nil, fmt.Errorf("%w: %s messages arrive whole and are never fetched",
-			services.ErrInboundContentRejected, req.Provider)
+			inboundmessageports.ErrInboundContentRejected, req.Provider)
 	default:
 		return nil, fmt.Errorf("%w: %s is not a provider messages are fetched from",
-			services.ErrInboundContentRejected, req.Provider)
+			inboundmessageports.ErrInboundContentRejected, req.Provider)
 	}
 }
 
@@ -163,17 +163,17 @@ type resendError struct {
 
 func (f *Fetcher) fetchResend(
 	ctx context.Context,
-	req *services.InboundContentRequest,
-) (*services.InboundContent, error) {
+	req *inboundmessageports.InboundContentRequest,
+) (*inboundmessageports.InboundContent, error) {
 	apiKey := strings.TrimSpace(req.APIKey)
 	if apiKey == "" {
 		return nil, fmt.Errorf("%w: the mailbox has no Resend API key",
-			services.ErrInboundContentRejected)
+			inboundmessageports.ErrInboundContentRejected)
 	}
 	emailID := strings.TrimSpace(req.ProviderMessageID)
 	if emailID == "" {
 		return nil, fmt.Errorf("%w: the message carries no Resend email id",
-			services.ErrInboundContentRejected)
+			inboundmessageports.ErrInboundContentRejected)
 	}
 
 	email := new(resendEmail)
@@ -188,7 +188,7 @@ func (f *Fetcher) fetchResend(
 		return nil, err
 	}
 
-	content := &services.InboundContent{
+	content := &inboundmessageports.InboundContent{
 		MessageID: strings.TrimSpace(email.MessageID),
 	}
 	if email.Text != nil {
@@ -208,7 +208,7 @@ func (f *Fetcher) fetchResend(
 		return nil, err
 	}
 
-	content.Attachments = make([]services.InboundContentAttachment, 0, len(files))
+	content.Attachments = make([]inboundmessageports.InboundContentAttachment, 0, len(files))
 	for i := range files {
 		attachment, dErr := f.downloadAttachment(ctx, &files[i])
 		if dErr != nil {
@@ -247,14 +247,14 @@ func (f *Fetcher) listResendAttachments(
 	}
 
 	return nil, fmt.Errorf("%w: Resend listed more than %d attachments",
-		services.ErrInboundContentRejected, attachmentPage*maxAttachmentPage)
+		inboundmessageports.ErrInboundContentRejected, attachmentPage*maxAttachmentPage)
 }
 
 func (f *Fetcher) downloadAttachment(
 	ctx context.Context,
 	file *resendAttachmentFile,
-) (services.InboundContentAttachment, error) {
-	attachment := services.InboundContentAttachment{
+) (inboundmessageports.InboundContentAttachment, error) {
+	attachment := inboundmessageports.InboundContentAttachment{
 		ProviderID:  file.ID,
 		FileName:    file.Filename,
 		ContentType: file.ContentType,
@@ -276,13 +276,13 @@ func (f *Fetcher) downloadAttachment(
 	httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, target.String(), http.NoBody)
 	if err != nil {
 		return attachment, fmt.Errorf("%w: build the attachment download: %w",
-			services.ErrInboundContentUnavailable, err)
+			inboundmessageports.ErrInboundContentUnavailable, err)
 	}
 
 	resp, err := f.downloads.Do(httpReq)
 	if err != nil {
 		return attachment, fmt.Errorf("%w: download %q: %w",
-			services.ErrInboundContentUnavailable, file.Filename, err)
+			inboundmessageports.ErrInboundContentUnavailable, file.Filename, err)
 	}
 	defer resp.Body.Close()
 
@@ -297,13 +297,13 @@ func (f *Fetcher) downloadAttachment(
 		}
 
 		return attachment, fmt.Errorf("%w: downloading %q answered %d",
-			services.ErrInboundContentUnavailable, file.Filename, resp.StatusCode)
+			inboundmessageports.ErrInboundContentUnavailable, file.Filename, resp.StatusCode)
 	}
 
 	body, err := io.ReadAll(io.LimitReader(resp.Body, MaxAttachmentBytes+1))
 	if err != nil {
 		return attachment, fmt.Errorf("%w: read %q: %w",
-			services.ErrInboundContentUnavailable, file.Filename, err)
+			inboundmessageports.ErrInboundContentUnavailable, file.Filename, err)
 	}
 	if len(body) > MaxAttachmentBytes {
 		attachment.FailureText = tooLargeText()
@@ -346,7 +346,7 @@ func (f *Fetcher) getResend(
 	httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, http.NoBody)
 	if err != nil {
 		return fmt.Errorf("%w: build the Resend request: %w",
-			services.ErrInboundContentRejected, err)
+			inboundmessageports.ErrInboundContentRejected, err)
 	}
 	httpReq.Header.Set("Authorization", "Bearer "+apiKey)
 	httpReq.Header.Set("Accept", "application/json")
@@ -354,24 +354,24 @@ func (f *Fetcher) getResend(
 	resp, err := f.api.Do(httpReq)
 	if err != nil {
 		return fmt.Errorf("%w: Resend could not be reached: %w",
-			services.ErrInboundContentUnavailable, err)
+			inboundmessageports.ErrInboundContentUnavailable, err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(io.LimitReader(resp.Body, limit+1))
 	if err != nil {
 		return fmt.Errorf("%w: read the Resend response: %w",
-			services.ErrInboundContentUnavailable, err)
+			inboundmessageports.ErrInboundContentUnavailable, err)
 	}
 	if int64(len(body)) > limit {
 		return fmt.Errorf("%w: the Resend response is larger than %d MB",
-			services.ErrInboundContentRejected, limit>>20)
+			inboundmessageports.ErrInboundContentRejected, limit>>20)
 	}
 
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		if err = sonic.Unmarshal(body, out); err != nil {
 			return fmt.Errorf("%w: the Resend response could not be read: %w",
-				services.ErrInboundContentUnavailable, err)
+				inboundmessageports.ErrInboundContentUnavailable, err)
 		}
 
 		return nil
@@ -391,21 +391,21 @@ func statusError(status int, body []byte) error {
 	case status == http.StatusUnauthorized || status == http.StatusForbidden:
 		return fmt.Errorf(
 			"%w: Resend refused the mailbox's API key (%d%s); reading received mail needs a full access key",
-			services.ErrInboundContentRejected,
+			inboundmessageports.ErrInboundContentRejected,
 			status,
 			detailSuffix(detail),
 		)
 	case status == http.StatusNotFound:
 		return fmt.Errorf(
 			"%w: Resend has no received email with this id under the mailbox's API key (%d%s)",
-			services.ErrInboundContentRejected, status, detailSuffix(detail),
+			inboundmessageports.ErrInboundContentRejected, status, detailSuffix(detail),
 		)
 	case status == http.StatusTooManyRequests || status >= 500:
 		return fmt.Errorf("%w: Resend answered %d%s",
-			services.ErrInboundContentUnavailable, status, detailSuffix(detail))
+			inboundmessageports.ErrInboundContentUnavailable, status, detailSuffix(detail))
 	default:
 		return fmt.Errorf("%w: Resend answered %d%s",
-			services.ErrInboundContentRejected, status, detailSuffix(detail))
+			inboundmessageports.ErrInboundContentRejected, status, detailSuffix(detail))
 	}
 }
 
@@ -419,7 +419,7 @@ func detailSuffix(detail string) string {
 
 // applyHeaders reads the threading headers. Resend returns headers as an
 // object keyed by lower-case name, with a repeated header as a list.
-func applyHeaders(content *services.InboundContent, headers map[string]any) {
+func applyHeaders(content *inboundmessageports.InboundContent, headers map[string]any) {
 	for name, raw := range headers {
 		value := headerValue(raw)
 		if value == "" {

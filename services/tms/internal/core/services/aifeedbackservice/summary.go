@@ -3,11 +3,9 @@ package aifeedbackservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/services/orgzone"
-
 	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/orgzone"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -16,8 +14,8 @@ const secondsPerDay = int64(24 * 60 * 60)
 
 func (s *Service) AgentSummary(
 	ctx context.Context,
-	req services.AgentFeedbackSummaryRequest,
-) (*services.AgentFeedbackSummary, error) {
+	req aifeedbackports.AgentFeedbackSummaryRequest,
+) (*aifeedbackports.AgentFeedbackSummary, error) {
 	if req.AgentDefinitionID.IsNil() {
 		return nil, errortypes.NewValidationError(
 			"agentDefinitionId",
@@ -28,20 +26,20 @@ func (s *Service) AgentSummary(
 
 	window := req.WindowDays
 	if window == 0 {
-		window = services.DefaultAgentFeedbackWindowDays
+		window = aifeedbackports.DefaultAgentFeedbackWindowDays
 	}
-	if window < 1 || window > services.MaxAgentFeedbackWindowDays {
+	if window < 1 || window > aifeedbackports.MaxAgentFeedbackWindowDays {
 		return nil, errortypes.NewValidationError(
 			"window",
 			errortypes.ErrInvalid,
 			"The window must be between 1 and {0} days",
-			services.MaxAgentFeedbackWindowDays,
+			aifeedbackports.MaxAgentFeedbackWindowDays,
 		)
 	}
 
 	worstLimit := req.WorstLimit
 	if worstLimit <= 0 {
-		worstLimit = services.DefaultAgentFeedbackWorstLimit
+		worstLimit = aifeedbackports.DefaultAgentFeedbackWorstLimit
 	}
 
 	location, err := orgzone.Location(ctx, s.organizations, req.TenantInfo)
@@ -50,7 +48,7 @@ func (s *Service) AgentSummary(
 	}
 
 	since := s.now() - int64(window)*secondsPerDay
-	windowReq := repositories.AIFeedbackWindowRequest{
+	windowReq := aifeedbackports.AIFeedbackWindowRequest{
 		TenantInfo:        req.TenantInfo,
 		AgentDefinitionID: req.AgentDefinitionID,
 		Since:             since,
@@ -73,17 +71,17 @@ func (s *Service) AgentSummary(
 		return nil, err
 	}
 
-	summary := &services.AgentFeedbackSummary{
+	summary := &aifeedbackports.AgentFeedbackSummary{
 		AgentDefinitionID: req.AgentDefinitionID,
 		WindowDays:        window,
 		Since:             since,
-		Days:              make([]*services.AgentFeedbackDay, 0, len(days)),
-		WorstRated:        make([]*services.AgentFeedbackWorstRated, 0, len(scores)),
+		Days:              make([]*aifeedbackports.AgentFeedbackDay, 0, len(days)),
+		WorstRated:        make([]*aifeedbackports.AgentFeedbackWorstRated, 0, len(scores)),
 	}
 	for _, day := range days {
 		summary.Positive += day.Positive
 		summary.Negative += day.Negative
-		summary.Days = append(summary.Days, &services.AgentFeedbackDay{
+		summary.Days = append(summary.Days, &aifeedbackports.AgentFeedbackDay{
 			Day:          day.Day,
 			Positive:     day.Positive,
 			Negative:     day.Negative,
@@ -93,7 +91,7 @@ func (s *Service) AgentSummary(
 	summary.Satisfaction = satisfaction(summary.Positive, summary.Negative)
 
 	for _, score := range scores {
-		summary.WorstRated = append(summary.WorstRated, &services.AgentFeedbackWorstRated{
+		summary.WorstRated = append(summary.WorstRated, &aifeedbackports.AgentFeedbackWorstRated{
 			TargetType:  score.TargetType,
 			TargetID:    score.TargetID,
 			TargetPart:  score.TargetPart,
@@ -109,8 +107,8 @@ func (s *Service) AgentSummary(
 
 func (s *Service) samples(
 	ctx context.Context,
-	req services.AgentFeedbackSummaryRequest,
-	scores []*repositories.AIFeedbackTargetScore,
+	req aifeedbackports.AgentFeedbackSummaryRequest,
+	scores []*aifeedbackports.AIFeedbackTargetScore,
 ) (map[pulid.ID]*aifeedback.Feedback, error) {
 	ids := make([]pulid.ID, 0, len(scores))
 	for _, score := range scores {
@@ -122,7 +120,7 @@ func (s *Service) samples(
 		return map[pulid.ID]*aifeedback.Feedback{}, nil
 	}
 
-	rows, err := s.repo.ListByIDs(ctx, repositories.ListAIFeedbackByIDsRequest{
+	rows, err := s.repo.ListByIDs(ctx, aifeedbackports.ListAIFeedbackByIDsRequest{
 		TenantInfo: req.TenantInfo,
 		IDs:        ids,
 	})

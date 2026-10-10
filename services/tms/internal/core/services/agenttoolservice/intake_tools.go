@@ -8,9 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -21,16 +22,16 @@ import (
 
 // shipmentWriter is the slice of the shipment service the intake tools use.
 type shipmentWriter interface {
-	Get(ctx context.Context, req *repositories.GetShipmentByIDRequest) (*shipment.Shipment, error)
+	Get(ctx context.Context, req *shipmentports.GetShipmentByIDRequest) (*shipment.Shipment, error)
 	Create(
 		ctx context.Context,
 		entity *shipment.Shipment,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*shipment.Shipment, error)
 	Update(
 		ctx context.Context,
 		entity *shipment.Shipment,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*shipment.Shipment, error)
 }
 
@@ -38,21 +39,21 @@ type shipmentCreator interface {
 	Create(
 		ctx context.Context,
 		entity *shipment.Shipment,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*shipment.Shipment, error)
 	PreviewCreate(
 		ctx context.Context,
 		entity *shipment.Shipment,
-		actor *serviceports.RequestActor,
-	) (*serviceports.ShipmentCreatePlan, error)
+		actor *permissionports.RequestActor,
+	) (*shipmentports.ShipmentCreatePlan, error)
 }
 
 type contractRatePreviewer interface {
 	PreviewContractRate(
 		ctx context.Context,
 		entity *shipment.Shipment,
-		actor *serviceports.RequestActor,
-	) (*serviceports.ContractRateApplication, error)
+		actor *permissionports.RequestActor,
+	) (*shipmentports.ContractRateApplication, error)
 }
 
 // importCompleter closes the import assistant's conversation for a document
@@ -82,7 +83,7 @@ type createShipmentDeps struct {
 	Logger    *zap.Logger
 }
 
-func newCreateShipmentTool(deps createShipmentDeps) serviceports.AgentTool {
+func newCreateShipmentTool(deps createShipmentDeps) agentports.AgentTool {
 	logger := deps.Logger
 	if logger == nil {
 		logger = zap.NewNop()
@@ -343,8 +344,8 @@ func chargeLineDraftSchema() map[string]any {
 	}
 }
 
-func (t *createShipmentTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *createShipmentTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceShipment,
@@ -364,7 +365,7 @@ func (t *createShipmentTool) Policy() serviceports.ToolPolicy {
 
 func (t *createShipmentTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -373,7 +374,7 @@ func (t *createShipmentTool) Execute(
 
 func (t *createShipmentTool) ExecuteWithResult(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
 	if err := guardExecute(t, params); err != nil {
 		return nil, err
@@ -411,14 +412,14 @@ func (t *createShipmentTool) ExecuteWithResult(
 // is refused to the model before it is proposed to a person.
 func (t *createShipmentTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	return previewValidates(ctx, t, &params)
 }
 
 func (t *createShipmentTool) draft(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*shipment.Shipment, error) {
 	draft := new(shipmentDraft)
 	if err := decodeParam(params.Params, "shipment", draft); err != nil {
@@ -465,7 +466,7 @@ func (t *createShipmentTool) draft(
 func (t *createShipmentTool) contractRating(
 	ctx context.Context,
 	entity *shipment.Shipment,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) error {
 	if entity.FormulaTemplateID.IsNotNil() {
 		return nil
@@ -521,7 +522,7 @@ type updateShipmentTool struct {
 func newUpdateShipmentTool(
 	shipments shipmentWriter,
 	partners shipmentPartnerNotices,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return &updateShipmentTool{shipments: shipments, partners: partners}
 }
 
@@ -592,8 +593,8 @@ func (t *updateShipmentTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *updateShipmentTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *updateShipmentTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceShipment,
@@ -633,7 +634,7 @@ func (p shipmentPatch) empty() bool {
 
 func (t *updateShipmentTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	_, entity, err := t.plan(ctx, &params)
 	if err != nil {
@@ -649,7 +650,7 @@ func (t *updateShipmentTool) Execute(
 // and as the write would save it.
 func (t *updateShipmentTool) plan(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (before, after *shipment.Shipment, err error) {
 	if err = guardExecute(t, *params); err != nil {
 		return nil, nil, err
@@ -672,10 +673,10 @@ func (t *updateShipmentTool) plan(
 		)
 	}
 
-	entity, err := t.shipments.Get(ctx, &repositories.GetShipmentByIDRequest{
+	entity, err := t.shipments.Get(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         shipmentID,
 		TenantInfo: tenantFrom(*params),
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -754,6 +755,6 @@ func placeholderTemperatures(entity *shipment.Shipment, patch shipmentPatch) err
 	return nil
 }
 
-func (t *updateShipmentTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *updateShipmentTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, "shipmentId", permission.ResourceShipment)
 }

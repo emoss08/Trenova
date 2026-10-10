@@ -9,8 +9,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -19,15 +19,15 @@ import (
 )
 
 type fakeEntitlementProvider struct {
-	result *services.FeatureCheckResult
+	result *platformcatalogports.FeatureCheckResult
 	err    error
-	req    *services.FeatureCheckRequest
+	req    *platformcatalogports.FeatureCheckRequest
 }
 
 func (p *fakeEntitlementProvider) CheckFeature(
 	_ context.Context,
-	req *services.FeatureCheckRequest,
-) (*services.FeatureCheckResult, error) {
+	req *platformcatalogports.FeatureCheckRequest,
+) (*platformcatalogports.FeatureCheckResult, error) {
 	p.req = req
 	if p.err != nil {
 		return nil, p.err
@@ -37,8 +37,8 @@ func (p *fakeEntitlementProvider) CheckFeature(
 
 func (p *fakeEntitlementProvider) ListEntitlements(
 	context.Context,
-	*services.EntitlementsRequest,
-) (*services.EntitlementsResult, error) {
+	*platformcatalogports.EntitlementsRequest,
+) (*platformcatalogports.EntitlementsResult, error) {
 	return nil, nil
 }
 
@@ -46,7 +46,7 @@ func TestEntitlementMiddleware_RequireFeatureAllowed(t *testing.T) {
 	t.Parallel()
 
 	provider := &fakeEntitlementProvider{
-		result: &services.FeatureCheckResult{
+		result: &platformcatalogports.FeatureCheckResult{
 			FeatureKey: platformcatalog.FeatureCoreTMS,
 			Allowed:    true,
 		},
@@ -79,7 +79,7 @@ func TestEntitlementMiddleware_RequireFeatureDenied(t *testing.T) {
 	t.Parallel()
 
 	provider := &fakeEntitlementProvider{
-		result: &services.FeatureCheckResult{
+		result: &platformcatalogports.FeatureCheckResult{
 			FeatureKey: platformcatalog.FeatureCoreTMS,
 			Allowed:    false,
 		},

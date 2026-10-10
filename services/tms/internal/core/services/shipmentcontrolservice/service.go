@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,16 +19,16 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.ShipmentControlRepository
+	Repo         tenantports.ShipmentControlRepository
 	Validator    *Validator
-	AuditService services.AuditService
+	AuditService auditports.AuditService
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.ShipmentControlRepository
+	repo         tenantports.ShipmentControlRepository
 	validator    *Validator
-	auditService services.AuditService
+	auditService auditports.AuditService
 }
 
 func New(p Params) *Service {
@@ -42,7 +42,7 @@ func New(p Params) *Service {
 
 func (s *Service) Get(
 	ctx context.Context,
-	req repositories.GetShipmentControlRequest,
+	req tenantports.GetShipmentControlRequest,
 ) (*tenant.ShipmentControl, error) {
 	return s.repo.Get(ctx, req)
 }
@@ -61,7 +61,7 @@ func (s *Service) Update(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.Get(ctx, repositories.GetShipmentControlRequest{
+	original, err := s.repo.Get(ctx, tenantports.GetShipmentControlRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -79,7 +79,7 @@ func (s *Service) Update(
 	}
 
 	if err = s.auditService.LogAction(
-		&services.LogActionParams{
+		&auditports.LogActionParams{
 			Resource:       permission.ResourceShipmentControl,
 			ResourceID:     updatedEntity.GetID().String(),
 			Operation:      permission.OpUpdate,

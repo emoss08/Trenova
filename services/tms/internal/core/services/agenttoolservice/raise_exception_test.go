@@ -7,8 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,23 +16,23 @@ import (
 type fakeSubjectRepository struct {
 	exists bool
 	err    error
-	asked  []repositories.AgentSubjectExistsRequest
+	asked  []agentports.AgentSubjectExistsRequest
 }
 
 func (f *fakeSubjectRepository) Exists(
 	_ context.Context,
-	req repositories.AgentSubjectExistsRequest,
+	req agentports.AgentSubjectExistsRequest,
 ) (bool, error) {
 	f.asked = append(f.asked, req)
 
 	return f.exists, f.err
 }
 
-func raiseExceptionParams(subjectType string, subjectID pulid.ID) serviceports.ToolExecuteParams {
+func raiseExceptionParams(subjectType string, subjectID pulid.ID) agentports.ToolExecuteParams {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
-	return serviceports.ToolExecuteParams{
+	return agentports.ToolExecuteParams{
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		Actor:          agentActorFor(orgID, buID),
@@ -61,7 +60,7 @@ func TestRaiseException_RefusesAnIDOfAnotherKind(t *testing.T) {
 	reportID := pulid.MustNew("rd_")
 	params := raiseExceptionParams("Insight", reportID)
 
-	validator, ok := tool.(serviceports.ToolValidator)
+	validator, ok := tool.(agentports.ToolValidator)
 	require.True(t, ok, "raise_exception checks its subject before a proposal is raised")
 
 	for name, run := range map[string]func() error{

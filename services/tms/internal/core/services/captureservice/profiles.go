@@ -7,8 +7,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -119,7 +120,7 @@ func (s *Service) listProfiles(
 			"Status must be Active or Inactive")
 	}
 
-	result, err := s.profiles.List(ctx, &repositories.ListCaptureProfilesRequest{
+	result, err := s.profiles.List(ctx, &captureports.ListCaptureProfilesRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenantInfo,
 			Pagination: pagination.Info{Limit: maxProfiles},
@@ -149,7 +150,7 @@ func (s *Service) GetProfile(
 		return nil, err
 	}
 
-	return s.profiles.GetByID(ctx, repositories.GetCaptureProfileByIDRequest{
+	return s.profiles.GetByID(ctx, captureports.GetCaptureProfileByIDRequest{
 		ID:         profileID,
 		TenantInfo: tenantInfo,
 	})
@@ -220,7 +221,7 @@ func (s *Service) UpdateProfile(
 		return nil, err
 	}
 
-	profile, err := s.profiles.GetByID(ctx, repositories.GetCaptureProfileByIDRequest{
+	profile, err := s.profiles.GetByID(ctx, captureports.GetCaptureProfileByIDRequest{
 		ID:         in.ProfileID,
 		TenantInfo: in.TenantInfo,
 	})
@@ -265,7 +266,7 @@ func (s *Service) DeleteProfile(
 		return err
 	}
 
-	profile, err := s.profiles.GetByID(ctx, repositories.GetCaptureProfileByIDRequest{
+	profile, err := s.profiles.GetByID(ctx, captureports.GetCaptureProfileByIDRequest{
 		ID:         profileID,
 		TenantInfo: tenantInfo,
 	})
@@ -273,7 +274,7 @@ func (s *Service) DeleteProfile(
 		return err
 	}
 
-	if err = s.profiles.Delete(ctx, repositories.DeleteCaptureProfileRequest{
+	if err = s.profiles.Delete(ctx, captureports.DeleteCaptureProfileRequest{
 		ID:         profileID,
 		TenantInfo: tenantInfo,
 	}); err != nil {
@@ -333,12 +334,12 @@ func (s *Service) profileChanged(
 		pulid.Nil,
 		nil,
 	)
-	s.logAudit(&services.LogActionParams{
+	s.logAudit(&auditports.LogActionParams{
 		Resource:       permission.ResourceCaptureProfile,
 		ResourceID:     profile.ID.String(),
 		Operation:      op,
 		UserID:         tenantInfo.UserID,
-		PrincipalType:  services.PrincipalTypeUser,
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    tenantInfo.UserID,
 		CurrentState:   jsonutils.MustToJSON(profile),
 		OrganizationID: profile.OrganizationID,

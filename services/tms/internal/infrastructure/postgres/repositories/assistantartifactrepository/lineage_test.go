@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -13,8 +13,8 @@ import (
 	"github.com/uptrace/bun/dialect/pgdialect"
 )
 
-func pageRequest() *repositories.ListArtifactsRequest {
-	return &repositories.ListArtifactsRequest{
+func pageRequest() *assistantartifactports.ListArtifactsRequest {
+	return &assistantartifactports.ListArtifactsRequest{
 		ThreadID:   pulid.MustNew("athr_"),
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 	}

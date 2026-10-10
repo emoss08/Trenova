@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmenttypeports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -30,7 +30,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.EquipmentTypeRepository {
+func New(p Params) equipmenttypeports.EquipmentTypeRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.equipment-type-repository"),
@@ -39,7 +39,7 @@ func New(p Params) repositories.EquipmentTypeRepository {
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListEquipmentTypesRequest,
+	req *equipmenttypeports.ListEquipmentTypesRequest,
 ) (*bun.SelectQuery, error) {
 	q, err := querybuilder.ApplyCursorFilters(
 		q,
@@ -57,7 +57,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListEquipmentTypesRequest,
+	req *equipmenttypeports.ListEquipmentTypesRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -95,7 +95,7 @@ func validEquipmentClasses(classes []string) []equipmenttype.Class {
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListEquipmentTypesRequest,
+	req *equipmenttypeports.ListEquipmentTypesRequest,
 ) (*pagination.CursorListResult[*equipmenttype.EquipmentType], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*equipmenttype.EquipmentType], error) {
 		log := r.l.With(
@@ -208,7 +208,7 @@ func (r *repository) Update(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetEquipmentTypeByIDRequest,
+	req equipmenttypeports.GetEquipmentTypeByIDRequest,
 ) (*equipmenttype.EquipmentType, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*equipmenttype.EquipmentType, error) {
 		log := r.l.With(
@@ -237,7 +237,7 @@ func (r *repository) GetByID(
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
-	req *repositories.EquipmentTypeSelectOptionsRequest,
+	req *equipmenttypeports.EquipmentTypeSelectOptionsRequest,
 ) (*pagination.ListResult[*equipmenttype.EquipmentType], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*equipmenttype.EquipmentType], error) {
 		return dbhelper.SelectOptions[*equipmenttype.EquipmentType](
@@ -272,7 +272,7 @@ func (r *repository) SelectOptions(
 
 func (r *repository) BulkUpdateStatus(
 	ctx context.Context,
-	req *repositories.BulkUpdateEquipmentTypeStatusRequest,
+	req *equipmenttypeports.BulkUpdateEquipmentTypeStatusRequest,
 ) ([]*equipmenttype.EquipmentType, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*equipmenttype.EquipmentType, error) {
 		log := r.l.With(
@@ -311,7 +311,7 @@ func (r *repository) BulkUpdateStatus(
 
 func (r *repository) GetByIDs(
 	ctx context.Context,
-	req repositories.GetEquipmentTypesByIDsRequest,
+	req equipmenttypeports.GetEquipmentTypesByIDsRequest,
 ) ([]*equipmenttype.EquipmentType, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*equipmenttype.EquipmentType, error) {
 		log := r.l.With(

@@ -8,8 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -35,7 +37,7 @@ func texasState() *fakeStates {
 	}}
 }
 
-func idempotentParams(params map[string]any) serviceports.ToolExecuteParams {
+func idempotentParams(params map[string]any) agentports.ToolExecuteParams {
 	execute := executeParams(params)
 	execute.IdempotencyKey = pulid.MustNew("idem_").String()
 
@@ -48,13 +50,13 @@ type fakeCarriers struct {
 	refusal    error
 	created    *carrier.Carrier
 	updated    *carrier.Carrier
-	getRequest repositories.GetCarrierByIDRequest
-	bulk       *repositories.BulkUpdateCarrierStatusRequest
+	getRequest carrierports.GetCarrierByIDRequest
+	bulk       *carrierports.BulkUpdateCarrierStatusRequest
 }
 
 func (f *fakeCarriers) Get(
 	_ context.Context,
-	req repositories.GetCarrierByIDRequest,
+	req carrierports.GetCarrierByIDRequest,
 ) (*carrier.Carrier, error) {
 	f.getRequest = req
 	copied := *f.stored
@@ -73,7 +75,7 @@ func (f *fakeCarriers) PlanCreate(_ context.Context, entity *carrier.Carrier) (*
 func (f *fakeCarriers) Create(
 	ctx context.Context,
 	entity *carrier.Carrier,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*carrier.Carrier, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -91,18 +93,18 @@ func (f *fakeCarriers) Create(
 func (f *fakeCarriers) PlanUpdate(
 	_ context.Context,
 	entity *carrier.Carrier,
-) (*serviceports.RecordChange[carrier.Carrier], error) {
+) (*kernelports.RecordChange[carrier.Carrier], error) {
 	if f.refusal != nil {
 		return nil, f.refusal
 	}
 
-	return &serviceports.RecordChange[carrier.Carrier]{Before: f.stored, After: entity}, nil
+	return &kernelports.RecordChange[carrier.Carrier]{Before: f.stored, After: entity}, nil
 }
 
 func (f *fakeCarriers) Update(
 	_ context.Context,
 	entity *carrier.Carrier,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*carrier.Carrier, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -114,17 +116,17 @@ func (f *fakeCarriers) Update(
 
 func (f *fakeCarriers) PlanBulkUpdateStatus(
 	_ context.Context,
-	req *repositories.BulkUpdateCarrierStatusRequest,
-) ([]serviceports.RecordChange[carrier.Carrier], error) {
+	req *carrierports.BulkUpdateCarrierStatusRequest,
+) ([]kernelports.RecordChange[carrier.Carrier], error) {
 	after := *f.stored
 	after.Status = req.Status
 
-	return []serviceports.RecordChange[carrier.Carrier]{{Before: f.stored, After: &after}}, nil
+	return []kernelports.RecordChange[carrier.Carrier]{{Before: f.stored, After: &after}}, nil
 }
 
 func (f *fakeCarriers) BulkUpdateStatus(
 	_ context.Context,
-	req *repositories.BulkUpdateCarrierStatusRequest,
+	req *carrierports.BulkUpdateCarrierStatusRequest,
 ) ([]*carrier.Carrier, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -169,7 +171,7 @@ func TestCreateCarrier_PreviewsTheCarrierAndCreatesIt(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, carriers.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would create the carrier Roadrunner Logistics")
 	change := previewChange(t, preview, 0)
@@ -177,7 +179,7 @@ func TestCreateCarrier_PreviewsTheCarrierAndCreatesIt(t *testing.T) {
 	assert.Equal(t, "TX", fieldByPath(t, change, "state").After)
 	assert.Equal(t, "RRLG", fieldByPath(t, change, "scac").After)
 
-	result, err := tool.(serviceports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	require.NotNil(t, carriers.created)
 	assert.Equal(t, carrier.StatusActive, carriers.created.Status)
@@ -209,14 +211,14 @@ func TestCreateCarrier_PaymentDetailsAreMoneyAndWaitForAPerson(t *testing.T) {
 	assert.Equal(t, agent.EgressMoney, call.Egress)
 	assert.Equal(t, agent.TierPropose, call.MaxTier)
 
-	_, err := tool.(serviceports.ToolResultReporter).ExecuteWithResult(t.Context(),
+	_, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(),
 		idempotentParams(args))
 	require.ErrorIs(t, err, ErrNeedsAPersonsApproval)
 	assert.Nil(t, carriers.created)
 
 	approved := approvedParams(args)
 	approved.IdempotencyKey = pulid.MustNew("idem_").String()
-	_, err = tool.(serviceports.ToolResultReporter).ExecuteWithResult(t.Context(), approved)
+	_, err = tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), approved)
 	require.NoError(t, err)
 	assert.Equal(t, "PO Box 9", carriers.created.RemitAddressLine1)
 }
@@ -233,7 +235,7 @@ func TestCreateCarrier_RefusesWhatTheServiceRefuses(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			tool := newCreateCarrierTool(&fakeCarriers{}, texasState())
-			require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+			require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 				idempotentParams(args)))
 		})
 	}
@@ -241,7 +243,7 @@ func TestCreateCarrier_RefusesWhatTheServiceRefuses(t *testing.T) {
 	refused := newCreateCarrierTool(&fakeCarriers{refusal: errortypes.NewValidationError(
 		mdCode, errortypes.ErrDuplicate, "Carrier with this code already exists",
 	)}, texasState())
-	preview, err := refused.(serviceports.ToolPreviewer).Preview(t.Context(),
+	preview, err := refused.(agentports.ToolPreviewer).Preview(t.Context(),
 		idempotentParams(map[string]any{mdCode: "ROAD", mdName: "Road"}))
 	require.NoError(t, err)
 	requireWarning(t, preview, agent.PreviewWarningWouldFail)
@@ -259,7 +261,7 @@ func TestUpdateCarrier_KeepsWhatItIsNotGivenAndTheCarriersChildren(t *testing.T)
 	})
 
 	preview := previewWithoutWrites(t, carriers.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	change := previewChange(t, preview, 0)
 	assert.Equal(t, "555-0100", fieldByPath(t, change, mdPhone).After)
@@ -276,11 +278,11 @@ func TestUpdateCarrier_KeepsWhatItIsNotGivenAndTheCarriersChildren(t *testing.T)
 	assert.True(t, carriers.getRequest.IncludeEDIChannels)
 	assert.True(t, carriers.getRequest.IncludeInsurancePolicies)
 
-	target, ok := tool.(serviceports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, permission.ResourceCarrier, target.Resource)
 
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), executeParams(
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), executeParams(
 		map[string]any{paramCarrierID: carriers.stored.ID.String()},
 	)))
 }
@@ -297,7 +299,7 @@ func TestUpdateCarrierStatus_PreviewsEachCarrierAndMovesThem(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, carriers.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, "DoNotUse", fieldByPath(t, previewChange(t, preview, 0), fieldStatus).After)
 
@@ -305,7 +307,7 @@ func TestUpdateCarrierStatus_PreviewsEachCarrierAndMovesThem(t *testing.T) {
 	require.NotNil(t, carriers.bulk)
 	assert.Equal(t, carrier.StatusDoNotUse, carriers.bulk.Status)
 
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), executeParams(
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), executeParams(
 		map[string]any{"carrierIds": []any{carriers.stored.ID.String()}, fieldStatus: "Gone"},
 	)))
 }

@@ -14,9 +14,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/apikey"
 	"github.com/emoss08/trenova/internal/core/domain/iam"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/hashutils"
@@ -33,7 +35,7 @@ const (
 )
 
 type permissionLoadResult struct {
-	perms               *repositories.CachedPermissions
+	perms               *permissionports.CachedPermissions
 	cacheHit            bool
 	cacheLookupDuration time.Duration
 	computeDuration     time.Duration
@@ -43,7 +45,7 @@ type permissionResultRequest struct {
 	log       *zap.Logger
 	start     time.Time
 	load      permissionLoadResult
-	req       *services.PermissionCheckRequest
+	req       *permissionports.PermissionCheckRequest
 	allowed   bool
 	reason    string
 	dataScope permission.DataScope
@@ -52,15 +54,15 @@ type permissionResultRequest struct {
 type Params struct {
 	fx.In
 
-	RoleRepository        repositories.RoleRepository
-	RBACRepository        repositories.RBACRepository
-	IAMRepository         repositories.IAMRepository
-	APIKeyRepository      repositories.APIKeyRepository
-	PermissionCacheRepo   repositories.PermissionCacheRepository
-	AccessPolicyCacheRepo repositories.AccessPolicyCacheRepository
-	UserRepository        repositories.UserRepository
-	AgentGrants           repositories.RoleAgentGrantRepository `optional:"true"`
-	Delegated             services.DelegatedPermissionSource    `optional:"true"`
+	RoleRepository        permissionports.RoleRepository
+	RBACRepository        permissionports.RBACRepository
+	IAMRepository         iamports.IAMRepository
+	APIKeyRepository      apikeyports.APIKeyRepository
+	PermissionCacheRepo   permissionports.PermissionCacheRepository
+	AccessPolicyCacheRepo iamports.AccessPolicyCacheRepository
+	UserRepository        tenantports.UserRepository
+	AgentGrants           permissionports.RoleAgentGrantRepository  `optional:"true"`
+	Delegated             permissionports.DelegatedPermissionSource `optional:"true"`
 	Registry              *permission.Registry
 	RouteRegistry         *permission.RouteRegistry
 	Metrics               *metrics.Registry
@@ -68,15 +70,15 @@ type Params struct {
 }
 
 type engine struct {
-	roleRepo      repositories.RoleRepository
-	rbacRepo      repositories.RBACRepository
-	iamRepo       repositories.IAMRepository
-	apiKeyRepo    repositories.APIKeyRepository
-	cacheRepo     repositories.PermissionCacheRepository
-	policyCache   repositories.AccessPolicyCacheRepository
-	userRepo      repositories.UserRepository
-	agentGrants   repositories.RoleAgentGrantRepository
-	delegated     services.DelegatedPermissionSource
+	roleRepo      permissionports.RoleRepository
+	rbacRepo      permissionports.RBACRepository
+	iamRepo       iamports.IAMRepository
+	apiKeyRepo    apikeyports.APIKeyRepository
+	cacheRepo     permissionports.PermissionCacheRepository
+	policyCache   iamports.AccessPolicyCacheRepository
+	userRepo      tenantports.UserRepository
+	agentGrants   permissionports.RoleAgentGrantRepository
+	delegated     permissionports.DelegatedPermissionSource
 	registry      *permission.Registry
 	routeRegistry *permission.RouteRegistry
 	metrics       *metrics.Registry
@@ -84,7 +86,7 @@ type engine struct {
 }
 
 //nolint:gocritic // this is dependency injection
-func NewEngine(p Params) services.PermissionEngine {
+func NewEngine(p Params) permissionports.PermissionEngine {
 	return &engine{
 		roleRepo:      p.RoleRepository,
 		rbacRepo:      p.RBACRepository,
@@ -104,16 +106,16 @@ func NewEngine(p Params) services.PermissionEngine {
 
 func (e *engine) Check(
 	ctx context.Context,
-	req *services.PermissionCheckRequest,
-) (*services.PermissionCheckResult, error) {
+	req *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
 	start := time.Now()
 	log := e.checkLogger("Check", req)
 
-	if req.PrincipalType == services.PrincipalTypeAPIKey {
+	if req.PrincipalType == permissionports.PrincipalTypeAPIKey {
 		return e.checkAPIKeyPermission(ctx, req, start)
 	}
 
-	if req.PrincipalType == services.PrincipalTypeAgent {
+	if req.PrincipalType == permissionports.PrincipalTypeAgent {
 		return e.checkAgentPermission(req, start), nil
 	}
 
@@ -130,7 +132,7 @@ func (e *engine) Check(
 
 func (e *engine) checkLogger(
 	operation string,
-	req *services.PermissionCheckRequest,
+	req *permissionports.PermissionCheckRequest,
 ) *zap.Logger {
 	return e.l.With(
 		zap.String("operation", operation),
@@ -141,9 +143,9 @@ func (e *engine) checkLogger(
 }
 
 func (e *engine) checkAgentPermission(
-	req *services.PermissionCheckRequest,
+	req *permissionports.PermissionCheckRequest,
 	start time.Time,
-) *services.PermissionCheckResult {
+) *permissionports.PermissionCheckResult {
 	allowed := permission.IsAgentAllowed(permission.Resource(req.Resource), req.Operation)
 
 	reason := "agent_denied"
@@ -151,7 +153,7 @@ func (e *engine) checkAgentPermission(
 		reason = "agent_allowed"
 	}
 
-	return &services.PermissionCheckResult{
+	return &permissionports.PermissionCheckResult{
 		Allowed:       allowed,
 		Reason:        reason,
 		DataScope:     permission.DataScopeOrganization,
@@ -164,9 +166,9 @@ func (e *engine) checkUserPermission(
 	log *zap.Logger,
 	start time.Time,
 	load permissionLoadResult,
-	req *services.PermissionCheckRequest,
+	req *permissionports.PermissionCheckRequest,
 	policies accessPolicySource,
-) (*services.PermissionCheckResult, error) {
+) (*permissionports.PermissionCheckResult, error) {
 	resourcePerms, ok := e.resolveResourcePermission(load.perms, req.Resource, req.Operation)
 	if !ok {
 		return e.permissionResult(&permissionResultRequest{
@@ -194,10 +196,10 @@ func (e *engine) checkUserPermission(
 }
 
 func (e *engine) resolveResourcePermission(
-	perms *repositories.CachedPermissions,
+	perms *permissionports.CachedPermissions,
 	resource string,
 	op permission.Operation,
-) (*repositories.CachedResourcePermission, bool) {
+) (*permissionports.CachedResourcePermission, bool) {
 	if rp, ok := perms.Resources[resource]; ok &&
 		slices.Contains(rp.Operations, string(op)) {
 		return rp, true
@@ -216,10 +218,10 @@ func (e *engine) resolveResourcePermission(
 
 func (e *engine) applyAccessPolicies(
 	ctx context.Context,
-	req *services.PermissionCheckRequest,
-	result *services.PermissionCheckResult,
+	req *permissionports.PermissionCheckRequest,
+	result *permissionports.PermissionCheckResult,
 	policies accessPolicySource,
-) (*services.PermissionCheckResult, error) {
+) (*permissionports.PermissionCheckResult, error) {
 	if policies == nil {
 		return result, nil
 	}
@@ -251,7 +253,7 @@ func (e *engine) newAccessPolicySource(orgID, buID pulid.ID) accessPolicySource 
 		repo:  e.iamRepo,
 		cache: e.policyCache,
 		log:   e.l,
-		req: repositories.IAMTenantPolicyLookupRequest{
+		req: iamports.IAMTenantPolicyLookupRequest{
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
 		},
@@ -272,10 +274,10 @@ type accessPolicyKey struct {
 }
 
 type tenantAccessPolicySource struct {
-	repo   repositories.IAMRepository
-	cache  repositories.AccessPolicyCacheRepository
+	repo   iamports.IAMRepository
+	cache  iamports.AccessPolicyCacheRepository
 	log    *zap.Logger
-	req    repositories.IAMTenantPolicyLookupRequest
+	req    iamports.IAMTenantPolicyLookupRequest
 	loaded bool
 	byKey  map[accessPolicyKey][]*iam.AccessPolicy
 }
@@ -333,7 +335,7 @@ func (s *tenantAccessPolicySource) fetch(ctx context.Context) ([]*iam.AccessPoli
 
 func evaluateAccessPolicies(
 	policies []*iam.AccessPolicy,
-	req *services.PermissionCheckRequest,
+	req *permissionports.PermissionCheckRequest,
 ) iam.PolicyEffect {
 	var currentPriority int
 	var hasPriority bool
@@ -367,7 +369,7 @@ func evaluateAccessPolicies(
 	return ""
 }
 
-func accessPolicyMatches(policy *iam.AccessPolicy, req *services.PermissionCheckRequest) bool {
+func accessPolicyMatches(policy *iam.AccessPolicy, req *permissionports.PermissionCheckRequest) bool {
 	if policy == nil || len(policy.Conditions) == 0 {
 		return true
 	}
@@ -383,7 +385,7 @@ func accessPolicyMatches(policy *iam.AccessPolicy, req *services.PermissionCheck
 func accessPolicyConditionMatches(
 	key string,
 	expected string,
-	req *services.PermissionCheckRequest,
+	req *permissionports.PermissionCheckRequest,
 ) bool {
 	normalizedKey := strings.TrimSpace(key)
 	normalizedExpected := strings.TrimSpace(expected)
@@ -425,7 +427,7 @@ func intConditionAtLeast(actual int, expected string) bool {
 	return actual >= expectedValue
 }
 
-func (e *engine) permissionResult(p *permissionResultRequest) *services.PermissionCheckResult {
+func (e *engine) permissionResult(p *permissionResultRequest) *permissionports.PermissionCheckResult {
 	if p.allowed {
 		if result := enforceResourceAttributes(p.req, p.dataScope); result != nil {
 			e.logSlowPermissionCheck(p.log, p.start, p.load, true)
@@ -436,7 +438,7 @@ func (e *engine) permissionResult(p *permissionResultRequest) *services.Permissi
 	}
 
 	e.logSlowPermissionCheck(p.log, p.start, p.load, true)
-	return &services.PermissionCheckResult{
+	return &permissionports.PermissionCheckResult{
 		Allowed:       p.allowed,
 		Reason:        p.reason,
 		DataScope:     p.dataScope,
@@ -467,13 +469,13 @@ func (e *engine) logSlowPermissionCheck(
 
 func (e *engine) CheckBatch(
 	ctx context.Context,
-	req *services.BatchPermissionCheckRequest,
-) (*services.BatchPermissionCheckResult, error) {
+	req *permissionports.BatchPermissionCheckRequest,
+) (*permissionports.BatchPermissionCheckResult, error) {
 	start := time.Now()
 
-	results := make([]services.PermissionCheckResult, len(req.Checks))
+	results := make([]permissionports.PermissionCheckResult, len(req.Checks))
 	if len(req.Checks) == 0 {
-		return &services.BatchPermissionCheckResult{
+		return &permissionports.BatchPermissionCheckResult{
 			Results:       results,
 			CheckDuration: time.Since(start).Milliseconds(),
 		}, nil
@@ -481,9 +483,9 @@ func (e *engine) CheckBatch(
 
 	var err error
 	switch req.PrincipalType {
-	case services.PrincipalTypeAPIKey:
+	case permissionports.PrincipalTypeAPIKey:
 		err = e.checkAPIKeyBatch(ctx, req, results)
-	case services.PrincipalTypeAgent:
+	case permissionports.PrincipalTypeAgent:
 		e.checkAgentBatch(req, results)
 	default:
 		err = e.checkUserBatch(ctx, req, results)
@@ -492,7 +494,7 @@ func (e *engine) CheckBatch(
 		return nil, err
 	}
 
-	return &services.BatchPermissionCheckResult{
+	return &permissionports.BatchPermissionCheckResult{
 		Results:       results,
 		CacheHit:      results[0].CacheHit,
 		CheckDuration: time.Since(start).Milliseconds(),
@@ -500,10 +502,10 @@ func (e *engine) CheckBatch(
 }
 
 func batchCheckRequest(
-	req *services.BatchPermissionCheckRequest,
-	check services.ResourceOperationCheck,
-) *services.PermissionCheckRequest {
-	return &services.PermissionCheckRequest{
+	req *permissionports.BatchPermissionCheckRequest,
+	check permissionports.ResourceOperationCheck,
+) *permissionports.PermissionCheckRequest {
+	return &permissionports.PermissionCheckRequest{
 		PrincipalType:      req.PrincipalType,
 		PrincipalID:        req.PrincipalID,
 		UserID:             req.UserID,
@@ -520,8 +522,8 @@ func batchCheckRequest(
 
 func (e *engine) checkUserBatch(
 	ctx context.Context,
-	req *services.BatchPermissionCheckRequest,
-	results []services.PermissionCheckResult,
+	req *permissionports.BatchPermissionCheckRequest,
+	results []permissionports.PermissionCheckResult,
 ) error {
 	load, err := e.getOrComputePermissions(ctx, req.UserID, req.OrganizationID)
 	if err != nil {
@@ -554,8 +556,8 @@ func (e *engine) checkUserBatch(
 
 func (e *engine) checkAPIKeyBatch(
 	ctx context.Context,
-	req *services.BatchPermissionCheckRequest,
-	results []services.PermissionCheckResult,
+	req *permissionports.BatchPermissionCheckRequest,
+	results []permissionports.PermissionCheckResult,
 ) error {
 	perms, err := e.computeAPIKeyPermissions(
 		ctx,
@@ -574,8 +576,8 @@ func (e *engine) checkAPIKeyBatch(
 }
 
 func (e *engine) checkAgentBatch(
-	req *services.BatchPermissionCheckRequest,
-	results []services.PermissionCheckResult,
+	req *permissionports.BatchPermissionCheckRequest,
+	results []permissionports.PermissionCheckResult,
 ) {
 	for i, check := range req.Checks {
 		results[i] = *e.checkAgentPermission(batchCheckRequest(req, check), time.Now())
@@ -583,9 +585,9 @@ func (e *engine) checkAgentBatch(
 }
 
 func enforceResourceAttributes(
-	req *services.PermissionCheckRequest,
+	req *permissionports.PermissionCheckRequest,
 	dataScope permission.DataScope,
-) *services.PermissionCheckResult {
+) *permissionports.PermissionCheckResult {
 	if result := enforceGlobalResourceAttributes(req, dataScope); result != nil {
 		return result
 	}
@@ -606,9 +608,9 @@ func enforceResourceAttributes(
 }
 
 func enforceGlobalResourceAttributes(
-	req *services.PermissionCheckRequest,
+	req *permissionports.PermissionCheckRequest,
 	dataScope permission.DataScope,
-) *services.PermissionCheckResult {
+) *permissionports.PermissionCheckResult {
 	attrs := req.ResourceAttributes
 
 	if attrs.OrganizationID.IsNotNil() && attrs.OrganizationID != req.OrganizationID {
@@ -634,8 +636,8 @@ func enforceGlobalResourceAttributes(
 func deniedByABAC(
 	dataScope permission.DataScope,
 	reason string,
-) *services.PermissionCheckResult {
-	return &services.PermissionCheckResult{
+) *permissionports.PermissionCheckResult {
+	return &permissionports.PermissionCheckResult{
 		Allowed:   false,
 		Reason:    reason,
 		DataScope: dataScope,
@@ -645,7 +647,7 @@ func deniedByABAC(
 func (e *engine) GetLightManifest(
 	ctx context.Context,
 	userID, orgID pulid.ID,
-) (*services.LightPermissionManifest, error) {
+) (*permissionports.LightPermissionManifest, error) {
 	log := e.l.With(
 		zap.String("operation", "GetLightManifest"),
 		zap.String("userID", userID.String()),
@@ -666,10 +668,10 @@ func (e *engine) GetLightManifest(
 	expiresAt := timeutils.NowUnix() + int64(cacheTTL.Seconds())
 	roleActivation, hasRoleActivation := authctx.GetSessionRoleActivation(ctx)
 	activeRoleIDs := roleActivation.ActiveRoleIDs
-	activeRoles := []services.RoleSummary{}
+	activeRoles := []permissionports.RoleSummary{}
 	requiresRoleActivation := false
 	authorizedRoleIDs := []pulid.ID{}
-	authorizedRoles := []services.RoleSummary{}
+	authorizedRoles := []permissionports.RoleSummary{}
 	if hasRoleActivation {
 		authorizedRoles, err = e.getAuthorizedRoleSummaries(ctx, userID, orgID)
 		if err != nil {
@@ -703,15 +705,15 @@ func (e *engine) GetLightManifest(
 func (e *engine) getUserOrgSummaries(
 	ctx context.Context,
 	userID pulid.ID,
-) ([]services.OrgSummary, error) {
+) ([]permissionports.OrgSummary, error) {
 	orgs, err := e.userRepo.GetUserOrganizationSummaries(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	orgSummaries := make([]services.OrgSummary, len(orgs))
+	orgSummaries := make([]permissionports.OrgSummary, len(orgs))
 	for i, org := range orgs {
-		orgSummaries[i] = services.OrgSummary{
+		orgSummaries[i] = permissionports.OrgSummary{
 			ID:   org.ID,
 			Name: org.Name,
 		}
@@ -724,16 +726,16 @@ func (e *engine) getAuthorizedRoleSummaries(
 	ctx context.Context,
 	userID pulid.ID,
 	orgID pulid.ID,
-) ([]services.RoleSummary, error) {
+) ([]permissionports.RoleSummary, error) {
 	roles, err := e.rbacRepo.GetAuthorizedRoles(ctx, userID, orgID)
 	if err != nil {
 		return nil, err
 	}
 
-	summaries := make([]services.RoleSummary, 0, len(roles))
+	summaries := make([]permissionports.RoleSummary, 0, len(roles))
 	for _, role := range roles {
 		if role != nil {
-			summaries = append(summaries, services.NewRoleSummary(role))
+			summaries = append(summaries, permissionports.NewRoleSummary(role))
 		}
 	}
 
@@ -741,12 +743,12 @@ func (e *engine) getAuthorizedRoleSummaries(
 	if err != nil {
 		return nil, err
 	}
-	services.ApplyRolePermissionCounts(summaries, counts)
+	permissionports.ApplyRolePermissionCounts(summaries, counts)
 
 	return summaries, nil
 }
 
-func roleSummaryIDs(roles []services.RoleSummary) []pulid.ID {
+func roleSummaryIDs(roles []permissionports.RoleSummary) []pulid.ID {
 	roleIDs := make([]pulid.ID, len(roles))
 	for i, role := range roles {
 		roleIDs[i] = role.ID
@@ -756,18 +758,18 @@ func roleSummaryIDs(roles []services.RoleSummary) []pulid.ID {
 
 func activeRoleSummaries(
 	activeRoleIDs []pulid.ID,
-	authorizedRoles []services.RoleSummary,
-) []services.RoleSummary {
+	authorizedRoles []permissionports.RoleSummary,
+) []permissionports.RoleSummary {
 	if len(activeRoleIDs) == 0 || len(authorizedRoles) == 0 {
-		return []services.RoleSummary{}
+		return []permissionports.RoleSummary{}
 	}
 
-	byID := make(map[pulid.ID]services.RoleSummary, len(authorizedRoles))
+	byID := make(map[pulid.ID]permissionports.RoleSummary, len(authorizedRoles))
 	for _, role := range authorizedRoles {
 		byID[role.ID] = role
 	}
 
-	activeRoles := make([]services.RoleSummary, 0, len(activeRoleIDs))
+	activeRoles := make([]permissionports.RoleSummary, 0, len(activeRoleIDs))
 	for _, roleID := range activeRoleIDs {
 		role, ok := byID[roleID]
 		if ok {
@@ -777,7 +779,7 @@ func activeRoleSummaries(
 	return activeRoles
 }
 
-func (*engine) lightResourceBitmasks(perms *repositories.CachedPermissions) map[string]uint32 {
+func (*engine) lightResourceBitmasks(perms *permissionports.CachedPermissions) map[string]uint32 {
 	permissions := make(map[string]uint32)
 	for resource, rp := range perms.Resources {
 		var bitmask uint32
@@ -794,15 +796,15 @@ func (e *engine) newLightManifest(
 	userID, orgID pulid.ID,
 	maxSensitivity permission.FieldSensitivity,
 	permissions map[string]uint32,
-	orgSummaries []services.OrgSummary,
+	orgSummaries []permissionports.OrgSummary,
 	activeRoleIDs []pulid.ID,
 	authorizedRoleIDs []pulid.ID,
-	activeRoles []services.RoleSummary,
-	authorizedRoles []services.RoleSummary,
+	activeRoles []permissionports.RoleSummary,
+	authorizedRoles []permissionports.RoleSummary,
 	requiresRoleActivation bool,
 	expiresAt int64,
-) *services.LightPermissionManifest {
-	manifest := &services.LightPermissionManifest{
+) *permissionports.LightPermissionManifest {
+	manifest := &permissionports.LightPermissionManifest{
 		Version:                manifestVersion,
 		UserID:                 userID,
 		OrganizationID:         orgID,
@@ -825,7 +827,7 @@ func (e *engine) GetResourcePermissions(
 	ctx context.Context,
 	userID, orgID pulid.ID,
 	resource string,
-) (*services.ResourcePermissionDetail, error) {
+) (*permissionports.ResourcePermissionDetail, error) {
 	log := e.l.With(
 		zap.String("operation", "GetResourcePermissions"),
 		zap.String("userID", userID.String()),
@@ -850,7 +852,7 @@ func (e *engine) GetResourcePermissions(
 	effectiveResource := e.registry.GetEffectiveResource(resource)
 	resourcePerms, ok := perms.Resources[effectiveResource]
 	if !ok {
-		return &services.ResourcePermissionDetail{
+		return &permissionports.ResourcePermissionDetail{
 			Resource:         resource,
 			Operations:       []permission.Operation{},
 			DataScope:        "",
@@ -869,7 +871,7 @@ func (e *engine) GetResourcePermissions(
 	// complete set. Built from the classified fields alone, it withheld every
 	// unclassified one, such as a move's miles, though MaxSensitivity, which
 	// each reader checks first, already allows them.
-	return &services.ResourcePermissionDetail{
+	return &permissionports.ResourcePermissionDetail{
 		Resource:       resource,
 		Operations:     ops,
 		DataScope:      permission.DataScope(resourcePerms.DataScope),
@@ -884,7 +886,7 @@ func (e *engine) InvalidateUser(ctx context.Context, userID, orgID pulid.ID) err
 func (e *engine) GetEffectivePermissions(
 	ctx context.Context,
 	userID, orgID pulid.ID,
-) (*services.EffectivePermissions, error) {
+) (*permissionports.EffectivePermissions, error) {
 	log := e.l.With(
 		zap.String("operation", "GetEffectivePermissions"),
 		zap.String("userID", userID.String()),
@@ -923,8 +925,8 @@ func (e *engine) GetEffectivePermissions(
 
 func (e *engine) SimulatePermissions(
 	ctx context.Context,
-	req *services.SimulatePermissionsRequest,
-) (*services.EffectivePermissions, error) {
+	req *permissionports.SimulatePermissionsRequest,
+) (*permissionports.EffectivePermissions, error) {
 	log := e.l.With(
 		zap.String("operation", "SimulatePermissions"),
 		zap.String("userID", req.UserID.String()),
@@ -969,9 +971,9 @@ func (e *engine) SimulatePermissions(
 
 func (e *engine) checkAPIKeyPermission(
 	ctx context.Context,
-	req *services.PermissionCheckRequest,
+	req *permissionports.PermissionCheckRequest,
 	start time.Time,
-) (*services.PermissionCheckResult, error) {
+) (*permissionports.PermissionCheckResult, error) {
 	perms, err := e.computeAPIKeyPermissions(
 		ctx,
 		req.APIKeyID,
@@ -986,13 +988,13 @@ func (e *engine) checkAPIKeyPermission(
 }
 
 func (e *engine) resolveAPIKeyPermission(
-	perms *repositories.CachedPermissions,
-	req *services.PermissionCheckRequest,
+	perms *permissionports.CachedPermissions,
+	req *permissionports.PermissionCheckRequest,
 	start time.Time,
-) *services.PermissionCheckResult {
+) *permissionports.PermissionCheckResult {
 	resourcePerms, ok := e.resolveResourcePermission(perms, req.Resource, req.Operation)
 	if !ok {
-		return &services.PermissionCheckResult{
+		return &permissionports.PermissionCheckResult{
 			Allowed:       false,
 			Reason:        "no_permission",
 			DataScope:     "",
@@ -1001,7 +1003,7 @@ func (e *engine) resolveAPIKeyPermission(
 		}
 	}
 
-	return &services.PermissionCheckResult{
+	return &permissionports.PermissionCheckResult{
 		Allowed:       true,
 		Reason:        "allowed",
 		DataScope:     permission.DataScope(resourcePerms.DataScope),
@@ -1013,7 +1015,7 @@ func (e *engine) resolveAPIKeyPermission(
 func (e *engine) computeAPIKeyPermissions(
 	ctx context.Context,
 	apiKeyID, buID, orgID pulid.ID,
-) (*repositories.CachedPermissions, error) {
+) (*permissionports.CachedPermissions, error) {
 	key, err := e.apiKeyRepo.GetByID(ctx, pagination.TenantInfo{
 		OrgID: orgID,
 		BuID:  buID,
@@ -1022,12 +1024,12 @@ func (e *engine) computeAPIKeyPermissions(
 		return nil, err
 	}
 
-	resources := make(map[string]*repositories.CachedResourcePermission)
+	resources := make(map[string]*permissionports.CachedResourcePermission)
 	for _, rp := range key.Permissions {
 		e.mergeAPIKeyPermissionIntoCache(resources, rp)
 	}
 
-	return &repositories.CachedPermissions{
+	return &permissionports.CachedPermissions{
 		MaxSensitivity: string(permission.SensitivityRestricted),
 		Resources:      resources,
 		ExpiresAt:      timeutils.NowUnix() + int64(cacheTTL.Seconds()),
@@ -1050,7 +1052,7 @@ func (e *engine) getOrComputePermissions(
 		}
 	}
 
-	key := repositories.PermissionCacheKey{
+	key := permissionports.PermissionCacheKey{
 		UserID:  userID,
 		OrgID:   orgID,
 		Variant: permissionCacheVariant(ctx),
@@ -1095,7 +1097,7 @@ func (e *engine) getOrComputePermissions(
 func permissionCacheVariant(ctx context.Context) string {
 	activation, ok := authctx.GetSessionRoleActivation(ctx)
 	if !ok {
-		return repositories.PermissionCacheVariantAllRoles
+		return permissionports.PermissionCacheVariantAllRoles
 	}
 
 	ids := make([]string, 0, len(activation.ActiveRoleIDs))
@@ -1111,7 +1113,7 @@ func permissionCacheVariant(ctx context.Context) string {
 func (e *engine) computePermissions(
 	ctx context.Context,
 	userID, orgID pulid.ID,
-) (*repositories.CachedPermissions, error) {
+) (*permissionports.CachedPermissions, error) {
 	assignments, err := e.roleRepo.GetUserRoleAssignments(ctx, userID, orgID)
 	if err != nil {
 		return nil, err
@@ -1120,9 +1122,9 @@ func (e *engine) computePermissions(
 	roleActivation, hasRoleActivation := authctx.GetSessionRoleActivation(ctx)
 	if hasRoleActivation && roleActivation.RequiresActivation &&
 		len(roleActivation.ActiveRoleIDs) == 0 {
-		return &repositories.CachedPermissions{
+		return &permissionports.CachedPermissions{
 			MaxSensitivity: string(permission.SensitivityPublic),
-			Resources:      make(map[string]*repositories.CachedResourcePermission),
+			Resources:      make(map[string]*permissionports.CachedResourcePermission),
 			ExpiresAt:      timeutils.NowUnix() + int64(cacheTTL.Seconds()),
 		}, nil
 	}
@@ -1130,9 +1132,9 @@ func (e *engine) computePermissions(
 	roleIDs := activePermissionRoleIDs(assignments, roleActivation, hasRoleActivation)
 
 	if len(roleIDs) == 0 {
-		return &repositories.CachedPermissions{
+		return &permissionports.CachedPermissions{
 			MaxSensitivity: string(permission.SensitivityPublic),
-			Resources:      make(map[string]*repositories.CachedResourcePermission),
+			Resources:      make(map[string]*permissionports.CachedResourcePermission),
 			ExpiresAt:      timeutils.NowUnix() + int64(cacheTTL.Seconds()),
 		}, nil
 	}
@@ -1144,7 +1146,7 @@ func (e *engine) computePermissions(
 	e.metrics.Permission.RecordClosureSize(len(roles))
 
 	maxSensitivity := permission.SensitivityPublic
-	resources := make(map[string]*repositories.CachedResourcePermission)
+	resources := make(map[string]*permissionports.CachedResourcePermission)
 
 	for _, role := range roles {
 		applyRoleSensitivity(role, &maxSensitivity)
@@ -1156,7 +1158,7 @@ func (e *engine) computePermissions(
 		return nil, err
 	}
 
-	return &repositories.CachedPermissions{
+	return &permissionports.CachedPermissions{
 		MaxSensitivity: string(maxSensitivity),
 		Resources:      resources,
 		AgentIDs:       agentIDs,
@@ -1209,7 +1211,7 @@ func applyRoleSensitivity(
 }
 
 func (e *engine) mergeRolePermissionsIntoCache(
-	resources map[string]*repositories.CachedResourcePermission,
+	resources map[string]*permissionports.CachedResourcePermission,
 	rolePermissions []*permission.ResourcePermission,
 ) {
 	for _, rp := range rolePermissions {
@@ -1218,12 +1220,12 @@ func (e *engine) mergeRolePermissionsIntoCache(
 }
 
 func (e *engine) mergeAPIKeyPermissionIntoCache(
-	resources map[string]*repositories.CachedResourcePermission,
+	resources map[string]*permissionports.CachedResourcePermission,
 	rp *apikey.Permission,
 ) {
 	existing, ok := resources[rp.Resource]
 	if !ok {
-		resources[rp.Resource] = &repositories.CachedResourcePermission{
+		resources[rp.Resource] = &permissionports.CachedResourcePermission{
 			Operations: e.opsToStrings(rp.Operations),
 			DataScope:  string(rp.DataScope),
 		}
@@ -1237,12 +1239,12 @@ func (e *engine) mergeAPIKeyPermissionIntoCache(
 }
 
 func (e *engine) mergeResourcePermissionIntoCache(
-	resources map[string]*repositories.CachedResourcePermission,
+	resources map[string]*permissionports.CachedResourcePermission,
 	rp *permission.ResourcePermission,
 ) {
 	existing, ok := resources[rp.Resource]
 	if !ok {
-		resources[rp.Resource] = &repositories.CachedResourcePermission{
+		resources[rp.Resource] = &permissionports.CachedResourcePermission{
 			Operations: e.opsToStrings(rp.Operations),
 			DataScope:  string(rp.DataScope),
 		}
@@ -1282,13 +1284,13 @@ func (e *engine) mergeOpStrings(existing []string, incoming []permission.Operati
 func (e *engine) buildEffectivePermissions(
 	userID, orgID pulid.ID,
 	roles []*permission.Role,
-) *services.EffectivePermissions {
+) *permissionports.EffectivePermissions {
 	maxSensitivity := permission.SensitivityPublic
-	resources := make(map[string]services.EffectiveResourcePermission)
+	resources := make(map[string]permissionports.EffectiveResourcePermission)
 
-	roleSummaries := make([]services.RoleSummary, len(roles))
+	roleSummaries := make([]permissionports.RoleSummary, len(roles))
 	for i, role := range roles {
-		roleSummaries[i] = services.RoleSummary{
+		roleSummaries[i] = permissionports.RoleSummary{
 			ID:          role.ID,
 			Name:        role.Name,
 			Description: role.Description,
@@ -1302,7 +1304,7 @@ func (e *engine) buildEffectivePermissions(
 		for _, rp := range role.Permissions {
 			existing, ok := resources[rp.Resource]
 			if !ok {
-				resources[rp.Resource] = services.EffectiveResourcePermission{
+				resources[rp.Resource] = permissionports.EffectiveResourcePermission{
 					Operations: rp.Operations,
 					DataScope:  rp.DataScope,
 					GrantedBy:  []string{role.Name},
@@ -1324,7 +1326,7 @@ func (e *engine) buildEffectivePermissions(
 		}
 	}
 
-	return &services.EffectivePermissions{
+	return &permissionports.EffectivePermissions{
 		UserID:         userID,
 		OrganizationID: orgID,
 		Roles:          roleSummaries,
@@ -1338,7 +1340,7 @@ type resourceBitmask struct {
 	Bitmask  uint32
 }
 
-func (e *engine) computeChecksum(manifest *services.LightPermissionManifest) string {
+func (e *engine) computeChecksum(manifest *permissionports.LightPermissionManifest) string {
 	keys := make([]string, 0, len(manifest.Permissions))
 	for k := range manifest.Permissions {
 		keys = append(keys, k)

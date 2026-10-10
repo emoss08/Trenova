@@ -9,8 +9,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/sliceutils"
@@ -26,14 +26,14 @@ type receivableSpec struct {
 	operation   permission.Operation
 	egress      agent.EgressClass
 	alsoEgress  []agent.EgressClass
-	classify    func(serviceports.ToolExecuteParams) serviceports.CallPolicy
+	classify    func(agentports.ToolExecuteParams) agentports.CallPolicy
 	defaultTier agent.AutonomyTier
 	maxTier     agent.AutonomyTier
 	personOnly  bool
 	reversible  bool
 	idempotent  bool
 	taintHold   string
-	condition   *serviceports.TierCondition
+	condition   *agentports.TierCondition
 	artifact    string
 	rationale   string
 	properties  map[string]any
@@ -43,19 +43,19 @@ type receivableSpec struct {
 	// the order a task with it is done in; see serviceports.RecipeTool.
 	prerequisites []string
 	recipe        []string
-	target        func(params map[string]any) (serviceports.ToolTarget, bool)
+	target        func(params map[string]any) (agentports.ToolTarget, bool)
 }
 
 type receivablePlan[R, P any] struct {
-	request func(params *serviceports.ToolExecuteParams) (R, error)
-	settle  func(ctx context.Context, req R, params *serviceports.ToolExecuteParams) error
-	plan    func(ctx context.Context, req R, params *serviceports.ToolExecuteParams) (P, error)
+	request func(params *agentports.ToolExecuteParams) (R, error)
+	settle  func(ctx context.Context, req R, params *agentports.ToolExecuteParams) error
+	plan    func(ctx context.Context, req R, params *agentports.ToolExecuteParams) (P, error)
 	refused func(req R) string
 	render  func(req R, plan P) (*agent.ToolPreview, error)
 	run     func(
 		ctx context.Context,
 		req R,
-		params *serviceports.ToolExecuteParams,
+		params *agentports.ToolExecuteParams,
 	) (*agent.ToolExecutionResult, error)
 }
 
@@ -69,11 +69,11 @@ type reportingReceivableTool[R, P any] struct {
 }
 
 var (
-	_ serviceports.ToolPreviewer      = (*receivableTool[struct{}, struct{}])(nil)
-	_ serviceports.ToolValidator      = (*receivableTool[struct{}, struct{}])(nil)
-	_ serviceports.TargetedTool       = (*receivableTool[struct{}, struct{}])(nil)
-	_ serviceports.SearchableTool     = (*receivableTool[struct{}, struct{}])(nil)
-	_ serviceports.ToolResultReporter = reportingReceivableTool[struct{}, struct{}]{}
+	_ agentports.ToolPreviewer      = (*receivableTool[struct{}, struct{}])(nil)
+	_ agentports.ToolValidator      = (*receivableTool[struct{}, struct{}])(nil)
+	_ agentports.TargetedTool       = (*receivableTool[struct{}, struct{}])(nil)
+	_ agentports.SearchableTool     = (*receivableTool[struct{}, struct{}])(nil)
+	_ agentports.ToolResultReporter = reportingReceivableTool[struct{}, struct{}]{}
 )
 
 func newReceivableTool[R, P any](
@@ -113,8 +113,8 @@ func (t *receivableTool[R, P]) ParamSchema() map[string]any {
 	return schema
 }
 
-func (t *receivableTool[R, P]) Policy() serviceports.ToolPolicy {
-	policy := serviceports.ToolPolicy{
+func (t *receivableTool[R, P]) Policy() agentports.ToolPolicy {
+	policy := agentports.ToolPolicy{
 		Name:          t.spec.name,
 		Kind:          agent.ToolKindAction,
 		Resource:      t.spec.resource,
@@ -133,24 +133,24 @@ func (t *receivableTool[R, P]) Policy() serviceports.ToolPolicy {
 		Classify:      t.spec.classify,
 	}
 	if t.spec.taintHold != "" {
-		policy.TaintHold = &serviceports.TaintHold{
+		policy.TaintHold = &agentports.TaintHold{
 			Description: t.spec.taintHold,
-			Applies:     func(serviceports.ToolExecuteParams) bool { return true },
+			Applies:     func(agentports.ToolExecuteParams) bool { return true },
 		}
 	}
 
 	return policy
 }
 
-func (t *receivableTool[R, P]) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *receivableTool[R, P]) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	if t.spec.target == nil {
-		return serviceports.ToolTarget{}, false
+		return agentports.ToolTarget{}, false
 	}
 
 	return t.spec.target(params)
 }
 
-func (t *receivableTool[R, P]) request(params *serviceports.ToolExecuteParams) (R, error) {
+func (t *receivableTool[R, P]) request(params *agentports.ToolExecuteParams) (R, error) {
 	if err := guardPreview(t, params); err != nil {
 		var zero R
 		return zero, err
@@ -162,7 +162,7 @@ func (t *receivableTool[R, P]) request(params *serviceports.ToolExecuteParams) (
 func (t *receivableTool[R, P]) settled(
 	ctx context.Context,
 	req R,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) error {
 	if t.steps.settle == nil {
 		return nil
@@ -173,7 +173,7 @@ func (t *receivableTool[R, P]) settled(
 
 func (t *receivableTool[R, P]) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	req, err := t.request(&params)
 	if err != nil {
@@ -189,7 +189,7 @@ func (t *receivableTool[R, P]) Validate(
 
 func (t *receivableTool[R, P]) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	req, err := t.request(&params)
 	if err != nil {
@@ -209,7 +209,7 @@ func (t *receivableTool[R, P]) Preview(
 
 func (t *receivableTool[R, P]) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.execute(ctx, &params)
 
@@ -218,7 +218,7 @@ func (t *receivableTool[R, P]) Execute(
 
 func (t *receivableTool[R, P]) execute(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*agent.ToolExecutionResult, error) {
 	if t.spec.personOnly && !params.ApprovedFromProposal() {
 		return nil, fmt.Errorf("%s: %w", t.spec.name, ErrNeedsAPersonsApproval)
@@ -240,12 +240,12 @@ func (t *receivableTool[R, P]) execute(
 
 func (t reportingReceivableTool[R, P]) ExecuteWithResult(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
 	return t.execute(ctx, &params)
 }
 
-func targetInvoice(params map[string]any) (serviceports.ToolTarget, bool) {
+func targetInvoice(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, paramInvoiceID, permission.ResourceInvoice)
 }
 

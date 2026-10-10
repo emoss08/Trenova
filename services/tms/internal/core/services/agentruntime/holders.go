@@ -8,8 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -21,9 +21,9 @@ const maxOtherAgents = 100
 
 // OtherUsableAgentsRequest names whose other agents to read.
 type OtherUsableAgentsRequest struct {
-	Permissions serviceports.PermissionEngine
-	Definitions repositories.AgentDefinitionRepository
-	Actor       *serviceports.RequestActor
+	Permissions permissionports.PermissionEngine
+	Definitions agentdefinitionports.AgentDefinitionRepository
+	Actor       *permissionports.RequestActor
 	// Self is the agent the person is already talking to, left out.
 	Self pulid.ID
 }
@@ -47,7 +47,7 @@ func OtherUsableAgents(
 		return nil, nil
 	}
 
-	result, err := req.Definitions.List(ctx, &repositories.ListAgentDefinitionRequest{
+	result, err := req.Definitions.List(ctx, &agentdefinitionports.ListAgentDefinitionRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: req.Actor.TenantInfo(),
 			Pagination: pagination.Info{Limit: maxOtherAgents},
@@ -91,11 +91,11 @@ func OtherUsableAgents(
 // can put them first rather than leave the person to match a name in prose.
 func (s *Service) handOffNote(
 	ctx context.Context,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 	self pulid.ID,
 	tools []string,
 ) (string, []pulid.ID) {
-	if len(tools) == 0 || actor == nil || actor.PrincipalType != serviceports.PrincipalTypeUser {
+	if len(tools) == 0 || actor == nil || actor.PrincipalType != permissionports.PrincipalTypeUser {
 		return "", nil
 	}
 	others, err := OtherUsableAgents(ctx, &OtherUsableAgentsRequest{

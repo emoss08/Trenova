@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -16,18 +16,18 @@ import (
 )
 
 type pagedRepo struct {
-	payments  [][]*repositories.DriverPaymentRepair
-	memos     [][]*repositories.AdjustmentMemoRepair
+	payments  [][]*driversettlementports.DriverPaymentRepair
+	memos     [][]*driversettlementports.AdjustmentMemoRepair
 	memoAfter []pulid.ID
 	memoErr   error
-	requests  []repositories.ListJournalRepairRequest
+	requests  []driversettlementports.ListJournalRepairRequest
 	memoCalls int
 }
 
 func (r *pagedRepo) ListUnjournaledAdjustmentMemos(
 	_ context.Context,
-	req *repositories.ListJournalRepairRequest,
-) ([]*repositories.AdjustmentMemoRepair, error) {
+	req *driversettlementports.ListJournalRepairRequest,
+) ([]*driversettlementports.AdjustmentMemoRepair, error) {
 	r.memoCalls++
 	r.memoAfter = append(r.memoAfter, req.AfterID)
 	if r.memoErr != nil || len(r.memos) == 0 {
@@ -40,8 +40,8 @@ func (r *pagedRepo) ListUnjournaledAdjustmentMemos(
 
 func (r *pagedRepo) ListUnjournaledDriverPayments(
 	_ context.Context,
-	req *repositories.ListJournalRepairRequest,
-) ([]*repositories.DriverPaymentRepair, error) {
+	req *driversettlementports.ListJournalRepairRequest,
+) ([]*driversettlementports.DriverPaymentRepair, error) {
 	r.requests = append(r.requests, *req)
 	if len(r.payments) == 0 {
 		return nil, nil
@@ -53,7 +53,7 @@ func (r *pagedRepo) ListUnjournaledDriverPayments(
 
 func (r *pagedRepo) SetDriverSettlementPaidBatch(
 	context.Context,
-	*repositories.SetDriverSettlementPaidBatchParams,
+	*driversettlementports.SetDriverSettlementPaidBatchParams,
 ) error {
 	return errors.New("dry run must not stamp a settlement")
 }
@@ -68,9 +68,9 @@ func (c *controlReader) GetByOrgID(context.Context, pulid.ID) (*tenant.Accountin
 	return c.control, nil
 }
 
-func paidWithoutSnapshot(orgID pulid.ID, number string) *repositories.DriverPaymentRepair {
+func paidWithoutSnapshot(orgID pulid.ID, number string) *driversettlementports.DriverPaymentRepair {
 	paidAt := int64(1_790_000_000)
-	return &repositories.DriverPaymentRepair{Settlement: &driversettlement.Settlement{
+	return &driversettlementports.DriverPaymentRepair{Settlement: &driversettlement.Settlement{
 		ID:               pulid.MustNew("dstl_"),
 		OrganizationID:   orgID,
 		BusinessUnitID:   pulid.MustNew("bu_"),
@@ -105,7 +105,7 @@ func TestRepairSkipsARecordItCannotJournalAndPagesOn(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	first := paidWithoutSnapshot(orgID, "STL-1")
 	second := paidWithoutSnapshot(orgID, "STL-2")
-	repo := &pagedRepo{payments: [][]*repositories.DriverPaymentRepair{{first}, {second}}}
+	repo := &pagedRepo{payments: [][]*driversettlementports.DriverPaymentRepair{{first}, {second}}}
 	controls := &controlReader{control: &tenant.AccountingControl{
 		OrganizationID:       orgID,
 		DefaultCashAccountID: pulid.MustNew("gla_"),
@@ -140,7 +140,7 @@ func TestRepairLinksAnExistingPaymentJournalWithoutWritingInDryRun(t *testing.T)
 	orgID := pulid.MustNew("org_")
 	linked := paidWithoutSnapshot(orgID, "STL-9")
 	linked.JournalBatchID = pulid.MustNew("jb_")
-	repo := &pagedRepo{payments: [][]*repositories.DriverPaymentRepair{{linked}}}
+	repo := &pagedRepo{payments: [][]*driversettlementports.DriverPaymentRepair{{linked}}}
 	svc := New(&Deps{Repo: repo, Now: func() int64 { return 1 }})
 
 	report, err := svc.Repair(t.Context(), &Request{ActorID: pulid.MustNew("usr_"), DryRun: true})
@@ -154,7 +154,7 @@ func TestRepairLinksAnExistingPaymentJournalWithoutWritingInDryRun(t *testing.T)
 func TestRepairReportsAMemoWhoseAdjustmentIsMissingAndPagesPastIt(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	orphan := &invoice.Invoice{ID: pulid.MustNew("inv_"), OrganizationID: orgID, Number: "CM-7"}
-	repo := &pagedRepo{memos: [][]*repositories.AdjustmentMemoRepair{
+	repo := &pagedRepo{memos: [][]*driversettlementports.AdjustmentMemoRepair{
 		{{Memo: orphan, SourceMissing: true}},
 	}}
 	svc := New(&Deps{Repo: repo, Now: func() int64 { return 1 }})

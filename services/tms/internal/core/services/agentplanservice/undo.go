@@ -4,13 +4,13 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/decisioncommitjobs/decisioncommitcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/decisioncommitjobs/decisioncommitcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -33,8 +33,8 @@ func (s *Service) defers() bool {
 // the window closes, when it is checked again against the world as it is then.
 func (s *Service) approveDeferred(
 	ctx context.Context,
-	req *services.DecideAgentPlanRequest,
-	actor *services.RequestActor,
+	req *agentports.DecideAgentPlanRequest,
+	actor *permissionports.RequestActor,
 ) (*agent.AgentPlan, error) {
 	prepared, err := s.prepare(ctx, req, actor, agent.PlanStatusPending)
 	if err != nil {
@@ -43,7 +43,7 @@ func (s *Service) approveDeferred(
 
 	now := time.Now()
 	commitsAt := decisioncommitcontract.CommitsAt(now)
-	plan, err := s.plans.UpdateStatus(ctx, repositories.UpdateAgentPlanStatusRequest{
+	plan, err := s.plans.UpdateStatus(ctx, agentports.UpdateAgentPlanStatusRequest{
 		ID:              prepared.plan.ID,
 		TenantInfo:      req.TenantInfo,
 		Status:          agent.PlanStatusApproving,
@@ -63,7 +63,7 @@ func (s *Service) approveDeferred(
 		WorkflowIDReusePolicy:    enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE,
 		WorkflowIDConflictPolicy: enums.WORKFLOW_ID_CONFLICT_POLICY_TERMINATE_EXISTING,
 		StaticSummary:            "Plan approval undo window",
-	}, decisioncommitcontract.ProposalCommitWorkflowName, &services.CommitApprovalRequest{
+	}, decisioncommitcontract.ProposalCommitWorkflowName, &agentports.CommitApprovalRequest{
 		OrganizationID:  req.TenantInfo.OrgID,
 		BusinessUnitID:  req.TenantInfo.BuID,
 		DecidedByUserID: actor.UserID,
@@ -83,7 +83,7 @@ func (s *Service) approveDeferred(
 		)
 	}
 
-	s.announce(ctx, plan, actor, services.ActivityApproving)
+	s.announce(ctx, plan, actor, agentports.ActivityApproving)
 
 	return plan, nil
 }
@@ -93,12 +93,12 @@ func (s *Service) approveDeferred(
 // later window, is left alone. A plan that can no longer be approved as it
 // stands, because a record it changes moved on in the window, goes back to
 // waiting on its decider instead of running.
-func (s *Service) CommitApproval(ctx context.Context, req *services.CommitApprovalRequest) error {
+func (s *Service) CommitApproval(ctx context.Context, req *agentports.CommitApprovalRequest) error {
 	tenant := req.TenantInfo()
-	actor := services.UserActor(tenant)
+	actor := permissionports.UserActor(tenant)
 	ctx = dbscope.WithTenant(ctx, actor.DBTenant())
 
-	plan, err := s.plans.GetByID(ctx, repositories.GetAgentPlanByIDRequest{
+	plan, err := s.plans.GetByID(ctx, agentports.GetAgentPlanByIDRequest{
 		ID:         req.PlanID,
 		TenantInfo: tenant,
 	})
@@ -110,7 +110,7 @@ func (s *Service) CommitApproval(ctx context.Context, req *services.CommitApprov
 		return nil
 	}
 
-	decideReq := &services.DecideAgentPlanRequest{
+	decideReq := &agentports.DecideAgentPlanRequest{
 		PlanID:        plan.ID,
 		Decision:      agent.DecisionAccepted,
 		ReasonCode:    req.ReasonCode,
@@ -148,8 +148,8 @@ func (s *Service) CommitApproval(ctx context.Context, req *services.CommitApprov
 // its undo window. Once the plan has started to run it is a conflict.
 func (s *Service) UndoOwnApproval(
 	ctx context.Context,
-	req *services.SettleApprovalRequest,
-	actor *services.RequestActor,
+	req *agentports.SettleApprovalRequest,
+	actor *permissionports.RequestActor,
 ) error {
 	plan, err := s.ownApproving(ctx, req, actor)
 	if err != nil {
@@ -177,8 +177,8 @@ func (s *Service) UndoOwnApproval(
 // already running or run is left as it is; one undone is a conflict.
 func (s *Service) CommitOwnApprovalNow(
 	ctx context.Context,
-	req *services.SettleApprovalRequest,
-	actor *services.RequestActor,
+	req *agentports.SettleApprovalRequest,
+	actor *permissionports.RequestActor,
 ) error {
 	plan, err := s.ownApproving(ctx, req, actor)
 	if err != nil {
@@ -204,7 +204,7 @@ func (s *Service) CommitOwnApprovalNow(
 	s.l.Warn("commit-now could not reach its plan's workflow; committing here",
 		zap.String("plan", plan.ID.String()), zap.Error(err))
 
-	return s.CommitApproval(ctx, &services.CommitApprovalRequest{
+	return s.CommitApproval(ctx, &agentports.CommitApprovalRequest{
 		OrganizationID:  req.TenantInfo.OrgID,
 		BusinessUnitID:  req.TenantInfo.BuID,
 		DecidedByUserID: actor.UserID,
@@ -217,8 +217,8 @@ func (s *Service) CommitOwnApprovalNow(
 // takes, so a person can undo exactly what they could approve.
 func (s *Service) ownApproving(
 	ctx context.Context,
-	req *services.SettleApprovalRequest,
-	actor *services.RequestActor,
+	req *agentports.SettleApprovalRequest,
+	actor *permissionports.RequestActor,
 ) (*agent.AgentPlan, error) {
 	if req.PlanID.IsNil() {
 		return nil, errortypes.NewValidationError(
@@ -239,7 +239,7 @@ func (s *Service) ownApproving(
 		return nil, err
 	}
 
-	return s.plans.GetByID(ctx, repositories.GetAgentPlanByIDRequest{
+	return s.plans.GetByID(ctx, agentports.GetAgentPlanByIDRequest{
 		ID:         req.PlanID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -251,11 +251,11 @@ func (s *Service) ownApproving(
 func (s *Service) reopenPlan(
 	ctx context.Context,
 	plan *agent.AgentPlan,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	undo bool,
 ) bool {
 	tenant := planTenant(plan)
-	update := repositories.UpdateAgentPlanStatusRequest{
+	update := agentports.UpdateAgentPlanStatusRequest{
 		ID:         plan.ID,
 		TenantInfo: tenant,
 		Status:     agent.PlanStatusPending,
@@ -280,18 +280,18 @@ func (s *Service) reopenPlan(
 	if undo {
 		s.logUndo(reopened, actor)
 	}
-	s.announce(ctx, reopened, actor, services.ActivityUndone)
+	s.announce(ctx, reopened, actor, agentports.ActivityUndone)
 
 	return true
 }
 
-func (s *Service) logUndo(plan *agent.AgentPlan, actor *services.RequestActor) {
+func (s *Service) logUndo(plan *agent.AgentPlan, actor *permissionports.RequestActor) {
 	if s.audit == nil {
 		return
 	}
 
 	auditActor := actor.AuditActor()
-	if err := s.audit.LogAction(&services.LogActionParams{
+	if err := s.audit.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceAgentProposal,
 		ResourceID:     plan.ID.String(),
 		Operation:      permission.OpUpdate,

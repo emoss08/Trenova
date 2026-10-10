@@ -10,13 +10,13 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/ifta"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/iftarepository"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -34,7 +34,7 @@ const testPeriodZone = "America/New_York"
 type fixture struct {
 	ctx        context.Context
 	db         *bun.DB
-	repo       repositories.IFTARepository
+	repo       iftaports.IFTARepository
 	tenantA    pagination.TenantInfo
 	tenantB    pagination.TenantInfo
 	userID     pulid.ID
@@ -288,7 +288,7 @@ func (f *fixture) draft(
 
 func ptr(v int64) *int64 { return &v }
 
-func rowFor(rows []*repositories.MileRow, tractor pulid.ID, code string) *repositories.MileRow {
+func rowFor(rows []*iftaports.MileRow, tractor pulid.ID, code string) *iftaports.MileRow {
 	for _, row := range rows {
 		if row.TractorID == tractor && row.JurisdictionCode == code {
 			return row
@@ -435,7 +435,7 @@ func TestAccumulateMiles(t *testing.T) {
 	f.insertRow(t, inTransit, "US", "TX", 100, miles)
 	f.assign(t, inTransit, false)
 
-	result, err := f.repo.AccumulateMiles(f.ctx, &repositories.AccumulateMilesRequest{
+	result, err := f.repo.AccumulateMiles(f.ctx, &iftaports.AccumulateMilesRequest{
 		TenantInfo: f.tenantA,
 		Start:      f.start,
 		End:        f.end,
@@ -482,7 +482,7 @@ func TestAccumulateMiles(t *testing.T) {
 	assert.Equal(t, "300.000", result.Mismatches[0].MoveDistance.StringFixed(3))
 	assert.Equal(t, "100.000", result.Mismatches[0].AttributedMiles.StringFixed(3))
 
-	otherTenant, err := f.repo.AccumulateMiles(f.ctx, &repositories.AccumulateMilesRequest{
+	otherTenant, err := f.repo.AccumulateMiles(f.ctx, &iftaports.AccumulateMilesRequest{
 		TenantInfo: f.tenantB,
 		Start:      f.start,
 		End:        f.end,
@@ -520,26 +520,26 @@ func TestReturns_TenantIsolationAndOpenReturnRule(t *testing.T) {
 	var conflict *errortypes.ConflictError
 	require.ErrorAs(t, err, &conflict, "two open returns for one period are rejected")
 
-	open, err := f.repo.GetOpenReturnForPeriod(f.ctx, &repositories.GetOpenReturnForPeriodRequest{
+	open, err := f.repo.GetOpenReturnForPeriod(f.ctx, &iftaports.GetOpenReturnForPeriodRequest{
 		TenantInfo: f.tenantA, Year: f.period.Year, Quarter: f.period.Quarter,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, open)
 	assert.Equal(t, original.ID, open.ID)
 
-	openB, err := f.repo.GetOpenReturnForPeriod(f.ctx, &repositories.GetOpenReturnForPeriodRequest{
+	openB, err := f.repo.GetOpenReturnForPeriod(f.ctx, &iftaports.GetOpenReturnForPeriodRequest{
 		TenantInfo: f.tenantB, Year: f.period.Year, Quarter: f.period.Quarter,
 	})
 	require.NoError(t, err)
 	assert.Nil(t, openB, "the other tenant sees no open return")
 
-	_, err = f.repo.GetReturnByID(f.ctx, &repositories.GetReturnByIDRequest{
+	_, err = f.repo.GetReturnByID(f.ctx, &iftaports.GetReturnByIDRequest{
 		ID: original.ID, TenantInfo: f.tenantB,
 	})
 	var notFound *errortypes.NotFoundError
 	require.ErrorAs(t, err, &notFound)
 
-	err = f.repo.DeleteReturn(f.ctx, &repositories.DeleteReturnRequest{
+	err = f.repo.DeleteReturn(f.ctx, &iftaports.DeleteReturnRequest{
 		ID: original.ID, TenantInfo: f.tenantB, Version: original.Version,
 	})
 	require.Error(t, err, "the other tenant cannot delete it")
@@ -565,7 +565,7 @@ func TestReturns_TenantIsolationAndOpenReturnRule(t *testing.T) {
 	assert.Equal(t, int64(1), computed.Version)
 	require.NotNil(t, computed.ComputedAt)
 
-	loaded, err := f.repo.GetReturnByID(f.ctx, &repositories.GetReturnByIDRequest{
+	loaded, err := f.repo.GetReturnByID(f.ctx, &iftaports.GetReturnByIDRequest{
 		ID: original.ID, TenantInfo: f.tenantA, IncludeLines: true, IncludeJurisdictions: true,
 	})
 	require.NoError(t, err)
@@ -577,7 +577,7 @@ func TestReturns_TenantIsolationAndOpenReturnRule(t *testing.T) {
 	recomputed, err := f.repo.ReplaceReturnLines(f.ctx, loaded, nil)
 	require.NoError(t, err)
 	assert.Equal(t, int64(2), recomputed.Version)
-	reloaded, err := f.repo.GetReturnByID(f.ctx, &repositories.GetReturnByIDRequest{
+	reloaded, err := f.repo.GetReturnByID(f.ctx, &iftaports.GetReturnByIDRequest{
 		ID: original.ID, TenantInfo: f.tenantA, IncludeLines: true,
 	})
 	require.NoError(t, err)
@@ -604,7 +604,7 @@ func TestReturns_AmendmentCoexistsWithTheFiledOriginal(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, ifta.ReturnStatusFiled, filed.Status)
 
-	open, err := f.repo.GetOpenReturnForPeriod(f.ctx, &repositories.GetOpenReturnForPeriodRequest{
+	open, err := f.repo.GetOpenReturnForPeriod(f.ctx, &iftaports.GetOpenReturnForPeriodRequest{
 		TenantInfo: f.tenantA, Year: f.period.Year, Quarter: f.period.Quarter,
 	})
 	require.NoError(t, err)
@@ -616,7 +616,7 @@ func TestReturns_AmendmentCoexistsWithTheFiledOriginal(t *testing.T) {
 
 	latest, err := f.repo.GetLatestReturnForPeriod(
 		f.ctx,
-		&repositories.GetLatestReturnForPeriodRequest{
+		&iftaports.GetLatestReturnForPeriodRequest{
 			TenantInfo: f.tenantA, Year: f.period.Year, Quarter: f.period.Quarter,
 		},
 	)
@@ -624,7 +624,7 @@ func TestReturns_AmendmentCoexistsWithTheFiledOriginal(t *testing.T) {
 	require.NotNil(t, latest)
 	assert.Equal(t, amendment.ID, latest.ID)
 
-	list, err := f.repo.ListReturns(f.ctx, &repositories.ListReturnsRequest{
+	list, err := f.repo.ListReturns(f.ctx, &iftaports.ListReturnsRequest{
 		Filter: &pagination.QueryOptions{TenantInfo: f.tenantA},
 		Cursor: pagination.CursorInfo{Limit: 10, IncludeTotalCount: true},
 		Year:   f.period.Year,
@@ -635,7 +635,7 @@ func TestReturns_AmendmentCoexistsWithTheFiledOriginal(t *testing.T) {
 	require.Len(t, list.Items, 2)
 	assert.Equal(t, amendment.ID, list.Items[0].ID, "highest amendment first")
 
-	listB, err := f.repo.ListReturns(f.ctx, &repositories.ListReturnsRequest{
+	listB, err := f.repo.ListReturns(f.ctx, &iftaports.ListReturnsRequest{
 		Filter: &pagination.QueryOptions{TenantInfo: f.tenantB},
 		Cursor: pagination.CursorInfo{Limit: 10},
 		Year:   f.period.Year,
@@ -687,7 +687,7 @@ func TestTaxRates_UpsertUpdatesInPlace(t *testing.T) {
 	assert.True(t, second[0].SurchargeRatePerGallon.Valid)
 	assert.Equal(t, "corrected", second[0].SourceNote)
 
-	resolved, err := f.repo.ResolveRates(f.ctx, &repositories.ResolveRatesRequest{
+	resolved, err := f.repo.ResolveRates(f.ctx, &iftaports.ResolveRatesRequest{
 		Year: f.period.Year, Quarter: f.period.Quarter,
 	})
 	require.NoError(t, err)
@@ -696,7 +696,7 @@ func TestTaxRates_UpsertUpdatesInPlace(t *testing.T) {
 		JurisdictionID: f.ok.ID, FuelType: domaintypes.IFTAFuelTypeDiesel,
 	}].RatePerGallon.StringFixed(4))
 
-	list, err := f.repo.ListTaxRates(f.ctx, &repositories.ListTaxRatesRequest{
+	list, err := f.repo.ListTaxRates(f.ctx, &iftaports.ListTaxRatesRequest{
 		Cursor:              pagination.CursorInfo{Limit: 10, IncludeTotalCount: true},
 		Year:                f.period.Year,
 		Quarter:             f.period.Quarter,
@@ -719,20 +719,20 @@ func TestMileageEntries_TenantIsolation(t *testing.T) {
 	entry := f.manualEntry(t, f.tenantA, "123.45", nil)
 	assert.False(t, entry.ID.IsNil())
 
-	_, err := f.repo.GetMileageEntryByID(f.ctx, &repositories.GetMileageEntryByIDRequest{
+	_, err := f.repo.GetMileageEntryByID(f.ctx, &iftaports.GetMileageEntryByIDRequest{
 		ID: entry.ID, TenantInfo: f.tenantB,
 	})
 	var notFound *errortypes.NotFoundError
 	require.ErrorAs(t, err, &notFound)
 
-	listB, err := f.repo.ListMileageEntries(f.ctx, &repositories.ListMileageEntriesRequest{
+	listB, err := f.repo.ListMileageEntries(f.ctx, &iftaports.ListMileageEntriesRequest{
 		Filter: &pagination.QueryOptions{TenantInfo: f.tenantB},
 		Cursor: pagination.CursorInfo{Limit: 10},
 	})
 	require.NoError(t, err)
 	assert.Empty(t, listB.Items)
 
-	listA, err := f.repo.ListMileageEntries(f.ctx, &repositories.ListMileageEntriesRequest{
+	listA, err := f.repo.ListMileageEntries(f.ctx, &iftaports.ListMileageEntriesRequest{
 		Filter:         &pagination.QueryOptions{TenantInfo: f.tenantA},
 		Cursor:         pagination.CursorInfo{Limit: 10, IncludeTotalCount: true},
 		TractorID:      f.tractorID,
@@ -744,7 +744,7 @@ func TestMileageEntries_TenantIsolation(t *testing.T) {
 	require.Len(t, listA.Items, 1)
 	require.NotNil(t, listA.Items[0].Tractor)
 
-	err = f.repo.DeleteMileageEntry(f.ctx, &repositories.DeleteMileageEntryRequest{
+	err = f.repo.DeleteMileageEntry(f.ctx, &iftaports.DeleteMileageEntryRequest{
 		ID: entry.ID, TenantInfo: f.tenantB, Version: entry.Version,
 	})
 	require.Error(t, err, "the other tenant cannot delete it")
@@ -754,7 +754,7 @@ func TestMileageEntries_TenantIsolation(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, int64(1), updated.Version)
 
-	require.NoError(t, f.repo.DeleteMileageEntry(f.ctx, &repositories.DeleteMileageEntryRequest{
+	require.NoError(t, f.repo.DeleteMileageEntry(f.ctx, &iftaports.DeleteMileageEntryRequest{
 		ID: entry.ID, TenantInfo: f.tenantA, Version: updated.Version,
 	}))
 }
@@ -773,10 +773,10 @@ func TestJurisdictions_LookupByCode(t *testing.T) {
 
 	members, err := f.repo.ListJurisdictions(
 		f.ctx,
-		&repositories.ListJurisdictionsRequest{MembersOnly: true},
+		&iftaports.ListJurisdictionsRequest{MembersOnly: true},
 	)
 	require.NoError(t, err)
-	all, err := f.repo.ListJurisdictions(f.ctx, &repositories.ListJurisdictionsRequest{})
+	all, err := f.repo.ListJurisdictions(f.ctx, &iftaports.ListJurisdictionsRequest{})
 	require.NoError(t, err)
 	assert.Less(t, len(members), len(all))
 	for _, j := range members {

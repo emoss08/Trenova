@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
@@ -45,7 +45,7 @@ func (s *Service) priceGuideEntry(
 		return frozen
 	}
 
-	rated, err := s.rateEngine.RateShipment(ctx, &services.RateShipmentRequest{
+	rated, err := s.rateEngine.RateShipment(ctx, &ratequoteports.RateShipmentRequest{
 		Shipment:   entity,
 		TenantInfo: tenantInfo,
 		PartyType:  rateagreement.PartyTypeCarrier,
@@ -100,10 +100,10 @@ func (s *Service) shipmentForContractPricing(
 		return nil
 	}
 
-	entity, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	entity, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         move.ShipmentID,
 		TenantInfo: tenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})

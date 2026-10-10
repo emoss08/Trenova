@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -19,14 +19,14 @@ func cardTenant(card *fuelpurchase.FuelCard) pagination.TenantInfo {
 
 func (s *Service) ListCards(
 	ctx context.Context,
-	req *repositories.ListFuelCardsRequest,
+	req *fuelpurchaseports.ListFuelCardsRequest,
 ) (*pagination.CursorListResult[*fuelpurchase.FuelCard], error) {
 	return s.repo.ListCards(ctx, req)
 }
 
 func (s *Service) ListActiveCards(
 	ctx context.Context,
-	req *repositories.ListActiveFuelCardsRequest,
+	req *fuelpurchaseports.ListActiveFuelCardsRequest,
 ) ([]*fuelpurchase.FuelCard, error) {
 	return s.repo.ListActiveCards(ctx, req)
 }
@@ -36,7 +36,7 @@ func (s *Service) GetCard(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*fuelpurchase.FuelCard, error) {
-	return s.repo.GetCardByID(ctx, &repositories.GetFuelCardByIDRequest{
+	return s.repo.GetCardByID(ctx, &fuelpurchaseports.GetFuelCardByIDRequest{
 		ID:                 id,
 		TenantInfo:         tenantInfo,
 		IncludeAssignments: true,
@@ -45,7 +45,7 @@ func (s *Service) GetCard(
 
 func (s *Service) GetCardsByIDs(
 	ctx context.Context,
-	req *repositories.GetFuelCardsByIDsRequest,
+	req *fuelpurchaseports.GetFuelCardsByIDsRequest,
 ) ([]*fuelpurchase.FuelCard, error) {
 	return s.repo.GetCardsByIDs(ctx, req)
 }
@@ -100,7 +100,7 @@ func (s *Service) UpdateCard(
 	userID pulid.ID,
 ) (*fuelpurchase.FuelCard, error) {
 	tenantInfo := cardTenant(card)
-	stored, err := s.repo.GetCardByID(ctx, &repositories.GetFuelCardByIDRequest{
+	stored, err := s.repo.GetCardByID(ctx, &fuelpurchaseports.GetFuelCardByIDRequest{
 		ID:         card.ID,
 		TenantInfo: tenantInfo,
 	})
@@ -188,7 +188,7 @@ func (s *Service) CancelCard(
 		)
 	}
 
-	card, err := s.repo.GetCardByID(ctx, &repositories.GetFuelCardByIDRequest{
+	card, err := s.repo.GetCardByID(ctx, &fuelpurchaseports.GetFuelCardByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})

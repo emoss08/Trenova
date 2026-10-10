@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -23,7 +23,7 @@ type payEventRepository struct {
 	l  *zap.Logger
 }
 
-func NewPayEvent(p Params) repositories.PayEventRepository {
+func NewPayEvent(p Params) driversettlementports.PayEventRepository {
 	return &payEventRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.pay-event-repository"),
@@ -32,7 +32,7 @@ func NewPayEvent(p Params) repositories.PayEventRepository {
 
 func (r *payEventRepository) List(
 	ctx context.Context,
-	req *repositories.ListPayEventsRequest,
+	req *driversettlementports.ListPayEventsRequest,
 ) (*pagination.ListResult[*driversettlement.PayEvent], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*driversettlement.PayEvent], error) {
 		limit := req.Filter.Pagination.SafeLimit()
@@ -72,7 +72,7 @@ func (r *payEventRepository) List(
 
 func (r *payEventRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListPayEventConnectionRequest,
+	req *driversettlementports.ListPayEventConnectionRequest,
 ) (*pagination.CursorListResult[*driversettlement.PayEvent], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*driversettlement.PayEvent], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -130,7 +130,7 @@ func (r *payEventRepository) ListConnection(
 
 func (r *payEventRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetPayEventByIDRequest,
+	req driversettlementports.GetPayEventByIDRequest,
 ) (*driversettlement.PayEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driversettlement.PayEvent, error) {
 		entity := new(driversettlement.PayEvent)
@@ -172,7 +172,7 @@ func (r *payEventRepository) GetByIdempotencyKey(
 
 func (r *payEventRepository) ListAccruedForWorker(
 	ctx context.Context,
-	req *repositories.ListAccruedPayEventsRequest,
+	req *driversettlementports.ListAccruedPayEventsRequest,
 ) ([]*driversettlement.PayEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driversettlement.PayEvent, error) {
 		cols := buncolgen.PayEventColumns
@@ -215,7 +215,7 @@ func (r *payEventRepository) ListAccruedForWorker(
 
 func (r *payEventRepository) ListWorkerIDsWithAccruedEvents(
 	ctx context.Context,
-	req repositories.ListWorkersWithAccruedEventsRequest,
+	req driversettlementports.ListWorkersWithAccruedEventsRequest,
 ) ([]pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
 		ids := make([]pulid.ID, 0)
@@ -238,10 +238,10 @@ func (r *payEventRepository) ListWorkerIDsWithAccruedEvents(
 
 func (r *payEventRepository) GetAccruedTotalsForWorker(
 	ctx context.Context,
-	req repositories.GetAccruedTotalsForWorkerRequest,
-) (*repositories.AccruedPayTotals, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.AccruedPayTotals, error) {
-		totals := new(repositories.AccruedPayTotals)
+	req driversettlementports.GetAccruedTotalsForWorkerRequest,
+) (*driversettlementports.AccruedPayTotals, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driversettlementports.AccruedPayTotals, error) {
+		totals := new(driversettlementports.AccruedPayTotals)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*driversettlement.PayEvent)(nil)).
@@ -335,10 +335,10 @@ func (r *payEventRepository) ListByMovesForWorker(
 
 func (r *payEventRepository) ListUnsettledWorkerSummaries(
 	ctx context.Context,
-	req *repositories.ListUnsettledWorkerSummariesRequest,
-) ([]*repositories.UnsettledWorkerSummary, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*repositories.UnsettledWorkerSummary, error) {
-		summaries := make([]*repositories.UnsettledWorkerSummary, 0)
+	req *driversettlementports.ListUnsettledWorkerSummariesRequest,
+) ([]*driversettlementports.UnsettledWorkerSummary, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*driversettlementports.UnsettledWorkerSummary, error) {
+		summaries := make([]*driversettlementports.UnsettledWorkerSummary, 0)
 		err := r.db.DBForContext(ctx).NewRaw(`
 		SELECT
 			dpe.worker_id,
@@ -381,9 +381,9 @@ func (r *payEventRepository) ListUnsettledWorkerSummaries(
 func (r *payEventRepository) GetUnsettledSummary(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*repositories.UnsettledPayEventSummary, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.UnsettledPayEventSummary, error) {
-		summary := new(repositories.UnsettledPayEventSummary)
+) (*driversettlementports.UnsettledPayEventSummary, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driversettlementports.UnsettledPayEventSummary, error) {
+		summary := new(driversettlementports.UnsettledPayEventSummary)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*driversettlement.PayEvent)(nil)).

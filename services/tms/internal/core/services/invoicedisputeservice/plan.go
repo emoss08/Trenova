@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -15,15 +15,15 @@ import (
 
 func (s *Service) planOpen(
 	ctx context.Context,
-	req *servicesports.OpenInvoiceDisputeRequest,
+	req *invoiceports.OpenInvoiceDisputeRequest,
 	inv *invoice.Invoice,
-	actor *servicesports.RequestActor,
+	actor *permissionports.RequestActor,
 	now int64,
 ) (*invoice.InvoiceDispute, error) {
 	if multiErr := validateDisputableInvoice(inv, req.DisputedAmount); multiErr != nil {
 		return nil, multiErr
 	}
-	if _, err := s.repo.GetOpenByInvoiceID(ctx, repositories.GetOpenInvoiceDisputeRequest{
+	if _, err := s.repo.GetOpenByInvoiceID(ctx, invoiceports.GetOpenInvoiceDisputeRequest{
 		InvoiceID:  inv.ID,
 		TenantInfo: req.TenantInfo,
 	}); err == nil {
@@ -59,10 +59,10 @@ func (s *Service) planOpen(
 
 func (s *Service) planResolve(
 	ctx context.Context,
-	req *servicesports.ResolveInvoiceDisputeRequest,
+	req *invoiceports.ResolveInvoiceDisputeRequest,
 	entity *invoice.InvoiceDispute,
 	inv *invoice.Invoice,
-	actor *servicesports.RequestActor,
+	actor *permissionports.RequestActor,
 	now int64,
 ) error {
 	if err := refuseClosedCase(entity, verbResolved); err != nil {
@@ -86,9 +86,9 @@ func (s *Service) planResolve(
 }
 
 func planWithdraw(
-	req *servicesports.WithdrawInvoiceDisputeRequest,
+	req *invoiceports.WithdrawInvoiceDisputeRequest,
 	entity *invoice.InvoiceDispute,
-	actor *servicesports.RequestActor,
+	actor *permissionports.RequestActor,
 	now int64,
 ) error {
 	if err := refuseClosedCase(entity, verbWithdrawn); err != nil {
@@ -106,7 +106,7 @@ func planWithdraw(
 }
 
 func validateWithdrawRequest(
-	req *servicesports.WithdrawInvoiceDisputeRequest,
+	req *invoiceports.WithdrawInvoiceDisputeRequest,
 ) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	if req.DisputeID.IsNil() {
@@ -151,7 +151,7 @@ func (s *Service) loadCase(
 	lock bool,
 	verb string,
 ) (*invoice.InvoiceDispute, *invoice.Invoice, error) {
-	entity, err := s.repo.GetByID(ctx, repositories.GetInvoiceDisputeByIDRequest{
+	entity, err := s.repo.GetByID(ctx, invoiceports.GetInvoiceDisputeByIDRequest{
 		ID:         disputeID,
 		TenantInfo: tenantInfo,
 	})
@@ -162,7 +162,7 @@ func (s *Service) loadCase(
 		return nil, nil, err
 	}
 
-	invoiceReq := repositories.GetInvoiceByIDRequest{ID: entity.InvoiceID, TenantInfo: tenantInfo}
+	invoiceReq := invoiceports.GetInvoiceByIDRequest{ID: entity.InvoiceID, TenantInfo: tenantInfo}
 	var inv *invoice.Invoice
 	if lock {
 		inv, err = s.invoiceRepo.LockForUpdate(ctx, invoiceReq)
@@ -178,9 +178,9 @@ func (s *Service) loadCase(
 
 func (s *Service) PreviewOpen(
 	ctx context.Context,
-	req *servicesports.OpenInvoiceDisputeRequest,
-	actor *servicesports.RequestActor,
-) (*servicesports.InvoiceDisputePreview, error) {
+	req *invoiceports.OpenInvoiceDisputeRequest,
+	actor *permissionports.RequestActor,
+) (*invoiceports.InvoiceDisputePreview, error) {
 	if err := requireRequestAndUser(req == nil, actor); err != nil {
 		return nil, err
 	}
@@ -188,7 +188,7 @@ func (s *Service) PreviewOpen(
 		return nil, multiErr
 	}
 
-	inv, err := s.invoiceRepo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+	inv, err := s.invoiceRepo.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         req.InvoiceID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -205,9 +205,9 @@ func (s *Service) PreviewOpen(
 
 func (s *Service) PreviewResolve(
 	ctx context.Context,
-	req *servicesports.ResolveInvoiceDisputeRequest,
-	actor *servicesports.RequestActor,
-) (*servicesports.InvoiceDisputePreview, error) {
+	req *invoiceports.ResolveInvoiceDisputeRequest,
+	actor *permissionports.RequestActor,
+) (*invoiceports.InvoiceDisputePreview, error) {
 	if err := requireRequestAndUser(req == nil, actor); err != nil {
 		return nil, err
 	}
@@ -229,9 +229,9 @@ func (s *Service) PreviewResolve(
 
 func (s *Service) PreviewWithdraw(
 	ctx context.Context,
-	req *servicesports.WithdrawInvoiceDisputeRequest,
-	actor *servicesports.RequestActor,
-) (*servicesports.InvoiceDisputePreview, error) {
+	req *invoiceports.WithdrawInvoiceDisputeRequest,
+	actor *permissionports.RequestActor,
+) (*invoiceports.InvoiceDisputePreview, error) {
 	if err := requireRequestAndUser(req == nil, actor); err != nil {
 		return nil, err
 	}
@@ -251,7 +251,7 @@ func (s *Service) PreviewWithdraw(
 	return disputePreview(&before, entity, inv, invoice.DisputeStatusNone), nil
 }
 
-func requireRequestAndUser(missing bool, actor *servicesports.RequestActor) error {
+func requireRequestAndUser(missing bool, actor *permissionports.RequestActor) error {
 	if missing {
 		return errortypes.NewValidationError(
 			"request",
@@ -272,11 +272,11 @@ func disputePreview(
 	before, after *invoice.InvoiceDispute,
 	inv *invoice.Invoice,
 	flag invoice.DisputeStatus,
-) *servicesports.InvoiceDisputePreview {
+) *invoiceports.InvoiceDisputePreview {
 	invoiceAfter := *inv
 	invoiceAfter.DisputeStatus = flag
 
-	return &servicesports.InvoiceDisputePreview{
+	return &invoiceports.InvoiceDisputePreview{
 		Before:        before,
 		After:         after,
 		InvoiceBefore: inv,

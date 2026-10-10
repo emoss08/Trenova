@@ -6,9 +6,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,7 +22,7 @@ const maxInvoiceLines = 100
 type invoiceReader interface {
 	GetByID(
 		ctx context.Context,
-		req repositories.GetInvoiceByIDRequest,
+		req invoiceports.GetInvoiceByIDRequest,
 	) (*invoice.Invoice, error)
 }
 
@@ -31,9 +32,9 @@ type getInvoiceTool struct {
 }
 
 func newGetInvoiceTool(
-	invoices repositories.InvoiceRepository,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	invoices invoiceports.InvoiceRepository,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &getInvoiceTool{invoices: invoices, access: newFieldAccess(permissions)}
 }
 
@@ -58,13 +59,13 @@ func (t *getInvoiceTool) ParamSchema() map[string]any {
 	)
 }
 
-func (t *getInvoiceTool) Policy() serviceports.ToolPolicy {
+func (t *getInvoiceTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceInvoice})
 }
 
 func (t *getInvoiceTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -75,7 +76,7 @@ func (t *getInvoiceTool) Query(
 		return nil, err
 	}
 
-	entity, err := t.invoices.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+	entity, err := t.invoices.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         id,
 		TenantInfo: tenantOf(params),
 	})
@@ -277,7 +278,7 @@ const (
 type invoiceBatchReader interface {
 	GetByIDs(
 		ctx context.Context,
-		req repositories.GetInvoicesByIDsRequest,
+		req invoiceports.GetInvoicesByIDsRequest,
 	) ([]*invoice.Invoice, error)
 }
 
@@ -287,9 +288,9 @@ type getInvoicesTool struct {
 }
 
 func newGetInvoicesTool(
-	invoices repositories.InvoiceRepository,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	invoices invoiceports.InvoiceRepository,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &getInvoicesTool{invoices: invoices, access: newFieldAccess(permissions)}
 }
 
@@ -321,7 +322,7 @@ func (t *getInvoicesTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *getInvoicesTool) Policy() serviceports.ToolPolicy {
+func (t *getInvoicesTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceInvoice})
 }
 
@@ -345,7 +346,7 @@ type invoiceBatchRow struct {
 
 func (t *getInvoicesTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -357,7 +358,7 @@ func (t *getInvoicesTool) Query(
 	}
 	ids = sliceutils.Dedupe(ids)
 
-	entities, err := t.invoices.GetByIDs(ctx, repositories.GetInvoicesByIDsRequest{
+	entities, err := t.invoices.GetByIDs(ctx, invoiceports.GetInvoicesByIDsRequest{
 		TenantInfo: tenantOf(params),
 		InvoiceIDs: ids,
 	})

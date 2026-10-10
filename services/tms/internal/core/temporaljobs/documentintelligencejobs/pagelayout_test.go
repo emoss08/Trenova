@@ -3,7 +3,7 @@ package documentintelligencejobs
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -35,10 +35,10 @@ func TestTesseractLayoutGroupsWordsIntoLines(t *testing.T) {
 func TestPDFLayoutPlacesLinesOnThePage(t *testing.T) {
 	t.Parallel()
 
-	lines := pdfLayout(&services.PDFPageLayout{
+	lines := pdfLayout(&kernelports.PDFPageLayout{
 		Width:  600,
 		Height: 800,
-		Lines: []services.PDFTextLine{
+		Lines: []kernelports.PDFTextLine{
 			{Text: "Rate:  $1,359.56", Left: 60, Top: 80, Width: 75, Height: 12},
 			{Text: "   ", Left: 60, Top: 90, Width: 10, Height: 12},
 			{Text: "PO & 77812", Left: 590, Top: 795, Width: 50, Height: 12},
@@ -54,6 +54,6 @@ func TestPDFLayoutPlacesLinesOnThePage(t *testing.T) {
 	assert.Equal(t, "PO & 77812", lines[1].Text)
 	assert.LessOrEqual(t, lines[1].X+lines[1].W, 1.0)
 	assert.LessOrEqual(t, lines[1].Y+lines[1].H, 1.0)
-	assert.Nil(t, pdfLayout(&services.PDFPageLayout{}))
+	assert.Nil(t, pdfLayout(&kernelports.PDFPageLayout{}))
 	assert.Nil(t, pdfLayout(nil))
 }

@@ -6,9 +6,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetypes"
@@ -27,8 +29,8 @@ import (
 func (s *service) PreviewContractRate(
 	ctx context.Context,
 	entity *shipment.Shipment,
-	actor *services.RequestActor,
-) (*services.ContractRateApplication, error) {
+	actor *permissionports.RequestActor,
+) (*shipmentports.ContractRateApplication, error) {
 	if entity == nil {
 		multiErr := errortypes.NewMultiError()
 		multiErr.Add("shipment", errortypes.ErrRequired, "Shipment is required")
@@ -66,9 +68,9 @@ func (s *service) PreviewContractRate(
 // than repriced, because its customer has seen the numbers.
 func (s *service) AutoRate(
 	ctx context.Context,
-	req *services.AutoRateShipmentRequest,
-	actor *services.RequestActor,
-) (*shipment.Shipment, *services.ContractRateApplication, error) {
+	req *shipmentports.AutoRateShipmentRequest,
+	actor *permissionports.RequestActor,
+) (*shipment.Shipment, *shipmentports.ContractRateApplication, error) {
 	auditActor := actor.AuditActor()
 	log := s.l.With(
 		zap.String("operation", "AutoRate"),
@@ -110,10 +112,10 @@ func (s *service) AutoRate(
 		log.Error("failed to log audit action", zap.Error(err))
 	}
 
-	services.InvalidateShipments(
+	shipmentports.InvalidateShipments(
 		ctx,
 		s.invalidator,
-		services.ShipmentInvalidationForRecord(
+		shipmentports.ShipmentInvalidationForRecord(
 			updatedEntity,
 			auditActor,
 			"auto-rate",
@@ -128,15 +130,15 @@ func (s *service) AutoRate(
 
 func (s *service) PreviewAutoRate(
 	ctx context.Context,
-	req *services.AutoRateShipmentRequest,
-	actor *services.RequestActor,
-) (*services.ShipmentAutoRatePreview, error) {
+	req *shipmentports.AutoRateShipmentRequest,
+	actor *permissionports.RequestActor,
+) (*shipmentports.ShipmentAutoRatePreview, error) {
 	plan, err := s.planAutoRate(ctx, req, actor)
 	if err != nil {
 		return nil, err
 	}
 
-	return &services.ShipmentAutoRatePreview{
+	return &shipmentports.ShipmentAutoRatePreview{
 		Before: plan.original,
 		After:  plan.entity,
 		Application: s.describeContractRate(
@@ -148,20 +150,20 @@ func (s *service) PreviewAutoRate(
 type autoRatePlan struct {
 	original         *shipment.Shipment
 	entity           *shipment.Shipment
-	rated            *services.RatedShipment
+	rated            *ratequoteports.RatedShipment
 	previousLinehaul decimal.NullDecimal
 }
 
 func (s *service) planAutoRate(
 	ctx context.Context,
-	req *services.AutoRateShipmentRequest,
-	actor *services.RequestActor,
+	req *shipmentports.AutoRateShipmentRequest,
+	actor *permissionports.RequestActor,
 ) (*autoRatePlan, error) {
 	auditActor := actor.AuditActor()
-	original, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	original, err := s.repo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         req.ShipmentID,
 		TenantInfo: req.TenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -177,10 +179,10 @@ func (s *service) planAutoRate(
 		return nil, multiErr
 	}
 
-	entity, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	entity, err := s.repo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         req.ShipmentID,
 		TenantInfo: req.TenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -246,10 +248,10 @@ func validateShipmentRateNotLocked(entity *shipment.Shipment) *errortypes.MultiE
 func (s *service) describeContractRate(
 	ctx context.Context,
 	entity *shipment.Shipment,
-	rated *services.RatedShipment,
+	rated *ratequoteports.RatedShipment,
 	previousLinehaul decimal.NullDecimal,
-) *services.ContractRateApplication {
-	application := &services.ContractRateApplication{
+) *shipmentports.ContractRateApplication {
+	application := &shipmentports.ContractRateApplication{
 		Applied:           rated.Outcome.Priced(),
 		Outcome:           rated.Outcome,
 		AgreementID:       rated.AgreementID,
@@ -294,7 +296,7 @@ func (s *service) describeContractRate(
 // linehaulTemplateName reads the formula that produced the linehaul off the
 // trace, which is where it is recorded whether the rule named the template
 // itself or reached it through a rate matrix.
-func linehaulTemplateName(rated *services.RatedShipment) string {
+func linehaulTemplateName(rated *ratequoteports.RatedShipment) string {
 	if rated.Quote == nil || rated.Quote.Trace == nil {
 		return ""
 	}
@@ -312,17 +314,17 @@ func linehaulTemplateName(rated *services.RatedShipment) string {
 func (s *service) describeContractAccessorials(
 	ctx context.Context,
 	entity *shipment.Shipment,
-	rated *services.RatedShipment,
-) []services.ContractRateAccessorial {
+	rated *ratequoteports.RatedShipment,
+) []shipmentports.ContractRateAccessorial {
 	accessorials := s.commercial.ContractAccessorials(ctx, entity, rated)
-	applied := make([]services.ContractRateAccessorial, 0, len(accessorials))
+	applied := make([]shipmentports.ContractRateAccessorial, 0, len(accessorials))
 
 	for _, accessorial := range accessorials {
 		if accessorial == nil {
 			continue
 		}
 
-		applied = append(applied, services.ContractRateAccessorial{
+		applied = append(applied, shipmentports.ContractRateAccessorial{
 			AccessorialChargeID: accessorial.AccessorialChargeID,
 			Description: s.accessorialDescription(
 				ctx, entity, accessorial.AccessorialChargeID, accessorial.AccessorialCharge,
@@ -353,7 +355,7 @@ func (s *service) accessorialDescription(
 		return ""
 	}
 
-	charge, err := s.accessorialRepo.GetByID(ctx, repositories.GetAccessorialChargeByIDRequest{
+	charge, err := s.accessorialRepo.GetByID(ctx, accessorialchargeports.GetAccessorialChargeByIDRequest{
 		ID: chargeID,
 		TenantInfo: &pagination.TenantInfo{
 			OrgID: entity.OrganizationID,

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -245,7 +245,7 @@ func TestImport_IgnoresUnresolvableSourceTemplate(t *testing.T) {
 	deps.repo.On("FindByNames", mock.Anything, mock.Anything).
 		Return([]*formulatemplate.FormulaTemplate{}, nil)
 	deps.repo.On("GetByIDs", mock.Anything, mock.MatchedBy(
-		func(req repositories.GetFormulaTemplatesByIDsRequest) bool {
+		func(req formulatemplateports.GetFormulaTemplatesByIDsRequest) bool {
 			return len(req.TemplateIDs) == 1 && req.TemplateIDs[0] == sourceID
 		},
 	)).Return([]*formulatemplate.FormulaTemplate{}, nil)

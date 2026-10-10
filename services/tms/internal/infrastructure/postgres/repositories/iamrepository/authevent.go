@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/iam"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/uptrace/bun"
@@ -18,7 +18,7 @@ type authEventRepository struct {
 	l  *zap.Logger
 }
 
-func NewAuthEventRepository(p Params) repositories.AuthEventRepository {
+func NewAuthEventRepository(p Params) iamports.AuthEventRepository {
 	return &authEventRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.auth-event-repository"),

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/location"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -14,11 +14,11 @@ import (
 type LocationByIDLoaderFactoryParams struct {
 	fx.In
 
-	LocationRepo repositories.LocationRepository
+	LocationRepo locationports.LocationRepository
 }
 
 type LocationByIDLoaderFactory struct {
-	locationRepo repositories.LocationRepository
+	locationRepo locationports.LocationRepository
 }
 
 func NewLocationByIDLoaderFactory(
@@ -39,7 +39,7 @@ func (f *LocationByIDLoaderFactory) batchFunc(
 	tenantInfo pagination.TenantInfo,
 ) batchFetchFunc[*location.Location] {
 	return batchByIDFunc(func(ctx context.Context, ids []pulid.ID) ([]*location.Location, error) {
-		return f.locationRepo.GetByIDs(ctx, repositories.GetLocationsByIDsRequest{
+		return f.locationRepo.GetByIDs(ctx, locationports.GetLocationsByIDsRequest{
 			TenantInfo:  tenantInfo,
 			LocationIDs: ids,
 		})

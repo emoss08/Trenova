@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -26,16 +26,16 @@ type Params struct {
 
 	Logger    *zap.Logger
 	Config    *config.Config
-	Publisher services.RealtimePublisher
+	Publisher agentports.RealtimePublisher
 }
 
 type Service struct {
 	l              *zap.Logger
-	publisher      services.RealtimePublisher
+	publisher      agentports.RealtimePublisher
 	maxEntityBytes int
 }
 
-func New(p Params) services.RealtimeService {
+func New(p Params) agentports.RealtimeService {
 	return &Service{
 		l:              p.Logger.Named("service.realtime"),
 		publisher:      p.Publisher,
@@ -49,7 +49,7 @@ func New(p Params) services.RealtimeService {
 // pays nothing for the screens watching it.
 func (s *Service) PublishResourceInvalidation(
 	_ context.Context,
-	req *services.PublishResourceInvalidationRequest,
+	req *agentports.PublishResourceInvalidationRequest,
 ) error {
 	if req == nil {
 		return errortypes.NewBusinessError("publish invalidation request is required")
@@ -75,11 +75,11 @@ func (s *Service) PublishResourceInvalidation(
 		return err
 	}
 
-	if !s.publisher.Enqueue(&services.RealtimeEnvelope{
+	if !s.publisher.Enqueue(&agentports.RealtimeEnvelope{
 		OrganizationID: req.OrganizationID,
 		BusinessUnitID: req.BusinessUnitID,
 		AudienceUserID: req.AudienceUserID,
-		Event:          services.RealtimeEventInvalidation,
+		Event:          agentports.RealtimeEventInvalidation,
 		Payload:        payload,
 		PortalPayload:  portal,
 	}) {
@@ -92,7 +92,7 @@ func (s *Service) PublishResourceInvalidation(
 // encode writes the event, leaving the entity off when it is larger than a
 // stream frame should carry. A reader without the entity refetches the record,
 // which is what it would do for any event it cannot patch from.
-func (s *Service) encode(event *services.ResourceInvalidationEvent) ([]byte, error) {
+func (s *Service) encode(event *agentports.ResourceInvalidationEvent) ([]byte, error) {
 	payload, err := sonic.Marshal(event)
 	if err != nil {
 		return nil, fmt.Errorf("encode realtime invalidation: %w", err)
@@ -120,7 +120,7 @@ func (s *Service) encode(event *services.ResourceInvalidationEvent) ([]byte, err
 // addressed to one person is delivered whole to that person and needs no
 // redacted form.
 func redactedPayload(
-	event *services.ResourceInvalidationEvent,
+	event *agentports.ResourceInvalidationEvent,
 	audience pulid.ID,
 ) ([]byte, error) {
 	if audience.IsNotNil() {
@@ -138,14 +138,14 @@ func redactedPayload(
 }
 
 func buildInvalidationEvent(
-	req *services.PublishResourceInvalidationRequest,
-) services.ResourceInvalidationEvent {
+	req *agentports.PublishResourceInvalidationRequest,
+) agentports.ResourceInvalidationEvent {
 	eventType := strings.TrimSpace(req.EventType)
 	if eventType == "" {
 		eventType = req.Resource + "." + req.Action
 	}
 
-	event := services.ResourceInvalidationEvent{
+	event := agentports.ResourceInvalidationEvent{
 		EventID:        pulid.MustNew("evt_").String(),
 		OrganizationID: req.OrganizationID.String(),
 		BusinessUnitID: req.BusinessUnitID.String(),

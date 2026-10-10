@@ -1,13 +1,18 @@
 package shipmentservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,9 +27,9 @@ func TestServiceGetDelayedShipments_UsesThreshold(t *testing.T) {
 
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
-	controlRepo := mocks.NewMockShipmentControlRepository(t)
+	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
-		Get(mock.Anything, repositories.GetShipmentControlRequest{
+		Get(mock.Anything, tenantports.GetShipmentControlRequest{
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		}).
 		Return(&tenant.ShipmentControl{
@@ -33,9 +38,9 @@ func TestServiceGetDelayedShipments_UsesThreshold(t *testing.T) {
 		}, nil).
 		Once()
 
-	repo := mocks.NewMockShipmentRepository(t)
+	repo := shipmentportsmock.NewMockShipmentRepository(t)
 	repo.EXPECT().
-		GetDelayedShipments(mock.Anything, mock.MatchedBy(func(req *repositories.GetDelayedShipmentsRequest) bool {
+		GetDelayedShipments(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetDelayedShipmentsRequest) bool {
 			return req.TenantInfo.OrgID == orgID && req.TenantInfo.BuID == buID
 		}), int16(45)).
 		Return([]*shipment.Shipment{{ID: pulid.MustNew("shp_")}}, nil).
@@ -47,7 +52,7 @@ func TestServiceGetDelayedShipments_UsesThreshold(t *testing.T) {
 		controlRepo: controlRepo,
 	}
 
-	entities, err := svc.GetDelayedShipments(t.Context(), &repositories.GetDelayedShipmentsRequest{
+	entities, err := svc.GetDelayedShipments(t.Context(), &shipmentports.GetDelayedShipmentsRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 	})
 
@@ -61,9 +66,9 @@ func TestServiceDelayShipments_SkipsWhenAutoDelayDisabled(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
-	controlRepo := mocks.NewMockShipmentControlRepository(t)
+	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
-		Get(mock.Anything, repositories.GetShipmentControlRequest{
+		Get(mock.Anything, tenantports.GetShipmentControlRequest{
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		}).
 		Return(&tenant.ShipmentControl{AutoDelayShipments: false}, nil).
@@ -71,14 +76,14 @@ func TestServiceDelayShipments_SkipsWhenAutoDelayDisabled(t *testing.T) {
 
 	svc := &service{
 		l:           zap.NewNop(),
-		repo:        mocks.NewMockShipmentRepository(t),
+		repo:        shipmentportsmock.NewMockShipmentRepository(t),
 		controlRepo: controlRepo,
-		invalidator: newTestInvalidator(mocks.NewMockRealtimeService(t)),
+		invalidator: newTestInvalidator(agentportsmock.NewMockRealtimeService(t)),
 	}
 
-	entities, err := svc.DelayShipments(t.Context(), &repositories.DelayShipmentsRequest{
+	entities, err := svc.DelayShipments(t.Context(), &shipmentports.DelayShipmentsRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
-	}, &services.RequestActor{})
+	}, &permissionports.RequestActor{})
 
 	require.NoError(t, err)
 	assert.Empty(t, entities)
@@ -92,9 +97,9 @@ func TestServiceDelayShipments_PublishesRealtimeInvalidations(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 	shipmentID := pulid.MustNew("shp_")
 
-	controlRepo := mocks.NewMockShipmentControlRepository(t)
+	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
-		Get(mock.Anything, repositories.GetShipmentControlRequest{
+		Get(mock.Anything, tenantports.GetShipmentControlRequest{
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		}).
 		Return(&tenant.ShipmentControl{
@@ -103,9 +108,9 @@ func TestServiceDelayShipments_PublishesRealtimeInvalidations(t *testing.T) {
 		}, nil).
 		Once()
 
-	repo := mocks.NewMockShipmentRepository(t)
+	repo := shipmentportsmock.NewMockShipmentRepository(t)
 	repo.EXPECT().
-		DelayShipments(mock.Anything, mock.MatchedBy(func(req *repositories.DelayShipmentsRequest) bool {
+		DelayShipments(mock.Anything, mock.MatchedBy(func(req *shipmentports.DelayShipmentsRequest) bool {
 			return req.TenantInfo.OrgID == orgID && req.TenantInfo.BuID == buID
 		}), int16(15)).
 		Return([]*shipment.Shipment{{
@@ -116,9 +121,9 @@ func TestServiceDelayShipments_PublishesRealtimeInvalidations(t *testing.T) {
 		}}, nil).
 		Once()
 
-	realtime := mocks.NewMockRealtimeService(t)
+	realtime := agentportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().
-		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *services.PublishResourceInvalidationRequest) bool {
+		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *agentports.PublishResourceInvalidationRequest) bool {
 			return req.Resource == "shipments" &&
 				req.Action == "delayed" &&
 				req.RecordID == shipmentID &&
@@ -134,10 +139,10 @@ func TestServiceDelayShipments_PublishesRealtimeInvalidations(t *testing.T) {
 		invalidator: newTestInvalidator(realtime),
 	}
 
-	entities, err := svc.DelayShipments(t.Context(), &repositories.DelayShipmentsRequest{
+	entities, err := svc.DelayShipments(t.Context(), &shipmentports.DelayShipmentsRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
-	}, &services.RequestActor{
-		PrincipalType: services.PrincipalTypeUser,
+	}, &permissionports.RequestActor{
+		PrincipalType: permissionports.PrincipalTypeUser,
 		PrincipalID:   userID,
 		UserID:        userID,
 	})

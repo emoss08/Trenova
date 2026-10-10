@@ -12,8 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/reporting/canned"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -150,8 +150,8 @@ func leakageRequest(
 	def *report.Definition,
 	tenantInfo pagination.TenantInfo,
 	params map[string]any,
-) *services.ReportCompileRequest {
-	return &services.ReportCompileRequest{
+) *reportports.ReportCompileRequest {
+	return &reportports.ReportCompileRequest{
 		Definition:  def,
 		Tenant:      tenantInfo,
 		Params:      params,
@@ -236,7 +236,7 @@ func collectResultCells(
 	t *testing.T,
 	ctx context.Context,
 	db *bun.DB,
-	compiled *services.CompiledReportQuery,
+	compiled *reportports.CompiledReportQuery,
 ) []string {
 	t.Helper()
 

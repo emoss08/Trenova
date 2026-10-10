@@ -6,9 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentmemoryservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -18,9 +18,9 @@ import (
 )
 
 type fakeMemories struct {
-	serviceports.AgentMemoryService
-	remembered *serviceports.RememberRequest
-	status     *serviceports.SetAgentMemoryStatusRequest
+	agentports.AgentMemoryService
+	remembered *agentports.RememberRequest
+	status     *agentports.SetAgentMemoryStatusRequest
 	created    *agent.Memory
 	stored     map[pulid.ID]*agent.Memory
 	existing   *agent.Memory
@@ -51,8 +51,8 @@ func (f *fakeMemories) Reader(
 
 func (f *fakeMemories) Remember(
 	_ context.Context,
-	req *serviceports.RememberRequest,
-	actor *serviceports.RequestActor,
+	req *agentports.RememberRequest,
+	actor *permissionports.RequestActor,
 ) (*agent.Memory, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -69,10 +69,10 @@ func (f *fakeMemories) Remember(
 
 func (f *fakeMemories) PreviewRemember(
 	_ context.Context,
-	req *serviceports.RememberRequest,
-	actor *serviceports.RequestActor,
-) (*serviceports.RememberPlan, error) {
-	return &serviceports.RememberPlan{
+	req *agentports.RememberRequest,
+	actor *permissionports.RequestActor,
+) (*agentports.RememberPlan, error) {
+	return &agentports.RememberPlan{
 		Memory:   agentmemoryservice.NewMemory(req, actor),
 		Existing: f.existing,
 	}, nil
@@ -80,7 +80,7 @@ func (f *fakeMemories) PreviewRemember(
 
 func (f *fakeMemories) GetByID(
 	_ context.Context,
-	req repositories.GetAgentMemoryByIDRequest,
+	req agentports.GetAgentMemoryByIDRequest,
 ) (*agent.Memory, error) {
 	memory, ok := f.stored[req.ID]
 	if !ok {
@@ -93,8 +93,8 @@ func (f *fakeMemories) GetByID(
 
 func (f *fakeMemories) SetStatus(
 	_ context.Context,
-	req serviceports.SetAgentMemoryStatusRequest,
-	actor *serviceports.RequestActor,
+	req agentports.SetAgentMemoryStatusRequest,
+	actor *permissionports.RequestActor,
 ) (*agent.Memory, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -116,14 +116,14 @@ func (f *fakeMemories) SetStatus(
 	return memory, nil
 }
 
-func memoryParams(params map[string]any) serviceports.ToolExecuteParams {
+func memoryParams(params map[string]any) agentports.ToolExecuteParams {
 	orgID, buID := pulid.MustNew("org_"), pulid.MustNew("bu_")
 
-	return serviceports.ToolExecuteParams{
+	return agentports.ToolExecuteParams{
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
-		Actor: &serviceports.RequestActor{
-			PrincipalType:  serviceports.PrincipalTypeUser,
+		Actor: &permissionports.RequestActor{
+			PrincipalType:  permissionports.PrincipalTypeUser,
 			UserID:         pulid.MustNew("usr_"),
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
@@ -236,7 +236,7 @@ func TestRemember_KeepsItForThePersonUnlessToldWhoElse(t *testing.T) {
 	tool := newRememberTool(memories)
 
 	params := memoryParams(map[string]any{"content": "Group AR by facility."})
-	memory, err := tool.(serviceports.MemoryRecordingTool).Record(t.Context(), params)
+	memory, err := tool.(agentports.MemoryRecordingTool).Record(t.Context(), params)
 	require.NoError(t, err)
 	assert.Equal(t, agent.MemoryScopeUser, memory.Scope)
 	require.NotNil(t, memory.OwnerUserID)
@@ -245,7 +245,7 @@ func TestRemember_KeepsItForThePersonUnlessToldWhoElse(t *testing.T) {
 	assert.Equal(t, agent.EgressPersonal, tool.Policy().Classified(params).Egress)
 
 	team := memoryParams(map[string]any{"content": "Columbus loads need a lumper receipt.", "visibleTo": "team"})
-	memory, err = tool.(serviceports.MemoryRecordingTool).Record(t.Context(), team)
+	memory, err = tool.(agentports.MemoryRecordingTool).Record(t.Context(), team)
 	require.NoError(t, err)
 	assert.Equal(t, agent.MemoryScopeRole, memory.Scope)
 	require.NotNil(t, memory.RoleID)
@@ -253,7 +253,7 @@ func TestRemember_KeepsItForThePersonUnlessToldWhoElse(t *testing.T) {
 	assert.Equal(t, agent.EgressInternal, tool.Policy().Classified(team).Egress)
 
 	org := memoryParams(map[string]any{"content": "Use the DOE weekly average.", "visibleTo": "organization"})
-	memory, err = tool.(serviceports.MemoryRecordingTool).Record(t.Context(), org)
+	memory, err = tool.(agentports.MemoryRecordingTool).Record(t.Context(), org)
 	require.NoError(t, err)
 	assert.Equal(t, agent.MemoryScopeOrganization, memory.Scope)
 	assert.Nil(t, memory.OwnerUserID)
@@ -266,19 +266,19 @@ func TestRemember_WithNobodyInTheConversationKeepsItForTheOrganization(t *testin
 
 	tool := newRememberTool(&fakeMemories{})
 	params := memoryParams(map[string]any{"content": "Docks close at four."})
-	params.Actor = &serviceports.RequestActor{
-		PrincipalType:  serviceports.PrincipalTypeAgent,
+	params.Actor = &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeAgent,
 		PrincipalID:    pulid.MustNew("agt_"),
 		OrganizationID: params.OrganizationID,
 		BusinessUnitID: params.BusinessUnitID,
 	}
 
-	memory, err := tool.(serviceports.MemoryRecordingTool).Record(t.Context(), params)
+	memory, err := tool.(agentports.MemoryRecordingTool).Record(t.Context(), params)
 	require.NoError(t, err)
 	assert.Equal(t, agent.MemoryScopeOrganization, memory.Scope)
 
 	params.Params["visibleTo"] = "me"
-	_, err = tool.(serviceports.MemoryRecordingTool).Record(t.Context(), params)
+	_, err = tool.(agentports.MemoryRecordingTool).Record(t.Context(), params)
 	require.Error(t, err)
 }
 
@@ -292,7 +292,7 @@ func TestRemember_AskFirstOffersInsteadOfKeeping(t *testing.T) {
 	tool := newRememberTool(memories)
 
 	params := memoryParams(map[string]any{"content": "Avery approves invoices after 4 PM."})
-	memory, err := tool.(serviceports.MemoryRecordingTool).Record(t.Context(), params)
+	memory, err := tool.(agentports.MemoryRecordingTool).Record(t.Context(), params)
 	require.NoError(t, err)
 	assert.Equal(t, agent.MemoryStatusSuggested, memory.Status)
 	require.NotNil(t, memory.CreatedByUserID)
@@ -300,7 +300,7 @@ func TestRemember_AskFirstOffersInsteadOfKeeping(t *testing.T) {
 
 	approved := memoryParams(map[string]any{"content": "Avery approves invoices after 4 PM."})
 	approved.ProposalID = pulid.MustNew("aprop_")
-	memory, err = tool.(serviceports.MemoryRecordingTool).Record(t.Context(), approved)
+	memory, err = tool.(agentports.MemoryRecordingTool).Record(t.Context(), approved)
 	require.NoError(t, err)
 	assert.Equal(t, agent.MemoryStatusActive, memory.Status)
 }

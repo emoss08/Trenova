@@ -7,8 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/shared/money"
 )
 
@@ -57,8 +58,8 @@ func invoiceRecord(entity *invoice.Invoice) toolpreview.Record {
 }
 
 func renderDraftUpdate(
-	req *serviceports.UpdateInvoiceDraftRequest,
-	plan *serviceports.InvoiceDraftUpdatePreview,
+	req *invoiceports.UpdateInvoiceDraftRequest,
+	plan *invoiceports.InvoiceDraftUpdatePreview,
 ) (*agent.ToolPreview, error) {
 	change, err := toolpreview.Changed(
 		invoiceRecord(plan.Before),
@@ -91,8 +92,8 @@ func renderDraftUpdate(
 }
 
 func renderPDFGeneration(
-	_ *serviceports.InvoicePreviewRequest,
-	plan *serviceports.InvoicePDFGenerationPlan,
+	_ *invoiceports.InvoicePreviewRequest,
+	plan *invoiceports.InvoicePDFGenerationPlan,
 ) (*agent.ToolPreview, error) {
 	summary := fmt.Sprintf("Would render the PDF of %s from what it says now and file it on "+
 		"the invoice", invoiceLabel(plan.Invoice))
@@ -107,7 +108,7 @@ func renderPDFGeneration(
 
 func renderCreateInvoices(
 	_ *createInvoicesRequest,
-	plan *serviceports.CreateInvoicesPlan,
+	plan *invoiceports.CreateInvoicesPlan,
 ) (*agent.ToolPreview, error) {
 	changes := make([]*agent.RecordChange, 0, len(plan.Drafts))
 	payers := make([]string, 0, len(plan.Drafts))
@@ -135,7 +136,7 @@ func renderCreateInvoices(
 }
 
 func renderMemo(
-	req *serviceports.CreateMemoRequest,
+	req *invoiceports.CreateMemoRequest,
 	memo *invoice.Invoice,
 ) (*agent.ToolPreview, error) {
 	change, err := draftInvoiceChange(memo)
@@ -164,8 +165,8 @@ func dispositionSentence(disposition invoice.VoidDisposition) string {
 }
 
 func renderVoid(
-	_ *serviceports.VoidInvoiceRequest,
-	plan *serviceports.InvoiceVoidPreview,
+	_ *invoiceports.VoidInvoiceRequest,
+	plan *invoiceports.InvoiceVoidPreview,
 ) (*agent.ToolPreview, error) {
 	label := invoiceLabel(plan.Before)
 	fields := []string{fieldVoidReason, "voidDisposition"}
@@ -214,7 +215,7 @@ func renderVoid(
 	), reversal, invoiceChange)
 	preview.Partial = true
 	if refusal := figuresRefusal(
-		[]*serviceports.InvoiceAdjustmentPreview{figures},
+		[]*invoiceadjustmentports.InvoiceAdjustmentPreview{figures},
 	); refusal != nil {
 		return warnWouldFail(preview, refusal), nil
 	}
@@ -223,8 +224,8 @@ func renderVoid(
 }
 
 func renderEDISend(
-	req *serviceports.SendInvoiceEDIRequest,
-	plan *serviceports.InvoiceEDISendPreview,
+	req *invoiceports.SendInvoiceEDIRequest,
+	plan *invoiceports.InvoiceEDISendPreview,
 ) (*agent.ToolPreview, error) {
 	label := invoiceLabel(plan.Invoice)
 	partner := plan.Plan.PartnerName

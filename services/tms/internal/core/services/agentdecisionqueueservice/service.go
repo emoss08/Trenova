@@ -7,9 +7,10 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentshadow"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -31,10 +32,10 @@ type Params struct {
 	fx.In
 
 	Logger    *zap.Logger
-	Queue     repositories.AgentDecisionQueueRepository
-	Proposals repositories.AgentProposalRepository
-	Plans     repositories.AgentPlanRepository
-	Decisions services.AgentDecisionService
+	Queue     agentports.AgentDecisionQueueRepository
+	Proposals agentports.AgentProposalRepository
+	Plans     agentports.AgentPlanRepository
+	Decisions agentports.AgentDecisionService
 	Shadow    *agentshadow.Resolver
 }
 
@@ -44,10 +45,10 @@ type Params struct {
 // the audit line are the same whether one proposal was approved or twenty.
 type Service struct {
 	l         *zap.Logger
-	queue     repositories.AgentDecisionQueueRepository
-	proposals repositories.AgentProposalRepository
-	plans     repositories.AgentPlanRepository
-	decisions services.AgentDecisionService
+	queue     agentports.AgentDecisionQueueRepository
+	proposals agentports.AgentProposalRepository
+	plans     agentports.AgentPlanRepository
+	decisions agentports.AgentDecisionService
 	shadow    shadowReader
 }
 
@@ -55,7 +56,7 @@ type shadowReader interface {
 	Organization(ctx context.Context, tenant pagination.TenantInfo) (bool, error)
 }
 
-func New(p Params) services.AgentDecisionQueueService {
+func New(p Params) agentports.AgentDecisionQueueService {
 	return &Service{
 		l:         p.Logger.Named("service.agentdecisionqueue"),
 		queue:     p.Queue,
@@ -68,14 +69,14 @@ func New(p Params) services.AgentDecisionQueueService {
 
 func (s *Service) ListPending(
 	ctx context.Context,
-	req services.ListPendingDecisionsRequest,
-) (*services.PendingDecisionsPage, error) {
+	req agentports.ListPendingDecisionsRequest,
+) (*agentports.PendingDecisionsPage, error) {
 	shadow, err := s.shadow.Organization(ctx, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
 	if shadow || withheld(req.Usable) {
-		return &services.PendingDecisionsPage{Items: []services.PendingDecision{}}, nil
+		return &agentports.PendingDecisionsPage{Items: []agentports.PendingDecision{}}, nil
 	}
 
 	limit := req.First
@@ -86,7 +87,7 @@ func (s *Service) ListPending(
 		limit = maxPageSize
 	}
 
-	listReq := repositories.ListPendingDecisionsRequest{
+	listReq := agentports.ListPendingDecisionsQuery{
 		TenantInfo:               req.TenantInfo,
 		Limit:                    limit,
 		AgentDefinitionID:        req.AgentDefinitionID,
@@ -117,7 +118,7 @@ func (s *Service) ListPending(
 		return nil, err
 	}
 
-	out := &services.PendingDecisionsPage{Items: items, HasNextPage: page.HasNextPage}
+	out := &agentports.PendingDecisionsPage{Items: items, HasNextPage: page.HasNextPage}
 	if req.IncludeTotalCount {
 		total, countErr := s.queue.CountPending(ctx, listReq)
 		if countErr != nil {
@@ -135,22 +136,22 @@ func (s *Service) ListPending(
 func (s *Service) loadEntries(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	entries []repositories.PendingDecisionEntry,
-) ([]services.PendingDecision, error) {
+	entries []agentports.PendingDecisionEntry,
+) ([]agentports.PendingDecision, error) {
 	proposalIDs := make([]pulid.ID, 0, len(entries))
 	planIDs := make([]pulid.ID, 0, len(entries))
 	for _, entry := range entries {
 		switch entry.Kind {
-		case repositories.PendingDecisionProposal:
+		case agentports.PendingDecisionProposal:
 			proposalIDs = append(proposalIDs, entry.ID)
-		case repositories.PendingDecisionPlan:
+		case agentports.PendingDecisionPlan:
 			planIDs = append(planIDs, entry.ID)
 		}
 	}
 
 	proposalsByID := make(map[pulid.ID]*agent.AgentProposal, len(proposalIDs))
 	if len(proposalIDs) > 0 {
-		proposals, err := s.proposals.ListByIDs(ctx, repositories.ListAgentProposalsByIDsRequest{
+		proposals, err := s.proposals.ListByIDs(ctx, agentports.ListAgentProposalsByIDsRequest{
 			IDs:        proposalIDs,
 			TenantInfo: tenant,
 		})
@@ -164,7 +165,7 @@ func (s *Service) loadEntries(
 
 	plansByID := make(map[pulid.ID]*agent.AgentPlan, len(planIDs))
 	if len(planIDs) > 0 {
-		plans, err := s.plans.ListByIDs(ctx, repositories.ListAgentPlansByIDsRequest{
+		plans, err := s.plans.ListByIDs(ctx, agentports.ListAgentPlansByIDsRequest{
 			IDs:        planIDs,
 			TenantInfo: tenant,
 		})
@@ -176,21 +177,21 @@ func (s *Service) loadEntries(
 		}
 	}
 
-	items := make([]services.PendingDecision, 0, len(entries))
+	items := make([]agentports.PendingDecision, 0, len(entries))
 	for _, entry := range entries {
 		cursor, err := encodeCursor(entry)
 		if err != nil {
 			return nil, err
 		}
-		item := services.PendingDecision{CreatedAt: entry.CreatedAt, Cursor: cursor}
+		item := agentports.PendingDecision{CreatedAt: entry.CreatedAt, Cursor: cursor}
 		switch entry.Kind {
-		case repositories.PendingDecisionProposal:
+		case agentports.PendingDecisionProposal:
 			proposal, ok := proposalsByID[entry.ID]
 			if !ok {
 				continue
 			}
 			item.Proposal = proposal
-		case repositories.PendingDecisionPlan:
+		case agentports.PendingDecisionPlan:
 			plan, ok := plansByID[entry.ID]
 			if !ok {
 				continue
@@ -208,7 +209,7 @@ func (s *Service) loadEntries(
 func (s *Service) Count(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	usable *services.UsableAgents,
+	usable *permissionports.UsableAgents,
 ) (int, error) {
 	shadow, err := s.shadow.Organization(ctx, tenant)
 	if err != nil {
@@ -218,7 +219,7 @@ func (s *Service) Count(
 		return 0, nil
 	}
 
-	return s.queue.CountPending(ctx, repositories.ListPendingDecisionsRequest{
+	return s.queue.CountPending(ctx, agentports.ListPendingDecisionsQuery{
 		TenantInfo:               tenant,
 		ExcludeShadowDefinitions: true,
 		Audience:                 audienceOf(usable),
@@ -232,13 +233,13 @@ func (s *Service) Count(
 // decided. A proposal gone since is left out rather than failing the list.
 func (s *Service) Recent(
 	ctx context.Context,
-	req services.ListRecentDecisionsRequest,
-) ([]services.RecentDecision, error) {
+	req agentports.ListRecentDecisionsRequest,
+) ([]agentports.RecentDecision, error) {
 	if withheld(req.Usable) {
-		return []services.RecentDecision{}, nil
+		return []agentports.RecentDecision{}, nil
 	}
 
-	entries, err := s.queue.ListRecent(ctx, repositories.ListRecentDecisionsRequest{
+	entries, err := s.queue.ListRecent(ctx, agentports.ListRecentDecisionsQuery{
 		TenantInfo: req.TenantInfo,
 		Since:      req.Since,
 		Limit:      req.First,
@@ -248,14 +249,14 @@ func (s *Service) Recent(
 		return nil, err
 	}
 	if len(entries) == 0 {
-		return []services.RecentDecision{}, nil
+		return []agentports.RecentDecision{}, nil
 	}
 
 	ids := make([]pulid.ID, 0, len(entries))
 	for _, entry := range entries {
 		ids = append(ids, entry.ProposalID)
 	}
-	proposals, err := s.proposals.ListByIDs(ctx, repositories.ListAgentProposalsByIDsRequest{
+	proposals, err := s.proposals.ListByIDs(ctx, agentports.ListAgentProposalsByIDsRequest{
 		IDs:        ids,
 		TenantInfo: req.TenantInfo,
 	})
@@ -267,23 +268,23 @@ func (s *Service) Recent(
 		byID[proposal.ID] = proposal
 	}
 
-	out := make([]services.RecentDecision, 0, len(entries))
+	out := make([]agentports.RecentDecision, 0, len(entries))
 	for _, entry := range entries {
 		proposal, ok := byID[entry.ProposalID]
 		if !ok {
 			continue
 		}
-		out = append(out, services.RecentDecision{RecentDecisionEntry: entry, Proposal: proposal})
+		out = append(out, agentports.RecentDecision{RecentDecisionEntry: entry, Proposal: proposal})
 	}
 
 	return out, nil
 }
 
-func withheld(usable *services.UsableAgents) bool {
+func withheld(usable *permissionports.UsableAgents) bool {
 	return usable != nil && !usable.Assistant
 }
 
-func audienceOf(usable *services.UsableAgents) *repositories.AgentAudience {
+func audienceOf(usable *permissionports.UsableAgents) *kernelports.AgentAudience {
 	if usable == nil {
 		return nil
 	}
@@ -294,20 +295,20 @@ func audienceOf(usable *services.UsableAgents) *repositories.AgentAudience {
 func (s *Service) Summary(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	usable *services.UsableAgents,
-) (*repositories.PendingDecisionSummary, error) {
+	usable *permissionports.UsableAgents,
+) (*agentports.PendingDecisionSummary, error) {
 	shadow, err := s.shadow.Organization(ctx, tenant)
 	if err != nil {
 		return nil, err
 	}
 	if shadow || withheld(usable) {
-		return &repositories.PendingDecisionSummary{
-			ByAgent: []repositories.PendingDecisionAgentCount{},
-			ByTool:  []repositories.PendingDecisionToolCount{},
+		return &agentports.PendingDecisionSummary{
+			ByAgent: []agentports.PendingDecisionAgentCount{},
+			ByTool:  []agentports.PendingDecisionToolCount{},
 		}, nil
 	}
 
-	return s.queue.Summary(ctx, repositories.PendingDecisionSummaryRequest{
+	return s.queue.Summary(ctx, agentports.PendingDecisionSummaryRequest{
 		TenantInfo:               tenant,
 		ExcludeShadowDefinitions: true,
 		Audience:                 audienceOf(usable),
@@ -323,19 +324,19 @@ func (s *Service) Summary(
 // the rest nor hides.
 func (s *Service) DecideMany(
 	ctx context.Context,
-	req *services.DecideAgentProposalsRequest,
-	actor *services.RequestActor,
-) ([]services.AgentProposalDecisionResult, error) {
+	req *agentports.DecideAgentProposalsRequest,
+	actor *permissionports.RequestActor,
+) ([]agentports.AgentProposalDecisionResult, error) {
 	if err := s.checkBatch(ctx, req); err != nil {
 		return nil, err
 	}
 
-	results := make([]services.AgentProposalDecisionResult, 0, len(req.ProposalIDs))
+	results := make([]agentports.AgentProposalDecisionResult, 0, len(req.ProposalIDs))
 	for _, id := range req.ProposalIDs {
-		result := services.AgentProposalDecisionResult{ProposalID: id}
+		result := agentports.AgentProposalDecisionResult{ProposalID: id}
 		outcome, decideErr := s.decisions.DecideWithOutcome(
 			ctx,
-			&services.DecideAgentProposalRequest{
+			&agentports.DecideAgentProposalRequest{
 				ProposalID:    id,
 				Decision:      req.Decision,
 				ReasonCode:    req.ReasonCode,
@@ -368,12 +369,12 @@ func (s *Service) DecideMany(
 
 // checkBatch refuses a batch before anything in it is decided: one that
 // names a proposal twice, a plan's step, or more than one tool.
-func (s *Service) checkBatch(ctx context.Context, req *services.DecideAgentProposalsRequest) error {
+func (s *Service) checkBatch(ctx context.Context, req *agentports.DecideAgentProposalsRequest) error {
 	if err := validateBatch(req); err != nil {
 		return err
 	}
 
-	proposals, err := s.proposals.ListByIDs(ctx, repositories.ListAgentProposalsByIDsRequest{
+	proposals, err := s.proposals.ListByIDs(ctx, agentports.ListAgentProposalsByIDsRequest{
 		IDs:        req.ProposalIDs,
 		TenantInfo: req.TenantInfo,
 	})
@@ -419,7 +420,7 @@ func (s *Service) checkBatch(ctx context.Context, req *services.DecideAgentPropo
 	return nil
 }
 
-func validateBatch(req *services.DecideAgentProposalsRequest) error {
+func validateBatch(req *agentports.DecideAgentProposalsRequest) error {
 	multiErr := errortypes.NewMultiError()
 	switch {
 	case len(req.ProposalIDs) == 0:
@@ -479,24 +480,24 @@ func decisionErrorMessage(err error) string {
 	return "This proposal could not be decided. Try it on its own."
 }
 
-func encodeCursor(entry repositories.PendingDecisionEntry) (string, error) {
+func encodeCursor(entry agentports.PendingDecisionEntry) (string, error) {
 	return pagination.EncodeCursor(pagination.Cursor{CreatedAt: entry.CreatedAt, ID: entry.ID})
 }
 
-func decodeCursor(encoded string) (repositories.PendingDecisionCursor, error) {
+func decodeCursor(encoded string) (agentports.PendingDecisionCursor, error) {
 	cursor, err := pagination.DecodeCursor(encoded)
 	if err != nil {
-		return repositories.PendingDecisionCursor{}, err
+		return agentports.PendingDecisionCursor{}, err
 	}
 
-	return repositories.PendingDecisionCursor{CreatedAt: cursor.CreatedAt, ID: cursor.ID}, nil
+	return agentports.PendingDecisionCursor{CreatedAt: cursor.CreatedAt, ID: cursor.ID}, nil
 }
 
 func (s *Service) DecideManyOwn(
 	ctx context.Context,
-	req *services.DecideAgentProposalsRequest,
-	actor *services.RequestActor,
-) ([]services.AgentProposalDecisionResult, error) {
+	req *agentports.DecideAgentProposalsRequest,
+	actor *permissionports.RequestActor,
+) ([]agentports.AgentProposalDecisionResult, error) {
 	if err := validateBatch(req); err != nil {
 		return nil, err
 	}
@@ -527,16 +528,16 @@ func (s *Service) DecideManyOwn(
 // outcome, and all of them commit together when the window closes.
 func (s *Service) approveDeferred(
 	ctx context.Context,
-	req *services.DecideAgentProposalsRequest,
-	actor *services.RequestActor,
-) ([]services.AgentProposalDecisionResult, error) {
+	req *agentports.DecideAgentProposalsRequest,
+	actor *permissionports.RequestActor,
+) ([]agentports.AgentProposalDecisionResult, error) {
 	if err := s.checkBatch(ctx, req); err != nil {
 		return nil, err
 	}
 
-	reqs := make([]*services.DecideAgentProposalRequest, 0, len(req.ProposalIDs))
+	reqs := make([]*agentports.DecideAgentProposalRequest, 0, len(req.ProposalIDs))
 	for _, id := range req.ProposalIDs {
-		reqs = append(reqs, &services.DecideAgentProposalRequest{
+		reqs = append(reqs, &agentports.DecideAgentProposalRequest{
 			ProposalID:    id,
 			Decision:      req.Decision,
 			ReasonCode:    req.ReasonCode,
@@ -551,9 +552,9 @@ func (s *Service) approveDeferred(
 		return nil, err
 	}
 
-	results := make([]services.AgentProposalDecisionResult, 0, len(deferred))
+	results := make([]agentports.AgentProposalDecisionResult, 0, len(deferred))
 	for _, approval := range deferred {
-		result := services.AgentProposalDecisionResult{ProposalID: approval.ProposalID}
+		result := agentports.AgentProposalDecisionResult{ProposalID: approval.ProposalID}
 		if approval.Err != nil {
 			result.Error = decisionErrorMessage(approval.Err)
 			s.l.Warn("batch approval refused for a proposal",

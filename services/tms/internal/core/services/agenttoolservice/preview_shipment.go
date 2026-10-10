@@ -9,18 +9,19 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/internal/core/services/tenderservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 var (
-	_ serviceports.ToolPreviewer = (*addShipmentCommentTool)(nil)
-	_ serviceports.ToolPreviewer = (*updateShipmentTool)(nil)
-	_ serviceports.ToolPreviewer = (*cancelShipmentTool)(nil)
+	_ agentports.ToolPreviewer = (*addShipmentCommentTool)(nil)
+	_ agentports.ToolPreviewer = (*updateShipmentTool)(nil)
+	_ agentports.ToolPreviewer = (*cancelShipmentTool)(nil)
 )
 
 // shipmentPartnerNotices is what a shipment write tells its EDI partners: a
@@ -30,7 +31,7 @@ type shipmentPartnerNotices interface {
 	PreviewTenderChanges(
 		ctx context.Context,
 		original, updated *shipment.Shipment,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) ([]*ediservice.PartnerNotice, error)
 	PreviewCancelNotices(
 		ctx context.Context,
@@ -58,7 +59,7 @@ var updateShipmentRefs = map[string]permission.Resource{
 
 func (t *addShipmentCommentTool) Preview(
 	_ context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	entity, err := t.comment(&params)
 	if err != nil {
@@ -125,7 +126,7 @@ func commentAudience(visibility shipment.CommentVisibility) string {
 
 func (t *updateShipmentTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	before, after, err := t.plan(ctx, &params)
 	if err != nil {
@@ -172,7 +173,7 @@ func (t *updateShipmentTool) Preview(
 
 func (t *cancelShipmentTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	request, err := t.request(&params)
 	if err != nil {

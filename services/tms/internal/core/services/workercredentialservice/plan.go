@@ -5,14 +5,15 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-type CredentialChange = services.RecordChange[worker.WorkerCredential]
+type CredentialChange = kernelports.RecordChange[worker.WorkerCredential]
 
 type CreatePlan struct {
 	Credential *worker.WorkerCredential
@@ -41,7 +42,7 @@ func (s *Service) PlanCreate(ctx context.Context, req *CreateRequest) (*CreatePl
 	}
 	entity.CredentialType = credentialType
 
-	held, err := s.repo.ListForWorker(ctx, &repositories.ListWorkerCredentialsRequest{
+	held, err := s.repo.ListForWorker(ctx, &workerports.ListWorkerCredentialsRequest{
 		TenantInfo: credentialTenant(&entity),
 		WorkerID:   entity.WorkerID,
 	})
@@ -70,7 +71,7 @@ func (s *Service) planUpdate(
 	ctx context.Context,
 	entity *worker.WorkerCredential,
 ) (*CredentialChange, *worker.WorkerCredentialType, error) {
-	original, err := s.repo.GetByID(ctx, &repositories.GetWorkerCredentialByIDRequest{
+	original, err := s.repo.GetByID(ctx, &workerports.GetWorkerCredentialByIDRequest{
 		ID:         entity.ID,
 		TenantInfo: credentialTenant(entity),
 	})
@@ -155,7 +156,7 @@ func (s *Service) PlanAttachDocument(
 		)
 	}
 
-	doc, err := s.documentRepo.GetByID(ctx, repositories.GetDocumentByIDRequest{
+	doc, err := s.documentRepo.GetByID(ctx, documentports.GetDocumentByIDRequest{
 		ID:         req.DocumentID,
 		TenantInfo: req.TenantInfo,
 	})

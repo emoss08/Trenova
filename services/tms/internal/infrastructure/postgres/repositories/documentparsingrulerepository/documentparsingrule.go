@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/documentparsingrule"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentparsingruleports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -30,7 +30,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.DocumentParsingRuleRepository {
+func New(p Params) documentparsingruleports.DocumentParsingRuleRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.document-parsing-rule-repository"),
@@ -39,7 +39,7 @@ func New(p Params) repositories.DocumentParsingRuleRepository {
 
 func (r *repository) ListRuleSets(
 	ctx context.Context,
-	req repositories.ListDocumentParsingRuleSetsRequest,
+	req documentparsingruleports.ListDocumentParsingRuleSetsRequest,
 ) ([]*documentparsingrule.RuleSet, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*documentparsingrule.RuleSet, error) {
 		items := make([]*documentparsingrule.RuleSet, 0)
@@ -58,7 +58,7 @@ func (r *repository) ListRuleSets(
 
 func (r *repository) GetRuleSet(
 	ctx context.Context,
-	req repositories.GetDocumentParsingRuleSetRequest,
+	req documentparsingruleports.GetDocumentParsingRuleSetRequest,
 ) (*documentparsingrule.RuleSet, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*documentparsingrule.RuleSet, error) {
 		entity := new(documentparsingrule.RuleSet)
@@ -122,7 +122,7 @@ func (r *repository) UpdateRuleSet(
 
 func (r *repository) DeleteRuleSet(
 	ctx context.Context,
-	req repositories.GetDocumentParsingRuleSetRequest,
+	req documentparsingruleports.GetDocumentParsingRuleSetRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		result, err := r.db.DBForContext(ctx).
@@ -141,7 +141,7 @@ func (r *repository) DeleteRuleSet(
 
 func (r *repository) ListVersions(
 	ctx context.Context,
-	req repositories.ListDocumentParsingRuleVersionsRequest,
+	req documentparsingruleports.ListDocumentParsingRuleVersionsRequest,
 ) ([]*documentparsingrule.RuleVersion, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*documentparsingrule.RuleVersion, error) {
 		items := make([]*documentparsingrule.RuleVersion, 0)
@@ -161,7 +161,7 @@ func (r *repository) ListVersions(
 
 func (r *repository) GetVersion(
 	ctx context.Context,
-	req repositories.GetDocumentParsingRuleVersionRequest,
+	req documentparsingruleports.GetDocumentParsingRuleVersionRequest,
 ) (*documentparsingrule.RuleVersion, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*documentparsingrule.RuleVersion, error) {
 		entity := new(documentparsingrule.RuleVersion)
@@ -181,13 +181,13 @@ func (r *repository) GetVersion(
 
 func (r *repository) GetVersionWithRuleSet(
 	ctx context.Context,
-	req repositories.GetDocumentParsingRuleVersionRequest,
+	req documentparsingruleports.GetDocumentParsingRuleVersionRequest,
 ) (*documentparsingrule.RuleVersion, *documentparsingrule.RuleSet, error) {
 	version, err := r.GetVersion(ctx, req)
 	if err != nil {
 		return nil, nil, err
 	}
-	set, err := r.GetRuleSet(ctx, repositories.GetDocumentParsingRuleSetRequest{
+	set, err := r.GetRuleSet(ctx, documentparsingruleports.GetDocumentParsingRuleSetRequest{
 		ID: version.RuleSetID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: req.TenantInfo.OrgID,
@@ -216,7 +216,7 @@ func (r *repository) CreateVersion(
 			return entity, nil
 		}
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			lockToken := 0
 			if err := r.db.DBForContext(c).
 				NewSelect().
@@ -350,8 +350,8 @@ func (r *repository) ListPublishedVersionsByDocumentKind(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	documentKind string,
-) ([]*repositories.PublishedDocumentParsingRuleVersion, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.PublishedDocumentParsingRuleVersion, error) {
+) ([]*documentparsingruleports.PublishedDocumentParsingRuleVersion, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*documentparsingruleports.PublishedDocumentParsingRuleVersion, error) {
 		type joinedRow struct {
 			RuleSetID             pulid.ID                          `bun:"rule_set_id"`
 			RuleSetOrganizationID pulid.ID                          `bun:"rule_set_organization_id"`
@@ -399,7 +399,7 @@ func (r *repository) ListPublishedVersionsByDocumentKind(
 			return nil, err
 		}
 
-		items := make([]*repositories.PublishedDocumentParsingRuleVersion, 0, len(rows))
+		items := make([]*documentparsingruleports.PublishedDocumentParsingRuleVersion, 0, len(rows))
 		for _, row := range rows {
 			set := documentparsingrule.RuleSet{
 				ID:                 row.RuleSetID,
@@ -432,7 +432,7 @@ func (r *repository) ListPublishedVersionsByDocumentKind(
 				CreatedAt:         row.VersionCreatedAt,
 				UpdatedAt:         row.VersionUpdatedAt,
 			}
-			items = append(items, &repositories.PublishedDocumentParsingRuleVersion{
+			items = append(items, &documentparsingruleports.PublishedDocumentParsingRuleVersion{
 				RuleSet: &set,
 				Version: &version,
 			})
@@ -443,7 +443,7 @@ func (r *repository) ListPublishedVersionsByDocumentKind(
 
 func (r *repository) ListFixtures(
 	ctx context.Context,
-	req repositories.ListDocumentParsingRuleFixturesRequest,
+	req documentparsingruleports.ListDocumentParsingRuleFixturesRequest,
 ) ([]*documentparsingrule.Fixture, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*documentparsingrule.Fixture, error) {
 		items := make([]*documentparsingrule.Fixture, 0)
@@ -461,7 +461,7 @@ func (r *repository) ListFixtures(
 
 func (r *repository) GetFixture(
 	ctx context.Context,
-	req repositories.GetDocumentParsingRuleFixtureRequest,
+	req documentparsingruleports.GetDocumentParsingRuleFixtureRequest,
 ) (*documentparsingrule.Fixture, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*documentparsingrule.Fixture, error) {
 		entity := new(documentparsingrule.Fixture)
@@ -525,7 +525,7 @@ func (r *repository) UpdateFixture(
 
 func (r *repository) DeleteFixture(
 	ctx context.Context,
-	req repositories.GetDocumentParsingRuleFixtureRequest,
+	req documentparsingruleports.GetDocumentParsingRuleFixtureRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		result, err := r.db.DBForContext(ctx).

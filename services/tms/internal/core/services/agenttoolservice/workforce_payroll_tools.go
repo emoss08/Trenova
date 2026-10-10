@@ -7,10 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/timesheetservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -77,7 +77,7 @@ func payrollSpec(name, description, rationale string) *receivableSpec {
 	return spec
 }
 
-func newGeneratePayrollExportTool(exporter payrollExporter) serviceports.AgentTool {
+func newGeneratePayrollExportTool(exporter payrollExporter) agentports.AgentTool {
 	spec := withSchema(payrollSpec(
 		"generate_payroll_export",
 		"Draft a payroll run over a pay period for a person to approve. Every approved "+
@@ -96,7 +96,7 @@ func newGeneratePayrollExportTool(exporter payrollExporter) serviceports.AgentTo
 		*timesheetservice.GenerateExportRequest, *timesheetservice.ExportPlan,
 	]{
 		request: func(
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*timesheetservice.GenerateExportRequest, error) {
 			first, err := requireScheduleDay(params.Params, paramFirstDay)
 			if err != nil {
@@ -125,7 +125,7 @@ func newGeneratePayrollExportTool(exporter payrollExporter) serviceports.AgentTo
 		plan: func(
 			ctx context.Context,
 			req *timesheetservice.GenerateExportRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*timesheetservice.ExportPlan, error) {
 			return exporter.PlanGenerateExport(ctx, req)
 		},
@@ -152,7 +152,7 @@ func newGeneratePayrollExportTool(exporter payrollExporter) serviceports.AgentTo
 		run: func(
 			ctx context.Context,
 			req *timesheetservice.GenerateExportRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			export, err := exporter.GenerateExport(ctx, req)
 			if err != nil {
@@ -163,7 +163,7 @@ func newGeneratePayrollExportTool(exporter payrollExporter) serviceports.AgentTo
 	})
 }
 
-func newVoidPayrollExportTool(exporter payrollExporter) serviceports.AgentTool {
+func newVoidPayrollExportTool(exporter payrollExporter) agentports.AgentTool {
 	spec := targeting(withSchema(payrollSpec(
 		"void_payroll_export",
 		"Draft voiding a payroll run for a person to approve, with the reason: the run is "+
@@ -185,7 +185,7 @@ func newVoidPayrollExportTool(exporter payrollExporter) serviceports.AgentTool {
 		*timesheetservice.VoidExportRequest, *timesheetservice.ExportChange,
 	]{
 		request: func(
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*timesheetservice.VoidExportRequest, error) {
 			id, err := requirePulid(params.Params, paramPayrollExportID)
 			if err != nil {
@@ -205,7 +205,7 @@ func newVoidPayrollExportTool(exporter payrollExporter) serviceports.AgentTool {
 		plan: func(
 			ctx context.Context,
 			req *timesheetservice.VoidExportRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*timesheetservice.ExportChange, error) {
 			return exporter.PlanVoidExport(ctx, req)
 		},
@@ -229,7 +229,7 @@ func newVoidPayrollExportTool(exporter payrollExporter) serviceports.AgentTool {
 		run: func(
 			ctx context.Context,
 			req *timesheetservice.VoidExportRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			export, err := exporter.VoidExport(ctx, req)
 			if err != nil {
@@ -240,10 +240,10 @@ func newVoidPayrollExportTool(exporter payrollExporter) serviceports.AgentTool {
 	})
 }
 
-func provideGeneratePayrollExportTool(s *timesheetservice.Service) serviceports.AgentTool {
+func provideGeneratePayrollExportTool(s *timesheetservice.Service) agentports.AgentTool {
 	return newGeneratePayrollExportTool(s)
 }
 
-func provideVoidPayrollExportTool(s *timesheetservice.Service) serviceports.AgentTool {
+func provideVoidPayrollExportTool(s *timesheetservice.Service) agentports.AgentTool {
 	return newVoidPayrollExportTool(s)
 }

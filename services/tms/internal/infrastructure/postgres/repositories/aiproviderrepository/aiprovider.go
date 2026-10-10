@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -34,7 +34,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.AIProviderRepository {
+func New(p Params) agentports.AIProviderRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.aiprovider-repository"),
@@ -43,7 +43,7 @@ func New(p Params) repositories.AIProviderRepository {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListAIProviderRequest,
+	req *agentports.ListAIProviderRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.ProviderColumns
 	q = querybuilder.ApplyFilters(
@@ -61,7 +61,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListAIProviderRequest,
+	req *agentports.ListAIProviderRequest,
 ) (*pagination.ListResult[*aiprovider.Provider], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*aiprovider.Provider], error) {
 		log := r.l.With(zap.String("operation", "List"))
@@ -84,7 +84,7 @@ func (r *repository) List(
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListAIProviderConnectionRequest,
+	req *agentports.ListAIProviderConnectionRequest,
 ) (*pagination.CursorListResult[*aiprovider.Provider], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*aiprovider.Provider], error) {
 		dba := r.db.DBForContext(ctx)
@@ -147,7 +147,7 @@ func (r *repository) ListConnection(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetAIProviderByIDRequest,
+	req agentports.GetAIProviderByIDRequest,
 ) (*aiprovider.Provider, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*aiprovider.Provider, error) {
 		entity := new(aiprovider.Provider)
@@ -173,7 +173,7 @@ func (r *repository) GetByID(
 // stable across calls and visible in the query plan.
 func (r *repository) ListForTask(
 	ctx context.Context,
-	req repositories.ListAIProvidersForTaskRequest,
+	req agentports.ListAIProvidersForTaskRequest,
 ) ([]*aiprovider.Provider, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiprovider.Provider, error) {
 		entities := make([]*aiprovider.Provider, 0, defaultTaskCandidates)
@@ -246,7 +246,7 @@ func (r *repository) ListOrdered(
 // the compiler — the difference only shows up in the statement.
 func (r *repository) SelectOptions(
 	ctx context.Context,
-	req *repositories.AIProviderSelectOptionsRequest,
+	req *agentports.AIProviderSelectOptionsRequest,
 ) (*pagination.ListResult[*aiprovider.Provider], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*aiprovider.Provider], error) {
 		cols := buncolgen.ProviderColumns
@@ -290,7 +290,7 @@ func applySelectOptionsFilter(q *bun.SelectQuery, task aiprovider.Task) *bun.Sel
 func buildProvidersForTaskQuery(
 	db bun.IDB,
 	entities *[]*aiprovider.Provider,
-	req repositories.ListAIProvidersForTaskRequest,
+	req agentports.ListAIProvidersForTaskRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.ProviderColumns
 
@@ -421,7 +421,7 @@ func (r *repository) Update(
 
 func (r *repository) Delete(
 	ctx context.Context,
-	req repositories.DeleteAIProviderRequest,
+	req agentports.DeleteAIProviderRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		res, err := r.db.DBForContext(ctx).
@@ -444,7 +444,7 @@ const defaultTaskCandidates = 4
 
 func (r *repository) MarkTested(
 	ctx context.Context,
-	req repositories.MarkAIProviderTestedRequest,
+	req agentports.MarkAIProviderTestedRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.ProviderColumns

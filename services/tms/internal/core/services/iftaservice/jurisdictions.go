@@ -4,16 +4,16 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/ifta"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 func (s *Service) ListJurisdictions(
 	ctx context.Context,
-	req *repositories.ListJurisdictionsRequest,
+	req *iftaports.ListJurisdictionsRequest,
 ) ([]*ifta.Jurisdiction, error) {
 	if req == nil {
-		req = &repositories.ListJurisdictionsRequest{}
+		req = &iftaports.ListJurisdictionsRequest{}
 	}
 	return s.repo.ListJurisdictions(ctx, req)
 }

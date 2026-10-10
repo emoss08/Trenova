@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/workerleaveservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -197,7 +197,7 @@ func TestOpenLeaveCase_WaitsForADecision(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, cases.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "waiting for a decision")
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -210,12 +210,12 @@ func TestOpenLeaveCase_WaitsForADecision(t *testing.T) {
 	assert.Equal(t, int32(1800), *cases.opened.EligibilityHoursWorked)
 	assert.Equal(t, permission.ResourceWorkerLeave, tool.Policy().Resource)
 
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 		executeParams(map[string]any{
 			paramWorkerID: cases.lcase.WorkerID.String(),
 			"startsAt":    "2026-10-05",
 		})), "validation runs the plan, which needs a leave type")
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 		executeParams(map[string]any{
 			paramWorkerID:  cases.lcase.WorkerID.String(),
 			paramLeaveType: "FMLA",
@@ -257,7 +257,7 @@ func TestCloseLeaveCase_IsAPersonsDecision(t *testing.T) {
 	assert.Equal(t, []pulid.ID{cases.lcase.ID}, cases.closed)
 
 	cases.lcase.Status = worker.LeaveCasePending
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), executeParams(raw)))
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), executeParams(raw)))
 }
 
 func TestRecordLeaveDay_SaysWhetherItCounts(t *testing.T) {
@@ -272,7 +272,7 @@ func TestRecordLeaveDay_SaysWhetherItCounts(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, cases.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "4.5 hours")
 	assert.Contains(t, preview.Summary, "counts against the entitlement")
@@ -289,7 +289,7 @@ func TestDeleteLeaveDay_IsOnlyProposed(t *testing.T) {
 	params := executeParams(map[string]any{paramLeaveEntryID: cases.entry.ID.String()})
 
 	preview := previewWithoutWrites(t, cases.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, agent.PreviewOperationDelete, previewChange(t, preview, 0).Operation)
 	assert.Equal(t, agent.TierPropose, tool.Policy().MaxTier)

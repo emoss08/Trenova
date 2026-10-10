@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/core/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,13 +19,13 @@ import (
 type fakeReceipts struct {
 	receipt     *bankreceipt.BankReceipt
 	exceptions  []*bankreceipt.BankReceipt
-	suggestions []*serviceports.BankReceiptMatchSuggestion
+	suggestions []*bankreceiptports.BankReceiptMatchSuggestion
 	suggested   bool
 }
 
 func (f *fakeReceipts) Get(
 	_ context.Context,
-	_ *serviceports.GetBankReceiptRequest,
+	_ *bankreceiptports.GetBankReceiptRequest,
 ) (*bankreceipt.BankReceipt, error) {
 	return f.receipt, nil
 }
@@ -39,8 +39,8 @@ func (f *fakeReceipts) ListExceptions(
 
 func (f *fakeReceipts) SuggestMatches(
 	_ context.Context,
-	_ *serviceports.GetBankReceiptRequest,
-) ([]*serviceports.BankReceiptMatchSuggestion, error) {
+	_ *bankreceiptports.GetBankReceiptRequest,
+) ([]*bankreceiptports.BankReceiptMatchSuggestion, error) {
 	f.suggested = true
 
 	return f.suggestions, nil
@@ -72,13 +72,13 @@ func (f *fakeWorkItems) GetActiveByReceiptID(
 }
 
 type fakePayments struct {
-	captured *repositories.ListCustomerPaymentsRequest
+	captured *customerpaymentports.ListCustomerPaymentsRequest
 	items    []*customerpayment.Payment
 }
 
 func (f *fakePayments) List(
 	_ context.Context,
-	req *repositories.ListCustomerPaymentsRequest,
+	req *customerpaymentports.ListCustomerPaymentsRequest,
 ) (*pagination.ListResult[*customerpayment.Payment], error) {
 	f.captured = req
 
@@ -156,7 +156,7 @@ func TestGetBankReceipt_ReturnsTheScoredCandidatesAndTheQueueEntry(t *testing.T)
 	customerID := pulid.MustNew("cus_")
 	receipts := &fakeReceipts{
 		receipt: receipt,
-		suggestions: []*serviceports.BankReceiptMatchSuggestion{{
+		suggestions: []*bankreceiptports.BankReceiptMatchSuggestion{{
 			CustomerPaymentID: paymentID,
 			CustomerID:        customerID,
 			ReferenceNumber:   "ACH4471",

@@ -7,10 +7,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -26,8 +27,8 @@ func (s *Service) LoadPlan(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	tenderID pulid.ID,
-) (*portservices.TenderPlan, error) {
-	entity, err := s.repo.GetByID(ctx, repositories.GetTenderByIDRequest{
+) (*tenderports.TenderPlan, error) {
+	entity, err := s.repo.GetByID(ctx, tenderports.GetTenderByIDRequest{
 		TenantInfo:    tenantInfo,
 		TenderID:      tenderID,
 		IncludeOffers: true,
@@ -36,17 +37,17 @@ func (s *Service) LoadPlan(
 		return nil, err
 	}
 
-	plan := &portservices.TenderPlan{
+	plan := &tenderports.TenderPlan{
 		TenderID: entity.ID,
 		Status:   entity.Status,
 		Mode:     entity.Mode,
-		Offers:   make([]portservices.TenderPlanOffer, 0, len(entity.Offers)),
+		Offers:   make([]tenderports.TenderPlanOffer, 0, len(entity.Offers)),
 	}
 	for _, offer := range entity.Offers {
 		if offer == nil {
 			continue
 		}
-		plan.Offers = append(plan.Offers, portservices.TenderPlanOffer{
+		plan.Offers = append(plan.Offers, tenderports.TenderPlanOffer{
 			OfferID:         offer.ID,
 			Rank:            offer.Rank,
 			Status:          offer.Status,
@@ -65,7 +66,7 @@ func (s *Service) ExpireOffer(
 	tenantInfo pagination.TenantInfo,
 	offerID pulid.ID,
 ) error {
-	offer, err := s.repo.GetOfferByID(ctx, repositories.GetTenderOfferByIDRequest{
+	offer, err := s.repo.GetOfferByID(ctx, tenderports.GetTenderOfferByIDRequest{
 		TenantInfo:    tenantInfo,
 		OfferID:       offerID,
 		IncludeTender: true,
@@ -75,7 +76,7 @@ func (s *Service) ExpireOffer(
 	}
 
 	now := timeutils.NowUnix()
-	moved, err := s.repo.UpdateOfferStatus(ctx, &repositories.UpdateOfferStatusRequest{
+	moved, err := s.repo.UpdateOfferStatus(ctx, &tenderports.UpdateOfferStatusRequest{
 		TenantInfo: tenantInfo,
 		OfferID:    offerID,
 		FromStatus: []tender.OfferStatus{tender.OfferStatusSent},
@@ -113,7 +114,7 @@ func (s *Service) DeclineOffer(
 	source tender.ResponseSource,
 	reason string,
 ) error {
-	offer, err := s.repo.GetOfferByID(ctx, repositories.GetTenderOfferByIDRequest{
+	offer, err := s.repo.GetOfferByID(ctx, tenderports.GetTenderOfferByIDRequest{
 		TenantInfo:    tenantInfo,
 		OfferID:       offerID,
 		IncludeTender: true,
@@ -123,7 +124,7 @@ func (s *Service) DeclineOffer(
 	}
 
 	now := timeutils.NowUnix()
-	moved, err := s.repo.UpdateOfferStatus(ctx, &repositories.UpdateOfferStatusRequest{
+	moved, err := s.repo.UpdateOfferStatus(ctx, &tenderports.UpdateOfferStatusRequest{
 		TenantInfo:     tenantInfo,
 		OfferID:        offerID,
 		FromStatus:     []tender.OfferStatus{tender.OfferStatusSent},
@@ -138,7 +139,7 @@ func (s *Service) DeclineOffer(
 	if !moved {
 		if lateErr := s.repo.RecordLateOfferResponse(
 			ctx,
-			&repositories.RecordLateOfferResponseRequest{
+			&tenderports.RecordLateOfferResponseRequest{
 				TenantInfo: tenantInfo,
 				OfferID:    offerID,
 				Action:     tender.ResponseActionDecline,
@@ -190,8 +191,8 @@ func (s *Service) AcceptOffer(
 	tenantInfo pagination.TenantInfo,
 	offerID pulid.ID,
 	source tender.ResponseSource,
-) (*portservices.TenderAcceptResult, error) {
-	offer, err := s.repo.GetOfferByID(ctx, repositories.GetTenderOfferByIDRequest{
+) (*tenderports.TenderAcceptResult, error) {
+	offer, err := s.repo.GetOfferByID(ctx, tenderports.GetTenderOfferByIDRequest{
 		TenantInfo:    tenantInfo,
 		OfferID:       offerID,
 		IncludeTender: true,
@@ -212,10 +213,10 @@ func (s *Service) AcceptOffer(
 
 	if !resuming {
 		accepted := false
-		err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 			tenderMoved, txErr := s.repo.UpdateTenderStatus(
 				txCtx,
-				&repositories.UpdateTenderStatusRequest{
+				&tenderports.UpdateTenderStatusRequest{
 					TenantInfo: tenantInfo,
 					TenderID:   offer.TenderID,
 					FromStatus: []tender.Status{tender.StatusActive},
@@ -231,7 +232,7 @@ func (s *Service) AcceptOffer(
 
 			offerMoved, txErr := s.repo.UpdateOfferStatus(
 				txCtx,
-				&repositories.UpdateOfferStatusRequest{
+				&tenderports.UpdateOfferStatusRequest{
 					TenantInfo:     tenantInfo,
 					OfferID:        offerID,
 					FromStatus:     []tender.OfferStatus{tender.OfferStatusSent},
@@ -250,7 +251,7 @@ func (s *Service) AcceptOffer(
 			offerIDCopy := offer.ID
 			if _, txErr = s.repo.UpdateTenderStatus(
 				txCtx,
-				&repositories.UpdateTenderStatusRequest{
+				&tenderports.UpdateTenderStatusRequest{
 					TenantInfo:      tenantInfo,
 					TenderID:        offer.TenderID,
 					FromStatus:      []tender.Status{tender.StatusAccepted},
@@ -270,7 +271,7 @@ func (s *Service) AcceptOffer(
 		}
 		if !accepted {
 			s.recordLateAccept(ctx, tenantInfo, offer, source, now)
-			return &portservices.TenderAcceptResult{Ignored: true}, nil
+			return &tenderports.TenderAcceptResult{Ignored: true}, nil
 		}
 	}
 
@@ -340,9 +341,9 @@ func (s *Service) assignAcceptedOffer(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	offer *tender.TenderOffer,
-) (*portservices.TenderAcceptResult, error) {
+) (*tenderports.TenderAcceptResult, error) {
 	if s.assigner == nil {
-		return &portservices.TenderAcceptResult{
+		return &tenderports.TenderAcceptResult{
 			NeedsReview:  true,
 			ReviewReason: "Carrier assignment is unavailable; assign the carrier manually",
 		}, nil
@@ -360,15 +361,15 @@ func (s *Service) assignAcceptedOffer(
 		if err = s.assigner.ConfirmAssignment(ctx, tenantInfo, existing.ID); err != nil {
 			return nil, err
 		}
-		return &portservices.TenderAcceptResult{}, nil
+		return &tenderports.TenderAcceptResult{}, nil
 	case existing != nil:
-		return &portservices.TenderAcceptResult{
+		return &tenderports.TenderAcceptResult{
 			NeedsReview:  true,
 			ReviewReason: "Move is already covered by another carrier",
 		}, nil
 	}
 
-	assignment, assignErr := s.assigner.AssignToMove(ctx, &repositories.AssignMoveToCarrierRequest{
+	assignment, assignErr := s.assigner.AssignToMove(ctx, &shipmentports.AssignMoveToCarrierRequest{
 		TenantInfo:     tenantInfo,
 		ShipmentMoveID: offer.Tender.ShipmentMoveID,
 		CarrierID:      offer.CarrierID,
@@ -381,7 +382,7 @@ func (s *Service) assignAcceptedOffer(
 		}
 		s.l.Warn("tender acceptance could not be auto-assigned",
 			zap.Error(assignErr), zap.String("offerId", offer.ID.String()))
-		return &portservices.TenderAcceptResult{
+		return &tenderports.TenderAcceptResult{
 			NeedsReview:  true,
 			ReviewReason: assignErr.Error(),
 		}, nil
@@ -391,7 +392,7 @@ func (s *Service) assignAcceptedOffer(
 		return nil, err
 	}
 
-	return &portservices.TenderAcceptResult{}, nil
+	return &tenderports.TenderAcceptResult{}, nil
 }
 
 func (s *Service) recordLateAccept(
@@ -401,7 +402,7 @@ func (s *Service) recordLateAccept(
 	source tender.ResponseSource,
 	now int64,
 ) {
-	if err := s.repo.RecordLateOfferResponse(ctx, &repositories.RecordLateOfferResponseRequest{
+	if err := s.repo.RecordLateOfferResponse(ctx, &tenderports.RecordLateOfferResponseRequest{
 		TenantInfo: tenantInfo,
 		OfferID:    offer.ID,
 		Action:     tender.ResponseActionAccept,
@@ -422,7 +423,7 @@ func (s *Service) FinalizeAccepted(
 	acceptedOfferID pulid.ID,
 ) error {
 	for _, settlement := range acceptSettlements {
-		if _, err := s.repo.BulkUpdateOfferStatus(ctx, &repositories.BulkOfferStatusRequest{
+		if _, err := s.repo.BulkUpdateOfferStatus(ctx, &tenderports.BulkOfferStatusRequest{
 			TenantInfo: tenantInfo,
 			TenderID:   tenderID,
 			FromStatus: []tender.OfferStatus{settlement.from},
@@ -433,7 +434,7 @@ func (s *Service) FinalizeAccepted(
 		}
 	}
 
-	entity, err := s.repo.GetByID(ctx, repositories.GetTenderByIDRequest{
+	entity, err := s.repo.GetByID(ctx, tenderports.GetTenderByIDRequest{
 		TenantInfo:    tenantInfo,
 		TenderID:      tenderID,
 		IncludeOffers: true,
@@ -469,7 +470,7 @@ func (s *Service) MarkNeedsReview(
 	offerID pulid.ID,
 	reason string,
 ) error {
-	moved, err := s.repo.UpdateTenderStatus(ctx, &repositories.UpdateTenderStatusRequest{
+	moved, err := s.repo.UpdateTenderStatus(ctx, &tenderports.UpdateTenderStatusRequest{
 		TenantInfo: tenantInfo,
 		TenderID:   tenderID,
 		FromStatus: []tender.Status{tender.StatusAccepted, tender.StatusActive},
@@ -495,7 +496,7 @@ func (s *Service) MarkNeedsReview(
 			zap.Error(err), zap.String("tenderId", tenderID.String()))
 	}
 
-	offer, err := s.repo.GetOfferByID(ctx, repositories.GetTenderOfferByIDRequest{
+	offer, err := s.repo.GetOfferByID(ctx, tenderports.GetTenderOfferByIDRequest{
 		TenantInfo:    tenantInfo,
 		OfferID:       offerID,
 		IncludeTender: true,
@@ -541,7 +542,7 @@ func (s *Service) MarkExhausted(
 	tenderID pulid.ID,
 ) error {
 	now := timeutils.NowUnix()
-	moved, err := s.repo.UpdateTenderStatus(ctx, &repositories.UpdateTenderStatusRequest{
+	moved, err := s.repo.UpdateTenderStatus(ctx, &tenderports.UpdateTenderStatusRequest{
 		TenantInfo:  tenantInfo,
 		TenderID:    tenderID,
 		FromStatus:  []tender.Status{tender.StatusActive},
@@ -555,7 +556,7 @@ func (s *Service) MarkExhausted(
 		return nil
 	}
 
-	if _, err = s.repo.BulkUpdateOfferStatus(ctx, &repositories.BulkOfferStatusRequest{
+	if _, err = s.repo.BulkUpdateOfferStatus(ctx, &tenderports.BulkOfferStatusRequest{
 		TenantInfo: tenantInfo,
 		TenderID:   tenderID,
 		FromStatus: []tender.OfferStatus{tender.OfferStatusPending},
@@ -564,7 +565,7 @@ func (s *Service) MarkExhausted(
 		return err
 	}
 
-	entity, err := s.repo.GetByID(ctx, repositories.GetTenderByIDRequest{
+	entity, err := s.repo.GetByID(ctx, tenderports.GetTenderByIDRequest{
 		TenantInfo: tenantInfo,
 		TenderID:   tenderID,
 	})
@@ -600,10 +601,10 @@ func (s *Service) MarkExhausted(
 		Comment:    "Tender exhausted with no acceptance",
 		Current:    entity,
 	})
-	portservices.InvalidateShipments(
+	shipmentports.InvalidateShipments(
 		ctx,
 		s.invalidator,
-		portservices.ShipmentInvalidationByUser(tenantInfo, entity.ShipmentID, "tender_exhausted"),
+		shipmentports.ShipmentInvalidationByUser(tenantInfo, entity.ShipmentID, "tender_exhausted"),
 	)
 
 	return nil
@@ -626,7 +627,7 @@ func (s *Service) IssueRateConfirmation(
 		return nil
 	}
 
-	offer, err := s.repo.GetOfferByID(ctx, repositories.GetTenderOfferByIDRequest{
+	offer, err := s.repo.GetOfferByID(ctx, tenderports.GetTenderOfferByIDRequest{
 		TenantInfo:    tenantInfo,
 		OfferID:       offerID,
 		IncludeTender: true,
@@ -647,7 +648,7 @@ func (s *Service) IssueRateConfirmation(
 
 	result, issueErr := s.rateConIssuer.IssueForTenderAcceptance(
 		ctx,
-		&portservices.IssueTenderRateConfirmationRequest{
+		&rateconfirmationports.IssueTenderRateConfirmationRequest{
 			TenantInfo:     tenantInfo,
 			ShipmentMoveID: offer.Tender.ShipmentMoveID,
 			OfferID:        offer.ID,
@@ -707,7 +708,7 @@ func (s *Service) CancelFromWorkflow(
 	reason string,
 	actorUserID pulid.ID,
 ) error {
-	entity, err := s.repo.GetByID(ctx, repositories.GetTenderByIDRequest{
+	entity, err := s.repo.GetByID(ctx, tenderports.GetTenderByIDRequest{
 		TenantInfo:    tenantInfo,
 		TenderID:      tenderID,
 		IncludeOffers: true,

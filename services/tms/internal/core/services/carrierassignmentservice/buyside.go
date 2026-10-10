@@ -7,8 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetypes"
@@ -23,7 +24,7 @@ type buySideResult struct {
 	RateMethod    shipment.CarrierRateMethod
 	BaseRate      decimal.Decimal
 	FuelSurcharge decimal.Decimal
-	Accessorials  []repositories.CarrierAccessorialInput
+	Accessorials  []shipmentports.CarrierAccessorialInput
 	RateQuoteID   *pulid.ID
 	Margin        ratetypes.MarginVerdict
 }
@@ -33,7 +34,7 @@ type buySideResult struct {
 // A rate somebody typed is a decision, and auto-rating over the top of it would
 // be the system overruling a negotiated number. That is precisely what makes
 // people switch auto-rating off, so a typed rate always wins.
-func shouldAutoRate(req *repositories.AssignMoveToCarrierRequest) bool {
+func shouldAutoRate(req *shipmentports.AssignMoveToCarrierRequest) bool {
 	return req != nil && req.AutoRate && req.BaseRate.IsZero()
 }
 
@@ -46,7 +47,7 @@ func shouldAutoRate(req *repositories.AssignMoveToCarrierRequest) bool {
 // contract pricing exists to remove. The quote is where the arithmetic lives,
 // and the assignment points at it.
 func buySideRating(
-	rated *services.RatedShipment,
+	rated *ratequoteports.RatedShipment,
 	agreement *rateagreement.RateAgreement,
 	sellTotal decimal.NullDecimal,
 ) (*buySideResult, error) {
@@ -82,11 +83,11 @@ func buySideRating(
 // ratedOnContract reports whether a carrier contract actually put a number on
 // this move. The buy side has no formula fallback, so an outcome that produced
 // an amount is always a contract's amount.
-func ratedOnContract(rated *services.RatedShipment) bool {
+func ratedOnContract(rated *ratequoteports.RatedShipment) bool {
 	return rated.Outcome.Priced()
 }
 
-func quoteIDOf(rated *services.RatedShipment) *pulid.ID {
+func quoteIDOf(rated *ratequoteports.RatedShipment) *pulid.ID {
 	if rated.Quote == nil || rated.Quote.ID.IsNil() {
 		return nil
 	}
@@ -106,10 +107,10 @@ func quoteIDOf(rated *services.RatedShipment) *pulid.ID {
 // checked is worse than leaving a charge for somebody to add deliberately.
 func contractAccessorials(
 	agreement *rateagreement.RateAgreement,
-) []repositories.CarrierAccessorialInput {
+) []shipmentports.CarrierAccessorialInput {
 	scoped := agreement.AutoApplyAccessorials(rateagreement.AccessorialFacts{})
 
-	inputs := make([]repositories.CarrierAccessorialInput, 0, len(scoped))
+	inputs := make([]shipmentports.CarrierAccessorialInput, 0, len(scoped))
 
 	for _, row := range scoped {
 		if row.ApplyCondition != "" {
@@ -117,7 +118,7 @@ func contractAccessorials(
 		}
 
 		chargeID := row.AccessorialChargeID
-		inputs = append(inputs, repositories.CarrierAccessorialInput{
+		inputs = append(inputs, shipmentports.CarrierAccessorialInput{
 			AccessorialChargeID: &chargeID,
 			Description:         accessorialDescription(row),
 			Amount:              row.PricedAmount(),
@@ -169,7 +170,7 @@ func valueOf(value decimal.NullDecimal) decimal.Decimal {
 // downstream — validation, totals, the rate confirmation — then runs on one
 // path whether a person typed the numbers or a contract produced them.
 func applyBuySideRating(
-	req *repositories.AssignMoveToCarrierRequest,
+	req *shipmentports.AssignMoveToCarrierRequest,
 	rating *buySideResult,
 ) {
 	if req == nil || rating == nil {
@@ -219,7 +220,7 @@ func enforceMarginFloor(
 // invoiced.
 func (s *Service) rateBuySide(
 	ctx context.Context,
-	req *repositories.AssignMoveToCarrierRequest,
+	req *shipmentports.AssignMoveToCarrierRequest,
 	entity *shipment.Shipment,
 ) error {
 	if !shouldAutoRate(req) || s.rateEngine == nil {
@@ -228,7 +229,7 @@ func (s *Service) rateBuySide(
 
 	sellTotal := sellTotalOf(entity)
 
-	rated, err := s.rateEngine.RateShipment(ctx, &services.RateShipmentRequest{
+	rated, err := s.rateEngine.RateShipment(ctx, &ratequoteports.RateShipmentRequest{
 		Shipment:       entity,
 		TenantInfo:     req.TenantInfo,
 		PartyType:      rateagreement.PartyTypeCarrier,
@@ -280,7 +281,7 @@ func sellTotalOf(entity *shipment.Shipment) decimal.NullDecimal {
 func (s *Service) carrierAgreement(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	rated *services.RatedShipment,
+	rated *ratequoteports.RatedShipment,
 ) *rateagreement.RateAgreement {
 	if s.agreementRepo == nil || rated == nil || rated.AgreementID == nil {
 		return nil
@@ -291,7 +292,7 @@ func (s *Service) carrierAgreement(
 		return rated.Quote.Agreement
 	}
 
-	agreement, err := s.agreementRepo.GetByID(ctx, &repositories.GetRateAgreementByIDRequest{
+	agreement, err := s.agreementRepo.GetByID(ctx, &rateagreementports.GetRateAgreementByIDRequest{
 		RateAgreementID: *rated.AgreementID,
 		TenantInfo:      tenantInfo,
 		IncludeChildren: true,
@@ -310,7 +311,7 @@ func (s *Service) carrierAgreement(
 
 // agreementFrom falls back to whatever the quote already carried, so the margin
 // terms survive a failed read even when the accessorial schedule does not.
-func agreementFrom(rated *services.RatedShipment) *rateagreement.RateAgreement {
+func agreementFrom(rated *ratequoteports.RatedShipment) *rateagreement.RateAgreement {
 	if rated.Quote == nil {
 		return nil
 	}

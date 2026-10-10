@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/modeprofile"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/modeprofileports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -29,7 +29,7 @@ type deviationRepository struct {
 	l  *zap.Logger
 }
 
-func NewDeviationRepository(p DeviationParams) repositories.DeviationRepository {
+func NewDeviationRepository(p DeviationParams) modeprofileports.DeviationRepository {
 	return &deviationRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.mode-profile-deviation-repository"),
@@ -65,7 +65,7 @@ func (r *deviationRepository) RecordMany(
 
 func (r *deviationRepository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListDeviationsRequest,
+	req *modeprofileports.ListDeviationsRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
@@ -94,7 +94,7 @@ func (r *deviationRepository) filterQuery(
 
 func (r *deviationRepository) List(
 	ctx context.Context,
-	req *repositories.ListDeviationsRequest,
+	req *modeprofileports.ListDeviationsRequest,
 ) (*pagination.ListResult[*modeprofile.Deviation], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*modeprofile.Deviation], error) {
 		log := r.l.With(zap.String("operation", "List"))
@@ -124,7 +124,7 @@ func (r *deviationRepository) List(
 
 func (r *deviationRepository) GetByID(
 	ctx context.Context,
-	req *repositories.GetDeviationByIDRequest,
+	req *modeprofileports.GetDeviationByIDRequest,
 ) (*modeprofile.Deviation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*modeprofile.Deviation, error) {
 		log := r.l.With(
@@ -153,7 +153,7 @@ func (r *deviationRepository) GetByID(
 
 func (r *deviationRepository) Acknowledge(
 	ctx context.Context,
-	req *repositories.AcknowledgeDeviationRequest,
+	req *modeprofileports.AcknowledgeDeviationRequest,
 ) (*modeprofile.Deviation, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*modeprofile.Deviation, error) {
 		log := r.l.With(
@@ -161,7 +161,7 @@ func (r *deviationRepository) Acknowledge(
 			zap.String("id", req.DeviationID.String()),
 		)
 
-		entity, err := r.GetByID(ctx, &repositories.GetDeviationByIDRequest{
+		entity, err := r.GetByID(ctx, &modeprofileports.GetDeviationByIDRequest{
 			DeviationID: req.DeviationID,
 			TenantInfo:  req.TenantInfo,
 		})
@@ -205,7 +205,7 @@ func (r *deviationRepository) Acknowledge(
 
 func (r *deviationRepository) SupersedeOpenForResource(
 	ctx context.Context,
-	req *repositories.SupersedeDeviationsRequest,
+	req *modeprofileports.SupersedeDeviationsRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		log := r.l.With(
@@ -242,7 +242,7 @@ func (r *deviationRepository) SupersedeOpenForResource(
 
 func (r *deviationRepository) LiveRuleKeysForResource(
 	ctx context.Context,
-	req *repositories.LiveDeviationKeysRequest,
+	req *modeprofileports.LiveDeviationKeysRequest,
 ) ([]string, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]string, error) {
 		log := r.l.With(
@@ -276,13 +276,13 @@ func (r *deviationRepository) LiveRuleKeysForResource(
 
 func (r *deviationRepository) Ledger(
 	ctx context.Context,
-	req *repositories.DeviationLedgerRequest,
-) ([]*repositories.DeviationLedgerEntry, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.DeviationLedgerEntry, error) {
+	req *modeprofileports.DeviationLedgerRequest,
+) ([]*modeprofileports.DeviationLedgerEntry, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*modeprofileports.DeviationLedgerEntry, error) {
 		log := r.l.With(zap.String("operation", "Ledger"))
 
 		cols := buncolgen.DeviationColumns
-		entries := make([]*repositories.DeviationLedgerEntry, 0, 16)
+		entries := make([]*modeprofileports.DeviationLedgerEntry, 0, 16)
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().

@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/settlementshared"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -159,7 +159,7 @@ func (s *Service) PlanPayEventHold(
 	reason string,
 	hold bool,
 ) (*PayEventPlan, error) {
-	event, err := s.payEventRepo.GetByID(ctx, repositories.GetPayEventByIDRequest{
+	event, err := s.payEventRepo.GetByID(ctx, driversettlementports.GetPayEventByIDRequest{
 		ID:         eventID,
 		TenantInfo: tenantInfo,
 	})
@@ -209,7 +209,7 @@ func (s *Service) PlanEventTransfer(
 	for _, eventID := range sliceutils.Dedupe(req.EventIDs) {
 		event, getErr := s.payEventRepo.GetByID(
 			ctx,
-			repositories.GetPayEventByIDRequest{ID: eventID, TenantInfo: req.TenantInfo},
+			driversettlementports.GetPayEventByIDRequest{ID: eventID, TenantInfo: req.TenantInfo},
 		)
 		if getErr != nil {
 			if settlementshared.IsRefusal(getErr) {

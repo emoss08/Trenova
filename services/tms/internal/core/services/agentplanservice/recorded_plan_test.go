@@ -7,8 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -54,9 +55,9 @@ type executingDecider struct {
 
 func (d *executingDecider) DecideWithOutcome(
 	ctx context.Context,
-	req *services.DecideAgentProposalRequest,
-	actor *services.RequestActor,
-) (*services.DecisionOutcome, error) {
+	req *agentports.DecideAgentProposalRequest,
+	actor *permissionports.RequestActor,
+) (*agentports.DecisionOutcome, error) {
 	outcome, err := d.fakeDecider.DecideWithOutcome(ctx, req, actor)
 	if err != nil {
 		return nil, err
@@ -89,23 +90,23 @@ func TestRecordedTurn_FilesOnePlanThatApproveAllRuns(t *testing.T) {
 		Plans:     proposalrecorder.NewPlanStore(plans),
 	})
 
-	actions := make([]services.PendingAction, 0, 5)
+	actions := make([]agentports.PendingAction, 0, 5)
 	for range 5 {
-		actions = append(actions, services.PendingAction{
+		actions = append(actions, agentports.PendingAction{
 			ProposalID: pulid.MustNew("ap_"),
 			ToolName:   "post_invoice",
 			Arguments:  map[string]any{"invoiceId": pulid.MustNew("inv_").String()},
 			Rationale:  "post the drafts",
 			Tier:       agent.TierPropose,
-			Target: &services.ProposalTarget{
+			Target: &agentports.ProposalTarget{
 				Resource: permission.ResourceInvoice,
 				ID:       pulid.MustNew("inv_"),
 			},
 		})
 	}
 
-	actor := &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeUser,
+	actor := &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    pulid.MustNew("usr_"),
 		UserID:         pulid.MustNew("usr_"),
 		OrganizationID: orgID,
@@ -120,7 +121,7 @@ func TestRecordedTurn_FilesOnePlanThatApproveAllRuns(t *testing.T) {
 			BusinessUnitID: buID,
 		},
 		Actions: actions,
-		Evidence: func(services.PendingAction, pulid.ID) []agent.EvidenceRef {
+		Evidence: func(agentports.PendingAction, pulid.ID) []agent.EvidenceRef {
 			return []agent.EvidenceRef{{Type: "message", ID: "amsg_1"}}
 		},
 	})
@@ -143,7 +144,7 @@ func TestRecordedTurn_FilesOnePlanThatApproveAllRuns(t *testing.T) {
 		shadow:    fakeShadow{},
 	}
 
-	plan, err := svc.Decide(t.Context(), &services.DecideAgentPlanRequest{
+	plan, err := svc.Decide(t.Context(), &agentports.DecideAgentPlanRequest{
 		PlanID:     result.Plan.ID,
 		Decision:   agent.DecisionAccepted,
 		ReasonCode: "approve all",

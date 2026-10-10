@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -32,9 +32,9 @@ var vehiclePositionJoin = "LEFT JOIN " + buncolgen.VehiclePositionTable.As(
 
 func (r *repository) GetBoardSummary(
 	ctx context.Context,
-	filter *repositories.DispatchBoardFilter,
-) (*repositories.BoardSummary, error) {
-	summary := new(repositories.BoardSummary)
+	filter *shipmentports.DispatchBoardFilter,
+) (*shipmentports.BoardSummary, error) {
+	summary := new(shipmentports.BoardSummary)
 	now := timeutils.NowUnix()
 
 	if err := r.scanMoveSummary(ctx, filter, now, summary); err != nil {
@@ -54,9 +54,9 @@ func (r *repository) GetBoardSummary(
 
 func (r *repository) scanMoveSummary(
 	ctx context.Context,
-	filter *repositories.DispatchBoardFilter,
+	filter *shipmentports.DispatchBoardFilter,
 	now int64,
-	summary *repositories.BoardSummary,
+	summary *shipmentports.BoardSummary,
 ) error {
 	return dbtx.ReadErr(ctx, r.db, func(ctx context.Context) error {
 		asnCols := buncolgen.AssignmentColumns
@@ -116,8 +116,8 @@ func (r *repository) scanMoveSummary(
 
 func (r *repository) scanDriverSummary(
 	ctx context.Context,
-	filter *repositories.DispatchBoardFilter,
-	summary *repositories.BoardSummary,
+	filter *shipmentports.DispatchBoardFilter,
+	summary *shipmentports.BoardSummary,
 ) error {
 	return dbtx.ReadErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.WorkerColumns

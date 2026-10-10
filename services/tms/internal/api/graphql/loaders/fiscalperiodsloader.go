@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/fiscalyearservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -15,7 +15,7 @@ import (
 type fiscalPeriodsByFiscalYearIDsLister interface {
 	ListPeriodsByFiscalYearIDs(
 		ctx context.Context,
-		req repositories.ListByFiscalYearIDsRequest,
+		req fiscalperiodports.ListByFiscalYearIDsRequest,
 	) (map[pulid.ID][]*fiscalperiod.FiscalPeriod, error)
 }
 
@@ -50,7 +50,7 @@ func (f *FiscalPeriodsByFiscalYearIDLoaderFactory) batchFunc(
 		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*fiscalperiod.FiscalPeriod, error) {
 			return f.periods.ListPeriodsByFiscalYearIDs(
 				ctx,
-				repositories.ListByFiscalYearIDsRequest{
+				fiscalperiodports.ListByFiscalYearIDsRequest{
 					TenantInfo:    tenantInfo,
 					FiscalYearIDs: ids,
 				},

@@ -6,9 +6,10 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,28 +22,28 @@ type EnqueuerParams struct {
 	fx.In
 
 	Logger      *zap.Logger
-	Connections repositories.AccountingConnectionRepository
-	Records     repositories.AccountingSyncRecordRepository
-	Mappings    repositories.AccountingMappingRepository
-	Orgs        repositories.OrganizationRepository
-	Ledger      repositories.AccountingLedgerSource
-	Dispatcher  services.AccountingSyncDispatcher `optional:"true"`
+	Connections accountingsyncports.AccountingConnectionRepository
+	Records     accountingsyncports.AccountingSyncRecordRepository
+	Mappings    accountingsyncports.AccountingMappingRepository
+	Orgs        tenantports.OrganizationRepository
+	Ledger      journalentryports.AccountingLedgerSource
+	Dispatcher  accountingsyncports.AccountingSyncDispatcher `optional:"true"`
 }
 
 type Enqueuer struct {
 	l           *zap.Logger
-	connections repositories.AccountingConnectionRepository
-	records     repositories.AccountingSyncRecordRepository
-	mappings    repositories.AccountingMappingRepository
-	orgs        repositories.OrganizationRepository
-	ledger      repositories.AccountingLedgerSource
-	dispatcher  services.AccountingSyncDispatcher
+	connections accountingsyncports.AccountingConnectionRepository
+	records     accountingsyncports.AccountingSyncRecordRepository
+	mappings    accountingsyncports.AccountingMappingRepository
+	orgs        tenantports.OrganizationRepository
+	ledger      journalentryports.AccountingLedgerSource
+	dispatcher  accountingsyncports.AccountingSyncDispatcher
 }
 
 var (
-	_ services.AccountingSyncEnqueuer   = (*Enqueuer)(nil)
-	_ services.AccountingSyncPlanner    = (*Enqueuer)(nil)
-	_ services.AccountingLedgerEnqueuer = (*Enqueuer)(nil)
+	_ accountingsyncports.AccountingSyncEnqueuer   = (*Enqueuer)(nil)
+	_ accountingsyncports.AccountingSyncPlanner    = (*Enqueuer)(nil)
+	_ accountingsyncports.AccountingLedgerEnqueuer = (*Enqueuer)(nil)
 )
 
 func NewEnqueuer(p EnqueuerParams) *Enqueuer {
@@ -57,7 +58,7 @@ func NewEnqueuer(p EnqueuerParams) *Enqueuer {
 	}
 }
 
-func validateEnqueue(req *services.AccountingSyncEnqueueRequest) error {
+func validateEnqueue(req *accountingsyncports.AccountingSyncEnqueueRequest) error {
 	switch {
 	case req == nil:
 		return errortypes.NewBusinessError("An accounting sync request is required")
@@ -74,7 +75,7 @@ func validateEnqueue(req *services.AccountingSyncEnqueueRequest) error {
 	}
 }
 
-func (e *Enqueuer) Enqueue(ctx context.Context, req *services.AccountingSyncEnqueueRequest) error {
+func (e *Enqueuer) Enqueue(ctx context.Context, req *accountingsyncports.AccountingSyncEnqueueRequest) error {
 	if err := validateEnqueue(req); err != nil {
 		return err
 	}
@@ -99,7 +100,7 @@ func (e *Enqueuer) EnqueueRecords(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	records []*accountingsync.AccountingSyncRecord,
-) (*repositories.EnqueueAccountingSyncRecordsResult, error) {
+) (*accountingsyncports.EnqueueAccountingSyncRecordsResult, error) {
 	result, err := e.QueueRecords(ctx, tenantInfo, records)
 	if err != nil {
 		return nil, err
@@ -115,9 +116,9 @@ func (e *Enqueuer) QueueRecords(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	records []*accountingsync.AccountingSyncRecord,
-) (*repositories.EnqueueAccountingSyncRecordsResult, error) {
+) (*accountingsyncports.EnqueueAccountingSyncRecordsResult, error) {
 	if len(records) == 0 {
-		return &repositories.EnqueueAccountingSyncRecordsResult{}, nil
+		return &accountingsyncports.EnqueueAccountingSyncRecordsResult{}, nil
 	}
 
 	result, err := e.records.Enqueue(ctx, records)
@@ -132,7 +133,7 @@ func (e *Enqueuer) QueueRecords(
 		result.Inserted = append(result.Inserted, updated.Inserted...)
 		result.Existing += updated.Existing
 	}
-	services.NoteAccountingSyncEnqueued(ctx, result.Inserted)
+	accountingsyncports.NoteAccountingSyncEnqueued(ctx, result.Inserted)
 
 	for _, record := range result.Inserted {
 		if record.Operation != accountingsync.SyncOperationUpdate {
@@ -140,7 +141,7 @@ func (e *Enqueuer) QueueRecords(
 		}
 		if _, err = e.records.SupersedeOlder(
 			ctx,
-			&repositories.SupersedeAccountingSyncRecordsRequest{
+			&accountingsyncports.SupersedeAccountingSyncRecordsRequest{
 				TenantInfo:     tenantInfo,
 				ConnectionID:   record.ConnectionID,
 				ObjectType:     record.ObjectType,
@@ -177,7 +178,7 @@ func dayUpdatesFor(
 
 func (e *Enqueuer) EnqueueJournal(
 	ctx context.Context,
-	posted *services.AccountingJournalPosted,
+	posted *accountingsyncports.AccountingJournalPosted,
 ) error {
 	if posted == nil || posted.EntryID.IsNil() ||
 		!accountingsync.JournalSendable(posted.EntryType, "") {
@@ -195,7 +196,7 @@ func (e *Enqueuer) EnqueueJournal(
 		if !conn.IsSyncing() || !conn.SendsLedger() || !conn.Covers(posted.AccountingDate) {
 			continue
 		}
-		req := &services.AccountingSyncEnqueueRequest{
+		req := &accountingsyncports.AccountingSyncEnqueueRequest{
 			TenantInfo:   posted.TenantInfo,
 			ObjectType:   accountingsync.SyncObjectJournalEntry,
 			ObjectID:     posted.EntryID,
@@ -230,12 +231,12 @@ func (e *Enqueuer) EnqueueJournal(
 
 func (e *Enqueuer) reversalSendable(
 	ctx context.Context,
-	posted *services.AccountingJournalPosted,
+	posted *accountingsyncports.AccountingJournalPosted,
 ) (bool, error) {
 	if posted.ReversalOfID.IsNil() {
 		return true, nil
 	}
-	reverses, err := e.ledger.GetEntryType(ctx, &repositories.GetLedgerJournalRequest{
+	reverses, err := e.ledger.GetEntryType(ctx, &journalentryports.GetLedgerJournalRequest{
 		TenantInfo: posted.TenantInfo,
 		ID:         posted.ReversalOfID,
 	})
@@ -249,8 +250,8 @@ func JournalDayRequest(
 	tenantInfo pagination.TenantInfo,
 	accountingDate int64,
 	loc *time.Location,
-) *services.AccountingSyncEnqueueRequest {
-	return &services.AccountingSyncEnqueueRequest{
+) *accountingsyncports.AccountingSyncEnqueueRequest {
+	return &accountingsyncports.AccountingSyncEnqueueRequest{
 		TenantInfo:   tenantInfo,
 		ObjectType:   accountingsync.SyncObjectJournalSummary,
 		ObjectID:     pulid.ID(accountingsync.JournalDayID(accountingDate, loc)),
@@ -265,7 +266,7 @@ func (e *Enqueuer) location(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*time.Location, error) {
-	org, err := e.orgs.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+	org, err := e.orgs.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {
@@ -281,8 +282,8 @@ func (e *Enqueuer) location(
 // cover it, decided by the same rule. It writes nothing.
 func (e *Enqueuer) Destinations(
 	ctx context.Context,
-	req *services.AccountingSyncEnqueueRequest,
-) ([]services.AccountingSyncDestination, error) {
+	req *accountingsyncports.AccountingSyncEnqueueRequest,
+) ([]accountingsyncports.AccountingSyncDestination, error) {
 	if err := validateEnqueue(req); err != nil {
 		return nil, err
 	}
@@ -292,9 +293,9 @@ func (e *Enqueuer) Destinations(
 		return nil, err
 	}
 
-	destinations := make([]services.AccountingSyncDestination, 0, len(conns))
+	destinations := make([]accountingsyncports.AccountingSyncDestination, 0, len(conns))
 	for _, conn := range conns {
-		destinations = append(destinations, services.AccountingSyncDestination{
+		destinations = append(destinations, accountingsyncports.AccountingSyncDestination{
 			ConnectionID: conn.ID,
 			Integration:  string(conn.IntegrationType),
 			Company:      conn.ExternalCompanyName,
@@ -308,7 +309,7 @@ func (e *Enqueuer) Destinations(
 
 func (e *Enqueuer) coveringConnections(
 	ctx context.Context,
-	req *services.AccountingSyncEnqueueRequest,
+	req *accountingsyncports.AccountingSyncEnqueueRequest,
 ) ([]*accountingsync.AccountingConnection, error) {
 	conns, err := e.connections.ListByTenant(ctx, req.TenantInfo)
 	if err != nil {
@@ -331,7 +332,7 @@ func (e *Enqueuer) coveringConnections(
 
 func NewRecordFor(
 	conn *accountingsync.AccountingConnection,
-	req *services.AccountingSyncEnqueueRequest,
+	req *accountingsyncports.AccountingSyncEnqueueRequest,
 	now int64,
 ) *accountingsync.AccountingSyncRecord {
 	var documentDate *int64
@@ -358,7 +359,7 @@ func NewRecordFor(
 
 func (e *Enqueuer) covers(
 	ctx context.Context,
-	req *services.AccountingSyncEnqueueRequest,
+	req *accountingsyncports.AccountingSyncEnqueueRequest,
 	conn *accountingsync.AccountingConnection,
 ) (bool, error) {
 	if !conn.IsSyncing() || !conn.Sends(req.ObjectType) {
@@ -375,7 +376,7 @@ func (e *Enqueuer) covers(
 		return true, nil
 	}
 
-	mapping, err := e.mappings.GetByTarget(ctx, &repositories.GetAccountingMappingByTargetRequest{
+	mapping, err := e.mappings.GetByTarget(ctx, &accountingsyncports.GetAccountingMappingByTargetRequest{
 		TenantInfo:      req.TenantInfo,
 		ConnectionID:    conn.ID,
 		TargetType:      target,
@@ -405,7 +406,7 @@ func (e *Enqueuer) kickAfterCommit(
 		}
 	}
 	for connectionID := range connectionIDs {
-		ports.AfterCommit(ctx, func(committedCtx context.Context) {
+		kernelports.AfterCommit(ctx, func(committedCtx context.Context) {
 			if err := e.dispatcher.Kick(committedCtx, tenantInfo, connectionID); err != nil {
 				e.l.Warn("failed to wake the accounting dispatcher; the schedule will pick it up",
 					zap.String("connectionId", connectionID.String()), zap.Error(err))

@@ -14,8 +14,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -4179,7 +4179,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.CarrierIntelSuggestion)
+					obj := o.(*carrierintelports.CarrierIntelSuggestion)
 					return obj.DOTNumber, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -4188,7 +4188,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "legalName",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.CarrierIntelSuggestion)
+					obj := o.(*carrierintelports.CarrierIntelSuggestion)
 					return obj.LegalName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -4197,7 +4197,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "dbaName",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.CarrierIntelSuggestion)
+					obj := o.(*carrierintelports.CarrierIntelSuggestion)
 					return obj.DBAName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -4206,7 +4206,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "city",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.CarrierIntelSuggestion)
+					obj := o.(*carrierintelports.CarrierIntelSuggestion)
 					return obj.City, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -4215,7 +4215,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "state",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.CarrierIntelSuggestion)
+					obj := o.(*carrierintelports.CarrierIntelSuggestion)
 					return obj.State, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -5637,7 +5637,7 @@ type resolverQuery interface {
 	CarrierIntelRawPayload(ctx context.Context, carrierID string, snapshotID string) (map[string]any, error)
 	CarrierIntelLookup(ctx context.Context, input gqlmodel.CarrierIntelLookupInput) (*gqlmodel.CarrierIntelProspectLookup, error)
 	CarrierSourcingSearch(ctx context.Context, input gqlmodel.CarrierSourcingSearchInput) (*carrierintelservice.SourcingPage, error)
-	CarrierSourcingAutocomplete(ctx context.Context, query string, limit *int) ([]*services.CarrierIntelSuggestion, error)
+	CarrierSourcingAutocomplete(ctx context.Context, query string, limit *int) ([]*carrierintelports.CarrierIntelSuggestion, error)
 	CarrierEquipmentVerifications(ctx context.Context, carrierAssignmentID string) ([]*carrierintel.CarrierEquipmentVerification, error)
 	MyCarrierIntelligence(ctx context.Context, refresh *bool) (*gqlmodel.MyCarrierIntelligence, error)
 }
@@ -7803,15 +7803,15 @@ func marshalNCarrierIntelSubjectType2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNCarrierIntelSuggestion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐCarrierIntelSuggestionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*services.CarrierIntelSuggestion) graphql.Marshaler {
-	return gqlexec.List[*services.CarrierIntelSuggestion]{
+func marshalNCarrierIntelSuggestion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐCarrierIntelSuggestionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*carrierintelports.CarrierIntelSuggestion) graphql.Marshaler {
+	return gqlexec.List[*carrierintelports.CarrierIntelSuggestion]{
 		Elem:        marshalNCarrierIntelSuggestion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐCarrierIntelSuggestion,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNCarrierIntelSuggestion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐCarrierIntelSuggestion(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.CarrierIntelSuggestion) graphql.Marshaler {
+func marshalNCarrierIntelSuggestion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐCarrierIntelSuggestion(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carrierintelports.CarrierIntelSuggestion) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

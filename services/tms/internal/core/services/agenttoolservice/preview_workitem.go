@@ -7,15 +7,16 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/bankreceiptworkitemservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptworkitemports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-var _ serviceports.ToolPreviewer = (*resolveBankReceiptWorkItemTool)(nil)
+var _ agentports.ToolPreviewer = (*resolveBankReceiptWorkItemTool)(nil)
 
 var closedWorkItemFields = []string{fieldStatus, "resolutionType", "resolutionNote", "resolvedAt"}
 
@@ -34,7 +35,7 @@ func (a resolveWorkItemArgs) close(
 
 func (t *resolveBankReceiptWorkItemTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	args, err := t.arguments(params)
 	if err != nil {
@@ -42,7 +43,7 @@ func (t *resolveBankReceiptWorkItemTool) Preview(
 	}
 
 	tenant := tenantFrom(params)
-	item, err := t.items.Get(ctx, &serviceports.GetBankReceiptWorkItemRequest{
+	item, err := t.items.Get(ctx, &bankreceiptworkitemports.GetBankReceiptWorkItemRequest{
 		WorkItemID: args.id,
 		TenantInfo: tenant,
 	})

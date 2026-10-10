@@ -3,15 +3,13 @@ package tenderservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/dbscope"
-	"github.com/emoss08/trenova/shared/tokenutils"
-
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	portservices "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/emoss08/trenova/shared/tokenutils"
 	"go.uber.org/zap"
 )
 
@@ -69,7 +67,7 @@ func (s *Service) resolveToken(
 		OrganizationID: token.OrganizationID,
 		BusinessUnitID: token.BusinessUnitID,
 	})
-	offer, err := s.repo.GetOfferByID(ctx, repositories.GetTenderOfferByIDRequest{
+	offer, err := s.repo.GetOfferByID(ctx, tenderports.GetTenderOfferByIDRequest{
 		TenantInfo:    tenantInfo,
 		OfferID:       token.TenderOfferID,
 		IncludeTender: true,
@@ -151,7 +149,7 @@ func (s *Service) RespondByToken(
 		BuID:  token.BusinessUnitID,
 	}
 
-	if err = s.RecordResponse(ctx, &portservices.TenderResponseRequest{
+	if err = s.RecordResponse(ctx, &tenderports.TenderResponseRequest{
 		TenantInfo:    tenantInfo,
 		OfferID:       offer.ID,
 		Action:        action,
@@ -161,7 +159,7 @@ func (s *Service) RespondByToken(
 		return err
 	}
 
-	if _, err = s.repo.MarkTokenUsed(ctx, &repositories.MarkTokenUsedRequest{
+	if _, err = s.repo.MarkTokenUsed(ctx, &tenderports.MarkTokenUsedRequest{
 		TenantInfo: tenantInfo,
 		TokenID:    token.ID,
 		UsedAt:     timeutils.NowUnix(),

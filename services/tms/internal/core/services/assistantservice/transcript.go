@@ -11,10 +11,11 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -49,8 +50,8 @@ var transcriptJSON = sonic.Config{SortMapKeys: true}.Froze()
 
 func (s *Service) Transcript(
 	ctx context.Context,
-	req repositories.GetThreadRequest,
-) (*services.TranscriptFile, error) {
+	req agentports.GetThreadRequest,
+) (*kernelports.TranscriptFile, error) {
 	thread, err := s.conversations.GetThread(ctx, req)
 	if err != nil {
 		return nil, err
@@ -61,7 +62,7 @@ func (s *Service) Transcript(
 		return nil, err
 	}
 
-	proposals, err := s.proposals.ListByThread(ctx, repositories.ListAgentProposalsByThreadRequest{
+	proposals, err := s.proposals.ListByThread(ctx, agentports.ListAgentProposalsByThreadRequest{
 		ThreadID:   req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -69,7 +70,7 @@ func (s *Service) Transcript(
 		return nil, err
 	}
 
-	return &services.TranscriptFile{
+	return &kernelports.TranscriptFile{
 		FileName: transcriptFileName(thread),
 		Body: renderTranscript(&transcriptInput{
 			Thread:     thread,
@@ -86,14 +87,14 @@ func (s *Service) Transcript(
 // run out, and hands it back oldest first.
 func (s *Service) allMessages(
 	ctx context.Context,
-	req repositories.GetThreadRequest,
+	req agentports.GetThreadRequest,
 ) ([]conversation.Message, error) {
 	pages := make([][]conversation.Message, 0, 1)
 	total := 0
 	var before *int
 
 	for page := 0; page < transcriptMaxPages; page++ {
-		messages, err := s.conversations.ListMessages(ctx, repositories.ListMessagesRequest{
+		messages, err := s.conversations.ListMessages(ctx, agentports.ListMessagesRequest{
 			ThreadID:       req.ID,
 			TenantInfo:     req.TenantInfo,
 			Limit:          transcriptPageSize,
@@ -128,14 +129,14 @@ func (s *Service) allMessages(
 // been deleted leaves the conversation readable under a plain name.
 func (s *Service) agentName(
 	ctx context.Context,
-	req repositories.GetThreadRequest,
+	req agentports.GetThreadRequest,
 	thread *conversation.Thread,
 ) string {
 	if s.definitions == nil || thread.AgentDefinitionID.IsNil() {
 		return "Assistant"
 	}
 
-	definition, err := s.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	definition, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         thread.AgentDefinitionID,
 		TenantInfo: req.TenantInfo,
 	})

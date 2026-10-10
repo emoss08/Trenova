@@ -7,13 +7,13 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/edicontrolnumberrepository"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -80,7 +80,7 @@ func TestAllocateControlNumbersConcurrentAllocationsAreUnique(t *testing.T) {
 	_, err = db.NewInsert().Model(partner).Exec(ctx)
 	require.NoError(t, err)
 
-	req := repositories.AllocateEDIControlNumbersRequest{
+	req := ediports.AllocateEDIControlNumbersRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: org.ID,
 			BuID:  org.BusinessUnitID,

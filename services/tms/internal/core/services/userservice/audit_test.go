@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/securityaudittest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -26,7 +26,7 @@ func TestReplaceOrganizationMembershipsRecordsWhatChanged(t *testing.T) {
 
 	deps.repo.EXPECT().ListOrganizationMemberships(mock.Anything, userID, buID).
 		Return([]*tenant.OrganizationMembership{{OrganizationID: kept}, {OrganizationID: removed}}, nil).Once()
-	deps.repo.EXPECT().ReplaceOrganizationMemberships(mock.Anything, repositories.ReplaceOrganizationMembershipsRequest{
+	deps.repo.EXPECT().ReplaceOrganizationMemberships(mock.Anything, tenantports.ReplaceOrganizationMembershipsRequest{
 		ActorID:         actorID,
 		UserID:          userID,
 		BusinessUnitID:  buID,

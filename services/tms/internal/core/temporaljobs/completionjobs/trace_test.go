@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace/aitracetest"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -75,7 +75,7 @@ func TestDispatcher_AFailedJobSaysSo(t *testing.T) {
 	d := &Dispatcher{workflows: starter}
 	_, err := d.Test(
 		t.Context(),
-		repositories.GetAIProviderByIDRequest{ID: pulid.MustNew("aiprv_")},
+		agentports.GetAIProviderByIDRequest{ID: pulid.MustNew("aiprv_")},
 	)
 	require.Error(t, err)
 

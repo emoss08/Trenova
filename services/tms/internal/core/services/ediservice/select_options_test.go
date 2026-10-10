@@ -1,10 +1,11 @@
 package ediservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -30,20 +31,20 @@ func TestService_SelectOptionsDelegateRequests(t *testing.T) {
 		Pagination: pagination.Info{Limit: 19, Offset: 5},
 		Query:      "carrier",
 	}
-	documentTypeReq := &repositories.EDIDocumentTypeSelectOptionsRequest{
+	documentTypeReq := &ediports.EDIDocumentTypeSelectOptionsRequest{
 		SelectQueryRequest: selectReq,
 		Standard:           edi.EDIStandardX12,
 		TransactionSet:     edi.TransactionSet204,
 		Direction:          edi.DocumentDirectionOutbound,
 		Status:             edi.DocumentStatusActive,
 	}
-	templateReq := &repositories.EDITemplateSelectOptionsRequest{
+	templateReq := &ediports.EDITemplateSelectOptionsRequest{
 		SelectQueryRequest: selectReq,
 		TransactionSet:     edi.TransactionSet204,
 		Direction:          edi.DocumentDirectionOutbound,
 		Status:             edi.TemplateStatusDraft,
 	}
-	profileReq := &repositories.EDIPartnerDocumentProfileSelectOptionsRequest{
+	profileReq := &ediports.EDIPartnerDocumentProfileSelectOptionsRequest{
 		SelectQueryRequest: selectReq,
 		TransactionSet:     edi.TransactionSet204,
 		Direction:          edi.DocumentDirectionOutbound,
@@ -51,7 +52,7 @@ func TestService_SelectOptionsDelegateRequests(t *testing.T) {
 		PartnerID:          pulid.MustNew("edip_"),
 	}
 	repeated := true
-	sourceReq := &repositories.ListEDISourceContextFieldsRequest{
+	sourceReq := &ediports.ListEDISourceContextFieldsRequest{
 		Filter:         queryReq,
 		Standard:       edi.EDIStandardX12,
 		TransactionSet: edi.TransactionSet204,
@@ -63,7 +64,7 @@ func TestService_SelectOptionsDelegateRequests(t *testing.T) {
 	}
 	required := true
 	secret := false
-	partnerSettingReq := &repositories.ListEDIPartnerSettingFieldsRequest{
+	partnerSettingReq := &ediports.ListEDIPartnerSettingFieldsRequest{
 		Filter:         queryReq,
 		Standard:       edi.EDIStandardX12,
 		TransactionSet: edi.TransactionSet204,
@@ -75,7 +76,7 @@ func TestService_SelectOptionsDelegateRequests(t *testing.T) {
 		Secret:         &secret,
 	}
 
-	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo := ediportsmock.NewMockEDIDocumentRepository(t)
 	repo.EXPECT().
 		SelectDocumentTypeOptions(mock.Anything, documentTypeReq).
 		Return(&pagination.ListResult[*edi.EDIDocumentType]{Items: []*edi.EDIDocumentType{{Code: "204"}}, Total: 1}, nil).

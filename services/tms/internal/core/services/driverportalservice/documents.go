@@ -7,9 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -59,7 +60,7 @@ func (s *Service) documentTypesByCategory(
 		return nil, err
 	}
 
-	result, err := s.documentTypeRepo.List(ctx, &repositories.ListDocumentTypesRequest{
+	result, err := s.documentTypeRepo.List(ctx, &documenttypeports.ListDocumentTypesRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenantInfo,
 			Pagination: pagination.Info{Limit: 100},
@@ -97,7 +98,7 @@ func (s *Service) MyProfileDocuments(
 
 	documents, err := s.documentService.GetByResource(
 		ctx,
-		&repositories.GetDocumentsByResourceRequest{
+		&documentports.GetDocumentsByResourceRequest{
 			TenantInfo:          tenantInfo,
 			ResourceID:          wrk.ID.String(),
 			ResourceType:        workerResourceType,
@@ -126,7 +127,7 @@ func (s *Service) UploadMyProfileDocument(
 	tenantInfo pagination.TenantInfo,
 	file *multipart.FileHeader,
 	documentTypeID string,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*PortalDocument, error) {
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
@@ -169,7 +170,7 @@ func (s *Service) MyLoadDocuments(
 
 	documents, err := s.documentService.GetByResource(
 		ctx,
-		&repositories.GetDocumentsByResourceRequest{
+		&documentports.GetDocumentsByResourceRequest{
 			TenantInfo:          tenantInfo,
 			ResourceID:          shipmentID.String(),
 			ResourceType:        shipmentResourceType,
@@ -196,7 +197,7 @@ func (s *Service) UploadMyLoadDocument(
 	shipmentID pulid.ID,
 	file *multipart.FileHeader,
 	documentTypeID string,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*PortalDocument, error) {
 	if err := s.requireAssignedShipment(ctx, tenantInfo, shipmentID); err != nil {
 		return nil, err

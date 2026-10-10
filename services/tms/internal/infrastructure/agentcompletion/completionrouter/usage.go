@@ -10,8 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
@@ -26,7 +26,7 @@ type usageAttempt struct {
 	provider    *aiprovider.Provider
 	task        aiprovider.Task
 	surface     aiusage.Surface
-	attribution serviceports.AIUsageAttribution
+	attribution aiusageports.AIUsageAttribution
 	tenant      pagination.TenantInfo
 	latency     time.Duration
 	// firstToken is how long the attempt took to stream its first text or
@@ -45,7 +45,7 @@ type usageAttempt struct {
 
 func surfaceFor(
 	surface aiusage.Surface,
-	attribution serviceports.AIUsageAttribution,
+	attribution aiusageports.AIUsageAttribution,
 ) aiusage.Surface {
 	if attribution.Evaluates() {
 		return aiusage.SurfaceEvaluation

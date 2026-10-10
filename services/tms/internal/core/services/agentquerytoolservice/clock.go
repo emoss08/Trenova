@@ -1,7 +1,7 @@
 package agentquerytoolservice
 
 import (
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 )
 
@@ -12,6 +12,6 @@ type clock = filtercatalog.Clock
 
 const secondsPerDay = filtercatalog.SecondsPerDay
 
-func clockFor(params *serviceports.QueryToolParams) clock {
+func clockFor(params *agentports.QueryToolParams) clock {
 	return filtercatalog.NewClock(params.Timezone)
 }

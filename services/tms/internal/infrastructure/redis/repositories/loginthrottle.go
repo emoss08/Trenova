@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	corerepositories "github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/shared/tokenutils"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
@@ -28,23 +28,23 @@ type LoginThrottleStoreParams struct {
 
 type loginThrottleStore struct {
 	client *redis.Client
-	policy corerepositories.LoginThrottlePolicy
+	policy sessionports.LoginThrottlePolicy
 	l      *zap.Logger
 }
 
-func NewLoginThrottleStore(p LoginThrottleStoreParams) corerepositories.LoginThrottleStore {
+func NewLoginThrottleStore(p LoginThrottleStoreParams) sessionports.LoginThrottleStore {
 	return NewLoginThrottleStoreWithPolicy(
 		p.Client,
-		corerepositories.DefaultLoginThrottlePolicy(),
+		sessionports.DefaultLoginThrottlePolicy(),
 		p.Logger,
 	)
 }
 
 func NewLoginThrottleStoreWithPolicy(
 	client *redis.Client,
-	policy corerepositories.LoginThrottlePolicy,
+	policy sessionports.LoginThrottlePolicy,
 	logger *zap.Logger,
-) corerepositories.LoginThrottleStore {
+) sessionports.LoginThrottleStore {
 	if logger == nil {
 		logger = zap.NewNop()
 	}
@@ -58,8 +58,8 @@ func NewLoginThrottleStoreWithPolicy(
 
 func (s *loginThrottleStore) Check(
 	ctx context.Context,
-	key corerepositories.LoginThrottleKey,
-) (*corerepositories.LoginThrottleDecision, error) {
+	key sessionports.LoginThrottleKey,
+) (*sessionports.LoginThrottleDecision, error) {
 	pipe := s.client.Pipeline()
 	lockTTL := pipe.PTTL(ctx, s.accountLockKey(key.Account))
 	accountFailures := pipe.Get(ctx, s.accountFailuresKey(key.Account))
@@ -69,21 +69,21 @@ func (s *loginThrottleStore) Check(
 		return nil, fmt.Errorf("check login throttle: %w", err)
 	}
 
-	decision := &corerepositories.LoginThrottleDecision{
+	decision := &sessionports.LoginThrottleDecision{
 		AccountFailures: intOrZero(accountFailures),
 		IPFailures:      intOrZero(ipFailures),
 	}
 
 	if ttl := lockTTL.Val(); ttl > 0 {
 		decision.Blocked = true
-		decision.Scope = corerepositories.LoginThrottleScopeAccount
+		decision.Scope = sessionports.LoginThrottleScopeAccount
 		decision.RetryAfter = ttl
 		return decision, nil
 	}
 
 	if decision.IPFailures >= s.policy.IPThreshold && s.policy.IPThreshold > 0 {
 		decision.Blocked = true
-		decision.Scope = corerepositories.LoginThrottleScopeIP
+		decision.Scope = sessionports.LoginThrottleScopeIP
 		decision.RetryAfter = positiveOr(ipTTL.Val(), s.policy.IPWindow)
 	}
 
@@ -92,8 +92,8 @@ func (s *loginThrottleStore) Check(
 
 func (s *loginThrottleStore) RecordFailure(
 	ctx context.Context,
-	key corerepositories.LoginThrottleKey,
-) (*corerepositories.LoginThrottleDecision, error) {
+	key sessionports.LoginThrottleKey,
+) (*sessionports.LoginThrottleDecision, error) {
 	accountKey := s.accountFailuresKey(key.Account)
 	ipKey := s.ipFailuresKey(key.ClientIP)
 
@@ -107,7 +107,7 @@ func (s *loginThrottleStore) RecordFailure(
 		return nil, fmt.Errorf("record login failure: %w", err)
 	}
 
-	decision := &corerepositories.LoginThrottleDecision{
+	decision := &sessionports.LoginThrottleDecision{
 		AccountFailures: int(accountFailures.Val()),
 		IPFailures:      int(ipFailures.Val()),
 	}
@@ -117,14 +117,14 @@ func (s *loginThrottleStore) RecordFailure(
 			return nil, fmt.Errorf("lock account after login failures: %w", err)
 		}
 		decision.Blocked = true
-		decision.Scope = corerepositories.LoginThrottleScopeAccount
+		decision.Scope = sessionports.LoginThrottleScopeAccount
 		decision.RetryAfter = lock
 		return decision, nil
 	}
 
 	if s.policy.IPThreshold > 0 && decision.IPFailures >= s.policy.IPThreshold {
 		decision.Blocked = true
-		decision.Scope = corerepositories.LoginThrottleScopeIP
+		decision.Scope = sessionports.LoginThrottleScopeIP
 		decision.RetryAfter = positiveOr(ipTTL.Val(), s.policy.IPWindow)
 	}
 

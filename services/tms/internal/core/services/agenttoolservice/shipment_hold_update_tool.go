@@ -9,10 +9,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/holdreason"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 )
 
 const (
@@ -38,10 +39,10 @@ var updatedHoldFields = []string{
 type classifiedTool[R, P any] struct {
 	reportingReceivableTool[R, P]
 	egress   []agent.EgressClass
-	classify func(serviceports.ToolExecuteParams) serviceports.CallPolicy
+	classify func(agentports.ToolExecuteParams) agentports.CallPolicy
 }
 
-func (t classifiedTool[R, P]) Policy() serviceports.ToolPolicy {
+func (t classifiedTool[R, P]) Policy() agentports.ToolPolicy {
 	policy := t.reportingReceivableTool.Policy()
 	policy.Egress = t.egress
 	policy.Classify = t.classify
@@ -52,22 +53,22 @@ func (t classifiedTool[R, P]) Policy() serviceports.ToolPolicy {
 type holdUpdater interface {
 	GetByID(
 		ctx context.Context,
-		req *repositories.GetShipmentHoldByIDRequest,
+		req *shipmentports.GetShipmentHoldByIDRequest,
 	) (*shipment.ShipmentHold, error)
 	Update(
 		ctx context.Context,
-		req *repositories.UpdateShipmentHoldRequest,
-		actor *serviceports.RequestActor,
+		req *shipmentports.UpdateShipmentHoldRequest,
+		actor *permissionports.RequestActor,
 	) (*shipment.ShipmentHold, error)
 	PreviewUpdate(
 		ctx context.Context,
-		req *repositories.UpdateShipmentHoldRequest,
-		actor *serviceports.RequestActor,
+		req *shipmentports.UpdateShipmentHoldRequest,
+		actor *permissionports.RequestActor,
 	) (*shipment.ShipmentHold, error)
 }
 
 type holdPatch struct {
-	get               repositories.GetShipmentHoldByIDRequest
+	get               shipmentports.GetShipmentHoldByIDRequest
 	severity          *holdreason.HoldSeverity
 	notes             *string
 	blocksDispatch    *bool
@@ -83,8 +84,8 @@ type holdUpdatePlan struct {
 
 func (p *holdPatch) request(
 	current *shipment.ShipmentHold,
-) *repositories.UpdateShipmentHoldRequest {
-	req := &repositories.UpdateShipmentHoldRequest{
+) *shipmentports.UpdateShipmentHoldRequest {
+	req := &shipmentports.UpdateShipmentHoldRequest{
 		TenantInfo:        p.get.TenantInfo,
 		ShipmentID:        p.get.ShipmentID,
 		HoldID:            p.get.HoldID,
@@ -119,7 +120,7 @@ func (p *holdPatch) request(
 	return req
 }
 
-func readHoldPatch(params *serviceports.ToolExecuteParams) (*holdPatch, error) {
+func readHoldPatch(params *agentports.ToolExecuteParams) (*holdPatch, error) {
 	shipmentID, err := requirePulid(params.Params, paramShipmentID)
 	if err != nil {
 		return nil, err
@@ -129,7 +130,7 @@ func readHoldPatch(params *serviceports.ToolExecuteParams) (*holdPatch, error) {
 		return nil, err
 	}
 
-	patch := &holdPatch{get: repositories.GetShipmentHoldByIDRequest{
+	patch := &holdPatch{get: shipmentports.GetShipmentHoldByIDRequest{
 		HoldID:     holdID,
 		ShipmentID: shipmentID,
 		TenantInfo: tenantFrom(*params),
@@ -172,16 +173,16 @@ func readHoldPatch(params *serviceports.ToolExecuteParams) (*holdPatch, error) {
 }
 
 func classifyHoldVisibility(
-	params serviceports.ToolExecuteParams, //nolint:gocritic // ToolPolicy.Classify passes params by value
-) serviceports.CallPolicy {
+	params agentports.ToolExecuteParams, //nolint:gocritic // ToolPolicy.Classify passes params by value
+) agentports.CallPolicy {
 	if optionalBool(params.Params, paramVisibleToCustomer) {
-		return serviceports.CallPolicy{Egress: agent.EgressCustomerVisible}
+		return agentports.CallPolicy{Egress: agent.EgressCustomerVisible}
 	}
 
-	return serviceports.CallPolicy{Egress: agent.EgressInternal}
+	return agentports.CallPolicy{Egress: agent.EgressInternal}
 }
 
-func newUpdateShipmentHoldTool(holds holdUpdater) serviceports.AgentTool {
+func newUpdateShipmentHoldTool(holds holdUpdater) agentports.AgentTool {
 	base := newReportingReceivableTool(&receivableSpec{
 		name:     "update_shipment_hold",
 		artifact: shipmentRecordEntity,
@@ -224,7 +225,7 @@ func newUpdateShipmentHoldTool(holds holdUpdater) serviceports.AgentTool {
 		plan: func(
 			ctx context.Context,
 			patch *holdPatch,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*holdUpdatePlan, error) {
 			current, err := holds.GetByID(ctx, &patch.get)
 			if err != nil {
@@ -242,7 +243,7 @@ func newUpdateShipmentHoldTool(holds holdUpdater) serviceports.AgentTool {
 		run: func(
 			ctx context.Context,
 			patch *holdPatch,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			current, err := holds.GetByID(ctx, &patch.get)
 			if err != nil {

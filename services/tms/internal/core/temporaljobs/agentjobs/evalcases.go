@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"go.temporal.io/sdk/workflow"
 )
 
@@ -37,14 +37,14 @@ type PurgeEvalCasesInput struct {
 
 func CaptureEvalCaseCandidatesWorkflow(
 	ctx workflow.Context,
-) (*serviceports.CaptureEvalCaseCandidatesResult, error) {
+) (*agentports.CaptureEvalCaseCandidatesResult, error) {
 	var a *Activities
-	total := &serviceports.CaptureEvalCaseCandidatesResult{}
+	total := &agentports.CaptureEvalCaseCandidatesResult{}
 
 	since := workflow.Now(ctx).Add(-evalCaseCaptureLookback).Unix()
 	captureCtx := workflow.WithActivityOptions(ctx, evalCaseSweepOptions)
 	for range evalCaseCaptureRounds {
-		var round serviceports.CaptureEvalCaseCandidatesResult
+		var round agentports.CaptureEvalCaseCandidatesResult
 		if err := workflow.ExecuteActivity(
 			captureCtx,
 			a.CaptureEvalCaseCandidatesActivity,
@@ -64,9 +64,9 @@ func CaptureEvalCaseCandidatesWorkflow(
 	return total, nil
 }
 
-func PurgeEvalCasesWorkflow(ctx workflow.Context) (*serviceports.PurgeEvalCasesResult, error) {
+func PurgeEvalCasesWorkflow(ctx workflow.Context) (*agentports.PurgeEvalCasesResult, error) {
 	var a *Activities
-	result := &serviceports.PurgeEvalCasesResult{}
+	result := &agentports.PurgeEvalCasesResult{}
 
 	purgeCtx := workflow.WithActivityOptions(ctx, evalCaseSweepOptions)
 	if err := workflow.ExecuteActivity(purgeCtx, a.PurgeEvalCasesActivity, &PurgeEvalCasesInput{
@@ -81,12 +81,12 @@ func PurgeEvalCasesWorkflow(ctx workflow.Context) (*serviceports.PurgeEvalCasesR
 func (a *Activities) CaptureEvalCaseCandidatesActivity(
 	ctx context.Context,
 	input *CaptureEvalCaseCandidatesInput,
-) (*serviceports.CaptureEvalCaseCandidatesResult, error) {
+) (*agentports.CaptureEvalCaseCandidatesResult, error) {
 	if a.caseService == nil {
-		return &serviceports.CaptureEvalCaseCandidatesResult{}, nil
+		return &agentports.CaptureEvalCaseCandidatesResult{}, nil
 	}
 
-	return a.caseService.CaptureCandidates(ctx, serviceports.CaptureEvalCaseCandidatesRequest{
+	return a.caseService.CaptureCandidates(ctx, agentports.CaptureEvalCaseCandidatesRequest{
 		Since: input.Since,
 		Limit: input.Limit,
 	})
@@ -95,10 +95,10 @@ func (a *Activities) CaptureEvalCaseCandidatesActivity(
 func (a *Activities) PurgeEvalCasesActivity(
 	ctx context.Context,
 	input *PurgeEvalCasesInput,
-) (*serviceports.PurgeEvalCasesResult, error) {
+) (*agentports.PurgeEvalCasesResult, error) {
 	if a.caseService == nil {
-		return &serviceports.PurgeEvalCasesResult{}, nil
+		return &agentports.PurgeEvalCasesResult{}, nil
 	}
 
-	return a.caseService.Purge(ctx, serviceports.PurgeEvalCasesRequest{Now: input.Now})
+	return a.caseService.Purge(ctx, agentports.PurgeEvalCasesRequest{Now: input.Now})
 }

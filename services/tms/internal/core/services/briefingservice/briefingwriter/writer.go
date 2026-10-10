@@ -17,7 +17,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/briefing"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/numberguard"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -35,12 +35,12 @@ type Params struct {
 	fx.In
 
 	Logger     *zap.Logger
-	Completion services.CompletionService
+	Completion agentports.CompletionService
 }
 
 type Service struct {
 	l          *zap.Logger
-	completion services.CompletionService
+	completion agentports.CompletionService
 }
 
 func New(p Params) *Service {
@@ -86,7 +86,7 @@ func (s *Service) Write(ctx context.Context, req *Request) Result {
 		return result
 	}
 
-	completion, err := s.completion.CompleteStructured(ctx, &services.StructuredCompletionRequest{
+	completion, err := s.completion.CompleteStructured(ctx, &agentports.StructuredCompletionRequest{
 		TenantInfo:   req.TenantInfo,
 		Task:         aiprovider.TaskDailyBriefing,
 		System:       systemPrompt,
@@ -123,7 +123,7 @@ func (s *Service) Write(ctx context.Context, req *Request) Result {
 func (s *Service) apply(
 	req *Request,
 	written *briefingDraft,
-	completion *services.StructuredCompletionResult,
+	completion *agentports.StructuredCompletionResult,
 	result *Result,
 ) {
 	known := make(map[briefing.SectionKey]struct{}, len(req.Sections))
@@ -168,7 +168,7 @@ func (s *Service) apply(
 
 func (s *Service) rejected(
 	req *Request,
-	completion *services.StructuredCompletionResult,
+	completion *agentports.StructuredCompletionResult,
 	where string,
 	unsupported []string,
 ) {
@@ -181,7 +181,7 @@ func (s *Service) rejected(
 }
 
 func (s *Service) logUnavailable(err error, role briefing.RoleKey) {
-	if errors.Is(err, services.ErrNoProviderConfigured) {
+	if errors.Is(err, agentports.ErrNoProviderConfigured) {
 		s.l.Info("no provider configured for the daily briefing; using computed wording",
 			zap.String("role", string(role)),
 		)

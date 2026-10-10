@@ -1,6 +1,8 @@
 package agentquerytoolservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/journalreversalportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/manualjournalportsmock"
 	"context"
 	"testing"
 
@@ -8,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/core/domain/manualjournal"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/manualjournalports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -51,12 +53,12 @@ func TestListManualJournals_NarrowsByStatusAndGatesAmounts(t *testing.T) {
 	t.Parallel()
 
 	entity := postedManualJournal()
-	repo := mocks.NewMockManualJournalRepository(t)
-	var captured *repositories.ListManualJournalRequest
+	repo := manualjournalportsmock.NewMockManualJournalRepository(t)
+	var captured *manualjournalports.ListManualJournalRequest
 	repo.EXPECT().List(mock.Anything, mock.Anything).RunAndReturn(
 		func(
 			_ context.Context,
-			req *repositories.ListManualJournalRequest,
+			req *manualjournalports.ListManualJournalRequest,
 		) (*pagination.ListResult[*manualjournal.Request], error) {
 			captured = req
 			return &pagination.ListResult[*manualjournal.Request]{
@@ -116,7 +118,7 @@ type fakeManualJournalReader struct {
 
 func (f fakeManualJournalReader) GetByID(
 	context.Context,
-	repositories.GetManualJournalByIDRequest,
+	manualjournalports.GetManualJournalByIDRequest,
 ) (*manualjournal.Request, error) {
 	return f.entity, nil
 }
@@ -131,7 +133,7 @@ func TestListJournalReversals_ListsWhatEachReverses(t *testing.T) {
 		ReasonCode:             "Duplicate",
 		ReasonText:             "Entered twice",
 	}
-	repo := mocks.NewMockJournalReversalRepository(t)
+	repo := journalreversalportsmock.NewMockJournalReversalRepository(t)
 	repo.EXPECT().List(mock.Anything, mock.Anything).Return(
 		&pagination.ListResult[*journalreversal.Reversal]{
 			Items: []*journalreversal.Reversal{reversal},

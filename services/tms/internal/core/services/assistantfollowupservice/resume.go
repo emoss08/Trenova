@@ -8,9 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/assistantservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -27,21 +26,21 @@ const resumeWindow = 24 * time.Hour
 type proposalLister interface {
 	ListByThread(
 		ctx context.Context,
-		req repositories.ListAgentProposalsByThreadRequest,
+		req agentports.ListAgentProposalsByThreadRequest,
 	) ([]*agent.AgentProposal, error)
 }
 
 type planLister interface {
 	ListByThread(
 		ctx context.Context,
-		req repositories.ListAgentPlansByThreadRequest,
+		req agentports.ListAgentPlansByThreadRequest,
 	) ([]*agent.AgentPlan, error)
 }
 
 type decisionLister interface {
 	ListByProposals(
 		ctx context.Context,
-		req repositories.ListAgentDecisionsByProposalsRequest,
+		req agentports.ListAgentDecisionsByProposalsRequest,
 	) ([]*agent.AgentDecision, error)
 }
 
@@ -71,7 +70,7 @@ type unreported struct {
 // that keeps a follow-up from starting. One follow-up is started at a time;
 // when it ends it asks again, so decisions made in a burst are reported in
 // the order they were made.
-func (s *Service) ResumeFollowUps(ctx context.Context, req serviceports.ResumeFollowUpsRequest) {
+func (s *Service) ResumeFollowUps(ctx context.Context, req agentports.ResumeFollowUpsRequest) {
 	if !s.decided.ready() || req.ThreadID.IsNil() {
 		return
 	}
@@ -91,7 +90,7 @@ func (s *Service) ResumeFollowUps(ctx context.Context, req serviceports.ResumeFo
 		return
 	}
 
-	s.FollowUp(ctx, serviceports.DecisionFollowUpRequest{
+	s.FollowUp(ctx, agentports.DecisionFollowUpRequest{
 		TenantInfo: tenant,
 		RunID:      next.runID,
 		ProposalID: next.proposalID,
@@ -111,7 +110,7 @@ func (s *Service) oldestUnreported(
 		return nil, err
 	}
 
-	plans, err := s.decided.plans.ListByThread(ctx, repositories.ListAgentPlansByThreadRequest{
+	plans, err := s.decided.plans.ListByThread(ctx, agentports.ListAgentPlansByThreadRequest{
 		ThreadID:   threadID,
 		TenantInfo: tenant,
 	})
@@ -133,7 +132,7 @@ func (s *Service) oldestUnreported(
 		return nil, nil
 	}
 
-	notes, err := s.conversations.ListMessages(ctx, repositories.ListMessagesRequest{
+	notes, err := s.conversations.ListMessages(ctx, agentports.ListMessagesRequest{
 		ThreadID:   threadID,
 		TenantInfo: tenant,
 		Kinds:      []conversation.MessageKind{conversation.MessageKindDecisionNote},
@@ -169,7 +168,7 @@ func (s *Service) decidedProposals(
 ) ([]unreported, error) {
 	proposals, err := s.decided.proposals.ListByThread(
 		ctx,
-		repositories.ListAgentProposalsByThreadRequest{ThreadID: threadID, TenantInfo: tenant},
+		agentports.ListAgentProposalsByThreadRequest{ThreadID: threadID, TenantInfo: tenant},
 	)
 	if err != nil {
 		return nil, err
@@ -190,7 +189,7 @@ func (s *Service) decidedProposals(
 
 	decisions, err := s.decided.decisions.ListByProposals(
 		ctx,
-		repositories.ListAgentDecisionsByProposalsRequest{ProposalIDs: ids, TenantInfo: tenant},
+		agentports.ListAgentDecisionsByProposalsRequest{ProposalIDs: ids, TenantInfo: tenant},
 	)
 	if err != nil {
 		return nil, err

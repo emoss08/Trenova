@@ -4,12 +4,12 @@ package invoiceadjustmentresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	services "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 )
 
 type Deps struct {
 	*base.Core
-	InvoiceAdjustmentService services.InvoiceAdjustmentService
+	InvoiceAdjustmentService invoiceadjustmentports.InvoiceAdjustmentService
 }
 
 type InvoiceAdjustmentApprovalQueueItemResolver struct{ *Deps }

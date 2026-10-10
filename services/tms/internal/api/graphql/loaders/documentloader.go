@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -14,14 +14,14 @@ import (
 type documentsByIDsGetter interface {
 	GetByIDs(
 		ctx context.Context,
-		req repositories.BulkDeleteDocumentRequest,
+		req documentports.BulkDeleteDocumentRequest,
 	) ([]*document.Document, error)
 }
 
 type DocumentByIDLoaderFactoryParams struct {
 	fx.In
 
-	Repo repositories.DocumentRepository
+	Repo documentports.DocumentRepository
 }
 
 type DocumentByIDLoaderFactory struct {
@@ -44,7 +44,7 @@ func (f *DocumentByIDLoaderFactory) batchFunc(
 	tenantInfo pagination.TenantInfo,
 ) batchFetchFunc[*document.Document] {
 	return batchByIDFunc(func(ctx context.Context, ids []pulid.ID) ([]*document.Document, error) {
-		return f.documents.GetByIDs(ctx, repositories.BulkDeleteDocumentRequest{
+		return f.documents.GetByIDs(ctx, documentports.BulkDeleteDocumentRequest{
 			IDs:        ids,
 			TenantInfo: tenantInfo,
 		})

@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
@@ -30,7 +30,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.BillingQueueReviewRepository {
+func New(p Params) billingqueueports.BillingQueueReviewRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.billing-queue-review-repository"),
@@ -69,9 +69,9 @@ func (r *repository) ListIssues(
 // racing to raise the same issue both end up looking at the one row.
 func (r *repository) SyncIssues(
 	ctx context.Context,
-	req *repositories.SyncBillingQueueIssuesRequest,
-) (*repositories.SyncBillingQueueIssuesResult, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.SyncBillingQueueIssuesResult, error) {
+	req *billingqueueports.SyncBillingQueueIssuesRequest,
+) (*billingqueueports.SyncBillingQueueIssuesResult, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*billingqueueports.SyncBillingQueueIssuesResult, error) {
 		existing, err := r.ListIssues(ctx, req.TenantInfo, req.ItemID)
 		if err != nil {
 			return nil, err
@@ -81,7 +81,7 @@ func (r *repository) SyncIssues(
 			byKey[issue.FindingKey()] = issue
 		}
 
-		result := &repositories.SyncBillingQueueIssuesResult{}
+		result := &billingqueueports.SyncBillingQueueIssuesResult{}
 		db := r.db.DBForContext(ctx)
 		now := timeutils.NowUnix()
 		found := make(map[string]struct{}, len(req.Findings))
@@ -175,7 +175,7 @@ func findingChanged(current, finding *billingqueue.Issue) bool {
 
 func (r *repository) GetIssue(
 	ctx context.Context,
-	req *repositories.GetBillingQueueIssueRequest,
+	req *billingqueueports.GetBillingQueueIssueRequest,
 ) (*billingqueue.Issue, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*billingqueue.Issue, error) {
 		issue := new(billingqueue.Issue)
@@ -253,9 +253,9 @@ func (r *repository) CreateEvents(ctx context.Context, events ...*billingqueue.I
 
 func (r *repository) ListEvents(
 	ctx context.Context,
-	req *repositories.ListBillingQueueEventsRequest,
-) (*repositories.BillingQueueEventPage, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.BillingQueueEventPage, error) {
+	req *billingqueueports.ListBillingQueueEventsRequest,
+) (*billingqueueports.BillingQueueEventPage, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*billingqueueports.BillingQueueEventPage, error) {
 		limit := req.Limit
 		if limit <= 0 || limit > 100 {
 			limit = 30
@@ -283,7 +283,7 @@ func (r *repository) ListEvents(
 			return nil, fmt.Errorf("list billing queue activity: %w", err)
 		}
 
-		page := &repositories.BillingQueueEventPage{Total: total}
+		page := &billingqueueports.BillingQueueEventPage{Total: total}
 		if len(events) > limit {
 			page.HasMore = true
 			events = events[:limit]
@@ -300,9 +300,9 @@ func (r *repository) ListEvents(
 // with a greater id.
 func (r *repository) GetNeighbors(
 	ctx context.Context,
-	req *repositories.GetBillingQueueNeighborsRequest,
-) (*repositories.BillingQueueNeighbors, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.BillingQueueNeighbors, error) {
+	req *billingqueueports.GetBillingQueueNeighborsRequest,
+) (*billingqueueports.BillingQueueNeighbors, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*billingqueueports.BillingQueueNeighbors, error) {
 		db := r.db.DBForContext(ctx)
 		ti := req.Filter.TenantInfo
 
@@ -346,7 +346,7 @@ func (r *repository) GetNeighbors(
 			return nil, fmt.Errorf("find item in billing queue: %w", err)
 		}
 
-		out := &repositories.BillingQueueNeighbors{Total: total}
+		out := &billingqueueports.BillingQueueNeighbors{Total: total}
 		if member {
 			out.Position = before + 1
 		}
@@ -385,7 +385,7 @@ func (r *repository) GetNeighbors(
 // Corrections are left out; they bill the same shipment on purpose.
 func (r *repository) FindDuplicates(
 	ctx context.Context,
-	req *repositories.FindBillingQueueDuplicatesRequest,
+	req *billingqueueports.FindBillingQueueDuplicatesRequest,
 ) ([]*billingqueue.DuplicateRef, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*billingqueue.DuplicateRef, error) {
 		if req.ShipmentID.IsNil() {
@@ -463,10 +463,10 @@ func (r *repository) FindDuplicates(
 // many of its checks wait on an open issue.
 func (r *repository) ListSummaries(
 	ctx context.Context,
-	req *repositories.ListBillingQueueSummariesRequest,
-) ([]*repositories.BillingQueueItemSummary, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.BillingQueueItemSummary, error) {
-		out := make([]*repositories.BillingQueueItemSummary, 0, len(req.ItemIDs))
+	req *billingqueueports.ListBillingQueueSummariesRequest,
+) ([]*billingqueueports.BillingQueueItemSummary, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*billingqueueports.BillingQueueItemSummary, error) {
+		out := make([]*billingqueueports.BillingQueueItemSummary, 0, len(req.ItemIDs))
 		if len(req.ItemIDs) == 0 {
 			return out, nil
 		}

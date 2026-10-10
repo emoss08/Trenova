@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -18,7 +18,7 @@ func (s *Service) ListQueries(
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 ) ([]*worker.WorkerClearinghouseQuery, error) {
-	return s.repo.ListQueries(ctx, &repositories.ListClearinghouseQueriesRequest{
+	return s.repo.ListQueries(ctx, &workerports.ListClearinghouseQueriesRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
 	})
@@ -34,7 +34,7 @@ func (s *Service) RecordQuery(
 ) (*worker.WorkerClearinghouseQuery, error) {
 	tenantInfo := queryTenant(entity)
 
-	if _, err := s.workerRepo.GetByID(ctx, repositories.GetWorkerByIDRequest{
+	if _, err := s.workerRepo.GetByID(ctx, workerports.GetWorkerByIDRequest{
 		ID:         entity.WorkerID,
 		TenantInfo: tenantInfo,
 	}); err != nil {
@@ -97,7 +97,7 @@ func (s *Service) CompleteQuery(
 	ctx context.Context,
 	req *CompleteQueryRequest,
 ) (*worker.WorkerClearinghouseQuery, error) {
-	entity, err := s.repo.GetQueryByID(ctx, &repositories.GetClearinghouseQueryByIDRequest{
+	entity, err := s.repo.GetQueryByID(ctx, &workerports.GetClearinghouseQueryByIDRequest{
 		ID:         req.QueryID,
 		TenantInfo: req.TenantInfo,
 	})

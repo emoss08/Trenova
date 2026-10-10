@@ -14,7 +14,7 @@ import (
 	"io"
 
 	"github.com/emoss08/trenova/internal/core/domain/capture"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/pdfcpu/pdfcpu/pkg/api"
 	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu/model"
 )
@@ -31,7 +31,7 @@ func init() {
 
 type Assembler struct{}
 
-func New() services.CapturePDFAssembler {
+func New() captureports.CapturePDFAssembler {
 	return &Assembler{}
 }
 
@@ -57,7 +57,7 @@ func (a *Assembler) PageCount(ctx context.Context, pdf []byte) (int, error) {
 
 func (a *Assembler) Assemble(
 	ctx context.Context,
-	pages []services.CaptureAssemblyPage,
+	pages []captureports.CaptureAssemblyPage,
 ) ([]byte, error) {
 	if len(pages) == 0 {
 		return nil, ErrNoPages
@@ -92,7 +92,7 @@ func (a *Assembler) Assemble(
 	return out.Bytes(), nil
 }
 
-func rotate(page services.CaptureAssemblyPage) ([]byte, error) {
+func rotate(page captureports.CaptureAssemblyPage) ([]byte, error) {
 	rotation := capture.NormalizeRotation(page.Rotation)
 	if rotation == 0 {
 		return page.PDF, nil

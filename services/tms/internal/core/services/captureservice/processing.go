@@ -9,8 +9,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -67,7 +67,7 @@ func (s *Service) ProcessBatch(
 	batchID pulid.ID,
 	progress Progress,
 ) (*ProcessResult, error) {
-	batch, err := s.batches.GetByID(ctx, &repositories.GetCaptureBatchByIDRequest{
+	batch, err := s.batches.GetByID(ctx, &captureports.GetCaptureBatchByIDRequest{
 		ID:           batchID,
 		TenantInfo:   tenantInfo,
 		IncludePages: true,
@@ -105,7 +105,7 @@ func (s *Service) ProcessBatch(
 		return nil, err
 	}
 
-	if err = s.items.ReplaceOpen(ctx, &repositories.ReplaceOpenCaptureItemsRequest{
+	if err = s.items.ReplaceOpen(ctx, &captureports.ReplaceOpenCaptureItemsRequest{
 		BatchID:    batch.ID,
 		TenantInfo: tenantInfo,
 		Items:      items,
@@ -327,7 +327,7 @@ func (s *Service) readCodes(
 
 		sheet, err := s.coverSheets.GetByTokenHash(
 			ctx,
-			repositories.GetCaptureCoverSheetByTokenRequest{
+			captureports.GetCaptureCoverSheetByTokenRequest{
 				TenantInfo: tenantInfo,
 				TokenHash:  tokenutils.Hash(token),
 			},
@@ -392,7 +392,7 @@ func (s *Service) batchProfile(
 		return nil
 	}
 
-	profile, err := s.profiles.GetByID(ctx, repositories.GetCaptureProfileByIDRequest{
+	profile, err := s.profiles.GetByID(ctx, captureports.GetCaptureProfileByIDRequest{
 		ID:         *batch.ProfileID,
 		TenantInfo: tenantInfo,
 	})
@@ -504,7 +504,7 @@ func (s *Service) suggestFromContent(
 		return
 	}
 
-	analysis, err := s.analyzer.Analyze(ctx, &services.CaptureAnalysisRequest{
+	analysis, err := s.analyzer.Analyze(ctx, &captureports.CaptureAnalysisRequest{
 		TenantInfo: tenantInfo,
 		FileName:   item.ID.String() + ".pdf",
 		PDF:        pdf,
@@ -606,7 +606,7 @@ func (s *Service) documentTypeByCode(
 	tenantInfo pagination.TenantInfo,
 	code string,
 ) *pulid.ID {
-	docType, err := s.documentTypes.GetByCode(ctx, repositories.GetDocumentTypeByCodeRequest{
+	docType, err := s.documentTypes.GetByCode(ctx, documenttypeports.GetDocumentTypeByCodeRequest{
 		Code:       code,
 		TenantInfo: tenantInfo,
 	})

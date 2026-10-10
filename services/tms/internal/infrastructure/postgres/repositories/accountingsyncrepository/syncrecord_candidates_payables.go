@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/uptrace/bun"
 )
@@ -96,7 +96,7 @@ func settlementSource(
 		source.at = table.postedAt
 		source.filter = func(
 			q *bun.SelectQuery,
-			req *repositories.ListAccountingSyncCandidatesRequest,
+			req *accountingsyncports.ListAccountingSyncCandidatesRequest,
 		) *bun.SelectQuery {
 			q = table.scope(q).
 				Where(table.postedAt.IsNotNull()).
@@ -118,7 +118,7 @@ func settlementSource(
 		source.at = table.voidedAt
 		source.filter = func(
 			q *bun.SelectQuery,
-			_ *repositories.ListAccountingSyncCandidatesRequest,
+			_ *accountingsyncports.ListAccountingSyncCandidatesRequest,
 		) *bun.SelectQuery {
 			return table.scope(q).
 				Where(table.status.Eq(), table.statuses["voided"]).
@@ -129,7 +129,7 @@ func settlementSource(
 		source.at = table.paidAt
 		source.filter = func(
 			q *bun.SelectQuery,
-			_ *repositories.ListAccountingSyncCandidatesRequest,
+			_ *accountingsyncports.ListAccountingSyncCandidatesRequest,
 		) *bun.SelectQuery {
 			return table.scope(q).
 				Where(table.status.Eq(), table.statuses["paid"]).

@@ -8,14 +8,14 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/formula/contextvariablecache"
 	"github.com/emoss08/trenova/internal/core/services/formula/effectiveversioncache"
 	"github.com/emoss08/trenova/internal/core/services/formula/engine"
 	formulaerrors "github.com/emoss08/trenova/internal/core/services/formula/errors"
 	"github.com/emoss08/trenova/internal/core/services/formula/resolver"
 	"github.com/emoss08/trenova/internal/core/services/formula/schema"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
@@ -34,9 +34,9 @@ type ServiceParams struct {
 	Registry       *schema.Registry
 	Engine         *engine.Engine
 	Resolver       *resolver.Resolver
-	Repo           repositories.FormulaTemplateRepository
-	VersionRepo    repositories.FormulaTemplateVersionRepository
-	RateMatrixRepo repositories.RateMatrixRepository
+	Repo           formulatemplateports.FormulaTemplateRepository
+	VersionRepo    formulatemplateports.FormulaTemplateVersionRepository
+	RateMatrixRepo ratematrixports.RateMatrixRepository
 
 	ContextProviders []formulatemplatetypes.ContextVariableProvider `group:"formula_context_variables"`
 }
@@ -46,9 +46,9 @@ type Service struct {
 	registry         *schema.Registry
 	engine           *engine.Engine
 	resolver         *resolver.Resolver
-	repo             repositories.FormulaTemplateRepository
-	versionRepo      repositories.FormulaTemplateVersionRepository
-	rateMatrixRepo   repositories.RateMatrixRepository
+	repo             formulatemplateports.FormulaTemplateRepository
+	versionRepo      formulatemplateports.FormulaTemplateVersionRepository
+	rateMatrixRepo   ratematrixports.RateMatrixRepository
 	contextProviders []formulatemplatetypes.ContextVariableProvider
 }
 
@@ -108,7 +108,7 @@ func (s *Service) Calculate(
 		zap.String("templateID", req.TemplateID.String()),
 	)
 
-	template, err := s.repo.GetByID(ctx, repositories.GetFormulaTemplateByIDRequest{
+	template, err := s.repo.GetByID(ctx, formulatemplateports.GetFormulaTemplateByIDRequest{
 		TemplateID: req.TemplateID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -203,7 +203,7 @@ func (s *Service) ResolveScheduledVersion(
 		func(loadCtx context.Context) ([]*formulatemplate.FormulaTemplateVersion, error) {
 			return s.versionRepo.ListScheduled(
 				loadCtx,
-				&repositories.ListScheduledVersionsRequest{
+				&formulatemplateports.ListScheduledVersionsRequest{
 					TenantInfo: tenantInfo,
 					TemplateID: template.ID,
 				},
@@ -307,7 +307,7 @@ func (s *Service) BuildLookup(
 		func(ctx context.Context) (formulatemplatetypes.RateTableLookup, error) {
 			data, err := s.rateMatrixRepo.GetLookupData(
 				ctx,
-				&repositories.GetRateMatrixLookupDataRequest{TenantInfo: tenantInfo},
+				&ratematrixports.GetRateMatrixLookupDataRequest{TenantInfo: tenantInfo},
 			)
 			if err != nil {
 				return nil, err
@@ -443,7 +443,7 @@ func (s *Service) EvaluateExpression(
 // than as an error that would block the save.
 func (s *Service) EvaluatePredicate(
 	ctx context.Context,
-	req *services.EvaluatePredicateRequest,
+	req *formulatemplateports.EvaluatePredicateRequest,
 ) (bool, error) {
 	result, err := s.engine.EvaluateExpression(
 		ctx,

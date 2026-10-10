@@ -10,7 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -19,17 +22,17 @@ import (
 )
 
 type fakeReceivables struct {
-	change      *serviceports.CustomerPaymentChangePreview
-	credit      *serviceports.CreditMemoApplicationPreview
+	change      *customerpaymentports.CustomerPaymentChangePreview
+	credit      *customerpaymentports.CreditMemoApplicationPreview
 	refusal     error
 	guard       *writeGuard
-	applied     *serviceports.ApplyCustomerPaymentRequest
-	reversed    *serviceports.ReverseCustomerPaymentRequest
-	creditApply *serviceports.ApplyCreditMemoRequest
-	unapplied   *serviceports.UnapplyCreditMemoApplicationRequest
+	applied     *customerpaymentports.ApplyCustomerPaymentRequest
+	reversed    *customerpaymentports.ReverseCustomerPaymentRequest
+	creditApply *customerpaymentports.ApplyCreditMemoRequest
+	unapplied   *customerpaymentports.UnapplyCreditMemoApplicationRequest
 }
 
-func (f *fakeReceivables) changePlan() (*serviceports.CustomerPaymentChangePreview, error) {
+func (f *fakeReceivables) changePlan() (*customerpaymentports.CustomerPaymentChangePreview, error) {
 	if f.refusal != nil {
 		return nil, f.refusal
 	}
@@ -37,7 +40,7 @@ func (f *fakeReceivables) changePlan() (*serviceports.CustomerPaymentChangePrevi
 	return f.change, nil
 }
 
-func (f *fakeReceivables) creditPlan() (*serviceports.CreditMemoApplicationPreview, error) {
+func (f *fakeReceivables) creditPlan() (*customerpaymentports.CreditMemoApplicationPreview, error) {
 	if f.refusal != nil {
 		return nil, f.refusal
 	}
@@ -47,8 +50,8 @@ func (f *fakeReceivables) creditPlan() (*serviceports.CreditMemoApplicationPrevi
 
 func (f *fakeReceivables) ApplyUnapplied(
 	_ context.Context,
-	req *serviceports.ApplyCustomerPaymentRequest,
-	_ *serviceports.RequestActor,
+	req *customerpaymentports.ApplyCustomerPaymentRequest,
+	_ *permissionports.RequestActor,
 ) (*customerpayment.Payment, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -60,8 +63,8 @@ func (f *fakeReceivables) ApplyUnapplied(
 
 func (f *fakeReceivables) Reverse(
 	_ context.Context,
-	req *serviceports.ReverseCustomerPaymentRequest,
-	_ *serviceports.RequestActor,
+	req *customerpaymentports.ReverseCustomerPaymentRequest,
+	_ *permissionports.RequestActor,
 ) (*customerpayment.Payment, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -73,8 +76,8 @@ func (f *fakeReceivables) Reverse(
 
 func (f *fakeReceivables) ApplyCreditMemo(
 	_ context.Context,
-	req *serviceports.ApplyCreditMemoRequest,
-	_ *serviceports.RequestActor,
+	req *customerpaymentports.ApplyCreditMemoRequest,
+	_ *permissionports.RequestActor,
 ) ([]*customerpayment.CreditMemoApplication, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -86,8 +89,8 @@ func (f *fakeReceivables) ApplyCreditMemo(
 
 func (f *fakeReceivables) UnapplyCreditMemoApplication(
 	_ context.Context,
-	req *serviceports.UnapplyCreditMemoApplicationRequest,
-	_ *serviceports.RequestActor,
+	req *customerpaymentports.UnapplyCreditMemoApplicationRequest,
+	_ *permissionports.RequestActor,
 ) (*customerpayment.CreditMemoApplication, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -99,33 +102,33 @@ func (f *fakeReceivables) UnapplyCreditMemoApplication(
 
 func (f *fakeReceivables) PreviewApplyUnapplied(
 	context.Context,
-	*serviceports.ApplyCustomerPaymentRequest,
-	*serviceports.RequestActor,
-) (*serviceports.CustomerPaymentChangePreview, error) {
+	*customerpaymentports.ApplyCustomerPaymentRequest,
+	*permissionports.RequestActor,
+) (*customerpaymentports.CustomerPaymentChangePreview, error) {
 	return f.changePlan()
 }
 
 func (f *fakeReceivables) PreviewReverse(
 	context.Context,
-	*serviceports.ReverseCustomerPaymentRequest,
-	*serviceports.RequestActor,
-) (*serviceports.CustomerPaymentChangePreview, error) {
+	*customerpaymentports.ReverseCustomerPaymentRequest,
+	*permissionports.RequestActor,
+) (*customerpaymentports.CustomerPaymentChangePreview, error) {
 	return f.changePlan()
 }
 
 func (f *fakeReceivables) PreviewApplyCreditMemo(
 	context.Context,
-	*serviceports.ApplyCreditMemoRequest,
-	*serviceports.RequestActor,
-) (*serviceports.CreditMemoApplicationPreview, error) {
+	*customerpaymentports.ApplyCreditMemoRequest,
+	*permissionports.RequestActor,
+) (*customerpaymentports.CreditMemoApplicationPreview, error) {
 	return f.creditPlan()
 }
 
 func (f *fakeReceivables) PreviewUnapplyCreditMemoApplication(
 	context.Context,
-	*serviceports.UnapplyCreditMemoApplicationRequest,
-	*serviceports.RequestActor,
-) (*serviceports.CreditMemoApplicationPreview, error) {
+	*customerpaymentports.UnapplyCreditMemoApplicationRequest,
+	*permissionports.RequestActor,
+) (*customerpaymentports.CreditMemoApplicationPreview, error) {
 	return f.creditPlan()
 }
 
@@ -145,7 +148,7 @@ func receivableInvoice(number string, totalMinor, appliedMinor int64) *invoice.I
 	}
 }
 
-func applyChangePlan() *serviceports.CustomerPaymentChangePreview {
+func applyChangePlan() *customerpaymentports.CustomerPaymentChangePreview {
 	before := &customerpayment.Payment{
 		ID:                   pulid.MustNew("cpay_"),
 		AmountMinor:          15000,
@@ -164,16 +167,16 @@ func applyChangePlan() *serviceports.CustomerPaymentChangePreview {
 	invAfter.AppliedAmountMinor = 5000
 	invAfter.SettlementStatus = invoice.SettlementStatusPaid
 
-	return &serviceports.CustomerPaymentChangePreview{
+	return &customerpaymentports.CustomerPaymentChangePreview{
 		PaymentBefore:  before,
 		PaymentAfter:   &after,
 		InvoicesBefore: []*invoice.Invoice{inv},
 		InvoicesAfter:  []*invoice.Invoice{&invAfter},
-		Journal: &serviceports.JournalPreview{
+		Journal: &kernelports.JournalPreview{
 			AccountingDate: 1_790_000_000,
 			FiscalPeriodID: pulid.MustNew("fp_"),
 			EntryStatus:    "Posted",
-			Lines: []serviceports.JournalLinePreview{
+			Lines: []kernelports.JournalLinePreview{
 				{GLAccountID: pulid.MustNew("gla_"), DebitMinor: 5000},
 				{GLAccountID: pulid.MustNew("gla_"), CreditMinor: 5000},
 			},
@@ -181,7 +184,7 @@ func applyChangePlan() *serviceports.CustomerPaymentChangePreview {
 	}
 }
 
-func applyPaymentParams(paymentID, invoiceID pulid.ID) serviceports.ToolExecuteParams {
+func applyPaymentParams(paymentID, invoiceID pulid.ID) agentports.ToolExecuteParams {
 	return executeParams(map[string]any{
 		paramCustomerPaymentID: paymentID.String(),
 		paramAccountingDate:    "2026-09-20",
@@ -195,7 +198,7 @@ func TestApplyCustomerPayment_PreviewShowsThePaymentTheInvoicesAndTheEntry(t *te
 	t.Parallel()
 
 	receivables := &fakeReceivables{change: applyChangePlan(), guard: &writeGuard{}}
-	tool := newApplyCustomerPaymentTool(receivables).(serviceports.ToolPreviewer)
+	tool := newApplyCustomerPaymentTool(receivables).(agentports.ToolPreviewer)
 	params := applyPaymentParams(
 		receivables.change.PaymentBefore.ID,
 		receivables.change.InvoicesBefore[0].ID,
@@ -244,7 +247,7 @@ func TestApplyCustomerPayment_OnlyAPersonApplies(t *testing.T) {
 	assert.Equal(t, permission.OpUpdate, policy.Operation)
 	assert.Equal(t, agent.TierPropose, policy.MaxTier)
 	assert.Equal(t, []agent.EgressClass{agent.EgressMoney}, policy.Egress)
-	target, ok := tool.(serviceports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, permission.ResourceCustomerPayment, target.Resource)
 }
@@ -274,7 +277,7 @@ func TestApplyCustomerPayment_RefusesBadApplications(t *testing.T) {
 	for name, raw := range cases {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+			require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 				executeParams(raw)))
 		})
 	}
@@ -297,13 +300,13 @@ func TestApplyCustomerPayment_ARefusalIsAWouldFail(t *testing.T) {
 		receivables.change.InvoicesBefore[0].ID,
 	)
 
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	requireWarning(t, preview, agent.PreviewWarningWouldFail)
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
 }
 
-func reverseChangePlan() *serviceports.CustomerPaymentChangePreview {
+func reverseChangePlan() *customerpaymentports.CustomerPaymentChangePreview {
 	plan := applyChangePlan()
 	before := *plan.PaymentAfter
 	after := before
@@ -328,7 +331,7 @@ func TestReverseCustomerPayment_PreviewAndPersonOnly(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, receivables.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would reverse payment ACH-9001")
 	assert.Equal(t, "Reversed", fieldByPath(t, previewChange(t, preview, 0), "status").After)
@@ -341,7 +344,7 @@ func TestReverseCustomerPayment_PreviewAndPersonOnly(t *testing.T) {
 	assert.False(t, tool.Policy().Reversible)
 }
 
-func creditApplicationPlan() *serviceports.CreditMemoApplicationPreview {
+func creditApplicationPlan() *customerpaymentports.CreditMemoApplicationPreview {
 	memo := receivableInvoice("CM-12", -8000, 0)
 	memo.BillType = billingqueue.BillTypeCreditMemo
 	memoAfter := *memo
@@ -351,7 +354,7 @@ func creditApplicationPlan() *serviceports.CreditMemoApplicationPreview {
 	targetAfter.AppliedAmountMinor = 3000
 	targetAfter.SettlementStatus = invoice.SettlementStatusPartiallyPaid
 
-	return &serviceports.CreditMemoApplicationPreview{
+	return &customerpaymentports.CreditMemoApplicationPreview{
 		CreditMemoBefore: memo,
 		CreditMemoAfter:  &memoAfter,
 		InvoicesBefore:   []*invoice.Invoice{target},
@@ -381,7 +384,7 @@ func TestApplyCreditMemo_PreviewAndPersonOnly(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, receivables.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would apply 30.00 USD of credit memo CM-12 to 1 invoice")
 	require.Len(t, preview.Changes, 3)
@@ -397,7 +400,7 @@ func TestApplyCreditMemo_PreviewAndPersonOnly(t *testing.T) {
 
 	policy := tool.Policy()
 	assert.Equal(t, permission.OpCreate, policy.Operation)
-	target, ok := tool.(serviceports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, permission.ResourceInvoice, target.Resource)
 }
@@ -424,7 +427,7 @@ func TestUnapplyCreditMemo_PreviewAndPersonOnly(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, receivables.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would take back 30.00 USD of credit memo CM-12")
 	application := previewChange(t, preview, 2)

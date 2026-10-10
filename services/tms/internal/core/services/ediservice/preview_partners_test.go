@@ -1,14 +1,15 @@
 package ediservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
 	"context"
 	"slices"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -51,17 +52,17 @@ func TestPreviewTenderChanges_NamesTheRecipientsAfterShipmentUpdateReaches(t *te
 	upToDate.ID = pulid.MustNew("etr_")
 	upToDate.LatestBaselineHash = tenderPayloadHash(&current)
 
-	recipients := mocks.NewMockEDITenderRecipientRepository(t)
+	recipients := ediportsmock.NewMockEDITenderRecipientRepository(t)
 	recipients.EXPECT().
 		ListActiveTenderRecipientsForSourceShipment(mock.Anything, mock.Anything).
 		Return([]*edi.TenderRecipient{internal, &upToDate}, nil)
-	changes := mocks.NewMockEDITenderChangeRepository(t)
+	changes := ediportsmock.NewMockEDITenderChangeRepository(t)
 	svc := &Service{
 		l:                   zap.NewNop(),
 		tenderRecipientRepo: recipients,
 		tenderChangeRepo:    changes,
 	}
-	actor := &services.RequestActor{UserID: pulid.MustNew("usr_")}
+	actor := &permissionports.RequestActor{UserID: pulid.MustNew("usr_")}
 
 	notices, err := svc.PreviewTenderChanges(t.Context(), original, &updated, actor)
 	require.NoError(t, err)
@@ -73,9 +74,9 @@ func TestPreviewTenderChanges_NamesTheRecipientsAfterShipmentUpdateReaches(t *te
 		RunAndReturn(func(
 			_ context.Context,
 			change *edi.TenderChange,
-		) (*repositories.CreateEDITenderChangeIdempotentResult, error) {
+		) (*ediports.CreateEDITenderChangeIdempotentResult, error) {
 			created = append(created, change)
-			return &repositories.CreateEDITenderChangeIdempotentResult{
+			return &ediports.CreateEDITenderChangeIdempotentResult{
 				TenderChange: change,
 				Created:      true,
 			}, nil
@@ -105,7 +106,7 @@ func TestPreviewCancelNotices_NamesTheOtherSideOfEachActiveLink(t *testing.T) {
 
 	orgID, partnerOrg := pulid.MustNew("org_"), pulid.MustNew("org_")
 	shipmentID := pulid.MustNew("shp_")
-	links := mocks.NewMockEDIShipmentLinkRepository(t)
+	links := ediportsmock.NewMockEDIShipmentLinkRepository(t)
 	links.EXPECT().
 		GetShipmentLinksByShipmentID(mock.Anything, mock.Anything).
 		Return([]*edi.ShipmentLink{

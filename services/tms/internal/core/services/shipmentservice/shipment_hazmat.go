@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/hazmatsegregationrule"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -28,13 +29,13 @@ type hazmatCommodityCandidate struct {
 func (s *service) evaluateHazmatSegregationRequest(
 	ctx context.Context,
 	control *tenant.ShipmentControl,
-	req *repositories.CheckHazmatSegregationRequest,
+	req *shipmentports.CheckHazmatSegregationRequest,
 ) ([]hazmatConflict, error) {
 	if !control.CheckHazmatSegregation {
 		return nil, nil
 	}
 
-	commodities, err := s.commodityRepo.GetByIDs(ctx, repositories.GetCommoditiesByIDsRequest{
+	commodities, err := s.commodityRepo.GetByIDs(ctx, commodityports.GetCommoditiesByIDsRequest{
 		TenantInfo:   req.TenantInfo,
 		CommodityIDs: req.CommodityIDs,
 	})

@@ -7,10 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/invoicelines"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -53,7 +53,7 @@ type ConsolidatedInvoiceParams struct {
 func (s *Service) CreateConsolidated(
 	ctx context.Context,
 	params *ConsolidatedInvoiceParams,
-	actor *servicesports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*invoice.Invoice, error) {
 	if params == nil || len(params.Legs) == 0 {
 		return nil, errortypes.NewValidationError(
@@ -92,10 +92,10 @@ func (s *Service) CreateConsolidated(
 		// Loaded before the transaction so the number honours the customer's own
 		// prefix: one consolidated invoice stands for a month of freight, and a
 		// customer who asked for their prefix expects to see it on it.
-		cus, err := s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
+		cus, err := s.customerRepo.GetByID(ctx, customerports.GetCustomerByIDRequest{
 			ID:         customerID,
 			TenantInfo: params.TenantInfo,
-			CustomerFilterOptions: repositories.CustomerFilterOptions{
+			CustomerFilterOptions: customerports.CustomerFilterOptions{
 				IncludeBillingProfile: true,
 			},
 		})
@@ -115,7 +115,7 @@ func (s *Service) CreateConsolidated(
 	}
 
 	var created *invoice.Invoice
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		var txErr error
 		created, txErr = s.createConsolidatedTx(txCtx, params, number, customerID, actor)
 		return txErr
@@ -132,7 +132,7 @@ func (s *Service) createConsolidatedTx(
 	params *ConsolidatedInvoiceParams,
 	number string,
 	customerID pulid.ID,
-	actor *servicesports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*invoice.Invoice, error) {
 	anchor := params.QueueItems[0]
 
@@ -149,10 +149,10 @@ func (s *Service) createConsolidatedTx(
 		return nil, err
 	}
 
-	cus, txErr := s.customerRepo.GetByID(txCtx, repositories.GetCustomerByIDRequest{
+	cus, txErr := s.customerRepo.GetByID(txCtx, customerports.GetCustomerByIDRequest{
 		ID:         customerID,
 		TenantInfo: params.TenantInfo,
-		CustomerFilterOptions: repositories.CustomerFilterOptions{
+		CustomerFilterOptions: customerports.CustomerFilterOptions{
 			IncludeBillingProfile: true,
 			IncludeState:          true,
 		},

@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -40,9 +40,9 @@ func TestTouchedRecords_CollectsWhatTheTurnWasAbout(t *testing.T) {
 			{ID: "d1", Name: "get_trailer", Arguments: map[string]any{"trailerId": delegated.String()}},
 		}},
 	}
-	actions := []services.PendingAction{
-		{Executed: true, Target: &services.ProposalTarget{Resource: permission.ResourceCustomer, ID: wrote}},
-		{Executed: false, Target: &services.ProposalTarget{Resource: permission.ResourceCustomer, ID: pulid.MustNew("cus_")}},
+	actions := []agentports.PendingAction{
+		{Executed: true, Target: &agentports.ProposalTarget{Resource: permission.ResourceCustomer, ID: wrote}},
+		{Executed: false, Target: &agentports.ProposalTarget{Resource: permission.ResourceCustomer, ID: pulid.MustNew("cus_")}},
 	}
 
 	touched := touchedRecords(&workingTurn{
@@ -117,7 +117,7 @@ func TestTouchedRecords_KeepsWhatAnApprovedOrAutomaticWriteMade(t *testing.T) {
 		thread: &conversation.Thread{WorkingSet: []conversation.WorkingRecord{
 			{Kind: "customer", ID: pulid.MustNew("cus_").String(), TouchedAt: 1_500},
 		}},
-		plan: &TurnPlan{FollowUp: true, Proposals: []services.ProposalOutcome{
+		plan: &TurnPlan{FollowUp: true, Proposals: []agentports.ProposalOutcome{
 			{
 				Status:          agent.ProposalStatusExecuted,
 				ExecutedAt:      &later,
@@ -129,7 +129,7 @@ func TestTouchedRecords_KeepsWhatAnApprovedOrAutomaticWriteMade(t *testing.T) {
 				ExecutionResult: &agent.ToolExecutionResult{Record: &agent.RecordRef{EntityType: "shipment", ID: older}},
 			},
 		}},
-		actions: []services.PendingAction{{
+		actions: []agentports.PendingAction{{
 			Executed:        true,
 			ExecutionResult: &agent.ToolExecutionResult{Record: &agent.RecordRef{EntityType: "location", ID: automatic}},
 		}},

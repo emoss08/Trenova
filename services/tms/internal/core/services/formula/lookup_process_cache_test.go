@@ -5,7 +5,7 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetablecache"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,7 +16,7 @@ import (
 // stampedMatrixRepo answers the cheap stamp question and counts the expensive
 // read, so a test can tell reuse from rebuild.
 type stampedMatrixRepo struct {
-	repositories.RateMatrixRepository
+	ratematrixports.RateMatrixRepository
 	stamp atomic.Value
 	reads atomic.Int32
 }
@@ -29,8 +29,8 @@ func newStampedMatrixRepo(stamp string) *stampedMatrixRepo {
 
 func (r *stampedMatrixRepo) GetLookupData(
 	context.Context,
-	*repositories.GetRateMatrixLookupDataRequest,
-) ([]*repositories.RateMatrixLookupData, error) {
+	*ratematrixports.GetRateMatrixLookupDataRequest,
+) ([]*ratematrixports.RateMatrixLookupData, error) {
 	r.reads.Add(1)
 	return nil, nil
 }

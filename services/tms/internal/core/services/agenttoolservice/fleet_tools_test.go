@@ -8,7 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -16,14 +17,14 @@ import (
 )
 
 type fakeTractorStatusUpdater struct {
-	request *repositories.BulkUpdateTractorStatusRequest
+	request *tractorports.BulkUpdateTractorStatusRequest
 	units   map[pulid.ID]*tractor.Tractor
 	guard   writeGuard
 }
 
 func (f *fakeTractorStatusUpdater) GetByIDs(
 	_ context.Context,
-	req repositories.GetTractorsByIDsRequest,
+	req tractorports.GetTractorsByIDsRequest,
 ) ([]*tractor.Tractor, error) {
 	found := make([]*tractor.Tractor, 0, len(req.TractorIDs))
 	for _, id := range req.TractorIDs {
@@ -38,7 +39,7 @@ func (f *fakeTractorStatusUpdater) GetByIDs(
 
 func (f *fakeTractorStatusUpdater) BulkUpdateStatus(
 	_ context.Context,
-	req *repositories.BulkUpdateTractorStatusRequest,
+	req *tractorports.BulkUpdateTractorStatusRequest,
 ) ([]*tractor.Tractor, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -57,14 +58,14 @@ func (f *fakeTractorStatusUpdater) BulkUpdateStatus(
 }
 
 type fakeTrailerStatusUpdater struct {
-	request *repositories.BulkUpdateTrailerStatusRequest
+	request *trailerports.BulkUpdateTrailerStatusRequest
 	units   map[pulid.ID]*trailer.Trailer
 	guard   writeGuard
 }
 
 func (f *fakeTrailerStatusUpdater) GetByIDs(
 	_ context.Context,
-	req repositories.GetTrailersByIDsRequest,
+	req trailerports.GetTrailersByIDsRequest,
 ) ([]*trailer.Trailer, error) {
 	found := make([]*trailer.Trailer, 0, len(req.TrailerIDs))
 	for _, id := range req.TrailerIDs {
@@ -79,7 +80,7 @@ func (f *fakeTrailerStatusUpdater) GetByIDs(
 
 func (f *fakeTrailerStatusUpdater) BulkUpdateStatus(
 	_ context.Context,
-	req *repositories.BulkUpdateTrailerStatusRequest,
+	req *trailerports.BulkUpdateTrailerStatusRequest,
 ) ([]*trailer.Trailer, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err

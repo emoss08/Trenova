@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/dataentrycontrol"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/dataentrycontrolports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,16 +19,16 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.DataEntryControlRepository
+	Repo         dataentrycontrolports.DataEntryControlRepository
 	Validator    *Validator
-	AuditService services.AuditService
+	AuditService auditports.AuditService
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.DataEntryControlRepository
+	repo         dataentrycontrolports.DataEntryControlRepository
 	validator    *Validator
-	auditService services.AuditService
+	auditService auditports.AuditService
 }
 
 func New(p Params) *Service {
@@ -42,7 +42,7 @@ func New(p Params) *Service {
 
 func (s *Service) Get(
 	ctx context.Context,
-	req repositories.GetDataEntryControlRequest,
+	req dataentrycontrolports.GetDataEntryControlRequest,
 ) (*dataentrycontrol.DataEntryControl, error) {
 	return s.repo.GetByOrgID(ctx, req)
 }
@@ -62,7 +62,7 @@ func (s *Service) Update(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetByOrgID(ctx, repositories.GetDataEntryControlRequest{
+	original, err := s.repo.GetByOrgID(ctx, dataentrycontrolports.GetDataEntryControlRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  entity.OrganizationID,
 			BuID:   entity.BusinessUnitID,
@@ -81,7 +81,7 @@ func (s *Service) Update(
 	}
 
 	if err = s.auditService.LogAction(
-		&services.LogActionParams{
+		&auditports.LogActionParams{
 			Resource:       permission.ResourceDataEntryControl,
 			ResourceID:     updatedEntity.GetID().String(),
 			Operation:      permission.OpUpdate,

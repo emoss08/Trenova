@@ -4,16 +4,28 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/services/orgzone"
-
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/orgzone"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -26,67 +38,67 @@ type Params struct {
 	fx.In
 
 	Logger            *zap.Logger
-	PolicyRepo        repositories.DetentionPolicyRepository
-	OccurrenceRepo    repositories.DetentionOccurrenceRepository
-	EvidenceRepo      repositories.DetentionEvidenceRepository
-	AccessorialRepo   repositories.AccessorialChargeRepository
-	AgreementRepo     repositories.RateAgreementRepository
-	PayAssignmentRepo repositories.WorkerPayAssignmentRepository
-	PayProfileRepo    repositories.PayProfileRepository
-	Organizations     repositories.OrganizationRepository
-	NoticeRepo        repositories.DetentionNoticeRepository
-	AnalyticsRepo     repositories.DetentionAnalyticsRepository
-	CustomerRepo      repositories.CustomerRepository
-	CommentRepo       repositories.ShipmentCommentRepository
-	DocumentTypeRepo  repositories.DocumentTypeRepository
-	EmailService      services.EmailService
-	UploadService     services.DocumentUploadService
-	WorkflowStarter   services.WorkflowStarter
-	Templates         services.DocumentTemplateResolver
+	PolicyRepo        detentionports.DetentionPolicyRepository
+	OccurrenceRepo    detentionports.DetentionOccurrenceRepository
+	EvidenceRepo      detentionports.DetentionEvidenceRepository
+	AccessorialRepo   accessorialchargeports.AccessorialChargeRepository
+	AgreementRepo     rateagreementports.RateAgreementRepository
+	PayAssignmentRepo driverpayports.WorkerPayAssignmentRepository
+	PayProfileRepo    driverpayports.PayProfileRepository
+	Organizations     tenantports.OrganizationRepository
+	NoticeRepo        detentionports.DetentionNoticeRepository
+	AnalyticsRepo     detentionports.DetentionAnalyticsRepository
+	CustomerRepo      customerports.CustomerRepository
+	CommentRepo       shipmentports.ShipmentCommentRepository
+	DocumentTypeRepo  documenttypeports.DocumentTypeRepository
+	EmailService      emailports.EmailService
+	UploadService     documentuploadports.DocumentUploadService
+	WorkflowStarter   kernelports.WorkflowStarter
+	Templates         documenttemplateports.DocumentTemplateResolver
 	ContextBuilder    *ContextBuilder
-	AuditService      services.AuditService
+	AuditService      auditports.AuditService
 	// Watchtower puts a running detention clock on the feed and takes it
 	// off once the occurrence closes.
-	Watchtower services.WatchtowerProjector `optional:"true"`
+	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
 	// Publisher wakes whichever agent covers detention when a clock starts
 	// and when a notice is left for a person to send.
-	Publisher services.AgentEventPublisher `optional:"true"`
+	Publisher agentports.AgentEventPublisher `optional:"true"`
 	// Realtime refreshes the billing queue when a charge starts or stops
 	// holding its shipment off an invoice.
-	Realtime services.RealtimeService `optional:"true"`
+	Realtime agentports.RealtimeService `optional:"true"`
 	// Senders names who a notice would go out as, for its preview.
-	Senders services.EmailSenderResolver `optional:"true"`
+	Senders emailports.EmailSenderResolver `optional:"true"`
 }
 
 type Service struct {
 	l                 *zap.Logger
-	policyRepo        repositories.DetentionPolicyRepository
-	occurrenceRepo    repositories.DetentionOccurrenceRepository
-	evidenceRepo      repositories.DetentionEvidenceRepository
-	accessorialRepo   repositories.AccessorialChargeRepository
-	agreementRepo     repositories.RateAgreementRepository
-	payAssignmentRepo repositories.WorkerPayAssignmentRepository
-	payProfileRepo    repositories.PayProfileRepository
-	organizations     repositories.OrganizationRepository
-	noticeRepo        repositories.DetentionNoticeRepository
-	analyticsRepo     repositories.DetentionAnalyticsRepository
-	customerRepo      repositories.CustomerRepository
-	commentRepo       repositories.ShipmentCommentRepository
-	documentTypeRepo  repositories.DocumentTypeRepository
-	emailService      services.EmailService
-	uploadService     services.DocumentUploadService
-	workflowStarter   services.WorkflowStarter
-	templates         services.DocumentTemplateResolver
+	policyRepo        detentionports.DetentionPolicyRepository
+	occurrenceRepo    detentionports.DetentionOccurrenceRepository
+	evidenceRepo      detentionports.DetentionEvidenceRepository
+	accessorialRepo   accessorialchargeports.AccessorialChargeRepository
+	agreementRepo     rateagreementports.RateAgreementRepository
+	payAssignmentRepo driverpayports.WorkerPayAssignmentRepository
+	payProfileRepo    driverpayports.PayProfileRepository
+	organizations     tenantports.OrganizationRepository
+	noticeRepo        detentionports.DetentionNoticeRepository
+	analyticsRepo     detentionports.DetentionAnalyticsRepository
+	customerRepo      customerports.CustomerRepository
+	commentRepo       shipmentports.ShipmentCommentRepository
+	documentTypeRepo  documenttypeports.DocumentTypeRepository
+	emailService      emailports.EmailService
+	uploadService     documentuploadports.DocumentUploadService
+	workflowStarter   kernelports.WorkflowStarter
+	templates         documenttemplateports.DocumentTemplateResolver
 	contextBuilder    *ContextBuilder
-	auditService      services.AuditService
-	watchtower        services.WatchtowerProjector
-	publisher         services.AgentEventPublisher
-	realtime          services.RealtimeService
-	senders           services.EmailSenderResolver
+	auditService      auditports.AuditService
+	watchtower        watchtowerports.WatchtowerProjector
+	publisher         agentports.AgentEventPublisher
+	realtime          agentports.RealtimeService
+	senders           emailports.EmailSenderResolver
 	now               func() int64
 }
 
-var _ services.DetentionNoticeService = (*Service)(nil)
+var _ detentionports.DetentionNoticeService = (*Service)(nil)
 
 func New(p Params) *Service {
 	return &Service{
@@ -181,7 +193,7 @@ func (s *Service) SyncShipment(
 
 			existing, err := s.occurrenceRepo.GetByStop(
 				ctx,
-				&repositories.GetOccurrenceByStopRequest{
+				&detentionports.GetOccurrenceByStopRequest{
 					StopID:     stop.ID,
 					TenantInfo: tenantInfo,
 				},
@@ -265,7 +277,7 @@ func (s *Service) computeStop(
 
 	candidates, err := s.policyRepo.GetResolutionCandidates(
 		ctx,
-		&repositories.GetResolutionCandidatesRequest{
+		&detentionports.GetResolutionCandidatesRequest{
 			TenantInfo: p.tenantInfo,
 			CustomerID: p.shipment.CustomerID,
 			LocationID: p.stop.LocationID,
@@ -282,7 +294,7 @@ func (s *Service) computeStop(
 
 	policy := resolution.Policy
 
-	accessorial, err := s.accessorialRepo.GetByID(ctx, repositories.GetAccessorialChargeByIDRequest{
+	accessorial, err := s.accessorialRepo.GetByID(ctx, accessorialchargeports.GetAccessorialChargeByIDRequest{
 		ID:         policy.AccessorialChargeID,
 		TenantInfo: &p.tenantInfo,
 	})
@@ -459,7 +471,7 @@ func (s *Service) recordRecalculation(
 		RecordedAt:            s.now(),
 	}
 
-	if _, err := s.evidenceRepo.Append(ctx, &repositories.AppendEvidenceRequest{
+	if _, err := s.evidenceRepo.Append(ctx, &detentionports.AppendEvidenceRequest{
 		Entry: entry,
 	}); err != nil {
 		s.l.Warn("failed to append detention recalculation evidence",
@@ -486,7 +498,7 @@ func (s *Service) resolveDriverPayRate(
 
 	assignment, err := s.payAssignmentRepo.GetEffectiveForWorker(
 		ctx,
-		repositories.GetWorkerPayAssignmentRequest{
+		driverpayports.GetWorkerPayAssignmentRequest{
 			TenantInfo: tenantInfo,
 			WorkerID:   *move.Assignment.PrimaryWorkerID,
 			AsOf:       asOf,
@@ -496,7 +508,7 @@ func (s *Service) resolveDriverPayRate(
 		return decimal.NullDecimal{}
 	}
 
-	profile, err := s.payProfileRepo.GetByID(ctx, repositories.GetPayProfileByIDRequest{
+	profile, err := s.payProfileRepo.GetByID(ctx, driverpayports.GetPayProfileByIDRequest{
 		TenantInfo: tenantInfo,
 		ID:         assignment.PayProfileID,
 	})
@@ -614,7 +626,7 @@ func (s *Service) publishOccurrenceOpened(
 		return
 	}
 
-	services.PublishAgentEvent(ctx, s.publisher, services.AgentEvent{
+	agentports.PublishAgentEvent(ctx, s.publisher, agentports.AgentEvent{
 		Kind:       agent.EventDetentionOccurrenceOpened,
 		SubjectID:  saved.ID,
 		TenantInfo: p.tenantInfo,

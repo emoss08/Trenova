@@ -6,8 +6,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 )
 
 const (
@@ -49,37 +51,37 @@ var (
 type invoiceDisputer interface {
 	Open(
 		ctx context.Context,
-		req *serviceports.OpenInvoiceDisputeRequest,
-		actor *serviceports.RequestActor,
+		req *invoiceports.OpenInvoiceDisputeRequest,
+		actor *permissionports.RequestActor,
 	) (*invoice.InvoiceDispute, error)
 	Resolve(
 		ctx context.Context,
-		req *serviceports.ResolveInvoiceDisputeRequest,
-		actor *serviceports.RequestActor,
+		req *invoiceports.ResolveInvoiceDisputeRequest,
+		actor *permissionports.RequestActor,
 	) (*invoice.InvoiceDispute, error)
 	Withdraw(
 		ctx context.Context,
-		req *serviceports.WithdrawInvoiceDisputeRequest,
-		actor *serviceports.RequestActor,
+		req *invoiceports.WithdrawInvoiceDisputeRequest,
+		actor *permissionports.RequestActor,
 	) (*invoice.InvoiceDispute, error)
 	PreviewOpen(
 		ctx context.Context,
-		req *serviceports.OpenInvoiceDisputeRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.InvoiceDisputePreview, error)
+		req *invoiceports.OpenInvoiceDisputeRequest,
+		actor *permissionports.RequestActor,
+	) (*invoiceports.InvoiceDisputePreview, error)
 	PreviewResolve(
 		ctx context.Context,
-		req *serviceports.ResolveInvoiceDisputeRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.InvoiceDisputePreview, error)
+		req *invoiceports.ResolveInvoiceDisputeRequest,
+		actor *permissionports.RequestActor,
+	) (*invoiceports.InvoiceDisputePreview, error)
 	PreviewWithdraw(
 		ctx context.Context,
-		req *serviceports.WithdrawInvoiceDisputeRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.InvoiceDisputePreview, error)
+		req *invoiceports.WithdrawInvoiceDisputeRequest,
+		actor *permissionports.RequestActor,
+	) (*invoiceports.InvoiceDisputePreview, error)
 }
 
-func targetDispute(params map[string]any) (serviceports.ToolTarget, bool) {
+func targetDispute(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, paramDisputeID, permission.ResourceInvoiceDispute)
 }
 
@@ -88,7 +90,7 @@ func disputeIDProperty() map[string]any {
 		"list_invoice_disputes")
 }
 
-func newOpenInvoiceDisputeTool(disputes invoiceDisputer) serviceports.AgentTool {
+func newOpenInvoiceDisputeTool(disputes invoiceDisputer) agentports.AgentTool {
 	return newReceivableTool(&receivableSpec{
 		name:   "open_invoice_dispute",
 		recipe: []string{"get_invoice", "open_invoice_dispute"},
@@ -119,28 +121,28 @@ func newOpenInvoiceDisputeTool(disputes invoiceDisputer) serviceports.AgentTool 
 		},
 		required: []string{paramInvoiceID, paramDisputeReasonCode, paramDisputedAmount},
 		target:   targetInvoice,
-	}, receivablePlan[*serviceports.OpenInvoiceDisputeRequest, *serviceports.InvoiceDisputePreview]{
+	}, receivablePlan[*invoiceports.OpenInvoiceDisputeRequest, *invoiceports.InvoiceDisputePreview]{
 		request: openDisputeRequest,
 		plan: func(
 			ctx context.Context,
-			req *serviceports.OpenInvoiceDisputeRequest,
-			params *serviceports.ToolExecuteParams,
-		) (*serviceports.InvoiceDisputePreview, error) {
+			req *invoiceports.OpenInvoiceDisputeRequest,
+			params *agentports.ToolExecuteParams,
+		) (*invoiceports.InvoiceDisputePreview, error) {
 			return disputes.PreviewOpen(ctx, req, params.Actor)
 		},
-		refused: func(*serviceports.OpenInvoiceDisputeRequest) string {
+		refused: func(*invoiceports.OpenInvoiceDisputeRequest) string {
 			return "Would open a dispute on the invoice."
 		},
 		render: func(
-			_ *serviceports.OpenInvoiceDisputeRequest,
-			plan *serviceports.InvoiceDisputePreview,
+			_ *invoiceports.OpenInvoiceDisputeRequest,
+			plan *invoiceports.InvoiceDisputePreview,
 		) (*agent.ToolPreview, error) {
 			return disputePreview(plan, "Would open a dispute on %[3]s for %[2]s (%[1]s).")
 		},
 		run: func(
 			ctx context.Context,
-			req *serviceports.OpenInvoiceDisputeRequest,
-			params *serviceports.ToolExecuteParams,
+			req *invoiceports.OpenInvoiceDisputeRequest,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := disputes.Open(ctx, req, params.Actor)
 			return nil, err
@@ -149,8 +151,8 @@ func newOpenInvoiceDisputeTool(disputes invoiceDisputer) serviceports.AgentTool 
 }
 
 func openDisputeRequest(
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.OpenInvoiceDisputeRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*invoiceports.OpenInvoiceDisputeRequest, error) {
 	invoiceID, err := requirePulid(params.Params, paramInvoiceID)
 	if err != nil {
 		return nil, err
@@ -168,7 +170,7 @@ func openDisputeRequest(
 		return nil, err
 	}
 
-	return &serviceports.OpenInvoiceDisputeRequest{
+	return &invoiceports.OpenInvoiceDisputeRequest{
 		InvoiceID:      invoiceID,
 		TenantInfo:     tenantFrom(*params),
 		ReasonCode:     reason,
@@ -177,7 +179,7 @@ func openDisputeRequest(
 	}, nil
 }
 
-func newResolveInvoiceDisputeTool(disputes invoiceDisputer) serviceports.AgentTool {
+func newResolveInvoiceDisputeTool(disputes invoiceDisputer) agentports.AgentTool {
 	return newReceivableTool(&receivableSpec{
 		name: "resolve_invoice_dispute",
 		recipe: []string{
@@ -210,29 +212,29 @@ func newResolveInvoiceDisputeTool(disputes invoiceDisputer) serviceports.AgentTo
 		},
 		required: []string{paramDisputeID, paramDisputeResolution},
 		target:   targetDispute,
-	}, receivablePlan[*serviceports.ResolveInvoiceDisputeRequest, *serviceports.InvoiceDisputePreview]{
+	}, receivablePlan[*invoiceports.ResolveInvoiceDisputeRequest, *invoiceports.InvoiceDisputePreview]{
 		request: resolveDisputeRequest,
 		plan: func(
 			ctx context.Context,
-			req *serviceports.ResolveInvoiceDisputeRequest,
-			params *serviceports.ToolExecuteParams,
-		) (*serviceports.InvoiceDisputePreview, error) {
+			req *invoiceports.ResolveInvoiceDisputeRequest,
+			params *agentports.ToolExecuteParams,
+		) (*invoiceports.InvoiceDisputePreview, error) {
 			return disputes.PreviewResolve(ctx, req, params.Actor)
 		},
-		refused: func(req *serviceports.ResolveInvoiceDisputeRequest) string {
+		refused: func(req *invoiceports.ResolveInvoiceDisputeRequest) string {
 			return "Would resolve the dispute as " + string(req.Resolution) + "."
 		},
 		render: func(
-			_ *serviceports.ResolveInvoiceDisputeRequest,
-			plan *serviceports.InvoiceDisputePreview,
+			_ *invoiceports.ResolveInvoiceDisputeRequest,
+			plan *invoiceports.InvoiceDisputePreview,
 		) (*agent.ToolPreview, error) {
 			return disputePreview(plan, "Would resolve the dispute on %[3]s for %[2]s (%[1]s) as "+
 				string(plan.After.Resolution)+".")
 		},
 		run: func(
 			ctx context.Context,
-			req *serviceports.ResolveInvoiceDisputeRequest,
-			params *serviceports.ToolExecuteParams,
+			req *invoiceports.ResolveInvoiceDisputeRequest,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := disputes.Resolve(ctx, req, params.Actor)
 			return nil, err
@@ -241,8 +243,8 @@ func newResolveInvoiceDisputeTool(disputes invoiceDisputer) serviceports.AgentTo
 }
 
 func resolveDisputeRequest(
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.ResolveInvoiceDisputeRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*invoiceports.ResolveInvoiceDisputeRequest, error) {
 	disputeID, err := requirePulid(params.Params, paramDisputeID)
 	if err != nil {
 		return nil, err
@@ -260,7 +262,7 @@ func resolveDisputeRequest(
 		return nil, err
 	}
 
-	return &serviceports.ResolveInvoiceDisputeRequest{
+	return &invoiceports.ResolveInvoiceDisputeRequest{
 		DisputeID:              disputeID,
 		TenantInfo:             tenantFrom(*params),
 		Resolution:             resolution,
@@ -269,7 +271,7 @@ func resolveDisputeRequest(
 	}, nil
 }
 
-func newWithdrawInvoiceDisputeTool(disputes invoiceDisputer) serviceports.AgentTool {
+func newWithdrawInvoiceDisputeTool(disputes invoiceDisputer) agentports.AgentTool {
 	return newReceivableTool(&receivableSpec{
 		name: "withdraw_invoice_dispute",
 		description: "Withdraw an open invoice dispute the customer no longer pursues, without " +
@@ -293,28 +295,28 @@ func newWithdrawInvoiceDisputeTool(disputes invoiceDisputer) serviceports.AgentT
 		},
 		required: []string{paramDisputeID},
 		target:   targetDispute,
-	}, receivablePlan[*serviceports.WithdrawInvoiceDisputeRequest, *serviceports.InvoiceDisputePreview]{
+	}, receivablePlan[*invoiceports.WithdrawInvoiceDisputeRequest, *invoiceports.InvoiceDisputePreview]{
 		request: withdrawDisputeRequest,
 		plan: func(
 			ctx context.Context,
-			req *serviceports.WithdrawInvoiceDisputeRequest,
-			params *serviceports.ToolExecuteParams,
-		) (*serviceports.InvoiceDisputePreview, error) {
+			req *invoiceports.WithdrawInvoiceDisputeRequest,
+			params *agentports.ToolExecuteParams,
+		) (*invoiceports.InvoiceDisputePreview, error) {
 			return disputes.PreviewWithdraw(ctx, req, params.Actor)
 		},
-		refused: func(*serviceports.WithdrawInvoiceDisputeRequest) string {
+		refused: func(*invoiceports.WithdrawInvoiceDisputeRequest) string {
 			return "Would withdraw the dispute."
 		},
 		render: func(
-			_ *serviceports.WithdrawInvoiceDisputeRequest,
-			plan *serviceports.InvoiceDisputePreview,
+			_ *invoiceports.WithdrawInvoiceDisputeRequest,
+			plan *invoiceports.InvoiceDisputePreview,
 		) (*agent.ToolPreview, error) {
 			return disputePreview(plan, "Would withdraw the dispute on %[3]s for %[2]s (%[1]s).")
 		},
 		run: func(
 			ctx context.Context,
-			req *serviceports.WithdrawInvoiceDisputeRequest,
-			params *serviceports.ToolExecuteParams,
+			req *invoiceports.WithdrawInvoiceDisputeRequest,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := disputes.Withdraw(ctx, req, params.Actor)
 			return nil, err
@@ -323,8 +325,8 @@ func newWithdrawInvoiceDisputeTool(disputes invoiceDisputer) serviceports.AgentT
 }
 
 func withdrawDisputeRequest(
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.WithdrawInvoiceDisputeRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*invoiceports.WithdrawInvoiceDisputeRequest, error) {
 	disputeID, err := requirePulid(params.Params, paramDisputeID)
 	if err != nil {
 		return nil, err
@@ -334,7 +336,7 @@ func withdrawDisputeRequest(
 		return nil, err
 	}
 
-	return &serviceports.WithdrawInvoiceDisputeRequest{
+	return &invoiceports.WithdrawInvoiceDisputeRequest{
 		DisputeID:  disputeID,
 		TenantInfo: tenantFrom(*params),
 		Notes:      notes,

@@ -11,10 +11,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -30,10 +33,10 @@ type Params struct {
 	fx.In
 
 	Logger              *zap.Logger
-	Repo                repositories.LateChargeRepository
-	BillingControlRepo  repositories.BillingControlRepository
-	InvoiceService      servicesports.InvoiceService
-	AuditService        servicesports.AuditService
+	Repo                latechargeports.LateChargeRepository
+	BillingControlRepo  tenantports.BillingControlRepository
+	InvoiceService      invoiceports.InvoiceService
+	AuditService        auditports.AuditService
 	NotificationService *notificationservice.Service `optional:"true"`
 }
 
@@ -42,14 +45,14 @@ type Params struct {
 // first so a concurrent run cannot charge the same period twice.
 type Service struct {
 	l                   *zap.Logger
-	repo                repositories.LateChargeRepository
-	billingRepo         repositories.BillingControlRepository
-	invoiceService      servicesports.InvoiceService
-	auditService        servicesports.AuditService
+	repo                latechargeports.LateChargeRepository
+	billingRepo         tenantports.BillingControlRepository
+	invoiceService      invoiceports.InvoiceService
+	auditService        auditports.AuditService
 	notificationService *notificationservice.Service
 }
 
-func New(p Params) servicesports.LateChargeService {
+func New(p Params) latechargeports.LateChargeService {
 	return &Service{
 		l:                   p.Logger.Named("service.late-charge"),
 		repo:                p.Repo,
@@ -78,9 +81,9 @@ func memosAutoPost(control *tenant.BillingControl) bool {
 
 func (s *Service) PlanAssess(
 	ctx context.Context,
-	req *servicesports.LateChargeAssessmentRequest,
-	actor *servicesports.RequestActor,
-) (*servicesports.LateChargeAssessmentResult, error) {
+	req *latechargeports.LateChargeAssessmentRequest,
+	actor *permissionports.RequestActor,
+) (*latechargeports.LateChargeAssessmentResult, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"request",
@@ -104,15 +107,15 @@ func (s *Service) PlanAssess(
 
 // customerPlan is what one customer is owed before anything is written.
 type customerPlan struct {
-	result      *servicesports.LateChargeCustomerResult
+	result      *latechargeports.LateChargeCustomerResult
 	assessments []*latecharge.LateChargeAssessment
 }
 
 func (s *Service) Assess(
 	ctx context.Context,
-	req *servicesports.LateChargeAssessmentRequest,
-	actor *servicesports.RequestActor,
-) (*servicesports.LateChargeAssessmentResult, error) {
+	req *latechargeports.LateChargeAssessmentRequest,
+	actor *permissionports.RequestActor,
+) (*latechargeports.LateChargeAssessmentResult, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"request",
@@ -140,12 +143,12 @@ func (s *Service) Assess(
 	if !mode.IsValid() {
 		mode = tenant.LateChargeAssessmentModeDisabled
 	}
-	result := &servicesports.LateChargeAssessmentResult{
+	result := &latechargeports.LateChargeAssessmentResult{
 		AsOfDate:  asOf,
 		Preview:   req.Preview,
 		Mode:      mode,
 		AutoPost:  memosAutoPost(control),
-		Customers: make([]*servicesports.LateChargeCustomerResult, 0),
+		Customers: make([]*latechargeports.LateChargeCustomerResult, 0),
 	}
 	if !req.Preview {
 		if err = refuseDisabled(mode); err != nil {
@@ -153,7 +156,7 @@ func (s *Service) Assess(
 		}
 	}
 
-	candidates, err := s.repo.ListCandidates(ctx, &repositories.ListLateChargeCandidatesRequest{
+	candidates, err := s.repo.ListCandidates(ctx, &latechargeports.ListLateChargeCandidatesRequest{
 		TenantInfo:  req.TenantInfo,
 		CustomerIDs: req.CustomerIDs,
 		AsOfDate:    asOf,
@@ -202,10 +205,10 @@ func (s *Service) Assess(
 // buildPlans turns candidates into one plan per customer, in candidate order,
 // with every unassessed period that has begun by asOf.
 func buildPlans(
-	candidates []*repositories.LateChargeCandidate,
+	candidates []*latechargeports.LateChargeCandidate,
 	asOf int64,
 	minimumMinor int64,
-	actor *servicesports.RequestActor,
+	actor *permissionports.RequestActor,
 ) []*customerPlan {
 	byCustomer := make(map[pulid.ID]*customerPlan, len(candidates))
 	ordered := make([]*customerPlan, 0, len(candidates))
@@ -213,11 +216,11 @@ func buildPlans(
 		plan, ok := byCustomer[candidate.CustomerID]
 		if !ok {
 			plan = &customerPlan{
-				result: &servicesports.LateChargeCustomerResult{
+				result: &latechargeports.LateChargeCustomerResult{
 					CustomerID:   candidate.CustomerID,
 					CustomerName: candidate.CustomerName,
 					CurrencyCode: candidate.CurrencyCode,
-					Lines:        make([]*servicesports.LateChargeLine, 0, 4),
+					Lines:        make([]*latechargeports.LateChargeLine, 0, 4),
 				},
 			}
 			byCustomer[candidate.CustomerID] = plan
@@ -230,7 +233,7 @@ func buildPlans(
 				continue
 			}
 			start, end := latecharge.PeriodBounds(overdueStart, idx)
-			plan.result.Lines = append(plan.result.Lines, &servicesports.LateChargeLine{
+			plan.result.Lines = append(plan.result.Lines, &latechargeports.LateChargeLine{
 				InvoiceID:             candidate.InvoiceID,
 				InvoiceNumber:         candidate.InvoiceNumber,
 				PeriodIndex:           idx,
@@ -283,7 +286,7 @@ func (s *Service) raiseMemo(
 	tenantInfo pagination.TenantInfo,
 	control *tenant.BillingControl,
 	plan *customerPlan,
-	actor *servicesports.RequestActor,
+	actor *permissionports.RequestActor,
 ) error {
 	memoID := pulid.MustNew("inv_")
 	runKey := pulid.MustNew("lcr_").String()
@@ -310,7 +313,7 @@ func (s *Service) raiseMemo(
 		plan.result.Lines,
 	)
 
-	memo, err := s.invoiceService.CreateMemo(ctx, &servicesports.CreateMemoRequest{
+	memo, err := s.invoiceService.CreateMemo(ctx, &invoiceports.CreateMemoRequest{
 		ID:          memoID,
 		TenantInfo:  tenantInfo,
 		CustomerID:  plan.result.CustomerID,
@@ -355,17 +358,17 @@ func (s *Service) raiseMemo(
 // in the assessment order, so the memo and the rows agree line for line.
 func linesFromAssessments(
 	inserted []*latecharge.LateChargeAssessment,
-	planned []*servicesports.LateChargeLine,
-) ([]*servicesports.LateChargeLine, int64) {
+	planned []*latechargeports.LateChargeLine,
+) ([]*latechargeports.LateChargeLine, int64) {
 	type key struct {
 		invoiceID pulid.ID
 		period    int
 	}
-	byKey := make(map[key]*servicesports.LateChargeLine, len(planned))
+	byKey := make(map[key]*latechargeports.LateChargeLine, len(planned))
 	for _, line := range planned {
 		byKey[key{line.InvoiceID, line.PeriodIndex}] = line
 	}
-	lines := make([]*servicesports.LateChargeLine, 0, len(inserted))
+	lines := make([]*latechargeports.LateChargeLine, 0, len(inserted))
 	var total int64
 	for _, assessment := range inserted {
 		line, ok := byKey[key{assessment.SourceInvoiceID, assessment.PeriodIndex}]
@@ -379,10 +382,10 @@ func linesFromAssessments(
 	return lines, total
 }
 
-func memoLines(lines []*servicesports.LateChargeLine) []*servicesports.CreateMemoLineInput {
-	inputs := make([]*servicesports.CreateMemoLineInput, 0, len(lines))
+func memoLines(lines []*latechargeports.LateChargeLine) []*invoiceports.CreateMemoLineInput {
+	inputs := make([]*invoiceports.CreateMemoLineInput, 0, len(lines))
 	for _, line := range lines {
-		inputs = append(inputs, &servicesports.CreateMemoLineInput{
+		inputs = append(inputs, &invoiceports.CreateMemoLineInput{
 			Description: fmt.Sprintf(
 				"Late charge on %s, period %d (%s to %s), %s%% of %s",
 				line.InvoiceNumber,
@@ -418,13 +421,13 @@ func stampMemoLines(inserted []*latecharge.LateChargeAssessment, memo *invoice.I
 func (s *Service) logAudit(
 	memo *invoice.Invoice,
 	inserted []*latecharge.LateChargeAssessment,
-	actor *servicesports.RequestActor,
+	actor *permissionports.RequestActor,
 ) {
 	if s.auditService == nil || memo == nil {
 		return
 	}
 	auditActor := actor.AuditActorOrSystem()
-	params := &servicesports.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceInvoice,
 		ResourceID:     memo.ID.String(),
 		Operation:      permission.OpCreate,
@@ -449,7 +452,7 @@ func (s *Service) logAudit(
 func (s *Service) notify(
 	ctx context.Context,
 	memo *invoice.Invoice,
-	result *servicesports.LateChargeCustomerResult,
+	result *latechargeports.LateChargeCustomerResult,
 ) {
 	if s.notificationService == nil || memo == nil {
 		return
@@ -480,7 +483,7 @@ func (s *Service) notify(
 	}
 }
 
-func actorUserID(actor *servicesports.RequestActor) pulid.ID {
+func actorUserID(actor *permissionports.RequestActor) pulid.ID {
 	if actor == nil {
 		return pulid.Nil
 	}

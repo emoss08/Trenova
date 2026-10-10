@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accounttype"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalclose"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/glbalanceports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -40,8 +40,8 @@ func balance(
 	code string,
 	category accounttype.Category,
 	debit, credit int64,
-) *repositories.GLPeriodAccountBalance {
-	return &repositories.GLPeriodAccountBalance{
+) *glbalanceports.GLPeriodAccountBalance {
+	return &glbalanceports.GLPeriodAccountBalance{
 		GLAccountID:       id,
 		AccountCode:       code,
 		AccountName:       code + " account",
@@ -76,7 +76,7 @@ func profitableYearInputs() *planInputs {
 			Name:     "Retained Earnings",
 			Category: accounttype.CategoryEquity,
 		},
-		balances: []*repositories.GLPeriodAccountBalance{
+		balances: []*glbalanceports.GLPeriodAccountBalance{
 			balance(cashID, "1000", accounttype.CategoryAsset, 9000, 0),
 			balance(arID, "1100", accounttype.CategoryAsset, 1000, 0),
 			balance(apID, "2000", accounttype.CategoryLiability, 0, 3000),
@@ -161,7 +161,7 @@ func TestBuildPlanDebitsRetainedEarningsOnALoss(t *testing.T) {
 	t.Parallel()
 
 	in := profitableYearInputs()
-	in.balances = []*repositories.GLPeriodAccountBalance{
+	in.balances = []*glbalanceports.GLPeriodAccountBalance{
 		balance(cashID, "1000", accounttype.CategoryAsset, 0, 2000),
 		balance(stockID, "3000", accounttype.CategoryEquity, 0, 4000),
 		balance(retainedID, "3900", accounttype.CategoryEquity, 0, 0),
@@ -244,7 +244,7 @@ func TestBuildPlanBlocksAnUnbalancedLedger(t *testing.T) {
 	t.Parallel()
 
 	in := profitableYearInputs()
-	in.balances = []*repositories.GLPeriodAccountBalance{
+	in.balances = []*glbalanceports.GLPeriodAccountBalance{
 		balance(cashID, "1000", accounttype.CategoryAsset, 9000, 0),
 		balance(apID, "2000", accounttype.CategoryLiability, 0, 1000),
 	}

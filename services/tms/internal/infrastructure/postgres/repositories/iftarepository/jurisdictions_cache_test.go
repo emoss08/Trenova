@@ -7,9 +7,9 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/core/domain/ifta"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/iftarepository"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -84,8 +84,8 @@ func warmCache() *FakeJurisdictionCache {
 
 func newCacheTestRepository(
 	t *testing.T,
-	cache repositories.IFTAJurisdictionCacheRepository,
-) (repositories.IFTARepository, sqlmock.Sqlmock) {
+	cache iftaports.IFTAJurisdictionCacheRepository,
+) (iftaports.IFTARepository, sqlmock.Sqlmock) {
 	t.Helper()
 
 	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherRegexp))
@@ -109,7 +109,7 @@ func TestListJurisdictions_WarmCacheIssuesNoQuery(t *testing.T) {
 	cache := warmCache()
 	repo, _ := newCacheTestRepository(t, cache)
 
-	out, err := repo.ListJurisdictions(t.Context(), &repositories.ListJurisdictionsRequest{})
+	out, err := repo.ListJurisdictions(t.Context(), &iftaports.ListJurisdictionsRequest{})
 	require.NoError(t, err)
 
 	assert.Len(t, out, 5)
@@ -124,7 +124,7 @@ func TestListJurisdictions_FiltersTheSnapshot(t *testing.T) {
 		t.Parallel()
 		repo, _ := newCacheTestRepository(t, warmCache())
 
-		out, err := repo.ListJurisdictions(t.Context(), &repositories.ListJurisdictionsRequest{
+		out, err := repo.ListJurisdictions(t.Context(), &iftaports.ListJurisdictionsRequest{
 			MembersOnly: true,
 		})
 		require.NoError(t, err)
@@ -137,7 +137,7 @@ func TestListJurisdictions_FiltersTheSnapshot(t *testing.T) {
 		t.Parallel()
 		repo, _ := newCacheTestRepository(t, warmCache())
 
-		out, err := repo.ListJurisdictions(t.Context(), &repositories.ListJurisdictionsRequest{
+		out, err := repo.ListJurisdictions(t.Context(), &iftaports.ListJurisdictionsRequest{
 			CountryCode: "  ca ",
 		})
 		require.NoError(t, err)
@@ -149,7 +149,7 @@ func TestListJurisdictions_FiltersTheSnapshot(t *testing.T) {
 		t.Parallel()
 		repo, _ := newCacheTestRepository(t, warmCache())
 
-		out, err := repo.ListJurisdictions(t.Context(), &repositories.ListJurisdictionsRequest{
+		out, err := repo.ListJurisdictions(t.Context(), &iftaports.ListJurisdictionsRequest{
 			Statuses: []ifta.JurisdictionStatus{ifta.JurisdictionStatusInactive},
 		})
 		require.NoError(t, err)
@@ -161,7 +161,7 @@ func TestListJurisdictions_FiltersTheSnapshot(t *testing.T) {
 		t.Parallel()
 		repo, _ := newCacheTestRepository(t, warmCache())
 
-		out, err := repo.ListJurisdictions(t.Context(), &repositories.ListJurisdictionsRequest{
+		out, err := repo.ListJurisdictions(t.Context(), &iftaports.ListJurisdictionsRequest{
 			MembersOnly: true,
 			CountryCode: "US",
 			Statuses:    []ifta.JurisdictionStatus{ifta.JurisdictionStatusActive},
@@ -175,7 +175,7 @@ func TestListJurisdictions_FiltersTheSnapshot(t *testing.T) {
 		t.Parallel()
 		repo, _ := newCacheTestRepository(t, warmCache())
 
-		out, err := repo.ListJurisdictions(t.Context(), &repositories.ListJurisdictionsRequest{})
+		out, err := repo.ListJurisdictions(t.Context(), &iftaports.ListJurisdictionsRequest{})
 		require.NoError(t, err)
 
 		assert.Equal(t, []string{"TX", "OK", "OR", "AB", "YT"}, codesOf(out))
@@ -194,7 +194,7 @@ func TestListJurisdictions_ColdCacheLoadsOnceThenServesFromCache(t *testing.T) {
 			AddRow(pulid.MustNew("ifj_").String(), "CA", "AB", "CA-AB", true, 2, "Active"),
 	)
 
-	first, err := repo.ListJurisdictions(t.Context(), &repositories.ListJurisdictionsRequest{})
+	first, err := repo.ListJurisdictions(t.Context(), &iftaports.ListJurisdictionsRequest{})
 	require.NoError(t, err)
 	require.Len(t, first, 2)
 	assert.Equal(t, 1, cache.setCalls, "a cold read must populate the cache")
@@ -218,7 +218,7 @@ func TestListJurisdictions_CacheFailureFallsThroughToPostgres(t *testing.T) {
 			AddRow(pulid.MustNew("ifj_").String(), "US", "TX", "US-TX", true, 1, "Active"),
 	)
 
-	out, err := repo.ListJurisdictions(t.Context(), &repositories.ListJurisdictionsRequest{})
+	out, err := repo.ListJurisdictions(t.Context(), &iftaports.ListJurisdictionsRequest{})
 	require.NoError(t, err)
 
 	assert.Len(t, out, 1)

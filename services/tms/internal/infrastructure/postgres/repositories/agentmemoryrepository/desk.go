@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -29,10 +29,10 @@ type deskRow struct {
 	RoleName    string `bun:"role_name,scanonly"`
 }
 
-func (r deskRow) row() *repositories.DeskMemoryRow {
+func (r deskRow) row() *agentports.DeskMemoryRow {
 	memory := r.Memory
 
-	return &repositories.DeskMemoryRow{
+	return &agentports.DeskMemoryRow{
 		Memory:      &memory,
 		SourceTitle: r.SourceTitle,
 		RoleName:    r.RoleName,
@@ -60,7 +60,7 @@ func (r *repository) deskSelect(ctx context.Context, rows *[]deskRow) *bun.Selec
 // deskVisible keeps what a person keeps: memories of the organization, their
 // own, and their roles', active or paused. What is kept for one agent is
 // administered in AI Control, and a suggestion waits in its conversation.
-func deskVisible(sq *bun.SelectQuery, filter *repositories.DeskMemoryFilter) *bun.SelectQuery {
+func deskVisible(sq *bun.SelectQuery, filter *agentports.DeskMemoryFilter) *bun.SelectQuery {
 	cols := buncolgen.MemoryColumns
 	sq = buncolgen.MemoryScopeTenant(sq, filter.TenantInfo).
 		Where(cols.Status.In(), bun.List([]agent.MemoryStatus{
@@ -84,9 +84,9 @@ func deskVisible(sq *bun.SelectQuery, filter *repositories.DeskMemoryFilter) *bu
 
 func (r *repository) ListDesk(
 	ctx context.Context,
-	req repositories.ListDeskMemoriesRequest,
-) ([]*repositories.DeskMemoryRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.DeskMemoryRow, error) {
+	req agentports.ListDeskMemoriesQuery,
+) ([]*agentports.DeskMemoryRow, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentports.DeskMemoryRow, error) {
 		cols := buncolgen.MemoryColumns
 		limit := req.Limit
 		if limit <= 0 {
@@ -121,7 +121,7 @@ func (r *repository) ListDesk(
 			return nil, fmt.Errorf("list desk memories: %w", err)
 		}
 
-		out := make([]*repositories.DeskMemoryRow, 0, len(rows))
+		out := make([]*agentports.DeskMemoryRow, 0, len(rows))
 		for _, row := range rows {
 			out = append(out, row.row())
 		}
@@ -132,9 +132,9 @@ func (r *repository) ListDesk(
 
 func (r *repository) CountDesk(
 	ctx context.Context,
-	filter repositories.DeskMemoryFilter,
-) ([]repositories.DeskMemoryCount, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.DeskMemoryCount, error) {
+	filter agentports.DeskMemoryFilter,
+) ([]agentports.DeskMemoryCountRow, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentports.DeskMemoryCountRow, error) {
 		cols := buncolgen.MemoryColumns
 		var rows []struct {
 			Scope  agent.MemoryScope `bun:"scope"`
@@ -158,9 +158,9 @@ func (r *repository) CountDesk(
 			return nil, fmt.Errorf("count desk memories: %w", err)
 		}
 
-		counts := make([]repositories.DeskMemoryCount, 0, len(rows))
+		counts := make([]agentports.DeskMemoryCountRow, 0, len(rows))
 		for _, row := range rows {
-			count := repositories.DeskMemoryCount{Scope: row.Scope, Count: row.Count}
+			count := agentports.DeskMemoryCountRow{Scope: row.Scope, Count: row.Count}
 			if row.RoleID != nil {
 				count.RoleID = *row.RoleID
 			}
@@ -173,11 +173,11 @@ func (r *repository) CountDesk(
 
 func (r *repository) GetDesk(
 	ctx context.Context,
-	req repositories.GetDeskMemoriesRequest,
-) ([]*repositories.DeskMemoryRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.DeskMemoryRow, error) {
+	req agentports.GetDeskMemoriesRequest,
+) ([]*agentports.DeskMemoryRow, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentports.DeskMemoryRow, error) {
 		if len(req.IDs) == 0 {
-			return []*repositories.DeskMemoryRow{}, nil
+			return []*agentports.DeskMemoryRow{}, nil
 		}
 		ids := req.IDs
 		if len(ids) > maxDeskIDs {
@@ -196,7 +196,7 @@ func (r *repository) GetDesk(
 			return nil, fmt.Errorf("get desk memories: %w", err)
 		}
 
-		out := make([]*repositories.DeskMemoryRow, 0, len(rows))
+		out := make([]*agentports.DeskMemoryRow, 0, len(rows))
 		for _, row := range rows {
 			out = append(out, row.row())
 		}
@@ -209,7 +209,7 @@ func (r *repository) GetDesk(
 // Like Update it leaves where the memory came from alone.
 func (r *repository) Revise(
 	ctx context.Context,
-	req repositories.ReviseAgentMemoryRequest,
+	req agentports.ReviseAgentMemoryRequest,
 ) (*agent.Memory, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.Memory, error) {
 		cols := buncolgen.MemoryColumns
@@ -248,7 +248,7 @@ func (r *repository) Revise(
 			return nil, dberror.CreateVersionMismatchError("AgentMemory", req.ID.String())
 		}
 
-		return r.GetByID(ctx, repositories.GetAgentMemoryByIDRequest{
+		return r.GetByID(ctx, agentports.GetAgentMemoryByIDRequest{
 			ID:         req.ID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -257,7 +257,7 @@ func (r *repository) Revise(
 
 func (r *repository) GetPreference(
 	ctx context.Context,
-	req repositories.GetAgentMemoryPreferenceRequest,
+	req agentports.GetAgentMemoryPreferenceRequest,
 ) (*agent.MemoryPreference, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.MemoryPreference, error) {
 		entity := new(agent.MemoryPreference)

@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/extractionshadow"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -31,7 +31,7 @@ type resultRepository struct {
 	l  *zap.Logger
 }
 
-func NewResults(p Params) repositories.ExtractionShadowResultRepository {
+func NewResults(p Params) extractionshadowports.ExtractionShadowResultRepository {
 	return &resultRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.extractionshadow-result-repository"),
@@ -79,7 +79,7 @@ func (r *resultRepository) Create(
 
 		existing, err := r.GetByExtraction(
 			ctx,
-			repositories.GetExtractionShadowResultByExtractionRequest{
+			extractionshadowports.GetExtractionShadowResultByExtractionRequest{
 				TenantInfo: pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
 					BuID:  entity.BusinessUnitID,
@@ -98,7 +98,7 @@ func (r *resultRepository) Create(
 
 func (r *resultRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetExtractionShadowResultRequest,
+	req extractionshadowports.GetExtractionShadowResultRequest,
 ) (*extractionshadow.ShadowResult, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*extractionshadow.ShadowResult, error) {
 		entity := new(extractionshadow.ShadowResult)
@@ -120,7 +120,7 @@ func (r *resultRepository) GetByID(
 
 func (r *resultRepository) GetByExtraction(
 	ctx context.Context,
-	req repositories.GetExtractionShadowResultByExtractionRequest,
+	req extractionshadowports.GetExtractionShadowResultByExtractionRequest,
 ) (*extractionshadow.ShadowResult, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*extractionshadow.ShadowResult, error) {
 		cols := buncolgen.ShadowResultColumns
@@ -212,7 +212,7 @@ func (r *resultRepository) CountCreatedSince(
 
 func (r *resultRepository) ListScored(
 	ctx context.Context,
-	req *repositories.ListScoredExtractionShadowResultsRequest,
+	req *extractionshadowports.ListScoredExtractionShadowResultsRequest,
 ) ([]*extractionshadow.ShadowResult, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*extractionshadow.ShadowResult, error) {
 		cols := buncolgen.ShadowResultColumns
@@ -269,12 +269,12 @@ func (r *resultRepository) ListScored(
 
 func (r *resultRepository) TotalsByStatus(
 	ctx context.Context,
-	req repositories.TotalExtractionShadowResultsRequest,
-) ([]repositories.ExtractionShadowStatusTotal, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.ExtractionShadowStatusTotal, error) {
+	req extractionshadowports.TotalExtractionShadowResultsRequest,
+) ([]extractionshadowports.ExtractionShadowStatusTotal, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]extractionshadowports.ExtractionShadowStatusTotal, error) {
 		cols := buncolgen.ShadowResultColumns
 		totals := make(
-			[]repositories.ExtractionShadowStatusTotal,
+			[]extractionshadowports.ExtractionShadowStatusTotal,
 			0,
 			len(extractionshadow.AllResultStatuses()),
 		)
@@ -309,7 +309,7 @@ func (r *resultRepository) TotalsByStatus(
 
 func (r *resultRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListExtractionShadowResultConnectionRequest,
+	req *extractionshadowports.ListExtractionShadowResultConnectionRequest,
 ) (*pagination.CursorListResult[*extractionshadow.ShadowResult], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*extractionshadow.ShadowResult], error) {
 		dba := r.db.DBForContext(ctx)
@@ -374,7 +374,7 @@ func (r *resultRepository) ListConnection(
 
 func (r *resultRepository) PurgeBefore(
 	ctx context.Context,
-	req repositories.PurgeExtractionShadowResultsRequest,
+	req extractionshadowports.PurgeExtractionShadowResultsRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
 		cols := buncolgen.ShadowResultColumns

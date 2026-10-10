@@ -11,11 +11,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/documentparsingrule"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentparsingruleports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -32,22 +32,22 @@ type Params struct {
 
 	Logger       *zap.Logger
 	DB           *postgres.Connection
-	Repo         repositories.DocumentParsingRuleRepository
+	Repo         documentparsingruleports.DocumentParsingRuleRepository
 	Validator    *Validator
-	AuditService serviceports.AuditService
+	AuditService auditports.AuditService
 }
 
 type Service struct {
 	l            *zap.Logger
 	db           *postgres.Connection
-	repo         repositories.DocumentParsingRuleRepository
+	repo         documentparsingruleports.DocumentParsingRuleRepository
 	validator    *Validator
-	auditService serviceports.AuditService
+	auditService auditports.AuditService
 }
 
 var (
-	_ serviceports.DocumentParsingRuleAdminService = (*Service)(nil)
-	_ serviceports.DocumentParsingRuleRuntime      = (*Service)(nil)
+	_ documentparsingruleports.DocumentParsingRuleAdminService = (*Service)(nil)
+	_ documentparsingruleports.DocumentParsingRuleRuntime      = (*Service)(nil)
 )
 
 func New(p Params) *Service {
@@ -65,7 +65,7 @@ func (s *Service) ListRuleSets(
 	tenantInfo pagination.TenantInfo,
 	documentKind string,
 ) ([]*documentparsingrule.RuleSet, error) {
-	return s.repo.ListRuleSets(ctx, repositories.ListDocumentParsingRuleSetsRequest{
+	return s.repo.ListRuleSets(ctx, documentparsingruleports.ListDocumentParsingRuleSetsRequest{
 		TenantInfo:   tenantInfo,
 		DocumentKind: strings.TrimSpace(documentKind),
 	})
@@ -76,7 +76,7 @@ func (s *Service) GetRuleSet(
 	id pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) (*documentparsingrule.RuleSet, error) {
-	return s.repo.GetRuleSet(ctx, repositories.GetDocumentParsingRuleSetRequest{
+	return s.repo.GetRuleSet(ctx, documentparsingruleports.GetDocumentParsingRuleSetRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
@@ -147,7 +147,7 @@ func (s *Service) DeleteRuleSet(
 		return err
 	}
 
-	if err = s.repo.DeleteRuleSet(ctx, repositories.GetDocumentParsingRuleSetRequest{
+	if err = s.repo.DeleteRuleSet(ctx, documentparsingruleports.GetDocumentParsingRuleSetRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	}); err != nil {
@@ -163,7 +163,7 @@ func (s *Service) ListVersions(
 	ruleSetID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) ([]*documentparsingrule.RuleVersion, error) {
-	return s.repo.ListVersions(ctx, repositories.ListDocumentParsingRuleVersionsRequest{
+	return s.repo.ListVersions(ctx, documentparsingruleports.ListDocumentParsingRuleVersionsRequest{
 		RuleSetID:  ruleSetID,
 		TenantInfo: tenantInfo,
 	})
@@ -174,7 +174,7 @@ func (s *Service) GetVersion(
 	id pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) (*documentparsingrule.RuleVersion, error) {
-	return s.repo.GetVersion(ctx, repositories.GetDocumentParsingRuleVersionRequest{
+	return s.repo.GetVersion(ctx, documentparsingruleports.GetDocumentParsingRuleVersionRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
@@ -226,7 +226,7 @@ func (s *Service) UpdateVersion(
 ) (*documentparsingrule.RuleVersion, error) {
 	original, _, err := s.repo.GetVersionWithRuleSet(
 		ctx,
-		repositories.GetDocumentParsingRuleVersionRequest{
+		documentparsingruleports.GetDocumentParsingRuleVersionRequest{
 			ID: entity.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
@@ -275,7 +275,7 @@ func (s *Service) PublishVersion(
 ) (*documentparsingrule.RuleVersion, error) {
 	version, set, err := s.repo.GetVersionWithRuleSet(
 		ctx,
-		repositories.GetDocumentParsingRuleVersionRequest{
+		documentparsingruleports.GetDocumentParsingRuleVersionRequest{
 			ID:         id,
 			TenantInfo: tenantInfo,
 		},
@@ -287,7 +287,7 @@ func (s *Service) PublishVersion(
 		return nil, errortypes.NewBusinessError("Only draft parsing rule versions can be published")
 	}
 
-	fixtures, err := s.repo.ListFixtures(ctx, repositories.ListDocumentParsingRuleFixturesRequest{
+	fixtures, err := s.repo.ListFixtures(ctx, documentparsingruleports.ListDocumentParsingRuleFixturesRequest{
 		RuleSetID:  set.ID,
 		TenantInfo: tenantInfo,
 	})
@@ -316,7 +316,7 @@ func (s *Service) PublishVersion(
 	version.PublishedByID = &userID
 
 	var updated *documentparsingrule.RuleVersion
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		if txErr := s.repo.ArchivePublishedVersions(
 			txCtx,
 			set.ID,
@@ -363,7 +363,7 @@ func (s *Service) ListFixtures(
 	ruleSetID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) ([]*documentparsingrule.Fixture, error) {
-	return s.repo.ListFixtures(ctx, repositories.ListDocumentParsingRuleFixturesRequest{
+	return s.repo.ListFixtures(ctx, documentparsingruleports.ListDocumentParsingRuleFixturesRequest{
 		RuleSetID:  ruleSetID,
 		TenantInfo: tenantInfo,
 	})
@@ -374,7 +374,7 @@ func (s *Service) GetFixture(
 	id pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) (*documentparsingrule.Fixture, error) {
-	return s.repo.GetFixture(ctx, repositories.GetDocumentParsingRuleFixtureRequest{
+	return s.repo.GetFixture(ctx, documentparsingruleports.GetDocumentParsingRuleFixtureRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
@@ -443,7 +443,7 @@ func (s *Service) DeleteFixture(
 	if err != nil {
 		return err
 	}
-	if err = s.repo.DeleteFixture(ctx, repositories.GetDocumentParsingRuleFixtureRequest{
+	if err = s.repo.DeleteFixture(ctx, documentparsingruleports.GetDocumentParsingRuleFixtureRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	}); err != nil {
@@ -462,9 +462,9 @@ func (s *Service) DeleteFixture(
 
 func (s *Service) ApplyPublished(
 	ctx context.Context,
-	input *serviceports.DocumentParsingRuntimeInput,
-	baseline *serviceports.DocumentParsingAnalysis,
-) (*serviceports.DocumentParsingAnalysis, error) {
+	input *documentparsingruleports.DocumentParsingRuntimeInput,
+	baseline *documentparsingruleports.DocumentParsingAnalysis,
+) (*documentparsingruleports.DocumentParsingAnalysis, error) {
 	selected, score, providerMatched, err := s.selectPublishedVersion(ctx, input)
 	if err != nil || selected == nil {
 		return nil, err
@@ -473,7 +473,7 @@ func (s *Service) ApplyPublished(
 	if err != nil {
 		return nil, err
 	}
-	candidate.Metadata = &serviceports.DocumentParsingRuleMetadata{
+	candidate.Metadata = &documentparsingruleports.DocumentParsingRuleMetadata{
 		RuleSetID:        selected.RuleSet.ID,
 		RuleSetName:      selected.RuleSet.Name,
 		RuleVersionID:    selected.Version.ID,
@@ -491,11 +491,11 @@ func (s *Service) ApplyPublished(
 
 func (s *Service) SimulateVersion(
 	ctx context.Context,
-	req *serviceports.DocumentParsingSimulationRequest,
-) (*serviceports.DocumentParsingSimulationResult, error) {
+	req *documentparsingruleports.DocumentParsingSimulationRequest,
+) (*documentparsingruleports.DocumentParsingSimulationResult, error) {
 	version, set, err := s.repo.GetVersionWithRuleSet(
 		ctx,
-		repositories.GetDocumentParsingRuleVersionRequest{
+		documentparsingruleports.GetDocumentParsingRuleVersionRequest{
 			ID:         req.VersionID,
 			TenantInfo: req.TenantInfo,
 		},
@@ -503,7 +503,7 @@ func (s *Service) SimulateVersion(
 	if err != nil {
 		return nil, err
 	}
-	input := &serviceports.DocumentParsingRuntimeInput{
+	input := &documentparsingruleports.DocumentParsingRuntimeInput{
 		TenantInfo:          req.TenantInfo,
 		DocumentKind:        string(set.DocumentKind),
 		FileName:            req.FileName,
@@ -512,11 +512,11 @@ func (s *Service) SimulateVersion(
 		ProviderFingerprint: req.ProviderFingerprint,
 	}
 	matched, score, providerMatched := matchesVersion(set, version, input)
-	result := &serviceports.DocumentParsingSimulationResult{
+	result := &documentparsingruleports.DocumentParsingSimulationResult{
 		Matched:  matched,
 		Baseline: req.Baseline,
-		Diff:     serviceports.DocumentParsingSimulationDiff{},
-		Metadata: &serviceports.DocumentParsingRuleMetadata{
+		Diff:     documentparsingruleports.DocumentParsingSimulationDiff{},
+		Metadata: &documentparsingruleports.DocumentParsingRuleMetadata{
 			RuleSetID:        set.ID,
 			RuleSetName:      set.Name,
 			RuleVersionID:    version.ID,
@@ -546,8 +546,8 @@ func (s *Service) SimulateVersion(
 
 func (s *Service) selectPublishedVersion(
 	ctx context.Context,
-	input *serviceports.DocumentParsingRuntimeInput,
-) (*repositories.PublishedDocumentParsingRuleVersion, int, string, error) {
+	input *documentparsingruleports.DocumentParsingRuntimeInput,
+) (*documentparsingruleports.PublishedDocumentParsingRuleVersion, int, string, error) {
 	if input == nil || strings.TrimSpace(input.DocumentKind) == "" {
 		return nil, 0, "", nil
 	}
@@ -559,7 +559,7 @@ func (s *Service) selectPublishedVersion(
 	if err != nil {
 		return nil, 0, "", err
 	}
-	var selected *repositories.PublishedDocumentParsingRuleVersion
+	var selected *documentparsingruleports.PublishedDocumentParsingRuleVersion
 	bestScore := -1
 	providerMatched := ""
 	for _, candidate := range published {
@@ -590,7 +590,7 @@ func (s *Service) validateFixturesAgainstVersion(
 ) (map[string]any, error) {
 	failures := make([]map[string]any, 0)
 	for _, fixture := range fixtures {
-		input := &serviceports.DocumentParsingRuntimeInput{
+		input := &documentparsingruleports.DocumentParsingRuntimeInput{
 			DocumentKind:        string(set.DocumentKind),
 			FileName:            fixture.FileName,
 			Text:                fixture.TextSnapshot,
@@ -690,7 +690,7 @@ func (s *Service) logAudit(
 	}
 
 	if err := s.auditService.LogAction(
-		&serviceports.LogActionParams{
+		&auditports.LogActionParams{
 			Resource:       permission.ResourceDocumentParsingRule,
 			ResourceID:     resourceID,
 			Operation:      operation,
@@ -707,16 +707,16 @@ func (s *Service) logAudit(
 	}
 }
 
-func fixturePages(fixture *documentparsingrule.Fixture) []serviceports.DocumentParsingPage {
-	pages := make([]serviceports.DocumentParsingPage, 0, len(fixture.PageSnapshots))
+func fixturePages(fixture *documentparsingrule.Fixture) []documentparsingruleports.DocumentParsingPage {
+	pages := make([]documentparsingruleports.DocumentParsingPage, 0, len(fixture.PageSnapshots))
 	for _, page := range fixture.PageSnapshots {
-		pages = append(pages, serviceports.DocumentParsingPage{
+		pages = append(pages, documentparsingruleports.DocumentParsingPage{
 			PageNumber: page.PageNumber,
 			Text:       page.Text,
 		})
 	}
 	if len(pages) == 0 {
-		pages = append(pages, serviceports.DocumentParsingPage{
+		pages = append(pages, documentparsingruleports.DocumentParsingPage{
 			PageNumber: 1,
 			Text:       fixture.TextSnapshot,
 		})
@@ -725,7 +725,7 @@ func fixturePages(fixture *documentparsingrule.Fixture) []serviceports.DocumentP
 }
 
 func validateFixtureAssertions(
-	analysis *serviceports.DocumentParsingAnalysis,
+	analysis *documentparsingruleports.DocumentParsingAnalysis,
 	assertions documentparsingrule.FixtureAssertions,
 ) error {
 	if analysis == nil {
@@ -770,7 +770,7 @@ func validateFixtureAssertions(
 }
 
 func validateFieldAssertion(
-	analysis *serviceports.DocumentParsingAnalysis,
+	analysis *documentparsingruleports.DocumentParsingAnalysis,
 	key string,
 	assertion documentparsingrule.FixtureFieldAssertion,
 ) error {
@@ -816,7 +816,7 @@ func validateFieldAssertion(
 	}
 }
 
-func analysisHasStopRole(analysis *serviceports.DocumentParsingAnalysis, role string) bool {
+func analysisHasStopRole(analysis *documentparsingruleports.DocumentParsingAnalysis, role string) bool {
 	for _, stop := range analysis.Stops {
 		if strings.EqualFold(stop.Role, role) {
 			return true
@@ -826,10 +826,10 @@ func analysisHasStopRole(analysis *serviceports.DocumentParsingAnalysis, role st
 }
 
 func diffAnalyses(
-	baseline *serviceports.DocumentParsingAnalysis,
-	candidate *serviceports.DocumentParsingAnalysis,
-) serviceports.DocumentParsingSimulationDiff {
-	diff := serviceports.DocumentParsingSimulationDiff{
+	baseline *documentparsingruleports.DocumentParsingAnalysis,
+	candidate *documentparsingruleports.DocumentParsingAnalysis,
+) documentparsingruleports.DocumentParsingSimulationDiff {
+	diff := documentparsingruleports.DocumentParsingSimulationDiff{
 		AddedFields:      []string{},
 		ChangedFields:    []string{},
 		AddedStopRoles:   []string{},
@@ -879,15 +879,15 @@ func diffAnalyses(
 }
 
 func findStopByRole(
-	stops []serviceports.DocumentParsingStop,
+	stops []documentparsingruleports.DocumentParsingStop,
 	role string,
-) (serviceports.DocumentParsingStop, bool) {
+) (documentparsingruleports.DocumentParsingStop, bool) {
 	for _, stop := range stops {
 		if strings.EqualFold(stop.Role, role) {
 			return stop, true
 		}
 	}
-	return serviceports.DocumentParsingStop{}, false
+	return documentparsingruleports.DocumentParsingStop{}, false
 }
 
 func dedupeStrings(items []string) []string {

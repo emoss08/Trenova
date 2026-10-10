@@ -3,8 +3,8 @@ package agentevalgate
 import (
 	"sort"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 
 type CatalogSnapshot struct {
@@ -47,7 +47,7 @@ type PolicySnapshot struct {
 
 func (k *Kit) Snapshot() CatalogSnapshot {
 	descriptors := make(
-		map[string]serviceports.AgentToolDescriptor,
+		map[string]agentports.AgentToolDescriptor,
 		len(k.Queries.All())+len(k.Actions.All()),
 	)
 	for _, descriptor := range k.Queries.Descriptors() {
@@ -57,7 +57,7 @@ func (k *Kit) Snapshot() CatalogSnapshot {
 		descriptors[descriptor.Name] = descriptor
 	}
 
-	policies := make([]serviceports.ToolPolicy, 0, len(descriptors)+len(k.Runtime))
+	policies := make([]agentports.ToolPolicy, 0, len(descriptors)+len(k.Runtime))
 	for _, tool := range k.Queries.All() {
 		policies = append(policies, tool.Policy())
 	}
@@ -84,7 +84,7 @@ func (k *Kit) Snapshot() CatalogSnapshot {
 	return CatalogSnapshot{Tools: tools}
 }
 
-func snapshotPolicy(policy *serviceports.ToolPolicy) PolicySnapshot {
+func snapshotPolicy(policy *agentports.ToolPolicy) PolicySnapshot {
 	egress := make([]string, 0, len(policy.Egress))
 	for _, class := range policy.Egress {
 		egress = append(egress, class.String())

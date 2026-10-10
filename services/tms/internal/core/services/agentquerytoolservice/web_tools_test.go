@@ -9,26 +9,27 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentextension"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type stubResearcher struct {
-	searched *serviceports.WebSearchQuery
-	read     *serviceports.WebPageQuery
+	searched *agentextensionports.WebSearchQuery
+	read     *agentextensionports.WebPageQuery
 	tenant   pagination.TenantInfo
-	outcome  *serviceports.WebSearchOutcome
-	page     *serviceports.WebPage
+	outcome  *agentextensionports.WebSearchOutcome
+	page     *agentextensionports.WebPage
 	err      error
 }
 
 func (s *stubResearcher) SearchWeb(
 	_ context.Context,
 	tenantInfo pagination.TenantInfo,
-	query serviceports.WebSearchQuery,
-) (*serviceports.WebSearchOutcome, error) {
+	query agentextensionports.WebSearchQuery,
+) (*agentextensionports.WebSearchOutcome, error) {
 	s.tenant = tenantInfo
 	s.searched = &query
 
@@ -38,8 +39,8 @@ func (s *stubResearcher) SearchWeb(
 func (s *stubResearcher) ReadWebPage(
 	_ context.Context,
 	tenantInfo pagination.TenantInfo,
-	query serviceports.WebPageQuery,
-) (*serviceports.WebPage, error) {
+	query agentextensionports.WebPageQuery,
+) (*agentextensionports.WebPage, error) {
 	s.tenant = tenantInfo
 	s.read = &query
 
@@ -49,9 +50,9 @@ func (s *stubResearcher) ReadWebPage(
 func TestWebSearchReturnsSourcesTheModelCanCite(t *testing.T) {
 	t.Parallel()
 
-	research := &stubResearcher{outcome: &serviceports.WebSearchOutcome{
+	research := &stubResearcher{outcome: &agentextensionports.WebSearchOutcome{
 		RetrievedAt: 1_790_150_400,
-		Hits: []serviceports.WebSearchHit{
+		Hits: []agentextensionports.WebSearchHit{
 			{
 				Ref:           "abcdEFGH12345678",
 				Title:         "Summary of Hours of Service Regulations",
@@ -94,7 +95,7 @@ func TestWebSearchReturnsSourcesTheModelCanCite(t *testing.T) {
 func TestWebSearchSaysSoWhenNothingMatched(t *testing.T) {
 	t.Parallel()
 
-	research := &stubResearcher{outcome: &serviceports.WebSearchOutcome{}}
+	research := &stubResearcher{outcome: &agentextensionports.WebSearchOutcome{}}
 	result, err := newWebSearchTool(research).Query(t.Context(), testParams(map[string]any{"query": "xyzzy"}))
 	require.NoError(t, err)
 
@@ -133,7 +134,7 @@ func TestWebSearchRefusesAMismatchedTenant(t *testing.T) {
 func TestWebReadPassesTheRefAndSaysWhetherThePageContinues(t *testing.T) {
 	t.Parallel()
 
-	research := &stubResearcher{page: &serviceports.WebPage{
+	research := &stubResearcher{page: &agentextensionports.WebPage{
 		Title:       "49 CFR 395.8",
 		URL:         "https://www.ecfr.gov/current/title-49/section-395.8",
 		Site:        "ecfr.gov",
@@ -177,7 +178,7 @@ func TestWebReadNeedsAURLAndARef(t *testing.T) {
 func TestWebToolsAreGatedOnWebResearch(t *testing.T) {
 	t.Parallel()
 
-	for _, tool := range []serviceports.AgentQueryTool{newWebSearchTool(nil), newWebReadTool(nil)} {
+	for _, tool := range []agentports.AgentQueryTool{newWebSearchTool(nil), newWebReadTool(nil)} {
 		policy := tool.Policy()
 		assert.Equal(t, permission.ResourceWebResearch, policy.Resource, tool.Name())
 		assert.Equal(t, agent.ExternalReadAlways, policy.ReadsExternal, tool.Name())
@@ -197,7 +198,7 @@ func TestEveryExtensionToolIsRegistered(t *testing.T) {
 			args[idx] = reflect.Zero(fn.Type().In(idx))
 		}
 		out := fn.Call(args)
-		if tool, ok := out[0].Interface().(serviceports.AgentQueryTool); ok {
+		if tool, ok := out[0].Interface().(agentports.AgentQueryTool); ok {
 			registered[tool.Name()] = struct{}{}
 		}
 	}

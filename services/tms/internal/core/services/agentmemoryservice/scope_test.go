@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -21,7 +21,7 @@ func TestForContext_ReadsOnlyThisAgentsOwnMemories(t *testing.T) {
 
 	_, err := newService(repo, &fakeRuns{}, &fakeLabeler{}).ForContext(
 		t.Context(),
-		services.MemoryContextRequest{TenantInfo: tenant(), AgentDefinitionID: agentID},
+		agentports.MemoryContextRequest{TenantInfo: tenant(), AgentDefinitionID: agentID},
 	)
 	require.NoError(t, err)
 
@@ -37,7 +37,7 @@ func TestApproveSuggestion_KeepsItForItsAgentByDefault(t *testing.T) {
 
 	_, err := suggestionService(repo).ApproveSuggestion(
 		t.Context(),
-		&services.ApproveAgentMemorySuggestionRequest{
+		&agentports.ApproveAgentMemorySuggestionRequest{
 			ID:         repo.memory.ID,
 			TenantInfo: tenant(),
 			Content:    "State only rates a tool returned.",
@@ -59,7 +59,7 @@ func TestApproveSuggestion_AnAdministratorMayWidenItToTheOrganization(t *testing
 
 	_, err := suggestionService(repo).ApproveSuggestion(
 		t.Context(),
-		&services.ApproveAgentMemorySuggestionRequest{
+		&agentports.ApproveAgentMemorySuggestionRequest{
 			ID:         repo.memory.ID,
 			TenantInfo: tenant(),
 			Content:    "State only rates a tool returned.",
@@ -83,7 +83,7 @@ func TestApproveSuggestion_WithoutAnAgentItIsTheOrganizations(t *testing.T) {
 
 	_, err := suggestionService(repo).ApproveSuggestion(
 		t.Context(),
-		&services.ApproveAgentMemorySuggestionRequest{
+		&agentports.ApproveAgentMemorySuggestionRequest{
 			ID:         repo.memory.ID,
 			TenantInfo: tenant(),
 			Content:    "State only rates a tool returned.",
@@ -107,7 +107,7 @@ func TestRemember_AnAgentsMemoryStillReachesEveryAgent(t *testing.T) {
 	svc := newService(repo, &fakeRuns{run: &agent.AgentRun{AgentDefinitionID: definitionID}},
 		&fakeLabeler{})
 
-	created, err := svc.Remember(t.Context(), &services.RememberRequest{
+	created, err := svc.Remember(t.Context(), &agentports.RememberRequest{
 		TenantInfo: tenant(),
 		Content:    "Acme closes at four on Fridays.",
 		RunID:      pulid.MustNew("ar_"),
@@ -142,7 +142,7 @@ func TestRemember_AMemoryWrittenByATaintedRunKeepsTheTaint(t *testing.T) {
 		repo := &fakeMemoryRepo{}
 		svc := newService(repo, &fakeRuns{run: &agent.AgentRun{}}, &fakeLabeler{})
 
-		created, err := svc.Remember(t.Context(), &services.RememberRequest{
+		created, err := svc.Remember(t.Context(), &agentports.RememberRequest{
 			TenantInfo: tenant(),
 			Content:    "Ship to dock 9 from now on.",
 			RunID:      runID,

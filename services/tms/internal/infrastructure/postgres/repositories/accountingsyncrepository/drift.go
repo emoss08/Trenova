@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -41,7 +41,7 @@ type driftFindingRepository struct {
 
 func NewDriftFindingRepository(
 	p DriftFindingParams,
-) repositories.AccountingDriftFindingRepository {
+) accountingsyncports.AccountingDriftFindingRepository {
 	return &driftFindingRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.accounting-drift-finding-repository"),
@@ -100,7 +100,7 @@ func (r *driftFindingRepository) Update(
 
 func (r *driftFindingRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetAccountingDriftFindingRequest,
+	req accountingsyncports.GetAccountingDriftFindingQuery,
 ) (*accountingsync.AccountingDriftFinding, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingDriftFinding, error) {
 		entity := new(accountingsync.AccountingDriftFinding)
@@ -124,7 +124,7 @@ func (r *driftFindingRepository) GetByID(
 
 func (r *driftFindingRepository) ListOpen(
 	ctx context.Context,
-	req *repositories.ListOpenAccountingDriftFindingsRequest,
+	req *accountingsyncports.ListOpenAccountingDriftFindingsRequest,
 ) ([]*accountingsync.AccountingDriftFinding, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*accountingsync.AccountingDriftFinding, error) {
 		entities := make([]*accountingsync.AccountingDriftFinding, 0, len(req.ObjectIDs))
@@ -151,7 +151,7 @@ func (r *driftFindingRepository) ListOpen(
 
 func (r *driftFindingRepository) applyListFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListAccountingDriftFindingsConnectionRequest,
+	req *accountingsyncports.ListAccountingDriftFindingsConnectionRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.AccountingDriftFindingColumns
 	if req.Filter != nil {
@@ -183,7 +183,7 @@ func (r *driftFindingRepository) applyListFilters(
 
 func (r *driftFindingRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListAccountingDriftFindingsConnectionRequest,
+	req *accountingsyncports.ListAccountingDriftFindingsConnectionRequest,
 ) (*pagination.CursorListResult[*accountingsync.AccountingDriftFinding], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*accountingsync.AccountingDriftFinding], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -254,11 +254,11 @@ func (r *driftFindingRepository) ListConnection(
 
 func (r *driftFindingRepository) Summarize(
 	ctx context.Context,
-	req *repositories.SummarizeAccountingDriftRequest,
-) (*repositories.AccountingDriftSummary, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.AccountingDriftSummary, error) {
+	req *accountingsyncports.SummarizeAccountingDriftRequest,
+) (*accountingsyncports.AccountingDriftSummary, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*accountingsyncports.AccountingDriftSummary, error) {
 		cols := buncolgen.AccountingDriftFindingColumns
-		summary := new(repositories.AccountingDriftSummary)
+		summary := new(accountingsyncports.AccountingDriftSummary)
 		open := accountingsync.DriftStatusOpen
 
 		if err := r.db.DBForContext(ctx).
@@ -305,12 +305,12 @@ func (r *driftFindingRepository) Summarize(
 
 func (r *driftFindingRepository) ListAttention(
 	ctx context.Context,
-	req *repositories.ListAccountingDriftAttentionRequest,
-) ([]repositories.AccountingDriftAttentionGroup, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.AccountingDriftAttentionGroup, error) {
+	req *accountingsyncports.ListAccountingDriftAttentionRequest,
+) ([]accountingsyncports.AccountingDriftAttentionGroup, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]accountingsyncports.AccountingDriftAttentionGroup, error) {
 		cols := buncolgen.AccountingDriftFindingColumns
 		groups := make(
-			[]repositories.AccountingDriftAttentionGroup,
+			[]accountingsyncports.AccountingDriftAttentionGroup,
 			0,
 			len(accountingsync.AllDriftKinds()),
 		)

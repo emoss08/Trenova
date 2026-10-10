@@ -1,17 +1,19 @@
 package shipmentcommercial
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/formulatemplateportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/fuelsurchargeportsmock"
 	"context"
 	"errors"
 	"testing"
-
-	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial/shipmentcommercialtest"
 
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial/shipmentcommercialtest"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -141,7 +143,7 @@ func TestAdoptContractRate_SkipsAccessorialWhoseConditionIsFalse(t *testing.T) {
 	agreement.Accessorials[0].ApplyCondition = "totalStops > 2"
 	entity := ratedShipment(agreement.ID)
 
-	predicate := mocks.NewMockFormulaPredicateEvaluator(t)
+	predicate := formulatemplateportsmock.NewMockFormulaPredicateEvaluator(t)
 	predicate.EXPECT().
 		EvaluatePredicate(mock.Anything, mock.AnythingOfType("*services.EvaluatePredicateRequest")).
 		Return(false, nil).
@@ -164,7 +166,7 @@ func TestAdoptContractRate_WithholdsAccessorialWhenConditionErrors(t *testing.T)
 	agreement.Accessorials[0].ApplyCondition = "nonsense("
 	entity := ratedShipment(agreement.ID)
 
-	predicate := mocks.NewMockFormulaPredicateEvaluator(t)
+	predicate := formulatemplateportsmock.NewMockFormulaPredicateEvaluator(t)
 	predicate.EXPECT().
 		EvaluatePredicate(mock.Anything, mock.AnythingOfType("*services.EvaluatePredicateRequest")).
 		Return(false, errors.New("compile failed")).
@@ -191,9 +193,9 @@ func TestSyncFuelSurcharge_PassesAgreementFuelBinding(t *testing.T) {
 
 	entity := ratedShipment(agreement.ID)
 
-	var captured *services.FuelProgramOverride
+	var captured *fuelsurchargeports.FuelProgramOverride
 
-	fuel := mocks.NewMockFuelSurchargeResolver(t)
+	fuel := fuelsurchargeportsmock.NewMockFuelSurchargeResolver(t)
 	fuel.EXPECT().
 		ResolveShipmentCharge(
 			mock.Anything,
@@ -201,8 +203,8 @@ func TestSyncFuelSurcharge_PassesAgreementFuelBinding(t *testing.T) {
 		).
 		RunAndReturn(func(
 			_ context.Context,
-			req *services.ResolveShipmentChargeRequest,
-		) (*services.ResolvedFuelSurcharge, error) {
+			req *fuelsurchargeports.ResolveShipmentChargeRequest,
+		) (*fuelsurchargeports.ResolvedFuelSurcharge, error) {
 			captured = req.Override
 			return nil, nil
 		}).
@@ -277,7 +279,7 @@ func ratedShipment(agreementID pulid.ID) *shipment.Shipment {
 func agreementCalculator(
 	t *testing.T,
 	agreement *rateagreement.RateAgreement,
-	predicate services.FormulaPredicateEvaluator,
+	predicate formulatemplateports.FormulaPredicateEvaluator,
 ) *Calculator {
 	t.Helper()
 

@@ -5,10 +5,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/jurisdictionrule"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/referencedataguard"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/jurisdictionruleports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,20 +22,20 @@ import (
 type ServiceParams struct {
 	fx.In
 
-	Repo          repositories.JurisdictionRuleRepository
-	AuditService  services.AuditService
+	Repo          permitports.JurisdictionRuleRepository
+	AuditService  auditports.AuditService
 	ReferenceData *referencedataguard.Guard
 	Logger        *zap.Logger
 }
 
 type service struct {
-	repo          repositories.JurisdictionRuleRepository
-	auditService  services.AuditService
+	repo          permitports.JurisdictionRuleRepository
+	auditService  auditports.AuditService
 	referenceData *referencedataguard.Guard
 	l             *zap.Logger
 }
 
-func NewService(p ServiceParams) services.JurisdictionRuleService {
+func NewService(p ServiceParams) jurisdictionruleports.JurisdictionRuleService {
 	return &service{
 		repo:          p.Repo,
 		auditService:  p.AuditService,
@@ -42,7 +44,7 @@ func NewService(p ServiceParams) services.JurisdictionRuleService {
 	}
 }
 
-func (s *service) requireSteward(actor *services.RequestActor) error {
+func (s *service) requireSteward(actor *permissionports.RequestActor) error {
 	if actor == nil {
 		return s.referenceData.RequireSteward(pulid.Nil)
 	}
@@ -52,9 +54,9 @@ func (s *service) requireSteward(actor *services.RequestActor) error {
 
 func (s *service) List(
 	ctx context.Context,
-	req *services.ListJurisdictionRulesRequest,
+	req *jurisdictionruleports.ListJurisdictionRulesRequest,
 ) (*pagination.ListResult[*jurisdictionrule.JurisdictionRule], error) {
-	return s.repo.List(ctx, &repositories.ListJurisdictionRulesRequest{
+	return s.repo.List(ctx, &permitports.ListJurisdictionRulesRequest{
 		Filter:            req.Filter,
 		VerificationState: req.VerificationState,
 		Status:            req.Status,
@@ -65,7 +67,7 @@ func (s *service) GetByID(
 	ctx context.Context,
 	ruleID pulid.ID,
 ) (*jurisdictionrule.JurisdictionRule, error) {
-	return s.repo.GetByID(ctx, &repositories.GetJurisdictionRuleByIDRequest{
+	return s.repo.GetByID(ctx, &permitports.GetJurisdictionRuleByIDRequest{
 		RuleID:           ruleID,
 		ExpandThresholds: true,
 	})
@@ -74,7 +76,7 @@ func (s *service) GetByID(
 func (s *service) Create(
 	ctx context.Context,
 	entity *jurisdictionrule.JurisdictionRule,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*jurisdictionrule.JurisdictionRule, error) {
 	if err := s.requireSteward(actor); err != nil {
 		return nil, err
@@ -111,13 +113,13 @@ func (s *service) Create(
 func (s *service) Update(
 	ctx context.Context,
 	entity *jurisdictionrule.JurisdictionRule,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*jurisdictionrule.JurisdictionRule, error) {
 	if err := s.requireSteward(actor); err != nil {
 		return nil, err
 	}
 
-	previous, err := s.repo.GetByID(ctx, &repositories.GetJurisdictionRuleByIDRequest{
+	previous, err := s.repo.GetByID(ctx, &permitports.GetJurisdictionRuleByIDRequest{
 		RuleID: entity.ID,
 	})
 	if err != nil {
@@ -197,7 +199,7 @@ func nullableIntDiffers(a, b *int64) bool {
 
 func (s *service) Verify(
 	ctx context.Context,
-	req *services.VerifyJurisdictionRuleRequest,
+	req *jurisdictionruleports.VerifyJurisdictionRuleRequest,
 ) (*jurisdictionrule.JurisdictionRule, error) {
 	if err := s.requireSteward(req.Actor); err != nil {
 		return nil, err
@@ -226,7 +228,7 @@ func (s *service) Verify(
 		return nil, multiErr
 	}
 
-	verified, err := s.repo.Verify(ctx, &repositories.VerifyJurisdictionRuleRequest{
+	verified, err := s.repo.Verify(ctx, &permitports.VerifyJurisdictionRuleRequest{
 		RuleID:     req.RuleID,
 		State:      req.State,
 		SourceNote: req.SourceNote,
@@ -251,7 +253,7 @@ func (s *service) Verify(
 type auditParams struct {
 	Rule      *jurisdictionrule.JurisdictionRule
 	Operation permission.Operation
-	Actor     *services.RequestActor
+	Actor     *permissionports.RequestActor
 	Previous  any
 	Current   any
 	Comment   string

@@ -7,25 +7,26 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 )
 
-func person() *serviceports.RequestActor {
+func person() *permissionports.RequestActor {
 	user := pulid.MustNew("usr_")
 
-	return &serviceports.RequestActor{
-		PrincipalType: serviceports.PrincipalTypeUser,
+	return &permissionports.RequestActor{
+		PrincipalType: permissionports.PrincipalTypeUser,
 		PrincipalID:   user,
 		UserID:        user,
 	}
 }
 
-func agentPrincipal() *serviceports.RequestActor {
-	return &serviceports.RequestActor{
-		PrincipalType: serviceports.PrincipalTypeAgent,
+func agentPrincipal() *permissionports.RequestActor {
+	return &permissionports.RequestActor{
+		PrincipalType: permissionports.PrincipalTypeAgent,
 		PrincipalID:   pulid.MustNew("agdef_"),
 	}
 }
@@ -37,18 +38,18 @@ func definition(
 	return &agentdefinition.Definition{AutonomyCeiling: ceiling, ToolTiers: tiers}
 }
 
-func call(actor *serviceports.RequestActor, args map[string]any) serviceports.ToolExecuteParams {
-	return serviceports.ToolExecuteParams{Actor: actor, Params: args}
+func call(actor *permissionports.RequestActor, args map[string]any) agentports.ToolExecuteParams {
+	return agentports.ToolExecuteParams{Actor: actor, Params: args}
 }
 
 func withCondition(
-	policy serviceports.ToolPolicy,
+	policy agentports.ToolPolicy,
 	limit agent.AutonomyTier,
-) serviceports.ToolPolicy {
+) agentports.ToolPolicy {
 	description := policy.Condition.Description
-	policy.Condition = &serviceports.TierCondition{
+	policy.Condition = &agentports.TierCondition{
 		Description: description,
-		Limit: func(context.Context, serviceports.ToolExecuteParams) agent.AutonomyTier {
+		Limit: func(context.Context, agentports.ToolExecuteParams) agent.AutonomyTier {
 			return limit
 		},
 	}
@@ -568,7 +569,7 @@ func TestPromotable(t *testing.T) {
 		assert.Equal(t, want, agenttoolpolicy.Promotable(registeredPolicy(t, name)), name)
 	}
 
-	uncapped := serviceports.ToolPolicy{
+	uncapped := agentports.ToolPolicy{
 		MaxTier: agent.TierAutoExecute,
 		Egress:  []agent.EgressClass{agent.EgressDriverVisible},
 	}

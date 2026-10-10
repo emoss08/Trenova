@@ -3,16 +3,16 @@ package telematicsservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-type WorkerHOSLogEntry = services.ProviderHOSLogEntry
+type WorkerHOSLogEntry = telematicsports.ProviderHOSLogEntry
 
-type WorkerHOSDailyLog = services.ProviderHOSDailyLog
+type WorkerHOSDailyLog = telematicsports.ProviderHOSDailyLog
 
-type WorkerFormSubmission = services.ProviderFormSubmission
+type WorkerFormSubmission = telematicsports.ProviderFormSubmission
 
 type HOSCertificationSummary struct {
 	WorkerID        pulid.ID `json:"workerId"`

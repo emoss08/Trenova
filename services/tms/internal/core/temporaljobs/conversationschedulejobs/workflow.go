@@ -3,7 +3,7 @@ package conversationschedulejobs
 import (
 	"time"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
@@ -57,11 +57,11 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 func ConversationScheduleRunWorkflow(
 	ctx workflow.Context,
 	payload *RunPayload,
-) (*serviceports.FireConversationScheduleResult, error) {
+) (*conversationscheduleports.FireConversationScheduleResult, error) {
 	var a *Activities
 
 	fireCtx := workflow.WithActivityOptions(ctx, fireOptions)
-	var result serviceports.FireConversationScheduleResult
+	var result conversationscheduleports.FireConversationScheduleResult
 	err := workflow.ExecuteActivity(fireCtx, a.FireConversationScheduleActivity, &FireInput{
 		Payload: payload,
 		FiredAt: workflow.GetInfo(ctx).WorkflowStartTime.Unix(),

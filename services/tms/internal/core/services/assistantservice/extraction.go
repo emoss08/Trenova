@@ -10,8 +10,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/typeutils"
@@ -34,7 +34,7 @@ type extractionPage struct {
 // box it was found in. It is nil when the draft holds nothing read yet, which
 // leaves the result to be shown as a record card.
 func (r *artifactRecorder) extraction(
-	observation services.ToolObservation,
+	observation agentports.ToolObservation,
 ) *assistantartifact.Artifact {
 	document, ok := toJSONDocument(observation.Data)
 	if !ok {
@@ -49,7 +49,7 @@ func (r *artifactRecorder) extraction(
 	fileName := ""
 	var pages []extractionPage
 	if r.svc != nil && r.svc.documents != nil {
-		if doc, docErr := r.svc.documents.GetByID(r.ctx, repositories.GetDocumentByIDRequest{
+		if doc, docErr := r.svc.documents.GetByID(r.ctx, documentports.GetDocumentByIDRequest{
 			ID:         documentID,
 			TenantInfo: r.tenant,
 		}); docErr == nil && doc != nil {

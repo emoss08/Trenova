@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/jurisdictionrule"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -41,7 +41,7 @@ func (r *QueryResolver) JurisdictionRules(ctx context.Context, input gqlmodel.Da
 	// global, so every organization's table shows the same data.
 	result, err := r.JurisdictionRuleRepo.ListConnection(
 		ctx,
-		&repositories.ListJurisdictionRuleConnectionRequest{
+		&permitports.ListJurisdictionRuleConnectionRequest{
 			Filter: tableInput.Filter,
 			Cursor: tableInput.Cursor,
 		},
@@ -85,7 +85,7 @@ func (r *QueryResolver) JurisdictionRuleOverrides(ctx context.Context, input gql
 	// scoped as well as authorized.
 	result, err := r.JurisdictionRuleRepo.ListOverridesConnection(
 		ctx,
-		&repositories.ListOverridesRequest{
+		&permitports.ListOverridesRequest{
 			Filter: tableInput.Filter,
 			Cursor: tableInput.Cursor,
 		},

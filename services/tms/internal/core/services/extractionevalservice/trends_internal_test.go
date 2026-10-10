@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -79,7 +79,7 @@ func TestProviderTrendsNameEachProviderAndItsDrift(t *testing.T) {
 	assert.Equal(t, aicorrection.DriftPoints, report.DriftPoints)
 	require.Len(t, report.Providers, 3)
 
-	byID := map[pulid.ID]services.ExtractionProviderTrend{}
+	byID := map[pulid.ID]extractionevalports.ExtractionProviderTrend{}
 	for _, trend := range report.Providers {
 		byID[trend.ProviderID] = trend
 	}
@@ -116,7 +116,7 @@ func TestCheckDriftTellsThePeopleWhoChooseProviders(t *testing.T) {
 	w.steady(fine.ID)
 	w.drifting(pulid.MustNew("aip_"))
 
-	notified, err := w.svc.CheckDrift(t.Context(), &services.ExtractionDriftCheckRequest{
+	notified, err := w.svc.CheckDrift(t.Context(), &extractionevalports.ExtractionDriftCheckRequest{
 		TenantInfo: testTenant(),
 	})
 	require.NoError(t, err)
@@ -128,7 +128,7 @@ func TestCheckDriftTellsThePeopleWhoChooseProviders(t *testing.T) {
 	assert.Equal(t, permission.ResourceAIProvider, req.Resource)
 	assert.Equal(t, permission.OpUpdate, req.Operation)
 	assert.Equal(t, window.CheckedWeek, req.DedupeSince, "one notice per provider per week")
-	assert.Equal(t, services.ExtractionAccuracyDriftEvent, req.Notification.EventType)
+	assert.Equal(t, extractionevalports.ExtractionAccuracyDriftEvent, req.Notification.EventType)
 	require.NotNil(t, req.Notification.CorrelationID)
 	assert.Contains(t, *req.Notification.CorrelationID, tuned.ID.String())
 	assert.Equal(t,
@@ -146,7 +146,7 @@ func TestCheckDriftSurvivesAFailedNotice(t *testing.T) {
 	w.svc.notifier = &fakeDriftNotifier{err: errors.New("mail down")}
 	w.drifting(w.provider("Fine-tuned Qwen").ID)
 
-	notified, err := w.svc.CheckDrift(t.Context(), &services.ExtractionDriftCheckRequest{
+	notified, err := w.svc.CheckDrift(t.Context(), &extractionevalports.ExtractionDriftCheckRequest{
 		TenantInfo: testTenant(),
 		Now:        testNow,
 	})
@@ -160,7 +160,7 @@ func TestCheckDriftReturnsARepositoryFailure(t *testing.T) {
 	w := newWorld()
 	w.corrections.weeklyErr = errUpstream
 
-	_, err := w.svc.CheckDrift(t.Context(), &services.ExtractionDriftCheckRequest{
+	_, err := w.svc.CheckDrift(t.Context(), &extractionevalports.ExtractionDriftCheckRequest{
 		TenantInfo: testTenant(),
 	})
 	require.ErrorIs(t, err, errUpstream)

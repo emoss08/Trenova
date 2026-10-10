@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs/billingcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs/billingcontract"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -21,8 +22,8 @@ import (
 
 func (s *Service) UpdateDraft(
 	ctx context.Context,
-	req *servicesports.UpdateInvoiceDraftRequest,
-	actor *servicesports.RequestActor,
+	req *invoiceports.UpdateInvoiceDraftRequest,
+	actor *permissionports.RequestActor,
 ) (*invoice.Invoice, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
@@ -32,7 +33,7 @@ func (s *Service) UpdateDraft(
 		)
 	}
 
-	entity, err := s.repo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+	entity, err := s.repo.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         req.InvoiceID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -51,7 +52,7 @@ func (s *Service) UpdateDraft(
 		return nil, err
 	}
 	if req.AttachmentIDs != nil {
-		if _, err = s.repo.UpsertAttachments(ctx, repositories.UpsertInvoiceAttachmentsRequest{
+		if _, err = s.repo.UpsertAttachments(ctx, invoiceports.UpsertInvoiceAttachmentsRequest{
 			InvoiceID:      updated.ID,
 			DocumentIDs:    *req.AttachmentIDs,
 			OrganizationID: updated.OrganizationID,
@@ -72,15 +73,15 @@ func (s *Service) UpdateDraft(
 	)
 	return s.repo.GetByID(
 		ctx,
-		repositories.GetInvoiceByIDRequest{ID: updated.ID, TenantInfo: req.TenantInfo},
+		invoiceports.GetInvoiceByIDRequest{ID: updated.ID, TenantInfo: req.TenantInfo},
 	)
 }
 
 func (s *Service) RenderPreview(
 	ctx context.Context,
-	req *servicesports.InvoicePreviewRequest,
-) (*servicesports.InvoicePreviewResult, error) {
-	entity, err := s.repo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+	req *invoiceports.InvoicePreviewRequest,
+) (*invoiceports.InvoicePreviewResult, error) {
+	entity, err := s.repo.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         req.InvoiceID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -109,9 +110,9 @@ func (s *Service) RenderPreview(
 
 func (s *Service) GeneratePDF(
 	ctx context.Context,
-	req *servicesports.InvoicePreviewRequest,
-	actor *servicesports.RequestActor,
-) (*servicesports.GenerateInvoicePDFResult, error) {
+	req *invoiceports.InvoicePreviewRequest,
+	actor *permissionports.RequestActor,
+) (*invoiceports.GenerateInvoicePDFResult, error) {
 	_, userID, err := s.planPDFGeneration(ctx, req, actor)
 	if err != nil {
 		return nil, err
@@ -152,7 +153,7 @@ func (s *Service) GeneratePDF(
 			WithInternal(err)
 	}
 
-	return &servicesports.GenerateInvoicePDFResult{
+	return &invoiceports.GenerateInvoicePDFResult{
 		InvoiceID:     req.InvoiceID,
 		WorkflowID:    run.GetID(),
 		WorkflowRunID: run.GetRunID(),
@@ -162,9 +163,9 @@ func (s *Service) GeneratePDF(
 
 func (s *Service) AutoSendInvoiceAfterPDFGeneration(
 	ctx context.Context,
-	req *servicesports.AutoSendInvoiceAfterPDFGenerationRequest,
-	actor *servicesports.RequestActor,
-) (*servicesports.InvoiceSendResult, error) {
+	req *invoiceports.AutoSendInvoiceAfterPDFGenerationRequest,
+	actor *permissionports.RequestActor,
+) (*invoiceports.InvoiceSendResult, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"request",
@@ -180,7 +181,7 @@ func (s *Service) AutoSendInvoiceAfterPDFGeneration(
 		)
 	}
 
-	entity, err := s.repo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+	entity, err := s.repo.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         req.InvoiceID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -191,10 +192,10 @@ func (s *Service) AutoSendInvoiceAfterPDFGeneration(
 		return nil, err
 	}
 
-	cus, err := s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
+	cus, err := s.customerRepo.GetByID(ctx, customerports.GetCustomerByIDRequest{
 		ID:         entity.CustomerID,
 		TenantInfo: req.TenantInfo,
-		CustomerFilterOptions: repositories.CustomerFilterOptions{
+		CustomerFilterOptions: customerports.CustomerFilterOptions{
 			IncludeBillingProfile: true,
 		},
 	})
@@ -205,7 +206,7 @@ func (s *Service) AutoSendInvoiceAfterPDFGeneration(
 		return nil, nil
 	}
 
-	return s.SendFromWorkflow(ctx, &servicesports.InvoiceSendRequest{
+	return s.SendFromWorkflow(ctx, &invoiceports.InvoiceSendRequest{
 		InvoiceID:  req.InvoiceID,
 		TenantInfo: req.TenantInfo,
 		BaseURL:    req.BaseURL,
@@ -223,7 +224,7 @@ func (s *Service) invoicePreviewForEntity(
 	entity *invoice.Invoice,
 	deliveryProfile *invoiceDeliveryProfile,
 	tenantInfo pagination.TenantInfo,
-) (*servicesports.InvoicePreviewResult, error) {
+) (*invoiceports.InvoicePreviewResult, error) {
 	if s.templates == nil {
 		return nil, errortypes.NewBusinessError(
 			"Invoice rendering is not configured on this deployment",
@@ -241,7 +242,7 @@ func (s *Service) invoicePreviewForEntity(
 		customerID = &id
 	}
 
-	rendered, err := s.templates.RenderDocument(ctx, &servicesports.RenderDocumentRequest{
+	rendered, err := s.templates.RenderDocument(ctx, &documenttemplateports.RenderDocumentRequest{
 		TenantInfo:  tenantInfo,
 		Kind:        documenttemplate.KindInvoicePDF,
 		CustomerID:  customerID,
@@ -253,7 +254,7 @@ func (s *Service) invoicePreviewForEntity(
 		return nil, err
 	}
 
-	return &servicesports.InvoicePreviewResult{
+	return &invoiceports.InvoicePreviewResult{
 		Content:     rendered.PDF,
 		ContentType: "application/pdf",
 		FileName:    invoicePDFName(entity),

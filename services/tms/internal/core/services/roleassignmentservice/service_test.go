@@ -1,11 +1,12 @@
 package roleassignmentservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,13 +17,13 @@ import (
 )
 
 type testDeps struct {
-	repo *mocks.MockRoleAssignmentRepository
+	repo *permissionportsmock.MockRoleAssignmentRepository
 	svc  *Service
 }
 
 func setupTest(t *testing.T) *testDeps {
 	t.Helper()
-	repo := mocks.NewMockRoleAssignmentRepository(t)
+	repo := permissionportsmock.NewMockRoleAssignmentRepository(t)
 	svc := &Service{
 		l:    zap.NewNop(),
 		repo: repo,
@@ -50,7 +51,7 @@ func TestList_Success(t *testing.T) {
 		Items: []*permission.UserRoleAssignment{newTestEntity()},
 		Total: 1,
 	}
-	req := &repositories.ListRoleAssignmentsRequest{
+	req := &permissionports.ListRoleAssignmentsRequest{
 		Filter:      &pagination.QueryOptions{},
 		ExpandRoles: true,
 	}
@@ -70,7 +71,7 @@ func TestList_Error(t *testing.T) {
 	deps := setupTest(t)
 	ctx := t.Context()
 
-	req := &repositories.ListRoleAssignmentsRequest{
+	req := &permissionports.ListRoleAssignmentsRequest{
 		Filter: &pagination.QueryOptions{},
 	}
 
@@ -89,7 +90,7 @@ func TestGetByID_Success(t *testing.T) {
 	ctx := t.Context()
 
 	entity := newTestEntity()
-	req := repositories.GetRoleAssignmentByIDRequest{
+	req := permissionports.GetRoleAssignmentByIDRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 		},
@@ -112,7 +113,7 @@ func TestGetByID_Error(t *testing.T) {
 	deps := setupTest(t)
 	ctx := t.Context()
 
-	req := repositories.GetRoleAssignmentByIDRequest{
+	req := permissionports.GetRoleAssignmentByIDRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
 		},
@@ -130,7 +131,7 @@ func TestGetByID_Error(t *testing.T) {
 
 func TestNew(t *testing.T) {
 	t.Parallel()
-	repo := mocks.NewMockRoleAssignmentRepository(t)
+	repo := permissionportsmock.NewMockRoleAssignmentRepository(t)
 	logger := zap.NewNop()
 
 	svc := New(Params{

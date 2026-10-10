@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -31,7 +31,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.RoleRepository {
+func New(p Params) permissionports.RoleRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.role-repository"),
@@ -40,7 +40,7 @@ func New(p Params) repositories.RoleRepository {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListRolesRequest,
+	req *permissionports.ListRolesRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(q, "r", req.Filter, (*permission.Role)(nil))
 	q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -53,7 +53,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListRolesRequest,
+	req *permissionports.ListRolesRequest,
 ) (*pagination.ListResult[*permission.Role], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*permission.Role], error) {
 		log := r.l.With(
@@ -83,7 +83,7 @@ func (r *repository) List(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListRoleConnectionRequest,
+	req *permissionports.ListRoleConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -96,7 +96,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListRoleConnectionRequest,
+	req *permissionports.ListRoleConnectionRequest,
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -108,7 +108,7 @@ func (r *repository) applyTotalCountFilters(
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListRoleConnectionRequest,
+	req *permissionports.ListRoleConnectionRequest,
 ) (*pagination.CursorListResult[*permission.Role], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*permission.Role], error) {
 		log := r.l.With(
@@ -180,7 +180,7 @@ func (r *repository) SelectOptions(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetRoleByIDRequest,
+	req permissionports.GetRoleByIDRequest,
 ) (*permission.Role, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*permission.Role, error) {
 		log := r.l.With(
@@ -252,14 +252,14 @@ func (r *repository) GetRolesWithInheritance(
 func (r *repository) GetUsersWithRole(
 	ctx context.Context,
 	roleID pulid.ID,
-) ([]repositories.ImpactedUser, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.ImpactedUser, error) {
+) ([]permissionports.ImpactedUser, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]permissionports.ImpactedUser, error) {
 		log := r.l.With(
 			zap.String("operation", "GetUsersWithRole"),
 			zap.String("roleId", roleID.String()),
 		)
 
-		var results []repositories.ImpactedUser
+		var results []permissionports.ImpactedUser
 		err := r.db.DBForContext(ctx).NewSelect().
 			TableExpr("user_role_assignments AS ura").
 			ColumnExpr("ura.user_id").
@@ -379,7 +379,7 @@ func (r *repository) CreateAssignment(
 
 func (r *repository) DeleteAssignment(
 	ctx context.Context,
-	req repositories.DeleteRoleAssignmentRequest,
+	req permissionports.DeleteRoleAssignmentRequest,
 ) (*permission.UserRoleAssignment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*permission.UserRoleAssignment, error) {
 		log := r.l.With(
@@ -459,7 +459,7 @@ func (r *repository) UpdateResourcePermission(
 
 func (r *repository) DeleteResourcePermission(
 	ctx context.Context,
-	req repositories.DeleteResourcePermissionRequest,
+	req permissionports.DeleteResourcePermissionRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		log := r.l.With(
@@ -536,16 +536,16 @@ ORDER BY u.name`
 
 func (r *repository) ListUsersWithPermission(
 	ctx context.Context,
-	req repositories.ListUsersWithPermissionRequest,
-) ([]repositories.PermittedUser, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]repositories.PermittedUser, error) {
+	req permissionports.ListUsersWithPermissionRequest,
+) ([]permissionports.PermittedUser, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]permissionports.PermittedUser, error) {
 		log := r.l.With(
 			zap.String("operation", "ListUsersWithPermission"),
 			zap.String("resource", req.Resource.String()),
 			zap.String("permissionOperation", string(req.Operation)),
 		)
 
-		users := make([]repositories.PermittedUser, 0)
+		users := make([]permissionports.PermittedUser, 0)
 		if err := r.db.DBForContext(ctx).NewRaw(
 			usersWithPermissionQuery,
 			req.OrganizationID,

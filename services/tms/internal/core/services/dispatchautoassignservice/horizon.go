@@ -4,9 +4,9 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/dispatchcandidateservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/shared/assignmentsolver"
 	"github.com/emoss08/trenova/shared/dispatchplanner"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,13 +16,13 @@ const horizonSearchSeed = int64(1)
 
 type horizonOracle struct {
 	candidates *dispatchcandidateservice.Service
-	moves      []*repositories.BoardMove
-	drivers    []*repositories.BoardDriver
+	moves      []*shipmentports.BoardMove
+	drivers    []*shipmentports.BoardDriver
 	snapshot   *dispatchcandidateservice.FleetSnapshot
 	control    *dispatchcontrol.DispatchControl
 	scores     [][]*dispatchcandidateservice.CandidateScore
 
-	baseCommitments map[pulid.ID][]*repositories.WorkerCommitment
+	baseCommitments map[pulid.ID][]*shipmentports.WorkerCommitment
 }
 
 func newHorizonOracle(
@@ -63,9 +63,9 @@ func (o *horizonOracle) Rebuild(
 }
 
 func cloneCommitments(
-	source map[pulid.ID][]*repositories.WorkerCommitment,
-) map[pulid.ID][]*repositories.WorkerCommitment {
-	cloned := make(map[pulid.ID][]*repositories.WorkerCommitment, len(source))
+	source map[pulid.ID][]*shipmentports.WorkerCommitment,
+) map[pulid.ID][]*shipmentports.WorkerCommitment {
+	cloned := make(map[pulid.ID][]*shipmentports.WorkerCommitment, len(source))
 	for workerID, commitments := range source {
 		cloned[workerID] = slices.Clone(commitments)
 	}
@@ -98,7 +98,7 @@ func (o *horizonOracle) Commit(task, resource int) {
 	)
 }
 
-func (s *Service) solveHorizon(p *solveParams) *portservices.DispatchPlan {
+func (s *Service) solveHorizon(p *solveParams) *agentports.DispatchPlan {
 	oracle := newHorizonOracle(p, s.candidates)
 
 	options := dispatchplanner.Options{
@@ -134,7 +134,7 @@ func (s *Service) solveHorizon(p *solveParams) *portservices.DispatchPlan {
 }
 
 type buildHorizonPlanParams struct {
-	Moves   []*repositories.BoardMove
+	Moves   []*shipmentports.BoardMove
 	Result  dispatchplanner.Result
 	Oracle  *horizonOracle
 	Control *dispatchcontrol.DispatchControl
@@ -142,21 +142,21 @@ type buildHorizonPlanParams struct {
 	Now     int64
 }
 
-func buildHorizonPlan(p *buildHorizonPlanParams) *portservices.DispatchPlan {
+func buildHorizonPlan(p *buildHorizonPlanParams) *agentports.DispatchPlan {
 	tier := p.Policy.Tier
 	threshold := p.Control.ConfidenceThreshold()
 
-	plan := &portservices.DispatchPlan{
-		Assignments:  make([]*portservices.DispatchPlannedAssignment, 0, len(p.Result.Assignments)),
-		Uncovered:    make([]*portservices.DispatchUncoveredMove, 0, len(p.Result.Unassigned)),
-		Tours:        make([]*portservices.DispatchTour, 0, len(p.Oracle.drivers)),
+	plan := &agentports.DispatchPlan{
+		Assignments:  make([]*agentports.DispatchPlannedAssignment, 0, len(p.Result.Assignments)),
+		Uncovered:    make([]*agentports.DispatchUncoveredMove, 0, len(p.Result.Unassigned)),
+		Tours:        make([]*agentports.DispatchTour, 0, len(p.Oracle.drivers)),
 		PlanningMode: dispatchcontrol.PlanningModeHorizon.String(),
 		ShadowMode:   p.Policy.ShadowMode,
 		AutonomyTier: tier,
 		GeneratedAt:  p.Now,
 	}
 
-	tourByDriver := make(map[int]*portservices.DispatchTour, len(p.Oracle.drivers))
+	tourByDriver := make(map[int]*agentports.DispatchTour, len(p.Oracle.drivers))
 	tourOrder := make([]int, 0, len(p.Oracle.drivers))
 
 	for _, assignment := range p.Result.Assignments {
@@ -169,7 +169,7 @@ func buildHorizonPlan(p *buildHorizonPlanParams) *portservices.DispatchPlan {
 
 		tour, ok := tourByDriver[assignment.Resource]
 		if !ok {
-			tour = &portservices.DispatchTour{
+			tour = &agentports.DispatchTour{
 				TourID:     pulid.MustNew("tour_"),
 				WorkerID:   score.WorkerID,
 				WorkerName: score.WorkerName,

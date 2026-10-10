@@ -8,7 +8,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -18,16 +19,16 @@ import (
 
 func newVectorizer(
 	repo *fakeRepository,
-	embeddings serviceports.EmbeddingService,
+	embeddings aiusageports.EmbeddingService,
 ) *Service {
 	return New(Params{Logger: zap.NewNop(), Repository: repo, Embeddings: embeddings})
 }
 
-func queryRequest(tenant pagination.TenantInfo, text string) *serviceports.QueryVectorRequest {
-	return &serviceports.QueryVectorRequest{
+func queryRequest(tenant pagination.TenantInfo, text string) *agentports.QueryVectorRequest {
+	return &agentports.QueryVectorRequest{
 		TenantInfo: tenant,
 		Text:       text,
-		Attribution: serviceports.AIUsageAttribution{
+		Attribution: aiusageports.AIUsageAttribution{
 			UserID:   pulid.MustNew("usr_"),
 			ThreadID: pulid.MustNew("ath_"),
 		},
@@ -52,11 +53,11 @@ func TestVectorize_EmbedsTheQueryUnderTheActiveModel(t *testing.T) {
 
 	calls := embeddings.calls()
 	require.Len(t, calls, 1)
-	assert.Equal(t, serviceports.EmbeddingPurposeQuery, calls[0].Purpose)
+	assert.Equal(t, aiusageports.EmbeddingPurposeQuery, calls[0].Purpose)
 	assert.Equal(t, testModelKey, calls[0].ModelKey, "the query is pinned to the index's model")
 	assert.Equal(t, []string{"who is off this week"}, calls[0].Inputs)
 	assert.Zero(t, calls[0].QueryTimeout, "the router's 1.5 s default applies")
-	assert.Equal(t, serviceports.DefaultQueryEmbeddingTimeout, calls[0].ResolvedQueryTimeout())
+	assert.Equal(t, aiusageports.DefaultQueryEmbeddingTimeout, calls[0].ResolvedQueryTimeout())
 	assert.Equal(t, req.Attribution, calls[0].Attribution)
 	assert.Equal(t, tenant, calls[0].TenantInfo)
 }
@@ -142,7 +143,7 @@ func TestVectorize_ReportsWhyRetrievalIsUnavailable(t *testing.T) {
 			name: "no provider embeds and nothing is indexed",
 			repo: func() *fakeRepository { return newFakeRepository(unindexed) },
 			embeddings: func() *fakeEmbeddings {
-				return &fakeEmbeddings{configured: serviceports.ErrNoProviderConfigured}
+				return &fakeEmbeddings{configured: agentports.ErrNoProviderConfigured}
 			},
 			want: airetrieval.UnavailableReasonNoProvider,
 		},
@@ -151,7 +152,7 @@ func TestVectorize_ReportsWhyRetrievalIsUnavailable(t *testing.T) {
 			repo: func() *fakeRepository { return newFakeRepository(activeSettings(tenant)) },
 			embeddings: func() *fakeEmbeddings {
 				return &fakeEmbeddings{
-					err: fmt.Errorf("route: %w", serviceports.ErrNoProviderConfigured),
+					err: fmt.Errorf("route: %w", agentports.ErrNoProviderConfigured),
 				}
 			},
 			want: airetrieval.UnavailableReasonNoProvider,
@@ -249,10 +250,10 @@ func TestVectorize_ReturnsWhatACallerMustSee(t *testing.T) {
 
 	service := newVectorizer(newFakeRepository(activeSettings(tenant)), embeddings)
 	_, err := service.Vectorize(t.Context(), queryRequest(tenant, "   "))
-	require.ErrorIs(t, err, serviceports.ErrQueryTextRequired)
+	require.ErrorIs(t, err, agentports.ErrQueryTextRequired)
 
 	_, err = service.Vectorize(t.Context(), queryRequest(pagination.TenantInfo{}, "who"))
-	require.ErrorIs(t, err, serviceports.ErrQueryTenantRequired)
+	require.ErrorIs(t, err, agentports.ErrQueryTenantRequired)
 
 	broken := newFakeRepository(nil)
 	broken.settingsErr = errors.New("connection refused")
@@ -283,13 +284,13 @@ func TestVectorize_BoundsTheTextItSends(t *testing.T) {
 
 	_, err := service.Vectorize(
 		t.Context(),
-		queryRequest(tenant, strings.Repeat("é", serviceports.MaxQueryTextRunes+50)),
+		queryRequest(tenant, strings.Repeat("é", agentports.MaxQueryTextRunes+50)),
 	)
 	require.NoError(t, err)
 
 	calls := embeddings.calls()
 	require.Len(t, calls, 1)
-	assert.Len(t, []rune(calls[0].Inputs[0]), serviceports.MaxQueryTextRunes)
+	assert.Len(t, []rune(calls[0].Inputs[0]), agentports.MaxQueryTextRunes)
 }
 
 func TestAvailability(t *testing.T) {
@@ -316,7 +317,7 @@ func TestAvailability(t *testing.T) {
 
 	unprovided := newVectorizer(
 		newFakeRepository(activeSettings(tenant)),
-		&fakeEmbeddings{configured: serviceports.ErrNoProviderConfigured},
+		&fakeEmbeddings{configured: agentports.ErrNoProviderConfigured},
 	)
 	availability, err = unprovided.Availability(t.Context(), tenant)
 	require.NoError(t, err)
@@ -330,5 +331,5 @@ func TestAvailability(t *testing.T) {
 	require.Error(t, err)
 
 	_, err = ready.Availability(t.Context(), pagination.TenantInfo{})
-	require.ErrorIs(t, err, serviceports.ErrQueryTenantRequired)
+	require.ErrorIs(t, err, agentports.ErrQueryTenantRequired)
 }

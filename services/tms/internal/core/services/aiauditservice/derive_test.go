@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/aiaudit"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -90,12 +90,12 @@ func TestStepOutcome_FollowsTheVerdict(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			step := &agent.AgentRunStep{Status: string(serviceports.RunStepCompleted)}
+			step := &agent.AgentRunStep{Status: string(agentports.RunStepCompleted)}
 			if tt.failed {
-				step.Status = string(serviceports.RunStepFailed)
+				step.Status = string(agentports.RunStepFailed)
 			}
 
-			got := stepOutcome(step, &serviceports.RunStepOutcome{
+			got := stepOutcome(step, &agentports.RunStepOutcome{
 				Failed:  tt.failed,
 				Reason:  tt.reason,
 				Verdict: tt.verdict,
@@ -110,10 +110,10 @@ func TestStepOutcome_AnActionOutranksTheVerdict(t *testing.T) {
 	t.Parallel()
 
 	got := stepOutcome(
-		&agent.AgentRunStep{Status: string(serviceports.RunStepCompleted)},
-		&serviceports.RunStepOutcome{
+		&agent.AgentRunStep{Status: string(agentports.RunStepCompleted)},
+		&agentports.RunStepOutcome{
 			Verdict: aitrace.OutcomeProposed,
-			Action:  &serviceports.PendingAction{ToolName: "update_worker"},
+			Action:  &agentports.PendingAction{ToolName: "update_worker"},
 		},
 	)
 
@@ -153,7 +153,7 @@ func TestRunEventEvent_ARefusalFollowsItsVerdict(t *testing.T) {
 				ID:         pulid.MustNew("are_"),
 				OwnerKind:  string(agent.RunOwnerAgentRun),
 				OwnerID:    pulid.MustNew("ar_"),
-				Kind:       serviceports.AssistantEventToolFinished,
+				Kind:       agentports.AssistantEventToolFinished,
 				CallID:     "call_1",
 				Payload:    payload,
 				OccurredAt: 1_700_000_000,
@@ -175,14 +175,14 @@ func TestRunEventEvent_ARefusalWithAStepIsTheStepsRow(t *testing.T) {
 
 	owner := pulid.MustNew("ar_")
 	lookups := emptyLookups()
-	lookups.calls[repositories.OwnerCall{OwnerID: owner, CallID: "call_1"}] = struct{}{}
+	lookups.calls[aiauditports.OwnerCall{OwnerID: owner, CallID: "call_1"}] = struct{}{}
 
 	d := &deriver{redactor: testRedactor()}
 	event := d.runEventEvent(lookups, &agent.AgentRunEvent{
 		ID:        pulid.MustNew("are_"),
 		OwnerKind: string(agent.RunOwnerAgentRun),
 		OwnerID:   owner,
-		Kind:      serviceports.AssistantEventToolFinished,
+		Kind:      agentports.AssistantEventToolFinished,
 		CallID:    "call_1",
 		Payload: map[string]any{
 			payloadKeyFailed:  true,

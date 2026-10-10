@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -37,7 +37,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.SelfServiceRepository {
+func New(p Params) workerports.SelfServiceRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.self-service-repository"),
@@ -53,7 +53,7 @@ func limitOr(requested, fallback int) int {
 
 func (r *repository) ListPolicies(
 	ctx context.Context,
-	req *repositories.ListWorkerPoliciesRequest,
+	req *workerports.ListWorkerPoliciesRequest,
 ) ([]*worker.WorkerPolicy, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerPolicy, error) {
 		cols := buncolgen.WorkerPolicyColumns
@@ -85,7 +85,7 @@ func (r *repository) ListPolicies(
 
 func (r *repository) GetPolicyByID(
 	ctx context.Context,
-	req *repositories.GetWorkerPolicyByIDRequest,
+	req *workerports.GetWorkerPolicyByIDRequest,
 ) (*worker.WorkerPolicy, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerPolicy, error) {
 		entity := new(worker.WorkerPolicy)
@@ -151,7 +151,7 @@ func (r *repository) UpdatePolicy(
 
 func (r *repository) ListAcknowledgements(
 	ctx context.Context,
-	req *repositories.ListPolicyAcknowledgementsRequest,
+	req *workerports.ListPolicyAcknowledgementsRequest,
 ) ([]*worker.WorkerPolicyAcknowledgement, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerPolicyAcknowledgement, error) {
 		cols := buncolgen.WorkerPolicyAcknowledgementColumns
@@ -239,12 +239,12 @@ func (r *repository) CountAcknowledgements(
 // employees never lists a contractor as outstanding.
 func (r *repository) PolicyCompliance(
 	ctx context.Context,
-	req *repositories.PolicyComplianceRequest,
-) ([]repositories.PolicyComplianceRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.PolicyComplianceRow, error) {
+	req *workerports.PolicyComplianceRequest,
+) ([]workerports.PolicyComplianceRow, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.PolicyComplianceRow, error) {
 		wrk := buncolgen.WorkerColumns
 		ack := buncolgen.WorkerPolicyAcknowledgementColumns
-		rows := make([]repositories.PolicyComplianceRow, 0, 64)
+		rows := make([]workerports.PolicyComplianceRow, 0, 64)
 
 		q := buncolgen.WorkerScopeTenant(
 			r.db.DBForContext(ctx).NewSelect().Model((*worker.Worker)(nil)),
@@ -285,7 +285,7 @@ func (r *repository) PolicyCompliance(
 
 func (r *repository) ListChangeRequests(
 	ctx context.Context,
-	req *repositories.ListProfileChangeRequestsRequest,
+	req *workerports.ListProfileChangeRequestsRequest,
 ) ([]*worker.WorkerProfileChangeRequest, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerProfileChangeRequest, error) {
 		cols := buncolgen.WorkerProfileChangeRequestColumns
@@ -335,7 +335,7 @@ func (r *repository) ListChangeRequests(
 
 func (r *repository) GetChangeRequestByID(
 	ctx context.Context,
-	req *repositories.GetProfileChangeRequestByIDRequest,
+	req *workerports.GetProfileChangeRequestByIDRequest,
 ) (*worker.WorkerProfileChangeRequest, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerProfileChangeRequest, error) {
 		entity := new(worker.WorkerProfileChangeRequest)

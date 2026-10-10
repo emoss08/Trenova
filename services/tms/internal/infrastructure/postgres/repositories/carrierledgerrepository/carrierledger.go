@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -26,7 +26,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.CarrierLedgerRepository {
+func New(p Params) carriersettlementports.CarrierLedgerRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.carrier-ledger-repository")}
 }
 
@@ -54,7 +54,7 @@ func (r *repository) AppendEntries(
 
 func (r *repository) ListByCarrier(
 	ctx context.Context,
-	req *repositories.ListCarrierLedgerEntriesRequest,
+	req *carriersettlementports.ListCarrierLedgerEntriesRequest,
 ) ([]*carriersettlement.LedgerEntry, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carriersettlement.LedgerEntry, error) {
 		cols := buncolgen.LedgerEntryColumns

@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentextension"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -38,21 +38,21 @@ func webGate(availability agentextension.Availability) *stubExtensionGate {
 type extensionRun struct {
 	gate       *stubExtensionGate
 	definition []string
-	turns      []*serviceports.ChatCompletionResult
+	turns      []*agentports.ChatCompletionResult
 	searchErr  error
 }
 
-func runWithExtensions(t *testing.T, run extensionRun) (*serviceports.RunResult, *scriptedCompletion) {
+func runWithExtensions(t *testing.T, run extensionRun) (*agentports.RunResult, *scriptedCompletion) {
 	t.Helper()
 
 	completion := &scriptedCompletion{Turns: run.turns}
 	rt := newRuntime(
 		completion,
-		&stubQueryRegistry{Tools: []serviceports.AgentQueryTool{
+		&stubQueryRegistry{Tools: []agentports.AgentQueryTool{
 			queryTool(agentextension.ToolWebSearch, map[string]any{"results": []any{}}, run.searchErr),
 			queryTool(agentextension.ToolWebRead, map[string]any{"text": "page"}, nil),
 		}},
-		&stubActionRegistry{Tools: []serviceports.AgentTool{
+		&stubActionRegistry{Tools: []agentports.AgentTool{
 			actionTool("create_report", agent.TierAutoExecute, nil),
 		}},
 		nil,
@@ -62,7 +62,7 @@ func runWithExtensions(t *testing.T, run extensionRun) (*serviceports.RunResult,
 	definition := testDefinition(run.definition...)
 	definition.AutonomyCeiling = agent.TierAutoExecute
 
-	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+	result, err := rt.Run(t.Context(), &agentports.RunRequest{
 		Definition: definition,
 		Actor:      testActor(),
 		Input:      "What changed in the ELD rules, then save a report of it",
@@ -72,7 +72,7 @@ func runWithExtensions(t *testing.T, run extensionRun) (*serviceports.RunResult,
 	return result, completion
 }
 
-func offeredTools(req *serviceports.ChatCompletionRequest) []string {
+func offeredTools(req *agentports.ChatCompletionRequest) []string {
 	names := make([]string, 0, len(req.Tools))
 	for _, spec := range req.Tools {
 		names = append(names, spec.Name)
@@ -81,7 +81,7 @@ func offeredTools(req *serviceports.ChatCompletionRequest) []string {
 	return names
 }
 
-func toolResults(result *serviceports.RunResult, name string) []string {
+func toolResults(result *agentports.RunResult, name string) []string {
 	contents := make([]string, 0, 2)
 	for _, message := range result.Messages {
 		if message.Role == conversation.RoleTool && message.ToolName == name {
@@ -98,7 +98,7 @@ func TestRun_AWriteAfterReadingTheWebWaitsForAPerson(t *testing.T) {
 	result, _ := runWithExtensions(t, extensionRun{
 		gate:       webGate(agentextension.AvailabilitySelectedAgents),
 		definition: []string{agentextension.ToolWebSearch, "create_report"},
-		turns: []*serviceports.ChatCompletionResult{
+		turns: []*agentports.ChatCompletionResult{
 			toolTurn(agentextension.ToolWebSearch, map[string]any{"query": "eld rule changes"}),
 			toolTurn("create_report", map[string]any{"name": "ELD changes"}),
 			textTurn("Proposed."),
@@ -120,7 +120,7 @@ func TestRun_AWriteBeforeAnyWebContentRunsAtItsTier(t *testing.T) {
 	result, _ := runWithExtensions(t, extensionRun{
 		gate:       webGate(agentextension.AvailabilitySelectedAgents),
 		definition: []string{agentextension.ToolWebSearch, "create_report"},
-		turns: []*serviceports.ChatCompletionResult{
+		turns: []*agentports.ChatCompletionResult{
 			toolTurn("create_report", map[string]any{"name": "Late loads"}),
 			textTurn("Saved."),
 		},
@@ -138,7 +138,7 @@ func TestRun_AFailedSearchReadNothing(t *testing.T) {
 		gate:       webGate(agentextension.AvailabilitySelectedAgents),
 		definition: []string{agentextension.ToolWebSearch, "create_report"},
 		searchErr:  context.DeadlineExceeded,
-		turns: []*serviceports.ChatCompletionResult{
+		turns: []*agentports.ChatCompletionResult{
 			toolTurn(agentextension.ToolWebSearch, map[string]any{"query": "eld rule changes"}),
 			toolTurn("create_report", map[string]any{"name": "Late loads"}),
 			textTurn("Saved."),
@@ -155,7 +155,7 @@ func TestRun_AnExtensionTurnedOffIsNeitherOfferedNorRun(t *testing.T) {
 	result, completion := runWithExtensions(t, extensionRun{
 		gate:       &stubExtensionGate{active: map[agentextension.Type]agentextension.Availability{}},
 		definition: []string{agentextension.ToolWebSearch, "create_report"},
-		turns: []*serviceports.ChatCompletionResult{
+		turns: []*agentports.ChatCompletionResult{
 			toolTurn(agentextension.ToolWebSearch, map[string]any{"query": "eld rule changes"}),
 			textTurn("I could not check the web."),
 		},
@@ -176,7 +176,7 @@ func TestRun_AnExtensionForEveryAgentReachesAgentsThatNeverSelectedIt(t *testing
 	result, completion := runWithExtensions(t, extensionRun{
 		gate:       webGate(agentextension.AvailabilityAllAgents),
 		definition: []string{"create_report"},
-		turns: []*serviceports.ChatCompletionResult{
+		turns: []*agentports.ChatCompletionResult{
 			toolTurn(agentextension.ToolWebSearch, map[string]any{"query": "eld rule changes"}),
 			textTurn("Here is what changed."),
 		},
@@ -197,7 +197,7 @@ func TestRun_AnExtensionForSelectedAgentsStaysWithThem(t *testing.T) {
 	_, completion := runWithExtensions(t, extensionRun{
 		gate:       webGate(agentextension.AvailabilitySelectedAgents),
 		definition: []string{"create_report"},
-		turns:      []*serviceports.ChatCompletionResult{textTurn("Done.")},
+		turns:      []*agentports.ChatCompletionResult{textTurn("Done.")},
 	})
 
 	offered := offeredTools(completion.Requests[0])
@@ -210,7 +210,7 @@ func TestTurnState_KeepsWhetherTheTurnReadTheWeb(t *testing.T) {
 	t.Parallel()
 
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
-	req := &serviceports.RunRequest{Definition: testDefinition(), Actor: testActor()}
+	req := &agentports.RunRequest{Definition: testDefinition(), Actor: testActor()}
 
 	turn := rt.RestoreTurn(req, TurnState{Held: []string{"recall_memory"}, ExternalContent: true})
 	assert.True(t, turn.ReadExternalContent())

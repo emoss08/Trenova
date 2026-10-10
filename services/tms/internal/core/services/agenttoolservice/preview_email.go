@@ -11,10 +11,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/customerupdateservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -22,9 +24,9 @@ import (
 )
 
 var (
-	_ serviceports.ToolPreviewer = (*emailCustomerTool)(nil)
-	_ serviceports.ToolPreviewer = (*requestMissingDocsTool)(nil)
-	_ serviceports.ToolPreviewer = (*replyToInboundMessageTool)(nil)
+	_ agentports.ToolPreviewer = (*emailCustomerTool)(nil)
+	_ agentports.ToolPreviewer = (*requestMissingDocsTool)(nil)
+	_ agentports.ToolPreviewer = (*replyToInboundMessageTool)(nil)
 )
 
 // ------------------------------------------------------------ email_customer
@@ -39,13 +41,13 @@ type customerEmail struct {
 	alreadyTold bool
 	recipients  []string
 	data        documenttemplate.AgentEmailContext
-	send        *serviceports.SendEmailRequest
+	send        *emailports.SendEmailRequest
 	versionID   *pulid.ID
 }
 
 func (t *emailCustomerTool) compose(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*customerEmail, error) {
 	if err := guardExecute(t, *params); err != nil {
 		return nil, err
@@ -69,10 +71,10 @@ func (t *emailCustomerTool) compose(
 	}
 
 	tenant := tenantFrom(*params)
-	sp, err := t.deps.shipments.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	sp, err := t.deps.shipments.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:              shipmentID,
 		TenantInfo:      tenant,
-		ShipmentOptions: repositories.ShipmentOptions{IncludeCustomer: true},
+		ShipmentOptions: shipmentports.ShipmentOptions{IncludeCustomer: true},
 	})
 	if err != nil {
 		return nil, err
@@ -110,7 +112,7 @@ func (t *emailCustomerTool) compose(
 	}
 	customerupdateservice.Brand(ctx, t.deps.orgRepo, t.deps.inliner, tenant, &composed.data)
 
-	rendered, err := t.deps.templates.RenderMessage(ctx, &serviceports.RenderMessageRequest{
+	rendered, err := t.deps.templates.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
 		TenantInfo: tenant,
 		Kind:       documenttemplate.KindAgentCustomerUpdateEmail,
 		CustomerID: pulid.PtrOrNil(sp.CustomerID),
@@ -121,7 +123,7 @@ func (t *emailCustomerTool) compose(
 	}
 	composed.versionID = rendered.VersionID
 
-	composed.send = &serviceports.SendEmailRequest{
+	composed.send = &emailports.SendEmailRequest{
 		TenantInfo:     tenant,
 		ProfileID:      profileID,
 		Purpose:        email.PurposeOperations,
@@ -137,7 +139,7 @@ func (t *emailCustomerTool) compose(
 
 func (t *emailCustomerTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	composed, err := t.compose(ctx, &params)
 	if err != nil {
@@ -205,7 +207,7 @@ func (t *emailCustomerTool) Preview(
 // its customer: who it went to and what it said, stamped as the agent's.
 func customerUpdateComment(
 	composed *customerEmail,
-) *serviceports.CreateSystemShipmentCommentRequest {
+) *shipmentports.CreateSystemShipmentCommentRequest {
 	return customerupdateservice.Comment(&customerupdateservice.CommentParams{
 		Tenant:     composed.tenant,
 		ShipmentID: composed.shipment.ID,
@@ -224,13 +226,13 @@ func customerUpdateComment(
 // fallback when the template fails.
 type docsRequest struct {
 	data      documenttemplate.AgentEmailContext
-	send      *serviceports.SendEmailRequest
+	send      *emailports.SendEmailRequest
 	versionID *pulid.ID
 }
 
 func (t *requestMissingDocsTool) compose(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*docsRequest, error) {
 	if err := guardExecute(t, *params); err != nil {
 		return nil, err
@@ -264,7 +266,7 @@ func (t *requestMissingDocsTool) compose(
 	// carrier authored badly must not be silently replaced on a message sent
 	// under their letterhead.
 	data := t.agentEmailContext(ctx, tenantInfo, subject, body, params.Params)
-	rendered, err := t.templates.RenderMessage(ctx, &serviceports.RenderMessageRequest{
+	rendered, err := t.templates.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
 		TenantInfo: tenantInfo,
 		Kind:       documenttemplate.KindAgentRequestMissingDocsEmail,
 		Data:       data,
@@ -276,7 +278,7 @@ func (t *requestMissingDocsTool) compose(
 	return &docsRequest{
 		data:      data,
 		versionID: rendered.VersionID,
-		send: &serviceports.SendEmailRequest{
+		send: &emailports.SendEmailRequest{
 			TenantInfo:     tenantInfo,
 			ProfileID:      profileID,
 			Purpose:        email.PurposeBilling,
@@ -291,7 +293,7 @@ func (t *requestMissingDocsTool) compose(
 
 func (t *requestMissingDocsTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	composed, err := t.compose(ctx, &params)
 	if err != nil {
@@ -336,13 +338,13 @@ func (t *requestMissingDocsTool) Preview(
 type composedReply struct {
 	reply     *inboundReply
 	data      documenttemplate.AgentEmailContext
-	send      *serviceports.SendEmailRequest
+	send      *emailports.SendEmailRequest
 	versionID *pulid.ID
 }
 
 func (t *replyToInboundMessageTool) compose(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*composedReply, error) {
 	if err := guardExecute(t, *params); err != nil {
 		return nil, err
@@ -361,7 +363,7 @@ func (t *replyToInboundMessageTool) compose(
 	t.describeMatch(ctx, reply.message, tenant, &data)
 	customerupdateservice.Brand(ctx, t.deps.orgRepo, t.deps.inliner, tenant, &data)
 
-	rendered, err := t.deps.templates.RenderMessage(ctx, &serviceports.RenderMessageRequest{
+	rendered, err := t.deps.templates.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
 		TenantInfo: tenant,
 		Kind:       documenttemplate.KindAgentInboundReplyEmail,
 		CustomerID: pulid.PtrOrNil(reply.message.MatchedCustomerID),
@@ -375,7 +377,7 @@ func (t *replyToInboundMessageTool) compose(
 		reply:     reply,
 		data:      data,
 		versionID: rendered.VersionID,
-		send: &serviceports.SendEmailRequest{
+		send: &emailports.SendEmailRequest{
 			TenantInfo:     tenant,
 			ProfileID:      reply.profileID,
 			Purpose:        email.PurposeOperations,
@@ -399,7 +401,7 @@ func replyReviewNote(reply *inboundReply) string {
 
 func (t *replyToInboundMessageTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	composed, err := t.compose(ctx, &params)
 	if err != nil {
@@ -462,7 +464,7 @@ func (t *replyToInboundMessageTool) Preview(
 // renderedEmailPreview is the message a send request would deliver: the
 // rendered subject, the plain-text body a reader sees, and its recipients.
 func renderedEmailPreview(
-	send *serviceports.SendEmailRequest,
+	send *emailports.SendEmailRequest,
 	versionID *pulid.ID,
 ) *agent.MessagePreview {
 	message := &agent.MessagePreview{

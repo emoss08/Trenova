@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,7 +22,7 @@ func TestUpdateConfigRefusesEnablingAnIntegrationThePlanRestricts(t *testing.T) 
 		t.Context(),
 		plantest.Tenant(),
 		integration.TypeGoogleMaps,
-		&services.UpdateConfigRequest{Enabled: true},
+		&integrationports.UpdateConfigRequest{Enabled: true},
 		pulid.MustNew("usr_"),
 	)
 

@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -31,7 +31,7 @@ type settlementRepository struct {
 	l  *zap.Logger
 }
 
-func NewSettlement(p Params) repositories.CarrierSettlementRepository {
+func NewSettlement(p Params) carriersettlementports.CarrierSettlementRepository {
 	return &settlementRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.carrier-settlement-repository"),
@@ -40,7 +40,7 @@ func NewSettlement(p Params) repositories.CarrierSettlementRepository {
 
 func (r *settlementRepository) List(
 	ctx context.Context,
-	req *repositories.ListCarrierSettlementsRequest,
+	req *carriersettlementports.ListCarrierSettlementsRequest,
 ) (*pagination.ListResult[*carriersettlement.CarrierSettlement], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*carriersettlement.CarrierSettlement], error) {
 		cols := buncolgen.CarrierSettlementColumns
@@ -88,7 +88,7 @@ func (r *settlementRepository) List(
 
 func (r *settlementRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListCarrierSettlementConnectionRequest,
+	req *carriersettlementports.ListCarrierSettlementConnectionRequest,
 ) (*pagination.CursorListResult[*carriersettlement.CarrierSettlement], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*carriersettlement.CarrierSettlement], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -149,7 +149,7 @@ func (r *settlementRepository) ListConnection(
 
 func (r *settlementRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetCarrierSettlementByIDRequest,
+	req carriersettlementports.GetCarrierSettlementByIDRequest,
 ) (*carriersettlement.CarrierSettlement, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carriersettlement.CarrierSettlement, error) {
 		cols := buncolgen.CarrierSettlementColumns
@@ -177,10 +177,10 @@ func (r *settlementRepository) GetByID(
 
 func (r *settlementRepository) GetWorkspaceCounts(
 	ctx context.Context,
-	req *repositories.GetCarrierSettlementWorkspaceCountsRequest,
-) (*repositories.CarrierSettlementWorkspaceCounts, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.CarrierSettlementWorkspaceCounts, error) {
-		counts := new(repositories.CarrierSettlementWorkspaceCounts)
+	req *carriersettlementports.GetCarrierSettlementWorkspaceCountsRequest,
+) (*carriersettlementports.CarrierSettlementWorkspaceCounts, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carriersettlementports.CarrierSettlementWorkspaceCounts, error) {
+		counts := new(carriersettlementports.CarrierSettlementWorkspaceCounts)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*carriersettlement.CarrierSettlement)(nil)).
@@ -256,7 +256,7 @@ func (r *settlementRepository) Create(
 				return nil, fmt.Errorf("create carrier settlement lines: %w", err)
 			}
 		}
-		return r.GetByID(ctx, repositories.GetCarrierSettlementByIDRequest{
+		return r.GetByID(ctx, carriersettlementports.GetCarrierSettlementByIDRequest{
 			ID: entity.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
@@ -317,7 +317,7 @@ func (r *settlementRepository) Update(
 		if err = dberror.CheckRowsAffected(res, "CarrierSettlement", entity.ID.String()); err != nil {
 			return nil, err
 		}
-		return r.GetByID(ctx, repositories.GetCarrierSettlementByIDRequest{
+		return r.GetByID(ctx, carriersettlementports.GetCarrierSettlementByIDRequest{
 			ID: entity.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,

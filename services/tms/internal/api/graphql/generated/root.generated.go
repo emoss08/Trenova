@@ -218,8 +218,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/benefitsservice"
 	"github.com/emoss08/trenova/internal/core/services/capturereleaseservice"
 	"github.com/emoss08/trenova/internal/core/services/captureservice"
@@ -239,6 +237,26 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/workeroverviewservice"
 	"github.com/emoss08/trenova/internal/core/services/workersafetyservice"
 	"github.com/emoss08/trenova/internal/core/services/workertrainingservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	gqlparser "github.com/vektah/gqlparser/v2"
@@ -488,7 +506,7 @@ type DirectiveRoot struct{}
 type ComplexityRoot struct{}
 
 type AIAuditChainStatusResolver interface {
-	LastVerificationStatus(ctx context.Context, obj *services.AIAuditChainStatus) (*aiaudit.VerificationStatus, error)
+	LastVerificationStatus(ctx context.Context, obj *aiauditports.AIAuditChainStatus) (*aiaudit.VerificationStatus, error)
 }
 
 type AIAuditEventResolver interface {
@@ -564,8 +582,8 @@ type AccountingAppCredentialResolver interface {
 }
 
 type AccountingAppSettingsResolver interface {
-	ActiveSource(ctx context.Context, obj *services.AccountingAppSettings) (*accountingsync.AppSource, error)
-	InstanceEnvironment(ctx context.Context, obj *services.AccountingAppSettings) (*accountingsync.AppEnvironment, error)
+	ActiveSource(ctx context.Context, obj *accountingsyncports.AccountingAppSettings) (*accountingsync.AppSource, error)
+	InstanceEnvironment(ctx context.Context, obj *accountingsyncports.AccountingAppSettings) (*accountingsync.AppEnvironment, error)
 }
 
 type AccountingConnectionResolver interface {
@@ -589,9 +607,9 @@ type AccountingDriftFindingResolver interface {
 }
 
 type AccountingDriftFixPreviewResolver interface {
-	Direction(ctx context.Context, obj *services.AccountingDriftFixPreview) (*accountingsync.DriftDirection, error)
-	FixObject(ctx context.Context, obj *services.AccountingDriftFixPreview) (*accountingsync.DriftFixObject, error)
-	Operation(ctx context.Context, obj *services.AccountingDriftFixPreview) (*accountingsync.SyncOperation, error)
+	Direction(ctx context.Context, obj *accountingsyncports.AccountingDriftFixPreview) (*accountingsync.DriftDirection, error)
+	FixObject(ctx context.Context, obj *accountingsyncports.AccountingDriftFixPreview) (*accountingsync.DriftFixObject, error)
+	Operation(ctx context.Context, obj *accountingsyncports.AccountingDriftFixPreview) (*accountingsync.SyncOperation, error)
 }
 
 type AccountingInboundChangeResolver interface {
@@ -629,7 +647,7 @@ type AccountingSyncAttemptResolver interface {
 }
 
 type AccountingSyncAttentionGroupResolver interface {
-	ErrorCategory(ctx context.Context, obj *repositories.AccountingSyncAttentionGroup) (*accountingsync.SyncErrorCategory, error)
+	ErrorCategory(ctx context.Context, obj *accountingsyncports.AccountingSyncAttentionGroup) (*accountingsync.SyncErrorCategory, error)
 }
 
 type AccountingSyncRecordResolver interface {
@@ -656,8 +674,8 @@ type AgentDefinitionResolver interface {
 }
 
 type AgentDraftResolver interface {
-	EventKinds(ctx context.Context, obj *services.AgentDraft) ([]string, error)
-	ToolTiers(ctx context.Context, obj *services.AgentDraft) (map[string]any, error)
+	EventKinds(ctx context.Context, obj *agentports.AgentDraft) ([]string, error)
+	ToolTiers(ctx context.Context, obj *agentports.AgentDraft) (map[string]any, error)
 }
 
 type AgentEvalCaseResolver interface {
@@ -742,7 +760,7 @@ type AgentProposalFieldResolver interface {
 }
 
 type AgentQualityAgentResolver interface {
-	ID(ctx context.Context, obj *services.AgentQualityAgent) (string, error)
+	ID(ctx context.Context, obj *agentqualityports.AgentQualityAgent) (string, error)
 }
 
 type AgentQualityControlResolver interface {
@@ -768,14 +786,14 @@ type AgentRunEventResolver interface {
 }
 
 type AgentSafetyResolver interface {
-	AgentID(ctx context.Context, obj *services.AgentSafetySubject) (string, error)
-	OrganizationShadow(ctx context.Context, obj *services.AgentSafetySubject) (bool, error)
-	Tools(ctx context.Context, obj *services.AgentSafetySubject) ([]*services.AgentToolSafety, error)
-	Reach(ctx context.Context, obj *services.AgentSafetySubject) (*gqlmodel.AgentReach, error)
+	AgentID(ctx context.Context, obj *agentports.AgentSafetySubject) (string, error)
+	OrganizationShadow(ctx context.Context, obj *agentports.AgentSafetySubject) (bool, error)
+	Tools(ctx context.Context, obj *agentports.AgentSafetySubject) ([]*agentports.AgentToolSafety, error)
+	Reach(ctx context.Context, obj *agentports.AgentSafetySubject) (*gqlmodel.AgentReach, error)
 }
 
 type AgentSafetySummaryResolver interface {
-	OpenSensitiveAgentIds(ctx context.Context, obj *services.AgentSafetySummary) ([]string, error)
+	OpenSensitiveAgentIds(ctx context.Context, obj *agentports.AgentSafetySummary) ([]string, error)
 }
 
 type AgentSuiteRunResolver interface {
@@ -787,7 +805,7 @@ type AgentSuiteRunResolver interface {
 }
 
 type AgentToolHoldersResolver interface {
-	AgentIds(ctx context.Context, obj *services.AgentToolHolders) ([]string, error)
+	AgentIds(ctx context.Context, obj *agentports.AgentToolHolders) ([]string, error)
 }
 
 type AgentToolRuleResolver interface {
@@ -797,12 +815,12 @@ type AgentToolRuleResolver interface {
 }
 
 type AgentToolSafetyResolver interface {
-	ID(ctx context.Context, obj *services.AgentToolSafety) (string, error)
-	Policy(ctx context.Context, obj *services.AgentToolSafety) (*gqlmodel.AgentToolPolicy, error)
+	ID(ctx context.Context, obj *agentports.AgentToolSafety) (string, error)
+	Policy(ctx context.Context, obj *agentports.AgentToolSafety) (*gqlmodel.AgentToolPolicy, error)
 }
 
 type AgentWorstRatedAnswerResolver interface {
-	ID(ctx context.Context, obj *services.AgentWorstRatedAnswer) (string, error)
+	ID(ctx context.Context, obj *agentqualityports.AgentWorstRatedAnswer) (string, error)
 }
 
 type ApiKeyResolver interface {
@@ -830,7 +848,7 @@ type BriefingSectionResolver interface {
 type CaptureBatchResolver interface {
 	User(ctx context.Context, obj *capture.CaptureBatch) (*tenant.User, error)
 	Device(ctx context.Context, obj *capture.CaptureBatch) (*capture.CaptureDevice, error)
-	Target(ctx context.Context, obj *capture.CaptureBatch) (*repositories.CaptureRecordLabel, error)
+	Target(ctx context.Context, obj *capture.CaptureBatch) (*captureports.CaptureRecordLabel, error)
 	OpenItemCount(ctx context.Context, obj *capture.CaptureBatch) (int, error)
 	IsEditable(ctx context.Context, obj *capture.CaptureBatch) (bool, error)
 	Pages(ctx context.Context, obj *capture.CaptureBatch) ([]*capture.CapturePage, error)
@@ -838,7 +856,7 @@ type CaptureBatchResolver interface {
 }
 
 type CaptureCoverSheetResolver interface {
-	Target(ctx context.Context, obj *gqlmodel.CaptureCoverSheet) (*repositories.CaptureRecordLabel, error)
+	Target(ctx context.Context, obj *gqlmodel.CaptureCoverSheet) (*captureports.CaptureRecordLabel, error)
 }
 
 type CaptureDeviceResolver interface {
@@ -848,9 +866,9 @@ type CaptureDeviceResolver interface {
 
 type CaptureItemResolver interface {
 	PageCount(ctx context.Context, obj *capture.CaptureItem) (int, error)
-	SuggestedRecord(ctx context.Context, obj *capture.CaptureItem) (*repositories.CaptureRecordLabel, error)
+	SuggestedRecord(ctx context.Context, obj *capture.CaptureItem) (*captureports.CaptureRecordLabel, error)
 	SuggestionSource(ctx context.Context, obj *capture.CaptureItem) (*capture.SuggestionSource, error)
-	FiledRecord(ctx context.Context, obj *capture.CaptureItem) (*repositories.CaptureRecordLabel, error)
+	FiledRecord(ctx context.Context, obj *capture.CaptureItem) (*captureports.CaptureRecordLabel, error)
 	FiledBy(ctx context.Context, obj *capture.CaptureItem) (*tenant.User, error)
 }
 
@@ -1167,7 +1185,7 @@ type ExtractionRolloutResolver interface {
 }
 
 type ExtractionShadowReportResolver interface {
-	CostUsd(ctx context.Context, obj *services.ExtractionShadowReport) (string, error)
+	CostUsd(ctx context.Context, obj *extractionshadowports.ExtractionShadowReport) (string, error)
 }
 
 type ExtractionShadowResultResolver interface {
@@ -1369,7 +1387,7 @@ type InboundMessageResolver interface {
 	Attachments(ctx context.Context, obj *inboundmessage.InboundMessage) ([]*inboundmessage.InboundAttachment, error)
 	AttachmentCount(ctx context.Context, obj *inboundmessage.InboundMessage) (int, error)
 	Preview(ctx context.Context, obj *inboundmessage.InboundMessage) (string, error)
-	MatchedShipment(ctx context.Context, obj *inboundmessage.InboundMessage) (*repositories.ShipmentSummary, error)
+	MatchedShipment(ctx context.Context, obj *inboundmessage.InboundMessage) (*shipmentports.ShipmentSummary, error)
 	MatchedCustomer(ctx context.Context, obj *inboundmessage.InboundMessage) (*customer.Customer, error)
 	NeedsReview(ctx context.Context, obj *inboundmessage.InboundMessage) (bool, error)
 }
@@ -1390,7 +1408,7 @@ type InvoiceResolver interface {
 	DaysPastDue(ctx context.Context, obj *invoice.Invoice) (*int, error)
 	PaymentApplications(ctx context.Context, obj *invoice.Invoice) ([]*customerpayment.Application, error)
 	CreditApplications(ctx context.Context, obj *invoice.Invoice) ([]*customerpayment.CreditMemoApplication, error)
-	EDISendPlan(ctx context.Context, obj *invoice.Invoice) (*services.InvoiceEDISendPlan, error)
+	EDISendPlan(ctx context.Context, obj *invoice.Invoice) (*invoiceports.InvoiceEDISendPlan, error)
 	Disputes(ctx context.Context, obj *invoice.Invoice) ([]*invoice.InvoiceDispute, error)
 	OpenDispute(ctx context.Context, obj *invoice.Invoice) (*invoice.InvoiceDispute, error)
 	LateChargeAssessments(ctx context.Context, obj *invoice.Invoice) ([]*latecharge.LateChargeAssessment, error)
@@ -1405,11 +1423,11 @@ type InvoiceAdjustmentResolver interface {
 }
 
 type InvoiceAdjustmentApprovalQueueItemResolver interface {
-	RebillStrategy(ctx context.Context, obj *repositories.InvoiceAdjustmentApprovalQueueItem) (*invoiceadjustment.RebillStrategy, error)
-	CreditTotalAmount(ctx context.Context, obj *repositories.InvoiceAdjustmentApprovalQueueItem) (string, error)
-	RebillTotalAmount(ctx context.Context, obj *repositories.InvoiceAdjustmentApprovalQueueItem) (string, error)
-	NetDeltaAmount(ctx context.Context, obj *repositories.InvoiceAdjustmentApprovalQueueItem) (string, error)
-	RerateVariancePercent(ctx context.Context, obj *repositories.InvoiceAdjustmentApprovalQueueItem) (string, error)
+	RebillStrategy(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem) (*invoiceadjustment.RebillStrategy, error)
+	CreditTotalAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem) (string, error)
+	RebillTotalAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem) (string, error)
+	NetDeltaAmount(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem) (string, error)
+	RerateVariancePercent(ctx context.Context, obj *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem) (string, error)
 }
 
 type InvoiceAdjustmentLineResolver interface {
@@ -1448,7 +1466,7 @@ type JournalEntryLineResolver interface {
 }
 
 type JournalReviewSummaryResolver interface {
-	PostingMode(ctx context.Context, obj *services.JournalReviewSummary) (string, error)
+	PostingMode(ctx context.Context, obj *journalentryports.JournalReviewSummary) (string, error)
 }
 
 type JurisdictionRuleResolver interface {
@@ -1461,7 +1479,7 @@ type LateChargeAssessmentResolver interface {
 }
 
 type LateChargeLineResolver interface {
-	RatePercent(ctx context.Context, obj *services.LateChargeLine) (string, error)
+	RatePercent(ctx context.Context, obj *latechargeports.LateChargeLine) (string, error)
 }
 
 type LeaveControlResolver interface {
@@ -1489,11 +1507,11 @@ type MutationResolver interface {
 	PatchTrailer(ctx context.Context, id string, input gqlmodel.TrailerPatchInput) (*trailer.Trailer, error)
 	BulkUpdateTrailerStatus(ctx context.Context, input gqlmodel.BulkUpdateTrailerStatusInput) ([]*trailer.Trailer, error)
 	LocateTrailer(ctx context.Context, input gqlmodel.LocateTrailerInput) (*equipmentcontinuity.EquipmentContinuity, error)
-	SaveAccountingApp(ctx context.Context, input gqlmodel.SaveAccountingAppInput) (*services.AccountingSyncStatus, error)
-	RemoveAccountingApp(ctx context.Context, integrationType integration.Type) (*services.AccountingSyncStatus, error)
-	StartAccountingAuthorization(ctx context.Context, integrationType integration.Type) (*services.AccountingAuthorizationStart, error)
+	SaveAccountingApp(ctx context.Context, input gqlmodel.SaveAccountingAppInput) (*accountingsyncports.AccountingSyncStatus, error)
+	RemoveAccountingApp(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingSyncStatus, error)
+	StartAccountingAuthorization(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingAuthorizationStart, error)
 	CompleteAccountingAuthorization(ctx context.Context, input gqlmodel.CompleteAccountingAuthorizationInput) (*accountingsync.AccountingConnection, error)
-	FinishAccountingAuthorization(ctx context.Context, input gqlmodel.CompleteAccountingAuthorizationInput) (*services.AccountingAuthorizationCompletion, error)
+	FinishAccountingAuthorization(ctx context.Context, input gqlmodel.CompleteAccountingAuthorizationInput) (*accountingsyncports.AccountingAuthorizationCompletion, error)
 	ChooseAccountingCompany(ctx context.Context, input gqlmodel.ChooseAccountingCompanyInput) (*accountingsync.AccountingConnection, error)
 	DisconnectAccountingSystem(ctx context.Context, integrationType integration.Type) (*accountingsync.AccountingConnection, error)
 	CheckAccountingConnection(ctx context.Context, integrationType integration.Type) (*accountingsync.AccountingConnection, error)
@@ -1519,7 +1537,7 @@ type MutationResolver interface {
 	IgnoreAccountingInboundChange(ctx context.Context, input gqlmodel.IgnoreAccountingInboundChangeInput) (*accountingsync.AccountingInboundChange, error)
 	ResolveAccountingDrift(ctx context.Context, input gqlmodel.ResolveAccountingDriftInput) (*accountingsync.AccountingDriftFinding, error)
 	DismissAccountingDrift(ctx context.Context, input gqlmodel.DismissAccountingDriftInput) (*accountingsync.AccountingDriftFinding, error)
-	CheckAccountingDrift(ctx context.Context, integrationType integration.Type) (*services.AccountingDriftOverview, error)
+	CheckAccountingDrift(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingDriftOverview, error)
 	DecideAgentProposal(ctx context.Context, id string, input gqlmodel.AgentProposalDecisionInput) (*agent.AgentDecision, error)
 	DecideAgentPlan(ctx context.Context, id string, input gqlmodel.AgentPlanDecisionInput) (*agent.AgentPlan, error)
 	DecideMyProposal(ctx context.Context, id string, input gqlmodel.AgentProposalDecisionInput) (*agent.AgentDecision, error)
@@ -1540,9 +1558,9 @@ type MutationResolver interface {
 	DeleteAgentTestPrompt(ctx context.Context, agentID string, id string) (bool, error)
 	SetAgentAccess(ctx context.Context, agentID string, input gqlmodel.SetAgentAccessInput) (*agentdefinition.Definition, error)
 	SetRoleAgentAccess(ctx context.Context, roleID string, agentIds []string) (*permission.Role, error)
-	UpdateAgentCapabilities(ctx context.Context, agentID string, input gqlmodel.UpdateAgentCapabilitiesInput) (*services.AgentCapabilities, error)
-	DraftAgentFromDescription(ctx context.Context, description string) (*services.AgentDraft, error)
-	TightenAgentInstructions(ctx context.Context, instructions string) (*services.TightenedAgentInstructions, error)
+	UpdateAgentCapabilities(ctx context.Context, agentID string, input gqlmodel.UpdateAgentCapabilitiesInput) (*agentports.AgentCapabilities, error)
+	DraftAgentFromDescription(ctx context.Context, description string) (*agentports.AgentDraft, error)
+	TightenAgentInstructions(ctx context.Context, instructions string) (*agentports.TightenedAgentInstructions, error)
 	CreateAgentEvalCase(ctx context.Context, input gqlmodel.CreateAgentEvalCaseInput) (*gqlmodel.AgentEvalCaseCapture, error)
 	UpdateAgentEvalCase(ctx context.Context, id string, input gqlmodel.UpdateAgentEvalCaseInput) (*agentquality.EvalCase, error)
 	SetAgentEvalCaseStatus(ctx context.Context, id string, status agentquality.CaseStatus) (*agentquality.EvalCase, error)
@@ -1551,8 +1569,8 @@ type MutationResolver interface {
 	UpdateAgentQualityControl(ctx context.Context, input gqlmodel.UpdateAgentQualityControlInput) (*agentquality.Control, error)
 	SaveAgentToolRule(ctx context.Context, name string, version int, input gqlmodel.AgentToolRuleInput) (*gqlmodel.AgentToolRuleSaved, error)
 	RequestAIAuditExport(ctx context.Context, input gqlmodel.RequestAIAuditExportInput) (*aiaudit.AIAuditExport, error)
-	AiAuditExportDownload(ctx context.Context, id string) (*services.AIAuditExportDownload, error)
-	VerifyAIAuditChain(ctx context.Context) (*services.AIAuditChainStatus, error)
+	AiAuditExportDownload(ctx context.Context, id string) (*aiauditports.AIAuditExportDownload, error)
+	VerifyAIAuditChain(ctx context.Context) (*aiauditports.AIAuditChainStatus, error)
 	DismissAIProviderFailure(ctx context.Context, providerID string, lastFailureAt int) (bool, error)
 	RestoreAIProviderFailure(ctx context.Context, providerID string) (bool, error)
 	ApplyAITuneUp(ctx context.Context, id string, version int) (*gqlmodel.AITuneUp, error)
@@ -1560,11 +1578,11 @@ type MutationResolver interface {
 	RestoreAITuneUp(ctx context.Context, id string, version int) (*gqlmodel.AITuneUp, error)
 	SetMyAIFeedback(ctx context.Context, input gqlmodel.SetMyAIFeedbackInput) (*aifeedback.Feedback, error)
 	ClearMyAIFeedback(ctx context.Context, input gqlmodel.AIFeedbackTargetInput) (bool, error)
-	TestAIProviderDraft(ctx context.Context, input gqlmodel.AIProviderDraftTestInput) (*services.TestAIProviderResult, error)
+	TestAIProviderDraft(ctx context.Context, input gqlmodel.AIProviderDraftTestInput) (*agentports.TestAIProviderResult, error)
 	ReorderAIProviders(ctx context.Context, ids []string) ([]*aiprovider.Provider, error)
 	PatchAIProvider(ctx context.Context, id string, version int, input gqlmodel.AIProviderPatchInput) (*aiprovider.Provider, error)
-	UpdateAIRetrievalSettings(ctx context.Context, input gqlmodel.AIRetrievalSettingsPatchInput) (*services.AIRetrievalStatus, error)
-	ReindexAIRetrievalSource(ctx context.Context, sourceType airetrieval.SourceType) (*services.AIRetrievalStatus, error)
+	UpdateAIRetrievalSettings(ctx context.Context, input gqlmodel.AIRetrievalSettingsPatchInput) (*agentports.AIRetrievalStatus, error)
+	ReindexAIRetrievalSource(ctx context.Context, sourceType airetrieval.SourceType) (*agentports.AIRetrievalStatus, error)
 	CreateBenefitPlan(ctx context.Context, input gqlmodel.BenefitPlanInput) (*driverpay.BenefitPlan, error)
 	UpdateBenefitPlan(ctx context.Context, input gqlmodel.UpdateBenefitPlanInput) (*driverpay.BenefitPlan, error)
 	EnrollBenefit(ctx context.Context, input gqlmodel.EnrollBenefitInput) (*driverpay.WorkerBenefitEnrollment, error)
@@ -1798,19 +1816,19 @@ type MutationResolver interface {
 	SetInboundMailboxAPIKey(ctx context.Context, id string, apiKey string) (*inboundmessage.Mailbox, error)
 	CreateInvoiceFromShipments(ctx context.Context, shipmentIds []string, offCycleReason *string) (*invoice.Invoice, error)
 	CreateInvoiceFromOrder(ctx context.Context, orderID string, offCycleReason *string) (*invoice.Invoice, error)
-	CreateInvoicesFromShipments(ctx context.Context, shipmentIds []string, offCycleReason *string) (*services.CreateInvoicesResult, error)
-	CreateInvoicesFromOrder(ctx context.Context, orderID string, offCycleReason *string) (*services.CreateInvoicesResult, error)
-	VoidInvoice(ctx context.Context, input gqlmodel.VoidInvoiceInput) (*services.VoidInvoiceResult, error)
+	CreateInvoicesFromShipments(ctx context.Context, shipmentIds []string, offCycleReason *string) (*invoiceports.CreateInvoicesResult, error)
+	CreateInvoicesFromOrder(ctx context.Context, orderID string, offCycleReason *string) (*invoiceports.CreateInvoicesResult, error)
+	VoidInvoice(ctx context.Context, input gqlmodel.VoidInvoiceInput) (*invoiceports.VoidInvoiceResult, error)
 	CreateMemo(ctx context.Context, input gqlmodel.CreateMemoInput) (*invoice.Invoice, error)
-	SendInvoiceEDI(ctx context.Context, invoiceID string, force *bool) (*services.InvoiceEDISendResult, error)
+	SendInvoiceEDI(ctx context.Context, invoiceID string, force *bool) (*invoiceports.InvoiceEDISendResult, error)
 	ApproveInvoiceAdjustment(ctx context.Context, adjustmentID string) (*invoiceadjustment.InvoiceAdjustment, error)
 	RejectInvoiceAdjustment(ctx context.Context, input gqlmodel.RejectInvoiceAdjustmentInput) (*invoiceadjustment.InvoiceAdjustment, error)
 	OpenInvoiceDispute(ctx context.Context, input gqlmodel.OpenInvoiceDisputeInput) (*invoice.InvoiceDispute, error)
 	ResolveInvoiceDispute(ctx context.Context, input gqlmodel.ResolveInvoiceDisputeInput) (*invoice.InvoiceDispute, error)
 	WithdrawInvoiceDispute(ctx context.Context, input gqlmodel.WithdrawInvoiceDisputeInput) (*invoice.InvoiceDispute, error)
-	ApproveJournalEntries(ctx context.Context, input gqlmodel.JournalReviewInput) (*services.JournalReviewResult, error)
-	PostJournalEntries(ctx context.Context, input gqlmodel.JournalReviewInput) (*services.JournalReviewResult, error)
-	AssessLateCharges(ctx context.Context, input *gqlmodel.LateChargeAssessmentInput) (*services.LateChargeAssessmentResult, error)
+	ApproveJournalEntries(ctx context.Context, input gqlmodel.JournalReviewInput) (*journalentryports.JournalReviewResult, error)
+	PostJournalEntries(ctx context.Context, input gqlmodel.JournalReviewInput) (*journalentryports.JournalReviewResult, error)
+	AssessLateCharges(ctx context.Context, input *gqlmodel.LateChargeAssessmentInput) (*latechargeports.LateChargeAssessmentResult, error)
 	MarkNotificationsRead(ctx context.Context, ids []string) (bool, error)
 	MarkNotificationsUnread(ctx context.Context, ids []string) (bool, error)
 	MarkAllNotificationsRead(ctx context.Context) (bool, error)
@@ -1944,7 +1962,7 @@ type MutationResolver interface {
 	ApproveWorkerPTO(ctx context.Context, id string) (*worker.WorkerPTO, error)
 	RejectWorkerPTO(ctx context.Context, id string, reason string) (*worker.WorkerPTO, error)
 	CancelWorkerPTO(ctx context.Context, id string, reason *string) (*worker.WorkerPTO, error)
-	BulkWorkerPTOAction(ctx context.Context, input gqlmodel.BulkWorkerPTOActionInput) (*services.PTOBulkActionPayload, error)
+	BulkWorkerPTOAction(ctx context.Context, input gqlmodel.BulkWorkerPTOActionInput) (*workerports.PTOBulkActionPayload, error)
 	CreateWorkerChecklistTemplate(ctx context.Context, input gqlmodel.WorkerChecklistTemplateInput) (*worker.WorkerChecklistTemplate, error)
 	UpdateWorkerChecklistTemplate(ctx context.Context, id string, input gqlmodel.WorkerChecklistTemplateInput) (*worker.WorkerChecklistTemplate, error)
 	ArchiveWorkerChecklistTemplate(ctx context.Context, id string, version *int) (*worker.WorkerChecklistTemplate, error)
@@ -2072,14 +2090,14 @@ type PTOAvailabilityResolver interface {
 }
 
 type PTOBalanceSummaryResolver interface {
-	TotalBalanceDays(ctx context.Context, obj *repositories.PTOBalanceSummary) (string, error)
-	TotalPendingDays(ctx context.Context, obj *repositories.PTOBalanceSummary) (string, error)
-	AccruedYtdDays(ctx context.Context, obj *repositories.PTOBalanceSummary) (string, error)
-	UsedYtdDays(ctx context.Context, obj *repositories.PTOBalanceSummary) (string, error)
+	TotalBalanceDays(ctx context.Context, obj *workerports.PTOBalanceSummary) (string, error)
+	TotalPendingDays(ctx context.Context, obj *workerports.PTOBalanceSummary) (string, error)
+	AccruedYtdDays(ctx context.Context, obj *workerports.PTOBalanceSummary) (string, error)
+	UsedYtdDays(ctx context.Context, obj *workerports.PTOBalanceSummary) (string, error)
 }
 
 type PTOChartDataPointResolver interface {
-	Workers(ctx context.Context, obj *repositories.PTOChartDataPoint) (map[string]any, error)
+	Workers(ctx context.Context, obj *workerports.PTOChartDataPoint) (map[string]any, error)
 }
 
 type PTOLiabilityReportResolver interface {
@@ -2160,38 +2178,38 @@ type QueryResolver interface {
 	AccessorialCharge(ctx context.Context, id string) (*accessorialcharge.AccessorialCharge, error)
 	AccountTypes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AccountTypeConnection, error)
 	AccountType(ctx context.Context, id string) (*accounttype.AccountType, error)
-	AccountingSyncStatus(ctx context.Context, integrationType integration.Type) (*services.AccountingSyncStatus, error)
-	AccountingMappingSummary(ctx context.Context, integrationType integration.Type) (*services.AccountingMappingSummary, error)
+	AccountingSyncStatus(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingSyncStatus, error)
+	AccountingMappingSummary(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingMappingSummary, error)
 	AccountingMappings(ctx context.Context, integrationType integration.Type, first *int, after *string, filter *gqlmodel.AccountingMappingFilterInput) (*gqlmodel.AccountingMappingConnection, error)
-	AccountingSyncSummary(ctx context.Context, integrationType integration.Type) (*services.AccountingSyncSummary, error)
+	AccountingSyncSummary(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingSyncSummary, error)
 	AccountingSyncRecords(ctx context.Context, integrationType integration.Type, first *int, after *string, filter *gqlmodel.AccountingSyncRecordFilterInput) (*gqlmodel.AccountingSyncRecordConnection, error)
 	AccountingSyncRecordTable(ctx context.Context, integrationType integration.Type, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AccountingSyncRecordConnection, error)
 	AccountingSyncRecord(ctx context.Context, id string) (*accountingsync.AccountingSyncRecord, error)
 	AccountingSyncAttempts(ctx context.Context, recordID string) ([]*accountingsync.AccountingSyncAttempt, error)
-	AccountingSyncObjectStates(ctx context.Context, objectIds []string) ([]*services.AccountingSyncObjectState, error)
+	AccountingSyncObjectStates(ctx context.Context, objectIds []string) ([]*accountingsyncports.AccountingSyncObjectState, error)
 	AccountingBackfills(ctx context.Context, integrationType integration.Type) ([]*accountingsync.AccountingBackfill, error)
-	AccountingInboundOverview(ctx context.Context, integrationType integration.Type) (*services.AccountingInboundOverview, error)
+	AccountingInboundOverview(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingInboundOverview, error)
 	AccountingInboundChangeTable(ctx context.Context, integrationType integration.Type, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AccountingInboundChangeConnection, error)
 	AccountingInboundChange(ctx context.Context, id string) (*accountingsync.AccountingInboundChange, error)
-	AccountingInboundApplyPreview(ctx context.Context, id string) (*services.AccountingInboundApplyPreview, error)
-	AccountingDriftOverview(ctx context.Context, integrationType integration.Type) (*services.AccountingDriftOverview, error)
+	AccountingInboundApplyPreview(ctx context.Context, id string) (*accountingsyncports.AccountingInboundApplyPreview, error)
+	AccountingDriftOverview(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingDriftOverview, error)
 	AccountingDriftFindingTable(ctx context.Context, integrationType integration.Type, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AccountingDriftFindingConnection, error)
 	AccountingDriftFinding(ctx context.Context, id string) (*accountingsync.AccountingDriftFinding, error)
-	AccountingDriftFixPreview(ctx context.Context, input gqlmodel.ResolveAccountingDriftInput) (*services.AccountingDriftFixPreview, error)
+	AccountingDriftFixPreview(ctx context.Context, input gqlmodel.ResolveAccountingDriftInput) (*accountingsyncports.AccountingDriftFixPreview, error)
 	AccountingReferenceObjects(ctx context.Context, integrationType integration.Type, kind accountingsync.ReferenceKind, query *string, usableOnly *bool, limit *int) ([]*accountingsync.AccountingReferenceObject, error)
-	ArAgingSummary(ctx context.Context, asOfDate *int) (*services.ARAgingSummary, error)
-	ArOpenItems(ctx context.Context, customerID *string, asOfDate *int) ([]*repositories.AROpenItem, error)
-	ArCustomerLedger(ctx context.Context, customerID string) ([]*repositories.ARLedgerEntry, error)
-	ArCustomerStatement(ctx context.Context, customerID string, startDate *int, asOfDate *int) (*services.ARCustomerStatement, error)
-	ArDashboardKpis(ctx context.Context) (*services.ARDashboardKPIs, error)
-	ArDsoTrend(ctx context.Context, weeks *int) ([]*services.ARDSOTrendPoint, error)
-	ArAgingTrend(ctx context.Context, weeks *int) ([]*repositories.ARAgingTrendPoint, error)
-	ArCashFlowForecast(ctx context.Context, pastWeeks *int, futureWeeks *int) ([]*repositories.ARCashFlowPoint, error)
-	ArCollectionPerformance(ctx context.Context, periodDays *int) (*services.ARCollectionPerformance, error)
-	ArTopOverdueCustomers(ctx context.Context, limit *int) ([]*repositories.ARTopOverdueCustomer, error)
-	ArCollectionsWorklist(ctx context.Context, limit *int) ([]*repositories.ARCollectionsWorklistItem, error)
-	ArCustomerProfile(ctx context.Context, customerID string) (*services.ARCustomerProfile, error)
-	ArPaymentStats(ctx context.Context) (*repositories.ARPaymentStats, error)
+	ArAgingSummary(ctx context.Context, asOfDate *int) (*customerledgerports.ARAgingSummary, error)
+	ArOpenItems(ctx context.Context, customerID *string, asOfDate *int) ([]*customerledgerports.AROpenItem, error)
+	ArCustomerLedger(ctx context.Context, customerID string) ([]*customerledgerports.ARLedgerEntry, error)
+	ArCustomerStatement(ctx context.Context, customerID string, startDate *int, asOfDate *int) (*customerledgerports.ARCustomerStatement, error)
+	ArDashboardKpis(ctx context.Context) (*customerledgerports.ARDashboardKPIs, error)
+	ArDsoTrend(ctx context.Context, weeks *int) ([]*customerledgerports.ARDSOTrendPoint, error)
+	ArAgingTrend(ctx context.Context, weeks *int) ([]*customerledgerports.ARAgingTrendPoint, error)
+	ArCashFlowForecast(ctx context.Context, pastWeeks *int, futureWeeks *int) ([]*customerledgerports.ARCashFlowPoint, error)
+	ArCollectionPerformance(ctx context.Context, periodDays *int) (*customerledgerports.ARCollectionPerformance, error)
+	ArTopOverdueCustomers(ctx context.Context, limit *int) ([]*customerledgerports.ARTopOverdueCustomer, error)
+	ArCollectionsWorklist(ctx context.Context, limit *int) ([]*customerledgerports.ARCollectionsWorklistItem, error)
+	ArCustomerProfile(ctx context.Context, customerID string) (*customerledgerports.ARCustomerProfile, error)
+	ArPaymentStats(ctx context.Context) (*customerledgerports.ARPaymentStats, error)
 	AgentRuns(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentRunConnection, error)
 	AgentRun(ctx context.Context, id string) (*agent.AgentRun, error)
 	AgentProposals(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentProposalConnection, error)
@@ -2203,11 +2221,11 @@ type QueryResolver interface {
 	AgentEvaluation(ctx context.Context, id string) (*agent.Evaluation, error)
 	AgentMemory(ctx context.Context, id string) (*agent.Memory, error)
 	AgentReflections(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentReflectionConnection, error)
-	AgentMemoryUsage(ctx context.Context) (*services.AgentMemoryUsage, error)
+	AgentMemoryUsage(ctx context.Context) (*agentports.AgentMemoryUsage, error)
 	AgentExceptions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentExceptionConnection, error)
 	AgentException(ctx context.Context, id string) (*agent.AgentException, error)
 	AgentControl(ctx context.Context) (*tenant.AgentControl, error)
-	AgentPromotionPreview(ctx context.Context, threshold int) ([]*services.ToolPromotion, error)
+	AgentPromotionPreview(ctx context.Context, threshold int) ([]*agentports.ToolPromotion, error)
 	AgentActivitySummary(ctx context.Context, since int) (*gqlmodel.AgentActivitySummary, error)
 	AgentDefinitions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentDefinitionConnection, error)
 	AgentInstructionLint(ctx context.Context, input gqlmodel.AgentInstructionLintInput) ([]*agentlint.Finding, error)
@@ -2219,7 +2237,7 @@ type QueryResolver interface {
 	SuggestedAgentAudience(ctx context.Context, agentID string) (*gqlmodel.AgentAudienceSuggestion, error)
 	AgentAccessPreview(ctx context.Context, input gqlmodel.AgentAccessPreviewInput) (*gqlmodel.AgentAccessPreview, error)
 	AgentTestPrompts(ctx context.Context, agentID string) ([]*agentdefinition.TestPrompt, error)
-	AgentCapabilities(ctx context.Context, agentID string) (*services.AgentCapabilities, error)
+	AgentCapabilities(ctx context.Context, agentID string) (*agentports.AgentCapabilities, error)
 	AgentDraftingAvailable(ctx context.Context) (bool, error)
 	AgentProposalPreview(ctx context.Context, id string, modifications map[string]any) (*agent.ProposalPreview, error)
 	AgentPlanPreview(ctx context.Context, id string) (*agent.PlanPreview, error)
@@ -2227,8 +2245,8 @@ type QueryResolver interface {
 	MyPlanPreview(ctx context.Context, id string) (*agent.PlanPreview, error)
 	AgentEvalCases(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentEvalCaseConnection, error)
 	AgentEvalCase(ctx context.Context, id string) (*agentquality.EvalCase, error)
-	AgentQualityOverview(ctx context.Context, window *int) (*services.AgentQualityOverview, error)
-	AgentQuality(ctx context.Context, agentDefinitionID string, window *int) (*services.AgentQualityDetail, error)
+	AgentQualityOverview(ctx context.Context, window *int) (*agentqualityports.AgentQualityOverview, error)
+	AgentQuality(ctx context.Context, agentDefinitionID string, window *int) (*agentqualityports.AgentQualityDetail, error)
 	AgentQualityAgents(ctx context.Context, input gqlmodel.AgentQualityAgentsInput) (*gqlmodel.AgentQualityAgentConnection, error)
 	AgentQualityAgentConnection(ctx context.Context, window *int, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentQualityAgentConnection, error)
 	AgentWorstRatedAnswers(ctx context.Context, input gqlmodel.AgentWorstRatedAnswersInput) (*gqlmodel.AgentWorstRatedAnswerConnection, error)
@@ -2240,18 +2258,18 @@ type QueryResolver interface {
 	AgentSuiteRunCaseConnection(ctx context.Context, suiteRunID string, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentSuiteRunCaseConnection, error)
 	AgentQualityControl(ctx context.Context) (*agentquality.Control, error)
 	AgentRunEvents(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentRunEventConnection, error)
-	AgentToolRuleImpact(ctx context.Context, name string, input gqlmodel.AgentToolRuleInput) ([]*services.AgentToolRuleImpact, error)
-	AgentToolHolders(ctx context.Context) ([]*services.AgentToolHolders, error)
+	AgentToolRuleImpact(ctx context.Context, name string, input gqlmodel.AgentToolRuleInput) ([]*agentports.AgentToolRuleImpact, error)
+	AgentToolHolders(ctx context.Context) ([]*agentports.AgentToolHolders, error)
 	AgentToolPolicies(ctx context.Context) ([]*gqlmodel.AgentToolPolicy, error)
 	AgentToolPolicyConnection(ctx context.Context, input gqlmodel.AgentToolPolicyConnectionInput) (*gqlmodel.AgentToolPolicyConnection, error)
 	AgentToolRuleConnection(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentToolPolicyConnection, error)
 	AgentToolSafetyConnection(ctx context.Context, agentIds []string, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentToolSafetyConnection, error)
-	AgentSafetySummary(ctx context.Context) (*services.AgentSafetySummary, error)
-	AgentSafety(ctx context.Context, agentIds []string) ([]*services.AgentSafetySubject, error)
+	AgentSafetySummary(ctx context.Context) (*agentports.AgentSafetySummary, error)
+	AgentSafety(ctx context.Context, agentIds []string) ([]*agentports.AgentSafetySubject, error)
 	AgentScorecard(ctx context.Context, input gqlmodel.AgentScorecardInput) (*gqlmodel.AgentScorecard, error)
 	AiAuditEvents(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIAuditEventConnection, error)
 	AiAuditEvent(ctx context.Context, id string) (*aiaudit.AIAuditEvent, error)
-	AiAuditChainStatus(ctx context.Context) (*services.AIAuditChainStatus, error)
+	AiAuditChainStatus(ctx context.Context) (*aiauditports.AIAuditChainStatus, error)
 	AiAuditExports(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIAuditExportConnection, error)
 	AiAuditExport(ctx context.Context, id string) (*aiaudit.AIAuditExport, error)
 	AiControlSummary(ctx context.Context, tab aicontrolsummary.Tab) (*aicontrolsummary.Summary, error)
@@ -2259,18 +2277,18 @@ type QueryResolver interface {
 	AiTuneUps(ctx context.Context) (*gqlmodel.AITuneUps, error)
 	MyAIFeedback(ctx context.Context, input gqlmodel.MyAIFeedbackInput) ([]*aifeedback.Feedback, error)
 	AiFeedback(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIFeedbackConnection, error)
-	AgentFeedbackSummary(ctx context.Context, agentDefinitionID string, window *int) (*services.AgentFeedbackSummary, error)
+	AgentFeedbackSummary(ctx context.Context, agentDefinitionID string, window *int) (*aifeedbackports.AgentFeedbackSummary, error)
 	AiProviderModels(ctx context.Context, input gqlmodel.AIProviderEndpointInput) ([]*gqlmodel.AIProviderModelOption, error)
 	AiProviders(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIProviderConnection, error)
 	AiProvider(ctx context.Context, id string) (*aiprovider.Provider, error)
 	AiRoutePreview(ctx context.Context, draft gqlmodel.AIProviderRoutingDraftInput) ([]*aiprovider.TaskRoute, error)
-	AiRetrievalStatus(ctx context.Context) (*services.AIRetrievalStatus, error)
-	AiRetrievalReindexEstimate(ctx context.Context, sourceType airetrieval.SourceType) (*services.AIRetrievalReindexEstimate, error)
+	AiRetrievalStatus(ctx context.Context) (*agentports.AIRetrievalStatus, error)
+	AiRetrievalReindexEstimate(ctx context.Context, sourceType airetrieval.SourceType) (*agentports.AIRetrievalReindexEstimate, error)
 	AiRetrievalFailedEntryConnection(ctx context.Context, sourceType *airetrieval.SourceType, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIRetrievalFailedEntryConnection, error)
 	AiTrainingExportHistory(ctx context.Context) ([]*aitraining.ExportHistoryEntry, error)
 	AiUsageFeatures(ctx context.Context, input gqlmodel.DataTableConnectionInput, days *int) (*gqlmodel.AIUsageFeatureConnection, error)
-	AiUsageSummary(ctx context.Context, since *int) (*services.AIUsageSummary, error)
-	AiUsageDaily(ctx context.Context, days *int, timezone *string, providerID *string) ([]*services.AIUsageDay, error)
+	AiUsageSummary(ctx context.Context, since *int) (*aiusageports.AIUsageSummary, error)
+	AiUsageDaily(ctx context.Context, days *int, timezone *string, providerID *string) ([]*aiusageports.AIUsageDay, error)
 	APIKeys(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.APIKeyConnection, error)
 	APIKey(ctx context.Context, id string) (*apikey.Key, error)
 	AttentionSummary(ctx context.Context) (*gqlmodel.AttentionSummary, error)
@@ -2281,7 +2299,7 @@ type QueryResolver interface {
 	BenefitPlan(ctx context.Context, id string) (*driverpay.BenefitPlan, error)
 	WorkerBenefitEnrollments(ctx context.Context, workerID string, openOnly *bool) ([]*driverpay.WorkerBenefitEnrollment, error)
 	BenefitEnrollments(ctx context.Context, planID *string, statuses []driverpay.BenefitEnrollmentStatus, openOnly *bool, limit *int) ([]*driverpay.WorkerBenefitEnrollment, error)
-	BenefitCosts(ctx context.Context, planYear *int) ([]*repositories.BenefitCostRow, error)
+	BenefitCosts(ctx context.Context, planYear *int) ([]*driverpayports.BenefitCostRow, error)
 	WorkerTotalCompensation(ctx context.Context, workerID string, planYear *int) (*benefitsservice.TotalCompensation, error)
 	MyTotalCompensation(ctx context.Context, planYear *int) (*benefitsservice.TotalCompensation, error)
 	BillingTransferRun(ctx context.Context, id string) (*gqlmodel.BillingTransferRun, error)
@@ -2325,7 +2343,7 @@ type QueryResolver interface {
 	CarrierIntelRawPayload(ctx context.Context, carrierID string, snapshotID string) (map[string]any, error)
 	CarrierIntelLookup(ctx context.Context, input gqlmodel.CarrierIntelLookupInput) (*gqlmodel.CarrierIntelProspectLookup, error)
 	CarrierSourcingSearch(ctx context.Context, input gqlmodel.CarrierSourcingSearchInput) (*carrierintelservice.SourcingPage, error)
-	CarrierSourcingAutocomplete(ctx context.Context, query string, limit *int) ([]*services.CarrierIntelSuggestion, error)
+	CarrierSourcingAutocomplete(ctx context.Context, query string, limit *int) ([]*carrierintelports.CarrierIntelSuggestion, error)
 	CarrierEquipmentVerifications(ctx context.Context, carrierAssignmentID string) ([]*carrierintel.CarrierEquipmentVerification, error)
 	MyCarrierIntelligence(ctx context.Context, refresh *bool) (*gqlmodel.MyCarrierIntelligence, error)
 	CarrierSettlements(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CarrierSettlementConnection, error)
@@ -2459,7 +2477,7 @@ type QueryResolver interface {
 	SettlementControl(ctx context.Context) (*tenant.SettlementControl, error)
 	CurrentSettlementPeriod(ctx context.Context) (*settlementshared.PeriodBounds, error)
 	SettlementWorkspaceSummary(ctx context.Context, periodStart *int, periodEnd *int) (*driversettlementservice.WorkspaceSummary, error)
-	UnsettledWorkerSummaries(ctx context.Context, periodStart *int, periodEnd *int) ([]*repositories.UnsettledWorkerSummary, error)
+	UnsettledWorkerSummaries(ctx context.Context, periodStart *int, periodEnd *int) ([]*driversettlementports.UnsettledWorkerSummary, error)
 	PreviewDriverSettlement(ctx context.Context, workerID string, periodStart *int, periodEnd *int) (*driversettlement.Settlement, error)
 	ExportSettlementBatchCSV(ctx context.Context, batchID string) (string, error)
 	EDIPartners(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.EDIPartnerConnection, error)
@@ -2480,8 +2498,8 @@ type QueryResolver interface {
 	EquipmentManufacturer(ctx context.Context, id string) (*equipmentmanufacturer.EquipmentManufacturer, error)
 	EquipmentTypes(ctx context.Context, input gqlmodel.DataTableConnectionInput, classes []equipmenttype.Class) (*gqlmodel.EquipmentTypeConnection, error)
 	EquipmentType(ctx context.Context, id string) (*equipmenttype.EquipmentType, error)
-	ExtractionAccuracy(ctx context.Context, windowDays *int) (*services.ExtractionAccuracy, error)
-	ExtractionProviderTrends(ctx context.Context) (*services.ExtractionProviderTrends, error)
+	ExtractionAccuracy(ctx context.Context, windowDays *int) (*extractionevalports.ExtractionAccuracy, error)
+	ExtractionProviderTrends(ctx context.Context) (*extractionevalports.ExtractionProviderTrends, error)
 	AiCorrections(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AICorrectionConnection, error)
 	AiCorrection(ctx context.Context, id string) (*aicorrection.Correction, error)
 	ExtractionEvalCases(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ExtractionEvalCaseConnection, error)
@@ -2491,9 +2509,9 @@ type QueryResolver interface {
 	ExtractionEvalResults(ctx context.Context, runID string, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ExtractionEvalResultConnection, error)
 	ExtractionEvalResult(ctx context.Context, id string) (*extractioneval.ExtractionResult, error)
 	ExtractionRollout(ctx context.Context) (*extractionrollout.ExtractionRollout, error)
-	ExtractionRolloutReport(ctx context.Context) (*services.ExtractionRolloutReport, error)
+	ExtractionRolloutReport(ctx context.Context) (*extractionrolloutports.ExtractionRolloutReport, error)
 	ExtractionShadowSettings(ctx context.Context) (*extractionshadow.ShadowSettings, error)
-	ExtractionShadowReport(ctx context.Context, windowDays *int, providerID *string) (*services.ExtractionShadowReport, error)
+	ExtractionShadowReport(ctx context.Context, windowDays *int, providerID *string) (*extractionshadowports.ExtractionShadowReport, error)
 	ExtractionShadowResults(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ExtractionShadowResultConnection, error)
 	ExtractionShadowResult(ctx context.Context, id string) (*extractionshadow.ShadowResult, error)
 	FiscalYears(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FiscalYearConnection, error)
@@ -2548,19 +2566,19 @@ type QueryResolver interface {
 	Invoice(ctx context.Context, id string) (*invoice.Invoice, error)
 	InvoiceAdjustment(ctx context.Context, id string) (*invoiceadjustment.InvoiceAdjustment, error)
 	InvoiceAdjustmentApprovals(ctx context.Context, input gqlmodel.InvoiceAdjustmentApprovalsInput) (*gqlmodel.InvoiceAdjustmentApprovalQueueConnection, error)
-	InvoiceAdjustmentOperationsSummary(ctx context.Context) (*repositories.InvoiceAdjustmentOperationsSummary, error)
+	InvoiceAdjustmentOperationsSummary(ctx context.Context) (*invoiceadjustmentports.InvoiceAdjustmentOperationsSummary, error)
 	InvoiceDisputes(ctx context.Context, invoiceID string) ([]*invoice.InvoiceDispute, error)
 	JournalEntry(ctx context.Context, id string) (*journalentry.JournalEntry, error)
 	JournalEntriesBySource(ctx context.Context, sourceType string, sourceID string) ([]*journalentry.JournalEntry, error)
 	JournalSourceByObject(ctx context.Context, sourceType string, sourceID string) (*journalsource.Source, error)
 	JournalReviewTable(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.JournalEntryConnection, error)
-	JournalReviewSummary(ctx context.Context) (*services.JournalReviewSummary, error)
+	JournalReviewSummary(ctx context.Context) (*journalentryports.JournalReviewSummary, error)
 	JournalReversals(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.JournalReversalConnection, error)
 	JournalReversal(ctx context.Context, id string) (*journalreversal.Reversal, error)
 	JurisdictionRules(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.JurisdictionRuleConnection, error)
 	JurisdictionRule(ctx context.Context, id string) (*jurisdictionrule.JurisdictionRule, error)
 	JurisdictionRuleOverrides(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.JurisdictionRuleOverrideConnection, error)
-	LateChargePreview(ctx context.Context, input *gqlmodel.LateChargeAssessmentInput) (*services.LateChargeAssessmentResult, error)
+	LateChargePreview(ctx context.Context, input *gqlmodel.LateChargeAssessmentInput) (*latechargeports.LateChargeAssessmentResult, error)
 	Locations(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.LocationConnection, error)
 	Location(ctx context.Context, id string) (*location.Location, error)
 	LocationCategories(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.LocationCategoryConnection, error)
@@ -2591,7 +2609,7 @@ type QueryResolver interface {
 	WorkerPTOLedger(ctx context.Context, input gqlmodel.WorkerPTOLedgerInput) (*gqlmodel.WorkerPTOLedgerConnection, error)
 	WorkerPTOAvailability(ctx context.Context, input gqlmodel.PTOAvailabilityInput) (*ptoledgerservice.AvailabilityResult, error)
 	PreviewWorkerPTOAccrual(ctx context.Context, workerID string, asOf *int) ([]*ptoledgerservice.PlannedEntry, error)
-	PTOBalanceSummary(ctx context.Context) (*repositories.PTOBalanceSummary, error)
+	PTOBalanceSummary(ctx context.Context) (*workerports.PTOBalanceSummary, error)
 	PTOLiabilityReport(ctx context.Context, asOf *int) (*ptoledgerservice.LiabilityReport, error)
 	RateAgreements(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateAgreementConnection, error)
 	RateZones(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateZoneConnection, error)
@@ -2707,7 +2725,7 @@ type QueryResolver interface {
 	Workers(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.WorkerConnection, error)
 	WorkerPTOEntries(ctx context.Context, input gqlmodel.WorkerPTOEntriesInput) (*gqlmodel.WorkerPTOConnection, error)
 	UpcomingWorkerPTO(ctx context.Context, input gqlmodel.UpcomingWorkerPTOInput) (*gqlmodel.WorkerPTOConnection, error)
-	WorkerPTOChartData(ctx context.Context, input gqlmodel.WorkerPTOChartInput) ([]*repositories.PTOChartDataPoint, error)
+	WorkerPTOChartData(ctx context.Context, input gqlmodel.WorkerPTOChartInput) ([]*workerports.PTOChartDataPoint, error)
 	WorkerChecklistTemplates(ctx context.Context, input gqlmodel.WorkerChecklistTemplatesInput) (*gqlmodel.WorkerChecklistTemplateConnection, error)
 	WorkerChecklistTemplate(ctx context.Context, id string) (*worker.WorkerChecklistTemplate, error)
 	ActiveWorkerChecklistTemplates(ctx context.Context) ([]*worker.WorkerChecklistTemplate, error)
@@ -2723,7 +2741,7 @@ type QueryResolver interface {
 	DriverQualificationFile(ctx context.Context, workerID string) (*worker.DQFFile, error)
 	WorkerEmploymentVerifications(ctx context.Context, workerID string) ([]*worker.WorkerEmploymentVerification, error)
 	OutstandingEmploymentVerifications(ctx context.Context) ([]*worker.WorkerEmploymentVerification, error)
-	DqfRetentionCandidates(ctx context.Context) ([]*repositories.DQFRetentionCandidate, error)
+	DqfRetentionCandidates(ctx context.Context) ([]*workerports.DQFRetentionCandidate, error)
 	WorkerDOTTests(ctx context.Context, workerID string) ([]*worker.WorkerDOTTest, error)
 	WorkerDOTTest(ctx context.Context, id string) (*worker.WorkerDOTTest, error)
 	OpenDOTTests(ctx context.Context) ([]*worker.WorkerDOTTest, error)

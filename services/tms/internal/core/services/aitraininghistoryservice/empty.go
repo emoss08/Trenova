@@ -4,15 +4,15 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/aitraining"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aitrainingports"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
 type Empty struct{}
 
-var _ services.AITrainingHistoryService = Empty{}
+var _ aitrainingports.AITrainingHistoryService = Empty{}
 
-func NewEmpty() services.AITrainingHistoryService {
+func NewEmpty() aitrainingports.AITrainingHistoryService {
 	return Empty{}
 }
 

@@ -4,7 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -26,7 +26,7 @@ func watchtowerCursor(item *watchtower.Item) string {
 // watchtowerCountsModel renders the counts, listing the kinds in the order
 // the feed's filters show them rather than whatever order the aggregate
 // came back in.
-func watchtowerCountsModel(counts *services.WatchtowerCounts) *gqlmodel.WatchtowerCounts {
+func watchtowerCountsModel(counts *watchtowerports.WatchtowerCounts) *gqlmodel.WatchtowerCounts {
 	byKind := make([]*gqlmodel.WatchtowerKindSummary, 0, len(counts.ByKind))
 	for _, kind := range watchtower.AllSourceKinds() {
 		count, ok := counts.ByKind[kind]
@@ -51,7 +51,7 @@ func watchtowerCountsModel(counts *services.WatchtowerCounts) *gqlmodel.Watchtow
 }
 
 func watchtowerHandOffModel(
-	result *services.HandOffWatchtowerItemResult,
+	result *watchtowerports.HandOffWatchtowerItemResult,
 ) *gqlmodel.WatchtowerHandOffResult {
 	templates := make([]string, 0, len(result.Templates))
 	for _, template := range result.Templates {

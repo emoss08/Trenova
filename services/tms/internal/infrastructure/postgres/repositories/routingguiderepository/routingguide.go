@@ -6,10 +6,10 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -35,7 +35,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.RoutingGuideRepository {
+func New(p Params) tenderports.RoutingGuideRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.routing-guide-repository"),
@@ -44,7 +44,7 @@ func New(p Params) repositories.RoutingGuideRepository {
 
 func (r *repository) addOptions(
 	q *bun.SelectQuery,
-	opts repositories.RoutingGuideFilterOptions,
+	opts tenderports.RoutingGuideFilterOptions,
 ) *bun.SelectQuery {
 	if opts.IncludeEntries {
 		q = q.Relation("Entries", func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -58,7 +58,7 @@ func (r *repository) addOptions(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListRoutingGuideRequest,
+	req *tenderports.ListRoutingGuideRequest,
 ) (*pagination.ListResult[*tender.RoutingGuide], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*tender.RoutingGuide], error) {
 		log := r.l.With(
@@ -96,7 +96,7 @@ func (r *repository) List(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListRoutingGuideConnectionRequest,
+	req *tenderports.ListRoutingGuideConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -109,7 +109,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListRoutingGuideConnectionRequest,
+	req *tenderports.ListRoutingGuideConnectionRequest,
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -129,7 +129,7 @@ func applyRoutingGuideColumns(q *bun.SelectQuery, columns []string) *bun.SelectQ
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListRoutingGuideConnectionRequest,
+	req *tenderports.ListRoutingGuideConnectionRequest,
 ) (*pagination.CursorListResult[*tender.RoutingGuide], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*tender.RoutingGuide], error) {
 		log := r.l.With(
@@ -186,7 +186,7 @@ func (r *repository) ListConnection(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetRoutingGuideByIDRequest,
+	req tenderports.GetRoutingGuideByIDRequest,
 ) (*tender.RoutingGuide, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tender.RoutingGuide, error) {
 		cols := buncolgen.RoutingGuideColumns
@@ -213,7 +213,7 @@ func (r *repository) GetByID(
 
 func (r *repository) GetByIDs(
 	ctx context.Context,
-	req repositories.GetRoutingGuidesByIDsRequest,
+	req tenderports.GetRoutingGuidesByIDsRequest,
 ) ([]*tender.RoutingGuide, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*tender.RoutingGuide, error) {
 		entities := make([]*tender.RoutingGuide, 0, len(req.RoutingGuideIDs))
@@ -358,7 +358,7 @@ func (r *repository) Create(
 			zap.String("name", entity.Name),
 		)
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			if _, iErr := r.db.DBForContext(c).
 				NewInsert().
 				Model(entity).
@@ -390,7 +390,7 @@ func (r *repository) Update(
 			zap.String("id", entity.ID.String()),
 		)
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			ov := entity.Version
 			entity.Version++
 
@@ -439,7 +439,7 @@ func (r *repository) Update(
 
 func (r *repository) Delete(
 	ctx context.Context,
-	req repositories.DeleteRoutingGuideRequest,
+	req tenderports.DeleteRoutingGuideRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.RoutingGuideColumns
@@ -462,7 +462,7 @@ func (r *repository) Delete(
 
 func (r *repository) matchTier(
 	ctx context.Context,
-	req *repositories.MatchLaneRequest,
+	req *tenderports.MatchLaneRequest,
 	specificity int16,
 	apply func(*bun.SelectQuery) *bun.SelectQuery,
 ) (*tender.RoutingGuide, error) {
@@ -499,7 +499,7 @@ func (r *repository) matchTier(
 
 func (r *repository) MatchLane(
 	ctx context.Context,
-	req *repositories.MatchLaneRequest,
+	req *tenderports.MatchLaneRequest,
 ) (*tender.RoutingGuide, error) {
 	cols := buncolgen.RoutingGuideColumns
 

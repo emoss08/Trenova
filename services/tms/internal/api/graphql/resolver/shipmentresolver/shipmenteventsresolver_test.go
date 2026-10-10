@@ -4,15 +4,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
-
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesport "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -119,20 +117,20 @@ func TestQueryResolver_ShipmentEvents_AllowsOptionalFilters(t *testing.T) {
 }
 
 type recordingShipmentEventService struct {
-	req    *repositories.ListShipmentEventsRequest
+	req    *shipmenteventports.ListShipmentEventsRequest
 	events []*shipmentevent.Event
 }
 
 func (s *recordingShipmentEventService) Record(
 	context.Context,
-	*servicesport.RecordShipmentEventParams,
+	*shipmenteventports.RecordShipmentEventParams,
 ) error {
 	return nil
 }
 
 func (s *recordingShipmentEventService) List(
 	_ context.Context,
-	req *repositories.ListShipmentEventsRequest,
+	req *shipmenteventports.ListShipmentEventsRequest,
 ) ([]*shipmentevent.Event, error) {
 	s.req = req
 	return s.events, nil

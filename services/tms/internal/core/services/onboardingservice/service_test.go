@@ -1,15 +1,17 @@
 package onboardingservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/onboardingportsmock"
 	"context"
 	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/onboarding"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/onboardingports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -29,7 +31,7 @@ func (fakeDB) DBForContext(context.Context) bun.IDB { return nil }
 
 func (fakeDB) WithTx(
 	ctx context.Context,
-	_ ports.TxOptions,
+	_ kernelports.TxOptions,
 	fn func(context.Context, bun.Tx) error,
 ) error {
 	return fn(ctx, bun.Tx{})
@@ -49,7 +51,7 @@ type fakeOrganizations struct {
 
 func (f *fakeOrganizations) GetByID(
 	context.Context,
-	repositories.GetOrganizationByIDRequest,
+	tenantports.GetOrganizationByIDRequest,
 ) (*tenant.Organization, error) {
 	copied := *f.org
 	return &copied, nil
@@ -77,7 +79,7 @@ func (f *fakeSampleData) Load(_ context.Context, req *SampleDataRequest) error {
 }
 
 type deps struct {
-	repo   *mocks.MockOnboardingRepository
+	repo   *onboardingportsmock.MockOnboardingRepository
 	orgs   *fakeOrganizations
 	sample *fakeSampleData
 	svc    *Service
@@ -93,7 +95,7 @@ func setup(t *testing.T) *deps {
 		UserID: pulid.MustNew("usr_"),
 	}
 	d := &deps{
-		repo: mocks.NewMockOnboardingRepository(t),
+		repo: onboardingportsmock.NewMockOnboardingRepository(t),
 		orgs: &fakeOrganizations{org: &tenant.Organization{
 			ID:                     tenantInfo.OrgID,
 			BusinessUnitID:         tenantInfo.BuID,
@@ -129,11 +131,11 @@ func pending(info pagination.TenantInfo) *onboarding.Onboarding {
 	return entity
 }
 
-func validRequest(info pagination.TenantInfo) *services.CompleteOnboardingRequest {
-	return &services.CompleteOnboardingRequest{
+func validRequest(info pagination.TenantInfo) *onboardingports.CompleteOnboardingRequest {
+	return &onboardingports.CompleteOnboardingRequest{
 		TenantInfo: info,
-		Actor:      &services.RequestActor{UserID: info.UserID},
-		Organization: services.OnboardingOrganization{
+		Actor:      &permissionports.RequestActor{UserID: info.UserID},
+		Organization: onboardingports.OnboardingOrganization{
 			Name:         "  Acme   Freight ",
 			Timezone:     "America/Chicago",
 			AddressLine1: "1 Main St",
@@ -151,7 +153,7 @@ func TestGetWithoutARowIsNotRequired(t *testing.T) {
 	t.Parallel()
 
 	d := setup(t)
-	d.repo.EXPECT().Get(mock.Anything, repositories.GetOnboardingRequest{TenantInfo: d.tenant}).
+	d.repo.EXPECT().Get(mock.Anything, onboardingports.GetOnboardingRequest{TenantInfo: d.tenant}).
 		Return(nil, errortypes.NewNotFoundError("Onboarding not found"))
 
 	state, err := d.svc.Get(t.Context(), d.tenant)
@@ -273,9 +275,9 @@ func TestCompleteValidation(t *testing.T) {
 
 	d := setup(t)
 
-	req := &services.CompleteOnboardingRequest{
+	req := &onboardingports.CompleteOnboardingRequest{
 		TenantInfo: d.tenant,
-		Organization: services.OnboardingOrganization{
+		Organization: onboardingports.OnboardingOrganization{
 			PostalCode: "7520",
 			ScacCode:   "A1",
 			DOTNumber:  "12ab",

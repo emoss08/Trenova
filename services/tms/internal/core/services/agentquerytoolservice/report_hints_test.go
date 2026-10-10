@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/stretchr/testify/assert"
@@ -241,10 +241,10 @@ func previewOfPeakDistributing(t *testing.T, filter map[string]any) reportPrevie
 
 	service, _, tools := reportingTools(t)
 	service.preview = &reporting.PreviewResult{
-		Columns: []serviceports.ReportResultColumn{
+		Columns: []reportports.ReportResultColumn{
 			{ID: "c1", Label: "Pro number", Type: reportcatalog.FieldString},
 		},
-		Rows: []serviceports.ReportRow{{"PRO-1"}},
+		Rows: []reportports.ReportRow{{"PRO-1"}},
 	}
 
 	result, err := tools["preview_report"].Query(t.Context(), testParams(map[string]any{

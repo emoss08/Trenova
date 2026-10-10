@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -17,8 +17,8 @@ func TestPlanReview_AnAgentCarryingTheSystemUserIsNotAReviewer(t *testing.T) {
 	_, err := (&Service{}).PlanReview(t.Context(), &ReviewRequest{
 		DocumentID: pulid.MustNew("doc_"),
 		Decision:   document.ReviewDecisionApprove,
-		Actor: services.RequestActor{
-			PrincipalType: services.PrincipalTypeAgent,
+		Actor: permissionports.RequestActor{
+			PrincipalType: permissionports.PrincipalTypeAgent,
 			PrincipalID:   pulid.MustNew("agdef_"),
 			UserID:        pulid.MustNew("usr_"),
 		},

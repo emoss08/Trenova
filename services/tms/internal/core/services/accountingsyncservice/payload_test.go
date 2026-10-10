@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -18,19 +18,19 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func salesDocs(t *testing.T, h *harness) []*services.AccountingSalesDocument {
+func salesDocs(t *testing.T, h *harness) []*accountingsyncports.AccountingSalesDocument {
 	t.Helper()
 	calls := h.writer.callsTo("CreateSalesDocument")
-	out := make([]*services.AccountingSalesDocument, 0, len(calls))
+	out := make([]*accountingsyncports.AccountingSalesDocument, 0, len(calls))
 	for _, call := range calls {
-		doc, ok := call.doc.(*services.AccountingSalesDocument)
+		doc, ok := call.doc.(*accountingsyncports.AccountingSalesDocument)
 		require.True(t, ok)
 		out = append(out, doc)
 	}
 	return out
 }
 
-func onlySalesDoc(t *testing.T, h *harness) *services.AccountingSalesDocument {
+func onlySalesDoc(t *testing.T, h *harness) *accountingsyncports.AccountingSalesDocument {
 	t.Helper()
 	docs := salesDocs(t, h)
 	require.Len(t, docs, 1)
@@ -125,13 +125,13 @@ func TestSyncedPayloadNeverCarriesTheAccessToken(t *testing.T) {
 func TestPayloadHashDoesNotDependOnTheCredentials(t *testing.T) {
 	t.Parallel()
 
-	doc := func(token string) *services.AccountingSalesDocument {
-		return &services.AccountingSalesDocument{
-			Auth:      services.AccountingDocumentAuth{RealmID: "1", AccessToken: token},
+	doc := func(token string) *accountingsyncports.AccountingSalesDocument {
+		return &accountingsyncports.AccountingSalesDocument{
+			Auth:      accountingsyncports.AccountingDocumentAuth{RealmID: "1", AccessToken: token},
 			RequestID: "trn-1",
 			Kind:      accountingsync.SyncObjectInvoice,
 			DocNumber: "INV-1",
-			Lines: []services.AccountingDocumentLine{{
+			Lines: []accountingsyncports.AccountingDocumentLine{{
 				ItemExternalID: "qb-item",
 				Amount:         decimal.RequireFromString("10.50"),
 			}},
@@ -199,7 +199,7 @@ func TestUnmappedCustomerQueuesACustomerCreateAndTheDocumentWaits(t *testing.T) 
 	h.confirm(freightTarget(), "qb-item-freight")
 	inv := h.postedInvoice(customerID, invoiceSpec{})
 	record := h.enqueueInvoice(t, inv)
-	_, err := h.svc.Release(t.Context(), &services.ReleaseAccountingSyncRequest{
+	_, err := h.svc.Release(t.Context(), &accountingsyncports.ReleaseAccountingSyncRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: h.conn.IntegrationType,
@@ -275,7 +275,7 @@ func TestDuplicateCustomerNameBlocksAsMappingAndRequeuesOnceMapped(t *testing.T)
 	assert.Empty(t, h.writer.callsTo("CreateSalesDocument"))
 
 	h.confirm(customerTarget(customerID, "Acme Freight"), "qb-cust-58")
-	requeued, err := h.svc.Retry(t.Context(), &services.RetryAccountingSyncRequest{
+	requeued, err := h.svc.Retry(t.Context(), &accountingsyncports.RetryAccountingSyncRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: h.conn.IntegrationType,
@@ -369,7 +369,7 @@ func TestLongDocumentNumberIsLeftForTheProvider(t *testing.T) {
 
 	docs := salesDocs(t, h)
 	require.Len(t, docs, 2)
-	byNote := map[string]*services.AccountingSalesDocument{}
+	byNote := map[string]*accountingsyncports.AccountingSalesDocument{}
 	for _, doc := range docs {
 		if doc.DocNumber == "" {
 			byNote["long"] = doc
@@ -539,7 +539,7 @@ func TestMissingInvoiceBlocksAsNotFound(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	h.enqueue(t, &services.AccountingSyncEnqueueRequest{
+	h.enqueue(t, &accountingsyncports.AccountingSyncEnqueueRequest{
 		ObjectType:   accountingsync.SyncObjectInvoice,
 		ObjectID:     pulid.MustNew("inv_"),
 		Operation:    accountingsync.SyncOperationCreate,
@@ -605,7 +605,7 @@ func (h *harness) enqueuePayment(
 	operation accountingsync.SyncOperation,
 ) *accountingsync.AccountingSyncRecord {
 	t.Helper()
-	require.NoError(t, h.enqueuer.Enqueue(t.Context(), services.PaymentSyncRequest(
+	require.NoError(t, h.enqueuer.Enqueue(t.Context(), accountingsyncports.PaymentSyncRequest(
 		payment, operation, accountingsync.SyncSourceCustomerPaymentPosted,
 	)))
 	found := h.records.find(accountingsync.SyncObjectCustomerPayment, payment.ID, operation)
@@ -613,12 +613,12 @@ func (h *harness) enqueuePayment(
 	return found[len(found)-1]
 }
 
-func paymentDocs(t *testing.T, h *harness) []*services.AccountingPaymentDocument {
+func paymentDocs(t *testing.T, h *harness) []*accountingsyncports.AccountingPaymentDocument {
 	t.Helper()
 	calls := h.writer.callsTo("SavePayment")
-	out := make([]*services.AccountingPaymentDocument, 0, len(calls))
+	out := make([]*accountingsyncports.AccountingPaymentDocument, 0, len(calls))
 	for _, call := range calls {
-		doc, ok := call.doc.(*services.AccountingPaymentDocument)
+		doc, ok := call.doc.(*accountingsyncports.AccountingPaymentDocument)
 		require.True(t, ok)
 		out = append(out, doc)
 	}
@@ -695,7 +695,7 @@ func TestShortPayNeedsTheWriteOffItem(t *testing.T) {
 		TargetType: accountingsync.TargetItemRole,
 		Key:        accountingsync.ItemRoleShortPayWriteOff,
 	}, "qb-item-shortpay")
-	_, err := h.svc.Retry(t.Context(), &services.RetryAccountingSyncRequest{
+	_, err := h.svc.Retry(t.Context(), &accountingsyncports.RetryAccountingSyncRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: h.conn.IntegrationType,
@@ -831,7 +831,7 @@ func TestPaymentVoidUsesTheSyncedPayment(t *testing.T) {
 	h := newHarness(t)
 	customerID, _ := h.mappedCustomer("Acme")
 	payment := h.postedPayment(customerID, paymentSpec{amountMinor: 5000})
-	created := NewRecordFor(h.conn, services.PaymentSyncRequest(
+	created := NewRecordFor(h.conn, accountingsyncports.PaymentSyncRequest(
 		payment, accountingsync.SyncOperationCreate, accountingsync.SyncSourceCustomerPaymentPosted,
 	), mayTenth)
 	created.MarkSynced(&accountingsync.SyncResult{
@@ -840,7 +840,7 @@ func TestPaymentVoidUsesTheSyncedPayment(t *testing.T) {
 	}, mayTenth)
 	h.records.put(created)
 	payment.Version = 2
-	staleUpdate := NewRecordFor(h.conn, services.PaymentSyncRequest(
+	staleUpdate := NewRecordFor(h.conn, accountingsyncports.PaymentSyncRequest(
 		payment, accountingsync.SyncOperationUpdate, accountingsync.SyncSourceCustomerPaymentApplied,
 	), time.Now().Add(time.Hour).Unix())
 	h.records.put(staleUpdate)
@@ -850,7 +850,7 @@ func TestPaymentVoidUsesTheSyncedPayment(t *testing.T) {
 
 	calls := h.writer.callsTo("VoidPayment")
 	require.Len(t, calls, 1)
-	ref, ok := calls[0].doc.(*services.AccountingDocumentRef)
+	ref, ok := calls[0].doc.(*accountingsyncports.AccountingDocumentRef)
 	require.True(t, ok)
 	assert.Equal(t, "qb-pay-1", ref.ExternalID)
 	assert.Equal(t, accountingsync.SyncObjectCustomerPayment, ref.Kind)
@@ -867,7 +867,7 @@ func TestAPaymentSharedWithOtherDocumentsInTheBooksIsNotVoidedAlone(t *testing.T
 	h := newHarness(t)
 	customerID, _ := h.mappedCustomer("Acme")
 	payment := h.postedPayment(customerID, paymentSpec{amountMinor: 5000})
-	created := NewRecordFor(h.conn, services.PaymentSyncRequest(
+	created := NewRecordFor(h.conn, accountingsyncports.PaymentSyncRequest(
 		payment, accountingsync.SyncOperationCreate, accountingsync.SyncSourceCustomerPaymentPosted,
 	), mayTenth)
 	require.True(t, created.Link(&accountingsync.SyncLink{
@@ -894,7 +894,7 @@ func TestAPaymentLinkedAloneIsVoidedNormally(t *testing.T) {
 	h := newHarness(t)
 	customerID, _ := h.mappedCustomer("Acme")
 	payment := h.postedPayment(customerID, paymentSpec{amountMinor: 5000})
-	created := NewRecordFor(h.conn, services.PaymentSyncRequest(
+	created := NewRecordFor(h.conn, accountingsyncports.PaymentSyncRequest(
 		payment, accountingsync.SyncOperationCreate, accountingsync.SyncSourceCustomerPaymentPosted,
 	), mayTenth)
 	require.True(t, created.Link(&accountingsync.SyncLink{ExternalID: "qb-pay-301"}, mayTenth))
@@ -905,7 +905,7 @@ func TestAPaymentLinkedAloneIsVoidedNormally(t *testing.T) {
 
 	calls := h.writer.callsTo("VoidPayment")
 	require.Len(t, calls, 1)
-	ref, ok := calls[0].doc.(*services.AccountingDocumentRef)
+	ref, ok := calls[0].doc.(*accountingsyncports.AccountingDocumentRef)
 	require.True(t, ok)
 	assert.Equal(t, "qb-pay-301", ref.ExternalID)
 }
@@ -916,7 +916,7 @@ func TestVoidOfAPaymentThatNeverReachedTheBooksWithdrawsIt(t *testing.T) {
 	h := newHarness(t)
 	customerID, _ := h.mappedCustomer("Acme")
 	payment := h.postedPayment(customerID, paymentSpec{amountMinor: 5000})
-	created := NewRecordFor(h.conn, services.PaymentSyncRequest(
+	created := NewRecordFor(h.conn, accountingsyncports.PaymentSyncRequest(
 		payment, accountingsync.SyncOperationCreate, accountingsync.SyncSourceCustomerPaymentPosted,
 	), mayTenth)
 	created.MarkFailed(&accountingsync.SyncError{Category: accountingsync.SyncErrorMapping}, mayTenth)
@@ -959,7 +959,7 @@ func TestCreditApplicationLinksTheInvoiceAndTheCreditMemo(t *testing.T) {
 	h.payments.mu.Lock()
 	h.payments.applications[app.ID] = app
 	h.payments.mu.Unlock()
-	require.NoError(t, h.enqueuer.Enqueue(t.Context(), services.CreditApplicationSyncRequest(
+	require.NoError(t, h.enqueuer.Enqueue(t.Context(), accountingsyncports.CreditApplicationSyncRequest(
 		app, memo.Number, accountingsync.SyncOperationCreate, accountingsync.SyncSourceCreditMemoApplied,
 	)))
 
@@ -967,7 +967,7 @@ func TestCreditApplicationLinksTheInvoiceAndTheCreditMemo(t *testing.T) {
 
 	calls := h.writer.callsTo("CreateCreditApplication")
 	require.Len(t, calls, 1)
-	doc, ok := calls[0].doc.(*services.AccountingCreditApplicationDocument)
+	doc, ok := calls[0].doc.(*accountingsyncports.AccountingCreditApplicationDocument)
 	require.True(t, ok)
 	assert.Equal(t, "qb-cust-Acme", doc.CustomerExternalID)
 	assert.Equal(t, "qb-inv-1", doc.InvoiceExternalID)
@@ -985,14 +985,14 @@ func TestCustomerUpdatePushesThePartyToTheMappedRecord(t *testing.T) {
 
 	h := newHarness(t)
 	customerID, mapping := h.mappedCustomer("Acme")
-	h.mappings.parties[customerID] = &services.AccountingPartyDraft{DisplayName: "Acme", City: "Reno"}
-	require.NoError(t, h.enqueuer.Enqueue(t.Context(), services.CustomerSyncRequest(h.tenant, customerID, "Acme", 3)))
+	h.mappings.parties[customerID] = &accountingsyncports.AccountingPartyDraft{DisplayName: "Acme", City: "Reno"}
+	require.NoError(t, h.enqueuer.Enqueue(t.Context(), accountingsyncports.CustomerSyncRequest(h.tenant, customerID, "Acme", 3)))
 
 	h.drain(t)
 
 	calls := h.writer.callsTo("UpsertCustomer")
 	require.Len(t, calls, 1)
-	doc, ok := calls[0].doc.(*services.AccountingCustomerDocument)
+	doc, ok := calls[0].doc.(*accountingsyncports.AccountingCustomerDocument)
 	require.True(t, ok)
 	assert.Equal(t, "qb-cust-Acme", doc.ExternalID)
 	assert.Equal(t, "Reno", doc.Party.City)

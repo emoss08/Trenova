@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -26,11 +26,11 @@ func money(value string) decimal.Decimal {
 	return decimal.RequireFromString(value)
 }
 
-func ratedBuySide(amount string) *services.RatedShipment {
+func ratedBuySide(amount string) *ratequoteports.RatedShipment {
 	quoteID := pulid.MustNew("rqt_")
 	agreementID := pulid.MustNew("rag_")
 
-	return &services.RatedShipment{
+	return &ratequoteports.RatedShipment{
 		Amount:      money(amount),
 		Currency:    "USD",
 		Outcome:     ratequote.OutcomeRated,
@@ -202,8 +202,8 @@ func TestBuySideRating_UnpricedSellSideIsNotAMarginBreach(t *testing.T) {
 	assert.False(t, rating.Margin.Breached())
 }
 
-func appliedRequest() *repositories.AssignMoveToCarrierRequest {
-	return &repositories.AssignMoveToCarrierRequest{
+func appliedRequest() *shipmentports.AssignMoveToCarrierRequest {
+	return &shipmentports.AssignMoveToCarrierRequest{
 		CarrierID: pulid.MustNew("car_"),
 		AutoRate:  true,
 	}
@@ -223,7 +223,7 @@ func TestApplyBuySideRating_FillsTheRequestTheWayAPersonWould(t *testing.T) {
 		BaseRate:      money("1450"),
 		FuelSurcharge: money("210"),
 		RateQuoteID:   &quoteID,
-		Accessorials: []repositories.CarrierAccessorialInput{
+		Accessorials: []shipmentports.CarrierAccessorialInput{
 			{AccessorialChargeID: chargeIDPtr(), Amount: money("125")},
 		},
 	})
@@ -240,7 +240,7 @@ func TestApplyBuySideRating_FillsTheRequestTheWayAPersonWould(t *testing.T) {
 func TestApplyBuySideRating_IsNotAskedForWhenARateWasTyped(t *testing.T) {
 	t.Parallel()
 
-	req := &repositories.AssignMoveToCarrierRequest{
+	req := &shipmentports.AssignMoveToCarrierRequest{
 		CarrierID: pulid.MustNew("car_"),
 		AutoRate:  true,
 		BaseRate:  money("1600"),
@@ -252,7 +252,7 @@ func TestApplyBuySideRating_IsNotAskedForWhenARateWasTyped(t *testing.T) {
 func TestShouldAutoRate_IsSkippedWhenNotAskedFor(t *testing.T) {
 	t.Parallel()
 
-	assert.False(t, shouldAutoRate(&repositories.AssignMoveToCarrierRequest{}))
+	assert.False(t, shouldAutoRate(&shipmentports.AssignMoveToCarrierRequest{}))
 }
 
 func TestShouldAutoRate_AppliesWhenAskedForAndNoRateWasTyped(t *testing.T) {

@@ -22,7 +22,7 @@ write runs on (`PlanCreateEvent`, `PlanRecordTest`, `PlanRunDraw`, `PlanOpenCase
 `PlanAssign`, `PlanStart`, `PlanUpdateReview`, `PlanRecordVerification`, `PlanCreate`,
 `PlanRecordInjury`, `PlanAdjust`, `PlanUpdatePermit`, `PlanResolveDispute`,
 `PlanGenerateExport` and the rest), returning the record as it stands and as the write would
-leave it (`services.RecordChange[T]`). A tool's preview renders that plan and its `Validate`
+leave it (`kernelports.RecordChange[T]`). A tool's preview renders that plan and its `Validate`
 runs the same plan, so a proposal shows what the write decides and is refused for the reasons
 the write refuses it. `UpdatePermit` runs `PlanUpdatePermit` itself, so the REST route and the
 tool both refuse a permit that belongs to another shipment.

@@ -3,14 +3,14 @@ package glaccountservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-
 	"github.com/emoss08/trenova/internal/core/domain/glaccount"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -25,19 +25,19 @@ type Params struct {
 
 	Logger       *zap.Logger
 	DB           *postgres.Connection
-	Repo         repositories.GLAccountRepository
+	Repo         glaccountports.GLAccountRepository
 	Validator    *Validator
-	AuditService services.AuditService
-	Transformer  services.DataTransformer
+	AuditService auditports.AuditService
+	Transformer  accessorialchargeports.DataTransformer
 }
 
 type Service struct {
 	l            *zap.Logger
 	db           *postgres.Connection
-	repo         repositories.GLAccountRepository
+	repo         glaccountports.GLAccountRepository
 	validator    *Validator
-	auditService services.AuditService
-	transformer  services.DataTransformer
+	auditService auditports.AuditService
+	transformer  accessorialchargeports.DataTransformer
 }
 
 func New(p Params) *Service {
@@ -53,35 +53,35 @@ func New(p Params) *Service {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListGLAccountsRequest,
+	req *glaccountports.ListGLAccountsRequest,
 ) (*pagination.ListResult[*glaccount.GLAccount], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	req repositories.GetGLAccountByIDRequest,
+	req glaccountports.GetGLAccountByIDRequest,
 ) (*glaccount.GLAccount, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) SelectOptions(
 	ctx context.Context,
-	req *repositories.GLAccountSelectOptionsRequest,
+	req *glaccountports.GLAccountSelectOptionsRequest,
 ) (*pagination.ListResult[*glaccount.GLAccount], error) {
 	return s.repo.SelectOptions(ctx, req)
 }
 
 func (s *Service) BulkUpdateStatus(
 	ctx context.Context,
-	req *repositories.BulkUpdateGLAccountStatusRequest,
+	req *glaccountports.BulkUpdateGLAccountStatusRequest,
 ) ([]*glaccount.GLAccount, error) {
 	log := s.l.With(
 		zap.String("operation", "BulkUpdateStatus"),
 		zap.Any("request", req),
 	)
 
-	originalEntities, err := s.repo.GetByIDs(ctx, repositories.GetGLAccountsByIDsRequest{
+	originalEntities, err := s.repo.GetByIDs(ctx, glaccountports.GetGLAccountsByIDsRequest{
 		TenantInfo:   req.TenantInfo,
 		GLAccountIDs: req.GLAccountIDs,
 	})
@@ -139,7 +139,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceGeneralLedgerAccount,
 		ResourceID:     createdEntity.GetID().String(),
 		Operation:      permission.OpCreate,
@@ -175,7 +175,7 @@ func (s *Service) Update(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetByID(ctx, repositories.GetGLAccountByIDRequest{
+	original, err := s.repo.GetByID(ctx, glaccountports.GetGLAccountByIDRequest{
 		ID: entity.GetID(),
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.GetOrganizationID(),
@@ -193,7 +193,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceGeneralLedgerAccount,
 		ResourceID:     updatedEntity.GetID().String(),
 		Operation:      permission.OpUpdate,
@@ -214,7 +214,7 @@ func (s *Service) Update(
 
 func (s *Service) Delete(
 	ctx context.Context,
-	req repositories.DeleteGLAccountRequest,
+	req glaccountports.DeleteGLAccountRequest,
 	userID pulid.ID,
 ) error {
 	log := s.l.With(
@@ -223,7 +223,7 @@ func (s *Service) Delete(
 		zap.String("userID", userID.String()),
 	)
 
-	existing, err := s.repo.GetByID(ctx, repositories.GetGLAccountByIDRequest(req))
+	existing, err := s.repo.GetByID(ctx, glaccountports.GetGLAccountByIDRequest(req))
 	if err != nil {
 		log.Error("failed to get gl account for delete", zap.Error(err))
 		return err
@@ -238,7 +238,7 @@ func (s *Service) Delete(
 		return err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceGeneralLedgerAccount,
 		ResourceID:     existing.GetID().String(),
 		Operation:      permission.OpDelete,

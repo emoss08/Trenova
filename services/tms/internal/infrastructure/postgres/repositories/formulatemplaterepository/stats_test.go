@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -23,7 +23,7 @@ func TestStatsQueryCountsEveryConsumerInOneStatement(t *testing.T) {
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	ids := []pulid.ID{pulid.MustNew("ft_"), pulid.MustNew("ft_")}
 
-	query := statsQuery(db.NewSelect(), &repositories.GetFormulaTemplateStatsRequest{
+	query := statsQuery(db.NewSelect(), &formulatemplateports.GetFormulaTemplateStatsRequest{
 		TenantInfo:  tenant,
 		TemplateIDs: ids,
 	})

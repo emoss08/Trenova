@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -34,7 +34,7 @@ func (s *Service) ListVehiclePositions(
 	if maxAgeSeconds <= 0 {
 		maxAgeSeconds = defaultPositionMaxAgeSeconds
 	}
-	return s.repo.ListVehiclePositions(ctx, &repositories.ListVehiclePositionsRequest{
+	return s.repo.ListVehiclePositions(ctx, &telematicsports.ListVehiclePositionsRequest{
 		TenantInfo:     tenantInfo,
 		MaxAgeSeconds:  maxAgeSeconds,
 		IncludeTractor: true,
@@ -48,7 +48,7 @@ func (s *Service) ListWorkerHOSStates(
 	workerIDs []pulid.ID,
 	limit int,
 ) ([]*telematics.WorkerHOSState, error) {
-	return s.repo.ListWorkerHOSStates(ctx, &repositories.ListWorkerHOSStatesRequest{
+	return s.repo.ListWorkerHOSStates(ctx, &telematicsports.ListWorkerHOSStatesRequest{
 		TenantInfo:    tenantInfo,
 		WorkerIDs:     workerIDs,
 		IncludeWorker: true,
@@ -61,7 +61,7 @@ func (s *Service) GetWorkerHOSState(
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 ) (*telematics.WorkerHOSState, error) {
-	state, err := s.repo.GetWorkerHOSState(ctx, repositories.GetWorkerHOSStateRequest{
+	state, err := s.repo.GetWorkerHOSState(ctx, telematicsports.GetWorkerHOSStateRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
 	})
@@ -78,7 +78,7 @@ func (s *Service) ListWorkerHOSViolations(
 	since int64,
 	limit int,
 ) ([]*telematics.WorkerHOSViolation, error) {
-	return s.repo.ListWorkerHOSViolations(ctx, &repositories.ListWorkerHOSViolationsRequest{
+	return s.repo.ListWorkerHOSViolations(ctx, &telematicsports.ListWorkerHOSViolationsRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
 		Since:      since,
@@ -101,7 +101,7 @@ func (s *Service) ListVehicleInspections(
 ) ([]*VehicleInspectionRecord, error) {
 	inspections, err := s.repo.ListVehicleInspections(
 		ctx,
-		&repositories.ListVehicleInspectionsRequest{
+		&telematicsports.ListVehicleInspectionsRequest{
 			TenantInfo: tenantInfo,
 			TractorID:  tractorID,
 			WorkerID:   workerID,
@@ -146,7 +146,7 @@ func (s *Service) workerNamesByID(
 	return names, nil
 }
 
-func workerMappingName(mapping *repositories.WorkerTelematicsMapping) string {
+func workerMappingName(mapping *telematicsports.WorkerTelematicsMapping) string {
 	return strings.TrimSpace(
 		strings.TrimSpace(mapping.FirstName) + " " + strings.TrimSpace(mapping.LastName),
 	)
@@ -222,7 +222,7 @@ func (s *Service) ListShipmentFormSubmissions(
 	tenantInfo pagination.TenantInfo,
 	shipmentID pulid.ID,
 ) ([]*FormSubmissionRecord, error) {
-	submissions, err := s.repo.ListFormSubmissions(ctx, &repositories.ListFormSubmissionsRequest{
+	submissions, err := s.repo.ListFormSubmissions(ctx, &telematicsports.ListFormSubmissionsRequest{
 		TenantInfo: tenantInfo,
 		ShipmentID: shipmentID,
 	})

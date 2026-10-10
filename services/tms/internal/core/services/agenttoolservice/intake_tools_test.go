@@ -8,9 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/tenderservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,8 +23,8 @@ type fakeShipmentWriter struct {
 	existing *shipment.Shipment
 	created  *shipment.Shipment
 	updated  *shipment.Shipment
-	lastGet  *repositories.GetShipmentByIDRequest
-	actor    *serviceports.RequestActor
+	lastGet  *shipmentports.GetShipmentByIDRequest
+	actor    *permissionports.RequestActor
 	// previewErr is what the create plan refuses with, when it refuses.
 	previewErr error
 	previews   int
@@ -31,7 +32,7 @@ type fakeShipmentWriter struct {
 
 func (f *fakeShipmentWriter) Get(
 	_ context.Context,
-	req *repositories.GetShipmentByIDRequest,
+	req *shipmentports.GetShipmentByIDRequest,
 ) (*shipment.Shipment, error) {
 	f.lastGet = req
 
@@ -41,7 +42,7 @@ func (f *fakeShipmentWriter) Get(
 func (f *fakeShipmentWriter) Create(
 	_ context.Context,
 	entity *shipment.Shipment,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*shipment.Shipment, error) {
 	f.created = entity
 	f.actor = actor
@@ -54,20 +55,20 @@ func (f *fakeShipmentWriter) Create(
 func (f *fakeShipmentWriter) PreviewCreate(
 	_ context.Context,
 	entity *shipment.Shipment,
-	_ *serviceports.RequestActor,
-) (*serviceports.ShipmentCreatePlan, error) {
+	_ *permissionports.RequestActor,
+) (*shipmentports.ShipmentCreatePlan, error) {
 	f.previews++
 	if f.previewErr != nil {
 		return nil, f.previewErr
 	}
 
-	return &serviceports.ShipmentCreatePlan{Shipment: entity}, nil
+	return &shipmentports.ShipmentCreatePlan{Shipment: entity}, nil
 }
 
 func (f *fakeShipmentWriter) Update(
 	_ context.Context,
 	entity *shipment.Shipment,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*shipment.Shipment, error) {
 	f.updated = entity
 	f.actor = actor
@@ -209,7 +210,7 @@ func TestCreateShipment_ValidateRefusesWhatTheServiceWould(t *testing.T) {
 		Shipments: writer,
 		Imports:   &fakeImportCompleter{},
 	})
-	validator, ok := tool.(serviceports.ToolValidator)
+	validator, ok := tool.(agentports.ToolValidator)
 	require.True(t, ok, "create_shipment checks a call before it is filed")
 
 	payload := shipmentPayload(
@@ -259,7 +260,7 @@ func TestUpdateShipment_PatchesOnlyTheNamedFields(t *testing.T) {
 	)
 	assert.Equal(t, params.OrganizationID, writer.lastGet.TenantInfo.OrgID)
 
-	target, ok := tool.(serviceports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, shipmentID, target.ID)
 	assert.Equal(t, permission.ResourceShipment, target.Resource)
@@ -331,7 +332,7 @@ func TestTenderToRoutingGuide_StartsAWaterfallForTheMove(t *testing.T) {
 	assert.Equal(t, guideID, *tenders.waterfall.RoutingGuideID)
 	assert.Equal(t, params.OrganizationID, tenders.waterfall.TenantInfo.OrgID)
 
-	target, ok := tool.(serviceports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, permission.ResourceShipmentMove, target.Resource)
 }

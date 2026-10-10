@@ -8,8 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/money"
 )
@@ -20,8 +21,8 @@ const invoiceRecordEntity = "invoice"
 type approvalInvoicePlanner interface {
 	PreviewApprovalInvoice(
 		ctx context.Context,
-		req *serviceports.CreateInvoiceFromBillingQueueRequest,
-	) (*serviceports.CreateInvoiceFromBillingQueueResult, error)
+		req *invoiceports.CreateInvoiceFromBillingQueueRequest,
+	) (*invoiceports.CreateInvoiceFromBillingQueueResult, error)
 }
 
 // approveBillingQueueItemTool proposes approving an item, which creates its
@@ -35,14 +36,14 @@ type approveBillingQueueItemTool struct {
 }
 
 var (
-	_ serviceports.ToolPreviewer      = (*approveBillingQueueItemTool)(nil)
-	_ serviceports.ToolResultReporter = (*approveBillingQueueItemTool)(nil)
+	_ agentports.ToolPreviewer      = (*approveBillingQueueItemTool)(nil)
+	_ agentports.ToolResultReporter = (*approveBillingQueueItemTool)(nil)
 )
 
 func newApproveBillingQueueItemTool(
 	billing billingQueueDecider,
 	invoices approvalInvoicePlanner,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return &approveBillingQueueItemTool{
 		invoices: invoices,
 		billingQueueDecisionTool: &billingQueueDecisionTool{
@@ -79,7 +80,7 @@ func newApproveBillingQueueItemTool(
 	}
 }
 
-func (t *approveBillingQueueItemTool) Policy() serviceports.ToolPolicy {
+func (t *approveBillingQueueItemTool) Policy() agentports.ToolPolicy {
 	policy := t.billingQueueDecisionTool.Policy()
 	policy.Artifact = invoiceRecordEntity
 
@@ -87,14 +88,14 @@ func (t *approveBillingQueueItemTool) Policy() serviceports.ToolPolicy {
 }
 
 func (t *approveBillingQueueItemTool) draftRequest(
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.CreateInvoiceFromBillingQueueRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*invoiceports.CreateInvoiceFromBillingQueueRequest, error) {
 	req, err := t.request(params)
 	if err != nil {
 		return nil, err
 	}
 
-	return &serviceports.CreateInvoiceFromBillingQueueRequest{
+	return &invoiceports.CreateInvoiceFromBillingQueueRequest{
 		BillingQueueItemID: req.ItemID,
 		TenantInfo:         req.TenantInfo,
 		DeferToStatement:   true,
@@ -103,7 +104,7 @@ func (t *approveBillingQueueItemTool) draftRequest(
 
 func (t *approveBillingQueueItemTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	plan, item, err := t.planned(ctx, &params)
 	if err != nil {
@@ -187,7 +188,7 @@ func draftInvoiceChange(draft *invoice.Invoice) (*agent.RecordChange, error) {
 // and names the invoice approval made, which post_invoice takes next.
 func (t *approveBillingQueueItemTool) ExecuteWithResult(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
 	if err := t.billingQueueDecisionTool.Execute(ctx, params); err != nil {
 		return nil, err
@@ -214,7 +215,7 @@ func (t *approveBillingQueueItemTool) ExecuteWithResult(
 
 func (t *approveBillingQueueItemTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 

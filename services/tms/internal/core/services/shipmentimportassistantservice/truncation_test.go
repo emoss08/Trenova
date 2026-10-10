@@ -1,6 +1,10 @@
 package shipmentimportassistantservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/locationcategoryportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/usstateportsmock"
 	"context"
 	"errors"
 	"testing"
@@ -10,8 +14,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/locationcategory"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/locationservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -25,16 +29,16 @@ func TestAddLocation_CutsTheCodeOnACharacterBoundary(t *testing.T) {
 	t.Parallel()
 
 	tenant := importTenant()
-	engine := mocks.NewMockPermissionEngine(t)
+	engine := permissionportsmock.NewMockPermissionEngine(t)
 	expectCheck(engine, tenant, permission.ResourceLocation, permission.OpCreate, true)
 
-	states := mocks.NewMockUsStateRepository(t)
+	states := usstateportsmock.NewMockUsStateRepository(t)
 	states.EXPECT().
 		GetByAbbreviation(mock.Anything, "QC").
 		Return(&usstate.UsState{ID: pulid.MustNew("us_")}, nil).
 		Once()
 
-	categories := mocks.NewMockLocationCategoryRepository(t)
+	categories := locationcategoryportsmock.NewMockLocationCategoryRepository(t)
 	categories.EXPECT().
 		SelectOptions(mock.Anything, mock.Anything).
 		Return(&pagination.ListResult[*locationcategory.LocationCategory]{
@@ -44,7 +48,7 @@ func TestAddLocation_CutsTheCodeOnACharacterBoundary(t *testing.T) {
 		Once()
 
 	var created *location.Location
-	transformer := mocks.NewMockDataTransformer(t)
+	transformer := accessorialchargeportsmock.NewMockDataTransformer(t)
 	transformer.EXPECT().
 		TransformLocation(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, entity *location.Location) error {
@@ -64,7 +68,7 @@ func TestAddLocation_CutsTheCodeOnACharacterBoundary(t *testing.T) {
 		}),
 	}
 
-	service.RunTool(t.Context(), tenant, &serviceports.ToolCall{
+	service.RunTool(t.Context(), tenant, &agentports.ToolCall{
 		ID:   "call_1",
 		Name: "add_location",
 		Arguments: map[string]any{

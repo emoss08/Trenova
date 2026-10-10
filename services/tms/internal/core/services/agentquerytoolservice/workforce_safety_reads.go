@@ -6,11 +6,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/workerdrugalcoholservice"
 	"github.com/emoss08/trenova/internal/core/services/workersafetyservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/typeutils"
@@ -37,7 +38,7 @@ type wfSafetyReader interface {
 	) ([]*worker.WorkerSafetyEvent, error)
 	ListViolations(
 		ctx context.Context,
-		req *repositories.ListWorkerSafetyViolationsRequest,
+		req *workerports.ListWorkerSafetyViolationsRequest,
 	) ([]*worker.WorkerSafetyViolation, error)
 	ListRecognitions(
 		ctx context.Context,
@@ -50,15 +51,15 @@ type wfSafetyReader interface {
 type wfDrugAlcoholReader interface {
 	ListTests(
 		ctx context.Context,
-		req *repositories.ListWorkerDOTTestsRequest,
+		req *workerports.ListWorkerDOTTestsRequest,
 	) ([]*worker.WorkerDOTTest, error)
 	ListPools(
 		ctx context.Context,
-		req *repositories.ListDOTRandomPoolsRequest,
+		req *workerports.ListDOTRandomPoolsRequest,
 	) (*pagination.CursorListResult[*worker.DOTRandomPool], error)
 	ListDraws(
 		ctx context.Context,
-		req *repositories.ListDOTRandomDrawsRequest,
+		req *workerports.ListDOTRandomDrawsRequest,
 	) ([]*worker.DOTRandomDraw, error)
 	GetDraw(
 		ctx context.Context,
@@ -67,7 +68,7 @@ type wfDrugAlcoholReader interface {
 	) (*worker.DOTRandomDraw, error)
 	ListDrawEntries(
 		ctx context.Context,
-		req *repositories.ListDOTRandomDrawEntriesRequest,
+		req *workerports.ListDOTRandomDrawEntriesRequest,
 	) ([]*worker.DOTRandomDrawEntry, error)
 }
 
@@ -124,8 +125,8 @@ type workerSafetyRecord struct {
 
 func newListWorkerSafetyEventsTool(
 	safety wfSafetyReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	access := newFieldAccess(permissions)
 	return &workforceRead{
 		name: "list_worker_safety_events",
@@ -142,7 +143,7 @@ func newListWorkerSafetyEventsTool(
 		access: access,
 		run: func(
 			ctx context.Context,
-			params *serviceports.QueryToolParams,
+			params *agentports.QueryToolParams,
 			gate *fieldGate,
 		) (any, error) {
 			workerID, given, err := optionalPulid(params.Params, paramWorkerID)
@@ -158,7 +159,7 @@ func newListWorkerSafetyEventsTool(
 				return nil, err
 			}
 			violations, err := safety.ListViolations(ctx,
-				&repositories.ListWorkerSafetyViolationsRequest{
+				&workerports.ListWorkerSafetyViolationsRequest{
 					TenantInfo: tenant,
 					WorkerID:   workerID,
 				})
@@ -245,8 +246,8 @@ type dotTestRow struct {
 
 func newListDOTTestsTool(
 	tests wfDrugAlcoholReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &workforceRead{
 		name: "list_dot_tests",
 		description: "List drug and alcohol tests, newest first: one worker's, or every " +
@@ -262,14 +263,14 @@ func newListDOTTestsTool(
 		access: newFieldAccess(permissions),
 		run: func(
 			ctx context.Context,
-			params *serviceports.QueryToolParams,
+			params *agentports.QueryToolParams,
 			gate *fieldGate,
 		) (any, error) {
 			workerID, err := optionalWorker(params.Params)
 			if err != nil {
 				return nil, err
 			}
-			found, err := tests.ListTests(ctx, &repositories.ListWorkerDOTTestsRequest{
+			found, err := tests.ListTests(ctx, &workerports.ListWorkerDOTTestsRequest{
 				TenantInfo:    tenantOf(params),
 				WorkerID:      workerID,
 				OpenOnly:      optionalBool(params.Params, wfParamOpenOnly),
@@ -356,8 +357,8 @@ func toRandomDrawRow(draw *worker.DOTRandomDraw) randomDrawRow {
 
 func newListDOTRandomDrawsTool(
 	draws wfDrugAlcoholReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &workforceRead{
 		name: "list_dot_random_draws",
 		description: "List the random drug and alcohol testing pools and the rounds drawn " +
@@ -370,11 +371,11 @@ func newListDOTRandomDrawsTool(
 		access:     newFieldAccess(permissions),
 		run: func(
 			ctx context.Context,
-			params *serviceports.QueryToolParams,
+			params *agentports.QueryToolParams,
 			_ *fieldGate,
 		) (any, error) {
 			tenant := tenantOf(params)
-			pools, err := draws.ListPools(ctx, &repositories.ListDOTRandomPoolsRequest{
+			pools, err := draws.ListPools(ctx, &workerports.ListDOTRandomPoolsRequest{
 				Filter: &pagination.QueryOptions{
 					TenantInfo: tenant,
 					Pagination: pagination.Info{Limit: maxPoolsShown},
@@ -385,7 +386,7 @@ func newListDOTRandomDrawsTool(
 			if err != nil {
 				return nil, err
 			}
-			found, err := draws.ListDraws(ctx, &repositories.ListDOTRandomDrawsRequest{
+			found, err := draws.ListDraws(ctx, &workerports.ListDOTRandomDrawsRequest{
 				TenantInfo:  tenant,
 				IncludePool: true,
 				Limit:       maxDrawsShown,
@@ -437,8 +438,8 @@ type randomDrawDetail struct {
 
 func newGetDOTRandomDrawTool(
 	draws wfDrugAlcoholReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &workforceRead{
 		name:        "get_dot_random_draw",
 		searchTerms: []string{"who was selected", "selected drivers", "draw results"},
@@ -457,7 +458,7 @@ func newGetDOTRandomDrawTool(
 		access:   newFieldAccess(permissions),
 		run: func(
 			ctx context.Context,
-			params *serviceports.QueryToolParams,
+			params *agentports.QueryToolParams,
 			_ *fieldGate,
 		) (any, error) {
 			id, err := requirePulid(params.Params, paramDrawID)
@@ -471,7 +472,7 @@ func newGetDOTRandomDrawTool(
 			}
 			entries, err := draws.ListDrawEntries(
 				ctx,
-				&repositories.ListDOTRandomDrawEntriesRequest{
+				&workerports.ListDOTRandomDrawEntriesRequest{
 					TenantInfo:    tenant,
 					DrawID:        id,
 					IncludeWorker: true,
@@ -505,29 +506,29 @@ func newGetDOTRandomDrawTool(
 
 func provideListWorkerSafetyEventsTool(
 	safety *workersafetyservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newListWorkerSafetyEventsTool(safety, permissions)
 }
 
 func provideListDOTTestsTool(
 	tests *workerdrugalcoholservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newListDOTTestsTool(tests, permissions)
 }
 
 func provideListDOTRandomDrawsTool(
 	draws *workerdrugalcoholservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newListDOTRandomDrawsTool(draws, permissions)
 }
 
 func provideGetDOTRandomDrawTool(
 	draws *workerdrugalcoholservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newGetDOTRandomDrawTool(draws, permissions)
 }
 

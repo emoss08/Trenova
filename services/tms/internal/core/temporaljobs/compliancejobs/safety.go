@@ -3,7 +3,7 @@ package compliancejobs
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -40,7 +40,7 @@ func (a *Activities) SafetyRollupSweepActivity(
 
 	refs, err := a.safetyRepo.ListWorkersWithLapsedPoints(
 		ctx,
-		&repositories.ListWorkersWithLapsedPointsRequest{
+		&workerports.ListWorkersWithLapsedPointsRequest{
 			Since: since,
 			Until: now,
 			Limit: sweepPageSize,

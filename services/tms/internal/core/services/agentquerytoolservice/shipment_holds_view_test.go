@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/holdreason"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -14,7 +14,7 @@ import (
 )
 
 type fakeShipmentGetter struct {
-	repositories.ShipmentRepository
+	shipmentports.ShipmentRepository
 
 	entity *shipment.Shipment
 	reads  int
@@ -22,7 +22,7 @@ type fakeShipmentGetter struct {
 
 func (f *fakeShipmentGetter) GetByID(
 	context.Context,
-	*repositories.GetShipmentByIDRequest,
+	*shipmentports.GetShipmentByIDRequest,
 ) (*shipment.Shipment, error) {
 	f.reads++
 
@@ -30,14 +30,14 @@ func (f *fakeShipmentGetter) GetByID(
 }
 
 type fakeHoldLister struct {
-	repositories.ShipmentHoldRepository
+	shipmentports.ShipmentHoldRepository
 
 	holds []*shipment.ShipmentHold
 }
 
 func (f *fakeHoldLister) ListByShipmentID(
 	context.Context,
-	*repositories.ListShipmentHoldsRequest,
+	*shipmentports.ListShipmentHoldsRequest,
 ) (*pagination.ListResult[*shipment.ShipmentHold], error) {
 	return &pagination.ListResult[*shipment.ShipmentHold]{Items: f.holds}, nil
 }

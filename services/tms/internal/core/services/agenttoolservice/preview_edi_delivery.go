@@ -9,11 +9,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/ediinboundservice"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -143,7 +143,7 @@ func refusedRecord(
 
 func (t *retryEDIMessageDeliveryTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	ids, err := ediRecordSet(t, &params, paramEDIMessageIDs)
 	if err != nil {
@@ -187,7 +187,7 @@ func (t *retryEDIMessageDeliveryTool) Preview(
 
 func (t *replayEDIMessageTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	req, err := t.request(&params)
 	if err != nil {
@@ -219,7 +219,7 @@ func (t *replayEDIMessageTool) Preview(
 
 func (t *reprocessEDIInboundFilesTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	ids, err := ediRecordSet(t, &params, paramEDIInboundFileIDs)
 	if err != nil {
@@ -249,10 +249,10 @@ func (t *reprocessEDIInboundFilesTool) Preview(
 
 func (t *reprocessEDIInboundFilesTool) planFile(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 	id pulid.ID,
 ) (plannedEDIRecord, error) {
-	file, err := t.files.GetInboundFile(ctx, repositories.GetEDIInboundFileByIDRequest{
+	file, err := t.files.GetInboundFile(ctx, ediports.GetEDIInboundFileByIDRequest{
 		ID:         id,
 		TenantInfo: tenantFrom(*params),
 	})

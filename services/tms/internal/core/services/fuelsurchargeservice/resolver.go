@@ -5,12 +5,11 @@ import (
 	"slices"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/services/orgzone"
-
 	"github.com/emoss08/trenova/internal/core/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/orgzone"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -19,8 +18,8 @@ import (
 
 func (s *Service) ResolveShipmentCharge(
 	ctx context.Context,
-	req *services.ResolveShipmentChargeRequest,
-) (*services.ResolvedFuelSurcharge, error) {
+	req *fuelsurchargeports.ResolveShipmentChargeRequest,
+) (*fuelsurchargeports.ResolvedFuelSurcharge, error) {
 	if req == nil || req.Shipment == nil || req.Shipment.CustomerID.IsNil() {
 		return nil, nil
 	}
@@ -42,7 +41,7 @@ func (s *Service) ResolveShipmentCharge(
 		BuID:  entity.BusinessUnitID,
 	}
 
-	program, err := s.programRepo.GetByID(ctx, &repositories.GetFuelSurchargeProgramByIDRequest{
+	program, err := s.programRepo.GetByID(ctx, &fuelsurchargeports.GetFuelSurchargeProgramByIDRequest{
 		ProgramID:    programID,
 		TenantInfo:   tenantInfo,
 		IncludeRows:  true,
@@ -67,7 +66,7 @@ func (s *Service) ResolveShipmentCharge(
 		return nil, nil
 	}
 
-	prices, err := s.priceRepo.GetLatestOnOrBefore(ctx, &repositories.GetLatestFuelPricesRequest{
+	prices, err := s.priceRepo.GetLatestOnOrBefore(ctx, &fuelsurchargeports.GetLatestFuelPricesRequest{
 		FuelIndexID: program.FuelIndexID,
 		TenantInfo:  tenantInfo,
 		Date:        basisDate.Format(fuelsurcharge.PriceDateLayout),
@@ -117,7 +116,7 @@ func (s *Service) ResolveShipmentCharge(
 		detail.TermsOverridden = req.Override.AppliesTerms()
 	}
 
-	return &services.ResolvedFuelSurcharge{
+	return &fuelsurchargeports.ResolvedFuelSurcharge{
 		ProgramID:           program.ID,
 		AccessorialChargeID: program.AccessorialChargeID,
 		Amount:              result.Amount,
@@ -133,7 +132,7 @@ func (s *Service) ResolveShipmentCharge(
 // customer was promised they would not see.
 func (s *Service) resolveProgramID(
 	ctx context.Context,
-	req *services.ResolveShipmentChargeRequest,
+	req *fuelsurchargeports.ResolveShipmentChargeRequest,
 	log *zap.Logger,
 ) (pulid.ID, bool) {
 	if override := req.Override; override != nil {
@@ -148,7 +147,7 @@ func (s *Service) resolveProgramID(
 
 	profile, err := s.customerRepo.GetBillingProfile(
 		ctx,
-		repositories.GetCustomerBillingProfileRequest{
+		customerports.GetCustomerBillingProfileRequest{
 			CustomerID: req.Shipment.CustomerID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: req.Shipment.OrganizationID,
@@ -175,7 +174,7 @@ func (s *Service) resolveProgramID(
 // same program.
 func applyOverrideTerms(
 	program *fuelsurcharge.FuelSurchargeProgram,
-	override *services.FuelProgramOverride,
+	override *fuelsurchargeports.FuelProgramOverride,
 ) *fuelsurcharge.FuelSurchargeProgram {
 	if program == nil || !override.AppliesTerms() {
 		return program

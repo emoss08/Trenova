@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -188,15 +188,15 @@ func TestFilterCatalog_CoversEveryListTool(t *testing.T) {
 }
 
 type stubTractorList struct {
-	repositories.TractorRepository
+	tractorports.TractorRepository
 
 	items []*tractor.Tractor
-	last  *repositories.ListTractorsRequest
+	last  *tractorports.ListTractorsRequest
 }
 
 func (s *stubTractorList) List(
 	_ context.Context,
-	req *repositories.ListTractorsRequest,
+	req *tractorports.ListTractorsRequest,
 ) (*pagination.CursorListResult[*tractor.Tractor], error) {
 	s.last = req
 

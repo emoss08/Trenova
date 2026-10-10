@@ -4,14 +4,13 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/replaytest"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/sdk/worker"
 	"go.temporal.io/sdk/workflow"
@@ -28,12 +27,12 @@ func loopReplayRuntime() *agentruntime.Service {
 		Logger:     zap.NewNop(),
 		Completion: &agentruntimetest.ScriptedCompletion{},
 		QueryTools: &agentruntimetest.StubQueryRegistry{
-			Tools: []serviceports.AgentQueryTool{&agentruntimetest.StubQueryTool{
+			Tools: []agentports.AgentQueryTool{&agentruntimetest.StubQueryTool{
 				ToolName: loopReplayRead,
 			}},
 		},
 		ActionTools: &agentruntimetest.StubActionRegistry{
-			Tools: []serviceports.AgentTool{&agentruntimetest.StubActionTool{
+			Tools: []agentports.AgentTool{&agentruntimetest.StubActionTool{
 				ToolName: loopReplayWrite,
 			}},
 		},

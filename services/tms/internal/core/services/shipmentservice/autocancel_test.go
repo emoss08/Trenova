@@ -1,12 +1,17 @@
 package shipmentservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,9 +27,9 @@ func TestServiceGetAutoCancelableShipments_UsesThreshold(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
-	controlRepo := mocks.NewMockShipmentControlRepository(t)
+	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
-		Get(mock.Anything, repositories.GetShipmentControlRequest{
+		Get(mock.Anything, tenantports.GetShipmentControlRequest{
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		}).
 		Return(&tenant.ShipmentControl{
@@ -33,9 +38,9 @@ func TestServiceGetAutoCancelableShipments_UsesThreshold(t *testing.T) {
 		}, nil).
 		Once()
 
-	repo := mocks.NewMockShipmentRepository(t)
+	repo := shipmentportsmock.NewMockShipmentRepository(t)
 	repo.EXPECT().
-		GetAutoCancelableShipments(mock.Anything, mock.MatchedBy(func(req *repositories.GetAutoCancelableShipmentsRequest) bool {
+		GetAutoCancelableShipments(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetAutoCancelableShipmentsRequest) bool {
 			return req.TenantInfo.OrgID == orgID && req.TenantInfo.BuID == buID
 		}), int8(21)).
 		Return([]*shipment.Shipment{{ID: pulid.MustNew("shp_")}}, nil).
@@ -49,7 +54,7 @@ func TestServiceGetAutoCancelableShipments_UsesThreshold(t *testing.T) {
 
 	entities, err := svc.GetAutoCancelableShipments(
 		t.Context(),
-		&repositories.GetAutoCancelableShipmentsRequest{
+		&shipmentports.GetAutoCancelableShipmentsRequest{
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		},
 	)
@@ -64,9 +69,9 @@ func TestServiceAutoCancelShipments_SkipsWhenDisabled(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
-	controlRepo := mocks.NewMockShipmentControlRepository(t)
+	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
-		Get(mock.Anything, repositories.GetShipmentControlRequest{
+		Get(mock.Anything, tenantports.GetShipmentControlRequest{
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		}).
 		Return(&tenant.ShipmentControl{AutoCancelShipments: false}, nil).
@@ -74,14 +79,14 @@ func TestServiceAutoCancelShipments_SkipsWhenDisabled(t *testing.T) {
 
 	svc := &service{
 		l:           zap.NewNop(),
-		repo:        mocks.NewMockShipmentRepository(t),
+		repo:        shipmentportsmock.NewMockShipmentRepository(t),
 		controlRepo: controlRepo,
-		invalidator: newTestInvalidator(mocks.NewMockRealtimeService(t)),
+		invalidator: newTestInvalidator(agentportsmock.NewMockRealtimeService(t)),
 	}
 
-	entities, err := svc.AutoCancelShipments(t.Context(), &repositories.AutoCancelShipmentsRequest{
+	entities, err := svc.AutoCancelShipments(t.Context(), &shipmentports.AutoCancelShipmentsRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
-	}, &services.RequestActor{})
+	}, &permissionports.RequestActor{})
 
 	require.NoError(t, err)
 	assert.Empty(t, entities)
@@ -94,9 +99,9 @@ func TestServiceAutoCancelShipments_PublishesBulkInvalidation(t *testing.T) {
 	buID := pulid.MustNew("bu_")
 	userID := pulid.MustNew("usr_")
 
-	controlRepo := mocks.NewMockShipmentControlRepository(t)
+	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
-		Get(mock.Anything, repositories.GetShipmentControlRequest{
+		Get(mock.Anything, tenantports.GetShipmentControlRequest{
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		}).
 		Return(&tenant.ShipmentControl{
@@ -105,9 +110,9 @@ func TestServiceAutoCancelShipments_PublishesBulkInvalidation(t *testing.T) {
 		}, nil).
 		Once()
 
-	repo := mocks.NewMockShipmentRepository(t)
+	repo := shipmentportsmock.NewMockShipmentRepository(t)
 	repo.EXPECT().
-		AutoCancelShipments(mock.Anything, mock.MatchedBy(func(req *repositories.AutoCancelShipmentsRequest) bool {
+		AutoCancelShipments(mock.Anything, mock.MatchedBy(func(req *shipmentports.AutoCancelShipmentsRequest) bool {
 			return req.TenantInfo.OrgID == orgID && req.TenantInfo.BuID == buID
 		}), int8(30)).
 		Return([]*shipment.Shipment{{
@@ -118,9 +123,9 @@ func TestServiceAutoCancelShipments_PublishesBulkInvalidation(t *testing.T) {
 		}}, nil).
 		Once()
 
-	realtime := mocks.NewMockRealtimeService(t)
+	realtime := agentportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().
-		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *services.PublishResourceInvalidationRequest) bool {
+		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *agentports.PublishResourceInvalidationRequest) bool {
 			return req.Resource == "shipments" &&
 				req.Action == "bulk_canceled" &&
 				req.OrganizationID == orgID &&
@@ -138,10 +143,10 @@ func TestServiceAutoCancelShipments_PublishesBulkInvalidation(t *testing.T) {
 		invalidator: newTestInvalidator(realtime),
 	}
 
-	entities, err := svc.AutoCancelShipments(t.Context(), &repositories.AutoCancelShipmentsRequest{
+	entities, err := svc.AutoCancelShipments(t.Context(), &shipmentports.AutoCancelShipmentsRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
-	}, &services.RequestActor{
-		PrincipalType: services.PrincipalTypeUser,
+	}, &permissionports.RequestActor{
+		PrincipalType: permissionports.PrincipalTypeUser,
 		PrincipalID:   userID,
 		UserID:        userID,
 	})

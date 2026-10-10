@@ -1,13 +1,16 @@
 package workersafetyservice_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/workeremploymentservice"
 	"github.com/emoss08/trenova/internal/core/services/workersafetyservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -22,7 +25,7 @@ import (
 const day = int64(86400)
 
 type fakeRepo struct {
-	repositories.WorkerSafetyRepository
+	workerports.WorkerSafetyRepository
 	events       []*worker.WorkerSafetyEvent
 	actions      []*worker.WorkerDisciplinaryAction
 	recognitions []*worker.WorkerRecognition
@@ -31,7 +34,7 @@ type fakeRepo struct {
 
 func (f *fakeRepo) ListEvents(
 	_ context.Context,
-	req *repositories.ListWorkerSafetyEventsRequest,
+	req *workerports.ListWorkerSafetyEventsRequest,
 ) ([]*worker.WorkerSafetyEvent, error) {
 	out := make([]*worker.WorkerSafetyEvent, 0, len(f.events))
 	for _, e := range f.events {
@@ -44,7 +47,7 @@ func (f *fakeRepo) ListEvents(
 
 func (f *fakeRepo) GetEventByID(
 	_ context.Context,
-	req *repositories.GetWorkerSafetyEventByIDRequest,
+	req *workerports.GetWorkerSafetyEventByIDRequest,
 ) (*worker.WorkerSafetyEvent, error) {
 	for _, e := range f.events {
 		if e.ID == req.ID {
@@ -80,7 +83,7 @@ func (f *fakeRepo) UpdateEvent(
 
 func (f *fakeRepo) DeleteEvent(
 	_ context.Context,
-	req *repositories.GetWorkerSafetyEventByIDRequest,
+	req *workerports.GetWorkerSafetyEventByIDRequest,
 ) error {
 	for i, e := range f.events {
 		if e.ID == req.ID {
@@ -93,7 +96,7 @@ func (f *fakeRepo) DeleteEvent(
 
 func (f *fakeRepo) ListActions(
 	_ context.Context,
-	req *repositories.ListWorkerDisciplinaryActionsRequest,
+	req *workerports.ListWorkerDisciplinaryActionsRequest,
 ) ([]*worker.WorkerDisciplinaryAction, error) {
 	out := make([]*worker.WorkerDisciplinaryAction, 0, len(f.actions))
 	for _, a := range f.actions {
@@ -106,7 +109,7 @@ func (f *fakeRepo) ListActions(
 
 func (f *fakeRepo) GetActionByID(
 	_ context.Context,
-	req *repositories.GetWorkerDisciplinaryActionByIDRequest,
+	req *workerports.GetWorkerDisciplinaryActionByIDRequest,
 ) (*worker.WorkerDisciplinaryAction, error) {
 	for _, a := range f.actions {
 		if a.ID == req.ID {
@@ -142,7 +145,7 @@ func (f *fakeRepo) UpdateAction(
 
 func (f *fakeRepo) ListRecognitions(
 	_ context.Context,
-	req *repositories.ListWorkerRecognitionsRequest,
+	req *workerports.ListWorkerRecognitionsRequest,
 ) ([]*worker.WorkerRecognition, error) {
 	out := make([]*worker.WorkerRecognition, 0, len(f.recognitions))
 	for _, r := range f.recognitions {
@@ -198,13 +201,13 @@ func newHarness(t *testing.T) *harness {
 		UserID:         pulid.MustNew("usr_"),
 		Profile:        &worker.WorkerProfile{HireDate: 1_600_000_000},
 	}
-	workerRepo := mocks.NewMockWorkerRepository(t)
+	workerRepo := workerportsmock.NewMockWorkerRepository(t)
 	workerRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(wrk, nil).Maybe()
 	// Every write refreshes the roster cache; the assertions here are about
 	// the change itself, not the cache.
 	workerRepo.EXPECT().UpdateProfileSafetyRollup(mock.Anything, mock.Anything).Return(nil).Maybe()
-	docs := mocks.NewMockDocumentRepository(t)
-	audit := mocks.NewMockAuditService(t)
+	docs := documentportsmock.NewMockDocumentRepository(t)
+	audit := auditportsmock.NewMockAuditService(t)
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Maybe()
 
 	repo := &fakeRepo{}

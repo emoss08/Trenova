@@ -6,9 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -16,32 +16,32 @@ import (
 )
 
 type toolPolicies interface {
-	Get(name string) (services.ToolPolicy, bool)
+	Get(name string) (agentports.ToolPolicy, bool)
 }
 
 type ruleImpact interface {
-	RuleImpact(ctx context.Context, req *services.RuleImpactRequest) ([]services.AgentToolRuleImpact, error)
+	RuleImpact(ctx context.Context, req *agentports.RuleImpactRequest) ([]agentports.AgentToolRuleImpact, error)
 }
 
 type Params struct {
 	fx.In
 
-	Repo     repositories.AgentToolRuleOverrideRepository
+	Repo     agentports.AgentToolRuleOverrideRepository
 	Loader   *Loader
 	Policies *agenttoolpolicy.Catalog
-	Safety   services.AgentSafetyService
-	Auditor  services.SecurityAuditor
+	Safety   agentports.AgentSafetyService
+	Auditor  permissionports.SecurityAuditor
 }
 
 type Service struct {
-	repo     repositories.AgentToolRuleOverrideRepository
+	repo     agentports.AgentToolRuleOverrideRepository
 	loader   *Loader
 	policies toolPolicies
 	impact   ruleImpact
-	auditor  services.SecurityAuditor
+	auditor  permissionports.SecurityAuditor
 }
 
-var _ services.AgentToolRuleService = (*Service)(nil)
+var _ agentports.AgentToolRuleService = (*Service)(nil)
 
 //nolint:gocritic // dependency injection
 func New(p Params) *Service {
@@ -66,7 +66,7 @@ func (s *Service) Get(
 	tenantInfo pagination.TenantInfo,
 	toolName string,
 ) (*agent.ToolRuleOverride, error) {
-	return s.repo.Get(ctx, repositories.GetToolRuleOverrideRequest{
+	return s.repo.Get(ctx, agentports.GetToolRuleOverrideRequest{
 		TenantInfo: tenantInfo,
 		ToolName:   toolName,
 	})
@@ -74,8 +74,8 @@ func (s *Service) Get(
 
 func (s *Service) Impact(
 	ctx context.Context,
-	req *services.ToolRuleImpactRequest,
-) ([]services.AgentToolRuleImpact, error) {
+	req *agentports.ToolRuleImpactRequest,
+) ([]agentports.AgentToolRuleImpact, error) {
 	declared, err := s.declared(req.ToolName)
 	if err != nil {
 		return nil, err
@@ -85,7 +85,7 @@ func (s *Service) Impact(
 		return nil, err
 	}
 
-	return s.impact.RuleImpact(ctx, &services.RuleImpactRequest{
+	return s.impact.RuleImpact(ctx, &agentports.RuleImpactRequest{
 		TenantInfo: req.TenantInfo,
 		ToolName:   req.ToolName,
 		Before:     agenttoolpolicy.ApplyOverride(declared, current),
@@ -95,9 +95,9 @@ func (s *Service) Impact(
 
 func (s *Service) Save(
 	ctx context.Context,
-	req *services.SaveToolRuleRequest,
-	actor *services.RequestActor,
-) (*services.SaveToolRuleResult, error) {
+	req *agentports.SaveToolRuleRequest,
+	actor *permissionports.RequestActor,
+) (*agentports.SaveToolRuleResult, error) {
 	declared, err := s.declared(req.ToolName)
 	if err != nil {
 		return nil, err
@@ -134,7 +134,7 @@ func (s *Service) Save(
 		return nil, multiErr
 	}
 
-	affected, err := s.impact.RuleImpact(ctx, &services.RuleImpactRequest{
+	affected, err := s.impact.RuleImpact(ctx, &agentports.RuleImpactRequest{
 		TenantInfo: req.TenantInfo,
 		ToolName:   req.ToolName,
 		Before:     before,
@@ -165,13 +165,13 @@ func (s *Service) Save(
 		actor:      actor,
 	})
 
-	return &services.SaveToolRuleResult{Override: saved, Affected: changedOnly(affected)}, nil
+	return &agentports.SaveToolRuleResult{Override: saved, Affected: changedOnly(affected)}, nil
 }
 
-func (s *Service) declared(toolName string) (services.ToolPolicy, error) {
+func (s *Service) declared(toolName string) (agentports.ToolPolicy, error) {
 	policy, ok := s.policies.Get(toolName)
 	if !ok {
-		return services.ToolPolicy{}, errortypes.NewValidationError(
+		return agentports.ToolPolicy{}, errortypes.NewValidationError(
 			"toolName", errortypes.ErrInvalid, "No tool is named {0}", toolName,
 		)
 	}
@@ -179,7 +179,7 @@ func (s *Service) declared(toolName string) (services.ToolPolicy, error) {
 	return policy, nil
 }
 
-func overrideOf(declared services.ToolPolicy, change services.ToolRuleChange) *agent.ToolRuleOverride {
+func overrideOf(declared agentports.ToolPolicy, change agentports.ToolRuleChange) *agent.ToolRuleOverride {
 	override := &agent.ToolRuleOverride{ToolName: declared.Name}
 	if change.MaxTier != "" && change.MaxTier != declared.MaxTier {
 		override.MaxTier = change.MaxTier
@@ -196,7 +196,7 @@ type writeRequest struct {
 	toolName   string
 	existing   *agent.ToolRuleOverride
 	next       *agent.ToolRuleOverride
-	actor      *services.RequestActor
+	actor      *permissionports.RequestActor
 }
 
 func (s *Service) write(ctx context.Context, req *writeRequest) (*agent.ToolRuleOverride, error) {
@@ -225,11 +225,11 @@ func (s *Service) write(ctx context.Context, req *writeRequest) (*agent.ToolRule
 type recordRequest struct {
 	tenantInfo pagination.TenantInfo
 	toolName   string
-	before     services.ToolPolicy
-	after      services.ToolPolicy
+	before     agentports.ToolPolicy
+	after      agentports.ToolPolicy
 	reason     string
-	affected   []services.AgentToolRuleImpact
-	actor      *services.RequestActor
+	affected   []agentports.AgentToolRuleImpact
+	actor      *permissionports.RequestActor
 }
 
 func (s *Service) record(ctx context.Context, req *recordRequest) {
@@ -248,7 +248,7 @@ func (s *Service) record(ctx context.Context, req *recordRequest) {
 		})
 	}
 
-	s.auditor.RecordChange(ctx, &services.SecurityChange{
+	s.auditor.RecordChange(ctx, &permissionports.SecurityChange{
 		Resource:       permission.ResourceAgentControl,
 		ResourceID:     req.toolName,
 		Operation:      permission.OpUpdate,
@@ -270,8 +270,8 @@ func (s *Service) record(ctx context.Context, req *recordRequest) {
 	})
 }
 
-func changedOnly(impacts []services.AgentToolRuleImpact) []services.AgentToolRuleImpact {
-	out := make([]services.AgentToolRuleImpact, 0, len(impacts))
+func changedOnly(impacts []agentports.AgentToolRuleImpact) []agentports.AgentToolRuleImpact {
+	out := make([]agentports.AgentToolRuleImpact, 0, len(impacts))
 	for _, impact := range impacts {
 		if impact.Before != impact.After {
 			out = append(out, impact)

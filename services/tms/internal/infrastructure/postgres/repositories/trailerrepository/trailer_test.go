@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -49,7 +49,7 @@ func TestApplyTrailerListCountFilters_SkipsCursorPredicateAndSort(t *testing.T) 
 	query := newTrailerQueryTestDB().
 		NewSelect().
 		Model(&entities)
-	result := repo.applyListCountFilters(query, &repositories.ListTrailersRequest{
+	result := repo.applyListCountFilters(query, &trailerports.ListTrailersRequest{
 		Filter: filter,
 		Status: string(domaintypes.EquipmentStatusAvailable),
 	})

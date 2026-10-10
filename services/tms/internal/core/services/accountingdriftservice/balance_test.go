@@ -4,8 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,7 +20,7 @@ type balanceDoc struct {
 func (h *harness) customer(name string, docs ...balanceDoc) pulid.ID {
 	id := pulid.MustNew("cus_")
 	for _, doc := range docs {
-		h.source.balances = append(h.source.balances, &repositories.AccountingDriftBalanceLine{
+		h.source.balances = append(h.source.balances, &accountingsyncports.AccountingDriftBalanceLine{
 			CustomerID:   id,
 			CustomerName: name,
 			CurrencyCode: "USD",
@@ -41,11 +40,11 @@ func (h *harness) customer(name string, docs ...balanceDoc) pulid.ID {
 	return id
 }
 
-func (h *harness) balances(t *testing.T) *services.AccountingDriftBalanceResult {
+func (h *harness) balances(t *testing.T) *accountingsyncports.AccountingDriftBalanceResult {
 	t.Helper()
 	result, err := h.svc.ReconcileBalances(
 		t.Context(),
-		&services.ReconcileAccountingDriftBalancesRequest{
+		&accountingsyncports.ReconcileAccountingDriftBalancesRequest{
 			TenantInfo:   h.tenant,
 			ConnectionID: h.conn.ID,
 			EventBudget:  20,
@@ -160,7 +159,7 @@ func TestBalancesPageByCustomer(t *testing.T) {
 		h.source.balances[0], h.source.balances[1] = h.source.balances[1], h.source.balances[0]
 	}
 
-	page, err := h.svc.ReconcileBalances(t.Context(), &services.ReconcileAccountingDriftBalancesRequest{
+	page, err := h.svc.ReconcileBalances(t.Context(), &accountingsyncports.ReconcileAccountingDriftBalancesRequest{
 		TenantInfo:   h.tenant,
 		ConnectionID: h.conn.ID,
 		Customers:    1,
@@ -169,7 +168,7 @@ func TestBalancesPageByCustomer(t *testing.T) {
 	assert.True(t, page.More)
 	assert.Equal(t, first, page.LastCustomerID)
 
-	next, err := h.svc.ReconcileBalances(t.Context(), &services.ReconcileAccountingDriftBalancesRequest{
+	next, err := h.svc.ReconcileBalances(t.Context(), &accountingsyncports.ReconcileAccountingDriftBalancesRequest{
 		TenantInfo:      h.tenant,
 		ConnectionID:    h.conn.ID,
 		AfterCustomerID: page.LastCustomerID,

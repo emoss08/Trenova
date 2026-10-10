@@ -18,9 +18,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -36,14 +36,14 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.SchedulingRepository
-	AuditService services.AuditService
+	Repo         workerports.SchedulingRepository
+	AuditService auditports.AuditService
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.SchedulingRepository
-	auditService services.AuditService
+	repo         workerports.SchedulingRepository
+	auditService auditports.AuditService
 }
 
 func New(p Params) *Service {
@@ -57,8 +57,8 @@ func New(p Params) *Service {
 // Deps is the constructor shape tests use to swap in fakes.
 type Deps struct {
 	Logger       *zap.Logger
-	Repo         repositories.SchedulingRepository
-	AuditService services.AuditService
+	Repo         workerports.SchedulingRepository
+	AuditService auditports.AuditService
 }
 
 func NewWithDeps(d Deps) *Service {
@@ -88,7 +88,7 @@ func (s *Service) audit(p auditParams) {
 	if s.auditService == nil || p.userID.IsNil() {
 		return
 	}
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       p.resource,
 		ResourceID:     p.resourceID,
 		Operation:      p.operation,
@@ -97,7 +97,7 @@ func (s *Service) audit(p auditParams) {
 		OrganizationID: p.tenantInfo.OrgID,
 		BusinessUnitID: p.tenantInfo.BuID,
 	}
-	opts := []services.LogOption{auditservice.WithComment(p.comment)}
+	opts := []auditports.LogOption{auditservice.WithComment(p.comment)}
 	if p.previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(p.previous)
 		opts = append(opts, auditservice.WithDiff(p.previous, p.current))
@@ -109,7 +109,7 @@ func (s *Service) audit(p auditParams) {
 
 func (s *Service) ListTemplates(
 	ctx context.Context,
-	req *repositories.ListShiftTemplatesRequest,
+	req *workerports.ListShiftTemplatesRequest,
 ) ([]*worker.ShiftTemplate, error) {
 	return s.repo.ListTemplates(ctx, req)
 }
@@ -119,7 +119,7 @@ func (s *Service) GetTemplate(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*worker.ShiftTemplate, error) {
-	return s.repo.GetTemplateByID(ctx, &repositories.GetShiftTemplateByIDRequest{
+	return s.repo.GetTemplateByID(ctx, &workerports.GetShiftTemplateByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
@@ -187,7 +187,7 @@ func (s *Service) UpdateTemplate(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetTemplateByID(ctx, &repositories.GetShiftTemplateByIDRequest{
+	original, err := s.repo.GetTemplateByID(ctx, &workerports.GetShiftTemplateByIDRequest{
 		ID:         entity.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -233,7 +233,7 @@ func (s *Service) UpdateTemplate(
 
 func (s *Service) ListAssignments(
 	ctx context.Context,
-	req *repositories.ListShiftAssignmentsRequest,
+	req *workerports.ListShiftAssignmentsRequest,
 ) ([]*worker.WorkerShiftAssignment, error) {
 	return s.repo.ListAssignments(ctx, req)
 }
@@ -243,7 +243,7 @@ func (s *Service) GetAssignment(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*worker.WorkerShiftAssignment, error) {
-	return s.repo.GetAssignmentByID(ctx, &repositories.GetShiftAssignmentByIDRequest{
+	return s.repo.GetAssignmentByID(ctx, &workerports.GetShiftAssignmentByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
@@ -264,7 +264,7 @@ func (s *Service) CountTemplateAssignmentsByIDs(
 ) (map[pulid.ID]int, error) {
 	return s.repo.CountTemplateAssignmentsByIDs(
 		ctx,
-		&repositories.CountShiftTemplateAssignmentsRequest{
+		&workerports.CountShiftTemplateAssignmentsRequest{
 			TenantInfo:  tenantInfo,
 			TemplateIDs: templateIDs,
 		},
@@ -391,7 +391,7 @@ func (s *Service) EndAssignment(
 
 func (s *Service) ListPreferences(
 	ctx context.Context,
-	req *repositories.ListAvailabilityPreferencesRequest,
+	req *workerports.ListAvailabilityPreferencesRequest,
 ) ([]*worker.WorkerAvailabilityPreference, error) {
 	return s.repo.ListPreferences(ctx, req)
 }
@@ -432,7 +432,7 @@ func (s *Service) SetPreference(
 
 func (s *Service) ListSwaps(
 	ctx context.Context,
-	req *repositories.ListShiftSwapsRequest,
+	req *workerports.ListShiftSwapsRequest,
 ) ([]*worker.ShiftSwapRequest, error) {
 	return s.repo.ListSwaps(ctx, req)
 }
@@ -442,7 +442,7 @@ func (s *Service) GetSwap(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*worker.ShiftSwapRequest, error) {
-	return s.repo.GetSwapByID(ctx, &repositories.GetShiftSwapByIDRequest{
+	return s.repo.GetSwapByID(ctx, &workerports.GetShiftSwapByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})

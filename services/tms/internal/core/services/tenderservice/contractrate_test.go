@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -19,17 +19,17 @@ import (
 
 // stubRateEngine answers one buy side rating per carrier.
 type stubRateEngine struct {
-	services.RateEngine
+	ratequoteports.RateEngine
 
-	byCarrier map[pulid.ID]*services.RatedShipment
+	byCarrier map[pulid.ID]*ratequoteports.RatedShipment
 	err       error
 	calls     int
 }
 
 func (s *stubRateEngine) RateShipment(
 	_ context.Context,
-	req *services.RateShipmentRequest,
-) (*services.RatedShipment, error) {
+	req *ratequoteports.RateShipmentRequest,
+) (*ratequoteports.RatedShipment, error) {
 	s.calls++
 
 	if s.err != nil {
@@ -40,13 +40,13 @@ func (s *stubRateEngine) RateShipment(
 		return rated, nil
 	}
 
-	return &services.RatedShipment{Outcome: ratequote.OutcomeNoRateFound}, nil
+	return &ratequoteports.RatedShipment{Outcome: ratequote.OutcomeNoRateFound}, nil
 }
 
-func contractRated(amount string) *services.RatedShipment {
+func contractRated(amount string) *ratequoteports.RatedShipment {
 	agreementID := pulid.MustNew("rag_")
 
-	return &services.RatedShipment{
+	return &ratequoteports.RatedShipment{
 		Amount:      decimal.RequireFromString(amount),
 		Currency:    "USD",
 		Outcome:     ratequote.OutcomeRated,
@@ -93,7 +93,7 @@ func TestCreateWaterfall_ContractEntryOffersTheContractsRate(t *testing.T) {
 		Return([]*carrier.Carrier{healthy}, nil)
 
 	deps.svc.rateEngine = &stubRateEngine{
-		byCarrier: map[pulid.ID]*services.RatedShipment{healthy.ID: contractRated("1875.50")},
+		byCarrier: map[pulid.ID]*ratequoteports.RatedShipment{healthy.ID: contractRated("1875.50")},
 	}
 
 	created, err := deps.svc.CreateWaterfall(t.Context(), &CreateWaterfallTenderRequest{
@@ -165,7 +165,7 @@ func TestCreateWaterfall_ContractEntryWithNoContractIsSkippedNotOfferedAtZero(t 
 		Return([]*carrier.Carrier{uncovered, covered}, nil)
 
 	deps.svc.rateEngine = &stubRateEngine{
-		byCarrier: map[pulid.ID]*services.RatedShipment{covered.ID: contractRated("1500")},
+		byCarrier: map[pulid.ID]*ratequoteports.RatedShipment{covered.ID: contractRated("1500")},
 	}
 
 	created, err := deps.svc.CreateWaterfall(t.Context(), &CreateWaterfallTenderRequest{

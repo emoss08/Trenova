@@ -1,11 +1,12 @@
 package carrierassignmentservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	portservices "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,14 +17,14 @@ import (
 )
 
 type recordingAuditService struct {
-	portservices.AuditService
+	auditports.AuditService
 
-	entries []*portservices.LogActionParams
+	entries []*auditports.LogActionParams
 }
 
 func (r *recordingAuditService) LogAction(
-	params *portservices.LogActionParams,
-	_ ...portservices.LogOption,
+	params *auditports.LogActionParams,
+	_ ...auditports.LogOption,
 ) error {
 	r.entries = append(r.entries, params)
 	return nil
@@ -46,7 +47,7 @@ func TestConfirmAssignmentLogsMoveAudit(t *testing.T) {
 		Status:         shipment.CarrierAssignmentStatusPending,
 	}
 
-	repo := mocks.NewMockCarrierAssignmentRepository(t)
+	repo := shipmentportsmock.NewMockCarrierAssignmentRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(entity, nil).Once()
 	repo.On("Update", mock.Anything, entity).Return(entity, nil).Once()
 
@@ -81,7 +82,7 @@ func TestConfirmAssignmentAlreadyConfirmedLogsNoAudit(t *testing.T) {
 		Status: shipment.CarrierAssignmentStatusConfirmed,
 	}
 
-	repo := mocks.NewMockCarrierAssignmentRepository(t)
+	repo := shipmentportsmock.NewMockCarrierAssignmentRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(entity, nil).Once()
 
 	audit := &recordingAuditService{}

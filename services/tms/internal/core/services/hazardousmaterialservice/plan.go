@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/statuschange"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/hazardousmaterialports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -30,7 +30,7 @@ func (s *Service) PlanCreate(
 func (s *Service) PlanUpdate(
 	ctx context.Context,
 	entity *hazardousmaterial.HazardousMaterial,
-) (*services.RecordChange[hazardousmaterial.HazardousMaterial], error) {
+) (*kernelports.RecordChange[hazardousmaterial.HazardousMaterial], error) {
 	if err := s.transformer.TransformHazardousMaterial(ctx, entity); err != nil {
 		return nil, err
 	}
@@ -39,7 +39,7 @@ func (s *Service) PlanUpdate(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetByID(ctx, repositories.GetHazardousMaterialByIDRequest{
+	original, err := s.repo.GetByID(ctx, hazardousmaterialports.GetHazardousMaterialByIDRequest{
 		ID: entity.GetID(),
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.GetOrganizationID(),
@@ -50,7 +50,7 @@ func (s *Service) PlanUpdate(
 		return nil, err
 	}
 
-	return &services.RecordChange[hazardousmaterial.HazardousMaterial]{
+	return &kernelports.RecordChange[hazardousmaterial.HazardousMaterial]{
 		Before: original,
 		After:  entity,
 	}, nil
@@ -58,9 +58,9 @@ func (s *Service) PlanUpdate(
 
 func (s *Service) PlanBulkUpdateStatus(
 	ctx context.Context,
-	req *repositories.BulkUpdateHazardousMaterialStatusRequest,
-) ([]services.RecordChange[hazardousmaterial.HazardousMaterial], error) {
-	found, err := s.repo.GetByIDs(ctx, repositories.GetHazardousMaterialsByIDsRequest{
+	req *hazardousmaterialports.BulkUpdateHazardousMaterialStatusRequest,
+) ([]kernelports.RecordChange[hazardousmaterial.HazardousMaterial], error) {
+	found, err := s.repo.GetByIDs(ctx, hazardousmaterialports.GetHazardousMaterialsByIDsRequest{
 		TenantInfo:           req.TenantInfo,
 		HazardousMaterialIDs: req.HazardousMaterialIDs,
 	})

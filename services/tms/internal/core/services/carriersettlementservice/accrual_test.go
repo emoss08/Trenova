@@ -1,6 +1,9 @@
 package carriersettlementservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/carriersettlementportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"errors"
 	"testing"
 
@@ -17,15 +20,15 @@ import (
 )
 
 type accrualDeps struct {
-	costEvents  *mocks.MockCarrierCostEventRepository
-	assignments *mocks.MockCarrierAssignmentRepository
+	costEvents  *carriersettlementportsmock.MockCarrierCostEventRepository
+	assignments *shipmentportsmock.MockCarrierAssignmentRepository
 	svc         *Service
 }
 
 func setupAccrualTest(t *testing.T) *accrualDeps {
 	t.Helper()
-	costEvents := mocks.NewMockCarrierCostEventRepository(t)
-	assignments := mocks.NewMockCarrierAssignmentRepository(t)
+	costEvents := carriersettlementportsmock.NewMockCarrierCostEventRepository(t)
+	assignments := shipmentportsmock.NewMockCarrierAssignmentRepository(t)
 	svc := &Service{
 		l:              zap.NewNop(),
 		costEventRepo:  costEvents,
@@ -314,19 +317,19 @@ func TestUpsertCostEventSkipsCurrentPendingAndRepricesVersionBump(t *testing.T) 
 }
 
 type reaccrueDeps struct {
-	costEvents  *mocks.MockCarrierCostEventRepository
-	assignments *mocks.MockCarrierAssignmentRepository
-	shipments   *mocks.MockShipmentRepository
-	control     *mocks.MockCarrierSettlementControlRepository
+	costEvents  *carriersettlementportsmock.MockCarrierCostEventRepository
+	assignments *shipmentportsmock.MockCarrierAssignmentRepository
+	shipments   *shipmentportsmock.MockShipmentRepository
+	control     *tenantportsmock.MockCarrierSettlementControlRepository
 	svc         *Service
 }
 
 func setupReaccrueTest(t *testing.T) *reaccrueDeps {
 	t.Helper()
-	costEvents := mocks.NewMockCarrierCostEventRepository(t)
-	assignments := mocks.NewMockCarrierAssignmentRepository(t)
-	shipments := mocks.NewMockShipmentRepository(t)
-	control := mocks.NewMockCarrierSettlementControlRepository(t)
+	costEvents := carriersettlementportsmock.NewMockCarrierCostEventRepository(t)
+	assignments := shipmentportsmock.NewMockCarrierAssignmentRepository(t)
+	shipments := shipmentportsmock.NewMockShipmentRepository(t)
+	control := tenantportsmock.NewMockCarrierSettlementControlRepository(t)
 	svc := &Service{
 		l:                 zap.NewNop(),
 		costEventRepo:     costEvents,

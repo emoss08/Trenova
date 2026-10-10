@@ -9,9 +9,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -27,16 +29,16 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.OrgHolidayRepository
-	AuditService services.AuditService
-	Realtime     services.RealtimeService `optional:"true"`
+	Repo         workerports.OrgHolidayRepository
+	AuditService auditports.AuditService
+	Realtime     agentports.RealtimeService `optional:"true"`
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.OrgHolidayRepository
-	auditService services.AuditService
-	realtime     services.RealtimeService
+	repo         workerports.OrgHolidayRepository
+	auditService auditports.AuditService
+	realtime     agentports.RealtimeService
 }
 
 func New(p Params) *Service {
@@ -60,7 +62,7 @@ func (s *Service) ListYear(
 	}
 	from := time.Date(year, time.January, 1, 0, 0, 0, 0, time.UTC).Unix()
 	to := time.Date(year, time.December, 31, 0, 0, 0, 0, time.UTC).Unix()
-	return s.repo.List(ctx, &repositories.ListOrgHolidaysRequest{
+	return s.repo.List(ctx, &workerports.ListOrgHolidaysRequest{
 		TenantInfo: tenantInfo,
 		From:       from,
 		To:         to,
@@ -73,7 +75,7 @@ func (s *Service) Calendar(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*worker.HolidayCalendar, error) {
-	rows, err := s.repo.List(ctx, &repositories.ListOrgHolidaysRequest{TenantInfo: tenantInfo})
+	rows, err := s.repo.List(ctx, &workerports.ListOrgHolidaysRequest{TenantInfo: tenantInfo})
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +132,7 @@ func (s *Service) Update(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetByID(ctx, &repositories.GetOrgHolidayByIDRequest{
+	original, err := s.repo.GetByID(ctx, &workerports.GetOrgHolidayByIDRequest{
 		ID:         entity.ID,
 		TenantInfo: tenantOf(entity),
 	})
@@ -157,14 +159,14 @@ func (s *Service) Delete(
 	userID pulid.ID,
 ) error {
 	log := s.l.With(zap.String("operation", "Delete"), zap.String("id", id.String()))
-	original, err := s.repo.GetByID(ctx, &repositories.GetOrgHolidayByIDRequest{
+	original, err := s.repo.GetByID(ctx, &workerports.GetOrgHolidayByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {
 		return err
 	}
-	if err = s.repo.Delete(ctx, &repositories.GetOrgHolidayByIDRequest{
+	if err = s.repo.Delete(ctx, &workerports.GetOrgHolidayByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	}); err != nil {
@@ -187,7 +189,7 @@ func (s *Service) audit(
 	if s.auditService == nil || userID.IsNil() {
 		return
 	}
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceOrgHoliday,
 		ResourceID:     current.GetResourceID(),
 		Operation:      operation,
@@ -196,7 +198,7 @@ func (s *Service) audit(
 		OrganizationID: current.OrganizationID,
 		BusinessUnitID: current.BusinessUnitID,
 	}
-	opts := []services.LogOption{auditservice.WithComment(comment)}
+	opts := []auditports.LogOption{auditservice.WithComment(comment)}
 	if previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(previous)
 		opts = append(opts, auditservice.WithDiff(previous, current))
@@ -219,7 +221,7 @@ func (s *Service) publish(
 		OrganizationID: entity.OrganizationID,
 		BusinessUnitID: entity.BusinessUnitID,
 		ActorUserID:    userID,
-		ActorType:      services.PrincipalTypeUser,
+		ActorType:      permissionports.PrincipalTypeUser,
 		ActorID:        userID,
 		Resource:       realtimeResource,
 		Action:         string(operation),

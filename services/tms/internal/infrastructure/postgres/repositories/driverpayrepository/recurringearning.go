@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -23,7 +23,7 @@ type recurringEarningRepository struct {
 	l  *zap.Logger
 }
 
-func NewRecurringEarning(p Params) repositories.RecurringEarningRepository {
+func NewRecurringEarning(p Params) driverpayports.RecurringEarningRepository {
 	return &recurringEarningRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.recurring-earning-repository"),
@@ -32,7 +32,7 @@ func NewRecurringEarning(p Params) repositories.RecurringEarningRepository {
 
 func (r *recurringEarningRepository) List(
 	ctx context.Context,
-	req *repositories.ListRecurringEarningsRequest,
+	req *driverpayports.ListRecurringEarningsRequest,
 ) (*pagination.ListResult[*driverpay.RecurringEarning], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*driverpay.RecurringEarning], error) {
 		limit := req.Filter.Pagination.SafeLimit()
@@ -70,7 +70,7 @@ func (r *recurringEarningRepository) List(
 
 func (r *recurringEarningRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListRecurringEarningConnectionRequest,
+	req *driverpayports.ListRecurringEarningConnectionRequest,
 ) (*pagination.CursorListResult[*driverpay.RecurringEarning], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*driverpay.RecurringEarning], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -132,7 +132,7 @@ func (r *recurringEarningRepository) ListConnection(
 
 func (r *recurringEarningRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetRecurringEarningByIDRequest,
+	req driverpayports.GetRecurringEarningByIDRequest,
 ) (*driverpay.RecurringEarning, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driverpay.RecurringEarning, error) {
 		entity := new(driverpay.RecurringEarning)
@@ -154,7 +154,7 @@ func (r *recurringEarningRepository) GetByID(
 
 func (r *recurringEarningRepository) ListActiveForWorker(
 	ctx context.Context,
-	req repositories.ListActiveEarningsForWorkerRequest,
+	req driverpayports.ListActiveEarningsForWorkerRequest,
 ) ([]*driverpay.RecurringEarning, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driverpay.RecurringEarning, error) {
 		items := make([]*driverpay.RecurringEarning, 0)
@@ -188,7 +188,7 @@ func (r *recurringEarningRepository) Create(
 		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
 			return nil, fmt.Errorf("create recurring earning: %w", err)
 		}
-		return r.GetByID(ctx, repositories.GetRecurringEarningByIDRequest{
+		return r.GetByID(ctx, driverpayports.GetRecurringEarningByIDRequest{
 			ID: entity.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
@@ -227,7 +227,7 @@ func (r *recurringEarningRepository) Update(
 		if err = dberror.CheckRowsAffected(res, "RecurringEarning", entity.ID.String()); err != nil {
 			return nil, err
 		}
-		return r.GetByID(ctx, repositories.GetRecurringEarningByIDRequest{
+		return r.GetByID(ctx, driverpayports.GetRecurringEarningByIDRequest{
 			ID: entity.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,

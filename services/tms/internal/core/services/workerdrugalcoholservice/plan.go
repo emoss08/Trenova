@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -14,9 +14,9 @@ import (
 )
 
 type (
-	TestChange  = services.RecordChange[worker.WorkerDOTTest]
-	DrawChange  = services.RecordChange[worker.DOTRandomDraw]
-	EntryChange = services.RecordChange[worker.DOTRandomDrawEntry]
+	TestChange  = kernelports.RecordChange[worker.WorkerDOTTest]
+	DrawChange  = kernelports.RecordChange[worker.DOTRandomDraw]
+	EntryChange = kernelports.RecordChange[worker.DOTRandomDrawEntry]
 )
 
 func (s *Service) PlanRecordTest(
@@ -37,7 +37,7 @@ func (s *Service) PlanCancelTest(
 	id pulid.ID,
 	reason string,
 ) (*TestChange, error) {
-	original, err := s.repo.GetTestByID(ctx, &repositories.GetWorkerDOTTestByIDRequest{
+	original, err := s.repo.GetTestByID(ctx, &workerports.GetWorkerDOTTestByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
@@ -89,7 +89,7 @@ func (s *Service) PlanFinalizeDraw(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*DrawChange, error) {
-	original, err := s.repo.GetDrawByID(ctx, &repositories.GetDOTRandomDrawByIDRequest{
+	original, err := s.repo.GetDrawByID(ctx, &workerports.GetDOTRandomDrawByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
@@ -126,7 +126,7 @@ func (s *Service) PlanCancelDraw(
 		)
 	}
 
-	original, err := s.repo.GetDrawByID(ctx, &repositories.GetDOTRandomDrawByIDRequest{
+	original, err := s.repo.GetDrawByID(ctx, &workerports.GetDOTRandomDrawByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
@@ -148,7 +148,7 @@ func (s *Service) PlanUpdateDrawEntry(
 	ctx context.Context,
 	req *UpdateEntryRequest,
 ) (*EntryChange, error) {
-	original, err := s.repo.GetDrawEntryByID(ctx, &repositories.GetDOTRandomDrawEntryByIDRequest{
+	original, err := s.repo.GetDrawEntryByID(ctx, &workerports.GetDOTRandomDrawEntryByIDRequest{
 		ID:         req.EntryID,
 		TenantInfo: req.TenantInfo,
 	})

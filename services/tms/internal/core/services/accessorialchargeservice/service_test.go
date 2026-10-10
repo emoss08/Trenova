@@ -1,11 +1,13 @@
 package accessorialchargeservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -27,17 +29,17 @@ func newTestValidator() *Validator {
 }
 
 type testDeps struct {
-	repo        *mocks.MockAccessorialChargeRepository
-	audit       *mocks.MockAuditService
-	transformer *mocks.MockDataTransformer
+	repo        *accessorialchargeportsmock.MockAccessorialChargeRepository
+	audit       *auditportsmock.MockAuditService
+	transformer *accessorialchargeportsmock.MockDataTransformer
 	svc         *Service
 }
 
 func setupTest(t *testing.T) *testDeps {
 	t.Helper()
-	repo := mocks.NewMockAccessorialChargeRepository(t)
-	auditSvc := mocks.NewMockAuditService(t)
-	transformer := mocks.NewMockDataTransformer(t)
+	repo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
+	auditSvc := auditportsmock.NewMockAuditService(t)
+	transformer := accessorialchargeportsmock.NewMockDataTransformer(t)
 	svc := &Service{
 		l:            zap.NewNop(),
 		repo:         repo,
@@ -198,7 +200,7 @@ func TestList_Success(t *testing.T) {
 		Items: []*accessorialcharge.AccessorialCharge{newTestEntity()},
 		Total: 1,
 	}
-	req := &repositories.ListAccessorialChargeRequest{
+	req := &accessorialchargeports.ListAccessorialChargeRequest{
 		Filter: &pagination.QueryOptions{},
 	}
 
@@ -218,7 +220,7 @@ func TestGet_Success(t *testing.T) {
 	ctx := t.Context()
 	entity := newTestEntity()
 
-	req := repositories.GetAccessorialChargeByIDRequest{
+	req := accessorialchargeports.GetAccessorialChargeByIDRequest{
 		ID: entity.ID,
 		TenantInfo: &pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -321,7 +323,7 @@ func TestList_Error(t *testing.T) {
 	deps := setupTest(t)
 	ctx := t.Context()
 	dbErr := errors.New("db error")
-	req := &repositories.ListAccessorialChargeRequest{
+	req := &accessorialchargeports.ListAccessorialChargeRequest{
 		Filter: &pagination.QueryOptions{},
 	}
 
@@ -340,7 +342,7 @@ func TestGet_NotFound(t *testing.T) {
 	ctx := t.Context()
 	notFoundErr := errors.New("not found")
 
-	req := repositories.GetAccessorialChargeByIDRequest{
+	req := accessorialchargeports.GetAccessorialChargeByIDRequest{
 		ID: pulid.MustNew("acc_"),
 		TenantInfo: &pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
@@ -376,9 +378,9 @@ func TestSelectOptions_Error(t *testing.T) {
 func TestNew(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockAccessorialChargeRepository(t)
-	auditSvc := mocks.NewMockAuditService(t)
-	transformer := mocks.NewMockDataTransformer(t)
+	repo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
+	auditSvc := auditportsmock.NewMockAuditService(t)
+	transformer := accessorialchargeportsmock.NewMockDataTransformer(t)
 	validator := newTestValidator()
 
 	svc := New(Params{

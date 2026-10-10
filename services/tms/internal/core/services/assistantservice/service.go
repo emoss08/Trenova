@@ -1,14 +1,22 @@
 package assistantservice
 
 import (
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentguard"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/agentshadow"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -19,63 +27,63 @@ type Params struct {
 	Logger        *zap.Logger
 	Guard         *agentguard.Service
 	Runtime       *agentruntime.Service
-	Contexts      serviceports.RuntimeContextBuilder
-	Conversations repositories.ConversationRepository
-	Definitions   repositories.AgentDefinitionRepository
+	Contexts      agentports.RuntimeContextBuilder
+	Conversations agentports.ConversationRepository
+	Definitions   agentdefinitionports.AgentDefinitionRepository
 	Recorder      *proposalrecorder.Service
-	Proposals     repositories.AgentProposalRepository
-	Plans         repositories.AgentPlanRepository `optional:"true"`
-	AIProviders   repositories.AIProviderRepository
+	Proposals     agentports.AgentProposalRepository
+	Plans         agentports.AgentPlanRepository `optional:"true"`
+	AIProviders   agentports.AIProviderRepository
 	Shadow        *agentshadow.Resolver
-	Budgets       serviceports.AgentBudgetService `optional:"true"`
+	Budgets       agentports.AgentBudgetService `optional:"true"`
 	// Tools names the parameters a proposal's tool takes, for the fields a
 	// person may edit before approving; Decisions carries what they changed.
-	Tools     serviceports.AgentToolRegistry       `optional:"true"`
-	Decisions repositories.AgentDecisionRepository `optional:"true"`
+	Tools     agentports.AgentToolRegistry       `optional:"true"`
+	Decisions agentports.AgentDecisionRepository `optional:"true"`
 	// Labeler names the records a proposal offers for a person to untick.
-	Labeler serviceports.RecordLabeler `optional:"true"`
+	Labeler agentports.RecordLabeler `optional:"true"`
 	// Artifacts keeps what a turn produced besides words; Subjects describes
 	// the record a conversation was opened from.
-	Artifacts repositories.AssistantArtifactRepository `optional:"true"`
-	Subjects  serviceports.AgentSubjectDescriber       `optional:"true"`
-	Anchors   serviceports.RecordAnchorReader          `optional:"true"`
-	Activity  serviceports.AgentActivityPublisher      `optional:"true"`
+	Artifacts assistantartifactports.AssistantArtifactRepository `optional:"true"`
+	Subjects  agentports.AgentSubjectDescriber                   `optional:"true"`
+	Anchors   agentports.RecordAnchorReader                      `optional:"true"`
+	Activity  agentports.AgentActivityPublisher                  `optional:"true"`
 	// Documents checks that an attached file is the person's own; Contents
 	// reads what document intelligence made of it.
-	Documents repositories.DocumentRepository     `optional:"true"`
-	Contents  serviceports.DocumentContentService `optional:"true"`
+	Documents documentports.DocumentRepository     `optional:"true"`
+	Contents  documentports.DocumentContentService `optional:"true"`
 	// Permissions decides whether the person may read the record a
 	// conversation is about before any of it reaches the model.
-	Permissions serviceports.PermissionEngine
+	Permissions permissionports.PermissionEngine
 	// Cases says where each conversation that is a case stands.
-	Cases serviceports.AssistantCaseStates `optional:"true"`
+	Cases deskcaseports.AssistantCaseStates `optional:"true"`
 	// Runs says which agent raised each of a conversation's proposals: its
 	// own, or one it handed a task to.
-	Runs         repositories.AgentRunRepository     `optional:"true"`
-	SystemAgents serviceports.SystemAgentProvisioner `optional:"true"`
-	PageThreads  repositories.PageThreadRepository   `optional:"true"`
+	Runs         agentports.AgentRunRepository               `optional:"true"`
+	SystemAgents agentdefinitionports.SystemAgentProvisioner `optional:"true"`
+	PageThreads  agentports.PageThreadRepository             `optional:"true"`
 	// AgentControls holds the per-person allowance; without it nobody is
 	// limited.
-	AgentControls repositories.AgentControlRepository `optional:"true"`
+	AgentControls tenantports.AgentControlRepository `optional:"true"`
 	// Users names who turned an agent off.
-	Users repositories.UserRepository `optional:"true"`
+	Users tenantports.UserRepository `optional:"true"`
 	// Notifier tells the people who run AI Control that someone asked for
 	// more room: access to an agent, more allowance, more budget.
 	Notifications *notificationservice.Service `optional:"true"`
 	// Completion rewrites a passage of a document a person asked to change,
 	// with the same models the conversation's agent uses.
-	Completion serviceports.StructuredCompleter `optional:"true"`
+	Completion agentports.StructuredCompleter `optional:"true"`
 	// Reports re-runs a report preview whole for its download, and Queries
 	// re-runs the list a table was read from; PDFs prints a document.
-	Reports *reporting.Service                  `optional:"true"`
-	Queries serviceports.AgentQueryToolRegistry `optional:"true"`
-	PDFs    serviceports.PDFRenderer            `optional:"true"`
+	Reports *reporting.Service                `optional:"true"`
+	Queries agentports.AgentQueryToolRegistry `optional:"true"`
+	PDFs    documenttemplateports.PDFRenderer `optional:"true"`
 	// Memories describes the memories a reply used or saved, as the thread
 	// is served.
-	Memories serviceports.AgentMemoryService `optional:"true"`
-	Quota    serviceports.QuotaGuard         `optional:"true"`
+	Memories agentports.AgentMemoryService `optional:"true"`
+	Quota    platformplanports.QuotaGuard  `optional:"true"`
 	// Waits reads a wait whose ending a turn picks up.
-	Waits repositories.AgentWaitRepository `optional:"true"`
+	Waits agentwaitports.AgentWaitRepository `optional:"true"`
 }
 
 // Module provides the assistant once, as itself for the worker that runs its
@@ -84,9 +92,9 @@ var Module = fx.Module("assistant",
 	fx.Provide(fx.Annotate(
 		New,
 		fx.As(fx.Self()),
-		fx.As(new(serviceports.AssistantService)),
-		fx.As(new(serviceports.PageAssistant)),
-		fx.As(new(serviceports.AgentRunTranscriptService)),
+		fx.As(new(agentports.AssistantService)),
+		fx.As(new(agentports.PageAssistant)),
+		fx.As(new(agentports.AgentRunTranscriptService)),
 	)),
 )
 
@@ -94,40 +102,40 @@ type Service struct {
 	logger        *zap.Logger
 	guard         *agentguard.Service
 	runtime       *agentruntime.Service
-	contexts      serviceports.RuntimeContextBuilder
-	conversations repositories.ConversationRepository
-	definitions   repositories.AgentDefinitionRepository
+	contexts      agentports.RuntimeContextBuilder
+	conversations agentports.ConversationRepository
+	definitions   agentdefinitionports.AgentDefinitionRepository
 	recorder      *proposalrecorder.Service
 	proposals     chatProposalStore
 	proposalEdits proposalEditStore
 	plans         chatPlanStore
-	providers     repositories.AIProviderRepository
+	providers     agentports.AIProviderRepository
 	shadow        *agentshadow.Resolver
-	budgets       serviceports.AgentBudgetService
-	tools         serviceports.AgentToolRegistry
-	decisions     repositories.AgentDecisionRepository
-	labeler       serviceports.RecordLabeler
-	artifacts     repositories.AssistantArtifactRepository
-	subjects      serviceports.AgentSubjectDescriber
-	anchors       serviceports.RecordAnchorReader
-	activity      serviceports.AgentActivityPublisher
-	documents     repositories.DocumentRepository
-	contents      serviceports.DocumentContentService
-	permissions   serviceports.PermissionEngine
-	cases         serviceports.AssistantCaseStates
-	runs          repositories.AgentRunRepository
-	systemAgents  serviceports.SystemAgentProvisioner
-	pageThreads   repositories.PageThreadRepository
-	agentControls repositories.AgentControlRepository
-	users         repositories.UserRepository
+	budgets       agentports.AgentBudgetService
+	tools         agentports.AgentToolRegistry
+	decisions     agentports.AgentDecisionRepository
+	labeler       agentports.RecordLabeler
+	artifacts     assistantartifactports.AssistantArtifactRepository
+	subjects      agentports.AgentSubjectDescriber
+	anchors       agentports.RecordAnchorReader
+	activity      agentports.AgentActivityPublisher
+	documents     documentports.DocumentRepository
+	contents      documentports.DocumentContentService
+	permissions   permissionports.PermissionEngine
+	cases         deskcaseports.AssistantCaseStates
+	runs          agentports.AgentRunRepository
+	systemAgents  agentdefinitionports.SystemAgentProvisioner
+	pageThreads   agentports.PageThreadRepository
+	agentControls tenantports.AgentControlRepository
+	users         tenantports.UserRepository
 	notifier      raiseNotifier
-	completion    serviceports.StructuredCompleter
+	completion    agentports.StructuredCompleter
 	reports       *reporting.Service
-	queries       serviceports.AgentQueryToolRegistry
-	pdfs          serviceports.PDFRenderer
-	memories      serviceports.AgentMemoryService
-	quota         serviceports.QuotaGuard
-	waits         repositories.AgentWaitRepository
+	queries       agentports.AgentQueryToolRegistry
+	pdfs          documenttemplateports.PDFRenderer
+	memories      agentports.AgentMemoryService
+	quota         platformplanports.QuotaGuard
+	waits         agentwaitports.AgentWaitRepository
 }
 
 func New(p Params) *Service {

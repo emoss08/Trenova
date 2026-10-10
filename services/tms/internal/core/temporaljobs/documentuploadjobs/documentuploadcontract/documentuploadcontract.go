@@ -1,7 +1,7 @@
 package documentuploadcontract
 
 import (
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -9,10 +9,10 @@ import (
 type FinalizeUploadPayload struct {
 	temporaltype.BasePayload
 
-	SessionID     pulid.ID               `json:"sessionId"`
-	PrincipalType services.PrincipalType `json:"principalType,omitempty"`
-	PrincipalID   pulid.ID               `json:"principalId,omitempty"`
-	APIKeyID      pulid.ID               `json:"apiKeyId,omitempty"`
+	SessionID     pulid.ID                  `json:"sessionId"`
+	PrincipalType kernelports.PrincipalType `json:"principalType,omitempty"`
+	PrincipalID   pulid.ID                  `json:"principalId,omitempty"`
+	APIKeyID      pulid.ID                  `json:"apiKeyId,omitempty"`
 }
 
 type CleanupDocumentStoragePayload struct {

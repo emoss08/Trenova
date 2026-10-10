@@ -6,8 +6,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -16,13 +19,13 @@ import (
 // repositories rather than services so that both the invoice service and the
 // adjustment engine can call it without depending on each other.
 type Deps struct {
-	BillingQueueRepo     repositories.BillingQueueRepository
-	OrderRepo            repositories.OrderRepository
-	ChargeAllocationRepo repositories.ChargeAllocationRepository
-	ShipmentRepo         repositories.ShipmentRepository
-	InvoiceRepo          repositories.InvoiceRepository
-	OrderDerivation      servicesports.OrderDerivationService
-	DetentionBilling     servicesports.DetentionBillingService
+	BillingQueueRepo     billingqueueports.BillingQueueRepository
+	OrderRepo            orderports.OrderRepository
+	ChargeAllocationRepo shipmentports.ChargeAllocationRepository
+	ShipmentRepo         shipmentports.ShipmentRepository
+	InvoiceRepo          invoiceports.InvoiceRepository
+	OrderDerivation      orderports.OrderDerivationService
+	DetentionBilling     detentionports.DetentionBillingService
 	Renumber             func(ctx context.Context, billType billingqueue.BillType) (string, error)
 }
 
@@ -55,7 +58,7 @@ func Release(ctx context.Context, deps Deps, p Params) ([]pulid.ID, error) {
 
 	released, err := deps.BillingQueueRepo.ReleaseForInvoice(
 		ctx,
-		&repositories.ReleaseForInvoiceRequest{
+		&billingqueueports.ReleaseForInvoiceRequest{
 			TenantInfo:   tenantInfo,
 			InvoiceID:    entity.ID,
 			AnchorItemID: entity.BillingQueueItemID,
@@ -77,7 +80,7 @@ func Release(ctx context.Context, deps Deps, p Params) ([]pulid.ID, error) {
 	}
 
 	if deps.OrderRepo != nil {
-		if _, err = deps.OrderRepo.ClearChargesInvoice(ctx, &repositories.ClearOrderChargesInvoiceRequest{
+		if _, err = deps.OrderRepo.ClearChargesInvoice(ctx, &orderports.ClearOrderChargesInvoiceRequest{
 			TenantInfo: tenantInfo,
 			InvoiceID:  entity.ID,
 		}); err != nil {
@@ -85,7 +88,7 @@ func Release(ctx context.Context, deps Deps, p Params) ([]pulid.ID, error) {
 		}
 	}
 	if deps.ChargeAllocationRepo != nil {
-		if _, err = deps.ChargeAllocationRepo.ClearInvoice(ctx, &repositories.ClearChargeAllocationsInvoiceRequest{
+		if _, err = deps.ChargeAllocationRepo.ClearInvoice(ctx, &shipmentports.ClearChargeAllocationsInvoiceRequest{
 			TenantInfo: tenantInfo,
 			InvoiceID:  entity.ID,
 		}); err != nil {
@@ -96,11 +99,11 @@ func Release(ctx context.Context, deps Deps, p Params) ([]pulid.ID, error) {
 	if deps.DetentionBilling != nil {
 		if err = deps.DetentionBilling.SyncInvoiceBilling(
 			ctx,
-			&servicesports.SyncDetentionInvoiceBillingRequest{
+			&detentionports.SyncDetentionInvoiceBillingRequest{
 				TenantInfo:    tenantInfo,
 				InvoiceIDs:    []pulid.ID{entity.ID},
 				InvoiceNumber: entity.Number,
-				Event:         servicesports.DetentionBillingInvoiceVoided,
+				Event:         detentionports.DetentionBillingInvoiceVoided,
 				ActorUserID:   p.ActorUserID,
 			},
 		); err != nil {
@@ -139,7 +142,7 @@ func restoreShipments(
 		var err error
 		otherInvoices, err = deps.InvoiceRepo.ListByShipmentIDs(
 			ctx,
-			repositories.ListInvoicesByShipmentIDsRequest{
+			invoiceports.ListInvoicesByShipmentIDsRequest{
 				TenantInfo:  tenantInfo,
 				ShipmentIDs: legIDs,
 			},
@@ -151,10 +154,10 @@ func restoreShipments(
 
 	orderIDs := make(map[pulid.ID]struct{}, len(legIDs))
 	for _, legID := range legIDs {
-		shp, err := deps.ShipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+		shp, err := deps.ShipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 			ID:         legID,
 			TenantInfo: tenantInfo,
-			ShipmentOptions: repositories.ShipmentOptions{
+			ShipmentOptions: shipmentports.ShipmentOptions{
 				ExpandShipmentDetails: true,
 			},
 		})

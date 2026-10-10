@@ -5,12 +5,12 @@ package agentdefinitionrepository
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -61,12 +61,12 @@ func TestDelete_RemovesTheAgentFromEveryAllowlist(t *testing.T) {
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 	tenant := pagination.TenantInfo{OrgID: asked.OrganizationID, BuID: asked.BusinessUnitID}
 
-	require.NoError(t, repo.Delete(ctx, repositories.DeleteAgentDefinitionRequest{
+	require.NoError(t, repo.Delete(ctx, agentdefinitionports.DeleteAgentDefinitionRequest{
 		ID:         asked.ID,
 		TenantInfo: tenant,
 	}))
 
-	definition, err := repo.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	definition, err := repo.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         asker.ID,
 		TenantInfo: tenant,
 	})

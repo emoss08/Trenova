@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -109,7 +109,7 @@ func TestListVersions_ResolvesAccessorialNamesAtReadTime(t *testing.T) {
 	_, err = repo.CreateVersion(ctx, version)
 	require.NoError(t, err)
 
-	listed, err := repo.ListVersions(ctx, &repositories.ListRateAgreementVersionsRequest{
+	listed, err := repo.ListVersions(ctx, &rateagreementports.ListRateAgreementVersionsRequest{
 		TenantInfo:      tenantInfo,
 		RateAgreementID: agreement.ID,
 	})

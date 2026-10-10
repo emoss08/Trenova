@@ -8,9 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	shipmentdomain "github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -36,7 +36,7 @@ type batchRepository struct {
 	l  *zap.Logger
 }
 
-func NewBatchRepository(p Params) repositories.CaptureBatchRepository {
+func NewBatchRepository(p Params) captureports.CaptureBatchRepository {
 	return &batchRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.capture-batch-repository"),
@@ -108,7 +108,7 @@ func (r *batchRepository) Update(
 
 func (r *batchRepository) GetByID(
 	ctx context.Context,
-	req *repositories.GetCaptureBatchByIDRequest,
+	req *captureports.GetCaptureBatchByIDRequest,
 ) (*capture.CaptureBatch, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capture.CaptureBatch, error) {
 		entity := new(capture.CaptureBatch)
@@ -144,7 +144,7 @@ func (r *batchRepository) GetByID(
 
 func (r *batchRepository) GetByClientKey(
 	ctx context.Context,
-	req repositories.GetCaptureBatchByClientKeyRequest,
+	req captureports.GetCaptureBatchByClientKeyRequest,
 ) (*capture.CaptureBatch, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capture.CaptureBatch, error) {
 		entity := new(capture.CaptureBatch)
@@ -168,7 +168,7 @@ func (r *batchRepository) GetByClientKey(
 // only when the caller asked for it.
 func (r *batchRepository) ListCursor(
 	ctx context.Context,
-	req *repositories.ListCaptureBatchesRequest,
+	req *captureports.ListCaptureBatchesRequest,
 ) (*pagination.CursorListResult[*capture.CaptureBatch], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*capture.CaptureBatch], error) {
 		dba := r.db.DBForContext(ctx)
@@ -217,7 +217,7 @@ func (r *batchRepository) ListCursor(
 func (r *batchRepository) narrowBatches(
 	ctx context.Context,
 	q *bun.SelectQuery,
-	req *repositories.ListCaptureBatchesRequest,
+	req *captureports.ListCaptureBatchesRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.CaptureBatchColumns
 	if len(req.Statuses) > 0 {
@@ -353,7 +353,7 @@ func (r *batchRepository) searchBatches(
 
 func (r *batchRepository) ListStale(
 	ctx context.Context,
-	req repositories.ListStaleCaptureBatchesRequest,
+	req captureports.ListStaleCaptureBatchesRequest,
 ) ([]*capture.CaptureBatch, error) {
 	ctx = dbscope.WithSystem(ctx, "list stale capture batches across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*capture.CaptureBatch, error) {
@@ -378,7 +378,7 @@ func (r *batchRepository) ListStale(
 
 func (r *batchRepository) ListRetentionDue(
 	ctx context.Context,
-	req repositories.ListRetentionDueCaptureBatchesRequest,
+	req captureports.ListRetentionDueCaptureBatchesRequest,
 ) ([]*capture.CaptureBatch, error) {
 	ctx = dbscope.WithSystem(ctx, "list capture batches past retention across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*capture.CaptureBatch, error) {
@@ -403,7 +403,7 @@ func (r *batchRepository) ListRetentionDue(
 
 func (r *batchRepository) ListRetentionReminders(
 	ctx context.Context,
-	req repositories.ListRetentionReminderCaptureBatchesRequest,
+	req captureports.ListRetentionReminderCaptureBatchesRequest,
 ) ([]*capture.CaptureBatch, error) {
 	ctx = dbscope.WithSystem(ctx, "list capture batches due a retention reminder across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*capture.CaptureBatch, error) {
@@ -430,7 +430,7 @@ func (r *batchRepository) ListRetentionReminders(
 
 func (r *batchRepository) ClaimRetentionReminder(
 	ctx context.Context,
-	req repositories.ClaimRetentionReminderRequest,
+	req captureports.ClaimRetentionReminderRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
 		cols := buncolgen.CaptureBatchColumns
@@ -460,7 +460,7 @@ func (r *batchRepository) ClaimRetentionReminder(
 
 func (r *batchRepository) IncrementReceived(
 	ctx context.Context,
-	req repositories.IncrementCaptureBatchPagesRequest,
+	req captureports.IncrementCaptureBatchPagesRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.CaptureBatchColumns
@@ -481,7 +481,7 @@ func (r *batchRepository) IncrementReceived(
 
 func (r *batchRepository) Delete(
 	ctx context.Context,
-	req repositories.DeleteCaptureBatchRequest,
+	req captureports.DeleteCaptureBatchRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		_, err := r.db.DBForContext(ctx).

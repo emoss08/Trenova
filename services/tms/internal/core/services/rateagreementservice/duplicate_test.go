@@ -1,11 +1,13 @@
 package rateagreementservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/rateagreementportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -62,12 +64,12 @@ func TestDuplicate_CopiesTheContractAsAFreshDraft(t *testing.T) {
 		},
 	}
 
-	repo := mocks.NewMockRateAgreementRepository(t)
+	repo := rateagreementportsmock.NewMockRateAgreementRepository(t)
 	repo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetRateAgreementByIDRequest")).
 		RunAndReturn(func(
 			_ context.Context,
-			req *repositories.GetRateAgreementByIDRequest,
+			req *rateagreementports.GetRateAgreementByIDRequest,
 		) (*rateagreement.RateAgreement, error) {
 			require.True(t, req.IncludeChildren, "a duplicate needs the whole contract")
 			return original, nil
@@ -96,7 +98,7 @@ func TestDuplicate_CopiesTheContractAsAFreshDraft(t *testing.T) {
 		}).
 		Once()
 
-	audit := mocks.NewMockAuditService(t)
+	audit := auditportsmock.NewMockAuditService(t)
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Twice()
 
 	svc := New(Params{

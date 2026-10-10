@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -30,7 +30,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.ShipmentEventRepository {
+func New(p Params) shipmenteventports.ShipmentEventRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.shipment-event-repository"),
@@ -49,7 +49,7 @@ func (r *repository) Insert(ctx context.Context, entity *shipmentevent.Event) er
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetShipmentEventByIDRequest,
+	req shipmenteventports.GetShipmentEventByIDRequest,
 ) (*shipmentevent.Event, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipmentevent.Event, error) {
 		entity := new(shipmentevent.Event)
@@ -70,7 +70,7 @@ func (r *repository) GetByID(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListShipmentEventsRequest,
+	req *shipmenteventports.ListShipmentEventsRequest,
 ) ([]*shipmentevent.Event, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipmentevent.Event, error) {
 		limit := req.Limit

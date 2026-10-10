@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -29,7 +29,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.AgentToolTrustRepository {
+func New(p Params) agentports.AgentToolTrustRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.agent-tool-trust-repository"),
@@ -46,7 +46,7 @@ const conflictTarget = "CONFLICT (organization_id, business_unit_id, agent_defin
 // arithmetic the ledger needs and nothing a read-then-write would do better.
 func (r *repository) Record(
 	ctx context.Context,
-	req repositories.RecordToolTrustRequest,
+	req agentports.RecordToolTrustRequest,
 ) (*agent.ToolTrust, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.ToolTrust, error) {
 		if !req.Outcome.IsValid() {
@@ -113,7 +113,7 @@ func (r *repository) Record(
 
 func (r *repository) ListByDefinition(
 	ctx context.Context,
-	req repositories.ListToolTrustRequest,
+	req agentports.ListToolTrustRequest,
 ) ([]*agent.ToolTrust, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.ToolTrust, error) {
 		cols := buncolgen.ToolTrustColumns
@@ -142,7 +142,7 @@ func (r *repository) ListByDefinition(
 
 func (r *repository) ListByDefinitionIDs(
 	ctx context.Context,
-	req repositories.ListToolTrustByDefinitionsRequest,
+	req agentports.ListToolTrustByDefinitionsRequest,
 ) (map[pulid.ID][]*agent.ToolTrust, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID][]*agent.ToolTrust, error) {
 		grouped := make(map[pulid.ID][]*agent.ToolTrust, len(req.AgentDefinitionIDs))
@@ -182,7 +182,7 @@ func (r *repository) ListByDefinitionIDs(
 // and the stale one is told the row moved on.
 func (r *repository) MarkTierChange(
 	ctx context.Context,
-	req repositories.MarkToolTierChangeRequest,
+	req agentports.MarkToolTierChangeRequest,
 ) (*agent.ToolTrust, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.ToolTrust, error) {
 		cols := buncolgen.ToolTrustColumns
@@ -234,7 +234,7 @@ func (r *repository) MarkTierChange(
 
 func (r *repository) ListReady(
 	ctx context.Context,
-	req repositories.ListReadyToolTrustRequest,
+	req agentports.ListReadyToolTrustRequest,
 ) ([]*agent.ToolTrust, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.ToolTrust, error) {
 		cols := buncolgen.ToolTrustColumns

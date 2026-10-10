@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingtransfer"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingtransferports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -37,7 +37,7 @@ var nonRetryableFailureCodes = []billingtransfer.FailureCode{
 // a retried seed a no-op rather than a duplicate-key failure.
 func (r *repository) SeedItems(
 	ctx context.Context,
-	req *repositories.SeedBillingTransferRunItemsRequest,
+	req *billingtransferports.SeedBillingTransferRunItemsRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		if len(req.ShipmentIDs) == 0 {
@@ -59,7 +59,7 @@ func (r *repository) SeedItems(
 		}
 
 		inserted := 0
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
 			for start := 0; start < len(rows); start += seedChunkSize {
 				end := min(start+seedChunkSize, len(rows))
 
@@ -98,9 +98,9 @@ func (r *repository) SeedItems(
 // than a fragment the reader has to mentally merge with the run before it.
 func (r *repository) SeedRetryItems(
 	ctx context.Context,
-	req *repositories.SeedBillingTransferRetryItemsRequest,
-) (*repositories.SeedBillingTransferRetryItemsResult, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.SeedBillingTransferRetryItemsResult, error) {
+	req *billingtransferports.SeedBillingTransferRetryItemsRequest,
+) (*billingtransferports.SeedBillingTransferRetryItemsResult, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*billingtransferports.SeedBillingTransferRetryItemsResult, error) {
 		cols := buncolgen.BillingTransferRunItemColumns
 
 		source := make([]*billingtransfer.BillingTransferRunItem, 0)
@@ -116,7 +116,7 @@ func (r *repository) SeedRetryItems(
 			return nil, err
 		}
 
-		out := &repositories.SeedBillingTransferRetryItemsResult{}
+		out := &billingtransferports.SeedBillingTransferRetryItemsResult{}
 		rows := make([]*billingtransfer.BillingTransferRunItem, 0, len(source))
 		for i, item := range source {
 			row := &billingtransfer.BillingTransferRunItem{
@@ -165,7 +165,7 @@ func (r *repository) SeedRetryItems(
 			return out, nil
 		}
 
-		err = r.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
+		err = r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
 			for start := 0; start < len(rows); start += seedChunkSize {
 				end := min(start+seedChunkSize, len(rows))
 
@@ -210,7 +210,7 @@ func retryableItem(item *billingtransfer.BillingTransferRunItem) bool {
 // picks up where it left off instead of transferring a shipment twice.
 func (r *repository) NextPendingShipmentIDs(
 	ctx context.Context,
-	req *repositories.NextPendingBillingTransferItemsRequest,
+	req *billingtransferports.NextPendingBillingTransferItemsRequest,
 ) ([]pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
 		cols := buncolgen.BillingTransferRunItemColumns
@@ -258,7 +258,7 @@ var outcomeColumns = []string{
 func outcomeRow(
 	tenant pagination.TenantInfo,
 	runID pulid.ID,
-	outcome repositories.BillingTransferItemOutcome,
+	outcome billingtransferports.BillingTransferItemOutcome,
 	now int64,
 ) *billingtransfer.BillingTransferRunItem {
 	processedAt := outcome.ProcessedAt
@@ -302,14 +302,14 @@ func outcomeRow(
 // times it runs.
 func (r *repository) RecordItemOutcomes(
 	ctx context.Context,
-	req *repositories.RecordBillingTransferOutcomesRequest,
-) (*repositories.BillingTransferRunProgress, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.BillingTransferRunProgress, error) {
+	req *billingtransferports.RecordBillingTransferOutcomesRequest,
+) (*billingtransferports.BillingTransferRunProgress, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*billingtransferports.BillingTransferRunProgress, error) {
 		cols := buncolgen.BillingTransferRunItemColumns
 		now := timeutils.NowUnix()
 
-		progress := new(repositories.BillingTransferRunProgress)
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
+		progress := new(billingtransferports.BillingTransferRunProgress)
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
 			for _, outcome := range req.Outcomes {
 				row := outcomeRow(req.TenantInfo, req.RunID, outcome, now)
 
@@ -342,7 +342,7 @@ func (r *repository) RecordItemOutcomes(
 // recomputed one last time so the report and the summary agree.
 func (r *repository) Finalize(
 	ctx context.Context,
-	req *repositories.FinalizeBillingTransferRunRequest,
+	req *billingtransferports.FinalizeBillingTransferRunRequest,
 ) (*billingtransfer.BillingTransferRun, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*billingtransfer.BillingTransferRun, error) {
 		itemCols := buncolgen.BillingTransferRunItemColumns
@@ -350,7 +350,7 @@ func (r *repository) Finalize(
 		now := timeutils.NowUnix()
 
 		entity := new(billingtransfer.BillingTransferRun)
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
 			if _, execErr := tx.NewUpdate().
 				Model((*billingtransfer.BillingTransferRunItem)(nil)).
 				Set(itemCols.Status.Set(), billingtransfer.ItemStatusSkipped).
@@ -365,7 +365,7 @@ func (r *repository) Finalize(
 				return execErr
 			}
 
-			progress := new(repositories.BillingTransferRunProgress)
+			progress := new(billingtransferports.BillingTransferRunProgress)
 			if err := r.refreshRunCounters(
 				txCtx, tx, req.TenantInfo, req.RunID, now, progress,
 			); err != nil {
@@ -409,7 +409,7 @@ func (r *repository) refreshRunCounters(
 	tenant pagination.TenantInfo,
 	runID pulid.ID,
 	now int64,
-	out *repositories.BillingTransferRunProgress,
+	out *billingtransferports.BillingTransferRunProgress,
 ) error {
 	itemCols := buncolgen.BillingTransferRunItemColumns
 	runCols := buncolgen.BillingTransferRunColumns

@@ -1,11 +1,12 @@
 package invoicerunservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/invoicerun"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -29,9 +30,9 @@ func buildCandidate(
 	customerID pulid.ID,
 	pro string,
 	amount string,
-	mutate func(*repositories.ConsolidationCandidate),
-) *repositories.ConsolidationCandidate {
-	c := &repositories.ConsolidationCandidate{
+	mutate func(*billingqueueports.ConsolidationCandidate),
+) *billingqueueports.ConsolidationCandidate {
+	c := &billingqueueports.ConsolidationCandidate{
 		BillingQueueItemID: pulid.MustNew("bqi_"),
 		ShipmentID:         pulid.MustNew("shp_"),
 		CustomerID:         customerID,
@@ -50,11 +51,11 @@ func buildCandidate(
 
 func serviceWithCandidates(
 	t *testing.T,
-	candidates []*repositories.ConsolidationCandidate,
+	candidates []*billingqueueports.ConsolidationCandidate,
 ) *Service {
 	t.Helper()
 
-	repo := mocks.NewMockBillingQueueRepository(t)
+	repo := billingqueueportsmock.NewMockBillingQueueRepository(t)
 	repo.EXPECT().
 		ListConsolidationCandidates(mock.Anything, mock.Anything).
 		Return(candidates, nil)
@@ -68,7 +69,7 @@ func TestBuildGroupsOneGroupPerCustomer(t *testing.T) {
 	custA := pulid.MustNew("cus_")
 	custB := pulid.MustNew("cus_")
 
-	svc := serviceWithCandidates(t, []*repositories.ConsolidationCandidate{
+	svc := serviceWithCandidates(t, []*billingqueueports.ConsolidationCandidate{
 		buildCandidate(custA, "PRO-1", "100.00", nil),
 		buildCandidate(custB, "PRO-2", "250.00", nil),
 		buildCandidate(custA, "PRO-3", "75.50", nil),
@@ -91,14 +92,14 @@ func TestBuildGroupsSplitsByPONumber(t *testing.T) {
 	t.Parallel()
 
 	cust := pulid.MustNew("cus_")
-	withPO := func(pro, po string) *repositories.ConsolidationCandidate {
-		return buildCandidate(cust, pro, "100.00", func(c *repositories.ConsolidationCandidate) {
+	withPO := func(pro, po string) *billingqueueports.ConsolidationCandidate {
+		return buildCandidate(cust, pro, "100.00", func(c *billingqueueports.ConsolidationCandidate) {
 			c.SplitBy = customer.InvoiceSplitKeyCustomerAndPONumber
 			c.OrderPONumber = po
 		})
 	}
 
-	svc := serviceWithCandidates(t, []*repositories.ConsolidationCandidate{
+	svc := serviceWithCandidates(t, []*billingqueueports.ConsolidationCandidate{
 		withPO("PRO-1", "PO-1"),
 		withPO("PRO-2", "PO-2"),
 		withPO("PRO-3", "PO-1"),
@@ -122,11 +123,11 @@ func TestBuildGroupsHonoursTheShipmentCap(t *testing.T) {
 	t.Parallel()
 
 	cust := pulid.MustNew("cus_")
-	candidates := make([]*repositories.ConsolidationCandidate, 0, 5)
+	candidates := make([]*billingqueueports.ConsolidationCandidate, 0, 5)
 	for _, pro := range []string{"PRO-1", "PRO-2", "PRO-3", "PRO-4", "PRO-5"} {
 		candidates = append(
 			candidates,
-			buildCandidate(cust, pro, "10.00", func(c *repositories.ConsolidationCandidate) {
+			buildCandidate(cust, pro, "10.00", func(c *billingqueueports.ConsolidationCandidate) {
 				c.MaxShipmentsPerInvoice = 2
 			}),
 		)
@@ -154,8 +155,8 @@ func TestBuildGroupsCarriesShipmentIdentityOntoItems(t *testing.T) {
 	serviceDate := int64(1_700_500_000)
 	orderID := pulid.MustNew("ord_")
 
-	svc := serviceWithCandidates(t, []*repositories.ConsolidationCandidate{
-		buildCandidate(cust, "PRO-1", "100.00", func(c *repositories.ConsolidationCandidate) {
+	svc := serviceWithCandidates(t, []*billingqueueports.ConsolidationCandidate{
+		buildCandidate(cust, "PRO-1", "100.00", func(c *billingqueueports.ConsolidationCandidate) {
 			c.ShipmentBOL = "BOL-1"
 			c.OrderPONumber = "PO-9"
 			c.OrderID = orderID

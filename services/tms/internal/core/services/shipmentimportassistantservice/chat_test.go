@@ -7,8 +7,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipmentimportchat"
-	repoports "github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentimportchatports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -24,7 +25,7 @@ func replayService(turns []*shipmentimportchat.Turn) (*Service, pulid.ID) {
 		chatRepo: &chatRepoStub{
 			getConversationByDocumentFn: func(
 				_ context.Context,
-				_ repoports.GetShipmentImportConversationRequest,
+				_ shipmentimportchatports.GetShipmentImportConversationRequest,
 			) (*shipmentimportchat.Conversation, error) {
 				return &shipmentimportchat.Conversation{
 					ID:         conversationID,
@@ -34,7 +35,7 @@ func replayService(turns []*shipmentimportchat.Turn) (*Service, pulid.ID) {
 			},
 			listTurnsFn: func(
 				_ context.Context,
-				_ repoports.ListShipmentImportTurnsRequest,
+				_ shipmentimportchatports.ListShipmentImportTurnsRequest,
 			) ([]*shipmentimportchat.Turn, error) {
 				return turns, nil
 			},
@@ -49,8 +50,8 @@ func replayService(turns []*shipmentimportchat.Turn) (*Service, pulid.ID) {
 	}, conversationID
 }
 
-func chatRequest() *serviceports.ShipmentImportChatRequest {
-	return &serviceports.ShipmentImportChatRequest{
+func chatRequest() *shipmentports.ShipmentImportChatRequest {
+	return &shipmentports.ShipmentImportChatRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),
@@ -83,11 +84,11 @@ func TestBuildMessages_ReplaysThePersistedExchange(t *testing.T) {
 	)
 
 	require.Len(t, messages, 3)
-	assert.Equal(t, serviceports.RoleUser, messages[0].Role)
+	assert.Equal(t, agentports.RoleUser, messages[0].Role)
 	assert.Equal(t, "What is the rate?", messages[0].Content)
-	assert.Equal(t, serviceports.RoleAssistant, messages[1].Role)
+	assert.Equal(t, agentports.RoleAssistant, messages[1].Role)
 	assert.Equal(t, "The rate is $1,850.", messages[1].Content)
-	assert.Equal(t, serviceports.RoleUser, messages[2].Role)
+	assert.Equal(t, agentports.RoleUser, messages[2].Role)
 	assert.Equal(t, "Set the customer to Acme", messages[2].Content,
 		"the new message is last")
 }
@@ -149,7 +150,7 @@ which every protocol rejects differently and none of them usefully.
 func TestToolRound_PairsEveryCallWithItsResult(t *testing.T) {
 	t.Parallel()
 
-	calls := []serviceports.ToolCall{
+	calls := []agentports.ToolCall{
 		{ID: "call_1", Name: "search_customers"},
 		{ID: "call_2", Name: "set_field_value"},
 	}
@@ -161,10 +162,10 @@ func TestToolRound_PairsEveryCallWithItsResult(t *testing.T) {
 	messages := ToolRound(calls, outcomes)
 
 	require.Len(t, messages, 3)
-	assert.Equal(t, serviceports.RoleAssistant, messages[0].Role)
+	assert.Equal(t, agentports.RoleAssistant, messages[0].Role)
 	assert.Len(t, messages[0].ToolCalls, 2)
 
-	assert.Equal(t, serviceports.RoleTool, messages[1].Role)
+	assert.Equal(t, agentports.RoleTool, messages[1].Role)
 	assert.Equal(t, "call_1", messages[1].ToolCallID)
 	assert.False(t, messages[1].IsError)
 
@@ -200,7 +201,7 @@ func TestRunTool_ReportsAnUnknownToolAsAnError(t *testing.T) {
 
 	service := &Service{logger: zap.NewNop()}
 
-	call := &serviceports.ToolCall{ID: "call_1", Name: "not_a_tool"}
+	call := &agentports.ToolCall{ID: "call_1", Name: "not_a_tool"}
 	outcome := service.RunTool(t.Context(), pagination.TenantInfo{}, call)
 
 	assert.Equal(t, toolStatusError, outcome.Status)
@@ -237,7 +238,7 @@ func TestFriendlyCompletionError_TellsThePersonWhatToDo(t *testing.T) {
 	t.Parallel()
 
 	assert.Contains(t,
-		friendlyCompletionError(serviceports.ErrNoProviderConfigured),
+		friendlyCompletionError(agentports.ErrNoProviderConfigured),
 		"AI Control",
 		"an unconfigured install is told where to configure one")
 

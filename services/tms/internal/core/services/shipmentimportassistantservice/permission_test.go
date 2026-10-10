@@ -1,14 +1,17 @@
 package shipmentimportassistantservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"errors"
 	"testing"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	repoports "github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -27,15 +30,15 @@ func importTenant() pagination.TenantInfo {
 }
 
 func expectCheck(
-	engine *mocks.MockPermissionEngine,
+	engine *permissionportsmock.MockPermissionEngine,
 	tenant pagination.TenantInfo,
 	resource permission.Resource,
 	operation permission.Operation,
 	allowed bool,
 ) {
 	engine.EXPECT().
-		Check(mock.Anything, mock.MatchedBy(func(req *serviceports.PermissionCheckRequest) bool {
-			return req.PrincipalType == serviceports.PrincipalTypeUser &&
+		Check(mock.Anything, mock.MatchedBy(func(req *permissionports.PermissionCheckRequest) bool {
+			return req.PrincipalType == permissionports.PrincipalTypeUser &&
 				req.PrincipalID == tenant.UserID &&
 				req.UserID == tenant.UserID &&
 				req.OrganizationID == tenant.OrgID &&
@@ -43,7 +46,7 @@ func expectCheck(
 				req.Resource == resource.String() &&
 				req.Operation == operation
 		})).
-		Return(&serviceports.PermissionCheckResult{Allowed: allowed}, nil).
+		Return(&permissionports.PermissionCheckResult{Allowed: allowed}, nil).
 		Once()
 }
 
@@ -61,11 +64,11 @@ func TestRunTool_RefusesAddLocationWithoutLocationCreate(t *testing.T) {
 	t.Parallel()
 
 	tenant := importTenant()
-	engine := mocks.NewMockPermissionEngine(t)
+	engine := permissionportsmock.NewMockPermissionEngine(t)
 	expectCheck(engine, tenant, permission.ResourceLocation, permission.OpCreate, false)
 	service := &Service{logger: zap.NewNop(), permissions: engine}
 
-	outcome := service.RunTool(t.Context(), tenant, &serviceports.ToolCall{
+	outcome := service.RunTool(t.Context(), tenant, &agentports.ToolCall{
 		ID:   "call_1",
 		Name: "add_location",
 		Arguments: map[string]any{
@@ -88,7 +91,7 @@ func TestRunTool_RefusesAddLocationWithoutLocationCreate(t *testing.T) {
 func TestRunTool_RefusesCustomerReadsWithoutCustomerRead(t *testing.T) {
 	t.Parallel()
 
-	for _, call := range []serviceports.ToolCall{
+	for _, call := range []agentports.ToolCall{
 		{ID: "call_1", Name: "search_customers", Arguments: map[string]any{"query": "Acme"}},
 		{
 			ID:        "call_2",
@@ -100,7 +103,7 @@ func TestRunTool_RefusesCustomerReadsWithoutCustomerRead(t *testing.T) {
 			t.Parallel()
 
 			tenant := importTenant()
-			engine := mocks.NewMockPermissionEngine(t)
+			engine := permissionportsmock.NewMockPermissionEngine(t)
 			expectCheck(engine, tenant, permission.ResourceCustomer, permission.OpRead, false)
 			service := &Service{logger: zap.NewNop(), permissions: engine}
 
@@ -118,11 +121,11 @@ func TestRunTool_RefusesLocationSearchWithoutLocationRead(t *testing.T) {
 	t.Parallel()
 
 	tenant := importTenant()
-	engine := mocks.NewMockPermissionEngine(t)
+	engine := permissionportsmock.NewMockPermissionEngine(t)
 	expectCheck(engine, tenant, permission.ResourceLocation, permission.OpRead, false)
 	service := &Service{logger: zap.NewNop(), permissions: engine}
 
-	outcome := service.RunTool(t.Context(), tenant, &serviceports.ToolCall{
+	outcome := service.RunTool(t.Context(), tenant, &agentports.ToolCall{
 		ID:        "call_1",
 		Name:      "search_locations",
 		Arguments: map[string]any{"query": "Reno"},
@@ -136,12 +139,12 @@ func TestRunTool_SearchesCustomersWhenThePersonMayReadThem(t *testing.T) {
 	t.Parallel()
 
 	tenant := importTenant()
-	engine := mocks.NewMockPermissionEngine(t)
+	engine := permissionportsmock.NewMockPermissionEngine(t)
 	expectCheck(engine, tenant, permission.ResourceCustomer, permission.OpRead, true)
-	customers := mocks.NewMockCustomerRepository(t)
+	customers := customerportsmock.NewMockCustomerRepository(t)
 	customerID := pulid.MustNew("cus_")
 	customers.EXPECT().
-		SelectOptions(mock.Anything, mock.MatchedBy(func(req *repoports.CustomerSelectOptionsRequest) bool {
+		SelectOptions(mock.Anything, mock.MatchedBy(func(req *customerports.CustomerSelectOptionsRequest) bool {
 			return req.SelectQueryRequest.TenantInfo == tenant && req.SelectQueryRequest.Query == "Acme"
 		})).
 		Return(&pagination.ListResult[*customer.Customer]{
@@ -151,7 +154,7 @@ func TestRunTool_SearchesCustomersWhenThePersonMayReadThem(t *testing.T) {
 		Once()
 	service := &Service{logger: zap.NewNop(), permissions: engine, customerRepo: customers}
 
-	outcome := service.RunTool(t.Context(), tenant, &serviceports.ToolCall{
+	outcome := service.RunTool(t.Context(), tenant, &agentports.ToolCall{
 		ID:        "call_1",
 		Name:      "search_customers",
 		Arguments: map[string]any{"query": "Acme"},
@@ -165,14 +168,14 @@ func TestRunTool_ReportsAFailedPermissionCheckWithoutFailingTheTurn(t *testing.T
 	t.Parallel()
 
 	tenant := importTenant()
-	engine := mocks.NewMockPermissionEngine(t)
+	engine := permissionportsmock.NewMockPermissionEngine(t)
 	engine.EXPECT().
 		Check(mock.Anything, mock.Anything).
 		Return(nil, errors.New("engine unavailable")).
 		Once()
 	service := &Service{logger: zap.NewNop(), permissions: engine}
 
-	outcome := service.RunTool(t.Context(), tenant, &serviceports.ToolCall{
+	outcome := service.RunTool(t.Context(), tenant, &agentports.ToolCall{
 		ID:        "call_1",
 		Name:      "search_locations",
 		Arguments: map[string]any{"query": "Reno"},
@@ -187,9 +190,9 @@ func TestRunTool_RefusesAGatedToolWhenNobodyIsActing(t *testing.T) {
 
 	tenant := importTenant()
 	tenant.UserID = pulid.Nil
-	service := &Service{logger: zap.NewNop(), permissions: mocks.NewMockPermissionEngine(t)}
+	service := &Service{logger: zap.NewNop(), permissions: permissionportsmock.NewMockPermissionEngine(t)}
 
-	outcome := service.RunTool(t.Context(), tenant, &serviceports.ToolCall{
+	outcome := service.RunTool(t.Context(), tenant, &agentports.ToolCall{
 		ID:        "call_1",
 		Name:      "search_customers",
 		Arguments: map[string]any{"query": "Acme"},
@@ -203,7 +206,7 @@ func TestRunTool_RefusesAGatedToolWithoutAPermissionEngine(t *testing.T) {
 
 	service := &Service{logger: zap.NewNop()}
 
-	outcome := service.RunTool(t.Context(), importTenant(), &serviceports.ToolCall{
+	outcome := service.RunTool(t.Context(), importTenant(), &agentports.ToolCall{
 		ID:        "call_1",
 		Name:      "search_customers",
 		Arguments: map[string]any{"query": "Acme"},
@@ -215,9 +218,9 @@ func TestRunTool_RefusesAGatedToolWithoutAPermissionEngine(t *testing.T) {
 func TestRunTool_DraftEditsNeedNoPermissionCheck(t *testing.T) {
 	t.Parallel()
 
-	service := &Service{logger: zap.NewNop(), permissions: mocks.NewMockPermissionEngine(t)}
+	service := &Service{logger: zap.NewNop(), permissions: permissionportsmock.NewMockPermissionEngine(t)}
 
-	outcome := service.RunTool(t.Context(), importTenant(), &serviceports.ToolCall{
+	outcome := service.RunTool(t.Context(), importTenant(), &agentports.ToolCall{
 		ID:        "call_1",
 		Name:      "accept_field",
 		Arguments: map[string]any{"field_key": "bol"},

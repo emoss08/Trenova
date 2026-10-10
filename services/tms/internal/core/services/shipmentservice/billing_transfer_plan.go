@@ -7,8 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,9 +24,9 @@ import (
 func transferGate(
 	entity *shipment.Shipment,
 	markCompleted bool,
-) (markReady bool, code services.BillingTransferFailureCode, err error) {
+) (markReady bool, code shipmentports.BillingTransferFailureCode, err error) {
 	if !entity.BillingTransferStatus.IsOutsideBillingQueue() {
-		return false, services.BillingTransferFailureAlreadyTransferred,
+		return false, shipmentports.BillingTransferFailureAlreadyTransferred,
 			errortypes.NewValidationError(
 				"billingTransferStatus",
 				errortypes.ErrInvalidOperation,
@@ -34,7 +36,7 @@ func transferGate(
 
 	markReady = markCompleted && entity.Status == shipment.StatusCompleted
 	if entity.Status != shipment.StatusReadyToInvoice && !markReady {
-		return false, services.BillingTransferFailureInvalidStatus, errortypes.NewValidationError(
+		return false, shipmentports.BillingTransferFailureInvalidStatus, errortypes.NewValidationError(
 			"shipmentId",
 			errortypes.ErrInvalidOperation,
 			"Shipment must be in ReadyToInvoice status to transfer to billing",
@@ -46,8 +48,8 @@ func transferGate(
 
 func (s *service) PlanBillingTransfers(
 	ctx context.Context,
-	req *services.PlanBillingTransfersRequest,
-) (*services.BillingTransferPlan, error) {
+	req *shipmentports.PlanBillingTransfersRequest,
+) (*shipmentports.BillingTransferPlan, error) {
 	ids := sliceutils.Dedupe(req.ShipmentIDs)
 	switch {
 	case len(ids) == 0:
@@ -56,12 +58,12 @@ func (s *service) PlanBillingTransfers(
 			errortypes.ErrRequired,
 			"At least one shipment ID is required",
 		)
-	case len(ids) > services.MaxBillingTransferCandidateIDs:
+	case len(ids) > shipmentports.MaxBillingTransferCandidateIDs:
 		return nil, errortypes.NewValidationError(
 			"shipmentIds",
 			errortypes.ErrInvalid,
 			"A transfer can include at most {0} shipments",
-			services.MaxBillingTransferCandidateIDs,
+			shipmentports.MaxBillingTransferCandidateIDs,
 		)
 	}
 
@@ -70,8 +72,8 @@ func (s *service) PlanBillingTransfers(
 
 func (s *service) ListBillingTransferCandidates(
 	ctx context.Context,
-	req *services.ListBillingTransferCandidatesRequest,
-) (*services.BillingTransferCandidates, error) {
+	req *shipmentports.ListBillingTransferCandidatesRequest,
+) (*shipmentports.BillingTransferCandidates, error) {
 	if req.Status != "" && !req.Status.IsBillingTransferCandidate() {
 		return nil, errortypes.NewValidationError(
 			"status",
@@ -84,10 +86,10 @@ func (s *service) ListBillingTransferCandidates(
 	offset := req.Filter.Pagination.SafeOffset()
 	candidates, err := s.repo.ListBillingTransferCandidateIDs(
 		ctx,
-		&repositories.ListBillingTransferCandidateIDsRequest{
+		&shipmentports.ListBillingTransferCandidateIDsQuery{
 			Filter: req.Filter,
 			Status: req.Status,
-			Limit:  min(offset+limit+1, services.MaxBillingTransferCandidateIDs),
+			Limit:  min(offset+limit+1, shipmentports.MaxBillingTransferCandidateIDs),
 		},
 	)
 	if err != nil {
@@ -95,8 +97,8 @@ func (s *service) ListBillingTransferCandidates(
 		return nil, err
 	}
 
-	result := &services.BillingTransferCandidates{
-		Decisions:  []services.BillingTransferDecision{},
+	result := &shipmentports.BillingTransferCandidates{
+		Decisions:  []shipmentports.BillingTransferDecision{},
 		TotalCount: candidates.TotalCount,
 		HasMore:    candidates.TotalCount > offset+limit,
 	}
@@ -136,12 +138,12 @@ func (s *service) planTransfers(
 	tenantInfo pagination.TenantInfo,
 	ids []pulid.ID,
 	markCompleted bool,
-) (*services.BillingTransferPlan, error) {
+) (*shipmentports.BillingTransferPlan, error) {
 	if s.customerRepo == nil || s.documentRepo == nil || s.billingRepo == nil {
 		return nil, errortypes.NewConflictError("Shipment billing readiness service is unavailable")
 	}
 
-	shipments, err := s.repo.GetByIDs(ctx, &repositories.GetShipmentsByIDsRequest{
+	shipments, err := s.repo.GetByIDs(ctx, &shipmentports.GetShipmentsByIDsRequest{
 		TenantInfo:     tenantInfo,
 		ShipmentIDs:    ids,
 		IncludeCharges: true,
@@ -156,13 +158,13 @@ func (s *service) planTransfers(
 		}
 	}
 
-	decisions := make([]services.BillingTransferDecision, len(ids))
+	decisions := make([]shipmentports.BillingTransferDecision, len(ids))
 	pending := make([]pendingReadiness, 0, len(ids))
 	for idx, id := range ids {
 		entity := byID[id]
 		decisions[idx] = decisionFor(id, entity)
 		if entity == nil {
-			refuse(&decisions[idx], services.BillingTransferFailureNotFound,
+			refuse(&decisions[idx], shipmentports.BillingTransferFailureNotFound,
 				errortypes.NewNotFoundError("Shipment not found"))
 			continue
 		}
@@ -175,7 +177,7 @@ func (s *service) planTransfers(
 
 		resolution, shareErr := shipment.ResolveShares(entity, entity.ChargeAllocations)
 		if shareErr != nil {
-			refuse(&decisions[idx], services.BillingTransferFailureUnexpected, shareErr)
+			refuse(&decisions[idx], shipmentports.BillingTransferFailureUnexpected, shareErr)
 			continue
 		}
 		pending = append(pending, pendingReadiness{
@@ -204,7 +206,7 @@ func (s *service) planTransfers(
 func (s *service) stampCurrencies(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	decisions []services.BillingTransferDecision,
+	decisions []shipmentports.BillingTransferDecision,
 	pending []pendingReadiness,
 	payers map[pulid.ID]*customer.Customer,
 ) error {
@@ -223,10 +225,10 @@ func (s *service) stampCurrencies(
 		}
 	}
 	if len(missing) > 0 {
-		loaded, err := s.customerRepo.GetByIDs(ctx, repositories.GetCustomersByIDsRequest{
+		loaded, err := s.customerRepo.GetByIDs(ctx, customerports.GetCustomersByIDsRequest{
 			TenantInfo:  tenantInfo,
 			CustomerIDs: sliceutils.Dedupe(missing),
-			CustomerFilterOptions: repositories.CustomerFilterOptions{
+			CustomerFilterOptions: customerports.CustomerFilterOptions{
 				IncludeBillingProfile: true,
 			},
 		})
@@ -272,10 +274,10 @@ func (s *service) readinessSourcesFor(
 		resourceIDs = append(resourceIDs, entry.entity.ID.String())
 	}
 
-	payers, err := s.customerRepo.GetByIDs(ctx, repositories.GetCustomersByIDsRequest{
+	payers, err := s.customerRepo.GetByIDs(ctx, customerports.GetCustomersByIDsRequest{
 		TenantInfo:  tenantInfo,
 		CustomerIDs: sliceutils.Dedupe(payerIDs),
-		CustomerFilterOptions: repositories.CustomerFilterOptions{
+		CustomerFilterOptions: customerports.CustomerFilterOptions{
 			IncludeBillingProfile: true,
 		},
 	})
@@ -302,7 +304,7 @@ func (s *service) readinessSourcesFor(
 
 	docs, err := s.documentRepo.GetByResourceIDs(
 		ctx,
-		&repositories.GetDocumentsByResourceIDsRequest{
+		&documentports.GetDocumentsByResourceIDsRequest{
 			TenantInfo:   tenantInfo,
 			ResourceType: "shipment",
 			ResourceIDs:  resourceIDs,
@@ -337,7 +339,7 @@ func (s *service) readServiceFailures(
 
 	failures, err := s.serviceFailureRepo.ListUnresolvedByShipmentIDs(
 		ctx,
-		&repositories.ServiceFailuresByShipmentIDsRequest{
+		&servicefailureports.ServiceFailuresByShipmentIDsRequest{
 			TenantInfo:  tenantInfo,
 			ShipmentIDs: shipmentIDs,
 		},
@@ -356,12 +358,12 @@ func (s *service) readServiceFailures(
 	}
 }
 
-func decisionFor(id pulid.ID, entity *shipment.Shipment) services.BillingTransferDecision {
-	decision := services.BillingTransferDecision{
+func decisionFor(id pulid.ID, entity *shipment.Shipment) shipmentports.BillingTransferDecision {
+	decision := shipmentports.BillingTransferDecision{
 		ShipmentID:          id,
-		MissingRequirements: []services.ShipmentBillingRequirement{},
-		ValidationFailures:  []services.ShipmentBillingValidation{},
-		Warnings:            []services.ShipmentBillingWarning{},
+		MissingRequirements: []shipmentports.ShipmentBillingRequirement{},
+		ValidationFailures:  []shipmentports.ShipmentBillingValidation{},
+		Warnings:            []shipmentports.ShipmentBillingWarning{},
 	}
 	if entity == nil {
 		return decision
@@ -382,21 +384,21 @@ func decisionFor(id pulid.ID, entity *shipment.Shipment) services.BillingTransfe
 }
 
 func refuse(
-	decision *services.BillingTransferDecision,
-	code services.BillingTransferFailureCode,
+	decision *shipmentports.BillingTransferDecision,
+	code shipmentports.BillingTransferFailureCode,
 	err error,
 ) {
-	decision.Outcome = services.BillingTransferOutcomeRefused
-	if code == services.BillingTransferFailureReturnToOperations {
-		decision.Outcome = services.BillingTransferOutcomeReturnToOperations
+	decision.Outcome = shipmentports.BillingTransferOutcomeRefused
+	if code == shipmentports.BillingTransferFailureReturnToOperations {
+		decision.Outcome = shipmentports.BillingTransferOutcomeReturnToOperations
 	}
 	decision.FailureCode = code
 	decision.Reason = err.Error()
 }
 
 func decide(
-	decision *services.BillingTransferDecision,
-	readiness *services.ShipmentBillingReadiness,
+	decision *shipmentports.BillingTransferDecision,
+	readiness *shipmentports.ShipmentBillingReadiness,
 	markReady bool,
 ) {
 	decision.MissingRequirements = readiness.MissingRequirements
@@ -416,13 +418,13 @@ func decide(
 		return
 	}
 
-	decision.Outcome = services.BillingTransferOutcomeTransfer
+	decision.Outcome = shipmentports.BillingTransferOutcomeTransfer
 	if markReady {
-		decision.Outcome = services.BillingTransferOutcomeMarkReadyAndTransfer
+		decision.Outcome = shipmentports.BillingTransferOutcomeMarkReadyAndTransfer
 	}
 }
 
-func primaryPayer(readiness *services.ShipmentBillingReadiness) string {
+func primaryPayer(readiness *shipmentports.ShipmentBillingReadiness) string {
 	for _, payer := range readiness.Payers {
 		if payer.IsPrimary {
 			return payer.PayerName
@@ -432,13 +434,13 @@ func primaryPayer(readiness *services.ShipmentBillingReadiness) string {
 	return ""
 }
 
-func summarize(decisions []services.BillingTransferDecision) *services.BillingTransferPlan {
-	plan := &services.BillingTransferPlan{Decisions: decisions}
+func summarize(decisions []shipmentports.BillingTransferDecision) *shipmentports.BillingTransferPlan {
+	plan := &shipmentports.BillingTransferPlan{Decisions: decisions}
 	for idx := range decisions {
 		switch outcome := decisions[idx].Outcome; {
 		case outcome.Transfers():
 			plan.Transfer++
-		case outcome == services.BillingTransferOutcomeReturnToOperations:
+		case outcome == shipmentports.BillingTransferOutcomeReturnToOperations:
 			plan.Returned++
 		default:
 			plan.Refused++

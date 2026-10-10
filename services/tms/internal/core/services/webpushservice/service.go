@@ -7,8 +7,8 @@ import (
 	webpush "github.com/SherClockHolmes/webpush-go"
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -22,13 +22,13 @@ type Params struct {
 
 	Logger *zap.Logger
 	Config *config.Config
-	Repo   repositories.PushSubscriptionRepository
+	Repo   notificationports.PushSubscriptionRepository
 }
 
 type Service struct {
 	l    *zap.Logger
 	cfg  config.PushConfig
-	repo repositories.PushSubscriptionRepository
+	repo notificationports.PushSubscriptionRepository
 }
 
 func New(p Params) *Service {
@@ -45,7 +45,7 @@ func (s *Service) PublicKey() string { return s.cfg.VAPIDPublicKey }
 
 func (s *Service) Subscribe(
 	ctx context.Context,
-	req *repositories.SavePushSubscriptionRequest,
+	req *notificationports.SavePushSubscriptionRequest,
 ) (*notification.PushSubscription, error) {
 	return s.repo.Save(ctx, req)
 }

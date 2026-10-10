@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -14,7 +14,7 @@ import (
 // authorization cannot be resolved.
 func PersonCeiling(
 	ctx context.Context,
-	engine serviceports.PermissionEngine,
+	engine permissionports.PermissionEngine,
 	userID, organizationID pulid.ID,
 	resource permission.Resource,
 ) permission.FieldSensitivity {
@@ -79,7 +79,7 @@ func VisibleAt(level, ceiling permission.FieldSensitivity) bool {
 // request, so a page of rows touching the same resource asks the engine once.
 // It is safe for concurrent use by the field resolvers of one request.
 type Ceilings struct {
-	engine         serviceports.PermissionEngine
+	engine         permissionports.PermissionEngine
 	userID         pulid.ID
 	organizationID pulid.ID
 
@@ -88,7 +88,7 @@ type Ceilings struct {
 }
 
 func NewCeilings(
-	engine serviceports.PermissionEngine,
+	engine permissionports.PermissionEngine,
 	userID, organizationID pulid.ID,
 ) *Ceilings {
 	return &Ceilings{
@@ -102,8 +102,8 @@ func NewCeilings(
 type permissionChecker interface {
 	Check(
 		ctx context.Context,
-		req *serviceports.PermissionCheckRequest,
-	) (*serviceports.PermissionCheckResult, error)
+		req *permissionports.PermissionCheckRequest,
+	) (*permissionports.PermissionCheckResult, error)
 }
 
 // ReadAccess remembers whether one reader may read each resource for the
@@ -112,13 +112,13 @@ type permissionChecker interface {
 // concurrent use.
 type ReadAccess struct {
 	engine permissionChecker
-	actor  *serviceports.RequestActor
+	actor  *permissionports.RequestActor
 
 	mu    sync.Mutex
 	cache map[permission.Resource]bool
 }
 
-func NewReadAccess(engine permissionChecker, actor *serviceports.RequestActor) *ReadAccess {
+func NewReadAccess(engine permissionChecker, actor *permissionports.RequestActor) *ReadAccess {
 	return &ReadAccess{
 		engine: engine,
 		actor:  actor,

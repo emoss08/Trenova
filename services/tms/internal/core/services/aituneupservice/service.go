@@ -8,8 +8,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentshadow"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/aituneup"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -28,35 +32,35 @@ type Params struct {
 	fx.In
 
 	Logger           *zap.Logger
-	Repo             repositories.AITuneUpRepository
-	Freshness        repositories.AITuneUpFreshness
-	Control          repositories.AgentControlRepository
-	Definitions      repositories.AgentDefinitionRepository
-	AgentDefinitions services.AgentDefinitionService
-	Providers        repositories.AIProviderRepository
-	ProviderService  services.AIProviderService
-	Trust            services.AgentTrustService
-	Shadow           services.AgentShadowService
-	Usage            repositories.AIUsageRepository
+	Repo             aituneupports.AITuneUpRepository
+	Freshness        aituneupports.AITuneUpFreshness
+	Control          tenantports.AgentControlRepository
+	Definitions      agentdefinitionports.AgentDefinitionRepository
+	AgentDefinitions agentdefinitionports.AgentDefinitionService
+	Providers        agentports.AIProviderRepository
+	ProviderService  agentports.AIProviderService
+	Trust            agentports.AgentTrustService
+	Shadow           agentshadowports.AgentShadowService
+	Usage            aiusageports.AIUsageRepository
 }
 
 type Service struct {
 	l                *zap.Logger
-	repo             repositories.AITuneUpRepository
-	freshness        repositories.AITuneUpFreshness
-	control          repositories.AgentControlRepository
-	definitions      repositories.AgentDefinitionRepository
-	agentDefinitions services.AgentDefinitionService
-	providers        repositories.AIProviderRepository
-	providerService  services.AIProviderService
-	trust            services.AgentTrustService
-	shadow           services.AgentShadowService
-	usage            repositories.AIUsageRepository
+	repo             aituneupports.AITuneUpRepository
+	freshness        aituneupports.AITuneUpFreshness
+	control          tenantports.AgentControlRepository
+	definitions      agentdefinitionports.AgentDefinitionRepository
+	agentDefinitions agentdefinitionports.AgentDefinitionService
+	providers        agentports.AIProviderRepository
+	providerService  agentports.AIProviderService
+	trust            agentports.AgentTrustService
+	shadow           agentshadowports.AgentShadowService
+	usage            aiusageports.AIUsageRepository
 	computing        singleflight.Group
 	now              func() int64
 }
 
-var _ services.AITuneUpService = (*Service)(nil)
+var _ aituneupports.AITuneUpService = (*Service)(nil)
 
 func New(p Params) *Service {
 	return &Service{
@@ -75,7 +79,7 @@ func New(p Params) *Service {
 	}
 }
 
-func (s *Service) List(ctx context.Context, tenantInfo pagination.TenantInfo) (*services.AITuneUpList, error) {
+func (s *Service) List(ctx context.Context, tenantInfo pagination.TenantInfo) (*aituneupports.AITuneUpList, error) {
 	s.ensureFresh(ctx, tenantInfo)
 
 	stored, err := s.repo.List(ctx, tenantInfo)
@@ -100,10 +104,10 @@ func (s *Service) List(ctx context.Context, tenantInfo pagination.TenantInfo) (*
 	if err != nil {
 		return nil, err
 	}
-	return &services.AITuneUpList{Items: items, ComputedAt: computedAt, WindowDays: aituneup.WindowDays}, nil
+	return &aituneupports.AITuneUpList{Items: items, ComputedAt: computedAt, WindowDays: aituneup.WindowDays}, nil
 }
 
-func (s *Service) Get(ctx context.Context, req repositories.GetAITuneUpRequest) (*aituneup.TuneUp, error) {
+func (s *Service) Get(ctx context.Context, req aituneupports.GetAITuneUpRequest) (*aituneup.TuneUp, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
@@ -173,7 +177,7 @@ func (s *Service) inputs(
 	}
 
 	since := now - aituneup.WindowDays*secondsPerDay
-	usage, err := s.usage.ProviderTaskTotals(ctx, repositories.AIUsageProviderTaskRequest{
+	usage, err := s.usage.ProviderTaskTotals(ctx, aiusageports.AIUsageProviderTaskRequest{
 		TenantInfo: tenantInfo,
 		Since:      since,
 	})
@@ -192,7 +196,7 @@ func (s *Service) inputs(
 	}
 
 	if !control.EarnedAutonomy {
-		ready, readyErr := s.trust.PromotionCandidates(ctx, &services.PromoteReadyRequest{
+		ready, readyErr := s.trust.PromotionCandidates(ctx, &agentports.PromoteReadyRequest{
 			TenantInfo: tenantInfo,
 			Threshold:  control.PromotionThreshold,
 		})
@@ -207,7 +211,7 @@ func (s *Service) inputs(
 			if !definition.Enabled || !definition.ShadowMode {
 				continue
 			}
-			report, reportErr := s.shadow.Report(ctx, &services.AgentShadowReportRequest{
+			report, reportErr := s.shadow.Report(ctx, &agentshadowports.AgentShadowReportRequest{
 				TenantInfo: tenantInfo,
 				AgentID:    definition.ID,
 				Days:       aituneup.WindowDays,
@@ -228,7 +232,7 @@ func (s *Service) allAgents(
 ) ([]*agentdefinition.Definition, error) {
 	agents := make([]*agentdefinition.Definition, 0, agentPageSize)
 	for offset := 0; offset < maxAgents; offset += agentPageSize {
-		page, err := s.definitions.List(ctx, &repositories.ListAgentDefinitionRequest{
+		page, err := s.definitions.List(ctx, &agentdefinitionports.ListAgentDefinitionRequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: tenantInfo,
 				Pagination: pagination.Info{Limit: agentPageSize, Offset: offset},
@@ -245,7 +249,7 @@ func (s *Service) allAgents(
 	return agents, nil
 }
 
-func usageRows(rows []repositories.AIUsageProviderTaskTotals) []aituneup.ProviderTaskUsage {
+func usageRows(rows []aiusageports.AIUsageProviderTaskTotals) []aituneup.ProviderTaskUsage {
 	out := make([]aituneup.ProviderTaskUsage, 0, len(rows))
 	for idx := range rows {
 		row := &rows[idx]
@@ -260,7 +264,7 @@ func usageRows(rows []repositories.AIUsageProviderTaskTotals) []aituneup.Provide
 	return out
 }
 
-func readyTools(promotions []services.ToolPromotion) []aituneup.ReadyTool {
+func readyTools(promotions []agentports.ToolPromotion) []aituneup.ReadyTool {
 	out := make([]aituneup.ReadyTool, 0, len(promotions))
 	for idx := range promotions {
 		promotion := &promotions[idx]
@@ -282,9 +286,9 @@ func (s *Service) describe(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	tuneUps []*aituneup.TuneUp,
-) ([]*services.AITuneUpView, error) {
+) ([]*aituneupports.AITuneUpView, error) {
 	if len(tuneUps) == 0 {
-		return []*services.AITuneUpView{}, nil
+		return []*aituneupports.AITuneUpView{}, nil
 	}
 
 	agentIDs := make([]pulid.ID, 0, len(tuneUps))
@@ -300,7 +304,7 @@ func (s *Service) describe(
 
 	agents := map[pulid.ID]*agentdefinition.Definition{}
 	if len(agentIDs) > 0 {
-		found, err := s.definitions.ListByIDs(ctx, repositories.ListAgentDefinitionsByIDsRequest{
+		found, err := s.definitions.ListByIDs(ctx, agentdefinitionports.ListAgentDefinitionsByIDsRequest{
 			IDs:        agentIDs,
 			TenantInfo: tenantInfo,
 		})
@@ -323,7 +327,7 @@ func (s *Service) describe(
 		}
 	}
 
-	views := make([]*services.AITuneUpView, 0, len(tuneUps))
+	views := make([]*aituneupports.AITuneUpView, 0, len(tuneUps))
 	for _, tuneUp := range tuneUps {
 		view, ok := viewOf(tuneUp, agents, providers)
 		if ok {
@@ -337,14 +341,14 @@ func viewOf(
 	tuneUp *aituneup.TuneUp,
 	agents map[pulid.ID]*agentdefinition.Definition,
 	providers map[pulid.ID]*aiprovider.Provider,
-) (*services.AITuneUpView, bool) {
-	view := &services.AITuneUpView{TuneUp: tuneUp}
+) (*aituneupports.AITuneUpView, bool) {
+	view := &aituneupports.AITuneUpView{TuneUp: tuneUp}
 	if tuneUp.AgentDefinitionID.IsNotNil() {
 		definition, ok := agents[tuneUp.AgentDefinitionID]
 		if !ok {
 			return nil, false
 		}
-		view.Agent = &services.AITuneUpAgent{
+		view.Agent = &aituneupports.AITuneUpAgent{
 			ID:     definition.ID,
 			Name:   definition.Name,
 			Icon:   definition.Icon,
@@ -368,6 +372,6 @@ func viewOf(
 	return view, true
 }
 
-func providerOf(provider *aiprovider.Provider) *services.AITuneUpProvider {
-	return &services.AITuneUpProvider{ID: provider.ID, Name: provider.Name, Kind: provider.Kind}
+func providerOf(provider *aiprovider.Provider) *aituneupports.AITuneUpProvider {
+	return &aituneupports.AITuneUpProvider{ID: provider.ID, Name: provider.Name, Kind: provider.Kind}
 }

@@ -8,7 +8,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/xuri/excelize/v2"
 )
 
@@ -24,9 +24,9 @@ const excelSheetNameForbidden = `[]:*?/\`
 // limit, and there are at most MaxDashboardTiles of them.
 type DashboardSheet struct {
 	Title     string
-	Schema    []services.ReportResultColumn
-	Rows      []services.ReportRow
-	Totals    services.ReportRow
+	Schema    []reportports.ReportResultColumn
+	Rows      []reportports.ReportRow
+	Totals    reportports.ReportRow
 	Truncated bool
 }
 
@@ -51,7 +51,7 @@ func (r *XLSXRenderer) RenderDashboard(req *DashboardRenderRequest) error {
 	file := excelize.NewFile()
 	defer file.Close()
 
-	loc := metaLocation(&services.ReportRunMeta{Timezone: req.Timezone})
+	loc := metaLocation(&reportports.ReportRunMeta{Timezone: req.Timezone})
 
 	if err := r.writeDashboardInfoSheet(file, req, loc); err != nil {
 		return err

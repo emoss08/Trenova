@@ -7,9 +7,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -33,7 +34,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.AgentDecisionQueueRepository {
+func New(p Params) agentports.AgentDecisionQueueRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.agentdecisionqueue-repository"),
@@ -55,7 +56,7 @@ func (u *unionQuery) write(fragment string, args ...any) {
 
 // pendingUnion writes the subquery; the caller selects from it as "q" with
 // the columns kind, id, created_at, agent_definition_id and agent_name.
-func pendingUnion(req repositories.ListPendingDecisionsRequest) *unionQuery {
+func pendingUnion(req agentports.ListPendingDecisionsQuery) *unionQuery {
 	proposals := buncolgen.AgentProposalColumns
 	plans := buncolgen.AgentPlanColumns
 	runs := buncolgen.AgentRunColumns
@@ -97,7 +98,7 @@ func pendingUnion(req repositories.ListPendingDecisionsRequest) *unionQuery {
 		"COALESCE("+definitions.Name.Qualified()+", '') AS agent_name, "+
 		proposals.ToolName.Qualified()+" AS tool_name"+
 		" FROM "+buncolgen.AgentProposalTable.Name+" AS "+buncolgen.AgentProposalTable.Alias,
-		string(repositories.PendingDecisionProposal))
+		string(agentports.PendingDecisionProposal))
 	joinRunAndDefinition(
 		proposals.OrganizationID.Qualified(),
 		proposals.BusinessUnitID.Qualified(),
@@ -122,7 +123,7 @@ func pendingUnion(req repositories.ListPendingDecisionsRequest) *unionQuery {
 		"COALESCE("+definitions.Name.Qualified()+", '') AS agent_name, "+
 		"? AS tool_name"+
 		" FROM "+buncolgen.AgentPlanTable.Name+" AS "+buncolgen.AgentPlanTable.Alias,
-		string(repositories.PendingDecisionPlan), agent.PlanToolName)
+		string(agentports.PendingDecisionPlan), agent.PlanToolName)
 	joinRunAndDefinition(
 		plans.OrganizationID.Qualified(),
 		plans.BusinessUnitID.Qualified(),
@@ -148,7 +149,7 @@ func pendingUnion(req repositories.ListPendingDecisionsRequest) *unionQuery {
 // writeAudience keeps what agents the reader may use raised: an agent open to
 // everyone, a system agent, one granted to the reader's roles, and a run of a
 // retired built-in agent, which has no definition to restrict it.
-func writeAudience(u *unionQuery, audience *repositories.AgentAudience) {
+func writeAudience(u *unionQuery, audience *kernelports.AgentAudience) {
 	if audience == nil {
 		return
 	}
@@ -166,9 +167,9 @@ func writeAudience(u *unionQuery, audience *repositories.AgentAudience) {
 
 func (r *repository) ListPending(
 	ctx context.Context,
-	req repositories.ListPendingDecisionsRequest,
-) (*repositories.PendingDecisionsPage, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.PendingDecisionsPage, error) {
+	req agentports.ListPendingDecisionsQuery,
+) (*agentports.PendingDecisionsPageRow, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentports.PendingDecisionsPageRow, error) {
 		limit := req.Limit
 		if limit <= 0 {
 			limit = defaultLimit
@@ -188,14 +189,14 @@ func (r *repository) ListPending(
 		}
 		q.write(" ORDER BY created_at DESC, id DESC LIMIT ?", limit+1)
 
-		entries := make([]repositories.PendingDecisionEntry, 0, limit+1)
+		entries := make([]agentports.PendingDecisionEntry, 0, limit+1)
 		if err := r.db.DBForContext(ctx).NewRaw(q.sql.String(), q.args...).Scan(ctx, &entries); err != nil {
 			r.l.Error("failed to list pending decisions", zap.Error(err))
 
 			return nil, fmt.Errorf("list pending decisions: %w", err)
 		}
 
-		page := &repositories.PendingDecisionsPage{Entries: entries}
+		page := &agentports.PendingDecisionsPageRow{Entries: entries}
 		if len(entries) > limit {
 			page.Entries = entries[:limit]
 			page.HasNextPage = true
@@ -207,7 +208,7 @@ func (r *repository) ListPending(
 
 func (r *repository) CountPending(
 	ctx context.Context,
-	req repositories.ListPendingDecisionsRequest,
+	req agentports.ListPendingDecisionsQuery,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		inner := pendingUnion(req)
@@ -229,10 +230,10 @@ func (r *repository) CountPending(
 
 func (r *repository) Summary(
 	ctx context.Context,
-	req repositories.PendingDecisionSummaryRequest,
-) (*repositories.PendingDecisionSummary, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.PendingDecisionSummary, error) {
-		listReq := repositories.ListPendingDecisionsRequest{
+	req agentports.PendingDecisionSummaryRequest,
+) (*agentports.PendingDecisionSummary, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentports.PendingDecisionSummary, error) {
+		listReq := agentports.ListPendingDecisionsQuery{
 			TenantInfo:               req.TenantInfo,
 			ExcludeShadowDefinitions: req.ExcludeShadowDefinitions,
 			Audience:                 req.Audience,
@@ -255,17 +256,17 @@ func (r *repository) Summary(
 			return nil, fmt.Errorf("summarize pending decisions: %w", err)
 		}
 
-		summary := &repositories.PendingDecisionSummary{
+		summary := &agentports.PendingDecisionSummary{
 			Total:   totals.Total,
-			ByAgent: []repositories.PendingDecisionAgentCount{},
-			ByTool:  []repositories.PendingDecisionToolCount{},
+			ByAgent: []agentports.PendingDecisionAgentCount{},
+			ByTool:  []agentports.PendingDecisionToolCount{},
 		}
 		if totals.Total == 0 {
 			return summary, nil
 		}
 		summary.OldestAt = totals.OldestAt
 
-		byAgent := make([]repositories.PendingDecisionAgentCount, 0, 8)
+		byAgent := make([]agentports.PendingDecisionAgentCount, 0, 8)
 		inner = pendingUnion(listReq)
 		q = &unionQuery{}
 		q.write("SELECT agent_definition_id, agent_name, COUNT(*) AS count FROM (")
@@ -278,7 +279,7 @@ func (r *repository) Summary(
 		}
 		summary.ByAgent = byAgent
 
-		byTool := make([]repositories.PendingDecisionToolCount, 0, 8)
+		byTool := make([]agentports.PendingDecisionToolCount, 0, 8)
 		inner = pendingUnion(listReq)
 		q = &unionQuery{}
 		q.write("SELECT tool_name, COUNT(*) AS count FROM (")
@@ -297,8 +298,8 @@ func (r *repository) Summary(
 
 func (r *repository) ListRecent(
 	ctx context.Context,
-	req repositories.ListRecentDecisionsRequest,
-) ([]repositories.RecentDecisionEntry, error) {
+	req agentports.ListRecentDecisionsQuery,
+) ([]agentports.RecentDecisionEntry, error) {
 	limit := req.Limit
 	if limit <= 0 {
 		limit = defaultLimit
@@ -310,7 +311,7 @@ func (r *repository) ListRecent(
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]repositories.RecentDecisionEntry, error) {
+		func(ctx context.Context) ([]agentports.RecentDecisionEntry, error) {
 			decisions := buncolgen.AgentDecisionColumns
 			proposals := buncolgen.AgentProposalColumns
 			runs := buncolgen.AgentRunColumns
@@ -350,7 +351,7 @@ func (r *repository) ListRecent(
 			q.write(" ORDER BY "+decisions.CreatedAt.Qualified()+" DESC, "+
 				decisions.ID.Qualified()+" DESC LIMIT ?", limit)
 
-			entries := make([]repositories.RecentDecisionEntry, 0, limit)
+			entries := make([]agentports.RecentDecisionEntry, 0, limit)
 			if err := r.db.DBForContext(ctx).NewRaw(q.sql.String(), q.args...).Scan(ctx, &entries); err != nil {
 				r.l.Error("failed to list recent decisions", zap.Error(err))
 

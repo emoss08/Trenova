@@ -8,8 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -29,7 +28,7 @@ func (e *engine) grantedAgentIDs(
 		}
 	}
 
-	granted, err := e.agentGrants.ListGrantedAgentIDs(ctx, repositories.ListGrantedAgentIDsRequest{
+	granted, err := e.agentGrants.ListGrantedAgentIDs(ctx, permissionports.ListGrantedAgentIDsRequest{
 		OrganizationID: orgID,
 		RoleIDs:        roleIDs,
 	})
@@ -48,11 +47,11 @@ func (e *engine) grantedAgentIDs(
 
 func (e *engine) AgentsUsable(
 	ctx context.Context,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	operation permission.Operation,
-) (*services.UsableAgents, error) {
+) (*permissionports.UsableAgents, error) {
 	if actor == nil {
-		return &services.UsableAgents{}, nil
+		return &permissionports.UsableAgents{}, nil
 	}
 
 	req := actor.PermissionCheck(permission.ResourceAssistant, operation)
@@ -62,7 +61,7 @@ func (e *engine) AgentsUsable(
 			return nil, err
 		}
 
-		return &services.UsableAgents{Assistant: result.Allowed}, nil
+		return &permissionports.UsableAgents{Assistant: result.Allowed}, nil
 	}
 
 	load, err := e.getOrComputePermissions(ctx, actor.UserID, actor.OrganizationID)
@@ -82,7 +81,7 @@ func (e *engine) AgentsUsable(
 		return nil, err
 	}
 
-	usable := &services.UsableAgents{Assistant: result.Allowed}
+	usable := &permissionports.UsableAgents{Assistant: result.Allowed}
 	if !result.Allowed {
 		return usable, nil
 	}
@@ -97,7 +96,7 @@ func (e *engine) AgentsUsable(
 
 func (e *engine) MayUseAgent(
 	ctx context.Context,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	definition *agentdefinition.Definition,
 ) (bool, error) {
 	if actor == nil || definition == nil {
@@ -114,10 +113,10 @@ func (e *engine) MayUseAgent(
 
 func (e *engine) RoleCoverage(
 	ctx context.Context,
-	req *services.RoleCoverageRequest,
-) ([]services.RoleCoverage, error) {
+	req *permissionports.RoleCoverageRequest,
+) ([]permissionports.RoleCoverage, error) {
 	if req == nil || len(req.RoleIDs) == 0 {
-		return []services.RoleCoverage{}, nil
+		return []permissionports.RoleCoverage{}, nil
 	}
 
 	closure, err := e.roleRepo.GetRolesWithInheritance(ctx, req.RoleIDs)
@@ -132,7 +131,7 @@ func (e *engine) RoleCoverage(
 		}
 	}
 
-	coverage := make([]services.RoleCoverage, 0, len(req.RoleIDs))
+	coverage := make([]permissionports.RoleCoverage, 0, len(req.RoleIDs))
 	for _, roleID := range req.RoleIDs {
 		role, ok := byID[roleID]
 		if !ok {
@@ -147,10 +146,10 @@ func (e *engine) RoleCoverage(
 func (e *engine) coverageOf(
 	role *permission.Role,
 	byID map[pulid.ID]*permission.Role,
-	required []services.RequiredGrant,
-) services.RoleCoverage {
+	required []permissionports.RequiredGrant,
+) permissionports.RoleCoverage {
 	perms := e.inheritedPermissions(role, byID)
-	result := services.RoleCoverage{
+	result := permissionports.RoleCoverage{
 		RoleID:           role.ID,
 		Coverage:         agentdefinition.CoverageNone,
 		MissingResources: []permission.Resource{},
@@ -187,8 +186,8 @@ func (e *engine) coverageOf(
 func (e *engine) inheritedPermissions(
 	role *permission.Role,
 	byID map[pulid.ID]*permission.Role,
-) *repositories.CachedPermissions {
-	resources := make(map[string]*repositories.CachedResourcePermission)
+) *permissionports.CachedPermissions {
+	resources := make(map[string]*permissionports.CachedResourcePermission)
 	visited := make(map[pulid.ID]struct{}, len(byID))
 	pending := []*permission.Role{role}
 
@@ -208,5 +207,5 @@ func (e *engine) inheritedPermissions(
 		}
 	}
 
-	return &repositories.CachedPermissions{Resources: resources}
+	return &permissionports.CachedPermissions{Resources: resources}
 }

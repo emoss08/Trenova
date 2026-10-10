@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/core/domain/extractionshadow"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -106,7 +106,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionShadowReport)
+					obj := o.(*extractionshadowports.ExtractionShadowReport)
 					return obj.WindowDays, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -116,7 +116,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionShadowReport)
+					obj := o.(*extractionshadowports.ExtractionShadowReport)
 					return obj.Since, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -125,7 +125,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "providerId",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionShadowReport)
+					obj := o.(*extractionshadowports.ExtractionShadowReport)
 					return obj.ProviderID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -135,7 +135,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionShadowReport)
+					obj := o.(*extractionshadowports.ExtractionShadowReport)
 					return obj.ProviderName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -145,7 +145,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionShadowReport)
+					obj := o.(*extractionshadowports.ExtractionShadowReport)
 					return obj.Sampled, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -155,7 +155,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionShadowReport)
+					obj := o.(*extractionshadowports.ExtractionShadowReport)
 					return obj.Pending, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -165,7 +165,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionShadowReport)
+					obj := o.(*extractionshadowports.ExtractionShadowReport)
 					return obj.Completed, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -175,7 +175,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionShadowReport)
+					obj := o.(*extractionshadowports.ExtractionShadowReport)
 					return obj.Failed, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -185,7 +185,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionShadowReport)
+					obj := o.(*extractionshadowports.ExtractionShadowReport)
 					return obj.Skipped, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -195,7 +195,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionShadowReport)
+					obj := o.(*extractionshadowports.ExtractionShadowReport)
 					return obj.Scored, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -205,7 +205,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionShadowReport)
+					obj := o.(*extractionshadowports.ExtractionShadowReport)
 					return obj.Truncated, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -215,7 +215,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionShadowReport)
+					obj := o.(*extractionshadowports.ExtractionShadowReport)
 					return obj.Better, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -225,7 +225,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionShadowReport)
+					obj := o.(*extractionshadowports.ExtractionShadowReport)
 					return obj.Worse, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -235,7 +235,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionShadowReport)
+					obj := o.(*extractionshadowports.ExtractionShadowReport)
 					return obj.Same, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -246,7 +246,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "ExtractionShadowSide",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionShadowReport)
+					obj := o.(*extractionshadowports.ExtractionShadowReport)
 					return obj.Candidate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNExtractionShadowSide2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionShadowSide),
@@ -257,7 +257,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "ExtractionShadowSide",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionShadowReport)
+					obj := o.(*extractionshadowports.ExtractionShadowReport)
 					return obj.Production, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNExtractionShadowSide2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionShadowSide),
@@ -268,7 +268,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "ExtractionShadowFieldComparison",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionShadowReport)
+					obj := o.(*extractionshadowports.ExtractionShadowReport)
 					return obj.Fields, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNExtractionShadowFieldComparison2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaicorrectionᚐFieldComparisonᚄ),
@@ -280,7 +280,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionShadowReport)
+					obj := o.(*extractionshadowports.ExtractionShadowReport)
 					return gqlexec.Resolver[resolverExtractionShadowReport](ec, "ExtractionShadowReport").CostUsd(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -290,7 +290,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionShadowReport)
+					obj := o.(*extractionshadowports.ExtractionShadowReport)
 					return obj.AvgLatencyMs, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -830,7 +830,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionShadowSide)
+					obj := o.(*extractionshadowports.ExtractionShadowSide)
 					return obj.Scored, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -840,7 +840,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionShadowSide)
+					obj := o.(*extractionshadowports.ExtractionShadowSide)
 					return obj.Correct, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -850,7 +850,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionShadowSide)
+					obj := o.(*extractionshadowports.ExtractionShadowSide)
 					return obj.Corrected, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -860,7 +860,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionShadowSide)
+					obj := o.(*extractionshadowports.ExtractionShadowSide)
 					return obj.Missed, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -870,7 +870,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionShadowSide)
+					obj := o.(*extractionshadowports.ExtractionShadowSide)
 					return obj.Accuracy, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
@@ -959,7 +959,7 @@ var Shard = &gqlexec.Shard{
 }
 
 type resolverExtractionShadowReport interface {
-	CostUsd(ctx context.Context, obj *services.ExtractionShadowReport) (string, error)
+	CostUsd(ctx context.Context, obj *extractionshadowports.ExtractionShadowReport) (string, error)
 }
 
 type resolverExtractionShadowResult interface {
@@ -973,7 +973,7 @@ type resolverMutation interface {
 
 type resolverQuery interface {
 	ExtractionShadowSettings(ctx context.Context) (*extractionshadow.ShadowSettings, error)
-	ExtractionShadowReport(ctx context.Context, windowDays *int, providerID *string) (*services.ExtractionShadowReport, error)
+	ExtractionShadowReport(ctx context.Context, windowDays *int, providerID *string) (*extractionshadowports.ExtractionShadowReport, error)
 	ExtractionShadowResults(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ExtractionShadowResultConnection, error)
 	ExtractionShadowResult(ctx context.Context, id string) (*extractionshadow.ShadowResult, error)
 }
@@ -1193,7 +1193,7 @@ func marshalNExtractionShadowFieldComparison2ᚕgithubᚗcomᚋemoss08ᚋtrenova
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNExtractionShadowReport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionShadowReport(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.ExtractionShadowReport) graphql.Marshaler {
+func marshalNExtractionShadowReport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionShadowReport(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *extractionshadowports.ExtractionShadowReport) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1249,7 +1249,7 @@ func marshalNExtractionShadowSettings2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return ec.MarshalType(ctx, sel, "ExtractionShadowSettings", v)
 }
 
-func marshalNExtractionShadowSide2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionShadowSide(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v services.ExtractionShadowSide) graphql.Marshaler {
+func marshalNExtractionShadowSide2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionShadowSide(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v extractionshadowports.ExtractionShadowSide) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "ExtractionShadowSide", &v)
 }
 

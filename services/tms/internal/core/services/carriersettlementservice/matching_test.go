@@ -1,13 +1,17 @@
 package carriersettlementservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/carriersettlementportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -17,21 +21,21 @@ import (
 )
 
 type matchingDeps struct {
-	costEvents  *mocks.MockCarrierCostEventRepository
-	assignments *mocks.MockCarrierAssignmentRepository
-	matches     *mocks.MockCarrierInvoiceMatchRepository
-	control     *mocks.MockCarrierSettlementControlRepository
-	audit       *mocks.MockAuditService
+	costEvents  *carriersettlementportsmock.MockCarrierCostEventRepository
+	assignments *shipmentportsmock.MockCarrierAssignmentRepository
+	matches     *carriersettlementportsmock.MockCarrierInvoiceMatchRepository
+	control     *tenantportsmock.MockCarrierSettlementControlRepository
+	audit       *auditportsmock.MockAuditService
 	svc         *Service
 }
 
 func setupMatchingTest(t *testing.T) *matchingDeps {
 	t.Helper()
-	costEvents := mocks.NewMockCarrierCostEventRepository(t)
-	assignments := mocks.NewMockCarrierAssignmentRepository(t)
-	matches := mocks.NewMockCarrierInvoiceMatchRepository(t)
-	control := mocks.NewMockCarrierSettlementControlRepository(t)
-	audit := mocks.NewMockAuditService(t)
+	costEvents := carriersettlementportsmock.NewMockCarrierCostEventRepository(t)
+	assignments := shipmentportsmock.NewMockCarrierAssignmentRepository(t)
+	matches := carriersettlementportsmock.NewMockCarrierInvoiceMatchRepository(t)
+	control := tenantportsmock.NewMockCarrierSettlementControlRepository(t)
+	audit := auditportsmock.NewMockAuditService(t)
 	expectNoDuplicateMatches(matches)
 	svc := &Service{
 		l:                 zap.NewNop(),
@@ -51,15 +55,15 @@ func setupMatchingTest(t *testing.T) *matchingDeps {
 	}
 }
 
-func expectNoDuplicateMatches(matches *mocks.MockCarrierInvoiceMatchRepository) {
+func expectNoDuplicateMatches(matches *carriersettlementportsmock.MockCarrierInvoiceMatchRepository) {
 	matches.On("GetLiveByCarrierInvoiceNumber", mock.Anything, mock.Anything).
 		Return(nil, nil).Maybe()
 	matches.On("ListLiveByAssignment", mock.Anything, mock.Anything).
 		Return([]*carriersettlement.InvoiceMatch{}, nil).Maybe()
 }
 
-func matchingActor() *serviceports.RequestActor {
-	return &serviceports.RequestActor{UserID: pulid.MustNew("usr_")}
+func matchingActor() *permissionports.RequestActor {
+	return &permissionports.RequestActor{UserID: pulid.MustNew("usr_")}
 }
 
 func createMatchWithVariance(

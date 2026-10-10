@@ -11,10 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/sessioncookie"
 	"github.com/emoss08/trenova/internal/core/domain/session"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/passwordresetservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,7 +25,7 @@ import (
 type Params struct {
 	fx.In
 
-	Service       services.AuthService
+	Service       tenantports.AuthService
 	PasswordReset *passwordresetservice.Service
 	Logger        *zap.Logger
 	Config        *config.Config
@@ -34,7 +33,7 @@ type Params struct {
 }
 
 type Handler struct {
-	service       services.AuthService
+	service       tenantports.AuthService
 	passwordReset *passwordresetservice.Service
 	l             *zap.Logger
 	cfg           *config.Config
@@ -91,7 +90,7 @@ func (h *Handler) activateSessionRoles(c *gin.Context) {
 		return
 	}
 
-	var req services.ActivateSessionRolesRequest
+	var req tenantports.ActivateSessionRolesRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -120,7 +119,7 @@ func (h *Handler) activateSessionRoles(c *gin.Context) {
 // @Failure 500 {object} helpers.ProblemDetail
 // @Router /auth/login [post]
 func (h *Handler) login(c *gin.Context) {
-	var req services.LoginRequest
+	var req tenantports.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -142,7 +141,7 @@ func (h *Handler) login(c *gin.Context) {
 }
 
 func (h *Handler) verifyMFA(c *gin.Context) {
-	var req services.VerifyMFAChallengeRequest
+	var req tenantports.VerifyMFAChallengeRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -157,7 +156,7 @@ func (h *Handler) verifyMFA(c *gin.Context) {
 	h.completeLogin(c, resp)
 }
 
-func (h *Handler) completeLogin(c *gin.Context, resp *services.LoginResponse) {
+func (h *Handler) completeLogin(c *gin.Context, resp *tenantports.LoginResponse) {
 	authctx.SetAuthContext(
 		c,
 		resp.User.ID,
@@ -285,7 +284,7 @@ func (h *Handler) startSSOLogin(provider tenant.SSOProvider) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		redirectURL, err := h.service.StartSSOLogin(
 			c.Request.Context(),
-			services.StartSSOLoginRequest{
+			tenantports.StartSSOLoginRequest{
 				Provider:         provider,
 				OrganizationSlug: c.Param("slug"),
 				ReturnTo:         c.Query("returnTo"),
@@ -311,7 +310,7 @@ func (h *Handler) startSSOLoginGeneric(c *gin.Context) {
 	if parseIDErr == nil {
 		redirectURL, err := h.service.StartSSOLogin(
 			c.Request.Context(),
-			services.StartSSOLoginRequest{
+			tenantports.StartSSOLoginRequest{
 				ProviderID:       providerID,
 				OrganizationSlug: orgSlug,
 				ReturnTo:         c.Query("returnTo"),
@@ -334,7 +333,7 @@ func (h *Handler) startSSOLoginGeneric(c *gin.Context) {
 
 	redirectURL, err := h.service.StartSSOLogin(
 		c.Request.Context(),
-		services.StartSSOLoginRequest{
+		tenantports.StartSSOLoginRequest{
 			Provider:         provider,
 			OrganizationSlug: orgSlug,
 			ReturnTo:         c.Query("returnTo"),
@@ -352,7 +351,7 @@ func (h *Handler) ssoCallback(provider tenant.SSOProvider) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		state := strings.TrimSpace(c.Query("state"))
 
-		var loginState *repositories.SSOLoginState
+		var loginState *tenantports.SSOLoginState
 		if state != "" {
 			ls, stateErr := h.service.GetSSOLoginState(c.Request.Context(), state)
 			if stateErr == nil {
@@ -369,7 +368,7 @@ func (h *Handler) ssoCallback(provider tenant.SSOProvider) gin.HandlerFunc {
 			return
 		}
 
-		resp, err := h.service.HandleSSOCallback(c.Request.Context(), services.SSOCallbackRequest{
+		resp, err := h.service.HandleSSOCallback(c.Request.Context(), tenantports.SSOCallbackRequest{
 			State: state,
 			Code:  strings.TrimSpace(c.Query("code")),
 		})
@@ -410,7 +409,7 @@ func parseSSOProvider(raw string) (tenant.SSOProvider, error) {
 
 func (h *Handler) redirectSSOError(
 	c *gin.Context,
-	loginState *repositories.SSOLoginState,
+	loginState *tenantports.SSOLoginState,
 	callbackErr error,
 ) {
 	h.l.Warn("sso callback failed", zap.Error(callbackErr))
@@ -427,7 +426,7 @@ func (h *Handler) redirectSSOError(
 	c.Redirect(http.StatusFound, redirectURL)
 }
 
-func (h *Handler) resolveSSOErrorOrigin(loginState *repositories.SSOLoginState) string {
+func (h *Handler) resolveSSOErrorOrigin(loginState *tenantports.SSOLoginState) string {
 	if loginState != nil {
 		if returnURL, err := url.Parse(loginState.ReturnTo); err == nil &&
 			(returnURL.Scheme == "http" || returnURL.Scheme == "https") &&

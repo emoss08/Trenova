@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/notification"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
@@ -74,7 +74,7 @@ func (s *Service) notificationThrottled(
 	alert *EDIOperationalAlert,
 	correlationID string,
 ) (bool, error) {
-	return s.notifications.ExistsRecent(ctx, repositories.ExistsRecentNotificationRequest{
+	return s.notifications.ExistsRecent(ctx, notificationports.ExistsRecentNotificationRequest{
 		OrganizationID: alert.OrganizationID,
 		BusinessUnitID: alert.BusinessUnitID,
 		EventType:      alert.EventType,

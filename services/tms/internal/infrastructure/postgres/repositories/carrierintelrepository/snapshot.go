@@ -6,10 +6,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -39,7 +39,7 @@ type snapshotRepository struct {
 	l  *zap.Logger
 }
 
-func NewSnapshotRepository(p Params) repositories.CarrierIntelSnapshotRepository {
+func NewSnapshotRepository(p Params) carrierintelports.CarrierIntelSnapshotRepository {
 	return &snapshotRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.carrier-intel-snapshot-repository"),
@@ -49,7 +49,7 @@ func NewSnapshotRepository(p Params) repositories.CarrierIntelSnapshotRepository
 func (r *snapshotRepository) GetCurrent(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	subject repositories.CarrierIntelSubjectRef,
+	subject carrierintelports.CarrierIntelSubjectRef,
 ) (*carrierintel.CarrierIntelSnapshot, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carrierintel.CarrierIntelSnapshot, error) {
 		cols := buncolgen.CarrierIntelSnapshotColumns
@@ -173,7 +173,7 @@ func (r *snapshotRepository) GetLatestFullByDOT(
 
 func (r *snapshotRepository) ListHistory(
 	ctx context.Context,
-	req *repositories.ListCarrierIntelSnapshotHistoryRequest,
+	req *carrierintelports.ListCarrierIntelSnapshotHistoryRequest,
 ) ([]*carrierintel.CarrierIntelSnapshot, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carrierintel.CarrierIntelSnapshot, error) {
 		cols := buncolgen.CarrierIntelSnapshotColumns
@@ -212,7 +212,7 @@ func (r *snapshotRepository) InsertCurrent(
 		cols := buncolgen.CarrierIntelSnapshotColumns
 		tenantInfo := pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			dba := r.db.DBForContext(c)
 			if _, uErr := dba.NewUpdate().
 				Model((*carrierintel.CarrierIntelSnapshot)(nil)).
@@ -314,7 +314,7 @@ func (r *snapshotRepository) TouchConfirmed(
 
 func (r *snapshotRepository) MarkReviewed(
 	ctx context.Context,
-	req *repositories.MarkSnapshotReviewedRequest,
+	req *carrierintelports.MarkSnapshotReviewedRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.CarrierIntelSnapshotColumns
@@ -353,7 +353,7 @@ func (r *snapshotRepository) MarkReviewed(
 
 func (r *snapshotRepository) ListForRecompute(
 	ctx context.Context,
-	req *repositories.ListSnapshotsForRecomputeRequest,
+	req *carrierintelports.ListSnapshotsForRecomputeRequest,
 ) ([]*carrierintel.CarrierIntelSnapshot, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carrierintel.CarrierIntelSnapshot, error) {
 		cols := buncolgen.CarrierIntelSnapshotColumns
@@ -393,7 +393,7 @@ func (r *snapshotRepository) ListForRecompute(
 
 func (r *snapshotRepository) ListReviewQueue(
 	ctx context.Context,
-	req *repositories.ListCarrierIntelReviewQueueRequest,
+	req *carrierintelports.ListCarrierIntelReviewQueueRequest,
 ) ([]*carrierintel.CarrierIntelSnapshot, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carrierintel.CarrierIntelSnapshot, error) {
 		cols := buncolgen.CarrierIntelSnapshotColumns
@@ -487,7 +487,7 @@ func (r *snapshotRepository) PruneHistory(
 
 func buildCarrierSummaryUpdate(
 	db bun.IDB,
-	req *repositories.UpdateCarrierIntelSummaryRequest,
+	req *carrierintelports.UpdateCarrierIntelSummaryRequest,
 ) *bun.UpdateQuery {
 	cols := buncolgen.CarrierColumns
 	var riskLevel any
@@ -520,7 +520,7 @@ func buildCarrierSummaryUpdate(
 
 func (r *snapshotRepository) UpdateCarrierSummary(
 	ctx context.Context,
-	req *repositories.UpdateCarrierIntelSummaryRequest,
+	req *carrierintelports.UpdateCarrierIntelSummaryRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if _, err := buildCarrierSummaryUpdate(r.db.DBForContext(ctx), req).Exec(ctx); err != nil {

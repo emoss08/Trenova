@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -26,7 +26,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.ShipmentControlRepository {
+func New(p Params) tenantports.ShipmentControlRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.shipmentcontrol-repository"),
@@ -35,7 +35,7 @@ func New(p Params) repositories.ShipmentControlRepository {
 
 func (r *repository) Get(
 	ctx context.Context,
-	req repositories.GetShipmentControlRequest,
+	req tenantports.GetShipmentControlRequest,
 ) (*tenant.ShipmentControl, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.ShipmentControl, error) {
 		log := r.l.With(

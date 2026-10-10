@@ -4,14 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -44,7 +43,7 @@ type mappingRepository struct {
 	l  *zap.Logger
 }
 
-func NewMappingRepository(p MappingParams) repositories.AccountingMappingRepository {
+func NewMappingRepository(p MappingParams) accountingsyncports.AccountingMappingRepository {
 	return &mappingRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.accounting-mapping-repository"),
@@ -53,7 +52,7 @@ func NewMappingRepository(p MappingParams) repositories.AccountingMappingReposit
 
 func (r *mappingRepository) ListByConnection(
 	ctx context.Context,
-	req *repositories.ListAccountingMappingsRequest,
+	req *accountingsyncports.ListAccountingMappingsQuery,
 ) ([]*accountingsync.AccountingMapping, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*accountingsync.AccountingMapping, error) {
 		entities := make([]*accountingsync.AccountingMapping, 0)
@@ -78,7 +77,7 @@ func (r *mappingRepository) ListByConnection(
 
 func (r *mappingRepository) applyMappingFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListAccountingMappingsConnectionRequest,
+	req *accountingsyncports.ListAccountingMappingsConnectionRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.AccountingMappingColumns
 	q = q.Where(cols.ConnectionID.Qualified()+" = ?", req.ConnectionID)
@@ -119,7 +118,7 @@ func requiredTargetsGroup(q *bun.SelectQuery) *bun.SelectQuery {
 
 func (r *mappingRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListAccountingMappingsConnectionRequest,
+	req *accountingsyncports.ListAccountingMappingsConnectionRequest,
 ) (*pagination.CursorListResult[*accountingsync.AccountingMapping], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*accountingsync.AccountingMapping], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -190,7 +189,7 @@ func (r *mappingRepository) ListConnection(
 
 func (r *mappingRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetAccountingMappingRequest,
+	req accountingsyncports.GetAccountingMappingRequest,
 ) (*accountingsync.AccountingMapping, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingMapping, error) {
 		entity := new(accountingsync.AccountingMapping)
@@ -211,7 +210,7 @@ func (r *mappingRepository) GetByID(
 
 func (r *mappingRepository) GetByIDs(
 	ctx context.Context,
-	req repositories.GetAccountingMappingsByIDsRequest,
+	req accountingsyncports.GetAccountingMappingsByIDsRequest,
 ) ([]*accountingsync.AccountingMapping, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*accountingsync.AccountingMapping, error) {
 		if len(req.IDs) == 0 {
@@ -236,7 +235,7 @@ func (r *mappingRepository) GetByIDs(
 
 func (r *mappingRepository) GetByTarget(
 	ctx context.Context,
-	req *repositories.GetAccountingMappingByTargetRequest,
+	req *accountingsyncports.GetAccountingMappingByTargetRequest,
 ) (*accountingsync.AccountingMapping, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingMapping, error) {
 		entity := new(accountingsync.AccountingMapping)
@@ -392,11 +391,11 @@ func (r *mappingRepository) CountByState(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	connectionID pulid.ID,
-) ([]repositories.AccountingMappingCount, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.AccountingMappingCount, error) {
+) ([]accountingsyncports.AccountingMappingCount, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]accountingsyncports.AccountingMappingCount, error) {
 		cols := buncolgen.AccountingMappingColumns
 		counts := make(
-			[]repositories.AccountingMappingCount,
+			[]accountingsyncports.AccountingMappingCount,
 			0,
 			len(accountingsync.AllMappingTargetTypes())*3,
 		)

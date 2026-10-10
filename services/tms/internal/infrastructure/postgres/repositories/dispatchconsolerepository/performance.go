@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/uptrace/bun"
 )
@@ -42,17 +42,17 @@ var (
 
 func (r *repository) ListWorkerOnTimeStats(
 	ctx context.Context,
-	req *repositories.ListWorkloadRequest,
-) ([]*repositories.WorkerOnTimeStats, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.WorkerOnTimeStats, error) {
+	req *shipmentports.ListWorkloadRequest,
+) ([]*shipmentports.WorkerOnTimeStats, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipmentports.WorkerOnTimeStats, error) {
 		if len(req.WorkerIDs) == 0 {
-			return []*repositories.WorkerOnTimeStats{}, nil
+			return []*shipmentports.WorkerOnTimeStats{}, nil
 		}
 
 		asnCols := buncolgen.AssignmentColumns
 		stopCols := buncolgen.StopColumns
 
-		arrivals := make([]*repositories.WorkerOnTimeStats, 0, len(req.WorkerIDs))
+		arrivals := make([]*shipmentports.WorkerOnTimeStats, 0, len(req.WorkerIDs))
 		arrivalsQuery := r.db.DBForContext(ctx).NewSelect().
 			Model((*shipment.Assignment)(nil)).
 			ColumnExpr(asnCols.PrimaryWorkerID.As("worker_id")).
@@ -89,7 +89,7 @@ func (r *repository) ListWorkerOnTimeStats(
 
 		sfCols := buncolgen.ServiceFailureColumns
 
-		failures := make([]*repositories.WorkerOnTimeStats, 0, len(req.WorkerIDs))
+		failures := make([]*shipmentports.WorkerOnTimeStats, 0, len(req.WorkerIDs))
 		failuresQuery := r.db.DBForContext(ctx).NewSelect().
 			Model((*servicefailure.ServiceFailure)(nil)).
 			ColumnExpr(asnCols.PrimaryWorkerID.As("worker_id")).
@@ -113,7 +113,7 @@ func (r *repository) ListWorkerOnTimeStats(
 			return nil, fmt.Errorf("list worker driver-fault failures: %w", err)
 		}
 
-		merged := make(map[string]*repositories.WorkerOnTimeStats, len(arrivals))
+		merged := make(map[string]*shipmentports.WorkerOnTimeStats, len(arrivals))
 		for _, row := range arrivals {
 			merged[row.WorkerID.String()] = row
 		}
@@ -125,7 +125,7 @@ func (r *repository) ListWorkerOnTimeStats(
 			merged[row.WorkerID.String()] = row
 		}
 
-		entities := make([]*repositories.WorkerOnTimeStats, 0, len(merged))
+		entities := make([]*shipmentports.WorkerOnTimeStats, 0, len(merged))
 		for _, row := range merged {
 			entities = append(entities, row)
 		}
@@ -135,16 +135,16 @@ func (r *repository) ListWorkerOnTimeStats(
 
 func (r *repository) ListWorkerAcceptanceStats(
 	ctx context.Context,
-	req *repositories.ListWorkloadRequest,
-) ([]*repositories.WorkerAcceptanceStats, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.WorkerAcceptanceStats, error) {
+	req *shipmentports.ListWorkloadRequest,
+) ([]*shipmentports.WorkerAcceptanceStats, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipmentports.WorkerAcceptanceStats, error) {
 		if len(req.WorkerIDs) == 0 {
-			return []*repositories.WorkerAcceptanceStats{}, nil
+			return []*shipmentports.WorkerAcceptanceStats{}, nil
 		}
 
 		cols := buncolgen.AssignmentColumns
 
-		entities := make([]*repositories.WorkerAcceptanceStats, 0, len(req.WorkerIDs))
+		entities := make([]*shipmentports.WorkerAcceptanceStats, 0, len(req.WorkerIDs))
 		q := r.db.DBForContext(ctx).NewSelect().
 			Model((*shipment.Assignment)(nil)).
 			ColumnExpr(cols.PrimaryWorkerID.As("worker_id")).

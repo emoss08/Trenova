@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/shopspring/decimal"
@@ -31,18 +31,18 @@ type InsightColumn struct {
 
 type InsightColumns map[string]InsightColumn
 
-func (c InsightColumns) Fields() []repositories.TableInsightField {
-	fields := make([]repositories.TableInsightField, 0, len(c))
+func (c InsightColumns) Fields() []permissionports.TableInsightField {
+	fields := make([]permissionports.TableInsightField, 0, len(c))
 	for name := range c {
 		column := c[name]
-		fields = append(fields, repositories.TableInsightField{
+		fields = append(fields, permissionports.TableInsightField{
 			Name:      name,
 			Facetable: column.Facetable,
 			Summable:  column.Summable,
 			Timeline:  column.Timeline,
 		})
 	}
-	slices.SortFunc(fields, func(a, b repositories.TableInsightField) int {
+	slices.SortFunc(fields, func(a, b permissionports.TableInsightField) int {
 		return cmp.Compare(a.Name, b.Name)
 	})
 	return fields
@@ -58,8 +58,8 @@ func Facet(
 	ctx context.Context,
 	base *bun.SelectQuery,
 	columns InsightColumns,
-	req *repositories.TableFacetRequest,
-) (*repositories.TableFacetResult, error) {
+	req *permissionports.TableFacetRequest,
+) (*permissionports.TableFacetResult, error) {
 	column, ok := columns[req.Field]
 	if !ok || !column.Facetable {
 		return nil, errortypes.NewValidationError(
@@ -89,11 +89,11 @@ func Facet(
 		return nil, err
 	}
 
-	result := &repositories.TableFacetResult{
-		Buckets: make([]repositories.TableFacetBucket, 0, len(rows)),
+	result := &permissionports.TableFacetResult{
+		Buckets: make([]permissionports.TableFacetBucket, 0, len(rows)),
 	}
 	for _, row := range rows {
-		result.Buckets = append(result.Buckets, repositories.TableFacetBucket{
+		result.Buckets = append(result.Buckets, permissionports.TableFacetBucket{
 			Value: row.Value,
 			Count: row.Count,
 		})
@@ -107,8 +107,8 @@ func Aggregate(
 	ctx context.Context,
 	base *bun.SelectQuery,
 	columns InsightColumns,
-	req *repositories.TableAggregateRequest,
-) (*repositories.TableAggregateResult, error) {
+	req *permissionports.TableAggregateRequest,
+) (*permissionports.TableAggregateResult, error) {
 	if len(req.Fields) > MaxAggregateFields {
 		return nil, errortypes.NewValidationError(
 			"fields",
@@ -147,15 +147,15 @@ func Aggregate(
 	if err != nil {
 		return nil, err
 	}
-	result := &repositories.TableAggregateResult{
-		Values: make([]repositories.TableAggregateValue, 0, len(req.Fields)),
+	result := &permissionports.TableAggregateResult{
+		Values: make([]permissionports.TableAggregateValue, 0, len(req.Fields)),
 	}
 	if count != nil {
 		result.Count = int(count.IntPart())
 	}
 
 	for idx, field := range req.Fields {
-		value := repositories.TableAggregateValue{Field: field}
+		value := permissionports.TableAggregateValue{Field: field}
 		for suffix, target := range map[string]**decimal.Decimal{
 			"sum": &value.Sum,
 			"avg": &value.Average,
@@ -188,7 +188,7 @@ type seriesExpressions struct {
 
 func seriesColumns(
 	columns InsightColumns,
-	req *repositories.TableSeriesRequest,
+	req *permissionports.TableSeriesRequest,
 ) (*seriesExpressions, error) {
 	group, ok := columns[req.GroupField]
 	if !ok || !group.Facetable {
@@ -227,7 +227,7 @@ func seriesColumns(
 	return exprs, nil
 }
 
-func seriesPeriods(req *repositories.TableSeriesRequest) (int, error) {
+func seriesPeriods(req *permissionports.TableSeriesRequest) (int, error) {
 	if len(req.GroupValues) > MaxSeriesGroups {
 		return 0, errortypes.NewValidationError(
 			"groupValues",
@@ -250,7 +250,7 @@ func seriesResult(
 	groupValues []string,
 	rows []seriesRow,
 	periods int,
-) (*repositories.TableSeriesResult, error) {
+) (*permissionports.TableSeriesResult, error) {
 	byGroup := make(map[string][]decimal.Decimal, len(groupValues))
 	for _, value := range groupValues {
 		if _, seen := byGroup[value]; seen {
@@ -274,15 +274,15 @@ func seriesResult(
 		points[row.Bucket-1] = parsed
 	}
 
-	result := &repositories.TableSeriesResult{
-		Groups: make([]repositories.TableSeriesGroup, 0, len(byGroup)),
+	result := &permissionports.TableSeriesResult{
+		Groups: make([]permissionports.TableSeriesGroup, 0, len(byGroup)),
 	}
 	for _, value := range groupValues {
 		points, found := byGroup[value]
 		if !found {
 			continue
 		}
-		result.Groups = append(result.Groups, repositories.TableSeriesGroup{
+		result.Groups = append(result.Groups, permissionports.TableSeriesGroup{
 			Value:  value,
 			Points: points,
 		})
@@ -295,14 +295,14 @@ func Series(
 	ctx context.Context,
 	base *bun.SelectQuery,
 	columns InsightColumns,
-	req *repositories.TableSeriesRequest,
-) (*repositories.TableSeriesResult, error) {
+	req *permissionports.TableSeriesRequest,
+) (*permissionports.TableSeriesResult, error) {
 	exprs, err := seriesColumns(columns, req)
 	if err != nil {
 		return nil, err
 	}
 	if len(req.GroupValues) == 0 {
-		return &repositories.TableSeriesResult{}, nil
+		return &permissionports.TableSeriesResult{}, nil
 	}
 	periods, err := seriesPeriods(req)
 	if err != nil {
@@ -337,7 +337,7 @@ func MatchingIDs(
 	base *bun.SelectQuery,
 	idColumn *buncolgen.Column,
 	limit int,
-) (*repositories.TableMatchResult, error) {
+) (*permissionports.TableMatchResult, error) {
 	if limit <= 0 {
 		return nil, errortypes.NewValidationError(
 			"limit",
@@ -358,7 +358,7 @@ func MatchingIDs(
 		return nil, err
 	}
 
-	result := &repositories.TableMatchResult{IDs: make([]string, 0, len(rows))}
+	result := &permissionports.TableMatchResult{IDs: make([]string, 0, len(rows))}
 	for _, row := range rows {
 		result.IDs = append(result.IDs, row.ID)
 		result.Total = row.Total

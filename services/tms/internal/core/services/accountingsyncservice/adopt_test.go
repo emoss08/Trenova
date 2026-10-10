@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,7 +20,7 @@ func sentDocNumber(t *testing.T, h *harness) string {
 	t.Helper()
 	calls := h.writer.callsTo("CreateSalesDocument")
 	require.NotEmpty(t, calls)
-	doc, ok := calls[0].doc.(*services.AccountingSalesDocument)
+	doc, ok := calls[0].doc.(*accountingsyncports.AccountingSalesDocument)
 	require.True(t, ok)
 	return doc.DocNumber
 }
@@ -49,7 +49,7 @@ func TestARetryAfterAnUnknownOutcomeAdoptsTheDocumentItFinds(t *testing.T) {
 	assert.Len(t, h.writer.callsTo("CreateSalesDocument"), 1, "the found document is not created again")
 	finds := h.writer.callsTo("FindDocument")
 	require.Len(t, finds, 1)
-	match, ok := finds[0].doc.(*services.AccountingFindDocumentRequest)
+	match, ok := finds[0].doc.(*accountingsyncports.AccountingFindDocumentRequest)
 	require.True(t, ok)
 	assert.Equal(t, record.RequestID, match.RequestID)
 	assert.Equal(t, accountingsync.SyncObjectInvoice, match.Kind)

@@ -8,7 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/fileutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,7 +23,7 @@ type deliveryEmailContent struct {
 	run            *report.ReportRun
 	schedule       *report.ReportSchedule
 	title          string
-	digest         *services.ReportDigest
+	digest         *reportports.ReportDigest
 	attached       bool
 	attachTooLarge bool
 }
@@ -102,7 +103,7 @@ func (a *Activities) attachmentNote(content *deliveryEmailContent) string {
 // what a tone *means* is the report definition's decision, and how it looks
 // belongs to whoever is editing the template.
 func digestContext(
-	digest *services.ReportDigest,
+	digest *reportports.ReportDigest,
 	loc *time.Location,
 	rowCount int64,
 ) documenttemplate.ReportDigest {
@@ -134,8 +135,8 @@ func digestContext(
 }
 
 func digestCells(
-	columns []services.ReportResultColumn,
-	row services.ReportRow,
+	columns []reportports.ReportResultColumn,
+	row reportports.ReportRow,
 	loc *time.Location,
 ) []documenttemplate.ReportCell {
 	cells := make([]documenttemplate.ReportCell, 0, len(columns))
@@ -156,7 +157,7 @@ func digestCells(
 
 // digestTotals labels the leading dimension, which has no total of its own. A
 // blank first cell reads as a missing number rather than as a row label.
-func digestTotals(digest *services.ReportDigest, loc *time.Location) []string {
+func digestTotals(digest *reportports.ReportDigest, loc *time.Location) []string {
 	totals := make([]string, 0, len(digest.Columns))
 	for i := range digest.Columns {
 		var value any
@@ -202,7 +203,7 @@ func (a *Activities) renderNotification(
 		return notificationWording{}, false
 	}
 
-	rendered, err := a.templates.RenderMessage(ctx, &services.RenderMessageRequest{
+	rendered, err := a.templates.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
 		TenantInfo:        tenantInfo,
 		Kind:              kind,
 		Data:              data,

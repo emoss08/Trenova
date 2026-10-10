@@ -6,7 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -62,7 +63,7 @@ func createRateCoverageRule(
 }
 
 type rateCoverage struct {
-	billing repositories.BillingControlRepository
+	billing tenantports.BillingControlRepository
 }
 
 func (c rateCoverage) acceptsUnrated(ctx context.Context, orgID pulid.ID) bool {
@@ -100,7 +101,7 @@ func (c rateCoverage) refuseUnpricing(
 
 func (c rateCoverage) refuseUnratedCopies(
 	ctx context.Context,
-	plan *repositories.ShipmentDuplicatePlan,
+	plan *shipmentports.ShipmentDuplicatePlan,
 ) error {
 	if plan == nil || plan.Source == nil {
 		return nil

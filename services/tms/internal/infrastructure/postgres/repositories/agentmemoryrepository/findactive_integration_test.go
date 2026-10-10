@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -43,7 +43,7 @@ func TestFindActive_IgnoresAnExpiredRow(t *testing.T) {
 	_, err := repo.Create(ctx, expired)
 	require.NoError(t, err)
 
-	found, err := repo.FindActive(ctx, repositories.FindActiveAgentMemoryRequest{
+	found, err := repo.FindActive(ctx, agentports.FindActiveAgentMemoryRequest{
 		TenantInfo: tenant,
 		Now:        now,
 		Content:    "  call ahead before a friday delivery ",
@@ -58,7 +58,7 @@ func TestFindActive_IgnoresAnExpiredRow(t *testing.T) {
 	created, err := repo.Create(ctx, current)
 	require.NoError(t, err)
 
-	found, err = repo.FindActive(ctx, repositories.FindActiveAgentMemoryRequest{
+	found, err = repo.FindActive(ctx, agentports.FindActiveAgentMemoryRequest{
 		TenantInfo: tenant,
 		Now:        now,
 		Content:    "Call ahead before a Monday delivery",
@@ -86,7 +86,7 @@ func TestFindActive_MatchesOnlyARowKeptForTheSameReaders(t *testing.T) {
 	require.NoError(t, err)
 
 	find := func(scope agent.MemoryScope, agentID pulid.ID) *agent.Memory {
-		found, findErr := repo.FindActive(ctx, repositories.FindActiveAgentMemoryRequest{
+		found, findErr := repo.FindActive(ctx, agentports.FindActiveAgentMemoryRequest{
 			TenantInfo:        tenant,
 			Now:               now,
 			Content:           "State which rate table a quote came from",
@@ -125,7 +125,7 @@ func TestFindActive_NeverHandsATaintedRowToACleanWrite(t *testing.T) {
 	tainted, err := repo.Create(ctx, dirty)
 	require.NoError(t, err)
 
-	request := repositories.FindActiveAgentMemoryRequest{
+	request := agentports.FindActiveAgentMemoryRequest{
 		TenantInfo: tenant,
 		Now:        now,
 		Content:    "Deliveries to Acme go to dock 9",
@@ -167,7 +167,7 @@ func TestFindActive_MatchesTheSameWordsWhateverTheCaseSpacingOrPunctuation(t *te
 	require.NoError(t, err)
 
 	find := func(content string) *agent.Memory {
-		found, findErr := repo.FindActive(ctx, repositories.FindActiveAgentMemoryRequest{
+		found, findErr := repo.FindActive(ctx, agentports.FindActiveAgentMemoryRequest{
 			TenantInfo: tenant,
 			Now:        now,
 			Content:    content,

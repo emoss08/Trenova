@@ -2,8 +2,8 @@ package airetrievalstatusservice
 
 import (
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/shopspring/decimal"
@@ -11,8 +11,8 @@ import (
 
 const moneyPlaces = 2
 
-func buildStatus(in *statusInputs, monthStart int64) *serviceports.AIRetrievalStatus {
-	status := &serviceports.AIRetrievalStatus{
+func buildStatus(in *statusInputs, monthStart int64) *agentports.AIRetrievalStatus {
+	status := &agentports.AIRetrievalStatus{
 		Availability:           AvailabilityView(in.availability),
 		Settings:               SettingsView(in.settings),
 		Sources:                SourceStatuses(in.settings, in.totals, in.active),
@@ -32,7 +32,7 @@ func buildStatus(in *statusInputs, monthStart int64) *serviceports.AIRetrievalSt
 	return status
 }
 
-func costOf(cost *repositories.AIUsageCost) decimal.Decimal {
+func costOf(cost *aiusageports.AIUsageCost) decimal.Decimal {
 	if cost == nil {
 		return decimal.Zero
 	}
@@ -40,7 +40,7 @@ func costOf(cost *repositories.AIUsageCost) decimal.Decimal {
 	return cost.CostUSD
 }
 
-func unpricedOf(cost *repositories.AIUsageCost) int {
+func unpricedOf(cost *aiusageports.AIUsageCost) int {
 	if cost == nil {
 		return 0
 	}
@@ -48,8 +48,8 @@ func unpricedOf(cost *repositories.AIUsageCost) int {
 	return cost.UnpricedCalls
 }
 
-func AvailabilityView(availability airetrieval.Availability) *serviceports.AIRetrievalAvailability {
-	view := &serviceports.AIRetrievalAvailability{
+func AvailabilityView(availability airetrieval.Availability) *agentports.AIRetrievalAvailability {
+	view := &agentports.AIRetrievalAvailability{
 		Available:          availability.Available,
 		ExtensionInstalled: availability.ExtensionInstalled,
 	}
@@ -61,8 +61,8 @@ func AvailabilityView(availability airetrieval.Availability) *serviceports.AIRet
 	return view
 }
 
-func SettingsView(settings *airetrieval.Settings) *serviceports.AIRetrievalSettings {
-	view := &serviceports.AIRetrievalSettings{
+func SettingsView(settings *airetrieval.Settings) *agentports.AIRetrievalSettings {
+	view := &agentports.AIRetrievalSettings{
 		MemoryEnabled:            settings.MemoryEnabled,
 		DocumentsEnabled:         settings.DocumentsEnabled,
 		InboundMessagesEnabled:   settings.InboundMessagesEnabled,
@@ -86,16 +86,16 @@ func SettingsView(settings *airetrieval.Settings) *serviceports.AIRetrievalSetti
 func SourceStatuses(
 	settings *airetrieval.Settings,
 	totals map[airetrieval.SourceType]int,
-	counts []repositories.IndexEntryCount,
-) []*serviceports.AIRetrievalSourceStatus {
+	counts []agentports.IndexEntryCount,
+) []*agentports.AIRetrievalSourceStatus {
 	sourceTypes := airetrieval.AllSourceTypes()
-	statuses := make([]*serviceports.AIRetrievalSourceStatus, 0, len(sourceTypes))
+	statuses := make([]*agentports.AIRetrievalSourceStatus, 0, len(sourceTypes))
 	bySource := make(
-		map[airetrieval.SourceType]*serviceports.AIRetrievalSourceStatus,
+		map[airetrieval.SourceType]*agentports.AIRetrievalSourceStatus,
 		len(sourceTypes),
 	)
 	for _, sourceType := range sourceTypes {
-		status := &serviceports.AIRetrievalSourceStatus{
+		status := &agentports.AIRetrievalSourceStatus{
 			SourceType: sourceType,
 			Enabled:    settings.SourceEnabled(sourceType),
 			Total:      totals[sourceType],
@@ -129,13 +129,13 @@ func SourceStatuses(
 func ModelChangeProgress(
 	settings *airetrieval.Settings,
 	totals map[airetrieval.SourceType]int,
-	counts []repositories.IndexEntryCount,
-) *serviceports.AIRetrievalModelChange {
+	counts []agentports.IndexEntryCount,
+) *agentports.AIRetrievalModelChange {
 	if !settings.HasPendingModel() {
 		return nil
 	}
 
-	change := &serviceports.AIRetrievalModelChange{
+	change := &agentports.AIRetrievalModelChange{
 		FromModelKey: settings.ActiveModelKey,
 		ToModelKey:   settings.PendingModelKey,
 		Dimensions:   settings.PendingDimensions,

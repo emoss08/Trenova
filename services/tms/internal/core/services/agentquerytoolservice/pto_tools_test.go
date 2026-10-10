@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -16,13 +16,13 @@ import (
 )
 
 type fakePTOLister struct {
-	request *repositories.ListPTORequest
+	request *workerports.ListPTORequest
 	items   []*worker.WorkerPTO
 }
 
 func (f *fakePTOLister) List(
 	_ context.Context,
-	req *repositories.ListPTORequest,
+	req *workerports.ListPTORequest,
 ) (*pagination.CursorListResult[*worker.WorkerPTO], error) {
 	if f.request == nil {
 		f.request = req
@@ -246,7 +246,7 @@ type typeFilteringPTO struct {
 
 func (f *typeFilteringPTO) List(
 	_ context.Context,
-	req *repositories.ListPTORequest,
+	req *workerports.ListPTORequest,
 ) (*pagination.CursorListResult[*worker.WorkerPTO], error) {
 	matched := make([]*worker.WorkerPTO, 0, len(f.items))
 	for _, item := range f.items {

@@ -6,8 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 )
 
 const (
@@ -26,7 +25,7 @@ const (
 )
 
 func classifyDelivery(
-	row *repositories.ShipmentDeliveryRow,
+	row *shipmentports.ShipmentDeliveryRow,
 	now int64,
 ) (state deliveryState, lateMinutes int) {
 	if row.ActualArrival != nil {
@@ -47,22 +46,22 @@ func classifyDelivery(
 }
 
 func BuildDeliveryWatch(
-	rows []*repositories.ShipmentDeliveryRow,
+	rows []*shipmentports.ShipmentDeliveryRow,
 	now int64,
 	loc *time.Location,
-) services.ShipmentDeliveryWatch {
-	buckets := make([]services.DeliveryHourBucket, 0, LastBucketHour-FirstBucketHour+1)
+) shipmentports.ShipmentDeliveryWatch {
+	buckets := make([]shipmentports.DeliveryHourBucket, 0, LastBucketHour-FirstBucketHour+1)
 	for hour := FirstBucketHour; hour <= LastBucketHour; hour++ {
-		buckets = append(buckets, services.DeliveryHourBucket{Hour: hour})
+		buckets = append(buckets, shipmentports.DeliveryHourBucket{Hour: hour})
 	}
 
-	watch := services.ShipmentDeliveryWatch{Total: len(rows), Buckets: buckets}
-	late := make([]services.LateDelivery, 0, len(rows))
+	watch := shipmentports.ShipmentDeliveryWatch{Total: len(rows), Buckets: buckets}
+	late := make([]shipmentports.LateDelivery, 0, len(rows))
 
 	for _, row := range rows {
 		state, delta := classifyDelivery(row, now)
 		hour := time.Unix(row.DeliveryAt, 0).In(loc).Hour()
-		var bucket *services.DeliveryHourBucket
+		var bucket *shipmentports.DeliveryHourBucket
 		if hour >= FirstBucketHour && hour <= LastBucketHour {
 			bucket = &watch.Buckets[hour-FirstBucketHour]
 		}
@@ -78,7 +77,7 @@ func BuildDeliveryWatch(
 			if bucket != nil {
 				bucket.Late++
 			}
-			late = append(late, services.LateDelivery{
+			late = append(late, shipmentports.LateDelivery{
 				ShipmentID:   row.ShipmentID,
 				ProNumber:    row.ProNumber,
 				DeltaMinutes: delta,
@@ -92,7 +91,7 @@ func BuildDeliveryWatch(
 		}
 	}
 
-	slices.SortStableFunc(late, func(a, b services.LateDelivery) int {
+	slices.SortStableFunc(late, func(a, b shipmentports.LateDelivery) int {
 		return cmp.Compare(b.DeltaMinutes, a.DeltaMinutes)
 	})
 	watch.WorstLate = late[:min(len(late), worstLateLimit)]

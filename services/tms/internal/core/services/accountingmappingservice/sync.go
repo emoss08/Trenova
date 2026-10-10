@@ -5,8 +5,11 @@ import (
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,7 +25,7 @@ func (s *Service) historyUse(
 	if s.syncRecords == nil || row.State != accountingsync.MappingStateConfirmed {
 		return 0, nil
 	}
-	usage, err := s.syncRecords.MappingUsage(ctx, &repositories.AccountingSyncMappingUsageRequest{
+	usage, err := s.syncRecords.MappingUsage(ctx, &accountingsyncports.AccountingSyncMappingUsageRequest{
 		TenantInfo:   tenantInfo,
 		ConnectionID: row.ConnectionID,
 		MappingIDs:   []pulid.ID{row.ID},
@@ -77,7 +80,7 @@ func (s *Service) requeueMappingBlocked(
 
 		requeued, err := s.syncRecords.Requeue(
 			ctx,
-			&repositories.RequeueAccountingSyncRecordsRequest{
+			&accountingsyncports.RequeueAccountingSyncRecordsRequest{
 				TenantInfo:   tenantInfo,
 				ConnectionID: connectionID,
 				ErrorCategories: []accountingsync.SyncErrorCategory{
@@ -103,9 +106,9 @@ func (s *Service) requeueMappingBlocked(
 
 func (s *Service) EnsureMapping(
 	ctx context.Context,
-	req *services.EnsureAccountingMappingRequest,
+	req *accountingsyncports.EnsureAccountingMappingRequest,
 ) (*accountingsync.AccountingMapping, error) {
-	lookup := &repositories.GetAccountingMappingByTargetRequest{
+	lookup := &accountingsyncports.GetAccountingMappingByTargetRequest{
 		TenantInfo:      req.TenantInfo,
 		ConnectionID:    req.ConnectionID,
 		TargetType:      req.TargetType,
@@ -117,7 +120,7 @@ func (s *Service) EnsureMapping(
 		return row, err
 	}
 
-	conn, err := s.connections.GetByID(ctx, repositories.GetAccountingConnectionByIDRequest{
+	conn, err := s.connections.GetByID(ctx, accountingsyncports.GetAccountingConnectionByIDRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.ConnectionID,
 	})
@@ -157,11 +160,11 @@ func (s *Service) EnsureMapping(
 
 func (s *Service) targetFor(
 	ctx context.Context,
-	req *services.EnsureAccountingMappingRequest,
+	req *accountingsyncports.EnsureAccountingMappingRequest,
 ) (*target, error) {
 	switch req.TargetType {
 	case accountingsync.TargetCustomer:
-		cus, err := s.customers.GetByID(ctx, repositories.GetCustomerByIDRequest{
+		cus, err := s.customers.GetByID(ctx, customerports.GetCustomerByIDRequest{
 			ID:         req.ObjectID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -171,7 +174,7 @@ func (s *Service) targetFor(
 		return customerTarget(cus), nil
 	case accountingsync.TargetAccessorialCharge:
 		tenantInfo := req.TenantInfo
-		charge, err := s.accessorials.GetByID(ctx, repositories.GetAccessorialChargeByIDRequest{
+		charge, err := s.accessorials.GetByID(ctx, accessorialchargeports.GetAccessorialChargeByIDRequest{
 			ID:         req.ObjectID,
 			TenantInfo: &tenantInfo,
 		})
@@ -199,7 +202,7 @@ func (s *Service) targetFor(
 			Label:      keyLabel(req.TargetType, req.Key),
 		}, nil
 	case accountingsync.TargetCarrier:
-		carr, err := s.carriers.GetByID(ctx, repositories.GetCarrierByIDRequest{
+		carr, err := s.carriers.GetByID(ctx, carrierports.GetCarrierByIDRequest{
 			ID:         req.ObjectID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -214,7 +217,7 @@ func (s *Service) targetFor(
 		}
 		return driverTarget(wrk), nil
 	case accountingsync.TargetGLAccount:
-		accounts, err := s.glAccounts.GetByIDs(ctx, repositories.GetGLAccountsByIDsRequest{
+		accounts, err := s.glAccounts.GetByIDs(ctx, glaccountports.GetGLAccountsByIDsRequest{
 			TenantInfo:   req.TenantInfo,
 			GLAccountIDs: []pulid.ID{req.ObjectID},
 		})

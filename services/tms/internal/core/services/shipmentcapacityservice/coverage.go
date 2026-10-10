@@ -7,10 +7,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/carriercapacity"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/core/services/ratequoteservice"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,10 +24,10 @@ func (s *Service) loadShipment(
 	tenantInfo pagination.TenantInfo,
 	shipmentID pulid.ID,
 ) (*shipment.Shipment, error) {
-	return s.shipments.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	return s.shipments.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:              shipmentID,
 		TenantInfo:      tenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{ExpandShipmentDetails: true},
+		ShipmentOptions: shipmentports.ShipmentOptions{ExpandShipmentDetails: true},
 	})
 }
 
@@ -48,10 +49,10 @@ func (s *Service) CoverageSuggestions(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	shipmentID pulid.ID,
-) (*services.ShipmentCoverageSuggestions, error) {
-	out := &services.ShipmentCoverageSuggestions{
-		Drivers:  []*services.DriverCoverageSuggestion{},
-		Carriers: []*services.CarrierCoverageSuggestion{},
+) (*shipmentports.ShipmentCoverageSuggestions, error) {
+	out := &shipmentports.ShipmentCoverageSuggestions{
+		Drivers:  []*shipmentports.DriverCoverageSuggestion{},
+		Carriers: []*shipmentports.CarrierCoverageSuggestion{},
 	}
 
 	sp, err := s.loadShipment(ctx, tenantInfo, shipmentID)
@@ -79,7 +80,7 @@ func (s *Service) driverSuggestions(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	moveID pulid.ID,
-) ([]*services.DriverCoverageSuggestion, error) {
+) ([]*shipmentports.DriverCoverageSuggestion, error) {
 	ranked, err := s.console.GetMoveCandidates(ctx, &dispatchconsoleservice.MoveCandidatesRequest{
 		TenantInfo: tenantInfo,
 		MoveID:     moveID,
@@ -89,14 +90,14 @@ func (s *Service) driverSuggestions(
 		return nil, err
 	}
 
-	out := make([]*services.DriverCoverageSuggestion, 0, len(ranked))
+	out := make([]*shipmentports.DriverCoverageSuggestion, 0, len(ranked))
 	for _, candidate := range ranked {
 		if candidate == nil || candidate.Blocked() {
 			continue
 		}
 		remaining := candidate.DriveRemainingMs
 		fit := float64(candidate.Score)
-		out = append(out, &services.DriverCoverageSuggestion{
+		out = append(out, &shipmentports.DriverCoverageSuggestion{
 			WorkerID:         candidate.WorkerID,
 			TractorID:        candidate.TractorID,
 			MoveID:           moveID,
@@ -116,7 +117,7 @@ func (s *Service) carrierSuggestions(
 	tenantInfo pagination.TenantInfo,
 	sp *shipment.Shipment,
 	move *shipment.ShipmentMove,
-) ([]*services.CarrierCoverageSuggestion, error) {
+) ([]*shipmentports.CarrierCoverageSuggestion, error) {
 	shopped, err := s.shopper.Shop(ctx, &ratequoteservice.ShopRequest{
 		TenantInfo: tenantInfo,
 		ShipmentID: sp.ID,
@@ -124,12 +125,12 @@ func (s *Service) carrierSuggestions(
 	})
 	if err != nil {
 		if errortypes.IsBusinessError(err) || errortypes.IsNotFoundError(err) {
-			return []*services.CarrierCoverageSuggestion{}, nil
+			return []*shipmentports.CarrierCoverageSuggestion{}, nil
 		}
 		return nil, err
 	}
 
-	priced := make([]*services.ShopOption, 0, len(shopped.Options))
+	priced := make([]*ratequoteports.ShopOption, 0, len(shopped.Options))
 	ids := make([]pulid.ID, 0, len(shopped.Options))
 	for _, option := range shopped.Options {
 		if option != nil && option.Priced() {
@@ -138,7 +139,7 @@ func (s *Service) carrierSuggestions(
 		}
 	}
 	if len(priced) == 0 {
-		return []*services.CarrierCoverageSuggestion{}, nil
+		return []*shipmentports.CarrierCoverageSuggestion{}, nil
 	}
 
 	facts, err := s.loadCarrierFacts(ctx, tenantInfo, ids)
@@ -153,9 +154,9 @@ func (s *Service) carrierSuggestions(
 	if stop := sp.ShipperStop(); stop != nil {
 		pickup = stop.ScheduledWindowStart
 	}
-	out := make([]*services.CarrierCoverageSuggestion, 0, len(priced))
+	out := make([]*shipmentports.CarrierCoverageSuggestion, 0, len(priced))
 	for _, option := range priced {
-		suggestion := &services.CarrierCoverageSuggestion{
+		suggestion := &shipmentports.CarrierCoverageSuggestion{
 			CarrierID:   option.CarrierID,
 			MoveID:      move.ID,
 			Name:        option.CarrierName,
@@ -192,7 +193,7 @@ func (s *Service) fillCarriers(
 		return nil
 	}
 
-	found, err := s.carriers.GetByIDs(ctx, repositories.GetCarriersByIDsRequest{
+	found, err := s.carriers.GetByIDs(ctx, carrierports.GetCarriersByIDsRequest{
 		TenantInfo: tenantInfo,
 		CarrierIDs: missing,
 	})

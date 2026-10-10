@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipmentimportchat"
-	ports "github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentimportchatports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/redishelpers"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -31,7 +31,7 @@ type shipmentImportChatCacheRepository struct {
 
 func NewShipmentImportChatCacheRepository(
 	p ShipmentImportChatCacheRepositoryParams,
-) ports.ShipmentImportChatCacheRepository {
+) shipmentimportchatports.ShipmentImportChatCacheRepository {
 	return &shipmentImportChatCacheRepository{
 		client: p.Client,
 		l:      p.Logger.Named("redis.shipment-import-chat-cache-repository"),
@@ -95,4 +95,4 @@ func (r *shipmentImportChatCacheRepository) key(
 	)
 }
 
-var _ ports.ShipmentImportChatCacheRepository = (*shipmentImportChatCacheRepository)(nil)
+var _ shipmentimportchatports.ShipmentImportChatCacheRepository = (*shipmentImportChatCacheRepository)(nil)

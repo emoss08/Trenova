@@ -13,11 +13,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentscoring"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -59,7 +62,7 @@ func (s *Service) ListSuiteCases(
 	ctx context.Context,
 	req *ListSuiteCasesRequest,
 ) ([]SuiteCase, error) {
-	evaluations, err := s.evaluations.ListBySuiteRun(ctx, repositories.ListSuiteEvaluationsRequest{
+	evaluations, err := s.evaluations.ListBySuiteRun(ctx, agentports.ListSuiteEvaluationsRequest{
 		TenantInfo:   req.TenantInfo,
 		SuiteRunID:   req.SuiteRunID,
 		AfterOrdinal: req.AfterOrdinal,
@@ -96,14 +99,14 @@ func (s *Service) CheckBudget(
 	ctx context.Context,
 	req *CheckBudgetRequest,
 ) (*agentquality.BudgetDecision, error) {
-	nightly, err := s.usage.EvaluationCost(ctx, repositories.AIUsageEvaluationCostRequest{
+	nightly, err := s.usage.EvaluationCost(ctx, aiusageports.AIUsageEvaluationCostRequest{
 		TenantInfo: req.TenantInfo,
 		Since:      req.DayStart,
 	})
 	if err != nil {
 		return nil, err
 	}
-	monthly, err := s.usage.EvaluationCost(ctx, repositories.AIUsageEvaluationCostRequest{
+	monthly, err := s.usage.EvaluationCost(ctx, aiusageports.AIUsageEvaluationCostRequest{
 		TenantInfo: req.TenantInfo,
 		Since:      req.MonthStart,
 	})
@@ -163,7 +166,7 @@ func (s *Service) suiteEvaluationsOf(
 	all := make([]*agent.Evaluation, 0, suiteReadPage)
 	after := 0
 	for {
-		page, err := s.evaluations.ListBySuiteRun(ctx, repositories.ListSuiteEvaluationsRequest{
+		page, err := s.evaluations.ListBySuiteRun(ctx, agentports.ListSuiteEvaluationsRequest{
 			TenantInfo:   tenant,
 			SuiteRunID:   suiteRunID,
 			AfterOrdinal: after,
@@ -189,7 +192,7 @@ func (s *Service) caseSources(
 	tenant pagination.TenantInfo,
 	agentID pulid.ID,
 ) (map[pulid.ID]agentquality.CaseSource, error) {
-	cases, err := s.cases.ListByAgent(ctx, repositories.ListAgentEvalCasesRequest{
+	cases, err := s.cases.ListByAgent(ctx, agentqualityports.ListAgentEvalCasesRequest{
 		AgentDefinitionID: agentID,
 		TenantInfo:        tenant,
 		Limit:             caseSourcePage,
@@ -303,7 +306,7 @@ type ScoredSuite struct {
 }
 
 func (s *Service) ScoreSuite(ctx context.Context, req *ScoreSuiteRequest) (*ScoredSuite, error) {
-	run, err := s.suiteRuns.GetByID(ctx, repositories.GetAgentSuiteRunRequest{
+	run, err := s.suiteRuns.GetByID(ctx, agentqualityports.GetAgentSuiteRunRequest{
 		ID:         req.SuiteRunID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -364,7 +367,7 @@ func (s *Service) JudgeCase(ctx context.Context, req *JudgeCaseRequest) (*Judged
 		return &JudgedCase{Note: "No completion service is available to judge with."}, nil
 	}
 
-	evaluation, err := s.evaluations.GetByID(ctx, repositories.GetAgentEvaluationByIDRequest{
+	evaluation, err := s.evaluations.GetByID(ctx, agentports.GetAgentEvaluationByIDRequest{
 		ID:         req.EvaluationID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -384,7 +387,7 @@ func (s *Service) JudgeCase(ctx context.Context, req *JudgeCaseRequest) (*Judged
 		return &JudgedCase{Note: "A hard check failed; the judge does not override it."}, nil
 	}
 
-	evalCase, err := s.cases.GetByID(ctx, repositories.GetAgentEvalCaseByIDRequest{
+	evalCase, err := s.cases.GetByID(ctx, agentqualityports.GetAgentEvalCaseByIDRequest{
 		ID:         *evaluation.EvalCaseID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -392,7 +395,7 @@ func (s *Service) JudgeCase(ctx context.Context, req *JudgeCaseRequest) (*Judged
 		return nil, err
 	}
 
-	result, err := s.completion.CompleteStructured(ctx, &services.StructuredCompletionRequest{
+	result, err := s.completion.CompleteStructured(ctx, &agentports.StructuredCompletionRequest{
 		TenantInfo:   req.TenantInfo,
 		Task:         aiprovider.TaskEvaluationJudge,
 		System:       judgeSystemPrompt,
@@ -400,14 +403,14 @@ func (s *Service) JudgeCase(ctx context.Context, req *JudgeCaseRequest) (*Judged
 		OutputSchema: judgeSchema(),
 		SchemaName:   judgeSchemaName,
 		MaxTokens:    judgeMaxTokens,
-		Attribution: services.AIUsageAttribution{
+		Attribution: aiusageports.AIUsageAttribution{
 			AgentDefinitionID: evaluation.AgentDefinitionID,
 			RunID:             evaluation.ID,
-			Purpose:           services.AIUsagePurposeEvaluation,
+			Purpose:           aiusageports.AIUsagePurposeEvaluation,
 			Feature:           aiusage.FeatureAgentEvaluation,
 		},
 	})
-	if errors.Is(err, services.ErrNoProviderConfigured) {
+	if errors.Is(err, agentports.ErrNoProviderConfigured) {
 		return &JudgedCase{Note: "No provider is assigned to the evaluation judge."}, nil
 	}
 	if err != nil {
@@ -470,7 +473,7 @@ func (s *Service) FinalizeSuite(
 	ctx context.Context,
 	req *FinalizeSuiteRequest,
 ) (*FinalizedSuite, error) {
-	run, err := s.suiteRuns.GetByID(ctx, repositories.GetAgentSuiteRunRequest{
+	run, err := s.suiteRuns.GetByID(ctx, agentqualityports.GetAgentSuiteRunRequest{
 		ID:         req.SuiteRunID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -484,7 +487,7 @@ func (s *Service) FinalizeSuite(
 	if req.StopReason != "" {
 		if _, err = s.evaluations.SkipPendingBySuiteRun(
 			ctx,
-			repositories.SkipPendingSuiteEvaluationsRequest{
+			agentports.SkipPendingSuiteEvaluationsRequest{
 				TenantInfo: req.TenantInfo,
 				SuiteRunID: run.ID,
 				Reason:     budgetStoppedCaseNote,
@@ -512,7 +515,7 @@ func (s *Service) FinalizeSuite(
 	run.DeterministicScore = scorePointer(outcome.deterministic)
 	run.JudgeScore = meanPointer(outcome.judged)
 	run.QualityScore = scorePointer(outcome.scored)
-	if cost, costErr := s.usage.EvaluationCost(ctx, repositories.AIUsageEvaluationCostRequest{
+	if cost, costErr := s.usage.EvaluationCost(ctx, aiusageports.AIUsageEvaluationCostRequest{
 		TenantInfo: req.TenantInfo,
 		SuiteRunID: run.ID,
 	}); costErr != nil {
@@ -600,7 +603,7 @@ func (s *Service) detectRegression(
 	outcome *suiteOutcome,
 	settings agentquality.SuiteSettings,
 ) (agentscoring.Regression, error) {
-	previous, err := s.suiteRuns.History(ctx, repositories.AgentSuiteRunHistoryRequest{
+	previous, err := s.suiteRuns.History(ctx, agentqualityports.AgentSuiteRunHistoryRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: run.OrganizationID,
 			BuID:  run.BusinessUnitID,
@@ -699,7 +702,7 @@ func (s *Service) agentName(
 	tenant pagination.TenantInfo,
 	agentID pulid.ID,
 ) string {
-	definition, err := s.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	definition, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         agentID,
 		TenantInfo: tenant,
 	})
@@ -715,7 +718,7 @@ func (s *Service) agentName(
 func (s *Service) notifyRegression(
 	ctx context.Context,
 	run *agentquality.SuiteRun,
-	item services.WatchtowerItemInput,
+	item watchtowerports.WatchtowerItemInput,
 ) {
 	if s.notifier == nil {
 		return
@@ -767,7 +770,7 @@ type FailSuiteRequest struct {
 }
 
 func (s *Service) FailSuite(ctx context.Context, req *FailSuiteRequest) error {
-	run, err := s.suiteRuns.GetByID(ctx, repositories.GetAgentSuiteRunRequest{
+	run, err := s.suiteRuns.GetByID(ctx, agentqualityports.GetAgentSuiteRunRequest{
 		ID:         req.SuiteRunID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -786,7 +789,7 @@ func (s *Service) fail(ctx context.Context, run *agentquality.SuiteRun, reason s
 	tenant := pagination.TenantInfo{OrgID: run.OrganizationID, BuID: run.BusinessUnitID}
 	if _, err := s.evaluations.SkipPendingBySuiteRun(
 		ctx,
-		repositories.SkipPendingSuiteEvaluationsRequest{
+		agentports.SkipPendingSuiteEvaluationsRequest{
 			TenantInfo: tenant,
 			SuiteRunID: run.ID,
 			Reason:     failedSuiteCaseNote,

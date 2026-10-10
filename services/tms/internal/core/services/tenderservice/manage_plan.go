@@ -5,8 +5,7 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	portservices "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -64,14 +63,14 @@ func (s *Service) PreviewCancel(
 // the workflow makes when it lands the answer.
 func (s *Service) PreviewResponse(
 	ctx context.Context,
-	req *portservices.TenderResponseRequest,
+	req *tenderports.TenderResponseRequest,
 ) (*ResponsePreview, error) {
 	offer, err := s.planResponse(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	entity, err := s.repo.GetByID(ctx, repositories.GetTenderByIDRequest{
+	entity, err := s.repo.GetByID(ctx, tenderports.GetTenderByIDRequest{
 		TenantInfo:    req.TenantInfo,
 		TenderID:      offer.TenderID,
 		IncludeOffers: true,
@@ -109,7 +108,7 @@ func (s *Service) planCancel(
 		return nil, multiErr
 	}
 
-	entity, err := s.repo.GetByID(ctx, repositories.GetTenderByIDRequest{
+	entity, err := s.repo.GetByID(ctx, tenderports.GetTenderByIDRequest{
 		TenantInfo:    req.TenantInfo,
 		TenderID:      req.TenderID,
 		IncludeOffers: true,
@@ -132,7 +131,7 @@ func (s *Service) planCancel(
 // can file the answer as late.
 func (s *Service) planResponse(
 	ctx context.Context,
-	req *portservices.TenderResponseRequest,
+	req *tenderports.TenderResponseRequest,
 ) (*tender.TenderOffer, error) {
 	if req.OfferID.IsNil() {
 		return nil, errortypes.NewValidationError(
@@ -157,7 +156,7 @@ func (s *Service) planResponse(
 		)
 	}
 
-	offer, err := s.repo.GetOfferByID(ctx, repositories.GetTenderOfferByIDRequest{
+	offer, err := s.repo.GetOfferByID(ctx, tenderports.GetTenderOfferByIDRequest{
 		TenantInfo:    req.TenantInfo,
 		OfferID:       req.OfferID,
 		IncludeTender: true,
@@ -229,7 +228,7 @@ func acceptedTender(
 func declinedTender(
 	entity *tender.Tender,
 	offerID pulid.ID,
-	req *portservices.TenderResponseRequest,
+	req *tenderports.TenderResponseRequest,
 	now int64,
 ) *tender.Tender {
 	return copyTender(entity, func(offer *tender.TenderOffer) {

@@ -7,8 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -42,7 +42,7 @@ type tenderChangePlan struct {
 func (s *Service) planTenderChanges(
 	ctx context.Context,
 	original, updated *shipment.Shipment,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*tenderChangePlan, error) {
 	if original == nil || updated == nil {
 		return nil, nil //nolint:nilnil // a nil plan means the update sends no 204 change
@@ -61,7 +61,7 @@ func (s *Service) planTenderChanges(
 
 	recipients, err := s.tenderRecipientRepo.ListActiveTenderRecipientsForSourceShipment(
 		ctx,
-		repositories.ListEDITenderRecipientsForSourceShipmentRequest{
+		ediports.ListEDITenderRecipientsForSourceShipmentRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID:  updated.OrganizationID,
 				BuID:   updated.BusinessUnitID,
@@ -95,7 +95,7 @@ func (s *Service) planTenderChanges(
 func (s *Service) PreviewTenderChanges(
 	ctx context.Context,
 	original, updated *shipment.Shipment,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) ([]*PartnerNotice, error) {
 	plan, err := s.planTenderChanges(ctx, original, updated, actor)
 	if err != nil || plan == nil {
@@ -143,7 +143,7 @@ func (s *Service) PreviewCancelNotices(
 
 	links, err := s.shipmentLinkRepo.GetShipmentLinksByShipmentID(
 		ctx,
-		repositories.GetEDIShipmentLinksByShipmentIDRequest{
+		ediports.GetEDIShipmentLinksByShipmentIDRequest{
 			ShipmentID: shipmentID,
 			TenantInfo: tenantInfo,
 		},
@@ -179,7 +179,7 @@ func (s *Service) partnerName(ctx context.Context, recipient *edi.TenderRecipien
 		return "Linked trading partner"
 	}
 
-	partner, err := s.partnerRepo.GetByID(ctx, repositories.GetEDIPartnerByIDRequest{
+	partner, err := s.partnerRepo.GetByID(ctx, ediports.GetEDIPartnerByIDRequest{
 		ID: recipient.EDIPartnerID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: recipient.SourceOrganizationID,

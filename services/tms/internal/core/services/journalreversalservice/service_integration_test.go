@@ -10,8 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/core/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
@@ -23,6 +21,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/journalentryrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/journalpostingrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/journalreversalrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalreversalports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -163,7 +163,7 @@ func TestJournalReversalPostingCreatesReversalEntryAndMarksOriginal(t *testing.T
 		t,
 		postingRepo.CreatePosting(
 			ctx,
-			repositories.CreateJournalPostingParams{
+			journalentryports.CreateJournalPostingParams{
 				BatchID:          pulid.MustNew("jb_"),
 				OrganizationID:   org.ID,
 				BusinessUnitID:   org.BusinessUnitID,
@@ -194,7 +194,7 @@ func TestJournalReversalPostingCreatesReversalEntryAndMarksOriginal(t *testing.T
 				IsApproved:       true,
 				ApprovedByID:     user.ID,
 				ApprovedAt:       &now,
-				Lines: []repositories.JournalPostingLine{
+				Lines: []journalentryports.JournalPostingLine{
 					{
 						ID:          pulid.MustNew("jel_"),
 						GLAccountID: accounts[0].ID,
@@ -234,7 +234,7 @@ func TestJournalReversalPostingCreatesReversalEntryAndMarksOriginal(t *testing.T
 
 	created, err := svc.Create(
 		ctx,
-		&serviceports.CreateJournalReversalRequest{
+		&journalreversalports.CreateJournalReversalRequest{
 			OriginalJournalEntryID:  originalEntryID,
 			RequestedAccountingDate: now,
 			ReasonCode:              "CORR",
@@ -248,7 +248,7 @@ func TestJournalReversalPostingCreatesReversalEntryAndMarksOriginal(t *testing.T
 
 	posted, err := svc.Post(
 		ctx,
-		&serviceports.GetJournalReversalRequest{ReversalID: created.ID, TenantInfo: tenantInfo},
+		&journalreversalports.GetJournalReversalRequest{ReversalID: created.ID, TenantInfo: tenantInfo},
 		actor,
 	)
 	require.NoError(t, err)

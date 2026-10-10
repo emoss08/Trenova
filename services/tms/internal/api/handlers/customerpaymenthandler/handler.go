@@ -8,8 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,13 +19,13 @@ import (
 type Params struct {
 	fx.In
 
-	Service              serviceports.CustomerPaymentService
+	Service              customerpaymentports.CustomerPaymentService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	service serviceports.CustomerPaymentService
+	service customerpaymentports.CustomerPaymentService
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
 }
@@ -93,7 +92,7 @@ func (h *Handler) list(c *gin.Context) {
 		query,
 		h.eh,
 		func() (*pagination.ListResult[*customerpayment.Payment], error) {
-			return h.service.List(c.Request.Context(), &repositories.ListCustomerPaymentsRequest{
+			return h.service.List(c.Request.Context(), &customerpaymentports.ListCustomerPaymentsRequest{
 				Filter:     query,
 				CustomerID: customerID,
 				Status:     customerpayment.Status(c.Query("status")),
@@ -110,7 +109,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.Get(c.Request.Context(), &serviceports.GetCustomerPaymentRequest{
+	entity, err := h.service.Get(c.Request.Context(), &customerpaymentports.GetCustomerPaymentRequest{
 		PaymentID:  paymentID,
 		TenantInfo: pagination.FromAuthAsUser(authCtx),
 	})
@@ -124,7 +123,7 @@ func (h *Handler) get(c *gin.Context) {
 
 func (h *Handler) postAndApply(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
-	req := new(serviceports.PostCustomerPaymentRequest)
+	req := new(customerpaymentports.PostCustomerPaymentRequest)
 	if err := authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -155,7 +154,7 @@ func (h *Handler) applyUnapplied(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	req := new(serviceports.ApplyCustomerPaymentRequest)
+	req := new(customerpaymentports.ApplyCustomerPaymentRequest)
 	if err = authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -187,7 +186,7 @@ func (h *Handler) reverse(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	req := new(serviceports.ReverseCustomerPaymentRequest)
+	req := new(customerpaymentports.ReverseCustomerPaymentRequest)
 	if err = authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -211,7 +210,7 @@ func (h *Handler) reverse(c *gin.Context) {
 // applyCreditMemo settles open invoices with a posted credit memo.
 func (h *Handler) applyCreditMemo(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
-	req := new(serviceports.ApplyCreditMemoRequest)
+	req := new(customerpaymentports.ApplyCreditMemoRequest)
 	if err := authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -243,7 +242,7 @@ func (h *Handler) unapplyCreditMemoApplication(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	req := new(serviceports.UnapplyCreditMemoApplicationRequest)
+	req := new(customerpaymentports.UnapplyCreditMemoApplicationRequest)
 	if err = authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return

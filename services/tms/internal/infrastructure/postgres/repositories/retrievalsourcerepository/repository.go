@@ -11,9 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -38,7 +38,7 @@ const (
 	sourceIDColumn     = "source_id"
 )
 
-var _ repositories.RetrievalSourceRepository = (*repository)(nil)
+var _ agentports.RetrievalSourceRepository = (*repository)(nil)
 
 type Params struct {
 	fx.In
@@ -52,7 +52,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.RetrievalSourceRepository {
+func New(p Params) agentports.RetrievalSourceRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.retrieval-source-repository"),
@@ -95,7 +95,7 @@ func sourceIDs(tenantInfo pagination.TenantInfo, ids []pulid.ID) ([]pulid.ID, er
 
 func (r *repository) GetMemories(
 	ctx context.Context,
-	req repositories.RetrievalSourcesRequest,
+	req agentports.RetrievalSourcesRequest,
 ) ([]*agent.Memory, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.Memory, error) {
 		ids, err := sourceIDs(req.TenantInfo, req.IDs)
@@ -119,12 +119,12 @@ func (r *repository) GetMemories(
 
 func (r *repository) GetDocuments(
 	ctx context.Context,
-	req *repositories.RetrievalDocumentsRequest,
-) ([]*repositories.RetrievalDocumentSource, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*repositories.RetrievalDocumentSource, error) {
+	req *agentports.RetrievalDocumentsRequest,
+) ([]*agentports.RetrievalDocumentSource, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*agentports.RetrievalDocumentSource, error) {
 		ids, err := sourceIDs(req.TenantInfo, req.IDs)
 		if err != nil || len(ids) == 0 {
-			return []*repositories.RetrievalDocumentSource{}, err
+			return []*agentports.RetrievalDocumentSource{}, err
 		}
 
 		dba := r.db.DBForContext(ctx)
@@ -137,14 +137,14 @@ func (r *repository) GetDocuments(
 			return nil, fmt.Errorf("read documents: %w", err)
 		}
 		if len(docs) == 0 {
-			return []*repositories.RetrievalDocumentSource{}, nil
+			return []*agentports.RetrievalDocumentSource{}, nil
 		}
 
 		found := make([]pulid.ID, 0, len(docs))
-		sources := make(map[pulid.ID]*repositories.RetrievalDocumentSource, len(docs))
+		sources := make(map[pulid.ID]*agentports.RetrievalDocumentSource, len(docs))
 		for _, doc := range docs {
 			found = append(found, doc.ID)
-			sources[doc.ID] = &repositories.RetrievalDocumentSource{Document: doc}
+			sources[doc.ID] = &agentports.RetrievalDocumentSource{Document: doc}
 		}
 
 		contents := make([]*documentcontent.Content, 0, len(found))
@@ -167,7 +167,7 @@ func (r *repository) GetDocuments(
 			}
 		}
 
-		ordered := make([]*repositories.RetrievalDocumentSource, 0, len(docs))
+		ordered := make([]*agentports.RetrievalDocumentSource, 0, len(docs))
 		for _, doc := range docs {
 			ordered = append(ordered, sources[doc.ID])
 		}
@@ -181,7 +181,7 @@ func (r *repository) attachPages(
 	dba bun.IDB,
 	tenantInfo pagination.TenantInfo,
 	documentIDs []pulid.ID,
-	sources map[pulid.ID]*repositories.RetrievalDocumentSource,
+	sources map[pulid.ID]*agentports.RetrievalDocumentSource,
 ) error {
 	cols := buncolgen.PageColumns
 	pages := make([]*documentcontent.Page, 0, len(documentIDs))
@@ -211,7 +211,7 @@ func (r *repository) attachPages(
 
 func (r *repository) GetInboundMessages(
 	ctx context.Context,
-	req repositories.RetrievalSourcesRequest,
+	req agentports.RetrievalSourcesRequest,
 ) ([]*inboundmessage.InboundMessage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*inboundmessage.InboundMessage, error) {
 		ids, err := sourceIDs(req.TenantInfo, req.IDs)
@@ -235,7 +235,7 @@ func (r *repository) GetInboundMessages(
 
 func (r *repository) ListModelKeys(
 	ctx context.Context,
-	req repositories.ListRetrievalModelKeysRequest,
+	req agentports.ListRetrievalModelKeysRequest,
 ) ([]string, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]string, error) {
 		if err := validateTenant(req.TenantInfo); err != nil {
@@ -295,7 +295,7 @@ var sourceTables = map[airetrieval.SourceType]sourceTable{
 
 func (r *repository) ListSourceIDs(
 	ctx context.Context,
-	req *repositories.ListRetrievalSourceIDsRequest,
+	req *agentports.ListRetrievalSourceIDsRequest,
 ) ([]pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
 		if err := validateTenant(req.TenantInfo); err != nil {
@@ -342,7 +342,7 @@ type keywordPlan struct {
 	limit int
 }
 
-func planKeywordSearch(req repositories.RetrievalKeywordSearchRequest) (keywordPlan, bool, error) {
+func planKeywordSearch(req agentports.RetrievalKeywordSearchRequest) (keywordPlan, bool, error) {
 	if err := validateTenant(req.TenantInfo); err != nil {
 		return keywordPlan{}, false, err
 	}
@@ -394,12 +394,12 @@ func likeAnyWord(query string, columns ...*buncolgen.Column) (clause string, arg
 
 func (r *repository) SearchDocuments(
 	ctx context.Context,
-	req repositories.RetrievalKeywordSearchRequest,
-) ([]repositories.RetrievalKeywordHit, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.RetrievalKeywordHit, error) {
+	req agentports.RetrievalKeywordSearchRequest,
+) ([]agentports.RetrievalKeywordHit, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentports.RetrievalKeywordHit, error) {
 		plan, ok, err := planKeywordSearch(req)
 		if err != nil || !ok {
-			return []repositories.RetrievalKeywordHit{}, err
+			return []agentports.RetrievalKeywordHit{}, err
 		}
 
 		docs := buncolgen.DocumentColumns
@@ -439,7 +439,7 @@ func (r *repository) SearchDocuments(
 				OrderExpr(docs.UpdatedAt.OrderDesc())
 		}
 
-		hits := make([]repositories.RetrievalKeywordHit, 0, plan.limit)
+		hits := make([]agentports.RetrievalKeywordHit, 0, plan.limit)
 		if err = q.OrderExpr(docs.ID.OrderAsc()).Limit(plan.limit).Scan(ctx, &hits); err != nil {
 			return nil, fmt.Errorf("search documents by keyword: %w", err)
 		}
@@ -450,12 +450,12 @@ func (r *repository) SearchDocuments(
 
 func (r *repository) SearchInboundMessages(
 	ctx context.Context,
-	req repositories.RetrievalKeywordSearchRequest,
-) ([]repositories.RetrievalKeywordHit, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.RetrievalKeywordHit, error) {
+	req agentports.RetrievalKeywordSearchRequest,
+) ([]agentports.RetrievalKeywordHit, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentports.RetrievalKeywordHit, error) {
 		plan, ok, err := planKeywordSearch(req)
 		if err != nil || !ok {
-			return []repositories.RetrievalKeywordHit{}, err
+			return []agentports.RetrievalKeywordHit{}, err
 		}
 
 		cols := buncolgen.InboundMessageColumns
@@ -481,7 +481,7 @@ func (r *repository) SearchInboundMessages(
 				OrderExpr(cols.ReceivedAt.OrderDesc())
 		}
 
-		hits := make([]repositories.RetrievalKeywordHit, 0, plan.limit)
+		hits := make([]agentports.RetrievalKeywordHit, 0, plan.limit)
 		if err = q.OrderExpr(cols.ID.OrderAsc()).Limit(plan.limit).Scan(ctx, &hits); err != nil {
 			return nil, fmt.Errorf("search inbound messages by keyword: %w", err)
 		}

@@ -6,9 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -36,7 +36,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.OrgStructureRepository {
+func New(p Params) workerports.OrgStructureRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.org-structure-repository"),
@@ -52,7 +52,7 @@ func limitOr(requested, fallback int) int {
 
 func (r *repository) ListPositions(
 	ctx context.Context,
-	req *repositories.ListJobPositionsRequest,
+	req *workerports.ListJobPositionsRequest,
 ) ([]*worker.JobPosition, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.JobPosition, error) {
 		cols := buncolgen.JobPositionColumns
@@ -93,7 +93,7 @@ func (r *repository) ListPositions(
 
 func (r *repository) GetPositionByID(
 	ctx context.Context,
-	req *repositories.GetJobPositionByIDRequest,
+	req *workerports.GetJobPositionByIDRequest,
 ) (*worker.JobPosition, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.JobPosition, error) {
 		entity := new(worker.JobPosition)
@@ -199,7 +199,7 @@ func (r *repository) CountPositionHolders(
 
 func (r *repository) ListDelegations(
 	ctx context.Context,
-	req *repositories.ListApprovalDelegationsRequest,
+	req *workerports.ListApprovalDelegationsRequest,
 ) ([]*worker.ApprovalDelegation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.ApprovalDelegation, error) {
 		cols := buncolgen.ApprovalDelegationColumns
@@ -251,7 +251,7 @@ func (r *repository) ListDelegations(
 
 func (r *repository) GetDelegationByID(
 	ctx context.Context,
-	req *repositories.GetApprovalDelegationByIDRequest,
+	req *workerports.GetApprovalDelegationByIDRequest,
 ) (*worker.ApprovalDelegation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.ApprovalDelegation, error) {
 		entity := new(worker.ApprovalDelegation)

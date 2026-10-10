@@ -4,13 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -35,9 +34,9 @@ func TestRunReadsASteerAtItsNextStep(t *testing.T) {
 		ToolName: "get_shipment",
 		Result:   map[string]any{"status": "InTransit"},
 	}
-	h := newHarness(t, harnessParams{query: []serviceports.AgentQueryTool{lookup}})
+	h := newHarness(t, harnessParams{query: []agentports.AgentQueryTool{lookup}})
 
-	var asked []*serviceports.ChatCompletionRequest
+	var asked []*agentports.ChatCompletionRequest
 	h.env.OnActivity(h.activities.ModelCallActivity, mock.Anything, mock.Anything).
 		Return(func(_ context.Context, in *ModelCallInput) (*agentruntime.ModelReply, error) {
 			asked = append(asked, in.Request)
@@ -62,7 +61,7 @@ func TestRunReadsASteerAtItsNextStep(t *testing.T) {
 	require.Empty(t, result.Err)
 	require.Len(t, asked, 2)
 	last := asked[1].Messages[len(asked[1].Messages)-1]
-	assert.Equal(t, serviceports.RoleUser, last.Role,
+	assert.Equal(t, agentports.RoleUser, last.Role,
 		"the steer is read after the step's results and before the next model call")
 	assert.Contains(t, last.Content, "Actually the carrier is Werner, not JB Hunt.")
 	assert.Contains(t, last.Content, "car_01J9WERNERWERNERWERNER000")
@@ -73,7 +72,7 @@ func TestRunReadsASteerAtItsNextStep(t *testing.T) {
 	require.Len(t, saved, 1)
 	assert.Equal(t, "Actually the carrier is Werner, not JB Hunt.", saved[0].Content,
 		"the conversation keeps the person's words, not the prompt around them")
-	assert.Contains(t, eventNames(result.Outcome), serviceports.AssistantEventSteered)
+	assert.Contains(t, eventNames(result.Outcome), agentports.AssistantEventSteered)
 }
 
 func TestRunReadsTheSameSteerOnce(t *testing.T) {

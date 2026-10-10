@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -18,7 +18,7 @@ import (
 )
 
 type adminMailboxRepo struct {
-	repositories.InboundMailboxRepository
+	inboundmessageports.InboundMailboxRepository
 
 	stored    *inboundmessage.Mailbox
 	createErr error
@@ -40,7 +40,7 @@ func (r *adminMailboxRepo) Create(
 
 func (r *adminMailboxRepo) GetByID(
 	_ context.Context,
-	req repositories.GetMailboxByIDRequest,
+	req inboundmessageports.GetMailboxByIDRequest,
 ) (*inboundmessage.Mailbox, error) {
 	if r.stored == nil || r.stored.ID != req.ID || r.stored.OrganizationID != req.TenantInfo.OrgID {
 		return nil, errortypes.NewNotFoundError("Mailbox not found")
@@ -60,9 +60,9 @@ func (r *adminMailboxRepo) Update(
 	return entity, nil
 }
 
-func adminActor(org, bu pulid.ID) *services.RequestActor {
-	return &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeUser,
+func adminActor(org, bu pulid.ID) *permissionports.RequestActor {
+	return &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    pulid.MustNew("usr_"),
 		UserID:         pulid.MustNew("usr_"),
 		OrganizationID: org,
@@ -180,7 +180,7 @@ func TestCreateMailbox_ReportsATakenAddressOnTheAddressField(t *testing.T) {
 	assert.Equal(t, "address", validation.Field)
 }
 
-func seededAdminMailbox(t *testing.T) (*adminMailboxRepo, *services.RequestActor) {
+func seededAdminMailbox(t *testing.T) (*adminMailboxRepo, *permissionports.RequestActor) {
 	t.Helper()
 
 	org, bu := pulid.MustNew("org_"), pulid.MustNew("bu_")

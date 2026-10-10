@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -36,7 +36,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.ConversationRepository {
+func New(p Params) agentports.ConversationRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.conversation-repository"),
@@ -65,7 +65,7 @@ func (r *repository) CreateThread(
 // investigating, so belonging to the same organization is not enough to read it.
 func (r *repository) GetThread(
 	ctx context.Context,
-	req repositories.GetThreadRequest,
+	req agentports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversation.Thread, error) {
 		cols := buncolgen.ThreadColumns
@@ -90,7 +90,7 @@ func (r *repository) GetThread(
 
 func (r *repository) GetThreadOwned(
 	ctx context.Context,
-	req repositories.GetThreadOwnedRequest,
+	req agentports.GetThreadOwnedRequest,
 ) (*conversation.Thread, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversation.Thread, error) {
 		cols := buncolgen.ThreadColumns
@@ -114,7 +114,7 @@ func (r *repository) GetThreadOwned(
 
 func (r *repository) ListThreadAgentsByIDs(
 	ctx context.Context,
-	req repositories.ListThreadAgentsByIDsRequest,
+	req agentports.ListThreadAgentsByIDsRequest,
 ) ([]*conversation.Thread, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*conversation.Thread, error) {
 		if len(req.IDs) == 0 {
@@ -147,14 +147,14 @@ func (r *repository) ListThreadAgentsByIDs(
 
 func (r *repository) ListThreads(
 	ctx context.Context,
-	req repositories.ListThreadsRequest,
-) (*repositories.ThreadPage, error) {
+	req agentports.ListThreadsRequest,
+) (*agentports.ThreadPage, error) {
 	window, err := threadWindowOf(&req)
 	if err != nil {
 		return nil, err
 	}
 
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.ThreadPage, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentports.ThreadPage, error) {
 		entities := make([]*conversation.Thread, 0, window.limit+1)
 		if scanErr := threadPageQuery(r.db.DBForContext(ctx), &entities, &req, window).
 			Scan(ctx); scanErr != nil {
@@ -162,7 +162,7 @@ func (r *repository) ListThreads(
 			return nil, scanErr
 		}
 
-		page := &repositories.ThreadPage{Items: entities}
+		page := &agentports.ThreadPage{Items: entities}
 		switch {
 		case len(entities) > window.limit:
 			page.Items = entities[:window.limit]
@@ -181,7 +181,7 @@ type threadWindow struct {
 	limit int
 }
 
-func threadWindowOf(req *repositories.ListThreadsRequest) (threadWindow, error) {
+func threadWindowOf(req *agentports.ListThreadsRequest) (threadWindow, error) {
 	window := threadWindow{limit: req.Limit}
 	if window.limit <= 0 {
 		window.limit = defaultThreadLimit
@@ -210,7 +210,7 @@ func threadWindowOf(req *repositories.ListThreadsRequest) (threadWindow, error) 
 func threadPageQuery(
 	db bun.IDB,
 	dest *[]*conversation.Thread,
-	req *repositories.ListThreadsRequest,
+	req *agentports.ListThreadsRequest,
 	window threadWindow,
 ) *bun.SelectQuery {
 	cols := buncolgen.ThreadColumns
@@ -309,7 +309,7 @@ func (r *repository) UpdateThread(
 
 func (r *repository) MarkThreadTainted(
 	ctx context.Context,
-	req repositories.MarkThreadTaintedRequest,
+	req agentports.MarkThreadTaintedRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if !req.Taint.Tainted() {
@@ -337,7 +337,7 @@ func (r *repository) MarkThreadTainted(
 
 func (r *repository) UpdateThreadContext(
 	ctx context.Context,
-	req repositories.UpdateThreadContextRequest,
+	req agentports.UpdateThreadContextRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if req.Usage == nil && req.AutoCompactOff == nil && req.WorkingSet == nil {
@@ -373,7 +373,7 @@ func (r *repository) UpdateThreadContext(
 
 func (r *repository) AddSavedMemories(
 	ctx context.Context,
-	req repositories.AddSavedMemoriesRequest,
+	req agentports.AddSavedMemoriesRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if len(req.Memories) == 0 {
@@ -420,7 +420,7 @@ func (r *repository) AddSavedMemories(
 
 func (r *repository) DeleteThread(
 	ctx context.Context,
-	req repositories.GetThreadRequest,
+	req agentports.GetThreadRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.
 
@@ -463,7 +463,7 @@ func (r *repository) DeleteThread(
 
 func (r *repository) ListMessages(
 	ctx context.Context,
-	req repositories.ListMessagesRequest,
+	req agentports.ListMessagesRequest,
 ) ([]conversation.Message, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]conversation.Message, error) {
 		cols := buncolgen.MessageColumns
@@ -538,7 +538,7 @@ func (r *repository) ListMessages(
 
 func (r *repository) CountMessages(
 	ctx context.Context,
-	req repositories.CountMessagesRequest,
+	req agentports.CountMessagesRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		cols := buncolgen.MessageColumns
@@ -575,7 +575,7 @@ func reverse(messages []conversation.Message) {
 // replay.
 func (r *repository) AppendTurn(
 	ctx context.Context,
-	req repositories.AppendTurnRequest,
+	req agentports.AppendTurnRequest,
 ) ([]conversation.Message, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]conversation.Message, error) {
 		if len(req.Messages) == 0 {
@@ -645,7 +645,7 @@ func (r *repository) AppendTurn(
 // artifacts follow the thread by cascade.
 func (r *repository) DeleteStaleThreads(
 	ctx context.Context,
-	req repositories.DeleteStaleThreadsRequest,
+	req agentports.DeleteStaleThreadsRequest,
 ) (int, error) {
 	ctx = dbscope.WithSystem(ctx, "delete stale ask threads across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {

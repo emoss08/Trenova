@@ -10,9 +10,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate/starters"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/pdfrender/gotenberg"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/testutil/pdftest"
 	"github.com/emoss08/trenova/pkg/templateengine"
 	"github.com/stretchr/testify/assert"
@@ -29,7 +29,7 @@ import (
 //
 // Start the sidecar with `docker compose -f docker-compose-local.yml up -d gotenberg`
 // and run with RENDERER_GOTENBERG_URL=http://localhost:3009.
-func liveRenderer(t *testing.T) services.PDFRenderer {
+func liveRenderer(t *testing.T) documenttemplateports.PDFRenderer {
 	t.Helper()
 
 	baseURL := os.Getenv("RENDERER_GOTENBERG_URL")
@@ -84,7 +84,7 @@ func renderStarterPDF(t *testing.T, kind documenttemplate.Kind) []byte {
 		CSS:      starter.CSS,
 	})
 
-	pdf, err := renderer.Render(t.Context(), &services.PDFRenderRequest{
+	pdf, err := renderer.Render(t.Context(), &documenttemplateports.PDFRenderRequest{
 		HTML:        document,
 		Title:       string(kind),
 		PageSize:    starter.PageSize,
@@ -198,7 +198,7 @@ func TestLiveInvoicePaginatesCleanly(t *testing.T) {
 	body, err := engine.Render(t.Context(), compiled, invoice)
 	require.NoError(t, err)
 
-	pdf, err := renderer.Render(t.Context(), &services.PDFRenderRequest{
+	pdf, err := renderer.Render(t.Context(), &documenttemplateports.PDFRenderRequest{
 		HTML: templateengine.WrapDocument(templateengine.WrapRequest{
 			Title:    "invoice",
 			BodyHTML: body,

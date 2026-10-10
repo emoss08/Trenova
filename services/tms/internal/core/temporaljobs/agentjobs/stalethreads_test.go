@@ -5,22 +5,22 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
 
 type staleThreads struct {
-	repositories.ConversationRepository
+	agentports.ConversationRepository
 
-	asked   []repositories.DeleteStaleThreadsRequest
+	asked   []agentports.DeleteStaleThreadsRequest
 	deleted map[conversation.ThreadOrigin]int
 }
 
 func (s *staleThreads) DeleteStaleThreads(
 	_ context.Context,
-	req repositories.DeleteStaleThreadsRequest,
+	req agentports.DeleteStaleThreadsRequest,
 ) (int, error) {
 	s.asked = append(s.asked, req)
 

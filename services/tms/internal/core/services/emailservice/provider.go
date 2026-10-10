@@ -5,12 +5,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 )
 
 var (
-	ErrRetryableSend    = serviceports.ErrRetryableEmailSend
-	ErrNonRetryableSend = serviceports.ErrNonRetryableEmailSend
+	ErrRetryableSend    = emailports.ErrRetryableEmailSend
+	ErrNonRetryableSend = emailports.ErrNonRetryableEmailSend
 )
 
 type ProviderSender interface {

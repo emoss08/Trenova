@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	sharedsamsara "github.com/emoss08/trenova/shared/samsara"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -130,7 +130,7 @@ func TestListPositionsMergesOdometerFromSecondStatsCall(t *testing.T) {
 		requestedTypes,
 	)
 
-	byID := make(map[string]services.ProviderPosition, len(positions))
+	byID := make(map[string]telematicsports.ProviderPosition, len(positions))
 	for _, position := range positions {
 		byID[position.VehicleID] = position
 	}
@@ -264,7 +264,7 @@ func TestParseWebhookEventRouteStopUsesStopAddressExternalIDs(t *testing.T) {
 
 	event, err := provider.ParseWebhookEvent(body)
 	require.NoError(t, err)
-	assert.Equal(t, services.ProviderEventKindStopArrival, event.Kind)
+	assert.Equal(t, telematicsports.ProviderEventKindStopArrival, event.Kind)
 	assert.Equal(t, "281474977075805", event.VehicleID)
 	assert.Equal(t, "1654973", event.DriverID)
 	require.NotNil(t, event.Stop)
@@ -306,7 +306,7 @@ func TestParseWebhookEventRouteStopWithoutRouteStopsLeavesAddressEmpty(t *testin
 
 	event, err := provider.ParseWebhookEvent(body)
 	require.NoError(t, err)
-	assert.Equal(t, services.ProviderEventKindStopDeparture, event.Kind)
+	assert.Equal(t, telematicsports.ProviderEventKindStopDeparture, event.Kind)
 	require.NotNil(t, event.Stop)
 	assert.Nil(t, event.Stop.AddressExternalIDs)
 	assert.Equal(t, map[string]string{"trenovaLocationId": "loc_b"}, event.Stop.StopExternalIDs)

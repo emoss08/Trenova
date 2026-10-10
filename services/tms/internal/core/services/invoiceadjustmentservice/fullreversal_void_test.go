@@ -1,13 +1,15 @@
 package invoiceadjustmentservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,7 +21,7 @@ import (
 
 func reversalFixture(
 	t *testing.T,
-) (*Service, *mocks.MockInvoiceRepository, *mocks.MockBillingQueueRepository, *invoiceadjustment.InvoiceAdjustment, *invoice.Invoice) {
+) (*Service, *invoiceportsmock.MockInvoiceRepository, *billingqueueportsmock.MockBillingQueueRepository, *invoiceadjustment.InvoiceAdjustment, *invoice.Invoice) {
 	t.Helper()
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
@@ -39,8 +41,8 @@ func reversalFixture(
 		Kind:              invoiceadjustment.KindFullReversal,
 		Reason:            "Duplicate billing",
 	}
-	invoiceRepo := mocks.NewMockInvoiceRepository(t)
-	queueRepo := mocks.NewMockBillingQueueRepository(t)
+	invoiceRepo := invoiceportsmock.NewMockInvoiceRepository(t)
+	queueRepo := billingqueueportsmock.NewMockBillingQueueRepository(t)
 	svc := &Service{
 		l:                 zap.NewNop(),
 		invoiceRepo:       invoiceRepo,
@@ -76,7 +78,7 @@ func TestVoidReversedInvoiceDefaultsToDoNotRebillWithTheAdjustmentReason(t *test
 		}).
 		Once()
 	queueRepo.EXPECT().
-		ReleaseForInvoice(mock.Anything, mock.MatchedBy(func(req *repositories.ReleaseForInvoiceRequest) bool {
+		ReleaseForInvoice(mock.Anything, mock.MatchedBy(func(req *billingqueueports.ReleaseForInvoiceRequest) bool {
 			return !req.Rebill &&
 				req.InvoiceID == original.ID &&
 				req.AnchorItemID == original.BillingQueueItemID &&
@@ -114,7 +116,7 @@ func TestVoidReversedInvoiceHonoursTheRequestedDispositionAndReason(t *testing.T
 		}).
 		Once()
 	queueRepo.EXPECT().
-		ReleaseForInvoice(mock.Anything, mock.MatchedBy(func(req *repositories.ReleaseForInvoiceRequest) bool {
+		ReleaseForInvoice(mock.Anything, mock.MatchedBy(func(req *billingqueueports.ReleaseForInvoiceRequest) bool {
 			if !req.Rebill || req.RenumberFn == nil {
 				return false
 			}

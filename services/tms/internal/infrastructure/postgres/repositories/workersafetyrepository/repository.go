@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -27,7 +27,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.WorkerSafetyRepository {
+func New(p Params) workerports.WorkerSafetyRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.worker-safety-repository"),
@@ -36,7 +36,7 @@ func New(p Params) repositories.WorkerSafetyRepository {
 
 func (r *repository) ListEvents(
 	ctx context.Context,
-	req *repositories.ListWorkerSafetyEventsRequest,
+	req *workerports.ListWorkerSafetyEventsRequest,
 ) ([]*worker.WorkerSafetyEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerSafetyEvent, error) {
 		cols := buncolgen.WorkerSafetyEventColumns
@@ -86,7 +86,7 @@ func (r *repository) ListEvents(
 
 func (r *repository) GetEventByID(
 	ctx context.Context,
-	req *repositories.GetWorkerSafetyEventByIDRequest,
+	req *workerports.GetWorkerSafetyEventByIDRequest,
 ) (*worker.WorkerSafetyEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerSafetyEvent, error) {
 		entity := new(worker.WorkerSafetyEvent)
@@ -159,7 +159,7 @@ func (r *repository) UpdateEvent(
 
 func (r *repository) DeleteEvent(
 	ctx context.Context,
-	req *repositories.GetWorkerSafetyEventByIDRequest,
+	req *workerports.GetWorkerSafetyEventByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		results, err := r.db.DBForContext(ctx).
@@ -180,7 +180,7 @@ func (r *repository) DeleteEvent(
 
 func (r *repository) ListActions(
 	ctx context.Context,
-	req *repositories.ListWorkerDisciplinaryActionsRequest,
+	req *workerports.ListWorkerDisciplinaryActionsRequest,
 ) ([]*worker.WorkerDisciplinaryAction, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerDisciplinaryAction, error) {
 		cols := buncolgen.WorkerDisciplinaryActionColumns
@@ -212,7 +212,7 @@ func (r *repository) ListActions(
 
 func (r *repository) GetActionByID(
 	ctx context.Context,
-	req *repositories.GetWorkerDisciplinaryActionByIDRequest,
+	req *workerports.GetWorkerDisciplinaryActionByIDRequest,
 ) (*worker.WorkerDisciplinaryAction, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerDisciplinaryAction, error) {
 		entity := new(worker.WorkerDisciplinaryAction)
@@ -282,7 +282,7 @@ func (r *repository) UpdateAction(
 
 func (r *repository) ListRecognitions(
 	ctx context.Context,
-	req *repositories.ListWorkerRecognitionsRequest,
+	req *workerports.ListWorkerRecognitionsRequest,
 ) ([]*worker.WorkerRecognition, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerRecognition, error) {
 		cols := buncolgen.WorkerRecognitionColumns
@@ -314,7 +314,7 @@ func (r *repository) ListRecognitions(
 
 func (r *repository) GetRecognitionByID(
 	ctx context.Context,
-	req *repositories.GetWorkerRecognitionByIDRequest,
+	req *workerports.GetWorkerRecognitionByIDRequest,
 ) (*worker.WorkerRecognition, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerRecognition, error) {
 		entity := new(worker.WorkerRecognition)
@@ -354,7 +354,7 @@ func (r *repository) CreateRecognition(
 
 func (r *repository) DeleteRecognition(
 	ctx context.Context,
-	req *repositories.GetWorkerRecognitionByIDRequest,
+	req *workerports.GetWorkerRecognitionByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		results, err := r.db.DBForContext(ctx).
@@ -379,10 +379,10 @@ func (r *repository) DeleteRecognition(
 // is the only thing that will notice.
 func (r *repository) ListWorkersWithLapsedPoints(
 	ctx context.Context,
-	req *repositories.ListWorkersWithLapsedPointsRequest,
-) ([]repositories.WorkerTenantRef, error) {
+	req *workerports.ListWorkersWithLapsedPointsRequest,
+) ([]workerports.WorkerTenantRef, error) {
 	ctx = dbscope.WithSystem(ctx, "list workers with lapsed safety points across every organization")
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.WorkerTenantRef, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.WorkerTenantRef, error) {
 		ecols := buncolgen.WorkerSafetyEventColumns
 		acols := buncolgen.WorkerDisciplinaryActionColumns
 
@@ -404,7 +404,7 @@ func (r *repository) ListWorkersWithLapsedPoints(
 			Where(acols.ExpiresAt.Gte(), req.Since).
 			Where(acols.ExpiresAt.Lt(), req.Until)
 
-		refs := make([]repositories.WorkerTenantRef, 0, 32)
+		refs := make([]workerports.WorkerTenantRef, 0, 32)
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			With("lapsed", events.UnionAll(actions)).

@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/editransport"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/as2"
@@ -86,7 +86,7 @@ func (s *Service) ApplyAS2MDN(ctx context.Context, req *ApplyAS2MDNRequest) erro
 	sentAttemptAt := message.DeliveryLastAttemptAt
 	message, err = s.messageRepo.UpdateMessageDelivery(
 		ctx,
-		&repositories.UpdateEDIMessageDeliveryRequest{
+		&ediports.UpdateEDIMessageDeliveryRequest{
 			ID:                    message.ID,
 			TenantInfo:            messageTenantInfo(message),
 			DeliveryStatus:        edi.MessageDeliveryStatusSent,

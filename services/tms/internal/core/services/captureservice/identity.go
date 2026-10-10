@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/capture"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -48,7 +48,7 @@ func (s *Service) DescribeDevice(
 ) (*DeviceIdentity, error) {
 	tenantInfo := principal.TenantInfo()
 
-	person, err := s.users.GetByID(ctx, repositories.GetUserByIDRequest{
+	person, err := s.users.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo:   tenantInfo,
 		LookupUserID: tenantInfo.UserID,
 	})
@@ -56,7 +56,7 @@ func (s *Service) DescribeDevice(
 		return nil, err
 	}
 
-	org, err := s.organizations.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+	org, err := s.organizations.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {

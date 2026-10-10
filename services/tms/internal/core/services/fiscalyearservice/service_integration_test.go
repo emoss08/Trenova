@@ -9,8 +9,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/fiscalcloseservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accountingcontrolrepository"
@@ -22,6 +20,9 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/journalentryrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/journalpostingrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/journalsourcerepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	inttestutil "github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -84,11 +85,11 @@ func TestActivateReturnsConflictWhenCurrentFiscalYearIsLocked(t *testing.T) {
 	lock := inttestutil.HoldTxLock(
 		t,
 		conn,
-		ports.TxOptions{},
+		kernelports.TxOptions{},
 		func(lockCtx context.Context, _ bun.Tx) error {
 			_, err := fyRepo.GetCurrentFiscalYearForUpdate(
 				lockCtx,
-				repositories.GetCurrentFiscalYearRequest{
+				fiscalyearports.GetCurrentFiscalYearRequest{
 					OrgID: data.Organization.ID,
 					BuID:  data.BusinessUnit.ID,
 				},
@@ -98,7 +99,7 @@ func TestActivateReturnsConflictWhenCurrentFiscalYearIsLocked(t *testing.T) {
 	)
 	lock.WaitLocked(t)
 
-	activated, err := svc.Activate(ctx, repositories.ActivateFiscalYearRequest{
+	activated, err := svc.Activate(ctx, fiscalyearports.ActivateFiscalYearRequest{
 		ID:         target.ID,
 		TenantInfo: tenantInfo,
 	}, data.User.ID)
@@ -111,7 +112,7 @@ func TestActivateReturnsConflictWhenCurrentFiscalYearIsLocked(t *testing.T) {
 	lock.Release()
 	lock.Wait(t)
 
-	currentAfter, err := fyRepo.GetCurrentFiscalYear(ctx, repositories.GetCurrentFiscalYearRequest{
+	currentAfter, err := fyRepo.GetCurrentFiscalYear(ctx, fiscalyearports.GetCurrentFiscalYearRequest{
 		OrgID: data.Organization.ID,
 		BuID:  data.BusinessUnit.ID,
 	})
@@ -180,7 +181,7 @@ func TestGetCloseBlockersReturnsOpenPeriodBlocker(t *testing.T) {
 
 	result, err := svc.GetCloseBlockers(
 		ctx,
-		repositories.GetFiscalYearByIDRequest{
+		fiscalyearports.GetFiscalYearByIDRequest{
 			ID: fy.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: data.Organization.ID,
@@ -198,7 +199,7 @@ func TestGetCloseBlockersReturnsOpenPeriodBlocker(t *testing.T) {
 func mustCreateFiscalYear(
 	t *testing.T,
 	ctx context.Context,
-	repo repositories.FiscalYearRepository,
+	repo fiscalyearports.FiscalYearRepository,
 	entity *fiscalyear.FiscalYear,
 ) *fiscalyear.FiscalYear {
 	t.Helper()
@@ -210,8 +211,8 @@ func mustCreateFiscalYear(
 
 func newTestCloseService(
 	conn *postgres.Connection,
-	fyRepo repositories.FiscalYearRepository,
-	fpRepo repositories.FiscalPeriodRepository,
+	fyRepo fiscalyearports.FiscalYearRepository,
+	fpRepo fiscalperiodports.FiscalPeriodRepository,
 ) *fiscalcloseservice.Service {
 	logger := zap.NewNop()
 

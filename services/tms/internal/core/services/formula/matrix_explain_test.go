@@ -3,8 +3,8 @@ package formula_test
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/formula"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -14,7 +14,7 @@ import (
 func TestMatrixLookup_ExplainsWhatMatched(t *testing.T) {
 	t.Parallel()
 
-	lookup := formula.NewMatrixLookup([]*repositories.RateMatrixLookupData{
+	lookup := formula.NewMatrixLookup([]*ratematrixports.RateMatrixLookupData{
 		exactLookupMatrix("fsc", map[string]string{"DIESEL": "0.35"}),
 		rangeLookupMatrix("miles", []bandDef{
 			{min: "0", max: "500", value: "2.5"},

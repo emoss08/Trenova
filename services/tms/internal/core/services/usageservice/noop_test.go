@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/stretchr/testify/require"
 )
 
@@ -14,14 +14,14 @@ func TestNoopUsageProvider(t *testing.T) {
 
 	provider := NewNoopUsageProvider()
 
-	limitResult, err := provider.CheckLimit(context.Background(), &services.UsageLimitCheckRequest{
+	limitResult, err := provider.CheckLimit(context.Background(), &platformcatalogports.UsageLimitCheckRequest{
 		MeterKey: platformcatalog.MeterAPIRequests,
 		Quantity: 1,
 	})
 	require.NoError(t, err)
 	require.True(t, limitResult.Allowed)
 
-	recordResult, err := provider.RecordUsage(context.Background(), &services.UsageRecordRequest{
+	recordResult, err := provider.RecordUsage(context.Background(), &platformcatalogports.UsageRecordRequest{
 		MeterKey: platformcatalog.MeterAPIRequests,
 		Quantity: 1,
 	})

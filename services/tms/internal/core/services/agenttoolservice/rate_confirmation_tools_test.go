@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/rateconfirmationservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -28,7 +28,7 @@ type fakeRateCons struct {
 	refusal    error
 
 	tenant    pagination.TenantInfo
-	actor     *serviceports.RequestActor
+	actor     *permissionports.RequestActor
 	generated pulid.ID
 	sent      pulid.ID
 	voided    string
@@ -68,7 +68,7 @@ func (f *fakeRateCons) PreviewGenerate(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	moveID pulid.ID,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*rateconfirmationservice.GeneratePreview, error) {
 	if f.refusal != nil {
 		return nil, f.refusal
@@ -99,7 +99,7 @@ func (f *fakeRateCons) Generate(
 	_ context.Context,
 	tenantInfo pagination.TenantInfo,
 	moveID pulid.ID,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*rateconfirmation.RateConfirmation, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err

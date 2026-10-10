@@ -5,9 +5,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -30,7 +30,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.EDITestCaseRepository {
+func New(p Params) ediports.EDITestCaseRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.edi-test-case-repository"),
@@ -39,7 +39,7 @@ func New(p Params) repositories.EDITestCaseRepository {
 
 func (r *repository) ListTestCases(
 	ctx context.Context,
-	req *repositories.ListEDITestCasesRequest,
+	req *ediports.ListEDITestCasesRequest,
 ) (*pagination.ListResult[*edi.EDITestCase], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDITestCase], error) {
 		entities := make([]*edi.EDITestCase, 0, req.Filter.Pagination.SafeLimit())
@@ -68,7 +68,7 @@ func (r *repository) ListTestCases(
 
 func (r *repository) GetTestCaseByID(
 	ctx context.Context,
-	req repositories.GetEDITestCaseByIDRequest,
+	req ediports.GetEDITestCaseByIDRequest,
 ) (*edi.EDITestCase, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDITestCase, error) {
 		entity := new(edi.EDITestCase)
@@ -130,7 +130,7 @@ func (r *repository) UpdateTestCase(
 
 func (r *repository) RecordTestCaseRun(
 	ctx context.Context,
-	req *repositories.RecordEDITestCaseRunRequest,
+	req *ediports.RecordEDITestCaseRunRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.EDITestCaseColumns
@@ -151,7 +151,7 @@ func (r *repository) RecordTestCaseRun(
 
 func (r *repository) DeleteTestCase(
 	ctx context.Context,
-	req repositories.DeleteEDITestCaseRequest,
+	req ediports.DeleteEDITestCaseRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.EDITestCaseColumns
@@ -171,7 +171,7 @@ func (r *repository) DeleteTestCase(
 
 func (r *repository) ListTestCasesCursor(
 	ctx context.Context,
-	req *repositories.ListEDITestCasesRequest,
+	req *ediports.ListEDITestCasesRequest,
 ) (*pagination.CursorListResult[*edi.EDITestCase], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*edi.EDITestCase], error) {
 		dba := r.db.DBForContext(ctx)

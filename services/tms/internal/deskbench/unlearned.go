@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 
 // unlearned stands in for the reflection scheduler on the bench's worker. A
@@ -13,9 +13,9 @@ import (
 // came to depend on what the bench had run before.
 type unlearned struct{}
 
-func (unlearned) AfterTurn(context.Context, *serviceports.ReflectOnThreadRequest) {}
+func (unlearned) AfterTurn(context.Context, *agentports.ReflectOnThreadRequest) {}
 
-func (unlearned) AfterRun(context.Context, *serviceports.ReflectOnRunRequest) {}
+func (unlearned) AfterRun(context.Context, *agentports.ReflectOnRunRequest) {}
 
 // untrusted keeps the bench's decisions out of the earned-autonomy ledger.
 // The bench approves the same proposals run after run and rejects whatever a
@@ -24,7 +24,7 @@ func (unlearned) AfterRun(context.Context, *serviceports.ReflectOnRunRequest) {}
 // found nothing to approve; the rejections would have taken tiers back the
 // same way.
 type untrusted struct {
-	serviceports.AgentTrustService
+	agentports.AgentTrustService
 }
 
 func (untrusted) RecordDecision(context.Context, *agent.AgentProposal, *agent.AgentDecision) error {

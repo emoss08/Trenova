@@ -10,8 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permit"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -33,10 +34,10 @@ type fakeWorkforceReads struct {
 	permits      []*permit.Permit
 	requirements []*permit.Requirement
 
-	testsReq    *repositories.ListWorkerDOTTestsRequest
-	injuriesReq *repositories.ListWorkerInjuriesRequest
-	expensesReq *repositories.ListDriverExpenseConnectionRequest
-	casesReq    *repositories.ListLeaveCasesRequest
+	testsReq    *workerports.ListWorkerDOTTestsRequest
+	injuriesReq *workerports.ListWorkerInjuriesRequest
+	expensesReq *driverpayports.ListDriverExpenseConnectionRequest
+	casesReq    *workerports.ListLeaveCasesRequest
 }
 
 func (f *fakeWorkforceReads) ListEvents(
@@ -57,7 +58,7 @@ func (f *fakeWorkforceReads) ListOpenEvents(
 
 func (f *fakeWorkforceReads) ListViolations(
 	context.Context,
-	*repositories.ListWorkerSafetyViolationsRequest,
+	*workerports.ListWorkerSafetyViolationsRequest,
 ) ([]*worker.WorkerSafetyViolation, error) {
 	return f.violations, nil
 }
@@ -73,7 +74,7 @@ func (f *fakeWorkforceReads) ListRecognitions(
 
 func (f *fakeWorkforceReads) ListTests(
 	_ context.Context,
-	req *repositories.ListWorkerDOTTestsRequest,
+	req *workerports.ListWorkerDOTTestsRequest,
 ) ([]*worker.WorkerDOTTest, error) {
 	f.testsReq = req
 	return f.tests, nil
@@ -81,14 +82,14 @@ func (f *fakeWorkforceReads) ListTests(
 
 func (f *fakeWorkforceReads) ListPools(
 	context.Context,
-	*repositories.ListDOTRandomPoolsRequest,
+	*workerports.ListDOTRandomPoolsRequest,
 ) (*pagination.CursorListResult[*worker.DOTRandomPool], error) {
 	return &pagination.CursorListResult[*worker.DOTRandomPool]{}, nil
 }
 
 func (f *fakeWorkforceReads) ListDraws(
 	context.Context,
-	*repositories.ListDOTRandomDrawsRequest,
+	*workerports.ListDOTRandomDrawsRequest,
 ) ([]*worker.DOTRandomDraw, error) {
 	return []*worker.DOTRandomDraw{f.draw}, nil
 }
@@ -103,14 +104,14 @@ func (f *fakeWorkforceReads) GetDraw(
 
 func (f *fakeWorkforceReads) ListDrawEntries(
 	context.Context,
-	*repositories.ListDOTRandomDrawEntriesRequest,
+	*workerports.ListDOTRandomDrawEntriesRequest,
 ) ([]*worker.DOTRandomDrawEntry, error) {
 	return f.entries, nil
 }
 
 func (f *fakeWorkforceReads) ListInjuries(
 	_ context.Context,
-	req *repositories.ListWorkerInjuriesRequest,
+	req *workerports.ListWorkerInjuriesRequest,
 ) ([]*worker.WorkerInjury, error) {
 	f.injuriesReq = req
 	return f.injuries, nil
@@ -118,7 +119,7 @@ func (f *fakeWorkforceReads) ListInjuries(
 
 func (f *fakeWorkforceReads) ListCases(
 	_ context.Context,
-	req *repositories.ListLeaveCasesRequest,
+	req *workerports.ListLeaveCasesRequest,
 ) ([]*worker.WorkerLeaveCase, error) {
 	f.casesReq = req
 	return f.cases, nil
@@ -126,7 +127,7 @@ func (f *fakeWorkforceReads) ListCases(
 
 func (f *fakeWorkforceReads) ListExpensesConnection(
 	_ context.Context,
-	req *repositories.ListDriverExpenseConnectionRequest,
+	req *driverpayports.ListDriverExpenseConnectionRequest,
 ) (*pagination.CursorListResult[*driverpay.Expense], error) {
 	f.expensesReq = req
 	return &pagination.CursorListResult[*driverpay.Expense]{Items: f.expenses}, nil
@@ -397,7 +398,7 @@ func TestWorkforceReads_AreClosedReadsOfTheirResource(t *testing.T) {
 	t.Parallel()
 
 	reads := &fakeWorkforceReads{}
-	for _, tool := range []serviceports.AgentQueryTool{
+	for _, tool := range []agentports.AgentQueryTool{
 		newListWorkerSafetyEventsTool(reads, nil),
 		newListDOTTestsTool(reads, nil),
 		newListDOTRandomDrawsTool(reads, nil),

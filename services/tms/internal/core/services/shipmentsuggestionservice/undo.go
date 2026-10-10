@@ -6,7 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentsuggestion"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -48,7 +49,7 @@ func (s *Service) revertCoverage(
 ) error {
 	since := decidedAt - int64(actionLeeway.Seconds())
 
-	live, err := s.tenders.GetLiveByMoveID(ctx, repositories.GetLiveTenderByMoveRequest{
+	live, err := s.tenders.GetLiveByMoveID(ctx, tenderports.GetLiveTenderByMoveRequest{
 		TenantInfo: tenantInfo,
 		MoveID:     moveID,
 	})
@@ -64,7 +65,7 @@ func (s *Service) revertCoverage(
 		return err
 	}
 
-	return s.assignments.Unassign(ctx, &repositories.UnassignShipmentMoveRequest{
+	return s.assignments.Unassign(ctx, &shipmentports.UnassignShipmentMoveRequest{
 		TenantInfo:     tenantInfo,
 		ShipmentMoveID: moveID,
 	})

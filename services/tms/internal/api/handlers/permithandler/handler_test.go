@@ -10,8 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/permit"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,21 +28,21 @@ type serviceStub struct {
 	listRequirementsFn func(pulid.ID, pagination.TenantInfo) ([]*permit.Requirement, error)
 	createPermitFn     func(*permit.Permit) (*permit.Permit, error)
 	updatePermitFn     func(*permit.Permit) (*permit.Permit, error)
-	waiveFn            func(*services.WaiveRequirementRequest) (*permit.Requirement, error)
+	waiveFn            func(*permitports.WaiveRequirementRequest) (*permit.Requirement, error)
 }
 
 func (s *serviceStub) Assess(
 	context.Context,
 	*shipment.Shipment,
-) (*services.PermitAssessment, error) {
+) (*permitports.PermitAssessment, error) {
 	panic("unexpected Assess call")
 }
 
 func (s *serviceStub) Sync(
 	context.Context,
 	*shipment.Shipment,
-	*services.RequestActor,
-) (*services.PermitAssessment, error) {
+	*permissionports.RequestActor,
+) (*permitports.PermitAssessment, error) {
 	panic("unexpected Sync call")
 }
 
@@ -63,7 +65,7 @@ func (s *serviceStub) ListRequirements(
 func (s *serviceStub) CreatePermit(
 	_ context.Context,
 	entity *permit.Permit,
-	_ *services.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*permit.Permit, error) {
 	return s.createPermitFn(entity)
 }
@@ -71,7 +73,7 @@ func (s *serviceStub) CreatePermit(
 func (s *serviceStub) UpdatePermit(
 	_ context.Context,
 	entity *permit.Permit,
-	_ *services.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*permit.Permit, error) {
 	return s.updatePermitFn(entity)
 }
@@ -86,18 +88,18 @@ func (s *serviceStub) PlanCreatePermit(
 func (s *serviceStub) PlanUpdatePermit(
 	context.Context,
 	*permit.Permit,
-) (*services.RecordChange[permit.Permit], error) {
+) (*kernelports.RecordChange[permit.Permit], error) {
 	panic("unexpected PlanUpdatePermit call")
 }
 
 func (s *serviceStub) WaiveRequirement(
 	_ context.Context,
-	req *services.WaiveRequirementRequest,
+	req *permitports.WaiveRequirementRequest,
 ) (*permit.Requirement, error) {
 	return s.waiveFn(req)
 }
 
-func setupHandler(t *testing.T, service services.PermitService) *permithandler.Handler {
+func setupHandler(t *testing.T, service permitports.PermitService) *permithandler.Handler {
 	t.Helper()
 
 	logger := zap.NewNop()
@@ -214,10 +216,10 @@ func TestPermitHandler_WaiveRequirement_TakesTheWaivingUserFromTheSession(t *tes
 
 	shipmentID := pulid.MustNew("shp_")
 	requirementID := pulid.MustNew("pmr_")
-	var captured *services.WaiveRequirementRequest
+	var captured *permitports.WaiveRequirementRequest
 
 	handler := setupHandler(t, &serviceStub{
-		waiveFn: func(req *services.WaiveRequirementRequest) (*permit.Requirement, error) {
+		waiveFn: func(req *permitports.WaiveRequirementRequest) (*permit.Requirement, error) {
 			captured = req
 			return &permit.Requirement{ID: req.RequirementID}, nil
 		},

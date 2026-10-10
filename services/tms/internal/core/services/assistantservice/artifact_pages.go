@@ -6,8 +6,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -23,9 +23,9 @@ const maxTurnRunes = 80
 // the pane shows a draft as sent the moment the decision ran.
 func (s *Service) ListThreadArtifacts(
 	ctx context.Context,
-	req repositories.GetThreadRequest,
-	opts services.ListArtifactsOptions,
-) (*services.AssistantArtifactPage, error) {
+	req agentports.GetThreadRequest,
+	opts agentports.ListArtifactsOptions,
+) (*agentports.AssistantArtifactPage, error) {
 	if _, err := s.conversations.GetThread(ctx, req); err != nil {
 		return nil, err
 	}
@@ -34,9 +34,9 @@ func (s *Service) ListThreadArtifacts(
 			"kind", errortypes.ErrInvalid, "There is no artifact kind by that name",
 		)
 	}
-	empty := &services.AssistantArtifactPage{
-		Results: []services.AssistantArtifact{},
-		Counts: repositories.ArtifactCounts{
+	empty := &agentports.AssistantArtifactPage{
+		Results: []agentports.AssistantArtifact{},
+		Counts: assistantartifactports.ArtifactCounts{
 			Families: map[assistantartifact.Family]int{},
 		},
 	}
@@ -44,7 +44,7 @@ func (s *Service) ListThreadArtifacts(
 		return empty, nil
 	}
 
-	page, err := s.artifacts.ListPage(ctx, repositories.ListArtifactsRequest{
+	page, err := s.artifacts.ListPage(ctx, assistantartifactports.ListArtifactsRequest{
 		ThreadID:   req.ID,
 		TenantInfo: req.TenantInfo,
 		Limit:      opts.Limit,
@@ -58,7 +58,7 @@ func (s *Service) ListThreadArtifacts(
 		return nil, err
 	}
 
-	return &services.AssistantArtifactPage{
+	return &agentports.AssistantArtifactPage{
 		Results:    s.presentArtifacts(ctx, req, page.Artifacts),
 		Total:      page.Total,
 		NextCursor: page.NextCursor,
@@ -68,9 +68,9 @@ func (s *Service) ListThreadArtifacts(
 
 func (s *Service) ArtifactLineage(
 	ctx context.Context,
-	req repositories.GetThreadRequest,
+	req agentports.GetThreadRequest,
 	artifactID pulid.ID,
-) ([]services.AssistantArtifact, error) {
+) ([]agentports.AssistantArtifact, error) {
 	if _, err := s.conversations.GetThread(ctx, req); err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func (s *Service) ArtifactLineage(
 		return nil, errortypes.NewNotFoundError("Artifact not found")
 	}
 
-	versions, err := s.artifacts.ListLineage(ctx, repositories.LineageRequest{
+	versions, err := s.artifacts.ListLineage(ctx, assistantartifactports.LineageRequest{
 		ThreadID:   req.ID,
 		TenantInfo: req.TenantInfo,
 		ID:         artifactID,
@@ -92,9 +92,9 @@ func (s *Service) ArtifactLineage(
 
 func (s *Service) ArtifactBySlug(
 	ctx context.Context,
-	req repositories.GetThreadRequest,
+	req agentports.GetThreadRequest,
 	slug string,
-) ([]services.AssistantArtifact, error) {
+) ([]agentports.AssistantArtifact, error) {
 	if _, err := s.conversations.GetThread(ctx, req); err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func (s *Service) ArtifactBySlug(
 	}
 
 	slug = strings.ToLower(strings.TrimSpace(slug))
-	root, err := s.artifacts.FindBySlug(ctx, repositories.SlugRequest{
+	root, err := s.artifacts.FindBySlug(ctx, assistantartifactports.SlugRequest{
 		ThreadID:   req.ID,
 		TenantInfo: req.TenantInfo,
 		Slug:       slug,
@@ -125,9 +125,9 @@ func (s *Service) ArtifactBySlug(
 // decisions, and the question of the turn each artifact came from.
 func (s *Service) presentArtifacts(
 	ctx context.Context,
-	req repositories.GetThreadRequest,
+	req agentports.GetThreadRequest,
 	artifacts []*assistantartifact.Artifact,
-) []services.AssistantArtifact {
+) []agentports.AssistantArtifact {
 	s.followDecisions(ctx, req, artifacts)
 
 	messageIDs := make([]pulid.ID, 0, len(artifacts))
@@ -143,7 +143,7 @@ func (s *Service) presentArtifacts(
 		s.logger.Warn("artifact turns could not be read", zap.Error(err))
 	}
 
-	out := make([]services.AssistantArtifact, 0, len(artifacts))
+	out := make([]agentports.AssistantArtifact, 0, len(artifacts))
 	for _, artifact := range artifacts {
 		shown := toAssistantArtifact(artifact)
 		shown.Turn = turnLabel(questions[artifact.MessageID])

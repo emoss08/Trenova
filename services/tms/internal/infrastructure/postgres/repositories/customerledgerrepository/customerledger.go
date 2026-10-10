@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/customerledger"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -24,7 +24,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.CustomerLedgerProjectionRepository {
+func New(p Params) customerledgerports.CustomerLedgerProjectionRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.customer-ledger-repository")}
 }
 
@@ -91,7 +91,7 @@ func (r *repository) AppendEntries(
 // the GL carries one reconciliation total, the detail behind it lives here.
 func (r *repository) SumBalanceAsOf(
 	ctx context.Context,
-	req repositories.SumCustomerLedgerBalanceRequest,
+	req customerledgerports.SumCustomerLedgerBalanceRequest,
 ) (int64, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int64, error) {
 		var total int64

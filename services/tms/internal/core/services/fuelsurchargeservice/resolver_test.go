@@ -9,8 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -19,53 +20,53 @@ import (
 )
 
 type stubCustomerRepo struct {
-	repositories.CustomerRepository
+	customerports.CustomerRepository
 	profile *customer.CustomerBillingProfile
 	err     error
 }
 
 func (s *stubCustomerRepo) GetBillingProfile(
 	context.Context,
-	repositories.GetCustomerBillingProfileRequest,
+	customerports.GetCustomerBillingProfileRequest,
 ) (*customer.CustomerBillingProfile, error) {
 	return s.profile, s.err
 }
 
 type stubProgramRepo struct {
-	repositories.FuelSurchargeProgramRepository
+	fuelsurchargeports.FuelSurchargeProgramRepository
 	program *fuelsurcharge.FuelSurchargeProgram
 	err     error
 }
 
 func (s *stubProgramRepo) GetByID(
 	context.Context,
-	*repositories.GetFuelSurchargeProgramByIDRequest,
+	*fuelsurchargeports.GetFuelSurchargeProgramByIDRequest,
 ) (*fuelsurcharge.FuelSurchargeProgram, error) {
 	return s.program, s.err
 }
 
 type stubPriceRepo struct {
-	repositories.FuelIndexPriceRepository
+	fuelsurchargeports.FuelIndexPriceRepository
 	prices []*fuelsurcharge.FuelIndexPrice
 	err    error
 }
 
 func (s *stubPriceRepo) GetLatestOnOrBefore(
 	context.Context,
-	*repositories.GetLatestFuelPricesRequest,
+	*fuelsurchargeports.GetLatestFuelPricesRequest,
 ) ([]*fuelsurcharge.FuelIndexPrice, error) {
 	return s.prices, s.err
 }
 
 type stubOrgRepo struct {
-	repositories.OrganizationRepository
+	tenantports.OrganizationRepository
 	org *tenant.Organization
 	err error
 }
 
 func (s *stubOrgRepo) GetByID(
 	context.Context,
-	repositories.GetOrganizationByIDRequest,
+	tenantports.GetOrganizationByIDRequest,
 ) (*tenant.Organization, error) {
 	if s.err != nil {
 		return nil, s.err
@@ -141,8 +142,8 @@ func newResolverFixture(t *testing.T) *resolverFixture {
 	}
 }
 
-func (f *resolverFixture) resolve(ctx context.Context) (*services.ResolvedFuelSurcharge, error) {
-	return f.service.ResolveShipmentCharge(ctx, &services.ResolveShipmentChargeRequest{
+func (f *resolverFixture) resolve(ctx context.Context) (*fuelsurchargeports.ResolvedFuelSurcharge, error) {
+	return f.service.ResolveShipmentCharge(ctx, &fuelsurchargeports.ResolveShipmentChargeRequest{
 		Shipment: f.shipment,
 		Linehaul: decimal.NewFromInt(2500),
 	})
@@ -388,14 +389,14 @@ func TestResolveShipmentCharge_TenderDateBasis(t *testing.T) {
 }
 
 type capturingProgramRepo struct {
-	repositories.FuelSurchargeProgramRepository
+	fuelsurchargeports.FuelSurchargeProgramRepository
 	program   *fuelsurcharge.FuelSurchargeProgram
 	requested pulid.ID
 }
 
 func (s *capturingProgramRepo) GetByID(
 	_ context.Context,
-	req *repositories.GetFuelSurchargeProgramByIDRequest,
+	req *fuelsurchargeports.GetFuelSurchargeProgramByIDRequest,
 ) (*fuelsurcharge.FuelSurchargeProgram, error) {
 	s.requested = req.ProgramID
 	return s.program, nil
@@ -403,9 +404,9 @@ func (s *capturingProgramRepo) GetByID(
 
 func (f *resolverFixture) resolveWith(
 	ctx context.Context,
-	override *services.FuelProgramOverride,
-) (*services.ResolvedFuelSurcharge, error) {
-	return f.service.ResolveShipmentCharge(ctx, &services.ResolveShipmentChargeRequest{
+	override *fuelsurchargeports.FuelProgramOverride,
+) (*fuelsurchargeports.ResolvedFuelSurcharge, error) {
+	return f.service.ResolveShipmentCharge(ctx, &fuelsurchargeports.ResolveShipmentChargeRequest{
 		Shipment: f.shipment,
 		Linehaul: decimal.NewFromInt(2500),
 		Override: override,
@@ -424,7 +425,7 @@ func TestResolveShipmentCharge_ContractProgramBeatsTheCustomerDefault(t *testing
 	contractProgramID := pulid.MustNew("fsp_")
 	agreementID := pulid.MustNew("ragr_")
 
-	resolved, err := f.resolveWith(t.Context(), &services.FuelProgramOverride{
+	resolved, err := f.resolveWith(t.Context(), &fuelsurchargeports.FuelProgramOverride{
 		AgreementID: agreementID,
 		ProgramID:   contractProgramID,
 	})
@@ -443,7 +444,7 @@ func TestResolveShipmentCharge_ContractWaivesFuel(t *testing.T) {
 
 	f := newResolverFixture(t)
 
-	resolved, err := f.resolveWith(t.Context(), &services.FuelProgramOverride{
+	resolved, err := f.resolveWith(t.Context(), &fuelsurchargeports.FuelProgramOverride{
 		AgreementID: pulid.MustNew("ragr_"),
 		ProgramID:   pulid.MustNew("fsp_"),
 		Waived:      true,
@@ -460,7 +461,7 @@ func TestResolveShipmentCharge_ContractOverridesThePeg(t *testing.T) {
 
 	// The program pegs at 1.20; the contract pegs at 2.20. At 3.70 a gallon
 	// that is thirty five-cent steps instead of fifty, so 30c a mile.
-	resolved, err := f.resolveWith(t.Context(), &services.FuelProgramOverride{
+	resolved, err := f.resolveWith(t.Context(), &fuelsurchargeports.FuelProgramOverride{
 		AgreementID: pulid.MustNew("ragr_"),
 		PegPrice:    nullDec("2.20"),
 	})
@@ -479,7 +480,7 @@ func TestResolveShipmentCharge_ContractCapsTheSurcharge(t *testing.T) {
 
 	f := newResolverFixture(t)
 
-	resolved, err := f.resolveWith(t.Context(), &services.FuelProgramOverride{
+	resolved, err := f.resolveWith(t.Context(), &fuelsurchargeports.FuelProgramOverride{
 		AgreementID: pulid.MustNew("ragr_"),
 		CapAmount:   nullDec("250"),
 	})
@@ -500,7 +501,7 @@ func TestResolveShipmentCharge_TermOverrideWithoutAProgramUsesTheCustomerDefault
 	programRepo := &capturingProgramRepo{program: f.program}
 	f.service.programRepo = programRepo
 
-	resolved, err := f.resolveWith(t.Context(), &services.FuelProgramOverride{
+	resolved, err := f.resolveWith(t.Context(), &fuelsurchargeports.FuelProgramOverride{
 		AgreementID: pulid.MustNew("ragr_"),
 		CapAmount:   nullDec("250"),
 	})

@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/templateengine"
 )
@@ -159,7 +159,7 @@ func documentTemplateDiagnosticsToModel(
 }
 
 func documentTemplatePreviewToModel(
-	result *services.PreviewResult,
+	result *documenttemplateports.PreviewResult,
 	versionID *string,
 ) *gqlmodel.DocumentTemplatePreview {
 	out := &gqlmodel.DocumentTemplatePreview{

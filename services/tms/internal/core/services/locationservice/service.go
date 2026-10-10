@@ -8,9 +8,14 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -23,22 +28,22 @@ type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Repo          repositories.LocationRepository
-	UsStateRepo   repositories.UsStateRepository
+	Repo          locationports.LocationRepository
+	UsStateRepo   usstateports.UsStateRepository
 	Validator     *Validator
-	AuditService  services.AuditService
-	Transformer   services.DataTransformer
-	CodeGenerator services.LocationCodeGenerator
+	AuditService  auditports.AuditService
+	Transformer   accessorialchargeports.DataTransformer
+	CodeGenerator tenantports.LocationCodeGenerator
 }
 
 type Service struct {
 	l             *zap.Logger
-	repo          repositories.LocationRepository
-	usStateRepo   repositories.UsStateRepository
+	repo          locationports.LocationRepository
+	usStateRepo   usstateports.UsStateRepository
 	validator     *Validator
-	auditService  services.AuditService
-	transformer   services.DataTransformer
-	codeGenerator services.LocationCodeGenerator
+	auditService  auditports.AuditService
+	transformer   accessorialchargeports.DataTransformer
+	codeGenerator tenantports.LocationCodeGenerator
 }
 
 func New(p Params) *Service {
@@ -55,42 +60,42 @@ func New(p Params) *Service {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListLocationRequest,
+	req *locationports.ListLocationRequest,
 ) (*pagination.ListResult[*location.Location], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListLocationConnectionRequest,
+	req *locationports.ListLocationConnectionRequest,
 ) (*pagination.CursorListResult[*location.Location], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	req repositories.GetLocationByIDRequest,
+	req locationports.GetLocationByIDRequest,
 ) (*location.Location, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) GetByIDs(
 	ctx context.Context,
-	req repositories.GetLocationsByIDsRequest,
+	req locationports.GetLocationsByIDsRequest,
 ) ([]*location.Location, error) {
 	return s.repo.GetByIDs(ctx, req)
 }
 
 func (s *Service) SelectOptions(
 	ctx context.Context,
-	req *repositories.LocationSelectOptionsRequest,
+	req *locationports.LocationSelectOptionsRequest,
 ) (*pagination.ListResult[*location.Location], error) {
 	return s.repo.SelectOptions(ctx, req)
 }
 
 func (s *Service) BulkUpdateStatus(
 	ctx context.Context,
-	req *repositories.BulkUpdateLocationStatusRequest,
+	req *locationports.BulkUpdateLocationStatusRequest,
 ) ([]*location.Location, error) {
 	log := s.l.With(
 		zap.String("operation", "BulkUpdateStatus"),
@@ -101,7 +106,7 @@ func (s *Service) BulkUpdateStatus(
 	if err != nil {
 		return nil, err
 	}
-	originalEntities := services.Befores(changes)
+	originalEntities := kernelports.Befores(changes)
 
 	entities, err := s.repo.BulkUpdateStatus(ctx, req)
 	if err != nil {
@@ -130,7 +135,7 @@ func (s *Service) BulkUpdateStatus(
 func (s *Service) Create(
 	ctx context.Context,
 	entity *location.Location,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*location.Location, error) {
 	auditActor := actor.AuditActor()
 	log := s.l.With(
@@ -156,7 +161,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceLocation,
 		ResourceID:     createdEntity.GetID().String(),
 		Operation:      permission.OpCreate,
@@ -199,7 +204,7 @@ func (s *Service) createLocation(
 
 	var lastErr error
 	for attempt := 1; attempt <= maxAttempts; attempt++ {
-		code, genErr := s.codeGenerator.Generate(ctx, services.LocationCodeGenerateRequest{
+		code, genErr := s.codeGenerator.Generate(ctx, tenantports.LocationCodeGenerateRequest{
 			OrganizationID: entity.OrganizationID,
 			BusinessUnitID: entity.BusinessUnitID,
 			Input:          input,
@@ -234,15 +239,15 @@ func (s *Service) createLocation(
 func (s *Service) locationCodeInput(
 	ctx context.Context,
 	entity *location.Location,
-) (services.LocationCodeInput, error) {
-	state, err := s.usStateRepo.GetByID(ctx, repositories.GetUsStateByIDRequest{
+) (tenantports.LocationCodeInput, error) {
+	state, err := s.usStateRepo.GetByID(ctx, usstateports.GetUsStateByIDRequest{
 		StateID: entity.StateID,
 	})
 	if err != nil {
-		return services.LocationCodeInput{}, err
+		return tenantports.LocationCodeInput{}, err
 	}
 
-	return services.LocationCodeInput{
+	return tenantports.LocationCodeInput{
 		Name:              entity.Name,
 		City:              entity.City,
 		StateAbbreviation: state.Abbreviation,
@@ -280,7 +285,7 @@ func waitBeforeLocationCodeRetry(ctx context.Context, attempt int) error {
 func (s *Service) Update(
 	ctx context.Context,
 	entity *location.Location,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*location.Location, error) {
 	auditActor := actor.AuditActor()
 	log := s.l.With(
@@ -301,7 +306,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceLocation,
 		ResourceID:     updatedEntity.GetID().String(),
 		Operation:      permission.OpUpdate,

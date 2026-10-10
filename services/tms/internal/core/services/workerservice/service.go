@@ -6,22 +6,26 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/uptrace/bun"
-
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
 	"github.com/emoss08/trenova/internal/core/services/ptopolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/workercredentialservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/uptrace/bun"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -31,35 +35,35 @@ type Params struct {
 	fx.In
 
 	Logger                    *zap.Logger
-	Repo                      repositories.WorkerRepository
-	CacheRepo                 repositories.WorkerCacheRepository
-	UserRepo                  repositories.UserRepository
+	Repo                      workerports.WorkerRepository
+	CacheRepo                 customerports.WorkerCacheRepository
+	UserRepo                  tenantports.UserRepository
 	TemporalClient            client.Client
 	Validator                 *Validator
-	AuditService              services.AuditService
-	Realtime                  services.RealtimeService
+	AuditService              auditports.AuditService
+	Realtime                  agentports.RealtimeService
 	CustomFieldsValuesService *customfieldservice.ValuesService
-	PTOPolicyService          *ptopolicyservice.Service        `optional:"true"`
-	CredentialService         *workercredentialservice.Service `optional:"true"`
-	DB                        ports.DBConnection               `optional:"true"`
-	Sync                      services.AccountingSyncEnqueuer  `optional:"true"`
+	PTOPolicyService          *ptopolicyservice.Service                  `optional:"true"`
+	CredentialService         *workercredentialservice.Service           `optional:"true"`
+	DB                        kernelports.DBConnection                   `optional:"true"`
+	Sync                      accountingsyncports.AccountingSyncEnqueuer `optional:"true"`
 }
 
 type Service struct {
 	l                         *zap.Logger
-	repo                      repositories.WorkerRepository
-	cacheRepo                 repositories.WorkerCacheRepository
-	userRepo                  repositories.UserRepository
+	repo                      workerports.WorkerRepository
+	cacheRepo                 customerports.WorkerCacheRepository
+	userRepo                  tenantports.UserRepository
 	temporalClient            client.Client
-	auditService              services.AuditService
-	realtime                  services.RealtimeService
+	auditService              auditports.AuditService
+	realtime                  agentports.RealtimeService
 	customFieldsValuesService *customfieldservice.ValuesService
 	validator                 *Validator
 	ptoPolicyService          *ptopolicyservice.Service
 	credentialService         *workercredentialservice.Service
-	employmentRecorder        services.EmploymentEventRecorder
-	db                        ports.DBConnection
-	sync                      services.AccountingSyncEnqueuer
+	employmentRecorder        workerports.EmploymentEventRecorder
+	db                        kernelports.DBConnection
+	sync                      accountingsyncports.AccountingSyncEnqueuer
 }
 
 //nolint:gocritic // dependency injection
@@ -91,7 +95,7 @@ func (s *Service) updateAndQueueSync(
 	}
 
 	var updated *worker.Worker
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		var txErr error
 		if updated, txErr = s.repo.Update(txCtx, entity); txErr != nil {
 			return txErr
@@ -99,7 +103,7 @@ func (s *Service) updateAndQueueSync(
 		if updated.SamePartyDetails(original) {
 			return nil
 		}
-		return services.EnqueueAccountingSync(txCtx, s.sync, services.VendorSyncRequest(
+		return accountingsyncports.EnqueueAccountingSync(txCtx, s.sync, accountingsyncports.VendorSyncRequest(
 			pagination.TenantInfo{OrgID: updated.OrganizationID, BuID: updated.BusinessUnitID},
 			accountingsync.SyncObjectDriverVendor,
 			updated.ID,
@@ -117,20 +121,20 @@ func (s *Service) updateAndQueueSync(
 // service (which opens a timeline when a worker is hired) and the employment
 // service (which applies event effects through the worker service): the
 // recorder arrives after both are built.
-func (s *Service) SetEmploymentRecorder(recorder services.EmploymentEventRecorder) {
+func (s *Service) SetEmploymentRecorder(recorder workerports.EmploymentEventRecorder) {
 	s.employmentRecorder = recorder
 }
 
 func (s *Service) SelectOptions(
 	ctx context.Context,
-	req *repositories.WorkerSelectOptionsRequest,
+	req *workerports.WorkerSelectOptionsRequest,
 ) (*pagination.ListResult[*worker.Worker], error) {
 	return s.repo.SelectOptions(ctx, req)
 }
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListWorkersRequest,
+	req *workerports.ListWorkersRequest,
 ) (*pagination.CursorListResult[*worker.Worker], error) {
 	log := s.l.With(
 		zap.String("operation", "List"),
@@ -187,7 +191,7 @@ func (s *Service) attachCustomFields(
 
 func (s *Service) Get(
 	ctx context.Context,
-	req repositories.GetWorkerByIDRequest,
+	req workerports.GetWorkerByIDRequest,
 ) (*worker.Worker, error) {
 	log := s.l.With(
 		zap.String("operation", "Get"),
@@ -203,7 +207,7 @@ func (s *Service) Get(
 
 	entity, err = s.cacheRepo.GetByID(ctx, req)
 	if err != nil {
-		if !errors.Is(err, repositories.ErrCacheMiss) {
+		if !errors.Is(err, customerports.ErrCacheMiss) {
 			log.Warn("failed to load worker from cache", zap.Error(err))
 		}
 		entity, err = s.repo.GetByID(ctx, req)
@@ -230,7 +234,7 @@ func (s *Service) Get(
 func (s *Service) Create(
 	ctx context.Context,
 	entity *worker.Worker,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*worker.Worker, error) {
 	auditActor := actor.AuditActor()
 	log := s.l.With(
@@ -271,7 +275,7 @@ func (s *Service) Create(
 		createdEntity.CustomFields = entity.CustomFields
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceWorker,
 		ResourceID:     createdEntity.GetResourceID(),
 		Operation:      permission.OpCreate,
@@ -312,7 +316,7 @@ func (s *Service) Create(
 func (s *Service) Update(
 	ctx context.Context,
 	entity *worker.Worker,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*worker.Worker, error) {
 	return s.update(ctx, entity, actor, true)
 }
@@ -323,7 +327,7 @@ func (s *Service) Update(
 func (s *Service) UpdateFromEmployment(
 	ctx context.Context,
 	entity *worker.Worker,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*worker.Worker, error) {
 	return s.update(ctx, entity, actor, false)
 }
@@ -331,7 +335,7 @@ func (s *Service) UpdateFromEmployment(
 func (s *Service) update(
 	ctx context.Context,
 	entity *worker.Worker,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	guardEmployment bool,
 ) (*worker.Worker, error) {
 	auditActor := actor.AuditActor()
@@ -347,7 +351,7 @@ func (s *Service) update(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetByID(ctx, repositories.GetWorkerByIDRequest{
+	original, err := s.repo.GetByID(ctx, workerports.GetWorkerByIDRequest{
 		ID: entity.GetID(),
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.GetOrganizationID(),
@@ -391,7 +395,7 @@ func (s *Service) update(
 		updatedEntity.CustomFields = entity.CustomFields
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceWorker,
 		ResourceID:     updatedEntity.GetResourceID(),
 		Operation:      permission.OpUpdate,

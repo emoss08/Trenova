@@ -4,14 +4,13 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/documentintelligencejobs/documentintelligencecontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	services "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/documentintelligencejobs/documentintelligencecontract"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentparsingruleports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -261,7 +260,7 @@ type DocumentIntelligenceAnalysis struct {
 	ClassifierSource     string
 	ProviderFingerprint  string
 	ClassificationReason string
-	ParsingRuleMetadata  *services.DocumentParsingRuleMetadata
+	ParsingRuleMetadata  *documentparsingruleports.DocumentParsingRuleMetadata
 	Conflicts            []*ReviewConflict
 	Fields               map[string]*ReviewField
 	Stops                []*IntelligenceStop

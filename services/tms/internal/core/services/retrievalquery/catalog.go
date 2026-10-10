@@ -8,8 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/shared/vectorutils"
 	lru "github.com/hashicorp/golang-lru/v2"
 	"go.uber.org/fx"
@@ -24,20 +24,20 @@ const (
 	catalogRetryBackoff = time.Minute
 )
 
-var _ serviceports.CatalogVectorIndex = (*CatalogIndex)(nil)
+var _ agentports.CatalogVectorIndex = (*CatalogIndex)(nil)
 
 type CatalogParams struct {
 	fx.In
 
 	Logger     *zap.Logger
-	Repository repositories.AIRetrievalRepository
-	Embeddings serviceports.EmbeddingService `optional:"true"`
+	Repository agentports.AIRetrievalRepository
+	Embeddings aiusageports.EmbeddingService `optional:"true"`
 }
 
 type CatalogIndex struct {
 	l           *zap.Logger
-	repo        repositories.AIRetrievalRepository
-	embeddings  serviceports.EmbeddingService
+	repo        agentports.AIRetrievalRepository
+	embeddings  aiusageports.EmbeddingService
 	entries     *lru.Cache[catalogKey, *catalogVectors]
 	flights     singleflight.Group
 	now         func() time.Time
@@ -90,23 +90,23 @@ func NewCatalogIndex(p CatalogParams) *CatalogIndex {
 
 func (c *CatalogIndex) Similarities(
 	ctx context.Context,
-	req *serviceports.CatalogSimilarityRequest,
-) (serviceports.CatalogSimilarities, error) {
+	req *agentports.CatalogSimilarityRequest,
+) (agentports.CatalogSimilarities, error) {
 	if err := validateCatalogRequest(req); err != nil {
-		return serviceports.CatalogSimilarities{}, err
+		return agentports.CatalogSimilarities{}, err
 	}
 
 	query, err := vectorutils.Normalized(req.Query.Vector)
 	if err != nil {
-		return serviceports.CatalogSimilarities{}, fmt.Errorf(
-			"%w: %w", serviceports.ErrCatalogQueryNotUsable, err,
+		return agentports.CatalogSimilarities{}, fmt.Errorf(
+			"%w: %w", agentports.ErrCatalogQueryNotUsable, err,
 		)
 	}
 
 	key := catalogKey{modelKey: req.Query.ModelKey, corpus: req.Corpus}
 	vectors, reason := c.vectorsFor(ctx, key, req)
 	if vectors == nil {
-		return serviceports.CatalogSimilarities{Reason: reason}, nil
+		return agentports.CatalogSimilarities{Reason: reason}, nil
 	}
 
 	byKey := make(map[string]float64, len(req.Items))
@@ -114,20 +114,20 @@ func (c *CatalogIndex) Similarities(
 		stored := vectors.items[item.Key]
 		similarity, dotErr := vectorutils.Dot(stored.unit, query)
 		if dotErr != nil {
-			return serviceports.CatalogSimilarities{}, fmt.Errorf(
+			return agentports.CatalogSimilarities{}, fmt.Errorf(
 				"compare %s with the query: %w", item.Key, dotErr,
 			)
 		}
 		byKey[item.Key] = similarity
 	}
 
-	return serviceports.CatalogSimilarities{Available: true, ByKey: byKey}, nil
+	return agentports.CatalogSimilarities{Available: true, ByKey: byKey}, nil
 }
 
 func (c *CatalogIndex) vectorsFor(
 	ctx context.Context,
 	key catalogKey,
-	req *serviceports.CatalogSimilarityRequest,
+	req *agentports.CatalogSimilarityRequest,
 ) (*catalogVectors, airetrieval.UnavailableReason) {
 	if cached, ok := c.entries.Get(key); ok && covers(cached, req) {
 		return cached, ""
@@ -168,7 +168,7 @@ func (c *CatalogIndex) vectorsFor(
 func (c *CatalogIndex) load(
 	ctx context.Context,
 	key catalogKey,
-	req *serviceports.CatalogSimilarityRequest,
+	req *agentports.CatalogSimilarityRequest,
 ) catalogLoad {
 	dimensions := req.Query.Dimensions
 	merged := &catalogVectors{
@@ -213,7 +213,7 @@ func (c *CatalogIndex) readStored(
 	ctx context.Context,
 	key catalogKey,
 	merged *catalogVectors,
-	absent []serviceports.EmbeddingCatalogItem,
+	absent []agentports.EmbeddingCatalogItem,
 ) error {
 	refs := make([]airetrieval.CatalogItemRef, 0, len(absent))
 	for _, item := range absent {
@@ -223,7 +223,7 @@ func (c *CatalogIndex) readStored(
 		})
 	}
 
-	rows, err := c.repo.GetCatalogEmbeddings(ctx, repositories.GetCatalogEmbeddingsRequest{
+	rows, err := c.repo.GetCatalogEmbeddings(ctx, agentports.GetCatalogEmbeddingsRequest{
 		ModelKey: key.modelKey,
 		Corpus:   key.corpus,
 		Items:    refs,
@@ -249,9 +249,9 @@ func (c *CatalogIndex) readStored(
 func (c *CatalogIndex) embedAbsent(
 	ctx context.Context,
 	key catalogKey,
-	req *serviceports.CatalogSimilarityRequest,
+	req *agentports.CatalogSimilarityRequest,
 	merged *catalogVectors,
-	absent []serviceports.EmbeddingCatalogItem,
+	absent []agentports.EmbeddingCatalogItem,
 ) airetrieval.UnavailableReason {
 	if c.embeddings == nil {
 		return airetrieval.UnavailableReasonNoProvider
@@ -262,9 +262,9 @@ func (c *CatalogIndex) embedAbsent(
 		inputs = append(inputs, item.Text)
 	}
 
-	result, err := c.embeddings.Embed(ctx, &serviceports.EmbedRequest{
+	result, err := c.embeddings.Embed(ctx, &aiusageports.EmbedRequest{
 		TenantInfo: req.TenantInfo,
-		Purpose:    serviceports.EmbeddingPurposeDocument,
+		Purpose:    aiusageports.EmbeddingPurposeDocument,
 		Inputs:     inputs,
 		ModelKey:   key.modelKey,
 		Surface:    aiusage.SurfaceIndexing,
@@ -290,7 +290,7 @@ func (c *CatalogIndex) embedAbsent(
 		return airetrieval.UnavailableReasonProviderFailed
 	}
 
-	put := make([]repositories.CatalogEmbeddingInput, 0, len(absent))
+	put := make([]agentports.CatalogEmbeddingInput, 0, len(absent))
 	for idx, item := range absent {
 		vector := result.Vectors[idx]
 		if len(vector) != merged.dimensions {
@@ -313,14 +313,14 @@ func (c *CatalogIndex) embedAbsent(
 			return airetrieval.UnavailableReasonProviderFailed
 		}
 		merged.items[item.Key] = catalogVector{hash: item.ContentHash, unit: unit}
-		put = append(put, repositories.CatalogEmbeddingInput{
+		put = append(put, agentports.CatalogEmbeddingInput{
 			ItemKey:     item.Key,
 			ContentHash: item.ContentHash,
 			Vector:      vector,
 		})
 	}
 
-	if _, err = c.repo.PutCatalogEmbeddings(ctx, repositories.PutCatalogEmbeddingsRequest{
+	if _, err = c.repo.PutCatalogEmbeddings(ctx, agentports.PutCatalogEmbeddingsRequest{
 		ModelKey:   key.modelKey,
 		Corpus:     key.corpus,
 		Dimensions: merged.dimensions,
@@ -336,7 +336,7 @@ func (c *CatalogIndex) embedAbsent(
 func (c *CatalogIndex) pruneOnce(
 	ctx context.Context,
 	key catalogKey,
-	items []serviceports.EmbeddingCatalogItem,
+	items []agentports.EmbeddingCatalogItem,
 ) {
 	c.mu.Lock()
 	if _, done := c.pruned[key]; done {
@@ -354,7 +354,7 @@ func (c *CatalogIndex) pruneOnce(
 		})
 	}
 
-	removed, err := c.repo.PruneCatalogEmbeddings(ctx, repositories.PruneCatalogEmbeddingsRequest{
+	removed, err := c.repo.PruneCatalogEmbeddings(ctx, agentports.PruneCatalogEmbeddingsRequest{
 		ModelKey: key.modelKey,
 		Corpus:   key.corpus,
 		Keep:     keep,
@@ -393,7 +393,7 @@ func (c *CatalogIndex) clearBackOff(key catalogKey) {
 	delete(c.retryAt, key)
 }
 
-func covers(vectors *catalogVectors, req *serviceports.CatalogSimilarityRequest) bool {
+func covers(vectors *catalogVectors, req *agentports.CatalogSimilarityRequest) bool {
 	if vectors == nil || vectors.dimensions != req.Query.Dimensions {
 		return false
 	}
@@ -410,9 +410,9 @@ func covers(vectors *catalogVectors, req *serviceports.CatalogSimilarityRequest)
 
 func missingItems(
 	vectors *catalogVectors,
-	items []serviceports.EmbeddingCatalogItem,
-) []serviceports.EmbeddingCatalogItem {
-	absent := make([]serviceports.EmbeddingCatalogItem, 0, len(items))
+	items []agentports.EmbeddingCatalogItem,
+) []agentports.EmbeddingCatalogItem {
+	absent := make([]agentports.EmbeddingCatalogItem, 0, len(items))
 	for _, item := range items {
 		stored, ok := vectors.items[item.Key]
 		if ok && stored.hash == item.ContentHash {
@@ -424,12 +424,12 @@ func missingItems(
 	return absent
 }
 
-func validateCatalogRequest(req *serviceports.CatalogSimilarityRequest) error {
+func validateCatalogRequest(req *agentports.CatalogSimilarityRequest) error {
 	if req == nil || !req.Corpus.IsValid() || len(req.Items) == 0 {
-		return serviceports.ErrCatalogRequestInvalid
+		return agentports.ErrCatalogRequestInvalid
 	}
 	if !req.Query.Usable() {
-		return serviceports.ErrCatalogQueryNotUsable
+		return agentports.ErrCatalogQueryNotUsable
 	}
 	if err := validateTenant(req.TenantInfo); err != nil {
 		return err
@@ -438,13 +438,13 @@ func validateCatalogRequest(req *serviceports.CatalogSimilarityRequest) error {
 	seen := make(map[string]struct{}, len(req.Items))
 	for _, item := range req.Items {
 		if item.Key == "" || item.ContentHash == "" {
-			return serviceports.ErrCatalogRequestInvalid
+			return agentports.ErrCatalogRequestInvalid
 		}
 		if len(item.Key) > airetrieval.MaxCatalogItemChars {
-			return fmt.Errorf("%w: %s", serviceports.ErrCatalogItemKeyTooLong, item.Key)
+			return fmt.Errorf("%w: %s", agentports.ErrCatalogItemKeyTooLong, item.Key)
 		}
 		if _, dup := seen[item.Key]; dup {
-			return fmt.Errorf("%w: %s", serviceports.ErrCatalogItemKeyRepeated, item.Key)
+			return fmt.Errorf("%w: %s", agentports.ErrCatalogItemKeyRepeated, item.Key)
 		}
 		seen[item.Key] = struct{}{}
 	}

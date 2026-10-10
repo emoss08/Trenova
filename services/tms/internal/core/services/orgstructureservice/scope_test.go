@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/orgstructureservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -16,7 +16,7 @@ import (
 // scopeRepo answers the two questions the scope check asks: what has been
 // delegated to this user, and do these managers cover this worker.
 type scopeRepo struct {
-	repositories.OrgStructureRepository
+	workerports.OrgStructureRepository
 	delegations []*worker.ApprovalDelegation
 	// manages maps a manager onto the workers they cover.
 	manages map[pulid.ID]map[pulid.ID]bool
@@ -27,7 +27,7 @@ type scopeRepo struct {
 
 func (r *scopeRepo) ListDelegations(
 	_ context.Context,
-	req *repositories.ListApprovalDelegationsRequest,
+	req *workerports.ListApprovalDelegationsRequest,
 ) ([]*worker.ApprovalDelegation, error) {
 	out := make([]*worker.ApprovalDelegation, 0, len(r.delegations))
 	for _, row := range r.delegations {

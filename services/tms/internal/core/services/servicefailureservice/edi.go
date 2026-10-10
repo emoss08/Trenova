@@ -7,9 +7,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/edix12"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"go.uber.org/zap"
 )
@@ -17,7 +20,7 @@ import (
 type serviceFailure214Params struct {
 	previous *servicefailure.ServiceFailure
 	current  *servicefailure.ServiceFailure
-	actor    *services.RequestActor
+	actor    *permissionports.RequestActor
 }
 
 // preflightServiceFailure214 is the 214 a lifecycle change would generate,
@@ -26,7 +29,7 @@ type serviceFailure214Params struct {
 func (s *service) preflightServiceFailure214(
 	ctx context.Context,
 	params serviceFailure214Params,
-) (*services.ServiceFailure214LifecycleResult, error) {
+) (*servicefailureports.ServiceFailure214LifecycleResult, error) {
 	req := serviceFailure214Request(params)
 	if req == nil || s.ediService == nil {
 		return nil, nil //nolint:nilnil // a nil result means the change generates no 214
@@ -39,7 +42,7 @@ func (s *service) preflightServiceFailure214(
 			"Service failure EDI 214 preflight failed: {0}", err.Error(),
 		)
 	}
-	if result.Action != services.ServiceFailureEDIActionBlocked || !result.Mandatory {
+	if result.Action != ediports.ServiceFailureEDIActionBlocked || !result.Mandatory {
 		return result, nil
 	}
 	if len(result.Diagnostics) == 0 {
@@ -72,23 +75,23 @@ func (s *service) generateServiceFailure214(
 		return
 	}
 	switch result.Action {
-	case services.ServiceFailureEDIActionGenerated, services.ServiceFailureEDIActionDuplicate:
+	case ediports.ServiceFailureEDIActionGenerated, ediports.ServiceFailureEDIActionDuplicate:
 		s.recordServiceFailure214Result(ctx, params, result)
-	case services.ServiceFailureEDIActionBlocked:
+	case ediports.ServiceFailureEDIActionBlocked:
 		s.l.Warn(
 			"service failure EDI 214 generation blocked",
 			zap.String("serviceFailureId", params.current.ID.String()),
 			zap.String("trigger", string(result.Trigger)),
 			zap.String("reason", result.SkippedReason),
 		)
-	case services.ServiceFailureEDIActionSkipped:
+	case ediports.ServiceFailureEDIActionSkipped:
 	default:
 	}
 }
 
 func serviceFailure214Request(
 	params serviceFailure214Params,
-) *services.ServiceFailure214LifecycleRequest {
+) *ediports.ServiceFailure214LifecycleRequest {
 	if params.current == nil {
 		return nil
 	}
@@ -100,7 +103,7 @@ func serviceFailure214Request(
 	if params.previous != nil {
 		previousStatus = params.previous.Status
 	}
-	return &services.ServiceFailure214LifecycleRequest{
+	return &ediports.ServiceFailure214LifecycleRequest{
 		TenantInfo:       serviceFailureTenantInfo(params.current),
 		ServiceFailureID: params.current.ID,
 		ShipmentID:       params.current.ShipmentID,
@@ -114,12 +117,12 @@ func serviceFailure214Request(
 
 func serviceFailure214Trigger(
 	status servicefailure.Status,
-) (services.ServiceFailureEDITrigger, bool) {
+) (servicefailureports.ServiceFailureEDITrigger, bool) {
 	switch status {
 	case servicefailure.StatusReviewed:
-		return services.ServiceFailureEDITriggerReviewed, true
+		return servicefailureports.ServiceFailureEDITriggerReviewed, true
 	case servicefailure.StatusResolved:
-		return services.ServiceFailureEDITriggerResolved, true
+		return servicefailureports.ServiceFailureEDITriggerResolved, true
 	default:
 		return "", false
 	}
@@ -146,7 +149,7 @@ func serviceFailure214DiagnosticsError(diagnostics []edix12.Diagnostic) error {
 func (s *service) recordServiceFailure214Result(
 	ctx context.Context,
 	params serviceFailure214Params,
-	result *services.ServiceFailure214LifecycleResult,
+	result *servicefailureports.ServiceFailure214LifecycleResult,
 ) {
 	metadata := serviceFailureLifecycleMetadata(params.previous, params.current, params.actor)
 	metadata["ediMessageId"] = result.MessageID.String()
@@ -156,7 +159,7 @@ func (s *service) recordServiceFailure214Result(
 	metadata["serviceFailure214Action"] = string(result.Action)
 
 	comment := "Service failure EDI 214 generated"
-	if result.Action == services.ServiceFailureEDIActionDuplicate {
+	if result.Action == ediports.ServiceFailureEDIActionDuplicate {
 		comment = "Service failure EDI 214 already generated"
 	}
 	s.logServiceFailureEDIAction(params, comment, metadata)
@@ -173,7 +176,7 @@ func (s *service) logServiceFailureEDIAction(
 	metadata map[string]any,
 ) {
 	auditActor := params.actor.AuditActorOrSystem()
-	logParams := &services.LogActionParams{
+	logParams := &auditports.LogActionParams{
 		Resource:       permission.ResourceServiceFailure,
 		ResourceID:     params.current.ID.String(),
 		Operation:      permission.OpUpdate,
@@ -184,7 +187,7 @@ func (s *service) logServiceFailureEDIAction(
 		OrganizationID: params.current.OrganizationID,
 		BusinessUnitID: params.current.BusinessUnitID,
 	}
-	opts := []services.LogOption{
+	opts := []auditports.LogOption{
 		auditservice.WithComment(comment),
 		auditservice.WithMetadata(metadata),
 	}

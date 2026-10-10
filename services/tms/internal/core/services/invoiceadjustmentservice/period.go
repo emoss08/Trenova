@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -17,7 +17,7 @@ func (s *Service) resolveAccountingDate(
 	ctx context.Context,
 	entity *invoice.Invoice,
 	control *tenant.InvoiceAdjustmentControl,
-	preview *servicesports.InvoiceAdjustmentPreview,
+	preview *invoiceadjustmentports.InvoiceAdjustmentPreview,
 ) int64 {
 	originalDate := entity.InvoiceDate
 	if control.AdjustmentAccountingDatePolicy == tenant.AdjustmentAccountingDateAlwaysNextOpen {
@@ -34,7 +34,7 @@ func (s *Service) resolveAccountingDate(
 		return timeutils.NowUnix()
 	}
 
-	period, err := s.fiscalPeriodRepo.GetPeriodByDate(ctx, repositories.GetPeriodByDateRequest{
+	period, err := s.fiscalPeriodRepo.GetPeriodByDate(ctx, fiscalperiodports.GetPeriodByDateRequest{
 		OrgID: entity.OrganizationID,
 		BuID:  entity.BusinessUnitID,
 		Date:  originalDate,
@@ -82,7 +82,7 @@ func (s *Service) resolveNextOpenPeriodDate(
 	orgID, buID pulid.ID,
 	fallback int64,
 ) int64 {
-	period, err := s.fiscalPeriodRepo.GetPeriodByDate(ctx, repositories.GetPeriodByDateRequest{
+	period, err := s.fiscalPeriodRepo.GetPeriodByDate(ctx, fiscalperiodports.GetPeriodByDateRequest{
 		OrgID: orgID,
 		BuID:  buID,
 		Date:  timeutils.NowUnix(),
@@ -96,7 +96,7 @@ func (s *Service) resolveNextOpenPeriodDate(
 func (s *Service) validateSettlementPolicy(
 	entity *invoice.Invoice,
 	control *tenant.InvoiceAdjustmentControl,
-	preview *servicesports.InvoiceAdjustmentPreview,
+	preview *invoiceadjustmentports.InvoiceAdjustmentPreview,
 ) {
 	//nolint:exhaustive // only actionable enum states require explicit handling here
 	switch entity.SettlementStatus {

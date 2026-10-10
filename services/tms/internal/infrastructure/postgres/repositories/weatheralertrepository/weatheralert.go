@@ -6,10 +6,10 @@ import (
 	"maps"
 
 	"github.com/emoss08/trenova/internal/core/domain/weatheralert"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -73,7 +73,7 @@ type weatherAlertWriteModel struct {
 	UpdatedAt      int64                      `bun:"updated_at"`
 }
 
-func New(p Params) repositories.WeatherAlertRepository {
+func New(p Params) weatheralertports.WeatherAlertRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.weather-alert-repository"),
@@ -136,7 +136,7 @@ func (r *repository) GetActiveAlerts(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetWeatherAlertByIDRequest,
+	req weatheralertports.GetWeatherAlertByIDRequest,
 ) (*weatheralert.WeatherAlert, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*weatheralert.WeatherAlert, error) {
 		alert := new(weatheralert.WeatherAlert)
@@ -159,7 +159,7 @@ func (r *repository) GetByID(
 
 func (r *repository) GetActivities(
 	ctx context.Context,
-	req repositories.GetWeatherAlertByIDRequest,
+	req weatheralertports.GetWeatherAlertByIDRequest,
 ) ([]*weatheralert.Activity, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*weatheralert.Activity, error) {
 		activities := make([]*weatheralert.Activity, 0)
@@ -180,7 +180,7 @@ func (r *repository) GetActivities(
 
 func (r *repository) ListByNWSIDs(
 	ctx context.Context,
-	req repositories.ListWeatherAlertsByNWSIDsRequest,
+	req weatheralertports.ListWeatherAlertsByNWSIDsRequest,
 ) ([]*weatheralert.WeatherAlert, error) {
 	if len(req.NWSIDs) == 0 {
 		return []*weatheralert.WeatherAlert{}, nil
@@ -215,11 +215,11 @@ func (r *repository) ListByNWSIDs(
 func (r *repository) UpsertAlert(
 	ctx context.Context,
 	alert *weatheralert.WeatherAlert,
-) (*repositories.UpsertWeatherAlertResult, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.UpsertWeatherAlertResult, error) {
-		result := new(repositories.UpsertWeatherAlertResult)
+) (*weatheralertports.UpsertWeatherAlertResult, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*weatheralertports.UpsertWeatherAlertResult, error) {
+		result := new(weatheralertports.UpsertWeatherAlertResult)
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 			existing, err := r.getByNWSID(
 				c,
 				tx,
@@ -313,13 +313,13 @@ func (r *repository) UpsertAlert(
 
 func (r *repository) ExpireStaleAlerts(
 	ctx context.Context,
-) (*repositories.ExpireWeatherAlertsResult, error) {
+) (*weatheralertports.ExpireWeatherAlertsResult, error) {
 	ctx = dbscope.WithSystem(ctx, "expire stale weather alerts across every organization")
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.ExpireWeatherAlertsResult, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*weatheralertports.ExpireWeatherAlertsResult, error) {
 		now := timeutils.NowUnix()
-		result := &repositories.ExpireWeatherAlertsResult{}
+		result := &weatheralertports.ExpireWeatherAlertsResult{}
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 			alerts := make([]*weatheralert.WeatherAlert, 0)
 			if err := tx.NewSelect().
 				Model(&alerts).

@@ -4,9 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentshadow"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
@@ -17,17 +16,17 @@ type Params struct {
 	fx.In
 
 	Logger *zap.Logger
-	Repo   repositories.AgentProposalRepository
+	Repo   agentports.AgentProposalRepository
 	Shadow *agentshadow.Resolver
 }
 
 type Service struct {
 	l      *zap.Logger
-	repo   repositories.AgentProposalRepository
+	repo   agentports.AgentProposalRepository
 	shadow *agentshadow.Resolver
 }
 
-func New(p Params) services.AgentProposalService {
+func New(p Params) agentports.AgentProposalService {
 	return &Service{
 		l:      p.Logger.Named("service.agentproposal"),
 		repo:   p.Repo,
@@ -37,7 +36,7 @@ func New(p Params) services.AgentProposalService {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListAgentProposalRequest,
+	req *agentports.ListAgentProposalRequest,
 ) (*pagination.ListResult[*agent.AgentProposal], error) {
 	shadow, err := s.shadow.Organization(ctx, req.Filter.TenantInfo)
 	if err != nil {
@@ -58,7 +57,7 @@ func (s *Service) List(
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListAgentProposalConnectionRequest,
+	req *agentports.ListAgentProposalConnectionRequest,
 ) (*pagination.CursorListResult[*agent.AgentProposal], error) {
 	shadow, err := s.shadow.Organization(ctx, req.Filter.TenantInfo)
 	if err != nil {
@@ -78,7 +77,7 @@ func (s *Service) ListConnection(
 
 func (s *Service) GetByID(
 	ctx context.Context,
-	req repositories.GetAgentProposalByIDRequest,
+	req agentports.GetAgentProposalByIDRequest,
 ) (*agent.AgentProposal, error) {
 	proposal, err := s.repo.GetByID(ctx, req)
 	if err != nil {

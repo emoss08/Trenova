@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
@@ -28,11 +28,11 @@ func (s *Service) recordMembershipChange(ctx context.Context, change *membership
 	before := membershipOrganizationIDs(change.before)
 	after := membershipOrganizationIDs(change.after)
 
-	s.auditor.RecordChange(ctx, &services.SecurityChange{
+	s.auditor.RecordChange(ctx, &permissionports.SecurityChange{
 		Resource:   permission.ResourceUser,
 		ResourceID: change.userID.String(),
 		Operation:  permission.OpUpdate,
-		Actor: services.UserActor(pagination.TenantInfo{
+		Actor: permissionports.UserActor(pagination.TenantInfo{
 			OrgID:  change.organizationID,
 			BuID:   change.businessUnitID,
 			UserID: change.actorID,

@@ -13,8 +13,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -22,7 +23,7 @@ import (
 // fakeLedger keeps the trail in memory with the repository's semantics:
 // existing source keys skipped, seqs assigned in order, every batch sealed.
 type fakeLedger struct {
-	repositories.AIAuditRepository
+	aiauditports.AIAuditRepository
 
 	mu         sync.Mutex
 	events     map[pagination.TenantInfo][]*aiaudit.AIAuditEvent
@@ -43,8 +44,8 @@ func newFakeLedger() *fakeLedger {
 
 func (f *fakeLedger) Append(
 	_ context.Context,
-	req *repositories.AppendAIAuditEventsRequest,
-) (*repositories.AppendAIAuditEventsResult, error) {
+	req *aiauditports.AppendAIAuditEventsRequest,
+) (*aiauditports.AppendAIAuditEventsResult, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
@@ -92,7 +93,7 @@ func (f *fakeLedger) Append(
 		inserted++
 	}
 
-	result := &repositories.AppendAIAuditEventsResult{Inserted: inserted}
+	result := &aiauditports.AppendAIAuditEventsResult{Inserted: inserted}
 	if inserted == 0 {
 		return result, nil
 	}
@@ -188,7 +189,7 @@ func (f *fakeLedger) FirstSeq(
 
 func (f *fakeLedger) ListChainRange(
 	_ context.Context,
-	req repositories.ListAIAuditChainRangeRequest,
+	req aiauditports.ListAIAuditChainRangeRequest,
 ) ([]*aiaudit.AIAuditEvent, error) {
 	out := make([]*aiaudit.AIAuditEvent, 0, req.Limit)
 	for _, event := range f.all(req.TenantInfo) {
@@ -219,7 +220,7 @@ func (f *fakeLedger) GetSealEndingAt(
 
 func (f *fakeLedger) ListSeals(
 	_ context.Context,
-	req repositories.ListAIAuditSealsRequest,
+	req aiauditports.ListAIAuditSealsRequest,
 ) ([]*aiaudit.AIAuditSeal, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -254,7 +255,7 @@ func (f *fakeLedger) LastSealBefore(
 
 func (f *fakeLedger) Prune(
 	_ context.Context,
-	req repositories.PruneAIAuditEventsRequest,
+	req aiauditports.PruneAIAuditEventsRequest,
 ) (int, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -276,7 +277,7 @@ func (f *fakeLedger) Prune(
 
 func (f *fakeLedger) RecordVerification(
 	_ context.Context,
-	req *repositories.RecordAIAuditVerificationRequest,
+	req *aiauditports.RecordAIAuditVerificationRequest,
 ) (*aiaudit.AIAuditChainHead, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -324,9 +325,9 @@ func (f *fakeLedger) SaveWatermark(_ context.Context, state *aiaudit.AIAuditProj
 
 func (f *fakeLedger) Summarize(
 	_ context.Context,
-	scope *repositories.AIAuditEventScope,
-) (*repositories.AIAuditEventSummary, error) {
-	summary := &repositories.AIAuditEventSummary{}
+	scope *aiauditports.AIAuditEventScope,
+) (*aiauditports.AIAuditEventSummary, error) {
+	summary := &aiauditports.AIAuditEventSummary{}
 	for _, event := range f.inScope(scope) {
 		if summary.Count == 0 || event.Seq < summary.FirstSeq {
 			summary.FirstSeq = event.Seq
@@ -338,7 +339,7 @@ func (f *fakeLedger) Summarize(
 	return summary, nil
 }
 
-func (f *fakeLedger) inScope(scope *repositories.AIAuditEventScope) []*aiaudit.AIAuditEvent {
+func (f *fakeLedger) inScope(scope *aiauditports.AIAuditEventScope) []*aiaudit.AIAuditEvent {
 	out := make([]*aiaudit.AIAuditEvent, 0)
 	for _, event := range f.all(scope.TenantInfo) {
 		if event.OccurredAt < scope.From || event.OccurredAt > scope.To {
@@ -373,7 +374,7 @@ func matchesFilters(event *aiaudit.AIAuditEvent, filter *aiaudit.ExportFilter) b
 
 func (f *fakeLedger) ListPage(
 	_ context.Context,
-	req *repositories.ListAIAuditEventPageRequest,
+	req *aiauditports.ListAIAuditEventPageRequest,
 ) ([]*aiaudit.AIAuditEvent, error) {
 	out := make([]*aiaudit.AIAuditEvent, 0, req.Limit)
 	for _, event := range f.inScope(&req.Scope) {
@@ -392,7 +393,7 @@ func (f *fakeLedger) ListPage(
 
 func (f *fakeLedger) ListCorrelatedAuditEntries(
 	_ context.Context,
-	req *repositories.ListCorrelatedAuditEntriesRequest,
+	req *aiauditports.ListCorrelatedAuditEntriesRequest,
 ) ([]*audit.Entry, error) {
 	out := make([]*audit.Entry, 0)
 	for _, entry := range f.entries {
@@ -410,21 +411,21 @@ func (f *fakeLedger) ListCorrelatedAuditEntries(
 }
 
 type emptyRetention struct {
-	repositories.DataRetentionRepository
+	tenantports.DataRetentionRepository
 }
 
 func (emptyRetention) List(context.Context) (*pagination.ListResult[*tenant.DataRetention], error) {
 	return &pagination.ListResult[*tenant.DataRetention]{}, nil
 }
 
-func pruneThrough(s *scenario, seq int64) repositories.PruneAIAuditEventsRequest {
-	return repositories.PruneAIAuditEventsRequest{TenantInfo: s.tenant, ThroughSeq: seq}
+func pruneThrough(s *scenario, seq int64) aiauditports.PruneAIAuditEventsRequest {
+	return aiauditports.PruneAIAuditEventsRequest{TenantInfo: s.tenant, ThroughSeq: seq}
 }
 
 // fakeSource holds source rows in memory and pages them in (ts, id) order
 // across tenants, as the repository does.
 type fakeSource struct {
-	repositories.AIAuditSourceRepository
+	aiauditports.AIAuditSourceRepository
 
 	runs        []*agent.AgentRun
 	turns       []*conversation.AssistantTurn
@@ -443,7 +444,7 @@ func page[T any](
 	rows []T,
 	ts func(T) int64,
 	id func(T) string,
-	req repositories.AIAuditSourcePage,
+	req aiauditports.AIAuditSourcePage,
 	keep func(T) bool,
 ) []T {
 	sorted := slices.Clone(rows)
@@ -470,7 +471,7 @@ func page[T any](
 
 func (f *fakeSource) ListRuns(
 	_ context.Context,
-	req repositories.AIAuditSourcePage,
+	req aiauditports.AIAuditSourcePage,
 ) ([]*agent.AgentRun, error) {
 	return page(f.runs, func(r *agent.AgentRun) int64 { return r.UpdatedAt },
 		func(r *agent.AgentRun) string { return r.ID.String() }, req, nil), nil
@@ -478,7 +479,7 @@ func (f *fakeSource) ListRuns(
 
 func (f *fakeSource) ListTurns(
 	_ context.Context,
-	req repositories.AIAuditSourcePage,
+	req aiauditports.AIAuditSourcePage,
 ) ([]*conversation.AssistantTurn, error) {
 	return page(f.turns, func(r *conversation.AssistantTurn) int64 { return r.UpdatedAt },
 		func(r *conversation.AssistantTurn) string { return r.ID.String() }, req, nil), nil
@@ -486,7 +487,7 @@ func (f *fakeSource) ListTurns(
 
 func (f *fakeSource) ListUsage(
 	_ context.Context,
-	req repositories.AIAuditSourcePage,
+	req aiauditports.AIAuditSourcePage,
 ) ([]*aiusage.AIUsageRecord, error) {
 	return page(f.usage, func(r *aiusage.AIUsageRecord) int64 { return r.CreatedAt },
 		func(r *aiusage.AIUsageRecord) string { return r.ID.String() }, req, nil), nil
@@ -494,16 +495,16 @@ func (f *fakeSource) ListUsage(
 
 func (f *fakeSource) ListSteps(
 	_ context.Context,
-	req repositories.AIAuditSourcePage,
+	req aiauditports.AIAuditSourcePage,
 ) ([]*agent.AgentRunStep, error) {
 	return page(f.steps, func(r *agent.AgentRunStep) int64 { return r.UpdatedAt },
 		func(r *agent.AgentRunStep) string { return r.ID.String() }, req,
-		func(r *agent.AgentRunStep) bool { return r.Kind == string(serviceports.RunStepTool) }), nil
+		func(r *agent.AgentRunStep) bool { return r.Kind == string(agentports.RunStepTool) }), nil
 }
 
 func (f *fakeSource) ListEvents(
 	_ context.Context,
-	req repositories.AIAuditSourcePage,
+	req aiauditports.AIAuditSourcePage,
 ) ([]*agent.AgentRunEvent, error) {
 	return page(f.events, func(r *agent.AgentRunEvent) int64 { return r.CreatedAt },
 		func(r *agent.AgentRunEvent) string { return r.ID.String() }, req, nil), nil
@@ -511,7 +512,7 @@ func (f *fakeSource) ListEvents(
 
 func (f *fakeSource) ListProposals(
 	_ context.Context,
-	req repositories.AIAuditSourcePage,
+	req aiauditports.AIAuditSourcePage,
 ) ([]*agent.AgentProposal, error) {
 	return page(f.proposals, func(r *agent.AgentProposal) int64 { return r.UpdatedAt },
 		func(r *agent.AgentProposal) string { return r.ID.String() }, req, nil), nil
@@ -519,7 +520,7 @@ func (f *fakeSource) ListProposals(
 
 func (f *fakeSource) ListDecisions(
 	_ context.Context,
-	req repositories.AIAuditSourcePage,
+	req aiauditports.AIAuditSourcePage,
 ) ([]*agent.AgentDecision, error) {
 	return page(f.decisions, func(r *agent.AgentDecision) int64 { return r.CreatedAt },
 		func(r *agent.AgentDecision) string { return r.ID.String() }, req, nil), nil
@@ -562,7 +563,7 @@ func (f *fakeSource) TurnsByRunIDs(
 
 func (f *fakeSource) TurnsInWindow(
 	_ context.Context,
-	req *repositories.AIAuditTurnWindow,
+	req *aiauditports.AIAuditTurnWindow,
 ) ([]*conversation.AssistantTurn, error) {
 	return byIDs(f.turns, func(r *conversation.AssistantTurn) pulid.ID { return r.ThreadID },
 		req.ThreadIDs), nil
@@ -600,8 +601,8 @@ func (f *fakeSource) StartedToolSteps(
 	out := make([]*agent.AgentRunStep, 0)
 	for _, step := range f.steps {
 		if slices.Contains(owners, step.OwnerID) &&
-			step.Status == string(serviceports.RunStepStarted) &&
-			step.Kind == string(serviceports.RunStepTool) {
+			step.Status == string(agentports.RunStepStarted) &&
+			step.Kind == string(agentports.RunStepTool) {
 			out = append(out, step)
 		}
 	}
@@ -612,11 +613,11 @@ func (f *fakeSource) StartedToolSteps(
 func (f *fakeSource) ToolStepCalls(
 	_ context.Context,
 	_ pagination.TenantInfo,
-	calls []repositories.OwnerCall,
-) (map[repositories.OwnerCall]struct{}, error) {
-	found := map[repositories.OwnerCall]struct{}{}
+	calls []aiauditports.OwnerCall,
+) (map[aiauditports.OwnerCall]struct{}, error) {
+	found := map[aiauditports.OwnerCall]struct{}{}
 	for _, step := range f.steps {
-		call := repositories.OwnerCall{OwnerID: step.OwnerID, CallID: step.CallID}
+		call := aiauditports.OwnerCall{OwnerID: step.OwnerID, CallID: step.CallID}
 		if slices.Contains(calls, call) {
 			found[call] = struct{}{}
 		}

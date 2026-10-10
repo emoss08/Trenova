@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -176,7 +176,7 @@ func (r *repository) updateSettings(
 
 func (r *repository) SetPaused(
 	ctx context.Context,
-	req *repositories.SetAIRetrievalPausedRequest,
+	req *agentports.SetAIRetrievalPausedRequest,
 ) (*airetrieval.Settings, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*airetrieval.Settings, error) {
 		if req == nil {
@@ -195,7 +195,7 @@ func (r *repository) SetPaused(
 		}
 
 		var updated *airetrieval.Settings
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
 			current, found, err := r.findSettings(ctx, tx, req.TenantInfo, true)
 			if err != nil {
 				return err
@@ -229,7 +229,7 @@ func (r *repository) SetPaused(
 
 func applyPause(
 	settings *airetrieval.Settings,
-	req *repositories.SetAIRetrievalPausedRequest,
+	req *agentports.SetAIRetrievalPausedRequest,
 	now int64,
 ) {
 	if !req.Paused {
@@ -278,9 +278,9 @@ func (r *repository) writePause(
 
 func (r *repository) SwapModel(
 	ctx context.Context,
-	req repositories.SwapAIRetrievalModelRequest,
-) (*repositories.SwapAIRetrievalModelResult, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.SwapAIRetrievalModelResult, error) {
+	req agentports.SwapAIRetrievalModelRequest,
+) (*agentports.SwapAIRetrievalModelResult, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentports.SwapAIRetrievalModelResult, error) {
 		if err := validateTenant(req.TenantInfo); err != nil {
 			return nil, err
 		}
@@ -288,8 +288,8 @@ func (r *repository) SwapModel(
 			return nil, err
 		}
 
-		var result *repositories.SwapAIRetrievalModelResult
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+		var result *agentports.SwapAIRetrievalModelResult
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
 			current, found, err := r.findSettings(ctx, tx, req.TenantInfo, true)
 			switch {
 			case err != nil:
@@ -330,7 +330,7 @@ func (r *repository) SwapModel(
 				return fmt.Errorf("swap retrieval embedding model: %w", err)
 			}
 
-			result = &repositories.SwapAIRetrievalModelResult{
+			result = &agentports.SwapAIRetrievalModelResult{
 				Settings:        current,
 				RetiredModelKey: retired,
 			}
@@ -347,10 +347,10 @@ func (r *repository) SwapModel(
 
 func (r *repository) PurgeModel(
 	ctx context.Context,
-	req repositories.PurgeAIRetrievalModelRequest,
-) (repositories.PurgeAIRetrievalModelResult, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (repositories.PurgeAIRetrievalModelResult, error) {
-		var result repositories.PurgeAIRetrievalModelResult
+	req agentports.PurgeAIRetrievalModelRequest,
+) (agentports.PurgeAIRetrievalModelResult, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (agentports.PurgeAIRetrievalModelResult, error) {
+		var result agentports.PurgeAIRetrievalModelResult
 
 		if err := validateTenant(req.TenantInfo); err != nil {
 			return result, err
@@ -370,7 +370,7 @@ func (r *repository) PurgeModel(
 			return result, err
 		}
 
-		err = r.db.WithTx(ctx, ports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+		err = r.db.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
 			current, found, txErr := r.findSettings(ctx, tx, req.TenantInfo, true)
 			if txErr != nil {
 				return txErr
@@ -391,7 +391,7 @@ func (r *repository) PurgeModel(
 			return txErr
 		})
 		if err != nil {
-			return repositories.PurgeAIRetrievalModelResult{}, err
+			return agentports.PurgeAIRetrievalModelResult{}, err
 		}
 
 		return result, nil
@@ -401,7 +401,7 @@ func (r *repository) PurgeModel(
 func purgeIndexEntries(
 	ctx context.Context,
 	tx bun.Tx,
-	req repositories.PurgeAIRetrievalModelRequest,
+	req agentports.PurgeAIRetrievalModelRequest,
 	batch int,
 ) (int, error) {
 	cols := buncolgen.IndexEntryColumns
@@ -429,7 +429,7 @@ func purgeIndexEntries(
 func purgeEmbeddings(
 	ctx context.Context,
 	tx bun.Tx,
-	req repositories.PurgeAIRetrievalModelRequest,
+	req agentports.PurgeAIRetrievalModelRequest,
 	batch int,
 ) (int, error) {
 	cols := buncolgen.EmbeddingColumns
@@ -474,7 +474,7 @@ type indexedTenantRow struct {
 
 func (r *repository) ListIndexedTenants(
 	ctx context.Context,
-	req repositories.ListIndexedRetrievalTenantsRequest,
+	req agentports.ListIndexedRetrievalTenantsRequest,
 ) ([]pagination.TenantInfo, error) {
 	ctx = dbscope.WithSystem(ctx, "list organizations that index sources for retrieval")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {

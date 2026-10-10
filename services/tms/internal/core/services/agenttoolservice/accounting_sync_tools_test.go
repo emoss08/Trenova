@@ -10,8 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,17 +27,17 @@ const (
 )
 
 type fakeSyncOperator struct {
-	summary *serviceports.AccountingSyncSummary
+	summary *accountingsyncports.AccountingSyncSummary
 	records map[pulid.ID]*accountingsync.AccountingSyncRecord
 
-	listed     []*serviceports.ListAccountingSyncRecordsRequest
-	retried    *serviceports.RetryAccountingSyncRequest
-	skipped    *serviceports.SkipAccountingSyncRequest
-	redated    *serviceports.RedateAccountingSyncRequest
+	listed     []*accountingsyncports.ListAccountingSyncRecordsRequest
+	retried    *accountingsyncports.RetryAccountingSyncRequest
+	skipped    *accountingsyncports.SkipAccountingSyncRequest
+	redated    *accountingsyncports.RedateAccountingSyncRequest
 	redateDay  int64
-	paused     *serviceports.PauseAccountingSyncRequest
-	resumed    *serviceports.PauseAccountingSyncRequest
-	backfilled *serviceports.RequestAccountingBackfillRequest
+	paused     *accountingsyncports.PauseAccountingSyncRequest
+	resumed    *accountingsyncports.PauseAccountingSyncRequest
+	backfilled *accountingsyncports.RequestAccountingBackfillRequest
 
 	savedRecords  []*accountingsync.AccountingSyncRecord
 	savedBackfill *accountingsync.AccountingBackfill
@@ -47,7 +48,7 @@ func (f *fakeSyncOperator) Summary(
 	context.Context,
 	pagination.TenantInfo,
 	integration.Type,
-) (*serviceports.AccountingSyncSummary, error) {
+) (*accountingsyncports.AccountingSyncSummary, error) {
 	return f.summary, nil
 }
 
@@ -66,7 +67,7 @@ func (f *fakeSyncOperator) GetRecord(
 
 func (f *fakeSyncOperator) ListRecords(
 	_ context.Context,
-	req *serviceports.ListAccountingSyncRecordsRequest,
+	req *accountingsyncports.ListAccountingSyncRecordsRequest,
 ) (*pagination.CursorListResult[*accountingsync.AccountingSyncRecord], error) {
 	f.listed = append(f.listed, req)
 	matching := make([]*accountingsync.AccountingSyncRecord, 0, len(f.records))
@@ -97,7 +98,7 @@ func (f *fakeSyncOperator) ListRecords(
 
 func (f *fakeSyncOperator) Retry(
 	_ context.Context,
-	req *serviceports.RetryAccountingSyncRequest,
+	req *accountingsyncports.RetryAccountingSyncRequest,
 ) (int64, error) {
 	if err := f.guard.write(); err != nil {
 		return 0, err
@@ -119,7 +120,7 @@ func (f *fakeSyncOperator) Retry(
 
 func (f *fakeSyncOperator) Skip(
 	_ context.Context,
-	req *serviceports.SkipAccountingSyncRequest,
+	req *accountingsyncports.SkipAccountingSyncRequest,
 ) (*accountingsync.AccountingSyncRecord, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -135,8 +136,8 @@ func (f *fakeSyncOperator) Skip(
 
 func (f *fakeSyncOperator) PlanRedate(
 	_ context.Context,
-	req *serviceports.RedateAccountingSyncRequest,
-) (*serviceports.AccountingSyncRedatePlan, error) {
+	req *accountingsyncports.RedateAccountingSyncRequest,
+) (*accountingsyncports.AccountingSyncRedatePlan, error) {
 	record, ok := f.records[req.ID]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("Accounting sync record not found")
@@ -149,7 +150,7 @@ func (f *fakeSyncOperator) PlanRedate(
 			syncDocumentLabel(record),
 		).WithInternal(err)
 	}
-	return &serviceports.AccountingSyncRedatePlan{
+	return &accountingsyncports.AccountingSyncRedatePlan{
 		Before:   &before,
 		After:    &after,
 		SentDate: f.redateDay,
@@ -159,7 +160,7 @@ func (f *fakeSyncOperator) PlanRedate(
 
 func (f *fakeSyncOperator) Redate(
 	ctx context.Context,
-	req *serviceports.RedateAccountingSyncRequest,
+	req *accountingsyncports.RedateAccountingSyncRequest,
 ) (*accountingsync.AccountingSyncRecord, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -175,7 +176,7 @@ func (f *fakeSyncOperator) Redate(
 
 func (f *fakeSyncOperator) Pause(
 	_ context.Context,
-	req *serviceports.PauseAccountingSyncRequest,
+	req *accountingsyncports.PauseAccountingSyncRequest,
 ) (*accountingsync.AccountingConnection, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -188,7 +189,7 @@ func (f *fakeSyncOperator) Pause(
 
 func (f *fakeSyncOperator) Resume(
 	_ context.Context,
-	req *serviceports.PauseAccountingSyncRequest,
+	req *accountingsyncports.PauseAccountingSyncRequest,
 ) (*accountingsync.AccountingConnection, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -201,7 +202,7 @@ func (f *fakeSyncOperator) Resume(
 
 func (f *fakeSyncOperator) RequestBackfill(
 	_ context.Context,
-	req *serviceports.RequestAccountingBackfillRequest,
+	req *accountingsyncports.RequestAccountingBackfillRequest,
 ) (*accountingsync.AccountingBackfill, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -218,9 +219,9 @@ func (f *fakeSyncOperator) RequestBackfill(
 	return f.savedBackfill, nil
 }
 
-func syncingSummary() *serviceports.AccountingSyncSummary {
+func syncingSummary() *accountingsyncports.AccountingSyncSummary {
 	start, enabled := syncStartDay, syncEnabledDay
-	return &serviceports.AccountingSyncSummary{
+	return &accountingsyncports.AccountingSyncSummary{
 		IntegrationType: integration.TypeQuickBooksOnline,
 		ProviderName:    "QuickBooks Online",
 		Connection: &accountingsync.AccountingConnection{
@@ -233,12 +234,12 @@ func syncingSummary() *serviceports.AccountingSyncSummary {
 			SyncEnabledAt:       &enabled,
 			AutoSync:            true,
 		},
-		Counts: []repositories.AccountingSyncStatusCount{
+		Counts: []accountingsyncports.AccountingSyncStatusCount{
 			{Status: accountingsync.SyncStatusQueued, Count: 7},
 			{Status: accountingsync.SyncStatusRetrying, Count: 2},
 			{Status: accountingsync.SyncStatusDeadLettered, Count: 5},
 		},
-		Attention: []repositories.AccountingSyncAttentionGroup{
+		Attention: []accountingsyncports.AccountingSyncAttentionGroup{
 			{
 				Status:        accountingsync.SyncStatusDeadLettered,
 				ErrorCategory: accountingsync.SyncErrorTransient,
@@ -274,10 +275,10 @@ func newSyncOperator(records ...*accountingsync.AccountingSyncRecord) *fakeSyncO
 	return operator
 }
 
-func syncParams(params map[string]any) serviceports.ToolExecuteParams {
+func syncParams(params map[string]any) agentports.ToolExecuteParams {
 	out := executeParams(params)
 	out.IdempotencyKey = "call-1"
-	out.Actor.PrincipalType = serviceports.PrincipalTypeUser
+	out.Actor.PrincipalType = permissionports.PrincipalTypeUser
 	return out
 }
 
@@ -294,7 +295,7 @@ func TestRetryAccountingSync_RetriesNamedRecordsAsTheActor(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, &operator.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Empty(t, preview.Warnings)
 	assert.Contains(t, preview.Summary, "Would send 2 documents to QuickBooks Online again")
@@ -332,7 +333,7 @@ func TestRetryAccountingSync_RetriesByErrorCategory(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, &operator.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Transient or RateLimited")
 	assert.Contains(t, preview.Summary, "5 are blocked")
@@ -370,7 +371,7 @@ func TestRetryAccountingSync_RefusesWhatItCannotRetry(t *testing.T) {
 		{"system": "QuickBooksOnline", "syncRecordIds": []any{held.ID.String()}},
 		{"system": "QuickBooksOnline", "syncRecordIds": []any{pulid.MustNew("acctsr_").String()}},
 	} {
-		require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), syncParams(params)), params)
+		require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), syncParams(params)), params)
 	}
 
 	operator.summary.Connection.SyncEnabledAt = nil
@@ -399,7 +400,7 @@ func TestSkipAccountingSync_SkipsWithTheReasonAndNamesItsTarget(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, &operator.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Entered by hand in QuickBooks on the 3rd.")
 	change := previewChange(t, preview, 0)
@@ -419,9 +420,9 @@ func TestSkipAccountingSync_SkipsWithTheReasonAndNamesItsTarget(t *testing.T) {
 	require.Len(t, operator.savedRecords, 1)
 	requireUpdateParity(t, change, blocked, operator.savedRecords[0], syncRecordOptions()...)
 
-	target, ok := tool.(serviceports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
-	assert.Equal(t, serviceports.ToolTarget{
+	assert.Equal(t, agentports.ToolTarget{
 		Resource: permission.ResourceAccountingSync,
 		ID:       blocked.ID,
 	}, target)
@@ -459,7 +460,7 @@ func TestRedateAccountingSync_SendsOnTheFirstOpenDayAndNamesItsTarget(t *testing
 	params := syncParams(map[string]any{"syncRecordId": held.ID.String()})
 
 	preview := previewWithoutWrites(t, &operator.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "first open day")
 	assert.Contains(t, preview.Summary, timeutils.FormatCalendarDate(syncEnabledDay, nil))
@@ -479,9 +480,9 @@ func TestRedateAccountingSync_SendsOnTheFirstOpenDayAndNamesItsTarget(t *testing
 	assert.Equal(t, syncEnabledDay, *operator.savedRecords[0].RedatedTo)
 	requireUpdateParity(t, change, held, operator.savedRecords[0], syncRecordOptions()...)
 
-	target, ok := tool.(serviceports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
-	assert.Equal(t, serviceports.ToolTarget{
+	assert.Equal(t, agentports.ToolTarget{
 		Resource: permission.ResourceAccountingSync,
 		ID:       held.ID,
 	}, target)
@@ -524,7 +525,7 @@ func TestPauseAccountingSync_PausesWithAReason(t *testing.T) {
 	})
 	before := *operator.summary.Connection
 	preview := previewWithoutWrites(t, &operator.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "9 documents waiting")
 	change := previewChange(t, preview, 0)
@@ -568,7 +569,7 @@ func TestResumeAccountingSync_OnlyResumesWhatIsPaused(t *testing.T) {
 	operator.summary.Connection.PausedReason = "Month-end close"
 
 	preview := previewWithoutWrites(t, &operator.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "9 documents queued")
 	assert.Contains(t, preview.Summary, "Month-end close")
@@ -597,7 +598,7 @@ func TestRequestAccountingBackfill_SendsTheRangeAPersonAskedFor(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, &operator.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "2026-01-15 to 2026-02-10")
 	assert.Contains(t, preview.Summary, "arrive twice")
@@ -667,7 +668,7 @@ func TestRequestAccountingBackfill_DefaultsToTheWholeGap(t *testing.T) {
 	}))
 	require.NoError(t, err)
 	operator.summary.Connection.DriverSettlementsEnabledAt = nil
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), syncParams(map[string]any{
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), syncParams(map[string]any{
 		"system":        "QuickBooksOnline",
 		"documentTypes": []any{"DriverBill"},
 	}))
@@ -698,7 +699,7 @@ func TestRequestAccountingBackfill_RefusesWhatCannotBeBackfilled(t *testing.T) {
 	operator.summary.ActiveBackfill = nil
 
 	agentParams := syncParams(map[string]any{"system": "QuickBooksOnline"})
-	agentParams.Actor.PrincipalType = serviceports.PrincipalTypeAgent
+	agentParams.Actor.PrincipalType = permissionports.PrincipalTypeAgent
 	require.Error(t, tool.Execute(t.Context(), agentParams), "a backfill is a person's to start")
 	assert.Nil(t, operator.backfilled)
 }
@@ -708,7 +709,7 @@ func TestAccountingSyncTools_CarryTheirSafetyTiers(t *testing.T) {
 
 	operator := newSyncOperator()
 	cases := []struct {
-		tool       serviceports.AgentTool
+		tool       agentports.AgentTool
 		resource   permission.Resource
 		operation  permission.Operation
 		tier       agent.AutonomyTier

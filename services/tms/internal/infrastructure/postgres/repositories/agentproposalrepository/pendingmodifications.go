@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -21,7 +21,7 @@ import (
 // reads it, and the person would think it had gone with the approval.
 func (r *repository) SetPendingModifications(
 	ctx context.Context,
-	req repositories.SetPendingModificationsRequest,
+	req agentports.SetPendingModificationsRequest,
 ) (*agent.AgentProposal, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentProposal, error) {
 		log := r.l.With(

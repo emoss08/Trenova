@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -32,7 +32,7 @@ func TestExpirePendingByDefinitionExpiresOnlyThePendingPlansOfTheAgentsRuns(t *t
 
 	expired, err := repo.ExpirePendingByDefinition(
 		t.Context(),
-		repositories.ExpireAgentPlansByDefinitionRequest{
+		agentports.ExpireAgentPlansByDefinitionRequest{
 			AgentDefinitionID: agentID,
 			TenantInfo:        tenantInfo,
 		},

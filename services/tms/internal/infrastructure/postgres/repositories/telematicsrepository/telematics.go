@@ -9,9 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -35,7 +35,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.TelematicsRepository {
+func New(p Params) telematicsports.TelematicsRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.telematics-repository"),
@@ -78,7 +78,7 @@ func (r *repository) UpsertVehiclePositions(
 
 func (r *repository) ListVehiclePositions(
 	ctx context.Context,
-	req *repositories.ListVehiclePositionsRequest,
+	req *telematicsports.ListVehiclePositionsRequest,
 ) ([]*telematics.VehiclePosition, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*telematics.VehiclePosition, error) {
 		cols := buncolgen.VehiclePositionColumns
@@ -151,7 +151,7 @@ func (r *repository) UpsertWorkerHOSStates(
 
 func (r *repository) ListWorkerHOSStates(
 	ctx context.Context,
-	req *repositories.ListWorkerHOSStatesRequest,
+	req *telematicsports.ListWorkerHOSStatesRequest,
 ) ([]*telematics.WorkerHOSState, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*telematics.WorkerHOSState, error) {
 		cols := buncolgen.WorkerHOSStateColumns
@@ -184,7 +184,7 @@ func (r *repository) ListWorkerHOSStates(
 
 func (r *repository) GetWorkerHOSState(
 	ctx context.Context,
-	req repositories.GetWorkerHOSStateRequest,
+	req telematicsports.GetWorkerHOSStateRequest,
 ) (*telematics.WorkerHOSState, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*telematics.WorkerHOSState, error) {
 		entity := new(telematics.WorkerHOSState)
@@ -230,7 +230,7 @@ func (r *repository) UpsertWorkerHOSViolations(
 
 func (r *repository) ListWorkerHOSViolations(
 	ctx context.Context,
-	req *repositories.ListWorkerHOSViolationsRequest,
+	req *telematicsports.ListWorkerHOSViolationsRequest,
 ) ([]*telematics.WorkerHOSViolation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*telematics.WorkerHOSViolation, error) {
 		cols := buncolgen.WorkerHOSViolationColumns
@@ -263,12 +263,12 @@ func (r *repository) ListWorkerHOSViolations(
 
 func (r *repository) ListWorkerHOSViolationStats(
 	ctx context.Context,
-	req *repositories.ListWorkerHOSViolationStatsRequest,
-) ([]*repositories.WorkerHOSViolationStats, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.WorkerHOSViolationStats, error) {
+	req *telematicsports.ListWorkerHOSViolationStatsRequest,
+) ([]*telematicsports.WorkerHOSViolationStats, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*telematicsports.WorkerHOSViolationStats, error) {
 		cols := buncolgen.WorkerHOSViolationColumns
 
-		rows := make([]*repositories.WorkerHOSViolationStats, 0, len(req.WorkerIDs))
+		rows := make([]*telematicsports.WorkerHOSViolationStats, 0, len(req.WorkerIDs))
 		err := r.db.DBForContext(ctx).NewSelect().
 			TableExpr(buncolgen.WorkerHOSViolationTable.Name+" AS "+buncolgen.WorkerHOSViolationTable.Alias).
 			ColumnExpr(cols.WorkerID.As("worker_id")).
@@ -297,7 +297,7 @@ func (r *repository) ListWorkerHOSViolationStats(
 
 func (r *repository) SyncWorkerHOSLogs(
 	ctx context.Context,
-	req *repositories.SyncWorkerHOSLogsRequest,
+	req *telematicsports.SyncWorkerHOSLogsRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		if len(req.WorkerIDs) == 0 {
@@ -350,7 +350,7 @@ func (r *repository) SyncWorkerHOSLogs(
 
 func (r *repository) ListWorkerHOSLogs(
 	ctx context.Context,
-	req *repositories.ListWorkerHOSLogsRequest,
+	req *telematicsports.ListWorkerHOSLogsRequest,
 ) ([]*telematics.WorkerHOSLog, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*telematics.WorkerHOSLog, error) {
 		cols := buncolgen.WorkerHOSLogColumns
@@ -412,7 +412,7 @@ func (r *repository) UpsertVehicleInspections(
 
 func (r *repository) ListVehicleInspections(
 	ctx context.Context,
-	req *repositories.ListVehicleInspectionsRequest,
+	req *telematicsports.ListVehicleInspectionsRequest,
 ) ([]*telematics.VehicleInspection, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*telematics.VehicleInspection, error) {
 		cols := buncolgen.VehicleInspectionColumns
@@ -492,9 +492,9 @@ func (r *repository) RecordStopOutcome(
 
 func (r *repository) ListOpenStopReviews(
 	ctx context.Context,
-	req *repositories.ListOpenStopReviewsRequest,
-) ([]*repositories.StopReview, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.StopReview, error) {
+	req *telematicsports.ListOpenStopReviewsRequest,
+) ([]*telematicsports.StopReview, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*telematicsports.StopReview, error) {
 		cols := buncolgen.TelematicsEventColumns
 		moveCols := buncolgen.ShipmentMoveColumns
 		stopCols := buncolgen.StopColumns
@@ -563,10 +563,10 @@ func (r *repository) ListOpenStopReviews(
 			return nil, fmt.Errorf("list open telematics stop reviews: %w", err)
 		}
 
-		reviews := make([]*repositories.StopReview, 0, len(rows))
+		reviews := make([]*telematicsports.StopReview, 0, len(rows))
 		for i := range rows {
 			event := rows[i].TelematicsEvent
-			reviews = append(reviews, &repositories.StopReview{
+			reviews = append(reviews, &telematicsports.StopReview{
 				Event:      &event,
 				ShipmentID: rows[i].ShipmentID,
 			})
@@ -623,11 +623,11 @@ func (r *repository) UpsertFeedState(
 func (r *repository) ListWorkerMappings(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) ([]repositories.WorkerTelematicsMapping, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.WorkerTelematicsMapping, error) {
+) ([]telematicsports.WorkerTelematicsMapping, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]telematicsports.WorkerTelematicsMapping, error) {
 		cols := buncolgen.WorkerColumns
 
-		rows := make([]repositories.WorkerTelematicsMapping, 0)
+		rows := make([]telematicsports.WorkerTelematicsMapping, 0)
 		err := r.db.DBForContext(ctx).NewSelect().
 			TableExpr(buncolgen.WorkerTable.Name+" AS "+buncolgen.WorkerTable.Alias).
 			ColumnExpr(cols.ID.As("worker_id")).
@@ -651,11 +651,11 @@ func (r *repository) ListWorkerMappings(
 func (r *repository) ListTractorMappings(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) ([]repositories.TractorTelematicsMapping, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.TractorTelematicsMapping, error) {
+) ([]telematicsports.TractorTelematicsMapping, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]telematicsports.TractorTelematicsMapping, error) {
 		cols := buncolgen.TractorColumns
 
-		rows := make([]repositories.TractorTelematicsMapping, 0)
+		rows := make([]telematicsports.TractorTelematicsMapping, 0)
 		err := r.db.DBForContext(ctx).NewSelect().
 			TableExpr(buncolgen.TractorTable.Name+" AS "+buncolgen.TractorTable.Alias).
 			ColumnExpr(cols.ID.As("tractor_id")).
@@ -677,7 +677,7 @@ func (r *repository) ListTractorMappings(
 
 func (r *repository) AssignTractorExternalIDs(
 	ctx context.Context,
-	req repositories.AssignTractorExternalIDsRequest,
+	req telematicsports.AssignTractorExternalIDsRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		if len(req.Assignments) == 0 {
@@ -719,11 +719,11 @@ func (r *repository) AssignTractorExternalIDs(
 func (r *repository) ListTrailerMappings(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) ([]repositories.TrailerTelematicsMapping, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.TrailerTelematicsMapping, error) {
+) ([]telematicsports.TrailerTelematicsMapping, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]telematicsports.TrailerTelematicsMapping, error) {
 		cols := buncolgen.TrailerColumns
 
-		rows := make([]repositories.TrailerTelematicsMapping, 0)
+		rows := make([]telematicsports.TrailerTelematicsMapping, 0)
 		err := r.db.DBForContext(ctx).NewSelect().
 			TableExpr(buncolgen.TrailerTable.Name+" AS "+buncolgen.TrailerTable.Alias).
 			ColumnExpr(cols.ID.As("trailer_id")).
@@ -745,7 +745,7 @@ func (r *repository) ListTrailerMappings(
 
 func (r *repository) AssignTrailerExternalIDs(
 	ctx context.Context,
-	req repositories.AssignTrailerExternalIDsRequest,
+	req telematicsports.AssignTrailerExternalIDsRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		if len(req.Assignments) == 0 {
@@ -786,7 +786,7 @@ func (r *repository) AssignTrailerExternalIDs(
 
 func (r *repository) UpdateWorkerRulesets(
 	ctx context.Context,
-	req repositories.UpdateWorkerRulesetsRequest,
+	req telematicsports.UpdateWorkerRulesetsRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		if len(req.Assignments) == 0 {
@@ -831,9 +831,9 @@ func (r *repository) GetWebhookConfigByToken(
 	ctx context.Context,
 	typ integration.Type,
 	token string,
-) (*repositories.TelematicsWebhookConfig, error) {
+) (*telematicsports.TelematicsWebhookConfig, error) {
 	ctx = dbscope.WithSystem(ctx, "resolve the telematics webhook a provider called before its tenant is known")
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.TelematicsWebhookConfig, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*telematicsports.TelematicsWebhookConfig, error) {
 		var row struct {
 			OrganizationID string `bun:"organization_id"`
 			BusinessUnitID string `bun:"business_unit_id"`
@@ -866,7 +866,7 @@ func (r *repository) GetWebhookConfigByToken(
 			return nil, fmt.Errorf("parse webhook business unit id: %w", err)
 		}
 
-		return &repositories.TelematicsWebhookConfig{
+		return &telematicsports.TelematicsWebhookConfig{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: orgID,
 				BuID:  buID,

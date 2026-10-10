@@ -5,8 +5,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -16,7 +17,7 @@ import (
 )
 
 type chainRepo struct {
-	repositories.AIProviderRepository
+	agentports.AIProviderRepository
 	providers map[pulid.ID]*aiprovider.Provider
 	order     []pulid.ID
 	updated   []*aiprovider.Provider
@@ -43,7 +44,7 @@ func (r *chainRepo) ListOrdered(context.Context, pagination.TenantInfo) ([]*aipr
 
 func (r *chainRepo) GetByID(
 	_ context.Context,
-	req repositories.GetAIProviderByIDRequest,
+	req agentports.GetAIProviderByIDRequest,
 ) (*aiprovider.Provider, error) {
 	provider, ok := r.providers[req.ID]
 	if !ok {
@@ -62,11 +63,11 @@ func (r *chainRepo) Update(_ context.Context, entity *aiprovider.Provider) (*aip
 }
 
 type auditLog struct {
-	services.AuditService
+	auditports.AuditService
 	comments int
 }
 
-func (a *auditLog) LogAction(*services.LogActionParams, ...services.LogOption) error {
+func (a *auditLog) LogAction(*auditports.LogActionParams, ...auditports.LogOption) error {
 	a.comments++
 	return nil
 }
@@ -116,10 +117,10 @@ func TestReorderWritesOnlyTheProvidersWhosePlaceChanged(t *testing.T) {
 	)
 	svc, audit, versions := chainService(repo)
 
-	ordered, err := svc.Reorder(t.Context(), &services.ReorderAIProvidersRequest{
+	ordered, err := svc.Reorder(t.Context(), &agentports.ReorderAIProvidersRequest{
 		TenantInfo:  chainTenant,
 		ProviderIDs: []pulid.ID{"aip_a", "aip_c", "aip_b"},
-	}, &services.RequestActor{UserID: pulid.ID("usr_1")})
+	}, &permissionports.RequestActor{UserID: pulid.ID("usr_1")})
 	require.NoError(t, err)
 
 	assert.Equal(t, 10, repo.providers["aip_a"].Priority)
@@ -148,7 +149,7 @@ func TestReorderRefusesAnOrderThatDoesNotNameEveryProviderOnce(t *testing.T) {
 		"duplicate": {"aip_a", "aip_a"},
 		"unknown":   {"aip_a", "aip_x"},
 	} {
-		_, err := svc.Reorder(t.Context(), &services.ReorderAIProvidersRequest{
+		_, err := svc.Reorder(t.Context(), &agentports.ReorderAIProvidersRequest{
 			TenantInfo: chainTenant, ProviderIDs: ids,
 		}, nil)
 		require.Error(t, err, name)
@@ -162,7 +163,7 @@ func TestAssignTaskAddsTheTaskOnce(t *testing.T) {
 	repo := newChainRepo(chainProvider("aip_a", 10, aiprovider.TaskAssistantChat))
 	svc, audit, _ := chainService(repo)
 
-	saved, err := svc.AssignTask(t.Context(), &services.AssignAIProviderTaskRequest{
+	saved, err := svc.AssignTask(t.Context(), &agentports.AssignAIProviderTaskRequest{
 		TenantInfo: chainTenant, ProviderID: "aip_a", Task: aiprovider.TaskOperationalInsights,
 	}, nil)
 	require.NoError(t, err)
@@ -172,7 +173,7 @@ func TestAssignTaskAddsTheTaskOnce(t *testing.T) {
 	assert.Empty(t, saved.APIKey)
 	assert.Equal(t, 1, audit.comments)
 
-	again, err := svc.AssignTask(t.Context(), &services.AssignAIProviderTaskRequest{
+	again, err := svc.AssignTask(t.Context(), &agentports.AssignAIProviderTaskRequest{
 		TenantInfo: chainTenant, ProviderID: "aip_a", Task: aiprovider.TaskOperationalInsights,
 	}, nil)
 	require.NoError(t, err)
@@ -185,7 +186,7 @@ func TestAssignTaskRefusesAnUnknownTask(t *testing.T) {
 	repo := newChainRepo(chainProvider("aip_a", 10, aiprovider.TaskGeneral))
 	svc, _, _ := chainService(repo)
 
-	_, err := svc.AssignTask(t.Context(), &services.AssignAIProviderTaskRequest{
+	_, err := svc.AssignTask(t.Context(), &agentports.AssignAIProviderTaskRequest{
 		TenantInfo: chainTenant, ProviderID: "aip_a", Task: aiprovider.Task("Juggling"),
 	}, nil)
 	require.Error(t, err)

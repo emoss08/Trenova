@@ -7,9 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -47,7 +47,7 @@ func (s *stubApprover) Approve(
 
 func (s *stubApprover) GetOccurrenceDetail(
 	context.Context,
-	*repositories.GetDetentionOccurrenceByIDRequest,
+	*detentionports.GetDetentionOccurrenceByIDRequest,
 ) (*detentionservice.OccurrenceDetail, error) {
 	return &detentionservice.OccurrenceDetail{
 		Occurrence: s.occurrence,
@@ -69,7 +69,7 @@ func heldOccurrence(status detention.OccurrenceStatus) *detention.DetentionOccur
 	}
 }
 
-func approveParams(occurrenceID pulid.ID) serviceports.ToolExecuteParams {
+func approveParams(occurrenceID pulid.ID) agentports.ToolExecuteParams {
 	params := deskParams(map[string]any{
 		"occurrenceId": occurrenceID.String(),
 		"evidence": " Arrival 08:02 and departure 12:40 on the ELD; notice sent 09:55, " +
@@ -87,9 +87,9 @@ func TestApproveDetention_ApprovesAsThePersonWhoApprovedTheProposal(t *testing.T
 	tool := newApproveDetentionTool(stub)
 	params := approveParams(stub.occurrence.ID)
 
-	require.NoError(t, tool.(serviceports.ToolValidator).Validate(t.Context(), params))
+	require.NoError(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
 
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.Nil(t, stub.approved, "a preview must not approve")
 	assert.Contains(t, preview.Summary, "425.00 USD")
@@ -124,7 +124,7 @@ func TestApproveDetention_RefusesAnythingButAPendingCharge(t *testing.T) {
 		tool := newApproveDetentionTool(stub)
 		params := approveParams(stub.occurrence.ID)
 
-		err := tool.(serviceports.ToolValidator).Validate(t.Context(), params)
+		err := tool.(agentports.ToolValidator).Validate(t.Context(), params)
 		require.Error(t, err, status)
 		assert.Contains(t, err.Error(), "only a pending charge can be approved", status)
 		assert.Contains(t, err.Error(), string(status), status)

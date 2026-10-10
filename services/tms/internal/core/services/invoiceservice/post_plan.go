@@ -4,16 +4,18 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/core/services/invoiceledger"
-
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/billingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp"
+	"github.com/emoss08/trenova/internal/core/services/invoiceledger"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -25,7 +27,7 @@ import (
 func (s *Service) planPost(
 	ctx context.Context,
 	entity *invoice.Invoice,
-	req *servicesports.PostInvoiceRequest,
+	req *invoiceports.PostInvoiceRequest,
 	now int64,
 ) (bool, error) {
 	if s.billingRepo != nil {
@@ -87,12 +89,12 @@ type PostPreview struct {
 	QueueAfter    *billingqueue.BillingQueueItem
 	// Journal is the ledger entry posting writes; nil when the organization's
 	// accounting control creates none for this invoice.
-	Journal *servicesports.JournalPreview
+	Journal *kernelports.JournalPreview
 	// AccountingSync is where the invoice is queued for the accounting
 	// system; empty when no connection covers it.
-	AccountingSync []servicesports.AccountingSyncDestination
+	AccountingSync []accountingsyncports.AccountingSyncDestination
 	// EDI is the invoice's outbound 210 as it would stand after posting.
-	EDI *servicesports.InvoiceEDISendPlan
+	EDI *invoiceports.InvoiceEDISendPlan
 }
 
 // Refused reports whether Post would refuse the invoice as it stands.
@@ -110,8 +112,8 @@ type LegChange struct {
 // deciding whether to post it.
 func (s *Service) PreviewPost(
 	ctx context.Context,
-	req *servicesports.PostInvoiceRequest,
-	actor *servicesports.RequestActor,
+	req *invoiceports.PostInvoiceRequest,
+	actor *permissionports.RequestActor,
 ) (*PostPreview, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
@@ -121,7 +123,7 @@ func (s *Service) PreviewPost(
 		)
 	}
 
-	entity, err := s.repo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+	entity, err := s.repo.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         req.InvoiceID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -147,7 +149,7 @@ func (s *Service) PreviewPost(
 
 	queueBefore, err := s.billingQueueRepo.GetByID(
 		ctx,
-		&repositories.GetBillingQueueItemByIDRequest{
+		&billingqueueports.GetBillingQueueItemByIDRequest{
 			ItemID:     entity.BillingQueueItemID,
 			TenantInfo: req.TenantInfo,
 		},
@@ -190,22 +192,22 @@ func (s *Service) PreviewPost(
 func (s *Service) previewJournal(
 	ctx context.Context,
 	entity *invoice.Invoice,
-	actor *servicesports.RequestActor,
-) (*servicesports.JournalPreview, error) {
+	actor *permissionports.RequestActor,
+) (*kernelports.JournalPreview, error) {
 	plan, err := s.planInvoiceJournal(ctx, entity, actor)
 	if err != nil {
 		return nil, err
 	}
 
-	journal := &servicesports.JournalPreview{
+	journal := &kernelports.JournalPreview{
 		AccountingDate:   plan.Journal.AccountingDate,
 		FiscalPeriodID:   plan.Journal.Period.ID,
 		EntryStatus:      plan.Journal.Workflow.EntryStatus,
 		RequiresApproval: plan.Journal.Workflow.RequiresApproval,
-		Lines:            make([]servicesports.JournalLinePreview, 0, len(plan.Journal.Lines)),
+		Lines:            make([]kernelports.JournalLinePreview, 0, len(plan.Journal.Lines)),
 	}
 	for _, line := range plan.Journal.Lines {
-		journal.Lines = append(journal.Lines, servicesports.JournalLinePreview{
+		journal.Lines = append(journal.Lines, kernelports.JournalLinePreview{
 			GLAccountID: line.GLAccountID,
 			Description: line.Description,
 			DebitMinor:  line.DebitAmount,
@@ -219,13 +221,13 @@ func (s *Service) previewJournal(
 func (s *Service) accountingSyncDestinations(
 	ctx context.Context,
 	entity *invoice.Invoice,
-) ([]servicesports.AccountingSyncDestination, error) {
-	planner, plans := s.accountingSync.(servicesports.AccountingSyncPlanner)
+) ([]accountingsyncports.AccountingSyncDestination, error) {
+	planner, plans := s.accountingSync.(accountingsyncports.AccountingSyncPlanner)
 	if !plans {
 		return nil, nil
 	}
 
-	return planner.Destinations(ctx, servicesports.InvoiceSyncRequest(
+	return planner.Destinations(ctx, accountingsyncports.InvoiceSyncRequest(
 		entity,
 		accountingsync.PostedSourceEvent(entity.BillType),
 	))

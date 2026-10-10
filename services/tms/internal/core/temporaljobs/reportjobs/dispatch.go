@@ -4,12 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/reportjobs/reportcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/reportjobs/reportcontract"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -84,7 +83,7 @@ func (a *Activities) dispatchSchedule(
 	}
 	tenantCtx := dbscope.WithTenant(ctx, tenant.DBTenant())
 
-	definition, err := a.defRepo.GetByID(tenantCtx, &repositories.GetReportDefinitionRequest{
+	definition, err := a.defRepo.GetByID(tenantCtx, &reportports.GetReportDefinitionRequest{
 		TenantInfo:   tenant,
 		DefinitionID: schedule.DefinitionID,
 	})
@@ -110,7 +109,7 @@ func (a *Activities) dispatchSchedule(
 		return updateErr
 	}
 
-	revisions, err := a.defRepo.ListRevisions(tenantCtx, &repositories.ListReportRevisionsRequest{
+	revisions, err := a.defRepo.ListRevisions(tenantCtx, &reportports.ListReportRevisionsRequest{
 		TenantInfo:   tenant,
 		DefinitionID: definition.ID,
 		Limit:        1,
@@ -229,7 +228,7 @@ func (a *Activities) notifyScheduleOwner(
 	payload := map[string]any{
 		dataKeyScheduleID: schedule.ID.String(),
 	}
-	if def, err := a.defRepo.GetByID(tenantCtx, &repositories.GetReportDefinitionRequest{
+	if def, err := a.defRepo.GetByID(tenantCtx, &reportports.GetReportDefinitionRequest{
 		TenantInfo:   tenantInfo,
 		DefinitionID: schedule.DefinitionID,
 	}); err == nil {
@@ -272,7 +271,7 @@ func (a *Activities) recordScheduleRunOutcome(ctx context.Context, run *report.R
 		return
 	}
 
-	schedule, err := a.scheduleRepo.GetByID(ctx, &repositories.GetReportScheduleRequest{
+	schedule, err := a.scheduleRepo.GetByID(ctx, &reportports.GetReportScheduleRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: run.OrganizationID,
 			BuID:  run.BusinessUnitID,

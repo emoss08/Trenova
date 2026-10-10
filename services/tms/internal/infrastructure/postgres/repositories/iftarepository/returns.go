@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/ifta"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -29,7 +29,7 @@ func openReturnConflict() error {
 
 func (r *repository) applyReturnFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListReturnsRequest,
+	req *iftaports.ListReturnsRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.ReturnColumns
 	if req.Year > 0 {
@@ -43,7 +43,7 @@ func (r *repository) applyReturnFilters(
 
 func (r *repository) ListReturns(
 	ctx context.Context,
-	req *repositories.ListReturnsRequest,
+	req *iftaports.ListReturnsRequest,
 ) (*pagination.CursorListResult[*ifta.Return], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*ifta.Return], error) {
 		dba := r.db.DBForContext(ctx)
@@ -117,7 +117,7 @@ func (r *repository) ListReturns(
 
 func (r *repository) GetReturnByID(
 	ctx context.Context,
-	req *repositories.GetReturnByIDRequest,
+	req *iftaports.GetReturnByIDRequest,
 ) (*ifta.Return, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ifta.Return, error) {
 		rel := buncolgen.ReturnRelations
@@ -148,7 +148,7 @@ func (r *repository) GetReturnByID(
 
 func (r *repository) GetReturnsByIDs(
 	ctx context.Context,
-	req *repositories.GetReturnsByIDsRequest,
+	req *iftaports.GetReturnsByIDsRequest,
 ) ([]*ifta.Return, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*ifta.Return, error) {
 		entities := make([]*ifta.Return, 0, len(req.IDs))
@@ -175,7 +175,7 @@ func (r *repository) GetReturnsByIDs(
 
 func (r *repository) GetOpenReturnForPeriod(
 	ctx context.Context,
-	req *repositories.GetOpenReturnForPeriodRequest,
+	req *iftaports.GetOpenReturnForPeriodRequest,
 ) (*ifta.Return, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ifta.Return, error) {
 		cols := buncolgen.ReturnColumns
@@ -206,7 +206,7 @@ func (r *repository) GetOpenReturnForPeriod(
 
 func (r *repository) GetLatestReturnForPeriod(
 	ctx context.Context,
-	req *repositories.GetLatestReturnForPeriodRequest,
+	req *iftaports.GetLatestReturnForPeriodRequest,
 ) (*ifta.Return, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ifta.Return, error) {
 		cols := buncolgen.ReturnColumns
@@ -293,7 +293,7 @@ func (r *repository) ReplaceReturnLines(
 		now := timeutils.NowUnix()
 		ret.ComputedAt = &now
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
 			if _, dErr := tx.NewDelete().
 				Model((*ifta.ReturnLine)(nil)).
 				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
@@ -343,13 +343,13 @@ func (r *repository) ReplaceReturnLines(
 
 func (r *repository) DeleteReturn(
 	ctx context.Context,
-	req *repositories.DeleteReturnRequest,
+	req *iftaports.DeleteReturnRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.ReturnColumns
 		lineCols := buncolgen.ReturnLineColumns
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
 			if _, lErr := tx.NewDelete().
 				Model((*ifta.ReturnLine)(nil)).
 				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {

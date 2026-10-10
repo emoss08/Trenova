@@ -6,8 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"golang.org/x/sync/errgroup"
 )
@@ -20,8 +21,8 @@ var boardAITasks = [...]aiprovider.Task{
 func (s *Service) Capabilities(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*services.ShipmentBoardCapabilities, error) {
-	out := new(services.ShipmentBoardCapabilities)
+) (*shipmentports.ShipmentBoardCapabilities, error) {
+	out := new(shipmentports.ShipmentBoardCapabilities)
 	g, gctx := errgroup.WithContext(ctx)
 
 	g.Go(func() error {
@@ -32,7 +33,7 @@ func (s *Service) Capabilities(
 	g.Go(func() error {
 		caps, err := s.organizations.GetCapabilities(
 			gctx,
-			repositories.GetOrganizationCapabilitiesRequest{TenantInfo: tenantInfo},
+			tenantports.GetOrganizationCapabilitiesRequest{TenantInfo: tenantInfo},
 		)
 		if err != nil {
 			return err
@@ -81,7 +82,7 @@ func (s *Service) anyAITask(
 	tasks []aiprovider.Task,
 ) (bool, error) {
 	for _, task := range tasks {
-		providers, err := s.aiProviders.ListForTask(ctx, repositories.ListAIProvidersForTaskRequest{
+		providers, err := s.aiProviders.ListForTask(ctx, agentports.ListAIProvidersForTaskRequest{
 			Task:       task,
 			TenantInfo: tenantInfo,
 		})

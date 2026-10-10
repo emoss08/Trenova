@@ -1,6 +1,8 @@
 package ediinboundservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
@@ -12,9 +14,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/internal/core/services/editransport"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/as2"
@@ -92,17 +94,17 @@ func TestReceiveAS2MessageStagesFileAndReturnsMDN(t *testing.T) {
 		},
 	}
 
-	profileRepo := mocks.NewMockEDICommunicationProfileRepository(t)
+	profileRepo := ediportsmock.NewMockEDICommunicationProfileRepository(t)
 	profileRepo.EXPECT().
 		GetActiveAS2ProfileByIdentifiers(
 			mock.Anything,
-			repositories.GetActiveAS2ProfileByIdentifiersRequest{
+			ediports.GetActiveAS2ProfileByIdentifiersRequest{
 				LocalAS2ID:   "TRENOVA-AS2",
 				PartnerAS2ID: "PARTNER-AS2",
 			},
 		).
 		Return(profile, nil)
-	inboundFileRepo := mocks.NewMockEDIInboundFileRepository(t)
+	inboundFileRepo := ediportsmock.NewMockEDIInboundFileRepository(t)
 	inboundFileRepo.EXPECT().
 		ExistsByChecksum(mock.Anything, mock.Anything).
 		Return(false, nil).
@@ -118,7 +120,7 @@ func TestReceiveAS2MessageStagesFileAndReturnsMDN(t *testing.T) {
 			return file, nil
 		}).
 		Once()
-	workflowStarter := mocks.NewMockWorkflowStarter(t)
+	workflowStarter := kernelportsmock.NewMockWorkflowStarter(t)
 	workflowStarter.EXPECT().Enabled().Return(true)
 	workflowStarter.EXPECT().
 		StartWorkflow(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
@@ -205,7 +207,7 @@ func TestReceiveAS2MessageRejectsUnsignedWhenPartnerCertConfigured(t *testing.T)
 			editransport.SecretKeyAS2PrivateKey: trenova.keyPEM,
 		},
 	}
-	profileRepo := mocks.NewMockEDICommunicationProfileRepository(t)
+	profileRepo := ediportsmock.NewMockEDICommunicationProfileRepository(t)
 	profileRepo.EXPECT().
 		GetActiveAS2ProfileByIdentifiers(mock.Anything, mock.Anything).
 		Return(profile, nil).
@@ -266,12 +268,12 @@ func TestReceiveAS2MessageAcceptsUnsignedWhenRequirementsDisabled(t *testing.T) 
 			editransport.SecretKeyAS2PrivateKey: trenova.keyPEM,
 		},
 	}
-	profileRepo := mocks.NewMockEDICommunicationProfileRepository(t)
+	profileRepo := ediportsmock.NewMockEDICommunicationProfileRepository(t)
 	profileRepo.EXPECT().
 		GetActiveAS2ProfileByIdentifiers(mock.Anything, mock.Anything).
 		Return(profile, nil).
 		Once()
-	inboundFileRepo := mocks.NewMockEDIInboundFileRepository(t)
+	inboundFileRepo := ediportsmock.NewMockEDIInboundFileRepository(t)
 	inboundFileRepo.EXPECT().
 		ExistsByChecksum(mock.Anything, mock.Anything).
 		Return(false, nil).
@@ -285,7 +287,7 @@ func TestReceiveAS2MessageAcceptsUnsignedWhenRequirementsDisabled(t *testing.T) 
 			return file, nil
 		}).
 		Once()
-	workflowStarter := mocks.NewMockWorkflowStarter(t)
+	workflowStarter := kernelportsmock.NewMockWorkflowStarter(t)
 	workflowStarter.EXPECT().Enabled().Return(true)
 	workflowStarter.EXPECT().
 		StartWorkflow(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
@@ -324,7 +326,7 @@ func TestReceiveAS2MessageAcceptsUnsignedWhenRequirementsDisabled(t *testing.T) 
 func TestReceiveAS2MessageRejectsUnknownIdentifiers(t *testing.T) {
 	t.Parallel()
 
-	profileRepo := mocks.NewMockEDICommunicationProfileRepository(t)
+	profileRepo := ediportsmock.NewMockEDICommunicationProfileRepository(t)
 	profileRepo.EXPECT().
 		GetActiveAS2ProfileByIdentifiers(mock.Anything, mock.Anything).
 		Return(nil, errortypes.NewNotFoundError("EDICommunicationProfile not found")).
@@ -409,7 +411,7 @@ func TestReceiveAS2MessageReturnsFailureMDNOnBadPayload(t *testing.T) {
 			editransport.SecretKeyAS2PrivateKey: trenova.keyPEM,
 		},
 	}
-	profileRepo := mocks.NewMockEDICommunicationProfileRepository(t)
+	profileRepo := ediportsmock.NewMockEDICommunicationProfileRepository(t)
 	profileRepo.EXPECT().
 		GetActiveAS2ProfileByIdentifiers(mock.Anything, mock.Anything).
 		Return(profile, nil).

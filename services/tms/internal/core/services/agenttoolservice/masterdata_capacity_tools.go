@@ -8,10 +8,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/carriercapacity"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carriercapacityports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -34,7 +36,7 @@ var (
 type capacityKeeper interface {
 	Get(
 		ctx context.Context,
-		req *repositories.GetCarrierCapacityPostingRequest,
+		req *carriercapacityports.GetCarrierCapacityPostingRequest,
 	) (*carriercapacity.Posting, error)
 	PlanCreate(
 		ctx context.Context,
@@ -43,25 +45,25 @@ type capacityKeeper interface {
 	Create(
 		ctx context.Context,
 		entity *carriercapacity.Posting,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*carriercapacity.Posting, error)
 	PlanUpdate(
 		ctx context.Context,
 		entity *carriercapacity.Posting,
-	) (*serviceports.RecordChange[carriercapacity.Posting], error)
+	) (*kernelports.RecordChange[carriercapacity.Posting], error)
 	Update(
 		ctx context.Context,
 		entity *carriercapacity.Posting,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*carriercapacity.Posting, error)
 	PlanDelete(
 		ctx context.Context,
-		req *repositories.DeleteCarrierCapacityPostingRequest,
+		req *carriercapacityports.DeleteCarrierCapacityPostingRequest,
 	) (*carriercapacity.Posting, error)
 	Delete(
 		ctx context.Context,
-		req *repositories.DeleteCarrierCapacityPostingRequest,
-		actor *serviceports.RequestActor,
+		req *carriercapacityports.DeleteCarrierCapacityPostingRequest,
+		actor *permissionports.RequestActor,
 	) error
 }
 
@@ -220,7 +222,7 @@ func getCapacity(keeper capacityKeeper) func(
 		tenant pagination.TenantInfo,
 		id pulid.ID,
 	) (*carriercapacity.Posting, error) {
-		return keeper.Get(ctx, &repositories.GetCarrierCapacityPostingRequest{
+		return keeper.Get(ctx, &carriercapacityports.GetCarrierCapacityPostingRequest{
 			ID:         id,
 			TenantInfo: tenant,
 		})
@@ -230,7 +232,7 @@ func getCapacity(keeper capacityKeeper) func(
 func newCreateCarrierCapacityPostingTool(
 	keeper capacityKeeper,
 	states stateLookup,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newMasterCreateTool(&masterCreateSpec[carriercapacity.Posting]{
 		record: capacityRecord,
 		name:   "create_carrier_capacity_posting",
@@ -270,7 +272,7 @@ func newCreateCarrierCapacityPostingTool(
 func newUpdateCarrierCapacityPostingTool(
 	keeper capacityKeeper,
 	states stateLookup,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newMasterUpdateTool(&masterUpdateSpec[carriercapacity.Posting]{
 		record: capacityRecord,
 		name:   "update_carrier_capacity_posting",
@@ -288,7 +290,7 @@ func newUpdateCarrierCapacityPostingTool(
 	})
 }
 
-func newDeleteCarrierCapacityPostingTool(keeper capacityKeeper) serviceports.AgentTool {
+func newDeleteCarrierCapacityPostingTool(keeper capacityKeeper) agentports.AgentTool {
 	return newReceivableTool(&receivableSpec{
 		name:        "delete_carrier_capacity_posting",
 		description: "Remove a carrier capacity posting the carrier withdrew or that was entered by mistake.",
@@ -309,15 +311,15 @@ func newDeleteCarrierCapacityPostingTool(keeper capacityKeeper) serviceports.Age
 		searchTerms: []string{"remove carrier capacity", "withdraw truck posting"},
 		target:      capacityRecord.target,
 	}, receivablePlan[pulid.ID, *carriercapacity.Posting]{
-		request: func(params *serviceports.ToolExecuteParams) (pulid.ID, error) {
+		request: func(params *agentports.ToolExecuteParams) (pulid.ID, error) {
 			return requirePulid(params.Params, paramPostingID)
 		},
 		plan: func(
 			ctx context.Context,
 			id pulid.ID,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*carriercapacity.Posting, error) {
-			return keeper.PlanDelete(ctx, &repositories.DeleteCarrierCapacityPostingRequest{
+			return keeper.PlanDelete(ctx, &carriercapacityports.DeleteCarrierCapacityPostingRequest{
 				ID:         id,
 				TenantInfo: tenantFrom(*params),
 			})
@@ -336,17 +338,17 @@ func newDeleteCarrierCapacityPostingTool(keeper capacityKeeper) serviceports.Age
 		run: func(
 			ctx context.Context,
 			id pulid.ID,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			tenant := tenantFrom(*params)
-			current, err := keeper.Get(ctx, &repositories.GetCarrierCapacityPostingRequest{
+			current, err := keeper.Get(ctx, &carriercapacityports.GetCarrierCapacityPostingRequest{
 				ID:         id,
 				TenantInfo: tenant,
 			})
 			if err != nil {
 				return nil, err
 			}
-			if err = keeper.Delete(ctx, &repositories.DeleteCarrierCapacityPostingRequest{
+			if err = keeper.Delete(ctx, &carriercapacityports.DeleteCarrierCapacityPostingRequest{
 				ID:         id,
 				Version:    current.Version,
 				TenantInfo: tenant,

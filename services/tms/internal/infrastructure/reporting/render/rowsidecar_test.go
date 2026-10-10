@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/pkg/reportrows"
 	"github.com/shopspring/decimal"
@@ -21,7 +21,7 @@ import (
 // diff reads these two objects as interchangeable.
 func TestRowsSidecarMatchesJSONRender(t *testing.T) {
 	var direct bytes.Buffer
-	_, err := NewJSON().Render(t.Context(), &services.ReportRenderRequest{
+	_, err := NewJSON().Render(t.Context(), &reportports.ReportRenderRequest{
 		Dataset: &fakeReader{schema: testSchema(), rows: testRows(), totals: testTotals()},
 		Sink:    &direct,
 		Meta:    testMeta(),
@@ -38,7 +38,7 @@ func TestRowsSidecarMatchesJSONRender(t *testing.T) {
 	// A format that is not JSON, driving the same reader.
 	stats, err := NewCSV(CSVParams{Config: testConfig()}).Render(
 		t.Context(),
-		&services.ReportRenderRequest{Dataset: sidecar, Sink: &bytes.Buffer{}, Meta: testMeta()},
+		&reportports.ReportRenderRequest{Dataset: sidecar, Sink: &bytes.Buffer{}, Meta: testMeta()},
 	)
 	require.NoError(t, err)
 	require.NoError(t, sidecar.Finish(t.Context()))
@@ -96,7 +96,7 @@ func TestRowsSidecarCarriesTruncation(t *testing.T) {
 
 	_, err := NewCSV(CSVParams{Config: testConfig()}).Render(
 		t.Context(),
-		&services.ReportRenderRequest{Dataset: sidecar, Sink: &bytes.Buffer{}, Meta: testMeta()},
+		&reportports.ReportRenderRequest{Dataset: sidecar, Sink: &bytes.Buffer{}, Meta: testMeta()},
 	)
 	require.NoError(t, err)
 	require.NoError(t, sidecar.Finish(t.Context()))
@@ -169,7 +169,7 @@ func TestRowsSidecarFailureIsReportedNotRaised(t *testing.T) {
 
 	stats, err := NewCSV(CSVParams{Config: testConfig()}).Render(
 		t.Context(),
-		&services.ReportRenderRequest{Dataset: sidecar, Sink: &bytes.Buffer{}, Meta: testMeta()},
+		&reportports.ReportRenderRequest{Dataset: sidecar, Sink: &bytes.Buffer{}, Meta: testMeta()},
 	)
 	require.NoError(t, err)
 	assert.Equal(t, int64(3), stats.Rows)
@@ -177,8 +177,8 @@ func TestRowsSidecarFailureIsReportedNotRaised(t *testing.T) {
 	require.ErrorIs(t, sidecar.Finish(t.Context()), errSinkFull)
 }
 
-func testTotals() services.ReportRow {
-	return services.ReportRow{
+func testTotals() reportports.ReportRow {
+	return reportports.ReportRow{
 		nil,
 		decimal.RequireFromString("1135.4000"),
 		int64(12),
@@ -216,7 +216,7 @@ type countingTotalsReader struct {
 	calls int
 }
 
-func (r *countingTotalsReader) Totals(ctx context.Context) (services.ReportRow, error) {
+func (r *countingTotalsReader) Totals(ctx context.Context) (reportports.ReportRow, error) {
 	r.calls++
 
 	return r.fakeReader.Totals(ctx)
@@ -244,7 +244,7 @@ func TestRowsSidecarDecodesThroughTheSharedShape(t *testing.T) {
 
 	_, err := NewCSV(CSVParams{Config: testConfig()}).Render(
 		t.Context(),
-		&services.ReportRenderRequest{Dataset: sidecar, Sink: &bytes.Buffer{}, Meta: testMeta()},
+		&reportports.ReportRenderRequest{Dataset: sidecar, Sink: &bytes.Buffer{}, Meta: testMeta()},
 	)
 	require.NoError(t, err)
 	require.NoError(t, sidecar.Finish(t.Context()))

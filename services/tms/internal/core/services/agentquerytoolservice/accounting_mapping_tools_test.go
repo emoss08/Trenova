@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -14,25 +14,25 @@ import (
 )
 
 type fakeMappingReader struct {
-	summary  *serviceports.AccountingMappingSummary
+	summary  *accountingsyncports.AccountingMappingSummary
 	rows     []*accountingsync.AccountingMapping
 	refs     []*accountingsync.AccountingReferenceObject
-	listed   *serviceports.ListAccountingMappingsRequest
-	found    *serviceports.SetAccountingMappingRequest
-	searched *serviceports.SearchAccountingReferenceRequest
+	listed   *accountingsyncports.ListAccountingMappingsRequest
+	found    *accountingsyncports.SetAccountingMappingRequest
+	searched *accountingsyncports.SearchAccountingReferenceRequest
 }
 
 func (f *fakeMappingReader) Summary(
 	context.Context,
 	pagination.TenantInfo,
 	integration.Type,
-) (*serviceports.AccountingMappingSummary, error) {
+) (*accountingsyncports.AccountingMappingSummary, error) {
 	return f.summary, nil
 }
 
 func (f *fakeMappingReader) ListMappings(
 	_ context.Context,
-	req *serviceports.ListAccountingMappingsRequest,
+	req *accountingsyncports.ListAccountingMappingsRequest,
 ) (*pagination.CursorListResult[*accountingsync.AccountingMapping], error) {
 	f.listed = req
 	return &pagination.CursorListResult[*accountingsync.AccountingMapping]{Items: f.rows, HasNextPage: true}, nil
@@ -40,7 +40,7 @@ func (f *fakeMappingReader) ListMappings(
 
 func (f *fakeMappingReader) FindMapping(
 	_ context.Context,
-	req *serviceports.SetAccountingMappingRequest,
+	req *accountingsyncports.SetAccountingMappingRequest,
 ) (*accountingsync.AccountingMapping, error) {
 	f.found = req
 	return f.rows[0], nil
@@ -48,7 +48,7 @@ func (f *fakeMappingReader) FindMapping(
 
 func (f *fakeMappingReader) SearchReference(
 	_ context.Context,
-	req *serviceports.SearchAccountingReferenceRequest,
+	req *accountingsyncports.SearchAccountingReferenceRequest,
 ) ([]*accountingsync.AccountingReferenceObject, error) {
 	f.searched = req
 	return f.refs, nil
@@ -74,7 +74,7 @@ func TestListAccountingMappingGaps_ListsOpenMappingsWithTheSummary(t *testing.T)
 	t.Parallel()
 
 	reader := &fakeMappingReader{
-		summary: &serviceports.AccountingMappingSummary{
+		summary: &accountingsyncports.AccountingMappingSummary{
 			IntegrationType:   integration.TypeQuickBooksOnline,
 			ProviderName:      "QuickBooks Online",
 			RequiredTotal:     4,
@@ -83,7 +83,7 @@ func TestListAccountingMappingGaps_ListsOpenMappingsWithTheSummary(t *testing.T)
 				Status:    accountingsync.ConnectionStatusConnected,
 				SetupStep: accountingsync.SetupStepMappings,
 			},
-			Groups: []serviceports.AccountingMappingGroup{
+			Groups: []accountingsyncports.AccountingMappingGroup{
 				{TargetType: accountingsync.TargetAccountRole, Unmatched: 5, Proposed: 1},
 			},
 		},
@@ -120,7 +120,7 @@ func TestListAccountingMappingGaps_ListsOpenMappingsWithTheSummary(t *testing.T)
 func TestListAccountingMappingGaps_BeforeConnecting(t *testing.T) {
 	t.Parallel()
 
-	reader := &fakeMappingReader{summary: &serviceports.AccountingMappingSummary{
+	reader := &fakeMappingReader{summary: &accountingsyncports.AccountingMappingSummary{
 		ProviderName:  "QuickBooks Online",
 		RequiredTotal: 4,
 	}}

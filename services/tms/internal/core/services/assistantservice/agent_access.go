@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -18,7 +18,7 @@ import (
 // the person may not use. A check that cannot be made is a refusal.
 func (s *Service) assertMayUseAgent(
 	ctx context.Context,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	definition *agentdefinition.Definition,
 ) error {
 	if s.permissions == nil || actor == nil {
@@ -54,10 +54,10 @@ func errAgentsWithheld() error {
 // conversation. Without a permission engine nothing is usable.
 func (s *Service) usableAgents(
 	ctx context.Context,
-	actor *services.RequestActor,
-) (*services.UsableAgents, error) {
+	actor *permissionports.RequestActor,
+) (*permissionports.UsableAgents, error) {
 	if s.permissions == nil || actor == nil {
-		return &services.UsableAgents{}, nil
+		return &permissionports.UsableAgents{}, nil
 	}
 
 	usable, err := s.permissions.AgentsUsable(ctx, actor, permission.OpCreate)
@@ -65,7 +65,7 @@ func (s *Service) usableAgents(
 		return nil, fmt.Errorf("check which agents the person may use: %w", err)
 	}
 	if usable == nil {
-		return &services.UsableAgents{}, nil
+		return &permissionports.UsableAgents{}, nil
 	}
 
 	return usable, nil
@@ -73,10 +73,10 @@ func (s *Service) usableAgents(
 
 // threadReader is the person a conversation is read for. Conversations are
 // read under the reader's own user id, so the reader is its owner.
-func threadReader(userID pulid.ID, tenant pagination.TenantInfo) *services.RequestActor {
+func threadReader(userID pulid.ID, tenant pagination.TenantInfo) *permissionports.RequestActor {
 	tenant.UserID = userID
 
-	return services.UserActor(tenant)
+	return permissionports.UserActor(tenant)
 }
 
 // markContinuable says on each conversation whether its reader may still ask
@@ -86,7 +86,7 @@ func threadReader(userID pulid.ID, tenant pagination.TenantInfo) *services.Reque
 // agents are read once for the whole page.
 func (s *Service) markContinuable(
 	ctx context.Context,
-	reader *services.RequestActor,
+	reader *permissionports.RequestActor,
 	threads ...*conversation.Thread,
 ) error {
 	if len(threads) == 0 {
@@ -122,7 +122,7 @@ func (s *Service) markContinuable(
 	if len(ids) > 0 {
 		definitions, listErr := s.definitions.ListByIDs(
 			ctx,
-			repositories.ListAgentDefinitionsByIDsRequest{
+			agentdefinitionports.ListAgentDefinitionsByIDsRequest{
 				IDs:        ids,
 				TenantInfo: reader.TenantInfo(),
 			},
@@ -164,7 +164,7 @@ func markAll(threads []*conversation.Thread, reason conversation.ContinueRefusal
 // agent they could not use anyway was merely turned off.
 func continueRefusal(
 	definition *agentdefinition.Definition,
-	usable *services.UsableAgents,
+	usable *permissionports.UsableAgents,
 ) conversation.ContinueRefusal {
 	switch {
 	case definition == nil:

@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/holdreason"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/holdreasonservice"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/holdreasonports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -97,7 +97,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*holdreason.HoldReason], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListHoldReasonRequest{
+				&holdreasonports.ListHoldReasonRequest{
 					Filter: req,
 				},
 			)
@@ -128,7 +128,7 @@ func (h *Handler) get(c *gin.Context) {
 
 	entity, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetHoldReasonByIDRequest{
+		holdreasonports.GetHoldReasonByIDRequest{
 			ID:         holdReasonID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -240,7 +240,7 @@ func (h *Handler) patch(c *gin.Context) {
 
 	existing, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetHoldReasonByIDRequest{
+		holdreasonports.GetHoldReasonByIDRequest{
 			ID:         holdReasonID,
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 		},
@@ -287,7 +287,7 @@ func (h *Handler) selectOptions(c *gin.Context) {
 		func() (*pagination.ListResult[*holdreason.HoldReason], error) {
 			return h.service.SelectOptions(
 				c.Request.Context(),
-				&repositories.HoldReasonSelectOptionsRequest{
+				&holdreasonports.HoldReasonSelectOptionsRequest{
 					SelectQueryRequest: req,
 				},
 			)
@@ -316,7 +316,7 @@ func (h *Handler) getOption(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.Get(c.Request.Context(), repositories.GetHoldReasonByIDRequest{
+	entity, err := h.service.Get(c.Request.Context(), holdreasonports.GetHoldReasonByIDRequest{
 		ID:         holdReasonID,
 		TenantInfo: pagination.FromAuth(authCtx),
 	})

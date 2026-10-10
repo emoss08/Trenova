@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,7 +20,7 @@ import (
 func feedbackFor(
 	tenant pagination.TenantInfo,
 	userID pulid.ID,
-	target repositories.AIFeedbackTargetRef,
+	target aifeedbackports.AIFeedbackTargetRef,
 	rating aifeedback.Rating,
 ) *aifeedback.Feedback {
 	agentID := pulid.MustNew("agdef_")
@@ -62,7 +62,7 @@ func TestFeedbackRepository_UpsertClearAndTenantIsolation(t *testing.T) {
 		OrgID: second.Organization.ID,
 		BuID:  second.BusinessUnit.ID,
 	}
-	target := repositories.AIFeedbackTargetRef{
+	target := aifeedbackports.AIFeedbackTargetRef{
 		TargetType: aifeedback.TargetAssistantMessage,
 		TargetID:   pulid.MustNew("amsg_"),
 	}
@@ -83,10 +83,10 @@ func TestFeedbackRepository_UpsertClearAndTenantIsolation(t *testing.T) {
 		aifeedback.RatingPositive))
 	require.NoError(t, err)
 
-	mine, err := repo.ListForTargets(ctx, repositories.ListAIFeedbackForTargetsRequest{
+	mine, err := repo.ListForTargets(ctx, aifeedbackports.ListAIFeedbackForTargetsRequest{
 		TenantInfo: firstTenant,
 		UserID:     first.User.ID,
-		Targets:    []repositories.AIFeedbackTargetRef{target},
+		Targets:    []aifeedbackports.AIFeedbackTargetRef{target},
 	})
 	require.NoError(t, err)
 	require.Len(t, mine, 1)
@@ -95,22 +95,22 @@ func TestFeedbackRepository_UpsertClearAndTenantIsolation(t *testing.T) {
 	require.NotNil(t, mine[0].TurnSnapshot)
 	assert.Equal(t, "In Dallas.", mine[0].TurnSnapshot.Answer)
 
-	crossed, err := repo.ListForTargets(ctx, repositories.ListAIFeedbackForTargetsRequest{
+	crossed, err := repo.ListForTargets(ctx, aifeedbackports.ListAIFeedbackForTargetsRequest{
 		TenantInfo: secondTenant,
 		UserID:     first.User.ID,
-		Targets:    []repositories.AIFeedbackTargetRef{target},
+		Targets:    []aifeedbackports.AIFeedbackTargetRef{target},
 	})
 	require.NoError(t, err)
 	assert.Empty(t, crossed, "a rating is never read from another tenant")
 
-	byIDs, err := repo.ListByIDs(ctx, repositories.ListAIFeedbackByIDsRequest{
+	byIDs, err := repo.ListByIDs(ctx, aifeedbackports.ListAIFeedbackByIDsRequest{
 		TenantInfo: secondTenant,
 		IDs:        []pulid.ID{created.ID},
 	})
 	require.NoError(t, err)
 	assert.Empty(t, byIDs, "an id from another tenant reads nothing")
 
-	removed, err := repo.Delete(ctx, repositories.DeleteAIFeedbackRequest{
+	removed, err := repo.Delete(ctx, aifeedbackports.DeleteAIFeedbackRequest{
 		TenantInfo: secondTenant,
 		UserID:     first.User.ID,
 		Target:     target,
@@ -118,7 +118,7 @@ func TestFeedbackRepository_UpsertClearAndTenantIsolation(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, removed, "clearing in another tenant touches nothing")
 
-	removed, err = repo.Delete(ctx, repositories.DeleteAIFeedbackRequest{
+	removed, err = repo.Delete(ctx, aifeedbackports.DeleteAIFeedbackRequest{
 		TenantInfo: firstTenant,
 		UserID:     first.User.ID,
 		Target:     target,
@@ -126,7 +126,7 @@ func TestFeedbackRepository_UpsertClearAndTenantIsolation(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, removed)
 
-	removed, err = repo.Delete(ctx, repositories.DeleteAIFeedbackRequest{
+	removed, err = repo.Delete(ctx, aifeedbackports.DeleteAIFeedbackRequest{
 		TenantInfo: firstTenant,
 		UserID:     first.User.ID,
 		Target:     target,
@@ -134,10 +134,10 @@ func TestFeedbackRepository_UpsertClearAndTenantIsolation(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, removed, "clearing twice is not an error")
 
-	theirs, err := repo.ListForTargets(ctx, repositories.ListAIFeedbackForTargetsRequest{
+	theirs, err := repo.ListForTargets(ctx, aifeedbackports.ListAIFeedbackForTargetsRequest{
 		TenantInfo: secondTenant,
 		UserID:     second.User.ID,
-		Targets:    []repositories.AIFeedbackTargetRef{target},
+		Targets:    []aifeedbackports.AIFeedbackTargetRef{target},
 	})
 	require.NoError(t, err)
 	assert.Len(t, theirs, 1, "the other tenant's rating survives")
@@ -154,11 +154,11 @@ func TestFeedbackRepository_SummaryNegativeScanAndPurge(t *testing.T) {
 	otherTenant := pagination.TenantInfo{OrgID: other.Organization.ID, BuID: other.BusinessUnit.ID}
 
 	agentID := pulid.MustNew("agdef_")
-	worst := repositories.AIFeedbackTargetRef{
+	worst := aifeedbackports.AIFeedbackTargetRef{
 		TargetType: aifeedback.TargetAssistantMessage,
 		TargetID:   pulid.MustNew("amsg_"),
 	}
-	liked := repositories.AIFeedbackTargetRef{
+	liked := aifeedbackports.AIFeedbackTargetRef{
 		TargetType: aifeedback.TargetAssistantMessage,
 		TargetID:   pulid.MustNew("amsg_"),
 	}
@@ -166,7 +166,7 @@ func TestFeedbackRepository_SummaryNegativeScanAndPurge(t *testing.T) {
 	for _, entry := range []struct {
 		tenant pagination.TenantInfo
 		user   pulid.ID
-		target repositories.AIFeedbackTargetRef
+		target aifeedbackports.AIFeedbackTargetRef
 		rating aifeedback.Rating
 	}{
 		{tenant, data.User.ID, worst, aifeedback.RatingNegative},
@@ -179,7 +179,7 @@ func TestFeedbackRepository_SummaryNegativeScanAndPurge(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	window := repositories.AIFeedbackWindowRequest{
+	window := aifeedbackports.AIFeedbackWindowRequest{
 		TenantInfo:        tenant,
 		AgentDefinitionID: agentID,
 		Since:             timeutils.NowUnix() - 86400,
@@ -200,7 +200,7 @@ func TestFeedbackRepository_SummaryNegativeScanAndPurge(t *testing.T) {
 	assert.Equal(t, 1, scores[0].Negative)
 	assert.False(t, scores[0].SampleID.IsNil())
 
-	negatives, err := repo.ListNegativeSince(ctx, repositories.ListNegativeAIFeedbackRequest{
+	negatives, err := repo.ListNegativeSince(ctx, aifeedbackports.ListNegativeAIFeedbackRequest{
 		TenantInfo: tenant,
 		Since:      window.Since,
 	})
@@ -208,14 +208,14 @@ func TestFeedbackRepository_SummaryNegativeScanAndPurge(t *testing.T) {
 	require.Len(t, negatives, 1)
 	assert.Equal(t, worst.TargetID, negatives[0].TargetID)
 
-	purged, err := repo.PurgeBefore(ctx, repositories.PurgeAIFeedbackRequest{
+	purged, err := repo.PurgeBefore(ctx, aifeedbackports.PurgeAIFeedbackRequest{
 		TenantInfo: tenant,
 		Before:     timeutils.NowUnix() + 60,
 	})
 	require.NoError(t, err)
 	assert.Equal(t, int64(2), purged)
 
-	survivors, err := repo.ListNegativeSince(ctx, repositories.ListNegativeAIFeedbackRequest{
+	survivors, err := repo.ListNegativeSince(ctx, aifeedbackports.ListNegativeAIFeedbackRequest{
 		TenantInfo: otherTenant,
 		Since:      window.Since,
 	})

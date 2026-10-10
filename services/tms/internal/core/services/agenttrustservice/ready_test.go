@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,7 +19,7 @@ type readyTrustRepo struct {
 
 func (r readyTrustRepo) ListReady(
 	_ context.Context,
-	req repositories.ListReadyToolTrustRequest,
+	req agentports.ListReadyToolTrustRequest,
 ) ([]*agent.ToolTrust, error) {
 	if r.row.Streak < req.MinStreak {
 		return nil, nil
@@ -34,7 +34,7 @@ type listingDefinitions struct {
 
 func (d listingDefinitions) ListByIDs(
 	context.Context,
-	repositories.ListAgentDefinitionsByIDsRequest,
+	agentdefinitionports.ListAgentDefinitionsByIDsRequest,
 ) ([]*agentdefinition.Definition, error) {
 	return []*agentdefinition.Definition{d.definition}, nil
 }
@@ -53,8 +53,8 @@ func readyHarness(t *testing.T, streak int, ceiling agent.AutonomyTier) *harness
 	return h
 }
 
-func readyRequest(h *harness, threshold int) *services.PromoteReadyRequest {
-	return &services.PromoteReadyRequest{
+func readyRequest(h *harness, threshold int) *agentports.PromoteReadyRequest {
+	return &agentports.PromoteReadyRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: h.definitions.definition.OrganizationID,
 			BuID:  h.definitions.definition.BusinessUnitID,
@@ -121,7 +121,7 @@ func TestPromoteToolMovesOnlyTheToolNamed(t *testing.T) {
 
 	h := readyHarness(t, 12, agent.TierAutoExecute)
 
-	promoted, err := h.svc.PromoteTool(t.Context(), &services.PromoteToolRequest{
+	promoted, err := h.svc.PromoteTool(t.Context(), &agentports.PromoteToolRequest{
 		PromoteReadyRequest: *readyRequest(h, 10),
 		AgentDefinitionID:   h.definitions.definition.ID,
 		ToolName:            "assign_move",
@@ -139,7 +139,7 @@ func TestPromoteToolRefusesAToolThatIsNotReady(t *testing.T) {
 
 	h := readyHarness(t, 12, agent.TierAutoExecute)
 
-	_, err := h.svc.PromoteTool(t.Context(), &services.PromoteToolRequest{
+	_, err := h.svc.PromoteTool(t.Context(), &agentports.PromoteToolRequest{
 		PromoteReadyRequest: *readyRequest(h, 10),
 		AgentDefinitionID:   h.definitions.definition.ID,
 		ToolName:            "release_hold",
@@ -147,7 +147,7 @@ func TestPromoteToolRefusesAToolThatIsNotReady(t *testing.T) {
 	require.Error(t, err)
 
 	short := readyHarness(t, 4, agent.TierAutoExecute)
-	_, err = short.svc.PromoteTool(t.Context(), &services.PromoteToolRequest{
+	_, err = short.svc.PromoteTool(t.Context(), &agentports.PromoteToolRequest{
 		PromoteReadyRequest: *readyRequest(short, 10),
 		AgentDefinitionID:   short.definitions.definition.ID,
 		ToolName:            "assign_move",

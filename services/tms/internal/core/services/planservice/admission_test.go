@@ -1,6 +1,7 @@
 package planservice_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
 	"errors"
 	"testing"
 
@@ -35,7 +36,7 @@ func TestAdmitIgnoresNonCloudAndUnscopedRequests(t *testing.T) {
 		&planservice.AdmissionRequest{TenantInfo: plantest.Tenant(), Write: true},
 	))
 
-	plans := mocks.NewMockPlanService(t)
+	plans := platformplanportsmock.NewMockPlanService(t)
 	plans.EXPECT().EnforcesPlans().Return(true)
 	require.NoError(t, planservice.Admit(
 		t.Context(),
@@ -124,7 +125,7 @@ func TestAdmitReturnsResolutionErrors(t *testing.T) {
 
 	tenant := plantest.Tenant()
 	boom := errors.New("database unavailable")
-	plans := mocks.NewMockPlanService(t)
+	plans := platformplanportsmock.NewMockPlanService(t)
 	plans.EXPECT().EnforcesPlans().Return(true)
 	plans.EXPECT().Resolve(mock.Anything, tenant.OrgID, tenant.BuID).Return(nil, boom)
 
@@ -171,7 +172,7 @@ func TestAllowsSeparatesRestrictionsFromFailures(t *testing.T) {
 	assert.False(t, allowed)
 
 	boom := errors.New("resolve failed")
-	plans := mocks.NewMockPlanService(t)
+	plans := platformplanportsmock.NewMockPlanService(t)
 	plans.EXPECT().
 		RequireCapability(mock.Anything, tenant, platformplan.CapabilitySSO).
 		Return(boom)
@@ -187,7 +188,7 @@ func TestRequireWritableHelperDelegates(t *testing.T) {
 	require.NoError(t, planservice.RequireWritable(t.Context(), nil, tenant))
 
 	refusal := errortypes.NewPlanRestrictionError("", platformplan.ReasonSubscriptionReadOnly, "free_demo")
-	plans := mocks.NewMockPlanService(t)
+	plans := platformplanportsmock.NewMockPlanService(t)
 	plans.EXPECT().RequireWritable(mock.Anything, tenant).Return(refusal)
 	require.ErrorIs(t, planservice.RequireWritable(t.Context(), plans, tenant), refusal)
 }
@@ -197,6 +198,6 @@ func TestOrUnlimitedFallsBackToUnlimitedPlans(t *testing.T) {
 
 	assert.IsType(t, &planservice.UnlimitedPlanService{}, planservice.OrUnlimited(nil))
 
-	plans := mocks.NewMockPlanService(t)
+	plans := platformplanportsmock.NewMockPlanService(t)
 	assert.Same(t, plans, planservice.OrUnlimited(plans))
 }

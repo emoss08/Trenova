@@ -12,12 +12,16 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
 	"github.com/emoss08/trenova/internal/infrastructure/observability"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -32,47 +36,47 @@ type Params struct {
 	fx.In
 
 	Logger              *zap.Logger
-	InboundFileRepo     repositories.EDIInboundFileRepository
-	ProfileRepo         repositories.EDICommunicationProfileRepository
-	PartnerRepo         repositories.EDIPartnerRepository
-	MessageRepo         repositories.EDIMessageRepository
-	DocumentTypeRepo    repositories.EDIDocumentTypeRepository
-	DocumentProfileRepo repositories.EDIPartnerDocumentProfileRepository
-	TransferRepo        repositories.EDILoadTenderTransferRepository
-	TenderRecipientRepo repositories.EDITenderRecipientRepository
-	TenderRepo          repositories.TenderRepository      `optional:"true"`
-	TenderResponses     services.TenderResponseRecorder    `optional:"true"`
-	InvoiceMatcher      services.CarrierInvoiceAutoMatcher `optional:"true"`
+	InboundFileRepo     ediports.EDIInboundFileRepository
+	ProfileRepo         ediports.EDICommunicationProfileRepository
+	PartnerRepo         ediports.EDIPartnerRepository
+	MessageRepo         ediports.EDIMessageRepository
+	DocumentTypeRepo    ediports.EDIDocumentTypeRepository
+	DocumentProfileRepo ediports.EDIPartnerDocumentProfileRepository
+	TransferRepo        ediports.EDILoadTenderTransferRepository
+	TenderRecipientRepo ediports.EDITenderRecipientRepository
+	TenderRepo          tenderports.TenderRepository           `optional:"true"`
+	TenderResponses     tenderports.TenderResponseRecorder     `optional:"true"`
+	InvoiceMatcher      carrierports.CarrierInvoiceAutoMatcher `optional:"true"`
 	EDIService          *ediservice.Service
-	Transport           services.EDITransportDispatcher
-	WorkflowStarter     services.WorkflowStarter
+	Transport           ediports.EDITransportDispatcher
+	WorkflowStarter     kernelports.WorkflowStarter
 	Metrics             *metrics.Registry `optional:"true"`
 	// Watchtower puts a held-back file on the feed a person reads.
-	Watchtower services.WatchtowerProjector `optional:"true"`
+	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
 	// Publisher wakes whichever agent covers intake on a file that could
 	// not be turned into shipments or updates.
-	Publisher services.AgentEventPublisher `optional:"true"`
+	Publisher agentports.AgentEventPublisher `optional:"true"`
 }
 
 type Service struct {
 	l                   *zap.Logger
-	inboundFileRepo     repositories.EDIInboundFileRepository
-	profileRepo         repositories.EDICommunicationProfileRepository
-	partnerRepo         repositories.EDIPartnerRepository
-	messageRepo         repositories.EDIMessageRepository
-	documentTypeRepo    repositories.EDIDocumentTypeRepository
-	documentProfileRepo repositories.EDIPartnerDocumentProfileRepository
-	transferRepo        repositories.EDILoadTenderTransferRepository
-	tenderRecipientRepo repositories.EDITenderRecipientRepository
-	tenderRepo          repositories.TenderRepository
-	tenderResponses     services.TenderResponseRecorder
-	invoiceMatcher      services.CarrierInvoiceAutoMatcher
+	inboundFileRepo     ediports.EDIInboundFileRepository
+	profileRepo         ediports.EDICommunicationProfileRepository
+	partnerRepo         ediports.EDIPartnerRepository
+	messageRepo         ediports.EDIMessageRepository
+	documentTypeRepo    ediports.EDIDocumentTypeRepository
+	documentProfileRepo ediports.EDIPartnerDocumentProfileRepository
+	transferRepo        ediports.EDILoadTenderTransferRepository
+	tenderRecipientRepo ediports.EDITenderRecipientRepository
+	tenderRepo          tenderports.TenderRepository
+	tenderResponses     tenderports.TenderResponseRecorder
+	invoiceMatcher      carrierports.CarrierInvoiceAutoMatcher
 	ediService          *ediservice.Service
-	transport           services.EDITransportDispatcher
-	workflowStarter     services.WorkflowStarter
+	transport           ediports.EDITransportDispatcher
+	workflowStarter     kernelports.WorkflowStarter
 	metrics             *metrics.EDI
-	watchtower          services.WatchtowerProjector
-	publisher           services.AgentEventPublisher
+	watchtower          watchtowerports.WatchtowerProjector
+	publisher           agentports.AgentEventPublisher
 }
 
 func New(p Params) *Service {
@@ -132,7 +136,7 @@ func (s *Service) PollMailbox(
 	}
 	profile, err := s.profileRepo.GetProfileByID(
 		ctx,
-		repositories.GetEDICommunicationProfileByIDRequest{
+		ediports.GetEDICommunicationProfileByIDRequest{
 			ID:         req.ProfileID,
 			TenantInfo: req.TenantInfo,
 		},
@@ -149,7 +153,7 @@ func (s *Service) PollMailbox(
 	if err != nil {
 		return nil, err
 	}
-	fetchReq := &services.EDIInboundFetchRequest{Profile: profile, Secrets: secrets}
+	fetchReq := &ediports.EDIInboundFetchRequest{Profile: profile, Secrets: secrets}
 	remoteFiles, err := s.transport.FetchInbound(ctx, profile.Method, fetchReq)
 	if err != nil {
 		s.metrics.RecordInboundPoll(string(profile.Method), "failed")
@@ -199,7 +203,7 @@ func (s *Service) recordPollOutcome(
 ) {
 	if err := s.profileRepo.RecordInboundPollOutcome(
 		ctx,
-		repositories.RecordEDIProfilePollOutcomeRequest{
+		ediports.RecordEDIProfilePollOutcomeRequest{
 			ProfileID: profile.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: profile.OrganizationID,
@@ -244,7 +248,7 @@ func (s *Service) PollAndProcessMailbox(
 func (s *Service) stageInboundFile(
 	ctx context.Context,
 	profile *edi.EDICommunicationProfile,
-	remoteFile *services.EDIInboundRemoteFile,
+	remoteFile *ediports.EDIInboundRemoteFile,
 ) (*edi.EDIInboundFile, bool, error) {
 	checksum := sha256.Sum256([]byte(remoteFile.Contents))
 	checksumHex := hex.EncodeToString(checksum[:])
@@ -254,7 +258,7 @@ func (s *Service) stageInboundFile(
 	}
 	exists, err := s.inboundFileRepo.ExistsByChecksum(
 		ctx,
-		repositories.ExistsEDIInboundFileByChecksumRequest{
+		ediports.ExistsEDIInboundFileByChecksumRequest{
 			TenantInfo:             tenantInfo,
 			CommunicationProfileID: profile.ID,
 			Checksum:               checksumHex,
@@ -326,7 +330,7 @@ func (s *Service) processInboundFile(
 	}
 	file, err := s.inboundFileRepo.GetInboundFileByID(
 		ctx,
-		repositories.GetEDIInboundFileByIDRequest{ID: req.FileID, TenantInfo: req.TenantInfo},
+		ediports.GetEDIInboundFileByIDRequest{ID: req.FileID, TenantInfo: req.TenantInfo},
 	)
 	if err != nil {
 		return nil, err
@@ -365,7 +369,7 @@ func (s *Service) processInboundFile(
 		return nil, err
 	}
 
-	partner, err := s.partnerRepo.GetByID(ctx, repositories.GetEDIPartnerByIDRequest{
+	partner, err := s.partnerRepo.GetByID(ctx, ediports.GetEDIPartnerByIDRequest{
 		ID:         file.EDIPartnerID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -421,7 +425,7 @@ func (s *Service) processInboundFile(
 		s.notifyQuarantinedFile(ctx, updated)
 	}
 	if tendered {
-		services.PublishAgentEvent(ctx, s.publisher, services.AgentEvent{
+		agentports.PublishAgentEvent(ctx, s.publisher, agentports.AgentEvent{
 			Kind:       agent.EventEDITenderReceived,
 			SubjectID:  updated.ID,
 			TenantInfo: inboundFileTenant(updated),
@@ -460,7 +464,7 @@ func (s *Service) notifyQuarantinedFile(ctx context.Context, file *edi.EDIInboun
 		s.watchtower.Upsert(ctx, watchtowersources.DescribeQuarantinedFile(file))
 	}
 
-	services.PublishAgentEvent(ctx, s.publisher, services.AgentEvent{
+	agentports.PublishAgentEvent(ctx, s.publisher, agentports.AgentEvent{
 		Kind:       agent.EventEDIFileQuarantined,
 		SubjectID:  file.ID,
 		TenantInfo: inboundFileTenant(file),
@@ -565,7 +569,7 @@ func (s *Service) recordInboundMessage(
 	}
 	return s.messageRepo.CreateMessageWithDiagnostics(
 		ctx,
-		repositories.CreateEDIMessageWithDiagnosticsRequest{Message: message},
+		ediports.CreateEDIMessageWithDiagnosticsRequest{Message: message},
 	)
 }
 
@@ -575,7 +579,7 @@ func (s *Service) inboundDocumentType(
 ) (*edi.EDIDocumentType, error) {
 	documentTypes, err := s.documentTypeRepo.ListDocumentTypes(
 		ctx,
-		repositories.ListEDIDocumentTypesRequest{
+		ediports.ListEDIDocumentTypesRequest{
 			Standard:       edi.EDIStandardX12,
 			TransactionSet: transactionSet,
 			Direction:      edi.DocumentDirectionInbound,
@@ -587,7 +591,7 @@ func (s *Service) inboundDocumentType(
 	if len(documentTypes) == 0 {
 		documentTypes, err = s.documentTypeRepo.ListDocumentTypes(
 			ctx,
-			repositories.ListEDIDocumentTypesRequest{
+			ediports.ListEDIDocumentTypesRequest{
 				Standard:       edi.EDIStandardX12,
 				TransactionSet: transactionSet,
 			},
@@ -658,7 +662,7 @@ func (s *Service) inboundAcknowledgmentType(
 ) edi.AcknowledgmentType {
 	profile, err := s.documentProfileRepo.GetActivePartnerDocumentProfile(
 		ctx,
-		repositories.GetActiveEDIPartnerDocumentProfileRequest{
+		ediports.GetActiveEDIPartnerDocumentProfileRequest{
 			PartnerID:      partnerID,
 			TenantInfo:     tenantInfo,
 			TransactionSet: transactionSet,
@@ -709,21 +713,21 @@ func (s *Service) generateAcknowledgment(
 
 func (s *Service) ListInboundFiles(
 	ctx context.Context,
-	req *repositories.ListEDIInboundFilesRequest,
+	req *ediports.ListEDIInboundFilesRequest,
 ) (*pagination.ListResult[*edi.EDIInboundFile], error) {
 	return s.inboundFileRepo.ListInboundFiles(ctx, req)
 }
 
 func (s *Service) GetInboundFile(
 	ctx context.Context,
-	req repositories.GetEDIInboundFileByIDRequest,
+	req ediports.GetEDIInboundFileByIDRequest,
 ) (*edi.EDIInboundFile, error) {
 	return s.inboundFileRepo.GetInboundFileByID(ctx, req)
 }
 
 func (s *Service) ListInboundFilesCursor(
 	ctx context.Context,
-	req *repositories.ListEDIInboundFilesRequest,
+	req *ediports.ListEDIInboundFilesRequest,
 ) (*pagination.CursorListResult[*edi.EDIInboundFile], error) {
 	return s.inboundFileRepo.ListInboundFilesCursor(ctx, req)
 }

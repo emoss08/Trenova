@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -17,13 +17,13 @@ import (
 type fakeVersions struct {
 	version int64
 	err     error
-	asked   []services.ToolTarget
+	asked   []agentports.ToolTarget
 }
 
 func (f *fakeVersions) Version(
 	_ context.Context,
 	_ pagination.TenantInfo,
-	target services.ToolTarget,
+	target agentports.ToolTarget,
 ) (int64, error) {
 	f.asked = append(f.asked, target)
 

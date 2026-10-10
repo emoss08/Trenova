@@ -5,7 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -40,9 +41,9 @@ func buildTenderEvent(
 	severity shipmentevent.Severity,
 	summary string,
 	metadata map[string]any,
-	actor services.AuditActor,
-) *services.RecordShipmentEventParams {
-	return &services.RecordShipmentEventParams{
+	actor kernelports.AuditActor,
+) *shipmenteventports.RecordShipmentEventParams {
+	return &shipmenteventports.RecordShipmentEventParams{
 		OrganizationID: tenant.OrganizationID,
 		BusinessUnitID: tenant.BusinessUnitID,
 		ShipmentID:     ref.ShipmentID,
@@ -61,8 +62,8 @@ func BuildTenderOffered(
 	carrierName string,
 	rank int16,
 	channel tender.Channel,
-	actor services.AuditActor,
-) *services.RecordShipmentEventParams {
+	actor kernelports.AuditActor,
+) *shipmenteventports.RecordShipmentEventParams {
 	return buildTenderEvent(tenant, ref,
 		shipmentevent.TypeTenderOffered,
 		shipmentevent.SeverityInfo,
@@ -82,8 +83,8 @@ func BuildTenderAccepted(
 	ref TenderRef,
 	carrierName string,
 	source tender.ResponseSource,
-	actor services.AuditActor,
-) *services.RecordShipmentEventParams {
+	actor kernelports.AuditActor,
+) *shipmenteventports.RecordShipmentEventParams {
 	return buildTenderEvent(tenant, ref,
 		shipmentevent.TypeTenderAccepted,
 		shipmentevent.SeveritySuccess,
@@ -102,8 +103,8 @@ func BuildTenderDeclined(
 	ref TenderRef,
 	carrierName, reason string,
 	source tender.ResponseSource,
-	actor services.AuditActor,
-) *services.RecordShipmentEventParams {
+	actor kernelports.AuditActor,
+) *shipmenteventports.RecordShipmentEventParams {
 	return buildTenderEvent(tenant, ref,
 		shipmentevent.TypeTenderDeclined,
 		shipmentevent.SeverityInfo,
@@ -122,8 +123,8 @@ func BuildTenderExpired(
 	tenant TenantRef,
 	ref TenderRef,
 	carrierName string,
-	actor services.AuditActor,
-) *services.RecordShipmentEventParams {
+	actor kernelports.AuditActor,
+) *shipmenteventports.RecordShipmentEventParams {
 	return buildTenderEvent(tenant, ref,
 		shipmentevent.TypeTenderExpired,
 		shipmentevent.SeverityMuted,
@@ -139,8 +140,8 @@ func BuildTenderWithdrawn(
 	tenant TenantRef,
 	ref TenderRef,
 	reason string,
-	actor services.AuditActor,
-) *services.RecordShipmentEventParams {
+	actor kernelports.AuditActor,
+) *shipmenteventports.RecordShipmentEventParams {
 	return buildTenderEvent(tenant, ref,
 		shipmentevent.TypeTenderWithdrawn,
 		shipmentevent.SeverityMuted,
@@ -156,8 +157,8 @@ func BuildTenderNeedsReview(
 	tenant TenantRef,
 	ref TenderRef,
 	carrierName, reason string,
-	actor services.AuditActor,
-) *services.RecordShipmentEventParams {
+	actor kernelports.AuditActor,
+) *shipmenteventports.RecordShipmentEventParams {
 	return buildTenderEvent(tenant, ref,
 		shipmentevent.TypeTenderNeedsReview,
 		shipmentevent.SeverityDanger,
@@ -175,8 +176,8 @@ func BuildRoutingGuideExhausted(
 	tenant TenantRef,
 	ref TenderRef,
 	mode tender.Mode,
-	actor services.AuditActor,
-) *services.RecordShipmentEventParams {
+	actor kernelports.AuditActor,
+) *shipmenteventports.RecordShipmentEventParams {
 	summary := "Routing guide exhausted with no carrier accepting"
 	if mode != tender.ModeWaterfall {
 		summary = "Spot tender exhausted with no carrier accepting"
@@ -198,8 +199,8 @@ func BuildTenderLateResponse(
 	carrierName string,
 	action tender.ResponseAction,
 	source tender.ResponseSource,
-	actor services.AuditActor,
-) *services.RecordShipmentEventParams {
+	actor kernelports.AuditActor,
+) *shipmenteventports.RecordShipmentEventParams {
 	return buildTenderEvent(tenant, ref,
 		shipmentevent.TypeTenderLateResponse,
 		shipmentevent.SeverityMuted,
@@ -221,8 +222,8 @@ func BuildTenderEntrySkipped(
 	carrierName string,
 	rank int16,
 	reasons []string,
-	actor services.AuditActor,
-) *services.RecordShipmentEventParams {
+	actor kernelports.AuditActor,
+) *shipmenteventports.RecordShipmentEventParams {
 	return buildTenderEvent(tenant, ref,
 		shipmentevent.TypeTenderEntrySkipped,
 		shipmentevent.SeverityDanger,
@@ -244,8 +245,8 @@ func BuildTenderEntryWarned(
 	carrierName string,
 	rank int16,
 	warnings []string,
-	actor services.AuditActor,
-) *services.RecordShipmentEventParams {
+	actor kernelports.AuditActor,
+) *shipmenteventports.RecordShipmentEventParams {
 	return buildTenderEvent(tenant, ref,
 		shipmentevent.TypeTenderEntryWarned,
 		shipmentevent.SeverityInfo,
@@ -267,8 +268,8 @@ func BuildTenderDeliveryFailed(
 	carrierName string,
 	channel tender.Channel,
 	deliveryError string,
-	actor services.AuditActor,
-) *services.RecordShipmentEventParams {
+	actor kernelports.AuditActor,
+) *shipmenteventports.RecordShipmentEventParams {
 	return buildTenderEvent(tenant, ref,
 		shipmentevent.TypeTenderDeliveryFailed,
 		shipmentevent.SeverityDanger,

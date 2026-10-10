@@ -9,10 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/fuelsurchargeservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -88,7 +88,7 @@ func requirePriceDay(params map[string]any) (string, error) {
 }
 
 func fuelIndexPriceFrom(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 	idKey string,
 ) (*fuelsurcharge.FuelIndexPrice, error) {
 	id, err := requirePulid(params.Params, idKey)
@@ -136,7 +136,7 @@ func fuelPriceProperties(
 	}
 }
 
-func newRecordFuelIndexPriceTool(prices fuelIndexPriceKeeper) serviceports.AgentTool {
+func newRecordFuelIndexPriceTool(prices fuelIndexPriceKeeper) agentports.AgentTool {
 	return newReceivableTool(fuelPriceMoneySpec(&receivableSpec{
 		name: "record_fuel_index_price",
 		description: "Propose recording a published price on a custom fuel index, such as " +
@@ -150,13 +150,13 @@ func newRecordFuelIndexPriceTool(prices fuelIndexPriceKeeper) serviceports.Agent
 			"fuel price", "diesel price", "index", "surcharge", "rack", "doe",
 		},
 	}), receivablePlan[*fuelsurcharge.FuelIndexPrice, *fuelsurcharge.FuelIndexPrice]{
-		request: func(params *serviceports.ToolExecuteParams) (*fuelsurcharge.FuelIndexPrice, error) {
+		request: func(params *agentports.ToolExecuteParams) (*fuelsurcharge.FuelIndexPrice, error) {
 			return fuelIndexPriceFrom(params, paramFuelIndexID)
 		},
 		plan: func(
 			ctx context.Context,
 			entity *fuelsurcharge.FuelIndexPrice,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*fuelsurcharge.FuelIndexPrice, error) {
 			return prices.PlanAddManualPrice(ctx, entity, params.Actor.UserID)
 		},
@@ -184,7 +184,7 @@ func newRecordFuelIndexPriceTool(prices fuelIndexPriceKeeper) serviceports.Agent
 		run: func(
 			ctx context.Context,
 			entity *fuelsurcharge.FuelIndexPrice,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := prices.AddManualPrice(ctx, entity, params.Actor.UserID)
 
@@ -193,7 +193,7 @@ func newRecordFuelIndexPriceTool(prices fuelIndexPriceKeeper) serviceports.Agent
 	})
 }
 
-func newCorrectFuelIndexPriceTool(prices fuelIndexPriceKeeper) serviceports.AgentTool {
+func newCorrectFuelIndexPriceTool(prices fuelIndexPriceKeeper) agentports.AgentTool {
 	return newReceivableTool(fuelPriceMoneySpec(&receivableSpec{
 		name:   "correct_fuel_index_price",
 		recipe: []string{"list_fuel_index_prices", "correct_fuel_index_price"},
@@ -205,13 +205,13 @@ func newCorrectFuelIndexPriceTool(prices fuelIndexPriceKeeper) serviceports.Agen
 			permission.KindFuelIndexPrice),
 		required: []string{paramFuelIndexPriceID, paramPriceDate, paramPrice},
 	}), receivablePlan[*fuelsurcharge.FuelIndexPrice, *fuelsurchargeservice.PriceChange]{
-		request: func(params *serviceports.ToolExecuteParams) (*fuelsurcharge.FuelIndexPrice, error) {
+		request: func(params *agentports.ToolExecuteParams) (*fuelsurcharge.FuelIndexPrice, error) {
 			return fuelIndexPriceFrom(params, paramFuelIndexPriceID)
 		},
 		plan: func(
 			ctx context.Context,
 			entity *fuelsurcharge.FuelIndexPrice,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*fuelsurchargeservice.PriceChange, error) {
 			return prices.PlanUpdateManualPrice(ctx, entity, params.Actor.UserID)
 		},
@@ -241,7 +241,7 @@ func newCorrectFuelIndexPriceTool(prices fuelIndexPriceKeeper) serviceports.Agen
 		run: func(
 			ctx context.Context,
 			entity *fuelsurcharge.FuelIndexPrice,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := prices.UpdateManualPrice(ctx, entity, params.Actor.UserID)
 

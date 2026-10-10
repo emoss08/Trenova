@@ -5,9 +5,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,10 +17,10 @@ func (h *harness) addCandidates(
 	operation accountingsync.SyncOperation,
 	count int,
 	postedFrom int64,
-) []repositories.AccountingSyncCandidate {
-	out := make([]repositories.AccountingSyncCandidate, 0, count)
+) []accountingsyncports.AccountingSyncCandidate {
+	out := make([]accountingsyncports.AccountingSyncCandidate, 0, count)
 	for idx := range count {
-		candidate := repositories.AccountingSyncCandidate{
+		candidate := accountingsyncports.AccountingSyncCandidate{
 			ObjectType:   objectType,
 			ObjectID:     pulid.MustNew("obj_"),
 			ObjectNumber: "DOC-" + objectType.String(),
@@ -35,9 +34,9 @@ func (h *harness) addCandidates(
 	return out
 }
 
-func (h *harness) safetyNet(t *testing.T) *services.AccountingSafetyNetResult {
+func (h *harness) safetyNet(t *testing.T) *accountingsyncports.AccountingSafetyNetResult {
 	t.Helper()
-	result, err := h.svc.SafetyNet(t.Context(), services.AccountingSyncConnectionRef{
+	result, err := h.svc.SafetyNet(t.Context(), accountingsyncports.AccountingSyncConnectionRef{
 		TenantInfo:   h.tenant,
 		ConnectionID: h.conn.ID,
 	})
@@ -167,7 +166,7 @@ func TestSafetyNetSkipsAConnectionThatIsNotSyncing(t *testing.T) {
 
 func (h *harness) newBackfill(t *testing.T, types ...accountingsync.SyncObjectType) *accountingsync.AccountingBackfill {
 	t.Helper()
-	backfill, err := h.svc.RequestBackfill(t.Context(), &services.RequestAccountingBackfillRequest{
+	backfill, err := h.svc.RequestBackfill(t.Context(), &accountingsyncports.RequestAccountingBackfillRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: h.conn.IntegrationType,
@@ -177,7 +176,7 @@ func (h *harness) newBackfill(t *testing.T, types ...accountingsync.SyncObjectTy
 	return backfill
 }
 
-func (h *harness) backfillStep(t *testing.T, id pulid.ID) *services.AccountingBackfillStepResult {
+func (h *harness) backfillStep(t *testing.T, id pulid.ID) *accountingsyncports.AccountingBackfillStepResult {
 	t.Helper()
 	result, err := h.svc.BackfillStep(t.Context(), h.tenant, id)
 	require.NoError(t, err)
@@ -319,7 +318,7 @@ func TestPurgeHistoryUsesTheRetentionWindowAndDrainsInBatches(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	h.records.purgeRounds = []repositories.PurgeAccountingSyncHistoryResult{
+	h.records.purgeRounds = []accountingsyncports.PurgeAccountingSyncHistoryResult{
 		{PayloadsCleared: purgeBatch, AttemptsDeleted: 10},
 		{PayloadsCleared: 5, AttemptsDeleted: purgeBatch},
 		{PayloadsCleared: 1, AttemptsDeleted: 2},

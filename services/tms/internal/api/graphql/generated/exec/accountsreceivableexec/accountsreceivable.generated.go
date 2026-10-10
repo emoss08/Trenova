@@ -8,8 +8,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -45,7 +44,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARAgingBucketTotals)
+					obj := o.(*customerledgerports.ARAgingBucketTotals)
 					return obj.CurrentMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -55,7 +54,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARAgingBucketTotals)
+					obj := o.(*customerledgerports.ARAgingBucketTotals)
 					return obj.Days1To30Minor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -65,7 +64,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARAgingBucketTotals)
+					obj := o.(*customerledgerports.ARAgingBucketTotals)
 					return obj.Days31To60Minor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -75,7 +74,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARAgingBucketTotals)
+					obj := o.(*customerledgerports.ARAgingBucketTotals)
 					return obj.Days61To90Minor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -85,7 +84,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARAgingBucketTotals)
+					obj := o.(*customerledgerports.ARAgingBucketTotals)
 					return obj.DaysOver90Minor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -95,7 +94,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARAgingBucketTotals)
+					obj := o.(*customerledgerports.ARAgingBucketTotals)
 					return obj.TotalOpenMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -107,7 +106,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARAgingSummary)
+					obj := o.(*customerledgerports.ARAgingSummary)
 					return obj.AsOfDate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -118,7 +117,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "ARAgingBucketTotals",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARAgingSummary)
+					obj := o.(*customerledgerports.ARAgingSummary)
 					return obj.Totals, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNARAgingBucketTotals2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARAgingBucketTotals),
@@ -129,7 +128,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "ARCustomerAgingRow",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARAgingSummary)
+					obj := o.(*customerledgerports.ARAgingSummary)
 					return obj.Rows, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNARCustomerAgingRow2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCustomerAgingRowᚄ),
@@ -141,7 +140,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARAgingTrendPoint)
+					obj := o.(*customerledgerports.ARAgingTrendPoint)
 					return obj.PeriodEnd, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -152,7 +151,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "ARAgingBucketTotals",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARAgingTrendPoint)
+					obj := o.(*customerledgerports.ARAgingTrendPoint)
 					return obj.Buckets, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNARAgingBucketTotals2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARAgingBucketTotals),
@@ -164,7 +163,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARBalanceOverview)
+					obj := o.(*customerledgerports.ARBalanceOverview)
 					return obj.TotalOpenMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -174,7 +173,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARBalanceOverview)
+					obj := o.(*customerledgerports.ARBalanceOverview)
 					return obj.OverdueMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -184,7 +183,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARBalanceOverview)
+					obj := o.(*customerledgerports.ARBalanceOverview)
 					return obj.UnappliedCashMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -194,7 +193,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARBalanceOverview)
+					obj := o.(*customerledgerports.ARBalanceOverview)
 					return obj.DisputedOpenMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -204,7 +203,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARBalanceOverview)
+					obj := o.(*customerledgerports.ARBalanceOverview)
 					return obj.OpenInvoiceCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -214,7 +213,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARBalanceOverview)
+					obj := o.(*customerledgerports.ARBalanceOverview)
 					return obj.OverdueInvoiceCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -224,7 +223,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARBalanceOverview)
+					obj := o.(*customerledgerports.ARBalanceOverview)
 					return obj.DisputedInvoiceCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -234,7 +233,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARBalanceOverview)
+					obj := o.(*customerledgerports.ARBalanceOverview)
 					return obj.AvgDaysPastDue, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
@@ -245,7 +244,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "ARAgingBucketTotals",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARBalanceOverview)
+					obj := o.(*customerledgerports.ARBalanceOverview)
 					return obj.Buckets, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNARAgingBucketTotals2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARAgingBucketTotals),
@@ -257,7 +256,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCashFlowPoint)
+					obj := o.(*customerledgerports.ARCashFlowPoint)
 					return obj.WeekStart, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -267,7 +266,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCashFlowPoint)
+					obj := o.(*customerledgerports.ARCashFlowPoint)
 					return obj.ExpectedMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -277,7 +276,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCashFlowPoint)
+					obj := o.(*customerledgerports.ARCashFlowPoint)
 					return obj.OpenDueMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -287,7 +286,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCashFlowPoint)
+					obj := o.(*customerledgerports.ARCashFlowPoint)
 					return obj.ActualMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -297,7 +296,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCashFlowPoint)
+					obj := o.(*customerledgerports.ARCashFlowPoint)
 					return obj.IsForecast, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -310,7 +309,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "ARCollectionTotals",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARCollectionPerformance)
+					obj := o.(*customerledgerports.ARCollectionPerformance)
 					return obj.Totals, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNARCollectionTotals2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCollectionTotals),
@@ -320,7 +319,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARCollectionPerformance)
+					obj := o.(*customerledgerports.ARCollectionPerformance)
 					return obj.CEI, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
@@ -330,7 +329,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARCollectionPerformance)
+					obj := o.(*customerledgerports.ARCollectionPerformance)
 					return obj.WriteOffRatio, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
@@ -340,7 +339,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARCollectionPerformance)
+					obj := o.(*customerledgerports.ARCollectionPerformance)
 					return obj.DisputeRate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
@@ -350,7 +349,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARCollectionPerformance)
+					obj := o.(*customerledgerports.ARCollectionPerformance)
 					return obj.ShortPayRate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
@@ -362,7 +361,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCollectionTotals)
+					obj := o.(*customerledgerports.ARCollectionTotals)
 					return obj.PeriodStart, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -372,7 +371,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCollectionTotals)
+					obj := o.(*customerledgerports.ARCollectionTotals)
 					return obj.PeriodEnd, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -382,7 +381,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCollectionTotals)
+					obj := o.(*customerledgerports.ARCollectionTotals)
 					return obj.BeginningOpenMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -392,7 +391,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCollectionTotals)
+					obj := o.(*customerledgerports.ARCollectionTotals)
 					return obj.EndingOpenMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -402,7 +401,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCollectionTotals)
+					obj := o.(*customerledgerports.ARCollectionTotals)
 					return obj.EndingCurrentMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -412,7 +411,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCollectionTotals)
+					obj := o.(*customerledgerports.ARCollectionTotals)
 					return obj.CreditSalesMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -422,7 +421,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCollectionTotals)
+					obj := o.(*customerledgerports.ARCollectionTotals)
 					return obj.CollectedMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -432,7 +431,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCollectionTotals)
+					obj := o.(*customerledgerports.ARCollectionTotals)
 					return obj.AvgDaysToPay, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
@@ -442,7 +441,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCollectionTotals)
+					obj := o.(*customerledgerports.ARCollectionTotals)
 					return obj.ShortPayMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -452,7 +451,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCollectionTotals)
+					obj := o.(*customerledgerports.ARCollectionTotals)
 					return obj.ShortPayApplicationCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -462,7 +461,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCollectionTotals)
+					obj := o.(*customerledgerports.ARCollectionTotals)
 					return obj.ApplicationCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -472,7 +471,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCollectionTotals)
+					obj := o.(*customerledgerports.ARCollectionTotals)
 					return obj.DisputedInvoiceCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -482,7 +481,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCollectionTotals)
+					obj := o.(*customerledgerports.ARCollectionTotals)
 					return obj.PostedInvoiceCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -494,7 +493,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCollectionsWorklistItem)
+					obj := o.(*customerledgerports.ARCollectionsWorklistItem)
 					return obj.InvoiceID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -504,7 +503,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCollectionsWorklistItem)
+					obj := o.(*customerledgerports.ARCollectionsWorklistItem)
 					return obj.CustomerID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -514,7 +513,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCollectionsWorklistItem)
+					obj := o.(*customerledgerports.ARCollectionsWorklistItem)
 					return obj.CustomerName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -524,7 +523,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCollectionsWorklistItem)
+					obj := o.(*customerledgerports.ARCollectionsWorklistItem)
 					return obj.InvoiceNumber, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -534,7 +533,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCollectionsWorklistItem)
+					obj := o.(*customerledgerports.ARCollectionsWorklistItem)
 					return obj.DueDate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -544,7 +543,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCollectionsWorklistItem)
+					obj := o.(*customerledgerports.ARCollectionsWorklistItem)
 					return obj.OpenAmountMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -554,7 +553,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCollectionsWorklistItem)
+					obj := o.(*customerledgerports.ARCollectionsWorklistItem)
 					return obj.DaysPastDue, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -564,7 +563,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCollectionsWorklistItem)
+					obj := o.(*customerledgerports.ARCollectionsWorklistItem)
 					return obj.IsDisputed, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -574,7 +573,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCollectionsWorklistItem)
+					obj := o.(*customerledgerports.ARCollectionsWorklistItem)
 					return obj.HasShortPay, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -584,7 +583,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCollectionsWorklistItem)
+					obj := o.(*customerledgerports.ARCollectionsWorklistItem)
 					return obj.Severity, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -594,7 +593,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCollectionsWorklistItem)
+					obj := o.(*customerledgerports.ARCollectionsWorklistItem)
 					return obj.OpenDisputeReasonCode, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -604,7 +603,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCollectionsWorklistItem)
+					obj := o.(*customerledgerports.ARCollectionsWorklistItem)
 					return obj.DisputedAmountMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -613,7 +612,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "disputeOpenedAt",
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCollectionsWorklistItem)
+					obj := o.(*customerledgerports.ARCollectionsWorklistItem)
 					return obj.DisputeOpenedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -625,7 +624,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCustomerAgingRow)
+					obj := o.(*customerledgerports.ARCustomerAgingRow)
 					return obj.CustomerID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -635,7 +634,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCustomerAgingRow)
+					obj := o.(*customerledgerports.ARCustomerAgingRow)
 					return obj.CustomerName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -646,7 +645,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "ARAgingBucketTotals",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCustomerAgingRow)
+					obj := o.(*customerledgerports.ARCustomerAgingRow)
 					return obj.Buckets, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNARAgingBucketTotals2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARAgingBucketTotals),
@@ -659,7 +658,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "ARCustomerSnapshot",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARCustomerProfile)
+					obj := o.(*customerledgerports.ARCustomerProfile)
 					return obj.Snapshot, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNARCustomerSnapshot2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCustomerSnapshot),
@@ -669,7 +668,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARCustomerProfile)
+					obj := o.(*customerledgerports.ARCustomerProfile)
 					return obj.DSODays, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
@@ -679,7 +678,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARCustomerProfile)
+					obj := o.(*customerledgerports.ARCustomerProfile)
 					return obj.CreditUtilization, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
@@ -689,7 +688,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARCustomerProfile)
+					obj := o.(*customerledgerports.ARCustomerProfile)
 					return obj.DelinquencyScore, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
@@ -701,7 +700,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCustomerSnapshot)
+					obj := o.(*customerledgerports.ARCustomerSnapshot)
 					return obj.CustomerID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -711,7 +710,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCustomerSnapshot)
+					obj := o.(*customerledgerports.ARCustomerSnapshot)
 					return obj.CustomerName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -721,7 +720,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCustomerSnapshot)
+					obj := o.(*customerledgerports.ARCustomerSnapshot)
 					return obj.TotalOpenMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -731,7 +730,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCustomerSnapshot)
+					obj := o.(*customerledgerports.ARCustomerSnapshot)
 					return obj.OverdueMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -741,7 +740,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCustomerSnapshot)
+					obj := o.(*customerledgerports.ARCustomerSnapshot)
 					return obj.UnappliedCashMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -751,7 +750,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCustomerSnapshot)
+					obj := o.(*customerledgerports.ARCustomerSnapshot)
 					return obj.CreditLimitMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -761,7 +760,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCustomerSnapshot)
+					obj := o.(*customerledgerports.ARCustomerSnapshot)
 					return obj.HasCreditLimit, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -771,7 +770,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCustomerSnapshot)
+					obj := o.(*customerledgerports.ARCustomerSnapshot)
 					return obj.OpenInvoiceCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -781,7 +780,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCustomerSnapshot)
+					obj := o.(*customerledgerports.ARCustomerSnapshot)
 					return obj.OldestOpenInvoiceDate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -791,7 +790,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCustomerSnapshot)
+					obj := o.(*customerledgerports.ARCustomerSnapshot)
 					return obj.OldestDaysPastDue, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -801,7 +800,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCustomerSnapshot)
+					obj := o.(*customerledgerports.ARCustomerSnapshot)
 					return obj.LastPaymentDate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -811,7 +810,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCustomerSnapshot)
+					obj := o.(*customerledgerports.ARCustomerSnapshot)
 					return obj.LastPaymentMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -821,7 +820,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCustomerSnapshot)
+					obj := o.(*customerledgerports.ARCustomerSnapshot)
 					return obj.AvgDaysToPay, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
@@ -831,7 +830,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCustomerSnapshot)
+					obj := o.(*customerledgerports.ARCustomerSnapshot)
 					return obj.BilledTrailing91Minor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -842,7 +841,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "ARAgingBucketTotals",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCustomerSnapshot)
+					obj := o.(*customerledgerports.ARCustomerSnapshot)
 					return obj.Buckets, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNARAgingBucketTotals2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARAgingBucketTotals),
@@ -853,7 +852,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "ARMonthlyCollectionPoint",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARCustomerSnapshot)
+					obj := o.(*customerledgerports.ARCustomerSnapshot)
 					return obj.MonthlyCollections, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNARMonthlyCollectionPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARMonthlyCollectionPointᚄ),
@@ -865,7 +864,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARCustomerStatement)
+					obj := o.(*customerledgerports.ARCustomerStatement)
 					return obj.CustomerID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -875,7 +874,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARCustomerStatement)
+					obj := o.(*customerledgerports.ARCustomerStatement)
 					return obj.CustomerName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -885,7 +884,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARCustomerStatement)
+					obj := o.(*customerledgerports.ARCustomerStatement)
 					return obj.StatementDate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -895,7 +894,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARCustomerStatement)
+					obj := o.(*customerledgerports.ARCustomerStatement)
 					return obj.StartDate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -905,7 +904,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARCustomerStatement)
+					obj := o.(*customerledgerports.ARCustomerStatement)
 					return obj.OpeningBalanceMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -915,7 +914,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARCustomerStatement)
+					obj := o.(*customerledgerports.ARCustomerStatement)
 					return obj.TotalChargesMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -925,7 +924,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARCustomerStatement)
+					obj := o.(*customerledgerports.ARCustomerStatement)
 					return obj.TotalPaymentsMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -935,7 +934,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARCustomerStatement)
+					obj := o.(*customerledgerports.ARCustomerStatement)
 					return obj.EndingBalanceMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -946,7 +945,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "ARAgingBucketTotals",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARCustomerStatement)
+					obj := o.(*customerledgerports.ARCustomerStatement)
 					return obj.Aging, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNARAgingBucketTotals2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARAgingBucketTotals),
@@ -957,7 +956,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "ARStatementTransaction",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARCustomerStatement)
+					obj := o.(*customerledgerports.ARCustomerStatement)
 					return obj.Transactions, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNARStatementTransaction2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARStatementTransactionᚄ),
@@ -968,7 +967,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "AROpenItem",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARCustomerStatement)
+					obj := o.(*customerledgerports.ARCustomerStatement)
 					return obj.OpenItems, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNAROpenItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐAROpenItemᚄ),
@@ -980,7 +979,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARDSOTrendPoint)
+					obj := o.(*customerledgerports.ARDSOTrendPoint)
 					return obj.PeriodEnd, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -990,7 +989,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARDSOTrendPoint)
+					obj := o.(*customerledgerports.ARDSOTrendPoint)
 					return obj.DSODays, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
@@ -1000,7 +999,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARDSOTrendPoint)
+					obj := o.(*customerledgerports.ARDSOTrendPoint)
 					return obj.ARBalanceMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1010,7 +1009,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARDSOTrendPoint)
+					obj := o.(*customerledgerports.ARDSOTrendPoint)
 					return obj.BilledMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1022,7 +1021,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARDashboardKPIs)
+					obj := o.(*customerledgerports.ARDashboardKPIs)
 					return obj.AsOfDate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1033,7 +1032,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "ARBalanceOverview",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARDashboardKPIs)
+					obj := o.(*customerledgerports.ARDashboardKPIs)
 					return obj.Overview, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNARBalanceOverview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARBalanceOverview),
@@ -1043,7 +1042,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARDashboardKPIs)
+					obj := o.(*customerledgerports.ARDashboardKPIs)
 					return obj.CurrentDSODays, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
@@ -1053,7 +1052,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARDashboardKPIs)
+					obj := o.(*customerledgerports.ARDashboardKPIs)
 					return obj.DSODeltaDays, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
@@ -1063,7 +1062,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARDashboardKPIs)
+					obj := o.(*customerledgerports.ARDashboardKPIs)
 					return obj.CEI, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
@@ -1073,7 +1072,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARDashboardKPIs)
+					obj := o.(*customerledgerports.ARDashboardKPIs)
 					return obj.AvgDaysToPay, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
@@ -1083,7 +1082,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARDashboardKPIs)
+					obj := o.(*customerledgerports.ARDashboardKPIs)
 					return obj.OverduePercent, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
@@ -1093,7 +1092,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARDashboardKPIs)
+					obj := o.(*customerledgerports.ARDashboardKPIs)
 					return obj.WriteOffRatio, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
@@ -1103,7 +1102,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARDashboardKPIs)
+					obj := o.(*customerledgerports.ARDashboardKPIs)
 					return obj.DisputeRate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
@@ -1113,7 +1112,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARDashboardKPIs)
+					obj := o.(*customerledgerports.ARDashboardKPIs)
 					return obj.ShortPayRate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
@@ -1125,7 +1124,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARLedgerEntry)
+					obj := o.(*customerledgerports.ARLedgerEntry)
 					return obj.CustomerID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1135,7 +1134,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARLedgerEntry)
+					obj := o.(*customerledgerports.ARLedgerEntry)
 					return obj.TransactionDate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1145,7 +1144,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARLedgerEntry)
+					obj := o.(*customerledgerports.ARLedgerEntry)
 					return obj.EventType, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1155,7 +1154,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARLedgerEntry)
+					obj := o.(*customerledgerports.ARLedgerEntry)
 					return obj.DocumentNumber, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1165,7 +1164,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARLedgerEntry)
+					obj := o.(*customerledgerports.ARLedgerEntry)
 					return obj.SourceObjectType, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1175,7 +1174,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARLedgerEntry)
+					obj := o.(*customerledgerports.ARLedgerEntry)
 					return obj.SourceObjectID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1185,7 +1184,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARLedgerEntry)
+					obj := o.(*customerledgerports.ARLedgerEntry)
 					return obj.AmountMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1194,7 +1193,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "relatedInvoiceId",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARLedgerEntry)
+					obj := o.(*customerledgerports.ARLedgerEntry)
 					return obj.RelatedInvoiceID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1206,7 +1205,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARMonthlyCollectionPoint)
+					obj := o.(*customerledgerports.ARMonthlyCollectionPoint)
 					return obj.MonthStart, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1216,7 +1215,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARMonthlyCollectionPoint)
+					obj := o.(*customerledgerports.ARMonthlyCollectionPoint)
 					return obj.AmountMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1228,7 +1227,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.AROpenItem)
+					obj := o.(*customerledgerports.AROpenItem)
 					return obj.InvoiceID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1238,7 +1237,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.AROpenItem)
+					obj := o.(*customerledgerports.AROpenItem)
 					return obj.CustomerID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1248,7 +1247,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.AROpenItem)
+					obj := o.(*customerledgerports.AROpenItem)
 					return obj.CustomerName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1258,7 +1257,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.AROpenItem)
+					obj := o.(*customerledgerports.AROpenItem)
 					return obj.InvoiceNumber, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1268,7 +1267,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.AROpenItem)
+					obj := o.(*customerledgerports.AROpenItem)
 					return obj.BillType, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1278,7 +1277,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.AROpenItem)
+					obj := o.(*customerledgerports.AROpenItem)
 					return obj.InvoiceDate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1288,7 +1287,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.AROpenItem)
+					obj := o.(*customerledgerports.AROpenItem)
 					return obj.DueDate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1298,7 +1297,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.AROpenItem)
+					obj := o.(*customerledgerports.AROpenItem)
 					return obj.CurrencyCode, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1308,7 +1307,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.AROpenItem)
+					obj := o.(*customerledgerports.AROpenItem)
 					return obj.ShipmentProNumber, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1318,7 +1317,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.AROpenItem)
+					obj := o.(*customerledgerports.AROpenItem)
 					return obj.ShipmentBOL, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1328,7 +1327,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.AROpenItem)
+					obj := o.(*customerledgerports.AROpenItem)
 					return obj.TotalAmountMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1338,7 +1337,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.AROpenItem)
+					obj := o.(*customerledgerports.AROpenItem)
 					return obj.AppliedAmountMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1348,7 +1347,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.AROpenItem)
+					obj := o.(*customerledgerports.AROpenItem)
 					return obj.OpenAmountMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1358,7 +1357,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.AROpenItem)
+					obj := o.(*customerledgerports.AROpenItem)
 					return obj.DaysPastDue, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1368,7 +1367,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.AROpenItem)
+					obj := o.(*customerledgerports.AROpenItem)
 					return obj.SettlementStatus, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1378,7 +1377,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.AROpenItem)
+					obj := o.(*customerledgerports.AROpenItem)
 					return obj.DisputeStatus, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1388,7 +1387,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.AROpenItem)
+					obj := o.(*customerledgerports.AROpenItem)
 					return obj.HasShortPay, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1400,7 +1399,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARPaymentStats)
+					obj := o.(*customerledgerports.ARPaymentStats)
 					return obj.PostedTodayMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1410,7 +1409,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARPaymentStats)
+					obj := o.(*customerledgerports.ARPaymentStats)
 					return obj.PostedTodayCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1420,7 +1419,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARPaymentStats)
+					obj := o.(*customerledgerports.ARPaymentStats)
 					return obj.UnappliedCashMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1430,7 +1429,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARPaymentStats)
+					obj := o.(*customerledgerports.ARPaymentStats)
 					return obj.UnappliedPaymentCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1440,7 +1439,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARPaymentStats)
+					obj := o.(*customerledgerports.ARPaymentStats)
 					return obj.ReversedLast30Minor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1450,7 +1449,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARPaymentStats)
+					obj := o.(*customerledgerports.ARPaymentStats)
 					return obj.ReversedLast30Count, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1462,7 +1461,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARStatementTransaction)
+					obj := o.(*customerledgerports.ARStatementTransaction)
 					return obj.TransactionDate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1472,7 +1471,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARStatementTransaction)
+					obj := o.(*customerledgerports.ARStatementTransaction)
 					return obj.EventType, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1482,7 +1481,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARStatementTransaction)
+					obj := o.(*customerledgerports.ARStatementTransaction)
 					return obj.DocumentNumber, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1492,7 +1491,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARStatementTransaction)
+					obj := o.(*customerledgerports.ARStatementTransaction)
 					return obj.SourceObjectID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1502,7 +1501,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARStatementTransaction)
+					obj := o.(*customerledgerports.ARStatementTransaction)
 					return obj.AmountMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1512,7 +1511,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARStatementTransaction)
+					obj := o.(*customerledgerports.ARStatementTransaction)
 					return obj.ChargeMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1522,7 +1521,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARStatementTransaction)
+					obj := o.(*customerledgerports.ARStatementTransaction)
 					return obj.PaymentMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1532,7 +1531,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ARStatementTransaction)
+					obj := o.(*customerledgerports.ARStatementTransaction)
 					return obj.RunningBalanceMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1544,7 +1543,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARTopOverdueCustomer)
+					obj := o.(*customerledgerports.ARTopOverdueCustomer)
 					return obj.CustomerID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1554,7 +1553,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARTopOverdueCustomer)
+					obj := o.(*customerledgerports.ARTopOverdueCustomer)
 					return obj.CustomerName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1564,7 +1563,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARTopOverdueCustomer)
+					obj := o.(*customerledgerports.ARTopOverdueCustomer)
 					return obj.OverdueMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1574,7 +1573,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARTopOverdueCustomer)
+					obj := o.(*customerledgerports.ARTopOverdueCustomer)
 					return obj.TotalOpenMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1584,7 +1583,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARTopOverdueCustomer)
+					obj := o.(*customerledgerports.ARTopOverdueCustomer)
 					return obj.OldestDaysPastDue, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1594,7 +1593,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ARTopOverdueCustomer)
+					obj := o.(*customerledgerports.ARTopOverdueCustomer)
 					return obj.OpenInvoiceCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1787,19 +1786,19 @@ var Shard = &gqlexec.Shard{
 }
 
 type resolverQuery interface {
-	ArAgingSummary(ctx context.Context, asOfDate *int) (*services.ARAgingSummary, error)
-	ArOpenItems(ctx context.Context, customerID *string, asOfDate *int) ([]*repositories.AROpenItem, error)
-	ArCustomerLedger(ctx context.Context, customerID string) ([]*repositories.ARLedgerEntry, error)
-	ArCustomerStatement(ctx context.Context, customerID string, startDate *int, asOfDate *int) (*services.ARCustomerStatement, error)
-	ArDashboardKpis(ctx context.Context) (*services.ARDashboardKPIs, error)
-	ArDsoTrend(ctx context.Context, weeks *int) ([]*services.ARDSOTrendPoint, error)
-	ArAgingTrend(ctx context.Context, weeks *int) ([]*repositories.ARAgingTrendPoint, error)
-	ArCashFlowForecast(ctx context.Context, pastWeeks *int, futureWeeks *int) ([]*repositories.ARCashFlowPoint, error)
-	ArCollectionPerformance(ctx context.Context, periodDays *int) (*services.ARCollectionPerformance, error)
-	ArTopOverdueCustomers(ctx context.Context, limit *int) ([]*repositories.ARTopOverdueCustomer, error)
-	ArCollectionsWorklist(ctx context.Context, limit *int) ([]*repositories.ARCollectionsWorklistItem, error)
-	ArCustomerProfile(ctx context.Context, customerID string) (*services.ARCustomerProfile, error)
-	ArPaymentStats(ctx context.Context) (*repositories.ARPaymentStats, error)
+	ArAgingSummary(ctx context.Context, asOfDate *int) (*customerledgerports.ARAgingSummary, error)
+	ArOpenItems(ctx context.Context, customerID *string, asOfDate *int) ([]*customerledgerports.AROpenItem, error)
+	ArCustomerLedger(ctx context.Context, customerID string) ([]*customerledgerports.ARLedgerEntry, error)
+	ArCustomerStatement(ctx context.Context, customerID string, startDate *int, asOfDate *int) (*customerledgerports.ARCustomerStatement, error)
+	ArDashboardKpis(ctx context.Context) (*customerledgerports.ARDashboardKPIs, error)
+	ArDsoTrend(ctx context.Context, weeks *int) ([]*customerledgerports.ARDSOTrendPoint, error)
+	ArAgingTrend(ctx context.Context, weeks *int) ([]*customerledgerports.ARAgingTrendPoint, error)
+	ArCashFlowForecast(ctx context.Context, pastWeeks *int, futureWeeks *int) ([]*customerledgerports.ARCashFlowPoint, error)
+	ArCollectionPerformance(ctx context.Context, periodDays *int) (*customerledgerports.ARCollectionPerformance, error)
+	ArTopOverdueCustomers(ctx context.Context, limit *int) ([]*customerledgerports.ARTopOverdueCustomer, error)
+	ArCollectionsWorklist(ctx context.Context, limit *int) ([]*customerledgerports.ARCollectionsWorklistItem, error)
+	ArCustomerProfile(ctx context.Context, customerID string) (*customerledgerports.ARCustomerProfile, error)
+	ArPaymentStats(ctx context.Context) (*customerledgerports.ARPaymentStats, error)
 }
 
 var (
@@ -2015,11 +2014,11 @@ func unmarshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func marshalNARAgingBucketTotals2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARAgingBucketTotals(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v repositories.ARAgingBucketTotals) graphql.Marshaler {
+func marshalNARAgingBucketTotals2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARAgingBucketTotals(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v customerledgerports.ARAgingBucketTotals) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "ARAgingBucketTotals", &v)
 }
 
-func marshalNARAgingSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARAgingSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.ARAgingSummary) graphql.Marshaler {
+func marshalNARAgingSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARAgingSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARAgingSummary) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2027,15 +2026,15 @@ func marshalNARAgingSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcor
 	return ec.MarshalType(ctx, sel, "ARAgingSummary", v)
 }
 
-func marshalNARAgingTrendPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARAgingTrendPointᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*repositories.ARAgingTrendPoint) graphql.Marshaler {
-	return gqlexec.List[*repositories.ARAgingTrendPoint]{
+func marshalNARAgingTrendPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARAgingTrendPointᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerledgerports.ARAgingTrendPoint) graphql.Marshaler {
+	return gqlexec.List[*customerledgerports.ARAgingTrendPoint]{
 		Elem:        marshalNARAgingTrendPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARAgingTrendPoint,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNARAgingTrendPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARAgingTrendPoint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *repositories.ARAgingTrendPoint) graphql.Marshaler {
+func marshalNARAgingTrendPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARAgingTrendPoint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARAgingTrendPoint) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2043,7 +2042,7 @@ func marshalNARAgingTrendPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return ec.MarshalType(ctx, sel, "ARAgingTrendPoint", v)
 }
 
-func marshalNARBalanceOverview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARBalanceOverview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *repositories.ARBalanceOverview) graphql.Marshaler {
+func marshalNARBalanceOverview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARBalanceOverview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARBalanceOverview) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2051,15 +2050,15 @@ func marshalNARBalanceOverview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return ec.MarshalType(ctx, sel, "ARBalanceOverview", v)
 }
 
-func marshalNARCashFlowPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCashFlowPointᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*repositories.ARCashFlowPoint) graphql.Marshaler {
-	return gqlexec.List[*repositories.ARCashFlowPoint]{
+func marshalNARCashFlowPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCashFlowPointᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerledgerports.ARCashFlowPoint) graphql.Marshaler {
+	return gqlexec.List[*customerledgerports.ARCashFlowPoint]{
 		Elem:        marshalNARCashFlowPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCashFlowPoint,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNARCashFlowPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCashFlowPoint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *repositories.ARCashFlowPoint) graphql.Marshaler {
+func marshalNARCashFlowPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCashFlowPoint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARCashFlowPoint) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2067,7 +2066,7 @@ func marshalNARCashFlowPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋco
 	return ec.MarshalType(ctx, sel, "ARCashFlowPoint", v)
 }
 
-func marshalNARCollectionPerformance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARCollectionPerformance(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.ARCollectionPerformance) graphql.Marshaler {
+func marshalNARCollectionPerformance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARCollectionPerformance(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARCollectionPerformance) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2075,7 +2074,7 @@ func marshalNARCollectionPerformance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return ec.MarshalType(ctx, sel, "ARCollectionPerformance", v)
 }
 
-func marshalNARCollectionTotals2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCollectionTotals(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *repositories.ARCollectionTotals) graphql.Marshaler {
+func marshalNARCollectionTotals2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCollectionTotals(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARCollectionTotals) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2083,15 +2082,15 @@ func marshalNARCollectionTotals2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "ARCollectionTotals", v)
 }
 
-func marshalNARCollectionsWorklistItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCollectionsWorklistItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*repositories.ARCollectionsWorklistItem) graphql.Marshaler {
-	return gqlexec.List[*repositories.ARCollectionsWorklistItem]{
+func marshalNARCollectionsWorklistItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCollectionsWorklistItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerledgerports.ARCollectionsWorklistItem) graphql.Marshaler {
+	return gqlexec.List[*customerledgerports.ARCollectionsWorklistItem]{
 		Elem:        marshalNARCollectionsWorklistItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCollectionsWorklistItem,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNARCollectionsWorklistItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCollectionsWorklistItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *repositories.ARCollectionsWorklistItem) graphql.Marshaler {
+func marshalNARCollectionsWorklistItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCollectionsWorklistItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARCollectionsWorklistItem) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2099,15 +2098,15 @@ func marshalNARCollectionsWorklistItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋint
 	return ec.MarshalType(ctx, sel, "ARCollectionsWorklistItem", v)
 }
 
-func marshalNARCustomerAgingRow2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCustomerAgingRowᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*repositories.ARCustomerAgingRow) graphql.Marshaler {
-	return gqlexec.List[*repositories.ARCustomerAgingRow]{
+func marshalNARCustomerAgingRow2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCustomerAgingRowᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerledgerports.ARCustomerAgingRow) graphql.Marshaler {
+	return gqlexec.List[*customerledgerports.ARCustomerAgingRow]{
 		Elem:        marshalNARCustomerAgingRow2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCustomerAgingRow,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNARCustomerAgingRow2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCustomerAgingRow(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *repositories.ARCustomerAgingRow) graphql.Marshaler {
+func marshalNARCustomerAgingRow2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCustomerAgingRow(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARCustomerAgingRow) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2115,7 +2114,7 @@ func marshalNARCustomerAgingRow2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "ARCustomerAgingRow", v)
 }
 
-func marshalNARCustomerProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARCustomerProfile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.ARCustomerProfile) graphql.Marshaler {
+func marshalNARCustomerProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARCustomerProfile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARCustomerProfile) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2123,7 +2122,7 @@ func marshalNARCustomerProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return ec.MarshalType(ctx, sel, "ARCustomerProfile", v)
 }
 
-func marshalNARCustomerSnapshot2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCustomerSnapshot(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *repositories.ARCustomerSnapshot) graphql.Marshaler {
+func marshalNARCustomerSnapshot2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCustomerSnapshot(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARCustomerSnapshot) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2131,7 +2130,7 @@ func marshalNARCustomerSnapshot2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "ARCustomerSnapshot", v)
 }
 
-func marshalNARCustomerStatement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARCustomerStatement(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.ARCustomerStatement) graphql.Marshaler {
+func marshalNARCustomerStatement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARCustomerStatement(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARCustomerStatement) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2139,15 +2138,15 @@ func marshalNARCustomerStatement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "ARCustomerStatement", v)
 }
 
-func marshalNARDSOTrendPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARDSOTrendPointᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*services.ARDSOTrendPoint) graphql.Marshaler {
-	return gqlexec.List[*services.ARDSOTrendPoint]{
+func marshalNARDSOTrendPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARDSOTrendPointᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerledgerports.ARDSOTrendPoint) graphql.Marshaler {
+	return gqlexec.List[*customerledgerports.ARDSOTrendPoint]{
 		Elem:        marshalNARDSOTrendPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARDSOTrendPoint,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNARDSOTrendPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARDSOTrendPoint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.ARDSOTrendPoint) graphql.Marshaler {
+func marshalNARDSOTrendPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARDSOTrendPoint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARDSOTrendPoint) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2155,7 +2154,7 @@ func marshalNARDSOTrendPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋco
 	return ec.MarshalType(ctx, sel, "ARDSOTrendPoint", v)
 }
 
-func marshalNARDashboardKPIs2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARDashboardKPIs(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.ARDashboardKPIs) graphql.Marshaler {
+func marshalNARDashboardKPIs2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARDashboardKPIs(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARDashboardKPIs) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2163,15 +2162,15 @@ func marshalNARDashboardKPIs2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋco
 	return ec.MarshalType(ctx, sel, "ARDashboardKPIs", v)
 }
 
-func marshalNARLedgerEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARLedgerEntryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*repositories.ARLedgerEntry) graphql.Marshaler {
-	return gqlexec.List[*repositories.ARLedgerEntry]{
+func marshalNARLedgerEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARLedgerEntryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerledgerports.ARLedgerEntry) graphql.Marshaler {
+	return gqlexec.List[*customerledgerports.ARLedgerEntry]{
 		Elem:        marshalNARLedgerEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARLedgerEntry,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNARLedgerEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARLedgerEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *repositories.ARLedgerEntry) graphql.Marshaler {
+func marshalNARLedgerEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARLedgerEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARLedgerEntry) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2179,15 +2178,15 @@ func marshalNARLedgerEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore
 	return ec.MarshalType(ctx, sel, "ARLedgerEntry", v)
 }
 
-func marshalNARMonthlyCollectionPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARMonthlyCollectionPointᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*repositories.ARMonthlyCollectionPoint) graphql.Marshaler {
-	return gqlexec.List[*repositories.ARMonthlyCollectionPoint]{
+func marshalNARMonthlyCollectionPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARMonthlyCollectionPointᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerledgerports.ARMonthlyCollectionPoint) graphql.Marshaler {
+	return gqlexec.List[*customerledgerports.ARMonthlyCollectionPoint]{
 		Elem:        marshalNARMonthlyCollectionPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARMonthlyCollectionPoint,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNARMonthlyCollectionPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARMonthlyCollectionPoint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *repositories.ARMonthlyCollectionPoint) graphql.Marshaler {
+func marshalNARMonthlyCollectionPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARMonthlyCollectionPoint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARMonthlyCollectionPoint) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2195,15 +2194,15 @@ func marshalNARMonthlyCollectionPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return ec.MarshalType(ctx, sel, "ARMonthlyCollectionPoint", v)
 }
 
-func marshalNAROpenItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐAROpenItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*repositories.AROpenItem) graphql.Marshaler {
-	return gqlexec.List[*repositories.AROpenItem]{
+func marshalNAROpenItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐAROpenItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerledgerports.AROpenItem) graphql.Marshaler {
+	return gqlexec.List[*customerledgerports.AROpenItem]{
 		Elem:        marshalNAROpenItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐAROpenItem,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAROpenItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐAROpenItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *repositories.AROpenItem) graphql.Marshaler {
+func marshalNAROpenItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐAROpenItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.AROpenItem) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2211,7 +2210,7 @@ func marshalNAROpenItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋ
 	return ec.MarshalType(ctx, sel, "AROpenItem", v)
 }
 
-func marshalNARPaymentStats2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARPaymentStats(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *repositories.ARPaymentStats) graphql.Marshaler {
+func marshalNARPaymentStats2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARPaymentStats(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARPaymentStats) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2219,15 +2218,15 @@ func marshalNARPaymentStats2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcor
 	return ec.MarshalType(ctx, sel, "ARPaymentStats", v)
 }
 
-func marshalNARStatementTransaction2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARStatementTransactionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*services.ARStatementTransaction) graphql.Marshaler {
-	return gqlexec.List[*services.ARStatementTransaction]{
+func marshalNARStatementTransaction2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARStatementTransactionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerledgerports.ARStatementTransaction) graphql.Marshaler {
+	return gqlexec.List[*customerledgerports.ARStatementTransaction]{
 		Elem:        marshalNARStatementTransaction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARStatementTransaction,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNARStatementTransaction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARStatementTransaction(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.ARStatementTransaction) graphql.Marshaler {
+func marshalNARStatementTransaction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARStatementTransaction(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARStatementTransaction) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2235,15 +2234,15 @@ func marshalNARStatementTransaction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	return ec.MarshalType(ctx, sel, "ARStatementTransaction", v)
 }
 
-func marshalNARTopOverdueCustomer2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARTopOverdueCustomerᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*repositories.ARTopOverdueCustomer) graphql.Marshaler {
-	return gqlexec.List[*repositories.ARTopOverdueCustomer]{
+func marshalNARTopOverdueCustomer2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARTopOverdueCustomerᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerledgerports.ARTopOverdueCustomer) graphql.Marshaler {
+	return gqlexec.List[*customerledgerports.ARTopOverdueCustomer]{
 		Elem:        marshalNARTopOverdueCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARTopOverdueCustomer,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNARTopOverdueCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARTopOverdueCustomer(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *repositories.ARTopOverdueCustomer) graphql.Marshaler {
+func marshalNARTopOverdueCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARTopOverdueCustomer(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARTopOverdueCustomer) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

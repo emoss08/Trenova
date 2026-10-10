@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -16,7 +16,7 @@ import (
 
 func definitionVisibilityScope(
 	q *bun.SelectQuery,
-	req *repositories.ListReportDefinitionConnectionRequest,
+	req *reportports.ListReportDefinitionConnectionRequest,
 ) *bun.SelectQuery {
 	if req.ViewerID.IsNil() {
 		return q
@@ -31,7 +31,7 @@ func definitionVisibilityScope(
 
 func (r *definitionRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListReportDefinitionConnectionRequest,
+	req *reportports.ListReportDefinitionConnectionRequest,
 ) (*pagination.CursorListResult[*report.ReportDefinition], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*report.ReportDefinition], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -96,7 +96,7 @@ func (r *definitionRepository) ListConnection(
 
 func runConnectionScope(
 	q *bun.SelectQuery,
-	req *repositories.ListReportRunConnectionRequest,
+	req *reportports.ListReportRunConnectionRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.ReportRunColumns
 
@@ -114,7 +114,7 @@ func runConnectionScope(
 
 func (r *runRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListReportRunConnectionRequest,
+	req *reportports.ListReportRunConnectionRequest,
 ) (*pagination.CursorListResult[*report.ReportRun], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*report.ReportRun], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))

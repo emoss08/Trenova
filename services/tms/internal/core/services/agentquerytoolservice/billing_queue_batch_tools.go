@@ -7,9 +7,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/sliceutils"
@@ -35,11 +38,11 @@ type getBillingQueueItemsTool struct {
 }
 
 func newGetBillingQueueItemsTool(
-	items serviceports.BillingQueueService,
-	shipments serviceports.ShipmentService,
-	invoices repositories.InvoiceRepository,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	items billingqueueports.BillingQueueService,
+	shipments shipmentports.ShipmentService,
+	invoices invoiceports.InvoiceRepository,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &getBillingQueueItemsTool{
 		items:     items,
 		readiness: shipments,
@@ -79,7 +82,7 @@ func (t *getBillingQueueItemsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *getBillingQueueItemsTool) Policy() serviceports.ToolPolicy {
+func (t *getBillingQueueItemsTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceBillingQueue})
 }
 
@@ -111,7 +114,7 @@ type billingQueueBatchRow struct {
 
 func (t *getBillingQueueItemsTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

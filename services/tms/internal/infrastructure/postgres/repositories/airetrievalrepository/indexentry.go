@@ -11,9 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
@@ -47,7 +47,7 @@ const (
 
 func (r *repository) MarkStale(
 	ctx context.Context,
-	req *repositories.MarkAIRetrievalStaleRequest,
+	req *agentports.MarkAIRetrievalStaleRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		if req == nil {
@@ -126,7 +126,7 @@ func (r *repository) MarkStale(
 
 func (r *repository) ClaimIndexEntries(
 	ctx context.Context,
-	req *repositories.ClaimIndexEntriesRequest,
+	req *agentports.ClaimIndexEntriesRequest,
 ) ([]*airetrieval.IndexEntry, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*airetrieval.IndexEntry, error) {
 		if req == nil {
@@ -265,7 +265,7 @@ func matchOutcomeKey(q *bun.UpdateQuery) *bun.UpdateQuery {
 }
 
 func outcomeRows(
-	req repositories.MarkIndexEntriesRequest,
+	req agentports.MarkIndexEntriesRequest,
 	status airetrieval.IndexStatus,
 ) ([]outcomeRow, error) {
 	if len(req.Outcomes) > maxOutcomesPerCall {
@@ -331,32 +331,32 @@ func outcomeRows(
 
 func (r *repository) MarkIndexed(
 	ctx context.Context,
-	req repositories.MarkIndexEntriesRequest,
-) (repositories.MarkIndexEntriesResult, error) {
+	req agentports.MarkIndexEntriesRequest,
+) (agentports.MarkIndexEntriesResult, error) {
 	return r.markEntries(ctx, req, airetrieval.IndexStatusIndexed)
 }
 
 func (r *repository) MarkFailed(
 	ctx context.Context,
-	req repositories.MarkIndexEntriesRequest,
-) (repositories.MarkIndexEntriesResult, error) {
+	req agentports.MarkIndexEntriesRequest,
+) (agentports.MarkIndexEntriesResult, error) {
 	return r.markEntries(ctx, req, airetrieval.IndexStatusFailed)
 }
 
 func (r *repository) MarkSkipped(
 	ctx context.Context,
-	req repositories.MarkIndexEntriesRequest,
-) (repositories.MarkIndexEntriesResult, error) {
+	req agentports.MarkIndexEntriesRequest,
+) (agentports.MarkIndexEntriesResult, error) {
 	return r.markEntries(ctx, req, airetrieval.IndexStatusSkipped)
 }
 
 func (r *repository) markEntries(
 	ctx context.Context,
-	req repositories.MarkIndexEntriesRequest,
+	req agentports.MarkIndexEntriesRequest,
 	status airetrieval.IndexStatus,
-) (repositories.MarkIndexEntriesResult, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (repositories.MarkIndexEntriesResult, error) {
-		var result repositories.MarkIndexEntriesResult
+) (agentports.MarkIndexEntriesResult, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (agentports.MarkIndexEntriesResult, error) {
+		var result agentports.MarkIndexEntriesResult
 
 		rows, err := outcomeRows(req, status)
 		if err != nil || len(rows) == 0 {
@@ -368,7 +368,7 @@ func (r *repository) markEntries(
 			now = timeutils.NowUnix()
 		}
 
-		err = r.db.WithTx(ctx, ports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+		err = r.db.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
 			res, txErr := applyOutcome(tx, rows, status, now).Exec(ctx)
 			if txErr != nil {
 				return fmt.Errorf("record index outcomes: %w", txErr)
@@ -386,7 +386,7 @@ func (r *repository) markEntries(
 			return txErr
 		})
 		if err != nil {
-			return repositories.MarkIndexEntriesResult{}, err
+			return agentports.MarkIndexEntriesResult{}, err
 		}
 
 		return result, nil
@@ -449,9 +449,9 @@ func releaseSuperseded(tx bun.Tx, rows []outcomeRow, now int64) *bun.UpdateQuery
 
 func (r *repository) CountIndexEntries(
 	ctx context.Context,
-	req repositories.CountIndexEntriesRequest,
-) ([]repositories.IndexEntryCount, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.IndexEntryCount, error) {
+	req agentports.CountIndexEntriesRequest,
+) ([]agentports.IndexEntryCount, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentports.IndexEntryCount, error) {
 		if err := validateTenant(req.TenantInfo); err != nil {
 			return nil, err
 		}
@@ -461,7 +461,7 @@ func (r *repository) CountIndexEntries(
 
 		cols := buncolgen.IndexEntryColumns
 		counts := make(
-			[]repositories.IndexEntryCount,
+			[]agentports.IndexEntryCount,
 			0,
 			len(airetrieval.AllSourceTypes())*len(airetrieval.AllIndexStatuses()),
 		)
@@ -524,7 +524,7 @@ var sourceTables = map[airetrieval.SourceType]sourceTable{
 
 func (r *repository) FindStaleSources(
 	ctx context.Context,
-	req *repositories.FindStaleAIRetrievalSourcesRequest,
+	req *agentports.FindStaleAIRetrievalSourcesRequest,
 ) ([]pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
 		if req == nil {
@@ -598,10 +598,10 @@ func (r *repository) FindStaleSources(
 
 func (r *repository) AverageIndexChunks(
 	ctx context.Context,
-	req *repositories.AverageIndexChunksRequest,
-) (repositories.IndexChunkAverage, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (repositories.IndexChunkAverage, error) {
-		var average repositories.IndexChunkAverage
+	req *agentports.AverageIndexChunksRequest,
+) (agentports.IndexChunkAverage, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (agentports.IndexChunkAverage, error) {
+		var average agentports.IndexChunkAverage
 
 		if req == nil {
 			return average, invalid("an average of index chunks needs a request")
@@ -628,7 +628,7 @@ func (r *repository) AverageIndexChunks(
 			Where(cols.Status.Eq(), airetrieval.IndexStatusIndexed).
 			Where(cols.ChunkCount.Gt(), 0).
 			Scan(ctx, &average); err != nil {
-			return repositories.IndexChunkAverage{}, fmt.Errorf(
+			return agentports.IndexChunkAverage{}, fmt.Errorf(
 				"average %s chunks per source: %w",
 				req.SourceType,
 				err,
@@ -641,7 +641,7 @@ func (r *repository) AverageIndexChunks(
 
 func (r *repository) ListErroredIndexEntries(
 	ctx context.Context,
-	req *repositories.ListErroredIndexEntriesRequest,
+	req *agentports.ListErroredIndexEntriesRequest,
 ) ([]*airetrieval.IndexEntry, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*airetrieval.IndexEntry, error) {
 		if req == nil {

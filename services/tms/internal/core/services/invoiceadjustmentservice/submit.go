@@ -5,13 +5,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/invoiceadjustmentjobs/invoiceadjustmentcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/invoiceadjustmentjobs/invoiceadjustmentcontract"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -24,8 +23,8 @@ import (
 
 func (s *Service) SubmitDraft(
 	ctx context.Context,
-	req *servicesports.GetInvoiceAdjustmentDetailRequest,
-	actor *servicesports.RequestActor,
+	req *invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest,
+	actor *permissionports.RequestActor,
 ) (*invoiceadjustment.InvoiceAdjustment, error) {
 	entity, draftReq, err := s.loadDraftRequest(ctx, req)
 	if err != nil {
@@ -92,13 +91,13 @@ func (s *Service) SubmitDraft(
 	}}
 
 	var executed *invoiceadjustment.InvoiceAdjustment
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		if _, txErr := s.repo.UpdateAdjustment(txCtx, entity); txErr != nil {
 			return txErr
 		}
 		if txErr := s.repo.CreateAdjustmentArtifacts(
 			txCtx,
-			repositories.CreateAdjustmentArtifactsParams{Snapshots: snapshots},
+			invoiceadjustmentports.CreateAdjustmentArtifactsParams{Snapshots: snapshots},
 		); txErr != nil {
 			return txErr
 		}
@@ -121,9 +120,9 @@ func (s *Service) SubmitDraft(
 
 func (s *Service) Preview(
 	ctx context.Context,
-	req *servicesports.InvoiceAdjustmentRequest,
-	_ *servicesports.RequestActor,
-) (*servicesports.InvoiceAdjustmentPreview, error) {
+	req *invoiceadjustmentports.InvoiceAdjustmentRequest,
+	_ *permissionports.RequestActor,
+) (*invoiceadjustmentports.InvoiceAdjustmentPreview, error) {
 	if multiErr := s.validator.ValidateRequest(ctx, req); multiErr != nil {
 		return nil, multiErr
 	}
@@ -138,8 +137,8 @@ func (s *Service) Preview(
 
 func (s *Service) Submit( //nolint:funlen // legacy workflow
 	ctx context.Context,
-	req *servicesports.InvoiceAdjustmentRequest,
-	actor *servicesports.RequestActor,
+	req *invoiceadjustmentports.InvoiceAdjustmentRequest,
+	actor *permissionports.RequestActor,
 ) (*invoiceadjustment.InvoiceAdjustment, error) {
 	if multiErr := s.validator.ValidateRequest(ctx, req); multiErr != nil {
 		return nil, multiErr
@@ -147,7 +146,7 @@ func (s *Service) Submit( //nolint:funlen // legacy workflow
 
 	if existing, err := s.repo.GetByIdempotencyKey(
 		ctx,
-		repositories.GetInvoiceAdjustmentByIdempotencyRequest{
+		invoiceadjustmentports.GetInvoiceAdjustmentByIdempotencyRequest{
 			IdempotencyKey: req.IdempotencyKey,
 			TenantInfo:     req.TenantInfo,
 		},
@@ -167,7 +166,7 @@ func (s *Service) Submit( //nolint:funlen // legacy workflow
 	var result *invoiceadjustment.InvoiceAdjustment
 	err = s.db.WithTx(
 		ctx,
-		ports.TxOptions{LockTimeout: 5 * 1000000000},
+		kernelports.TxOptions{LockTimeout: 5 * 1000000000},
 		func(txCtx context.Context, _ bun.Tx) error {
 			group, groupErr := s.ensureCorrectionGroup(txCtx, computation.invoice)
 			if groupErr != nil {
@@ -250,7 +249,7 @@ func (s *Service) Submit( //nolint:funlen // legacy workflow
 
 			if err = s.repo.CreateAdjustmentArtifacts(
 				txCtx,
-				repositories.CreateAdjustmentArtifactsParams{
+				invoiceadjustmentports.CreateAdjustmentArtifactsParams{
 					Adjustment:         adjustment,
 					Lines:              computation.lines,
 					Snapshots:          snapshots,
@@ -261,7 +260,7 @@ func (s *Service) Submit( //nolint:funlen // legacy workflow
 			}
 
 			if computation.preview.RequiresApproval {
-				result, err = s.repo.GetByID(txCtx, repositories.GetInvoiceAdjustmentRequest{
+				result, err = s.repo.GetByID(txCtx, invoiceadjustmentports.GetInvoiceAdjustmentRequest{
 					ID:         adjustment.ID,
 					TenantInfo: req.TenantInfo,
 				})
@@ -289,10 +288,10 @@ func (s *Service) Submit( //nolint:funlen // legacy workflow
 
 func (s *Service) BulkPreview(
 	ctx context.Context,
-	req *servicesports.InvoiceAdjustmentBulkRequest,
-	actor *servicesports.RequestActor,
-) ([]*servicesports.InvoiceAdjustmentPreview, error) {
-	previews := make([]*servicesports.InvoiceAdjustmentPreview, 0, len(req.Items))
+	req *invoiceadjustmentports.InvoiceAdjustmentBulkRequest,
+	actor *permissionports.RequestActor,
+) ([]*invoiceadjustmentports.InvoiceAdjustmentPreview, error) {
+	previews := make([]*invoiceadjustmentports.InvoiceAdjustmentPreview, 0, len(req.Items))
 	for _, item := range req.Items {
 		item.TenantInfo = req.TenantInfo
 		preview, err := s.Preview(ctx, item, actor)
@@ -307,8 +306,8 @@ func (s *Service) BulkPreview(
 //nolint:nestif // existing validation flow mirrors business rule nesting
 func (s *Service) BulkSubmit( //nolint:funlen // legacy workflow
 	ctx context.Context,
-	req *servicesports.InvoiceAdjustmentBulkRequest,
-	actor *servicesports.RequestActor,
+	req *invoiceadjustmentports.InvoiceAdjustmentBulkRequest,
+	actor *permissionports.RequestActor,
 ) (*invoiceadjustment.InvoiceAdjustmentBatch, error) {
 	if err := validateBulkRequest(req); err != nil {
 		return nil, err
@@ -316,7 +315,7 @@ func (s *Service) BulkSubmit( //nolint:funlen // legacy workflow
 
 	if existing, err := s.repo.GetBatchByIdempotencyKey(
 		ctx,
-		repositories.GetBatchByIdempotencyRequest{
+		invoiceadjustmentports.GetBatchByIdempotencyRequest{
 			IdempotencyKey: req.IdempotencyKey,
 			TenantInfo:     req.TenantInfo,
 		},
@@ -405,11 +404,11 @@ func (s *Service) BulkSubmit( //nolint:funlen // legacy workflow
 
 	if !s.workflowStarter.Enabled() {
 		created.Status = invoiceadjustment.BatchStatusFailed
-		created.Metadata["workflowError"] = servicesports.ErrWorkflowStarterDisabled.Error()
+		created.Metadata["workflowError"] = kernelports.ErrWorkflowStarterDisabled.Error()
 		if _, err = s.repo.UpdateBatch(ctx, created); err != nil {
 			return nil, err
 		}
-		return nil, servicesports.ErrWorkflowStarterDisabled
+		return nil, kernelports.ErrWorkflowStarterDisabled
 	}
 
 	workflowID := fmt.Sprintf(
@@ -453,7 +452,7 @@ func (s *Service) BulkSubmit( //nolint:funlen // legacy workflow
 	return s.repo.UpdateBatch(ctx, created)
 }
 
-func validateBulkRequest(req *servicesports.InvoiceAdjustmentBulkRequest) error {
+func validateBulkRequest(req *invoiceadjustmentports.InvoiceAdjustmentBulkRequest) error {
 	if req == nil {
 		return errortypes.NewValidationError(
 			"request",

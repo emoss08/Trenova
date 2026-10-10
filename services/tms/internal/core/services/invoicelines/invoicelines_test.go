@@ -1,6 +1,7 @@
 package invoicelines_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
 	"errors"
 	"testing"
 
@@ -9,8 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/invoicelines"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -225,13 +226,13 @@ func TestHydrateAccessorialsLoadsMissingAndStaleDefinitionsOnce(t *testing.T) {
 		AccessorialCharge:   loaded,
 	}
 
-	repo := mocks.NewMockAccessorialChargeRepository(t)
-	repo.On("GetByID", mock.Anything, mock.MatchedBy(func(req repositories.GetAccessorialChargeByIDRequest) bool {
+	repo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
+	repo.On("GetByID", mock.Anything, mock.MatchedBy(func(req accessorialchargeports.GetAccessorialChargeByIDRequest) bool {
 		return req.ID == det.ID && *req.TenantInfo == tenantInfo
 	})).
 		Return(det, nil).
 		Once()
-	repo.On("GetByID", mock.Anything, mock.MatchedBy(func(req repositories.GetAccessorialChargeByIDRequest) bool {
+	repo.On("GetByID", mock.Anything, mock.MatchedBy(func(req accessorialchargeports.GetAccessorialChargeByIDRequest) bool {
 		return req.ID == current.ID
 	})).
 		Return(current, nil).
@@ -256,7 +257,7 @@ func TestHydrateAccessorialsLoadsMissingAndStaleDefinitionsOnce(t *testing.T) {
 func TestHydrateAccessorialsReturnsLookupErrors(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockAccessorialChargeRepository(t)
+	repo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(nil, errors.New("database unavailable"))
 
 	err := invoicelines.HydrateAccessorials(

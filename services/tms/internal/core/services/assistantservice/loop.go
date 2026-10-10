@@ -9,8 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentguard"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -20,7 +22,7 @@ import (
 // TurnRequest is one question as the guard and the runtime read it.
 type TurnRequest struct {
 	Definition *agentdefinition.Definition
-	Actor      *serviceports.RequestActor
+	Actor      *permissionports.RequestActor
 	History    []conversation.Message
 	Input      string
 	Page       *agentdefinition.PageContext
@@ -30,7 +32,7 @@ type TurnRequest struct {
 	// ThreadID is the conversation, for attributing what the turn cost.
 	ThreadID pulid.ID
 	// Proposals is what became of the writes earlier turns proposed.
-	Proposals []serviceports.ProposalOutcome
+	Proposals []agentports.ProposalOutcome
 	// Subject is the record the conversation is about, when it was opened
 	// from one.
 	Subject *agentdefinition.RuntimeSubject
@@ -51,7 +53,7 @@ type TurnResult struct {
 	Reply    string
 	Decision agentguard.Decision
 	Messages []conversation.Message
-	Actions  []serviceports.PendingAction
+	Actions  []agentports.PendingAction
 	Model    string
 	Provider pulid.ID
 }
@@ -68,7 +70,7 @@ type TurnResult struct {
 func (s *Service) admit(
 	ctx context.Context,
 	req *TurnRequest,
-) (agentguard.Decision, *serviceports.RunRequest) {
+) (agentguard.Decision, *agentports.RunRequest) {
 	evaluate := agentguard.EvaluateRequest{
 		TenantInfo: req.Actor.TenantInfo(),
 		Input:      req.Input,
@@ -92,7 +94,7 @@ func (s *Service) admit(
 	runtimeContext.PendingProposals = pendingProposals(req.Proposals)
 	runtimeContext.Anchors = req.Anchors
 
-	return decision, &serviceports.RunRequest{
+	return decision, &agentports.RunRequest{
 		Definition:          req.Definition,
 		Actor:               req.Actor,
 		Context:             runtimeContext,
@@ -114,7 +116,7 @@ func (s *Service) admit(
 func turnResultOf(
 	input string,
 	decision agentguard.Decision,
-	run *serviceports.RunResult,
+	run *agentports.RunResult,
 	err error,
 ) *TurnResult {
 	if !decision.Allowed {
@@ -171,7 +173,7 @@ func (s *Service) buildContext(
 		return bare
 	}
 
-	runtimeContext, err := s.contexts.Build(ctx, &serviceports.RuntimeContextRequest{
+	runtimeContext, err := s.contexts.Build(ctx, &agentports.RuntimeContextRequest{
 		Definition:  req.Definition,
 		Actor:       req.Actor,
 		Trigger:     agent.RunTriggerChat,
@@ -181,7 +183,7 @@ func (s *Service) buildContext(
 		Attachments: req.Attachments,
 		Mentions:    req.Mentions,
 		Facts:       req.Facts,
-		Query: (&serviceports.ContextQuery{
+		Query: (&agentports.ContextQuery{
 			Actor:        req.Actor,
 			DefinitionID: definitionID(req.Definition),
 			ThreadID:     req.ThreadID,
@@ -209,7 +211,7 @@ func (s *Service) buildContext(
 func (s *Service) describeSubject(
 	ctx context.Context,
 	thread *conversation.Thread,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 	tenant pagination.TenantInfo,
 ) *agentdefinition.RuntimeSubject {
 	if !thread.HasSubject() {
@@ -304,7 +306,7 @@ func withReason(notice string, err error) string {
 // provider's own message: that message is for the administrator and is
 // kept with the usage record in AI Control.
 func failureReason(err error) string {
-	var failure serviceports.ProviderFailure
+	var failure agentports.ProviderFailure
 	if errors.As(err, &failure) {
 		if failure.ProviderRetryable() {
 			return fmt.Sprintf(
@@ -318,7 +320,7 @@ func failureReason(err error) string {
 			failure.ProviderStatus(),
 		)
 	}
-	if errors.Is(err, serviceports.ErrProvidersResting) {
+	if errors.Is(err, agentports.ErrProvidersResting) {
 		return "Every model provider is paused after repeated failures."
 	}
 	if errors.Is(err, context.DeadlineExceeded) {
@@ -340,11 +342,11 @@ func failureReason(err error) string {
 func interruptedTurn(
 	input string,
 	decision agentguard.Decision,
-	run *serviceports.RunResult,
+	run *agentports.RunResult,
 	err error,
 ) *TurnResult {
 	if run == nil {
-		run = &serviceports.RunResult{}
+		run = &agentports.RunResult{}
 	}
 
 	// The first message is the question; anything after it is what ran.
@@ -383,7 +385,7 @@ func replyFailure(err error, ranAnything bool) *conversation.ReplyFailure {
 	if errors.Is(err, context.Canceled) {
 		return &conversation.ReplyFailure{Kind: conversation.ReplyFailureStopped}
 	}
-	var exhausted *serviceports.ChatProvidersFailedError
+	var exhausted *agentports.ChatProvidersFailedError
 	if errors.As(err, &exhausted) && len(exhausted.Failures) > 0 {
 		failure := &conversation.ReplyFailure{Kind: conversation.ReplyFailureNoModel}
 		for _, provider := range exhausted.Failures {
@@ -425,7 +427,7 @@ func scopedMessage(
 // marked as altered with the rule and reason the reply's message carries, so
 // the signal that something upstream let a code request through is kept.
 func outputDecision(
-	run *serviceports.RunResult,
+	run *agentports.RunResult,
 	messages []conversation.Message,
 ) agentguard.Decision {
 	decision := agentguard.Decision{
@@ -448,10 +450,10 @@ func outputDecision(
 	return decision
 }
 
-func refusedEvent(decision agentguard.Decision) serviceports.StreamEvent {
-	return serviceports.StreamEvent{
-		Event: serviceports.AssistantEventRefused,
-		Data: serviceports.AssistantRefusedEvent{
+func refusedEvent(decision agentguard.Decision) kernelports.StreamEvent {
+	return kernelports.StreamEvent{
+		Event: agentports.AssistantEventRefused,
+		Data: agentports.AssistantRefusedEvent{
 			Message:  decision.Message,
 			Stage:    string(decision.Stage),
 			Category: string(decision.Category),
@@ -491,7 +493,7 @@ func recentTurns(history []conversation.Message) []agentguard.Turn {
 }
 
 // pendingProposals names the undecided proposals for the prompt.
-func pendingProposals(outcomes []serviceports.ProposalOutcome) []agentdefinition.PendingProposal {
+func pendingProposals(outcomes []agentports.ProposalOutcome) []agentdefinition.PendingProposal {
 	pending := make([]agentdefinition.PendingProposal, 0, len(outcomes))
 	for _, outcome := range outcomes {
 		if outcome.Pending() {

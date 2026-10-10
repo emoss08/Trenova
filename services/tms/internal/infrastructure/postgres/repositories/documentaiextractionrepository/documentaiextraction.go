@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/documentaiextraction"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -29,7 +29,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.DocumentAIExtractionRepository {
+func New(p Params) documentaiextractionports.DocumentAIExtractionRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.document-ai-extraction-repository"),
@@ -38,7 +38,7 @@ func New(p Params) repositories.DocumentAIExtractionRepository {
 
 func (r *repository) GetByDocumentExtractedAt(
 	ctx context.Context,
-	req repositories.GetDocumentAIExtractionRequest,
+	req documentaiextractionports.GetDocumentAIExtractionRequest,
 ) (*documentaiextraction.Extraction, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*documentaiextraction.Extraction, error) {
 		entity := new(documentaiextraction.Extraction)
@@ -124,7 +124,7 @@ func (r *repository) Update(
 
 func (r *repository) ListPollable(
 	ctx context.Context,
-	req *repositories.ListPollableDocumentAIExtractionRequest,
+	req *documentaiextractionports.ListPollableDocumentAIExtractionRequest,
 ) ([]*documentaiextraction.Extraction, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*documentaiextraction.Extraction, error) {
 		limit := req.Limit
@@ -150,7 +150,7 @@ func (r *repository) ListPollable(
 
 func (r *repository) ListPollableTenants(
 	ctx context.Context,
-	req *repositories.ListPollableDocumentAIExtractionRequest,
+	req *documentaiextractionports.ListPollableDocumentAIExtractionRequest,
 ) ([]pagination.TenantInfo, error) {
 	ctx = dbscope.WithSystem(ctx, "list organizations with pollable document extractions")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
@@ -193,7 +193,7 @@ func (r *repository) ListPollableTenants(
 }
 
 func applyPollableDocumentAIExtractionFilters(
-	req *repositories.ListPollableDocumentAIExtractionRequest,
+	req *documentaiextractionports.ListPollableDocumentAIExtractionRequest,
 ) func(*bun.SelectQuery) *bun.SelectQuery {
 	return func(q *bun.SelectQuery) *bun.SelectQuery {
 		cols := buncolgen.ExtractionColumns

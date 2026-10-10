@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/accountingcontrolservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/gin-gonic/gin"
@@ -65,7 +65,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 func (h *Handler) get(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	entity, err := h.service.Get(c.Request.Context(), repositories.GetAccountingControlRequest{
+	entity, err := h.service.Get(c.Request.Context(), tenantports.GetAccountingControlRequest{
 		TenantInfo: pagination.FromAuthAsUser(authCtx),
 	})
 	if err != nil {

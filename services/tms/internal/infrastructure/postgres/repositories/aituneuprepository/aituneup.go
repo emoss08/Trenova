@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/aituneup"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -29,7 +29,7 @@ type repository struct {
 	db *postgres.Connection
 }
 
-func New(p Params) repositories.AITuneUpRepository {
+func New(p Params) aituneupports.AITuneUpRepository {
 	return &repository{db: p.DB}
 }
 
@@ -58,7 +58,7 @@ func (r *repository) List(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetAITuneUpRequest,
+	req aituneupports.GetAITuneUpRequest,
 ) (*aituneup.TuneUp, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*aituneup.TuneUp, error) {
 		entity := new(aituneup.TuneUp)
@@ -168,7 +168,7 @@ func (r *repository) refresh(
 
 func (r *repository) Decide(
 	ctx context.Context,
-	req *repositories.DecideAITuneUpRequest,
+	req *aituneupports.DecideAITuneUpRequest,
 ) (*aituneup.TuneUp, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*aituneup.TuneUp, error) {
 		cols := buncolgen.TuneUpColumns
@@ -202,7 +202,7 @@ func (r *repository) Decide(
 
 func (r *repository) Reopen(
 	ctx context.Context,
-	req *repositories.ReopenAITuneUpRequest,
+	req *aituneupports.ReopenAITuneUpRequest,
 ) (*aituneup.TuneUp, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*aituneup.TuneUp, error) {
 		cols := buncolgen.TuneUpColumns

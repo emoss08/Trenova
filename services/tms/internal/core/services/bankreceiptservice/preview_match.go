@@ -6,8 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/core/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
-	repositoryports "github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -27,8 +28,8 @@ type MatchPreview struct {
 // PreviewMatch is Match without the writes.
 func (s *Service) PreviewMatch(
 	ctx context.Context,
-	req *serviceports.MatchBankReceiptRequest,
-	actor *serviceports.RequestActor,
+	req *bankreceiptports.MatchBankReceiptRequest,
+	actor *permissionports.RequestActor,
 ) (*MatchPreview, error) {
 	return s.planStoredMatch(ctx, req, actor)
 }
@@ -46,7 +47,7 @@ type PreviewMatchPaymentRequest struct {
 func (s *Service) PreviewMatchPayment(
 	ctx context.Context,
 	req *PreviewMatchPaymentRequest,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*MatchPreview, error) {
 	if req == nil || req.Payment == nil {
 		return nil, errortypes.NewValidationError(
@@ -64,8 +65,8 @@ func (s *Service) PreviewMatchPayment(
 
 func (s *Service) planStoredMatch(
 	ctx context.Context,
-	req *serviceports.MatchBankReceiptRequest,
-	actor *serviceports.RequestActor,
+	req *bankreceiptports.MatchBankReceiptRequest,
+	actor *permissionports.RequestActor,
 ) (*MatchPreview, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
@@ -80,7 +81,7 @@ func (s *Service) planStoredMatch(
 
 	payment, err := s.paymentRepo.GetByID(
 		ctx,
-		repositoryports.GetCustomerPaymentByIDRequest{
+		customerpaymentports.GetCustomerPaymentByIDRequest{
 			ID:         req.PaymentID,
 			TenantInfo: req.TenantInfo,
 		},
@@ -92,7 +93,7 @@ func (s *Service) planStoredMatch(
 	return s.planMatch(ctx, req.ReceiptID, req.TenantInfo, payment, actor)
 }
 
-func requireMatchActor(actor *serviceports.RequestActor) error {
+func requireMatchActor(actor *permissionports.RequestActor) error {
 	if actor == nil || actor.UserID.IsNil() {
 		return errortypes.NewAuthorizationError(
 			"Bank receipt matching requires an authenticated user",
@@ -110,11 +111,11 @@ func (s *Service) planMatch(
 	receiptID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 	payment *customerpayment.Payment,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*MatchPreview, error) {
 	receipt, err := s.repo.GetByID(
 		ctx,
-		repositoryports.GetBankReceiptByIDRequest{ID: receiptID, TenantInfo: tenantInfo},
+		bankreceiptports.GetBankReceiptByIDRequest{ID: receiptID, TenantInfo: tenantInfo},
 	)
 	if err != nil {
 		return nil, err

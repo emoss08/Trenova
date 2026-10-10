@@ -7,8 +7,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/insight"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"
@@ -24,12 +25,12 @@ const (
 type insightReader interface {
 	List(
 		ctx context.Context,
-		req serviceports.BrowseInsightsRequest,
+		req insightports.BrowseInsightsRequest,
 	) (*pagination.ListResult[*insight.Insight], error)
 	GetDetail(
 		ctx context.Context,
-		req serviceports.GetInsightDetailRequest,
-	) (*serviceports.InsightDetail, error)
+		req insightports.GetInsightDetailRequest,
+	) (*insightports.InsightDetail, error)
 }
 
 // insightRow is a finding in the words the model needs: what was found,
@@ -111,7 +112,7 @@ type listInsightsTool struct {
 	insights insightReader
 }
 
-func newListInsightsTool(insights insightReader) serviceports.AgentQueryTool {
+func newListInsightsTool(insights insightReader) agentports.AgentQueryTool {
 	return &listInsightsTool{insights: insights}
 }
 
@@ -147,7 +148,7 @@ func (t *listInsightsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listInsightsTool) Policy() serviceports.ToolPolicy {
+func (t *listInsightsTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceInsight,
 	})
@@ -155,7 +156,7 @@ func (t *listInsightsTool) Policy() serviceports.ToolPolicy {
 
 func (t *listInsightsTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -166,7 +167,7 @@ func (t *listInsightsTool) Query(
 		limit = maxInsightRows
 	}
 
-	req := serviceports.BrowseInsightsRequest{
+	req := insightports.BrowseInsightsRequest{
 		TenantInfo: tenantOf(params),
 		UserID:     params.Actor.UserID,
 		Actor:      params.Actor,
@@ -255,7 +256,7 @@ type getInsightTool struct {
 	insights insightReader
 }
 
-func newGetInsightTool(insights insightReader) serviceports.AgentQueryTool {
+func newGetInsightTool(insights insightReader) agentports.AgentQueryTool {
 	return &getInsightTool{insights: insights}
 }
 
@@ -280,7 +281,7 @@ func (t *getInsightTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *getInsightTool) Policy() serviceports.ToolPolicy {
+func (t *getInsightTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceInsight,
 	})
@@ -288,7 +289,7 @@ func (t *getInsightTool) Policy() serviceports.ToolPolicy {
 
 func (t *getInsightTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -299,7 +300,7 @@ func (t *getInsightTool) Query(
 		return nil, err
 	}
 
-	detail, err := t.insights.GetDetail(ctx, serviceports.GetInsightDetailRequest{
+	detail, err := t.insights.GetDetail(ctx, insightports.GetInsightDetailRequest{
 		ID:         id,
 		UserID:     params.Actor.UserID,
 		Actor:      params.Actor,

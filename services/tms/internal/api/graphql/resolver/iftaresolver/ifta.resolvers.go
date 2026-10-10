@@ -17,9 +17,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/iftaservice"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/money"
 )
@@ -576,7 +576,7 @@ func (r *MutationResolver) RecalculateMoveJurisdictionMiles(ctx context.Context,
 
 	return r.DistanceCalculationService.RecalculateMoveJurisdictionMiles(
 		ctx,
-		serviceports.RecalculateMoveJurisdictionMilesRequest{
+		shipmentports.RecalculateMoveJurisdictionMilesRequest{
 			TenantInfo:     base.TenantInfo(authCtx),
 			ShipmentMoveID: moveID,
 			UserID:         authCtx.UserID,
@@ -592,7 +592,7 @@ func (r *MutationResolver) BackfillJurisdictionMiles(ctx context.Context, input 
 
 	result, err := r.DistanceCalculationService.BackfillJurisdictionMiles(
 		ctx,
-		serviceports.BackfillJurisdictionMilesRequest{
+		shipmentports.BackfillJurisdictionMilesRequest{
 			TenantInfo: base.TenantInfo(authCtx),
 			Start:      int64(input.PeriodStart),
 			End:        int64(input.PeriodEnd),
@@ -617,7 +617,7 @@ func (r *QueryResolver) IFTAJurisdictions(ctx context.Context, membersOnly *bool
 		return nil, err
 	}
 
-	return r.IftaService.ListJurisdictions(ctx, &repositories.ListJurisdictionsRequest{
+	return r.IftaService.ListJurisdictions(ctx, &iftaports.ListJurisdictionsRequest{
 		MembersOnly: base.BoolValue(membersOnly),
 	})
 }

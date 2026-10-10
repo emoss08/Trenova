@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -30,7 +30,7 @@ type repository struct {
 	db *postgres.Connection
 }
 
-func New(p Params) repositories.AgentProposalBaselineRepository {
+func New(p Params) agentports.AgentProposalBaselineRepository {
 	return &repository{db: p.DB}
 }
 
@@ -52,7 +52,7 @@ func (r *repository) Create(ctx context.Context, baseline *agent.ProposalBaselin
 
 func (r *repository) GetByProposal(
 	ctx context.Context,
-	req repositories.GetProposalBaselineRequest,
+	req agentports.GetProposalBaselineRequest,
 ) (*agent.ProposalBaseline, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.ProposalBaseline, error) {
 		baseline := new(agent.ProposalBaseline)
@@ -73,7 +73,7 @@ func (r *repository) GetByProposal(
 
 func (r *repository) ListByProposals(
 	ctx context.Context,
-	req repositories.ListProposalBaselinesRequest,
+	req agentports.ListProposalBaselinesRequest,
 ) ([]*agent.ProposalBaseline, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.ProposalBaseline, error) {
 		rows := make([]*agent.ProposalBaseline, 0, len(req.ProposalIDs))
@@ -97,7 +97,7 @@ func (r *repository) ListByProposals(
 
 func (r *repository) PurgeOrphans(
 	ctx context.Context,
-	req repositories.PurgeOrphanProposalBaselinesRequest,
+	req agentports.PurgeOrphanProposalBaselinesRequest,
 ) (int, error) {
 	ctx = dbscope.WithSystem(ctx, "purge orphaned proposal baselines across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {

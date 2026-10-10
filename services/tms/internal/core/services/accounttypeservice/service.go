@@ -5,9 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/accounttype"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accounttypeports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,18 +20,18 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.AccountTypeRepository
+	Repo         accounttypeports.AccountTypeRepository
 	Validator    *Validator
-	AuditService services.AuditService
-	Transformer  services.DataTransformer
+	AuditService auditports.AuditService
+	Transformer  accessorialchargeports.DataTransformer
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.AccountTypeRepository
+	repo         accounttypeports.AccountTypeRepository
 	validator    *Validator
-	auditService services.AuditService
-	transformer  services.DataTransformer
+	auditService auditports.AuditService
+	transformer  accessorialchargeports.DataTransformer
 }
 
 func New(p Params) *Service {
@@ -45,42 +46,42 @@ func New(p Params) *Service {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListAccountTypesRequest,
+	req *accounttypeports.ListAccountTypesRequest,
 ) (*pagination.ListResult[*accounttype.AccountType], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListAccountTypesConnectionRequest,
+	req *accounttypeports.ListAccountTypesConnectionRequest,
 ) (*pagination.CursorListResult[*accounttype.AccountType], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	req repositories.GetAccountTypeByIDRequest,
+	req accounttypeports.GetAccountTypeByIDRequest,
 ) (*accounttype.AccountType, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) SelectOptions(
 	ctx context.Context,
-	req *repositories.AccountTypeSelectOptionsRequest,
+	req *accounttypeports.AccountTypeSelectOptionsRequest,
 ) (*pagination.ListResult[*accounttype.AccountType], error) {
 	return s.repo.SelectOptions(ctx, req)
 }
 
 func (s *Service) BulkUpdateStatus(
 	ctx context.Context,
-	req *repositories.BulkUpdateAccountTypeStatusRequest,
+	req *accounttypeports.BulkUpdateAccountTypeStatusRequest,
 ) ([]*accounttype.AccountType, error) {
 	log := s.l.With(
 		zap.String("operation", "BulkUpdateStatus"),
 		zap.Any("request", req),
 	)
 
-	originalEntities, err := s.repo.GetByIDs(ctx, repositories.GetAccountTypesByIDsRequest{
+	originalEntities, err := s.repo.GetByIDs(ctx, accounttypeports.GetAccountTypesByIDsRequest{
 		TenantInfo:     req.TenantInfo,
 		AccountTypeIDs: req.AccountTypeIDs,
 	})
@@ -138,7 +139,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceAccountType,
 		ResourceID:     createdEntity.GetID().String(),
 		Operation:      permission.OpCreate,
@@ -174,7 +175,7 @@ func (s *Service) Update(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetByID(ctx, repositories.GetAccountTypeByIDRequest{
+	original, err := s.repo.GetByID(ctx, accounttypeports.GetAccountTypeByIDRequest{
 		ID: entity.GetID(),
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.GetOrganizationID(),
@@ -192,7 +193,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceAccountType,
 		ResourceID:     updatedEntity.GetID().String(),
 		Operation:      permission.OpUpdate,

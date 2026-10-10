@@ -9,7 +9,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
@@ -18,6 +17,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fiscalyearrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/journalpostingrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/glbalanceports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -61,7 +62,7 @@ func TestListTrialBalanceByPeriodReturnsOrderedBalances(t *testing.T) {
 	orgID, buID, userID, fiscalYearID, periodID, accountIDs := setupGLBalanceFixture(t, ctx, conn)
 	now := time.Date(2027, time.January, 15, 0, 0, 0, 0, time.UTC).Unix()
 
-	err = postingRepo.CreatePosting(ctx, repositories.CreateJournalPostingParams{
+	err = postingRepo.CreatePosting(ctx, journalentryports.CreateJournalPostingParams{
 		BatchID:          pulid.MustNew("jb_"),
 		OrganizationID:   orgID,
 		BusinessUnitID:   buID,
@@ -92,7 +93,7 @@ func TestListTrialBalanceByPeriodReturnsOrderedBalances(t *testing.T) {
 		IsApproved:       true,
 		ApprovedByID:     userID,
 		ApprovedAt:       &now,
-		Lines: []repositories.JournalPostingLine{
+		Lines: []journalentryports.JournalPostingLine{
 			{
 				ID:          pulid.MustNew("jel_"),
 				GLAccountID: accountIDs[0],
@@ -115,7 +116,7 @@ func TestListTrialBalanceByPeriodReturnsOrderedBalances(t *testing.T) {
 
 	balances, err := balanceRepo.ListTrialBalanceByPeriod(
 		ctx,
-		repositories.ListTrialBalanceByPeriodRequest{
+		glbalanceports.ListTrialBalanceByPeriodRequest{
 			TenantInfo:     pagination.TenantInfo{OrgID: orgID, BuID: buID},
 			FiscalPeriodID: periodID,
 		},
@@ -186,7 +187,7 @@ func TestListCumulativeBalancesThroughPeriodSumsPriorPeriods(t *testing.T) {
 
 	post := func(periodID pulid.ID, amount int64, suffix string) {
 		at := time.Date(2027, time.January, 15, 0, 0, 0, 0, time.UTC).Unix()
-		require.NoError(t, postingRepo.CreatePosting(ctx, repositories.CreateJournalPostingParams{
+		require.NoError(t, postingRepo.CreatePosting(ctx, journalentryports.CreateJournalPostingParams{
 			BatchID:          pulid.MustNew("jb_"),
 			OrganizationID:   orgID,
 			BusinessUnitID:   buID,
@@ -209,7 +210,7 @@ func TestListCumulativeBalancesThroughPeriodSumsPriorPeriods(t *testing.T) {
 			TotalDebit:       amount,
 			TotalCredit:      amount,
 			IsPosted:         true,
-			Lines: []repositories.JournalPostingLine{
+			Lines: []journalentryports.JournalPostingLine{
 				{
 					ID:          pulid.MustNew("jel_"),
 					GLAccountID: accountIDs[0],
@@ -237,7 +238,7 @@ func TestListCumulativeBalancesThroughPeriodSumsPriorPeriods(t *testing.T) {
 	debitFor := func(periodID pulid.ID) int64 {
 		balances, listErr := balanceRepo.ListCumulativeBalancesThroughPeriod(
 			ctx,
-			repositories.ListCumulativeBalancesThroughPeriodRequest{
+			glbalanceports.ListCumulativeBalancesThroughPeriodRequest{
 				TenantInfo:     tenantInfo,
 				FiscalPeriodID: periodID,
 			},

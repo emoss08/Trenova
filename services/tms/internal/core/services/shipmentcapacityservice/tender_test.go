@@ -9,10 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/ratequoteservice"
 	"github.com/emoss08/trenova/internal/core/services/tenderservice"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,13 +22,13 @@ import (
 )
 
 type shipmentBook struct {
-	repositories.ShipmentRepository
+	shipmentports.ShipmentRepository
 	byID map[pulid.ID]*shipment.Shipment
 }
 
 func (f *shipmentBook) GetByID(
 	_ context.Context,
-	req *repositories.GetShipmentByIDRequest,
+	req *shipmentports.GetShipmentByIDRequest,
 ) (*shipment.Shipment, error) {
 	if entity, ok := f.byID[req.ID]; ok {
 		return entity, nil
@@ -38,17 +38,17 @@ func (f *shipmentBook) GetByID(
 }
 
 type fakeShopper struct {
-	options  []*services.ShopOption
+	options  []*ratequoteports.ShopOption
 	requests []*ratequoteservice.ShopRequest
 }
 
 func (f *fakeShopper) Shop(
 	_ context.Context,
 	req *ratequoteservice.ShopRequest,
-) (*services.ShopResult, error) {
+) (*ratequoteports.ShopResult, error) {
 	f.requests = append(f.requests, req)
 
-	return &services.ShopResult{Options: f.options}, nil
+	return &ratequoteports.ShopResult{Options: f.options}, nil
 }
 
 type fakeTenderer struct {
@@ -109,7 +109,7 @@ func newTenderFixture(shipments ...*shipment.Shipment) *tenderFixture {
 		book.byID[sp.ID] = sp
 	}
 	f := &tenderFixture{
-		shopper: &fakeShopper{options: []*services.ShopOption{
+		shopper: &fakeShopper{options: []*ratequoteports.ShopOption{
 			{CarrierID: pulid.MustNew("car_"), CarrierName: "No rate", Outcome: ratequote.OutcomeNoRateFound},
 			{
 				CarrierID:   pulid.MustNew("car_"),
@@ -143,9 +143,9 @@ func TestTenderShipments_NamedCarrierGetsASpotTenderAtItsPricedRate(t *testing.T
 	f := newTenderFixture(sp)
 	carrierID := pulid.MustNew("car_")
 
-	result, err := f.service.TenderShipments(t.Context(), &services.TenderShipmentsRequest{
+	result, err := f.service.TenderShipments(t.Context(), &shipmentports.TenderShipmentsRequest{
 		TenantInfo: tenant(),
-		Items:      []services.TenderShipmentItem{{ShipmentID: sp.ID, CarrierID: carrierID}},
+		Items:      []shipmentports.TenderShipmentItem{{ShipmentID: sp.ID, CarrierID: carrierID}},
 	})
 
 	require.NoError(t, err)
@@ -170,9 +170,9 @@ func TestTenderShipments_UsesTheRoutingGuideWhenNoCarrierIsNamed(t *testing.T) {
 	sp := uncoveredShipment(move(0, shipment.MoveCoverageTypeUnassigned))
 	f := newTenderFixture(sp)
 
-	result, err := f.service.TenderShipments(t.Context(), &services.TenderShipmentsRequest{
+	result, err := f.service.TenderShipments(t.Context(), &shipmentports.TenderShipmentsRequest{
 		TenantInfo: tenant(),
-		Items:      []services.TenderShipmentItem{{ShipmentID: sp.ID}},
+		Items:      []shipmentports.TenderShipmentItem{{ShipmentID: sp.ID}},
 	})
 
 	require.NoError(t, err)
@@ -190,9 +190,9 @@ func TestTenderShipments_FallsBackToTheBestPricedCarrierOnlyWhenNoGuideMatches(t
 	noGuide.tenderer.waterfallErr = errortypes.NewBusinessError("No routing guide matches this lane").
 		WithInternal(tenderservice.ErrNoRoutingGuideMatch)
 
-	result, err := noGuide.service.TenderShipments(t.Context(), &services.TenderShipmentsRequest{
+	result, err := noGuide.service.TenderShipments(t.Context(), &shipmentports.TenderShipmentsRequest{
 		TenantInfo: tenant(),
-		Items:      []services.TenderShipmentItem{{ShipmentID: sp.ID}},
+		Items:      []shipmentports.TenderShipmentItem{{ShipmentID: sp.ID}},
 	})
 	require.NoError(t, err)
 	require.Len(t, result.Tendered, 1)
@@ -201,9 +201,9 @@ func TestTenderShipments_FallsBackToTheBestPricedCarrierOnlyWhenNoGuideMatches(t
 
 	held := newTenderFixture(sp)
 	held.tenderer.waterfallErr = errortypes.NewBusinessError("The shipment is on hold")
-	result, err = held.service.TenderShipments(t.Context(), &services.TenderShipmentsRequest{
+	result, err = held.service.TenderShipments(t.Context(), &shipmentports.TenderShipmentsRequest{
 		TenantInfo: tenant(),
-		Items:      []services.TenderShipmentItem{{ShipmentID: sp.ID}},
+		Items:      []shipmentports.TenderShipmentItem{{ShipmentID: sp.ID}},
 	})
 	require.NoError(t, err)
 	assert.Empty(t, result.Tendered)
@@ -220,9 +220,9 @@ func TestTenderShipments_ReportsEachShipmentItCouldNotTender(t *testing.T) {
 	f := newTenderFixture(covered, open)
 	missing := pulid.MustNew("shp_")
 
-	result, err := f.service.TenderShipments(t.Context(), &services.TenderShipmentsRequest{
+	result, err := f.service.TenderShipments(t.Context(), &shipmentports.TenderShipmentsRequest{
 		TenantInfo: tenant(),
-		Items: []services.TenderShipmentItem{
+		Items: []shipmentports.TenderShipmentItem{
 			{ShipmentID: covered.ID},
 			{ShipmentID: missing},
 			{ShipmentID: open.ID},
@@ -241,11 +241,11 @@ func TestTenderShipments_RefusesAnEmptyOrOversizedBatch(t *testing.T) {
 	t.Parallel()
 
 	f := newTenderFixture()
-	_, err := f.service.TenderShipments(t.Context(), &services.TenderShipmentsRequest{TenantInfo: tenant()})
+	_, err := f.service.TenderShipments(t.Context(), &shipmentports.TenderShipmentsRequest{TenantInfo: tenant()})
 	require.Error(t, err)
 
-	items := make([]services.TenderShipmentItem, maxTenderItems+1)
-	_, err = f.service.TenderShipments(t.Context(), &services.TenderShipmentsRequest{
+	items := make([]shipmentports.TenderShipmentItem, maxTenderItems+1)
+	_, err = f.service.TenderShipments(t.Context(), &shipmentports.TenderShipmentsRequest{
 		TenantInfo: tenant(),
 		Items:      items,
 	})

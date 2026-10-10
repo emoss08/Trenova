@@ -17,9 +17,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/journalentry"
 	"github.com/emoss08/trenova/internal/core/domain/journalsource"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -57,7 +57,7 @@ type ledgerOrigin struct {
 	objectType     string
 	objectID       string
 	documentNumber string
-	party          repositories.LedgerParty
+	party          journalentryports.LedgerParty
 }
 
 type ledgerSumRow struct {
@@ -80,7 +80,7 @@ type ledgerNameRow struct {
 
 type ledgerBalanceKey struct {
 	accountID pulid.ID
-	kind      repositories.LedgerPartyKind
+	kind      journalentryports.LedgerPartyKind
 	partyID   pulid.ID
 }
 
@@ -92,7 +92,7 @@ type partyLookup struct {
 	objects []string
 }
 
-func NewLedgerSource(p LedgerSourceParams) repositories.AccountingLedgerSource {
+func NewLedgerSource(p LedgerSourceParams) journalentryports.AccountingLedgerSource {
 	return &ledgerSource{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.accounting-ledger-source"),
@@ -137,7 +137,7 @@ func withoutEntryTypes(
 
 func (s *ledgerSource) GetEntryType(
 	ctx context.Context,
-	req *repositories.GetLedgerJournalRequest,
+	req *journalentryports.GetLedgerJournalRequest,
 ) (journalentry.EntryType, error) {
 	return dbtx.Read(ctx, s.db, func(ctx context.Context) (journalentry.EntryType, error) {
 		cols := buncolgen.JournalEntryColumns
@@ -157,9 +157,9 @@ func (s *ledgerSource) GetEntryType(
 
 func (s *ledgerSource) GetJournal(
 	ctx context.Context,
-	req *repositories.GetLedgerJournalRequest,
-) (*repositories.LedgerJournal, error) {
-	return dbtx.Write(ctx, s.db, func(ctx context.Context) (*repositories.LedgerJournal, error) {
+	req *journalentryports.GetLedgerJournalRequest,
+) (*journalentryports.LedgerJournal, error) {
+	return dbtx.Write(ctx, s.db, func(ctx context.Context) (*journalentryports.LedgerJournal, error) {
 		cols := buncolgen.JournalEntryColumns
 		entry := new(journalentry.JournalEntry)
 		if err := s.db.DBForContext(ctx).
@@ -182,9 +182,9 @@ func (s *ledgerSource) GetJournal(
 
 func (s *ledgerSource) ListJournals(
 	ctx context.Context,
-	req *repositories.ListLedgerJournalsRequest,
-) ([]*repositories.LedgerJournal, error) {
-	return dbtx.Write(ctx, s.db, func(ctx context.Context) ([]*repositories.LedgerJournal, error) {
+	req *journalentryports.ListLedgerJournalsRequest,
+) ([]*journalentryports.LedgerJournal, error) {
+	return dbtx.Write(ctx, s.db, func(ctx context.Context) ([]*journalentryports.LedgerJournal, error) {
 		cols := buncolgen.JournalEntryColumns
 		entries := make([]*journalentry.JournalEntry, 0, 16)
 		if err := s.db.DBForContext(ctx).
@@ -201,7 +201,7 @@ func (s *ledgerSource) ListJournals(
 			return nil, fmt.Errorf("list posted journals: %w", err)
 		}
 		if len(entries) == 0 {
-			return []*repositories.LedgerJournal{}, nil
+			return []*journalentryports.LedgerJournal{}, nil
 		}
 		return s.assemble(ctx, req.TenantInfo, entries)
 	})
@@ -209,9 +209,9 @@ func (s *ledgerSource) ListJournals(
 
 func (s *ledgerSource) SumLines(
 	ctx context.Context,
-	req *repositories.SumLedgerRequest,
-) ([]repositories.LedgerAccountBalance, error) {
-	return dbtx.Read(ctx, s.db, func(ctx context.Context) ([]repositories.LedgerAccountBalance, error) {
+	req *journalentryports.SumLedgerRequest,
+) ([]journalentryports.LedgerAccountBalance, error) {
+	return dbtx.Read(ctx, s.db, func(ctx context.Context) ([]journalentryports.LedgerAccountBalance, error) {
 		lines := buncolgen.JournalEntryLineColumns
 		entries := buncolgen.JournalEntryColumns
 		query := s.postedLines(ctx, &postedLinesFilter{
@@ -246,7 +246,7 @@ func (s *ledgerSource) SumLines(
 			return nil, fmt.Errorf("sum posted journal lines: %w", err)
 		}
 		if len(rows) == 0 {
-			return []repositories.LedgerAccountBalance{}, nil
+			return []journalentryports.LedgerAccountBalance{}, nil
 		}
 		return s.balancesOf(ctx, req.TenantInfo, rows)
 	})
@@ -256,7 +256,7 @@ func (s *ledgerSource) balancesOf(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	rows []ledgerSumRow,
-) ([]repositories.LedgerAccountBalance, error) {
+) ([]journalentryports.LedgerAccountBalance, error) {
 	sourceEntries := make([]pulid.ID, 0, len(rows))
 	accountIDs := make([]pulid.ID, 0, len(rows))
 	for idx := range rows {
@@ -276,14 +276,14 @@ func (s *ledgerSource) balancesOf(
 
 	names := make(partyNames, 3)
 	byKey := make(map[ledgerBalanceKey]int, len(rows))
-	out := make([]repositories.LedgerAccountBalance, 0, len(rows))
+	out := make([]journalentryports.LedgerAccountBalance, 0, len(rows))
 	for idx := range rows {
 		row := &rows[idx]
-		party := repositories.LedgerParty{}
+		party := journalentryports.LedgerParty{}
 		switch {
 		case !row.CustomerID.IsNil():
-			party = repositories.LedgerParty{
-				Kind: repositories.LedgerPartyCustomer,
+			party = journalentryports.LedgerParty{
+				Kind: journalentryports.LedgerPartyCustomer,
 				ID:   row.CustomerID,
 			}
 		case !row.SourceEntryID.IsNil():
@@ -293,7 +293,7 @@ func (s *ledgerSource) balancesOf(
 		pos, seen := byKey[key]
 		if !seen {
 			account := accounts[row.AccountID]
-			out = append(out, repositories.LedgerAccountBalance{
+			out = append(out, journalentryports.LedgerAccountBalance{
 				AccountID:   row.AccountID,
 				AccountCode: account.Code,
 				AccountName: account.Name,
@@ -314,7 +314,7 @@ func (s *ledgerSource) balancesOf(
 	for idx := range out {
 		out[idx].Party.Name = names.of(out[idx].Party)
 	}
-	slices.SortFunc(out, func(a, b repositories.LedgerAccountBalance) int {
+	slices.SortFunc(out, func(a, b journalentryports.LedgerAccountBalance) int {
 		return cmp.Or(
 			cmp.Compare(a.AccountCode, b.AccountCode),
 			cmp.Compare(a.AccountID, b.AccountID),
@@ -327,9 +327,9 @@ func (s *ledgerSource) balancesOf(
 
 func (s *ledgerSource) ListActiveAccounts(
 	ctx context.Context,
-	req *repositories.ListLedgerAccountsRequest,
-) ([]repositories.LedgerAccount, error) {
-	return dbtx.Read(ctx, s.db, func(ctx context.Context) ([]repositories.LedgerAccount, error) {
+	req *journalentryports.ListLedgerAccountsRequest,
+) ([]journalentryports.LedgerAccount, error) {
+	return dbtx.Read(ctx, s.db, func(ctx context.Context) ([]journalentryports.LedgerAccount, error) {
 		lines := buncolgen.JournalEntryLineColumns
 		ids := make([]pulid.ID, 0, 64)
 		if err := s.postedLines(ctx, &postedLinesFilter{tenantInfo: req.TenantInfo, from: req.Since}).
@@ -340,18 +340,18 @@ func (s *ledgerSource) ListActiveAccounts(
 			return nil, fmt.Errorf("list accounts with posted lines: %w", err)
 		}
 		if len(ids) == 0 {
-			return []repositories.LedgerAccount{}, nil
+			return []journalentryports.LedgerAccount{}, nil
 		}
 
 		accounts, err := s.loadAccounts(ctx, req.TenantInfo, ids)
 		if err != nil {
 			return nil, err
 		}
-		out := make([]repositories.LedgerAccount, 0, len(accounts))
+		out := make([]journalentryports.LedgerAccount, 0, len(accounts))
 		for _, account := range accounts {
 			out = append(out, account)
 		}
-		slices.SortFunc(out, func(a, b repositories.LedgerAccount) int {
+		slices.SortFunc(out, func(a, b journalentryports.LedgerAccount) int {
 			return cmp.Or(cmp.Compare(a.Code, b.Code), cmp.Compare(a.ID, b.ID))
 		})
 		return out, nil
@@ -401,7 +401,7 @@ func (s *ledgerSource) assemble(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	entries []*journalentry.JournalEntry,
-) ([]*repositories.LedgerJournal, error) {
+) ([]*journalentryports.LedgerJournal, error) {
 	entryIDs := make([]pulid.ID, 0, len(entries))
 	originIDs := make([]pulid.ID, 0, len(entries))
 	reversalOf := make([]pulid.ID, 0, 4)
@@ -427,10 +427,10 @@ func (s *ledgerSource) assemble(
 	}
 
 	names := make(partyNames, 3)
-	out := make([]*repositories.LedgerJournal, 0, len(entries))
+	out := make([]*journalentryports.LedgerJournal, 0, len(entries))
 	for _, entry := range entries {
 		origin := origins[originEntryID(entry)]
-		journal := &repositories.LedgerJournal{
+		journal := &journalentryports.LedgerJournal{
 			ID:                   entry.ID,
 			EntryNumber:          entry.EntryNumber,
 			EntryType:            entry.EntryType.String(),
@@ -452,9 +452,9 @@ func (s *ledgerSource) assemble(
 		names.want(origin.party)
 
 		entryLines := lines[entry.ID]
-		journal.Lines = make([]repositories.LedgerJournalLine, 0, len(entryLines))
+		journal.Lines = make([]journalentryports.LedgerJournalLine, 0, len(entryLines))
 		for _, line := range entryLines {
-			entryLine := repositories.LedgerJournalLine{
+			entryLine := journalentryports.LedgerJournalLine{
 				AccountID:   line.GLAccountID,
 				DebitMinor:  line.DebitAmount,
 				CreditMinor: line.CreditAmount,
@@ -465,8 +465,8 @@ func (s *ledgerSource) assemble(
 				entryLine.AccountName = line.GLAccount.Name
 			}
 			if !line.CustomerID.IsNil() {
-				entryLine.Party = repositories.LedgerParty{
-					Kind: repositories.LedgerPartyCustomer,
+				entryLine.Party = journalentryports.LedgerParty{
+					Kind: journalentryports.LedgerPartyCustomer,
 					ID:   line.CustomerID,
 				}
 				names.want(entryLine.Party)
@@ -608,8 +608,8 @@ func (s *ledgerSource) originParties(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	objects map[string][]string,
-) (map[string]map[string]repositories.LedgerParty, error) {
-	out := make(map[string]map[string]repositories.LedgerParty, len(objects))
+) (map[string]map[string]journalentryports.LedgerParty, error) {
+	out := make(map[string]map[string]journalentryports.LedgerParty, len(objects))
 
 	adjustments, err := s.lookupParties(ctx, &partyLookup{
 		model:   (*invoiceadjustment.InvoiceAdjustment)(nil),
@@ -635,7 +635,7 @@ func (s *ledgerSource) originParties(
 	if err != nil {
 		return nil, err
 	}
-	out[journalsource.ObjectInvoice] = partiesOf(repositories.LedgerPartyCustomer, invoices)
+	out[journalsource.ObjectInvoice] = partiesOf(journalentryports.LedgerPartyCustomer, invoices)
 	adjusted := make(map[string]pulid.ID, len(adjustments))
 	for adjustmentID, invoiceID := range adjustments {
 		if customerID, ok := invoices[invoiceID.String()]; ok {
@@ -643,18 +643,18 @@ func (s *ledgerSource) originParties(
 		}
 	}
 	out[journalsource.ObjectInvoiceAdjustment] = partiesOf(
-		repositories.LedgerPartyCustomer,
+		journalentryports.LedgerPartyCustomer,
 		adjusted,
 	)
 
 	lookups := []struct {
 		objectType string
-		kind       repositories.LedgerPartyKind
+		kind       journalentryports.LedgerPartyKind
 		lookup     partyLookup
 	}{
 		{
 			objectType: journalsource.ObjectCustomerPayment,
-			kind:       repositories.LedgerPartyCustomer,
+			kind:       journalentryports.LedgerPartyCustomer,
 			lookup: partyLookup{
 				model:  (*customerpayment.Payment)(nil),
 				id:     buncolgen.PaymentColumns.ID,
@@ -664,7 +664,7 @@ func (s *ledgerSource) originParties(
 		},
 		{
 			objectType: journalsource.ObjectCarrierSettlement,
-			kind:       repositories.LedgerPartyCarrier,
+			kind:       journalentryports.LedgerPartyCarrier,
 			lookup: partyLookup{
 				model:  (*carriersettlement.CarrierSettlement)(nil),
 				id:     buncolgen.CarrierSettlementColumns.ID,
@@ -674,7 +674,7 @@ func (s *ledgerSource) originParties(
 		},
 		{
 			objectType: journalsource.ObjectDriverSettlement,
-			kind:       repositories.LedgerPartyDriver,
+			kind:       journalentryports.LedgerPartyDriver,
 			lookup: partyLookup{
 				model:  (*driversettlement.Settlement)(nil),
 				id:     buncolgen.SettlementColumns.ID,
@@ -696,12 +696,12 @@ func (s *ledgerSource) originParties(
 }
 
 func partiesOf(
-	kind repositories.LedgerPartyKind,
+	kind journalentryports.LedgerPartyKind,
 	found map[string]pulid.ID,
-) map[string]repositories.LedgerParty {
-	out := make(map[string]repositories.LedgerParty, len(found))
+) map[string]journalentryports.LedgerParty {
+	out := make(map[string]journalentryports.LedgerParty, len(found))
 	for objectID, partyID := range found {
-		out[objectID] = repositories.LedgerParty{Kind: kind, ID: partyID}
+		out[objectID] = journalentryports.LedgerParty{Kind: kind, ID: partyID}
 	}
 	return out
 }
@@ -737,9 +737,9 @@ func (s *ledgerSource) lookupParties(
 	})
 }
 
-type partyNames map[repositories.LedgerPartyKind]map[pulid.ID]string
+type partyNames map[journalentryports.LedgerPartyKind]map[pulid.ID]string
 
-func (n partyNames) want(party repositories.LedgerParty) {
+func (n partyNames) want(party journalentryports.LedgerParty) {
 	if party.IsZero() {
 		return
 	}
@@ -749,14 +749,14 @@ func (n partyNames) want(party repositories.LedgerParty) {
 	n[party.Kind][party.ID] = ""
 }
 
-func (n partyNames) of(party repositories.LedgerParty) string {
+func (n partyNames) of(party journalentryports.LedgerParty) string {
 	if party.IsZero() {
 		return ""
 	}
 	return n[party.Kind][party.ID]
 }
 
-func (n partyNames) ids(kind repositories.LedgerPartyKind) []pulid.ID {
+func (n partyNames) ids(kind journalentryports.LedgerPartyKind) []pulid.ID {
 	out := make([]pulid.ID, 0, len(n[kind]))
 	for id := range n[kind] {
 		out = append(out, id)
@@ -772,28 +772,28 @@ func (s *ledgerSource) nameParties(
 	return dbtx.ReadErr(ctx, s.db, func(ctx context.Context) error {
 		workers := buncolgen.WorkerColumns
 		lookups := []struct {
-			kind   repositories.LedgerPartyKind
+			kind   journalentryports.LedgerPartyKind
 			model  any
 			id     buncolgen.Column
 			name   string
 			tenant func(*bun.SelectQuery) *bun.SelectQuery
 		}{
 			{
-				kind:   repositories.LedgerPartyCustomer,
+				kind:   journalentryports.LedgerPartyCustomer,
 				model:  (*customer.Customer)(nil),
 				id:     buncolgen.CustomerColumns.ID,
 				name:   buncolgen.CustomerColumns.Name.As(ledgerNameLabel),
 				tenant: buncolgen.CustomerApplyTenant(tenantInfo),
 			},
 			{
-				kind:   repositories.LedgerPartyCarrier,
+				kind:   journalentryports.LedgerPartyCarrier,
 				model:  (*carrier.Carrier)(nil),
 				id:     buncolgen.CarrierColumns.ID,
 				name:   buncolgen.CarrierColumns.Name.As(ledgerNameLabel),
 				tenant: buncolgen.CarrierApplyTenant(tenantInfo),
 			},
 			{
-				kind:  repositories.LedgerPartyDriver,
+				kind:  journalentryports.LedgerPartyDriver,
 				model: (*worker.Worker)(nil),
 				id:    workers.ID,
 				name: buncolgen.Expr("CONCAT_WS(' ', {0}, {1}) AS "+ledgerNameLabel,
@@ -832,8 +832,8 @@ func (s *ledgerSource) loadAccounts(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	ids []pulid.ID,
-) (map[pulid.ID]repositories.LedgerAccount, error) {
-	return dbtx.Read(ctx, s.db, func(ctx context.Context) (map[pulid.ID]repositories.LedgerAccount, error) {
+) (map[pulid.ID]journalentryports.LedgerAccount, error) {
+	return dbtx.Read(ctx, s.db, func(ctx context.Context) (map[pulid.ID]journalentryports.LedgerAccount, error) {
 		cols := buncolgen.GLAccountColumns
 		accounts := make([]*glaccount.GLAccount, 0, len(ids))
 		if err := s.db.DBForContext(ctx).
@@ -847,9 +847,9 @@ func (s *ledgerSource) loadAccounts(
 			return nil, fmt.Errorf("load ledger accounts: %w", err)
 		}
 
-		out := make(map[pulid.ID]repositories.LedgerAccount, len(accounts))
+		out := make(map[pulid.ID]journalentryports.LedgerAccount, len(accounts))
 		for _, account := range accounts {
-			entry := repositories.LedgerAccount{
+			entry := journalentryports.LedgerAccount{
 				ID:   account.ID,
 				Code: account.AccountCode,
 				Name: account.Name,

@@ -3,12 +3,12 @@ package accountingmappingservice
 import (
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 func MappingChoice(
-	req *services.SetAccountingMappingRequest,
+	req *accountingsyncports.SetAccountingMappingRequest,
 	ref *accountingsync.AccountingReferenceObject,
 	at int64,
 ) *accountingsync.Choice {

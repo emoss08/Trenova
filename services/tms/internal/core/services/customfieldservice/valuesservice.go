@@ -3,7 +3,7 @@ package customfieldservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/customfieldports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
@@ -14,15 +14,15 @@ type ValuesServiceParams struct {
 	fx.In
 
 	Logger         *zap.Logger
-	ValueRepo      repositories.CustomFieldValueRepository
-	DefinitionRepo repositories.CustomFieldDefinitionRepository
+	ValueRepo      customfieldports.CustomFieldValueRepository
+	DefinitionRepo customfieldports.CustomFieldDefinitionRepository
 	Validator      *ValuesValidator
 }
 
 type ValuesService struct {
 	l              *zap.Logger
-	valueRepo      repositories.CustomFieldValueRepository
-	definitionRepo repositories.CustomFieldDefinitionRepository
+	valueRepo      customfieldports.CustomFieldValueRepository
+	definitionRepo customfieldports.CustomFieldDefinitionRepository
 	validator      *ValuesValidator
 }
 
@@ -43,7 +43,7 @@ func (s *ValuesService) GetForResource(
 ) (map[string]any, error) {
 	values, err := s.valueRepo.GetByResource(
 		ctx,
-		&repositories.GetCustomFieldValuesByResourceRequest{
+		&customfieldports.GetCustomFieldValuesByResourceRequest{
 			TenantInfo:   tenantInfo,
 			ResourceType: resourceType,
 			ResourceID:   resourceID,
@@ -79,7 +79,7 @@ func (s *ValuesService) GetForResources(
 
 	valuesMap, err := s.valueRepo.GetByResources(
 		ctx,
-		&repositories.GetCustomFieldValuesByResourcesRequest{
+		&customfieldports.GetCustomFieldValuesByResourcesRequest{
 			TenantInfo:   tenantInfo,
 			ResourceType: resourceType,
 			ResourceIDs:  resourceIDs,
@@ -120,7 +120,7 @@ func (s *ValuesService) ValidateAndSave(
 		return multiErr
 	}
 
-	if err := s.valueRepo.Upsert(ctx, &repositories.UpsertCustomFieldValuesRequest{
+	if err := s.valueRepo.Upsert(ctx, &customfieldports.UpsertCustomFieldValuesRequest{
 		TenantInfo:   tenantInfo,
 		ResourceType: resourceType,
 		ResourceID:   resourceID,
@@ -149,7 +149,7 @@ func (s *ValuesService) Delete(
 	resourceType string,
 	resourceID string,
 ) error {
-	return s.valueRepo.DeleteByResource(ctx, &repositories.GetCustomFieldValuesByResourceRequest{
+	return s.valueRepo.DeleteByResource(ctx, &customfieldports.GetCustomFieldValuesByResourceRequest{
 		TenantInfo:   tenantInfo,
 		ResourceType: resourceType,
 		ResourceID:   resourceID,

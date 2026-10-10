@@ -7,12 +7,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -108,7 +108,7 @@ func TestSummary_BreaksUsageDownByFeature(t *testing.T) {
 		require.NoError(t, repo.Create(ctx, record))
 	}
 
-	summary, err := repo.Summary(ctx, repositories.AIUsageSummaryRequest{
+	summary, err := repo.Summary(ctx, aiusageports.AIUsageSummaryRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: tenant.OrganizationID,
 			BuID:  tenant.BusinessUnitID,
@@ -117,7 +117,7 @@ func TestSummary_BreaksUsageDownByFeature(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	byFeature := make(map[aiusage.Feature]repositories.AIUsageFeatureTotals, len(summary.ByFeature))
+	byFeature := make(map[aiusage.Feature]aiusageports.AIUsageFeatureTotals, len(summary.ByFeature))
 	for _, slice := range summary.ByFeature {
 		byFeature[slice.Feature] = slice
 	}

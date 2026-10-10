@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/testutil/pdftest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -55,7 +55,7 @@ func TestLiveHealthy(t *testing.T) {
 func TestLiveRenderProducesPDF(t *testing.T) {
 	client := liveClient(t)
 
-	pdf, err := client.Render(t.Context(), &services.PDFRenderRequest{
+	pdf, err := client.Render(t.Context(), &documenttemplateports.PDFRenderRequest{
 		HTML: `<!DOCTYPE html><html><head><meta charset="utf-8">
 			<style>body{font-family:sans-serif}h1{color:#111}</style></head>
 			<body><h1>Invoice 1024</h1><p>Balance due $1,234.50</p></body></html>`,
@@ -72,7 +72,7 @@ func TestLiveRenderProducesPDF(t *testing.T) {
 func TestLiveRenderHonoursHeaderAndFooter(t *testing.T) {
 	client := liveClient(t)
 
-	withChrome, err := client.Render(t.Context(), &services.PDFRenderRequest{
+	withChrome, err := client.Render(t.Context(), &documenttemplateports.PDFRenderRequest{
 		HTML:        `<!DOCTYPE html><html><body><p>body</p></body></html>`,
 		HeaderHTML:  `<!DOCTYPE html><html><body><div>HEADER</div></body></html>`,
 		FooterHTML:  `<!DOCTYPE html><html><body><div>FOOTER</div></body></html>`,
@@ -90,7 +90,7 @@ func TestLiveRenderHonoursHeaderAndFooter(t *testing.T) {
 func TestLiveJavaScriptIsDisabled(t *testing.T) {
 	client := liveClient(t)
 
-	pdf, err := client.Render(t.Context(), &services.PDFRenderRequest{
+	pdf, err := client.Render(t.Context(), &documenttemplateports.PDFRenderRequest{
 		HTML: `<!DOCTYPE html><html><body>
 			<div id="out">SCRIPT-DID-NOT-RUN</div>
 			<script>document.getElementById('out').textContent='SCRIPT-RAN';</script>
@@ -115,7 +115,7 @@ func TestLiveJavaScriptIsDisabled(t *testing.T) {
 func TestLiveRemoteAssetsAreBlocked(t *testing.T) {
 	client := liveClient(t)
 
-	pdf, err := client.Render(t.Context(), &services.PDFRenderRequest{
+	pdf, err := client.Render(t.Context(), &documenttemplateports.PDFRenderRequest{
 		HTML: `<!DOCTYPE html><html><body>
 			<p>body</p>
 			<img src="http://169.254.169.254/latest/meta-data/" alt="blocked">

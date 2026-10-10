@@ -5,9 +5,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -25,29 +27,29 @@ var customerUpdatePreferences = agenttoolschema.Source(
 )
 
 type customerKeeper interface {
-	Get(ctx context.Context, req repositories.GetCustomerByIDRequest) (*customer.Customer, error)
+	Get(ctx context.Context, req customerports.GetCustomerByIDRequest) (*customer.Customer, error)
 	PlanCreate(ctx context.Context, entity *customer.Customer) (*customer.Customer, error)
 	Create(
 		ctx context.Context,
 		entity *customer.Customer,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*customer.Customer, error)
 	PlanUpdate(
 		ctx context.Context,
 		entity *customer.Customer,
-	) (*serviceports.RecordChange[customer.Customer], error)
+	) (*kernelports.RecordChange[customer.Customer], error)
 	Update(
 		ctx context.Context,
 		entity *customer.Customer,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*customer.Customer, error)
 	PlanBulkUpdateStatus(
 		ctx context.Context,
-		req *repositories.BulkUpdateCustomerStatusRequest,
-	) ([]serviceports.RecordChange[customer.Customer], error)
+		req *customerports.BulkUpdateCustomerStatusRequest,
+	) ([]kernelports.RecordChange[customer.Customer], error)
 	BulkUpdateStatus(
 		ctx context.Context,
-		req *repositories.BulkUpdateCustomerStatusRequest,
+		req *customerports.BulkUpdateCustomerStatusRequest,
 	) ([]*customer.Customer, error)
 }
 
@@ -157,7 +159,7 @@ func customerPolicy() masterPolicy {
 	return policy
 }
 
-func newCreateCustomerTool(customers customerKeeper, states stateLookup) serviceports.AgentTool {
+func newCreateCustomerTool(customers customerKeeper, states stateLookup) agentports.AgentTool {
 	return newMasterCreateTool(&masterCreateSpec[customer.Customer]{
 		record: customerRecord,
 		name:   "create_customer",
@@ -187,7 +189,7 @@ func newCreateCustomerTool(customers customerKeeper, states stateLookup) service
 	})
 }
 
-func newUpdateCustomerTool(customers customerKeeper, states stateLookup) serviceports.AgentTool {
+func newUpdateCustomerTool(customers customerKeeper, states stateLookup) agentports.AgentTool {
 	return newMasterUpdateTool(&masterUpdateSpec[customer.Customer]{
 		record: customerRecord,
 		name:   "update_customer",
@@ -206,7 +208,7 @@ func newUpdateCustomerTool(customers customerKeeper, states stateLookup) service
 			tenant pagination.TenantInfo,
 			id pulid.ID,
 		) (*customer.Customer, error) {
-			return customers.Get(ctx, repositories.GetCustomerByIDRequest{
+			return customers.Get(ctx, customerports.GetCustomerByIDRequest{
 				ID:         id,
 				TenantInfo: tenant,
 			})
@@ -219,7 +221,7 @@ func newUpdateCustomerTool(customers customerKeeper, states stateLookup) service
 func newUpdateCustomerStatusTool(
 	customers customerKeeper,
 	states stateLookup,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newMasterStatusTool(&masterStatusSpec[customer.Customer, domaintypes.Status]{
 		record: customerRecord,
 		name:   "update_customer_status",
@@ -236,9 +238,9 @@ func newUpdateCustomerStatusTool(
 			tenant pagination.TenantInfo,
 			ids []pulid.ID,
 			status domaintypes.Status,
-		) ([]serviceports.RecordChange[customer.Customer], error) {
+		) ([]kernelports.RecordChange[customer.Customer], error) {
 			return customers.PlanBulkUpdateStatus(ctx,
-				&repositories.BulkUpdateCustomerStatusRequest{
+				&customerports.BulkUpdateCustomerStatusRequest{
 					TenantInfo:  tenant,
 					CustomerIDs: ids,
 					Status:      status,
@@ -250,7 +252,7 @@ func newUpdateCustomerStatusTool(
 			ids []pulid.ID,
 			status domaintypes.Status,
 		) ([]*customer.Customer, error) {
-			return customers.BulkUpdateStatus(ctx, &repositories.BulkUpdateCustomerStatusRequest{
+			return customers.BulkUpdateStatus(ctx, &customerports.BulkUpdateCustomerStatusRequest{
 				TenantInfo:  tenant,
 				CustomerIDs: ids,
 				Status:      status,

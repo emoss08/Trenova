@@ -1,10 +1,11 @@
 package ediservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -30,14 +31,14 @@ func TestGenerateDocument_ReturnsTheDocumentAlreadyGeneratedForItsKey(t *testing
 		IdempotencyKey: key,
 	}
 
-	messages := mocks.NewMockEDIMessageRepository(t)
-	messages.EXPECT().GetMessageByIdempotencyKey(t.Context(), repositories.GetEDIMessageByIdempotencyKeyRequest{
+	messages := ediportsmock.NewMockEDIMessageRepository(t)
+	messages.EXPECT().GetMessageByIdempotencyKey(t.Context(), ediports.GetEDIMessageByIdempotencyKeyRequest{
 		TenantInfo:     tenant,
 		IdempotencyKey: key,
 	}).Return(existing, nil).Once()
 
-	partners := mocks.NewMockEDIPartnerRepository(t)
-	partners.EXPECT().GetByID(t.Context(), repositories.GetEDIPartnerByIDRequest{
+	partners := ediportsmock.NewMockEDIPartnerRepository(t)
+	partners.EXPECT().GetByID(t.Context(), ediports.GetEDIPartnerByIDRequest{
 		ID:         existing.EDIPartnerID,
 		TenantInfo: tenant,
 	}).Return(&edi.EDIPartner{Kind: edi.PartnerKindInternal}, nil).Once()
@@ -59,8 +60,8 @@ func TestGenerateDocument_RefusesAKeyThatNamesAnotherTransactionSet(t *testing.T
 	t.Parallel()
 
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	messages := mocks.NewMockEDIMessageRepository(t)
-	messages.EXPECT().GetMessageByIdempotencyKey(t.Context(), repositories.GetEDIMessageByIdempotencyKeyRequest{
+	messages := ediportsmock.NewMockEDIMessageRepository(t)
+	messages.EXPECT().GetMessageByIdempotencyKey(t.Context(), ediports.GetEDIMessageByIdempotencyKeyRequest{
 		TenantInfo:     tenant,
 		IdempotencyKey: "shared-key",
 	}).Return(&edi.EDIMessage{TransactionSet: edi.TransactionSet214}, nil).Once()

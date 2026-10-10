@@ -8,21 +8,21 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/requestmeta"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-func WithComment(comment string) services.LogOption {
+func WithComment(comment string) auditports.LogOption {
 	return func(entry *audit.Entry) error {
 		entry.Comment = comment
 		return nil
 	}
 }
 
-func WithDiff(before, after any) services.LogOption {
+func WithDiff(before, after any) auditports.LogOption {
 	return func(entry *audit.Entry) error {
 		opts := jsonutils.DefaultOptions()
 		opts.IgnoreFields = []string{"updated_at", "version"}
@@ -48,7 +48,7 @@ func WithDiff(before, after any) services.LogOption {
 	}
 }
 
-func WithCompactDiff(before, after any) services.LogOption {
+func WithCompactDiff(before, after any) auditports.LogOption {
 	return func(entry *audit.Entry) error {
 		results, err := jsonutils.JSONDiff(before, after, jsonutils.DefaultOptions())
 		if err != nil {
@@ -71,7 +71,7 @@ func WithCompactDiff(before, after any) services.LogOption {
 	}
 }
 
-func WithMetadata(metadata map[string]any) services.LogOption {
+func WithMetadata(metadata map[string]any) auditports.LogOption {
 	return func(entry *audit.Entry) error {
 		if entry.Metadata == nil {
 			entry.Metadata = make(map[string]any)
@@ -81,56 +81,56 @@ func WithMetadata(metadata map[string]any) services.LogOption {
 	}
 }
 
-func WithUserAgent(userAgent string) services.LogOption {
+func WithUserAgent(userAgent string) auditports.LogOption {
 	return func(entry *audit.Entry) error {
 		entry.UserAgent = userAgent
 		return nil
 	}
 }
 
-func WithCorrelationID() services.LogOption {
+func WithCorrelationID() auditports.LogOption {
 	return func(entry *audit.Entry) error {
 		entry.CorrelationID = pulid.MustNew("corr_").String()
 		return nil
 	}
 }
 
-func WithCustomCorrelationID(id string) services.LogOption {
+func WithCustomCorrelationID(id string) auditports.LogOption {
 	return func(entry *audit.Entry) error {
 		entry.CorrelationID = id
 		return nil
 	}
 }
 
-func WithCategory(category audit.Category) services.LogOption {
+func WithCategory(category audit.Category) auditports.LogOption {
 	return func(entry *audit.Entry) error {
 		entry.Category = category
 		return nil
 	}
 }
 
-func WithCritical() services.LogOption {
+func WithCritical() auditports.LogOption {
 	return func(entry *audit.Entry) error {
 		entry.Critical = true
 		return nil
 	}
 }
 
-func WithIP(ip string) services.LogOption {
+func WithIP(ip string) auditports.LogOption {
 	return func(entry *audit.Entry) error {
 		entry.IPAddress = ip
 		return nil
 	}
 }
 
-func WithTimestamp(timestamp time.Time) services.LogOption {
+func WithTimestamp(timestamp time.Time) auditports.LogOption {
 	return func(entry *audit.Entry) error {
 		entry.Timestamp = timestamp.Unix()
 		return nil
 	}
 }
 
-func WithLocation(location string) services.LogOption {
+func WithLocation(location string) auditports.LogOption {
 	return func(entry *audit.Entry) error {
 		if entry.Metadata == nil {
 			entry.Metadata = make(map[string]any)
@@ -140,7 +140,7 @@ func WithLocation(location string) services.LogOption {
 	}
 }
 
-func WithSessionID(sessionID string) services.LogOption {
+func WithSessionID(sessionID string) auditports.LogOption {
 	return func(entry *audit.Entry) error {
 		if entry.Metadata == nil {
 			entry.Metadata = make(map[string]any)
@@ -150,7 +150,7 @@ func WithSessionID(sessionID string) services.LogOption {
 	}
 }
 
-func WithTags(tags ...string) services.LogOption {
+func WithTags(tags ...string) auditports.LogOption {
 	return func(entry *audit.Entry) error {
 		if entry.Metadata == nil {
 			entry.Metadata = make(map[string]any)
@@ -161,10 +161,10 @@ func WithTags(tags ...string) services.LogOption {
 }
 
 func NewBulkLogEntry(
-	params *services.LogActionParams,
-	opts ...services.LogOption,
-) services.BulkLogEntry {
-	return services.BulkLogEntry{
+	params *auditports.LogActionParams,
+	opts ...auditports.LogOption,
+) auditports.BulkLogEntry {
+	return auditports.BulkLogEntry{
 		Params:  params,
 		Options: opts,
 	}
@@ -176,13 +176,13 @@ type BulkLogEntriesParams[T validationframework.TenantedEntity] struct {
 	UserID    pulid.ID
 	Updated   []T
 	Originals []T
-	Opts      []services.LogOption
+	Opts      []auditports.LogOption
 }
 
 func BuildBulkLogEntries[T validationframework.TenantedEntity](
 	params *BulkLogEntriesParams[T],
-	opts ...services.LogOption,
-) []services.BulkLogEntry {
+	opts ...auditports.LogOption,
+) []auditports.BulkLogEntry {
 	if len(params.Updated) == 0 {
 		return nil
 	}
@@ -192,10 +192,10 @@ func BuildBulkLogEntries[T validationframework.TenantedEntity](
 		originalByID[orig.GetID().String()] = orig
 	}
 
-	entries := make([]services.BulkLogEntry, 0, len(params.Updated))
+	entries := make([]auditports.BulkLogEntry, 0, len(params.Updated))
 	for _, entity := range params.Updated {
 		var previousState map[string]any
-		var entryOpts []services.LogOption
+		var entryOpts []auditports.LogOption
 
 		if orig, ok := originalByID[entity.GetID().String()]; ok {
 			previousState = jsonutils.MustToJSON(orig)
@@ -204,8 +204,8 @@ func BuildBulkLogEntries[T validationframework.TenantedEntity](
 
 		entryOpts = append(entryOpts, opts...)
 
-		entry := services.BulkLogEntry{
-			Params: &services.LogActionParams{
+		entry := auditports.BulkLogEntry{
+			Params: &auditports.LogActionParams{
 				Resource:       params.Resource,
 				ResourceID:     entity.GetID().String(),
 				Operation:      params.Operation,
@@ -224,7 +224,7 @@ func BuildBulkLogEntries[T validationframework.TenantedEntity](
 	return entries
 }
 
-func WithRequest(ctx context.Context) services.LogOption {
+func WithRequest(ctx context.Context) auditports.LogOption {
 	return func(entry *audit.Entry) error {
 		meta, ok := requestmeta.From(ctx)
 		if !ok {

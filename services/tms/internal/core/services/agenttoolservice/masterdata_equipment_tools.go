@@ -11,12 +11,15 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/internal/core/services/tractorservice"
 	"github.com/emoss08/trenova/internal/core/services/trailerservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
@@ -54,58 +57,58 @@ var (
 )
 
 type tractorKeeper interface {
-	Get(ctx context.Context, req repositories.GetTractorByIDRequest) (*tractor.Tractor, error)
+	Get(ctx context.Context, req tractorports.GetTractorByIDRequest) (*tractor.Tractor, error)
 	PlanCreate(ctx context.Context, entity *tractor.Tractor) (*tractor.Tractor, error)
 	Create(
 		ctx context.Context,
 		entity *tractor.Tractor,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*tractor.Tractor, error)
 	PlanUpdate(
 		ctx context.Context,
 		entity *tractor.Tractor,
-	) (*serviceports.RecordChange[tractor.Tractor], error)
+	) (*kernelports.RecordChange[tractor.Tractor], error)
 	Update(
 		ctx context.Context,
 		entity *tractor.Tractor,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*tractor.Tractor, error)
 	PlanLocate(
 		ctx context.Context,
-		req *repositories.LocateTractorRequest,
+		req *tractorports.LocateTractorRequest,
 	) (*tractorservice.LocatePlan, error)
 	Locate(
 		ctx context.Context,
-		req *repositories.LocateTractorRequest,
+		req *tractorports.LocateTractorRequest,
 	) (*equipmentcontinuity.EquipmentContinuity, error)
 }
 
 type trailerKeeper interface {
-	Get(ctx context.Context, req repositories.GetTrailerByIDRequest) (*trailer.Trailer, error)
+	Get(ctx context.Context, req trailerports.GetTrailerByIDRequest) (*trailer.Trailer, error)
 	PlanCreate(ctx context.Context, entity *trailer.Trailer) (*trailer.Trailer, error)
 	Create(
 		ctx context.Context,
 		entity *trailer.Trailer,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*trailer.Trailer, error)
 	PlanUpdate(
 		ctx context.Context,
 		entity *trailer.Trailer,
-	) (*serviceports.RecordChange[trailer.Trailer], error)
+	) (*kernelports.RecordChange[trailer.Trailer], error)
 	Update(
 		ctx context.Context,
 		entity *trailer.Trailer,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*trailer.Trailer, error)
 	PlanLocate(
 		ctx context.Context,
-		req *repositories.LocateTrailerRequest,
-		actor *serviceports.RequestActor,
+		req *trailerports.LocateTrailerRequest,
+		actor *permissionports.RequestActor,
 	) (*trailerservice.LocatePlan, error)
 	Locate(
 		ctx context.Context,
-		req *repositories.LocateTrailerRequest,
-		actor *serviceports.RequestActor,
+		req *trailerports.LocateTrailerRequest,
+		actor *permissionports.RequestActor,
 	) (*equipmentcontinuity.EquipmentContinuity, error)
 }
 
@@ -261,7 +264,7 @@ func tractorFields() []masterField[tractor.Tractor] {
 	)
 }
 
-func newCreateTractorTool(tractors tractorKeeper, states stateLookup) serviceports.AgentTool {
+func newCreateTractorTool(tractors tractorKeeper, states stateLookup) agentports.AgentTool {
 	return newMasterCreateTool(&masterCreateSpec[tractor.Tractor]{
 		record: tractorRecord,
 		name:   "create_tractor",
@@ -292,7 +295,7 @@ func newCreateTractorTool(tractors tractorKeeper, states stateLookup) servicepor
 	})
 }
 
-func newUpdateTractorTool(tractors tractorKeeper, states stateLookup) serviceports.AgentTool {
+func newUpdateTractorTool(tractors tractorKeeper, states stateLookup) agentports.AgentTool {
 	return newMasterUpdateTool(&masterUpdateSpec[tractor.Tractor]{
 		record: tractorRecord,
 		name:   "update_tractor",
@@ -309,7 +312,7 @@ func newUpdateTractorTool(tractors tractorKeeper, states stateLookup) servicepor
 			tenant pagination.TenantInfo,
 			id pulid.ID,
 		) (*tractor.Tractor, error) {
-			return tractors.Get(ctx, repositories.GetTractorByIDRequest{
+			return tractors.Get(ctx, tractorports.GetTractorByIDRequest{
 				ID:         id,
 				TenantInfo: tenant,
 			})
@@ -410,7 +413,7 @@ func trailerFields() []masterField[trailer.Trailer] {
 	)
 }
 
-func newCreateTrailerTool(trailers trailerKeeper, states stateLookup) serviceports.AgentTool {
+func newCreateTrailerTool(trailers trailerKeeper, states stateLookup) agentports.AgentTool {
 	return newMasterCreateTool(&masterCreateSpec[trailer.Trailer]{
 		record: trailerRecord,
 		name:   "create_trailer",
@@ -437,7 +440,7 @@ func newCreateTrailerTool(trailers trailerKeeper, states stateLookup) servicepor
 	})
 }
 
-func newUpdateTrailerTool(trailers trailerKeeper, states stateLookup) serviceports.AgentTool {
+func newUpdateTrailerTool(trailers trailerKeeper, states stateLookup) agentports.AgentTool {
 	return newMasterUpdateTool(&masterUpdateSpec[trailer.Trailer]{
 		record: trailerRecord,
 		name:   "update_trailer",
@@ -454,7 +457,7 @@ func newUpdateTrailerTool(trailers trailerKeeper, states stateLookup) servicepor
 			tenant pagination.TenantInfo,
 			id pulid.ID,
 		) (*trailer.Trailer, error) {
-			return trailers.Get(ctx, repositories.GetTrailerByIDRequest{
+			return trailers.Get(ctx, trailerports.GetTrailerByIDRequest{
 				ID:         id,
 				TenantInfo: tenant,
 			})
@@ -494,8 +497,8 @@ type locateRequest struct {
 
 func locateRequestFrom(
 	unitKey string,
-) func(*serviceports.ToolExecuteParams) (*locateRequest, error) {
-	return func(params *serviceports.ToolExecuteParams) (*locateRequest, error) {
+) func(*agentports.ToolExecuteParams) (*locateRequest, error) {
+	return func(params *agentports.ToolExecuteParams) (*locateRequest, error) {
 		unitID, err := requirePulid(params.Params, unitKey)
 		if err != nil {
 			return nil, err
@@ -521,9 +524,9 @@ func locateProperties(
 	}
 }
 
-func newLocateTractorTool(tractors tractorKeeper) serviceports.AgentTool {
-	build := func(req *locateRequest, params *serviceports.ToolExecuteParams) *repositories.LocateTractorRequest {
-		return &repositories.LocateTractorRequest{
+func newLocateTractorTool(tractors tractorKeeper) agentports.AgentTool {
+	build := func(req *locateRequest, params *agentports.ToolExecuteParams) *tractorports.LocateTractorRequest {
+		return &tractorports.LocateTractorRequest{
 			TenantInfo:    tenantFrom(*params),
 			TractorID:     req.unitID,
 			NewLocationID: req.locationID,
@@ -548,7 +551,7 @@ func newLocateTractorTool(tractors tractorKeeper) serviceports.AgentTool {
 			permission.ResourceTractor),
 		required:    []string{paramTractorID, paramNewLocationID},
 		searchTerms: []string{"locate tractor", "relocate truck", "move tractor", "yard"},
-		target: func(params map[string]any) (serviceports.ToolTarget, bool) {
+		target: func(params map[string]any) (agentports.ToolTarget, bool) {
 			return targetOf(params, paramTractorID, permission.ResourceTractor)
 		},
 	}, receivablePlan[*locateRequest, *tractorservice.LocatePlan]{
@@ -556,7 +559,7 @@ func newLocateTractorTool(tractors tractorKeeper) serviceports.AgentTool {
 		plan: func(
 			ctx context.Context,
 			req *locateRequest,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*tractorservice.LocatePlan, error) {
 			return tractors.PlanLocate(ctx, build(req, params))
 		},
@@ -577,7 +580,7 @@ func newLocateTractorTool(tractors tractorKeeper) serviceports.AgentTool {
 		run: func(
 			ctx context.Context,
 			req *locateRequest,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			if _, err := tractors.Locate(ctx, build(req, params)); err != nil {
 				return nil, err
@@ -593,9 +596,9 @@ func newLocateTractorTool(tractors tractorKeeper) serviceports.AgentTool {
 	})
 }
 
-func newLocateTrailerTool(trailers trailerKeeper) serviceports.AgentTool {
-	build := func(req *locateRequest, params *serviceports.ToolExecuteParams) *repositories.LocateTrailerRequest {
-		return &repositories.LocateTrailerRequest{
+func newLocateTrailerTool(trailers trailerKeeper) agentports.AgentTool {
+	build := func(req *locateRequest, params *agentports.ToolExecuteParams) *trailerports.LocateTrailerRequest {
+		return &trailerports.LocateTrailerRequest{
 			TenantInfo:    tenantFrom(*params),
 			TrailerID:     req.unitID,
 			NewLocationID: req.locationID,
@@ -620,7 +623,7 @@ func newLocateTrailerTool(trailers trailerKeeper) serviceports.AgentTool {
 			permission.ResourceTrailer),
 		required:    []string{paramTrailerID, paramNewLocationID},
 		searchTerms: []string{"locate trailer", "trailer location", "move trailer", "drop yard"},
-		target: func(params map[string]any) (serviceports.ToolTarget, bool) {
+		target: func(params map[string]any) (agentports.ToolTarget, bool) {
 			return targetOf(params, paramTrailerID, permission.ResourceTrailer)
 		},
 	}, receivablePlan[*locateRequest, *trailerservice.LocatePlan]{
@@ -628,7 +631,7 @@ func newLocateTrailerTool(trailers trailerKeeper) serviceports.AgentTool {
 		plan: func(
 			ctx context.Context,
 			req *locateRequest,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*trailerservice.LocatePlan, error) {
 			return trailers.PlanLocate(ctx, build(req, params), params.Actor)
 		},
@@ -637,7 +640,7 @@ func newLocateTrailerTool(trailers trailerKeeper) serviceports.AgentTool {
 		run: func(
 			ctx context.Context,
 			req *locateRequest,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			if _, err := trailers.Locate(ctx, build(req, params), params.Actor); err != nil {
 				return nil, err

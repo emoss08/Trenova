@@ -3,6 +3,10 @@
 package documentservice_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentsearchprojectionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentuploadportsmock"
 	"context"
 	"testing"
 	"time"
@@ -10,9 +14,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentpacketrule"
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
@@ -22,6 +23,12 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documentpacketrulerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documenttyperepository"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentpacketruleports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -42,14 +49,14 @@ type serviceHarness struct {
 	db               *bun.DB
 	tenantInfo       pagination.TenantInfo
 	service          *documentservice.Service
-	documentRepo     repositories.DocumentRepository
-	documentTypeRepo repositories.DocumentTypeRepository
-	packetRuleRepo   repositories.DocumentPacketRuleRepository
-	storage          storage.Client
-	cacheRepo        *mocks.MockDocumentCacheRepository
-	sessionRepo      *mocks.MockDocumentUploadSessionRepository
-	contentService   *mocks.MockDocumentContentService
-	searchProjection *mocks.MockDocumentSearchProjectionService
+	documentRepo     documentports.DocumentRepository
+	documentTypeRepo documenttypeports.DocumentTypeRepository
+	packetRuleRepo   documentpacketruleports.DocumentPacketRuleRepository
+	storage          kernelports.Client
+	cacheRepo        *customerportsmock.MockDocumentCacheRepository
+	sessionRepo      *documentuploadportsmock.MockDocumentUploadSessionRepository
+	contentService   *documentportsmock.MockDocumentContentService
+	searchProjection *documentsearchprojectionportsmock.MockDocumentSearchProjectionService
 }
 
 func setupDocumentServiceHarness(t *testing.T) *serviceHarness {
@@ -89,11 +96,11 @@ func setupDocumentServiceHarness(t *testing.T) *serviceHarness {
 	})
 	require.NoError(t, err)
 
-	cacheRepo := mocks.NewMockDocumentCacheRepository(t)
+	cacheRepo := customerportsmock.NewMockDocumentCacheRepository(t)
 
-	sessionRepo := mocks.NewMockDocumentUploadSessionRepository(t)
-	contentService := mocks.NewMockDocumentContentService(t)
-	searchProjection := mocks.NewMockDocumentSearchProjectionService(t)
+	sessionRepo := documentuploadportsmock.NewMockDocumentUploadSessionRepository(t)
+	contentService := documentportsmock.NewMockDocumentContentService(t)
+	searchProjection := documentsearchprojectionportsmock.NewMockDocumentSearchProjectionService(t)
 	// Every scenario in this suite uploads at least one document, and each
 	// upload projects it into search.
 	searchProjection.On("Upsert", mock.Anything, mock.Anything, mock.Anything).Return(nil)
@@ -235,7 +242,7 @@ func uploadDocument(
 		[]byte("test "+filename),
 		"application/pdf",
 	)
-	result, err := h.service.Upload(h.ctx, &services.UploadRequest{
+	result, err := h.service.Upload(h.ctx, &documentports.UploadRequest{
 		TenantInfo:     h.tenantInfo,
 		File:           fileHeader,
 		ResourceID:     resourceID,
@@ -280,7 +287,7 @@ func updateDocumentExpiration(
 func fetchDocument(t *testing.T, h *serviceHarness, id pulid.ID) *document.Document {
 	t.Helper()
 
-	entity, err := h.documentRepo.GetByID(h.ctx, repositories.GetDocumentByIDRequest{
+	entity, err := h.documentRepo.GetByID(h.ctx, documentports.GetDocumentByIDRequest{
 		ID:         id,
 		TenantInfo: h.tenantInfo,
 	})
@@ -293,7 +300,7 @@ func TestService_DocumentVersioningLifecycle_Integration(t *testing.T) {
 	// Versioning re-reads the current version, which misses the cache, and pulls
 	// the previous version's extracted content to carry lineage metadata forward.
 	h.cacheRepo.On("GetByID", mock.Anything, mock.Anything).
-		Return(nil, repositories.ErrCacheMiss)
+		Return(nil, customerports.ErrCacheMiss)
 	h.contentService.On("GetContent", mock.Anything, mock.Anything, mock.Anything).
 		Return(nil, assert.AnError)
 
@@ -339,7 +346,7 @@ func TestService_DocumentVersioningLifecycle_Integration(t *testing.T) {
 	assert.EqualValues(t, 1, refreshedFirstVersion.VersionNumber)
 	assert.EqualValues(t, 2, refreshedSecondVersion.VersionNumber)
 
-	resourceDocs, err := h.service.GetByResource(h.ctx, &repositories.GetDocumentsByResourceRequest{
+	resourceDocs, err := h.service.GetByResource(h.ctx, &documentports.GetDocumentsByResourceRequest{
 		TenantInfo:   h.tenantInfo,
 		ResourceID:   resourceID,
 		ResourceType: "shipment",
@@ -358,7 +365,7 @@ func TestService_DocumentVersioningLifecycle_Integration(t *testing.T) {
 	assert.Equal(t, firstVersion.ID, restored.ID)
 	assert.True(t, restored.IsCurrentVersion)
 
-	restoredDocs, err := h.service.GetByResource(h.ctx, &repositories.GetDocumentsByResourceRequest{
+	restoredDocs, err := h.service.GetByResource(h.ctx, &documentports.GetDocumentsByResourceRequest{
 		TenantInfo:   h.tenantInfo,
 		ResourceID:   resourceID,
 		ResourceType: "shipment",
@@ -370,13 +377,13 @@ func TestService_DocumentVersioningLifecycle_Integration(t *testing.T) {
 	firstStoragePath := firstVersion.StoragePath
 	secondStoragePath := secondVersion.StoragePath
 
-	err = h.service.Delete(h.ctx, repositories.DeleteDocumentRequest{
+	err = h.service.Delete(h.ctx, documentports.DeleteDocumentRequest{
 		ID:         restored.ID,
 		TenantInfo: h.tenantInfo,
 	}, h.tenantInfo.UserID)
 	require.NoError(t, err)
 
-	_, err = h.service.Get(h.ctx, repositories.GetDocumentByIDRequest{
+	_, err = h.service.Get(h.ctx, documentports.GetDocumentByIDRequest{
 		ID:         firstVersion.ID,
 		TenantInfo: h.tenantInfo,
 	})
@@ -637,8 +644,8 @@ func TestService_ReviewLifecycle_Integration(t *testing.T) {
 	resourceID := pulid.MustNew("sh_").String()
 	docType := createDocumentType(t, h, "POD", "Proof of Delivery", documenttype.CategoryShipment)
 	uploaded := uploadDocument(t, h, "pod.pdf", resourceID, "shipment", docType.ID.String(), "")
-	actor := services.RequestActor{
-		PrincipalType:  services.PrincipalTypeUser,
+	actor := permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    h.tenantInfo.UserID,
 		UserID:         h.tenantInfo.UserID,
 		OrganizationID: h.tenantInfo.OrgID,

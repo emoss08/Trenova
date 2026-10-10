@@ -3,18 +3,18 @@ package agenttoolservice
 import (
 	"context"
 	"fmt"
-	"github.com/emoss08/trenova/pkg/toolschema"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/rateimport"
 	"github.com/emoss08/trenova/internal/core/domain/ratesimulation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/rateimportservice"
 	"github.com/emoss08/trenova/internal/core/services/ratesimulationservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -61,7 +61,7 @@ var (
 )
 
 func rateImportRequestFrom(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*rateimportservice.CommitRequest, error) {
 	id, err := requirePulid(params.Params, paramRateImportID)
 	if err != nil {
@@ -83,11 +83,11 @@ func rateImportRecord(batch *rateimport.RateImportBatch) toolpreview.Record {
 	}
 }
 
-func targetRateImport(params map[string]any) (serviceports.ToolTarget, bool) {
+func targetRateImport(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, paramRateImportID, permission.ResourceRateAgreement)
 }
 
-func newCommitRateImportTool(imports rateImportKeeper) serviceports.AgentTool {
+func newCommitRateImportTool(imports rateImportKeeper) agentports.AgentTool {
 	return newReceivableTool(rateMoneySpec(&receivableSpec{
 		name:   "commit_rate_import",
 		recipe: []string{"list_rate_imports", "commit_rate_import"},
@@ -109,7 +109,7 @@ func newCommitRateImportTool(imports rateImportKeeper) serviceports.AgentTool {
 		plan: func(
 			ctx context.Context,
 			req *rateimportservice.CommitRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*rateimportservice.CommitPlan, error) {
 			return imports.PlanCommit(ctx, req)
 		},
@@ -142,7 +142,7 @@ func newCommitRateImportTool(imports rateImportKeeper) serviceports.AgentTool {
 		run: func(
 			ctx context.Context,
 			req *rateimportservice.CommitRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := imports.Commit(ctx, req)
 
@@ -155,7 +155,7 @@ type rateImportView struct {
 	Status string `json:"status"`
 }
 
-func newDiscardRateImportTool(imports rateImportKeeper) serviceports.AgentTool {
+func newDiscardRateImportTool(imports rateImportKeeper) agentports.AgentTool {
 	return newReceivableTool(fuelInternalSpec(&receivableSpec{
 		name: "discard_rate_import",
 		description: "Discard a rate sheet that was read and should not be applied, such as " +
@@ -175,7 +175,7 @@ func newDiscardRateImportTool(imports rateImportKeeper) serviceports.AgentTool {
 		plan: func(
 			ctx context.Context,
 			req *rateimportservice.CommitRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*rateimportservice.BatchChange, error) {
 			return imports.PlanDiscard(ctx, req)
 		},
@@ -203,7 +203,7 @@ func newDiscardRateImportTool(imports rateImportKeeper) serviceports.AgentTool {
 		run: func(
 			ctx context.Context,
 			req *rateimportservice.CommitRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := imports.Discard(ctx, req)
 
@@ -218,7 +218,7 @@ var simulationParties = agenttoolschema.Source(
 )
 
 func rateSimulationFrom(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*ratesimulation.RateSimulation, error) {
 	agreementID, err := requirePulid(params.Params, paramRateAgreementID)
 	if err != nil {
@@ -268,7 +268,7 @@ func rateSimulationFrom(
 	return simulation, nil
 }
 
-func newRunRateSimulationTool(simulations rateSimulationKeeper) serviceports.AgentTool {
+func newRunRateSimulationTool(simulations rateSimulationKeeper) agentports.AgentTool {
 	return newReportingReceivableTool(fuelInternalSpec(&receivableSpec{
 		name: "run_rate_simulation",
 		description: "Replay past shipments against a rate agreement, usually a draft, to see " +
@@ -304,7 +304,7 @@ func newRunRateSimulationTool(simulations rateSimulationKeeper) serviceports.Age
 		plan: func(
 			ctx context.Context,
 			simulation *ratesimulation.RateSimulation,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*ratesimulationservice.CreatePlan, error) {
 			return simulations.PlanCreate(ctx, simulation)
 		},
@@ -328,7 +328,7 @@ func newRunRateSimulationTool(simulations rateSimulationKeeper) serviceports.Age
 		run: func(
 			ctx context.Context,
 			simulation *ratesimulation.RateSimulation,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			created, err := simulations.Create(ctx, simulation, params.Actor.UserID)
 			if err != nil {

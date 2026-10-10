@@ -2,12 +2,13 @@ package assistantservice
 
 import (
 	"context"
-	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/pulid"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
 
@@ -21,13 +22,13 @@ const budgetNearShare = 0.9
 // not found.
 func (s *Service) ThreadBudget(
 	ctx context.Context,
-	req repositories.GetThreadRequest,
-) (*services.ThreadBudget, error) {
+	req agentports.GetThreadRequest,
+) (*agentports.ThreadBudget, error) {
 	thread, err := s.conversations.GetThread(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	out := &services.ThreadBudget{}
+	out := &agentports.ThreadBudget{}
 	if out.Person, err = s.personAllowance(ctx, req.UserID, req.TenantInfo, time.Now().UTC()); err != nil {
 		return nil, err
 	}
@@ -35,7 +36,7 @@ func (s *Service) ThreadBudget(
 		return out, nil
 	}
 
-	definition, err := s.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	definition, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         thread.AgentDefinitionID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -95,7 +96,7 @@ func (s *Service) personName(
 	if id == nil || id.IsNil() || s.users == nil {
 		return ""
 	}
-	user, err := s.users.GetByID(ctx, repositories.GetUserByIDRequest{
+	user, err := s.users.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo:   tenant,
 		LookupUserID: *id,
 	})

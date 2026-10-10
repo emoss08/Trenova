@@ -5,12 +5,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -21,16 +21,16 @@ import (
 // It embeds the interface so the methods no tool calls stay unimplemented and
 // a future addition to WorkerRepository does not break this file.
 type fakeWorkerRepo struct {
-	repositories.WorkerRepository
+	workerports.WorkerRepository
 
-	captured *repositories.ListWorkersRequest
+	captured *workerports.ListWorkersRequest
 	items    []*worker.Worker
 	err      error
 }
 
 func (f *fakeWorkerRepo) List(
 	_ context.Context,
-	req *repositories.ListWorkersRequest,
+	req *workerports.ListWorkersRequest,
 ) (*pagination.CursorListResult[*worker.Worker], error) {
 	f.captured = req
 	if f.err != nil {
@@ -40,14 +40,14 @@ func (f *fakeWorkerRepo) List(
 	return &pagination.CursorListResult[*worker.Worker]{Items: f.items}, nil
 }
 
-func testParams(params map[string]any) *serviceports.QueryToolParams {
+func testParams(params map[string]any) *agentports.QueryToolParams {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
-	return &serviceports.QueryToolParams{
+	return &agentports.QueryToolParams{
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
-		Actor: &serviceports.RequestActor{
+		Actor: &permissionports.RequestActor{
 			UserID:         pulid.MustNew("usr_"),
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
@@ -153,7 +153,7 @@ func TestRegistry_ResolvesTheLegacyWorkerSearchName(t *testing.T) {
 	t.Parallel()
 
 	reg := NewRegistry(RegistryParams{
-		Tools: []serviceports.AgentQueryTool{
+		Tools: []agentports.AgentQueryTool{
 			newSearchWorkerTool(&fakeWorkerRepo{}, &fakePermissions{}),
 		},
 	})
@@ -167,7 +167,7 @@ func TestRegistry_DoesNotAdvertiseTheLegacyName(t *testing.T) {
 	t.Parallel()
 
 	reg := NewRegistry(RegistryParams{
-		Tools: []serviceports.AgentQueryTool{
+		Tools: []agentports.AgentQueryTool{
 			newSearchWorkerTool(&fakeWorkerRepo{}, &fakePermissions{}),
 		},
 	})
@@ -319,7 +319,7 @@ func TestWorkerRow_KeepsAMoreSpecificBlockReason(t *testing.T) {
 
 func (f *fakeWorkerRepo) GetByID(
 	_ context.Context,
-	_ repositories.GetWorkerByIDRequest,
+	_ workerports.GetWorkerByIDRequest,
 ) (*worker.Worker, error) {
 	if f.err != nil {
 		return nil, f.err
@@ -373,7 +373,7 @@ func TestGetWorker_WithholdsConfidentialFieldsFromEveryone(t *testing.T) {
 	repo := &fakeWorkerRepo{items: []*worker.Worker{sensitiveWorker()}}
 	tool := newGetWorkerTool(repo, &fakePermissions{})
 	params := testParams(map[string]any{"workerId": repo.items[0].ID.String()})
-	params.Actor.PrincipalType = serviceports.PrincipalTypeUser
+	params.Actor.PrincipalType = permissionports.PrincipalTypeUser
 
 	result, err := tool.Query(t.Context(), params)
 	require.NoError(t, err)
@@ -397,7 +397,7 @@ func TestGetWorker_WithholdsRestrictedFieldsBelowTheRoleCeilingAndSaysSo(t *test
 	t.Parallel()
 
 	repo := &fakeWorkerRepo{items: []*worker.Worker{sensitiveWorker()}}
-	perms := &fakePermissions{readable: map[string]*serviceports.ResourcePermissionDetail{
+	perms := &fakePermissions{readable: map[string]*permissionports.ResourcePermissionDetail{
 		"worker": {
 			Resource:       "worker",
 			Operations:     []permission.Operation{permission.OpRead},
@@ -406,7 +406,7 @@ func TestGetWorker_WithholdsRestrictedFieldsBelowTheRoleCeilingAndSaysSo(t *test
 	}}
 	tool := newGetWorkerTool(repo, perms)
 	params := testParams(map[string]any{"workerId": repo.items[0].ID.String()})
-	params.Actor.PrincipalType = serviceports.PrincipalTypeUser
+	params.Actor.PrincipalType = permissionports.PrincipalTypeUser
 
 	result, err := tool.Query(t.Context(), params)
 	require.NoError(t, err)
@@ -432,7 +432,7 @@ func TestGetWorker_AnAgentPrincipalReadsInternalOnly(t *testing.T) {
 	repo := &fakeWorkerRepo{items: []*worker.Worker{sensitiveWorker()}}
 	tool := newGetWorkerTool(repo, &fakePermissions{})
 	params := testParams(map[string]any{"workerId": repo.items[0].ID.String()})
-	params.Actor.PrincipalType = serviceports.PrincipalTypeAgent
+	params.Actor.PrincipalType = permissionports.PrincipalTypeAgent
 	params.Actor.UserID = pulid.Nil
 
 	result, err := tool.Query(t.Context(), params)

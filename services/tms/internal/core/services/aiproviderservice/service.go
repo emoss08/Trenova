@@ -6,12 +6,14 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/settingversionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/httpsafe"
@@ -26,15 +28,15 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	DB           ports.DBConnection
-	Repo         repositories.AIProviderRepository
-	Keys         repositories.AIProviderKeyRepository `optional:"true"`
-	Versions     repositories.SettingVersionRepository
+	DB           kernelports.DBConnection
+	Repo         agentports.AIProviderRepository
+	Keys         agentports.AIProviderKeyRepository `optional:"true"`
+	Versions     settingversionports.SettingVersionRepository
 	Encryption   *encryptionservice.Service
 	Prober       *Prober
-	AuditService services.AuditService
+	AuditService auditports.AuditService
 	// Tester runs a test on a worker, which calls back into RunTest.
-	Tester services.AIProviderTester
+	Tester agentports.AIProviderTester
 	Config *config.Config
 }
 
@@ -44,30 +46,30 @@ type EndpointProber interface {
 		ctx context.Context,
 		provider *aiprovider.Provider,
 		apiKey string,
-	) *services.TestAIProviderResult
+	) *agentports.TestAIProviderResult
 	ListModels(
 		ctx context.Context,
 		provider *aiprovider.Provider,
 		apiKey string,
-	) ([]services.AIProviderModelOption, error)
+	) ([]agentports.AIProviderModelOption, error)
 }
 
 type Service struct {
 	l          *zap.Logger
-	db         ports.DBConnection
-	repo       repositories.AIProviderRepository
-	keys       repositories.AIProviderKeyRepository
-	versions   repositories.SettingVersionRepository
+	db         kernelports.DBConnection
+	repo       agentports.AIProviderRepository
+	keys       agentports.AIProviderKeyRepository
+	versions   settingversionports.SettingVersionRepository
 	encryption *encryptionservice.Service
 	prober     EndpointProber
-	audit      services.AuditService
-	tester     services.AIProviderTester
+	audit      auditports.AuditService
+	tester     agentports.AIProviderTester
 	ai         *config.AIConfig
 }
 
 var (
-	_ services.AIProviderService = (*Service)(nil)
-	_ services.AIProviderProbe   = (*Service)(nil)
+	_ agentports.AIProviderService = (*Service)(nil)
+	_ agentports.AIProviderProbe   = (*Service)(nil)
 )
 
 func New(p Params) *Service {
@@ -92,7 +94,7 @@ func New(p Params) *Service {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListAIProviderRequest,
+	req *agentports.ListAIProviderRequest,
 ) (*pagination.ListResult[*aiprovider.Provider], error) {
 	result, err := s.repo.List(ctx, req)
 	if err != nil {
@@ -108,7 +110,7 @@ func (s *Service) List(
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListAIProviderConnectionRequest,
+	req *agentports.ListAIProviderConnectionRequest,
 ) (*pagination.CursorListResult[*aiprovider.Provider], error) {
 	result, err := s.repo.ListConnection(ctx, req)
 	if err != nil {
@@ -124,7 +126,7 @@ func (s *Service) ListConnection(
 
 func (s *Service) SelectOptions(
 	ctx context.Context,
-	req *repositories.AIProviderSelectOptionsRequest,
+	req *agentports.AIProviderSelectOptionsRequest,
 ) (*pagination.ListResult[*aiprovider.Provider], error) {
 	result, err := s.repo.SelectOptions(ctx, req)
 	if err != nil {
@@ -140,7 +142,7 @@ func (s *Service) SelectOptions(
 
 func (s *Service) GetByID(
 	ctx context.Context,
-	req repositories.GetAIProviderByIDRequest,
+	req agentports.GetAIProviderByIDRequest,
 ) (*aiprovider.Provider, error) {
 	provider, err := s.repo.GetByID(ctx, req)
 	if err != nil {
@@ -152,8 +154,8 @@ func (s *Service) GetByID(
 
 func (s *Service) Create(
 	ctx context.Context,
-	req *services.SaveAIProviderRequest,
-	actor *services.RequestActor,
+	req *agentports.SaveAIProviderRequest,
+	actor *permissionports.RequestActor,
 ) (*aiprovider.Provider, error) {
 	provider := &aiprovider.Provider{
 		OrganizationID: req.TenantInfo.OrgID,
@@ -189,10 +191,10 @@ func (s *Service) Create(
 
 func (s *Service) Update(
 	ctx context.Context,
-	req *services.SaveAIProviderRequest,
-	actor *services.RequestActor,
+	req *agentports.SaveAIProviderRequest,
+	actor *permissionports.RequestActor,
 ) (*aiprovider.Provider, error) {
-	existing, err := s.repo.GetByID(ctx, repositories.GetAIProviderByIDRequest{
+	existing, err := s.repo.GetByID(ctx, agentports.GetAIProviderByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -247,10 +249,10 @@ func (s *Service) Update(
 
 func (s *Service) Delete(
 	ctx context.Context,
-	req repositories.DeleteAIProviderRequest,
-	actor *services.RequestActor,
+	req agentports.DeleteAIProviderRequest,
+	actor *permissionports.RequestActor,
 ) error {
-	existing, err := s.repo.GetByID(ctx, repositories.GetAIProviderByIDRequest{
+	existing, err := s.repo.GetByID(ctx, agentports.GetAIProviderByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -278,8 +280,8 @@ func (s *Service) Delete(
 // reported as such rather than as a failed test.
 func (s *Service) Test(
 	ctx context.Context,
-	req repositories.GetAIProviderByIDRequest,
-) (*services.TestAIProviderResult, error) {
+	req agentports.GetAIProviderByIDRequest,
+) (*agentports.TestAIProviderResult, error) {
 	if _, err := s.repo.GetByID(ctx, req); err != nil {
 		return nil, err
 	}
@@ -291,8 +293,8 @@ func (s *Service) Test(
 // worker runs for Test.
 func (s *Service) RunTest(
 	ctx context.Context,
-	req repositories.GetAIProviderByIDRequest,
-) (*services.TestAIProviderResult, error) {
+	req agentports.GetAIProviderByIDRequest,
+) (*agentports.TestAIProviderResult, error) {
 	provider, err := s.repo.GetByID(ctx, req)
 	if err != nil {
 		return nil, err
@@ -306,7 +308,7 @@ func (s *Service) RunTest(
 	s.tidyKey(ctx, provider, apiKey, req.TenantInfo)
 	result := s.prober.Probe(ctx, provider, apiKey)
 
-	if err = s.repo.MarkTested(ctx, repositories.MarkAIProviderTestedRequest{
+	if err = s.repo.MarkTested(ctx, agentports.MarkAIProviderTestedRequest{
 		ID:         provider.ID,
 		TenantInfo: req.TenantInfo,
 		Outcome: &aiprovider.TestOutcome{
@@ -340,7 +342,7 @@ func (s *Service) tidyKey(
 	}
 	if provider.NeedsKeyFingerprint() && apiKey != "" {
 		fingerprint := secretutils.FingerprintOf(apiKey)
-		if err := s.keys.RecordFingerprint(ctx, repositories.RecordAIProviderKeyFingerprintRequest{
+		if err := s.keys.RecordFingerprint(ctx, agentports.RecordAIProviderKeyFingerprintRequest{
 			ID:         provider.ID,
 			TenantInfo: tenantInfo,
 			Prefix:     fingerprint.Prefix,
@@ -350,7 +352,7 @@ func (s *Service) tidyKey(
 		}
 	}
 	if provider.PreviousKeyExpired(timeutils.NowUnix()) {
-		if _, err := s.keys.ClearExpiredPrevious(ctx, repositories.ClearExpiredAIProviderKeysRequest{
+		if _, err := s.keys.ClearExpiredPrevious(ctx, agentports.ClearExpiredAIProviderKeysRequest{
 			TenantInfo: tenantInfo,
 			Now:        timeutils.NowUnix(),
 		}); err != nil {
@@ -363,8 +365,8 @@ func (s *Service) tidyKey(
 // defaulting the fields an administrator can reasonably leave blank.
 func (s *Service) apply(
 	provider *aiprovider.Provider,
-	req *services.SaveAIProviderRequest,
-	actor *services.RequestActor,
+	req *agentports.SaveAIProviderRequest,
+	actor *permissionports.RequestActor,
 ) error {
 	// A replaced key is kept as a fallback only for the endpoint it was
 	// entered for; kept across a move, it would be sent somewhere new.
@@ -424,7 +426,7 @@ func (s *Service) apply(
 }
 
 // applyLimits copies the limits, taking the default for one left at zero.
-func applyLimits(provider *aiprovider.Provider, req *services.SaveAIProviderRequest) {
+func applyLimits(provider *aiprovider.Provider, req *agentports.SaveAIProviderRequest) {
 	provider.TimeoutSeconds = req.TimeoutSeconds
 	if provider.TimeoutSeconds == 0 {
 		provider.TimeoutSeconds = aiprovider.DefaultTimeoutSeconds
@@ -454,7 +456,7 @@ func (s *Service) checkPrivateNetwork(allow bool) error {
 type keyChange struct {
 	incoming     string
 	keepPrevious bool
-	actor        *services.RequestActor
+	actor        *permissionports.RequestActor
 }
 
 // replaceKey stores a new credential, or clears it when the new one is
@@ -500,7 +502,7 @@ func (s *Service) keyReplacement(change *keyChange) (aiprovider.KeyReplacement, 
 // server, or a different kind of API, while leaving its stored key in place.
 func keptKeyForNewEndpoint(
 	existing, updated *aiprovider.Provider,
-	req *services.SaveAIProviderRequest,
+	req *agentports.SaveAIProviderRequest,
 ) bool {
 	if req.APIKey != nil || !existing.HasStoredAPIKey() {
 		return false
@@ -528,7 +530,7 @@ type auditParams struct {
 	provider  *aiprovider.Provider
 	previous  *aiprovider.Provider
 	operation permission.Operation
-	actor     *services.RequestActor
+	actor     *permissionports.RequestActor
 	comment   string
 }
 
@@ -542,7 +544,7 @@ func (s *Service) logAudit(p *auditParams) {
 		previousState = jsonutils.MustToJSON(p.previous)
 	}
 
-	if err := s.audit.LogAction(&services.LogActionParams{
+	if err := s.audit.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceAIProvider,
 		ResourceID:     p.provider.GetID().String(),
 		Operation:      p.operation,

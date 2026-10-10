@@ -10,9 +10,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -25,8 +29,8 @@ import (
 // need every invoice use CreateInvoicesFromShipments.
 func (s *Service) CreateFromShipments(
 	ctx context.Context,
-	req *servicesports.CreateInvoiceFromShipmentsRequest,
-	actor *servicesports.RequestActor,
+	req *invoiceports.CreateInvoiceFromShipmentsRequest,
+	actor *permissionports.RequestActor,
 ) (*invoice.Invoice, error) {
 	result, err := s.CreateInvoicesFromShipments(ctx, req, actor)
 	if err != nil {
@@ -46,9 +50,9 @@ type payerPlan struct {
 
 func (s *Service) CreateInvoicesFromShipments(
 	ctx context.Context,
-	req *servicesports.CreateInvoiceFromShipmentsRequest,
-	actor *servicesports.RequestActor,
-) (*servicesports.CreateInvoicesResult, error) {
+	req *invoiceports.CreateInvoiceFromShipmentsRequest,
+	actor *permissionports.RequestActor,
+) (*invoiceports.CreateInvoicesResult, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"request",
@@ -146,12 +150,12 @@ func (s *Service) createSingleShipmentInvoices(
 	shp *shipment.Shipment,
 	plans []*payerPlan,
 	offCycleReason string,
-	actor *servicesports.RequestActor,
-) (*servicesports.CreateInvoicesResult, error) {
-	result := &servicesports.CreateInvoicesResult{
+	actor *permissionports.RequestActor,
+) (*invoiceports.CreateInvoicesResult, error) {
+	result := &invoiceports.CreateInvoicesResult{
 		Invoices: make([]*invoice.Invoice, 0, len(plans)),
 	}
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		for _, plan := range plans {
 			queueItem, txErr := s.billingQueueRepo.Create(txCtx, &billingqueue.BillingQueueItem{
 				OrganizationID:       tenantInfo.OrgID,
@@ -170,7 +174,7 @@ func (s *Service) createSingleShipmentInvoices(
 
 			created, txErr := s.CreateFromApprovedBillingQueueItem(
 				txCtx,
-				&servicesports.CreateInvoiceFromBillingQueueRequest{
+				&invoiceports.CreateInvoiceFromBillingQueueRequest{
 					BillingQueueItemID: queueItem.ID,
 					TenantInfo:         tenantInfo,
 					OffCycleReason:     offCycleReasonFor(plan.Customer, offCycleReason),
@@ -269,15 +273,15 @@ func (s *Service) collectBillableLegs(
 // under one order.
 func (s *Service) groupedInvoicesFromShipments(
 	ctx context.Context,
-	req *servicesports.CreateInvoiceFromShipmentsRequest,
-	actor *servicesports.RequestActor,
-) (*servicesports.CreateInvoicesResult, error) {
+	req *invoiceports.CreateInvoiceFromShipmentsRequest,
+	actor *permissionports.RequestActor,
+) (*invoiceports.CreateInvoicesResult, error) {
 	orderID, err := s.sharedOrderOf(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.CreateInvoicesFromOrder(ctx, &servicesports.CreateInvoiceFromOrderRequest{
+	return s.CreateInvoicesFromOrder(ctx, &invoiceports.CreateInvoiceFromOrderRequest{
 		OrderID:        orderID,
 		ShipmentIDs:    req.ShipmentIDs,
 		TenantInfo:     req.TenantInfo,
@@ -292,8 +296,8 @@ func (s *Service) groupedInvoicesFromShipments(
 // idempotency lookup.
 func (s *Service) CreateFromOrder(
 	ctx context.Context,
-	req *servicesports.CreateInvoiceFromOrderRequest,
-	actor *servicesports.RequestActor,
+	req *invoiceports.CreateInvoiceFromOrderRequest,
+	actor *permissionports.RequestActor,
 ) (*invoice.Invoice, error) {
 	result, err := s.CreateInvoicesFromOrder(ctx, req, actor)
 	if err != nil {
@@ -305,9 +309,9 @@ func (s *Service) CreateFromOrder(
 
 func (s *Service) CreateInvoicesFromOrder(
 	ctx context.Context,
-	req *servicesports.CreateInvoiceFromOrderRequest,
-	actor *servicesports.RequestActor,
-) (*servicesports.CreateInvoicesResult, error) {
+	req *invoiceports.CreateInvoiceFromOrderRequest,
+	actor *permissionports.RequestActor,
+) (*invoiceports.CreateInvoicesResult, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"request",
@@ -330,7 +334,7 @@ func (s *Service) CreateInvoicesFromOrder(
 		)
 	}
 
-	ord, err := s.orderRepo.GetByID(ctx, repositories.GetOrderByIDRequest{
+	ord, err := s.orderRepo.GetByID(ctx, orderports.GetOrderByIDRequest{
 		ID:         req.OrderID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -338,10 +342,10 @@ func (s *Service) CreateInvoicesFromOrder(
 		return nil, err
 	}
 
-	orderCustomer, err := s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
+	orderCustomer, err := s.customerRepo.GetByID(ctx, customerports.GetCustomerByIDRequest{
 		ID:         ord.CustomerID,
 		TenantInfo: req.TenantInfo,
-		CustomerFilterOptions: repositories.CustomerFilterOptions{
+		CustomerFilterOptions: customerports.CustomerFilterOptions{
 			IncludeBillingProfile: true,
 		},
 	})
@@ -358,8 +362,8 @@ func (s *Service) CreateInvoicesFromOrder(
 		return nil, err
 	}
 
-	result := &servicesports.CreateInvoicesResult{}
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	result := &invoiceports.CreateInvoicesResult{}
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		var txErr error
 		result, txErr = s.createOrderInvoicesTx(txCtx, req, orderCustomer, number, actor)
 		return txErr
@@ -428,18 +432,18 @@ func bucketLegsByPayer(
 
 func (s *Service) createOrderInvoicesTx(
 	txCtx context.Context,
-	req *servicesports.CreateInvoiceFromOrderRequest,
+	req *invoiceports.CreateInvoiceFromOrderRequest,
 	orderCustomer *customer.Customer,
 	number string,
-	actor *servicesports.RequestActor,
-) (*servicesports.CreateInvoicesResult, error) {
+	actor *permissionports.RequestActor,
+) (*invoiceports.CreateInvoicesResult, error) {
 	plan, txErr := s.planOrderInvoices(txCtx, req)
 	if txErr != nil {
 		return nil, txErr
 	}
 	ord := plan.order
 
-	result := &servicesports.CreateInvoicesResult{
+	result := &invoiceports.CreateInvoicesResult{
 		Invoices: make([]*invoice.Invoice, 0, len(plan.buckets)),
 	}
 	for i, bucket := range plan.buckets {
@@ -593,7 +597,7 @@ func (s *Service) attachQueueItems(
 	invoiceID pulid.ID,
 	itemIDs []pulid.ID,
 ) error {
-	attached, err := s.billingQueueRepo.AttachInvoice(ctx, &repositories.AttachInvoiceRequest{
+	attached, err := s.billingQueueRepo.AttachInvoice(ctx, &billingqueueports.AttachInvoiceRequest{
 		TenantInfo: tenantInfo,
 		InvoiceID:  invoiceID,
 		ItemIDs:    itemIDs,
@@ -686,7 +690,7 @@ func (s *Service) markOrderChargeSharesInvoiced(
 	}
 
 	if len(chargeIDs) > 0 {
-		if _, err := s.orderRepo.MarkChargesInvoiced(ctx, &repositories.MarkOrderChargesInvoicedRequest{
+		if _, err := s.orderRepo.MarkChargesInvoiced(ctx, &orderports.MarkOrderChargesInvoicedRequest{
 			TenantInfo: tenantInfo,
 			OrderID:    orderID,
 			ChargeIDs:  chargeIDs,
@@ -700,7 +704,7 @@ func (s *Service) markOrderChargeSharesInvoiced(
 		return nil
 	}
 
-	if _, err := s.chargeAllocationRepo.MarkInvoiced(ctx, &repositories.MarkChargeAllocationsInvoicedRequest{
+	if _, err := s.chargeAllocationRepo.MarkInvoiced(ctx, &shipmentports.MarkChargeAllocationsInvoicedRequest{
 		TenantInfo:    tenantInfo,
 		AllocationIDs: allocationIDs,
 		InvoiceID:     created.ID,
@@ -710,7 +714,7 @@ func (s *Service) markOrderChargeSharesInvoiced(
 	}
 	_, err := s.orderRepo.MarkChargesFullyInvoicedWhereComplete(
 		ctx,
-		&repositories.MarkChargesFullyInvoicedRequest{
+		&orderports.MarkChargesFullyInvoicedRequest{
 			TenantInfo: tenantInfo,
 			OrderID:    orderID,
 			InvoiceID:  created.ID,

@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/audit"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/uptrace/bun"
 )
@@ -22,10 +22,10 @@ const (
 // log is written by every service and carries no reference to the trail.
 func (r *repository) ListCorrelatedAuditEntries(
 	ctx context.Context,
-	req *repositories.ListCorrelatedAuditEntriesRequest,
+	req *aiauditports.ListCorrelatedAuditEntriesRequest,
 ) ([]*audit.Entry, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*audit.Entry, error) {
-		matches := make([]repositories.AuditEntryMatch, 0, len(req.Matches))
+		matches := make([]aiauditports.AuditEntryMatch, 0, len(req.Matches))
 		for _, match := range req.Matches {
 			if match.ResourceID == "" || match.PrincipalID.IsNil() || match.WindowStart <= 0 {
 				continue

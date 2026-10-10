@@ -6,12 +6,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/quotaservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/quotatx"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -30,16 +30,16 @@ type Params struct {
 
 	DB     *postgres.Connection
 	Logger *zap.Logger
-	Quota  services.QuotaGuard `optional:"true"`
+	Quota  platformplanports.QuotaGuard `optional:"true"`
 }
 
 type repository struct {
 	db    *postgres.Connection
 	l     *zap.Logger
-	quota services.QuotaGuard
+	quota platformplanports.QuotaGuard
 }
 
-func New(p Params) repositories.DocumentRepository {
+func New(p Params) documentports.DocumentRepository {
 	return &repository{
 		db:    p.DB,
 		l:     p.Logger.Named("postgres.document-repository"),
@@ -49,7 +49,7 @@ func New(p Params) repositories.DocumentRepository {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListDocumentsRequest,
+	req *documentports.ListDocumentsRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.DocumentColumns
 
@@ -78,7 +78,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListDocumentsRequest,
+	req *documentports.ListDocumentsRequest,
 ) (*pagination.ListResult[*document.Document], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*document.Document], error) {
 		log := r.l.With(
@@ -107,7 +107,7 @@ func (r *repository) List(
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
-	req *repositories.DocumentSelectOptionsRequest,
+	req *documentports.DocumentSelectOptionsRequest,
 ) (*pagination.ListResult[*document.Document], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*document.Document], error) {
 		return dbhelper.SelectOptions[*document.Document](
@@ -154,7 +154,7 @@ func (r *repository) SelectOptions(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetDocumentByIDRequest,
+	req documentports.GetDocumentByIDRequest,
 ) (*document.Document, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*document.Document, error) {
 		log := r.l.With(
@@ -183,7 +183,7 @@ func (r *repository) GetByID(
 
 func (r *repository) GetByStoragePath(
 	ctx context.Context,
-	req repositories.GetDocumentByStoragePathRequest,
+	req documentports.GetDocumentByStoragePathRequest,
 ) (*document.Document, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*document.Document, error) {
 		entity := new(document.Document)
@@ -207,7 +207,7 @@ func (r *repository) GetByStoragePath(
 
 func (r *repository) GetByResourceID(
 	ctx context.Context,
-	req *repositories.GetDocumentsByResourceRequest,
+	req *documentports.GetDocumentsByResourceRequest,
 ) ([]*document.Document, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*document.Document, error) {
 		log := r.l.With(
@@ -247,7 +247,7 @@ func (r *repository) GetByResourceID(
 
 func (r *repository) GetByResourceIDs(
 	ctx context.Context,
-	req *repositories.GetDocumentsByResourceIDsRequest,
+	req *documentports.GetDocumentsByResourceIDsRequest,
 ) ([]*document.Document, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*document.Document, error) {
 		if len(req.ResourceIDs) == 0 {
@@ -284,7 +284,7 @@ func (r *repository) GetByResourceIDs(
 
 func (r *repository) ListPendingPreviewReconciliation(
 	ctx context.Context,
-	req *repositories.ListPendingPreviewReconciliationRequest,
+	req *documentports.ListPendingPreviewReconciliationRequest,
 ) ([]*document.Document, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*document.Document, error) {
 		limit := req.Limit
@@ -315,7 +315,7 @@ func (r *repository) ListPendingPreviewReconciliation(
 
 func (r *repository) ListPendingPreviewReconciliationTenants(
 	ctx context.Context,
-	req *repositories.ListPendingPreviewReconciliationRequest,
+	req *documentports.ListPendingPreviewReconciliationRequest,
 ) ([]pagination.TenantInfo, error) {
 	ctx = dbscope.WithSystem(ctx, "list organizations with document previews to reconcile")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
@@ -440,7 +440,7 @@ func (r *repository) Update(
 
 func (r *repository) UpdatePreview(
 	ctx context.Context,
-	req *repositories.UpdateDocumentPreviewRequest,
+	req *documentports.UpdateDocumentPreviewRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.DocumentColumns
@@ -475,7 +475,7 @@ func (r *repository) UpdatePreview(
 
 func (r *repository) UpdateIntelligence(
 	ctx context.Context,
-	req *repositories.UpdateDocumentIntelligenceRequest,
+	req *documentports.UpdateDocumentIntelligenceRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.DocumentColumns
@@ -514,7 +514,7 @@ func (r *repository) UpdateIntelligence(
 
 func (r *repository) Delete(
 	ctx context.Context,
-	req repositories.DeleteDocumentRequest,
+	req documentports.DeleteDocumentRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		log := r.l.With(
@@ -542,7 +542,7 @@ func (r *repository) Delete(
 
 func (r *repository) GetByIDs(
 	ctx context.Context,
-	req repositories.BulkDeleteDocumentRequest,
+	req documentports.BulkDeleteDocumentRequest,
 ) ([]*document.Document, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*document.Document, error) {
 		log := r.l.With(
@@ -571,7 +571,7 @@ func (r *repository) GetByIDs(
 
 func (r *repository) ListVersions(
 	ctx context.Context,
-	req repositories.ListDocumentVersionsRequest,
+	req documentports.ListDocumentVersionsRequest,
 ) ([]*document.Document, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*document.Document, error) {
 		entities := make([]*document.Document, 0)
@@ -594,7 +594,7 @@ func (r *repository) ListVersions(
 
 func (r *repository) BulkDelete(
 	ctx context.Context,
-	req repositories.BulkDeleteDocumentRequest,
+	req documentports.BulkDeleteDocumentRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		log := r.l.With(
@@ -625,7 +625,7 @@ func (r *repository) BulkDelete(
 
 func (r *repository) PromoteVersion(
 	ctx context.Context,
-	req *repositories.PromoteDocumentVersionRequest,
+	req *documentports.PromoteDocumentVersionRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		db := r.db.DBForContext(ctx)
@@ -667,7 +667,7 @@ func (r *repository) PromoteVersion(
 
 func (r *repository) MoveLineageToResource(
 	ctx context.Context,
-	req *repositories.MoveDocumentLineageRequest,
+	req *documentports.MoveDocumentLineageRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		db := r.db.DBForContext(ctx)
@@ -706,7 +706,7 @@ func (r *repository) MoveLineageToResource(
 
 func (r *repository) DeleteByLineageIDs(
 	ctx context.Context,
-	req repositories.DeleteDocumentLineageRequest,
+	req documentports.DeleteDocumentLineageRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if len(req.LineageIDs) == 0 {
@@ -726,14 +726,14 @@ func (r *repository) DeleteByLineageIDs(
 	})
 }
 
-func documentQuotaRequests(entity *document.Document) []services.QuotaRequest {
+func documentQuotaRequests(entity *document.Document) []platformplanports.QuotaRequest {
 	tenantInfo := pagination.TenantInfo{
 		OrgID: entity.OrganizationID,
 		BuID:  entity.BusinessUnitID,
 	}
 	size := max(entity.FileSize, 0)
 
-	return []services.QuotaRequest{
+	return []platformplanports.QuotaRequest{
 		{TenantInfo: tenantInfo, Meter: platformcatalog.MeterDocumentFileBytes, Quantity: size},
 		{TenantInfo: tenantInfo, Meter: platformcatalog.MeterDocumentUploads, Quantity: 1},
 		{TenantInfo: tenantInfo, Meter: platformcatalog.MeterDocumentStorageBytes, Quantity: size},

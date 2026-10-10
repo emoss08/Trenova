@@ -4,8 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/extractionrollout"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -14,7 +13,7 @@ import (
 
 func (s *Service) AssignExtraction(
 	ctx context.Context,
-	req *services.AssignExtractionRolloutRequest,
+	req *extractionrolloutports.AssignExtractionRolloutRequest,
 ) (pulid.ID, error) {
 	rollout, err := s.Get(ctx, req.TenantInfo)
 	if err != nil {
@@ -58,7 +57,7 @@ func (s *Service) AssignExtraction(
 
 func (s *Service) SettleExtraction(
 	ctx context.Context,
-	req *services.SettleExtractionRolloutRequest,
+	req *extractionrolloutports.SettleExtractionRolloutRequest,
 ) error {
 	if !req.Outcome.IsSettled() {
 		return errortypes.NewValidationError(
@@ -66,7 +65,7 @@ func (s *Service) SettleExtraction(
 		)
 	}
 
-	assignment, err := s.assignments.GetByExtraction(ctx, repositories.GetRolloutAssignmentRequest{
+	assignment, err := s.assignments.GetByExtraction(ctx, extractionrolloutports.GetRolloutAssignmentRequest{
 		TenantInfo:  req.TenantInfo,
 		DocumentID:  req.DocumentID,
 		ExtractedAt: req.ExtractedAt,

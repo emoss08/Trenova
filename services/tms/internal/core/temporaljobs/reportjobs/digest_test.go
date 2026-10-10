@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/pkg/reportfmt"
 	"github.com/shopspring/decimal"
@@ -17,16 +17,16 @@ import (
 
 // fakeReader streams a fixed set of rows, standing in for the executor.
 type fakeReader struct {
-	schema []services.ReportResultColumn
-	rows   []services.ReportRow
-	totals services.ReportRow
+	schema []reportports.ReportResultColumn
+	rows   []reportports.ReportRow
+	totals reportports.ReportRow
 	cursor int
 	closed bool
 }
 
-func (f *fakeReader) Schema() []services.ReportResultColumn { return f.schema }
+func (f *fakeReader) Schema() []reportports.ReportResultColumn { return f.schema }
 
-func (f *fakeReader) Next(_ context.Context) (services.ReportRow, error) {
+func (f *fakeReader) Next(_ context.Context) (reportports.ReportRow, error) {
 	if f.cursor >= len(f.rows) {
 		return nil, io.EOF
 	}
@@ -35,15 +35,15 @@ func (f *fakeReader) Next(_ context.Context) (services.ReportRow, error) {
 	return row, nil
 }
 
-func (f *fakeReader) Totals(_ context.Context) (services.ReportRow, error) { return f.totals, nil }
+func (f *fakeReader) Totals(_ context.Context) (reportports.ReportRow, error) { return f.totals, nil }
 
 func (f *fakeReader) RowCount() int64 { return int64(f.cursor) }
 func (f *fakeReader) Truncated() bool { return false }
 
 func (f *fakeReader) Close() error { f.closed = true; return nil }
 
-func moneyColumn(label string, rules ...reportfmt.Rule) services.ReportResultColumn {
-	return services.ReportResultColumn{
+func moneyColumn(label string, rules ...reportfmt.Rule) reportports.ReportResultColumn {
+	return reportports.ReportResultColumn{
 		ID:    strings.ToLower(label),
 		Label: label,
 		Type:  reportcatalog.FieldDecimal,
@@ -55,8 +55,8 @@ func moneyColumn(label string, rules ...reportfmt.Rule) services.ReportResultCol
 	}
 }
 
-func textColumn(label string) services.ReportResultColumn {
-	return services.ReportResultColumn{
+func textColumn(label string) reportports.ReportResultColumn {
+	return reportports.ReportResultColumn{
 		ID:      strings.ToLower(label),
 		Label:   label,
 		Type:    reportcatalog.FieldString,
@@ -64,7 +64,7 @@ func textColumn(label string) services.ReportResultColumn {
 	}
 }
 
-func drainDigest(t *testing.T, reader *digestReader) *services.ReportDigest {
+func drainDigest(t *testing.T, reader *digestReader) *reportports.ReportDigest {
 	t.Helper()
 	for {
 		if _, err := reader.Next(t.Context()); err != nil {
@@ -79,8 +79,8 @@ func drainDigest(t *testing.T, reader *digestReader) *services.ReportDigest {
 // query, so every row the renderer sees must still reach it.
 func TestDigestCapturesRowsWhilePassingThemThrough(t *testing.T) {
 	inner := &fakeReader{
-		schema: []services.ReportResultColumn{textColumn("Customer"), moneyColumn("Revenue")},
-		rows: []services.ReportRow{
+		schema: []reportports.ReportResultColumn{textColumn("Customer"), moneyColumn("Revenue")},
+		rows: []reportports.ReportRow{
 			{"ACME", decimal.NewFromInt(1000)},
 			{"Globex", decimal.NewFromInt(2000)},
 		},
@@ -106,12 +106,12 @@ func TestDigestCapturesRowsWhilePassingThemThrough(t *testing.T) {
 // An email is a summary: past a couple of dozen rows the table stops being
 // readable, and the attachment is the right answer.
 func TestDigestStopsAtTheLimitAndSaysSo(t *testing.T) {
-	rows := make([]services.ReportRow, 0, 50)
+	rows := make([]reportports.ReportRow, 0, 50)
 	for i := range 50 {
-		rows = append(rows, services.ReportRow{"row", decimal.NewFromInt(int64(i))})
+		rows = append(rows, reportports.ReportRow{"row", decimal.NewFromInt(int64(i))})
 	}
 	inner := &fakeReader{
-		schema: []services.ReportResultColumn{textColumn("Name"), moneyColumn("Revenue")},
+		schema: []reportports.ReportResultColumn{textColumn("Name"), moneyColumn("Revenue")},
 		rows:   rows,
 	}
 
@@ -123,17 +123,17 @@ func TestDigestStopsAtTheLimitAndSaysSo(t *testing.T) {
 }
 
 func TestDigestLimitIsCappedGlobally(t *testing.T) {
-	inner := &fakeReader{schema: []services.ReportResultColumn{textColumn("Name")}}
-	assert.Equal(t, services.MaxDigestRows, newDigestReader(inner, 10_000).limit)
+	inner := &fakeReader{schema: []reportports.ReportResultColumn{textColumn("Name")}}
+	assert.Equal(t, reportports.MaxDigestRows, newDigestReader(inner, 10_000).limit)
 }
 
 // The renderer owns the slice it is handed, so a digest that kept the reference
 // would show whatever the last row happened to leave behind.
 func TestDigestCopiesRowsItKeeps(t *testing.T) {
-	shared := services.ReportRow{"ACME", decimal.NewFromInt(1)}
+	shared := reportports.ReportRow{"ACME", decimal.NewFromInt(1)}
 	inner := &fakeReader{
-		schema: []services.ReportResultColumn{textColumn("Customer"), moneyColumn("Revenue")},
-		rows:   []services.ReportRow{shared},
+		schema: []reportports.ReportResultColumn{textColumn("Customer"), moneyColumn("Revenue")},
+		rows:   []reportports.ReportRow{shared},
 	}
 	reader := newDigestReader(inner, 5)
 
@@ -148,18 +148,18 @@ func TestDigestCopiesRowsItKeeps(t *testing.T) {
 // Every cell renders through its column's display contract, so the email agrees
 // with the grid and the exports — including the conditional-format tones.
 func TestDigestContextFormatsThroughTheDisplayContract(t *testing.T) {
-	digest := &services.ReportDigest{
-		Columns: []services.ReportResultColumn{
+	digest := &reportports.ReportDigest{
+		Columns: []reportports.ReportResultColumn{
 			textColumn("Customer"),
 			moneyColumn("Revenue", reportfmt.Rule{
 				Op: reportfmt.RuleGreaterThan, Value: 1500, Tone: reportfmt.ToneNegative,
 			}),
 		},
-		Rows: []services.ReportRow{
+		Rows: []reportports.ReportRow{
 			{"ACME", decimal.NewFromInt(2000)},
 			{"Globex", decimal.NewFromInt(500)},
 		},
-		Totals: services.ReportRow{nil, decimal.NewFromInt(2500)},
+		Totals: reportports.ReportRow{nil, decimal.NewFromInt(2500)},
 	}
 
 	out := digestContext(digest, nil, 2)
@@ -181,9 +181,9 @@ func TestDigestContextFormatsThroughTheDisplayContract(t *testing.T) {
 // A short row must not read as a row with a value in the wrong column, and a
 // missing cell is not a panic.
 func TestDigestContextPadsShortRows(t *testing.T) {
-	digest := &services.ReportDigest{
-		Columns: []services.ReportResultColumn{textColumn("Customer"), moneyColumn("Revenue")},
-		Rows:    []services.ReportRow{{"ACME"}},
+	digest := &reportports.ReportDigest{
+		Columns: []reportports.ReportResultColumn{textColumn("Customer"), moneyColumn("Revenue")},
+		Rows:    []reportports.ReportRow{{"ACME"}},
 	}
 
 	out := digestContext(digest, nil, 1)
@@ -195,12 +195,12 @@ func TestDigestContextPadsShortRows(t *testing.T) {
 
 func TestDigestContextIsEmptyWhenThereIsNothingToShow(t *testing.T) {
 	assert.Empty(t, digestContext(nil, nil, 0).Rows)
-	assert.Empty(t, digestContext(&services.ReportDigest{}, nil, 0).Rows)
+	assert.Empty(t, digestContext(&reportports.ReportDigest{}, nil, 0).Rows)
 
 	// Columns but no rows is a real case — an alert that fired on an empty
 	// result should not draw a headers-only table.
-	headersOnly := &services.ReportDigest{
-		Columns: []services.ReportResultColumn{textColumn("Customer")},
+	headersOnly := &reportports.ReportDigest{
+		Columns: []reportports.ReportResultColumn{textColumn("Customer")},
 	}
 	out := digestContext(headersOnly, nil, 0)
 	assert.Empty(t, out.Rows)
@@ -209,13 +209,13 @@ func TestDigestContextIsEmptyWhenThereIsNothingToShow(t *testing.T) {
 
 // Nobody should reconcile against a sample believing it is the whole result.
 func TestDigestNoteOnlyAppearsWhenRowsWereDropped(t *testing.T) {
-	full := &services.ReportDigest{
-		Columns: []services.ReportResultColumn{textColumn("Customer")},
-		Rows:    []services.ReportRow{{"ACME"}},
+	full := &reportports.ReportDigest{
+		Columns: []reportports.ReportResultColumn{textColumn("Customer")},
+		Rows:    []reportports.ReportRow{{"ACME"}},
 	}
 	assert.Empty(t, digestNote(full, 1))
 
-	sampled := &services.ReportDigest{
+	sampled := &reportports.ReportDigest{
 		Columns:   full.Columns,
 		Rows:      full.Rows,
 		Truncated: true,

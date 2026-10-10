@@ -4,7 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -17,14 +18,14 @@ import (
 type RefresherParams struct {
 	fx.In
 
-	Workflows services.WorkflowStarter
+	Workflows kernelports.WorkflowStarter
 }
 
 type ReferenceRefresher struct {
-	workflows services.WorkflowStarter
+	workflows kernelports.WorkflowStarter
 }
 
-var _ services.AccountingReferenceRefresher = (*ReferenceRefresher)(nil)
+var _ accountingsyncports.AccountingReferenceRefresher = (*ReferenceRefresher)(nil)
 
 func NewReferenceRefresher(p RefresherParams) *ReferenceRefresher {
 	return &ReferenceRefresher{workflows: p.Workflows}
@@ -45,7 +46,7 @@ func (r *ReferenceRefresher) RequestReferenceRefresh(
 		BusinessUnitID: tenantInfo.BuID,
 		ConnectionID:   connectionID,
 	})
-	if errors.Is(err, services.ErrWorkflowStarterDisabled) {
+	if errors.Is(err, kernelports.ErrWorkflowStarterDisabled) {
 		return errortypes.NewBusinessError(
 			"Background work is not available on this server, so the reference data cannot be refreshed",
 		).WithInternal(err)

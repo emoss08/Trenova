@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/jackc/pgerrcode"
@@ -24,7 +24,7 @@ type fakeSSOLinks struct {
 
 func (f *fakeSSOLinks) GetBySubject(
 	_ context.Context,
-	req repositories.GetSSOIdentityLinkBySubjectRequest,
+	req tenantports.GetSSOIdentityLinkBySubjectRequest,
 ) (*tenant.SSOIdentityLink, error) {
 	for _, link := range f.links {
 		if link.SSOConfigID == req.SSOConfigID && link.Issuer == req.Issuer &&
@@ -38,7 +38,7 @@ func (f *fakeSSOLinks) GetBySubject(
 
 func (f *fakeSSOLinks) GetByUser(
 	_ context.Context,
-	req repositories.GetSSOIdentityLinkByUserRequest,
+	req tenantports.GetSSOIdentityLinkByUserRequest,
 ) (*tenant.SSOIdentityLink, error) {
 	for _, link := range f.links {
 		if link.SSOConfigID == req.SSOConfigID && link.Issuer == req.Issuer &&

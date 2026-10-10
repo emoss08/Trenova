@@ -4,8 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/selfserviceservice"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -111,7 +112,7 @@ func (s *Service) MyPolicyDocumentURL(
 				"That policy has no attached document",
 			)
 		}
-		return s.documentService.GetViewURL(ctx, repositories.GetDocumentByIDRequest{
+		return s.documentService.GetViewURL(ctx, documentports.GetDocumentByIDRequest{
 			ID:         standing.Policy.DocumentID,
 			TenantInfo: tenantInfo,
 		})
@@ -165,7 +166,7 @@ func (s *Service) MyProfileChangeRequests(
 		return nil, err
 	}
 
-	return s.selfService.ListChangeRequests(ctx, &repositories.ListProfileChangeRequestsRequest{
+	return s.selfService.ListChangeRequests(ctx, &workerports.ListProfileChangeRequestsRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   wrk.ID,
 		Limit:      10,

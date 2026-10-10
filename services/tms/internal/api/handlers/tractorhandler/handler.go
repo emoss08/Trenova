@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/tractorservice"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -108,10 +108,10 @@ func (h *Handler) list(c *gin.Context) {
 		func(cursor pagination.CursorInfo) (*pagination.CursorListResult[*tractor.Tractor], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListTractorsRequest{
+				&tractorports.ListTractorsRequest{
 					Filter: req,
 					Cursor: cursor,
-					TractorRelationIncludes: repositories.TractorRelationIncludes{
+					TractorRelationIncludes: tractorports.TractorRelationIncludes{
 						IncludeEquipmentDetails: helpers.QueryBool(
 							c,
 							"includeEquipmentDetails",
@@ -154,7 +154,7 @@ func (h *Handler) get(c *gin.Context) {
 
 	entity, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetTractorByIDRequest{
+		tractorports.GetTractorByIDRequest{
 			ID:         id,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -188,7 +188,7 @@ func (h *Handler) getOption(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.Get(c.Request.Context(), repositories.GetTractorByIDRequest{
+	entity, err := h.service.Get(c.Request.Context(), tractorports.GetTractorByIDRequest{
 		ID:         tractorID,
 		TenantInfo: pagination.FromAuth(authCtx),
 	})
@@ -223,7 +223,7 @@ func (h *Handler) selectOptions(c *gin.Context) {
 		func() (*pagination.ListResult[*tractor.Tractor], error) {
 			return h.service.SelectOptions(
 				c.Request.Context(),
-				&repositories.TractorSelectOptionsRequest{
+				&tractorports.TractorSelectOptionsRequest{
 					SelectOptionsRequest: req,
 				},
 			)
@@ -333,7 +333,7 @@ func (h *Handler) patch(c *gin.Context) {
 
 	existing, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetTractorByIDRequest{
+		tractorports.GetTractorByIDRequest{
 			ID:         tractorID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -381,7 +381,7 @@ func (h *Handler) bulkUpdateStatus(c *gin.Context) {
 		return
 	}
 
-	req := new(repositories.BulkUpdateTractorStatusRequest)
+	req := new(tractorports.BulkUpdateTractorStatusRequest)
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return

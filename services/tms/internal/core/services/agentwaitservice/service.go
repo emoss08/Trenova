@@ -15,18 +15,23 @@ import (
 	"slices"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentwaitjobs/agentwaitcontract"
-
-	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentwait"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentwaitjobs/agentwaitcontract"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -59,26 +64,26 @@ type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Waits         repositories.AgentWaitRepository
-	Runs          repositories.AgentRunRepository
-	Moves         repositories.ShipmentMoveRepository
-	Assignments   repositories.AssignmentRepository
-	Occurrences   repositories.DetentionOccurrenceRepository
-	Telematics    repositories.TelematicsRepository
-	Carriers      repositories.CarrierRepository
-	Customers     repositories.CustomerRepository
-	Subjects      repositories.AgentSubjectRepository
-	Conversations repositories.ConversationRepository
+	Waits         agentwaitports.AgentWaitRepository
+	Runs          agentports.AgentRunRepository
+	Moves         shipmentports.ShipmentMoveRepository
+	Assignments   shipmentports.AssignmentRepository
+	Occurrences   detentionports.DetentionOccurrenceRepository
+	Telematics    telematicsports.TelematicsRepository
+	Carriers      carrierports.CarrierRepository
+	Customers     customerports.CustomerRepository
+	Subjects      agentports.AgentSubjectRepository
+	Conversations agentports.ConversationRepository
 	Turns         *assistantturnservice.Service
-	RunService    serviceports.AgentRunService
-	Workflows     serviceports.WorkflowStarter
-	Realtime      serviceports.RealtimeService `optional:"true"`
+	RunService    agentports.AgentRunService
+	Workflows     kernelports.WorkflowStarter
+	Realtime      agentports.RealtimeService `optional:"true"`
 }
 
 type turnStarter interface {
 	Active(
 		ctx context.Context,
-		req repositories.ActiveAssistantTurnRequest,
+		req agentports.ActiveAssistantTurnRequest,
 	) (*conversation.AssistantTurn, error)
 	StartTurn(
 		ctx context.Context,
@@ -90,28 +95,28 @@ type turnStarter interface {
 type runStarter interface {
 	StartForDefinition(
 		ctx context.Context,
-		req *serviceports.StartAgentRunForDefinitionRequest,
-		actor *serviceports.RequestActor,
+		req *agentports.StartAgentRunForDefinitionRequest,
+		actor *permissionports.RequestActor,
 	) (*agent.AgentRun, error)
 }
 
 type Service struct {
 	l             *zap.Logger
-	waits         repositories.AgentWaitRepository
-	runs          repositories.AgentRunRepository
+	waits         agentwaitports.AgentWaitRepository
+	runs          agentports.AgentRunRepository
 	facts         *facts
-	conversations repositories.ConversationRepository
+	conversations agentports.ConversationRepository
 	turns         turnStarter
 	runService    runStarter
-	workflows     serviceports.WorkflowStarter
-	realtime      serviceports.RealtimeService
+	workflows     kernelports.WorkflowStarter
+	realtime      agentports.RealtimeService
 	now           func() int64
 }
 
 var (
-	_ serviceports.AgentWaitService  = (*Service)(nil)
-	_ serviceports.AgentWaitNotifier = (*Service)(nil)
-	_ agentwaitcontract.Worker       = (*Service)(nil)
+	_ agentwaitports.AgentWaitService  = (*Service)(nil)
+	_ agentwaitports.AgentWaitNotifier = (*Service)(nil)
+	_ agentwaitcontract.Worker         = (*Service)(nil)
 )
 
 func New(p Params) *Service { //nolint:gocritic // fx param structs are passed by value
@@ -141,9 +146,9 @@ func New(p Params) *Service { //nolint:gocritic // fx param structs are passed b
 	return s
 }
 
-func NewWaitService(s *Service) serviceports.AgentWaitService { return s }
+func NewWaitService(s *Service) agentwaitports.AgentWaitService { return s }
 
-func NewNotifier(s *Service) serviceports.AgentWaitNotifier { return s }
+func NewNotifier(s *Service) agentwaitports.AgentWaitNotifier { return s }
 
 func NewWorker(s *Service) agentwaitcontract.Worker { return s }
 
@@ -152,7 +157,7 @@ func NewWorker(s *Service) agentwaitcontract.Worker { return s }
 // is refused with what is true now, so the agent acts instead of waiting.
 func (s *Service) Register(
 	ctx context.Context,
-	req *serviceports.RegisterWaitRequest,
+	req *agentwaitports.RegisterWaitRequest,
 ) (*agentwait.Wait, error) {
 	if req.Delegated {
 		return nil, errortypes.NewBusinessError(
@@ -184,7 +189,7 @@ func (s *Service) Register(
 	wait.ExpiresAt = expiry(wait, now, req.LifetimeSeconds)
 
 	created, err := s.waits.Insert(ctx, wait)
-	if errors.Is(err, repositories.ErrTooManyWaits) {
+	if errors.Is(err, agentwaitports.ErrTooManyWaits) {
 		return nil, errortypes.NewBusinessError(fmt.Sprintf(
 			"There are already %d open waits here. Cancel one you no longer need first.",
 			agentwait.MaxOpenPerOwner,
@@ -207,7 +212,7 @@ func (s *Service) Register(
 // answering or, for a background run, by the run's agent and record.
 func (s *Service) draft(
 	ctx context.Context,
-	req *serviceports.RegisterWaitRequest,
+	req *agentwaitports.RegisterWaitRequest,
 ) (*agentwait.Wait, error) {
 	condition := req.Condition
 	wait := &agentwait.Wait{
@@ -227,7 +232,7 @@ func (s *Service) draft(
 		wait.UserID = req.Actor.UserID
 	case req.RunID.IsNotNil():
 		tenant := pagination.TenantInfo{OrgID: wait.OrganizationID, BuID: wait.BusinessUnitID}
-		run, err := s.runs.GetByID(ctx, repositories.GetAgentRunByIDRequest{
+		run, err := s.runs.GetByID(ctx, agentports.GetAgentRunByIDRequest{
 			ID:         req.RunID,
 			TenantInfo: &tenant,
 		})
@@ -281,7 +286,7 @@ func (s *Service) start(ctx context.Context, wait *agentwait.Wait) error {
 	}
 	wait.WorkflowID = workflowID
 
-	return s.waits.SetDue(ctx, &repositories.SetAgentWaitDueRequest{
+	return s.waits.SetDue(ctx, &agentwaitports.SetAgentWaitDueRequest{
 		ID:         wait.ID,
 		TenantInfo: tenantOf(wait),
 		DueAt:      wait.DueAt,
@@ -292,9 +297,9 @@ func (s *Service) start(ctx context.Context, wait *agentwait.Wait) error {
 // Cancel ends a wait without picking the work up.
 func (s *Service) Cancel(
 	ctx context.Context,
-	req *serviceports.CancelWaitRequest,
+	req *agentwaitports.CancelWaitRequest,
 ) (*agentwait.Wait, error) {
-	wait, err := s.waits.Get(ctx, &repositories.GetAgentWaitRequest{
+	wait, err := s.waits.Get(ctx, &agentwaitports.GetAgentWaitRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 		ThreadID:   req.ThreadID,
@@ -315,7 +320,7 @@ func (s *Service) Cancel(
 	if req.By != "" {
 		outcome = "Cancelled by " + req.By + "."
 	}
-	closed, changed, err := s.waits.Resolve(ctx, &repositories.ResolveAgentWaitRequest{
+	closed, changed, err := s.waits.Resolve(ctx, &agentwaitports.ResolveAgentWaitRequest{
 		ID:         wait.ID,
 		TenantInfo: tenantOf(wait),
 		Status:     agentwait.StatusCancelled,
@@ -342,9 +347,9 @@ func (s *Service) Cancel(
 // List is a conversation's waits, newest first, as its owner sees them.
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListThreadWaitsRequest,
+	req *agentwaitports.ListThreadWaitsRequest,
 ) ([]*agentwait.Wait, error) {
-	if _, err := s.conversations.GetThread(ctx, repositories.GetThreadRequest{
+	if _, err := s.conversations.GetThread(ctx, agentports.GetThreadRequest{
 		ID:         req.ThreadID,
 		UserID:     req.UserID,
 		TenantInfo: req.TenantInfo,
@@ -356,14 +361,14 @@ func (s *Service) List(
 }
 
 // NotifyEvent ends the waits watching for what the event says happened.
-func (s *Service) NotifyEvent(ctx context.Context, event *serviceports.AgentEvent) {
+func (s *Service) NotifyEvent(ctx context.Context, event *agentports.AgentEvent) {
 	kinds, watched := eventWatch(event)
 	if len(kinds) == 0 || len(watched) == 0 {
 		return
 	}
 	ctx = dbscope.WithValidTenant(context.WithoutCancel(ctx), event.TenantInfo.DBTenant())
 
-	waits, err := s.waits.ListOpenWatching(ctx, &repositories.ListOpenWaitsWatchingRequest{
+	waits, err := s.waits.ListOpenWatching(ctx, &agentwaitports.ListOpenWaitsWatchingRequest{
 		TenantInfo: event.TenantInfo,
 		Kinds:      kinds,
 		WatchIDs:   watched,
@@ -385,7 +390,7 @@ func (s *Service) NotifyEvent(ctx context.Context, event *serviceports.AgentEven
 	}
 }
 
-func eventWatch(event *serviceports.AgentEvent) ([]agentwait.Kind, []pulid.ID) {
+func eventWatch(event *agentports.AgentEvent) ([]agentwait.Kind, []pulid.ID) {
 	switch event.Kind { //nolint:exhaustive // only these events end a wait
 	case agent.EventShipmentMoveArrived:
 		return []agentwait.Kind{agentwait.KindStopArrival}, []pulid.ID{event.SubjectID}
@@ -400,7 +405,7 @@ func eventWatch(event *serviceports.AgentEvent) ([]agentwait.Kind, []pulid.ID) {
 
 // eventMeets reports whether the event is the one the wait is for. A wait on
 // one stop of a move ends only at that stop.
-func eventMeets(wait *agentwait.Wait, event *serviceports.AgentEvent) bool {
+func eventMeets(wait *agentwait.Wait, event *agentports.AgentEvent) bool {
 	switch wait.Kind { //nolint:exhaustive // the kinds an event ends
 	case agentwait.KindStopArrival, agentwait.KindStopDeparture:
 		return wait.Condition.StopID.IsNil() ||
@@ -434,7 +439,7 @@ func (s *Service) NotifyHOS(
 	}
 	ctx = dbscope.WithValidTenant(context.WithoutCancel(ctx), tenant.DBTenant())
 
-	waits, err := s.waits.ListOpenWatching(ctx, &repositories.ListOpenWaitsWatchingRequest{
+	waits, err := s.waits.ListOpenWatching(ctx, &agentwaitports.ListOpenWaitsWatchingRequest{
 		TenantInfo: tenant,
 		Kinds:      []agentwait.Kind{agentwait.KindHOSDriveBelow},
 		WatchIDs:   workers,
@@ -465,7 +470,7 @@ func (s *Service) reschedule(ctx context.Context, wait *agentwait.Wait, due *int
 	if sameDue(wait.DueAt, due) {
 		return
 	}
-	if err := s.waits.SetDue(ctx, &repositories.SetAgentWaitDueRequest{
+	if err := s.waits.SetDue(ctx, &agentwaitports.SetAgentWaitDueRequest{
 		ID:         wait.ID,
 		TenantInfo: tenantOf(wait),
 		DueAt:      due,
@@ -536,7 +541,7 @@ func (s *Service) meet(ctx context.Context, wait *agentwait.Wait, detail string)
 			zap.String("wait", wait.ID.String()), zap.Error(err))
 		return
 	}
-	current, gErr := s.waits.Get(ctx, &repositories.GetAgentWaitRequest{
+	current, gErr := s.waits.Get(ctx, &agentwaitports.GetAgentWaitRequest{
 		ID:         wait.ID,
 		TenantInfo: tenantOf(wait),
 	})
@@ -577,7 +582,7 @@ const overdueGrace int64 = 15 * 60
 // their own workflow never closed: one terminated by hand, or lost with a
 // namespace. Each is picked up as a wait that ran out.
 func (s *Service) ReconcileOverdue(ctx context.Context) (int, error) {
-	overdue, err := s.waits.ListOverdueAcrossTenants(ctx, &repositories.ListOverdueWaitsRequest{
+	overdue, err := s.waits.ListOverdueAcrossTenants(ctx, &agentwaitports.ListOverdueWaitsRequest{
 		ExpiredBefore: s.now() - overdueGrace,
 	})
 	if err != nil {
@@ -600,7 +605,7 @@ func (s *Service) Schedule(
 	tenant pagination.TenantInfo,
 	id pulid.ID,
 ) (*agentwaitcontract.Schedule, error) {
-	wait, err := s.waits.Get(ctx, &repositories.GetAgentWaitRequest{ID: id, TenantInfo: tenant})
+	wait, err := s.waits.Get(ctx, &agentwaitports.GetAgentWaitRequest{ID: id, TenantInfo: tenant})
 	if err != nil {
 		return nil, err
 	}
@@ -620,7 +625,7 @@ func (s *Service) Check(
 	id pulid.ID,
 	now int64,
 ) (*agentwaitcontract.Check, error) {
-	wait, err := s.waits.Get(ctx, &repositories.GetAgentWaitRequest{ID: id, TenantInfo: tenant})
+	wait, err := s.waits.Get(ctx, &agentwaitports.GetAgentWaitRequest{ID: id, TenantInfo: tenant})
 	if err != nil {
 		return nil, err
 	}
@@ -633,7 +638,7 @@ func (s *Service) Check(
 		return nil, err
 	}
 	if !check.Met && check.DueAt != nil {
-		if err = s.waits.SetDue(ctx, &repositories.SetAgentWaitDueRequest{
+		if err = s.waits.SetDue(ctx, &agentwaitports.SetAgentWaitDueRequest{
 			ID:         wait.ID,
 			TenantInfo: tenant,
 			DueAt:      check.DueAt,
@@ -654,7 +659,7 @@ func (s *Service) Finish(ctx context.Context, in *agentwaitcontract.FinishInput)
 	}
 	ctx = dbscope.WithValidTenant(ctx, tenant.DBTenant())
 
-	wait, changed, err := s.waits.Resolve(ctx, &repositories.ResolveAgentWaitRequest{
+	wait, changed, err := s.waits.Resolve(ctx, &agentwaitports.ResolveAgentWaitRequest{
 		ID:         in.Payload.WaitID,
 		TenantInfo: tenant,
 		Status:     in.Status,
@@ -687,7 +692,7 @@ func (s *Service) resumeConversation(ctx context.Context, wait *agentwait.Wait) 
 		BuID:   wait.BusinessUnitID,
 		UserID: wait.UserID,
 	}
-	thread, err := s.conversations.GetThreadOwned(ctx, repositories.GetThreadOwnedRequest{
+	thread, err := s.conversations.GetThreadOwned(ctx, agentports.GetThreadOwnedRequest{
 		ID:         wait.ThreadID,
 		TenantInfo: tenant,
 	})
@@ -698,7 +703,7 @@ func (s *Service) resumeConversation(ctx context.Context, wait *agentwait.Wait) 
 		return err
 	}
 
-	active, err := s.turns.Active(ctx, repositories.ActiveAssistantTurnRequest{
+	active, err := s.turns.Active(ctx, agentports.ActiveAssistantTurnRequest{
 		ThreadID:   thread.ID,
 		UserID:     thread.UserID,
 		TenantInfo: tenant,
@@ -710,8 +715,8 @@ func (s *Service) resumeConversation(ctx context.Context, wait *agentwait.Wait) 
 		return agentwaitcontract.ErrConversationBusy
 	}
 
-	owner := serviceports.RequestActor{
-		PrincipalType:  serviceports.PrincipalTypeUser,
+	owner := permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    thread.UserID,
 		UserID:         thread.UserID,
 		OrganizationID: thread.OrganizationID,
@@ -742,7 +747,7 @@ func (s *Service) resumeConversation(ctx context.Context, wait *agentwait.Wait) 
 	}
 	s.wakeCase(ctx, thread, tenant)
 
-	return s.waits.MarkResumed(ctx, &repositories.MarkAgentWaitResumedRequest{
+	return s.waits.MarkResumed(ctx, &agentwaitports.MarkAgentWaitResumedRequest{
 		ID:         wait.ID,
 		TenantInfo: tenant,
 		TurnID:     turn.ID,
@@ -759,7 +764,7 @@ func (s *Service) wakeCase(
 	if !thread.Snooze().Set() {
 		return
 	}
-	if _, err := s.conversations.WakeThread(ctx, &repositories.WakeThreadRequest{
+	if _, err := s.conversations.WakeThread(ctx, &agentports.WakeThreadRequest{
 		ThreadID:   thread.ID,
 		UserID:     thread.UserID,
 		TenantInfo: tenant,
@@ -773,7 +778,7 @@ func (s *Service) resumeRun(ctx context.Context, wait *agentwait.Wait) error {
 	tenant := tenantOf(wait)
 	run, err := s.runService.StartForDefinition(
 		ctx,
-		&serviceports.StartAgentRunForDefinitionRequest{
+		&agentports.StartAgentRunForDefinitionRequest{
 			DefinitionID: wait.AgentDefinitionID,
 			SubjectType:  wait.SubjectType,
 			SubjectID:    wait.SubjectID,
@@ -783,7 +788,7 @@ func (s *Service) resumeRun(ctx context.Context, wait *agentwait.Wait) error {
 		},
 		nil,
 	)
-	if errors.Is(err, serviceports.ErrAgentRunAlreadyOpen) {
+	if errors.Is(err, agentports.ErrAgentRunAlreadyOpen) {
 		return agentwaitcontract.ErrConversationBusy
 	}
 	if errortypes.IsBusinessError(err) {
@@ -795,7 +800,7 @@ func (s *Service) resumeRun(ctx context.Context, wait *agentwait.Wait) error {
 		return err
 	}
 
-	return s.waits.MarkResumed(ctx, &repositories.MarkAgentWaitResumedRequest{
+	return s.waits.MarkResumed(ctx, &agentwaitports.MarkAgentWaitResumedRequest{
 		ID:         wait.ID,
 		TenantInfo: tenant,
 		RunID:      run.ID,
@@ -811,7 +816,7 @@ func (s *Service) close(
 ) {
 	if _, _, err := s.waits.Resolve(
 		context.WithoutCancel(ctx),
-		&repositories.ResolveAgentWaitRequest{
+		&agentwaitports.ResolveAgentWaitRequest{
 			ID:         wait.ID,
 			TenantInfo: tenantOf(wait),
 			Status:     status,
@@ -830,7 +835,7 @@ func (s *Service) announce(ctx context.Context, wait *agentwait.Wait) {
 	}
 	if err := s.realtime.PublishResourceInvalidation(
 		context.WithoutCancel(ctx),
-		&serviceports.PublishResourceInvalidationRequest{
+		&agentports.PublishResourceInvalidationRequest{
 			OrganizationID: wait.OrganizationID,
 			BusinessUnitID: wait.BusinessUnitID,
 			AudienceUserID: wait.UserID,

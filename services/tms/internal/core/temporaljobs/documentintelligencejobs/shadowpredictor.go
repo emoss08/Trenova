@@ -3,29 +3,31 @@ package documentintelligencejobs
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	services "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/fx"
 )
 
-var _ services.ExtractionShadowPredictor = (*ShadowPredictor)(nil)
+var _ extractionshadowports.ExtractionShadowPredictor = (*ShadowPredictor)(nil)
 
 type ShadowPredictorParams struct {
 	fx.In
 
 	Config            *config.Config
-	DocumentRepo      repositories.DocumentRepository
-	ContentRepo       repositories.DocumentContentRepository
-	AIDocumentService services.AIDocumentService
+	DocumentRepo      documentports.DocumentRepository
+	ContentRepo       documentcontentports.DocumentContentRepository
+	AIDocumentService documentaiextractionports.AIDocumentService
 }
 
 type ShadowPredictor struct {
 	cfg       *config.AIConfig
-	documents repositories.DocumentRepository
-	contents  repositories.DocumentContentRepository
-	extractor services.AIDocumentService
+	documents documentports.DocumentRepository
+	contents  documentcontentports.DocumentContentRepository
+	extractor documentaiextractionports.AIDocumentService
 }
 
 func NewShadowPredictor(p ShadowPredictorParams) *ShadowPredictor {
@@ -39,9 +41,9 @@ func NewShadowPredictor(p ShadowPredictorParams) *ShadowPredictor {
 
 func (p *ShadowPredictor) PredictShadowDraft(
 	ctx context.Context,
-	req *services.PredictShadowDraftRequest,
-) (*services.ShadowDraftPrediction, error) {
-	doc, err := p.documents.GetByID(ctx, repositories.GetDocumentByIDRequest{
+	req *extractionshadowports.PredictShadowDraftRequest,
+) (*extractionshadowports.ShadowDraftPrediction, error) {
+	doc, err := p.documents.GetByID(ctx, documentports.GetDocumentByIDRequest{
 		ID:         req.DocumentID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -54,7 +56,7 @@ func (p *ShadowPredictor) PredictShadowDraft(
 		return nil, err
 	}
 	if content.LastExtractedAt == nil || *content.LastExtractedAt != req.ExtractedAt {
-		return nil, services.ErrShadowSuperseded
+		return nil, extractionshadowports.ErrShadowSuperseded
 	}
 
 	pages, err := p.contents.ListPagesByDocumentID(ctx, req.DocumentID, req.TenantInfo)
@@ -66,7 +68,7 @@ func (p *ShadowPredictor) PredictShadowDraft(
 	aiPages := toAIDocumentPages(pages, maxChars)
 	result, err := p.extractor.ExtractRateConfirmationForShadow(
 		ctx,
-		&services.AIShadowExtractRequest{
+		&documentaiextractionports.AIShadowExtractRequest{
 			TenantInfo: req.TenantInfo,
 			ProviderID: req.ProviderID,
 			DocumentID: doc.ID,
@@ -84,7 +86,7 @@ func (p *ShadowPredictor) PredictShadowDraft(
 		withFieldEvidence(result.Extract, aiPages),
 	)
 
-	return &services.ShadowDraftPrediction{
+	return &extractionshadowports.ShadowDraftPrediction{
 		DraftData:       draft.ToMap(),
 		Accepted:        accepted,
 		RejectionReason: rejectionReason,

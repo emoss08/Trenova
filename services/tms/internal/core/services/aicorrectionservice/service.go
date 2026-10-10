@@ -9,8 +9,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/floatutils"
@@ -21,15 +26,15 @@ import (
 	"go.uber.org/zap"
 )
 
-var _ services.AICorrectionService = (*Service)(nil)
+var _ aicorrectionports.AICorrectionService = (*Service)(nil)
 
 type correctionStore interface {
 	Upsert(ctx context.Context, entity *aicorrection.Correction) (*aicorrection.Correction, error)
-	PurgeBefore(ctx context.Context, req repositories.PurgeAICorrectionsRequest) (int64, error)
+	PurgeBefore(ctx context.Context, req aicorrectionports.PurgeAICorrectionsRequest) (int64, error)
 }
 
 type shipmentReader interface {
-	GetByID(ctx context.Context, req *repositories.GetShipmentByIDRequest) (*shipment.Shipment, error)
+	GetByID(ctx context.Context, req *shipmentports.GetShipmentByIDRequest) (*shipment.Shipment, error)
 }
 
 type contentReader interface {
@@ -43,25 +48,25 @@ type contentReader interface {
 type extractionReader interface {
 	GetByDocumentExtractedAt(
 		ctx context.Context,
-		req repositories.GetDocumentAIExtractionRequest,
+		req documentaiextractionports.GetDocumentAIExtractionRequest,
 	) (*documentaiextraction.Extraction, error)
 }
 
 type retentionReader interface {
-	Get(ctx context.Context, req repositories.GetDataRetentionRequest) (*tenant.DataRetention, error)
+	Get(ctx context.Context, req tenantports.GetDataRetentionRequest) (*tenant.DataRetention, error)
 }
 
 type Params struct {
 	fx.In
 
 	Logger      *zap.Logger
-	Repo        repositories.AICorrectionRepository
-	Shipments   repositories.ShipmentRepository
-	Contents    repositories.DocumentContentRepository
-	Extractions repositories.DocumentAIExtractionRepository
-	Retention   repositories.DataRetentionRepository
-	Shadows     services.ExtractionShadowScorer `optional:"true"`
-	Rollout     services.ExtractionRolloutGuard `optional:"true"`
+	Repo        aicorrectionports.AICorrectionRepository
+	Shipments   shipmentports.ShipmentRepository
+	Contents    documentcontentports.DocumentContentRepository
+	Extractions documentaiextractionports.DocumentAIExtractionRepository
+	Retention   tenantports.DataRetentionRepository
+	Shadows     extractionshadowports.ExtractionShadowScorer  `optional:"true"`
+	Rollout     extractionrolloutports.ExtractionRolloutGuard `optional:"true"`
 }
 
 type Service struct {
@@ -71,12 +76,12 @@ type Service struct {
 	contents    contentReader
 	extractions extractionReader
 	retention   retentionReader
-	shadows     services.ExtractionShadowScorer
-	rollout     services.ExtractionRolloutGuard
+	shadows     extractionshadowports.ExtractionShadowScorer
+	rollout     extractionrolloutports.ExtractionRolloutGuard
 	now         func() int64
 }
 
-func New(p Params) services.AICorrectionService {
+func New(p Params) aicorrectionports.AICorrectionService {
 	return &Service{
 		l:           p.Logger.Named("service.aicorrection"),
 		repo:        p.Repo,
@@ -92,7 +97,7 @@ func New(p Params) services.AICorrectionService {
 
 func (s *Service) CaptureShipmentDraft(
 	ctx context.Context,
-	req *services.CaptureShipmentDraftCorrectionRequest,
+	req *aicorrectionports.CaptureShipmentDraftCorrectionRequest,
 ) (*aicorrection.Correction, error) {
 	if req == nil || req.Draft == nil {
 		return nil, errortypes.NewValidationError("draft", errortypes.ErrRequired, "Draft is required")
@@ -114,10 +119,10 @@ func (s *Service) CaptureShipmentDraft(
 		return nil, aicorrection.ErrNothingPredicted
 	}
 
-	shp, err := s.shipments.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	shp, err := s.shipments.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:              req.ShipmentID,
 		TenantInfo:      req.TenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{ExpandShipmentDetails: true},
+		ShipmentOptions: shipmentports.ShipmentOptions{ExpandShipmentDetails: true},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("load confirmed shipment: %w", err)
@@ -211,7 +216,7 @@ func (s *Service) attachExtractionModel(
 
 	extraction, err := s.extractions.GetByDocumentExtractedAt(
 		ctx,
-		repositories.GetDocumentAIExtractionRequest{
+		documentaiextractionports.GetDocumentAIExtractionRequest{
 			DocumentID:  documentID,
 			ExtractedAt: *content.LastExtractedAt,
 			TenantInfo:  tenantInfo,

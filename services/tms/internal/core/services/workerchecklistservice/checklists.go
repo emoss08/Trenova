@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,7 +27,7 @@ func (s *Service) ListForWorker(
 	workerID pulid.ID,
 	includeClosed bool,
 ) ([]*worker.WorkerChecklist, error) {
-	checklists, err := s.repo.ListForWorker(ctx, &repositories.ListWorkerChecklistsRequest{
+	checklists, err := s.repo.ListForWorker(ctx, &workerports.ListWorkerChecklistsRequest{
 		TenantInfo:    tenantInfo,
 		WorkerID:      workerID,
 		IncludeClosed: includeClosed,
@@ -59,7 +60,7 @@ func (s *Service) Get(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*worker.WorkerChecklist, error) {
-	checklist, err := s.repo.GetByID(ctx, &repositories.GetWorkerChecklistByIDRequest{
+	checklist, err := s.repo.GetByID(ctx, &workerports.GetWorkerChecklistByIDRequest{
 		ID:           id,
 		TenantInfo:   tenantInfo,
 		IncludeItems: true,
@@ -148,7 +149,7 @@ func (s *Service) SpawnForEvent(
 	tenantInfo := pagination.TenantInfo{OrgID: wrk.OrganizationID, BuID: wrk.BusinessUnitID}
 	template, err := s.repo.GetDefaultTemplate(
 		ctx,
-		&repositories.GetDefaultChecklistTemplateRequest{
+		&workerports.GetDefaultChecklistTemplateRequest{
 			TenantInfo: tenantInfo,
 			Trigger:    trigger,
 		},
@@ -187,7 +188,7 @@ func (s *Service) CloseForEvent(
 		return 0, nil
 	}
 	tenantInfo := pagination.TenantInfo{OrgID: wrk.OrganizationID, BuID: wrk.BusinessUnitID}
-	open, err := s.repo.ListForWorker(ctx, &repositories.ListWorkerChecklistsRequest{
+	open, err := s.repo.ListForWorker(ctx, &workerports.ListWorkerChecklistsRequest{
 		TenantInfo:   tenantInfo,
 		WorkerID:     wrk.ID,
 		IncludeItems: true,
@@ -461,7 +462,7 @@ func (s *Service) closeIfComplete(
 	saved.Items = items
 
 	if saved.Kind == worker.ChecklistKindOnboarding {
-		if err = s.workerRepo.UpdateProfileQualification(ctx, &repositories.UpdateProfileQualificationRequest{
+		if err = s.workerRepo.UpdateProfileQualification(ctx, &workerports.UpdateProfileQualificationRequest{
 			TenantInfo: tenantInfo,
 			WorkerID:   saved.WorkerID,
 			Qualified:  true,
@@ -489,7 +490,7 @@ func (s *Service) collectEvidence(
 		DocumentsByType:   map[pulid.ID]*document.Document{},
 	}
 
-	wrk, err := s.workerRepo.GetByID(ctx, repositories.GetWorkerByIDRequest{
+	wrk, err := s.workerRepo.GetByID(ctx, workerports.GetWorkerByIDRequest{
 		ID:         workerID,
 		TenantInfo: tenantInfo,
 	})
@@ -500,7 +501,7 @@ func (s *Service) collectEvidence(
 
 	credentials, err := s.credentialRepo.ListForWorker(
 		ctx,
-		&repositories.ListWorkerCredentialsRequest{
+		&workerports.ListWorkerCredentialsRequest{
 			TenantInfo:  tenantInfo,
 			WorkerID:    workerID,
 			IncludeType: true,
@@ -517,7 +518,7 @@ func (s *Service) collectEvidence(
 
 	documents, err := s.documentRepo.GetByResourceID(
 		ctx,
-		&repositories.GetDocumentsByResourceRequest{
+		&documentports.GetDocumentsByResourceRequest{
 			TenantInfo:   tenantInfo,
 			ResourceID:   workerID.String(),
 			ResourceType: workerResourceType,

@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentextension"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 
 const (
@@ -25,10 +26,10 @@ const (
 )
 
 type webSearchTool struct {
-	research serviceports.WebResearcher
+	research agentextensionports.WebResearcher
 }
 
-func newWebSearchTool(research serviceports.WebResearcher) serviceports.AgentQueryTool {
+func newWebSearchTool(research agentextensionports.WebResearcher) agentports.AgentQueryTool {
 	return &webSearchTool{research: research}
 }
 
@@ -73,7 +74,7 @@ func (t *webSearchTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *webSearchTool) Policy() serviceports.ToolPolicy {
+func (t *webSearchTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceWebResearch,
 		reads:    agent.ExternalReadAlways,
@@ -111,7 +112,7 @@ type webSearchAnswer struct {
 
 func (t *webSearchTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -122,7 +123,7 @@ func (t *webSearchTool) Query(
 		return nil, err
 	}
 
-	outcome, err := t.research.SearchWeb(ctx, params.Actor.TenantInfo(), serviceports.WebSearchQuery{
+	outcome, err := t.research.SearchWeb(ctx, params.Actor.TenantInfo(), agentextensionports.WebSearchQuery{
 		Query:               query,
 		PublishedWithinDays: max(optionalInt(params.Params, "publishedWithinDays", 0), 0),
 		ResultLimit:         max(optionalInt(params.Params, "limit", 0), 0),
@@ -160,10 +161,10 @@ func (t *webSearchTool) Query(
 }
 
 type webReadTool struct {
-	research serviceports.WebResearcher
+	research agentextensionports.WebResearcher
 }
 
-func newWebReadTool(research serviceports.WebResearcher) serviceports.AgentQueryTool {
+func newWebReadTool(research agentextensionports.WebResearcher) agentports.AgentQueryTool {
 	return &webReadTool{research: research}
 }
 
@@ -201,7 +202,7 @@ func (t *webReadTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *webReadTool) Policy() serviceports.ToolPolicy {
+func (t *webReadTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceWebResearch,
 		reads:    agent.ExternalReadAlways,
@@ -234,7 +235,7 @@ type webPageAnswer struct {
 
 func (t *webReadTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -249,7 +250,7 @@ func (t *webReadTool) Query(
 		return nil, err
 	}
 
-	page, err := t.research.ReadWebPage(ctx, params.Actor.TenantInfo(), serviceports.WebPageQuery{
+	page, err := t.research.ReadWebPage(ctx, params.Actor.TenantInfo(), agentextensionports.WebPageQuery{
 		URL:  target,
 		Ref:  ref,
 		Part: max(optionalInt(params.Params, "part", 1), 1),

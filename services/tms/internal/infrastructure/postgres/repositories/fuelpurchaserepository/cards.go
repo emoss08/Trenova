@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -21,7 +21,7 @@ import (
 
 func (r *repository) applyCardFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListFuelCardsRequest,
+	req *fuelpurchaseports.ListFuelCardsRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.FuelCardColumns
 
@@ -50,7 +50,7 @@ func (r *repository) applyCardFilters(
 
 func (r *repository) ListCards(
 	ctx context.Context,
-	req *repositories.ListFuelCardsRequest,
+	req *fuelpurchaseports.ListFuelCardsRequest,
 ) (*pagination.CursorListResult[*fuelpurchase.FuelCard], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*fuelpurchase.FuelCard], error) {
 		dba := r.db.DBForContext(ctx)
@@ -116,7 +116,7 @@ func (r *repository) ListCards(
 
 func (r *repository) GetCardByID(
 	ctx context.Context,
-	req *repositories.GetFuelCardByIDRequest,
+	req *fuelpurchaseports.GetFuelCardByIDRequest,
 ) (*fuelpurchase.FuelCard, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*fuelpurchase.FuelCard, error) {
 		entity := new(fuelpurchase.FuelCard)
@@ -143,7 +143,7 @@ func (r *repository) GetCardByID(
 
 func (r *repository) GetCardsByIDs(
 	ctx context.Context,
-	req *repositories.GetFuelCardsByIDsRequest,
+	req *fuelpurchaseports.GetFuelCardsByIDsRequest,
 ) ([]*fuelpurchase.FuelCard, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*fuelpurchase.FuelCard, error) {
 		entities := make([]*fuelpurchase.FuelCard, 0, len(req.IDs))
@@ -174,7 +174,7 @@ func (r *repository) GetCardsByIDs(
 // resolves to the live card.
 func (r *repository) FindCardsByLastFour(
 	ctx context.Context,
-	req *repositories.FindFuelCardsByLastFourRequest,
+	req *fuelpurchaseports.FindFuelCardsByLastFourRequest,
 ) (map[string]*fuelpurchase.FuelCard, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[string]*fuelpurchase.FuelCard, error) {
 		cols := buncolgen.FuelCardColumns
@@ -234,7 +234,7 @@ func (r *repository) FindCardsByLastFour(
 
 func (r *repository) FindCardByLastFour(
 	ctx context.Context,
-	req *repositories.FindFuelCardByLastFourRequest,
+	req *fuelpurchaseports.FindFuelCardByLastFourRequest,
 ) (*fuelpurchase.FuelCard, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*fuelpurchase.FuelCard, error) {
 		cols := buncolgen.FuelCardColumns
@@ -273,7 +273,7 @@ func (r *repository) FindCardByLastFour(
 
 func (r *repository) ListActiveCards(
 	ctx context.Context,
-	req *repositories.ListActiveFuelCardsRequest,
+	req *fuelpurchaseports.ListActiveFuelCardsRequest,
 ) ([]*fuelpurchase.FuelCard, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*fuelpurchase.FuelCard, error) {
 		cols := buncolgen.FuelCardColumns

@@ -85,11 +85,18 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmenttracking"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 )
 
@@ -274,8 +281,8 @@ type AIRetrievalFailedEntryConnection struct {
 }
 
 type AIRetrievalFailedEntryEdge struct {
-	Node   *services.AIRetrievalFailedEntry `json:"node"`
-	Cursor string                           `json:"cursor"`
+	Node   *agentports.AIRetrievalFailedEntry `json:"node"`
+	Cursor string                             `json:"cursor"`
 }
 
 // Changes only the fields given. Turning paused off also lifts a budget pause;
@@ -290,20 +297,20 @@ type AIRetrievalSettingsPatchInput struct {
 
 // A change to how AI is set up that the last 30 days of runs argue for.
 type AITuneUp struct {
-	ID    string                  `json:"id"`
-	Kind  aituneup.Kind           `json:"kind"`
-	Agent *services.AITuneUpAgent `json:"agent,omitempty"`
+	ID    string                       `json:"id"`
+	Kind  aituneup.Kind                `json:"kind"`
+	Agent *aituneupports.AITuneUpAgent `json:"agent,omitempty"`
 	// The provider the change acts on: the one moved ahead, or the one given the task.
-	Provider *services.AITuneUpProvider `json:"provider,omitempty"`
+	Provider *aituneupports.AITuneUpProvider `json:"provider,omitempty"`
 	// The provider moved behind.
-	OtherProvider  *services.AITuneUpProvider `json:"otherProvider,omitempty"`
-	ToolName       *string                    `json:"toolName,omitempty"`
-	Task           *aiprovider.Task           `json:"task,omitempty"`
-	Evidence       *aituneup.Evidence         `json:"evidence"`
-	Status         aituneup.Status            `json:"status"`
-	DismissedUntil *int                       `json:"dismissedUntil,omitempty"`
-	ComputedAt     int                        `json:"computedAt"`
-	Version        int                        `json:"version"`
+	OtherProvider  *aituneupports.AITuneUpProvider `json:"otherProvider,omitempty"`
+	ToolName       *string                         `json:"toolName,omitempty"`
+	Task           *aiprovider.Task                `json:"task,omitempty"`
+	Evidence       *aituneup.Evidence              `json:"evidence"`
+	Status         aituneup.Status                 `json:"status"`
+	DismissedUntil *int                            `json:"dismissedUntil,omitempty"`
+	ComputedAt     int                             `json:"computedAt"`
+	Version        int                             `json:"version"`
 }
 
 // The tune-ups offered now, worked out nightly.
@@ -324,8 +331,8 @@ type AIUsageFeatureConnection struct {
 }
 
 type AIUsageFeatureEdge struct {
-	Node   *services.AIUsageFeatureSlice `json:"node"`
-	Cursor string                        `json:"cursor"`
+	Node   *aiusageports.AIUsageFeatureSlice `json:"node"`
+	Cursor string                            `json:"cursor"`
 }
 
 type AccessorialChargeConnection struct {
@@ -525,8 +532,8 @@ type AgentAudienceSuggestion struct {
 }
 
 type AgentCapabilityToolInput struct {
-	Key  string                       `json:"key"`
-	Mode services.AgentCapabilityMode `json:"mode"`
+	Key  string                         `json:"key"`
+	Mode agentports.AgentCapabilityMode `json:"mode"`
 }
 
 type AgentControlInput struct {
@@ -747,8 +754,8 @@ type AgentQualityAgentConnection struct {
 }
 
 type AgentQualityAgentEdge struct {
-	Node   *services.AgentQualityAgent `json:"node"`
-	Cursor string                      `json:"cursor"`
+	Node   *agentqualityports.AgentQualityAgent `json:"node"`
+	Cursor string                               `json:"cursor"`
 }
 
 type AgentQualityAgentsInput struct {
@@ -762,8 +769,8 @@ type AgentQualityAgentsInput struct {
 type AgentReach struct {
 	AccessMode agentdefinition.AccessMode `json:"accessMode"`
 	// The roles granted the agent. Empty for a reader who may not read roles.
-	Roles    []*permission.Role            `json:"roles"`
-	Warnings []*services.AgentReachWarning `json:"warnings"`
+	Roles    []*permission.Role              `json:"roles"`
+	Warnings []*agentports.AgentReachWarning `json:"warnings"`
 }
 
 type AgentReflectionConnection struct {
@@ -975,7 +982,7 @@ type AgentToolRuleInput struct {
 type AgentToolRuleSaved struct {
 	Tool *AgentToolPolicy `json:"tool"`
 	// The agents whose answer moved.
-	Affected []*services.AgentToolRuleImpact `json:"affected"`
+	Affected []*agentports.AgentToolRuleImpact `json:"affected"`
 }
 
 type AgentToolSafetyConnection struct {
@@ -986,8 +993,8 @@ type AgentToolSafetyConnection struct {
 }
 
 type AgentToolSafetyEdge struct {
-	Node   *services.AgentToolSafety `json:"node"`
-	Cursor string                    `json:"cursor"`
+	Node   *agentports.AgentToolSafety `json:"node"`
+	Cursor string                      `json:"cursor"`
 }
 
 // What one tool has earned on this agent.
@@ -1018,8 +1025,8 @@ type AgentWorstRatedAnswerConnection struct {
 }
 
 type AgentWorstRatedAnswerEdge struct {
-	Node   *services.AgentWorstRatedAnswer `json:"node"`
-	Cursor string                          `json:"cursor"`
+	Node   *agentqualityports.AgentWorstRatedAnswer `json:"node"`
+	Cursor string                                   `json:"cursor"`
 }
 
 type AgentWorstRatedAnswersInput struct {
@@ -1440,9 +1447,9 @@ type BulkUpdateTrailerStatusInput struct {
 }
 
 type BulkWorkerPTOActionInput struct {
-	PTOIds []string                   `json:"ptoIds"`
-	Action services.PTOBulkActionType `json:"action"`
-	Reason *string                    `json:"reason,omitempty"`
+	PTOIds []string                      `json:"ptoIds"`
+	Action workerports.PTOBulkActionType `json:"action"`
+	Reason *string                       `json:"reason,omitempty"`
 }
 
 type CancelFuelCardInput struct {
@@ -1556,13 +1563,13 @@ type CaptureCoverSheet struct {
 	ID             string                           `json:"id"`
 	TargetType     string                           `json:"targetType"`
 	TargetID       *string                          `json:"targetId,omitempty"`
-	Target         *repositories.CaptureRecordLabel `json:"target,omitempty"`
+	Target         *captureports.CaptureRecordLabel `json:"target,omitempty"`
 	DocumentTypeID *string                          `json:"documentTypeId,omitempty"`
 	Payload        string                           `json:"payload"`
 	// The code to print, drawn from the payload.
-	QRCode    *services.CaptureQRCode `json:"qrCode"`
-	ExpiresAt int                     `json:"expiresAt"`
-	CreatedAt int                     `json:"createdAt"`
+	QRCode    *captureports.CaptureQRCode `json:"qrCode"`
+	ExpiresAt int                         `json:"expiresAt"`
+	CreatedAt int                         `json:"createdAt"`
 }
 
 type CaptureCoverSheetInput struct {
@@ -1908,8 +1915,8 @@ type CategoryCostLine struct {
 }
 
 type ChangeAccountingBackfillInput struct {
-	ID     string                            `json:"id"`
-	Action services.AccountingBackfillAction `json:"action"`
+	ID     string                                       `json:"id"`
+	Action accountingsyncports.AccountingBackfillAction `json:"action"`
 }
 
 type ChargeAllocationInput struct {
@@ -4881,8 +4888,8 @@ type InvoiceAdjustmentApprovalQueueConnection struct {
 }
 
 type InvoiceAdjustmentApprovalQueueEdge struct {
-	Node   *repositories.InvoiceAdjustmentApprovalQueueItem `json:"node"`
-	Cursor string                                           `json:"cursor"`
+	Node   *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem `json:"node"`
+	Cursor string                                                     `json:"cursor"`
 }
 
 // Pages the approval queue newest submission first. query matches the adjustment
@@ -5887,9 +5894,9 @@ type RecordLeaveDayInput struct {
 }
 
 type RecordMyStopActionInput struct {
-	MoveID string                        `json:"moveId"`
-	StopID string                        `json:"stopId"`
-	Action repositories.StopActualAction `json:"action"`
+	MoveID string                         `json:"moveId"`
+	StopID string                         `json:"stopId"`
+	Action shipmentports.StopActualAction `json:"action"`
 }
 
 type RecordSafetyViolationInput struct {

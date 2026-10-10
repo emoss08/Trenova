@@ -9,8 +9,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,23 +30,23 @@ const (
 type Params struct {
 	fx.In
 
-	Email         services.EmailService
-	Templates     services.DocumentTemplateResolver
-	Organizations repositories.OrganizationRepository
-	Inliner       services.AssetInliner
-	Customers     repositories.CustomerRepository
-	Shipments     repositories.ShipmentRepository
-	Comments      services.ShipmentCommentService
+	Email         emailports.EmailService
+	Templates     documenttemplateports.DocumentTemplateResolver
+	Organizations tenantports.OrganizationRepository
+	Inliner       documenttemplateports.AssetInliner
+	Customers     customerports.CustomerRepository
+	Shipments     shipmentports.ShipmentRepository
+	Comments      shipmentports.ShipmentCommentService
 }
 
 type Service struct {
-	email         services.EmailService
-	templates     services.DocumentTemplateResolver
-	organizations repositories.OrganizationRepository
-	inliner       services.AssetInliner
-	customers     repositories.CustomerRepository
-	shipments     repositories.ShipmentRepository
-	comments      services.ShipmentCommentService
+	email         emailports.EmailService
+	templates     documenttemplateports.DocumentTemplateResolver
+	organizations tenantports.OrganizationRepository
+	inliner       documenttemplateports.AssetInliner
+	customers     customerports.CustomerRepository
+	shipments     shipmentports.ShipmentRepository
+	comments      shipmentports.ShipmentCommentService
 	now           func() int64
 }
 
@@ -93,16 +97,16 @@ func (r *NotifyDelayRequest) validate() error {
 func (s *Service) NotifyDelay(
 	ctx context.Context,
 	req *NotifyDelayRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) error {
 	if err := req.validate(); err != nil {
 		return err
 	}
 
-	sp, err := s.shipments.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	sp, err := s.shipments.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:              req.ShipmentID,
 		TenantInfo:      req.TenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{IncludeCustomer: true},
+		ShipmentOptions: shipmentports.ShipmentOptions{IncludeCustomer: true},
 	})
 	if err != nil {
 		return err
@@ -130,7 +134,7 @@ func (s *Service) NotifyDelay(
 	}
 	Brand(ctx, s.organizations, s.inliner, req.TenantInfo, &data)
 
-	rendered, err := s.templates.RenderMessage(ctx, &services.RenderMessageRequest{
+	rendered, err := s.templates.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
 		TenantInfo: req.TenantInfo,
 		Kind:       documenttemplate.KindAgentCustomerUpdateEmail,
 		CustomerID: pulid.PtrOrNil(sp.CustomerID),
@@ -140,7 +144,7 @@ func (s *Service) NotifyDelay(
 		return err
 	}
 
-	if _, err = s.email.Send(ctx, &services.SendEmailRequest{
+	if _, err = s.email.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo:     req.TenantInfo,
 		Purpose:        email.PurposeOperations,
 		To:             recipients,

@@ -1,6 +1,7 @@
 package agentaccessservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"context"
 	"errors"
 	"testing"
@@ -8,9 +9,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -23,13 +26,13 @@ import (
 )
 
 type txDB struct {
-	ports.DBConnection
+	kernelports.DBConnection
 	transactions int
 }
 
 func (d *txDB) WithTx(
 	ctx context.Context,
-	_ ports.TxOptions,
+	_ kernelports.TxOptions,
 	fn func(context.Context, bun.Tx) error,
 ) error {
 	d.transactions++
@@ -37,14 +40,14 @@ func (d *txDB) WithTx(
 }
 
 type fakeDefinitions struct {
-	repositories.AgentDefinitionRepository
+	agentdefinitionports.AgentDefinitionRepository
 	byID     map[pulid.ID]*agentdefinition.Definition
-	modeSets []repositories.SetAgentDefinitionAccessModeRequest
+	modeSets []agentdefinitionports.SetAgentDefinitionAccessModeRequest
 }
 
 func (f *fakeDefinitions) GetByID(
 	_ context.Context,
-	req repositories.GetAgentDefinitionByIDRequest,
+	req agentdefinitionports.GetAgentDefinitionByIDRequest,
 ) (*agentdefinition.Definition, error) {
 	definition, ok := f.byID[req.ID]
 	if !ok {
@@ -59,7 +62,7 @@ func (f *fakeDefinitions) GetByID(
 
 func (f *fakeDefinitions) ListByIDs(
 	_ context.Context,
-	req repositories.ListAgentDefinitionsByIDsRequest,
+	req agentdefinitionports.ListAgentDefinitionsByIDsRequest,
 ) ([]*agentdefinition.Definition, error) {
 	out := make([]*agentdefinition.Definition, 0, len(req.IDs))
 	for _, id := range req.IDs {
@@ -73,24 +76,24 @@ func (f *fakeDefinitions) ListByIDs(
 
 func (f *fakeDefinitions) SetAccessMode(
 	_ context.Context,
-	req repositories.SetAgentDefinitionAccessModeRequest,
+	req agentdefinitionports.SetAgentDefinitionAccessModeRequest,
 ) error {
 	f.modeSets = append(f.modeSets, req)
 	return nil
 }
 
 type fakeGrants struct {
-	repositories.RoleAgentGrantRepository
+	permissionports.RoleAgentGrantRepository
 	roles        map[pulid.ID]*permission.Role
 	agentRoles   map[pulid.ID][]pulid.ID
-	agentReplace []repositories.ReplaceAgentGrantsRequest
-	roleReplace  []repositories.ReplaceRoleGrantsRequest
+	agentReplace []permissionports.ReplaceAgentGrantsRequest
+	roleReplace  []permissionports.ReplaceRoleGrantsRequest
 	roleAgents   map[pulid.ID][]pulid.ID
 }
 
 func (f *fakeGrants) ListGrantableRoles(
 	_ context.Context,
-	req repositories.ListGrantableRolesRequest,
+	req permissionports.ListGrantableRolesRequest,
 ) ([]*permission.Role, error) {
 	if len(req.RoleIDs) == 0 {
 		out := make([]*permission.Role, 0, len(f.roles))
@@ -113,8 +116,8 @@ func (f *fakeGrants) ListGrantableRoles(
 
 func (f *fakeGrants) ReplaceForAgent(
 	_ context.Context,
-	req repositories.ReplaceAgentGrantsRequest,
-) (repositories.GrantChange, error) {
+	req permissionports.ReplaceAgentGrantsRequest,
+) (permissionports.GrantChange, error) {
 	f.agentReplace = append(f.agentReplace, req)
 	previous := f.agentRoles[req.AgentID]
 	f.agentRoles[req.AgentID] = req.RoleIDs
@@ -124,8 +127,8 @@ func (f *fakeGrants) ReplaceForAgent(
 
 func (f *fakeGrants) ReplaceForRole(
 	_ context.Context,
-	req repositories.ReplaceRoleGrantsRequest,
-) (repositories.GrantChange, error) {
+	req permissionports.ReplaceRoleGrantsRequest,
+) (permissionports.GrantChange, error) {
 	f.roleReplace = append(f.roleReplace, req)
 	previous := f.roleAgents[req.RoleID]
 	f.roleAgents[req.RoleID] = req.AgentIDs
@@ -133,8 +136,8 @@ func (f *fakeGrants) ReplaceForRole(
 	return diff(previous, req.AgentIDs), nil
 }
 
-func diff(previous, wanted []pulid.ID) repositories.GrantChange {
-	change := repositories.GrantChange{Previous: previous}
+func diff(previous, wanted []pulid.ID) permissionports.GrantChange {
+	change := permissionports.GrantChange{Previous: previous}
 	for _, id := range wanted {
 		if !contains(previous, id) {
 			change.Added = append(change.Added, id)
@@ -160,27 +163,27 @@ func contains(ids []pulid.ID, id pulid.ID) bool {
 }
 
 type checkingPermissions struct {
-	services.PermissionEngine
+	permissionports.PermissionEngine
 	denied map[string]bool
 }
 
 func (p *checkingPermissions) Check(
 	_ context.Context,
-	req *services.PermissionCheckRequest,
-) (*services.PermissionCheckResult, error) {
-	return &services.PermissionCheckResult{
+	req *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
+	return &permissionports.PermissionCheckResult{
 		Allowed: !p.denied[req.Resource+":"+string(req.Operation)],
 	}, nil
 }
 
 type recordingAudit struct {
-	services.AuditService
-	logged []*services.LogActionParams
+	auditports.AuditService
+	logged []*auditports.LogActionParams
 }
 
 func (a *recordingAudit) LogAction(
-	params *services.LogActionParams,
-	_ ...services.LogOption,
+	params *auditports.LogActionParams,
+	_ ...auditports.LogOption,
 ) error {
 	a.logged = append(a.logged, params)
 	return nil
@@ -191,10 +194,10 @@ type fixture struct {
 	db          *txDB
 	definitions *fakeDefinitions
 	grants      *fakeGrants
-	cache       *mocks.MockPermissionCacheRepository
+	cache       *permissionportsmock.MockPermissionCacheRepository
 	permissions *checkingPermissions
 	audit       *recordingAudit
-	actor       *services.RequestActor
+	actor       *permissionports.RequestActor
 	tenant      pagination.TenantInfo
 	agent       *agentdefinition.Definition
 	system      *agentdefinition.Definition
@@ -243,11 +246,11 @@ func newFixture(t *testing.T) *fixture {
 			agentRoles: map[pulid.ID][]pulid.ID{},
 			roleAgents: map[pulid.ID][]pulid.ID{},
 		},
-		cache:       mocks.NewMockPermissionCacheRepository(t),
+		cache:       permissionportsmock.NewMockPermissionCacheRepository(t),
 		permissions: &checkingPermissions{denied: map[string]bool{}},
 		audit:       &recordingAudit{},
-		actor: &services.RequestActor{
-			PrincipalType:  services.PrincipalTypeUser,
+		actor: &permissionports.RequestActor{
+			PrincipalType:  permissionports.PrincipalTypeUser,
 			PrincipalID:    pulid.MustNew("usr_"),
 			UserID:         pulid.MustNew("usr_"),
 			OrganizationID: tenant.OrgID,
@@ -264,7 +267,7 @@ func newFixture(t *testing.T) *fixture {
 		db:          f.db,
 		definitions: f.definitions,
 		grants:      f.grants,
-		roles:       mocks.NewMockRoleRepository(t),
+		roles:       permissionportsmock.NewMockRoleRepository(t),
 		cache:       f.cache,
 		permissions: f.permissions,
 		audit:       f.audit,
@@ -287,7 +290,7 @@ func TestSetAgentAccess_RestrictsGrantsAndInvalidatesTheChangedRoles(t *testing.
 	f.cache.On("InvalidateByRole", mock.Anything, f.roleA.ID, mock.Anything).Return(nil).Once()
 	f.cache.On("InvalidateByRole", mock.Anything, f.roleB.ID, mock.Anything).Return(nil).Once()
 
-	access, err := f.service.SetAgentAccess(t.Context(), &services.SetAgentAccessRequest{
+	access, err := f.service.SetAgentAccess(t.Context(), &agentdefinitionports.SetAgentAccessRequest{
 		TenantInfo: f.tenant,
 		AgentID:    f.agent.ID,
 		Mode:       agentdefinition.AccessRoles,
@@ -317,7 +320,7 @@ func TestSetAgentAccess_RestrictsGrantsAndInvalidatesTheChangedRoles(t *testing.
 func TestSetAgentAccess_RefusesToRestrictASystemAgent(t *testing.T) {
 	t.Parallel()
 
-	for name, req := range map[string]*services.SetAgentAccessRequest{
+	for name, req := range map[string]*agentdefinitionports.SetAgentAccessRequest{
 		"restricted to roles": {Mode: agentdefinition.AccessRoles},
 		"granted a role":      {Mode: agentdefinition.AccessEveryone},
 	} {
@@ -352,7 +355,7 @@ func TestSetAgentAccess_NeedsAgentAndRoleUpdate(t *testing.T) {
 			f := newFixture(t)
 			f.permissions.denied[denied] = true
 
-			_, err := f.service.SetAgentAccess(t.Context(), &services.SetAgentAccessRequest{
+			_, err := f.service.SetAgentAccess(t.Context(), &agentdefinitionports.SetAgentAccessRequest{
 				TenantInfo: f.tenant,
 				AgentID:    f.agent.ID,
 				Mode:       agentdefinition.AccessRoles,
@@ -369,7 +372,7 @@ func TestSetAgentAccess_RefusesARoleOfAnotherTenant(t *testing.T) {
 
 	f := newFixture(t)
 
-	_, err := f.service.SetAgentAccess(t.Context(), &services.SetAgentAccessRequest{
+	_, err := f.service.SetAgentAccess(t.Context(), &agentdefinitionports.SetAgentAccessRequest{
 		TenantInfo: f.tenant,
 		AgentID:    f.agent.ID,
 		Mode:       agentdefinition.AccessRoles,
@@ -386,7 +389,7 @@ func TestSetAgentAccess_RefusesAnotherTenantsRequest(t *testing.T) {
 
 	f := newFixture(t)
 
-	_, err := f.service.SetAgentAccess(t.Context(), &services.SetAgentAccessRequest{
+	_, err := f.service.SetAgentAccess(t.Context(), &agentdefinitionports.SetAgentAccessRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: f.tenant.BuID},
 		AgentID:    f.agent.ID,
 		Mode:       agentdefinition.AccessRoles,
@@ -405,7 +408,7 @@ func TestSetAgentAccess_RemovingTheLastRoleKeepsItRestricted(t *testing.T) {
 	f.grants.agentRoles[f.agent.ID] = []pulid.ID{f.roleA.ID}
 	f.cache.On("InvalidateByRole", mock.Anything, f.roleA.ID, mock.Anything).Return(nil).Once()
 
-	access, err := f.service.SetAgentAccess(t.Context(), &services.SetAgentAccessRequest{
+	access, err := f.service.SetAgentAccess(t.Context(), &agentdefinitionports.SetAgentAccessRequest{
 		TenantInfo: f.tenant,
 		AgentID:    f.agent.ID,
 		Mode:       agentdefinition.AccessRoles,
@@ -424,7 +427,7 @@ func TestSetRoleAgents_ReplacesAndInvalidatesTheRole(t *testing.T) {
 	f := newFixture(t)
 	f.cache.On("InvalidateByRole", mock.Anything, f.roleA.ID, mock.Anything).Return(nil).Once()
 
-	result, err := f.service.SetRoleAgents(t.Context(), &services.SetRoleAgentsRequest{
+	result, err := f.service.SetRoleAgents(t.Context(), &agentdefinitionports.SetRoleAgentsRequest{
 		TenantInfo: f.tenant,
 		RoleID:     f.roleA.ID,
 		AgentIDs:   []pulid.ID{f.agent.ID},
@@ -442,7 +445,7 @@ func TestSetRoleAgents_RefusesASystemAgentAndDuplicates(t *testing.T) {
 
 	f := newFixture(t)
 
-	_, err := f.service.SetRoleAgents(t.Context(), &services.SetRoleAgentsRequest{
+	_, err := f.service.SetRoleAgents(t.Context(), &agentdefinitionports.SetRoleAgentsRequest{
 		TenantInfo: f.tenant,
 		RoleID:     f.roleA.ID,
 		AgentIDs:   []pulid.ID{f.system.ID},
@@ -450,7 +453,7 @@ func TestSetRoleAgents_RefusesASystemAgentAndDuplicates(t *testing.T) {
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
 
-	_, err = f.service.SetRoleAgents(t.Context(), &services.SetRoleAgentsRequest{
+	_, err = f.service.SetRoleAgents(t.Context(), &agentdefinitionports.SetRoleAgentsRequest{
 		TenantInfo: f.tenant,
 		RoleID:     f.roleA.ID,
 		AgentIDs:   []pulid.ID{f.agent.ID, f.agent.ID},
@@ -465,7 +468,7 @@ func TestSetRoleAgents_NeedsRoleUpdate(t *testing.T) {
 	f := newFixture(t)
 	f.permissions.denied["role:update"] = true
 
-	_, err := f.service.SetRoleAgents(t.Context(), &services.SetRoleAgentsRequest{
+	_, err := f.service.SetRoleAgents(t.Context(), &agentdefinitionports.SetRoleAgentsRequest{
 		TenantInfo: f.tenant,
 		RoleID:     f.roleA.ID,
 	}, f.actor)
@@ -478,7 +481,7 @@ func TestSetRoleAgents_UnknownRoleIsNotFound(t *testing.T) {
 
 	f := newFixture(t)
 
-	_, err := f.service.SetRoleAgents(t.Context(), &services.SetRoleAgentsRequest{
+	_, err := f.service.SetRoleAgents(t.Context(), &agentdefinitionports.SetRoleAgentsRequest{
 		TenantInfo: f.tenant,
 		RoleID:     pulid.MustNew("rol_"),
 	}, f.actor)
@@ -498,7 +501,7 @@ func TestInvalidate_KeepsGoingPastAFailure(t *testing.T) {
 }
 
 type summarizingRuntime struct {
-	services.AgentRuntime
+	agentports.AgentRuntime
 	names []string
 }
 
@@ -513,9 +516,9 @@ func (r summarizingRuntime) ToolSummaries(
 	return out
 }
 
-type policyTable map[string]services.ToolPolicy
+type policyTable map[string]agentports.ToolPolicy
 
-func (p policyTable) Get(name string) (services.ToolPolicy, bool) {
+func (p policyTable) Get(name string) (agentports.ToolPolicy, bool) {
 	policy, ok := p[name]
 	return policy, ok
 }
@@ -561,7 +564,7 @@ func TestHeldTools_ReadsEachToolsPolicy(t *testing.T) {
 		},
 		{Name: "remember", Egress: []agent.EgressClass{agent.EgressPersonal}},
 	}, held)
-	assert.Equal(t, []services.RequiredGrant{
+	assert.Equal(t, []permissionports.RequiredGrant{
 		{Tool: "get_shipment", Resource: "shipment", Operation: permission.OpRead},
 		{Tool: "email_customer", Resource: "shipment", Operation: permission.OpUpdate},
 	}, requiredGrants(held))

@@ -8,7 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -17,22 +19,22 @@ import (
 
 type fakeAdjuster struct {
 	guard     *writeGuard
-	figures   *serviceports.InvoiceAdjustmentPreview
-	draft     *serviceports.InvoiceAdjustmentDraftPreview
+	figures   *invoiceadjustmentports.InvoiceAdjustmentPreview
+	draft     *invoiceadjustmentports.InvoiceAdjustmentDraftPreview
 	detail    *invoiceadjustment.InvoiceAdjustment
-	decision  *serviceports.InvoiceAdjustmentDecisionPreview
-	saved     *serviceports.SaveInvoiceAdjustmentDraftRequest
-	submitted []*serviceports.InvoiceAdjustmentRequest
-	bulk      *serviceports.InvoiceAdjustmentBulkRequest
-	drafted   *serviceports.GetInvoiceAdjustmentDetailRequest
-	approved  *serviceports.ApproveInvoiceAdjustmentRequest
-	rejected  *serviceports.RejectInvoiceAdjustmentRequest
+	decision  *invoiceadjustmentports.InvoiceAdjustmentDecisionPreview
+	saved     *invoiceadjustmentports.SaveInvoiceAdjustmentDraftRequest
+	submitted []*invoiceadjustmentports.InvoiceAdjustmentRequest
+	bulk      *invoiceadjustmentports.InvoiceAdjustmentBulkRequest
+	drafted   *invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest
+	approved  *invoiceadjustmentports.ApproveInvoiceAdjustmentRequest
+	rejected  *invoiceadjustmentports.RejectInvoiceAdjustmentRequest
 }
 
 func (f *fakeAdjuster) SaveDraft(
 	_ context.Context,
-	req *serviceports.SaveInvoiceAdjustmentDraftRequest,
-	_ *serviceports.RequestActor,
+	req *invoiceadjustmentports.SaveInvoiceAdjustmentDraftRequest,
+	_ *permissionports.RequestActor,
 ) (*invoiceadjustment.InvoiceAdjustment, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -46,31 +48,31 @@ func (f *fakeAdjuster) SaveDraft(
 
 func (f *fakeAdjuster) PreviewSaveDraft(
 	context.Context,
-	*serviceports.SaveInvoiceAdjustmentDraftRequest,
-	*serviceports.RequestActor,
-) (*serviceports.InvoiceAdjustmentDraftPreview, error) {
+	*invoiceadjustmentports.SaveInvoiceAdjustmentDraftRequest,
+	*permissionports.RequestActor,
+) (*invoiceadjustmentports.InvoiceAdjustmentDraftPreview, error) {
 	return f.draft, nil
 }
 
 func (f *fakeAdjuster) GetDetail(
 	context.Context,
-	*serviceports.GetInvoiceAdjustmentDetailRequest,
+	*invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest,
 ) (*invoiceadjustment.InvoiceAdjustment, error) {
 	return f.detail, nil
 }
 
 func (f *fakeAdjuster) PreviewDraft(
 	context.Context,
-	*serviceports.GetInvoiceAdjustmentDetailRequest,
-	*serviceports.RequestActor,
-) (*serviceports.InvoiceAdjustmentPreview, error) {
+	*invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest,
+	*permissionports.RequestActor,
+) (*invoiceadjustmentports.InvoiceAdjustmentPreview, error) {
 	return f.figures, nil
 }
 
 func (f *fakeAdjuster) SubmitDraft(
 	_ context.Context,
-	req *serviceports.GetInvoiceAdjustmentDetailRequest,
-	_ *serviceports.RequestActor,
+	req *invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest,
+	_ *permissionports.RequestActor,
 ) (*invoiceadjustment.InvoiceAdjustment, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -82,9 +84,9 @@ func (f *fakeAdjuster) SubmitDraft(
 
 func (f *fakeAdjuster) Preview(
 	_ context.Context,
-	req *serviceports.InvoiceAdjustmentRequest,
-	_ *serviceports.RequestActor,
-) (*serviceports.InvoiceAdjustmentPreview, error) {
+	req *invoiceadjustmentports.InvoiceAdjustmentRequest,
+	_ *permissionports.RequestActor,
+) (*invoiceadjustmentports.InvoiceAdjustmentPreview, error) {
 	figures := *f.figures
 	figures.InvoiceID = req.InvoiceID
 	figures.Kind = req.Kind
@@ -94,8 +96,8 @@ func (f *fakeAdjuster) Preview(
 
 func (f *fakeAdjuster) Submit(
 	_ context.Context,
-	req *serviceports.InvoiceAdjustmentRequest,
-	_ *serviceports.RequestActor,
+	req *invoiceadjustmentports.InvoiceAdjustmentRequest,
+	_ *permissionports.RequestActor,
 ) (*invoiceadjustment.InvoiceAdjustment, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -111,10 +113,10 @@ func (f *fakeAdjuster) Submit(
 
 func (f *fakeAdjuster) BulkPreview(
 	ctx context.Context,
-	req *serviceports.InvoiceAdjustmentBulkRequest,
-	actor *serviceports.RequestActor,
-) ([]*serviceports.InvoiceAdjustmentPreview, error) {
-	previews := make([]*serviceports.InvoiceAdjustmentPreview, 0, len(req.Items))
+	req *invoiceadjustmentports.InvoiceAdjustmentBulkRequest,
+	actor *permissionports.RequestActor,
+) ([]*invoiceadjustmentports.InvoiceAdjustmentPreview, error) {
+	previews := make([]*invoiceadjustmentports.InvoiceAdjustmentPreview, 0, len(req.Items))
 	for _, item := range req.Items {
 		preview, err := f.Preview(ctx, item, actor)
 		if err != nil {
@@ -128,8 +130,8 @@ func (f *fakeAdjuster) BulkPreview(
 
 func (f *fakeAdjuster) BulkSubmit(
 	_ context.Context,
-	req *serviceports.InvoiceAdjustmentBulkRequest,
-	_ *serviceports.RequestActor,
+	req *invoiceadjustmentports.InvoiceAdjustmentBulkRequest,
+	_ *permissionports.RequestActor,
 ) (*invoiceadjustment.InvoiceAdjustmentBatch, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -141,8 +143,8 @@ func (f *fakeAdjuster) BulkSubmit(
 
 func (f *fakeAdjuster) Approve(
 	_ context.Context,
-	req *serviceports.ApproveInvoiceAdjustmentRequest,
-	_ *serviceports.RequestActor,
+	req *invoiceadjustmentports.ApproveInvoiceAdjustmentRequest,
+	_ *permissionports.RequestActor,
 ) (*invoiceadjustment.InvoiceAdjustment, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -154,8 +156,8 @@ func (f *fakeAdjuster) Approve(
 
 func (f *fakeAdjuster) Reject(
 	_ context.Context,
-	req *serviceports.RejectInvoiceAdjustmentRequest,
-	_ *serviceports.RequestActor,
+	req *invoiceadjustmentports.RejectInvoiceAdjustmentRequest,
+	_ *permissionports.RequestActor,
 ) (*invoiceadjustment.InvoiceAdjustment, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -167,13 +169,13 @@ func (f *fakeAdjuster) Reject(
 
 func (f *fakeAdjuster) PreviewDecision(
 	context.Context,
-	*serviceports.InvoiceAdjustmentDecisionRequest,
-) (*serviceports.InvoiceAdjustmentDecisionPreview, error) {
+	*invoiceadjustmentports.InvoiceAdjustmentDecisionRequest,
+) (*invoiceadjustmentports.InvoiceAdjustmentDecisionPreview, error) {
 	return f.decision, nil
 }
 
-func adjustmentFigures(approval bool) *serviceports.InvoiceAdjustmentPreview {
-	return &serviceports.InvoiceAdjustmentPreview{
+func adjustmentFigures(approval bool) *invoiceadjustmentports.InvoiceAdjustmentPreview {
+	return &invoiceadjustmentports.InvoiceAdjustmentPreview{
 		Kind:              invoiceadjustment.KindCreditOnly,
 		CreditTotalAmount: decimal.RequireFromString("125.00"),
 		RebillTotalAmount: decimal.Zero,
@@ -207,7 +209,7 @@ func TestSubmitInvoiceAdjustment_OneAdjustmentPreviewsItsFigures(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, adjuster.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would submit 1 invoice adjustment")
 	assert.Contains(t, preview.Summary, "waits for approval")
@@ -216,7 +218,7 @@ func TestSubmitInvoiceAdjustment_OneAdjustmentPreviewsItsFigures(t *testing.T) {
 	assert.Equal(t, "PendingApproval", fieldByPath(t, change, "status").After)
 	require.NotNil(t, change.Money)
 
-	target, ok := tool.(serviceports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, invoiceID, target.ID)
 
@@ -255,11 +257,11 @@ func TestSubmitInvoiceAdjustment_ManyGoAsOneBatch(t *testing.T) {
 	params.ProposalID = pulid.MustNew("ap_")
 	params.IdempotencyKey = params.ProposalID.String()
 
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	assert.Contains(t, preview.Summary, "Would submit 3 invoice adjustments")
 	assert.Len(t, preview.Changes, 3)
-	_, targeted := tool.(serviceports.TargetedTool).Target(params.Params)
+	_, targeted := tool.(agentports.TargetedTool).Target(params.Params)
 	assert.False(t, targeted)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -284,10 +286,10 @@ func TestSubmitInvoiceAdjustment_PreviewErrorsRefuseIt(t *testing.T) {
 		}},
 	})
 
-	err := tool.(serviceports.ToolValidator).Validate(t.Context(), params)
+	err := tool.(agentports.ToolValidator).Validate(t.Context(), params)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "Only posted invoices may be adjusted")
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	requireWarning(t, preview, agent.PreviewWarningWouldFail)
 }
@@ -304,8 +306,8 @@ func TestSubmitInvoiceAdjustment_TakesADraftOrAdjustmentsNotBoth(t *testing.T) {
 			paramReason:         "x",
 		}},
 	})
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), both))
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), executeParams(map[string]any{})))
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), both))
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), executeParams(map[string]any{})))
 }
 
 func TestSubmitInvoiceAdjustment_SubmitsASavedDraft(t *testing.T) {
@@ -322,7 +324,7 @@ func TestSubmitInvoiceAdjustment_SubmitsASavedDraft(t *testing.T) {
 	tool := newSubmitInvoiceAdjustmentTool(adjuster)
 	params := executeParams(map[string]any{paramDraftAdjustmentID: detail.ID.String()})
 
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	assert.Contains(t, preview.Summary, "executes at once")
 
@@ -339,7 +341,7 @@ func TestSaveInvoiceAdjustmentDraft_AnAgentSavesADraftAndSaysWhere(t *testing.T)
 	inv := adjustedInvoice()
 	adjuster := &fakeAdjuster{
 		guard: &writeGuard{},
-		draft: &serviceports.InvoiceAdjustmentDraftPreview{
+		draft: &invoiceadjustmentports.InvoiceAdjustmentDraftPreview{
 			After: &invoiceadjustment.InvoiceAdjustment{
 				OriginalInvoiceID: inv.ID,
 				Kind:              invoiceadjustment.KindCreditOnly,
@@ -359,12 +361,12 @@ func TestSaveInvoiceAdjustmentDraft_AnAgentSavesADraftAndSaysWhere(t *testing.T)
 	})
 
 	preview := previewWithoutWrites(t, adjuster.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would save a draft CreditOnly adjustment of Invoice INV-5100")
 	assert.Equal(t, agent.PreviewOperationCreate, previewChange(t, preview, 0).Operation)
 
-	result, err := tool.(serviceports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	require.NotNil(t, adjuster.saved)
 	assert.Equal(t, invoiceadjustment.RebillStrategyCloneExact, adjuster.saved.RebillStrategy)
@@ -378,9 +380,9 @@ func TestSaveInvoiceAdjustmentDraft_AnAgentSavesADraftAndSaysWhere(t *testing.T)
 	assert.NotNil(t, policy.TaintHold)
 }
 
-func pendingDecision() *serviceports.InvoiceAdjustmentDecisionPreview {
+func pendingDecision() *invoiceadjustmentports.InvoiceAdjustmentDecisionPreview {
 	inv := adjustedInvoice()
-	return &serviceports.InvoiceAdjustmentDecisionPreview{
+	return &invoiceadjustmentports.InvoiceAdjustmentDecisionPreview{
 		Adjustment: &invoiceadjustment.InvoiceAdjustment{
 			ID:                pulid.MustNew("iadj_"),
 			OriginalInvoiceID: inv.ID,
@@ -406,7 +408,7 @@ func TestApproveInvoiceAdjustment_OnlyAPersonApprovesWhatExecutionWouldDo(t *tes
 	})
 
 	preview := previewWithoutWrites(t, adjuster.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would approve the CreditOnly adjustment of Invoice INV-5100")
 	change := previewChange(t, preview, 0)
@@ -418,7 +420,7 @@ func TestApproveInvoiceAdjustment_OnlyAPersonApprovesWhatExecutionWouldDo(t *tes
 	require.NotNil(t, adjuster.approved)
 
 	agentParams := agentParamsFor(params.Params)
-	_, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), agentParams)
+	_, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), agentParams)
 	require.ErrorIs(t, err, ErrAgentCannotApprove)
 	assert.Equal(t, permission.OpApprove, tool.Policy().Operation)
 }
@@ -433,7 +435,7 @@ func TestApproveInvoiceAdjustment_ARevalidationFailureRefusesIt(t *testing.T) {
 	tool := newApproveInvoiceAdjustmentTool(&fakeAdjuster{decision: decision})
 	params := executeParams(map[string]any{paramAdjustmentID: decision.Adjustment.ID.String()})
 
-	err := tool.(serviceports.ToolValidator).Validate(t.Context(), params)
+	err := tool.(agentports.ToolValidator).Validate(t.Context(), params)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "Credit exceeds what is left of the line")
 }
@@ -449,7 +451,7 @@ func TestRejectInvoiceAdjustment_RecordsTheReason(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, adjuster.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, "Rejected", fieldByPath(t, previewChange(t, preview, 0), "status").After)
 

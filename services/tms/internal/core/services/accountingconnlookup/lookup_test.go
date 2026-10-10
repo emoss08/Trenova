@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,15 +16,15 @@ import (
 )
 
 type fakeConnections struct {
-	repositories.AccountingConnectionRepository
+	accountingsyncports.AccountingConnectionRepository
 	conn *accountingsync.AccountingConnection
 	err  error
-	asks []repositories.GetAccountingConnectionRequest
+	asks []accountingsyncports.GetAccountingConnectionRequest
 }
 
 func (f *fakeConnections) GetByType(
 	_ context.Context,
-	req repositories.GetAccountingConnectionRequest,
+	req accountingsyncports.GetAccountingConnectionRequest,
 ) (*accountingsync.AccountingConnection, error) {
 	f.asks = append(f.asks, req)
 	return f.conn, f.err

@@ -7,23 +7,40 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs/shipmentcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/services/quotaservice"
 	"github.com/emoss08/trenova/internal/core/services/servicefailuretrigger"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs/shipmentcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmenttypeports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/hazmatsegregationruleports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/modeprofileports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -44,90 +61,90 @@ type shipmentTenantResource interface {
 }
 
 type MutationObserverSetter interface {
-	SetShipmentMutationObservers(observers []services.ShipmentMutationObserver)
+	SetShipmentMutationObservers(observers []shipmentports.ShipmentMutationObserver)
 }
 
 type Params struct {
 	fx.In
 
 	Logger               *zap.Logger
-	DB                   ports.DBConnection
-	Repo                 repositories.ShipmentRepository
-	OrderRepo            repositories.OrderRepository
-	CacheRepo            repositories.ShipmentCacheRepository
-	AssignmentRepo       repositories.AssignmentRepository
-	UserRepo             repositories.UserRepository
-	ControlRepo          repositories.ShipmentControlRepository
-	ModeProfileService   services.ModeProfileService
-	PermitService        services.PermitService
-	ContinuityRepo       repositories.EquipmentContinuityRepository
-	CommodityRepo        repositories.CommodityRepository
-	HazmatRuleRepo       repositories.HazmatSegregationRuleRepository
-	EquipmentTypeRepo    repositories.EquipmentTypeRepository
-	AccessorialRepo      repositories.AccessorialChargeRepository
-	CustomerRepo         repositories.CustomerRepository
-	ChargeAllocationRepo repositories.ChargeAllocationRepository
-	DocumentRepo         repositories.DocumentRepository
-	BillingRepo          repositories.BillingControlRepository
+	DB                   kernelports.DBConnection
+	Repo                 shipmentports.ShipmentRepository
+	OrderRepo            orderports.OrderRepository
+	CacheRepo            customerports.ShipmentCacheRepository
+	AssignmentRepo       shipmentports.AssignmentRepository
+	UserRepo             tenantports.UserRepository
+	ControlRepo          tenantports.ShipmentControlRepository
+	ModeProfileService   modeprofileports.ModeProfileService
+	PermitService        permitports.PermitService
+	ContinuityRepo       equipmentcontinuityports.EquipmentContinuityRepository
+	CommodityRepo        commodityports.CommodityRepository
+	HazmatRuleRepo       hazmatsegregationruleports.HazmatSegregationRuleRepository
+	EquipmentTypeRepo    equipmenttypeports.EquipmentTypeRepository
+	AccessorialRepo      accessorialchargeports.AccessorialChargeRepository
+	CustomerRepo         customerports.CustomerRepository
+	ChargeAllocationRepo shipmentports.ChargeAllocationRepository
+	DocumentRepo         documentports.DocumentRepository
+	BillingRepo          tenantports.BillingControlRepository
 	NotificationService  *notificationservice.Service
-	BillingQueueService  services.BillingQueueService          `optional:"true"`
-	ServiceFailureRepo   repositories.ServiceFailureRepository `optional:"true"`
-	ServiceFailures      services.ServiceFailureEvaluator      `optional:"true"`
-	Permissions          services.PermissionEngine
+	BillingQueueService  billingqueueports.BillingQueueService        `optional:"true"`
+	ServiceFailureRepo   servicefailureports.ServiceFailureRepository `optional:"true"`
+	ServiceFailures      servicefailureports.ServiceFailureEvaluator  `optional:"true"`
+	Permissions          permissionports.PermissionEngine
 	Validator            *Validator
-	AuditService         services.AuditService
-	EventService         services.ShipmentEventService
-	WorkflowStarter      services.WorkflowStarter
+	AuditService         auditports.AuditService
+	EventService         shipmenteventports.ShipmentEventService
+	WorkflowStarter      kernelports.WorkflowStarter
 	Coordinator          *shipmentstate.Coordinator
 	Commercial           *shipmentcommercial.Calculator
-	OrderDerivation      services.OrderDerivationService
-	DistanceCalculation  services.DistanceCalculationService `optional:"true"`
-	TenderGuard          services.TenderGuard                `optional:"true"`
-	AgentEvents          services.AgentEventPublisher        `optional:"true"`
-	Quota                services.QuotaGuard                 `optional:"true"`
-	QuickFilters         services.ShipmentQuickFilterBasisResolver
-	Invalidator          services.ShipmentInvalidator
+	OrderDerivation      orderports.OrderDerivationService
+	DistanceCalculation  shipmentports.DistanceCalculationService `optional:"true"`
+	TenderGuard          tenderports.TenderGuard                  `optional:"true"`
+	AgentEvents          agentports.AgentEventPublisher           `optional:"true"`
+	Quota                platformplanports.QuotaGuard             `optional:"true"`
+	QuickFilters         shipmentports.ShipmentQuickFilterBasisResolver
+	Invalidator          shipmentports.ShipmentInvalidator
 }
 
 type service struct {
 	l                    *zap.Logger
-	db                   ports.DBConnection
-	repo                 repositories.ShipmentRepository
-	orderRepo            repositories.OrderRepository
-	cacheRepo            repositories.ShipmentCacheRepository
-	assignmentRepo       repositories.AssignmentRepository
-	userRepo             repositories.UserRepository
-	controlRepo          repositories.ShipmentControlRepository
-	modeProfileService   services.ModeProfileService
-	permitService        services.PermitService
-	continuityRepo       repositories.EquipmentContinuityRepository
-	commodityRepo        repositories.CommodityRepository
-	hazmatRuleRepo       repositories.HazmatSegregationRuleRepository
-	equipmentTypeRepo    repositories.EquipmentTypeRepository
-	accessorialRepo      repositories.AccessorialChargeRepository
-	customerRepo         repositories.CustomerRepository
-	chargeAllocationRepo repositories.ChargeAllocationRepository
-	documentRepo         repositories.DocumentRepository
-	billingRepo          repositories.BillingControlRepository
+	db                   kernelports.DBConnection
+	repo                 shipmentports.ShipmentRepository
+	orderRepo            orderports.OrderRepository
+	cacheRepo            customerports.ShipmentCacheRepository
+	assignmentRepo       shipmentports.AssignmentRepository
+	userRepo             tenantports.UserRepository
+	controlRepo          tenantports.ShipmentControlRepository
+	modeProfileService   modeprofileports.ModeProfileService
+	permitService        permitports.PermitService
+	continuityRepo       equipmentcontinuityports.EquipmentContinuityRepository
+	commodityRepo        commodityports.CommodityRepository
+	hazmatRuleRepo       hazmatsegregationruleports.HazmatSegregationRuleRepository
+	equipmentTypeRepo    equipmenttypeports.EquipmentTypeRepository
+	accessorialRepo      accessorialchargeports.AccessorialChargeRepository
+	customerRepo         customerports.CustomerRepository
+	chargeAllocationRepo shipmentports.ChargeAllocationRepository
+	documentRepo         documentports.DocumentRepository
+	billingRepo          tenantports.BillingControlRepository
 	notificationService  *notificationservice.Service
-	billingQueueService  services.BillingQueueService
-	serviceFailureRepo   repositories.ServiceFailureRepository
-	serviceFailures      services.ServiceFailureEvaluator
-	permissions          services.PermissionEngine
+	billingQueueService  billingqueueports.BillingQueueService
+	serviceFailureRepo   servicefailureports.ServiceFailureRepository
+	serviceFailures      servicefailureports.ServiceFailureEvaluator
+	permissions          permissionports.PermissionEngine
 	validator            *Validator
-	auditService         services.AuditService
-	eventService         services.ShipmentEventService
-	workflowStarter      services.WorkflowStarter
+	auditService         auditports.AuditService
+	eventService         shipmenteventports.ShipmentEventService
+	workflowStarter      kernelports.WorkflowStarter
 	coordinator          *shipmentstate.Coordinator
-	quickFilters         services.ShipmentQuickFilterBasisResolver
-	invalidator          services.ShipmentInvalidator
+	quickFilters         shipmentports.ShipmentQuickFilterBasisResolver
+	invalidator          shipmentports.ShipmentInvalidator
 	commercial           *shipmentcommercial.Calculator
-	orderDerivation      services.OrderDerivationService
-	distanceCalculation  services.DistanceCalculationService
-	tenderGuard          services.TenderGuard
-	agentEvents          services.AgentEventPublisher
-	quota                services.QuotaGuard
-	mutationObservers    []services.ShipmentMutationObserver
+	orderDerivation      orderports.OrderDerivationService
+	distanceCalculation  shipmentports.DistanceCalculationService
+	tenderGuard          tenderports.TenderGuard
+	agentEvents          agentports.AgentEventPublisher
+	quota                platformplanports.QuotaGuard
+	mutationObservers    []shipmentports.ShipmentMutationObserver
 }
 
 func New(p Params) *service { //nolint:gocritic // stable API shape
@@ -172,8 +189,8 @@ func New(p Params) *service { //nolint:gocritic // stable API shape
 	}
 }
 
-func (s *service) SetShipmentMutationObservers(observers []services.ShipmentMutationObserver) {
-	s.mutationObservers = append([]services.ShipmentMutationObserver(nil), observers...)
+func (s *service) SetShipmentMutationObservers(observers []shipmentports.ShipmentMutationObserver) {
+	s.mutationObservers = append([]shipmentports.ShipmentMutationObserver(nil), observers...)
 }
 
 func (s *service) createNotification(
@@ -191,7 +208,7 @@ func (s *service) createNotification(
 
 func (s *service) List(
 	ctx context.Context,
-	req *repositories.ListShipmentsRequest,
+	req *shipmentports.ListShipmentsRequest,
 ) (*pagination.CursorListResult[*shipment.Shipment], error) {
 	if req.ShipmentOptions.HasQuickFilters() {
 		if s.quickFilters == nil {
@@ -211,13 +228,13 @@ func (s *service) List(
 
 func (s *service) Get(
 	ctx context.Context,
-	req *repositories.GetShipmentByIDRequest,
+	req *shipmentports.GetShipmentByIDRequest,
 ) (*shipment.Shipment, error) {
 	entity, err := s.cacheRepo.GetByID(ctx, req)
 	if err == nil {
 		return entity, nil
 	}
-	if !errors.Is(err, repositories.ErrCacheMiss) {
+	if !errors.Is(err, customerports.ErrCacheMiss) {
 		s.l.Warn(
 			"failed to load shipment from cache",
 			zap.Error(err),
@@ -230,21 +247,21 @@ func (s *service) Get(
 
 func (s *service) GetUnassigned(
 	ctx context.Context,
-	req *repositories.GetUnassignedShipmentsRequest,
+	req *shipmentports.GetUnassignedShipmentsRequest,
 ) (*pagination.CursorListResult[*shipment.Shipment], error) {
 	return s.repo.GetUnassigned(ctx, req)
 }
 
 func (s *service) GetByIDs(
 	ctx context.Context,
-	req *repositories.GetShipmentsByIDsRequest,
+	req *shipmentports.GetShipmentsByIDsRequest,
 ) ([]*shipment.Shipment, error) {
 	return s.repo.GetByIDs(ctx, req)
 }
 
 func (s *service) SelectOptions(
 	ctx context.Context,
-	req *repositories.ShipmentSelectOptionsRequest,
+	req *shipmentports.ShipmentSelectOptionsRequest,
 ) (*pagination.ListResult[*shipment.Shipment], error) {
 	return s.repo.SelectOptions(ctx, req)
 }
@@ -252,13 +269,13 @@ func (s *service) SelectOptions(
 func (s *service) GetUIPolicy(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*services.ShipmentUIPolicy, error) {
+) (*shipmentports.ShipmentUIPolicy, error) {
 	control, err := s.getShipmentControl(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
 
-	policy := &services.ShipmentUIPolicy{
+	policy := &shipmentports.ShipmentUIPolicy{
 		AllowMoveRemovals:      control.AllowMoveRemovals,
 		CheckForDuplicateBOLs:  control.CheckForDuplicateBOLs,
 		CheckHazmatSegregation: control.CheckHazmatSegregation,
@@ -269,7 +286,7 @@ func (s *service) GetUIPolicy(
 		return policy, nil
 	}
 
-	resolved, err := s.modeProfileService.Resolve(ctx, &services.ResolveModeProfileRequest{
+	resolved, err := s.modeProfileService.Resolve(ctx, &modeprofileports.ResolveModeProfileRequest{
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {
@@ -284,8 +301,8 @@ func (s *service) GetUIPolicy(
 
 func (s *service) GetPreviousRates(
 	ctx context.Context,
-	req *repositories.GetPreviousRatesRequest,
-) (*pagination.ListResult[*repositories.PreviousRateSummary], error) {
+	req *shipmentports.GetPreviousRatesRequest,
+) (*pagination.ListResult[*shipmentports.PreviousRateSummary], error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
 	}
@@ -296,7 +313,7 @@ func (s *service) GetPreviousRates(
 func (s *service) Create(
 	ctx context.Context,
 	entity *shipment.Shipment,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*shipment.Shipment, error) {
 	auditActor := actor.AuditActor()
 	log := s.l.With(
@@ -322,7 +339,7 @@ func (s *service) Create(
 	}
 
 	var createdEntity *shipment.Shipment
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		created, txErr := s.persistCreate(txCtx, entity, prepared, actor)
 		createdEntity = created
 		return txErr
@@ -341,7 +358,7 @@ func (s *service) Create(
 		return nil, err
 	}
 
-	ports.AfterCommit(ctx, func(committed context.Context) {
+	kernelports.AfterCommit(ctx, func(committed context.Context) {
 		s.announceCreated(committed, createdEntity, auditActor)
 	})
 
@@ -352,7 +369,7 @@ func (s *service) persistCreate(
 	ctx context.Context,
 	entity *shipment.Shipment,
 	prepared *createPreparation,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*shipment.Shipment, error) {
 	auditActor := actor.AuditActor()
 	created, err := s.repo.Create(ctx, entity)
@@ -393,7 +410,7 @@ func (s *service) persistCreate(
 func (s *service) announceCreated(
 	ctx context.Context,
 	created *shipment.Shipment,
-	auditActor services.AuditActor,
+	auditActor kernelports.AuditActor,
 ) {
 	if err := s.logShipmentAction(
 		created,
@@ -406,13 +423,13 @@ func (s *service) announceCreated(
 		s.l.Error("failed to log audit action", zap.Error(err))
 	}
 
-	services.InvalidateShipments(
+	shipmentports.InvalidateShipments(
 		ctx,
 		s.invalidator,
-		services.ShipmentInvalidationForRecord(created, auditActor, "created", created),
+		shipmentports.ShipmentInvalidationForRecord(created, auditActor, "created", created),
 	)
 
-	services.PublishAgentEvent(ctx, s.agentEvents, services.AgentEvent{
+	agentports.PublishAgentEvent(ctx, s.agentEvents, agentports.AgentEvent{
 		Kind:      agent.EventShipmentCreated,
 		SubjectID: created.ID,
 		TenantInfo: pagination.TenantInfo{
@@ -425,7 +442,7 @@ func (s *service) announceCreated(
 func (s *service) Update( //nolint:cyclop // legacy workflow
 	ctx context.Context,
 	entity *shipment.Shipment,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*shipment.Shipment, error) {
 	auditActor := actor.AuditActor()
 	log := s.l.With(
@@ -438,13 +455,13 @@ func (s *service) Update( //nolint:cyclop // legacy workflow
 
 	original, err := s.repo.GetByID(
 		ctx,
-		&repositories.GetShipmentByIDRequest{
+		&shipmentports.GetShipmentByIDRequest{
 			ID: entity.GetID(),
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.GetOrganizationID(),
 				BuID:  entity.GetBusinessUnitID(),
 			},
-			ShipmentOptions: repositories.ShipmentOptions{
+			ShipmentOptions: shipmentports.ShipmentOptions{
 				ExpandShipmentDetails: true,
 			},
 		},
@@ -573,10 +590,10 @@ func (s *service) Update( //nolint:cyclop // legacy workflow
 		s.l.Error("failed to log audit action", zap.Error(err))
 	}
 
-	services.InvalidateShipments(
+	shipmentports.InvalidateShipments(
 		ctx,
 		s.invalidator,
-		services.ShipmentInvalidationForRecord(updatedEntity, auditActor, "updated", updatedEntity),
+		shipmentports.ShipmentInvalidationForRecord(updatedEntity, auditActor, "updated", updatedEntity),
 	)
 
 	s.emitStatusChangeEvent(ctx, original, updatedEntity, auditActor)
@@ -624,7 +641,7 @@ func (s *service) notifyShipmentMutationObservers(
 	ctx context.Context,
 	original *shipment.Shipment,
 	updated *shipment.Shipment,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) {
 	if len(s.mutationObservers) == 0 {
 		return
@@ -646,7 +663,7 @@ func (s *service) notifyShipmentMutationObservers(
 func (s *service) evaluateServiceFailuresAfterShipmentUpdate(
 	ctx context.Context,
 	entity *shipment.Shipment,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) {
 	if entity == nil {
 		return
@@ -672,8 +689,8 @@ func (s *service) evaluateServiceFailuresAfterShipmentUpdate(
 
 func (s *service) TransferOwnership(
 	ctx context.Context,
-	req *repositories.TransferOwnershipRequest,
-	actor *services.RequestActor,
+	req *shipmentports.TransferOwnershipRequest,
+	actor *permissionports.RequestActor,
 ) (*shipment.Shipment, error) {
 	original, err := s.planTransferOwnership(ctx, req, actor)
 	if err != nil {
@@ -707,10 +724,10 @@ func (s *service) TransferOwnership(
 		log.Error("failed to log audit action", zap.Error(err))
 	}
 
-	services.InvalidateShipments(
+	shipmentports.InvalidateShipments(
 		ctx,
 		s.invalidator,
-		services.ShipmentInvalidationForRecord(
+		shipmentports.ShipmentInvalidationForRecord(
 			updatedEntity,
 			auditActor,
 			"ownership_transferred",
@@ -731,7 +748,7 @@ func (s *service) TransferOwnership(
 
 func (s *service) GetDelayedShipments(
 	ctx context.Context,
-	req *repositories.GetDelayedShipmentsRequest,
+	req *shipmentports.GetDelayedShipmentsRequest,
 ) ([]*shipment.Shipment, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
@@ -751,8 +768,8 @@ func (s *service) GetDelayedShipments(
 
 func (s *service) DelayShipments(
 	ctx context.Context,
-	req *repositories.DelayShipmentsRequest,
-	actor *services.RequestActor,
+	req *shipmentports.DelayShipmentsRequest,
+	actor *permissionports.RequestActor,
 ) ([]*shipment.Shipment, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
@@ -780,16 +797,16 @@ func (s *service) DelayShipments(
 		return nil, err
 	}
 
-	var auditActor services.AuditActor
+	var auditActor kernelports.AuditActor
 	if actor != nil {
 		auditActor = actor.AuditActor()
 	}
 
 	for _, entity := range delayedShipments {
-		services.InvalidateShipments(
+		shipmentports.InvalidateShipments(
 			ctx,
 			s.invalidator,
-			services.ShipmentInvalidationForRecord(entity, auditActor, "delayed", entity),
+			shipmentports.ShipmentInvalidationForRecord(entity, auditActor, "delayed", entity),
 		)
 	}
 
@@ -798,7 +815,7 @@ func (s *service) DelayShipments(
 
 func (s *service) GetAutoCancelableShipments(
 	ctx context.Context,
-	req *repositories.GetAutoCancelableShipmentsRequest,
+	req *shipmentports.GetAutoCancelableShipmentsRequest,
 ) ([]*shipment.Shipment, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
@@ -818,8 +835,8 @@ func (s *service) GetAutoCancelableShipments(
 
 func (s *service) AutoCancelShipments(
 	ctx context.Context,
-	req *repositories.AutoCancelShipmentsRequest,
-	actor *services.RequestActor,
+	req *shipmentports.AutoCancelShipmentsRequest,
+	actor *permissionports.RequestActor,
 ) ([]*shipment.Shipment, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
@@ -844,7 +861,7 @@ func (s *service) AutoCancelShipments(
 				continue
 			}
 			if err = s.continuityRepo.RollbackCurrentByShipment(ctx,
-				repositories.RollbackEquipmentContinuityByShipmentRequest{
+				equipmentcontinuityports.RollbackEquipmentContinuityByShipmentRequest{
 					TenantInfo: req.TenantInfo,
 					ShipmentID: canceledShipment.ID,
 				}); err != nil {
@@ -861,15 +878,15 @@ func (s *service) AutoCancelShipments(
 		return nil, err
 	}
 
-	var auditActor services.AuditActor
+	var auditActor kernelports.AuditActor
 	if actor != nil {
 		auditActor = actor.AuditActor()
 	}
 
-	services.InvalidateShipments(
+	shipmentports.InvalidateShipments(
 		ctx,
 		s.invalidator,
-		services.ShipmentInvalidationByActor(
+		shipmentports.ShipmentInvalidationByActor(
 			req.TenantInfo,
 			auditActor,
 			pulid.Nil,
@@ -892,7 +909,7 @@ func (s *service) validateExplicitOrder(
 		return nil
 	}
 
-	ord, err := s.orderRepo.GetByID(ctx, repositories.GetOrderByIDRequest{
+	ord, err := s.orderRepo.GetByID(ctx, orderports.GetOrderByIDRequest{
 		ID: entity.OrderID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -944,7 +961,7 @@ func (s *service) syncOrderMembershipForUpdate(
 		return nil
 	}
 
-	ord, err := s.orderRepo.GetByID(ctx, repositories.GetOrderByIDRequest{
+	ord, err := s.orderRepo.GetByID(ctx, orderports.GetOrderByIDRequest{
 		ID: original.OrderID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -1007,7 +1024,7 @@ func (s *service) recomputeOrdersForShipments(
 
 func (s *service) CheckForDuplicateBOLs(
 	ctx context.Context,
-	req *repositories.DuplicateBOLCheckRequest,
+	req *shipmentports.DuplicateBOLCheckRequest,
 ) error {
 	if multiErr := req.Validate(); multiErr != nil {
 		return multiErr
@@ -1023,7 +1040,7 @@ func (s *service) CheckForDuplicateBOLs(
 
 func (s *service) CheckHazmatSegregation(
 	ctx context.Context,
-	req *repositories.CheckHazmatSegregationRequest,
+	req *shipmentports.CheckHazmatSegregationRequest,
 ) error {
 	if multiErr := req.Validate(); multiErr != nil {
 		return multiErr
@@ -1051,8 +1068,8 @@ func (s *service) CheckHazmatSegregation(
 
 func (s *service) Cancel(
 	ctx context.Context,
-	req *repositories.CancelShipmentRequest,
-	actor *services.RequestActor,
+	req *shipmentports.CancelShipmentRequest,
+	actor *permissionports.RequestActor,
 ) (*shipment.Shipment, error) {
 	original, err := s.planCancel(ctx, req, actor)
 	if err != nil {
@@ -1068,7 +1085,7 @@ func (s *service) Cancel(
 	)
 
 	var updatedEntity *shipment.Shipment
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		canceled, txErr := s.repo.Cancel(txCtx, req)
 		if txErr != nil {
 			return txErr
@@ -1076,7 +1093,7 @@ func (s *service) Cancel(
 
 		if s.continuityRepo != nil {
 			if txErr = s.continuityRepo.RollbackCurrentByShipment(txCtx,
-				repositories.RollbackEquipmentContinuityByShipmentRequest{
+				equipmentcontinuityports.RollbackEquipmentContinuityByShipmentRequest{
 					TenantInfo: req.TenantInfo,
 					ShipmentID: req.ShipmentID,
 				}); txErr != nil {
@@ -1104,10 +1121,10 @@ func (s *service) Cancel(
 		log.Error("failed to log audit action", zap.Error(err))
 	}
 
-	services.InvalidateShipments(
+	shipmentports.InvalidateShipments(
 		ctx,
 		s.invalidator,
-		services.ShipmentInvalidationForRecord(
+		shipmentports.ShipmentInvalidationForRecord(
 			updatedEntity,
 			auditActor,
 			"canceled",
@@ -1135,8 +1152,8 @@ func (s *service) Cancel(
 
 func (s *service) Uncancel(
 	ctx context.Context,
-	req *repositories.UncancelShipmentRequest,
-	actor *services.RequestActor,
+	req *shipmentports.UncancelShipmentRequest,
+	actor *permissionports.RequestActor,
 ) (*shipment.Shipment, error) {
 	original, _, err := s.planUncancel(ctx, req)
 	if err != nil {
@@ -1179,10 +1196,10 @@ func (s *service) Uncancel(
 		log.Error("failed to log audit action", zap.Error(err))
 	}
 
-	services.InvalidateShipments(
+	shipmentports.InvalidateShipments(
 		ctx,
 		s.invalidator,
-		services.ShipmentInvalidationForRecord(
+		shipmentports.ShipmentInvalidationForRecord(
 			updatedEntity,
 			auditActor,
 			"uncanceled",
@@ -1201,12 +1218,12 @@ func (s *service) Uncancel(
 
 func (s *service) Duplicate(
 	ctx context.Context,
-	req *repositories.BulkDuplicateShipmentRequest,
-) (*repositories.ShipmentDuplicateWorkflowResponse, error) {
+	req *shipmentports.BulkDuplicateShipmentRequest,
+) (*shipmentports.ShipmentDuplicateWorkflowResponse, error) {
 	if _, err := s.planDuplicate(ctx, req); err != nil {
 		return nil, err
 	}
-	if err := quotaservice.Preflight(ctx, s.quota, &services.QuotaRequest{
+	if err := quotaservice.Preflight(ctx, s.quota, &platformplanports.QuotaRequest{
 		TenantInfo: req.TenantInfo,
 		Meter:      platformcatalog.MeterShipmentsTotal,
 		Quantity:   int64(max(req.Count, 0)),
@@ -1260,7 +1277,7 @@ func (s *service) Duplicate(
 			WithInternal(err)
 	}
 
-	return &repositories.ShipmentDuplicateWorkflowResponse{
+	return &shipmentports.ShipmentDuplicateWorkflowResponse{
 		WorkflowID:  run.GetID(),
 		RunID:       run.GetRunID(),
 		TaskQueue:   temporaltype.TaskQueueSystem.String(),
@@ -1273,7 +1290,7 @@ func (s *service) CalculateTotals(
 	ctx context.Context,
 	entity *shipment.Shipment,
 	userID pulid.ID,
-) (*repositories.ShipmentTotalsResponse, error) {
+) (*shipmentports.ShipmentTotalsResponse, error) {
 	// Shipment totals are derived from the formula template plus nested additional charges.
 	if entity == nil {
 		multiErr := errortypes.NewMultiError()
@@ -1319,7 +1336,7 @@ func (s *service) CalculateTotals(
 func (s *service) CalculateDistance(
 	ctx context.Context,
 	entity *shipment.Shipment,
-) (*services.DistanceCalculationResponse, error) {
+) (*shipmentports.DistanceCalculationResponse, error) {
 	if s.distanceCalculation == nil {
 		return nil, errortypes.NewBusinessError("distance calculation service is not configured")
 	}
@@ -1333,7 +1350,7 @@ func (s *service) RecalculateDistance(
 	ctx context.Context,
 	shipmentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) (*services.DistanceCalculationResponse, error) {
+) (*shipmentports.DistanceCalculationResponse, error) {
 	if s.distanceCalculation == nil {
 		return nil, errortypes.NewBusinessError("distance calculation service is not configured")
 	}
@@ -1342,7 +1359,7 @@ func (s *service) RecalculateDistance(
 
 func (s *service) validateTransferActor(
 	ctx context.Context,
-	auditActor services.AuditActor,
+	auditActor kernelports.AuditActor,
 	original *shipment.Shipment,
 	orgID pulid.ID,
 ) error {
@@ -1362,7 +1379,7 @@ func (s *service) validateTransferActor(
 		return errortypes.NewBusinessError("Permission engine is not configured")
 	}
 
-	result, err := s.permissions.Check(ctx, &services.PermissionCheckRequest{
+	result, err := s.permissions.Check(ctx, &permissionports.PermissionCheckRequest{
 		PrincipalType:  auditActor.PrincipalType,
 		PrincipalID:    auditActor.PrincipalID,
 		UserID:         auditActor.UserID,
@@ -1372,7 +1389,7 @@ func (s *service) validateTransferActor(
 		Resource:       permission.ResourceShipment.String(),
 		Operation:      permission.OpUpdate,
 		ResourceID:     &original.ID,
-		ResourceAttributes: services.ResourceAttributes{
+		ResourceAttributes: permissionports.ResourceAttributes{
 			OrganizationID: original.OrganizationID,
 			BusinessUnitID: original.BusinessUnitID,
 			OwnerID:        original.OwnerID,
@@ -1395,13 +1412,13 @@ func (s *service) validateTransferActor(
 
 func (s *service) validateTransferTarget(
 	ctx context.Context,
-	req *repositories.TransferOwnershipRequest,
+	req *shipmentports.TransferOwnershipRequest,
 ) error {
 	if s.userRepo == nil {
 		return errortypes.NewBusinessError("User repository is not configured")
 	}
 
-	_, err := s.userRepo.GetByID(ctx, repositories.GetUserByIDRequest{
+	_, err := s.userRepo.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  req.TenantInfo.OrgID,
 			BuID:   req.TenantInfo.BuID,

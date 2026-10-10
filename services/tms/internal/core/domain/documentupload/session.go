@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
-	"github.com/emoss08/trenova/internal/core/ports/storage"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -39,7 +39,7 @@ type DocumentUploadSession struct {
 	Status                  Status                     `json:"status"                  bun:"status,type:document_upload_session_status_enum,notnull,default:'Initiated'"`
 	Description             string                     `json:"description"             bun:"description,type:TEXT,nullzero"`
 	Tags                    []string                   `json:"tags"                    bun:"tags,type:VARCHAR(100)[],default:'{}'"`
-	UploadedParts           []storage.UploadedPart     `json:"uploadedParts"           bun:"uploaded_parts,type:JSONB,notnull,default:'[]'"`
+	UploadedParts           []kernelports.UploadedPart `json:"uploadedParts"           bun:"uploaded_parts,type:JSONB,notnull,default:'[]'"`
 	PartSize                int64                      `json:"partSize"                bun:"part_size,type:BIGINT,notnull"`
 	FailureCode             string                     `json:"failureCode"             bun:"failure_code,type:VARCHAR(100),nullzero"`
 	FailureMessage          string                     `json:"failureMessage"          bun:"failure_message,type:TEXT,nullzero"`

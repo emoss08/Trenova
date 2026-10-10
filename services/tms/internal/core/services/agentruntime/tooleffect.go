@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -25,7 +25,7 @@ func (s *Service) ToolEffect(name string) agent.ToolEffect {
 		return policy.Effect
 	}
 
-	return serviceports.EffectOf(s.toolNamed(name))
+	return agentports.EffectOf(s.toolNamed(name))
 }
 
 func (s *Service) MarkToolEffects(messages []conversation.Message) {
@@ -55,7 +55,7 @@ func (s *Service) callsWithEffects(
 	return marked
 }
 
-func summarizeOutcome(call serviceports.ToolCall, outcome toolOutcome) string {
+func summarizeOutcome(call agentports.ToolCall, outcome toolOutcome) string {
 	if outcome.failed {
 		return ""
 	}

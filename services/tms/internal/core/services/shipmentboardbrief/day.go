@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipmentbrief"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/orgzone"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -32,11 +32,11 @@ func Today(
 
 func Latest(
 	ctx context.Context,
-	briefs repositories.ShipmentBriefRepository,
+	briefs shipmentbriefports.ShipmentBriefRepository,
 	tenantInfo pagination.TenantInfo,
 	day Day,
 ) (*shipmentbrief.Brief, error) {
-	return briefs.Latest(ctx, &repositories.GetLatestShipmentBriefRequest{
+	return briefs.Latest(ctx, &shipmentbriefports.GetLatestShipmentBriefRequest{
 		TenantInfo: tenantInfo,
 		BriefDate:  day.Date,
 	})

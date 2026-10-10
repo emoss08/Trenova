@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/core/domain/extractionshadow"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -81,7 +81,7 @@ func TestConsiderExtractionDoesNothingUntilAProviderIsChosen(t *testing.T) {
 	t.Parallel()
 
 	w := newWorld()
-	decision, err := w.svc.ConsiderExtraction(t.Context(), &services.ConsiderExtractionShadowRequest{
+	decision, err := w.svc.ConsiderExtraction(t.Context(), &extractionshadowports.ConsiderExtractionShadowRequest{
 		TenantInfo:  testTenant(),
 		DocumentID:  w.document(extractedAt),
 		ExtractedAt: extractedAt,
@@ -100,7 +100,7 @@ func TestConsiderExtractionSamplesAndStartsTheShadow(t *testing.T) {
 	w.enable(100)
 	documentID := w.document(extractedAt)
 
-	decision, err := w.svc.ConsiderExtraction(t.Context(), &services.ConsiderExtractionShadowRequest{
+	decision, err := w.svc.ConsiderExtraction(t.Context(), &extractionshadowports.ConsiderExtractionShadowRequest{
 		TenantInfo:           testTenant(),
 		DocumentID:           documentID,
 		ExtractedAt:          extractedAt,
@@ -130,7 +130,7 @@ func TestConsiderExtractionIsIdempotentForOneExtraction(t *testing.T) {
 	w.enable(100)
 	documentID := w.document(extractedAt)
 
-	req := &services.ConsiderExtractionShadowRequest{
+	req := &extractionshadowports.ConsiderExtractionShadowRequest{
 		TenantInfo:           testTenant(),
 		DocumentID:           documentID,
 		ExtractedAt:          extractedAt,
@@ -155,7 +155,7 @@ func TestConsiderExtractionRestartsARowWhoseWorkflowNeverStarted(t *testing.T) {
 	documentID := w.document(extractedAt)
 	w.pending(documentID)
 
-	decision, err := w.svc.ConsiderExtraction(t.Context(), &services.ConsiderExtractionShadowRequest{
+	decision, err := w.svc.ConsiderExtraction(t.Context(), &extractionshadowports.ConsiderExtractionShadowRequest{
 		TenantInfo:           testTenant(),
 		DocumentID:           documentID,
 		ExtractedAt:          extractedAt,
@@ -173,7 +173,7 @@ func TestConsiderExtractionSkipsWhenProductionAlreadyUsedTheCandidate(t *testing
 	w := newWorld()
 	w.enable(100)
 
-	decision, err := w.svc.ConsiderExtraction(t.Context(), &services.ConsiderExtractionShadowRequest{
+	decision, err := w.svc.ConsiderExtraction(t.Context(), &extractionshadowports.ConsiderExtractionShadowRequest{
 		TenantInfo:           testTenant(),
 		DocumentID:           w.document(extractedAt),
 		ExtractedAt:          extractedAt,
@@ -193,7 +193,7 @@ func TestConsiderExtractionFollowsTheSample(t *testing.T) {
 	sampled, skipped := 0, 0
 	for range 200 {
 		documentID := w.document(extractedAt)
-		decision, err := w.svc.ConsiderExtraction(t.Context(), &services.ConsiderExtractionShadowRequest{
+		decision, err := w.svc.ConsiderExtraction(t.Context(), &extractionshadowports.ConsiderExtractionShadowRequest{
 			TenantInfo:           testTenant(),
 			DocumentID:           documentID,
 			ExtractedAt:          extractedAt,
@@ -221,7 +221,7 @@ func TestConsiderExtractionStopsAtTheDailyLimit(t *testing.T) {
 
 	reasons := make([]string, 0, 3)
 	for range 3 {
-		decision, err := w.svc.ConsiderExtraction(t.Context(), &services.ConsiderExtractionShadowRequest{
+		decision, err := w.svc.ConsiderExtraction(t.Context(), &extractionshadowports.ConsiderExtractionShadowRequest{
 			TenantInfo:           testTenant(),
 			DocumentID:           w.document(extractedAt),
 			ExtractedAt:          extractedAt,
@@ -241,7 +241,7 @@ func TestConsiderExtractionIgnoresASupersededExtraction(t *testing.T) {
 	w := newWorld()
 	w.enable(100)
 
-	decision, err := w.svc.ConsiderExtraction(t.Context(), &services.ConsiderExtractionShadowRequest{
+	decision, err := w.svc.ConsiderExtraction(t.Context(), &extractionshadowports.ConsiderExtractionShadowRequest{
 		TenantInfo:           testTenant(),
 		DocumentID:           w.document(extractedAt + 60),
 		ExtractedAt:          extractedAt,
@@ -259,7 +259,7 @@ func TestConsiderExtractionRecordsAWorkflowThatCouldNotStart(t *testing.T) {
 	w.enable(100)
 	w.starter.err = errUpstream
 
-	decision, err := w.svc.ConsiderExtraction(t.Context(), &services.ConsiderExtractionShadowRequest{
+	decision, err := w.svc.ConsiderExtraction(t.Context(), &extractionshadowports.ConsiderExtractionShadowRequest{
 		TenantInfo:           testTenant(),
 		DocumentID:           w.document(extractedAt),
 		ExtractedAt:          extractedAt,
@@ -279,7 +279,7 @@ func TestRunShadowStoresTheWouldBeDraft(t *testing.T) {
 	documentID := w.document(extractedAt)
 	result := w.pending(documentID)
 	cost := decimal.RequireFromString("0.0042")
-	w.predictor.prediction = &services.ShadowDraftPrediction{
+	w.predictor.prediction = &extractionshadowports.ShadowDraftPrediction{
 		DraftData:    draftData("2563.12", "OUG-8393964"),
 		Accepted:     true,
 		Model:        "trenova-extract-v3",
@@ -290,7 +290,7 @@ func TestRunShadowStoresTheWouldBeDraft(t *testing.T) {
 		CostUSD:      &cost,
 	}
 
-	require.NoError(t, w.runner.RunShadow(t.Context(), &services.RunExtractionShadowRequest{
+	require.NoError(t, w.runner.RunShadow(t.Context(), &extractionshadowports.RunExtractionShadowRequest{
 		TenantInfo: testTenant(),
 		ResultID:   result.ID,
 	}))
@@ -317,12 +317,12 @@ func TestRunShadowScoresAtOnceWhenThePersonConfirmedFirst(t *testing.T) {
 	documentID := w.document(extractedAt)
 	result := w.pending(documentID)
 	correction := w.correction(documentID, extractedAt+120, draftData("2500.00", "OUG-8393964"))
-	w.predictor.prediction = &services.ShadowDraftPrediction{
+	w.predictor.prediction = &extractionshadowports.ShadowDraftPrediction{
 		DraftData: draftData("2563.12", "OUG-8393964"),
 		Accepted:  true,
 	}
 
-	require.NoError(t, w.runner.RunShadow(t.Context(), &services.RunExtractionShadowRequest{
+	require.NoError(t, w.runner.RunShadow(t.Context(), &extractionshadowports.RunExtractionShadowRequest{
 		TenantInfo: testTenant(),
 		ResultID:   result.ID,
 	}))
@@ -343,9 +343,9 @@ func TestRunShadowDoesNotScoreAgainstAnEarlierConfirmation(t *testing.T) {
 	documentID := w.document(extractedAt)
 	result := w.pending(documentID)
 	w.correction(documentID, extractedAt-3600, draftData("2500.00", "OUG-8393964"))
-	w.predictor.prediction = &services.ShadowDraftPrediction{DraftData: draftData("2563.12", "X")}
+	w.predictor.prediction = &extractionshadowports.ShadowDraftPrediction{DraftData: draftData("2563.12", "X")}
 
-	require.NoError(t, w.runner.RunShadow(t.Context(), &services.RunExtractionShadowRequest{
+	require.NoError(t, w.runner.RunShadow(t.Context(), &extractionshadowports.RunExtractionShadowRequest{
 		TenantInfo: testTenant(),
 		ResultID:   result.ID,
 	}))
@@ -362,7 +362,7 @@ func TestRunShadowSkipsWhenTheBudgetIsSpent(t *testing.T) {
 	result := w.pending(w.document(extractedAt))
 	w.budget.decision = &agentquality.BudgetDecision{Stop: true, Reason: "the nightly cap is reached"}
 
-	require.NoError(t, w.runner.RunShadow(t.Context(), &services.RunExtractionShadowRequest{
+	require.NoError(t, w.runner.RunShadow(t.Context(), &extractionshadowports.RunExtractionShadowRequest{
 		TenantInfo: testTenant(),
 		ResultID:   result.ID,
 	}))
@@ -380,7 +380,7 @@ func TestRunShadowSkipsASupersededOrDeletedDocument(t *testing.T) {
 		err    error
 		reason string
 	}{
-		"superseded": {err: services.ErrShadowSuperseded, reason: supersededReason},
+		"superseded": {err: extractionshadowports.ErrShadowSuperseded, reason: supersededReason},
 		"deleted":    {err: errortypes.NewNotFoundError("document not found"), reason: deletedReason},
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -390,7 +390,7 @@ func TestRunShadowSkipsASupersededOrDeletedDocument(t *testing.T) {
 			result := w.pending(w.document(extractedAt))
 			w.predictor.err = tc.err
 
-			require.NoError(t, w.runner.RunShadow(t.Context(), &services.RunExtractionShadowRequest{
+			require.NoError(t, w.runner.RunShadow(t.Context(), &extractionshadowports.RunExtractionShadowRequest{
 				TenantInfo: testTenant(),
 				ResultID:   result.ID,
 			}))
@@ -409,14 +409,14 @@ func TestRunShadowRetriesATransientFailureThenRecordsIt(t *testing.T) {
 	result := w.pending(w.document(extractedAt))
 	w.predictor.err = errUpstream
 
-	err := w.runner.RunShadow(t.Context(), &services.RunExtractionShadowRequest{
+	err := w.runner.RunShadow(t.Context(), &extractionshadowports.RunExtractionShadowRequest{
 		TenantInfo: testTenant(),
 		ResultID:   result.ID,
 	})
 	require.ErrorIs(t, err, errUpstream)
 	assert.Equal(t, extractionshadow.ResultStatusPending, w.results.find(result.ID).Status)
 
-	require.NoError(t, w.runner.RunShadow(t.Context(), &services.RunExtractionShadowRequest{
+	require.NoError(t, w.runner.RunShadow(t.Context(), &extractionshadowports.RunExtractionShadowRequest{
 		TenantInfo:   testTenant(),
 		ResultID:     result.ID,
 		FinalAttempt: true,
@@ -433,7 +433,7 @@ func TestRunShadowLeavesASettledResultAlone(t *testing.T) {
 	result := w.pending(w.document(extractedAt))
 	result.Status = extractionshadow.ResultStatusSkipped
 
-	require.NoError(t, w.runner.RunShadow(t.Context(), &services.RunExtractionShadowRequest{
+	require.NoError(t, w.runner.RunShadow(t.Context(), &extractionshadowports.RunExtractionShadowRequest{
 		TenantInfo: testTenant(),
 		ResultID:   result.ID,
 	}))
@@ -445,7 +445,7 @@ func TestFailShadowSettlesOnlyAPendingResult(t *testing.T) {
 
 	w := newWorld()
 	result := w.pending(w.document(extractedAt))
-	req := repositories.GetExtractionShadowResultRequest{TenantInfo: testTenant(), ID: result.ID}
+	req := extractionshadowports.GetExtractionShadowResultRequest{TenantInfo: testTenant(), ID: result.ID}
 
 	require.NoError(t, w.runner.FailShadow(t.Context(), req, "boom"))
 	assert.Equal(t, extractionshadow.ResultStatusFailed, w.results.find(result.ID).Status)
@@ -536,7 +536,7 @@ func TestReportComparesBothSidesOnTheSameDocuments(t *testing.T) {
 	failed.Status = extractionshadow.ResultStatusFailed
 	w.pending(w.document(extractedAt))
 
-	report, err := w.svc.Report(t.Context(), &services.ExtractionShadowReportRequest{
+	report, err := w.svc.Report(t.Context(), &extractionshadowports.ExtractionShadowReportRequest{
 		TenantInfo: testTenant(),
 		WindowDays: 7,
 	})
@@ -587,7 +587,7 @@ func TestReportLogsAProviderLookupFailure(t *testing.T) {
 
 			report, err := w.svc.Report(
 				t.Context(),
-				&services.ExtractionShadowReportRequest{TenantInfo: testTenant()},
+				&extractionshadowports.ExtractionShadowReportRequest{TenantInfo: testTenant()},
 			)
 			require.NoError(t, err)
 			assert.Empty(t, report.ProviderName)
@@ -600,13 +600,13 @@ func TestReportWithoutACandidateIsEmpty(t *testing.T) {
 	t.Parallel()
 
 	w := newWorld()
-	report, err := w.svc.Report(t.Context(), &services.ExtractionShadowReportRequest{TenantInfo: testTenant()})
+	report, err := w.svc.Report(t.Context(), &extractionshadowports.ExtractionShadowReportRequest{TenantInfo: testTenant()})
 	require.NoError(t, err)
 	assert.Nil(t, report.ProviderID)
 	assert.Equal(t, defaultReportWindowDays, report.WindowDays)
 	assert.Zero(t, report.Sampled)
 
-	_, err = w.svc.Report(t.Context(), &services.ExtractionShadowReportRequest{
+	_, err = w.svc.Report(t.Context(), &extractionshadowports.ExtractionShadowReportRequest{
 		TenantInfo: testTenant(),
 		WindowDays: 400,
 	})
@@ -623,7 +623,7 @@ func TestUpdateSettingsValidatesTheCandidate(t *testing.T) {
 	assert.Equal(t, extractionshadow.DefaultSamplePercent, settings.SamplePercent)
 
 	w.candidate.Enabled = false
-	_, err = w.svc.UpdateSettings(t.Context(), &services.UpdateExtractionShadowSettingsRequest{
+	_, err = w.svc.UpdateSettings(t.Context(), &extractionshadowports.UpdateExtractionShadowSettingsRequest{
 		TenantInfo:    testTenant(),
 		Enabled:       true,
 		ProviderID:    w.candidate.ID,
@@ -635,7 +635,7 @@ func TestUpdateSettingsValidatesTheCandidate(t *testing.T) {
 	assert.Zero(t, w.settings.saves)
 
 	w.candidate.Enabled = true
-	saved, err := w.svc.UpdateSettings(t.Context(), &services.UpdateExtractionShadowSettingsRequest{
+	saved, err := w.svc.UpdateSettings(t.Context(), &extractionshadowports.UpdateExtractionShadowSettingsRequest{
 		TenantInfo:    testTenant(),
 		Enabled:       true,
 		ProviderID:    w.candidate.ID,
@@ -656,7 +656,7 @@ func TestUpdateSettingsRefusesAStaleVersion(t *testing.T) {
 	w.enable(10)
 	w.settings.settings.Version = 3
 
-	_, err := w.svc.UpdateSettings(t.Context(), &services.UpdateExtractionShadowSettingsRequest{
+	_, err := w.svc.UpdateSettings(t.Context(), &extractionshadowports.UpdateExtractionShadowSettingsRequest{
 		TenantInfo:    testTenant(),
 		SamplePercent: 10,
 		DailyLimit:    10,
@@ -672,7 +672,7 @@ func TestUpdateSettingsCanTurnTheShadowOffWithoutAProvider(t *testing.T) {
 	w := newWorld()
 	w.enable(10)
 
-	saved, err := w.svc.UpdateSettings(t.Context(), &services.UpdateExtractionShadowSettingsRequest{
+	saved, err := w.svc.UpdateSettings(t.Context(), &extractionshadowports.UpdateExtractionShadowSettingsRequest{
 		TenantInfo:    testTenant(),
 		Enabled:       false,
 		SamplePercent: 10,
@@ -692,7 +692,7 @@ func TestPurgeExpiredShadowsFollowsCorrectionRetention(t *testing.T) {
 	old.CreatedAt = testNow - 31*timeutils.SecondsPerDay
 	recent := w.pending(w.document(extractedAt))
 
-	purged, err := w.svc.PurgeExpiredShadows(t.Context(), services.PurgeExpiredAICorrectionsRequest{
+	purged, err := w.svc.PurgeExpiredShadows(t.Context(), kernelports.PurgeExpiredAICorrectionsRequest{
 		TenantInfo: testTenant(),
 	})
 	require.NoError(t, err)

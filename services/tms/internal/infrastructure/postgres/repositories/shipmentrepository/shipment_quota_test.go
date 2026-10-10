@@ -1,13 +1,14 @@
 package shipmentrepository
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -18,8 +19,8 @@ import (
 	"go.uber.org/zap"
 )
 
-func refusedDecision(quantity int64) *services.QuotaDecision {
-	return &services.QuotaDecision{
+func refusedDecision(quantity int64) *platformplanports.QuotaDecision {
+	return &platformplanports.QuotaDecision{
 		Meter:     platformcatalog.MeterShipmentsTotal,
 		Plan:      platformplan.PlanKeyFreeDemo,
 		Allowed:   false,
@@ -33,14 +34,14 @@ func TestCreateRefusesBeforeMintingAProNumber(t *testing.T) {
 	t.Parallel()
 
 	conn, sqlMock := dbtest.NewSQLMock(t)
-	guard := mocks.NewMockQuotaGuard(t)
+	guard := platformplanportsmock.NewMockQuotaGuard(t)
 	repo := &repository{db: conn, l: zap.NewNop(), quota: guard}
 	entity := &shipment.Shipment{
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
 	}
 
-	guard.EXPECT().Check(mock.Anything, &services.QuotaRequest{
+	guard.EXPECT().Check(mock.Anything, &platformplanports.QuotaRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
 		Meter:      platformcatalog.MeterShipmentsTotal,
 		Quantity:   1,
@@ -58,17 +59,17 @@ func TestBulkDuplicateRefusesEveryCopyThePlanCannotHold(t *testing.T) {
 	t.Parallel()
 
 	conn, sqlMock := dbtest.NewSQLMock(t)
-	guard := mocks.NewMockQuotaGuard(t)
+	guard := platformplanportsmock.NewMockQuotaGuard(t)
 	repo := &repository{db: conn, l: zap.NewNop(), quota: guard}
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 
-	guard.EXPECT().Check(mock.Anything, &services.QuotaRequest{
+	guard.EXPECT().Check(mock.Anything, &platformplanports.QuotaRequest{
 		TenantInfo: tenant,
 		Meter:      platformcatalog.MeterShipmentsTotal,
 		Quantity:   3,
 	}).Return(refusedDecision(3), nil)
 
-	duplicated, err := repo.BulkDuplicate(t.Context(), &repositories.BulkDuplicateShipmentRequest{
+	duplicated, err := repo.BulkDuplicate(t.Context(), &shipmentports.BulkDuplicateShipmentRequest{
 		TenantInfo: tenant,
 		ShipmentID: pulid.MustNew("shp_"),
 		Count:      3,

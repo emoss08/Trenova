@@ -14,10 +14,10 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/aiaudit"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -60,7 +60,7 @@ func seededLedger(t *testing.T, tenantInfo pagination.TenantInfo, rows int) *fak
 			Purpose:       aiaudit.PurposeLive,
 		})
 	}
-	_, err := ledger.Append(t.Context(), &repositories.AppendAIAuditEventsRequest{
+	_, err := ledger.Append(t.Context(), &aiauditports.AppendAIAuditEventsRequest{
 		TenantInfo: tenantInfo,
 		Events:     events,
 		Sign:       testKeyring(true).Signer(),
@@ -189,8 +189,8 @@ func TestExporter_CSVKeepsTheColumnContractAndDefusesFormulas(t *testing.T) {
 func TestChainComplete_OnlyForAnUnfilteredContiguousRange(t *testing.T) {
 	t.Parallel()
 
-	contiguous := &repositories.AIAuditEventSummary{Count: 10, FirstSeq: 5, LastSeq: 14}
-	gapped := &repositories.AIAuditEventSummary{Count: 9, FirstSeq: 5, LastSeq: 14}
+	contiguous := &aiauditports.AIAuditEventSummary{Count: 10, FirstSeq: 5, LastSeq: 14}
+	gapped := &aiauditports.AIAuditEventSummary{Count: 9, FirstSeq: 5, LastSeq: 14}
 	filtered := &aiaudit.ExportFilter{FieldFilters: []domaintypes.FieldFilter{{
 		Field: "kind", Operator: "eq", Value: "ToolCall",
 	}}}
@@ -199,11 +199,11 @@ func TestChainComplete_OnlyForAnUnfilteredContiguousRange(t *testing.T) {
 	assert.True(t, ChainComplete(nil, contiguous))
 	assert.False(t, ChainComplete(&aiaudit.ExportFilter{}, gapped))
 	assert.False(t, ChainComplete(filtered, contiguous))
-	assert.False(t, ChainComplete(nil, &repositories.AIAuditEventSummary{}))
+	assert.False(t, ChainComplete(nil, &aiauditports.AIAuditEventSummary{}))
 }
 
 type fakeStorage struct {
-	storage.Client
+	kernelports.Client
 
 	mu      sync.Mutex
 	objects map[string][]byte
@@ -211,8 +211,8 @@ type fakeStorage struct {
 
 func (f *fakeStorage) Upload(
 	_ context.Context,
-	params *storage.UploadParams,
-) (*storage.FileInfo, error) {
+	params *kernelports.UploadParams,
+) (*kernelports.FileInfo, error) {
 	body, err := io.ReadAll(params.Body)
 	if err != nil {
 		return nil, err
@@ -224,12 +224,12 @@ func (f *fakeStorage) Upload(
 	}
 	f.objects[params.Key] = body
 
-	return &storage.FileInfo{Key: params.Key, Size: int64(len(body))}, nil
+	return &kernelports.FileInfo{Key: params.Key, Size: int64(len(body))}, nil
 }
 
 func (f *fakeStorage) GetPresignedURL(
 	_ context.Context,
-	params *storage.PresignedURLParams,
+	params *kernelports.PresignedURLParams,
 ) (string, error) {
 	return "https://files.example/" + params.Key, nil
 }
@@ -243,7 +243,7 @@ func (f *fakeStorage) Delete(_ context.Context, key string) error {
 }
 
 type fakeExportRepo struct {
-	repositories.AIAuditExportRepository
+	aiauditports.AIAuditExportRepository
 
 	mu      sync.Mutex
 	exports map[pulid.ID]*aiaudit.AIAuditExport
@@ -279,7 +279,7 @@ func (f *fakeExportRepo) Update(
 
 func (f *fakeExportRepo) GetByID(
 	_ context.Context,
-	req repositories.GetAIAuditExportRequest,
+	req aiauditports.GetAIAuditExportRequest,
 ) (*aiaudit.AIAuditExport, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -289,7 +289,7 @@ func (f *fakeExportRepo) GetByID(
 }
 
 type fakeStarter struct {
-	serviceports.WorkflowStarter
+	kernelports.WorkflowStarter
 
 	started []string
 }
@@ -329,11 +329,11 @@ func testExports(
 	}), repo, starter, notifier, audited
 }
 
-func actorFor(tenantInfo pagination.TenantInfo) *serviceports.RequestActor {
+func actorFor(tenantInfo pagination.TenantInfo) *permissionports.RequestActor {
 	user := pulid.MustNew("usr_")
 
-	return &serviceports.RequestActor{
-		PrincipalType:  serviceports.PrincipalTypeUser,
+	return &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    user,
 		UserID:         user,
 		OrganizationID: tenantInfo.OrgID,
@@ -349,7 +349,7 @@ func TestExports_ASmallExportIsWrittenAtOnceAndAudited(t *testing.T) {
 	exports, _, starter, notifier, audited := testExports(ledger, 10)
 	actor := actorFor(tenantInfo)
 
-	export, err := exports.Request(t.Context(), &serviceports.RequestAIAuditExportRequest{
+	export, err := exports.Request(t.Context(), &aiauditports.RequestAIAuditExportRequest{
 		Actor:  actor,
 		Format: aiaudit.ExportFormatCSV,
 		From:   testNow - 1000,
@@ -363,11 +363,11 @@ func TestExports_ASmallExportIsWrittenAtOnceAndAudited(t *testing.T) {
 	assert.True(t, export.ChainComplete)
 	assert.Empty(t, starter.started)
 	require.Len(t, notifier.personal, 1)
-	assert.Equal(t, serviceports.AIAuditExportReadyEvent, notifier.personal[0].EventType)
+	assert.Equal(t, aiauditports.AIAuditExportReadyEvent, notifier.personal[0].EventType)
 	require.Len(t, audited.entries, 1)
 	assert.True(t, audited.entries[0].Critical)
 
-	download, err := exports.Download(t.Context(), &serviceports.GetAIAuditExportDownloadRequest{
+	download, err := exports.Download(t.Context(), &aiauditports.GetAIAuditExportDownloadRequest{
 		Actor:    actor,
 		ExportID: export.ID,
 	})
@@ -376,7 +376,7 @@ func TestExports_ASmallExportIsWrittenAtOnceAndAudited(t *testing.T) {
 	assert.Equal(t, testNow+60, download.ExpiresAt)
 	assert.Len(t, audited.entries, 2, "the download is audited too")
 
-	_, err = exports.Download(t.Context(), &serviceports.GetAIAuditExportDownloadRequest{
+	_, err = exports.Download(t.Context(), &aiauditports.GetAIAuditExportDownloadRequest{
 		Actor:    actorFor(tenantInfo),
 		ExportID: export.ID,
 	})
@@ -390,7 +390,7 @@ func TestExports_ALargeExportRunsOnTheReportQueue(t *testing.T) {
 	ledger := seededLedger(t, tenantInfo, 20)
 	exports, _, starter, _, _ := testExports(ledger, 10)
 
-	export, err := exports.Request(t.Context(), &serviceports.RequestAIAuditExportRequest{
+	export, err := exports.Request(t.Context(), &aiauditports.RequestAIAuditExportRequest{
 		Actor:  actorFor(tenantInfo),
 		Format: aiaudit.ExportFormatJSON,
 		From:   testNow - 1000,
@@ -400,7 +400,7 @@ func TestExports_ALargeExportRunsOnTheReportQueue(t *testing.T) {
 
 	assert.Equal(t, aiaudit.ExportStatusRunning, export.Status)
 	require.Len(t, starter.started, 1)
-	assert.Contains(t, starter.started[0], serviceports.AIAuditExportWorkflowName+"|report-queue")
+	assert.Contains(t, starter.started[0], aiauditports.AIAuditExportWorkflowName+"|report-queue")
 
 	finished, err := exports.Run(t.Context(), tenantInfo, export.ID, nil)
 	require.NoError(t, err)
@@ -415,7 +415,7 @@ func TestExports_AnExportPastTheCapIsRefused(t *testing.T) {
 	ledger := seededLedger(t, tenantInfo, 150)
 	exports, repo, _, _, _ := testExports(ledger, 10)
 
-	_, err := exports.Request(t.Context(), &serviceports.RequestAIAuditExportRequest{
+	_, err := exports.Request(t.Context(), &aiauditports.RequestAIAuditExportRequest{
 		Actor:  actorFor(tenantInfo),
 		Format: aiaudit.ExportFormatJSON,
 		From:   testNow - 1000,

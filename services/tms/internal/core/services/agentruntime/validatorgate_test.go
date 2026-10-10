@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -69,15 +69,15 @@ func TestRun_AToolThatSaysItWouldFailIsRefusedAtEveryTier(t *testing.T) {
 				stubActionToolAlias: actionTool("update_report", tc.tier, nil),
 				invalid:             errors.New("the report no longer has a column named lateness"),
 			}
-			completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+			completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 				toolTurn("update_report", map[string]any{"definitionId": "rd_1"}),
 				textTurn("I will fix the column."),
 			}}
 			rt := newRuntime(completion, &stubQueryRegistry{},
-				&stubActionRegistry{Tools: []serviceports.AgentTool{tool}}, nil)
+				&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
 			actor := testActor()
 
-			result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+			result, err := rt.Run(t.Context(), &agentports.RunRequest{
 				Definition: tc.definition("update_report"),
 				Actor:      actor,
 				Input:      "update",
@@ -114,14 +114,14 @@ func TestRun_AToolThatValidatesRunsWhenItsCheckPasses(t *testing.T) {
 	tool := &validatingActionTool{
 		stubActionToolAlias: actionTool("update_report", agent.TierAutoExecute, nil),
 	}
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		toolTurn("update_report", map[string]any{"definitionId": "rd_1"}),
 		textTurn("Done."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []serviceports.AgentTool{tool}}, nil)
+		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
 
-	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+	result, err := rt.Run(t.Context(), &agentports.RunRequest{
 		Definition: autoDefinition("update_report"),
 		Actor:      testActor(),
 		Input:      "update",

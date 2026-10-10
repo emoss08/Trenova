@@ -8,8 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
@@ -29,33 +30,33 @@ const (
 type accountingMappingWriter interface {
 	FindMapping(
 		ctx context.Context,
-		req *serviceports.SetAccountingMappingRequest,
+		req *accountingsyncports.SetAccountingMappingRequest,
 	) (*accountingsync.AccountingMapping, error)
 	GetReferenceObjects(
 		ctx context.Context,
-		req *serviceports.GetAccountingReferenceObjectsRequest,
+		req *accountingsyncports.GetAccountingReferenceObjectsRequest,
 	) ([]*accountingsync.AccountingReferenceObject, error)
 	Set(
 		ctx context.Context,
-		req *serviceports.SetAccountingMappingRequest,
+		req *accountingsyncports.SetAccountingMappingRequest,
 	) (*accountingsync.AccountingMapping, error)
 	Clear(
 		ctx context.Context,
-		req *serviceports.AccountingMappingActionRequest,
+		req *accountingsyncports.AccountingMappingActionRequest,
 	) (*accountingsync.AccountingMapping, error)
 	CreateReferenceRecord(
 		ctx context.Context,
-		req *serviceports.CreateAccountingReferenceRecordRequest,
+		req *accountingsyncports.CreateAccountingReferenceRecordRequest,
 	) (*accountingsync.AccountingMapping, error)
 	RequestRefresh(
 		ctx context.Context,
-		req *serviceports.AccountingSetupRequest,
+		req *accountingsyncports.AccountingSetupRequest,
 	) (*accountingsync.AccountingConnection, error)
 	Summary(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		integrationType integration.Type,
-	) (*serviceports.AccountingMappingSummary, error)
+	) (*accountingsyncports.AccountingMappingSummary, error)
 	GuardHistory(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -113,8 +114,8 @@ func accountingSystemFrom(params map[string]any) (integration.Type, error) {
 }
 
 func mappingRequestFrom(
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.SetAccountingMappingRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*accountingsyncports.SetAccountingMappingRequest, error) {
 	system, err := accountingSystemFrom(params.Params)
 	if err != nil {
 		return nil, err
@@ -127,7 +128,7 @@ func mappingRequestFrom(
 	if err != nil {
 		return nil, err
 	}
-	req := &serviceports.SetAccountingMappingRequest{
+	req := &accountingsyncports.SetAccountingMappingRequest{
 		TenantInfo:      tenantFrom(*params),
 		UserID:          params.Actor.UserID,
 		IntegrationType: system,
@@ -147,10 +148,10 @@ func mappingRequestFrom(
 
 func findMapping(
 	ctx context.Context,
-	tool serviceports.AgentTool,
+	tool agentports.AgentTool,
 	mappings accountingMappingWriter,
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.SetAccountingMappingRequest, *accountingsync.AccountingMapping, error) {
+	params *agentports.ToolExecuteParams,
+) (*accountingsyncports.SetAccountingMappingRequest, *accountingsync.AccountingMapping, error) {
 	if err := guardExecute(tool, *params); err != nil {
 		return nil, nil, err
 	}
@@ -176,8 +177,8 @@ func accountingMappingPolicy(
 	name string,
 	reversible bool,
 	rationale string,
-) serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+) agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          name,
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceAccountingIntegration,
@@ -197,13 +198,13 @@ type setAccountingMappingTool struct {
 	mappings accountingMappingWriter
 }
 
-func newSetAccountingMappingTool(mappings accountingMappingWriter) serviceports.AgentTool {
+func newSetAccountingMappingTool(mappings accountingMappingWriter) agentports.AgentTool {
 	return &setAccountingMappingTool{mappings: mappings}
 }
 
 func provideSetAccountingMappingTool(
-	mappings serviceports.AccountingMappingService,
-) serviceports.AgentTool {
+	mappings accountingsyncports.AccountingMappingService,
+) agentports.AgentTool {
 	return newSetAccountingMappingTool(mappings)
 }
 
@@ -245,7 +246,7 @@ func (t *setAccountingMappingTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(properties, paramAccountingSystem, "externalId", "reason")
 }
 
-func (t *setAccountingMappingTool) Policy() serviceports.ToolPolicy {
+func (t *setAccountingMappingTool) Policy() agentports.ToolPolicy {
 	return accountingMappingPolicy(t.Name(), true,
 		"Decides which account or record Trenova's invoices, payments and bills will post "+
 			"to, so a person approves it; clearing or changing it undoes it.")
@@ -253,8 +254,8 @@ func (t *setAccountingMappingTool) Policy() serviceports.ToolPolicy {
 
 func (t *setAccountingMappingTool) request(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.SetAccountingMappingRequest, *accountingsync.AccountingMapping, *accountingsync.AccountingReferenceObject, error) {
+	params *agentports.ToolExecuteParams,
+) (*accountingsyncports.SetAccountingMappingRequest, *accountingsync.AccountingMapping, *accountingsync.AccountingReferenceObject, error) {
 	req, row, err := findMapping(ctx, t, t.mappings, params)
 	if err != nil {
 		return nil, nil, nil, err
@@ -269,7 +270,7 @@ func (t *setAccountingMappingTool) request(
 	}
 	refs, err := t.mappings.GetReferenceObjects(
 		ctx,
-		&serviceports.GetAccountingReferenceObjectsRequest{
+		&accountingsyncports.GetAccountingReferenceObjectsRequest{
 			TenantInfo:   req.TenantInfo,
 			ConnectionID: row.ConnectionID,
 			Kind:         row.ProviderKind,
@@ -297,7 +298,7 @@ func (t *setAccountingMappingTool) request(
 
 func (t *setAccountingMappingTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, _, _, err := t.request(ctx, &params)
 	return err
@@ -305,7 +306,7 @@ func (t *setAccountingMappingTool) Validate(
 
 func (t *setAccountingMappingTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	req, _, _, err := t.request(ctx, &params)
 	if err != nil {
@@ -319,13 +320,13 @@ type clearAccountingMappingTool struct {
 	mappings accountingMappingWriter
 }
 
-func newClearAccountingMappingTool(mappings accountingMappingWriter) serviceports.AgentTool {
+func newClearAccountingMappingTool(mappings accountingMappingWriter) agentports.AgentTool {
 	return &clearAccountingMappingTool{mappings: mappings}
 }
 
 func provideClearAccountingMappingTool(
-	mappings serviceports.AccountingMappingService,
-) serviceports.AgentTool {
+	mappings accountingsyncports.AccountingMappingService,
+) agentports.AgentTool {
 	return newClearAccountingMappingTool(mappings)
 }
 
@@ -350,7 +351,7 @@ func (t *clearAccountingMappingTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(mappingTargetProperties(), paramAccountingSystem)
 }
 
-func (t *clearAccountingMappingTool) Policy() serviceports.ToolPolicy {
+func (t *clearAccountingMappingTool) Policy() agentports.ToolPolicy {
 	return accountingMappingPolicy(t.Name(), true,
 		"Unmatches a record so it cannot sync until someone maps it again; mapping it "+
 			"again undoes it.")
@@ -358,7 +359,7 @@ func (t *clearAccountingMappingTool) Policy() serviceports.ToolPolicy {
 
 func (t *clearAccountingMappingTool) mapping(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*accountingsync.AccountingMapping, error) {
 	_, row, err := findMapping(ctx, t, t.mappings, params)
 	if err != nil {
@@ -372,7 +373,7 @@ func (t *clearAccountingMappingTool) mapping(
 
 func (t *clearAccountingMappingTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.mapping(ctx, &params)
 	return err
@@ -380,13 +381,13 @@ func (t *clearAccountingMappingTool) Validate(
 
 func (t *clearAccountingMappingTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	row, err := t.mapping(ctx, &params)
 	if err != nil {
 		return err
 	}
-	_, err = t.mappings.Clear(ctx, &serviceports.AccountingMappingActionRequest{
+	_, err = t.mappings.Clear(ctx, &accountingsyncports.AccountingMappingActionRequest{
 		TenantInfo: tenantFrom(params),
 		UserID:     params.Actor.UserID,
 		ID:         row.ID,
@@ -401,13 +402,13 @@ type createAccountingReferenceRecordTool struct {
 
 func newCreateAccountingReferenceRecordTool(
 	mappings accountingMappingWriter,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return &createAccountingReferenceRecordTool{mappings: mappings}
 }
 
 func provideCreateAccountingReferenceRecordTool(
-	mappings serviceports.AccountingMappingService,
-) serviceports.AgentTool {
+	mappings accountingsyncports.AccountingMappingService,
+) agentports.AgentTool {
 	return newCreateAccountingReferenceRecordTool(mappings)
 }
 
@@ -443,7 +444,7 @@ func (t *createAccountingReferenceRecordTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(properties, paramAccountingSystem)
 }
 
-func (t *createAccountingReferenceRecordTool) Policy() serviceports.ToolPolicy {
+func (t *createAccountingReferenceRecordTool) Policy() agentports.ToolPolicy {
 	return accountingMappingPolicy(t.Name(), false,
 		"Creates a record in the organization's own accounting system; Trenova cannot "+
 			"delete it again, so a person approves it.")
@@ -451,7 +452,7 @@ func (t *createAccountingReferenceRecordTool) Policy() serviceports.ToolPolicy {
 
 func (t *createAccountingReferenceRecordTool) mapping(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*accountingsync.AccountingMapping, error) {
 	_, row, err := findMapping(ctx, t, t.mappings, params)
 	if err != nil {
@@ -475,7 +476,7 @@ func (t *createAccountingReferenceRecordTool) mapping(
 
 func (t *createAccountingReferenceRecordTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.mapping(ctx, &params)
 	return err
@@ -483,7 +484,7 @@ func (t *createAccountingReferenceRecordTool) Validate(
 
 func (t *createAccountingReferenceRecordTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	row, err := t.mapping(ctx, &params)
 	if err != nil {
@@ -491,7 +492,7 @@ func (t *createAccountingReferenceRecordTool) Execute(
 	}
 	_, err = t.mappings.CreateReferenceRecord(
 		ctx,
-		&serviceports.CreateAccountingReferenceRecordRequest{
+		&accountingsyncports.CreateAccountingReferenceRecordRequest{
 			TenantInfo: tenantFrom(params),
 			UserID:     params.Actor.UserID,
 			MappingID:  row.ID,
@@ -508,13 +509,13 @@ type refreshAccountingReferenceDataTool struct {
 
 func newRefreshAccountingReferenceDataTool(
 	mappings accountingMappingWriter,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return &refreshAccountingReferenceDataTool{mappings: mappings}
 }
 
 func provideRefreshAccountingReferenceDataTool(
-	mappings serviceports.AccountingMappingService,
-) serviceports.AgentTool {
+	mappings accountingsyncports.AccountingMappingService,
+) agentports.AgentTool {
 	return newRefreshAccountingReferenceDataTool(mappings)
 }
 
@@ -545,8 +546,8 @@ func (t *refreshAccountingReferenceDataTool) ParamSchema() map[string]any {
 	)
 }
 
-func (t *refreshAccountingReferenceDataTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *refreshAccountingReferenceDataTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceAccountingIntegration,
@@ -565,8 +566,8 @@ func (t *refreshAccountingReferenceDataTool) Policy() serviceports.ToolPolicy {
 
 func (t *refreshAccountingReferenceDataTool) setup(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.AccountingSetupRequest, *serviceports.AccountingMappingSummary, error) {
+	params *agentports.ToolExecuteParams,
+) (*accountingsyncports.AccountingSetupRequest, *accountingsyncports.AccountingMappingSummary, error) {
 	if err := guardExecute(t, *params); err != nil {
 		return nil, nil, err
 	}
@@ -574,7 +575,7 @@ func (t *refreshAccountingReferenceDataTool) setup(
 	if err != nil {
 		return nil, nil, err
 	}
-	req := &serviceports.AccountingSetupRequest{
+	req := &accountingsyncports.AccountingSetupRequest{
 		TenantInfo:      tenantFrom(*params),
 		UserID:          params.Actor.UserID,
 		IntegrationType: system,
@@ -594,7 +595,7 @@ func (t *refreshAccountingReferenceDataTool) setup(
 
 func (t *refreshAccountingReferenceDataTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, _, err := t.setup(ctx, &params)
 	return err
@@ -602,7 +603,7 @@ func (t *refreshAccountingReferenceDataTool) Validate(
 
 func (t *refreshAccountingReferenceDataTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	req, _, err := t.setup(ctx, &params)
 	if err != nil {

@@ -9,10 +9,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -51,33 +52,33 @@ type driverPayReviewer interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		disputeID pulid.ID,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*driversettlementservice.DisputeChange, error)
 	StartDisputeReview(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		disputeID pulid.ID,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*driversettlement.Dispute, error)
 	PlanResolveDispute(
 		ctx context.Context,
 		req *driversettlementservice.ResolveDisputeRequest,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*driversettlementservice.ResolveDisputePlan, error)
 	ResolveDispute(
 		ctx context.Context,
 		req *driversettlementservice.ResolveDisputeRequest,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*driversettlement.Dispute, error)
 	PlanReviewExpense(
 		ctx context.Context,
 		req *driversettlementservice.ReviewExpenseRequest,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*driversettlementservice.ReviewExpensePlan, error)
 	ReviewExpense(
 		ctx context.Context,
 		req *driversettlementservice.ReviewExpenseRequest,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*driverpay.Expense, error)
 }
 
@@ -92,13 +93,13 @@ func driverPayReviewToolProviders() []any {
 }
 
 func classifyDriverPayDecision(moneyMoves func(params map[string]any) bool) func(
-	serviceports.ToolExecuteParams,
-) serviceports.CallPolicy {
-	return func(params serviceports.ToolExecuteParams) serviceports.CallPolicy {
+	agentports.ToolExecuteParams,
+) agentports.CallPolicy {
+	return func(params agentports.ToolExecuteParams) agentports.CallPolicy {
 		if moneyMoves(params.Params) {
-			return serviceports.CallPolicy{Egress: agent.EgressMoney}
+			return agentports.CallPolicy{Egress: agent.EgressMoney}
 		}
-		return serviceports.CallPolicy{Egress: agent.EgressDriverVisible}
+		return agentports.CallPolicy{Egress: agent.EgressDriverVisible}
 	}
 }
 
@@ -145,7 +146,7 @@ type disputeStart struct {
 	disputeID pulid.ID
 }
 
-func newStartSettlementDisputeReviewTool(reviewer driverPayReviewer) serviceports.AgentTool {
+func newStartSettlementDisputeReviewTool(reviewer driverPayReviewer) agentports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
 		"start_settlement_dispute_review",
 		"Move an open pay dispute a driver raised to under review, so the driver and the "+
@@ -167,7 +168,7 @@ func newStartSettlementDisputeReviewTool(reviewer driverPayReviewer) serviceport
 	return newReportingReceivableTool(spec, receivablePlan[
 		*disputeStart, *driversettlementservice.DisputeChange,
 	]{
-		request: func(params *serviceports.ToolExecuteParams) (*disputeStart, error) {
+		request: func(params *agentports.ToolExecuteParams) (*disputeStart, error) {
 			id, err := requirePulid(params.Params, paramDisputeID)
 			if err != nil {
 				return nil, err
@@ -177,7 +178,7 @@ func newStartSettlementDisputeReviewTool(reviewer driverPayReviewer) serviceport
 		plan: func(
 			ctx context.Context,
 			req *disputeStart,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*driversettlementservice.DisputeChange, error) {
 			return reviewer.PlanStartDisputeReview(ctx, req.tenant, req.disputeID, params.Actor)
 		},
@@ -197,7 +198,7 @@ func newStartSettlementDisputeReviewTool(reviewer driverPayReviewer) serviceport
 		run: func(
 			ctx context.Context,
 			req *disputeStart,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			updated, err := reviewer.StartDisputeReview(ctx, req.tenant, req.disputeID,
 				params.Actor)
@@ -211,7 +212,7 @@ func newStartSettlementDisputeReviewTool(reviewer driverPayReviewer) serviceport
 }
 
 func resolvePayDisputeRequest(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*driversettlementservice.ResolveDisputeRequest, error) {
 	id, err := requirePulid(params.Params, paramDisputeID)
 	if err != nil {
@@ -255,7 +256,7 @@ func resolvePayDisputeRequest(
 	return req, nil
 }
 
-func newResolveSettlementDisputeTool(reviewer driverPayReviewer) serviceports.AgentTool {
+func newResolveSettlementDisputeTool(reviewer driverPayReviewer) agentports.AgentTool {
 	spec := targeting(personOnly(withSchema(wfSpec(
 		"resolve_settlement_dispute",
 		"Draft the decision on a driver's pay dispute for a person to approve. Approve or "+
@@ -300,7 +301,7 @@ func newResolveSettlementDisputeTool(reviewer driverPayReviewer) serviceports.Ag
 		plan: func(
 			ctx context.Context,
 			req *driversettlementservice.ResolveDisputeRequest,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*driversettlementservice.ResolveDisputePlan, error) {
 			return reviewer.PlanResolveDispute(ctx, req, params.Actor)
 		},
@@ -350,7 +351,7 @@ func newResolveSettlementDisputeTool(reviewer driverPayReviewer) serviceports.Ag
 		run: func(
 			ctx context.Context,
 			req *driversettlementservice.ResolveDisputeRequest,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			updated, err := reviewer.ResolveDispute(ctx, req, params.Actor)
 			if err != nil {
@@ -363,7 +364,7 @@ func newResolveSettlementDisputeTool(reviewer driverPayReviewer) serviceports.Ag
 }
 
 func reviewExpenseFrom(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*driversettlementservice.ReviewExpenseRequest, error) {
 	id, err := requirePulid(params.Params, paramExpenseID)
 	if err != nil {
@@ -385,7 +386,7 @@ func reviewExpenseFrom(
 	}, nil
 }
 
-func newReviewDriverExpenseTool(reviewer driverPayReviewer) serviceports.AgentTool {
+func newReviewDriverExpenseTool(reviewer driverPayReviewer) agentports.AgentTool {
 	spec := targeting(personOnly(withSchema(wfSpec(
 		"review_driver_expense",
 		"Draft the decision on a driver's expense claim for a person to approve. Approve "+
@@ -421,7 +422,7 @@ func newReviewDriverExpenseTool(reviewer driverPayReviewer) serviceports.AgentTo
 		plan: func(
 			ctx context.Context,
 			req *driversettlementservice.ReviewExpenseRequest,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*driversettlementservice.ReviewExpensePlan, error) {
 			return reviewer.PlanReviewExpense(ctx, req, params.Actor)
 		},
@@ -464,7 +465,7 @@ func newReviewDriverExpenseTool(reviewer driverPayReviewer) serviceports.AgentTo
 		run: func(
 			ctx context.Context,
 			req *driversettlementservice.ReviewExpenseRequest,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			updated, err := reviewer.ReviewExpense(ctx, req, params.Actor)
 			if err != nil {
@@ -478,16 +479,16 @@ func newReviewDriverExpenseTool(reviewer driverPayReviewer) serviceports.AgentTo
 
 func provideStartSettlementDisputeReviewTool(
 	s *driversettlementservice.Service,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newStartSettlementDisputeReviewTool(s)
 }
 
 func provideResolveSettlementDisputeTool(
 	s *driversettlementservice.Service,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newResolveSettlementDisputeTool(s)
 }
 
-func provideReviewDriverExpenseTool(s *driversettlementservice.Service) serviceports.AgentTool {
+func provideReviewDriverExpenseTool(s *driversettlementservice.Service) agentports.AgentTool {
 	return newReviewDriverExpenseTool(s)
 }

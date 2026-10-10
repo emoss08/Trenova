@@ -6,9 +6,10 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/intutils"
@@ -34,7 +35,7 @@ const (
 type RootParams struct {
 	Anchor         aitrace.Anchor
 	Definition     *agentdefinition.Definition
-	OwnerKind      serviceports.RunStepOwnerKind
+	OwnerKind      kernelports.RunStepOwnerKind
 	OwnerID        pulid.ID
 	RunID          pulid.ID
 	TurnID         pulid.ID
@@ -45,8 +46,8 @@ type RootParams struct {
 	Trigger        string
 	Status         string
 	Failure        *modelcall.Failure
-	Result         *serviceports.RunResult
-	Usage          *serviceports.RunUsage
+	Result         *agentports.RunResult
+	Usage          *agentports.RunUsage
 	ToolCalls      int
 	Purpose        string
 	Start          time.Time
@@ -158,8 +159,8 @@ type DelegateSpan struct {
 func DelegateSpans(events []temporaltype.StreamItem) map[string]DelegateSpan {
 	spans := make(map[string]DelegateSpan)
 	for _, event := range events {
-		if event.Event != serviceports.AssistantEventDelegateStarted &&
-			event.Event != serviceports.AssistantEventDelegateFinished {
+		if event.Event != agentports.AssistantEventDelegateStarted &&
+			event.Event != agentports.AssistantEventDelegateFinished {
 			continue
 		}
 		fields := eventFields(event.Data)
@@ -173,7 +174,7 @@ func DelegateSpans(events []temporaltype.StreamItem) map[string]DelegateSpan {
 		if event.At == 0 {
 			at = time.Time{}
 		}
-		if event.Event == serviceports.AssistantEventDelegateStarted {
+		if event.Event == agentports.AssistantEventDelegateStarted {
 			span.Start = at
 		} else {
 			span.End = at
@@ -190,20 +191,20 @@ func eventFields(data any) map[string]any {
 	switch typed := data.(type) {
 	case map[string]any:
 		return typed
-	case serviceports.AssistantDelegateStartedEvent:
+	case agentports.AssistantDelegateStartedEvent:
 		return map[string]any{delegateFieldCallID: typed.DelegateCallID}
-	case *serviceports.AssistantDelegateStartedEvent:
+	case *agentports.AssistantDelegateStartedEvent:
 		return map[string]any{delegateFieldCallID: typed.DelegateCallID}
-	case serviceports.AssistantDelegateFinishedEvent:
+	case agentports.AssistantDelegateFinishedEvent:
 		return delegateFinishedFields(&typed)
-	case *serviceports.AssistantDelegateFinishedEvent:
+	case *agentports.AssistantDelegateFinishedEvent:
 		return delegateFinishedFields(typed)
 	default:
 		return nil
 	}
 }
 
-func delegateFinishedFields(event *serviceports.AssistantDelegateFinishedEvent) map[string]any {
+func delegateFinishedFields(event *agentports.AssistantDelegateFinishedEvent) map[string]any {
 	return map[string]any{
 		delegateFieldCallID:    event.DelegateCallID,
 		delegateFieldStatus:    string(event.Status),

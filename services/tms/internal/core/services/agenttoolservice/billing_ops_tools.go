@@ -9,10 +9,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/billingtransferservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -35,17 +37,17 @@ var reassignableKinds = agenttoolschema.Source(
 type chargeReassigner interface {
 	ReassignCharge(
 		ctx context.Context,
-		req *serviceports.ReassignChargeRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.ReassignChargeResult, error)
+		req *billingqueueports.ReassignChargeRequest,
+		actor *permissionports.RequestActor,
+	) (*billingqueueports.ReassignChargeResult, error)
 	PreviewReassignCharge(
 		ctx context.Context,
-		req *serviceports.ReassignChargeRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.ReassignChargePreview, error)
+		req *billingqueueports.ReassignChargeRequest,
+		actor *permissionports.RequestActor,
+	) (*billingqueueports.ReassignChargePreview, error)
 }
 
-func newReassignBillingChargeTool(billing chargeReassigner) serviceports.AgentTool {
+func newReassignBillingChargeTool(billing chargeReassigner) agentports.AgentTool {
 	return newReportingReceivableTool(&receivableSpec{
 		name:     "reassign_billing_charge",
 		artifact: billingQueueRecordEntity,
@@ -78,26 +80,26 @@ func newReassignBillingChargeTool(billing chargeReassigner) serviceports.AgentTo
 			paramAllocations: allocationsProperty("The payers and their shares."),
 		},
 		required: []string{paramItemID, paramChargeKind, paramAllocations},
-		target: func(params map[string]any) (serviceports.ToolTarget, bool) {
+		target: func(params map[string]any) (agentports.ToolTarget, bool) {
 			return targetOf(params, paramItemID, permission.ResourceBillingQueue)
 		},
-	}, receivablePlan[*serviceports.ReassignChargeRequest, *serviceports.ReassignChargePreview]{
+	}, receivablePlan[*billingqueueports.ReassignChargeRequest, *billingqueueports.ReassignChargePreview]{
 		request: reassignRequest,
 		plan: func(
 			ctx context.Context,
-			req *serviceports.ReassignChargeRequest,
-			params *serviceports.ToolExecuteParams,
-		) (*serviceports.ReassignChargePreview, error) {
+			req *billingqueueports.ReassignChargeRequest,
+			params *agentports.ToolExecuteParams,
+		) (*billingqueueports.ReassignChargePreview, error) {
 			return billing.PreviewReassignCharge(ctx, req, params.Actor)
 		},
-		refused: func(*serviceports.ReassignChargeRequest) string {
+		refused: func(*billingqueueports.ReassignChargeRequest) string {
 			return "Would reassign who pays a charge."
 		},
 		render: renderReassignment,
 		run: func(
 			ctx context.Context,
-			req *serviceports.ReassignChargeRequest,
-			params *serviceports.ToolExecuteParams,
+			req *billingqueueports.ReassignChargeRequest,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			result, err := billing.ReassignCharge(ctx, req, params.Actor)
 			if err != nil {
@@ -123,8 +125,8 @@ func newReassignBillingChargeTool(billing chargeReassigner) serviceports.AgentTo
 }
 
 func reassignRequest(
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.ReassignChargeRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*billingqueueports.ReassignChargeRequest, error) {
 	itemID, err := requirePulid(params.Params, paramItemID)
 	if err != nil {
 		return nil, err
@@ -150,7 +152,7 @@ func reassignRequest(
 		return nil, fmt.Errorf("missing required parameter %q", paramAllocations)
 	}
 
-	return &serviceports.ReassignChargeRequest{
+	return &billingqueueports.ReassignChargeRequest{
 		ItemID:             itemID,
 		TenantInfo:         tenant,
 		ChargeKind:         kind,
@@ -171,8 +173,8 @@ type queueItemStatusView struct {
 }
 
 func renderReassignment(
-	_ *serviceports.ReassignChargeRequest,
-	plan *serviceports.ReassignChargePreview,
+	_ *billingqueueports.ReassignChargeRequest,
+	plan *billingqueueports.ReassignChargePreview,
 ) (*agent.ToolPreview, error) {
 	changes := make([]*agent.RecordChange, 0, len(plan.ToCreate)+len(plan.ToCancel))
 	refs := toolpreview.WithRefs(map[string]permission.Resource{
@@ -269,7 +271,7 @@ type transferRunCall struct {
 	req    *billingtransferservice.RunRequest
 }
 
-func newManageBillingTransferRunTool(runs transferRunKeeper) serviceports.AgentTool {
+func newManageBillingTransferRunTool(runs transferRunKeeper) agentports.AgentTool {
 	return newReportingReceivableTool(&receivableSpec{
 		name:     "manage_billing_transfer_run",
 		artifact: billingQueueRecordEntity,
@@ -298,7 +300,7 @@ func newManageBillingTransferRunTool(runs transferRunKeeper) serviceports.AgentT
 		},
 		required: []string{resultRunID, paramRunAction},
 	}, receivablePlan[*transferRunCall, *billingtransferservice.RunPreview]{
-		request: func(params *serviceports.ToolExecuteParams) (*transferRunCall, error) {
+		request: func(params *agentports.ToolExecuteParams) (*transferRunCall, error) {
 			runID, err := requirePulid(params.Params, resultRunID)
 			if err != nil {
 				return nil, err
@@ -323,7 +325,7 @@ func newManageBillingTransferRunTool(runs transferRunKeeper) serviceports.AgentT
 		plan: func(
 			ctx context.Context,
 			call *transferRunCall,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*billingtransferservice.RunPreview, error) {
 			if call.action == transferRunStop {
 				return runs.PreviewCancel(ctx, call.req)
@@ -338,7 +340,7 @@ func newManageBillingTransferRunTool(runs transferRunKeeper) serviceports.AgentT
 		run: func(
 			ctx context.Context,
 			call *transferRunCall,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			var (
 				run *billingtransfer.BillingTransferRun

@@ -12,8 +12,9 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/productguideservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/productguide"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/vectorutils"
@@ -46,19 +47,19 @@ type EmbeddingFixture struct {
 }
 
 type EmbeddingInputs struct {
-	Documents []serviceports.EmbeddingCatalogItem
+	Documents []agentports.EmbeddingCatalogItem
 	Queries   []string
 }
 
 type Embed func(
 	ctx context.Context,
-	purpose serviceports.EmbeddingPurpose,
+	purpose aiusageports.EmbeddingPurpose,
 	inputs []string,
 ) ([][]float32, error)
 
 func QueryHash(query string) string { return hashutils.SHA256Hex(query) }
 
-func GuideItems() []serviceports.EmbeddingCatalogItem {
+func GuideItems() []agentports.EmbeddingCatalogItem {
 	return productguideservice.CatalogItems(productguide.Default)
 }
 
@@ -155,7 +156,7 @@ func (f *EmbeddingFixture) Stale(inputs EmbeddingInputs) error {
 
 func (f *EmbeddingFixture) Similarities(
 	query string,
-	items []serviceports.EmbeddingCatalogItem,
+	items []agentports.EmbeddingCatalogItem,
 ) (map[string]float64, error) {
 	vector, ok := f.Query(query)
 	if !ok {
@@ -205,7 +206,7 @@ func RecordEmbeddingFixture(
 		documents = append(documents, item.Text)
 		hashes = append(hashes, item.ContentHash)
 	}
-	if err := recordBatches(ctx, embed, serviceports.EmbeddingPurposeDocument, documents,
+	if err := recordBatches(ctx, embed, aiusageports.EmbeddingPurposeDocument, documents,
 		hashes, dimensions, fixture.Documents); err != nil {
 		return nil, err
 	}
@@ -222,7 +223,7 @@ func RecordEmbeddingFixture(
 		queries = append(queries, query)
 		queryHashes = append(queryHashes, hash)
 	}
-	if err := recordBatches(ctx, embed, serviceports.EmbeddingPurposeQuery, queries,
+	if err := recordBatches(ctx, embed, aiusageports.EmbeddingPurposeQuery, queries,
 		queryHashes, dimensions, fixture.Queries); err != nil {
 		return nil, err
 	}
@@ -233,7 +234,7 @@ func RecordEmbeddingFixture(
 func recordBatches(
 	ctx context.Context,
 	embed Embed,
-	purpose serviceports.EmbeddingPurpose,
+	purpose aiusageports.EmbeddingPurpose,
 	texts []string,
 	hashes []string,
 	dimensions int,

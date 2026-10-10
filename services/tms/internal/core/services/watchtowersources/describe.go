@@ -17,8 +17,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
 	"github.com/emoss08/trenova/internal/core/domain/weatheralert"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/productguide"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -77,7 +77,7 @@ func firstNonZero(values ...int64) int64 {
 
 // DescribeInsight is a finding as the tower shows it: the headline, the
 // recommendation, and the finding's own severity.
-func DescribeInsight(entity *insight.Insight) services.WatchtowerItemInput {
+func DescribeInsight(entity *insight.Insight) watchtowerports.WatchtowerItemInput {
 	severity := watchtower.SeverityInfo
 	switch entity.Severity {
 	case insight.SeverityCritical:
@@ -90,7 +90,7 @@ func DescribeInsight(entity *insight.Insight) services.WatchtowerItemInput {
 		path = entity.Links[0].Path
 	}
 
-	return services.WatchtowerItemInput{
+	return watchtowerports.WatchtowerItemInput{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -110,13 +110,13 @@ func DescribeInsight(entity *insight.Insight) services.WatchtowerItemInput {
 
 // DescribeProposal is a proposal waiting on a person. The agent's name is
 // passed in because the proposal only carries the run.
-func DescribeProposal(entity *agent.AgentProposal, agentName string) services.WatchtowerItemInput {
+func DescribeProposal(entity *agent.AgentProposal, agentName string) watchtowerports.WatchtowerItemInput {
 	who := agentName
 	if who == "" {
 		who = "An agent"
 	}
 
-	return services.WatchtowerItemInput{
+	return watchtowerports.WatchtowerItemInput{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -132,7 +132,7 @@ func DescribeProposal(entity *agent.AgentProposal, agentName string) services.Wa
 }
 
 // DescribePlan is a plan waiting on a person, decided as one.
-func DescribePlan(entity *agent.AgentPlan, agentName string) services.WatchtowerItemInput {
+func DescribePlan(entity *agent.AgentPlan, agentName string) watchtowerports.WatchtowerItemInput {
 	who := agentName
 	if who == "" {
 		who = "An agent"
@@ -142,7 +142,7 @@ func DescribePlan(entity *agent.AgentPlan, agentName string) services.Watchtower
 		title = strconv.Itoa(entity.StepCount) + " changes"
 	}
 
-	return services.WatchtowerItemInput{
+	return watchtowerports.WatchtowerItemInput{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -159,7 +159,7 @@ func DescribePlan(entity *agent.AgentPlan, agentName string) services.Watchtower
 
 // DescribeFailedRun is a run that ended in error, so the person who relies
 // on the agent learns it did not do its work.
-func DescribeFailedRun(entity *agent.AgentRun, agentName string) services.WatchtowerItemInput {
+func DescribeFailedRun(entity *agent.AgentRun, agentName string) watchtowerports.WatchtowerItemInput {
 	who := agentName
 	if who == "" {
 		who = "An agent"
@@ -169,7 +169,7 @@ func DescribeFailedRun(entity *agent.AgentRun, agentName string) services.Watcht
 		occurredAt = *entity.CompletedAt
 	}
 
-	return services.WatchtowerItemInput{
+	return watchtowerports.WatchtowerItemInput{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -188,13 +188,13 @@ func DescribeFailedRun(entity *agent.AgentRun, agentName string) services.Watcht
 
 // DescribeException is what an agent raised because it could not do its
 // work the way it was asked.
-func DescribeException(entity *agent.AgentException) services.WatchtowerItemInput {
+func DescribeException(entity *agent.AgentException) watchtowerports.WatchtowerItemInput {
 	severity := watchtower.SeverityWarning
 	if entity.Severity == agent.SeverityCritical {
 		severity = watchtower.SeverityCritical
 	}
 
-	return services.WatchtowerItemInput{
+	return watchtowerports.WatchtowerItemInput{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -212,7 +212,7 @@ func DescribeException(entity *agent.AgentException) services.WatchtowerItemInpu
 }
 
 // DescribeServiceFailure is a late or missed stop.
-func DescribeServiceFailure(entity *servicefailure.ServiceFailure) services.WatchtowerItemInput {
+func DescribeServiceFailure(entity *servicefailure.ServiceFailure) watchtowerports.WatchtowerItemInput {
 	severity := watchtower.SeverityWarning
 	if entity.Type == servicefailure.TypeMissedDelivery ||
 		entity.Type == servicefailure.TypeMissedPickup {
@@ -227,7 +227,7 @@ func DescribeServiceFailure(entity *servicefailure.ServiceFailure) services.Watc
 		summary += ". " + entity.Notes
 	}
 
-	return services.WatchtowerItemInput{
+	return watchtowerports.WatchtowerItemInput{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -261,7 +261,7 @@ func CarrierIntelEventOnTower(entity *carrierintel.CarrierIntelEvent) bool {
 // or safety record.
 func DescribeCarrierIntelEvent(
 	entity *carrierintel.CarrierIntelEvent,
-) services.WatchtowerItemInput {
+) watchtowerports.WatchtowerItemInput {
 	severity := watchtower.SeverityInfo
 	switch entity.Severity {
 	case carrierintel.SeverityCritical:
@@ -274,7 +274,7 @@ func DescribeCarrierIntelEvent(
 		name = "DOT " + entity.DOTNumber
 	}
 
-	return services.WatchtowerItemInput{
+	return watchtowerports.WatchtowerItemInput{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -301,13 +301,13 @@ func HOSViolationSourceID(entity *telematics.WorkerHOSViolation) string {
 }
 
 // DescribeHOSViolation is a driver over their hours.
-func DescribeHOSViolation(entity *telematics.WorkerHOSViolation) services.WatchtowerItemInput {
+func DescribeHOSViolation(entity *telematics.WorkerHOSViolation) watchtowerports.WatchtowerItemInput {
 	who := "A driver"
 	if entity.Worker != nil {
 		who = strings.TrimSpace(entity.Worker.FirstName + " " + entity.Worker.LastName)
 	}
 
-	return services.WatchtowerItemInput{
+	return watchtowerports.WatchtowerItemInput{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -342,14 +342,14 @@ func WeatherSeverity(alert *weatheralert.WeatherAlert) (watchtower.Severity, boo
 
 // DescribeWeatherAlert is a severe or extreme weather alert in an area the
 // organization runs through.
-func DescribeWeatherAlert(entity *weatheralert.WeatherAlert) services.WatchtowerItemInput {
+func DescribeWeatherAlert(entity *weatheralert.WeatherAlert) watchtowerports.WatchtowerItemInput {
 	severity, _ := WeatherSeverity(entity)
 	occurredAt := entity.CreatedAt
 	if entity.Effective != nil && *entity.Effective > 0 {
 		occurredAt = *entity.Effective
 	}
 
-	return services.WatchtowerItemInput{
+	return watchtowerports.WatchtowerItemInput{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -365,8 +365,8 @@ func DescribeWeatherAlert(entity *weatheralert.WeatherAlert) services.Watchtower
 }
 
 // DescribeQuarantinedFile is an EDI file that could not be processed.
-func DescribeQuarantinedFile(entity *edi.EDIInboundFile) services.WatchtowerItemInput {
-	return services.WatchtowerItemInput{
+func DescribeQuarantinedFile(entity *edi.EDIInboundFile) watchtowerports.WatchtowerItemInput {
+	return watchtowerports.WatchtowerItemInput{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -389,13 +389,13 @@ func DescribeQuarantinedFile(entity *edi.EDIInboundFile) services.WatchtowerItem
 
 // DescribeBillingException is a billing queue item that cannot be invoiced
 // as it stands.
-func DescribeBillingException(entity *billingqueue.BillingQueueItem) services.WatchtowerItemInput {
+func DescribeBillingException(entity *billingqueue.BillingQueueItem) watchtowerports.WatchtowerItemInput {
 	reason := "Needs review"
 	if entity.ExceptionReasonCode != nil {
 		reason = stringutils.HumanizeSnakeCase(string(*entity.ExceptionReasonCode))
 	}
 
-	return services.WatchtowerItemInput{
+	return watchtowerports.WatchtowerItemInput{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -416,7 +416,7 @@ func DescribeBillingException(entity *billingqueue.BillingQueueItem) services.Wa
 // DescribeDetentionOccurrence is a clock running, or run out, at a stop.
 func DescribeDetentionOccurrence(
 	entity *detention.DetentionOccurrence,
-) services.WatchtowerItemInput {
+) watchtowerports.WatchtowerItemInput {
 	severity := watchtower.SeverityInfo
 	if entity.BillableMinutes > 0 {
 		severity = watchtower.SeverityWarning
@@ -437,7 +437,7 @@ func DescribeDetentionOccurrence(
 		summary += ", " + entity.BillableAmount.StringFixed(2) + " " + entity.Currency
 	}
 
-	return services.WatchtowerItemInput{
+	return watchtowerports.WatchtowerItemInput{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -475,7 +475,7 @@ type ExpiringCredentials struct {
 
 // DescribeExpiringCredentials is a driver who will stop being able to drive
 // unless something is renewed.
-func DescribeExpiringCredentials(entity ExpiringCredentials) services.WatchtowerItemInput {
+func DescribeExpiringCredentials(entity ExpiringCredentials) watchtowerports.WatchtowerItemInput {
 	severity := watchtower.SeverityInfo
 	soonest := int64(0)
 	parts := make([]string, 0, len(entity.Papers))
@@ -497,7 +497,7 @@ func DescribeExpiringCredentials(entity ExpiringCredentials) services.Watchtower
 		who = "A driver"
 	}
 
-	return services.WatchtowerItemInput{
+	return watchtowerports.WatchtowerItemInput{
 		TenantInfo:  entity.TenantInfo,
 		SourceKind:  watchtower.SourceWorkerCredential,
 		SourceID:    entity.WorkerID.String(),
@@ -549,7 +549,7 @@ type UncoveredMove struct {
 }
 
 // DescribeMoveCoverageRisk is a load about to leave with nobody on it.
-func DescribeMoveCoverageRisk(entity UncoveredMove) services.WatchtowerItemInput {
+func DescribeMoveCoverageRisk(entity UncoveredMove) watchtowerports.WatchtowerItemInput {
 	severity := watchtower.SeverityWarning
 	if entity.HoursOut <= coverageCriticalHours {
 		severity = watchtower.SeverityCritical
@@ -567,7 +567,7 @@ func DescribeMoveCoverageRisk(entity UncoveredMove) services.WatchtowerItemInput
 		summary += " Starts in " + strconv.FormatInt(entity.HoursOut, 10) + "h."
 	}
 
-	return services.WatchtowerItemInput{
+	return watchtowerports.WatchtowerItemInput{
 		TenantInfo:  entity.TenantInfo,
 		SourceKind:  watchtower.SourceMoveCoverage,
 		SourceID:    entity.MoveID.String(),
@@ -587,13 +587,13 @@ func DescribeMoveCoverageRisk(entity UncoveredMove) services.WatchtowerItemInput
 // Only a message in a waiting state reaches the tower. A message the desk
 // answered by itself is work that happened, not work owed, and putting it on
 // the feed would bury the ones that are actually waiting.
-func DescribeInboundMessage(entity *inboundmessage.InboundMessage) services.WatchtowerItemInput {
+func DescribeInboundMessage(entity *inboundmessage.InboundMessage) watchtowerports.WatchtowerItemInput {
 	severity := watchtower.SeverityWarning
 	if entity.Status == inboundmessage.StatusQuarantined {
 		severity = watchtower.SeverityCritical
 	}
 
-	return services.WatchtowerItemInput{
+	return watchtowerports.WatchtowerItemInput{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -655,7 +655,7 @@ func TelematicsStopVisitSourceID(event *telematics.TelematicsEvent) string {
 	return event.ShipmentMoveID.String() + ":" + target + ":" + string(event.StopVisit)
 }
 
-func DescribeTelematicsStopVisit(review *repositories.StopReview) services.WatchtowerItemInput {
+func DescribeTelematicsStopVisit(review *telematicsports.StopReview) watchtowerports.WatchtowerItemInput {
 	event := review.Event
 
 	visit := "Arrival"
@@ -674,7 +674,7 @@ func DescribeTelematicsStopVisit(review *repositories.StopReview) services.Watch
 		}
 	}
 
-	return services.WatchtowerItemInput{
+	return watchtowerports.WatchtowerItemInput{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: event.OrganizationID,
 			BuID:  event.BusinessUnitID,

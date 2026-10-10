@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/shared/cronutils"
@@ -31,7 +31,7 @@ func (s *Service) PlanDeleteDefinition(
 	ctx context.Context,
 	req *GetDefinitionRequest,
 ) (*report.ReportDefinition, error) {
-	existing, err := s.defRepo.GetByID(ctx, &repositories.GetReportDefinitionRequest{
+	existing, err := s.defRepo.GetByID(ctx, &reportports.GetReportDefinitionRequest{
 		TenantInfo:   req.TenantInfo,
 		DefinitionID: req.DefinitionID,
 	})
@@ -49,7 +49,7 @@ func (s *Service) PlanResetCannedFork(
 	ctx context.Context,
 	req *GetDefinitionRequest,
 ) (*DefinitionChange, error) {
-	existing, err := s.defRepo.GetByID(ctx, &repositories.GetReportDefinitionRequest{
+	existing, err := s.defRepo.GetByID(ctx, &reportports.GetReportDefinitionRequest{
 		TenantInfo:   req.TenantInfo,
 		DefinitionID: req.DefinitionID,
 	})
@@ -108,7 +108,7 @@ func (s *Service) PlanDeleteDashboard(
 	ctx context.Context,
 	req *GetDashboardRequest,
 ) (*report.Dashboard, error) {
-	existing, err := s.dashboardRepo.GetByID(ctx, &repositories.GetReportDashboardRequest{
+	existing, err := s.dashboardRepo.GetByID(ctx, &reportports.GetReportDashboardRequest{
 		TenantInfo:  req.TenantInfo,
 		DashboardID: req.DashboardID,
 	})

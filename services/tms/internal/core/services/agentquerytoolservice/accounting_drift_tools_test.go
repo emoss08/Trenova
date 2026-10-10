@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -14,12 +14,12 @@ import (
 
 type fakeDriftReader struct {
 	findings []*accountingsync.AccountingDriftFinding
-	listed   *serviceports.ListAccountingDriftFindingsRequest
+	listed   *accountingsyncports.ListAccountingDriftFindingsRequest
 }
 
 func (f *fakeDriftReader) List(
 	_ context.Context,
-	req *serviceports.ListAccountingDriftFindingsRequest,
+	req *accountingsyncports.ListAccountingDriftFindingsRequest,
 ) (*pagination.CursorListResult[*accountingsync.AccountingDriftFinding], error) {
 	f.listed = req
 	return &pagination.CursorListResult[*accountingsync.AccountingDriftFinding]{
@@ -29,10 +29,10 @@ func (f *fakeDriftReader) List(
 
 func (f *fakeDriftReader) Overview(
 	_ context.Context,
-	_ *serviceports.AccountingDriftOverviewRequest,
-) (*serviceports.AccountingDriftOverview, error) {
+	_ *accountingsyncports.AccountingDriftOverviewRequest,
+) (*accountingsyncports.AccountingDriftOverview, error) {
 	checked := int64(1_790_208_000)
-	return &serviceports.AccountingDriftOverview{
+	return &accountingsyncports.AccountingDriftOverview{
 		ToleranceMinor: 500,
 		CurrencyCode:   "CAD",
 		CheckedAt:      &checked,

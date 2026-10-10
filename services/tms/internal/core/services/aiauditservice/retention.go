@@ -7,8 +7,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
 )
@@ -30,16 +31,16 @@ type PruneResult struct {
 // seal, so the oldest row left still links to the seal before it, and it
 // keeps every seal.
 type Retention struct {
-	ledger    repositories.AIAuditRepository
-	retention repositories.DataRetentionRepository
+	ledger    aiauditports.AIAuditRepository
+	retention tenantports.DataRetentionRepository
 	metrics   *metrics.AIAudit
 	now       func() time.Time
 	l         *zap.Logger
 }
 
 func NewRetention(
-	ledger repositories.AIAuditRepository,
-	retention repositories.DataRetentionRepository,
+	ledger aiauditports.AIAuditRepository,
+	retention tenantports.DataRetentionRepository,
 	registry *metrics.AIAudit,
 	logger *zap.Logger,
 ) *Retention {
@@ -119,7 +120,7 @@ func (r *Retention) pruneTenant(
 		return 0, err
 	}
 
-	deleted, err := r.ledger.Prune(ctx, repositories.PruneAIAuditEventsRequest{
+	deleted, err := r.ledger.Prune(ctx, aiauditports.PruneAIAuditEventsRequest{
 		TenantInfo: tenantInfo,
 		ThroughSeq: seal.ToSeq,
 		BatchSize:  pruneBatchSize,

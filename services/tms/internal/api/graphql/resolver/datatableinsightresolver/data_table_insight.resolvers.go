@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 )
 
 // This file will be automatically regenerated based on the schema, any resolver
@@ -35,7 +35,7 @@ func (r *QueryResolver) DataTableFacets(
 	if input.Limit != nil {
 		limit = *input.Limit
 	}
-	result, err := r.TableInsightService.Facet(ctx, resource, &repositories.TableFacetRequest{
+	result, err := r.TableInsightService.Facet(ctx, resource, &permissionports.TableFacetRequest{
 		Scope: scope,
 		Field: input.Field,
 		Limit: limit,
@@ -68,7 +68,7 @@ func (r *QueryResolver) DataTableAggregates(
 	result, err := r.TableInsightService.Aggregate(
 		ctx,
 		resource,
-		&repositories.TableAggregateRequest{
+		&permissionports.TableAggregateRequest{
 			Scope:  scope,
 			Fields: input.Fields,
 		},

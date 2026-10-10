@@ -6,24 +6,24 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 )
 
-var _ serviceports.ToolPreviewer = (*approveWorkerPTOTool)(nil)
+var _ agentports.ToolPreviewer = (*approveWorkerPTOTool)(nil)
 
 type ptoApprover interface {
 	ptoDecider
 	PreviewApprove(
 		ctx context.Context,
-		req *repositories.UpdatePTOStatusRequest,
-	) (*serviceports.WorkerPTOTransitionPreview, error)
+		req *workerports.UpdatePTOStatusRequest,
+	) (*workerports.WorkerPTOTransitionPreview, error)
 }
 
 func (t *approveWorkerPTOTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	summary := "Would approve a time-off request."
 	if err := guardPreview(t, &params); err != nil {

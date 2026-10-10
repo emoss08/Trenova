@@ -1,9 +1,9 @@
 package agenttoolservice
 
 import (
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/accountingmappingservice"
 	"github.com/emoss08/trenova/internal/core/services/accountingsyncservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 
 func ledgerToolProviders() []any {
@@ -31,24 +31,24 @@ func ledgerToolProviders() []any {
 
 func provideConfirmAccountingMappingProposalsTool(
 	mappings *accountingmappingservice.Service,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newConfirmAccountingMappingProposalsTool(mappings)
 }
 
 func provideRejectAccountingMappingProposalTool(
 	mappings *accountingmappingservice.Service,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newRejectAccountingMappingProposalTool(mappings)
 }
 
 func provideReleaseAccountingSyncTool(
 	sync *accountingsyncservice.Service,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newReleaseAccountingSyncTool(sync)
 }
 
 func provideChangeAccountingBackfillTool(
 	sync *accountingsyncservice.Service,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newChangeAccountingBackfillTool(sync)
 }

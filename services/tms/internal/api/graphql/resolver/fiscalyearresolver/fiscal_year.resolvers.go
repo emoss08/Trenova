@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -39,7 +39,7 @@ func (r *QueryResolver) FiscalYears(ctx context.Context, input gqlmodel.DataTabl
 
 	result, err := r.FiscalYearService.ListConnection(
 		ctx,
-		&repositories.ListFiscalYearConnectionRequest{
+		&fiscalyearports.ListFiscalYearConnectionRequest{
 			Filter:            tableInput.Filter,
 			Cursor:            tableInput.Cursor,
 			FiscalYearColumns: fiscalYearColumns(ctx, "edges.node"),
@@ -63,7 +63,7 @@ func (r *QueryResolver) FiscalYear(ctx context.Context, id string) (*fiscalyear.
 		return nil, err
 	}
 
-	return r.FiscalYearService.Get(ctx, repositories.GetFiscalYearByIDRequest{
+	return r.FiscalYearService.Get(ctx, fiscalyearports.GetFiscalYearByIDRequest{
 		ID:         fiscalYearID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})

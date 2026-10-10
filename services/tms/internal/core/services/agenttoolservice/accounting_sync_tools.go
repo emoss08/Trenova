@@ -12,9 +12,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/accountingsyncservice"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -51,7 +52,7 @@ type accountingSyncOperator interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		integrationType integration.Type,
-	) (*serviceports.AccountingSyncSummary, error)
+	) (*accountingsyncports.AccountingSyncSummary, error)
 	GetRecord(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -59,32 +60,32 @@ type accountingSyncOperator interface {
 	) (*accountingsync.AccountingSyncRecord, error)
 	ListRecords(
 		ctx context.Context,
-		req *serviceports.ListAccountingSyncRecordsRequest,
+		req *accountingsyncports.ListAccountingSyncRecordsRequest,
 	) (*pagination.CursorListResult[*accountingsync.AccountingSyncRecord], error)
-	Retry(ctx context.Context, req *serviceports.RetryAccountingSyncRequest) (int64, error)
+	Retry(ctx context.Context, req *accountingsyncports.RetryAccountingSyncRequest) (int64, error)
 	Skip(
 		ctx context.Context,
-		req *serviceports.SkipAccountingSyncRequest,
+		req *accountingsyncports.SkipAccountingSyncRequest,
 	) (*accountingsync.AccountingSyncRecord, error)
 	PlanRedate(
 		ctx context.Context,
-		req *serviceports.RedateAccountingSyncRequest,
-	) (*serviceports.AccountingSyncRedatePlan, error)
+		req *accountingsyncports.RedateAccountingSyncRequest,
+	) (*accountingsyncports.AccountingSyncRedatePlan, error)
 	Redate(
 		ctx context.Context,
-		req *serviceports.RedateAccountingSyncRequest,
+		req *accountingsyncports.RedateAccountingSyncRequest,
 	) (*accountingsync.AccountingSyncRecord, error)
 	Pause(
 		ctx context.Context,
-		req *serviceports.PauseAccountingSyncRequest,
+		req *accountingsyncports.PauseAccountingSyncRequest,
 	) (*accountingsync.AccountingConnection, error)
 	Resume(
 		ctx context.Context,
-		req *serviceports.PauseAccountingSyncRequest,
+		req *accountingsyncports.PauseAccountingSyncRequest,
 	) (*accountingsync.AccountingConnection, error)
 	RequestBackfill(
 		ctx context.Context,
-		req *serviceports.RequestAccountingBackfillRequest,
+		req *accountingsyncports.RequestAccountingBackfillRequest,
 	) (*accountingsync.AccountingBackfill, error)
 }
 
@@ -97,8 +98,8 @@ type accountingSyncPolicySpec struct {
 	rationale  string
 }
 
-func accountingSyncPolicy(name string, spec accountingSyncPolicySpec) serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func accountingSyncPolicy(name string, spec accountingSyncPolicySpec) agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          name,
 		Kind:          agent.ToolKindAction,
 		Resource:      spec.resource,
@@ -138,7 +139,7 @@ type accountingSyncSummarizer interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		integrationType integration.Type,
-	) (*serviceports.AccountingSyncSummary, error)
+	) (*accountingsyncports.AccountingSyncSummary, error)
 }
 
 func syncingConnectionFor(
@@ -146,7 +147,7 @@ func syncingConnectionFor(
 	sync accountingSyncSummarizer,
 	tenant pagination.TenantInfo,
 	system integration.Type,
-) (*serviceports.AccountingSyncSummary, error) {
+) (*accountingsyncports.AccountingSyncSummary, error) {
 	summary, err := sync.Summary(ctx, tenant, system)
 	if err != nil {
 		return nil, err
@@ -161,7 +162,7 @@ func syncingConnectionFor(
 }
 
 func countWithStatus(
-	summary *serviceports.AccountingSyncSummary,
+	summary *accountingsyncports.AccountingSyncSummary,
 	statuses ...accountingsync.SyncStatus,
 ) int {
 	total := 0
@@ -198,7 +199,7 @@ func syncEnums[T ~string](
 	return sliceutils.Dedupe(out), nil
 }
 
-var _ serviceports.ToolProposalSelectionResolver = (*retryAccountingSyncTool)(nil)
+var _ agentports.ToolProposalSelectionResolver = (*retryAccountingSyncTool)(nil)
 
 var errUnpinnedRetry = errortypes.NewBusinessError(
 	"retry_accounting_sync runs from an approval only on the records a person approved, and " +
@@ -210,13 +211,13 @@ type retryAccountingSyncTool struct {
 	sync accountingSyncOperator
 }
 
-func newRetryAccountingSyncTool(sync accountingSyncOperator) serviceports.AgentTool {
+func newRetryAccountingSyncTool(sync accountingSyncOperator) agentports.AgentTool {
 	return &retryAccountingSyncTool{sync: sync}
 }
 
 func provideRetryAccountingSyncTool(
-	sync serviceports.AccountingSyncService,
-) serviceports.AgentTool {
+	sync accountingsyncports.AccountingSyncService,
+) agentports.AgentTool {
 	return newRetryAccountingSyncTool(sync)
 }
 
@@ -275,7 +276,7 @@ func (t *retryAccountingSyncTool) ParamSchema() map[string]any {
 	}, paramAccountingSystem)
 }
 
-func (t *retryAccountingSyncTool) Policy() serviceports.ToolPolicy {
+func (t *retryAccountingSyncTool) Policy() agentports.ToolPolicy {
 	return accountingSyncPolicy(t.Name(), accountingSyncPolicySpec{
 		resource:   permission.ResourceAccountingSync,
 		operation:  permission.OpUpdate,
@@ -288,14 +289,14 @@ func (t *retryAccountingSyncTool) Policy() serviceports.ToolPolicy {
 }
 
 type retryPlan struct {
-	req     *serviceports.RetryAccountingSyncRequest
+	req     *accountingsyncports.RetryAccountingSyncRequest
 	records []*accountingsync.AccountingSyncRecord
-	summary *serviceports.AccountingSyncSummary
+	summary *accountingsyncports.AccountingSyncSummary
 }
 
 func (t *retryAccountingSyncTool) plan(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*retryPlan, error) {
 	if err := guardPreview(t, params); err != nil {
 		return nil, err
@@ -360,7 +361,7 @@ func (t *retryAccountingSyncTool) plan(
 	}
 
 	return &retryPlan{
-		req: &serviceports.RetryAccountingSyncRequest{
+		req: &accountingsyncports.RetryAccountingSyncRequest{
 			TenantInfo:      tenant,
 			UserID:          params.Actor.UserID,
 			IntegrationType: system,
@@ -374,7 +375,7 @@ func (t *retryAccountingSyncTool) plan(
 
 func (t *retryAccountingSyncTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.plan(ctx, &params)
 	return err
@@ -382,7 +383,7 @@ func (t *retryAccountingSyncTool) Validate(
 
 func (t *retryAccountingSyncTool) ResolveProposalSelection(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolProposalSelectionResolver interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolProposalSelectionResolver interface passes params by value
 ) (map[string]any, error) {
 	if _, named := params.Params[paramSyncRecordIDs]; named {
 		return params.Params, nil
@@ -435,7 +436,7 @@ func (t *retryAccountingSyncTool) ResolveProposalSelection(
 
 func (t *retryAccountingSyncTool) waitingCount(
 	ctx context.Context,
-	req *serviceports.RetryAccountingSyncRequest,
+	req *accountingsyncports.RetryAccountingSyncRequest,
 ) (int, error) {
 	candidates := retryCandidatesRequest(req.TenantInfo, req.IntegrationType, req.ErrorCategories)
 	candidates.Cursor.Limit = 1
@@ -455,8 +456,8 @@ func retryCandidatesRequest(
 	tenant pagination.TenantInfo,
 	system integration.Type,
 	categories []accountingsync.SyncErrorCategory,
-) *serviceports.ListAccountingSyncRecordsRequest {
-	return &serviceports.ListAccountingSyncRecordsRequest{
+) *accountingsyncports.ListAccountingSyncRecordsRequest {
+	return &accountingsyncports.ListAccountingSyncRecordsRequest{
 		TenantInfo:      tenant,
 		IntegrationType: system,
 		Statuses:        accountingsync.RetryableSyncStatuses(),
@@ -470,7 +471,7 @@ func joinCategories(categories []accountingsync.SyncErrorCategory) string {
 
 func (t *retryAccountingSyncTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -487,11 +488,11 @@ type skipAccountingSyncTool struct {
 	sync accountingSyncOperator
 }
 
-func newSkipAccountingSyncTool(sync accountingSyncOperator) serviceports.AgentTool {
+func newSkipAccountingSyncTool(sync accountingSyncOperator) agentports.AgentTool {
 	return &skipAccountingSyncTool{sync: sync}
 }
 
-func provideSkipAccountingSyncTool(sync serviceports.AccountingSyncService) serviceports.AgentTool {
+func provideSkipAccountingSyncTool(sync accountingsyncports.AccountingSyncService) agentports.AgentTool {
 	return newSkipAccountingSyncTool(sync)
 }
 
@@ -527,7 +528,7 @@ func (t *skipAccountingSyncTool) ParamSchema() map[string]any {
 	}, paramSyncRecordID, paramSyncReason)
 }
 
-func (t *skipAccountingSyncTool) Policy() serviceports.ToolPolicy {
+func (t *skipAccountingSyncTool) Policy() agentports.ToolPolicy {
 	return accountingSyncPolicy(t.Name(), accountingSyncPolicySpec{
 		resource:  permission.ResourceAccountingSync,
 		operation: permission.OpUpdate,
@@ -539,14 +540,14 @@ func (t *skipAccountingSyncTool) Policy() serviceports.ToolPolicy {
 
 // Target names the record this call would change, so a proposal to skip it is
 // refused if the record moved on, such as being sent, before it is approved.
-func (t *skipAccountingSyncTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *skipAccountingSyncTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, paramSyncRecordID, permission.ResourceAccountingSync)
 }
 
 func (t *skipAccountingSyncTool) request(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.SkipAccountingSyncRequest, *accountingsync.AccountingSyncRecord, error) {
+	params *agentports.ToolExecuteParams,
+) (*accountingsyncports.SkipAccountingSyncRequest, *accountingsync.AccountingSyncRecord, error) {
 	if err := guardExecute(t, *params); err != nil {
 		return nil, nil, err
 	}
@@ -572,7 +573,7 @@ func (t *skipAccountingSyncTool) request(
 		)
 	}
 
-	return &serviceports.SkipAccountingSyncRequest{
+	return &accountingsyncports.SkipAccountingSyncRequest{
 		TenantInfo: tenant,
 		UserID:     params.Actor.UserID,
 		ID:         id,
@@ -582,7 +583,7 @@ func (t *skipAccountingSyncTool) request(
 
 func (t *skipAccountingSyncTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, _, err := t.request(ctx, &params)
 	return err
@@ -590,7 +591,7 @@ func (t *skipAccountingSyncTool) Validate(
 
 func (t *skipAccountingSyncTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	req, _, err := t.request(ctx, &params)
 	if err != nil {
@@ -604,13 +605,13 @@ type redateAccountingSyncTool struct {
 	sync accountingSyncOperator
 }
 
-func newRedateAccountingSyncTool(sync accountingSyncOperator) serviceports.AgentTool {
+func newRedateAccountingSyncTool(sync accountingSyncOperator) agentports.AgentTool {
 	return &redateAccountingSyncTool{sync: sync}
 }
 
 func provideRedateAccountingSyncTool(
-	sync serviceports.AccountingSyncService,
-) serviceports.AgentTool {
+	sync accountingsyncports.AccountingSyncService,
+) agentports.AgentTool {
 	return newRedateAccountingSyncTool(sync)
 }
 
@@ -643,7 +644,7 @@ func (t *redateAccountingSyncTool) ParamSchema() map[string]any {
 	}, paramSyncRecordID)
 }
 
-func (t *redateAccountingSyncTool) Policy() serviceports.ToolPolicy {
+func (t *redateAccountingSyncTool) Policy() agentports.ToolPolicy {
 	return accountingSyncPolicy(t.Name(), accountingSyncPolicySpec{
 		resource:  permission.ResourceAccountingSync,
 		operation: permission.OpUpdate,
@@ -653,14 +654,14 @@ func (t *redateAccountingSyncTool) Policy() serviceports.ToolPolicy {
 	})
 }
 
-func (t *redateAccountingSyncTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *redateAccountingSyncTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, paramSyncRecordID, permission.ResourceAccountingSync)
 }
 
 func (t *redateAccountingSyncTool) request(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.RedateAccountingSyncRequest, *serviceports.AccountingSyncRedatePlan, error) {
+	params *agentports.ToolExecuteParams,
+) (*accountingsyncports.RedateAccountingSyncRequest, *accountingsyncports.AccountingSyncRedatePlan, error) {
 	if err := guardExecute(t, *params); err != nil {
 		return nil, nil, err
 	}
@@ -668,7 +669,7 @@ func (t *redateAccountingSyncTool) request(
 	if err != nil {
 		return nil, nil, err
 	}
-	req := &serviceports.RedateAccountingSyncRequest{
+	req := &accountingsyncports.RedateAccountingSyncRequest{
 		TenantInfo: tenantFrom(*params),
 		UserID:     params.Actor.UserID,
 		ID:         id,
@@ -682,7 +683,7 @@ func (t *redateAccountingSyncTool) request(
 
 func (t *redateAccountingSyncTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, _, err := t.request(ctx, &params)
 	return err
@@ -690,7 +691,7 @@ func (t *redateAccountingSyncTool) Validate(
 
 func (t *redateAccountingSyncTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	req, _, err := t.request(ctx, &params)
 	if err != nil {
@@ -704,13 +705,13 @@ type pauseAccountingSyncTool struct {
 	sync accountingSyncOperator
 }
 
-func newPauseAccountingSyncTool(sync accountingSyncOperator) serviceports.AgentTool {
+func newPauseAccountingSyncTool(sync accountingSyncOperator) agentports.AgentTool {
 	return &pauseAccountingSyncTool{sync: sync}
 }
 
 func providePauseAccountingSyncTool(
-	sync serviceports.AccountingSyncService,
-) serviceports.AgentTool {
+	sync accountingsyncports.AccountingSyncService,
+) agentports.AgentTool {
 	return newPauseAccountingSyncTool(sync)
 }
 
@@ -741,7 +742,7 @@ func (t *pauseAccountingSyncTool) ParamSchema() map[string]any {
 	}, paramAccountingSystem, paramSyncReason)
 }
 
-func (t *pauseAccountingSyncTool) Policy() serviceports.ToolPolicy {
+func (t *pauseAccountingSyncTool) Policy() agentports.ToolPolicy {
 	return accountingSyncPolicy(t.Name(), accountingSyncPolicySpec{
 		resource:   permission.ResourceAccountingSync,
 		operation:  permission.OpUpdate,
@@ -754,8 +755,8 @@ func (t *pauseAccountingSyncTool) Policy() serviceports.ToolPolicy {
 
 func (t *pauseAccountingSyncTool) request(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.PauseAccountingSyncRequest, *serviceports.AccountingSyncSummary, error) {
+	params *agentports.ToolExecuteParams,
+) (*accountingsyncports.PauseAccountingSyncRequest, *accountingsyncports.AccountingSyncSummary, error) {
 	if err := guardExecute(t, *params); err != nil {
 		return nil, nil, err
 	}
@@ -784,7 +785,7 @@ func (t *pauseAccountingSyncTool) request(
 		)
 	}
 
-	return &serviceports.PauseAccountingSyncRequest{
+	return &accountingsyncports.PauseAccountingSyncRequest{
 		TenantInfo:      tenant,
 		UserID:          params.Actor.UserID,
 		IntegrationType: system,
@@ -794,7 +795,7 @@ func (t *pauseAccountingSyncTool) request(
 
 func (t *pauseAccountingSyncTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, _, err := t.request(ctx, &params)
 	return err
@@ -802,7 +803,7 @@ func (t *pauseAccountingSyncTool) Validate(
 
 func (t *pauseAccountingSyncTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	req, _, err := t.request(ctx, &params)
 	if err != nil {
@@ -816,13 +817,13 @@ type resumeAccountingSyncTool struct {
 	sync accountingSyncOperator
 }
 
-func newResumeAccountingSyncTool(sync accountingSyncOperator) serviceports.AgentTool {
+func newResumeAccountingSyncTool(sync accountingSyncOperator) agentports.AgentTool {
 	return &resumeAccountingSyncTool{sync: sync}
 }
 
 func provideResumeAccountingSyncTool(
-	sync serviceports.AccountingSyncService,
-) serviceports.AgentTool {
+	sync accountingsyncports.AccountingSyncService,
+) agentports.AgentTool {
 	return newResumeAccountingSyncTool(sync)
 }
 
@@ -854,7 +855,7 @@ func (t *resumeAccountingSyncTool) ParamSchema() map[string]any {
 	)
 }
 
-func (t *resumeAccountingSyncTool) Policy() serviceports.ToolPolicy {
+func (t *resumeAccountingSyncTool) Policy() agentports.ToolPolicy {
 	return accountingSyncPolicy(t.Name(), accountingSyncPolicySpec{
 		resource:  permission.ResourceAccountingSync,
 		operation: permission.OpUpdate,
@@ -867,8 +868,8 @@ func (t *resumeAccountingSyncTool) Policy() serviceports.ToolPolicy {
 
 func (t *resumeAccountingSyncTool) request(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.PauseAccountingSyncRequest, *serviceports.AccountingSyncSummary, error) {
+	params *agentports.ToolExecuteParams,
+) (*accountingsyncports.PauseAccountingSyncRequest, *accountingsyncports.AccountingSyncSummary, error) {
 	if err := guardExecute(t, *params); err != nil {
 		return nil, nil, err
 	}
@@ -889,7 +890,7 @@ func (t *resumeAccountingSyncTool) request(
 		)
 	}
 
-	return &serviceports.PauseAccountingSyncRequest{
+	return &accountingsyncports.PauseAccountingSyncRequest{
 		TenantInfo:      tenant,
 		UserID:          params.Actor.UserID,
 		IntegrationType: system,
@@ -898,7 +899,7 @@ func (t *resumeAccountingSyncTool) request(
 
 func (t *resumeAccountingSyncTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, _, err := t.request(ctx, &params)
 	return err
@@ -906,7 +907,7 @@ func (t *resumeAccountingSyncTool) Validate(
 
 func (t *resumeAccountingSyncTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	req, _, err := t.request(ctx, &params)
 	if err != nil {
@@ -920,13 +921,13 @@ type requestAccountingBackfillTool struct {
 	sync accountingSyncOperator
 }
 
-func newRequestAccountingBackfillTool(sync accountingSyncOperator) serviceports.AgentTool {
+func newRequestAccountingBackfillTool(sync accountingSyncOperator) agentports.AgentTool {
 	return &requestAccountingBackfillTool{sync: sync}
 }
 
 func provideRequestAccountingBackfillTool(
-	sync serviceports.AccountingSyncService,
-) serviceports.AgentTool {
+	sync accountingsyncports.AccountingSyncService,
+) agentports.AgentTool {
 	return newRequestAccountingBackfillTool(sync)
 }
 
@@ -966,7 +967,7 @@ func (t *requestAccountingBackfillTool) ParamSchema() map[string]any {
 	}, paramAccountingSystem)
 }
 
-func (t *requestAccountingBackfillTool) Policy() serviceports.ToolPolicy {
+func (t *requestAccountingBackfillTool) Policy() agentports.ToolPolicy {
 	return accountingSyncPolicy(t.Name(), accountingSyncPolicySpec{
 		resource:  permission.ResourceAccountingIntegration,
 		operation: permission.OpManage,
@@ -1002,7 +1003,7 @@ func dayLabel(seconds int64) string {
 }
 
 type backfillPlan struct {
-	req        *serviceports.RequestAccountingBackfillRequest
+	req        *accountingsyncports.RequestAccountingBackfillRequest
 	connection *accountingsync.AccountingConnection
 	provider   string
 	from       int64
@@ -1012,7 +1013,7 @@ type backfillPlan struct {
 
 func (t *requestAccountingBackfillTool) plan(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*backfillPlan, error) {
 	if err := guardExecute(t, *params); err != nil {
 		return nil, err
@@ -1089,7 +1090,7 @@ func (t *requestAccountingBackfillTool) plan(
 	}
 
 	return &backfillPlan{
-		req: &serviceports.RequestAccountingBackfillRequest{
+		req: &accountingsyncports.RequestAccountingBackfillRequest{
 			TenantInfo:      tenant,
 			UserID:          params.Actor.UserID,
 			IntegrationType: system,
@@ -1107,7 +1108,7 @@ func (t *requestAccountingBackfillTool) plan(
 
 func (t *requestAccountingBackfillTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.plan(ctx, &params)
 	return err
@@ -1115,7 +1116,7 @@ func (t *requestAccountingBackfillTool) Validate(
 
 func (t *requestAccountingBackfillTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {

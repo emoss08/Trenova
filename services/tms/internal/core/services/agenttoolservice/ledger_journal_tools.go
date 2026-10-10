@@ -11,11 +11,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/core/domain/manualjournal"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/journalreversalservice"
 	"github.com/emoss08/trenova/internal/core/services/manualjournalservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalreversalports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/manualjournalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -65,97 +68,97 @@ var (
 type ledgerAccounts interface {
 	GetByIDs(
 		ctx context.Context,
-		req repositories.GetGLAccountsByIDsRequest,
+		req glaccountports.GetGLAccountsByIDsRequest,
 	) ([]*glaccount.GLAccount, error)
 }
 
 type manualJournalKeeper interface {
 	Get(
 		ctx context.Context,
-		req *serviceports.GetManualJournalRequest,
+		req *manualjournalports.GetManualJournalRequest,
 	) (*manualjournal.Request, error)
 	PlanCreateDraft(
 		ctx context.Context,
-		req *serviceports.CreateManualJournalRequest,
-		actor *serviceports.RequestActor,
+		req *manualjournalports.CreateManualJournalRequest,
+		actor *permissionports.RequestActor,
 	) (*manualjournal.Request, error)
 	CreateDraft(
 		ctx context.Context,
-		req *serviceports.CreateManualJournalRequest,
-		actor *serviceports.RequestActor,
+		req *manualjournalports.CreateManualJournalRequest,
+		actor *permissionports.RequestActor,
 	) (*manualjournal.Request, error)
 	PlanUpdateDraft(
 		ctx context.Context,
-		req *serviceports.UpdateManualJournalDraftRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.ManualJournalChange, error)
+		req *manualjournalports.UpdateManualJournalDraftRequest,
+		actor *permissionports.RequestActor,
+	) (*manualjournalports.ManualJournalChange, error)
 	UpdateDraft(
 		ctx context.Context,
-		req *serviceports.UpdateManualJournalDraftRequest,
-		actor *serviceports.RequestActor,
+		req *manualjournalports.UpdateManualJournalDraftRequest,
+		actor *permissionports.RequestActor,
 	) (*manualjournal.Request, error)
 	PlanSubmit(
 		ctx context.Context,
-		req *serviceports.GetManualJournalRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.ManualJournalChange, error)
+		req *manualjournalports.GetManualJournalRequest,
+		actor *permissionports.RequestActor,
+	) (*manualjournalports.ManualJournalChange, error)
 	Submit(
 		ctx context.Context,
-		req *serviceports.GetManualJournalRequest,
-		actor *serviceports.RequestActor,
+		req *manualjournalports.GetManualJournalRequest,
+		actor *permissionports.RequestActor,
 	) (*manualjournal.Request, error)
 	PlanCancel(
 		ctx context.Context,
-		req *serviceports.CancelManualJournalRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.ManualJournalChange, error)
+		req *manualjournalports.CancelManualJournalRequest,
+		actor *permissionports.RequestActor,
+	) (*manualjournalports.ManualJournalChange, error)
 	Cancel(
 		ctx context.Context,
-		req *serviceports.CancelManualJournalRequest,
-		actor *serviceports.RequestActor,
+		req *manualjournalports.CancelManualJournalRequest,
+		actor *permissionports.RequestActor,
 	) (*manualjournal.Request, error)
 	PlanPost(
 		ctx context.Context,
-		req *serviceports.GetManualJournalRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.ManualJournalChange, error)
+		req *manualjournalports.GetManualJournalRequest,
+		actor *permissionports.RequestActor,
+	) (*manualjournalports.ManualJournalChange, error)
 	Post(
 		ctx context.Context,
-		req *serviceports.GetManualJournalRequest,
-		actor *serviceports.RequestActor,
+		req *manualjournalports.GetManualJournalRequest,
+		actor *permissionports.RequestActor,
 	) (*manualjournal.Request, error)
 }
 
 type journalReversalKeeper interface {
 	PlanCreate(
 		ctx context.Context,
-		req *serviceports.CreateJournalReversalRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.JournalReversalChange, error)
+		req *journalreversalports.CreateJournalReversalRequest,
+		actor *permissionports.RequestActor,
+	) (*journalreversalports.JournalReversalChange, error)
 	Create(
 		ctx context.Context,
-		req *serviceports.CreateJournalReversalRequest,
-		actor *serviceports.RequestActor,
+		req *journalreversalports.CreateJournalReversalRequest,
+		actor *permissionports.RequestActor,
 	) (*journalreversal.Reversal, error)
 	PlanCancel(
 		ctx context.Context,
-		req *serviceports.CancelJournalReversalRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.JournalReversalChange, error)
+		req *journalreversalports.CancelJournalReversalRequest,
+		actor *permissionports.RequestActor,
+	) (*journalreversalports.JournalReversalChange, error)
 	Cancel(
 		ctx context.Context,
-		req *serviceports.CancelJournalReversalRequest,
-		actor *serviceports.RequestActor,
+		req *journalreversalports.CancelJournalReversalRequest,
+		actor *permissionports.RequestActor,
 	) (*journalreversal.Reversal, error)
 	PlanPost(
 		ctx context.Context,
-		req *serviceports.GetJournalReversalRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.JournalReversalChange, error)
+		req *journalreversalports.GetJournalReversalRequest,
+		actor *permissionports.RequestActor,
+	) (*journalreversalports.JournalReversalChange, error)
 	Post(
 		ctx context.Context,
-		req *serviceports.GetJournalReversalRequest,
-		actor *serviceports.RequestActor,
+		req *journalreversalports.GetJournalReversalRequest,
+		actor *permissionports.RequestActor,
 	) (*journalreversal.Reversal, error)
 }
 
@@ -164,15 +167,15 @@ var (
 	_ journalReversalKeeper = (*journalreversalservice.Service)(nil)
 )
 
-func targetManualJournal(params map[string]any) (serviceports.ToolTarget, bool) {
+func targetManualJournal(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, paramManualJournalID, permission.ResourceManualJournal)
 }
 
-func targetJournalReversal(params map[string]any) (serviceports.ToolTarget, bool) {
+func targetJournalReversal(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, paramJournalReversalID, permission.ResourceJournalReversal)
 }
 
-func targetReversedEntry(params map[string]any) (serviceports.ToolTarget, bool) {
+func targetReversedEntry(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, paramJournalEntryID, permission.ResourceJournalEntry)
 }
 
@@ -244,7 +247,7 @@ func journalLinesProperty() map[string]any {
 	}
 }
 
-func readJournalLines(params map[string]any) ([]*serviceports.ManualJournalLineInput, error) {
+func readJournalLines(params map[string]any) ([]*manualjournalports.ManualJournalLineInput, error) {
 	raw, ok := params[paramJournalLines].([]any)
 	if !ok || len(raw) < 2 {
 		return nil, fmt.Errorf("parameter %q must list at least two lines", paramJournalLines)
@@ -256,7 +259,7 @@ func readJournalLines(params map[string]any) ([]*serviceports.ManualJournalLineI
 		)
 	}
 
-	lines := make([]*serviceports.ManualJournalLineInput, 0, len(raw))
+	lines := make([]*manualjournalports.ManualJournalLineInput, 0, len(raw))
 	for idx, item := range raw {
 		fields, isObject := item.(map[string]any)
 		if !isObject {
@@ -272,7 +275,7 @@ func readJournalLines(params map[string]any) ([]*serviceports.ManualJournalLineI
 	return lines, nil
 }
 
-func readJournalLine(fields map[string]any) (*serviceports.ManualJournalLineInput, error) {
+func readJournalLine(fields map[string]any) (*manualjournalports.ManualJournalLineInput, error) {
 	accountID, err := requirePulid(fields, paramGLAccountID)
 	if err != nil {
 		return nil, err
@@ -305,7 +308,7 @@ func readJournalLine(fields map[string]any) (*serviceports.ManualJournalLineInpu
 		return nil, err
 	}
 
-	line := &serviceports.ManualJournalLineInput{
+	line := &manualjournalports.ManualJournalLineInput{
 		GLAccountID:  accountID,
 		Description:  description,
 		DebitAmount:  debit,
@@ -331,8 +334,8 @@ func readJournalCurrency(params map[string]any) (string, error) {
 }
 
 func draftManualJournalRequest(
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.CreateManualJournalRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*manualjournalports.CreateManualJournalRequest, error) {
 	description, err := requireBoundedText(
 		params.Params,
 		paramJournalDescription,
@@ -358,7 +361,7 @@ func draftManualJournalRequest(
 		return nil, err
 	}
 
-	return &serviceports.CreateManualJournalRequest{
+	return &manualjournalports.CreateManualJournalRequest{
 		Description:    description,
 		Reason:         reason,
 		AccountingDate: accountingDate,
@@ -375,10 +378,10 @@ type journalRevision struct {
 	hasReason   bool
 	date        int64
 	currency    string
-	lines       []*serviceports.ManualJournalLineInput
+	lines       []*manualjournalports.ManualJournalLineInput
 }
 
-func journalRevisionFrom(params *serviceports.ToolExecuteParams) (*journalRevision, error) {
+func journalRevisionFrom(params *agentports.ToolExecuteParams) (*journalRevision, error) {
 	id, err := requirePulid(params.Params, paramManualJournalID)
 	if err != nil {
 		return nil, err
@@ -416,9 +419,9 @@ func journalRevisionFrom(params *serviceports.ToolExecuteParams) (*journalRevisi
 
 func (r *journalRevision) over(
 	current *manualjournal.Request,
-	params *serviceports.ToolExecuteParams,
-) *serviceports.UpdateManualJournalDraftRequest {
-	req := &serviceports.UpdateManualJournalDraftRequest{
+	params *agentports.ToolExecuteParams,
+) *manualjournalports.UpdateManualJournalDraftRequest {
+	req := &manualjournalports.UpdateManualJournalDraftRequest{
 		RequestID:      current.ID,
 		Description:    current.Description,
 		Reason:         current.Reason,
@@ -446,13 +449,13 @@ func (r *journalRevision) over(
 	return req
 }
 
-func linesOf(current *manualjournal.Request) []*serviceports.ManualJournalLineInput {
-	lines := make([]*serviceports.ManualJournalLineInput, 0, len(current.Lines))
+func linesOf(current *manualjournal.Request) []*manualjournalports.ManualJournalLineInput {
+	lines := make([]*manualjournalports.ManualJournalLineInput, 0, len(current.Lines))
 	for _, line := range current.Lines {
 		if line == nil {
 			continue
 		}
-		lines = append(lines, &serviceports.ManualJournalLineInput{
+		lines = append(lines, &manualjournalports.ManualJournalLineInput{
 			GLAccountID:  line.GLAccountID,
 			Description:  line.Description,
 			DebitAmount:  line.DebitAmount,
@@ -469,9 +472,9 @@ func revisedDraft(
 	ctx context.Context,
 	journals manualJournalKeeper,
 	revision *journalRevision,
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.UpdateManualJournalDraftRequest, error) {
-	current, err := journals.Get(ctx, &serviceports.GetManualJournalRequest{
+	params *agentports.ToolExecuteParams,
+) (*manualjournalports.UpdateManualJournalDraftRequest, error) {
+	current, err := journals.Get(ctx, &manualjournalports.GetManualJournalRequest{
 		RequestID:  revision.id,
 		TenantInfo: tenantFrom(*params),
 	})
@@ -483,14 +486,14 @@ func revisedDraft(
 }
 
 func manualJournalRequestFrom(
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.GetManualJournalRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*manualjournalports.GetManualJournalRequest, error) {
 	id, err := requirePulid(params.Params, paramManualJournalID)
 	if err != nil {
 		return nil, err
 	}
 
-	return &serviceports.GetManualJournalRequest{
+	return &manualjournalports.GetManualJournalRequest{
 		RequestID:  id,
 		TenantInfo: tenantFrom(*params),
 	}, nil
@@ -529,8 +532,8 @@ func ledgerMoneySpec(spec *receivableSpec) *receivableSpec {
 func labelledJournal(
 	ctx context.Context,
 	accounts ledgerAccounts,
-	params *serviceports.ToolExecuteParams,
-	change *serviceports.ManualJournalChange,
+	params *agentports.ToolExecuteParams,
+	change *manualjournalports.ManualJournalChange,
 	err error,
 ) (*manualJournalPlan, error) {
 	if err != nil {
@@ -543,8 +546,8 @@ func labelledJournal(
 func labelledReversal(
 	ctx context.Context,
 	accounts ledgerAccounts,
-	params *serviceports.ToolExecuteParams,
-	change *serviceports.JournalReversalChange,
+	params *agentports.ToolExecuteParams,
+	change *journalreversalports.JournalReversalChange,
 	err error,
 ) (*reversalPlan, error) {
 	if err != nil {
@@ -557,7 +560,7 @@ func labelledReversal(
 func newDraftManualJournalTool(
 	journals manualJournalKeeper,
 	accounts ledgerAccounts,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newReportingReceivableTool(journalDraftSpec(&receivableSpec{
 		name: "draft_manual_journal",
 		description: "Draft a manual journal entry for the general ledger: its lines, the " +
@@ -575,12 +578,12 @@ func newDraftManualJournalTool(
 			paramAccountingDate,
 			paramJournalLines,
 		},
-	}), receivablePlan[*serviceports.CreateManualJournalRequest, *manualJournalPlan]{
+	}), receivablePlan[*manualjournalports.CreateManualJournalRequest, *manualJournalPlan]{
 		request: draftManualJournalRequest,
 		plan: func(
 			ctx context.Context,
-			req *serviceports.CreateManualJournalRequest,
-			params *serviceports.ToolExecuteParams,
+			req *manualjournalports.CreateManualJournalRequest,
+			params *agentports.ToolExecuteParams,
 		) (*manualJournalPlan, error) {
 			planned, err := journals.PlanCreateDraft(ctx, req, params.Actor)
 			if err != nil {
@@ -589,15 +592,15 @@ func newDraftManualJournalTool(
 
 			return planManualJournalDraft(ctx, accounts, req.TenantInfo, planned)
 		},
-		refused: func(req *serviceports.CreateManualJournalRequest) string {
+		refused: func(req *manualjournalports.CreateManualJournalRequest) string {
 			return fmt.Sprintf("Would draft the manual journal %q with %s.",
 				req.Description, countOf(len(req.Lines), "line"))
 		},
 		render: renderManualJournalDraft,
 		run: func(
 			ctx context.Context,
-			req *serviceports.CreateManualJournalRequest,
-			params *serviceports.ToolExecuteParams,
+			req *manualjournalports.CreateManualJournalRequest,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			created, err := journals.CreateDraft(ctx, req, params.Actor)
 			if err != nil {
@@ -612,7 +615,7 @@ func newDraftManualJournalTool(
 func newReviseManualJournalDraftTool(
 	journals manualJournalKeeper,
 	accounts ledgerAccounts,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newReportingReceivableTool(journalDraftSpec(&receivableSpec{
 		name:        "revise_manual_journal_draft",
 		searchTerms: []string{"change journal lines", "edit draft journal", "fix draft journal"},
@@ -633,7 +636,7 @@ func newReviseManualJournalDraftTool(
 		plan: func(
 			ctx context.Context,
 			revision *journalRevision,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*manualJournalPlan, error) {
 			req, err := revisedDraft(ctx, journals, revision, params)
 			if err != nil {
@@ -650,7 +653,7 @@ func newReviseManualJournalDraftTool(
 		run: func(
 			ctx context.Context,
 			revision *journalRevision,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			req, err := revisedDraft(ctx, journals, revision, params)
 			if err != nil {
@@ -669,9 +672,9 @@ func newReviseManualJournalDraftTool(
 func plannedSubmit(
 	ctx context.Context,
 	journals manualJournalKeeper,
-	req *serviceports.GetManualJournalRequest,
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.ManualJournalChange, error) {
+	req *manualjournalports.GetManualJournalRequest,
+	params *agentports.ToolExecuteParams,
+) (*manualjournalports.ManualJournalChange, error) {
 	change, err := journals.PlanSubmit(ctx, req, params.Actor)
 	if err != nil {
 		return nil, err
@@ -686,7 +689,7 @@ func plannedSubmit(
 func newSubmitManualJournalTool(
 	journals manualJournalKeeper,
 	accounts ledgerAccounts,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newReceivableTool(journalDraftSpec(&receivableSpec{
 		name: "submit_manual_journal",
 		description: "Submit a balanced draft manual journal for approval. It waits for an " +
@@ -702,25 +705,25 @@ func newSubmitManualJournalTool(
 		},
 		required: []string{paramManualJournalID},
 		target:   targetManualJournal,
-	}), receivablePlan[*serviceports.GetManualJournalRequest, *manualJournalPlan]{
+	}), receivablePlan[*manualjournalports.GetManualJournalRequest, *manualJournalPlan]{
 		request: manualJournalRequestFrom,
 		plan: func(
 			ctx context.Context,
-			req *serviceports.GetManualJournalRequest,
-			params *serviceports.ToolExecuteParams,
+			req *manualjournalports.GetManualJournalRequest,
+			params *agentports.ToolExecuteParams,
 		) (*manualJournalPlan, error) {
 			change, err := plannedSubmit(ctx, journals, req, params)
 
 			return labelledJournal(ctx, accounts, params, change, err)
 		},
-		refused: func(*serviceports.GetManualJournalRequest) string {
+		refused: func(*manualjournalports.GetManualJournalRequest) string {
 			return "Would submit a manual journal for approval."
 		},
 		render: renderManualJournalSubmit,
 		run: func(
 			ctx context.Context,
-			req *serviceports.GetManualJournalRequest,
-			params *serviceports.ToolExecuteParams,
+			req *manualjournalports.GetManualJournalRequest,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			if _, err := plannedSubmit(ctx, journals, req, params); err != nil {
 				return nil, err
@@ -733,8 +736,8 @@ func newSubmitManualJournalTool(
 }
 
 func cancelManualJournalRequest(
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.CancelManualJournalRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*manualjournalports.CancelManualJournalRequest, error) {
 	id, err := requirePulid(params.Params, paramManualJournalID)
 	if err != nil {
 		return nil, err
@@ -744,7 +747,7 @@ func cancelManualJournalRequest(
 		return nil, err
 	}
 
-	return &serviceports.CancelManualJournalRequest{
+	return &manualjournalports.CancelManualJournalRequest{
 		RequestID:  id,
 		Reason:     reason,
 		TenantInfo: tenantFrom(*params),
@@ -754,7 +757,7 @@ func cancelManualJournalRequest(
 func newCancelManualJournalTool(
 	journals manualJournalKeeper,
 	accounts ledgerAccounts,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newReceivableTool(journalDraftSpec(&receivableSpec{
 		name: "cancel_manual_journal",
 		description: "Cancel a manual journal that is a draft, waiting for approval or " +
@@ -773,25 +776,25 @@ func newCancelManualJournalTool(
 		},
 		required: []string{paramManualJournalID, paramReason},
 		target:   targetManualJournal,
-	}), receivablePlan[*serviceports.CancelManualJournalRequest, *manualJournalPlan]{
+	}), receivablePlan[*manualjournalports.CancelManualJournalRequest, *manualJournalPlan]{
 		request: cancelManualJournalRequest,
 		plan: func(
 			ctx context.Context,
-			req *serviceports.CancelManualJournalRequest,
-			params *serviceports.ToolExecuteParams,
+			req *manualjournalports.CancelManualJournalRequest,
+			params *agentports.ToolExecuteParams,
 		) (*manualJournalPlan, error) {
 			change, err := journals.PlanCancel(ctx, req, params.Actor)
 
 			return labelledJournal(ctx, accounts, params, change, err)
 		},
-		refused: func(*serviceports.CancelManualJournalRequest) string {
+		refused: func(*manualjournalports.CancelManualJournalRequest) string {
 			return "Would cancel a manual journal."
 		},
 		render: renderManualJournalCancel,
 		run: func(
 			ctx context.Context,
-			req *serviceports.CancelManualJournalRequest,
-			params *serviceports.ToolExecuteParams,
+			req *manualjournalports.CancelManualJournalRequest,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := journals.Cancel(ctx, req, params.Actor)
 
@@ -803,7 +806,7 @@ func newCancelManualJournalTool(
 func newPostManualJournalTool(
 	journals manualJournalKeeper,
 	accounts ledgerAccounts,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newReceivableTool(ledgerMoneySpec(&receivableSpec{
 		name: "post_manual_journal",
 		description: "Propose posting an approved manual journal to the general ledger, in " +
@@ -821,25 +824,25 @@ func newPostManualJournalTool(
 		},
 		required: []string{paramManualJournalID},
 		target:   targetManualJournal,
-	}), receivablePlan[*serviceports.GetManualJournalRequest, *manualJournalPlan]{
+	}), receivablePlan[*manualjournalports.GetManualJournalRequest, *manualJournalPlan]{
 		request: manualJournalRequestFrom,
 		plan: func(
 			ctx context.Context,
-			req *serviceports.GetManualJournalRequest,
-			params *serviceports.ToolExecuteParams,
+			req *manualjournalports.GetManualJournalRequest,
+			params *agentports.ToolExecuteParams,
 		) (*manualJournalPlan, error) {
 			change, err := journals.PlanPost(ctx, req, params.Actor)
 
 			return labelledJournal(ctx, accounts, params, change, err)
 		},
-		refused: func(*serviceports.GetManualJournalRequest) string {
+		refused: func(*manualjournalports.GetManualJournalRequest) string {
 			return "Would post a manual journal to the general ledger."
 		},
 		render: renderManualJournalPost,
 		run: func(
 			ctx context.Context,
-			req *serviceports.GetManualJournalRequest,
-			params *serviceports.ToolExecuteParams,
+			req *manualjournalports.GetManualJournalRequest,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := journals.Post(ctx, req, params.Actor)
 
@@ -849,8 +852,8 @@ func newPostManualJournalTool(
 }
 
 func journalReversalRequestFrom(
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.CreateJournalReversalRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*journalreversalports.CreateJournalReversalRequest, error) {
 	entryID, err := requirePulid(params.Params, paramJournalEntryID)
 	if err != nil {
 		return nil, err
@@ -868,7 +871,7 @@ func journalReversalRequestFrom(
 		return nil, err
 	}
 
-	return &serviceports.CreateJournalReversalRequest{
+	return &journalreversalports.CreateJournalReversalRequest{
 		OriginalJournalEntryID:  entryID,
 		RequestedAccountingDate: accountingDate,
 		ReasonCode:              code,
@@ -880,7 +883,7 @@ func journalReversalRequestFrom(
 func newRequestJournalReversalTool(
 	reversals journalReversalKeeper,
 	accounts ledgerAccounts,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newReportingReceivableTool(ledgerMoneySpec(&receivableSpec{
 		name: "request_journal_reversal",
 		description: "Propose reversing a posted journal entry that was booked in error, with " +
@@ -913,25 +916,25 @@ func newRequestJournalReversalTool(
 		},
 		target:      targetReversedEntry,
 		searchTerms: []string{"reverse", "undo", "wrong", "entry", "error"},
-	}), receivablePlan[*serviceports.CreateJournalReversalRequest, *reversalPlan]{
+	}), receivablePlan[*journalreversalports.CreateJournalReversalRequest, *reversalPlan]{
 		request: journalReversalRequestFrom,
 		plan: func(
 			ctx context.Context,
-			req *serviceports.CreateJournalReversalRequest,
-			params *serviceports.ToolExecuteParams,
+			req *journalreversalports.CreateJournalReversalRequest,
+			params *agentports.ToolExecuteParams,
 		) (*reversalPlan, error) {
 			change, err := reversals.PlanCreate(ctx, req, params.Actor)
 
 			return labelledReversal(ctx, accounts, params, change, err)
 		},
-		refused: func(*serviceports.CreateJournalReversalRequest) string {
+		refused: func(*journalreversalports.CreateJournalReversalRequest) string {
 			return "Would request a reversal of a posted journal entry."
 		},
 		render: renderReversalRequest,
 		run: func(
 			ctx context.Context,
-			req *serviceports.CreateJournalReversalRequest,
-			params *serviceports.ToolExecuteParams,
+			req *journalreversalports.CreateJournalReversalRequest,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			created, err := reversals.Create(ctx, req, params.Actor)
 			if err != nil {
@@ -949,8 +952,8 @@ func newRequestJournalReversalTool(
 }
 
 func cancelJournalReversalRequest(
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.CancelJournalReversalRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*journalreversalports.CancelJournalReversalRequest, error) {
 	id, err := requirePulid(params.Params, paramJournalReversalID)
 	if err != nil {
 		return nil, err
@@ -960,7 +963,7 @@ func cancelJournalReversalRequest(
 		return nil, err
 	}
 
-	return &serviceports.CancelJournalReversalRequest{
+	return &journalreversalports.CancelJournalReversalRequest{
 		ReversalID: id,
 		Reason:     reason,
 		TenantInfo: tenantFrom(*params),
@@ -970,7 +973,7 @@ func cancelJournalReversalRequest(
 func newCancelJournalReversalTool(
 	reversals journalReversalKeeper,
 	accounts ledgerAccounts,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newReceivableTool(&receivableSpec{
 		name: "cancel_journal_reversal",
 		description: "Cancel a journal reversal that has not been posted, with the reason, " +
@@ -995,25 +998,25 @@ func newCancelJournalReversalTool(
 		},
 		required: []string{paramJournalReversalID, paramReason},
 		target:   targetJournalReversal,
-	}, receivablePlan[*serviceports.CancelJournalReversalRequest, *reversalPlan]{
+	}, receivablePlan[*journalreversalports.CancelJournalReversalRequest, *reversalPlan]{
 		request: cancelJournalReversalRequest,
 		plan: func(
 			ctx context.Context,
-			req *serviceports.CancelJournalReversalRequest,
-			params *serviceports.ToolExecuteParams,
+			req *journalreversalports.CancelJournalReversalRequest,
+			params *agentports.ToolExecuteParams,
 		) (*reversalPlan, error) {
 			change, err := reversals.PlanCancel(ctx, req, params.Actor)
 
 			return labelledReversal(ctx, accounts, params, change, err)
 		},
-		refused: func(*serviceports.CancelJournalReversalRequest) string {
+		refused: func(*journalreversalports.CancelJournalReversalRequest) string {
 			return "Would cancel a journal reversal."
 		},
 		render: renderReversalCancel,
 		run: func(
 			ctx context.Context,
-			req *serviceports.CancelJournalReversalRequest,
-			params *serviceports.ToolExecuteParams,
+			req *journalreversalports.CancelJournalReversalRequest,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := reversals.Cancel(ctx, req, params.Actor)
 
@@ -1025,7 +1028,7 @@ func newCancelJournalReversalTool(
 func newPostJournalReversalTool(
 	reversals journalReversalKeeper,
 	accounts ledgerAccounts,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newReceivableTool(ledgerMoneySpec(&receivableSpec{
 		name: "post_journal_reversal",
 		description: "Propose posting an approved journal reversal: it books the original " +
@@ -1043,37 +1046,37 @@ func newPostJournalReversalTool(
 		},
 		required: []string{paramJournalReversalID},
 		target:   targetJournalReversal,
-	}), receivablePlan[*serviceports.GetJournalReversalRequest, *reversalPlan]{
+	}), receivablePlan[*journalreversalports.GetJournalReversalRequest, *reversalPlan]{
 		request: func(
-			params *serviceports.ToolExecuteParams,
-		) (*serviceports.GetJournalReversalRequest, error) {
+			params *agentports.ToolExecuteParams,
+		) (*journalreversalports.GetJournalReversalRequest, error) {
 			id, err := requirePulid(params.Params, paramJournalReversalID)
 			if err != nil {
 				return nil, err
 			}
 
-			return &serviceports.GetJournalReversalRequest{
+			return &journalreversalports.GetJournalReversalRequest{
 				ReversalID: id,
 				TenantInfo: tenantFrom(*params),
 			}, nil
 		},
 		plan: func(
 			ctx context.Context,
-			req *serviceports.GetJournalReversalRequest,
-			params *serviceports.ToolExecuteParams,
+			req *journalreversalports.GetJournalReversalRequest,
+			params *agentports.ToolExecuteParams,
 		) (*reversalPlan, error) {
 			change, err := reversals.PlanPost(ctx, req, params.Actor)
 
 			return labelledReversal(ctx, accounts, params, change, err)
 		},
-		refused: func(*serviceports.GetJournalReversalRequest) string {
+		refused: func(*journalreversalports.GetJournalReversalRequest) string {
 			return "Would post a journal reversal to the general ledger."
 		},
 		render: renderReversalPost,
 		run: func(
 			ctx context.Context,
-			req *serviceports.GetJournalReversalRequest,
-			params *serviceports.ToolExecuteParams,
+			req *journalreversalports.GetJournalReversalRequest,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := reversals.Post(ctx, req, params.Actor)
 
@@ -1084,56 +1087,56 @@ func newPostJournalReversalTool(
 
 func provideDraftManualJournalTool(
 	journals *manualjournalservice.Service,
-	accounts repositories.GLAccountRepository,
-) serviceports.AgentTool {
+	accounts glaccountports.GLAccountRepository,
+) agentports.AgentTool {
 	return newDraftManualJournalTool(journals, accounts)
 }
 
 func provideReviseManualJournalDraftTool(
 	journals *manualjournalservice.Service,
-	accounts repositories.GLAccountRepository,
-) serviceports.AgentTool {
+	accounts glaccountports.GLAccountRepository,
+) agentports.AgentTool {
 	return newReviseManualJournalDraftTool(journals, accounts)
 }
 
 func provideSubmitManualJournalTool(
 	journals *manualjournalservice.Service,
-	accounts repositories.GLAccountRepository,
-) serviceports.AgentTool {
+	accounts glaccountports.GLAccountRepository,
+) agentports.AgentTool {
 	return newSubmitManualJournalTool(journals, accounts)
 }
 
 func provideCancelManualJournalTool(
 	journals *manualjournalservice.Service,
-	accounts repositories.GLAccountRepository,
-) serviceports.AgentTool {
+	accounts glaccountports.GLAccountRepository,
+) agentports.AgentTool {
 	return newCancelManualJournalTool(journals, accounts)
 }
 
 func providePostManualJournalTool(
 	journals *manualjournalservice.Service,
-	accounts repositories.GLAccountRepository,
-) serviceports.AgentTool {
+	accounts glaccountports.GLAccountRepository,
+) agentports.AgentTool {
 	return newPostManualJournalTool(journals, accounts)
 }
 
 func provideRequestJournalReversalTool(
 	reversals *journalreversalservice.Service,
-	accounts repositories.GLAccountRepository,
-) serviceports.AgentTool {
+	accounts glaccountports.GLAccountRepository,
+) agentports.AgentTool {
 	return newRequestJournalReversalTool(reversals, accounts)
 }
 
 func provideCancelJournalReversalTool(
 	reversals *journalreversalservice.Service,
-	accounts repositories.GLAccountRepository,
-) serviceports.AgentTool {
+	accounts glaccountports.GLAccountRepository,
+) agentports.AgentTool {
 	return newCancelJournalReversalTool(reversals, accounts)
 }
 
 func providePostJournalReversalTool(
 	reversals *journalreversalservice.Service,
-	accounts repositories.GLAccountRepository,
-) serviceports.AgentTool {
+	accounts glaccountports.GLAccountRepository,
+) agentports.AgentTool {
 	return newPostJournalReversalTool(reversals, accounts)
 }

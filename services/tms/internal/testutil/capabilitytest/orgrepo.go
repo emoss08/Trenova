@@ -1,9 +1,10 @@
 package capabilitytest
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/mock"
@@ -11,22 +12,22 @@ import (
 
 type OrgRepoParams struct {
 	TenantInfo             pagination.TenantInfo
-	Lock                   repositories.CapabilityLock
+	Lock                   tenantports.CapabilityLock
 	BrokerageEnabled       bool
 	AssetOperationsEnabled bool
 	Optional               bool
 }
 
-func OrgRepo(t *testing.T, params OrgRepoParams) *mocks.MockOrganizationRepository {
+func OrgRepo(t *testing.T, params OrgRepoParams) *tenantportsmock.MockOrganizationRepository {
 	t.Helper()
 
-	orgRepo := mocks.NewMockOrganizationRepository(t)
+	orgRepo := tenantportsmock.NewMockOrganizationRepository(t)
 	call := orgRepo.EXPECT().
-		GetCapabilities(mock.Anything, repositories.GetOrganizationCapabilitiesRequest{
+		GetCapabilities(mock.Anything, tenantports.GetOrganizationCapabilitiesRequest{
 			TenantInfo: params.TenantInfo,
 			Lock:       params.Lock,
 		}).
-		Return(&repositories.OrganizationCapabilities{
+		Return(&tenantports.OrganizationCapabilities{
 			BrokerageEnabled:       params.BrokerageEnabled,
 			AssetOperationsEnabled: params.AssetOperationsEnabled,
 		}, nil)

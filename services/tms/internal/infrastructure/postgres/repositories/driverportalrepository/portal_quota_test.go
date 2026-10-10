@@ -1,6 +1,7 @@
 package driverportalrepository
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
 	"testing"
 	"time"
 
@@ -8,8 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -24,7 +25,7 @@ func TestActivatePortalAccessRefusesASeatPastTheQuota(t *testing.T) {
 	t.Parallel()
 
 	conn, sqlMock := dbtest.NewSQLMock(t)
-	guard := mocks.NewMockQuotaGuard(t)
+	guard := platformplanportsmock.NewMockQuotaGuard(t)
 	repo := &portalAccessRepository{db: conn, l: zap.NewNop(), quota: guard}
 	invitation := &worker.PortalInvitation{
 		ID:             pulid.MustNew("wpi_"),
@@ -43,7 +44,7 @@ func TestActivatePortalAccessRefusesASeatPastTheQuota(t *testing.T) {
 			string(worker.PortalInvitationStatusPending),
 			time.Now().Add(time.Hour).Unix(),
 		))
-	guard.EXPECT().Enforce(mock.Anything, &services.QuotaRequest{
+	guard.EXPECT().Enforce(mock.Anything, &platformplanports.QuotaRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: invitation.OrganizationID,
 			BuID:  invitation.BusinessUnitID,
@@ -53,7 +54,7 @@ func TestActivatePortalAccessRefusesASeatPastTheQuota(t *testing.T) {
 	}).Return(errortypes.NewQuotaExceededError(string(platformcatalog.MeterUserSeats), 1, 1, "free_demo"))
 	sqlMock.ExpectRollback()
 
-	user, err := repo.ActivatePortalAccess(t.Context(), &repositories.ActivatePortalAccessRequest{
+	user, err := repo.ActivatePortalAccess(t.Context(), &workerports.ActivatePortalAccessRequest{
 		Invitation: invitation,
 		User:       &tenant.User{ID: pulid.MustNew("usr_")},
 	})

@@ -22,8 +22,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/briefing"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -71,13 +76,13 @@ type Facts struct {
 // Sources are the repositories the facts are drawn from. Every one is
 // optional: a nil source is a section the briefing does without.
 type Sources struct {
-	Watchtower  repositories.WatchtowerRepository
-	Decisions   services.AgentDecisionQueueService
-	Board       repositories.DispatchConsoleRepository
-	Credentials repositories.WorkerCredentialRepository
-	Billing     repositories.BillingQueueRepository
-	Payments    repositories.CustomerPaymentRepository
-	Detention   repositories.DetentionOccurrenceRepository
+	Watchtower  watchtowerports.WatchtowerRepository
+	Decisions   agentports.AgentDecisionQueueService
+	Board       shipmentports.DispatchConsoleRepository
+	Credentials workerports.WorkerCredentialRepository
+	Billing     billingqueueports.BillingQueueRepository
+	Payments    customerpaymentports.CustomerPaymentRepository
+	Detention   detentionports.DetentionOccurrenceRepository
 }
 
 // Builder gathers the facts. It holds only repositories, so it is safe to
@@ -178,7 +183,7 @@ func (b *Builder) attention(ctx context.Context, req Request, facts *Facts) {
 		return
 	}
 
-	counts, err := b.sources.Watchtower.Counts(ctx, repositories.CountWatchtowerItemsRequest{
+	counts, err := b.sources.Watchtower.Counts(ctx, watchtowerports.CountWatchtowerItemsRequest{
 		TenantInfo: req.TenantInfo,
 		SeenAt:     req.DayStart,
 	})
@@ -278,7 +283,7 @@ func (b *Builder) coverage(ctx context.Context, req Request, facts *Facts) {
 		return
 	}
 
-	summary, err := b.sources.Board.GetBoardSummary(ctx, &repositories.DispatchBoardFilter{
+	summary, err := b.sources.Board.GetBoardSummary(ctx, &shipmentports.DispatchBoardFilter{
 		TenantInfo:     req.TenantInfo,
 		WindowStart:    req.Now,
 		WindowEnd:      req.Now + boardWindowHours*60*60,
@@ -334,7 +339,7 @@ func (b *Builder) compliance(ctx context.Context, req Request, facts *Facts) {
 
 	credentials, err := b.sources.Credentials.ListExpiring(
 		ctx,
-		&repositories.ListExpiringWorkerCredentialsRequest{
+		&workerports.ListExpiringWorkerCredentialsRequest{
 			TenantInfo:  req.TenantInfo,
 			HorizonDays: credentialHorizonDays,
 			AsOf:        req.DayStart,
@@ -402,7 +407,7 @@ func (b *Builder) billing(ctx context.Context, req Request, facts *Facts) {
 
 	counts, err := b.sources.Billing.GetStatusCounts(
 		ctx,
-		&repositories.GetBillingQueueStatsRequest{TenantInfo: req.TenantInfo},
+		&billingqueueports.GetBillingQueueStatsRequest{TenantInfo: req.TenantInfo},
 	)
 	if err != nil {
 		facts.miss("billing queue")
@@ -458,7 +463,7 @@ func (b *Builder) cash(ctx context.Context, req Request, facts *Facts) {
 	// Yesterday, in the organization's own day: a cash line that moved
 	// with the server's midnight would report a different figure to two
 	// offices of the same company.
-	received, err := b.sources.Payments.SumReceived(ctx, repositories.SumPaymentsReceivedRequest{
+	received, err := b.sources.Payments.SumReceived(ctx, customerpaymentports.SumPaymentsReceivedRequest{
 		TenantInfo: req.TenantInfo,
 		From:       req.DayStart - 24*60*60,
 		To:         req.DayStart - 1,

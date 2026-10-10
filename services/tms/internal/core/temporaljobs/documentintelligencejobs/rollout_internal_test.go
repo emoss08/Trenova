@@ -7,7 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/documentaiextraction"
 	"github.com/emoss08/trenova/internal/core/domain/extractionrollout"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -19,13 +20,13 @@ type fakeRolloutRouter struct {
 	preferred pulid.ID
 	assignErr error
 	settleErr error
-	assigned  *services.AssignExtractionRolloutRequest
-	settled   *services.SettleExtractionRolloutRequest
+	assigned  *extractionrolloutports.AssignExtractionRolloutRequest
+	settled   *extractionrolloutports.SettleExtractionRolloutRequest
 }
 
 func (f *fakeRolloutRouter) AssignExtraction(
 	_ context.Context,
-	req *services.AssignExtractionRolloutRequest,
+	req *extractionrolloutports.AssignExtractionRolloutRequest,
 ) (pulid.ID, error) {
 	f.assigned = req
 	return f.preferred, f.assignErr
@@ -33,7 +34,7 @@ func (f *fakeRolloutRouter) AssignExtraction(
 
 func (f *fakeRolloutRouter) SettleExtraction(
 	_ context.Context,
-	req *services.SettleExtractionRolloutRequest,
+	req *extractionrolloutports.SettleExtractionRolloutRequest,
 ) error {
 	f.settled = req
 	return f.settleErr
@@ -114,8 +115,8 @@ func TestSettleRolloutRecordsWhoServedTheExtraction(t *testing.T) {
 func TestRolloutOutcomeFollowsTheAppliedAnswer(t *testing.T) {
 	t.Parallel()
 
-	completed := &AsyncAIExtractionCompletion{Status: services.AIBackgroundExtractionStatusCompleted}
-	failed := &AsyncAIExtractionCompletion{Status: services.AIBackgroundExtractionStatusFailed}
+	completed := &AsyncAIExtractionCompletion{Status: documentaiextractionports.AIBackgroundExtractionStatusCompleted}
+	failed := &AsyncAIExtractionCompletion{Status: documentaiextractionports.AIBackgroundExtractionStatusFailed}
 
 	assert.Equal(t, extractionrollout.OutcomeAccepted,
 		rolloutOutcome(completed, aiAcceptanceStatusAccepted))

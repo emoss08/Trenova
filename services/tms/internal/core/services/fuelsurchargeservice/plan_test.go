@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/fuelsurcharge"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -15,13 +15,13 @@ import (
 )
 
 type planIndexRepo struct {
-	repositories.FuelIndexRepository
+	fuelsurchargeports.FuelIndexRepository
 	index *fuelsurcharge.FuelIndex
 }
 
 func (r *planIndexRepo) GetByID(
 	_ context.Context,
-	req *repositories.GetFuelIndexByIDRequest,
+	req *fuelsurchargeports.GetFuelIndexByIDRequest,
 ) (*fuelsurcharge.FuelIndex, error) {
 	if r.index == nil || r.index.ID != req.FuelIndexID {
 		return nil, errortypes.NewNotFoundError("Fuel index not found")
@@ -32,14 +32,14 @@ func (r *planIndexRepo) GetByID(
 }
 
 type planPriceRepo struct {
-	repositories.FuelIndexPriceRepository
+	fuelsurchargeports.FuelIndexPriceRepository
 	price  *fuelsurcharge.FuelIndexPrice
 	writes int
 }
 
 func (r *planPriceRepo) GetByID(
 	_ context.Context,
-	req *repositories.GetFuelIndexPriceByIDRequest,
+	req *fuelsurchargeports.GetFuelIndexPriceByIDRequest,
 ) (*fuelsurcharge.FuelIndexPrice, error) {
 	if r.price == nil || r.price.ID != req.PriceID {
 		return nil, errortypes.NewNotFoundError("Fuel price not found")

@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/require"
@@ -16,7 +16,7 @@ func TestSendRefusesOutboundEmailThePlanRestricts(t *testing.T) {
 
 	svc := &Service{plans: plantest.Restricting(t, platformplan.CapabilityEmailOutbound)}
 
-	msg, err := svc.Send(t.Context(), &services.SendEmailRequest{
+	msg, err := svc.Send(t.Context(), &emailports.SendEmailRequest{
 		TenantInfo: plantest.Tenant(),
 		Purpose:    email.PurposeBilling,
 		To:         []string{"ap@example.com"},

@@ -1,7 +1,7 @@
 package aidocumentservice
 
 import (
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 )
 
 type routeResponse struct {
@@ -25,12 +25,12 @@ type extractFieldResponse struct {
 }
 
 type extractResponse struct {
-	DocumentKind      string                             `json:"documentKind"`
-	OverallConfidence float64                            `json:"overallConfidence"`
-	ReviewStatus      string                             `json:"reviewStatus"`
-	MissingFields     []string                           `json:"missingFields"`
-	Signals           []string                           `json:"signals"`
-	Fields            []extractFieldResponse             `json:"fields"`
-	Stops             []*serviceports.AIDocumentStop     `json:"stops"`
-	Conflicts         []*serviceports.AIDocumentConflict `json:"conflicts"`
+	DocumentKind      string                                          `json:"documentKind"`
+	OverallConfidence float64                                         `json:"overallConfidence"`
+	ReviewStatus      string                                          `json:"reviewStatus"`
+	MissingFields     []string                                        `json:"missingFields"`
+	Signals           []string                                        `json:"signals"`
+	Fields            []extractFieldResponse                          `json:"fields"`
+	Stops             []*documentaiextractionports.AIDocumentStop     `json:"stops"`
+	Conflicts         []*documentaiextractionports.AIDocumentConflict `json:"conflicts"`
 }

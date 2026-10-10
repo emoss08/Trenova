@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 )
@@ -18,7 +18,7 @@ func TestRelevance_NothingToJudgeByLeavesEveryMemoryBearing(t *testing.T) {
 
 	memory := relevanceMemory("Assess ELD applicability for each driver.")
 
-	relevance := Relevance("", services.RankedMemories{Memories: []*agent.Memory{memory}})
+	relevance := Relevance("", agentports.RankedMemories{Memories: []*agent.Memory{memory}})
 
 	assert.False(t, relevance.Judged)
 	assert.True(t, relevance.Bears(memory.ID))
@@ -33,7 +33,7 @@ func TestRelevance_SharedWordsBear(t *testing.T) {
 
 	relevance := Relevance(
 		"Let the customer know shipment SEED-PAY-001 has delivered.",
-		services.RankedMemories{Memories: []*agent.Memory{eld, report, notify}},
+		agentports.RankedMemories{Memories: []*agent.Memory{eld, report, notify}},
 	)
 
 	assert.True(t, relevance.Judged)
@@ -49,7 +49,7 @@ func TestRelevance_TheOperatorsWordReachesTheSchemasWord(t *testing.T) {
 
 	relevance := Relevance(
 		"Which drivers can take this load?",
-		services.RankedMemories{Memories: []*agent.Memory{memory}},
+		agentports.RankedMemories{Memories: []*agent.Memory{memory}},
 	)
 
 	assert.True(t, relevance.Bears(memory.ID))
@@ -61,7 +61,7 @@ func TestRelevance_AMemoryNearInMeaningBearsWithoutSharedWords(t *testing.T) {
 	near := relevanceMemory("Net 45 for Acme.")
 	far := relevanceMemory("The yard closes at six.")
 
-	relevance := Relevance("When is the invoice due?", services.RankedMemories{
+	relevance := Relevance("When is the invoice due?", agentports.RankedMemories{
 		Memories: []*agent.Memory{near, far},
 		Similar:  []pulid.ID{near.ID},
 		Semantic: true,
@@ -82,7 +82,7 @@ func TestRelevance_ASubjectOrToolNameIsReadToo(t *testing.T) {
 		ID: pulid.MustNew("amem_"), Content: "Prefer the closest tractor.", ToolName: "assign_move",
 	}
 
-	relevance := Relevance("Assign a move for Acme", services.RankedMemories{
+	relevance := Relevance("Assign a move for Acme", agentports.RankedMemories{
 		Memories: []*agent.Memory{about, tool},
 	})
 

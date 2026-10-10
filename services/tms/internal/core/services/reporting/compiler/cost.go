@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/uptrace/bun"
 )
 
@@ -27,7 +27,7 @@ type explainEntry struct {
 func PreflightCost(
 	ctx context.Context,
 	db bun.IDB,
-	compiled *services.CompiledReportQuery,
+	compiled *reportports.CompiledReportQuery,
 	costLimits CostLimits,
 ) error {
 	explainSQL := "EXPLAIN (FORMAT JSON) " + compiled.SQL

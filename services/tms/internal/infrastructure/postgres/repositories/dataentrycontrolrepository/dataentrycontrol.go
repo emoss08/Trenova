@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/dataentrycontrol"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/dataentrycontrolports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
@@ -26,7 +26,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.DataEntryControlRepository {
+func New(p Params) dataentrycontrolports.DataEntryControlRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.data-entry-control-repository"),
@@ -35,7 +35,7 @@ func New(p Params) repositories.DataEntryControlRepository {
 
 func (r *repository) GetByOrgID(
 	ctx context.Context,
-	req repositories.GetDataEntryControlRequest,
+	req dataentrycontrolports.GetDataEntryControlRequest,
 ) (*dataentrycontrol.DataEntryControl, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*dataentrycontrol.DataEntryControl, error) {
 		log := r.l.With(

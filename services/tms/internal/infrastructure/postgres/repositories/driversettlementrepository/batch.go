@@ -7,9 +7,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -25,7 +25,7 @@ type batchRepository struct {
 	l  *zap.Logger
 }
 
-func NewBatch(p Params) repositories.SettlementBatchRepository {
+func NewBatch(p Params) driversettlementports.SettlementBatchRepository {
 	return &batchRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.settlement-batch-repository"),
@@ -34,7 +34,7 @@ func NewBatch(p Params) repositories.SettlementBatchRepository {
 
 func (r *batchRepository) List(
 	ctx context.Context,
-	req *repositories.ListSettlementBatchesRequest,
+	req *driversettlementports.ListSettlementBatchesRequest,
 ) (*pagination.ListResult[*driversettlement.SettlementBatch], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*driversettlement.SettlementBatch], error) {
 		limit := req.Filter.Pagination.SafeLimit()
@@ -70,7 +70,7 @@ func (r *batchRepository) List(
 
 func (r *batchRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListSettlementBatchConnectionRequest,
+	req *driversettlementports.ListSettlementBatchConnectionRequest,
 ) (*pagination.CursorListResult[*driversettlement.SettlementBatch], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*driversettlement.SettlementBatch], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -130,7 +130,7 @@ func (r *batchRepository) ListConnection(
 
 func (r *batchRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetSettlementBatchByIDRequest,
+	req driversettlementports.GetSettlementBatchByIDRequest,
 ) (*driversettlement.SettlementBatch, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driversettlement.SettlementBatch, error) {
 		entity := new(driversettlement.SettlementBatch)
@@ -216,7 +216,7 @@ func (r *batchRepository) RecalculateAggregates(
 			return nil, fmt.Errorf("recalculate settlement batch aggregates: %w", err)
 		}
 
-		return r.GetByID(ctx, repositories.GetSettlementBatchByIDRequest{
+		return r.GetByID(ctx, driversettlementports.GetSettlementBatchByIDRequest{
 			ID:         batchID,
 			TenantInfo: tenantInfo,
 		})

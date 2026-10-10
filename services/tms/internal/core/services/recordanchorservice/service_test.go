@@ -8,10 +8,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/recordanchorservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmenttracking"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -19,15 +21,15 @@ import (
 )
 
 type gatedPermissions struct {
-	services.PermissionEngine
+	permissionports.PermissionEngine
 	denied map[string]bool
 }
 
 func (g *gatedPermissions) Check(
 	_ context.Context,
-	req *services.PermissionCheckRequest,
-) (*services.PermissionCheckResult, error) {
-	return &services.PermissionCheckResult{Allowed: !g.denied[req.Resource]}, nil
+	req *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
+	return &permissionports.PermissionCheckResult{Allowed: !g.denied[req.Resource]}, nil
 }
 
 type fakeTracking struct {
@@ -51,13 +53,13 @@ func (f *fakeTracking) TrackingSnapshots(
 }
 
 type fakeTelematics struct {
-	repositories.TelematicsRepository
+	telematicsports.TelematicsRepository
 	states []*telematics.WorkerHOSState
 }
 
 func (f *fakeTelematics) ListWorkerHOSStates(
 	_ context.Context,
-	_ *repositories.ListWorkerHOSStatesRequest,
+	_ *telematicsports.ListWorkerHOSStatesRequest,
 ) ([]*telematics.WorkerHOSState, error) {
 	return f.states, nil
 }
@@ -94,8 +96,8 @@ func TestAnchor_ReadsEachRecordAgainInTheOrderGiven(t *testing.T) {
 		Now:        func() int64 { return now },
 	})
 
-	anchors := service.Anchor(t.Context(), &services.RecordAnchorRequest{
-		Actor: &services.RequestActor{UserID: pulid.MustNew("usr_")},
+	anchors := service.Anchor(t.Context(), &agentports.RecordAnchorRequest{
+		Actor: &permissionports.RequestActor{UserID: pulid.MustNew("usr_")},
 		Records: []agent.EntityRef{
 			{ID: shipmentID.String(), Label: "the acme load"},
 			{ID: goneID.String()},
@@ -139,17 +141,17 @@ func TestAnchor_NothingToReadIsNothing(t *testing.T) {
 	t.Parallel()
 
 	service := recordanchorservice.NewWithDependencies(&recordanchorservice.Dependencies{})
-	assert.Nil(t, service.Anchor(t.Context(), &services.RecordAnchorRequest{}))
+	assert.Nil(t, service.Anchor(t.Context(), &agentports.RecordAnchorRequest{}))
 	assert.Nil(t, service.Anchor(t.Context(), nil))
 }
 
 type stubInvoices struct {
-	repositories.InvoiceRepository
+	invoiceports.InvoiceRepository
 }
 
 func (s *stubInvoices) GetByIDs(
 	_ context.Context,
-	_ repositories.GetInvoicesByIDsRequest,
+	_ invoiceports.GetInvoicesByIDsRequest,
 ) ([]*invoice.Invoice, error) {
 	return nil, nil
 }

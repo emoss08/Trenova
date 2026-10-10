@@ -13,9 +13,11 @@ import (
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -39,23 +41,23 @@ type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Conversations repositories.ConversationRepository
-	Definitions   repositories.AgentDefinitionRepository
-	Artifacts     repositories.AssistantArtifactRepository
-	Assistant     services.AssistantService
-	Completion    services.StructuredCompleter `optional:"true"`
+	Conversations agentports.ConversationRepository
+	Definitions   agentdefinitionports.AgentDefinitionRepository
+	Artifacts     assistantartifactports.AssistantArtifactRepository
+	Assistant     agentports.AssistantService
+	Completion    agentports.StructuredCompleter `optional:"true"`
 }
 
 type Service struct {
 	l             *zap.Logger
-	conversations repositories.ConversationRepository
-	definitions   repositories.AgentDefinitionRepository
-	artifacts     repositories.AssistantArtifactRepository
-	assistant     services.AssistantService
-	completion    services.StructuredCompleter
+	conversations agentports.ConversationRepository
+	definitions   agentdefinitionports.AgentDefinitionRepository
+	artifacts     assistantartifactports.AssistantArtifactRepository
+	assistant     agentports.AssistantService
+	completion    agentports.StructuredCompleter
 }
 
-func New(p Params) services.AssistantHandoffService {
+func New(p Params) agentports.AssistantHandoffService {
 	return &Service{
 		l:             p.Logger.Named("service.assistant-handoff"),
 		conversations: p.Conversations,
@@ -68,9 +70,9 @@ func New(p Params) services.AssistantHandoffService {
 
 func (s *Service) Handoff(
 	ctx context.Context,
-	req *services.HandoffThreadRequest,
-	actor *services.RequestActor,
-) (*services.HandoffThreadResult, error) {
+	req *agentports.HandoffThreadRequest,
+	actor *permissionports.RequestActor,
+) (*agentports.HandoffThreadResult, error) {
 	if actor == nil || actor.UserID.IsNil() {
 		return nil, errortypes.NewAuthorizationError("Only a person can hand off a conversation")
 	}
@@ -79,7 +81,7 @@ func (s *Service) Handoff(
 
 	// Read under the person's own id: someone else's conversation is not
 	// found, which is the authorization.
-	origin, err := s.conversations.GetThread(ctx, repositories.GetThreadRequest{
+	origin, err := s.conversations.GetThread(ctx, agentports.GetThreadRequest{
 		ID:         req.ThreadID,
 		UserID:     actor.UserID,
 		TenantInfo: tenant,
@@ -91,7 +93,7 @@ func (s *Service) Handoff(
 		return nil, errortypes.NewValidationError("agentDefinitionId", errortypes.ErrInvalid,
 			"This conversation is already with that agent")
 	}
-	source, err := s.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	source, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         origin.AgentDefinitionID,
 		TenantInfo: tenant,
 	})
@@ -99,7 +101,7 @@ func (s *Service) Handoff(
 		return nil, err
 	}
 
-	history, err := s.conversations.ListMessages(ctx, repositories.ListMessagesRequest{
+	history, err := s.conversations.ListMessages(ctx, agentports.ListMessagesRequest{
 		ThreadID:     origin.ID,
 		TenantInfo:   tenant,
 		Limit:        historyMessages,
@@ -118,7 +120,7 @@ func (s *Service) Handoff(
 	// Starting the thread checks the target: enabled, one people talk to,
 	// and one this person may use. A refusal there stops the hand-off before
 	// anything is written or any model is asked.
-	thread, err := s.assistant.StartThread(ctx, &services.StartThreadRequest{
+	thread, err := s.assistant.StartThread(ctx, &agentports.StartThreadRequest{
 		AgentDefinitionID:  req.AgentDefinitionID,
 		Title:              origin.Title,
 		TenantInfo:         tenant,
@@ -133,7 +135,7 @@ func (s *Service) Handoff(
 	if err != nil {
 		return nil, err
 	}
-	target, err := s.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	target, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         thread.AgentDefinitionID,
 		TenantInfo: tenant,
 	})
@@ -155,7 +157,7 @@ func (s *Service) Handoff(
 	}
 	handoff.Artifacts = s.copyArtifacts(ctx, tenant, thread, pinned)
 
-	if _, err = s.conversations.AppendTurn(ctx, repositories.AppendTurnRequest{
+	if _, err = s.conversations.AppendTurn(ctx, agentports.AppendTurnRequest{
 		ThreadID:   thread.ID,
 		TenantInfo: tenant,
 		Messages: []conversation.Message{{
@@ -168,7 +170,7 @@ func (s *Service) Handoff(
 		return nil, err
 	}
 
-	saved, err := s.conversations.AppendTurn(ctx, repositories.AppendTurnRequest{
+	saved, err := s.conversations.AppendTurn(ctx, agentports.AppendTurnRequest{
 		ThreadID:   origin.ID,
 		TenantInfo: tenant,
 		Messages: []conversation.Message{{
@@ -182,7 +184,7 @@ func (s *Service) Handoff(
 		return nil, err
 	}
 
-	result := &services.HandoffThreadResult{Thread: thread}
+	result := &agentports.HandoffThreadResult{Thread: thread}
 	if len(saved) > 0 {
 		result.Message = &saved[0]
 	}

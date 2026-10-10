@@ -1,24 +1,24 @@
 package agenttoolservice
 
 import (
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"go.uber.org/fx"
 )
 
 type RegistryParams struct {
 	fx.In
 
-	Tools []serviceports.AgentTool `group:"agent_tools"`
+	Tools []agentports.AgentTool `group:"agent_tools"`
 }
 
 type registry struct {
-	byName  map[string]serviceports.AgentTool
-	ordered []serviceports.AgentTool
+	byName  map[string]agentports.AgentTool
+	ordered []agentports.AgentTool
 }
 
-func NewRegistry(p RegistryParams) serviceports.AgentToolRegistry {
-	byName := make(map[string]serviceports.AgentTool, len(p.Tools))
-	ordered := make([]serviceports.AgentTool, 0, len(p.Tools))
+func NewRegistry(p RegistryParams) agentports.AgentToolRegistry {
+	byName := make(map[string]agentports.AgentTool, len(p.Tools))
+	ordered := make([]agentports.AgentTool, 0, len(p.Tools))
 
 	for _, tool := range p.Tools {
 		if _, exists := byName[tool.Name()]; exists {
@@ -31,21 +31,21 @@ func NewRegistry(p RegistryParams) serviceports.AgentToolRegistry {
 	return &registry{byName: byName, ordered: ordered}
 }
 
-func (r *registry) Get(name string) (serviceports.AgentTool, bool) {
+func (r *registry) Get(name string) (agentports.AgentTool, bool) {
 	tool, ok := r.byName[name]
 	return tool, ok
 }
 
-func (r *registry) All() []serviceports.AgentTool {
+func (r *registry) All() []agentports.AgentTool {
 	return r.ordered
 }
 
-func (r *registry) Descriptors() []serviceports.AgentToolDescriptor {
-	descriptors := make([]serviceports.AgentToolDescriptor, 0, len(r.ordered))
+func (r *registry) Descriptors() []agentports.AgentToolDescriptor {
+	descriptors := make([]agentports.AgentToolDescriptor, 0, len(r.ordered))
 
 	for _, tool := range r.ordered {
 		descriptors = append(descriptors,
-			serviceports.DescribeTool(tool, tool.Policy().DefaultTier, false))
+			agentports.DescribeTool(tool, tool.Policy().DefaultTier, false))
 	}
 
 	return descriptors

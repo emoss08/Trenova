@@ -5,13 +5,13 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/quotaservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/m2msync"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -29,17 +29,17 @@ type Params struct {
 	DB      *postgres.Connection
 	Logger  *zap.Logger
 	M2MSync *m2msync.Syncer
-	Quota   services.QuotaGuard `optional:"true"`
+	Quota   platformplanports.QuotaGuard `optional:"true"`
 }
 
 type repository struct {
 	db      *postgres.Connection
 	l       *zap.Logger
 	m2mSync *m2msync.Syncer
-	quota   services.QuotaGuard
+	quota   platformplanports.QuotaGuard
 }
 
-func New(p Params) repositories.CustomerRepository {
+func New(p Params) customerports.CustomerRepository {
 	return &repository{
 		db:      p.DB,
 		l:       p.Logger.Named("postgres.customer-repository"),
@@ -50,7 +50,7 @@ func New(p Params) repositories.CustomerRepository {
 
 func (r *repository) addOptions(
 	q *bun.SelectQuery,
-	opts repositories.CustomerFilterOptions,
+	opts customerports.CustomerFilterOptions,
 ) *bun.SelectQuery {
 	if opts.IncludeState {
 		q = q.Relation("State")
@@ -70,7 +70,7 @@ func (r *repository) addOptions(
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListCustomerRequest,
+	req *customerports.ListCustomerRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
@@ -88,7 +88,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListCustomerRequest,
+	req *customerports.ListCustomerRequest,
 ) (*pagination.ListResult[*customer.Customer], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*customer.Customer], error) {
 		log := r.l.With(
@@ -117,7 +117,7 @@ func (r *repository) List(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListCustomerConnectionRequest,
+	req *customerports.ListCustomerConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -130,7 +130,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListCustomerConnectionRequest,
+	req *customerports.ListCustomerConnectionRequest,
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -150,7 +150,7 @@ func applyCustomerColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListCustomerConnectionRequest,
+	req *customerports.ListCustomerConnectionRequest,
 ) (*pagination.CursorListResult[*customer.Customer], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*customer.Customer], error) {
 		log := r.l.With(
@@ -208,7 +208,7 @@ func (r *repository) ListConnection(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetCustomerByIDRequest,
+	req customerports.GetCustomerByIDRequest,
 ) (*customer.Customer, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*customer.Customer, error) {
 		log := r.l.With(
@@ -241,7 +241,7 @@ func (r *repository) GetByID(
 
 func (r *repository) GetBillingProfile(
 	ctx context.Context,
-	req repositories.GetCustomerBillingProfileRequest,
+	req customerports.GetCustomerBillingProfileRequest,
 ) (*customer.CustomerBillingProfile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*customer.CustomerBillingProfile, error) {
 		log := r.l.With(
@@ -270,7 +270,7 @@ func (r *repository) GetBillingProfile(
 
 func (r *repository) GetByIDs(
 	ctx context.Context,
-	req repositories.GetCustomersByIDsRequest,
+	req customerports.GetCustomersByIDsRequest,
 ) ([]*customer.Customer, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*customer.Customer, error) {
 		log := r.l.With(
@@ -301,7 +301,7 @@ func (r *repository) GetByIDs(
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
-	req *repositories.CustomerSelectOptionsRequest,
+	req *customerports.CustomerSelectOptionsRequest,
 ) (*pagination.ListResult[*customer.Customer], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*customer.Customer], error) {
 		return dbhelper.SelectOptions[*customer.Customer](
@@ -349,8 +349,8 @@ func (r *repository) Create(
 			zap.String("code", entity.Code),
 		)
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
-			if err := quotaservice.EnforceAll(c, r.quota, services.QuotaRequest{
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+			if err := quotaservice.EnforceAll(c, r.quota, platformplanports.QuotaRequest{
 				TenantInfo: pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
 					BuID:  entity.BusinessUnitID,
@@ -572,7 +572,7 @@ func (r *repository) Update(
 			zap.String("id", entity.ID.String()),
 		)
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 			ov := entity.Version
 			entity.Version++
 
@@ -617,7 +617,7 @@ func (r *repository) Update(
 
 func (r *repository) BulkUpdateStatus(
 	ctx context.Context,
-	req *repositories.BulkUpdateCustomerStatusRequest,
+	req *customerports.BulkUpdateCustomerStatusRequest,
 ) ([]*customer.Customer, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*customer.Customer, error) {
 		log := r.l.With(

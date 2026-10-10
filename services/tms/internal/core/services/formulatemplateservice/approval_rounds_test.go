@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	notificationdomain "github.com/emoss08/trenova/internal/core/domain/notification"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -33,7 +33,7 @@ func (s *stubReviewRepo) Create(
 
 func (s *stubReviewRepo) ListByTemplate(
 	context.Context,
-	*repositories.ListTemplateReviewsRequest,
+	*formulatemplateports.ListTemplateReviewsRequest,
 ) ([]*formulatemplate.Review, error) {
 	return s.created, nil
 }
@@ -48,7 +48,7 @@ func (s *stubReviewRepo) Latest(
 
 func (s *stubReviewRepo) ListStaleSubmissions(
 	context.Context,
-	*repositories.ListStaleSubmissionsRequest,
+	*formulatemplateports.ListStaleSubmissionsRequest,
 ) ([]*formulatemplate.FormulaTemplate, error) {
 	return s.stale, nil
 }

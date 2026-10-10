@@ -10,7 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -25,7 +25,7 @@ const seedBytes = 32
 
 func (s *Service) ListPools(
 	ctx context.Context,
-	req *repositories.ListDOTRandomPoolsRequest,
+	req *workerports.ListDOTRandomPoolsRequest,
 ) (*pagination.CursorListResult[*worker.DOTRandomPool], error) {
 	return s.repo.ListPools(ctx, req)
 }
@@ -35,7 +35,7 @@ func (s *Service) GetPool(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*worker.DOTRandomPool, error) {
-	return s.repo.GetPoolByID(ctx, &repositories.GetDOTRandomPoolByIDRequest{
+	return s.repo.GetPoolByID(ctx, &workerports.GetDOTRandomPoolByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
@@ -63,7 +63,7 @@ func (s *Service) preparePool(
 		OrgID: entity.OrganizationID,
 		BuID:  entity.BusinessUnitID,
 	}
-	exists, err := s.repo.PoolCodeExists(ctx, &repositories.DOTRandomPoolCodeExistsRequest{
+	exists, err := s.repo.PoolCodeExists(ctx, &workerports.DOTRandomPoolCodeExistsRequest{
 		TenantInfo: tenantInfo,
 		Code:       entity.Code,
 		ExcludeID:  excludeID,
@@ -130,7 +130,7 @@ func (s *Service) UpdatePool(
 		BuID:  entity.BusinessUnitID,
 	}
 
-	previous, err := s.repo.GetPoolByID(ctx, &repositories.GetDOTRandomPoolByIDRequest{
+	previous, err := s.repo.GetPoolByID(ctx, &workerports.GetDOTRandomPoolByIDRequest{
 		ID:         entity.ID,
 		TenantInfo: tenantInfo,
 	})
@@ -169,7 +169,7 @@ func (s *Service) UpdatePool(
 
 func (s *Service) ListDraws(
 	ctx context.Context,
-	req *repositories.ListDOTRandomDrawsRequest,
+	req *workerports.ListDOTRandomDrawsRequest,
 ) ([]*worker.DOTRandomDraw, error) {
 	return s.repo.ListDraws(ctx, req)
 }
@@ -179,7 +179,7 @@ func (s *Service) GetDraw(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*worker.DOTRandomDraw, error) {
-	return s.repo.GetDrawByID(ctx, &repositories.GetDOTRandomDrawByIDRequest{
+	return s.repo.GetDrawByID(ctx, &workerports.GetDOTRandomDrawByIDRequest{
 		ID:             id,
 		TenantInfo:     tenantInfo,
 		IncludeEntries: true,
@@ -283,7 +283,7 @@ func (s *Service) planDraw(ctx context.Context, req *RunDrawRequest) (*drawPlan,
 	periodKey := worker.PeriodKeyFor(pool.Period, drawTime)
 	periodStart, periodEnd := worker.PeriodBoundsFor(pool.Period, drawTime)
 
-	existing, err := s.repo.GetDrawByPeriod(ctx, &repositories.GetDOTRandomDrawByPeriodRequest{
+	existing, err := s.repo.GetDrawByPeriod(ctx, &workerports.GetDOTRandomDrawByPeriodRequest{
 		TenantInfo: req.TenantInfo,
 		PoolID:     pool.ID,
 		PeriodKey:  periodKey,
@@ -299,7 +299,7 @@ func (s *Service) planDraw(ctx context.Context, req *RunDrawRequest) (*drawPlan,
 		)
 	}
 
-	candidates, err := s.repo.ListPoolCandidates(ctx, &repositories.ListPoolCandidatesRequest{
+	candidates, err := s.repo.ListPoolCandidates(ctx, &workerports.ListPoolCandidatesRequest{
 		TenantInfo:  req.TenantInfo,
 		DriverTypes: pool.IncludedDriverTypes,
 	})
@@ -414,7 +414,7 @@ func (s *Service) CancelDraw(
 
 func (s *Service) ListDrawEntries(
 	ctx context.Context,
-	req *repositories.ListDOTRandomDrawEntriesRequest,
+	req *workerports.ListDOTRandomDrawEntriesRequest,
 ) ([]*worker.DOTRandomDrawEntry, error) {
 	return s.repo.ListDrawEntries(ctx, req)
 }
@@ -465,7 +465,7 @@ func (s *Service) resolvePool(
 	poolID pulid.ID,
 ) (*worker.DOTRandomPool, error) {
 	if !poolID.IsNil() {
-		return s.repo.GetPoolByID(ctx, &repositories.GetDOTRandomPoolByIDRequest{
+		return s.repo.GetPoolByID(ctx, &workerports.GetDOTRandomPoolByIDRequest{
 			ID:         poolID,
 			TenantInfo: tenantInfo,
 		})

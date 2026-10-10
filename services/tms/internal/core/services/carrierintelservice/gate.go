@@ -7,8 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -70,11 +69,11 @@ func (s *Service) GateFor(
 			needsRecompute = append(needsRecompute, snap.CarrierID)
 		}
 	}
-	subjectByCarrier := make(map[pulid.ID]repositories.CarrierIntelSubject, len(needsRecompute))
+	subjectByCarrier := make(map[pulid.ID]carrierintelports.CarrierIntelSubject, len(needsRecompute))
 	if len(needsRecompute) > 0 {
 		subjects, subjectErr := s.subjectRepo.ListCarrierSubjects(
 			ctx,
-			&repositories.ListCarrierIntelSubjectsRequest{
+			&carrierintelports.ListCarrierIntelSubjectsRequest{
 				TenantInfo: tenantInfo,
 				CarrierIDs: needsRecompute,
 				Limit:      len(needsRecompute),
@@ -162,7 +161,7 @@ func toGateFindings(findings []carrierintel.Finding) []carrier.IntelFinding {
 	return out
 }
 
-func (s *Service) EnsureFresh(ctx context.Context, req *services.CarrierIntelEnsureFreshRequest) {
+func (s *Service) EnsureFresh(ctx context.Context, req *carrierintelports.CarrierIntelEnsureFreshRequest) {
 	if len(req.CarrierIDs) == 0 {
 		return
 	}
@@ -200,7 +199,7 @@ func (s *Service) EnsureFresh(ctx context.Context, req *services.CarrierIntelEns
 
 	subjects, err := s.subjectRepo.ListCarrierSubjects(
 		ctx,
-		&repositories.ListCarrierIntelSubjectsRequest{
+		&carrierintelports.ListCarrierIntelSubjectsRequest{
 			TenantInfo: req.TenantInfo,
 			CarrierIDs: stale,
 			Limit:      len(stale),

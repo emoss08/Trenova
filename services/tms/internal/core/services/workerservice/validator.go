@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,7 +17,7 @@ type ValidatorParams struct {
 	fx.In
 
 	DB                  *postgres.Connection
-	DispatchControlRepo repositories.DispatchControlRepository
+	DispatchControlRepo dispatchcontrolports.DispatchControlRepository
 }
 
 type Validator struct {

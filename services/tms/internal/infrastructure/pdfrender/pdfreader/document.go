@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync/atomic"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/klippa-app/go-pdfium"
 	"github.com/klippa-app/go-pdfium/references"
 	"github.com/klippa-app/go-pdfium/requests"
@@ -37,7 +37,7 @@ type document struct {
 	killed    atomic.Bool
 }
 
-var _ services.PDFDocument = (*document)(nil)
+var _ kernelports.PDFDocument = (*document)(nil)
 
 func (d *document) PageCount() int { return d.pages }
 
@@ -93,12 +93,12 @@ func (d *document) PageText(ctx context.Context, page int) (string, error) {
 	return text, err
 }
 
-func (d *document) PageLayout(ctx context.Context, page int) (*services.PDFPageLayout, error) {
+func (d *document) PageLayout(ctx context.Context, page int) (*kernelports.PDFPageLayout, error) {
 	if err := d.checkPage(page); err != nil {
 		return nil, err
 	}
 
-	var layout *services.PDFPageLayout
+	var layout *kernelports.PDFPageLayout
 	err := d.guard(ctx, "read page layout", func() error {
 		size, err := d.instance.GetPageSize(&requests.GetPageSize{Page: d.pageRef(page)})
 		if err != nil {
@@ -128,7 +128,7 @@ func (d *document) PageLayout(ctx context.Context, page int) (*services.PDFPageL
 			runs = append(runs, box)
 		}
 
-		layout = &services.PDFPageLayout{
+		layout = &kernelports.PDFPageLayout{
 			Width:  size.Width,
 			Height: size.Height,
 			Lines:  groupLines(runs),
@@ -197,7 +197,7 @@ func (d *document) guard(ctx context.Context, op string, fn func() error) error 
 		return fmt.Errorf("%s: %w", op, errInstanceKilled)
 	}
 	if err != nil {
-		return fmt.Errorf("%s: %w: %w", op, services.ErrPDFUnreadable, err)
+		return fmt.Errorf("%s: %w: %w", op, kernelports.ErrPDFUnreadable, err)
 	}
 
 	return nil

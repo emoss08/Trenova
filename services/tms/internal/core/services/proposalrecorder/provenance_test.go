@@ -4,7 +4,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,7 +20,7 @@ func TestRecord_KeepsTheProposalTheCallWasDecidedAs(t *testing.T) {
 	t.Parallel()
 
 	minted := pulid.MustNew("ap_")
-	proposal := recordOne(t, serviceports.PendingAction{
+	proposal := recordOne(t, agentports.PendingAction{
 		ToolName:   "assign_move",
 		Arguments:  map[string]any{},
 		Rationale:  "cover it",
@@ -42,7 +43,7 @@ func TestRecord_KeepsTheProposalTheCallWasDecidedAs(t *testing.T) {
 func TestRecord_MintsAsBeforeForAnActionRecordedWithoutAnID(t *testing.T) {
 	t.Parallel()
 
-	proposal := recordOne(t, serviceports.PendingAction{
+	proposal := recordOne(t, agentports.PendingAction{
 		ToolName:  "assign_move",
 		Arguments: map[string]any{},
 		Rationale: "cover it",
@@ -58,7 +59,7 @@ func TestRecord_KeepsWhoAnAutomaticWriteRanAsAndWhen(t *testing.T) {
 	t.Parallel()
 
 	version := int64(9)
-	proposal := recordOne(t, serviceports.PendingAction{
+	proposal := recordOne(t, agentports.PendingAction{
 		ToolName:        "assign_move",
 		Arguments:       map[string]any{},
 		Rationale:       "cover it",
@@ -84,15 +85,15 @@ func TestRecord_AnUnattendedAutomaticWriteIsExecutedByTheSystemUser(t *testing.T
 	systemUser := pulid.MustNew("usr_")
 	store := &capturingStore{}
 	_, err := NewWithStores(nil, nil, store).Record(t.Context(), &RecordRequest{
-		Actor: &serviceports.RequestActor{
-			PrincipalType:  serviceports.PrincipalTypeAgent,
+		Actor: &permissionports.RequestActor{
+			PrincipalType:  permissionports.PrincipalTypeAgent,
 			PrincipalID:    pulid.MustNew("agdef_"),
 			UserID:         systemUser,
 			OrganizationID: pulid.MustNew("org_"),
 			BusinessUnitID: pulid.MustNew("bu_"),
 		},
 		Run: &agent.AgentRun{ID: pulid.MustNew("arun_")},
-		Actions: []serviceports.PendingAction{
+		Actions: []agentports.PendingAction{
 			{
 				ToolName:  "assign_move",
 				Arguments: map[string]any{},
@@ -121,14 +122,14 @@ func TestRecord_AnUnattendedWriteRanAsNoPerson(t *testing.T) {
 
 	store := &capturingStore{}
 	_, err := NewWithStores(nil, nil, store).Record(t.Context(), &RecordRequest{
-		Actor: &serviceports.RequestActor{
-			PrincipalType:  serviceports.PrincipalTypeAgent,
-			PrincipalID:    serviceports.AgentPrincipalID,
+		Actor: &permissionports.RequestActor{
+			PrincipalType:  permissionports.PrincipalTypeAgent,
+			PrincipalID:    permissionports.AgentPrincipalID,
 			OrganizationID: pulid.MustNew("org_"),
 			BusinessUnitID: pulid.MustNew("bu_"),
 		},
 		Run: &agent.AgentRun{ID: pulid.MustNew("arun_")},
-		Actions: []serviceports.PendingAction{{
+		Actions: []agentports.PendingAction{{
 			ToolName:  "assign_move",
 			Arguments: map[string]any{},
 			Rationale: "cover it",
@@ -149,8 +150,8 @@ func TestRecord_OpensADelegatesRunUnderItsParentAndTask(t *testing.T) {
 	runs := &openedRuns{}
 	turnID := pulid.MustNew("atrn_")
 	_, err := NewWithStores(nil, runs, &capturingStore{}).Record(t.Context(), &RecordRequest{
-		Actor: &serviceports.RequestActor{
-			PrincipalType:  serviceports.PrincipalTypeUser,
+		Actor: &permissionports.RequestActor{
+			PrincipalType:  permissionports.PrincipalTypeUser,
 			UserID:         pulid.MustNew("usr_"),
 			OrganizationID: pulid.MustNew("org_"),
 			BusinessUnitID: pulid.MustNew("bu_"),
@@ -168,7 +169,7 @@ func TestRecord_OpensADelegatesRunUnderItsParentAndTask(t *testing.T) {
 			ParentOwnerID:    turnID,
 			DelegateCallID:   "call_task_1",
 		},
-		Actions: []serviceports.PendingAction{
+		Actions: []agentports.PendingAction{
 			{ToolName: "assign_move", Rationale: "cover it", Tier: agent.TierPropose},
 		},
 		Evidence: messageEvidence,

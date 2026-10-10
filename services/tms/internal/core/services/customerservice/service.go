@@ -7,10 +7,14 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -23,26 +27,26 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.CustomerRepository
-	CacheRepo    repositories.CustomerCacheRepository
+	Repo         customerports.CustomerRepository
+	CacheRepo    customerports.CustomerCacheRepository
 	Validator    *Validator
-	AuditService services.AuditService
-	Realtime     services.RealtimeService
-	Transformer  services.DataTransformer
-	DB           ports.DBConnection              `optional:"true"`
-	Sync         services.AccountingSyncEnqueuer `optional:"true"`
+	AuditService auditports.AuditService
+	Realtime     agentports.RealtimeService
+	Transformer  accessorialchargeports.DataTransformer
+	DB           kernelports.DBConnection                   `optional:"true"`
+	Sync         accountingsyncports.AccountingSyncEnqueuer `optional:"true"`
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.CustomerRepository
-	cacheRepo    repositories.CustomerCacheRepository
+	repo         customerports.CustomerRepository
+	cacheRepo    customerports.CustomerCacheRepository
 	validator    *Validator
-	auditService services.AuditService
-	realtime     services.RealtimeService
-	transformer  services.DataTransformer
-	db           ports.DBConnection
-	sync         services.AccountingSyncEnqueuer
+	auditService auditports.AuditService
+	realtime     agentports.RealtimeService
+	transformer  accessorialchargeports.DataTransformer
+	db           kernelports.DBConnection
+	sync         accountingsyncports.AccountingSyncEnqueuer
 }
 
 func New(p Params) *Service {
@@ -69,7 +73,7 @@ func (s *Service) updateAndQueueSync(
 	}
 
 	var updated *customer.Customer
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		var txErr error
 		if updated, txErr = s.repo.Update(txCtx, entity); txErr != nil {
 			return txErr
@@ -77,7 +81,7 @@ func (s *Service) updateAndQueueSync(
 		if updated.SamePartyDetails(original) {
 			return nil
 		}
-		return services.EnqueueAccountingSync(txCtx, s.sync, services.CustomerSyncRequest(
+		return accountingsyncports.EnqueueAccountingSync(txCtx, s.sync, accountingsyncports.CustomerSyncRequest(
 			pagination.TenantInfo{OrgID: updated.OrganizationID, BuID: updated.BusinessUnitID},
 			updated.ID,
 			updated.Name,
@@ -92,27 +96,27 @@ func (s *Service) updateAndQueueSync(
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListCustomerRequest,
+	req *customerports.ListCustomerRequest,
 ) (*pagination.ListResult[*customer.Customer], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListCustomerConnectionRequest,
+	req *customerports.ListCustomerConnectionRequest,
 ) (*pagination.CursorListResult[*customer.Customer], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	req repositories.GetCustomerByIDRequest,
+	req customerports.GetCustomerByIDRequest,
 ) (*customer.Customer, error) {
 	entity, err := s.cacheRepo.GetByID(ctx, req)
 	if err == nil {
 		return entity, nil
 	}
-	if !errors.Is(err, repositories.ErrCacheMiss) {
+	if !errors.Is(err, customerports.ErrCacheMiss) {
 		s.l.Warn(
 			"failed to load customer from cache",
 			zap.Error(err),
@@ -125,28 +129,28 @@ func (s *Service) Get(
 
 func (s *Service) GetByIDs(
 	ctx context.Context,
-	req repositories.GetCustomersByIDsRequest,
+	req customerports.GetCustomersByIDsRequest,
 ) ([]*customer.Customer, error) {
 	return s.repo.GetByIDs(ctx, req)
 }
 
 func (s *Service) SelectOptions(
 	ctx context.Context,
-	req *repositories.CustomerSelectOptionsRequest,
+	req *customerports.CustomerSelectOptionsRequest,
 ) (*pagination.ListResult[*customer.Customer], error) {
 	return s.repo.SelectOptions(ctx, req)
 }
 
 func (s *Service) GetBillingProfile(
 	ctx context.Context,
-	req repositories.GetCustomerBillingProfileRequest,
+	req customerports.GetCustomerBillingProfileRequest,
 ) (*customer.CustomerBillingProfile, error) {
 	return s.repo.GetBillingProfile(ctx, req)
 }
 
 func (s *Service) BulkUpdateStatus(
 	ctx context.Context,
-	req *repositories.BulkUpdateCustomerStatusRequest,
+	req *customerports.BulkUpdateCustomerStatusRequest,
 ) ([]*customer.Customer, error) {
 	log := s.l.With(
 		zap.String("operation", "BulkUpdateStatus"),
@@ -157,7 +161,7 @@ func (s *Service) BulkUpdateStatus(
 	if err != nil {
 		return nil, err
 	}
-	originalEntities := services.Befores(changes)
+	originalEntities := kernelports.Befores(changes)
 
 	entities, err := s.repo.BulkUpdateStatus(ctx, req)
 	if err != nil {
@@ -196,7 +200,7 @@ func (s *Service) BulkUpdateStatus(
 func (s *Service) Create(
 	ctx context.Context,
 	entity *customer.Customer,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*customer.Customer, error) {
 	auditActor := actor.AuditActor()
 	log := s.l.With(
@@ -216,7 +220,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceCustomer,
 		ResourceID:     createdEntity.GetID().String(),
 		Operation:      permission.OpCreate,
@@ -254,7 +258,7 @@ func (s *Service) Create(
 func (s *Service) Update(
 	ctx context.Context,
 	entity *customer.Customer,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*customer.Customer, error) {
 	auditActor := actor.AuditActor()
 	log := s.l.With(
@@ -275,7 +279,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceCustomer,
 		ResourceID:     updatedEntity.GetID().String(),
 		Operation:      permission.OpUpdate,

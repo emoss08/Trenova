@@ -5,8 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/core/domain/extractionrollout"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -18,12 +19,12 @@ const reportSampleLimit = 5000
 func (s *Service) Report(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-) (*services.ExtractionRolloutReport, error) {
+) (*extractionrolloutports.ExtractionRolloutReport, error) {
 	rollout, err := s.Get(ctx, tenant)
 	if err != nil {
 		return nil, err
 	}
-	report := &services.ExtractionRolloutReport{
+	report := &extractionrolloutports.ExtractionRolloutReport{
 		Rollout:              rollout,
 		MinGuardScoredFields: extractionrollout.MinGuardScoredFields,
 		MinGuardExtractions:  extractionrollout.MinGuardExtractions,
@@ -33,7 +34,7 @@ func (s *Service) Report(
 	}
 
 	candidate := *rollout.ProviderID
-	totals, err := s.assignments.Totals(ctx, repositories.TotalRolloutAssignmentsRequest{
+	totals, err := s.assignments.Totals(ctx, extractionrolloutports.TotalRolloutAssignmentsRequest{
 		TenantInfo:          tenant,
 		CandidateProviderID: candidate,
 		Since:               *rollout.StartedAt,
@@ -60,8 +61,8 @@ func (s *Service) Report(
 	return report, nil
 }
 
-func accuracyOf(side extractionrollout.ArmAccuracy) services.ExtractionRolloutAccuracy {
-	return services.ExtractionRolloutAccuracy{
+func accuracyOf(side extractionrollout.ArmAccuracy) extractionrolloutports.ExtractionRolloutAccuracy {
+	return extractionrolloutports.ExtractionRolloutAccuracy{
 		Scored:   side.Scored,
 		Correct:  side.Correct,
 		Accuracy: side.Rate(),
@@ -70,13 +71,13 @@ func accuracyOf(side extractionrollout.ArmAccuracy) services.ExtractionRolloutAc
 
 func (s *Service) addFields(
 	ctx context.Context,
-	report *services.ExtractionRolloutReport,
+	report *extractionrolloutports.ExtractionRolloutReport,
 	tenant pagination.TenantInfo,
 	rollout *extractionrollout.ExtractionRollout,
 ) error {
 	corrections, err := s.corrections.ListForAccuracy(
 		ctx,
-		repositories.ListAICorrectionsForAccuracyRequest{
+		aicorrectionports.ListAICorrectionsForAccuracyRequest{
 			TenantInfo: tenant,
 			Task:       aicorrection.TaskShipmentDraftExtraction,
 			Since:      *rollout.StartedAt,
@@ -110,7 +111,7 @@ func (s *Service) providerName(
 	tenant pagination.TenantInfo,
 	providerID pulid.ID,
 ) string {
-	provider, err := s.providers.GetByID(ctx, repositories.GetAIProviderByIDRequest{
+	provider, err := s.providers.GetByID(ctx, agentports.GetAIProviderByIDRequest{
 		ID:         providerID,
 		TenantInfo: tenant,
 	})

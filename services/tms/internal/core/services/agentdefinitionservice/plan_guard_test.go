@@ -1,6 +1,7 @@
 package agentdefinitionservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
@@ -36,7 +37,7 @@ func TestRequireAutomationRefusesTurningOnAnAutomatedAgent(t *testing.T) {
 func TestRequireAutomationAllowsChatAgentsAndUnchangedAutomation(t *testing.T) {
 	t.Parallel()
 
-	svc := &Service{plans: mocks.NewMockPlanService(t)}
+	svc := &Service{plans: platformplanportsmock.NewMockPlanService(t)}
 	tenant := plantest.Tenant()
 
 	require.NoError(t, svc.requireAutomation(t.Context(), tenant, definitionWith(agentdefinition.TriggerChat, true), nil))

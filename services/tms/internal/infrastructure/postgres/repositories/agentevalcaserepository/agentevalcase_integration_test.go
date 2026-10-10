@@ -8,12 +8,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -36,7 +36,7 @@ type definitionRow struct {
 type fixture struct {
 	ctx        context.Context
 	db         *bun.DB
-	repo       repositories.AgentEvalCaseRepository
+	repo       agentqualityports.AgentEvalCaseRepository
 	tenant     pagination.TenantInfo
 	definition pulid.ID
 }
@@ -119,7 +119,7 @@ func TestCreateAndRead_RoundTripsEveryFrozenField(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, created.ID.IsNotNil())
 
-	read, err := f.repo.GetByID(f.ctx, repositories.GetAgentEvalCaseByIDRequest{
+	read, err := f.repo.GetByID(f.ctx, agentqualityports.GetAgentEvalCaseByIDRequest{
 		ID:         created.ID,
 		TenantInfo: f.tenant,
 	})
@@ -140,20 +140,20 @@ func TestTenantIsolation_AnotherTenantSeesNothing(t *testing.T) {
 	require.NoError(t, err)
 	other := otherTenant()
 
-	_, err = f.repo.GetByID(f.ctx, repositories.GetAgentEvalCaseByIDRequest{
+	_, err = f.repo.GetByID(f.ctx, agentqualityports.GetAgentEvalCaseByIDRequest{
 		ID:         created.ID,
 		TenantInfo: other,
 	})
 	assert.True(t, errortypes.IsNotFoundError(err))
 
-	_, err = f.repo.GetByContent(f.ctx, repositories.GetAgentEvalCaseByContentRequest{
+	_, err = f.repo.GetByContent(f.ctx, agentqualityports.GetAgentEvalCaseByContentRequest{
 		AgentDefinitionID: f.definition,
 		ContentHash:       created.ContentHash,
 		TenantInfo:        other,
 	})
 	assert.True(t, errortypes.IsNotFoundError(err))
 
-	listed, err := f.repo.ListByAgent(f.ctx, repositories.ListAgentEvalCasesRequest{
+	listed, err := f.repo.ListByAgent(f.ctx, agentqualityports.ListAgentEvalCasesRequest{
 		AgentDefinitionID: f.definition,
 		TenantInfo:        other,
 	})
@@ -167,7 +167,7 @@ func TestTenantIsolation_AnotherTenantSeesNothing(t *testing.T) {
 	_, err = f.repo.Update(f.ctx, &stolen)
 	require.Error(t, err, "an update scoped to another tenant touches nothing")
 
-	purged, err := f.repo.PurgeExpired(f.ctx, repositories.PurgeExpiredEvalCasesRequest{
+	purged, err := f.repo.PurgeExpired(f.ctx, agentqualityports.PurgeExpiredEvalCasesRequest{
 		TenantInfo:    other,
 		CreatedBefore: timeutils.NowUnix() + 3600,
 		Now:           timeutils.NowUnix(),
@@ -175,7 +175,7 @@ func TestTenantIsolation_AnotherTenantSeesNothing(t *testing.T) {
 	require.NoError(t, err)
 	assert.Zero(t, purged)
 
-	still, err := f.repo.GetByID(f.ctx, repositories.GetAgentEvalCaseByIDRequest{
+	still, err := f.repo.GetByID(f.ctx, agentqualityports.GetAgentEvalCaseByIDRequest{
 		ID:         created.ID,
 		TenantInfo: f.tenant,
 	})
@@ -193,7 +193,7 @@ func TestCreate_RefusesTheSameFrozenInputTwice(t *testing.T) {
 	require.Error(t, err)
 	assert.True(t, dberror.IsUniqueConstraintViolation(err))
 
-	found, err := f.repo.GetByContent(f.ctx, repositories.GetAgentEvalCaseByContentRequest{
+	found, err := f.repo.GetByContent(f.ctx, agentqualityports.GetAgentEvalCaseByContentRequest{
 		AgentDefinitionID: f.definition,
 		ContentHash:       f.newCase(t, "Put S-102 on hold").ContentHash,
 		TenantInfo:        f.tenant,
@@ -237,18 +237,18 @@ func TestPurge_ExpiredAndOrphanedCasesGo(t *testing.T) {
 	kept, err := f.repo.Create(f.ctx, f.newCase(t, "Put S-106 on hold"))
 	require.NoError(t, err)
 
-	purged, err := f.repo.PurgeExpired(f.ctx, repositories.PurgeExpiredEvalCasesRequest{
+	purged, err := f.repo.PurgeExpired(f.ctx, agentqualityports.PurgeExpiredEvalCasesRequest{
 		TenantInfo: f.tenant,
 		Now:        timeutils.NowUnix(),
 	})
 	require.NoError(t, err)
 	assert.Equal(t, 1, purged)
 
-	orphans, err := f.repo.PurgeOrphaned(f.ctx, repositories.PurgeOrphanedEvalCasesRequest{})
+	orphans, err := f.repo.PurgeOrphaned(f.ctx, agentqualityports.PurgeOrphanedEvalCasesRequest{})
 	require.NoError(t, err)
 	assert.Equal(t, 1, orphans)
 
-	remaining, err := f.repo.ListByAgent(f.ctx, repositories.ListAgentEvalCasesRequest{
+	remaining, err := f.repo.ListByAgent(f.ctx, agentqualityports.ListAgentEvalCasesRequest{
 		AgentDefinitionID: f.definition,
 		TenantInfo:        f.tenant,
 	})

@@ -5,7 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -15,14 +16,14 @@ import (
 type agentRunsByIDsLister interface {
 	ListByIDs(
 		ctx context.Context,
-		req repositories.ListAgentRunsByIDsRequest,
+		req agentports.ListAgentRunsByIDsRequest,
 	) ([]*agent.AgentRun, error)
 }
 
 type AgentRunByIDLoaderFactoryParams struct {
 	fx.In
 
-	Runs repositories.AgentRunRepository
+	Runs agentports.AgentRunRepository
 }
 
 // AgentRunByIDLoaderFactory reads the runs behind a page of proposals or
@@ -41,7 +42,7 @@ func (f *AgentRunByIDLoaderFactory) NewForTenant(
 ) *dataloadgen.Loader[string, *agent.AgentRun] {
 	return newLoader(batchByIDFunc(
 		func(ctx context.Context, ids []pulid.ID) ([]*agent.AgentRun, error) {
-			return f.runs.ListByIDs(ctx, repositories.ListAgentRunsByIDsRequest{
+			return f.runs.ListByIDs(ctx, agentports.ListAgentRunsByIDsRequest{
 				IDs:        ids,
 				TenantInfo: tenantInfo,
 			})
@@ -53,14 +54,14 @@ func (f *AgentRunByIDLoaderFactory) NewForTenant(
 type agentRunTranscriptsByIDsLister interface {
 	ListTranscriptsByIDs(
 		ctx context.Context,
-		req repositories.ListAgentRunsByIDsRequest,
+		req agentports.ListAgentRunsByIDsRequest,
 	) ([]*agent.AgentRun, error)
 }
 
 type AgentRunTranscriptByIDLoaderFactoryParams struct {
 	fx.In
 
-	Runs repositories.AgentRunRepository
+	Runs agentports.AgentRunRepository
 }
 
 type AgentRunTranscriptByIDLoaderFactory struct {
@@ -78,7 +79,7 @@ func (f *AgentRunTranscriptByIDLoaderFactory) NewForTenant(
 ) *dataloadgen.Loader[string, *agent.AgentRun] {
 	return newLoader(batchByIDFunc(
 		func(ctx context.Context, ids []pulid.ID) ([]*agent.AgentRun, error) {
-			return f.runs.ListTranscriptsByIDs(ctx, repositories.ListAgentRunsByIDsRequest{
+			return f.runs.ListTranscriptsByIDs(ctx, agentports.ListAgentRunsByIDsRequest{
 				IDs:        ids,
 				TenantInfo: tenantInfo,
 			})
@@ -90,14 +91,14 @@ func (f *AgentRunTranscriptByIDLoaderFactory) NewForTenant(
 type agentDefinitionsByIDsLister interface {
 	ListByIDs(
 		ctx context.Context,
-		req repositories.ListAgentDefinitionsByIDsRequest,
+		req agentdefinitionports.ListAgentDefinitionsByIDsRequest,
 	) ([]*agentdefinition.Definition, error)
 }
 
 type AgentDefinitionByIDLoaderFactoryParams struct {
 	fx.In
 
-	Definitions repositories.AgentDefinitionRepository
+	Definitions agentdefinitionports.AgentDefinitionRepository
 }
 
 // AgentDefinitionByIDLoaderFactory reads the definitions behind a page of
@@ -117,7 +118,7 @@ func (f *AgentDefinitionByIDLoaderFactory) NewForTenant(
 ) *dataloadgen.Loader[string, *agentdefinition.Definition] {
 	return newLoader(batchByIDFunc(
 		func(ctx context.Context, ids []pulid.ID) ([]*agentdefinition.Definition, error) {
-			return f.definitions.ListByIDs(ctx, repositories.ListAgentDefinitionsByIDsRequest{
+			return f.definitions.ListByIDs(ctx, agentdefinitionports.ListAgentDefinitionsByIDsRequest{
 				IDs:        ids,
 				TenantInfo: tenantInfo,
 			})

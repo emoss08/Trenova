@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -51,7 +51,7 @@ func TestTheArrivalSortResolvesToTheReceivedAtColumn(t *testing.T) {
 func TestTheCensusGroupsByStatusReadingAndMailbox(t *testing.T) {
 	t.Parallel()
 
-	sqlText := countBreakdownQuery(renderDB(), repositories.CountInboundMessagesRequest{}).String()
+	sqlText := countBreakdownQuery(renderDB(), inboundmessageports.CountInboundMessagesRequest{}).String()
 
 	assert.Contains(t, sqlText, "COALESCE(imsg.classification, '') AS classification", sqlText)
 	assert.Contains(t, sqlText,
@@ -63,7 +63,7 @@ func TestTheCensusGroupsByStatusReadingAndMailbox(t *testing.T) {
 func TestRetentionReadsOnlySettledMailInsideOneTenant(t *testing.T) {
 	t.Parallel()
 
-	req := repositories.ListSettledInboundMessagesRequest{
+	req := inboundmessageports.ListSettledInboundMessagesRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: "org_1", BuID: "bu_1"},
 		Before:     1_700_000_000,
 		Limit:      500,
@@ -83,7 +83,7 @@ func TestRetentionReadsOnlySettledMailInsideOneTenant(t *testing.T) {
 func TestRetentionDeletesOnlyInsideOneTenant(t *testing.T) {
 	t.Parallel()
 
-	sqlText := deleteByIDsQuery(renderDB(), repositories.DeleteInboundMessagesRequest{
+	sqlText := deleteByIDsQuery(renderDB(), inboundmessageports.DeleteInboundMessagesRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: "org_1", BuID: "bu_1"},
 		IDs:        []pulid.ID{"imsg_1", "imsg_2"},
 	}).String()

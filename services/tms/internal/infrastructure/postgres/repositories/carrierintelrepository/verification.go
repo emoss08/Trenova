@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -23,7 +23,7 @@ type verificationRepository struct {
 	l  *zap.Logger
 }
 
-func NewVerificationRepository(p Params) repositories.CarrierEquipmentVerificationRepository {
+func NewVerificationRepository(p Params) carrierintelports.CarrierEquipmentVerificationRepository {
 	return &verificationRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.carrier-equipment-verification-repository"),

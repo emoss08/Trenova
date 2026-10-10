@@ -1,0 +1,692 @@
+package shipmentports
+
+import (
+	"context"
+	"time"
+
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/shopspring/decimal"
+)
+
+type ShipmentOptions struct {
+	ExpandShipmentDetails   bool   `form:"expandShipmentDetails"   json:"expandShipmentDetails"   query:"expandShipmentDetails"`
+	Status                  string `form:"status"                  json:"status"                  query:"status"`
+	ActivityWindowStart     int64  `form:"activityWindowStart"     json:"activityWindowStart"     query:"activityWindowStart"`
+	ActivityWindowEnd       int64  `form:"activityWindowEnd"       json:"activityWindowEnd"       query:"activityWindowEnd"`
+	BillingTransferEligible bool   `form:"billingTransferEligible" json:"billingTransferEligible" query:"billingTransferEligible"`
+	IncludeCustomer         bool   `form:"includeCustomer"         json:"includeCustomer"         query:"includeCustomer"`
+	IncludeRoute            bool   `form:"-"                       json:"-"                       query:"-"`
+
+	Statuses         []shipment.Status          `form:"-" json:"-" query:"-"`
+	CustomerIDs      []pulid.ID                 `form:"-" json:"-" query:"-"`
+	StopLocationIDs  []pulid.ID                 `form:"-" json:"-" query:"-"`
+	StopEachOf       [][]pulid.ID               `form:"-" json:"-" query:"-"`
+	WorkerIDs        []pulid.ID                 `form:"-" json:"-" query:"-"`
+	CommodityIDs     []pulid.ID                 `form:"-" json:"-" query:"-"`
+	ShipmentTypeIDs  []pulid.ID                 `form:"-" json:"-" query:"-"`
+	QuickFilters     []shipment.QuickFilterSpec `form:"-" json:"-" query:"-"`
+	Timezone         string                     `form:"-" json:"-" query:"-"`
+	QuickFilterBasis *ShipmentQuickFilterBasis  `form:"-" json:"-" query:"-"`
+}
+
+func (o ShipmentOptions) HasActivityWindow() bool {
+	return o.ActivityWindowStart > 0 && o.ActivityWindowEnd > 0
+}
+
+func (o *ShipmentOptions) HasQuickFilters() bool {
+	return len(o.QuickFilters) > 0
+}
+
+type ShipmentMarginBasis struct {
+	CostPerMile          decimal.Decimal
+	IncludeDeadheadMiles bool
+	TargetMarginPercent  decimal.Decimal
+}
+
+type ShipmentDetentionBasis struct {
+	UsePolicyEngine  bool
+	ThresholdMinutes int64
+}
+
+type ShipmentQuickFilterBasis struct {
+	Now       time.Time
+	Location  *time.Location
+	Margin    *ShipmentMarginBasis
+	Detention *ShipmentDetentionBasis
+}
+
+type ListShipmentsRequest struct {
+	Filter          *pagination.QueryOptions `json:"filter"`
+	Cursor          pagination.CursorInfo    `json:"cursor"`
+	ShipmentOptions ShipmentOptions          `json:"shipmentOptions"`
+}
+
+type GetUnassignedShipmentsRequest struct {
+	Filter          *pagination.QueryOptions `json:"filter"`
+	Cursor          pagination.CursorInfo    `json:"cursor"`
+	ShipmentOptions ShipmentOptions          `json:"shipmentOptions"`
+}
+
+type GetShipmentByIDRequest struct {
+	ID         pulid.ID              `json:"id"         form:"id"`
+	TenantInfo pagination.TenantInfo `json:"tenantInfo" form:"tenantInfo"`
+	ShipmentOptions
+}
+
+type CancelShipmentRequest struct {
+	TenantInfo      pagination.TenantInfo `json:"-"`
+	ShipmentID      pulid.ID              `json:"shipmentId"`
+	CanceledByID    pulid.ID              `json:"-"`
+	CanceledAt      int64                 `json:"-"`
+	CancelReason    string                `json:"cancelReason"`
+	ExpectedVersion int64                 `json:"-"`
+}
+
+func (r *CancelShipmentRequest) Validate() *errortypes.MultiError {
+	multiErr := errortypes.NewMultiError()
+
+	multiErr.AddOzzoError(validation.ValidateStruct(
+		r,
+		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
+		validation.Field(
+			&r.TenantInfo.OrgID,
+			validation.Required.Error("Organization ID is required"),
+		),
+		validation.Field(
+			&r.TenantInfo.BuID,
+			validation.Required.Error("Business unit ID is required"),
+		),
+	))
+
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
+}
+
+type MoveStatusRestore struct {
+	MoveID pulid.ID
+	Status shipment.MoveStatus
+}
+
+type StopStatusRestore struct {
+	StopID pulid.ID
+	Status shipment.StopStatus
+}
+
+type UncancelShipmentRequest struct {
+	TenantInfo      pagination.TenantInfo `json:"-"`
+	ShipmentID      pulid.ID              `json:"shipmentId"`
+	ExpectedVersion int64                 `json:"-"`
+	RestoredStatus  shipment.Status       `json:"-"`
+	MoveStatuses    []MoveStatusRestore   `json:"-"`
+	StopStatuses    []StopStatusRestore   `json:"-"`
+}
+
+func (r *UncancelShipmentRequest) Validate() *errortypes.MultiError {
+	multiErr := errortypes.NewMultiError()
+
+	multiErr.AddOzzoError(validation.ValidateStruct(
+		r,
+		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
+		validation.Field(
+			&r.TenantInfo.OrgID,
+			validation.Required.Error("Organization ID is required"),
+		),
+		validation.Field(
+			&r.TenantInfo.BuID,
+			validation.Required.Error("Business unit ID is required"),
+		),
+	))
+
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
+}
+
+type TransferOwnershipRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	ShipmentID pulid.ID              `json:"shipmentId"`
+	OwnerID    pulid.ID              `json:"ownerId"`
+}
+
+func (r *TransferOwnershipRequest) Validate() *errortypes.MultiError {
+	multiErr := errortypes.NewMultiError()
+
+	multiErr.AddOzzoError(validation.ValidateStruct(
+		r,
+		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
+		validation.Field(&r.OwnerID, validation.Required.Error("Owner ID is required")),
+		validation.Field(
+			&r.TenantInfo.OrgID,
+			validation.Required.Error("Organization ID is required"),
+		),
+		validation.Field(
+			&r.TenantInfo.BuID,
+			validation.Required.Error("Business unit ID is required"),
+		),
+	))
+
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
+}
+
+type DuplicateBOLCheckRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	BOL        string                `json:"bol"`
+	ShipmentID *pulid.ID             `json:"shipmentId,omitempty"`
+}
+
+func (r *DuplicateBOLCheckRequest) Validate() *errortypes.MultiError {
+	multiErr := errortypes.NewMultiError()
+
+	multiErr.AddOzzoError(validation.ValidateStruct(
+		r,
+		validation.Field(&r.BOL, validation.Required.Error("BOL is required")),
+		validation.Field(
+			&r.TenantInfo.OrgID,
+			validation.Required.Error("Organization ID is required"),
+		),
+		validation.Field(
+			&r.TenantInfo.BuID,
+			validation.Required.Error("Business unit ID is required"),
+		),
+	))
+
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
+}
+
+type CheckHazmatSegregationRequest struct {
+	TenantInfo   pagination.TenantInfo `json:"-"`
+	CommodityIDs []pulid.ID            `json:"commodityIds"`
+}
+
+func (r *CheckHazmatSegregationRequest) Validate() *errortypes.MultiError {
+	multiErr := errortypes.NewMultiError()
+
+	if len(r.CommodityIDs) < 2 {
+		multiErr.Add("commodityIds", errortypes.ErrInvalid, "At least 2 commodity IDs are required")
+	}
+
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
+}
+
+type BulkDuplicateShipmentRequest struct {
+	TenantInfo    pagination.TenantInfo `json:"-"`
+	ShipmentID    pulid.ID              `json:"shipmentId"`
+	Count         int                   `json:"count"`
+	OverrideDates bool                  `json:"overrideDates"`
+	FirstPickupAt *int64                `json:"firstPickupAt,omitempty"`
+}
+
+func (r *BulkDuplicateShipmentRequest) Validate() *errortypes.MultiError {
+	multiErr := errortypes.NewMultiError()
+
+	if r.ShipmentID.IsNil() {
+		multiErr.Add("shipmentId", errortypes.ErrRequired, "Shipment ID is required")
+	}
+
+	if r.TenantInfo.OrgID.IsNil() {
+		multiErr.Add("orgId", errortypes.ErrRequired, "Organization ID is required")
+	}
+
+	if r.TenantInfo.BuID.IsNil() {
+		multiErr.Add("buId", errortypes.ErrRequired, "Business unit ID is required")
+	}
+
+	if r.TenantInfo.UserID.IsNil() {
+		multiErr.Add("userId", errortypes.ErrRequired, "User ID is required")
+	}
+
+	switch {
+	case r.Count == 0:
+		multiErr.Add("count", errortypes.ErrRequired, "Count is required")
+	case r.Count < 1:
+		multiErr.Add("count", errortypes.ErrInvalid, "Count must be at least 1")
+	case r.Count > 20:
+		multiErr.Add("count", errortypes.ErrInvalid, "Count must be at most 20")
+	}
+
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
+}
+
+func (r *BulkDuplicateShipmentRequest) DateAnchor(now int64) *int64 {
+	if r.FirstPickupAt != nil {
+		anchor := *r.FirstPickupAt
+		return &anchor
+	}
+	if r.OverrideDates {
+		return &now
+	}
+
+	return nil
+}
+
+type ShipmentDuplicatePlan struct {
+	Source *shipment.Shipment
+	Copies []*shipment.Shipment
+}
+
+type GetDelayedShipmentsRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	Limit      int                   `json:"limit"`
+}
+
+func (r *GetDelayedShipmentsRequest) Validate() *errortypes.MultiError {
+	multiErr := errortypes.NewMultiError()
+
+	multiErr.AddOzzoError(validation.ValidateStruct(
+		r,
+		validation.Field(
+			&r.TenantInfo.OrgID,
+			validation.Required.Error("Organization ID is required"),
+		),
+		validation.Field(
+			&r.TenantInfo.BuID,
+			validation.Required.Error("Business unit ID is required"),
+		),
+	))
+
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
+}
+
+type DelayShipmentsRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	Limit      int                   `json:"limit"`
+}
+
+func (r *DelayShipmentsRequest) Validate() *errortypes.MultiError {
+	multiErr := errortypes.NewMultiError()
+
+	multiErr.AddOzzoError(validation.ValidateStruct(
+		r,
+		validation.Field(
+			&r.TenantInfo.OrgID,
+			validation.Required.Error("Organization ID is required"),
+		),
+		validation.Field(
+			&r.TenantInfo.BuID,
+			validation.Required.Error("Business unit ID is required"),
+		),
+	))
+
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
+}
+
+type GetAutoCancelableShipmentsRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	Limit      int                   `json:"limit"`
+}
+
+func (r *GetAutoCancelableShipmentsRequest) Validate() *errortypes.MultiError {
+	multiErr := errortypes.NewMultiError()
+
+	multiErr.AddOzzoError(validation.ValidateStruct(
+		r,
+		validation.Field(
+			&r.TenantInfo.OrgID,
+			validation.Required.Error("Organization ID is required"),
+		),
+		validation.Field(
+			&r.TenantInfo.BuID,
+			validation.Required.Error("Business unit ID is required"),
+		),
+	))
+
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
+}
+
+type AutoCancelShipmentsRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	Limit      int                   `json:"limit"`
+}
+
+func (r *AutoCancelShipmentsRequest) Validate() *errortypes.MultiError {
+	multiErr := errortypes.NewMultiError()
+
+	multiErr.AddOzzoError(validation.ValidateStruct(
+		r,
+		validation.Field(
+			&r.TenantInfo.OrgID,
+			validation.Required.Error("Organization ID is required"),
+		),
+		validation.Field(
+			&r.TenantInfo.BuID,
+			validation.Required.Error("Business unit ID is required"),
+		),
+	))
+
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
+}
+
+type GetPreviousRatesRequest struct {
+	TenantInfo            pagination.TenantInfo `json:"-"`
+	OriginLocationID      pulid.ID              `json:"originLocationId"`
+	DestinationLocationID pulid.ID              `json:"destinationLocationId"`
+	ShipmentTypeID        pulid.ID              `json:"shipmentTypeId"`
+	ServiceTypeID         pulid.ID              `json:"serviceTypeId"`
+	CustomerID            *pulid.ID             `json:"customerId,omitempty"`
+	ExcludeShipmentID     *pulid.ID             `json:"excludeShipmentId,omitempty"`
+}
+
+func (r *GetPreviousRatesRequest) Validate() *errortypes.MultiError {
+	multiErr := errortypes.NewMultiError()
+
+	if r.OriginLocationID.IsNil() {
+		multiErr.Add("originLocationId", errortypes.ErrRequired, "Origin location ID is required")
+	}
+
+	if r.DestinationLocationID.IsNil() {
+		multiErr.Add(
+			"destinationLocationId",
+			errortypes.ErrRequired,
+			"Destination location ID is required",
+		)
+	}
+
+	if r.ShipmentTypeID.IsNil() {
+		multiErr.Add("shipmentTypeId", errortypes.ErrRequired, "Shipment type ID is required")
+	}
+
+	if r.ServiceTypeID.IsNil() {
+		multiErr.Add("serviceTypeId", errortypes.ErrRequired, "Service type ID is required")
+	}
+
+	if r.TenantInfo.OrgID.IsNil() {
+		multiErr.Add("orgId", errortypes.ErrRequired, "Organization ID is required")
+	}
+
+	if r.TenantInfo.BuID.IsNil() {
+		multiErr.Add("buId", errortypes.ErrRequired, "Business unit ID is required")
+	}
+
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
+}
+
+type ShipmentTotalsResponse struct {
+	FreightChargeAmount decimal.Decimal            `json:"freightChargeAmount"`
+	OtherChargeAmount   decimal.Decimal            `json:"otherChargeAmount"`
+	TotalChargeAmount   decimal.Decimal            `json:"totalChargeAmount"`
+	FuelSurcharge       *shipment.AdditionalCharge `json:"fuelSurcharge,omitempty"`
+}
+
+type ShipmentDuplicateWorkflowResponse struct {
+	WorkflowID  string `json:"workflowId"`
+	RunID       string `json:"runId"`
+	TaskQueue   string `json:"taskQueue"`
+	Status      string `json:"status"`
+	SubmittedAt int64  `json:"submittedAt"`
+}
+
+type ExternalReferenceCheckRequest struct {
+	TenantInfo        pagination.TenantInfo
+	CustomerID        pulid.ID
+	ExternalReference string
+	ShipmentID        pulid.ID
+}
+
+type IdempotencyKeyLookupRequest struct {
+	TenantInfo     pagination.TenantInfo
+	IdempotencyKey string
+}
+
+type DuplicateBOLResult struct {
+	ID        pulid.ID `bun:"id"`
+	ProNumber string   `bun:"pro_number"`
+}
+
+type PreviousRateSummary struct {
+	ShipmentID          pulid.ID        `json:"shipmentId"          bun:"shipment_id"`
+	ProNumber           string          `json:"proNumber"           bun:"pro_number"`
+	CustomerID          pulid.ID        `json:"customerId"          bun:"customer_id"`
+	ServiceTypeID       pulid.ID        `json:"serviceTypeId"       bun:"service_type_id"`
+	ShipmentTypeID      pulid.ID        `json:"shipmentTypeId"      bun:"shipment_type_id"`
+	FormulaTemplateID   pulid.ID        `json:"formulaTemplateId"   bun:"formula_template_id"`
+	FreightChargeAmount decimal.Decimal `json:"freightChargeAmount" bun:"freight_charge_amount"`
+	OtherChargeAmount   decimal.Decimal `json:"otherChargeAmount"   bun:"other_charge_amount"`
+	TotalChargeAmount   decimal.Decimal `json:"totalChargeAmount"   bun:"total_charge_amount"`
+	RatingUnit          int64           `json:"ratingUnit"          bun:"rating_unit"`
+	Pieces              *int64          `json:"pieces"              bun:"pieces"`
+	Weight              *int64          `json:"weight"              bun:"weight"`
+	CreatedAt           int64           `json:"createdAt"           bun:"created_at"`
+}
+
+type ListBillingTransferCandidateIDsQuery struct {
+	Filter *pagination.QueryOptions `json:"filter"`
+	Status shipment.Status          `json:"status"`
+	Limit  int                      `json:"limit"`
+}
+
+type BillingTransferCandidateIDsResult struct {
+	IDs        []pulid.ID `json:"ids"`
+	TotalCount int        `json:"totalCount"`
+}
+
+type GetShipmentsByIDsRequest struct {
+	TenantInfo  pagination.TenantInfo `json:"-"`
+	ShipmentIDs []pulid.ID            `json:"shipmentIds"`
+	// IncludeCharges loads each shipment's payers, additional charges and
+	// charge allocations, which is what dividing it among its payers reads.
+	IncludeCharges bool `json:"-"`
+}
+
+// ListShipmentSummariesRequest asks for the flat per-shipment facts a document
+// names, for many shipments at once.
+type ListShipmentSummariesRequest struct {
+	TenantInfo  pagination.TenantInfo `json:"-"`
+	ShipmentIDs []pulid.ID            `json:"-"`
+}
+
+// ShipmentSummary is one shipment as a consolidated invoice lists it.
+//
+// It exists because a consolidated invoice names dozens of shipments and needs
+// only a line of text about each. Loading whole shipments with their moves,
+// stops and locations to render one row apiece would be dozens of round trips
+// for data the document throws away.
+type ShipmentSummary struct {
+	ShipmentID       pulid.ID            `bun:"shipment_id"`
+	ProNumber        string              `bun:"pro_number"`
+	BOL              string              `bun:"bol"`
+	PONumber         string              `bun:"po_number"`
+	ServiceDate      *int64              `bun:"service_date"`
+	OriginCity       string              `bun:"origin_city"`
+	OriginState      string              `bun:"origin_state"`
+	DestinationCity  string              `bun:"destination_city"`
+	DestinationState string              `bun:"destination_state"`
+	TotalCharge      decimal.NullDecimal `bun:"total_charge_amount"`
+}
+
+func (s *ShipmentSummary) GetID() pulid.ID { return s.ShipmentID }
+
+type ShipmentSelectOptionsRequest struct {
+	SelectQueryRequest *pagination.SelectQueryRequest `json:"-"`
+	CustomerID         pulid.ID                       `json:"customerId"`
+	// AttachableOnly hides legs that can never join an order (Canceled/Invoiced).
+	AttachableOnly bool `json:"attachableOnly"`
+	// ExcludeOrderID hides legs already attached to the given order.
+	ExcludeOrderID pulid.ID `json:"excludeOrderId"`
+}
+
+type ListRatedByFormulaTemplateRequest struct {
+	TemplateID pulid.ID              `json:"templateId"`
+	TenantInfo pagination.TenantInfo `json:"-"`
+	Limit      int                   `json:"limit"`
+}
+
+type UpdateShipmentStatusRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	ShipmentID pulid.ID              `json:"shipmentId"`
+	Status     shipment.Status       `json:"status"`
+	Version    int64                 `json:"version"`
+}
+
+type ShipmentRepository interface {
+	List(
+		ctx context.Context,
+		req *ListShipmentsRequest,
+	) (*pagination.CursorListResult[*shipment.Shipment], error)
+	GetByID(
+		ctx context.Context,
+		req *GetShipmentByIDRequest,
+	) (*shipment.Shipment, error)
+	GetByIDs(
+		ctx context.Context,
+		req *GetShipmentsByIDsRequest,
+	) ([]*shipment.Shipment, error)
+	ListBillingTransferCandidateIDs(
+		ctx context.Context,
+		req *ListBillingTransferCandidateIDsQuery,
+	) (*BillingTransferCandidateIDsResult, error)
+	ListSummariesByIDs(
+		ctx context.Context,
+		req *ListShipmentSummariesRequest,
+	) ([]*ShipmentSummary, error)
+	SelectOptions(
+		ctx context.Context,
+		req *ShipmentSelectOptionsRequest,
+	) (*pagination.ListResult[*shipment.Shipment], error)
+	GetPreviousRates(
+		ctx context.Context,
+		req *GetPreviousRatesRequest,
+	) (*pagination.ListResult[*PreviousRateSummary], error)
+	ListRatedByFormulaTemplate(
+		ctx context.Context,
+		req *ListRatedByFormulaTemplateRequest,
+	) ([]*shipment.Shipment, error)
+	Create(
+		ctx context.Context,
+		entity *shipment.Shipment,
+	) (*shipment.Shipment, error)
+	GetUnassigned(
+		ctx context.Context,
+		req *GetUnassignedShipmentsRequest,
+	) (*pagination.CursorListResult[*shipment.Shipment], error)
+	Update(
+		ctx context.Context,
+		entity *shipment.Shipment,
+	) (*shipment.Shipment, error)
+	UpdateOperationalLifecycle(
+		ctx context.Context,
+		entity *shipment.Shipment,
+	) (*shipment.Shipment, error)
+	UpdateDerivedState(
+		ctx context.Context,
+		entity *shipment.Shipment,
+	) (*shipment.Shipment, error)
+	MarkReadyToInvoice(
+		ctx context.Context,
+		entity *shipment.Shipment,
+	) (*shipment.Shipment, error)
+	UpdateStatus(
+		ctx context.Context,
+		req *UpdateShipmentStatusRequest,
+	) (*shipment.Shipment, error)
+	Cancel(
+		ctx context.Context,
+		req *CancelShipmentRequest,
+	) (*shipment.Shipment, error)
+	Uncancel(
+		ctx context.Context,
+		req *UncancelShipmentRequest,
+	) (*shipment.Shipment, error)
+	TransferOwnership(
+		ctx context.Context,
+		req *TransferOwnershipRequest,
+	) (*shipment.Shipment, error)
+	FindByExternalReference(
+		ctx context.Context,
+		req *ExternalReferenceCheckRequest,
+	) (*DuplicateBOLResult, error)
+	FindIDByIdempotencyKey(
+		ctx context.Context,
+		req *IdempotencyKeyLookupRequest,
+	) (pulid.ID, error)
+	CheckForDuplicateBOLs(
+		ctx context.Context,
+		req *DuplicateBOLCheckRequest,
+	) ([]*DuplicateBOLResult, error)
+	BulkDuplicate(
+		ctx context.Context,
+		req *BulkDuplicateShipmentRequest,
+	) ([]*shipment.Shipment, error)
+	PlanDuplicate(
+		ctx context.Context,
+		req *BulkDuplicateShipmentRequest,
+	) (*ShipmentDuplicatePlan, error)
+	GetDelayedShipments(
+		ctx context.Context,
+		req *GetDelayedShipmentsRequest,
+		thresholdMinutes int16,
+	) ([]*shipment.Shipment, error)
+	DelayShipments(
+		ctx context.Context,
+		req *DelayShipmentsRequest,
+		thresholdMinutes int16,
+	) ([]*shipment.Shipment, error)
+	GetAutoCancelableShipments(
+		ctx context.Context,
+		req *GetAutoCancelableShipmentsRequest,
+		thresholdDays int8,
+	) ([]*shipment.Shipment, error)
+	AutoCancelShipments(
+		ctx context.Context,
+		req *AutoCancelShipmentsRequest,
+		thresholdDays int8,
+	) ([]*shipment.Shipment, error)
+	ListAutoDelayShipmentTenants(ctx context.Context, limit int) ([]pagination.TenantInfo, error)
+	ListAutoCancelShipmentTenants(ctx context.Context, limit int) ([]pagination.TenantInfo, error)
+	RunAutoDelayShipmentsForTenant(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		limit int,
+	) ([]*shipment.Shipment, error)
+	RunAutoCancelShipmentsForTenant(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		limit int,
+	) ([]*shipment.Shipment, error)
+	AutoDelayShipments(ctx context.Context) ([]*shipment.Shipment, error)
+	RunAutoCancelShipments(ctx context.Context) ([]*shipment.Shipment, error)
+}

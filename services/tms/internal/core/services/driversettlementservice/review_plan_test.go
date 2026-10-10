@@ -7,8 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,39 +19,39 @@ import (
 )
 
 type disputeReader struct {
-	repositories.SettlementDisputeRepository
+	driversettlementports.SettlementDisputeRepository
 	dispute *driversettlement.Dispute
 }
 
 func (r *disputeReader) GetByID(
 	context.Context,
-	repositories.GetSettlementDisputeByIDRequest,
+	driversettlementports.GetSettlementDisputeByIDRequest,
 ) (*driversettlement.Dispute, error) {
 	copied := *r.dispute
 	return &copied, nil
 }
 
 type expenseReader struct {
-	repositories.DriverExpenseRepository
+	driverpayports.DriverExpenseRepository
 	expense *driverpay.Expense
 }
 
 func (r *expenseReader) GetByID(
 	context.Context,
-	repositories.GetDriverExpenseByIDRequest,
+	driverpayports.GetDriverExpenseByIDRequest,
 ) (*driverpay.Expense, error) {
 	copied := *r.expense
 	return &copied, nil
 }
 
 type draftReader struct {
-	repositories.DriverSettlementRepository
+	driversettlementports.DriverSettlementRepository
 	draft *driversettlement.Settlement
 }
 
 func (r *draftReader) GetOpenDraftForWorker(
 	context.Context,
-	repositories.GetOpenDraftForWorkerRequest,
+	driversettlementports.GetOpenDraftForWorkerRequest,
 ) (*driversettlement.Settlement, error) {
 	if r.draft == nil {
 		return nil, errortypes.NewNotFoundError("no open draft")
@@ -58,7 +60,7 @@ func (r *draftReader) GetOpenDraftForWorker(
 }
 
 type receiptControl struct {
-	repositories.DashControlRepository
+	tenantports.DashControlRepository
 	required bool
 }
 
@@ -69,10 +71,10 @@ func (c *receiptControl) GetOrCreate(
 	return &tenant.DashControl{RequireExpenseReceipt: c.required}, nil
 }
 
-func reviewer() *serviceports.RequestActor {
-	return &serviceports.RequestActor{
+func reviewer() *permissionports.RequestActor {
+	return &permissionports.RequestActor{
 		UserID:        pulid.MustNew("usr_"),
-		PrincipalType: serviceports.PrincipalTypeUser,
+		PrincipalType: permissionports.PrincipalTypeUser,
 	}
 }
 

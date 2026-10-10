@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,9 +17,9 @@ import (
 func TestContractRequestIsTheProductionExtractionCall(t *testing.T) {
 	t.Parallel()
 
-	pages := []serviceports.AIDocumentPage{{PageNumber: 1, Text: strings.Repeat("x", extractPageLimit+500)}}
+	pages := []documentaiextractionports.AIDocumentPage{{PageNumber: 1, Text: strings.Repeat("x", extractPageLimit+500)}}
 	req := Contract{}.CompletionRequest("document.pdf", pages)
-	production := newExtractCall(&serviceports.AIExtractRequest{FileName: "document.pdf", Pages: pages}).request()
+	production := newExtractCall(&documentaiextractionports.AIExtractRequest{FileName: "document.pdf", Pages: pages}).request()
 
 	assert.Equal(t, production.System, req.System)
 	assert.Equal(t, production.Context, req.Context)
@@ -80,7 +80,7 @@ func TestContractParseReplyDerivesWhatTheModelNoLongerWrites(t *testing.T) {
 	window := parsed.Fields["pickupWindow"]
 	assert.Equal(t, "Pickup Window", window.Label)
 	assert.True(t, window.Conflict)
-	assert.Equal(t, serviceports.AIDocumentSourceAI, window.Source)
+	assert.Equal(t, documentaiextractionports.AIDocumentSourceAI, window.Source)
 	assert.Empty(t, window.AlternativeValues)
 
 	po := parsed.Fields["poNumber"]
@@ -90,7 +90,7 @@ func TestContractParseReplyDerivesWhatTheModelNoLongerWrites(t *testing.T) {
 	require.Len(t, parsed.Stops, 2)
 	for i, stop := range parsed.Stops {
 		assert.Equal(t, i+1, stop.Sequence)
-		assert.Equal(t, serviceports.AIDocumentSourceAI, stop.Source)
+		assert.Equal(t, documentaiextractionports.AIDocumentSourceAI, stop.Source)
 	}
 
 	require.Len(t, parsed.Conflicts, 2)
@@ -99,7 +99,7 @@ func TestContractParseReplyDerivesWhatTheModelNoLongerWrites(t *testing.T) {
 	assert.Equal(t, "brokerNotes", parsed.Conflicts[1].Key)
 	assert.Equal(t, "brokerNotes", parsed.Conflicts[1].Label)
 	for _, conflict := range parsed.Conflicts {
-		assert.Equal(t, serviceports.AIDocumentSourceAI, conflict.Source)
+		assert.Equal(t, documentaiextractionports.AIDocumentSourceAI, conflict.Source)
 	}
 }
 
@@ -120,10 +120,10 @@ func TestContractParseReplyReadsRepliesInTheFormerWireFormat(t *testing.T) {
 	assert.Equal(t, "1500.00", rate.Value)
 	assert.Equal(t, "Rate", rate.Label)
 	assert.False(t, rate.Conflict)
-	assert.Equal(t, serviceports.AIDocumentSourceAI, rate.Source)
+	assert.Equal(t, documentaiextractionports.AIDocumentSourceAI, rate.Source)
 	require.Len(t, parsed.Stops, 1)
 	assert.Equal(t, 1, parsed.Stops[0].Sequence)
-	assert.Equal(t, serviceports.AIDocumentSourceAI, parsed.Stops[0].Source)
+	assert.Equal(t, documentaiextractionports.AIDocumentSourceAI, parsed.Stops[0].Source)
 }
 
 func TestExtractSchemaHoldsOnlyWhatTheModelMustDecide(t *testing.T) {
@@ -153,7 +153,7 @@ func TestContractParseReplyRejectsMalformedText(t *testing.T) {
 	t.Parallel()
 
 	_, err := Contract{}.ParseReply("not json")
-	require.ErrorIs(t, err, serviceports.ErrModelSchemaValidation)
+	require.ErrorIs(t, err, agentports.ErrModelSchemaValidation)
 }
 
 const pipelineSchemaFixture = "../../../../../../ml/extraction-finetune/tests/fixtures/extraction-schema.json"

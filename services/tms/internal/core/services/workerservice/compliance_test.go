@@ -8,7 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -24,7 +24,7 @@ type mockDispatchControlRepo struct {
 
 func (m *mockDispatchControlRepo) GetByOrgID(
 	ctx context.Context,
-	req repositories.GetDispatchControlRequest,
+	req dispatchcontrolports.GetDispatchControlRequest,
 ) (*dispatchcontrol.DispatchControl, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {

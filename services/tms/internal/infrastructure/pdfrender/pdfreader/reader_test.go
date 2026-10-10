@@ -9,9 +9,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/pdfrender/pdfreader"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -91,7 +91,7 @@ func newReader(t *testing.T, cfg *config.PDFReaderConfig) *pdfreader.Reader {
 	return reader
 }
 
-func openDoc(t *testing.T, reader *pdfreader.Reader, data []byte) services.PDFDocument {
+func openDoc(t *testing.T, reader *pdfreader.Reader, data []byte) kernelports.PDFDocument {
 	t.Helper()
 	doc, err := reader.Open(t.Context(), data)
 	require.NoError(t, err)
@@ -206,10 +206,10 @@ func TestReaderRejectsBadInput(t *testing.T) {
 	reader := newReader(t, nil)
 
 	_, err := reader.Open(t.Context(), nil)
-	require.ErrorIs(t, err, services.ErrPDFUnreadable)
+	require.ErrorIs(t, err, kernelports.ErrPDFUnreadable)
 
 	_, err = reader.Open(t.Context(), []byte("this is not a pdf"))
-	require.ErrorIs(t, err, services.ErrPDFUnreadable)
+	require.ErrorIs(t, err, kernelports.ErrPDFUnreadable)
 
 	doc := openDoc(t, reader, buildPDF(letterPage(invoiceContent)))
 	_, err = doc.RenderPage(t.Context(), 1, 72)

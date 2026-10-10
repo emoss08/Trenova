@@ -5,7 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/extractionrollout"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -14,13 +15,13 @@ import (
 
 func (w *world) update(
 	t *testing.T,
-	mutate func(*services.UpdateExtractionRolloutRequest),
+	mutate func(*extractionrolloutports.UpdateExtractionRolloutRequest),
 ) (*extractionrollout.ExtractionRollout, error) {
 	t.Helper()
 
 	current, err := w.svc.Get(t.Context(), testTenant())
 	require.NoError(t, err)
-	req := &services.UpdateExtractionRolloutRequest{
+	req := &extractionrolloutports.UpdateExtractionRolloutRequest{
 		TenantInfo:                 testTenant(),
 		Enabled:                    true,
 		ProviderID:                 w.candidate.ID,
@@ -62,7 +63,7 @@ func TestUpdateRefusesACandidateThatCannotExtract(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "cannot run document extraction")
 
-	_, err = w.update(t, func(req *services.UpdateExtractionRolloutRequest) {
+	_, err = w.update(t, func(req *extractionrolloutports.UpdateExtractionRolloutRequest) {
 		req.ProviderID = pulid.MustNew("aip_")
 	})
 	require.Error(t, err)
@@ -80,7 +81,7 @@ func TestUpdateRefusesAStaleVersion(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, int64(1), saved.Version)
 
-	_, err = w.update(t, func(req *services.UpdateExtractionRolloutRequest) { req.Version = 0 })
+	_, err = w.update(t, func(req *extractionrolloutports.UpdateExtractionRolloutRequest) { req.Version = 0 })
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "Someone else changed the rollout")
 }
@@ -89,7 +90,7 @@ func TestUpdateRefusesOutOfRangeSettings(t *testing.T) {
 	t.Parallel()
 
 	w := newWorld()
-	_, err := w.update(t, func(req *services.UpdateExtractionRolloutRequest) { req.Percent = 0 })
+	_, err := w.update(t, func(req *extractionrolloutports.UpdateExtractionRolloutRequest) { req.Percent = 0 })
 	require.Error(t, err)
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
@@ -105,7 +106,7 @@ func TestAssignSendsTheCandidatesShareToTheCandidate(t *testing.T) {
 	candidateSide, controlSide := 0, 0
 	for range 400 {
 		document := pulid.MustNew("doc_")
-		preferred, err := w.svc.AssignExtraction(t.Context(), &services.AssignExtractionRolloutRequest{
+		preferred, err := w.svc.AssignExtraction(t.Context(), &extractionrolloutports.AssignExtractionRolloutRequest{
 			TenantInfo:  testTenant(),
 			DocumentID:  document,
 			ExtractedAt: testNow,
@@ -129,7 +130,7 @@ func TestAssignIsStableAcrossRetries(t *testing.T) {
 
 	w := newWorld()
 	w.start(100)
-	req := &services.AssignExtractionRolloutRequest{
+	req := &extractionrolloutports.AssignExtractionRolloutRequest{
 		TenantInfo:  testTenant(),
 		DocumentID:  pulid.MustNew("doc_"),
 		ExtractedAt: testNow,
@@ -149,7 +150,7 @@ func TestAssignLeavesProductionAloneWhenTheRolloutIsOff(t *testing.T) {
 	t.Parallel()
 
 	w := newWorld()
-	req := &services.AssignExtractionRolloutRequest{
+	req := &extractionrolloutports.AssignExtractionRolloutRequest{
 		TenantInfo:  testTenant(),
 		DocumentID:  pulid.MustNew("doc_"),
 		ExtractedAt: testNow,
@@ -171,7 +172,7 @@ func TestAssignDoesNotPreferACandidateThatWasReplaced(t *testing.T) {
 
 	w := newWorld()
 	w.start(100)
-	req := &services.AssignExtractionRolloutRequest{
+	req := &extractionrolloutports.AssignExtractionRolloutRequest{
 		TenantInfo:  testTenant(),
 		DocumentID:  pulid.MustNew("doc_"),
 		ExtractedAt: testNow,
@@ -192,14 +193,14 @@ func TestSettleRecordsTheOutcomeOnce(t *testing.T) {
 	w := newWorld()
 	w.start(100)
 	document := pulid.MustNew("doc_")
-	_, err := w.svc.AssignExtraction(t.Context(), &services.AssignExtractionRolloutRequest{
+	_, err := w.svc.AssignExtraction(t.Context(), &extractionrolloutports.AssignExtractionRolloutRequest{
 		TenantInfo:  testTenant(),
 		DocumentID:  document,
 		ExtractedAt: testNow,
 	})
 	require.NoError(t, err)
 
-	settle := &services.SettleExtractionRolloutRequest{
+	settle := &extractionrolloutports.SettleExtractionRolloutRequest{
 		TenantInfo:       testTenant(),
 		DocumentID:       document,
 		ExtractedAt:      testNow,
@@ -221,14 +222,14 @@ func TestSettleIgnoresAnExtractionOutsideTheRollout(t *testing.T) {
 	t.Parallel()
 
 	w := newWorld()
-	require.NoError(t, w.svc.SettleExtraction(t.Context(), &services.SettleExtractionRolloutRequest{
+	require.NoError(t, w.svc.SettleExtraction(t.Context(), &extractionrolloutports.SettleExtractionRolloutRequest{
 		TenantInfo:  testTenant(),
 		DocumentID:  pulid.MustNew("doc_"),
 		ExtractedAt: testNow,
 		Outcome:     extractionrollout.OutcomeAccepted,
 	}))
 
-	err := w.svc.SettleExtraction(t.Context(), &services.SettleExtractionRolloutRequest{
+	err := w.svc.SettleExtraction(t.Context(), &extractionrolloutports.SettleExtractionRolloutRequest{
 		TenantInfo: testTenant(),
 		Outcome:    extractionrollout.OutcomePending,
 	})
@@ -256,7 +257,7 @@ func TestTooManyRejectedAnswersStopTheRollout(t *testing.T) {
 		Outcome:             extractionrollout.OutcomePending,
 		CreatedAt:           testNow,
 	})
-	require.NoError(t, w.svc.SettleExtraction(t.Context(), &services.SettleExtractionRolloutRequest{
+	require.NoError(t, w.svc.SettleExtraction(t.Context(), &extractionrolloutports.SettleExtractionRolloutRequest{
 		TenantInfo:       testTenant(),
 		DocumentID:       document,
 		ExtractedAt:      testNow,
@@ -276,11 +277,11 @@ func TestTooManyRejectedAnswersStopTheRollout(t *testing.T) {
 		"the people told are the ones who can change which provider serves")
 	assert.Equal(t, permission.OpUpdate, w.notifier.sent[0].Operation)
 	notice := w.notifier.sent[0].Notification
-	assert.Equal(t, services.ExtractionRolloutHaltedEvent, notice.EventType)
+	assert.Equal(t, extractionrolloutports.ExtractionRolloutHaltedEvent, notice.EventType)
 	assert.Contains(t, notice.Message, "33.3%")
 	assert.Contains(t, notice.Message, "10.0%")
 
-	preferred, err := w.svc.AssignExtraction(t.Context(), &services.AssignExtractionRolloutRequest{
+	preferred, err := w.svc.AssignExtraction(t.Context(), &extractionrolloutports.AssignExtractionRolloutRequest{
 		TenantInfo:  testTenant(),
 		DocumentID:  pulid.MustNew("doc_"),
 		ExtractedAt: testNow,
@@ -377,7 +378,7 @@ func TestStartingAgainAfterAHaltMeasuresFromNow(t *testing.T) {
 	w.start(50)
 	w.rollouts.rollout.Halt(extractionrollout.Breach{Reason: extractionrollout.HaltReasonAccuracyDrop}, testNow)
 
-	saved, err := w.update(t, func(req *services.UpdateExtractionRolloutRequest) { req.Percent = 50 })
+	saved, err := w.update(t, func(req *extractionrolloutports.UpdateExtractionRolloutRequest) { req.Percent = 50 })
 	require.NoError(t, err)
 	assert.False(t, saved.IsHalted())
 	assert.Equal(t, testNow, *saved.StartedAt)
@@ -439,7 +440,7 @@ func TestPurgeRemovesExpiredAssignments(t *testing.T) {
 	w.settled(extractionrollout.ArmControl, w.production.ID, extractionrollout.OutcomeAccepted, 3)
 	w.assignments.items[0].CreatedAt = 1
 
-	purged, err := w.svc.PurgeExpiredAssignments(t.Context(), services.PurgeExpiredAICorrectionsRequest{
+	purged, err := w.svc.PurgeExpiredAssignments(t.Context(), kernelports.PurgeExpiredAICorrectionsRequest{
 		TenantInfo: testTenant(),
 		Now:        testNow,
 	})

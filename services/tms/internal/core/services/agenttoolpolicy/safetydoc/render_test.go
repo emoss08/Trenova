@@ -6,16 +6,16 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy/registered"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy/safetydoc"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 const committed = "../../../../../../../docs/engineering/ai-tool-safety.md"
 
-func registeredPolicies(t *testing.T) []serviceports.ToolPolicy {
+func registeredPolicies(t *testing.T) []agentports.ToolPolicy {
 	t.Helper()
 
 	catalog, err := registered.Catalog()
@@ -30,7 +30,7 @@ func TestRenderIsStable(t *testing.T) {
 	policies := registeredPolicies(t)
 	first := safetydoc.Render(policies)
 
-	reversed := make([]serviceports.ToolPolicy, 0, len(policies))
+	reversed := make([]agentports.ToolPolicy, 0, len(policies))
 	for idx := len(policies) - 1; idx >= 0; idx-- {
 		reversed = append(reversed, policies[idx])
 	}
@@ -70,7 +70,7 @@ func TestEveryToolIsListedOnceUnderItsHighestClass(t *testing.T) {
 func TestRenderEscapesTableCells(t *testing.T) {
 	t.Parallel()
 
-	doc := string(safetydoc.Render([]serviceports.ToolPolicy{{
+	doc := string(safetydoc.Render([]agentports.ToolPolicy{{
 		Name:          "pipe_tool",
 		Kind:          agent.ToolKindAction,
 		Egress:        []agent.EgressClass{agent.EgressInternal},

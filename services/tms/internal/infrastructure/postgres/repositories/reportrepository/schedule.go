@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -27,7 +27,7 @@ type scheduleRepository struct {
 	l  *zap.Logger
 }
 
-func NewScheduleRepository(p ScheduleParams) repositories.ReportScheduleRepository {
+func NewScheduleRepository(p ScheduleParams) reportports.ReportScheduleRepository {
 	return &scheduleRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.report-schedule-repository"),
@@ -80,7 +80,7 @@ func (r *scheduleRepository) Update(
 
 func (r *scheduleRepository) GetByID(
 	ctx context.Context,
-	req *repositories.GetReportScheduleRequest,
+	req *reportports.GetReportScheduleRequest,
 ) (*report.ReportSchedule, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*report.ReportSchedule, error) {
 		entity := new(report.ReportSchedule)
@@ -102,7 +102,7 @@ func (r *scheduleRepository) GetByID(
 
 func (r *scheduleRepository) List(
 	ctx context.Context,
-	req *repositories.ListReportSchedulesRequest,
+	req *reportports.ListReportSchedulesRequest,
 ) ([]*report.ReportSchedule, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.ReportSchedule, error) {
 		cols := buncolgen.ReportScheduleColumns
@@ -157,7 +157,7 @@ func (r *scheduleRepository) ListAllEnabled(
 
 func (r *scheduleRepository) Delete(
 	ctx context.Context,
-	req *repositories.GetReportScheduleRequest,
+	req *reportports.GetReportScheduleRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		result, err := r.db.DBForContext(ctx).

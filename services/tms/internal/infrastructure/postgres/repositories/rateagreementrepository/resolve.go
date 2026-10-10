@@ -5,8 +5,8 @@ import (
 	"sort"
 
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -57,8 +57,8 @@ func agreementJoin() string {
 // but the covering index.
 func (r *repository) ResolveRules(
 	ctx context.Context,
-	req *repositories.ResolveRateRulesRequest,
-) (*repositories.ResolveRateRulesResult, error) {
+	req *rateagreementports.ResolveRateRulesRequest,
+) (*rateagreementports.ResolveRateRulesResult, error) {
 	log := r.l.With(
 		zap.String("operation", "ResolveRules"),
 		zap.String("partyType", string(req.PartyType)),
@@ -70,7 +70,7 @@ func (r *repository) ResolveRules(
 		limit = DefaultCandidateLimit
 	}
 
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.ResolveRateRulesResult, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*rateagreementports.ResolveRateRulesResult, error) {
 		keyed, err := r.resolveKeyedRules(ctx, req, limit)
 		if err != nil {
 			log.Error("failed to resolve keyed rate rules", zap.Error(err))
@@ -99,7 +99,7 @@ func (r *repository) ResolveRules(
 			merged = merged[:limit]
 		}
 
-		return &repositories.ResolveRateRulesResult{
+		return &rateagreementports.ResolveRateRulesResult{
 			Rules:  merged,
 			Total:  total,
 			Capped: capped,
@@ -130,7 +130,7 @@ func candidateOrder(q *bun.SelectQuery) *bun.SelectQuery {
 
 func (r *repository) baseCandidateQuery(
 	ctx context.Context,
-	req *repositories.ResolveRateRulesRequest,
+	req *rateagreementports.ResolveRateRulesRequest,
 	entities *[]*rateagreement.RateAgreementRule,
 ) *bun.SelectQuery {
 	cols := buncolgen.RateAgreementRuleColumns
@@ -190,7 +190,7 @@ func (r *repository) baseCandidateQuery(
 
 func (r *repository) resolveKeyedRules(
 	ctx context.Context,
-	req *repositories.ResolveRateRulesRequest,
+	req *rateagreementports.ResolveRateRulesRequest,
 	limit int,
 ) ([]*rateagreement.RateAgreementRule, error) {
 	if len(req.LaneKeys) == 0 {
@@ -222,7 +222,7 @@ func (r *repository) resolveKeyedRules(
 // to force both shapes through one.
 func (r *repository) resolveRadiusRules(
 	ctx context.Context,
-	req *repositories.ResolveRateRulesRequest,
+	req *rateagreementports.ResolveRateRulesRequest,
 	limit int,
 ) ([]*rateagreement.RateAgreementRule, error) {
 	if req.OriginLatitude == nil || req.OriginLongitude == nil ||

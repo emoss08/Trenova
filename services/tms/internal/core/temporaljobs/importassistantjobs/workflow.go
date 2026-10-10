@@ -4,12 +4,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
-
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	assistant "github.com/emoss08/trenova/internal/core/services/shipmentimportassistantservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
@@ -28,7 +28,7 @@ const failedMessage = "AI assistant encountered an error. Please try again."
 func ImportAssistantTurnWorkflow(
 	ctx workflow.Context,
 	payload *TurnPayload,
-) (*serviceports.ShipmentImportChatResponse, error) {
+) (*shipmentports.ShipmentImportChatResponse, error) {
 	stream, err := agentflow.HostStream(ctx)
 	if err != nil {
 		return nil, err
@@ -77,7 +77,7 @@ type turn struct {
 
 // converse runs the turn to its reply. Every failure is returned as data, for
 // the turn's record and for the person.
-func (t *turn) converse() (*serviceports.ShipmentImportChatResponse, *modelcall.Failure) {
+func (t *turn) converse() (*shipmentports.ShipmentImportChatResponse, *modelcall.Failure) {
 	var a *Activities
 
 	prepareCtx := workflow.WithActivityOptions(t.ctx, t.options(prepareTimeout, readAttempts))
@@ -96,9 +96,9 @@ func (t *turn) converse() (*serviceports.ShipmentImportChatResponse, *modelcall.
 			t.emit(t.ctx, assistant.EventNewMessage, nil)
 		}
 
-		var result serviceports.ChatCompletionResult
+		var result agentports.ChatCompletionResult
 		if err := workflow.ExecuteActivity(modelCtx, a.ImportModelCallActivity, &ModelInput{
-			Request: &serviceports.ChatCompletionRequest{
+			Request: &agentports.ChatCompletionRequest{
 				TenantInfo:  t.payload.TenantInfo,
 				System:      prepared.System,
 				Messages:    messages,
@@ -128,7 +128,7 @@ func (t *turn) converse() (*serviceports.ShipmentImportChatResponse, *modelcall.
 	}
 
 	finishCtx := workflow.WithActivityOptions(t.ctx, t.options(finishTimeout, saveAttempts))
-	var response serviceports.ShipmentImportChatResponse
+	var response shipmentports.ShipmentImportChatResponse
 	if err := workflow.ExecuteActivity(finishCtx, a.FinishImportTurnActivity, &FinishInput{
 		Payload: t.payload,
 		Record:  t.record,
@@ -142,7 +142,7 @@ func (t *turn) converse() (*serviceports.ShipmentImportChatResponse, *modelcall.
 // runTools runs one round's calls in the order the model made them, each an
 // activity of its own. A call that could not be run at all is reported to the
 // model as such, and the turn goes on.
-func (t *turn) runTools(calls []serviceports.ToolCall) map[string]assistant.ToolOutcome {
+func (t *turn) runTools(calls []agentports.ToolCall) map[string]assistant.ToolOutcome {
 	var a *Activities
 	outcomes := make(map[string]assistant.ToolOutcome, len(calls))
 

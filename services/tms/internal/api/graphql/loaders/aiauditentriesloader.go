@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/aiauditservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -21,14 +21,14 @@ type aiAuditLedger interface {
 	) ([]*aiaudit.AIAuditEvent, error)
 	ListCorrelatedAuditEntries(
 		ctx context.Context,
-		req *repositories.ListCorrelatedAuditEntriesRequest,
+		req *aiauditports.ListCorrelatedAuditEntriesRequest,
 	) ([]*audit.Entry, error)
 }
 
 type AuditEntriesByAIAuditEventIDLoaderFactoryParams struct {
 	fx.In
 
-	Ledger repositories.AIAuditRepository
+	Ledger aiauditports.AIAuditRepository
 }
 
 // AuditEntriesByAIAuditEventIDLoaderFactory finds, for a page of trail

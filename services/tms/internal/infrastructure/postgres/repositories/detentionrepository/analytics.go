@@ -7,9 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
@@ -29,7 +29,7 @@ type analyticsRepository struct {
 	l  *zap.Logger
 }
 
-func NewAnalyticsRepository(p AnalyticsParams) repositories.DetentionAnalyticsRepository {
+func NewAnalyticsRepository(p AnalyticsParams) detentionports.DetentionAnalyticsRepository {
 	return &analyticsRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.detention-analytics-repository"),
@@ -41,14 +41,14 @@ func NewAnalyticsRepository(p AnalyticsParams) repositories.DetentionAnalyticsRe
 // has not left has no settled duration to re-price.
 func (r *analyticsRepository) ListStopFacts(
 	ctx context.Context,
-	req *repositories.ListStopFactsRequest,
-) ([]*repositories.StopFact, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.StopFact, error) {
+	req *detentionports.ListStopFactsRequest,
+) ([]*detentionports.StopFact, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detentionports.StopFact, error) {
 		stopCols := buncolgen.StopColumns
 		moveCols := buncolgen.ShipmentMoveColumns
 		shipCols := buncolgen.ShipmentColumns
 
-		facts := make([]*repositories.StopFact, 0, 256)
+		facts := make([]*detentionports.StopFact, 0, 256)
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
@@ -111,11 +111,11 @@ func (r *analyticsRepository) ListStopFacts(
 // backtest can diff against reality without a query per stop.
 func (r *analyticsRepository) BaselineByStop(
 	ctx context.Context,
-	req *repositories.DetentionStatsRequest,
-) ([]*repositories.StopBaseline, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.StopBaseline, error) {
+	req *detentionports.DetentionStatsRequest,
+) ([]*detentionports.StopBaseline, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detentionports.StopBaseline, error) {
 		cols := buncolgen.DetentionOccurrenceColumns
-		baselines := make([]*repositories.StopBaseline, 0, 256)
+		baselines := make([]*detentionports.StopBaseline, 0, 256)
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
@@ -146,12 +146,12 @@ func (r *analyticsRepository) BaselineByStop(
 // identifiable at planning and negotiation time rather than only at billing.
 func (r *analyticsRepository) FacilityStats(
 	ctx context.Context,
-	req *repositories.DetentionStatsRequest,
-) ([]*repositories.FacilityDetentionStat, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.FacilityDetentionStat, error) {
+	req *detentionports.DetentionStatsRequest,
+) ([]*detentionports.FacilityDetentionStat, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detentionports.FacilityDetentionStat, error) {
 		cols := buncolgen.DetentionOccurrenceColumns
 		locCols := buncolgen.LocationColumns
-		stats := make([]*repositories.FacilityDetentionStat, 0, 64)
+		stats := make([]*detentionports.FacilityDetentionStat, 0, 64)
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
@@ -219,12 +219,12 @@ func (r *analyticsRepository) FacilityStats(
 // rate negotiation.
 func (r *analyticsRepository) CustomerStats(
 	ctx context.Context,
-	req *repositories.DetentionStatsRequest,
-) ([]*repositories.CustomerDetentionStat, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.CustomerDetentionStat, error) {
+	req *detentionports.DetentionStatsRequest,
+) ([]*detentionports.CustomerDetentionStat, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detentionports.CustomerDetentionStat, error) {
 		cols := buncolgen.DetentionOccurrenceColumns
 		cusCols := buncolgen.CustomerColumns
-		stats := make([]*repositories.CustomerDetentionStat, 0, 64)
+		stats := make([]*detentionports.CustomerDetentionStat, 0, 64)
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
@@ -284,11 +284,11 @@ func (r *analyticsRepository) CustomerStats(
 // how much, and who approved it.
 func (r *analyticsRepository) WaiverStats(
 	ctx context.Context,
-	req *repositories.DetentionStatsRequest,
-) ([]*repositories.WaiverLeakageStat, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.WaiverLeakageStat, error) {
+	req *detentionports.DetentionStatsRequest,
+) ([]*detentionports.WaiverLeakageStat, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detentionports.WaiverLeakageStat, error) {
 		cols := buncolgen.DetentionOccurrenceColumns
-		stats := make([]*repositories.WaiverLeakageStat, 0, 16)
+		stats := make([]*detentionports.WaiverLeakageStat, 0, 16)
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
@@ -331,10 +331,10 @@ type entityNameRow struct {
 // backtest groups by, so its buckets can be labeled without a query per row.
 func (r *analyticsRepository) EntityNames(
 	ctx context.Context,
-	req *repositories.DetentionEntityNamesRequest,
-) (*repositories.DetentionEntityNames, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.DetentionEntityNames, error) {
-		names := &repositories.DetentionEntityNames{
+	req *detentionports.DetentionEntityNamesRequest,
+) (*detentionports.DetentionEntityNames, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*detentionports.DetentionEntityNames, error) {
+		names := &detentionports.DetentionEntityNames{
 			Locations: make(map[pulid.ID]string, len(req.LocationIDs)),
 			Customers: make(map[pulid.ID]string, len(req.CustomerIDs)),
 		}

@@ -10,8 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -27,47 +27,47 @@ type mockPermissionEngine struct {
 
 func (m *mockPermissionEngine) Check(
 	ctx context.Context,
-	req *services.PermissionCheckRequest,
-) (*services.PermissionCheckResult, error) {
+	req *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*services.PermissionCheckResult), args.Error(1)
+	return args.Get(0).(*permissionports.PermissionCheckResult), args.Error(1)
 }
 
 func (m *mockPermissionEngine) CheckBatch(
 	ctx context.Context,
-	req *services.BatchPermissionCheckRequest,
-) (*services.BatchPermissionCheckResult, error) {
+	req *permissionports.BatchPermissionCheckRequest,
+) (*permissionports.BatchPermissionCheckResult, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*services.BatchPermissionCheckResult), args.Error(1)
+	return args.Get(0).(*permissionports.BatchPermissionCheckResult), args.Error(1)
 }
 
 func (m *mockPermissionEngine) GetLightManifest(
 	ctx context.Context,
 	userID, orgID pulid.ID,
-) (*services.LightPermissionManifest, error) {
+) (*permissionports.LightPermissionManifest, error) {
 	args := m.Called(ctx, userID, orgID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*services.LightPermissionManifest), args.Error(1)
+	return args.Get(0).(*permissionports.LightPermissionManifest), args.Error(1)
 }
 
 func (m *mockPermissionEngine) GetResourcePermissions(
 	ctx context.Context,
 	userID, orgID pulid.ID,
 	resource string,
-) (*services.ResourcePermissionDetail, error) {
+) (*permissionports.ResourcePermissionDetail, error) {
 	args := m.Called(ctx, userID, orgID, resource)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*services.ResourcePermissionDetail), args.Error(1)
+	return args.Get(0).(*permissionports.ResourcePermissionDetail), args.Error(1)
 }
 
 func (m *mockPermissionEngine) InvalidateUser(ctx context.Context, userID, orgID pulid.ID) error {
@@ -78,40 +78,40 @@ func (m *mockPermissionEngine) InvalidateUser(ctx context.Context, userID, orgID
 func (m *mockPermissionEngine) GetEffectivePermissions(
 	ctx context.Context,
 	userID, orgID pulid.ID,
-) (*services.EffectivePermissions, error) {
+) (*permissionports.EffectivePermissions, error) {
 	args := m.Called(ctx, userID, orgID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*services.EffectivePermissions), args.Error(1)
+	return args.Get(0).(*permissionports.EffectivePermissions), args.Error(1)
 }
 
 func (m *mockPermissionEngine) SimulatePermissions(
 	ctx context.Context,
-	req *services.SimulatePermissionsRequest,
-) (*services.EffectivePermissions, error) {
+	req *permissionports.SimulatePermissionsRequest,
+) (*permissionports.EffectivePermissions, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*services.EffectivePermissions), args.Error(1)
+	return args.Get(0).(*permissionports.EffectivePermissions), args.Error(1)
 }
 
 func (m *mockPermissionEngine) AgentsUsable(
 	ctx context.Context,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	operation permission.Operation,
-) (*services.UsableAgents, error) {
+) (*permissionports.UsableAgents, error) {
 	args := m.Called(ctx, actor, operation)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*services.UsableAgents), args.Error(1)
+	return args.Get(0).(*permissionports.UsableAgents), args.Error(1)
 }
 
 func (m *mockPermissionEngine) MayUseAgent(
 	ctx context.Context,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	definition *agentdefinition.Definition,
 ) (bool, error) {
 	args := m.Called(ctx, actor, definition)
@@ -120,13 +120,13 @@ func (m *mockPermissionEngine) MayUseAgent(
 
 func (m *mockPermissionEngine) RoleCoverage(
 	ctx context.Context,
-	req *services.RoleCoverageRequest,
-) ([]services.RoleCoverage, error) {
+	req *permissionports.RoleCoverageRequest,
+) ([]permissionports.RoleCoverage, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]services.RoleCoverage), args.Error(1)
+	return args.Get(0).([]permissionports.RoleCoverage), args.Error(1)
 }
 
 func newTestErrorHandler() *helpers.ErrorHandler {
@@ -159,11 +159,11 @@ func TestRequirePermission_Allowed(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 
 	engine := new(mockPermissionEngine)
-	engine.On("Check", mock.Anything, mock.MatchedBy(func(req *services.PermissionCheckRequest) bool {
+	engine.On("Check", mock.Anything, mock.MatchedBy(func(req *permissionports.PermissionCheckRequest) bool {
 		return req.UserID == userID && req.OrganizationID == orgID && req.Resource == "shipment" &&
 			req.Operation == permission.OpRead
 	})).
-		Return(&services.PermissionCheckResult{Allowed: true}, nil)
+		Return(&permissionports.PermissionCheckResult{Allowed: true}, nil)
 
 	pm := newPermissionMiddleware(engine)
 
@@ -198,7 +198,7 @@ func TestRequirePermission_Denied(t *testing.T) {
 
 	engine := new(mockPermissionEngine)
 	engine.On("Check", mock.Anything, mock.Anything).
-		Return(&services.PermissionCheckResult{Allowed: false}, nil)
+		Return(&permissionports.PermissionCheckResult{Allowed: false}, nil)
 
 	pm := newPermissionMiddleware(engine)
 
@@ -267,14 +267,14 @@ func TestRequireAnyPermission_OneAllowed(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 
 	engine := new(mockPermissionEngine)
-	engine.On("Check", mock.Anything, mock.MatchedBy(func(req *services.PermissionCheckRequest) bool {
+	engine.On("Check", mock.Anything, mock.MatchedBy(func(req *permissionports.PermissionCheckRequest) bool {
 		return req.Resource == "shipment" && req.Operation == permission.OpRead
 	})).
-		Return(&services.PermissionCheckResult{Allowed: false}, nil)
-	engine.On("Check", mock.Anything, mock.MatchedBy(func(req *services.PermissionCheckRequest) bool {
+		Return(&permissionports.PermissionCheckResult{Allowed: false}, nil)
+	engine.On("Check", mock.Anything, mock.MatchedBy(func(req *permissionports.PermissionCheckRequest) bool {
 		return req.Resource == "order" && req.Operation == permission.OpRead
 	})).
-		Return(&services.PermissionCheckResult{Allowed: true}, nil)
+		Return(&permissionports.PermissionCheckResult{Allowed: true}, nil)
 
 	pm := newPermissionMiddleware(engine)
 
@@ -314,7 +314,7 @@ func TestRequireAnyPermission_AllDenied(t *testing.T) {
 
 	engine := new(mockPermissionEngine)
 	engine.On("Check", mock.Anything, mock.Anything).
-		Return(&services.PermissionCheckResult{Allowed: false}, nil)
+		Return(&permissionports.PermissionCheckResult{Allowed: false}, nil)
 
 	pm := newPermissionMiddleware(engine)
 
@@ -354,7 +354,7 @@ func TestRequireAllPermissions_AllAllowed(t *testing.T) {
 
 	engine := new(mockPermissionEngine)
 	engine.On("Check", mock.Anything, mock.Anything).
-		Return(&services.PermissionCheckResult{Allowed: true}, nil)
+		Return(&permissionports.PermissionCheckResult{Allowed: true}, nil)
 
 	pm := newPermissionMiddleware(engine)
 
@@ -393,14 +393,14 @@ func TestRequireAllPermissions_OneDenied(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 
 	engine := new(mockPermissionEngine)
-	engine.On("Check", mock.Anything, mock.MatchedBy(func(req *services.PermissionCheckRequest) bool {
+	engine.On("Check", mock.Anything, mock.MatchedBy(func(req *permissionports.PermissionCheckRequest) bool {
 		return req.Resource == "shipment"
 	})).
-		Return(&services.PermissionCheckResult{Allowed: true}, nil)
-	engine.On("Check", mock.Anything, mock.MatchedBy(func(req *services.PermissionCheckRequest) bool {
+		Return(&permissionports.PermissionCheckResult{Allowed: true}, nil)
+	engine.On("Check", mock.Anything, mock.MatchedBy(func(req *permissionports.PermissionCheckRequest) bool {
 		return req.Resource == "order"
 	})).
-		Return(&services.PermissionCheckResult{Allowed: false}, nil)
+		Return(&permissionports.PermissionCheckResult{Allowed: false}, nil)
 
 	pm := newPermissionMiddleware(engine)
 
@@ -438,7 +438,7 @@ func TestGetPermissionResult(t *testing.T) {
 	buID := pulid.MustNew("bu_")
 	orgID := pulid.MustNew("org_")
 
-	expected := &services.PermissionCheckResult{
+	expected := &permissionports.PermissionCheckResult{
 		Allowed:   true,
 		DataScope: permission.DataScopeOrganization,
 	}
@@ -448,7 +448,7 @@ func TestGetPermissionResult(t *testing.T) {
 
 	pm := newPermissionMiddleware(engine)
 
-	var result *services.PermissionCheckResult
+	var result *permissionports.PermissionCheckResult
 	r := gin.New()
 	r.GET(
 		"/test",

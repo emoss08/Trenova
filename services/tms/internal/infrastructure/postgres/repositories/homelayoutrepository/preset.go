@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/homelayout"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/homelayoutports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -22,7 +22,7 @@ import (
 // winner deterministic when two presets share a priority.
 func (r *repository) ListPresets(
 	ctx context.Context,
-	req *repositories.ListHomeLayoutPresetsRequest,
+	req *homelayoutports.ListHomeLayoutPresetsRequest,
 ) ([]*homelayout.Preset, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*homelayout.Preset, error) {
 		log := r.l.With(zap.String("operation", "ListPresets"))
@@ -48,7 +48,7 @@ func (r *repository) ListPresets(
 
 func (r *repository) GetPreset(
 	ctx context.Context,
-	req *repositories.GetHomeLayoutPresetRequest,
+	req *homelayoutports.GetHomeLayoutPresetRequest,
 ) (*homelayout.Preset, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*homelayout.Preset, error) {
 		log := r.l.With(
@@ -182,7 +182,7 @@ func (r *repository) UpdatePreset(
 
 func (r *repository) DeletePreset(
 	ctx context.Context,
-	req *repositories.DeleteHomeLayoutPresetRequest,
+	req *homelayoutports.DeleteHomeLayoutPresetRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		log := r.l.With(
@@ -251,12 +251,12 @@ func clearOrgDefault(
 func (r *repository) ListRoleUserAssignments(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) ([]repositories.HomeRoleUserAssignment, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.HomeRoleUserAssignment, error) {
+) ([]homelayoutports.HomeRoleUserAssignment, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]homelayoutports.HomeRoleUserAssignment, error) {
 		log := r.l.With(zap.String("operation", "ListRoleUserAssignments"))
 
 		now := timeutils.NowUnix()
-		assignments := make([]repositories.HomeRoleUserAssignment, 0)
+		assignments := make([]homelayoutports.HomeRoleUserAssignment, 0)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*permission.UserRoleAssignment)(nil)).

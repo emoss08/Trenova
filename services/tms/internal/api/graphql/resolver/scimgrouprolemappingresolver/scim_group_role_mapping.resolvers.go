@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -33,7 +33,7 @@ func (r *QueryResolver) ScimGroupRoleMappings(ctx context.Context, input gqlmode
 
 	result, err := r.IamService.ListSCIMGroupRoleMappingsConnection(
 		ctx,
-		&repositories.ListSCIMGroupRoleMappingConnectionRequest{
+		&iamports.ListSCIMGroupRoleMappingConnectionRequest{
 			Filter:      tableInput.Filter,
 			Cursor:      tableInput.Cursor,
 			DirectoryID: dirID,

@@ -6,9 +6,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -30,7 +30,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.AssignmentRepository {
+func New(p Params) shipmentports.AssignmentRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.assignment-repository"),
@@ -39,7 +39,7 @@ func New(p Params) repositories.AssignmentRepository {
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListAssignmentsRequest,
+	req *shipmentports.ListAssignmentsRequest,
 ) (*pagination.ListResult[*shipment.Assignment], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*shipment.Assignment], error) {
 		entities := make([]*shipment.Assignment, 0, req.Filter.Pagination.SafeLimit())
@@ -72,7 +72,7 @@ func (r *repository) List(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req *repositories.GetAssignmentByIDRequest,
+	req *shipmentports.GetAssignmentByIDRequest,
 ) (*shipment.Assignment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipment.Assignment, error) {
 		entity := new(shipment.Assignment)
@@ -239,33 +239,33 @@ func (r *repository) findActiveAssignment(
 
 func (r *repository) FindNearestActualEventByTractorID(
 	ctx context.Context,
-	req repositories.FindNearestActualTimelineEventRequest,
+	req shipmentports.FindNearestActualTimelineEventRequest,
 	tractorID pulid.ID,
-) (*repositories.ActualTimelineEvent, error) {
+) (*shipmentports.ActualTimelineEvent, error) {
 	return r.findNearestActualEvent(ctx, req, "a.tractor_id", tractorID)
 }
 
 func (r *repository) FindNearestActualEventByPrimaryWorkerID(
 	ctx context.Context,
-	req repositories.FindNearestActualTimelineEventRequest,
+	req shipmentports.FindNearestActualTimelineEventRequest,
 	workerID pulid.ID,
-) (*repositories.ActualTimelineEvent, error) {
+) (*shipmentports.ActualTimelineEvent, error) {
 	return r.findNearestActualEvent(ctx, req, "a.primary_worker_id", workerID)
 }
 
 func (r *repository) FindOverlappingActualWindowByTractorID(
 	ctx context.Context,
-	req repositories.FindOverlappingActualTimelineWindowRequest,
+	req shipmentports.FindOverlappingActualTimelineWindowRequest,
 	tractorID pulid.ID,
-) (*repositories.ActualTimelineWindow, error) {
+) (*shipmentports.ActualTimelineWindow, error) {
 	return r.findOverlappingActualWindow(ctx, req, "a.tractor_id", tractorID)
 }
 
 func (r *repository) FindOverlappingActualWindowByPrimaryWorkerID(
 	ctx context.Context,
-	req repositories.FindOverlappingActualTimelineWindowRequest,
+	req shipmentports.FindOverlappingActualTimelineWindowRequest,
 	workerID pulid.ID,
-) (*repositories.ActualTimelineWindow, error) {
+) (*shipmentports.ActualTimelineWindow, error) {
 	return r.findOverlappingActualWindow(ctx, req, "a.primary_worker_id", workerID)
 }
 
@@ -331,15 +331,15 @@ func (r *repository) findInProgressAssignment(
 
 func (r *repository) findNearestActualEvent(
 	ctx context.Context,
-	req repositories.FindNearestActualTimelineEventRequest,
+	req shipmentports.FindNearestActualTimelineEventRequest,
 	column string,
 	resourceID pulid.ID,
-) (*repositories.ActualTimelineEvent, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.ActualTimelineEvent, error) {
-		event := new(repositories.ActualTimelineEvent)
+) (*shipmentports.ActualTimelineEvent, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipmentports.ActualTimelineEvent, error) {
+		event := new(shipmentports.ActualTimelineEvent)
 		comparison := "<="
 		order := "event.timestamp DESC"
-		if req.Direction == repositories.ActualTimelineDirectionNext {
+		if req.Direction == shipmentports.ActualTimelineDirectionNext {
 			comparison = ">="
 			order = "event.timestamp ASC"
 		}
@@ -375,12 +375,12 @@ func (r *repository) findNearestActualEvent(
 
 func (r *repository) findOverlappingActualWindow(
 	ctx context.Context,
-	req repositories.FindOverlappingActualTimelineWindowRequest,
+	req shipmentports.FindOverlappingActualTimelineWindowRequest,
 	column string,
 	resourceID pulid.ID,
-) (*repositories.ActualTimelineWindow, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.ActualTimelineWindow, error) {
-		window := new(repositories.ActualTimelineWindow)
+) (*shipmentports.ActualTimelineWindow, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipmentports.ActualTimelineWindow, error) {
+		window := new(shipmentports.ActualTimelineWindow)
 		actualEvent := r.buildAssignedActualTimelineEventQuery(
 			ctx,
 			req.TenantInfo,
@@ -426,7 +426,7 @@ func (r *repository) buildAssignedActualTimelineEventQuery(
 	arrivalQuery := db.NewSelect().
 		TableExpr("assignments AS a").
 		ColumnExpr("s.actual_arrival AS timestamp").
-		ColumnExpr("? AS event_type", repositories.ActualTimelineEventTypeArrival).
+		ColumnExpr("? AS event_type", shipmentports.ActualTimelineEventTypeArrival).
 		ColumnExpr("s.id AS stop_id").
 		ColumnExpr("s.shipment_move_id").
 		ColumnExpr("sm.shipment_id").
@@ -445,7 +445,7 @@ func (r *repository) buildAssignedActualTimelineEventQuery(
 	departureQuery := db.NewSelect().
 		TableExpr("assignments AS a").
 		ColumnExpr("s.actual_departure AS timestamp").
-		ColumnExpr("? AS event_type", repositories.ActualTimelineEventTypeDeparture).
+		ColumnExpr("? AS event_type", shipmentports.ActualTimelineEventTypeDeparture).
 		ColumnExpr("s.id AS stop_id").
 		ColumnExpr("s.shipment_move_id").
 		ColumnExpr("sm.shipment_id").
@@ -473,7 +473,7 @@ func (r *repository) Create(
 			return nil, err
 		}
 
-		return r.GetByID(ctx, &repositories.GetAssignmentByIDRequest{
+		return r.GetByID(ctx, &shipmentports.GetAssignmentByIDRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
 				BuID:  entity.BusinessUnitID,
@@ -515,7 +515,7 @@ func (r *repository) Update(
 			return nil, err
 		}
 
-		return r.GetByID(ctx, &repositories.GetAssignmentByIDRequest{
+		return r.GetByID(ctx, &shipmentports.GetAssignmentByIDRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
 				BuID:  entity.BusinessUnitID,
@@ -554,7 +554,7 @@ func (r *repository) Unassign(
 			return nil, err
 		}
 
-		return r.GetByID(ctx, &repositories.GetAssignmentByIDRequest{
+		return r.GetByID(ctx, &shipmentports.GetAssignmentByIDRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
 				BuID:  entity.BusinessUnitID,

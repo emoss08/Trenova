@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -14,7 +14,7 @@ type UnlimitedPlanService struct {
 	plan *platformplan.Plan
 }
 
-var _ services.PlanService = (*UnlimitedPlanService)(nil)
+var _ platformplanports.PlanService = (*UnlimitedPlanService)(nil)
 
 func NewUnlimited() *UnlimitedPlanService {
 	return &UnlimitedPlanService{plan: platformplan.Unlimited()}

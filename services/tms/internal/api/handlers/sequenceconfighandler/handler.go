@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/sequenceconfigservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/gin-gonic/gin"
@@ -73,7 +73,7 @@ func (h *Handler) get(c *gin.Context) {
 
 	doc, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetSequenceConfigRequest{
+		tenantports.GetSequenceConfigRequest{
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 		},
 	)

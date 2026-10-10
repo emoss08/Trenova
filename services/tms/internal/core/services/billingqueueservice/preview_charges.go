@@ -5,17 +5,18 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/shopspring/decimal"
 )
 
 func (s *service) PreviewUpdateCharges(
 	ctx context.Context,
-	req *services.UpdateChargesRequest,
-	actor *services.RequestActor,
-) (*services.ChargeUpdatePreview, error) {
+	req *billingqueueports.UpdateChargesRequest,
+	actor *permissionports.RequestActor,
+) (*billingqueueports.ChargeUpdatePreview, error) {
 	return s.planChargeUpdate(ctx, req, actor, false)
 }
 
@@ -27,10 +28,10 @@ func (s *service) PreviewUpdateCharges(
 // so only the write may make one.
 func (s *service) planChargeUpdate(
 	ctx context.Context,
-	req *services.UpdateChargesRequest,
-	actor *services.RequestActor,
+	req *billingqueueports.UpdateChargesRequest,
+	actor *permissionports.RequestActor,
 	rerate bool,
-) (*services.ChargeUpdatePreview, error) {
+) (*billingqueueports.ChargeUpdatePreview, error) {
 	return s.planChargeUpdateFrom(ctx, req, actor, rerate, false)
 }
 
@@ -39,11 +40,11 @@ func (s *service) planChargeUpdate(
 // charges before anyone has started the review, and that edit is the review.
 func (s *service) planChargeUpdateFrom(
 	ctx context.Context,
-	req *services.UpdateChargesRequest,
-	actor *services.RequestActor,
+	req *billingqueueports.UpdateChargesRequest,
+	actor *permissionports.RequestActor,
 	rerate bool,
 	allowReady bool,
-) (*services.ChargeUpdatePreview, error) {
+) (*billingqueueports.ChargeUpdatePreview, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"request",
@@ -60,7 +61,7 @@ func (s *service) planChargeUpdateFrom(
 		)
 	}
 
-	item, err := s.repo.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
+	item, err := s.repo.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
 		ItemID:     req.ItemID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -82,10 +83,10 @@ func (s *service) planChargeUpdateFrom(
 		return nil, err
 	}
 
-	shp, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	shp, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         item.ShipmentID,
 		TenantInfo: req.TenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -117,7 +118,7 @@ func (s *service) planChargeUpdateFrom(
 		convertedSplits = shipment.ConvertAmountSplitsToPercent(shp, shp.ChargeAllocations)
 	}
 
-	return &services.ChargeUpdatePreview{
+	return &billingqueueports.ChargeUpdatePreview{
 		Item:            item,
 		Before:          &before,
 		After:           shp,
@@ -128,8 +129,8 @@ func (s *service) planChargeUpdateFrom(
 func (s *service) applyRateChange(
 	ctx context.Context,
 	shp *shipment.Shipment,
-	req *services.UpdateChargesRequest,
-	actor *services.RequestActor,
+	req *billingqueueports.UpdateChargesRequest,
+	actor *permissionports.RequestActor,
 ) error {
 	switch {
 	case req.FormulaTemplateID != nil && !req.FormulaTemplateID.IsNil():

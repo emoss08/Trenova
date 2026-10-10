@@ -9,10 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/captureservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -107,7 +107,7 @@ type captureFiling struct {
 	entries []captureservice.FileItemInput
 }
 
-func captureFilingFrom(params *serviceports.ToolExecuteParams) (*captureFiling, error) {
+func captureFilingFrom(params *agentports.ToolExecuteParams) (*captureFiling, error) {
 	raw, ok := params.Params[paramCaptureItems].([]any)
 	if !ok || len(raw) == 0 {
 		return nil, fmt.Errorf("parameter %q must list at least one document", paramCaptureItems)
@@ -185,7 +185,7 @@ func (f *captureFiling) versioned(
 	return entries, nil
 }
 
-func newFileCaptureItemsTool(captures captureKeeper) serviceports.AgentTool {
+func newFileCaptureItemsTool(captures captureKeeper) agentports.AgentTool {
 	return newReceivableTool(&receivableSpec{
 		name:   "file_capture_items",
 		recipe: []string{"list_capture_batches", "list_document_types", "file_capture_items"},
@@ -207,7 +207,7 @@ func newFileCaptureItemsTool(captures captureKeeper) serviceports.AgentTool {
 		plan: func(
 			ctx context.Context,
 			filing *captureFiling,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) ([]*captureservice.FilePlan, error) {
 			entries, err := filing.versioned(ctx, captures)
 			if err != nil {
@@ -236,7 +236,7 @@ func newFileCaptureItemsTool(captures captureKeeper) serviceports.AgentTool {
 		run: func(
 			ctx context.Context,
 			filing *captureFiling,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			entries, err := filing.versioned(ctx, captures)
 			if err != nil {
@@ -352,10 +352,10 @@ func capturedOutcome(result *captureservice.FileItemsResult) string {
 	return summary + "; not filed: " + strings.Join(failures, "; ")
 }
 
-func newDiscardCaptureItemTool(captures captureKeeper) serviceports.AgentTool {
+func newDiscardCaptureItemTool(captures captureKeeper) agentports.AgentTool {
 	build := func(
 		ctx context.Context,
-		params *serviceports.ToolExecuteParams,
+		params *agentports.ToolExecuteParams,
 		id pulid.ID,
 	) (*captureservice.DiscardItemInput, error) {
 		item, err := captures.GetItem(ctx, tenantFrom(*params), id)
@@ -390,13 +390,13 @@ func newDiscardCaptureItemTool(captures captureKeeper) serviceports.AgentTool {
 		required:    []string{paramCaptureItemIDOne},
 		searchTerms: []string{"discard scan", "blank page", "throw away scan"},
 	}, receivablePlan[pulid.ID, *captureservice.DiscardItemPlan]{
-		request: func(params *serviceports.ToolExecuteParams) (pulid.ID, error) {
+		request: func(params *agentports.ToolExecuteParams) (pulid.ID, error) {
 			return requirePulid(params.Params, paramCaptureItemIDOne)
 		},
 		plan: func(
 			ctx context.Context,
 			id pulid.ID,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*captureservice.DiscardItemPlan, error) {
 			in, err := build(ctx, params, id)
 			if err != nil {
@@ -424,7 +424,7 @@ func newDiscardCaptureItemTool(captures captureKeeper) serviceports.AgentTool {
 		run: func(
 			ctx context.Context,
 			id pulid.ID,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			in, err := build(ctx, params, id)
 			if err != nil {
@@ -446,10 +446,10 @@ type captureBatchView struct {
 	FiledItems    int    `json:"filedDocuments"`
 }
 
-func newDiscardCaptureBatchTool(captures captureKeeper) serviceports.AgentTool {
+func newDiscardCaptureBatchTool(captures captureKeeper) agentports.AgentTool {
 	build := func(
 		ctx context.Context,
-		params *serviceports.ToolExecuteParams,
+		params *agentports.ToolExecuteParams,
 		id pulid.ID,
 	) (*captureservice.DiscardBatchInput, error) {
 		batch, err := captures.GetBatch(ctx, tenantFrom(*params), id)
@@ -483,13 +483,13 @@ func newDiscardCaptureBatchTool(captures captureKeeper) serviceports.AgentTool {
 		required:    []string{paramCaptureBatchID},
 		searchTerms: []string{"discard stack", "clear capture intake", "throw away scans"},
 	}, receivablePlan[pulid.ID, *captureservice.DiscardBatchPlan]{
-		request: func(params *serviceports.ToolExecuteParams) (pulid.ID, error) {
+		request: func(params *agentports.ToolExecuteParams) (pulid.ID, error) {
 			return requirePulid(params.Params, paramCaptureBatchID)
 		},
 		plan: func(
 			ctx context.Context,
 			id pulid.ID,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*captureservice.DiscardBatchPlan, error) {
 			in, err := build(ctx, params, id)
 			if err != nil {
@@ -511,7 +511,7 @@ func newDiscardCaptureBatchTool(captures captureKeeper) serviceports.AgentTool {
 		run: func(
 			ctx context.Context,
 			id pulid.ID,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			in, err := build(ctx, params, id)
 			if err != nil {

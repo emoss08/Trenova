@@ -11,8 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/journalentry"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
@@ -33,12 +33,12 @@ type candidateSource struct {
 	number *buncolgen.Column
 	date   buncolgen.Column
 	at     buncolgen.Column
-	filter func(q *bun.SelectQuery, req *repositories.ListAccountingSyncCandidatesRequest) *bun.SelectQuery
-	queued func(q *bun.SelectQuery, req *repositories.ListAccountingSyncCandidatesRequest) *bun.SelectQuery
+	filter func(q *bun.SelectQuery, req *accountingsyncports.ListAccountingSyncCandidatesRequest) *bun.SelectQuery
+	queued func(q *bun.SelectQuery, req *accountingsyncports.ListAccountingSyncCandidatesRequest) *bun.SelectQuery
 }
 
-func postgresTxOptions() ports.TxOptions {
-	return ports.TxOptions{}
+func postgresTxOptions() kernelports.TxOptions {
+	return kernelports.TxOptions{}
 }
 
 func sortClaimed(records []*accountingsync.AccountingSyncRecord) {
@@ -92,7 +92,7 @@ func salesDocumentSource(billType billingqueue.BillType) *candidateSource {
 		at:     cols.PostedAt,
 		filter: func(
 			q *bun.SelectQuery,
-			_ *repositories.ListAccountingSyncCandidatesRequest,
+			_ *accountingsyncports.ListAccountingSyncCandidatesRequest,
 		) *bun.SelectQuery {
 			return q.
 				Where(cols.BillType.Eq(), billType).
@@ -120,7 +120,7 @@ func paymentSource(operation accountingsync.SyncOperation) (*candidateSource, er
 		source.at = cols.CreatedAt
 		source.filter = func(
 			q *bun.SelectQuery,
-			req *repositories.ListAccountingSyncCandidatesRequest,
+			req *accountingsyncports.ListAccountingSyncCandidatesRequest,
 		) *bun.SelectQuery {
 			if req.UndoneBefore == nil {
 				return q
@@ -135,7 +135,7 @@ func paymentSource(operation accountingsync.SyncOperation) (*candidateSource, er
 		source.at = cols.ReversedAt
 		source.filter = func(
 			q *bun.SelectQuery,
-			_ *repositories.ListAccountingSyncCandidatesRequest,
+			_ *accountingsyncports.ListAccountingSyncCandidatesRequest,
 		) *bun.SelectQuery {
 			return q.
 				Where(cols.Status.Eq(), customerpayment.StatusReversed).
@@ -163,7 +163,7 @@ func creditApplicationSource(operation accountingsync.SyncOperation) (*candidate
 		source.at = cols.CreatedAt
 		source.filter = func(
 			q *bun.SelectQuery,
-			req *repositories.ListAccountingSyncCandidatesRequest,
+			req *accountingsyncports.ListAccountingSyncCandidatesRequest,
 		) *bun.SelectQuery {
 			if req.UndoneBefore == nil {
 				return q
@@ -178,7 +178,7 @@ func creditApplicationSource(operation accountingsync.SyncOperation) (*candidate
 		source.at = cols.UnappliedAt
 		source.filter = func(
 			q *bun.SelectQuery,
-			_ *repositories.ListAccountingSyncCandidatesRequest,
+			_ *accountingsyncports.ListAccountingSyncCandidatesRequest,
 		) *bun.SelectQuery {
 			return q.
 				Where(cols.Status.Eq(), customerpayment.CreditApplicationStatusUnapplied).
@@ -194,7 +194,7 @@ func creditApplicationSource(operation accountingsync.SyncOperation) (*candidate
 
 func (s *candidateSource) query(
 	dba bun.IDB,
-	req *repositories.ListAccountingSyncCandidatesRequest,
+	req *accountingsyncports.ListAccountingSyncCandidatesRequest,
 	limit int,
 ) *bun.SelectQuery {
 	records := buncolgen.AccountingSyncRecordColumns
@@ -245,7 +245,7 @@ func (s *candidateSource) query(
 }
 
 func journalSource(
-	queued func(*bun.SelectQuery, *repositories.ListAccountingSyncCandidatesRequest) *bun.SelectQuery,
+	queued func(*bun.SelectQuery, *accountingsyncports.ListAccountingSyncCandidatesRequest) *bun.SelectQuery,
 ) *candidateSource {
 	cols := buncolgen.JournalEntryColumns
 	return &candidateSource{
@@ -258,7 +258,7 @@ func journalSource(
 		at:     cols.PostedAt,
 		filter: func(
 			q *bun.SelectQuery,
-			_ *repositories.ListAccountingSyncCandidatesRequest,
+			_ *accountingsyncports.ListAccountingSyncCandidatesRequest,
 		) *bun.SelectQuery {
 			return q.
 				Where(cols.IsPosted.IsTrue()).
@@ -270,7 +270,7 @@ func journalSource(
 
 func journalDayQueued(
 	q *bun.SelectQuery,
-	req *repositories.ListAccountingSyncCandidatesRequest,
+	req *accountingsyncports.ListAccountingSyncCandidatesRequest,
 ) *bun.SelectQuery {
 	records := buncolgen.AccountingSyncRecordColumns
 	entries := buncolgen.JournalEntryColumns

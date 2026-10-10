@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/invoicelines"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"
 )
@@ -16,7 +16,7 @@ import (
 // invoice.
 func loadInvoiceLegs(
 	ctx context.Context,
-	shipmentRepo repositories.ShipmentRepository,
+	shipmentRepo shipmentports.ShipmentRepository,
 	entity *invoice.Invoice,
 	tenantInfo pagination.TenantInfo,
 	withDetails bool,

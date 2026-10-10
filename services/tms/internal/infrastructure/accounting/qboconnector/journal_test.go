@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,8 +21,8 @@ const trialBalanceReport = `{
   ]}
 }`
 
-func dailyJournal() *services.AccountingJournalDocument {
-	return &services.AccountingJournalDocument{
+func dailyJournal() *accountingsyncports.AccountingJournalDocument {
+	return &accountingsyncports.AccountingJournalDocument{
 		Auth:         auth(),
 		RequestID:    docRequestID,
 		Kind:         accountingsync.SyncObjectJournalSummary,
@@ -30,27 +30,27 @@ func dailyJournal() *services.AccountingJournalDocument {
 		TxnDate:      "2026-09-27",
 		CurrencyCode: "USD",
 		PrivateNote:  "Trenova daily summary",
-		Lines: []services.AccountingJournalLine{
+		Lines: []accountingsyncports.AccountingJournalLine{
 			{
-				Posting:           services.AccountingJournalDebit,
+				Posting:           accountingsyncports.AccountingJournalDebit,
 				AccountExternalID: "84",
 				Amount:            decimal.NewFromInt(1500),
 				Description:       "Accounts receivable",
-				PartyKind:         services.AccountingJournalCustomer,
+				PartyKind:         accountingsyncports.AccountingJournalCustomer,
 				PartyExternalID:   " 58 ",
 			},
 			{
-				Posting:           services.AccountingJournalCredit,
+				Posting:           accountingsyncports.AccountingJournalCredit,
 				AccountExternalID: "79",
 				Amount:            decimal.NewFromInt(1200),
 				Description:       "Freight revenue",
 			},
 			{
-				Posting:           services.AccountingJournalCredit,
+				Posting:           accountingsyncports.AccountingJournalCredit,
 				AccountExternalID: "33",
 				Amount:            decimal.NewFromInt(300),
 				Description:       "Accounts payable",
-				PartyKind:         services.AccountingJournalVendor,
+				PartyKind:         accountingsyncports.AccountingJournalVendor,
 				PartyExternalID:   "91",
 			},
 		},
@@ -152,12 +152,12 @@ func TestJournalEntryRefusals(t *testing.T) {
 	require.ErrorIs(t, err, errExternalIDRequired)
 
 	badPosting := dailyJournal()
-	badPosting.Lines[1].Posting = services.AccountingJournalPosting("Both")
+	badPosting.Lines[1].Posting = accountingsyncports.AccountingJournalPosting("Both")
 	_, err = conn.CreateJournalEntry(t.Context(), badPosting)
 	require.ErrorIs(t, err, errJournalPosting)
 
 	badParty := dailyJournal()
-	badParty.Lines[0].PartyKind = services.AccountingJournalPartyKind("Employee")
+	badParty.Lines[0].PartyKind = accountingsyncports.AccountingJournalPartyKind("Employee")
 	_, err = conn.CreateJournalEntry(t.Context(), badParty)
 	require.ErrorIs(t, err, errJournalParty)
 
@@ -174,7 +174,7 @@ func TestReadTrialBalanceReadsEveryAccountRow(t *testing.T) {
 	}}
 	conn := documentConnector(t, fake)
 
-	rows, err := conn.ReadTrialBalance(t.Context(), &services.ReadTrialBalanceRequest{
+	rows, err := conn.ReadTrialBalance(t.Context(), &accountingsyncports.ReadTrialBalanceRequest{
 		Auth:      auth(),
 		StartDate: "2026-04-01",
 		EndDate:   "2026-09-27",
@@ -200,7 +200,7 @@ func TestDeleteJournalEntryRetiresTheProviderEntry(t *testing.T) {
 	}}
 	conn := documentConnector(t, fake)
 
-	result, err := conn.DeleteJournalEntry(t.Context(), &services.AccountingDocumentRef{
+	result, err := conn.DeleteJournalEntry(t.Context(), &accountingsyncports.AccountingDocumentRef{
 		Auth:       auth(),
 		RequestID:  docRequestID,
 		Kind:       accountingsync.SyncObjectJournalSummary,
@@ -215,11 +215,11 @@ func TestDeleteJournalEntryRetiresTheProviderEntry(t *testing.T) {
 	assert.Equal(t, "delete", writes[0].Operation)
 	assert.Equal(t, "5", writes[0].Body["SyncToken"])
 
-	_, err = conn.DeleteJournalEntry(t.Context(), &services.AccountingDocumentRef{
+	_, err = conn.DeleteJournalEntry(t.Context(), &accountingsyncports.AccountingDocumentRef{
 		Auth: auth(), RequestID: docRequestID, Kind: accountingsync.SyncObjectInvoice, ExternalID: "1",
 	})
 	require.ErrorIs(t, err, errDocumentKind)
-	_, err = conn.DeleteJournalEntry(t.Context(), &services.AccountingDocumentRef{
+	_, err = conn.DeleteJournalEntry(t.Context(), &accountingsyncports.AccountingDocumentRef{
 		Auth: auth(), RequestID: docRequestID, Kind: accountingsync.SyncObjectJournalEntry,
 	})
 	require.ErrorIs(t, err, errExternalIDRequired)

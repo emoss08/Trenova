@@ -7,9 +7,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -38,7 +38,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.WorkerLeaveRepository {
+func New(p Params) workerports.WorkerLeaveRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.worker-leave-repository"),
@@ -124,7 +124,7 @@ func (r *repository) UpdateControl(
 // caseFilter is the one place the case predicates live, so a count and a list
 // can never disagree about what they are counting.
 func caseFilter(
-	req *repositories.ListLeaveCasesRequest,
+	req *workerports.ListLeaveCasesRequest,
 ) func(*bun.SelectQuery) *bun.SelectQuery {
 	cols := buncolgen.WorkerLeaveCaseColumns
 	return func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -154,7 +154,7 @@ func caseFilter(
 
 func (r *repository) ListCases(
 	ctx context.Context,
-	req *repositories.ListLeaveCasesRequest,
+	req *workerports.ListLeaveCasesRequest,
 ) ([]*worker.WorkerLeaveCase, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerLeaveCase, error) {
 		cols := buncolgen.WorkerLeaveCaseColumns
@@ -188,7 +188,7 @@ func (r *repository) ListCases(
 
 func (r *repository) CountCases(
 	ctx context.Context,
-	req *repositories.ListLeaveCasesRequest,
+	req *workerports.ListLeaveCasesRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		total, err := r.db.DBForContext(ctx).
@@ -207,7 +207,7 @@ func (r *repository) CountCases(
 
 func (r *repository) GetCaseByID(
 	ctx context.Context,
-	req *repositories.GetLeaveCaseByIDRequest,
+	req *workerports.GetLeaveCaseByIDRequest,
 ) (*worker.WorkerLeaveCase, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerLeaveCase, error) {
 		entity := new(worker.WorkerLeaveCase)
@@ -280,7 +280,7 @@ func (r *repository) UpdateCase(
 
 func (r *repository) ListEntries(
 	ctx context.Context,
-	req *repositories.ListLeaveEntriesRequest,
+	req *workerports.ListLeaveEntriesRequest,
 ) ([]*worker.WorkerLeaveEntry, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerLeaveEntry, error) {
 		cols := buncolgen.WorkerLeaveEntryColumns
@@ -316,7 +316,7 @@ func (r *repository) ListEntries(
 
 func (r *repository) ListEntriesByCaseIDs(
 	ctx context.Context,
-	req *repositories.ListLeaveEntriesByCaseIDsRequest,
+	req *workerports.ListLeaveEntriesByCaseIDsRequest,
 ) (map[pulid.ID][]*worker.WorkerLeaveEntry, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID][]*worker.WorkerLeaveEntry, error) {
 		cols := buncolgen.WorkerLeaveEntryColumns
@@ -345,7 +345,7 @@ func (r *repository) ListEntriesByCaseIDs(
 
 func (r *repository) GetEntryByID(
 	ctx context.Context,
-	req *repositories.GetLeaveEntryByIDRequest,
+	req *workerports.GetLeaveEntryByIDRequest,
 ) (*worker.WorkerLeaveEntry, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerLeaveEntry, error) {
 		entity := new(worker.WorkerLeaveEntry)
@@ -423,7 +423,7 @@ func (r *repository) UpdateEntry(
 
 func (r *repository) DeleteEntry(
 	ctx context.Context,
-	req *repositories.GetLeaveEntryByIDRequest,
+	req *workerports.GetLeaveEntryByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		results, err := r.db.DBForContext(ctx).

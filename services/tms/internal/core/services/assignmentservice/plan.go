@@ -5,10 +5,13 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/capabilityguard"
 	"github.com/emoss08/trenova/internal/core/services/dispatchguard"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,7 +24,7 @@ type assignmentPlan struct {
 }
 
 func NewMoveAssignment(
-	req *repositories.AssignShipmentMoveRequest,
+	req *shipmentports.AssignShipmentMoveRequest,
 	existing *shipment.Assignment,
 ) (*shipment.Assignment, error) {
 	if existing != nil {
@@ -43,8 +46,8 @@ func NewMoveAssignment(
 
 func (s *service) PreviewAssignToMove(
 	ctx context.Context,
-	req *repositories.AssignShipmentMoveRequest,
-) (*portservices.AssignmentPlan, error) {
+	req *shipmentports.AssignShipmentMoveRequest,
+) (*shipmentports.AssignmentPlan, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
 	}
@@ -53,7 +56,7 @@ func (s *service) PreviewAssignToMove(
 		ctx,
 		req.TenantInfo,
 		req.ShipmentMoveID,
-		repositories.CapabilityLockNone,
+		tenantports.CapabilityLockNone,
 		func(existing *shipment.Assignment) (*shipment.Assignment, error) {
 			return NewMoveAssignment(req, existing)
 		},
@@ -72,7 +75,7 @@ func (s *service) PreviewAssignToMove(
 		return nil, err
 	}
 
-	return &portservices.AssignmentPlan{
+	return &shipmentports.AssignmentPlan{
 		Assignment:     plan.assignment,
 		ShipmentBefore: plan.original,
 		ShipmentAfter:  updated,
@@ -89,12 +92,12 @@ func (s *service) equipmentInUse(
 	tenantInfo pagination.TenantInfo,
 	assignment *shipment.Assignment,
 	moveID pulid.ID,
-) ([]portservices.EquipmentInUse, error) {
+) ([]shipmentports.EquipmentInUse, error) {
 	if assignment == nil {
 		return nil, nil
 	}
 
-	found := make([]portservices.EquipmentInUse, 0, 2)
+	found := make([]shipmentports.EquipmentInUse, 0, 2)
 	check := func(kind string, id *pulid.ID, find func() (*shipment.Assignment, error)) error {
 		if id == nil || id.IsNil() {
 			return nil
@@ -103,14 +106,14 @@ func (s *service) equipmentInUse(
 		if err != nil || conflict == nil {
 			return err
 		}
-		inUse := portservices.EquipmentInUse{
+		inUse := shipmentports.EquipmentInUse{
 			Kind:           kind,
 			EquipmentID:    *id,
 			ShipmentMoveID: conflict.ShipmentMoveID,
 		}
 		if move, moveErr := s.repo.GetMoveByID(ctx, tenantInfo, conflict.ShipmentMoveID); moveErr == nil &&
 			move != nil {
-			if other, shipErr := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+			if other, shipErr := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 				ID:         move.ShipmentID,
 				TenantInfo: tenantInfo,
 			}); shipErr == nil && other != nil {
@@ -140,7 +143,7 @@ func (s *service) planAssignment(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	moveID pulid.ID,
-	lock repositories.CapabilityLock,
+	lock tenantports.CapabilityLock,
 	build func(*shipment.Assignment) (*shipment.Assignment, error),
 ) (*assignmentPlan, error) {
 	move, err := s.repo.GetMoveByID(ctx, tenantInfo, moveID)
@@ -169,13 +172,13 @@ func (s *service) planAssignment(
 		return nil, err
 	}
 
-	original, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	original, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID: move.ShipmentID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: tenantInfo.OrgID,
 			BuID:  tenantInfo.BuID,
 		},
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -239,7 +242,7 @@ func (s *service) ensureParties(
 	var worker func(pulid.ID) error
 	if s.workerRepo != nil {
 		worker = func(id pulid.ID) error {
-			_, err := s.workerRepo.GetByID(ctx, repositories.GetWorkerByIDRequest{
+			_, err := s.workerRepo.GetByID(ctx, workerports.GetWorkerByIDRequest{
 				ID: id, TenantInfo: tenantInfo,
 			})
 
@@ -249,7 +252,7 @@ func (s *service) ensureParties(
 	var tractor func(pulid.ID) error
 	if s.tractorRepo != nil {
 		tractor = func(id pulid.ID) error {
-			_, err := s.tractorRepo.GetByID(ctx, repositories.GetTractorByIDRequest{
+			_, err := s.tractorRepo.GetByID(ctx, tractorports.GetTractorByIDRequest{
 				ID: id, TenantInfo: tenantInfo,
 			})
 
@@ -259,7 +262,7 @@ func (s *service) ensureParties(
 	var trailer func(pulid.ID) error
 	if s.trailerRepo != nil {
 		trailer = func(id pulid.ID) error {
-			_, err := s.trailerRepo.GetByID(ctx, repositories.GetTrailerByIDRequest{
+			_, err := s.trailerRepo.GetByID(ctx, trailerports.GetTrailerByIDRequest{
 				ID: id, TenantInfo: tenantInfo,
 			})
 
@@ -302,7 +305,7 @@ func (s *service) projectAssignment(
 	targetMove.Assignment = assignment
 	targetMove.CoverageType = shipment.MoveCoverageTypeDriver
 
-	control, err := s.controlRepo.Get(ctx, repositories.GetShipmentControlRequest{
+	control, err := s.controlRepo.Get(ctx, tenantports.GetShipmentControlRequest{
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {
@@ -350,8 +353,8 @@ type unassignPlan struct {
 // shipment as the coordinator re-derives it.
 func (s *service) PreviewUnassign(
 	ctx context.Context,
-	req *repositories.UnassignShipmentMoveRequest,
-) (*portservices.AssignmentPlan, error) {
+	req *shipmentports.UnassignShipmentMoveRequest,
+) (*shipmentports.AssignmentPlan, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
 	}
@@ -366,7 +369,7 @@ func (s *service) PreviewUnassign(
 		return nil, err
 	}
 
-	return &portservices.AssignmentPlan{
+	return &shipmentports.AssignmentPlan{
 		Assignment:     plan.existing,
 		ShipmentBefore: plan.original,
 		ShipmentAfter:  updated,
@@ -375,7 +378,7 @@ func (s *service) PreviewUnassign(
 
 func (s *service) planUnassign(
 	ctx context.Context,
-	req *repositories.UnassignShipmentMoveRequest,
+	req *shipmentports.UnassignShipmentMoveRequest,
 ) (*unassignPlan, error) {
 	move, err := s.repo.GetMoveByID(ctx, req.TenantInfo, req.ShipmentMoveID)
 	if err != nil {
@@ -387,13 +390,13 @@ func (s *service) planUnassign(
 			WithParam("shipmentMoveId", req.ShipmentMoveID.String())
 	}
 
-	original, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	original, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID: move.ShipmentID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: req.TenantInfo.OrgID,
 			BuID:  req.TenantInfo.BuID,
 		},
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -420,7 +423,7 @@ func (s *service) planUnassign(
 // every derived status and charge recomputed, validated as an update.
 func (s *service) projectUnassign(
 	ctx context.Context,
-	req *repositories.UnassignShipmentMoveRequest,
+	req *shipmentports.UnassignShipmentMoveRequest,
 	plan *unassignPlan,
 ) (*shipment.Shipment, error) {
 	updatedShipment := shipment.CloneForUpdate(plan.original)
@@ -432,7 +435,7 @@ func (s *service) projectUnassign(
 	targetMove.CoverageType = shipment.MoveCoverageTypeUnassigned
 	targetMove.Status = shipment.MoveStatusNew
 
-	control, err := s.controlRepo.Get(ctx, repositories.GetShipmentControlRequest{
+	control, err := s.controlRepo.Get(ctx, tenantports.GetShipmentControlRequest{
 		TenantInfo: req.TenantInfo,
 	})
 	if err != nil {

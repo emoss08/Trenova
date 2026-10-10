@@ -1,14 +1,15 @@
 package apikeyservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/apikeyportsmock"
 	"context"
 	"testing"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/apikey"
 	permissiondomain "github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,10 +20,10 @@ import (
 	"go.uber.org/zap"
 )
 
-func newTestService(t *testing.T) (*Service, *mocks.MockAPIKeyRepository) {
+func newTestService(t *testing.T) (*Service, *apikeyportsmock.MockAPIKeyRepository) {
 	t.Helper()
 
-	repo := mocks.NewMockAPIKeyRepository(t)
+	repo := apikeyportsmock.NewMockAPIKeyRepository(t)
 	svc := &Service{
 		repo:     repo,
 		registry: permissiondomain.NewRegistry(),
@@ -41,8 +42,8 @@ func newTestService(t *testing.T) (*Service, *mocks.MockAPIKeyRepository) {
 	return svc, repo
 }
 
-func newAllowedPermission() services.APIKeyPermissionInput {
-	return services.APIKeyPermissionInput{
+func newAllowedPermission() apikeyports.APIKeyPermissionInput {
+	return apikeyports.APIKeyPermissionInput{
 		Resource:   permissiondomain.ResourceCustomer.String(),
 		Operations: []permissiondomain.Operation{permissiondomain.OpRead},
 		DataScope:  permissiondomain.DataScopeOrganization,
@@ -63,9 +64,9 @@ func TestCreateAPIKeyRejectsDisallowedResource(t *testing.T) {
 	_, err := svc.CreateAPIKey(
 		t.Context(),
 		tenantInfo,
-		&services.CreateAPIKeyRequest{
+		&apikeyports.CreateAPIKeyRequest{
 			Name: "Unsafe key",
-			Permissions: []services.APIKeyPermissionInput{
+			Permissions: []apikeyports.APIKeyPermissionInput{
 				{
 					Resource:   permissiondomain.ResourceUser.String(),
 					Operations: []permissiondomain.Operation{permissiondomain.OpRead},
@@ -113,9 +114,9 @@ func TestCreateAPIKeyEnforcesCreatorLimit(t *testing.T) {
 	_, err := svc.CreateAPIKey(
 		t.Context(),
 		tenantInfo,
-		&services.CreateAPIKeyRequest{
+		&apikeyports.CreateAPIKeyRequest{
 			Name:        "Rate Limited Key",
-			Permissions: []services.APIKeyPermissionInput{newAllowedPermission()},
+			Permissions: []apikeyports.APIKeyPermissionInput{newAllowedPermission()},
 		},
 		userID,
 	)
@@ -132,10 +133,10 @@ func TestCreateAPIKeySuccessPersistsPermissions(t *testing.T) {
 		BuID:  pulid.MustNew("bu_"),
 	}
 	userID := pulid.MustNew("usr_")
-	req := &services.CreateAPIKeyRequest{
+	req := &apikeyports.CreateAPIKeyRequest{
 		Name:        "Customer Sync",
 		Description: "Reads customer data",
-		Permissions: []services.APIKeyPermissionInput{newAllowedPermission()},
+		Permissions: []apikeyports.APIKeyPermissionInput{newAllowedPermission()},
 	}
 
 	repo.EXPECT().CountActiveByCreator(mock.Anything, tenantInfo, userID).Return(0, nil)
@@ -270,9 +271,9 @@ func TestCreateAPIKeyNormalizesPermissionsBeforePersisting(t *testing.T) {
 		}).
 		Return(nil)
 
-	result, err := svc.CreateAPIKey(t.Context(), tenantInfo, &services.CreateAPIKeyRequest{
+	result, err := svc.CreateAPIKey(t.Context(), tenantInfo, &apikeyports.CreateAPIKeyRequest{
 		Name: "Normalized",
-		Permissions: []services.APIKeyPermissionInput{
+		Permissions: []apikeyports.APIKeyPermissionInput{
 			{
 				Resource: "  " + permissiondomain.ResourceCustomer.String() + "  ",
 				Operations: []permissiondomain.Operation{

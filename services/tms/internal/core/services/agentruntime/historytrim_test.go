@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -93,7 +93,7 @@ func TestReplayHistory_KeepsRecentResultsWholeOnlyUpToABudget(t *testing.T) {
 
 	kept := 0
 	for _, message := range messages {
-		if message.Role == serviceports.RoleTool {
+		if message.Role == agentports.RoleTool {
 			kept += len(message.Content)
 		}
 	}
@@ -136,7 +136,7 @@ func TestOpenTurn_KeepsTheFiguresOfShortenedResultsAsEvidence(t *testing.T) {
 		quietTurns(recentToolTurns)...,
 	)
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
-	req := &serviceports.RunRequest{
+	req := &agentports.RunRequest{
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		History:    history,

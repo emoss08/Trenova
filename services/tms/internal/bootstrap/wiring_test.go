@@ -7,8 +7,18 @@ import (
 	"github.com/emoss08/trenova/internal/bootstrap/apiapp"
 	"github.com/emoss08/trenova/internal/bootstrap/core"
 	"github.com/emoss08/trenova/internal/bootstrap/workerapp"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aitrainingports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/fx"
 )
@@ -90,48 +100,48 @@ func TestWiring_BestEffortPortsAreActuallyProvided(t *testing.T) {
 				processOptions,
 				fx.Invoke(
 					func(
-						services.AgentEventPublisher,
-						services.WatchtowerProjector,
+						agentports.AgentEventPublisher,
+						watchtowerports.WatchtowerProjector,
 						// A trajectory recorder is optional at every use site, so
 						// an installation missing it records nothing and says
 						// nothing — the exact failure this file exists to catch.
 						// It matters most in the worker, where the background runs
 						// that had no durable account of themselves execute.
-						services.AgentRunEventRecorder,
-						services.QueryVectorizer,
-						services.CatalogVectorIndex,
-						services.RetrievalIndexer,
-						services.RetrievalSearcher,
-						services.MemoryVectorSearcher,
-						services.MemoryRanker,
-						services.WorkflowSignalStarter,
+						agentports.AgentRunEventRecorder,
+						agentports.QueryVectorizer,
+						agentports.CatalogVectorIndex,
+						agentports.RetrievalIndexer,
+						agentports.RetrievalSearcher,
+						agentports.MemoryVectorSearcher,
+						agentports.MemoryRanker,
+						kernelports.WorkflowSignalStarter,
 						// Previews are optional to the runtime, the decision
 						// services and the resolvers; without them nothing is
 						// previewed, no baseline is kept and no digest checked.
-						services.ProposalPreviewService,
-						services.RecordLabeler,
-						services.AICorrectionService,
-						services.EvaluationBudget,
-						services.ExtractionPredictor,
-						services.ExtractionEvalRunStarter,
-						services.ExtractionEvalRunner,
-						services.AITrainingHistoryService,
-						services.EditionInfo,
-						services.EntitlementProvider,
-						services.BillingProvider,
-						services.UsageProvider,
-						services.PlanService,
-						services.QuotaGuard,
+						agentports.ProposalPreviewService,
+						agentports.RecordLabeler,
+						aicorrectionports.AICorrectionService,
+						agentqualityports.EvaluationBudget,
+						extractionevalports.ExtractionPredictor,
+						extractionevalports.ExtractionEvalRunStarter,
+						extractionevalports.ExtractionEvalRunner,
+						aitrainingports.AITrainingHistoryService,
+						ediports.EditionInfo,
+						platformcatalogports.EntitlementProvider,
+						platformcatalogports.BillingProvider,
+						platformcatalogports.UsageProvider,
+						platformplanports.PlanService,
+						platformplanports.QuotaGuard,
 						// The change feed compares edited documents only when
 						// the drift check is there; without it an edit waits
 						// for the nightly run.
-						services.AccountingDriftRechecker,
-						services.AccountingDriftChecker,
-						services.AccountingSyncDispatcher,
+						accountingsyncports.AccountingDriftRechecker,
+						accountingsyncports.AccountingDriftChecker,
+						accountingsyncports.AccountingSyncDispatcher,
 						proposalrecorder.PlanStore,
-						services.AgentTrustService,
-						services.AgentProposalNotifier,
-						services.AgentActivityPublisher,
+						agentports.AgentTrustService,
+						agentports.AgentProposalNotifier,
+						agentports.AgentActivityPublisher,
 					) {
 					},
 				),

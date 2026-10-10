@@ -8,9 +8,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	inttestutil "github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -35,7 +35,7 @@ func TestGetOrCreateParticipatesInOuterTransaction(t *testing.T) {
 	lock := inttestutil.HoldTxLock(
 		t,
 		conn,
-		ports.TxOptions{},
+		kernelports.TxOptions{},
 		func(txCtx context.Context, _ bun.Tx) error {
 			created, err := repo.GetOrCreate(txCtx, data.Organization.ID, data.BusinessUnit.ID)
 			if err != nil {
@@ -45,7 +45,7 @@ func TestGetOrCreateParticipatesInOuterTransaction(t *testing.T) {
 				return context.Canceled
 			}
 
-			_, err = repo.GetByOrgID(txCtx, repositories.GetDispatchControlRequest{
+			_, err = repo.GetByOrgID(txCtx, dispatchcontrolports.GetDispatchControlRequest{
 				TenantInfo: pagination.TenantInfo{
 					OrgID: data.Organization.ID,
 					BuID:  data.BusinessUnit.ID,
@@ -56,7 +56,7 @@ func TestGetOrCreateParticipatesInOuterTransaction(t *testing.T) {
 	)
 	lock.WaitLocked(t)
 
-	visibleOutsideTx, err := repo.GetByOrgID(ctx, repositories.GetDispatchControlRequest{
+	visibleOutsideTx, err := repo.GetByOrgID(ctx, dispatchcontrolports.GetDispatchControlRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: data.Organization.ID,
 			BuID:  data.BusinessUnit.ID,
@@ -69,7 +69,7 @@ func TestGetOrCreateParticipatesInOuterTransaction(t *testing.T) {
 	lock.Release()
 	lock.Wait(t)
 
-	visibleAfterCommit, err := repo.GetByOrgID(ctx, repositories.GetDispatchControlRequest{
+	visibleAfterCommit, err := repo.GetByOrgID(ctx, dispatchcontrolports.GetDispatchControlRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: data.Organization.ID,
 			BuID:  data.BusinessUnit.ID,
@@ -178,7 +178,7 @@ func TestGetOrCreateInAReadOnlyTransactionWritesNothing(t *testing.T) {
 		Exec(ctx)
 	require.NoError(t, err)
 
-	err = conn.WithTx(ctx, ports.TxOptions{ReadOnly: true}, func(txCtx context.Context, tx bun.Tx) error {
+	err = conn.WithTx(ctx, kernelports.TxOptions{ReadOnly: true}, func(txCtx context.Context, tx bun.Tx) error {
 		entity, getErr := repo.GetOrCreate(txCtx, data.Organization.ID, data.BusinessUnit.ID)
 		require.NoError(t, getErr)
 		require.NotNil(t, entity)

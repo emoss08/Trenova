@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/location"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -14,7 +14,7 @@ import (
 type locationZoneReader interface {
 	GetByIDs(
 		ctx context.Context,
-		req repositories.GetLocationsByIDsRequest,
+		req locationports.GetLocationsByIDsRequest,
 	) ([]*location.Location, error)
 }
 
@@ -35,7 +35,7 @@ func readLocationZones(
 		return zones, nil
 	}
 
-	locations, err := reader.GetByIDs(ctx, repositories.GetLocationsByIDsRequest{
+	locations, err := reader.GetByIDs(ctx, locationports.GetLocationsByIDsRequest{
 		TenantInfo:  tenant,
 		LocationIDs: ids,
 	})

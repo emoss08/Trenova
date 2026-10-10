@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -13,14 +13,14 @@ import (
 )
 
 type inScopeClassifier struct {
-	serviceports.CompletionService
+	agentports.CompletionService
 }
 
 func (inScopeClassifier) CompleteStructured(
 	context.Context,
-	*serviceports.StructuredCompletionRequest,
-) (*serviceports.StructuredCompletionResult, error) {
-	return &serviceports.StructuredCompletionResult{
+	*agentports.StructuredCompletionRequest,
+) (*agentports.StructuredCompletionResult, error) {
+	return &agentports.StructuredCompletionResult{
 		Text: `{"category":"TransportationOperations","reasoning":"stub"}`,
 	}, nil
 }

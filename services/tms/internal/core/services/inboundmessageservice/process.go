@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -58,7 +58,7 @@ func (s *Service) ProcessMessage(
 		opt(&options)
 	}
 
-	message, err := s.messageRepo.GetByID(ctx, repositories.GetInboundMessageByIDRequest{
+	message, err := s.messageRepo.GetByID(ctx, inboundmessageports.GetInboundMessageByIDRequest{
 		ID:                 messageID,
 		TenantInfo:         tenantInfo,
 		IncludeAttachments: true,
@@ -140,7 +140,7 @@ func (s *Service) MarkFailed(
 	code string,
 	reason string,
 ) error {
-	message, err := s.messageRepo.GetByID(ctx, repositories.GetInboundMessageByIDRequest{
+	message, err := s.messageRepo.GetByID(ctx, inboundmessageports.GetInboundMessageByIDRequest{
 		ID:         messageID,
 		TenantInfo: tenantInfo,
 	})

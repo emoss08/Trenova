@@ -3,7 +3,7 @@ package documentintelligencejobs
 import (
 	"context"
 
-	services "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentparsingruleports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
 )
@@ -20,7 +20,7 @@ func (a *Activities) applyParsingRules(
 		return intelligence
 	}
 
-	result, err := a.parsingRuleRuntime.ApplyPublished(ctx, &services.DocumentParsingRuntimeInput{
+	result, err := a.parsingRuleRuntime.ApplyPublished(ctx, &documentparsingruleports.DocumentParsingRuntimeInput{
 		TenantInfo:          tenantInfo,
 		DocumentKind:        intelligence.Kind,
 		FileName:            fileName,
@@ -38,10 +38,10 @@ func (a *Activities) applyParsingRules(
 	return fromParsingAnalysis(intelligence, result)
 }
 
-func toParsingPages(pages []*PageExtractionResult) []services.DocumentParsingPage {
-	out := make([]services.DocumentParsingPage, 0, len(pages))
+func toParsingPages(pages []*PageExtractionResult) []documentparsingruleports.DocumentParsingPage {
+	out := make([]documentparsingruleports.DocumentParsingPage, 0, len(pages))
 	for _, page := range pages {
-		out = append(out, services.DocumentParsingPage{
+		out = append(out, documentparsingruleports.DocumentParsingPage{
 			PageNumber: page.PageNumber,
 			Text:       page.Text,
 		})
@@ -51,14 +51,14 @@ func toParsingPages(pages []*PageExtractionResult) []services.DocumentParsingPag
 
 func toParsingAnalysis(
 	intelligence *DocumentIntelligenceAnalysis,
-) *services.DocumentParsingAnalysis {
+) *documentparsingruleports.DocumentParsingAnalysis {
 	if intelligence == nil {
 		return nil
 	}
 
-	fields := make(map[string]services.DocumentParsingField, len(intelligence.Fields))
+	fields := make(map[string]documentparsingruleports.DocumentParsingField, len(intelligence.Fields))
 	for key, field := range intelligence.Fields {
-		fields[key] = services.DocumentParsingField{
+		fields[key] = documentparsingruleports.DocumentParsingField{
 			Key:             key,
 			Label:           field.Label,
 			Value:           field.Value,
@@ -70,9 +70,9 @@ func toParsingAnalysis(
 		}
 	}
 
-	stops := make([]services.DocumentParsingStop, 0, len(intelligence.Stops))
+	stops := make([]documentparsingruleports.DocumentParsingStop, 0, len(intelligence.Stops))
 	for _, stop := range intelligence.Stops {
-		stops = append(stops, services.DocumentParsingStop{
+		stops = append(stops, documentparsingruleports.DocumentParsingStop{
 			Sequence:            stop.Sequence,
 			Role:                stop.Role,
 			Name:                stop.Name,
@@ -92,9 +92,9 @@ func toParsingAnalysis(
 		})
 	}
 
-	conflicts := make([]services.DocumentParsingConflict, 0, len(intelligence.Conflicts))
+	conflicts := make([]documentparsingruleports.DocumentParsingConflict, 0, len(intelligence.Conflicts))
 	for _, conflict := range intelligence.Conflicts {
-		conflicts = append(conflicts, services.DocumentParsingConflict{
+		conflicts = append(conflicts, documentparsingruleports.DocumentParsingConflict{
 			Key:             conflict.Key,
 			Label:           conflict.Label,
 			Values:          conflict.Values,
@@ -104,7 +104,7 @@ func toParsingAnalysis(
 		})
 	}
 
-	return &services.DocumentParsingAnalysis{
+	return &documentparsingruleports.DocumentParsingAnalysis{
 		Fields:            fields,
 		Stops:             stops,
 		Conflicts:         conflicts,
@@ -118,7 +118,7 @@ func toParsingAnalysis(
 
 func fromParsingAnalysis(
 	baseline *DocumentIntelligenceAnalysis,
-	analysis *services.DocumentParsingAnalysis,
+	analysis *documentparsingruleports.DocumentParsingAnalysis,
 ) *DocumentIntelligenceAnalysis {
 	if analysis == nil {
 		return baseline

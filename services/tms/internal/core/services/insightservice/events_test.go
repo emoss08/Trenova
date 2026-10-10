@@ -7,19 +7,21 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/insight"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/insightservice/detector"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type recordingEvents struct {
-	published []services.AgentEvent
+	published []agentports.AgentEvent
 }
 
-func (r *recordingEvents) Publish(_ context.Context, event services.AgentEvent) {
+func (r *recordingEvents) Publish(_ context.Context, event agentports.AgentEvent) {
 	r.published = append(r.published, event)
 }
 
@@ -34,11 +36,11 @@ type detectingRepo struct {
 
 func (r *detectingRepo) ReplaceDetectorFindings(
 	_ context.Context,
-	req repositories.ReplaceDetectorFindingsRequest,
-) (repositories.ReplaceDetectorFindingsResult, error) {
+	req insightports.ReplaceDetectorFindingsRequest,
+) (insightports.ReplaceDetectorFindingsResult, error) {
 	r.replaced = append(r.replaced, req)
 
-	result := repositories.ReplaceDetectorFindingsResult{Created: len(req.Insights)}
+	result := insightports.ReplaceDetectorFindingsResult{Created: len(req.Insights)}
 	for _, entity := range req.Insights {
 		if r.newKeys[entity.DedupeKey] {
 			entity.ID = pulid.MustNew("inst_")
@@ -111,13 +113,13 @@ func detectingService(repo *detectingRepo, ds ...detector.Detector) *Service {
 type principalRecordingPermissions struct {
 	stubPermissions
 
-	principals []services.PrincipalType
+	principals []kernelports.PrincipalType
 }
 
 func (p *principalRecordingPermissions) Check(
 	ctx context.Context,
-	req *services.PermissionCheckRequest,
-) (*services.PermissionCheckResult, error) {
+	req *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
 	p.principals = append(p.principals, req.PrincipalType)
 
 	return p.stubPermissions.Check(ctx, req)
@@ -136,20 +138,20 @@ func TestList_ChecksAnAgentActorAsAnAgent(t *testing.T) {
 	service := newService(repo, &stubPermissions{}, &stubDetector{key: "ontime-decline"})
 	service.permissions = perms
 
-	_, err := service.List(t.Context(), services.BrowseInsightsRequest{
+	_, err := service.List(t.Context(), insightports.BrowseInsightsRequest{
 		TenantInfo: tenant(),
-		Actor: &services.RequestActor{
-			PrincipalType: services.PrincipalTypeAgent,
-			PrincipalID:   services.AgentPrincipalID,
+		Actor: &permissionports.RequestActor{
+			PrincipalType: permissionports.PrincipalTypeAgent,
+			PrincipalID:   permissionports.AgentPrincipalID,
 		},
 	})
 	require.NoError(t, err)
 
 	require.Len(t, perms.principals, 1)
-	assert.Equal(t, services.PrincipalTypeAgent, perms.principals[0])
+	assert.Equal(t, permissionports.PrincipalTypeAgent, perms.principals[0])
 	assert.Equal(
 		t,
-		repositories.AllowedDetectorKeys{"ontime-decline"},
+		insightports.AllowedDetectorKeys{"ontime-decline"},
 		repo.lastBrowse.AllowedDetectorKeys,
 	)
 }
@@ -172,15 +174,15 @@ func TestGetDetail_ChecksAnAgentActorAsAnAgent(t *testing.T) {
 	)
 	service.permissions = perms
 
-	detail, err := service.GetDetail(t.Context(), services.GetInsightDetailRequest{
+	detail, err := service.GetDetail(t.Context(), insightports.GetInsightDetailRequest{
 		ID:         found.ID,
 		TenantInfo: tenant(),
-		Actor: &services.RequestActor{
-			PrincipalType: services.PrincipalTypeAgent,
-			PrincipalID:   services.AgentPrincipalID,
+		Actor: &permissionports.RequestActor{
+			PrincipalType: permissionports.PrincipalTypeAgent,
+			PrincipalID:   permissionports.AgentPrincipalID,
 		},
 	})
 	require.NoError(t, err)
 	assert.Equal(t, found, detail.Insight)
-	assert.Equal(t, []services.PrincipalType{services.PrincipalTypeAgent}, perms.principals)
+	assert.Equal(t, []kernelports.PrincipalType{permissionports.PrincipalTypeAgent}, perms.principals)
 }

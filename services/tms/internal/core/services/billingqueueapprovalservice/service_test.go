@@ -1,13 +1,13 @@
 package billingqueueapprovalservice_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/billingqueueapprovalservice"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -18,7 +18,7 @@ import (
 )
 
 type reviewRepo struct {
-	repositories.BillingQueueReviewRepository
+	billingqueueports.BillingQueueReviewRepository
 }
 
 func (reviewRepo) GetApprovalRunByKey(
@@ -31,7 +31,7 @@ func (reviewRepo) GetApprovalRunByKey(
 
 func (reviewRepo) CreateApprovalRun(
 	_ context.Context,
-	req *repositories.CreateApprovalRunRequest,
+	req *billingqueueports.CreateApprovalRunRequest,
 ) (*billingqueue.ApprovalRun, error) {
 	req.Run.ID = pulid.MustNew("bqar_")
 	return req.Run, nil
@@ -40,7 +40,7 @@ func (reviewRepo) CreateApprovalRun(
 func TestStartRequestsTheWorkflowByItsRegisteredName(t *testing.T) {
 	t.Parallel()
 
-	workflows := mocks.NewMockWorkflowStarter(t)
+	workflows := kernelportsmock.NewMockWorkflowStarter(t)
 	workflows.EXPECT().Enabled().Return(true)
 	workflows.EXPECT().
 		StartWorkflow(mock.Anything, mock.Anything, "BillingQueueBulkApprovalWorkflow", mock.Anything).
@@ -53,7 +53,7 @@ func TestStartRequestsTheWorkflowByItsRegisteredName(t *testing.T) {
 		Logger:    zap.NewNop(),
 	})
 
-	_, err := svc.Start(t.Context(), &services.StartBillingQueueApprovalRequest{
+	_, err := svc.Start(t.Context(), &billingqueueports.StartBillingQueueApprovalRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  pulid.MustNew("org_"),
 			BuID:   pulid.MustNew("bu_"),

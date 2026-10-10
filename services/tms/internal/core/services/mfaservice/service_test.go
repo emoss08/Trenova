@@ -1,6 +1,8 @@
 package mfaservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"sync"
 	"testing"
@@ -9,10 +11,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/iam"
 	"github.com/emoss08/trenova/internal/core/domain/session"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -53,7 +56,7 @@ func (r *memoryRepo) ReplacePendingTOTP(_ context.Context, a *iam.MFAAuthenticat
 	return nil
 }
 
-func (r *memoryRepo) ActivateTOTP(_ context.Context, req *repositories.ActivateTOTPRequest) error {
+func (r *memoryRepo) ActivateTOTP(_ context.Context, req *iamports.ActivateTOTPRequest) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.authenticator.Enabled = true
@@ -63,7 +66,7 @@ func (r *memoryRepo) ActivateTOTP(_ context.Context, req *repositories.ActivateT
 	return nil
 }
 
-func (r *memoryRepo) RecordTOTPUse(_ context.Context, req repositories.RecordTOTPUseRequest) (bool, error) {
+func (r *memoryRepo) RecordTOTPUse(_ context.Context, req iamports.RecordTOTPUseRequest) (bool, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if r.authenticator.LastUsedStep >= req.Step {
@@ -88,7 +91,7 @@ func (r *memoryRepo) DeleteAll(context.Context, pulid.ID) (int, error) {
 
 func (r *memoryRepo) ReplaceRecoveryCodes(
 	_ context.Context,
-	req *repositories.ReplaceRecoveryCodesRequest,
+	req *iamports.ReplaceRecoveryCodesRequest,
 ) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -98,7 +101,7 @@ func (r *memoryRepo) ReplaceRecoveryCodes(
 
 func (r *memoryRepo) ConsumeRecoveryCode(
 	_ context.Context,
-	req repositories.ConsumeRecoveryCodeRequest,
+	req iamports.ConsumeRecoveryCodeRequest,
 ) (bool, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -125,10 +128,10 @@ func (r *memoryRepo) CountUnusedRecoveryCodes(context.Context, pulid.ID) (int, e
 
 type recordingAuditor struct {
 	mu      sync.Mutex
-	changes []*services.SecurityChange
+	changes []*permissionports.SecurityChange
 }
 
-func (a *recordingAuditor) RecordChange(_ context.Context, change *services.SecurityChange) {
+func (a *recordingAuditor) RecordChange(_ context.Context, change *permissionports.SecurityChange) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	a.changes = append(a.changes, change)
@@ -137,8 +140,8 @@ func (a *recordingAuditor) RecordChange(_ context.Context, change *services.Secu
 type harness struct {
 	svc      *Service
 	repo     *memoryRepo
-	users    *mocks.MockUserRepository
-	sessions *mocks.MockSessionRepository
+	users    *tenantportsmock.MockUserRepository
+	sessions *sessionportsmock.MockSessionRepository
 	auditor  *recordingAuditor
 	user     *tenant.User
 	tenant   pagination.TenantInfo
@@ -159,9 +162,9 @@ func newHarness(t *testing.T) *harness {
 	require.NoError(t, err)
 	usr.Password = hashed
 
-	users := mocks.NewMockUserRepository(t)
+	users := tenantportsmock.NewMockUserRepository(t)
 	users.On("FindByIDForLogin", mock.Anything, usr.ID).Return(usr, nil).Maybe()
-	sessions := mocks.NewMockSessionRepository(t)
+	sessions := sessionportsmock.NewMockSessionRepository(t)
 	repo := &memoryRepo{}
 	auditor := &recordingAuditor{}
 
@@ -211,13 +214,13 @@ func (h *harness) codeAt(t *testing.T, secret string, offsetSteps int64) string 
 func (h *harness) enroll(t *testing.T) (string, []string) {
 	t.Helper()
 
-	enrollment, err := h.svc.BeginTOTPEnrollment(t.Context(), &services.BeginTOTPEnrollmentRequest{
+	enrollment, err := h.svc.BeginTOTPEnrollment(t.Context(), &sessionports.BeginTOTPEnrollmentRequest{
 		TenantInfo: h.tenant,
 		Password:   "correct-horse",
 	})
 	require.NoError(t, err)
 
-	resp, err := h.svc.ConfirmTOTPEnrollment(t.Context(), &services.ConfirmTOTPEnrollmentRequest{
+	resp, err := h.svc.ConfirmTOTPEnrollment(t.Context(), &sessionports.ConfirmTOTPEnrollmentRequest{
 		TenantInfo: h.tenant,
 		Code:       h.codeAt(t, enrollment.Secret, 0),
 	})
@@ -230,7 +233,7 @@ func TestEnrollmentNeedsThePassword(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t)
 
-	_, err := h.svc.BeginTOTPEnrollment(t.Context(), &services.BeginTOTPEnrollmentRequest{
+	_, err := h.svc.BeginTOTPEnrollment(t.Context(), &sessionports.BeginTOTPEnrollmentRequest{
 		TenantInfo: h.tenant,
 		Password:   "wrong",
 	})
@@ -242,7 +245,7 @@ func TestEnrollmentStoresTheSecretEncryptedAndReturnsAQRCode(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t)
 
-	enrollment, err := h.svc.BeginTOTPEnrollment(t.Context(), &services.BeginTOTPEnrollmentRequest{
+	enrollment, err := h.svc.BeginTOTPEnrollment(t.Context(), &sessionports.BeginTOTPEnrollmentRequest{
 		TenantInfo: h.tenant,
 		Password:   "correct-horse",
 	})
@@ -265,13 +268,13 @@ func TestConfirmRejectsAWrongCodeAndLeavesTheFactorOff(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t)
 
-	enrollment, err := h.svc.BeginTOTPEnrollment(t.Context(), &services.BeginTOTPEnrollmentRequest{
+	enrollment, err := h.svc.BeginTOTPEnrollment(t.Context(), &sessionports.BeginTOTPEnrollmentRequest{
 		TenantInfo: h.tenant,
 		Password:   "correct-horse",
 	})
 	require.NoError(t, err)
 
-	_, err = h.svc.ConfirmTOTPEnrollment(t.Context(), &services.ConfirmTOTPEnrollmentRequest{
+	_, err = h.svc.ConfirmTOTPEnrollment(t.Context(), &sessionports.ConfirmTOTPEnrollmentRequest{
 		TenantInfo: h.tenant,
 		Code:       h.codeAt(t, enrollment.Secret, 5),
 	})
@@ -293,13 +296,13 @@ func TestConfirmTurnsTheFactorOnAndRaisesTheSession(t *testing.T) {
 		return s.AuthenticatorAAL == 2 && s.MFAAuthenticatedAt == h.clock.Unix()
 	})).Return(nil)
 
-	enrollment, err := h.svc.BeginTOTPEnrollment(t.Context(), &services.BeginTOTPEnrollmentRequest{
+	enrollment, err := h.svc.BeginTOTPEnrollment(t.Context(), &sessionports.BeginTOTPEnrollmentRequest{
 		TenantInfo: h.tenant,
 		Password:   "correct-horse",
 	})
 	require.NoError(t, err)
 
-	resp, err := h.svc.ConfirmTOTPEnrollment(t.Context(), &services.ConfirmTOTPEnrollmentRequest{
+	resp, err := h.svc.ConfirmTOTPEnrollment(t.Context(), &sessionports.ConfirmTOTPEnrollmentRequest{
 		TenantInfo: h.tenant,
 		SessionID:  sessionID,
 		Code:       h.codeAt(t, enrollment.Secret, 0),
@@ -324,14 +327,14 @@ func TestVerifySecondFactorRefusesAReplayedCode(t *testing.T) {
 	h.clock = h.clock.Add(2 * totputils.Period)
 	code := h.codeAt(t, secret, 0)
 
-	method, err := h.svc.VerifySecondFactor(t.Context(), &services.VerifySecondFactorRequest{
+	method, err := h.svc.VerifySecondFactor(t.Context(), &sessionports.VerifySecondFactorRequest{
 		UserID: h.user.ID,
 		Code:   code,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, services.MFAMethodTOTP, method)
+	assert.Equal(t, sessionports.MFAMethodTOTP, method)
 
-	_, err = h.svc.VerifySecondFactor(t.Context(), &services.VerifySecondFactorRequest{
+	_, err = h.svc.VerifySecondFactor(t.Context(), &sessionports.VerifySecondFactorRequest{
 		UserID: h.user.ID,
 		Code:   code,
 	})
@@ -343,14 +346,14 @@ func TestRecoveryCodesWorkOnce(t *testing.T) {
 	h := newHarness(t)
 	_, codes := h.enroll(t)
 
-	method, err := h.svc.VerifySecondFactor(t.Context(), &services.VerifySecondFactorRequest{
+	method, err := h.svc.VerifySecondFactor(t.Context(), &sessionports.VerifySecondFactorRequest{
 		UserID:       h.user.ID,
 		RecoveryCode: " " + codes[0] + " ",
 	})
 	require.NoError(t, err)
-	assert.Equal(t, services.MFAMethodRecoveryCode, method)
+	assert.Equal(t, sessionports.MFAMethodRecoveryCode, method)
 
-	_, err = h.svc.VerifySecondFactor(t.Context(), &services.VerifySecondFactorRequest{
+	_, err = h.svc.VerifySecondFactor(t.Context(), &sessionports.VerifySecondFactorRequest{
 		UserID:       h.user.ID,
 		RecoveryCode: codes[0],
 	})
@@ -365,7 +368,7 @@ func TestReauthenticateNeedsBothFactors(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t)
 
-	_, err := h.svc.Reauthenticate(t.Context(), &services.ReauthenticateRequest{
+	_, err := h.svc.Reauthenticate(t.Context(), &sessionports.ReauthenticateRequest{
 		UserID:   h.user.ID,
 		Password: "correct-horse",
 		Code:     "123456",
@@ -375,20 +378,20 @@ func TestReauthenticateNeedsBothFactors(t *testing.T) {
 	secret, _ := h.enroll(t)
 	h.clock = h.clock.Add(2 * totputils.Period)
 
-	_, err = h.svc.Reauthenticate(t.Context(), &services.ReauthenticateRequest{
+	_, err = h.svc.Reauthenticate(t.Context(), &sessionports.ReauthenticateRequest{
 		UserID:   h.user.ID,
 		Password: "wrong",
 		Code:     h.codeAt(t, secret, 0),
 	})
 	require.ErrorIs(t, err, errInvalidPassword)
 
-	method, err := h.svc.Reauthenticate(t.Context(), &services.ReauthenticateRequest{
+	method, err := h.svc.Reauthenticate(t.Context(), &sessionports.ReauthenticateRequest{
 		UserID:   h.user.ID,
 		Password: "correct-horse",
 		Code:     h.codeAt(t, secret, 0),
 	})
 	require.NoError(t, err)
-	assert.Equal(t, services.MFAMethodTOTP, method)
+	assert.Equal(t, sessionports.MFAMethodTOTP, method)
 }
 
 func TestDisableNeedsPasswordAndFactor(t *testing.T) {
@@ -397,14 +400,14 @@ func TestDisableNeedsPasswordAndFactor(t *testing.T) {
 	secret, _ := h.enroll(t)
 	h.clock = h.clock.Add(2 * totputils.Period)
 
-	err := h.svc.DisableTOTP(t.Context(), &services.DisableTOTPRequest{
+	err := h.svc.DisableTOTP(t.Context(), &sessionports.DisableTOTPRequest{
 		TenantInfo: h.tenant,
 		Password:   "correct-horse",
 		Code:       "000000",
 	})
 	require.Error(t, err)
 
-	err = h.svc.DisableTOTP(t.Context(), &services.DisableTOTPRequest{
+	err = h.svc.DisableTOTP(t.Context(), &sessionports.DisableTOTPRequest{
 		TenantInfo: h.tenant,
 		Password:   "correct-horse",
 		Code:       h.codeAt(t, secret, 0),
@@ -422,14 +425,14 @@ func TestRegenerateRecoveryCodesReplacesTheSet(t *testing.T) {
 	secret, original := h.enroll(t)
 	h.clock = h.clock.Add(2 * totputils.Period)
 
-	resp, err := h.svc.RegenerateRecoveryCodes(t.Context(), &services.RegenerateRecoveryCodesRequest{
+	resp, err := h.svc.RegenerateRecoveryCodes(t.Context(), &sessionports.RegenerateRecoveryCodesRequest{
 		TenantInfo: h.tenant,
 		Code:       h.codeAt(t, secret, 0),
 	})
 	require.NoError(t, err)
 	assert.Len(t, resp.RecoveryCodes, totputils.RecoveryCodeCount)
 
-	_, err = h.svc.VerifySecondFactor(t.Context(), &services.VerifySecondFactorRequest{
+	_, err = h.svc.VerifySecondFactor(t.Context(), &sessionports.VerifySecondFactorRequest{
 		UserID:       h.user.ID,
 		RecoveryCode: original[0],
 	})

@@ -9,8 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/shipmenttracking"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -21,20 +23,20 @@ type stubShipments struct{ entities []*shipment.Shipment }
 
 func (s *stubShipments) ListTrackingShipments(
 	context.Context,
-	*repositories.ListTrackingShipmentsRequest,
+	*shipmentports.ListTrackingShipmentsRequest,
 ) ([]*shipment.Shipment, error) {
 	return s.entities, nil
 }
 
 type stubBoard struct {
-	moves []*repositories.BoardMove
+	moves []*shipmentports.BoardMove
 	calls int
 }
 
 func (s *stubBoard) ListBoardMoves(
 	_ context.Context,
-	filter *repositories.DispatchBoardFilter,
-) ([]*repositories.BoardMove, error) {
+	filter *shipmentports.DispatchBoardFilter,
+) ([]*shipmentports.BoardMove, error) {
 	s.calls++
 	return s.moves, nil
 }
@@ -46,7 +48,7 @@ type stubTelematics struct {
 
 func (s *stubTelematics) ListVehiclePositions(
 	_ context.Context,
-	req *repositories.ListVehiclePositionsRequest,
+	req *telematicsports.ListVehiclePositionsRequest,
 ) ([]*telematics.VehiclePosition, error) {
 	s.tractors = req.TractorIDs
 	return s.positions, nil
@@ -54,7 +56,7 @@ func (s *stubTelematics) ListVehiclePositions(
 
 func (s *stubTelematics) ListWorkerHOSStates(
 	context.Context,
-	*repositories.ListWorkerHOSStatesRequest,
+	*telematicsports.ListWorkerHOSStatesRequest,
 ) ([]*telematics.WorkerHOSState, error) {
 	return nil, nil
 }
@@ -65,7 +67,7 @@ type stubFailures struct {
 
 func (s *stubFailures) ListUnresolvedByShipmentIDs(
 	context.Context,
-	*repositories.ServiceFailuresByShipmentIDsRequest,
+	*servicefailureports.ServiceFailuresByShipmentIDsRequest,
 ) ([]*servicefailure.ServiceFailure, error) {
 	return s.failures, nil
 }
@@ -117,7 +119,7 @@ func TestEtasByShipmentIDsBatchesAndEstimates(t *testing.T) {
 	now := time.Date(2026, 10, 6, 12, 0, 0, 0, time.UTC)
 	entity, moveID, tractorID := trackingFixture(now.Unix(), now.Unix()+600)
 
-	board := &stubBoard{moves: []*repositories.BoardMove{{
+	board := &stubBoard{moves: []*shipmentports.BoardMove{{
 		MoveID:            moveID,
 		AssignedTractorID: tractorID,
 	}}}

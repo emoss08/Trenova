@@ -1,6 +1,7 @@
 package roleassignmenthandler_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"errors"
 	"net/http"
 	"testing"
@@ -8,9 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/roleassignmenthandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/roleassignmentservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,7 +27,7 @@ var errNotFound = errors.New("role assignment not found")
 
 func setupRoleAssignmentHandler(
 	t *testing.T,
-	repo *mocks.MockRoleAssignmentRepository,
+	repo *permissionportsmock.MockRoleAssignmentRepository,
 ) *roleassignmenthandler.Handler {
 	t.Helper()
 
@@ -58,8 +59,8 @@ func TestRoleAssignmentHandler_List_Success(t *testing.T) {
 	t.Parallel()
 
 	assignmentID := pulid.MustNew("ura_")
-	repo := mocks.NewMockRoleAssignmentRepository(t)
-	repo.On("List", mock.Anything, mock.MatchedBy(func(req *repositories.ListRoleAssignmentsRequest) bool {
+	repo := permissionportsmock.NewMockRoleAssignmentRepository(t)
+	repo.On("List", mock.Anything, mock.MatchedBy(func(req *permissionports.ListRoleAssignmentsRequest) bool {
 		return req.Filter.TenantInfo.OrgID == testutil.TestOrgID
 	})).
 		Return(&pagination.ListResult[*permission.UserRoleAssignment]{
@@ -108,8 +109,8 @@ func TestRoleAssignmentHandler_List_WithPagination(t *testing.T) {
 		})
 	}
 
-	repo := mocks.NewMockRoleAssignmentRepository(t)
-	repo.On("List", mock.Anything, mock.MatchedBy(func(req *repositories.ListRoleAssignmentsRequest) bool {
+	repo := permissionportsmock.NewMockRoleAssignmentRepository(t)
+	repo.On("List", mock.Anything, mock.MatchedBy(func(req *permissionports.ListRoleAssignmentsRequest) bool {
 		return req.Filter.TenantInfo.OrgID == testutil.TestOrgID &&
 			req.Filter.Pagination.Limit == requestedLimit+1
 	})).
@@ -142,7 +143,7 @@ func TestRoleAssignmentHandler_List_WithPagination(t *testing.T) {
 func TestRoleAssignmentHandler_List_RejectsOffset(t *testing.T) {
 	t.Parallel()
 
-	handler := setupRoleAssignmentHandler(t, mocks.NewMockRoleAssignmentRepository(t))
+	handler := setupRoleAssignmentHandler(t, permissionportsmock.NewMockRoleAssignmentRepository(t))
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
@@ -160,7 +161,7 @@ func TestRoleAssignmentHandler_Get_Success(t *testing.T) {
 	t.Parallel()
 
 	assignmentID := pulid.MustNew("ura_")
-	repo := mocks.NewMockRoleAssignmentRepository(t)
+	repo := permissionportsmock.NewMockRoleAssignmentRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(&permission.UserRoleAssignment{
 		ID:             assignmentID,
 		UserID:         pulid.MustNew("usr_"),
@@ -189,7 +190,7 @@ func TestRoleAssignmentHandler_Get_NotFound(t *testing.T) {
 	t.Parallel()
 
 	assignmentID := pulid.MustNew("ura_")
-	repo := mocks.NewMockRoleAssignmentRepository(t)
+	repo := permissionportsmock.NewMockRoleAssignmentRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(nil, errNotFound)
 
 	handler := setupRoleAssignmentHandler(t, repo)
@@ -208,7 +209,7 @@ func TestRoleAssignmentHandler_Get_NotFound(t *testing.T) {
 func TestRoleAssignmentHandler_Get_InvalidID(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockRoleAssignmentRepository(t)
+	repo := permissionportsmock.NewMockRoleAssignmentRepository(t)
 	handler := setupRoleAssignmentHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().

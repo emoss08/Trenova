@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/homelayout"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/homelayoutports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/uptrace/bun"
@@ -14,7 +14,7 @@ import (
 
 func (r *repository) GetPreference(
 	ctx context.Context,
-	req *repositories.GetHomePreferenceRequest,
+	req *homelayoutports.GetHomePreferenceRequest,
 ) (*homelayout.Preference, bool, error) {
 	return dbtx.Read2(ctx, r.db, func(ctx context.Context) (*homelayout.Preference, bool, error) {
 		log := r.l.With(

@@ -8,9 +8,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -22,34 +24,34 @@ import (
 
 const maxSettingsWriteAttempts = 3
 
-var _ serviceports.AIRetrievalStatusService = (*Service)(nil)
+var _ agentports.AIRetrievalStatusService = (*Service)(nil)
 
 type Params struct {
 	fx.In
 
 	Logger     *zap.Logger
-	Repo       repositories.AIRetrievalRepository
-	Sources    repositories.RetrievalSourceRepository
-	Usage      repositories.AIUsageRepository
-	Providers  repositories.AIProviderRepository
-	Vectorizer serviceports.QueryVectorizer
-	Indexer    serviceports.RetrievalIndexer
-	Pipeline   serviceports.RetrievalIndexPipeline
-	Audit      serviceports.AuditService
-	Embeddings serviceports.EmbeddingService `optional:"true"`
+	Repo       agentports.AIRetrievalRepository
+	Sources    agentports.RetrievalSourceRepository
+	Usage      aiusageports.AIUsageRepository
+	Providers  agentports.AIProviderRepository
+	Vectorizer agentports.QueryVectorizer
+	Indexer    agentports.RetrievalIndexer
+	Pipeline   agentports.RetrievalIndexPipeline
+	Audit      auditports.AuditService
+	Embeddings aiusageports.EmbeddingService `optional:"true"`
 }
 
 type Service struct {
 	l          *zap.Logger
-	repo       repositories.AIRetrievalRepository
-	sources    repositories.RetrievalSourceRepository
-	usage      repositories.AIUsageRepository
-	providers  repositories.AIProviderRepository
-	vectorizer serviceports.QueryVectorizer
-	indexer    serviceports.RetrievalIndexer
-	pipeline   serviceports.RetrievalIndexPipeline
-	audit      serviceports.AuditService
-	embeddings serviceports.EmbeddingService
+	repo       agentports.AIRetrievalRepository
+	sources    agentports.RetrievalSourceRepository
+	usage      aiusageports.AIUsageRepository
+	providers  agentports.AIProviderRepository
+	vectorizer agentports.QueryVectorizer
+	indexer    agentports.RetrievalIndexer
+	pipeline   agentports.RetrievalIndexPipeline
+	audit      auditports.AuditService
+	embeddings aiusageports.EmbeddingService
 	now        func() int64
 }
 
@@ -69,7 +71,7 @@ func New(p Params) *Service { //nolint:gocritic // fx param structs are passed b
 	}
 }
 
-func AsService(s *Service) serviceports.AIRetrievalStatusService { return s }
+func AsService(s *Service) agentports.AIRetrievalStatusService { return s }
 
 func validateTenant(tenant pagination.TenantInfo) error {
 	if tenant.OrgID.IsNil() || tenant.BuID.IsNil() {
@@ -94,18 +96,18 @@ func validateSourceType(sourceType airetrieval.SourceType) error {
 type statusInputs struct {
 	availability airetrieval.Availability
 	settings     *airetrieval.Settings
-	indexing     *repositories.AIUsageCost
-	retrieval    *repositories.AIUsageCost
+	indexing     *aiusageports.AIUsageCost
+	retrieval    *aiusageports.AIUsageCost
 	totals       map[airetrieval.SourceType]int
-	active       []repositories.IndexEntryCount
-	pending      []repositories.IndexEntryCount
+	active       []agentports.IndexEntryCount
+	pending      []agentports.IndexEntryCount
 	configured   string
 }
 
 func (s *Service) Status(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-) (*serviceports.AIRetrievalStatus, error) {
+) (*agentports.AIRetrievalStatus, error) {
 	if err := validateTenant(tenant); err != nil {
 		return nil, err
 	}
@@ -156,7 +158,7 @@ func (s *Service) gather(
 	})
 	for idx, sourceType := range airetrieval.AllSourceTypes() {
 		group.Go(func() error {
-			count, err := s.sources.CountSources(gctx, repositories.CountRetrievalSourcesRequest{
+			count, err := s.sources.CountSources(gctx, agentports.CountRetrievalSourcesRequest{
 				TenantInfo: tenant,
 				SourceType: sourceType,
 			})
@@ -203,8 +205,8 @@ func (s *Service) surfaceCost(
 	tenant pagination.TenantInfo,
 	surface aiusage.Surface,
 	since int64,
-) (*repositories.AIUsageCost, error) {
-	cost, err := s.usage.SurfaceCost(ctx, repositories.AIUsageSurfaceCostRequest{
+) (*aiusageports.AIUsageCost, error) {
+	cost, err := s.usage.SurfaceCost(ctx, aiusageports.AIUsageSurfaceCostRequest{
 		TenantInfo: tenant,
 		Surface:    surface,
 		Since:      since,
@@ -213,7 +215,7 @@ func (s *Service) surfaceCost(
 		return nil, fmt.Errorf("sum this month's %s cost: %w", surface, err)
 	}
 	if cost == nil {
-		return &repositories.AIUsageCost{}, nil
+		return &aiusageports.AIUsageCost{}, nil
 	}
 
 	return cost, nil
@@ -223,8 +225,8 @@ func (s *Service) countEntries(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	modelKey string,
-) ([]repositories.IndexEntryCount, error) {
-	counts, err := s.repo.CountIndexEntries(ctx, repositories.CountIndexEntriesRequest{
+) ([]agentports.IndexEntryCount, error) {
+	counts, err := s.repo.CountIndexEntries(ctx, agentports.CountIndexEntriesRequest{
 		TenantInfo: tenant,
 		ModelKey:   modelKey,
 	})
@@ -247,7 +249,7 @@ func (s *Service) configuredModelKey(
 	switch {
 	case err == nil:
 		return key, nil
-	case errors.Is(err, serviceports.ErrNoProviderConfigured) || errortypes.IsBusinessError(err):
+	case errors.Is(err, agentports.ErrNoProviderConfigured) || errortypes.IsBusinessError(err):
 		return "", nil
 	default:
 		return "", fmt.Errorf("resolve the configured embedding model: %w", err)
@@ -256,8 +258,8 @@ func (s *Service) configuredModelKey(
 
 func (s *Service) UpdateSettings(
 	ctx context.Context,
-	req *serviceports.UpdateAIRetrievalSettingsRequest,
-) (*serviceports.AIRetrievalStatus, error) {
+	req *agentports.UpdateAIRetrievalSettingsRequest,
+) (*agentports.AIRetrievalStatus, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"input",
@@ -298,7 +300,7 @@ func (s *Service) UpdateSettings(
 
 func (s *Service) writeSettings(
 	ctx context.Context,
-	req *serviceports.UpdateAIRetrievalSettingsRequest,
+	req *agentports.UpdateAIRetrievalSettingsRequest,
 ) (saved, previous *airetrieval.Settings, changed bool, err error) {
 	current, err := s.repo.GetSettings(ctx, req.TenantInfo)
 	if err != nil {
@@ -327,7 +329,7 @@ func (s *Service) writeSettings(
 
 func ApplySettingsPatch(
 	settings *airetrieval.Settings,
-	req *serviceports.UpdateAIRetrievalSettingsRequest,
+	req *agentports.UpdateAIRetrievalSettingsRequest,
 	now int64,
 ) bool {
 	changed := false
@@ -371,8 +373,8 @@ func ApplySettingsPatch(
 
 func (s *Service) Reindex(
 	ctx context.Context,
-	req *serviceports.ReindexAIRetrievalSourceRequest,
-) (*serviceports.AIRetrievalStatus, error) {
+	req *agentports.ReindexAIRetrievalSourceRequest,
+) (*agentports.AIRetrievalStatus, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"sourceType",
@@ -481,10 +483,10 @@ func auditResourceID(settings *airetrieval.Settings) string {
 
 func (s *Service) logSettings(
 	saved, previous *airetrieval.Settings,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) {
 	auditActor := actor.AuditActorOrSystem()
-	if err := s.audit.LogAction(&serviceports.LogActionParams{
+	if err := s.audit.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceAIProvider,
 		ResourceID:     auditResourceID(saved),
 		Operation:      permission.OpUpdate,
@@ -503,10 +505,10 @@ func (s *Service) logSettings(
 
 func (s *Service) logReindex(
 	settings *airetrieval.Settings,
-	req *serviceports.ReindexAIRetrievalSourceRequest,
+	req *agentports.ReindexAIRetrievalSourceRequest,
 ) {
 	auditActor := req.Actor.AuditActorOrSystem()
-	if err := s.audit.LogAction(&serviceports.LogActionParams{
+	if err := s.audit.LogAction(&auditports.LogActionParams{
 		Resource:      permission.ResourceAIProvider,
 		ResourceID:    auditResourceID(settings),
 		Operation:     permission.OpUpdate,

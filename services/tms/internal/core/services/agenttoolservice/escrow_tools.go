@@ -7,11 +7,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/driverpayservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -37,13 +38,13 @@ const (
 type escrowBook interface {
 	GetEscrowAccount(
 		ctx context.Context,
-		req repositories.GetEscrowAccountByIDRequest,
+		req driverpayports.GetEscrowAccountByIDRequest,
 	) (*driverpay.EscrowAccount, error)
 	PlanOpenEscrowAccount(ctx context.Context, entity *driverpay.EscrowAccount, now int64) error
 	OpenEscrowAccount(
 		ctx context.Context,
 		entity *driverpay.EscrowAccount,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*driverpay.EscrowAccount, error)
 	PlanUpdateEscrowAccount(
 		ctx context.Context,
@@ -52,18 +53,18 @@ type escrowBook interface {
 	UpdateEscrowAccount(
 		ctx context.Context,
 		entity *driverpay.EscrowAccount,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*driverpay.EscrowAccount, error)
 	AdjustEscrowAccount(
 		ctx context.Context,
 		req *driverpayservice.EscrowAdjustmentRequest,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*driverpay.EscrowAccount, error)
 	CloseEscrowAccount(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		accountID pulid.ID,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*driverpay.EscrowAccount, error)
 }
 
@@ -108,14 +109,14 @@ func readInterestRate(params map[string]any) (decimal.Decimal, bool, error) {
 func loadEscrow(
 	ctx context.Context,
 	book escrowBook,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*driverpay.EscrowAccount, error) {
 	accountID, err := requirePulid(params.Params, paramEscrowAccountID)
 	if err != nil {
 		return nil, err
 	}
 
-	return book.GetEscrowAccount(ctx, repositories.GetEscrowAccountByIDRequest{
+	return book.GetEscrowAccount(ctx, driverpayports.GetEscrowAccountByIDRequest{
 		ID:         accountID,
 		TenantInfo: tenantFrom(*params),
 	})
@@ -134,11 +135,11 @@ type openEscrowAccountTool struct {
 }
 
 var (
-	_ serviceports.ToolPreviewer = (*openEscrowAccountTool)(nil)
-	_ serviceports.ToolValidator = (*openEscrowAccountTool)(nil)
+	_ agentports.ToolPreviewer = (*openEscrowAccountTool)(nil)
+	_ agentports.ToolValidator = (*openEscrowAccountTool)(nil)
 )
 
-func provideOpenEscrowAccountTool(s *driverpayservice.Service) serviceports.AgentTool {
+func provideOpenEscrowAccountTool(s *driverpayservice.Service) agentports.AgentTool {
 	return &openEscrowAccountTool{escrow: s}
 }
 
@@ -161,7 +162,7 @@ func (t *openEscrowAccountTool) ParamSchema() map[string]any {
 	}, paramWorkerID, paramEscrowTarget)
 }
 
-func (t *openEscrowAccountTool) Policy() serviceports.ToolPolicy {
+func (t *openEscrowAccountTool) Policy() agentports.ToolPolicy {
 	return (&personOnlyPolicy{
 		name:      t.Name(),
 		resource:  permission.ResourceEscrowAccount,
@@ -172,7 +173,7 @@ func (t *openEscrowAccountTool) Policy() serviceports.ToolPolicy {
 }
 
 func (t *openEscrowAccountTool) entity(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*driverpay.EscrowAccount, error) {
 	if err := guardPreview(t, params); err != nil {
 		return nil, err
@@ -212,7 +213,7 @@ type escrowOpening struct {
 
 func (t *openEscrowAccountTool) planned(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*escrowOpening, error) {
 	entity, err := t.entity(params)
 	if err != nil {
@@ -231,7 +232,7 @@ func (t *openEscrowAccountTool) planned(
 
 func (t *openEscrowAccountTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	plan, err := t.planned(ctx, &params)
 	if err != nil {
@@ -243,7 +244,7 @@ func (t *openEscrowAccountTool) Validate(
 
 func (t *openEscrowAccountTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -262,7 +263,7 @@ func (t *openEscrowAccountTool) Execute(
 
 func (t *openEscrowAccountTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	plan, err := t.planned(ctx, &params)
 	if err != nil {
@@ -305,12 +306,12 @@ type updateEscrowAccountTool struct {
 }
 
 var (
-	_ serviceports.ToolPreviewer = (*updateEscrowAccountTool)(nil)
-	_ serviceports.ToolValidator = (*updateEscrowAccountTool)(nil)
-	_ serviceports.TargetedTool  = (*updateEscrowAccountTool)(nil)
+	_ agentports.ToolPreviewer = (*updateEscrowAccountTool)(nil)
+	_ agentports.ToolValidator = (*updateEscrowAccountTool)(nil)
+	_ agentports.TargetedTool  = (*updateEscrowAccountTool)(nil)
 )
 
-func provideUpdateEscrowAccountTool(s *driverpayservice.Service) serviceports.AgentTool {
+func provideUpdateEscrowAccountTool(s *driverpayservice.Service) agentports.AgentTool {
 	return &updateEscrowAccountTool{escrow: s}
 }
 
@@ -334,7 +335,7 @@ func (t *updateEscrowAccountTool) ParamSchema() map[string]any {
 	}, paramEscrowAccountID)
 }
 
-func (t *updateEscrowAccountTool) Policy() serviceports.ToolPolicy {
+func (t *updateEscrowAccountTool) Policy() agentports.ToolPolicy {
 	return (&personOnlyPolicy{
 		name:      t.Name(),
 		resource:  permission.ResourceEscrowAccount,
@@ -344,7 +345,7 @@ func (t *updateEscrowAccountTool) Policy() serviceports.ToolPolicy {
 	}).policy()
 }
 
-func (t *updateEscrowAccountTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *updateEscrowAccountTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, paramEscrowAccountID, permission.ResourceEscrowAccount)
 }
 
@@ -356,7 +357,7 @@ type escrowUpdate struct {
 
 func (t *updateEscrowAccountTool) planned(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*escrowUpdate, error) {
 	if err := guardPreview(t, params); err != nil {
 		return nil, err
@@ -396,7 +397,7 @@ func (t *updateEscrowAccountTool) planned(
 
 func (t *updateEscrowAccountTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	plan, err := t.planned(ctx, &params)
 	if err != nil {
@@ -408,7 +409,7 @@ func (t *updateEscrowAccountTool) Validate(
 
 func (t *updateEscrowAccountTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -430,7 +431,7 @@ func (t *updateEscrowAccountTool) Execute(
 
 func (t *updateEscrowAccountTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	plan, err := t.planned(ctx, &params)
 	if err != nil {
@@ -462,12 +463,12 @@ type adjustEscrowAccountTool struct {
 }
 
 var (
-	_ serviceports.ToolPreviewer = (*adjustEscrowAccountTool)(nil)
-	_ serviceports.ToolValidator = (*adjustEscrowAccountTool)(nil)
-	_ serviceports.TargetedTool  = (*adjustEscrowAccountTool)(nil)
+	_ agentports.ToolPreviewer = (*adjustEscrowAccountTool)(nil)
+	_ agentports.ToolValidator = (*adjustEscrowAccountTool)(nil)
+	_ agentports.TargetedTool  = (*adjustEscrowAccountTool)(nil)
 )
 
-func provideAdjustEscrowAccountTool(s *driverpayservice.Service) serviceports.AgentTool {
+func provideAdjustEscrowAccountTool(s *driverpayservice.Service) agentports.AgentTool {
 	return &adjustEscrowAccountTool{escrow: s}
 }
 
@@ -497,7 +498,7 @@ func (t *adjustEscrowAccountTool) ParamSchema() map[string]any {
 	}, paramEscrowAccountID, paramDriverPayAmount, paramEscrowDescription)
 }
 
-func (t *adjustEscrowAccountTool) Policy() serviceports.ToolPolicy {
+func (t *adjustEscrowAccountTool) Policy() agentports.ToolPolicy {
 	return (&personOnlyPolicy{
 		name:      t.Name(),
 		resource:  permission.ResourceEscrowAccount,
@@ -506,12 +507,12 @@ func (t *adjustEscrowAccountTool) Policy() serviceports.ToolPolicy {
 	}).policy()
 }
 
-func (t *adjustEscrowAccountTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *adjustEscrowAccountTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, paramEscrowAccountID, permission.ResourceEscrowAccount)
 }
 
 func (t *adjustEscrowAccountTool) request(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*driverpayservice.EscrowAdjustmentRequest, error) {
 	if err := guardPreview(t, params); err != nil {
 		return nil, err
@@ -559,13 +560,13 @@ type escrowMovement struct {
 
 func (t *adjustEscrowAccountTool) planned(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*driverpayservice.EscrowAdjustmentRequest, *escrowMovement, error) {
 	req, err := t.request(params)
 	if err != nil {
 		return nil, nil, err
 	}
-	before, err := t.escrow.GetEscrowAccount(ctx, repositories.GetEscrowAccountByIDRequest{
+	before, err := t.escrow.GetEscrowAccount(ctx, driverpayports.GetEscrowAccountByIDRequest{
 		ID:         req.AccountID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -591,7 +592,7 @@ func (t *adjustEscrowAccountTool) planned(
 
 func (t *adjustEscrowAccountTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	_, plan, err := t.planned(ctx, &params)
 	if err != nil {
@@ -603,7 +604,7 @@ func (t *adjustEscrowAccountTool) Validate(
 
 func (t *adjustEscrowAccountTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -622,7 +623,7 @@ func (t *adjustEscrowAccountTool) Execute(
 
 func (t *adjustEscrowAccountTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	req, plan, err := t.planned(ctx, &params)
 	if err != nil {
@@ -653,12 +654,12 @@ type closeEscrowAccountTool struct {
 }
 
 var (
-	_ serviceports.ToolPreviewer = (*closeEscrowAccountTool)(nil)
-	_ serviceports.ToolValidator = (*closeEscrowAccountTool)(nil)
-	_ serviceports.TargetedTool  = (*closeEscrowAccountTool)(nil)
+	_ agentports.ToolPreviewer = (*closeEscrowAccountTool)(nil)
+	_ agentports.ToolValidator = (*closeEscrowAccountTool)(nil)
+	_ agentports.TargetedTool  = (*closeEscrowAccountTool)(nil)
 )
 
-func provideCloseEscrowAccountTool(s *driverpayservice.Service) serviceports.AgentTool {
+func provideCloseEscrowAccountTool(s *driverpayservice.Service) agentports.AgentTool {
 	return &closeEscrowAccountTool{escrow: s}
 }
 
@@ -676,7 +677,7 @@ func (t *closeEscrowAccountTool) ParamSchema() map[string]any {
 	}, paramEscrowAccountID)
 }
 
-func (t *closeEscrowAccountTool) Policy() serviceports.ToolPolicy {
+func (t *closeEscrowAccountTool) Policy() agentports.ToolPolicy {
 	return (&personOnlyPolicy{
 		name:      t.Name(),
 		resource:  permission.ResourceEscrowAccount,
@@ -686,13 +687,13 @@ func (t *closeEscrowAccountTool) Policy() serviceports.ToolPolicy {
 	}).policy()
 }
 
-func (t *closeEscrowAccountTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *closeEscrowAccountTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, paramEscrowAccountID, permission.ResourceEscrowAccount)
 }
 
 func (t *closeEscrowAccountTool) planned(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*escrowMovement, error) {
 	if err := guardPreview(t, params); err != nil {
 		return nil, err
@@ -719,7 +720,7 @@ func (t *closeEscrowAccountTool) planned(
 
 func (t *closeEscrowAccountTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	plan, err := t.planned(ctx, &params)
 	if err != nil {
@@ -731,7 +732,7 @@ func (t *closeEscrowAccountTool) Validate(
 
 func (t *closeEscrowAccountTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -750,7 +751,7 @@ func (t *closeEscrowAccountTool) Execute(
 
 func (t *closeEscrowAccountTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	plan, err := t.planned(ctx, &params)
 	if err != nil {

@@ -6,9 +6,9 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/costingcontrol"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/costingcontrolports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/uptrace/bun"
@@ -28,7 +28,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.CostingControlRepository {
+func New(p Params) costingcontrolports.CostingControlRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.costing-repository"),
@@ -37,7 +37,7 @@ func New(p Params) repositories.CostingControlRepository {
 
 func (r *repository) GetByOrgID(
 	ctx context.Context,
-	req *repositories.GetCostingControlRequest,
+	req *costingcontrolports.GetCostingControlRequest,
 ) (*costingcontrol.CostingControl, error) {
 	log := r.l.With(
 		zap.String("operation", "GetByOrgID"),
@@ -70,7 +70,7 @@ func (r *repository) GetByOrgID(
 
 func (r *repository) selectControl(
 	ctx context.Context,
-	req *repositories.GetCostingControlRequest,
+	req *costingcontrolports.GetCostingControlRequest,
 ) (*costingcontrol.CostingControl, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*costingcontrol.CostingControl, error) {
 		entity := new(costingcontrol.CostingControl)
@@ -104,7 +104,7 @@ func (r *repository) selectControl(
 
 func (r *repository) createDefaults(
 	ctx context.Context,
-	req *repositories.GetCostingControlRequest,
+	req *costingcontrolports.GetCostingControlRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		return r.db.DBForContext(ctx).RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
@@ -211,7 +211,7 @@ func (r *repository) UpdateCategory(
 
 func (r *repository) ReplaceCategoryGLAccounts(
 	ctx context.Context,
-	req *repositories.ReplaceCategoryGLAccountsRequest,
+	req *costingcontrolports.ReplaceCategoryGLAccountsRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		log := r.l.With(

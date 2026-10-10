@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -34,7 +34,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.WorkerDQFRepository {
+func New(p Params) workerports.WorkerDQFRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.worker-dqf-repository"),
@@ -50,7 +50,7 @@ func limitOr(requested, fallback int) int {
 
 func (r *repository) ListVerifications(
 	ctx context.Context,
-	req *repositories.ListEmploymentVerificationsRequest,
+	req *workerports.ListEmploymentVerificationsRequest,
 ) ([]*worker.WorkerEmploymentVerification, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerEmploymentVerification, error) {
 		cols := buncolgen.WorkerEmploymentVerificationColumns
@@ -97,7 +97,7 @@ func (r *repository) ListVerifications(
 
 func (r *repository) ListVerificationsByWorkerIDs(
 	ctx context.Context,
-	req *repositories.ListEmploymentVerificationsByWorkerIDsRequest,
+	req *workerports.ListEmploymentVerificationsByWorkerIDsRequest,
 ) (map[pulid.ID][]*worker.WorkerEmploymentVerification, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID][]*worker.WorkerEmploymentVerification, error) {
 		cols := buncolgen.WorkerEmploymentVerificationColumns
@@ -134,7 +134,7 @@ func (r *repository) ListVerificationsByWorkerIDs(
 
 func (r *repository) GetVerificationByID(
 	ctx context.Context,
-	req *repositories.GetEmploymentVerificationByIDRequest,
+	req *workerports.GetEmploymentVerificationByIDRequest,
 ) (*worker.WorkerEmploymentVerification, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerEmploymentVerification, error) {
 		entity := new(worker.WorkerEmploymentVerification)
@@ -208,7 +208,7 @@ func (r *repository) UpdateVerification(
 
 func (r *repository) DeleteVerification(
 	ctx context.Context,
-	req *repositories.GetEmploymentVerificationByIDRequest,
+	req *workerports.GetEmploymentVerificationByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		results, err := r.db.DBForContext(ctx).
@@ -237,13 +237,13 @@ func (r *repository) DeleteVerification(
 // that qualify rather than every worker who ever left.
 func (r *repository) ListRetentionCandidates(
 	ctx context.Context,
-	req *repositories.ListDQFRetentionCandidatesRequest,
-) ([]repositories.DQFRetentionCandidate, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.DQFRetentionCandidate, error) {
+	req *workerports.ListDQFRetentionCandidatesRequest,
+) ([]workerports.DQFRetentionCandidate, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.DQFRetentionCandidate, error) {
 		workerCols := buncolgen.WorkerColumns
 		profileCols := buncolgen.WorkerProfileColumns
 
-		candidates := make([]repositories.DQFRetentionCandidate, 0, 32)
+		candidates := make([]workerports.DQFRetentionCandidate, 0, 32)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*worker.Worker)(nil)).

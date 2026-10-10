@@ -9,8 +9,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -26,11 +29,11 @@ type paymentChangePlan struct {
 
 type paymentJournal struct {
 	description string
-	lines       []repositories.JournalPostingLine
+	lines       []journalentryports.JournalPostingLine
 	total       int64
 }
 
-func requirePaymentActor(actor *serviceports.RequestActor, action string) error {
+func requirePaymentActor(actor *permissionports.RequestActor, action string) error {
 	if actor == nil || actor.UserID.IsNil() {
 		return errortypes.NewAuthorizationError(
 			"Customer payment " + action + " requires an authenticated user",
@@ -51,11 +54,11 @@ func requireRequest(missing bool) error {
 func (s *Service) loadPaymentAndControl(
 	ctx context.Context,
 	paymentID pulid.ID,
-	tenantInfo repositories.GetInvoiceByIDRequest,
+	tenantInfo invoiceports.GetInvoiceByIDRequest,
 ) (*customerpayment.Payment, *tenant.AccountingControl, error) {
 	payment, err := s.repo.GetByID(
 		ctx,
-		repositories.GetCustomerPaymentByIDRequest{
+		customerpaymentports.GetCustomerPaymentByIDRequest{
 			ID:         paymentID,
 			TenantInfo: tenantInfo.TenantInfo,
 		},
@@ -73,8 +76,8 @@ func (s *Service) loadPaymentAndControl(
 
 func (s *Service) planApplyUnapplied(
 	ctx context.Context,
-	req *serviceports.ApplyCustomerPaymentRequest,
-	actor *serviceports.RequestActor,
+	req *customerpaymentports.ApplyCustomerPaymentRequest,
+	actor *permissionports.RequestActor,
 ) (*paymentChangePlan, error) {
 	if err := requireRequest(req == nil); err != nil {
 		return nil, err
@@ -83,7 +86,7 @@ func (s *Service) planApplyUnapplied(
 		return nil, err
 	}
 
-	scope := repositories.GetInvoiceByIDRequest{TenantInfo: req.TenantInfo}
+	scope := invoiceports.GetInvoiceByIDRequest{TenantInfo: req.TenantInfo}
 	payment, control, err := s.loadPaymentAndControl(ctx, req.PaymentID, scope)
 	if err != nil {
 		return nil, err
@@ -112,8 +115,8 @@ func (s *Service) planApplyUnapplied(
 
 func (s *Service) planReverse(
 	ctx context.Context,
-	req *serviceports.ReverseCustomerPaymentRequest,
-	actor *serviceports.RequestActor,
+	req *customerpaymentports.ReverseCustomerPaymentRequest,
+	actor *permissionports.RequestActor,
 ) (*paymentChangePlan, error) {
 	if err := requireRequest(req == nil); err != nil {
 		return nil, err
@@ -122,7 +125,7 @@ func (s *Service) planReverse(
 		return nil, err
 	}
 
-	scope := repositories.GetInvoiceByIDRequest{TenantInfo: req.TenantInfo}
+	scope := invoiceports.GetInvoiceByIDRequest{TenantInfo: req.TenantInfo}
 	payment, control, err := s.loadPaymentAndControl(ctx, req.PaymentID, scope)
 	if err != nil {
 		return nil, err
@@ -167,9 +170,9 @@ func applicationJournal(
 		)
 	}
 
-	lines := make([]repositories.JournalPostingLine, 0, len(applications)*3+1)
+	lines := make([]journalentryports.JournalPostingLine, 0, len(applications)*3+1)
 	lineNumber := int16(1)
-	lines = append(lines, repositories.JournalPostingLine{
+	lines = append(lines, journalentryports.JournalPostingLine{
 		ID:          pulid.MustNew("jel_"),
 		GLAccountID: control.DefaultUnappliedCashAccountID,
 		LineNumber:  lineNumber,
@@ -187,7 +190,7 @@ func applicationJournal(
 		}
 		total += app.AppliedAmountMinor
 		if app.AppliedAmountMinor > 0 {
-			lines = append(lines, repositories.JournalPostingLine{
+			lines = append(lines, journalentryports.JournalPostingLine{
 				ID:           pulid.MustNew("jel_"),
 				GLAccountID:  creditAccountID,
 				LineNumber:   lineNumber,
@@ -200,7 +203,7 @@ func applicationJournal(
 		}
 		if app.ShortPayAmountMinor > 0 {
 			lines = append(lines,
-				repositories.JournalPostingLine{
+				journalentryports.JournalPostingLine{
 					ID:           pulid.MustNew("jel_"),
 					GLAccountID:  control.DefaultARAccountID,
 					LineNumber:   lineNumber,
@@ -209,7 +212,7 @@ func applicationJournal(
 					NetAmount:    -app.ShortPayAmountMinor,
 					CustomerID:   payment.CustomerID,
 				},
-				repositories.JournalPostingLine{
+				journalentryports.JournalPostingLine{
 					ID:          pulid.MustNew("jel_"),
 					GLAccountID: control.DefaultWriteOffAccountID,
 					LineNumber:  lineNumber + 1,
@@ -237,10 +240,10 @@ func reversalJournal(
 		description = fmt.Sprintf("Customer cash receipt reversal %s", payment.DocumentLabel())
 	}
 
-	lines := make([]repositories.JournalPostingLine, 0, 3)
+	lines := make([]journalentryports.JournalPostingLine, 0, 3)
 	lineNumber := int16(1)
 	if payment.AppliedAmountMinor > 0 {
-		lines = append(lines, repositories.JournalPostingLine{
+		lines = append(lines, journalentryports.JournalPostingLine{
 			ID:          pulid.MustNew("jel_"),
 			GLAccountID: debitAccountID,
 			LineNumber:  lineNumber,
@@ -252,7 +255,7 @@ func reversalJournal(
 		lineNumber++
 	}
 	if payment.UnappliedAmountMinor > 0 {
-		lines = append(lines, repositories.JournalPostingLine{
+		lines = append(lines, journalentryports.JournalPostingLine{
 			ID:          pulid.MustNew("jel_"),
 			GLAccountID: control.DefaultUnappliedCashAccountID,
 			LineNumber:  lineNumber,
@@ -263,7 +266,7 @@ func reversalJournal(
 		})
 		lineNumber++
 	}
-	lines = append(lines, repositories.JournalPostingLine{
+	lines = append(lines, journalentryports.JournalPostingLine{
 		ID:           pulid.MustNew("jel_"),
 		GLAccountID:  control.DefaultCashAccountID,
 		LineNumber:   lineNumber,
@@ -281,24 +284,24 @@ func (j paymentJournal) preview(
 	accountingDate int64,
 	period *fiscalperiod.FiscalPeriod,
 	userID pulid.ID,
-) *serviceports.JournalPreview {
+) *kernelports.JournalPreview {
 	entryStatus, _, _, _, requiresApproval, _, _, _ := paymentPostingWorkflow(
 		control,
 		userID,
 		timeutils.NowUnix(),
 	)
-	journal := &serviceports.JournalPreview{
+	journal := &kernelports.JournalPreview{
 		AccountingDate:   accountingDate,
 		EntryStatus:      entryStatus,
 		RequiresApproval: requiresApproval,
-		Lines:            make([]serviceports.JournalLinePreview, 0, len(j.lines)),
+		Lines:            make([]kernelports.JournalLinePreview, 0, len(j.lines)),
 	}
 	if period != nil {
 		journal.FiscalPeriodID = period.ID
 	}
 	for idx := range j.lines {
 		line := &j.lines[idx]
-		journal.Lines = append(journal.Lines, serviceports.JournalLinePreview{
+		journal.Lines = append(journal.Lines, kernelports.JournalLinePreview{
 			GLAccountID: line.GLAccountID,
 			Description: line.Description,
 			DebitMinor:  line.DebitAmount,
@@ -311,7 +314,7 @@ func (j paymentJournal) preview(
 
 func markReversed(
 	payment *customerpayment.Payment,
-	req *serviceports.ReverseCustomerPaymentRequest,
+	req *customerpaymentports.ReverseCustomerPaymentRequest,
 	userID pulid.ID,
 	now int64,
 ) {
@@ -324,9 +327,9 @@ func markReversed(
 
 func (s *Service) PreviewApplyUnapplied(
 	ctx context.Context,
-	req *serviceports.ApplyCustomerPaymentRequest,
-	actor *serviceports.RequestActor,
-) (*serviceports.CustomerPaymentChangePreview, error) {
+	req *customerpaymentports.ApplyCustomerPaymentRequest,
+	actor *permissionports.RequestActor,
+) (*customerpaymentports.CustomerPaymentChangePreview, error) {
 	plan, err := s.planApplyUnapplied(ctx, req, actor)
 	if err != nil {
 		return nil, err
@@ -350,7 +353,7 @@ func (s *Service) PreviewApplyUnapplied(
 		plan.applications,
 	)
 
-	return &serviceports.CustomerPaymentChangePreview{
+	return &customerpaymentports.CustomerPaymentChangePreview{
 		PaymentBefore:  plan.payment,
 		PaymentAfter:   &after,
 		InvoicesBefore: plan.invoices,
@@ -366,9 +369,9 @@ func (s *Service) PreviewApplyUnapplied(
 
 func (s *Service) PreviewReverse(
 	ctx context.Context,
-	req *serviceports.ReverseCustomerPaymentRequest,
-	actor *serviceports.RequestActor,
-) (*serviceports.CustomerPaymentChangePreview, error) {
+	req *customerpaymentports.ReverseCustomerPaymentRequest,
+	actor *permissionports.RequestActor,
+) (*customerpaymentports.CustomerPaymentChangePreview, error) {
 	plan, err := s.planReverse(ctx, req, actor)
 	if err != nil {
 		return nil, err
@@ -387,7 +390,7 @@ func (s *Service) PreviewReverse(
 
 	journal := reversalJournal(plan.control, plan.payment)
 
-	return &serviceports.CustomerPaymentChangePreview{
+	return &customerpaymentports.CustomerPaymentChangePreview{
 		PaymentBefore:  plan.payment,
 		PaymentAfter:   &after,
 		InvoicesBefore: plan.invoices,

@@ -7,35 +7,35 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 type moveStopReader interface {
 	GetByID(
 		ctx context.Context,
-		req *repositories.GetMoveByIDRequest,
+		req *shipmentports.GetMoveByIDRequest,
 	) (*shipment.ShipmentMove, error)
 }
 
 type recordStopActualTool struct {
-	moves     serviceports.ShipmentMoveService
+	moves     shipmentports.ShipmentMoveService
 	moveStops moveStopReader
 }
 
 func newRecordStopActualTool(
-	moves serviceports.ShipmentMoveService,
+	moves shipmentports.ShipmentMoveService,
 	moveStops moveStopReader,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return &recordStopActualTool{moves: moves, moveStops: moveStops}
 }
 
 func provideRecordStopActualTool(
-	moves serviceports.ShipmentMoveService,
-	moveStops repositories.ShipmentMoveRepository,
-) serviceports.AgentTool {
+	moves shipmentports.ShipmentMoveService,
+	moveStops shipmentports.ShipmentMoveRepository,
+) agentports.AgentTool {
 	return newRecordStopActualTool(moves, moveStops)
 }
 
@@ -88,8 +88,8 @@ func (t *recordStopActualTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *recordStopActualTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *recordStopActualTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceShipmentMove,
@@ -107,7 +107,7 @@ func (t *recordStopActualTool) Policy() serviceports.ToolPolicy {
 
 func (t *recordStopActualTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -127,15 +127,15 @@ func (t *recordStopActualTool) Execute(
 // state does not admit is refused to the model before it is proposed.
 func (t *recordStopActualTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	return previewValidates(ctx, t, &params)
 }
 
 func (t *recordStopActualTool) request(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
-) (*repositories.RecordStopActualRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*shipmentports.RecordStopActualRequest, error) {
 	moveID, err := requirePulid(params.Params, "moveId")
 	if err != nil {
 		return nil, err
@@ -153,7 +153,7 @@ func (t *recordStopActualTool) request(
 		return nil, err
 	}
 
-	request := &repositories.RecordStopActualRequest{
+	request := &shipmentports.RecordStopActualRequest{
 		TenantInfo: tenantFrom(*params),
 		MoveID:     moveID,
 		StopID:     stopID,
@@ -185,7 +185,7 @@ func (t *recordStopActualTool) request(
 
 func (t *recordStopActualTool) stopZone(
 	ctx context.Context,
-	request *repositories.RecordStopActualRequest,
+	request *shipmentports.RecordStopActualRequest,
 	fallback string,
 ) (*time.Location, error) {
 	if t.moveStops == nil {
@@ -194,7 +194,7 @@ func (t *recordStopActualTool) stopZone(
 		return zone, nil
 	}
 
-	move, err := t.moveStops.GetByID(ctx, &repositories.GetMoveByIDRequest{
+	move, err := t.moveStops.GetByID(ctx, &shipmentports.GetMoveByIDRequest{
 		MoveID:            request.MoveID,
 		TenantInfo:        request.TenantInfo,
 		ExpandMoveDetails: true,
@@ -214,6 +214,6 @@ func (t *recordStopActualTool) stopZone(
 
 // Target names the record this call would change, so a proposal to change it
 // can be checked against the record's version before it runs.
-func (t *recordStopActualTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *recordStopActualTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, "moveId", permission.ResourceShipmentMove)
 }

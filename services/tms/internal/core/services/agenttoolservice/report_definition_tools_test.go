@@ -8,9 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/reporting/canned"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -199,7 +200,7 @@ func TestCreateReport_CarriesTheActorTenantAndPrincipal(t *testing.T) {
 		"name":       "Revenue by customer",
 		"definition": definitionArgument(),
 	})
-	params.Actor.PrincipalType = serviceports.PrincipalTypeUser
+	params.Actor.PrincipalType = permissionports.PrincipalTypeUser
 	params.Actor.PrincipalID = params.Actor.UserID
 
 	require.NoError(t, newCreateReportTool(writer).Execute(t.Context(), params))
@@ -208,7 +209,7 @@ func TestCreateReport_CarriesTheActorTenantAndPrincipal(t *testing.T) {
 	assert.Equal(t, params.BusinessUnitID, writer.created.TenantInfo.BuID)
 	assert.Equal(t, params.Actor.UserID, writer.created.TenantInfo.UserID)
 	assert.Equal(t, params.Actor.UserID, writer.created.Principal.UserID)
-	assert.Equal(t, serviceports.PrincipalTypeUser, writer.created.Principal.Type)
+	assert.Equal(t, permissionports.PrincipalTypeUser, writer.created.Principal.Type)
 }
 
 func TestCreateReport_PassesAnExplicitVisibilityAndFormat(t *testing.T) {
@@ -413,7 +414,7 @@ func TestUpdateReport_RefusesAnEmptyNameOrUnknownStatus(t *testing.T) {
 func TestUpdateReport_NamesItsTargetFromTheDefinitionID(t *testing.T) {
 	t.Parallel()
 
-	tool, ok := newUpdateReportTool(&fakeReportWriter{}).(serviceports.TargetedTool)
+	tool, ok := newUpdateReportTool(&fakeReportWriter{}).(agentports.TargetedTool)
 	require.True(t, ok)
 
 	id := pulid.MustNew("rdef_")
@@ -471,7 +472,7 @@ func TestReportDefinitionTools_DeclareTheirGates(t *testing.T) {
 		"update_report": agent.TierActWithApproval,
 		"fork_report":   agent.TierActWithApproval,
 	}
-	for _, tool := range []serviceports.AgentTool{
+	for _, tool := range []agentports.AgentTool{
 		newCreateReportTool(writer),
 		newUpdateReportTool(writer),
 		newForkReportTool(writer),
@@ -509,7 +510,7 @@ func TestCreateAndUpdateReport_ValidateTheDefinitionBeforeProposing(t *testing.T
 
 	writer := &fakeReportWriter{invalid: errors.New("unknown field \"foo\" on entity \"shipment\"")}
 	create := newCreateReportTool(writer)
-	validator, ok := create.(serviceports.ToolValidator)
+	validator, ok := create.(agentports.ToolValidator)
 	require.True(t, ok)
 
 	err := validator.Validate(t.Context(), executeParams(map[string]any{
@@ -544,7 +545,7 @@ func TestCreateAndUpdateReport_RefuseADefinitionPartSentBesideTheDefinition(t *t
 	}
 
 	writer := &fakeReportWriter{}
-	create, ok := newCreateReportTool(writer).(serviceports.ToolValidator)
+	create, ok := newCreateReportTool(writer).(agentports.ToolValidator)
 	require.True(t, ok)
 	err := create.Validate(t.Context(), executeParams(map[string]any{
 		"name":       "Peak Distributing shipments",

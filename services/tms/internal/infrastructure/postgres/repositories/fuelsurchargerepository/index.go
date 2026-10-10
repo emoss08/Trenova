@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/fuelsurcharge"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -29,7 +29,7 @@ type indexRepository struct {
 	l  *zap.Logger
 }
 
-func NewIndexRepository(p IndexParams) repositories.FuelIndexRepository {
+func NewIndexRepository(p IndexParams) fuelsurchargeports.FuelIndexRepository {
 	return &indexRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.fuel-index-repository"),
@@ -46,7 +46,7 @@ func applyFuelIndexColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuer
 
 func (r *indexRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListFuelIndexConnectionRequest,
+	req *fuelsurchargeports.ListFuelIndexConnectionRequest,
 ) (*pagination.CursorListResult[*fuelsurcharge.FuelIndex], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*fuelsurcharge.FuelIndex], error) {
 		log := r.l.With(
@@ -167,7 +167,7 @@ func (r *indexRepository) ListActive(
 
 func (r *indexRepository) GetByID(
 	ctx context.Context,
-	req *repositories.GetFuelIndexByIDRequest,
+	req *fuelsurchargeports.GetFuelIndexByIDRequest,
 ) (*fuelsurcharge.FuelIndex, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*fuelsurcharge.FuelIndex, error) {
 		log := r.l.With(
@@ -250,7 +250,7 @@ func (r *indexRepository) Update(
 
 func (r *indexRepository) Delete(
 	ctx context.Context,
-	req *repositories.GetFuelIndexByIDRequest,
+	req *fuelsurchargeports.GetFuelIndexByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		log := r.l.With(
@@ -278,7 +278,7 @@ func (r *indexRepository) Delete(
 
 func (r *indexRepository) SelectOptions(
 	ctx context.Context,
-	req *repositories.FuelIndexSelectOptionsRequest,
+	req *fuelsurchargeports.FuelIndexSelectOptionsRequest,
 ) (*pagination.ListResult[*fuelsurcharge.FuelIndex], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*fuelsurcharge.FuelIndex], error) {
 		cols := buncolgen.FuelIndexColumns

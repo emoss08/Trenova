@@ -4,17 +4,16 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/ptoledgerservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
 
 func (s *Service) PreviewApprove(
 	ctx context.Context,
-	req *repositories.UpdatePTOStatusRequest,
-) (*services.WorkerPTOTransitionPreview, error) {
+	req *workerports.UpdatePTOStatusRequest,
+) (*workerports.WorkerPTOTransitionPreview, error) {
 	preview, err := s.previewTransition(ctx, transitionParams{
 		req:          req,
 		target:       worker.PTOStatusApproved,

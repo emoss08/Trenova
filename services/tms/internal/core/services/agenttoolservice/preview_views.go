@@ -7,11 +7,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tableconfiguration"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 
-var _ serviceports.ToolPreviewer = (*saveTableViewTool)(nil)
+var _ agentports.ToolPreviewer = (*saveTableViewTool)(nil)
 
 var savedViewFields = []string{fieldName, "resource", fieldVisibility}
 
@@ -34,7 +34,7 @@ func savedViewAudience(visibility tableconfiguration.Visibility) string {
 
 func (t *saveTableViewTool) Preview(
 	_ context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	if err := guardPreview(t, &params); err != nil {
 		return nil, err

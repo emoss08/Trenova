@@ -4,21 +4,32 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
-
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/domain/watchtower"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
+	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -35,68 +46,68 @@ type Params struct {
 	fx.In
 
 	Logger               *zap.Logger
-	DB                   ports.DBConnection
-	Repo                 repositories.BillingQueueRepository
-	ShipmentRepo         repositories.ShipmentRepository
-	ControlRepo          repositories.ShipmentControlRepository
-	CommentRepo          repositories.ShipmentCommentRepository
-	CustomerRepo         repositories.CustomerRepository
-	UserRepo             repositories.UserRepository
-	AdjustmentRepo       repositories.InvoiceAdjustmentRepository
-	InvoiceRepo          repositories.InvoiceRepository
-	InvoiceSvc           services.InvoiceService
-	ChargeAllocationRepo repositories.ChargeAllocationRepository
+	DB                   kernelports.DBConnection
+	Repo                 billingqueueports.BillingQueueRepository
+	ShipmentRepo         shipmentports.ShipmentRepository
+	ControlRepo          tenantports.ShipmentControlRepository
+	CommentRepo          shipmentports.ShipmentCommentRepository
+	CustomerRepo         customerports.CustomerRepository
+	UserRepo             tenantports.UserRepository
+	AdjustmentRepo       invoiceadjustmentports.InvoiceAdjustmentRepository
+	InvoiceRepo          invoiceports.InvoiceRepository
+	InvoiceSvc           invoiceports.InvoiceService
+	ChargeAllocationRepo shipmentports.ChargeAllocationRepository
 	Commercial           *shipmentcommercial.Calculator
 	Generator            seqgen.Generator
-	AuditService         services.AuditService
-	Realtime             services.RealtimeService
+	AuditService         auditports.AuditService
+	Realtime             agentports.RealtimeService
 	Validator            *Validator
-	OrderDerivation      services.OrderDerivationService
-	DetentionBilling     services.DetentionBillingService
-	AgentEvents          services.AgentEventPublisher `optional:"true"`
+	OrderDerivation      orderports.OrderDerivationService
+	DetentionBilling     detentionports.DetentionBillingService
+	AgentEvents          agentports.AgentEventPublisher `optional:"true"`
 	// Watchtower puts an item that cannot be invoiced on the feed.
-	Watchtower services.WatchtowerProjector `optional:"true"`
+	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
 	// The review reads: issues and activity, the shipment's paperwork and
 	// detention evidence, the contract's accessorials, and the driver to ask
 	// for a missing signature.
-	ReviewRepo     repositories.BillingQueueReviewRepository  `optional:"true"`
-	DocumentRepo   repositories.DocumentRepository            `optional:"true"`
-	OccurrenceRepo repositories.DetentionOccurrenceRepository `optional:"true"`
-	AgreementRepo  repositories.RateAgreementRepository       `optional:"true"`
-	DriverNotifier *drivernotificationservice.Service         `optional:"true"`
+	ReviewRepo     billingqueueports.BillingQueueReviewRepository `optional:"true"`
+	DocumentRepo   documentports.DocumentRepository               `optional:"true"`
+	OccurrenceRepo detentionports.DetentionOccurrenceRepository   `optional:"true"`
+	AgreementRepo  rateagreementports.RateAgreementRepository     `optional:"true"`
+	DriverNotifier *drivernotificationservice.Service             `optional:"true"`
 }
 
 type service struct {
 	l                    *zap.Logger
-	db                   ports.DBConnection
-	repo                 repositories.BillingQueueRepository
-	shipmentRepo         repositories.ShipmentRepository
-	controlRepo          repositories.ShipmentControlRepository
-	commentRepo          repositories.ShipmentCommentRepository
-	customerRepo         repositories.CustomerRepository
-	userRepo             repositories.UserRepository
-	adjustmentRepo       repositories.InvoiceAdjustmentRepository
-	invoiceRepo          repositories.InvoiceRepository
-	invoiceSvc           services.InvoiceService
-	chargeAllocationRepo repositories.ChargeAllocationRepository
+	db                   kernelports.DBConnection
+	repo                 billingqueueports.BillingQueueRepository
+	shipmentRepo         shipmentports.ShipmentRepository
+	controlRepo          tenantports.ShipmentControlRepository
+	commentRepo          shipmentports.ShipmentCommentRepository
+	customerRepo         customerports.CustomerRepository
+	userRepo             tenantports.UserRepository
+	adjustmentRepo       invoiceadjustmentports.InvoiceAdjustmentRepository
+	invoiceRepo          invoiceports.InvoiceRepository
+	invoiceSvc           invoiceports.InvoiceService
+	chargeAllocationRepo shipmentports.ChargeAllocationRepository
 	commercial           *shipmentcommercial.Calculator
 	generator            seqgen.Generator
-	auditService         services.AuditService
-	realtime             services.RealtimeService
+	auditService         auditports.AuditService
+	realtime             agentports.RealtimeService
 	validator            *Validator
-	orderDerivation      services.OrderDerivationService
-	detentionBilling     services.DetentionBillingService
-	agentEvents          services.AgentEventPublisher
-	watchtower           services.WatchtowerProjector
-	reviewRepo           repositories.BillingQueueReviewRepository
-	documentRepo         repositories.DocumentRepository
-	occurrenceRepo       repositories.DetentionOccurrenceRepository
-	agreementRepo        repositories.RateAgreementRepository
+	orderDerivation      orderports.OrderDerivationService
+	detentionBilling     detentionports.DetentionBillingService
+	agentEvents          agentports.AgentEventPublisher
+	watchtower           watchtowerports.WatchtowerProjector
+	reviewRepo           billingqueueports.BillingQueueReviewRepository
+	documentRepo         documentports.DocumentRepository
+	occurrenceRepo       detentionports.DetentionOccurrenceRepository
+	agreementRepo        rateagreementports.RateAgreementRepository
 	drivers              driverNotifier
 }
 
 //nolint:gocritic // dependency injection
-func New(p Params) services.BillingQueueService {
+func New(p Params) billingqueueports.BillingQueueService {
 	return &service{
 		l:                    p.Logger.Named("service.billing-queue"),
 		db:                   p.DB,
@@ -129,20 +140,20 @@ func New(p Params) services.BillingQueueService {
 
 // NewReview is the same service seen as the review a biller does from one
 // item; it shares every dependency with the queue it reviews.
-func NewReview(svc services.BillingQueueService) services.BillingQueueReviewService {
+func NewReview(svc billingqueueports.BillingQueueService) billingqueueports.BillingQueueReviewService {
 	return svc.(*service) //nolint:errcheck,forcetypeassert // New always returns *service
 }
 
 func (s *service) List(
 	ctx context.Context,
-	req *repositories.ListBillingQueueItemsRequest,
+	req *billingqueueports.ListBillingQueueItemsRequest,
 ) (*pagination.ListResult[*billingqueue.BillingQueueItem], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *service) GetByID(
 	ctx context.Context,
-	req *repositories.GetBillingQueueItemByIDRequest,
+	req *billingqueueports.GetBillingQueueItemByIDRequest,
 ) (*billingqueue.BillingQueueItem, error) {
 	item, err := s.repo.GetByID(ctx, req)
 	if err != nil {
@@ -189,7 +200,7 @@ func (s *service) detentionHolds(
 		return nil, nil
 	}
 
-	return s.detentionBilling.HoldsForShipments(ctx, &services.DetentionBillingHoldsRequest{
+	return s.detentionBilling.HoldsForShipments(ctx, &detentionports.DetentionBillingHoldsRequest{
 		TenantInfo:  tenantInfo,
 		ShipmentIDs: []pulid.ID{item.ShipmentID},
 	})
@@ -213,10 +224,10 @@ func (s *service) expandShipmentDetails(
 	item *billingqueue.BillingQueueItem,
 	tenantInfo pagination.TenantInfo,
 ) error {
-	fullShipment, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	fullShipment, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         item.ShipmentID,
 		TenantInfo: tenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -231,10 +242,10 @@ func (s *service) expandShipmentDetails(
 
 	defer s.attachPayerShare(ctx, item, tenantInfo)
 
-	cust, err := s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
+	cust, err := s.customerRepo.GetByID(ctx, customerports.GetCustomerByIDRequest{
 		ID:         fullShipment.CustomerID,
 		TenantInfo: tenantInfo,
-		CustomerFilterOptions: repositories.CustomerFilterOptions{
+		CustomerFilterOptions: customerports.CustomerFilterOptions{
 			IncludeBillingProfile: true,
 			IncludeEmailProfile:   true,
 		},
@@ -249,10 +260,10 @@ func (s *service) expandShipmentDetails(
 	case item.BillToCustomerID.IsNil() || item.BillToCustomerID == fullShipment.CustomerID:
 		item.BillToCustomer = item.Shipment.Customer
 	default:
-		payer, payerErr := s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
+		payer, payerErr := s.customerRepo.GetByID(ctx, customerports.GetCustomerByIDRequest{
 			ID:         item.BillToCustomerID,
 			TenantInfo: tenantInfo,
-			CustomerFilterOptions: repositories.CustomerFilterOptions{
+			CustomerFilterOptions: customerports.CustomerFilterOptions{
 				IncludeBillingProfile: true,
 				IncludeEmailProfile:   true,
 			},
@@ -267,8 +278,8 @@ func (s *service) expandShipmentDetails(
 
 func (s *service) GetStats(
 	ctx context.Context,
-	req *repositories.GetBillingQueueStatsRequest,
-) (*services.BillingQueueStats, error) {
+	req *billingqueueports.GetBillingQueueStatsRequest,
+) (*billingqueueports.BillingQueueStats, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"request",
@@ -287,7 +298,7 @@ func (s *service) GetStats(
 		total += c
 	}
 
-	return &services.BillingQueueStats{
+	return &billingqueueports.BillingQueueStats{
 		ReadyForReview: counts[billingqueue.StatusReadyForReview],
 		InReview:       counts[billingqueue.StatusInReview],
 		Approved:       counts[billingqueue.StatusApproved],
@@ -305,8 +316,8 @@ func (s *service) GetStats(
 // need every item use TransferToBillingItems.
 func (s *service) TransferToBilling(
 	ctx context.Context,
-	req *services.TransferToBillingRequest,
-	actor *services.RequestActor,
+	req *billingqueueports.TransferToBillingRequest,
+	actor *permissionports.RequestActor,
 ) (*billingqueue.BillingQueueItem, error) {
 	result, err := s.TransferToBillingItems(ctx, req, actor)
 	if err != nil {
@@ -323,9 +334,9 @@ func (s *service) TransferToBilling(
 // per payer from here on.
 func (s *service) TransferToBillingItems(
 	ctx context.Context,
-	req *services.TransferToBillingRequest,
-	actor *services.RequestActor,
-) (*services.TransferToBillingResult, error) {
+	req *billingqueueports.TransferToBillingRequest,
+	actor *permissionports.RequestActor,
+) (*billingqueueports.TransferToBillingResult, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"request",
@@ -407,7 +418,7 @@ func (s *service) TransferToBillingItems(
 	}
 
 	created := make([]*billingqueue.BillingQueueItem, 0, len(entities))
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		for _, entity := range entities {
 			item, txErr := s.repo.Create(txCtx, entity)
 			if txErr != nil {
@@ -421,7 +432,7 @@ func (s *service) TransferToBillingItems(
 		return nil, err
 	}
 
-	result := &services.TransferToBillingResult{
+	result := &billingqueueports.TransferToBillingResult{
 		Items: make([]*billingqueue.BillingQueueItem, 0, len(created)),
 	}
 	auditActor := actor.AuditActor()
@@ -460,17 +471,17 @@ func (s *service) TransferToBillingItems(
 
 func (s *service) shipmentForTransfer(
 	ctx context.Context,
-	req *services.TransferToBillingRequest,
+	req *billingqueueports.TransferToBillingRequest,
 ) (*shipment.Shipment, error) {
 	if shp := req.DetailedShipment; shp != nil && shp.ID == req.ShipmentID &&
 		shp.OrganizationID == req.TenantInfo.OrgID && shp.BusinessUnitID == req.TenantInfo.BuID {
 		return shp, nil
 	}
 
-	return s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	return s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         req.ShipmentID,
 		TenantInfo: req.TenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -478,7 +489,7 @@ func (s *service) shipmentForTransfer(
 
 // shouldAutoApprove reports whether one payer's item may skip review: either the
 // whole transfer was cleared, or this payer is among those who opted in.
-func (s *service) shouldAutoApprove(req *services.TransferToBillingRequest, payerID pulid.ID) bool {
+func (s *service) shouldAutoApprove(req *billingqueueports.TransferToBillingRequest, payerID pulid.ID) bool {
 	if req.AutoApprove {
 		return true
 	}
@@ -526,7 +537,7 @@ func (s *service) autoApprove(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
 	tenantInfo pagination.TenantInfo,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) *billingqueue.BillingQueueItem {
 	holds, err := s.detentionHolds(ctx, item, tenantInfo)
 	if err != nil {
@@ -545,7 +556,7 @@ func (s *service) autoApprove(
 		return item
 	}
 
-	approved, err := s.UpdateStatus(ctx, &services.UpdateBillingQueueStatusRequest{
+	approved, err := s.UpdateStatus(ctx, &billingqueueports.UpdateBillingQueueStatusRequest{
 		ItemID:     item.ID,
 		NewStatus:  billingqueue.StatusApproved,
 		TenantInfo: tenantInfo,
@@ -571,12 +582,12 @@ func (s *service) autoAssignDefaultBiller(
 	item *billingqueue.BillingQueueItem,
 	customerID pulid.ID,
 	tenantInfo pagination.TenantInfo,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) {
-	cust, err := s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
+	cust, err := s.customerRepo.GetByID(ctx, customerports.GetCustomerByIDRequest{
 		ID:         customerID,
 		TenantInfo: tenantInfo,
-		CustomerFilterOptions: repositories.CustomerFilterOptions{
+		CustomerFilterOptions: customerports.CustomerFilterOptions{
 			IncludeBillingProfile: true,
 		},
 	})
@@ -591,7 +602,7 @@ func (s *service) autoAssignDefaultBiller(
 		zap.String("defaultBillerId", cust.BillingProfile.DefaultBillerID.String()),
 	)
 
-	if _, err = s.AssignBiller(systemEvents(ctx), &services.AssignBillerRequest{
+	if _, err = s.AssignBiller(systemEvents(ctx), &billingqueueports.AssignBillerRequest{
 		ItemID:     item.ID,
 		BillerID:   *cust.BillingProfile.DefaultBillerID,
 		TenantInfo: tenantInfo,
@@ -622,7 +633,7 @@ func (s *service) biller(
 	tenantInfo pagination.TenantInfo,
 	billerID pulid.ID,
 ) (*tenant.User, error) {
-	biller, err := s.userRepo.GetByID(ctx, repositories.GetUserByIDRequest{
+	biller, err := s.userRepo.GetByID(ctx, tenantports.GetUserByIDRequest{
 		LookupUserID: billerID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: tenantInfo.OrgID,
@@ -646,8 +657,8 @@ func (s *service) biller(
 
 func (s *service) AssignBiller(
 	ctx context.Context,
-	req *services.AssignBillerRequest,
-	actor *services.RequestActor,
+	req *billingqueueports.AssignBillerRequest,
+	actor *permissionports.RequestActor,
 ) (*billingqueue.BillingQueueItem, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
@@ -657,7 +668,7 @@ func (s *service) AssignBiller(
 		)
 	}
 
-	entity, err := s.repo.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
+	entity, err := s.repo.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
 		ItemID:     req.ItemID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -699,8 +710,8 @@ func (s *service) AssignBiller(
 
 func (s *service) UpdateStatus(
 	ctx context.Context,
-	req *services.UpdateBillingQueueStatusRequest,
-	actor *services.RequestActor,
+	req *billingqueueports.UpdateBillingQueueStatusRequest,
+	actor *permissionports.RequestActor,
 ) (*billingqueue.BillingQueueItem, error) {
 	if err := guardAgentTransition(actor, req.NewStatus); err != nil {
 		return nil, err
@@ -709,11 +720,11 @@ func (s *service) UpdateStatus(
 	var (
 		updated      *billingqueue.BillingQueueItem
 		previous     *billingqueue.BillingQueueItem
-		createResult *services.CreateInvoiceFromBillingQueueResult
+		createResult *invoiceports.CreateInvoiceFromBillingQueueResult
 	)
 
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		entity, getErr := s.repo.GetByID(txCtx, &repositories.GetBillingQueueItemByIDRequest{
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		entity, getErr := s.repo.GetByID(txCtx, &billingqueueports.GetBillingQueueItemByIDRequest{
 			ItemID:     req.ItemID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -757,7 +768,7 @@ func (s *service) UpdateStatus(
 			// for their cycle; everyone else is invoiced here as before.
 			createResult, updateErr = s.invoiceSvc.CreateFromApprovedBillingQueueItem(
 				txCtx,
-				&services.CreateInvoiceFromBillingQueueRequest{
+				&invoiceports.CreateInvoiceFromBillingQueueRequest{
 					BillingQueueItemID: updated.ID,
 					TenantInfo:         req.TenantInfo,
 					DeferToStatement:   true,
@@ -824,7 +835,7 @@ func (s *service) publishStatusAgentEvent(
 		return
 	}
 
-	services.PublishAgentEvent(ctx, s.agentEvents, services.AgentEvent{
+	agentports.PublishAgentEvent(ctx, s.agentEvents, agentports.AgentEvent{
 		Kind:      kind,
 		SubjectID: item.ID,
 		TenantInfo: pagination.TenantInfo{
@@ -857,7 +868,7 @@ func (s *service) projectToWatchtower(
 func (s *service) completeReplacementReview(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
-	req *services.UpdateBillingQueueStatusRequest,
+	req *billingqueueports.UpdateBillingQueueStatusRequest,
 ) error {
 	if req.NewStatus != billingqueue.StatusApproved && req.NewStatus != billingqueue.StatusPosted {
 		return nil
@@ -867,7 +878,7 @@ func (s *service) completeReplacementReview(
 		return nil
 	}
 
-	adjustment, err := s.adjustmentRepo.GetByID(ctx, repositories.GetInvoiceAdjustmentRequest{
+	adjustment, err := s.adjustmentRepo.GetByID(ctx, invoiceadjustmentports.GetInvoiceAdjustmentRequest{
 		ID:         *item.SourceInvoiceAdjustmentID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -886,7 +897,7 @@ func (s *service) completeReplacementReview(
 func (s *service) createOpsComment(
 	ctx context.Context,
 	entity *billingqueue.BillingQueueItem,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) {
 	_, err := s.commentRepo.Create(ctx, SendBackComment(entity, actor.UserIDOrNil()))
 	if err != nil {
@@ -913,16 +924,16 @@ func (s *service) recomputeParentOrder(ctx context.Context, shp *shipment.Shipme
 
 func (s *service) UpdateCharges(
 	ctx context.Context,
-	req *services.UpdateChargesRequest,
-	actor *services.RequestActor,
+	req *billingqueueports.UpdateChargesRequest,
+	actor *permissionports.RequestActor,
 ) (*billingqueue.BillingQueueItem, error) {
 	return s.updateCharges(ctx, req, actor, false)
 }
 
 func (s *service) updateCharges(
 	ctx context.Context,
-	req *services.UpdateChargesRequest,
-	actor *services.RequestActor,
+	req *billingqueueports.UpdateChargesRequest,
+	actor *permissionports.RequestActor,
 	allowReady bool,
 ) (*billingqueue.BillingQueueItem, error) {
 	plan, err := s.planChargeUpdateFrom(ctx, req, actor, true, allowReady)
@@ -956,7 +967,7 @@ func (s *service) updateCharges(
 		s.syncReview(ctx, req.ItemID, req.TenantInfo)
 	}
 
-	return s.repo.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
+	return s.repo.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
 		ItemID:     req.ItemID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -976,7 +987,7 @@ func (s *service) guardSiblingPayersUnposted(
 
 	invoices, err := s.invoiceRepo.ListByShipmentIDs(
 		ctx,
-		repositories.ListInvoicesByShipmentIDsRequest{
+		invoiceports.ListInvoicesByShipmentIDsRequest{
 			TenantInfo:  tenantInfo,
 			ShipmentIDs: []pulid.ID{item.ShipmentID},
 		},
@@ -1001,13 +1012,13 @@ func (s *service) guardSiblingPayersUnposted(
 
 func (s *service) logAction(
 	entity *billingqueue.BillingQueueItem,
-	actor services.AuditActor,
+	actor kernelports.AuditActor,
 	op permission.Operation,
 	previous any,
 	current any,
 	comment string,
 ) {
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceBillingQueue,
 		ResourceID:     entity.ID.String(),
 		Operation:      op,
@@ -1025,7 +1036,7 @@ func (s *service) logAction(
 		params.PreviousState = jsonutils.MustToJSON(previous)
 	}
 
-	opts := []services.LogOption{
+	opts := []auditports.LogOption{
 		auditservice.WithComment(comment),
 		auditservice.WithMetadata(map[string]any{
 			"shipmentId":     entity.ShipmentID.String(),
@@ -1045,7 +1056,7 @@ func (s *service) logAction(
 func (s *service) publishInvalidation(
 	ctx context.Context,
 	entity *billingqueue.BillingQueueItem,
-	actor services.AuditActor,
+	actor kernelports.AuditActor,
 	action string,
 	payload any,
 ) {

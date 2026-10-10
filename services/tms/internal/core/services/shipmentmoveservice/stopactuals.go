@@ -9,10 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,7 +23,7 @@ import (
 
 func (s *service) RecordStopActual(
 	ctx context.Context,
-	req *repositories.RecordStopActualRequest,
+	req *shipmentports.RecordStopActualRequest,
 ) (*shipment.ShipmentMove, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
@@ -31,8 +31,8 @@ func (s *service) RecordStopActual(
 
 	var updatedMove *shipment.ShipmentMove
 	var previousStatus shipment.MoveStatus
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		move, err := s.repo.GetByID(txCtx, &repositories.GetMoveByIDRequest{
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		move, err := s.repo.GetByID(txCtx, &shipmentports.GetMoveByIDRequest{
 			MoveID:            req.MoveID,
 			TenantInfo:        req.TenantInfo,
 			ExpandMoveDetails: true,
@@ -80,7 +80,7 @@ func (s *service) RecordStopActual(
 	}
 	departure := req.Departure()
 	switch {
-	case req.Action == repositories.StopActualActionDepart && updatedMove != nil:
+	case req.Action == shipmentports.StopActualActionDepart && updatedMove != nil:
 		s.flagDetentionCandidate(ctx, req, updatedMove)
 	case departure != nil && updatedMove != nil:
 		s.flagDetentionCandidate(ctx, departure, updatedMove)
@@ -118,7 +118,7 @@ func (s *service) detentionAlertThreshold(
 
 func (s *service) flagDetentionCandidate(
 	ctx context.Context,
-	req *repositories.RecordStopActualRequest,
+	req *shipmentports.RecordStopActualRequest,
 	move *shipment.ShipmentMove,
 ) {
 	if s.notifications == nil {
@@ -180,11 +180,11 @@ func (s *service) flagDetentionCandidate(
 
 func (s *service) applyDerivedMoveStatus(
 	ctx context.Context,
-	req *repositories.RecordStopActualRequest,
+	req *shipmentports.RecordStopActualRequest,
 	previousStatus, targetStatus shipment.MoveStatus,
 ) (*shipment.ShipmentMove, error) {
 	if targetStatus == previousStatus {
-		return s.repo.GetByID(ctx, &repositories.GetMoveByIDRequest{
+		return s.repo.GetByID(ctx, &shipmentports.GetMoveByIDRequest{
 			MoveID:            req.MoveID,
 			TenantInfo:        req.TenantInfo,
 			ExpandMoveDetails: true,
@@ -197,7 +197,7 @@ func (s *service) applyDerivedMoveStatus(
 		).WithParam("moveId", req.MoveID.String())
 	}
 
-	updatedMove, err := s.repo.UpdateStatus(ctx, &repositories.UpdateMoveStatusRequest{
+	updatedMove, err := s.repo.UpdateStatus(ctx, &shipmentports.UpdateMoveStatusRequest{
 		TenantInfo: req.TenantInfo,
 		MoveID:     req.MoveID,
 		Status:     targetStatus,
@@ -218,7 +218,7 @@ func (s *service) applyDerivedMoveStatus(
 
 func applyStopActual(
 	move *shipment.ShipmentMove,
-	req *repositories.RecordStopActualRequest,
+	req *shipmentports.RecordStopActualRequest,
 ) (*shipment.Stop, error) {
 	if move.Status == shipment.MoveStatusCanceled {
 		return nil, errortypes.NewBusinessError("This load has been canceled")
@@ -244,7 +244,7 @@ func applyStopActual(
 		occurredAt = *req.OccurredAt
 	}
 	switch req.Action {
-	case repositories.StopActualActionArrive:
+	case shipmentports.StopActualActionArrive:
 		if stop.ActualArrival != nil {
 			return nil, errortypes.NewBusinessError("You've already arrived at this stop")
 		}
@@ -265,7 +265,7 @@ func applyStopActual(
 		}
 		stop.ActualArrival = &occurredAt
 		stop.Status = shipment.StopStatusInTransit
-	case repositories.StopActualActionDepart:
+	case shipmentports.StopActualActionDepart:
 		if stop.ActualArrival == nil {
 			return nil, errortypes.NewBusinessError("Arrive at this stop before departing")
 		}
@@ -322,11 +322,11 @@ func deriveMoveStatusFromStops(move *shipment.ShipmentMove) shipment.MoveStatus 
 // wants the stop reads it back, so nothing here can go stale in transit.
 func (s *service) publishStopActualEvent(
 	ctx context.Context,
-	req *repositories.RecordStopActualRequest,
+	req *shipmentports.RecordStopActualRequest,
 ) {
 	kind := agent.EventShipmentMoveArrived
 	verb := "Arrived at"
-	if req.Action == repositories.StopActualActionDepart {
+	if req.Action == shipmentports.StopActualActionDepart {
 		kind = agent.EventShipmentMoveDeparted
 		verb = "Left"
 	}
@@ -335,7 +335,7 @@ func (s *service) publishStopActualEvent(
 		at = *req.OccurredAt
 	}
 
-	portservices.PublishAgentEvent(ctx, s.publisher, portservices.AgentEvent{
+	agentports.PublishAgentEvent(ctx, s.publisher, agentports.AgentEvent{
 		Kind:       kind,
 		SubjectID:  req.MoveID,
 		TenantInfo: req.TenantInfo,

@@ -9,8 +9,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -21,10 +22,10 @@ type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Usage         repositories.AIUsageRepository
-	Runs          repositories.AgentRunRepository
-	Proposals     repositories.AgentProposalRepository
-	Organizations repositories.OrganizationRepository
+	Usage         aiusageports.AIUsageRepository
+	Runs          agentports.AgentRunRepository
+	Proposals     agentports.AgentProposalRepository
+	Organizations tenantports.OrganizationRepository
 }
 
 type Service struct {
@@ -39,16 +40,16 @@ type Service struct {
 type costReader interface {
 	CostByDefinition(
 		ctx context.Context,
-		req repositories.AIUsageCostRequest,
-	) (*repositories.AIUsageCost, error)
+		req aiusageports.AIUsageCostRequest,
+	) (*aiusageports.AIUsageCost, error)
 }
 
 type runCounter interface {
-	CountSince(ctx context.Context, req repositories.CountAgentRunsSinceRequest) (int, error)
+	CountSince(ctx context.Context, req agentports.CountAgentRunsSinceRequest) (int, error)
 }
 
 type toolCounter interface {
-	CountExecutedTool(ctx context.Context, req repositories.CountExecutedToolRequest) (int, error)
+	CountExecutedTool(ctx context.Context, req agentports.CountExecutedToolRequest) (int, error)
 }
 
 // timezoneReader names the organization's zone, which is what "this month"
@@ -57,7 +58,7 @@ type timezoneReader interface {
 	Timezone(ctx context.Context, tenant pagination.TenantInfo) string
 }
 
-func New(p Params) services.AgentBudgetService {
+func New(p Params) agentports.AgentBudgetService {
 	return &Service{
 		l:         p.Logger.Named("service.agentbudget"),
 		usage:     p.Usage,
@@ -71,25 +72,25 @@ func New(p Params) services.AgentBudgetService {
 func (s *Service) CheckRun(
 	ctx context.Context,
 	definition *agentdefinition.Definition,
-) (services.BudgetRefusal, error) {
+) (agentports.BudgetRefusal, error) {
 	if definition == nil {
-		return services.BudgetRefusal{}, nil
+		return agentports.BudgetRefusal{}, nil
 	}
 	tenant := tenantOf(definition)
 	windows := s.windows(ctx, tenant)
 
 	if definition.MonthlyBudgetUSD != nil && definition.MonthlyBudgetUSD.IsPositive() {
-		cost, err := s.usage.CostByDefinition(ctx, repositories.AIUsageCostRequest{
+		cost, err := s.usage.CostByDefinition(ctx, aiusageports.AIUsageCostRequest{
 			TenantInfo:   tenant,
 			DefinitionID: definition.ID,
 			Since:        windows.monthStart,
 		})
 		if err != nil {
-			return services.BudgetRefusal{}, err
+			return agentports.BudgetRefusal{}, err
 		}
 		if cost.CostUSD.GreaterThanOrEqual(*definition.MonthlyBudgetUSD) {
-			return services.BudgetRefusal{
-				Cap:      services.BudgetCapMonthly,
+			return agentports.BudgetRefusal{
+				Cap:      agentports.BudgetCapMonthly,
 				Spent:    cost.CostUSD.StringFixed(2),
 				Limit:    definition.MonthlyBudgetUSD.StringFixed(2),
 				ResetsAt: windows.nextMonth,
@@ -98,17 +99,17 @@ func (s *Service) CheckRun(
 	}
 
 	if definition.DailyRunLimit > 0 {
-		started, err := s.runs.CountSince(ctx, repositories.CountAgentRunsSinceRequest{
+		started, err := s.runs.CountSince(ctx, agentports.CountAgentRunsSinceRequest{
 			TenantInfo:   tenant,
 			DefinitionID: definition.ID,
 			Since:        windows.dayStart,
 		})
 		if err != nil {
-			return services.BudgetRefusal{}, err
+			return agentports.BudgetRefusal{}, err
 		}
 		if started >= definition.DailyRunLimit {
-			return services.BudgetRefusal{
-				Cap:      services.BudgetCapDailyRuns,
+			return agentports.BudgetRefusal{
+				Cap:      agentports.BudgetCapDailyRuns,
 				Spent:    strconv.Itoa(started),
 				Limit:    strconv.Itoa(definition.DailyRunLimit),
 				ResetsAt: windows.nextDay,
@@ -116,37 +117,37 @@ func (s *Service) CheckRun(
 		}
 	}
 
-	return services.BudgetRefusal{}, nil
+	return agentports.BudgetRefusal{}, nil
 }
 
 func (s *Service) CheckTool(
 	ctx context.Context,
-	req services.CheckToolBudgetRequest,
-) (services.BudgetRefusal, error) {
+	req agentports.CheckToolBudgetRequest,
+) (agentports.BudgetRefusal, error) {
 	definition, toolName := req.Definition, req.ToolName
 	if definition == nil {
-		return services.BudgetRefusal{}, nil
+		return agentports.BudgetRefusal{}, nil
 	}
 	limit := definition.ToolDailyLimit(toolName)
 	if limit <= 0 {
-		return services.BudgetRefusal{}, nil
+		return agentports.BudgetRefusal{}, nil
 	}
 
 	tenant := tenantOf(definition)
 	windows := s.windows(ctx, tenant)
-	used, err := s.proposals.CountExecutedTool(ctx, repositories.CountExecutedToolRequest{
+	used, err := s.proposals.CountExecutedTool(ctx, agentports.CountExecutedToolRequest{
 		TenantInfo:   tenant,
 		DefinitionID: definition.ID,
 		ToolName:     toolName,
 		Since:        windows.dayStart,
 	})
 	if err != nil {
-		return services.BudgetRefusal{}, err
+		return agentports.BudgetRefusal{}, err
 	}
 	used += max(req.Unrecorded, 0)
 	if used >= limit {
-		return services.BudgetRefusal{
-			Cap:      services.BudgetCapTool,
+		return agentports.BudgetRefusal{
+			Cap:      agentports.BudgetCapTool,
 			Tool:     toolName,
 			Spent:    strconv.Itoa(used),
 			Limit:    strconv.Itoa(limit),
@@ -154,17 +155,17 @@ func (s *Service) CheckTool(
 		}, nil
 	}
 
-	return services.BudgetRefusal{}, nil
+	return agentports.BudgetRefusal{}, nil
 }
 
 func (s *Service) Status(
 	ctx context.Context,
 	definition *agentdefinition.Definition,
-) (*services.AgentBudgetStatus, error) {
+) (*agentports.AgentBudgetStatus, error) {
 	tenant := tenantOf(definition)
 	windows := s.windows(ctx, tenant)
 
-	cost, err := s.usage.CostByDefinition(ctx, repositories.AIUsageCostRequest{
+	cost, err := s.usage.CostByDefinition(ctx, aiusageports.AIUsageCostRequest{
 		TenantInfo:   tenant,
 		DefinitionID: definition.ID,
 		Since:        windows.monthStart,
@@ -172,7 +173,7 @@ func (s *Service) Status(
 	if err != nil {
 		return nil, err
 	}
-	started, err := s.runs.CountSince(ctx, repositories.CountAgentRunsSinceRequest{
+	started, err := s.runs.CountSince(ctx, agentports.CountAgentRunsSinceRequest{
 		TenantInfo:   tenant,
 		DefinitionID: definition.ID,
 		Since:        windows.dayStart,
@@ -181,7 +182,7 @@ func (s *Service) Status(
 		return nil, err
 	}
 
-	status := &services.AgentBudgetStatus{
+	status := &agentports.AgentBudgetStatus{
 		MonthStart:     windows.monthStart,
 		DayStart:       windows.dayStart,
 		SpentUSD:       cost.CostUSD.StringFixed(2),
@@ -190,7 +191,7 @@ func (s *Service) Status(
 		RunsToday:      started,
 		DailyRunLimit:  definition.DailyRunLimit,
 		SimulationMode: definition.SimulationMode,
-		Tools:          make([]services.ToolBudgetUse, 0, len(definition.ToolDailyLimits)),
+		Tools:          make([]agentports.ToolBudgetUse, 0, len(definition.ToolDailyLimits)),
 	}
 	if definition.MonthlyBudgetUSD != nil {
 		budget := definition.MonthlyBudgetUSD.StringFixed(2)
@@ -202,7 +203,7 @@ func (s *Service) Status(
 		if limit <= 0 {
 			continue
 		}
-		used, cErr := s.proposals.CountExecutedTool(ctx, repositories.CountExecutedToolRequest{
+		used, cErr := s.proposals.CountExecutedTool(ctx, agentports.CountExecutedToolRequest{
 			TenantInfo:   tenant,
 			DefinitionID: definition.ID,
 			ToolName:     tool,
@@ -213,7 +214,7 @@ func (s *Service) Status(
 		}
 		status.Tools = append(
 			status.Tools,
-			services.ToolBudgetUse{Tool: tool, Used: used, Limit: limit},
+			agentports.ToolBudgetUse{Tool: tool, Used: used, Limit: limit},
 		)
 	}
 
@@ -268,12 +269,12 @@ func tenantOf(definition *agentdefinition.Definition) pagination.TenantInfo {
 // UTC when it cannot be read: a cap checked in the wrong zone is still a
 // cap, and a run refused because the organization could not be read is not.
 type organizationZones struct {
-	organizations repositories.OrganizationRepository
+	organizations tenantports.OrganizationRepository
 	logger        *zap.Logger
 }
 
 func (z organizationZones) Timezone(ctx context.Context, tenant pagination.TenantInfo) string {
-	org, err := z.organizations.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+	org, err := z.organizations.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: tenant,
 	})
 	if err != nil {

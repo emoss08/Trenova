@@ -7,7 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/costingcontrolports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -21,7 +23,7 @@ func (s *Service) ResolveCostProfile(
 	tenantInfo pagination.TenantInfo,
 	asOf time.Time,
 ) (*ResolvedCostProfile, error) {
-	control, err := s.repo.GetByOrgID(ctx, &repositories.GetCostingControlRequest{
+	control, err := s.repo.GetByOrgID(ctx, &costingcontrolports.GetCostingControlRequest{
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {
@@ -129,7 +131,7 @@ func (s *Service) resolveFuel(
 		return fuel
 	}
 
-	prices, err := s.priceRepo.GetLatestOnOrBefore(ctx, &repositories.GetLatestFuelPricesRequest{
+	prices, err := s.priceRepo.GetLatestOnOrBefore(ctx, &fuelsurchargeports.GetLatestFuelPricesRequest{
 		FuelIndexID: *control.FuelIndexID,
 		TenantInfo:  tenantInfo,
 		Date:        asOf.Format(fuelsurcharge.PriceDateLayout),
@@ -156,10 +158,10 @@ func (s *Service) EstimateShipment(
 	shipmentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) (*ShipmentProfitabilityEstimate, error) {
-	entity, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	entity, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         shipmentID,
 		TenantInfo: tenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -189,7 +191,7 @@ func (s *Service) EstimateShipments(
 		return nil, err
 	}
 
-	rows, err := s.actualsRepo.ShipmentMilesByIDs(ctx, &repositories.ShipmentMilesByIDsRequest{
+	rows, err := s.actualsRepo.ShipmentMilesByIDs(ctx, &costingcontrolports.ShipmentMilesByIDsRequest{
 		TenantInfo:  tenantInfo,
 		ShipmentIDs: shipmentIDs,
 	})
@@ -306,7 +308,7 @@ func (s *Service) FleetSummary(
 	tenantInfo pagination.TenantInfo,
 	from, to int64,
 ) (*FleetCostSummary, error) {
-	control, err := s.repo.GetByOrgID(ctx, &repositories.GetCostingControlRequest{
+	control, err := s.repo.GetByOrgID(ctx, &costingcontrolports.GetCostingControlRequest{
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {
@@ -320,7 +322,7 @@ func (s *Service) FleetSummary(
 
 	aggregates, err := s.actualsRepo.FleetCostAggregates(
 		ctx,
-		&repositories.FleetCostAggregatesRequest{
+		&costingcontrolports.FleetCostAggregatesRequest{
 			TenantInfo:           tenantInfo,
 			FromDate:             from,
 			ToDate:               to,

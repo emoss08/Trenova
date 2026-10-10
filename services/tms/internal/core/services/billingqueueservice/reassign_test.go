@@ -1,6 +1,12 @@
 package billingqueueservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"context"
 	"errors"
 	"testing"
@@ -10,8 +16,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -113,9 +121,9 @@ func newSplitShipment() *splitShipment {
 	}
 }
 
-func testActor(tenantInfo pagination.TenantInfo) *services.RequestActor {
-	return &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeUser,
+func testActor(tenantInfo pagination.TenantInfo) *permissionports.RequestActor {
+	return &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    pulid.MustNew("usr_"),
 		UserID:         pulid.MustNew("usr_"),
 		OrganizationID: tenantInfo.OrgID,
@@ -168,7 +176,7 @@ func TestReassignRows_WholeChargeToTheShipmentPayerIsNoRows(t *testing.T) {
 	t.Parallel()
 
 	f := newSplitShipment()
-	rows, err := reassignRows(f.shipment, &services.ReassignChargeRequest{
+	rows, err := reassignRows(f.shipment, &billingqueueports.ReassignChargeRequest{
 		ChargeKind: shipment.ChargeAllocationKindFreight,
 		Allocations: []*shipment.ChargeAllocation{{
 			BillToCustomerID: f.acme,
@@ -185,7 +193,7 @@ func TestReassignRows_RefusesARowIDFromAnotherCharge(t *testing.T) {
 	t.Parallel()
 
 	f := newSplitShipment()
-	_, err := reassignRows(f.shipment, &services.ReassignChargeRequest{
+	_, err := reassignRows(f.shipment, &billingqueueports.ReassignChargeRequest{
 		ChargeKind:         shipment.ChargeAllocationKindAccessorial,
 		AdditionalChargeID: f.detention.ID,
 		Allocations: []*shipment.ChargeAllocation{{
@@ -206,7 +214,7 @@ func TestReassignRows_KeepsTheIdentityOfARowAlreadyOnTheCharge(t *testing.T) {
 	f := newSplitShipment()
 	existing := f.shipment.ChargeAllocations[0]
 	existing.Version = 4
-	rows, err := reassignRows(f.shipment, &services.ReassignChargeRequest{
+	rows, err := reassignRows(f.shipment, &billingqueueports.ReassignChargeRequest{
 		ChargeKind: shipment.ChargeAllocationKindFreight,
 		Allocations: []*shipment.ChargeAllocation{
 			{
@@ -235,11 +243,11 @@ func TestReassignRows_KeepsTheIdentityOfARowAlreadyOnTheCharge(t *testing.T) {
 type reassignHarness struct {
 	f            *splitShipment
 	svc          *service
-	repo         *mocks.MockBillingQueueRepository
-	shipmentRepo *mocks.MockShipmentRepository
-	customerRepo *mocks.MockCustomerRepository
-	invoiceRepo  *mocks.MockInvoiceRepository
-	allocRepo    *mocks.MockChargeAllocationRepository
+	repo         *billingqueueportsmock.MockBillingQueueRepository
+	shipmentRepo *shipmentportsmock.MockShipmentRepository
+	customerRepo *customerportsmock.MockCustomerRepository
+	invoiceRepo  *invoiceportsmock.MockInvoiceRepository
+	allocRepo    *shipmentportsmock.MockChargeAllocationRepository
 }
 
 func newReassignHarness(t *testing.T) *reassignHarness {
@@ -247,15 +255,15 @@ func newReassignHarness(t *testing.T) *reassignHarness {
 	f := newSplitShipment()
 	h := &reassignHarness{
 		f:            f,
-		repo:         mocks.NewMockBillingQueueRepository(t),
-		shipmentRepo: mocks.NewMockShipmentRepository(t),
-		customerRepo: mocks.NewMockCustomerRepository(t),
-		invoiceRepo:  mocks.NewMockInvoiceRepository(t),
-		allocRepo:    mocks.NewMockChargeAllocationRepository(t),
+		repo:         billingqueueportsmock.NewMockBillingQueueRepository(t),
+		shipmentRepo: shipmentportsmock.NewMockShipmentRepository(t),
+		customerRepo: customerportsmock.NewMockCustomerRepository(t),
+		invoiceRepo:  invoiceportsmock.NewMockInvoiceRepository(t),
+		allocRepo:    shipmentportsmock.NewMockChargeAllocationRepository(t),
 	}
-	audit := mocks.NewMockAuditService(t)
+	audit := auditportsmock.NewMockAuditService(t)
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
-	realtime := mocks.NewMockRealtimeService(t)
+	realtime := agentportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Maybe()
 
 	h.svc = &service{
@@ -278,7 +286,7 @@ func newReassignHarness(t *testing.T) *reassignHarness {
 		Maybe()
 	h.shipmentRepo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(context.Context, *repositories.GetShipmentByIDRequest) (*shipment.Shipment, error) {
+		RunAndReturn(func(context.Context, *shipmentports.GetShipmentByIDRequest) (*shipment.Shipment, error) {
 			return cloneShipment(f.shipment), nil
 		}).
 		Maybe()
@@ -288,7 +296,7 @@ func newReassignHarness(t *testing.T) *reassignHarness {
 		Maybe()
 	h.customerRepo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req repositories.GetCustomerByIDRequest) (*customer.Customer, error) {
+		RunAndReturn(func(_ context.Context, req customerports.GetCustomerByIDRequest) (*customer.Customer, error) {
 			return &customer.Customer{
 				ID:             req.ID,
 				BillingProfile: &customer.CustomerBillingProfile{},
@@ -315,10 +323,10 @@ func cloneShipment(src *shipment.Shipment) *shipment.Shipment {
 
 func (h *reassignHarness) expectItem(item *billingqueue.BillingQueueItem) {
 	h.repo.EXPECT().
-		GetByID(mock.Anything, mock.MatchedBy(func(req *repositories.GetBillingQueueItemByIDRequest) bool {
+		GetByID(mock.Anything, mock.MatchedBy(func(req *billingqueueports.GetBillingQueueItemByIDRequest) bool {
 			return req.ItemID == item.ID
 		})).
-		RunAndReturn(func(context.Context, *repositories.GetBillingQueueItemByIDRequest) (*billingqueue.BillingQueueItem, error) {
+		RunAndReturn(func(context.Context, *billingqueueports.GetBillingQueueItemByIDRequest) (*billingqueue.BillingQueueItem, error) {
 			copied := *item
 			return &copied, nil
 		})
@@ -347,7 +355,7 @@ func TestReassignCharge_MovingDetentionToPeakKeepsBothItemsAndSyncsTheSplit(t *t
 		}).
 		Once()
 
-	result, err := h.svc.ReassignCharge(t.Context(), &services.ReassignChargeRequest{
+	result, err := h.svc.ReassignCharge(t.Context(), &billingqueueports.ReassignChargeRequest{
 		ItemID:             f.acmeItem.ID,
 		TenantInfo:         f.tenantInfo,
 		ChargeKind:         shipment.ChargeAllocationKindAccessorial,
@@ -396,7 +404,7 @@ func TestReassignCharge_GivingPeakFreightBackToAcmeCancelsPeaksItem(t *testing.T
 		}).
 		Once()
 
-	result, err := h.svc.ReassignCharge(t.Context(), &services.ReassignChargeRequest{
+	result, err := h.svc.ReassignCharge(t.Context(), &billingqueueports.ReassignChargeRequest{
 		ItemID:      f.peakItem.ID,
 		TenantInfo:  f.tenantInfo,
 		ChargeKind:  shipment.ChargeAllocationKindFreight,
@@ -422,7 +430,7 @@ func TestReassignCharge_ANewPayerGetsTheirOwnQueueItem(t *testing.T) {
 	h.customerRepo.EXPECT().GetByIDs(mock.Anything, mock.Anything).
 		Return(activeCustomers(f.tenantInfo, f.acme, f.peak, carrier), nil).Maybe()
 	h.customerRepo.EXPECT().GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req repositories.GetCustomerByIDRequest) (*customer.Customer, error) {
+		RunAndReturn(func(_ context.Context, req customerports.GetCustomerByIDRequest) (*customer.Customer, error) {
 			return &customer.Customer{
 				ID:             req.ID,
 				BillingProfile: &customer.CustomerBillingProfile{},
@@ -446,7 +454,7 @@ func TestReassignCharge_ANewPayerGetsTheirOwnQueueItem(t *testing.T) {
 		}).
 		Once()
 
-	result, err := h.svc.ReassignCharge(t.Context(), &services.ReassignChargeRequest{
+	result, err := h.svc.ReassignCharge(t.Context(), &billingqueueports.ReassignChargeRequest{
 		ItemID:             f.acmeItem.ID,
 		TenantInfo:         f.tenantInfo,
 		ChargeKind:         shipment.ChargeAllocationKindAccessorial,
@@ -477,7 +485,7 @@ func TestReassignCharge_RefusesWhileASiblingIsApproved(t *testing.T) {
 	h.expectItem(f.acmeItem)
 	h.expectActive(f.acmeItem, &approved)
 
-	_, err := h.svc.ReassignCharge(t.Context(), &services.ReassignChargeRequest{
+	_, err := h.svc.ReassignCharge(t.Context(), &billingqueueports.ReassignChargeRequest{
 		ItemID:             f.acmeItem.ID,
 		TenantInfo:         f.tenantInfo,
 		ChargeKind:         shipment.ChargeAllocationKindAccessorial,
@@ -500,7 +508,7 @@ func TestReassignCharge_RefusesASplitThatDoesNotAddUp(t *testing.T) {
 	f := h.f
 	h.expectItem(f.acmeItem)
 
-	_, err := h.svc.ReassignCharge(t.Context(), &services.ReassignChargeRequest{
+	_, err := h.svc.ReassignCharge(t.Context(), &billingqueueports.ReassignChargeRequest{
 		ItemID:     f.acmeItem.ID,
 		TenantInfo: f.tenantInfo,
 		ChargeKind: shipment.ChargeAllocationKindFreight,
@@ -532,7 +540,7 @@ func TestReassignCharge_RefusesAnItemPastReview(t *testing.T) {
 	posted.Status = billingqueue.StatusApproved
 	h.expectItem(&posted)
 
-	_, err := h.svc.ReassignCharge(t.Context(), &services.ReassignChargeRequest{
+	_, err := h.svc.ReassignCharge(t.Context(), &billingqueueports.ReassignChargeRequest{
 		ItemID:     posted.ID,
 		TenantInfo: f.tenantInfo,
 		ChargeKind: shipment.ChargeAllocationKindFreight,
@@ -588,7 +596,7 @@ func TestUpdateCharges_RefusesAnEditThatLeavesAnAmountSplitStale(t *testing.T) {
 	splitDetentionByAmount(f)
 	h.expectItem(f.acmeItem)
 
-	_, err := h.svc.UpdateCharges(t.Context(), &services.UpdateChargesRequest{
+	_, err := h.svc.UpdateCharges(t.Context(), &billingqueueports.UpdateChargesRequest{
 		ItemID:            f.acmeItem.ID,
 		TenantInfo:        f.tenantInfo,
 		AdditionalCharges: editedDetention(f, "1200"),
@@ -619,7 +627,7 @@ func TestUpdateCharges_ConvertsTheStaleSplitAndSavesWhenAsked(t *testing.T) {
 		}).
 		Once()
 
-	_, err := h.svc.UpdateCharges(t.Context(), &services.UpdateChargesRequest{
+	_, err := h.svc.UpdateCharges(t.Context(), &billingqueueports.UpdateChargesRequest{
 		ItemID:                       f.acmeItem.ID,
 		TenantInfo:                   f.tenantInfo,
 		AdditionalCharges:            editedDetention(f, "1200"),
@@ -677,7 +685,7 @@ func TestGetByID_AttachesTheItemsOwnBill(t *testing.T) {
 	f := h.f
 	h.expectItem(f.peakItem)
 
-	item, err := h.svc.GetByID(t.Context(), &repositories.GetBillingQueueItemByIDRequest{
+	item, err := h.svc.GetByID(t.Context(), &billingqueueports.GetBillingQueueItemByIDRequest{
 		ItemID:                f.peakItem.ID,
 		TenantInfo:            f.tenantInfo,
 		ExpandShipmentDetails: true,

@@ -5,7 +5,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
 
 const (
@@ -26,7 +27,7 @@ type cutOffState struct {
 	first    int
 }
 
-func cutOffCall(completion *serviceports.ChatCompletionResult) (cutOff, bool) {
+func cutOffCall(completion *agentports.ChatCompletionResult) (cutOff, bool) {
 	if completion == nil || !completion.Truncated {
 		return cutOff{}, false
 	}
@@ -74,7 +75,7 @@ func raisedOutputBudget(limit int) int {
 func (s *Service) handleCutOff(
 	t *Turn,
 	fx TurnEffects,
-	completion *serviceports.ChatCompletionResult,
+	completion *agentports.ChatCompletionResult,
 ) (retry, stop bool) {
 	cut, isCut := cutOffCall(completion)
 	if !isCut {
@@ -85,12 +86,12 @@ func (s *Service) handleCutOff(
 		return false, false
 	}
 
-	fx.Emit(serviceports.StreamEvent{
-		Event: serviceports.AssistantEventRetrying,
-		Data: serviceports.AssistantRetryingEvent{
+	fx.Emit(kernelports.StreamEvent{
+		Event: agentports.AssistantEventRetrying,
+		Data: agentports.AssistantRetryingEvent{
 			Attempt: 1,
 			Reason:  cutOffRetryReason,
-			Kind:    serviceports.RetryKindRestart,
+			Kind:    agentports.RetryKindRestart,
 		},
 	})
 
@@ -108,8 +109,8 @@ func (s *Service) handleCutOff(
 func (s *Service) finishCutOff(
 	t *Turn,
 	fx TurnEffects,
-	completion *serviceports.ChatCompletionResult,
-) *serviceports.RunResult {
+	completion *agentports.ChatCompletionResult,
+) *agentports.RunResult {
 	cut, _ := cutOffCall(completion)
 	reply := cutOffNotice(cut, t.cutOff)
 	if visible := strings.TrimSpace(completion.Text); visible != "" {

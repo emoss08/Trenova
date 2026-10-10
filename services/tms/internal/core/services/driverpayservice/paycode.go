@@ -5,9 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -17,7 +18,7 @@ import (
 
 func (s *Service) ListPayCodes(
 	ctx context.Context,
-	req *repositories.ListPayCodesRequest,
+	req *driverpayports.ListPayCodesRequest,
 ) (*pagination.ListResult[*driverpay.PayCode], error) {
 	if err := s.payCodeRepo.EnsureSystemDefaults(ctx, req.Filter.TenantInfo); err != nil {
 		return nil, err
@@ -27,7 +28,7 @@ func (s *Service) ListPayCodes(
 
 func (s *Service) ListPayCodesConnection(
 	ctx context.Context,
-	req *repositories.ListPayCodeConnectionRequest,
+	req *driverpayports.ListPayCodeConnectionRequest,
 ) (*pagination.CursorListResult[*driverpay.PayCode], error) {
 	if err := s.payCodeRepo.EnsureSystemDefaults(ctx, req.Filter.TenantInfo); err != nil {
 		return nil, err
@@ -37,7 +38,7 @@ func (s *Service) ListPayCodesConnection(
 
 func (s *Service) ListActivePayCodes(
 	ctx context.Context,
-	req repositories.ListActivePayCodesRequest,
+	req driverpayports.ListActivePayCodesRequest,
 ) ([]*driverpay.PayCode, error) {
 	if err := s.payCodeRepo.EnsureSystemDefaults(ctx, req.TenantInfo); err != nil {
 		return nil, err
@@ -47,7 +48,7 @@ func (s *Service) ListActivePayCodes(
 
 func (s *Service) PayCodeSelectOptions(
 	ctx context.Context,
-	req *repositories.PayCodeSelectOptionsRequest,
+	req *driverpayports.PayCodeSelectOptionsRequest,
 ) (*pagination.ListResult[*driverpay.PayCode], error) {
 	if err := s.payCodeRepo.EnsureSystemDefaults(ctx, req.SelectQueryRequest.TenantInfo); err != nil {
 		return nil, err
@@ -57,7 +58,7 @@ func (s *Service) PayCodeSelectOptions(
 
 func (s *Service) GetPayCode(
 	ctx context.Context,
-	req repositories.GetPayCodeByIDRequest,
+	req driverpayports.GetPayCodeByIDRequest,
 ) (*driverpay.PayCode, error) {
 	return s.payCodeRepo.GetByID(ctx, req)
 }
@@ -65,7 +66,7 @@ func (s *Service) GetPayCode(
 func (s *Service) CreatePayCode(
 	ctx context.Context,
 	entity *driverpay.PayCode,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driverpay.PayCode, error) {
 	if err := requireActor(actor, "Pay code creation"); err != nil {
 		return nil, err
@@ -87,7 +88,7 @@ func (s *Service) CreatePayCode(
 func (s *Service) UpdatePayCode(
 	ctx context.Context,
 	entity *driverpay.PayCode,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driverpay.PayCode, error) {
 	if err := requireActor(actor, "Pay code update"); err != nil {
 		return nil, err
@@ -98,7 +99,7 @@ func (s *Service) UpdatePayCode(
 		return nil, multiErr
 	}
 
-	previous, err := s.payCodeRepo.GetByID(ctx, repositories.GetPayCodeByIDRequest{
+	previous, err := s.payCodeRepo.GetByID(ctx, driverpayports.GetPayCodeByIDRequest{
 		ID: entity.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -132,7 +133,7 @@ func (s *Service) resolvePayCode(
 	payCodeID pulid.ID,
 	direction driverpay.PayCodeDirection,
 ) error {
-	code, err := s.payCodeRepo.GetByID(ctx, repositories.GetPayCodeByIDRequest{
+	code, err := s.payCodeRepo.GetByID(ctx, driverpayports.GetPayCodeByIDRequest{
 		ID:         payCodeID,
 		TenantInfo: tenantInfo,
 	})
@@ -157,7 +158,7 @@ func (s *Service) logPayCodeAudit(
 	operation permission.Operation,
 	comment string,
 ) {
-	params := &serviceports.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourcePayCode,
 		ResourceID:     current.ID.String(),
 		Operation:      operation,
@@ -166,7 +167,7 @@ func (s *Service) logPayCodeAudit(
 		OrganizationID: current.OrganizationID,
 		BusinessUnitID: current.BusinessUnitID,
 	}
-	options := []serviceports.LogOption{auditservice.WithComment(comment)}
+	options := []auditports.LogOption{auditservice.WithComment(comment)}
 	if previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(previous)
 		options = append(options, auditservice.WithDiff(previous, current))

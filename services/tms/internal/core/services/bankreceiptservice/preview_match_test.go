@@ -1,14 +1,16 @@
 package bankreceiptservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/bankreceiptportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/bankreceiptworkitemportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerpaymentportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/core/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -44,16 +46,16 @@ func TestPreviewMatch_IsWhatMatchSaves(t *testing.T) {
 		Status:      customerpayment.StatusPosted,
 	}
 
-	receiptRepo := mocks.NewMockBankReceiptRepository(t)
+	receiptRepo := bankreceiptportsmock.NewMockBankReceiptRepository(t)
 	receiptRepo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(context.Context, repositories.GetBankReceiptByIDRequest) (*bankreceipt.BankReceipt, error) {
+		RunAndReturn(func(context.Context, bankreceiptports.GetBankReceiptByIDRequest) (*bankreceipt.BankReceipt, error) {
 			copied := *stored
 			return &copied, nil
 		})
-	paymentRepo := mocks.NewMockCustomerPaymentRepository(t)
+	paymentRepo := customerpaymentportsmock.NewMockCustomerPaymentRepository(t)
 	paymentRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(payment, nil)
-	workItems := mocks.NewMockBankReceiptWorkItemRepository(t)
+	workItems := bankreceiptworkitemportsmock.NewMockBankReceiptWorkItemRepository(t)
 	workItems.EXPECT().
 		GetActiveByReceiptID(mock.Anything, mock.Anything, mock.Anything).
 		RunAndReturn(func(context.Context, pagination.TenantInfo, pulid.ID) (*bankreceiptworkitem.WorkItem, error) {
@@ -67,7 +69,7 @@ func TestPreviewMatch_IsWhatMatchSaves(t *testing.T) {
 		paymentRepo:  paymentRepo,
 		auditService: &mocks.NoopAuditService{},
 	}
-	request := &serviceports.MatchBankReceiptRequest{
+	request := &bankreceiptports.MatchBankReceiptRequest{
 		ReceiptID:  stored.ID,
 		PaymentID:  payment.ID,
 		TenantInfo: tenantInfo,
@@ -109,7 +111,7 @@ func TestPreviewMatchPayment_RefusesAnAmountMismatch(t *testing.T) {
 	t.Parallel()
 
 	orgID, buID, userID := pulid.MustNew("org_"), pulid.MustNew("bu_"), pulid.MustNew("usr_")
-	receiptRepo := mocks.NewMockBankReceiptRepository(t)
+	receiptRepo := bankreceiptportsmock.NewMockBankReceiptRepository(t)
 	receiptRepo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
 		Return(&bankreceipt.BankReceipt{AmountMinor: 10000, Status: bankreceipt.StatusException}, nil)

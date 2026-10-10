@@ -5,9 +5,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -27,26 +29,26 @@ func (s *Service) loadCarrierSubject(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	carrierID pulid.ID,
-) (repositories.CarrierIntelSubject, error) {
+) (carrierintelports.CarrierIntelSubject, error) {
 	subjects, err := s.subjectRepo.ListCarrierSubjects(
 		ctx,
-		&repositories.ListCarrierIntelSubjectsRequest{
+		&carrierintelports.ListCarrierIntelSubjectsRequest{
 			TenantInfo: tenantInfo,
 			CarrierIDs: []pulid.ID{carrierID},
 			Limit:      1,
 		},
 	)
 	if err != nil {
-		return repositories.CarrierIntelSubject{}, err
+		return carrierintelports.CarrierIntelSubject{}, err
 	}
 	if len(subjects) == 0 {
-		if _, getErr := s.carrierRepo.GetByID(ctx, repositories.GetCarrierByIDRequest{
+		if _, getErr := s.carrierRepo.GetByID(ctx, carrierports.GetCarrierByIDRequest{
 			ID:         carrierID,
 			TenantInfo: tenantInfo,
 		}); getErr != nil {
-			return repositories.CarrierIntelSubject{}, getErr
+			return carrierintelports.CarrierIntelSubject{}, getErr
 		}
-		return repositories.CarrierIntelSubject{}, errortypes.NewBusinessError(
+		return carrierintelports.CarrierIntelSubject{}, errortypes.NewBusinessError(
 			"Add the carrier's DOT number before running carrier intelligence",
 		)
 	}
@@ -102,7 +104,7 @@ func (s *Service) LookupProspect(
 
 	result, err := s.Fetch(ctx, &FetchRequest{
 		TenantInfo: req.TenantInfo,
-		Subject: repositories.CarrierIntelSubject{
+		Subject: carrierintelports.CarrierIntelSubject{
 			SubjectType:  carrierintel.SubjectTypeProspect,
 			SubjectID:    subjectID,
 			DOTNumber:    dot,
@@ -153,7 +155,7 @@ func (s *Service) MyIntelligence(
 		snapshot, getErr := s.snapshotRepo.GetCurrent(
 			ctx,
 			tenantInfo,
-			repositories.CarrierIntelSubjectRef{
+			carrierintelports.CarrierIntelSubjectRef{
 				SubjectType: carrierintel.SubjectTypeOrganization,
 				SubjectID:   org.SubjectID,
 			},
@@ -214,17 +216,17 @@ func (s *Service) SyncPlan(
 	if err != nil {
 		return nil, err
 	}
-	entity, err := s.carrierRepo.GetByID(ctx, repositories.GetCarrierByIDRequest{
+	entity, err := s.carrierRepo.GetByID(ctx, carrierports.GetCarrierByIDRequest{
 		ID:         carrierID,
 		TenantInfo: tenantInfo,
-		CarrierFilterOptions: repositories.CarrierFilterOptions{
+		CarrierFilterOptions: carrierports.CarrierFilterOptions{
 			IncludeInsurancePolicies: true,
 		},
 	})
 	if err != nil {
 		return nil, err
 	}
-	snapshot, err := s.snapshotRepo.GetCurrent(ctx, tenantInfo, repositories.CarrierIntelSubjectRef{
+	snapshot, err := s.snapshotRepo.GetCurrent(ctx, tenantInfo, carrierintelports.CarrierIntelSubjectRef{
 		SubjectType: carrierintel.SubjectTypeCarrier,
 		SubjectID:   carrierID.String(),
 	})
@@ -261,8 +263,8 @@ func (s *Service) ApplySuggestions(
 	}
 	entity := plan.After
 
-	if _, err = s.carrierService.Update(ctx, entity, &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeUser,
+	if _, err = s.carrierService.Update(ctx, entity, &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    req.TenantInfo.UserID,
 		UserID:         req.TenantInfo.UserID,
 		OrganizationID: req.TenantInfo.OrgID,
@@ -271,12 +273,12 @@ func (s *Service) ApplySuggestions(
 		return 0, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:      permission.ResourceCarrierIntelligence,
 		ResourceID:    req.CarrierID.String(),
 		Operation:     permission.OpUpdate,
 		UserID:        req.TenantInfo.UserID,
-		PrincipalType: services.PrincipalTypeUser,
+		PrincipalType: permissionports.PrincipalTypeUser,
 		PrincipalID:   req.TenantInfo.UserID,
 		CurrentState: jsonutils.MustToJSON(map[string]any{
 			"fields":    plan.Fields,

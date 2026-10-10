@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentmanufacturerports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -30,7 +30,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.EquipmentManufacturerRepository {
+func New(p Params) equipmentmanufacturerports.EquipmentManufacturerRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.equipment-manufacturer-repository"),
@@ -39,7 +39,7 @@ func New(p Params) repositories.EquipmentManufacturerRepository {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListEquipmentManufacturersRequest,
+	req *equipmentmanufacturerports.ListEquipmentManufacturersRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.EquipmentManufacturerColumns
 	q = querybuilder.ApplyFilters(
@@ -57,7 +57,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListEquipmentManufacturersRequest,
+	req *equipmentmanufacturerports.ListEquipmentManufacturersRequest,
 ) (*pagination.ListResult[*equipmentmanufacturer.EquipmentManufacturer], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*equipmentmanufacturer.EquipmentManufacturer], error) {
 		log := r.l.With(
@@ -90,7 +90,7 @@ func (r *repository) List(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListEquipmentManufacturerConnectionRequest,
+	req *equipmentmanufacturerports.ListEquipmentManufacturerConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -103,7 +103,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListEquipmentManufacturerConnectionRequest,
+	req *equipmentmanufacturerports.ListEquipmentManufacturerConnectionRequest,
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -126,7 +126,7 @@ func applyEquipmentManufacturerColumns(
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListEquipmentManufacturerConnectionRequest,
+	req *equipmentmanufacturerports.ListEquipmentManufacturerConnectionRequest,
 ) (*pagination.CursorListResult[*equipmentmanufacturer.EquipmentManufacturer], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*equipmentmanufacturer.EquipmentManufacturer], error) {
 		log := r.l.With(
@@ -240,7 +240,7 @@ func (r *repository) Update(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetEquipmentManufacturerByIDRequest,
+	req equipmentmanufacturerports.GetEquipmentManufacturerByIDRequest,
 ) (*equipmentmanufacturer.EquipmentManufacturer, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*equipmentmanufacturer.EquipmentManufacturer, error) {
 		log := r.l.With(
@@ -269,7 +269,7 @@ func (r *repository) GetByID(
 
 func (r *repository) GetByIDs(
 	ctx context.Context,
-	req repositories.GetEquipmentManufacturersByIDsRequest,
+	req equipmentmanufacturerports.GetEquipmentManufacturersByIDsRequest,
 ) ([]*equipmentmanufacturer.EquipmentManufacturer, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*equipmentmanufacturer.EquipmentManufacturer, error) {
 		log := r.l.With(
@@ -332,7 +332,7 @@ func (r *repository) SelectOptions(
 
 func (r *repository) BulkUpdateStatus(
 	ctx context.Context,
-	req *repositories.BulkUpdateEquipmentManufacturerStatusRequest,
+	req *equipmentmanufacturerports.BulkUpdateEquipmentManufacturerStatusRequest,
 ) ([]*equipmentmanufacturer.EquipmentManufacturer, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*equipmentmanufacturer.EquipmentManufacturer, error) {
 		log := r.l.With(

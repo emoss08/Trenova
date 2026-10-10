@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/detention"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -27,7 +27,7 @@ type noticeRepository struct {
 	l  *zap.Logger
 }
 
-func NewNoticeRepository(p NoticeParams) repositories.DetentionNoticeRepository {
+func NewNoticeRepository(p NoticeParams) detentionports.DetentionNoticeRepository {
 	return &noticeRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.detention-notice-repository"),
@@ -90,7 +90,7 @@ func (r *noticeRepository) Update(
 // caller happened to read.
 func (r *noticeRepository) AttachPDFDocument(
 	ctx context.Context,
-	req *repositories.AttachNoticePDFDocumentRequest,
+	req *detentionports.AttachNoticePDFDocumentRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.DetentionNoticeColumns
@@ -116,7 +116,7 @@ func (r *noticeRepository) AttachPDFDocument(
 
 func (r *noticeRepository) List(
 	ctx context.Context,
-	req *repositories.ListDetentionNoticesRequest,
+	req *detentionports.ListDetentionNoticesRequest,
 ) ([]*detention.DetentionNotice, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detention.DetentionNotice, error) {
 		cols := buncolgen.DetentionNoticeColumns
@@ -144,7 +144,7 @@ func (r *noticeRepository) List(
 // arrived but that have not left the building yet.
 func (r *noticeRepository) ListQueued(
 	ctx context.Context,
-	req *repositories.ListNoticesDueRequest,
+	req *detentionports.ListNoticesDueRequest,
 ) ([]*detention.DetentionNotice, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detention.DetentionNotice, error) {
 		cols := buncolgen.DetentionNoticeColumns

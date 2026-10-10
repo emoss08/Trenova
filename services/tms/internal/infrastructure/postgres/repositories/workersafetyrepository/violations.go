@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/uptrace/bun"
@@ -14,7 +14,7 @@ import (
 
 func (r *repository) ListViolations(
 	ctx context.Context,
-	req *repositories.ListWorkerSafetyViolationsRequest,
+	req *workerports.ListWorkerSafetyViolationsRequest,
 ) ([]*worker.WorkerSafetyViolation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerSafetyViolation, error) {
 		cols := buncolgen.WorkerSafetyViolationColumns
@@ -59,7 +59,7 @@ func (r *repository) ListViolations(
 
 func (r *repository) GetViolationByID(
 	ctx context.Context,
-	req *repositories.GetWorkerSafetyViolationByIDRequest,
+	req *workerports.GetWorkerSafetyViolationByIDRequest,
 ) (*worker.WorkerSafetyViolation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerSafetyViolation, error) {
 		entity := new(worker.WorkerSafetyViolation)
@@ -129,7 +129,7 @@ func (r *repository) UpdateViolation(
 
 func (r *repository) DeleteViolation(
 	ctx context.Context,
-	req *repositories.GetWorkerSafetyViolationByIDRequest,
+	req *workerports.GetWorkerSafetyViolationByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		results, err := r.db.DBForContext(ctx).

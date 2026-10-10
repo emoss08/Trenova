@@ -4,12 +4,12 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/shared/imageutils"
 	"go.uber.org/zap"
 )
 
-var _ services.AssetInliner = (*Inliner)(nil)
+var _ documenttemplateports.AssetInliner = (*Inliner)(nil)
 
 // InlineAssets adapts Inline to the core port.
 //
@@ -18,10 +18,10 @@ var _ services.AssetInliner = (*Inliner)(nil)
 // doing it safely requires.
 func (i *Inliner) InlineAssets(
 	ctx context.Context,
-	req *services.AssetInlineRequest,
-) (*services.AssetInlineResult, error) {
+	req *documenttemplateports.AssetInlineRequest,
+) (*documenttemplateports.AssetInlineResult, error) {
 	if req == nil {
-		return &services.AssetInlineResult{}, nil
+		return &documenttemplateports.AssetInlineResult{}, nil
 	}
 
 	result, err := i.Inline(ctx, &Request{HTML: req.HTML, Field: req.Field})
@@ -29,7 +29,7 @@ func (i *Inliner) InlineAssets(
 		return nil, err
 	}
 
-	return &services.AssetInlineResult{
+	return &documenttemplateports.AssetInlineResult{
 		HTML:    result.HTML,
 		Diags:   result.Diags,
 		Inlined: result.Inlined,

@@ -6,13 +6,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
-
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/api/enums/v1"
@@ -25,21 +25,21 @@ import (
 type DispatcherParams struct {
 	fx.In
 
-	Workflows serviceports.WorkflowStarter
+	Workflows kernelports.WorkflowStarter
 	Logger    *zap.Logger
 }
 
 // Dispatcher hands a one-shot call to a worker and waits for its answer, for
 // the request a person is waiting on.
 type Dispatcher struct {
-	workflows serviceports.WorkflowStarter
+	workflows kernelports.WorkflowStarter
 	l         *zap.Logger
 }
 
 var (
-	_ serviceports.StructuredCompleter = (*Dispatcher)(nil)
-	_ serviceports.AIProviderTester    = (*Dispatcher)(nil)
-	_ serviceports.BriefingDayWriter   = (*Dispatcher)(nil)
+	_ agentports.StructuredCompleter  = (*Dispatcher)(nil)
+	_ agentports.AIProviderTester     = (*Dispatcher)(nil)
+	_ briefingports.BriefingDayWriter = (*Dispatcher)(nil)
 )
 
 func NewDispatcher(p DispatcherParams) *Dispatcher {
@@ -49,9 +49,9 @@ func NewDispatcher(p DispatcherParams) *Dispatcher {
 // CompleteStructured asks the model one structured question on a worker.
 func (d *Dispatcher) CompleteStructured(
 	ctx context.Context,
-	req *serviceports.StructuredCompletionRequest,
-) (*serviceports.StructuredCompletionResult, error) {
-	var result serviceports.StructuredCompletionResult
+	req *agentports.StructuredCompletionRequest,
+) (*agentports.StructuredCompletionResult, error) {
+	var result agentports.StructuredCompletionResult
 	if err := d.await(ctx, &call{
 		id:           "structured-completion/" + pulid.MustNew("scmp_").String(),
 		workflow:     StructuredCompletionWorkflowName,
@@ -71,9 +71,9 @@ func (d *Dispatcher) CompleteStructured(
 // the one probe.
 func (d *Dispatcher) Test(
 	ctx context.Context,
-	req repositories.GetAIProviderByIDRequest,
-) (*serviceports.TestAIProviderResult, error) {
-	var result serviceports.TestAIProviderResult
+	req agentports.GetAIProviderByIDRequest,
+) (*agentports.TestAIProviderResult, error) {
+	var result agentports.TestAIProviderResult
 	if err := d.await(ctx, &call{
 		id:           "ai-provider-test/" + req.ID.String(),
 		workflow:     TestAIProviderWorkflowName,
@@ -92,9 +92,9 @@ func (d *Dispatcher) Test(
 // its own call, abandoned when the editor stops waiting.
 func (d *Dispatcher) ListModels(
 	ctx context.Context,
-	req *serviceports.ProbeAIProviderModelsRequest,
-) ([]serviceports.AIProviderModelOption, error) {
-	var result []serviceports.AIProviderModelOption
+	req *agentports.ProbeAIProviderModelsRequest,
+) ([]agentports.AIProviderModelOption, error) {
+	var result []agentports.AIProviderModelOption
 	if err := d.await(ctx, &call{
 		id:           "ai-provider-models/" + pulid.MustNew("apml_").String(),
 		workflow:     ListAIProviderModelsWorkflowName,
@@ -113,9 +113,9 @@ func (d *Dispatcher) ListModels(
 // TestDraft probes an unsaved endpoint on a worker.
 func (d *Dispatcher) TestDraft(
 	ctx context.Context,
-	req *serviceports.ProbeAIProviderDraftRequest,
-) (*serviceports.AIProviderDraftTestResult, error) {
-	var result serviceports.AIProviderDraftTestResult
+	req *agentports.ProbeAIProviderDraftRequest,
+) (*agentports.AIProviderDraftTestResult, error) {
+	var result agentports.AIProviderDraftTestResult
 	if err := d.await(ctx, &call{
 		id:           "ai-provider-draft-test/" + pulid.MustNew("apdt_").String(),
 		workflow:     TestAIProviderDraftWorkflowName,
@@ -135,9 +135,9 @@ func (d *Dispatcher) TestDraft(
 // same page at once share the one write.
 func (d *Dispatcher) WriteForDay(
 	ctx context.Context,
-	req serviceports.WriteBriefingRequest,
-) (*serviceports.WriteBriefingResult, error) {
-	var result serviceports.WriteBriefingResult
+	req briefingports.WriteBriefingRequest,
+) (*briefingports.WriteBriefingResult, error) {
+	var result briefingports.WriteBriefingResult
 	if err := d.await(ctx, &call{
 		id:           briefingWriteID(req),
 		workflow:     WriteBriefingWorkflowName,
@@ -152,7 +152,7 @@ func (d *Dispatcher) WriteForDay(
 	return &result, nil
 }
 
-func briefingWriteID(req serviceports.WriteBriefingRequest) string {
+func briefingWriteID(req briefingports.WriteBriefingRequest) string {
 	roles := make([]string, 0, len(req.Roles))
 	for _, role := range req.Roles {
 		roles = append(roles, string(role))
@@ -226,7 +226,7 @@ func (d *Dispatcher) await(ctx context.Context, c *call, result any) (err error)
 	return nil
 }
 
-func structuredFeature(req *serviceports.StructuredCompletionRequest) string {
+func structuredFeature(req *agentports.StructuredCompletionRequest) string {
 	if req.Attribution.Feature != "" {
 		return string(req.Attribution.Feature)
 	}

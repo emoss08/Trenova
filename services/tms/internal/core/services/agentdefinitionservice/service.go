@@ -3,7 +3,6 @@ package agentdefinitionservice
 import (
 	"context"
 	"fmt"
-	"github.com/emoss08/trenova/internal/core/ports"
 	"slices"
 	"strings"
 
@@ -11,10 +10,15 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/planservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -30,46 +34,46 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	DB           ports.DBConnection
-	Repo         repositories.AgentDefinitionRepository
-	Versions     repositories.AgentDefinitionVersionRepository
-	Proposals    repositories.AgentProposalRepository
-	AgentPlans   repositories.AgentPlanRepository
-	Tools        services.AgentToolRegistry
-	QueryTools   services.AgentQueryToolRegistry
-	Contexts     services.RuntimeContextBuilder
-	AuditService services.AuditService
+	DB           kernelports.DBConnection
+	Repo         agentdefinitionports.AgentDefinitionRepository
+	Versions     agentdefinitionports.AgentDefinitionVersionRepository
+	Proposals    agentports.AgentProposalRepository
+	AgentPlans   agentports.AgentPlanRepository
+	Tools        agentports.AgentToolRegistry
+	QueryTools   agentports.AgentQueryToolRegistry
+	Contexts     agentports.RuntimeContextBuilder
+	AuditService auditports.AuditService
 	// Schedules keeps the schedule behind a scheduled or continuous agent
 	// in line with the agent as it is saved.
-	Schedules services.AgentDefinitionScheduler
+	Schedules agentdefinitionports.AgentDefinitionScheduler
 	// Extensions says which extensions the organization has on, so their
 	// tools are offered only while they are.
-	Extensions services.AgentExtensionGate `optional:"true"`
+	Extensions agentextensionports.AgentExtensionGate `optional:"true"`
 	// Access sets who may use an agent in the transaction that saves it.
-	Access      services.AgentAccessService
-	Permissions services.PermissionEngine `optional:"true"`
-	Plans       services.PlanService      `optional:"true"`
+	Access      agentdefinitionports.AgentAccessService
+	Permissions permissionports.PermissionEngine `optional:"true"`
+	Plans       platformplanports.PlanService    `optional:"true"`
 }
 
 type Service struct {
 	l           *zap.Logger
-	db          ports.DBConnection
-	repo        repositories.AgentDefinitionRepository
-	versions    repositories.AgentDefinitionVersionRepository
-	proposals   repositories.AgentProposalRepository
-	agentPlans  repositories.AgentPlanRepository
-	tools       services.AgentToolRegistry
-	queryTools  services.AgentQueryToolRegistry
-	contexts    services.RuntimeContextBuilder
-	audit       services.AuditService
-	schedules   services.AgentDefinitionScheduler
-	extensions  services.AgentExtensionGate
-	access      services.AgentAccessService
-	permissions services.PermissionEngine
-	plans       services.PlanService
+	db          kernelports.DBConnection
+	repo        agentdefinitionports.AgentDefinitionRepository
+	versions    agentdefinitionports.AgentDefinitionVersionRepository
+	proposals   agentports.AgentProposalRepository
+	agentPlans  agentports.AgentPlanRepository
+	tools       agentports.AgentToolRegistry
+	queryTools  agentports.AgentQueryToolRegistry
+	contexts    agentports.RuntimeContextBuilder
+	audit       auditports.AuditService
+	schedules   agentdefinitionports.AgentDefinitionScheduler
+	extensions  agentextensionports.AgentExtensionGate
+	access      agentdefinitionports.AgentAccessService
+	permissions permissionports.PermissionEngine
+	plans       platformplanports.PlanService
 }
 
-func New(p Params) services.AgentDefinitionService {
+func New(p Params) agentdefinitionports.AgentDefinitionService {
 	return &Service{
 		l:           p.Logger.Named("service.agentdefinition"),
 		db:          p.DB,
@@ -91,36 +95,36 @@ func New(p Params) services.AgentDefinitionService {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListAgentDefinitionRequest,
+	req *agentdefinitionports.ListAgentDefinitionRequest,
 ) (*pagination.ListResult[*agentdefinition.Definition], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListAgentDefinitionConnectionRequest,
+	req *agentdefinitionports.ListAgentDefinitionConnectionRequest,
 ) (*pagination.CursorListResult[*agentdefinition.Definition], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) GetByID(
 	ctx context.Context,
-	req repositories.GetAgentDefinitionByIDRequest,
+	req agentdefinitionports.GetAgentDefinitionByIDRequest,
 ) (*agentdefinition.Definition, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) GetBySystemKey(
 	ctx context.Context,
-	req repositories.GetAgentDefinitionBySystemKeyRequest,
+	req agentdefinitionports.GetAgentDefinitionBySystemKeyRequest,
 ) (*agentdefinition.Definition, error) {
 	return s.repo.GetBySystemKey(ctx, req)
 }
 
 func (s *Service) Create(
 	ctx context.Context,
-	req *services.SaveAgentDefinitionRequest,
-	actor *services.RequestActor,
+	req *agentdefinitionports.SaveAgentDefinitionRequest,
+	actor *permissionports.RequestActor,
 ) (*agentdefinition.Definition, error) {
 	definition := &agentdefinition.Definition{
 		OrganizationID: req.TenantInfo.OrgID,
@@ -162,10 +166,10 @@ func (s *Service) Create(
 
 func (s *Service) Update(
 	ctx context.Context,
-	req *services.SaveAgentDefinitionRequest,
-	actor *services.RequestActor,
+	req *agentdefinitionports.SaveAgentDefinitionRequest,
+	actor *permissionports.RequestActor,
 ) (*agentdefinition.Definition, error) {
-	existing, err := s.repo.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	existing, err := s.repo.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -223,8 +227,8 @@ func (s *Service) Update(
 // rule for who may change it.
 func (s *Service) save(
 	ctx context.Context,
-	req *services.SaveAgentDefinitionRequest,
-	actor *services.RequestActor,
+	req *agentdefinitionports.SaveAgentDefinitionRequest,
+	actor *permissionports.RequestActor,
 	write saveFunc,
 ) (*agentdefinition.Definition, error) {
 	if req.Access == nil {
@@ -236,7 +240,7 @@ func (s *Service) save(
 		)
 	}
 
-	return s.access.SaveWithAccess(ctx, &services.SaveAgentWithAccessRequest{
+	return s.access.SaveWithAccess(ctx, &agentdefinitionports.SaveAgentWithAccessRequest{
 		TenantInfo: req.TenantInfo,
 		Access:     *req.Access,
 		Save:       write,
@@ -245,10 +249,10 @@ func (s *Service) save(
 
 func (s *Service) Delete(
 	ctx context.Context,
-	req repositories.DeleteAgentDefinitionRequest,
-	actor *services.RequestActor,
+	req agentdefinitionports.DeleteAgentDefinitionRequest,
+	actor *permissionports.RequestActor,
 ) error {
-	existing, err := s.repo.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	existing, err := s.repo.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -262,7 +266,7 @@ func (s *Service) Delete(
 		)
 	}
 
-	if err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	if err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		return s.withdrawAndDelete(txCtx, req)
 	}); err != nil {
 		return err
@@ -276,11 +280,11 @@ func (s *Service) Delete(
 
 func (s *Service) withdrawAndDelete(
 	ctx context.Context,
-	req repositories.DeleteAgentDefinitionRequest,
+	req agentdefinitionports.DeleteAgentDefinitionRequest,
 ) error {
 	proposals, err := s.proposals.ExpirePendingByDefinition(
 		ctx,
-		repositories.ExpireAgentProposalsByDefinitionRequest{
+		agentports.ExpireAgentProposalsByDefinitionRequest{
 			AgentDefinitionID: req.ID,
 			TenantInfo:        req.TenantInfo,
 		},
@@ -291,7 +295,7 @@ func (s *Service) withdrawAndDelete(
 
 	plans, err := s.agentPlans.ExpirePendingByDefinition(
 		ctx,
-		repositories.ExpireAgentPlansByDefinitionRequest{
+		agentports.ExpireAgentPlansByDefinitionRequest{
 			AgentDefinitionID: req.ID,
 			TenantInfo:        req.TenantInfo,
 		},
@@ -313,12 +317,12 @@ func (s *Service) withdrawAndDelete(
 	return nil
 }
 
-func (s *Service) Templates() []services.AgentTemplateDescriptor {
+func (s *Service) Templates() []agentdefinitionports.AgentTemplateDescriptor {
 	templates := agentdefinition.AllTemplates()
-	descriptors := make([]services.AgentTemplateDescriptor, 0, len(templates))
+	descriptors := make([]agentdefinitionports.AgentTemplateDescriptor, 0, len(templates))
 
 	for _, template := range templates {
-		descriptors = append(descriptors, services.AgentTemplateDescriptor{
+		descriptors = append(descriptors, agentdefinitionports.AgentTemplateDescriptor{
 			Template:             template,
 			Label:                template.Label(),
 			Description:          template.Description(),
@@ -350,7 +354,7 @@ func starterOutput(template agentdefinition.Template) agentdefinition.OutputMode
 func (s *Service) ToolCatalog(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) ([]services.ToolCatalogEntry, error) {
+) ([]agentdefinitionports.ToolCatalogEntry, error) {
 	extensions, err := s.activeExtensions(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -383,7 +387,7 @@ func (s *Service) EventKinds() []agent.EventDescriptor {
 
 func (s *Service) PreviewPrompt(
 	ctx context.Context,
-	req *services.PreviewPromptRequest,
+	req *agentdefinitionports.PreviewPromptRequest,
 ) (string, error) {
 	definition := &agentdefinition.Definition{
 		OrganizationID: req.Definition.TenantInfo.OrgID,
@@ -395,7 +399,7 @@ func (s *Service) PreviewPrompt(
 		Trigger: definition.TriggerMode.RunTrigger(),
 	}
 	if s.contexts != nil {
-		built, err := s.contexts.Build(ctx, &services.RuntimeContextRequest{
+		built, err := s.contexts.Build(ctx, &agentports.RuntimeContextRequest{
 			Definition: definition,
 			Actor:      req.Actor,
 			Trigger:    definition.TriggerMode.RunTrigger(),
@@ -498,7 +502,7 @@ func scheduleChanged(previous, updated *agentdefinition.Definition) bool {
 		updated.NextRunAt == nil
 }
 
-func apply(definition *agentdefinition.Definition, req *services.SaveAgentDefinitionRequest) {
+func apply(definition *agentdefinition.Definition, req *agentdefinitionports.SaveAgentDefinitionRequest) {
 	definition.Name = strings.TrimSpace(req.Name)
 	definition.Description = strings.TrimSpace(req.Description)
 	definition.Template = req.Template
@@ -603,7 +607,7 @@ func (s *Service) logAudit(
 	definition *agentdefinition.Definition,
 	previous *agentdefinition.Definition,
 	operation permission.Operation,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	comment string,
 ) {
 	auditActor := actor.AuditActor()
@@ -613,7 +617,7 @@ func (s *Service) logAudit(
 		previousState = jsonutils.MustToJSON(previous)
 	}
 
-	if err := s.audit.LogAction(&services.LogActionParams{
+	if err := s.audit.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceAgentDefinition,
 		ResourceID:     definition.GetID().String(),
 		Operation:      operation,
@@ -631,7 +635,7 @@ func (s *Service) logAudit(
 }
 
 // actorUser is the person behind a request, nil for a key or the system.
-func actorUser(actor *services.RequestActor) pulid.ID {
+func actorUser(actor *permissionports.RequestActor) pulid.ID {
 	if actor == nil {
 		return pulid.Nil
 	}

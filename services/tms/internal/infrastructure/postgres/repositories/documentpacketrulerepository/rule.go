@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/documentpacketrule"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentpacketruleports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -29,7 +29,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.DocumentPacketRuleRepository {
+func New(p Params) documentpacketruleports.DocumentPacketRuleRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.document-packet-rule-repository"),
@@ -38,7 +38,7 @@ func New(p Params) repositories.DocumentPacketRuleRepository {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListDocumentPacketRulesRequest,
+	req *documentpacketruleports.ListDocumentPacketRulesRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
@@ -52,7 +52,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListDocumentPacketRulesRequest,
+	req *documentpacketruleports.ListDocumentPacketRulesRequest,
 ) (*pagination.ListResult[*documentpacketrule.DocumentPacketRule], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*documentpacketrule.DocumentPacketRule], error) {
 		items := make([]*documentpacketrule.DocumentPacketRule, 0, req.Filter.Pagination.SafeLimit())
@@ -74,7 +74,7 @@ func (r *repository) List(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListDocumentPacketRuleConnectionRequest,
+	req *documentpacketruleports.ListDocumentPacketRuleConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -87,7 +87,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListDocumentPacketRuleConnectionRequest,
+	req *documentpacketruleports.ListDocumentPacketRuleConnectionRequest,
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -107,7 +107,7 @@ func applyDocumentPacketRuleColumns(q *bun.SelectQuery, columns []string) *bun.S
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListDocumentPacketRuleConnectionRequest,
+	req *documentpacketruleports.ListDocumentPacketRuleConnectionRequest,
 ) (*pagination.CursorListResult[*documentpacketrule.DocumentPacketRule], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*documentpacketrule.DocumentPacketRule], error) {
 		log := r.l.With(
@@ -161,7 +161,7 @@ func (r *repository) ListConnection(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetDocumentPacketRuleByIDRequest,
+	req documentpacketruleports.GetDocumentPacketRuleByIDRequest,
 ) (*documentpacketrule.DocumentPacketRule, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*documentpacketrule.DocumentPacketRule, error) {
 		log := r.l.With(
@@ -188,7 +188,7 @@ func (r *repository) GetByID(
 
 func (r *repository) ListByResourceType(
 	ctx context.Context,
-	req *repositories.ListDocumentPacketRulesByResourceRequest,
+	req *documentpacketruleports.ListDocumentPacketRulesByResourceRequest,
 ) ([]*documentpacketrule.DocumentPacketRule, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*documentpacketrule.DocumentPacketRule, error) {
 		items := make([]*documentpacketrule.DocumentPacketRule, 0)
@@ -268,7 +268,7 @@ func (r *repository) Update(
 
 func (r *repository) Delete(
 	ctx context.Context,
-	req repositories.GetDocumentPacketRuleByIDRequest,
+	req documentpacketruleports.GetDocumentPacketRuleByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		log := r.l.With(

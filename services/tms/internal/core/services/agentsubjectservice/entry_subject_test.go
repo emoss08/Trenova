@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -19,14 +19,14 @@ import (
 )
 
 type fakeShipments struct {
-	serviceports.ShipmentService
+	shipmentports.ShipmentService
 
 	entity *shipment.Shipment
 }
 
 func (f *fakeShipments) Get(
 	_ context.Context,
-	req *repositories.GetShipmentByIDRequest,
+	req *shipmentports.GetShipmentByIDRequest,
 ) (*shipment.Shipment, error) {
 	entity := *f.entity
 	entity.ID = req.ID
@@ -35,20 +35,20 @@ func (f *fakeShipments) Get(
 }
 
 type fakeConsole struct {
-	repositories.DispatchConsoleRepository
+	shipmentports.DispatchConsoleRepository
 
-	moves []*repositories.BoardMove
+	moves []*shipmentports.BoardMove
 }
 
 func (f *fakeConsole) ListBoardMoves(
 	_ context.Context,
-	_ *repositories.DispatchBoardFilter,
-) ([]*repositories.BoardMove, error) {
+	_ *shipmentports.DispatchBoardFilter,
+) ([]*shipmentports.BoardMove, error) {
 	return f.moves, nil
 }
 
 type fakeDispatchControls struct {
-	repositories.DispatchControlRepository
+	dispatchcontrolports.DispatchControlRepository
 
 	control *dispatchcontrol.DispatchControl
 	err     error
@@ -56,7 +56,7 @@ type fakeDispatchControls struct {
 
 func (f *fakeDispatchControls) GetByOrgID(
 	_ context.Context,
-	_ repositories.GetDispatchControlRequest,
+	_ dispatchcontrolports.GetDispatchControlRequest,
 ) (*dispatchcontrol.DispatchControl, error) {
 	return f.control, f.err
 }
@@ -115,7 +115,7 @@ func TestService_SaysWhetherAMoveStartsInsideTheCoverageWindow(t *testing.T) {
 
 			moveID := pulid.MustNew("smv_")
 			svc := &Service{
-				console: &fakeConsole{moves: []*repositories.BoardMove{{
+				console: &fakeConsole{moves: []*shipmentports.BoardMove{{
 					MoveID:            moveID,
 					ProNumber:         "S-2002",
 					OriginWindowStart: now + tc.startsIn,
@@ -154,7 +154,7 @@ func TestService_AMoveWithoutDispatchControlsStillDescribesTheMove(t *testing.T)
 
 	moveID := pulid.MustNew("smv_")
 	svc := &Service{
-		console: &fakeConsole{moves: []*repositories.BoardMove{{
+		console: &fakeConsole{moves: []*shipmentports.BoardMove{{
 			MoveID:            moveID,
 			ProNumber:         "S-2003",
 			OriginWindowStart: timeutils.NowUnix(),

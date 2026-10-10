@@ -4,25 +4,25 @@ package agentresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	services "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 
 type Deps struct {
 	*base.Core
-	AgentRunService           services.AgentRunService
-	AgentTrustService         services.AgentTrustService
-	AgentProposalService      services.AgentProposalService
-	AgentPlanService          services.AgentPlanService
-	AgentMemoryService        services.AgentMemoryService
-	AgentReflectionService    services.AgentReflectionService
-	AgentEvaluationService    services.AgentEvaluationService
-	AgentActivityService      services.AgentActivityService
-	AgentExceptionService     services.AgentExceptionService
-	AgentDecisionService      services.AgentDecisionService
-	AgentDecisionQueueService services.AgentDecisionQueueService
-	ApprovalCommitter         services.ApprovalCommitter
-	AgentTools                services.AgentToolRegistry
-	AgentControlService       services.AgentControlService
+	AgentRunService           agentports.AgentRunService
+	AgentTrustService         agentports.AgentTrustService
+	AgentProposalService      agentports.AgentProposalService
+	AgentPlanService          agentports.AgentPlanService
+	AgentMemoryService        agentports.AgentMemoryService
+	AgentReflectionService    agentports.AgentReflectionService
+	AgentEvaluationService    agentports.AgentEvaluationService
+	AgentActivityService      agentports.AgentActivityService
+	AgentExceptionService     agentports.AgentExceptionService
+	AgentDecisionService      agentports.AgentDecisionService
+	AgentDecisionQueueService agentports.AgentDecisionQueueService
+	ApprovalCommitter         agentports.ApprovalCommitter
+	AgentTools                agentports.AgentToolRegistry
+	AgentControlService       agentports.AgentControlService
 }
 
 type AgentDecisionResolver struct{ *Deps }

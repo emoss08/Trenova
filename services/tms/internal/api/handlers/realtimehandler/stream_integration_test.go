@@ -3,6 +3,8 @@
 package realtimehandler
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"bufio"
 	"bytes"
 	"context"
@@ -16,10 +18,11 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	servicesport "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/realtimeservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/realtimebroker"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -107,7 +110,7 @@ func TestStreamEndToEnd(t *testing.T) {
 	lc.RequireStart()
 	t.Cleanup(lc.RequireStop)
 
-	users := mocks.NewMockUserRepository(t)
+	users := tenantportsmock.NewMockUserRepository(t)
 	users.On("GetByID", mock.Anything, mock.Anything).
 		Return(&tenant.User{ID: testUserID, Name: "Dana Dispatcher"}, nil)
 
@@ -118,9 +121,9 @@ func TestStreamEndToEnd(t *testing.T) {
 		Logger: logger, Config: cfg, Publisher: publisher,
 	})
 
-	engine := mocks.NewMockPermissionEngine(t)
+	engine := permissionportsmock.NewMockPermissionEngine(t)
 	engine.On("Check", mock.Anything, mock.Anything).
-		Return(&servicesport.PermissionCheckResult{Allowed: true}, nil).Maybe()
+		Return(&permissionports.PermissionCheckResult{Allowed: true}, nil).Maybe()
 	eh := helpers.NewErrorHandler(helpers.ErrorHandlerParams{Logger: logger, Config: cfg})
 	h := New(Params{
 		Gateway:      gateway,
@@ -157,18 +160,18 @@ func TestStreamEndToEnd(t *testing.T) {
 
 	stream := readSSE(t, bufio.NewReader(resp.Body))
 
-	var ready servicesport.RealtimeReadyEvent
+	var ready agentports.RealtimeReadyEvent
 	require.NoError(t, sonic.UnmarshalString(stream.next(t, "ready").data, &ready))
 	require.NotEmpty(t, ready.ConnectionID)
 
-	var snapshot servicesport.RealtimePresenceSnapshot
+	var snapshot agentports.RealtimePresenceSnapshot
 	require.NoError(t, sonic.UnmarshalString(stream.next(t, "presence.snapshot").data, &snapshot))
 	require.Len(t, snapshot.Members, 1)
 	assert.Equal(t, "Dana Dispatcher", snapshot.Members[0].Name)
 
 	t.Run("an invalidation arrives with a resumable id", func(t *testing.T) {
 		require.NoError(t, publish.PublishResourceInvalidation(t.Context(),
-			&servicesport.PublishResourceInvalidationRequest{
+			&agentports.PublishResourceInvalidationRequest{
 				OrganizationID: testOrgID,
 				BusinessUnitID: testBUID,
 				Resource:       "shipments",
@@ -203,7 +206,7 @@ func TestStreamEndToEnd(t *testing.T) {
 		_ = typingResp.Body.Close()
 		require.Equal(t, http.StatusNoContent, typingResp.StatusCode)
 
-		var typing servicesport.RealtimeTypingEvent
+		var typing agentports.RealtimeTypingEvent
 		require.NoError(t, sonic.UnmarshalString(stream.next(t, "typing").data, &typing))
 		assert.Equal(t, "shipment-comments:"+shipmentID, typing.Scope)
 		assert.Equal(t, testUserID.String(), typing.UserID)
@@ -220,7 +223,7 @@ func TestStreamEndToEnd(t *testing.T) {
 		started := time.Now()
 		for range n {
 			require.NoError(t, publish.PublishResourceInvalidation(t.Context(),
-				&servicesport.PublishResourceInvalidationRequest{
+				&agentports.PublishResourceInvalidationRequest{
 					OrganizationID: otherOrg,
 					BusinessUnitID: otherBU,
 					Resource:       "billing_queue",
@@ -238,8 +241,8 @@ func TestStreamEndToEnd(t *testing.T) {
 
 	t.Run("draining ends the stream with a shutdown notice", func(t *testing.T) {
 		gateway.Drain()
-		var closing servicesport.RealtimeCloseEvent
+		var closing agentports.RealtimeCloseEvent
 		require.NoError(t, sonic.UnmarshalString(stream.next(t, "close").data, &closing))
-		assert.Equal(t, servicesport.RealtimeCloseShutdown, closing.Reason)
+		assert.Equal(t, agentports.RealtimeCloseShutdown, closing.Reason)
 	})
 }

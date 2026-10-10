@@ -12,8 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/manualjournal"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/manualjournalports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -30,7 +29,7 @@ func (r *QueryResolver) ManualJournals(ctx context.Context, input gqlmodel.DataT
 
 	result, err := r.ManualJournalService.ListConnection(
 		ctx,
-		&repositories.ListManualJournalConnectionRequest{
+		&manualjournalports.ListManualJournalConnectionRequest{
 			Filter:               tableInput.Filter,
 			Cursor:               tableInput.Cursor,
 			ManualJournalColumns: manualJournalColumns(ctx, "edges.node"),
@@ -54,7 +53,7 @@ func (r *QueryResolver) ManualJournal(ctx context.Context, id string) (*manualjo
 		return nil, err
 	}
 
-	return r.ManualJournalService.Get(ctx, &serviceports.GetManualJournalRequest{
+	return r.ManualJournalService.Get(ctx, &manualjournalports.GetManualJournalRequest{
 		RequestID:  requestID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})

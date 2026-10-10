@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/jurisdictionrule"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -19,7 +19,7 @@ func i16ptr(v int16) *int16   { return &v }
 func bptr(v bool) *bool       { return &v }
 
 type overrideRepoStub struct {
-	repositories.JurisdictionRuleRepository
+	permitports.JurisdictionRuleRepository
 
 	rule    *jurisdictionrule.JurisdictionRule
 	rules   []*jurisdictionrule.JurisdictionRule
@@ -27,7 +27,7 @@ type overrideRepoStub struct {
 }
 
 func (s *overrideRepoStub) GetActiveByStateIDs(
-	_ context.Context, _ *repositories.GetJurisdictionRulesRequest,
+	_ context.Context, _ *permitports.GetJurisdictionRulesRequest,
 ) ([]*jurisdictionrule.JurisdictionRule, error) {
 	if s.rules != nil {
 		return s.rules, nil
@@ -68,7 +68,7 @@ func overrideFor(mutate func(*jurisdictionrule.Override)) *jurisdictionrule.Over
 	return o
 }
 
-func overrideService(repo repositories.JurisdictionRuleRepository) *service {
+func overrideService(repo permitports.JurisdictionRuleRepository) *service {
 	return &service{repo: repo, l: zap.NewNop()}
 }
 

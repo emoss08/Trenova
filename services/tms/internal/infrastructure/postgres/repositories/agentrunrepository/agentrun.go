@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -30,7 +30,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.AgentRunRepository {
+func New(p Params) agentports.AgentRunRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.agentrun-repository"),
@@ -39,7 +39,7 @@ func New(p Params) repositories.AgentRunRepository {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListAgentRunRequest,
+	req *agentports.ListAgentRunRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.AgentRunColumns
 	q = querybuilder.ApplyFilters(
@@ -57,7 +57,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListAgentRunRequest,
+	req *agentports.ListAgentRunRequest,
 ) (*pagination.ListResult[*agent.AgentRun], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*agent.AgentRun], error) {
 		log := r.l.With(zap.String("operation", "List"))
@@ -81,7 +81,7 @@ func (r *repository) List(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListAgentRunConnectionRequest,
+	req *agentports.ListAgentRunConnectionRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -95,7 +95,7 @@ func (r *repository) applyTotalCountFilters(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListAgentRunConnectionRequest,
+	req *agentports.ListAgentRunConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -120,7 +120,7 @@ func withoutTranscript(q *bun.SelectQuery) *bun.SelectQuery {
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListAgentRunConnectionRequest,
+	req *agentports.ListAgentRunConnectionRequest,
 ) (*pagination.CursorListResult[*agent.AgentRun], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*agent.AgentRun], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -171,7 +171,7 @@ func (r *repository) ListConnection(
 
 func (r *repository) ListByIDs(
 	ctx context.Context,
-	req repositories.ListAgentRunsByIDsRequest,
+	req agentports.ListAgentRunsByIDsRequest,
 ) ([]*agent.AgentRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRun, error) {
 		if len(req.IDs) == 0 {
@@ -201,7 +201,7 @@ func (r *repository) ListByIDs(
 
 func (r *repository) ListTranscriptsByIDs(
 	ctx context.Context,
-	req repositories.ListAgentRunsByIDsRequest,
+	req agentports.ListAgentRunsByIDsRequest,
 ) ([]*agent.AgentRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRun, error) {
 		if len(req.IDs) == 0 {
@@ -236,7 +236,7 @@ func (r *repository) ListTranscriptsByIDs(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetAgentRunByIDRequest,
+	req agentports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.AgentRun, error) {
 		log := r.l.With(zap.String("operation", "GetByID"), zap.String("id", req.ID.String()))
@@ -310,7 +310,7 @@ func (r *repository) Update(
 
 func (r *repository) CountOpen(
 	ctx context.Context,
-	req repositories.CountOpenAgentRunsRequest,
+	req agentports.CountOpenAgentRunsRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		cols := buncolgen.AgentRunColumns
@@ -344,7 +344,7 @@ func (r *repository) CountOpen(
 
 func (r *repository) CountSince(
 	ctx context.Context,
-	req repositories.CountAgentRunsSinceRequest,
+	req agentports.CountAgentRunsSinceRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		cols := buncolgen.AgentRunColumns

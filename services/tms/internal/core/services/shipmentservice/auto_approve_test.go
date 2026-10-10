@@ -5,14 +5,14 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/stretchr/testify/assert"
 )
 
 func autoTransferPolicy(
 	requirement tenant.EnforcementLevel,
-) services.ShipmentBillingReadinessPolicy {
-	return services.ShipmentBillingReadinessPolicy{
+) shipmentports.ShipmentBillingReadinessPolicy {
+	return shipmentports.ShipmentBillingReadinessPolicy{
 		BillingQueueTransferMode:              tenant.BillingQueueTransferModeAutomaticWhenReady,
 		ShipmentBillingRequirementEnforcement: requirement,
 		RateValidationEnforcement:             requirement,
@@ -56,7 +56,7 @@ func TestIssuesStopAutoApprovalEvenWhenEnforcementIsIgnore(t *testing.T) {
 func TestManualTransferOrganizationsNeverAutoApprove(t *testing.T) {
 	t.Parallel()
 
-	manual := services.ShipmentBillingReadinessPolicy{
+	manual := shipmentports.ShipmentBillingReadinessPolicy{
 		BillingQueueTransferMode:              tenant.BillingQueueTransferModeManualOnly,
 		ShipmentBillingRequirementEnforcement: tenant.EnforcementLevelBlock,
 		RateValidationEnforcement:             tenant.EnforcementLevelBlock,

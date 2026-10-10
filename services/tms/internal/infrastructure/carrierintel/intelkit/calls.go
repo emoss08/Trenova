@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/shared/restx"
 )
 
@@ -21,10 +21,10 @@ func LimiterKeyPrefix(namespace, secret string) string {
 }
 
 type Recorder struct {
-	record services.CarrierIntelCallRecorder
+	record carrierintelports.CarrierIntelCallRecorder
 }
 
-func NewRecorder(record services.CarrierIntelCallRecorder) Recorder {
+func NewRecorder(record carrierintelports.CarrierIntelCallRecorder) Recorder {
 	return Recorder{record: record}
 }
 
@@ -43,7 +43,7 @@ func (r Recorder) Record(ctx context.Context, outcome *CallOutcome) {
 	if r.record == nil {
 		return
 	}
-	r.record(ctx, services.CarrierIntelCall{
+	r.record(ctx, carrierintelports.CarrierIntelCall{
 		Endpoint:   outcome.Endpoint,
 		DOTNumber:  outcome.DOTNumber,
 		StatusCode: outcome.statusCode(),
@@ -68,7 +68,7 @@ func CallStatus(rawErr, mapped error) int {
 	if status := restx.StatusCode(rawErr); status != 0 {
 		return status
 	}
-	if services.IsCarrierIntelErrorKind(mapped, services.CarrierIntelErrorNotFound) {
+	if carrierintelports.IsCarrierIntelErrorKind(mapped, carrierintelports.CarrierIntelErrorNotFound) {
 		return http.StatusOK
 	}
 	return 0

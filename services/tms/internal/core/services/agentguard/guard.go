@@ -5,11 +5,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
-
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -18,13 +16,13 @@ type Params struct {
 	fx.In
 
 	Logger     *zap.Logger
-	Completion serviceports.CompletionService
+	Completion agentports.CompletionService
 	// Verdicts is the store every replica shares. Optional: without it each
 	// replica remembers only its own classifications, which is what this
 	// service did before and what a test wants.
-	Verdicts repositories.ScopeVerdictCacheRepository `optional:"true"`
-	Config   *config.Config                           `optional:"true"`
-	Metrics  *metrics.Registry                        `optional:"true"`
+	Verdicts agentports.ScopeVerdictCacheRepository `optional:"true"`
+	Config   *config.Config                         `optional:"true"`
+	Metrics  *metrics.Registry                      `optional:"true"`
 }
 
 /*
@@ -52,7 +50,7 @@ const DefaultClassifierTimeout = 3 * time.Second
 
 type Service struct {
 	logger     *zap.Logger
-	completion serviceports.CompletionService
+	completion agentports.CompletionService
 	metrics    *metrics.Assistant
 
 	// ClassifierTimeout is how long the scope check may take before the
@@ -189,7 +187,7 @@ func (s *Service) evaluate(ctx context.Context, req *EvaluateRequest) Decision {
 			return allowed(StageUnavailable, CategoryOther)
 		}
 
-		if errors.Is(err, serviceports.ErrNoProviderConfigured) {
+		if errors.Is(err, agentports.ErrNoProviderConfigured) {
 			s.logger.Debug("no scope classifier configured; deterministic rules only")
 
 			return allowed(StageUnavailable, CategoryOther)
@@ -243,7 +241,7 @@ func reasonForCategory(category Category) Reason {
 // literal. The field is unexported because nothing outside this package has
 // any business swapping the classifier at runtime; a test that needs a slow
 // or failing one does.
-func SetCompletionForTest(s *Service, completion serviceports.CompletionService) {
+func SetCompletionForTest(s *Service, completion agentports.CompletionService) {
 	s.completion = completion
 	if s.logger == nil {
 		s.logger = zap.NewNop()

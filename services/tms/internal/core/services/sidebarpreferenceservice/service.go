@@ -6,8 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/sidebarpreference"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/sidebarpreferenceports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -19,14 +20,14 @@ type Params struct {
 	fx.In
 
 	Logger           *zap.Logger
-	Repo             repositories.SidebarPreferenceRepository
-	PermissionEngine services.PermissionEngine
+	Repo             sidebarpreferenceports.SidebarPreferenceRepository
+	PermissionEngine permissionports.PermissionEngine
 }
 
 type Service struct {
 	l           *zap.Logger
-	repo        repositories.SidebarPreferenceRepository
-	permissions services.PermissionEngine
+	repo        sidebarpreferenceports.SidebarPreferenceRepository
+	permissions permissionports.PermissionEngine
 }
 
 func New(p Params) *Service {
@@ -39,7 +40,7 @@ func New(p Params) *Service {
 
 type Request struct {
 	TenantInfo pagination.TenantInfo
-	Principal  services.PrincipalInfo
+	Principal  kernelports.PrincipalInfo
 }
 
 type UpdateRequest struct {
@@ -73,7 +74,7 @@ func (s *Service) GetEffective(
 
 	entity, found, err := s.repo.Get(
 		ctx,
-		&repositories.GetSidebarPreferenceRequest{TenantInfo: req.TenantInfo},
+		&sidebarpreferenceports.GetSidebarPreferenceRequest{TenantInfo: req.TenantInfo},
 	)
 	if err != nil {
 		log.Error("failed to get sidebar preference", zap.Error(err))
@@ -154,7 +155,7 @@ func (s *Service) Update(
 
 	entity, found, err := s.repo.Get(
 		ctx,
-		&repositories.GetSidebarPreferenceRequest{TenantInfo: req.TenantInfo},
+		&sidebarpreferenceports.GetSidebarPreferenceRequest{TenantInfo: req.TenantInfo},
 	)
 	if err != nil {
 		log.Error("failed to get sidebar preference", zap.Error(err))
@@ -260,15 +261,15 @@ func (s *Service) checkCatalogPermissions(
 		addPair(action.Resource, action.Operation)
 	}
 
-	checks := make([]services.ResourceOperationCheck, 0, len(pairs))
+	checks := make([]permissionports.ResourceOperationCheck, 0, len(pairs))
 	for _, pair := range pairs {
-		checks = append(checks, services.ResourceOperationCheck{
+		checks = append(checks, permissionports.ResourceOperationCheck{
 			Resource:  pair.resource,
 			Operation: pair.operation,
 		})
 	}
 
-	result, err := s.permissions.CheckBatch(ctx, &services.BatchPermissionCheckRequest{
+	result, err := s.permissions.CheckBatch(ctx, &permissionports.BatchPermissionCheckRequest{
 		PrincipalType:  req.Principal.Type,
 		PrincipalID:    req.Principal.ID,
 		UserID:         req.Principal.UserID,

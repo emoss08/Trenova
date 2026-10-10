@@ -10,8 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -110,8 +110,8 @@ func newScenario() *scenario {
 				ID: pulid.MustNew("ars_"), OrganizationID: org, BusinessUnitID: bu,
 				OwnerKind: string(agent.RunOwnerAssistantTurn), OwnerID: s.turn,
 				Kind: string(
-					serviceports.RunStepTool,
-				), Status: string(serviceports.RunStepCompleted),
+					agentports.RunStepTool,
+				), Status: string(agentports.RunStepCompleted),
 				StepKey: "k-read", ToolName: "get_shipment", CallID: "c1",
 				Arguments: map[string]any{"shipmentId": shipment.String()},
 				Outcome:   map[string]any{"content": "found", "failed": false},
@@ -121,8 +121,8 @@ func newScenario() *scenario {
 				ID: pulid.MustNew("ars_"), OrganizationID: org, BusinessUnitID: bu,
 				OwnerKind: string(agent.RunOwnerAssistantTurn), OwnerID: s.turn,
 				Kind: string(
-					serviceports.RunStepTool,
-				), Status: string(serviceports.RunStepCompleted),
+					agentports.RunStepTool,
+				), Status: string(agentports.RunStepCompleted),
 				StepKey: "k-write", ToolName: "update_worker", CallID: "c2",
 				Arguments: map[string]any{"dob": "1990-01-01", "firstName": "Ada"},
 				Outcome: map[string]any{"action": map[string]any{
@@ -140,14 +140,14 @@ func newScenario() *scenario {
 			{
 				ID: pulid.MustNew("ars_"), OrganizationID: org, BusinessUnitID: bu,
 				OwnerKind: string(agent.RunOwnerAssistantTurn), OwnerID: s.turn,
-				Kind: string(serviceports.RunStepTool), Status: string(serviceports.RunStepStarted),
+				Kind: string(agentports.RunStepTool), Status: string(agentports.RunStepStarted),
 				StepKey: "k-lost", ToolName: "update_worker", CallID: "c3",
 				CreatedAt: testNow - 940, UpdatedAt: testNow - 940,
 			},
 			{
 				ID: pulid.MustNew("ars_"), OrganizationID: org, BusinessUnitID: bu,
 				OwnerKind: string(agent.RunOwnerAssistantTurn), OwnerID: s.turn,
-				Kind: string(serviceports.RunStepTool), Status: string(serviceports.RunStepFailed),
+				Kind: string(agentports.RunStepTool), Status: string(agentports.RunStepFailed),
 				StepKey: "k-denied", ToolName: "update_worker", CallID: "c4",
 				Outcome:   map[string]any{"failed": true, "reason": "lacks worker:update"},
 				CreatedAt: testNow - 935, UpdatedAt: testNow - 934,
@@ -157,7 +157,7 @@ func newScenario() *scenario {
 			{
 				ID: pulid.MustNew("are_"), OrganizationID: org, BusinessUnitID: bu,
 				OwnerKind: string(agent.RunOwnerAssistantTurn), OwnerID: s.turn, Sequence: 1,
-				Kind: serviceports.AssistantEventToolFinished, CallID: "c9",
+				Kind: agentports.AssistantEventToolFinished, CallID: "c9",
 				Payload: map[string]any{"callId": "c9", "name": "delete_everything",
 					"failed": true, "content": "that tool is not held"},
 				OccurredAt: testNow - 930, CreatedAt: testNow - 900,
@@ -165,14 +165,14 @@ func newScenario() *scenario {
 			{
 				ID: pulid.MustNew("are_"), OrganizationID: org, BusinessUnitID: bu,
 				OwnerKind: string(agent.RunOwnerAssistantTurn), OwnerID: s.turn, Sequence: 2,
-				Kind: serviceports.AssistantEventToolFinished, CallID: "c1",
+				Kind: agentports.AssistantEventToolFinished, CallID: "c1",
 				Payload:    map[string]any{"callId": "c1", "name": "get_shipment", "failed": true},
 				OccurredAt: testNow - 930, CreatedAt: testNow - 900,
 			},
 			{
 				ID: pulid.MustNew("are_"), OrganizationID: org, BusinessUnitID: bu,
 				OwnerKind: string(agent.RunOwnerAssistantTurn), OwnerID: s.turn, Sequence: 3,
-				Kind: serviceports.AssistantEventDelegateStarted,
+				Kind: agentports.AssistantEventDelegateStarted,
 				Payload: map[string]any{"delegateCallId": "d1", "agentId": s.agentID.String(),
 					"task": "look it up"},
 				OccurredAt: testNow - 925, CreatedAt: testNow - 900,
@@ -180,7 +180,7 @@ func newScenario() *scenario {
 			{
 				ID: pulid.MustNew("are_"), OrganizationID: org, BusinessUnitID: bu,
 				OwnerKind: string(agent.RunOwnerAssistantTurn), OwnerID: s.turn, Sequence: 4,
-				Kind: serviceports.AssistantEventDelegateFinished,
+				Kind: agentports.AssistantEventDelegateFinished,
 				Payload: map[string]any{"delegateCallId": "d1", "agentId": s.agentID.String(),
 					"status": "exhausted", "reason": "ran out of tool calls"},
 				OccurredAt: testNow - 920, CreatedAt: testNow - 900,

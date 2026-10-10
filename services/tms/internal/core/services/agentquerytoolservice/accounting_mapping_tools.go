@@ -7,8 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 )
@@ -30,18 +31,18 @@ type accountingMappingReader interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		integrationType integration.Type,
-	) (*serviceports.AccountingMappingSummary, error)
+	) (*accountingsyncports.AccountingMappingSummary, error)
 	ListMappings(
 		ctx context.Context,
-		req *serviceports.ListAccountingMappingsRequest,
+		req *accountingsyncports.ListAccountingMappingsRequest,
 	) (*pagination.CursorListResult[*accountingsync.AccountingMapping], error)
 	FindMapping(
 		ctx context.Context,
-		req *serviceports.SetAccountingMappingRequest,
+		req *accountingsyncports.SetAccountingMappingRequest,
 	) (*accountingsync.AccountingMapping, error)
 	SearchReference(
 		ctx context.Context,
-		req *serviceports.SearchAccountingReferenceRequest,
+		req *accountingsyncports.SearchAccountingReferenceRequest,
 	) ([]*accountingsync.AccountingReferenceObject, error)
 }
 
@@ -184,13 +185,13 @@ type listAccountingMappingGapsTool struct {
 
 func newListAccountingMappingGapsTool(
 	mappings accountingMappingReader,
-) serviceports.AgentQueryTool {
+) agentports.AgentQueryTool {
 	return &listAccountingMappingGapsTool{mappings: mappings}
 }
 
 func provideListAccountingMappingGapsTool(
-	mappings serviceports.AccountingMappingService,
-) serviceports.AgentQueryTool {
+	mappings accountingsyncports.AccountingMappingService,
+) agentports.AgentQueryTool {
 	return newListAccountingMappingGapsTool(mappings)
 }
 
@@ -223,13 +224,13 @@ func (t *listAccountingMappingGapsTool) ParamSchema() map[string]any {
 	}, paramAccountingSystem)
 }
 
-func (t *listAccountingMappingGapsTool) Policy() serviceports.ToolPolicy {
+func (t *listAccountingMappingGapsTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceAccountingIntegration})
 }
 
 func (t *listAccountingMappingGapsTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -276,7 +277,7 @@ func (t *listAccountingMappingGapsTool) Query(
 	result.Connected = summary.Connection.IsActive()
 	result.SetupStep = string(summary.Connection.SetupStep)
 
-	req := &serviceports.ListAccountingMappingsRequest{
+	req := &accountingsyncports.ListAccountingMappingsRequest{
 		TenantInfo:      tenant,
 		IntegrationType: system,
 		States: []accountingsync.MappingState{
@@ -305,13 +306,13 @@ type getAccountingMappingTool struct {
 	mappings accountingMappingReader
 }
 
-func newGetAccountingMappingTool(mappings accountingMappingReader) serviceports.AgentQueryTool {
+func newGetAccountingMappingTool(mappings accountingMappingReader) agentports.AgentQueryTool {
 	return &getAccountingMappingTool{mappings: mappings}
 }
 
 func provideGetAccountingMappingTool(
-	mappings serviceports.AccountingMappingService,
-) serviceports.AgentQueryTool {
+	mappings accountingsyncports.AccountingMappingService,
+) agentports.AgentQueryTool {
 	return newGetAccountingMappingTool(mappings)
 }
 
@@ -354,13 +355,13 @@ func (t *getAccountingMappingTool) ParamSchema() map[string]any {
 	}, paramAccountingSystem)
 }
 
-func (t *getAccountingMappingTool) Policy() serviceports.ToolPolicy {
+func (t *getAccountingMappingTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceAccountingIntegration})
 }
 
 func (t *getAccountingMappingTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -384,7 +385,7 @@ func (t *getAccountingMappingTool) Query(
 	if search == "" {
 		return detail, nil
 	}
-	refs, err := t.mappings.SearchReference(ctx, &serviceports.SearchAccountingReferenceRequest{
+	refs, err := t.mappings.SearchReference(ctx, &accountingsyncports.SearchAccountingReferenceRequest{
 		TenantInfo:      find.TenantInfo,
 		IntegrationType: system,
 		Kind:            row.ProviderKind,
@@ -403,9 +404,9 @@ func (t *getAccountingMappingTool) Query(
 }
 
 func mappingLookup(
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 	system integration.Type,
-) (*serviceports.SetAccountingMappingRequest, error) {
+) (*accountingsyncports.SetAccountingMappingRequest, error) {
 	mappingID, err := optionalID(params.Params, paramMappingID)
 	if err != nil {
 		return nil, err
@@ -414,7 +415,7 @@ func mappingLookup(
 	if err != nil {
 		return nil, err
 	}
-	req := &serviceports.SetAccountingMappingRequest{
+	req := &accountingsyncports.SetAccountingMappingRequest{
 		TenantInfo:      tenantOf(params),
 		IntegrationType: system,
 		MappingID:       mappingID,

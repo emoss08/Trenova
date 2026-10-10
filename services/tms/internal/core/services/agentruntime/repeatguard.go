@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 
 // repeatGuard stops a turn re-sending a call that has already failed unchanged.
@@ -72,7 +72,7 @@ func isRead(name string) bool {
 
 // readBefore reports whether this exact read already succeeded since the last
 // call that could have changed anything.
-func (g *repeatGuard) readBefore(call serviceports.ToolCall) bool {
+func (g *repeatGuard) readBefore(call agentports.ToolCall) bool {
 	if !isRead(call.Name) {
 		return false
 	}
@@ -83,7 +83,7 @@ func (g *repeatGuard) readBefore(call serviceports.ToolCall) bool {
 
 // ran notes a call that succeeded: a read is remembered, and anything else
 // forgets every read, since it may have changed what they returned.
-func (g *repeatGuard) ran(call serviceports.ToolCall) {
+func (g *repeatGuard) ran(call agentports.ToolCall) {
 	if !isRead(call.Name) {
 		clear(g.reads)
 		return
@@ -104,7 +104,7 @@ func repeatedRead(name string) string {
 }
 
 // seen reports the earlier failure for this exact call, if there was one.
-func (g *repeatGuard) seen(call serviceports.ToolCall) (string, bool) {
+func (g *repeatGuard) seen(call agentports.ToolCall) (string, bool) {
 	key, ok := callKey(call)
 	if !ok {
 		return "", false
@@ -116,7 +116,7 @@ func (g *repeatGuard) seen(call serviceports.ToolCall) (string, bool) {
 }
 
 // record remembers a failure so the identical call is not run again.
-func (g *repeatGuard) record(call serviceports.ToolCall, message string) {
+func (g *repeatGuard) record(call agentports.ToolCall, message string) {
 	key, ok := callKey(call)
 	if !ok {
 		return
@@ -177,7 +177,7 @@ const stuckReply = "I could not finish this: the tool kept refusing the request 
 // at all. A call whose arguments cannot be marshalled is never matched, which
 // fails open — running a tool twice is a smaller fault than refusing a call
 // that was never made.
-func callKey(call serviceports.ToolCall) (string, bool) {
+func callKey(call agentports.ToolCall) (string, bool) {
 	encoded, err := sonic.ConfigStd.Marshal(call.Arguments)
 	if err != nil {
 		return "", false

@@ -7,8 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -18,15 +19,15 @@ import (
 
 func (s *Service) validateAttachments(
 	ctx context.Context,
-	req *servicesports.InvoiceAdjustmentRequest,
-	preview *servicesports.InvoiceAdjustmentPreview,
+	req *invoiceadjustmentports.InvoiceAdjustmentRequest,
+	preview *invoiceadjustmentports.InvoiceAdjustmentPreview,
 ) {
 	fieldName := attachmentFieldName(req.AdjustmentID)
 	if len(req.AttachmentIDs) == 0 {
 		return
 	}
 
-	docs, err := s.documentRepo.GetByIDs(ctx, repositories.BulkDeleteDocumentRequest{
+	docs, err := s.documentRepo.GetByIDs(ctx, documentports.BulkDeleteDocumentRequest{
 		IDs:        req.AttachmentIDs,
 		TenantInfo: req.TenantInfo,
 	})
@@ -79,7 +80,7 @@ func (s *Service) buildDraftLines(
 func (s *Service) buildAdjustmentLines(
 	adjustmentID pulid.ID,
 	invoiceID pulid.ID,
-	inputs []*servicesports.InvoiceAdjustmentLineInput,
+	inputs []*invoiceadjustmentports.InvoiceAdjustmentLineInput,
 	tenantInfo pagination.TenantInfo,
 ) []*invoiceadjustment.InvoiceAdjustmentLine {
 	lines := make([]*invoiceadjustment.InvoiceAdjustmentLine, 0, len(inputs))
@@ -112,14 +113,14 @@ func (s *Service) buildDocumentReferences(
 	documentIDs []pulid.ID,
 	sourceInvoice *invoice.Invoice,
 	tenantInfo pagination.TenantInfo,
-	actor *servicesports.RequestActor,
+	actor *permissionports.RequestActor,
 	fieldName string,
 ) ([]*invoiceadjustment.InvoiceAdjustmentDocumentReference, error) {
 	if len(documentIDs) == 0 {
 		return nil, nil
 	}
 
-	docs, err := s.documentRepo.GetByIDs(ctx, repositories.BulkDeleteDocumentRequest{
+	docs, err := s.documentRepo.GetByIDs(ctx, documentports.BulkDeleteDocumentRequest{
 		IDs:        documentIDs,
 		TenantInfo: tenantInfo,
 	})
@@ -189,13 +190,13 @@ func attachmentFieldName(adjustmentID pulid.ID) string {
 
 func (s *Service) requestLinesFromAdjustment(
 	entity *invoiceadjustment.InvoiceAdjustment,
-) []*servicesports.InvoiceAdjustmentLineInput {
-	lines := make([]*servicesports.InvoiceAdjustmentLineInput, 0, len(entity.Lines))
+) []*invoiceadjustmentports.InvoiceAdjustmentLineInput {
+	lines := make([]*invoiceadjustmentports.InvoiceAdjustmentLineInput, 0, len(entity.Lines))
 	for _, line := range entity.Lines {
 		if line == nil {
 			continue
 		}
-		lines = append(lines, &servicesports.InvoiceAdjustmentLineInput{
+		lines = append(lines, &invoiceadjustmentports.InvoiceAdjustmentLineInput{
 			OriginalLineID:     line.OriginalLineID,
 			CreditQuantity:     line.CreditQuantity,
 			CreditAmount:       line.CreditAmount,

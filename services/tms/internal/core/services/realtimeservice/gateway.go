@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -25,8 +25,8 @@ type GatewayParams struct {
 
 	Logger   *zap.Logger
 	Config   *config.Config
-	Broker   services.RealtimeBroker
-	UserRepo repositories.UserRepository
+	Broker   agentports.RealtimeBroker
+	UserRepo tenantports.UserRepository
 }
 
 // Gateway is what a browser talks to: it opens a reader's stream and lets that
@@ -35,12 +35,12 @@ type GatewayParams struct {
 // checked against the caller, so one person cannot act through another's.
 type Gateway struct {
 	l      *zap.Logger
-	broker services.RealtimeBroker
-	users  repositories.UserRepository
+	broker agentports.RealtimeBroker
+	users  tenantports.UserRepository
 	cfg    config.RealtimeConfig
 }
 
-func NewGateway(p GatewayParams) services.RealtimeGateway {
+func NewGateway(p GatewayParams) agentports.RealtimeGateway {
 	return &Gateway{
 		l:      p.Logger.Named("service.realtime-gateway"),
 		broker: p.Broker,
@@ -51,8 +51,8 @@ func NewGateway(p GatewayParams) services.RealtimeGateway {
 
 func (g *Gateway) Open(
 	ctx context.Context,
-	req *services.OpenRealtimeStreamRequest,
-) (services.RealtimeStream, error) {
+	req *agentports.OpenRealtimeStreamRequest,
+) (agentports.RealtimeStream, error) {
 	if req == nil || req.UserID.IsNil() || req.OrganizationID.IsNil() ||
 		req.BusinessUnitID.IsNil() {
 		return nil, errortypes.NewAuthenticationError(
@@ -60,7 +60,7 @@ func (g *Gateway) Open(
 		)
 	}
 
-	user, err := g.users.GetByID(ctx, repositories.GetUserByIDRequest{
+	user, err := g.users.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  req.OrganizationID,
 			BuID:   req.BusinessUnitID,
@@ -72,8 +72,8 @@ func (g *Gateway) Open(
 		return nil, err
 	}
 
-	return g.broker.Subscribe(ctx, &services.RealtimeSubscribeRequest{
-		Connection: &services.RealtimeConnection{
+	return g.broker.Subscribe(ctx, &agentports.RealtimeSubscribeRequest{
+		Connection: &agentports.RealtimeConnection{
 			ConnectionID:   pulid.MustNew("rtc_").String(),
 			OrganizationID: req.OrganizationID,
 			BusinessUnitID: req.BusinessUnitID,
@@ -88,8 +88,8 @@ func (g *Gateway) Open(
 
 func (g *Gateway) JoinPresence(
 	ctx context.Context,
-	req *services.RealtimeScopeRequest,
-) (*services.RealtimePresenceSnapshot, error) {
+	req *agentports.RealtimeScopeRequest,
+) (*agentports.RealtimePresenceSnapshot, error) {
 	conn, err := g.connectionFor(ctx, req)
 	if err != nil {
 		return nil, err
@@ -98,7 +98,7 @@ func (g *Gateway) JoinPresence(
 	return g.broker.JoinPresence(ctx, conn, req.Scope)
 }
 
-func (g *Gateway) LeavePresence(ctx context.Context, req *services.RealtimeScopeRequest) error {
+func (g *Gateway) LeavePresence(ctx context.Context, req *agentports.RealtimeScopeRequest) error {
 	conn, err := g.connectionFor(ctx, req)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
@@ -113,7 +113,7 @@ func (g *Gateway) LeavePresence(ctx context.Context, req *services.RealtimeScope
 // SignalTyping tells the scope's other members that the caller is typing, at
 // most once per throttle window per connection. A stop always goes through and
 // reopens the window, so the next keystroke is announced at once.
-func (g *Gateway) SignalTyping(ctx context.Context, req *services.RealtimeTypingRequest) error {
+func (g *Gateway) SignalTyping(ctx context.Context, req *agentports.RealtimeTypingRequest) error {
 	if req == nil {
 		return errortypes.NewValidationError("scope", errortypes.ErrRequired, "Scope is required")
 	}
@@ -142,7 +142,7 @@ func (g *Gateway) SignalTyping(ctx context.Context, req *services.RealtimeTyping
 		}
 	}
 
-	payload, err := sonic.Marshal(services.RealtimeTypingEvent{
+	payload, err := sonic.Marshal(agentports.RealtimeTypingEvent{
 		Scope:  req.Scope,
 		UserID: conn.UserID.String(),
 		Name:   conn.Name,
@@ -152,10 +152,10 @@ func (g *Gateway) SignalTyping(ctx context.Context, req *services.RealtimeTyping
 		return err
 	}
 
-	g.broker.Enqueue(&services.RealtimeEnvelope{
+	g.broker.Enqueue(&agentports.RealtimeEnvelope{
 		OrganizationID: conn.OrganizationID,
 		BusinessUnitID: conn.BusinessUnitID,
-		Event:          services.RealtimeEventTyping,
+		Event:          agentports.RealtimeEventTyping,
 		Scope:          req.Scope,
 		Payload:        payload,
 		Ephemeral:      true,
@@ -172,8 +172,8 @@ func (g *Gateway) Drain() {
 // caller's own, in the caller's current tenant.
 func (g *Gateway) connectionFor(
 	ctx context.Context,
-	req *services.RealtimeScopeRequest,
-) (*services.RealtimeConnection, error) {
+	req *agentports.RealtimeScopeRequest,
+) (*agentports.RealtimeConnection, error) {
 	if err := validateScopeRequest(req); err != nil {
 		return nil, err
 	}
@@ -195,7 +195,7 @@ func (g *Gateway) connectionFor(
 	return conn, nil
 }
 
-func validateScopeRequest(req *services.RealtimeScopeRequest) error {
+func validateScopeRequest(req *agentports.RealtimeScopeRequest) error {
 	if req == nil {
 		return errortypes.NewValidationError("scope", errortypes.ErrRequired, "Scope is required")
 	}
@@ -212,7 +212,7 @@ func validateScopeRequest(req *services.RealtimeScopeRequest) error {
 		multiErr.Add("scope", errortypes.ErrRequired, "Scope is required")
 	case len(req.Scope) > maxScopeLength:
 		multiErr.Add("scope", errortypes.ErrInvalid, "Scope is too long")
-	case req.Scope == services.RealtimeScopeUsers:
+	case req.Scope == agentports.RealtimeScopeUsers:
 		multiErr.Add("scope", errortypes.ErrInvalid, "Scope is reserved")
 	case !validScope(req.Scope):
 		multiErr.Add("scope", errortypes.ErrInvalid, "Scope is invalid")

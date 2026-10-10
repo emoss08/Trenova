@@ -5,8 +5,8 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -71,7 +71,7 @@ func TestSelectTemplateOptions_AppliesTenantSearchAndFilters(t *testing.T) {
 
 	result, err := repo.SelectTemplateOptions(
 		t.Context(),
-		&repositories.EDITemplateSelectOptionsRequest{
+		&ediports.EDITemplateSelectOptionsRequest{
 			SelectQueryRequest: &pagination.SelectQueryRequest{
 				TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 				Pagination: pagination.Info{Limit: 10},

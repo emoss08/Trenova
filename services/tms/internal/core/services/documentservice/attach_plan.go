@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -40,7 +40,7 @@ func (s *Service) planAttach(
 	ctx context.Context,
 	req *AttachLineageRequest,
 ) (*AttachLineagePlan, error) {
-	current, err := s.repo.GetByID(ctx, repositories.GetDocumentByIDRequest{
+	current, err := s.repo.GetByID(ctx, documentports.GetDocumentByIDRequest{
 		ID:         req.DocumentID,
 		TenantInfo: req.TenantInfo,
 	})

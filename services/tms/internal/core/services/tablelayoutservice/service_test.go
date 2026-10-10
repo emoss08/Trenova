@@ -1,12 +1,13 @@
 package tablelayoutservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/tablelayoutportsmock"
 	"context"
 	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/tablelayout"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/tablelayoutports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -17,10 +18,10 @@ import (
 	"go.uber.org/zap"
 )
 
-func newTestService(t *testing.T) (*Service, *mocks.MockTableLayoutRepository) {
+func newTestService(t *testing.T) (*Service, *tablelayoutportsmock.MockTableLayoutRepository) {
 	t.Helper()
 
-	repo := mocks.NewMockTableLayoutRepository(t)
+	repo := tablelayoutportsmock.NewMockTableLayoutRepository(t)
 	return New(Params{Logger: zap.NewNop(), Repo: repo}), repo
 }
 
@@ -39,7 +40,7 @@ func TestService_Get_ReturnsNilWhenThePersonHasNoLayout(t *testing.T) {
 	svc, repo := newTestService(t)
 	req := testRequest()
 
-	repo.EXPECT().Get(mock.Anything, &repositories.TableLayoutRequest{
+	repo.EXPECT().Get(mock.Anything, &tablelayoutports.TableLayoutRequest{
 		TenantInfo: req.TenantInfo,
 		Resource:   "shipment",
 	}).Return(nil, false, nil)
@@ -148,7 +149,7 @@ func TestService_Reset_DeletesOnlyTheCallersLayoutForTheTable(t *testing.T) {
 	svc, repo := newTestService(t)
 	req := testRequest()
 
-	repo.EXPECT().Delete(mock.Anything, &repositories.TableLayoutRequest{
+	repo.EXPECT().Delete(mock.Anything, &tablelayoutports.TableLayoutRequest{
 		TenantInfo: req.TenantInfo,
 		Resource:   "shipment",
 	}).Return(nil)

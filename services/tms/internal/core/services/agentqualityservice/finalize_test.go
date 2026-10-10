@@ -10,9 +10,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,7 +26,7 @@ import (
 )
 
 type fakeSuiteRuns struct {
-	repositories.AgentSuiteRunRepository
+	agentqualityports.AgentSuiteRunRepository
 	runs    map[pulid.ID]*agentquality.SuiteRun
 	history []*agentquality.SuiteRun
 	updates int
@@ -31,7 +34,7 @@ type fakeSuiteRuns struct {
 
 func (f *fakeSuiteRuns) GetByID(
 	_ context.Context,
-	req repositories.GetAgentSuiteRunRequest,
+	req agentqualityports.GetAgentSuiteRunRequest,
 ) (*agentquality.SuiteRun, error) {
 	run, ok := f.runs[req.ID]
 	if !ok {
@@ -55,19 +58,19 @@ func (f *fakeSuiteRuns) Update(
 
 func (f *fakeSuiteRuns) History(
 	context.Context,
-	repositories.AgentSuiteRunHistoryRequest,
+	agentqualityports.AgentSuiteRunHistoryRequest,
 ) ([]*agentquality.SuiteRun, error) {
 	return f.history, nil
 }
 
 type fakeEvaluations struct {
-	repositories.AgentEvaluationRepository
+	agentports.AgentEvaluationRepository
 	bySuite map[pulid.ID][]*agent.Evaluation
 }
 
 func (f *fakeEvaluations) ListBySuiteRun(
 	_ context.Context,
-	req repositories.ListSuiteEvaluationsRequest,
+	req agentports.ListSuiteEvaluationsRequest,
 ) ([]*agent.Evaluation, error) {
 	out := make([]*agent.Evaluation, 0)
 	for _, evaluation := range f.bySuite[req.SuiteRunID] {
@@ -81,50 +84,50 @@ func (f *fakeEvaluations) ListBySuiteRun(
 
 func (f *fakeEvaluations) SkipPendingBySuiteRun(
 	context.Context,
-	repositories.SkipPendingSuiteEvaluationsRequest,
+	agentports.SkipPendingSuiteEvaluationsRequest,
 ) (int, error) {
 	return 0, nil
 }
 
 type fakeCaseSources struct {
-	repositories.AgentEvalCaseRepository
+	agentqualityports.AgentEvalCaseRepository
 }
 
 func (f *fakeCaseSources) ListByAgent(
 	context.Context,
-	repositories.ListAgentEvalCasesRequest,
+	agentqualityports.ListAgentEvalCasesRequest,
 ) ([]*agentquality.EvalCase, error) {
 	return nil, nil
 }
 
 type fakeUsage struct {
-	repositories.AIUsageRepository
+	aiusageports.AIUsageRepository
 }
 
 func (f *fakeUsage) EvaluationCost(
 	context.Context,
-	repositories.AIUsageEvaluationCostRequest,
-) (*repositories.AIUsageCost, error) {
-	return &repositories.AIUsageCost{CostUSD: decimal.RequireFromString("0.42")}, nil
+	aiusageports.AIUsageEvaluationCostRequest,
+) (*aiusageports.AIUsageCost, error) {
+	return &aiusageports.AIUsageCost{CostUSD: decimal.RequireFromString("0.42")}, nil
 }
 
 type fakeDefinitions struct {
-	repositories.AgentDefinitionRepository
+	agentdefinitionports.AgentDefinitionRepository
 }
 
 func (f *fakeDefinitions) GetByID(
 	_ context.Context,
-	req repositories.GetAgentDefinitionByIDRequest,
+	req agentdefinitionports.GetAgentDefinitionByIDRequest,
 ) (*agentdefinition.Definition, error) {
 	return &agentdefinition.Definition{ID: req.ID, Name: "Billing desk"}, nil
 }
 
 type fakeTower struct {
-	upserts  []services.WatchtowerItemInput
+	upserts  []watchtowerports.WatchtowerItemInput
 	resolved []string
 }
 
-func (f *fakeTower) Upsert(_ context.Context, input services.WatchtowerItemInput) {
+func (f *fakeTower) Upsert(_ context.Context, input watchtowerports.WatchtowerItemInput) {
 	f.upserts = append(f.upserts, input)
 }
 
@@ -357,7 +360,7 @@ func TestNotifyRegression_IsKeyedOnTheRun(t *testing.T) {
 	run := world.run
 	run.Regression = true
 	run.HardFailures = 1
-	item := services.WatchtowerItemInput{
+	item := watchtowerports.WatchtowerItemInput{
 		TenantInfo: pagination.TenantInfo{OrgID: run.OrganizationID, BuID: run.BusinessUnitID},
 		Severity:   watchtower.SeverityWarning,
 		Title:      "Billing desk answers its evaluation cases worse than before",

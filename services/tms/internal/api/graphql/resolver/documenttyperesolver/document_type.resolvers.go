@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -29,7 +29,7 @@ func (r *QueryResolver) DocumentTypes(ctx context.Context, input gqlmodel.DataTa
 
 	result, err := r.DocumentTypeService.ListConnection(
 		ctx,
-		&repositories.ListDocumentTypeConnectionRequest{
+		&documenttypeports.ListDocumentTypeConnectionRequest{
 			Filter:              tableInput.Filter,
 			Cursor:              tableInput.Cursor,
 			DocumentTypeColumns: documentTypeColumns(ctx, "edges.node"),
@@ -53,7 +53,7 @@ func (r *QueryResolver) DocumentType(ctx context.Context, id string) (*documentt
 		return nil, err
 	}
 
-	return r.DocumentTypeService.Get(ctx, repositories.GetDocumentTypeByIDRequest{
+	return r.DocumentTypeService.Get(ctx, documenttypeports.GetDocumentTypeByIDRequest{
 		ID:         documentTypeID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})

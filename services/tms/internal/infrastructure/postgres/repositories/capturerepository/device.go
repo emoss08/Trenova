@@ -5,9 +5,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/capture"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -30,7 +30,7 @@ type deviceRepository struct {
 	l  *zap.Logger
 }
 
-func NewDeviceRepository(p Params) repositories.CaptureDeviceRepository {
+func NewDeviceRepository(p Params) captureports.CaptureDeviceRepository {
 	return &deviceRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.capture-device-repository"),
@@ -86,7 +86,7 @@ func (r *deviceRepository) Update(
 
 func (r *deviceRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetCaptureDeviceByIDRequest,
+	req captureports.GetCaptureDeviceByIDRequest,
 ) (*capture.CaptureDevice, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capture.CaptureDevice, error) {
 		entity := new(capture.CaptureDevice)
@@ -106,7 +106,7 @@ func (r *deviceRepository) GetByID(
 
 func (r *deviceRepository) List(
 	ctx context.Context,
-	req *repositories.ListCaptureDevicesRequest,
+	req *captureports.ListCaptureDevicesRequest,
 ) (*pagination.ListResult[*capture.CaptureDevice], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*capture.CaptureDevice], error) {
 		entities := make([]*capture.CaptureDevice, 0, req.Filter.Pagination.SafeLimit())
@@ -184,7 +184,7 @@ func (r *deviceRepository) getByTokenColumn(
 
 func (r *deviceRepository) Touch(
 	ctx context.Context,
-	req repositories.TouchCaptureDeviceRequest,
+	req captureports.TouchCaptureDeviceRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.CaptureDeviceColumns

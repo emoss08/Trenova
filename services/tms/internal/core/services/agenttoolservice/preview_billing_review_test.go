@@ -1,16 +1,17 @@
 package agenttoolservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/billingqueueservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -23,15 +24,15 @@ func billingQueueFor(
 	t *testing.T,
 	item *billingqueue.BillingQueueItem,
 	guard *writeGuard,
-) *mocks.MockBillingQueueService {
+) *billingqueueportsmock.MockBillingQueueService {
 	t.Helper()
 
-	billing := mocks.NewMockBillingQueueService(t)
+	billing := billingqueueportsmock.NewMockBillingQueueService(t)
 	billing.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
 		RunAndReturn(func(
 			context.Context,
-			*repositories.GetBillingQueueItemByIDRequest,
+			*billingqueueports.GetBillingQueueItemByIDRequest,
 		) (*billingqueue.BillingQueueItem, error) {
 			copied := *item
 
@@ -42,8 +43,8 @@ func billingQueueFor(
 		UpdateStatus(mock.Anything, mock.Anything, mock.Anything).
 		RunAndReturn(func(
 			_ context.Context,
-			req *serviceports.UpdateBillingQueueStatusRequest,
-			actor *serviceports.RequestActor,
+			req *billingqueueports.UpdateBillingQueueStatusRequest,
+			actor *permissionports.RequestActor,
 		) (*billingqueue.BillingQueueItem, error) {
 			if err := guard.write(); err != nil {
 				return nil, err
@@ -61,8 +62,8 @@ func billingQueueFor(
 		AssignBiller(mock.Anything, mock.Anything, mock.Anything).
 		RunAndReturn(func(
 			_ context.Context,
-			req *serviceports.AssignBillerRequest,
-			_ *serviceports.RequestActor,
+			req *billingqueueports.AssignBillerRequest,
+			_ *permissionports.RequestActor,
 		) (*billingqueue.BillingQueueItem, error) {
 			if err := guard.write(); err != nil {
 				return nil, err
@@ -93,7 +94,7 @@ func TestTransitionToInReview_PreviewMatchesWhatIsSaved(t *testing.T) {
 	guard := &writeGuard{}
 	tool := newTransitionToInReviewTool(billingQueueFor(t, item, guard)).(*transitionToInReviewTool)
 	params := executeParams(map[string]any{"billingQueueItemId": item.ID.String()})
-	params.Actor.PrincipalType = serviceports.PrincipalTypeUser
+	params.Actor.PrincipalType = permissionports.PrincipalTypeUser
 
 	preview := previewWithoutWrites(t, guard, func() (*agent.ToolPreview, error) {
 		return tool.Preview(t.Context(), params)

@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -44,7 +44,7 @@ type documentPage struct {
 	text   string
 }
 
-func documentPages(source *repositories.RetrievalDocumentSource) []documentPage {
+func documentPages(source *agentports.RetrievalDocumentSource) []documentPage {
 	pages := make([]documentPage, 0, len(source.Pages))
 	for _, page := range source.Pages {
 		if text := strings.TrimSpace(page.ExtractedText); text != "" {
@@ -62,7 +62,7 @@ func documentPages(source *repositories.RetrievalDocumentSource) []documentPage 
 	return pages
 }
 
-func documentHeader(source *repositories.RetrievalDocumentSource) string {
+func documentHeader(source *agentports.RetrievalDocumentSource) string {
 	doc := source.Document
 
 	var b strings.Builder
@@ -82,7 +82,7 @@ func documentHeader(source *repositories.RetrievalDocumentSource) string {
 	return b.String()
 }
 
-func documentKind(source *repositories.RetrievalDocumentSource) string {
+func documentKind(source *agentports.RetrievalDocumentSource) string {
 	if source.Content != nil && source.Content.DetectedDocumentKind != "" {
 		return source.Content.DetectedDocumentKind
 	}
@@ -90,7 +90,7 @@ func documentKind(source *repositories.RetrievalDocumentSource) string {
 	return source.Document.DetectedKind
 }
 
-func documentPageCount(source *repositories.RetrievalDocumentSource, pages []documentPage) int {
+func documentPageCount(source *agentports.RetrievalDocumentSource, pages []documentPage) int {
 	count := 0
 	if source.Content != nil {
 		count = source.Content.PageCount
@@ -102,7 +102,7 @@ func documentPageCount(source *repositories.RetrievalDocumentSource, pages []doc
 	return count
 }
 
-func ChunkDocument(source *repositories.RetrievalDocumentSource) []Chunk {
+func ChunkDocument(source *agentports.RetrievalDocumentSource) []Chunk {
 	if source == nil || source.Document == nil {
 		return nil
 	}

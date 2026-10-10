@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"go.uber.org/zap"
 )
 
@@ -35,7 +35,7 @@ type RelayRequest struct {
 func (s *Service) Relay(
 	ctx context.Context,
 	req RelayRequest,
-	onFrame serviceports.TurnFrameFunc,
+	onFrame agentports.TurnFrameFunc,
 ) error {
 	turn := req.Turn
 
@@ -61,10 +61,10 @@ func (s *Service) Relay(
 	attached := time.Now()
 	spoke := false
 	sawTerminal := false
-	err := s.reader.Read(ctx, serviceports.ReadTurnStreamRequest{
+	err := s.reader.Read(ctx, agentports.ReadTurnStreamRequest{
 		Ref:    streamRef(turn),
 		Cursor: req.Cursor,
-		OnFrame: func(frame serviceports.TurnStreamFrame) error {
+		OnFrame: func(frame agentports.TurnStreamFrame) error {
 			if fresh && !spoke {
 				spoke = true
 				s.metrics.RecordFirstEvent(time.Since(attached).Seconds())
@@ -110,7 +110,7 @@ func (s *Service) current(
 	ctx context.Context,
 	turn *conversation.AssistantTurn,
 ) *conversation.AssistantTurn {
-	current, err := s.turns.GetByID(ctx, repositories.GetAssistantTurnRequest{
+	current, err := s.turns.GetByID(ctx, agentports.GetAssistantTurnRequest{
 		ID:         turn.ID,
 		TenantInfo: tenantOf(turn),
 	})
@@ -129,18 +129,18 @@ func (s *Service) current(
 // ClosingEvent is the ending a reader gets when the turn's own ending cannot
 // be given to them: it names the turn, so the client refetches the thread
 // rather than trusting whatever half a reply it has on screen.
-func ClosingEvent(turn *conversation.AssistantTurn) serviceports.StreamEvent {
+func ClosingEvent(turn *conversation.AssistantTurn) kernelports.StreamEvent {
 	if turn.Status == conversation.AssistantTurnStatusFailed && turn.ErrorMessage != "" {
-		return serviceports.StreamEvent{
-			Event: serviceports.AssistantEventError,
+		return kernelports.StreamEvent{
+			Event: agentports.AssistantEventError,
 			Data: map[string]any{
 				"message": "This reply did not finish. What ran has been kept in the conversation.",
 			},
 		}
 	}
 
-	return serviceports.StreamEvent{
-		Event: serviceports.AssistantEventDone,
+	return kernelports.StreamEvent{
+		Event: agentports.AssistantEventDone,
 		Data: map[string]any{
 			"turnId":   turn.ID.String(),
 			"threadId": turn.ThreadID.String(),
@@ -153,7 +153,7 @@ func ClosingEvent(turn *conversation.AssistantTurn) serviceports.StreamEvent {
 	}
 }
 
-func closingFrame(turn *conversation.AssistantTurn) serviceports.TurnStreamFrame {
+func closingFrame(turn *conversation.AssistantTurn) agentports.TurnStreamFrame {
 	event := ClosingEvent(turn)
 
 	return frameOf(event.Event, event.Data)

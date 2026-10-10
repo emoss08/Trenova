@@ -4,12 +4,13 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/stretchr/testify/assert"
 )
 
-func callLimit(call serviceports.CallPolicy) agent.AutonomyTier {
+func callLimit(call agentports.CallPolicy) agent.AutonomyTier {
 	limit := call.Egress.Ceiling()
 	if call.MaxTier.IsValid() {
 		limit = limit.AtMost(call.MaxTier)
@@ -23,7 +24,7 @@ func callLimit(call serviceports.CallPolicy) agent.AutonomyTier {
 func TestEgressTools_NeverRunWithoutAPerson(t *testing.T) {
 	t.Parallel()
 
-	for _, tool := range []serviceports.AgentTool{
+	for _, tool := range []agentports.AgentTool{
 		&emailCustomerTool{},
 		&sendDetentionNoticeTool{},
 		&notifyDriverTool{},
@@ -67,7 +68,7 @@ func TestAddShipmentComment_HoldsANoteOutsidersReadForApproval(t *testing.T) {
 		"Driver":     {class: agent.EgressDriverVisible, limit: agent.TierActWithApproval},
 	}
 	for visibility, want := range cases {
-		params := serviceports.ToolExecuteParams{Params: map[string]any{"visibility": visibility}}
+		params := agentports.ToolExecuteParams{Params: map[string]any{"visibility": visibility}}
 		call := policy.Classified(params)
 		assert.Equal(t, want.class, call.Egress, visibility)
 		assert.Equal(t, want.limit, callLimit(call), visibility)
@@ -89,6 +90,6 @@ func TestSaveTableView_ClassifiesAPrivateViewAsPersonal(t *testing.T) {
 	assert.Equal(t, agent.EgressInternal, policy.Classified(shared).Egress)
 
 	agentCall := personParams(map[string]any{"entity": "shipment"})
-	agentCall.Actor.PrincipalType = serviceports.PrincipalTypeAgent
+	agentCall.Actor.PrincipalType = permissionports.PrincipalTypeAgent
 	assert.Equal(t, agent.EgressInternal, policy.Classified(agentCall).Egress)
 }

@@ -5,12 +5,13 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -22,7 +23,7 @@ import (
 )
 
 type fakeAgentRunRepo struct {
-	repositories.AgentRunRepository
+	agentports.AgentRunRepository
 	create func(ctx context.Context, entity *agent.AgentRun) (*agent.AgentRun, error)
 	update func(ctx context.Context, entity *agent.AgentRun) (*agent.AgentRun, error)
 }
@@ -42,27 +43,27 @@ func (f *fakeAgentRunRepo) Update(
 }
 
 type fakeDefinitionRepo struct {
-	repositories.AgentDefinitionRepository
-	byID  func(ctx context.Context, req repositories.GetAgentDefinitionByIDRequest) (*agentdefinition.Definition, error)
-	byKey func(ctx context.Context, req repositories.GetAgentDefinitionBySystemKeyRequest) (*agentdefinition.Definition, error)
+	agentdefinitionports.AgentDefinitionRepository
+	byID  func(ctx context.Context, req agentdefinitionports.GetAgentDefinitionByIDRequest) (*agentdefinition.Definition, error)
+	byKey func(ctx context.Context, req agentdefinitionports.GetAgentDefinitionBySystemKeyRequest) (*agentdefinition.Definition, error)
 }
 
 func (f *fakeDefinitionRepo) GetByID(
 	ctx context.Context,
-	req repositories.GetAgentDefinitionByIDRequest,
+	req agentdefinitionports.GetAgentDefinitionByIDRequest,
 ) (*agentdefinition.Definition, error) {
 	return f.byID(ctx, req)
 }
 
 func (f *fakeDefinitionRepo) GetBySystemKey(
 	ctx context.Context,
-	req repositories.GetAgentDefinitionBySystemKeyRequest,
+	req agentdefinitionports.GetAgentDefinitionBySystemKeyRequest,
 ) (*agentdefinition.Definition, error) {
 	return f.byKey(ctx, req)
 }
 
 type fakeWorkflowStarter struct {
-	serviceports.WorkflowStarter
+	kernelports.WorkflowStarter
 	enabled       bool
 	startWorkflow func(
 		ctx context.Context,
@@ -84,13 +85,13 @@ func (f *fakeWorkflowStarter) StartWorkflow(
 }
 
 type fakeAuditService struct {
-	serviceports.AuditService
-	logged []*serviceports.LogActionParams
+	auditports.AuditService
+	logged []*auditports.LogActionParams
 }
 
 func (f *fakeAuditService) LogAction(
-	params *serviceports.LogActionParams,
-	_ ...serviceports.LogOption,
+	params *auditports.LogActionParams,
+	_ ...auditports.LogOption,
 ) error {
 	f.logged = append(f.logged, params)
 	return nil
@@ -114,13 +115,13 @@ func definitionFixture(enabled bool) *agentdefinition.Definition {
 
 func definitionRepoFor(def *agentdefinition.Definition) *fakeDefinitionRepo {
 	return &fakeDefinitionRepo{
-		byID: func(_ context.Context, req repositories.GetAgentDefinitionByIDRequest) (*agentdefinition.Definition, error) {
+		byID: func(_ context.Context, req agentdefinitionports.GetAgentDefinitionByIDRequest) (*agentdefinition.Definition, error) {
 			if req.ID != def.ID || req.TenantInfo.OrgID != def.OrganizationID {
 				return nil, errortypes.NewNotFoundError("Agent definition not found")
 			}
 			return def, nil
 		},
-		byKey: func(_ context.Context, req repositories.GetAgentDefinitionBySystemKeyRequest) (*agentdefinition.Definition, error) {
+		byKey: func(_ context.Context, req agentdefinitionports.GetAgentDefinitionBySystemKeyRequest) (*agentdefinition.Definition, error) {
 			if req.SystemKey != def.SystemKey || req.TenantInfo.OrgID != def.OrganizationID {
 				return nil, errortypes.NewNotFoundError("Agent definition not found")
 			}
@@ -129,8 +130,8 @@ func definitionRepoFor(def *agentdefinition.Definition) *fakeDefinitionRepo {
 	}
 }
 
-func startRequest(def *agentdefinition.Definition) *serviceports.StartAgentRunForDefinitionRequest {
-	return &serviceports.StartAgentRunForDefinitionRequest{
+func startRequest(def *agentdefinition.Definition) *agentports.StartAgentRunForDefinitionRequest {
+	return &agentports.StartAgentRunForDefinitionRequest{
 		DefinitionID: def.ID,
 		SubjectType:  agent.SubjectBillingQueueItem,
 		SubjectID:    pulid.MustNew("bqi_"),
@@ -330,7 +331,7 @@ func TestStartForDefinitionUsesSlotWorkflowID(t *testing.T) {
 		audit: &fakeAuditService{},
 	}
 
-	req := &serviceports.StartAgentRunForDefinitionRequest{
+	req := &agentports.StartAgentRunForDefinitionRequest{
 		SystemKey:  def.SystemKey,
 		Trigger:    agent.RunTriggerScheduled,
 		Slot:       1_700_000_000,
@@ -432,7 +433,7 @@ func TestStartForDefinitionRefusesASecondRunForAnOpenSubject(t *testing.T) {
 	}
 
 	_, err := svc.StartForDefinition(t.Context(), startRequest(def), nil)
-	if !errors.Is(err, serviceports.ErrAgentRunAlreadyOpen) {
+	if !errors.Is(err, agentports.ErrAgentRunAlreadyOpen) {
 		t.Fatalf("expected the open run to refuse the start, got %v", err)
 	}
 	if created {
@@ -462,7 +463,7 @@ func TestStartForDefinitionRequiresIDOrSystemKey(t *testing.T) {
 		definitions: &fakeDefinitionRepo{},
 	}
 
-	_, err := svc.StartForDefinition(t.Context(), &serviceports.StartAgentRunForDefinitionRequest{
+	_, err := svc.StartForDefinition(t.Context(), &agentports.StartAgentRunForDefinitionRequest{
 		TenantInfo: testTenant,
 	}, nil)
 	if err == nil {

@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/extractionshadow"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -31,7 +31,7 @@ type settingsRepository struct {
 	l  *zap.Logger
 }
 
-func NewSettings(p Params) repositories.ExtractionShadowSettingsRepository {
+func NewSettings(p Params) extractionshadowports.ExtractionShadowSettingsRepository {
 	return &settingsRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.extractionshadow-settings-repository"),

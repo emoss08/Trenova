@@ -3,8 +3,8 @@ package ediresolver
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
@@ -16,7 +16,7 @@ func TestEDIPartnerScorecardsToModel(t *testing.T) {
 
 	avgAck := 120.0
 	oldest := timeutils.NowUnix() - 7200
-	rows := []*repositories.EDIPartnerScorecardRow{
+	rows := []*ediports.EDIPartnerScorecardRow{
 		{
 			PartnerID:         pulid.MustNew("edip_"),
 			PartnerName:       "ACME Freight",
@@ -53,7 +53,7 @@ func TestEDIVolumeSeriesToModel(t *testing.T) {
 
 	series := &ediservice.EDIVolumeSeries{
 		BucketSeconds: 3600,
-		Points: []*repositories.EDIVolumePoint{
+		Points: []*ediports.EDIVolumePoint{
 			{
 				BucketStart:   1780000000,
 				OutboundCount: 4,

@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/holdreason"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/holdreasonports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -29,7 +29,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.HoldReasonRepository {
+func New(p Params) holdreasonports.HoldReasonRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.hold-reason-repository"),
@@ -38,7 +38,7 @@ func New(p Params) repositories.HoldReasonRepository {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListHoldReasonRequest,
+	req *holdreasonports.ListHoldReasonRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
@@ -52,7 +52,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListHoldReasonRequest,
+	req *holdreasonports.ListHoldReasonRequest,
 ) (*pagination.ListResult[*holdreason.HoldReason], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*holdreason.HoldReason], error) {
 		log := r.l.With(
@@ -81,7 +81,7 @@ func (r *repository) List(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListHoldReasonConnectionRequest,
+	req *holdreasonports.ListHoldReasonConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -94,7 +94,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListHoldReasonConnectionRequest,
+	req *holdreasonports.ListHoldReasonConnectionRequest,
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -114,7 +114,7 @@ func applyHoldReasonColumns(q *bun.SelectQuery, columns []string) *bun.SelectQue
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListHoldReasonConnectionRequest,
+	req *holdreasonports.ListHoldReasonConnectionRequest,
 ) (*pagination.CursorListResult[*holdreason.HoldReason], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*holdreason.HoldReason], error) {
 		log := r.l.With(
@@ -168,7 +168,7 @@ func (r *repository) ListConnection(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetHoldReasonByIDRequest,
+	req holdreasonports.GetHoldReasonByIDRequest,
 ) (*holdreason.HoldReason, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*holdreason.HoldReason, error) {
 		log := r.l.With(
@@ -249,7 +249,7 @@ func (r *repository) Update(
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
-	req *repositories.HoldReasonSelectOptionsRequest,
+	req *holdreasonports.HoldReasonSelectOptionsRequest,
 ) (*pagination.ListResult[*holdreason.HoldReason], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*holdreason.HoldReason], error) {
 		return dbhelper.SelectOptions[*holdreason.HoldReason](

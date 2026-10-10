@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,9 +20,9 @@ import (
 type readSession struct {
 	tenant pagination.TenantInfo
 	conn   *accountingsync.AccountingConnection
-	reader services.AccountingChangeReader
-	auth   services.AccountingDocumentAuth
-	writer services.AccountingDocumentWriter
+	reader accountingsyncports.AccountingChangeReader
+	auth   accountingsyncports.AccountingDocumentAuth
+	writer accountingsyncports.AccountingDocumentWriter
 	loc    *time.Location
 }
 
@@ -30,7 +30,7 @@ func (s *Service) location(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 ) (*time.Location, error) {
-	org, err := s.organizations.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+	org, err := s.organizations.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: tenant,
 	})
 	if err != nil {
@@ -51,14 +51,14 @@ func (s *Service) openRead(
 	if err != nil {
 		return nil, err
 	}
-	reader, ok := session.Connector.(services.AccountingChangeReader)
+	reader, ok := session.Connector.(accountingsyncports.AccountingChangeReader)
 	if !ok {
 		return nil, fmt.Errorf(
 			"%s does not report its changes to Trenova",
 			accountingsync.ProviderName(conn.IntegrationType),
 		)
 	}
-	writer, _ := session.Connector.(services.AccountingDocumentWriter)
+	writer, _ := session.Connector.(accountingsyncports.AccountingDocumentWriter)
 	loc, err := s.location(ctx, tenant)
 	if err != nil {
 		return nil, err
@@ -67,7 +67,7 @@ func (s *Service) openRead(
 		tenant: tenant,
 		conn:   session.Connection,
 		reader: reader,
-		auth:   services.DocumentAuthFor(session.Connection, session.AccessToken),
+		auth:   accountingsyncports.DocumentAuthFor(session.Connection, session.AccessToken),
 		writer: writer,
 		loc:    loc,
 	}, nil
@@ -75,9 +75,9 @@ func (s *Service) openRead(
 
 func (s *Service) PollChanges(
 	ctx context.Context,
-	req *services.PollAccountingChangesRequest,
-) (*services.AccountingChangesPollResult, error) {
-	result := new(services.AccountingChangesPollResult)
+	req *accountingsyncports.PollAccountingChangesRequest,
+) (*accountingsyncports.AccountingChangesPollResult, error) {
+	result := new(accountingsyncports.AccountingChangesPollResult)
 	conn, err := s.connectionByID(ctx, req.TenantInfo, req.ConnectionID)
 	if err != nil {
 		return nil, err
@@ -101,7 +101,7 @@ func (s *Service) PollChanges(
 	}
 
 	now := s.now()
-	page, err := sess.reader.ReadChanges(ctx, &services.ReadAccountingChangesRequest{
+	page, err := sess.reader.ReadChanges(ctx, &accountingsyncports.ReadAccountingChangesRequest{
 		Auth:           sess.auth,
 		Cursor:         cursor,
 		Now:            now,
@@ -116,7 +116,7 @@ func (s *Service) PollChanges(
 	}
 
 	readAt := now.Unix()
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		refs, refErr := s.applyReferences(txCtx, sess, page.References, readAt)
 		if refErr != nil {
 			return refErr
@@ -129,7 +129,7 @@ func (s *Service) PollChanges(
 		result.Recorded = recorded
 		_, saveErr := s.connections.SaveChangeFeed(
 			txCtx,
-			&repositories.SaveAccountingChangeFeedRequest{
+			&accountingsyncports.SaveAccountingChangeFeedRequest{
 				TenantInfo: sess.tenant,
 				ID:         sess.conn.ID,
 				Cursor:     page.NextCursor,
@@ -165,12 +165,12 @@ func (s *Service) PollChanges(
 func (s *Service) recheckDocuments(
 	ctx context.Context,
 	sess *readSession,
-	documents []services.AccountingChangedDocument,
+	documents []accountingsyncports.AccountingChangedDocument,
 ) int {
 	if s.drift == nil || len(documents) == 0 {
 		return 0
 	}
-	checked, err := s.drift.RecheckDocuments(ctx, &services.RecheckAccountingDriftRequest{
+	checked, err := s.drift.RecheckDocuments(ctx, &accountingsyncports.RecheckAccountingDriftRequest{
 		TenantInfo:   sess.tenant,
 		ConnectionID: sess.conn.ID,
 		Documents:    documents,
@@ -196,7 +196,7 @@ func (s *Service) startCursor(ctx context.Context, sess *readSession) (string, e
 		start = time.Unix(*sess.conn.SyncEnabledAt, 0)
 	}
 	cursor := sess.reader.ChangeCursorAt(start)
-	if _, err := s.connections.SaveChangeFeed(ctx, &repositories.SaveAccountingChangeFeedRequest{
+	if _, err := s.connections.SaveChangeFeed(ctx, &accountingsyncports.SaveAccountingChangeFeedRequest{
 		TenantInfo:  sess.tenant,
 		ID:          sess.conn.ID,
 		Cursor:      cursor,
@@ -225,7 +225,7 @@ func (s *Service) recordReadFailure(ctx context.Context, sess *readSession, read
 			failure = classified
 		}
 	}
-	if _, err := s.connections.SaveChangeFeed(ctx, &repositories.SaveAccountingChangeFeedRequest{
+	if _, err := s.connections.SaveChangeFeed(ctx, &accountingsyncports.SaveAccountingChangeFeedRequest{
 		TenantInfo:    sess.tenant,
 		ID:            sess.conn.ID,
 		ErrorCategory: failure.Category,
@@ -238,7 +238,7 @@ func (s *Service) recordReadFailure(ctx context.Context, sess *readSession, read
 func (s *Service) applyReferences(
 	ctx context.Context,
 	sess *readSession,
-	changed []services.AccountingChangedReference,
+	changed []accountingsyncports.AccountingChangedReference,
 	seenAt int64,
 ) (int, error) {
 	if len(changed) == 0 {
@@ -259,7 +259,7 @@ func (s *Service) applyReferences(
 		}
 		upserts = append(upserts, ref.Object)
 	}
-	if err := s.references.Upsert(ctx, &repositories.UpsertAccountingReferenceObjectsRequest{
+	if err := s.references.Upsert(ctx, &accountingsyncports.UpsertAccountingReferenceObjectsRequest{
 		TenantInfo:   sess.tenant,
 		ConnectionID: sess.conn.ID,
 		Objects:      upserts,
@@ -270,7 +270,7 @@ func (s *Service) applyReferences(
 	for kind, ids := range removed {
 		if _, err := s.references.MarkRemoved(
 			ctx,
-			&repositories.MarkAccountingReferencesRemovedRequest{
+			&accountingsyncports.MarkAccountingReferencesRemovedRequest{
 				TenantInfo:   sess.tenant,
 				ConnectionID: sess.conn.ID,
 				Kind:         kind,
@@ -287,7 +287,7 @@ func (s *Service) applyReferences(
 func (s *Service) recordPayments(
 	ctx context.Context,
 	sess *readSession,
-	payments []services.AccountingInboundPayment,
+	payments []accountingsyncports.AccountingInboundPayment,
 	at int64,
 ) (int, error) {
 	recorded := 0
@@ -302,10 +302,10 @@ func (s *Service) recordPayments(
 }
 
 func paymentsOf(
-	payments []services.AccountingInboundPayment,
+	payments []accountingsyncports.AccountingInboundPayment,
 	kind accountingsync.InboundChangeKind,
-) []*services.AccountingInboundPayment {
-	out := make([]*services.AccountingInboundPayment, 0, len(payments))
+) []*accountingsyncports.AccountingInboundPayment {
+	out := make([]*accountingsyncports.AccountingInboundPayment, 0, len(payments))
 	for idx := range payments {
 		if payments[idx].Kind == kind && payments[idx].ExternalID != "" {
 			out = append(out, &payments[idx])
@@ -318,7 +318,7 @@ func (s *Service) recordKind(
 	ctx context.Context,
 	sess *readSession,
 	kind accountingsync.InboundChangeKind,
-	payments []*services.AccountingInboundPayment,
+	payments []*accountingsyncports.AccountingInboundPayment,
 	at int64,
 ) (int, error) {
 	if len(payments) == 0 {
@@ -335,7 +335,7 @@ func (s *Service) recordKind(
 	}
 	existing, err := s.changes.ListByExternalIDs(
 		ctx,
-		&repositories.ListAccountingInboundChangesByExternalIDsRequest{
+		&accountingsyncports.ListAccountingInboundChangesByExternalIDsRequest{
 			TenantInfo:   sess.tenant,
 			ConnectionID: sess.conn.ID,
 			Kind:         kind,
@@ -377,7 +377,7 @@ func (s *Service) echoes(
 ) (map[string]bool, error) {
 	records, err := s.records.ListByExternalIDs(
 		ctx,
-		&repositories.ListAccountingSyncRecordsByExternalIDsRequest{
+		&accountingsyncports.ListAccountingSyncRecordsByExternalIDsRequest{
 			TenantInfo:   tenant,
 			ConnectionID: connectionID,
 			ObjectTypes:  kind.EchoObjectTypes(),
@@ -399,10 +399,10 @@ func (s *Service) recordOne(
 	sess *readSession,
 	policy accountingsync.InboundPaymentPolicy,
 	change *accountingsync.AccountingInboundChange,
-	payment *services.AccountingInboundPayment,
+	payment *accountingsyncports.AccountingInboundPayment,
 	at int64,
 ) (bool, error) {
-	if payment.Operation != services.AccountingChangeUpsert {
+	if payment.Operation != accountingsyncports.AccountingChangeUpsert {
 		if change == nil {
 			return false, nil
 		}
@@ -435,7 +435,7 @@ func (s *Service) recordOne(
 
 func (s *Service) observation(
 	sess *readSession,
-	payment *services.AccountingInboundPayment,
+	payment *accountingsyncports.AccountingInboundPayment,
 	at int64,
 ) (*accountingsync.InboundObservation, error) {
 	txnDate, err := timeutils.ParseCalendarDate(payment.TxnDate, sess.loc)
@@ -493,9 +493,9 @@ func (s *Service) observation(
 	}, nil
 }
 
-func removedResolution(sess *readSession, payment *services.AccountingInboundPayment) string {
+func removedResolution(sess *readSession, payment *accountingsyncports.AccountingInboundPayment) string {
 	provider := accountingsync.ProviderName(sess.conn.IntegrationType)
-	if payment.Operation == services.AccountingChangeDelete {
+	if payment.Operation == accountingsyncports.AccountingChangeDelete {
 		return "Deleted in " + provider + " before it was applied, so there is nothing to apply."
 	}
 	return "Voided in " + provider + " before it was applied, so there is nothing to apply."

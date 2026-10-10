@@ -6,10 +6,10 @@ import (
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentrepository"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -41,13 +41,13 @@ func New(p Params) *Repository {
 	return &Repository{db: p.DB, l: p.Logger.Named("postgres.shipment-board-repository")}
 }
 
-func NewBoardRepository(r *Repository) repositories.ShipmentBoardRepository { return r }
+func NewBoardRepository(r *Repository) shipmentports.ShipmentBoardRepository { return r }
 
-func NewWatchlistRepository(r *Repository) repositories.ShipmentWatchlistRepository { return r }
+func NewWatchlistRepository(r *Repository) shipmentports.ShipmentWatchlistRepository { return r }
 
 func (r *Repository) scoped(
 	dba bun.IDB,
-	scope *repositories.ShipmentBoardScope,
+	scope *shipmentports.ShipmentBoardScope,
 ) (*bun.SelectQuery, error) {
 	if scope == nil {
 		return nil, ErrScopeMissing
@@ -63,12 +63,12 @@ func (r *Repository) scoped(
 
 func (r *Repository) StageSummary(
 	ctx context.Context,
-	scope *repositories.ShipmentBoardScope,
-) ([]*repositories.ShipmentStageSummaryRow, error) {
+	scope *shipmentports.ShipmentBoardScope,
+) ([]*shipmentports.ShipmentStageSummaryRow, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*repositories.ShipmentStageSummaryRow, error) {
+		func(ctx context.Context) ([]*shipmentports.ShipmentStageSummaryRow, error) {
 			sp := buncolgen.ShipmentColumns
 
 			q, err := r.scoped(r.db.DBForContext(ctx), scope)
@@ -76,7 +76,7 @@ func (r *Repository) StageSummary(
 				return nil, err
 			}
 
-			rows := make([]*repositories.ShipmentStageSummaryRow, 0, len(shipment.Stages()))
+			rows := make([]*shipmentports.ShipmentStageSummaryRow, 0, len(shipment.Stages()))
 			if err = q.
 				ColumnExpr(sp.StageRank.As(stageRankAlias)).
 				ColumnExpr(buncolgen.Count(countAlias)).
@@ -95,13 +95,13 @@ func (r *Repository) StageSummary(
 
 func (r *Repository) QuickFilterTotals(
 	ctx context.Context,
-	req *repositories.CountShipmentQuickFiltersRequest,
-) ([]repositories.ShipmentQuickFilterTotal, error) {
+	req *shipmentports.CountShipmentQuickFiltersRequest,
+) ([]shipmentports.ShipmentQuickFilterTotal, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]repositories.ShipmentQuickFilterTotal, error) {
-			totals := make([]repositories.ShipmentQuickFilterTotal, len(req.Filters))
+		func(ctx context.Context) ([]shipmentports.ShipmentQuickFilterTotal, error) {
+			totals := make([]shipmentports.ShipmentQuickFilterTotal, len(req.Filters))
 			if len(req.Filters) == 0 {
 				return totals, nil
 			}

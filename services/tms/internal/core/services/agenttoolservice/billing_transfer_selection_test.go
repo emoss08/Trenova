@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/billingtransfercriteria"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -27,25 +27,25 @@ func newTransferSelection() *transferSelection {
 	refused, returned := pulid.MustNew("shp_"), pulid.MustNew("shp_")
 	planner := &fakeTransferPlanner{
 		preview: true,
-		candidates: &serviceports.BillingTransferCandidateIDsResponse{
+		candidates: &shipmentports.BillingTransferCandidateIDsResponse{
 			IDs:        []pulid.ID{ready, marked, refused, returned},
 			TotalCount: 4,
 		},
-		plan: &serviceports.BillingTransferPlan{
+		plan: &shipmentports.BillingTransferPlan{
 			Transfer: 2,
 			Refused:  1,
 			Returned: 1,
-			Decisions: []serviceports.BillingTransferDecision{
-				{ShipmentID: ready, Outcome: serviceports.BillingTransferOutcomeTransfer},
+			Decisions: []shipmentports.BillingTransferDecision{
+				{ShipmentID: ready, Outcome: shipmentports.BillingTransferOutcomeTransfer},
 				{
 					ShipmentID: marked,
 					Status:     shipment.StatusCompleted,
-					Outcome:    serviceports.BillingTransferOutcomeMarkReadyAndTransfer,
+					Outcome:    shipmentports.BillingTransferOutcomeMarkReadyAndTransfer,
 				},
-				{ShipmentID: refused, Outcome: serviceports.BillingTransferOutcomeRefused},
+				{ShipmentID: refused, Outcome: shipmentports.BillingTransferOutcomeRefused},
 				{
 					ShipmentID: returned,
-					Outcome:    serviceports.BillingTransferOutcomeReturnToOperations,
+					Outcome:    shipmentports.BillingTransferOutcomeReturnToOperations,
 				},
 			},
 		},
@@ -117,10 +117,10 @@ func TestTransferToBilling_RefusesACriteriaSelectionThatTransfersNothing(t *test
 	t.Parallel()
 
 	sel := newTransferSelection()
-	sel.planner.plan = &serviceports.BillingTransferPlan{
+	sel.planner.plan = &shipmentports.BillingTransferPlan{
 		Refused: 1,
-		Decisions: []serviceports.BillingTransferDecision{
-			{ShipmentID: sel.refused, Outcome: serviceports.BillingTransferOutcomeRefused},
+		Decisions: []shipmentports.BillingTransferDecision{
+			{ShipmentID: sel.refused, Outcome: shipmentports.BillingTransferOutcomeRefused},
 		},
 	}
 
@@ -129,7 +129,7 @@ func TestTransferToBilling_RefusesACriteriaSelectionThatTransfersNothing(t *test
 	}))
 	require.ErrorContains(t, err, "list_billing_transfer_candidates")
 
-	sel.planner.candidates = &serviceports.BillingTransferCandidateIDsResponse{}
+	sel.planner.candidates = &shipmentports.BillingTransferCandidateIDsResponse{}
 	sel.planner.planned = nil
 	_, err = sel.tool.ResolveSelection(t.Context(), executeParams(map[string]any{
 		paramAllTransferable: true,
@@ -142,7 +142,7 @@ func TestTransferToBilling_RefusesACriteriaSelectionPastWhatOneTransferHolds(t *
 	t.Parallel()
 
 	sel := newTransferSelection()
-	sel.planner.candidates.TotalCount = serviceports.MaxBillingTransferCandidateIDs + 1
+	sel.planner.candidates.TotalCount = shipmentports.MaxBillingTransferCandidateIDs + 1
 	sel.planner.candidates.Truncated = true
 
 	_, err := sel.tool.ResolveSelection(t.Context(), executeParams(map[string]any{

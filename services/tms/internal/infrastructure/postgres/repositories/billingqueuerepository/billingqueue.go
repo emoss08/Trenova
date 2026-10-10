@@ -6,9 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -32,7 +32,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.BillingQueueRepository {
+func New(p Params) billingqueueports.BillingQueueRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.billing-queue-repository"),
@@ -41,7 +41,7 @@ func New(p Params) repositories.BillingQueueRepository {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListBillingQueueItemsRequest,
+	req *billingqueueports.ListBillingQueueItemsRequest,
 ) *bun.SelectQuery {
 	bqi := buncolgen.BillingQueueItemColumns
 
@@ -67,7 +67,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListBillingQueueItemsRequest,
+	req *billingqueueports.ListBillingQueueItemsRequest,
 ) (*pagination.ListResult[*billingqueue.BillingQueueItem], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*billingqueue.BillingQueueItem], error) {
 		log := r.l.With(
@@ -98,7 +98,7 @@ func (r *repository) List(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req *repositories.GetBillingQueueItemByIDRequest,
+	req *billingqueueports.GetBillingQueueItemByIDRequest,
 ) (*billingqueue.BillingQueueItem, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*billingqueue.BillingQueueItem, error) {
 		bqi := buncolgen.BillingQueueItemColumns
@@ -155,7 +155,7 @@ func (r *repository) Create(
 			return nil, err
 		}
 
-		return r.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
+		return r.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
 			ItemID:     entity.ID,
 			TenantInfo: tenantInfo(entity),
 		})
@@ -212,7 +212,7 @@ func (r *repository) Update(
 			return nil, err
 		}
 
-		return r.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
+		return r.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
 			ItemID:     entity.ID,
 			TenantInfo: tenantInfo(entity),
 		})
@@ -224,7 +224,7 @@ func (r *repository) Update(
 // how many were, so a caller can detect an item billed elsewhere in the meantime.
 func (r *repository) AttachInvoice(
 	ctx context.Context,
-	req *repositories.AttachInvoiceRequest,
+	req *billingqueueports.AttachInvoiceRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
 		if req.InvoiceID.IsNil() || len(req.ItemIDs) == 0 {
@@ -261,7 +261,7 @@ func (r *repository) AttachInvoice(
 // for rows written before that link, which the migration could not always resolve.
 func (r *repository) MarkPostedForInvoice(
 	ctx context.Context,
-	req *repositories.MarkPostedForInvoiceRequest,
+	req *billingqueueports.MarkPostedForInvoiceRequest,
 ) (int64, error) {
 	if req.InvoiceID.IsNil() {
 		return 0, nil
@@ -375,7 +375,7 @@ func (r *repository) syncShipmentTransferState(
 // link. Released items get a fresh number: the voided invoice keeps the old one.
 func (r *repository) ReleaseForInvoice(
 	ctx context.Context,
-	req *repositories.ReleaseForInvoiceRequest,
+	req *billingqueueports.ReleaseForInvoiceRequest,
 ) ([]*billingqueue.BillingQueueItem, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*billingqueue.BillingQueueItem, error) {
 		if req == nil || req.InvoiceID.IsNil() {
@@ -496,7 +496,7 @@ func (r *repository) ExistsByShipmentPayerAndType(
 // shipment is fully invoiced or another payer's share is still open.
 func (r *repository) ListActiveInvoiceItemsByShipmentIDs(
 	ctx context.Context,
-	req *repositories.ListActiveInvoiceItemsRequest,
+	req *billingqueueports.ListActiveInvoiceItemsRequest,
 ) (map[pulid.ID][]*billingqueue.BillingQueueItem, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID][]*billingqueue.BillingQueueItem, error) {
 		result := make(map[pulid.ID][]*billingqueue.BillingQueueItem, len(req.ShipmentIDs))
@@ -530,7 +530,7 @@ func (r *repository) ListActiveInvoiceItemsByShipmentIDs(
 
 func (r *repository) GetStatusCounts(
 	ctx context.Context,
-	req *repositories.GetBillingQueueStatsRequest,
+	req *billingqueueports.GetBillingQueueStatsRequest,
 ) (map[billingqueue.Status]int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[billingqueue.Status]int, error) {
 		bqi := buncolgen.BillingQueueItemColumns

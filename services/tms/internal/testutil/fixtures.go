@@ -2,8 +2,7 @@ package testutil
 
 import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -174,15 +173,15 @@ func (b *UserRoleAssignmentBuilder) Build() *permission.UserRoleAssignment {
 }
 
 type EffectivePermissionsBuilder struct {
-	ep *services.EffectivePermissions
+	ep *permissionports.EffectivePermissions
 }
 
 func NewEffectivePermissionsBuilder() *EffectivePermissionsBuilder {
 	return &EffectivePermissionsBuilder{
-		ep: &services.EffectivePermissions{
+		ep: &permissionports.EffectivePermissions{
 			MaxSensitivity: permission.SensitivityInternal,
-			Resources:      make(map[string]services.EffectiveResourcePermission),
-			Roles:          []services.RoleSummary{},
+			Resources:      make(map[string]permissionports.EffectiveResourcePermission),
+			Roles:          []permissionports.RoleSummary{},
 		},
 	}
 }
@@ -211,7 +210,7 @@ func (b *EffectivePermissionsBuilder) WithResource(
 	ops []permission.Operation,
 	scope permission.DataScope,
 ) *EffectivePermissionsBuilder {
-	b.ep.Resources[resource] = services.EffectiveResourcePermission{
+	b.ep.Resources[resource] = permissionports.EffectiveResourcePermission{
 		Operations: ops,
 		DataScope:  scope,
 	}
@@ -222,26 +221,26 @@ func (b *EffectivePermissionsBuilder) WithRole(
 	id pulid.ID,
 	name string,
 ) *EffectivePermissionsBuilder {
-	b.ep.Roles = append(b.ep.Roles, services.RoleSummary{
+	b.ep.Roles = append(b.ep.Roles, permissionports.RoleSummary{
 		ID:   id,
 		Name: name,
 	})
 	return b
 }
 
-func (b *EffectivePermissionsBuilder) Build() *services.EffectivePermissions {
+func (b *EffectivePermissionsBuilder) Build() *permissionports.EffectivePermissions {
 	return b.ep
 }
 
 type CachedPermissionsBuilder struct {
-	cp *repositories.CachedPermissions
+	cp *permissionports.CachedPermissions
 }
 
 func NewCachedPermissionsBuilder() *CachedPermissionsBuilder {
 	return &CachedPermissionsBuilder{
-		cp: &repositories.CachedPermissions{
+		cp: &permissionports.CachedPermissions{
 			MaxSensitivity: string(permission.SensitivityInternal),
-			Resources:      make(map[string]*repositories.CachedResourcePermission),
+			Resources:      make(map[string]*permissionports.CachedResourcePermission),
 		},
 	}
 }
@@ -262,13 +261,13 @@ func (b *CachedPermissionsBuilder) WithResource(
 	for i, op := range ops {
 		strOps[i] = string(op)
 	}
-	b.cp.Resources[resource] = &repositories.CachedResourcePermission{
+	b.cp.Resources[resource] = &permissionports.CachedResourcePermission{
 		Operations: strOps,
 		DataScope:  string(scope),
 	}
 	return b
 }
 
-func (b *CachedPermissionsBuilder) Build() *repositories.CachedPermissions {
+func (b *CachedPermissionsBuilder) Build() *permissionports.CachedPermissions {
 	return b.cp
 }

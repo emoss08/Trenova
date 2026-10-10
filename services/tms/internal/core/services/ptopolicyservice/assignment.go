@@ -7,11 +7,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/ptoledgerservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -53,7 +53,7 @@ type EndAssignmentRequest struct {
 
 func (s *Service) ListAssignments(
 	ctx context.Context,
-	req *repositories.ListPTOAssignmentsRequest,
+	req *workerports.ListPTOAssignmentsRequest,
 ) ([]*worker.WorkerPTOPolicyAssignment, error) {
 	return s.repo.ListAssignments(ctx, req)
 }
@@ -63,7 +63,7 @@ func (s *Service) ActiveAssignment(
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 ) (*worker.WorkerPTOPolicyAssignment, error) {
-	assignment, err := s.repo.GetActiveAssignment(ctx, &repositories.GetPTOAssignmentRequest{
+	assignment, err := s.repo.GetActiveAssignment(ctx, &workerports.GetPTOAssignmentRequest{
 		TenantInfo:    tenantInfo,
 		WorkerID:      workerID,
 		IncludePolicy: true,
@@ -101,7 +101,7 @@ func (s *Service) AssignWorkers(
 		)
 	}
 
-	policy, err := s.repo.GetByID(ctx, &repositories.GetPTOPolicyByIDRequest{
+	policy, err := s.repo.GetByID(ctx, &workerports.GetPTOPolicyByIDRequest{
 		ID:           req.PolicyID,
 		TenantInfo:   req.TenantInfo,
 		IncludeRules: true,
@@ -156,10 +156,10 @@ func (s *Service) AssignWorkers(
 	}
 
 	if len(result.Assignments) > 0 && !req.SystemActor {
-		entries := make([]services.BulkLogEntry, 0, len(result.Assignments))
+		entries := make([]auditports.BulkLogEntry, 0, len(result.Assignments))
 		for _, assignment := range result.Assignments {
-			entries = append(entries, services.BulkLogEntry{
-				Params: &services.LogActionParams{
+			entries = append(entries, auditports.BulkLogEntry{
+				Params: &auditports.LogActionParams{
 					Resource:       permission.ResourcePTOPolicy,
 					ResourceID:     assignment.PTOPolicyID.String(),
 					Operation:      permission.OpAssign,
@@ -168,7 +168,7 @@ func (s *Service) AssignWorkers(
 					OrganizationID: assignment.OrganizationID,
 					BusinessUnitID: assignment.BusinessUnitID,
 				},
-				Options: []services.LogOption{auditservice.WithComment(
+				Options: []auditports.LogOption{auditservice.WithComment(
 					fmt.Sprintf(
 						"Worker %s assigned to PTO policy %s",
 						assignment.WorkerID,
@@ -192,7 +192,7 @@ func (s *Service) assignWorker(
 	workerID pulid.ID,
 	actor ptoledgerservice.Actor,
 ) (*worker.WorkerPTOPolicyAssignment, error) {
-	if _, err := s.workerRepo.GetByID(ctx, repositories.GetWorkerByIDRequest{
+	if _, err := s.workerRepo.GetByID(ctx, workerports.GetWorkerByIDRequest{
 		ID:         workerID,
 		TenantInfo: req.TenantInfo,
 	}); err != nil {
@@ -201,8 +201,8 @@ func (s *Service) assignWorker(
 
 	var created *worker.WorkerPTOPolicyAssignment
 	err := s.ledger.DB().
-		WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-			open, err := s.repo.GetActiveAssignment(txCtx, &repositories.GetPTOAssignmentRequest{
+		WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+			open, err := s.repo.GetActiveAssignment(txCtx, &workerports.GetPTOAssignmentRequest{
 				TenantInfo: req.TenantInfo,
 				WorkerID:   workerID,
 			})
@@ -271,7 +271,7 @@ func (s *Service) EndAssignment(
 		zap.String("id", req.AssignmentID.String()),
 	)
 
-	assignment, err := s.repo.GetAssignmentByID(ctx, &repositories.GetPTOAssignmentByIDRequest{
+	assignment, err := s.repo.GetAssignmentByID(ctx, &workerports.GetPTOAssignmentByIDRequest{
 		ID:         req.AssignmentID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -308,7 +308,7 @@ func (s *Service) EndAssignment(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourcePTOPolicy,
 		ResourceID:     updated.PTOPolicyID.String(),
 		Operation:      permission.OpAssign,

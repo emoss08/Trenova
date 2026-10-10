@@ -6,7 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -27,8 +28,8 @@ func (f *fakeToolRules) For(
 	return f.rules, f.err
 }
 
-func ruledPolicy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func ruledPolicy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          "update_shipment",
 		Kind:          agent.ToolKindAction,
 		DefaultTier:   agent.TierAutoExecute,
@@ -37,9 +38,9 @@ func ruledPolicy() serviceports.ToolPolicy {
 	}
 }
 
-func ruledRequest() *serviceports.RunRequest {
-	return &serviceports.RunRequest{
-		Actor: &serviceports.RequestActor{OrganizationID: "org_1", BusinessUnitID: "bu_1"},
+func ruledRequest() *agentports.RunRequest {
+	return &agentports.RunRequest{
+		Actor: &permissionports.RequestActor{OrganizationID: "org_1", BusinessUnitID: "bu_1"},
 	}
 }
 

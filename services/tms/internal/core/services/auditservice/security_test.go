@@ -7,8 +7,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/requestmeta"
@@ -19,14 +20,14 @@ import (
 )
 
 type capturingAuditService struct {
-	services.AuditService
+	auditports.AuditService
 
-	params *services.LogActionParams
+	params *auditports.LogActionParams
 	entry  *audit.Entry
 	err    error
 }
 
-func (c *capturingAuditService) LogAction(params *services.LogActionParams, opts ...services.LogOption) error {
+func (c *capturingAuditService) LogAction(params *auditports.LogActionParams, opts ...auditports.LogOption) error {
 	c.params = params
 	c.entry = &audit.Entry{Metadata: map[string]any{}}
 	for _, opt := range opts {
@@ -37,7 +38,7 @@ func (c *capturingAuditService) LogAction(params *services.LogActionParams, opts
 	return c.err
 }
 
-func newSecurityAuditor(svc services.AuditService) services.SecurityAuditor {
+func newSecurityAuditor(svc auditports.AuditService) permissionports.SecurityAuditor {
 	return NewSecurityAuditor(SecurityAuditorParams{
 		AuditService: svc,
 		Metrics:      &metrics.Registry{Audit: metrics.NewAudit(nil, zap.NewNop(), false)},
@@ -52,10 +53,10 @@ func TestSecurityAuditorRecordsACriticalEntryWithTheRequest(t *testing.T) {
 	auditor := newSecurityAuditor(capture)
 
 	tenant := pulidTenant()
-	actor := services.UserActor(tenant).AuditActor()
+	actor := permissionports.UserActor(tenant).AuditActor()
 	ctx := requestmeta.With(t.Context(), requestmeta.New("req-7", "192.0.2.10", "admin-browser"))
 
-	auditor.RecordChange(ctx, &services.SecurityChange{
+	auditor.RecordChange(ctx, &permissionports.SecurityChange{
 		Resource:       permission.ResourceAPIKey,
 		ResourceID:     "key_1",
 		Operation:      permission.OpUpdate,
@@ -71,7 +72,7 @@ func TestSecurityAuditorRecordsACriticalEntryWithTheRequest(t *testing.T) {
 	require.NotNil(t, capture.params)
 	assert.True(t, capture.params.Critical)
 	assert.Equal(t, actor.UserID, capture.params.UserID)
-	assert.Equal(t, services.PrincipalTypeUser, capture.params.PrincipalType)
+	assert.Equal(t, permissionports.PrincipalTypeUser, capture.params.PrincipalType)
 	assert.Equal(t, tenant.OrgID, capture.params.OrganizationID)
 	assert.Equal(t, "active", capture.params.PreviousState["status"])
 	assert.Equal(t, "revoked", capture.params.CurrentState["status"])
@@ -90,7 +91,7 @@ func TestSecurityAuditorAcceptsListStates(t *testing.T) {
 	capture := &capturingAuditService{}
 	auditor := newSecurityAuditor(capture)
 
-	auditor.RecordChange(t.Context(), &services.SecurityChange{
+	auditor.RecordChange(t.Context(), &permissionports.SecurityChange{
 		Resource:  permission.ResourceUser,
 		Operation: permission.OpUpdate,
 		Before:    []string{"org_a"},
@@ -109,7 +110,7 @@ func TestSecurityAuditorSurvivesAnUnserializableStateAndAFailedWrite(t *testing.
 	auditor := newSecurityAuditor(capture)
 
 	assert.NotPanics(t, func() {
-		auditor.RecordChange(context.WithoutCancel(t.Context()), &services.SecurityChange{
+		auditor.RecordChange(context.WithoutCancel(t.Context()), &permissionports.SecurityChange{
 			Resource:  permission.ResourceRole,
 			Operation: permission.OpDelete,
 			Before:    make(chan int),
@@ -139,7 +140,7 @@ func TestSecurityAuditorFillsTheTenantAndActorFromTheRequestScope(t *testing.T) 
 		UserID:         tenant.UserID,
 	})
 
-	auditor.RecordChange(ctx, &services.SecurityChange{
+	auditor.RecordChange(ctx, &permissionports.SecurityChange{
 		Resource:   permission.ResourceRole,
 		ResourceID: "role_1",
 		Operation:  permission.OpDelete,
@@ -149,7 +150,7 @@ func TestSecurityAuditorFillsTheTenantAndActorFromTheRequestScope(t *testing.T) 
 	assert.Equal(t, tenant.OrgID, capture.params.OrganizationID)
 	assert.Equal(t, tenant.BuID, capture.params.BusinessUnitID)
 	assert.Equal(t, tenant.UserID, capture.params.UserID)
-	assert.Equal(t, services.PrincipalTypeUser, capture.params.PrincipalType)
+	assert.Equal(t, permissionports.PrincipalTypeUser, capture.params.PrincipalType)
 }
 
 func TestSecurityAuditorFallsBackToTheSystemActor(t *testing.T) {
@@ -158,7 +159,7 @@ func TestSecurityAuditorFallsBackToTheSystemActor(t *testing.T) {
 	capture := &capturingAuditService{}
 	auditor := newSecurityAuditor(capture)
 
-	auditor.RecordChange(t.Context(), &services.SecurityChange{
+	auditor.RecordChange(t.Context(), &permissionports.SecurityChange{
 		Resource:       permission.ResourceRole,
 		Operation:      permission.OpCreate,
 		OrganizationID: pulid.MustNew("org_"),
@@ -166,6 +167,6 @@ func TestSecurityAuditorFallsBackToTheSystemActor(t *testing.T) {
 	})
 
 	require.NotNil(t, capture.params)
-	assert.Equal(t, services.PrincipalTypeSystem, capture.params.PrincipalType)
-	assert.Equal(t, services.SystemPrincipalID, capture.params.PrincipalID)
+	assert.Equal(t, permissionports.PrincipalTypeSystem, capture.params.PrincipalType)
+	assert.Equal(t, permissionports.SystemPrincipalID, capture.params.PrincipalID)
 }

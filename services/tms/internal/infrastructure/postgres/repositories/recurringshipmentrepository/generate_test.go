@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/recurringshipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/recurringshipmentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -66,7 +66,7 @@ func TestResolveOccurrence_ExplicitDateWins(t *testing.T) {
 	series.NextOccurrenceAt = &stored
 
 	explicit := mustUnix(t, "2026-07-22 08:00", "America/New_York")
-	occurrence, err := resolveOccurrence(series, &repositories.GenerateRecurringShipmentRequest{
+	occurrence, err := resolveOccurrence(series, &recurringshipmentports.GenerateRecurringShipmentRequest{
 		OccurrenceAt: &explicit,
 		Trigger:      recurringshipment.RunTriggerManual,
 	})
@@ -84,7 +84,7 @@ func TestResolveOccurrence_UsesStoredPointerWithShiftMetadata(t *testing.T) {
 	series.NextOccurrenceAt = &shifted
 	series.NextOccurrenceSourceAt = &source
 
-	occurrence, err := resolveOccurrence(series, &repositories.GenerateRecurringShipmentRequest{
+	occurrence, err := resolveOccurrence(series, &recurringshipmentports.GenerateRecurringShipmentRequest{
 		Trigger: recurringshipment.RunTriggerAuto,
 	})
 	require.NoError(t, err)
@@ -148,15 +148,15 @@ func TestShouldAdvancePointer(t *testing.T) {
 	series.NextOccurrenceAt = &next
 
 	occurrence := &recurringshipment.Occurrence{At: next, OriginalAt: next}
-	assert.True(t, shouldAdvancePointer(series, &repositories.GenerateRecurringShipmentRequest{
+	assert.True(t, shouldAdvancePointer(series, &recurringshipmentports.GenerateRecurringShipmentRequest{
 		Trigger: recurringshipment.RunTriggerAuto,
 	}, occurrence))
-	assert.True(t, shouldAdvancePointer(series, &repositories.GenerateRecurringShipmentRequest{
+	assert.True(t, shouldAdvancePointer(series, &recurringshipmentports.GenerateRecurringShipmentRequest{
 		Trigger: recurringshipment.RunTriggerManual,
 	}, occurrence))
 
 	other := mustUnix(t, "2026-07-24 08:00", "America/New_York")
-	assert.False(t, shouldAdvancePointer(series, &repositories.GenerateRecurringShipmentRequest{
+	assert.False(t, shouldAdvancePointer(series, &recurringshipmentports.GenerateRecurringShipmentRequest{
 		Trigger:      recurringshipment.RunTriggerManual,
 		OccurrenceAt: &other,
 	}, &recurringshipment.Occurrence{At: other, OriginalAt: other}))

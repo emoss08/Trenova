@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -22,7 +22,7 @@ type disputeRepository struct {
 	l  *zap.Logger
 }
 
-func NewDispute(p Params) repositories.SettlementDisputeRepository {
+func NewDispute(p Params) driversettlementports.SettlementDisputeRepository {
 	return &disputeRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.settlement-dispute-repository"),
@@ -71,7 +71,7 @@ func (r *disputeRepository) Update(
 
 func (r *disputeRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetSettlementDisputeByIDRequest,
+	req driversettlementports.GetSettlementDisputeByIDRequest,
 ) (*driversettlement.Dispute, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driversettlement.Dispute, error) {
 		cols := buncolgen.DisputeColumns
@@ -100,7 +100,7 @@ func (r *disputeRepository) GetByID(
 
 func (r *disputeRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListSettlementDisputeConnectionRequest,
+	req *driversettlementports.ListSettlementDisputeConnectionRequest,
 ) (*pagination.CursorListResult[*driversettlement.Dispute], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*driversettlement.Dispute], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -164,7 +164,7 @@ func (r *disputeRepository) ListConnection(
 
 func (r *disputeRepository) ListForWorker(
 	ctx context.Context,
-	req *repositories.ListSettlementDisputesForWorkerRequest,
+	req *driversettlementports.ListSettlementDisputesForWorkerRequest,
 ) ([]*driversettlement.Dispute, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driversettlement.Dispute, error) {
 		cols := buncolgen.DisputeColumns

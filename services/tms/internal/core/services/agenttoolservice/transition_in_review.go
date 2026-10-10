@@ -6,10 +6,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/billingqueueservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -25,12 +26,12 @@ type transitionToInReviewTool struct {
 }
 
 var (
-	_ serviceports.ToolPreviewer = (*transitionToInReviewTool)(nil)
-	_ serviceports.ToolValidator = (*transitionToInReviewTool)(nil)
-	_ serviceports.TargetedTool  = (*transitionToInReviewTool)(nil)
+	_ agentports.ToolPreviewer = (*transitionToInReviewTool)(nil)
+	_ agentports.ToolValidator = (*transitionToInReviewTool)(nil)
+	_ agentports.TargetedTool  = (*transitionToInReviewTool)(nil)
 )
 
-func newTransitionToInReviewTool(billing billingQueueDecider) serviceports.AgentTool {
+func newTransitionToInReviewTool(billing billingQueueDecider) agentports.AgentTool {
 	return &transitionToInReviewTool{billing: billing}
 }
 
@@ -61,8 +62,8 @@ func (t *transitionToInReviewTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *transitionToInReviewTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *transitionToInReviewTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceBillingQueue,
@@ -74,7 +75,7 @@ func (t *transitionToInReviewTool) Policy() serviceports.ToolPolicy {
 		Effect:        agent.ToolEffectChange,
 		Reversible:    true,
 		ReadsExternal: agent.ExternalReadNever,
-		Condition: &serviceports.TierCondition{
+		Condition: &agentports.TierCondition{
 			Description: inReviewConditionDescription,
 			Limit:       t.tierLimit,
 		},
@@ -89,7 +90,7 @@ const inReviewConditionDescription = "An item on hold was held there by a person
 
 func (t *transitionToInReviewTool) tierLimit(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) agent.AutonomyTier {
 	if params.Actor == nil {
 		return agent.TierPropose
@@ -110,7 +111,7 @@ func (t *transitionToInReviewTool) tierFor(
 	tenant pagination.TenantInfo,
 	itemID pulid.ID,
 ) agent.AutonomyTier {
-	item, err := t.billing.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
+	item, err := t.billing.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
 		TenantInfo: tenant,
 		ItemID:     itemID,
 	})
@@ -121,7 +122,7 @@ func (t *transitionToInReviewTool) tierFor(
 	return agent.TierAutoExecute
 }
 
-func (t *transitionToInReviewTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *transitionToInReviewTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, paramBillingQueueItemID, permission.ResourceBillingQueue)
 }
 
@@ -131,7 +132,7 @@ type reviewMove struct {
 	item   *billingqueue.BillingQueueItem
 	biller pulid.ID
 	asker  bool
-	status *serviceports.UpdateBillingQueueStatusRequest
+	status *billingqueueports.UpdateBillingQueueStatusRequest
 }
 
 func (m *reviewMove) needsBiller() bool {
@@ -142,7 +143,7 @@ func (m *reviewMove) needsBiller() bool {
 // to the record: the biller first, since a waiting item moves with them, then
 // the status change for an item the assignment did not move.
 func (m *reviewMove) plan(
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 	now int64,
 ) func(*billingqueue.BillingQueueItem) error {
 	return func(after *billingqueue.BillingQueueItem) error {
@@ -169,7 +170,7 @@ func (m *reviewMove) plan(
 
 func (t *transitionToInReviewTool) move(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*reviewMove, error) {
 	if err := guardPreview(t, params); err != nil {
 		return nil, err
@@ -180,7 +181,7 @@ func (t *transitionToInReviewTool) move(
 		return nil, err
 	}
 	tenant := tenantFrom(*params)
-	item, err := t.billing.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
+	item, err := t.billing.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
 		ItemID:     itemID,
 		TenantInfo: tenant,
 	})
@@ -190,7 +191,7 @@ func (t *transitionToInReviewTool) move(
 
 	move := &reviewMove{
 		item: item,
-		status: &serviceports.UpdateBillingQueueStatusRequest{
+		status: &billingqueueports.UpdateBillingQueueStatusRequest{
 			ItemID:     itemID,
 			NewStatus:  billingqueue.StatusInReview,
 			TenantInfo: tenant,
@@ -208,7 +209,7 @@ func (t *transitionToInReviewTool) move(
 
 func (t *transitionToInReviewTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	move, err := t.move(ctx, &params)
 	if err != nil {
@@ -221,7 +222,7 @@ func (t *transitionToInReviewTool) Validate(
 
 func (t *transitionToInReviewTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -234,7 +235,7 @@ func (t *transitionToInReviewTool) Execute(
 
 	item := move.item
 	if move.needsBiller() {
-		item, err = t.billing.AssignBiller(ctx, &serviceports.AssignBillerRequest{
+		item, err = t.billing.AssignBiller(ctx, &billingqueueports.AssignBillerRequest{
 			ItemID:     move.status.ItemID,
 			BillerID:   move.biller,
 			TenantInfo: move.status.TenantInfo,

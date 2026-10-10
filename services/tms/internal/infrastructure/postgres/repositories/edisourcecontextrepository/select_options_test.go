@@ -5,8 +5,8 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -75,7 +75,7 @@ func TestSelectSourceContextFieldOptions_AppliesSchemaSearchAndFieldFilters(t *t
 	repeated := true
 	result, err := repo.SelectSourceContextFieldOptions(
 		t.Context(),
-		&repositories.ListEDISourceContextFieldsRequest{
+		&ediports.ListEDISourceContextFieldsRequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 				Pagination: pagination.Info{Limit: 20},

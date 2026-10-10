@@ -9,10 +9,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentshadow"
 	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,7 +23,7 @@ import (
 )
 
 type stubRunRepo struct {
-	repositories.AgentRunRepository
+	agentports.AgentRunRepository
 
 	created []*agent.AgentRun
 	err     error
@@ -31,12 +32,12 @@ type stubRunRepo struct {
 	reads int
 
 	transcripts     map[pulid.ID]*agent.RunTranscript
-	transcriptReads []repositories.ListAgentRunsByIDsRequest
+	transcriptReads []agentports.ListAgentRunsByIDsRequest
 }
 
 func (r *stubRunRepo) ListTranscriptsByIDs(
 	_ context.Context,
-	req repositories.ListAgentRunsByIDsRequest,
+	req agentports.ListAgentRunsByIDsRequest,
 ) ([]*agent.AgentRun, error) {
 	r.transcriptReads = append(r.transcriptReads, req)
 	runs := make([]*agent.AgentRun, 0, len(req.IDs))
@@ -51,7 +52,7 @@ func (r *stubRunRepo) ListTranscriptsByIDs(
 
 func (r *stubRunRepo) GetByID(
 	_ context.Context,
-	req repositories.GetAgentRunByIDRequest,
+	req agentports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	r.reads++
 	if run, ok := r.byID[req.ID]; ok {
@@ -67,7 +68,7 @@ func (r *stubRunRepo) GetByID(
 }
 
 type stubControlRepo struct {
-	repositories.AgentControlRepository
+	tenantports.AgentControlRepository
 
 	paused bool
 }
@@ -80,14 +81,14 @@ func (r stubControlRepo) GetOrCreate(
 }
 
 type stubDefinitionRepo struct {
-	repositories.AgentDefinitionRepository
+	agentdefinitionports.AgentDefinitionRepository
 
 	definition *agentdefinition.Definition
 }
 
 func (r stubDefinitionRepo) GetByID(
 	_ context.Context,
-	req repositories.GetAgentDefinitionByIDRequest,
+	req agentdefinitionports.GetAgentDefinitionByIDRequest,
 ) (*agentdefinition.Definition, error) {
 	if r.definition == nil || r.definition.ID != req.ID {
 		return nil, errortypes.NewNotFoundError("Agent definition not found")
@@ -121,17 +122,17 @@ type stubProposalRepo struct {
 	byThread []*agent.AgentProposal
 	err      error
 	listErr  error
-	lastList repositories.ListAgentProposalsByThreadRequest
+	lastList agentports.ListAgentProposalsByThreadRequest
 
 	byRun   []*agent.AgentProposal
-	lastRun repositories.ListAgentProposalsByRunRequest
+	lastRun agentports.ListAgentProposalsByRunRequest
 
 	expiredThreads []pulid.ID
 }
 
 func (r *stubProposalRepo) ListByRun(
 	_ context.Context,
-	req repositories.ListAgentProposalsByRunRequest,
+	req agentports.ListAgentProposalsByRunRequest,
 ) ([]*agent.AgentProposal, error) {
 	r.lastRun = req
 	if r.listErr != nil {
@@ -157,7 +158,7 @@ func (r *stubProposalRepo) Create(
 
 func (r *stubProposalRepo) ListByThread(
 	_ context.Context,
-	req repositories.ListAgentProposalsByThreadRequest,
+	req agentports.ListAgentProposalsByThreadRequest,
 ) ([]*agent.AgentProposal, error) {
 	r.lastList = req
 	if r.listErr != nil {
@@ -171,7 +172,7 @@ func (r *stubProposalRepo) ListByThread(
 // only reads a thread, and an unexpected call panics on the nil interface, which
 // is exactly the failure a test wants.
 type stubConversationRepo struct {
-	repositories.ConversationRepository
+	agentports.ConversationRepository
 
 	thread *conversation.Thread
 	getErr error
@@ -179,7 +180,7 @@ type stubConversationRepo struct {
 
 func (r *stubConversationRepo) GetThread(
 	_ context.Context,
-	_ repositories.GetThreadRequest,
+	_ agentports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	if r.getErr != nil {
 		return nil, r.getErr
@@ -216,7 +217,7 @@ func newProposalServiceBehind(
 }
 
 func proposalTestParams(
-	actions []serviceports.PendingAction,
+	actions []agentports.PendingAction,
 	saved []conversation.Message,
 ) persistProposalsParams {
 	return persistProposalsParams{
@@ -261,7 +262,7 @@ func TestPersistProposals_RecordsTheWritesOfATurnThatFailed(t *testing.T) {
 	proposals := &stubProposalRepo{}
 	svc := newProposalService(runs, proposals, &stubConversationRepo{})
 
-	params := proposalTestParams([]serviceports.PendingAction{
+	params := proposalTestParams([]agentports.PendingAction{
 		{ToolName: "hold_shipment", Rationale: "Consignee closed", Tier: agent.TierAutoExecute, Executed: true},
 	}, nil)
 	params.Failed = true
@@ -281,7 +282,7 @@ func TestPersistProposals_OpensOneChatRunForTheTurn(t *testing.T) {
 	proposals := &stubProposalRepo{}
 	svc := newProposalService(runs, proposals, &stubConversationRepo{})
 
-	params := proposalTestParams([]serviceports.PendingAction{
+	params := proposalTestParams([]agentports.PendingAction{
 		{ToolName: "reassign_move", Rationale: "Driver is out of hours", Tier: agent.TierPropose},
 		{ToolName: "hold_shipment", Rationale: "Consignee closed", Tier: agent.TierPropose},
 	}, nil)
@@ -314,7 +315,7 @@ func TestPersistProposals_RecordsThePendingStatusAndTier(t *testing.T) {
 	proposals := &stubProposalRepo{}
 	svc := newProposalService(&stubRunRepo{}, proposals, &stubConversationRepo{})
 
-	_, err := svc.persistProposals(t.Context(), proposalTestParams([]serviceports.PendingAction{
+	_, err := svc.persistProposals(t.Context(), proposalTestParams([]agentports.PendingAction{
 		{
 			ToolName:  "reassign_move",
 			Arguments: map[string]any{"moveId": "mv_1"},
@@ -350,7 +351,7 @@ func TestPersistProposals_TiesEachProposalToTheMessageThatAskedForIt(t *testing.
 	svc := newProposalService(&stubRunRepo{}, proposals, &stubConversationRepo{})
 
 	_, err := svc.persistProposals(t.Context(), proposalTestParams(
-		[]serviceports.PendingAction{
+		[]agentports.PendingAction{
 			{ToolName: "hold_shipment", Rationale: "Consignee closed", ToolCallID: "call_2"},
 			{ToolName: "reassign_move", Rationale: "Out of hours", ToolCallID: "call_1"},
 		},
@@ -375,7 +376,7 @@ func TestPersistProposals_StoresEmptyArgumentsAsAnObject(t *testing.T) {
 	proposals := &stubProposalRepo{}
 	svc := newProposalService(&stubRunRepo{}, proposals, &stubConversationRepo{})
 
-	_, err := svc.persistProposals(t.Context(), proposalTestParams([]serviceports.PendingAction{
+	_, err := svc.persistProposals(t.Context(), proposalTestParams([]agentports.PendingAction{
 		{ToolName: "close_period", Rationale: "Month end"},
 	}, nil))
 	require.NoError(t, err)
@@ -393,7 +394,7 @@ func TestPersistProposals_FallsBackToTheMostRestrictiveTier(t *testing.T) {
 	proposals := &stubProposalRepo{}
 	svc := newProposalService(&stubRunRepo{}, proposals, &stubConversationRepo{})
 
-	_, err := svc.persistProposals(t.Context(), proposalTestParams([]serviceports.PendingAction{
+	_, err := svc.persistProposals(t.Context(), proposalTestParams([]agentports.PendingAction{
 		{ToolName: "reassign_move", Rationale: "Out of hours"},
 	}, nil))
 	require.NoError(t, err)
@@ -417,7 +418,7 @@ func TestPersistProposals_CitesTheConversationAsEvidence(t *testing.T) {
 	svc := newProposalService(&stubRunRepo{}, proposals, &stubConversationRepo{})
 
 	params := proposalTestParams(
-		[]serviceports.PendingAction{{
+		[]agentports.PendingAction{{
 			ToolName:   "reassign_move",
 			Rationale:  "Out of hours",
 			Tier:       agent.TierPropose,
@@ -446,7 +447,7 @@ func TestPersistProposals_CitesOnlyTheThreadWhenTheMessageIsUnknown(t *testing.T
 	proposals := &stubProposalRepo{}
 	svc := newProposalService(&stubRunRepo{}, proposals, &stubConversationRepo{})
 
-	_, err := svc.persistProposals(t.Context(), proposalTestParams([]serviceports.PendingAction{
+	_, err := svc.persistProposals(t.Context(), proposalTestParams([]agentports.PendingAction{
 		{ToolName: "reassign_move", Rationale: "Out of hours", ToolCallID: "call_missing"},
 	}, nil))
 	require.NoError(t, err)
@@ -467,7 +468,7 @@ func TestPersistProposals_FailsWhenTheRunCannotBeOpened(t *testing.T) {
 		&stubConversationRepo{},
 	)
 
-	_, err := svc.persistProposals(t.Context(), proposalTestParams([]serviceports.PendingAction{
+	_, err := svc.persistProposals(t.Context(), proposalTestParams([]agentports.PendingAction{
 		{ToolName: "reassign_move", Rationale: "Out of hours"},
 	}, nil))
 
@@ -499,7 +500,7 @@ func TestListThreadProposals_ScopesToTheThreadAndReportsExecution(t *testing.T) 
 	conversations := &stubConversationRepo{thread: &conversation.Thread{ID: threadID}}
 	svc := newProposalService(&stubRunRepo{}, proposals, conversations)
 
-	result, err := svc.ListThreadProposals(t.Context(), repositories.GetThreadRequest{ID: threadID})
+	result, err := svc.ListThreadProposals(t.Context(), agentports.GetThreadRequest{ID: threadID})
 	require.NoError(t, err)
 
 	assert.Equal(t, threadID, proposals.lastList.ThreadID)
@@ -521,7 +522,7 @@ func TestListThreadProposals_RefusesAThreadTheReaderCannotSee(t *testing.T) {
 
 	_, err := svc.ListThreadProposals(
 		t.Context(),
-		repositories.GetThreadRequest{ID: pulid.MustNew("thr_")},
+		agentports.GetThreadRequest{ID: pulid.MustNew("thr_")},
 	)
 
 	require.Error(t, err)
@@ -536,7 +537,7 @@ func TestPersistProposals_HoldsAProposalBehindTheOrganizationPause(t *testing.T)
 	svc := newProposalServiceBehind(&stubRunRepo{}, &stubProposalRepo{}, &stubConversationRepo{},
 		shadowSwitches{organizationPaused: true})
 
-	saved, err := svc.persistProposals(t.Context(), proposalTestParams([]serviceports.PendingAction{
+	saved, err := svc.persistProposals(t.Context(), proposalTestParams([]agentports.PendingAction{
 		{
 			ToolName:  "reassign_move",
 			Arguments: map[string]any{"moveId": "mv_1"},
@@ -556,7 +557,7 @@ func TestPersistProposals_HoldsAProposalBehindTheOrganizationPause(t *testing.T)
 func TestPersistProposals_HoldsAProposalBehindTheAgentSwitch(t *testing.T) {
 	t.Parallel()
 
-	params := proposalTestParams([]serviceports.PendingAction{
+	params := proposalTestParams([]agentports.PendingAction{
 		{
 			ToolName:  "reassign_move",
 			Arguments: map[string]any{"moveId": "mv_1"},
@@ -581,7 +582,7 @@ func TestPersistProposals_LeavesALiveProposalUnheld(t *testing.T) {
 
 	svc := newProposalService(&stubRunRepo{}, &stubProposalRepo{}, &stubConversationRepo{})
 
-	saved, err := svc.persistProposals(t.Context(), proposalTestParams([]serviceports.PendingAction{
+	saved, err := svc.persistProposals(t.Context(), proposalTestParams([]agentports.PendingAction{
 		{
 			ToolName:  "reassign_move",
 			Arguments: map[string]any{"moveId": "mv_1"},
@@ -633,7 +634,7 @@ func TestListThreadProposals_HoldsOnlyWhatIsStillPending(t *testing.T) {
 		shadowSwitches{definition: def},
 	)
 
-	result, err := svc.ListThreadProposals(t.Context(), repositories.GetThreadRequest{ID: threadID})
+	result, err := svc.ListThreadProposals(t.Context(), agentports.GetThreadRequest{ID: threadID})
 	require.NoError(t, err)
 
 	require.Len(t, result, 2)
@@ -646,7 +647,7 @@ func TestListThreadProposals_HoldsOnlyWhatIsStillPending(t *testing.T) {
 
 func (r *stubProposalRepo) ExpirePendingByThread(
 	_ context.Context,
-	req repositories.ExpireAgentProposalsByThreadRequest,
+	req agentports.ExpireAgentProposalsByThreadRequest,
 ) (int, error) {
 	r.expiredThreads = append(r.expiredThreads, req.ThreadID)
 

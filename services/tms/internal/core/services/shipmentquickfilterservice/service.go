@@ -7,9 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -27,24 +27,24 @@ type CostProfileResolver interface {
 type Params struct {
 	fx.In
 
-	ShipmentControlRepo repositories.ShipmentControlRepository
+	ShipmentControlRepo tenantports.ShipmentControlRepository
 	CostingService      *costingservice.Service
 }
 
 type Service struct {
-	controls repositories.ShipmentControlRepository
+	controls tenantports.ShipmentControlRepository
 	costs    CostProfileResolver
 	now      func() time.Time
 }
 
-var _ services.ShipmentQuickFilterBasisResolver = (*Service)(nil)
+var _ shipmentports.ShipmentQuickFilterBasisResolver = (*Service)(nil)
 
-func New(p Params) services.ShipmentQuickFilterBasisResolver {
+func New(p Params) shipmentports.ShipmentQuickFilterBasisResolver {
 	return NewWithDependencies(p.ShipmentControlRepo, p.CostingService, time.Now)
 }
 
 func NewWithDependencies(
-	controls repositories.ShipmentControlRepository,
+	controls tenantports.ShipmentControlRepository,
 	costs CostProfileResolver,
 	now func() time.Time,
 ) *Service {
@@ -54,7 +54,7 @@ func NewWithDependencies(
 func (s *Service) Prepare(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	opts *repositories.ShipmentOptions,
+	opts *shipmentports.ShipmentOptions,
 ) error {
 	if opts == nil || !opts.HasQuickFilters() {
 		return nil
@@ -67,7 +67,7 @@ func (s *Service) Prepare(
 	}
 
 	margin, detention := shipment.QuickFiltersNeed(opts.QuickFilters)
-	basis, err := s.Resolve(ctx, &services.ResolveShipmentQuickFilterBasisRequest{
+	basis, err := s.Resolve(ctx, &shipmentports.ResolveShipmentQuickFilterBasisRequest{
 		TenantInfo: tenantInfo,
 		Timezone:   opts.Timezone,
 		Margin:     margin,
@@ -83,8 +83,8 @@ func (s *Service) Prepare(
 
 func (s *Service) Resolve(
 	ctx context.Context,
-	req *services.ResolveShipmentQuickFilterBasisRequest,
-) (*repositories.ShipmentQuickFilterBasis, error) {
+	req *shipmentports.ResolveShipmentQuickFilterBasisRequest,
+) (*shipmentports.ShipmentQuickFilterBasis, error) {
 	if !timeutils.IsValidLocation(req.Timezone) {
 		return nil, errortypes.NewValidationError(
 			"timezone",
@@ -99,14 +99,14 @@ func (s *Service) Resolve(
 	}
 
 	now := s.now()
-	basis := &repositories.ShipmentQuickFilterBasis{Now: now.In(loc), Location: loc}
+	basis := &shipmentports.ShipmentQuickFilterBasis{Now: now.In(loc), Location: loc}
 
 	if req.Margin {
 		profile, pErr := s.costs.ResolveCostProfile(ctx, req.TenantInfo, now)
 		if pErr != nil {
 			return nil, pErr
 		}
-		basis.Margin = &repositories.ShipmentMarginBasis{
+		basis.Margin = &shipmentports.ShipmentMarginBasis{
 			CostPerMile:          profile.TotalCPM,
 			IncludeDeadheadMiles: profile.IncludeDeadheadMiles,
 			TargetMarginPercent: costingcontrol.EffectiveTargetMarginPercent(
@@ -116,7 +116,7 @@ func (s *Service) Resolve(
 	}
 
 	if req.Detention {
-		control, cErr := s.controls.Get(ctx, repositories.GetShipmentControlRequest{
+		control, cErr := s.controls.Get(ctx, tenantports.GetShipmentControlRequest{
 			TenantInfo: req.TenantInfo,
 		})
 		if cErr != nil {
@@ -131,13 +131,13 @@ func (s *Service) Resolve(
 	return basis, nil
 }
 
-func DetentionBasisOf(usePolicyEngine bool, threshold *int16) *repositories.ShipmentDetentionBasis {
+func DetentionBasisOf(usePolicyEngine bool, threshold *int16) *shipmentports.ShipmentDetentionBasis {
 	minutes := shipmentstate.DefaultDelayThresholdMinutes
 	if threshold != nil {
 		minutes = shipmentstate.ResolveDelayThresholdMinutes(*threshold)
 	}
 
-	return &repositories.ShipmentDetentionBasis{
+	return &shipmentports.ShipmentDetentionBasis{
 		UsePolicyEngine:  usePolicyEngine,
 		ThresholdMinutes: int64(minutes),
 	}

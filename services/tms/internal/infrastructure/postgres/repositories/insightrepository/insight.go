@@ -7,9 +7,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/insight"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -43,7 +43,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.InsightRepository {
+func New(p Params) insightports.InsightRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.insight-repository"),
@@ -60,7 +60,7 @@ const severityOrder = `CASE ins.severity
 
 func (r *repository) ListActive(
 	ctx context.Context,
-	req repositories.ListActiveInsightsRequest,
+	req insightports.ListActiveInsightsRequest,
 ) ([]*insight.Insight, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*insight.Insight, error) {
 		log := r.l.With(zap.String("operation", "ListActive"))
@@ -113,7 +113,7 @@ func (r *repository) ListActive(
 // pages with no explanation.
 func (r *repository) List(
 	ctx context.Context,
-	req repositories.ListInsightsRequest,
+	req insightports.ListInsightsQuery,
 ) (*pagination.ListResult[*insight.Insight], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*insight.Insight], error) {
 		log := r.l.With(zap.String("operation", "List"))
@@ -180,7 +180,7 @@ func pageBounds(limit, offset int) (int, int) {
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetInsightByIDRequest,
+	req insightports.GetInsightByIDRequest,
 ) (*insight.Insight, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*insight.Insight, error) {
 		log := r.l.With(zap.String("operation", "GetByID"), zap.String("id", req.ID.String()))
@@ -212,7 +212,7 @@ func (r *repository) GetByID(
 // to — the rows share its dedupe key, so they share its detector.
 func (r *repository) ListHistory(
 	ctx context.Context,
-	req repositories.ListInsightHistoryRequest,
+	req insightports.ListInsightHistoryRequest,
 ) ([]*insight.Insight, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*insight.Insight, error) {
 		log := r.l.With(zap.String("operation", "ListHistory"))
@@ -255,7 +255,7 @@ func (r *repository) ListHistory(
 // suppress a finding that is no longer being made.
 func (r *repository) Dismiss(
 	ctx context.Context,
-	req repositories.DismissInsightRequest,
+	req insightports.DismissInsightQuery,
 ) (*insight.Insight, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*insight.Insight, error) {
 		log := r.l.With(zap.String("operation", "Dismiss"), zap.String("id", req.ID.String()))
@@ -302,7 +302,7 @@ func (r *repository) Dismiss(
 // it had never been waved away.
 func (r *repository) Restore(
 	ctx context.Context,
-	req repositories.RestoreInsightRequest,
+	req insightports.RestoreInsightQuery,
 ) (*insight.Insight, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*insight.Insight, error) {
 		log := r.l.With(zap.String("operation", "Restore"), zap.String("id", req.ID.String()))
@@ -349,15 +349,15 @@ func (r *repository) Restore(
 // finding had been superseded and not yet replaced.
 func (r *repository) ReplaceDetectorFindings(
 	ctx context.Context,
-	req repositories.ReplaceDetectorFindingsRequest,
-) (repositories.ReplaceDetectorFindingsResult, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (repositories.ReplaceDetectorFindingsResult, error) {
+	req insightports.ReplaceDetectorFindingsRequest,
+) (insightports.ReplaceDetectorFindingsResult, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (insightports.ReplaceDetectorFindingsResult, error) {
 		log := r.l.With(
 			zap.String("operation", "ReplaceDetectorFindings"),
 			zap.String("detector", req.DetectorKey),
 		)
 
-		var result repositories.ReplaceDetectorFindingsResult
+		var result insightports.ReplaceDetectorFindingsResult
 
 		err := r.db.DBForContext(ctx).RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
 			suppressed, err := r.suppressedKeys(txCtx, tx, req)
@@ -389,7 +389,7 @@ func (r *repository) ReplaceDetectorFindings(
 		if err != nil {
 			log.Error("failed to replace detector findings", zap.Error(err))
 
-			return repositories.ReplaceDetectorFindingsResult{}, err
+			return insightports.ReplaceDetectorFindingsResult{}, err
 		}
 
 		return result, nil
@@ -401,7 +401,7 @@ func (r *repository) ReplaceDetectorFindings(
 func (r *repository) suppressedKeys(
 	ctx context.Context,
 	tx bun.Tx,
-	req repositories.ReplaceDetectorFindingsRequest,
+	req insightports.ReplaceDetectorFindingsRequest,
 ) (map[string]struct{}, error) {
 	cols := buncolgen.InsightColumns
 	keys := make([]string, 0)
@@ -428,10 +428,10 @@ func (r *repository) suppressedKeys(
 func (r *repository) applyReplacement(
 	ctx context.Context,
 	tx bun.Tx,
-	req repositories.ReplaceDetectorFindingsRequest,
+	req insightports.ReplaceDetectorFindingsRequest,
 	keep []*insight.Insight,
-) (repositories.ReplaceDetectorFindingsResult, error) {
-	var result repositories.ReplaceDetectorFindingsResult
+) (insightports.ReplaceDetectorFindingsResult, error) {
+	var result insightports.ReplaceDetectorFindingsResult
 
 	current := make([]string, 0, len(keep))
 	for _, entity := range keep {
@@ -492,7 +492,7 @@ func newlyDetected(inserted []*insight.Insight, superseded []string) []*insight.
 }
 
 type closeParams struct {
-	req    repositories.ReplaceDetectorFindingsRequest
+	req    insightports.ReplaceDetectorFindingsRequest
 	status insight.Status
 	keys   []string
 	// within selects whether to close the rows whose dedupe key is in keys

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/session"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/pkg/redishelpers"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -33,7 +33,7 @@ type sessionRepository struct {
 	l      *zap.Logger
 }
 
-func NewSessionRepository(p SessionRepositoryParams) repositories.SessionRepository {
+func NewSessionRepository(p SessionRepositoryParams) sessionports.SessionRepository {
 	return &sessionRepository{
 		client: p.Client,
 		l:      p.Logger.Named("redis.session-repository"),

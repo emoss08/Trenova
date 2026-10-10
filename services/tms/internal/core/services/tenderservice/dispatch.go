@@ -10,9 +10,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -28,8 +31,8 @@ func (s *Service) DispatchOffer(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	offerID pulid.ID,
-) (*portservices.TenderDispatchResult, error) {
-	offer, err := s.repo.GetOfferByID(ctx, repositories.GetTenderOfferByIDRequest{
+) (*tenderports.TenderDispatchResult, error) {
+	offer, err := s.repo.GetOfferByID(ctx, tenderports.GetTenderOfferByIDRequest{
 		TenantInfo:    tenantInfo,
 		OfferID:       offerID,
 		IncludeTender: true,
@@ -45,7 +48,7 @@ func (s *Service) DispatchOffer(
 	// carrier's whole TTL in silence.
 	if offer.Status == tender.OfferStatusSent && offer.ExpiresAt != nil {
 		if offer.IsExpiredAt(timeutils.NowUnix()) {
-			return &portservices.TenderDispatchResult{
+			return &tenderports.TenderDispatchResult{
 				Delivered: true,
 				ExpiresAt: *offer.ExpiresAt,
 			}, nil
@@ -53,13 +56,13 @@ func (s *Service) DispatchOffer(
 		if err = s.deliverOffer(ctx, tenantInfo, offer, *offer.ExpiresAt); err != nil {
 			return s.dispatchDeliveryOutcome(ctx, tenantInfo, offer, err)
 		}
-		return &portservices.TenderDispatchResult{
+		return &tenderports.TenderDispatchResult{
 			Delivered: true,
 			ExpiresAt: *offer.ExpiresAt,
 		}, nil
 	}
 	if offer.Status != tender.OfferStatusPending {
-		return &portservices.TenderDispatchResult{
+		return &tenderports.TenderDispatchResult{
 			Delivered: false,
 			Reason:    "Offer is no longer pending",
 		}, nil
@@ -72,7 +75,7 @@ func (s *Service) DispatchOffer(
 
 	now := timeutils.NowUnix()
 	expiresAt := now + int64(offer.OfferTTLSeconds)
-	moved, err := s.repo.UpdateOfferStatus(ctx, &repositories.UpdateOfferStatusRequest{
+	moved, err := s.repo.UpdateOfferStatus(ctx, &tenderports.UpdateOfferStatusRequest{
 		TenantInfo: tenantInfo,
 		OfferID:    offerID,
 		FromStatus: []tender.OfferStatus{tender.OfferStatusPending},
@@ -84,14 +87,14 @@ func (s *Service) DispatchOffer(
 		return nil, err
 	}
 	if !moved {
-		return &portservices.TenderDispatchResult{
+		return &tenderports.TenderDispatchResult{
 			Delivered: false,
 			Reason:    "Offer is no longer pending",
 		}, nil
 	}
 
 	rank := offer.Rank
-	if _, err = s.repo.UpdateTenderStatus(ctx, &repositories.UpdateTenderStatusRequest{
+	if _, err = s.repo.UpdateTenderStatus(ctx, &tenderports.UpdateTenderStatusRequest{
 		TenantInfo:  tenantInfo,
 		TenderID:    offer.TenderID,
 		FromStatus:  []tender.Status{tender.StatusActive},
@@ -115,7 +118,7 @@ func (s *Service) DispatchOffer(
 	))
 	s.publishTenderShipmentInvalidation(ctx, tenantInfo, offer, "tender_offer_sent")
 
-	return &portservices.TenderDispatchResult{
+	return &tenderports.TenderDispatchResult{
 		Delivered: true,
 		ExpiresAt: expiresAt,
 	}, nil
@@ -149,13 +152,13 @@ func (s *Service) dispatchDeliveryOutcome(
 	tenantInfo pagination.TenantInfo,
 	offer *tender.TenderOffer,
 	deliveryErr error,
-) (*portservices.TenderDispatchResult, error) {
+) (*tenderports.TenderDispatchResult, error) {
 	if !isAssignBusinessFailure(deliveryErr) {
 		return nil, deliveryErr
 	}
 
 	s.markDeliveryFailed(ctx, tenantInfo, offer, deliveryErr.Error())
-	return &portservices.TenderDispatchResult{
+	return &tenderports.TenderDispatchResult{
 		Delivered: false,
 		Reason:    deliveryErr.Error(),
 	}, nil
@@ -199,7 +202,7 @@ func (s *Service) deliverByEmail(
 		return err
 	}
 
-	rendered, err := s.templates.RenderMessage(ctx, &portservices.RenderMessageRequest{
+	rendered, err := s.templates.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
 		TenantInfo:        tenantInfo,
 		Kind:              documenttemplate.KindTenderOfferEmail,
 		Data:              data,
@@ -212,7 +215,7 @@ func (s *Service) deliverByEmail(
 		)
 	}
 
-	if _, err = s.emailService.Send(ctx, &portservices.SendEmailRequest{
+	if _, err = s.emailService.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo:     tenantInfo,
 		Purpose:        email.PurposeGeneral,
 		To:             []string{offer.RecipientEmail},
@@ -238,7 +241,7 @@ func (s *Service) deliverByEDI(
 		)
 	}
 
-	result, err := s.ediChannel.SendTenderOffer(ctx, &portservices.SendTenderOfferEDIRequest{
+	result, err := s.ediChannel.SendTenderOffer(ctx, &tenderports.SendTenderOfferEDIRequest{
 		TenantInfo: tenantInfo,
 		OfferID:    offer.ID,
 	})
@@ -248,7 +251,7 @@ func (s *Service) deliverByEDI(
 
 	if result != nil && !result.MessageID.IsNil() {
 		messageID := result.MessageID
-		if _, uErr := s.repo.UpdateOfferStatus(ctx, &repositories.UpdateOfferStatusRequest{
+		if _, uErr := s.repo.UpdateOfferStatus(ctx, &tenderports.UpdateOfferStatusRequest{
 			TenantInfo:   tenantInfo,
 			OfferID:      offer.ID,
 			FromStatus:   []tender.OfferStatus{tender.OfferStatusSent},
@@ -269,7 +272,7 @@ func (s *Service) markDeliveryFailed(
 	reason string,
 ) {
 	now := timeutils.NowUnix()
-	if _, err := s.repo.UpdateOfferStatus(ctx, &repositories.UpdateOfferStatusRequest{
+	if _, err := s.repo.UpdateOfferStatus(ctx, &tenderports.UpdateOfferStatusRequest{
 		TenantInfo:    tenantInfo,
 		OfferID:       offer.ID,
 		FromStatus:    []tender.OfferStatus{tender.OfferStatusSent},
@@ -338,13 +341,13 @@ func (s *Service) buildOfferEmailContext(
 		return data, nil
 	}
 
-	sh, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	sh, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID: offer.Tender.ShipmentID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: tenantInfo.OrgID,
 			BuID:  tenantInfo.BuID,
 		},
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -391,7 +394,7 @@ func (s *Service) companyName(ctx context.Context, tenantInfo pagination.TenantI
 		return ""
 	}
 
-	org, err := s.orgRepo.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+	org, err := s.orgRepo.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: tenantInfo,
 	})
 	if err != nil || org == nil {
@@ -443,9 +446,9 @@ func (s *Service) publishTenderShipmentInvalidation(
 	if offer.Tender == nil {
 		return
 	}
-	portservices.InvalidateShipments(
+	shipmentports.InvalidateShipments(
 		ctx,
 		s.invalidator,
-		portservices.ShipmentInvalidationByUser(tenantInfo, offer.Tender.ShipmentID, action),
+		shipmentports.ShipmentInvalidationByUser(tenantInfo, offer.Tender.ShipmentID, action),
 	)
 }

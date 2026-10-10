@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/uptrace/bun"
@@ -62,7 +62,7 @@ func sourceTableFor(sourceType airetrieval.SourceType) (sourceTable, error) {
 
 func (r *repository) CountSources(
 	ctx context.Context,
-	req repositories.CountRetrievalSourcesRequest,
+	req agentports.CountRetrievalSourcesRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		if err := validateTenant(req.TenantInfo); err != nil {
@@ -89,10 +89,10 @@ func (r *repository) CountSources(
 
 func (r *repository) AverageSourceChars(
 	ctx context.Context,
-	req repositories.AverageRetrievalSourceCharsRequest,
-) (repositories.RetrievalSourceChars, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (repositories.RetrievalSourceChars, error) {
-		var out repositories.RetrievalSourceChars
+	req agentports.AverageRetrievalSourceCharsRequest,
+) (agentports.RetrievalSourceChars, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (agentports.RetrievalSourceChars, error) {
+		var out agentports.RetrievalSourceChars
 
 		if err := validateTenant(req.TenantInfo); err != nil {
 			return out, err
@@ -130,7 +130,7 @@ func (r *repository) AverageSourceChars(
 			ColumnExpr(buncolgen.Count("sampled")).
 			ColumnExpr("COALESCE(AVG("+charsSampleAlias+"."+charsColumn+"), 0) AS average_chars").
 			Scan(ctx, &out); err != nil {
-			return repositories.RetrievalSourceChars{}, fmt.Errorf(
+			return agentports.RetrievalSourceChars{}, fmt.Errorf(
 				"measure %s text: %w",
 				req.SourceType,
 				err,

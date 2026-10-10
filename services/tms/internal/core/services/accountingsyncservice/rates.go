@@ -6,8 +6,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -92,7 +93,7 @@ func (s *Service) stampInvoice(
 	id pulid.ID,
 ) func(context.Context, decimal.Decimal, int64) error {
 	return func(ctx context.Context, rate decimal.Decimal, date int64) error {
-		return s.invoices.StampExchangeRate(ctx, &repositories.StampExchangeRateRequest{
+		return s.invoices.StampExchangeRate(ctx, &kernelports.StampExchangeRateRequest{
 			TenantInfo: sess.tenant,
 			ID:         id,
 			Rate:       rate,
@@ -106,7 +107,7 @@ func (s *Service) stampPayment(
 	id pulid.ID,
 ) func(context.Context, decimal.Decimal, int64) error {
 	return func(ctx context.Context, rate decimal.Decimal, date int64) error {
-		return s.payments.StampExchangeRate(ctx, &repositories.StampExchangeRateRequest{
+		return s.payments.StampExchangeRate(ctx, &kernelports.StampExchangeRateRequest{
 			TenantInfo: sess.tenant,
 			ID:         id,
 			Rate:       rate,
@@ -117,11 +118,11 @@ func (s *Service) stampPayment(
 
 func (s *Service) stampPayable(
 	sess *pushSession,
-	settlement *repositories.PayableSettlement,
+	settlement *accountingsyncports.PayableSettlement,
 	paid bool,
 ) func(context.Context, decimal.Decimal, int64) error {
 	return func(ctx context.Context, rate decimal.Decimal, date int64) error {
-		return s.payables.StampExchangeRate(ctx, &repositories.StampPayableExchangeRateRequest{
+		return s.payables.StampExchangeRate(ctx, &accountingsyncports.StampPayableExchangeRateRequest{
 			TenantInfo: sess.tenant,
 			Kind:       settlement.Kind,
 			ID:         settlement.ID,

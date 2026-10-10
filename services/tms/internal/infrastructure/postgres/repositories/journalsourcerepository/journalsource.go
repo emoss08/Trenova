@@ -5,9 +5,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/journalsource"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalsourceports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
@@ -27,7 +27,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.JournalSourceRepository {
+func New(p Params) journalsourceports.JournalSourceRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.journal-source-repository")}
 }
 
@@ -49,14 +49,14 @@ type sourceRecord struct {
 
 func (r *repository) GetByObject(
 	ctx context.Context,
-	req repositories.GetJournalSourceByObjectRequest,
+	req journalsourceports.GetJournalSourceByObjectRequest,
 ) (*journalsource.Source, error) {
 	return r.getByObjectQuery(ctx, req, "")
 }
 
 func (r *repository) GetByObjectAndEvent(
 	ctx context.Context,
-	req repositories.GetJournalSourceByObjectRequest,
+	req journalsourceports.GetJournalSourceByObjectRequest,
 	sourceEventType string,
 ) (*journalsource.Source, error) {
 	return r.getByObjectQuery(ctx, req, sourceEventType)
@@ -64,7 +64,7 @@ func (r *repository) GetByObjectAndEvent(
 
 func (r *repository) ListByObject(
 	ctx context.Context,
-	req repositories.GetJournalSourceByObjectRequest,
+	req journalsourceports.GetJournalSourceByObjectRequest,
 ) ([]*journalsource.Source, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*journalsource.Source, error) {
 		records := make([]*sourceRecord, 0)
@@ -90,7 +90,7 @@ func (r *repository) ListByObject(
 
 func (r *repository) getByObjectQuery(
 	ctx context.Context,
-	req repositories.GetJournalSourceByObjectRequest,
+	req journalsourceports.GetJournalSourceByObjectRequest,
 	sourceEventType string,
 ) (*journalsource.Source, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*journalsource.Source, error) {

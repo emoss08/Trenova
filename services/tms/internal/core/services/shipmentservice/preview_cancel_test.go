@@ -1,12 +1,15 @@
 package shipmentservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -30,9 +33,9 @@ func TestPreviewCancel_IsTheCancellationCancelMakes(t *testing.T) {
 		ProNumber:      "SHP-3001",
 		Status:         shipment.StatusAssigned,
 	}
-	repo := mocks.NewMockShipmentRepository(t)
+	repo := shipmentportsmock.NewMockShipmentRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
-		RunAndReturn(func(context.Context, *repositories.GetShipmentByIDRequest) (*shipment.Shipment, error) {
+		RunAndReturn(func(context.Context, *shipmentports.GetShipmentByIDRequest) (*shipment.Shipment, error) {
 			copied := *original
 			return &copied, nil
 		})
@@ -44,15 +47,15 @@ func TestPreviewCancel_IsTheCancellationCancelMakes(t *testing.T) {
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
-	request := func() *repositories.CancelShipmentRequest {
-		return &repositories.CancelShipmentRequest{
+	request := func() *shipmentports.CancelShipmentRequest {
+		return &shipmentports.CancelShipmentRequest{
 			TenantInfo:   pagination.TenantInfo{OrgID: orgID, BuID: buID},
 			ShipmentID:   original.ID,
 			CancelReason: "customer request",
 		}
 	}
-	actor := &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeUser,
+	actor := &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    userID,
 		UserID:         userID,
 		OrganizationID: orgID,
@@ -64,11 +67,11 @@ func TestPreviewCancel_IsTheCancellationCancelMakes(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, req.CanceledByID.IsNil(), "a preview must not stamp the caller's request")
 
-	var cancelled *repositories.CancelShipmentRequest
+	var cancelled *shipmentports.CancelShipmentRequest
 	repo.EXPECT().Cancel(mock.Anything, mock.Anything).
 		RunAndReturn(func(
 			_ context.Context,
-			req *repositories.CancelShipmentRequest,
+			req *shipmentports.CancelShipmentRequest,
 		) (*shipment.Shipment, error) {
 			cancelled = req
 			saved := *original
@@ -76,10 +79,10 @@ func TestPreviewCancel_IsTheCancellationCancelMakes(t *testing.T) {
 			return &saved, nil
 		}).
 		Once()
-	audit := mocks.NewMockAuditService(t)
+	audit := auditportsmock.NewMockAuditService(t)
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(nil).Maybe()
-	realtime := mocks.NewMockRealtimeService(t)
+	realtime := agentportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).
 		Return(nil).Maybe()
 	svc.auditService = audit

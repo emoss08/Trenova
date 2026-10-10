@@ -6,9 +6,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -32,7 +32,7 @@ type connectionRepository struct {
 	l  *zap.Logger
 }
 
-func NewConnectionRepository(p ConnectionParams) repositories.AccountingConnectionRepository {
+func NewConnectionRepository(p ConnectionParams) accountingsyncports.AccountingConnectionRepository {
 	return &connectionRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.accounting-connection-repository"),
@@ -63,7 +63,7 @@ func activeStatuses() []accountingsync.ConnectionStatus {
 
 func (r *connectionRepository) GetByType(
 	ctx context.Context,
-	req repositories.GetAccountingConnectionRequest,
+	req accountingsyncports.GetAccountingConnectionRequest,
 ) (*accountingsync.AccountingConnection, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingConnection, error) {
 		entity := new(accountingsync.AccountingConnection)
@@ -85,7 +85,7 @@ func (r *connectionRepository) GetByType(
 
 func (r *connectionRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetAccountingConnectionByIDRequest,
+	req accountingsyncports.GetAccountingConnectionByIDRequest,
 ) (*accountingsync.AccountingConnection, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingConnection, error) {
 		entity := new(accountingsync.AccountingConnection)
@@ -129,7 +129,7 @@ func (r *connectionRepository) ListByTenant(
 
 func (r *connectionRepository) ListHoldingRealm(
 	ctx context.Context,
-	req repositories.ListAccountingConnectionsByRealmRequest,
+	req accountingsyncports.ListAccountingConnectionsByRealmRequest,
 ) ([]*accountingsync.AccountingConnection, error) {
 	ctx = dbscope.WithSystem(ctx, "find every connection holding an accounting company, which spans tenants by design")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*accountingsync.AccountingConnection, error) {
@@ -157,7 +157,7 @@ func (r *connectionRepository) ListHoldingRealm(
 
 func (r *connectionRepository) ListDueForHealthCheck(
 	ctx context.Context,
-	req repositories.ListDueAccountingConnectionsRequest,
+	req accountingsyncports.ListDueAccountingConnectionsRequest,
 ) ([]*accountingsync.AccountingConnection, error) {
 	ctx = dbscope.WithSystem(ctx, "list accounting connections due a health check across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*accountingsync.AccountingConnection, error) {
@@ -191,7 +191,7 @@ func (r *connectionRepository) ListDueForHealthCheck(
 
 func (r *connectionRepository) LockByTypeWithTokens(
 	ctx context.Context,
-	req repositories.GetAccountingConnectionRequest,
+	req accountingsyncports.GetAccountingConnectionRequest,
 ) (*accountingsync.AccountingConnection, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingConnection, error) {
 		entity := new(accountingsync.AccountingConnection)
@@ -213,7 +213,7 @@ func (r *connectionRepository) LockByTypeWithTokens(
 
 func (r *connectionRepository) LockWithTokens(
 	ctx context.Context,
-	req repositories.GetAccountingConnectionByIDRequest,
+	req accountingsyncports.GetAccountingConnectionByIDRequest,
 ) (*accountingsync.AccountingConnection, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingConnection, error) {
 		entity := new(accountingsync.AccountingConnection)
@@ -281,7 +281,7 @@ func (r *connectionRepository) Update(
 
 func (r *connectionRepository) StoreTokens(
 	ctx context.Context,
-	req repositories.StoreAccountingTokensRequest,
+	req accountingsyncports.StoreAccountingTokensRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.AccountingConnectionColumns
@@ -312,7 +312,7 @@ func (r *connectionRepository) StoreTokens(
 
 func (r *connectionRepository) MarkWebhookReceived(
 	ctx context.Context,
-	req repositories.MarkAccountingWebhookRequest,
+	req accountingsyncports.MarkAccountingWebhookRequest,
 ) (int64, error) {
 	ctx = dbscope.WithSystem(ctx, "stamp every connection holding the accounting company a webhook named")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
@@ -339,7 +339,7 @@ func (r *connectionRepository) MarkWebhookReceived(
 
 func (r *connectionRepository) MarkReferenceRefresh(
 	ctx context.Context,
-	req repositories.MarkAccountingReferenceRefreshRequest,
+	req accountingsyncports.MarkAccountingReferenceRefreshRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if req.StartedAt == nil && req.RefreshedAt == nil && req.Error == "" {
@@ -381,7 +381,7 @@ func (r *connectionRepository) MarkReferenceRefresh(
 
 func (r *connectionRepository) SaveChangeFeed(
 	ctx context.Context,
-	req *repositories.SaveAccountingChangeFeedRequest,
+	req *accountingsyncports.SaveAccountingChangeFeedRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
 		cols := buncolgen.AccountingConnectionColumns
@@ -419,7 +419,7 @@ func (r *connectionRepository) SaveChangeFeed(
 
 func (r *connectionRepository) SaveDriftCheck(
 	ctx context.Context,
-	req *repositories.SaveAccountingDriftCheckRequest,
+	req *accountingsyncports.SaveAccountingDriftCheckRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.AccountingConnectionColumns
@@ -444,7 +444,7 @@ func (r *connectionRepository) SaveDriftCheck(
 
 func (r *connectionRepository) ListActive(
 	ctx context.Context,
-	req repositories.ListActiveAccountingConnectionsRequest,
+	req accountingsyncports.ListActiveAccountingConnectionsRequest,
 ) ([]*accountingsync.AccountingConnection, error) {
 	ctx = dbscope.WithSystem(ctx, "list active accounting connections across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*accountingsync.AccountingConnection, error) {

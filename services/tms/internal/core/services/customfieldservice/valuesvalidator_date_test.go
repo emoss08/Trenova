@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/customfield"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/customfieldports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -599,7 +599,7 @@ func TestValidate_NoDefinitions_WithCustomFields(t *testing.T) {
 	validator := newTestValuesValidator(repo)
 	tenantInfo := newTenantInfo()
 
-	repo.On("GetActiveByResourceType", mock.Anything, repositories.GetActiveByResourceTypeRequest{
+	repo.On("GetActiveByResourceType", mock.Anything, customfieldports.GetActiveByResourceTypeRequest{
 		TenantInfo:   tenantInfo,
 		ResourceType: "trailer",
 	}).Return([]*customfield.CustomFieldDefinition{}, nil)

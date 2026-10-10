@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,7 +21,7 @@ func (s *Service) ListPositionHolders(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	positionID pulid.ID,
-) ([]repositories.PositionHolderRow, error) {
+) ([]workerports.PositionHolderRow, error) {
 	return s.repo.ListPositionHolders(ctx, tenantInfo, positionID)
 }
 
@@ -40,7 +40,7 @@ func (s *Service) AssignWorkerPosition(ctx context.Context, req *AssignRequest) 
 	if err != nil {
 		return err
 	}
-	if err = s.repo.SetWorkerPosition(ctx, &repositories.SetWorkerPositionRequest{
+	if err = s.repo.SetWorkerPosition(ctx, &workerports.SetWorkerPositionRequest{
 		TenantInfo: req.TenantInfo,
 		WorkerID:   req.HolderID,
 		PositionID: req.PositionID,
@@ -56,7 +56,7 @@ func (s *Service) AssignUserPosition(ctx context.Context, req *AssignRequest) er
 	if err != nil {
 		return err
 	}
-	if err = s.repo.SetUserPosition(ctx, &repositories.SetUserPositionRequest{
+	if err = s.repo.SetUserPosition(ctx, &workerports.SetUserPositionRequest{
 		TenantInfo: req.TenantInfo,
 		UserID:     req.HolderID,
 		PositionID: req.PositionID,
@@ -85,7 +85,7 @@ func (s *Service) assignablePosition(
 	if req.PositionID.IsNil() {
 		return nil, nil
 	}
-	position, err := s.repo.GetPositionByID(ctx, &repositories.GetJobPositionByIDRequest{
+	position, err := s.repo.GetPositionByID(ctx, &workerports.GetJobPositionByIDRequest{
 		ID:         req.PositionID,
 		TenantInfo: req.TenantInfo,
 	})

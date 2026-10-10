@@ -6,34 +6,38 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
-	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/services/fieldsensitivity"
-
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/core/domain/glaccount"
 	"github.com/emoss08/trenova/internal/core/domain/ifta"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/latecharge"
+	"github.com/emoss08/trenova/internal/core/domain/location"
+	"github.com/emoss08/trenova/internal/core/domain/order"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-
-	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/domain/location"
-	"github.com/emoss08/trenova/internal/core/domain/order"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
+	"github.com/emoss08/trenova/internal/core/services/fieldsensitivity"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"
 	"github.com/vikstrous/dataloadgen"
@@ -105,7 +109,7 @@ type FactoryParams struct {
 	CarrierMonitoringEnrollmentByCarrierID    *CarrierMonitoringEnrollmentByCarrierIDLoaderFactory
 	AuditEntriesByAIAuditEventID              *AuditEntriesByAIAuditEventIDLoaderFactory
 	SubsetLabels                              *SubsetLabelsLoaderFactory
-	PermissionEngine                          services.PermissionEngine
+	PermissionEngine                          permissionports.PermissionEngine
 }
 
 type Factory struct {
@@ -169,7 +173,7 @@ type Factory struct {
 	carrierMonitoringEnrollmentByCarrierID    *CarrierMonitoringEnrollmentByCarrierIDLoaderFactory
 	auditEntriesByAIAuditEventID              *AuditEntriesByAIAuditEventIDLoaderFactory
 	subsetLabels                              *SubsetLabelsLoaderFactory
-	permissionEngine                          services.PermissionEngine
+	permissionEngine                          permissionports.PermissionEngine
 }
 
 type Loaders struct {
@@ -177,10 +181,10 @@ type Loaders struct {
 	LocationByID                              *dataloadgen.Loader[string, *location.Location]
 	OrderByID                                 *dataloadgen.Loader[string, *order.Order]
 	ShipmentProfitabilityByID                 *dataloadgen.Loader[string, *costingservice.ShipmentProfitabilityEstimate]
-	ShipmentEtaByID                           *dataloadgen.Loader[string, *services.ShipmentEta]
+	ShipmentEtaByID                           *dataloadgen.Loader[string, *shipmentports.ShipmentEta]
 	EDIPartnerByCustomerID                    *dataloadgen.Loader[string, *edi.EDIPartner]
-	FormulaTemplateStatsByID                  *dataloadgen.Loader[string, repositories.TemplateStats]
-	AgentDefinitionStatsByID                  *dataloadgen.Loader[string, repositories.AgentDefinitionStats]
+	FormulaTemplateStatsByID                  *dataloadgen.Loader[string, formulatemplateports.TemplateStats]
+	AgentDefinitionStatsByID                  *dataloadgen.Loader[string, agentdefinitionports.AgentDefinitionStats]
 	PayProfileActiveAssignmentCount           *dataloadgen.Loader[string, int]
 	PTOPolicyOpenAssignmentCount              *dataloadgen.Loader[string, int]
 	ShiftTemplateActiveAssignmentCount        *dataloadgen.Loader[string, int]
@@ -223,20 +227,20 @@ type Loaders struct {
 	CreditMemoApplicationsByInvoiceID         *dataloadgen.Loader[string, []*customerpayment.CreditMemoApplication]
 	InvoiceDisputesByInvoiceID                *dataloadgen.Loader[string, []*invoice.InvoiceDispute]
 	LateChargeAssessmentsByInvoiceID          *dataloadgen.Loader[string, []*latecharge.LateChargeAssessment]
-	InvoiceEDISendPlanByInvoiceID             *dataloadgen.Loader[string, *services.InvoiceEDISendPlan]
+	InvoiceEDISendPlanByInvoiceID             *dataloadgen.Loader[string, *invoiceports.InvoiceEDISendPlan]
 	CarrierIntelSnapshotByCarrierID           *dataloadgen.Loader[string, []*carrierintel.CarrierIntelSnapshot]
 	CarrierIntelSnapshotByCustomerID          *dataloadgen.Loader[string, []*carrierintel.CarrierIntelSnapshot]
 	CarrierIntelOpenEventCount                *dataloadgen.Loader[string, int]
 	InboundAttachmentCount                    *dataloadgen.Loader[string, int]
-	ShipmentSummaryByID                       *dataloadgen.Loader[string, *repositories.ShipmentSummary]
-	CaptureRecordLabel                        *dataloadgen.Loader[string, *repositories.CaptureRecordLabel]
+	ShipmentSummaryByID                       *dataloadgen.Loader[string, *shipmentports.ShipmentSummary]
+	CaptureRecordLabel                        *dataloadgen.Loader[string, *captureports.CaptureRecordLabel]
 	CarrierMonitoringEnrollmentByCarrierID    *dataloadgen.Loader[string, []*carrierintel.CarrierMonitoringEnrollment]
 	AuditEntriesByAIAuditEventID              *dataloadgen.Loader[string, []*audit.Entry]
 	// SubsetLabels names the records each record-subset field offers.
-	SubsetLabels *dataloadgen.Loader[string, services.RecordLabels]
+	SubsetLabels *dataloadgen.Loader[string, agentports.RecordLabels]
 	// FieldCeilings is the reader's sensitivity ceiling per resource, asked
 	// of the permission engine once per resource per request.
-	FieldCeilings services.FieldCeilings
+	FieldCeilings aiauditports.FieldCeilings
 }
 
 func NewFactory(p FactoryParams) *Factory {

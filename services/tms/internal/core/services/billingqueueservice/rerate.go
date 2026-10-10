@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -27,7 +27,7 @@ func (s *service) rerateShipment(
 		shp.ClearAutoRating()
 	}
 
-	control, _ := s.controlRepo.Get(ctx, repositories.GetShipmentControlRequest{
+	control, _ := s.controlRepo.Get(ctx, tenantports.GetShipmentControlRequest{
 		TenantInfo: tenantInfo,
 	})
 

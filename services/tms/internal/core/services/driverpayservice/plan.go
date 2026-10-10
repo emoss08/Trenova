@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -83,7 +83,7 @@ func (s *Service) PlanOpenEscrowAccount(
 
 	existing, err := s.escrowRepo.GetActiveForWorker(
 		ctx,
-		repositories.GetActiveEscrowAccountForWorkerRequest{
+		driverpayports.GetActiveEscrowAccountForWorkerRequest{
 			TenantInfo: tenantInfo,
 			WorkerID:   entity.WorkerID,
 		},
@@ -102,7 +102,7 @@ func (s *Service) PlanUpdateEscrowAccount(
 	ctx context.Context,
 	entity *driverpay.EscrowAccount,
 ) (*driverpay.EscrowAccount, error) {
-	previous, err := s.escrowRepo.GetByID(ctx, repositories.GetEscrowAccountByIDRequest{
+	previous, err := s.escrowRepo.GetByID(ctx, driverpayports.GetEscrowAccountByIDRequest{
 		ID:         entity.ID,
 		TenantInfo: tenantOf(entity.OrganizationID, entity.BusinessUnitID),
 	})
@@ -225,7 +225,7 @@ func (s *Service) PlanAssignment(
 		return nil, multiErr
 	}
 
-	profile, err := s.profileRepo.GetByID(ctx, repositories.GetPayProfileByIDRequest{
+	profile, err := s.profileRepo.GetByID(ctx, driverpayports.GetPayProfileByIDRequest{
 		ID:                entity.PayProfileID,
 		TenantInfo:        tenantOf(entity.OrganizationID, entity.BusinessUnitID),
 		IncludeComponents: true,
@@ -312,7 +312,7 @@ func (s *Service) CheckDeduction(
 	if autoLinkEscrow && !entity.IsEscrowContribution() {
 		account, err := s.escrowRepo.GetActiveForWorker(
 			ctx,
-			repositories.GetActiveEscrowAccountForWorkerRequest{
+			driverpayports.GetActiveEscrowAccountForWorkerRequest{
 				TenantInfo: tenantInfo,
 				WorkerID:   entity.WorkerID,
 			},

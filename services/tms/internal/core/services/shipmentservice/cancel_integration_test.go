@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -67,7 +67,7 @@ func TestCancelIntegration_CancelsLiveWorkAndKeepsCompletedStops(t *testing.T) {
 	_, err = db.NewInsert().Model(assignment).Exec(ctx)
 	require.NoError(t, err)
 
-	_, err = svc.Cancel(ctx, &repositories.CancelShipmentRequest{
+	_, err = svc.Cancel(ctx, &shipmentports.CancelShipmentRequest{
 		TenantInfo:   tenantInfo,
 		ShipmentID:   created.ID,
 		CancelReason: "customer request",
@@ -84,7 +84,7 @@ func TestCancelIntegration_CancelsLiveWorkAndKeepsCompletedStops(t *testing.T) {
 	}
 	assert.Equal(t, shipment.AssignmentStatusCanceled, mustAssignmentStatus(t, db, assignment.ID))
 
-	_, err = svc.Uncancel(ctx, &repositories.UncancelShipmentRequest{
+	_, err = svc.Uncancel(ctx, &shipmentports.UncancelShipmentRequest{
 		TenantInfo: tenantInfo,
 		ShipmentID: created.ID,
 	}, actor)
@@ -129,7 +129,7 @@ func TestCancelIntegration_RefusesInvoicedShipment(t *testing.T) {
 		Exec(ctx)
 	require.NoError(t, err)
 
-	_, err = svc.Cancel(ctx, &repositories.CancelShipmentRequest{
+	_, err = svc.Cancel(ctx, &shipmentports.CancelShipmentRequest{
 		TenantInfo: tenantInfo,
 		ShipmentID: created.ID,
 	}, actor)
@@ -161,7 +161,7 @@ func TestCancelIntegration_RepositoryRefusesStaleVersion(t *testing.T) {
 	created, err := svc.Create(ctx, entity, actor)
 	require.NoError(t, err)
 
-	_, err = shipmentRepo.Cancel(ctx, &repositories.CancelShipmentRequest{
+	_, err = shipmentRepo.Cancel(ctx, &shipmentports.CancelShipmentRequest{
 		TenantInfo:      tenantInfo,
 		ShipmentID:      created.ID,
 		CanceledByID:    data.User.ID,
@@ -176,16 +176,16 @@ func TestCancelIntegration_RepositoryRefusesStaleVersion(t *testing.T) {
 
 func mustGetExpandedShipment(
 	t *testing.T,
-	repo repositories.ShipmentRepository,
+	repo shipmentports.ShipmentRepository,
 	id pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) *shipment.Shipment {
 	t.Helper()
 
-	entity, err := repo.GetByID(t.Context(), &repositories.GetShipmentByIDRequest{
+	entity, err := repo.GetByID(t.Context(), &shipmentports.GetShipmentByIDRequest{
 		ID:              id,
 		TenantInfo:      tenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{ExpandShipmentDetails: true},
+		ShipmentOptions: shipmentports.ShipmentOptions{ExpandShipmentDetails: true},
 	})
 	require.NoError(t, err)
 

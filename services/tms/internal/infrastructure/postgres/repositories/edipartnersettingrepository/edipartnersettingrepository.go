@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -29,7 +29,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.EDIPartnerSettingRepository {
+func New(p Params) ediports.EDIPartnerSettingRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.edi-partner-setting-repository"),
@@ -38,7 +38,7 @@ func New(p Params) repositories.EDIPartnerSettingRepository {
 
 func (r *repository) ListPartnerSettingSchemas(
 	ctx context.Context,
-	req *repositories.ListEDIPartnerSettingSchemasRequest,
+	req *ediports.ListEDIPartnerSettingSchemasRequest,
 ) (*pagination.ListResult[*edi.EDIPartnerSettingSchema], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDIPartnerSettingSchema], error) {
 		entities := make([]*edi.EDIPartnerSettingSchema, 0, req.Filter.Pagination.SafeLimit())
@@ -70,7 +70,7 @@ func (r *repository) ListPartnerSettingSchemas(
 
 func (r *repository) GetPartnerSettingSchema(
 	ctx context.Context,
-	req repositories.GetEDIPartnerSettingSchemaRequest,
+	req ediports.GetEDIPartnerSettingSchemaRequest,
 ) (*edi.EDIPartnerSettingSchema, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIPartnerSettingSchema, error) {
 		entity := new(edi.EDIPartnerSettingSchema)
@@ -93,7 +93,7 @@ func (r *repository) GetPartnerSettingSchema(
 
 func (r *repository) GetActivePartnerSettingSchema(
 	ctx context.Context,
-	req repositories.GetActiveEDIPartnerSettingSchemaRequest,
+	req ediports.GetActiveEDIPartnerSettingSchemaRequest,
 ) (*edi.EDIPartnerSettingSchema, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIPartnerSettingSchema, error) {
 		entity := new(edi.EDIPartnerSettingSchema)
@@ -130,28 +130,28 @@ func (r *repository) GetActivePartnerSettingSchema(
 
 func (r *repository) ListPartnerSettingFields(
 	ctx context.Context,
-	req *repositories.ListEDIPartnerSettingFieldsRequest,
+	req *ediports.ListEDIPartnerSettingFieldsRequest,
 ) (*pagination.ListResult[*edi.EDIPartnerSettingField], error) {
 	return r.searchPartnerSettingFields(ctx, req)
 }
 
 func (r *repository) SearchPartnerSettingFields(
 	ctx context.Context,
-	req *repositories.ListEDIPartnerSettingFieldsRequest,
+	req *ediports.ListEDIPartnerSettingFieldsRequest,
 ) (*pagination.ListResult[*edi.EDIPartnerSettingField], error) {
 	return r.searchPartnerSettingFields(ctx, req)
 }
 
 func (r *repository) SelectPartnerSettingFieldOptions(
 	ctx context.Context,
-	req *repositories.ListEDIPartnerSettingFieldsRequest,
+	req *ediports.ListEDIPartnerSettingFieldsRequest,
 ) (*pagination.ListResult[*edi.EDIPartnerSettingField], error) {
 	return r.searchPartnerSettingFields(ctx, req)
 }
 
 func (r *repository) searchPartnerSettingFields(
 	ctx context.Context,
-	req *repositories.ListEDIPartnerSettingFieldsRequest,
+	req *ediports.ListEDIPartnerSettingFieldsRequest,
 ) (*pagination.ListResult[*edi.EDIPartnerSettingField], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDIPartnerSettingField], error) {
 		entities := make([]*edi.EDIPartnerSettingField, 0, req.Filter.Pagination.SafeLimit())
@@ -180,7 +180,7 @@ func (r *repository) searchPartnerSettingFields(
 
 func filterPartnerSettingSchemasQuery(
 	query *bun.SelectQuery,
-	req *repositories.ListEDIPartnerSettingSchemasRequest,
+	req *ediports.ListEDIPartnerSettingSchemasRequest,
 ) *bun.SelectQuery {
 	query = partnerSettingSchemaTenantScope(query, req.Filter.TenantInfo)
 	cols := buncolgen.EDIPartnerSettingSchemaColumns
@@ -220,7 +220,7 @@ func filterPartnerSettingSchemasQuery(
 
 func filterPartnerSettingFieldsQuery(
 	query *bun.SelectQuery,
-	req *repositories.ListEDIPartnerSettingFieldsRequest,
+	req *ediports.ListEDIPartnerSettingFieldsRequest,
 ) *bun.SelectQuery {
 	query = partnerSettingSchemaTenantScope(query, req.Filter.TenantInfo)
 	fieldCols := buncolgen.EDIPartnerSettingFieldColumns

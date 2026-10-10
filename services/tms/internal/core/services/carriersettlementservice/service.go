@@ -4,14 +4,22 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -26,48 +34,48 @@ type Params struct {
 	fx.In
 
 	Logger            *zap.Logger
-	DB                ports.DBConnection
-	SettlementRepo    repositories.CarrierSettlementRepository
-	BatchRepo         repositories.CarrierSettlementBatchRepository
-	CostEventRepo     repositories.CarrierCostEventRepository
-	LedgerRepo        repositories.CarrierLedgerRepository
-	InvoiceMatchRepo  repositories.CarrierInvoiceMatchRepository
-	SettlementControl repositories.CarrierSettlementControlRepository
-	CarrierRepo       repositories.CarrierRepository
-	AssignmentRepo    repositories.CarrierAssignmentRepository
-	ShipmentRepo      repositories.ShipmentRepository
-	EDIInvoiceRepo    repositories.EDICarrierInvoiceRepository
-	AccountingRepo    repositories.AccountingControlRepository
+	DB                kernelports.DBConnection
+	SettlementRepo    carriersettlementports.CarrierSettlementRepository
+	BatchRepo         carriersettlementports.CarrierSettlementBatchRepository
+	CostEventRepo     carriersettlementports.CarrierCostEventRepository
+	LedgerRepo        carriersettlementports.CarrierLedgerRepository
+	InvoiceMatchRepo  carriersettlementports.CarrierInvoiceMatchRepository
+	SettlementControl tenantports.CarrierSettlementControlRepository
+	CarrierRepo       carrierports.CarrierRepository
+	AssignmentRepo    shipmentports.CarrierAssignmentRepository
+	ShipmentRepo      shipmentports.ShipmentRepository
+	EDIInvoiceRepo    ediports.EDICarrierInvoiceRepository
+	AccountingRepo    tenantports.AccountingControlRepository
 	Stamper           *exchangeratestamp.Stamper
-	JournalRepo       repositories.JournalPostingRepository
-	FiscalPeriodRepo  repositories.FiscalPeriodRepository
+	JournalRepo       journalentryports.JournalPostingRepository
+	FiscalPeriodRepo  fiscalperiodports.FiscalPeriodRepository
 	Generator         seqgen.Generator
-	AuditService      serviceports.AuditService
-	Realtime          serviceports.RealtimeService
-	Sync              serviceports.AccountingSyncEnqueuer `optional:"true"`
+	AuditService      auditports.AuditService
+	Realtime          agentports.RealtimeService
+	Sync              accountingsyncports.AccountingSyncEnqueuer `optional:"true"`
 }
 
 type Service struct {
 	l                 *zap.Logger
-	db                ports.DBConnection
-	settlementRepo    repositories.CarrierSettlementRepository
-	batchRepo         repositories.CarrierSettlementBatchRepository
-	costEventRepo     repositories.CarrierCostEventRepository
-	ledgerRepo        repositories.CarrierLedgerRepository
-	invoiceMatchRepo  repositories.CarrierInvoiceMatchRepository
-	settlementControl repositories.CarrierSettlementControlRepository
-	carrierRepo       repositories.CarrierRepository
-	assignmentRepo    repositories.CarrierAssignmentRepository
-	shipmentRepo      repositories.ShipmentRepository
-	ediInvoiceRepo    repositories.EDICarrierInvoiceRepository
-	accountingRepo    repositories.AccountingControlRepository
+	db                kernelports.DBConnection
+	settlementRepo    carriersettlementports.CarrierSettlementRepository
+	batchRepo         carriersettlementports.CarrierSettlementBatchRepository
+	costEventRepo     carriersettlementports.CarrierCostEventRepository
+	ledgerRepo        carriersettlementports.CarrierLedgerRepository
+	invoiceMatchRepo  carriersettlementports.CarrierInvoiceMatchRepository
+	settlementControl tenantports.CarrierSettlementControlRepository
+	carrierRepo       carrierports.CarrierRepository
+	assignmentRepo    shipmentports.CarrierAssignmentRepository
+	shipmentRepo      shipmentports.ShipmentRepository
+	ediInvoiceRepo    ediports.EDICarrierInvoiceRepository
+	accountingRepo    tenantports.AccountingControlRepository
 	stamper           *exchangeratestamp.Stamper
-	journalRepo       repositories.JournalPostingRepository
-	fiscalPeriodRepo  repositories.FiscalPeriodRepository
+	journalRepo       journalentryports.JournalPostingRepository
+	fiscalPeriodRepo  fiscalperiodports.FiscalPeriodRepository
 	generator         seqgen.Generator
-	auditService      serviceports.AuditService
-	realtime          serviceports.RealtimeService
-	sync              serviceports.AccountingSyncEnqueuer
+	auditService      auditports.AuditService
+	realtime          agentports.RealtimeService
+	sync              accountingsyncports.AccountingSyncEnqueuer
 }
 
 func New(p Params) *Service { //nolint:gocritic // stable API shape
@@ -102,10 +110,10 @@ func (s *Service) queueSync(
 	operation accountingsync.SyncOperation,
 	source accountingsync.SyncSourceEvent,
 ) error {
-	return serviceports.EnqueueAccountingSync(
+	return accountingsyncports.EnqueueAccountingSync(
 		ctx,
 		s.sync,
-		serviceports.SettlementSync(&serviceports.SettlementSyncRequest{
+		accountingsyncports.SettlementSync(&accountingsyncports.SettlementSyncRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
 				BuID:  entity.BusinessUnitID,
@@ -120,7 +128,7 @@ func (s *Service) queueSync(
 	)
 }
 
-func requireActor(actor *serviceports.RequestActor, operation string) error {
+func requireActor(actor *permissionports.RequestActor, operation string) error {
 	if actor == nil || actor.UserID.IsNil() {
 		return errortypes.NewAuthorizationError("{0} requires an authenticated user", operation)
 	}
@@ -129,63 +137,63 @@ func requireActor(actor *serviceports.RequestActor, operation string) error {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListCarrierSettlementsRequest,
+	req *carriersettlementports.ListCarrierSettlementsRequest,
 ) (*pagination.ListResult[*carriersettlement.CarrierSettlement], error) {
 	return s.settlementRepo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListCarrierSettlementConnectionRequest,
+	req *carriersettlementports.ListCarrierSettlementConnectionRequest,
 ) (*pagination.CursorListResult[*carriersettlement.CarrierSettlement], error) {
 	return s.settlementRepo.ListConnection(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	req repositories.GetCarrierSettlementByIDRequest,
+	req carriersettlementports.GetCarrierSettlementByIDRequest,
 ) (*carriersettlement.CarrierSettlement, error) {
 	return s.settlementRepo.GetByID(ctx, req)
 }
 
 func (s *Service) ListBatches(
 	ctx context.Context,
-	req *repositories.ListCarrierSettlementBatchesRequest,
+	req *carriersettlementports.ListCarrierSettlementBatchesRequest,
 ) (*pagination.ListResult[*carriersettlement.CarrierSettlementBatch], error) {
 	return s.batchRepo.List(ctx, req)
 }
 
 func (s *Service) ListBatchesConnection(
 	ctx context.Context,
-	req *repositories.ListCarrierSettlementBatchConnectionRequest,
+	req *carriersettlementports.ListCarrierSettlementBatchConnectionRequest,
 ) (*pagination.CursorListResult[*carriersettlement.CarrierSettlementBatch], error) {
 	return s.batchRepo.ListConnection(ctx, req)
 }
 
 func (s *Service) GetBatch(
 	ctx context.Context,
-	req repositories.GetCarrierSettlementBatchByIDRequest,
+	req carriersettlementports.GetCarrierSettlementBatchByIDRequest,
 ) (*carriersettlement.CarrierSettlementBatch, error) {
 	return s.batchRepo.GetByID(ctx, req)
 }
 
 func (s *Service) ListCostEvents(
 	ctx context.Context,
-	req *repositories.ListCarrierCostEventsRequest,
+	req *carriersettlementports.ListCarrierCostEventsRequest,
 ) (*pagination.ListResult[*carriersettlement.CostEvent], error) {
 	return s.costEventRepo.List(ctx, req)
 }
 
 func (s *Service) ListCostEventsConnection(
 	ctx context.Context,
-	req *repositories.ListCarrierCostEventConnectionRequest,
+	req *carriersettlementports.ListCarrierCostEventConnectionRequest,
 ) (*pagination.CursorListResult[*carriersettlement.CostEvent], error) {
 	return s.costEventRepo.ListConnection(ctx, req)
 }
 
 func (s *Service) ListLedgerEntries(
 	ctx context.Context,
-	req *repositories.ListCarrierLedgerEntriesRequest,
+	req *carriersettlementports.ListCarrierLedgerEntriesRequest,
 ) ([]*carriersettlement.LedgerEntry, error) {
 	return s.ledgerRepo.ListByCarrier(ctx, req)
 }
@@ -203,7 +211,7 @@ func (s *Service) publishRealtimeInvalidation(
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		ActorUserID:    userID,
-		ActorType:      serviceports.PrincipalTypeUser,
+		ActorType:      permissionports.PrincipalTypeUser,
 		ActorID:        userID,
 		Resource:       resource,
 		Action:         string(action),
@@ -252,7 +260,7 @@ func (s *Service) logSettlementAudit(
 		current.BusinessUnitID,
 		userID,
 	)
-	params := &serviceports.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceCarrierSettlement,
 		ResourceID:     current.ID.String(),
 		Operation:      operation,
@@ -261,7 +269,7 @@ func (s *Service) logSettlementAudit(
 		OrganizationID: current.OrganizationID,
 		BusinessUnitID: current.BusinessUnitID,
 	}
-	options := []serviceports.LogOption{auditservice.WithComment(comment)}
+	options := []auditports.LogOption{auditservice.WithComment(comment)}
 	if previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(previous)
 		options = append(options, auditservice.WithDiff(previous, current))

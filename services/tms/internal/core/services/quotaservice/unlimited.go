@@ -5,19 +5,19 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
 type UnlimitedQuotaGuard struct{}
 
-var _ services.QuotaGuard = (*UnlimitedQuotaGuard)(nil)
+var _ platformplanports.QuotaGuard = (*UnlimitedQuotaGuard)(nil)
 
 func NewUnlimited() *UnlimitedQuotaGuard {
 	return &UnlimitedQuotaGuard{}
 }
 
-func (g *UnlimitedQuotaGuard) Enforce(_ context.Context, req *services.QuotaRequest) error {
+func (g *UnlimitedQuotaGuard) Enforce(_ context.Context, req *platformplanports.QuotaRequest) error {
 	if req == nil {
 		return ErrRequestRequired
 	}
@@ -30,13 +30,13 @@ func (g *UnlimitedQuotaGuard) Enforce(_ context.Context, req *services.QuotaRequ
 
 func (g *UnlimitedQuotaGuard) Check(
 	_ context.Context,
-	req *services.QuotaRequest,
-) (*services.QuotaDecision, error) {
+	req *platformplanports.QuotaRequest,
+) (*platformplanports.QuotaDecision, error) {
 	if req == nil {
 		return nil, ErrRequestRequired
 	}
 
-	return &services.QuotaDecision{
+	return &platformplanports.QuotaDecision{
 		Meter:     req.Meter,
 		Plan:      platformplan.PlanKeyUnlimited,
 		Allowed:   true,
@@ -48,10 +48,10 @@ func (g *UnlimitedQuotaGuard) Check(
 func (g *UnlimitedQuotaGuard) Usage(
 	_ context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*services.QuotaUsageSummary, error) {
+) (*platformplanports.QuotaUsageSummary, error) {
 	plan := platformplan.Unlimited()
 
-	return &services.QuotaUsageSummary{
+	return &platformplanports.QuotaUsageSummary{
 		OrganizationID:         tenantInfo.OrgID,
 		BusinessUnitID:         tenantInfo.BuID,
 		Plan:                   plan.Key,
@@ -59,7 +59,7 @@ func (g *UnlimitedQuotaGuard) Usage(
 		Origin:                 platformplan.OriginSelfHosted,
 		Unlimited:              true,
 		RestrictedCapabilities: []platformplan.Capability{},
-		Meters:                 []services.QuotaMeterUsage{},
+		Meters:                 []platformplanports.QuotaMeterUsage{},
 		CheckedAt:              time.Now().Unix(),
 	}, nil
 }

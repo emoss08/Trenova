@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	inttestutil "github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -33,7 +33,7 @@ func TestUpdatePasswordUpdatesOnlyScopedUser(t *testing.T) {
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 
-	user, err := repo.GetByID(ctx, repositories.GetUserByIDRequest{
+	user, err := repo.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  data.Organization.ID,
 			BuID:   data.BusinessUnit.ID,
@@ -46,7 +46,7 @@ func TestUpdatePasswordUpdatesOnlyScopedUser(t *testing.T) {
 	updatedHash, err := user.GeneratePassword("new-password-123")
 	require.NoError(t, err)
 
-	err = repo.UpdatePassword(ctx, repositories.UpdateUserPasswordRequest{
+	err = repo.UpdatePassword(ctx, tenantports.UpdateUserPasswordRequest{
 		UserID:             data.User.ID,
 		OrganizationID:     data.Organization.ID,
 		BusinessUnitID:     data.BusinessUnit.ID,
@@ -55,7 +55,7 @@ func TestUpdatePasswordUpdatesOnlyScopedUser(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	updatedUser, err := repo.GetByID(ctx, repositories.GetUserByIDRequest{
+	updatedUser, err := repo.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  data.Organization.ID,
 			BuID:   data.BusinessUnit.ID,
@@ -113,7 +113,7 @@ func TestReplaceOrganizationMembershipsReturnsConflictWhenMembershipsLocked(t *t
 	lock := inttestutil.HoldTxLock(
 		t,
 		conn,
-		ports.TxOptions{},
+		kernelports.TxOptions{},
 		func(lockCtx context.Context, tx bun.Tx) error {
 			locked := make([]*tenant.OrganizationMembership, 0)
 			return tx.NewSelect().
@@ -129,7 +129,7 @@ func TestReplaceOrganizationMembershipsReturnsConflictWhenMembershipsLocked(t *t
 
 	memberships, err := repo.ReplaceOrganizationMemberships(
 		ctx,
-		repositories.ReplaceOrganizationMembershipsRequest{
+		tenantports.ReplaceOrganizationMembershipsRequest{
 			ActorID:         data.User.ID,
 			UserID:          data.User.ID,
 			BusinessUnitID:  data.BusinessUnit.ID,

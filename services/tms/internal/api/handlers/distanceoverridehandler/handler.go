@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/distanceoverride"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/distanceoverrideservice"
+	"github.com/emoss08/trenova/internal/modules/places/ports/distanceoverrideports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -98,7 +98,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*distanceoverride.DistanceOverride], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListDistanceOverrideRequest{
+				&distanceoverrideports.ListDistanceOverrideRequest{
 					Filter: req,
 				},
 			)
@@ -128,7 +128,7 @@ func (h *Handler) get(c *gin.Context) {
 
 	entity, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetDistanceOverrideByIDRequest{
+		distanceoverrideports.GetDistanceOverrideByIDRequest{
 			ID:         distanceOverrideID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -235,7 +235,7 @@ func (h *Handler) patch(c *gin.Context) {
 
 	existing, err := h.service.Get(
 		c.Request.Context(),
-		repositories.GetDistanceOverrideByIDRequest{
+		distanceoverrideports.GetDistanceOverrideByIDRequest{
 			ID:         distanceOverrideID,
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 		},
@@ -279,7 +279,7 @@ func (h *Handler) delete(c *gin.Context) {
 		return
 	}
 
-	if err = h.service.Delete(c.Request.Context(), repositories.DeleteDistanceOverrideRequest{
+	if err = h.service.Delete(c.Request.Context(), distanceoverrideports.DeleteDistanceOverrideRequest{
 		ID:         distanceOverrideID,
 		TenantInfo: pagination.FromAuthAsUser(authCtx),
 	}, authCtx.UserID); err != nil {

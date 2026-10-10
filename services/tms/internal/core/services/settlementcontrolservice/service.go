@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -20,14 +20,14 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.SettlementControlRepository
-	AuditService services.AuditService
+	Repo         tenantports.SettlementControlRepository
+	AuditService auditports.AuditService
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.SettlementControlRepository
-	auditService services.AuditService
+	repo         tenantports.SettlementControlRepository
+	auditService auditports.AuditService
 }
 
 func New(p Params) *Service {
@@ -70,7 +70,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceSettlementControl,
 		ResourceID:     updated.ID.String(),
 		Operation:      permission.OpUpdate,

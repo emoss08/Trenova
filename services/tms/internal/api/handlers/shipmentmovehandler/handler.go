@@ -7,8 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	portservices "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,13 +18,13 @@ import (
 type Params struct {
 	fx.In
 
-	Service              portservices.ShipmentMoveService
+	Service              shipmentports.ShipmentMoveService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	service portservices.ShipmentMoveService
+	service shipmentports.ShipmentMoveService
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
 }
@@ -77,11 +76,11 @@ type recordStopActualRequest struct {
 }
 
 type splitMoveRequest struct {
-	NewDeliveryLocationID pulid.ID                    `json:"newDeliveryLocationId"`
-	SplitPickupTimes      repositories.SplitStopTimes `json:"splitPickupTimes"`
-	NewDeliveryTimes      repositories.SplitStopTimes `json:"newDeliveryTimes"`
-	Pieces                *int64                      `json:"pieces,omitempty"`
-	Weight                *int64                      `json:"weight,omitempty"`
+	NewDeliveryLocationID pulid.ID                     `json:"newDeliveryLocationId"`
+	SplitPickupTimes      shipmentports.SplitStopTimes `json:"splitPickupTimes"`
+	NewDeliveryTimes      shipmentports.SplitStopTimes `json:"newDeliveryTimes"`
+	Pieces                *int64                       `json:"pieces,omitempty"`
+	Weight                *int64                       `json:"weight,omitempty"`
 }
 
 // @Summary Update a shipment move status
@@ -114,7 +113,7 @@ func (h *Handler) updateStatus(c *gin.Context) {
 
 	entity, err := h.service.UpdateStatus(
 		c.Request.Context(),
-		&repositories.UpdateMoveStatusRequest{
+		&shipmentports.UpdateMoveStatusRequest{
 			TenantInfo: pagination.FromAuth(authCtx),
 			MoveID:     moveID,
 			Status:     shipment.MoveStatus(body.Status),
@@ -151,7 +150,7 @@ func (h *Handler) bulkUpdateStatus(c *gin.Context) {
 
 	entities, err := h.service.BulkUpdateStatus(
 		c.Request.Context(),
-		&repositories.BulkUpdateMoveStatusRequest{
+		&shipmentports.BulkUpdateMoveStatusRequest{
 			TenantInfo: pagination.FromAuth(authCtx),
 			MoveIDs:    body.MoveIDs,
 			Status:     shipment.MoveStatus(body.Status),
@@ -202,11 +201,11 @@ func (h *Handler) recordStopActual(c *gin.Context) {
 
 	entity, err := h.service.RecordStopActual(
 		c.Request.Context(),
-		&repositories.RecordStopActualRequest{
+		&shipmentports.RecordStopActualRequest{
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 			MoveID:     moveID,
 			StopID:     stopID,
-			Action:     repositories.StopActualAction(body.Action),
+			Action:     shipmentports.StopActualAction(body.Action),
 			OccurredAt: body.OccurredAt,
 		},
 	)
@@ -246,7 +245,7 @@ func (h *Handler) splitMove(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.SplitMove(c.Request.Context(), &repositories.SplitMoveRequest{
+	entity, err := h.service.SplitMove(c.Request.Context(), &shipmentports.SplitMoveRequest{
 		TenantInfo:            pagination.FromAuth(authCtx),
 		MoveID:                moveID,
 		NewDeliveryLocationID: body.NewDeliveryLocationID,

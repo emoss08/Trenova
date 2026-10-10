@@ -8,8 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -44,7 +44,7 @@ func TestOpenEscrowAccount_RequiresActor(t *testing.T) {
 	_, err := svc.OpenEscrowAccount(t.Context(), newEscrowEntity(), nil)
 	require.Error(t, err)
 
-	_, err = svc.OpenEscrowAccount(t.Context(), newEscrowEntity(), &serviceports.RequestActor{})
+	_, err = svc.OpenEscrowAccount(t.Context(), newEscrowEntity(), &permissionports.RequestActor{})
 	require.Error(t, err)
 }
 
@@ -54,7 +54,7 @@ func TestOpenEscrowAccount_DefaultsInterestRateFromSettlementControl(t *testing.
 
 	var created *driverpay.EscrowAccount
 	svc.escrowRepo = &fakeEscrowRepo{
-		getActiveForWorker: func(context.Context, repositories.GetActiveEscrowAccountForWorkerRequest) (*driverpay.EscrowAccount, error) {
+		getActiveForWorker: func(context.Context, driverpayports.GetActiveEscrowAccountForWorkerRequest) (*driverpay.EscrowAccount, error) {
 			return nil, errors.New("not found")
 		},
 		create: func(_ context.Context, entity *driverpay.EscrowAccount) (*driverpay.EscrowAccount, error) {
@@ -89,7 +89,7 @@ func TestOpenEscrowAccount_RejectsDuplicateActiveAccount(t *testing.T) {
 	svc, audit := newTestService()
 
 	svc.escrowRepo = &fakeEscrowRepo{
-		getActiveForWorker: func(context.Context, repositories.GetActiveEscrowAccountForWorkerRequest) (*driverpay.EscrowAccount, error) {
+		getActiveForWorker: func(context.Context, driverpayports.GetActiveEscrowAccountForWorkerRequest) (*driverpay.EscrowAccount, error) {
 			return activeEscrowAccount(0), nil
 		},
 	}
@@ -134,7 +134,7 @@ func TestAdjustEscrowAccount_RejectsInactiveAccount(t *testing.T) {
 	account := activeEscrowAccount(10_000)
 	account.Status = driverpay.EscrowAccountStatusClosed
 	svc.escrowRepo = &fakeEscrowRepo{
-		getByID: func(context.Context, repositories.GetEscrowAccountByIDRequest) (*driverpay.EscrowAccount, error) {
+		getByID: func(context.Context, driverpayports.GetEscrowAccountByIDRequest) (*driverpay.EscrowAccount, error) {
 			return account, nil
 		},
 	}
@@ -154,7 +154,7 @@ func TestAdjustEscrowAccount_RejectsNegativeResultingBalance(t *testing.T) {
 
 	account := activeEscrowAccount(5_000)
 	svc.escrowRepo = &fakeEscrowRepo{
-		getByID: func(context.Context, repositories.GetEscrowAccountByIDRequest) (*driverpay.EscrowAccount, error) {
+		getByID: func(context.Context, driverpayports.GetEscrowAccountByIDRequest) (*driverpay.EscrowAccount, error) {
 			return account, nil
 		},
 	}
@@ -174,7 +174,7 @@ func TestAdjustEscrowAccount_AppliesTransactionAndUpdatesBalance(t *testing.T) {
 
 	account := activeEscrowAccount(5_000)
 	repo := &fakeEscrowRepo{
-		getByID: func(context.Context, repositories.GetEscrowAccountByIDRequest) (*driverpay.EscrowAccount, error) {
+		getByID: func(context.Context, driverpayports.GetEscrowAccountByIDRequest) (*driverpay.EscrowAccount, error) {
 			return account, nil
 		},
 	}
@@ -212,7 +212,7 @@ func TestCloseEscrowAccount_RejectsAlreadyClosedAccount(t *testing.T) {
 	account := activeEscrowAccount(0)
 	account.Status = driverpay.EscrowAccountStatusClosed
 	svc.escrowRepo = &fakeEscrowRepo{
-		getByID: func(context.Context, repositories.GetEscrowAccountByIDRequest) (*driverpay.EscrowAccount, error) {
+		getByID: func(context.Context, driverpayports.GetEscrowAccountByIDRequest) (*driverpay.EscrowAccount, error) {
 			return account, nil
 		},
 	}
@@ -233,7 +233,7 @@ func TestCloseEscrowAccount_RefundsRemainingBalance(t *testing.T) {
 
 	account := activeEscrowAccount(75_000)
 	repo := &fakeEscrowRepo{
-		getByID: func(context.Context, repositories.GetEscrowAccountByIDRequest) (*driverpay.EscrowAccount, error) {
+		getByID: func(context.Context, driverpayports.GetEscrowAccountByIDRequest) (*driverpay.EscrowAccount, error) {
 			return account, nil
 		},
 	}
@@ -272,7 +272,7 @@ func TestCloseEscrowAccount_ZeroBalanceSkipsRefund(t *testing.T) {
 	account := activeEscrowAccount(0)
 	appendCalls := 0
 	repo := &fakeEscrowRepo{
-		getByID: func(context.Context, repositories.GetEscrowAccountByIDRequest) (*driverpay.EscrowAccount, error) {
+		getByID: func(context.Context, driverpayports.GetEscrowAccountByIDRequest) (*driverpay.EscrowAccount, error) {
 			return account, nil
 		},
 	}
@@ -327,7 +327,7 @@ func TestAccrueEscrowInterest_SkipsIneligibleAccounts(t *testing.T) {
 			tc.mutate(account)
 
 			svc.escrowRepo = &fakeEscrowRepo{
-				getByID: func(context.Context, repositories.GetEscrowAccountByIDRequest) (*driverpay.EscrowAccount, error) {
+				getByID: func(context.Context, driverpayports.GetEscrowAccountByIDRequest) (*driverpay.EscrowAccount, error) {
 					return account, nil
 				},
 			}
@@ -353,7 +353,7 @@ func TestAccrueEscrowInterest_AccruesOneYearOfInterest(t *testing.T) {
 	account.LastInterestAccrualDate = &oneYearAgo
 
 	repo := &fakeEscrowRepo{
-		getByID: func(context.Context, repositories.GetEscrowAccountByIDRequest) (*driverpay.EscrowAccount, error) {
+		getByID: func(context.Context, driverpayports.GetEscrowAccountByIDRequest) (*driverpay.EscrowAccount, error) {
 			return account, nil
 		},
 	}
@@ -389,7 +389,7 @@ func TestAccrueEscrowInterest_TinyElapsedOnlyAdvancesAccrualDate(t *testing.T) {
 
 	appendCalls := 0
 	repo := &fakeEscrowRepo{
-		getByID: func(context.Context, repositories.GetEscrowAccountByIDRequest) (*driverpay.EscrowAccount, error) {
+		getByID: func(context.Context, driverpayports.GetEscrowAccountByIDRequest) (*driverpay.EscrowAccount, error) {
 			return account, nil
 		},
 	}

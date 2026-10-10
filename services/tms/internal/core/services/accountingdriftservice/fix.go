@@ -9,9 +9,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -41,7 +43,7 @@ type requiredPermission struct {
 
 func (s *Service) authorize(
 	ctx context.Context,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	needed []requiredPermission,
 ) error {
 	if actor == nil || actor.UserID.IsNil() {
@@ -104,7 +106,7 @@ func (s *Service) findingByID(
 	id pulid.ID,
 	forUpdate bool,
 ) (*accountingsync.AccountingDriftFinding, error) {
-	return s.findings.GetByID(ctx, repositories.GetAccountingDriftFindingRequest{
+	return s.findings.GetByID(ctx, accountingsyncports.GetAccountingDriftFindingQuery{
 		TenantInfo: tenant,
 		ID:         id,
 		ForUpdate:  forUpdate,
@@ -113,9 +115,9 @@ func (s *Service) findingByID(
 
 func (s *Service) PreviewResolve(
 	ctx context.Context,
-	req *services.ResolveAccountingDriftRequest,
-	actor *services.RequestActor,
-) (*services.AccountingDriftFixPreview, error) {
+	req *accountingsyncports.ResolveAccountingDriftRequest,
+	actor *permissionports.RequestActor,
+) (*accountingsyncports.AccountingDriftFixPreview, error) {
 	finding, err := s.findingByID(ctx, req.TenantInfo, req.ID, false)
 	if err != nil {
 		return nil, err
@@ -132,8 +134,8 @@ func (s *Service) PreviewResolve(
 
 func (s *Service) Resolve(
 	ctx context.Context,
-	req *services.ResolveAccountingDriftRequest,
-	actor *services.RequestActor,
+	req *accountingsyncports.ResolveAccountingDriftRequest,
+	actor *permissionports.RequestActor,
 ) (*accountingsync.AccountingDriftFinding, error) {
 	current, err := s.findingByID(ctx, req.TenantInfo, req.ID, false)
 	if err != nil {
@@ -146,7 +148,7 @@ func (s *Service) Resolve(
 	var updated *accountingsync.AccountingDriftFinding
 	var previous map[string]any
 	kick := false
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		finding, txErr := s.findingByID(txCtx, req.TenantInfo, req.ID, true)
 		if txErr != nil {
 			return txErr
@@ -207,7 +209,7 @@ func (s *Service) plan(
 	}
 	records, err := s.records.ListByObjects(
 		ctx,
-		&repositories.ListAccountingSyncRecordsByObjectsRequest{
+		&accountingsyncports.ListAccountingSyncRecordsByObjectsRequest{
 			TenantInfo:   finding.TenantInfo(),
 			ConnectionID: finding.ConnectionID,
 			ObjectTypes:  []accountingsync.SyncObjectType{finding.ObjectType},
@@ -269,7 +271,7 @@ func planPush(plan *fixPlan, records []*accountingsync.AccountingSyncRecord) err
 func (s *Service) planAdjust(ctx context.Context, plan *fixPlan) error {
 	finding := plan.finding
 	if finding.ObjectType == accountingsync.SyncObjectCustomerPayment {
-		payment, err := s.payments.Get(ctx, &services.GetCustomerPaymentRequest{
+		payment, err := s.payments.Get(ctx, &customerpaymentports.GetCustomerPaymentRequest{
 			PaymentID:  finding.ObjectID,
 			TenantInfo: finding.TenantInfo(),
 		})
@@ -288,7 +290,7 @@ func (s *Service) planAdjust(ctx context.Context, plan *fixPlan) error {
 		return nil
 	}
 
-	inv, err := s.invoiceRepo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+	inv, err := s.invoiceRepo.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         finding.ObjectID,
 		TenantInfo: finding.TenantInfo(),
 	})
@@ -361,7 +363,7 @@ func (s *Service) push(
 	if plan.operation == accountingsync.SyncOperationUpdate {
 		if _, err = s.records.SupersedeOlder(
 			ctx,
-			&repositories.SupersedeAccountingSyncRecordsRequest{
+			&accountingsyncports.SupersedeAccountingSyncRecordsRequest{
 				TenantInfo:     finding.TenantInfo(),
 				ConnectionID:   finding.ConnectionID,
 				ObjectType:     finding.ObjectType,
@@ -380,9 +382,9 @@ func (s *Service) push(
 func (s *Service) adjust(
 	ctx context.Context,
 	plan *fixPlan,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) error {
-	collectCtx, collector := services.CollectAccountingSync(ctx)
+	collectCtx, collector := accountingsyncports.CollectAccountingSync(ctx)
 	fixID, err := s.runAdjustment(collectCtx, plan, actor)
 	if err != nil {
 		return err
@@ -424,13 +426,13 @@ func goneWord(kind accountingsync.DriftKind) string {
 func (s *Service) runAdjustment(
 	ctx context.Context,
 	plan *fixPlan,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (pulid.ID, error) {
 	tenant := plan.finding.TenantInfo()
 	reason := s.adjustmentReason(plan)
 	switch plan.fixObject {
 	case accountingsync.DriftFixPaymentReversal:
-		reversed, err := s.payments.Reverse(ctx, &services.ReverseCustomerPaymentRequest{
+		reversed, err := s.payments.Reverse(ctx, &customerpaymentports.ReverseCustomerPaymentRequest{
 			PaymentID:      plan.payment.ID,
 			AccountingDate: s.now().Unix(),
 			Reason:         reason,
@@ -441,7 +443,7 @@ func (s *Service) runAdjustment(
 		}
 		return reversed.ID, nil
 	case accountingsync.DriftFixInvoiceVoid:
-		voided, err := s.invoices.VoidInvoice(ctx, &services.VoidInvoiceRequest{
+		voided, err := s.invoices.VoidInvoice(ctx, &invoiceports.VoidInvoiceRequest{
 			InvoiceID:   plan.invoice.ID,
 			TenantInfo:  tenant,
 			Reason:      reason,
@@ -470,18 +472,18 @@ func (s *Service) postMemo(
 	ctx context.Context,
 	plan *fixPlan,
 	reason string,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (pulid.ID, error) {
 	tenant := plan.finding.TenantInfo()
 	billType := billingqueue.BillTypeDebitMemo
 	if plan.fixObject == accountingsync.DriftFixCreditMemo {
 		billType = billingqueue.BillTypeCreditMemo
 	}
-	memo, err := s.invoices.CreateMemo(ctx, &services.CreateMemoRequest{
+	memo, err := s.invoices.CreateMemo(ctx, &invoiceports.CreateMemoRequest{
 		TenantInfo: tenant,
 		CustomerID: plan.invoice.CustomerID,
 		BillType:   billType,
-		Lines: []*services.CreateMemoLineInput{{
+		Lines: []*invoiceports.CreateMemoLineInput{{
 			Description: reason,
 			Amount:      money.DecimalFromMinor(plan.amountMinor),
 		}},
@@ -497,10 +499,10 @@ func (s *Service) postMemo(
 	if billType != billingqueue.BillTypeCreditMemo || applied <= 0 {
 		return memo.ID, nil
 	}
-	if _, err = s.payments.ApplyCreditMemo(ctx, &services.ApplyCreditMemoRequest{
+	if _, err = s.payments.ApplyCreditMemo(ctx, &customerpaymentports.ApplyCreditMemoRequest{
 		CreditMemoID:   memo.ID,
 		AccountingDate: s.now().Unix(),
-		Applications: []*services.CreditMemoApplicationInput{{
+		Applications: []*customerpaymentports.CreditMemoApplicationInput{{
 			InvoiceID:          plan.invoice.ID,
 			AppliedAmountMinor: applied,
 		}},
@@ -526,7 +528,7 @@ func (s *Service) reflect(
 	if len(ids) == 0 {
 		return nil
 	}
-	current, err := s.records.GetByIDs(ctx, repositories.GetAccountingSyncRecordsByIDsRequest{
+	current, err := s.records.GetByIDs(ctx, accountingsyncports.GetAccountingSyncRecordsByIDsRequest{
 		TenantInfo: plan.finding.TenantInfo(),
 		IDs:        ids,
 	})

@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/tablelayout"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/tablelayoutports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -27,7 +27,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.TableLayoutRepository {
+func New(p Params) tablelayoutports.TableLayoutRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.table-layout-repository"),
@@ -36,7 +36,7 @@ func New(p Params) repositories.TableLayoutRepository {
 
 func (r *repository) Get(
 	ctx context.Context,
-	req *repositories.TableLayoutRequest,
+	req *tablelayoutports.TableLayoutRequest,
 ) (*tablelayout.TableLayout, bool, error) {
 	return dbtx.Read2(ctx, r.db, func(ctx context.Context) (*tablelayout.TableLayout, bool, error) {
 		cols := buncolgen.TableLayoutColumns
@@ -123,7 +123,7 @@ func (r *repository) Upsert(
 	})
 }
 
-func (r *repository) Delete(ctx context.Context, req *repositories.TableLayoutRequest) error {
+func (r *repository) Delete(ctx context.Context, req *tablelayoutports.TableLayoutRequest) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.TableLayoutColumns
 		_, err := r.db.DBForContext(ctx).

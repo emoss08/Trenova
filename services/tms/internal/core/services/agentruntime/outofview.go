@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -24,7 +24,7 @@ const maxOutOfViewDecisions = 5
 // out of view the same way.
 func outOfViewDecisions(
 	history []conversation.Message,
-	outcomes []serviceports.ProposalOutcome,
+	outcomes []agentports.ProposalOutcome,
 ) string {
 	if len(outcomes) == 0 {
 		return ""

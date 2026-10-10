@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -87,7 +87,7 @@ func (s *Service) handleEvent(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	providerType string,
-	event *services.ProviderWebhookEvent,
+	event *telematicsports.ProviderWebhookEvent,
 ) error {
 	record := &telematics.TelematicsEvent{
 		ID:             telematics.NewEventID(),
@@ -146,30 +146,30 @@ func (s *Service) dispatchEventSideEffects(
 	tenantInfo pagination.TenantInfo,
 	providerType string,
 	record *telematics.TelematicsEvent,
-	event *services.ProviderWebhookEvent,
+	event *telematicsports.ProviderWebhookEvent,
 ) {
 	switch event.Kind {
-	case services.ProviderEventKindGeofenceEntry, services.ProviderEventKindStopArrival:
+	case telematicsports.ProviderEventKindGeofenceEntry, telematicsports.ProviderEventKindStopArrival:
 		s.applyStopEvent(ctx, &stopEvent{
 			tenantInfo:   tenantInfo,
 			record:       record,
 			visit:        shipment.VisitArrival,
-			providerStop: event.Kind == services.ProviderEventKindStopArrival,
+			providerStop: event.Kind == telematicsports.ProviderEventKindStopArrival,
 		})
-	case services.ProviderEventKindGeofenceExit, services.ProviderEventKindStopDeparture:
+	case telematicsports.ProviderEventKindGeofenceExit, telematicsports.ProviderEventKindStopDeparture:
 		s.applyStopEvent(ctx, &stopEvent{
 			tenantInfo:   tenantInfo,
 			record:       record,
 			visit:        shipment.VisitDeparture,
-			providerStop: event.Kind == services.ProviderEventKindStopDeparture,
+			providerStop: event.Kind == telematicsports.ProviderEventKindStopDeparture,
 		})
-	case services.ProviderEventKindFormSubmission:
+	case telematicsports.ProviderEventKindFormSubmission:
 		if err := s.handleFormEvent(ctx, tenantInfo, providerType, event.Form); err != nil {
 			s.l.Warn("failed to ingest telematics form event",
 				zap.String("organizationId", tenantInfo.OrgID.String()),
 				zap.Error(err))
 		}
-	case services.ProviderEventKindOther:
+	case telematicsports.ProviderEventKindOther:
 	}
 }
 
@@ -177,7 +177,7 @@ func (s *Service) handleFormEvent(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	providerType string,
-	form *services.ProviderFormEvent,
+	form *telematicsports.ProviderFormEvent,
 ) error {
 	if form == nil {
 		return nil
@@ -210,7 +210,7 @@ func (s *Service) handleFormEvent(
 
 func applyGeofenceEvent(
 	record *telematics.TelematicsEvent,
-	geofence *services.ProviderGeofenceEvent,
+	geofence *telematicsports.ProviderGeofenceEvent,
 	vehicleID *string,
 	vehicleVIN *string,
 	driverID *string,

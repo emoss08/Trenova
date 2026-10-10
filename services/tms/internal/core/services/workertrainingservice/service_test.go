@@ -1,14 +1,18 @@
 package workertrainingservice_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"context"
 	"testing"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/workertrainingservice"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -25,7 +29,7 @@ import (
 const day = int64(86400)
 
 type fakeRepo struct {
-	repositories.WorkerTrainingRepository
+	workerports.WorkerTrainingRepository
 	courses []*worker.TrainingCourse
 	records []*worker.WorkerTrainingRecord
 }
@@ -45,7 +49,7 @@ func (f *fakeRepo) ListActiveCourses(
 
 func (f *fakeRepo) GetCourseByID(
 	_ context.Context,
-	req *repositories.GetTrainingCourseByIDRequest,
+	req *workerports.GetTrainingCourseByIDRequest,
 ) (*worker.TrainingCourse, error) {
 	for _, c := range f.courses {
 		if c.ID == req.ID {
@@ -57,7 +61,7 @@ func (f *fakeRepo) GetCourseByID(
 
 func (f *fakeRepo) ListForWorker(
 	_ context.Context,
-	req *repositories.ListWorkerTrainingRequest,
+	req *workerports.ListWorkerTrainingRequest,
 ) ([]*worker.WorkerTrainingRecord, error) {
 	out := make([]*worker.WorkerTrainingRecord, 0, len(f.records))
 	for _, r := range f.records {
@@ -81,7 +85,7 @@ func (f *fakeRepo) ListForWorker(
 
 func (f *fakeRepo) GetByID(
 	_ context.Context,
-	req *repositories.GetWorkerTrainingByIDRequest,
+	req *workerports.GetWorkerTrainingByIDRequest,
 ) (*worker.WorkerTrainingRecord, error) {
 	for _, r := range f.records {
 		if r.ID == req.ID {
@@ -129,7 +133,7 @@ func (f *fakeRepo) Update(
 type harness struct {
 	svc    *workertrainingservice.Service
 	repo   *fakeRepo
-	docs   *mocks.MockDocumentRepository
+	docs   *documentportsmock.MockDocumentRepository
 	tenant pagination.TenantInfo
 	wrk    *worker.Worker
 	userID pulid.ID
@@ -147,7 +151,7 @@ func newHarness(t *testing.T) *harness {
 		DriverType:     worker.DriverTypeOTR,
 		Profile:        &worker.WorkerProfile{HireDate: 1_600_000_000},
 	}
-	workerRepo := mocks.NewMockWorkerRepository(t)
+	workerRepo := workerportsmock.NewMockWorkerRepository(t)
 	workerRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(wrk, nil).Maybe()
 	// Every write refreshes the roster cache; the assertions here are about
 	// the change itself, not the cache.
@@ -155,8 +159,8 @@ func newHarness(t *testing.T) *harness {
 		UpdateProfileTrainingRollup(mock.Anything, mock.Anything).
 		Return(nil).
 		Maybe()
-	docs := mocks.NewMockDocumentRepository(t)
-	audit := mocks.NewMockAuditService(t)
+	docs := documentportsmock.NewMockDocumentRepository(t)
+	audit := auditportsmock.NewMockAuditService(t)
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Maybe()
 
 	repo := &fakeRepo{}
@@ -332,7 +336,7 @@ func TestComplete_DocumentMustBelongToWorker(t *testing.T) {
 
 	strangerDoc := pulid.MustNew("doc_")
 	h.docs.EXPECT().
-		GetByID(mock.Anything, mock.MatchedBy(func(req repositories.GetDocumentByIDRequest) bool {
+		GetByID(mock.Anything, mock.MatchedBy(func(req documentports.GetDocumentByIDRequest) bool {
 			return req.ID == strangerDoc
 		})).
 		Return(&document.Document{ID: strangerDoc, ResourceType: "worker", ResourceID: pulid.MustNew("wrk_").String()}, nil)
@@ -346,7 +350,7 @@ func TestComplete_DocumentMustBelongToWorker(t *testing.T) {
 
 	ownDoc := pulid.MustNew("doc_")
 	h.docs.EXPECT().
-		GetByID(mock.Anything, mock.MatchedBy(func(req repositories.GetDocumentByIDRequest) bool {
+		GetByID(mock.Anything, mock.MatchedBy(func(req documentports.GetDocumentByIDRequest) bool {
 			return req.ID == ownDoc
 		})).
 		Return(&document.Document{ID: ownDoc, ResourceType: "worker", ResourceID: h.wrk.ID.String()}, nil)

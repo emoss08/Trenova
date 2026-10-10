@@ -4,7 +4,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
 
 const (
@@ -41,7 +41,7 @@ func (b *lineBand) add(run textRun) {
 	b.runs = append(b.runs, run)
 }
 
-func groupLines(runs []textRun) []services.PDFTextLine {
+func groupLines(runs []textRun) []kernelports.PDFTextLine {
 	if len(runs) == 0 {
 		return nil
 	}
@@ -67,7 +67,7 @@ func groupLines(runs []textRun) []services.PDFTextLine {
 		bands = append(bands, &lineBand{top: run.top, bottom: run.bottom, runs: []textRun{run}})
 	}
 
-	lines := make([]services.PDFTextLine, 0, len(bands))
+	lines := make([]kernelports.PDFTextLine, 0, len(bands))
 	for _, band := range bands {
 		lines = append(lines, splitBand(band)...)
 	}
@@ -75,7 +75,7 @@ func groupLines(runs []textRun) []services.PDFTextLine {
 	return lines
 }
 
-func splitBand(band *lineBand) []services.PDFTextLine {
+func splitBand(band *lineBand) []kernelports.PDFTextLine {
 	slices.SortStableFunc(band.runs, func(a, b textRun) int {
 		switch {
 		case a.left < b.left:
@@ -89,14 +89,14 @@ func splitBand(band *lineBand) []services.PDFTextLine {
 
 	maxGap := (band.bottom - band.top) * maxWordGapRatio
 
-	var lines []services.PDFTextLine
+	var lines []kernelports.PDFTextLine
 	var parts []string
 	var current textRun
 	flush := func() {
 		if len(parts) == 0 {
 			return
 		}
-		lines = append(lines, services.PDFTextLine{
+		lines = append(lines, kernelports.PDFTextLine{
 			Text:   strings.Join(parts, " "),
 			Left:   current.left,
 			Top:    current.top,

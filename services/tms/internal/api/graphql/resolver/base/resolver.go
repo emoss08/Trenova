@@ -6,8 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/orgstructureservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -16,9 +17,9 @@ import (
 
 type Core struct {
 	L                   *zap.Logger
-	WorkerPTOService    services.WorkerPTOService
+	WorkerPTOService    workerports.WorkerPTOService
 	OrgStructureService *orgstructureservice.Service
-	PermissionEngine    services.PermissionEngine
+	PermissionEngine    permissionports.PermissionEngine
 	TraceURL            func(traceID string) string
 }
 

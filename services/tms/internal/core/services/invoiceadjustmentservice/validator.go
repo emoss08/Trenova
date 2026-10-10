@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"go.uber.org/fx"
 )
@@ -21,7 +21,7 @@ func NewValidator(_ ValidatorParams) *Validator {
 
 func (v *Validator) ValidateRequest(
 	_ context.Context,
-	req *services.InvoiceAdjustmentRequest,
+	req *invoiceadjustmentports.InvoiceAdjustmentRequest,
 ) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	if req == nil {

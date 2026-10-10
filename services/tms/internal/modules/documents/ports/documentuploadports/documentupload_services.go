@@ -1,0 +1,89 @@
+package documentuploadports
+
+import (
+	"context"
+	"io"
+
+	"github.com/emoss08/trenova/internal/core/domain/documentupload"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+)
+
+type CreateSessionRequest struct {
+	TenantInfo        pagination.TenantInfo
+	Actor             permissionports.RequestActor
+	ResourceID        string
+	ResourceType      string
+	ProcessingProfile string
+	FileName          string
+	FileSize          int64
+	ContentType       string
+	Description       string
+	Tags              []string
+	DocumentTypeID    string
+	LineageID         string
+}
+
+type PartRequest struct {
+	TenantInfo   pagination.TenantInfo
+	SessionID    pulid.ID
+	PartNumbers  []int
+	ResourceID   string
+	ResourceType string
+}
+
+type CompletionRequest struct {
+	TenantInfo pagination.TenantInfo
+	Actor      permissionports.RequestActor
+	SessionID  pulid.ID
+}
+
+type CancelRequest struct {
+	TenantInfo pagination.TenantInfo
+	SessionID  pulid.ID
+}
+
+type UploadPartRequest struct {
+	TenantInfo pagination.TenantInfo
+	SessionID  pulid.ID
+	PartNumber int
+	Body       io.Reader
+	Size       int64
+}
+
+type PartUploadTarget struct {
+	PartNumber int    `json:"partNumber"`
+	URL        string `json:"url"`
+	Method     string `json:"method"`
+}
+
+type SessionState struct {
+	Session *documentupload.DocumentUploadSession `json:"session"`
+	Parts   []kernelports.UploadedPart            `json:"parts"`
+}
+
+type DocumentUploadService interface {
+	CreateSession(
+		ctx context.Context,
+		req *CreateSessionRequest,
+	) (*documentupload.DocumentUploadSession, error)
+	UploadPart(
+		ctx context.Context,
+		req *UploadPartRequest,
+	) (*documentupload.DocumentUploadSession, error)
+
+	// Complete finalizes an upload. With workflow processing enabled it hands
+	// finalization to the upload workflow and the returned session has no
+	// document yet; without it, finalization runs inline and the session carries
+	// the document it became.
+	//
+	// A server-generated document therefore needs this only on deployments with
+	// no Temporal worker — everywhere else the finalize workflow reports the
+	// document id to whoever started it.
+	Complete(
+		ctx context.Context,
+		req *CompletionRequest,
+	) (*documentupload.DocumentUploadSession, error)
+}

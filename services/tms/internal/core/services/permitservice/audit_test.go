@@ -1,14 +1,16 @@
 package permitservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/holdreason"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/permit"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,16 +24,16 @@ import (
 // eight methods and this test drives three of them. Mockery is not run against
 // this repo.
 type permitRepoStub struct {
-	repositories.PermitRepository
+	permitports.PermitRepository
 
-	getByID func(*repositories.GetPermitByIDRequest) (*permit.Permit, error)
+	getByID func(*permitports.GetPermitByIDRequest) (*permit.Permit, error)
 	create  func(*permit.Permit) (*permit.Permit, error)
 	update  func(*permit.Permit) (*permit.Permit, error)
-	waive   func(*repositories.WaiveRequirementRepoRequest) (*permit.Requirement, error)
+	waive   func(*permitports.WaiveRequirementRepoRequest) (*permit.Requirement, error)
 }
 
 func (s *permitRepoStub) GetByID(
-	_ context.Context, req *repositories.GetPermitByIDRequest,
+	_ context.Context, req *permitports.GetPermitByIDRequest,
 ) (*permit.Permit, error) {
 	return s.getByID(req)
 }
@@ -49,7 +51,7 @@ func (s *permitRepoStub) Update(
 }
 
 func (s *permitRepoStub) WaiveRequirement(
-	_ context.Context, req *repositories.WaiveRequirementRepoRequest,
+	_ context.Context, req *permitports.WaiveRequirementRepoRequest,
 ) (*permit.Requirement, error) {
 	return s.waive(req)
 }
@@ -74,10 +76,10 @@ func activePermit() *permit.Permit {
 	}
 }
 
-func actor() *services.RequestActor {
-	return &services.RequestActor{
+func actor() *permissionports.RequestActor {
+	return &permissionports.RequestActor{
 		UserID:        pulid.MustNew("usr_"),
-		PrincipalType: services.PrincipalTypeUser,
+		PrincipalType: permissionports.PrincipalTypeUser,
 	}
 }
 
@@ -86,11 +88,11 @@ func actor() *services.RequestActor {
 // by the sync tests.
 func newAuditingService(
 	t *testing.T,
-	repo repositories.PermitRepository,
-) (*service, *mocks.MockAuditService) {
+	repo permitports.PermitRepository,
+) (*service, *auditportsmock.MockAuditService) {
 	t.Helper()
 
-	auditService := mocks.NewMockAuditService(t)
+	auditService := auditportsmock.NewMockAuditService(t)
 	return &service{
 		permitRepo:   repo,
 		auditService: auditService,
@@ -105,10 +107,10 @@ func TestCreatePermit_RecordsAnAuditEntry(t *testing.T) {
 		create: func(e *permit.Permit) (*permit.Permit, error) { return e, nil },
 	})
 
-	var captured *services.LogActionParams
+	var captured *auditports.LogActionParams
 	auditService.EXPECT().
 		LogAction(mock.Anything, mock.Anything).
-		RunAndReturn(func(p *services.LogActionParams, _ ...services.LogOption) error {
+		RunAndReturn(func(p *auditports.LogActionParams, _ ...auditports.LogOption) error {
 			captured = p
 			return nil
 		})
@@ -139,26 +141,26 @@ func TestWaiveRequirement_RecordsWhoAcceptedTheRiskAndWhy(t *testing.T) {
 	reason := "Escort booked and route surveyed with the state"
 
 	svc, auditService := newAuditingService(t, &permitRepoStub{
-		waive: func(*repositories.WaiveRequirementRepoRequest) (*permit.Requirement, error) {
+		waive: func(*permitports.WaiveRequirementRepoRequest) (*permit.Requirement, error) {
 			return requirement, nil
 		},
 	})
 
-	var captured *services.LogActionParams
+	var captured *auditports.LogActionParams
 	auditService.EXPECT().
 		LogAction(mock.Anything, mock.Anything).
-		RunAndReturn(func(p *services.LogActionParams, _ ...services.LogOption) error {
+		RunAndReturn(func(p *auditports.LogActionParams, _ ...auditports.LogOption) error {
 			captured = p
 			return nil
 		})
 
-	_, err := svc.WaiveRequirement(t.Context(), &services.WaiveRequirementRequest{
+	_, err := svc.WaiveRequirement(t.Context(), &permitports.WaiveRequirementRequest{
 		RequirementID: requirement.ID,
 		WaivedByID:    waiver,
 		Reason:        reason,
-		Actor: &services.RequestActor{
+		Actor: &permissionports.RequestActor{
 			UserID:        waiver,
-			PrincipalType: services.PrincipalTypeUser,
+			PrincipalType: permissionports.PrincipalTypeUser,
 		},
 	})
 	require.NoError(t, err)
@@ -177,7 +179,7 @@ func TestWaiveRequirement_RecordsWhoAcceptedTheRiskAndWhy(t *testing.T) {
 func TestWaiveRequirement_DoesNotAuditARejectedWaiver(t *testing.T) {
 	svc, auditService := newAuditingService(t, &permitRepoStub{})
 
-	_, err := svc.WaiveRequirement(t.Context(), &services.WaiveRequirementRequest{
+	_, err := svc.WaiveRequirement(t.Context(), &permitports.WaiveRequirementRequest{
 		RequirementID: pulid.MustNew("pmr_"),
 		WaivedByID:    pulid.MustNew("usr_"),
 		Reason:        "too short",

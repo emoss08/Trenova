@@ -3,14 +3,14 @@ package ediservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	coreports "github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -29,10 +29,10 @@ func (s *Service) PlanLoadTender(
 		return nil, err
 	}
 
-	sourceShipment, err := s.shipmentSvc.Get(ctx, &repositories.GetShipmentByIDRequest{
+	sourceShipment, err := s.shipmentSvc.Get(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         req.SourceShipmentID,
 		TenantInfo: req.TenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -62,7 +62,7 @@ func (s *Service) PlanLoadTender(
 
 	connection, err := s.connectionRepo.GetActiveConnectionForPartner(
 		ctx,
-		repositories.GetActiveEDIConnectionForPartnerRequest{
+		ediports.GetActiveEDIConnectionForPartnerRequest{
 			PartnerID:  sourcePartner.ID,
 			TenantInfo: req.TenantInfo,
 			Method:     edi.ConnectionMethodInternal,
@@ -85,7 +85,7 @@ func (s *Service) PlanLoadTender(
 
 	targetPartner, err := s.partnerRepo.GetReciprocalInternalPartner(
 		ctx,
-		repositories.GetReciprocalInternalPartnerRequest{
+		ediports.GetReciprocalInternalPartnerRequest{
 			SourceOrganizationID: req.TenantInfo.OrgID,
 			TargetOrganizationID: sourcePartner.InternalOrganizationID,
 			BusinessUnitID:       req.TenantInfo.BuID,
@@ -110,7 +110,7 @@ func (s *Service) PlanLoadTender(
 	}
 	if _, err = s.profileRepo.GetActiveProfileByPartner(
 		ctx,
-		repositories.GetActiveEDICommunicationProfileByPartnerRequest{
+		ediports.GetActiveEDICommunicationProfileByPartnerRequest{
 			PartnerID:  sourcePartner.ID,
 			TenantInfo: req.TenantInfo,
 			Method:     edi.ConnectionMethodInternal,
@@ -128,7 +128,7 @@ func (s *Service) PlanLoadTender(
 	}
 	if _, err = s.profileRepo.GetActiveProfileByPartner(
 		dbscope.WithTenant(ctx, targetTenant.DBTenant()),
-		repositories.GetActiveEDICommunicationProfileByPartnerRequest{
+		ediports.GetActiveEDICommunicationProfileByPartnerRequest{
 			PartnerID:  targetPartner.ID,
 			TenantInfo: targetTenant,
 			Method:     edi.ConnectionMethodInternal,
@@ -170,7 +170,7 @@ func (s *Service) PlanLoadTender(
 func (s *Service) SubmitLoadTender(
 	ctx context.Context,
 	req *SubmitLoadTenderRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*edi.EDITransfer, error) {
 	plan, err := s.PlanLoadTender(ctx, req)
 	if err != nil {
@@ -206,7 +206,7 @@ func (s *Service) SubmitLoadTender(
 			return nil, err
 		}
 	} else {
-		err = s.db.WithTx(ctx, coreports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 			lockedShipment, lockErr := s.lockShipment(txCtx, req.SourceShipmentID, req.TenantInfo)
 			if lockErr != nil {
 				return lockErr
@@ -260,7 +260,7 @@ func (s *Service) resolveTenderSourcePartner(
 	sourceShipment *shipment.Shipment,
 ) (*edi.EDIPartner, error) {
 	if req.EDIPartnerID.IsNotNil() {
-		return s.partnerRepo.GetByID(ctx, repositories.GetEDIPartnerByIDRequest{
+		return s.partnerRepo.GetByID(ctx, ediports.GetEDIPartnerByIDRequest{
 			ID:         req.EDIPartnerID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -276,7 +276,7 @@ func (s *Service) resolveTenderSourcePartner(
 
 	partners, err := s.partnerRepo.ListInternalOutboundPartnersByCustomerIDs(
 		ctx,
-		repositories.ListEDIPartnersByCustomerIDsRequest{
+		ediports.ListEDIPartnersByCustomerIDsRequest{
 			CustomerIDs: []pulid.ID{sourceShipment.CustomerID},
 			TenantInfo:  req.TenantInfo,
 		},

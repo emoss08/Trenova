@@ -6,8 +6,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,7 +28,7 @@ type stagingTx struct {
 
 func (s *stagingTx) WithTx(
 	ctx context.Context,
-	_ ports.TxOptions,
+	_ kernelports.TxOptions,
 	fn func(context.Context, bun.Tx) error,
 ) error {
 	s.calls++
@@ -99,7 +100,7 @@ func (s *stagingProposals) Create(
 }
 
 type countingActivity struct {
-	serviceports.AgentActivityPublisher
+	agentports.AgentActivityPublisher
 	proposals int
 	plans     int
 }
@@ -107,7 +108,7 @@ type countingActivity struct {
 func (a *countingActivity) ProposalChanged(
 	context.Context,
 	*agent.AgentProposal,
-	serviceports.AuditActor,
+	kernelports.AuditActor,
 	string,
 ) {
 	a.proposals++
@@ -116,7 +117,7 @@ func (a *countingActivity) ProposalChanged(
 func (a *countingActivity) PlanChanged(
 	context.Context,
 	*agent.AgentPlan,
-	serviceports.AuditActor,
+	kernelports.AuditActor,
 	string,
 ) {
 	a.plans++
@@ -137,7 +138,7 @@ func recordInTx(
 
 	return svc.Record(t.Context(), &RecordRequest{
 		Evidence: messageEvidence,
-		Actor: &serviceports.RequestActor{
+		Actor: &permissionports.RequestActor{
 			OrganizationID: pulid.MustNew("org_"),
 			BusinessUnitID: pulid.MustNew("bu_"),
 		},
@@ -148,7 +149,7 @@ func recordInTx(
 			PromptVersion:    "v1",
 			InputContextHash: "hash",
 		},
-		Actions: []serviceports.PendingAction{
+		Actions: []agentports.PendingAction{
 			pendingAction("assign_move"),
 			pendingAction("notify_driver"),
 			pendingAction("add_shipment_comment"),

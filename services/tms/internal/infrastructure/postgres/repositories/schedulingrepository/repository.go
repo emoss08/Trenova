@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -37,7 +37,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.SchedulingRepository {
+func New(p Params) workerports.SchedulingRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.scheduling-repository"),
@@ -54,7 +54,7 @@ func limitOr(requested, fallback int) int {
 
 func (r *repository) ListTemplates(
 	ctx context.Context,
-	req *repositories.ListShiftTemplatesRequest,
+	req *workerports.ListShiftTemplatesRequest,
 ) ([]*worker.ShiftTemplate, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.ShiftTemplate, error) {
 		cols := buncolgen.ShiftTemplateColumns
@@ -83,7 +83,7 @@ func (r *repository) ListTemplates(
 
 func (r *repository) GetTemplateByID(
 	ctx context.Context,
-	req *repositories.GetShiftTemplateByIDRequest,
+	req *workerports.GetShiftTemplateByIDRequest,
 ) (*worker.ShiftTemplate, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.ShiftTemplate, error) {
 		entity := new(worker.ShiftTemplate)
@@ -178,7 +178,7 @@ func (r *repository) CountTemplateAssignments(
 
 func (r *repository) CountTemplateAssignmentsByIDs(
 	ctx context.Context,
-	req *repositories.CountShiftTemplateAssignmentsRequest,
+	req *workerports.CountShiftTemplateAssignmentsRequest,
 ) (map[pulid.ID]int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (map[pulid.ID]int, error) {
 		if len(req.TemplateIDs) == 0 {
@@ -207,7 +207,7 @@ func (r *repository) CountTemplateAssignmentsByIDs(
 
 func (r *repository) ListAssignments(
 	ctx context.Context,
-	req *repositories.ListShiftAssignmentsRequest,
+	req *workerports.ListShiftAssignmentsRequest,
 ) ([]*worker.WorkerShiftAssignment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerShiftAssignment, error) {
 		cols := buncolgen.WorkerShiftAssignmentColumns
@@ -250,7 +250,7 @@ func (r *repository) ListAssignments(
 
 func (r *repository) GetAssignmentByID(
 	ctx context.Context,
-	req *repositories.GetShiftAssignmentByIDRequest,
+	req *workerports.GetShiftAssignmentByIDRequest,
 ) (*worker.WorkerShiftAssignment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerShiftAssignment, error) {
 		entity := new(worker.WorkerShiftAssignment)
@@ -320,7 +320,7 @@ func (r *repository) UpdateAssignment(
 
 func (r *repository) ListPreferences(
 	ctx context.Context,
-	req *repositories.ListAvailabilityPreferencesRequest,
+	req *workerports.ListAvailabilityPreferencesRequest,
 ) ([]*worker.WorkerAvailabilityPreference, error) {
 	return dbtx.Read(
 		ctx,
@@ -385,7 +385,7 @@ func (r *repository) UpsertPreference(
 
 func (r *repository) ListSwaps(
 	ctx context.Context,
-	req *repositories.ListShiftSwapsRequest,
+	req *workerports.ListShiftSwapsRequest,
 ) ([]*worker.ShiftSwapRequest, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.ShiftSwapRequest, error) {
 		cols := buncolgen.ShiftSwapRequestColumns
@@ -433,7 +433,7 @@ func (r *repository) ListSwaps(
 
 func (r *repository) GetSwapByID(
 	ctx context.Context,
-	req *repositories.GetShiftSwapByIDRequest,
+	req *workerports.GetShiftSwapByIDRequest,
 ) (*worker.ShiftSwapRequest, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.ShiftSwapRequest, error) {
 		entity := new(worker.ShiftSwapRequest)

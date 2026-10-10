@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -29,8 +29,8 @@ func (t fakeQueryTool) Name() string              { return t.name }
 func (fakeQueryTool) Description() string         { return "" }
 func (fakeQueryTool) ParamSchema() map[string]any { return nil }
 
-func (t fakeQueryTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t fakeQueryTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.name,
 		Kind:          agent.ToolKindQuery,
 		Resource:      t.resource,
@@ -38,22 +38,22 @@ func (t fakeQueryTool) Policy() serviceports.ToolPolicy {
 		ReadsExternal: agent.ExternalReadNever,
 	}
 }
-func (fakeQueryTool) Query(context.Context, *serviceports.QueryToolParams) (any, error) {
+func (fakeQueryTool) Query(context.Context, *agentports.QueryToolParams) (any, error) {
 	return nil, nil
 }
 
 type fakeQueryRegistry struct {
-	tools map[string]serviceports.AgentQueryTool
+	tools map[string]agentports.AgentQueryTool
 }
 
-func (r fakeQueryRegistry) Get(name string) (serviceports.AgentQueryTool, bool) {
+func (r fakeQueryRegistry) Get(name string) (agentports.AgentQueryTool, bool) {
 	tool, ok := r.tools[name]
 	return tool, ok
 }
 
-func (r fakeQueryRegistry) All() []serviceports.AgentQueryTool { return nil }
+func (r fakeQueryRegistry) All() []agentports.AgentQueryTool { return nil }
 
-func (r fakeQueryRegistry) Descriptors() []serviceports.AgentToolDescriptor { return nil }
+func (r fakeQueryRegistry) Descriptors() []agentports.AgentToolDescriptor { return nil }
 
 func testRegistry(t *testing.T) *permission.Registry {
 	t.Helper()
@@ -92,7 +92,7 @@ func testRegistry(t *testing.T) *permission.Registry {
 func testRedactor(t *testing.T) *Redactor {
 	t.Helper()
 
-	tools := fakeQueryRegistry{tools: map[string]serviceports.AgentQueryTool{
+	tools := fakeQueryRegistry{tools: map[string]agentports.AgentQueryTool{
 		"get_customer": fakeQueryTool{name: "get_customer", resource: resourceCustomer},
 		"get_ledger":   fakeQueryTool{name: "get_ledger", resource: resourceLedger},
 	}}

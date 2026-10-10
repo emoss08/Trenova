@@ -11,8 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -252,7 +252,7 @@ func jsonValueString(value any) *string {
 }
 
 func eventCountsToModel(
-	counts *repositories.CarrierIntelEventCounts,
+	counts *carrierintelports.CarrierIntelEventCounts,
 ) *gqlmodel.CarrierIntelEventCounts {
 	result := &gqlmodel.CarrierIntelEventCounts{
 		Open:         counts.Open,
@@ -361,7 +361,7 @@ func carrierMonitoringEnrollmentConnectionToModel(
 
 func eventFilterFromInput(
 	filter *gqlmodel.CarrierIntelEventFilterInput,
-	req *repositories.ListCarrierIntelEventsRequest,
+	req *carrierintelports.ListCarrierIntelEventsRequest,
 ) error {
 	if filter == nil {
 		return nil

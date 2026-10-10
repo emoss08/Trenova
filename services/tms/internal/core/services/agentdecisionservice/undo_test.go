@@ -7,16 +7,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/decisioncommitjobs/decisioncommitcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
 	"github.com/emoss08/trenova/internal/core/services/agentshadow"
 	"github.com/emoss08/trenova/internal/core/services/proposalexecutor"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/decisioncommitjobs/decisioncommitcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -31,7 +31,7 @@ import (
 // windowProposals keeps proposals by id and honours the FromStatus guard the
 // way the database does, which is what decides a commit racing an undo.
 type windowProposals struct {
-	repositories.AgentProposalRepository
+	agentports.AgentProposalRepository
 
 	mu       sync.Mutex
 	byID     map[pulid.ID]*agent.AgentProposal
@@ -40,7 +40,7 @@ type windowProposals struct {
 
 func (p *windowProposals) GetByID(
 	_ context.Context,
-	req repositories.GetAgentProposalByIDRequest,
+	req agentports.GetAgentProposalByIDRequest,
 ) (*agent.AgentProposal, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -56,7 +56,7 @@ func (p *windowProposals) GetByID(
 
 func (p *windowProposals) UpdateStatus(
 	_ context.Context,
-	req repositories.UpdateAgentProposalStatusRequest,
+	req agentports.UpdateAgentProposalStatusRequest,
 ) (*agent.AgentProposal, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -73,7 +73,7 @@ func (p *windowProposals) UpdateStatus(
 
 func (p *windowProposals) RecordExecution(
 	_ context.Context,
-	req repositories.RecordAgentProposalExecutionRequest,
+	req agentports.RecordAgentProposalExecutionRequest,
 ) (*agent.AgentProposal, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -96,7 +96,7 @@ func (p *windowProposals) status(id pulid.ID) agent.ProposalStatus {
 // windowDecisionRows keeps decisions in memory and settles them with the same
 // guard the repository's statement has.
 type windowDecisionRows struct {
-	repositories.AgentDecisionRepository
+	agentports.AgentDecisionRepository
 
 	mu   sync.Mutex
 	rows []*agent.AgentDecision
@@ -118,7 +118,7 @@ func (d *windowDecisionRows) Create(
 
 func (d *windowDecisionRows) ListByProposals(
 	_ context.Context,
-	req repositories.ListAgentDecisionsByProposalsRequest,
+	req agentports.ListAgentDecisionsByProposalsRequest,
 ) ([]*agent.AgentDecision, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -142,7 +142,7 @@ func (d *windowDecisionRows) ListByProposals(
 
 func (d *windowDecisionRows) ListByCommitWorkflow(
 	_ context.Context,
-	req repositories.ListAgentDecisionsByCommitWorkflowRequest,
+	req agentports.ListAgentDecisionsByCommitWorkflowRequest,
 ) ([]*agent.AgentDecision, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -158,7 +158,7 @@ func (d *windowDecisionRows) ListByCommitWorkflow(
 	return out, nil
 }
 
-func (d *windowDecisionRows) settle(req repositories.SettleAgentDecisionsRequest, undo bool) []pulid.ID {
+func (d *windowDecisionRows) settle(req agentports.SettleAgentDecisionsRequest, undo bool) []pulid.ID {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -185,14 +185,14 @@ func (d *windowDecisionRows) settle(req repositories.SettleAgentDecisionsRequest
 
 func (d *windowDecisionRows) MarkCommitted(
 	_ context.Context,
-	req repositories.SettleAgentDecisionsRequest,
+	req agentports.SettleAgentDecisionsRequest,
 ) ([]pulid.ID, error) {
 	return d.settle(req, false), nil
 }
 
 func (d *windowDecisionRows) MarkUndone(
 	_ context.Context,
-	req repositories.SettleAgentDecisionsRequest,
+	req agentports.SettleAgentDecisionsRequest,
 ) ([]pulid.ID, error) {
 	return d.settle(req, true), nil
 }
@@ -204,10 +204,10 @@ type sentSignal struct {
 
 // windowWorkflows records what the service asked of the workflow engine.
 type windowWorkflows struct {
-	services.WorkflowStarter
+	kernelports.WorkflowStarter
 
 	started   []client.StartWorkflowOptions
-	payloads  []*services.CommitApprovalRequest
+	payloads  []*agentports.CommitApprovalRequest
 	signals   []sentSignal
 	signalErr error
 	startErr  error
@@ -225,7 +225,7 @@ func (w *windowWorkflows) StartWorkflow(
 		return nil, w.startErr
 	}
 	w.started = append(w.started, options)
-	w.payloads = append(w.payloads, args[0].(*services.CommitApprovalRequest))
+	w.payloads = append(w.payloads, args[0].(*agentports.CommitApprovalRequest))
 
 	return nil, nil
 }
@@ -242,14 +242,14 @@ func (w *windowWorkflows) SignalWorkflow(
 
 // windowRuns says every proposal came from the actor's own conversation.
 type windowRuns struct {
-	repositories.AgentRunRepository
+	agentports.AgentRunRepository
 
 	threadID pulid.ID
 }
 
 func (r windowRuns) GetByID(
 	_ context.Context,
-	req repositories.GetAgentRunByIDRequest,
+	req agentports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	return &agent.AgentRun{
 		ID:          req.ID,
@@ -259,18 +259,18 @@ func (r windowRuns) GetByID(
 }
 
 type windowThreads struct {
-	repositories.ConversationRepository
+	agentports.ConversationRepository
 }
 
 func (windowThreads) GetThread(
 	_ context.Context,
-	req repositories.GetThreadRequest,
+	req agentports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	return &conversation.Thread{ID: req.ID, UserID: req.UserID}, nil
 }
 
 type windowActivity struct {
-	services.AgentActivityPublisher
+	agentports.AgentActivityPublisher
 
 	mu      sync.Mutex
 	actions []string
@@ -279,7 +279,7 @@ type windowActivity struct {
 func (a *windowActivity) ProposalChanged(
 	_ context.Context,
 	_ *agent.AgentProposal,
-	_ services.AuditActor,
+	_ kernelports.AuditActor,
 	action string,
 ) {
 	a.mu.Lock()
@@ -293,7 +293,7 @@ type windowHarness struct {
 	decisions *windowDecisionRows
 	workflows *windowWorkflows
 	activity  *windowActivity
-	actor     *services.RequestActor
+	actor     *permissionports.RequestActor
 	tenant    pagination.TenantInfo
 	ids       []pulid.ID
 }
@@ -301,8 +301,8 @@ type windowHarness struct {
 func newWindowHarness(t *testing.T, count int) *windowHarness {
 	t.Helper()
 
-	actor := &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeUser,
+	actor := &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    pulid.MustNew("usr_"),
 		UserID:         pulid.MustNew("usr_"),
 		OrganizationID: pulid.MustNew("org_"),
@@ -338,7 +338,7 @@ func newWindowHarness(t *testing.T, count int) *windowHarness {
 	runs := windowRuns{threadID: pulid.MustNew("athr_")}
 	executor := proposalexecutor.New(proposalexecutor.Params{
 		Logger: zap.NewNop(),
-		Tools: &agentruntimetest.StubActionRegistry{Tools: []services.AgentTool{
+		Tools: &agentruntimetest.StubActionRegistry{Tools: []agentports.AgentTool{
 			&agentruntimetest.StubActionTool{ToolName: "place_shipment_hold"},
 		}},
 		ProposalRepo: proposals,
@@ -369,12 +369,12 @@ func newWindowHarness(t *testing.T, count int) *windowHarness {
 	}
 }
 
-func (h *windowHarness) approve(t *testing.T) []services.DeferredApproval {
+func (h *windowHarness) approve(t *testing.T) []agentports.DeferredApproval {
 	t.Helper()
 
-	reqs := make([]*services.DecideAgentProposalRequest, 0, len(h.ids))
+	reqs := make([]*agentports.DecideAgentProposalRequest, 0, len(h.ids))
 	for _, id := range h.ids {
-		reqs = append(reqs, &services.DecideAgentProposalRequest{
+		reqs = append(reqs, &agentports.DecideAgentProposalRequest{
 			ProposalID: id,
 			Decision:   agent.DecisionAccepted,
 			TenantInfo: h.tenant,
@@ -394,8 +394,8 @@ func (h *windowHarness) closeWindow(t *testing.T) {
 	require.NoError(t, h.service.CommitApproval(t.Context(), payload))
 }
 
-func (h *windowHarness) settle(id pulid.ID) *services.SettleApprovalRequest {
-	return &services.SettleApprovalRequest{ProposalID: id, TenantInfo: h.tenant}
+func (h *windowHarness) settle(id pulid.ID) *agentports.SettleApprovalRequest {
+	return &agentports.SettleApprovalRequest{ProposalID: id, TenantInfo: h.tenant}
 }
 
 // An approval from the person's own conversation records the decision and
@@ -413,22 +413,22 @@ func TestApproval_WaitsOutItsWindowAndThenCommits(t *testing.T) {
 	decision := approved[0].Decision
 	require.NotNil(t, decision.CommitsAt)
 	window := time.Unix(*decision.CommitsAt, 0).Sub(before)
-	assert.GreaterOrEqual(t, window, services.ApprovalUndoWindow,
+	assert.GreaterOrEqual(t, window, agentports.ApprovalUndoWindow,
 		"the client's ring counts down from the server's clock, never less than the full window")
-	assert.Less(t, window, services.ApprovalUndoWindow+2*time.Second)
+	assert.Less(t, window, agentports.ApprovalUndoWindow+2*time.Second)
 
 	id := h.ids[0]
 	assert.Equal(t, agent.ProposalStatusApproving, h.proposals.status(id))
 	assert.Empty(t, h.proposals.executed, "nothing runs while the approval can still be undone")
 	require.Len(t, h.workflows.started, 1)
 	assert.Equal(t, decisioncommitcontract.WorkflowID(id), h.workflows.started[0].ID)
-	assert.Contains(t, h.activity.actions, services.ActivityApproving)
+	assert.Contains(t, h.activity.actions, agentports.ActivityApproving)
 
 	h.closeWindow(t)
 
 	assert.Equal(t, []pulid.ID{id}, h.proposals.executed, "the window closing runs the write")
 	assert.Equal(t, agent.ProposalStatusExecuted, h.proposals.status(id))
-	assert.Contains(t, h.activity.actions, services.ActivityCommitted)
+	assert.Contains(t, h.activity.actions, agentports.ActivityCommitted)
 
 	h.closeWindow(t)
 	assert.Len(t, h.proposals.executed, 1, "a retried commit does not run the write twice")
@@ -448,7 +448,7 @@ func TestApproval_UndoneInItsWindowNeverRuns(t *testing.T) {
 	assert.Equal(t, agent.ProposalStatusPending, h.proposals.status(id))
 	require.Len(t, h.workflows.signals, 1)
 	assert.Equal(t, decisioncommitcontract.UndoSignalName, h.workflows.signals[0].name)
-	assert.Contains(t, h.activity.actions, services.ActivityUndone)
+	assert.Contains(t, h.activity.actions, agentports.ActivityUndone)
 
 	// A workflow that never heard the undo commits nothing when it wakes.
 	h.closeWindow(t)
@@ -534,7 +534,7 @@ func TestApproval_ThatCannotBeScheduledIsTakenBack(t *testing.T) {
 	h := newWindowHarness(t, 1)
 	h.workflows.startErr = errors.New("temporal unavailable")
 
-	_, err := h.service.ApproveDeferred(t.Context(), []*services.DecideAgentProposalRequest{{
+	_, err := h.service.ApproveDeferred(t.Context(), []*agentports.DecideAgentProposalRequest{{
 		ProposalID: h.ids[0],
 		Decision:   agent.DecisionAccepted,
 		TenantInfo: h.tenant,
@@ -543,7 +543,7 @@ func TestApproval_ThatCannotBeScheduledIsTakenBack(t *testing.T) {
 	require.Error(t, err)
 	assert.Equal(t, agent.ProposalStatusPending, h.proposals.status(h.ids[0]))
 	decisions, listErr := h.decisions.ListByProposals(t.Context(),
-		repositories.ListAgentDecisionsByProposalsRequest{ProposalIDs: h.ids, TenantInfo: h.tenant})
+		agentports.ListAgentDecisionsByProposalsRequest{ProposalIDs: h.ids, TenantInfo: h.tenant})
 	require.NoError(t, listErr)
 	assert.Empty(t, decisions, "the decision is taken back with it")
 }

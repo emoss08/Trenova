@@ -8,21 +8,21 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 var (
-	_ serviceports.ToolPreviewer = (*approveDetentionTool)(nil)
-	_ serviceports.ToolPreviewer = (*waiveDetentionTool)(nil)
-	_ serviceports.ToolPreviewer = (*sendDetentionNoticeTool)(nil)
+	_ agentports.ToolPreviewer = (*approveDetentionTool)(nil)
+	_ agentports.ToolPreviewer = (*waiveDetentionTool)(nil)
+	_ agentports.ToolPreviewer = (*sendDetentionNoticeTool)(nil)
 )
 
 func (t *approveDetentionTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	request, detail, err := t.request(ctx, params)
 	if err != nil {
@@ -51,7 +51,7 @@ func (t *approveDetentionTool) Preview(
 
 func (t *waiveDetentionTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	request, err := t.request(&params)
 	if err != nil {
@@ -77,7 +77,7 @@ func (t *waiveDetentionTool) Preview(
 
 func (t *sendDetentionNoticeTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	request, err := t.request(&params)
 	if err != nil {

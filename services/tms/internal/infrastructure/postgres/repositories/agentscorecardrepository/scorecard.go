@@ -6,11 +6,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
@@ -30,7 +29,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.AgentScorecardRepository {
+func New(p Params) agentports.AgentScorecardRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.agent-scorecard-repository"),
@@ -50,7 +49,7 @@ var runJoin = "JOIN " + buncolgen.AgentRunTable.Name + " AS " + buncolgen.AgentR
 // grow with how busy the agent has been.
 func (r *repository) Aggregate(
 	ctx context.Context,
-	req repositories.ScorecardRequest,
+	req agentports.ScorecardRequest,
 ) (*agent.ScorecardTotals, error) {
 	totals := &agent.ScorecardTotals{
 		CostUSD:      decimal.Zero,
@@ -59,7 +58,7 @@ func (r *repository) Aggregate(
 		Trend:        []agent.ScorecardPoint{},
 	}
 
-	for _, step := range []func(context.Context, repositories.ScorecardRequest, *agent.ScorecardTotals) error{
+	for _, step := range []func(context.Context, agentports.ScorecardRequest, *agent.ScorecardTotals) error{
 		r.runs,
 		r.proposals,
 		r.toolVerdicts,
@@ -76,7 +75,7 @@ func (r *repository) Aggregate(
 
 func (r *repository) runs(
 	ctx context.Context,
-	req repositories.ScorecardRequest,
+	req agentports.ScorecardRequest,
 	totals *agent.ScorecardTotals,
 ) error {
 	return dbtx.ReadErr(ctx, r.db, func(ctx context.Context) error {
@@ -116,7 +115,7 @@ func (r *repository) runs(
 // tool inside nine good ones.
 func (r *repository) proposals(
 	ctx context.Context,
-	req repositories.ScorecardRequest,
+	req agentports.ScorecardRequest,
 	totals *agent.ScorecardTotals,
 ) error {
 	return dbtx.ReadErr(ctx, r.db, func(ctx context.Context) error {
@@ -220,7 +219,7 @@ type verdictRow struct {
 // is done in SQL, so only the few reasons kept per verdict leave the database.
 func (r *repository) toolVerdicts(
 	ctx context.Context,
-	req repositories.ScorecardRequest,
+	req agentports.ScorecardRequest,
 	totals *agent.ScorecardTotals,
 ) error {
 	return dbtx.ReadErr(ctx, r.db, func(ctx context.Context) error {
@@ -238,8 +237,8 @@ func (r *repository) toolVerdicts(
 					step.Outcome,
 					step.Status,
 				),
-				services.RunStepStarted, aitrace.OutcomeUnknown,
-				services.RunStepFailed, aitrace.OutcomeFailed,
+				agentports.RunStepStarted, aitrace.OutcomeUnknown,
+				agentports.RunStepFailed, aitrace.OutcomeFailed,
 				aitrace.OutcomeRan,
 				bun.Ident(verdictVerdict),
 			).
@@ -250,7 +249,7 @@ func (r *repository) toolVerdicts(
 			Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
 				return buncolgen.AgentRunStepScopeTenant(q, req.TenantInfo)
 			}).
-			Where(step.Kind.Eq(), services.RunStepTool).
+			Where(step.Kind.Eq(), agentports.RunStepTool).
 			Where(step.AgentDefinitionID.Eq(), req.AgentDefinitionID).
 			Where(step.CreatedAt.Gte(), req.Since)
 
@@ -323,7 +322,7 @@ func foldVerdicts(rows []verdictRow) []agent.ToolVerdictCount {
 
 func (r *repository) exceptions(
 	ctx context.Context,
-	req repositories.ScorecardRequest,
+	req agentports.ScorecardRequest,
 	totals *agent.ScorecardTotals,
 ) error {
 	return dbtx.ReadErr(ctx, r.db, func(ctx context.Context) error {
@@ -356,7 +355,7 @@ func (r *repository) exceptions(
 
 func (r *repository) usage(
 	ctx context.Context,
-	req repositories.ScorecardRequest,
+	req agentports.ScorecardRequest,
 	totals *agent.ScorecardTotals,
 ) error {
 	return dbtx.ReadErr(ctx, r.db, func(ctx context.Context) error {

@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/statuschange"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -30,7 +30,7 @@ func (s *Service) PlanCreate(
 func (s *Service) PlanUpdate(
 	ctx context.Context,
 	entity *customer.Customer,
-) (*services.RecordChange[customer.Customer], error) {
+) (*kernelports.RecordChange[customer.Customer], error) {
 	if err := s.transformer.TransformCustomer(ctx, entity); err != nil {
 		return nil, err
 	}
@@ -39,7 +39,7 @@ func (s *Service) PlanUpdate(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetByID(ctx, repositories.GetCustomerByIDRequest{
+	original, err := s.repo.GetByID(ctx, customerports.GetCustomerByIDRequest{
 		ID: entity.GetID(),
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.GetOrganizationID(),
@@ -50,14 +50,14 @@ func (s *Service) PlanUpdate(
 		return nil, err
 	}
 
-	return &services.RecordChange[customer.Customer]{Before: original, After: entity}, nil
+	return &kernelports.RecordChange[customer.Customer]{Before: original, After: entity}, nil
 }
 
 func (s *Service) PlanBulkUpdateStatus(
 	ctx context.Context,
-	req *repositories.BulkUpdateCustomerStatusRequest,
-) ([]services.RecordChange[customer.Customer], error) {
-	found, err := s.repo.GetByIDs(ctx, repositories.GetCustomersByIDsRequest{
+	req *customerports.BulkUpdateCustomerStatusRequest,
+) ([]kernelports.RecordChange[customer.Customer], error) {
+	found, err := s.repo.GetByIDs(ctx, customerports.GetCustomersByIDsRequest{
 		TenantInfo:  req.TenantInfo,
 		CustomerIDs: req.CustomerIDs,
 	})

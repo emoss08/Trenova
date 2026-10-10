@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -110,7 +110,7 @@ func TestListRules_HistoryKeepsTheClosedOutRule(t *testing.T) {
 	successor.Rate = decimal.NewNullDecimal(successorRate)
 	successor.EffectiveFrom = 0
 
-	require.NoError(t, repo.AmendRules(ctx, &repositories.AmendRateAgreementRulesRequest{
+	require.NoError(t, repo.AmendRules(ctx, &rateagreementports.AmendRateAgreementRulesRequest{
 		TenantInfo:      tenantInfo,
 		RateAgreementID: agreement.ID,
 		EffectiveFrom:   1_000,
@@ -118,7 +118,7 @@ func TestListRules_HistoryKeepsTheClosedOutRule(t *testing.T) {
 		Rules:           []*rateagreement.RateAgreementRule{&successor},
 	}))
 
-	current, err := repo.ListRules(ctx, &repositories.ListRateAgreementRulesRequest{
+	current, err := repo.ListRules(ctx, &rateagreementports.ListRateAgreementRulesRequest{
 		TenantInfo:      tenantInfo,
 		RateAgreementID: agreement.ID,
 		AsOf:            2_000,
@@ -127,7 +127,7 @@ func TestListRules_HistoryKeepsTheClosedOutRule(t *testing.T) {
 	require.Len(t, current, 1, "only the successor prices after the amendment")
 	assert.True(t, successorRate.Equal(current[0].Rate.Decimal))
 
-	history, err := repo.ListRules(ctx, &repositories.ListRateAgreementRulesRequest{
+	history, err := repo.ListRules(ctx, &rateagreementports.ListRateAgreementRulesRequest{
 		TenantInfo:        tenantInfo,
 		RateAgreementID:   agreement.ID,
 		LaneKey:           "ST:GA>ST:FL",

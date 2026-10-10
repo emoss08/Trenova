@@ -1,10 +1,6 @@
 package modules
 
 import (
-	"go.uber.org/fx"
-
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accessorialchargerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accountingcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accountingsyncrepository"
@@ -34,6 +30,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentsubjectrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agenttoolrulerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agenttooltrustrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentwaitrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aiauditrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aicontrolfactsrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aicorrectionrepository"
@@ -45,10 +42,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/apikeyrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/assignmentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/assistantartifactrepository"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/assistantqueuerepository"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentwaitrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/assistantcaserepository"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/casechecklistrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/assistantqueuerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/assistantturnrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/auditdlqrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/auditrepository"
@@ -72,6 +67,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carrierrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carriersettlementcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carriersettlementrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/casechecklistrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/chargeallocationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/commodityrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/conversationrepository"
@@ -255,7 +251,10 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/workersafetyrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/workertrainingrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/tableinsight"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/pkg/seqgen"
+	"go.uber.org/fx"
 )
 
 var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
@@ -382,10 +381,10 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	agentqualityrepository.NewControls,
 	fx.Annotate(
 		airetrievalrepository.New,
-		fx.As(new(repositories.AIRetrievalRepository)),
-		fx.As(new(repositories.AIEmbeddingRepository)),
-		fx.As(new(repositories.AIIndexEntryRepository)),
-		fx.As(new(repositories.AIRetrievalSettingsRepository)),
+		fx.As(new(agentports.AIRetrievalRepository)),
+		fx.As(new(agentports.AIEmbeddingRepository)),
+		fx.As(new(agentports.AIIndexEntryRepository)),
+		fx.As(new(agentports.AIRetrievalSettingsRepository)),
 	),
 	retrievalsourcerepository.New,
 	recordversionrepository.New,
@@ -479,8 +478,8 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	inboundmessagerepository.NewMailboxRepository,
 	fx.Annotate(
 		inboundmessagerepository.NewRecordFinder,
-		fx.As(new(repositories.InboundShipmentFinder)),
-		fx.As(new(repositories.InboundPartyFinder)),
+		fx.As(new(inboundmessageports.InboundShipmentFinder)),
+		fx.As(new(inboundmessageports.InboundPartyFinder)),
 	),
 	capturerepository.NewDeviceRepository,
 	capturerepository.NewPairingRepository,

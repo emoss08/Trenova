@@ -12,8 +12,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -25,8 +30,8 @@ const taskAgentRun = "AgentRun"
 
 type resolveParams struct {
 	tenant pagination.TenantInfo
-	target repositories.AIFeedbackTargetRef
-	actor  *services.RequestActor
+	target aifeedbackports.AIFeedbackTargetRef
+	actor  *permissionports.RequestActor
 }
 
 type resolvedTarget struct {
@@ -50,7 +55,7 @@ type resolvedTarget struct {
 type feedbackParams struct {
 	tenant  pagination.TenantInfo
 	userID  pulid.ID
-	target  repositories.AIFeedbackTargetRef
+	target  aifeedbackports.AIFeedbackTargetRef
 	rating  aifeedback.Rating
 	reasons []aifeedback.Reason
 	comment string
@@ -137,7 +142,7 @@ func (s *Service) resolve(ctx context.Context, p resolveParams) (*resolvedTarget
 }
 
 func (s *Service) resolveMessage(ctx context.Context, p resolveParams) (*resolvedTarget, error) {
-	source, err := s.sources.GetMessageContext(ctx, repositories.GetAIFeedbackMessageRequest{
+	source, err := s.sources.GetMessageContext(ctx, aifeedbackports.GetAIFeedbackMessageRequest{
 		TenantInfo: p.tenant,
 		MessageID:  p.target.TargetID,
 	})
@@ -277,7 +282,7 @@ func questionText(message *conversation.Message) string {
 }
 
 func (s *Service) resolveBriefing(ctx context.Context, p resolveParams) (*resolvedTarget, error) {
-	entity, err := s.briefings.GetByID(ctx, repositories.GetBriefingByIDRequest{
+	entity, err := s.briefings.GetByID(ctx, briefingports.GetBriefingByIDRequest{
 		ID:         p.target.TargetID,
 		TenantInfo: p.tenant,
 	})
@@ -368,7 +373,7 @@ func (s *Service) resolveInsight(ctx context.Context, p resolveParams) (*resolve
 		return nil, err
 	}
 
-	entity, err := s.insights.GetByID(ctx, repositories.GetInsightByIDRequest{
+	entity, err := s.insights.GetByID(ctx, insightports.GetInsightByIDRequest{
 		ID:         p.target.TargetID,
 		TenantInfo: p.tenant,
 	})
@@ -409,7 +414,7 @@ func (s *Service) resolveWatchtowerItem(
 		return nil, err
 	}
 
-	item, err := s.watchtower.GetByID(ctx, repositories.GetWatchtowerItemRequest{
+	item, err := s.watchtower.GetByID(ctx, watchtowerports.GetWatchtowerItemRequest{
 		ID:         p.target.TargetID,
 		TenantInfo: p.tenant,
 	})
@@ -466,7 +471,7 @@ func (s *Service) creditWatchtowerSource(
 
 	switch item.SourceKind {
 	case watchtower.SourceInsight:
-		entity, iErr := s.insights.GetByID(ctx, repositories.GetInsightByIDRequest{
+		entity, iErr := s.insights.GetByID(ctx, insightports.GetInsightByIDRequest{
 			ID:         sourceID,
 			TenantInfo: tenant,
 		})
@@ -481,7 +486,7 @@ func (s *Service) creditWatchtowerSource(
 
 		return
 	case watchtower.SourceAgentProposal:
-		proposal, pErr := s.proposals.GetByID(ctx, repositories.GetAgentProposalByIDRequest{
+		proposal, pErr := s.proposals.GetByID(ctx, agentports.GetAgentProposalByIDRequest{
 			ID:         sourceID,
 			TenantInfo: &tenant,
 		})
@@ -491,7 +496,7 @@ func (s *Service) creditWatchtowerSource(
 		}
 		runID = proposal.RunID
 	case watchtower.SourceAgentPlan:
-		plan, pErr := s.plans.GetByID(ctx, repositories.GetAgentPlanByIDRequest{
+		plan, pErr := s.plans.GetByID(ctx, agentports.GetAgentPlanByIDRequest{
 			ID:         sourceID,
 			TenantInfo: tenant,
 		})
@@ -503,7 +508,7 @@ func (s *Service) creditWatchtowerSource(
 	case watchtower.SourceAgentRunFailed:
 		runID = sourceID
 	case watchtower.SourceAgentException:
-		exception, xErr := s.exceptions.GetByID(ctx, repositories.GetAgentExceptionByIDRequest{
+		exception, xErr := s.exceptions.GetByID(ctx, agentports.GetAgentExceptionByIDRequest{
 			ID:         sourceID,
 			TenantInfo: &tenant,
 		})
@@ -532,7 +537,7 @@ func (s *Service) creditRun(
 	runID pulid.ID,
 	resolved *resolvedTarget,
 ) error {
-	run, err := s.runs.GetByID(ctx, repositories.GetAgentRunByIDRequest{
+	run, err := s.runs.GetByID(ctx, agentports.GetAgentRunByIDRequest{
 		ID:         runID,
 		TenantInfo: &tenant,
 	})
@@ -557,7 +562,7 @@ func (s *Service) stampDefinitionVersion(
 		return
 	}
 
-	definition, err := s.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	definition, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         resolved.agentDefinitionID,
 		TenantInfo: tenant,
 	})
@@ -576,14 +581,14 @@ func (s *Service) stampDefinitionVersion(
 
 func (s *Service) requireRead(
 	ctx context.Context,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	resource permission.Resource,
 ) error {
 	if s.permissions == nil {
 		return errortypes.NewAuthorizationError("Permissions could not be checked")
 	}
 
-	result, err := s.permissions.Check(ctx, &services.PermissionCheckRequest{
+	result, err := s.permissions.Check(ctx, &permissionports.PermissionCheckRequest{
 		PrincipalType:  actor.PrincipalType,
 		PrincipalID:    actor.PrincipalID,
 		UserID:         actor.UserID,

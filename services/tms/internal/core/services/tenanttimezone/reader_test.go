@@ -1,11 +1,12 @@
 package tenanttimezone
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,11 +27,11 @@ func TestTenantTimezone_ReadsTheOrganizationFirst(t *testing.T) {
 	t.Parallel()
 
 	info := tenantInfo()
-	orgs := mocks.NewMockOrganizationRepository(t)
+	orgs := tenantportsmock.NewMockOrganizationRepository(t)
 	orgs.EXPECT().
-		GetByID(mock.Anything, repositories.GetOrganizationByIDRequest{TenantInfo: info}).
+		GetByID(mock.Anything, tenantports.GetOrganizationByIDRequest{TenantInfo: info}).
 		Return(&tenant.Organization{Timezone: "America/Chicago"}, nil)
-	reader := New(Params{Organizations: orgs, Users: mocks.NewMockUserRepository(t)})
+	reader := New(Params{Organizations: orgs, Users: tenantportsmock.NewMockUserRepository(t)})
 
 	zone, err := reader.TenantTimezone(t.Context(), info)
 
@@ -42,12 +43,12 @@ func TestTenantTimezone_FallsBackToThePerson(t *testing.T) {
 	t.Parallel()
 
 	info := tenantInfo()
-	orgs := mocks.NewMockOrganizationRepository(t)
+	orgs := tenantportsmock.NewMockOrganizationRepository(t)
 	orgs.EXPECT().GetByID(mock.Anything, mock.Anything).
 		Return(&tenant.Organization{Timezone: "Not/AZone"}, nil)
-	users := mocks.NewMockUserRepository(t)
+	users := tenantportsmock.NewMockUserRepository(t)
 	users.EXPECT().
-		GetByID(mock.Anything, repositories.GetUserByIDRequest{
+		GetByID(mock.Anything, tenantports.GetUserByIDRequest{
 			TenantInfo:   info,
 			LookupUserID: info.UserID,
 		}).
@@ -64,10 +65,10 @@ func TestTenantTimezone_NamesNoZoneWhenNeitherHasOne(t *testing.T) {
 
 	info := tenantInfo()
 	info.UserID = pulid.Nil
-	orgs := mocks.NewMockOrganizationRepository(t)
+	orgs := tenantportsmock.NewMockOrganizationRepository(t)
 	orgs.EXPECT().GetByID(mock.Anything, mock.Anything).Return(&tenant.Organization{}, nil)
 
-	zone, err := New(Params{Organizations: orgs, Users: mocks.NewMockUserRepository(t)}).
+	zone, err := New(Params{Organizations: orgs, Users: tenantportsmock.NewMockUserRepository(t)}).
 		TenantTimezone(t.Context(), info)
 
 	require.NoError(t, err)
@@ -77,10 +78,10 @@ func TestTenantTimezone_NamesNoZoneWhenNeitherHasOne(t *testing.T) {
 func TestTenantTimezone_SaysWhenTheOrganizationCannotBeRead(t *testing.T) {
 	t.Parallel()
 
-	orgs := mocks.NewMockOrganizationRepository(t)
+	orgs := tenantportsmock.NewMockOrganizationRepository(t)
 	orgs.EXPECT().GetByID(mock.Anything, mock.Anything).Return(nil, errors.New("down"))
 
-	_, err := New(Params{Organizations: orgs, Users: mocks.NewMockUserRepository(t)}).
+	_, err := New(Params{Organizations: orgs, Users: tenantportsmock.NewMockUserRepository(t)}).
 		TenantTimezone(t.Context(), tenantInfo())
 
 	require.Error(t, err)

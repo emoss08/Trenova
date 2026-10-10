@@ -1,6 +1,7 @@
 package equipmenttypehandler_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/equipmenttypeportsmock"
 	"context"
 	"errors"
 	"net/http"
@@ -27,7 +28,7 @@ var errNotFound = errors.New("equipment type not found")
 
 func setupEquipTypeHandler(
 	t *testing.T,
-	repo *mocks.MockEquipmentTypeRepository,
+	repo *equipmenttypeportsmock.MockEquipmentTypeRepository,
 ) *equipmenttypehandler.Handler {
 	t.Helper()
 
@@ -69,7 +70,7 @@ func TestEquipmentTypeHandler_List_Success(t *testing.T) {
 
 	etID := pulid.MustNew("et_")
 	total := 1
-	repo := mocks.NewMockEquipmentTypeRepository(t)
+	repo := equipmenttypeportsmock.NewMockEquipmentTypeRepository(t)
 	repo.On("List", mock.Anything, mock.Anything).
 		Return(&pagination.CursorListResult[*equipmenttype.EquipmentType]{
 			Items: []*equipmenttype.EquipmentType{
@@ -108,7 +109,7 @@ func TestEquipmentTypeHandler_List_Success(t *testing.T) {
 func TestEquipmentTypeHandler_List_RejectsOffset(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockEquipmentTypeRepository(t)
+	repo := equipmenttypeportsmock.NewMockEquipmentTypeRepository(t)
 
 	handler := setupEquipTypeHandler(t, repo)
 
@@ -129,7 +130,7 @@ func TestEquipmentTypeHandler_Get_Success(t *testing.T) {
 	t.Parallel()
 
 	etID := pulid.MustNew("et_")
-	repo := mocks.NewMockEquipmentTypeRepository(t)
+	repo := equipmenttypeportsmock.NewMockEquipmentTypeRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(&equipmenttype.EquipmentType{
 		ID:             etID,
 		OrganizationID: testutil.TestOrgID,
@@ -160,7 +161,7 @@ func TestEquipmentTypeHandler_Get_NotFound(t *testing.T) {
 	t.Parallel()
 
 	etID := pulid.MustNew("et_")
-	repo := mocks.NewMockEquipmentTypeRepository(t)
+	repo := equipmenttypeportsmock.NewMockEquipmentTypeRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(nil, errNotFound)
 
 	handler := setupEquipTypeHandler(t, repo)
@@ -179,7 +180,7 @@ func TestEquipmentTypeHandler_Get_NotFound(t *testing.T) {
 func TestEquipmentTypeHandler_Get_InvalidID(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockEquipmentTypeRepository(t)
+	repo := equipmenttypeportsmock.NewMockEquipmentTypeRepository(t)
 	handler := setupEquipTypeHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -196,7 +197,7 @@ func TestEquipmentTypeHandler_Get_InvalidID(t *testing.T) {
 func TestEquipmentTypeHandler_Create_Success(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockEquipmentTypeRepository(t)
+	repo := equipmenttypeportsmock.NewMockEquipmentTypeRepository(t)
 	repo.On("Create", mock.Anything, mock.Anything).
 		Return(func(_ context.Context, entity *equipmenttype.EquipmentType) *equipmenttype.EquipmentType {
 			entity.ID = pulid.MustNew("et_")
@@ -229,7 +230,7 @@ func TestEquipmentTypeHandler_Create_Success(t *testing.T) {
 func TestEquipmentTypeHandler_Create_BadJSON(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockEquipmentTypeRepository(t)
+	repo := equipmenttypeportsmock.NewMockEquipmentTypeRepository(t)
 	handler := setupEquipTypeHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -248,7 +249,7 @@ func TestEquipmentTypeHandler_Update_Success(t *testing.T) {
 	t.Parallel()
 
 	etID := pulid.MustNew("et_")
-	repo := mocks.NewMockEquipmentTypeRepository(t)
+	repo := equipmenttypeportsmock.NewMockEquipmentTypeRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(&equipmenttype.EquipmentType{
 		ID:             etID,
 		OrganizationID: testutil.TestOrgID,
@@ -289,7 +290,7 @@ func TestEquipmentTypeHandler_Update_NotFound(t *testing.T) {
 	t.Parallel()
 
 	etID := pulid.MustNew("et_")
-	repo := mocks.NewMockEquipmentTypeRepository(t)
+	repo := equipmenttypeportsmock.NewMockEquipmentTypeRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(nil, errNotFound)
 
 	handler := setupEquipTypeHandler(t, repo)
@@ -314,7 +315,7 @@ func TestEquipmentTypeHandler_Patch_Success(t *testing.T) {
 	t.Parallel()
 
 	etID := pulid.MustNew("et_")
-	repo := mocks.NewMockEquipmentTypeRepository(t)
+	repo := equipmenttypeportsmock.NewMockEquipmentTypeRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(&equipmenttype.EquipmentType{
 		ID:             etID,
 		OrganizationID: testutil.TestOrgID,
@@ -349,7 +350,7 @@ func TestEquipmentTypeHandler_Patch_Success(t *testing.T) {
 func TestEquipmentTypeHandler_Patch_InvalidID(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockEquipmentTypeRepository(t)
+	repo := equipmenttypeportsmock.NewMockEquipmentTypeRepository(t)
 	handler := setupEquipTypeHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -367,7 +368,7 @@ func TestEquipmentTypeHandler_Patch_InvalidID(t *testing.T) {
 func TestEquipmentTypeHandler_SelectOptions_Success(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockEquipmentTypeRepository(t)
+	repo := equipmenttypeportsmock.NewMockEquipmentTypeRepository(t)
 	repo.On("SelectOptions", mock.Anything, mock.Anything).
 		Return(&pagination.ListResult[*equipmenttype.EquipmentType]{
 			Items: []*equipmenttype.EquipmentType{{ID: pulid.MustNew("et_"), Code: "TRK"}},
@@ -391,7 +392,7 @@ func TestEquipmentTypeHandler_GetOption_Success(t *testing.T) {
 	t.Parallel()
 
 	etID := pulid.MustNew("et_")
-	repo := mocks.NewMockEquipmentTypeRepository(t)
+	repo := equipmenttypeportsmock.NewMockEquipmentTypeRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(&equipmenttype.EquipmentType{
 		ID:             etID,
 		OrganizationID: testutil.TestOrgID,
@@ -417,7 +418,7 @@ func TestEquipmentTypeHandler_GetOption_Success(t *testing.T) {
 func TestEquipmentTypeHandler_GetOption_InvalidID(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockEquipmentTypeRepository(t)
+	repo := equipmenttypeportsmock.NewMockEquipmentTypeRepository(t)
 	handler := setupEquipTypeHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -435,7 +436,7 @@ func TestEquipmentTypeHandler_BulkUpdateStatus_Success(t *testing.T) {
 	t.Parallel()
 
 	etID := pulid.MustNew("et_")
-	repo := mocks.NewMockEquipmentTypeRepository(t)
+	repo := equipmenttypeportsmock.NewMockEquipmentTypeRepository(t)
 	repo.On("GetByIDs", mock.Anything, mock.Anything).Return([]*equipmenttype.EquipmentType{
 		{
 			ID:     etID,
@@ -473,7 +474,7 @@ func TestEquipmentTypeHandler_BulkUpdateStatus_Success(t *testing.T) {
 func TestEquipmentTypeHandler_SelectOptions_WithClassFilter(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockEquipmentTypeRepository(t)
+	repo := equipmenttypeportsmock.NewMockEquipmentTypeRepository(t)
 	repo.On("SelectOptions", mock.Anything, mock.Anything).
 		Return(&pagination.ListResult[*equipmenttype.EquipmentType]{
 			Items: []*equipmenttype.EquipmentType{
@@ -500,7 +501,7 @@ func TestEquipmentTypeHandler_GetOption_NotFound(t *testing.T) {
 	t.Parallel()
 
 	etID := pulid.MustNew("et_")
-	repo := mocks.NewMockEquipmentTypeRepository(t)
+	repo := equipmenttypeportsmock.NewMockEquipmentTypeRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(nil, errNotFound)
 
 	handler := setupEquipTypeHandler(t, repo)
@@ -520,7 +521,7 @@ func TestEquipmentTypeHandler_BulkUpdateStatus_ServiceError(t *testing.T) {
 	t.Parallel()
 
 	etID := pulid.MustNew("et_")
-	repo := mocks.NewMockEquipmentTypeRepository(t)
+	repo := equipmenttypeportsmock.NewMockEquipmentTypeRepository(t)
 	repo.On("GetByIDs", mock.Anything, mock.Anything).Return([]*equipmenttype.EquipmentType{
 		{
 			ID:     etID,
@@ -552,7 +553,7 @@ func TestEquipmentTypeHandler_BulkUpdateStatus_ServiceError(t *testing.T) {
 func TestEquipmentTypeHandler_Create_ServiceError(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockEquipmentTypeRepository(t)
+	repo := equipmenttypeportsmock.NewMockEquipmentTypeRepository(t)
 	repo.On("Create", mock.Anything, mock.Anything).Return(nil, errors.New("service error"))
 
 	handler := setupEquipTypeHandler(t, repo)
@@ -576,7 +577,7 @@ func TestEquipmentTypeHandler_Create_ServiceError(t *testing.T) {
 func TestEquipmentTypeHandler_Update_InvalidID(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockEquipmentTypeRepository(t)
+	repo := equipmenttypeportsmock.NewMockEquipmentTypeRepository(t)
 	handler := setupEquipTypeHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -598,7 +599,7 @@ func TestEquipmentTypeHandler_Update_InvalidID(t *testing.T) {
 func TestEquipmentTypeHandler_BulkUpdateStatus_BadJSON(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockEquipmentTypeRepository(t)
+	repo := equipmenttypeportsmock.NewMockEquipmentTypeRepository(t)
 	handler := setupEquipTypeHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().

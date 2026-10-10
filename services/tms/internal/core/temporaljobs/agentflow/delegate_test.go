@@ -5,15 +5,14 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -47,13 +46,13 @@ func (o *scriptedOpener) OpenDelegate(
 		return nil, &DelegateDeclinedError{Reason: o.declined}
 	}
 
-	req := &serviceports.RunRequest{
+	req := &agentports.RunRequest{
 		Definition: o.definition,
 		Actor:      run.Actor,
 		Input:      call.Task,
 		ThreadID:   run.ThreadID,
 		StepOwner:  run.StepOwner,
-		Delegation: &serviceports.Delegation{
+		Delegation: &agentports.Delegation{
 			ParentAgentID:   run.Definition.ID,
 			ParentAgentName: run.Definition.Name,
 			CallID:          call.Call.ID,
@@ -92,8 +91,8 @@ func (h *harness) delegatingRun(
 	rc := runContext()
 	rc.Definition.ID = pulid.MustNew("agdef_")
 	rc.ThreadID = pulid.MustNew("athr_")
-	rc.StepOwner = serviceports.RunStepOwner{
-		Kind: serviceports.RunStepOwnerAssistantTurn,
+	rc.StepOwner = agentports.RunStepOwner{
+		Kind: agentports.RunStepOwnerAssistantTurn,
 		ID:   pulid.MustNew("atrn_"),
 	}
 	req := rc.request()
@@ -109,7 +108,7 @@ func (h *harness) delegatingRun(
 // scopedReplies scripts the model for the calls in one scope, in order.
 func (h *harness) scopedReplies(
 	scope func(*ModelCallInput) bool,
-	replies ...*serviceports.ChatCompletionResult,
+	replies ...*agentports.ChatCompletionResult,
 ) {
 	for _, reply := range replies {
 		h.env.OnActivity(h.activities.ModelCallActivity, mock.Anything, mock.MatchedBy(scope)).
@@ -151,7 +150,7 @@ func TestRunDrivesADelegatesTurnInTheSameWorkflow(t *testing.T) {
 	delegate := delegateDefinition("get_shipment")
 	opener := &scriptedOpener{definition: delegate}
 	h := newHarness(t, harnessParams{
-		query:     []serviceports.AgentQueryTool{lookup},
+		query:     []agentports.AgentQueryTool{lookup},
 		delegates: opener,
 	})
 	opener.runtime = h.runtime
@@ -182,14 +181,14 @@ func TestRunDrivesADelegatesTurnInTheSameWorkflow(t *testing.T) {
 	assert.Equal(t, "The Shipment Desk found it in Memphis.", result.Outcome.Result.Reply)
 
 	assert.Equal(t, []string{
-		serviceports.AssistantEventMessage,
-		serviceports.AssistantEventToolStarted,
-		serviceports.AssistantEventDelegateStarted,
-		serviceports.AssistantEventMessage,
-		serviceports.AssistantEventToolStarted,
-		serviceports.AssistantEventToolFinished,
-		serviceports.AssistantEventDelegateFinished,
-		serviceports.AssistantEventToolFinished,
+		agentports.AssistantEventMessage,
+		agentports.AssistantEventToolStarted,
+		agentports.AssistantEventDelegateStarted,
+		agentports.AssistantEventMessage,
+		agentports.AssistantEventToolStarted,
+		agentports.AssistantEventToolFinished,
+		agentports.AssistantEventDelegateFinished,
+		agentports.AssistantEventToolFinished,
 	}, eventNames(result.Outcome))
 	nested, ok := result.Outcome.Events[4].Data.(map[string]any)
 	require.True(t, ok)
@@ -295,7 +294,7 @@ func TestRunContext_CarriesTheRecordsTheTurnIsAboutAsData(t *testing.T) {
 		{Type: "customer", ID: pulid.MustNew("cus_").String()},
 		{Type: string(agent.SubjectShipment), ID: pulid.MustNew("shp_").String()},
 	}
-	run := NewRunContext(&serviceports.RunRequest{
+	run := NewRunContext(&agentports.RunRequest{
 		Definition: &agentdefinition.Definition{ID: pulid.MustNew("agdef_")},
 		Records:    records,
 	}, agentflowcontract.PriorityInteractive)

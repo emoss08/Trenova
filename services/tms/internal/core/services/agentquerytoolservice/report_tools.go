@@ -9,10 +9,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/reporting/canned"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/reportrows"
@@ -94,7 +96,7 @@ type listReportsTool struct {
 	reports reportRunner
 }
 
-func newListReportsTool(reports reportRunner) serviceports.AgentQueryTool {
+func newListReportsTool(reports reportRunner) agentports.AgentQueryTool {
 	return &listReportsTool{reports: reports}
 }
 
@@ -130,7 +132,7 @@ func (t *listReportsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listReportsTool) Policy() serviceports.ToolPolicy {
+func (t *listReportsTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceReport,
 	})
@@ -138,7 +140,7 @@ func (t *listReportsTool) Policy() serviceports.ToolPolicy {
 
 func (t *listReportsTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -381,7 +383,7 @@ const (
 
 type runReportTool struct {
 	reports     reportRunner
-	permissions serviceports.PermissionEngine
+	permissions permissionports.PermissionEngine
 
 	settleWindow time.Duration
 	settlePoll   time.Duration
@@ -389,8 +391,8 @@ type runReportTool struct {
 
 func newRunReportTool(
 	reports reportRunner,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &runReportTool{
 		reports:      reports,
 		permissions:  permissions,
@@ -456,7 +458,7 @@ func (t *runReportTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *runReportTool) Policy() serviceports.ToolPolicy {
+func (t *runReportTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceReport,
 		effect:   agent.ToolEffectPresent,
@@ -465,7 +467,7 @@ func (t *runReportTool) Policy() serviceports.ToolPolicy {
 
 func (t *runReportTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -536,7 +538,7 @@ func (t *runReportTool) Query(
 // and the conversation's own card takes it from there.
 func (t *runReportTool) settle(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 	run *report.ReportRun,
 ) *report.ReportRun {
 	if t.settleWindow <= 0 || t.settlePoll <= 0 || run.Status.IsTerminal() {
@@ -573,13 +575,13 @@ func (t *runReportTool) settle(
 
 func (t *runReportTool) authorizeExport(
 	ctx context.Context,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) error {
 	if t.permissions == nil {
 		return fmt.Errorf("reports cannot be run because authorization is unavailable")
 	}
 
-	result, err := t.permissions.Check(ctx, &serviceports.PermissionCheckRequest{
+	result, err := t.permissions.Check(ctx, &permissionports.PermissionCheckRequest{
 		PrincipalType:  actor.PrincipalType,
 		PrincipalID:    actor.PrincipalID,
 		UserID:         actor.UserID,
@@ -669,7 +671,7 @@ type getReportRunTool struct {
 	reports reportRunner
 }
 
-func newGetReportRunTool(reports reportRunner) serviceports.AgentQueryTool {
+func newGetReportRunTool(reports reportRunner) agentports.AgentQueryTool {
 	return &getReportRunTool{reports: reports}
 }
 
@@ -699,7 +701,7 @@ func (t *getReportRunTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *getReportRunTool) Policy() serviceports.ToolPolicy {
+func (t *getReportRunTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceReport,
 	})
@@ -707,7 +709,7 @@ func (t *getReportRunTool) Policy() serviceports.ToolPolicy {
 
 func (t *getReportRunTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -744,7 +746,7 @@ const maxRunSampleRows = maxPreviewRows
 func attachRunSample(
 	ctx context.Context,
 	reports reportRunner,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 	run *report.ReportRun,
 	status *reportRunStatus,
 ) {
@@ -833,14 +835,14 @@ func toRunStatus(run *report.ReportRun) reportRunStatus {
 	return status
 }
 
-func reportingRequestFor(params *serviceports.QueryToolParams) reporting.Request {
+func reportingRequestFor(params *agentports.QueryToolParams) reporting.Request {
 	return reporting.Request{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  params.OrganizationID,
 			BuID:   params.BusinessUnitID,
 			UserID: params.Actor.PersonUserID(),
 		},
-		Principal: serviceports.PrincipalInfo{
+		Principal: kernelports.PrincipalInfo{
 			Type:     params.Actor.PrincipalType,
 			ID:       params.Actor.PrincipalID,
 			UserID:   params.Actor.UserID,

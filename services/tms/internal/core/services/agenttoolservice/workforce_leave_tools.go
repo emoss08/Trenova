@@ -7,10 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/internal/core/services/workerleaveservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -215,7 +215,7 @@ func applyLeaveCaseOpen(entity *worker.WorkerLeaveCase, params map[string]any) e
 	return nil
 }
 
-func newOpenLeaveCaseTool(cases leaveKeeper) serviceports.AgentTool {
+func newOpenLeaveCaseTool(cases leaveKeeper) agentports.AgentTool {
 	properties := leaveCaseProperties()
 	properties[paramWorkerID] = workerProperty()
 	properties[paramStartsAt] = agenttoolschema.Date("The first day of leave.")
@@ -236,7 +236,7 @@ func newOpenLeaveCaseTool(cases leaveKeeper) serviceports.AgentTool {
 
 	return newReportingReceivableTool(spec,
 		receivablePlan[*worker.WorkerLeaveCase, *worker.WorkerLeaveCase]{
-			request: func(params *serviceports.ToolExecuteParams) (*worker.WorkerLeaveCase, error) {
+			request: func(params *agentports.ToolExecuteParams) (*worker.WorkerLeaveCase, error) {
 				workerID, err := requirePulid(params.Params, paramWorkerID)
 				if err != nil {
 					return nil, err
@@ -263,7 +263,7 @@ func newOpenLeaveCaseTool(cases leaveKeeper) serviceports.AgentTool {
 			plan: func(
 				ctx context.Context,
 				entity *worker.WorkerLeaveCase,
-				params *serviceports.ToolExecuteParams,
+				params *agentports.ToolExecuteParams,
 			) (*worker.WorkerLeaveCase, error) {
 				return cases.PlanOpenCase(ctx, entity, params.Actor.UserID)
 			},
@@ -286,7 +286,7 @@ func newOpenLeaveCaseTool(cases leaveKeeper) serviceports.AgentTool {
 			run: func(
 				ctx context.Context,
 				entity *worker.WorkerLeaveCase,
-				params *serviceports.ToolExecuteParams,
+				params *agentports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				created, err := cases.OpenCase(ctx, entity, params.Actor.UserID)
 				if err != nil {
@@ -299,7 +299,7 @@ func newOpenLeaveCaseTool(cases leaveKeeper) serviceports.AgentTool {
 }
 
 func leaveCaseUpdateFrom(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*workerleaveservice.UpdateCaseRequest, error) {
 	id, err := requirePulid(params.Params, paramLeaveCaseID)
 	if err != nil {
@@ -368,7 +368,7 @@ func renderLeaveCaseChange(
 	}
 }
 
-func newUpdateLeaveCaseTool(cases leaveKeeper) serviceports.AgentTool {
+func newUpdateLeaveCaseTool(cases leaveKeeper) agentports.AgentTool {
 	properties := leaveCaseProperties()
 	properties[paramLeaveCaseID] = leaveCaseIDProperty()
 	properties[paramStartsAt] = agenttoolschema.Date("The first day of leave.")
@@ -392,7 +392,7 @@ func newUpdateLeaveCaseTool(cases leaveKeeper) serviceports.AgentTool {
 		plan: func(
 			ctx context.Context,
 			req *workerleaveservice.UpdateCaseRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*workerleaveservice.CaseChange, error) {
 			return cases.PlanUpdateCase(ctx, req)
 		},
@@ -408,7 +408,7 @@ func newUpdateLeaveCaseTool(cases leaveKeeper) serviceports.AgentTool {
 		run: func(
 			ctx context.Context,
 			req *workerleaveservice.UpdateCaseRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			updated, err := cases.UpdateCase(ctx, req)
 			if err != nil {
@@ -420,7 +420,7 @@ func newUpdateLeaveCaseTool(cases leaveKeeper) serviceports.AgentTool {
 	})
 }
 
-func newCloseLeaveCaseTool(cases leaveKeeper) serviceports.AgentTool {
+func newCloseLeaveCaseTool(cases leaveKeeper) agentports.AgentTool {
 	spec := personOnly(targeting(withSchema(wfSpec(
 		"close_leave_case",
 		"Close a decided leave case once the leave is over. The days recorded against it "+
@@ -444,7 +444,7 @@ func newCloseLeaveCaseTool(cases leaveKeeper) serviceports.AgentTool {
 			plan: func(
 				ctx context.Context,
 				req *recordDelete,
-				_ *serviceports.ToolExecuteParams,
+				_ *agentports.ToolExecuteParams,
 			) (*workerleaveservice.CaseChange, error) {
 				return cases.PlanCloseCase(ctx, req.tenant, req.id)
 			},
@@ -455,7 +455,7 @@ func newCloseLeaveCaseTool(cases leaveKeeper) serviceports.AgentTool {
 			run: func(
 				ctx context.Context,
 				req *recordDelete,
-				_ *serviceports.ToolExecuteParams,
+				_ *agentports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				closed, err := cases.CloseCase(ctx, req.tenant, req.id, req.userID)
 				if err != nil {
@@ -468,7 +468,7 @@ func newCloseLeaveCaseTool(cases leaveKeeper) serviceports.AgentTool {
 	)
 }
 
-func newRequestLeaveCertificationTool(cases leaveKeeper) serviceports.AgentTool {
+func newRequestLeaveCertificationTool(cases leaveKeeper) agentports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
 		"request_leave_certification",
 		"Record that medical certification was asked for on a leave case and start its "+
@@ -491,7 +491,7 @@ func newRequestLeaveCertificationTool(cases leaveKeeper) serviceports.AgentTool 
 		*workerleaveservice.RequestCertificationRequest, *workerleaveservice.CaseChange,
 	]{
 		request: func(
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*workerleaveservice.RequestCertificationRequest, error) {
 			id, err := requirePulid(params.Params, paramLeaveCaseID)
 			if err != nil {
@@ -511,7 +511,7 @@ func newRequestLeaveCertificationTool(cases leaveKeeper) serviceports.AgentTool 
 		plan: func(
 			ctx context.Context,
 			req *workerleaveservice.RequestCertificationRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*workerleaveservice.CaseChange, error) {
 			return cases.PlanRequestCertification(ctx, req)
 		},
@@ -527,7 +527,7 @@ func newRequestLeaveCertificationTool(cases leaveKeeper) serviceports.AgentTool 
 		run: func(
 			ctx context.Context,
 			req *workerleaveservice.RequestCertificationRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			updated, err := cases.RequestCertification(ctx, req)
 			if err != nil {
@@ -558,7 +558,7 @@ func leaveDayOptions() []toolpreview.Option {
 	}))
 }
 
-func newRecordLeaveDayTool(cases leaveKeeper) serviceports.AgentTool {
+func newRecordLeaveDayTool(cases leaveKeeper) agentports.AgentTool {
 	spec := withSchema(wfSpec(
 		"record_leave_day",
 		"Record a day of leave taken against an open or approved leave case, with the "+
@@ -582,7 +582,7 @@ func newRecordLeaveDayTool(cases leaveKeeper) serviceports.AgentTool {
 		*workerleaveservice.RecordDayRequest, *worker.WorkerLeaveEntry,
 	]{
 		request: func(
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*workerleaveservice.RecordDayRequest, error) {
 			caseID, err := requirePulid(params.Params, paramLeaveCaseID)
 			if err != nil {
@@ -617,7 +617,7 @@ func newRecordLeaveDayTool(cases leaveKeeper) serviceports.AgentTool {
 		plan: func(
 			ctx context.Context,
 			req *workerleaveservice.RecordDayRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*worker.WorkerLeaveEntry, error) {
 			return cases.PlanRecordDay(ctx, req)
 		},
@@ -646,7 +646,7 @@ func newRecordLeaveDayTool(cases leaveKeeper) serviceports.AgentTool {
 		run: func(
 			ctx context.Context,
 			req *workerleaveservice.RecordDayRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			created, err := cases.RecordDay(ctx, req)
 			if err != nil {
@@ -658,7 +658,7 @@ func newRecordLeaveDayTool(cases leaveKeeper) serviceports.AgentTool {
 	})
 }
 
-func newUpdateLeaveDayTool(cases leaveKeeper) serviceports.AgentTool {
+func newUpdateLeaveDayTool(cases leaveKeeper) agentports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
 		"update_leave_day",
 		"Correct a day of leave already recorded: the hours, whether it counts against the "+
@@ -683,7 +683,7 @@ func newUpdateLeaveDayTool(cases leaveKeeper) serviceports.AgentTool {
 		*workerleaveservice.UpdateDayRequest, *workerleaveservice.EntryChange,
 	]{
 		request: func(
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*workerleaveservice.UpdateDayRequest, error) {
 			id, err := requirePulid(params.Params, paramLeaveEntryID)
 			if err != nil {
@@ -716,7 +716,7 @@ func newUpdateLeaveDayTool(cases leaveKeeper) serviceports.AgentTool {
 		plan: func(
 			ctx context.Context,
 			req *workerleaveservice.UpdateDayRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*workerleaveservice.EntryChange, error) {
 			return cases.PlanUpdateDay(ctx, req)
 		},
@@ -737,7 +737,7 @@ func newUpdateLeaveDayTool(cases leaveKeeper) serviceports.AgentTool {
 		run: func(
 			ctx context.Context,
 			req *workerleaveservice.UpdateDayRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			updated, err := cases.UpdateDay(ctx, req)
 			if err != nil {
@@ -749,7 +749,7 @@ func newUpdateLeaveDayTool(cases leaveKeeper) serviceports.AgentTool {
 	})
 }
 
-func newDeleteLeaveDayTool(cases leaveKeeper) serviceports.AgentTool {
+func newDeleteLeaveDayTool(cases leaveKeeper) agentports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
 		"delete_leave_day",
 		"Remove a day of leave recorded in error, which gives its hours back to the "+
@@ -769,7 +769,7 @@ func newDeleteLeaveDayTool(cases leaveKeeper) serviceports.AgentTool {
 		plan: func(
 			ctx context.Context,
 			req *recordDelete,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*worker.WorkerLeaveEntry, error) {
 			return cases.PlanDeleteDay(ctx, req.tenant, req.id)
 		},
@@ -786,37 +786,37 @@ func newDeleteLeaveDayTool(cases leaveKeeper) serviceports.AgentTool {
 		run: func(
 			ctx context.Context,
 			req *recordDelete,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			return nil, cases.DeleteDay(ctx, req.tenant, req.id, req.userID)
 		},
 	})
 }
 
-func provideOpenLeaveCaseTool(s *workerleaveservice.Service) serviceports.AgentTool {
+func provideOpenLeaveCaseTool(s *workerleaveservice.Service) agentports.AgentTool {
 	return newOpenLeaveCaseTool(s)
 }
 
-func provideUpdateLeaveCaseTool(s *workerleaveservice.Service) serviceports.AgentTool {
+func provideUpdateLeaveCaseTool(s *workerleaveservice.Service) agentports.AgentTool {
 	return newUpdateLeaveCaseTool(s)
 }
 
-func provideCloseLeaveCaseTool(s *workerleaveservice.Service) serviceports.AgentTool {
+func provideCloseLeaveCaseTool(s *workerleaveservice.Service) agentports.AgentTool {
 	return newCloseLeaveCaseTool(s)
 }
 
-func provideRequestLeaveCertificationTool(s *workerleaveservice.Service) serviceports.AgentTool {
+func provideRequestLeaveCertificationTool(s *workerleaveservice.Service) agentports.AgentTool {
 	return newRequestLeaveCertificationTool(s)
 }
 
-func provideRecordLeaveDayTool(s *workerleaveservice.Service) serviceports.AgentTool {
+func provideRecordLeaveDayTool(s *workerleaveservice.Service) agentports.AgentTool {
 	return newRecordLeaveDayTool(s)
 }
 
-func provideUpdateLeaveDayTool(s *workerleaveservice.Service) serviceports.AgentTool {
+func provideUpdateLeaveDayTool(s *workerleaveservice.Service) agentports.AgentTool {
 	return newUpdateLeaveDayTool(s)
 }
 
-func provideDeleteLeaveDayTool(s *workerleaveservice.Service) serviceports.AgentTool {
+func provideDeleteLeaveDayTool(s *workerleaveservice.Service) agentports.AgentTool {
 	return newDeleteLeaveDayTool(s)
 }

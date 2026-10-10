@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"go.uber.org/fx"
 )
 
@@ -24,7 +24,7 @@ type LocalEntitlementProvider struct {
 	catalog platformcatalog.FeatureCatalog
 }
 
-var _ services.EntitlementProvider = (*LocalEntitlementProvider)(nil)
+var _ platformcatalogports.EntitlementProvider = (*LocalEntitlementProvider)(nil)
 
 func NewLocalEntitlementProvider(p LocalEntitlementProviderParams) *LocalEntitlementProvider {
 	return &LocalEntitlementProvider{
@@ -34,8 +34,8 @@ func NewLocalEntitlementProvider(p LocalEntitlementProviderParams) *LocalEntitle
 
 func (p *LocalEntitlementProvider) CheckFeature(
 	_ context.Context,
-	req *services.FeatureCheckRequest,
-) (*services.FeatureCheckResult, error) {
+	req *platformcatalogports.FeatureCheckRequest,
+) (*platformcatalogports.FeatureCheckResult, error) {
 	checkedAt := req.CheckedAt
 	if checkedAt == 0 {
 		checkedAt = time.Now().Unix()
@@ -43,7 +43,7 @@ func (p *LocalEntitlementProvider) CheckFeature(
 
 	if p.catalog != nil {
 		if _, ok := p.catalog.GetFeature(req.FeatureKey); !ok {
-			return &services.FeatureCheckResult{
+			return &platformcatalogports.FeatureCheckResult{
 				FeatureKey: req.FeatureKey,
 				Allowed:    false,
 				Reason:     reasonFeatureNotFound,
@@ -52,7 +52,7 @@ func (p *LocalEntitlementProvider) CheckFeature(
 		}
 	}
 
-	return &services.FeatureCheckResult{
+	return &platformcatalogports.FeatureCheckResult{
 		FeatureKey: req.FeatureKey,
 		Allowed:    true,
 		Reason:     reasonCommunityMode,
@@ -62,8 +62,8 @@ func (p *LocalEntitlementProvider) CheckFeature(
 
 func (p *LocalEntitlementProvider) ListEntitlements(
 	_ context.Context,
-	req *services.EntitlementsRequest,
-) (*services.EntitlementsResult, error) {
+	req *platformcatalogports.EntitlementsRequest,
+) (*platformcatalogports.EntitlementsResult, error) {
 	checkedAt := req.CheckedAt
 	if checkedAt == 0 {
 		checkedAt = time.Now().Unix()
@@ -74,9 +74,9 @@ func (p *LocalEntitlementProvider) ListEntitlements(
 		features = p.catalog.ListFeatures()
 	}
 
-	results := make([]services.FeatureCheckResult, 0, len(features))
+	results := make([]platformcatalogports.FeatureCheckResult, 0, len(features))
 	for i := range features {
-		results = append(results, services.FeatureCheckResult{
+		results = append(results, platformcatalogports.FeatureCheckResult{
 			FeatureKey: features[i].Key,
 			Allowed:    true,
 			Reason:     reasonCommunityMode,
@@ -84,7 +84,7 @@ func (p *LocalEntitlementProvider) ListEntitlements(
 		})
 	}
 
-	return &services.EntitlementsResult{
+	return &platformcatalogports.EntitlementsResult{
 		Features:  results,
 		CheckedAt: checkedAt,
 	}, nil

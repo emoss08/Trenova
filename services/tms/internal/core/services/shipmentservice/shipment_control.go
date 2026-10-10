@@ -6,7 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -33,13 +34,13 @@ func (s *service) getShipmentControl(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*tenant.ShipmentControl, error) {
-	return s.controlRepo.Get(ctx, repositories.GetShipmentControlRequest{
+	return s.controlRepo.Get(ctx, tenantports.GetShipmentControlRequest{
 		TenantInfo: tenantInfo,
 	})
 }
 
-func duplicateBOLCheckRequest(entity *shipment.Shipment) *repositories.DuplicateBOLCheckRequest {
-	req := &repositories.DuplicateBOLCheckRequest{
+func duplicateBOLCheckRequest(entity *shipment.Shipment) *shipmentports.DuplicateBOLCheckRequest {
+	req := &shipmentports.DuplicateBOLCheckRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,

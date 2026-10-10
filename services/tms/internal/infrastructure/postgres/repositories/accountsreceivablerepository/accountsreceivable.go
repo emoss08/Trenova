@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -56,20 +56,20 @@ type openItemRecord struct {
 	HasShortPay        bool   `bun:"has_short_pay"`
 }
 
-func New(p Params) repositories.AccountsReceivableRepository {
+func New(p Params) customerledgerports.AccountsReceivableRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.accounts-receivable-repository")}
 }
 
-func NewAnalytics(p Params) repositories.ARAnalyticsRepository {
+func NewAnalytics(p Params) customerledgerports.ARAnalyticsRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.ar-analytics-repository")}
 }
 
 func (r *repository) ListCustomerLedger(
 	ctx context.Context,
-	req repositories.ListCustomerLedgerRequest,
-) ([]*repositories.ARLedgerEntry, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*repositories.ARLedgerEntry, error) {
-		entries := make([]*repositories.ARLedgerEntry, 0)
+	req customerledgerports.ListCustomerLedgerRequest,
+) ([]*customerledgerports.ARLedgerEntry, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*customerledgerports.ARLedgerEntry, error) {
+		entries := make([]*customerledgerports.ARLedgerEntry, 0)
 		err := r.db.DBForContext(ctx).NewRaw(`
 		SELECT customer_id, transaction_date, source_event_type AS event_type, document_number, source_object_type, source_object_id, amount_minor, COALESCE(related_invoice_id, '') AS related_invoice_id
 		FROM customer_ledger_entries
@@ -87,9 +87,9 @@ func (r *repository) ListCustomerLedger(
 
 func (r *repository) ListARAging(
 	ctx context.Context,
-	req repositories.ListARAgingRequest,
-) ([]*repositories.ARCustomerAgingRow, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*repositories.ARCustomerAgingRow, error) {
+	req customerledgerports.ListARAgingRequest,
+) ([]*customerledgerports.ARCustomerAgingRow, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*customerledgerports.ARCustomerAgingRow, error) {
 		records := make([]*agingRowRecord, 0)
 		err := r.db.DBForContext(ctx).NewRaw(`
 		SELECT
@@ -113,12 +113,12 @@ func (r *repository) ListARAging(
 		if err != nil {
 			return nil, err
 		}
-		rows := make([]*repositories.ARCustomerAgingRow, 0, len(records))
+		rows := make([]*customerledgerports.ARCustomerAgingRow, 0, len(records))
 		for _, rec := range records {
-			rows = append(rows, &repositories.ARCustomerAgingRow{
+			rows = append(rows, &customerledgerports.ARCustomerAgingRow{
 				CustomerID:   pulid.ID(rec.CustomerID),
 				CustomerName: rec.CustomerName,
-				Buckets: repositories.ARAgingBucketTotals{
+				Buckets: customerledgerports.ARAgingBucketTotals{
 					CurrentMinor:    rec.CurrentMinor,
 					Days1To30Minor:  rec.Days1To30Minor,
 					Days31To60Minor: rec.Days31To60Minor,
@@ -134,9 +134,9 @@ func (r *repository) ListARAging(
 
 func (r *repository) ListOpenItems(
 	ctx context.Context,
-	req repositories.ListAROpenItemsRequest,
-) ([]*repositories.AROpenItem, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*repositories.AROpenItem, error) {
+	req customerledgerports.ListAROpenItemsRequest,
+) ([]*customerledgerports.AROpenItem, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*customerledgerports.AROpenItem, error) {
 		records := make([]*openItemRecord, 0)
 		query := `
 		SELECT
@@ -192,9 +192,9 @@ func (r *repository) ListOpenItems(
 			return nil, fmt.Errorf("list ar open items: %w", err)
 		}
 
-		items := make([]*repositories.AROpenItem, 0, len(records))
+		items := make([]*customerledgerports.AROpenItem, 0, len(records))
 		for _, rec := range records {
-			items = append(items, &repositories.AROpenItem{
+			items = append(items, &customerledgerports.AROpenItem{
 				InvoiceID:          pulid.ID(rec.InvoiceID),
 				CustomerID:         pulid.ID(rec.CustomerID),
 				CustomerName:       rec.CustomerName,
@@ -221,7 +221,7 @@ func (r *repository) ListOpenItems(
 
 func (r *repository) GetCustomerName(
 	ctx context.Context,
-	req repositories.GetARCustomerNameRequest,
+	req customerledgerports.GetARCustomerNameRequest,
 ) (string, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (string, error) {
 		var row struct {
@@ -245,9 +245,9 @@ func (r *repository) GetCustomerName(
 
 func (r *repository) GetCustomerAging(
 	ctx context.Context,
-	req repositories.GetARCustomerAgingRequest,
-) (*repositories.ARCustomerAgingRow, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.ARCustomerAgingRow, error) {
+	req customerledgerports.GetARCustomerAgingRequest,
+) (*customerledgerports.ARCustomerAgingRow, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*customerledgerports.ARCustomerAgingRow, error) {
 		records := make([]*agingRowRecord, 0, 1)
 		err := r.db.DBForContext(ctx).NewRaw(`
 		SELECT
@@ -272,14 +272,14 @@ func (r *repository) GetCustomerAging(
 			return nil, fmt.Errorf("get customer ar aging: %w", err)
 		}
 		if len(records) == 0 {
-			return &repositories.ARCustomerAgingRow{CustomerID: req.CustomerID}, nil
+			return &customerledgerports.ARCustomerAgingRow{CustomerID: req.CustomerID}, nil
 		}
 
 		rec := records[0]
-		return &repositories.ARCustomerAgingRow{
+		return &customerledgerports.ARCustomerAgingRow{
 			CustomerID:   pulid.ID(rec.CustomerID),
 			CustomerName: rec.CustomerName,
-			Buckets: repositories.ARAgingBucketTotals{
+			Buckets: customerledgerports.ARAgingBucketTotals{
 				CurrentMinor:    rec.CurrentMinor,
 				Days1To30Minor:  rec.Days1To30Minor,
 				Days31To60Minor: rec.Days31To60Minor,

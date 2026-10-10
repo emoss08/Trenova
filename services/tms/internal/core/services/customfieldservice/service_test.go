@@ -1,11 +1,13 @@
 package customfieldservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customfieldportsmock"
 	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/customfield"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/customfieldports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -42,8 +44,8 @@ func newServiceDefinition() *customfield.CustomFieldDefinition {
 
 func newService(
 	repo *mockCustomFieldRepository,
-	valueRepo *mocks.MockCustomFieldValueRepository,
-	auditSvc *mocks.MockAuditService,
+	valueRepo *customfieldportsmock.MockCustomFieldValueRepository,
+	auditSvc *auditportsmock.MockAuditService,
 	validator *Validator,
 ) *Service {
 	return &Service{
@@ -59,8 +61,8 @@ func TestService_List_Success(t *testing.T) {
 	t.Parallel()
 
 	repo := new(mockCustomFieldRepository)
-	valueRepo := mocks.NewMockCustomFieldValueRepository(t)
-	auditSvc := mocks.NewMockAuditService(t)
+	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
+	auditSvc := auditportsmock.NewMockAuditService(t)
 	svc := newService(repo, valueRepo, auditSvc, newNoOpValidator())
 
 	def := newServiceDefinition()
@@ -69,7 +71,7 @@ func TestService_List_Success(t *testing.T) {
 		Total: 1,
 	}
 
-	req := &repositories.ListCustomFieldDefinitionsRequest{
+	req := &customfieldports.ListCustomFieldDefinitionsRequest{
 		Filter: &pagination.QueryOptions{},
 	}
 
@@ -88,11 +90,11 @@ func TestService_List_Error(t *testing.T) {
 	t.Parallel()
 
 	repo := new(mockCustomFieldRepository)
-	valueRepo := mocks.NewMockCustomFieldValueRepository(t)
-	auditSvc := mocks.NewMockAuditService(t)
+	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
+	auditSvc := auditportsmock.NewMockAuditService(t)
 	svc := newService(repo, valueRepo, auditSvc, newNoOpValidator())
 
-	req := &repositories.ListCustomFieldDefinitionsRequest{
+	req := &customfieldports.ListCustomFieldDefinitionsRequest{
 		Filter: &pagination.QueryOptions{},
 	}
 
@@ -110,12 +112,12 @@ func TestService_Get_Success(t *testing.T) {
 	t.Parallel()
 
 	repo := new(mockCustomFieldRepository)
-	valueRepo := mocks.NewMockCustomFieldValueRepository(t)
-	auditSvc := mocks.NewMockAuditService(t)
+	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
+	auditSvc := auditportsmock.NewMockAuditService(t)
 	svc := newService(repo, valueRepo, auditSvc, newNoOpValidator())
 
 	def := newServiceDefinition()
-	req := repositories.GetCustomFieldDefinitionByIDRequest{
+	req := customfieldports.GetCustomFieldDefinitionByIDRequest{
 		ID: def.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: def.OrganizationID,
@@ -137,11 +139,11 @@ func TestService_Get_NotFound(t *testing.T) {
 	t.Parallel()
 
 	repo := new(mockCustomFieldRepository)
-	valueRepo := mocks.NewMockCustomFieldValueRepository(t)
-	auditSvc := mocks.NewMockAuditService(t)
+	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
+	auditSvc := auditportsmock.NewMockAuditService(t)
 	svc := newService(repo, valueRepo, auditSvc, newNoOpValidator())
 
-	req := repositories.GetCustomFieldDefinitionByIDRequest{
+	req := customfieldports.GetCustomFieldDefinitionByIDRequest{
 		ID: pulid.MustNew("cfd_"),
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
@@ -163,15 +165,15 @@ func TestService_Create_Success(t *testing.T) {
 	t.Parallel()
 
 	repo := new(mockCustomFieldRepository)
-	valueRepo := mocks.NewMockCustomFieldValueRepository(t)
-	auditSvc := mocks.NewMockAuditService(t)
+	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
+	auditSvc := auditportsmock.NewMockAuditService(t)
 	svc := newService(repo, valueRepo, auditSvc, newNoOpValidator())
 
 	entity := newServiceDefinition()
 	entity.ID = ""
 	userID := pulid.MustNew("usr_")
 
-	repo.On("CountByResourceType", mock.Anything, repositories.CountByResourceTypeRequest{
+	repo.On("CountByResourceType", mock.Anything, customfieldports.CountByResourceTypeRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -198,14 +200,14 @@ func TestService_Create_QuotaExceeded(t *testing.T) {
 	t.Parallel()
 
 	repo := new(mockCustomFieldRepository)
-	valueRepo := mocks.NewMockCustomFieldValueRepository(t)
-	auditSvc := mocks.NewMockAuditService(t)
+	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
+	auditSvc := auditportsmock.NewMockAuditService(t)
 	svc := newService(repo, valueRepo, auditSvc, newNoOpValidator())
 
 	entity := newServiceDefinition()
 	userID := pulid.MustNew("usr_")
 
-	repo.On("CountByResourceType", mock.Anything, repositories.CountByResourceTypeRequest{
+	repo.On("CountByResourceType", mock.Anything, customfieldports.CountByResourceTypeRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -230,8 +232,8 @@ func TestService_Create_ValidationFailure(t *testing.T) {
 	t.Parallel()
 
 	repo := new(mockCustomFieldRepository)
-	valueRepo := mocks.NewMockCustomFieldValueRepository(t)
-	auditSvc := mocks.NewMockAuditService(t)
+	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
+	auditSvc := auditportsmock.NewMockAuditService(t)
 	svc := newService(repo, valueRepo, auditSvc, newNoOpValidator())
 
 	entity := newServiceDefinition()
@@ -239,7 +241,7 @@ func TestService_Create_ValidationFailure(t *testing.T) {
 	entity.Name = "INVALID NAME!"
 	userID := pulid.MustNew("usr_")
 
-	repo.On("CountByResourceType", mock.Anything, repositories.CountByResourceTypeRequest{
+	repo.On("CountByResourceType", mock.Anything, customfieldports.CountByResourceTypeRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -262,8 +264,8 @@ func TestService_Update_Success(t *testing.T) {
 	t.Parallel()
 
 	repo := new(mockCustomFieldRepository)
-	valueRepo := mocks.NewMockCustomFieldValueRepository(t)
-	auditSvc := mocks.NewMockAuditService(t)
+	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
+	auditSvc := auditportsmock.NewMockAuditService(t)
 	svc := newService(repo, valueRepo, auditSvc, newNoOpValidator())
 
 	entity := newServiceDefinition()
@@ -280,12 +282,12 @@ func TestService_Update_Success(t *testing.T) {
 		BuID:  entity.BusinessUnitID,
 	}
 
-	repo.On("GetByID", mock.Anything, repositories.GetCustomFieldDefinitionByIDRequest{
+	repo.On("GetByID", mock.Anything, customfieldports.GetCustomFieldDefinitionByIDRequest{
 		ID:         entity.ID,
 		TenantInfo: tenantInfo,
 	}).Return(original, nil)
 
-	valueReq := &repositories.GetValuesByDefinitionRequest{
+	valueReq := &customfieldports.GetValuesByDefinitionRequest{
 		TenantInfo:   tenantInfo,
 		DefinitionID: entity.ID,
 	}
@@ -308,8 +310,8 @@ func TestService_Update_BreakingChange_FieldTypeChange(t *testing.T) {
 	t.Parallel()
 
 	repo := new(mockCustomFieldRepository)
-	valueRepo := mocks.NewMockCustomFieldValueRepository(t)
-	auditSvc := mocks.NewMockAuditService(t)
+	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
+	auditSvc := auditportsmock.NewMockAuditService(t)
 	svc := newService(repo, valueRepo, auditSvc, newNoOpValidator())
 
 	entity := newServiceDefinition()
@@ -327,12 +329,12 @@ func TestService_Update_BreakingChange_FieldTypeChange(t *testing.T) {
 		BuID:  entity.BusinessUnitID,
 	}
 
-	repo.On("GetByID", mock.Anything, repositories.GetCustomFieldDefinitionByIDRequest{
+	repo.On("GetByID", mock.Anything, customfieldports.GetCustomFieldDefinitionByIDRequest{
 		ID:         entity.ID,
 		TenantInfo: tenantInfo,
 	}).Return(original, nil)
 
-	valueReq := &repositories.GetValuesByDefinitionRequest{
+	valueReq := &customfieldports.GetValuesByDefinitionRequest{
 		TenantInfo:   tenantInfo,
 		DefinitionID: entity.ID,
 	}
@@ -357,8 +359,8 @@ func TestService_Update_BreakingChange_OptionInUseRemoved(t *testing.T) {
 	t.Parallel()
 
 	repo := new(mockCustomFieldRepository)
-	valueRepo := mocks.NewMockCustomFieldValueRepository(t)
-	auditSvc := mocks.NewMockAuditService(t)
+	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
+	auditSvc := auditportsmock.NewMockAuditService(t)
 	svc := newService(repo, valueRepo, auditSvc, newNoOpValidator())
 
 	entity := newServiceDefinition()
@@ -383,19 +385,19 @@ func TestService_Update_BreakingChange_OptionInUseRemoved(t *testing.T) {
 		BuID:  entity.BusinessUnitID,
 	}
 
-	repo.On("GetByID", mock.Anything, repositories.GetCustomFieldDefinitionByIDRequest{
+	repo.On("GetByID", mock.Anything, customfieldports.GetCustomFieldDefinitionByIDRequest{
 		ID:         entity.ID,
 		TenantInfo: tenantInfo,
 	}).Return(original, nil)
 
-	valueReq := &repositories.GetValuesByDefinitionRequest{
+	valueReq := &customfieldports.GetValuesByDefinitionRequest{
 		TenantInfo:   tenantInfo,
 		DefinitionID: entity.ID,
 	}
 	valueRepo.On("CountByDefinition", mock.Anything, valueReq).Return(3, nil)
 	valueRepo.On("CountResourcesByDefinition", mock.Anything, valueReq).Return(2, nil)
 
-	optionUsageReq := &repositories.GetOptionUsageRequest{
+	optionUsageReq := &customfieldports.GetOptionUsageRequest{
 		TenantInfo:   tenantInfo,
 		DefinitionID: entity.ID,
 	}
@@ -429,14 +431,14 @@ func TestService_Delete_Success(t *testing.T) {
 	t.Parallel()
 
 	repo := new(mockCustomFieldRepository)
-	valueRepo := mocks.NewMockCustomFieldValueRepository(t)
-	auditSvc := mocks.NewMockAuditService(t)
+	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
+	auditSvc := auditportsmock.NewMockAuditService(t)
 	svc := newService(repo, valueRepo, auditSvc, newNoOpValidator())
 
 	def := newServiceDefinition()
 	userID := pulid.MustNew("usr_")
 
-	req := repositories.GetCustomFieldDefinitionByIDRequest{
+	req := customfieldports.GetCustomFieldDefinitionByIDRequest{
 		ID: def.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: def.OrganizationID,
@@ -446,7 +448,7 @@ func TestService_Delete_Success(t *testing.T) {
 
 	repo.On("GetByID", mock.Anything, req).Return(def, nil)
 
-	valueReq := &repositories.GetValuesByDefinitionRequest{
+	valueReq := &customfieldports.GetValuesByDefinitionRequest{
 		TenantInfo:   req.TenantInfo,
 		DefinitionID: def.ID,
 	}
@@ -468,14 +470,14 @@ func TestService_Delete_ValuesExistConflict(t *testing.T) {
 	t.Parallel()
 
 	repo := new(mockCustomFieldRepository)
-	valueRepo := mocks.NewMockCustomFieldValueRepository(t)
-	auditSvc := mocks.NewMockAuditService(t)
+	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
+	auditSvc := auditportsmock.NewMockAuditService(t)
 	svc := newService(repo, valueRepo, auditSvc, newNoOpValidator())
 
 	def := newServiceDefinition()
 	userID := pulid.MustNew("usr_")
 
-	req := repositories.GetCustomFieldDefinitionByIDRequest{
+	req := customfieldports.GetCustomFieldDefinitionByIDRequest{
 		ID: def.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: def.OrganizationID,
@@ -485,7 +487,7 @@ func TestService_Delete_ValuesExistConflict(t *testing.T) {
 
 	repo.On("GetByID", mock.Anything, req).Return(def, nil)
 
-	valueReq := &repositories.GetValuesByDefinitionRequest{
+	valueReq := &customfieldports.GetValuesByDefinitionRequest{
 		TenantInfo:   req.TenantInfo,
 		DefinitionID: def.ID,
 	}
@@ -506,8 +508,8 @@ func TestService_GetUsageStats_Success(t *testing.T) {
 	t.Parallel()
 
 	repo := new(mockCustomFieldRepository)
-	valueRepo := mocks.NewMockCustomFieldValueRepository(t)
-	auditSvc := mocks.NewMockAuditService(t)
+	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
+	auditSvc := auditportsmock.NewMockAuditService(t)
 	svc := newService(repo, valueRepo, auditSvc, newNoOpValidator())
 
 	defID := pulid.MustNew("cfd_")
@@ -516,7 +518,7 @@ func TestService_GetUsageStats_Success(t *testing.T) {
 		BuID:  pulid.MustNew("bu_"),
 	}
 
-	valueReq := &repositories.GetValuesByDefinitionRequest{
+	valueReq := &customfieldports.GetValuesByDefinitionRequest{
 		TenantInfo:   tenantInfo,
 		DefinitionID: defID,
 	}
@@ -535,12 +537,12 @@ func TestService_GetUsageStats_Success(t *testing.T) {
 		},
 	}
 
-	repo.On("GetByID", mock.Anything, repositories.GetCustomFieldDefinitionByIDRequest{
+	repo.On("GetByID", mock.Anything, customfieldports.GetCustomFieldDefinitionByIDRequest{
 		ID:         defID,
 		TenantInfo: tenantInfo,
 	}).Return(def, nil)
 
-	valueRepo.On("GetOptionUsageCounts", mock.Anything, &repositories.GetOptionUsageRequest{
+	valueRepo.On("GetOptionUsageCounts", mock.Anything, &customfieldports.GetOptionUsageRequest{
 		TenantInfo:   tenantInfo,
 		DefinitionID: defID,
 	}).Return(map[string]int{
@@ -563,8 +565,8 @@ func TestNew(t *testing.T) {
 	t.Parallel()
 
 	repo := new(mockCustomFieldRepository)
-	valueRepo := mocks.NewMockCustomFieldValueRepository(t)
-	auditSvc := mocks.NewMockAuditService(t)
+	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
+	auditSvc := auditportsmock.NewMockAuditService(t)
 	validator := newNoOpValidator()
 
 	svc := New(Params{

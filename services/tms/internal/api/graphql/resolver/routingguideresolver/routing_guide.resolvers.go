@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -30,11 +30,11 @@ func (r *QueryResolver) RoutingGuides(ctx context.Context, input gqlmodel.DataTa
 
 	result, err := r.RoutingGuideService.ListConnection(
 		ctx,
-		&repositories.ListRoutingGuideConnectionRequest{
+		&tenderports.ListRoutingGuideConnectionRequest{
 			Filter:              tableInput.Filter,
 			Cursor:              tableInput.Cursor,
 			RoutingGuideColumns: routingGuideColumns(ctx, "edges.node"),
-			RoutingGuideFilterOptions: repositories.RoutingGuideFilterOptions{
+			RoutingGuideFilterOptions: tenderports.RoutingGuideFilterOptions{
 				IncludeEntries: graphql.FieldRequested(ctx, "edges.node.entries"),
 			},
 		},
@@ -57,10 +57,10 @@ func (r *QueryResolver) RoutingGuide(ctx context.Context, id string) (*tender.Ro
 		return nil, err
 	}
 
-	return r.RoutingGuideService.Get(ctx, repositories.GetRoutingGuideByIDRequest{
+	return r.RoutingGuideService.Get(ctx, tenderports.GetRoutingGuideByIDRequest{
 		ID:         guideID,
 		TenantInfo: base.TenantInfo(authCtx),
-		RoutingGuideFilterOptions: repositories.RoutingGuideFilterOptions{
+		RoutingGuideFilterOptions: tenderports.RoutingGuideFilterOptions{
 			IncludeEntries: true,
 		},
 	})
@@ -82,7 +82,7 @@ func (r *QueryResolver) MatchRoutingGuide(ctx context.Context, input gqlmodel.Ma
 		return nil, err
 	}
 
-	return r.RoutingGuideService.MatchLane(ctx, &repositories.MatchLaneRequest{
+	return r.RoutingGuideService.MatchLane(ctx, &tenderports.MatchLaneRequest{
 		TenantInfo:            base.TenantInfo(authCtx),
 		OriginLocationID:      originLocationID,
 		DestinationLocationID: destinationLocationID,

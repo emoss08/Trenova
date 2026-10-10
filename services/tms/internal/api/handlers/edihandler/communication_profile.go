@@ -7,9 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/ediinboundservice"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -77,7 +77,7 @@ func (h *Handler) listCommunicationProfiles(c *gin.Context) {
 		func() (*pagination.ListResult[*edi.EDICommunicationProfile], error) {
 			return h.service.ListCommunicationProfiles(
 				c.Request.Context(),
-				&repositories.ListEDICommunicationProfilesRequest{Filter: req},
+				&ediports.ListEDICommunicationProfilesRequest{Filter: req},
 			)
 		},
 	)
@@ -94,7 +94,7 @@ func (h *Handler) selectCommunicationProfileOptions(c *gin.Context) {
 		func() (*pagination.ListResult[*edi.EDICommunicationProfile], error) {
 			return h.service.SelectCommunicationProfileOptions(
 				c.Request.Context(),
-				&repositories.EDICommunicationProfileSelectOptionsRequest{
+				&ediports.EDICommunicationProfileSelectOptionsRequest{
 					SelectQueryRequest: req,
 					Status:             domaintypes.Status(helpers.QueryString(c, "status", "")),
 					Method:             edi.ConnectionMethod(helpers.QueryString(c, "method", "")),
@@ -146,7 +146,7 @@ func (h *Handler) getCommunicationProfile(c *gin.Context) {
 
 	profile, err := h.service.GetCommunicationProfile(
 		c.Request.Context(),
-		repositories.GetEDICommunicationProfileByIDRequest{
+		ediports.GetEDICommunicationProfileByIDRequest{
 			ID:         profileID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},

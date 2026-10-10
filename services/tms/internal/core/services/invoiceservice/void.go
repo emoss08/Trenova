@@ -8,10 +8,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/invoicevoid"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -31,9 +32,9 @@ const maxVoidReasonLength = 1000
 // stays readable in the audit trail.
 func (s *Service) VoidInvoice(
 	ctx context.Context,
-	req *servicesports.VoidInvoiceRequest,
-	actor *servicesports.RequestActor,
-) (*servicesports.VoidInvoiceResult, error) {
+	req *invoiceports.VoidInvoiceRequest,
+	actor *permissionports.RequestActor,
+) (*invoiceports.VoidInvoiceResult, error) {
 	entity, err := s.planVoid(ctx, req, actor)
 	if err != nil {
 		return nil, err
@@ -46,7 +47,7 @@ func (s *Service) VoidInvoice(
 	return s.voidPosted(ctx, req, entity, actor)
 }
 
-func validateVoidRequest(req *servicesports.VoidInvoiceRequest) *errortypes.MultiError {
+func validateVoidRequest(req *invoiceports.VoidInvoiceRequest) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	reason := strings.TrimSpace(req.Reason)
 	switch {
@@ -76,14 +77,14 @@ func validateVoidRequest(req *servicesports.VoidInvoiceRequest) *errortypes.Mult
 
 func (s *Service) voidDraft(
 	ctx context.Context,
-	req *servicesports.VoidInvoiceRequest,
-	actor *servicesports.RequestActor,
-) (*servicesports.VoidInvoiceResult, error) {
-	result := &servicesports.VoidInvoiceResult{}
+	req *invoiceports.VoidInvoiceRequest,
+	actor *permissionports.RequestActor,
+) (*invoiceports.VoidInvoiceResult, error) {
+	result := &invoiceports.VoidInvoiceResult{}
 	auditActor := actor.AuditActor()
 
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		entity, txErr := s.repo.LockForUpdate(txCtx, repositories.GetInvoiceByIDRequest{
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		entity, txErr := s.repo.LockForUpdate(txCtx, invoiceports.GetInvoiceByIDRequest{
 			ID:         req.InvoiceID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -139,10 +140,10 @@ func (s *Service) voidDraft(
 
 func (s *Service) voidPosted(
 	ctx context.Context,
-	req *servicesports.VoidInvoiceRequest,
+	req *invoiceports.VoidInvoiceRequest,
 	entity *invoice.Invoice,
-	actor *servicesports.RequestActor,
-) (*servicesports.VoidInvoiceResult, error) {
+	actor *permissionports.RequestActor,
+) (*invoiceports.VoidInvoiceResult, error) {
 	if err := s.refuseVoidingPosted(entity); err != nil {
 		return nil, err
 	}
@@ -161,7 +162,7 @@ func (s *Service) voidPosted(
 		return nil, err
 	}
 
-	reloaded, err := s.repo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+	reloaded, err := s.repo.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         entity.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -169,7 +170,7 @@ func (s *Service) voidPosted(
 		return nil, err
 	}
 
-	result := &servicesports.VoidInvoiceResult{
+	result := &invoiceports.VoidInvoiceResult{
 		Invoice:         reloaded,
 		AdjustmentID:    adjustment.ID,
 		PendingApproval: adjustment.Status != invoiceadjustment.StatusExecuted,
@@ -248,7 +249,7 @@ func (s *Service) refuseVoidWithStandingLateCharges(
 	}
 	grouped, err := s.lateChargeRepo.ListBySourceInvoiceIDs(
 		ctx,
-		&repositories.ListLateChargeAssessmentsByInvoiceIDsRequest{
+		&latechargeports.ListLateChargeAssessmentsByInvoiceIDsRequest{
 			TenantInfo: tenantInfo,
 			InvoiceIDs: []pulid.ID{entity.ID},
 		},
@@ -276,7 +277,7 @@ func (s *Service) refuseVoidWithStandingLateCharges(
 	if len(memoIDs) == 0 {
 		return nil
 	}
-	memos, err := s.repo.GetByIDs(ctx, repositories.GetInvoicesByIDsRequest{
+	memos, err := s.repo.GetByIDs(ctx, invoiceports.GetInvoicesByIDsRequest{
 		TenantInfo: tenantInfo,
 		InvoiceIDs: memoIDs,
 	})

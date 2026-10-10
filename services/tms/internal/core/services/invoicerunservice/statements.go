@@ -5,8 +5,10 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/invoicerun"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -33,8 +35,8 @@ type windowKey struct {
 // fall out of step, and nothing to reconcile when a biller changes a charge.
 func (s *Service) ListOpenStatements(
 	ctx context.Context,
-	req *servicesports.ListOpenStatementsRequest,
-) ([]*servicesports.OpenStatement, error) {
+	req *invoicerunports.ListOpenStatementsRequest,
+) ([]*invoicerunports.OpenStatement, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"request",
@@ -45,7 +47,7 @@ func (s *Service) ListOpenStatements(
 
 	schedules, err := s.customerRepo.ListDueBillingSchedules(
 		ctx,
-		&repositories.ListBillingSchedulesRequest{TenantInfo: req.TenantInfo},
+		&customerports.ListBillingSchedulesRequest{TenantInfo: req.TenantInfo},
 	)
 	if err != nil {
 		return nil, err
@@ -55,13 +57,13 @@ func (s *Service) ListOpenStatements(
 		schedules = filterToCustomer(schedules, req.CustomerID)
 	}
 	if len(schedules) == 0 {
-		return []*servicesports.OpenStatement{}, nil
+		return []*invoicerunports.OpenStatement{}, nil
 	}
 
 	now := timeutils.NowUnix()
 
-	statements := make([]*servicesports.OpenStatement, 0, len(schedules))
-	byCustomer := make(map[pulid.ID]*servicesports.OpenStatement, len(schedules))
+	statements := make([]*invoicerunports.OpenStatement, 0, len(schedules))
+	byCustomer := make(map[pulid.ID]*invoicerunports.OpenStatement, len(schedules))
 	batches := make(map[windowKey][]pulid.ID)
 	windows := make([]windowKey, 0, 4)
 
@@ -94,8 +96,8 @@ func (s *Service) ListOpenStatements(
 // GetOpenStatement is one customer's open statement with its members filled in.
 func (s *Service) GetOpenStatement(
 	ctx context.Context,
-	req *servicesports.ListOpenStatementsRequest,
-) (*servicesports.OpenStatement, error) {
+	req *invoicerunports.ListOpenStatementsRequest,
+) (*invoicerunports.OpenStatement, error) {
 	if req == nil || req.CustomerID.IsNil() {
 		return nil, errortypes.NewValidationError(
 			"customerId",
@@ -122,14 +124,14 @@ func (s *Service) GetOpenStatement(
 // fillStatements resolves one shared period window for every customer in it.
 func (s *Service) fillStatements(
 	ctx context.Context,
-	req *servicesports.ListOpenStatementsRequest,
+	req *invoicerunports.ListOpenStatementsRequest,
 	window windowKey,
 	customerIDs []pulid.ID,
-	byCustomer map[pulid.ID]*servicesports.OpenStatement,
+	byCustomer map[pulid.ID]*invoicerunports.OpenStatement,
 ) error {
 	candidates, err := s.billingQueueRepo.ListConsolidationCandidates(
 		ctx,
-		&repositories.ListConsolidationCandidatesRequest{
+		&billingqueueports.ListConsolidationCandidatesRequest{
 			TenantInfo:  req.TenantInfo,
 			CustomerIDs: customerIDs,
 			PeriodEnd:   window.end,
@@ -169,14 +171,14 @@ func (s *Service) fillStatements(
 // customers must not pay a round trip each to answer "anything still waiting?".
 func (s *Service) fillHeldFreight(
 	ctx context.Context,
-	req *servicesports.ListOpenStatementsRequest,
+	req *invoicerunports.ListOpenStatementsRequest,
 	window windowKey,
 	customerIDs []pulid.ID,
-	byCustomer map[pulid.ID]*servicesports.OpenStatement,
+	byCustomer map[pulid.ID]*invoicerunports.OpenStatement,
 ) error {
 	held, err := s.billingQueueRepo.CountHeldForPeriod(
 		ctx,
-		&repositories.CountHeldForPeriodRequest{
+		&billingqueueports.CountHeldForPeriodRequest{
 			TenantInfo:  req.TenantInfo,
 			CustomerIDs: customerIDs,
 			PeriodEnd:   window.end,
@@ -206,14 +208,14 @@ func (s *Service) fillHeldFreight(
 // early never moves the cadence.
 func (s *Service) BillStatementNow(
 	ctx context.Context,
-	req *servicesports.BillStatementNowRequest,
-	actor *servicesports.RequestActor,
-) (*servicesports.CommitInvoiceRunResult, error) {
+	req *invoicerunports.BillStatementNowRequest,
+	actor *permissionports.RequestActor,
+) (*invoicerunports.CommitInvoiceRunResult, error) {
 	if err := validateBillStatementRequest(req, actor); err != nil {
 		return nil, err
 	}
 
-	statement, err := s.GetOpenStatement(ctx, &servicesports.ListOpenStatementsRequest{
+	statement, err := s.GetOpenStatement(ctx, &invoicerunports.ListOpenStatementsRequest{
 		TenantInfo: req.TenantInfo,
 		CustomerID: req.CustomerID,
 	})
@@ -232,7 +234,7 @@ func (s *Service) BillStatementNow(
 	// everything after this moment still belongs to the period they agreed to.
 	now := timeutils.NowUnix()
 
-	run, err := s.Preview(ctx, &servicesports.PreviewInvoiceRunRequest{
+	run, err := s.Preview(ctx, &invoicerunports.PreviewInvoiceRunRequest{
 		TenantInfo:  req.TenantInfo,
 		CustomerIDs: []pulid.ID{req.CustomerID},
 		PeriodStart: statement.PeriodStart,
@@ -254,7 +256,7 @@ func (s *Service) BillStatementNow(
 		return nil, err
 	}
 
-	return s.Commit(ctx, &servicesports.CommitInvoiceRunRequest{
+	return s.Commit(ctx, &invoicerunports.CommitInvoiceRunRequest{
 		TenantInfo: req.TenantInfo,
 		RunID:      run.ID,
 	}, actor)
@@ -272,16 +274,16 @@ func (s *Service) BillStatementNow(
 func (s *Service) applyStatementExclusions(
 	ctx context.Context,
 	run *invoicerun.InvoiceRun,
-	req *servicesports.BillStatementNowRequest,
-	actor *servicesports.RequestActor,
+	req *invoicerunports.BillStatementNowRequest,
+	actor *permissionports.RequestActor,
 ) (*invoicerun.InvoiceRun, error) {
 	if len(req.Exclude) == 0 {
 		return run, nil
 	}
 
-	exclusions := make([]servicesports.ItemExclusion, 0, len(req.Exclude))
+	exclusions := make([]invoicerunports.ItemExclusion, 0, len(req.Exclude))
 	matchStatementExclusions(run, req, func(item *invoicerun.InvoiceRunGroupItem, reason string) {
-		exclusions = append(exclusions, servicesports.ItemExclusion{
+		exclusions = append(exclusions, invoicerunports.ItemExclusion{
 			ItemID: item.ID,
 			Reason: reason,
 		})
@@ -291,7 +293,7 @@ func (s *Service) applyStatementExclusions(
 		return run, nil
 	}
 
-	return s.AdjustMembership(ctx, &servicesports.AdjustInvoiceRunMembershipRequest{
+	return s.AdjustMembership(ctx, &invoicerunports.AdjustInvoiceRunMembershipRequest{
 		TenantInfo: req.TenantInfo,
 		RunID:      run.ID,
 		Exclude:    exclusions,
@@ -299,10 +301,10 @@ func (s *Service) applyStatementExclusions(
 }
 
 func newOpenStatement(
-	schedule *repositories.DueBillingSchedule,
+	schedule *customerports.DueBillingSchedule,
 	period Period,
-) *servicesports.OpenStatement {
-	return &servicesports.OpenStatement{
+) *invoicerunports.OpenStatement {
+	return &invoicerunports.OpenStatement{
 		CustomerID:            schedule.CustomerID,
 		CustomerName:          schedule.CustomerName,
 		CustomerCode:          schedule.CustomerCode,
@@ -321,15 +323,15 @@ func newOpenStatement(
 		AutoBill:              schedule.AutoBill,
 		TotalAmount:           decimal.Zero,
 		HeldAmount:            decimal.Zero,
-		Groups:                make([]*servicesports.StatementGroup, 0, 1),
+		Groups:                make([]*invoicerunports.StatementGroup, 0, 1),
 	}
 }
 
 func newStatementGroup(
 	group CandidateGroup,
 	includeShipments bool,
-) *servicesports.StatementGroup {
-	out := &servicesports.StatementGroup{
+) *invoicerunports.StatementGroup {
+	out := &invoicerunports.StatementGroup{
 		Key:           group.Key,
 		Label:         group.Label,
 		ShipmentCount: len(group.Members),
@@ -337,7 +339,7 @@ func newStatementGroup(
 	}
 
 	if includeShipments {
-		out.Shipments = make([]*servicesports.StatementShipment, 0, len(group.Members))
+		out.Shipments = make([]*invoicerunports.StatementShipment, 0, len(group.Members))
 	}
 
 	for _, member := range group.Members {
@@ -347,7 +349,7 @@ func newStatementGroup(
 		if !includeShipments {
 			continue
 		}
-		out.Shipments = append(out.Shipments, &servicesports.StatementShipment{
+		out.Shipments = append(out.Shipments, &invoicerunports.StatementShipment{
 			BillingQueueItemID: member.BillingQueueItemID,
 			ShipmentID:         member.ShipmentID,
 			OrderID:            member.OrderID,
@@ -372,7 +374,7 @@ func newStatementGroup(
 // BelowMinimum is true only when every group is under the floor: a statement
 // with one billable group and one held group still bills, and saying otherwise
 // would tell a biller nothing is going out when something is.
-func syncStatementTotals(statement *servicesports.OpenStatement) {
+func syncStatementTotals(statement *invoicerunports.OpenStatement) {
 	statement.InvoiceCount = len(statement.Groups)
 	statement.ShipmentCount = 0
 	statement.TotalAmount = decimal.Zero
@@ -388,12 +390,12 @@ func syncStatementTotals(statement *servicesports.OpenStatement) {
 }
 
 func filterToCustomer(
-	schedules []*repositories.DueBillingSchedule,
+	schedules []*customerports.DueBillingSchedule,
 	customerID pulid.ID,
-) []*repositories.DueBillingSchedule {
+) []*customerports.DueBillingSchedule {
 	for _, schedule := range schedules {
 		if schedule.CustomerID == customerID {
-			return []*repositories.DueBillingSchedule{schedule}
+			return []*customerports.DueBillingSchedule{schedule}
 		}
 	}
 
@@ -408,7 +410,7 @@ func filterToCustomer(
 // enough that refusing would just teach them to work around it. What it must not
 // be is silent, so the caller has to supply a reason.
 func StatementCadenceGuard(
-	schedule *repositories.DueBillingSchedule,
+	schedule *customerports.DueBillingSchedule,
 ) (string, bool) {
 	if schedule == nil {
 		return "", false

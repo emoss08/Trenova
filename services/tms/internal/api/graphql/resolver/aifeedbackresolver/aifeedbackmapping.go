@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -51,17 +51,17 @@ func aiFeedbackTarget(
 	targetType aifeedback.TargetType,
 	targetID string,
 	targetPart *string,
-) (repositories.AIFeedbackTargetRef, error) {
+) (aifeedbackports.AIFeedbackTargetRef, error) {
 	id, err := pulid.MustParse(targetID)
 	if err != nil {
-		return repositories.AIFeedbackTargetRef{}, errortypes.NewValidationError(
+		return aifeedbackports.AIFeedbackTargetRef{}, errortypes.NewValidationError(
 			"targetId",
 			errortypes.ErrInvalid,
 			"Target is not a valid id",
 		)
 	}
 
-	return repositories.AIFeedbackTargetRef{
+	return aifeedbackports.AIFeedbackTargetRef{
 		TargetType: targetType,
 		TargetID:   id,
 		TargetPart: base.DerefString(targetPart),
@@ -70,17 +70,17 @@ func aiFeedbackTarget(
 
 func aiFeedbackTargets(
 	inputs []*gqlmodel.AIFeedbackTargetInput,
-) ([]repositories.AIFeedbackTargetRef, error) {
-	if len(inputs) > repositories.MaxAIFeedbackTargetsPerRead {
+) ([]aifeedbackports.AIFeedbackTargetRef, error) {
+	if len(inputs) > aifeedbackports.MaxAIFeedbackTargetsPerRead {
 		return nil, errortypes.NewValidationError(
 			"targets",
 			errortypes.ErrInvalid,
 			"Ask for at most {0} targets at a time",
-			repositories.MaxAIFeedbackTargetsPerRead,
+			aifeedbackports.MaxAIFeedbackTargetsPerRead,
 		)
 	}
 
-	targets := make([]repositories.AIFeedbackTargetRef, 0, len(inputs))
+	targets := make([]aifeedbackports.AIFeedbackTargetRef, 0, len(inputs))
 	for _, input := range inputs {
 		if input == nil {
 			continue

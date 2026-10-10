@@ -7,14 +7,20 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/carrierservice"
 	"github.com/emoss08/trenova/internal/core/services/integrationservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/services/planservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -35,74 +41,74 @@ type Params struct {
 
 	Logger         *zap.Logger
 	Config         *config.Config
-	DB             ports.DBConnection
+	DB             kernelports.DBConnection
 	Integrations   *integrationservice.Service
-	Connectors     []services.CarrierIntelConnector `group:"carrierIntelConnectors"`
-	Limiter        restx.Limiter                    `name:"carrierIntelLimiter"`
-	ControlRepo    repositories.CarrierIntelControlRepository
-	SnapshotRepo   repositories.CarrierIntelSnapshotRepository
-	RawRepo        repositories.CarrierIntelRawPayloadRepository
-	EventRepo      repositories.CarrierIntelEventRepository
-	EnrollmentRepo repositories.CarrierMonitoringEnrollmentRepository
-	FeedRepo       repositories.CarrierIntelFeedStateRepository
-	UsageRepo      repositories.CarrierIntelUsageRepository
-	OverrideRepo   repositories.CarrierIntelOverrideRepository
-	VerifyRepo     repositories.CarrierEquipmentVerificationRepository
-	SubjectRepo    repositories.CarrierIntelSubjectRepository
-	CarrierRepo    repositories.CarrierRepository
-	AssignmentRepo repositories.CarrierAssignmentRepository
-	UsStateRepo    repositories.UsStateRepository
+	Connectors     []carrierintelports.CarrierIntelConnector `group:"carrierIntelConnectors"`
+	Limiter        restx.Limiter                             `name:"carrierIntelLimiter"`
+	ControlRepo    carrierintelports.CarrierIntelControlRepository
+	SnapshotRepo   carrierintelports.CarrierIntelSnapshotRepository
+	RawRepo        carrierintelports.CarrierIntelRawPayloadRepository
+	EventRepo      carrierintelports.CarrierIntelEventRepository
+	EnrollmentRepo carrierintelports.CarrierMonitoringEnrollmentRepository
+	FeedRepo       carrierintelports.CarrierIntelFeedStateRepository
+	UsageRepo      carrierintelports.CarrierIntelUsageRepository
+	OverrideRepo   carrierintelports.CarrierIntelOverrideRepository
+	VerifyRepo     carrierintelports.CarrierEquipmentVerificationRepository
+	SubjectRepo    carrierintelports.CarrierIntelSubjectRepository
+	CarrierRepo    carrierports.CarrierRepository
+	AssignmentRepo shipmentports.CarrierAssignmentRepository
+	UsStateRepo    usstateports.UsStateRepository
 	CarrierService *carrierservice.Service
 	Notifications  *notificationservice.Service
-	AuditService   services.AuditService
-	Realtime       services.RealtimeService
+	AuditService   auditports.AuditService
+	Realtime       agentports.RealtimeService
 	// Watchtower puts a change on a carrier's authority, insurance or
 	// safety record on the feed and takes it off once it is resolved.
-	Watchtower services.WatchtowerProjector `optional:"true"`
+	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
 	// Publisher wakes whichever agent covers carrier risk on a finding the
 	// tower would show a person.
-	Publisher services.AgentEventPublisher `optional:"true"`
-	Plans     services.PlanService         `optional:"true"`
+	Publisher agentports.AgentEventPublisher `optional:"true"`
+	Plans     platformplanports.PlanService  `optional:"true"`
 }
 
 type Service struct {
 	l               *zap.Logger
-	db              ports.DBConnection
+	db              kernelports.DBConnection
 	integrations    IntegrationConfigReader
-	connectors      map[integration.Type]services.CarrierIntelConnector
+	connectors      map[integration.Type]carrierintelports.CarrierIntelConnector
 	limiter         restx.Limiter
-	controlRepo     repositories.CarrierIntelControlRepository
-	snapshotRepo    repositories.CarrierIntelSnapshotRepository
-	rawRepo         repositories.CarrierIntelRawPayloadRepository
-	eventRepo       repositories.CarrierIntelEventRepository
-	enrollmentRepo  repositories.CarrierMonitoringEnrollmentRepository
-	feedRepo        repositories.CarrierIntelFeedStateRepository
-	usageRepo       repositories.CarrierIntelUsageRepository
-	overrideRepo    repositories.CarrierIntelOverrideRepository
-	verifyRepo      repositories.CarrierEquipmentVerificationRepository
-	subjectRepo     repositories.CarrierIntelSubjectRepository
-	carrierRepo     repositories.CarrierRepository
-	assignmentRepo  repositories.CarrierAssignmentRepository
-	usStateRepo     repositories.UsStateRepository
+	controlRepo     carrierintelports.CarrierIntelControlRepository
+	snapshotRepo    carrierintelports.CarrierIntelSnapshotRepository
+	rawRepo         carrierintelports.CarrierIntelRawPayloadRepository
+	eventRepo       carrierintelports.CarrierIntelEventRepository
+	enrollmentRepo  carrierintelports.CarrierMonitoringEnrollmentRepository
+	feedRepo        carrierintelports.CarrierIntelFeedStateRepository
+	usageRepo       carrierintelports.CarrierIntelUsageRepository
+	overrideRepo    carrierintelports.CarrierIntelOverrideRepository
+	verifyRepo      carrierintelports.CarrierEquipmentVerificationRepository
+	subjectRepo     carrierintelports.CarrierIntelSubjectRepository
+	carrierRepo     carrierports.CarrierRepository
+	assignmentRepo  shipmentports.CarrierAssignmentRepository
+	usStateRepo     usstateports.UsStateRepository
 	carrierService  CarrierWriter
 	notifications   NotificationSender
-	auditService    services.AuditService
-	realtime        services.RealtimeService
-	watchtower      services.WatchtowerProjector
-	publisher       services.AgentEventPublisher
+	auditService    auditports.AuditService
+	realtime        agentports.RealtimeService
+	watchtower      watchtowerports.WatchtowerProjector
+	publisher       agentports.AgentEventPublisher
 	interactiveWait time.Duration
 	breaker         *circuitBreaker
-	plans           services.PlanService
+	plans           platformplanports.PlanService
 	now             func() int64
 }
 
 var (
-	_ services.CarrierIntelGate         = (*Service)(nil)
-	_ services.CarrierLifecycleObserver = (*Service)(nil)
+	_ carrierintelports.CarrierIntelGate         = (*Service)(nil)
+	_ carrierintelports.CarrierLifecycleObserver = (*Service)(nil)
 )
 
 func New(p Params) *Service {
-	connectors := make(map[integration.Type]services.CarrierIntelConnector, len(p.Connectors))
+	connectors := make(map[integration.Type]carrierintelports.CarrierIntelConnector, len(p.Connectors))
 	for _, connector := range p.Connectors {
 		if connector != nil {
 			connectors[connector.IntegrationType()] = connector
@@ -159,7 +165,7 @@ func (s *Service) requirePaidLookups(
 	)
 }
 
-func (s *Service) Connector(typ integration.Type) (services.CarrierIntelConnector, bool) {
+func (s *Service) Connector(typ integration.Type) (carrierintelports.CarrierIntelConnector, bool) {
 	connector, ok := s.connectors[typ]
 	return connector, ok
 }

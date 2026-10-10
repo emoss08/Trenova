@@ -4,7 +4,8 @@ import (
 	"strings"
 	"unicode"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/mdtable"
 	"github.com/emoss08/trenova/shared/recordids"
 )
@@ -48,7 +49,7 @@ const (
 func (s *Service) passReply(
 	t *Turn,
 	fx TurnEffects,
-	completion *serviceports.ChatCompletionResult,
+	completion *agentports.ChatCompletionResult,
 ) {
 	if completion == nil || strings.TrimSpace(completion.Text) == "" {
 		return
@@ -61,10 +62,10 @@ func (s *Service) passReply(
 	}
 
 	if stripped != completion.Text {
-		fx.Emit(passEvent(serviceports.RegroundStripIDs, stripIDsReason, nil))
+		fx.Emit(passEvent(agentports.RegroundStripIDs, stripIDsReason, nil))
 	}
 	if table != nil {
-		fx.Emit(passEvent(serviceports.RegroundPointToTable, pointToTableReason, table))
+		fx.Emit(passEvent(agentports.RegroundPointToTable, pointToTableReason, table))
 	}
 	fx.Emit(replyReplacedEvent(pointed, replyPassReplacedReason))
 	completion.Text = pointed
@@ -72,24 +73,24 @@ func (s *Service) passReply(
 
 // replyReplacedEvent puts the reply the turn recorded in place of the one
 // that streamed, for a correction the model was not asked to make.
-func replyReplacedEvent(text, reason string) serviceports.StreamEvent {
-	return serviceports.StreamEvent{
-		Event: serviceports.AssistantEventReplyReplaced,
-		Data:  serviceports.AssistantReplyReplacedEvent{Text: text, Reason: reason},
+func replyReplacedEvent(text, reason string) kernelports.StreamEvent {
+	return kernelports.StreamEvent{
+		Event: agentports.AssistantEventReplyReplaced,
+		Data:  agentports.AssistantReplyReplacedEvent{Text: text, Reason: reason},
 	}
 }
 
 func passEvent(
-	action serviceports.RegroundAction,
+	action agentports.RegroundAction,
 	reason string,
-	table *serviceports.ShownArtifact,
-) serviceports.StreamEvent {
-	data := serviceports.AssistantReplyRegroundedEvent{Action: action, Reason: reason}
+	table *agentports.ShownArtifact,
+) kernelports.StreamEvent {
+	data := agentports.AssistantReplyRegroundedEvent{Action: action, Reason: reason}
 	if table != nil {
 		data.ArtifactID = table.ID
 	}
 
-	return serviceports.StreamEvent{Event: serviceports.AssistantEventReplyRegrounded, Data: data}
+	return kernelports.StreamEvent{Event: agentports.AssistantEventReplyRegrounded, Data: data}
 }
 
 // keepTable remembers a table the call put beside the conversation, so the
@@ -116,8 +117,8 @@ func (t *Turn) keepTable(outcome *toolOutcome) {
 // kept table is now pointed to once, wherever its reprint stands.
 func pointToTables(
 	reply string,
-	kept []serviceports.ShownArtifact,
-) (string, *serviceports.ShownArtifact) {
+	kept []agentports.ShownArtifact,
+) (string, *agentports.ShownArtifact) {
 	if len(kept) == 0 {
 		return reply, nil
 	}
@@ -132,7 +133,7 @@ func pointToTables(
 
 	type replacement struct {
 		table *mdtable.Table
-		match *serviceports.ShownArtifact
+		match *agentports.ShownArtifact
 	}
 	replacements := make([]replacement, 0, len(tables))
 	for idx := range tables {
@@ -173,9 +174,9 @@ func pointToTables(
 // reply most likely describes.
 func reprinted(
 	table *mdtable.Table,
-	kept []serviceports.ShownArtifact,
+	kept []agentports.ShownArtifact,
 	pointed map[string]bool,
-) *serviceports.ShownArtifact {
+) *agentports.ShownArtifact {
 	firstColumn := make([]string, 0, len(table.Rows))
 	for _, row := range table.Rows {
 		if len(row) > 0 {
@@ -188,7 +189,7 @@ func reprinted(
 	}
 	around := wordsOf(named)
 
-	var best *serviceports.ShownArtifact
+	var best *agentports.ShownArtifact
 	bestScore := 0.0
 	for idx := len(kept) - 1; idx >= 0; idx-- {
 		candidate := &kept[idx]

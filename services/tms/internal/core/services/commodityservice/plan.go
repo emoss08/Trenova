@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/statuschange"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -30,7 +30,7 @@ func (s *Service) PlanCreate(
 func (s *Service) PlanUpdate(
 	ctx context.Context,
 	entity *commodity.Commodity,
-) (*services.RecordChange[commodity.Commodity], error) {
+) (*kernelports.RecordChange[commodity.Commodity], error) {
 	if err := s.transformer.TransformCommodity(ctx, entity); err != nil {
 		return nil, err
 	}
@@ -39,7 +39,7 @@ func (s *Service) PlanUpdate(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetByID(ctx, repositories.GetCommodityByIDRequest{
+	original, err := s.repo.GetByID(ctx, commodityports.GetCommodityByIDRequest{
 		ID: entity.GetID(),
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.GetOrganizationID(),
@@ -50,14 +50,14 @@ func (s *Service) PlanUpdate(
 		return nil, err
 	}
 
-	return &services.RecordChange[commodity.Commodity]{Before: original, After: entity}, nil
+	return &kernelports.RecordChange[commodity.Commodity]{Before: original, After: entity}, nil
 }
 
 func (s *Service) PlanBulkUpdateStatus(
 	ctx context.Context,
-	req *repositories.BulkUpdateCommodityStatusRequest,
-) ([]services.RecordChange[commodity.Commodity], error) {
-	found, err := s.repo.GetByIDs(ctx, repositories.GetCommoditiesByIDsRequest{
+	req *commodityports.BulkUpdateCommodityStatusRequest,
+) ([]kernelports.RecordChange[commodity.Commodity], error) {
+	found, err := s.repo.GetByIDs(ctx, commodityports.GetCommoditiesByIDsRequest{
 		TenantInfo:   req.TenantInfo,
 		CommodityIDs: req.CommodityIDs,
 	})

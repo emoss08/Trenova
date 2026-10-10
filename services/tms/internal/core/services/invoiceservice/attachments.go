@@ -10,8 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/encodingutils"
@@ -29,20 +31,20 @@ func (s *Service) documentForID(
 	}
 	return s.documentService.Get(
 		ctx,
-		repositories.GetDocumentByIDRequest{ID: documentID, TenantInfo: tenantInfo},
+		documentports.GetDocumentByIDRequest{ID: documentID, TenantInfo: tenantInfo},
 	)
 }
 
 func (s *Service) emailAttachmentsForPlan(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	planned []*servicesports.InvoiceSendPlanAttachment,
-) ([]servicesports.EmailAttachment, error) {
-	result := make([]servicesports.EmailAttachment, 0, len(planned))
+	planned []*invoiceports.InvoiceSendPlanAttachment,
+) ([]emailports.EmailAttachment, error) {
+	result := make([]emailports.EmailAttachment, 0, len(planned))
 	for _, item := range planned {
 		content, err := s.documentService.GetDownloadContent(
 			ctx,
-			repositories.GetDocumentByIDRequest{
+			documentports.GetDocumentByIDRequest{
 				ID:         item.DocumentID,
 				TenantInfo: tenantInfo,
 			},
@@ -58,7 +60,7 @@ func (s *Service) emailAttachmentsForPlan(
 		if closeErr != nil {
 			return nil, fmt.Errorf("close attachment %s: %w", item.FileName, closeErr)
 		}
-		result = append(result, servicesports.EmailAttachment{
+		result = append(result, emailports.EmailAttachment{
 			FileName:    item.FileName,
 			ContentType: item.ContentType,
 			Content:     body,
@@ -82,9 +84,9 @@ func readDocumentBody(body io.ReadCloser, label string) ([]byte, error) {
 
 func (s *Service) materializePartLinks(
 	ctx context.Context,
-	req *servicesports.InvoiceSendRequest,
-	actor *servicesports.RequestActor,
-	part *servicesports.InvoiceSendPlanPart,
+	req *invoiceports.InvoiceSendRequest,
+	actor *permissionports.RequestActor,
+	part *invoiceports.InvoiceSendPlanPart,
 ) (string, []*invoice.EmailAttemptAttachment, error) {
 	body := strings.TrimSpace(partBodyBase(part))
 	linked := make([]*invoice.EmailAttemptAttachment, 0, len(part.Links))
@@ -121,7 +123,7 @@ func (s *Service) materializePartLinks(
 }
 
 func attemptAttachmentsForPlan(
-	planned []*servicesports.InvoiceSendPlanAttachment,
+	planned []*invoiceports.InvoiceSendPlanAttachment,
 	linked []*invoice.EmailAttemptAttachment,
 ) []*invoice.EmailAttemptAttachment {
 	result := make([]*invoice.EmailAttemptAttachment, 0, len(planned)+len(linked))
@@ -140,8 +142,8 @@ func attemptAttachmentsForPlan(
 }
 
 func attemptWarnings(
-	plan *servicesports.InvoiceSendPlan,
-	part *servicesports.InvoiceSendPlanPart,
+	plan *invoiceports.InvoiceSendPlan,
+	part *invoiceports.InvoiceSendPlanPart,
 ) []string {
 	capacity := len(plan.Warnings) + len(part.Warnings)
 	if plan.OpenTracking {
@@ -165,8 +167,8 @@ func attemptWarnings(
 func planAttachment(
 	doc *document.Document,
 	invoicePDF bool,
-) *servicesports.InvoiceSendPlanAttachment {
-	return &servicesports.InvoiceSendPlanAttachment{
+) *invoiceports.InvoiceSendPlanAttachment {
+	return &invoiceports.InvoiceSendPlanAttachment{
 		DocumentID:   doc.ID,
 		FileName:     doc.OriginalName,
 		ContentType:  doc.FileType,

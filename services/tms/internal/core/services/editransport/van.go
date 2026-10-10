@@ -5,7 +5,7 @@ import (
 	"path"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/shared/maputils"
 )
 
@@ -21,8 +21,8 @@ func (t *VANTransport) Method() edi.ConnectionMethod {
 
 func (t *VANTransport) Deliver(
 	ctx context.Context,
-	req *services.EDITransportRequest,
-) (*services.EDITransportResult, error) {
+	req *ediports.EDITransportRequest,
+) (*ediports.EDITransportResult, error) {
 	if req == nil || req.Profile == nil {
 		return nil, ErrEDICommunicationProfileRequired
 	}

@@ -3,6 +3,8 @@
 package invoiceservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"context"
 	"fmt"
 	"testing"
@@ -14,8 +16,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/orderderivation"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
@@ -30,6 +30,11 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoicerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/journalpostingrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/orderrepository"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -84,8 +89,8 @@ func TestGroupedInvoiceFromOrderEndToEnd(t *testing.T) {
 	journalRepo := journalpostingrepository.New(
 		journalpostingrepository.Params{DB: conn, Logger: logger},
 	)
-	shipmentRepo := mocks.NewMockShipmentRepository(t)
-	customerRepo := mocks.NewMockCustomerRepository(t)
+	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
+	customerRepo := customerportsmock.NewMockCustomerRepository(t)
 	store := seqgen.NewSequenceStore(seqgen.SequenceStoreParams{DB: conn, Logger: logger})
 	provider := seqgen.NewFormatProvider(seqgen.FormatProviderParams{DB: conn, Logger: logger})
 	generator := seqgen.NewGenerator(
@@ -207,7 +212,7 @@ func TestGroupedInvoiceFromOrderEndToEnd(t *testing.T) {
 	// shipment carrying the freight amount used to build the invoice line.
 	mockLeg := func(legID pulid.ID, proNumber string, orderID pulid.ID, freight decimal.Decimal) {
 		shipmentRepo.EXPECT().
-			GetByID(mock.Anything, mock.MatchedBy(func(req *repositories.GetShipmentByIDRequest) bool {
+			GetByID(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetShipmentByIDRequest) bool {
 				return req != nil && req.ID == legID
 			})).
 			Return(&shipment.Shipment{
@@ -244,7 +249,7 @@ func TestGroupedInvoiceFromOrderEndToEnd(t *testing.T) {
 		})
 
 	customerRepo.EXPECT().
-		GetByID(mock.Anything, mock.MatchedBy(func(req repositories.GetCustomerByIDRequest) bool {
+		GetByID(mock.Anything, mock.MatchedBy(func(req customerports.GetCustomerByIDRequest) bool {
 			return req.ID == customerID
 		})).
 		Return(&customer.Customer{
@@ -292,7 +297,7 @@ func TestGroupedInvoiceFromOrderEndToEnd(t *testing.T) {
 	actor := testutil.NewSessionActor(user.ID, org.ID, org.BusinessUnitID)
 
 	// --- Create the grouped invoice from the order ---
-	inv, err := svc.CreateFromOrder(ctx, &serviceports.CreateInvoiceFromOrderRequest{
+	inv, err := svc.CreateFromOrder(ctx, &invoiceports.CreateInvoiceFromOrderRequest{
 		OrderID:    ord.ID,
 		TenantInfo: tenantInfo,
 	}, actor)
@@ -339,7 +344,7 @@ func TestGroupedInvoiceFromOrderEndToEnd(t *testing.T) {
 	}
 
 	// --- Post the grouped invoice ---
-	posted, err := svc.Post(ctx, &serviceports.PostInvoiceRequest{
+	posted, err := svc.Post(ctx, &invoiceports.PostInvoiceRequest{
 		InvoiceID:  inv.ID,
 		TenantInfo: tenantInfo,
 	}, actor)
@@ -371,7 +376,7 @@ func TestGroupedInvoiceFromOrderEndToEnd(t *testing.T) {
 	assert.True(t, invoicedLegs[legRows[1].ID], "leg 1 should be invoiced")
 
 	// Posting derived the order to Billed (all legs Invoiced) and the total held.
-	billedOrder, err := orderRepo.GetByID(ctx, repositories.GetOrderByIDRequest{
+	billedOrder, err := orderRepo.GetByID(ctx, orderports.GetOrderByIDRequest{
 		ID:         ord.ID,
 		TenantInfo: tenantInfo,
 	})
@@ -382,7 +387,7 @@ func TestGroupedInvoiceFromOrderEndToEnd(t *testing.T) {
 
 	// A second CreateFromOrder for the already-invoiced order must be rejected, not
 	// silently duplicated.
-	_, err = svc.CreateFromOrder(ctx, &serviceports.CreateInvoiceFromOrderRequest{
+	_, err = svc.CreateFromOrder(ctx, &invoiceports.CreateInvoiceFromOrderRequest{
 		OrderID:    ord.ID,
 		TenantInfo: tenantInfo,
 	}, actor)
@@ -404,7 +409,7 @@ func TestGroupedInvoiceFromOrderEndToEnd(t *testing.T) {
 
 type partialScenarioParams struct {
 	tenantInfo pagination.TenantInfo
-	actor      *serviceports.RequestActor
+	actor      *permissionports.RequestActor
 	org        seededInvoiceOrg
 	customerID pulid.ID
 	readyLeg   seededInvoiceShipment
@@ -420,7 +425,7 @@ func runPartialOrderScenario(
 	ctx context.Context,
 	db bun.IDB,
 	svc *Service,
-	orderRepo repositories.OrderRepository,
+	orderRepo orderports.OrderRepository,
 	p partialScenarioParams,
 ) {
 	t.Helper()
@@ -469,7 +474,7 @@ func runPartialOrderScenario(
 	p.mockLeg(p.lateLeg.ID, p.lateLeg.ProNumber, ord.ID, legFreights[p.lateLeg.ID])
 
 	// First pass: only the ready leg is billable, and the order charge rides along.
-	first, err := svc.CreateFromOrder(ctx, &serviceports.CreateInvoiceFromOrderRequest{
+	first, err := svc.CreateFromOrder(ctx, &invoiceports.CreateInvoiceFromOrderRequest{
 		OrderID:    ord.ID,
 		TenantInfo: p.tenantInfo,
 	}, p.actor)
@@ -508,7 +513,7 @@ func runPartialOrderScenario(
 
 	// Second pass through the single-shipment entry point: the invoice carries the
 	// order correlation (G9) and must NOT re-bill the order charge.
-	second, err := svc.CreateFromShipments(ctx, &serviceports.CreateInvoiceFromShipmentsRequest{
+	second, err := svc.CreateFromShipments(ctx, &invoiceports.CreateInvoiceFromShipmentsRequest{
 		ShipmentIDs: []pulid.ID{p.lateLeg.ID},
 		TenantInfo:  p.tenantInfo,
 	}, p.actor)

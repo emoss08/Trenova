@@ -1,6 +1,7 @@
 package permissionhandler_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"errors"
 	"net/http"
 	"testing"
@@ -8,8 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/permissionhandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/testutil"
 	"github.com/stretchr/testify/assert"
@@ -20,7 +21,7 @@ import (
 
 func setupPermissionHandler(
 	t *testing.T,
-	engine *mocks.MockPermissionEngine,
+	engine *permissionportsmock.MockPermissionEngine,
 ) *permissionhandler.Handler {
 	t.Helper()
 
@@ -46,9 +47,9 @@ func setupPermissionHandler(
 func TestPermissionHandler_GetManifest_Success(t *testing.T) {
 	t.Parallel()
 
-	engine := mocks.NewMockPermissionEngine(t)
+	engine := permissionportsmock.NewMockPermissionEngine(t)
 	engine.On("GetLightManifest", mock.Anything, mock.Anything, mock.Anything).
-		Return(&services.LightPermissionManifest{
+		Return(&permissionports.LightPermissionManifest{
 			Checksum:  "abc123",
 			ExpiresAt: 1700000000,
 		}, nil)
@@ -73,7 +74,7 @@ func TestPermissionHandler_GetManifest_Success(t *testing.T) {
 func TestPermissionHandler_GetManifest_Error(t *testing.T) {
 	t.Parallel()
 
-	engine := mocks.NewMockPermissionEngine(t)
+	engine := permissionportsmock.NewMockPermissionEngine(t)
 	engine.On("GetLightManifest", mock.Anything, mock.Anything, mock.Anything).
 		Return(nil, errors.New("internal error"))
 
@@ -93,9 +94,9 @@ func TestPermissionHandler_GetManifest_Error(t *testing.T) {
 func TestPermissionHandler_GetVersion_Success(t *testing.T) {
 	t.Parallel()
 
-	engine := mocks.NewMockPermissionEngine(t)
+	engine := permissionportsmock.NewMockPermissionEngine(t)
 	engine.On("GetLightManifest", mock.Anything, mock.Anything, mock.Anything).
-		Return(&services.LightPermissionManifest{
+		Return(&permissionports.LightPermissionManifest{
 			Checksum:  "abc123",
 			ExpiresAt: 1700000000,
 		}, nil)
@@ -120,9 +121,9 @@ func TestPermissionHandler_GetVersion_Success(t *testing.T) {
 func TestPermissionHandler_GetResourcePermissions_Success(t *testing.T) {
 	t.Parallel()
 
-	engine := mocks.NewMockPermissionEngine(t)
+	engine := permissionportsmock.NewMockPermissionEngine(t)
 	engine.On("GetResourcePermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Return(&services.ResourcePermissionDetail{
+		Return(&permissionports.ResourcePermissionDetail{
 			Resource:   "test_resource",
 			Operations: []permission.Operation{permission.OpRead},
 		}, nil)
@@ -147,7 +148,7 @@ func TestPermissionHandler_GetResourcePermissions_Success(t *testing.T) {
 func TestPermissionHandler_GetResourcePermissions_NotFound(t *testing.T) {
 	t.Parallel()
 
-	engine := mocks.NewMockPermissionEngine(t)
+	engine := permissionportsmock.NewMockPermissionEngine(t)
 	engine.On("GetResourcePermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(nil, nil)
 
@@ -167,7 +168,7 @@ func TestPermissionHandler_GetResourcePermissions_NotFound(t *testing.T) {
 func TestPermissionHandler_GetResourcePermissions_Error(t *testing.T) {
 	t.Parallel()
 
-	engine := mocks.NewMockPermissionEngine(t)
+	engine := permissionportsmock.NewMockPermissionEngine(t)
 	engine.On("GetResourcePermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(nil, errors.New("internal error"))
 
@@ -187,10 +188,10 @@ func TestPermissionHandler_GetResourcePermissions_Error(t *testing.T) {
 func TestPermissionHandler_CheckBatch_Success(t *testing.T) {
 	t.Parallel()
 
-	engine := mocks.NewMockPermissionEngine(t)
+	engine := permissionportsmock.NewMockPermissionEngine(t)
 	engine.On("CheckBatch", mock.Anything, mock.Anything).
-		Return(&services.BatchPermissionCheckResult{
-			Results: []services.PermissionCheckResult{
+		Return(&permissionports.BatchPermissionCheckResult{
+			Results: []permissionports.PermissionCheckResult{
 				{Allowed: true},
 			},
 		}, nil)
@@ -214,7 +215,7 @@ func TestPermissionHandler_CheckBatch_Success(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
 
-	var resp services.BatchPermissionCheckResult
+	var resp permissionports.BatchPermissionCheckResult
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
 	assert.Len(t, resp.Results, 1)
 }
@@ -222,7 +223,7 @@ func TestPermissionHandler_CheckBatch_Success(t *testing.T) {
 func TestPermissionHandler_CheckBatch_BadJSON(t *testing.T) {
 	t.Parallel()
 
-	engine := mocks.NewMockPermissionEngine(t)
+	engine := permissionportsmock.NewMockPermissionEngine(t)
 	handler := setupPermissionHandler(t, engine)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -241,7 +242,7 @@ func TestPermissionHandler_CheckBatch_BadJSON(t *testing.T) {
 func TestPermissionHandler_GetAvailableResources_Success(t *testing.T) {
 	t.Parallel()
 
-	engine := mocks.NewMockPermissionEngine(t)
+	engine := permissionportsmock.NewMockPermissionEngine(t)
 	handler := setupPermissionHandler(t, engine)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -263,7 +264,7 @@ func TestPermissionHandler_GetAvailableResources_Success(t *testing.T) {
 func TestPermissionHandler_GetAvailableOperations_Success(t *testing.T) {
 	t.Parallel()
 
-	engine := mocks.NewMockPermissionEngine(t)
+	engine := permissionportsmock.NewMockPermissionEngine(t)
 	handler := setupPermissionHandler(t, engine)
 
 	ginCtx := testutil.NewGinTestContext().

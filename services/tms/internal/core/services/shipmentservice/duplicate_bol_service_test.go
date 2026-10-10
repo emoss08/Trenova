@@ -1,10 +1,13 @@
 package shipmentservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -18,12 +21,12 @@ import (
 func TestServiceCheckForDuplicateBOLs_SkipsLookupWhenDisabled(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockShipmentRepository(t)
-	controlRepo := mocks.NewMockShipmentControlRepository(t)
+	repo := shipmentportsmock.NewMockShipmentRepository(t)
+	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
-	controlRepo.EXPECT().Get(mock.Anything, repositories.GetShipmentControlRequest{
+	controlRepo.EXPECT().Get(mock.Anything, tenantports.GetShipmentControlRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: orgID,
 			BuID:  buID,
@@ -41,7 +44,7 @@ func TestServiceCheckForDuplicateBOLs_SkipsLookupWhenDisabled(t *testing.T) {
 		coordinator:  newStateCoordinator(),
 	}
 
-	err := svc.CheckForDuplicateBOLs(t.Context(), &repositories.DuplicateBOLCheckRequest{
+	err := svc.CheckForDuplicateBOLs(t.Context(), &shipmentports.DuplicateBOLCheckRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: orgID,
 			BuID:  buID,
@@ -55,13 +58,13 @@ func TestServiceCheckForDuplicateBOLs_SkipsLookupWhenDisabled(t *testing.T) {
 func TestServiceCheckForDuplicateBOLs_ReturnsDuplicateError(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockShipmentRepository(t)
-	controlRepo := mocks.NewMockShipmentControlRepository(t)
+	repo := shipmentportsmock.NewMockShipmentRepository(t)
+	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 	shipmentID := pulid.MustNew("shp_")
 
-	controlRepo.EXPECT().Get(mock.Anything, repositories.GetShipmentControlRequest{
+	controlRepo.EXPECT().Get(mock.Anything, tenantports.GetShipmentControlRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: orgID,
 			BuID:  buID,
@@ -70,14 +73,14 @@ func TestServiceCheckForDuplicateBOLs_ReturnsDuplicateError(t *testing.T) {
 		CheckForDuplicateBOLs: true,
 	}, nil).Once()
 	repo.EXPECT().
-		CheckForDuplicateBOLs(mock.Anything, mock.MatchedBy(func(req *repositories.DuplicateBOLCheckRequest) bool {
+		CheckForDuplicateBOLs(mock.Anything, mock.MatchedBy(func(req *shipmentports.DuplicateBOLCheckRequest) bool {
 			return req.BOL == "BOL-123" &&
 				req.TenantInfo.OrgID == orgID &&
 				req.TenantInfo.BuID == buID &&
 				req.ShipmentID != nil &&
 				*req.ShipmentID == shipmentID
 		})).
-		Return([]*repositories.DuplicateBOLResult{
+		Return([]*shipmentports.DuplicateBOLResult{
 			{ID: pulid.MustNew("shp_"), ProNumber: "PRO-101"},
 		}, nil).
 		Once()
@@ -91,7 +94,7 @@ func TestServiceCheckForDuplicateBOLs_ReturnsDuplicateError(t *testing.T) {
 		coordinator:  newStateCoordinator(),
 	}
 
-	err := svc.CheckForDuplicateBOLs(t.Context(), &repositories.DuplicateBOLCheckRequest{
+	err := svc.CheckForDuplicateBOLs(t.Context(), &shipmentports.DuplicateBOLCheckRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: orgID,
 			BuID:  buID,
@@ -110,7 +113,7 @@ func TestServiceCheckForDuplicateBOLs_ReturnsDuplicateError(t *testing.T) {
 func TestCheckDuplicateBOLsWithControl_NoDuplicates(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockShipmentRepository(t)
+	repo := shipmentportsmock.NewMockShipmentRepository(t)
 	repo.EXPECT().
 		CheckForDuplicateBOLs(mock.Anything, mock.Anything).
 		Return(nil, nil).
@@ -119,7 +122,7 @@ func TestCheckDuplicateBOLsWithControl_NoDuplicates(t *testing.T) {
 	svc := &service{
 		l:            zap.NewNop(),
 		repo:         repo,
-		controlRepo:  mocks.NewMockShipmentControlRepository(t),
+		controlRepo:  tenantportsmock.NewMockShipmentControlRepository(t),
 		validator:    newTestValidator(t),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
@@ -128,7 +131,7 @@ func TestCheckDuplicateBOLsWithControl_NoDuplicates(t *testing.T) {
 	err := svc.checkDuplicateBOLsWithControl(
 		t.Context(),
 		&tenant.ShipmentControl{CheckForDuplicateBOLs: true},
-		&repositories.DuplicateBOLCheckRequest{
+		&shipmentports.DuplicateBOLCheckRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: pulid.MustNew("org_"),
 				BuID:  pulid.MustNew("bu_"),

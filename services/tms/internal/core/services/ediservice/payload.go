@@ -14,9 +14,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/edix12"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -375,22 +376,22 @@ func buildShipmentEventStatusPayload(
 
 func (s *Service) BuildShipmentStatusPayloadForServiceFailure(
 	ctx context.Context,
-	req *services.BuildServiceFailureEDIPayloadRequest,
-) (*services.ServiceFailureEDIPayloadResult, error) {
+	req *servicefailureports.BuildServiceFailureEDIPayloadRequest,
+) (*servicefailureports.ServiceFailureEDIPayloadResult, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
 	}
-	failure, err := s.serviceFailureRepo.GetByID(ctx, &repositories.GetServiceFailureByIDRequest{
+	failure, err := s.serviceFailureRepo.GetByID(ctx, &servicefailureports.GetServiceFailureByIDRequest{
 		ID:         req.ServiceFailureID,
 		TenantInfo: req.TenantInfo,
 	})
 	if err != nil {
 		return nil, err
 	}
-	source, err := s.shipmentSvc.Get(ctx, &repositories.GetShipmentByIDRequest{
+	source, err := s.shipmentSvc.Get(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         failure.ShipmentID,
 		TenantInfo: req.TenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -400,7 +401,7 @@ func (s *Service) BuildShipmentStatusPayloadForServiceFailure(
 
 	payload := buildServiceFailureShipmentStatusPayload(failure, source)
 	diagnostics := serviceFailurePayloadDiagnostics(payload.ShipmentStatus)
-	return &services.ServiceFailureEDIPayloadResult{
+	return &servicefailureports.ServiceFailureEDIPayloadResult{
 		Payload:     payload,
 		Diagnostics: diagnostics,
 	}, nil
@@ -752,7 +753,7 @@ func (s *Service) buildAcknowledgmentPayload(
 	req *PreviewEDIDocumentRequest,
 	transactionSet edi.TransactionSet,
 ) (edi.DocumentPayload, error) {
-	message, err := s.messageRepo.GetMessageByID(ctx, repositories.GetEDIMessageByIDRequest{
+	message, err := s.messageRepo.GetMessageByID(ctx, ediports.GetEDIMessageByIDRequest{
 		ID:         req.SourceMessageID,
 		TenantInfo: req.TenantInfo,
 	})

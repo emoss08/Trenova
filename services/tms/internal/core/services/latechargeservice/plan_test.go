@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -21,7 +21,7 @@ func TestPlanAssessIsAPreviewThatSaysWhetherTheMemosPost(t *testing.T) {
 	asOf := dueDate + 5*day + 1
 	f.expectCandidates(asOf, candidate(pulid.MustNew("cus_"), "AMD", "INV-2", 50_000))
 
-	result, err := f.svc.PlanAssess(t.Context(), &servicesports.LateChargeAssessmentRequest{
+	result, err := f.svc.PlanAssess(t.Context(), &latechargeports.LateChargeAssessmentRequest{
 		TenantInfo: f.tenantInfo, AsOfDate: asOf,
 	}, f.actor)
 	require.NoError(t, err)
@@ -42,7 +42,7 @@ func TestPlanAssessRefusesWhatARealRunRefuses(t *testing.T) {
 	asOf := dueDate + 5*day + 1
 	f.expectCandidates(asOf)
 
-	_, err := f.svc.PlanAssess(t.Context(), &servicesports.LateChargeAssessmentRequest{
+	_, err := f.svc.PlanAssess(t.Context(), &latechargeports.LateChargeAssessmentRequest{
 		TenantInfo: f.tenantInfo, AsOfDate: asOf,
 	}, f.actor)
 	require.Error(t, err)

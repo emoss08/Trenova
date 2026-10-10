@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/distanceprofile"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/distanceprofileports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -31,7 +31,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.DistanceProfileRepository {
+func New(p Params) distanceprofileports.DistanceProfileRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.distance-profile-repository"),
@@ -40,7 +40,7 @@ func New(p Params) repositories.DistanceProfileRepository {
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListDistanceProfileRequest,
+	req *distanceprofileports.ListDistanceProfileRequest,
 ) (*pagination.ListResult[*distanceprofile.DistanceProfile], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*distanceprofile.DistanceProfile], error) {
 		entities := make([]*distanceprofile.DistanceProfile, 0, req.Filter.Pagination.SafeLimit())
@@ -71,7 +71,7 @@ func (r *repository) List(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListDistanceProfileConnectionRequest,
+	req *distanceprofileports.ListDistanceProfileConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -84,7 +84,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListDistanceProfileConnectionRequest,
+	req *distanceprofileports.ListDistanceProfileConnectionRequest,
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -104,7 +104,7 @@ func applyDistanceProfileColumns(q *bun.SelectQuery, columns []string) *bun.Sele
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListDistanceProfileConnectionRequest,
+	req *distanceprofileports.ListDistanceProfileConnectionRequest,
 ) (*pagination.CursorListResult[*distanceprofile.DistanceProfile], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*distanceprofile.DistanceProfile], error) {
 		log := r.l.With(
@@ -158,7 +158,7 @@ func (r *repository) ListConnection(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetDistanceProfileByIDRequest,
+	req distanceprofileports.GetDistanceProfileByIDRequest,
 ) (*distanceprofile.DistanceProfile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*distanceprofile.DistanceProfile, error) {
 		entity := new(distanceprofile.DistanceProfile)
@@ -227,7 +227,7 @@ func (r *repository) Create(
 	entity *distanceprofile.DistanceProfile,
 ) (*distanceprofile.DistanceProfile, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*distanceprofile.DistanceProfile, error) {
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 			if entity.IsDefault {
 				if _, err := r.db.DBForContext(c).NewUpdate().
 					Model((*distanceprofile.DistanceProfile)(nil)).
@@ -260,7 +260,7 @@ func (r *repository) Update(
 		entity.Version++
 
 		cols := buncolgen.DistanceProfileColumns
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 			if entity.IsDefault {
 				if _, err := r.db.DBForContext(c).NewUpdate().
 					Model((*distanceprofile.DistanceProfile)(nil)).
@@ -298,7 +298,7 @@ func (r *repository) Update(
 
 func (r *repository) Delete(
 	ctx context.Context,
-	req repositories.DeleteDistanceProfileRequest,
+	req distanceprofileports.DeleteDistanceProfileRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.DistanceProfileColumns
@@ -318,11 +318,11 @@ func (r *repository) Delete(
 
 func (r *repository) SetDefault(
 	ctx context.Context,
-	req repositories.GetDistanceProfileByIDRequest,
+	req distanceprofileports.GetDistanceProfileByIDRequest,
 ) (*distanceprofile.DistanceProfile, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*distanceprofile.DistanceProfile, error) {
 		var entity *distanceprofile.DistanceProfile
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 			current, err := r.GetByID(c, req)
 			if err != nil {
 				return err
@@ -367,7 +367,7 @@ func (r *repository) SetDefault(
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
-	req *repositories.DistanceProfileSelectOptionsRequest,
+	req *distanceprofileports.DistanceProfileSelectOptionsRequest,
 ) (*pagination.ListResult[*distanceprofile.DistanceProfile], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*distanceprofile.DistanceProfile], error) {
 		cols := buncolgen.DistanceProfileColumns

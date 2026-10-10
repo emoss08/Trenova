@@ -1,11 +1,11 @@
 package assistantturnservice
 
 import (
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"go.uber.org/fx"
 )
 
 var Module = fx.Module("assistantturnservice",
 	fx.Provide(New),
-	fx.Provide(func(s *Service) serviceports.AssistantTurnStopper { return s }),
+	fx.Provide(func(s *Service) agentports.AssistantTurnStopper { return s }),
 )

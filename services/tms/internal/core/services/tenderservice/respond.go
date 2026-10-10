@@ -3,12 +3,10 @@ package tenderservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/tenderjobs/tendercontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/tenderjobs/tendercontract"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -27,7 +25,7 @@ const maxDeclineReasonLength = 500
 // responses from different channels serialize in one place.
 func (s *Service) RecordResponse(
 	ctx context.Context,
-	req *portservices.TenderResponseRequest,
+	req *tenderports.TenderResponseRequest,
 ) error {
 	offer, err := s.planResponse(ctx, req)
 	if isNoLongerAvailable(err) {
@@ -70,7 +68,7 @@ func (s *Service) RecordResponse(
 // attempt is preserved for the tender history.
 func (s *Service) recordLateResponse(
 	ctx context.Context,
-	req *portservices.TenderResponseRequest,
+	req *tenderports.TenderResponseRequest,
 	offer *tender.TenderOffer,
 ) {
 	if offer == nil {
@@ -89,7 +87,7 @@ func (s *Service) RecordLateResponse(
 	action tender.ResponseAction,
 	source tender.ResponseSource,
 ) error {
-	offer, err := s.repo.GetOfferByID(ctx, repositories.GetTenderOfferByIDRequest{
+	offer, err := s.repo.GetOfferByID(ctx, tenderports.GetTenderOfferByIDRequest{
 		TenantInfo:    tenantInfo,
 		OfferID:       offerID,
 		IncludeTender: true,
@@ -115,7 +113,7 @@ func (s *Service) recordLateOfferResponse(
 	action tender.ResponseAction,
 	source tender.ResponseSource,
 ) {
-	if err := s.repo.RecordLateOfferResponse(ctx, &repositories.RecordLateOfferResponseRequest{
+	if err := s.repo.RecordLateOfferResponse(ctx, &tenderports.RecordLateOfferResponseRequest{
 		TenantInfo: tenantInfo,
 		OfferID:    offer.ID,
 		Action:     action,

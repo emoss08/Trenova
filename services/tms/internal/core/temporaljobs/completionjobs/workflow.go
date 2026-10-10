@@ -1,9 +1,10 @@
 package completionjobs
 
 import (
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
@@ -14,13 +15,13 @@ import (
 func StructuredCompletionWorkflow(
 	ctx workflow.Context,
 	payload *StructuredCompletionPayload,
-) (*serviceports.StructuredCompletionResult, error) {
+) (*agentports.StructuredCompletionResult, error) {
 	var a *Activities
 	callCtx := workflow.WithActivityOptions(ctx, waitedOptions(
 		ctx, payload.Request.TenantInfo.OrgID, callAttempts, "Ask the model",
 	))
 
-	var result serviceports.StructuredCompletionResult
+	var result agentports.StructuredCompletionResult
 	if err := workflow.ExecuteActivity(callCtx, a.CompleteStructuredActivity, payload.Request).
 		Get(callCtx, &result); err != nil {
 		return nil, err
@@ -35,13 +36,13 @@ func StructuredCompletionWorkflow(
 func TestAIProviderWorkflow(
 	ctx workflow.Context,
 	payload *TestAIProviderPayload,
-) (*serviceports.TestAIProviderResult, error) {
+) (*agentports.TestAIProviderResult, error) {
 	var a *Activities
 	testCtx := workflow.WithActivityOptions(ctx, waitedOptions(
 		ctx, payload.Request.TenantInfo.OrgID, 1, "Test the provider",
 	))
 
-	var result serviceports.TestAIProviderResult
+	var result agentports.TestAIProviderResult
 	if err := workflow.ExecuteActivity(testCtx, a.TestAIProviderActivity, payload).
 		Get(testCtx, &result); err != nil {
 		return nil, err
@@ -56,13 +57,13 @@ func TestAIProviderWorkflow(
 func ListAIProviderModelsWorkflow(
 	ctx workflow.Context,
 	payload *ListAIProviderModelsPayload,
-) ([]serviceports.AIProviderModelOption, error) {
+) ([]agentports.AIProviderModelOption, error) {
 	var a *Activities
 	listCtx := workflow.WithActivityOptions(ctx, waitedOptions(
 		ctx, payload.Request.TenantInfo.OrgID, 1, "List the endpoint's models",
 	))
 
-	var result []serviceports.AIProviderModelOption
+	var result []agentports.AIProviderModelOption
 	if err := workflow.ExecuteActivity(listCtx, a.ListAIProviderModelsActivity, payload).
 		Get(listCtx, &result); err != nil {
 		return nil, err
@@ -76,13 +77,13 @@ func ListAIProviderModelsWorkflow(
 func TestAIProviderDraftWorkflow(
 	ctx workflow.Context,
 	payload *TestAIProviderDraftPayload,
-) (*serviceports.AIProviderDraftTestResult, error) {
+) (*agentports.AIProviderDraftTestResult, error) {
 	var a *Activities
 	testCtx := workflow.WithActivityOptions(ctx, waitedOptions(
 		ctx, payload.Request.TenantInfo.OrgID, 1, "Test the unsaved provider",
 	))
 
-	var result serviceports.AIProviderDraftTestResult
+	var result agentports.AIProviderDraftTestResult
 	if err := workflow.ExecuteActivity(testCtx, a.TestAIProviderDraftActivity, payload).
 		Get(testCtx, &result); err != nil {
 		return nil, err
@@ -96,13 +97,13 @@ func TestAIProviderDraftWorkflow(
 func WriteBriefingWorkflow(
 	ctx workflow.Context,
 	payload *WriteBriefingPayload,
-) (*serviceports.WriteBriefingResult, error) {
+) (*briefingports.WriteBriefingResult, error) {
 	var a *Activities
 	writeCtx := workflow.WithActivityOptions(ctx, waitedOptions(
 		ctx, payload.Request.TenantInfo.OrgID, writeAttempts, "Write the briefing",
 	))
 
-	var result serviceports.WriteBriefingResult
+	var result briefingports.WriteBriefingResult
 	if err := workflow.ExecuteActivity(writeCtx, a.WriteBriefingActivity, payload).
 		Get(writeCtx, &result); err != nil {
 		return nil, err

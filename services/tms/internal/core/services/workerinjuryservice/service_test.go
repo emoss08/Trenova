@@ -1,12 +1,13 @@
 package workerinjuryservice_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/workerinjuryservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -32,7 +33,7 @@ func newFakeRepo() *fakeRepo {
 
 func (f *fakeRepo) ListInjuries(
 	_ context.Context,
-	req *repositories.ListWorkerInjuriesRequest,
+	req *workerports.ListWorkerInjuriesRequest,
 ) ([]*worker.WorkerInjury, error) {
 	out := make([]*worker.WorkerInjury, 0, len(f.injuries))
 	for _, injury := range f.injuries {
@@ -55,7 +56,7 @@ func (f *fakeRepo) ListInjuries(
 
 func (f *fakeRepo) GetInjuryByID(
 	_ context.Context,
-	req *repositories.GetWorkerInjuryByIDRequest,
+	req *workerports.GetWorkerInjuryByIDRequest,
 ) (*worker.WorkerInjury, error) {
 	injury, ok := f.injuries[req.ID]
 	if !ok {
@@ -85,7 +86,7 @@ func (f *fakeRepo) UpdateInjury(
 
 func (f *fakeRepo) DeleteInjury(
 	_ context.Context,
-	req *repositories.GetWorkerInjuryByIDRequest,
+	req *workerports.GetWorkerInjuryByIDRequest,
 ) error {
 	delete(f.injuries, req.ID)
 	return nil
@@ -93,7 +94,7 @@ func (f *fakeRepo) DeleteInjury(
 
 func (f *fakeRepo) NextCaseNumber(
 	_ context.Context,
-	req *repositories.NextCaseNumberRequest,
+	req *workerports.NextCaseNumberRequest,
 ) (int32, error) {
 	var highest int32
 	for _, injury := range f.injuries {
@@ -106,14 +107,14 @@ func (f *fakeRepo) NextCaseNumber(
 
 func (f *fakeRepo) GetSummary(
 	_ context.Context,
-	req *repositories.GetOSHASummaryRequest,
+	req *workerports.GetOSHASummaryRequest,
 ) (*worker.OSHAAnnualSummary, error) {
 	return f.summaries[req.Year], nil
 }
 
 func (f *fakeRepo) ListSummaries(
 	_ context.Context,
-	_ *repositories.ListOSHASummariesRequest,
+	_ *workerports.ListOSHASummariesRequest,
 ) ([]*worker.OSHAAnnualSummary, error) {
 	out := make([]*worker.OSHAAnnualSummary, 0, len(f.summaries))
 	for _, summary := range f.summaries {
@@ -156,7 +157,7 @@ func newHarness(t *testing.T) *harness {
 	buID := pulid.MustNew("bu_")
 	workerID := pulid.MustNew("wrk_")
 
-	workerRepo := mocks.NewMockWorkerRepository(t)
+	workerRepo := workerportsmock.NewMockWorkerRepository(t)
 	workerRepo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
 		Return(&worker.Worker{ID: workerID, OrganizationID: orgID, BusinessUnitID: buID}, nil).

@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/briefing"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -37,7 +37,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.BriefingRepository {
+func New(p Params) briefingports.BriefingRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.briefing-repository"),
@@ -92,7 +92,7 @@ func buildUpsert(db bun.IDB, entity *briefing.Briefing) *bun.InsertQuery {
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetBriefingByIDRequest,
+	req briefingports.GetBriefingByIDRequest,
 ) (*briefing.Briefing, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*briefing.Briefing, error) {
 		cols := buncolgen.BriefingColumns
@@ -122,7 +122,7 @@ func (r *repository) GetByID(
 // page before the morning job has run is shown that it is on its way.
 func (r *repository) GetForDay(
 	ctx context.Context,
-	req repositories.GetBriefingForDayRequest,
+	req briefingports.GetBriefingForDayRequest,
 ) (*briefing.Briefing, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*briefing.Briefing, error) {
 		cols := buncolgen.BriefingColumns
@@ -153,7 +153,7 @@ func (r *repository) GetForDay(
 
 func (r *repository) List(
 	ctx context.Context,
-	req repositories.ListBriefingsRequest,
+	req briefingports.ListBriefingsQuery,
 ) ([]*briefing.Briefing, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*briefing.Briefing, error) {
 		cols := buncolgen.BriefingColumns
@@ -190,7 +190,7 @@ func (r *repository) List(
 
 func (r *repository) MarkRead(
 	ctx context.Context,
-	req repositories.GetBriefingByIDRequest,
+	req briefingports.GetBriefingByIDRequest,
 	readAt int64,
 ) (*briefing.Briefing, error) {
 	return r.stamp(ctx, req, buncolgen.BriefingColumns.ReadAt, readAt)
@@ -198,7 +198,7 @@ func (r *repository) MarkRead(
 
 func (r *repository) MarkEmailed(
 	ctx context.Context,
-	req repositories.GetBriefingByIDRequest,
+	req briefingports.GetBriefingByIDRequest,
 	emailedAt int64,
 ) (*briefing.Briefing, error) {
 	return r.stamp(ctx, req, buncolgen.BriefingColumns.EmailedAt, emailedAt)
@@ -209,7 +209,7 @@ func (r *repository) MarkEmailed(
 // anything.
 func (r *repository) DeleteBefore(
 	ctx context.Context,
-	req repositories.DeleteBriefingsBeforeRequest,
+	req briefingports.DeleteBriefingsBeforeRequest,
 ) (int, error) {
 	ctx = dbscope.WithSystem(ctx, "delete briefings past retention across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
@@ -244,7 +244,7 @@ func buildDeleteBefore(db bun.IDB, beforeDate string, limit int) *bun.DeleteQuer
 
 func (r *repository) stamp(
 	ctx context.Context,
-	req repositories.GetBriefingByIDRequest,
+	req briefingports.GetBriefingByIDRequest,
 	column buncolgen.Column,
 	at int64,
 ) (*briefing.Briefing, error) {

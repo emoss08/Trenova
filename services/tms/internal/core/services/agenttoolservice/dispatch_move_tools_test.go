@@ -7,8 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -20,7 +19,7 @@ import (
 type fakeUnassigner struct {
 	guard     writeGuard
 	assigned  map[pulid.ID]*shipment.Shipment
-	unassigns []*repositories.UnassignShipmentMoveRequest
+	unassigns []*shipmentports.UnassignShipmentMoveRequest
 }
 
 func newFakeUnassigner(moves ...*shipment.Shipment) *fakeUnassigner {
@@ -33,8 +32,8 @@ func newFakeUnassigner(moves ...*shipment.Shipment) *fakeUnassigner {
 }
 
 func (f *fakeUnassigner) plan(
-	req *repositories.UnassignShipmentMoveRequest,
-) (*serviceports.AssignmentPlan, error) {
+	req *shipmentports.UnassignShipmentMoveRequest,
+) (*shipmentports.AssignmentPlan, error) {
 	entity, ok := f.assigned[req.ShipmentMoveID]
 	if !ok {
 		return nil, errortypes.NewBusinessError(
@@ -47,7 +46,7 @@ func (f *fakeUnassigner) plan(
 	after.Moves[0].CoverageType = shipment.MoveCoverageTypeUnassigned
 	after.Moves[0].Assignment = nil
 
-	return &serviceports.AssignmentPlan{
+	return &shipmentports.AssignmentPlan{
 		Assignment:     entity.Moves[0].Assignment,
 		ShipmentBefore: entity,
 		ShipmentAfter:  after,
@@ -56,14 +55,14 @@ func (f *fakeUnassigner) plan(
 
 func (f *fakeUnassigner) PreviewUnassign(
 	_ context.Context,
-	req *repositories.UnassignShipmentMoveRequest,
-) (*serviceports.AssignmentPlan, error) {
+	req *shipmentports.UnassignShipmentMoveRequest,
+) (*shipmentports.AssignmentPlan, error) {
 	return f.plan(req)
 }
 
 func (f *fakeUnassigner) Unassign(
 	_ context.Context,
-	req *repositories.UnassignShipmentMoveRequest,
+	req *shipmentports.UnassignShipmentMoveRequest,
 ) error {
 	if err := f.guard.write(); err != nil {
 		return err
@@ -243,8 +242,8 @@ type fakeMoveStatuses struct {
 	guard    writeGuard
 	moves    map[pulid.ID]*shipment.ShipmentMove
 	shipment *shipment.Shipment
-	single   *repositories.UpdateMoveStatusRequest
-	bulk     *repositories.BulkUpdateMoveStatusRequest
+	single   *shipmentports.UpdateMoveStatusRequest
+	bulk     *shipmentports.BulkUpdateMoveStatusRequest
 }
 
 func newFakeMoveStatuses(status shipment.MoveStatus, n int) *fakeMoveStatuses {
@@ -281,9 +280,9 @@ func (f *fakeMoveStatuses) ids() []pulid.ID {
 
 func (f *fakeMoveStatuses) PreviewUpdateStatus(
 	_ context.Context,
-	req *repositories.BulkUpdateMoveStatusRequest,
-) (*serviceports.MoveStatusPlan, error) {
-	plan := &serviceports.MoveStatusPlan{ShipmentsBefore: []*shipment.Shipment{f.shipment}}
+	req *shipmentports.BulkUpdateMoveStatusRequest,
+) (*shipmentports.MoveStatusPlan, error) {
+	plan := &shipmentports.MoveStatusPlan{ShipmentsBefore: []*shipment.Shipment{f.shipment}}
 	for _, id := range req.MoveIDs {
 		move, ok := f.moves[id]
 		if !ok {
@@ -310,7 +309,7 @@ func (f *fakeMoveStatuses) PreviewUpdateStatus(
 
 func (f *fakeMoveStatuses) UpdateStatus(
 	_ context.Context,
-	req *repositories.UpdateMoveStatusRequest,
+	req *shipmentports.UpdateMoveStatusRequest,
 ) (*shipment.ShipmentMove, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -322,7 +321,7 @@ func (f *fakeMoveStatuses) UpdateStatus(
 
 func (f *fakeMoveStatuses) BulkUpdateStatus(
 	_ context.Context,
-	req *repositories.BulkUpdateMoveStatusRequest,
+	req *shipmentports.BulkUpdateMoveStatusRequest,
 ) ([]*shipment.ShipmentMove, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err

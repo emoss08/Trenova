@@ -1,11 +1,12 @@
 package authservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/apikeyportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/apikey"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -16,11 +17,11 @@ import (
 )
 
 type stubUsageRecorder struct {
-	lastEvent services.APIKeyUsageEvent
+	lastEvent apikeyports.APIKeyUsageEvent
 	calls     int
 }
 
-func (s *stubUsageRecorder) RecordUsage(event services.APIKeyUsageEvent) {
+func (s *stubUsageRecorder) RecordUsage(event apikeyports.APIKeyUsageEvent) {
 	s.lastEvent = event
 	s.calls++
 }
@@ -30,7 +31,7 @@ func TestAuthenticateAPIKeyDisabled(t *testing.T) {
 
 	recorder := &stubUsageRecorder{}
 	svc := &Service{
-		akr:      mocks.NewMockAPIKeyRepository(t),
+		akr:      apikeyportsmock.NewMockAPIKeyRepository(t),
 		usageBuf: recorder,
 		cfg: &config.Config{
 			Security: config.SecurityConfig{
@@ -62,7 +63,7 @@ func TestAuthenticateAPIKeyRejectsRevokedKey(t *testing.T) {
 		BusinessUnitID: pulid.MustNew("bu_"),
 	}
 
-	repo := mocks.NewMockAPIKeyRepository(t)
+	repo := apikeyportsmock.NewMockAPIKeyRepository(t)
 	repo.EXPECT().GetByPrefix(mock.Anything, generated.Prefix).Return(key, nil)
 
 	recorder := &stubUsageRecorder{}
@@ -100,7 +101,7 @@ func TestAuthenticateAPIKeyRejectsExpiredKey(t *testing.T) {
 		BusinessUnitID: pulid.MustNew("bu_"),
 	}
 
-	repo := mocks.NewMockAPIKeyRepository(t)
+	repo := apikeyportsmock.NewMockAPIKeyRepository(t)
 	repo.EXPECT().GetByPrefix(mock.Anything, generated.Prefix).Return(key, nil)
 
 	recorder := &stubUsageRecorder{}
@@ -137,7 +138,7 @@ func TestAuthenticateAPIKeyRejectsInvalidSecret(t *testing.T) {
 		BusinessUnitID: pulid.MustNew("bu_"),
 	}
 
-	repo := mocks.NewMockAPIKeyRepository(t)
+	repo := apikeyportsmock.NewMockAPIKeyRepository(t)
 	repo.EXPECT().GetByPrefix(mock.Anything, generated.Prefix).Return(key, nil)
 
 	recorder := &stubUsageRecorder{}
@@ -179,7 +180,7 @@ func TestAuthenticateAPIKeySuccessReturnsMachinePrincipal(t *testing.T) {
 		BusinessUnitID: pulid.MustNew("bu_"),
 	}
 
-	repo := mocks.NewMockAPIKeyRepository(t)
+	repo := apikeyportsmock.NewMockAPIKeyRepository(t)
 	repo.EXPECT().GetByPrefix(mock.Anything, generated.Prefix).Return(key, nil)
 	recorder := &stubUsageRecorder{}
 

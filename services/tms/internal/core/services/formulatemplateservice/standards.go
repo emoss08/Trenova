@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/formulatemplateservice/standardcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/uptrace/bun"
@@ -77,7 +77,7 @@ func (s *Service) InstallStandards(
 		names = append(names, entry.Name)
 	}
 
-	existing, err := s.repo.FindByNames(ctx, repositories.GetFormulaTemplatesByNamesRequest{
+	existing, err := s.repo.FindByNames(ctx, formulatemplateports.GetFormulaTemplatesByNamesRequest{
 		TenantInfo: tenantInfo,
 		Names:      names,
 	})
@@ -123,7 +123,7 @@ func (s *Service) InstallStandards(
 	}
 
 	var installed []*formulatemplate.FormulaTemplate
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		installed = make([]*formulatemplate.FormulaTemplate, 0, len(pending))
 		for _, entity := range pending {
 			created, txErr := s.repo.Create(txCtx, entity)

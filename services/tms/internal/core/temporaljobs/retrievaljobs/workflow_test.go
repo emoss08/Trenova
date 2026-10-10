@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/retrievalservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -30,8 +30,8 @@ func indexInput() retrievalservice.IndexOrganizationInput {
 	}
 }
 
-func activePlan() *serviceports.RetrievalIndexPlan {
-	return &serviceports.RetrievalIndexPlan{
+func activePlan() *agentports.RetrievalIndexPlan {
+	return &agentports.RetrievalIndexPlan{
 		Active:         true,
 		ActiveModelKey: testActiveKey,
 		SourceTypes:    airetrieval.AllSourceTypes(),
@@ -57,7 +57,7 @@ func TestIndexOrganizationWorkflowDrainsTheOutboxThenEnds(t *testing.T) {
 	env.OnActivity(a.PlanRetrievalIndexActivity, mock.Anything, mock.Anything).
 		Return(activePlan(), nil)
 
-	batches := []serviceports.RetrievalIndexBatchResult{
+	batches := []agentports.RetrievalIndexBatchResult{
 		{Claimed: 25, Indexed: 24, Failed: 1, ChunksEmbedded: 30,
 			CostUSD: decimal.RequireFromString("0.02")},
 		{Claimed: 3, Indexed: 3, ChunksEmbedded: 3, CostUSD: decimal.RequireFromString("0.01")},
@@ -65,12 +65,12 @@ func TestIndexOrganizationWorkflowDrainsTheOutboxThenEnds(t *testing.T) {
 	env.OnActivity(a.IndexRetrievalBatchActivity, mock.Anything, mock.Anything).
 		Return(func(
 			_ context.Context,
-			input *serviceports.RetrievalIndexBatchRequest,
-		) (*serviceports.RetrievalIndexBatchResult, error) {
+			input *agentports.RetrievalIndexBatchRequest,
+		) (*agentports.RetrievalIndexBatchResult, error) {
 			assert.Equal(t, testActiveKey, input.ModelKey)
 			assert.Equal(t, retrievalservice.DefaultBatchSize, input.Limit)
 			if len(batches) == 0 {
-				return &serviceports.RetrievalIndexBatchResult{CostUSD: decimal.Zero}, nil
+				return &agentports.RetrievalIndexBatchResult{CostUSD: decimal.Zero}, nil
 			}
 			next := batches[0]
 			batches = batches[1:]
@@ -80,9 +80,9 @@ func TestIndexOrganizationWorkflowDrainsTheOutboxThenEnds(t *testing.T) {
 		Return(func(
 			_ context.Context,
 			input *OrganizationSweepInput,
-		) (*serviceports.RetrievalSweepResult, error) {
+		) (*agentports.RetrievalSweepResult, error) {
 			assert.False(t, input.Wake, "the running indexer does not signal itself")
-			return &serviceports.RetrievalSweepResult{}, nil
+			return &agentports.RetrievalSweepResult{}, nil
 		})
 
 	env.ExecuteWorkflow(IndexOrganizationWorkflow, indexInput())
@@ -114,18 +114,18 @@ func TestIndexOrganizationWorkflowPicksUpASignalWhileIdle(t *testing.T) {
 	env.OnActivity(a.IndexRetrievalBatchActivity, mock.Anything, mock.Anything).
 		Return(func(
 			context.Context,
-			*serviceports.RetrievalIndexBatchRequest,
-		) (*serviceports.RetrievalIndexBatchResult, error) {
+			*agentports.RetrievalIndexBatchRequest,
+		) (*agentports.RetrievalIndexBatchResult, error) {
 			if signalled && claimed == 0 {
 				claimed++
-				return &serviceports.RetrievalIndexBatchResult{
+				return &agentports.RetrievalIndexBatchResult{
 					Claimed: 1, Indexed: 1, CostUSD: decimal.Zero,
 				}, nil
 			}
-			return &serviceports.RetrievalIndexBatchResult{CostUSD: decimal.Zero}, nil
+			return &agentports.RetrievalIndexBatchResult{CostUSD: decimal.Zero}, nil
 		})
 	env.OnActivity(a.SweepRetrievalSourcesActivity, mock.Anything, mock.Anything).
-		Return(&serviceports.RetrievalSweepResult{}, nil)
+		Return(&agentports.RetrievalSweepResult{}, nil)
 
 	env.RegisterDelayedCallback(func() {
 		signalled = true
@@ -154,7 +154,7 @@ func TestIndexOrganizationWorkflowStopsAtTheBudget(t *testing.T) {
 	env.OnActivity(a.PlanRetrievalIndexActivity, mock.Anything, mock.Anything).
 		Return(activePlan(), nil)
 	env.OnActivity(a.IndexRetrievalBatchActivity, mock.Anything, mock.Anything).
-		Return(&serviceports.RetrievalIndexBatchResult{
+		Return(&agentports.RetrievalIndexBatchResult{
 			Claimed: 10, Indexed: 10, BudgetReached: true, CostUSD: decimal.Zero,
 		}, nil).
 		Once()
@@ -177,7 +177,7 @@ func TestIndexOrganizationWorkflowEndsWhenIndexingIsUnavailable(t *testing.T) {
 	var a *Activities
 
 	env.OnActivity(a.PlanRetrievalIndexActivity, mock.Anything, mock.Anything).
-		Return(&serviceports.RetrievalIndexPlan{Reason: airetrieval.UnavailableReasonNoProvider}, nil)
+		Return(&agentports.RetrievalIndexPlan{Reason: airetrieval.UnavailableReasonNoProvider}, nil)
 
 	env.ExecuteWorkflow(IndexOrganizationWorkflow, indexInput())
 
@@ -200,9 +200,9 @@ func TestIndexOrganizationWorkflowSwapsAFullyIndexedModelAndPurgesTheOldOne(t *t
 	plan.RetiredKeys = []string{"old.example.com/embed@1536"}
 	swapped := false
 	env.OnActivity(a.PlanRetrievalIndexActivity, mock.Anything, mock.Anything).
-		Return(func(context.Context, *PlanInput) (*serviceports.RetrievalIndexPlan, error) {
+		Return(func(context.Context, *PlanInput) (*agentports.RetrievalIndexPlan, error) {
 			if swapped {
-				return &serviceports.RetrievalIndexPlan{
+				return &agentports.RetrievalIndexPlan{
 					Active:         true,
 					ActiveModelKey: testPendingKey,
 					SourceTypes:    airetrieval.AllSourceTypes(),
@@ -215,19 +215,19 @@ func TestIndexOrganizationWorkflowSwapsAFullyIndexedModelAndPurgesTheOldOne(t *t
 	env.OnActivity(a.IndexRetrievalBatchActivity, mock.Anything, mock.Anything).
 		Return(func(
 			_ context.Context,
-			input *serviceports.RetrievalIndexBatchRequest,
-		) (*serviceports.RetrievalIndexBatchResult, error) {
+			input *agentports.RetrievalIndexBatchRequest,
+		) (*agentports.RetrievalIndexBatchResult, error) {
 			keys = append(keys, input.ModelKey)
-			return &serviceports.RetrievalIndexBatchResult{CostUSD: decimal.Zero}, nil
+			return &agentports.RetrievalIndexBatchResult{CostUSD: decimal.Zero}, nil
 		})
 	env.OnActivity(a.CompleteRetrievalModelChangeActivity, mock.Anything, mock.Anything).
 		Return(func(
 			_ context.Context,
 			input *ModelChangeInput,
-		) (*serviceports.RetrievalModelChangeResult, error) {
+		) (*agentports.RetrievalModelChangeResult, error) {
 			assert.Equal(t, testPendingKey, input.PendingModelKey)
 			swapped = true
-			return &serviceports.RetrievalModelChangeResult{
+			return &agentports.RetrievalModelChangeResult{
 				Swapped:         true,
 				RetiredModelKey: testActiveKey,
 			}, nil
@@ -239,12 +239,12 @@ func TestIndexOrganizationWorkflowSwapsAFullyIndexedModelAndPurgesTheOldOne(t *t
 		Return(func(
 			_ context.Context,
 			input *PurgeInput,
-		) (*serviceports.RetrievalPurgeResult, error) {
+		) (*agentports.RetrievalPurgeResult, error) {
 			purged = append(purged, input.ModelKey)
-			return &serviceports.RetrievalPurgeResult{Embeddings: 10, Done: true}, nil
+			return &agentports.RetrievalPurgeResult{Embeddings: 10, Done: true}, nil
 		})
 	env.OnActivity(a.SweepRetrievalSourcesActivity, mock.Anything, mock.Anything).
-		Return(&serviceports.RetrievalSweepResult{}, nil)
+		Return(&agentports.RetrievalSweepResult{}, nil)
 
 	env.ExecuteWorkflow(IndexOrganizationWorkflow, indexInput())
 
@@ -268,7 +268,7 @@ func TestIndexOrganizationWorkflowContinuesAsNewAfterItsSteps(t *testing.T) {
 	env.OnActivity(a.PlanRetrievalIndexActivity, mock.Anything, mock.Anything).
 		Return(activePlan(), nil)
 	env.OnActivity(a.IndexRetrievalBatchActivity, mock.Anything, mock.Anything).
-		Return(&serviceports.RetrievalIndexBatchResult{
+		Return(&agentports.RetrievalIndexBatchResult{
 			Claimed: 25, Indexed: 25, CostUSD: decimal.Zero,
 		}, nil)
 
@@ -287,7 +287,7 @@ func TestReindexRetrievalSourceWorkflowPagesThroughTheSources(t *testing.T) {
 	env.RegisterActivity(&Activities{})
 
 	var a *Activities
-	pages := []serviceports.RetrievalReindexPage{
+	pages := []agentports.RetrievalReindexPage{
 		{Marked: 500, Next: pulid.ID("doc_500")},
 		{Marked: 120, Next: pulid.ID("doc_620"), Done: true},
 	}
@@ -295,8 +295,8 @@ func TestReindexRetrievalSourceWorkflowPagesThroughTheSources(t *testing.T) {
 	env.OnActivity(a.ReindexRetrievalPageActivity, mock.Anything, mock.Anything).
 		Return(func(
 			_ context.Context,
-			input *serviceports.RetrievalReindexPageRequest,
-		) (*serviceports.RetrievalReindexPage, error) {
+			input *agentports.RetrievalReindexPageRequest,
+		) (*agentports.RetrievalReindexPage, error) {
 			afters = append(afters, input.AfterID)
 			assert.Equal(t, airetrieval.SourceTypeDocument, input.SourceType)
 			next := pages[0]
@@ -338,9 +338,9 @@ func TestRetrievalIndexSweepWorkflowWakesEachOrganization(t *testing.T) {
 		Return(func(
 			_ context.Context,
 			input *OrganizationSweepInput,
-		) (*serviceports.RetrievalSweepResult, error) {
+		) (*agentports.RetrievalSweepResult, error) {
 			assert.True(t, input.Wake)
-			return &serviceports.RetrievalSweepResult{Marked: 3}, nil
+			return &agentports.RetrievalSweepResult{Marked: 3}, nil
 		})
 
 	env.ExecuteWorkflow(RetrievalIndexSweepWorkflow, &SweepInput{})

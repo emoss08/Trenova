@@ -9,9 +9,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -35,9 +38,9 @@ func (b *blockedError) Error() string { return b.resolution }
 
 func (s *Service) Evaluate(
 	ctx context.Context,
-	req *services.EvaluateAccountingInboundRequest,
-) (*services.AccountingInboundEvaluation, error) {
-	result := new(services.AccountingInboundEvaluation)
+	req *accountingsyncports.EvaluateAccountingInboundRequest,
+) (*accountingsyncports.AccountingInboundEvaluation, error) {
+	result := new(accountingsyncports.AccountingInboundEvaluation)
 	conn, err := s.connectionByID(ctx, req.TenantInfo, req.ConnectionID)
 	if err != nil {
 		return nil, err
@@ -46,7 +49,7 @@ func (s *Service) Evaluate(
 		return result, nil
 	}
 
-	inFlight, err := s.records.CountInFlight(ctx, &repositories.CountAccountingSyncInFlightRequest{
+	inFlight, err := s.records.CountInFlight(ctx, &accountingsyncports.CountAccountingSyncInFlightRequest{
 		TenantInfo:   req.TenantInfo,
 		ConnectionID: conn.ID,
 		ObjectTypes:  echoTypes(),
@@ -65,7 +68,7 @@ func (s *Service) Evaluate(
 	}
 	rows, err := s.changes.ListDetected(
 		ctx,
-		&repositories.ListDetectedAccountingInboundChangesRequest{
+		&accountingsyncports.ListDetectedAccountingInboundChangesRequest{
 			TenantInfo:     req.TenantInfo,
 			ConnectionID:   conn.ID,
 			DetectedBefore: s.now().Add(-accountingsync.InboundEvaluationSettle).Unix(),
@@ -102,7 +105,7 @@ func (s *Service) Evaluate(
 
 	if result.Evaluated > 0 {
 		if !firstProposed.IsNil() {
-			services.PublishAgentEvent(ctx, s.publisher, services.AgentEvent{
+			agentports.PublishAgentEvent(ctx, s.publisher, agentports.AgentEvent{
 				Kind:       agent.EventAccountingPaymentProposed,
 				SubjectID:  firstProposed,
 				TenantInfo: req.TenantInfo,
@@ -129,8 +132,8 @@ func (s *Service) evaluateOne(
 ) (accountingsync.InboundChangeStatus, error) {
 	autoApply := false
 	var outcome accountingsync.InboundChangeStatus
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		change, err := s.changes.GetByID(txCtx, repositories.GetAccountingInboundChangeRequest{
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		change, err := s.changes.GetByID(txCtx, accountingsyncports.GetAccountingInboundChangeQuery{
 			TenantInfo: tenantOf(conn),
 			ID:         id,
 			ForUpdate:  true,
@@ -184,13 +187,13 @@ func (s *Service) evaluateOne(
 func (s *Service) systemActor(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-) (*services.RequestActor, error) {
+) (*permissionports.RequestActor, error) {
 	user, err := s.users.GetSystemUser(ctx, "id")
 	if err != nil {
 		return nil, err
 	}
-	return &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeSystem,
+	return &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeSystem,
 		PrincipalID:    user.ID,
 		UserID:         user.ID,
 		OrganizationID: tenant.OrgID,
@@ -216,8 +219,8 @@ func (s *Service) proposeAfterFailure(
 	}
 
 	var updated *accountingsync.AccountingInboundChange
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		change, err := s.changes.GetByID(txCtx, repositories.GetAccountingInboundChangeRequest{
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		change, err := s.changes.GetByID(txCtx, accountingsyncports.GetAccountingInboundChangeQuery{
 			TenantInfo: tenantOf(conn),
 			ID:         id,
 			ForUpdate:  true,
@@ -248,15 +251,15 @@ func isBusinessError(err error) bool {
 
 func (s *Service) Apply(
 	ctx context.Context,
-	req *services.DecideAccountingInboundChangeRequest,
-	actor *services.RequestActor,
+	req *accountingsyncports.DecideAccountingInboundChangeRequest,
+	actor *permissionports.RequestActor,
 ) (*accountingsync.AccountingInboundChange, error) {
 	if actor == nil || actor.UserID.IsNil() {
 		return nil, errortypes.NewAuthorizationError(
 			"Applying a payment from the accounting system requires an authenticated user",
 		)
 	}
-	current, err := s.changes.GetByID(ctx, repositories.GetAccountingInboundChangeRequest{
+	current, err := s.changes.GetByID(ctx, accountingsyncports.GetAccountingInboundChangeQuery{
 		TenantInfo: req.TenantInfo,
 		ID:         req.ID,
 	})
@@ -316,10 +319,10 @@ func applyPermissions(change *accountingsync.AccountingInboundChange) []required
 func (s *Service) authorizeApply(
 	ctx context.Context,
 	change *accountingsync.AccountingInboundChange,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) error {
 	for _, needed := range applyPermissions(change) {
-		result, err := s.permissions.Check(ctx, &services.PermissionCheckRequest{
+		result, err := s.permissions.Check(ctx, &permissionports.PermissionCheckRequest{
 			PrincipalType:  actor.PrincipalType,
 			PrincipalID:    actor.PrincipalID,
 			UserID:         actor.UserID,
@@ -346,15 +349,15 @@ func (s *Service) applyChange(
 	ctx context.Context,
 	conn *accountingsync.AccountingConnection,
 	id pulid.ID,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	byPerson bool,
 ) (*accountingsync.AccountingInboundChange, error) {
 	links := s.linkTarget(ctx, conn)
 
 	var updated *accountingsync.AccountingInboundChange
 	var previous map[string]any
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		change, err := s.changes.GetByID(txCtx, repositories.GetAccountingInboundChangeRequest{
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		change, err := s.changes.GetByID(txCtx, accountingsyncports.GetAccountingInboundChangeQuery{
 			TenantInfo: tenantOf(conn),
 			ID:         id,
 			ForUpdate:  true,
@@ -402,7 +405,7 @@ func (s *Service) applyChange(
 func (s *Service) execute(
 	ctx context.Context,
 	p *postingPlan,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) ([]accountingsync.AppliedObject, error) {
 	change := p.change
 	tenant := change.TenantInfo()
@@ -410,7 +413,7 @@ func (s *Service) execute(
 
 	if change.Kind == accountingsync.InboundBillPayment {
 		for _, settlement := range p.settlements {
-			req := &services.MarkSettlementPaidRequest{
+			req := &carriersettlementports.MarkSettlementPaidRequest{
 				TenantInfo:       tenant,
 				SettlementID:     settlement.id,
 				PaymentMethod:    p.method,
@@ -419,7 +422,7 @@ func (s *Service) execute(
 			}
 			var err error
 			appliedType := accountingsync.AppliedCarrierSettlement
-			if settlement.kind == repositories.PayableDriver {
+			if settlement.kind == accountingsyncports.PayableDriver {
 				appliedType = accountingsync.AppliedDriverSettlement
 				_, err = s.driverPayer.MarkPaid(ctx, req, actor)
 			} else {
@@ -437,7 +440,7 @@ func (s *Service) execute(
 	}
 
 	if change.AmountMinor > 0 {
-		payment, err := s.customerPayments.PostAndApply(ctx, &services.PostCustomerPaymentRequest{
+		payment, err := s.customerPayments.PostAndApply(ctx, &customerpaymentports.PostCustomerPaymentRequest{
 			CustomerID:      p.customerID,
 			PaymentDate:     p.paidAt,
 			AccountingDate:  p.paidAt,
@@ -460,7 +463,7 @@ func (s *Service) execute(
 	for _, credit := range p.credits {
 		applications, err := s.customerPayments.ApplyCreditMemo(
 			ctx,
-			&services.ApplyCreditMemoRequest{
+			&customerpaymentports.ApplyCreditMemoRequest{
 				CreditMemoID:   credit.memoID,
 				AccountingDate: p.paidAt,
 				Applications:   credit.applications,
@@ -518,8 +521,8 @@ func (s *Service) linkTarget(
 		s.l.Debug("linking without provider links: the connection cannot be used", zap.Error(err))
 		return target
 	}
-	if writer, ok := session.Connector.(services.AccountingDocumentWriter); ok {
-		auth := services.DocumentAuthFor(session.Connection, session.AccessToken)
+	if writer, ok := session.Connector.(accountingsyncports.AccountingDocumentWriter); ok {
+		auth := accountingsyncports.DocumentAuthFor(session.Connection, session.AccessToken)
 		target.urlOf = func(kind accountingsync.SyncObjectType, externalID string) string {
 			return writer.DocumentURL(auth, kind, externalID)
 		}
@@ -539,7 +542,7 @@ func (s *Service) linkRecords(
 		objectType := syncTypeOf(object.Type)
 		records, err := s.records.ListByObjects(
 			ctx,
-			&repositories.ListAccountingSyncRecordsByObjectsRequest{
+			&accountingsyncports.ListAccountingSyncRecordsByObjectsRequest{
 				TenantInfo:   change.TenantInfo(),
 				ConnectionID: change.ConnectionID,
 				ObjectTypes:  []accountingsync.SyncObjectType{objectType},
@@ -571,9 +574,9 @@ func (s *Service) linkRecords(
 
 func (s *Service) PreviewApply(
 	ctx context.Context,
-	req *services.GetAccountingInboundChangeRequest,
-) (*services.AccountingInboundApplyPreview, error) {
-	change, err := s.changes.GetByID(ctx, repositories.GetAccountingInboundChangeRequest{
+	req *accountingsyncports.GetAccountingInboundChangeRequest,
+) (*accountingsyncports.AccountingInboundApplyPreview, error) {
+	change, err := s.changes.GetByID(ctx, accountingsyncports.GetAccountingInboundChangeQuery{
 		TenantInfo: req.TenantInfo,
 		ID:         req.ID,
 	})
@@ -589,7 +592,7 @@ func (s *Service) PreviewApply(
 		return nil, err
 	}
 
-	preview := &services.AccountingInboundApplyPreview{
+	preview := &accountingsyncports.AccountingInboundApplyPreview{
 		Change:    change,
 		PaidAt:    p.paidAt,
 		CashMinor: p.cashMinor,

@@ -10,8 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/core/domain/document"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -27,7 +27,7 @@ type harness struct {
 	ctx    context.Context
 	db     *bun.DB
 	conn   *postgres.Connection
-	repo   repositories.AIRetrievalRepository
+	repo   agentports.AIRetrievalRepository
 	data   *seedtest.TestData
 	tenant pagination.TenantInfo
 }
@@ -51,7 +51,7 @@ func newHarness(t *testing.T) *harness {
 	}
 }
 
-func newRepository(conn *postgres.Connection) repositories.AIRetrievalRepository {
+func newRepository(conn *postgres.Connection) agentports.AIRetrievalRepository {
 	return New(Params{
 		DB:     conn,
 		Probe:  postgres.NewTestCapabilityProbe(conn),
@@ -95,12 +95,12 @@ func (h *harness) replace(
 	sourceID pulid.ID,
 	modelKey string,
 	dimensions int,
-	chunks ...repositories.EmbeddingChunk,
-) repositories.ReplaceEmbeddingChunksResult {
+	chunks ...agentports.EmbeddingChunk,
+) agentports.ReplaceEmbeddingChunksResult {
 	t.Helper()
 
-	result, err := h.repo.ReplaceChunks(h.ctx, &repositories.ReplaceEmbeddingChunksRequest{
-		Source: repositories.AIRetrievalSourceRef{
+	result, err := h.repo.ReplaceChunks(h.ctx, &agentports.ReplaceEmbeddingChunksRequest{
+		Source: agentports.AIRetrievalSourceRef{
 			TenantInfo: tenant,
 			SourceType: sourceType,
 			SourceID:   sourceID,

@@ -10,8 +10,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -22,14 +25,14 @@ import (
 )
 
 type stubDocuments struct {
-	repositories.DocumentRepository
+	documentports.DocumentRepository
 
 	docs map[pulid.ID]*document.Document
 }
 
 func (s *stubDocuments) GetByID(
 	_ context.Context,
-	req repositories.GetDocumentByIDRequest,
+	req documentports.GetDocumentByIDRequest,
 ) (*document.Document, error) {
 	if doc, ok := s.docs[req.ID]; ok {
 		return doc, nil
@@ -39,7 +42,7 @@ func (s *stubDocuments) GetByID(
 }
 
 type stubContents struct {
-	serviceports.DocumentContentService
+	documentports.DocumentContentService
 
 	content *documentcontent.Content
 	err     error
@@ -53,7 +56,7 @@ func (s *stubContents) GetContent(
 	return s.content, s.err
 }
 
-func ownDocument(thread *conversation.Thread, actor *serviceports.RequestActor) *document.Document {
+func ownDocument(thread *conversation.Thread, actor *permissionports.RequestActor) *document.Document {
 	return &document.Document{
 		ID:           pulid.MustNew("doc_"),
 		OriginalName: "rate-con.pdf",
@@ -68,7 +71,7 @@ func ownDocument(thread *conversation.Thread, actor *serviceports.RequestActor) 
 func TestSendMessageStream_StoresAttachmentsAndMentionsOnTheUserTurn(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		textTurn("The rate confirmation is for Acme."),
 	}}
 	svc, conversations := newConversationService(completion, testDefinition())
@@ -83,7 +86,7 @@ func TestSendMessageStream_StoresAttachmentsAndMentionsOnTheUserTurn(t *testing.
 	}}
 
 	customer := pulid.MustNew("cust_")
-	result, err := svc.sendMessage(t.Context(), &serviceports.SendMessageRequest{
+	result, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
 		ThreadID:              conversations.thread.ID,
 		Content:               "Does this match what we quoted?",
 		TenantInfo:            actor.TenantInfo(),
@@ -128,7 +131,7 @@ func TestSendMessageStream_StoresAttachmentsAndMentionsOnTheUserTurn(t *testing.
 func TestSendMessageStream_RefusesAnAttachmentThatIsNotTheirs(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{textTurn("ok")}}
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{textTurn("ok")}}
 	svc, conversations := newConversationService(completion, testDefinition())
 	actor := testActor()
 
@@ -150,7 +153,7 @@ func TestSendMessageStream_RefusesAnAttachmentThatIsNotTheirs(t *testing.T) {
 		"a shipment's file":     shipmentFile.ID,
 		"an unknown document":   pulid.MustNew("doc_"),
 	} {
-		_, err := svc.sendMessage(t.Context(), &serviceports.SendMessageRequest{
+		_, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
 			ThreadID:              conversations.thread.ID,
 			Content:               "Read this",
 			TenantInfo:            actor.TenantInfo(),
@@ -167,7 +170,7 @@ func TestSendMessageStream_RefusesAnAttachmentThatIsNotTheirs(t *testing.T) {
 func TestSendMessageStream_BoundsAttachmentsAndMentions(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{textTurn("ok")}}
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{textTurn("ok")}}
 	svc, conversations := newConversationService(completion, testDefinition())
 	actor := testActor()
 	svc.documents = &stubDocuments{}
@@ -176,7 +179,7 @@ func TestSendMessageStream_BoundsAttachmentsAndMentions(t *testing.T) {
 	for i := range tooManyFiles {
 		tooManyFiles[i] = pulid.MustNew("doc_")
 	}
-	_, err := svc.sendMessage(t.Context(), &serviceports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
 		ThreadID:              conversations.thread.ID,
 		Content:               "Read these",
 		TenantInfo:            actor.TenantInfo(),
@@ -186,7 +189,7 @@ func TestSendMessageStream_BoundsAttachmentsAndMentions(t *testing.T) {
 	require.ErrorAs(t, err, &multiErr)
 	assert.Equal(t, "attachmentDocumentIds", multiErr.Errors[0].Field)
 
-	_, err = svc.sendMessage(t.Context(), &serviceports.SendMessageRequest{
+	_, err = svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
 		ThreadID:   conversations.thread.ID,
 		Content:    "Who is this",
 		TenantInfo: actor.TenantInfo(),
@@ -207,14 +210,14 @@ func TestSendMessageStream_BoundsAttachmentsAndMentions(t *testing.T) {
 func TestSendMessageStream_NamesAPendingAttachment(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{textTurn("ok")}}
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{textTurn("ok")}}
 	svc, conversations := newConversationService(completion, testDefinition())
 	actor := testActor()
 	doc := ownDocument(conversations.thread, actor)
 	svc.documents = &stubDocuments{docs: map[pulid.ID]*document.Document{doc.ID: doc}}
 	svc.contents = &stubContents{err: errors.New("no content yet")}
 
-	_, err := svc.sendMessage(t.Context(), &serviceports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
 		ThreadID:              conversations.thread.ID,
 		Content:               "What is this?",
 		TenantInfo:            actor.TenantInfo(),
@@ -229,12 +232,12 @@ func TestSendMessageStream_NamesAPendingAttachment(t *testing.T) {
 func TestSendMessageStream_RendersTheTableView(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{textTurn("ok")}}
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{textTurn("ok")}}
 	svc, conversations := newConversationService(completion, testDefinition())
 	actor := testActor()
 
 	rows := 17
-	_, err := svc.sendMessage(t.Context(), &serviceports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
 		ThreadID:   conversations.thread.ID,
 		Content:    "Why are these late?",
 		TenantInfo: actor.TenantInfo(),
@@ -258,15 +261,15 @@ func TestSendMessageStream_RendersTheTableView(t *testing.T) {
 }
 
 type stubDefinitionList struct {
-	repositories.AgentDefinitionRepository
+	agentdefinitionports.AgentDefinitionRepository
 
 	definitions []*agentdefinition.Definition
-	last        *repositories.ListAgentDefinitionRequest
+	last        *agentdefinitionports.ListAgentDefinitionRequest
 }
 
 func (s *stubDefinitionList) List(
 	_ context.Context,
-	req *repositories.ListAgentDefinitionRequest,
+	req *agentdefinitionports.ListAgentDefinitionRequest,
 ) (*pagination.ListResult[*agentdefinition.Definition], error) {
 	s.last = req
 
@@ -275,7 +278,7 @@ func (s *stubDefinitionList) List(
 
 func (s *stubDefinitionList) GetByID(
 	_ context.Context,
-	req repositories.GetAgentDefinitionByIDRequest,
+	req agentdefinitionports.GetAgentDefinitionByIDRequest,
 ) (*agentdefinition.Definition, error) {
 	for _, definition := range s.definitions {
 		if definition.ID == req.ID {
@@ -319,7 +322,7 @@ func chatDefinition(name string, template agentdefinition.Template) *agentdefini
 func TestAsk_AnswersOnAHiddenThreadWithTheGeneralAssistant(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		textTurn("Twelve loads are late."),
 	}}
 	svc := newService(completion, &stubQueryRegistry{}, &stubActionRegistry{})
@@ -335,13 +338,13 @@ func TestAsk_AnswersOnAHiddenThreadWithTheGeneralAssistant(t *testing.T) {
 
 	var events []string
 	var announced *conversation.Thread
-	result, err := svc.ask(t.Context(), &serviceports.AskRequest{
+	result, err := svc.ask(t.Context(), &agentports.AskRequest{
 		Content:    "How many loads are late today?",
 		TenantInfo: actor.TenantInfo(),
 		Page:       &agent.PageContext{Path: "/dispatch"},
-	}, actor, func(event serviceports.StreamEvent) {
+	}, actor, func(event kernelports.StreamEvent) {
 		events = append(events, event.Event)
-		if event.Event == serviceports.AssistantEventThread {
+		if event.Event == agentports.AssistantEventThread {
 			announced = event.Data.(*conversation.Thread)
 		}
 	})
@@ -360,7 +363,7 @@ func TestAsk_AnswersOnAHiddenThreadWithTheGeneralAssistant(t *testing.T) {
 	assert.Equal(t, "How many loads are late today?", conversations.created.Title)
 	require.NotNil(t, announced)
 	assert.Equal(t, conversations.created.ID, announced.ID)
-	assert.Equal(t, serviceports.AssistantEventThread, events[0], "the thread is announced first")
+	assert.Equal(t, agentports.AssistantEventThread, events[0], "the thread is announced first")
 	assert.Equal(t, "Twelve loads are late.", result.Reply)
 	assert.Equal(t, "/dispatch", conversations.appended[0].PageContext.Path)
 }
@@ -368,7 +371,7 @@ func TestAsk_AnswersOnAHiddenThreadWithTheGeneralAssistant(t *testing.T) {
 func TestAsk_FallsBackToAnyChatAgentAndRefusesWithNone(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{textTurn("ok")}}
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{textTurn("ok")}}
 	svc := newService(completion, &stubQueryRegistry{}, &stubActionRegistry{})
 	dispatch := chatDefinition("Dispatch", agentdefinition.TemplateDispatchAssistant)
 	definitions := &stubDefinitionList{definitions: []*agentdefinition.Definition{dispatch}}
@@ -377,7 +380,7 @@ func TestAsk_FallsBackToAnyChatAgentAndRefusesWithNone(t *testing.T) {
 	svc.conversations = conversations
 	actor := testActor()
 
-	_, err := svc.ask(t.Context(), &serviceports.AskRequest{
+	_, err := svc.ask(t.Context(), &agentports.AskRequest{
 		Content:    "Anything late?",
 		TenantInfo: actor.TenantInfo(),
 	}, actor, nil)
@@ -385,14 +388,14 @@ func TestAsk_FallsBackToAnyChatAgentAndRefusesWithNone(t *testing.T) {
 	assert.Equal(t, dispatch.ID, conversations.created.AgentDefinitionID)
 
 	definitions.definitions = nil
-	_, err = svc.ask(t.Context(), &serviceports.AskRequest{
+	_, err = svc.ask(t.Context(), &agentports.AskRequest{
 		Content:    "Anything late?",
 		TenantInfo: actor.TenantInfo(),
 	}, actor, nil)
 	require.Error(t, err)
 	assert.True(t, errortypes.IsBusinessError(err))
 
-	_, err = svc.ask(t.Context(), &serviceports.AskRequest{
+	_, err = svc.ask(t.Context(), &agentports.AskRequest{
 		Content:    "   ",
 		TenantInfo: actor.TenantInfo(),
 	}, actor, nil)

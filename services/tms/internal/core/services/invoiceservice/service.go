@@ -5,11 +5,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs/billingcontract"
-
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
@@ -18,15 +15,35 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/billingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp"
 	"github.com/emoss08/trenova/internal/core/services/invoicelines"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs/billingcontract"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -46,88 +63,88 @@ type Params struct {
 	fx.In
 
 	Logger               *zap.Logger
-	DB                   ports.DBConnection
-	Repo                 repositories.InvoiceRepository
-	BillingQueueRepo     repositories.BillingQueueRepository
-	ShipmentRepo         repositories.ShipmentRepository
-	OrderRepo            repositories.OrderRepository
-	CustomerRepo         repositories.CustomerRepository
-	OrganizationRepo     repositories.OrganizationRepository
-	DocumentTypeRepo     repositories.DocumentTypeRepository
-	CustomerLedgerRepo   repositories.CustomerLedgerProjectionRepository
-	BillingRepo          repositories.BillingControlRepository
-	AccountingRepo       repositories.AccountingControlRepository
+	DB                   kernelports.DBConnection
+	Repo                 invoiceports.InvoiceRepository
+	BillingQueueRepo     billingqueueports.BillingQueueRepository
+	ShipmentRepo         shipmentports.ShipmentRepository
+	OrderRepo            orderports.OrderRepository
+	CustomerRepo         customerports.CustomerRepository
+	OrganizationRepo     tenantports.OrganizationRepository
+	DocumentTypeRepo     documenttypeports.DocumentTypeRepository
+	CustomerLedgerRepo   customerledgerports.CustomerLedgerProjectionRepository
+	BillingRepo          tenantports.BillingControlRepository
+	AccountingRepo       tenantports.AccountingControlRepository
 	Stamper              *exchangeratestamp.Stamper
-	JournalRepo          repositories.JournalPostingRepository
-	AdjustmentRepo       repositories.InvoiceAdjustmentRepository
-	ChargeAllocationRepo repositories.ChargeAllocationRepository
-	AdjustmentService    servicesports.InvoiceAdjustmentService `optional:"true"`
+	JournalRepo          journalentryports.JournalPostingRepository
+	AdjustmentRepo       invoiceadjustmentports.InvoiceAdjustmentRepository
+	ChargeAllocationRepo shipmentports.ChargeAllocationRepository
+	AdjustmentService    invoiceadjustmentports.InvoiceAdjustmentService `optional:"true"`
 	NotificationService  *notificationservice.Service
-	AccessorialRepo      repositories.AccessorialChargeRepository
-	EmailRepo            repositories.EmailRepository
+	AccessorialRepo      accessorialchargeports.AccessorialChargeRepository
+	EmailRepo            emailports.EmailRepository
 	Validator            *Validator
-	AuditService         servicesports.AuditService
-	DocumentService      servicesports.InvoiceDocumentService `optional:"true"`
-	EmailService         servicesports.EmailService
-	Templates            servicesports.DocumentTemplateResolver
+	AuditService         auditports.AuditService
+	DocumentService      documentports.InvoiceDocumentService `optional:"true"`
+	EmailService         emailports.EmailService
+	Templates            documenttemplateports.DocumentTemplateResolver
 	ContextBuilder       *ContextBuilder
-	Realtime             servicesports.RealtimeService
-	WorkflowStarter      servicesports.WorkflowStarter
+	Realtime             agentports.RealtimeService
+	WorkflowStarter      kernelports.WorkflowStarter
 	SequenceGenerator    seqgen.Generator
 	SequenceProvider     seqgen.FormatProvider
-	OrderDerivation      servicesports.OrderDerivationService
-	DetentionBilling     servicesports.DetentionBillingService
+	OrderDerivation      orderports.OrderDerivationService
+	DetentionBilling     detentionports.DetentionBillingService
 	AccountingPolicy     *accountingcontrolpolicyservice.Service
 	BillingPolicy        *billingcontrolpolicyservice.Service
 
-	EDIPartnerRepo              repositories.EDIPartnerRepository                `optional:"true"`
-	EDIDocumentProfileRepo      repositories.EDIPartnerDocumentProfileRepository `optional:"true"`
-	EDICommunicationProfileRepo repositories.EDICommunicationProfileRepository   `optional:"true"`
-	LateChargeRepo              repositories.LateChargeRepository                `optional:"true"`
-	AccountingSync              servicesports.AccountingSyncEnqueuer             `optional:"true"`
+	EDIPartnerRepo              ediports.EDIPartnerRepository                `optional:"true"`
+	EDIDocumentProfileRepo      ediports.EDIPartnerDocumentProfileRepository `optional:"true"`
+	EDICommunicationProfileRepo ediports.EDICommunicationProfileRepository   `optional:"true"`
+	LateChargeRepo              latechargeports.LateChargeRepository         `optional:"true"`
+	AccountingSync              accountingsyncports.AccountingSyncEnqueuer   `optional:"true"`
 }
 
 type Service struct {
 	l                    *zap.Logger
-	db                   ports.DBConnection
-	repo                 repositories.InvoiceRepository
-	billingQueueRepo     repositories.BillingQueueRepository
-	shipmentRepo         repositories.ShipmentRepository
-	orderRepo            repositories.OrderRepository
-	customerRepo         repositories.CustomerRepository
-	organizationRepo     repositories.OrganizationRepository
-	documentTypeRepo     repositories.DocumentTypeRepository
-	customerLedgerRepo   repositories.CustomerLedgerProjectionRepository
-	billingRepo          repositories.BillingControlRepository
-	accountingRepo       repositories.AccountingControlRepository
+	db                   kernelports.DBConnection
+	repo                 invoiceports.InvoiceRepository
+	billingQueueRepo     billingqueueports.BillingQueueRepository
+	shipmentRepo         shipmentports.ShipmentRepository
+	orderRepo            orderports.OrderRepository
+	customerRepo         customerports.CustomerRepository
+	organizationRepo     tenantports.OrganizationRepository
+	documentTypeRepo     documenttypeports.DocumentTypeRepository
+	customerLedgerRepo   customerledgerports.CustomerLedgerProjectionRepository
+	billingRepo          tenantports.BillingControlRepository
+	accountingRepo       tenantports.AccountingControlRepository
 	stamper              *exchangeratestamp.Stamper
-	journalRepo          repositories.JournalPostingRepository
-	adjustmentRepo       repositories.InvoiceAdjustmentRepository
-	chargeAllocationRepo repositories.ChargeAllocationRepository
-	adjustmentService    servicesports.InvoiceAdjustmentService
+	journalRepo          journalentryports.JournalPostingRepository
+	adjustmentRepo       invoiceadjustmentports.InvoiceAdjustmentRepository
+	chargeAllocationRepo shipmentports.ChargeAllocationRepository
+	adjustmentService    invoiceadjustmentports.InvoiceAdjustmentService
 	notificationService  *notificationservice.Service
-	accessorialRepo      repositories.AccessorialChargeRepository
-	emailRepo            repositories.EmailRepository
+	accessorialRepo      accessorialchargeports.AccessorialChargeRepository
+	emailRepo            emailports.EmailRepository
 	validator            *Validator
-	auditService         servicesports.AuditService
-	documentService      servicesports.InvoiceDocumentService
-	emailService         servicesports.EmailService
-	templates            servicesports.DocumentTemplateResolver
+	auditService         auditports.AuditService
+	documentService      documentports.InvoiceDocumentService
+	emailService         emailports.EmailService
+	templates            documenttemplateports.DocumentTemplateResolver
 	contextBuilder       *ContextBuilder
-	realtime             servicesports.RealtimeService
-	workflowStarter      servicesports.WorkflowStarter
+	realtime             agentports.RealtimeService
+	workflowStarter      kernelports.WorkflowStarter
 	sequenceGenerator    seqgen.Generator
 	sequenceProvider     seqgen.FormatProvider
-	orderDerivation      servicesports.OrderDerivationService
-	detentionBilling     servicesports.DetentionBillingService
+	orderDerivation      orderports.OrderDerivationService
+	detentionBilling     detentionports.DetentionBillingService
 	accountingPolicy     *accountingcontrolpolicyservice.Service
 	billingPolicy        *billingcontrolpolicyservice.Service
 
-	ediPartnerRepo              repositories.EDIPartnerRepository
-	ediDocumentProfileRepo      repositories.EDIPartnerDocumentProfileRepository
-	ediCommunicationProfileRepo repositories.EDICommunicationProfileRepository
-	lateChargeRepo              repositories.LateChargeRepository
-	accountingSync              servicesports.AccountingSyncEnqueuer
+	ediPartnerRepo              ediports.EDIPartnerRepository
+	ediDocumentProfileRepo      ediports.EDIPartnerDocumentProfileRepository
+	ediCommunicationProfileRepo ediports.EDICommunicationProfileRepository
+	lateChargeRepo              latechargeports.LateChargeRepository
+	accountingSync              accountingsyncports.AccountingSyncEnqueuer
 }
 
 type existingInvoiceLookupResult struct {
@@ -152,9 +169,9 @@ type postedBillingQueueResult struct {
 	Updated  *billingqueue.BillingQueueItem
 }
 
-var _ servicesports.InvoiceService = (*Service)(nil)
+var _ invoiceports.InvoiceService = (*Service)(nil)
 
-func New(p Params) servicesports.InvoiceService { //nolint:gocritic // stable API shape
+func New(p Params) invoiceports.InvoiceService { //nolint:gocritic // stable API shape
 	return NewService(p)
 }
 
@@ -207,37 +224,37 @@ func NewService(p Params) *Service { //nolint:gocritic // mirrors New
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListInvoicesRequest,
+	req *invoiceports.ListInvoicesRequest,
 ) (*pagination.ListResult[*invoice.Invoice], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListInvoiceConnectionRequest,
+	req *invoiceports.ListInvoiceConnectionRequest,
 ) (*pagination.CursorListResult[*invoice.Invoice], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) GetByID(
 	ctx context.Context,
-	req repositories.GetInvoiceByIDRequest,
+	req invoiceports.GetInvoiceByIDRequest,
 ) (*invoice.Invoice, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) GetByIDs(
 	ctx context.Context,
-	req repositories.GetInvoicesByIDsRequest,
+	req invoiceports.GetInvoicesByIDsRequest,
 ) ([]*invoice.Invoice, error) {
 	return s.repo.GetByIDs(ctx, req)
 }
 
 func (s *Service) CreateFromApprovedBillingQueueItem(
 	ctx context.Context,
-	req *servicesports.CreateInvoiceFromBillingQueueRequest,
-	actor *servicesports.RequestActor,
-) (*servicesports.CreateInvoiceFromBillingQueueResult, error) {
+	req *invoiceports.CreateInvoiceFromBillingQueueRequest,
+	actor *permissionports.RequestActor,
+) (*invoiceports.CreateInvoiceFromBillingQueueResult, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"request",
@@ -251,7 +268,7 @@ func (s *Service) CreateFromApprovedBillingQueueItem(
 		return nil, err
 	}
 	if existingLookup.Found {
-		return &servicesports.CreateInvoiceFromBillingQueueResult{
+		return &invoiceports.CreateInvoiceFromBillingQueueResult{
 			Invoice:  existingLookup.Invoice,
 			AutoPost: s.resolveAutoPost(existingLookup.Invoice.Customer),
 		}, nil
@@ -267,7 +284,7 @@ func (s *Service) CreateFromApprovedBillingQueueItem(
 		return nil, err
 	}
 	if draft.deferred {
-		return &servicesports.CreateInvoiceFromBillingQueueResult{
+		return &invoiceports.CreateInvoiceFromBillingQueueResult{
 			DeferredToStatement: true,
 		}, nil
 	}
@@ -298,7 +315,7 @@ func (s *Service) CreateFromApprovedBillingQueueItem(
 	)
 	s.publishInvalidation(ctx, created, auditActor, "created", created)
 
-	return &servicesports.CreateInvoiceFromBillingQueueResult{
+	return &invoiceports.CreateInvoiceFromBillingQueueResult{
 		Invoice:  created,
 		AutoPost: autoPost,
 	}, nil
@@ -311,20 +328,20 @@ func (s *Service) CreateFromApprovedBillingQueueItem(
 // one, and a statement customer's item returns DeferredToStatement.
 func (s *Service) PreviewApprovalInvoice(
 	ctx context.Context,
-	req *servicesports.CreateInvoiceFromBillingQueueRequest,
-) (*servicesports.CreateInvoiceFromBillingQueueResult, error) {
+	req *invoiceports.CreateInvoiceFromBillingQueueRequest,
+) (*invoiceports.CreateInvoiceFromBillingQueueResult, error) {
 	existing, err := s.getExistingInvoiceByBillingQueueItem(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 	if existing.Found {
-		return &servicesports.CreateInvoiceFromBillingQueueResult{
+		return &invoiceports.CreateInvoiceFromBillingQueueResult{
 			Invoice:  existing.Invoice,
 			AutoPost: s.resolveAutoPost(existing.Invoice.Customer),
 		}, nil
 	}
 
-	item, err := s.billingQueueRepo.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
+	item, err := s.billingQueueRepo.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
 		ItemID:                req.BillingQueueItemID,
 		TenantInfo:            req.TenantInfo,
 		ExpandShipmentDetails: true,
@@ -346,12 +363,12 @@ func (s *Service) PreviewApprovalInvoice(
 		return nil, err
 	}
 	if draft.deferred {
-		return &servicesports.CreateInvoiceFromBillingQueueResult{
+		return &invoiceports.CreateInvoiceFromBillingQueueResult{
 			DeferredToStatement: true,
 		}, nil
 	}
 
-	return &servicesports.CreateInvoiceFromBillingQueueResult{
+	return &invoiceports.CreateInvoiceFromBillingQueueResult{
 		Invoice:  draft.entity,
 		AutoPost: s.shouldAutoPost(ctx, req.TenantInfo.OrgID, draft.dependencies.Customer),
 	}, nil
@@ -368,7 +385,7 @@ type invoiceDraft struct {
 // bills. It reads and saves nothing but what the build reads.
 func (s *Service) planDraftFromItem(
 	ctx context.Context,
-	req *servicesports.CreateInvoiceFromBillingQueueRequest,
+	req *invoiceports.CreateInvoiceFromBillingQueueRequest,
 	item *billingqueue.BillingQueueItem,
 ) (*invoiceDraft, error) {
 	dependencies, err := s.getInvoiceDependencies(ctx, req, item)
@@ -427,7 +444,7 @@ func (s *Service) syncAdjustmentLineage(
 		return
 	}
 	if item.SourceInvoiceID != nil && item.SourceInvoiceID.IsNotNil() {
-		sourceInvoice, err := s.repo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+		sourceInvoice, err := s.repo.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 			ID: *item.SourceInvoiceID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: item.OrganizationID,
@@ -447,7 +464,7 @@ func (s *Service) syncAdjustmentLineage(
 		item.CorrectionGroupID.IsNotNil() {
 		group, err := s.adjustmentRepo.GetCorrectionGroup(
 			ctx,
-			repositories.GetCorrectionGroupRequest{
+			invoiceadjustmentports.GetCorrectionGroupRequest{
 				ID: *item.CorrectionGroupID,
 				TenantInfo: pagination.TenantInfo{
 					OrgID: item.OrganizationID,
@@ -467,8 +484,8 @@ func (s *Service) syncAdjustmentLineage(
 //nolint:nestif // existing validation flow mirrors business rule nesting
 func (s *Service) Post( //nolint:funlen // legacy workflow
 	ctx context.Context,
-	req *servicesports.PostInvoiceRequest,
-	actor *servicesports.RequestActor,
+	req *invoiceports.PostInvoiceRequest,
+	actor *permissionports.RequestActor,
 ) (*invoice.Invoice, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
@@ -479,8 +496,8 @@ func (s *Service) Post( //nolint:funlen // legacy workflow
 	}
 
 	var posted *invoice.Invoice
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		entity, getErr := s.repo.GetByID(txCtx, repositories.GetInvoiceByIDRequest{
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		entity, getErr := s.repo.GetByID(txCtx, invoiceports.GetInvoiceByIDRequest{
 			ID:         req.InvoiceID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -538,10 +555,10 @@ func (s *Service) Post( //nolint:funlen // legacy workflow
 			return postErr
 		}
 
-		if syncErr := servicesports.EnqueueAccountingSync(
+		if syncErr := accountingsyncports.EnqueueAccountingSync(
 			txCtx,
 			s.accountingSync,
-			servicesports.InvoiceSyncRequest(
+			accountingsyncports.InvoiceSyncRequest(
 				updated,
 				accountingsync.PostedSourceEvent(updated.BillType),
 			),
@@ -728,7 +745,7 @@ func (s *Service) legsWithOpenSiblingItems(
 	}
 	active, err := s.billingQueueRepo.ListActiveInvoiceItemsByShipmentIDs(
 		ctx,
-		&repositories.ListActiveInvoiceItemsRequest{
+		&billingqueueports.ListActiveInvoiceItemsRequest{
 			TenantInfo:  tenantInfo,
 			ShipmentIDs: legIDs,
 		},
@@ -756,7 +773,7 @@ func (s *Service) markBillingQueueItemPosted(
 	entity *invoice.Invoice,
 	tenantInfo pagination.TenantInfo,
 ) (*postedBillingQueueResult, error) {
-	item, err := s.billingQueueRepo.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
+	item, err := s.billingQueueRepo.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
 		ItemID:     entity.BillingQueueItemID,
 		TenantInfo: tenantInfo,
 	})
@@ -784,7 +801,7 @@ func (s *Service) markBillingQueueItemPosted(
 	// invoice back-link existed.
 	if _, sweepErr := s.billingQueueRepo.MarkPostedForInvoice(
 		ctx,
-		&repositories.MarkPostedForInvoiceRequest{
+		&billingqueueports.MarkPostedForInvoiceRequest{
 			TenantInfo:  tenantInfo,
 			InvoiceID:   entity.ID,
 			OrderID:     entity.OrderID,
@@ -803,11 +820,11 @@ func (s *Service) markBillingQueueItemPosted(
 
 func (s *Service) getExistingInvoiceByBillingQueueItem(
 	ctx context.Context,
-	req *servicesports.CreateInvoiceFromBillingQueueRequest,
+	req *invoiceports.CreateInvoiceFromBillingQueueRequest,
 ) (*existingInvoiceLookupResult, error) {
 	existing, err := s.repo.GetByBillingQueueItemID(
 		ctx,
-		repositories.GetInvoiceByBillingQueueItemIDRequest{
+		invoiceports.GetInvoiceByBillingQueueItemIDRequest{
 			BillingQueueItemID: req.BillingQueueItemID,
 			TenantInfo:         req.TenantInfo,
 		},
@@ -827,9 +844,9 @@ func (s *Service) getExistingInvoiceByBillingQueueItem(
 
 func (s *Service) getApprovedBillingQueueItem(
 	ctx context.Context,
-	req *servicesports.CreateInvoiceFromBillingQueueRequest,
+	req *invoiceports.CreateInvoiceFromBillingQueueRequest,
 ) (*billingqueue.BillingQueueItem, error) {
-	item, err := s.billingQueueRepo.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
+	item, err := s.billingQueueRepo.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
 		ItemID:                req.BillingQueueItemID,
 		TenantInfo:            req.TenantInfo,
 		ExpandShipmentDetails: true,
@@ -888,7 +905,7 @@ func (s *Service) resolveDependencyShipment(
 			"Billing queue item has no shipment or source invoice to bill from",
 		)
 	}
-	src, err := s.repo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+	src, err := s.repo.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         *item.SourceInvoiceID,
 		TenantInfo: tenantInfo,
 	})
@@ -900,7 +917,7 @@ func (s *Service) resolveDependencyShipment(
 
 func (s *Service) getInvoiceDependencies(
 	ctx context.Context,
-	req *servicesports.CreateInvoiceFromBillingQueueRequest,
+	req *invoiceports.CreateInvoiceFromBillingQueueRequest,
 	item *billingqueue.BillingQueueItem,
 ) (*invoiceDependencies, error) {
 	shp, customerID, err := s.resolveDependencyShipment(ctx, req.TenantInfo, item)
@@ -916,10 +933,10 @@ func (s *Service) getInvoiceDependencies(
 		return nil, err
 	}
 
-	cus, err := s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
+	cus, err := s.customerRepo.GetByID(ctx, customerports.GetCustomerByIDRequest{
 		ID:         customerID,
 		TenantInfo: req.TenantInfo,
-		CustomerFilterOptions: repositories.CustomerFilterOptions{
+		CustomerFilterOptions: customerports.CustomerFilterOptions{
 			IncludeBillingProfile: true,
 			IncludeState:          true,
 		},
@@ -939,7 +956,7 @@ func (s *Service) getInvoiceDependencies(
 	}
 	var ord *order.Order
 	if !orderID.IsNil() {
-		ord, err = s.orderRepo.GetByID(ctx, repositories.GetOrderByIDRequest{
+		ord, err = s.orderRepo.GetByID(ctx, orderports.GetOrderByIDRequest{
 			ID:         orderID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -974,7 +991,7 @@ func (s *Service) getInvoiceDependencies(
 	}
 	deps.IsSplitBill = resolution.IsSplit
 	if shp.CustomerID != cus.ID {
-		deps.Shipper, err = s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
+		deps.Shipper, err = s.customerRepo.GetByID(ctx, customerports.GetCustomerByIDRequest{
 			ID:         shp.CustomerID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -989,7 +1006,7 @@ func (s *Service) getInvoiceDependencies(
 func (s *Service) EnqueueAutoPost(
 	ctx context.Context,
 	entity *invoice.Invoice,
-	actor *servicesports.RequestActor,
+	actor *permissionports.RequestActor,
 ) error {
 	if entity == nil {
 		return errortypes.NewValidationError(
@@ -1000,7 +1017,7 @@ func (s *Service) EnqueueAutoPost(
 	}
 
 	if !s.workflowStarter.Enabled() {
-		return servicesports.ErrWorkflowStarterDisabled
+		return kernelports.ErrWorkflowStarterDisabled
 	}
 
 	auditActor := actor.AuditActor()
@@ -1497,13 +1514,13 @@ func (s *Service) billingPolicyService() *billingcontrolpolicyservice.Service {
 
 func (s *Service) logAction(
 	entity *invoice.Invoice,
-	actor servicesports.AuditActor,
+	actor kernelports.AuditActor,
 	op permission.Operation,
 	previous any,
 	current any,
 	comment string,
 ) {
-	params := &servicesports.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceInvoice,
 		ResourceID:     entity.ID.String(),
 		Operation:      op,
@@ -1521,7 +1538,7 @@ func (s *Service) logAction(
 		params.PreviousState = jsonutils.MustToJSON(previous)
 	}
 
-	opts := []servicesports.LogOption{
+	opts := []auditports.LogOption{
 		auditservice.WithComment(comment),
 		auditservice.WithMetadata(map[string]any{
 			"shipmentId":         entity.ShipmentID.String(),
@@ -1542,7 +1559,7 @@ func (s *Service) logAction(
 func (s *Service) publishInvalidation(
 	ctx context.Context,
 	entity *invoice.Invoice,
-	actor servicesports.AuditActor,
+	actor kernelports.AuditActor,
 	action string,
 	payload any,
 ) {
@@ -1564,13 +1581,13 @@ func (s *Service) publishInvalidation(
 
 func (s *Service) logBillingQueuePosted(
 	result *postedBillingQueueResult,
-	actor servicesports.AuditActor,
+	actor kernelports.AuditActor,
 ) {
 	if result == nil || result.Previous == nil || result.Updated == nil {
 		return
 	}
 
-	if err := s.auditService.LogAction(&servicesports.LogActionParams{
+	if err := s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceBillingQueue,
 		ResourceID:     result.Updated.ID.String(),
 		Operation:      permission.OpUpdate,
@@ -1593,7 +1610,7 @@ func (s *Service) logBillingQueuePosted(
 func (s *Service) publishBillingQueueInvalidation(
 	ctx context.Context,
 	result *postedBillingQueueResult,
-	actor servicesports.AuditActor,
+	actor kernelports.AuditActor,
 ) {
 	if result == nil || result.Previous == nil || result.Updated == nil {
 		return

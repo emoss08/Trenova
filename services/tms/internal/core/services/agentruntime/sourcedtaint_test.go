@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -35,8 +35,8 @@ type recordFeed struct {
 
 func (f *recordFeed) TaintedRecords() []agent.RecordRef { return f.records }
 
-func feedPolicy(reads agent.ExternalRead) serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func feedPolicy(reads agent.ExternalRead) agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          "list_watchtower_items",
 		ReadsExternal: reads,
 		Source:        agent.TaintSourceInboundMessage,
@@ -48,8 +48,8 @@ func feedPolicy(reads agent.ExternalRead) serviceports.ToolPolicy {
 	}
 }
 
-func feedCall() serviceports.ToolCall {
-	return serviceports.ToolCall{ID: "call_feed", Name: "list_watchtower_items"}
+func feedCall() agentports.ToolCall {
+	return agentports.ToolCall{ID: "call_feed", Name: "list_watchtower_items"}
 }
 
 func TestCallTaint_EachSourcedRowIsMarkedWithItsOwnSource(t *testing.T) {
@@ -133,7 +133,7 @@ func TestCallTaint_ARecordCarrierIsMarkedWithThePolicySource(t *testing.T) {
 	feed := &recordFeed{records: []agent.RecordRef{
 		{EntityType: agent.TaintEntityAgentRun, ID: "ar_1"},
 	}}
-	policy := serviceports.ToolPolicy{
+	policy := agentports.ToolPolicy{
 		ReadsExternal: agent.ExternalReadMarked,
 		Source:        agent.TaintSourceRunRecord,
 	}
@@ -184,16 +184,16 @@ func TestRun_AFeedRowFromAnInboundEmailTaintsTheRunAndHoldsMoney(t *testing.T) {
 		Sources: []agent.TaintSource{agent.TaintSourceWeather},
 	}
 	pay := moneyTool()
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		toolTurn("list_watchtower_items", map[string]any{}),
 		toolTurn("apply_payment", map[string]any{"invoiceId": "inv_9911"}),
 		textTurn("The payment waits for a person."),
 	}}
 	rt := newRuntime(completion,
-		&stubQueryRegistry{Tools: []serviceports.AgentQueryTool{feed}},
-		&stubActionRegistry{Tools: []serviceports.AgentTool{pay}}, nil)
+		&stubQueryRegistry{Tools: []agentports.AgentQueryTool{feed}},
+		&stubActionRegistry{Tools: []agentports.AgentTool{pay}}, nil)
 
-	run := runTainted(t, rt, &serviceports.RunRequest{
+	run := runTainted(t, rt, &agentports.RunRequest{
 		Definition: autoDefinition("list_watchtower_items", "apply_payment"),
 		Actor:      testActor(),
 		Input:      "Work the tower.",
@@ -223,16 +223,16 @@ func TestRun_AFeedWithNoOutsideRowLeavesTheRunClean(t *testing.T) {
 		Source:   agent.TaintSourceInboundMessage,
 	}
 	pay := moneyTool()
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		toolTurn("list_watchtower_items", map[string]any{}),
 		toolTurn("apply_payment", map[string]any{"invoiceId": "inv_1"}),
 		textTurn("Applied."),
 	}}
 	rt := newRuntime(completion,
-		&stubQueryRegistry{Tools: []serviceports.AgentQueryTool{feed}},
-		&stubActionRegistry{Tools: []serviceports.AgentTool{pay}}, nil)
+		&stubQueryRegistry{Tools: []agentports.AgentQueryTool{feed}},
+		&stubActionRegistry{Tools: []agentports.AgentTool{pay}}, nil)
 
-	run := runTainted(t, rt, &serviceports.RunRequest{
+	run := runTainted(t, rt, &agentports.RunRequest{
 		Definition: autoDefinition("list_watchtower_items", "apply_payment"),
 		Actor:      testActor(),
 		Input:      "Work the tower.",

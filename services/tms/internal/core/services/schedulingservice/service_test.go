@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/schedulingservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -18,7 +18,7 @@ import (
 const day = int64(86400)
 
 type fakeSchedulingRepo struct {
-	repositories.SchedulingRepository
+	workerports.SchedulingRepository
 
 	template        *worker.ShiftTemplate
 	templates       []*worker.ShiftTemplate
@@ -28,22 +28,22 @@ type fakeSchedulingRepo struct {
 	swap            *worker.ShiftSwapRequest
 	savedSwap       *worker.ShiftSwapRequest
 	preferences     []*worker.WorkerAvailabilityPreference
-	workers         []repositories.RotaWorkerRow
-	timeOff         []repositories.RotaRangeRow
-	leave           []repositories.RotaRangeRow
-	assigned        []repositories.RotaDayRow
+	workers         []workerports.RotaWorkerRow
+	timeOff         []workerports.RotaRangeRow
+	leave           []workerports.RotaRangeRow
+	assigned        []workerports.RotaDayRow
 }
 
 func (r *fakeSchedulingRepo) GetTemplateByID(
 	_ context.Context,
-	_ *repositories.GetShiftTemplateByIDRequest,
+	_ *workerports.GetShiftTemplateByIDRequest,
 ) (*worker.ShiftTemplate, error) {
 	return r.template, nil
 }
 
 func (r *fakeSchedulingRepo) ListTemplates(
 	_ context.Context,
-	_ *repositories.ListShiftTemplatesRequest,
+	_ *workerports.ListShiftTemplatesRequest,
 ) ([]*worker.ShiftTemplate, error) {
 	return r.templates, nil
 }
@@ -65,7 +65,7 @@ func (r *fakeSchedulingRepo) CountTemplateAssignments(
 
 func (r *fakeSchedulingRepo) ListAssignments(
 	_ context.Context,
-	_ *repositories.ListShiftAssignmentsRequest,
+	_ *workerports.ListShiftAssignmentsRequest,
 ) ([]*worker.WorkerShiftAssignment, error) {
 	return r.assignments, nil
 }
@@ -88,7 +88,7 @@ func (r *fakeSchedulingRepo) UpdateAssignment(
 
 func (r *fakeSchedulingRepo) GetSwapByID(
 	_ context.Context,
-	_ *repositories.GetShiftSwapByIDRequest,
+	_ *workerports.GetShiftSwapByIDRequest,
 ) (*worker.ShiftSwapRequest, error) {
 	return r.swap, nil
 }
@@ -103,36 +103,36 @@ func (r *fakeSchedulingRepo) UpdateSwap(
 
 func (r *fakeSchedulingRepo) ListPreferences(
 	_ context.Context,
-	_ *repositories.ListAvailabilityPreferencesRequest,
+	_ *workerports.ListAvailabilityPreferencesRequest,
 ) ([]*worker.WorkerAvailabilityPreference, error) {
 	return r.preferences, nil
 }
 
 func (r *fakeSchedulingRepo) RotaWorkers(
 	_ context.Context,
-	_ *repositories.RotaQuery,
-) ([]repositories.RotaWorkerRow, error) {
+	_ *workerports.RotaQuery,
+) ([]workerports.RotaWorkerRow, error) {
 	return r.workers, nil
 }
 
 func (r *fakeSchedulingRepo) RotaTimeOffRanges(
 	_ context.Context,
-	_ *repositories.RotaQuery,
-) ([]repositories.RotaRangeRow, error) {
+	_ *workerports.RotaQuery,
+) ([]workerports.RotaRangeRow, error) {
 	return r.timeOff, nil
 }
 
 func (r *fakeSchedulingRepo) RotaLeaveRanges(
 	_ context.Context,
-	_ *repositories.RotaQuery,
-) ([]repositories.RotaRangeRow, error) {
+	_ *workerports.RotaQuery,
+) ([]workerports.RotaRangeRow, error) {
 	return r.leave, nil
 }
 
 func (r *fakeSchedulingRepo) RotaAssignedDays(
 	_ context.Context,
-	_ *repositories.RotaQuery,
-) ([]repositories.RotaDayRow, error) {
+	_ *workerports.RotaQuery,
+) ([]workerports.RotaDayRow, error) {
 	return r.assigned, nil
 }
 
@@ -433,13 +433,13 @@ func TestRota_OpenEndedLeaveCoversTheRestOfTheWeek(t *testing.T) {
 	template := activeTemplate(1)
 	repo := &fakeSchedulingRepo{
 		templates: []*worker.ShiftTemplate{template},
-		workers: []repositories.RotaWorkerRow{{
+		workers: []workerports.RotaWorkerRow{{
 			WorkerID:        "wrk_1",
 			FirstName:       "Ada",
 			LastName:        "Byron",
 			ShiftTemplateID: template.ID,
 		}},
-		leave: []repositories.RotaRangeRow{{
+		leave: []workerports.RotaRangeRow{{
 			WorkerID: "wrk_1",
 			StartsAt: mondayEpoch(),
 			EndsAt:   0,
@@ -472,7 +472,7 @@ func TestRota_AlternatesAcrossWeeks(t *testing.T) {
 	template := activeTemplate(2)
 	repo := &fakeSchedulingRepo{
 		templates: []*worker.ShiftTemplate{template},
-		workers: []repositories.RotaWorkerRow{{
+		workers: []workerports.RotaWorkerRow{{
 			WorkerID:        "wrk_1",
 			FirstName:       "Ada",
 			LastName:        "Byron",
@@ -516,18 +516,18 @@ func TestRota_CountsAnAssignmentOnADayOffAsAConflict(t *testing.T) {
 	tuesday := mondayEpoch() + day
 	repo := &fakeSchedulingRepo{
 		templates: []*worker.ShiftTemplate{template},
-		workers: []repositories.RotaWorkerRow{{
+		workers: []workerports.RotaWorkerRow{{
 			WorkerID:        "wrk_1",
 			FirstName:       "Ada",
 			LastName:        "Byron",
 			ShiftTemplateID: template.ID,
 		}},
-		timeOff: []repositories.RotaRangeRow{{
+		timeOff: []workerports.RotaRangeRow{{
 			WorkerID: "wrk_1",
 			StartsAt: tuesday,
 			EndsAt:   tuesday,
 		}},
-		assigned: []repositories.RotaDayRow{{
+		assigned: []workerports.RotaDayRow{{
 			WorkerID: "wrk_1",
 			DayStart: tuesday,
 			Count:    2,

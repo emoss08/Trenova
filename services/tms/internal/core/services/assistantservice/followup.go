@@ -4,15 +4,15 @@ import (
 	"cmp"
 	"context"
 	"fmt"
-	"github.com/bytedance/sonic"
 	"maps"
 	"slices"
 	"strings"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -78,7 +78,7 @@ func (s *Service) decisionNote(ctx context.Context, p decisionNoteParams) (strin
 		return "", errortypes.NewBusinessError("Decisions cannot be followed up here")
 	}
 
-	stored, err := s.proposals.ListByThread(ctx, repositories.ListAgentProposalsByThreadRequest{
+	stored, err := s.proposals.ListByThread(ctx, agentports.ListAgentProposalsByThreadRequest{
 		ThreadID:   p.thread.ID,
 		TenantInfo: p.tenant,
 	})
@@ -146,7 +146,7 @@ func (s *Service) decisionsOn(
 
 	return s.decisions.ListByProposals(
 		ctx,
-		repositories.ListAgentDecisionsByProposalsRequest{
+		agentports.ListAgentDecisionsByProposalsRequest{
 			ProposalIDs: proposalIDs,
 			TenantInfo:  tenant,
 		},
@@ -317,7 +317,7 @@ func (s *Service) planDecisionNote(ctx context.Context, p decisionNoteParams) (s
 		return "", errortypes.NewBusinessError("Decisions cannot be followed up here")
 	}
 
-	plans, err := s.plans.ListByThread(ctx, repositories.ListAgentPlansByThreadRequest{
+	plans, err := s.plans.ListByThread(ctx, agentports.ListAgentPlansByThreadRequest{
 		ThreadID:   p.thread.ID,
 		TenantInfo: p.tenant,
 	})
@@ -376,7 +376,7 @@ func (s *Service) planSteps(
 		return nil, nil
 	}
 
-	stored, err := s.proposals.ListByThread(ctx, repositories.ListAgentProposalsByThreadRequest{
+	stored, err := s.proposals.ListByThread(ctx, agentports.ListAgentProposalsByThreadRequest{
 		ThreadID:   p.thread.ID,
 		TenantInfo: p.tenant,
 	})

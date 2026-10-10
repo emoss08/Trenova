@@ -3,12 +3,11 @@ package documenttemplateresolver
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,12 +18,12 @@ import (
 // a kind nobody has customized.
 func documentTemplateContentFromInput(
 	input *gqlmodel.DocumentTemplateVersionInput,
-) *services.TemplateContent {
+) *documenttemplateports.TemplateContent {
 	if input == nil {
 		return nil
 	}
 
-	content := &services.TemplateContent{
+	content := &documenttemplateports.TemplateContent{
 		Subject:    TemplateString(input.Subject),
 		BodyHTML:   TemplateString(input.BodyHTML),
 		BodyText:   TemplateString(input.BodyText),
@@ -96,7 +95,7 @@ func (r *Deps) PreviewFor(
 	ctx context.Context,
 	authCtx *authctx.AuthContext,
 	input *gqlmodel.DocumentTemplatePreviewInput,
-) (*services.PreviewResult, error) {
+) (*documenttemplateports.PreviewResult, error) {
 	var versionID *pulid.ID
 	if input.VersionID != nil && *input.VersionID != "" {
 		parsed, err := pulid.MustParse(*input.VersionID)
@@ -106,7 +105,7 @@ func (r *Deps) PreviewFor(
 		versionID = &parsed
 	}
 
-	return r.DocumentTemplateService.PreviewVersion(ctx, &services.PreviewVersionRequest{
+	return r.DocumentTemplateService.PreviewVersion(ctx, &documenttemplateports.PreviewVersionRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		Kind:       documenttemplate.Kind(input.Kind),
 		VersionID:  versionID,

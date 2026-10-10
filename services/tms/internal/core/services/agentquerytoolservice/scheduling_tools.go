@@ -9,12 +9,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/recurringshipment"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/orgstructureservice"
 	"github.com/emoss08/trenova/internal/core/services/schedulingservice"
 	"github.com/emoss08/trenova/internal/core/services/teamscope"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/recurringshipmentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -84,8 +86,8 @@ func recurringShipmentRowFrom(entity *recurringshipment.RecurringShipment) recur
 }
 
 func newListRecurringShipmentsTool(
-	repo repositories.RecurringShipmentRepository,
-) serviceports.AgentQueryTool {
+	repo recurringshipmentports.RecurringShipmentRepository,
+) agentports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "list_recurring_shipments",
 		entityPlural: "recurring shipments",
@@ -108,7 +110,7 @@ func newListRecurringShipmentsTool(
 			{Name: fieldCreatedAt, Kind: filterDate, Sortable: true},
 		},
 		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
-			result, err := repo.List(ctx, &repositories.ListRecurringShipmentsRequest{Filter: opts})
+			result, err := repo.List(ctx, &recurringshipmentports.ListRecurringShipmentsRequest{Filter: opts})
 			if err != nil {
 				return nil, err
 			}
@@ -123,19 +125,19 @@ func newListRecurringShipmentsTool(
 type scheduleReader interface {
 	ListAssignments(
 		ctx context.Context,
-		req *repositories.ListShiftAssignmentsRequest,
+		req *workerports.ListShiftAssignmentsRequest,
 	) ([]*worker.WorkerShiftAssignment, error)
 	ListPreferences(
 		ctx context.Context,
-		req *repositories.ListAvailabilityPreferencesRequest,
+		req *workerports.ListAvailabilityPreferencesRequest,
 	) ([]*worker.WorkerAvailabilityPreference, error)
 	ListSwaps(
 		ctx context.Context,
-		req *repositories.ListShiftSwapsRequest,
+		req *workerports.ListShiftSwapsRequest,
 	) ([]*worker.ShiftSwapRequest, error)
 	ListTemplates(
 		ctx context.Context,
-		req *repositories.ListShiftTemplatesRequest,
+		req *workerports.ListShiftTemplatesRequest,
 	) ([]*worker.ShiftTemplate, error)
 }
 
@@ -147,17 +149,17 @@ type getWorkerScheduleTool struct {
 
 func provideGetWorkerScheduleTool(
 	schedules *schedulingservice.Service,
-	permissions serviceports.PermissionEngine,
+	permissions permissionports.PermissionEngine,
 	teams *orgstructureservice.Service,
-) serviceports.AgentQueryTool {
+) agentports.AgentQueryTool {
 	return newGetWorkerScheduleTool(schedules, permissions, teams)
 }
 
 func newGetWorkerScheduleTool(
 	schedules scheduleReader,
-	permissions serviceports.PermissionEngine,
+	permissions permissionports.PermissionEngine,
 	teams teamscope.Teams,
-) serviceports.AgentQueryTool {
+) agentports.AgentQueryTool {
 	return &getWorkerScheduleTool{
 		schedules: schedules,
 		scope:     teamscope.Guard{Permissions: permissions, Teams: teams},
@@ -183,7 +185,7 @@ func (t *getWorkerScheduleTool) ParamSchema() map[string]any {
 	)
 }
 
-func (t *getWorkerScheduleTool) Policy() serviceports.ToolPolicy {
+func (t *getWorkerScheduleTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceWorkerSchedule})
 }
 
@@ -223,7 +225,7 @@ type workerScheduleView struct {
 
 func (t *getWorkerScheduleTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -268,7 +270,7 @@ func (t *getWorkerScheduleTool) assignments(
 	tenant pagination.TenantInfo,
 	workerID pulid.ID,
 ) ([]scheduleAssignmentRow, error) {
-	assignments, err := t.schedules.ListAssignments(ctx, &repositories.ListShiftAssignmentsRequest{
+	assignments, err := t.schedules.ListAssignments(ctx, &workerports.ListShiftAssignmentsRequest{
 		TenantInfo:      tenant,
 		WorkerID:        workerID,
 		IncludeTemplate: true,
@@ -306,7 +308,7 @@ func (t *getWorkerScheduleTool) preferences(
 	workerID pulid.ID,
 ) ([]schedulePreferenceRow, error) {
 	preferences, err := t.schedules.ListPreferences(ctx,
-		&repositories.ListAvailabilityPreferencesRequest{TenantInfo: tenant, WorkerID: workerID})
+		&workerports.ListAvailabilityPreferencesRequest{TenantInfo: tenant, WorkerID: workerID})
 	if err != nil {
 		return nil, err
 	}
@@ -331,7 +333,7 @@ func (t *getWorkerScheduleTool) swaps(
 	tenant pagination.TenantInfo,
 	workerID pulid.ID,
 ) ([]scheduleSwapRow, error) {
-	swaps, err := t.schedules.ListSwaps(ctx, &repositories.ListShiftSwapsRequest{
+	swaps, err := t.schedules.ListSwaps(ctx, &workerports.ListShiftSwapsRequest{
 		TenantInfo: tenant,
 		WorkerID:   workerID,
 		OpenOnly:   true,
@@ -369,11 +371,11 @@ type listShiftTemplatesTool struct {
 
 func provideListShiftTemplatesTool(
 	schedules *schedulingservice.Service,
-) serviceports.AgentQueryTool {
+) agentports.AgentQueryTool {
 	return newListShiftTemplatesTool(schedules)
 }
 
-func newListShiftTemplatesTool(schedules scheduleReader) serviceports.AgentQueryTool {
+func newListShiftTemplatesTool(schedules scheduleReader) agentports.AgentQueryTool {
 	return &listShiftTemplatesTool{schedules: schedules}
 }
 
@@ -392,7 +394,7 @@ func (t *listShiftTemplatesTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listShiftTemplatesTool) Policy() serviceports.ToolPolicy {
+func (t *listShiftTemplatesTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceShiftTemplate})
 }
 
@@ -408,13 +410,13 @@ type shiftTemplateRow struct {
 
 func (t *listShiftTemplatesTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
 	}
 
-	templates, err := t.schedules.ListTemplates(ctx, &repositories.ListShiftTemplatesRequest{
+	templates, err := t.schedules.ListTemplates(ctx, &workerports.ListShiftTemplatesRequest{
 		TenantInfo: tenantOf(params),
 		ActiveOnly: true,
 		Limit:      maxShiftTemplates,

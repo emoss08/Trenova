@@ -6,7 +6,11 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/fx"
@@ -15,19 +19,19 @@ import (
 type LabelerParams struct {
 	fx.In
 
-	Customers repositories.CustomerRepository
-	Locations repositories.LocationRepository
-	Workers   repositories.WorkerRepository
-	Carriers  repositories.CarrierRepository
+	Customers customerports.CustomerRepository
+	Locations locationports.LocationRepository
+	Workers   workerports.WorkerRepository
+	Carriers  carrierports.CarrierRepository
 }
 
 // repositoryLabeler names a subject by reading it, which also proves it
 // exists in the tenant asking.
 type repositoryLabeler struct {
-	customers repositories.CustomerRepository
-	locations repositories.LocationRepository
-	workers   repositories.WorkerRepository
-	carriers  repositories.CarrierRepository
+	customers customerports.CustomerRepository
+	locations locationports.LocationRepository
+	workers   workerports.WorkerRepository
+	carriers  carrierports.CarrierRepository
 }
 
 func NewLabeler(p LabelerParams) SubjectLabeler {
@@ -42,11 +46,11 @@ func NewLabeler(p LabelerParams) SubjectLabeler {
 func (l *repositoryLabeler) Label(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	ref repositories.MemorySubjectRef,
+	ref agentports.MemorySubjectRef,
 ) (string, error) {
 	switch ref.Type {
 	case agent.MemorySubjectCustomer:
-		entity, err := l.customers.GetByID(ctx, repositories.GetCustomerByIDRequest{
+		entity, err := l.customers.GetByID(ctx, customerports.GetCustomerByIDRequest{
 			ID:         ref.ID,
 			TenantInfo: tenant,
 		})
@@ -56,7 +60,7 @@ func (l *repositoryLabeler) Label(
 
 		return stringutils.FirstNonEmpty(entity.Name, entity.Code), nil
 	case agent.MemorySubjectLocation:
-		entity, err := l.locations.GetByID(ctx, repositories.GetLocationByIDRequest{
+		entity, err := l.locations.GetByID(ctx, locationports.GetLocationByIDRequest{
 			ID:         ref.ID,
 			TenantInfo: tenant,
 		})
@@ -66,7 +70,7 @@ func (l *repositoryLabeler) Label(
 
 		return stringutils.FirstNonEmpty(entity.Name, entity.Code), nil
 	case agent.MemorySubjectWorker:
-		entity, err := l.workers.GetByID(ctx, repositories.GetWorkerByIDRequest{
+		entity, err := l.workers.GetByID(ctx, workerports.GetWorkerByIDRequest{
 			ID:         ref.ID,
 			TenantInfo: tenant,
 		})
@@ -76,7 +80,7 @@ func (l *repositoryLabeler) Label(
 
 		return strings.TrimSpace(entity.FirstName + " " + entity.LastName), nil
 	case agent.MemorySubjectCarrier:
-		entity, err := l.carriers.GetByID(ctx, repositories.GetCarrierByIDRequest{
+		entity, err := l.carriers.GetByID(ctx, carrierports.GetCarrierByIDRequest{
 			ID:         ref.ID,
 			TenantInfo: tenant,
 		})

@@ -6,11 +6,15 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -23,29 +27,29 @@ type Params struct {
 
 	Logger              *zap.Logger
 	Config              *config.Config
-	Repo                repositories.InvoiceShareRepository
-	InvoiceRepo         repositories.InvoiceRepository
-	UserRepo            repositories.UserRepository
-	OrganizationRepo    repositories.OrganizationRepository
-	Permissions         servicesports.PermissionEngine
+	Repo                invoiceports.InvoiceShareRepository
+	InvoiceRepo         invoiceports.InvoiceRepository
+	UserRepo            tenantports.UserRepository
+	OrganizationRepo    tenantports.OrganizationRepository
+	Permissions         permissionports.PermissionEngine
 	NotificationService *notificationservice.Service
-	EmailService        servicesports.EmailService
-	Templates           servicesports.DocumentTemplateResolver
-	AuditService        servicesports.AuditService
+	EmailService        emailports.EmailService
+	Templates           documenttemplateports.DocumentTemplateResolver
+	AuditService        auditports.AuditService
 }
 
 type Service struct {
 	l                   *zap.Logger
 	cfg                 *config.Config
-	repo                repositories.InvoiceShareRepository
-	invoiceRepo         repositories.InvoiceRepository
-	userRepo            repositories.UserRepository
-	organizationRepo    repositories.OrganizationRepository
-	permissions         servicesports.PermissionEngine
+	repo                invoiceports.InvoiceShareRepository
+	invoiceRepo         invoiceports.InvoiceRepository
+	userRepo            tenantports.UserRepository
+	organizationRepo    tenantports.OrganizationRepository
+	permissions         permissionports.PermissionEngine
 	notificationService *notificationservice.Service
-	emailService        servicesports.EmailService
-	templates           servicesports.DocumentTemplateResolver
-	auditService        servicesports.AuditService
+	emailService        emailports.EmailService
+	templates           documenttemplateports.DocumentTemplateResolver
+	auditService        auditports.AuditService
 }
 
 func New(p Params) *Service {
@@ -66,7 +70,7 @@ func New(p Params) *Service {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListInvoiceSharesRequest,
+	req *invoiceports.ListInvoiceSharesRequest,
 ) ([]*invoice.InvoiceShare, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
@@ -76,7 +80,7 @@ func (s *Service) List(
 		)
 	}
 
-	if _, err := s.invoiceRepo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+	if _, err := s.invoiceRepo.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         req.InvoiceID,
 		TenantInfo: req.TenantInfo,
 	}); err != nil {
@@ -88,9 +92,9 @@ func (s *Service) List(
 
 func (s *Service) Share(
 	ctx context.Context,
-	req *servicesports.ShareInvoiceRequest,
-	actor *servicesports.RequestActor,
-) (*servicesports.ShareInvoiceResult, error) {
+	req *invoiceports.ShareInvoiceRequest,
+	actor *permissionports.RequestActor,
+) (*invoiceports.ShareInvoiceResult, error) {
 	plan, err := s.planShare(ctx, req, actor)
 	if err != nil {
 		return nil, err
@@ -112,7 +116,7 @@ func (s *Service) Share(
 		tab:        input.tab,
 	})
 
-	listed, err := s.repo.ListByInvoiceID(ctx, &repositories.ListInvoiceSharesRequest{
+	listed, err := s.repo.ListByInvoiceID(ctx, &invoiceports.ListInvoiceSharesRequest{
 		TenantInfo: req.TenantInfo,
 		InvoiceID:  entity.ID,
 	})
@@ -120,7 +124,7 @@ func (s *Service) Share(
 		return nil, err
 	}
 
-	return &servicesports.ShareInvoiceResult{
+	return &invoiceports.ShareInvoiceResult{
 		Shares:         listed,
 		RecipientCount: len(recipients),
 		EmailsQueued:   emailsQueued,
@@ -166,7 +170,7 @@ func buildShares(
 
 func (s *Service) logShare(
 	entity *invoice.Invoice,
-	actor *servicesports.RequestActor,
+	actor *permissionports.RequestActor,
 	recipients []*tenant.User,
 	input *shareInput,
 ) {
@@ -177,7 +181,7 @@ func (s *Service) logShare(
 	}
 
 	if err := s.auditService.LogAction(
-		&servicesports.LogActionParams{
+		&auditports.LogActionParams{
 			Resource:       permission.ResourceInvoice,
 			ResourceID:     entity.ID.String(),
 			Operation:      permission.OpAssign,

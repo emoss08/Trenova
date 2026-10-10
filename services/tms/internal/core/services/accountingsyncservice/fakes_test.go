@@ -18,8 +18,15 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/exchangerateports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -36,7 +43,7 @@ func cloneConnection(conn *accountingsync.AccountingConnection) *accountingsync.
 }
 
 type fakeConnections struct {
-	repositories.AccountingConnectionRepository
+	accountingsyncports.AccountingConnectionRepository
 
 	mu   sync.Mutex
 	rows map[pulid.ID]*accountingsync.AccountingConnection
@@ -60,7 +67,7 @@ func (f *fakeConnections) get(id pulid.ID) *accountingsync.AccountingConnection 
 
 func (f *fakeConnections) GetByType(
 	_ context.Context,
-	req repositories.GetAccountingConnectionRequest,
+	req accountingsyncports.GetAccountingConnectionRequest,
 ) (*accountingsync.AccountingConnection, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -75,7 +82,7 @@ func (f *fakeConnections) GetByType(
 
 func (f *fakeConnections) GetByID(
 	_ context.Context,
-	req repositories.GetAccountingConnectionByIDRequest,
+	req accountingsyncports.GetAccountingConnectionByIDRequest,
 ) (*accountingsync.AccountingConnection, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -149,25 +156,25 @@ func cloneRecord(record *accountingsync.AccountingSyncRecord) *accountingsync.Ac
 }
 
 type candidateRow struct {
-	candidate repositories.AccountingSyncCandidate
+	candidate accountingsyncports.AccountingSyncCandidate
 	orgID     pulid.ID
 	buID      pulid.ID
 }
 
 type fakeRecords struct {
-	repositories.AccountingSyncRecordRepository
+	accountingsyncports.AccountingSyncRecordRepository
 
 	mu              sync.Mutex
 	rows            []*accountingsync.AccountingSyncRecord
 	attempts        []*accountingsync.AccountingSyncAttempt
 	candidates      []candidateRow
-	attention       []repositories.AccountingSyncAttentionGroup
-	purgeRounds     []repositories.PurgeAccountingSyncHistoryResult
-	purgeRequests   []repositories.PurgeAccountingSyncHistoryRequest
-	candidateCalls  []repositories.ListAccountingSyncCandidatesRequest
-	byObjectsCalls  []repositories.ListAccountingSyncRecordsByObjectsRequest
-	connectionCalls []repositories.ListAccountingSyncRecordsConnectionRequest
-	dueCalls        []repositories.ListDueAccountingSyncConnectionsRequest
+	attention       []accountingsyncports.AccountingSyncAttentionGroup
+	purgeRounds     []accountingsyncports.PurgeAccountingSyncHistoryResult
+	purgeRequests   []accountingsyncports.PurgeAccountingSyncHistoryRequest
+	candidateCalls  []accountingsyncports.ListAccountingSyncCandidatesRequest
+	byObjectsCalls  []accountingsyncports.ListAccountingSyncRecordsByObjectsRequest
+	connectionCalls []accountingsyncports.ListAccountingSyncRecordsConnectionRequest
+	dueCalls        []accountingsyncports.ListDueAccountingSyncConnectionsRequest
 	attentionCalls  int
 	finishErr       map[pulid.ID]error
 	onCandidates    func()
@@ -258,7 +265,7 @@ func (f *fakeRecords) attemptsFor(id pulid.ID) []*accountingsync.AccountingSyncA
 
 func (f *fakeRecords) addCandidate(
 	tenantInfo pagination.TenantInfo,
-	candidate repositories.AccountingSyncCandidate,
+	candidate accountingsyncports.AccountingSyncCandidate,
 ) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -272,10 +279,10 @@ func (f *fakeRecords) addCandidate(
 func (f *fakeRecords) Enqueue(
 	_ context.Context,
 	records []*accountingsync.AccountingSyncRecord,
-) (*repositories.EnqueueAccountingSyncRecordsResult, error) {
+) (*accountingsyncports.EnqueueAccountingSyncRecordsResult, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	result := &repositories.EnqueueAccountingSyncRecordsResult{
+	result := &accountingsyncports.EnqueueAccountingSyncRecordsResult{
 		Inserted: make([]*accountingsync.AccountingSyncRecord, 0, len(records)),
 	}
 	for _, record := range records {
@@ -297,7 +304,7 @@ func (f *fakeRecords) Enqueue(
 
 func (f *fakeRecords) GetByID(
 	_ context.Context,
-	req repositories.GetAccountingSyncRecordRequest,
+	req accountingsyncports.GetAccountingSyncRecordRequest,
 ) (*accountingsync.AccountingSyncRecord, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -310,7 +317,7 @@ func (f *fakeRecords) GetByID(
 
 func (f *fakeRecords) ListConnection(
 	_ context.Context,
-	req *repositories.ListAccountingSyncRecordsConnectionRequest,
+	req *accountingsyncports.ListAccountingSyncRecordsConnectionRequest,
 ) (*pagination.CursorListResult[*accountingsync.AccountingSyncRecord], error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -327,7 +334,7 @@ func (f *fakeRecords) ListConnection(
 
 func (f *fakeRecords) ListByExternalIDs(
 	_ context.Context,
-	req *repositories.ListAccountingSyncRecordsByExternalIDsRequest,
+	req *accountingsyncports.ListAccountingSyncRecordsByExternalIDsRequest,
 ) ([]*accountingsync.AccountingSyncRecord, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -348,7 +355,7 @@ func (f *fakeRecords) ListByExternalIDs(
 
 func (f *fakeRecords) CountInFlight(
 	_ context.Context,
-	req *repositories.CountAccountingSyncInFlightRequest,
+	req *accountingsyncports.CountAccountingSyncInFlightRequest,
 ) (int, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -369,7 +376,7 @@ func (f *fakeRecords) CountInFlight(
 
 func (f *fakeRecords) ListByObjects(
 	_ context.Context,
-	req *repositories.ListAccountingSyncRecordsByObjectsRequest,
+	req *accountingsyncports.ListAccountingSyncRecordsByObjectsRequest,
 ) ([]*accountingsync.AccountingSyncRecord, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -404,7 +411,7 @@ func due(row *accountingsync.AccountingSyncRecord, now int64) bool {
 
 func (f *fakeRecords) Claim(
 	_ context.Context,
-	req *repositories.ClaimAccountingSyncRecordsRequest,
+	req *accountingsyncports.ClaimAccountingSyncRecordsRequest,
 ) ([]*accountingsync.AccountingSyncRecord, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -445,7 +452,7 @@ func (f *fakeRecords) Claim(
 
 func (f *fakeRecords) Finish(
 	_ context.Context,
-	req *repositories.FinishAccountingSyncRecordRequest,
+	req *accountingsyncports.FinishAccountingSyncRecordRequest,
 ) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -454,11 +461,11 @@ func (f *fakeRecords) Finish(
 	}
 	idx := f.indexOf(req.Record.ID)
 	if idx < 0 {
-		return repositories.ErrAccountingSyncLeaseLost
+		return accountingsyncports.ErrAccountingSyncLeaseLost
 	}
 	stored := f.rows[idx]
 	if stored.Version != req.Record.Version || stored.Status != accountingsync.SyncStatusInFlight {
-		return repositories.ErrAccountingSyncLeaseLost
+		return accountingsyncports.ErrAccountingSyncLeaseLost
 	}
 	req.Record.Version++
 	f.rows[idx] = cloneRecord(req.Record)
@@ -488,8 +495,8 @@ func (f *fakeRecords) Update(
 
 func (f *fakeRecords) CountByStatus(
 	_ context.Context,
-	req repositories.AccountingSyncConnectionRequest,
-) ([]repositories.AccountingSyncStatusCount, error) {
+	req accountingsyncports.AccountingSyncConnectionRequest,
+) ([]accountingsyncports.AccountingSyncStatusCount, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	counts := map[accountingsync.SyncStatus]int{}
@@ -498,10 +505,10 @@ func (f *fakeRecords) CountByStatus(
 			counts[row.Status]++
 		}
 	}
-	out := make([]repositories.AccountingSyncStatusCount, 0, len(counts))
+	out := make([]accountingsyncports.AccountingSyncStatusCount, 0, len(counts))
 	for _, status := range accountingsync.AllSyncStatuses() {
 		if counts[status] > 0 {
-			out = append(out, repositories.AccountingSyncStatusCount{Status: status, Count: counts[status]})
+			out = append(out, accountingsyncports.AccountingSyncStatusCount{Status: status, Count: counts[status]})
 		}
 	}
 	return out, nil
@@ -509,8 +516,8 @@ func (f *fakeRecords) CountByStatus(
 
 func (f *fakeRecords) ListAttention(
 	_ context.Context,
-	_ repositories.ListAccountingSyncAttentionRequest,
-) ([]repositories.AccountingSyncAttentionGroup, error) {
+	_ accountingsyncports.ListAccountingSyncAttentionRequest,
+) ([]accountingsyncports.AccountingSyncAttentionGroup, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.attentionCalls++
@@ -519,7 +526,7 @@ func (f *fakeRecords) ListAttention(
 
 func (f *fakeRecords) Requeue(
 	_ context.Context,
-	req *repositories.RequeueAccountingSyncRecordsRequest,
+	req *accountingsyncports.RequeueAccountingSyncRecordsRequest,
 ) (int64, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -547,7 +554,7 @@ func (f *fakeRecords) Requeue(
 
 func (f *fakeRecords) Release(
 	_ context.Context,
-	req *repositories.ReleaseAccountingSyncRecordsRequest,
+	req *accountingsyncports.ReleaseAccountingSyncRecordsRequest,
 ) (int64, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -572,7 +579,7 @@ func (f *fakeRecords) Release(
 
 func (f *fakeRecords) SupersedeOlder(
 	_ context.Context,
-	req *repositories.SupersedeAccountingSyncRecordsRequest,
+	req *accountingsyncports.SupersedeAccountingSyncRecordsRequest,
 ) (int64, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -595,11 +602,11 @@ func (f *fakeRecords) SupersedeOlder(
 
 func (f *fakeRecords) ListCandidates(
 	_ context.Context,
-	req *repositories.ListAccountingSyncCandidatesRequest,
-) ([]repositories.AccountingSyncCandidate, error) {
+	req *accountingsyncports.ListAccountingSyncCandidatesRequest,
+) ([]accountingsyncports.AccountingSyncCandidate, error) {
 	f.mu.Lock()
 	f.candidateCalls = append(f.candidateCalls, *req)
-	out := []repositories.AccountingSyncCandidate{}
+	out := []accountingsyncports.AccountingSyncCandidate{}
 	for _, row := range f.candidates {
 		cand := row.candidate
 		if !sameTenant(row.orgID, row.buID, req.TenantInfo) || cand.ObjectType != req.ObjectType ||
@@ -627,7 +634,7 @@ func (f *fakeRecords) ListCandidates(
 			out = append(out, cand)
 		}
 	}
-	slices.SortFunc(out, func(a, b repositories.AccountingSyncCandidate) int {
+	slices.SortFunc(out, func(a, b accountingsyncports.AccountingSyncCandidate) int {
 		return cmp.Or(cmp.Compare(a.PostedAt, b.PostedAt), cmp.Compare(a.ObjectID.String(), b.ObjectID.String()))
 	})
 	if req.Limit > 0 && len(out) > req.Limit {
@@ -643,23 +650,23 @@ func (f *fakeRecords) ListCandidates(
 
 func (f *fakeRecords) ListDueConnections(
 	_ context.Context,
-	req repositories.ListDueAccountingSyncConnectionsRequest,
-) ([]repositories.AccountingSyncDueConnection, error) {
+	req accountingsyncports.ListDueAccountingSyncConnectionsRequest,
+) ([]accountingsyncports.AccountingSyncDueConnection, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.dueCalls = append(f.dueCalls, req)
-	return []repositories.AccountingSyncDueConnection{}, nil
+	return []accountingsyncports.AccountingSyncDueConnection{}, nil
 }
 
 func (f *fakeRecords) PurgeHistory(
 	_ context.Context,
-	req repositories.PurgeAccountingSyncHistoryRequest,
-) (*repositories.PurgeAccountingSyncHistoryResult, error) {
+	req accountingsyncports.PurgeAccountingSyncHistoryRequest,
+) (*accountingsyncports.PurgeAccountingSyncHistoryResult, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.purgeRequests = append(f.purgeRequests, req)
 	if len(f.purgeRounds) == 0 {
-		return &repositories.PurgeAccountingSyncHistoryResult{}, nil
+		return &accountingsyncports.PurgeAccountingSyncHistoryResult{}, nil
 	}
 	round := f.purgeRounds[0]
 	f.purgeRounds = f.purgeRounds[1:]
@@ -668,7 +675,7 @@ func (f *fakeRecords) PurgeHistory(
 
 func (f *fakeRecords) ListAttempts(
 	_ context.Context,
-	req repositories.ListAccountingSyncAttemptsRequest,
+	req accountingsyncports.ListAccountingSyncAttemptsRequest,
 ) ([]*accountingsync.AccountingSyncAttempt, error) {
 	return f.attemptsFor(req.SyncRecordID), nil
 }
@@ -709,7 +716,7 @@ func (f *fakeBackfills) Create(
 	defer f.mu.Unlock()
 	for _, row := range f.rows {
 		if row.ConnectionID == entity.ConnectionID && row.Status.InProgress() {
-			return nil, repositories.ErrAccountingBackfillActive
+			return nil, accountingsyncports.ErrAccountingBackfillActive
 		}
 	}
 	f.rows[entity.ID] = cloneBackfill(entity)
@@ -718,7 +725,7 @@ func (f *fakeBackfills) Create(
 
 func (f *fakeBackfills) GetByID(
 	_ context.Context,
-	req repositories.GetAccountingBackfillRequest,
+	req accountingsyncports.GetAccountingBackfillRequest,
 ) (*accountingsync.AccountingBackfill, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -731,7 +738,7 @@ func (f *fakeBackfills) GetByID(
 
 func (f *fakeBackfills) GetActive(
 	_ context.Context,
-	req repositories.AccountingSyncConnectionRequest,
+	req accountingsyncports.AccountingSyncConnectionRequest,
 ) (*accountingsync.AccountingBackfill, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -745,7 +752,7 @@ func (f *fakeBackfills) GetActive(
 
 func (f *fakeBackfills) ListByConnection(
 	_ context.Context,
-	req repositories.ListAccountingBackfillsRequest,
+	req accountingsyncports.ListAccountingBackfillsRequest,
 ) ([]*accountingsync.AccountingBackfill, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -784,9 +791,9 @@ type vendorPartyCall struct {
 type fakeMappingStore struct {
 	mu          sync.Mutex
 	rows        map[string]*accountingsync.AccountingMapping
-	created     []*services.CreateAccountingReferenceRecordRequest
+	created     []*accountingsyncports.CreateAccountingReferenceRecordRequest
 	createErr   error
-	parties     map[pulid.ID]*services.AccountingPartyDraft
+	parties     map[pulid.ID]*accountingsyncports.AccountingPartyDraft
 	vendorCalls []vendorPartyCall
 	rescored    []pulid.ID
 }
@@ -795,17 +802,17 @@ func (f fakeMappingService) Rescore(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	connectionID pulid.ID,
-) (*services.AccountingRescoreResult, error) {
+) (*accountingsyncports.AccountingRescoreResult, error) {
 	f.store.mu.Lock()
 	defer f.store.mu.Unlock()
 	f.store.rescored = append(f.store.rescored, connectionID)
-	return &services.AccountingRescoreResult{}, nil
+	return &accountingsyncports.AccountingRescoreResult{}, nil
 }
 
 func newFakeMappingStore() *fakeMappingStore {
 	return &fakeMappingStore{
 		rows:    map[string]*accountingsync.AccountingMapping{},
-		parties: map[pulid.ID]*services.AccountingPartyDraft{},
+		parties: map[pulid.ID]*accountingsyncports.AccountingPartyDraft{},
 	}
 }
 
@@ -851,7 +858,7 @@ func (f *fakeMappingStore) set(
 }
 
 func (f *fakeMappingStore) ensure(
-	req *services.EnsureAccountingMappingRequest,
+	req *accountingsyncports.EnsureAccountingMappingRequest,
 ) *accountingsync.AccountingMapping {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -877,13 +884,13 @@ func (f *fakeMappingStore) ensure(
 }
 
 type fakeMappingRepo struct {
-	repositories.AccountingMappingRepository
+	accountingsyncports.AccountingMappingRepository
 	store *fakeMappingStore
 }
 
 func (f fakeMappingRepo) GetByTarget(
 	_ context.Context,
-	req *repositories.GetAccountingMappingByTargetRequest,
+	req *accountingsyncports.GetAccountingMappingByTargetRequest,
 ) (*accountingsync.AccountingMapping, error) {
 	f.store.mu.Lock()
 	defer f.store.mu.Unlock()
@@ -897,20 +904,20 @@ func (f fakeMappingRepo) GetByTarget(
 }
 
 type fakeMappingService struct {
-	services.AccountingMappingService
+	accountingsyncports.AccountingMappingService
 	store *fakeMappingStore
 }
 
 func (f fakeMappingService) EnsureMapping(
 	_ context.Context,
-	req *services.EnsureAccountingMappingRequest,
+	req *accountingsyncports.EnsureAccountingMappingRequest,
 ) (*accountingsync.AccountingMapping, error) {
 	return f.store.ensure(req), nil
 }
 
 func (f fakeMappingService) CreateReferenceRecord(
 	_ context.Context,
-	req *services.CreateAccountingReferenceRecordRequest,
+	req *accountingsyncports.CreateAccountingReferenceRecordRequest,
 ) (*accountingsync.AccountingMapping, error) {
 	f.store.mu.Lock()
 	defer f.store.mu.Unlock()
@@ -935,7 +942,7 @@ func (f fakeMappingService) CustomerParty(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	customerID pulid.ID,
-) (*services.AccountingPartyDraft, error) {
+) (*accountingsyncports.AccountingPartyDraft, error) {
 	f.store.mu.Lock()
 	defer f.store.mu.Unlock()
 	party, ok := f.store.parties[customerID]
@@ -951,7 +958,7 @@ func (f fakeMappingService) VendorParty(
 	_ pagination.TenantInfo,
 	targetType accountingsync.MappingTargetType,
 	objectID pulid.ID,
-) (*services.AccountingPartyDraft, error) {
+) (*accountingsyncports.AccountingPartyDraft, error) {
 	f.store.mu.Lock()
 	defer f.store.mu.Unlock()
 	f.store.vendorCalls = append(f.store.vendorCalls, vendorPartyCall{
@@ -972,7 +979,7 @@ type reportedFailure struct {
 }
 
 type fakeConnService struct {
-	services.AccountingConnectionService
+	accountingsyncports.AccountingConnectionService
 
 	mu          sync.Mutex
 	connections *fakeConnections
@@ -986,7 +993,7 @@ func (f *fakeConnService) Session(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	connectionID pulid.ID,
-) (*services.AccountingSession, error) {
+) (*accountingsyncports.AccountingSession, error) {
 	f.mu.Lock()
 	sessionErr := f.sessionErr
 	token := f.accessToken
@@ -994,14 +1001,14 @@ func (f *fakeConnService) Session(
 	if sessionErr != nil {
 		return nil, sessionErr
 	}
-	conn, err := f.connections.GetByID(ctx, repositories.GetAccountingConnectionByIDRequest{
+	conn, err := f.connections.GetByID(ctx, accountingsyncports.GetAccountingConnectionByIDRequest{
 		TenantInfo: tenantInfo,
 		ID:         connectionID,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return &services.AccountingSession{Connection: conn, AccessToken: token, Connector: f.writer}, nil
+	return &accountingsyncports.AccountingSession{Connection: conn, AccessToken: token, Connector: f.writer}, nil
 }
 
 func (f *fakeConnService) ReportCallFailure(
@@ -1043,10 +1050,10 @@ type writerCall struct {
 }
 
 type fakeWriter struct {
-	services.AccountingConnector
+	accountingsyncports.AccountingConnector
 
 	mu        sync.Mutex
-	limits    services.AccountingDocumentLimits
+	limits    accountingsyncports.AccountingDocumentLimits
 	calls     []writerCall
 	errs      map[string][]error
 	partials  map[string]map[string]string
@@ -1058,7 +1065,7 @@ type fakeWriter struct {
 
 func newFakeWriter() *fakeWriter {
 	return &fakeWriter{
-		limits:    services.AccountingDocumentLimits{MaxDocNumberLength: 21},
+		limits:    accountingsyncports.AccountingDocumentLimits{MaxDocNumberLength: 21},
 		errs:      map[string][]error{},
 		partials:  map[string]map[string]string{},
 		found:     map[string]string{},
@@ -1094,15 +1101,15 @@ func (f *fakeWriter) methods() []string {
 	return out
 }
 
-func (f *fakeWriter) record(method string, doc any) (*services.AccountingDocumentResult, error) {
+func (f *fakeWriter) record(method string, doc any) (*accountingsyncports.AccountingDocumentResult, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.calls = append(f.calls, writerCall{method: method, doc: doc})
 	if queued := f.errs[method]; len(queued) > 0 {
 		f.errs[method] = queued[1:]
-		var written *services.AccountingDocumentResult
+		var written *accountingsyncports.AccountingDocumentResult
 		if refs := f.partials[method]; refs != nil {
-			written = &services.AccountingDocumentResult{Refs: maps.Clone(refs)}
+			written = &accountingsyncports.AccountingDocumentResult{Refs: maps.Clone(refs)}
 		}
 		return written, queued[0]
 	}
@@ -1110,21 +1117,21 @@ func (f *fakeWriter) record(method string, doc any) (*services.AccountingDocumen
 	id := "qb-" + method + "-" + strconv.Itoa(f.nextID)
 	refs := map[string]string{accountingsync.ExternalRefDocument: id}
 	maps.Copy(refs, f.extraRefs[method])
-	return &services.AccountingDocumentResult{
+	return &accountingsyncports.AccountingDocumentResult{
 		ExternalID: id,
 		DocNumber:  "QB" + id,
 		Refs:       refs,
 	}, nil
 }
 
-func (f *fakeWriter) DocumentLimits() services.AccountingDocumentLimits {
+func (f *fakeWriter) DocumentLimits() accountingsyncports.AccountingDocumentLimits {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return f.limits
 }
 
 func (f *fakeWriter) DocumentURL(
-	_ services.AccountingDocumentAuth,
+	_ accountingsyncports.AccountingDocumentAuth,
 	kind accountingsync.SyncObjectType,
 	externalID string,
 ) string {
@@ -1148,15 +1155,15 @@ func (f *fakeWriter) ClassifyDocumentError(err error) *accountingsync.SyncError 
 
 func (f *fakeWriter) UpsertCustomer(
 	_ context.Context,
-	doc *services.AccountingCustomerDocument,
-) (*services.AccountingDocumentResult, error) {
+	doc *accountingsyncports.AccountingCustomerDocument,
+) (*accountingsyncports.AccountingDocumentResult, error) {
 	return f.record("UpsertCustomer", doc)
 }
 
 func (f *fakeWriter) CreateSalesDocument(
 	_ context.Context,
-	doc *services.AccountingSalesDocument,
-) (*services.AccountingDocumentResult, error) {
+	doc *accountingsyncports.AccountingSalesDocument,
+) (*accountingsyncports.AccountingDocumentResult, error) {
 	sent := *doc
 	sent.Refs = maps.Clone(doc.Refs)
 	return f.record("CreateSalesDocument", &sent)
@@ -1164,92 +1171,92 @@ func (f *fakeWriter) CreateSalesDocument(
 
 func (f *fakeWriter) VoidSalesDocument(
 	_ context.Context,
-	ref *services.AccountingDocumentRef,
-) (*services.AccountingDocumentResult, error) {
+	ref *accountingsyncports.AccountingDocumentRef,
+) (*accountingsyncports.AccountingDocumentResult, error) {
 	return f.record("VoidSalesDocument", ref)
 }
 
 func (f *fakeWriter) SavePayment(
 	_ context.Context,
-	doc *services.AccountingPaymentDocument,
-) (*services.AccountingDocumentResult, error) {
+	doc *accountingsyncports.AccountingPaymentDocument,
+) (*accountingsyncports.AccountingDocumentResult, error) {
 	return f.record("SavePayment", doc)
 }
 
 func (f *fakeWriter) VoidPayment(
 	_ context.Context,
-	ref *services.AccountingDocumentRef,
-) (*services.AccountingDocumentResult, error) {
+	ref *accountingsyncports.AccountingDocumentRef,
+) (*accountingsyncports.AccountingDocumentResult, error) {
 	return f.record("VoidPayment", ref)
 }
 
 func (f *fakeWriter) CreateCreditApplication(
 	_ context.Context,
-	doc *services.AccountingCreditApplicationDocument,
-) (*services.AccountingDocumentResult, error) {
+	doc *accountingsyncports.AccountingCreditApplicationDocument,
+) (*accountingsyncports.AccountingDocumentResult, error) {
 	return f.record("CreateCreditApplication", doc)
 }
 
 func (f *fakeWriter) VoidCreditApplication(
 	_ context.Context,
-	ref *services.AccountingDocumentRef,
-) (*services.AccountingDocumentResult, error) {
+	ref *accountingsyncports.AccountingDocumentRef,
+) (*accountingsyncports.AccountingDocumentResult, error) {
 	return f.record("VoidCreditApplication", ref)
 }
 
 func (f *fakeWriter) UpsertVendor(
 	_ context.Context,
-	doc *services.AccountingVendorDocument,
-) (*services.AccountingDocumentResult, error) {
+	doc *accountingsyncports.AccountingVendorDocument,
+) (*accountingsyncports.AccountingDocumentResult, error) {
 	return f.record("UpsertVendor", doc)
 }
 
 func (f *fakeWriter) CreatePurchaseDocument(
 	_ context.Context,
-	doc *services.AccountingPurchaseDocument,
-) (*services.AccountingDocumentResult, error) {
+	doc *accountingsyncports.AccountingPurchaseDocument,
+) (*accountingsyncports.AccountingDocumentResult, error) {
 	return f.record("CreatePurchaseDocument", doc)
 }
 
 func (f *fakeWriter) UpdateSalesDocument(
 	_ context.Context,
-	doc *services.AccountingSalesDocument,
-) (*services.AccountingDocumentResult, error) {
+	doc *accountingsyncports.AccountingSalesDocument,
+) (*accountingsyncports.AccountingDocumentResult, error) {
 	return f.record("UpdateSalesDocument", doc)
 }
 
 func (f *fakeWriter) UpdatePurchaseDocument(
 	_ context.Context,
-	doc *services.AccountingPurchaseDocument,
-) (*services.AccountingDocumentResult, error) {
+	doc *accountingsyncports.AccountingPurchaseDocument,
+) (*accountingsyncports.AccountingDocumentResult, error) {
 	return f.record("UpdatePurchaseDocument", doc)
 }
 
 func (f *fakeWriter) UpdateBillPayment(
 	_ context.Context,
-	doc *services.AccountingBillPaymentDocument,
-) (*services.AccountingDocumentResult, error) {
+	doc *accountingsyncports.AccountingBillPaymentDocument,
+) (*accountingsyncports.AccountingDocumentResult, error) {
 	return f.record("UpdateBillPayment", doc)
 }
 
 func (f *fakeWriter) VoidPurchaseDocument(
 	_ context.Context,
-	ref *services.AccountingDocumentRef,
-) (*services.AccountingDocumentResult, error) {
+	ref *accountingsyncports.AccountingDocumentRef,
+) (*accountingsyncports.AccountingDocumentResult, error) {
 	return f.record("VoidPurchaseDocument", ref)
 }
 
 func (f *fakeWriter) CreateBillPayment(
 	_ context.Context,
-	doc *services.AccountingBillPaymentDocument,
-) (*services.AccountingDocumentResult, error) {
+	doc *accountingsyncports.AccountingBillPaymentDocument,
+) (*accountingsyncports.AccountingDocumentResult, error) {
 	return f.record("CreateBillPayment", doc)
 }
 
 func (f *fakeWriter) FindDocument(
 	_ context.Context,
-	req *services.AccountingFindDocumentRequest,
-) (*services.AccountingDocumentResult, bool, error) {
+	req *accountingsyncports.AccountingFindDocumentRequest,
+) (*accountingsyncports.AccountingDocumentResult, bool, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.calls = append(f.calls, writerCall{method: "FindDocument", doc: req})
@@ -1257,11 +1264,11 @@ func (f *fakeWriter) FindDocument(
 	if !ok {
 		return nil, false, nil
 	}
-	return &services.AccountingDocumentResult{ExternalID: id, DocNumber: req.DocNumber}, true, nil
+	return &accountingsyncports.AccountingDocumentResult{ExternalID: id, DocNumber: req.DocNumber}, true, nil
 }
 
 type fakeInvoices struct {
-	repositories.InvoiceRepository
+	invoiceports.InvoiceRepository
 
 	mu   sync.Mutex
 	rows map[pulid.ID]*invoice.Invoice
@@ -1275,7 +1282,7 @@ func (f *fakeInvoices) put(inv *invoice.Invoice) {
 
 func (f *fakeInvoices) GetByID(
 	_ context.Context,
-	req repositories.GetInvoiceByIDRequest,
+	req invoiceports.GetInvoiceByIDRequest,
 ) (*invoice.Invoice, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -1288,7 +1295,7 @@ func (f *fakeInvoices) GetByID(
 
 func (f *fakeInvoices) GetByIDs(
 	_ context.Context,
-	req repositories.GetInvoicesByIDsRequest,
+	req invoiceports.GetInvoicesByIDsRequest,
 ) ([]*invoice.Invoice, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -1302,7 +1309,7 @@ func (f *fakeInvoices) GetByIDs(
 }
 
 type fakeAdjustments struct {
-	repositories.InvoiceAdjustmentRepository
+	invoiceadjustmentports.InvoiceAdjustmentRepository
 
 	mu   sync.Mutex
 	rows map[pulid.ID]*invoiceadjustment.InvoiceAdjustment
@@ -1310,7 +1317,7 @@ type fakeAdjustments struct {
 
 func (f *fakeAdjustments) GetByID(
 	_ context.Context,
-	req repositories.GetInvoiceAdjustmentRequest,
+	req invoiceadjustmentports.GetInvoiceAdjustmentRequest,
 ) (*invoiceadjustment.InvoiceAdjustment, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -1322,7 +1329,7 @@ func (f *fakeAdjustments) GetByID(
 }
 
 type fakePayments struct {
-	repositories.CustomerPaymentRepository
+	customerpaymentports.CustomerPaymentRepository
 
 	mu           sync.Mutex
 	rows         map[pulid.ID]*customerpayment.Payment
@@ -1331,7 +1338,7 @@ type fakePayments struct {
 
 func (f *fakePayments) GetByID(
 	_ context.Context,
-	req repositories.GetCustomerPaymentByIDRequest,
+	req customerpaymentports.GetCustomerPaymentByIDRequest,
 ) (*customerpayment.Payment, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -1344,7 +1351,7 @@ func (f *fakePayments) GetByID(
 
 func (f *fakePayments) GetCreditMemoApplicationByID(
 	_ context.Context,
-	req repositories.GetCreditMemoApplicationRequest,
+	req customerpaymentports.GetCreditMemoApplicationRequest,
 ) (*customerpayment.CreditMemoApplication, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -1356,26 +1363,26 @@ func (f *fakePayments) GetCreditMemoApplicationByID(
 }
 
 type fakeOrganizations struct {
-	repositories.OrganizationRepository
+	tenantports.OrganizationRepository
 	timezone string
 }
 
 func (f fakeOrganizations) GetByID(
 	_ context.Context,
-	req repositories.GetOrganizationByIDRequest,
+	req tenantports.GetOrganizationByIDRequest,
 ) (*tenant.Organization, error) {
 	return &tenant.Organization{ID: req.TenantInfo.OrgID, Timezone: f.timezone}, nil
 }
 
 type fakeAudit struct {
-	services.AuditService
+	auditports.AuditService
 
 	mu       sync.Mutex
-	entries  []*services.LogActionParams
+	entries  []*auditports.LogActionParams
 	comments []string
 }
 
-func (f *fakeAudit) LogAction(params *services.LogActionParams, opts ...services.LogOption) error {
+func (f *fakeAudit) LogAction(params *auditports.LogActionParams, opts ...auditports.LogOption) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.entries = append(f.entries, params)
@@ -1406,18 +1413,18 @@ func (f *fakeAudit) count() int {
 
 type fakeWatchtower struct {
 	mu       sync.Mutex
-	upserts  map[string]services.WatchtowerItemInput
+	upserts  map[string]watchtowerports.WatchtowerItemInput
 	resolved map[string]bool
 }
 
 func newFakeWatchtower() *fakeWatchtower {
 	return &fakeWatchtower{
-		upserts:  map[string]services.WatchtowerItemInput{},
+		upserts:  map[string]watchtowerports.WatchtowerItemInput{},
 		resolved: map[string]bool{},
 	}
 }
 
-func (f *fakeWatchtower) Upsert(_ context.Context, input services.WatchtowerItemInput) {
+func (f *fakeWatchtower) Upsert(_ context.Context, input watchtowerports.WatchtowerItemInput) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.upserts[input.SourceID] = input
@@ -1439,7 +1446,7 @@ func (f *fakeWatchtower) Resolve(
 	f.resolved[sourceID] = true
 }
 
-func (f *fakeWatchtower) item(sourceID string) (services.WatchtowerItemInput, bool) {
+func (f *fakeWatchtower) item(sourceID string) (watchtowerports.WatchtowerItemInput, bool) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	item, ok := f.upserts[sourceID]
@@ -1481,14 +1488,14 @@ func (f *fakeDispatcher) started() []*accountingsync.AccountingBackfill {
 }
 
 type payableRow struct {
-	settlement *repositories.PayableSettlement
+	settlement *accountingsyncports.PayableSettlement
 	tenant     pagination.TenantInfo
 }
 
 type fakePayables struct {
 	mu    sync.Mutex
 	rows  map[pulid.ID]payableRow
-	calls []repositories.GetPayableSettlementRequest
+	calls []accountingsyncports.GetPayableSettlementRequest
 }
 
 func newFakePayables() *fakePayables {
@@ -1497,20 +1504,20 @@ func newFakePayables() *fakePayables {
 
 func (f *fakePayables) put(
 	tenantInfo pagination.TenantInfo,
-	settlement *repositories.PayableSettlement,
+	settlement *accountingsyncports.PayableSettlement,
 ) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.rows[settlement.ID] = payableRow{settlement: settlement, tenant: tenantInfo}
 }
 
-func (f *fakePayables) requests() []repositories.GetPayableSettlementRequest {
+func (f *fakePayables) requests() []accountingsyncports.GetPayableSettlementRequest {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return slices.Clone(f.calls)
 }
 
-func clonePayable(in *repositories.PayableSettlement) *repositories.PayableSettlement {
+func clonePayable(in *accountingsyncports.PayableSettlement) *accountingsyncports.PayableSettlement {
 	out := *in
 	out.Lines = slices.Clone(in.Lines)
 	out.InvoiceNumbers = slices.Clone(in.InvoiceNumbers)
@@ -1527,8 +1534,8 @@ func clonePayable(in *repositories.PayableSettlement) *repositories.PayableSettl
 
 func (f *fakePayables) GetSettlement(
 	_ context.Context,
-	req *repositories.GetPayableSettlementRequest,
-) (*repositories.PayableSettlement, error) {
+	req *accountingsyncports.GetPayableSettlementRequest,
+) (*accountingsyncports.PayableSettlement, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.calls = append(f.calls, *req)
@@ -1540,7 +1547,7 @@ func (f *fakePayables) GetSettlement(
 }
 
 type fakeControls struct {
-	repositories.AccountingControlRepository
+	tenantports.AccountingControlRepository
 
 	mu      sync.Mutex
 	control *tenant.AccountingControl
@@ -1572,7 +1579,7 @@ func (f *fakeControls) set(mutate func(*tenant.AccountingControl)) {
 
 func (f *fakeInvoices) StampExchangeRate(
 	_ context.Context,
-	req *repositories.StampExchangeRateRequest,
+	req *kernelports.StampExchangeRateRequest,
 ) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -1588,7 +1595,7 @@ func (f *fakeInvoices) StampExchangeRate(
 
 func (f *fakePayments) StampExchangeRate(
 	_ context.Context,
-	req *repositories.StampExchangeRateRequest,
+	req *kernelports.StampExchangeRateRequest,
 ) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -1604,7 +1611,7 @@ func (f *fakePayments) StampExchangeRate(
 
 func (f *fakePayables) StampExchangeRate(
 	_ context.Context,
-	req *repositories.StampPayableExchangeRateRequest,
+	req *accountingsyncports.StampPayableExchangeRateRequest,
 ) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -1624,7 +1631,7 @@ func (f *fakePayables) StampExchangeRate(
 }
 
 type fakeRates struct {
-	services.ExchangeRateService
+	exchangerateports.ExchangeRateService
 
 	mu    sync.Mutex
 	rates map[string]decimal.Decimal
@@ -1654,7 +1661,7 @@ func (f *fakeRates) Convert(
 	fromCurrency, toCurrency string,
 	amount decimal.Decimal,
 	date time.Time,
-) (*services.RateConversionResult, error) {
+) (*exchangerateports.RateConversionResult, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	day := date.Format("2006-01-02")
@@ -1666,7 +1673,7 @@ func (f *fakeRates) Convert(
 	if !ok {
 		return nil, errortypes.NewBusinessError("no exchange rate")
 	}
-	return &services.RateConversionResult{
+	return &exchangerateports.RateConversionResult{
 		FromCurrency: fromCurrency,
 		ToCurrency:   toCurrency,
 		Amount:       amount,

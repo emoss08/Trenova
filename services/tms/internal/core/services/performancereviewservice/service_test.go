@@ -1,12 +1,14 @@
 package performancereviewservice_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/performancereviewservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -20,14 +22,14 @@ import (
 )
 
 type fakeRepo struct {
-	repositories.PerformanceReviewRepository
+	workerports.PerformanceReviewRepository
 	templates []*worker.PerformanceReviewTemplate
 	reviews   []*worker.PerformanceReview
 }
 
 func (f *fakeRepo) GetTemplateByID(
 	_ context.Context,
-	req *repositories.GetReviewTemplateByIDRequest,
+	req *workerports.GetReviewTemplateByIDRequest,
 ) (*worker.PerformanceReviewTemplate, error) {
 	for _, t := range f.templates {
 		if t.ID == req.ID {
@@ -39,7 +41,7 @@ func (f *fakeRepo) GetTemplateByID(
 
 func (f *fakeRepo) TemplateCodeExists(
 	context.Context,
-	*repositories.ReviewTemplateCodeExistsRequest,
+	*workerports.ReviewTemplateCodeExistsRequest,
 ) (bool, error) {
 	return false, nil
 }
@@ -68,7 +70,7 @@ func (f *fakeRepo) CreateTemplate(
 
 func (f *fakeRepo) ListReviews(
 	_ context.Context,
-	req *repositories.ListPerformanceReviewsRequest,
+	req *workerports.ListPerformanceReviewsRequest,
 ) ([]*worker.PerformanceReview, error) {
 	out := make([]*worker.PerformanceReview, 0, len(f.reviews))
 	for _, r := range f.reviews {
@@ -93,7 +95,7 @@ func (f *fakeRepo) ListReviews(
 
 func (f *fakeRepo) GetReviewByID(
 	_ context.Context,
-	req *repositories.GetPerformanceReviewByIDRequest,
+	req *workerports.GetPerformanceReviewByIDRequest,
 ) (*worker.PerformanceReview, error) {
 	for _, r := range f.reviews {
 		if r.ID == req.ID {
@@ -142,7 +144,7 @@ func (f *fakeRepo) UpdateReview(
 
 func (f *fakeRepo) DeleteReview(
 	_ context.Context,
-	req *repositories.GetPerformanceReviewByIDRequest,
+	req *workerports.GetPerformanceReviewByIDRequest,
 ) error {
 	for i, r := range f.reviews {
 		if r.ID == req.ID {
@@ -171,9 +173,9 @@ func newHarness(t *testing.T) *harness {
 		BusinessUnitID: tenant.BuID,
 		Status:         domaintypes.StatusActive,
 	}
-	workerRepo := mocks.NewMockWorkerRepository(t)
+	workerRepo := workerportsmock.NewMockWorkerRepository(t)
 	workerRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(wrk, nil).Maybe()
-	audit := mocks.NewMockAuditService(t)
+	audit := auditportsmock.NewMockAuditService(t)
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Maybe()
 
 	cadence := int32(6)

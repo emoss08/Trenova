@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -26,10 +26,10 @@ func documentRecorder(
 	return svc.newArtifactRecorder(t.Context(), thread, tenant, testActor(), nil), thread
 }
 
-func published(title, body string, revises pulid.ID) serviceports.ToolObservation {
-	return serviceports.ToolObservation{
-		Call: serviceports.ToolCall{ID: "call_publish", Name: "publish_artifact"},
-		Data: serviceports.PublishedDocument{Title: title, Body: body, ArtifactID: revises},
+func published(title, body string, revises pulid.ID) agentports.ToolObservation {
+	return agentports.ToolObservation{
+		Call: agentports.ToolCall{ID: "call_publish", Name: "publish_artifact"},
+		Data: agentports.PublishedDocument{Title: title, Body: body, ArtifactID: revises},
 	}
 }
 

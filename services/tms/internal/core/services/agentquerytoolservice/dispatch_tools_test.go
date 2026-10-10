@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/core/services/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/core/services/dispatcheligibility"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -95,14 +95,14 @@ func TestRankMoveCandidates_ExplainsAnEmptyList(t *testing.T) {
 }
 
 type fakePlanner struct {
-	plan    *serviceports.DispatchPlan
-	lastReq *serviceports.DispatchPlanRequest
+	plan    *agentports.DispatchPlan
+	lastReq *agentports.DispatchPlanRequest
 }
 
 func (f *fakePlanner) Plan(
 	_ context.Context,
-	req *serviceports.DispatchPlanRequest,
-) (*serviceports.DispatchPlan, error) {
+	req *agentports.DispatchPlanRequest,
+) (*agentports.DispatchPlan, error) {
 	f.lastReq = req
 
 	return f.plan, nil
@@ -111,17 +111,17 @@ func (f *fakePlanner) Plan(
 func TestPlanDispatch_IsAlwaysADryRunOverTheWindow(t *testing.T) {
 	t.Parallel()
 
-	planner := &fakePlanner{plan: &serviceports.DispatchPlan{
+	planner := &fakePlanner{plan: &agentports.DispatchPlan{
 		PlanningMode: "Balanced",
 		TotalScore:   140,
-		Assignments: []*serviceports.DispatchPlannedAssignment{{
+		Assignments: []*agentports.DispatchPlannedAssignment{{
 			MoveID: pulid.MustNew(
 				"smv_",
 			), ProNumber: "S1", WorkerID: pulid.MustNew("wrk_"), WorkerName: "Dana Ortiz",
 			Confidence: decimal.NewFromFloat(0.9), Rationale: "closest with hours",
 			Score: &dispatchcandidateservice.CandidateScore{Score: 88},
 		}},
-		Uncovered: []*serviceports.DispatchUncoveredMove{{
+		Uncovered: []*agentports.DispatchUncoveredMove{{
 			MoveID: pulid.MustNew("smv_"), ProNumber: "S2", Reason: "no eligible driver",
 			BestBlockedFindings: []dispatcheligibility.Finding{
 				{Code: "HOS_DRIVE", Message: "No drive time left"},

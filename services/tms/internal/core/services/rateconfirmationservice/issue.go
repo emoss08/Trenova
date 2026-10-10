@@ -6,14 +6,14 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
 
-var _ services.RateConfirmationIssuer = (*Service)(nil)
+var _ rateconfirmationports.RateConfirmationIssuer = (*Service)(nil)
 
 // IssueForTenderAcceptance documents an accepted tender offer as a Confirmed
 // rate confirmation. The carrier's affirmative acceptance of the offered rate
@@ -30,8 +30,8 @@ var _ services.RateConfirmationIssuer = (*Service)(nil)
 //   - nothing stands: full generate, confirm, send.
 func (s *Service) IssueForTenderAcceptance(
 	ctx context.Context,
-	req *services.IssueTenderRateConfirmationRequest,
-) (*services.IssueTenderRateConfirmationResult, error) {
+	req *rateconfirmationports.IssueTenderRateConfirmationRequest,
+) (*rateconfirmationports.IssueTenderRateConfirmationResult, error) {
 	if req == nil || req.ShipmentMoveID.IsNil() || req.OfferID.IsNil() {
 		return nil, errortypes.NewValidationError(
 			"offerId", errortypes.ErrRequired,
@@ -46,12 +46,12 @@ func (s *Service) IssueForTenderAcceptance(
 		return nil, err
 	}
 	if assignment == nil {
-		return &services.IssueTenderRateConfirmationResult{
+		return &rateconfirmationports.IssueTenderRateConfirmationResult{
 			Reason: "The move has no active carrier assignment to confirm",
 		}, nil
 	}
 	if assignment.CarrierID != req.CarrierID {
-		return &services.IssueTenderRateConfirmationResult{
+		return &rateconfirmationports.IssueTenderRateConfirmationResult{
 			Reason: "The move is covered by a different carrier than the accepted offer",
 		}, nil
 	}
@@ -82,14 +82,14 @@ func (s *Service) IssueForTenderAcceptance(
 		return s.completeTenderIssued(ctx, req, created)
 	case issuedFromOffer(active, req):
 		if active.Status == rateconfirmation.StatusConfirmed {
-			return &services.IssueTenderRateConfirmationResult{
+			return &rateconfirmationports.IssueTenderRateConfirmationResult{
 				RateConfirmationID: active.ID,
 				Issued:             true,
 			}, nil
 		}
 		return s.completeTenderIssued(ctx, req, active)
 	default:
-		return &services.IssueTenderRateConfirmationResult{
+		return &rateconfirmationports.IssueTenderRateConfirmationResult{
 			RateConfirmationID: active.ID,
 			Reason: "A dispatcher-managed rate confirmation already covers this move; " +
 				"no automatic revision was issued",
@@ -99,7 +99,7 @@ func (s *Service) IssueForTenderAcceptance(
 
 func issuedFromOffer(
 	entity *rateconfirmation.RateConfirmation,
-	req *services.IssueTenderRateConfirmationRequest,
+	req *rateconfirmationports.IssueTenderRateConfirmationRequest,
 ) bool {
 	return entity.GeneratedVia == rateconfirmation.ViaTenderAcceptance &&
 		entity.SourceTenderOfferID != nil &&
@@ -111,9 +111,9 @@ func issuedFromOffer(
 // never unwinds the agreement, and Send can be retried by a dispatcher.
 func (s *Service) completeTenderIssued(
 	ctx context.Context,
-	req *services.IssueTenderRateConfirmationRequest,
+	req *rateconfirmationports.IssueTenderRateConfirmationRequest,
 	entity *rateconfirmation.RateConfirmation,
-) (*services.IssueTenderRateConfirmationResult, error) {
+) (*rateconfirmationports.IssueTenderRateConfirmationResult, error) {
 	at := req.AcceptedAt
 	if at <= 0 {
 		at = timeutils.NowUnix()
@@ -146,7 +146,7 @@ func (s *Service) completeTenderIssued(
 			zap.String("rateConfirmationId", confirmed.ID.String()))
 	}
 
-	return &services.IssueTenderRateConfirmationResult{
+	return &rateconfirmationports.IssueTenderRateConfirmationResult{
 		RateConfirmationID: confirmed.ID,
 		Issued:             true,
 	}, nil
@@ -154,10 +154,10 @@ func (s *Service) completeTenderIssued(
 
 func (s *Service) tenderConfirmingName(
 	ctx context.Context,
-	req *services.IssueTenderRateConfirmationRequest,
+	req *rateconfirmationports.IssueTenderRateConfirmationRequest,
 	entity *rateconfirmation.RateConfirmation,
 ) string {
-	carrierEntity, err := s.carrierRepo.GetByID(ctx, repositories.GetCarrierByIDRequest{
+	carrierEntity, err := s.carrierRepo.GetByID(ctx, carrierports.GetCarrierByIDRequest{
 		ID:         entity.CarrierID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -167,7 +167,7 @@ func (s *Service) tenderConfirmingName(
 	return carrierEntity.Name
 }
 
-func tenderConfirmingTitle(req *services.IssueTenderRateConfirmationRequest) string {
+func tenderConfirmingTitle(req *rateconfirmationports.IssueTenderRateConfirmationRequest) string {
 	if req.Source == "" {
 		return "Tender offer acceptance"
 	}

@@ -15,12 +15,15 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/briefing"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/briefingservice/briefingfacts"
 	"github.com/emoss08/trenova/internal/core/services/briefingservice/briefingwriter"
 	"github.com/emoss08/trenova/internal/core/services/orgzone"
 	"github.com/emoss08/trenova/internal/core/services/planservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -42,31 +45,31 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.BriefingRepository
-	Organization repositories.OrganizationRepository
+	Repo         briefingports.BriefingRepository
+	Organization tenantports.OrganizationRepository
 	Writer       *briefingwriter.Service
-	Permissions  services.PermissionEngine
-	Realtime     services.RealtimeService `optional:"true"`
+	Permissions  permissionports.PermissionEngine
+	Realtime     agentports.RealtimeService `optional:"true"`
 	// Days writes a page a person asked for again, on a worker.
-	Days    services.BriefingDayWriter
+	Days    briefingports.BriefingDayWriter
 	Sources briefingfacts.Sources
-	Plans   services.PlanService `optional:"true"`
+	Plans   platformplanports.PlanService `optional:"true"`
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.BriefingRepository
-	organization repositories.OrganizationRepository
+	repo         briefingports.BriefingRepository
+	organization tenantports.OrganizationRepository
 	facts        *briefingfacts.Builder
 	writer       *briefingwriter.Service
-	permissions  services.PermissionEngine
-	realtime     services.RealtimeService
-	days         services.BriefingDayWriter
-	plans        services.PlanService
+	permissions  permissionports.PermissionEngine
+	realtime     agentports.RealtimeService
+	days         briefingports.BriefingDayWriter
+	plans        platformplanports.PlanService
 	now          func() int64
 }
 
-var _ services.BriefingService = (*Service)(nil)
+var _ briefingports.BriefingService = (*Service)(nil)
 
 func New(p Params) *Service {
 	return &Service{
@@ -83,7 +86,7 @@ func New(p Params) *Service {
 	}
 }
 
-func AsService(s *Service) services.BriefingService { return s }
+func AsService(s *Service) briefingports.BriefingService { return s }
 
 // WriteForDay gathers the day once and writes every role's page from it.
 //
@@ -93,9 +96,9 @@ func AsService(s *Service) services.BriefingService { return s }
 // other if a number moved between them.
 func (s *Service) WriteForDay(
 	ctx context.Context,
-	req services.WriteBriefingRequest,
-) (*services.WriteBriefingResult, error) {
-	organization, err := s.organization.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+	req briefingports.WriteBriefingRequest,
+) (*briefingports.WriteBriefingResult, error) {
+	organization, err := s.organization.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: req.TenantInfo,
 	})
 	if err != nil {
@@ -128,7 +131,7 @@ func (s *Service) WriteForDay(
 		Timezone:   timezone,
 	})
 
-	result := &services.WriteBriefingResult{}
+	result := &briefingports.WriteBriefingResult{}
 	roles := req.Roles
 	if len(roles) == 0 {
 		roles = briefing.AllRoleKeys()
@@ -232,8 +235,8 @@ func (s *Service) writeRole(
 // simply not have run yet, and the caller says so.
 func (s *Service) Today(
 	ctx context.Context,
-	req services.GetBriefingRequest,
-	actor *services.RequestActor,
+	req briefingports.GetBriefingRequest,
+	actor *permissionports.RequestActor,
 ) (*briefing.Briefing, error) {
 	if err := s.assertMayRead(ctx, actor); err != nil {
 		return nil, err
@@ -248,7 +251,7 @@ func (s *Service) Today(
 		day = timeutils.CurrentDateInTimezone(location.String())
 	}
 
-	return s.repo.GetForDay(ctx, repositories.GetBriefingForDayRequest{
+	return s.repo.GetForDay(ctx, briefingports.GetBriefingForDayRequest{
 		TenantInfo:   req.TenantInfo,
 		RoleKey:      roleOrDefault(req.RoleKey),
 		BriefingDate: day,
@@ -259,25 +262,25 @@ func (s *Service) Get(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	id pulid.ID,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*briefing.Briefing, error) {
 	if err := s.assertMayRead(ctx, actor); err != nil {
 		return nil, err
 	}
 
-	return s.repo.GetByID(ctx, repositories.GetBriefingByIDRequest{ID: id, TenantInfo: tenant})
+	return s.repo.GetByID(ctx, briefingports.GetBriefingByIDRequest{ID: id, TenantInfo: tenant})
 }
 
 func (s *Service) List(
 	ctx context.Context,
-	req services.ListBriefingsRequest,
-	actor *services.RequestActor,
+	req briefingports.ListBriefingsRequest,
+	actor *permissionports.RequestActor,
 ) ([]*briefing.Briefing, error) {
 	if err := s.assertMayRead(ctx, actor); err != nil {
 		return nil, err
 	}
 
-	return s.repo.List(ctx, repositories.ListBriefingsRequest{
+	return s.repo.List(ctx, briefingports.ListBriefingsQuery{
 		TenantInfo: req.TenantInfo,
 		RoleKey:    req.RoleKey,
 		Limit:      req.Limit,
@@ -288,7 +291,7 @@ func (s *Service) MarkRead(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	id pulid.ID,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*briefing.Briefing, error) {
 	if err := s.assertMayRead(ctx, actor); err != nil {
 		return nil, err
@@ -296,7 +299,7 @@ func (s *Service) MarkRead(
 
 	return s.repo.MarkRead(
 		ctx,
-		repositories.GetBriefingByIDRequest{ID: id, TenantInfo: tenant},
+		briefingports.GetBriefingByIDRequest{ID: id, TenantInfo: tenant},
 		s.now(),
 	)
 }
@@ -306,8 +309,8 @@ func (s *Service) MarkRead(
 // call and replaces what a colleague may already have read.
 func (s *Service) Regenerate(
 	ctx context.Context,
-	req services.GetBriefingRequest,
-	actor *services.RequestActor,
+	req briefingports.GetBriefingRequest,
+	actor *permissionports.RequestActor,
 ) (*briefing.Briefing, error) {
 	if err := s.assertMay(ctx, actor, permission.OpCreate); err != nil {
 		return nil, err
@@ -322,7 +325,7 @@ func (s *Service) Regenerate(
 	}
 
 	role := roleOrDefault(req.RoleKey)
-	result, err := s.days.WriteForDay(ctx, services.WriteBriefingRequest{
+	result, err := s.days.WriteForDay(ctx, briefingports.WriteBriefingRequest{
 		TenantInfo:   req.TenantInfo,
 		Roles:        []briefing.RoleKey{role},
 		BriefingDate: req.BriefingDate,
@@ -337,20 +340,20 @@ func (s *Service) Regenerate(
 	return result.Briefings[0], nil
 }
 
-func (s *Service) assertMayRead(ctx context.Context, actor *services.RequestActor) error {
+func (s *Service) assertMayRead(ctx context.Context, actor *permissionports.RequestActor) error {
 	return s.assertMay(ctx, actor, permission.OpRead)
 }
 
 func (s *Service) assertMay(
 	ctx context.Context,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	operation permission.Operation,
 ) error {
 	if s.permissions == nil || actor == nil {
 		return nil
 	}
 
-	result, err := s.permissions.Check(ctx, &services.PermissionCheckRequest{
+	result, err := s.permissions.Check(ctx, &permissionports.PermissionCheckRequest{
 		PrincipalType:  actor.PrincipalType,
 		PrincipalID:    actor.PrincipalID,
 		UserID:         actor.UserID,

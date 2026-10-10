@@ -2,7 +2,6 @@ package compiler
 
 import (
 	"fmt"
-	"github.com/emoss08/trenova/shared/i18n"
 	"sort"
 	"strconv"
 	"strings"
@@ -10,10 +9,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/uptrace/bun"
 )
 
@@ -27,7 +27,7 @@ type emitter struct {
 	v      *validatedDef
 	plan   *joinPlan
 	az     *authzResult
-	req    *services.ReportCompileRequest
+	req    *reportports.ReportCompileRequest
 	loc    *time.Location
 	labels labeler
 }
@@ -38,7 +38,7 @@ type outputColumn struct {
 	pivotSuffix   string
 	explicitLabel bool
 	expr          sqlExpr
-	column        services.ReportResultColumn
+	column        reportports.ReportResultColumn
 	isDim         bool
 }
 
@@ -55,11 +55,11 @@ func requestLocation(orgTimezone string) (*time.Location, error) {
 
 func (c *Compiler) emit(
 	locale i18n.Locale,
-	req *services.ReportCompileRequest,
+	req *reportports.ReportCompileRequest,
 	v *validatedDef,
 	plan *joinPlan,
 	az *authzResult,
-) (*services.CompiledReportQuery, error) {
+) (*reportports.CompiledReportQuery, error) {
 	loc, err := requestLocation(req.OrgTimezone)
 	if err != nil {
 		return nil, err
@@ -266,8 +266,8 @@ func (c *Compiler) buildResult(
 	sql string,
 	args []any,
 	limit int,
-) *services.CompiledReportQuery {
-	columns := make([]services.ReportResultColumn, 0, len(outputs))
+) *reportports.CompiledReportQuery {
+	columns := make([]reportports.ReportResultColumn, 0, len(outputs))
 	for i := range outputs {
 		columns = append(columns, outputs[i].column)
 	}
@@ -293,7 +293,7 @@ func (c *Compiler) buildResult(
 	}
 	sort.Strings(tables)
 
-	return &services.CompiledReportQuery{
+	return &reportports.CompiledReportQuery{
 		SQL:                sql,
 		Args:               args,
 		Columns:            columns,

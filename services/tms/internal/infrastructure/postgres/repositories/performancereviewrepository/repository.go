@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -34,7 +34,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.PerformanceReviewRepository {
+func New(p Params) workerports.PerformanceReviewRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.performance-review-repository"),
@@ -59,7 +59,7 @@ func duplicateOpenReview() error {
 
 func (r *repository) applyTemplateFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListReviewTemplatesRequest,
+	req *workerports.ListReviewTemplatesRequest,
 ) *bun.SelectQuery {
 	if req.Status != "" {
 		q = q.Where(buncolgen.PerformanceReviewTemplateColumns.Status.Eq(), req.Status)
@@ -69,7 +69,7 @@ func (r *repository) applyTemplateFilters(
 
 func (r *repository) ListTemplates(
 	ctx context.Context,
-	req *repositories.ListReviewTemplatesRequest,
+	req *workerports.ListReviewTemplatesRequest,
 ) (*pagination.CursorListResult[*worker.PerformanceReviewTemplate], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*worker.PerformanceReviewTemplate], error) {
 		log := r.l.With(zap.String("operation", "ListTemplates"))
@@ -160,7 +160,7 @@ func (r *repository) ListActiveTemplates(
 
 func (r *repository) TemplateSelectOptions(
 	ctx context.Context,
-	req *repositories.ReviewTemplateSelectOptionsRequest,
+	req *workerports.ReviewTemplateSelectOptionsRequest,
 ) (*pagination.ListResult[*worker.PerformanceReviewTemplate], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*worker.PerformanceReviewTemplate], error) {
 		cols := buncolgen.PerformanceReviewTemplateColumns
@@ -199,7 +199,7 @@ func (r *repository) TemplateSelectOptions(
 
 func (r *repository) GetTemplateByID(
 	ctx context.Context,
-	req *repositories.GetReviewTemplateByIDRequest,
+	req *workerports.GetReviewTemplateByIDRequest,
 ) (*worker.PerformanceReviewTemplate, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.PerformanceReviewTemplate, error) {
 		entity := new(worker.PerformanceReviewTemplate)
@@ -221,7 +221,7 @@ func (r *repository) GetTemplateByID(
 
 func (r *repository) TemplateCodeExists(
 	ctx context.Context,
-	req *repositories.ReviewTemplateCodeExistsRequest,
+	req *workerports.ReviewTemplateCodeExistsRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
 		cols := buncolgen.PerformanceReviewTemplateColumns
@@ -325,7 +325,7 @@ func (r *repository) ClearDefaultTemplate(
 
 func (r *repository) CountReviewsByTemplate(
 	ctx context.Context,
-	req *repositories.CountReviewsByTemplateRequest,
+	req *workerports.CountReviewsByTemplateRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		cols := buncolgen.PerformanceReviewColumns
@@ -355,7 +355,7 @@ func (r *repository) CountReviewsByTemplate(
 
 func (r *repository) CountReviewsByTemplateIDs(
 	ctx context.Context,
-	req *repositories.CountReviewsByTemplateIDsRequest,
+	req *workerports.CountReviewsByTemplateIDsRequest,
 ) (map[pulid.ID]int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (map[pulid.ID]int, error) {
 		if len(req.TemplateIDs) == 0 {
@@ -391,7 +391,7 @@ func (r *repository) CountReviewsByTemplateIDs(
 // cannot do because it is always scoped to one worker.
 func (r *repository) CountReviews(
 	ctx context.Context,
-	req *repositories.CountPerformanceReviewsRequest,
+	req *workerports.CountPerformanceReviewsRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		cols := buncolgen.PerformanceReviewColumns
@@ -416,7 +416,7 @@ func (r *repository) CountReviews(
 
 func (r *repository) ListReviews(
 	ctx context.Context,
-	req *repositories.ListPerformanceReviewsRequest,
+	req *workerports.ListPerformanceReviewsRequest,
 ) ([]*worker.PerformanceReview, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.PerformanceReview, error) {
 		cols := buncolgen.PerformanceReviewColumns
@@ -452,7 +452,7 @@ func (r *repository) ListReviews(
 
 func (r *repository) GetReviewByID(
 	ctx context.Context,
-	req *repositories.GetPerformanceReviewByIDRequest,
+	req *workerports.GetPerformanceReviewByIDRequest,
 ) (*worker.PerformanceReview, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.PerformanceReview, error) {
 		entity := new(worker.PerformanceReview)
@@ -534,7 +534,7 @@ func (r *repository) UpdateReview(
 
 func (r *repository) DeleteReview(
 	ctx context.Context,
-	req *repositories.GetPerformanceReviewByIDRequest,
+	req *workerports.GetPerformanceReviewByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		results, err := r.db.DBForContext(ctx).

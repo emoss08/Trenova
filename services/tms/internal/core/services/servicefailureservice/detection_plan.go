@@ -7,8 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,8 +18,8 @@ import (
 
 func (s *service) PreviewEvaluateShipment(
 	ctx context.Context,
-	req *services.EvaluateShipmentServiceFailuresRequest,
-) (*services.ServiceFailureDetectionPlan, error) {
+	req *servicefailureports.EvaluateShipmentServiceFailuresRequest,
+) (*servicefailureports.ServiceFailureDetectionPlan, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
 	}
@@ -40,10 +41,10 @@ func (s *service) evaluationSource(
 	tenantInfo pagination.TenantInfo,
 	shipmentID pulid.ID,
 ) (*shipment.Shipment, *dispatchcontrol.DispatchControl, error) {
-	source, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	source, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         shipmentID,
 		TenantInfo: tenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -62,11 +63,11 @@ func (s *service) evaluationSource(
 func (s *service) planDetection(
 	ctx context.Context,
 	params evaluateShipmentParams,
-) (*services.ServiceFailureDetectionPlan, error) {
-	plan := &services.ServiceFailureDetectionPlan{
+) (*servicefailureports.ServiceFailureDetectionPlan, error) {
+	plan := &servicefailureports.ServiceFailureDetectionPlan{
 		Shipment:     params.source,
-		Detected:     make([]services.DetectedServiceFailure, 0),
-		SkippedStops: make([]services.ServiceFailureSkippedStop, 0),
+		Detected:     make([]servicefailureports.DetectedServiceFailure, 0),
+		SkippedStops: make([]servicefailureports.ServiceFailureSkippedStop, 0),
 	}
 	if params.source == nil {
 		return plan, nil
@@ -136,11 +137,11 @@ func (s *service) planDetection(
 func (s *service) planDetected(
 	ctx context.Context,
 	entity *servicefailure.ServiceFailure,
-) (services.DetectedServiceFailure, error) {
+) (servicefailureports.DetectedServiceFailure, error) {
 	tenantInfo := serviceFailureTenantInfo(entity)
 	defaultReason, err := s.defaultReasonCode(ctx, tenantInfo, entity.StopType)
 	if err != nil {
-		return services.DetectedServiceFailure{}, err
+		return servicefailureports.DetectedServiceFailure{}, err
 	}
 	if defaultReason != nil {
 		entity.ReasonCodeID = pulid.PtrOrNil(defaultReason.ID)
@@ -162,23 +163,23 @@ func (s *service) planDetected(
 			updated.ReasonCodeID = entity.ReasonCodeID
 			updated.Notes = entity.Notes
 		}
-		return services.DetectedServiceFailure{Failure: &updated, Existing: existing}, nil
+		return servicefailureports.DetectedServiceFailure{Failure: &updated, Existing: existing}, nil
 	case errortypes.IsNotFoundError(err):
 	default:
-		return services.DetectedServiceFailure{}, err
+		return servicefailureports.DetectedServiceFailure{}, err
 	}
 
 	if multiErr := validateServiceFailure(entity); multiErr != nil {
-		return services.DetectedServiceFailure{}, multiErr
+		return servicefailureports.DetectedServiceFailure{}, multiErr
 	}
 
-	return services.DetectedServiceFailure{Failure: entity}, nil
+	return servicefailureports.DetectedServiceFailure{Failure: entity}, nil
 }
 
 func (s *service) persistDetected(
 	ctx context.Context,
-	detected services.DetectedServiceFailure,
-	actor *services.RequestActor,
+	detected servicefailureports.DetectedServiceFailure,
+	actor *permissionports.RequestActor,
 ) (*servicefailure.ServiceFailure, error) {
 	if detected.Existing != nil {
 		return s.repo.UpdateDetectionSnapshot(ctx, detected.Failure)

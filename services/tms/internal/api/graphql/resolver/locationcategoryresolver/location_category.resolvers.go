@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/locationcategory"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationcategoryports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -38,7 +38,7 @@ func (r *QueryResolver) LocationCategories(ctx context.Context, input gqlmodel.D
 
 	result, err := r.LocationCategoryService.ListConnection(
 		ctx,
-		&repositories.ListLocationCategoryConnectionRequest{
+		&locationcategoryports.ListLocationCategoryConnectionRequest{
 			Filter:                  tableInput.Filter,
 			Cursor:                  tableInput.Cursor,
 			LocationCategoryColumns: locationCategoryColumns(ctx, "edges.node"),
@@ -62,7 +62,7 @@ func (r *QueryResolver) LocationCategory(ctx context.Context, id string) (*locat
 		return nil, err
 	}
 
-	return r.LocationCategoryService.Get(ctx, repositories.GetLocationCategoryByIDRequest{
+	return r.LocationCategoryService.Get(ctx, locationcategoryports.GetLocationCategoryByIDRequest{
 		ID:         locationCategoryID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})

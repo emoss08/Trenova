@@ -9,9 +9,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/shipmenttracking"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -19,7 +23,7 @@ import (
 
 const msPerMinute = 60_000
 
-func shipmentReader(tracking services.ShipmentTrackingReader) kindReader {
+func shipmentReader(tracking shipmentports.ShipmentTrackingReader) kindReader {
 	return func(ctx context.Context, read *kindRead) (map[pulid.ID]*agentdefinition.RuntimeAnchor, error) {
 		snapshots, err := tracking.TrackingSnapshots(ctx, read.tenant, read.ids, read.timezone)
 		if err != nil {
@@ -55,9 +59,9 @@ func anchorFact(fact shipmenttracking.Fact) agentdefinition.AnchorFact {
 	}
 }
 
-func invoiceReader(invoices repositories.InvoiceRepository) kindReader {
+func invoiceReader(invoices invoiceports.InvoiceRepository) kindReader {
 	return func(ctx context.Context, read *kindRead) (map[pulid.ID]*agentdefinition.RuntimeAnchor, error) {
-		found, err := invoices.GetByIDs(ctx, repositories.GetInvoicesByIDsRequest{
+		found, err := invoices.GetByIDs(ctx, invoiceports.GetInvoicesByIDsRequest{
 			TenantInfo: read.tenant,
 			InvoiceIDs: read.ids,
 		})
@@ -104,11 +108,11 @@ func invoiceFacts(entity *invoice.Invoice, read *kindRead) []agentdefinition.Anc
 }
 
 func tractorReader(
-	tractors repositories.TractorRepository,
-	telem repositories.TelematicsRepository,
+	tractors tractorports.TractorRepository,
+	telem telematicsports.TelematicsRepository,
 ) kindReader {
 	return func(ctx context.Context, read *kindRead) (map[pulid.ID]*agentdefinition.RuntimeAnchor, error) {
-		found, err := tractors.GetByIDs(ctx, repositories.GetTractorsByIDsRequest{
+		found, err := tractors.GetByIDs(ctx, tractorports.GetTractorsByIDsRequest{
 			TenantInfo: read.tenant,
 			TractorIDs: read.ids,
 		})
@@ -117,7 +121,7 @@ func tractorReader(
 		}
 		positions := map[pulid.ID]*telematics.VehiclePosition{}
 		if telem != nil {
-			listed, listErr := telem.ListVehiclePositions(ctx, &repositories.ListVehiclePositionsRequest{
+			listed, listErr := telem.ListVehiclePositions(ctx, &telematicsports.ListVehiclePositionsRequest{
 				TenantInfo: read.tenant,
 				TractorIDs: read.ids,
 			})
@@ -167,9 +171,9 @@ func positionFact(position *telematics.VehiclePosition, now int64) agentdefiniti
 	}
 }
 
-func trailerReader(trailers repositories.TrailerRepository) kindReader {
+func trailerReader(trailers trailerports.TrailerRepository) kindReader {
 	return func(ctx context.Context, read *kindRead) (map[pulid.ID]*agentdefinition.RuntimeAnchor, error) {
-		found, err := trailers.GetByIDs(ctx, repositories.GetTrailersByIDsRequest{
+		found, err := trailers.GetByIDs(ctx, trailerports.GetTrailersByIDsRequest{
 			TenantInfo: read.tenant,
 			TrailerIDs: read.ids,
 		})
@@ -192,9 +196,9 @@ func trailerReader(trailers repositories.TrailerRepository) kindReader {
 	}
 }
 
-func workerReader(telem repositories.TelematicsRepository) kindReader {
+func workerReader(telem telematicsports.TelematicsRepository) kindReader {
 	return func(ctx context.Context, read *kindRead) (map[pulid.ID]*agentdefinition.RuntimeAnchor, error) {
-		states, err := telem.ListWorkerHOSStates(ctx, &repositories.ListWorkerHOSStatesRequest{
+		states, err := telem.ListWorkerHOSStates(ctx, &telematicsports.ListWorkerHOSStatesRequest{
 			TenantInfo:    read.tenant,
 			WorkerIDs:     read.ids,
 			IncludeWorker: true,
@@ -252,13 +256,13 @@ func hoursFact(state *telematics.WorkerHOSState, now int64) agentdefinition.Anch
 }
 
 func detentionReader(
-	occurrences repositories.DetentionOccurrenceRepository,
+	occurrences detentionports.DetentionOccurrenceRepository,
 	pricer clockPricer,
 ) kindReader {
 	return func(ctx context.Context, read *kindRead) (map[pulid.ID]*agentdefinition.RuntimeAnchor, error) {
 		out := make(map[pulid.ID]*agentdefinition.RuntimeAnchor, len(read.ids))
 		for _, id := range read.ids {
-			occurrence, err := occurrences.GetByID(ctx, &repositories.GetDetentionOccurrenceByIDRequest{
+			occurrence, err := occurrences.GetByID(ctx, &detentionports.GetDetentionOccurrenceByIDRequest{
 				OccurrenceID: id,
 				TenantInfo:   read.tenant,
 			})

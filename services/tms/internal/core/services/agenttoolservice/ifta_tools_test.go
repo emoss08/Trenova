@@ -8,8 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/ifta"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/iftaservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -232,16 +233,16 @@ func (f *fakeIFTA) DeleteMileageEntry(
 
 type fakeMileRouter struct {
 	guard        *writeGuard
-	recalculated *serviceports.RecalculateMoveJurisdictionMilesRequest
-	backfills    []serviceports.BackfillJurisdictionMilesRequest
+	recalculated *shipmentports.RecalculateMoveJurisdictionMilesRequest
+	backfills    []shipmentports.BackfillJurisdictionMilesRequest
 	unattributed int
 }
 
 func (f *fakeMileRouter) PlanMoveJurisdictionMiles(
 	_ context.Context,
-	req *serviceports.RecalculateMoveJurisdictionMilesRequest,
-) (*serviceports.MoveJurisdictionMilesPlan, error) {
-	return &serviceports.MoveJurisdictionMilesPlan{Move: &shipment.ShipmentMove{
+	req *shipmentports.RecalculateMoveJurisdictionMilesRequest,
+) (*shipmentports.MoveJurisdictionMilesPlan, error) {
+	return &shipmentports.MoveJurisdictionMilesPlan{Move: &shipment.ShipmentMove{
 		ID:                req.ShipmentMoveID,
 		Stops:             []*shipment.Stop{{}, {}},
 		JurisdictionMiles: []*shipment.ShipmentMoveJurisdictionMile{{}, {}, {}},
@@ -250,7 +251,7 @@ func (f *fakeMileRouter) PlanMoveJurisdictionMiles(
 
 func (f *fakeMileRouter) RecalculateMoveJurisdictionMiles(
 	_ context.Context,
-	req serviceports.RecalculateMoveJurisdictionMilesRequest,
+	req shipmentports.RecalculateMoveJurisdictionMilesRequest,
 ) ([]*shipment.ShipmentMoveJurisdictionMile, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -262,8 +263,8 @@ func (f *fakeMileRouter) RecalculateMoveJurisdictionMiles(
 
 func (f *fakeMileRouter) BackfillJurisdictionMiles(
 	_ context.Context,
-	req serviceports.BackfillJurisdictionMilesRequest,
-) (*serviceports.BackfillJurisdictionMilesResult, error) {
+	req shipmentports.BackfillJurisdictionMilesRequest,
+) (*shipmentports.BackfillJurisdictionMilesResult, error) {
 	if !req.DryRun {
 		if err := f.guard.write(); err != nil {
 			return nil, err
@@ -271,7 +272,7 @@ func (f *fakeMileRouter) BackfillJurisdictionMiles(
 	}
 	f.backfills = append(f.backfills, req)
 
-	return &serviceports.BackfillJurisdictionMilesResult{
+	return &shipmentports.BackfillJurisdictionMilesResult{
 		DryRun:            req.DryRun,
 		Started:           !req.DryRun,
 		UnattributedMoves: f.unattributed,
@@ -287,7 +288,7 @@ func TestGenerateIFTAReturn_PreviewsTheDraftAndFilesNothing(t *testing.T) {
 	params := executeParams(map[string]any{paramYear: 2026, paramQuarter: 3})
 
 	preview := previewWithoutWrites(t, returns.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would generate the Q3 2026 IFTA return as a draft")
 	assert.Contains(t, preview.Summary, "net due 412.20 USD")
@@ -300,7 +301,7 @@ func TestGenerateIFTAReturn_PreviewsTheDraftAndFilesNothing(t *testing.T) {
 		"a fifth quarter": {paramYear: 2026, paramQuarter: 5},
 		"no year":         {paramQuarter: 1},
 	} {
-		require.Error(t, tool.(serviceports.ToolValidator).Validate(
+		require.Error(t, tool.(agentports.ToolValidator).Validate(
 			t.Context(),
 			executeParams(bad),
 		), name)
@@ -309,10 +310,10 @@ func TestGenerateIFTAReturn_PreviewsTheDraftAndFilesNothing(t *testing.T) {
 	blocked := newGenerateIFTAReturnTool(&fakeIFTA{refusal: errortypes.NewBusinessError(
 		"A return is already filed for the quarter",
 	)})
-	preview, err := blocked.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := blocked.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	requireWarning(t, preview, agent.PreviewWarningWouldFail)
-	require.Error(t, blocked.(serviceports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, blocked.(agentports.ToolValidator).Validate(t.Context(), params))
 }
 
 func TestIFTAReturnTools_ActOnTheVersionTheyRead(t *testing.T) {
@@ -323,7 +324,7 @@ func TestIFTAReturnTools_ActOnTheVersionTheyRead(t *testing.T) {
 
 	recompute := newRecomputeIFTAReturnTool(returns)
 	preview := previewWithoutWrites(t, returns.guard, func() (*agent.ToolPreview, error) {
-		return recompute.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return recompute.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, "48900.00",
 		fieldByPath(t, previewChange(t, preview, 0), "totalMiles").After)
@@ -333,13 +334,13 @@ func TestIFTAReturnTools_ActOnTheVersionTheyRead(t *testing.T) {
 
 	remove := newDeleteIFTAReturnTool(returns)
 	preview = previewWithoutWrites(t, returns.guard, func() (*agent.ToolPreview, error) {
-		return remove.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return remove.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, "Would delete the draft Q3 2026 IFTA return.", preview.Summary)
 	require.NoError(t, remove.Execute(t.Context(), params))
 	assert.Equal(t, returns.stored.Version, returns.deleted.Version)
 
-	target, ok := remove.(serviceports.TargetedTool).Target(params.Params)
+	target, ok := remove.(agentports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, permission.ResourceIFTAReturn, target.Resource)
 }
@@ -355,7 +356,7 @@ func TestAmendIFTAReturn_IsOnlyEverProposedWithAReason(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, returns.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would open amendment 1 of the filed Q3 2026 IFTA return")
 	assert.Contains(t, preview.Summary, "The filed return is not changed.")
@@ -365,7 +366,7 @@ func TestAmendIFTAReturn_IsOnlyEverProposedWithAReason(t *testing.T) {
 		returns.amended.Reason)
 	assert.Equal(t, agent.TierPropose, tool.Policy().MaxTier)
 
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), executeParams(
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), executeParams(
 		map[string]any{paramIFTAReturnID: returns.stored.ID.String()},
 	)))
 }
@@ -399,7 +400,7 @@ func TestIFTAMileageTools_RecordCorrectAndProposeDeletingMiles(t *testing.T) {
 		paramNotes:          "Trip sheet 4411",
 	})
 	preview := previewWithoutWrites(t, entries.guard, func() (*agent.ToolPreview, error) {
-		return record.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return record.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, "Would record 212.50 miles in TX (Texas), counted in Q3 2026.",
 		preview.Summary)
@@ -409,7 +410,7 @@ func TestIFTAMileageTools_RecordCorrectAndProposeDeletingMiles(t *testing.T) {
 	require.NotNil(t, record.Policy().TaintHold)
 
 	params.Params[paramMiles] = "-4"
-	require.Error(t, record.(serviceports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, record.(agentports.ToolValidator).Validate(t.Context(), params))
 
 	correct := newCorrectIFTAMileageEntryTool(entries)
 	fix := executeParams(map[string]any{
@@ -417,7 +418,7 @@ func TestIFTAMileageTools_RecordCorrectAndProposeDeletingMiles(t *testing.T) {
 		paramLoaded:             false,
 	})
 	preview = previewWithoutWrites(t, entries.guard, func() (*agent.ToolPreview, error) {
-		return correct.(serviceports.ToolPreviewer).Preview(t.Context(), fix)
+		return correct.(agentports.ToolPreviewer).Preview(t.Context(), fix)
 	})
 	assert.Equal(t, false, fieldByPath(t, previewChange(t, preview, 0), "loaded").After)
 	require.NoError(t, correct.Execute(t.Context(), fix))
@@ -428,7 +429,7 @@ func TestIFTAMileageTools_RecordCorrectAndProposeDeletingMiles(t *testing.T) {
 	remove := newDeleteIFTAMileageEntryTool(entries)
 	gone := executeParams(map[string]any{paramIFTAMileageEntryID: entries.entry.ID.String()})
 	preview = previewWithoutWrites(t, entries.guard, func() (*agent.ToolPreview, error) {
-		return remove.(serviceports.ToolPreviewer).Preview(t.Context(), gone)
+		return remove.(agentports.ToolPreviewer).Preview(t.Context(), gone)
 	})
 	assert.Equal(t, "Would delete the 212.50 miles in Q3 2026 driven in TX (Texas).",
 		preview.Summary)
@@ -446,7 +447,7 @@ func TestRecalculateMoveJurisdictionMiles_AsksAgainOnlyOnExecute(t *testing.T) {
 	params := executeParams(map[string]any{paramShipmentMoveID: moveID.String()})
 
 	preview := previewWithoutWrites(t, router.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "across 2 stops and replace its 3 jurisdiction rows")
 
@@ -463,7 +464,7 @@ func TestBackfillJurisdictionMiles_PreviewsWithADryRunAndStartsOnExecute(t *test
 	params := executeParams(map[string]any{paramYear: 2026, paramQuarter: 3, paramMaxMoves: 50})
 
 	preview := previewWithoutWrites(t, router.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would start routing 14 completed moves in Q3 2026")
 	require.Len(t, router.backfills, 1)
@@ -476,11 +477,11 @@ func TestBackfillJurisdictionMiles_PreviewsWithADryRunAndStartsOnExecute(t *test
 	assert.False(t, router.backfills[1].DryRun)
 
 	settled := newBackfillJurisdictionMilesTool(&fakeIFTA{}, &fakeMileRouter{})
-	preview, err := settled.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := settled.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	assert.Contains(t, preview.Summary, "nothing would be routed")
 
 	params.Params[paramMaxMoves] = maxBackfillMoves + 1
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
 	assert.Equal(t, permission.OpManage, tool.Policy().Operation)
 }

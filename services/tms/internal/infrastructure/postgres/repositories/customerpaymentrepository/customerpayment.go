@@ -6,9 +6,10 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -33,13 +34,13 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.CustomerPaymentRepository {
+func New(p Params) customerpaymentports.CustomerPaymentRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.customer-payment-repository")}
 }
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListCustomerPaymentsRequest,
+	req *customerpaymentports.ListCustomerPaymentsRequest,
 ) (*pagination.ListResult[*customerpayment.Payment], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*customerpayment.Payment], error) {
 		limit := req.Filter.Pagination.SafeLimit()
@@ -82,7 +83,7 @@ func (r *repository) List(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListCustomerPaymentConnectionRequest,
+	req *customerpaymentports.ListCustomerPaymentConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -95,7 +96,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListCustomerPaymentConnectionRequest,
+	req *customerpaymentports.ListCustomerPaymentConnectionRequest,
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -107,7 +108,7 @@ func (r *repository) applyTotalCountFilters(
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListCustomerPaymentConnectionRequest,
+	req *customerpaymentports.ListCustomerPaymentConnectionRequest,
 ) (*pagination.CursorListResult[*customerpayment.Payment], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*customerpayment.Payment], error) {
 		log := r.l.With(
@@ -159,7 +160,7 @@ func (r *repository) ListConnection(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetCustomerPaymentByIDRequest,
+	req customerpaymentports.GetCustomerPaymentByIDRequest,
 ) (*customerpayment.Payment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*customerpayment.Payment, error) {
 		entity := new(customerpayment.Payment)
@@ -180,7 +181,7 @@ func (r *repository) GetByID(
 
 func (r *repository) FindMatchCandidates(
 	ctx context.Context,
-	req repositories.FindCustomerPaymentMatchCandidatesRequest,
+	req customerpaymentports.FindCustomerPaymentMatchCandidatesRequest,
 ) ([]*customerpayment.Payment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*customerpayment.Payment, error) {
 		items := make([]*customerpayment.Payment, 0)
@@ -204,7 +205,7 @@ func (r *repository) FindMatchCandidates(
 
 func (r *repository) FindSuggestedMatchCandidates(
 	ctx context.Context,
-	req repositories.FindCustomerPaymentMatchCandidatesRequest,
+	req customerpaymentports.FindCustomerPaymentMatchCandidatesRequest,
 ) ([]*customerpayment.Payment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*customerpayment.Payment, error) {
 		items := make([]*customerpayment.Payment, 0)
@@ -262,7 +263,7 @@ func (r *repository) Create(
 		}
 		return r.GetByID(
 			ctx,
-			repositories.GetCustomerPaymentByIDRequest{
+			customerpaymentports.GetCustomerPaymentByIDRequest{
 				ID: entity.ID,
 				TenantInfo: pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
@@ -325,7 +326,7 @@ func (r *repository) Update(
 		}
 		return r.GetByID(
 			ctx,
-			repositories.GetCustomerPaymentByIDRequest{
+			customerpaymentports.GetCustomerPaymentByIDRequest{
 				ID: entity.ID,
 				TenantInfo: pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
@@ -354,11 +355,11 @@ func assignApplicationFields(entity *customerpayment.Payment) {
 // briefing's cash line.
 func (r *repository) SumReceived(
 	ctx context.Context,
-	req repositories.SumPaymentsReceivedRequest,
-) ([]*repositories.PaymentsReceived, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.PaymentsReceived, error) {
+	req customerpaymentports.SumPaymentsReceivedRequest,
+) ([]*customerpaymentports.PaymentsReceived, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*customerpaymentports.PaymentsReceived, error) {
 		cols := buncolgen.PaymentColumns
-		rows := make([]*repositories.PaymentsReceived, 0, 4)
+		rows := make([]*customerpaymentports.PaymentsReceived, 0, 4)
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -386,7 +387,7 @@ func (r *repository) SumReceived(
 
 func (r *repository) StampExchangeRate(
 	ctx context.Context,
-	req *repositories.StampExchangeRateRequest,
+	req *kernelports.StampExchangeRateRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.PaymentColumns

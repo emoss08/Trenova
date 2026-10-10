@@ -10,11 +10,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/carrierservice"
 	"github.com/emoss08/trenova/internal/core/services/customerservice"
 	"github.com/emoss08/trenova/internal/core/services/locationservice"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/bulkeditports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -36,12 +39,12 @@ var (
 type EditorResult struct {
 	fx.Out
 
-	Editor services.BulkEditor `group:"bulk_editors"`
+	Editor bulkeditports.BulkEditor `group:"bulk_editors"`
 }
 
 type statusEditor[S ~string] struct {
 	resource permission.Resource
-	options  []services.BulkEditOption
+	options  []bulkeditports.BulkEditOption
 	valid    func(S) bool
 	load     func(ctx context.Context, tenant pagination.TenantInfo, ids []pulid.ID) (map[pulid.ID]S, error)
 	apply    func(ctx context.Context, tenant pagination.TenantInfo, ids []pulid.ID, status S) error
@@ -51,19 +54,19 @@ func (e *statusEditor[S]) Resource() permission.Resource {
 	return e.resource
 }
 
-func (e *statusEditor[S]) Fields() []services.BulkEditField {
-	return []services.BulkEditField{{
+func (e *statusEditor[S]) Fields() []bulkeditports.BulkEditField {
+	return []bulkeditports.BulkEditField{{
 		Name:    statusField,
 		Label:   "Status",
-		Kind:    services.BulkEditFieldSelect,
+		Kind:    bulkeditports.BulkEditFieldSelect,
 		Options: e.options,
 	}}
 }
 
 func (e *statusEditor[S]) Apply(
 	ctx context.Context,
-	req *services.BulkEditApplyRequest,
-) ([]services.BulkEditOutcome, error) {
+	req *bulkeditports.BulkEditApplyRequest,
+) ([]bulkeditports.BulkEditOutcome, error) {
 	if req.Field != statusField {
 		return nil, ErrUnknownField
 	}
@@ -81,17 +84,17 @@ func (e *statusEditor[S]) Apply(
 		return nil, err
 	}
 
-	outcomes := make([]services.BulkEditOutcome, 0, len(req.IDs))
+	outcomes := make([]bulkeditports.BulkEditOutcome, 0, len(req.IDs))
 	toChange := make([]pulid.ID, 0, len(req.IDs))
 	for _, id := range req.IDs {
 		previous, found := current[id]
 		switch {
 		case !found:
-			outcomes = append(outcomes, services.BulkEditOutcome{ID: id, Err: ErrRecordNotFound})
+			outcomes = append(outcomes, bulkeditports.BulkEditOutcome{ID: id, Err: ErrRecordNotFound})
 		case previous == status:
 			outcomes = append(
 				outcomes,
-				services.BulkEditOutcome{ID: id, Previous: string(previous)},
+				bulkeditports.BulkEditOutcome{ID: id, Previous: string(previous)},
 			)
 		default:
 			toChange = append(toChange, id)
@@ -102,7 +105,7 @@ func (e *statusEditor[S]) Apply(
 		chunk := toChange[start:min(start+applyChunk, len(toChange))]
 		applyErr := e.apply(ctx, req.TenantInfo, chunk, status)
 		for _, id := range chunk {
-			outcome := services.BulkEditOutcome{ID: id, Previous: string(current[id])}
+			outcome := bulkeditports.BulkEditOutcome{ID: id, Previous: string(current[id])}
 			if applyErr != nil {
 				outcome.Err = applyErr
 			} else {
@@ -115,8 +118,8 @@ func (e *statusEditor[S]) Apply(
 	return outcomes, nil
 }
 
-func activeInactiveOptions() []services.BulkEditOption {
-	return []services.BulkEditOption{
+func activeInactiveOptions() []bulkeditports.BulkEditOption {
+	return []bulkeditports.BulkEditOption{
 		{Value: string(domaintypes.StatusActive), Label: "Active"},
 		{Value: string(domaintypes.StatusInactive), Label: "Inactive"},
 	}
@@ -125,7 +128,7 @@ func activeInactiveOptions() []services.BulkEditOption {
 type CustomerEditorParams struct {
 	fx.In
 
-	Repo    repositories.CustomerRepository
+	Repo    customerports.CustomerRepository
 	Service *customerservice.Service
 }
 
@@ -139,7 +142,7 @@ func NewCustomerEditor(p CustomerEditorParams) EditorResult {
 			tenant pagination.TenantInfo,
 			ids []pulid.ID,
 		) (map[pulid.ID]domaintypes.Status, error) {
-			found, err := p.Repo.GetByIDs(ctx, repositories.GetCustomersByIDsRequest{
+			found, err := p.Repo.GetByIDs(ctx, customerports.GetCustomersByIDsRequest{
 				TenantInfo:  tenant,
 				CustomerIDs: ids,
 			})
@@ -159,7 +162,7 @@ func NewCustomerEditor(p CustomerEditorParams) EditorResult {
 			ids []pulid.ID,
 			status domaintypes.Status,
 		) error {
-			_, err := p.Service.BulkUpdateStatus(ctx, &repositories.BulkUpdateCustomerStatusRequest{
+			_, err := p.Service.BulkUpdateStatus(ctx, &customerports.BulkUpdateCustomerStatusRequest{
 				TenantInfo:  tenant,
 				CustomerIDs: ids,
 				Status:      status,
@@ -172,7 +175,7 @@ func NewCustomerEditor(p CustomerEditorParams) EditorResult {
 type LocationEditorParams struct {
 	fx.In
 
-	Repo    repositories.LocationRepository
+	Repo    locationports.LocationRepository
 	Service *locationservice.Service
 }
 
@@ -186,7 +189,7 @@ func NewLocationEditor(p LocationEditorParams) EditorResult {
 			tenant pagination.TenantInfo,
 			ids []pulid.ID,
 		) (map[pulid.ID]domaintypes.Status, error) {
-			found, err := p.Repo.GetByIDs(ctx, repositories.GetLocationsByIDsRequest{
+			found, err := p.Repo.GetByIDs(ctx, locationports.GetLocationsByIDsRequest{
 				TenantInfo:  tenant,
 				LocationIDs: ids,
 			})
@@ -206,7 +209,7 @@ func NewLocationEditor(p LocationEditorParams) EditorResult {
 			ids []pulid.ID,
 			status domaintypes.Status,
 		) error {
-			_, err := p.Service.BulkUpdateStatus(ctx, &repositories.BulkUpdateLocationStatusRequest{
+			_, err := p.Service.BulkUpdateStatus(ctx, &locationports.BulkUpdateLocationStatusRequest{
 				TenantInfo:  tenant,
 				LocationIDs: ids,
 				Status:      status,
@@ -219,14 +222,14 @@ func NewLocationEditor(p LocationEditorParams) EditorResult {
 type CarrierEditorParams struct {
 	fx.In
 
-	Repo    repositories.CarrierRepository
+	Repo    carrierports.CarrierRepository
 	Service *carrierservice.Service
 }
 
 func NewCarrierEditor(p CarrierEditorParams) EditorResult {
 	return EditorResult{Editor: &statusEditor[carrier.Status]{
 		resource: permission.ResourceCarrier,
-		options: []services.BulkEditOption{
+		options: []bulkeditports.BulkEditOption{
 			{Value: string(carrier.StatusActive), Label: "Active"},
 			{Value: string(carrier.StatusInactive), Label: "Inactive"},
 			{Value: string(carrier.StatusDoNotUse), Label: "Do not use"},
@@ -237,7 +240,7 @@ func NewCarrierEditor(p CarrierEditorParams) EditorResult {
 			tenant pagination.TenantInfo,
 			ids []pulid.ID,
 		) (map[pulid.ID]carrier.Status, error) {
-			found, err := p.Repo.GetByIDs(ctx, repositories.GetCarriersByIDsRequest{
+			found, err := p.Repo.GetByIDs(ctx, carrierports.GetCarriersByIDsRequest{
 				TenantInfo: tenant,
 				CarrierIDs: ids,
 			})
@@ -254,7 +257,7 @@ func NewCarrierEditor(p CarrierEditorParams) EditorResult {
 			ids []pulid.ID,
 			status carrier.Status,
 		) error {
-			_, err := p.Service.BulkUpdateStatus(ctx, &repositories.BulkUpdateCarrierStatusRequest{
+			_, err := p.Service.BulkUpdateStatus(ctx, &carrierports.BulkUpdateCarrierStatusRequest{
 				TenantInfo: tenant,
 				CarrierIDs: ids,
 				Status:     status,
@@ -276,13 +279,13 @@ func statusesByID[T any, S ~string](entities []T, read func(T) (pulid.ID, S)) ma
 type ShipmentEditorParams struct {
 	fx.In
 
-	Repo    repositories.ShipmentRepository
-	Service services.ShipmentService
+	Repo    shipmentports.ShipmentRepository
+	Service shipmentports.ShipmentService
 }
 
 type shipmentEditor struct {
-	repo    repositories.ShipmentRepository
-	service services.ShipmentService
+	repo    shipmentports.ShipmentRepository
+	service shipmentports.ShipmentService
 }
 
 func NewShipmentEditor(p ShipmentEditorParams) EditorResult {
@@ -293,19 +296,19 @@ func (e *shipmentEditor) Resource() permission.Resource {
 	return permission.ResourceShipment
 }
 
-func (e *shipmentEditor) Fields() []services.BulkEditField {
-	return []services.BulkEditField{{
+func (e *shipmentEditor) Fields() []bulkeditports.BulkEditField {
+	return []bulkeditports.BulkEditField{{
 		Name:   ownerField,
 		Label:  "Owner",
-		Kind:   services.BulkEditFieldRecord,
+		Kind:   bulkeditports.BulkEditFieldRecord,
 		Record: "USER",
 	}}
 }
 
 func (e *shipmentEditor) Apply(
 	ctx context.Context,
-	req *services.BulkEditApplyRequest,
-) ([]services.BulkEditOutcome, error) {
+	req *bulkeditports.BulkEditApplyRequest,
+) ([]bulkeditports.BulkEditOutcome, error) {
 	if req.Field != ownerField {
 		return nil, ErrUnknownField
 	}
@@ -318,7 +321,7 @@ func (e *shipmentEditor) Apply(
 		)
 	}
 
-	found, err := e.repo.GetByIDs(ctx, &repositories.GetShipmentsByIDsRequest{
+	found, err := e.repo.GetByIDs(ctx, &shipmentports.GetShipmentsByIDsRequest{
 		TenantInfo:  req.TenantInfo,
 		ShipmentIDs: req.IDs,
 	})
@@ -330,25 +333,25 @@ func (e *shipmentEditor) Apply(
 		byID[entity.ID] = entity
 	}
 
-	outcomes := make([]services.BulkEditOutcome, 0, len(req.IDs))
+	outcomes := make([]bulkeditports.BulkEditOutcome, 0, len(req.IDs))
 	for _, id := range req.IDs {
 		entity, ok := byID[id]
 		if !ok {
-			outcomes = append(outcomes, services.BulkEditOutcome{ID: id, Err: ErrRecordNotFound})
+			outcomes = append(outcomes, bulkeditports.BulkEditOutcome{ID: id, Err: ErrRecordNotFound})
 			continue
 		}
 		previous := entity.OwnerID.String()
 		if entity.OwnerID == ownerID {
-			outcomes = append(outcomes, services.BulkEditOutcome{ID: id, Previous: previous})
+			outcomes = append(outcomes, bulkeditports.BulkEditOutcome{ID: id, Previous: previous})
 			continue
 		}
 
-		_, transferErr := e.service.TransferOwnership(ctx, &repositories.TransferOwnershipRequest{
+		_, transferErr := e.service.TransferOwnership(ctx, &shipmentports.TransferOwnershipRequest{
 			TenantInfo: req.TenantInfo,
 			ShipmentID: id,
 			OwnerID:    ownerID,
 		}, req.Actor)
-		outcomes = append(outcomes, services.BulkEditOutcome{
+		outcomes = append(outcomes, bulkeditports.BulkEditOutcome{
 			ID:       id,
 			Previous: previous,
 			Changed:  transferErr == nil,

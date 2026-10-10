@@ -4,7 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"
 )
@@ -12,7 +12,7 @@ import (
 func assignMoveToCarrierRequestFromInput(
 	input *gqlmodel.DispatchAssignMoveToCarrierInput,
 	tenant pagination.TenantInfo,
-) (*repositories.AssignMoveToCarrierRequest, error) {
+) (*shipmentports.AssignMoveToCarrierRequest, error) {
 	moveID, err := parseDispatchID(
 		input.MoveID,
 		"moveId",
@@ -44,7 +44,7 @@ func assignMoveToCarrierRequestFromInput(
 		}
 	}
 
-	accessorials := make([]repositories.CarrierAccessorialInput, 0, len(input.Accessorials))
+	accessorials := make([]shipmentports.CarrierAccessorialInput, 0, len(input.Accessorials))
 	for _, acc := range input.Accessorials {
 		if acc == nil {
 			continue
@@ -55,7 +55,7 @@ func assignMoveToCarrierRequestFromInput(
 			return nil, accErr
 		}
 
-		item := repositories.CarrierAccessorialInput{
+		item := shipmentports.CarrierAccessorialInput{
 			Description: acc.Description,
 			Amount:      amount,
 		}
@@ -73,7 +73,7 @@ func assignMoveToCarrierRequestFromInput(
 		accessorials = append(accessorials, item)
 	}
 
-	return &repositories.AssignMoveToCarrierRequest{
+	return &shipmentports.AssignMoveToCarrierRequest{
 		TenantInfo:               tenant,
 		ShipmentMoveID:           moveID,
 		CarrierID:                carrierID,

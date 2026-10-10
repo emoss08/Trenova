@@ -1,14 +1,22 @@
 package carriersettlementservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/carriersettlementportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,21 +28,21 @@ import (
 )
 
 type autoMatchDeps struct {
-	assignments *mocks.MockCarrierAssignmentRepository
-	matches     *mocks.MockCarrierInvoiceMatchRepository
-	control     *mocks.MockCarrierSettlementControlRepository
-	invoices    *mocks.MockEDICarrierInvoiceRepository
-	audit       *mocks.MockAuditService
+	assignments *shipmentportsmock.MockCarrierAssignmentRepository
+	matches     *carriersettlementportsmock.MockCarrierInvoiceMatchRepository
+	control     *tenantportsmock.MockCarrierSettlementControlRepository
+	invoices    *ediportsmock.MockEDICarrierInvoiceRepository
+	audit       *auditportsmock.MockAuditService
 	svc         *Service
 }
 
 func setupAutoMatchTest(t *testing.T) *autoMatchDeps {
 	t.Helper()
-	assignments := mocks.NewMockCarrierAssignmentRepository(t)
-	matches := mocks.NewMockCarrierInvoiceMatchRepository(t)
-	control := mocks.NewMockCarrierSettlementControlRepository(t)
-	invoices := mocks.NewMockEDICarrierInvoiceRepository(t)
-	audit := mocks.NewMockAuditService(t)
+	assignments := shipmentportsmock.NewMockCarrierAssignmentRepository(t)
+	matches := carriersettlementportsmock.NewMockCarrierInvoiceMatchRepository(t)
+	control := tenantportsmock.NewMockCarrierSettlementControlRepository(t)
+	invoices := ediportsmock.NewMockEDICarrierInvoiceRepository(t)
+	audit := auditportsmock.NewMockAuditService(t)
 	expectNoDuplicateMatches(matches)
 	svc := &Service{
 		l:                 zap.NewNop(),
@@ -91,7 +99,7 @@ func (deps *autoMatchDeps) expectInvoiceLoad(
 	deps.invoices.On(
 		"GetCarrierInvoiceByID",
 		mock.Anything,
-		repositories.GetEDICarrierInvoiceByIDRequest{ID: invoice.ID, TenantInfo: tenantInfo},
+		ediports.GetEDICarrierInvoiceByIDRequest{ID: invoice.ID, TenantInfo: tenantInfo},
 	).Return(invoice, nil)
 }
 
@@ -120,7 +128,7 @@ func TestAutoMatchDisabledNoOps(t *testing.T) {
 
 	result, err := deps.svc.AutoMatchInboundInvoice(
 		t.Context(),
-		&serviceports.AutoMatchInboundInvoiceRequest{
+		&carrierports.AutoMatchInboundInvoiceRequest{
 			TenantInfo:          tenantInfo,
 			EDICarrierInvoiceID: invoiceID,
 		},
@@ -149,7 +157,7 @@ func TestAutoMatchIdempotentOnReprocess(t *testing.T) {
 
 	result, err := deps.svc.AutoMatchInboundInvoice(
 		t.Context(),
-		&serviceports.AutoMatchInboundInvoiceRequest{
+		&carrierports.AutoMatchInboundInvoiceRequest{
 			TenantInfo:          tenantInfo,
 			EDICarrierInvoiceID: invoiceID,
 		},
@@ -174,7 +182,7 @@ func TestAutoMatchWithinToleranceCreatesMatched(t *testing.T) {
 	deps.assignments.On(
 		"FindForMatching",
 		mock.Anything,
-		&repositories.FindCarrierAssignmentForMatchingRequest{
+		&shipmentports.FindCarrierAssignmentForMatchingRequest{
 			TenantInfo: tenantInfo,
 			CarrierID:  invoice.CarrierID,
 			ProNumber:  invoice.ProNumber,
@@ -183,9 +191,9 @@ func TestAutoMatchWithinToleranceCreatesMatched(t *testing.T) {
 	).Return(assignment, nil)
 	created := deps.expectMatchCreate()
 
-	var auditParams []*serviceports.LogActionParams
+	var auditParams []*auditports.LogActionParams
 	deps.audit.EXPECT().LogAction(mock.Anything, mock.Anything).
-		Run(func(params *serviceports.LogActionParams, _ ...serviceports.LogOption) {
+		Run(func(params *auditports.LogActionParams, _ ...auditports.LogOption) {
 			auditParams = append(auditParams, params)
 		}).
 		Return(nil)
@@ -198,7 +206,7 @@ func TestAutoMatchWithinToleranceCreatesMatched(t *testing.T) {
 
 	result, err := deps.svc.AutoMatchInboundInvoice(
 		t.Context(),
-		&serviceports.AutoMatchInboundInvoiceRequest{
+		&carrierports.AutoMatchInboundInvoiceRequest{
 			TenantInfo:          tenantInfo,
 			EDICarrierInvoiceID: invoice.ID,
 		},
@@ -222,8 +230,8 @@ func TestAutoMatchWithinToleranceCreatesMatched(t *testing.T) {
 	assert.True(t, match.ResolvedByID.IsNil())
 
 	require.Len(t, auditParams, 1)
-	assert.Equal(t, serviceports.PrincipalTypeSystem, auditParams[0].PrincipalType)
-	assert.Equal(t, serviceports.SystemPrincipalID, auditParams[0].PrincipalID)
+	assert.Equal(t, permissionports.PrincipalTypeSystem, auditParams[0].PrincipalType)
+	assert.Equal(t, permissionports.SystemPrincipalID, auditParams[0].PrincipalID)
 	assert.True(t, auditParams[0].UserID.IsNil())
 
 	require.NotNil(t, syncedInvoice)
@@ -262,7 +270,7 @@ func TestAutoMatchWithinToleranceAutoAccepts(t *testing.T) {
 
 	result, err := deps.svc.AutoMatchInboundInvoice(
 		t.Context(),
-		&serviceports.AutoMatchInboundInvoiceRequest{
+		&carrierports.AutoMatchInboundInvoiceRequest{
 			TenantInfo:          tenantInfo,
 			EDICarrierInvoiceID: invoice.ID,
 		},
@@ -302,7 +310,7 @@ func TestAutoMatchOutsideToleranceCreatesVariance(t *testing.T) {
 
 	result, err := deps.svc.AutoMatchInboundInvoice(
 		t.Context(),
-		&serviceports.AutoMatchInboundInvoiceRequest{
+		&carrierports.AutoMatchInboundInvoiceRequest{
 			TenantInfo:          tenantInfo,
 			EDICarrierInvoiceID: invoice.ID,
 		},
@@ -336,7 +344,7 @@ func TestAutoMatchMissingCarrierSkipsWithWarning(t *testing.T) {
 
 	result, err := deps.svc.AutoMatchInboundInvoice(
 		t.Context(),
-		&serviceports.AutoMatchInboundInvoiceRequest{
+		&carrierports.AutoMatchInboundInvoiceRequest{
 			TenantInfo:          tenantInfo,
 			EDICarrierInvoiceID: invoice.ID,
 		},
@@ -360,7 +368,7 @@ func TestAutoMatchMissingTotalSkipsWithWarning(t *testing.T) {
 
 	result, err := deps.svc.AutoMatchInboundInvoice(
 		t.Context(),
-		&serviceports.AutoMatchInboundInvoiceRequest{
+		&carrierports.AutoMatchInboundInvoiceRequest{
 			TenantInfo:          tenantInfo,
 			EDICarrierInvoiceID: invoice.ID,
 		},
@@ -384,7 +392,7 @@ func TestAutoMatchMissingAssignmentSkipsWithWarning(t *testing.T) {
 
 	result, err := deps.svc.AutoMatchInboundInvoice(
 		t.Context(),
-		&serviceports.AutoMatchInboundInvoiceRequest{
+		&carrierports.AutoMatchInboundInvoiceRequest{
 			TenantInfo:          tenantInfo,
 			EDICarrierInvoiceID: invoice.ID,
 		},
@@ -409,7 +417,7 @@ func TestAutoMatchMissingReferencesSkipsWithWarning(t *testing.T) {
 
 	result, err := deps.svc.AutoMatchInboundInvoice(
 		t.Context(),
-		&serviceports.AutoMatchInboundInvoiceRequest{
+		&carrierports.AutoMatchInboundInvoiceRequest{
 			TenantInfo:          tenantInfo,
 			EDICarrierInvoiceID: invoice.ID,
 		},

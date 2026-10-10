@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/ifta"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -43,7 +43,7 @@ func withoutSort(filter *pagination.QueryOptions) *pagination.QueryOptions {
 
 func (r *repository) applyTaxRateFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListTaxRatesRequest,
+	req *iftaports.ListTaxRatesRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.TaxRateColumns
 	if req.Year > 0 {
@@ -63,7 +63,7 @@ func (r *repository) applyTaxRateFilters(
 
 func (r *repository) ListTaxRates(
 	ctx context.Context,
-	req *repositories.ListTaxRatesRequest,
+	req *iftaports.ListTaxRatesRequest,
 ) (*pagination.CursorListResult[*ifta.TaxRate], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*ifta.TaxRate], error) {
 		dba := r.db.DBForContext(ctx)
@@ -208,7 +208,7 @@ func (r *repository) DeleteTaxRate(ctx context.Context, id pulid.ID, version int
 
 func (r *repository) ResolveRates(
 	ctx context.Context,
-	req *repositories.ResolveRatesRequest,
+	req *iftaports.ResolveRatesRequest,
 ) (map[ifta.RateKey]*ifta.TaxRate, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[ifta.RateKey]*ifta.TaxRate, error) {
 		cols := buncolgen.TaxRateColumns

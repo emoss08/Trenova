@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -66,7 +66,7 @@ func TestMemoryReaders_ScopeAMemoryKeptForOneAgentToThatAgent(t *testing.T) {
 	require.NoError(t, err)
 
 	read := func(agentID pulid.ID) []pulid.ID {
-		listed, listErr := repo.ListActive(ctx, repositories.ListActiveAgentMemoriesRequest{
+		listed, listErr := repo.ListActive(ctx, agentports.ListActiveAgentMemoriesRequest{
 			TenantInfo:        tenant,
 			AgentDefinitionID: agentID,
 			Now:               now,
@@ -85,7 +85,7 @@ func TestMemoryReaders_ScopeAMemoryKeptForOneAgentToThatAgent(t *testing.T) {
 	assert.ElementsMatch(t, []pulid.ID{organization.ID, written.ID}, read(pulid.Nil),
 		"a prompt for no agent in particular reads only the organization's")
 
-	recalled, err := repo.Search(ctx, repositories.SearchAgentMemoriesRequest{
+	recalled, err := repo.Search(ctx, agentports.SearchAgentMemoriesRequest{
 		TenantInfo:        tenant,
 		AgentDefinitionID: dispatch,
 		Now:               now,
@@ -93,7 +93,7 @@ func TestMemoryReaders_ScopeAMemoryKeptForOneAgentToThatAgent(t *testing.T) {
 	require.NoError(t, err)
 	assert.ElementsMatch(t, []pulid.ID{organization.ID, written.ID}, memoryIDs(recalled))
 
-	stored, err := repo.GetByID(ctx, repositories.GetAgentMemoryByIDRequest{
+	stored, err := repo.GetByID(ctx, agentports.GetAgentMemoryByIDRequest{
 		ID:         written.ID,
 		TenantInfo: tenant,
 	})
@@ -116,7 +116,7 @@ func TestResolveSuggestion_ApprovesForTheScopeAsked(t *testing.T) {
 		require.NoError(t, err)
 
 		resolved, err := repo.ResolveSuggestion(ctx,
-			repositories.ResolveAgentMemorySuggestionRequest{
+			agentports.ResolveAgentMemorySuggestionRequest{
 				ID:         created.ID,
 				TenantInfo: tenant,
 				Status:     agent.MemoryStatusActive,

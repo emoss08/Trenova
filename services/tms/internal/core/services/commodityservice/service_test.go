@@ -1,11 +1,14 @@
 package commodityservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/commodityportsmock"
 	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -27,17 +30,17 @@ func newTestValidator() *Validator {
 }
 
 type testDeps struct {
-	repo        *mocks.MockCommodityRepository
-	audit       *mocks.MockAuditService
-	transformer *mocks.MockDataTransformer
+	repo        *commodityportsmock.MockCommodityRepository
+	audit       *auditportsmock.MockAuditService
+	transformer *accessorialchargeportsmock.MockDataTransformer
 	svc         *Service
 }
 
 func setupTest(t *testing.T) *testDeps {
 	t.Helper()
-	repo := mocks.NewMockCommodityRepository(t)
-	auditSvc := mocks.NewMockAuditService(t)
-	transformer := mocks.NewMockDataTransformer(t)
+	repo := commodityportsmock.NewMockCommodityRepository(t)
+	auditSvc := auditportsmock.NewMockAuditService(t)
+	transformer := accessorialchargeportsmock.NewMockDataTransformer(t)
 	svc := &Service{
 		l:            zap.NewNop(),
 		repo:         repo,
@@ -73,9 +76,9 @@ func newCreateEntity() *commodity.Commodity {
 func TestNew(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockCommodityRepository(t)
-	auditSvc := mocks.NewMockAuditService(t)
-	transformer := mocks.NewMockDataTransformer(t)
+	repo := commodityportsmock.NewMockCommodityRepository(t)
+	auditSvc := auditportsmock.NewMockAuditService(t)
+	transformer := accessorialchargeportsmock.NewMockDataTransformer(t)
 	validator := newTestValidator()
 
 	svc := New(Params{
@@ -401,7 +404,7 @@ func TestList_Success(t *testing.T) {
 		Items: []*commodity.Commodity{newTestEntity()},
 		Total: 1,
 	}
-	req := &repositories.ListCommodityRequest{
+	req := &commodityports.ListCommodityRequest{
 		Filter: &pagination.QueryOptions{},
 	}
 
@@ -420,7 +423,7 @@ func TestList_Error(t *testing.T) {
 	deps := setupTest(t)
 	ctx := t.Context()
 	dbErr := errors.New("db error")
-	req := &repositories.ListCommodityRequest{
+	req := &commodityports.ListCommodityRequest{
 		Filter: &pagination.QueryOptions{},
 	}
 
@@ -439,7 +442,7 @@ func TestGet_Success(t *testing.T) {
 	ctx := t.Context()
 	entity := newTestEntity()
 
-	req := repositories.GetCommodityByIDRequest{
+	req := commodityports.GetCommodityByIDRequest{
 		ID: entity.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -462,7 +465,7 @@ func TestGet_NotFound(t *testing.T) {
 	ctx := t.Context()
 	notFoundErr := errors.New("not found")
 
-	req := repositories.GetCommodityByIDRequest{
+	req := commodityports.GetCommodityByIDRequest{
 		ID: pulid.MustNew("com_"),
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
@@ -488,7 +491,7 @@ func TestSelectOptions_Success(t *testing.T) {
 		Items: []*commodity.Commodity{newTestEntity()},
 		Total: 1,
 	}
-	req := &repositories.CommoditySelectOptionsRequest{
+	req := &commodityports.CommoditySelectOptionsRequest{
 		SelectQueryRequest: &pagination.SelectQueryRequest{
 			Query: "Electronics",
 		},
@@ -508,7 +511,7 @@ func TestSelectOptions_Error(t *testing.T) {
 	deps := setupTest(t)
 	ctx := t.Context()
 	dbErr := errors.New("db error")
-	req := &repositories.CommoditySelectOptionsRequest{
+	req := &commodityports.CommoditySelectOptionsRequest{
 		SelectQueryRequest: &pagination.SelectQueryRequest{Query: "test"},
 	}
 

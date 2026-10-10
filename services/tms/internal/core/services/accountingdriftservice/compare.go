@@ -2,8 +2,7 @@ package accountingdriftservice
 
 import (
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/shared/money"
 )
 
@@ -15,8 +14,8 @@ const (
 
 type comparison struct {
 	record   *accountingsync.AccountingSyncRecord
-	trenova  *repositories.AccountingDriftState
-	provider *services.AccountingDocumentState
+	trenova  *accountingsyncports.AccountingDriftState
+	provider *accountingsyncports.AccountingDocumentState
 }
 
 func comparesAmount(objectType accountingsync.SyncObjectType) bool {

@@ -3,10 +3,10 @@
 package shipmentservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"testing"
-
-	"github.com/emoss08/trenova/internal/core/services/shipmentservice/shipmentservicetest"
 
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
@@ -15,12 +15,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/hazmatsegregationrule"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/formula"
 	"github.com/emoss08/trenova/internal/core/services/formula/engine"
 	"github.com/emoss08/trenova/internal/core/services/formula/resolver"
 	"github.com/emoss08/trenova/internal/core/services/formula/schema"
+	"github.com/emoss08/trenova/internal/core/services/shipmentservice/shipmentservicetest"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accessorialchargerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/chargeallocationrepository"
@@ -33,6 +32,11 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentmoverepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/internal/testutil"
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -109,10 +113,10 @@ func TestCreateIntegration_PersistsAdditionalChargesAndCommodities(t *testing.T)
 	require.NoError(t, err)
 	require.NotNil(t, created)
 
-	persisted, err := shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	persisted, err := shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         created.ID,
 		TenantInfo: tenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -195,10 +199,10 @@ func TestUpdateIntegration_SyncsNestedChargesAndCommodities(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	loaded, err := shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	loaded, err := shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         created.ID,
 		TenantInfo: tenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -248,10 +252,10 @@ func TestUpdateIntegration_SyncsNestedChargesAndCommodities(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, updated)
 
-	persisted, err := shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	persisted, err := shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         created.ID,
 		TenantInfo: tenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -318,10 +322,10 @@ func TestUpdateIntegration_ReplacesExistingCommodityInPlace(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	loaded, err := shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	loaded, err := shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         created.ID,
 		TenantInfo: tenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -342,10 +346,10 @@ func TestUpdateIntegration_ReplacesExistingCommodityInPlace(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, updated)
 
-	persisted, err := shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	persisted, err := shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         created.ID,
 		TenantInfo: tenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -414,10 +418,10 @@ func TestUpdateIntegration_ReplacesExistingAdditionalChargeInPlace(t *testing.T)
 	)
 	require.NoError(t, err)
 
-	loaded, err := shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	loaded, err := shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         created.ID,
 		TenantInfo: tenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -439,10 +443,10 @@ func TestUpdateIntegration_ReplacesExistingAdditionalChargeInPlace(t *testing.T)
 	require.NoError(t, err)
 	require.NotNil(t, updated)
 
-	persisted, err := shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	persisted, err := shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         created.ID,
 		TenantInfo: tenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -561,10 +565,10 @@ func TestUpdateIntegration_RejectsManualDetentionChargeWhenAutoGenerated(t *test
 	)
 	require.NoError(t, err)
 
-	loaded, err := shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	loaded, err := shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         created.ID,
 		TenantInfo: tenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -708,10 +712,10 @@ func TestUpdateIntegration_ReconcilesDetentionCharge(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	loaded, err := shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	loaded, err := shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         created.ID,
 		TenantInfo: tenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -733,10 +737,10 @@ func TestUpdateIntegration_ReconcilesDetentionCharge(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, updated)
 
-	persisted, err := shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	persisted, err := shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         created.ID,
 		TenantInfo: tenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -828,10 +832,10 @@ func TestCreateIntegration_RatesWithHydratedCommodityDetails(t *testing.T) {
 	assert.True(t, decimal.NewFromFloat(34).Equal(created.FreightChargeAmount.Decimal))
 	assert.True(t, decimal.NewFromFloat(34).Equal(created.TotalChargeAmount.Decimal))
 
-	persisted, err := shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	persisted, err := shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         created.ID,
 		TenantInfo: tenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -905,10 +909,10 @@ func TestUpdateIntegration_RecalculatesWithHydratedCommodityDetails(t *testing.T
 	require.NoError(t, err)
 	assert.True(t, decimal.NewFromFloat(5).Equal(created.FreightChargeAmount.Decimal))
 
-	loaded, err := shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	loaded, err := shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         created.ID,
 		TenantInfo: tenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -947,10 +951,10 @@ func TestUpdateIntegration_RecalculatesWithHydratedCommodityDetails(t *testing.T
 	require.NotNil(t, updated)
 	assert.True(t, decimal.NewFromFloat(9).Equal(updated.FreightChargeAmount.Decimal))
 
-	persisted, err := shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	persisted, err := shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         created.ID,
 		TenantInfo: tenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -964,10 +968,10 @@ func newIntegrationShipmentService(
 	ctx context.Context,
 	db *bun.DB,
 ) (
-	portservices.ShipmentService,
-	repositories.ShipmentRepository,
-	repositories.ShipmentControlRepository,
-	repositories.AccessorialChargeRepository,
+	shipmentports.ShipmentService,
+	shipmentports.ShipmentRepository,
+	tenantports.ShipmentControlRepository,
+	accessorialchargeports.AccessorialChargeRepository,
 	pagination.TenantInfo,
 	*testutil.ShipmentIntegrationFixture,
 	*seedtest.TestData,
@@ -982,10 +986,10 @@ func newIntegrationShipmentServiceWith(
 	db *bun.DB,
 	override func(*Params),
 ) (
-	portservices.ShipmentService,
-	repositories.ShipmentRepository,
-	repositories.ShipmentControlRepository,
-	repositories.AccessorialChargeRepository,
+	shipmentports.ShipmentService,
+	shipmentports.ShipmentRepository,
+	tenantports.ShipmentControlRepository,
+	accessorialchargeports.AccessorialChargeRepository,
 	pagination.TenantInfo,
 	*testutil.ShipmentIntegrationFixture,
 	*seedtest.TestData,
@@ -1083,11 +1087,11 @@ func newIntegrationShipmentServiceWith(
 		Logger:          zap.NewNop(),
 		DB:              conn,
 		Repo:            shipmentRepo,
-		UserRepo:        mocks.NewMockUserRepository(t),
+		UserRepo:        tenantportsmock.NewMockUserRepository(t),
 		ControlRepo:     controlRepo,
 		CommodityRepo:   commodityRepo,
 		AccessorialRepo: accessorialRepo,
-		Permissions:     mocks.NewMockPermissionEngine(t),
+		Permissions:     permissionportsmock.NewMockPermissionEngine(t),
 		Validator:       validator,
 		AuditService:    audit,
 		EventService:    noopShipmentEventService{},
@@ -1137,13 +1141,13 @@ func insertShipmentControl(
 func configureShipmentControl(
 	t *testing.T,
 	ctx context.Context,
-	repo repositories.ShipmentControlRepository,
+	repo tenantports.ShipmentControlRepository,
 	tenantInfo pagination.TenantInfo,
 	mutate func(*tenant.ShipmentControl),
 ) {
 	t.Helper()
 
-	entity, err := repo.Get(ctx, repositories.GetShipmentControlRequest{TenantInfo: tenantInfo})
+	entity, err := repo.Get(ctx, tenantports.GetShipmentControlRequest{TenantInfo: tenantInfo})
 	require.NoError(t, err)
 	mutate(entity)
 	_, err = repo.Update(ctx, entity)
@@ -1237,31 +1241,31 @@ func timeutilsNow() int64 {
 }
 
 type shipIntgStubVersionRepo struct {
-	repositories.FormulaTemplateVersionRepository
+	formulatemplateports.FormulaTemplateVersionRepository
 }
 
 func (shipIntgStubVersionRepo) GetEffectiveVersion(
 	_ context.Context,
-	_ *repositories.GetEffectiveVersionRequest,
+	_ *formulatemplateports.GetEffectiveVersionRequest,
 ) (*formulatemplate.FormulaTemplateVersion, error) {
 	return nil, nil
 }
 
 func (shipIntgStubVersionRepo) ListScheduled(
 	_ context.Context,
-	_ *repositories.ListScheduledVersionsRequest,
+	_ *formulatemplateports.ListScheduledVersionsRequest,
 ) ([]*formulatemplate.FormulaTemplateVersion, error) {
 	return nil, nil
 }
 
 type shipIntgStubMatrixRepo struct {
-	repositories.RateMatrixRepository
+	ratematrixports.RateMatrixRepository
 }
 
 func (shipIntgStubMatrixRepo) GetLookupData(
 	_ context.Context,
-	_ *repositories.GetRateMatrixLookupDataRequest,
-) ([]*repositories.RateMatrixLookupData, error) {
+	_ *ratematrixports.GetRateMatrixLookupDataRequest,
+) ([]*ratematrixports.RateMatrixLookupData, error) {
 	return nil, nil
 }
 

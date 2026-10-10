@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -35,7 +35,7 @@ func (h *Handler) registerDocumentTypeRoutes(documentTypes *gin.RouterGroup) {
 func (h *Handler) listDocumentTypes(c *gin.Context) {
 	entities, err := h.service.ListDocumentTypes(
 		c.Request.Context(),
-		repositories.ListEDIDocumentTypesRequest{
+		ediports.ListEDIDocumentTypesRequest{
 			Standard:       edi.EDIStandard(helpers.QueryString(c, "standard", "")),
 			TransactionSet: edi.TransactionSet(helpers.QueryString(c, "transactionSet", "")),
 			Direction:      edi.DocumentDirection(helpers.QueryString(c, "direction", "")),
@@ -60,7 +60,7 @@ func (h *Handler) selectDocumentTypeOptions(c *gin.Context) {
 		func() (*pagination.ListResult[*edi.EDIDocumentType], error) {
 			return h.service.SelectDocumentTypeOptions(
 				c.Request.Context(),
-				&repositories.EDIDocumentTypeSelectOptionsRequest{
+				&ediports.EDIDocumentTypeSelectOptionsRequest{
 					SelectQueryRequest: req,
 					Standard:           edi.EDIStandard(helpers.QueryString(c, "standard", "")),
 					TransactionSet: edi.TransactionSet(
@@ -87,7 +87,7 @@ func (h *Handler) getDocumentTypeOption(c *gin.Context) {
 
 	entities, err := h.service.ListDocumentTypes(
 		c.Request.Context(),
-		repositories.ListEDIDocumentTypesRequest{},
+		ediports.ListEDIDocumentTypesRequest{},
 	)
 	if err != nil {
 		h.eh.HandleError(c, err)

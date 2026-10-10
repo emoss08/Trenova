@@ -7,9 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/core/domain/extractioneval"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/extractionfailure"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -21,7 +20,7 @@ var errPredictorUnavailable = errors.New("extraction predictor is not configured
 
 func (s *Service) BeginRun(
 	ctx context.Context,
-	req repositories.GetExtractionEvalRunRequest,
+	req extractionevalports.GetExtractionEvalRunRequest,
 ) (*extractioneval.ExtractionRun, error) {
 	run, err := s.runs.GetByID(ctx, req)
 	if err != nil {
@@ -40,24 +39,24 @@ func (s *Service) BeginRun(
 
 func (s *Service) ListPending(
 	ctx context.Context,
-	req repositories.ListPendingExtractionEvalResultsRequest,
+	req extractionevalports.ListPendingExtractionEvalResultsRequest,
 ) ([]*extractioneval.ExtractionResult, error) {
 	return s.results.ListPending(ctx, req)
 }
 
 func (s *Service) CheckContinue(
 	ctx context.Context,
-	req repositories.GetExtractionEvalRunRequest,
-) (*services.ExtractionEvalDecision, error) {
+	req extractionevalports.GetExtractionEvalRunRequest,
+) (*extractionevalports.ExtractionEvalDecision, error) {
 	run, err := s.runs.GetByID(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 	if !run.Status.IsActive() {
-		return &services.ExtractionEvalDecision{Stop: true, Status: run.Status, Reason: run.StopReason}, nil
+		return &extractionevalports.ExtractionEvalDecision{Stop: true, Status: run.Status, Reason: run.StopReason}, nil
 	}
 	if s.budget == nil {
-		return &services.ExtractionEvalDecision{}, nil
+		return &extractionevalports.ExtractionEvalDecision{}, nil
 	}
 
 	decision, err := s.budget.CheckEvaluationBudget(ctx, req.TenantInfo)
@@ -65,19 +64,19 @@ func (s *Service) CheckContinue(
 		return nil, err
 	}
 	if decision.Stop {
-		return &services.ExtractionEvalDecision{
+		return &extractionevalports.ExtractionEvalDecision{
 			Stop:   true,
 			Status: extractioneval.RunStatusBudgetStopped,
 			Reason: decision.Reason,
 		}, nil
 	}
 
-	return &services.ExtractionEvalDecision{}, nil
+	return &extractionevalports.ExtractionEvalDecision{}, nil
 }
 
 func (s *Service) EvaluateResult(
 	ctx context.Context,
-	req *services.EvaluateExtractionResultRequest,
+	req *extractionevalports.EvaluateExtractionResultRequest,
 ) error {
 	if s.predictor == nil {
 		return errortypes.NewBusinessError(
@@ -85,7 +84,7 @@ func (s *Service) EvaluateResult(
 		).WithInternal(errPredictorUnavailable)
 	}
 
-	result, err := s.results.GetByID(ctx, repositories.GetExtractionEvalResultRequest{
+	result, err := s.results.GetByID(ctx, extractionevalports.GetExtractionEvalResultRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.ResultID,
 	})
@@ -96,14 +95,14 @@ func (s *Service) EvaluateResult(
 		return nil
 	}
 
-	run, err := s.runs.GetByID(ctx, repositories.GetExtractionEvalRunRequest{
+	run, err := s.runs.GetByID(ctx, extractionevalports.GetExtractionEvalRunRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         result.RunID,
 	})
 	if err != nil {
 		return err
 	}
-	evalCase, err := s.cases.GetByID(ctx, repositories.GetExtractionEvalCaseRequest{
+	evalCase, err := s.cases.GetByID(ctx, extractionevalports.GetExtractionEvalCaseRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         result.CaseID,
 	})
@@ -116,7 +115,7 @@ func (s *Service) EvaluateResult(
 
 	started := s.now()
 	result.StartedAt = &started
-	prediction, err := s.predictor.Predict(ctx, &services.PredictExtractionRequest{
+	prediction, err := s.predictor.Predict(ctx, &extractionevalports.PredictExtractionRequest{
 		TenantInfo: req.TenantInfo,
 		ProviderID: run.ProviderID,
 		FileName:   evalCase.FileName,
@@ -171,9 +170,9 @@ func (s *Service) saveFailure(
 
 func (s *Service) FinishRun(
 	ctx context.Context,
-	req *services.FinishExtractionEvalRunRequest,
+	req *extractionevalports.FinishExtractionEvalRunRequest,
 ) (*extractioneval.ExtractionRun, error) {
-	run, err := s.runs.GetByID(ctx, repositories.GetExtractionEvalRunRequest{
+	run, err := s.runs.GetByID(ctx, extractionevalports.GetExtractionEvalRunRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.RunID,
 	})
@@ -189,7 +188,7 @@ func (s *Service) FinishRun(
 
 func (s *Service) FailRun(
 	ctx context.Context,
-	req repositories.GetExtractionEvalRunRequest,
+	req extractionevalports.GetExtractionEvalRunRequest,
 	message string,
 ) error {
 	run, err := s.runs.GetByID(ctx, req)

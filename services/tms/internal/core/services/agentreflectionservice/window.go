@@ -8,8 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/agentmemoryservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -23,7 +24,7 @@ func (s *Service) threadProposals(
 	threadID pulid.ID,
 	messages []conversation.Message,
 ) []DecidedProposal {
-	stored, err := s.proposals.ListByThread(ctx, repositories.ListAgentProposalsByThreadRequest{
+	stored, err := s.proposals.ListByThread(ctx, agentports.ListAgentProposalsByThreadRequest{
 		ThreadID:   threadID,
 		TenantInfo: tenant,
 	})
@@ -61,7 +62,7 @@ func (s *Service) runProposals(
 	tenant pagination.TenantInfo,
 	runID pulid.ID,
 ) []DecidedProposal {
-	stored, err := s.proposals.ListByRun(ctx, repositories.ListAgentProposalsByRunRequest{
+	stored, err := s.proposals.ListByRun(ctx, agentports.ListAgentProposalsByRunRequest{
 		RunID:      runID,
 		TenantInfo: tenant,
 	})
@@ -99,7 +100,7 @@ func (s *Service) decided(
 
 	decisions, err := s.decisions.ListByProposals(
 		ctx,
-		repositories.ListAgentDecisionsByProposalsRequest{
+		agentports.ListAgentDecisionsByProposalsRequest{
 			ProposalIDs: ids,
 			TenantInfo:  tenant,
 		},
@@ -147,10 +148,10 @@ func (s *Service) negativeRatings(
 		return 0
 	}
 
-	targets := make([]repositories.AIFeedbackTargetRef, 0, len(messages))
+	targets := make([]aifeedbackports.AIFeedbackTargetRef, 0, len(messages))
 	for idx := range messages {
 		if messages[idx].Role == conversation.RoleAssistant {
-			targets = append(targets, repositories.AIFeedbackTargetRef{
+			targets = append(targets, aifeedbackports.AIFeedbackTargetRef{
 				TargetType: aifeedback.TargetAssistantMessage,
 				TargetID:   messages[idx].ID,
 			})
@@ -160,7 +161,7 @@ func (s *Service) negativeRatings(
 		return 0
 	}
 
-	ratings, err := s.feedback.ListForTargets(ctx, repositories.ListAIFeedbackForTargetsRequest{
+	ratings, err := s.feedback.ListForTargets(ctx, aifeedbackports.ListAIFeedbackForTargetsRequest{
 		TenantInfo: tenant,
 		UserID:     person,
 		Targets:    targets,
@@ -188,7 +189,7 @@ func (s *Service) runMessages(
 	tenant pagination.TenantInfo,
 	runID pulid.ID,
 ) ([]conversation.Message, error) {
-	runs, err := s.runs.ListTranscriptsByIDs(ctx, repositories.ListAgentRunsByIDsRequest{
+	runs, err := s.runs.ListTranscriptsByIDs(ctx, agentports.ListAgentRunsByIDsRequest{
 		IDs:        []pulid.ID{runID},
 		TenantInfo: tenant,
 	})

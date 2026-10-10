@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/samsarasyncservice"
 	workflowstarterservice "github.com/emoss08/trenova/internal/core/services/workflowstarter"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -25,13 +25,13 @@ type ManagerParams struct {
 	fx.In
 
 	TemporalClient  client.Client
-	WorkflowStarter serviceports.WorkflowStarter
+	WorkflowStarter kernelports.WorkflowStarter
 	SyncService     *samsarasyncservice.Service
 }
 
 type Manager struct {
 	temporalClient  client.Client
-	workflowStarter serviceports.WorkflowStarter
+	workflowStarter kernelports.WorkflowStarter
 	syncService     *samsarasyncservice.Service
 }
 
@@ -226,7 +226,7 @@ type WorkersSyncWorkflowPayload struct {
 }
 
 type WorkersSyncWorkflowResult struct {
-	Result *services.SamsaraWorkerSyncResult `json:"result,omitempty"`
+	Result *telematicsports.SamsaraWorkerSyncResult `json:"result,omitempty"`
 }
 
 type SyncWorkflowStartResponse struct {
@@ -238,12 +238,12 @@ type SyncWorkflowStartResponse struct {
 }
 
 type SyncWorkflowStatusResponse struct {
-	WorkflowID string                            `json:"workflowId"`
-	RunID      string                            `json:"runId"`
-	TaskQueue  string                            `json:"taskQueue"`
-	Status     string                            `json:"status"`
-	StartedAt  int64                             `json:"startedAt,omitempty"`
-	ClosedAt   int64                             `json:"closedAt,omitempty"`
-	Result     *services.SamsaraWorkerSyncResult `json:"result,omitempty"`
-	Error      string                            `json:"error,omitempty"`
+	WorkflowID string                                   `json:"workflowId"`
+	RunID      string                                   `json:"runId"`
+	TaskQueue  string                                   `json:"taskQueue"`
+	Status     string                                   `json:"status"`
+	StartedAt  int64                                    `json:"startedAt,omitempty"`
+	ClosedAt   int64                                    `json:"closedAt,omitempty"`
+	Result     *telematicsports.SamsaraWorkerSyncResult `json:"result,omitempty"`
+	Error      string                                   `json:"error,omitempty"`
 }

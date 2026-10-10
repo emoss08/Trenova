@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/ifta"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -19,7 +19,7 @@ import (
 
 func (r *repository) applyMileageEntryFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListMileageEntriesRequest,
+	req *iftaports.ListMileageEntriesRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.JurisdictionMileageEntryColumns
 	if !req.TractorID.IsNil() {
@@ -42,7 +42,7 @@ func (r *repository) applyMileageEntryFilters(
 
 func (r *repository) ListMileageEntries(
 	ctx context.Context,
-	req *repositories.ListMileageEntriesRequest,
+	req *iftaports.ListMileageEntriesRequest,
 ) (*pagination.CursorListResult[*ifta.JurisdictionMileageEntry], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*ifta.JurisdictionMileageEntry], error) {
 		dba := r.db.DBForContext(ctx)
@@ -125,7 +125,7 @@ func (r *repository) ListMileageEntries(
 
 func (r *repository) GetMileageEntryByID(
 	ctx context.Context,
-	req *repositories.GetMileageEntryByIDRequest,
+	req *iftaports.GetMileageEntryByIDRequest,
 ) (*ifta.JurisdictionMileageEntry, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ifta.JurisdictionMileageEntry, error) {
 		rel := buncolgen.JurisdictionMileageEntryRelations
@@ -213,7 +213,7 @@ func (r *repository) UpdateMileageEntry(
 
 func (r *repository) DeleteMileageEntry(
 	ctx context.Context,
-	req *repositories.DeleteMileageEntryRequest,
+	req *iftaports.DeleteMileageEntryRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.JurisdictionMileageEntryColumns

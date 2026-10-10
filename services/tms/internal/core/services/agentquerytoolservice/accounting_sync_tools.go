@@ -6,8 +6,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 	"github.com/emoss08/trenova/shared/sliceutils"
@@ -19,7 +21,7 @@ type accountingStatusReader interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		typ integration.Type,
-	) (*serviceports.AccountingSyncStatus, error)
+	) (*accountingsyncports.AccountingSyncStatus, error)
 }
 
 type accountingSyncSummaryReader interface {
@@ -27,7 +29,7 @@ type accountingSyncSummaryReader interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		integrationType integration.Type,
-	) (*serviceports.AccountingSyncSummary, error)
+	) (*accountingsyncports.AccountingSyncSummary, error)
 }
 
 const (
@@ -113,8 +115,8 @@ type getAccountingSyncStatusTool struct {
 func newGetAccountingSyncStatusTool(
 	accounting accountingStatusReader,
 	sync accountingSyncSummaryReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &getAccountingSyncStatusTool{
 		accounting: accounting,
 		sync:       sync,
@@ -123,10 +125,10 @@ func newGetAccountingSyncStatusTool(
 }
 
 func provideGetAccountingSyncStatusTool(
-	accounting serviceports.AccountingConnectionService,
-	sync serviceports.AccountingSyncService,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	accounting accountingsyncports.AccountingConnectionService,
+	sync accountingsyncports.AccountingSyncService,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newGetAccountingSyncStatusTool(accounting, sync, permissions)
 }
 
@@ -155,13 +157,13 @@ func (t *getAccountingSyncStatusTool) ParamSchema() map[string]any {
 	}, "system")
 }
 
-func (t *getAccountingSyncStatusTool) Policy() serviceports.ToolPolicy {
+func (t *getAccountingSyncStatusTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceAccountingIntegration})
 }
 
 func (t *getAccountingSyncStatusTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -196,7 +198,7 @@ func (t *getAccountingSyncStatusTool) Query(
 	return row, nil
 }
 
-func accountingSyncQueueFrom(summary *serviceports.AccountingSyncSummary) *accountingSyncQueueRow {
+func accountingSyncQueueFrom(summary *accountingsyncports.AccountingSyncSummary) *accountingSyncQueueRow {
 	queue := &accountingSyncQueueRow{
 		ByStatus:       make([]accountingSyncStatusCountRow, 0, len(summary.Counts)),
 		NeedsAttention: make([]accountingSyncCauseRow, 0, len(summary.Attention)),
@@ -246,7 +248,7 @@ func accountingSending(conn *accountingsync.AccountingConnection) string {
 }
 
 func accountingSyncStatusRowFrom(
-	status *serviceports.AccountingSyncStatus,
+	status *accountingsyncports.AccountingSyncStatus,
 ) accountingSyncStatusRow {
 	row := accountingSyncStatusRow{
 		System:              string(status.IntegrationType),
@@ -293,7 +295,7 @@ func accountingSyncStatusRowFrom(
 }
 
 func accountingStatusMeaning(
-	status *serviceports.AccountingSyncStatus,
+	status *accountingsyncports.AccountingSyncStatus,
 	connection accountingsync.ConnectionStatus,
 ) string {
 	provider := status.ProviderName

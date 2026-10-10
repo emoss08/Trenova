@@ -1,14 +1,16 @@
 package workerdqfservice_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/documentpacketrule"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/workerdqfservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -25,8 +27,8 @@ func ptrInt64(v int64) *int64 { return &v }
 // exercised for real rather than asserted against canned returns.
 type fakeDQFRepo struct {
 	verifications map[pulid.ID]*worker.WorkerEmploymentVerification
-	candidates    []repositories.DQFRetentionCandidate
-	lastRetention *repositories.ListDQFRetentionCandidatesRequest
+	candidates    []workerports.DQFRetentionCandidate
+	lastRetention *workerports.ListDQFRetentionCandidatesRequest
 }
 
 func newFakeRepo() *fakeDQFRepo {
@@ -35,7 +37,7 @@ func newFakeRepo() *fakeDQFRepo {
 
 func (f *fakeDQFRepo) ListVerifications(
 	_ context.Context,
-	req *repositories.ListEmploymentVerificationsRequest,
+	req *workerports.ListEmploymentVerificationsRequest,
 ) ([]*worker.WorkerEmploymentVerification, error) {
 	out := make([]*worker.WorkerEmploymentVerification, 0, len(f.verifications))
 	for _, entity := range f.verifications {
@@ -52,7 +54,7 @@ func (f *fakeDQFRepo) ListVerifications(
 
 func (f *fakeDQFRepo) ListVerificationsByWorkerIDs(
 	_ context.Context,
-	req *repositories.ListEmploymentVerificationsByWorkerIDsRequest,
+	req *workerports.ListEmploymentVerificationsByWorkerIDsRequest,
 ) (map[pulid.ID][]*worker.WorkerEmploymentVerification, error) {
 	wanted := make(map[pulid.ID]struct{}, len(req.WorkerIDs))
 	for _, id := range req.WorkerIDs {
@@ -71,7 +73,7 @@ func (f *fakeDQFRepo) ListVerificationsByWorkerIDs(
 
 func (f *fakeDQFRepo) GetVerificationByID(
 	_ context.Context,
-	req *repositories.GetEmploymentVerificationByIDRequest,
+	req *workerports.GetEmploymentVerificationByIDRequest,
 ) (*worker.WorkerEmploymentVerification, error) {
 	entity, ok := f.verifications[req.ID]
 	if !ok {
@@ -101,7 +103,7 @@ func (f *fakeDQFRepo) UpdateVerification(
 
 func (f *fakeDQFRepo) DeleteVerification(
 	_ context.Context,
-	req *repositories.GetEmploymentVerificationByIDRequest,
+	req *workerports.GetEmploymentVerificationByIDRequest,
 ) error {
 	delete(f.verifications, req.ID)
 	return nil
@@ -109,8 +111,8 @@ func (f *fakeDQFRepo) DeleteVerification(
 
 func (f *fakeDQFRepo) ListRetentionCandidates(
 	_ context.Context,
-	req *repositories.ListDQFRetentionCandidatesRequest,
-) ([]repositories.DQFRetentionCandidate, error) {
+	req *workerports.ListDQFRetentionCandidatesRequest,
+) ([]workerports.DQFRetentionCandidate, error) {
 	f.lastRetention = req
 	return f.candidates, nil
 }
@@ -169,7 +171,7 @@ func (f *fakeRetention) List(
 
 func (f *fakeRetention) Get(
 	_ context.Context,
-	_ repositories.GetDataRetentionRequest,
+	_ tenantports.GetDataRetentionRequest,
 ) (*tenant.DataRetention, error) {
 	return f.row, f.err
 }
@@ -205,7 +207,7 @@ func newHarness(t *testing.T, profile *worker.WorkerProfile) *harness {
 	buID := pulid.MustNew("bu_")
 	workerID := pulid.MustNew("wrk_")
 
-	workerRepo := mocks.NewMockWorkerRepository(t)
+	workerRepo := workerportsmock.NewMockWorkerRepository(t)
 	workerRepo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
 		Return(&worker.Worker{

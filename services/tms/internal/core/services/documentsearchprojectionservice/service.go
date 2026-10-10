@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentsearchprojection"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentsearchprojectionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -18,19 +18,19 @@ type Params struct {
 	fx.In
 
 	Logger  *zap.Logger
-	Repo    repositories.DocumentSearchProjectionRepository
-	Indexer serviceports.RetrievalIndexer `optional:"true"`
+	Repo    documentsearchprojectionports.DocumentSearchProjectionRepository
+	Indexer agentports.RetrievalIndexer `optional:"true"`
 }
 
 type Service struct {
 	logger  *zap.Logger
-	repo    repositories.DocumentSearchProjectionRepository
-	indexer serviceports.RetrievalIndexer
+	repo    documentsearchprojectionports.DocumentSearchProjectionRepository
+	indexer agentports.RetrievalIndexer
 }
 
-var _ serviceports.DocumentSearchProjectionService = (*Service)(nil)
+var _ documentsearchprojectionports.DocumentSearchProjectionService = (*Service)(nil)
 
-func New(p Params) serviceports.DocumentSearchProjectionService {
+func New(p Params) documentsearchprojectionports.DocumentSearchProjectionService {
 	return &Service{
 		logger:  p.Logger.Named("service.document-search-projection"),
 		repo:    p.Repo,

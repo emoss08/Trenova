@@ -7,8 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -100,7 +99,7 @@ type unitExternalIDMatch struct {
 
 func matchUnitsToProviderVehicles(
 	candidates []unitMappingCandidate,
-	vehicles []services.ProviderVehicle,
+	vehicles []telematicsports.ProviderVehicle,
 	unmatched *int,
 ) []unitExternalIDMatch {
 	assignedExternalIDs := make(map[string]struct{}, len(candidates))
@@ -152,7 +151,7 @@ func matchUnitsToProviderVehicles(
 }
 
 func matchVehicleToUnit(
-	vehicle *services.ProviderVehicle,
+	vehicle *telematicsports.ProviderVehicle,
 	unmappedByVin map[string]pulid.ID,
 	unmappedByCode map[string]pulid.ID,
 ) (pulid.ID, bool) {
@@ -172,7 +171,7 @@ func matchVehicleToUnit(
 func (s *Service) syncVehicleMappings(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	provider services.TelematicsProvider,
+	provider telematicsports.TelematicsProvider,
 	result *TenantSweepResult,
 ) error {
 	mappings, err := s.repo.ListTractorMappings(ctx, tenantInfo)
@@ -211,9 +210,9 @@ func (s *Service) syncVehicleMappings(
 		return nil
 	}
 
-	assignments := make([]repositories.TractorExternalIDAssignment, 0, len(matches))
+	assignments := make([]telematicsports.TractorExternalIDAssignment, 0, len(matches))
 	for _, match := range matches {
-		assignments = append(assignments, repositories.TractorExternalIDAssignment{
+		assignments = append(assignments, telematicsports.TractorExternalIDAssignment{
 			TractorID:  match.unitID,
 			ExternalID: match.externalID,
 		})
@@ -221,7 +220,7 @@ func (s *Service) syncVehicleMappings(
 
 	assigned, err := s.repo.AssignTractorExternalIDs(
 		ctx,
-		repositories.AssignTractorExternalIDsRequest{
+		telematicsports.AssignTractorExternalIDsRequest{
 			TenantInfo:  tenantInfo,
 			Assignments: assignments,
 		},
@@ -241,7 +240,7 @@ func (s *Service) syncVehicleMappings(
 func (s *Service) syncTrailerMappings(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	provider services.TelematicsProvider,
+	provider telematicsports.TelematicsProvider,
 	result *TenantSweepResult,
 ) error {
 	mappings, err := s.repo.ListTrailerMappings(ctx, tenantInfo)
@@ -276,9 +275,9 @@ func (s *Service) syncTrailerMappings(
 		return nil
 	}
 
-	assignments := make([]repositories.TrailerExternalIDAssignment, 0, len(matches))
+	assignments := make([]telematicsports.TrailerExternalIDAssignment, 0, len(matches))
 	for _, match := range matches {
-		assignments = append(assignments, repositories.TrailerExternalIDAssignment{
+		assignments = append(assignments, telematicsports.TrailerExternalIDAssignment{
 			TrailerID:  match.unitID,
 			ExternalID: match.externalID,
 		})
@@ -286,7 +285,7 @@ func (s *Service) syncTrailerMappings(
 
 	assigned, err := s.repo.AssignTrailerExternalIDs(
 		ctx,
-		repositories.AssignTrailerExternalIDsRequest{
+		telematicsports.AssignTrailerExternalIDsRequest{
 			TenantInfo:  tenantInfo,
 			Assignments: assignments,
 		},
@@ -306,7 +305,7 @@ func (s *Service) syncTrailerMappings(
 func (s *Service) syncDriverRulesets(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	provider services.TelematicsProvider,
+	provider telematicsports.TelematicsProvider,
 	drivers *sweepDrivers,
 	result *TenantSweepResult,
 ) error {
@@ -320,7 +319,7 @@ func (s *Service) syncDriverRulesets(
 		return err
 	}
 
-	assignments := make([]repositories.WorkerRulesetAssignment, 0, len(profiles))
+	assignments := make([]telematicsports.WorkerRulesetAssignment, 0, len(profiles))
 	for i := range profiles {
 		profile := &profiles[i]
 		if profile.Ruleset == nil {
@@ -330,7 +329,7 @@ func (s *Service) syncDriverRulesets(
 		if !ok {
 			continue
 		}
-		assignments = append(assignments, repositories.WorkerRulesetAssignment{
+		assignments = append(assignments, telematicsports.WorkerRulesetAssignment{
 			WorkerID:     workerID,
 			Cycle:        profile.Ruleset.Cycle,
 			Shift:        profile.Ruleset.Shift,
@@ -344,7 +343,7 @@ func (s *Service) syncDriverRulesets(
 		return nil
 	}
 
-	updated, err := s.repo.UpdateWorkerRulesets(ctx, repositories.UpdateWorkerRulesetsRequest{
+	updated, err := s.repo.UpdateWorkerRulesets(ctx, telematicsports.UpdateWorkerRulesetsRequest{
 		TenantInfo:  tenantInfo,
 		Assignments: assignments,
 	})
@@ -358,7 +357,7 @@ func (s *Service) syncDriverRulesets(
 func (s *Service) pollHOSViolations(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	provider services.TelematicsProvider,
+	provider telematicsports.TelematicsProvider,
 	drivers *sweepDrivers,
 	result *TenantSweepResult,
 ) error {
@@ -412,7 +411,7 @@ func (s *Service) pollHOSViolations(
 func (s *Service) syncDVIRs(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	provider services.TelematicsProvider,
+	provider telematicsports.TelematicsProvider,
 	drivers *sweepDrivers,
 	result *TenantSweepResult,
 ) error {
@@ -473,7 +472,7 @@ func (s *Service) syncDVIRs(
 
 func applyInspectionDefects(
 	inspection *telematics.VehicleInspection,
-	record *services.ProviderDVIR,
+	record *telematicsports.ProviderDVIR,
 ) {
 	inspection.DefectCount = len(record.Defects)
 	if len(record.Defects) == 0 {

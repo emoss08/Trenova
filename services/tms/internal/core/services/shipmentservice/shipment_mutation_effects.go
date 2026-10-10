@@ -5,9 +5,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/equipmentcontinuityhelper"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -66,13 +68,13 @@ func (s *service) advanceContinuityForCompletedMoves(
 
 func (s *service) logShipmentAction(
 	entity shipmentTenantResource,
-	actor services.AuditActor,
+	actor kernelports.AuditActor,
 	operation permission.Operation,
 	previous any,
 	current any,
-	opts ...services.LogOption,
+	opts ...auditports.LogOption,
 ) error {
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceShipment,
 		ResourceID:     entity.GetID().String(),
 		Operation:      operation,
@@ -95,7 +97,7 @@ func (s *service) logShipmentAction(
 
 func (s *service) recordShipmentEvent(
 	ctx context.Context,
-	params *services.RecordShipmentEventParams,
+	params *shipmenteventports.RecordShipmentEventParams,
 ) {
 	if params == nil {
 		return
@@ -108,7 +110,7 @@ func (s *service) recordShipmentEvent(
 func (s *service) emitStatusChangeEvent(
 	ctx context.Context,
 	original, updated *shipment.Shipment,
-	actor services.AuditActor,
+	actor kernelports.AuditActor,
 ) {
 	if original == nil || updated == nil || original.Status == updated.Status {
 		return

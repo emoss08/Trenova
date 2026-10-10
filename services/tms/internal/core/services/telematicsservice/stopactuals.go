@@ -12,9 +12,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -71,7 +72,7 @@ func (s *Service) applyStopEvent(ctx context.Context, event *stopEvent) {
 		return
 	}
 
-	move, err := s.shipmentMoveRepo.GetByID(ctx, &repositories.GetMoveByIDRequest{
+	move, err := s.shipmentMoveRepo.GetByID(ctx, &shipmentports.GetMoveByIDRequest{
 		MoveID:            assignment.ShipmentMoveID,
 		TenantInfo:        event.tenantInfo,
 		ExpandMoveDetails: true,
@@ -132,7 +133,7 @@ func (s *Service) notifyVisitWaits(
 		at = timeutils.NowUnix()
 	}
 
-	s.waits.NotifyEvent(ctx, &services.AgentEvent{
+	s.waits.NotifyEvent(ctx, &agentports.AgentEvent{
 		Kind:       kind,
 		SubjectID:  move.ID,
 		TenantInfo: event.tenantInfo,
@@ -166,7 +167,7 @@ func (s *Service) settleStopVisit(
 
 	result.StopID = stop.ID
 	occurredAt := event.record.OccurredAt
-	_, err := s.shipmentMoveService.RecordStopActual(ctx, &repositories.RecordStopActualRequest{
+	_, err := s.shipmentMoveService.RecordStopActual(ctx, &shipmentports.RecordStopActualRequest{
 		TenantInfo: event.tenantInfo,
 		MoveID:     move.ID,
 		StopID:     stop.ID,
@@ -202,7 +203,7 @@ func (s *Service) projectStopVisit(
 	switch {
 	case record.StopOutcome.NeedsReview():
 		s.watchtower.Upsert(ctx, watchtowersources.DescribeTelematicsStopVisit(
-			&repositories.StopReview{Event: record, ShipmentID: shipmentID},
+			&telematicsports.StopReview{Event: record, ShipmentID: shipmentID},
 		))
 	case record.StopOutcome == telematics.StopOutcomeRecorded:
 		s.watchtower.Resolve(
@@ -214,11 +215,11 @@ func (s *Service) projectStopVisit(
 	}
 }
 
-func stopActualAction(visit shipment.VisitKind) repositories.StopActualAction {
+func stopActualAction(visit shipment.VisitKind) shipmentports.StopActualAction {
 	if visit == shipment.VisitDeparture {
-		return repositories.StopActualActionDepart
+		return shipmentports.StopActualActionDepart
 	}
-	return repositories.StopActualActionArrive
+	return shipmentports.StopActualActionArrive
 }
 
 func visitNoun(visit shipment.VisitKind) string {

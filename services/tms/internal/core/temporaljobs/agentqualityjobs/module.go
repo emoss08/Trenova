@@ -3,9 +3,9 @@ package agentqualityjobs
 import (
 	"context"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
@@ -59,8 +59,8 @@ var Module = fx.Module("agent-quality-jobs",
 	fx.Provide(
 		NewActivities,
 		NewQualitySchedules,
-		func(s *QualitySchedules) serviceports.AgentQualityScheduler { return s },
-		func(s *QualitySchedules) serviceports.AgentSuiteStarter { return s },
+		func(s *QualitySchedules) agentqualityports.AgentQualityScheduler { return s },
+		func(s *QualitySchedules) agentqualityports.AgentSuiteStarter { return s },
 	),
 	fx.Provide(schedule.AsProvider(NewScheduleProvider)),
 	fx.Provide(fx.Annotate(

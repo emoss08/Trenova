@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
@@ -25,14 +25,14 @@ import (
 // Grouped by customer so one query answers for every statement on the list.
 func (r *repository) CountHeldForPeriod(
 	ctx context.Context,
-	req *repositories.CountHeldForPeriodRequest,
-) ([]*repositories.HeldForPeriod, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.HeldForPeriod, error) {
+	req *billingqueueports.CountHeldForPeriodRequest,
+) ([]*billingqueueports.HeldForPeriod, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*billingqueueports.HeldForPeriod, error) {
 		if len(req.CustomerIDs) == 0 {
 			return nil, nil
 		}
 
-		held := make([]*repositories.HeldForPeriod, 0, len(req.CustomerIDs))
+		held := make([]*billingqueueports.HeldForPeriod, 0, len(req.CustomerIDs))
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*billingqueue.BillingQueueItem)(nil)).

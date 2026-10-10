@@ -3,7 +3,7 @@ package compliancejobs
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -39,7 +39,7 @@ func (a *Activities) DrugAlcoholSweepActivity(
 
 	refs, err := a.drugAlcoholRepo.ListWorkersWithClearinghouseDue(
 		ctx,
-		&repositories.ListWorkersWithClearinghouseDueRequest{
+		&workerports.ListWorkersWithClearinghouseDueRequest{
 			Until: until,
 			Limit: sweepPageSize,
 		},

@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 )
 
 const (
@@ -40,7 +40,7 @@ type GroupKeyResult struct {
 // no PO onto one invoice is how a customer gets an invoice they refuse.
 func GroupKeyFor(
 	splitBy customer.InvoiceSplitKey,
-	candidate *repositories.ConsolidationCandidate,
+	candidate *billingqueueports.ConsolidationCandidate,
 ) GroupKeyResult {
 	customerID := candidate.CustomerID.String()
 
@@ -121,8 +121,8 @@ type CandidateGroup struct {
 	Label   string
 	Part    int
 	Parts   int
-	First   *repositories.ConsolidationCandidate
-	Members []*repositories.ConsolidationCandidate
+	First   *billingqueueports.ConsolidationCandidate
+	Members []*billingqueueports.ConsolidationCandidate
 }
 
 // GroupCandidates is the whole split decision: which invoices a set of eligible
@@ -136,11 +136,11 @@ type CandidateGroup struct {
 // Insertion order is preserved so members keep the query's ordering — customer,
 // then service date, then PRO — and the same input always yields the same
 // proposal.
-func GroupCandidates(candidates []*repositories.ConsolidationCandidate) []CandidateGroup {
+func GroupCandidates(candidates []*billingqueueports.ConsolidationCandidate) []CandidateGroup {
 	ordered := make([]string, 0, len(candidates))
-	byKey := make(map[string][]*repositories.ConsolidationCandidate, len(candidates))
+	byKey := make(map[string][]*billingqueueports.ConsolidationCandidate, len(candidates))
 	labels := make(map[string]string, len(candidates))
-	settings := make(map[string]*repositories.ConsolidationCandidate, len(candidates))
+	settings := make(map[string]*billingqueueports.ConsolidationCandidate, len(candidates))
 
 	for _, candidate := range candidates {
 		result := GroupKeyFor(candidate.SplitBy, candidate)

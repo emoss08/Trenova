@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/weatheralert"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/postgis"
@@ -52,7 +52,7 @@ func TestUpsertAlertAndExpireStaleAlerts(t *testing.T) {
 	require.Len(t, activeAlerts, 1)
 	assert.Equal(t, "Flood Warning", activeAlerts[0].Event)
 
-	activities, err := repo.GetActivities(ctx, repositories.GetWeatherAlertByIDRequest{
+	activities, err := repo.GetActivities(ctx, weatheralertports.GetWeatherAlertByIDRequest{
 		ID:         activeAlerts[0].ID,
 		TenantInfo: tenantInfo,
 	})
@@ -105,7 +105,7 @@ func TestListByNWSIDsReturnsTheStoredMessages(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	stored, err := repo.ListByNWSIDs(ctx, repositories.ListWeatherAlertsByNWSIDsRequest{
+	stored, err := repo.ListByNWSIDs(ctx, weatheralertports.ListWeatherAlertsByNWSIDsRequest{
 		TenantInfo: tenantInfo,
 		NWSIDs:     []string{"urn:oid:weather-alert-stored", "urn:oid:weather-alert-unknown"},
 	})
@@ -120,7 +120,7 @@ func TestListByNWSIDsReturnsTheStoredMessages(t *testing.T) {
 	assert.Equal(t, expires, *stored[0].Expires)
 	assert.Nil(t, stored[0].Onset)
 
-	none, err := repo.ListByNWSIDs(ctx, repositories.ListWeatherAlertsByNWSIDsRequest{
+	none, err := repo.ListByNWSIDs(ctx, weatheralertports.ListWeatherAlertsByNWSIDsRequest{
 		TenantInfo: tenantInfo,
 	})
 	require.NoError(t, err)

@@ -11,10 +11,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
@@ -24,29 +25,29 @@ import (
 )
 
 type grantedEngine struct {
-	serviceports.PermissionEngine
+	permissionports.PermissionEngine
 
 	granted map[string]bool
 }
 
 func (e *grantedEngine) Check(
 	_ context.Context,
-	req *serviceports.PermissionCheckRequest,
-) (*serviceports.PermissionCheckResult, error) {
-	return &serviceports.PermissionCheckResult{
+	req *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
+	return &permissionports.PermissionCheckResult{
 		Allowed: e.granted[req.Resource+":"+string(req.Operation)],
 	}, nil
 }
 
 type formulaPageAssistant struct {
-	opened []*serviceports.OpenPageThreadRequest
+	opened []*agentports.OpenPageThreadRequest
 }
 
 func (p *formulaPageAssistant) OpenPageThread(
 	_ context.Context,
-	req *serviceports.OpenPageThreadRequest,
-	_ *serviceports.RequestActor,
-) (*serviceports.PageThread, error) {
+	req *agentports.OpenPageThreadRequest,
+	_ *permissionports.RequestActor,
+) (*agentports.PageThread, error) {
 	p.opened = append(p.opened, req)
 	thread := &conversation.Thread{ID: pulid.MustNew("athr_"), Origin: req.Origin}
 	if req.SubjectID.IsNotNil() {
@@ -54,9 +55,9 @@ func (p *formulaPageAssistant) OpenPageThread(
 		thread.SubjectID = req.SubjectID
 	}
 
-	return &serviceports.PageThread{
+	return &agentports.PageThread{
 		Thread: thread,
-		Agent:  serviceports.PageAgent{Name: "Formula assistant", SystemKey: "formula_assistant"},
+		Agent:  agentports.PageAgent{Name: "Formula assistant", SystemKey: "formula_assistant"},
 	}, nil
 }
 
@@ -120,7 +121,7 @@ func TestOpenAssistantThread_OpensTheTemplatesConversation(t *testing.T) {
 	repo := &mockFormulaTemplateRepo{
 		getByIDFunc: func(
 			_ context.Context,
-			req repositories.GetFormulaTemplateByIDRequest,
+			req formulatemplateports.GetFormulaTemplateByIDRequest,
 		) (*formulatemplate.FormulaTemplate, error) {
 			return &formulatemplate.FormulaTemplate{ID: req.TemplateID, Name: "Per mile"}, nil
 		},

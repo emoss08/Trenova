@@ -7,30 +7,30 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentrepository"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
-func NewBriefingRepository(r *Repository) repositories.ShipmentBriefingRepository { return r }
+func NewBriefingRepository(r *Repository) shipmentports.ShipmentBriefingRepository { return r }
 
 func (r *Repository) LeadingLateReason(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*repositories.ShipmentLateReason, error) {
+) (*shipmentports.ShipmentLateReason, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*repositories.ShipmentLateReason, error) {
+		func(ctx context.Context) (*shipmentports.ShipmentLateReason, error) {
 			sp := buncolgen.ShipmentColumns
 			sf := buncolgen.ServiceFailureColumns
 			rc := buncolgen.ReasonCodeColumns
 
-			reason := new(repositories.ShipmentLateReason)
+			reason := new(shipmentports.ShipmentLateReason)
 			err := r.db.DBForContext(ctx).NewSelect().
 				Model((*servicefailure.ServiceFailure)(nil)).
 				ColumnExpr(rc.Label.As("label")).

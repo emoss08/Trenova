@@ -1,13 +1,18 @@
 package servicefailureservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/servicefailureportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -42,23 +47,23 @@ func TestPreviewResolve_IsTheResolutionResolveSaves(t *testing.T) {
 		GracePeriodMinutes: 5,
 		LateMinutes:        1,
 	}
-	repo := mocks.NewMockServiceFailureRepository(t)
+	repo := servicefailureportsmock.NewMockServiceFailureRepository(t)
 	repo.EXPECT().GetByShipment(mock.Anything, mock.Anything).
-		RunAndReturn(func(context.Context, *repositories.GetServiceFailureByShipmentRequest) (*servicefailure.ServiceFailure, error) {
+		RunAndReturn(func(context.Context, *servicefailureports.GetServiceFailureByShipmentRequest) (*servicefailure.ServiceFailure, error) {
 			copied := *stored
 			return &copied, nil
 		})
-	ediSvc := mocks.NewMockEDIService(t)
+	ediSvc := ediportsmock.NewMockEDIService(t)
 	ediSvc.EXPECT().PreviewServiceFailure214ForLifecycle(mock.Anything, mock.Anything).
-		Return(&serviceports.ServiceFailure214LifecycleResult{
-			Trigger:       serviceports.ServiceFailureEDITriggerResolved,
-			Action:        serviceports.ServiceFailureEDIActionSkipped,
+		Return(&servicefailureports.ServiceFailure214LifecycleResult{
+			Trigger:       servicefailureports.ServiceFailureEDITriggerResolved,
+			Action:        ediports.ServiceFailureEDIActionSkipped,
 			SkippedReason: "ready_for_generation",
 			EDIPartnerID:  pulid.MustNew("edip_"),
 		}, nil)
 	svc := &service{l: zap.NewNop(), repo: repo, ediService: ediSvc}
-	req := func() *serviceports.ServiceFailureLifecycleRequest {
-		return &serviceports.ServiceFailureLifecycleRequest{
+	req := func() *servicefailureports.ServiceFailureLifecycleRequest {
+		return &servicefailureports.ServiceFailureLifecycleRequest{
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 			ID:         stored.ID,
 			ShipmentID: stored.ShipmentID,
@@ -66,8 +71,8 @@ func TestPreviewResolve_IsTheResolutionResolveSaves(t *testing.T) {
 			Notes:      "Receiver held the truck at the gate",
 		}
 	}
-	actor := &serviceports.RequestActor{
-		PrincipalType:  serviceports.PrincipalTypeUser,
+	actor := &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    userID,
 		UserID:         userID,
 		OrganizationID: orgID,
@@ -87,13 +92,13 @@ func TestPreviewResolve_IsTheResolutionResolveSaves(t *testing.T) {
 		}).
 		Once()
 	ediSvc.EXPECT().GenerateServiceFailure214ForLifecycle(mock.Anything, mock.Anything).
-		Return(&serviceports.ServiceFailure214LifecycleResult{
-			Action: serviceports.ServiceFailureEDIActionSkipped,
+		Return(&servicefailureports.ServiceFailure214LifecycleResult{
+			Action: ediports.ServiceFailureEDIActionSkipped,
 		}, nil).
 		Once()
-	audit := mocks.NewMockAuditService(t)
+	audit := auditportsmock.NewMockAuditService(t)
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
-	realtime := mocks.NewMockRealtimeService(t)
+	realtime := agentportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Maybe()
 	svc.auditService = audit
 	svc.realtime = realtime

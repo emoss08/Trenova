@@ -6,8 +6,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/performancereviewservice"
 	"github.com/emoss08/trenova/internal/core/services/workerchecklistservice"
 	"github.com/emoss08/trenova/internal/core/services/workercredentialservice"
@@ -15,6 +13,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/workerinjuryservice"
 	"github.com/emoss08/trenova/internal/core/services/workerleaveservice"
 	"github.com/emoss08/trenova/internal/core/services/workertrainingservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -36,7 +37,7 @@ const (
 type wfLeaveReader interface {
 	ListCases(
 		ctx context.Context,
-		req *repositories.ListLeaveCasesRequest,
+		req *workerports.ListLeaveCasesRequest,
 	) ([]*worker.WorkerLeaveCase, error)
 }
 
@@ -49,7 +50,7 @@ type wfTrainingReader interface {
 	) ([]*worker.WorkerTrainingRecord, error)
 	ListCourses(
 		ctx context.Context,
-		req *repositories.ListTrainingCoursesRequest,
+		req *workerports.ListTrainingCoursesRequest,
 	) (*pagination.CursorListResult[*worker.TrainingCourse], error)
 }
 
@@ -62,7 +63,7 @@ type wfChecklistReader interface {
 	) ([]*worker.WorkerChecklist, error)
 	ListTemplates(
 		ctx context.Context,
-		req *repositories.ListChecklistTemplatesRequest,
+		req *workerports.ListChecklistTemplatesRequest,
 	) (*pagination.CursorListResult[*worker.WorkerChecklistTemplate], error)
 }
 
@@ -75,14 +76,14 @@ type wfReviewReader interface {
 	) ([]*worker.PerformanceReview, error)
 	ListTemplates(
 		ctx context.Context,
-		req *repositories.ListReviewTemplatesRequest,
+		req *workerports.ListReviewTemplatesRequest,
 	) (*pagination.CursorListResult[*worker.PerformanceReviewTemplate], error)
 }
 
 type wfVerificationReader interface {
 	ListVerifications(
 		ctx context.Context,
-		req *repositories.ListEmploymentVerificationsRequest,
+		req *workerports.ListEmploymentVerificationsRequest,
 	) ([]*worker.WorkerEmploymentVerification, error)
 }
 
@@ -95,14 +96,14 @@ type wfCredentialReader interface {
 	) ([]*worker.WorkerCredential, error)
 	ListTypes(
 		ctx context.Context,
-		req *repositories.ListCredentialTypesRequest,
+		req *workerports.ListCredentialTypesRequest,
 	) (*pagination.CursorListResult[*worker.WorkerCredentialType], error)
 }
 
 type wfInjuryReader interface {
 	ListInjuries(
 		ctx context.Context,
-		req *repositories.ListWorkerInjuriesRequest,
+		req *workerports.ListWorkerInjuriesRequest,
 	) ([]*worker.WorkerInjury, error)
 }
 
@@ -116,7 +117,7 @@ var (
 	_ wfInjuryReader       = (*workerinjuryservice.Service)(nil)
 )
 
-func catalogFilter(params *serviceports.QueryToolParams) *pagination.QueryOptions {
+func catalogFilter(params *agentports.QueryToolParams) *pagination.QueryOptions {
 	return &pagination.QueryOptions{
 		TenantInfo: tenantOf(params),
 		Pagination: pagination.Info{Limit: maxCatalogRows},
@@ -150,8 +151,8 @@ type leaveCaseRow struct {
 
 func newListWorkerLeaveCasesTool(
 	cases wfLeaveReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &workforceRead{
 		name: "list_worker_leave_cases",
 		description: "List FMLA, medical, military, parental and personal leave cases. " +
@@ -169,14 +170,14 @@ func newListWorkerLeaveCasesTool(
 		access: newFieldAccess(permissions),
 		run: func(
 			ctx context.Context,
-			params *serviceports.QueryToolParams,
+			params *agentports.QueryToolParams,
 			gate *fieldGate,
 		) (any, error) {
 			workerID, err := optionalWorker(params.Params)
 			if err != nil {
 				return nil, err
 			}
-			found, err := cases.ListCases(ctx, &repositories.ListLeaveCasesRequest{
+			found, err := cases.ListCases(ctx, &workerports.ListLeaveCasesRequest{
 				TenantInfo:                   tenantOf(params),
 				WorkerID:                     workerID,
 				OpenOnly:                     optionalBool(params.Params, wfParamOpenOnly),
@@ -240,8 +241,8 @@ type trainingRow struct {
 
 func newListWorkerTrainingTool(
 	training wfTrainingReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &workforceRead{
 		name: "list_worker_training",
 		description: "List one worker's training assignments with each course, its " +
@@ -257,7 +258,7 @@ func newListWorkerTrainingTool(
 		access:   newFieldAccess(permissions),
 		run: func(
 			ctx context.Context,
-			params *serviceports.QueryToolParams,
+			params *agentports.QueryToolParams,
 			gate *fieldGate,
 		) (any, error) {
 			workerID, err := requirePulid(params.Params, paramWorkerID)
@@ -306,8 +307,8 @@ type trainingCourseRow struct {
 
 func newListTrainingCoursesTool(
 	training wfTrainingReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &workforceRead{
 		name: "list_training_courses",
 		description: "List the organization's active training courses with their category, " +
@@ -318,10 +319,10 @@ func newListTrainingCoursesTool(
 		access:     newFieldAccess(permissions),
 		run: func(
 			ctx context.Context,
-			params *serviceports.QueryToolParams,
+			params *agentports.QueryToolParams,
 			gate *fieldGate,
 		) (any, error) {
-			courses, err := training.ListCourses(ctx, &repositories.ListTrainingCoursesRequest{
+			courses, err := training.ListCourses(ctx, &workerports.ListTrainingCoursesRequest{
 				Filter: catalogFilter(params),
 				Cursor: pagination.CursorInfo{Limit: maxCatalogRows},
 				Status: activeStatus,
@@ -385,8 +386,8 @@ type workerChecklists struct {
 
 func newListWorkerChecklistsTool(
 	checklists wfChecklistReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	access := newFieldAccess(permissions)
 	return &workforceRead{
 		name: "list_worker_checklists",
@@ -403,7 +404,7 @@ func newListWorkerChecklistsTool(
 		access:   access,
 		run: func(
 			ctx context.Context,
-			params *serviceports.QueryToolParams,
+			params *agentports.QueryToolParams,
 			gate *fieldGate,
 		) (any, error) {
 			workerID, err := requirePulid(params.Params, paramWorkerID)
@@ -442,7 +443,7 @@ func newListWorkerChecklistsTool(
 			}
 			if access.mayRead(ctx, params, permission.ResourceWorkerChecklistTemplate) {
 				templates, tmplErr := checklists.ListTemplates(ctx,
-					&repositories.ListChecklistTemplatesRequest{
+					&workerports.ListChecklistTemplatesRequest{
 						Filter:  catalogFilter(params),
 						Cursor:  pagination.CursorInfo{Limit: maxCatalogRows},
 						Status:  activeStatus,
@@ -505,8 +506,8 @@ type workerReviews struct {
 
 func newListPerformanceReviewsTool(
 	reviews wfReviewReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	access := newFieldAccess(permissions)
 	return &workforceRead{
 		name: "list_performance_reviews",
@@ -522,7 +523,7 @@ func newListPerformanceReviewsTool(
 		access:   access,
 		run: func(
 			ctx context.Context,
-			params *serviceports.QueryToolParams,
+			params *agentports.QueryToolParams,
 			gate *fieldGate,
 		) (any, error) {
 			workerID, err := requirePulid(params.Params, paramWorkerID)
@@ -562,7 +563,7 @@ func newListPerformanceReviewsTool(
 			}
 			if access.mayRead(ctx, params, permission.ResourcePerformanceReviewTemplate) {
 				templates, tmplErr := reviews.ListTemplates(ctx,
-					&repositories.ListReviewTemplatesRequest{
+					&workerports.ListReviewTemplatesRequest{
 						Filter: catalogFilter(params),
 						Cursor: pagination.CursorInfo{Limit: maxCatalogRows},
 						Status: activeStatus,
@@ -609,8 +610,8 @@ type verificationRow struct {
 
 func newListEmploymentVerificationsTool(
 	verifications wfVerificationReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &workforceRead{
 		name: "list_employment_verifications",
 		description: "List the previous employers on drivers' qualification files. Each " +
@@ -626,7 +627,7 @@ func newListEmploymentVerificationsTool(
 		access: newFieldAccess(permissions),
 		run: func(
 			ctx context.Context,
-			params *serviceports.QueryToolParams,
+			params *agentports.QueryToolParams,
 			gate *fieldGate,
 		) (any, error) {
 			workerID, err := optionalWorker(params.Params)
@@ -634,7 +635,7 @@ func newListEmploymentVerificationsTool(
 				return nil, err
 			}
 			found, err := verifications.ListVerifications(ctx,
-				&repositories.ListEmploymentVerificationsRequest{
+				&workerports.ListEmploymentVerificationsRequest{
 					TenantInfo:      tenantOf(params),
 					WorkerID:        workerID,
 					OutstandingOnly: optionalBool(params.Params, paramOutstanding),
@@ -706,8 +707,8 @@ type workerCredentials struct {
 
 func newListWorkerCredentialsTool(
 	credentials wfCredentialReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	access := newFieldAccess(permissions)
 	return &workforceRead{
 		name: "list_worker_credentials",
@@ -724,7 +725,7 @@ func newListWorkerCredentialsTool(
 		access:   access,
 		run: func(
 			ctx context.Context,
-			params *serviceports.QueryToolParams,
+			params *agentports.QueryToolParams,
 			gate *fieldGate,
 		) (any, error) {
 			workerID, err := requirePulid(params.Params, paramWorkerID)
@@ -760,7 +761,7 @@ func newListWorkerCredentialsTool(
 			if access.mayRead(ctx, params, permission.ResourceWorkerCredentialType) {
 				types, typeErr := credentials.ListTypes(
 					ctx,
-					&repositories.ListCredentialTypesRequest{
+					&workerports.ListCredentialTypesRequest{
 						Filter: catalogFilter(params),
 						Cursor: pagination.CursorInfo{Limit: maxCatalogRows},
 						Status: activeStatus,
@@ -808,8 +809,8 @@ type injuryRow struct {
 
 func newListWorkerInjuriesTool(
 	injuries wfInjuryReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &workforceRead{
 		name: "list_worker_injuries",
 		description: "List injury and illness cases on the OSHA log, for one worker or a " +
@@ -831,7 +832,7 @@ func newListWorkerInjuriesTool(
 		access: newFieldAccess(permissions),
 		run: func(
 			ctx context.Context,
-			params *serviceports.QueryToolParams,
+			params *agentports.QueryToolParams,
 			gate *fieldGate,
 		) (any, error) {
 			workerID, err := optionalWorker(params.Params)
@@ -844,7 +845,7 @@ func newListWorkerInjuriesTool(
 					paramCaseYear, minCaseYear, maxCaseYear)
 			}
 			caseYear := int16(year) //nolint:gosec // checked against the year range above
-			found, err := injuries.ListInjuries(ctx, &repositories.ListWorkerInjuriesRequest{
+			found, err := injuries.ListInjuries(ctx, &workerports.ListWorkerInjuriesRequest{
 				TenantInfo:     tenantOf(params),
 				WorkerID:       workerID,
 				CaseYear:       caseYear,
@@ -890,56 +891,56 @@ func newListWorkerInjuriesTool(
 
 func provideListWorkerLeaveCasesTool(
 	s *workerleaveservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newListWorkerLeaveCasesTool(s, permissions)
 }
 
 func provideListWorkerTrainingTool(
 	s *workertrainingservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newListWorkerTrainingTool(s, permissions)
 }
 
 func provideListTrainingCoursesTool(
 	s *workertrainingservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newListTrainingCoursesTool(s, permissions)
 }
 
 func provideListWorkerChecklistsTool(
 	s *workerchecklistservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newListWorkerChecklistsTool(s, permissions)
 }
 
 func provideListPerformanceReviewsTool(
 	s *performancereviewservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newListPerformanceReviewsTool(s, permissions)
 }
 
 func provideListEmploymentVerificationsTool(
 	s *workerdqfservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newListEmploymentVerificationsTool(s, permissions)
 }
 
 func provideListWorkerCredentialsTool(
 	s *workercredentialservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newListWorkerCredentialsTool(s, permissions)
 }
 
 func provideListWorkerInjuriesTool(
 	s *workerinjuryservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newListWorkerInjuriesTool(s, permissions)
 }

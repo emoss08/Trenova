@@ -9,10 +9,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/pagedraft"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/formulaassistantservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -50,7 +51,7 @@ func formulaToolProviders() []any {
 	}
 }
 
-func formulaTenant(params *serviceports.QueryToolParams) pagination.TenantInfo {
+func formulaTenant(params *agentports.QueryToolParams) pagination.TenantInfo {
 	return pagination.TenantInfo{
 		OrgID:  params.OrganizationID,
 		BuID:   params.BusinessUnitID,
@@ -73,8 +74,8 @@ type formulaTemplateRow struct {
 }
 
 func newListFormulaTemplatesTool(
-	repo repositories.FormulaTemplateRepository,
-) serviceports.AgentQueryTool {
+	repo formulatemplateports.FormulaTemplateRepository,
+) agentports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "list_formula_templates",
 		entityPlural: "formula templates",
@@ -95,7 +96,7 @@ func newListFormulaTemplatesTool(
 			{Name: "createdAt", Kind: filterDate, Sortable: true},
 		},
 		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
-			result, err := repo.List(ctx, &repositories.ListFormulaTemplatesRequest{Filter: opts})
+			result, err := repo.List(ctx, &formulatemplateports.ListFormulaTemplatesRequest{Filter: opts})
 			if err != nil {
 				return nil, err
 			}
@@ -120,11 +121,11 @@ type describeFormulaSchemaTool struct {
 
 func provideDescribeFormulaSchemaTool(
 	workbench *formulaassistantservice.Service,
-) serviceports.AgentQueryTool {
+) agentports.AgentQueryTool {
 	return newDescribeFormulaSchemaTool(workbench)
 }
 
-func newDescribeFormulaSchemaTool(workbench formulaWorkbench) serviceports.AgentQueryTool {
+func newDescribeFormulaSchemaTool(workbench formulaWorkbench) agentports.AgentQueryTool {
 	return &describeFormulaSchemaTool{workbench: workbench}
 }
 
@@ -151,7 +152,7 @@ func (t *describeFormulaSchemaTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *describeFormulaSchemaTool) Policy() serviceports.ToolPolicy {
+func (t *describeFormulaSchemaTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceFormulaTemplate})
 }
 
@@ -163,7 +164,7 @@ func (t *describeFormulaSchemaTool) SearchTerms() []string {
 
 func (t *describeFormulaSchemaTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -237,15 +238,15 @@ type testFormulaExpressionTool struct {
 
 func provideTestFormulaExpressionTool(
 	workbench *formulaassistantservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newTestFormulaExpressionTool(workbench, permissions)
 }
 
 func newTestFormulaExpressionTool(
 	workbench formulaWorkbench,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &testFormulaExpressionTool{workbench: workbench, access: newFieldAccess(permissions)}
 }
 
@@ -281,7 +282,7 @@ func (t *testFormulaExpressionTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *testFormulaExpressionTool) Policy() serviceports.ToolPolicy {
+func (t *testFormulaExpressionTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceFormulaTemplate,
 		rationale: "Prices an expression with the formula engine, for sample values or a " +
@@ -303,7 +304,7 @@ type testedFormula struct {
 
 func (t *testFormulaExpressionTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -359,15 +360,15 @@ type proposeFormulaTool struct {
 
 func provideProposeFormulaTool(
 	workbench *formulaassistantservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newProposeFormulaTool(workbench, permissions)
 }
 
 func newProposeFormulaTool(
 	workbench formulaWorkbench,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &proposeFormulaTool{workbench: workbench, access: newFieldAccess(permissions)}
 }
 
@@ -453,7 +454,7 @@ func (t *proposeFormulaTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *proposeFormulaTool) Policy() serviceports.ToolPolicy {
+func (t *proposeFormulaTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceFormulaTemplate,
 		scope:    agent.ToolScopeSelf,
@@ -472,7 +473,7 @@ func (t *proposeFormulaTool) SearchTerms() []string {
 
 func (t *proposeFormulaTool) mayAuthor(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) bool {
 	actor := params.Actor
 	if actor == nil || t.access.permissions == nil {
@@ -493,7 +494,7 @@ func (t *proposeFormulaTool) mayAuthor(
 
 func (t *proposeFormulaTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

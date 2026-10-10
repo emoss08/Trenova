@@ -8,18 +8,17 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/integrationservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	sharedsamsara "github.com/emoss08/trenova/shared/samsara"
 	"github.com/emoss08/trenova/shared/samsara/drivers"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
-
-	"github.com/emoss08/trenova/pkg/domaintypes"
-	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 )
 
 const (
@@ -36,14 +35,14 @@ type Params struct {
 	fx.In
 
 	Logger             *zap.Logger
-	Repo               repositories.WorkerRepository
+	Repo               workerports.WorkerRepository
 	SamsaraClient      *sharedsamsara.Client `optional:"true"`
 	IntegrationService *integrationservice.Service
 }
 
 type Service struct {
 	l                  *zap.Logger
-	repo               repositories.WorkerRepository
+	repo               workerports.WorkerRepository
 	samsaraClient      *sharedsamsara.Client
 	integrationService *integrationservice.Service
 }
@@ -60,7 +59,7 @@ func New(p Params) *Service {
 func (s *Service) GetWorkerSyncReadiness(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*services.WorkerSyncReadinessResponse, error) {
+) (*telematicsports.WorkerSyncReadinessResponse, error) {
 	counts, err := s.repo.GetWorkerSyncReadinessCounts(ctx, tenantInfo)
 	if err != nil {
 		return nil, errortypes.NewBusinessError(
@@ -70,7 +69,7 @@ func (s *Service) GetWorkerSyncReadiness(
 
 	unsyncedActiveWorkers := max(counts.ActiveWorkers-counts.SyncedActiveWorkers, 0)
 
-	return &services.WorkerSyncReadinessResponse{
+	return &telematicsports.WorkerSyncReadinessResponse{
 		TotalWorkers:           counts.TotalWorkers,
 		ActiveWorkers:          counts.ActiveWorkers,
 		SyncedActiveWorkers:    counts.SyncedActiveWorkers,
@@ -83,7 +82,7 @@ func (s *Service) GetWorkerSyncReadiness(
 func (s *Service) SyncWorkersToSamsara(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*services.SamsaraWorkerSyncResult, error) {
+) (*telematicsports.SamsaraWorkerSyncResult, error) {
 	samsaraClient, err := s.resolveSamsaraClient(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -105,10 +104,10 @@ func (s *Service) SyncWorkersToSamsara(
 		return nil, errortypes.NewBusinessError("failed to list Samsara drivers").WithInternal(err)
 	}
 
-	result := &services.SamsaraWorkerSyncResult{
+	result := &telematicsports.SamsaraWorkerSyncResult{
 		TotalWorkers:  len(workers),
 		RemoteDrivers: len(remoteDrivers),
-		Failures:      make([]services.SamsaraWorkerSyncFailure, 0),
+		Failures:      make([]telematicsports.SamsaraWorkerSyncFailure, 0),
 	}
 
 	driverIndex := buildSamsaraDriverIndex(remoteDrivers)
@@ -129,7 +128,7 @@ func (s *Service) SyncWorkersToSamsara(
 func (s *Service) DetectWorkerSyncDrift(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*services.WorkerSyncDriftResponse, error) {
+) (*telematicsports.WorkerSyncDriftResponse, error) {
 	samsaraClient, err := s.resolveSamsaraClient(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -156,7 +155,7 @@ func (s *Service) DetectWorkerSyncDrift(
 	}
 
 	detectedAt := timeutils.NowUnix()
-	drifts := make([]repositories.WorkerSyncDriftRecord, 0)
+	drifts := make([]workerports.WorkerSyncDriftRecord, 0)
 	for _, currentWorker := range workers {
 		drifts = append(
 			drifts,
@@ -176,7 +175,7 @@ func (s *Service) DetectWorkerSyncDrift(
 func (s *Service) GetWorkerSyncDrift(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*services.WorkerSyncDriftResponse, error) {
+) (*telematicsports.WorkerSyncDriftResponse, error) {
 	drifts, err := s.repo.ListWorkerSyncDrifts(ctx, tenantInfo)
 	if err != nil {
 		return nil, errortypes.NewBusinessError(
@@ -200,8 +199,8 @@ func (s *Service) GetWorkerSyncDrift(
 func (s *Service) RepairWorkerSyncDrift(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	req services.RepairWorkerSyncDriftRequest,
-) (*services.RepairWorkerSyncDriftResponse, error) {
+	req telematicsports.RepairWorkerSyncDriftRequest,
+) (*telematicsports.RepairWorkerSyncDriftResponse, error) {
 	samsaraClient, err := s.resolveSamsaraClient(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -215,22 +214,22 @@ func (s *Service) RepairWorkerSyncDrift(
 	}
 
 	if len(existingDrifts) == 0 {
-		return &services.RepairWorkerSyncDriftResponse{
+		return &telematicsports.RepairWorkerSyncDriftResponse{
 			RequestedWorkers: 0,
 			RepairedWorkers:  0,
 			FailedWorkers:    0,
-			Failures:         []services.SamsaraWorkerSyncFailure{},
+			Failures:         []telematicsports.SamsaraWorkerSyncFailure{},
 		}, nil
 	}
 
 	targetWorkerIDs := buildTargetWorkerIDs(req.WorkerIDs, existingDrifts)
 
 	if len(targetWorkerIDs) == 0 {
-		return &services.RepairWorkerSyncDriftResponse{
+		return &telematicsports.RepairWorkerSyncDriftResponse{
 			RequestedWorkers: 0,
 			RepairedWorkers:  0,
 			FailedWorkers:    0,
-			Failures:         []services.SamsaraWorkerSyncFailure{},
+			Failures:         []telematicsports.SamsaraWorkerSyncFailure{},
 		}, nil
 	}
 
@@ -246,16 +245,16 @@ func (s *Service) RepairWorkerSyncDrift(
 	}
 	driverIndex := buildSamsaraDriverIndex(remoteDrivers)
 
-	response := &services.RepairWorkerSyncDriftResponse{
+	response := &telematicsports.RepairWorkerSyncDriftResponse{
 		RequestedWorkers: len(targetWorkerIDs),
-		Failures:         make([]services.SamsaraWorkerSyncFailure, 0),
+		Failures:         make([]telematicsports.SamsaraWorkerSyncFailure, 0),
 	}
 
 	for idx := range targetWorkerIDs {
 		workerID := targetWorkerIDs[idx]
 		currentWorker, ok := workersByID[workerID]
 		if !ok {
-			response.Failures = append(response.Failures, services.SamsaraWorkerSyncFailure{
+			response.Failures = append(response.Failures, telematicsports.SamsaraWorkerSyncFailure{
 				WorkerID:  workerID,
 				Worker:    workerID,
 				Operation: "repair",
@@ -264,8 +263,8 @@ func (s *Service) RepairWorkerSyncDrift(
 			continue
 		}
 
-		result := &services.SamsaraWorkerSyncResult{
-			Failures: make([]services.SamsaraWorkerSyncFailure, 0),
+		result := &telematicsports.SamsaraWorkerSyncResult{
+			Failures: make([]telematicsports.SamsaraWorkerSyncFailure, 0),
 		}
 		s.syncWorkerToSamsara(ctx, samsaraClient, currentWorker, result, &driverIndex)
 		if len(result.Failures) > 0 {
@@ -291,7 +290,7 @@ func detectWorkerDrifts(
 	driverIndex *samsaraDriverIndex,
 	driverByID map[string]*drivers.Driver,
 	detectedAt int64,
-) []repositories.WorkerSyncDriftRecord {
+) []workerports.WorkerSyncDriftRecord {
 	if currentWorker == nil || currentWorker.ID.IsNil() {
 		return nil
 	}
@@ -304,12 +303,12 @@ func detectWorkerDrifts(
 	localExternalID := strings.TrimSpace(currentWorker.ExternalID)
 	remoteMappedID := strings.TrimSpace(driverIndex.remoteDriverByWorkerID[workerID])
 
-	drifts := make([]repositories.WorkerSyncDriftRecord, 0, 3)
+	drifts := make([]workerports.WorkerSyncDriftRecord, 0, 3)
 	if localExternalID == "" && remoteMappedID == "" {
-		drifts = append(drifts, repositories.WorkerSyncDriftRecord{
+		drifts = append(drifts, workerports.WorkerSyncDriftRecord{
 			WorkerID:        workerID,
 			WorkerName:      workerName,
-			DriftType:       repositories.WorkerSyncDriftTypeMissingMapping,
+			DriftType:       workerports.WorkerSyncDriftTypeMissingMapping,
 			Message:         "active worker is missing a Samsara driver mapping",
 			LocalExternalID: localExternalID,
 			RemoteDriverID:  remoteMappedID,
@@ -320,10 +319,10 @@ func detectWorkerDrifts(
 
 	if localExternalID != "" {
 		if _, ok := driverByID[localExternalID]; !ok {
-			drifts = append(drifts, repositories.WorkerSyncDriftRecord{
+			drifts = append(drifts, workerports.WorkerSyncDriftRecord{
 				WorkerID:        workerID,
 				WorkerName:      workerName,
-				DriftType:       repositories.WorkerSyncDriftTypeMissingRemoteDriver,
+				DriftType:       workerports.WorkerSyncDriftTypeMissingRemoteDriver,
 				Message:         "worker points to a Samsara driver that no longer exists",
 				LocalExternalID: localExternalID,
 				DetectedAt:      detectedAt,
@@ -332,10 +331,10 @@ func detectWorkerDrifts(
 	}
 
 	if localExternalID != "" && remoteMappedID != "" && localExternalID != remoteMappedID {
-		drifts = append(drifts, repositories.WorkerSyncDriftRecord{
+		drifts = append(drifts, workerports.WorkerSyncDriftRecord{
 			WorkerID:        workerID,
 			WorkerName:      workerName,
-			DriftType:       repositories.WorkerSyncDriftTypeMappingMismatch,
+			DriftType:       workerports.WorkerSyncDriftTypeMappingMismatch,
 			Message:         "local worker mapping differs from Samsara external ID mapping",
 			LocalExternalID: localExternalID,
 			RemoteDriverID:  remoteMappedID,
@@ -350,10 +349,10 @@ func detectWorkerDrifts(
 	if effectiveRemoteID != "" {
 		if remoteDriver := driverByID[effectiveRemoteID]; remoteDriver != nil &&
 			strings.EqualFold(samsaraDriverActivationStatus(remoteDriver), "deactivated") {
-			drifts = append(drifts, repositories.WorkerSyncDriftRecord{
+			drifts = append(drifts, workerports.WorkerSyncDriftRecord{
 				WorkerID:        workerID,
 				WorkerName:      workerName,
-				DriftType:       repositories.WorkerSyncDriftTypeRemoteDeactivated,
+				DriftType:       workerports.WorkerSyncDriftTypeRemoteDeactivated,
 				Message:         "mapped Samsara driver is deactivated",
 				LocalExternalID: localExternalID,
 				RemoteDriverID:  effectiveRemoteID,
@@ -378,7 +377,7 @@ func buildWorkerSyncName(currentWorker *worker.Worker) string {
 
 func buildTargetWorkerIDs(
 	requestedWorkerIDs []string,
-	existingDrifts []repositories.WorkerSyncDriftRecord,
+	existingDrifts []workerports.WorkerSyncDriftRecord,
 ) []string {
 	targetWorkerIDs := make([]string, 0)
 	seenTargets := make(map[string]struct{})
@@ -422,11 +421,11 @@ func buildWorkersByID(workers []*worker.Worker) map[string]*worker.Worker {
 }
 
 func toWorkerSyncDriftResponse(
-	drifts []repositories.WorkerSyncDriftRecord,
+	drifts []workerports.WorkerSyncDriftRecord,
 	lastCalculatedAt int64,
-) *services.WorkerSyncDriftResponse {
-	response := &services.WorkerSyncDriftResponse{
-		Drifts:           make([]services.WorkerSyncDrift, 0, len(drifts)),
+) *telematicsports.WorkerSyncDriftResponse {
+	response := &telematicsports.WorkerSyncDriftResponse{
+		Drifts:           make([]telematicsports.WorkerSyncDrift, 0, len(drifts)),
 		WorkersWithDrift: 0,
 		LastCalculatedAt: lastCalculatedAt,
 	}
@@ -434,7 +433,7 @@ func toWorkerSyncDriftResponse(
 
 	for idx := range drifts {
 		drift := drifts[idx]
-		response.Drifts = append(response.Drifts, services.WorkerSyncDrift{
+		response.Drifts = append(response.Drifts, telematicsports.WorkerSyncDrift{
 			WorkerID:        drift.WorkerID,
 			WorkerName:      drift.WorkerName,
 			DriftType:       drift.DriftType,
@@ -450,13 +449,13 @@ func toWorkerSyncDriftResponse(
 		}
 
 		switch drift.DriftType {
-		case repositories.WorkerSyncDriftTypeMissingMapping:
+		case workerports.WorkerSyncDriftTypeMissingMapping:
 			response.MissingMapping++
-		case repositories.WorkerSyncDriftTypeMissingRemoteDriver:
+		case workerports.WorkerSyncDriftTypeMissingRemoteDriver:
 			response.MissingRemoteDriver++
-		case repositories.WorkerSyncDriftTypeMappingMismatch:
+		case workerports.WorkerSyncDriftTypeMappingMismatch:
 			response.MappingMismatch++
-		case repositories.WorkerSyncDriftTypeRemoteDeactivated:
+		case workerports.WorkerSyncDriftTypeRemoteDeactivated:
 			response.RemoteDeactivated++
 		}
 	}
@@ -496,7 +495,7 @@ func (s *Service) syncWorkerToSamsara(
 	ctx context.Context,
 	samsaraClient *sharedsamsara.Client,
 	currentWorker *worker.Worker,
-	result *services.SamsaraWorkerSyncResult,
+	result *telematicsports.SamsaraWorkerSyncResult,
 	driverIndex *samsaraDriverIndex,
 ) {
 	if currentWorker == nil || currentWorker.ID.IsNil() {
@@ -568,7 +567,7 @@ func (s *Service) syncWorkerToSamsara(
 func (s *Service) mapWorkerFromRemoteExternalID(
 	ctx context.Context,
 	currentWorker *worker.Worker,
-	result *services.SamsaraWorkerSyncResult,
+	result *telematicsports.SamsaraWorkerSyncResult,
 	driverIndex *samsaraDriverIndex,
 	workerName string,
 ) bool {
@@ -621,7 +620,7 @@ func (s *Service) createAndMapWorkerToSamsara(
 }
 
 func appendSamsaraWorkerSyncFailure(
-	result *services.SamsaraWorkerSyncResult,
+	result *telematicsports.SamsaraWorkerSyncResult,
 	workerID string,
 	workerName string,
 	operation string,
@@ -631,7 +630,7 @@ func appendSamsaraWorkerSyncFailure(
 		return
 	}
 
-	result.Failures = append(result.Failures, services.SamsaraWorkerSyncFailure{
+	result.Failures = append(result.Failures, telematicsports.SamsaraWorkerSyncFailure{
 		WorkerID:  workerID,
 		Worker:    workerName,
 		Operation: operation,
@@ -652,7 +651,7 @@ func (s *Service) listWorkersForSamsaraSync(
 			return nil, err
 		}
 
-		page, err := s.repo.List(ctx, &repositories.ListWorkersRequest{
+		page, err := s.repo.List(ctx, &workerports.ListWorkersRequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: tenantInfo,
 				Pagination: pagination.Info{

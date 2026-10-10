@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/tableconfiguration"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/tableconfigurationports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -30,7 +30,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.TableConfigurationRepository {
+func New(p Params) tableconfigurationports.TableConfigurationRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.table-configuration-repository"),
@@ -39,7 +39,7 @@ func New(p Params) repositories.TableConfigurationRepository {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListTableConfigurationsRequest,
+	req *tableconfigurationports.ListTableConfigurationsRequest,
 ) *bun.SelectQuery {
 	log := r.l.With(
 		zap.String("operation", "filterQuery"),
@@ -92,7 +92,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListTableConfigurationsRequest,
+	req *tableconfigurationports.ListTableConfigurationsRequest,
 ) (*pagination.ListResult[*tableconfiguration.TableConfiguration], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*tableconfiguration.TableConfiguration], error) {
 		log := r.l.With(
@@ -121,7 +121,7 @@ func (r *repository) List(
 
 func (r *repository) scopeQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListTableConfigurationConnectionRequest,
+	req *tableconfigurationports.ListTableConfigurationConnectionRequest,
 ) *bun.SelectQuery {
 	log := r.l.With(zap.String("operation", "scopeQuery"))
 	tenantInfo := req.Filter.TenantInfo
@@ -178,7 +178,7 @@ func applyTableConfigurationColumns(q *bun.SelectQuery, columns []string) *bun.S
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListTableConfigurationConnectionRequest,
+	req *tableconfigurationports.ListTableConfigurationConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	q, err := querybuilder.ApplyCursorFilters(
 		q,
@@ -196,7 +196,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListTableConfigurationConnectionRequest,
+	req *tableconfigurationports.ListTableConfigurationConnectionRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -210,7 +210,7 @@ func (r *repository) applyTotalCountFilters(
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListTableConfigurationConnectionRequest,
+	req *tableconfigurationports.ListTableConfigurationConnectionRequest,
 ) (*pagination.CursorListResult[*tableconfiguration.TableConfiguration], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*tableconfiguration.TableConfiguration], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -311,7 +311,7 @@ func (r *repository) Update(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetTableConfigurationByIDRequest,
+	req tableconfigurationports.GetTableConfigurationByIDRequest,
 ) (*tableconfiguration.TableConfiguration, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tableconfiguration.TableConfiguration, error) {
 		log := r.l.With(
@@ -369,7 +369,7 @@ func (r *repository) Delete(
 
 func (r *repository) GetDefaultForResource(
 	ctx context.Context,
-	req repositories.GetDefaultTableConfigurationRequest,
+	req tableconfigurationports.GetDefaultTableConfigurationRequest,
 ) (*tableconfiguration.TableConfiguration, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tableconfiguration.TableConfiguration, error) {
 		log := r.l.With(

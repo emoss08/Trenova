@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/uptrace/bun"
 )
 
@@ -81,22 +81,22 @@ LIMIT ?`,
 
 func (r *repository) SearchDesk(
 	ctx context.Context,
-	req repositories.SearchDeskRequest,
-) ([]repositories.DeskSearchRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.DeskSearchRow, error) {
+	req agentports.SearchDeskRequest,
+) ([]agentports.DeskSearchRow, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentports.DeskSearchRow, error) {
 		db := r.db.DBForContext(ctx)
 		term := strings.TrimSpace(req.Query)
 		contains := ""
 		if term != "" {
 			contains = "%" + likeEscape(term) + "%"
 		}
-		out := make([]repositories.DeskSearchRow, 0, len(req.Kinds)*req.LimitPerKind)
+		out := make([]agentports.DeskSearchRow, 0, len(req.Kinds)*req.LimitPerKind)
 		for _, kind := range req.Kinds {
 			query, ok := deskSearchQueries[kind]
 			if !ok {
 				continue
 			}
-			rows := make([]repositories.DeskSearchRow, 0, req.LimitPerKind)
+			rows := make([]agentports.DeskSearchRow, 0, req.LimitPerKind)
 			if err := db.NewRaw(
 				query,
 				req.TenantInfo.OrgID,
@@ -117,7 +117,7 @@ func (r *repository) SearchDesk(
 
 func (r *repository) CountQuestionsSince(
 	ctx context.Context,
-	req repositories.CountQuestionsSinceRequest,
+	req agentports.CountQuestionsSinceRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		var count int

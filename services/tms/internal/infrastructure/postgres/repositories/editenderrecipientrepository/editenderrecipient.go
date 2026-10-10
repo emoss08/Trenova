@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/uptrace/bun"
@@ -26,7 +26,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.EDITenderRecipientRepository {
+func New(p Params) ediports.EDITenderRecipientRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.edi-tender-recipient-repository"),
@@ -35,7 +35,7 @@ func New(p Params) repositories.EDITenderRecipientRepository {
 
 func (r *repository) GetTenderRecipientByID(
 	ctx context.Context,
-	req repositories.GetEDITenderRecipientByIDRequest,
+	req ediports.GetEDITenderRecipientByIDRequest,
 ) (*edi.TenderRecipient, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.TenderRecipient, error) {
 		entity := new(edi.TenderRecipient)
@@ -56,7 +56,7 @@ func (r *repository) GetTenderRecipientByID(
 
 func (r *repository) ListActiveTenderRecipientsForSourceShipment(
 	ctx context.Context,
-	req repositories.ListEDITenderRecipientsForSourceShipmentRequest,
+	req ediports.ListEDITenderRecipientsForSourceShipmentRequest,
 ) ([]*edi.TenderRecipient, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.TenderRecipient, error) {
 		entities := make([]*edi.TenderRecipient, 0)
@@ -75,7 +75,7 @@ func (r *repository) ListActiveTenderRecipientsForSourceShipment(
 
 func (r *repository) GetActiveExternalRecipientByShipmentReference(
 	ctx context.Context,
-	req repositories.GetActiveExternalEDITenderRecipientByReferenceRequest,
+	req ediports.GetActiveExternalEDITenderRecipientByReferenceRequest,
 ) (*edi.TenderRecipient, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.TenderRecipient, error) {
 		entity := new(edi.TenderRecipient)
@@ -105,7 +105,7 @@ func (r *repository) GetActiveExternalRecipientByShipmentReference(
 
 func (r *repository) UpsertTenderRecipient(
 	ctx context.Context,
-	req repositories.UpsertEDITenderRecipientRequest,
+	req ediports.UpsertEDITenderRecipientRequest,
 ) (*edi.TenderRecipient, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.TenderRecipient, error) {
 		entity := req.Recipient

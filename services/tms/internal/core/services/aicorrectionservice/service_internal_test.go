@@ -15,8 +15,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -40,7 +43,7 @@ const (
 type fakeStore struct {
 	saved       *aicorrection.Correction
 	upsertErr   error
-	purgeCalls  []repositories.PurgeAICorrectionsRequest
+	purgeCalls  []aicorrectionports.PurgeAICorrectionsRequest
 	purgeCounts []int64
 }
 
@@ -57,7 +60,7 @@ func (f *fakeStore) Upsert(
 
 func (f *fakeStore) PurgeBefore(
 	_ context.Context,
-	req repositories.PurgeAICorrectionsRequest,
+	req aicorrectionports.PurgeAICorrectionsRequest,
 ) (int64, error) {
 	f.purgeCalls = append(f.purgeCalls, req)
 	if len(f.purgeCounts) == 0 {
@@ -71,12 +74,12 @@ func (f *fakeStore) PurgeBefore(
 type fakeShipments struct {
 	shipment *shipment.Shipment
 	err      error
-	req      *repositories.GetShipmentByIDRequest
+	req      *shipmentports.GetShipmentByIDRequest
 }
 
 func (f *fakeShipments) GetByID(
 	_ context.Context,
-	req *repositories.GetShipmentByIDRequest,
+	req *shipmentports.GetShipmentByIDRequest,
 ) (*shipment.Shipment, error) {
 	f.req = req
 	return f.shipment, f.err
@@ -98,12 +101,12 @@ func (f *fakeContents) GetByDocumentID(
 type fakeExtractions struct {
 	extraction *documentaiextraction.Extraction
 	err        error
-	req        repositories.GetDocumentAIExtractionRequest
+	req        documentaiextractionports.GetDocumentAIExtractionRequest
 }
 
 func (f *fakeExtractions) GetByDocumentExtractedAt(
 	_ context.Context,
-	req repositories.GetDocumentAIExtractionRequest,
+	req documentaiextractionports.GetDocumentAIExtractionRequest,
 ) (*documentaiextraction.Extraction, error) {
 	f.req = req
 	return f.extraction, f.err
@@ -116,7 +119,7 @@ type fakeRetention struct {
 
 func (f *fakeRetention) Get(
 	_ context.Context,
-	_ repositories.GetDataRetentionRequest,
+	_ tenantports.GetDataRetentionRequest,
 ) (*tenant.DataRetention, error) {
 	return f.settings, f.err
 }
@@ -284,7 +287,7 @@ func resultsByKey(results []aicorrection.FieldResult) map[string]aicorrection.Fi
 
 func capture(t *testing.T, h *harness, draft *documentshipmentdraft.DocumentShipmentDraft) *aicorrection.Correction {
 	t.Helper()
-	got, err := h.svc.CaptureShipmentDraft(t.Context(), &services.CaptureShipmentDraftCorrectionRequest{
+	got, err := h.svc.CaptureShipmentDraft(t.Context(), &aicorrectionports.CaptureShipmentDraftCorrectionRequest{
 		Draft:        draft,
 		ShipmentID:   testShipment,
 		CapturedByID: testUser,
@@ -447,7 +450,7 @@ func TestCaptureShipmentDraft_SkipsADraftWithNothingPredicted(t *testing.T) {
 	draft := rateConfirmationDraft()
 	draft.DraftData = map[string]any{"fields": map[string]any{"rate": field("  ", "ai", 0.1)}}
 
-	got, err := h.svc.CaptureShipmentDraft(t.Context(), &services.CaptureShipmentDraftCorrectionRequest{
+	got, err := h.svc.CaptureShipmentDraft(t.Context(), &aicorrectionports.CaptureShipmentDraftCorrectionRequest{
 		Draft:        draft,
 		ShipmentID:   testShipment,
 		CapturedByID: testUser,
@@ -466,7 +469,7 @@ func TestCaptureShipmentDraft_RefusesADraftFromAnotherTenant(t *testing.T) {
 	draft := rateConfirmationDraft()
 	draft.OrganizationID = pulid.ID("org_other")
 
-	_, err := h.svc.CaptureShipmentDraft(t.Context(), &services.CaptureShipmentDraftCorrectionRequest{
+	_, err := h.svc.CaptureShipmentDraft(t.Context(), &aicorrectionports.CaptureShipmentDraftCorrectionRequest{
 		Draft:        draft,
 		ShipmentID:   testShipment,
 		CapturedByID: testUser,
@@ -485,7 +488,7 @@ func TestCaptureShipmentDraft_RequiresADraftAndAShipment(t *testing.T) {
 	_, err := h.svc.CaptureShipmentDraft(t.Context(), nil)
 	require.Error(t, err)
 
-	_, err = h.svc.CaptureShipmentDraft(t.Context(), &services.CaptureShipmentDraftCorrectionRequest{
+	_, err = h.svc.CaptureShipmentDraft(t.Context(), &aicorrectionports.CaptureShipmentDraftCorrectionRequest{
 		Draft:      rateConfirmationDraft(),
 		TenantInfo: tenantInfo(),
 	})
@@ -497,7 +500,7 @@ func TestCaptureShipmentDraft_PropagatesShipmentAndStoreFailures(t *testing.T) {
 
 	h := newHarness(nil)
 	h.shipments.err = errors.New("database unavailable")
-	_, err := h.svc.CaptureShipmentDraft(t.Context(), &services.CaptureShipmentDraftCorrectionRequest{
+	_, err := h.svc.CaptureShipmentDraft(t.Context(), &aicorrectionports.CaptureShipmentDraftCorrectionRequest{
 		Draft:        rateConfirmationDraft(),
 		ShipmentID:   testShipment,
 		CapturedByID: testUser,
@@ -507,7 +510,7 @@ func TestCaptureShipmentDraft_PropagatesShipmentAndStoreFailures(t *testing.T) {
 
 	h = newHarness(confirmedShipment())
 	h.store.upsertErr = errors.New("write failed")
-	_, err = h.svc.CaptureShipmentDraft(t.Context(), &services.CaptureShipmentDraftCorrectionRequest{
+	_, err = h.svc.CaptureShipmentDraft(t.Context(), &aicorrectionports.CaptureShipmentDraftCorrectionRequest{
 		Draft:        rateConfirmationDraft(),
 		ShipmentID:   testShipment,
 		CapturedByID: testUser,
@@ -523,7 +526,7 @@ func TestPurgeExpired_UsesTheOrganizationsRetentionInBatches(t *testing.T) {
 	h.retention.settings = &tenant.DataRetention{AICorrectionRetentionPeriod: 60}
 	h.store.purgeCounts = []int64{purgeBatchSize, 12}
 
-	purged, err := h.svc.PurgeExpired(t.Context(), services.PurgeExpiredAICorrectionsRequest{
+	purged, err := h.svc.PurgeExpired(t.Context(), kernelports.PurgeExpiredAICorrectionsRequest{
 		TenantInfo: tenantInfo(),
 		Now:        capturedAt,
 	})
@@ -540,7 +543,7 @@ func TestPurgeExpired_DefaultsWhenNoRetentionIsSaved(t *testing.T) {
 	h := newHarness(nil)
 	h.retention.err = errortypes.NewNotFoundError("data retention not found")
 
-	_, err := h.svc.PurgeExpired(t.Context(), services.PurgeExpiredAICorrectionsRequest{
+	_, err := h.svc.PurgeExpired(t.Context(), kernelports.PurgeExpiredAICorrectionsRequest{
 		TenantInfo: tenantInfo(),
 	})
 	require.NoError(t, err)
@@ -553,7 +556,7 @@ func TestPurgeExpired_DefaultsWhenNoRetentionIsSaved(t *testing.T) {
 
 	h = newHarness(nil)
 	h.retention.err = errors.New("database unavailable")
-	_, err = h.svc.PurgeExpired(t.Context(), services.PurgeExpiredAICorrectionsRequest{
+	_, err = h.svc.PurgeExpired(t.Context(), kernelports.PurgeExpiredAICorrectionsRequest{
 		TenantInfo: tenantInfo(),
 	})
 	require.Error(t, err)
@@ -601,7 +604,7 @@ func TestCaptureShipmentDraft_ShadowsAreNotScoredWhenTheCaptureFails(t *testing.
 	h.svc.shadows = scorer
 	h.store.upsertErr = errors.New("write failed")
 
-	_, err := h.svc.CaptureShipmentDraft(t.Context(), &services.CaptureShipmentDraftCorrectionRequest{
+	_, err := h.svc.CaptureShipmentDraft(t.Context(), &aicorrectionports.CaptureShipmentDraftCorrectionRequest{
 		Draft:        rateConfirmationDraft(),
 		ShipmentID:   testShipment,
 		CapturedByID: testUser,

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentsearchprojectionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -27,4 +27,4 @@ func (noopDocumentSearchProjectionService) Delete(
 	return nil
 }
 
-var _ serviceports.DocumentSearchProjectionService = noopDocumentSearchProjectionService{}
+var _ documentsearchprojectionports.DocumentSearchProjectionService = noopDocumentSearchProjectionService{}

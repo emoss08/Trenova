@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -15,7 +15,7 @@ import (
 )
 
 type settleRepo struct {
-	repositories.InboundMessageRepository
+	inboundmessageports.InboundMessageRepository
 
 	message *inboundmessage.InboundMessage
 	getErr  error
@@ -24,7 +24,7 @@ type settleRepo struct {
 }
 
 func (s *settleRepo) GetByID(
-	_ context.Context, _ repositories.GetInboundMessageByIDRequest,
+	_ context.Context, _ inboundmessageports.GetInboundMessageByIDRequest,
 ) (*inboundmessage.InboundMessage, error) {
 	if s.getErr != nil {
 		return nil, s.getErr

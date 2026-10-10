@@ -6,9 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/templateengine"
 )
@@ -28,11 +27,11 @@ import (
 //     next, and the next one is a real customer's name.
 func (s *Service) PublishVersion(
 	ctx context.Context,
-	req *services.PublishVersionRequest,
+	req *documenttemplateports.PublishVersionRequest,
 ) (*documenttemplate.DocumentTemplateVersion, error) {
 	version, err := s.versionRepo.GetByID(
 		ctx,
-		&repositories.GetDocumentTemplateVersionByIDRequest{
+		&documenttemplateports.GetDocumentTemplateVersionByIDRequest{
 			VersionID:  req.VersionID,
 			TenantInfo: req.TenantInfo,
 		},
@@ -56,7 +55,7 @@ func (s *Service) PublishVersion(
 
 	published, err := s.versionRepo.Publish(
 		ctx,
-		&repositories.PublishDocumentTemplateVersionRequest{
+		&documenttemplateports.PublishDocumentTemplateVersionRequest{
 			TenantInfo:    req.TenantInfo,
 			VersionID:     req.VersionID,
 			PublishedByID: req.UserID,

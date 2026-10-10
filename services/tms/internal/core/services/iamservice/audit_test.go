@@ -1,13 +1,14 @@
 package iamservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/iamportsmock"
 	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/iam"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/securityaudittest"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -18,10 +19,10 @@ import (
 	"go.uber.org/zap"
 )
 
-func auditedService(t *testing.T) (*service, *mocks.MockIAMRepository, *securityaudittest.Recorder) {
+func auditedService(t *testing.T) (*service, *iamportsmock.MockIAMRepository, *securityaudittest.Recorder) {
 	t.Helper()
 
-	repo := mocks.NewMockIAMRepository(t)
+	repo := iamportsmock.NewMockIAMRepository(t)
 	recorder := &securityaudittest.Recorder{}
 	return &service{repo: repo, auditor: recorder, l: zap.NewNop()}, repo, recorder
 }
@@ -79,7 +80,7 @@ func TestIdentityProviderDeletionRecordsWhatWasRemoved(t *testing.T) {
 	assert.Equal(t, permission.OpDelete, change.Operation)
 	assert.Same(t, existing, change.Before)
 	assert.Equal(t, tenant.UserID, change.Actor.UserID)
-	assert.Equal(t, services.PrincipalTypeUser, change.Actor.PrincipalType)
+	assert.Equal(t, permissionports.PrincipalTypeUser, change.Actor.PrincipalType)
 }
 
 func TestFailedIdentityProviderDeletionIsNotRecorded(t *testing.T) {
@@ -106,7 +107,7 @@ func TestSCIMTokenLifecycleIsRecordedWithoutTheSecret(t *testing.T) {
 	repo.EXPECT().CreateSCIMToken(mock.Anything, mock.AnythingOfType("*iam.SCIMToken")).Return(saved, nil).Once()
 	repo.EXPECT().RevokeSCIMToken(mock.Anything, orgID, saved.ID).Return(saved, nil).Once()
 
-	created, err := svc.CreateSCIMToken(t.Context(), orgID, directoryID, &services.SCIMTokenCreateRequest{Name: "Okta sync"})
+	created, err := svc.CreateSCIMToken(t.Context(), orgID, directoryID, &iamports.SCIMTokenCreateRequest{Name: "Okta sync"})
 	require.NoError(t, err)
 	_, err = svc.RevokeSCIMToken(t.Context(), orgID, saved.ID)
 	require.NoError(t, err)
@@ -130,7 +131,7 @@ func TestSCIMDirectoryUpdateRequiresTheDirectoryInTheTenant(t *testing.T) {
 	tenant := auditTenant()
 	id := pulid.MustNew("scd_")
 
-	repo.EXPECT().GetSCIMDirectory(mock.Anything, repositories.GetSCIMDirectoryRequest{ID: id, TenantInfo: tenant}).
+	repo.EXPECT().GetSCIMDirectory(mock.Anything, iamports.GetSCIMDirectoryRequest{ID: id, TenantInfo: tenant}).
 		Return(nil, errors.New("not found")).Once()
 
 	_, err := svc.UpdateSCIMDirectory(t.Context(), tenant, id, &iam.SCIMDirectory{TenantSlug: "acme"})

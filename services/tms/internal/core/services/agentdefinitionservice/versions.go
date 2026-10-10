@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/editconflict"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,7 +23,7 @@ type saveFunc func(ctx context.Context) (*agentdefinition.Definition, error)
 func (s *Service) versioned(
 	write saveFunc,
 	before *agentdefinition.Definition,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) saveFunc {
 	author := typeutils.IDPtr(actorUser(actor))
 	return func(ctx context.Context) (*agentdefinition.Definition, error) {
@@ -41,7 +41,7 @@ func (s *Service) versioned(
 // inTransaction runs a save in a transaction of its own.
 func (s *Service) inTransaction(ctx context.Context, write saveFunc) (*agentdefinition.Definition, error) {
 	var saved *agentdefinition.Definition
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		var txErr error
 		saved, txErr = write(txCtx)
 		return txErr
@@ -68,7 +68,7 @@ func (s *Service) editConflict(ctx context.Context, req *conflictRequest) error 
 		return req.cause
 	}
 
-	current, err := s.repo.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	current, err := s.repo.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         req.agentID,
 		TenantInfo: req.tenantInfo,
 	})
@@ -78,7 +78,7 @@ func (s *Service) editConflict(ctx context.Context, req *conflictRequest) error 
 
 	detail := &editconflict.Detail{Version: current.Version, UpdatedAt: current.UpdatedAt}
 
-	latest, err := s.versions.LatestAt(ctx, &repositories.GetAgentDefinitionVersionAtRequest{
+	latest, err := s.versions.LatestAt(ctx, &agentdefinitionports.GetAgentDefinitionVersionAtRequest{
 		TenantInfo:        req.tenantInfo,
 		AgentDefinitionID: req.agentID,
 		Version:           current.Version,
@@ -90,7 +90,7 @@ func (s *Service) editConflict(ctx context.Context, req *conflictRequest) error 
 		detail.Author = latest.Author
 	}
 
-	loaded, err := s.versions.LatestAt(ctx, &repositories.GetAgentDefinitionVersionAtRequest{
+	loaded, err := s.versions.LatestAt(ctx, &agentdefinitionports.GetAgentDefinitionVersionAtRequest{
 		TenantInfo:        req.tenantInfo,
 		AgentDefinitionID: req.agentID,
 		Version:           req.loaded,
@@ -107,9 +107,9 @@ func (s *Service) editConflict(ctx context.Context, req *conflictRequest) error 
 
 func (s *Service) ListVersions(
 	ctx context.Context,
-	req *repositories.ListAgentDefinitionVersionsRequest,
+	req *agentdefinitionports.ListAgentDefinitionVersionsRequest,
 ) ([]*agentdefinition.DefinitionVersion, error) {
-	if _, err := s.repo.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	if _, err := s.repo.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         req.AgentDefinitionID,
 		TenantInfo: req.TenantInfo,
 	}); err != nil {
@@ -124,9 +124,9 @@ func (s *Service) ListVersions(
 // replaces the agent the way any edit does. Nothing is saved here.
 func (s *Service) RestoreVersion(
 	ctx context.Context,
-	req *repositories.GetAgentDefinitionVersionRequest,
+	req *agentdefinitionports.GetAgentDefinitionVersionRequest,
 ) (*agentdefinition.Definition, error) {
-	current, err := s.repo.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	current, err := s.repo.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         req.AgentDefinitionID,
 		TenantInfo: req.TenantInfo,
 	})

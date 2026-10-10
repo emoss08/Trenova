@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -24,8 +24,8 @@ func restrictedChatDefinition(name string) *agentdefinition.Definition {
 func startAs(
 	t *testing.T,
 	svc *Service,
-	req *serviceports.StartThreadRequest,
-	actor *serviceports.RequestActor,
+	req *agentports.StartThreadRequest,
+	actor *permissionports.RequestActor,
 ) (*conversation.Thread, error) {
 	t.Helper()
 
@@ -45,7 +45,7 @@ func TestStartThread_RefusesAnAgentThePersonMayNotUse(t *testing.T) {
 	restricted := restrictedChatDefinition("Payroll Helper")
 	svc, conversations, permissions := subjectService(restricted)
 
-	_, err := startAs(t, svc, &serviceports.StartThreadRequest{
+	_, err := startAs(t, svc, &agentports.StartThreadRequest{
 		AgentDefinitionID: restricted.ID,
 	}, testActor())
 
@@ -56,7 +56,7 @@ func TestStartThread_RefusesAnAgentThePersonMayNotUse(t *testing.T) {
 	assert.Equal(t, []pulid.ID{restricted.ID}, permissions.agentChecks)
 
 	permissions.granted = []pulid.ID{restricted.ID}
-	thread, err := startAs(t, svc, &serviceports.StartThreadRequest{
+	thread, err := startAs(t, svc, &agentports.StartThreadRequest{
 		AgentDefinitionID: restricted.ID,
 	}, testActor())
 
@@ -73,7 +73,7 @@ func TestStartThread_RefusesEveryAgentWithoutTheAssistant(t *testing.T) {
 	svc, conversations, permissions := subjectService(open)
 	permissions.allowed = map[string]bool{}
 
-	_, err := startAs(t, svc, &serviceports.StartThreadRequest{
+	_, err := startAs(t, svc, &agentports.StartThreadRequest{
 		AgentDefinitionID: open.ID,
 	}, testActor())
 
@@ -90,7 +90,7 @@ never called.
 func TestSendMessage_RefusesATurnWithAnAgentThePersonLostAccessTo(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		textTurn("never reached"),
 	}}
 	restricted := testDefinition()
@@ -99,7 +99,7 @@ func TestSendMessage_RefusesATurnWithAnAgentThePersonLostAccessTo(t *testing.T) 
 	svc.permissions = &subjectPermissions{allowed: map[string]bool{"assistant:create": true}}
 	actor := testActor()
 
-	_, err := svc.sendMessage(t.Context(), &serviceports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
 		ThreadID:   conversations.thread.ID,
 		Content:    "What did we pay drivers last week?",
 		TenantInfo: actor.TenantInfo(),
@@ -152,7 +152,7 @@ func TestGetThread_StaysReadableAndSaysWhetherItCanContinue(t *testing.T) {
 
 	f := newContinuableFixture()
 	actor := testActor()
-	req := repositories.GetThreadRequest{
+	req := agentports.GetThreadRequest{
 		ID:         f.thread.ID,
 		UserID:     actor.UserID,
 		TenantInfo: actor.TenantInfo(),
@@ -186,7 +186,7 @@ func TestGetThread_SaysWhyItCannotContinue(t *testing.T) {
 
 	f := newContinuableFixture()
 	actor := testActor()
-	req := repositories.GetThreadRequest{
+	req := agentports.GetThreadRequest{
 		ID:         f.thread.ID,
 		UserID:     actor.UserID,
 		TenantInfo: actor.TenantInfo(),
@@ -252,7 +252,7 @@ func TestGetThread_CannotContinueWithoutTheAssistant(t *testing.T) {
 	f.permissions.allowed = map[string]bool{}
 	actor := testActor()
 
-	thread, err := f.svc.GetThread(t.Context(), repositories.GetThreadRequest{
+	thread, err := f.svc.GetThread(t.Context(), agentports.GetThreadRequest{
 		ID:         f.thread.ID,
 		UserID:     actor.UserID,
 		TenantInfo: actor.TenantInfo(),
@@ -272,7 +272,7 @@ at all is told an administrator can grant one rather than that none exists.
 func TestAsk_ChoosesOnlyAnAgentThePersonMayUse(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{textTurn("ok")}}
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{textTurn("ok")}}
 	svc := newService(completion, &stubQueryRegistry{}, &stubActionRegistry{})
 	general := chatDefinition("Assistant", agentdefinition.TemplateGeneralAssistant)
 	general.AccessMode = agentdefinition.AccessRoles

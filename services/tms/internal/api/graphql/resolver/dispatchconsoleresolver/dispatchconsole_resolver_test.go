@@ -5,14 +5,13 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
-
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	servicesport "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/dispatcheligibility"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -25,15 +24,15 @@ import (
 // permission under test.
 type denyingPermissionEngine struct {
 	mocks.AllowAllPermissionEngine
-	request *servicesport.PermissionCheckRequest
+	request *permissionports.PermissionCheckRequest
 }
 
 func (e *denyingPermissionEngine) Check(
 	_ context.Context,
-	req *servicesport.PermissionCheckRequest,
-) (*servicesport.PermissionCheckResult, error) {
+	req *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
 	e.request = req
-	return &servicesport.PermissionCheckResult{Allowed: false}, nil
+	return &permissionports.PermissionCheckResult{Allowed: false}, nil
 }
 
 func dispatchAuthContext(t *testing.T) context.Context {
@@ -168,18 +167,18 @@ func TestDispatchResolvers_RequireTheCorrectPermission(t *testing.T) {
 type denyResourcePermissionEngine struct {
 	mocks.AllowAllPermissionEngine
 	deniedResource string
-	denied         *servicesport.PermissionCheckRequest
+	denied         *permissionports.PermissionCheckRequest
 }
 
 func (e *denyResourcePermissionEngine) Check(
 	_ context.Context,
-	req *servicesport.PermissionCheckRequest,
-) (*servicesport.PermissionCheckResult, error) {
+	req *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
 	if req.Resource == e.deniedResource {
 		e.denied = req
-		return &servicesport.PermissionCheckResult{Allowed: false}, nil
+		return &permissionports.PermissionCheckResult{Allowed: false}, nil
 	}
-	return &servicesport.PermissionCheckResult{Allowed: true}, nil
+	return &permissionports.PermissionCheckResult{Allowed: true}, nil
 }
 
 // The board and the reverse-match expose driver PII, live position, and HOS clocks, so

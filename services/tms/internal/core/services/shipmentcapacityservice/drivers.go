@@ -6,8 +6,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/dispatchconsoleservice"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -19,7 +19,7 @@ const msPerHour = float64(3_600_000)
 func (s *Service) driverCapacity(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*services.ShipmentCapacity, error) {
+) (*shipmentports.ShipmentCapacity, error) {
 	caps, err := s.capabilities.Capabilities(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -32,9 +32,9 @@ func (s *Service) driverCapacity(
 	}
 
 	units := driverUnits(board.Drivers, s.now().Unix(), caps.HOS)
-	summary := &services.DriverCapacitySummary{Uncovered: countUncovered(board.Moves)}
+	summary := &shipmentports.DriverCapacitySummary{Uncovered: countUncovered(board.Moves)}
 	for _, unit := range units {
-		if unit.Group == services.CapacityGroupReadyNow {
+		if unit.Group == shipmentports.CapacityGroupReadyNow {
 			summary.Ready++
 		} else {
 			summary.WithinTwoHours++
@@ -42,8 +42,8 @@ func (s *Service) driverCapacity(
 	}
 	summary.Short = max(0, summary.Uncovered-summary.Ready-summary.WithinTwoHours)
 
-	return &services.ShipmentCapacity{
-		Kind:    services.CapacityUnitDriver,
+	return &shipmentports.ShipmentCapacity{
+		Kind:    shipmentports.CapacityUnitDriver,
 		Units:   units,
 		Drivers: summary,
 	}, nil
@@ -64,29 +64,29 @@ func driverUnits(
 	drivers []*dispatchconsoleservice.BoardDriver,
 	now int64,
 	hos bool,
-) []*services.CapacityUnit {
+) []*shipmentports.CapacityUnit {
 	cutoff := now + int64(withinTwoHours.Seconds())
-	units := make([]*services.CapacityUnit, 0, len(drivers))
+	units := make([]*shipmentports.CapacityUnit, 0, len(drivers))
 	for _, driver := range drivers {
 		if driver == nil || driver.BoardDriver == nil || !driver.AvailableForDispatch {
 			continue
 		}
 
-		var group services.CapacityGroup
+		var group shipmentports.CapacityGroup
 		switch {
 		case driver.Availability == dispatchconsoleservice.AvailabilityOpen:
-			group = services.CapacityGroupReadyNow
+			group = shipmentports.CapacityGroupReadyNow
 		case driver.Availability == dispatchconsoleservice.AvailabilityFinishing &&
 			driver.ProjectedTimeAvailable <= cutoff:
-			group = services.CapacityGroupWithinTwoHours
+			group = shipmentports.CapacityGroupWithinTwoHours
 		default:
 			continue
 		}
 
 		name := strings.TrimSpace(driver.FirstName + " " + driver.LastName)
-		unit := &services.CapacityUnit{
+		unit := &shipmentports.CapacityUnit{
 			ID:        driver.WorkerID,
-			Kind:      services.CapacityUnitDriver,
+			Kind:      shipmentports.CapacityUnitDriver,
 			Name:      name,
 			Initials:  stringutils.Initials(name),
 			Group:     group,
@@ -94,7 +94,7 @@ func driverUnits(
 			UnitLabel: driver.TractorCode,
 			TractorID: driver.TractorID,
 		}
-		if group == services.CapacityGroupWithinTwoHours {
+		if group == shipmentports.CapacityGroupWithinTwoHours {
 			freeAt := driver.ProjectedTimeAvailable
 			unit.FreeAt = &freeAt
 		}
@@ -102,7 +102,7 @@ func driverUnits(
 			remaining := driver.DriveRemainingMs
 			hours := float64(remaining) / msPerHour
 			unit.DriveRemainingMs = &remaining
-			unit.Ring = &services.CapacityRing{
+			unit.Ring = &shipmentports.CapacityRing{
 				Value: hours,
 				Max:   hosMaxHours,
 				Low:   hours < hosLowHours,
@@ -111,7 +111,7 @@ func driverUnits(
 		units = append(units, unit)
 	}
 
-	slices.SortStableFunc(units, func(a, b *services.CapacityUnit) int {
+	slices.SortStableFunc(units, func(a, b *shipmentports.CapacityUnit) int {
 		return cmp.Or(
 			cmp.Compare(groupOrder(a.Group), groupOrder(b.Group)),
 			cmp.Compare(freeAtOf(a), freeAtOf(b)),
@@ -122,18 +122,18 @@ func driverUnits(
 	return units
 }
 
-func groupOrder(group services.CapacityGroup) int {
+func groupOrder(group shipmentports.CapacityGroup) int {
 	switch group {
-	case services.CapacityGroupReadyNow, services.CapacityGroupTrucksPosted:
+	case shipmentports.CapacityGroupReadyNow, shipmentports.CapacityGroupTrucksPosted:
 		return 0
-	case services.CapacityGroupWithinTwoHours, services.CapacityGroupUsuallyAccept:
+	case shipmentports.CapacityGroupWithinTwoHours, shipmentports.CapacityGroupUsuallyAccept:
 		return 1
 	default:
 		return 1
 	}
 }
 
-func freeAtOf(unit *services.CapacityUnit) int64 {
+func freeAtOf(unit *shipmentports.CapacityUnit) int64 {
 	if unit.FreeAt == nil {
 		return 0
 	}
@@ -154,7 +154,7 @@ func (s *Service) driverMatches(
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 	limit int,
-) ([]*services.CapacityMatch, error) {
+) ([]*shipmentports.CapacityMatch, error) {
 	ranked, err := s.console.GetDriverMoves(ctx, &dispatchconsoleservice.DriverMovesRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
@@ -164,7 +164,7 @@ func (s *Service) driverMatches(
 		return nil, err
 	}
 
-	matches := make([]*services.CapacityMatch, 0, limit)
+	matches := make([]*shipmentports.CapacityMatch, 0, limit)
 	for _, candidate := range ranked {
 		if len(matches) == limit {
 			break
@@ -185,13 +185,13 @@ func (s *Service) driverMatches(
 	return matches, nil
 }
 
-func matchFromMove(move *dispatchconsoleservice.BoardMove) *services.CapacityMatch {
+func matchFromMove(move *dispatchconsoleservice.BoardMove) *shipmentports.CapacityMatch {
 	revenue := decimal.Zero
 	if move.Revenue != nil {
 		revenue = decimal.NewFromFloat(*move.Revenue)
 	}
 
-	return &services.CapacityMatch{
+	return &shipmentports.CapacityMatch{
 		ShipmentID:      move.ShipmentID,
 		MoveID:          move.MoveID,
 		ProNumber:       move.ProNumber,

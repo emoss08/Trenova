@@ -6,8 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/sliceutils"
@@ -24,8 +25,8 @@ type sharePlan struct {
 
 func (s *Service) planShare(
 	ctx context.Context,
-	req *servicesports.ShareInvoiceRequest,
-	actor *servicesports.RequestActor,
+	req *invoiceports.ShareInvoiceRequest,
+	actor *permissionports.RequestActor,
 ) (*sharePlan, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
@@ -55,13 +56,13 @@ func (s *Service) planShare(
 	}
 
 	var err error
-	if plan.invoice, err = s.invoiceRepo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+	if plan.invoice, err = s.invoiceRepo.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         req.InvoiceID,
 		TenantInfo: req.TenantInfo,
 	}); err != nil {
 		return nil, err
 	}
-	if plan.sharer, err = s.userRepo.GetByID(ctx, repositories.GetUserByIDRequest{
+	if plan.sharer, err = s.userRepo.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo:   req.TenantInfo,
 		LookupUserID: actor.UserID,
 	}); err != nil {
@@ -88,9 +89,9 @@ func (s *Service) planShare(
 
 func (s *Service) PreviewShare(
 	ctx context.Context,
-	req *servicesports.ShareInvoiceRequest,
-	actor *servicesports.RequestActor,
-) (*servicesports.InvoiceSharePreview, error) {
+	req *invoiceports.ShareInvoiceRequest,
+	actor *permissionports.RequestActor,
+) (*invoiceports.InvoiceSharePreview, error) {
 	plan, err := s.planShare(ctx, req, actor)
 	if err != nil {
 		return nil, err
@@ -117,20 +118,20 @@ func (s *Service) PreviewShare(
 	path := invoiceSharePath(plan.invoice.ID.String(), plan.input.tab)
 	sentAt := timeutils.NowUnix()
 
-	preview := &servicesports.InvoiceSharePreview{
+	preview := &invoiceports.InvoiceSharePreview{
 		Invoice:         plan.invoice,
 		SharedByName:    plan.sharer.Name,
 		Note:            plan.input.note,
 		Tab:             plan.input.tab,
 		EmailConfigured: canEmail,
 		Recipients: make(
-			[]servicesports.InvoiceShareRecipientPreview,
+			[]invoiceports.InvoiceShareRecipientPreview,
 			0,
 			len(plan.recipients),
 		),
 	}
 	for _, recipient := range plan.recipients {
-		entry := servicesports.InvoiceShareRecipientPreview{
+		entry := invoiceports.InvoiceShareRecipientPreview{
 			UserID:       recipient.ID,
 			Name:         recipient.Name,
 			EmailAddress: strings.TrimSpace(recipient.EmailAddress),

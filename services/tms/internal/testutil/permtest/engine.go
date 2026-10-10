@@ -5,11 +5,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-var _ services.PermissionEngine = (*Engine)(nil)
+var _ permissionports.PermissionEngine = (*Engine)(nil)
 
 type Grant struct {
 	Operations       []permission.Operation
@@ -43,12 +43,12 @@ func (e *Engine) GetResourcePermissions(
 	_ context.Context,
 	_, _ pulid.ID,
 	resource string,
-) (*services.ResourcePermissionDetail, error) {
+) (*permissionports.ResourcePermissionDetail, error) {
 	grant := e.DefaultGrant
 	if override, ok := e.Overrides[resource]; ok {
 		grant = override
 	}
-	return &services.ResourcePermissionDetail{
+	return &permissionports.ResourcePermissionDetail{
 		Resource:         resource,
 		Operations:       grant.Operations,
 		DataScope:        grant.DataScope,
@@ -59,24 +59,24 @@ func (e *Engine) GetResourcePermissions(
 
 func (e *Engine) Check(
 	context.Context,
-	*services.PermissionCheckRequest,
-) (*services.PermissionCheckResult, error) {
-	return &services.PermissionCheckResult{Allowed: true}, nil
+	*permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
+	return &permissionports.PermissionCheckResult{Allowed: true}, nil
 }
 
 func (e *Engine) CheckBatch(
 	context.Context,
-	*services.BatchPermissionCheckRequest,
-) (*services.BatchPermissionCheckResult, error) {
-	return &services.BatchPermissionCheckResult{}, nil
+	*permissionports.BatchPermissionCheckRequest,
+) (*permissionports.BatchPermissionCheckResult, error) {
+	return &permissionports.BatchPermissionCheckResult{}, nil
 }
 
 func (e *Engine) GetLightManifest(
 	context.Context,
 	pulid.ID,
 	pulid.ID,
-) (*services.LightPermissionManifest, error) {
-	return &services.LightPermissionManifest{}, nil
+) (*permissionports.LightPermissionManifest, error) {
+	return &permissionports.LightPermissionManifest{}, nil
 }
 
 func (e *Engine) InvalidateUser(context.Context, pulid.ID, pulid.ID) error { return nil }
@@ -85,28 +85,28 @@ func (e *Engine) GetEffectivePermissions(
 	context.Context,
 	pulid.ID,
 	pulid.ID,
-) (*services.EffectivePermissions, error) {
-	return &services.EffectivePermissions{}, nil
+) (*permissionports.EffectivePermissions, error) {
+	return &permissionports.EffectivePermissions{}, nil
 }
 
 func (e *Engine) SimulatePermissions(
 	context.Context,
-	*services.SimulatePermissionsRequest,
-) (*services.EffectivePermissions, error) {
-	return &services.EffectivePermissions{}, nil
+	*permissionports.SimulatePermissionsRequest,
+) (*permissionports.EffectivePermissions, error) {
+	return &permissionports.EffectivePermissions{}, nil
 }
 
 func (e *Engine) AgentsUsable(
 	context.Context,
-	*services.RequestActor,
+	*permissionports.RequestActor,
 	permission.Operation,
-) (*services.UsableAgents, error) {
-	return &services.UsableAgents{Assistant: true}, nil
+) (*permissionports.UsableAgents, error) {
+	return &permissionports.UsableAgents{Assistant: true}, nil
 }
 
 func (e *Engine) MayUseAgent(
 	context.Context,
-	*services.RequestActor,
+	*permissionports.RequestActor,
 	*agentdefinition.Definition,
 ) (bool, error) {
 	return true, nil
@@ -114,21 +114,21 @@ func (e *Engine) MayUseAgent(
 
 func (e *Engine) RoleCoverage(
 	_ context.Context,
-	req *services.RoleCoverageRequest,
-) ([]services.RoleCoverage, error) {
+	req *permissionports.RoleCoverageRequest,
+) ([]permissionports.RoleCoverage, error) {
 	return FullCoverage(req), nil
 }
 
 // FullCoverage is every requested role covering everything, for an engine
 // that allows all.
-func FullCoverage(req *services.RoleCoverageRequest) []services.RoleCoverage {
+func FullCoverage(req *permissionports.RoleCoverageRequest) []permissionports.RoleCoverage {
 	if req == nil {
-		return []services.RoleCoverage{}
+		return []permissionports.RoleCoverage{}
 	}
 
-	out := make([]services.RoleCoverage, 0, len(req.RoleIDs))
+	out := make([]permissionports.RoleCoverage, 0, len(req.RoleIDs))
 	for _, id := range req.RoleIDs {
-		out = append(out, services.RoleCoverage{
+		out = append(out, permissionports.RoleCoverage{
 			RoleID:           id,
 			Coverage:         agentdefinition.CoverageFull,
 			MissingResources: []permission.Resource{},

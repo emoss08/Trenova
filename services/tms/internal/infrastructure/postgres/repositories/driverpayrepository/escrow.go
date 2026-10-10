@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -23,7 +23,7 @@ type escrowAccountRepository struct {
 	l  *zap.Logger
 }
 
-func NewEscrowAccount(p Params) repositories.EscrowAccountRepository {
+func NewEscrowAccount(p Params) driverpayports.EscrowAccountRepository {
 	return &escrowAccountRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.escrow-account-repository"),
@@ -32,7 +32,7 @@ func NewEscrowAccount(p Params) repositories.EscrowAccountRepository {
 
 func (r *escrowAccountRepository) List(
 	ctx context.Context,
-	req *repositories.ListEscrowAccountsRequest,
+	req *driverpayports.ListEscrowAccountsRequest,
 ) (*pagination.ListResult[*driverpay.EscrowAccount], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*driverpay.EscrowAccount], error) {
 		limit := req.Filter.Pagination.SafeLimit()
@@ -66,7 +66,7 @@ func (r *escrowAccountRepository) List(
 
 func (r *escrowAccountRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListEscrowAccountConnectionRequest,
+	req *driverpayports.ListEscrowAccountConnectionRequest,
 ) (*pagination.CursorListResult[*driverpay.EscrowAccount], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*driverpay.EscrowAccount], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -124,7 +124,7 @@ func (r *escrowAccountRepository) ListConnection(
 
 func (r *escrowAccountRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetEscrowAccountByIDRequest,
+	req driverpayports.GetEscrowAccountByIDRequest,
 ) (*driverpay.EscrowAccount, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driverpay.EscrowAccount, error) {
 		entity := new(driverpay.EscrowAccount)
@@ -149,7 +149,7 @@ func (r *escrowAccountRepository) GetByID(
 
 func (r *escrowAccountRepository) GetActiveForWorker(
 	ctx context.Context,
-	req repositories.GetActiveEscrowAccountForWorkerRequest,
+	req driverpayports.GetActiveEscrowAccountForWorkerRequest,
 ) (*driverpay.EscrowAccount, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driverpay.EscrowAccount, error) {
 		entity := new(driverpay.EscrowAccount)
@@ -171,7 +171,7 @@ func (r *escrowAccountRepository) GetActiveForWorker(
 
 func (r *escrowAccountRepository) ListDueForInterest(
 	ctx context.Context,
-	req repositories.ListEscrowAccountsForInterestRequest,
+	req driverpayports.ListEscrowAccountsForInterestRequest,
 ) ([]*driverpay.EscrowAccount, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driverpay.EscrowAccount, error) {
 		items := make([]*driverpay.EscrowAccount, 0)
@@ -206,7 +206,7 @@ func (r *escrowAccountRepository) Create(
 		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
 			return nil, fmt.Errorf("create escrow account: %w", err)
 		}
-		return r.GetByID(ctx, repositories.GetEscrowAccountByIDRequest{
+		return r.GetByID(ctx, driverpayports.GetEscrowAccountByIDRequest{
 			ID: entity.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
@@ -242,7 +242,7 @@ func (r *escrowAccountRepository) Update(
 		if err = dberror.CheckRowsAffected(res, "EscrowAccount", entity.ID.String()); err != nil {
 			return nil, err
 		}
-		return r.GetByID(ctx, repositories.GetEscrowAccountByIDRequest{
+		return r.GetByID(ctx, driverpayports.GetEscrowAccountByIDRequest{
 			ID: entity.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
@@ -269,7 +269,7 @@ func (r *escrowAccountRepository) AppendTransaction(
 
 func (r *escrowAccountRepository) ListTransactions(
 	ctx context.Context,
-	req repositories.GetEscrowAccountByIDRequest,
+	req driverpayports.GetEscrowAccountByIDRequest,
 ) ([]*driverpay.EscrowTransaction, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driverpay.EscrowTransaction, error) {
 		items := make([]*driverpay.EscrowTransaction, 0)

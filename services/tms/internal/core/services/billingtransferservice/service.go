@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingtransfer"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingtransferports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,14 +16,14 @@ import (
 type Params struct {
 	fx.In
 
-	RunRepo   repositories.BillingTransferRunRepository
-	Workflows services.WorkflowStarter
+	RunRepo   billingtransferports.BillingTransferRunRepository
+	Workflows kernelports.WorkflowStarter
 	Logger    *zap.Logger
 }
 
 type Service struct {
-	runRepo   repositories.BillingTransferRunRepository
-	workflows services.WorkflowStarter
+	runRepo   billingtransferports.BillingTransferRunRepository
+	workflows kernelports.WorkflowStarter
 	l         *zap.Logger
 }
 
@@ -44,7 +44,7 @@ func (s *Service) GetRun(
 	ctx context.Context,
 	req *RunRequest,
 ) (*billingtransfer.BillingTransferRun, error) {
-	return s.runRepo.GetByID(ctx, &repositories.GetBillingTransferRunRequest{
+	return s.runRepo.GetByID(ctx, &billingtransferports.GetBillingTransferRunRequest{
 		TenantInfo: req.TenantInfo,
 		RunID:      req.RunID,
 	})
@@ -61,7 +61,7 @@ func (s *Service) GetActiveRun(
 		return nil, errortypes.NewAuthenticationError("A user is required to read a transfer")
 	}
 
-	return s.runRepo.GetActive(ctx, &repositories.GetActiveBillingTransferRunRequest{
+	return s.runRepo.GetActive(ctx, &billingtransferports.GetActiveBillingTransferRunRequest{
 		TenantInfo:    tenant,
 		RequestedByID: tenant.UserID,
 	})
@@ -69,7 +69,7 @@ func (s *Service) GetActiveRun(
 
 func (s *Service) ListRunItems(
 	ctx context.Context,
-	req *repositories.ListBillingTransferRunItemsRequest,
+	req *billingtransferports.ListBillingTransferRunItemsRequest,
 ) (*pagination.CursorListResult[*billingtransfer.BillingTransferRunItem], error) {
 	return s.runRepo.ListItems(ctx, req)
 }

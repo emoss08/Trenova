@@ -8,9 +8,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/dispatchconsoleservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -100,7 +100,7 @@ type getDispatchBoardTool struct {
 	board boardReader
 }
 
-func newGetDispatchBoardTool(board boardReader) serviceports.AgentQueryTool {
+func newGetDispatchBoardTool(board boardReader) agentports.AgentQueryTool {
 	return &getDispatchBoardTool{board: board}
 }
 
@@ -150,7 +150,7 @@ func (t *getDispatchBoardTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *getDispatchBoardTool) Policy() serviceports.ToolPolicy {
+func (t *getDispatchBoardTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceShipmentMove,
 	})
@@ -158,7 +158,7 @@ func (t *getDispatchBoardTool) Policy() serviceports.ToolPolicy {
 
 func (t *getDispatchBoardTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -254,7 +254,7 @@ const (
 // window has opened with no arrival recorded, or deliver, when it was picked
 // up and its delivery window has closed. A move picked up and still inside
 // its delivery window is not late, whatever its pickup-based urgency says.
-func lateTo(move *repositories.BoardMove, now int64) string {
+func lateTo(move *shipmentports.BoardMove, now int64) string {
 	if move.OriginActualArrive == nil || *move.OriginActualArrive <= 0 {
 		if move.OriginWindowStart > 0 && move.OriginWindowStart < now {
 			return lateToPickUp

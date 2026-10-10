@@ -7,9 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -18,14 +19,14 @@ import (
 )
 
 type listedDefinitions struct {
-	repositories.AgentDefinitionRepository
+	agentdefinitionports.AgentDefinitionRepository
 
 	byID map[pulid.ID]*agentdefinition.Definition
 }
 
 func (s *listedDefinitions) ListByIDs(
 	_ context.Context,
-	req repositories.ListAgentDefinitionsByIDsRequest,
+	req agentdefinitionports.ListAgentDefinitionsByIDsRequest,
 ) ([]*agentdefinition.Definition, error) {
 	found := make([]*agentdefinition.Definition, 0, len(req.IDs))
 	for _, id := range req.IDs {
@@ -39,7 +40,7 @@ func (s *listedDefinitions) ListByIDs(
 
 func (s *listedDefinitions) List(
 	_ context.Context,
-	_ *repositories.ListAgentDefinitionRequest,
+	_ *agentdefinitionports.ListAgentDefinitionRequest,
 ) (*pagination.ListResult[*agentdefinition.Definition], error) {
 	items := make([]*agentdefinition.Definition, 0, len(s.byID))
 	for _, definition := range s.byID {
@@ -50,7 +51,7 @@ func (s *listedDefinitions) List(
 }
 
 type toollessRuntime struct {
-	serviceports.AgentRuntime
+	agentports.AgentRuntime
 }
 
 func (toollessRuntime) ToolSummaries(*agentdefinition.Definition) []agentdefinition.ToolSummary {
@@ -59,7 +60,7 @@ func (toollessRuntime) ToolSummaries(*agentdefinition.Definition) []agentdefinit
 
 func (toollessRuntime) PermittedTools(
 	context.Context,
-	*serviceports.RequestActor,
+	*permissionports.RequestActor,
 	[]string,
 ) []string {
 	return []string{}
@@ -104,7 +105,7 @@ func TestContextBuilder_OffersOnlyDelegatesThePersonMayUse(t *testing.T) {
 			restricted.ID: restricted,
 		}},
 	}
-	req := &serviceports.RuntimeContextRequest{
+	req := &agentports.RuntimeContextRequest{
 		Definition: parent,
 		Actor:      testActor(),
 		Trigger:    agent.RunTriggerChat,

@@ -10,12 +10,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/recurringshipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/quotaservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/recurringshipmentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -154,17 +154,17 @@ func destinationLocationID(moves []*shipment.ShipmentMove) pulid.ID {
 
 func (r *repository) Generate(
 	ctx context.Context,
-	req *repositories.GenerateRecurringShipmentRequest,
-) (*repositories.GenerateRecurringShipmentResult, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.GenerateRecurringShipmentResult, error) {
+	req *recurringshipmentports.GenerateRecurringShipmentRequest,
+) (*recurringshipmentports.GenerateRecurringShipmentResult, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*recurringshipmentports.GenerateRecurringShipmentResult, error) {
 		log := r.l.With(
 			zap.String("operation", "Generate"),
 			zap.String("recurringShipmentId", req.RecurringShipmentID.String()),
 			zap.String("trigger", string(req.Trigger)),
 		)
 
-		result := new(repositories.GenerateRecurringShipmentResult)
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+		result := new(recurringshipmentports.GenerateRecurringShipmentResult)
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 			series, err := r.lockSeries(c, tx, req.TenantInfo, req.RecurringShipmentID)
 			if err != nil {
 				return err
@@ -263,7 +263,7 @@ func (r *repository) enforceGeneratedShipment(
 	ctx context.Context,
 	series *recurringshipment.RecurringShipment,
 ) error {
-	return quotaservice.EnforceAll(ctx, r.quota, services.QuotaRequest{
+	return quotaservice.EnforceAll(ctx, r.quota, platformplanports.QuotaRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: series.OrganizationID,
 			BuID:  series.BusinessUnitID,
@@ -275,11 +275,11 @@ func (r *repository) enforceGeneratedShipment(
 
 func (r *repository) PlanGenerate(
 	ctx context.Context,
-	req *repositories.GenerateRecurringShipmentRequest,
-) (*repositories.RecurringShipmentGenerationPlan, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.RecurringShipmentGenerationPlan, error) {
+	req *recurringshipmentports.GenerateRecurringShipmentRequest,
+) (*recurringshipmentports.RecurringShipmentGenerationPlan, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*recurringshipmentports.RecurringShipmentGenerationPlan, error) {
 		db := r.db.DBForContext(ctx)
-		series, err := r.GetByID(ctx, &repositories.GetRecurringShipmentByIDRequest{
+		series, err := r.GetByID(ctx, &recurringshipmentports.GetRecurringShipmentByIDRequest{
 			ID:         req.RecurringShipmentID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -328,7 +328,7 @@ func (r *repository) PlanGenerate(
 			DateAnchor:  &occurrence.At,
 		})
 
-		return &repositories.RecurringShipmentGenerationPlan{
+		return &recurringshipmentports.RecurringShipmentGenerationPlan{
 			Series:           series,
 			Occurrence:       occurrence,
 			Shipment:         generated,
@@ -339,7 +339,7 @@ func (r *repository) PlanGenerate(
 
 func (r *repository) RecordGenerationFailure(
 	ctx context.Context,
-	req *repositories.RecordRecurringGenerationFailureRequest,
+	req *recurringshipmentports.RecordRecurringGenerationFailureRequest,
 ) (*recurringshipment.RecurringShipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*recurringshipment.RecurringShipment, error) {
 		log := r.l.With(
@@ -348,7 +348,7 @@ func (r *repository) RecordGenerationFailure(
 		)
 
 		var series *recurringshipment.RecurringShipment
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 			locked, err := r.lockSeries(c, tx, req.TenantInfo, req.RecurringShipmentID)
 			if err != nil {
 				return err
@@ -463,7 +463,7 @@ func validateGenerationEligibility(
 
 func resolveOccurrence(
 	series *recurringshipment.RecurringShipment,
-	req *repositories.GenerateRecurringShipmentRequest,
+	req *recurringshipmentports.GenerateRecurringShipmentRequest,
 ) (*recurringshipment.Occurrence, error) {
 	if req.OccurrenceAt != nil {
 		return &recurringshipment.Occurrence{
@@ -509,7 +509,7 @@ func seriesSourceSlot(series *recurringshipment.RecurringShipment, fallback int6
 
 func shouldAdvancePointer(
 	series *recurringshipment.RecurringShipment,
-	req *repositories.GenerateRecurringShipmentRequest,
+	req *recurringshipmentports.GenerateRecurringShipmentRequest,
 	occurrence *recurringshipment.Occurrence,
 ) bool {
 	if req.Trigger == recurringshipment.RunTriggerAuto || req.OccurrenceAt == nil {
@@ -555,7 +555,7 @@ func (r *repository) recordMissedOccurrence(
 	tx bun.Tx,
 	series *recurringshipment.RecurringShipment,
 	occurrence *recurringshipment.Occurrence,
-	result *repositories.GenerateRecurringShipmentResult,
+	result *recurringshipmentports.GenerateRecurringShipmentResult,
 ) error {
 	run := &recurringshipment.RecurringShipmentRun{
 		BusinessUnitID:      series.BusinessUnitID,
@@ -633,7 +633,7 @@ func (r *repository) materializeOccurrence(
 	tx bun.Tx,
 	series *recurringshipment.RecurringShipment,
 	occurrence *recurringshipment.Occurrence,
-	req *repositories.GenerateRecurringShipmentRequest,
+	req *recurringshipmentports.GenerateRecurringShipmentRequest,
 ) (*shipment.Shipment, error) {
 	source, err := shipmentrepository.LoadShipmentGraphSource(
 		ctx,

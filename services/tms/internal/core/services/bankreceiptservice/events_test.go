@@ -1,6 +1,10 @@
 package bankreceiptservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/bankreceiptportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/bankreceiptworkitemportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerpaymentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"testing"
 
@@ -8,7 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/core/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -21,10 +26,10 @@ import (
 )
 
 type recordingEvents struct {
-	published []serviceports.AgentEvent
+	published []agentports.AgentEvent
 }
 
-func (r *recordingEvents) Publish(_ context.Context, event serviceports.AgentEvent) {
+func (r *recordingEvents) Publish(_ context.Context, event agentports.AgentEvent) {
 	r.published = append(r.published, event)
 }
 
@@ -38,10 +43,10 @@ func TestImportAnnouncesAnExceptionAndOpensItsWorkItem(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 	userID := pulid.MustNew("usr_")
-	receiptRepo := mocks.NewMockBankReceiptRepository(t)
-	paymentRepo := mocks.NewMockCustomerPaymentRepository(t)
-	workItemRepo := mocks.NewMockBankReceiptWorkItemRepository(t)
-	accountingRepo := mocks.NewMockAccountingControlRepository(t)
+	receiptRepo := bankreceiptportsmock.NewMockBankReceiptRepository(t)
+	paymentRepo := customerpaymentportsmock.NewMockCustomerPaymentRepository(t)
+	workItemRepo := bankreceiptworkitemportsmock.NewMockBankReceiptWorkItemRepository(t)
+	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 
 	var stored *bankreceipt.BankReceipt
 	receiptRepo.EXPECT().
@@ -98,7 +103,7 @@ func TestImportAnnouncesAnExceptionAndOpensItsWorkItem(t *testing.T) {
 
 	receipt, err := svc.Import(
 		t.Context(),
-		&serviceports.ImportBankReceiptRequest{
+		&bankreceiptports.ImportBankReceiptRequest{
 			ReceiptDate:     100,
 			AmountMinor:     125_000,
 			ReferenceNumber: "ACH 4471",

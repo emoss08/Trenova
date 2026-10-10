@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -23,7 +23,7 @@ func TestServiceRecordNotifiesObserversAfterInsert(t *testing.T) {
 		l:         testLogger(),
 		repo:      repo,
 		realtime:  noopRealtimeService{},
-		observers: []services.ShipmentEventObserver{observer},
+		observers: []shipmenteventports.ShipmentEventObserver{observer},
 	}
 
 	err := svc.Record(t.Context(), validRecordShipmentEventParams(t))
@@ -44,7 +44,7 @@ func TestServiceRecordSkipsObserversWhenInsertFails(t *testing.T) {
 		l:         testLogger(),
 		repo:      &fakeShipmentEventRepository{insertErr: insertErr},
 		realtime:  noopRealtimeService{},
-		observers: []services.ShipmentEventObserver{observer},
+		observers: []shipmenteventports.ShipmentEventObserver{observer},
 	}
 
 	err := svc.Record(t.Context(), validRecordShipmentEventParams(t))
@@ -60,7 +60,7 @@ func TestServiceRecordObserverErrorDoesNotFailRecord(t *testing.T) {
 		l:        testLogger(),
 		repo:     &fakeShipmentEventRepository{},
 		realtime: noopRealtimeService{},
-		observers: []services.ShipmentEventObserver{
+		observers: []shipmenteventports.ShipmentEventObserver{
 			nil,
 			failingShipmentEventObserver{},
 			&recordingShipmentEventObserver{},
@@ -72,10 +72,10 @@ func TestServiceRecordObserverErrorDoesNotFailRecord(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func validRecordShipmentEventParams(t *testing.T) *services.RecordShipmentEventParams {
+func validRecordShipmentEventParams(t *testing.T) *shipmenteventports.RecordShipmentEventParams {
 	t.Helper()
 
-	return &services.RecordShipmentEventParams{
+	return &shipmenteventports.RecordShipmentEventParams{
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
 		ShipmentID:     pulid.MustNew("shp_"),
@@ -113,14 +113,14 @@ func (r *fakeShipmentEventRepository) Insert(
 
 func (r *fakeShipmentEventRepository) GetByID(
 	context.Context,
-	repositories.GetShipmentEventByIDRequest,
+	shipmenteventports.GetShipmentEventByIDRequest,
 ) (*shipmentevent.Event, error) {
 	return nil, errors.New("not implemented")
 }
 
 func (r *fakeShipmentEventRepository) List(
 	context.Context,
-	*repositories.ListShipmentEventsRequest,
+	*shipmenteventports.ListShipmentEventsRequest,
 ) ([]*shipmentevent.Event, error) {
 	return nil, errors.New("not implemented")
 }
@@ -150,7 +150,7 @@ type noopRealtimeService struct{}
 
 func (noopRealtimeService) PublishResourceInvalidation(
 	context.Context,
-	*services.PublishResourceInvalidationRequest,
+	*agentports.PublishResourceInvalidationRequest,
 ) error {
 	return nil
 }
@@ -164,9 +164,9 @@ func TestServiceRecordDefersObserversUntilTheTransactionCommits(t *testing.T) {
 		l:         testLogger(),
 		repo:      repo,
 		realtime:  noopRealtimeService{},
-		observers: []services.ShipmentEventObserver{observer},
+		observers: []shipmenteventports.ShipmentEventObserver{observer},
 	}
-	txCtx, hooks := ports.WithAfterCommitHooks(t.Context())
+	txCtx, hooks := kernelports.WithAfterCommitHooks(t.Context())
 
 	err := svc.Record(txCtx, validRecordShipmentEventParams(t))
 

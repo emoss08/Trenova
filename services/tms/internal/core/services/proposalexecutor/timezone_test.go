@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -30,7 +30,7 @@ type zoneTool struct {
 	validatedIn string
 }
 
-func (t *zoneTool) Validate(_ context.Context, params services.ToolExecuteParams) error {
+func (t *zoneTool) Validate(_ context.Context, params agentports.ToolExecuteParams) error {
 	t.validatedIn = params.Timezone
 
 	return nil

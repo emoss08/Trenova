@@ -6,12 +6,12 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -57,21 +57,21 @@ func TestSetToolTier_PromotesACoreToolTheAgentDoesNotList(t *testing.T) {
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 	tenant := pagination.TenantInfo{OrgID: row.OrganizationID, BuID: row.BusinessUnitID}
 
-	require.NoError(t, repo.SetToolTier(ctx, repositories.SetAgentDefinitionToolTierRequest{
+	require.NoError(t, repo.SetToolTier(ctx, agentdefinitionports.SetAgentDefinitionToolTierRequest{
 		ID:         row.ID,
 		TenantInfo: tenant,
 		ToolName:   "remember",
 		Tier:       agent.TierAutoExecute,
 	}))
 
-	definition, err := repo.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	definition, err := repo.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         row.ID,
 		TenantInfo: tenant,
 	})
 	require.NoError(t, err)
 	require.Equal(t, agent.TierAutoExecute, definition.ToolTiers["remember"])
 
-	err = repo.SetToolTier(ctx, repositories.SetAgentDefinitionToolTierRequest{
+	err = repo.SetToolTier(ctx, agentdefinitionports.SetAgentDefinitionToolTierRequest{
 		ID:         row.ID,
 		TenantInfo: tenant,
 		ToolName:   "create_dashboard",
@@ -111,14 +111,14 @@ func TestSetToolTier_MergesIntoAnAgentSavedWithNoTiers(t *testing.T) {
 
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 	tenant := pagination.TenantInfo{OrgID: row.OrganizationID, BuID: row.BusinessUnitID}
-	require.NoError(t, repo.SetToolTier(ctx, repositories.SetAgentDefinitionToolTierRequest{
+	require.NoError(t, repo.SetToolTier(ctx, agentdefinitionports.SetAgentDefinitionToolTierRequest{
 		ID:         row.ID,
 		TenantInfo: tenant,
 		ToolName:   "remember",
 		Tier:       agent.TierActWithApproval,
 	}))
 
-	definition, err := repo.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	definition, err := repo.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         row.ID,
 		TenantInfo: tenant,
 	})

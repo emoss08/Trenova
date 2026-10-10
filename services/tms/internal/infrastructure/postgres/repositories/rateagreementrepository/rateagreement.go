@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -32,7 +32,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.RateAgreementRepository {
+func New(p Params) rateagreementports.RateAgreementRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.rateagreement-repository"),
@@ -41,7 +41,7 @@ func New(p Params) repositories.RateAgreementRepository {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListRateAgreementRequest,
+	req *rateagreementports.ListRateAgreementRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.RateAgreementColumns
 	q = querybuilder.ApplyFilters(
@@ -77,7 +77,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListRateAgreementRequest,
+	req *rateagreementports.ListRateAgreementRequest,
 ) (*pagination.ListResult[*rateagreement.RateAgreement], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*rateagreement.RateAgreement], error) {
 		log := r.l.With(zap.String("operation", "List"))
@@ -104,7 +104,7 @@ func (r *repository) List(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListRateAgreementConnectionRequest,
+	req *rateagreementports.ListRateAgreementConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -117,7 +117,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListRateAgreementConnectionRequest,
+	req *rateagreementports.ListRateAgreementConnectionRequest,
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -129,7 +129,7 @@ func (r *repository) applyTotalCountFilters(
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListRateAgreementConnectionRequest,
+	req *rateagreementports.ListRateAgreementConnectionRequest,
 ) (*pagination.CursorListResult[*rateagreement.RateAgreement], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*rateagreement.RateAgreement], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -181,7 +181,7 @@ func (r *repository) ListConnection(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req *repositories.GetRateAgreementByIDRequest,
+	req *rateagreementports.GetRateAgreementByIDRequest,
 ) (*rateagreement.RateAgreement, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*rateagreement.RateAgreement, error) {
 		log := r.l.With(
@@ -238,7 +238,7 @@ func (r *repository) GetByID(
 
 func (r *repository) ListRules(
 	ctx context.Context,
-	req *repositories.ListRateAgreementRulesRequest,
+	req *rateagreementports.ListRateAgreementRulesRequest,
 ) ([]*rateagreement.RateAgreementRule, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*rateagreement.RateAgreementRule, error) {
 		log := r.l.With(zap.String("operation", "ListRules"))
@@ -294,7 +294,7 @@ func (r *repository) ListRules(
 
 func (r *repository) GetRuleByID(
 	ctx context.Context,
-	req *repositories.GetRateAgreementRuleByIDRequest,
+	req *rateagreementports.GetRateAgreementRuleByIDRequest,
 ) (*rateagreement.RateAgreementRule, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*rateagreement.RateAgreementRule, error) {
 		log := r.l.With(
@@ -331,7 +331,7 @@ func (r *repository) Create(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*rateagreement.RateAgreement, error) {
 		log := r.l.With(zap.String("operation", "Create"), zap.String("code", entity.Code))
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			if _, iErr := r.db.DBForContext(c).
 				NewInsert().
 				Model(entity).
@@ -348,7 +348,7 @@ func (r *repository) Create(
 				return nil
 			}
 
-			return r.insertRules(c, &repositories.AmendRateAgreementRulesRequest{
+			return r.insertRules(c, &rateagreementports.AmendRateAgreementRulesRequest{
 				TenantInfo: pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
 					BuID:  entity.BusinessUnitID,
@@ -389,7 +389,7 @@ func (r *repository) Update(
 		entity.Version++
 		cols := buncolgen.RateAgreementColumns
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			results, uErr := r.db.DBForContext(c).
 				NewUpdate().
 				Model(entity).

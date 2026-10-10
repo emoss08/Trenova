@@ -8,9 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -139,7 +139,7 @@ func TestTranscript_RendersTheWholeConversationInOrder(t *testing.T) {
 	}}}
 	svc := newTranscriptService(conversations, proposals)
 
-	transcript, err := svc.Transcript(t.Context(), repositories.GetThreadRequest{ID: thread.ID})
+	transcript, err := svc.Transcript(t.Context(), agentports.GetThreadRequest{ID: thread.ID})
 	require.NoError(t, err)
 
 	id := strings.ToLower(thread.ID.String())
@@ -192,7 +192,7 @@ func TestTranscript_NamesAnUntitledThreadAndAMissingAgent(t *testing.T) {
 	svc := newTranscriptService(conversations, &stubProposalRepo{})
 	svc.definitions = &stubDefinitions{}
 
-	transcript, err := svc.Transcript(t.Context(), repositories.GetThreadRequest{ID: thread.ID})
+	transcript, err := svc.Transcript(t.Context(), agentports.GetThreadRequest{ID: thread.ID})
 	require.NoError(t, err)
 
 	assert.True(t, strings.HasPrefix(transcript.FileName, "conversation-"))
@@ -216,23 +216,23 @@ func TestTranscript_FencesAResultLongerThanItsOwnBackticks(t *testing.T) {
 // pagingConversations serves a thread longer than one page, newest page
 // first, the way the repository does.
 type pagingConversations struct {
-	repositories.ConversationRepository
+	agentports.ConversationRepository
 
 	thread   *conversation.Thread
 	messages []conversation.Message
-	calls    []repositories.ListMessagesRequest
+	calls    []agentports.ListMessagesRequest
 }
 
 func (p *pagingConversations) GetThread(
 	context.Context,
-	repositories.GetThreadRequest,
+	agentports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	return p.thread, nil
 }
 
 func (p *pagingConversations) ListMessages(
 	_ context.Context,
-	req repositories.ListMessagesRequest,
+	req agentports.ListMessagesRequest,
 ) ([]conversation.Message, error) {
 	p.calls = append(p.calls, req)
 
@@ -265,7 +265,7 @@ func TestTranscript_ReadsEveryPageOfALongThread(t *testing.T) {
 
 	transcript, err := svc.Transcript(
 		t.Context(),
-		repositories.GetThreadRequest{ID: conversations.thread.ID},
+		agentports.GetThreadRequest{ID: conversations.thread.ID},
 	)
 	require.NoError(t, err)
 

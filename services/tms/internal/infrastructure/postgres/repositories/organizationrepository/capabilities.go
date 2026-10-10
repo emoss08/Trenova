@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"go.uber.org/zap"
@@ -13,9 +13,9 @@ import (
 
 func (r *repository) GetCapabilities(
 	ctx context.Context,
-	req repositories.GetOrganizationCapabilitiesRequest,
-) (*repositories.OrganizationCapabilities, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.OrganizationCapabilities, error) {
+	req tenantports.GetOrganizationCapabilitiesRequest,
+) (*tenantports.OrganizationCapabilities, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenantports.OrganizationCapabilities, error) {
 		log := r.l.With(
 			zap.String("operation", "GetCapabilities"),
 			zap.String("orgID", req.TenantInfo.OrgID.String()),
@@ -33,11 +33,11 @@ func (r *repository) GetCapabilities(
 			Where(org.ID.Eq(), req.TenantInfo.OrgID).
 			Where(org.BusinessUnitID.Eq(), req.TenantInfo.BuID)
 
-		if req.Lock != repositories.CapabilityLockNone {
+		if req.Lock != tenantports.CapabilityLockNone {
 			query = query.For(string(req.Lock))
 		}
 
-		capabilities := new(repositories.OrganizationCapabilities)
+		capabilities := new(tenantports.OrganizationCapabilities)
 		if err := query.Scan(
 			ctx,
 			&capabilities.BrokerageEnabled,

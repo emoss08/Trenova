@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -142,7 +142,7 @@ func TestContractArguments_AnOpenSchemaAcceptsAnything(t *testing.T) {
 	t.Parallel()
 
 	got, _, err := contractArguments(nil, "stub", map[string]any{"type": "object"},
-		map[string]any{"anything": 1, serviceports.SelfScopeOwnerParam: "usr_x"})
+		map[string]any{"anything": 1, agentports.SelfScopeOwnerParam: "usr_x"})
 	require.NoError(t, err)
 	assert.Equal(t, map[string]any{"anything": 1}, got,
 		"the owner key is set aside whatever the schema says")
@@ -171,18 +171,18 @@ func TestRun_StripsTheOwnerTheModelSentAndStampsThePerson(t *testing.T) {
 	stub.Resource = permission.ResourceHomeLayoutPreset
 	stub.Schema = closedSchema("key")
 	tool := selfScopedAction{stub}
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		toolTurn("add_home_widget", map[string]any{
-			"key":                            "kpi",
-			serviceports.SelfScopeOwnerParam: pulid.MustNew("usr_").String(),
+			"key":                          "kpi",
+			agentports.SelfScopeOwnerParam: pulid.MustNew("usr_").String(),
 		}),
 		textTurn("Proposed."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []serviceports.AgentTool{tool}}, nil)
+		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
 	actor := testActor()
 
-	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+	result, err := rt.Run(t.Context(), &agentports.RunRequest{
 		Definition: testDefinition("add_home_widget"),
 		Actor:      actor,
 		Input:      "put on-time on my dashboard",
@@ -191,8 +191,8 @@ func TestRun_StripsTheOwnerTheModelSentAndStampsThePerson(t *testing.T) {
 
 	require.Len(t, result.Actions, 1, "the call fit the schema once the owner was set aside")
 	assert.Equal(t, map[string]any{
-		"key":                            "kpi",
-		serviceports.SelfScopeOwnerParam: actor.UserID.String(),
+		"key":                          "kpi",
+		agentports.SelfScopeOwnerParam: actor.UserID.String(),
 	}, result.Actions[0].Arguments)
 }
 
@@ -207,14 +207,14 @@ func TestRun_ValidatesAQueryToolsArguments(t *testing.T) {
 		Result:   map[string]any{"items": []any{}},
 		Schema:   closedSchema("status"),
 	}
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		toolTurn("list_shipments", map[string]any{"status": "New", "customer": "Acme"}),
 		textTurn("I could not list them."),
 	}}
-	rt := newRuntime(completion, &stubQueryRegistry{Tools: []serviceports.AgentQueryTool{tool}},
+	rt := newRuntime(completion, &stubQueryRegistry{Tools: []agentports.AgentQueryTool{tool}},
 		&stubActionRegistry{}, nil)
 
-	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+	result, err := rt.Run(t.Context(), &agentports.RunRequest{
 		Definition: testDefinition("list_shipments"),
 		Actor:      testActor(),
 		Input:      "Acme's new loads",

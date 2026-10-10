@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -23,13 +23,13 @@ type dismissalRepository struct {
 	db *postgres.Connection
 }
 
-func NewDismissalRepository(p DismissalParams) repositories.AIProviderFailureDismissalRepository {
+func NewDismissalRepository(p DismissalParams) agentports.AIProviderFailureDismissalRepository {
 	return &dismissalRepository{db: p.DB}
 }
 
 func (r *dismissalRepository) List(
 	ctx context.Context,
-	req *repositories.ListFailureDismissalsRequest,
+	req *agentports.ListFailureDismissalsRequest,
 ) ([]*aiprovider.FailureDismissal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiprovider.FailureDismissal, error) {
 		cols := buncolgen.FailureDismissalColumns
@@ -68,7 +68,7 @@ func (r *dismissalRepository) Upsert(ctx context.Context, dismissal *aiprovider.
 
 func (r *dismissalRepository) Delete(
 	ctx context.Context,
-	req *repositories.DeleteFailureDismissalRequest,
+	req *agentports.DeleteFailureDismissalRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.FailureDismissalColumns

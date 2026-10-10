@@ -5,7 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,7 +17,7 @@ type turnFixture struct {
 	proposals *capturingStore
 	plans     *capturingPlans
 	svc       *Service
-	actor     *serviceports.RequestActor
+	actor     *permissionports.RequestActor
 	parent    *agentdefinition.Definition
 	delegate  *agentdefinition.Definition
 	turnID    pulid.ID
@@ -31,8 +32,8 @@ func newTurnFixture() *turnFixture {
 		proposals: proposals,
 		plans:     plans,
 		svc:       NewWithStores(nil, runs, proposals).WithPlans(plans),
-		actor: &serviceports.RequestActor{
-			PrincipalType:  serviceports.PrincipalTypeUser,
+		actor: &permissionports.RequestActor{
+			PrincipalType:  permissionports.PrincipalTypeUser,
 			PrincipalID:    pulid.MustNew("usr_"),
 			UserID:         pulid.MustNew("usr_"),
 			OrganizationID: pulid.MustNew("org_"),
@@ -65,7 +66,7 @@ func (f *turnFixture) open(delegateCallID string) *OpenRunRequest {
 	return open
 }
 
-func calledAction(tool, callID string) serviceports.PendingAction {
+func calledAction(tool, callID string) agentports.PendingAction {
 	action := pendingAction(tool)
 	action.ToolCallID = callID
 
@@ -86,11 +87,11 @@ func TestRecord_FoldsADelegatesWritesIntoTheTurnsOnePlanInConversationOrder(t *t
 		Actor:      f.actor,
 		Definition: f.parent,
 		Open:       f.open(""),
-		Actions:    []serviceports.PendingAction{calledAction("void_shipment", "call_void")},
+		Actions:    []agentports.PendingAction{calledAction("void_shipment", "call_void")},
 		Delegated: []DelegatedActions{{
 			Definition: f.delegate,
 			Open:       f.open("call_hand"),
-			Actions: []serviceports.PendingAction{
+			Actions: []agentports.PendingAction{
 				calledAction("duplicate_shipment", "call_copy"),
 			},
 		}},
@@ -139,11 +140,11 @@ func TestRecord_NumbersTheStepsByWhereTheConversationAskedForThem(t *testing.T) 
 		Actor:      f.actor,
 		Definition: f.parent,
 		Open:       f.open(""),
-		Actions:    []serviceports.PendingAction{calledAction("void_shipment", "call_void")},
+		Actions:    []agentports.PendingAction{calledAction("void_shipment", "call_void")},
 		Delegated: []DelegatedActions{{
 			Definition: f.delegate,
 			Open:       f.open("call_hand"),
-			Actions: []serviceports.PendingAction{
+			Actions: []agentports.PendingAction{
 				calledAction("duplicate_shipment", "call_copy"),
 				calledAction("add_shipment_comment", "call_note"),
 			},
@@ -228,11 +229,11 @@ func TestRecord_ADelegatesOnlyPendingWriteStandsAlone(t *testing.T) {
 		Actor:      f.actor,
 		Definition: f.parent,
 		Open:       f.open(""),
-		Actions:    []serviceports.PendingAction{executed},
+		Actions:    []agentports.PendingAction{executed},
 		Delegated: []DelegatedActions{{
 			Definition: f.delegate,
 			Open:       f.open("call_hand"),
-			Actions: []serviceports.PendingAction{
+			Actions: []agentports.PendingAction{
 				calledAction("duplicate_shipment", "call_copy"),
 			},
 		}},

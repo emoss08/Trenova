@@ -14,11 +14,15 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/glaccount"
 	"github.com/emoss08/trenova/internal/core/domain/journalentry"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/accountsreceivableservice"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/fiscalperiodservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
@@ -70,56 +74,56 @@ type receivablesReader interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		asOfDate int64,
-	) (*serviceports.ARAgingSummary, error)
+	) (*customerledgerports.ARAgingSummary, error)
 	ListOpenItems(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		customerID pulid.ID,
 		asOfDate int64,
-	) ([]*repositories.AROpenItem, error)
+	) ([]*customerledgerports.AROpenItem, error)
 	GetCustomerStatement(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		customerID pulid.ID,
 		startDate, asOfDate int64,
-	) (*serviceports.ARCustomerStatement, error)
+	) (*customerledgerports.ARCustomerStatement, error)
 	GetCollectionsWorklist(
 		ctx context.Context,
-		req repositories.ListARCollectionsWorklistRequest,
-	) ([]*repositories.ARCollectionsWorklistItem, error)
+		req customerledgerports.ListARCollectionsWorklistRequest,
+	) ([]*customerledgerports.ARCollectionsWorklistItem, error)
 }
 
 func provideGetARAgingTool(
 	receivables *accountsreceivableservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newGetARAgingTool(receivables, permissions)
 }
 
 func provideListAROpenItemsTool(
 	receivables *accountsreceivableservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newListAROpenItemsTool(receivables, permissions)
 }
 
 func provideGetCustomerStatementTool(
 	receivables *accountsreceivableservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newGetCustomerStatementTool(receivables, permissions)
 }
 
 func provideListCollectionsWorklistTool(
 	receivables *accountsreceivableservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newListCollectionsWorklistTool(receivables, permissions)
 }
 
 func provideGetFiscalCloseBlockersTool(
 	periods *fiscalperiodservice.Service,
-) serviceports.AgentQueryTool {
+) agentports.AgentQueryTool {
 	return newGetFiscalCloseBlockersTool(periods)
 }
 
@@ -136,7 +140,7 @@ type arBuckets struct {
 	TotalOpen  string `json:"totalOpen,omitempty"`
 }
 
-func arBucketsFrom(totals repositories.ARAgingBucketTotals) *arBuckets {
+func arBucketsFrom(totals customerledgerports.ARAgingBucketTotals) *arBuckets {
 	return &arBuckets{
 		Current:    minorText(totals.CurrentMinor),
 		Days1To30:  minorText(totals.Days1To30Minor),
@@ -147,7 +151,7 @@ func arBucketsFrom(totals repositories.ARAgingBucketTotals) *arBuckets {
 	}
 }
 
-func oldestBucket(totals repositories.ARAgingBucketTotals) (string, int) {
+func oldestBucket(totals customerledgerports.ARAgingBucketTotals) (string, int) {
 	switch {
 	case totals.DaysOver90Minor > 0:
 		return bucketOver90, 4
@@ -169,8 +173,8 @@ type getARAgingTool struct {
 
 func newGetARAgingTool(
 	receivables receivablesReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &getARAgingTool{receivables: receivables, access: newFieldAccess(permissions)}
 }
 
@@ -193,7 +197,7 @@ func (t *getARAgingTool) ParamSchema() map[string]any {
 	}, defaultAccountingRows, maxAccountingRows))
 }
 
-func (t *getARAgingTool) Policy() serviceports.ToolPolicy {
+func (t *getARAgingTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceAccountsReceivable})
 }
 
@@ -221,7 +225,7 @@ type arAgingOutcome struct {
 
 func (t *getARAgingTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -289,7 +293,7 @@ type agingFilter struct {
 	showAmounts bool
 }
 
-func agingRows(entries []*repositories.ARCustomerAgingRow, filter agingFilter) []arAgingRow {
+func agingRows(entries []*customerledgerports.ARCustomerAgingRow, filter agingFilter) []arAgingRow {
 	rows := make([]arAgingRow, 0, len(entries))
 	for _, entry := range entries {
 		if entry == nil || entry.Buckets.TotalOpenMinor == 0 {
@@ -344,8 +348,8 @@ type listAROpenItemsTool struct {
 
 func newListAROpenItemsTool(
 	receivables receivablesReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &listAROpenItemsTool{receivables: receivables, access: newFieldAccess(permissions)}
 }
 
@@ -368,7 +372,7 @@ func (t *listAROpenItemsTool) ParamSchema() map[string]any {
 	}, defaultAccountingRows, maxAccountingRows))
 }
 
-func (t *listAROpenItemsTool) Policy() serviceports.ToolPolicy {
+func (t *listAROpenItemsTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceAccountsReceivable})
 }
 
@@ -391,7 +395,7 @@ type arOpenItemRow struct {
 	Open             string       `json:"openAmount,omitempty"`
 }
 
-func arOpenItemRowFrom(item *repositories.AROpenItem, showAmounts bool) arOpenItemRow {
+func arOpenItemRowFrom(item *customerledgerports.AROpenItem, showAmounts bool) arOpenItemRow {
 	row := arOpenItemRow{
 		InvoiceID:        item.InvoiceID.String(),
 		InvoiceNumber:    item.InvoiceNumber,
@@ -418,7 +422,7 @@ func arOpenItemRowFrom(item *repositories.AROpenItem, showAmounts bool) arOpenIt
 
 func (t *listAROpenItemsTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -456,7 +460,7 @@ func (t *listAROpenItemsTool) Query(
 	gate := t.access.gate(ctx, params, permission.ResourceAccountsReceivable)
 	showAmounts := gate.show(fieldAmountMinor, withheldAmounts)
 
-	kept := make([]*repositories.AROpenItem, 0, len(items))
+	kept := make([]*customerledgerports.AROpenItem, 0, len(items))
 	for _, item := range items {
 		if item == nil || item.DaysPastDue < minDays {
 			continue
@@ -466,7 +470,7 @@ func (t *listAROpenItemsTool) Query(
 		}
 		kept = append(kept, item)
 	}
-	slices.SortStableFunc(kept, func(a, b *repositories.AROpenItem) int {
+	slices.SortStableFunc(kept, func(a, b *customerledgerports.AROpenItem) int {
 		if byDays := cmp.Compare(b.DaysPastDue, a.DaysPastDue); byDays != 0 {
 			return byDays
 		}
@@ -492,8 +496,8 @@ type getCustomerStatementTool struct {
 
 func newGetCustomerStatementTool(
 	receivables receivablesReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &getCustomerStatementTool{receivables: receivables, access: newFieldAccess(permissions)}
 }
 
@@ -516,7 +520,7 @@ func (t *getCustomerStatementTool) ParamSchema() map[string]any {
 	}, paramCustomerID)
 }
 
-func (t *getCustomerStatementTool) Policy() serviceports.ToolPolicy {
+func (t *getCustomerStatementTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceAccountsReceivable})
 }
 
@@ -551,7 +555,7 @@ type customerStatementView struct {
 
 func (t *getCustomerStatementTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -611,7 +615,7 @@ func (t *getCustomerStatementTool) Query(
 }
 
 func statementTransactions(
-	transactions []*serviceports.ARStatementTransaction,
+	transactions []*customerledgerports.ARStatementTransaction,
 	showAmounts bool,
 ) ([]statementTransactionRow, int) {
 	omitted := 0
@@ -646,7 +650,7 @@ func statementTransactions(
 }
 
 func statementOpenItems(
-	items []*repositories.AROpenItem,
+	items []*customerledgerports.AROpenItem,
 	showAmounts bool,
 ) ([]arOpenItemRow, int) {
 	omitted := 0
@@ -672,8 +676,8 @@ type listCollectionsWorklistTool struct {
 
 func newListCollectionsWorklistTool(
 	receivables receivablesReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &listCollectionsWorklistTool{
 		receivables: receivables,
 		access:      newFieldAccess(permissions),
@@ -698,7 +702,7 @@ func (t *listCollectionsWorklistTool) ParamSchema() map[string]any {
 	})
 }
 
-func (t *listCollectionsWorklistTool) Policy() serviceports.ToolPolicy {
+func (t *listCollectionsWorklistTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceAccountsReceivable})
 }
 
@@ -720,7 +724,7 @@ type worklistRow struct {
 
 func (t *listCollectionsWorklistTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -748,7 +752,7 @@ func (t *listCollectionsWorklistTool) Query(
 		fetch = maxAccountingRows
 	}
 	items, err := t.receivables.GetCollectionsWorklist(ctx,
-		repositories.ListARCollectionsWorklistRequest{
+		customerledgerports.ListARCollectionsWorklistRequest{
 			TenantInfo: tenantOf(params),
 			AsOfDate:   asOf,
 			Limit:      fetch,
@@ -800,18 +804,18 @@ func (t *listCollectionsWorklistTool) Query(
 type journalEntryReader interface {
 	List(
 		ctx context.Context,
-		req *repositories.ListJournalEntriesRequest,
+		req *journalentryports.ListJournalEntriesRequest,
 	) (*pagination.ListResult[*journalentry.JournalEntry], error)
 	GetByID(
 		ctx context.Context,
-		req repositories.GetJournalEntryByIDRequest,
+		req journalentryports.GetJournalEntryByIDRequest,
 	) (*journalentry.JournalEntry, error)
 }
 
 type glAccountLookup interface {
 	GetByIDs(
 		ctx context.Context,
-		req repositories.GetGLAccountsByIDsRequest,
+		req glaccountports.GetGLAccountsByIDsRequest,
 	) ([]*glaccount.GLAccount, error)
 }
 
@@ -821,9 +825,9 @@ type listJournalEntriesTool struct {
 }
 
 func newListJournalEntriesTool(
-	entries repositories.JournalEntryRepository,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	entries journalentryports.JournalEntryRepository,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &listJournalEntriesTool{entries: entries, access: newFieldAccess(permissions)}
 }
 
@@ -850,7 +854,7 @@ func (t *listJournalEntriesTool) ParamSchema() map[string]any {
 	}, defaultListLimit, maxListLimit))
 }
 
-func (t *listJournalEntriesTool) Policy() serviceports.ToolPolicy {
+func (t *listJournalEntriesTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceJournalEntry})
 }
 
@@ -896,7 +900,7 @@ func journalEntryRowFrom(entry *journalentry.JournalEntry, gate *fieldGate) jour
 
 func (t *listJournalEntriesTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -927,7 +931,7 @@ func (t *listJournalEntriesTool) Query(
 	}
 	window := readPage(params.Params, defaultListLimit, maxListLimit)
 
-	req := &repositories.ListJournalEntriesRequest{
+	req := &journalentryports.ListJournalEntriesRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenantOf(params),
 			Pagination: pagination.Info{Limit: window.fetch(), Offset: window.offset},
@@ -984,10 +988,10 @@ type getJournalEntryTool struct {
 }
 
 func newGetJournalEntryTool(
-	entries repositories.JournalEntryRepository,
-	accounts repositories.GLAccountRepository,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	entries journalentryports.JournalEntryRepository,
+	accounts glaccountports.GLAccountRepository,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &getJournalEntryTool{
 		entries:  entries,
 		accounts: accounts,
@@ -1017,7 +1021,7 @@ func (t *getJournalEntryTool) ParamSchema() map[string]any {
 	)
 }
 
-func (t *getJournalEntryTool) Policy() serviceports.ToolPolicy {
+func (t *getJournalEntryTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceJournalEntry})
 }
 
@@ -1055,7 +1059,7 @@ type journalEntryView struct {
 
 func (t *getJournalEntryTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -1067,7 +1071,7 @@ func (t *getJournalEntryTool) Query(
 	}
 
 	tenant := tenantOf(params)
-	entry, err := t.entries.GetByID(ctx, repositories.GetJournalEntryByIDRequest{
+	entry, err := t.entries.GetByID(ctx, journalentryports.GetJournalEntryByIDRequest{
 		ID:         id,
 		TenantInfo: tenant,
 	})
@@ -1167,7 +1171,7 @@ func (t *getJournalEntryTool) lineAccounts(
 		return out, nil
 	}
 
-	accounts, err := t.accounts.GetByIDs(ctx, repositories.GetGLAccountsByIDsRequest{
+	accounts, err := t.accounts.GetByIDs(ctx, glaccountports.GetGLAccountsByIDsRequest{
 		TenantInfo:   tenant,
 		GLAccountIDs: ids,
 	})
@@ -1200,9 +1204,9 @@ type glAccountRow struct {
 }
 
 func newListGLAccountsTool(
-	repo repositories.GLAccountRepository,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	repo glaccountports.GLAccountRepository,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "list_gl_accounts",
 		entityPlural: "general ledger accounts",
@@ -1225,7 +1229,7 @@ func newListGLAccountsTool(
 			opts *pagination.QueryOptions,
 			gate *fieldGate,
 		) ([]any, error) {
-			result, err := repo.List(ctx, &repositories.ListGLAccountsRequest{Filter: opts})
+			result, err := repo.List(ctx, &glaccountports.ListGLAccountsRequest{Filter: opts})
 			if err != nil {
 				return nil, err
 			}
@@ -1282,9 +1286,9 @@ type fiscalPeriodRow struct {
 }
 
 func newListFiscalPeriodsTool(
-	repo repositories.FiscalPeriodRepository,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	repo fiscalperiodports.FiscalPeriodRepository,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "list_fiscal_periods",
 		entityPlural: "fiscal periods",
@@ -1331,7 +1335,7 @@ func newListFiscalPeriodsTool(
 			opts *pagination.QueryOptions,
 			gate *fieldGate,
 		) ([]any, error) {
-			result, err := repo.List(ctx, &repositories.ListFiscalPeriodsRequest{Filter: opts})
+			result, err := repo.List(ctx, &fiscalperiodports.ListFiscalPeriodsRequest{Filter: opts})
 			if err != nil {
 				return nil, err
 			}
@@ -1364,11 +1368,11 @@ func newListFiscalPeriodsTool(
 type closeBlockerReader interface {
 	Get(
 		ctx context.Context,
-		req repositories.GetFiscalPeriodByIDRequest,
+		req fiscalperiodports.GetFiscalPeriodByIDRequest,
 	) (*fiscalperiod.FiscalPeriod, error)
 	GetCloseBlockers(
 		ctx context.Context,
-		req repositories.GetFiscalPeriodByIDRequest,
+		req fiscalperiodports.GetFiscalPeriodByIDRequest,
 	) (*fiscalclose.Result, error)
 }
 
@@ -1376,7 +1380,7 @@ type getFiscalCloseBlockersTool struct {
 	periods closeBlockerReader
 }
 
-func newGetFiscalCloseBlockersTool(periods closeBlockerReader) serviceports.AgentQueryTool {
+func newGetFiscalCloseBlockersTool(periods closeBlockerReader) agentports.AgentQueryTool {
 	return &getFiscalCloseBlockersTool{periods: periods}
 }
 
@@ -1403,7 +1407,7 @@ func (t *getFiscalCloseBlockersTool) ParamSchema() map[string]any {
 	)
 }
 
-func (t *getFiscalCloseBlockersTool) Policy() serviceports.ToolPolicy {
+func (t *getFiscalCloseBlockersTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceFiscalPeriod})
 }
 
@@ -1426,7 +1430,7 @@ type closeBlockersView struct {
 
 func (t *getFiscalCloseBlockersTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -1437,7 +1441,7 @@ func (t *getFiscalCloseBlockersTool) Query(
 		return nil, err
 	}
 
-	req := repositories.GetFiscalPeriodByIDRequest{ID: id, TenantInfo: tenantOf(params)}
+	req := fiscalperiodports.GetFiscalPeriodByIDRequest{ID: id, TenantInfo: tenantOf(params)}
 	period, err := t.periods.Get(ctx, req)
 	if err != nil {
 		return nil, err

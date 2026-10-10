@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/storage"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -16,16 +16,16 @@ import (
 )
 
 type retentionRepo struct {
-	repositories.InboundMessageRepository
+	inboundmessageports.InboundMessageRepository
 
 	settled []*inboundmessage.InboundMessage
-	listed  *repositories.ListSettledInboundMessagesRequest
-	deleted *repositories.DeleteInboundMessagesRequest
+	listed  *inboundmessageports.ListSettledInboundMessagesRequest
+	deleted *inboundmessageports.DeleteInboundMessagesRequest
 }
 
 func (r *retentionRepo) ListSettledBefore(
 	_ context.Context,
-	req repositories.ListSettledInboundMessagesRequest,
+	req inboundmessageports.ListSettledInboundMessagesRequest,
 ) ([]*inboundmessage.InboundMessage, error) {
 	r.listed = &req
 	return r.settled, nil
@@ -33,14 +33,14 @@ func (r *retentionRepo) ListSettledBefore(
 
 func (r *retentionRepo) DeleteByIDs(
 	_ context.Context,
-	req repositories.DeleteInboundMessagesRequest,
+	req inboundmessageports.DeleteInboundMessagesRequest,
 ) (int, error) {
 	r.deleted = &req
 	return len(req.IDs), nil
 }
 
 type deletingStorage struct {
-	storage.Client
+	kernelports.Client
 
 	refuse  map[string]bool
 	removed []string

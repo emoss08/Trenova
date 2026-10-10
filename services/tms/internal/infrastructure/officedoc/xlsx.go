@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/xuri/excelize/v2"
 )
 
-func readXLSX(ctx context.Context, data []byte) (pages []services.OfficePage, err error) {
+func readXLSX(ctx context.Context, data []byte) (pages []kernelports.OfficePage, err error) {
 	book, err := excelize.OpenReader(bytes.NewReader(data), excelize.Options{
 		UnzipSizeLimit:    maxTotalBytes,
 		UnzipXMLSizeLimit: maxPartBytes,

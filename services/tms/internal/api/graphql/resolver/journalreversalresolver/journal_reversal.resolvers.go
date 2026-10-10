@@ -12,8 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalreversalports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -30,7 +29,7 @@ func (r *QueryResolver) JournalReversals(ctx context.Context, input gqlmodel.Dat
 
 	result, err := r.JournalReversalService.ListConnection(
 		ctx,
-		&repositories.ListJournalReversalConnectionRequest{
+		&journalreversalports.ListJournalReversalConnectionRequest{
 			Filter: tableInput.Filter,
 			Cursor: tableInput.Cursor,
 		},
@@ -53,7 +52,7 @@ func (r *QueryResolver) JournalReversal(ctx context.Context, id string) (*journa
 		return nil, err
 	}
 
-	return r.JournalReversalService.Get(ctx, &serviceports.GetJournalReversalRequest{
+	return r.JournalReversalService.Get(ctx, &journalreversalports.GetJournalReversalRequest{
 		ReversalID: reversalID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})

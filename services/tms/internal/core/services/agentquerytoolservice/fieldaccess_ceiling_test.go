@@ -4,7 +4,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 )
@@ -12,9 +13,9 @@ import (
 func agentParams(
 	params map[string]any,
 	dataAccess permission.FieldSensitivity,
-) *serviceports.QueryToolParams {
+) *agentports.QueryToolParams {
 	out := testParams(params)
-	out.Actor.PrincipalType = serviceports.PrincipalTypeAgent
+	out.Actor.PrincipalType = permissionports.PrincipalTypeAgent
 	out.Actor.PrincipalID = pulid.MustNew("agdef_")
 	out.Actor.UserID = pulid.Nil
 	out.DataAccessCeiling = dataAccess
@@ -25,9 +26,9 @@ func agentParams(
 func chatParams(
 	params map[string]any,
 	dataAccess permission.FieldSensitivity,
-) *serviceports.QueryToolParams {
+) *agentports.QueryToolParams {
 	out := testParams(params)
-	out.Actor.PrincipalType = serviceports.PrincipalTypeUser
+	out.Actor.PrincipalType = permissionports.PrincipalTypeUser
 	out.Actor.PrincipalID = out.Actor.UserID
 	out.DataAccessCeiling = dataAccess
 
@@ -39,7 +40,7 @@ func personReaching(
 	sensitivity permission.FieldSensitivity,
 ) *fakePermissions {
 	return &fakePermissions{
-		readable: map[string]*serviceports.ResourcePermissionDetail{
+		readable: map[string]*permissionports.ResourcePermissionDetail{
 			resource.String(): {
 				Resource:       resource.String(),
 				Operations:     []permission.Operation{permission.OpRead},

@@ -9,7 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -23,14 +23,14 @@ const (
 	digestEventLimit      = 200
 )
 
-type TenantCursor = repositories.CarrierIntelTenantCursor
+type TenantCursor = carrierintelports.CarrierIntelTenantCursor
 
 func (s *Service) ListConfiguredTenants(
 	ctx context.Context,
 	after TenantCursor,
 	limit int,
 ) ([]pagination.TenantInfo, error) {
-	controls, err := s.controlRepo.ListConfigured(ctx, &repositories.ListCarrierIntelTenantsRequest{
+	controls, err := s.controlRepo.ListConfigured(ctx, &carrierintelports.ListCarrierIntelTenantsRequest{
 		After: after,
 		Limit: limit,
 	})
@@ -114,7 +114,7 @@ func (s *Service) SendDigest(
 	tenantInfo pagination.TenantInfo,
 ) (*DigestResult, error) {
 	now := s.now()
-	events, err := s.eventRepo.ListForDigest(ctx, &repositories.ListCarrierIntelDigestEventsRequest{
+	events, err := s.eventRepo.ListForDigest(ctx, &carrierintelports.ListCarrierIntelDigestEventsRequest{
 		TenantInfo: tenantInfo,
 		Since:      now - timeutils.SecondsPerDay,
 		Limit:      digestEventLimit,
@@ -187,7 +187,7 @@ type UsageSummary struct {
 	MonthToDate    decimal.Decimal
 	Cap            *decimal.Decimal
 	SoftCapPercent int
-	ByEndpoint     []repositories.CarrierIntelUsageSummaryRow
+	ByEndpoint     []carrierintelports.CarrierIntelUsageSummaryRow
 	Daily          []*carrierintel.CarrierIntelUsageDaily
 }
 
@@ -207,7 +207,7 @@ func (s *Service) Usage(
 	}
 	end := timeutils.AddMonthsUTC(start, 1)
 
-	rows, err := s.usageRepo.Summary(ctx, &repositories.ListCarrierIntelUsageRequest{
+	rows, err := s.usageRepo.Summary(ctx, &carrierintelports.ListCarrierIntelUsageRequest{
 		TenantInfo: tenantInfo,
 		Since:      start,
 		Until:      end,
@@ -220,7 +220,7 @@ func (s *Service) Usage(
 		total = total.Add(row.EstimatedCost)
 	}
 
-	daily, err := s.usageRepo.ListDaily(ctx, &repositories.ListCarrierIntelUsageDailyRequest{
+	daily, err := s.usageRepo.ListDaily(ctx, &carrierintelports.ListCarrierIntelUsageDailyRequest{
 		TenantInfo: tenantInfo,
 		FromDay:    timeutils.DayKeyUTC(start),
 		ToDay:      timeutils.DayKeyUTC(end - 1),

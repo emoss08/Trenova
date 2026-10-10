@@ -7,15 +7,18 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -31,25 +34,25 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.AgentEvaluationRepository
-	Runs         repositories.AgentRunRepository
-	Definitions  repositories.AgentDefinitionRepository
-	Cases        repositories.AgentEvalCaseRepository
-	Workflows    services.WorkflowStarter
-	AuditService services.AuditService
+	Repo         agentports.AgentEvaluationRepository
+	Runs         agentports.AgentRunRepository
+	Definitions  agentdefinitionports.AgentDefinitionRepository
+	Cases        agentqualityports.AgentEvalCaseRepository
+	Workflows    kernelports.WorkflowStarter
+	AuditService auditports.AuditService
 }
 
 type Service struct {
 	l           *zap.Logger
-	repo        repositories.AgentEvaluationRepository
-	runs        repositories.AgentRunRepository
-	definitions repositories.AgentDefinitionRepository
-	cases       repositories.AgentEvalCaseRepository
-	workflows   services.WorkflowStarter
-	audit       services.AuditService
+	repo        agentports.AgentEvaluationRepository
+	runs        agentports.AgentRunRepository
+	definitions agentdefinitionports.AgentDefinitionRepository
+	cases       agentqualityports.AgentEvalCaseRepository
+	workflows   kernelports.WorkflowStarter
+	audit       auditports.AuditService
 }
 
-func New(p Params) services.AgentEvaluationService {
+func New(p Params) agentports.AgentEvaluationService {
 	return &Service{
 		l:           p.Logger.Named("service.agentevaluation"),
 		repo:        p.Repo,
@@ -65,14 +68,14 @@ func New(p Params) services.AgentEvaluationService {
 // workflow that carries it out.
 func (s *Service) Replay(
 	ctx context.Context,
-	req *services.ReplayAgentRunRequest,
-	actor *services.RequestActor,
+	req *agentports.ReplayAgentRunRequest,
+	actor *permissionports.RequestActor,
 ) (*agent.Evaluation, error) {
 	if !s.workflows.Enabled() {
 		return nil, errortypes.NewBusinessError("The workflow engine is not available")
 	}
 
-	run, err := s.runs.GetByID(ctx, repositories.GetAgentRunByIDRequest{
+	run, err := s.runs.GetByID(ctx, agentports.GetAgentRunByIDRequest{
 		ID:         req.RunID,
 		TenantInfo: &req.TenantInfo,
 	})
@@ -85,7 +88,7 @@ func (s *Service) Replay(
 		)
 	}
 
-	definition, err := s.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	definition, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         run.AgentDefinitionID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -111,14 +114,14 @@ func (s *Service) Replay(
 
 func (s *Service) ReplayCase(
 	ctx context.Context,
-	req *services.ReplayAgentEvalCaseRequest,
-	actor *services.RequestActor,
+	req *agentports.ReplayAgentEvalCaseRequest,
+	actor *permissionports.RequestActor,
 ) (*agent.Evaluation, error) {
 	if !s.workflows.Enabled() {
 		return nil, errortypes.NewBusinessError("The workflow engine is not available")
 	}
 
-	evalCase, err := s.cases.GetByID(ctx, repositories.GetAgentEvalCaseByIDRequest{
+	evalCase, err := s.cases.GetByID(ctx, agentqualityports.GetAgentEvalCaseByIDRequest{
 		ID:         req.CaseID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -129,7 +132,7 @@ func (s *Service) ReplayCase(
 		return nil, errortypes.NewBusinessError("A retired case is not replayed; restore it first")
 	}
 
-	definition, err := s.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	definition, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         evalCase.AgentDefinitionID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -160,7 +163,7 @@ func (s *Service) ReplayCase(
 func (s *Service) start(
 	ctx context.Context,
 	evaluation *agent.Evaluation,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	comment string,
 ) (*agent.Evaluation, error) {
 	if actor != nil && actor.IsUser() && actor.UserID.IsNotNil() {
@@ -220,21 +223,21 @@ func (s *Service) start(
 
 func (s *Service) GetByID(
 	ctx context.Context,
-	req repositories.GetAgentEvaluationByIDRequest,
+	req agentports.GetAgentEvaluationByIDRequest,
 ) (*agent.Evaluation, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListAgentEvaluationConnectionRequest,
+	req *agentports.ListAgentEvaluationConnectionRequest,
 ) (*pagination.CursorListResult[*agent.Evaluation], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
-func (s *Service) log(evaluation *agent.Evaluation, actor *services.RequestActor, comment string) {
+func (s *Service) log(evaluation *agent.Evaluation, actor *permissionports.RequestActor, comment string) {
 	auditActor := actor.AuditActorOrSystem()
-	if err := s.audit.LogAction(&services.LogActionParams{
+	if err := s.audit.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceAgentRun,
 		ResourceID:     evaluation.ID.String(),
 		Operation:      permission.OpCreate,

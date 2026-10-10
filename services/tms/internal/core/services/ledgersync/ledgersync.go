@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/journalentry"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -14,35 +14,35 @@ import (
 var Module = fx.Decorate(DecoratePosting, DecorateReview)
 
 type postingRepository struct {
-	next   repositories.JournalPostingRepository
-	ledger services.AccountingLedgerEnqueuer
+	next   journalentryports.JournalPostingRepository
+	ledger accountingsyncports.AccountingLedgerEnqueuer
 }
 
 type reviewRepository struct {
-	repositories.JournalReviewRepository
-	entries repositories.JournalEntryRepository
-	ledger  services.AccountingLedgerEnqueuer
+	journalentryports.JournalReviewRepository
+	entries journalentryports.JournalEntryRepository
+	ledger  accountingsyncports.AccountingLedgerEnqueuer
 }
 
 func DecoratePosting(
-	next repositories.JournalPostingRepository,
-	ledger services.AccountingLedgerEnqueuer,
-) repositories.JournalPostingRepository {
+	next journalentryports.JournalPostingRepository,
+	ledger accountingsyncports.AccountingLedgerEnqueuer,
+) journalentryports.JournalPostingRepository {
 	return &postingRepository{next: next, ledger: ledger}
 }
 
 func DecorateReview(
-	next repositories.JournalReviewRepository,
-	entries repositories.JournalEntryRepository,
-	ledger services.AccountingLedgerEnqueuer,
-) repositories.JournalReviewRepository {
+	next journalentryports.JournalReviewRepository,
+	entries journalentryports.JournalEntryRepository,
+	ledger accountingsyncports.AccountingLedgerEnqueuer,
+) journalentryports.JournalReviewRepository {
 	return &reviewRepository{JournalReviewRepository: next, entries: entries, ledger: ledger}
 }
 
 //nolint:gocritic // the repository contract takes the params by value
 func (r *postingRepository) CreatePosting(
 	ctx context.Context,
-	params repositories.CreateJournalPostingParams,
+	params journalentryports.CreateJournalPostingParams,
 ) error {
 	if err := r.next.CreatePosting(ctx, params); err != nil {
 		return err
@@ -50,7 +50,7 @@ func (r *postingRepository) CreatePosting(
 	if !params.IsPosted {
 		return nil
 	}
-	return r.ledger.EnqueueJournal(ctx, &services.AccountingJournalPosted{
+	return r.ledger.EnqueueJournal(ctx, &accountingsyncports.AccountingJournalPosted{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: params.OrganizationID,
 			BuID:  params.BusinessUnitID,
@@ -65,19 +65,19 @@ func (r *postingRepository) CreatePosting(
 
 func (r *reviewRepository) PostEntry(
 	ctx context.Context,
-	params *repositories.PostJournalEntryParams,
+	params *journalentryports.PostJournalEntryParams,
 ) error {
 	if err := r.JournalReviewRepository.PostEntry(ctx, params); err != nil {
 		return err
 	}
-	entry, err := r.entries.GetByID(ctx, repositories.GetJournalEntryByIDRequest{
+	entry, err := r.entries.GetByID(ctx, journalentryports.GetJournalEntryByIDRequest{
 		ID:         params.EntryID,
 		TenantInfo: params.TenantInfo,
 	})
 	if err != nil {
 		return err
 	}
-	return r.ledger.EnqueueJournal(ctx, &services.AccountingJournalPosted{
+	return r.ledger.EnqueueJournal(ctx, &accountingsyncports.AccountingJournalPosted{
 		TenantInfo:     params.TenantInfo,
 		EntryID:        entry.ID,
 		EntryNumber:    entry.EntryNumber,

@@ -10,8 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -74,81 +76,81 @@ var (
 type invoiceDraftEditor interface {
 	UpdateDraft(
 		ctx context.Context,
-		req *serviceports.UpdateInvoiceDraftRequest,
-		actor *serviceports.RequestActor,
+		req *invoiceports.UpdateInvoiceDraftRequest,
+		actor *permissionports.RequestActor,
 	) (*invoice.Invoice, error)
 	PreviewUpdateDraft(
 		ctx context.Context,
-		req *serviceports.UpdateInvoiceDraftRequest,
-	) (*serviceports.InvoiceDraftUpdatePreview, error)
+		req *invoiceports.UpdateInvoiceDraftRequest,
+	) (*invoiceports.InvoiceDraftUpdatePreview, error)
 }
 
 type invoicePDFGenerator interface {
 	GeneratePDF(
 		ctx context.Context,
-		req *serviceports.InvoicePreviewRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.GenerateInvoicePDFResult, error)
+		req *invoiceports.InvoicePreviewRequest,
+		actor *permissionports.RequestActor,
+	) (*invoiceports.GenerateInvoicePDFResult, error)
 	PlanPDFGeneration(
 		ctx context.Context,
-		req *serviceports.InvoicePreviewRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.InvoicePDFGenerationPlan, error)
+		req *invoiceports.InvoicePreviewRequest,
+		actor *permissionports.RequestActor,
+	) (*invoiceports.InvoicePDFGenerationPlan, error)
 }
 
 type invoiceCreator interface {
 	PlanCreateInvoices(
 		ctx context.Context,
-		req *serviceports.PlanCreateInvoicesRequest,
-	) (*serviceports.CreateInvoicesPlan, error)
+		req *invoiceports.PlanCreateInvoicesRequest,
+	) (*invoiceports.CreateInvoicesPlan, error)
 	CreateInvoicesFromOrder(
 		ctx context.Context,
-		req *serviceports.CreateInvoiceFromOrderRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.CreateInvoicesResult, error)
+		req *invoiceports.CreateInvoiceFromOrderRequest,
+		actor *permissionports.RequestActor,
+	) (*invoiceports.CreateInvoicesResult, error)
 	CreateInvoicesFromShipments(
 		ctx context.Context,
-		req *serviceports.CreateInvoiceFromShipmentsRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.CreateInvoicesResult, error)
+		req *invoiceports.CreateInvoiceFromShipmentsRequest,
+		actor *permissionports.RequestActor,
+	) (*invoiceports.CreateInvoicesResult, error)
 }
 
 type invoiceMemoRaiser interface {
 	CreateMemo(
 		ctx context.Context,
-		req *serviceports.CreateMemoRequest,
-		actor *serviceports.RequestActor,
+		req *invoiceports.CreateMemoRequest,
+		actor *permissionports.RequestActor,
 	) (*invoice.Invoice, error)
 	PreviewMemo(
 		ctx context.Context,
-		req *serviceports.CreateMemoRequest,
+		req *invoiceports.CreateMemoRequest,
 	) (*invoice.Invoice, error)
 }
 
 type invoiceVoider interface {
 	VoidInvoice(
 		ctx context.Context,
-		req *serviceports.VoidInvoiceRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.VoidInvoiceResult, error)
+		req *invoiceports.VoidInvoiceRequest,
+		actor *permissionports.RequestActor,
+	) (*invoiceports.VoidInvoiceResult, error)
 	PreviewVoid(
 		ctx context.Context,
-		req *serviceports.VoidInvoiceRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.InvoiceVoidPreview, error)
+		req *invoiceports.VoidInvoiceRequest,
+		actor *permissionports.RequestActor,
+	) (*invoiceports.InvoiceVoidPreview, error)
 }
 
 type invoiceEDISender interface {
 	SendEDI(
 		ctx context.Context,
-		req *serviceports.SendInvoiceEDIRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.InvoiceEDISendResult, error)
+		req *invoiceports.SendInvoiceEDIRequest,
+		actor *permissionports.RequestActor,
+	) (*invoiceports.InvoiceEDISendResult, error)
 	PreviewSendEDI(
 		ctx context.Context,
-		req *serviceports.SendInvoiceEDIRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.InvoiceEDISendPreview, error)
+		req *invoiceports.SendInvoiceEDIRequest,
+		actor *permissionports.RequestActor,
+	) (*invoiceports.InvoiceEDISendPreview, error)
 }
 
 func invoiceIDProperty() map[string]any {
@@ -165,7 +167,7 @@ func recipientsProperty(description string) map[string]any {
 	}
 }
 
-func newUpdateInvoiceDraftTool(invoices invoiceDraftEditor) serviceports.AgentTool {
+func newUpdateInvoiceDraftTool(invoices invoiceDraftEditor) agentports.AgentTool {
 	return newReceivableTool(&receivableSpec{
 		name: "update_invoice_draft",
 		description: "Change what a draft invoice says and where it goes: its memo, remittance " +
@@ -180,7 +182,7 @@ func newUpdateInvoiceDraftTool(invoices invoiceDraftEditor) serviceports.AgentTo
 		reversible:  true,
 		taintHold: "Outside content could put its own wording or recipients on an invoice " +
 			"the customer receives.",
-		condition: &serviceports.TierCondition{
+		condition: &agentports.TierCondition{
 			Description: "Changing who the invoice is emailed to is a proposal a person " +
 				"decides; any other change runs once a person approves it.",
 			Limit: draftUpdateTierLimit,
@@ -216,23 +218,23 @@ func newUpdateInvoiceDraftTool(invoices invoiceDraftEditor) serviceports.AgentTo
 		},
 		required: []string{paramInvoiceID},
 		target:   targetInvoice,
-	}, receivablePlan[*serviceports.UpdateInvoiceDraftRequest, *serviceports.InvoiceDraftUpdatePreview]{
+	}, receivablePlan[*invoiceports.UpdateInvoiceDraftRequest, *invoiceports.InvoiceDraftUpdatePreview]{
 		request: draftUpdateRequest,
 		plan: func(
 			ctx context.Context,
-			req *serviceports.UpdateInvoiceDraftRequest,
-			_ *serviceports.ToolExecuteParams,
-		) (*serviceports.InvoiceDraftUpdatePreview, error) {
+			req *invoiceports.UpdateInvoiceDraftRequest,
+			_ *agentports.ToolExecuteParams,
+		) (*invoiceports.InvoiceDraftUpdatePreview, error) {
 			return invoices.PreviewUpdateDraft(ctx, req)
 		},
-		refused: func(*serviceports.UpdateInvoiceDraftRequest) string {
+		refused: func(*invoiceports.UpdateInvoiceDraftRequest) string {
 			return "Would update the draft invoice."
 		},
 		render: renderDraftUpdate,
 		run: func(
 			ctx context.Context,
-			req *serviceports.UpdateInvoiceDraftRequest,
-			params *serviceports.ToolExecuteParams,
+			req *invoiceports.UpdateInvoiceDraftRequest,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := invoices.UpdateDraft(ctx, req, params.Actor)
 			return nil, err
@@ -242,7 +244,7 @@ func newUpdateInvoiceDraftTool(invoices invoiceDraftEditor) serviceports.AgentTo
 
 func draftUpdateTierLimit(
 	_ context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
 ) agent.AutonomyTier {
 	for _, key := range recipientParams {
 		if _, ok := params.Params[key]; ok {
@@ -254,13 +256,13 @@ func draftUpdateTierLimit(
 }
 
 func draftUpdateRequest(
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.UpdateInvoiceDraftRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*invoiceports.UpdateInvoiceDraftRequest, error) {
 	invoiceID, err := requirePulid(params.Params, paramInvoiceID)
 	if err != nil {
 		return nil, err
 	}
-	req := &serviceports.UpdateInvoiceDraftRequest{
+	req := &invoiceports.UpdateInvoiceDraftRequest{
 		InvoiceID:  invoiceID,
 		TenantInfo: tenantFrom(*params),
 	}
@@ -395,12 +397,12 @@ func presentIDs(params map[string]any, key string, limit int) (*[]pulid.ID, erro
 	return &ids, nil
 }
 
-func newGenerateInvoicePDFTool(invoices invoicePDFGenerator) serviceports.AgentTool {
+func newGenerateInvoicePDFTool(invoices invoicePDFGenerator) agentports.AgentTool {
 	plan := func(
 		ctx context.Context,
-		req *serviceports.InvoicePreviewRequest,
-		params *serviceports.ToolExecuteParams,
-	) (*serviceports.InvoicePDFGenerationPlan, error) {
+		req *invoiceports.InvoicePreviewRequest,
+		params *agentports.ToolExecuteParams,
+	) (*invoiceports.InvoicePDFGenerationPlan, error) {
 		generation, err := invoices.PlanPDFGeneration(ctx, req, params.Actor)
 		if err != nil {
 			return nil, err
@@ -426,26 +428,26 @@ func newGenerateInvoicePDFTool(invoices invoicePDFGenerator) serviceports.AgentT
 		properties: map[string]any{paramInvoiceID: invoiceIDProperty()},
 		required:   []string{paramInvoiceID},
 		target:     targetInvoice,
-	}, receivablePlan[*serviceports.InvoicePreviewRequest, *serviceports.InvoicePDFGenerationPlan]{
-		request: func(params *serviceports.ToolExecuteParams) (*serviceports.InvoicePreviewRequest, error) {
+	}, receivablePlan[*invoiceports.InvoicePreviewRequest, *invoiceports.InvoicePDFGenerationPlan]{
+		request: func(params *agentports.ToolExecuteParams) (*invoiceports.InvoicePreviewRequest, error) {
 			invoiceID, err := requirePulid(params.Params, paramInvoiceID)
 			if err != nil {
 				return nil, err
 			}
-			return &serviceports.InvoicePreviewRequest{
+			return &invoiceports.InvoicePreviewRequest{
 				InvoiceID:  invoiceID,
 				TenantInfo: tenantFrom(*params),
 			}, nil
 		},
 		plan: plan,
-		refused: func(*serviceports.InvoicePreviewRequest) string {
+		refused: func(*invoiceports.InvoicePreviewRequest) string {
 			return "Would render the invoice's PDF."
 		},
 		render: renderPDFGeneration,
 		run: func(
 			ctx context.Context,
-			req *serviceports.InvoicePreviewRequest,
-			params *serviceports.ToolExecuteParams,
+			req *invoiceports.InvoicePreviewRequest,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			if _, err := plan(ctx, req, params); err != nil {
 				return nil, err
@@ -457,10 +459,10 @@ func newGenerateInvoicePDFTool(invoices invoicePDFGenerator) serviceports.AgentT
 }
 
 type createInvoicesRequest struct {
-	plan *serviceports.PlanCreateInvoicesRequest
+	plan *invoiceports.PlanCreateInvoicesRequest
 }
 
-func newCreateInvoiceTool(invoices invoiceCreator) serviceports.AgentTool {
+func newCreateInvoiceTool(invoices invoiceCreator) agentports.AgentTool {
 	return newReportingReceivableTool(&receivableSpec{
 		name:        "create_invoice",
 		searchTerms: []string{"invoice delivered", "bill completed"},
@@ -490,13 +492,13 @@ func newCreateInvoiceTool(invoices invoiceCreator) serviceports.AgentTool {
 				"rather than on their periodic statement. Required only for statement "+
 				"customers.", maxInvoiceReasonChars),
 		},
-	}, receivablePlan[*createInvoicesRequest, *serviceports.CreateInvoicesPlan]{
+	}, receivablePlan[*createInvoicesRequest, *invoiceports.CreateInvoicesPlan]{
 		request: createInvoicesRequestFrom,
 		plan: func(
 			ctx context.Context,
 			req *createInvoicesRequest,
-			_ *serviceports.ToolExecuteParams,
-		) (*serviceports.CreateInvoicesPlan, error) {
+			_ *agentports.ToolExecuteParams,
+		) (*invoiceports.CreateInvoicesPlan, error) {
 			return invoices.PlanCreateInvoices(ctx, req.plan)
 		},
 		refused: func(req *createInvoicesRequest) string {
@@ -509,15 +511,15 @@ func newCreateInvoiceTool(invoices invoiceCreator) serviceports.AgentTool {
 		run: func(
 			ctx context.Context,
 			req *createInvoicesRequest,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			var (
-				made *serviceports.CreateInvoicesResult
+				made *invoiceports.CreateInvoicesResult
 				err  error
 			)
 			if req.plan.OrderID.IsNotNil() {
 				made, err = invoices.CreateInvoicesFromOrder(ctx,
-					&serviceports.CreateInvoiceFromOrderRequest{
+					&invoiceports.CreateInvoiceFromOrderRequest{
 						OrderID:        req.plan.OrderID,
 						ShipmentIDs:    req.plan.ShipmentIDs,
 						TenantInfo:     req.plan.TenantInfo,
@@ -525,7 +527,7 @@ func newCreateInvoiceTool(invoices invoiceCreator) serviceports.AgentTool {
 					}, params.Actor)
 			} else {
 				made, err = invoices.CreateInvoicesFromShipments(ctx,
-					&serviceports.CreateInvoiceFromShipmentsRequest{
+					&invoiceports.CreateInvoiceFromShipmentsRequest{
 						ShipmentIDs:    req.plan.ShipmentIDs,
 						TenantInfo:     req.plan.TenantInfo,
 						OffCycleReason: req.plan.OffCycleReason,
@@ -540,13 +542,13 @@ func newCreateInvoiceTool(invoices invoiceCreator) serviceports.AgentTool {
 }
 
 func createInvoicesRequestFrom(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*createInvoicesRequest, error) {
 	orderID, hasOrder, err := optionalPulid(params.Params, paramOrderID)
 	if err != nil {
 		return nil, err
 	}
-	req := &serviceports.PlanCreateInvoicesRequest{
+	req := &invoiceports.PlanCreateInvoicesRequest{
 		OrderID:    orderID,
 		TenantInfo: tenantFrom(*params),
 	}
@@ -585,7 +587,7 @@ func invoiceResult(action string, entity *invoice.Invoice) *agent.ToolExecutionR
 	}
 }
 
-func newCreateInvoiceMemoTool(invoices invoiceMemoRaiser) serviceports.AgentTool {
+func newCreateInvoiceMemoTool(invoices invoiceMemoRaiser) agentports.AgentTool {
 	return newReportingReceivableTool(&receivableSpec{
 		name: "create_invoice_memo",
 		description: "Propose a draft credit or debit memo to a customer with no shipment " +
@@ -636,23 +638,23 @@ func newCreateInvoiceMemoTool(invoices invoiceMemoRaiser) serviceports.AgentTool
 			paramInvoiceMemo: stringProperty("A note printed on the memo.", maxInvoiceTextChars),
 		},
 		required: []string{paramCustomerID, paramBillType, paramReason, paramAdjustmentLines},
-	}, receivablePlan[*serviceports.CreateMemoRequest, *invoice.Invoice]{
+	}, receivablePlan[*invoiceports.CreateMemoRequest, *invoice.Invoice]{
 		request: memoRequest,
 		plan: func(
 			ctx context.Context,
-			req *serviceports.CreateMemoRequest,
-			_ *serviceports.ToolExecuteParams,
+			req *invoiceports.CreateMemoRequest,
+			_ *agentports.ToolExecuteParams,
 		) (*invoice.Invoice, error) {
 			return invoices.PreviewMemo(ctx, req)
 		},
-		refused: func(req *serviceports.CreateMemoRequest) string {
+		refused: func(req *invoiceports.CreateMemoRequest) string {
 			return fmt.Sprintf("Would raise a draft %s.", req.BillType)
 		},
 		render: renderMemo,
 		run: func(
 			ctx context.Context,
-			req *serviceports.CreateMemoRequest,
-			params *serviceports.ToolExecuteParams,
+			req *invoiceports.CreateMemoRequest,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			created, err := invoices.CreateMemo(ctx, req, params.Actor)
 			if err != nil {
@@ -663,7 +665,7 @@ func newCreateInvoiceMemoTool(invoices invoiceMemoRaiser) serviceports.AgentTool
 	})
 }
 
-func memoRequest(params *serviceports.ToolExecuteParams) (*serviceports.CreateMemoRequest, error) {
+func memoRequest(params *agentports.ToolExecuteParams) (*invoiceports.CreateMemoRequest, error) {
 	customerID, err := requirePulid(params.Params, paramCustomerID)
 	if err != nil {
 		return nil, err
@@ -689,7 +691,7 @@ func memoRequest(params *serviceports.ToolExecuteParams) (*serviceports.CreateMe
 		return nil, err
 	}
 
-	req := &serviceports.CreateMemoRequest{
+	req := &invoiceports.CreateMemoRequest{
 		TenantInfo:         tenantFrom(*params),
 		CustomerID:         customerID,
 		BillType:           billType,
@@ -710,7 +712,7 @@ func memoRequest(params *serviceports.ToolExecuteParams) (*serviceports.CreateMe
 	return req, nil
 }
 
-func memoLines(params map[string]any) ([]*serviceports.CreateMemoLineInput, error) {
+func memoLines(params map[string]any) ([]*invoiceports.CreateMemoLineInput, error) {
 	entries, err := readObjects(params, paramAdjustmentLines, maxMemoLineCount)
 	if err != nil {
 		return nil, err
@@ -719,7 +721,7 @@ func memoLines(params map[string]any) ([]*serviceports.CreateMemoLineInput, erro
 		return nil, fmt.Errorf("%s needs at least one line", paramAdjustmentLines)
 	}
 
-	lines := make([]*serviceports.CreateMemoLineInput, 0, len(entries))
+	lines := make([]*invoiceports.CreateMemoLineInput, 0, len(entries))
 	for idx, fields := range entries {
 		line, lineErr := memoLine(fields)
 		if lineErr != nil {
@@ -731,7 +733,7 @@ func memoLines(params map[string]any) ([]*serviceports.CreateMemoLineInput, erro
 	return lines, nil
 }
 
-func memoLine(fields map[string]any) (*serviceports.CreateMemoLineInput, error) {
+func memoLine(fields map[string]any) (*invoiceports.CreateMemoLineInput, error) {
 	description, err := requireBoundedText(fields, paramLineDescription, maxMemoLineTextChars)
 	if err != nil {
 		return nil, err
@@ -740,7 +742,7 @@ func memoLine(fields map[string]any) (*serviceports.CreateMemoLineInput, error) 
 	if err != nil {
 		return nil, err
 	}
-	line := &serviceports.CreateMemoLineInput{Description: description, Amount: amount}
+	line := &invoiceports.CreateMemoLineInput{Description: description, Amount: amount}
 	if raw := strings.TrimSpace(optionalString(fields, paramMemoQuantity)); raw != "" {
 		quantity, parseErr := decimal.NewFromString(raw)
 		if parseErr != nil || !quantity.IsPositive() {
@@ -758,7 +760,7 @@ func memoLine(fields map[string]any) (*serviceports.CreateMemoLineInput, error) 
 	return line, nil
 }
 
-func newVoidInvoiceTool(invoices invoiceVoider) serviceports.AgentTool {
+func newVoidInvoiceTool(invoices invoiceVoider) agentports.AgentTool {
 	return newReportingReceivableTool(&receivableSpec{
 		name:        "void_invoice",
 		searchTerms: []string{"kill invoice", "cancel invoice"},
@@ -784,23 +786,23 @@ func newVoidInvoiceTool(invoices invoiceVoider) serviceports.AgentTool {
 		},
 		required: []string{paramInvoiceID, paramReason, paramVoidDisposition},
 		target:   targetInvoice,
-	}, receivablePlan[*serviceports.VoidInvoiceRequest, *serviceports.InvoiceVoidPreview]{
+	}, receivablePlan[*invoiceports.VoidInvoiceRequest, *invoiceports.InvoiceVoidPreview]{
 		request: voidRequest,
 		plan: func(
 			ctx context.Context,
-			req *serviceports.VoidInvoiceRequest,
-			params *serviceports.ToolExecuteParams,
-		) (*serviceports.InvoiceVoidPreview, error) {
+			req *invoiceports.VoidInvoiceRequest,
+			params *agentports.ToolExecuteParams,
+		) (*invoiceports.InvoiceVoidPreview, error) {
 			return invoices.PreviewVoid(ctx, req, params.Actor)
 		},
-		refused: func(*serviceports.VoidInvoiceRequest) string {
+		refused: func(*invoiceports.VoidInvoiceRequest) string {
 			return "Would void the invoice."
 		},
 		render: renderVoid,
 		run: func(
 			ctx context.Context,
-			req *serviceports.VoidInvoiceRequest,
-			params *serviceports.ToolExecuteParams,
+			req *invoiceports.VoidInvoiceRequest,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			result, err := invoices.VoidInvoice(ctx, req, params.Actor)
 			if err != nil {
@@ -815,7 +817,7 @@ func newVoidInvoiceTool(invoices invoiceVoider) serviceports.AgentTool {
 	})
 }
 
-func voidRequest(params *serviceports.ToolExecuteParams) (*serviceports.VoidInvoiceRequest, error) {
+func voidRequest(params *agentports.ToolExecuteParams) (*invoiceports.VoidInvoiceRequest, error) {
 	invoiceID, err := requirePulid(params.Params, paramInvoiceID)
 	if err != nil {
 		return nil, err
@@ -829,7 +831,7 @@ func voidRequest(params *serviceports.ToolExecuteParams) (*serviceports.VoidInvo
 		return nil, err
 	}
 
-	return &serviceports.VoidInvoiceRequest{
+	return &invoiceports.VoidInvoiceRequest{
 		InvoiceID:   invoiceID,
 		TenantInfo:  tenantFrom(*params),
 		Reason:      reason,
@@ -837,7 +839,7 @@ func voidRequest(params *serviceports.ToolExecuteParams) (*serviceports.VoidInvo
 	}, nil
 }
 
-func newSendInvoiceEDITool(invoices invoiceEDISender) serviceports.AgentTool {
+func newSendInvoiceEDITool(invoices invoiceEDISender) agentports.AgentTool {
 	return newReceivableTool(&receivableSpec{
 		name: "send_invoice_edi",
 		description: "Propose sending a posted invoice to the customer's EDI partner as a 210. " +
@@ -860,13 +862,13 @@ func newSendInvoiceEDITool(invoices invoiceEDISender) serviceports.AgentTool {
 		},
 		required: []string{paramInvoiceID},
 		target:   targetInvoice,
-	}, receivablePlan[*serviceports.SendInvoiceEDIRequest, *serviceports.InvoiceEDISendPreview]{
-		request: func(params *serviceports.ToolExecuteParams) (*serviceports.SendInvoiceEDIRequest, error) {
+	}, receivablePlan[*invoiceports.SendInvoiceEDIRequest, *invoiceports.InvoiceEDISendPreview]{
+		request: func(params *agentports.ToolExecuteParams) (*invoiceports.SendInvoiceEDIRequest, error) {
 			invoiceID, err := requirePulid(params.Params, paramInvoiceID)
 			if err != nil {
 				return nil, err
 			}
-			return &serviceports.SendInvoiceEDIRequest{
+			return &invoiceports.SendInvoiceEDIRequest{
 				InvoiceID:  invoiceID,
 				TenantInfo: tenantFrom(*params),
 				Force:      optionalBool(params.Params, paramForceResend),
@@ -874,19 +876,19 @@ func newSendInvoiceEDITool(invoices invoiceEDISender) serviceports.AgentTool {
 		},
 		plan: func(
 			ctx context.Context,
-			req *serviceports.SendInvoiceEDIRequest,
-			params *serviceports.ToolExecuteParams,
-		) (*serviceports.InvoiceEDISendPreview, error) {
+			req *invoiceports.SendInvoiceEDIRequest,
+			params *agentports.ToolExecuteParams,
+		) (*invoiceports.InvoiceEDISendPreview, error) {
 			return invoices.PreviewSendEDI(ctx, req, params.Actor)
 		},
-		refused: func(*serviceports.SendInvoiceEDIRequest) string {
+		refused: func(*invoiceports.SendInvoiceEDIRequest) string {
 			return "Would send the invoice by EDI."
 		},
 		render: renderEDISend,
 		run: func(
 			ctx context.Context,
-			req *serviceports.SendInvoiceEDIRequest,
-			params *serviceports.ToolExecuteParams,
+			req *invoiceports.SendInvoiceEDIRequest,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := invoices.SendEDI(ctx, req, params.Actor)
 			return nil, err

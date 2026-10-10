@@ -11,9 +11,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/dispatcheligibility"
 	"github.com/emoss08/trenova/internal/core/services/hosprojection"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/geoutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -46,15 +48,15 @@ const (
 type Params struct {
 	fx.In
 
-	ConsoleRepo     repositories.DispatchConsoleRepository
-	TelematicsRepo  repositories.TelematicsRepository
-	IntegrationRepo repositories.IntegrationRepository
+	ConsoleRepo     shipmentports.DispatchConsoleRepository
+	TelematicsRepo  telematicsports.TelematicsRepository
+	IntegrationRepo integrationports.IntegrationRepository
 }
 
 type Service struct {
-	consoleRepo     repositories.DispatchConsoleRepository
-	telematicsRepo  repositories.TelematicsRepository
-	integrationRepo repositories.IntegrationRepository
+	consoleRepo     shipmentports.DispatchConsoleRepository
+	telematicsRepo  telematicsports.TelematicsRepository
+	integrationRepo integrationports.IntegrationRepository
 }
 
 func New(p Params) *Service {
@@ -83,19 +85,19 @@ func (s *Service) telematicsActive(
 }
 
 type FleetSnapshot struct {
-	Drivers             []*repositories.BoardDriver
+	Drivers             []*shipmentports.BoardDriver
 	WorkersByID         map[pulid.ID]*worker.Worker
 	TractorByID         map[pulid.ID]*tractor.Tractor
 	TrailerByID         map[pulid.ID]*trailer.Trailer
 	HOSByWorker         map[pulid.ID]*telematics.WorkerHOSState
 	HOSLogsByWorker     map[pulid.ID][]*telematics.WorkerHOSLog
 	PosByTractor        map[pulid.ID]*telematics.VehiclePosition
-	CommitmentsByWorker map[pulid.ID][]*repositories.WorkerCommitment
-	TimeOffByWorker     map[pulid.ID][]*repositories.WorkerTimeOff
-	WorkloadByWorker    map[pulid.ID]*repositories.WorkerWorkload
-	OnTimeByWorker      map[pulid.ID]*repositories.WorkerOnTimeStats
-	AcceptanceByWorker  map[pulid.ID]*repositories.WorkerAcceptanceStats
-	ViolationsByWorker  map[pulid.ID]*repositories.WorkerHOSViolationStats
+	CommitmentsByWorker map[pulid.ID][]*shipmentports.WorkerCommitment
+	TimeOffByWorker     map[pulid.ID][]*shipmentports.WorkerTimeOff
+	WorkloadByWorker    map[pulid.ID]*shipmentports.WorkerWorkload
+	OnTimeByWorker      map[pulid.ID]*shipmentports.WorkerOnTimeStats
+	AcceptanceByWorker  map[pulid.ID]*shipmentports.WorkerAcceptanceStats
+	ViolationsByWorker  map[pulid.ID]*telematicsports.WorkerHOSViolationStats
 	NamesByWorker       map[pulid.ID]string
 	LaneExperience      map[laneKey]int
 	Control             *dispatchcontrol.DispatchControl
@@ -103,7 +105,7 @@ type FleetSnapshot struct {
 	Now                 int64
 }
 
-func (s *FleetSnapshot) driverName(driver *repositories.BoardDriver) string {
+func (s *FleetSnapshot) driverName(driver *shipmentports.BoardDriver) string {
 	if name, ok := s.NamesByWorker[driver.WorkerID]; ok {
 		return name
 	}
@@ -117,7 +119,7 @@ type laneKey struct {
 
 type SnapshotRequest struct {
 	TenantInfo  pagination.TenantInfo
-	Filter      *repositories.DispatchBoardFilter
+	Filter      *shipmentports.DispatchBoardFilter
 	Control     *dispatchcontrol.DispatchControl
 	CustomerIDs []pulid.ID
 	TrailerIDs  []pulid.ID
@@ -141,12 +143,12 @@ func (s *Service) BuildSnapshot(
 		HOSByWorker:         make(map[pulid.ID]*telematics.WorkerHOSState, len(drivers)),
 		HOSLogsByWorker:     make(map[pulid.ID][]*telematics.WorkerHOSLog, len(drivers)),
 		PosByTractor:        make(map[pulid.ID]*telematics.VehiclePosition, len(drivers)),
-		CommitmentsByWorker: make(map[pulid.ID][]*repositories.WorkerCommitment, len(drivers)),
-		TimeOffByWorker:     make(map[pulid.ID][]*repositories.WorkerTimeOff, len(drivers)),
-		WorkloadByWorker:    make(map[pulid.ID]*repositories.WorkerWorkload, len(drivers)),
-		OnTimeByWorker:      make(map[pulid.ID]*repositories.WorkerOnTimeStats, len(drivers)),
-		AcceptanceByWorker:  make(map[pulid.ID]*repositories.WorkerAcceptanceStats, len(drivers)),
-		ViolationsByWorker:  make(map[pulid.ID]*repositories.WorkerHOSViolationStats, len(drivers)),
+		CommitmentsByWorker: make(map[pulid.ID][]*shipmentports.WorkerCommitment, len(drivers)),
+		TimeOffByWorker:     make(map[pulid.ID][]*shipmentports.WorkerTimeOff, len(drivers)),
+		WorkloadByWorker:    make(map[pulid.ID]*shipmentports.WorkerWorkload, len(drivers)),
+		OnTimeByWorker:      make(map[pulid.ID]*shipmentports.WorkerOnTimeStats, len(drivers)),
+		AcceptanceByWorker:  make(map[pulid.ID]*shipmentports.WorkerAcceptanceStats, len(drivers)),
+		ViolationsByWorker:  make(map[pulid.ID]*telematicsports.WorkerHOSViolationStats, len(drivers)),
 		NamesByWorker:       make(map[pulid.ID]string, len(drivers)),
 		LaneExperience:      make(map[laneKey]int, len(drivers)),
 		Control:             req.Control,
@@ -195,7 +197,7 @@ func (s *Service) loadPerformance(
 	snapshot *FleetSnapshot,
 	workerIDs []pulid.ID,
 ) error {
-	onTime, err := s.consoleRepo.ListWorkerOnTimeStats(ctx, &repositories.ListWorkloadRequest{
+	onTime, err := s.consoleRepo.ListWorkerOnTimeStats(ctx, &shipmentports.ListWorkloadRequest{
 		TenantInfo: tenantInfo,
 		WorkerIDs:  workerIDs,
 		Since:      snapshot.Now - onTimeHistoryLookbackSeconds,
@@ -209,7 +211,7 @@ func (s *Service) loadPerformance(
 
 	acceptance, err := s.consoleRepo.ListWorkerAcceptanceStats(
 		ctx,
-		&repositories.ListWorkloadRequest{
+		&shipmentports.ListWorkloadRequest{
 			TenantInfo: tenantInfo,
 			WorkerIDs:  workerIDs,
 			Since:      snapshot.Now - acceptanceLookbackSeconds,
@@ -241,7 +243,7 @@ func (s *Service) loadWorkersAndEquipment(
 
 	tractors, trailers, err := s.consoleRepo.ListEquipmentByIDs(
 		ctx,
-		&repositories.ListEquipmentByIDsRequest{
+		&shipmentports.ListEquipmentByIDsRequest{
 			TenantInfo: req.TenantInfo,
 			TractorIDs: tractorIDs,
 			TrailerIDs: snapshotTrailerIDs(req, snapshot),
@@ -299,7 +301,7 @@ func (s *Service) loadTelematics(
 
 	states, err := s.telematicsRepo.ListWorkerHOSStates(
 		ctx,
-		&repositories.ListWorkerHOSStatesRequest{
+		&telematicsports.ListWorkerHOSStatesRequest{
 			TenantInfo: tenantInfo,
 			WorkerIDs:  workerIDs,
 		},
@@ -311,7 +313,7 @@ func (s *Service) loadTelematics(
 		snapshot.HOSByWorker[state.WorkerID] = state
 	}
 
-	logs, err := s.telematicsRepo.ListWorkerHOSLogs(ctx, &repositories.ListWorkerHOSLogsRequest{
+	logs, err := s.telematicsRepo.ListWorkerHOSLogs(ctx, &telematicsports.ListWorkerHOSLogsRequest{
 		TenantInfo: tenantInfo,
 		WorkerIDs:  workerIDs,
 		Since:      snapshot.Now - hosLogLookbackSeconds,
@@ -328,7 +330,7 @@ func (s *Service) loadTelematics(
 
 	violations, err := s.telematicsRepo.ListWorkerHOSViolationStats(
 		ctx,
-		&repositories.ListWorkerHOSViolationStatsRequest{
+		&telematicsports.ListWorkerHOSViolationStatsRequest{
 			TenantInfo: tenantInfo,
 			WorkerIDs:  workerIDs,
 			Since:      snapshot.Now - safetyLookbackSeconds,
@@ -347,7 +349,7 @@ func (s *Service) loadTelematics(
 
 	positions, err := s.telematicsRepo.ListVehiclePositions(
 		ctx,
-		&repositories.ListVehiclePositionsRequest{
+		&telematicsports.ListVehiclePositionsRequest{
 			TenantInfo:    tenantInfo,
 			TractorIDs:    tractorIDs,
 			MaxAgeSeconds: positionMaxAgeSeconds,
@@ -369,7 +371,7 @@ func (s *Service) loadSchedules(
 	snapshot *FleetSnapshot,
 	workerIDs []pulid.ID,
 ) error {
-	windows := &repositories.ListWorkerWindowsRequest{
+	windows := &shipmentports.ListWorkerWindowsRequest{
 		TenantInfo:  req.TenantInfo,
 		WorkerIDs:   workerIDs,
 		WindowStart: req.Filter.WindowStart,
@@ -395,7 +397,7 @@ func (s *Service) loadSchedules(
 		snapshot.TimeOffByWorker[pto.WorkerID] = append(snapshot.TimeOffByWorker[pto.WorkerID], pto)
 	}
 
-	workload, err := s.consoleRepo.ListWorkerWorkload(ctx, &repositories.ListWorkloadRequest{
+	workload, err := s.consoleRepo.ListWorkerWorkload(ctx, &shipmentports.ListWorkloadRequest{
 		TenantInfo: req.TenantInfo,
 		WorkerIDs:  workerIDs,
 		Since:      snapshot.Now - workloadLookbackSeconds,
@@ -410,7 +412,7 @@ func (s *Service) loadSchedules(
 	if len(req.CustomerIDs) > 0 {
 		experience, expErr := s.consoleRepo.ListWorkerLaneExperience(
 			ctx,
-			&repositories.ListLaneExperienceRequest{
+			&shipmentports.ListLaneExperienceRequest{
 				TenantInfo:  req.TenantInfo,
 				WorkerIDs:   workerIDs,
 				CustomerIDs: req.CustomerIDs,
@@ -429,7 +431,7 @@ func (s *Service) loadSchedules(
 }
 
 type RankRequest struct {
-	Move           *repositories.BoardMove
+	Move           *shipmentports.BoardMove
 	Snapshot       *FleetSnapshot
 	Limit          int
 	IncludeBlocked bool
@@ -470,7 +472,7 @@ func (s *Service) RankCandidates(req *RankRequest) []*CandidateScore {
 	return results
 }
 
-func requirementsFor(move *repositories.BoardMove) dispatcheligibility.MoveRequirements {
+func requirementsFor(move *shipmentports.BoardMove) dispatcheligibility.MoveRequirements {
 	return dispatcheligibility.MoveRequirements{
 		MoveID:                move.MoveID,
 		ShipmentID:            move.ShipmentID,
@@ -482,7 +484,7 @@ func requirementsFor(move *repositories.BoardMove) dispatcheligibility.MoveRequi
 	}
 }
 
-func moveWindow(move *repositories.BoardMove) dispatcheligibility.TimeWindow {
+func moveWindow(move *shipmentports.BoardMove) dispatcheligibility.TimeWindow {
 	return dispatcheligibility.TimeWindow{
 		Start: move.OriginWindowStart,
 		End:   MoveWindowEnd(move),
@@ -499,8 +501,8 @@ func sortCandidates(results []*CandidateScore) {
 }
 
 type scoreDriverParams struct {
-	Driver       *repositories.BoardDriver
-	Move         *repositories.BoardMove
+	Driver       *shipmentports.BoardDriver
+	Move         *shipmentports.BoardMove
 	Requirements dispatcheligibility.MoveRequirements
 	Snapshot     *FleetSnapshot
 	Weights      map[dispatchcontrol.ScoringFactor]float64
@@ -603,7 +605,7 @@ func (s *Service) scoreDriver(p *scoreDriverParams) *CandidateScore {
 // returns nil when the projection cannot be trusted: no telematics integration, no or
 // stale clock data, or an ELD-exempt driver whose hours are not tracked.
 func (s *Service) projectHOS(
-	driver *repositories.BoardDriver,
+	driver *shipmentports.BoardDriver,
 	snapshot *FleetSnapshot,
 	trip tripEstimate,
 	hosKnown bool,
@@ -706,8 +708,8 @@ type tripEstimate struct {
 }
 
 func (s *Service) computeTrip(
-	driver *repositories.BoardDriver,
-	move *repositories.BoardMove,
+	driver *shipmentports.BoardDriver,
+	move *shipmentports.BoardMove,
 	snapshot *FleetSnapshot,
 ) tripEstimate {
 	estimate := tripEstimate{}
@@ -771,7 +773,7 @@ type geoPoint struct {
 // their tractor happens to be pinging right now; only idle drivers use the live
 // position. With neither, deadhead is unknown and the factor is omitted.
 func deadheadOrigin(
-	driver *repositories.BoardDriver,
+	driver *shipmentports.BoardDriver,
 	snapshot *FleetSnapshot,
 ) (geoPoint, bool) {
 	commitments := snapshot.CommitmentsByWorker[driver.WorkerID]
@@ -787,8 +789,8 @@ func deadheadOrigin(
 	return geoPoint{}, false
 }
 
-func finalCommitmentDestination(commitments []*repositories.WorkerCommitment) (geoPoint, bool) {
-	var latest *repositories.WorkerCommitment
+func finalCommitmentDestination(commitments []*shipmentports.WorkerCommitment) (geoPoint, bool) {
+	var latest *shipmentports.WorkerCommitment
 	for _, commitment := range commitments {
 		if latest == nil || commitment.WindowEnd > latest.WindowEnd {
 			latest = commitment
@@ -801,8 +803,8 @@ func finalCommitmentDestination(commitments []*repositories.WorkerCommitment) (g
 }
 
 type factorContext struct {
-	driver     *repositories.BoardDriver
-	move       *repositories.BoardMove
+	driver     *shipmentports.BoardDriver
+	move       *shipmentports.BoardMove
 	snapshot   *FleetSnapshot
 	trip       tripEstimate
 	hosState   *telematics.WorkerHOSState
@@ -933,7 +935,7 @@ func projectedTripCompletion(fc *factorContext) int64 {
 
 // nextApprovedPTOStart finds the next approved time-off window starting within the
 // lookahead. Windows already underway are excluded — those hard-block availability.
-func nextApprovedPTOStart(timeOff []*repositories.WorkerTimeOff, now int64) int64 {
+func nextApprovedPTOStart(timeOff []*shipmentports.WorkerTimeOff, now int64) int64 {
 	next := int64(0)
 	for _, pto := range timeOff {
 		if pto.StartDate <= now || pto.StartDate > now+ptoLookaheadSeconds {
@@ -946,7 +948,7 @@ func nextApprovedPTOStart(timeOff []*repositories.WorkerTimeOff, now int64) int6
 	return next
 }
 
-func currentTrailer(commitments []*repositories.WorkerCommitment) (pulid.ID, bool) {
+func currentTrailer(commitments []*shipmentports.WorkerCommitment) (pulid.ID, bool) {
 	var (
 		latest    int64
 		trailerID pulid.ID
@@ -965,14 +967,14 @@ func currentTrailer(commitments []*repositories.WorkerCommitment) (pulid.ID, boo
 	return trailerID, found
 }
 
-func resolveTrailer(move *repositories.BoardMove) pulid.ID {
+func resolveTrailer(move *shipmentports.BoardMove) pulid.ID {
 	if !move.AssignedTrailerID.IsNil() {
 		return move.AssignedTrailerID
 	}
 	return move.PreviousMoveTrailerID
 }
 
-func ptoWindows(items []*repositories.WorkerTimeOff) []dispatcheligibility.PTOWindow {
+func ptoWindows(items []*shipmentports.WorkerTimeOff) []dispatcheligibility.PTOWindow {
 	if len(items) == 0 {
 		return nil
 	}
@@ -989,7 +991,7 @@ func ptoWindows(items []*repositories.WorkerTimeOff) []dispatcheligibility.PTOWi
 	return windows
 }
 
-func commitmentWindows(items []*repositories.WorkerCommitment) []dispatcheligibility.TimeWindow {
+func commitmentWindows(items []*shipmentports.WorkerCommitment) []dispatcheligibility.TimeWindow {
 	if len(items) == 0 {
 		return nil
 	}

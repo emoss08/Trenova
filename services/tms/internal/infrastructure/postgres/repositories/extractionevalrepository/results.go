@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/extractioneval"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -30,7 +30,7 @@ type resultRepository struct {
 	l  *zap.Logger
 }
 
-func NewResults(p Params) repositories.ExtractionEvalResultRepository {
+func NewResults(p Params) extractionevalports.ExtractionEvalResultRepository {
 	return &resultRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.extractioneval-result-repository"),
@@ -39,7 +39,7 @@ func NewResults(p Params) repositories.ExtractionEvalResultRepository {
 
 func (r *resultRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetExtractionEvalResultRequest,
+	req extractionevalports.GetExtractionEvalResultRequest,
 ) (*extractioneval.ExtractionResult, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*extractioneval.ExtractionResult, error) {
 		entity := new(extractioneval.ExtractionResult)
@@ -106,7 +106,7 @@ func (r *resultRepository) Save(
 
 func (r *resultRepository) ListPending(
 	ctx context.Context,
-	req repositories.ListPendingExtractionEvalResultsRequest,
+	req extractionevalports.ListPendingExtractionEvalResultsRequest,
 ) ([]*extractioneval.ExtractionResult, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*extractioneval.ExtractionResult, error) {
 		cols := buncolgen.ExtractionResultColumns
@@ -212,7 +212,7 @@ func (r *resultRepository) SkipPending(
 
 func (r *resultRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListExtractionEvalResultConnectionRequest,
+	req *extractionevalports.ListExtractionEvalResultConnectionRequest,
 ) (*pagination.CursorListResult[*extractioneval.ExtractionResult], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*extractioneval.ExtractionResult], error) {
 		dba := r.db.DBForContext(ctx)

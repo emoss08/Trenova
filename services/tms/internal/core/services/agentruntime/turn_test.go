@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,7 +20,7 @@ func openedTurn(t *testing.T, definition *agentdefinition.Definition, input stri
 
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 
-	return rt.OpenTurn(t.Context(), &serviceports.RunRequest{
+	return rt.OpenTurn(t.Context(), &agentports.RunRequest{
 		Definition: definition,
 		Actor:      testActor(),
 		Input:      input,
@@ -37,7 +37,7 @@ func TestOpenTurn_PrefixesTheQuestionWithTheTimeInTheOrganizationsZone(t *testin
 	turn := openedTurn(t, testDefinition(), "what is due before noon?")
 
 	asked := turn.messages[len(turn.messages)-1]
-	require.Equal(t, serviceports.RoleUser, asked.Role)
+	require.Equal(t, agentports.RoleUser, asked.Role)
 	assert.Regexp(t, clockLinePattern, asked.Content)
 	assert.True(t, strings.HasSuffix(asked.Content, "what is due before noon?"))
 	assert.Equal(t, "what is due before noon?", turn.result.Messages[0].Content,
@@ -79,7 +79,7 @@ func TestOpenTurn_OpensTheQuestionWithTheRecordsInPlayAndNeverKeepsThem(t *testi
 	t.Parallel()
 
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
-	turn := rt.OpenTurn(t.Context(), &serviceports.RunRequest{
+	turn := rt.OpenTurn(t.Context(), &agentports.RunRequest{
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Input:      "is it still on time?",
@@ -110,7 +110,7 @@ func TestOpenTurn_OpensTheQuestionWithTheRecordsInPlayAndNeverKeepsThem(t *testi
 func TestWatchedRecords_AddsTheReadableRecordsInPlay(t *testing.T) {
 	t.Parallel()
 
-	req := &serviceports.RunRequest{Context: agentdefinition.RuntimeContext{
+	req := &agentports.RunRequest{Context: agentdefinition.RuntimeContext{
 		Anchors: []agentdefinition.RuntimeAnchor{
 			{Kind: "shipment", ID: "shp_01M49Z0FTJPBFF0HBFFNGYRY9B"},
 			{Kind: "invoice", ID: "inv_01M49Z0FTJPBFF0HBFFNGYRY9B", Note: "you can no longer read this record"},

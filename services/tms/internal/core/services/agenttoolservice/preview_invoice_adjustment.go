@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
@@ -39,7 +39,7 @@ func adjustmentLabel(kind invoiceadjustment.Kind, invoiceNumber string) string {
 
 func adjustmentMoney(
 	change *agent.RecordChange,
-	figures *serviceports.InvoiceAdjustmentPreview,
+	figures *invoiceadjustmentports.InvoiceAdjustmentPreview,
 	currency string,
 ) {
 	if figures == nil {
@@ -52,7 +52,7 @@ func adjustmentMoney(
 	), toolpreview.SensitiveAs("totalAmount"))
 }
 
-func outcomeStatus(figures *serviceports.InvoiceAdjustmentPreview) invoiceadjustment.Status {
+func outcomeStatus(figures *invoiceadjustmentports.InvoiceAdjustmentPreview) invoiceadjustment.Status {
 	if figures != nil && figures.RequiresApproval {
 		return invoiceadjustment.StatusPendingApproval
 	}
@@ -60,7 +60,7 @@ func outcomeStatus(figures *serviceports.InvoiceAdjustmentPreview) invoiceadjust
 	return invoiceadjustment.StatusExecuted
 }
 
-func outcomeSentence(figures *serviceports.InvoiceAdjustmentPreview) string {
+func outcomeSentence(figures *invoiceadjustmentports.InvoiceAdjustmentPreview) string {
 	if outcomeStatus(figures) == invoiceadjustment.StatusPendingApproval {
 		return "waits for approval"
 	}
@@ -68,7 +68,7 @@ func outcomeSentence(figures *serviceports.InvoiceAdjustmentPreview) string {
 	return "executes at once"
 }
 
-func figureWarnings(figures *serviceports.InvoiceAdjustmentPreview) string {
+func figureWarnings(figures *invoiceadjustmentports.InvoiceAdjustmentPreview) string {
 	if figures == nil || len(figures.Warnings) == 0 {
 		return ""
 	}
@@ -146,8 +146,8 @@ func describeOutcomes(outcomes map[string]int) string {
 }
 
 func renderDraft(
-	req *serviceports.SaveInvoiceAdjustmentDraftRequest,
-	plan *serviceports.InvoiceAdjustmentDraftPreview,
+	req *invoiceadjustmentports.SaveInvoiceAdjustmentDraftRequest,
+	plan *invoiceadjustmentports.InvoiceAdjustmentDraftPreview,
 ) (*agent.ToolPreview, error) {
 	after := &adjustmentView{
 		InvoiceID:      plan.After.OriginalInvoiceID,
@@ -188,7 +188,7 @@ func renderDraft(
 	summary := fmt.Sprintf("Would save a draft %s adjustment of %s for a biller to submit; "+
 		"nothing is credited until then.", plan.After.Kind, invoiceLabel(plan.Invoice))
 	if refusal := figuresRefusal(
-		[]*serviceports.InvoiceAdjustmentPreview{plan.Figures},
+		[]*invoiceadjustmentports.InvoiceAdjustmentPreview{plan.Figures},
 	); refusal != nil {
 		summary += " As it stands it could not be submitted: " + refusal.Error() + "."
 	}
@@ -198,7 +198,7 @@ func renderDraft(
 
 func renderDecision(
 	req *adjustmentDecision,
-	plan *serviceports.InvoiceAdjustmentDecisionPreview,
+	plan *invoiceadjustmentports.InvoiceAdjustmentDecisionPreview,
 ) (*agent.ToolPreview, error) {
 	adjustment := plan.Adjustment
 	before := &adjustmentView{
@@ -220,7 +220,7 @@ func renderDecision(
 		verb = verbReject
 		after.Status = string(invoiceadjustment.StatusRejected)
 		after.ApprovalStatus = string(invoiceadjustment.ApprovalStatusRejected)
-		figures = &serviceports.InvoiceAdjustmentPreview{
+		figures = &invoiceadjustmentports.InvoiceAdjustmentPreview{
 			CreditTotalAmount: adjustment.CreditTotalAmount,
 			RebillTotalAmount: adjustment.RebillTotalAmount,
 		}

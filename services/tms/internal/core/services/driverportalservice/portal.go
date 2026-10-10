@@ -10,9 +10,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -159,7 +162,7 @@ func (s *Service) MyLoads(
 		}
 	}
 
-	assignments, err := s.portalRepo.ListWorkerLoads(ctx, &repositories.ListWorkerLoadsRequest{
+	assignments, err := s.portalRepo.ListWorkerLoads(ctx, &workerports.ListWorkerLoadsRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   wrk.ID,
 		Statuses:   statuses,
@@ -351,7 +354,7 @@ func (s *Service) MyStopAction(
 	tenantInfo pagination.TenantInfo,
 	moveID pulid.ID,
 	stopID pulid.ID,
-	action repositories.StopActualAction,
+	action shipmentports.StopActualAction,
 ) error {
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
@@ -372,7 +375,7 @@ func (s *Service) MyStopAction(
 		return errortypes.NewNotFoundError("Load not found")
 	}
 
-	_, err = s.moveService.RecordStopActual(ctx, &repositories.RecordStopActualRequest{
+	_, err = s.moveService.RecordStopActual(ctx, &shipmentports.RecordStopActualRequest{
 		TenantInfo: tenantInfo,
 		MoveID:     moveID,
 		StopID:     stopID,
@@ -386,7 +389,7 @@ func (s *Service) CreateMyLoadComment(
 	tenantInfo pagination.TenantInfo,
 	shipmentID pulid.ID,
 	body string,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*PortalComment, error) {
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
@@ -453,7 +456,7 @@ func (s *Service) MyPeriodSummary(
 
 	totals, err := s.payEventRepo.GetAccruedTotalsForWorker(
 		ctx,
-		repositories.GetAccruedTotalsForWorkerRequest{
+		driversettlementports.GetAccruedTotalsForWorkerRequest{
 			TenantInfo: tenantInfo,
 			WorkerID:   wrk.ID,
 		},
@@ -490,7 +493,7 @@ func (s *Service) MyRecentPayEvents(
 	if !control.ShowLoadPay {
 		return []*driversettlement.PayEvent{}, nil
 	}
-	result, err := s.payEventRepo.List(ctx, &repositories.ListPayEventsRequest{
+	result, err := s.payEventRepo.List(ctx, &driversettlementports.ListPayEventsRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenantInfo,
 			Pagination: pagination.Info{Limit: limit},
@@ -522,7 +525,7 @@ func (s *Service) MySettlements(
 	if limit <= 0 || limit > 100 {
 		limit = 25
 	}
-	return s.settlementRepo.List(ctx, &repositories.ListDriverSettlementsRequest{
+	return s.settlementRepo.List(ctx, &driversettlementports.ListDriverSettlementsRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenantInfo,
 			Pagination: pagination.Info{Limit: limit, Offset: offset},
@@ -541,7 +544,7 @@ func (s *Service) MySettlement(
 	if err != nil {
 		return nil, err
 	}
-	settlement, err := s.settlementRepo.GetByID(ctx, repositories.GetDriverSettlementByIDRequest{
+	settlement, err := s.settlementRepo.GetByID(ctx, driversettlementports.GetDriverSettlementByIDRequest{
 		ID:           settlementID,
 		TenantInfo:   tenantInfo,
 		IncludeLines: true,
@@ -575,7 +578,7 @@ func (s *Service) MyEscrow(
 	}
 	account, err := s.escrowRepo.GetActiveForWorker(
 		ctx,
-		repositories.GetActiveEscrowAccountForWorkerRequest{
+		driverpayports.GetActiveEscrowAccountForWorkerRequest{
 			TenantInfo: tenantInfo,
 			WorkerID:   wrk.ID,
 		},
@@ -588,7 +591,7 @@ func (s *Service) MyEscrow(
 	}
 	transactions, err := s.escrowRepo.ListTransactions(
 		ctx,
-		repositories.GetEscrowAccountByIDRequest{
+		driverpayports.GetEscrowAccountByIDRequest{
 			ID:         account.ID,
 			TenantInfo: tenantInfo,
 		},
@@ -609,7 +612,7 @@ func (s *Service) MyAdvances(
 	}
 	return s.advanceRepo.ListOutstandingForWorker(
 		ctx,
-		repositories.ListOutstandingAdvancesForWorkerRequest{
+		driverpayports.ListOutstandingAdvancesForWorkerRequest{
 			TenantInfo: tenantInfo,
 			WorkerID:   wrk.ID,
 		},

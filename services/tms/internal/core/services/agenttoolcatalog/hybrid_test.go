@@ -3,7 +3,7 @@ package agenttoolcatalog
 import (
 	"testing"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -229,7 +229,7 @@ func TestItems_KeyEachToolByTheHashOfItsText(t *testing.T) {
 	items[0].Key = "changed"
 	assert.NotEqual(t, "changed", catalog.Items()[0].Key, "callers get a copy")
 
-	edited := New([]serviceports.AgentToolDescriptor{
+	edited := New([]agentports.AgentToolDescriptor{
 		descriptor("list_workers", "List every worker."),
 	})
 	original := ""
@@ -246,7 +246,7 @@ func TestItems_KeyEachToolByTheHashOfItsText(t *testing.T) {
 func TestDescriptorText_NamesTheToolAndWhatPeopleCallIt(t *testing.T) {
 	t.Parallel()
 
-	text := DescriptorText(&serviceports.AgentToolDescriptor{
+	text := DescriptorText(&agentports.AgentToolDescriptor{
 		Name:        "get_my_home_layout",
 		Description: " Read the person's home page. ",
 		SearchTerms: []string{"my dashboard", "home"},

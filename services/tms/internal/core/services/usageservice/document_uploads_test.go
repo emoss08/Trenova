@@ -1,10 +1,11 @@
 package usageservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/platformcatalogportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -20,20 +21,20 @@ func TestCheckDocumentBytesLimit(t *testing.T) {
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 
 	require.NoError(t, CheckDocumentBytesLimit(t.Context(), nil, DocumentBytesUsageParams{Bytes: 10}))
-	require.NoError(t, CheckDocumentBytesLimit(t.Context(), mocks.NewMockUsageProvider(t), DocumentBytesUsageParams{}))
+	require.NoError(t, CheckDocumentBytesLimit(t.Context(), platformcatalogportsmock.NewMockUsageProvider(t), DocumentBytesUsageParams{}))
 
-	provider := mocks.NewMockUsageProvider(t)
+	provider := platformcatalogportsmock.NewMockUsageProvider(t)
 	provider.EXPECT().
-		CheckLimit(mock.Anything, mock.MatchedBy(func(req *services.UsageLimitCheckRequest) bool {
+		CheckLimit(mock.Anything, mock.MatchedBy(func(req *platformcatalogports.UsageLimitCheckRequest) bool {
 			return req.MeterKey == platformcatalog.MeterDocumentFileBytes && req.Quantity == 2048
 		})).
-		Return(&services.UsageLimitCheckResult{Allowed: true}, nil).
+		Return(&platformcatalogports.UsageLimitCheckResult{Allowed: true}, nil).
 		Once()
 	provider.EXPECT().
-		CheckLimit(mock.Anything, mock.MatchedBy(func(req *services.UsageLimitCheckRequest) bool {
+		CheckLimit(mock.Anything, mock.MatchedBy(func(req *platformcatalogports.UsageLimitCheckRequest) bool {
 			return req.MeterKey == platformcatalog.MeterDocumentStorageBytes && req.Quantity == 2048
 		})).
-		Return(&services.UsageLimitCheckResult{
+		Return(&platformcatalogports.UsageLimitCheckResult{
 			MeterKey: platformcatalog.MeterDocumentStorageBytes,
 			Allowed:  false,
 			Reason:   ReasonQuotaExceeded,
@@ -56,6 +57,6 @@ func TestCheckDocumentBytesLimit(t *testing.T) {
 func TestLimitError_FallsBackToAuthorization(t *testing.T) {
 	t.Parallel()
 
-	err := LimitError(&services.UsageLimitCheckResult{Reason: "plan_inactive"})
+	err := LimitError(&platformcatalogports.UsageLimitCheckResult{Reason: "plan_inactive"})
 	assert.True(t, errortypes.IsAuthorizationError(err))
 }

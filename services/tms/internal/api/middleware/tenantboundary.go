@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/tenantboundary"
 	"github.com/gin-gonic/gin"
@@ -16,12 +16,12 @@ import (
 type TenantBoundaryParams struct {
 	fx.In
 
-	Auditor services.SecurityAuditor
+	Auditor permissionports.SecurityAuditor
 	Logger  *zap.Logger
 }
 
 type TenantBoundaryMiddleware struct {
-	auditor services.SecurityAuditor
+	auditor permissionports.SecurityAuditor
 	l       *zap.Logger
 }
 
@@ -66,7 +66,7 @@ func (m *TenantBoundaryMiddleware) report(c *gin.Context, violations []tenantbou
 			continue
 		}
 
-		m.auditor.RecordChange(c.Request.Context(), &services.SecurityChange{
+		m.auditor.RecordChange(c.Request.Context(), &permissionports.SecurityChange{
 			Resource:       permission.ResourceOrganization,
 			ResourceID:     violationTarget(violation, authCtx),
 			Operation:      operationForMethod(c.Request.Method),

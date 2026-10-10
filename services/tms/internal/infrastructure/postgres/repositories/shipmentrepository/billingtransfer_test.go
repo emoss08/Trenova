@@ -5,7 +5,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -23,7 +23,7 @@ func TestApplyShipmentOptionFilters_BillingTransferEligibleKeepsQueuedShipmentsO
 	q := applyShipmentOptionFilters(
 		dba.NewSelect().Model((*shipment.Shipment)(nil)),
 		dba,
-		repositories.ShipmentOptions{BillingTransferEligible: true},
+		shipmentports.ShipmentOptions{BillingTransferEligible: true},
 	)
 
 	assert.Regexp(t, billingTransferCandidateSQL, q.String())
@@ -39,7 +39,7 @@ func TestApplyShipmentOptionFilters_BillingTransferEligibleOffLeavesQueryUntouch
 	filtered := applyShipmentOptionFilters(
 		dba.NewSelect().Model((*shipment.Shipment)(nil)),
 		dba,
-		repositories.ShipmentOptions{},
+		shipmentports.ShipmentOptions{},
 	)
 
 	assert.Equal(t, base.String(), filtered.String())
@@ -61,7 +61,7 @@ func TestListBillingTransferCandidateIDs_ReturnsOldestFirstUpToTheLimit(t *testi
 
 	result, err := repo.ListBillingTransferCandidateIDs(
 		t.Context(),
-		&repositories.ListBillingTransferCandidateIDsRequest{
+		&shipmentports.ListBillingTransferCandidateIDsQuery{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 			},
@@ -88,7 +88,7 @@ func TestListBillingTransferCandidateIDs_SelectsOnlyIDsWhenSearching(t *testing.
 
 	result, err := repo.ListBillingTransferCandidateIDs(
 		t.Context(),
-		&repositories.ListBillingTransferCandidateIDsRequest{
+		&shipmentports.ListBillingTransferCandidateIDsQuery{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: pagination.TenantInfo{
 					OrgID: pulid.MustNew("org_"),
@@ -116,7 +116,7 @@ func TestListBillingTransferCandidateIDs_SkipsTheIDQueryWhenNothingMatches(t *te
 
 	result, err := repo.ListBillingTransferCandidateIDs(
 		t.Context(),
-		&repositories.ListBillingTransferCandidateIDsRequest{
+		&shipmentports.ListBillingTransferCandidateIDsQuery{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: pagination.TenantInfo{
 					OrgID: pulid.MustNew("org_"),
@@ -141,7 +141,7 @@ func TestStandardShipmentFilter_IncludeCustomerJoinsOnlyTheCustomer(t *testing.T
 
 	sql := standardShipmentFilter(
 		dba.NewSelect().Model((*shipment.Shipment)(nil)),
-		repositories.ShipmentOptions{IncludeCustomer: true},
+		shipmentports.ShipmentOptions{IncludeCustomer: true},
 	).String()
 
 	assert.Contains(t, sql, `LEFT JOIN "customers" AS "customer"`)
@@ -158,14 +158,14 @@ func TestCountShipmentListQuery_NeverJoinsTheCustomer(t *testing.T) {
 	sql := countShipmentListQuery(
 		dba.NewSelect().Model((*shipment.Shipment)(nil)),
 		dba,
-		&repositories.ListShipmentsRequest{
+		&shipmentports.ListShipmentsRequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: pagination.TenantInfo{
 					OrgID: pulid.MustNew("org_"),
 					BuID:  pulid.MustNew("bu_"),
 				},
 			},
-			ShipmentOptions: repositories.ShipmentOptions{
+			ShipmentOptions: shipmentports.ShipmentOptions{
 				IncludeCustomer:         true,
 				BillingTransferEligible: true,
 			},

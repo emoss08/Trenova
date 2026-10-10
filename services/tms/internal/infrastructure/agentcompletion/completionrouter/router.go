@@ -15,14 +15,15 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/quotaservice"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/httpsafe"
@@ -37,19 +38,19 @@ type Params struct {
 
 	Logger     *zap.Logger
 	Config     *config.Config
-	Repo       repositories.AIProviderRepository
+	Repo       agentports.AIProviderRepository
 	Encryption *encryptionservice.Service
 	// Usage records every attempt. Optional so a router built without a
 	// database still answers; without it nothing is counted.
-	Usage    repositories.AIUsageRepository         `optional:"true"`
-	Metrics  *metrics.Registry                      `optional:"true"`
-	Breakers repositories.ProviderBreakerRepository `optional:"true"`
-	Quota    serviceports.QuotaGuard                `optional:"true"`
+	Usage    aiusageports.AIUsageRepository       `optional:"true"`
+	Metrics  *metrics.Registry                    `optional:"true"`
+	Breakers agentports.ProviderBreakerRepository `optional:"true"`
+	Quota    platformplanports.QuotaGuard         `optional:"true"`
 	// Spend, Slots and Keys enforce each provider's monthly cap and calls at
 	// once, and record when its key was last used.
-	Spend serviceports.AIProviderSpendService  `optional:"true"`
-	Slots repositories.ProviderSlotRepository  `optional:"true"`
-	Keys  repositories.AIProviderKeyRepository `optional:"true"`
+	Spend agentports.AIProviderSpendService  `optional:"true"`
+	Slots agentports.ProviderSlotRepository  `optional:"true"`
+	Keys  agentports.AIProviderKeyRepository `optional:"true"`
 }
 
 type Service struct {
@@ -57,11 +58,11 @@ type Service struct {
 	// ai is the whole AI section: the master switch the router gates on,
 	// and the timeouts and retry budget it calls with.
 	ai         *config.AIConfig
-	repo       repositories.AIProviderRepository
+	repo       agentports.AIProviderRepository
 	encryption *encryptionservice.Service
 	adapters   *modeladapter.Registry
-	usage      repositories.AIUsageRepository
-	quota      serviceports.QuotaGuard
+	usage      aiusageports.AIUsageRepository
+	quota      platformplanports.QuotaGuard
 	genAI      *metrics.GenAI
 	// health rests a provider that keeps failing, so a turn does not pay for
 	// attempts on a provider that is down before reaching one that is up.
@@ -84,7 +85,7 @@ type Service struct {
 	streamClients map[bool]*http.Client
 }
 
-func New(p Params) serviceports.CompletionService {
+func New(p Params) agentports.CompletionService {
 	return newService(p)
 }
 
@@ -110,8 +111,8 @@ func newService(p Params) *Service {
 
 func (s *Service) CompleteStructured(
 	ctx context.Context,
-	req *serviceports.StructuredCompletionRequest,
-) (*serviceports.StructuredCompletionResult, error) {
+	req *agentports.StructuredCompletionRequest,
+) (*agentports.StructuredCompletionResult, error) {
 	if !s.ai.AIEnabled() {
 		return nil, errortypes.NewBusinessError(aiDisabledMessage)
 	}
@@ -125,7 +126,7 @@ func (s *Service) CompleteStructured(
 		return nil, err
 	}
 
-	return &serviceports.StructuredCompletionResult{
+	return &agentports.StructuredCompletionResult{
 		Text:            outcome.Text,
 		ModelIdentifier: outcome.Model,
 		InputTokens:     outcome.InputTokens,
@@ -142,7 +143,7 @@ func (s *Service) assertWithinSpend(ctx context.Context, tenantInfo pagination.T
 		return nil
 	}
 
-	return quotaservice.Preflight(ctx, s.quota, &serviceports.QuotaRequest{
+	return quotaservice.Preflight(ctx, s.quota, &platformplanports.QuotaRequest{
 		TenantInfo: tenantInfo,
 		Meter:      platformcatalog.MeterAISpendCents,
 		Quantity:   1,
@@ -166,7 +167,7 @@ type runRequest struct {
 	HedgeAfter time.Duration
 	// Reasoning overrides each provider's configured effort for this call.
 	Reasoning   aiprovider.ReasoningEffort
-	Attribution serviceports.AIUsageAttribution
+	Attribution aiusageports.AIUsageAttribution
 }
 
 type runOutcome struct {
@@ -237,7 +238,7 @@ func requiredProvider(
 
 	return nil, errortypes.NewBusinessError(
 		"The chosen AI provider is not enabled for {0}", string(task),
-	).WithInternal(serviceports.ErrRequiredProviderUnavailable)
+	).WithInternal(agentports.ErrRequiredProviderUnavailable)
 }
 
 func (s *Service) usableFor(
@@ -245,7 +246,7 @@ func (s *Service) usableFor(
 	task aiprovider.Task,
 	tenant pagination.TenantInfo,
 ) ([]*aiprovider.Provider, error) {
-	candidates, err := s.repo.ListForTask(ctx, repositories.ListAIProvidersForTaskRequest{
+	candidates, err := s.repo.ListForTask(ctx, agentports.ListAIProvidersForTaskRequest{
 		Task:       task,
 		TenantInfo: tenant,
 	})
@@ -269,7 +270,7 @@ func (s *Service) usableFor(
 	if len(usable) == 0 {
 		return nil, errortypes.NewBusinessError(
 			"No AI provider is configured for {0}", string(task),
-		).WithInternal(serviceports.ErrNoProviderConfigured)
+		).WithInternal(agentports.ErrNoProviderConfigured)
 	}
 
 	return usable, nil
@@ -305,13 +306,13 @@ func restingError(resting []*aiprovider.Provider, wait time.Duration) error {
 			"{0} is paused for {1} seconds after repeated failures. Try again then, or pick another model",
 			resting[0].Name,
 			seconds,
-		).WithInternal(serviceports.ErrProvidersResting)
+		).WithInternal(agentports.ErrProvidersResting)
 	}
 
 	return errortypes.NewBusinessError(
 		"Every AI provider is paused after repeated failures; the first is back in {0} seconds",
 		seconds,
-	).WithInternal(serviceports.ErrProvidersResting)
+	).WithInternal(agentports.ErrProvidersResting)
 }
 
 func (s *Service) run(ctx context.Context, req *runRequest) (*runOutcome, error) {
@@ -553,7 +554,7 @@ func validateStructuredOutput(schema map[string]any, text string) error {
 
 	decoded := make(map[string]any, len(schema))
 	if err := modeladapter.ExtractJSON(text, &decoded); err != nil {
-		return fmt.Errorf("%w: %w", serviceports.ErrModelSchemaValidation, err)
+		return fmt.Errorf("%w: %w", agentports.ErrModelSchemaValidation, err)
 	}
 
 	return nil

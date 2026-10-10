@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -128,7 +129,7 @@ func (s *Service) cancelArmedPrints(
 	tenantInfo pagination.TenantInfo,
 	deviceID pulid.ID,
 ) {
-	open, err := s.requests.ListOpen(ctx, repositories.ListOpenCaptureRequestsRequest{
+	open, err := s.requests.ListOpen(ctx, captureports.ListOpenCaptureRequestsRequest{
 		TenantInfo: tenantInfo,
 		DeviceID:   deviceID,
 	})
@@ -169,7 +170,7 @@ func (s *Service) ownDevice(
 	tenantInfo pagination.TenantInfo,
 	deviceID pulid.ID,
 ) (*capture.CaptureDevice, error) {
-	device, err := s.devices.GetByID(ctx, repositories.GetCaptureDeviceByIDRequest{
+	device, err := s.devices.GetByID(ctx, captureports.GetCaptureDeviceByIDRequest{
 		ID:         deviceID,
 		TenantInfo: tenantInfo,
 	})
@@ -237,7 +238,7 @@ func (s *Service) checkTarget(
 	}
 
 	if target.DocumentTypeID != nil {
-		if _, err = s.documentTypes.GetByID(ctx, repositories.GetDocumentTypeByIDRequest{
+		if _, err = s.documentTypes.GetByID(ctx, documenttypeports.GetDocumentTypeByIDRequest{
 			ID:         *target.DocumentTypeID,
 			TenantInfo: tenantInfo,
 		}); err != nil {
@@ -274,7 +275,7 @@ func (s *Service) resolveProfile(
 		return profile.ID, true, nil
 	}
 
-	profile, err := s.profiles.GetByID(ctx, repositories.GetCaptureProfileByIDRequest{
+	profile, err := s.profiles.GetByID(ctx, captureports.GetCaptureProfileByIDRequest{
 		ID:         *profileID,
 		TenantInfo: tenantInfo,
 	})
@@ -303,7 +304,7 @@ func (s *Service) CancelRequest(
 	tenantInfo pagination.TenantInfo,
 	requestID pulid.ID,
 ) (*capture.CaptureRequest, error) {
-	req, err := s.requests.GetByID(ctx, repositories.GetCaptureRequestByIDRequest{
+	req, err := s.requests.GetByID(ctx, captureports.GetCaptureRequestByIDRequest{
 		ID:         requestID,
 		TenantInfo: tenantInfo,
 	})
@@ -333,7 +334,7 @@ func (s *Service) OpenRequests(
 	ctx context.Context,
 	principal *DevicePrincipal,
 ) ([]*capture.CaptureRequest, error) {
-	open, err := s.requests.ListOpen(ctx, repositories.ListOpenCaptureRequestsRequest{
+	open, err := s.requests.ListOpen(ctx, captureports.ListOpenCaptureRequestsRequest{
 		TenantInfo: principal.TenantInfo(),
 		DeviceID:   principal.Device.ID,
 	})
@@ -425,7 +426,7 @@ func (s *Service) deviceRequest(
 	principal *DevicePrincipal,
 	requestID pulid.ID,
 ) (*capture.CaptureRequest, error) {
-	req, err := s.requests.GetByID(ctx, repositories.GetCaptureRequestByIDRequest{
+	req, err := s.requests.GetByID(ctx, captureports.GetCaptureRequestByIDRequest{
 		ID:         requestID,
 		TenantInfo: principal.TenantInfo(),
 	})
@@ -466,7 +467,7 @@ func (s *Service) ListRequestsForTarget(
 		limit = defaultTargetRequests
 	}
 
-	return s.requests.ListForTarget(ctx, repositories.ListCaptureRequestsForTargetRequest{
+	return s.requests.ListForTarget(ctx, captureports.ListCaptureRequestsForTargetRequest{
 		TenantInfo: in.TenantInfo,
 		UserID:     in.TenantInfo.UserID,
 		TargetType: in.TargetType,

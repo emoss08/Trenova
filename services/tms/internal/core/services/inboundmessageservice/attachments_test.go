@@ -8,8 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentupload"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -18,7 +19,7 @@ import (
 )
 
 type attachmentRepo struct {
-	repositories.InboundMessageRepository
+	inboundmessageports.InboundMessageRepository
 
 	rows []*inboundmessage.InboundAttachment
 }
@@ -36,19 +37,19 @@ func (a *attachmentRepo) UpdateAttachment(
 }
 
 type docRepo struct {
-	repositories.DocumentRepository
+	documentports.DocumentRepository
 
 	doc *document.Document
 }
 
 func (d *docRepo) GetByID(
-	_ context.Context, _ repositories.GetDocumentByIDRequest,
+	_ context.Context, _ documentports.GetDocumentByIDRequest,
 ) (*document.Document, error) {
 	return d.doc, nil
 }
 
 type uploads struct {
-	services.DocumentUploadService
+	documentuploadports.DocumentUploadService
 
 	refuse    error
 	sessionID pulid.ID
@@ -56,7 +57,7 @@ type uploads struct {
 }
 
 func (u *uploads) CreateSession(
-	_ context.Context, _ *services.CreateSessionRequest,
+	_ context.Context, _ *documentuploadports.CreateSessionRequest,
 ) (*documentupload.DocumentUploadSession, error) {
 	if u.refuse != nil {
 		return nil, u.refuse
@@ -66,7 +67,7 @@ func (u *uploads) CreateSession(
 }
 
 func (u *uploads) UploadPart(
-	_ context.Context, _ *services.UploadPartRequest,
+	_ context.Context, _ *documentuploadports.UploadPartRequest,
 ) (*documentupload.DocumentUploadSession, error) {
 	u.parts++
 

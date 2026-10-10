@@ -1,6 +1,7 @@
 package usstatehandler_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/usstateportsmock"
 	"errors"
 	"net/http"
 	"testing"
@@ -22,7 +23,7 @@ import (
 
 var errNotFound = errors.New("us state not found")
 
-func setupUsStateHandler(t *testing.T, repo *mocks.MockUsStateRepository) *usstatehandler.Handler {
+func setupUsStateHandler(t *testing.T, repo *usstateportsmock.MockUsStateRepository) *usstatehandler.Handler {
 	t.Helper()
 
 	logger := zap.NewNop()
@@ -53,7 +54,7 @@ func TestUsStateHandler_SelectOptions_Success(t *testing.T) {
 	t.Parallel()
 
 	ussID := pulid.MustNew("uss_")
-	repo := mocks.NewMockUsStateRepository(t)
+	repo := usstateportsmock.NewMockUsStateRepository(t)
 	repo.On("SelectOptions", mock.Anything, mock.Anything).
 		Return(&pagination.ListResult[*usstate.UsState]{
 			Items: []*usstate.UsState{
@@ -90,7 +91,7 @@ func TestUsStateHandler_GetOption_Success(t *testing.T) {
 	t.Parallel()
 
 	ussID := pulid.MustNew("uss_")
-	repo := mocks.NewMockUsStateRepository(t)
+	repo := usstateportsmock.NewMockUsStateRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(&usstate.UsState{
 		ID:           ussID,
 		Name:         "California",
@@ -119,7 +120,7 @@ func TestUsStateHandler_GetOption_Success(t *testing.T) {
 func TestUsStateHandler_GetOption_InvalidID(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockUsStateRepository(t)
+	repo := usstateportsmock.NewMockUsStateRepository(t)
 	handler := setupUsStateHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -137,7 +138,7 @@ func TestUsStateHandler_GetOption_NotFound(t *testing.T) {
 	t.Parallel()
 
 	ussID := pulid.MustNew("uss_")
-	repo := mocks.NewMockUsStateRepository(t)
+	repo := usstateportsmock.NewMockUsStateRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(nil, errNotFound)
 
 	handler := setupUsStateHandler(t, repo)

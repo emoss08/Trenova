@@ -9,7 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -28,15 +30,15 @@ type detectingFailures struct {
 	guard    writeGuard
 }
 
-func (f *detectingFailures) plan() (*serviceports.ServiceFailureDetectionPlan, error) {
+func (f *detectingFailures) plan() (*servicefailureports.ServiceFailureDetectionPlan, error) {
 	if f.refuse != nil {
 		return nil, f.refuse
 	}
 
-	plan := &serviceports.ServiceFailureDetectionPlan{
+	plan := &servicefailureports.ServiceFailureDetectionPlan{
 		Shipment:     f.shipment,
-		Detected:     make([]serviceports.DetectedServiceFailure, 0, len(f.late)),
-		SkippedStops: []serviceports.ServiceFailureSkippedStop{{Reason: "not late after grace"}},
+		Detected:     make([]servicefailureports.DetectedServiceFailure, 0, len(f.late)),
+		SkippedStops: []servicefailureports.ServiceFailureSkippedStop{{Reason: "not late after grace"}},
 	}
 	for _, stop := range f.late {
 		failure := &servicefailure.ServiceFailure{
@@ -61,7 +63,7 @@ func (f *detectingFailures) plan() (*serviceports.ServiceFailureDetectionPlan, e
 			updated.LateMinutes = failure.LateMinutes
 			failure = &updated
 		}
-		plan.Detected = append(plan.Detected, serviceports.DetectedServiceFailure{
+		plan.Detected = append(plan.Detected, servicefailureports.DetectedServiceFailure{
 			Failure:  failure,
 			Existing: existing,
 		})
@@ -75,16 +77,16 @@ func (f *detectingFailures) plan() (*serviceports.ServiceFailureDetectionPlan, e
 
 func (f *detectingFailures) PreviewEvaluateShipment(
 	context.Context,
-	*serviceports.EvaluateShipmentServiceFailuresRequest,
-) (*serviceports.ServiceFailureDetectionPlan, error) {
+	*servicefailureports.EvaluateShipmentServiceFailuresRequest,
+) (*servicefailureports.ServiceFailureDetectionPlan, error) {
 	return f.plan()
 }
 
 func (f *detectingFailures) EvaluateShipment(
 	context.Context,
-	*serviceports.EvaluateShipmentServiceFailuresRequest,
-	*serviceports.RequestActor,
-) (*serviceports.ServiceFailureEvaluationResult, error) {
+	*servicefailureports.EvaluateShipmentServiceFailuresRequest,
+	*permissionports.RequestActor,
+) (*servicefailureports.ServiceFailureEvaluationResult, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
 	}
@@ -103,7 +105,7 @@ func (f *detectingFailures) EvaluateShipment(
 	}
 	f.delayed = plan.MarksDelayed
 
-	return &serviceports.ServiceFailureEvaluationResult{}, nil
+	return &servicefailureports.ServiceFailureEvaluationResult{}, nil
 }
 
 func lateShipment() (*shipment.Shipment, *shipment.Stop, *shipment.Stop) {
@@ -140,7 +142,7 @@ func lateShipment() (*shipment.Shipment, *shipment.Stop, *shipment.Stop) {
 	}, pickup, delivery
 }
 
-func evaluateParams(entity *shipment.Shipment) serviceports.ToolExecuteParams {
+func evaluateParams(entity *shipment.Shipment) agentports.ToolExecuteParams {
 	return executeParams(map[string]any{"shipmentId": entity.ID.String()})
 }
 

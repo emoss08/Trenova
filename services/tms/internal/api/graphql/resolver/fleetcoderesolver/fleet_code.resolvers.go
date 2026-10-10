@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/fleetcodeports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -29,7 +29,7 @@ func (r *QueryResolver) FleetCodes(ctx context.Context, input gqlmodel.DataTable
 
 	result, err := r.FleetCodeService.ListConnection(
 		ctx,
-		&repositories.ListFleetCodeConnectionRequest{
+		&fleetcodeports.ListFleetCodeConnectionRequest{
 			Filter:           tableInput.Filter,
 			Cursor:           tableInput.Cursor,
 			FleetCodeColumns: fleetCodeColumns(ctx, "edges.node"),
@@ -54,7 +54,7 @@ func (r *QueryResolver) FleetCode(ctx context.Context, id string) (*fleetcode.Fl
 	}
 
 	ti := base.TenantInfo(authCtx)
-	return r.FleetCodeService.Get(ctx, repositories.GetFleetCodeByIDRequest{
+	return r.FleetCodeService.Get(ctx, fleetcodeports.GetFleetCodeByIDRequest{
 		ID:         fleetCodeID,
 		TenantInfo: &ti,
 	})

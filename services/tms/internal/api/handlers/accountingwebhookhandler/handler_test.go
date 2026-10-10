@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -16,26 +16,28 @@ import (
 )
 
 type recordingService struct {
-	services.AccountingConnectionService
-	received *services.ReceiveAccountingWebhookRequest
+	accountingsyncports.AccountingConnectionService
+	received *accountingsyncports.ReceiveAccountingWebhookRequest
 	err      error
 }
 
 func (s *recordingService) ReceiveWebhook(
 	_ context.Context,
-	req *services.ReceiveAccountingWebhookRequest,
+	req *accountingsyncports.ReceiveAccountingWebhookRequest,
 ) error {
 	s.received = req
 	return s.err
 }
 
-type headerProvider struct{ services.AccountingProvider }
+type headerProvider struct {
+	accountingsyncports.AccountingProvider
+}
 
 func (headerProvider) WebhookSignatureHeader() string { return "intuit-signature" }
 
 type registry struct{}
 
-func (registry) For(typ integration.Type) (services.AccountingProvider, bool) {
+func (registry) For(typ integration.Type) (accountingsyncports.AccountingProvider, bool) {
 	if typ == integration.TypeQuickBooksOnline {
 		return headerProvider{}, true
 	}

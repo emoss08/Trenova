@@ -6,8 +6,8 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -60,7 +60,7 @@ func TestListByShipmentID_ReturnsCommentsAndCount(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{
 			"id", "comment_id", "business_unit_id", "organization_id", "shipment_id", "user_id", "acknowledged_at",
 		}))
-	result, err := repo.ListByShipmentID(t.Context(), &repositories.ListShipmentCommentsRequest{
+	result, err := repo.ListByShipmentID(t.Context(), &shipmentports.ListShipmentCommentsRequest{
 		ShipmentID: shipmentID,
 		Cursor:     pagination.CursorInfo{IncludeTotalCount: true},
 		Filter: &pagination.QueryOptions{
@@ -86,7 +86,7 @@ func TestListByShipmentID_RejectsMismatchedCursorSortBeforeScan(t *testing.T) {
 
 	repo, mock := newTestRepository(t)
 	commentID := pulid.MustNew("shc_")
-	result, err := repo.ListByShipmentID(t.Context(), &repositories.ListShipmentCommentsRequest{
+	result, err := repo.ListByShipmentID(t.Context(), &shipmentports.ListShipmentCommentsRequest{
 		ShipmentID: pulid.MustNew("shp_"),
 		Filter: &pagination.QueryOptions{
 			TenantInfo: pagination.TenantInfo{
@@ -176,7 +176,7 @@ func TestDelete_RemovesComment(t *testing.T) {
 	mock.ExpectExec(`DELETE FROM "shipment_comments" AS "sc".*organization_id = .*business_unit_id = .*id = .*shipment_id = .*`).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
-	err := repo.Delete(t.Context(), &repositories.DeleteShipmentCommentRequest{
+	err := repo.Delete(t.Context(), &shipmentports.DeleteShipmentCommentQuery{
 		CommentID:  commentID,
 		ShipmentID: shipmentID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},

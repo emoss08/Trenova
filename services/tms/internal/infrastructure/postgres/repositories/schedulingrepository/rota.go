@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/uptrace/bun"
@@ -36,7 +36,7 @@ func dayStartExpr(column string) string {
 
 func (r *repository) rosterScope(
 	ctx context.Context,
-	req *repositories.RotaQuery,
+	req *workerports.RotaQuery,
 ) *bun.SelectQuery {
 	cols := buncolgen.WorkerColumns
 	q := buncolgen.WorkerScopeTenant(
@@ -71,10 +71,10 @@ func (r *repository) rosterScope(
 // separately so the week comes back in one row per worker.
 func (r *repository) RotaWorkers(
 	ctx context.Context,
-	req *repositories.RotaQuery,
-) ([]repositories.RotaWorkerRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.RotaWorkerRow, error) {
-		rows := make([]repositories.RotaWorkerRow, 0, 32)
+	req *workerports.RotaQuery,
+) ([]workerports.RotaWorkerRow, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.RotaWorkerRow, error) {
+		rows := make([]workerports.RotaWorkerRow, 0, 32)
 
 		if err := r.rosterScope(ctx, req).
 			Join("LEFT JOIN fleet_codes AS fc").
@@ -110,10 +110,10 @@ func (r *repository) RotaWorkers(
 // not worth a Postgres-only query.
 func (r *repository) RotaTimeOffRanges(
 	ctx context.Context,
-	req *repositories.RotaQuery,
-) ([]repositories.RotaRangeRow, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]repositories.RotaRangeRow, error) {
-		rows := make([]repositories.RotaRangeRow, 0, 16)
+	req *workerports.RotaQuery,
+) ([]workerports.RotaRangeRow, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]workerports.RotaRangeRow, error) {
+		rows := make([]workerports.RotaRangeRow, 0, 16)
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -143,10 +143,10 @@ func (r *repository) RotaTimeOffRanges(
 // covering the rest of the week.
 func (r *repository) RotaLeaveRanges(
 	ctx context.Context,
-	req *repositories.RotaQuery,
-) ([]repositories.RotaRangeRow, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]repositories.RotaRangeRow, error) {
-		rows := make([]repositories.RotaRangeRow, 0, 16)
+	req *workerports.RotaQuery,
+) ([]workerports.RotaRangeRow, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]workerports.RotaRangeRow, error) {
+		rows := make([]workerports.RotaRangeRow, 0, 16)
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -176,10 +176,10 @@ func (r *repository) RotaLeaveRanges(
 // the same thing in both dialects.
 func (r *repository) RotaAssignedDays(
 	ctx context.Context,
-	req *repositories.RotaQuery,
-) ([]repositories.RotaDayRow, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]repositories.RotaDayRow, error) {
-		rows := make([]repositories.RotaDayRow, 0, 32)
+	req *workerports.RotaQuery,
+) ([]workerports.RotaDayRow, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]workerports.RotaDayRow, error) {
+		rows := make([]workerports.RotaDayRow, 0, 32)
 		dayStart := dayStartExpr("asn.created_at")
 
 		if err := r.db.DBForContext(ctx).

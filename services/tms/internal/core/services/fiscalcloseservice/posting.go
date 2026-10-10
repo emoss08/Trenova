@@ -8,7 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/core/domain/journalentry"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalsourceports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -137,7 +140,7 @@ func (s *Service) ensureClosingPeriod(
 		return target.ID, nil
 	}
 
-	if _, err := s.fiscalPeriodRepo.Close(ctx, repositories.CloseFiscalPeriodRequest{
+	if _, err := s.fiscalPeriodRepo.Close(ctx, fiscalperiodports.CloseFiscalPeriodRequest{
 		ID:         target.ID,
 		TenantInfo: tenantOf(fy),
 		ClosedByID: userID,
@@ -172,9 +175,9 @@ func (s *Service) postPlanEntry(
 	batchID := pulid.MustNew("jb_")
 	entryID := pulid.MustNew("je_")
 
-	lines := make([]repositories.JournalPostingLine, 0, len(req.entry.Lines))
+	lines := make([]journalentryports.JournalPostingLine, 0, len(req.entry.Lines))
 	for idx, line := range req.entry.Lines {
-		lines = append(lines, repositories.JournalPostingLine{
+		lines = append(lines, journalentryports.JournalPostingLine{
 			ID:          pulid.MustNew("jel_"),
 			GLAccountID: line.GLAccountID,
 			LineNumber: int16(
@@ -187,7 +190,7 @@ func (s *Service) postPlanEntry(
 		})
 	}
 
-	if err = s.journalPostRepo.CreatePosting(ctx, repositories.CreateJournalPostingParams{
+	if err = s.journalPostRepo.CreatePosting(ctx, journalentryports.CreateJournalPostingParams{
 		BatchID:              batchID,
 		OrganizationID:       req.fiscalYear.OrganizationID,
 		BusinessUnitID:       req.fiscalYear.BusinessUnitID,
@@ -290,7 +293,7 @@ func (s *Service) postedCloseEntries(
 	ctx context.Context,
 	fy *fiscalyear.FiscalYear,
 ) ([]*journalentry.JournalEntry, error) {
-	sources, err := s.sourceRepo.ListByObject(ctx, repositories.GetJournalSourceByObjectRequest{
+	sources, err := s.sourceRepo.ListByObject(ctx, journalsourceports.GetJournalSourceByObjectRequest{
 		TenantInfo:       tenantOf(fy),
 		SourceObjectType: sourceObjectType,
 		SourceObjectID:   fy.ID.String(),
@@ -314,7 +317,7 @@ func (s *Service) postedCloseEntries(
 		}
 		seen[source.JournalEntryID] = struct{}{}
 
-		entry, entryErr := s.journalEntryRepo.GetByID(ctx, repositories.GetJournalEntryByIDRequest{
+		entry, entryErr := s.journalEntryRepo.GetByID(ctx, journalentryports.GetJournalEntryByIDRequest{
 			ID:         source.JournalEntryID,
 			TenantInfo: tenantOf(fy),
 		})
@@ -342,7 +345,7 @@ func (s *Service) assertYearAcceptsReversal(
 		return nil
 	}
 
-	target, err := s.fiscalYearRepo.GetByID(ctx, repositories.GetFiscalYearByIDRequest{
+	target, err := s.fiscalYearRepo.GetByID(ctx, fiscalyearports.GetFiscalYearByIDRequest{
 		ID:         entry.FiscalYearID,
 		TenantInfo: tenantOf(fy),
 	})
@@ -371,7 +374,7 @@ func (s *Service) assertPeriodAcceptsReversal(
 	fy *fiscalyear.FiscalYear,
 	entry *journalentry.JournalEntry,
 ) error {
-	period, err := s.fiscalPeriodRepo.GetByID(ctx, repositories.GetFiscalPeriodByIDRequest{
+	period, err := s.fiscalPeriodRepo.GetByID(ctx, fiscalperiodports.GetFiscalPeriodByIDRequest{
 		ID:         entry.FiscalPeriodID,
 		TenantInfo: tenantOf(fy),
 	})
@@ -406,12 +409,12 @@ func (s *Service) reverseEntry(
 	batchID := pulid.MustNew("jb_")
 	reversalEntryID := pulid.MustNew("je_")
 
-	lines := make([]repositories.JournalPostingLine, 0, len(entry.Lines))
+	lines := make([]journalentryports.JournalPostingLine, 0, len(entry.Lines))
 	for _, line := range entry.Lines {
 		if line == nil {
 			continue
 		}
-		lines = append(lines, repositories.JournalPostingLine{
+		lines = append(lines, journalentryports.JournalPostingLine{
 			ID:           pulid.MustNew("jel_"),
 			GLAccountID:  line.GLAccountID,
 			LineNumber:   line.LineNumber,
@@ -426,7 +429,7 @@ func (s *Service) reverseEntry(
 
 	description := fmt.Sprintf("Reversal of %s for reopening %s", entry.EntryNumber, fy.Name)
 
-	if err = s.journalPostRepo.CreatePosting(ctx, repositories.CreateJournalPostingParams{
+	if err = s.journalPostRepo.CreatePosting(ctx, journalentryports.CreateJournalPostingParams{
 		BatchID:              batchID,
 		OrganizationID:       fy.OrganizationID,
 		BusinessUnitID:       fy.BusinessUnitID,
@@ -474,7 +477,7 @@ func (s *Service) reverseEntry(
 
 	if err = s.journalEntryRepo.MarkReversed(
 		ctx,
-		repositories.MarkJournalEntryReversedRequest{
+		journalentryports.MarkJournalEntryReversedRequest{
 			OriginalEntryID: entry.ID,
 			ReversalEntryID: reversalEntryID,
 			OrganizationID:  fy.OrganizationID,

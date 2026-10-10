@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/orgstructureservice"
 	"github.com/emoss08/trenova/internal/core/services/teamscope"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,16 +16,16 @@ import (
 type grant struct {
 	allowed bool
 	scope   permission.DataScope
-	asked   *services.PermissionCheckRequest
+	asked   *permissionports.PermissionCheckRequest
 }
 
 func (g *grant) Check(
 	_ context.Context,
-	req *services.PermissionCheckRequest,
-) (*services.PermissionCheckResult, error) {
+	req *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
 	g.asked = req
 
-	return &services.PermissionCheckResult{Allowed: g.allowed, DataScope: g.scope}, nil
+	return &permissionports.PermissionCheckResult{Allowed: g.allowed, DataScope: g.scope}, nil
 }
 
 type team map[pulid.ID]bool
@@ -39,7 +39,7 @@ func (t team) CanActFor(
 
 func request(workerID pulid.ID) *teamscope.Request {
 	return &teamscope.Request{
-		Actor:     &services.RequestActor{UserID: pulid.MustNew("usr_")},
+		Actor:     &permissionports.RequestActor{UserID: pulid.MustNew("usr_")},
 		Resource:  permission.ResourceWorkerSchedule,
 		Operation: permission.OpAssign,
 		WorkerID:  workerID,

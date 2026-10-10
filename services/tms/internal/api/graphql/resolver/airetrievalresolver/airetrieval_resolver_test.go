@@ -5,15 +5,14 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
-
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -36,11 +35,11 @@ type fakeRetrievalStatusService struct {
 	mu        sync.Mutex
 	calls     []string
 	tenants   []pagination.TenantInfo
-	update    *services.UpdateAIRetrievalSettingsRequest
-	reindex   *services.ReindexAIRetrievalSourceRequest
+	update    *agentports.UpdateAIRetrievalSettingsRequest
+	reindex   *agentports.ReindexAIRetrievalSourceRequest
 	estimate  airetrieval.SourceType
-	failedReq *services.ListAIRetrievalFailedEntriesRequest
-	page      *services.AIRetrievalFailedEntryPage
+	failedReq *agentports.ListAIRetrievalFailedEntriesRequest
+	page      *agentports.AIRetrievalFailedEntryPage
 }
 
 func (f *fakeRetrievalStatusService) record(call string, tenant pagination.TenantInfo) {
@@ -54,49 +53,49 @@ func (f *fakeRetrievalStatusService) record(call string, tenant pagination.Tenan
 func (f *fakeRetrievalStatusService) Status(
 	_ context.Context,
 	tenant pagination.TenantInfo,
-) (*services.AIRetrievalStatus, error) {
+) (*agentports.AIRetrievalStatus, error) {
 	f.record("Status", tenant)
-	return &services.AIRetrievalStatus{}, nil
+	return &agentports.AIRetrievalStatus{}, nil
 }
 
 func (f *fakeRetrievalStatusService) UpdateSettings(
 	_ context.Context,
-	req *services.UpdateAIRetrievalSettingsRequest,
-) (*services.AIRetrievalStatus, error) {
+	req *agentports.UpdateAIRetrievalSettingsRequest,
+) (*agentports.AIRetrievalStatus, error) {
 	f.record("UpdateSettings", req.TenantInfo)
 	f.update = req
-	return &services.AIRetrievalStatus{}, nil
+	return &agentports.AIRetrievalStatus{}, nil
 }
 
 func (f *fakeRetrievalStatusService) Reindex(
 	_ context.Context,
-	req *services.ReindexAIRetrievalSourceRequest,
-) (*services.AIRetrievalStatus, error) {
+	req *agentports.ReindexAIRetrievalSourceRequest,
+) (*agentports.AIRetrievalStatus, error) {
 	f.record("Reindex", req.TenantInfo)
 	f.reindex = req
-	return &services.AIRetrievalStatus{}, nil
+	return &agentports.AIRetrievalStatus{}, nil
 }
 
 func (f *fakeRetrievalStatusService) ReindexEstimate(
 	_ context.Context,
 	tenant pagination.TenantInfo,
 	sourceType airetrieval.SourceType,
-) (*services.AIRetrievalReindexEstimate, error) {
+) (*agentports.AIRetrievalReindexEstimate, error) {
 	f.record("ReindexEstimate", tenant)
 	f.estimate = sourceType
-	return &services.AIRetrievalReindexEstimate{SourceType: sourceType}, nil
+	return &agentports.AIRetrievalReindexEstimate{SourceType: sourceType}, nil
 }
 
 func (f *fakeRetrievalStatusService) ListFailedEntries(
 	_ context.Context,
-	req *services.ListAIRetrievalFailedEntriesRequest,
-) (*services.AIRetrievalFailedEntryPage, error) {
+	req *agentports.ListAIRetrievalFailedEntriesRequest,
+) (*agentports.AIRetrievalFailedEntryPage, error) {
 	f.record("ListFailedEntries", req.TenantInfo)
 	f.failedReq = req
 	if f.page != nil {
 		return f.page, nil
 	}
-	return &services.AIRetrievalFailedEntryPage{}, nil
+	return &agentports.AIRetrievalFailedEntryPage{}, nil
 }
 
 type retrievalResolverFixture struct {
@@ -308,10 +307,10 @@ func TestAIRetrievalFailedEntryConnection_NarrowsToTheSourceAndMapsThePage(t *te
 	f := newRetrievalResolverFixture(t, permission.OpRead)
 	total := 3
 	sourceID := pulid.MustNew("doc_")
-	f.service.page = &services.AIRetrievalFailedEntryPage{
-		Edges: []*services.AIRetrievalFailedEntryEdge{
-			{Node: &services.AIRetrievalFailedEntry{ID: "a", SourceID: sourceID}, Cursor: "c1"},
-			{Node: &services.AIRetrievalFailedEntry{ID: "b", SourceID: sourceID}, Cursor: "c2"},
+	f.service.page = &agentports.AIRetrievalFailedEntryPage{
+		Edges: []*agentports.AIRetrievalFailedEntryEdge{
+			{Node: &agentports.AIRetrievalFailedEntry{ID: "a", SourceID: sourceID}, Cursor: "c1"},
+			{Node: &agentports.AIRetrievalFailedEntry{ID: "b", SourceID: sourceID}, Cursor: "c2"},
 		},
 		HasNextPage: true,
 		TotalCount:  &total,

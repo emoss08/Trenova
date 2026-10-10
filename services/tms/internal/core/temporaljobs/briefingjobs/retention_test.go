@@ -4,7 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.temporal.io/sdk/testsuite"
@@ -27,25 +28,25 @@ func (p *pagedDeletes) next(cutoff string) int {
 }
 
 type morningBriefs struct {
-	repositories.BriefingRepository
+	briefingports.BriefingRepository
 	deletes *pagedDeletes
 }
 
 func (m morningBriefs) DeleteBefore(
 	_ context.Context,
-	req repositories.DeleteBriefingsBeforeRequest,
+	req briefingports.DeleteBriefingsBeforeRequest,
 ) (int, error) {
 	return m.deletes.next(req.BeforeDate), nil
 }
 
 type boardBriefs struct {
-	repositories.ShipmentBriefRepository
+	shipmentbriefports.ShipmentBriefRepository
 	deletes *pagedDeletes
 }
 
 func (b boardBriefs) DeleteBefore(
 	_ context.Context,
-	req *repositories.DeleteShipmentBriefsBeforeRequest,
+	req *shipmentbriefports.DeleteShipmentBriefsBeforeRequest,
 ) (int, error) {
 	return b.deletes.next(req.BeforeDate), nil
 }

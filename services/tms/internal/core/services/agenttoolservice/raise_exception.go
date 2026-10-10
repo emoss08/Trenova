@@ -8,9 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -50,14 +49,14 @@ var ErrSubjectUncheckable = errors.New(
 )
 
 type raiseExceptionTool struct {
-	exceptions serviceports.AgentExceptionService
-	subjects   repositories.AgentSubjectRepository
+	exceptions agentports.AgentExceptionService
+	subjects   agentports.AgentSubjectRepository
 }
 
 func newRaiseExceptionTool(
-	exceptions serviceports.AgentExceptionService,
-	subjects repositories.AgentSubjectRepository,
-) serviceports.AgentTool {
+	exceptions agentports.AgentExceptionService,
+	subjects agentports.AgentSubjectRepository,
+) agentports.AgentTool {
 	return &raiseExceptionTool{exceptions: exceptions, subjects: subjects}
 }
 
@@ -113,8 +112,8 @@ func (t *raiseExceptionTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *raiseExceptionTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *raiseExceptionTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceAgentException,
@@ -132,7 +131,7 @@ func (t *raiseExceptionTool) Policy() serviceports.ToolPolicy {
 
 func (t *raiseExceptionTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -150,8 +149,8 @@ func (t *raiseExceptionTool) Execute(
 
 func (t *raiseExceptionTool) request(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.FlagAgentExceptionRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*agentports.FlagAgentExceptionRequest, error) {
 	if params.RunID.IsNil() {
 		return nil, ErrMissingRun
 	}
@@ -184,7 +183,7 @@ func (t *raiseExceptionTool) request(
 		severity = agent.SeverityMedium
 	}
 
-	return &serviceports.FlagAgentExceptionRequest{
+	return &agentports.FlagAgentExceptionRequest{
 		RunID:          params.RunID,
 		Category:       category,
 		Severity:       severity,
@@ -206,7 +205,7 @@ func (t *raiseExceptionTool) request(
 
 func (t *raiseExceptionTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -224,7 +223,7 @@ func (t *raiseExceptionTool) Validate(
 // approval runs it long after the proposal was validated.
 func (t *raiseExceptionTool) subject(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) (agent.SubjectType, pulid.ID, error) {
 	subjectTypeRaw, err := requireString(params.Params, "subjectType")
 	if err != nil {
@@ -248,7 +247,7 @@ func (t *raiseExceptionTool) subject(
 	if t.subjects == nil {
 		return "", pulid.Nil, ErrSubjectUncheckable
 	}
-	exists, err := t.subjects.Exists(ctx, repositories.AgentSubjectExistsRequest{
+	exists, err := t.subjects.Exists(ctx, agentports.AgentSubjectExistsRequest{
 		TenantInfo:  tenantFrom(params),
 		SubjectType: subjectType,
 		SubjectID:   subjectID,

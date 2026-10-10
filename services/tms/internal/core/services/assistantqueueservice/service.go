@@ -12,15 +12,15 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -36,11 +36,11 @@ type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Queue         repositories.AssistantQueueRepository
-	Conversations repositories.ConversationRepository
+	Queue         agentports.AssistantQueueRepository
+	Conversations agentports.ConversationRepository
 	Turns         *assistantturnservice.Service
-	Workflows     serviceports.WorkflowStarter
-	Realtime      serviceports.RealtimeService `optional:"true"`
+	Workflows     kernelports.WorkflowStarter
+	Realtime      agentports.RealtimeService `optional:"true"`
 }
 
 // turnStarter is the part of the turn service the queue needs: whether a
@@ -48,7 +48,7 @@ type Params struct {
 type turnStarter interface {
 	Active(
 		ctx context.Context,
-		req repositories.ActiveAssistantTurnRequest,
+		req agentports.ActiveAssistantTurnRequest,
 	) (*conversation.AssistantTurn, error)
 	StartTurn(
 		ctx context.Context,
@@ -58,19 +58,19 @@ type turnStarter interface {
 }
 
 type threadReader interface {
-	GetThread(ctx context.Context, req repositories.GetThreadRequest) (*conversation.Thread, error)
+	GetThread(ctx context.Context, req agentports.GetThreadRequest) (*conversation.Thread, error)
 }
 
 type Service struct {
 	l             *zap.Logger
-	queue         repositories.AssistantQueueRepository
+	queue         agentports.AssistantQueueRepository
 	conversations threadReader
 	turns         turnStarter
-	workflows     serviceports.WorkflowStarter
-	realtime      serviceports.RealtimeService
+	workflows     kernelports.WorkflowStarter
+	realtime      agentports.RealtimeService
 }
 
-var _ serviceports.AssistantQueueSettler = (*Service)(nil)
+var _ agentports.AssistantQueueSettler = (*Service)(nil)
 
 func New(p Params) *Service { //nolint:gocritic // fx param structs are passed by value
 	return &Service{
@@ -83,11 +83,11 @@ func New(p Params) *Service { //nolint:gocritic // fx param structs are passed b
 	}
 }
 
-func NewSettler(s *Service) serviceports.AssistantQueueSettler { return s }
+func NewSettler(s *Service) agentports.AssistantQueueSettler { return s }
 
 type Scope struct {
 	ThreadID pulid.ID
-	Actor    serviceports.RequestActor
+	Actor    permissionports.RequestActor
 }
 
 func (s *Scope) tenant() pagination.TenantInfo {
@@ -98,8 +98,8 @@ func (s *Scope) tenant() pagination.TenantInfo {
 	}
 }
 
-func (s *Scope) repo() *repositories.AssistantQueueScope {
-	return &repositories.AssistantQueueScope{
+func (s *Scope) repo() *agentports.AssistantQueueScope {
+	return &agentports.AssistantQueueScope{
 		ThreadID:   s.ThreadID,
 		UserID:     s.Actor.UserID,
 		TenantInfo: s.tenant(),
@@ -180,7 +180,7 @@ func (s *Service) Enqueue(ctx context.Context, req *EnqueueRequest) (*Outcome, e
 
 	created, err := s.queue.Insert(ctx, item)
 	if err != nil {
-		if errors.Is(err, repositories.ErrQueueFull) {
+		if errors.Is(err, agentports.ErrQueueFull) {
 			return nil, errortypes.NewBusinessError(fmt.Sprintf(
 				"Up to %d messages can wait in a conversation. Send or remove one first.",
 				conversation.MaxQueuedPerThread,
@@ -228,7 +228,7 @@ func (s *Service) Remove(ctx context.Context, req *ItemRequest) error {
 	if _, err := s.editable(ctx, req.Scope, req.ID); err != nil {
 		return err
 	}
-	if err := s.queue.Delete(ctx, &repositories.QueuedMessageRequest{
+	if err := s.queue.Delete(ctx, &agentports.QueuedMessageRequest{
 		ID:    req.ID,
 		Scope: *req.Scope.repo(),
 	}); err != nil {
@@ -259,7 +259,7 @@ func (s *Service) Reorder(
 		)
 	}
 
-	ordered, err := s.queue.Reorder(ctx, &repositories.ReorderQueuedMessagesRequest{
+	ordered, err := s.queue.Reorder(ctx, &agentports.ReorderQueuedMessagesRequest{
 		IDs:   req.IDs,
 		Scope: *req.Scope.repo(),
 	})
@@ -283,7 +283,7 @@ func (s *Service) SendNow(ctx context.Context, req *ItemRequest) (*Outcome, erro
 	if err != nil {
 		return nil, err
 	}
-	key := &repositories.QueuedMessageRequest{ID: req.ID, Scope: *req.Scope.repo()}
+	key := &agentports.QueuedMessageRequest{ID: req.ID, Scope: *req.Scope.repo()}
 	defer s.announce(ctx, &req.Scope.Actor, req.Scope.ThreadID)
 
 	if active != nil {
@@ -291,7 +291,7 @@ func (s *Service) SendNow(ctx context.Context, req *ItemRequest) (*Outcome, erro
 	}
 
 	item, err := s.queue.Claim(ctx, key)
-	if errors.Is(err, repositories.ErrQueueEmpty) {
+	if errors.Is(err, agentports.ErrQueueEmpty) {
 		return nil, errortypes.NewNotFoundError("{0} not found within your organization",
 			"Queued message")
 	}
@@ -313,7 +313,7 @@ func (s *Service) SendNow(ctx context.Context, req *ItemRequest) (*Outcome, erro
 func (s *Service) steerNow(
 	ctx context.Context,
 	active *conversation.AssistantTurn,
-	key *repositories.QueuedMessageRequest,
+	key *agentports.QueuedMessageRequest,
 ) (*Outcome, error) {
 	if !steerable(active) {
 		return nil, errortypes.NewBusinessError(
@@ -347,13 +347,13 @@ func (s *Service) steerNow(
 
 func (s *Service) SettleQueue(
 	ctx context.Context,
-	req *serviceports.SettleQueueRequest,
-) *serviceports.QueuedTurn {
+	req *agentports.SettleQueueRequest,
+) *agentports.QueuedTurn {
 	tenant := pagination.TenantInfo{OrgID: req.TenantInfo.OrgID, BuID: req.TenantInfo.BuID}
 	ctx = dbscope.WithValidTenant(context.WithoutCancel(ctx), tenant.DBTenant())
-	scope := &repositories.AssistantQueueScope{ThreadID: req.ThreadID, TenantInfo: tenant}
-	owner := serviceports.RequestActor{
-		PrincipalType:  serviceports.PrincipalTypeUser,
+	scope := &agentports.AssistantQueueScope{ThreadID: req.ThreadID, TenantInfo: tenant}
+	owner := permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    req.UserID,
 		UserID:         req.UserID,
 		OrganizationID: tenant.OrgID,
@@ -362,7 +362,7 @@ func (s *Service) SettleQueue(
 
 	changed := false
 	if len(req.Read) > 0 {
-		if err := s.queue.DeleteMany(ctx, &repositories.DeleteQueuedMessagesRequest{
+		if err := s.queue.DeleteMany(ctx, &agentports.DeleteQueuedMessagesRequest{
 			IDs:   req.Read,
 			Scope: *scope,
 		}); err != nil {
@@ -388,7 +388,7 @@ func (s *Service) SettleQueue(
 		return nil
 	}
 
-	return &serviceports.QueuedTurn{TurnID: turn.ID, QueuedID: item.ID, Input: turn.Input}
+	return &agentports.QueuedTurn{TurnID: turn.ID, QueuedID: item.ID, Input: turn.Input}
 }
 
 func (s *Service) sendWhenFree(
@@ -417,10 +417,10 @@ type dispatched struct {
 
 func (s *Service) dispatchNext(
 	ctx context.Context,
-	scope *repositories.AssistantQueueScope,
+	scope *agentports.AssistantQueueScope,
 ) (*conversation.AssistantTurn, *dispatched) {
 	item, err := s.queue.ClaimNext(ctx, scope)
-	if errors.Is(err, repositories.ErrQueueEmpty) {
+	if errors.Is(err, agentports.ErrQueueEmpty) {
 		return nil, nil
 	}
 	if err != nil {
@@ -451,8 +451,8 @@ func (s *Service) start(
 	if request == nil {
 		request = &conversation.QueuedRequest{}
 	}
-	actor := serviceports.RequestActor{
-		PrincipalType:  serviceports.PrincipalTypeUser,
+	actor := permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    item.UserID,
 		UserID:         item.UserID,
 		OrganizationID: item.OrganizationID,
@@ -541,7 +541,7 @@ func (s *Service) editable(
 	if err := s.ownThread(ctx, scope); err != nil {
 		return nil, err
 	}
-	item, err := s.queue.Get(ctx, &repositories.QueuedMessageRequest{ID: id, Scope: *scope.repo()})
+	item, err := s.queue.Get(ctx, &agentports.QueuedMessageRequest{ID: id, Scope: *scope.repo()})
 	if err != nil {
 		return nil, err
 	}
@@ -564,7 +564,7 @@ func (s *Service) editable(
 }
 
 func (s *Service) ownThread(ctx context.Context, scope *Scope) error {
-	_, err := s.conversations.GetThread(ctx, repositories.GetThreadRequest{
+	_, err := s.conversations.GetThread(ctx, agentports.GetThreadRequest{
 		ID:         scope.ThreadID,
 		UserID:     scope.Actor.UserID,
 		TenantInfo: scope.tenant(),
@@ -574,7 +574,7 @@ func (s *Service) ownThread(ctx context.Context, scope *Scope) error {
 }
 
 func (s *Service) active(ctx context.Context, scope *Scope) (*conversation.AssistantTurn, error) {
-	return s.turns.Active(ctx, repositories.ActiveAssistantTurnRequest{
+	return s.turns.Active(ctx, agentports.ActiveAssistantTurnRequest{
 		ThreadID:   scope.ThreadID,
 		UserID:     scope.Actor.UserID,
 		TenantInfo: scope.tenant(),
@@ -583,7 +583,7 @@ func (s *Service) active(ctx context.Context, scope *Scope) (*conversation.Assis
 
 func (s *Service) announce(
 	ctx context.Context,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 	threadID pulid.ID,
 ) {
 	if s.realtime == nil {
@@ -591,7 +591,7 @@ func (s *Service) announce(
 	}
 	if err := s.realtime.PublishResourceInvalidation(
 		context.WithoutCancel(ctx),
-		&serviceports.PublishResourceInvalidationRequest{
+		&agentports.PublishResourceInvalidationRequest{
 			OrganizationID: actor.OrganizationID,
 			BusinessUnitID: actor.BusinessUnitID,
 			AudienceUserID: actor.UserID,

@@ -12,12 +12,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentshadow"
 	"github.com/emoss08/trenova/internal/core/services/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -28,15 +28,15 @@ import (
 type chatProposalStore interface {
 	ListByThread(
 		ctx context.Context,
-		req repositories.ListAgentProposalsByThreadRequest,
+		req agentports.ListAgentProposalsByThreadRequest,
 	) ([]*agent.AgentProposal, error)
 	ListByRun(
 		ctx context.Context,
-		req repositories.ListAgentProposalsByRunRequest,
+		req agentports.ListAgentProposalsByRunRequest,
 	) ([]*agent.AgentProposal, error)
 	ExpirePendingByThread(
 		ctx context.Context,
-		req repositories.ExpireAgentProposalsByThreadRequest,
+		req agentports.ExpireAgentProposalsByThreadRequest,
 	) (int, error)
 }
 
@@ -57,11 +57,11 @@ type persistProposalsParams struct {
 	TurnID     pulid.ID
 	Definition *agentdefinition.Definition
 	Thread     *conversation.Thread
-	Actor      *services.RequestActor
+	Actor      *permissionports.RequestActor
 	// Saved are the messages as persisted, used to tie each proposal to the
 	// assistant turn that asked for it.
 	Saved   []conversation.Message
-	Actions []services.PendingAction
+	Actions []agentports.PendingAction
 	Model   string
 	Input   string
 	// Failed records the run as having ended before the turn finished.
@@ -72,7 +72,7 @@ type persistProposalsParams struct {
 	// Taint is the outside content the turn that proposed read.
 	Taint       *agent.RunTaint
 	Fingerprint *agent.Fingerprint
-	Delegations []services.DelegatedRun
+	Delegations []agentports.DelegatedRun
 }
 
 type chatRun struct {
@@ -95,7 +95,7 @@ type chatRun struct {
 func (s *Service) persistProposals(
 	ctx context.Context,
 	params persistProposalsParams,
-) ([]services.AssistantProposal, error) {
+) ([]agentports.AssistantProposal, error) {
 	delegated := make([]proposalrecorder.DelegatedActions, 0, len(params.Delegations))
 	for idx := range params.Delegations {
 		delegation := &params.Delegations[idx]
@@ -135,7 +135,7 @@ func (s *Service) persistProposals(
 		OpenEmptyRuns:    true,
 		CallOrder:        callOrder(params.Saved),
 		SourceMessageIDs: sourceMessageIndex(params.Saved),
-		Evidence: func(_ services.PendingAction, sourceMessageID pulid.ID) []agent.EvidenceRef {
+		Evidence: func(_ agentports.PendingAction, sourceMessageID pulid.ID) []agent.EvidenceRef {
 			return chatEvidence(params.Thread, sourceMessageID)
 		},
 	})
@@ -156,7 +156,7 @@ func (s *Service) persistProposals(
 	}
 
 	all := make([]*agent.AgentProposal, 0, len(params.Actions))
-	persisted := make([]services.AssistantProposal, 0, len(params.Actions))
+	persisted := make([]agentports.AssistantProposal, 0, len(params.Actions))
 	for _, group := range groups {
 		if len(group.proposals) == 0 {
 			continue
@@ -249,7 +249,7 @@ func (p *persistProposalsParams) delegateCallID(delegateCallID string) string {
 	return delegateCallID
 }
 
-func tenantOf(actor *services.RequestActor) pagination.TenantInfo {
+func tenantOf(actor *permissionports.RequestActor) pagination.TenantInfo {
 	return pagination.TenantInfo{
 		OrgID:  actor.OrganizationID,
 		BuID:   actor.BusinessUnitID,
@@ -259,12 +259,12 @@ func tenantOf(actor *services.RequestActor) pagination.TenantInfo {
 
 // holdFor turns a shadow verdict into what the card shows. Nothing is held
 // by a live verdict.
-func holdFor(verdict agentshadow.Verdict) *services.ProposalHold {
+func holdFor(verdict agentshadow.Verdict) *agentports.ProposalHold {
 	if !verdict.Shadow() {
 		return nil
 	}
 
-	return &services.ProposalHold{
+	return &agentports.ProposalHold{
 		Reason:    string(verdict.Cause),
 		AgentName: verdict.AgentName,
 	}
@@ -363,15 +363,15 @@ func (s *Service) logProposalPersistFailure(thread *conversation.Thread, err err
 // found rather than returned.
 func (s *Service) ListThreadProposals(
 	ctx context.Context,
-	req repositories.GetThreadRequest,
-) ([]services.AssistantProposal, error) {
+	req agentports.GetThreadRequest,
+) ([]agentports.AssistantProposal, error) {
 	if _, err := s.conversations.GetThread(ctx, req); err != nil {
 		return nil, err
 	}
 
 	stored, err := s.proposals.ListByThread(
 		ctx,
-		repositories.ListAgentProposalsByThreadRequest{
+		agentports.ListAgentProposalsByThreadRequest{
 			ThreadID:   req.ID,
 			TenantInfo: req.TenantInfo,
 		},
@@ -396,7 +396,7 @@ func (s *Service) ListThreadProposals(
 	decided := s.decisionsFor(ctx, stored, req.TenantInfo)
 	proposers := s.proposersOf(ctx, req.TenantInfo, runsOf(stored))
 
-	proposals := make([]services.AssistantProposal, 0, len(stored))
+	proposals := make([]agentports.AssistantProposal, 0, len(stored))
 	for _, proposal := range stored {
 		out := toAssistantProposal(proposal, holdFor(verdicts[proposal.RunID]))
 		out.Fields = s.editableFields(proposal)
@@ -429,20 +429,20 @@ func (s *Service) ListThreadProposals(
 func (s *Service) labelChoices(
 	ctx context.Context,
 	reader pagination.TenantInfo,
-	proposals []services.AssistantProposal,
+	proposals []agentports.AssistantProposal,
 ) {
 	if s.labeler == nil {
 		return
 	}
 
-	reads := fieldsensitivity.NewReadAccess(s.permissions, services.UserActor(reader))
+	reads := fieldsensitivity.NewReadAccess(s.permissions, permissionports.UserActor(reader))
 	refs := make(map[permission.Resource][]pulid.ID)
 	for i := range proposals {
 		for j := range proposals[i].Fields {
 			field := &proposals[i].Fields[j]
 			if field.Kind == toolschema.KindRecordSubset &&
 				reads.MayRead(ctx, permission.Resource(field.Resource)) {
-				services.SubsetChoiceRefs(refs, field)
+				agentports.SubsetChoiceRefs(refs, field)
 			}
 		}
 	}
@@ -460,7 +460,7 @@ func (s *Service) labelChoices(
 
 	for i := range proposals {
 		for j := range proposals[i].Fields {
-			services.LabelSubsetChoices(&proposals[i].Fields[j], labels)
+			agentports.LabelSubsetChoices(&proposals[i].Fields[j], labels)
 		}
 	}
 }
@@ -491,7 +491,7 @@ func (s *Service) editableFields(proposal *agent.AgentProposal) []toolschema.Fie
 		return []toolschema.Field{}
 	}
 
-	return services.ProposalFields(tool, proposal.ToolParams)
+	return agentports.ProposalFields(tool, proposal.ToolParams)
 }
 
 // decisionsFor reads the decision behind each decided proposal, keyed by
@@ -519,7 +519,7 @@ func (s *Service) decisionsFor(
 
 	decisions, err := s.decisions.ListByProposals(
 		ctx,
-		repositories.ListAgentDecisionsByProposalsRequest{
+		agentports.ListAgentDecisionsByProposalsRequest{
 			ProposalIDs: ids,
 			TenantInfo:  tenant,
 		},
@@ -556,17 +556,17 @@ func modificationsOf(decision *agent.AgentDecision) map[string]any {
 type chatPlanStore interface {
 	ListByThread(
 		ctx context.Context,
-		req repositories.ListAgentPlansByThreadRequest,
+		req agentports.ListAgentPlansByThreadRequest,
 	) ([]*agent.AgentPlan, error)
 	ExpirePendingByThread(
 		ctx context.Context,
-		req repositories.ExpireAgentPlansByThreadRequest,
+		req agentports.ExpireAgentPlansByThreadRequest,
 	) (int, error)
 }
 
 // planStoreOrNil keeps a typed nil out of the interface, so the absence of a
 // plan store reads as nil rather than as a store that panics.
-func planStoreOrNil(plans repositories.AgentPlanRepository) chatPlanStore {
+func planStoreOrNil(plans agentports.AgentPlanRepository) chatPlanStore {
 	if plans == nil {
 		return nil
 	}
@@ -579,16 +579,16 @@ func planStoreOrNil(plans repositories.AgentPlanRepository) chatPlanStore {
 // decided.
 func (s *Service) ListThreadPlans(
 	ctx context.Context,
-	req repositories.GetThreadRequest,
-) ([]services.AssistantPlan, error) {
+	req agentports.GetThreadRequest,
+) ([]agentports.AssistantPlan, error) {
 	if _, err := s.conversations.GetThread(ctx, req); err != nil {
 		return nil, err
 	}
 	if s.plans == nil {
-		return []services.AssistantPlan{}, nil
+		return []agentports.AssistantPlan{}, nil
 	}
 
-	stored, err := s.plans.ListByThread(ctx, repositories.ListAgentPlansByThreadRequest{
+	stored, err := s.plans.ListByThread(ctx, agentports.ListAgentPlansByThreadRequest{
 		ThreadID:   req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -622,7 +622,7 @@ func (s *Service) ListThreadPlans(
 	}
 	proposers := s.proposersOf(ctx, req.TenantInfo, planRuns)
 
-	plans := make([]services.AssistantPlan, 0, len(stored))
+	plans := make([]agentports.AssistantPlan, 0, len(stored))
 	for _, plan := range stored {
 		out := toAssistantPlan(plan, holdFor(planVerdict(verdicts, plan, stepRuns[plan.ID])))
 		if by, ok := proposers[plan.RunID]; ok {
@@ -636,7 +636,7 @@ func (s *Service) ListThreadPlans(
 
 func (s *Service) planStepRuns(
 	ctx context.Context,
-	req *repositories.GetThreadRequest,
+	req *agentports.GetThreadRequest,
 	needed bool,
 ) (map[pulid.ID][]pulid.ID, error) {
 	runs := make(map[pulid.ID][]pulid.ID)
@@ -644,7 +644,7 @@ func (s *Service) planStepRuns(
 		return runs, nil
 	}
 
-	stored, err := s.proposals.ListByThread(ctx, repositories.ListAgentProposalsByThreadRequest{
+	stored, err := s.proposals.ListByThread(ctx, agentports.ListAgentProposalsByThreadRequest{
 		ThreadID:   req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -683,13 +683,13 @@ func planVerdict(
 	return agentshadow.Verdict{}
 }
 
-func toAssistantPlan(plan *agent.AgentPlan, hold *services.ProposalHold) services.AssistantPlan {
+func toAssistantPlan(plan *agent.AgentPlan, hold *agentports.ProposalHold) agentports.AssistantPlan {
 	decidedBy := pulid.Nil
 	if plan.DecidedByUserID != nil {
 		decidedBy = *plan.DecidedByUserID
 	}
 
-	return services.AssistantPlan{
+	return agentports.AssistantPlan{
 		ID:              plan.ID,
 		RunID:           plan.RunID,
 		Title:           plan.Title,
@@ -709,9 +709,9 @@ func toAssistantPlan(plan *agent.AgentPlan, hold *services.ProposalHold) service
 
 func toAssistantProposal(
 	proposal *agent.AgentProposal,
-	hold *services.ProposalHold,
-) services.AssistantProposal {
-	out := services.AssistantProposal{
+	hold *agentports.ProposalHold,
+) agentports.AssistantProposal {
+	out := agentports.AssistantProposal{
 		ID:              proposal.ID,
 		RunID:           proposal.RunID,
 		ToolName:        proposal.ToolName,
@@ -749,12 +749,12 @@ func (s *Service) proposalOutcomes(
 	ctx context.Context,
 	thread *conversation.Thread,
 	tenant pagination.TenantInfo,
-) []services.ProposalOutcome {
+) []agentports.ProposalOutcome {
 	if s.proposals == nil {
 		return nil
 	}
 
-	stored, err := s.proposals.ListByThread(ctx, repositories.ListAgentProposalsByThreadRequest{
+	stored, err := s.proposals.ListByThread(ctx, agentports.ListAgentProposalsByThreadRequest{
 		ThreadID:   thread.ID,
 		TenantInfo: tenant,
 	})
@@ -767,7 +767,7 @@ func (s *Service) proposalOutcomes(
 
 	decided := s.decisionsFor(ctx, stored, tenant)
 
-	outcomes := make([]services.ProposalOutcome, 0, len(stored))
+	outcomes := make([]agentports.ProposalOutcome, 0, len(stored))
 	for _, proposal := range stored {
 		if proposal == nil {
 			continue
@@ -776,7 +776,7 @@ func (s *Service) proposalOutcomes(
 		if proposal.PlanID != nil {
 			planID = *proposal.PlanID
 		}
-		outcomes = append(outcomes, services.ProposalOutcome{
+		outcomes = append(outcomes, agentports.ProposalOutcome{
 			ProposalID:      proposal.ID,
 			PlanID:          planID,
 			SourceMessageID: proposal.SourceMessageID,

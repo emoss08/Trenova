@@ -5,7 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,7 +21,7 @@ func (s *Service) ListForWorker(
 	workerID pulid.ID,
 	includeClosed bool,
 ) ([]*worker.WorkerTrainingRecord, error) {
-	return s.repo.ListForWorker(ctx, &repositories.ListWorkerTrainingRequest{
+	return s.repo.ListForWorker(ctx, &workerports.ListWorkerTrainingRequest{
 		TenantInfo:      tenantInfo,
 		WorkerID:        workerID,
 		IncludeClosed:   includeClosed,
@@ -35,7 +36,7 @@ func (s *Service) Get(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*worker.WorkerTrainingRecord, error) {
-	return s.repo.GetByID(ctx, &repositories.GetWorkerTrainingByIDRequest{
+	return s.repo.GetByID(ctx, &workerports.GetWorkerTrainingByIDRequest{
 		ID:              id,
 		TenantInfo:      tenantInfo,
 		IncludeCourse:   true,
@@ -60,7 +61,7 @@ func (s *Service) RefreshRollup(
 	}
 	if err = s.workerRepo.UpdateProfileTrainingRollup(
 		ctx,
-		&repositories.UpdateProfileTrainingRollupRequest{
+		&workerports.UpdateProfileTrainingRollupRequest{
 			TenantInfo: tenantInfo,
 			WorkerID:   workerID,
 			Health:     summary.WorstHealth(),
@@ -93,7 +94,7 @@ func (s *Service) summarize(
 	if err != nil {
 		return nil, err
 	}
-	records, err := s.repo.ListForWorker(ctx, &repositories.ListWorkerTrainingRequest{
+	records, err := s.repo.ListForWorker(ctx, &workerports.ListWorkerTrainingRequest{
 		TenantInfo:      tenantInfo,
 		WorkerID:        wrk.ID,
 		IncludeClosed:   true,
@@ -282,7 +283,7 @@ func (s *Service) openRecordFor(
 			"Choose the course that was completed",
 		)
 	}
-	course, err := s.repo.GetCourseByID(ctx, &repositories.GetTrainingCourseByIDRequest{
+	course, err := s.repo.GetCourseByID(ctx, &workerports.GetTrainingCourseByIDRequest{
 		ID:         req.CourseID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -292,7 +293,7 @@ func (s *Service) openRecordFor(
 	if _, err = s.loadWorker(ctx, req.TenantInfo, req.WorkerID); err != nil {
 		return nil, nil, err
 	}
-	open, err := s.repo.ListForWorker(ctx, &repositories.ListWorkerTrainingRequest{
+	open, err := s.repo.ListForWorker(ctx, &workerports.ListWorkerTrainingRequest{
 		TenantInfo: req.TenantInfo,
 		WorkerID:   req.WorkerID,
 	})
@@ -325,7 +326,7 @@ func (s *Service) loadRecord(
 	id pulid.ID,
 	version int64,
 ) (*worker.WorkerTrainingRecord, error) {
-	original, err := s.repo.GetByID(ctx, &repositories.GetWorkerTrainingByIDRequest{
+	original, err := s.repo.GetByID(ctx, &workerports.GetWorkerTrainingByIDRequest{
 		ID:            id,
 		TenantInfo:    tenantInfo,
 		IncludeCourse: true,
@@ -352,7 +353,7 @@ func (s *Service) requireWorkerDocument(
 	record *worker.WorkerTrainingRecord,
 	documentID pulid.ID,
 ) error {
-	doc, err := s.documentRepo.GetByID(ctx, repositories.GetDocumentByIDRequest{
+	doc, err := s.documentRepo.GetByID(ctx, documentports.GetDocumentByIDRequest{
 		ID:         documentID,
 		TenantInfo: tenantInfo,
 	})

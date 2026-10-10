@@ -3,7 +3,7 @@ package agentruntime
 import (
 	"context"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -16,12 +16,12 @@ const loopRefusalKeyPrefix = "loop-refusal:"
 // RecordLoopRefusalsRequest names the turn or run whose loop refusals to
 // write and the agent that made the calls.
 type RecordLoopRefusalsRequest struct {
-	Ledger       serviceports.RunStepLedger
+	Ledger       agentports.RunStepLedger
 	Tenant       pagination.TenantInfo
-	Owner        serviceports.RunStepOwner
+	Owner        agentports.RunStepOwner
 	DefinitionID pulid.ID
 	Attempt      int
-	Refusals     []serviceports.LoopRefusal
+	Refusals     []agentports.LoopRefusal
 }
 
 // RecordLoopRefusals writes each call the loop refused without dispatching
@@ -45,12 +45,12 @@ func RecordLoopRefusals(ctx context.Context, req *RecordLoopRefusalsRequest) int
 		if refusal.CallID == "" {
 			continue
 		}
-		step := serviceports.RunStep{
+		step := agentports.RunStep{
 			OwnerKind:    req.Owner.Kind,
 			OwnerID:      req.Owner.ID,
 			Attempt:      req.Attempt,
-			Kind:         serviceports.RunStepTool,
-			Status:       serviceports.RunStepStarted,
+			Kind:         agentports.RunStepTool,
+			Status:       agentports.RunStepStarted,
 			Key:          loopRefusalKeyPrefix + refusal.CallID,
 			ToolName:     refusal.ToolName,
 			CallID:       refusal.CallID,
@@ -62,11 +62,11 @@ func RecordLoopRefusals(ctx context.Context, req *RecordLoopRefusalsRequest) int
 
 			continue
 		}
-		if verdict.State != serviceports.StepFresh {
+		if verdict.State != agentports.StepFresh {
 			continue
 		}
-		step.Status = serviceports.RunStepFailed
-		step.Outcome = serviceports.RunStepOutcome{
+		step.Status = agentports.RunStepFailed
+		step.Outcome = agentports.RunStepOutcome{
 			Content: refusal.Content,
 			Failed:  true,
 			Reason:  refusal.Reason,

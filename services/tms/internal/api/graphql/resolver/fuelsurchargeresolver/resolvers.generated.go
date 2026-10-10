@@ -4,16 +4,16 @@ package fuelsurchargeresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	repositories "github.com/emoss08/trenova/internal/core/ports/repositories"
 	fuelsurchargeservice "github.com/emoss08/trenova/internal/core/services/fuelsurchargeservice"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 )
 
 type Deps struct {
 	*base.Core
 	FuelSurchargeService     *fuelsurchargeservice.Service
-	FuelIndexRepo            repositories.FuelIndexRepository
-	FuelIndexPriceRepo       repositories.FuelIndexPriceRepository
-	FuelSurchargeProgramRepo repositories.FuelSurchargeProgramRepository
+	FuelIndexRepo            fuelsurchargeports.FuelIndexRepository
+	FuelIndexPriceRepo       fuelsurchargeports.FuelIndexPriceRepository
+	FuelSurchargeProgramRepo fuelsurchargeports.FuelSurchargeProgramRepository
 }
 
 type MutationResolver struct{ *Deps }

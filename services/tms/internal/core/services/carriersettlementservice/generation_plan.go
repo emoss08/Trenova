@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/settlementshared"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -69,7 +69,7 @@ func (s *Service) PlanBatch(ctx context.Context, req *BatchPlanRequest) (*BatchP
 
 	carrierIDs, err := s.costEventRepo.ListCarrierIDsWithPendingEvents(
 		ctx,
-		repositories.ListCarriersWithPendingEventsRequest{
+		carriersettlementports.ListCarriersWithPendingEventsRequest{
 			TenantInfo:              batchReq.TenantInfo,
 			PeriodEnd:               plan.Bounds.PeriodEnd,
 			HoldUntilInvoiceMatched: control.HoldUntilInvoiceMatched,

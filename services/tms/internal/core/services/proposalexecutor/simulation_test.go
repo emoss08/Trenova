@@ -8,8 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -29,21 +30,21 @@ func (f fixedDefinition) ForRun(
 }
 
 type fakeBudgets struct {
-	refusal services.BudgetRefusal
+	refusal agentports.BudgetRefusal
 	asked   string
 }
 
 func (f *fakeBudgets) CheckRun(
 	context.Context,
 	*agentdefinition.Definition,
-) (services.BudgetRefusal, error) {
-	return services.BudgetRefusal{}, nil
+) (agentports.BudgetRefusal, error) {
+	return agentports.BudgetRefusal{}, nil
 }
 
 func (f *fakeBudgets) CheckTool(
 	_ context.Context,
-	req services.CheckToolBudgetRequest,
-) (services.BudgetRefusal, error) {
+	req agentports.CheckToolBudgetRequest,
+) (agentports.BudgetRefusal, error) {
 	f.asked = req.ToolName
 
 	return f.refusal, nil
@@ -52,7 +53,7 @@ func (f *fakeBudgets) CheckTool(
 func (f *fakeBudgets) Status(
 	context.Context,
 	*agentdefinition.Definition,
-) (*services.AgentBudgetStatus, error) {
+) (*agentports.AgentBudgetStatus, error) {
 	return nil, nil
 }
 
@@ -64,9 +65,9 @@ func (f *fakeBudgets) Timezone(context.Context, *agentdefinition.Definition) str
 	return ""
 }
 
-func approver(proposal *agent.AgentProposal) *services.RequestActor {
-	return &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeUser,
+func approver(proposal *agent.AgentProposal) *permissionports.RequestActor {
+	return &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    pulid.MustNew("usr_"),
 		UserID:         pulid.MustNew("usr_"),
 		OrganizationID: proposal.OrganizationID,
@@ -115,8 +116,8 @@ func TestExecute_RefusesAWritePastTheToolsDailyCap(t *testing.T) {
 	repo := &fakeProposalRepo{}
 	svc := newExecutor(tool, repo, &fakePermissions{allowed: true})
 	svc.definitions = fixedDefinition{definition: &agentdefinition.Definition{Name: "Night desk"}}
-	budgets := &fakeBudgets{refusal: services.BudgetRefusal{
-		Cap: services.BudgetCapTool, Tool: "assign_move", Spent: "5", Limit: "5",
+	budgets := &fakeBudgets{refusal: agentports.BudgetRefusal{
+		Cap: agentports.BudgetCapTool, Tool: "assign_move", Spent: "5", Limit: "5",
 	}}
 	svc.budgets = budgets
 
@@ -153,17 +154,17 @@ func TestExecute_RunsWhenThereIsNoCapAndNoSimulation(t *testing.T) {
 
 type recordingTxConnection struct {
 	dbtest.NopConnection
-	opts []ports.TxOptions
+	opts []kernelports.TxOptions
 }
 
 func (c *recordingTxConnection) WithTx(
 	ctx context.Context,
-	opts ports.TxOptions,
+	opts kernelports.TxOptions,
 	fn func(context.Context, bun.Tx) error,
 ) error {
 	c.opts = append(c.opts, opts)
 
-	return fn(ports.WithReadOnly(ctx), bun.Tx{})
+	return fn(kernelports.WithReadOnly(ctx), bun.Tx{})
 }
 
 type snapshotPreviewTool struct {
@@ -173,9 +174,9 @@ type snapshotPreviewTool struct {
 
 func (t *snapshotPreviewTool) Preview(
 	ctx context.Context,
-	_ services.ToolExecuteParams,
+	_ agentports.ToolExecuteParams,
 ) (*agent.ToolPreview, error) {
-	t.readOnly = ports.IsReadOnly(ctx)
+	t.readOnly = kernelports.IsReadOnly(ctx)
 
 	return &agent.ToolPreview{Summary: "Would cancel PRO-100."}, nil
 }

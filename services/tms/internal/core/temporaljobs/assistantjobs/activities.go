@@ -9,21 +9,20 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/assistantservice"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -74,17 +73,17 @@ type ActivitiesParams struct {
 	Logger        *zap.Logger
 	Assistant     *assistantservice.Service
 	Turns         *assistantturnservice.Service
-	TurnRepo      repositories.AssistantTurnRepository
-	Steps         serviceports.RunStepLedger
+	TurnRepo      agentports.AssistantTurnRepository
+	Steps         agentports.RunStepLedger
 	Notifications *notificationservice.Service
-	Trajectory    serviceports.AgentRunEventRecorder   `optional:"true"`
-	FollowUps     serviceports.DecisionFollowUpResumer `optional:"true"`
-	Metrics       *metrics.Registry                    `optional:"true"`
+	Trajectory    agentports.AgentRunEventRecorder   `optional:"true"`
+	FollowUps     agentports.DecisionFollowUpResumer `optional:"true"`
+	Metrics       *metrics.Registry                  `optional:"true"`
 	// Workflows starts the compaction a turn that filled its conversation
 	// sets off.
-	Workflows   serviceports.WorkflowStarter          `optional:"true"`
-	Reflections serviceports.AgentReflectionScheduler `optional:"true"`
-	Queue       serviceports.AssistantQueueSettler    `optional:"true"`
+	Workflows   kernelports.WorkflowStarter         `optional:"true"`
+	Reflections agentports.AgentReflectionScheduler `optional:"true"`
+	Queue       agentports.AssistantQueueSettler    `optional:"true"`
 }
 
 // Activities are a turn's first and last steps. Everything between them is
@@ -93,16 +92,16 @@ type Activities struct {
 	logger        *zap.Logger
 	assistant     *assistantservice.Service
 	turns         *assistantturnservice.Service
-	turnRepo      repositories.AssistantTurnRepository
-	steps         serviceports.RunStepLedger
-	trajectory    serviceports.AgentRunEventRecorder
+	turnRepo      agentports.AssistantTurnRepository
+	steps         agentports.RunStepLedger
+	trajectory    agentports.AgentRunEventRecorder
 	threads       replyThreads
 	notifications replyNotifications
-	followUps     serviceports.DecisionFollowUpResumer
+	followUps     agentports.DecisionFollowUpResumer
 	metrics       *metrics.Assistant
-	workflows     serviceports.WorkflowStarter
-	reflections   serviceports.AgentReflectionScheduler
-	queue         serviceports.AssistantQueueSettler
+	workflows     kernelports.WorkflowStarter
+	reflections   agentports.AgentReflectionScheduler
+	queue         agentports.AssistantQueueSettler
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -227,7 +226,7 @@ func (a *Activities) FinishTurnActivity(
 	payload := in.Payload
 	tenant := payload.TenantInfo()
 
-	turn, err := a.turnRepo.GetByID(ctx, repositories.GetAssistantTurnRequest{
+	turn, err := a.turnRepo.GetByID(ctx, agentports.GetAssistantTurnRequest{
 		ID:         payload.TurnID,
 		TenantInfo: tenant,
 	})
@@ -263,11 +262,11 @@ func (a *Activities) FinishTurnActivity(
 	if err != nil {
 		// Nothing was appended: the save fails before the append or in it.
 		// Settling the claim as failed is what lets the retry save.
-		a.settle(ctx, payload, serviceports.RunStepFailed, err.Error())
+		a.settle(ctx, payload, agentports.RunStepFailed, err.Error())
 
 		return nil, err
 	}
-	a.settle(ctx, payload, serviceports.RunStepCompleted, ending.Result.Status)
+	a.settle(ctx, payload, agentports.RunStepCompleted, ending.Result.Status)
 	a.recordLoopRefusals(ctx, in)
 	a.turns.Complete(ctx, turn, conversation.AssistantTurnStatus(ending.Result.Status), cause)
 	a.recordTrajectory(ctx, tenant, payload, in.Events, ending.Event)
@@ -294,7 +293,7 @@ func emitTurnRoots(
 		definition = in.Plan.Definition
 	}
 
-	var delegations []serviceports.DelegatedRun
+	var delegations []agentports.DelegatedRun
 	if in.Run != nil {
 		delegations = in.Run.Delegations
 	}
@@ -311,9 +310,9 @@ func emitTurnRoots(
 		span := spans[delegation.CallID]
 		delegateStatus := span.Status
 		if delegateStatus == "" {
-			delegateStatus = string(serviceports.DelegateStatusCompleted)
+			delegateStatus = string(agentports.DelegateStatusCompleted)
 			if delegation.Failed {
-				delegateStatus = string(serviceports.DelegateStatusFailed)
+				delegateStatus = string(agentports.DelegateStatusFailed)
 			}
 		}
 		var failure *modelcall.Failure
@@ -323,7 +322,7 @@ func emitTurnRoots(
 		agentflow.EmitRoot(ctx, &agentflow.RootParams{
 			Anchor:         anchor,
 			Definition:     delegation.Definition,
-			OwnerKind:      serviceports.RunStepOwnerAssistantTurn,
+			OwnerKind:      agentports.RunStepOwnerAssistantTurn,
 			OwnerID:        payload.TurnID,
 			TurnID:         payload.TurnID,
 			ThreadID:       payload.ThreadID,
@@ -333,7 +332,7 @@ func emitTurnRoots(
 			Trigger:        string(turn.Origin),
 			Status:         delegateStatus,
 			Failure:        failure,
-			Result:         &serviceports.RunResult{Taint: delegation.Taint},
+			Result:         &agentports.RunResult{Taint: delegation.Taint},
 			Usage:          delegation.Usage,
 			ToolCalls:      span.ToolCalls,
 			Start:          cmp.Or(span.Start, start),
@@ -345,7 +344,7 @@ func emitTurnRoots(
 	agentflow.EmitRoot(ctx, &agentflow.RootParams{
 		Anchor:     turnAnchor,
 		Definition: definition,
-		OwnerKind:  serviceports.RunStepOwnerAssistantTurn,
+		OwnerKind:  agentports.RunStepOwnerAssistantTurn,
 		OwnerID:    payload.TurnID,
 		TurnID:     payload.TurnID,
 		ThreadID:   payload.ThreadID,
@@ -375,7 +374,7 @@ func (a *Activities) continueTurn(
 	ctx context.Context,
 	in *FinishTurnInput,
 	status conversation.AssistantTurnStatus,
-) *serviceports.QueuedTurn {
+) *agentports.QueuedTurn {
 	return a.continueConversation(ctx, &conversationContinuation{
 		tenant:   in.Payload.TenantInfo(),
 		threadID: in.Payload.ThreadID,
@@ -407,10 +406,10 @@ type conversationContinuation struct {
 func (a *Activities) continueConversation(
 	ctx context.Context,
 	c *conversationContinuation,
-) *serviceports.QueuedTurn {
-	var next *serviceports.QueuedTurn
+) *agentports.QueuedTurn {
+	var next *agentports.QueuedTurn
 	if a.queue != nil {
-		next = a.queue.SettleQueue(ctx, &serviceports.SettleQueueRequest{
+		next = a.queue.SettleQueue(ctx, &agentports.SettleQueueRequest{
 			TenantInfo: c.tenant,
 			ThreadID:   c.threadID,
 			UserID:     c.userID,
@@ -422,7 +421,7 @@ func (a *Activities) continueConversation(
 		return next
 	}
 
-	a.followUps.ResumeFollowUps(ctx, serviceports.ResumeFollowUpsRequest{
+	a.followUps.ResumeFollowUps(ctx, agentports.ResumeFollowUpsRequest{
 		TenantInfo: c.tenant,
 		ThreadID:   c.threadID,
 	})
@@ -441,7 +440,7 @@ func (a *Activities) cueReflection(ctx context.Context, in *FinishTurnInput) {
 	}
 
 	payload := in.Payload
-	a.reflections.AfterTurn(ctx, &serviceports.ReflectOnThreadRequest{
+	a.reflections.AfterTurn(ctx, &agentports.ReflectOnThreadRequest{
 		TenantInfo: payload.TenantInfo(),
 		ThreadID:   payload.ThreadID,
 		UserID:     payload.Actor.UserID,
@@ -509,7 +508,7 @@ func (a *Activities) finish(
 				Refused: result.Refused,
 				Result:  result,
 			},
-			Event:   temporaltype.StreamItem{Event: serviceports.AssistantEventDone, Data: result},
+			Event:   temporaltype.StreamItem{Event: agentports.AssistantEventDone, Data: result},
 			Compact: compactionCue(status, result),
 		}, nil, nil
 	}
@@ -520,7 +519,7 @@ func (a *Activities) finish(
 // Only an answered turn sets one off: a refusal added nothing worth room.
 func compactionCue(
 	status conversation.AssistantTurnStatus,
-	result *serviceports.SendMessageResult,
+	result *agentports.SendMessageResult,
 ) *CompactionCue {
 	if status != conversation.AssistantTurnStatusCompleted || result.Thread == nil {
 		return nil
@@ -539,7 +538,7 @@ func (a *Activities) recordFingerprint(ctx context.Context, in *FinishTurnInput)
 		return
 	}
 
-	if err := a.turnRepo.RecordFingerprint(ctx, repositories.RecordAssistantTurnFingerprintRequest{
+	if err := a.turnRepo.RecordFingerprint(ctx, agentports.RecordAssistantTurnFingerprintRequest{
 		ID:          in.Payload.TurnID,
 		TenantInfo:  in.Payload.TenantInfo(),
 		Fingerprint: fingerprint,
@@ -555,7 +554,7 @@ func failedEnding(status conversation.AssistantTurnStatus, message string) *Turn
 	return &TurnEnding{
 		Result: assistantcontract.AssistantTurnResult{Status: string(status), Message: message},
 		Event: temporaltype.StreamItem{
-			Event: serviceports.AssistantEventError,
+			Event: agentports.AssistantEventError,
 			Data:  map[string]any{"message": message},
 		},
 	}
@@ -667,7 +666,7 @@ func (a *Activities) alreadySaved(
 	ctx context.Context,
 	turn *conversation.AssistantTurn,
 ) *TurnEnding {
-	current, err := a.turnRepo.GetByID(ctx, repositories.GetAssistantTurnRequest{
+	current, err := a.turnRepo.GetByID(ctx, agentports.GetAssistantTurnRequest{
 		ID:         turn.ID,
 		TenantInfo: pagination.TenantInfo{OrgID: turn.OrganizationID, BuID: turn.BusinessUnitID},
 	})
@@ -699,7 +698,7 @@ func (a *Activities) CloseTurnActivity(
 	payload *assistantcontract.AssistantTurnPayload,
 	message string,
 ) error {
-	turn, err := a.turnRepo.GetByID(ctx, repositories.GetAssistantTurnRequest{
+	turn, err := a.turnRepo.GetByID(ctx, agentports.GetAssistantTurnRequest{
 		ID:         payload.TurnID,
 		TenantInfo: payload.TenantInfo(),
 	})
@@ -734,8 +733,8 @@ func (a *Activities) recordLoopRefusals(ctx context.Context, in *FinishTurnInput
 	failed := agentruntime.RecordLoopRefusals(ctx, &agentruntime.RecordLoopRefusalsRequest{
 		Ledger: a.steps,
 		Tenant: payload.TenantInfo(),
-		Owner: serviceports.RunStepOwner{
-			Kind: serviceports.RunStepOwnerAssistantTurn,
+		Owner: agentports.RunStepOwner{
+			Kind: agentports.RunStepOwnerAssistantTurn,
 			ID:   payload.TurnID,
 		},
 		DefinitionID: in.Plan.Definition.ID,
@@ -754,8 +753,8 @@ func (a *Activities) recordLoopRefusals(ctx context.Context, in *FinishTurnInput
 // this attempt may save it.
 func (a *Activities) claimSave(ctx context.Context, payload *assistantcontract.AssistantTurnPayload) (bool, error) {
 	tenant := payload.TenantInfo()
-	recorded, err := a.steps.Loaded(ctx, tenant, serviceports.RunStepOwner{
-		Kind: serviceports.RunStepOwnerAssistantTurn,
+	recorded, err := a.steps.Loaded(ctx, tenant, agentports.RunStepOwner{
+		Kind: agentports.RunStepOwnerAssistantTurn,
 		ID:   payload.TurnID,
 	})
 	if err != nil {
@@ -763,9 +762,9 @@ func (a *Activities) claimSave(ctx context.Context, payload *assistantcontract.A
 	}
 	for i := range recorded {
 		step := &recorded[i]
-		if step.Kind == serviceports.RunStepCompletion &&
+		if step.Kind == agentports.RunStepCompletion &&
 			strings.HasPrefix(step.Key, turnFinishKey) &&
-			step.Status != serviceports.RunStepFailed {
+			step.Status != agentports.RunStepFailed {
 			return false, nil
 		}
 	}
@@ -775,17 +774,17 @@ func (a *Activities) claimSave(ctx context.Context, payload *assistantcontract.A
 		return false, fmt.Errorf("claim saving this turn: %w", err)
 	}
 
-	return verdict.State == serviceports.StepFresh, nil
+	return verdict.State == agentports.StepFresh, nil
 }
 
-func saveStep(ctx context.Context, payload *assistantcontract.AssistantTurnPayload) serviceports.RunStep {
+func saveStep(ctx context.Context, payload *assistantcontract.AssistantTurnPayload) agentports.RunStep {
 	attempt := int(activity.GetInfo(ctx).Attempt)
 
-	return serviceports.RunStep{
-		OwnerKind: serviceports.RunStepOwnerAssistantTurn,
+	return agentports.RunStep{
+		OwnerKind: agentports.RunStepOwnerAssistantTurn,
 		OwnerID:   payload.TurnID,
 		Attempt:   attempt,
-		Kind:      serviceports.RunStepCompletion,
+		Kind:      agentports.RunStepCompletion,
 		Key:       turnFinishKey + ":" + strconv.Itoa(attempt),
 		ToolName:  turnFinishKey,
 	}
@@ -795,14 +794,14 @@ func saveStep(ctx context.Context, payload *assistantcontract.AssistantTurnPaylo
 func (a *Activities) settle(
 	ctx context.Context,
 	payload *assistantcontract.AssistantTurnPayload,
-	status serviceports.RunStepStatus,
+	status agentports.RunStepStatus,
 	content string,
 ) {
 	step := saveStep(ctx, payload)
 	step.Status = status
-	step.Outcome = serviceports.RunStepOutcome{
+	step.Outcome = agentports.RunStepOutcome{
 		Content: content,
-		Failed:  status == serviceports.RunStepFailed,
+		Failed:  status == agentports.RunStepFailed,
 	}
 
 	if err := a.steps.Settle(context.WithoutCancel(ctx), payload.TenantInfo(), step); err != nil {
@@ -826,23 +825,23 @@ func (a *Activities) recordTrajectory(
 		return
 	}
 
-	writer := a.trajectory.Recorder(ctx, tenant, serviceports.RunStepOwner{
-		Kind: serviceports.RunStepOwnerAssistantTurn,
+	writer := a.trajectory.Recorder(ctx, tenant, agentports.RunStepOwner{
+		Kind: agentports.RunStepOwnerAssistantTurn,
 		ID:   payload.TurnID,
 	})
 	for _, event := range events {
-		serviceports.RecordTrajectory(writer, ctx, serviceports.StreamEvent{
+		agentports.RecordTrajectory(writer, ctx, kernelports.StreamEvent{
 			Event: event.Event,
 			Data:  event.Data,
 			At:    event.At,
 		})
 	}
-	serviceports.RecordTrajectory(writer, ctx, serviceports.StreamEvent{
+	agentports.RecordTrajectory(writer, ctx, kernelports.StreamEvent{
 		Event: ending.Event,
 		Data:  ending.Data,
 		At:    ending.At,
 	})
-	serviceports.FlushTrajectory(writer, ctx)
+	agentports.FlushTrajectory(writer, ctx)
 }
 
 // openStream is how the save reaches the reader: a proposal the turn raised
@@ -851,7 +850,7 @@ func (a *Activities) recordTrajectory(
 // turn, so it is logged and the save goes on.
 func (a *Activities) openStream(
 	ctx context.Context,
-) (*workflowstreams.Client, serviceports.AssistantStreamEmitter) {
+) (*workflowstreams.Client, kernelports.AssistantStreamEmitter) {
 	stream, err := workflowstreams.NewClientFromActivity(ctx, workflowstreams.Options{})
 	if err != nil {
 		a.logger.Warn("could not open this turn's stream to save it", zap.Error(err))
@@ -861,7 +860,7 @@ func (a *Activities) openStream(
 
 	events := stream.Topic(temporaltype.StreamEventsTopic)
 
-	return stream, func(event serviceports.StreamEvent) {
+	return stream, func(event kernelports.StreamEvent) {
 		events.Publish(temporaltype.StreamItem{Event: event.Event, Data: event.Data}, true)
 	}
 }
@@ -892,8 +891,8 @@ func newArtifactObserver(assistant *assistantservice.Service) agentflow.ToolObse
 func (o *artifactObserver) ObserveTool(
 	ctx context.Context,
 	run agentflow.RunContext,
-	observation serviceports.ToolObservation,
-	emit serviceports.AssistantStreamEmitter,
-) (*serviceports.ShownArtifact, []*assistantartifact.Artifact, error) {
+	observation agentports.ToolObservation,
+	emit kernelports.AssistantStreamEmitter,
+) (*agentports.ShownArtifact, []*assistantartifact.Artifact, error) {
 	return o.assistant.ObserveTool(ctx, run.ThreadID, run.Actor, observation, emit)
 }

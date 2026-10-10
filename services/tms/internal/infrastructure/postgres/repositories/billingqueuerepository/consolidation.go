@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
@@ -23,9 +23,9 @@ const defaultCandidateLimit = 5000
 // same reason.
 func (r *repository) ListConsolidationCandidates(
 	ctx context.Context,
-	req *repositories.ListConsolidationCandidatesRequest,
-) ([]*repositories.ConsolidationCandidate, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.ConsolidationCandidate, error) {
+	req *billingqueueports.ListConsolidationCandidatesRequest,
+) ([]*billingqueueports.ConsolidationCandidate, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*billingqueueports.ConsolidationCandidate, error) {
 		if len(req.CustomerIDs) == 0 {
 			return nil, nil
 		}
@@ -35,7 +35,7 @@ func (r *repository) ListConsolidationCandidates(
 			limit = defaultCandidateLimit
 		}
 
-		candidates := make([]*repositories.ConsolidationCandidate, 0, limit)
+		candidates := make([]*billingqueueports.ConsolidationCandidate, 0, limit)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*billingqueue.BillingQueueItem)(nil)).

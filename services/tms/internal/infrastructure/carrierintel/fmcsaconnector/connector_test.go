@@ -15,8 +15,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/shared/fmcsa"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/stretchr/testify/assert"
@@ -30,19 +30,19 @@ const (
 
 type callLog struct {
 	mu    sync.Mutex
-	calls []services.CarrierIntelCall
+	calls []carrierintelports.CarrierIntelCall
 }
 
-func (l *callLog) record(_ context.Context, call services.CarrierIntelCall) {
+func (l *callLog) record(_ context.Context, call carrierintelports.CarrierIntelCall) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	l.calls = append(l.calls, call)
 }
 
-func (l *callLog) all() []services.CarrierIntelCall {
+func (l *callLog) all() []carrierintelports.CarrierIntelCall {
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	return append([]services.CarrierIntelCall(nil), l.calls...)
+	return append([]carrierintelports.CarrierIntelCall(nil), l.calls...)
 }
 
 type keyRecordingLimiter struct {
@@ -120,7 +120,7 @@ func bindTestClient(t *testing.T, limiter restx.Limiter, handler http.HandlerFun
 	t.Cleanup(server.Close)
 
 	log := &callLog{}
-	bound, err := testConnector().Bind(&services.CarrierIntelBindParams{
+	bound, err := testConnector().Bind(&carrierintelports.CarrierIntelBindParams{
 		Config: map[string]string{
 			integration.ConfigKeyCarrierIntelWebKey:  testWebKey,
 			integration.ConfigKeyCarrierIntelBaseURL: server.URL + basePath + "/",
@@ -166,10 +166,10 @@ func TestConnector_BindAndClientInterfaces(t *testing.T) {
 	t.Parallel()
 
 	bound := bindTestClient(t, nil, routeHandler(t, nil))
-	var client services.CarrierIntelClient = bound.client
-	_, isMonitor := client.(services.CarrierIntelNativeMonitor)
-	_, isEquipment := client.(services.CarrierIntelEquipmentLookup)
-	_, isSearcher := client.(services.CarrierIntelSearcher)
+	var client carrierintelports.CarrierIntelClient = bound.client
+	_, isMonitor := client.(carrierintelports.CarrierIntelNativeMonitor)
+	_, isEquipment := client.(carrierintelports.CarrierIntelEquipmentLookup)
+	_, isSearcher := client.(carrierintelports.CarrierIntelSearcher)
 	assert.False(t, isMonitor)
 	assert.False(t, isEquipment)
 	assert.True(t, isSearcher)
@@ -180,13 +180,13 @@ func TestConnector_BindAndClientInterfaces(t *testing.T) {
 func TestConnector_BindValidation(t *testing.T) {
 	t.Parallel()
 
-	_, err := New(&config.Config{}).Bind(&services.CarrierIntelBindParams{
+	_, err := New(&config.Config{}).Bind(&carrierintelports.CarrierIntelBindParams{
 		Config: map[string]string{},
 	})
 	require.Error(t, err)
 	assert.Equal(t, "FMCSA QCMobile web key is required", err.Error())
 
-	_, err = New(&config.Config{}).Bind(&services.CarrierIntelBindParams{
+	_, err = New(&config.Config{}).Bind(&carrierintelports.CarrierIntelBindParams{
 		Config: map[string]string{
 			integration.ConfigKeyCarrierIntelWebKey:  testWebKey,
 			integration.ConfigKeyCarrierIntelBaseURL: "http://mobile.fmcsa.dot.gov/qc/services",
@@ -263,8 +263,8 @@ func TestClient_LookupByDOT(t *testing.T) {
 	limiter := &keyRecordingLimiter{}
 	bound := bindTestClient(t, limiter, routeHandler(t, nil))
 
-	result, err := bound.client.Lookup(t.Context(), &services.CarrierIntelLookupRequest{
-		Identifier: services.CarrierIntelIdentifier{DOTNumber: "818175"},
+	result, err := bound.client.Lookup(t.Context(), &carrierintelports.CarrierIntelLookupRequest{
+		Identifier: carrierintelports.CarrierIntelIdentifier{DOTNumber: "818175"},
 		Depth:      carrierintel.LookupDepthFull,
 	})
 	require.NoError(t, err)
@@ -297,8 +297,8 @@ func TestClient_LookupByDocketResolvesDOT(t *testing.T) {
 
 	bound := bindTestClient(t, nil, routeHandler(t, nil))
 
-	result, err := bound.client.Lookup(t.Context(), &services.CarrierIntelLookupRequest{
-		Identifier: services.CarrierIntelIdentifier{DocketNumber: "MC-277621"},
+	result, err := bound.client.Lookup(t.Context(), &carrierintelports.CarrierIntelLookupRequest{
+		Identifier: carrierintelports.CarrierIntelIdentifier{DocketNumber: "MC-277621"},
 	})
 	require.NoError(t, err)
 	assert.Equal(t, "818175", result.Profile.DOTNumber())
@@ -317,13 +317,13 @@ func TestClient_LookupRejectsUnsupportedIdentifiers(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	_, err := bound.client.Lookup(t.Context(), &services.CarrierIntelLookupRequest{
-		Identifier: services.CarrierIntelIdentifier{Company: "Sandbox"},
+	_, err := bound.client.Lookup(t.Context(), &carrierintelports.CarrierIntelLookupRequest{
+		Identifier: carrierintelports.CarrierIntelIdentifier{Company: "Sandbox"},
 	})
-	assert.True(t, services.IsCarrierIntelErrorKind(err, services.CarrierIntelErrorUnsupported))
+	assert.True(t, carrierintelports.IsCarrierIntelErrorKind(err, carrierintelports.CarrierIntelErrorUnsupported))
 
-	_, err = bound.client.Lookup(t.Context(), &services.CarrierIntelLookupRequest{})
-	assert.True(t, services.IsCarrierIntelErrorKind(err, services.CarrierIntelErrorInvalidRequest))
+	_, err = bound.client.Lookup(t.Context(), &carrierintelports.CarrierIntelLookupRequest{})
+	assert.True(t, carrierintelports.IsCarrierIntelErrorKind(err, carrierintelports.CarrierIntelErrorInvalidRequest))
 	assert.Equal(t, int32(0), hits.Load())
 	assert.Empty(t, bound.log.all())
 }
@@ -334,7 +334,7 @@ func TestClient_LookupErrors(t *testing.T) {
 	cases := []struct {
 		name    string
 		handler http.HandlerFunc
-		kind    services.CarrierIntelErrorKind
+		kind    carrierintelports.CarrierIntelErrorKind
 		retry   time.Duration
 	}{
 		{
@@ -342,14 +342,14 @@ func TestClient_LookupErrors(t *testing.T) {
 			handler: func(w http.ResponseWriter, _ *http.Request) {
 				writeJSON(w, http.StatusOK, fixture(t, "not_found.json"))
 			},
-			kind: services.CarrierIntelErrorNotFound,
+			kind: carrierintelports.CarrierIntelErrorNotFound,
 		},
 		{
 			name: "unauthorized",
 			handler: func(w http.ResponseWriter, _ *http.Request) {
 				writeJSON(w, http.StatusUnauthorized, []byte(`{"content":"Webkey not authorized"}`))
 			},
-			kind: services.CarrierIntelErrorUnauthorized,
+			kind: carrierintelports.CarrierIntelErrorUnauthorized,
 		},
 		{
 			name: "rate limited",
@@ -357,7 +357,7 @@ func TestClient_LookupErrors(t *testing.T) {
 				w.Header().Set("Retry-After", "30")
 				writeJSON(w, http.StatusTooManyRequests, []byte(`{}`))
 			},
-			kind:  services.CarrierIntelErrorRateLimited,
+			kind:  carrierintelports.CarrierIntelErrorRateLimited,
 			retry: 30 * time.Second,
 		},
 		{
@@ -365,7 +365,7 @@ func TestClient_LookupErrors(t *testing.T) {
 			handler: func(w http.ResponseWriter, _ *http.Request) {
 				writeJSON(w, http.StatusBadGateway, []byte(`{}`))
 			},
-			kind: services.CarrierIntelErrorUnavailable,
+			kind: carrierintelports.CarrierIntelErrorUnavailable,
 		},
 	}
 
@@ -377,13 +377,13 @@ func TestClient_LookupErrors(t *testing.T) {
 				basePath + "/carriers/818175": tc.handler,
 			}))
 
-			_, err := bound.client.Lookup(t.Context(), &services.CarrierIntelLookupRequest{
-				Identifier: services.CarrierIntelIdentifier{DOTNumber: "818175"},
+			_, err := bound.client.Lookup(t.Context(), &carrierintelports.CarrierIntelLookupRequest{
+				Identifier: carrierintelports.CarrierIntelIdentifier{DOTNumber: "818175"},
 			})
 			require.Error(t, err)
 			assert.NotContains(t, err.Error(), "SECRET")
 
-			var providerErr *services.CarrierIntelProviderError
+			var providerErr *carrierintelports.CarrierIntelProviderError
 			require.ErrorAs(t, err, &providerErr)
 			assert.Equal(t, tc.kind, providerErr.Kind)
 			assert.Equal(t, tc.retry, providerErr.RetryAfter)
@@ -404,7 +404,7 @@ func TestClient_SearchAndAutocomplete(t *testing.T) {
 		},
 	}))
 
-	result, err := bound.client.Search(t.Context(), &services.CarrierIntelSearchRequest{
+	result, err := bound.client.Search(t.Context(), &carrierintelports.CarrierIntelSearchRequest{
 		CompanyName: "sandbox",
 		Limit:       25,
 	})
@@ -418,13 +418,13 @@ func TestClient_SearchAndAutocomplete(t *testing.T) {
 
 	empty, err := bound.client.Search(
 		t.Context(),
-		&services.CarrierIntelSearchRequest{Query: "nobody"},
+		&carrierintelports.CarrierIntelSearchRequest{Query: "nobody"},
 	)
 	require.NoError(t, err)
 	assert.Empty(t, empty.Items)
 
-	_, err = bound.client.Search(t.Context(), &services.CarrierIntelSearchRequest{EIN: "364123456"})
-	assert.True(t, services.IsCarrierIntelErrorKind(err, services.CarrierIntelErrorUnsupported))
+	_, err = bound.client.Search(t.Context(), &carrierintelports.CarrierIntelSearchRequest{EIN: "364123456"})
+	assert.True(t, carrierintelports.IsCarrierIntelErrorKind(err, carrierintelports.CarrierIntelErrorUnsupported))
 
 	suggestions, err := bound.client.Autocomplete(t.Context(), "sandbox", 5)
 	require.NoError(t, err)
@@ -443,8 +443,8 @@ func TestNormalizeComposite(t *testing.T) {
 	t.Parallel()
 
 	bound := bindTestClient(t, nil, routeHandler(t, nil))
-	result, err := bound.client.Lookup(t.Context(), &services.CarrierIntelLookupRequest{
-		Identifier: services.CarrierIntelIdentifier{DOTNumber: "818175"},
+	result, err := bound.client.Lookup(t.Context(), &carrierintelports.CarrierIntelLookupRequest{
+		Identifier: carrierintelports.CarrierIntelIdentifier{DOTNumber: "818175"},
 	})
 	require.NoError(t, err)
 	profile := result.Profile

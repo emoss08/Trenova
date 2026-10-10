@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/modeprofile"
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/modeprofileports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/ratetypes"
@@ -21,7 +22,7 @@ import (
 // stubModeProfiles answers with one policy, or with the ordinary "nothing
 // configured" outcome.
 type stubModeProfiles struct {
-	services.ModeProfileService
+	modeprofileports.ModeProfileService
 
 	policy *modeprofile.ResolvedPolicy
 	err    error
@@ -30,7 +31,7 @@ type stubModeProfiles struct {
 
 func (s *stubModeProfiles) Resolve(
 	_ context.Context,
-	_ *services.ResolveModeProfileRequest,
+	_ *modeprofileports.ResolveModeProfileRequest,
 ) (*modeprofile.ResolvedPolicy, error) {
 	s.calls++
 
@@ -111,7 +112,7 @@ func TestNoModeProfileConfiguredStillPricesAnUnscopedRule(t *testing.T) {
 	t.Parallel()
 
 	d := setup(t)
-	d.svc.modeProfile = &stubModeProfiles{err: services.ErrNoModeProfileConfigured}
+	d.svc.modeProfile = &stubModeProfiles{err: modeprofileports.ErrNoModeProfileConfigured}
 
 	expectRules(d, perMileRule("2.15", 100))
 
@@ -216,7 +217,7 @@ func TestBuySideDoesNotFallBackToTheShipmentsFormulaTemplate(t *testing.T) {
 	entity := testShipment()
 	entity.FormulaTemplateID = pulid.MustNew("ft_")
 
-	result, err := d.svc.RateShipment(t.Context(), &services.RateShipmentRequest{
+	result, err := d.svc.RateShipment(t.Context(), &ratequoteports.RateShipmentRequest{
 		Shipment:   entity,
 		TenantInfo: tenantInfo(),
 		PartyType:  rateagreement.PartyTypeCarrier,

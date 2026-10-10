@@ -8,8 +8,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -24,32 +25,32 @@ import (
 const maxStaleIDsPerCall = 1000
 
 var (
-	_ serviceports.RetrievalIndexer       = (*Service)(nil)
-	_ serviceports.RetrievalIndexPipeline = (*Service)(nil)
+	_ agentports.RetrievalIndexer       = (*Service)(nil)
+	_ agentports.RetrievalIndexPipeline = (*Service)(nil)
 )
 
 type Params struct {
 	fx.In
 
 	Logger     *zap.Logger
-	Repo       repositories.AIRetrievalRepository
-	Sources    repositories.RetrievalSourceRepository
-	Usage      repositories.AIUsageRepository
+	Repo       agentports.AIRetrievalRepository
+	Sources    agentports.RetrievalSourceRepository
+	Usage      aiusageports.AIUsageRepository
 	Registry   *permission.Registry
-	Embeddings serviceports.EmbeddingService      `optional:"true"`
-	Signals    serviceports.WorkflowSignalStarter `optional:"true"`
-	Workflows  serviceports.WorkflowStarter       `optional:"true"`
+	Embeddings aiusageports.EmbeddingService     `optional:"true"`
+	Signals    kernelports.WorkflowSignalStarter `optional:"true"`
+	Workflows  kernelports.WorkflowStarter       `optional:"true"`
 }
 
 type Service struct {
 	l          *zap.Logger
-	repo       repositories.AIRetrievalRepository
-	sources    repositories.RetrievalSourceRepository
-	usage      repositories.AIUsageRepository
+	repo       agentports.AIRetrievalRepository
+	sources    agentports.RetrievalSourceRepository
+	usage      aiusageports.AIUsageRepository
 	registry   *permission.Registry
-	embeddings serviceports.EmbeddingService
-	signals    serviceports.WorkflowSignalStarter
-	workflows  serviceports.WorkflowStarter
+	embeddings aiusageports.EmbeddingService
+	signals    kernelports.WorkflowSignalStarter
+	workflows  kernelports.WorkflowStarter
 	now        func() int64
 }
 
@@ -72,9 +73,9 @@ func New(p Params) *Service { //nolint:gocritic // fx param structs are passed b
 	}
 }
 
-func AsIndexer(s *Service) serviceports.RetrievalIndexer { return s }
+func AsIndexer(s *Service) agentports.RetrievalIndexer { return s }
 
-func AsPipeline(s *Service) serviceports.RetrievalIndexPipeline { return s }
+func AsPipeline(s *Service) agentports.RetrievalIndexPipeline { return s }
 
 func validateSourceType(sourceType airetrieval.SourceType) error {
 	if sourceType.IsValid() {
@@ -130,7 +131,7 @@ func (s *Service) markStale(
 ) (int, error) {
 	marked := 0
 	for batch := range slices.Chunk(ids, maxStaleIDsPerCall) {
-		count, err := s.repo.MarkStale(ctx, &repositories.MarkAIRetrievalStaleRequest{
+		count, err := s.repo.MarkStale(ctx, &agentports.MarkAIRetrievalStaleRequest{
 			TenantInfo: tenant,
 			SourceType: sourceType,
 			SourceIDs:  batch,
@@ -184,7 +185,7 @@ func (s *Service) DeleteSource(
 		return nil
 	}
 
-	if _, err := s.repo.DeleteSource(ctx, &repositories.AIRetrievalSourceRef{
+	if _, err := s.repo.DeleteSource(ctx, &agentports.AIRetrievalSourceRef{
 		TenantInfo: tenant,
 		SourceType: sourceType,
 		SourceID:   id,
@@ -206,7 +207,7 @@ func (s *Service) Reindex(
 	if s.workflows == nil {
 		return errortypes.NewBusinessError(
 			"Background work is not available, so the source cannot be re-indexed.",
-		).WithInternal(serviceports.ErrWorkflowStarterDisabled)
+		).WithInternal(kernelports.ErrWorkflowStarterDisabled)
 	}
 
 	if _, err := s.workflows.StartWorkflow(ctx, client.StartWorkflowOptions{
@@ -227,5 +228,5 @@ func (s *Service) Reindex(
 }
 
 func isNoProvider(err error) bool {
-	return errors.Is(err, serviceports.ErrNoProviderConfigured) || errortypes.IsBusinessError(err)
+	return errors.Is(err, agentports.ErrNoProviderConfigured) || errortypes.IsBusinessError(err)
 }

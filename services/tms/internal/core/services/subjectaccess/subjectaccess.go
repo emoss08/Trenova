@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -17,8 +17,8 @@ import (
 // grant; a permission that cannot be checked is a refusal.
 func MayRead(
 	ctx context.Context,
-	engine services.PermissionEngine,
-	actor *services.RequestActor,
+	engine permissionports.PermissionEngine,
+	actor *permissionports.RequestActor,
 	subjectType agent.SubjectType,
 ) (bool, error) {
 	resource, names := subjectType.Resource()
@@ -36,15 +36,15 @@ func MayRead(
 
 func MayReadResource(
 	ctx context.Context,
-	engine services.PermissionEngine,
-	actor *services.RequestActor,
+	engine permissionports.PermissionEngine,
+	actor *permissionports.RequestActor,
 	resource permission.Resource,
 ) (bool, error) {
 	if engine == nil || actor == nil {
 		return false, nil
 	}
 
-	result, err := engine.Check(ctx, &services.PermissionCheckRequest{
+	result, err := engine.Check(ctx, &permissionports.PermissionCheckRequest{
 		PrincipalType:  actor.PrincipalType,
 		PrincipalID:    actor.PrincipalID,
 		UserID:         actor.UserID,
@@ -65,8 +65,8 @@ func MayReadResource(
 // read.
 func AssertReadable(
 	ctx context.Context,
-	engine services.PermissionEngine,
-	actor *services.RequestActor,
+	engine permissionports.PermissionEngine,
+	actor *permissionports.RequestActor,
 	subjectType agent.SubjectType,
 ) error {
 	allowed, err := MayRead(ctx, engine, actor, subjectType)

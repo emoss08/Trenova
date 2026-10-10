@@ -11,13 +11,15 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/fiscalcloseblockers"
 	"github.com/emoss08/trenova/internal/core/services/fiscalcloseservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -36,22 +38,22 @@ type Params struct {
 
 	Logger           *zap.Logger
 	DB               *postgres.Connection
-	Repo             repositories.FiscalYearRepository
-	FiscalPeriodRepo repositories.FiscalPeriodRepository
+	Repo             fiscalyearports.FiscalYearRepository
+	FiscalPeriodRepo fiscalperiodports.FiscalPeriodRepository
 	Validator        *Validator
-	AuditService     services.AuditService
-	Transformer      services.DataTransformer
+	AuditService     auditports.AuditService
+	Transformer      accessorialchargeports.DataTransformer
 	CloseService     *fiscalcloseservice.Service
 }
 
 type Service struct {
 	l                *zap.Logger
 	db               *postgres.Connection
-	repo             repositories.FiscalYearRepository
-	fiscalPeriodRepo repositories.FiscalPeriodRepository
+	repo             fiscalyearports.FiscalYearRepository
+	fiscalPeriodRepo fiscalperiodports.FiscalPeriodRepository
 	validator        *Validator
-	auditService     services.AuditService
-	transformer      services.DataTransformer
+	auditService     auditports.AuditService
+	transformer      accessorialchargeports.DataTransformer
 	closeService     *fiscalcloseservice.Service
 }
 
@@ -70,7 +72,7 @@ func New(p Params) *Service {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListFiscalYearsRequest,
+	req *fiscalyearports.ListFiscalYearsRequest,
 ) (*pagination.ListResult[*fiscalyear.FiscalYear], error) {
 	result, err := s.repo.List(ctx, req)
 	if err != nil {
@@ -102,21 +104,21 @@ func (s *Service) List(
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListFiscalYearConnectionRequest,
+	req *fiscalyearports.ListFiscalYearConnectionRequest,
 ) (*pagination.CursorListResult[*fiscalyear.FiscalYear], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	req repositories.GetFiscalYearByIDRequest,
+	req fiscalyearports.GetFiscalYearByIDRequest,
 ) (*fiscalyear.FiscalYear, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) GetCloseBlockers(
 	ctx context.Context,
-	req repositories.GetFiscalYearByIDRequest,
+	req fiscalyearports.GetFiscalYearByIDRequest,
 ) (*fiscalclose.Result, error) {
 	plan, err := s.GetClosePreview(ctx, req)
 	if err != nil {
@@ -132,7 +134,7 @@ func (s *Service) GetCloseBlockers(
 // that currently stands in the way. Nothing is written.
 func (s *Service) GetClosePreview(
 	ctx context.Context,
-	req repositories.GetFiscalYearByIDRequest,
+	req fiscalyearports.GetFiscalYearByIDRequest,
 ) (*fiscalclose.Plan, error) {
 	entity, err := s.repo.GetByID(ctx, req)
 	if err != nil {
@@ -167,7 +169,7 @@ func (s *Service) ensureBootstrapCurrentFiscalYear(
 	orgID pulid.ID,
 	buID pulid.ID,
 ) (*fiscalyear.FiscalYear, error) {
-	existing, err := s.repo.GetCurrentFiscalYear(ctx, repositories.GetCurrentFiscalYearRequest{
+	existing, err := s.repo.GetCurrentFiscalYear(ctx, fiscalyearports.GetCurrentFiscalYearRequest{
 		OrgID: orgID,
 		BuID:  buID,
 	})
@@ -179,7 +181,7 @@ func (s *Service) ensureBootstrapCurrentFiscalYear(
 		return nil, err
 	}
 
-	count, err := s.repo.CountByTenant(ctx, repositories.CountFiscalYearsByTenantRequest{
+	count, err := s.repo.CountByTenant(ctx, fiscalyearports.CountFiscalYearsByTenantRequest{
 		OrgID: orgID,
 		BuID:  buID,
 	})
@@ -231,7 +233,7 @@ func (s *Service) bootstrapCurrentCalendarFiscalYear(
 		createdEntity, err := s.repo.Create(ctx, entity)
 		if err != nil {
 			if dberror.IsUniqueConstraintViolation(err) {
-				return s.repo.GetCurrentFiscalYear(ctx, repositories.GetCurrentFiscalYearRequest{
+				return s.repo.GetCurrentFiscalYear(ctx, fiscalyearports.GetCurrentFiscalYearRequest{
 					OrgID: orgID,
 					BuID:  buID,
 				})
@@ -250,11 +252,11 @@ func (s *Service) bootstrapCurrentCalendarFiscalYear(
 	var createdEntity *fiscalyear.FiscalYear
 	err := s.db.WithTx(
 		ctx,
-		ports.TxOptions{LockTimeout: fiscalYearLockTimeout},
+		kernelports.TxOptions{LockTimeout: fiscalYearLockTimeout},
 		func(txCtx context.Context, _ bun.Tx) error {
 			current, txErr := s.repo.GetCurrentFiscalYearForUpdate(
 				txCtx,
-				repositories.GetCurrentFiscalYearRequest{
+				fiscalyearports.GetCurrentFiscalYearRequest{
 					OrgID: orgID,
 					BuID:  buID,
 				},
@@ -269,7 +271,7 @@ func (s *Service) bootstrapCurrentCalendarFiscalYear(
 
 			count, txErr := s.repo.CountByTenant(
 				txCtx,
-				repositories.CountFiscalYearsByTenantRequest{
+				fiscalyearports.CountFiscalYearsByTenantRequest{
 					OrgID: orgID,
 					BuID:  buID,
 				},
@@ -293,7 +295,7 @@ func (s *Service) bootstrapCurrentCalendarFiscalYear(
 	)
 	if err != nil {
 		if dberror.IsUniqueConstraintViolation(err) {
-			return s.repo.GetCurrentFiscalYear(ctx, repositories.GetCurrentFiscalYearRequest{
+			return s.repo.GetCurrentFiscalYear(ctx, fiscalyearports.GetCurrentFiscalYearRequest{
 				OrgID: orgID,
 				BuID:  buID,
 			})
@@ -312,7 +314,7 @@ func (s *Service) ListPeriods(
 	ctx context.Context,
 	fiscalYearID, orgID, buID pulid.ID,
 ) ([]*fiscalperiod.FiscalPeriod, error) {
-	return s.fiscalPeriodRepo.ListByFiscalYearID(ctx, repositories.ListByFiscalYearIDRequest{
+	return s.fiscalPeriodRepo.ListByFiscalYearID(ctx, fiscalperiodports.ListByFiscalYearIDRequest{
 		FiscalYearID: fiscalYearID,
 		OrgID:        orgID,
 		BuID:         buID,
@@ -321,7 +323,7 @@ func (s *Service) ListPeriods(
 
 func (s *Service) ListPeriodsByFiscalYearIDs(
 	ctx context.Context,
-	req repositories.ListByFiscalYearIDsRequest,
+	req fiscalperiodports.ListByFiscalYearIDsRequest,
 ) (map[pulid.ID][]*fiscalperiod.FiscalPeriod, error) {
 	return s.fiscalPeriodRepo.ListByFiscalYearIDs(ctx, req)
 }
@@ -331,7 +333,7 @@ func (s *Service) GetPeriodForDate(
 	orgID, buID pulid.ID,
 	date int64,
 ) (*fiscalperiod.FiscalPeriod, error) {
-	return s.fiscalPeriodRepo.GetPeriodByDate(ctx, repositories.GetPeriodByDateRequest{
+	return s.fiscalPeriodRepo.GetPeriodByDate(ctx, fiscalperiodports.GetPeriodByDateRequest{
 		OrgID: orgID,
 		BuID:  buID,
 		Date:  date,
@@ -367,7 +369,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceFiscalYear,
 		ResourceID:     createdEntity.GetID().String(),
 		Operation:      permission.OpCreate,
@@ -407,7 +409,7 @@ func (s *Service) createWithPeriods(
 	var createdEntity *fiscalyear.FiscalYear
 	err := s.db.WithTx(
 		ctx,
-		ports.TxOptions{LockTimeout: fiscalYearLockTimeout},
+		kernelports.TxOptions{LockTimeout: fiscalYearLockTimeout},
 		func(txCtx context.Context, _ bun.Tx) error {
 			var txErr error
 			createdEntity, txErr = s.repo.Create(txCtx, entity)
@@ -439,7 +441,7 @@ func (s *Service) Update(
 		zap.String("userID", userID.String()),
 	)
 
-	original, err := s.repo.GetByID(ctx, repositories.GetFiscalYearByIDRequest{
+	original, err := s.repo.GetByID(ctx, fiscalyearports.GetFiscalYearByIDRequest{
 		ID: entity.GetID(),
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.GetOrganizationID(),
@@ -472,7 +474,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceFiscalYear,
 		ResourceID:     updatedEntity.GetID().String(),
 		Operation:      permission.OpUpdate,
@@ -493,7 +495,7 @@ func (s *Service) Update(
 
 func (s *Service) Delete(
 	ctx context.Context,
-	req repositories.DeleteFiscalYearRequest,
+	req fiscalyearports.DeleteFiscalYearRequest,
 	userID pulid.ID,
 ) error {
 	log := s.l.With(
@@ -502,7 +504,7 @@ func (s *Service) Delete(
 		zap.String("userID", userID.String()),
 	)
 
-	existing, err := s.repo.GetByID(ctx, repositories.GetFiscalYearByIDRequest(req))
+	existing, err := s.repo.GetByID(ctx, fiscalyearports.GetFiscalYearByIDRequest(req))
 	if err != nil {
 		log.Error("failed to get fiscal year for delete", zap.Error(err))
 		return err
@@ -517,7 +519,7 @@ func (s *Service) Delete(
 		return err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceFiscalYear,
 		ResourceID:     existing.GetID().String(),
 		Operation:      permission.OpDelete,
@@ -536,7 +538,7 @@ func (s *Service) Delete(
 
 func (s *Service) Close(
 	ctx context.Context,
-	req repositories.CloseFiscalYearRequest,
+	req fiscalyearports.CloseFiscalYearRequest,
 	userID pulid.ID,
 ) (*fiscalyear.FiscalYear, error) {
 	log := s.l.With(
@@ -544,7 +546,7 @@ func (s *Service) Close(
 		zap.String("id", req.ID.String()),
 	)
 
-	existing, err := s.repo.GetByID(ctx, repositories.GetFiscalYearByIDRequest{
+	existing, err := s.repo.GetByID(ctx, fiscalyearports.GetFiscalYearByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -566,7 +568,7 @@ func (s *Service) Close(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceFiscalYear,
 		ResourceID:     closedEntity.GetID().String(),
 		Operation:      permission.OpClose,
@@ -591,7 +593,7 @@ func (s *Service) Close(
 // entries without the status flip would be posted again on the next attempt.
 func (s *Service) closeWithAccounting(
 	ctx context.Context,
-	req repositories.CloseFiscalYearRequest,
+	req fiscalyearports.CloseFiscalYearRequest,
 	userID pulid.ID,
 ) (*fiscalyear.FiscalYear, *fiscalclose.PostResult, error) {
 	if s.db == nil {
@@ -604,7 +606,7 @@ func (s *Service) closeWithAccounting(
 	)
 	err := s.db.WithTx(
 		ctx,
-		ports.TxOptions{LockTimeout: fiscalYearLockTimeout},
+		kernelports.TxOptions{LockTimeout: fiscalYearLockTimeout},
 		func(txCtx context.Context, _ bun.Tx) error {
 			var txErr error
 			closedEntity, postResult, txErr = s.closeInTx(txCtx, req, userID)
@@ -624,10 +626,10 @@ func (s *Service) closeWithAccounting(
 
 func (s *Service) closeInTx(
 	ctx context.Context,
-	req repositories.CloseFiscalYearRequest,
+	req fiscalyearports.CloseFiscalYearRequest,
 	userID pulid.ID,
 ) (*fiscalyear.FiscalYear, *fiscalclose.PostResult, error) {
-	current, err := s.repo.GetByIDForUpdate(ctx, repositories.GetFiscalYearByIDRequest{
+	current, err := s.repo.GetByIDForUpdate(ctx, fiscalyearports.GetFiscalYearByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -657,7 +659,7 @@ func (s *Service) closeInTx(
 // of both the close and its undo.
 func (s *Service) Reopen(
 	ctx context.Context,
-	req repositories.ReopenFiscalYearRequest,
+	req fiscalyearports.ReopenFiscalYearRequest,
 	userID pulid.ID,
 ) (*fiscalyear.FiscalYear, error) {
 	log := s.l.With(
@@ -665,7 +667,7 @@ func (s *Service) Reopen(
 		zap.String("id", req.ID.String()),
 	)
 
-	existing, err := s.repo.GetByID(ctx, repositories.GetFiscalYearByIDRequest{
+	existing, err := s.repo.GetByID(ctx, fiscalyearports.GetFiscalYearByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -687,7 +689,7 @@ func (s *Service) Reopen(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceFiscalYear,
 		ResourceID:     reopenedEntity.GetID().String(),
 		Operation:      permission.OpReopen,
@@ -708,7 +710,7 @@ func (s *Service) Reopen(
 
 func (s *Service) reopenWithAccounting(
 	ctx context.Context,
-	req repositories.ReopenFiscalYearRequest,
+	req fiscalyearports.ReopenFiscalYearRequest,
 	userID pulid.ID,
 ) (*fiscalyear.FiscalYear, error) {
 	if s.db == nil {
@@ -718,7 +720,7 @@ func (s *Service) reopenWithAccounting(
 	var reopenedEntity *fiscalyear.FiscalYear
 	err := s.db.WithTx(
 		ctx,
-		ports.TxOptions{LockTimeout: fiscalYearLockTimeout},
+		kernelports.TxOptions{LockTimeout: fiscalYearLockTimeout},
 		func(txCtx context.Context, _ bun.Tx) error {
 			var txErr error
 			reopenedEntity, txErr = s.reopenInTx(txCtx, req, userID)
@@ -738,10 +740,10 @@ func (s *Service) reopenWithAccounting(
 
 func (s *Service) reopenInTx(
 	ctx context.Context,
-	req repositories.ReopenFiscalYearRequest,
+	req fiscalyearports.ReopenFiscalYearRequest,
 	userID pulid.ID,
 ) (*fiscalyear.FiscalYear, error) {
-	current, err := s.repo.GetByIDForUpdate(ctx, repositories.GetFiscalYearByIDRequest{
+	current, err := s.repo.GetByIDForUpdate(ctx, fiscalyearports.GetFiscalYearByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -775,7 +777,7 @@ func closeAuditComment(result *fiscalclose.PostResult) string {
 //nolint:funlen // existing workflow or route registration is intentionally kept together
 func (s *Service) Activate(
 	ctx context.Context,
-	req repositories.ActivateFiscalYearRequest,
+	req fiscalyearports.ActivateFiscalYearRequest,
 	userID pulid.ID,
 ) (*fiscalyear.FiscalYear, error) {
 	log := s.l.With(
@@ -784,7 +786,7 @@ func (s *Service) Activate(
 	)
 
 	if s.db == nil {
-		existing, err := s.repo.GetByID(ctx, repositories.GetFiscalYearByIDRequest(req))
+		existing, err := s.repo.GetByID(ctx, fiscalyearports.GetFiscalYearByIDRequest(req))
 		if err != nil {
 			log.Error("failed to get fiscal year", zap.Error(err))
 			return nil, err
@@ -800,7 +802,7 @@ func (s *Service) Activate(
 			return nil, err
 		}
 
-		if err = s.auditService.LogAction(&services.LogActionParams{
+		if err = s.auditService.LogAction(&auditports.LogActionParams{
 			Resource:       permission.ResourceFiscalYear,
 			ResourceID:     activatedEntity.GetID().String(),
 			Operation:      permission.OpUpdate,
@@ -823,12 +825,12 @@ func (s *Service) Activate(
 	var activatedEntity *fiscalyear.FiscalYear
 	err := s.db.WithTx(
 		ctx,
-		ports.TxOptions{LockTimeout: fiscalYearLockTimeout},
+		kernelports.TxOptions{LockTimeout: fiscalYearLockTimeout},
 		func(txCtx context.Context, _ bun.Tx) error {
 			var txErr error
 			existing, txErr = s.repo.GetByIDForUpdate(
 				txCtx,
-				repositories.GetFiscalYearByIDRequest(req),
+				fiscalyearports.GetFiscalYearByIDRequest(req),
 			)
 			if txErr != nil {
 				return txErr
@@ -836,7 +838,7 @@ func (s *Service) Activate(
 
 			if _, txErr = s.repo.GetCurrentFiscalYearForUpdate(
 				txCtx,
-				repositories.GetCurrentFiscalYearRequest{
+				fiscalyearports.GetCurrentFiscalYearRequest{
 					OrgID: req.TenantInfo.OrgID,
 					BuID:  req.TenantInfo.BuID,
 				},
@@ -861,7 +863,7 @@ func (s *Service) Activate(
 		)
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceFiscalYear,
 		ResourceID:     activatedEntity.GetID().String(),
 		Operation:      permission.OpUpdate,
@@ -912,7 +914,7 @@ func (s *Service) validateClose(
 
 	unclosedCount, err := s.fiscalPeriodRepo.CountUnclosedPeriodsByFiscalYear(
 		ctx,
-		repositories.CountUnclosedPeriodsByFiscalYearRequest{
+		fiscalperiodports.CountUnclosedPeriodsByFiscalYearRequest{
 			FiscalYearID: entity.ID,
 			OrgID:        entity.OrganizationID,
 			BuID:         entity.BusinessUnitID,
@@ -992,7 +994,7 @@ func (s *Service) generatePeriods(
 ) error {
 	periods := fy.GenerateMonthlyPeriods()
 
-	err := s.fiscalPeriodRepo.BulkCreate(ctx, &repositories.BulkCreateFiscalPeriodsRequest{
+	err := s.fiscalPeriodRepo.BulkCreate(ctx, &fiscalperiodports.BulkCreateFiscalPeriodsRequest{
 		Periods: periods,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: fy.OrganizationID,

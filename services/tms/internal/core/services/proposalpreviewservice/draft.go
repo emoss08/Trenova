@@ -11,10 +11,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/proposalexecutor"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/productguide"
@@ -28,7 +29,7 @@ type draftInput struct {
 	proposal      *agent.AgentProposal
 	modifications map[string]any
 	params        map[string]any
-	actor         *services.RequestActor
+	actor         *permissionports.RequestActor
 	timeout       time.Duration
 }
 
@@ -118,7 +119,7 @@ func (s *Service) draft(ctx context.Context, in *draftInput) (*draft, error) {
 // of a stored or typed value never differs from what runs on approval.
 func (s *Service) settleParams(
 	ctx context.Context,
-	tool services.AgentTool,
+	tool agentports.AgentTool,
 	in *draftInput,
 ) (map[string]any, []agent.PreviewWarning, error) {
 	proposal := in.proposal
@@ -142,7 +143,7 @@ func (s *Service) settleParams(
 	}
 
 	params := proposalexecutor.CoerceParams(tool, maps.Clone(proposal.ToolParams))
-	validator, validates := tool.(services.ToolValidator)
+	validator, validates := tool.(agentports.ToolValidator)
 	if !validates {
 		return params, nil, nil
 	}
@@ -165,10 +166,10 @@ func (s *Service) settleParams(
 func (s *Service) executionParams(
 	ctx context.Context,
 	proposal *agent.AgentProposal,
-	policy *services.ToolPolicy,
+	policy *agentports.ToolPolicy,
 	params map[string]any,
-	actor *services.RequestActor,
-) (services.ToolExecuteParams, error) {
+	actor *permissionports.RequestActor,
+) (agentports.ToolExecuteParams, error) {
 	return proposalexecutor.WithTimezone(
 		ctx, s.zones, proposalexecutor.ExecutionParams(proposal, policy, params, actor),
 	)
@@ -177,15 +178,15 @@ func (s *Service) executionParams(
 // assertOwner keeps a self-scoped proposal's preview to the person it is
 // for: it is about their own records, and nobody else's queue shows it.
 func assertOwner(
-	tool services.AgentTool,
+	tool agentports.AgentTool,
 	proposal *agent.AgentProposal,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) error {
-	if !services.IsSelfScoped(tool) {
+	if !agentports.IsSelfScoped(tool) {
 		return nil
 	}
 
-	owner, _ := proposal.ToolParams[services.SelfScopeOwnerParam].(string)
+	owner, _ := proposal.ToolParams[agentports.SelfScopeOwnerParam].(string)
 	if actor == nil || actor.UserID.IsNil() || owner != actor.UserID.String() {
 		return errortypes.NewNotFoundError("That proposal is not one you can preview")
 	}
@@ -194,7 +195,7 @@ func assertOwner(
 }
 
 type pin struct {
-	target  services.ToolTarget
+	target  agentports.ToolTarget
 	version int64
 }
 
@@ -204,7 +205,7 @@ func pinOf(proposal *agent.AgentProposal) *pin {
 	}
 
 	return &pin{
-		target: services.ToolTarget{
+		target: agentports.ToolTarget{
 			Resource: permission.Resource(proposal.TargetResource),
 			ID:       proposal.TargetID,
 		},
@@ -212,18 +213,18 @@ func pinOf(proposal *agent.AgentProposal) *pin {
 	}
 }
 
-func targetOf(tool services.AgentTool, params map[string]any) (services.ToolTarget, bool) {
-	targeted, ok := tool.(services.TargetedTool)
+func targetOf(tool agentports.AgentTool, params map[string]any) (agentports.ToolTarget, bool) {
+	targeted, ok := tool.(agentports.TargetedTool)
 	if !ok {
-		return services.ToolTarget{}, false
+		return agentports.ToolTarget{}, false
 	}
 
 	return targeted.Target(params)
 }
 
 type snapshotInput struct {
-	tool     services.AgentTool
-	params   services.ToolExecuteParams
+	tool     agentports.AgentTool
+	params   agentports.ToolExecuteParams
 	pin      *pin
 	timeout  time.Duration
 	labelled bool
@@ -239,7 +240,7 @@ type snapshotResult struct {
 	missing    bool
 	preview    *agent.ToolPreview
 	previewErr error
-	labels     services.RecordLabels
+	labels     agentports.RecordLabels
 }
 
 // staleness compares the pinned version with the one read now. It is
@@ -268,7 +269,7 @@ func (r *snapshotResult) staleness(proposal *agent.AgentProposal) *agent.Preview
 // still leaves the staleness known.
 func (s *Service) snapshot(ctx context.Context, in *snapshotInput) (*snapshotResult, error) {
 	result := &snapshotResult{}
-	err := s.db.WithTx(ctx, ports.TxOptions{
+	err := s.db.WithTx(ctx, kernelports.TxOptions{
 		ReadOnly:  true,
 		Isolation: sql.LevelRepeatableRead,
 	}, func(txCtx context.Context, _ bun.Tx) error {
@@ -276,7 +277,7 @@ func (s *Service) snapshot(ctx context.Context, in *snapshotInput) (*snapshotRes
 			return err
 		}
 
-		if previewer, ok := in.tool.(services.ToolPreviewer); ok {
+		if previewer, ok := in.tool.(agentports.ToolPreviewer); ok {
 			previewCtx, cancel := context.WithTimeout(txCtx, in.timeout)
 			result.preview, result.previewErr = runPreview(previewCtx, previewer, &in.params)
 			cancel()
@@ -315,7 +316,7 @@ func (s *Service) readPin(ctx context.Context, in *snapshotInput, result *snapsh
 	case errors.Is(err, sql.ErrNoRows):
 		result.missing = true
 		result.pinRead = true
-	case errors.Is(err, services.ErrRecordVersionUnsupported):
+	case errors.Is(err, agentports.ErrRecordVersionUnsupported):
 	default:
 		return fmt.Errorf("read the %s this change is for: %w", in.pin.target.Resource, err)
 	}
@@ -327,8 +328,8 @@ func (s *Service) readPin(ctx context.Context, in *snapshotInput, result *snapsh
 // failed its preview, never the request.
 func runPreview(
 	ctx context.Context,
-	previewer services.ToolPreviewer,
-	params *services.ToolExecuteParams,
+	previewer agentports.ToolPreviewer,
+	params *agentports.ToolExecuteParams,
 ) (preview *agent.ToolPreview, err error) {
 	defer func() {
 		if recovered := recover(); recovered != nil {
@@ -345,13 +346,13 @@ func runPreview(
 	return preview.Bounded(), err
 }
 
-func tenantOfParams(params *services.ToolExecuteParams) pagination.TenantInfo {
+func tenantOfParams(params *agentports.ToolExecuteParams) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: params.OrganizationID, BuID: params.BusinessUnitID}
 }
 
 // assemble turns the tool's preview into the proposal's: its coverage, its
 // changes named by their labels, or the fallback when it had nothing to say.
-func (s *Service) assemble(d *draft, tool services.AgentTool, found *snapshotResult) {
+func (s *Service) assemble(d *draft, tool agentports.AgentTool, found *snapshotResult) {
 	preview := d.preview
 	switch {
 	case found.previewErr != nil:
@@ -391,7 +392,7 @@ func (s *Service) assemble(d *draft, tool services.AgentTool, found *snapshotRes
 
 // fallback is a tool that cannot say what it would change: the parameters it
 // would run with, without the ones its policy holds Confidential.
-func (s *Service) fallback(d *draft, tool services.AgentTool) {
+func (s *Service) fallback(d *draft, tool agentports.AgentTool) {
 	params := toolpreview.Parameters(d.proposal.ToolName, tool.Policy().Resource, d.params)
 	d.preview.Summary = params.Summary
 	d.preview.Changes = params.Changes
@@ -420,7 +421,7 @@ func (s *Service) pinOutside(ctx context.Context, d *draft) error {
 	result := &snapshotResult{}
 	if err := s.readPin(ctx, &snapshotInput{
 		pin: p,
-		params: services.ToolExecuteParams{
+		params: agentports.ToolExecuteParams{
 			OrganizationID: d.proposal.OrganizationID,
 			BusinessUnitID: d.proposal.BusinessUnitID,
 		},
@@ -468,9 +469,9 @@ func staleWarning(staleness *agent.PreviewStaleness, resource string) agent.Prev
 // record named by nothing, never by its id.
 func (s *Service) labels(
 	ctx context.Context,
-	params *services.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 	preview *agent.ToolPreview,
-) services.RecordLabels {
+) agentports.RecordLabels {
 	if s.labeler == nil {
 		return nil
 	}
@@ -509,7 +510,7 @@ func (s *Service) labels(
 	return labels
 }
 
-func applyLabels(changes []agent.RecordChange, labels services.RecordLabels) {
+func applyLabels(changes []agent.RecordChange, labels agentports.RecordLabels) {
 	for i := range changes {
 		change := &changes[i]
 		if change.Label == "" {
@@ -525,7 +526,7 @@ func applyLabels(changes []agent.RecordChange, labels services.RecordLabels) {
 	}
 }
 
-func labelRef(ref *agent.PreviewRef, labels services.RecordLabels) {
+func labelRef(ref *agent.PreviewRef, labels agentports.RecordLabels) {
 	if ref == nil {
 		return
 	}

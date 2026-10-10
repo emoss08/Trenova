@@ -10,14 +10,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/planservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -33,31 +33,31 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	DB           ports.DBConnection
-	Repo         repositories.OrganizationRepository
-	SSORepo      repositories.SSOConfigRepository
-	AuditService services.AuditService
-	Storage      storage.Client
+	DB           kernelports.DBConnection
+	Repo         tenantports.OrganizationRepository
+	SSORepo      tenantports.SSOConfigRepository
+	AuditService auditports.AuditService
+	Storage      kernelports.Client
 	Config       *config.Config
 	Validator    *Validator
 	Encryption   *encryptionservice.Service
-	Plans        services.PlanService `optional:"true"`
+	Plans        platformplanports.PlanService `optional:"true"`
 }
 
 type service struct {
 	l            *zap.Logger
-	db           ports.DBConnection
-	repo         repositories.OrganizationRepository
-	ssoRepo      repositories.SSOConfigRepository
-	auditService services.AuditService
-	storage      storage.Client
+	db           kernelports.DBConnection
+	repo         tenantports.OrganizationRepository
+	ssoRepo      tenantports.SSOConfigRepository
+	auditService auditports.AuditService
+	storage      kernelports.Client
 	storageCfg   *config.StorageConfig
 	v            *Validator
 	enc          *encryptionservice.Service
-	plans        services.PlanService
+	plans        platformplanports.PlanService
 }
 
-func New(p Params) services.OrganizationService {
+func New(p Params) tenantports.OrganizationService {
 	return &service{
 		l:            p.Logger.Named("service.organization"),
 		db:           p.DB,
@@ -74,16 +74,16 @@ func New(p Params) services.OrganizationService {
 
 func (s *service) GetByID(
 	ctx context.Context,
-	req repositories.GetOrganizationByIDRequest,
+	req tenantports.GetOrganizationByIDRequest,
 ) (*tenant.Organization, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *service) GetByIDs(
 	ctx context.Context,
-	req services.GetOrganizationsByIDsRequest,
+	req tenantports.GetOrganizationsByIDsRequest,
 ) ([]*tenant.Organization, error) {
-	return s.repo.GetByIDs(ctx, repositories.GetOrganizationsByIDsRequest{
+	return s.repo.GetByIDs(ctx, tenantports.GetOrganizationsByIDsQuery{
 		TenantInfo:      req.TenantInfo,
 		OrganizationIDs: req.OrganizationIDs,
 		IncludeState:    req.IncludeState,
@@ -93,7 +93,7 @@ func (s *service) GetByIDs(
 
 func (s *service) SelectOptions(
 	ctx context.Context,
-	req *repositories.SelectOrganizationOptionsRequest,
+	req *tenantports.SelectOrganizationOptionsRequest,
 ) (*pagination.ListResult[*tenant.Organization], error) {
 	return s.repo.SelectOptions(ctx, req)
 }
@@ -109,7 +109,7 @@ func (s *service) Update(
 	}
 
 	var updatedEntity *tenant.Organization
-	if err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	if err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		if err := s.guardCapabilityDisable(txCtx, entity); err != nil {
 			return err
 		}
@@ -171,7 +171,7 @@ func mapOrganizationUniqueConstraint(err error) error {
 
 func (s *service) UploadLogo(
 	ctx context.Context,
-	req *services.UploadLogoRequest,
+	req *tenantports.UploadLogoRequest,
 	userID pulid.ID,
 ) (*tenant.Organization, error) {
 	log := s.l.With(
@@ -196,7 +196,7 @@ func (s *service) UploadLogo(
 		req.File.Filename,
 	)
 
-	if _, err = s.storage.Upload(ctx, &storage.UploadParams{
+	if _, err = s.storage.Upload(ctx, &kernelports.UploadParams{
 		Key:         key,
 		ContentType: contentType,
 		Size:        req.File.Size,
@@ -211,7 +211,7 @@ func (s *service) UploadLogo(
 			WithInternal(err)
 	}
 
-	entity, err := s.repo.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+	entity, err := s.repo.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: req.OrganizationID,
 			BuID:  req.TenantInfo.BuID,
@@ -242,7 +242,7 @@ func (s *service) UploadLogo(
 		}
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceOrganization,
 		ResourceID:     updatedEntity.GetResourceID(),
 		Operation:      permission.OpUpdate,
@@ -260,9 +260,9 @@ func (s *service) UploadLogo(
 
 func (s *service) GetLogoURL(
 	ctx context.Context,
-	req services.GetLogoURLRequest,
-) (*services.GetLogoURLResponse, error) {
-	entity, err := s.repo.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+	req tenantports.GetLogoURLRequest,
+) (*tenantports.GetLogoURLResponse, error) {
+	entity, err := s.repo.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: req.OrganizationID,
 			BuID:  req.TenantInfo.BuID,
@@ -277,10 +277,10 @@ func (s *service) GetLogoURL(
 	}
 
 	if fileutils.IsExternalURL(entity.LogoURL) {
-		return &services.GetLogoURLResponse{URL: entity.LogoURL}, nil
+		return &tenantports.GetLogoURLResponse{URL: entity.LogoURL}, nil
 	}
 
-	url, err := s.storage.GetPresignedURL(ctx, &storage.PresignedURLParams{
+	url, err := s.storage.GetPresignedURL(ctx, &kernelports.PresignedURLParams{
 		Key:    entity.LogoURL,
 		Expiry: s.storageCfg.GetPresignedURLExpiry(),
 	})
@@ -289,14 +289,14 @@ func (s *service) GetLogoURL(
 			WithInternal(err)
 	}
 
-	return &services.GetLogoURLResponse{URL: url}, nil
+	return &tenantports.GetLogoURLResponse{URL: url}, nil
 }
 
 func (s *service) DeleteLogo(
 	ctx context.Context,
-	req services.DeleteLogoRequest,
+	req tenantports.DeleteLogoRequest,
 ) (*tenant.Organization, error) {
-	org, err := s.repo.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+	org, err := s.repo.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: req.OrganizationID,
 			BuID:  req.TenantInfo.BuID,
@@ -367,11 +367,11 @@ func (s *service) validateLogoFile(file *multipart.FileHeader) *errortypes.Multi
 func (s *service) GetMicrosoftSSOConfig(
 	ctx context.Context,
 	organizationID pulid.ID,
-) (*services.MicrosoftSSOConfig, error) {
+) (*tenantports.MicrosoftSSOConfig, error) {
 	entity, err := s.ssoRepo.GetByOrganizationID(ctx, organizationID, tenant.SSOProviderAzureAD)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
-			return &services.MicrosoftSSOConfig{
+			return &tenantports.MicrosoftSSOConfig{
 				OrganizationID: organizationID.String(),
 			}, nil
 		}
@@ -386,8 +386,8 @@ func (s *service) GetMicrosoftSSOConfig(
 func (s *service) UpsertMicrosoftSSOConfig(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	cfg *services.MicrosoftSSOConfig,
-) (*services.MicrosoftSSOConfig, error) {
+	cfg *tenantports.MicrosoftSSOConfig,
+) (*tenantports.MicrosoftSSOConfig, error) {
 	if cfg == nil {
 		return nil, errortypes.NewValidationError(
 			"config",
@@ -475,7 +475,7 @@ func (s *service) UpsertMicrosoftSSOConfig(
 	return mapMicrosoftSSOConfig(saved), nil
 }
 
-func mapMicrosoftSSOConfig(entity *tenant.SSOConfig) *services.MicrosoftSSOConfig {
+func mapMicrosoftSSOConfig(entity *tenant.SSOConfig) *tenantports.MicrosoftSSOConfig {
 	if entity == nil {
 		return nil
 	}
@@ -485,7 +485,7 @@ func mapMicrosoftSSOConfig(entity *tenant.SSOConfig) *services.MicrosoftSSOConfi
 		allowedDomains = []string{}
 	}
 
-	return &services.MicrosoftSSOConfig{
+	return &tenantports.MicrosoftSSOConfig{
 		OrganizationID:   entity.OrganizationID.String(),
 		Enabled:          entity.Enabled,
 		EnforceSSO:       entity.EnforceSSO,
@@ -513,11 +513,11 @@ func ssoSecretAAD(tenantInfo pagination.TenantInfo, provider string) encryptions
 func (s *service) GetOktaSSOConfig(
 	ctx context.Context,
 	organizationID pulid.ID,
-) (*services.OktaSSOConfig, error) {
+) (*tenantports.OktaSSOConfig, error) {
 	entity, err := s.ssoRepo.GetByOrganizationID(ctx, organizationID, tenant.SSOProviderOkta)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
-			return &services.OktaSSOConfig{
+			return &tenantports.OktaSSOConfig{
 				OrganizationID: organizationID.String(),
 				Scopes:         []string{"openid", "profile", "email"},
 			}, nil
@@ -533,8 +533,8 @@ func (s *service) GetOktaSSOConfig(
 func (s *service) UpsertOktaSSOConfig(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	cfg *services.OktaSSOConfig,
-) (*services.OktaSSOConfig, error) {
+	cfg *tenantports.OktaSSOConfig,
+) (*tenantports.OktaSSOConfig, error) {
 	if cfg == nil {
 		return nil, errortypes.NewValidationError(
 			"config",
@@ -627,7 +627,7 @@ func (s *service) UpsertOktaSSOConfig(
 	return mapOktaSSOConfig(saved), nil
 }
 
-func mapOktaSSOConfig(entity *tenant.SSOConfig) *services.OktaSSOConfig {
+func mapOktaSSOConfig(entity *tenant.SSOConfig) *tenantports.OktaSSOConfig {
 	if entity == nil {
 		return nil
 	}
@@ -642,7 +642,7 @@ func mapOktaSSOConfig(entity *tenant.SSOConfig) *services.OktaSSOConfig {
 		scopes = []string{"openid", "profile", "email"}
 	}
 
-	return &services.OktaSSOConfig{
+	return &tenantports.OktaSSOConfig{
 		OrganizationID:   entity.OrganizationID.String(),
 		Enabled:          entity.Enabled,
 		EnforceSSO:       entity.EnforceSSO,

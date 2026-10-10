@@ -33,9 +33,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -46,7 +46,7 @@ import (
 // MaxIDsPerResource bounds one resource's query: every record the longest
 // record subset may offer a person to untick. A preview names a few dozen;
 // anything past this is left unlabelled.
-const MaxIDsPerResource = services.MaxRecordLabelsPerResource
+const MaxIDsPerResource = agentports.MaxRecordLabelsPerResource
 
 const labelAlias = " AS label"
 
@@ -60,7 +60,7 @@ type Labeler struct {
 	db *postgres.Connection
 }
 
-func New(p Params) services.RecordLabeler {
+func New(p Params) agentports.RecordLabeler {
 	return &Labeler{db: p.DB}
 }
 
@@ -232,8 +232,8 @@ func (l *Labeler) Labels(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	refs map[permission.Resource][]pulid.ID,
-) (services.RecordLabels, error) {
-	labels := make(services.RecordLabels, len(refs))
+) (agentports.RecordLabels, error) {
+	labels := make(agentports.RecordLabels, len(refs))
 
 	resources := make([]permission.Resource, 0, len(refs))
 	for resource := range refs {

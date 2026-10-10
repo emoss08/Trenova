@@ -12,23 +12,31 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs/documentuploadcontract"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs/thumbnailcontract"
-
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
 	"github.com/emoss08/trenova/internal/core/services/usageservice"
 	workflowstarterservice "github.com/emoss08/trenova/internal/core/services/workflowstarter"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs/documentuploadcontract"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs/thumbnailcontract"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentpacketruleports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentsearchprojectionports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/documentshipmentdraftports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -49,50 +57,50 @@ type Params struct {
 	fx.In
 
 	Logger               *zap.Logger
-	DB                   ports.DBConnection
-	Repo                 repositories.DocumentRepository
-	PacketRuleRepo       repositories.DocumentPacketRuleRepository
-	DocumentTypeRepo     repositories.DocumentTypeRepository
-	DraftRepo            repositories.DocumentShipmentDraftRepository
-	Shipments            repositories.ShipmentRepository
-	CacheRepo            repositories.DocumentCacheRepository
-	SessionRepo          repositories.DocumentUploadSessionRepository
-	Storage              storage.Client
+	DB                   kernelports.DBConnection
+	Repo                 documentports.DocumentRepository
+	PacketRuleRepo       documentpacketruleports.DocumentPacketRuleRepository
+	DocumentTypeRepo     documenttypeports.DocumentTypeRepository
+	DraftRepo            documentshipmentdraftports.DocumentShipmentDraftRepository
+	Shipments            shipmentports.ShipmentRepository
+	CacheRepo            customerports.DocumentCacheRepository
+	SessionRepo          documentuploadports.DocumentUploadSessionRepository
+	Storage              kernelports.Client
 	Validator            *Validator
-	AuditService         services.AuditService
-	DocumentIntelligence services.DocumentContentService
-	SearchProjection     services.DocumentSearchProjectionService
-	WorkflowStarter      services.WorkflowStarter
-	UsageProvider        services.UsageProvider `optional:"true"`
+	AuditService         auditports.AuditService
+	DocumentIntelligence documentports.DocumentContentService
+	SearchProjection     documentsearchprojectionports.DocumentSearchProjectionService
+	WorkflowStarter      kernelports.WorkflowStarter
+	UsageProvider        platformcatalogports.UsageProvider `optional:"true"`
 	Config               *config.Config
 	ThumbnailGenerator   *thumbnailservice.Generator
 	Encryption           *encryptionservice.Service
-	Realtime             services.RealtimeService
-	AICorrections        services.AICorrectionService `optional:"true"`
+	Realtime             agentports.RealtimeService
+	AICorrections        aicorrectionports.AICorrectionService `optional:"true"`
 }
 
 type Service struct {
 	l                    *zap.Logger
-	db                   ports.DBConnection
-	repo                 repositories.DocumentRepository
-	packetRuleRepo       repositories.DocumentPacketRuleRepository
-	documentTypeRepo     repositories.DocumentTypeRepository
-	draftRepo            repositories.DocumentShipmentDraftRepository
-	shipments            repositories.ShipmentRepository
-	cacheRepo            repositories.DocumentCacheRepository
-	sessionRepo          repositories.DocumentUploadSessionRepository
-	storage              storage.Client
+	db                   kernelports.DBConnection
+	repo                 documentports.DocumentRepository
+	packetRuleRepo       documentpacketruleports.DocumentPacketRuleRepository
+	documentTypeRepo     documenttypeports.DocumentTypeRepository
+	draftRepo            documentshipmentdraftports.DocumentShipmentDraftRepository
+	shipments            shipmentports.ShipmentRepository
+	cacheRepo            customerports.DocumentCacheRepository
+	sessionRepo          documentuploadports.DocumentUploadSessionRepository
+	storage              kernelports.Client
 	validator            *Validator
-	auditService         services.AuditService
-	documentIntelligence services.DocumentContentService
-	searchProjection     services.DocumentSearchProjectionService
-	workflowStarter      services.WorkflowStarter
-	usageProvider        services.UsageProvider
+	auditService         auditports.AuditService
+	documentIntelligence documentports.DocumentContentService
+	searchProjection     documentsearchprojectionports.DocumentSearchProjectionService
+	workflowStarter      kernelports.WorkflowStarter
+	usageProvider        platformcatalogports.UsageProvider
 	config               *config.StorageConfig
 	thumbnailGenerator   *thumbnailservice.Generator
 	encryption           *encryptionservice.Service
-	realtime             services.RealtimeService
-	aiCorrections        services.AICorrectionService
+	realtime             agentports.RealtimeService
+	aiCorrections        aicorrectionports.AICorrectionService
 }
 
 func New(p Params) *Service { //nolint:gocritic // stable API shape
@@ -136,15 +144,15 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 	}
 }
 
-type UploadRequest = services.UploadRequest
+type UploadRequest = documentports.UploadRequest
 
-type UploadResult = services.DocumentUploadResult
+type UploadResult = documentports.DocumentUploadResult
 
-type DocumentContent = services.DocumentContent
+type DocumentContent = documentports.DocumentContent
 
 type BulkUploadRequest struct {
 	TenantInfo   pagination.TenantInfo
-	Actor        services.RequestActor
+	Actor        permissionports.RequestActor
 	Files        []*multipart.FileHeader
 	ResourceID   string
 	ResourceType string
@@ -158,27 +166,27 @@ type BulkUploadResult struct {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListDocumentsRequest,
+	req *documentports.ListDocumentsRequest,
 ) (*pagination.ListResult[*document.Document], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) SelectOptions(
 	ctx context.Context,
-	req *repositories.DocumentSelectOptionsRequest,
+	req *documentports.DocumentSelectOptionsRequest,
 ) (*pagination.ListResult[*document.Document], error) {
 	return s.repo.SelectOptions(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	req repositories.GetDocumentByIDRequest,
+	req documentports.GetDocumentByIDRequest,
 ) (*document.Document, error) {
 	entity, err := s.cacheRepo.GetByID(ctx, req)
 	if err == nil {
 		return entity, nil
 	}
-	if !errors.Is(err, repositories.ErrCacheMiss) {
+	if !errors.Is(err, customerports.ErrCacheMiss) {
 		s.l.Warn(
 			"failed to load document from cache",
 			zap.Error(err),
@@ -191,14 +199,14 @@ func (s *Service) Get(
 
 func (s *Service) GetByResource(
 	ctx context.Context,
-	req *repositories.GetDocumentsByResourceRequest,
+	req *documentports.GetDocumentsByResourceRequest,
 ) ([]*document.Document, error) {
 	return s.repo.GetByResourceID(ctx, req)
 }
 
 func (s *Service) Upload(
 	ctx context.Context,
-	req *services.UploadRequest,
+	req *documentports.UploadRequest,
 ) (*UploadResult, error) {
 	log := s.l.With(
 		zap.String("operation", "Upload"),
@@ -276,7 +284,7 @@ func (s *Service) Upload(
 		return nil, err
 	}
 
-	fileInfo, err := s.storage.Upload(ctx, &storage.UploadParams{
+	fileInfo, err := s.storage.Upload(ctx, &kernelports.UploadParams{
 		Key:         storagePath,
 		ContentType: contentType,
 		Size:        int64(len(uploadBody)),
@@ -341,7 +349,7 @@ func (s *Service) Upload(
 
 	createdDoc := doc
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceDocument,
 		ResourceID:     createdDoc.GetID().String(),
 		Operation:      permission.OpCreate,
@@ -382,7 +390,7 @@ func (s *Service) Upload(
 func (s *Service) publishDocumentInvalidation(
 	ctx context.Context,
 	doc *document.Document,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	operation permission.Operation,
 ) {
 	if s.realtime == nil || doc == nil {
@@ -412,7 +420,7 @@ func (s *Service) publishDocumentInvalidation(
 
 func (s *Service) prepareUploadLineage(
 	ctx context.Context,
-	req *services.UploadRequest,
+	req *documentports.UploadRequest,
 	docID pulid.ID,
 ) (pulid.ID, *document.Document, error) {
 	if strings.TrimSpace(req.LineageID) == "" {
@@ -467,7 +475,7 @@ func (s *Service) recordDocumentUploadUsage(
 	log *zap.Logger,
 	doc *document.Document,
 	tenantInfo pagination.TenantInfo,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) {
 	if _, err := usageservice.RecordDocumentUpload(
 		ctx,
@@ -554,7 +562,7 @@ func (s *Service) BulkUpload(
 	}
 
 	for _, file := range req.Files {
-		uploadResult, err := s.Upload(ctx, &services.UploadRequest{
+		uploadResult, err := s.Upload(ctx, &documentports.UploadRequest{
 			TenantInfo:   req.TenantInfo,
 			Actor:        req.Actor,
 			File:         file,
@@ -579,7 +587,7 @@ func (s *Service) BulkUpload(
 
 func (s *Service) GetDownloadURL(
 	ctx context.Context,
-	req repositories.GetDocumentByIDRequest,
+	req documentports.GetDocumentByIDRequest,
 ) (string, error) {
 	log := s.l.With(
 		zap.String("operation", "GetDownloadURL"),
@@ -591,7 +599,7 @@ func (s *Service) GetDownloadURL(
 		return "", err
 	}
 
-	url, err := s.storage.GetPresignedURL(ctx, &storage.PresignedURLParams{
+	url, err := s.storage.GetPresignedURL(ctx, &kernelports.PresignedURLParams{
 		Key:                doc.StoragePath,
 		Expiry:             s.config.GetPresignedURLExpiry(),
 		ContentDisposition: fileutils.ContentDisposition("attachment", doc.OriginalName),
@@ -607,7 +615,7 @@ func (s *Service) GetDownloadURL(
 
 func (s *Service) GetViewURL(
 	ctx context.Context,
-	req repositories.GetDocumentByIDRequest,
+	req documentports.GetDocumentByIDRequest,
 ) (string, error) {
 	log := s.l.With(
 		zap.String("operation", "GetViewURL"),
@@ -619,7 +627,7 @@ func (s *Service) GetViewURL(
 		return "", err
 	}
 
-	url, err := s.storage.GetPresignedURL(ctx, &storage.PresignedURLParams{
+	url, err := s.storage.GetPresignedURL(ctx, &kernelports.PresignedURLParams{
 		Key:                doc.StoragePath,
 		Expiry:             s.config.GetPresignedURLExpiry(),
 		ContentDisposition: viewContentDisposition(doc),
@@ -635,7 +643,7 @@ func (s *Service) GetViewURL(
 
 func (s *Service) GetDownloadContent(
 	ctx context.Context,
-	req repositories.GetDocumentByIDRequest,
+	req documentports.GetDocumentByIDRequest,
 ) (*DocumentContent, error) {
 	doc, err := s.repo.GetByID(ctx, req)
 	if err != nil {
@@ -659,7 +667,7 @@ func (s *Service) GetDownloadContent(
 
 func (s *Service) GetViewContent(
 	ctx context.Context,
-	req repositories.GetDocumentByIDRequest,
+	req documentports.GetDocumentByIDRequest,
 ) (*DocumentContent, error) {
 	doc, err := s.repo.GetByID(ctx, req)
 	if err != nil {
@@ -683,7 +691,7 @@ func (s *Service) GetViewContent(
 
 func (s *Service) GetPreviewContent(
 	ctx context.Context,
-	req repositories.GetDocumentByIDRequest,
+	req documentports.GetDocumentByIDRequest,
 ) (*DocumentContent, error) {
 	doc, err := s.repo.GetByID(ctx, req)
 	if err != nil {
@@ -785,7 +793,7 @@ func documentStorageAAD(
 
 func (s *Service) Delete(
 	ctx context.Context,
-	req repositories.DeleteDocumentRequest,
+	req documentports.DeleteDocumentRequest,
 	userID pulid.ID,
 ) error {
 	log := s.l.With(
@@ -793,13 +801,13 @@ func (s *Service) Delete(
 		zap.String("documentId", req.ID.String()),
 	)
 
-	doc, err := s.repo.GetByID(ctx, repositories.GetDocumentByIDRequest(req))
+	doc, err := s.repo.GetByID(ctx, documentports.GetDocumentByIDRequest(req))
 	if err != nil {
 		return err
 	}
 
 	if doc.LineageID.IsNil() {
-		if err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		if err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 			if txErr := s.detachUploadSessionsForDocuments(
 				txCtx,
 				[]pulid.ID{doc.ID},
@@ -815,7 +823,7 @@ func (s *Service) Delete(
 		}
 
 		s.cleanupDocumentStorage(ctx, log, doc)
-		if err = s.auditService.LogAction(&services.LogActionParams{
+		if err = s.auditService.LogAction(&auditports.LogActionParams{
 			Resource:       permission.ResourceDocument,
 			ResourceID:     doc.GetID().String(),
 			Operation:      permission.OpDelete,
@@ -829,7 +837,7 @@ func (s *Service) Delete(
 		return nil
 	}
 
-	versions, err := s.repo.ListVersions(ctx, repositories.ListDocumentVersionsRequest{
+	versions, err := s.repo.ListVersions(ctx, documentports.ListDocumentVersionsRequest{
 		LineageID:  doc.LineageID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -837,7 +845,7 @@ func (s *Service) Delete(
 		return err
 	}
 
-	if err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	if err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		versionIDs := documentIDs(versions)
 		lineageIDs := []pulid.ID{doc.LineageID}
 		if txErr := s.detachUploadSessionsForDocuments(
@@ -850,7 +858,7 @@ func (s *Service) Delete(
 				WithInternal(txErr)
 		}
 
-		return s.repo.DeleteByLineageIDs(txCtx, repositories.DeleteDocumentLineageRequest{
+		return s.repo.DeleteByLineageIDs(txCtx, documentports.DeleteDocumentLineageRequest{
 			LineageIDs: lineageIDs,
 			TenantInfo: req.TenantInfo,
 		})
@@ -862,7 +870,7 @@ func (s *Service) Delete(
 		s.cleanupDocumentStorage(ctx, log, version)
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceDocument,
 		ResourceID:     doc.GetID().String(),
 		Operation:      permission.OpDelete,
@@ -916,7 +924,7 @@ func (s *Service) BulkDelete( //nolint:gocognit // legacy workflow
 		docs,
 		func(doc *document.Document) bool { return doc.LineageID.IsNil() },
 	) {
-		if err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		if err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 			if txErr := s.detachUploadSessionsForDocuments(
 				txCtx,
 				documentIDs(docs),
@@ -929,7 +937,7 @@ func (s *Service) BulkDelete( //nolint:gocognit // legacy workflow
 				return errortypes.NewDatabaseError("Failed to detach upload sessions from documents").
 					WithInternal(txErr)
 			}
-			return s.repo.BulkDelete(txCtx, repositories.BulkDeleteDocumentRequest{
+			return s.repo.BulkDelete(txCtx, documentports.BulkDeleteDocumentRequest{
 				IDs:        req.IDs,
 				TenantInfo: req.TenantInfo,
 			})
@@ -943,7 +951,7 @@ func (s *Service) BulkDelete( //nolint:gocognit // legacy workflow
 			s.cleanupDocumentStorage(ctx, log, doc)
 		}
 		for _, doc := range docs {
-			if err = s.auditService.LogAction(&services.LogActionParams{
+			if err = s.auditService.LogAction(&auditports.LogActionParams{
 				Resource:       permission.ResourceDocument,
 				ResourceID:     doc.GetID().String(),
 				Operation:      permission.OpDelete,
@@ -978,7 +986,7 @@ func (s *Service) BulkDelete( //nolint:gocognit // legacy workflow
 		lineageIDs = append(lineageIDs, doc.LineageID)
 	}
 
-	if err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	if err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		if txErr := s.detachUploadSessionsForDocuments(
 			txCtx,
 			docIDs,
@@ -992,7 +1000,7 @@ func (s *Service) BulkDelete( //nolint:gocognit // legacy workflow
 				WithInternal(txErr)
 		}
 
-		return s.repo.DeleteByLineageIDs(txCtx, repositories.DeleteDocumentLineageRequest{
+		return s.repo.DeleteByLineageIDs(txCtx, documentports.DeleteDocumentLineageRequest{
 			LineageIDs: lineageIDs,
 			TenantInfo: req.TenantInfo,
 		})
@@ -1010,7 +1018,7 @@ func (s *Service) BulkDelete( //nolint:gocognit // legacy workflow
 	}
 
 	for _, doc := range docs {
-		if err = s.auditService.LogAction(&services.LogActionParams{
+		if err = s.auditService.LogAction(&auditports.LogActionParams{
 			Resource:       permission.ResourceDocument,
 			ResourceID:     doc.GetID().String(),
 			Operation:      permission.OpDelete,
@@ -1087,7 +1095,7 @@ func (s *Service) detachUploadSessionsForDocuments(
 
 func (s *Service) GetPreviewURL(
 	ctx context.Context,
-	req repositories.GetDocumentByIDRequest,
+	req documentports.GetDocumentByIDRequest,
 ) (string, error) {
 	log := s.l.With(
 		zap.String("operation", "GetPreviewURL"),
@@ -1103,7 +1111,7 @@ func (s *Service) GetPreviewURL(
 		return "", errortypes.NewNotFoundError("Preview not available for this document")
 	}
 
-	url, err := s.storage.GetPresignedURL(ctx, &storage.PresignedURLParams{
+	url, err := s.storage.GetPresignedURL(ctx, &kernelports.PresignedURLParams{
 		Key:    doc.PreviewStoragePath,
 		Expiry: s.config.GetPresignedURLExpiry(),
 	})
@@ -1132,7 +1140,7 @@ func (s *Service) PresignDocumentURLs(
 			continue
 		}
 
-		downloadURL, err := s.storage.GetPresignedURL(ctx, &storage.PresignedURLParams{
+		downloadURL, err := s.storage.GetPresignedURL(ctx, &kernelports.PresignedURLParams{
 			Key:                doc.StoragePath,
 			Expiry:             expiry,
 			ContentDisposition: fileutils.ContentDisposition("attachment", doc.OriginalName),
@@ -1147,7 +1155,7 @@ func (s *Service) PresignDocumentURLs(
 
 		set := DocumentURLSet{DownloadURL: downloadURL}
 		if doc.PreviewStatus == document.PreviewStatusReady && doc.PreviewStoragePath != "" {
-			previewURL, previewErr := s.storage.GetPresignedURL(ctx, &storage.PresignedURLParams{
+			previewURL, previewErr := s.storage.GetPresignedURL(ctx, &kernelports.PresignedURLParams{
 				Key:    doc.PreviewStoragePath,
 				Expiry: expiry,
 			})
@@ -1220,7 +1228,7 @@ func (s *Service) deleteStoredObject(ctx context.Context, key, versionID string)
 		versionID = fileInfo.VersionID
 	}
 
-	return s.storage.DeleteObject(ctx, &storage.DeleteObjectParams{
+	return s.storage.DeleteObject(ctx, &kernelports.DeleteObjectParams{
 		Key:       key,
 		VersionID: versionID,
 	})

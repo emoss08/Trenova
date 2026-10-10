@@ -21,15 +21,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/conversationschedule"
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
 	"github.com/emoss08/trenova/internal/core/services/planservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -73,16 +77,16 @@ type turns interface {
 	) (*conversation.AssistantTurn, error)
 	Active(
 		ctx context.Context,
-		req repositories.ActiveAssistantTurnRequest,
+		req agentports.ActiveAssistantTurnRequest,
 	) (*conversation.AssistantTurn, error)
 }
 
 // threads is the part of the conversation repository a schedule needs.
 type threads interface {
-	GetThread(ctx context.Context, req repositories.GetThreadRequest) (*conversation.Thread, error)
+	GetThread(ctx context.Context, req agentports.GetThreadRequest) (*conversation.Thread, error)
 	GetThreadOwned(
 		ctx context.Context,
-		req repositories.GetThreadOwnedRequest,
+		req agentports.GetThreadOwnedRequest,
 	) (*conversation.Thread, error)
 }
 
@@ -97,35 +101,35 @@ type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Schedules     repositories.ConversationScheduleRepository
-	Conversations repositories.ConversationRepository
-	Definitions   repositories.AgentDefinitionRepository
-	Users         repositories.UserRepository
-	Organizations repositories.OrganizationRepository
-	Permissions   serviceports.PermissionEngine
+	Schedules     conversationscheduleports.ConversationScheduleRepository
+	Conversations agentports.ConversationRepository
+	Definitions   agentdefinitionports.AgentDefinitionRepository
+	Users         tenantports.UserRepository
+	Organizations tenantports.OrganizationRepository
+	Permissions   permissionports.PermissionEngine
 	Turns         *assistantturnservice.Service
-	Workflows     serviceports.WorkflowStarter
-	Syncer        serviceports.ConversationScheduleSyncer
-	Realtime      serviceports.RealtimeService `optional:"true"`
-	Plans         serviceports.PlanService     `optional:"true"`
+	Workflows     kernelports.WorkflowStarter
+	Syncer        conversationscheduleports.ConversationScheduleSyncer
+	Realtime      agentports.RealtimeService    `optional:"true"`
+	Plans         platformplanports.PlanService `optional:"true"`
 }
 
 type Service struct {
 	l           *zap.Logger
-	schedules   repositories.ConversationScheduleRepository
+	schedules   conversationscheduleports.ConversationScheduleRepository
 	threads     threads
-	definitions repositories.AgentDefinitionRepository
-	permissions serviceports.PermissionEngine
+	definitions agentdefinitionports.AgentDefinitionRepository
+	permissions permissionports.PermissionEngine
 	turns       turns
-	workflows   serviceports.WorkflowStarter
-	syncer      serviceports.ConversationScheduleSyncer
-	realtime    serviceports.RealtimeService
+	workflows   kernelports.WorkflowStarter
+	syncer      conversationscheduleports.ConversationScheduleSyncer
+	realtime    agentports.RealtimeService
 	clocks      clocks
-	plans       serviceports.PlanService
+	plans       platformplanports.PlanService
 	now         func() int64
 }
 
-var _ serviceports.ConversationScheduleRunner = (*Service)(nil)
+var _ conversationscheduleports.ConversationScheduleRunner = (*Service)(nil)
 
 func New(p Params) *Service {
 	return &Service{
@@ -154,7 +158,7 @@ func (s *Service) requireAutomation(ctx context.Context, tenant pagination.Tenan
 }
 
 // NewRunner is the same service, as what a firing schedule asks to run.
-func NewRunner(s *Service) serviceports.ConversationScheduleRunner {
+func NewRunner(s *Service) conversationscheduleports.ConversationScheduleRunner {
 	return s
 }
 
@@ -163,7 +167,7 @@ type CreateRequest struct {
 	ThreadID pulid.ID
 	// Text is the message as sent: the cadence and the request.
 	Text  string
-	Actor serviceports.RequestActor
+	Actor permissionports.RequestActor
 }
 
 // CreateResult is the schedule and the message that draws its card.
@@ -186,7 +190,7 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (*CreateResult,
 		return nil, err
 	}
 
-	thread, err := s.threads.GetThread(ctx, repositories.GetThreadRequest{
+	thread, err := s.threads.GetThread(ctx, agentports.GetThreadRequest{
 		ID:         req.ThreadID,
 		UserID:     req.Actor.UserID,
 		TenantInfo: tenant,
@@ -228,7 +232,7 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (*CreateResult,
 		return nil, multiErr
 	}
 
-	saved, message, err := s.schedules.Create(ctx, repositories.CreateConversationScheduleRequest{
+	saved, message, err := s.schedules.Create(ctx, conversationscheduleports.CreateConversationScheduleRequest{
 		Schedule: schedule,
 		Message: conversation.Message{
 			Role:    conversation.RoleUser,
@@ -253,7 +257,7 @@ func (s *Service) withinLimits(
 	tenant pagination.TenantInfo,
 	userID, threadID pulid.ID,
 ) error {
-	inThread, err := s.schedules.Count(ctx, repositories.CountConversationSchedulesRequest{
+	inThread, err := s.schedules.Count(ctx, conversationscheduleports.CountConversationSchedulesRequest{
 		UserID:     userID,
 		ThreadID:   threadID,
 		TenantInfo: tenant,
@@ -268,7 +272,7 @@ func (s *Service) withinLimits(
 		)
 	}
 
-	total, err := s.schedules.Count(ctx, repositories.CountConversationSchedulesRequest{
+	total, err := s.schedules.Count(ctx, conversationscheduleports.CountConversationSchedulesRequest{
 		UserID:     userID,
 		TenantInfo: tenant,
 	})
@@ -312,7 +316,7 @@ func (s *Service) timezoneFor(
 // ThreadID is set.
 type ListRequest struct {
 	ThreadID pulid.ID
-	Actor    serviceports.RequestActor
+	Actor    permissionports.RequestActor
 	Limit    int
 	Offset   int
 }
@@ -324,7 +328,7 @@ func (s *Service) List(
 	tenant := tenantOf(req.Actor)
 	if req.ThreadID.IsNotNil() {
 		// Reading a conversation's schedules is reading the conversation.
-		if _, err := s.threads.GetThread(ctx, repositories.GetThreadRequest{
+		if _, err := s.threads.GetThread(ctx, agentports.GetThreadRequest{
 			ID:         req.ThreadID,
 			UserID:     req.Actor.UserID,
 			TenantInfo: tenant,
@@ -333,7 +337,7 @@ func (s *Service) List(
 		}
 	}
 
-	return s.schedules.List(ctx, repositories.ListConversationSchedulesRequest{
+	return s.schedules.List(ctx, conversationscheduleports.ListConversationSchedulesRequest{
 		UserID:     req.Actor.UserID,
 		ThreadID:   req.ThreadID,
 		TenantInfo: tenant,
@@ -345,11 +349,11 @@ func (s *Service) List(
 // ScheduleRequest names one of the person's schedules.
 type ScheduleRequest struct {
 	ScheduleID pulid.ID
-	Actor      serviceports.RequestActor
+	Actor      permissionports.RequestActor
 }
 
-func (r ScheduleRequest) get() repositories.GetConversationScheduleRequest {
-	return repositories.GetConversationScheduleRequest{
+func (r ScheduleRequest) get() conversationscheduleports.GetConversationScheduleRequest {
+	return conversationscheduleports.GetConversationScheduleRequest{
 		ID:         r.ScheduleID,
 		UserID:     r.Actor.UserID,
 		TenantInfo: tenantOf(r.Actor),
@@ -447,25 +451,25 @@ func (s *Service) RunNow(
 // for the caller to retry once that reply ends.
 func (s *Service) Fire(
 	ctx context.Context,
-	req serviceports.FireConversationScheduleRequest,
-) (*serviceports.FireConversationScheduleResult, error) {
+	req conversationscheduleports.FireConversationScheduleRequest,
+) (*conversationscheduleports.FireConversationScheduleResult, error) {
 	ctx = dbscope.WithValidTenant(ctx, req.TenantInfo.DBTenant())
 
-	schedule, err := s.schedules.Get(ctx, repositories.GetConversationScheduleRequest{
+	schedule, err := s.schedules.Get(ctx, conversationscheduleports.GetConversationScheduleRequest{
 		ID:         req.ScheduleID,
 		TenantInfo: req.TenantInfo,
 	})
 	if errortypes.IsNotFoundError(err) {
-		return &serviceports.FireConversationScheduleResult{Skipped: SkipGone, Gone: true}, nil
+		return &conversationscheduleports.FireConversationScheduleResult{Skipped: SkipGone, Gone: true}, nil
 	}
 	if err != nil {
 		return nil, err
 	}
 	if !schedule.Enabled {
-		return &serviceports.FireConversationScheduleResult{Skipped: SkipPaused}, nil
+		return &conversationscheduleports.FireConversationScheduleResult{Skipped: SkipPaused}, nil
 	}
 	if schedule.LastRunAt != nil && req.FiredAt > 0 && *schedule.LastRunAt >= req.FiredAt {
-		return &serviceports.FireConversationScheduleResult{
+		return &conversationscheduleports.FireConversationScheduleResult{
 			Skipped: SkipAlreadyRan,
 			TurnID:  schedule.LastTurnID,
 		}, nil
@@ -476,10 +480,10 @@ func (s *Service) Fire(
 		return nil, err
 	}
 	if skipped != "" {
-		return &serviceports.FireConversationScheduleResult{Skipped: skipped}, nil
+		return &conversationscheduleports.FireConversationScheduleResult{Skipped: skipped}, nil
 	}
 
-	return &serviceports.FireConversationScheduleResult{TurnID: turn.ID}, nil
+	return &conversationscheduleports.FireConversationScheduleResult{TurnID: turn.ID}, nil
 }
 
 // run starts one turn of a schedule, as its conversation's owner, and records
@@ -494,7 +498,7 @@ func (s *Service) run(
 		BuID:   schedule.BusinessUnitID,
 		UserID: schedule.UserID,
 	}
-	thread, err := s.threads.GetThreadOwned(ctx, repositories.GetThreadOwnedRequest{
+	thread, err := s.threads.GetThreadOwned(ctx, agentports.GetThreadOwnedRequest{
 		ID:         schedule.ThreadID,
 		TenantInfo: tenant,
 	})
@@ -505,8 +509,8 @@ func (s *Service) run(
 	// The turn runs as the person whose conversation it is, with the access
 	// they have now. One who lost the agent keeps the conversation to read
 	// and the schedule to delete, but it asks nothing for them.
-	owner := serviceports.RequestActor{
-		PrincipalType:  serviceports.PrincipalTypeUser,
+	owner := permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    thread.UserID,
 		UserID:         thread.UserID,
 		OrganizationID: thread.OrganizationID,
@@ -524,7 +528,7 @@ func (s *Service) run(
 		return nil, SkipNoAccess, nil
 	}
 
-	active, err := s.turns.Active(ctx, repositories.ActiveAssistantTurnRequest{
+	active, err := s.turns.Active(ctx, agentports.ActiveAssistantTurnRequest{
 		ThreadID:   thread.ID,
 		UserID:     thread.UserID,
 		TenantInfo: tenant,
@@ -560,7 +564,7 @@ func (s *Service) run(
 
 	now := s.now()
 	next := schedule.Next(now)
-	if err = s.schedules.RecordRun(ctx, repositories.RecordConversationScheduleRunRequest{
+	if err = s.schedules.RecordRun(ctx, conversationscheduleports.RecordConversationScheduleRunRequest{
 		ID:         schedule.ID,
 		TenantInfo: tenant,
 		RunAt:      now,
@@ -587,10 +591,10 @@ func (s *Service) run(
 func (s *Service) mayUseAgent(
 	ctx context.Context,
 	thread *conversation.Thread,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 	tenant pagination.TenantInfo,
 ) (bool, error) {
-	definition, err := s.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	definition, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         thread.AgentDefinitionID,
 		TenantInfo: tenant,
 	})
@@ -620,11 +624,11 @@ func (s *Service) announce(
 
 	err := s.realtime.PublishResourceInvalidation(
 		publishCtx,
-		&serviceports.PublishResourceInvalidationRequest{
+		&agentports.PublishResourceInvalidationRequest{
 			OrganizationID: schedule.OrganizationID,
 			BusinessUnitID: schedule.BusinessUnitID,
 			AudienceUserID: schedule.UserID,
-			Resource:       serviceports.ConversationSchedulesResource,
+			Resource:       conversationscheduleports.ConversationSchedulesResource,
 			Action:         action,
 			RecordID:       schedule.ID,
 			Entity: map[string]any{
@@ -643,7 +647,7 @@ func (s *Service) announce(
 	}
 }
 
-func tenantOf(actor serviceports.RequestActor) pagination.TenantInfo {
+func tenantOf(actor permissionports.RequestActor) pagination.TenantInfo {
 	return pagination.TenantInfo{
 		OrgID:  actor.OrganizationID,
 		BuID:   actor.BusinessUnitID,
@@ -653,8 +657,8 @@ func tenantOf(actor serviceports.RequestActor) pagination.TenantInfo {
 
 // repositoryClocks reads timezones from the user and organization records.
 type repositoryClocks struct {
-	users         repositories.UserRepository
-	organizations repositories.OrganizationRepository
+	users         tenantports.UserRepository
+	organizations tenantports.OrganizationRepository
 }
 
 func (c repositoryClocks) userTimezone(
@@ -665,7 +669,7 @@ func (c repositoryClocks) userTimezone(
 	if c.users == nil {
 		return ""
 	}
-	user, err := c.users.GetByID(ctx, repositories.GetUserByIDRequest{
+	user, err := c.users.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo:   tenant,
 		LookupUserID: userID,
 	})
@@ -683,7 +687,7 @@ func (c repositoryClocks) organizationTimezone(
 	if c.organizations == nil {
 		return ""
 	}
-	org, err := c.organizations.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+	org, err := c.organizations.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: tenant,
 	})
 	if err != nil {

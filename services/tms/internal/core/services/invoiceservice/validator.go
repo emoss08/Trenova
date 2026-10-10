@@ -3,14 +3,15 @@ package invoiceservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/services/invoiceledger"
-
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/accountingcontrolpolicyservice"
+	"github.com/emoss08/trenova/internal/core/services/invoiceledger"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -24,18 +25,18 @@ type ValidatorParams struct {
 
 	DB               *postgres.Connection
 	Logger           *zap.Logger
-	AccountingRepo   repositories.AccountingControlRepository
-	FiscalPeriodRepo repositories.FiscalPeriodRepository
-	ShipmentRepo     repositories.ShipmentRepository
+	AccountingRepo   tenantports.AccountingControlRepository
+	FiscalPeriodRepo fiscalperiodports.FiscalPeriodRepository
+	ShipmentRepo     shipmentports.ShipmentRepository
 	AccountingPolicy *accountingcontrolpolicyservice.Service
 }
 
 type Validator struct {
 	validator        *validationframework.TenantedValidator[*invoice.Invoice]
 	l                *zap.Logger
-	accountingRepo   repositories.AccountingControlRepository
-	fiscalPeriodRepo repositories.FiscalPeriodRepository
-	shipmentRepo     repositories.ShipmentRepository
+	accountingRepo   tenantports.AccountingControlRepository
+	fiscalPeriodRepo fiscalperiodports.FiscalPeriodRepository
+	shipmentRepo     shipmentports.ShipmentRepository
 	accountingPolicy *accountingcontrolpolicyservice.Service
 }
 
@@ -197,7 +198,7 @@ func (v *Validator) validatePostingPeriodPolicy(
 		return
 	}
 
-	period, err := v.fiscalPeriodRepo.GetPeriodByDate(ctx, repositories.GetPeriodByDateRequest{
+	period, err := v.fiscalPeriodRepo.GetPeriodByDate(ctx, fiscalperiodports.GetPeriodByDateRequest{
 		OrgID: entity.OrganizationID,
 		BuID:  entity.BusinessUnitID,
 		Date:  postedAt,

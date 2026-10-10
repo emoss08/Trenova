@@ -1,11 +1,14 @@
 package fleetcodeservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/fleetcodeportsmock"
 	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/fleetcodeports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -26,17 +29,17 @@ func newTestValidator() *Validator {
 }
 
 type testDeps struct {
-	repo        *mocks.MockFleetCodeRepository
-	audit       *mocks.MockAuditService
-	transformer *mocks.MockDataTransformer
+	repo        *fleetcodeportsmock.MockFleetCodeRepository
+	audit       *auditportsmock.MockAuditService
+	transformer *accessorialchargeportsmock.MockDataTransformer
 	svc         *Service
 }
 
 func setupTest(t *testing.T) *testDeps {
 	t.Helper()
-	repo := mocks.NewMockFleetCodeRepository(t)
-	auditSvc := mocks.NewMockAuditService(t)
-	transformer := mocks.NewMockDataTransformer(t)
+	repo := fleetcodeportsmock.NewMockFleetCodeRepository(t)
+	auditSvc := auditportsmock.NewMockAuditService(t)
+	transformer := accessorialchargeportsmock.NewMockDataTransformer(t)
 	svc := &Service{
 		l:            zap.NewNop(),
 		repo:         repo,
@@ -152,7 +155,7 @@ func TestList_Success(t *testing.T) {
 		Items: []*fleetcode.FleetCode{newTestEntity()},
 		Total: 1,
 	}
-	req := &repositories.ListFleetCodesRequest{
+	req := &fleetcodeports.ListFleetCodesRequest{
 		Filter: &pagination.QueryOptions{},
 	}
 
@@ -172,7 +175,7 @@ func TestGet_Success(t *testing.T) {
 	ctx := t.Context()
 	entity := newTestEntity()
 
-	req := repositories.GetFleetCodeByIDRequest{
+	req := fleetcodeports.GetFleetCodeByIDRequest{
 		ID: entity.ID,
 		TenantInfo: &pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -313,7 +316,7 @@ func TestList_Error(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
 	ctx := t.Context()
-	req := &repositories.ListFleetCodesRequest{
+	req := &fleetcodeports.ListFleetCodesRequest{
 		Filter: &pagination.QueryOptions{},
 	}
 	dbErr := errors.New("db error")
@@ -333,7 +336,7 @@ func TestGet_NotFound(t *testing.T) {
 	ctx := t.Context()
 	notFoundErr := errors.New("not found")
 
-	req := repositories.GetFleetCodeByIDRequest{
+	req := fleetcodeports.GetFleetCodeByIDRequest{
 		ID: pulid.MustNew("fc_"),
 		TenantInfo: &pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
@@ -368,9 +371,9 @@ func TestSelectOptions_Error(t *testing.T) {
 
 func TestNew(t *testing.T) {
 	t.Parallel()
-	repo := mocks.NewMockFleetCodeRepository(t)
-	auditSvc := mocks.NewMockAuditService(t)
-	transformer := mocks.NewMockDataTransformer(t)
+	repo := fleetcodeportsmock.NewMockFleetCodeRepository(t)
+	auditSvc := auditportsmock.NewMockAuditService(t)
+	transformer := accessorialchargeportsmock.NewMockDataTransformer(t)
 	logger := zap.NewNop()
 
 	svc := New(Params{

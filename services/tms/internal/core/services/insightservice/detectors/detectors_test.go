@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/insight"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/insightservice/detector"
 	"github.com/emoss08/trenova/internal/core/services/insightservice/detectors"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,22 +18,22 @@ import (
 // exercised without a database. The whole point of splitting the queries behind
 // a port is that these judgement calls become testable.
 type fakeMetrics struct {
-	onTime     []repositories.CustomerOnTimeRow
-	unbilled   []repositories.UnbilledShipmentRow
-	detention  []repositories.UnbilledDetentionRow
-	emptyMiles []repositories.CustomerEmptyMilesRow
-	credential []repositories.ExpiringCredentialRow
+	onTime     []insightports.CustomerOnTimeRow
+	unbilled   []insightports.UnbilledShipmentRow
+	detention  []insightports.UnbilledDetentionRow
+	emptyMiles []insightports.CustomerEmptyMilesRow
+	credential []insightports.ExpiringCredentialRow
 	err        error
 
-	lastWindow      repositories.InsightWindowRequest
-	lastUnbilledReq repositories.UnbilledShipmentsRequest
-	lastCredential  repositories.ExpiringCredentialsRequest
+	lastWindow      insightports.InsightWindowRequest
+	lastUnbilledReq insightports.UnbilledShipmentsRequest
+	lastCredential  insightports.ExpiringCredentialsRequest
 }
 
 func (m *fakeMetrics) CustomerOnTimeComparison(
 	_ context.Context,
-	req repositories.InsightWindowRequest,
-) ([]repositories.CustomerOnTimeRow, error) {
+	req insightports.InsightWindowRequest,
+) ([]insightports.CustomerOnTimeRow, error) {
 	m.lastWindow = req
 
 	return m.onTime, m.err
@@ -41,8 +41,8 @@ func (m *fakeMetrics) CustomerOnTimeComparison(
 
 func (m *fakeMetrics) UnbilledDeliveredShipments(
 	_ context.Context,
-	req repositories.UnbilledShipmentsRequest,
-) ([]repositories.UnbilledShipmentRow, error) {
+	req insightports.UnbilledShipmentsRequest,
+) ([]insightports.UnbilledShipmentRow, error) {
 	m.lastUnbilledReq = req
 
 	return m.unbilled, m.err
@@ -50,8 +50,8 @@ func (m *fakeMetrics) UnbilledDeliveredShipments(
 
 func (m *fakeMetrics) UnbilledDetention(
 	_ context.Context,
-	req repositories.InsightWindowRequest,
-) ([]repositories.UnbilledDetentionRow, error) {
+	req insightports.InsightWindowRequest,
+) ([]insightports.UnbilledDetentionRow, error) {
 	m.lastWindow = req
 
 	return m.detention, m.err
@@ -59,8 +59,8 @@ func (m *fakeMetrics) UnbilledDetention(
 
 func (m *fakeMetrics) CustomerEmptyMiles(
 	_ context.Context,
-	req repositories.InsightWindowRequest,
-) ([]repositories.CustomerEmptyMilesRow, error) {
+	req insightports.InsightWindowRequest,
+) ([]insightports.CustomerEmptyMilesRow, error) {
 	m.lastWindow = req
 
 	return m.emptyMiles, m.err
@@ -68,8 +68,8 @@ func (m *fakeMetrics) CustomerEmptyMiles(
 
 func (m *fakeMetrics) ExpiringCredentials(
 	_ context.Context,
-	req repositories.ExpiringCredentialsRequest,
-) ([]repositories.ExpiringCredentialRow, error) {
+	req insightports.ExpiringCredentialsRequest,
+) ([]insightports.ExpiringCredentialRow, error) {
 	m.lastCredential = req
 
 	return m.credential, m.err
@@ -97,7 +97,7 @@ func requireValidFindings(t *testing.T, findings []detector.Finding) {
 func TestOnTimeDecline_ReportsACustomerWhoseServiceFell(t *testing.T) {
 	t.Parallel()
 
-	metrics := &fakeMetrics{onTime: []repositories.CustomerOnTimeRow{{
+	metrics := &fakeMetrics{onTime: []insightports.CustomerOnTimeRow{{
 		CustomerID:    pulid.MustNew("cus_"),
 		CustomerName:  "Acme Foods",
 		CurrentTotal:  100,
@@ -126,7 +126,7 @@ func TestOnTimeDecline_ReportsACustomerWhoseServiceFell(t *testing.T) {
 func TestOnTimeDecline_IgnoresACustomerWithTooLittleVolume(t *testing.T) {
 	t.Parallel()
 
-	metrics := &fakeMetrics{onTime: []repositories.CustomerOnTimeRow{{
+	metrics := &fakeMetrics{onTime: []insightports.CustomerOnTimeRow{{
 		CustomerID:    pulid.MustNew("cus_"),
 		CustomerName:  "Tiny Shipper",
 		CurrentTotal:  4,
@@ -146,7 +146,7 @@ func TestOnTimeDecline_IgnoresACustomerWithTooLittleVolume(t *testing.T) {
 func TestOnTimeDecline_IgnoresACustomerWithNoPriorPeriod(t *testing.T) {
 	t.Parallel()
 
-	metrics := &fakeMetrics{onTime: []repositories.CustomerOnTimeRow{{
+	metrics := &fakeMetrics{onTime: []insightports.CustomerOnTimeRow{{
 		CustomerID:    pulid.MustNew("cus_"),
 		CustomerName:  "New Customer",
 		CurrentTotal:  40,
@@ -164,7 +164,7 @@ func TestOnTimeDecline_IgnoresACustomerWithNoPriorPeriod(t *testing.T) {
 func TestOnTimeDecline_IgnoresACustomerWhoImproved(t *testing.T) {
 	t.Parallel()
 
-	metrics := &fakeMetrics{onTime: []repositories.CustomerOnTimeRow{{
+	metrics := &fakeMetrics{onTime: []insightports.CustomerOnTimeRow{{
 		CustomerID:    pulid.MustNew("cus_"),
 		CustomerName:  "Improving Co",
 		CurrentTotal:  100,
@@ -182,7 +182,7 @@ func TestOnTimeDecline_IgnoresACustomerWhoImproved(t *testing.T) {
 func TestOnTimeDecline_GradesASmallerSlipAsWarning(t *testing.T) {
 	t.Parallel()
 
-	metrics := &fakeMetrics{onTime: []repositories.CustomerOnTimeRow{{
+	metrics := &fakeMetrics{onTime: []insightports.CustomerOnTimeRow{{
 		CustomerID:    pulid.MustNew("cus_"),
 		CustomerName:  "Acme Foods",
 		CurrentTotal:  100,
@@ -211,7 +211,7 @@ func TestOnTimeDecline_SurfacesARepositoryFailureRatherThanReportingNoProblems(t
 func TestUnbilledAging_ReportsRevenueSittingStill(t *testing.T) {
 	t.Parallel()
 
-	metrics := &fakeMetrics{unbilled: []repositories.UnbilledShipmentRow{{
+	metrics := &fakeMetrics{unbilled: []insightports.UnbilledShipmentRow{{
 		CustomerID:     pulid.MustNew("cus_"),
 		CustomerName:   "Borden Freight",
 		ShipmentCount:  14,
@@ -248,7 +248,7 @@ func TestUnbilledAging_AsksOnlyForShipmentsOldEnoughToBeLate(t *testing.T) {
 func TestUnbilledAging_IgnoresASingleStuckShipment(t *testing.T) {
 	t.Parallel()
 
-	metrics := &fakeMetrics{unbilled: []repositories.UnbilledShipmentRow{{
+	metrics := &fakeMetrics{unbilled: []insightports.UnbilledShipmentRow{{
 		CustomerID:     pulid.MustNew("cus_"),
 		CustomerName:   "Borden Freight",
 		ShipmentCount:  1,
@@ -265,7 +265,7 @@ func TestUnbilledAging_IgnoresASingleStuckShipment(t *testing.T) {
 func TestUnbilledAging_IgnoresAnImmaterialAmount(t *testing.T) {
 	t.Parallel()
 
-	metrics := &fakeMetrics{unbilled: []repositories.UnbilledShipmentRow{{
+	metrics := &fakeMetrics{unbilled: []insightports.UnbilledShipmentRow{{
 		CustomerID:     pulid.MustNew("cus_"),
 		CustomerName:   "Borden Freight",
 		ShipmentCount:  6,
@@ -284,7 +284,7 @@ func TestUnbilledAging_IgnoresAnImmaterialAmount(t *testing.T) {
 func TestUnbilledAging_SaysNothingRatherThanReportingZeroForAnUnreadableAmount(t *testing.T) {
 	t.Parallel()
 
-	metrics := &fakeMetrics{unbilled: []repositories.UnbilledShipmentRow{{
+	metrics := &fakeMetrics{unbilled: []insightports.UnbilledShipmentRow{{
 		CustomerID:     pulid.MustNew("cus_"),
 		CustomerName:   "Borden Freight",
 		ShipmentCount:  9,
@@ -303,7 +303,7 @@ func TestUnbilledAging_SaysNothingRatherThanReportingZeroForAnUnreadableAmount(t
 func TestUnbilledAging_NeverReportsANegativeAge(t *testing.T) {
 	t.Parallel()
 
-	metrics := &fakeMetrics{unbilled: []repositories.UnbilledShipmentRow{{
+	metrics := &fakeMetrics{unbilled: []insightports.UnbilledShipmentRow{{
 		CustomerID:     pulid.MustNew("cus_"),
 		CustomerName:   "Borden Freight",
 		ShipmentCount:  9,
@@ -323,7 +323,7 @@ func TestUnbilledAging_NeverReportsANegativeAge(t *testing.T) {
 func TestUnbilledDetention_ReportsMoneyLeftOnTheTable(t *testing.T) {
 	t.Parallel()
 
-	metrics := &fakeMetrics{detention: []repositories.UnbilledDetentionRow{{
+	metrics := &fakeMetrics{detention: []insightports.UnbilledDetentionRow{{
 		LocationID:        pulid.MustNew("loc_"),
 		LocationName:      "Dallas Distribution Center",
 		OccurrenceCount:   19,
@@ -348,7 +348,7 @@ func TestUnbilledDetention_ReportsMoneyLeftOnTheTable(t *testing.T) {
 func TestUnbilledDetention_IgnoresAnIsolatedOccurrence(t *testing.T) {
 	t.Parallel()
 
-	metrics := &fakeMetrics{detention: []repositories.UnbilledDetentionRow{{
+	metrics := &fakeMetrics{detention: []insightports.UnbilledDetentionRow{{
 		LocationID:        pulid.MustNew("loc_"),
 		LocationName:      "Dallas Distribution Center",
 		OccurrenceCount:   1,
@@ -365,7 +365,7 @@ func TestUnbilledDetention_IgnoresAnIsolatedOccurrence(t *testing.T) {
 func TestEmptyMiles_ReportsACustomerRunningEmptierThanTheBook(t *testing.T) {
 	t.Parallel()
 
-	metrics := &fakeMetrics{emptyMiles: []repositories.CustomerEmptyMilesRow{{
+	metrics := &fakeMetrics{emptyMiles: []insightports.CustomerEmptyMilesRow{{
 		CustomerID:    pulid.MustNew("cus_"),
 		CustomerName:  "Northwind Retail",
 		EmptyMiles:    "28000",
@@ -394,7 +394,7 @@ func TestEmptyMiles_ReportsACustomerRunningEmptierThanTheBook(t *testing.T) {
 func TestEmptyMiles_EscalatesAnExtremeSpread(t *testing.T) {
 	t.Parallel()
 
-	metrics := &fakeMetrics{emptyMiles: []repositories.CustomerEmptyMilesRow{{
+	metrics := &fakeMetrics{emptyMiles: []insightports.CustomerEmptyMilesRow{{
 		CustomerID:    pulid.MustNew("cus_"),
 		CustomerName:  "Northwind Retail",
 		EmptyMiles:    "35000",
@@ -417,7 +417,7 @@ func TestEmptyMiles_EscalatesAnExtremeSpread(t *testing.T) {
 func TestEmptyMiles_IgnoresAHighRatioThatMatchesTheFleet(t *testing.T) {
 	t.Parallel()
 
-	metrics := &fakeMetrics{emptyMiles: []repositories.CustomerEmptyMilesRow{{
+	metrics := &fakeMetrics{emptyMiles: []insightports.CustomerEmptyMilesRow{{
 		CustomerID:    pulid.MustNew("cus_"),
 		CustomerName:  "Spot Market Co",
 		EmptyMiles:    "26000",
@@ -436,7 +436,7 @@ func TestEmptyMiles_IgnoresAHighRatioThatMatchesTheFleet(t *testing.T) {
 func TestEmptyMiles_IgnoresACustomerWithTooFewMoves(t *testing.T) {
 	t.Parallel()
 
-	metrics := &fakeMetrics{emptyMiles: []repositories.CustomerEmptyMilesRow{{
+	metrics := &fakeMetrics{emptyMiles: []insightports.CustomerEmptyMilesRow{{
 		CustomerID:    pulid.MustNew("cus_"),
 		CustomerName:  "Occasional Shipper",
 		EmptyMiles:    "600",
@@ -456,7 +456,7 @@ func TestEmptyMiles_IgnoresACustomerWithTooFewMoves(t *testing.T) {
 func TestEmptyMiles_SaysNothingWhenThereAreNoMilesToDivideBy(t *testing.T) {
 	t.Parallel()
 
-	metrics := &fakeMetrics{emptyMiles: []repositories.CustomerEmptyMilesRow{{
+	metrics := &fakeMetrics{emptyMiles: []insightports.CustomerEmptyMilesRow{{
 		CustomerID:    pulid.MustNew("cus_"),
 		CustomerName:  "Northwind Retail",
 		EmptyMiles:    "0",
@@ -475,7 +475,7 @@ func TestEmptyMiles_SaysNothingWhenThereAreNoMilesToDivideBy(t *testing.T) {
 func TestCredentialExpiry_ReportsAClusterComingDue(t *testing.T) {
 	t.Parallel()
 
-	metrics := &fakeMetrics{credential: []repositories.ExpiringCredentialRow{{
+	metrics := &fakeMetrics{credential: []insightports.ExpiringCredentialRow{{
 		CredentialTypeID:   pulid.MustNew("wct_"),
 		CredentialTypeName: "DOT Medical Card",
 		IsRequired:         true,
@@ -500,7 +500,7 @@ func TestCredentialExpiry_ReportsAClusterComingDue(t *testing.T) {
 func TestCredentialExpiry_EscalatesWhenARequiredCredentialHasAlreadyLapsed(t *testing.T) {
 	t.Parallel()
 
-	metrics := &fakeMetrics{credential: []repositories.ExpiringCredentialRow{{
+	metrics := &fakeMetrics{credential: []insightports.ExpiringCredentialRow{{
 		CredentialTypeID:   pulid.MustNew("wct_"),
 		CredentialTypeName: "DOT Medical Card",
 		IsRequired:         true,
@@ -526,7 +526,7 @@ func TestCredentialExpiry_EscalatesWhenARequiredCredentialHasAlreadyLapsed(t *te
 func TestCredentialExpiry_NeverGradesARequiredCredentialAsMerelyInformational(t *testing.T) {
 	t.Parallel()
 
-	metrics := &fakeMetrics{credential: []repositories.ExpiringCredentialRow{{
+	metrics := &fakeMetrics{credential: []insightports.ExpiringCredentialRow{{
 		CredentialTypeID:   pulid.MustNew("wct_"),
 		CredentialTypeName: "Hazmat Endorsement",
 		IsRequired:         true,
@@ -545,7 +545,7 @@ func TestCredentialExpiry_NeverGradesARequiredCredentialAsMerelyInformational(t 
 func TestCredentialExpiry_IgnoresALoneOptionalCredential(t *testing.T) {
 	t.Parallel()
 
-	metrics := &fakeMetrics{credential: []repositories.ExpiringCredentialRow{{
+	metrics := &fakeMetrics{credential: []insightports.ExpiringCredentialRow{{
 		CredentialTypeID:   pulid.MustNew("wct_"),
 		CredentialTypeName: "Forklift Certification",
 		IsRequired:         false,

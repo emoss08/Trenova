@@ -9,7 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -18,16 +21,16 @@ import (
 
 type fakeLateCharges struct {
 	guard    *writeGuard
-	plan     *serviceports.LateChargeAssessmentResult
+	plan     *latechargeports.LateChargeAssessmentResult
 	refusal  error
-	assessed *serviceports.LateChargeAssessmentRequest
+	assessed *latechargeports.LateChargeAssessmentRequest
 }
 
 func (f *fakeLateCharges) Assess(
 	_ context.Context,
-	req *serviceports.LateChargeAssessmentRequest,
-	_ *serviceports.RequestActor,
-) (*serviceports.LateChargeAssessmentResult, error) {
+	req *latechargeports.LateChargeAssessmentRequest,
+	_ *permissionports.RequestActor,
+) (*latechargeports.LateChargeAssessmentResult, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
 	}
@@ -38,9 +41,9 @@ func (f *fakeLateCharges) Assess(
 
 func (f *fakeLateCharges) PlanAssess(
 	context.Context,
-	*serviceports.LateChargeAssessmentRequest,
-	*serviceports.RequestActor,
-) (*serviceports.LateChargeAssessmentResult, error) {
+	*latechargeports.LateChargeAssessmentRequest,
+	*permissionports.RequestActor,
+) (*latechargeports.LateChargeAssessmentResult, error) {
 	if f.refusal != nil {
 		return nil, f.refusal
 	}
@@ -48,19 +51,19 @@ func (f *fakeLateCharges) PlanAssess(
 	return f.plan, nil
 }
 
-func lateChargePlan() *serviceports.LateChargeAssessmentResult {
-	return &serviceports.LateChargeAssessmentResult{
+func lateChargePlan() *latechargeports.LateChargeAssessmentResult {
+	return &latechargeports.LateChargeAssessmentResult{
 		Preview:          true,
 		Mode:             tenant.LateChargeAssessmentModeAutomatic,
 		AutoPost:         true,
 		TotalChargeMinor: 1500,
-		Customers: []*serviceports.LateChargeCustomerResult{
+		Customers: []*latechargeports.LateChargeCustomerResult{
 			{
 				CustomerID:       pulid.MustNew("cus_"),
 				CustomerName:     "Acme Foods",
 				CurrencyCode:     "USD",
 				TotalChargeMinor: 1500,
-				Lines: []*serviceports.LateChargeLine{
+				Lines: []*latechargeports.LateChargeLine{
 					{InvoiceNumber: "INV-1", ChargeMinor: 750},
 					{InvoiceNumber: "INV-2", ChargeMinor: 750},
 				},
@@ -83,7 +86,7 @@ func TestAssessLateCharges_PreviewsEachMemoAndOnlyAPersonAssesses(t *testing.T) 
 	params := executeParams(map[string]any{paramAsOfDate: "2026-09-25"})
 
 	preview := previewWithoutWrites(t, charges.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would raise 1 late charge debit memo for 15.00")
 	assert.Contains(t, preview.Summary, "posted as it is raised")
@@ -116,14 +119,14 @@ func TestAssessLateCharges_RefusesARunThatChargesNothing(t *testing.T) {
 	tool := newAssessLateChargesTool(&fakeLateCharges{plan: plan})
 	params := executeParams(map[string]any{paramAsOfDate: "2026-09-25"})
 
-	err := tool.(serviceports.ToolValidator).Validate(t.Context(), params)
+	err := tool.(agentports.ToolValidator).Validate(t.Context(), params)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "nothing to charge")
 
 	disabled := &fakeLateCharges{refusal: errortypes.NewValidationError(
 		"mode", errortypes.ErrInvalidOperation, "Late charge assessment is disabled",
 	)}
-	preview, err := newAssessLateChargesTool(disabled).(serviceports.ToolPreviewer).
+	preview, err := newAssessLateChargesTool(disabled).(agentports.ToolPreviewer).
 		Preview(t.Context(), params)
 	require.NoError(t, err)
 	requireWarning(t, preview, agent.PreviewWarningWouldFail)
@@ -131,29 +134,29 @@ func TestAssessLateCharges_RefusesARunThatChargesNothing(t *testing.T) {
 
 type fakeSharer struct {
 	guard   *writeGuard
-	plan    *serviceports.InvoiceSharePreview
-	shared  *serviceports.ShareInvoiceRequest
+	plan    *invoiceports.InvoiceSharePreview
+	shared  *invoiceports.ShareInvoiceRequest
 	refusal error
 }
 
 func (f *fakeSharer) Share(
 	_ context.Context,
-	req *serviceports.ShareInvoiceRequest,
-	_ *serviceports.RequestActor,
-) (*serviceports.ShareInvoiceResult, error) {
+	req *invoiceports.ShareInvoiceRequest,
+	_ *permissionports.RequestActor,
+) (*invoiceports.ShareInvoiceResult, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
 	}
 	f.shared = req
 
-	return &serviceports.ShareInvoiceResult{}, nil
+	return &invoiceports.ShareInvoiceResult{}, nil
 }
 
 func (f *fakeSharer) PreviewShare(
 	context.Context,
-	*serviceports.ShareInvoiceRequest,
-	*serviceports.RequestActor,
-) (*serviceports.InvoiceSharePreview, error) {
+	*invoiceports.ShareInvoiceRequest,
+	*permissionports.RequestActor,
+) (*invoiceports.InvoiceSharePreview, error) {
 	if f.refusal != nil {
 		return nil, f.refusal
 	}
@@ -166,13 +169,13 @@ func TestShareInvoice_PreviewsWhatEachTeammateReceives(t *testing.T) {
 
 	inv := receivableInvoice("INV-2026-1042", 100000, 0)
 	dana := pulid.MustNew("usr_")
-	sharer := &fakeSharer{guard: &writeGuard{}, plan: &serviceports.InvoiceSharePreview{
+	sharer := &fakeSharer{guard: &writeGuard{}, plan: &invoiceports.InvoiceSharePreview{
 		Invoice:         inv,
 		SharedByName:    "Marcus Bell",
 		Note:            "Check the detention line",
 		Tab:             invoice.ShareTabCharges,
 		EmailConfigured: true,
-		Recipients: []serviceports.InvoiceShareRecipientPreview{{
+		Recipients: []invoiceports.InvoiceShareRecipientPreview{{
 			UserID: dana, Name: "Dana Whitfield", EmailAddress: "dana@example.com",
 			Emailed: true, Subject: "Marcus shared an invoice", Body: "Check the detention line",
 		}},
@@ -186,7 +189,7 @@ func TestShareInvoice_PreviewsWhatEachTeammateReceives(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, sharer.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would share Invoice INV-2026-1042 with Dana Whitfield")
 	change := previewChange(t, preview, 0)

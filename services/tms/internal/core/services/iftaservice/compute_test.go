@@ -4,8 +4,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/ifta"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/iftaservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -27,8 +28,8 @@ func dec(s string) decimal.Decimal { return decimal.RequireFromString(s) }
 type world struct {
 	jurisdictions map[pulid.ID]*ifta.Jurisdiction
 	tractors      map[pulid.ID]iftaservice.TractorProfile
-	miles         *repositories.MileAccumulation
-	fuel          []*repositories.FuelAccumulationRow
+	miles         *iftaports.MileAccumulation
+	fuel          []*fuelpurchaseports.FuelAccumulationRow
 	rates         map[ifta.RateKey]*ifta.TaxRate
 	byCode        map[string]*ifta.Jurisdiction
 }
@@ -40,7 +41,7 @@ func newWorld() *world {
 			tractorA: {FuelType: diesel, IFTAQualified: true},
 			tractorB: {FuelType: diesel, IFTAQualified: false},
 		},
-		miles:  &repositories.MileAccumulation{},
+		miles:  &iftaports.MileAccumulation{},
 		rates:  map[ifta.RateKey]*ifta.TaxRate{},
 		byCode: map[string]*ifta.Jurisdiction{},
 	}
@@ -69,7 +70,7 @@ func (w *world) jurisdiction(code, name string, member, surcharge bool) *ifta.Ju
 
 func (w *world) route(tractor pulid.ID, code, loaded, empty string) {
 	j := w.byCode[code]
-	w.miles.RouteRows = append(w.miles.RouteRows, &repositories.MileRow{
+	w.miles.RouteRows = append(w.miles.RouteRows, &iftaports.MileRow{
 		TractorID:        tractor,
 		CountryCode:      j.CountryCode,
 		JurisdictionCode: j.Code,
@@ -83,7 +84,7 @@ func (w *world) route(tractor pulid.ID, code, loaded, empty string) {
 
 func (w *world) manual(tractor pulid.ID, code, miles string) {
 	j := w.byCode[code]
-	w.miles.ManualRows = append(w.miles.ManualRows, &repositories.MileRow{
+	w.miles.ManualRows = append(w.miles.ManualRows, &iftaports.MileRow{
 		TractorID:        tractor,
 		CountryCode:      j.CountryCode,
 		JurisdictionCode: j.Code,
@@ -100,7 +101,7 @@ func (w *world) purchase(
 	fuelType domaintypes.IFTAFuelType,
 	gallons, taxPaid string,
 ) {
-	w.fuel = append(w.fuel, &repositories.FuelAccumulationRow{
+	w.fuel = append(w.fuel, &fuelpurchaseports.FuelAccumulationRow{
 		TractorID:      tractor,
 		JurisdictionID: w.byCode[code].ID,
 		FuelType:       fuelType,
@@ -504,7 +505,7 @@ func TestCompute_DiagnosticsBecomeProblems(t *testing.T) {
 	t.Parallel()
 	w := newWorld()
 	w.route(tractorA, "TX", "100", "0")
-	w.miles.RouteRows = append(w.miles.RouteRows, &repositories.MileRow{
+	w.miles.RouteRows = append(w.miles.RouteRows, &iftaports.MileRow{
 		CountryCode:      "US",
 		JurisdictionCode: "TX",
 		JurisdictionID:   w.byCode["TX"].ID,
@@ -512,7 +513,7 @@ func TestCompute_DiagnosticsBecomeProblems(t *testing.T) {
 		LoadedMiles:      dec("50"),
 		MoveCount:        1,
 	})
-	w.miles.RouteRows = append(w.miles.RouteRows, &repositories.MileRow{
+	w.miles.RouteRows = append(w.miles.RouteRows, &iftaports.MileRow{
 		TractorID:        tractorA,
 		CountryCode:      "MX",
 		JurisdictionCode: "CH",
@@ -520,9 +521,9 @@ func TestCompute_DiagnosticsBecomeProblems(t *testing.T) {
 		LoadedMiles:      dec("30"),
 		MoveCount:        1,
 	})
-	w.miles.Unattributed = repositories.MoveAggregate{Miles: dec("300"), MoveCount: 2}
-	w.miles.NoTractor = repositories.MoveAggregate{Miles: dec("50"), MoveCount: 1}
-	w.miles.Mismatches = []repositories.MoveMismatch{{MoveID: pulid.MustNew("sm_")}}
+	w.miles.Unattributed = iftaports.MoveAggregate{Miles: dec("300"), MoveCount: 2}
+	w.miles.NoTractor = iftaports.MoveAggregate{Miles: dec("50"), MoveCount: 1}
+	w.miles.Mismatches = []iftaports.MoveMismatch{{MoveID: pulid.MustNew("sm_")}}
 	w.purchase(tractorA, "TX", diesel, "10", "10")
 	w.rate("TX", diesel, "0.2000", "")
 

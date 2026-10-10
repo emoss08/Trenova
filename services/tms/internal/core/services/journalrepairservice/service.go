@@ -7,11 +7,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/invoiceledger"
 	"github.com/emoss08/trenova/internal/core/services/journalposting"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,11 +25,11 @@ const (
 )
 
 type Deps struct {
-	DB       ports.DBConnection
-	Repo     repositories.JournalRepairRepository
+	DB       kernelports.DBConnection
+	Repo     driversettlementports.JournalRepairRepository
 	Controls invoiceledger.ControlReader
 	Periods  journalposting.PeriodReader
-	Journals repositories.JournalPostingRepository
+	Journals journalentryports.JournalPostingRepository
 	Ledger   invoiceledger.LedgerAppender
 	Numbers  journalposting.Numberer
 	Policy   invoiceledger.Policy
@@ -108,7 +109,7 @@ func (s *Service) repairCreditMemos(ctx context.Context, req *Request, report *R
 	for {
 		batch, err := s.deps.Repo.ListUnjournaledAdjustmentMemos(
 			ctx,
-			&repositories.ListJournalRepairRequest{
+			&driversettlementports.ListJournalRepairRequest{
 				OrganizationID: req.OrganizationID,
 				AfterID:        after,
 				Limit:          req.BatchSize,
@@ -180,7 +181,7 @@ func (s *Service) repairDriverPayments(
 	for {
 		batch, err := s.deps.Repo.ListUnjournaledDriverPayments(
 			ctx,
-			&repositories.ListJournalRepairRequest{
+			&driversettlementports.ListJournalRepairRequest{
 				OrganizationID: req.OrganizationID,
 				AfterID:        after,
 				Limit:          req.BatchSize,
@@ -222,7 +223,7 @@ func (s *Service) repairDriverPayments(
 func (s *Service) repairDriverPayment(
 	ctx context.Context,
 	req *Request,
-	candidate *repositories.DriverPaymentRepair,
+	candidate *driversettlementports.DriverPaymentRepair,
 	controls map[pulid.ID]*tenant.AccountingControl,
 ) error {
 	settlement := candidate.Settlement
@@ -269,7 +270,7 @@ func (s *Service) stampPaidBatch(
 ) error {
 	return s.deps.Repo.SetDriverSettlementPaidBatch(
 		ctx,
-		&repositories.SetDriverSettlementPaidBatchParams{
+		&driversettlementports.SetDriverSettlementPaidBatchParams{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: settlement.OrganizationID,
 				BuID:  settlement.BusinessUnitID,
@@ -318,7 +319,7 @@ func (s *Service) inTx(ctx context.Context, dryRun bool, fn func(context.Context
 	if dryRun {
 		return fn(ctx)
 	}
-	return s.deps.DB.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	return s.deps.DB.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		return fn(txCtx)
 	})
 }

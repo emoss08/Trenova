@@ -1,7 +1,8 @@
 package detentioncontract
 
 import (
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -24,9 +25,9 @@ type StoreNoticePDFPayload struct {
 	FileName     string   `json:"fileName"`
 	FileSize     int64    `json:"fileSize"`
 
-	Provenance *services.RenderedDocument `json:"provenance"`
+	Provenance *documenttemplateports.RenderedDocument `json:"provenance"`
 
-	PrincipalType services.PrincipalType `json:"principalType"`
-	PrincipalID   pulid.ID               `json:"principalId"`
-	APIKeyID      pulid.ID               `json:"apiKeyId"`
+	PrincipalType kernelports.PrincipalType `json:"principalType"`
+	PrincipalID   pulid.ID                  `json:"principalId"`
+	APIKeyID      pulid.ID                  `json:"apiKeyId"`
 }

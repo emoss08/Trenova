@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -69,7 +69,7 @@ func (a *Activities) SweepMissingRateConfirmationsActivity(
 	now := timeutils.NowUnix()
 	tenders, err := a.repo.ListAcceptedMissingRateConfirmation(
 		ctx,
-		repositories.ListAcceptedMissingRateConfirmationRequest{
+		tenderports.ListAcceptedMissingRateConfirmationRequest{
 			AcceptedAfter:  now - issueSweepLookbackSeconds,
 			AcceptedBefore: now - issueSweepGraceSeconds,
 			Limit:          issueSweepBatchLimit,

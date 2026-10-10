@@ -11,10 +11,13 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -29,19 +32,19 @@ type Params struct {
 	fx.In
 
 	LC                    fx.Lifecycle
-	AuditRepository       repositories.AuditRepository
-	AuditBufferRepository repositories.AuditBufferRepository
-	Realtime              services.RealtimeService
+	AuditRepository       auditports.AuditRepository
+	AuditBufferRepository auditports.AuditBufferRepository
+	Realtime              agentports.RealtimeService
 	Logger                *zap.Logger
 	Config                *config.Config
 	Metrics               *metrics.Registry
-	AgentDefinitions      repositories.AgentDefinitionRepository `optional:"true"`
+	AgentDefinitions      agentdefinitionports.AgentDefinitionRepository `optional:"true"`
 }
 
 type service struct {
-	repo       repositories.AuditRepository
-	bufferRepo repositories.AuditBufferRepository
-	realtime   services.RealtimeService
+	repo       auditports.AuditRepository
+	bufferRepo auditports.AuditBufferRepository
+	realtime   agentports.RealtimeService
 	logger     *zap.Logger
 	config     *config.Config
 	sdm        *SensitiveDataManager
@@ -73,7 +76,7 @@ var clientBitToOperation = map[int64]permission.Operation{
 }
 
 //nolint:gocritic // this is dependency injection
-func New(p Params) services.AuditService {
+func New(p Params) auditports.AuditService {
 	var definitions agentDefinitionReader
 	if p.AgentDefinitions != nil {
 		definitions = p.AgentDefinitions
@@ -99,7 +102,7 @@ func New(p Params) services.AuditService {
 	return srv
 }
 
-func (s *service) LogAction(params *services.LogActionParams, opts ...services.LogOption) error {
+func (s *service) LogAction(params *auditports.LogActionParams, opts ...auditports.LogOption) error {
 	if params == nil {
 		return ErrAuditParamsRequired
 	}
@@ -188,7 +191,7 @@ func (s *service) LogAction(params *services.LogActionParams, opts ...services.L
 	return nil
 }
 
-func (s *service) LogActions(bulkEntries []services.BulkLogEntry) error {
+func (s *service) LogActions(bulkEntries []auditports.BulkLogEntry) error {
 	if len(bulkEntries) == 0 {
 		return nil
 	}
@@ -212,7 +215,7 @@ func (s *service) LogActions(bulkEntries []services.BulkLogEntry) error {
 }
 
 func (s *service) buildBulkAuditEntries(
-	bulkEntries []services.BulkLogEntry,
+	bulkEntries []auditports.BulkLogEntry,
 ) (criticalEntries, nonCriticalEntries []*audit.Entry, validCount int) {
 	for i, bulkEntry := range bulkEntries {
 		if bulkEntry.Params == nil {
@@ -283,12 +286,12 @@ func (s *service) buildBulkAuditEntries(
 	return criticalEntries, nonCriticalEntries, validCount
 }
 
-func resolveAuditPrincipal(params *services.LogActionParams) (services.PrincipalType, pulid.ID) {
+func resolveAuditPrincipal(params *auditports.LogActionParams) (kernelports.PrincipalType, pulid.ID) {
 	if params.PrincipalType != "" && params.PrincipalID.IsNotNil() {
 		return params.PrincipalType, params.PrincipalID
 	}
 
-	return services.PrincipalTypeUser, params.UserID
+	return permissionports.PrincipalTypeUser, params.UserID
 }
 
 func (s *service) insertCriticalEntries(criticalEntries []*audit.Entry) error {
@@ -379,7 +382,7 @@ func (s *service) publishRealtimeInvalidation(ctx context.Context, entries []*au
 		buID          pulid.ID
 		actorUserID   pulid.ID
 		actorID       pulid.ID
-		actorType     services.PrincipalType
+		actorType     kernelports.PrincipalType
 		actorAPIKeyID pulid.ID
 		record        pulid.ID
 		count         int
@@ -399,7 +402,7 @@ func (s *service) publishRealtimeInvalidation(ctx context.Context, entries []*au
 				buID:          entry.BusinessUnitID,
 				actorUserID:   entry.UserID,
 				actorID:       entry.PrincipalID,
-				actorType:     services.PrincipalType(entry.PrincipalType),
+				actorType:     kernelports.PrincipalType(entry.PrincipalType),
 				actorAPIKeyID: entry.APIKeyID,
 				record:        entry.ID,
 			}
@@ -483,7 +486,7 @@ func (s *service) publishRecordChanges(ctx context.Context, entries []*audit.Ent
 			OrganizationID: entry.OrganizationID,
 			BusinessUnitID: entry.BusinessUnitID,
 			ActorUserID:    entry.UserID,
-			ActorType:      services.PrincipalType(entry.PrincipalType),
+			ActorType:      kernelports.PrincipalType(entry.PrincipalType),
 			ActorID:        entry.PrincipalID,
 			ActorAPIKeyID:  entry.APIKeyID,
 			Resource:       realtimeinvalidation.RecordChangeResource(entry.Resource),
@@ -502,7 +505,7 @@ func (s *service) publishRecordChanges(ctx context.Context, entries []*audit.Ent
 
 func (s *service) List(
 	ctx context.Context,
-	req *repositories.ListAuditEntriesRequest,
+	req *auditports.ListAuditEntriesRequest,
 ) (*pagination.ListResult[*audit.Entry], error) {
 	log := s.logger.With(
 		zap.String("operation", "List"),
@@ -523,7 +526,7 @@ func (s *service) List(
 
 func (s *service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListAuditEntriesConnectionRequest,
+	req *auditports.ListAuditEntriesConnectionRequest,
 ) (*pagination.CursorListResult[*audit.Entry], error) {
 	log := s.logger.With(
 		zap.String("operation", "ListConnection"),
@@ -544,7 +547,7 @@ func (s *service) ListConnection(
 
 func (s *service) ListByResourceID(
 	ctx context.Context,
-	req *repositories.ListByResourceIDRequest,
+	req *auditports.ListByResourceIDRequest,
 ) (*pagination.ListResult[*audit.Entry], error) {
 	log := s.logger.With(
 		zap.String("operation", "ListByResourceID"),
@@ -564,7 +567,7 @@ func (s *service) ListByResourceID(
 
 func (s *service) GetByID(
 	ctx context.Context,
-	req repositories.GetAuditEntryByIDOptions,
+	req auditports.GetAuditEntryByIDOptions,
 ) (*audit.Entry, error) {
 	log := s.logger.With(
 		zap.String("operation", "GetByID"),
@@ -582,35 +585,35 @@ func (s *service) GetByID(
 
 func (s *service) RegisterSensitiveFields(
 	resource permission.Resource,
-	fields []services.SensitiveField,
+	fields []auditports.SensitiveField,
 ) error {
 	return s.sdm.RegisterSensitiveFields(resource, fields)
 }
 
 func (s *service) registerDefaultSensitiveFields() error {
-	if err := s.sdm.RegisterSensitiveFields(permission.ResourceUser, []services.SensitiveField{
-		{Name: "password", Action: services.SensitiveFieldOmit},
-		{Name: "hashedPassword", Action: services.SensitiveFieldOmit},
-		{Name: "emailAddress", Action: services.SensitiveFieldMask},
-		{Name: "address", Action: services.SensitiveFieldMask},
+	if err := s.sdm.RegisterSensitiveFields(permission.ResourceUser, []auditports.SensitiveField{
+		{Name: "password", Action: auditports.SensitiveFieldOmit},
+		{Name: "hashedPassword", Action: auditports.SensitiveFieldOmit},
+		{Name: "emailAddress", Action: auditports.SensitiveFieldMask},
+		{Name: "address", Action: auditports.SensitiveFieldMask},
 	}); err != nil {
 		return err
 	}
 
 	if err := s.sdm.RegisterSensitiveFields(
 		permission.ResourceOrganization,
-		[]services.SensitiveField{
-			{Name: "logoUrl", Action: services.SensitiveFieldMask},
-			{Name: "taxId", Action: services.SensitiveFieldMask},
+		[]auditports.SensitiveField{
+			{Name: "logoUrl", Action: auditports.SensitiveFieldMask},
+			{Name: "taxId", Action: auditports.SensitiveFieldMask},
 		},
 	); err != nil {
 		return err
 	}
 
-	if err := s.sdm.RegisterSensitiveFields(permission.ResourceWorker, []services.SensitiveField{
-		{Name: "licenseNumber", Action: services.SensitiveFieldMask},
-		{Name: "dateOfBirth", Action: services.SensitiveFieldMask},
-		{Path: "profile", Name: "licenseNumber", Action: services.SensitiveFieldMask},
+	if err := s.sdm.RegisterSensitiveFields(permission.ResourceWorker, []auditports.SensitiveField{
+		{Name: "licenseNumber", Action: auditports.SensitiveFieldMask},
+		{Name: "dateOfBirth", Action: auditports.SensitiveFieldMask},
+		{Path: "profile", Name: "licenseNumber", Action: auditports.SensitiveFieldMask},
 	}); err != nil {
 		return err
 	}

@@ -13,8 +13,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
@@ -26,6 +24,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fiscalyearrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoicerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/journalpostingrepository"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -263,7 +263,7 @@ func TestPostAndApplyCreatesPaymentApplicationJournalAndSettlementUpdate(t *test
 	)
 	payment, err := svc.PostAndApply(
 		ctx,
-		&serviceports.PostCustomerPaymentRequest{
+		&customerpaymentports.PostCustomerPaymentRequest{
 			CustomerID:      shp.CustomerID,
 			PaymentDate:     now.Unix(),
 			AccountingDate:  now.Unix(),
@@ -271,7 +271,7 @@ func TestPostAndApplyCreatesPaymentApplicationJournalAndSettlementUpdate(t *test
 			PaymentMethod:   customerpayment.MethodACH,
 			ReferenceNumber: "PAY-1",
 			CurrencyCode:    "USD",
-			Applications: []*serviceports.CustomerPaymentApplicationInput{
+			Applications: []*customerpaymentports.CustomerPaymentApplicationInput{
 				{InvoiceID: inv.ID, AppliedAmountMinor: 10000},
 			},
 			TenantInfo: pagination.TenantInfo{
@@ -289,7 +289,7 @@ func TestPostAndApplyCreatesPaymentApplicationJournalAndSettlementUpdate(t *test
 
 	updatedInvoice, err := invoiceRepo.GetByID(
 		ctx,
-		repositories.GetInvoiceByIDRequest{
+		invoiceports.GetInvoiceByIDRequest{
 			ID:         inv.ID,
 			TenantInfo: pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID},
 		},
@@ -535,7 +535,7 @@ func TestPostAndApplySupportsUnappliedCash(t *testing.T) {
 	)
 	payment, err := svc.PostAndApply(
 		ctx,
-		&serviceports.PostCustomerPaymentRequest{
+		&customerpaymentports.PostCustomerPaymentRequest{
 			CustomerID:      shp.CustomerID,
 			PaymentDate:     now.Unix(),
 			AccountingDate:  now.Unix(),
@@ -543,7 +543,7 @@ func TestPostAndApplySupportsUnappliedCash(t *testing.T) {
 			PaymentMethod:   customerpayment.MethodACH,
 			ReferenceNumber: "PAY-2",
 			CurrencyCode:    "USD",
-			Applications: []*serviceports.CustomerPaymentApplicationInput{
+			Applications: []*customerpaymentports.CustomerPaymentApplicationInput{
 				{InvoiceID: inv.ID, AppliedAmountMinor: 10000},
 			},
 			TenantInfo: pagination.TenantInfo{
@@ -561,7 +561,7 @@ func TestPostAndApplySupportsUnappliedCash(t *testing.T) {
 
 	updatedInvoice, err := invoiceRepo.GetByID(
 		ctx,
-		repositories.GetInvoiceByIDRequest{
+		invoiceports.GetInvoiceByIDRequest{
 			ID:         inv.ID,
 			TenantInfo: pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID},
 		},
@@ -844,7 +844,7 @@ func TestApplyUnappliedLaterCreatesReclassificationEntry(t *testing.T) {
 	)
 	payment, err := svc.PostAndApply(
 		ctx,
-		&serviceports.PostCustomerPaymentRequest{
+		&customerpaymentports.PostCustomerPaymentRequest{
 			CustomerID:      shp.CustomerID,
 			PaymentDate:     now.Unix(),
 			AccountingDate:  now.Unix(),
@@ -852,7 +852,7 @@ func TestApplyUnappliedLaterCreatesReclassificationEntry(t *testing.T) {
 			PaymentMethod:   customerpayment.MethodACH,
 			ReferenceNumber: "PAY-3",
 			CurrencyCode:    "USD",
-			Applications: []*serviceports.CustomerPaymentApplicationInput{
+			Applications: []*customerpaymentports.CustomerPaymentApplicationInput{
 				{InvoiceID: inv1.ID, AppliedAmountMinor: 10000},
 			},
 			TenantInfo: pagination.TenantInfo{
@@ -868,10 +868,10 @@ func TestApplyUnappliedLaterCreatesReclassificationEntry(t *testing.T) {
 
 	payment, err = svc.ApplyUnapplied(
 		ctx,
-		&serviceports.ApplyCustomerPaymentRequest{
+		&customerpaymentports.ApplyCustomerPaymentRequest{
 			PaymentID:      payment.ID,
 			AccountingDate: now.Unix(),
-			Applications: []*serviceports.CustomerPaymentApplicationInput{
+			Applications: []*customerpaymentports.CustomerPaymentApplicationInput{
 				{InvoiceID: inv2.ID, AppliedAmountMinor: 5000},
 			},
 			TenantInfo: pagination.TenantInfo{
@@ -888,7 +888,7 @@ func TestApplyUnappliedLaterCreatesReclassificationEntry(t *testing.T) {
 
 	updatedInvoice2, err := invoiceRepo.GetByID(
 		ctx,
-		repositories.GetInvoiceByIDRequest{
+		invoiceports.GetInvoiceByIDRequest{
 			ID:         inv2.ID,
 			TenantInfo: pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID},
 		},
@@ -1123,7 +1123,7 @@ func TestReversePaymentRestoresInvoiceAndBalances(t *testing.T) {
 	)
 	payment, err := svc.PostAndApply(
 		ctx,
-		&serviceports.PostCustomerPaymentRequest{
+		&customerpaymentports.PostCustomerPaymentRequest{
 			CustomerID:      shp.CustomerID,
 			PaymentDate:     now.Unix(),
 			AccountingDate:  now.Unix(),
@@ -1131,7 +1131,7 @@ func TestReversePaymentRestoresInvoiceAndBalances(t *testing.T) {
 			PaymentMethod:   customerpayment.MethodACH,
 			ReferenceNumber: "PAY-REV",
 			CurrencyCode:    "USD",
-			Applications: []*serviceports.CustomerPaymentApplicationInput{
+			Applications: []*customerpaymentports.CustomerPaymentApplicationInput{
 				{InvoiceID: inv.ID, AppliedAmountMinor: 10000},
 			},
 			TenantInfo: pagination.TenantInfo{
@@ -1146,7 +1146,7 @@ func TestReversePaymentRestoresInvoiceAndBalances(t *testing.T) {
 
 	reversed, err := svc.Reverse(
 		ctx,
-		&serviceports.ReverseCustomerPaymentRequest{
+		&customerpaymentports.ReverseCustomerPaymentRequest{
 			PaymentID:      payment.ID,
 			AccountingDate: now.Unix(),
 			Reason:         "chargeback",
@@ -1163,7 +1163,7 @@ func TestReversePaymentRestoresInvoiceAndBalances(t *testing.T) {
 
 	updatedInvoice, err := invoiceRepo.GetByID(
 		ctx,
-		repositories.GetInvoiceByIDRequest{
+		invoiceports.GetInvoiceByIDRequest{
 			ID:         inv.ID,
 			TenantInfo: pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID},
 		},
@@ -1422,7 +1422,7 @@ func TestPostAndApplyRecognizesShortPayAndSettlesInvoice(t *testing.T) {
 	)
 	payment, err := svc.PostAndApply(
 		ctx,
-		&serviceports.PostCustomerPaymentRequest{
+		&customerpaymentports.PostCustomerPaymentRequest{
 			CustomerID:      shp.CustomerID,
 			PaymentDate:     now.Unix(),
 			AccountingDate:  now.Unix(),
@@ -1430,7 +1430,7 @@ func TestPostAndApplyRecognizesShortPayAndSettlesInvoice(t *testing.T) {
 			PaymentMethod:   customerpayment.MethodACH,
 			ReferenceNumber: "PAY-SP",
 			CurrencyCode:    "USD",
-			Applications: []*serviceports.CustomerPaymentApplicationInput{
+			Applications: []*customerpaymentports.CustomerPaymentApplicationInput{
 				{InvoiceID: inv.ID, AppliedAmountMinor: 9000, ShortPayAmountMinor: 1000},
 			},
 			TenantInfo: pagination.TenantInfo{
@@ -1448,7 +1448,7 @@ func TestPostAndApplyRecognizesShortPayAndSettlesInvoice(t *testing.T) {
 
 	updatedInvoice, err := invoiceRepo.GetByID(
 		ctx,
-		repositories.GetInvoiceByIDRequest{
+		invoiceports.GetInvoiceByIDRequest{
 			ID:         inv.ID,
 			TenantInfo: pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID},
 		},
@@ -1675,7 +1675,7 @@ func TestListAndGetCustomerPayments(t *testing.T) {
 	)
 	payment, err := svc.PostAndApply(
 		ctx,
-		&serviceports.PostCustomerPaymentRequest{
+		&customerpaymentports.PostCustomerPaymentRequest{
 			CustomerID:      shp.CustomerID,
 			PaymentDate:     now.Unix(),
 			AccountingDate:  now.Unix(),
@@ -1683,7 +1683,7 @@ func TestListAndGetCustomerPayments(t *testing.T) {
 			PaymentMethod:   customerpayment.MethodACH,
 			ReferenceNumber: "PAY-LIST-1",
 			CurrencyCode:    "USD",
-			Applications: []*serviceports.CustomerPaymentApplicationInput{
+			Applications: []*customerpaymentports.CustomerPaymentApplicationInput{
 				{InvoiceID: inv.ID, AppliedAmountMinor: 10000},
 			},
 			TenantInfo: pagination.TenantInfo{
@@ -1698,7 +1698,7 @@ func TestListAndGetCustomerPayments(t *testing.T) {
 
 	listResult, err := svc.List(
 		ctx,
-		&repositories.ListCustomerPaymentsRequest{
+		&customerpaymentports.ListCustomerPaymentsRequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: pagination.TenantInfo{
 					OrgID:  org.ID,
@@ -1716,7 +1716,7 @@ func TestListAndGetCustomerPayments(t *testing.T) {
 
 	connResult, err := paymentRepo.ListConnection(
 		ctx,
-		&repositories.ListCustomerPaymentConnectionRequest{
+		&customerpaymentports.ListCustomerPaymentConnectionRequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: pagination.TenantInfo{
 					OrgID:  org.ID,
@@ -1740,7 +1740,7 @@ func TestListAndGetCustomerPayments(t *testing.T) {
 
 	got, err := svc.Get(
 		ctx,
-		&serviceports.GetCustomerPaymentRequest{
+		&customerpaymentports.GetCustomerPaymentRequest{
 			PaymentID: payment.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID:  org.ID,

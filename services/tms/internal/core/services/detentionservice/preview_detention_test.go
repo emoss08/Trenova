@@ -1,6 +1,7 @@
 package detentionservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
 	"context"
 	"errors"
 	"testing"
@@ -9,8 +10,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -27,7 +31,7 @@ var errPreviewWrote = errors.New("a preview wrote")
 // readOnly set, any save fails the test's call, which is how a preview is held
 // to reading.
 type previewOccurrenceRepo struct {
-	repositories.DetentionOccurrenceRepository
+	detentionports.DetentionOccurrenceRepository
 
 	stored   detention.DetentionOccurrence
 	sibling  *detention.DetentionOccurrence
@@ -37,7 +41,7 @@ type previewOccurrenceRepo struct {
 
 func (r *previewOccurrenceRepo) GetByID(
 	context.Context,
-	*repositories.GetDetentionOccurrenceByIDRequest,
+	*detentionports.GetDetentionOccurrenceByIDRequest,
 ) (*detention.DetentionOccurrence, error) {
 	copied := r.stored
 
@@ -46,7 +50,7 @@ func (r *previewOccurrenceRepo) GetByID(
 
 func (r *previewOccurrenceRepo) GetByShipment(
 	context.Context,
-	*repositories.GetOccurrencesByShipmentRequest,
+	*detentionports.GetOccurrencesByShipmentRequest,
 ) ([]*detention.DetentionOccurrence, error) {
 	stored := r.stored
 	out := []*detention.DetentionOccurrence{&stored}
@@ -91,12 +95,12 @@ func pendingCharge() detention.DetentionOccurrence {
 }
 
 type previewOrganizations struct {
-	repositories.OrganizationRepository
+	tenantports.OrganizationRepository
 }
 
 func (previewOrganizations) GetByID(
 	context.Context,
-	repositories.GetOrganizationByIDRequest,
+	tenantports.GetOrganizationByIDRequest,
 ) (*tenant.Organization, error) {
 	return &tenant.Organization{Timezone: "America/Chicago"}, nil
 }
@@ -186,14 +190,14 @@ func TestPreviewApprove_RefusesWhatApproveRefuses(t *testing.T) {
 }
 
 type noticeCustomers struct {
-	repositories.CustomerRepository
+	customerports.CustomerRepository
 
 	recipients string
 }
 
 func (r *noticeCustomers) GetByID(
 	context.Context,
-	repositories.GetCustomerByIDRequest,
+	customerports.GetCustomerByIDRequest,
 ) (*customer.Customer, error) {
 	return &customer.Customer{
 		Name:         "Acme Foods",
@@ -202,12 +206,12 @@ func (r *noticeCustomers) GetByID(
 }
 
 type noticeMailer struct {
-	sent []*services.SendEmailRequest
+	sent []*emailports.SendEmailRequest
 }
 
 func (m *noticeMailer) Send(
 	_ context.Context,
-	req *services.SendEmailRequest,
+	req *emailports.SendEmailRequest,
 ) (*email.Message, error) {
 	m.sent = append(m.sent, req)
 
@@ -216,7 +220,7 @@ func (m *noticeMailer) Send(
 
 func (m *noticeMailer) SendPersisted(
 	context.Context,
-	*services.SendPersistedEmailRequest,
+	*emailports.SendPersistedEmailRequest,
 ) (*email.Message, error) {
 	return nil, nil
 }
@@ -225,9 +229,9 @@ type noticeSenders struct{}
 
 func (noticeSenders) ResolveSender(
 	context.Context,
-	*services.SendEmailRequest,
-) (*services.EmailSender, error) {
-	return &services.EmailSender{Email: "notices@carrier.test", Name: "Carrier Billing"}, nil
+	*emailports.SendEmailRequest,
+) (*emailports.EmailSender, error) {
+	return &emailports.EmailSender{Email: "notices@carrier.test", Name: "Carrier Billing"}, nil
 }
 
 func TestPreviewOccurrenceNotice_IsTheNoticeSendOccurrenceNoticeSends(t *testing.T) {
@@ -238,17 +242,17 @@ func TestPreviewOccurrenceNotice_IsTheNoticeSendOccurrenceNoticeSends(t *testing
 	stored.DetentionPolicyID = &policyID
 	repo := &previewOccurrenceRepo{stored: stored, readOnly: true}
 	mailer := &noticeMailer{}
-	resolver := mocks.NewMockDocumentTemplateResolver(t)
+	resolver := documenttemplateportsmock.NewMockDocumentTemplateResolver(t)
 	resolver.EXPECT().
 		RenderMessage(mock.Anything, mock.Anything).
-		Return(&services.RenderedMessage{
+		Return(&documenttemplateports.RenderedMessage{
 			Subject: "Detention charges started at Memphis DC",
 			Text:    "Detention began at 09:00.",
 			HTML:    "<p>Detention began at 09:00.</p>",
 		}, nil)
 	resolver.EXPECT().
 		RenderDocument(mock.Anything, mock.Anything).
-		Return(&services.RenderedDocument{PDF: []byte("%PDF-1.7")}, nil).
+		Return(&documenttemplateports.RenderedDocument{PDF: []byte("%PDF-1.7")}, nil).
 		Maybe()
 
 	svc := previewService(repo)

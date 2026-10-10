@@ -9,9 +9,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentsearch"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -44,14 +45,14 @@ type ratingCluster struct {
 
 func (s *Service) SuggestMemories(
 	ctx context.Context,
-	req services.SuggestAgentMemoriesRequest,
-) (*services.SuggestAgentMemoriesResult, error) {
+	req aifeedbackports.SuggestAgentMemoriesRequest,
+) (*aifeedbackports.SuggestAgentMemoriesResult, error) {
 	now := req.Now
 	if now <= 0 {
 		now = s.now()
 	}
 
-	ratings, err := s.repo.ListNegativeSince(ctx, repositories.ListNegativeAIFeedbackRequest{
+	ratings, err := s.repo.ListNegativeSince(ctx, aifeedbackports.ListNegativeAIFeedbackRequest{
 		TenantInfo: req.TenantInfo,
 		Since:      now - SuggestionLookbackDays*secondsPerDay,
 		Limit:      maxNegativeScan,
@@ -60,7 +61,7 @@ func (s *Service) SuggestMemories(
 		return nil, err
 	}
 
-	result := &services.SuggestAgentMemoriesResult{}
+	result := &aifeedbackports.SuggestAgentMemoriesResult{}
 	byAgent := ratingsByAgent(ratings)
 	agentIDs := make([]pulid.ID, 0, len(byAgent))
 	for agentID := range byAgent {
@@ -88,7 +89,7 @@ type suggestForAgentParams struct {
 	agentID pulid.ID
 	ratings []*aifeedback.Feedback
 	now     int64
-	result  *services.SuggestAgentMemoriesResult
+	result  *aifeedbackports.SuggestAgentMemoriesResult
 }
 
 func (s *Service) suggestForAgent(ctx context.Context, p suggestForAgentParams) error {
@@ -107,7 +108,7 @@ func (s *Service) suggestForAgent(ctx context.Context, p suggestForAgentParams) 
 
 	existing, err := s.memories.ListSuggestionContext(
 		ctx,
-		repositories.ListAgentMemorySuggestionContextRequest{
+		agentports.ListAgentMemorySuggestionContextRequest{
 			TenantInfo:        p.tenant,
 			AgentDefinitionID: p.agentID,
 			Now:               p.now,
@@ -156,7 +157,7 @@ func (s *Service) agentName(ctx context.Context, tenant pagination.TenantInfo, i
 		return fallbackAgentName
 	}
 
-	definition, err := s.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	definition, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         id,
 		TenantInfo: tenant,
 	})

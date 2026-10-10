@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -23,7 +23,7 @@ type payAdvanceRepository struct {
 	l  *zap.Logger
 }
 
-func NewPayAdvance(p Params) repositories.PayAdvanceRepository {
+func NewPayAdvance(p Params) driverpayports.PayAdvanceRepository {
 	return &payAdvanceRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.pay-advance-repository"),
@@ -32,7 +32,7 @@ func NewPayAdvance(p Params) repositories.PayAdvanceRepository {
 
 func (r *payAdvanceRepository) List(
 	ctx context.Context,
-	req *repositories.ListPayAdvancesRequest,
+	req *driverpayports.ListPayAdvancesRequest,
 ) (*pagination.ListResult[*driverpay.PayAdvance], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*driverpay.PayAdvance], error) {
 		limit := req.Filter.Pagination.SafeLimit()
@@ -73,7 +73,7 @@ func (r *payAdvanceRepository) List(
 
 func (r *payAdvanceRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListPayAdvanceConnectionRequest,
+	req *driverpayports.ListPayAdvanceConnectionRequest,
 ) (*pagination.CursorListResult[*driverpay.PayAdvance], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*driverpay.PayAdvance], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -131,7 +131,7 @@ func (r *payAdvanceRepository) ListConnection(
 
 func (r *payAdvanceRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetPayAdvanceByIDRequest,
+	req driverpayports.GetPayAdvanceByIDRequest,
 ) (*driverpay.PayAdvance, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driverpay.PayAdvance, error) {
 		entity := new(driverpay.PayAdvance)
@@ -152,7 +152,7 @@ func (r *payAdvanceRepository) GetByID(
 
 func (r *payAdvanceRepository) ListOutstandingForWorker(
 	ctx context.Context,
-	req repositories.ListOutstandingAdvancesForWorkerRequest,
+	req driverpayports.ListOutstandingAdvancesForWorkerRequest,
 ) ([]*driverpay.PayAdvance, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driverpay.PayAdvance, error) {
 		items := make([]*driverpay.PayAdvance, 0)
@@ -186,7 +186,7 @@ func (r *payAdvanceRepository) Create(
 		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
 			return nil, fmt.Errorf("create pay advance: %w", err)
 		}
-		return r.GetByID(ctx, repositories.GetPayAdvanceByIDRequest{
+		return r.GetByID(ctx, driverpayports.GetPayAdvanceByIDRequest{
 			ID: entity.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
@@ -227,7 +227,7 @@ func (r *payAdvanceRepository) Update(
 		if err = dberror.CheckRowsAffected(res, "PayAdvance", entity.ID.String()); err != nil {
 			return nil, err
 		}
-		return r.GetByID(ctx, repositories.GetPayAdvanceByIDRequest{
+		return r.GetByID(ctx, driverpayports.GetPayAdvanceByIDRequest{
 			ID: entity.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,

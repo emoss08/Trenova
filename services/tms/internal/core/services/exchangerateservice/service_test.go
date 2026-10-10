@@ -10,11 +10,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/exchangerate"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/integrationservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/exchangerateports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -59,14 +58,14 @@ type stubExchangeRateRepository struct {
 
 func (s *stubExchangeRateRepository) GetRate(
 	_ context.Context,
-	_ *repositories.GetExchangeRateRequest,
+	_ *exchangerateports.GetExchangeRateRequest,
 ) (*exchangerate.ExchangeRate, error) {
 	return s.getRateResult, s.getRateErr
 }
 
 func (s *stubExchangeRateRepository) UpsertRates(
 	_ context.Context,
-	req *repositories.UpsertExchangeRatesRequest,
+	req *exchangerateports.UpsertExchangeRatesRequest,
 ) error {
 	s.upsertedRates = append(s.upsertedRates, req.Rates...)
 	return s.upsertErr
@@ -74,7 +73,7 @@ func (s *stubExchangeRateRepository) UpsertRates(
 
 func (s *stubExchangeRateRepository) CreateSettlementQuote(
 	_ context.Context,
-	req *repositories.CreateSettlementQuoteRequest,
+	req *exchangerateports.CreateSettlementQuoteQuery,
 ) (*exchangerate.SettlementQuote, error) {
 	s.createdQuote = req.Quote
 	return req.Quote, s.createErr
@@ -273,7 +272,7 @@ func TestCreateSettlementQuoteUsesDefaultMidpointAndPersistsQuote(t *testing.T) 
 	quote, err := svc.CreateSettlementQuote(
 		t.Context(),
 		pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
-		&services.CreateSettlementQuoteRequest{
+		&exchangerateports.CreateSettlementQuoteRequest{
 			FromCurrency: "USD",
 			ToCurrency:   "CAD",
 			Amount:       decimal.NewFromInt(100),
@@ -291,7 +290,7 @@ func TestCreateSettlementQuoteUsesDefaultMidpointAndPersistsQuote(t *testing.T) 
 
 func newTestService(
 	t *testing.T,
-	repo repositories.ExchangeRateRepository,
+	repo exchangerateports.ExchangeRateRepository,
 	baseURL string,
 	defaultRateType string,
 ) *Service {
@@ -354,7 +353,7 @@ func TestCachedRateReadsOnlyTheRateTableAndReportsAMiss(t *testing.T) {
 	)
 
 	require.Nil(t, result)
-	require.ErrorIs(t, err, services.ErrExchangeRateNotCached)
+	require.ErrorIs(t, err, exchangerateports.ErrExchangeRateNotCached)
 	require.Zero(t, requestCount, "posting never waits on the provider")
 
 	same, err := svc.CachedRate(t.Context(), pagination.TenantInfo{}, "USD", "usd", time.Now())

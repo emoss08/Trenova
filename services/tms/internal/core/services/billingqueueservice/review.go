@@ -14,8 +14,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -118,7 +122,7 @@ func (s *service) reviewFacts(
 		if facts.invoice != nil {
 			invoiceID = facts.invoice.ID
 		}
-		dups, err := s.reviewRepo.FindDuplicates(ctx, &repositories.FindBillingQueueDuplicatesRequest{
+		dups, err := s.reviewRepo.FindDuplicates(ctx, &billingqueueports.FindBillingQueueDuplicatesRequest{
 			TenantInfo:       tenantInfo,
 			ItemID:           item.ID,
 			ShipmentID:       item.ShipmentID,
@@ -174,7 +178,7 @@ func (s *service) storedIssues(
 		return issues
 	}
 
-	result, err := s.reviewRepo.SyncIssues(ctx, &repositories.SyncBillingQueueIssuesRequest{
+	result, err := s.reviewRepo.SyncIssues(ctx, &billingqueueports.SyncBillingQueueIssuesRequest{
 		TenantInfo: tenantInfo,
 		ItemID:     item.ID,
 		Findings:   billingqueue.Findings(facts.findings),
@@ -209,7 +213,7 @@ func (s *service) syncReview(ctx context.Context, itemID pulid.ID, tenantInfo pa
 	if s.reviewRepo == nil {
 		return
 	}
-	if _, err := s.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
+	if _, err := s.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
 		ItemID:                itemID,
 		TenantInfo:            tenantInfo,
 		ExpandShipmentDetails: true,
@@ -249,7 +253,7 @@ func (s *service) shipmentOccurrences(
 	if s.occurrenceRepo == nil || item.ShipmentID.IsNil() {
 		return nil
 	}
-	occurrences, err := s.occurrenceRepo.GetByShipment(ctx, &repositories.GetOccurrencesByShipmentRequest{
+	occurrences, err := s.occurrenceRepo.GetByShipment(ctx, &detentionports.GetOccurrencesByShipmentRequest{
 		ShipmentID:      item.ShipmentID,
 		TenantInfo:      tenantInfo,
 		IncludeEvidence: true,
@@ -371,7 +375,7 @@ func (s *service) ratingAgreement(
 	if err != nil {
 		return nil
 	}
-	agreement, err := s.agreementRepo.GetByID(ctx, &repositories.GetRateAgreementByIDRequest{
+	agreement, err := s.agreementRepo.GetByID(ctx, &rateagreementports.GetRateAgreementByIDRequest{
 		RateAgreementID: agreementID,
 		TenantInfo:      tenantInfo,
 		IncludeChildren: true,
@@ -594,7 +598,7 @@ func (s *service) invoiceRef(
 	if item.Status != billingqueue.StatusApproved && item.Status != billingqueue.StatusPosted {
 		return nil
 	}
-	inv, err := s.invoiceRepo.GetByBillingQueueItemID(ctx, repositories.GetInvoiceByBillingQueueItemIDRequest{
+	inv, err := s.invoiceRepo.GetByBillingQueueItemID(ctx, invoiceports.GetInvoiceByBillingQueueItemIDRequest{
 		BillingQueueItemID: item.ID,
 		TenantInfo:         tenantInfo,
 	})
@@ -666,7 +670,7 @@ func (s *service) shipmentDocuments(
 	if s.documentRepo == nil || item.ShipmentID.IsNil() {
 		return nil
 	}
-	docs, err := s.documentRepo.GetByResourceID(ctx, &repositories.GetDocumentsByResourceRequest{
+	docs, err := s.documentRepo.GetByResourceID(ctx, &documentports.GetDocumentsByResourceRequest{
 		TenantInfo:          tenantInfo,
 		ResourceID:          item.ShipmentID.String(),
 		ResourceType:        "shipment",

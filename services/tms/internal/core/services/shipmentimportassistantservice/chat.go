@@ -7,7 +7,9 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentimportchat"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -40,10 +42,10 @@ type PreparedTurn struct {
 	ConversationID pulid.ID `json:"conversationId"`
 	// RequestConversationID is the handle the turn answers, as the stored
 	// conversation fills it in when the request left it out.
-	RequestConversationID string                  `json:"requestConversationId,omitempty"`
-	System                string                  `json:"system"`
-	Messages              []serviceports.Message  `json:"messages"`
-	Tools                 []serviceports.ToolSpec `json:"tools"`
+	RequestConversationID string                 `json:"requestConversationId,omitempty"`
+	System                string                 `json:"system"`
+	Messages              []agentports.Message   `json:"messages"`
+	Tools                 []kernelports.ToolSpec `json:"tools"`
 }
 
 // PrepareTurn opens the document's conversation and builds the turn's first
@@ -51,7 +53,7 @@ type PreparedTurn struct {
 // carries the import's current state.
 func (s *Service) PrepareTurn(
 	ctx context.Context,
-	req *serviceports.ShipmentImportChatRequest,
+	req *shipmentports.ShipmentImportChatRequest,
 ) (*PreparedTurn, error) {
 	conversation, err := s.ensureConversation(ctx, req)
 	if err != nil {
@@ -70,9 +72,9 @@ func (s *Service) PrepareTurn(
 // ToolOutcome is what one tool call returned: the text the model reads, and
 // the actions the client applies to the draft.
 type ToolOutcome struct {
-	Output  string                              `json:"output"`
-	Status  string                              `json:"status"`
-	Actions []serviceports.ShipmentImportAction `json:"actions,omitempty"`
+	Output  string                               `json:"output"`
+	Status  string                               `json:"status"`
+	Actions []shipmentports.ShipmentImportAction `json:"actions,omitempty"`
 }
 
 // RunTool runs one tool call. The call's arguments are already decoded: the
@@ -81,7 +83,7 @@ type ToolOutcome struct {
 func (s *Service) RunTool(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	call *serviceports.ToolCall,
+	call *agentports.ToolCall,
 ) ToolOutcome {
 	output, actions := s.runToolCall(ctx, tenantInfo, call.Name, call.Arguments)
 
@@ -121,10 +123,10 @@ func WritesTool(name string) bool {
 
 // ToolRecord is a call as the history panel shows it.
 func ToolRecord(
-	call *serviceports.ToolCall,
+	call *agentports.ToolCall,
 	outcome ToolOutcome,
-) serviceports.ShipmentImportToolCallRecord {
-	return serviceports.ShipmentImportToolCallRecord{
+) shipmentports.ShipmentImportToolCallRecord {
+	return shipmentports.ShipmentImportToolCallRecord{
 		Name:   call.Name,
 		CallID: call.ID,
 		Status: outcome.Status,
@@ -135,19 +137,19 @@ func ToolRecord(
 
 // TurnRecord is what a turn produced across its tool rounds.
 type TurnRecord struct {
-	Message         string                                      `json:"message"`
-	Suggestions     []serviceports.ShipmentImportSuggestion     `json:"suggestions,omitempty"`
-	ToolCalls       []serviceports.ShipmentImportToolCallRecord `json:"toolCalls,omitempty"`
-	Actions         []serviceports.ShipmentImportAction         `json:"actions,omitempty"`
-	Model           string                                      `json:"model,omitempty"`
-	ProviderID      pulid.ID                                    `json:"providerId,omitempty"`
-	ProviderKind    aiprovider.Kind                             `json:"providerKind,omitempty"`
-	InputTokens     int                                         `json:"inputTokens,omitempty"`
-	OutputTokens    int                                         `json:"outputTokens,omitempty"`
-	ReasoningTokens int                                         `json:"reasoningTokens,omitempty"`
+	Message         string                                       `json:"message"`
+	Suggestions     []shipmentports.ShipmentImportSuggestion     `json:"suggestions,omitempty"`
+	ToolCalls       []shipmentports.ShipmentImportToolCallRecord `json:"toolCalls,omitempty"`
+	Actions         []shipmentports.ShipmentImportAction         `json:"actions,omitempty"`
+	Model           string                                       `json:"model,omitempty"`
+	ProviderID      pulid.ID                                     `json:"providerId,omitempty"`
+	ProviderKind    aiprovider.Kind                              `json:"providerKind,omitempty"`
+	InputTokens     int                                          `json:"inputTokens,omitempty"`
+	OutputTokens    int                                          `json:"outputTokens,omitempty"`
+	ReasoningTokens int                                          `json:"reasoningTokens,omitempty"`
 }
 
-func (r *TurnRecord) RecordModelCall(result *serviceports.ChatCompletionResult) {
+func (r *TurnRecord) RecordModelCall(result *agentports.ChatCompletionResult) {
 	r.Model = result.ModelIdentifier
 	r.ProviderID = result.ProviderID
 	r.ProviderKind = result.ProviderKind
@@ -159,9 +161,9 @@ func (r *TurnRecord) RecordModelCall(result *serviceports.ChatCompletionResult) 
 // FinishTurn saves a turn that finished and returns it as the reply.
 func (s *Service) FinishTurn(
 	ctx context.Context,
-	req *serviceports.ShipmentImportChatRequest,
+	req *shipmentports.ShipmentImportChatRequest,
 	record *TurnRecord,
-) (*serviceports.ShipmentImportChatResponse, error) {
+) (*shipmentports.ShipmentImportChatResponse, error) {
 	conversation, err := s.ensureConversation(ctx, req)
 	if err != nil {
 		return nil, err
@@ -185,7 +187,7 @@ func (s *Service) FinishTurn(
 		return nil, err
 	}
 
-	return &serviceports.ShipmentImportChatResponse{
+	return &shipmentports.ShipmentImportChatResponse{
 		Message:        record.Message,
 		ConversationID: handle,
 		Actions:        record.Actions,
@@ -198,7 +200,7 @@ func (s *Service) FinishTurn(
 // is told.
 func (s *Service) FailTurn(
 	ctx context.Context,
-	req *serviceports.ShipmentImportChatRequest,
+	req *shipmentports.ShipmentImportChatRequest,
 	record *TurnRecord,
 	cause error,
 ) string {
@@ -222,19 +224,19 @@ func (s *Service) FailTurn(
 // ToolRound appends what a round of tool calls did, in the shape the next call
 // needs: the assistant turn that asked, then one result per call.
 func ToolRound(
-	calls []serviceports.ToolCall,
+	calls []agentports.ToolCall,
 	outcomes map[string]ToolOutcome,
-) []serviceports.Message {
-	messages := make([]serviceports.Message, 0, len(calls)+1)
-	messages = append(messages, serviceports.Message{
-		Role:      serviceports.RoleAssistant,
+) []agentports.Message {
+	messages := make([]agentports.Message, 0, len(calls)+1)
+	messages = append(messages, agentports.Message{
+		Role:      agentports.RoleAssistant,
 		ToolCalls: calls,
 	})
 
 	for _, call := range calls {
 		outcome := outcomes[call.ID]
-		messages = append(messages, serviceports.Message{
-			Role:       serviceports.RoleTool,
+		messages = append(messages, agentports.Message{
+			Role:       agentports.RoleTool,
 			ToolCallID: call.ID,
 			ToolName:   call.Name,
 			Content:    outcome.Output,
@@ -246,14 +248,14 @@ func ToolRound(
 }
 
 // ReadSuggestions reads the chips a suggest_quick_actions call carries.
-func ReadSuggestions(arguments map[string]any) []serviceports.ShipmentImportSuggestion {
+func ReadSuggestions(arguments map[string]any) []shipmentports.ShipmentImportSuggestion {
 	raw, err := sonic.Marshal(arguments)
 	if err != nil {
 		return nil
 	}
 
 	var decoded struct {
-		Suggestions []serviceports.ShipmentImportSuggestion `json:"suggestions"`
+		Suggestions []shipmentports.ShipmentImportSuggestion `json:"suggestions"`
 	}
 	if err = sonic.Unmarshal(raw, &decoded); err != nil {
 		return nil
@@ -268,7 +270,7 @@ func (s *Service) runToolCall(
 	tenantInfo pagination.TenantInfo,
 	name string,
 	arguments map[string]any,
-) (string, []serviceports.ShipmentImportAction) {
+) (string, []shipmentports.ShipmentImportAction) {
 	handler, ok := shipmentImportToolCallHandlers[name]
 	if !ok {
 		return `{"error":"unknown tool"}`, nil
@@ -303,10 +305,10 @@ func encodeArguments(arguments map[string]any) string {
 // "the reply did not fit the schema", and "it did not work".
 func friendlyCompletionError(err error) string {
 	switch {
-	case errors.Is(err, serviceports.ErrNoProviderConfigured):
+	case errors.Is(err, agentports.ErrNoProviderConfigured):
 		return "No AI provider is configured for this organization. " +
 			"Add one under AI Control before using the import assistant."
-	case errors.Is(err, serviceports.ErrModelSchemaValidation):
+	case errors.Is(err, agentports.ErrModelSchemaValidation):
 		return "The AI reply could not be read. Please try again."
 	case errors.Is(err, context.DeadlineExceeded):
 		return "The AI request timed out. Please try again."

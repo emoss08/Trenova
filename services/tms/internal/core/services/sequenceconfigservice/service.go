@@ -6,9 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,16 +20,16 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.SequenceConfigRepository
+	Repo         tenantports.SequenceConfigRepository
 	Validator    *Validator
-	AuditService services.AuditService
+	AuditService auditports.AuditService
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.SequenceConfigRepository
+	repo         tenantports.SequenceConfigRepository
 	validator    *Validator
-	auditService services.AuditService
+	auditService auditports.AuditService
 }
 
 func New(p Params) *Service {
@@ -43,7 +43,7 @@ func New(p Params) *Service {
 
 func (s *Service) Get(
 	ctx context.Context,
-	req repositories.GetSequenceConfigRequest,
+	req tenantports.GetSequenceConfigRequest,
 ) (*tenant.SequenceConfigDocument, error) {
 	return s.repo.GetByTenant(ctx, req)
 }
@@ -57,7 +57,7 @@ func (s *Service) Update(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetByTenant(ctx, repositories.GetSequenceConfigRequest{
+	original, err := s.repo.GetByTenant(ctx, tenantports.GetSequenceConfigRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: doc.OrganizationID,
 			BuID:  doc.BusinessUnitID,
@@ -73,7 +73,7 @@ func (s *Service) Update(
 	}
 
 	if err = s.auditService.LogAction(
-		&services.LogActionParams{
+		&auditports.LogActionParams{
 			Resource:       permission.ResourceSequenceConfig,
 			ResourceID:     fmt.Sprintf("%s:%s", updated.OrganizationID, updated.BusinessUnitID),
 			Operation:      permission.OpUpdate,

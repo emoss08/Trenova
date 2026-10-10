@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -14,8 +14,8 @@ import (
 	"github.com/uptrace/bun/dialect/pgdialect"
 )
 
-func threadPageRequest() *repositories.ListThreadsRequest {
-	return &repositories.ListThreadsRequest{
+func threadPageRequest() *agentports.ListThreadsRequest {
+	return &agentports.ListThreadsRequest{
 		UserID:     pulid.MustNew("usr_"),
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 	}

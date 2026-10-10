@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -17,7 +17,7 @@ type fakeOrders struct {
 	entity *order.Order
 }
 
-func (f *fakeOrders) Get(context.Context, repositories.GetOrderByIDRequest) (*order.Order, error) {
+func (f *fakeOrders) Get(context.Context, orderports.GetOrderByIDRequest) (*order.Order, error) {
 	return f.entity, nil
 }
 

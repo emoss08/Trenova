@@ -4,17 +4,21 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/domain/glaccount"
-	"github.com/emoss08/trenova/internal/core/domain/worker"
-
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/core/domain/glaccount"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -199,7 +203,7 @@ func (s *Service) roleTargets(
 
 	names := make(map[pulid.ID][2]string, len(ids))
 	if len(ids) > 0 {
-		accounts, getErr := s.glAccounts.GetByIDs(ctx, repositories.GetGLAccountsByIDsRequest{
+		accounts, getErr := s.glAccounts.GetByIDs(ctx, glaccountports.GetGLAccountsByIDsRequest{
 			TenantInfo:   tenantInfo,
 			GLAccountIDs: ids,
 		})
@@ -298,7 +302,7 @@ func (s *Service) accessorialTargets(
 ) ([]*target, error) {
 	targets := make([]*target, 0)
 	for offset := 0; ; offset += targetPageSize {
-		page, err := s.accessorials.List(ctx, &repositories.ListAccessorialChargeRequest{
+		page, err := s.accessorials.List(ctx, &accessorialchargeports.ListAccessorialChargeRequest{
 			Filter: activeFilter(tenantInfo, offset),
 		})
 		if err != nil {
@@ -329,7 +333,7 @@ func (s *Service) customerTargets(
 ) ([]*target, error) {
 	targets := make([]*target, 0)
 	for offset := 0; ; offset += targetPageSize {
-		page, err := s.customers.List(ctx, &repositories.ListCustomerRequest{
+		page, err := s.customers.List(ctx, &customerports.ListCustomerRequest{
 			Filter: activeFilter(tenantInfo, offset),
 		})
 		if err != nil {
@@ -361,7 +365,7 @@ func (s *Service) carrierTargets(
 ) ([]*target, error) {
 	targets := make([]*target, 0)
 	for offset := 0; ; offset += targetPageSize {
-		page, err := s.carriers.List(ctx, &repositories.ListCarrierRequest{
+		page, err := s.carriers.List(ctx, &carrierports.ListCarrierRequest{
 			Filter: activeFilter(tenantInfo, offset),
 		})
 		if err != nil {
@@ -430,7 +434,7 @@ func (s *Service) glAccountTargets(
 	}
 	accounts := make([]*glaccount.GLAccount, 0, len(ids))
 	if len(ids) > 0 {
-		if accounts, err = s.glAccounts.GetByIDs(ctx, repositories.GetGLAccountsByIDsRequest{
+		if accounts, err = s.glAccounts.GetByIDs(ctx, glaccountports.GetGLAccountsByIDsRequest{
 			TenantInfo:   tenantInfo,
 			GLAccountIDs: ids,
 		}); err != nil {
@@ -457,7 +461,7 @@ func (s *Service) glAccountTargets(
 	if !ledger || s.ledger == nil {
 		return targets, nil
 	}
-	posted, err := s.ledger.ListActiveAccounts(ctx, &repositories.ListLedgerAccountsRequest{
+	posted, err := s.ledger.ListActiveAccounts(ctx, &journalentryports.ListLedgerAccountsRequest{
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {
@@ -483,7 +487,7 @@ func (s *Service) activeGLAccounts(
 ) ([]*glaccount.GLAccount, error) {
 	accounts := make([]*glaccount.GLAccount, 0, targetPageSize)
 	for offset := 0; ; offset += targetPageSize {
-		page, err := s.glAccounts.List(ctx, &repositories.ListGLAccountsRequest{
+		page, err := s.glAccounts.List(ctx, &glaccountports.ListGLAccountsRequest{
 			Filter: activeFilter(tenantInfo, offset),
 		})
 		if err != nil {
@@ -540,7 +544,7 @@ func (s *Service) payablesAccountIDs(
 		)
 	}
 	if s.payCodes != nil {
-		codes, listErr := s.payCodes.ListActive(ctx, repositories.ListActivePayCodesRequest{
+		codes, listErr := s.payCodes.ListActive(ctx, driverpayports.ListActivePayCodesRequest{
 			TenantInfo: tenantInfo,
 		})
 		if listErr != nil {

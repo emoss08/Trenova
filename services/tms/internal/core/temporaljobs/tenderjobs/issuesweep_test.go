@@ -6,8 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -23,7 +22,7 @@ type issueCall struct {
 }
 
 type fakeIssueLifecycle struct {
-	serviceports.TenderLifecycle
+	tenderports.TenderLifecycle
 
 	calls []issueCall
 	errOn map[pulid.ID]error
@@ -39,9 +38,9 @@ func (f *fakeIssueLifecycle) IssueRateConfirmation(
 }
 
 type fakeSweepTenderRepo struct {
-	repositories.TenderRepository
+	tenderports.TenderRepository
 
-	req      repositories.ListAcceptedMissingRateConfirmationRequest
+	req      tenderports.ListAcceptedMissingRateConfirmationRequest
 	tenders  []*tender.Tender
 	listErr  error
 	callSeen bool
@@ -49,7 +48,7 @@ type fakeSweepTenderRepo struct {
 
 func (f *fakeSweepTenderRepo) ListAcceptedMissingRateConfirmation(
 	_ context.Context,
-	req repositories.ListAcceptedMissingRateConfirmationRequest,
+	req tenderports.ListAcceptedMissingRateConfirmationRequest,
 ) ([]*tender.Tender, error) {
 	f.callSeen = true
 	f.req = req

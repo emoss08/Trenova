@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -22,7 +22,7 @@ const (
 type Params struct {
 	fx.In
 
-	Usage repositories.AIUsageRepository
+	Usage aiusageports.AIUsageRepository
 }
 
 type entry struct {
@@ -32,20 +32,20 @@ type entry struct {
 }
 
 type Service struct {
-	usage  repositories.AIUsageRepository
+	usage  aiusageports.AIUsageRepository
 	clock  func() time.Time
 	ttl    time.Duration
 	mu     sync.Mutex
 	cached map[pulid.ID]entry
 }
 
-var _ services.AIProviderSpendService = (*Service)(nil)
+var _ agentports.AIProviderSpendService = (*Service)(nil)
 
 func New(p Params) *Service {
 	return newService(p.Usage, time.Now)
 }
 
-func newService(usage repositories.AIUsageRepository, clock func() time.Time) *Service {
+func newService(usage aiusageports.AIUsageRepository, clock func() time.Time) *Service {
 	return &Service{
 		usage:  usage,
 		clock:  clock,
@@ -71,7 +71,7 @@ func (s *Service) MonthSpend(
 		return out, nil
 	}
 
-	fetched, err := s.usage.SpendByProvider(ctx, repositories.AIUsageProviderSpendRequest{
+	fetched, err := s.usage.SpendByProvider(ctx, aiusageports.AIUsageProviderSpendRequest{
 		TenantInfo:  tenantInfo,
 		ProviderIDs: missing,
 		Since:       month,

@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/shared/xero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,9 +17,9 @@ func listReference(
 	conn *Connector,
 	kind accountingsync.ReferenceKind,
 	start int,
-) *services.AccountingReferencePage {
+) *accountingsyncports.AccountingReferencePage {
 	t.Helper()
-	page, err := conn.ListReference(t.Context(), &services.AccountingReferencePageRequest{
+	page, err := conn.ListReference(t.Context(), &accountingsyncports.AccountingReferencePageRequest{
 		RealmID:       testTenant,
 		AccessToken:   "token",
 		Kind:          kind,
@@ -178,12 +178,12 @@ func TestCreateItemUsesTheChargeCodeAndTheIncomeAccountCode(t *testing.T) {
 	}}
 	conn := testConnector(t, fake)
 
-	obj, err := conn.CreateReference(t.Context(), &services.AccountingCreateReferenceRequest{
+	obj, err := conn.CreateReference(t.Context(), &accountingsyncports.AccountingCreateReferenceRequest{
 		RealmID:     testTenant,
 		AccessToken: "token",
 		RequestID:   testRequestID,
 		Kind:        accountingsync.ReferenceKindItem,
-		Item: &services.AccountingItemDraft{
+		Item: &accountingsyncports.AccountingItemDraft{
 			Name:            "Detention",
 			Description:     "Detention time",
 			Sku:             "DET",
@@ -216,14 +216,14 @@ func TestCreateContactsAndDuplicateNames(t *testing.T) {
 	}}
 	conn := testConnector(t, fake)
 
-	party := &services.AccountingPartyDraft{
+	party := &accountingsyncports.AccountingPartyDraft{
 		DisplayName:  "Globex\n Shipping",
 		Email:        "ap@globex.test",
 		AddressLine1: "1 Main",
 		City:         "Dallas",
 		State:        "TX",
 	}
-	obj, err := conn.CreateReference(t.Context(), &services.AccountingCreateReferenceRequest{
+	obj, err := conn.CreateReference(t.Context(), &accountingsyncports.AccountingCreateReferenceRequest{
 		RealmID: testTenant, AccessToken: "token", RequestID: "req-1",
 		Kind: accountingsync.ReferenceKindVendor, Party: party,
 	})
@@ -237,7 +237,7 @@ func TestCreateContactsAndDuplicateNames(t *testing.T) {
 	require.True(t, ok)
 	require.Len(t, addresses, 1)
 
-	_, err = conn.CreateReference(t.Context(), &services.AccountingCreateReferenceRequest{
+	_, err = conn.CreateReference(t.Context(), &accountingsyncports.AccountingCreateReferenceRequest{
 		RealmID: testTenant, AccessToken: "token", RequestID: "dup",
 		Kind: accountingsync.ReferenceKindCustomer, Party: party,
 	})
@@ -245,7 +245,7 @@ func TestCreateContactsAndDuplicateNames(t *testing.T) {
 	assert.True(t, conn.IsDuplicateName(err))
 	assert.Equal(t, accountingsync.SyncErrorDuplicate, conn.ClassifyDocumentError(err).Category)
 
-	_, err = conn.CreateReference(t.Context(), &services.AccountingCreateReferenceRequest{
+	_, err = conn.CreateReference(t.Context(), &accountingsyncports.AccountingCreateReferenceRequest{
 		RealmID: testTenant, AccessToken: "token", RequestID: "x",
 		Kind: accountingsync.ReferenceKindAccount,
 	})
@@ -260,5 +260,5 @@ func TestSanitizeName(t *testing.T) {
 	long := strings.Repeat("x", 80)
 	assert.Len(t, conn.SanitizeName(accountingsync.ReferenceKindItem, long), xero.MaxItemNameLength)
 	assert.Len(t, conn.SanitizeName(accountingsync.ReferenceKindVendor, long), 80)
-	assert.Equal(t, "Line haul", itemCode(&services.AccountingItemDraft{Name: "Line haul"}))
+	assert.Equal(t, "Line haul", itemCode(&accountingsyncports.AccountingItemDraft{Name: "Line haul"}))
 }

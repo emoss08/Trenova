@@ -7,8 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/fuelcard/fileconnector"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/shared/sftp"
 	"github.com/stretchr/testify/require"
 )
@@ -95,10 +95,10 @@ func fetch(
 	t *testing.T,
 	connector *fileconnector.Connector,
 	config map[string]string,
-) *services.FetchFuelTransactionsResult {
+) *fuelpurchaseports.FetchFuelTransactionsResult {
 	t.Helper()
 
-	result, err := connector.FetchTransactions(t.Context(), &services.FetchFuelTransactionsRequest{
+	result, err := connector.FetchTransactions(t.Context(), &fuelpurchaseports.FetchFuelTransactionsRequest{
 		Provider: fuelpurchase.CardProviderComdata,
 		Config:   config,
 	})
@@ -162,7 +162,7 @@ func TestFetchRefusesFixedWidthWithoutALayout(t *testing.T) {
 	transport := newFakeTransport(map[string]string{"AC00029": "anything\n"})
 	_, err := newConnector(transport).FetchTransactions(
 		t.Context(),
-		&services.FetchFuelTransactionsRequest{
+		&fuelpurchaseports.FetchFuelTransactionsRequest{
 			Provider: fuelpurchase.CardProviderComdata,
 			Config:   config,
 		},
@@ -264,7 +264,7 @@ func TestFetchRefusesAFileOverTheImportLimit(t *testing.T) {
 
 	_, err := newConnector(transport).FetchTransactions(
 		t.Context(),
-		&services.FetchFuelTransactionsRequest{
+		&fuelpurchaseports.FetchFuelTransactionsRequest{
 			Provider: fuelpurchase.CardProviderComdata,
 			Config:   baseConfig(),
 		},
@@ -280,7 +280,7 @@ func TestFetchRefusesAnUndialableConfiguration(t *testing.T) {
 
 	_, err := newConnector(newFakeTransport(nil)).FetchTransactions(
 		t.Context(),
-		&services.FetchFuelTransactionsRequest{
+		&fuelpurchaseports.FetchFuelTransactionsRequest{
 			Provider: fuelpurchase.CardProviderComdata,
 			Config:   config,
 		},
@@ -296,7 +296,7 @@ func TestFetchRefusesAConfigurationWithoutARemoteDirectory(t *testing.T) {
 
 	_, err := newConnector(newFakeTransport(nil)).FetchTransactions(
 		t.Context(),
-		&services.FetchFuelTransactionsRequest{
+		&fuelpurchaseports.FetchFuelTransactionsRequest{
 			Provider: fuelpurchase.CardProviderComdata,
 			Config:   config,
 		},

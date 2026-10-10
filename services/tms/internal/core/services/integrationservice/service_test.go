@@ -1,6 +1,7 @@
 package integrationservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"context"
 	"strings"
 	"testing"
@@ -8,10 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -30,40 +31,40 @@ type stubIntegrationRepo struct {
 	upsertErr          error
 }
 
-type stubAuditService struct{ *mocks.MockAuditService }
+type stubAuditService struct{ *auditportsmock.MockAuditService }
 
 func (s *stubAuditService) List(
 	context.Context,
-	*repositories.ListAuditEntriesRequest,
+	*auditports.ListAuditEntriesRequest,
 ) (*pagination.ListResult[*audit.Entry], error) {
 	return nil, nil
 }
 
 func (s *stubAuditService) ListByResourceID(
 	context.Context,
-	*repositories.ListByResourceIDRequest,
+	*auditports.ListByResourceIDRequest,
 ) (*pagination.ListResult[*audit.Entry], error) {
 	return nil, nil
 }
 
 func (s *stubAuditService) GetByID(
 	context.Context,
-	repositories.GetAuditEntryByIDOptions,
+	auditports.GetAuditEntryByIDOptions,
 ) (*audit.Entry, error) {
 	return nil, nil
 }
 
-func (s *stubAuditService) LogAction(*services.LogActionParams, ...services.LogOption) error {
+func (s *stubAuditService) LogAction(*auditports.LogActionParams, ...auditports.LogOption) error {
 	return nil
 }
 
-func (s *stubAuditService) LogActions([]services.BulkLogEntry) error {
+func (s *stubAuditService) LogActions([]auditports.BulkLogEntry) error {
 	return nil
 }
 
 func (s *stubAuditService) RegisterSensitiveFields(
 	permission.Resource,
-	[]services.SensitiveField,
+	[]auditports.SensitiveField,
 ) error {
 	return nil
 }
@@ -276,7 +277,7 @@ func TestUpdateResendConfigAllowsEnabledWithoutWebhookSecret(t *testing.T) {
 		t.Context(),
 		pagination.TenantInfo{},
 		integration.TypeResend,
-		&services.UpdateConfigRequest{
+		&integrationports.UpdateConfigRequest{
 			Enabled: true,
 			Configuration: map[string]string{
 				"apiKey":  "re_test_key",
@@ -311,7 +312,7 @@ func TestUpdatePostmarkConfigGeneratesWebhookToken(t *testing.T) {
 		t.Context(),
 		pagination.TenantInfo{},
 		integration.TypePostmark,
-		&services.UpdateConfigRequest{
+		&integrationports.UpdateConfigRequest{
 			Enabled: true,
 			Configuration: map[string]string{
 				"serverToken":   "postmark-token",
@@ -331,9 +332,9 @@ func TestUpdatePostmarkConfigGeneratesWebhookToken(t *testing.T) {
 
 func findConfigField(
 	t *testing.T,
-	fields []services.ConfigFieldValue,
+	fields []integrationports.ConfigFieldValue,
 	key string,
-) services.ConfigFieldValue {
+) integrationports.ConfigFieldValue {
 	t.Helper()
 
 	for _, field := range fields {
@@ -343,14 +344,14 @@ func findConfigField(
 	}
 
 	require.Failf(t, "config field not found", "key %s was not present", key)
-	return services.ConfigFieldValue{}
+	return integrationports.ConfigFieldValue{}
 }
 
 func findCatalogItem(
 	t *testing.T,
-	items []services.CatalogItem,
+	items []integrationports.CatalogItem,
 	typ integration.Type,
-) services.CatalogItem {
+) integrationports.CatalogItem {
 	t.Helper()
 
 	for _, item := range items {
@@ -360,7 +361,7 @@ func findCatalogItem(
 	}
 
 	require.Failf(t, "catalog item not found", "type %s was not present", typ)
-	return services.CatalogItem{}
+	return integrationports.CatalogItem{}
 }
 
 func TestGetClientRuntimeConfigAllowsBrowserSafeIntegrations(t *testing.T) {

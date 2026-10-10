@@ -8,13 +8,13 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 )
 
 type fakeEngine struct {
-	serviceports.PermissionEngine
+	permissionports.PermissionEngine
 
 	levels map[string]permission.FieldSensitivity
 	fail   bool
@@ -25,13 +25,13 @@ func (f *fakeEngine) GetResourcePermissions(
 	_ context.Context,
 	_, _ pulid.ID,
 	resource string,
-) (*serviceports.ResourcePermissionDetail, error) {
+) (*permissionports.ResourcePermissionDetail, error) {
 	f.calls.Add(1)
 	if f.fail {
 		return nil, errors.New("engine unavailable")
 	}
 
-	return &serviceports.ResourcePermissionDetail{
+	return &permissionports.ResourcePermissionDetail{
 		Resource:       resource,
 		MaxSensitivity: f.levels[resource],
 	}, nil
@@ -119,21 +119,21 @@ type fakeChecker struct {
 
 func (f *fakeChecker) Check(
 	_ context.Context,
-	req *serviceports.PermissionCheckRequest,
-) (*serviceports.PermissionCheckResult, error) {
+	req *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
 	f.calls.Add(1)
 	if f.fail {
 		return nil, errors.New("engine unavailable")
 	}
 
-	return &serviceports.PermissionCheckResult{Allowed: f.allowed[req.Resource]}, nil
+	return &permissionports.PermissionCheckResult{Allowed: f.allowed[req.Resource]}, nil
 }
 
 func TestReadAccess_AsksOncePerResourceAndRefusesWhatItCannotCheck(t *testing.T) {
 	t.Parallel()
 
-	actor := &serviceports.RequestActor{
-		PrincipalType:  serviceports.PrincipalTypeUser,
+	actor := &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    pulid.MustNew("usr_"),
 		UserID:         pulid.MustNew("usr_"),
 		OrganizationID: pulid.MustNew("org_"),

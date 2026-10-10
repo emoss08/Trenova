@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/distancecalculation"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/places/ports/distancecalculationports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -25,7 +25,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.DistanceCalculationRepository {
+func New(p Params) distancecalculationports.DistanceCalculationRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.distance-calculation-repository"),

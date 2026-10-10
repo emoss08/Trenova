@@ -6,9 +6,12 @@ import (
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentguard"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -38,20 +41,20 @@ type DryRunPlan struct {
 
 func (p *DryRunPlan) Refused() bool { return !p.Decision.Allowed }
 
-func (p *DryRunPlan) Opening() services.StreamEvent {
+func (p *DryRunPlan) Opening() kernelports.StreamEvent {
 	return openingEvent(p.Input, p.Decision)
 }
 
 // RunRequest is the plan as the runtime reads it. No thread, no step ledger
 // and no publishing: a dry run leaves nothing behind but what it cost.
-func (p *DryRunPlan) RunRequest(actor *services.RequestActor) *services.RunRequest {
-	return &services.RunRequest{
+func (p *DryRunPlan) RunRequest(actor *permissionports.RequestActor) *agentports.RunRequest {
+	return &agentports.RunRequest{
 		Definition:   p.Definition,
 		Actor:        actor,
 		Context:      agentdefinition.RuntimeContext{Timezone: p.Timezone},
 		Input:        p.Input,
 		RunID:        p.RunID,
-		UsagePurpose: services.AIUsagePurposeEvaluation,
+		UsagePurpose: aiusageports.AIUsagePurposeEvaluation,
 	}
 }
 
@@ -61,7 +64,7 @@ func (p *DryRunPlan) RunRequest(actor *services.RequestActor) *services.RunReque
 func (s *Service) PrepareDryRun(
 	ctx context.Context,
 	req *DryRunRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*DryRunPlan, error) {
 	prompt := strings.TrimSpace(req.Prompt)
 	multiErr := errortypes.NewMultiError()
@@ -100,7 +103,7 @@ func (s *Service) PrepareDryRun(
 	}
 
 	runReq.RunID = req.RunID
-	runReq.UsagePurpose = services.AIUsagePurposeEvaluation
+	runReq.UsagePurpose = aiusageports.AIUsagePurposeEvaluation
 	plan.Timezone = runReq.Context.Timezone
 	plan.Turn = s.runtime.OpenTurn(ctx, runReq).State()
 

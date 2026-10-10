@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -14,12 +14,12 @@ import (
 
 type fakeInboundReader struct {
 	changes []*accountingsync.AccountingInboundChange
-	listed  *serviceports.ListAccountingInboundChangesRequest
+	listed  *accountingsyncports.ListAccountingInboundChangesRequest
 }
 
 func (f *fakeInboundReader) List(
 	_ context.Context,
-	req *serviceports.ListAccountingInboundChangesRequest,
+	req *accountingsyncports.ListAccountingInboundChangesRequest,
 ) (*pagination.CursorListResult[*accountingsync.AccountingInboundChange], error) {
 	f.listed = req
 	return &pagination.CursorListResult[*accountingsync.AccountingInboundChange]{

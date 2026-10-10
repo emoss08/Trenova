@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/briefing"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -14,14 +14,14 @@ import (
 )
 
 type fakeDays struct {
-	asked  []services.WriteBriefingRequest
-	result *services.WriteBriefingResult
+	asked  []briefingports.WriteBriefingRequest
+	result *briefingports.WriteBriefingResult
 }
 
 func (f *fakeDays) WriteForDay(
 	_ context.Context,
-	req services.WriteBriefingRequest,
-) (*services.WriteBriefingResult, error) {
+	req briefingports.WriteBriefingRequest,
+) (*briefingports.WriteBriefingResult, error) {
 	f.asked = append(f.asked, req)
 
 	return f.result, nil
@@ -34,13 +34,13 @@ func TestRegenerate_WritesTheOneRoleOnAWorker(t *testing.T) {
 
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	written := &briefing.Briefing{ID: pulid.MustNew("brf_"), RoleKey: briefing.RoleBilling}
-	days := &fakeDays{result: &services.WriteBriefingResult{
+	days := &fakeDays{result: &briefingports.WriteBriefingResult{
 		Written:   1,
 		Briefings: []*briefing.Briefing{written},
 	}}
 	svc := &Service{l: zap.NewNop(), days: days}
 
-	got, err := svc.Regenerate(t.Context(), services.GetBriefingRequest{
+	got, err := svc.Regenerate(t.Context(), briefingports.GetBriefingRequest{
 		TenantInfo:   tenant,
 		RoleKey:      briefing.RoleBilling,
 		BriefingDate: "2026-09-23",
@@ -58,12 +58,12 @@ func TestRegenerate_WritesTheOneRoleOnAWorker(t *testing.T) {
 func TestRegenerate_AnUnknownRoleWritesTheGeneralPage(t *testing.T) {
 	t.Parallel()
 
-	days := &fakeDays{result: &services.WriteBriefingResult{
+	days := &fakeDays{result: &briefingports.WriteBriefingResult{
 		Briefings: []*briefing.Briefing{{ID: pulid.MustNew("brf_")}},
 	}}
 	svc := &Service{l: zap.NewNop(), days: days}
 
-	_, err := svc.Regenerate(t.Context(), services.GetBriefingRequest{RoleKey: "Nobody"}, nil)
+	_, err := svc.Regenerate(t.Context(), briefingports.GetBriefingRequest{RoleKey: "Nobody"}, nil)
 	require.NoError(t, err)
 	require.Len(t, days.asked, 1)
 	assert.Equal(t, []briefing.RoleKey{briefing.RoleGeneral}, days.asked[0].Roles)
@@ -74,8 +74,8 @@ func TestRegenerate_AnUnknownRoleWritesTheGeneralPage(t *testing.T) {
 func TestRegenerate_NoPageWrittenIsAnError(t *testing.T) {
 	t.Parallel()
 
-	svc := &Service{l: zap.NewNop(), days: &fakeDays{result: &services.WriteBriefingResult{}}}
+	svc := &Service{l: zap.NewNop(), days: &fakeDays{result: &briefingports.WriteBriefingResult{}}}
 
-	_, err := svc.Regenerate(t.Context(), services.GetBriefingRequest{}, nil)
+	_, err := svc.Regenerate(t.Context(), briefingports.GetBriefingRequest{}, nil)
 	require.Error(t, err)
 }

@@ -5,7 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"go.temporal.io/api/serviceerror"
 )
 
@@ -14,11 +15,11 @@ import (
 // every caller that stops a turn tells a stopped turn from one it has to
 // close itself the same way.
 type turnCanceller struct {
-	workflows serviceports.WorkflowStarter
+	workflows kernelports.WorkflowStarter
 }
 
 // NewTurnCanceller is the canceller for turns carried by AssistantTurnWorkflow.
-func NewTurnCanceller(workflows serviceports.WorkflowStarter) serviceports.AssistantTurnCanceller {
+func NewTurnCanceller(workflows kernelports.WorkflowStarter) agentports.AssistantTurnCanceller {
 	return &turnCanceller{workflows: workflows}
 }
 
@@ -26,7 +27,7 @@ func (c *turnCanceller) CancelTurn(ctx context.Context, workflowID string) error
 	err := c.workflows.CancelWorkflow(ctx, workflowID, "")
 	var gone *serviceerror.NotFound
 	if errors.As(err, &gone) {
-		return fmt.Errorf("%w: %w", serviceports.ErrNoTurnExecution, err)
+		return fmt.Errorf("%w: %w", agentports.ErrNoTurnExecution, err)
 	}
 
 	return err

@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/pagefavorite"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/pagefavoriteports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -27,7 +27,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.PageFavoriteRepository {
+func New(p Params) pagefavoriteports.PageFavoriteRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.page-favorite-repository"),
@@ -36,7 +36,7 @@ func New(p Params) repositories.PageFavoriteRepository {
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListPageFavoritesRequest,
+	req *pagefavoriteports.ListPageFavoritesRequest,
 ) ([]*pagefavorite.PageFavorite, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*pagefavorite.PageFavorite, error) {
 		log := r.l.With(
@@ -66,7 +66,7 @@ func (r *repository) List(
 
 func (r *repository) GetByURL(
 	ctx context.Context,
-	req *repositories.GetPageFavoriteByURLRequest,
+	req *pagefavoriteports.GetPageFavoriteByURLRequest,
 ) (*pagefavorite.PageFavorite, bool, error) {
 	return dbtx.Read2(ctx, r.db, func(ctx context.Context) (*pagefavorite.PageFavorite, bool, error) {
 		log := r.l.With(

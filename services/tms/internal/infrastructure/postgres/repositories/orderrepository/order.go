@@ -6,9 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -38,7 +38,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.OrderRepository {
+func New(p Params) orderports.OrderRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.order-repository"),
@@ -47,7 +47,7 @@ func New(p Params) repositories.OrderRepository {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListOrdersRequest,
+	req *orderports.ListOrdersRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.OrderColumns
 	q = querybuilder.ApplyFilters(
@@ -65,7 +65,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListOrdersRequest,
+	req *orderports.ListOrdersRequest,
 ) (*pagination.ListResult[*order.Order], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*order.Order], error) {
 		log := r.l.With(
@@ -94,7 +94,7 @@ func (r *repository) List(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListOrdersConnectionRequest,
+	req *orderports.ListOrdersConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -107,7 +107,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListOrdersConnectionRequest,
+	req *orderports.ListOrdersConnectionRequest,
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -127,7 +127,7 @@ func applyOrderColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListOrdersConnectionRequest,
+	req *orderports.ListOrdersConnectionRequest,
 ) (*pagination.CursorListResult[*order.Order], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*order.Order], error) {
 		log := r.l.With(
@@ -266,7 +266,7 @@ func (r *repository) Update(
 
 func (r *repository) UpdateStatus(
 	ctx context.Context,
-	req *repositories.UpdateOrderStatusRequest,
+	req *orderports.UpdateOrderStatusRequest,
 ) (*order.Order, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*order.Order, error) {
 		log := r.l.With(
@@ -406,13 +406,13 @@ func (r *repository) GetShipmentAttachRefs(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	shipmentIDs []pulid.ID,
-) ([]repositories.ShipmentAttachRef, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.ShipmentAttachRef, error) {
+) ([]orderports.ShipmentAttachRef, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]orderports.ShipmentAttachRef, error) {
 		if len(shipmentIDs) == 0 {
 			return nil, nil
 		}
 
-		refs := make([]repositories.ShipmentAttachRef, 0, len(shipmentIDs))
+		refs := make([]orderports.ShipmentAttachRef, 0, len(shipmentIDs))
 		cols := buncolgen.ShipmentColumns
 		err := r.db.DBForContext(ctx).NewSelect().
 			Model((*shipment.Shipment)(nil)).
@@ -478,7 +478,7 @@ func (r *repository) AddCharge(
 
 func (r *repository) RemoveCharge(
 	ctx context.Context,
-	req *repositories.RemoveOrderChargeRequest,
+	req *orderports.RemoveOrderChargeRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
 		if req == nil {
@@ -603,7 +603,7 @@ const noInvoicedShareExpr = `NOT EXISTS (
 
 func (r *repository) ListUninvoicedChargeSharesForPayer(
 	ctx context.Context,
-	req *repositories.ListUninvoicedChargeSharesRequest,
+	req *orderports.ListUninvoicedChargeSharesRequest,
 ) ([]*order.OrderCharge, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*order.OrderCharge, error) {
 		if req == nil {
@@ -662,7 +662,7 @@ func (r *repository) ListUninvoicedChargeSharesForPayer(
 // the allocation rows; the charge itself reopens once no share is invoiced.
 func (r *repository) ClearChargesInvoice(
 	ctx context.Context,
-	req *repositories.ClearOrderChargesInvoiceRequest,
+	req *orderports.ClearOrderChargesInvoiceRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
 		if req == nil || req.InvoiceID.IsNil() {
@@ -691,7 +691,7 @@ func (r *repository) ClearChargesInvoice(
 
 func (r *repository) MarkChargesFullyInvoicedWhereComplete(
 	ctx context.Context,
-	req *repositories.MarkChargesFullyInvoicedRequest,
+	req *orderports.MarkChargesFullyInvoicedRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
 		if req == nil {
@@ -734,7 +734,7 @@ func (r *repository) MarkChargesFullyInvoicedWhereComplete(
 
 func (r *repository) MarkChargesInvoiced(
 	ctx context.Context,
-	req *repositories.MarkOrderChargesInvoicedRequest,
+	req *orderports.MarkOrderChargesInvoicedRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
 		if req == nil {
@@ -812,7 +812,7 @@ func (r *repository) RecalculateTotal(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetOrderByIDRequest,
+	req orderports.GetOrderByIDRequest,
 ) (*order.Order, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*order.Order, error) {
 		log := r.l.With(
@@ -845,7 +845,7 @@ func (r *repository) GetByID(
 
 func (r *repository) GetByIDs(
 	ctx context.Context,
-	req repositories.GetOrdersByIDsRequest,
+	req orderports.GetOrdersByIDsRequest,
 ) ([]*order.Order, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*order.Order, error) {
 		log := r.l.With(
@@ -874,7 +874,7 @@ func (r *repository) GetByIDs(
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
-	req *repositories.OrderSelectOptionsRequest,
+	req *orderports.OrderSelectOptionsRequest,
 ) (*pagination.ListResult[*order.Order], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*order.Order], error) {
 		cols := buncolgen.OrderColumns

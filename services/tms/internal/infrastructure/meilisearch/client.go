@@ -6,8 +6,8 @@ import (
 	"net/http"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	meili "github.com/meilisearch/meilisearch-go"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -27,7 +27,7 @@ type Client struct {
 	logger  *zap.Logger
 }
 
-var _ repositories.SearchRepository = (*Client)(nil)
+var _ customerports.SearchRepository = (*Client)(nil)
 
 func New(p Params) (*Client, error) {
 	searchConfig := p.Config.GetSearchConfig()
@@ -78,10 +78,10 @@ func (c *Client) Enabled() bool {
 
 func (c *Client) Search(
 	ctx context.Context,
-	req repositories.SearchRequest,
+	req customerports.SearchRequest,
 ) ([]map[string]any, error) {
 	if !c.Enabled() {
-		return nil, repositories.ErrCacheMiss
+		return nil, customerports.ErrCacheMiss
 	}
 
 	result, err := c.client.Index(req.Index).Search(req.Query, &meili.SearchRequest{

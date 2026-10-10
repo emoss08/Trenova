@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -18,7 +18,7 @@ type usStatesByIDsGetter interface {
 type UsStateByIDLoaderFactoryParams struct {
 	fx.In
 
-	Repo repositories.UsStateRepository
+	Repo usstateports.UsStateRepository
 }
 
 type UsStateByIDLoaderFactory struct {

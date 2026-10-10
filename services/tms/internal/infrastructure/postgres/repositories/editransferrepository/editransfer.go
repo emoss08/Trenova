@@ -5,9 +5,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -31,7 +31,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.EDILoadTenderTransferRepository {
+func New(p Params) ediports.EDILoadTenderTransferRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.edi-transfer-repository"),
@@ -40,7 +40,7 @@ func New(p Params) repositories.EDILoadTenderTransferRepository {
 
 func (r *repository) GetInboundStatusCounts(
 	ctx context.Context,
-	req repositories.GetEDITransferStatusCountsRequest,
+	req ediports.GetEDITransferStatusCountsRequest,
 ) (map[edi.TransferStatus]int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[edi.TransferStatus]int, error) {
 		cols := buncolgen.EDITransferColumns
@@ -73,7 +73,7 @@ func (r *repository) GetInboundStatusCounts(
 
 func (r *repository) ListInbound(
 	ctx context.Context,
-	req *repositories.ListEDITransfersRequest,
+	req *ediports.ListEDITransfersRequest,
 ) (*pagination.ListResult[*edi.EDITransfer], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDITransfer], error) {
 		entities := make([]*edi.EDITransfer, 0, req.Filter.Pagination.SafeLimit())
@@ -101,7 +101,7 @@ func (r *repository) ListInbound(
 
 func (r *repository) ListOutbound(
 	ctx context.Context,
-	req *repositories.ListEDITransfersRequest,
+	req *ediports.ListEDITransfersRequest,
 ) (*pagination.ListResult[*edi.EDITransfer], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDITransfer], error) {
 		entities := make([]*edi.EDITransfer, 0, req.Filter.Pagination.SafeLimit())
@@ -130,7 +130,7 @@ func (r *repository) ListOutbound(
 
 func (r *repository) GetTransferByID(
 	ctx context.Context,
-	req repositories.GetEDITransferByIDRequest,
+	req ediports.GetEDITransferByIDRequest,
 ) (*edi.EDITransfer, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDITransfer, error) {
 		entity := new(edi.EDITransfer)
@@ -149,7 +149,7 @@ func (r *repository) GetTransferByID(
 
 func (r *repository) GetTransfersByIDs(
 	ctx context.Context,
-	req repositories.GetEDITransfersByIDsRequest,
+	req ediports.GetEDITransfersByIDsRequest,
 ) ([]*edi.EDITransfer, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDITransfer, error) {
 		entities := make([]*edi.EDITransfer, 0, len(req.TransferIDs))
@@ -176,7 +176,7 @@ func (r *repository) GetTransfersByIDs(
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
-	req *repositories.EDITransferSelectOptionsRequest,
+	req *ediports.EDITransferSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDITransfer], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDITransfer], error) {
 		entities := make([]*edi.EDITransfer, 0, req.SelectQueryRequest.Pagination.SafeLimit())
@@ -216,7 +216,7 @@ func (r *repository) SelectOptions(
 
 func (r *repository) GetTransferForUpdate(
 	ctx context.Context,
-	req repositories.GetEDITransferForUpdateRequest,
+	req ediports.GetEDITransferForUpdateRequest,
 ) (*edi.EDITransfer, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDITransfer, error) {
 		entity := new(edi.EDITransfer)
@@ -291,7 +291,7 @@ func applyTransferTenantFilter(
 
 func (r *repository) GetActionableInboundTransferByExternalReference(
 	ctx context.Context,
-	req repositories.GetActionableInboundEDITransferByExternalReferenceRequest,
+	req ediports.GetActionableInboundEDITransferByExternalReferenceRequest,
 ) (*edi.EDITransfer, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDITransfer, error) {
 		entity := new(edi.EDITransfer)
@@ -373,7 +373,7 @@ func (r *repository) UpdateTransfer(
 
 func (r *repository) SetApprovalWorkflowRunID(
 	ctx context.Context,
-	req repositories.SetEDITransferApprovalWorkflowRunIDRequest,
+	req ediports.SetEDITransferApprovalWorkflowRunIDRequest,
 ) (*edi.EDITransfer, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDITransfer, error) {
 		entity := new(edi.EDITransfer)
@@ -401,21 +401,21 @@ func (r *repository) SetApprovalWorkflowRunID(
 
 func (r *repository) ListInboundCursor(
 	ctx context.Context,
-	req *repositories.ListEDITransfersRequest,
+	req *ediports.ListEDITransfersRequest,
 ) (*pagination.CursorListResult[*edi.EDITransfer], error) {
 	return r.listCursor(ctx, req, "inbound")
 }
 
 func (r *repository) ListOutboundCursor(
 	ctx context.Context,
-	req *repositories.ListEDITransfersRequest,
+	req *ediports.ListEDITransfersRequest,
 ) (*pagination.CursorListResult[*edi.EDITransfer], error) {
 	return r.listCursor(ctx, req, "outbound")
 }
 
 func (r *repository) listCursor(
 	ctx context.Context,
-	req *repositories.ListEDITransfersRequest,
+	req *ediports.ListEDITransfersRequest,
 	direction string,
 ) (*pagination.CursorListResult[*edi.EDITransfer], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*edi.EDITransfer], error) {

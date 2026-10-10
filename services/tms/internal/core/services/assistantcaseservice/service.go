@@ -10,9 +10,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/deskcase"
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/subjectaccess"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -62,16 +66,16 @@ type Params struct {
 
 	Logger        *zap.Logger
 	States        *States
-	Conversations repositories.ConversationRepository
-	Cases         repositories.AssistantCaseRepository
-	Subjects      repositories.AgentSubjectRepository
-	Shipments     serviceports.ShipmentService
-	Waits         serviceports.AgentWaitService
-	Checklists    repositories.CaseChecklistRepository
-	Definitions   repositories.AgentDefinitionRepository
-	Runtime       serviceports.AgentRuntime
-	Permissions   serviceports.PermissionEngine
-	Realtime      serviceports.RealtimeService `optional:"true"`
+	Conversations agentports.ConversationRepository
+	Cases         deskcaseports.AssistantCaseRepository
+	Subjects      agentports.AgentSubjectRepository
+	Shipments     shipmentports.ShipmentService
+	Waits         agentwaitports.AgentWaitService
+	Checklists    deskcaseports.CaseChecklistRepository
+	Definitions   agentdefinitionports.AgentDefinitionRepository
+	Runtime       agentports.AgentRuntime
+	Permissions   permissionports.PermissionEngine
+	Realtime      agentports.RealtimeService `optional:"true"`
 }
 
 // Service makes a conversation a case about a shipment, invoice or dispute
@@ -81,19 +85,19 @@ type Params struct {
 type Service struct {
 	*States
 
-	conversations repositories.ConversationRepository
-	subjects      repositories.AgentSubjectRepository
-	shipments     serviceports.ShipmentService
-	agentWaits    serviceports.AgentWaitService
-	checklists    repositories.CaseChecklistRepository
-	definitions   repositories.AgentDefinitionRepository
-	runtime       serviceports.AgentRuntime
-	permissions   serviceports.PermissionEngine
-	realtime      serviceports.RealtimeService
+	conversations agentports.ConversationRepository
+	subjects      agentports.AgentSubjectRepository
+	shipments     shipmentports.ShipmentService
+	agentWaits    agentwaitports.AgentWaitService
+	checklists    deskcaseports.CaseChecklistRepository
+	definitions   agentdefinitionports.AgentDefinitionRepository
+	runtime       agentports.AgentRuntime
+	permissions   permissionports.PermissionEngine
+	realtime      agentports.RealtimeService
 }
 
 //nolint:gocritic // fx passes params by value
-func New(p Params) serviceports.AssistantCaseService {
+func New(p Params) deskcaseports.AssistantCaseService {
 	return &Service{
 		States:        p.States,
 		conversations: p.Conversations,
@@ -112,7 +116,7 @@ func New(p Params) serviceports.AssistantCaseService {
 // able to read the record: the checklist reads its paperwork and charges.
 func (s *Service) Get(
 	ctx context.Context,
-	req *serviceports.CaseThreadRequest,
+	req *deskcaseports.CaseThreadRequest,
 ) (*deskcase.View, error) {
 	thread, err := s.caseThread(ctx, req)
 	if err != nil {
@@ -135,7 +139,7 @@ func (s *Service) Get(
 		return view, nil
 	}
 
-	view.Parties, err = s.cases.Parties(ctx, &repositories.ListCasePartiesRequest{
+	view.Parties, err = s.cases.Parties(ctx, &deskcaseports.ListCasePartiesRequest{
 		TenantInfo: req.TenantInfo,
 		CustomerID: record.CustomerID,
 		CarrierIDs: record.CarrierIDs,
@@ -161,7 +165,7 @@ func (s *Service) readyToBill(
 	record *deskcase.Record,
 ) (*deskcase.Checklist, error) {
 	shipmentID := record.ID
-	facts, err := s.cases.ShipmentFacts(ctx, &repositories.GetShipmentCaseFactsRequest{
+	facts, err := s.cases.ShipmentFacts(ctx, &deskcaseports.GetShipmentCaseFactsRequest{
 		TenantInfo: tenant,
 		ShipmentID: shipmentID,
 		PODCode:    documenttype.CodePOD,
@@ -204,7 +208,7 @@ func (s *Service) readyToClose(
 	tenant pagination.TenantInfo,
 	record *deskcase.Record,
 ) (*deskcase.Checklist, error) {
-	facts, err := s.cases.InvoiceFacts(ctx, &repositories.GetInvoiceCaseFactsRequest{
+	facts, err := s.cases.InvoiceFacts(ctx, &deskcaseports.GetInvoiceCaseFactsRequest{
 		TenantInfo: tenant,
 		InvoiceID:  record.ID,
 	})
@@ -233,7 +237,7 @@ func (s *Service) arrangement(
 		return deskcase.Arrangement{}, err
 	}
 
-	ticks, err := s.checklists.ListTicks(ctx, &repositories.ListCaseChecklistTicksRequest{
+	ticks, err := s.checklists.ListTicks(ctx, &deskcaseports.ListCaseChecklistTicksRequest{
 		TenantInfo:  tenant,
 		SubjectType: string(record.Type),
 		SubjectID:   record.ID,
@@ -259,7 +263,7 @@ func (s *Service) templateFor(
 	kind deskcase.ChecklistKind,
 	record *deskcase.Record,
 ) (deskcase.TemplateItems, error) {
-	template, err := s.checklists.TemplateFor(ctx, &repositories.GetCaseChecklistTemplateForRequest{
+	template, err := s.checklists.TemplateFor(ctx, &deskcaseports.GetCaseChecklistTemplateForRequest{
 		TenantInfo: tenant,
 		Kind:       kind,
 		CustomerID: record.BillToID,
@@ -279,7 +283,7 @@ func (s *Service) templateFor(
 // everyone working a case about it sees it.
 func (s *Service) Tick(
 	ctx context.Context,
-	req *serviceports.TickCaseItemRequest,
+	req *deskcaseports.TickCaseItemRequest,
 ) (*deskcase.View, error) {
 	thread, err := s.caseThread(ctx, &req.CaseThreadRequest)
 	if err != nil {
@@ -325,7 +329,7 @@ func (s *Service) Tick(
 			TickedAt:       s.now(),
 		})
 	} else {
-		err = s.checklists.Untick(ctx, &repositories.UntickCaseChecklistItemRequest{
+		err = s.checklists.Untick(ctx, &deskcaseports.UntickCaseChecklistItemRequest{
 			TenantInfo:  req.TenantInfo,
 			SubjectType: string(thread.SubjectType),
 			SubjectID:   thread.SubjectID,
@@ -344,7 +348,7 @@ func (s *Service) Tick(
 // another. A snooze set against the record it was about goes with it.
 func (s *Service) Bind(
 	ctx context.Context,
-	req *serviceports.BindCaseRequest,
+	req *deskcaseports.BindCaseRequest,
 ) (*conversation.Thread, error) {
 	if !deskcase.IsSubject(req.SubjectType) {
 		return nil, errortypes.NewValidationError(
@@ -374,7 +378,7 @@ func (s *Service) Bind(
 		return nil, err
 	}
 
-	exists, err := s.subjects.Exists(ctx, repositories.AgentSubjectExistsRequest{
+	exists, err := s.subjects.Exists(ctx, agentports.AgentSubjectExistsRequest{
 		TenantInfo:  req.TenantInfo,
 		SubjectType: req.SubjectType,
 		SubjectID:   req.SubjectID,
@@ -402,7 +406,7 @@ func (s *Service) Bind(
 // Unbind makes the case an ordinary conversation again.
 func (s *Service) Unbind(
 	ctx context.Context,
-	req *serviceports.CaseThreadRequest,
+	req *deskcaseports.CaseThreadRequest,
 ) (*conversation.Thread, error) {
 	thread, err := s.caseThread(ctx, req)
 	if err != nil {
@@ -426,7 +430,7 @@ func (s *Service) Unbind(
 // time the case is, so the snooze follows them as they move.
 func (s *Service) Snooze(
 	ctx context.Context,
-	req *serviceports.SnoozeCaseRequest,
+	req *deskcaseports.SnoozeCaseRequest,
 ) (*conversation.Thread, error) {
 	thread, err := s.caseThread(ctx, &req.CaseThreadRequest)
 	if err != nil {
@@ -451,7 +455,7 @@ func (s *Service) Snooze(
 
 func (s *Service) resolveSnooze(
 	ctx context.Context,
-	req *serviceports.SnoozeCaseRequest,
+	req *deskcaseports.SnoozeCaseRequest,
 	thread *conversation.Thread,
 	record *deskcase.Record,
 ) (deskcase.Snooze, error) {
@@ -539,7 +543,7 @@ func onlyShipments() error {
 // Wake brings a snoozed case back now.
 func (s *Service) Wake(
 	ctx context.Context,
-	req *serviceports.CaseThreadRequest,
+	req *deskcaseports.CaseThreadRequest,
 ) (*conversation.Thread, error) {
 	thread, err := s.caseThread(ctx, req)
 	if err != nil {
@@ -559,7 +563,7 @@ func (s *Service) Wake(
 // given.
 func (s *Service) AwaitReply(
 	ctx context.Context,
-	req *serviceports.AwaitCaseReplyRequest,
+	req *deskcaseports.AwaitCaseReplyRequest,
 ) (*agentwait.Wait, error) {
 	thread, err := s.caseThread(ctx, &req.CaseThreadRequest)
 	if err != nil {
@@ -590,7 +594,7 @@ func (s *Service) AwaitReply(
 		condition.CustomerID = party.ID
 	}
 
-	return s.agentWaits.Register(ctx, &serviceports.RegisterWaitRequest{
+	return s.agentWaits.Register(ctx, &agentwaitports.RegisterWaitRequest{
 		Actor:        req.Actor,
 		DefinitionID: thread.AgentDefinitionID,
 		ThreadID:     thread.ID,
@@ -620,7 +624,7 @@ func replyHours(requested int) int {
 // be the record's own.
 func (s *Service) party(
 	ctx context.Context,
-	req *serviceports.AwaitCaseReplyRequest,
+	req *deskcaseports.AwaitCaseReplyRequest,
 	record *deskcase.Record,
 ) (*deskcase.Party, error) {
 	if record.Gone() {
@@ -649,7 +653,7 @@ func (s *Service) party(
 		)
 	}
 
-	parties, err := s.cases.Parties(ctx, &repositories.ListCasePartiesRequest{
+	parties, err := s.cases.Parties(ctx, &deskcaseports.ListCasePartiesRequest{
 		TenantInfo: req.TenantInfo,
 		CustomerID: record.CustomerID,
 		CarrierIDs: record.CarrierIDs,
@@ -670,13 +674,13 @@ func (s *Service) party(
 
 func (s *Service) ownThread(
 	ctx context.Context,
-	req *serviceports.CaseThreadRequest,
+	req *deskcaseports.CaseThreadRequest,
 ) (*conversation.Thread, error) {
 	if req.Actor == nil {
 		return nil, errortypes.NewAuthorizationError("A case belongs to a person")
 	}
 
-	return s.conversations.GetThread(ctx, repositories.GetThreadRequest{
+	return s.conversations.GetThread(ctx, agentports.GetThreadRequest{
 		ID:         req.ThreadID,
 		UserID:     req.Actor.UserID,
 		TenantInfo: req.TenantInfo,
@@ -685,7 +689,7 @@ func (s *Service) ownThread(
 
 func (s *Service) caseThread(
 	ctx context.Context,
-	req *serviceports.CaseThreadRequest,
+	req *deskcaseports.CaseThreadRequest,
 ) (*conversation.Thread, error) {
 	thread, err := s.ownThread(ctx, req)
 	if err != nil {
@@ -732,7 +736,7 @@ func (s *Service) announce(ctx context.Context, thread *conversation.Thread) {
 	}
 	if err := s.realtime.PublishResourceInvalidation(
 		context.WithoutCancel(ctx),
-		&serviceports.PublishResourceInvalidationRequest{
+		&agentports.PublishResourceInvalidationRequest{
 			OrganizationID: thread.OrganizationID,
 			BusinessUnitID: thread.BusinessUnitID,
 			AudienceUserID: thread.UserID,

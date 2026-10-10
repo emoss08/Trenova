@@ -8,8 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -33,8 +33,8 @@ type runTranscriptInput struct {
 
 func (s *Service) RunTranscript(
 	ctx context.Context,
-	req repositories.GetAgentRunByIDRequest,
-) (*services.TranscriptFile, error) {
+	req agentports.GetAgentRunByIDRequest,
+) (*kernelports.TranscriptFile, error) {
 	if s.runs == nil {
 		return nil, errortypes.NewBusinessError("Agent run transcripts are not available")
 	}
@@ -53,7 +53,7 @@ func (s *Service) RunTranscript(
 		return nil, err
 	}
 
-	proposals, err := s.proposals.ListByRun(ctx, repositories.ListAgentProposalsByRunRequest{
+	proposals, err := s.proposals.ListByRun(ctx, agentports.ListAgentProposalsByRunRequest{
 		RunID:      run.ID,
 		TenantInfo: tenant,
 	})
@@ -73,7 +73,7 @@ func (s *Service) RunTranscript(
 		agentName = runTranscriptAgentFallback
 	}
 
-	return &services.TranscriptFile{
+	return &kernelports.TranscriptFile{
 		FileName: runTranscriptFileName(agentName, run.ID),
 		Body: renderRunTranscript(runTranscriptInput{
 			Run:        run,
@@ -91,7 +91,7 @@ func (s *Service) runTranscriptOf(
 	runID pulid.ID,
 	tenant pagination.TenantInfo,
 ) (*agent.RunTranscript, error) {
-	rows, err := s.runs.ListTranscriptsByIDs(ctx, repositories.ListAgentRunsByIDsRequest{
+	rows, err := s.runs.ListTranscriptsByIDs(ctx, agentports.ListAgentRunsByIDsRequest{
 		IDs:        []pulid.ID{runID},
 		TenantInfo: tenant,
 	})

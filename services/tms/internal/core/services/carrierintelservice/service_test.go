@@ -10,9 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/integrationservice"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,7 +26,7 @@ import (
 const testNow = int64(1_789_000_000)
 
 type fakeUsageRepo struct {
-	repositories.CarrierIntelUsageRepository
+	carrierintelports.CarrierIntelUsageRepository
 
 	mu         sync.Mutex
 	records    []*carrierintel.CarrierIntelUsageRecord
@@ -81,7 +81,7 @@ func (f *fakeUsageRepo) CostSince(
 
 func (f *fakeUsageRepo) CountBillableSince(
 	_ context.Context,
-	_ *repositories.CountBillableUsageRequest,
+	_ *carrierintelports.CountBillableUsageRequest,
 ) (int, error) {
 	return f.billable, nil
 }
@@ -109,7 +109,7 @@ func (f *fakeNotifications) Create(
 
 func (f *fakeNotifications) ExistsRecent(
 	_ context.Context,
-	req repositories.ExistsRecentNotificationRequest,
+	req notificationports.ExistsRecentNotificationRequest,
 ) (bool, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -154,12 +154,12 @@ func (f *fakeIntegrations) GetRuntimeConfig(
 
 type fakeClient struct {
 	provider integration.Type
-	recorder services.CarrierIntelCallRecorder
+	recorder carrierintelports.CarrierIntelCallRecorder
 
 	mu       sync.Mutex
-	requests []*services.CarrierIntelLookupRequest
+	requests []*carrierintelports.CarrierIntelLookupRequest
 	errs     []error
-	result   *services.CarrierIntelLookupResult
+	result   *carrierintelports.CarrierIntelLookupResult
 }
 
 func (c *fakeClient) Provider() integration.Type { return c.provider }
@@ -168,8 +168,8 @@ func (c *fakeClient) IsSandbox() bool { return true }
 
 func (c *fakeClient) Lookup(
 	ctx context.Context,
-	req *services.CarrierIntelLookupRequest,
-) (*services.CarrierIntelLookupResult, error) {
+	req *carrierintelports.CarrierIntelLookupRequest,
+) (*carrierintelports.CarrierIntelLookupResult, error) {
 	c.mu.Lock()
 	c.requests = append(c.requests, req)
 	var err error
@@ -180,7 +180,7 @@ func (c *fakeClient) Lookup(
 	c.mu.Unlock()
 
 	if c.recorder != nil {
-		c.recorder(ctx, services.CarrierIntelCall{
+		c.recorder(ctx, carrierintelports.CarrierIntelCall{
 			Endpoint:  depthEndpoint(req.Depth),
 			DOTNumber: req.Identifier.DOTNumber,
 			Found:     err == nil,
@@ -193,16 +193,16 @@ func (c *fakeClient) Lookup(
 	if c.result != nil {
 		return c.result, nil
 	}
-	return &services.CarrierIntelLookupResult{
+	return &carrierintelports.CarrierIntelLookupResult{
 		Profile:  &carrierintel.Profile{},
 		Endpoint: depthEndpoint(req.Depth),
 	}, nil
 }
 
-func (c *fakeClient) lookups() []*services.CarrierIntelLookupRequest {
+func (c *fakeClient) lookups() []*carrierintelports.CarrierIntelLookupRequest {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	return append([]*services.CarrierIntelLookupRequest(nil), c.requests...)
+	return append([]*carrierintelports.CarrierIntelLookupRequest(nil), c.requests...)
 }
 
 type fakeConnector struct {
@@ -223,8 +223,8 @@ func (c *fakeConnector) PriceBook() carrierintel.PriceBook { return c.prices }
 func (c *fakeConnector) TestConnection(context.Context, map[string]string) error { return nil }
 
 func (c *fakeConnector) Bind(
-	params *services.CarrierIntelBindParams,
-) (services.CarrierIntelClient, error) {
+	params *carrierintelports.CarrierIntelBindParams,
+) (carrierintelports.CarrierIntelClient, error) {
 	c.client.recorder = params.Recorder
 	return c.client, nil
 }
@@ -296,7 +296,7 @@ func newHarness(t *testing.T, connectors ...*fakeConnector) *harness {
 		now:           testNow,
 	}
 
-	byType := make(map[integration.Type]services.CarrierIntelConnector, len(connectors))
+	byType := make(map[integration.Type]carrierintelports.CarrierIntelConnector, len(connectors))
 	for _, connector := range connectors {
 		byType[connector.typ] = connector
 	}
@@ -334,7 +334,7 @@ func (h *harness) attempt(bound *boundProvider, wanted carrierintel.LookupDepth)
 		tenant:  h.tenant,
 		control: h.control,
 		primary: bound,
-		subject: repositories.CarrierIntelSubject{
+		subject: carrierintelports.CarrierIntelSubject{
 			SubjectType: carrierintel.SubjectTypeCarrier,
 			SubjectID:   pulid.MustNew("car_").String(),
 			DOTNumber:   "818175",
@@ -343,8 +343,8 @@ func (h *harness) attempt(bound *boundProvider, wanted carrierintel.LookupDepth)
 	}
 }
 
-func providerError(kind services.CarrierIntelErrorKind) error {
-	return &services.CarrierIntelProviderError{Provider: integration.TypeCarrierOK, Kind: kind}
+func providerError(kind carrierintelports.CarrierIntelErrorKind) error {
+	return &carrierintelports.CarrierIntelProviderError{Provider: integration.TypeCarrierOK, Kind: kind}
 }
 
 func TestCircuitBreaker(t *testing.T) {
@@ -390,39 +390,39 @@ func TestIsBillable(t *testing.T) {
 	tests := []struct {
 		name      string
 		price     carrierintel.EndpointPrice
-		call      services.CarrierIntelCall
+		call      carrierintelports.CarrierIntelCall
 		billable  bool
 		wantUnits int
 	}{
-		{name: "free endpoint", price: free, call: services.CarrierIntelCall{Found: true}},
+		{name: "free endpoint", price: free, call: carrierintelports.CarrierIntelCall{Found: true}},
 		{
 			name:      "per DOT found",
 			price:     perDOT,
-			call:      services.CarrierIntelCall{Found: true},
+			call:      carrierintelports.CarrierIntelCall{Found: true},
 			billable:  true,
 			wantUnits: 1,
 		},
-		{name: "per match not found", price: perMatch, call: services.CarrierIntelCall{}},
+		{name: "per match not found", price: perMatch, call: carrierintelports.CarrierIntelCall{}},
 		{
 			name:  "failed call without a match",
 			price: perMatch,
-			call: services.CarrierIntelCall{
-				Err: providerError(services.CarrierIntelErrorUnavailable),
+			call: carrierintelports.CarrierIntelCall{
+				Err: providerError(carrierintelports.CarrierIntelErrorUnavailable),
 			},
 		},
 		{
 			name:      "per request success counts units",
 			price:     perRequest,
-			call:      services.CarrierIntelCall{Units: 4},
+			call:      carrierintelports.CarrierIntelCall{Units: 4},
 			billable:  true,
 			wantUnits: 4,
 		},
 		{
 			name:  "per request failure",
 			price: perRequest,
-			call: services.CarrierIntelCall{
+			call: carrierintelports.CarrierIntelCall{
 				Found: true,
-				Err:   providerError(services.CarrierIntelErrorInvalidRequest),
+				Err:   providerError(carrierintelports.CarrierIntelErrorInvalidRequest),
 			},
 		},
 	}
@@ -445,28 +445,28 @@ func TestUsageOutcomeAndOutageClassification(t *testing.T) {
 	limited := &restx.RateLimitedError{RetryAfter: time.Second}
 
 	assert.Equal(t, carrierintel.UsageOutcomeSuccess,
-		usageOutcome(services.CarrierIntelCall{Found: true}))
-	assert.Equal(t, carrierintel.UsageOutcomeNotFound, usageOutcome(services.CarrierIntelCall{}))
+		usageOutcome(carrierintelports.CarrierIntelCall{Found: true}))
+	assert.Equal(t, carrierintel.UsageOutcomeNotFound, usageOutcome(carrierintelports.CarrierIntelCall{}))
 	assert.Equal(t, carrierintel.UsageOutcomeDenied,
-		usageOutcome(services.CarrierIntelCall{Err: limited}))
+		usageOutcome(carrierintelports.CarrierIntelCall{Err: limited}))
 	assert.Equal(t, carrierintel.UsageOutcomeTransport,
-		usageOutcome(services.CarrierIntelCall{Err: errors.New("dial tcp: timeout")}))
-	assert.Equal(t, carrierintel.UsageOutcomeRateLimited, usageOutcome(services.CarrierIntelCall{
-		Err: providerError(services.CarrierIntelErrorRateLimited),
+		usageOutcome(carrierintelports.CarrierIntelCall{Err: errors.New("dial tcp: timeout")}))
+	assert.Equal(t, carrierintel.UsageOutcomeRateLimited, usageOutcome(carrierintelports.CarrierIntelCall{
+		Err: providerError(carrierintelports.CarrierIntelErrorRateLimited),
 	}))
-	assert.Equal(t, carrierintel.UsageOutcomeServerError, usageOutcome(services.CarrierIntelCall{
-		Err: providerError(services.CarrierIntelErrorUnavailable),
+	assert.Equal(t, carrierintel.UsageOutcomeServerError, usageOutcome(carrierintelports.CarrierIntelCall{
+		Err: providerError(carrierintelports.CarrierIntelErrorUnavailable),
 	}))
-	assert.Equal(t, carrierintel.UsageOutcomeClientError, usageOutcome(services.CarrierIntelCall{
-		Err: providerError(services.CarrierIntelErrorUnauthorized),
+	assert.Equal(t, carrierintel.UsageOutcomeClientError, usageOutcome(carrierintelports.CarrierIntelCall{
+		Err: providerError(carrierintelports.CarrierIntelErrorUnauthorized),
 	}))
 
 	assert.False(t, isOutageError(limited))
 	assert.False(t, isOutageError(context.Canceled))
 	assert.True(t, isOutageError(errors.New("connection reset")))
-	assert.True(t, isOutageError(providerError(services.CarrierIntelErrorUnavailable)))
-	assert.False(t, isOutageError(providerError(services.CarrierIntelErrorUnauthorized)))
-	assert.False(t, isOutageError(providerError(services.CarrierIntelErrorPaymentRequired)))
+	assert.True(t, isOutageError(providerError(carrierintelports.CarrierIntelErrorUnavailable)))
+	assert.False(t, isOutageError(providerError(carrierintelports.CarrierIntelErrorUnauthorized)))
+	assert.False(t, isOutageError(providerError(carrierintelports.CarrierIntelErrorPaymentRequired)))
 }
 
 func TestToBusinessError(t *testing.T) {
@@ -479,22 +479,22 @@ func TestToBusinessError(t *testing.T) {
 	existing := errortypes.NewBusinessError("already friendly")
 	assert.Same(t, existing, toBusinessError(integration.TypeCarrierOK, existing))
 
-	kinds := []services.CarrierIntelErrorKind{
-		services.CarrierIntelErrorUnauthorized,
-		services.CarrierIntelErrorPaymentRequired,
-		services.CarrierIntelErrorInvalidRequest,
-		services.CarrierIntelErrorUnsupported,
-		services.CarrierIntelErrorUnavailable,
+	kinds := []carrierintelports.CarrierIntelErrorKind{
+		carrierintelports.CarrierIntelErrorUnauthorized,
+		carrierintelports.CarrierIntelErrorPaymentRequired,
+		carrierintelports.CarrierIntelErrorInvalidRequest,
+		carrierintelports.CarrierIntelErrorUnsupported,
+		carrierintelports.CarrierIntelErrorUnavailable,
 	}
 	for _, kind := range kinds {
 		err := toBusinessError(integration.TypeCarrierOK, providerError(kind))
 		require.ErrorAs(t, err, &business, string(kind))
-		assert.True(t, services.IsCarrierIntelErrorKind(err, kind), string(kind))
+		assert.True(t, carrierintelports.IsCarrierIntelErrorKind(err, kind), string(kind))
 	}
 
-	limited := toBusinessError(integration.TypeCarrierOK, &services.CarrierIntelProviderError{
+	limited := toBusinessError(integration.TypeCarrierOK, &carrierintelports.CarrierIntelProviderError{
 		Provider:   integration.TypeCarrierOK,
-		Kind:       services.CarrierIntelErrorRateLimited,
+		Kind:       carrierintelports.CarrierIntelErrorRateLimited,
 		RetryAfter: 1500 * time.Millisecond,
 	})
 	require.ErrorAs(t, limited, &business)
@@ -665,7 +665,7 @@ func TestRecordCallDedupesMonthlyCharges(t *testing.T) {
 	h := newHarness(t, newCarrierOKConnector())
 	bound := h.bind(t, integration.TypeCarrierOK, false)
 	ctx := carrierintel.WithPurpose(t.Context(), carrierintel.PurposeVet)
-	call := services.CarrierIntelCall{
+	call := carrierintelports.CarrierIntelCall{
 		Endpoint:  carrierintel.EndpointProfileFull,
 		DOTNumber: "818175",
 		Found:     true,
@@ -757,7 +757,7 @@ func TestLookupWithFallback(t *testing.T) {
 	t.Run("primary outage answers from the fallback", func(t *testing.T) {
 		t.Parallel()
 		primary, fallback := newCarrierOKConnector(), newFMCSAConnector()
-		primary.client.errs = []error{providerError(services.CarrierIntelErrorUnavailable)}
+		primary.client.errs = []error{providerError(carrierintelports.CarrierIntelErrorUnavailable)}
 		h := newHarness(t, primary, fallback)
 		h.setPrimary(integration.TypeCarrierOK)
 		h.setFallback(integration.TypeFMCSAQCMobile)
@@ -776,7 +776,7 @@ func TestLookupWithFallback(t *testing.T) {
 	t.Run("rejected credentials never fall back", func(t *testing.T) {
 		t.Parallel()
 		primary, fallback := newCarrierOKConnector(), newFMCSAConnector()
-		primary.client.errs = []error{providerError(services.CarrierIntelErrorUnauthorized)}
+		primary.client.errs = []error{providerError(carrierintelports.CarrierIntelErrorUnauthorized)}
 		h := newHarness(t, primary, fallback)
 		h.setPrimary(integration.TypeCarrierOK)
 		h.setFallback(integration.TypeFMCSAQCMobile)
@@ -789,7 +789,7 @@ func TestLookupWithFallback(t *testing.T) {
 		require.ErrorAs(t, err, &business)
 		assert.True(
 			t,
-			services.IsCarrierIntelErrorKind(err, services.CarrierIntelErrorUnauthorized),
+			carrierintelports.IsCarrierIntelErrorKind(err, carrierintelports.CarrierIntelErrorUnauthorized),
 		)
 		assert.Empty(t, fallback.client.lookups())
 	})
@@ -837,7 +837,7 @@ func TestLookupWithFallback(t *testing.T) {
 	t.Run("outage without a fallback reports the provider unavailable", func(t *testing.T) {
 		t.Parallel()
 		primary := newCarrierOKConnector()
-		primary.client.errs = []error{providerError(services.CarrierIntelErrorUnavailable)}
+		primary.client.errs = []error{providerError(carrierintelports.CarrierIntelErrorUnavailable)}
 		h := newHarness(t, primary)
 		h.setPrimary(integration.TypeCarrierOK)
 		bound := h.bind(t, integration.TypeCarrierOK, false)
@@ -847,13 +847,13 @@ func TestLookupWithFallback(t *testing.T) {
 		)
 		var business *errortypes.BusinessError
 		require.ErrorAs(t, err, &business)
-		assert.True(t, services.IsCarrierIntelErrorKind(err, services.CarrierIntelErrorUnavailable))
+		assert.True(t, carrierintelports.IsCarrierIntelErrorKind(err, carrierintelports.CarrierIntelErrorUnavailable))
 	})
 
 	t.Run("not found is a result, not an error", func(t *testing.T) {
 		t.Parallel()
 		primary := newCarrierOKConnector()
-		primary.client.errs = []error{providerError(services.CarrierIntelErrorNotFound)}
+		primary.client.errs = []error{providerError(carrierintelports.CarrierIntelErrorNotFound)}
 		h := newHarness(t, primary)
 		h.setPrimary(integration.TypeCarrierOK)
 		bound := h.bind(t, integration.TypeCarrierOK, false)

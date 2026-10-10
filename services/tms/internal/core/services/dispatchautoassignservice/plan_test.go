@@ -5,10 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/core/services/dispatcheligibility"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/shared/assignmentsolver"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -110,15 +110,15 @@ func planFor(
 	scores []*dispatchcandidateservice.CandidateScore,
 	control *dispatchcontrol.DispatchControl,
 	policy Policy,
-) *portservices.DispatchPlan {
+) *agentports.DispatchPlan {
 	t.Helper()
 
-	moves := make([]*repositories.BoardMove, len(scores))
+	moves := make([]*shipmentports.BoardMove, len(scores))
 	cost := make([][]float64, len(scores))
 	grid := make([][]*dispatchcandidateservice.CandidateScore, len(scores))
 
 	for i := range scores {
-		moves[i] = &repositories.BoardMove{
+		moves[i] = &shipmentports.BoardMove{
 			MoveID:    pulid.MustNew("sm_"),
 			ProNumber: "PRO-1",
 		}
@@ -146,12 +146,12 @@ func planFor(
 
 func autoExecuteControls() (*dispatchcontrol.DispatchControl, Policy) {
 	return &dispatchcontrol.DispatchControl{
-			AutoAssignConfidenceThreshold: decimal.NewFromFloat(0.85),
-		}, Policy{
-			Enabled:    true,
-			Tier:       agent.TierAutoExecute,
-			ShadowMode: false,
-		}
+		AutoAssignConfidenceThreshold: decimal.NewFromFloat(0.85),
+	}, Policy{
+		Enabled:    true,
+		Tier:       agent.TierAutoExecute,
+		ShadowMode: false,
+	}
 }
 
 func TestBuildPlan_AutoExecutesOnlyAboveTheConfidenceThreshold(t *testing.T) {
@@ -244,7 +244,7 @@ func TestBuildPlan_SurvivesAnEmptySolverResult(t *testing.T) {
 	t.Parallel()
 
 	control, policy := autoExecuteControls()
-	moves := []*repositories.BoardMove{{MoveID: pulid.MustNew("sm_"), ProNumber: "PRO-9"}}
+	moves := []*shipmentports.BoardMove{{MoveID: pulid.MustNew("sm_"), ProNumber: "PRO-9"}}
 
 	plan := buildPlan(&buildPlanParams{
 		Moves:    moves,
@@ -267,7 +267,7 @@ func TestSolve_NoDriversLeavesEveryMoveUncovered(t *testing.T) {
 	svc := &Service{}
 
 	plan := svc.solve(&solveParams{
-		Moves: []*repositories.BoardMove{
+		Moves: []*shipmentports.BoardMove{
 			{MoveID: pulid.MustNew("sm_"), ProNumber: "PRO-1"},
 			{MoveID: pulid.MustNew("sm_"), ProNumber: "PRO-2"},
 		},
@@ -288,7 +288,7 @@ func TestSolve_NoDriversLeavesEveryMoveUncovered(t *testing.T) {
 func TestUncoveredFor_DistinguishesBlockedFromMerelyUnchosen(t *testing.T) {
 	t.Parallel()
 
-	move := &repositories.BoardMove{MoveID: pulid.MustNew("sm_"), ProNumber: "PRO-3"}
+	move := &shipmentports.BoardMove{MoveID: pulid.MustNew("sm_"), ProNumber: "PRO-3"}
 
 	eligible := score(85)
 	eligible.WorkerName = "Riley Chen"
@@ -333,7 +333,7 @@ func TestRationaleFor_LeadsWithTheDrivingFactors(t *testing.T) {
 		{Key: dispatchcontrol.FactorOnTime, Detail: "3.0 hours of margin to the appointment"},
 	}
 
-	rationale := rationaleFor(candidate, &repositories.BoardMove{ProNumber: "PRO-42"})
+	rationale := rationaleFor(candidate, &shipmentports.BoardMove{ProNumber: "PRO-42"})
 
 	assert.Contains(t, rationale, "Ada Reed")
 	assert.Contains(t, rationale, "PRO-42")
@@ -347,7 +347,7 @@ func TestEvidenceFor_RecordsMoveAndHOSAlways(t *testing.T) {
 	candidate := score(80)
 	candidate.DriveRemainingMs = 6 * 3600 * 1000
 
-	evidence := evidenceFor(candidate, &repositories.BoardMove{
+	evidence := evidenceFor(candidate, &shipmentports.BoardMove{
 		MoveID:      pulid.MustNew("sm_"),
 		OriginCity:  "Joliet",
 		OriginState: "IL",
@@ -362,13 +362,13 @@ func TestEvidenceFor_RecordsMoveAndHOSAlways(t *testing.T) {
 	withPosition := score(80)
 	miles := 42.0
 	withPosition.DeadheadMiles = &miles
-	assert.Len(t, evidenceFor(withPosition, &repositories.BoardMove{}), 3)
+	assert.Len(t, evidenceFor(withPosition, &shipmentports.BoardMove{}), 3)
 }
 
 func TestToolParamsFor(t *testing.T) {
 	t.Parallel()
 
-	planned := &portservices.DispatchPlannedAssignment{
+	planned := &agentports.DispatchPlannedAssignment{
 		MoveID:    pulid.MustNew("sm_"),
 		WorkerID:  pulid.MustNew("wrk_"),
 		TractorID: pulid.MustNew("trac_"),

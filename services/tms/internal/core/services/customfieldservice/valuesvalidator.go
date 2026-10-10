@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/customfield"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/customfieldports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
@@ -18,12 +18,12 @@ type ValuesValidatorParams struct {
 	fx.In
 
 	Logger *zap.Logger
-	Repo   repositories.CustomFieldDefinitionRepository
+	Repo   customfieldports.CustomFieldDefinitionRepository
 }
 
 type ValuesValidator struct {
 	l    *zap.Logger
-	repo repositories.CustomFieldDefinitionRepository
+	repo customfieldports.CustomFieldDefinitionRepository
 }
 
 func NewValuesValidator(p ValuesValidatorParams) *ValuesValidator {
@@ -42,7 +42,7 @@ func (v *ValuesValidator) Validate(
 ) {
 	definitions, err := v.repo.GetActiveByResourceType(
 		ctx,
-		repositories.GetActiveByResourceTypeRequest{
+		customfieldports.GetActiveByResourceTypeRequest{
 			TenantInfo:   tenantInfo,
 			ResourceType: resourceType,
 		},

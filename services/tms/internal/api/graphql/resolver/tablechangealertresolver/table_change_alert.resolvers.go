@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tablechangealert"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/tablechangealertports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -30,7 +30,7 @@ func (r *QueryResolver) TcaSubscriptions(ctx context.Context, input gqlmodel.Dat
 
 	result, err := r.TableChangeAlertService.ListSubscriptionsConnection(
 		ctx,
-		&repositories.ListTCASubscriptionConnectionRequest{
+		&tablechangealertports.ListTCASubscriptionConnectionRequest{
 			Filter: tableInput.Filter,
 			Cursor: tableInput.Cursor,
 		},
@@ -55,7 +55,7 @@ func (r *QueryResolver) TcaSubscription(ctx context.Context, id string) (*tablec
 
 	return r.TableChangeAlertService.GetSubscriptionByID(
 		ctx,
-		repositories.GetTCASubscriptionByIDRequest{
+		tablechangealertports.GetTCASubscriptionByIDRequest{
 			SubscriptionID: subscriptionID,
 			TenantInfo:     base.TenantInfo(authCtx),
 		},

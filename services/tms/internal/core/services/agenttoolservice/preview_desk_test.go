@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -187,7 +187,7 @@ func TestAcknowledgeCarrierIntelEvent_PreviewMatchesWhatIsSaved(t *testing.T) {
 func TestCarrierIntelEventTools_PreviewWarnsOnAClosedFinding(t *testing.T) {
 	t.Parallel()
 
-	for name, build := range map[string]func(carrierIntelActor) serviceports.AgentTool{
+	for name, build := range map[string]func(carrierIntelActor) agentports.AgentTool{
 		"acknowledge": newAcknowledgeCarrierIntelEventTool,
 		"resolve":     newResolveCarrierIntelEventTool,
 	} {
@@ -197,7 +197,7 @@ func TestCarrierIntelEventTools_PreviewWarnsOnAClosedFinding(t *testing.T) {
 			event := openFinding()
 			event.Status = carrierintel.EventStatusResolved
 			stub := &stubCarrierIntel{event: event}
-			tool := build(stub).(serviceports.ToolPreviewer)
+			tool := build(stub).(agentports.ToolPreviewer)
 
 			preview := previewWithoutWrites(t, &stub.guard, func() (*agent.ToolPreview, error) {
 				return tool.Preview(t.Context(), deskParams(map[string]any{

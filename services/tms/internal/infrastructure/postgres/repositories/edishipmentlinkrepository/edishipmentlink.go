@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -28,7 +28,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.EDIShipmentLinkRepository {
+func New(p Params) ediports.EDIShipmentLinkRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.edi-shipment-link-repository"),
@@ -37,7 +37,7 @@ func New(p Params) repositories.EDIShipmentLinkRepository {
 
 func (r *repository) ListShipmentLinks(
 	ctx context.Context,
-	req *repositories.ListEDIShipmentLinksRequest,
+	req *ediports.ListEDIShipmentLinksRequest,
 ) (*pagination.ListResult[*edi.ShipmentLink], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.ShipmentLink], error) {
 		entities := make([]*edi.ShipmentLink, 0, req.Filter.Pagination.SafeLimit())
@@ -69,7 +69,7 @@ func (r *repository) ListShipmentLinks(
 
 func (r *repository) GetShipmentLinkByID(
 	ctx context.Context,
-	req repositories.GetEDIShipmentLinkByIDRequest,
+	req ediports.GetEDIShipmentLinkByIDRequest,
 ) (*edi.ShipmentLink, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.ShipmentLink, error) {
 		entity := new(edi.ShipmentLink)
@@ -93,7 +93,7 @@ func (r *repository) GetShipmentLinkByID(
 
 func (r *repository) GetShipmentLinksByShipmentID(
 	ctx context.Context,
-	req repositories.GetEDIShipmentLinksByShipmentIDRequest,
+	req ediports.GetEDIShipmentLinksByShipmentIDRequest,
 ) ([]*edi.ShipmentLink, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.ShipmentLink, error) {
 		entities := make([]*edi.ShipmentLink, 0)

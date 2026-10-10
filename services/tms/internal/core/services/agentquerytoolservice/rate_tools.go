@@ -9,9 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -37,7 +38,7 @@ the same place or it is an explanation of something else.
 type quoteReader interface {
 	GetAppliedForShipment(
 		ctx context.Context,
-		req *repositories.GetShipmentRateQuoteRequest,
+		req *ratequoteports.GetShipmentRateQuoteRequest,
 	) (*ratequote.RateQuote, error)
 }
 
@@ -46,7 +47,7 @@ type quoteReader interface {
 type shipmentRatingReader interface {
 	GetByID(
 		ctx context.Context,
-		req *repositories.GetShipmentByIDRequest,
+		req *shipmentports.GetShipmentByIDRequest,
 	) (*shipment.Shipment, error)
 }
 
@@ -56,9 +57,9 @@ type explainRateTool struct {
 }
 
 func newExplainRateTool(
-	quotes repositories.RateQuoteRepository,
-	shipments repositories.ShipmentRepository,
-) serviceports.AgentQueryTool {
+	quotes ratequoteports.RateQuoteRepository,
+	shipments shipmentports.ShipmentRepository,
+) agentports.AgentQueryTool {
 	return &explainRateTool{quotes: quotes, shipments: shipments}
 }
 
@@ -94,7 +95,7 @@ func (t *explainRateTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *explainRateTool) Policy() serviceports.ToolPolicy {
+func (t *explainRateTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceRateMatrix,
 	})
@@ -197,7 +198,7 @@ type rateTotalsRow struct {
 
 func (t *explainRateTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -216,7 +217,7 @@ func (t *explainRateTool) Query(
 		side = rateagreement.PartyTypeCarrier
 	}
 
-	quote, err := t.quotes.GetAppliedForShipment(ctx, &repositories.GetShipmentRateQuoteRequest{
+	quote, err := t.quotes.GetAppliedForShipment(ctx, &ratequoteports.GetShipmentRateQuoteRequest{
 		ShipmentID: shipmentID,
 		PartyType:  side,
 		TenantInfo: pagination.TenantInfo{
@@ -232,14 +233,14 @@ func (t *explainRateTool) Query(
 	explanation := rateExplanation{ShipmentID: shipmentID.String(), Side: string(side)}
 	var record *shipment.Shipment
 	if side == rateagreement.PartyTypeCustomer && t.shipments != nil {
-		record, err = t.shipments.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+		record, err = t.shipments.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 			ID: shipmentID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID:  params.OrganizationID,
 				BuID:   params.BusinessUnitID,
 				UserID: params.Actor.UserID,
 			},
-			ShipmentOptions: repositories.ShipmentOptions{ExpandShipmentDetails: true},
+			ShipmentOptions: shipmentports.ShipmentOptions{ExpandShipmentDetails: true},
 		})
 		if err != nil {
 			return nil, err

@@ -5,7 +5,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -23,7 +23,7 @@ type invoiceDeliveryProfile struct {
 	// Shipments is the group of shipments the invoice bills, one flat row each.
 	// Populated only when there is more than one, which is what a document keys
 	// off to print a manifest instead of freight detail.
-	Shipments []*repositories.ShipmentSummary
+	Shipments []*shipmentports.ShipmentSummary
 
 	BillingControl *tenant.BillingControl
 }

@@ -7,8 +7,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
@@ -18,16 +17,16 @@ import (
 // fakePreviews answers as the preview service would: stale when the pinned
 // record has moved, and with the digest of what it shows.
 type fakePreviews struct {
-	services.ProposalPreviewService
+	agentports.ProposalPreviewService
 
 	stale  bool
 	digest string
-	asked  []*services.ProposalPreviewRequest
+	asked  []*agentports.ProposalPreviewRequest
 }
 
 func (f *fakePreviews) ForProposal(
 	_ context.Context,
-	req *services.ProposalPreviewRequest,
+	req *agentports.ProposalPreviewRequest,
 ) (*agent.ProposalPreview, error) {
 	f.asked = append(f.asked, req)
 	version := int64(3)
@@ -55,7 +54,7 @@ type statusRecorder struct {
 
 func (p *statusRecorder) UpdateStatus(
 	ctx context.Context,
-	req repositories.UpdateAgentProposalStatusRequest,
+	req agentports.UpdateAgentProposalStatusRequest,
 ) (*agent.AgentProposal, error) {
 	p.updated++
 
@@ -78,10 +77,10 @@ func decideWith(
 	h *decideHarness,
 	decision agent.DecisionType,
 	digest string,
-) (*services.DecisionOutcome, error) {
+) (*agentports.DecisionOutcome, error) {
 	t.Helper()
 
-	return h.service.DecideWithOutcome(t.Context(), &services.DecideAgentProposalRequest{
+	return h.service.DecideWithOutcome(t.Context(), &agentports.DecideAgentProposalRequest{
 		ProposalID:    h.proposals.proposal.ID,
 		Decision:      decision,
 		ReasonCode:    "looks_right",

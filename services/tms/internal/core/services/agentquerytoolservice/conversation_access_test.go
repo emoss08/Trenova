@@ -7,8 +7,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,12 +18,12 @@ import (
 type fakeThreadOwners struct {
 	owners   map[pulid.ID]pulid.ID
 	err      error
-	requests []repositories.ThreadOwnersRequest
+	requests []agentports.ThreadOwnersRequest
 }
 
 func (f *fakeThreadOwners) ThreadOwners(
 	_ context.Context,
-	req repositories.ThreadOwnersRequest,
+	req agentports.ThreadOwnersRequest,
 ) (map[pulid.ID]pulid.ID, error) {
 	f.requests = append(f.requests, req)
 	if f.err != nil {
@@ -49,7 +50,7 @@ func conversationDocument(threadID pulid.ID) *document.Document {
 	}
 }
 
-func personParams(principal serviceports.PrincipalType) *serviceports.QueryToolParams {
+func personParams(principal kernelports.PrincipalType) *agentports.QueryToolParams {
 	params := testParams(map[string]any{})
 	params.Actor.PrincipalType = principal
 
@@ -58,8 +59,8 @@ func personParams(principal serviceports.PrincipalType) *serviceports.QueryToolP
 
 func conversationSummaryTool(
 	doc *document.Document,
-	threads repositories.ThreadOwnerRepository,
-) serviceports.AgentQueryTool {
+	threads agentports.ThreadOwnerRepository,
+) agentports.AgentQueryTool {
 	return newGetDocumentSummaryTool(
 		&stubDocumentRepo{doc: doc},
 		&stubContentReader{content: &documentcontent.Content{
@@ -77,7 +78,7 @@ func TestGetDocumentSummary_ConversationFileIsReadOnlyByItsOwner(t *testing.T) {
 	threadID := pulid.MustNew("athr_")
 	doc := conversationDocument(threadID)
 
-	owner := personParams(serviceports.PrincipalTypeUser)
+	owner := personParams(permissionports.PrincipalTypeUser)
 	owner.Params = map[string]any{"documentId": doc.ID.String()}
 	threads := &fakeThreadOwners{owners: map[pulid.ID]pulid.ID{threadID: owner.Actor.UserID}}
 
@@ -89,7 +90,7 @@ func TestGetDocumentSummary_ConversationFileIsReadOnlyByItsOwner(t *testing.T) {
 	assert.Equal(t, owner.OrganizationID, threads.requests[0].TenantInfo.OrgID)
 	assert.Equal(t, owner.BusinessUnitID, threads.requests[0].TenantInfo.BuID)
 
-	colleague := personParams(serviceports.PrincipalTypeUser)
+	colleague := personParams(permissionports.PrincipalTypeUser)
 	colleague.OrganizationID = owner.OrganizationID
 	colleague.BusinessUnitID = owner.BusinessUnitID
 	colleague.Actor.OrganizationID = owner.OrganizationID
@@ -104,9 +105,9 @@ func TestGetDocumentSummary_ConversationFileIsReadOnlyByItsOwner(t *testing.T) {
 func TestGetDocumentSummary_ConversationFileIsNeverReadWithoutAPerson(t *testing.T) {
 	t.Parallel()
 
-	for _, principal := range []serviceports.PrincipalType{
-		serviceports.PrincipalTypeAgent,
-		serviceports.PrincipalTypeAPIKey,
+	for _, principal := range []kernelports.PrincipalType{
+		permissionports.PrincipalTypeAgent,
+		permissionports.PrincipalTypeAPIKey,
 		"",
 	} {
 		t.Run(string(principal), func(t *testing.T) {
@@ -132,7 +133,7 @@ func TestGetDocumentSummary_ConversationOwnerLookupFailureRefuses(t *testing.T) 
 	t.Parallel()
 
 	doc := conversationDocument(pulid.MustNew("athr_"))
-	params := personParams(serviceports.PrincipalTypeUser)
+	params := personParams(permissionports.PrincipalTypeUser)
 	params.Params = map[string]any{"documentId": doc.ID.String()}
 
 	_, err := conversationSummaryTool(doc, &fakeThreadOwners{err: errors.New("pool closed")}).
@@ -144,7 +145,7 @@ func TestGetDocumentSummary_ConversationFileWithoutOwnerLookupRefuses(t *testing
 	t.Parallel()
 
 	doc := conversationDocument(pulid.MustNew("athr_"))
-	params := personParams(serviceports.PrincipalTypeUser)
+	params := personParams(permissionports.PrincipalTypeUser)
 	params.Params = map[string]any{"documentId": doc.ID.String()}
 
 	_, err := conversationSummaryTool(doc, nil).Query(t.Context(), params)
@@ -155,7 +156,7 @@ func TestGetDocumentSummary_ConversationFileWithoutOwnerLookupRefuses(t *testing
 func TestRetrievalAccess_ChecksConversationOwnersInOneBatch(t *testing.T) {
 	t.Parallel()
 
-	params := personParams(serviceports.PrincipalTypeUser)
+	params := personParams(permissionports.PrincipalTypeUser)
 	mineID := pulid.MustNew("athr_")
 	theirsID := pulid.MustNew("athr_")
 	mine := conversationDocument(mineID)
@@ -191,7 +192,7 @@ func TestRetrievalAccess_ChecksConversationOwnersInOneBatch(t *testing.T) {
 func TestRetrievalAccess_BackgroundRunSeesNoConversationFiles(t *testing.T) {
 	t.Parallel()
 
-	params := personParams(serviceports.PrincipalTypeAgent)
+	params := personParams(permissionports.PrincipalTypeAgent)
 	threadID := pulid.MustNew("athr_")
 	conversation := conversationDocument(threadID)
 	shipment := summaryDocument()
@@ -211,7 +212,7 @@ func TestRetrievalAccess_BackgroundRunSeesNoConversationFiles(t *testing.T) {
 func TestSearchDocuments_HandsTheSearcherConversationOwnership(t *testing.T) {
 	t.Parallel()
 
-	params := personParams(serviceports.PrincipalTypeUser)
+	params := personParams(permissionports.PrincipalTypeUser)
 	params.Params = map[string]any{"query": "rate confirmation"}
 	mineID := pulid.MustNew("athr_")
 	theirsID := pulid.MustNew("athr_")
@@ -221,7 +222,7 @@ func TestSearchDocuments_HandsTheSearcherConversationOwnership(t *testing.T) {
 		mineID:   params.Actor.UserID,
 		theirsID: pulid.MustNew("usr_"),
 	}}
-	searcher := &fakeRetrievalSearcher{documents: &serviceports.DocumentSearchResult{}}
+	searcher := &fakeRetrievalSearcher{documents: &agentports.DocumentSearchResult{}}
 
 	_, err := newSearchDocumentsTool(searcher, &fakePermissions{allowed: true}, threads).
 		Query(t.Context(), params)

@@ -7,8 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/insight"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -18,9 +19,9 @@ const maxDismissReasonChars = 500
 type insightDismisser interface {
 	GetDetail(
 		ctx context.Context,
-		req serviceports.GetInsightDetailRequest,
-	) (*serviceports.InsightDetail, error)
-	Dismiss(ctx context.Context, req serviceports.DismissInsightRequest) (*insight.Insight, error)
+		req insightports.GetInsightDetailRequest,
+	) (*insightports.InsightDetail, error)
+	Dismiss(ctx context.Context, req insightports.DismissInsightRequest) (*insight.Insight, error)
 }
 
 // dismissInsightTool records that a finding is not worth acting on. The
@@ -30,7 +31,7 @@ type dismissInsightTool struct {
 	insights insightDismisser
 }
 
-func newDismissInsightTool(insights insightDismisser) serviceports.AgentTool {
+func newDismissInsightTool(insights insightDismisser) agentports.AgentTool {
 	return &dismissInsightTool{insights: insights}
 }
 
@@ -68,8 +69,8 @@ func (t *dismissInsightTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *dismissInsightTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *dismissInsightTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceInsight,
@@ -85,18 +86,18 @@ func (t *dismissInsightTool) Policy() serviceports.ToolPolicy {
 	}
 }
 
-func (t *dismissInsightTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *dismissInsightTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	id, err := requirePulid(params, "insightId")
 	if err != nil {
-		return serviceports.ToolTarget{}, false
+		return agentports.ToolTarget{}, false
 	}
 
-	return serviceports.ToolTarget{Resource: permission.ResourceInsight, ID: id}, true
+	return agentports.ToolTarget{Resource: permission.ResourceInsight, ID: id}, true
 }
 
 func (t *dismissInsightTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	request, err := t.request(params)
 	if err != nil {
@@ -109,14 +110,14 @@ func (t *dismissInsightTool) Execute(
 }
 
 func (t *dismissInsightTool) request(
-	params serviceports.ToolExecuteParams,
-) (serviceports.DismissInsightRequest, error) {
+	params agentports.ToolExecuteParams,
+) (insightports.DismissInsightRequest, error) {
 	id, reason, err := t.arguments(params)
 	if err != nil {
-		return serviceports.DismissInsightRequest{}, err
+		return insightports.DismissInsightRequest{}, err
 	}
 
-	return serviceports.DismissInsightRequest{
+	return insightports.DismissInsightRequest{
 		ID:         id,
 		UserID:     params.Actor.UserID,
 		Reason:     reason,
@@ -125,7 +126,7 @@ func (t *dismissInsightTool) request(
 }
 
 func (t *dismissInsightTool) arguments(
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) (pulid.ID, string, error) {
 	if err := guardExecute(t, params); err != nil {
 		return "", "", err

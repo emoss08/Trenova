@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -42,7 +42,7 @@ func (r *QueryResolver) AccessorialCharges(ctx context.Context, input gqlmodel.D
 
 	result, err := r.AccessorialChargeService.ListConnection(
 		ctx,
-		&repositories.ListAccessorialChargeConnectionRequest{
+		&accessorialchargeports.ListAccessorialChargeConnectionRequest{
 			Filter:                   tableInput.Filter,
 			Cursor:                   tableInput.Cursor,
 			AccessorialChargeColumns: accessorialChargeColumns(ctx, "edges.node"),
@@ -67,7 +67,7 @@ func (r *QueryResolver) AccessorialCharge(ctx context.Context, id string) (*acce
 	}
 
 	ti := base.TenantInfo(authCtx)
-	return r.AccessorialChargeService.Get(ctx, repositories.GetAccessorialChargeByIDRequest{
+	return r.AccessorialChargeService.Get(ctx, accessorialchargeports.GetAccessorialChargeByIDRequest{
 		ID:         accessorialChargeID,
 		TenantInfo: &ti,
 	})

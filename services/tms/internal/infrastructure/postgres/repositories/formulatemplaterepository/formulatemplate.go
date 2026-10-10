@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -31,7 +31,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.FormulaTemplateRepository {
+func New(p Params) formulatemplateports.FormulaTemplateRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.formula-template-repository"),
@@ -40,7 +40,7 @@ func New(p Params) repositories.FormulaTemplateRepository {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListFormulaTemplatesRequest,
+	req *formulatemplateports.ListFormulaTemplatesRequest,
 ) *bun.SelectQuery {
 	log := r.l.With(
 		zap.String("operation", "filterQuery"),
@@ -84,7 +84,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListFormulaTemplatesRequest,
+	req *formulatemplateports.ListFormulaTemplatesRequest,
 ) (*pagination.ListResult[*formulatemplate.FormulaTemplate], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*formulatemplate.FormulaTemplate], error) {
 		log := r.l.With(
@@ -113,7 +113,7 @@ func (r *repository) List(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListFormulaTemplateConnectionRequest,
+	req *formulatemplateports.ListFormulaTemplateConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -126,7 +126,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListFormulaTemplateConnectionRequest,
+	req *formulatemplateports.ListFormulaTemplateConnectionRequest,
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -146,7 +146,7 @@ func applyFormulaTemplateColumns(q *bun.SelectQuery, columns []string) *bun.Sele
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListFormulaTemplateConnectionRequest,
+	req *formulatemplateports.ListFormulaTemplateConnectionRequest,
 ) (*pagination.CursorListResult[*formulatemplate.FormulaTemplate], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*formulatemplate.FormulaTemplate], error) {
 		log := r.l.With(
@@ -280,7 +280,7 @@ func applyClearableColumns(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetFormulaTemplateByIDRequest,
+	req formulatemplateports.GetFormulaTemplateByIDRequest,
 ) (*formulatemplate.FormulaTemplate, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*formulatemplate.FormulaTemplate, error) {
 		log := r.l.With(
@@ -308,7 +308,7 @@ func (r *repository) GetByID(
 
 func (r *repository) GetByIDs(
 	ctx context.Context,
-	req repositories.GetFormulaTemplatesByIDsRequest,
+	req formulatemplateports.GetFormulaTemplatesByIDsRequest,
 ) ([]*formulatemplate.FormulaTemplate, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*formulatemplate.FormulaTemplate, error) {
 		log := r.l.With(
@@ -336,7 +336,7 @@ func (r *repository) GetByIDs(
 
 func (r *repository) FindByNames(
 	ctx context.Context,
-	req repositories.GetFormulaTemplatesByNamesRequest,
+	req formulatemplateports.GetFormulaTemplatesByNamesRequest,
 ) ([]*formulatemplate.FormulaTemplate, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*formulatemplate.FormulaTemplate, error) {
 		log := r.l.With(
@@ -368,7 +368,7 @@ func (r *repository) FindByNames(
 
 func (r *repository) BulkUpdateStatus(
 	ctx context.Context,
-	req *repositories.BulkUpdateFormulaTemplateStatusRequest,
+	req *formulatemplateports.BulkUpdateFormulaTemplateStatusRequest,
 ) ([]*formulatemplate.FormulaTemplate, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*formulatemplate.FormulaTemplate, error) {
 		log := r.l.With(
@@ -406,7 +406,7 @@ func (r *repository) BulkUpdateStatus(
 
 func (r *repository) BulkDuplicate(
 	ctx context.Context,
-	req *repositories.BulkDuplicateFormulaTemplateRequest,
+	req *formulatemplateports.BulkDuplicateFormulaTemplateRequest,
 ) ([]*formulatemplate.FormulaTemplate, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*formulatemplate.FormulaTemplate, error) {
 		log := r.l.With(
@@ -414,7 +414,7 @@ func (r *repository) BulkDuplicate(
 			zap.Any("request", req),
 		)
 
-		entities, err := r.GetByIDs(ctx, repositories.GetFormulaTemplatesByIDsRequest{
+		entities, err := r.GetByIDs(ctx, formulatemplateports.GetFormulaTemplatesByIDsRequest{
 			TemplateIDs: req.TemplateIDs,
 			TenantInfo:  req.TenantInfo,
 		})
@@ -518,9 +518,9 @@ func nextAvailableName(taken map[string]struct{}, base string) string {
 
 func (r *repository) CountUsages(
 	ctx context.Context,
-	req *repositories.GetTemplateUsageRequest,
-) (*repositories.GetTemplateUsageResponse, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.GetTemplateUsageResponse, error) {
+	req *formulatemplateports.GetTemplateUsageRequest,
+) (*formulatemplateports.GetTemplateUsageResponse, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*formulatemplateports.GetTemplateUsageResponse, error) {
 		log := r.l.With(
 			zap.String("operation", "CountUsages"),
 			zap.String("templateID", req.TemplateID.String()),
@@ -564,19 +564,19 @@ func (r *repository) CountUsages(
 			return nil, err
 		}
 
-		usages := make([]repositories.TemplateUsageCount, 0, len(results))
+		usages := make([]formulatemplateports.TemplateUsageCount, 0, len(results))
 		inUse := false
 		for _, res := range results {
 			if res.Count > 0 {
 				inUse = true
-				usages = append(usages, repositories.TemplateUsageCount{
+				usages = append(usages, formulatemplateports.TemplateUsageCount{
 					Type:  res.Type,
 					Count: res.Count,
 				})
 			}
 		}
 
-		return &repositories.GetTemplateUsageResponse{
+		return &formulatemplateports.GetTemplateUsageResponse{
 			InUse:  inUse,
 			Usages: usages,
 		}, nil
@@ -585,7 +585,7 @@ func (r *repository) CountUsages(
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
-	req *repositories.FormulaTemplateSelectOptionsRequest,
+	req *formulatemplateports.FormulaTemplateSelectOptionsRequest,
 ) (*pagination.ListResult[*formulatemplate.FormulaTemplate], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*formulatemplate.FormulaTemplate], error) {
 		cols := buncolgen.FormulaTemplateColumns
@@ -628,7 +628,7 @@ func duplicateTemplateName(name string) error {
 // at the template, labelled so the caller can tell shipments from rules.
 func (r *repository) usageCount(
 	ctx context.Context,
-	req *repositories.GetTemplateUsageRequest,
+	req *formulatemplateports.GetTemplateUsageRequest,
 	label string,
 	table buncolgen.TableInfo,
 	templateColumn buncolgen.Column,

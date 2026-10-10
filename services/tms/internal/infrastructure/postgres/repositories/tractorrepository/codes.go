@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
@@ -32,7 +32,7 @@ func normalizeLookupKeys(values []string) []string {
 
 func (r *repository) GetByCodes(
 	ctx context.Context,
-	req repositories.GetTractorsByCodesRequest,
+	req tractorports.GetTractorsByCodesRequest,
 ) (map[string]*tractor.Tractor, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[string]*tractor.Tractor, error) {
 		codes := normalizeLookupKeys(req.Codes)

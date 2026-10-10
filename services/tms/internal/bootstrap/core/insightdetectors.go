@@ -1,9 +1,9 @@
 package core
 
 import (
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/insightservice/detector"
 	"github.com/emoss08/trenova/internal/core/services/insightservice/detectors"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 )
 
 // newDetectorRegistry names every insight rule this deployment runs.
@@ -14,7 +14,7 @@ import (
 // here stops it producing new findings; the ones it already produced stay
 // stored, and are hidden from readers because nothing is left to say what
 // permission they required.
-func newDetectorRegistry(metrics repositories.InsightMetricsRepository) *detector.Registry {
+func newDetectorRegistry(metrics insightports.InsightMetricsRepository) *detector.Registry {
 	return detector.NewRegistry(
 		detectors.NewOnTimeDecline(metrics),
 		detectors.NewUnbilledAging(metrics),

@@ -4,8 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -15,14 +14,14 @@ import (
 type invoicesByIDsGetter interface {
 	GetByIDs(
 		ctx context.Context,
-		req repositories.GetInvoicesByIDsRequest,
+		req invoiceports.GetInvoicesByIDsRequest,
 	) ([]*invoice.Invoice, error)
 }
 
 type InvoiceByIDLoaderFactoryParams struct {
 	fx.In
 
-	InvoiceService services.InvoiceService
+	InvoiceService invoiceports.InvoiceService
 }
 
 type InvoiceByIDLoaderFactory struct {
@@ -47,7 +46,7 @@ func (f *InvoiceByIDLoaderFactory) batchFunc(
 	tenantInfo pagination.TenantInfo,
 ) batchFetchFunc[*invoice.Invoice] {
 	return batchByIDFunc(func(ctx context.Context, ids []pulid.ID) ([]*invoice.Invoice, error) {
-		return f.invoices.GetByIDs(ctx, repositories.GetInvoicesByIDsRequest{
+		return f.invoices.GetByIDs(ctx, invoiceports.GetInvoicesByIDsRequest{
 			TenantInfo: tenantInfo,
 			InvoiceIDs: ids,
 		})

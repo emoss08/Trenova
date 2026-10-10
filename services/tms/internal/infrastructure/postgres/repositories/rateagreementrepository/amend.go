@@ -6,9 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -34,7 +34,7 @@ import (
 // anybody intended.
 func (r *repository) AmendRules(
 	ctx context.Context,
-	req *repositories.AmendRateAgreementRulesRequest,
+	req *rateagreementports.AmendRateAgreementRulesRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		log := r.l.With(
@@ -48,7 +48,7 @@ func (r *repository) AmendRules(
 			return nil
 		}
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			if cErr := r.closeOutRules(c, req); cErr != nil {
 				return cErr
 			}
@@ -88,7 +88,7 @@ func applyOpenRuleWindow(q *bun.SelectQuery, asOf int64) *bun.SelectQuery {
 // extend the life of something already retired.
 func (r *repository) closeOutRules(
 	ctx context.Context,
-	req *repositories.AmendRateAgreementRulesRequest,
+	req *rateagreementports.AmendRateAgreementRulesRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if len(req.SupersededIDs) == 0 {
@@ -120,7 +120,7 @@ func (r *repository) closeOutRules(
 
 func (r *repository) insertRules(
 	ctx context.Context,
-	req *repositories.AmendRateAgreementRulesRequest,
+	req *rateagreementports.AmendRateAgreementRulesRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if len(req.Rules) == 0 {
@@ -194,7 +194,7 @@ func (r *repository) insertRuleBreaks(
 
 func (r *repository) ListVersions(
 	ctx context.Context,
-	req *repositories.ListRateAgreementVersionsRequest,
+	req *rateagreementports.ListRateAgreementVersionsRequest,
 ) (*pagination.ListResult[*rateagreement.RateAgreementVersion], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*rateagreement.RateAgreementVersion], error) {
 		log := r.l.With(zap.String("operation", "ListVersions"))
@@ -343,7 +343,7 @@ func summaryAccessorialChargeIDs(
 // header, which is by definition what was in force.
 func (r *repository) GetEffectiveVersion(
 	ctx context.Context,
-	req *repositories.GetEffectiveAgreementVersionRequest,
+	req *rateagreementports.GetEffectiveAgreementVersionRequest,
 ) (*rateagreement.RateAgreementVersion, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*rateagreement.RateAgreementVersion, error) {
 		log := r.l.With(zap.String("operation", "GetEffectiveVersion"))
@@ -397,7 +397,7 @@ func (r *repository) CreateVersion(
 			BuID:  version.BusinessUnitID,
 		}
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			if _, uErr := r.db.DBForContext(c).
 				NewUpdate().
 				Model((*rateagreement.RateAgreementVersion)(nil)).

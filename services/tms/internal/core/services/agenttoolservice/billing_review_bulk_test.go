@@ -2,16 +2,17 @@ package agenttoolservice
 
 import (
 	"context"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/billingqueueservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
@@ -44,7 +45,7 @@ func newFakeQueueSet(items ...*billingqueue.BillingQueueItem) *fakeQueueSet {
 
 func (f *fakeQueueSet) GetByID(
 	_ context.Context,
-	req *repositories.GetBillingQueueItemByIDRequest,
+	req *billingqueueports.GetBillingQueueItemByIDRequest,
 ) (*billingqueue.BillingQueueItem, error) {
 	item, ok := f.items[req.ItemID]
 	if !ok {
@@ -57,8 +58,8 @@ func (f *fakeQueueSet) GetByID(
 
 func (f *fakeQueueSet) UpdateStatus(
 	_ context.Context,
-	req *serviceports.UpdateBillingQueueStatusRequest,
-	actor *serviceports.RequestActor,
+	req *billingqueueports.UpdateBillingQueueStatusRequest,
+	actor *permissionports.RequestActor,
 ) (*billingqueue.BillingQueueItem, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -77,8 +78,8 @@ func (f *fakeQueueSet) UpdateStatus(
 
 func (f *fakeQueueSet) AssignBiller(
 	_ context.Context,
-	req *serviceports.AssignBillerRequest,
-	_ *serviceports.RequestActor,
+	req *billingqueueports.AssignBillerRequest,
+	_ *permissionports.RequestActor,
 ) (*billingqueue.BillingQueueItem, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -168,7 +169,7 @@ func TestAssignBillingQueueBillers_AssignsOnePersonToEveryItemInOneCall(t *testi
 	ids := []any{first.ID.String(), second.ID.String(), third.ID.String(), posted.ID.String()}
 	params := executeParams(map[string]any{paramBillingQueueItemIDs: ids})
 
-	previewer, ok := tool.(serviceports.ToolPreviewer)
+	previewer, ok := tool.(agentports.ToolPreviewer)
 	require.True(t, ok)
 	preview := previewWithoutWrites(t, queue.guard, func() (*agent.ToolPreview, error) {
 		return previewer.Preview(t.Context(), params)
@@ -183,11 +184,11 @@ func TestAssignBillingQueueBillers_AssignsOnePersonToEveryItemInOneCall(t *testi
 	assert.True(t, strings.HasPrefix(refusedOutcome, "Refused:"), refusedOutcome)
 	assert.Contains(t, fieldByPath(t, &preview.Changes[1], bulkOutcomeField).After, "the person who asked")
 
-	validator, ok := tool.(serviceports.ToolValidator)
+	validator, ok := tool.(agentports.ToolValidator)
 	require.True(t, ok)
 	require.NoError(t, validator.Validate(t.Context(), params), "one refusal among three that go is not a refusal of the call")
 
-	reporter, ok := tool.(serviceports.ToolResultReporter)
+	reporter, ok := tool.(agentports.ToolResultReporter)
 	require.True(t, ok)
 	result, err := reporter.ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err, "the single may run on its own, so the twin may too")
@@ -287,7 +288,7 @@ func TestTransitionItemsToInReview_MovesEveryItemInOneCall(t *testing.T) {
 		paramBillingQueueItemIDs: []any{first.ID.String(), second.ID.String()},
 	})
 
-	previewer, ok := tool.(serviceports.ToolPreviewer)
+	previewer, ok := tool.(agentports.ToolPreviewer)
 	require.True(t, ok)
 	preview := previewWithoutWrites(t, queue.guard, func() (*agent.ToolPreview, error) {
 		return previewer.Preview(t.Context(), params)

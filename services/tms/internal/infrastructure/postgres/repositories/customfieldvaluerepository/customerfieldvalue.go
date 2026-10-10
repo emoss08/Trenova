@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/customfield"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/customfieldports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
@@ -27,7 +27,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.CustomFieldValueRepository {
+func New(p Params) customfieldports.CustomFieldValueRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.custom-field-value-repository"),
@@ -36,7 +36,7 @@ func New(p Params) repositories.CustomFieldValueRepository {
 
 func (r *repository) GetByResource(
 	ctx context.Context,
-	req *repositories.GetCustomFieldValuesByResourceRequest,
+	req *customfieldports.GetCustomFieldValuesByResourceRequest,
 ) ([]*customfield.CustomFieldValue, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*customfield.CustomFieldValue, error) {
 		log := r.l.With(
@@ -72,7 +72,7 @@ func (r *repository) GetByResource(
 
 func (r *repository) GetByResources(
 	ctx context.Context,
-	req *repositories.GetCustomFieldValuesByResourcesRequest,
+	req *customfieldports.GetCustomFieldValuesByResourcesRequest,
 ) (map[string][]*customfield.CustomFieldValue, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[string][]*customfield.CustomFieldValue, error) {
 		log := r.l.With(
@@ -114,7 +114,7 @@ func (r *repository) GetByResources(
 
 func (r *repository) Upsert(
 	ctx context.Context,
-	req *repositories.UpsertCustomFieldValuesRequest,
+	req *customfieldports.UpsertCustomFieldValuesRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		log := r.l.With(
@@ -125,7 +125,7 @@ func (r *repository) Upsert(
 		)
 
 		if len(req.Values) == 0 {
-			if err := r.DeleteByResource(ctx, &repositories.GetCustomFieldValuesByResourceRequest{
+			if err := r.DeleteByResource(ctx, &customfieldports.GetCustomFieldValuesByResourceRequest{
 				TenantInfo:   req.TenantInfo,
 				ResourceType: req.ResourceType,
 				ResourceID:   req.ResourceID,
@@ -136,7 +136,7 @@ func (r *repository) Upsert(
 		}
 
 		return dberror.MapRetryableTransactionError(
-			r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+			r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 				_, err := r.db.DBForContext(c).NewDelete().
 					Model((*customfield.CustomFieldValue)(nil)).
 					WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
@@ -191,7 +191,7 @@ func (r *repository) Upsert(
 
 func (r *repository) DeleteByResource(
 	ctx context.Context,
-	req *repositories.GetCustomFieldValuesByResourceRequest,
+	req *customfieldports.GetCustomFieldValuesByResourceRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		log := r.l.With(
@@ -222,7 +222,7 @@ func (r *repository) DeleteByResource(
 
 func (r *repository) CountByDefinition(
 	ctx context.Context,
-	req *repositories.GetValuesByDefinitionRequest,
+	req *customfieldports.GetValuesByDefinitionRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		log := r.l.With(
@@ -251,7 +251,7 @@ func (r *repository) CountByDefinition(
 
 func (r *repository) CountResourcesByDefinition(
 	ctx context.Context,
-	req *repositories.GetValuesByDefinitionRequest,
+	req *customfieldports.GetValuesByDefinitionRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		log := r.l.With(
@@ -282,7 +282,7 @@ func (r *repository) CountResourcesByDefinition(
 
 func (r *repository) GetOptionUsageCounts(
 	ctx context.Context,
-	req *repositories.GetOptionUsageRequest,
+	req *customfieldports.GetOptionUsageRequest,
 ) (map[string]int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[string]int, error) {
 		log := r.l.With(

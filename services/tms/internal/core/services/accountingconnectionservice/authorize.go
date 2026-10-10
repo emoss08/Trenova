@@ -8,10 +8,9 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -39,7 +38,7 @@ type pendingGrant struct {
 }
 
 type authorizedApp struct {
-	connector services.AccountingConnector
+	connector accountingsyncports.AccountingConnector
 	identity  accountingsync.AppIdentity
 	provider  string
 }
@@ -47,12 +46,12 @@ type authorizedApp struct {
 type companyConnect struct {
 	owner   *stateOwner
 	app     *authorizedApp
-	grant   *services.AccountingTokenGrant
-	company services.AccountingCompany
+	grant   *accountingsyncports.AccountingTokenGrant
+	company accountingsyncports.AccountingCompany
 }
 
 func validateCompletion(
-	req *services.CompleteAccountingAuthorizationRequest,
+	req *accountingsyncports.CompleteAccountingAuthorizationRequest,
 	profile *accountingsync.ProviderProfile,
 ) error {
 	multiErr := errortypes.NewMultiError()
@@ -78,8 +77,8 @@ func validateCompletion(
 
 func (s *Service) CompleteAuthorization(
 	ctx context.Context,
-	req *services.CompleteAccountingAuthorizationRequest,
-) (*services.AccountingAuthorizationCompletion, error) {
+	req *accountingsyncports.CompleteAccountingAuthorizationRequest,
+) (*accountingsyncports.AccountingAuthorizationCompletion, error) {
 	if err := s.requireIntegrations(ctx, req.TenantInfo); err != nil {
 		return nil, err
 	}
@@ -129,7 +128,7 @@ func (s *Service) CompleteAuthorization(
 		if connectErr != nil {
 			return nil, connectErr
 		}
-		return &services.AccountingAuthorizationCompletion{Connection: conn}, nil
+		return &accountingsyncports.AccountingAuthorizationCompletion{Connection: conn}, nil
 	}
 
 	return s.offerCompanyChoice(ctx, &companyChoiceOffer{
@@ -144,16 +143,16 @@ func (s *Service) CompleteAuthorization(
 func (s *Service) grantedCompanies(
 	ctx context.Context,
 	app *authorizedApp,
-	grant *services.AccountingTokenGrant,
+	grant *accountingsyncports.AccountingTokenGrant,
 	callbackRealmID string,
-) ([]services.AccountingCompany, error) {
+) ([]accountingsyncports.AccountingCompany, error) {
 	granted, err := app.connector.Companies(ctx, grant, callbackRealmID)
 	if err != nil {
 		s.revokeQuietly(ctx, app.connector, grant.RefreshToken)
 		return nil, errortypes.NewBusinessError("Connected, but {0} would not say which company was authorized. Try connecting again.", app.provider).
 			WithInternal(err)
 	}
-	companies := make([]services.AccountingCompany, 0, len(granted))
+	companies := make([]accountingsyncports.AccountingCompany, 0, len(granted))
 	for _, company := range granted {
 		if realmIDPattern.MatchString(company.ID) {
 			companies = append(companies, company)
@@ -171,16 +170,16 @@ func (s *Service) grantedCompanies(
 
 type companyChoiceOffer struct {
 	owner     *stateOwner
-	state     *repositories.AccountingOAuthState
+	state     *accountingsyncports.AccountingOAuthState
 	app       *authorizedApp
-	grant     *services.AccountingTokenGrant
-	companies []services.AccountingCompany
+	grant     *accountingsyncports.AccountingTokenGrant
+	companies []accountingsyncports.AccountingCompany
 }
 
 func (s *Service) offerCompanyChoice(
 	ctx context.Context,
 	offer *companyChoiceOffer,
-) (*services.AccountingAuthorizationCompletion, error) {
+) (*accountingsyncports.AccountingAuthorizationCompletion, error) {
 	token, tokenHash, err := tokenutils.New()
 	if err != nil {
 		s.revokeQuietly(ctx, offer.app.connector, offer.grant.RefreshToken)
@@ -192,9 +191,9 @@ func (s *Service) offerCompanyChoice(
 		return nil, err
 	}
 
-	choices := make([]repositories.AccountingOAuthCompany, 0, len(offer.companies))
+	choices := make([]accountingsyncports.AccountingOAuthCompany, 0, len(offer.companies))
 	for _, company := range offer.companies {
-		choices = append(choices, repositories.AccountingOAuthCompany{
+		choices = append(choices, accountingsyncports.AccountingOAuthCompany{
 			ID:           company.ID,
 			Name:         company.Name,
 			ConnectionID: company.ConnectionID,
@@ -202,7 +201,7 @@ func (s *Service) offerCompanyChoice(
 	}
 
 	now := timeutils.NowUnix()
-	if err = s.states.Save(ctx, &repositories.AccountingOAuthState{
+	if err = s.states.Save(ctx, &accountingsyncports.AccountingOAuthState{
 		State:           tokenHash,
 		IntegrationType: offer.owner.integrationType,
 		UserID:          offer.owner.userID,
@@ -219,14 +218,14 @@ func (s *Service) offerCompanyChoice(
 			WithInternal(err)
 	}
 
-	return &services.AccountingAuthorizationCompletion{
+	return &accountingsyncports.AccountingAuthorizationCompletion{
 		Companies:       offer.companies,
 		ChoiceToken:     token,
 		ChoiceExpiresAt: now + int64(companyChoiceTTL/time.Second),
 	}, nil
 }
 
-func validateChoice(req *services.ChooseAccountingCompanyRequest) error {
+func validateChoice(req *accountingsyncports.ChooseAccountingCompanyRequest) error {
 	multiErr := errortypes.NewMultiError()
 	if strings.TrimSpace(req.ChoiceToken) == "" {
 		multiErr.Add(
@@ -246,7 +245,7 @@ func validateChoice(req *services.ChooseAccountingCompanyRequest) error {
 
 func (s *Service) ChooseCompany(
 	ctx context.Context,
-	req *services.ChooseAccountingCompanyRequest,
+	req *accountingsyncports.ChooseAccountingCompanyRequest,
 ) (*accountingsync.AccountingConnection, error) {
 	if err := s.requireIntegrations(ctx, req.TenantInfo); err != nil {
 		return nil, err
@@ -304,12 +303,12 @@ func (s *Service) ChooseCompany(
 }
 
 func splitChoice(
-	choices []repositories.AccountingOAuthCompany,
+	choices []accountingsyncports.AccountingOAuthCompany,
 	companyID string,
-) (chosen *services.AccountingCompany, others []services.AccountingCompany) {
-	others = make([]services.AccountingCompany, 0, len(choices))
+) (chosen *accountingsyncports.AccountingCompany, others []accountingsyncports.AccountingCompany) {
+	others = make([]accountingsyncports.AccountingCompany, 0, len(choices))
 	for _, choice := range choices {
-		company := services.AccountingCompany{
+		company := accountingsyncports.AccountingCompany{
 			ID:           choice.ID,
 			Name:         choice.Name,
 			ConnectionID: choice.ConnectionID,
@@ -325,9 +324,9 @@ func splitChoice(
 
 func (s *Service) releaseQuietly(
 	ctx context.Context,
-	connector services.AccountingConnector,
-	grant *services.AccountingTokenGrant,
-	companies []services.AccountingCompany,
+	connector accountingsyncports.AccountingConnector,
+	grant *accountingsyncports.AccountingTokenGrant,
+	companies []accountingsyncports.AccountingCompany,
 ) {
 	if len(companies) == 0 {
 		return
@@ -339,9 +338,9 @@ func (s *Service) releaseQuietly(
 
 func (s *Service) authorizedApp(
 	ctx context.Context,
-	provider services.AccountingProvider,
+	provider accountingsyncports.AccountingProvider,
 	owner *stateOwner,
-	state *repositories.AccountingOAuthState,
+	state *accountingsyncports.AccountingOAuthState,
 ) (*authorizedApp, error) {
 	name := accountingsync.ProviderName(owner.integrationType)
 	app, err := s.appForTenant(ctx, owner.tenantInfo, provider)
@@ -429,7 +428,7 @@ func (s *Service) takeState(
 	ctx context.Context,
 	token string,
 	owner *stateOwner,
-) (*repositories.AccountingOAuthState, error) {
+) (*accountingsyncports.AccountingOAuthState, error) {
 	state, err := s.states.Take(ctx, tokenutils.Hash(token))
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
@@ -464,7 +463,7 @@ func (s *Service) pendingGrantAAD(
 func (s *Service) sealPendingGrant(
 	tenantInfo pagination.TenantInfo,
 	stateHash string,
-	grant *services.AccountingTokenGrant,
+	grant *accountingsyncports.AccountingTokenGrant,
 ) (string, error) {
 	raw, err := sonic.Marshal(pendingGrant{
 		AccessToken:     grant.AccessToken,
@@ -482,7 +481,7 @@ func (s *Service) openPendingGrant(
 	tenantInfo pagination.TenantInfo,
 	stateHash string,
 	sealed string,
-) (*services.AccountingTokenGrant, error) {
+) (*accountingsyncports.AccountingTokenGrant, error) {
 	raw, err := s.encryption.DecryptStringWithAAD(sealed, s.pendingGrantAAD(tenantInfo, stateHash))
 	if err != nil {
 		return nil, err
@@ -491,7 +490,7 @@ func (s *Service) openPendingGrant(
 	if err = sonic.UnmarshalString(raw, &held); err != nil {
 		return nil, err
 	}
-	return &services.AccountingTokenGrant{
+	return &accountingsyncports.AccountingTokenGrant{
 		AccessToken:     held.AccessToken,
 		RefreshToken:    held.RefreshToken,
 		AccessTokenTTL:  held.AccessTokenTTL,
@@ -502,7 +501,7 @@ func (s *Service) openPendingGrant(
 type connectionSave struct {
 	owner    *stateOwner
 	realmID  string
-	grant    *services.AccountingTokenGrant
+	grant    *accountingsyncports.AccountingTokenGrant
 	facts    *accountingsync.CompanyFacts
 	app      accountingsync.AppIdentity
 	provider string
@@ -516,10 +515,10 @@ func (s *Service) saveConnection(
 	owner, grant, facts, provider, now := in.owner, in.grant, in.facts, in.provider, in.now
 	var conn *accountingsync.AccountingConnection
 	var previous map[string]any
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		existing, lockErr := s.connections.LockByTypeWithTokens(
 			txCtx,
-			repositories.GetAccountingConnectionRequest{
+			accountingsyncports.GetAccountingConnectionRequest{
 				TenantInfo:      owner.tenantInfo,
 				IntegrationType: owner.integrationType,
 			},
@@ -580,7 +579,7 @@ func errRealmTaken(provider string) error {
 func (s *Service) ensureRealmIsFree(ctx context.Context, in *companyConnect) error {
 	holders, err := s.connections.ListHoldingRealm(
 		ctx,
-		repositories.ListAccountingConnectionsByRealmRequest{
+		accountingsyncports.ListAccountingConnectionsByRealmRequest{
 			IntegrationType: in.owner.integrationType,
 			RealmIDs:        []string{in.company.ID},
 		},

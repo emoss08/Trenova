@@ -1,6 +1,7 @@
 package allocationcheck
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
@@ -52,7 +53,7 @@ func TestValidate_ChecksTheSplitOnAChargeAddedInTheSameSave(t *testing.T) {
 		},
 	}
 
-	customers := mocks.NewMockCustomerRepository(t)
+	customers := customerportsmock.NewMockCustomerRepository(t)
 	customers.EXPECT().GetByIDs(mock.Anything, mock.Anything).Return([]*customer.Customer{
 		{ID: payerA, Status: domaintypes.StatusActive},
 		{ID: payerB, Status: domaintypes.StatusActive},

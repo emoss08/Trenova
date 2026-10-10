@@ -3,8 +3,8 @@ package agentevalcaseservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
@@ -19,14 +19,14 @@ const (
 
 func (s *Service) Purge(
 	ctx context.Context,
-	req services.PurgeEvalCasesRequest,
-) (*services.PurgeEvalCasesResult, error) {
+	req agentports.PurgeEvalCasesRequest,
+) (*agentports.PurgeEvalCasesResult, error) {
 	now := req.Now
 	if now <= 0 {
 		now = s.now()
 	}
 	limit := intutils.WithDefault(req.Limit, defaultPurgeBatch)
-	result := &services.PurgeEvalCasesResult{}
+	result := &agentports.PurgeEvalCasesResult{}
 
 	retentions, err := s.retention.List(ctx)
 	if err != nil {
@@ -42,7 +42,7 @@ func (s *Service) Purge(
 		}
 		tenantCtx := dbscope.WithTenant(ctx, tenant.DBTenant())
 		purged, purgeErr := drain(limit, func() (int, error) {
-			return s.cases.PurgeExpired(tenantCtx, repositories.PurgeExpiredEvalCasesRequest{
+			return s.cases.PurgeExpired(tenantCtx, agentqualityports.PurgeExpiredEvalCasesRequest{
 				TenantInfo:    tenant,
 				CreatedBefore: now - int64(retention.AgentEvalCaseRetentionPeriod)*secondsPerDay,
 				Now:           now,
@@ -59,7 +59,7 @@ func (s *Service) Purge(
 	}
 
 	result.Expired, err = drain(limit, func() (int, error) {
-		return s.cases.PurgeExpired(ctx, repositories.PurgeExpiredEvalCasesRequest{
+		return s.cases.PurgeExpired(ctx, agentqualityports.PurgeExpiredEvalCasesRequest{
 			AllTenants: true,
 			Now:        now,
 			Limit:      limit,
@@ -70,7 +70,7 @@ func (s *Service) Purge(
 	}
 
 	result.Orphaned, err = drain(limit, func() (int, error) {
-		return s.cases.PurgeOrphaned(ctx, repositories.PurgeOrphanedEvalCasesRequest{Limit: limit})
+		return s.cases.PurgeOrphaned(ctx, agentqualityports.PurgeOrphanedEvalCasesRequest{Limit: limit})
 	})
 	if err != nil {
 		return result, err

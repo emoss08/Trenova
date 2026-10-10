@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -94,7 +94,7 @@ func (r *QueryResolver) Organization(ctx context.Context, id string, includeStat
 		buIncluded = *includeBu
 	}
 
-	return r.OrganizationService.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+	return r.OrganizationService.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  orgID,
 			BuID:   authCtx.BusinessUnitID,

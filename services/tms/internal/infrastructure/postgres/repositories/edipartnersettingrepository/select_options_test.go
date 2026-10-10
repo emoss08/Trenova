@@ -7,8 +7,8 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -92,7 +92,7 @@ func TestSelectPartnerSettingFieldOptions_AppliesSchemaSearchAndFieldFilters(t *
 	secret := false
 	result, err := repo.SelectPartnerSettingFieldOptions(
 		t.Context(),
-		&repositories.ListEDIPartnerSettingFieldsRequest{
+		&ediports.ListEDIPartnerSettingFieldsRequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 				Pagination: pagination.Info{Limit: 20},
@@ -224,7 +224,7 @@ func TestSearchPartnerSettingFields_AppliesSchemaSearchAndRequiredFilters(t *tes
 		))
 	result, err := repo.SearchPartnerSettingFields(
 		t.Context(),
-		&repositories.ListEDIPartnerSettingFieldsRequest{
+		&ediports.ListEDIPartnerSettingFieldsRequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 				Pagination: pagination.Info{Limit: 20},

@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -35,7 +35,7 @@ func TestTranscript_RendersADecisionNoteAsADecision(t *testing.T) {
 	}}}
 	svc := newTranscriptService(conversations, &stubProposalRepo{})
 
-	transcript, err := svc.Transcript(t.Context(), repositories.GetThreadRequest{ID: thread.ID})
+	transcript, err := svc.Transcript(t.Context(), agentports.GetThreadRequest{ID: thread.ID})
 	require.NoError(t, err)
 
 	body := transcript.Body
@@ -60,7 +60,7 @@ func TestTranscript_NamesAnEmptyDecisionNote(t *testing.T) {
 	}}}
 	svc := newTranscriptService(conversations, &stubProposalRepo{})
 
-	transcript, err := svc.Transcript(t.Context(), repositories.GetThreadRequest{ID: thread.ID})
+	transcript, err := svc.Transcript(t.Context(), agentports.GetThreadRequest{ID: thread.ID})
 	require.NoError(t, err)
 
 	assert.Contains(t, transcript.Body, "## Decision · Sep 21, 2026 2:13:20 PM UTC\n\n"+
@@ -89,7 +89,7 @@ func TestTranscript_ListsWhatAnExecutedProposalMade(t *testing.T) {
 	}}}
 	svc := newTranscriptService(conversations, proposals)
 
-	transcript, err := svc.Transcript(t.Context(), repositories.GetThreadRequest{ID: thread.ID})
+	transcript, err := svc.Transcript(t.Context(), agentports.GetThreadRequest{ID: thread.ID})
 	require.NoError(t, err)
 
 	assert.Contains(t, transcript.Body,

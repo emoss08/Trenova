@@ -9,8 +9,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/handlers/publicconfighandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,16 +21,16 @@ import (
 const selfHostedBody = `{"platformMode":"self_hosted","signupEnabled":false,` +
 	`"turnstileSiteKey":"","termsUrl":"","privacyUrl":"","freePlan":{"limits":{}}}`
 
-type contributorFunc func(ctx context.Context, cfg *services.PublicConfig) error
+type contributorFunc func(ctx context.Context, cfg *kernelports.PublicConfig) error
 
-func (f contributorFunc) ContributePublicConfig(ctx context.Context, cfg *services.PublicConfig) error {
+func (f contributorFunc) ContributePublicConfig(ctx context.Context, cfg *kernelports.PublicConfig) error {
 	return f(ctx, cfg)
 }
 
 func serve(
 	t *testing.T,
 	cfg *config.Config,
-	contributors ...services.PublicConfigContributor,
+	contributors ...kernelports.PublicConfigContributor,
 ) *httptest.ResponseRecorder {
 	t.Helper()
 	gin.SetMode(gin.TestMode)
@@ -82,14 +82,14 @@ func TestDevelopmentModeIsReported(t *testing.T) {
 func TestContributorsShapeTheResponse(t *testing.T) {
 	t.Parallel()
 
-	signup := contributorFunc(func(_ context.Context, cfg *services.PublicConfig) error {
+	signup := contributorFunc(func(_ context.Context, cfg *kernelports.PublicConfig) error {
 		cfg.SignupEnabled = true
 		cfg.TurnstileSiteKey = "site-key"
 		cfg.TermsURL = "https://example.test/terms"
 		cfg.PrivacyURL = "https://example.test/privacy"
 		return nil
 	})
-	plan := contributorFunc(func(_ context.Context, cfg *services.PublicConfig) error {
+	plan := contributorFunc(func(_ context.Context, cfg *kernelports.PublicConfig) error {
 		cfg.FreePlan.Limits["shipments.total"] = 12
 		return nil
 	})
@@ -105,7 +105,7 @@ func TestContributorsShapeTheResponse(t *testing.T) {
 func TestAContributorThatClearsTheLimitsStillAnswersAnObject(t *testing.T) {
 	t.Parallel()
 
-	clear := contributorFunc(func(_ context.Context, cfg *services.PublicConfig) error {
+	clear := contributorFunc(func(_ context.Context, cfg *kernelports.PublicConfig) error {
 		cfg.FreePlan.Limits = nil
 		return nil
 	})
@@ -119,7 +119,7 @@ func TestAContributorThatClearsTheLimitsStillAnswersAnObject(t *testing.T) {
 func TestAContributorErrorIsReported(t *testing.T) {
 	t.Parallel()
 
-	failing := contributorFunc(func(context.Context, *services.PublicConfig) error {
+	failing := contributorFunc(func(context.Context, *kernelports.PublicConfig) error {
 		return errors.New("catalog unavailable")
 	})
 
@@ -132,14 +132,14 @@ func TestAContributorErrorIsReported(t *testing.T) {
 func TestAsContributorJoinsTheGroup(t *testing.T) {
 	t.Parallel()
 
-	contributor := contributorFunc(func(context.Context, *services.PublicConfig) error { return nil })
+	contributor := contributorFunc(func(context.Context, *kernelports.PublicConfig) error { return nil })
 
-	var got []services.PublicConfigContributor
+	var got []kernelports.PublicConfigContributor
 	app := fx.New(
 		fx.NopLogger,
 		fx.Provide(publicconfighandler.AsContributor(func() contributorFunc { return contributor })),
 		fx.Invoke(fx.Annotate(
-			func(contributors []services.PublicConfigContributor) { got = contributors },
+			func(contributors []kernelports.PublicConfigContributor) { got = contributors },
 			fx.ParamTags(`group:"`+publicconfighandler.ContributorsGroup+`"`),
 		)),
 	)

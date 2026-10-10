@@ -8,18 +8,18 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 var (
-	_ serviceports.ToolPreviewer = (*cancelTenderTool)(nil)
-	_ serviceports.ToolPreviewer = (*recordTenderResponseTool)(nil)
-	_ serviceports.ToolValidator = (*cancelTenderTool)(nil)
-	_ serviceports.ToolValidator = (*recordTenderResponseTool)(nil)
+	_ agentports.ToolPreviewer = (*cancelTenderTool)(nil)
+	_ agentports.ToolPreviewer = (*recordTenderResponseTool)(nil)
+	_ agentports.ToolValidator = (*cancelTenderTool)(nil)
+	_ agentports.ToolValidator = (*recordTenderResponseTool)(nil)
 )
 
 var tenderOfferLabels = map[string]string{
@@ -29,7 +29,7 @@ var tenderOfferLabels = map[string]string{
 
 func (t *cancelTenderTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	request, err := t.request(&params)
 	if err != nil {
@@ -88,7 +88,7 @@ func (t *cancelTenderTool) Preview(
 
 func (t *recordTenderResponseTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	request, err := t.request(&params)
 	if err != nil {

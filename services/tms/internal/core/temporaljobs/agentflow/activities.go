@@ -6,11 +6,12 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.opentelemetry.io/otel/trace"
@@ -31,9 +32,9 @@ type ToolObserver interface {
 	ObserveTool(
 		ctx context.Context,
 		run RunContext,
-		observation serviceports.ToolObservation,
-		emit serviceports.AssistantStreamEmitter,
-	) (*serviceports.ShownArtifact, []*assistantartifact.Artifact, error)
+		observation agentports.ToolObservation,
+		emit kernelports.AssistantStreamEmitter,
+	) (*agentports.ShownArtifact, []*assistantartifact.Artifact, error)
 }
 
 // DelegateOpener opens another agent's turn on a task the run's agent handed
@@ -60,22 +61,22 @@ type ActivitiesParams struct {
 
 	Logger    *zap.Logger
 	Runtime   *agentruntime.Service
-	Steps     serviceports.RunStepLedger
-	Observer  ToolObserver                  `optional:"true"`
-	Delegates DelegateOpener                `optional:"true"`
-	Metrics   *metrics.Registry             `optional:"true"`
-	Changes   serviceports.RecordChangeFeed `optional:"true"`
+	Steps     agentports.RunStepLedger
+	Observer  ToolObserver                `optional:"true"`
+	Delegates DelegateOpener              `optional:"true"`
+	Metrics   *metrics.Registry           `optional:"true"`
+	Changes   agentports.RecordChangeFeed `optional:"true"`
 }
 
 // Activities are a turn's effects, one activity each.
 type Activities struct {
 	l         *zap.Logger
 	runtime   *agentruntime.Service
-	steps     serviceports.RunStepLedger
+	steps     agentports.RunStepLedger
 	observer  ToolObserver
 	delegates DelegateOpener
 	metrics   *metrics.Assistant
-	changes   serviceports.RecordChangeFeed
+	changes   agentports.RecordChangeFeed
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -96,12 +97,12 @@ func NewActivities(p ActivitiesParams) *Activities {
 func (a *Activities) CheckWorldActivity(
 	ctx context.Context,
 	in *WorldCheckInput,
-) (*serviceports.RecordChanges, error) {
+) (*agentports.RecordChanges, error) {
 	if a.changes == nil {
-		return &serviceports.RecordChanges{Cursor: in.Check.Cursor}, nil
+		return &agentports.RecordChanges{Cursor: in.Check.Cursor}, nil
 	}
 
-	return a.changes.Since(ctx, &serviceports.RecordChangesRequest{
+	return a.changes.Since(ctx, &agentports.RecordChangesRequest{
 		OrganizationID: in.OrganizationID,
 		BusinessUnitID: in.BusinessUnitID,
 		Cursor:         in.Check.Cursor,
@@ -122,7 +123,7 @@ func (a *Activities) ModelCallActivity(
 		a.metrics.RecordModelCallWait(info.StartedTime.Sub(info.ScheduledTime).Seconds())
 	}
 
-	emit := func(serviceports.StreamEvent) {}
+	emit := func(kernelports.StreamEvent) {}
 	if in.Stream {
 		stream, events, err := OpenStream(ctx)
 		if err != nil {
@@ -130,7 +131,7 @@ func (a *Activities) ModelCallActivity(
 		}
 		defer CloseStream(ctx, stream, a.l)
 
-		publish := func(event serviceports.StreamEvent, force bool) {
+		publish := func(event kernelports.StreamEvent, force bool) {
 			tagged, shown := in.Scope.Tag(event)
 			if shown {
 				events.Publish(StreamItem{
@@ -146,18 +147,18 @@ func (a *Activities) ModelCallActivity(
 		// told so before the first word of the new one arrives, or the two
 		// run together.
 		if attempt := activity.GetInfo(ctx).Attempt; attempt > 1 {
-			publish(serviceports.StreamEvent{
-				Event: serviceports.AssistantEventRetrying,
-				Data: serviceports.AssistantRetryingEvent{
+			publish(kernelports.StreamEvent{
+				Event: agentports.AssistantEventRetrying,
+				Data: agentports.AssistantRetryingEvent{
 					Attempt: int(attempt) - 1,
 					Reason:  "The reply is being written again after an interruption.",
-					Kind:    serviceports.RetryKindRestart,
+					Kind:    agentports.RetryKindRestart,
 				},
 			}, true)
 		}
 
 		var first firstWords
-		emit = func(event serviceports.StreamEvent) { publish(event, first.flush(event)) }
+		emit = func(event kernelports.StreamEvent) { publish(event, first.flush(event)) }
 	}
 
 	stopBeating := modelcall.Heartbeat(ctx)
@@ -183,12 +184,12 @@ type firstWords struct {
 	sent bool
 }
 
-func (f *firstWords) flush(event serviceports.StreamEvent) bool {
+func (f *firstWords) flush(event kernelports.StreamEvent) bool {
 	if f.sent {
 		return false
 	}
-	if event.Event != serviceports.AssistantEventDelta &&
-		event.Event != serviceports.AssistantEventReasoning {
+	if event.Event != agentports.AssistantEventDelta &&
+		event.Event != agentports.AssistantEventReasoning {
 		return false
 	}
 	f.sent = true
@@ -330,7 +331,7 @@ func (a *Activities) PublishArtifactActivity(
 func (a *Activities) observing(
 	ctx context.Context,
 	run *RunContext,
-) (serviceports.ToolObserver, *[]*assistantartifact.Artifact, func()) {
+) (agentports.ToolObserver, *[]*assistantartifact.Artifact, func()) {
 	kept := new([]*assistantartifact.Artifact)
 	if a.observer == nil || run.ThreadID.IsNil() {
 		return nil, kept, func() {}
@@ -343,7 +344,7 @@ func (a *Activities) observing(
 		a.l.Warn("a run's stream could not be opened for what a call showed",
 			zap.String("run", run.ThreadID.String()), zap.Error(openErr))
 	}
-	emit := func(event serviceports.StreamEvent) {
+	emit := func(event kernelports.StreamEvent) {
 		if events != nil {
 			events.Publish(StreamItem{
 				Event: event.Event,
@@ -353,7 +354,7 @@ func (a *Activities) observing(
 		}
 	}
 
-	observe := func(observation serviceports.ToolObservation) (*serviceports.ShownArtifact, error) {
+	observe := func(observation agentports.ToolObservation) (*agentports.ShownArtifact, error) {
 		shown, artifacts, err := a.observer.ObserveTool(ctx, *run, observation, emit)
 		*kept = append(*kept, artifacts...)
 

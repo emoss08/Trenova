@@ -4,14 +4,14 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/bankreceiptworkitem"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptworkitemports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 func ResolveWorkItem(
 	entity *bankreceiptworkitem.WorkItem,
-	req *serviceports.ResolveBankReceiptWorkItemRequest,
+	req *bankreceiptworkitemports.ResolveBankReceiptWorkItemRequest,
 	userID pulid.ID,
 	now int64,
 ) error {
@@ -41,7 +41,7 @@ func ResolveWorkItem(
 
 func DismissWorkItem(
 	entity *bankreceiptworkitem.WorkItem,
-	req *serviceports.DismissBankReceiptWorkItemRequest,
+	req *bankreceiptworkitemports.DismissBankReceiptWorkItemRequest,
 	userID pulid.ID,
 	now int64,
 ) error {

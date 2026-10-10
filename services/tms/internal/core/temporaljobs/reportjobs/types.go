@@ -2,7 +2,7 @@ package reportjobs
 
 import (
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -31,13 +31,13 @@ type ExecuteResult struct {
 	ArtifactKey string `json:"artifactKey"`
 	// RowsKey is the JSON rows sidecar. It is empty when the sidecar could not
 	// be written, which costs the run nothing beyond a later comparison.
-	RowsKey           string                 `json:"rowsKey,omitempty"`
-	RowCount          int64                  `json:"rowCount"`
-	ByteSize          int64                  `json:"byteSize"`
-	Truncated         bool                   `json:"truncated"`
-	CacheHit          bool                   `json:"cacheHit"`
-	ArtifactExpiresAt int64                  `json:"artifactExpiresAt,omitempty"`
-	Digest            *services.ReportDigest `json:"digest,omitempty"`
+	RowsKey           string                    `json:"rowsKey,omitempty"`
+	RowCount          int64                     `json:"rowCount"`
+	ByteSize          int64                     `json:"byteSize"`
+	Truncated         bool                      `json:"truncated"`
+	CacheHit          bool                      `json:"cacheHit"`
+	ArtifactExpiresAt int64                     `json:"artifactExpiresAt,omitempty"`
+	Digest            *reportports.ReportDigest `json:"digest,omitempty"`
 }
 
 type FinalizePayload struct {
@@ -67,7 +67,7 @@ type RunReportResult struct {
 type DeliverRunPayload struct {
 	// Digest rides the workflow rather than the database: it is only ever needed
 	// for the delivery that immediately follows this run.
-	Digest *services.ReportDigest `json:"digest,omitempty"`
+	Digest *reportports.ReportDigest `json:"digest,omitempty"`
 
 	RunID          pulid.ID `json:"runId"`
 	OrganizationID pulid.ID `json:"organizationId"`

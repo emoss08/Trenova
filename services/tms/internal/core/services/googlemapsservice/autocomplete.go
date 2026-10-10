@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/integrationservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
 	"github.com/google/uuid"
 	"github.com/sourcegraph/conc/pool"
 	"go.uber.org/fx"
@@ -20,16 +20,16 @@ type AutoCompleteServiceParams struct {
 
 	Logger             *zap.Logger
 	IntegrationService *integrationservice.Service
-	UsStateRepo        repositories.UsStateRepository
+	UsStateRepo        usstateports.UsStateRepository
 }
 
 type autoCompleteService struct {
 	l                  *zap.Logger
 	integrationService *integrationservice.Service
-	usStateRepo        repositories.UsStateRepository
+	usStateRepo        usstateports.UsStateRepository
 }
 
-func NewAutoCompleteService(p AutoCompleteServiceParams) services.AutoCompleteService {
+func NewAutoCompleteService(p AutoCompleteServiceParams) kernelports.AutoCompleteService {
 	log := p.Logger.Named("service.google.maps.autocomplete")
 	return &autoCompleteService{
 		l:                  log,
@@ -40,16 +40,16 @@ func NewAutoCompleteService(p AutoCompleteServiceParams) services.AutoCompleteSe
 
 func (s *autoCompleteService) GetPlaceDetails(
 	ctx context.Context,
-	req *services.AutoCompleteRequest,
-) (*services.AutocompleteLocationResult, error) {
+	req *kernelports.AutoCompleteRequest,
+) (*kernelports.AutocompleteLocationResult, error) {
 	log := s.l.With(
 		zap.String("operation", "GetPlaceDetails"),
 		zap.Any("request", req),
 	)
 
 	if req.Input == "" {
-		return &services.AutocompleteLocationResult{
-			Details: []*services.LocationDetails{},
+		return &kernelports.AutocompleteLocationResult{
+			Details: []*kernelports.LocationDetails{},
 			Count:   0,
 		}, nil
 	}
@@ -86,8 +86,8 @@ func (s *autoCompleteService) GetPlaceDetails(
 	}
 
 	if len(autocompleteResp.Predictions) == 0 {
-		return &services.AutocompleteLocationResult{
-			Details: []*services.LocationDetails{},
+		return &kernelports.AutocompleteLocationResult{
+			Details: []*kernelports.LocationDetails{},
 			Count:   0,
 		}, nil
 	}
@@ -95,7 +95,7 @@ func (s *autoCompleteService) GetPlaceDetails(
 	maxResults := min(5, len(autocompleteResp.Predictions))
 
 	p := pool.New().WithMaxGoroutines(maxResults)
-	results := make([]*services.LocationDetails, maxResults)
+	results := make([]*kernelports.LocationDetails, maxResults)
 
 	for i := range maxResults {
 		p.Go(func() {
@@ -117,14 +117,14 @@ func (s *autoCompleteService) GetPlaceDetails(
 
 	p.Wait()
 
-	details := make([]*services.LocationDetails, 0, maxResults)
+	details := make([]*kernelports.LocationDetails, 0, maxResults)
 	for _, r := range results {
 		if r != nil {
 			details = append(details, r)
 		}
 	}
 
-	return &services.AutocompleteLocationResult{
+	return &kernelports.AutocompleteLocationResult{
 		Details: details,
 		Count:   len(details),
 	}, nil
@@ -132,7 +132,7 @@ func (s *autoCompleteService) GetPlaceDetails(
 
 func (s *autoCompleteService) resolveClient(
 	ctx context.Context,
-	req *services.AutoCompleteRequest,
+	req *kernelports.AutoCompleteRequest,
 ) (*maps.Client, error) {
 	cfg, err := s.integrationService.GetRuntimeConfig(
 		ctx, req.TenantInfo, integration.TypeGoogleMaps,
@@ -159,7 +159,7 @@ func (s *autoCompleteService) getDetailsByPlaceID(
 	client *maps.Client,
 	placeID string,
 	sessionToken maps.PlaceAutocompleteSessionToken,
-) (*services.LocationDetails, error) {
+) (*kernelports.LocationDetails, error) {
 	log := s.l.With(
 		zap.String("operation", "getDetailsByPlaceID"),
 		zap.String("placeID", placeID),
@@ -204,8 +204,8 @@ func (s *autoCompleteService) getDetailsByPlaceID(
 
 func (s *autoCompleteService) parseLocationDetails(
 	resp *maps.PlaceDetailsResult,
-) *services.LocationDetails {
-	details := &services.LocationDetails{
+) *kernelports.LocationDetails {
+	details := &kernelports.LocationDetails{
 		Name:      resp.Name,
 		PlaceID:   resp.PlaceID,
 		Longitude: resp.Geometry.Location.Lng,

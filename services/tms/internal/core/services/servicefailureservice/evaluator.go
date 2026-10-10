@@ -6,7 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -15,7 +16,7 @@ type evaluateShipmentParams struct {
 	source     *shipment.Shipment
 	control    *dispatchcontrol.DispatchControl
 	force      bool
-	actor      *services.RequestActor
+	actor      *permissionports.RequestActor
 	onlyStopID *pulid.ID
 }
 
@@ -34,21 +35,21 @@ type qualifyingFailureParams struct {
 	force       bool
 }
 
-func newServiceFailureEvaluationResult() *services.ServiceFailureEvaluationResult {
-	return &services.ServiceFailureEvaluationResult{
+func newServiceFailureEvaluationResult() *servicefailureports.ServiceFailureEvaluationResult {
+	return &servicefailureports.ServiceFailureEvaluationResult{
 		CreatedIDs:   make([]pulid.ID, 0),
 		UpdatedIDs:   make([]pulid.ID, 0),
-		CreatedStops: make([]services.ServiceFailureEvaluatedStopSummary, 0),
-		UpdatedStops: make([]services.ServiceFailureEvaluatedStopSummary, 0),
-		SkippedStops: make([]services.ServiceFailureSkippedStop, 0),
+		CreatedStops: make([]servicefailureports.ServiceFailureEvaluatedStopSummary, 0),
+		UpdatedStops: make([]servicefailureports.ServiceFailureEvaluatedStopSummary, 0),
+		SkippedStops: make([]servicefailureports.ServiceFailureSkippedStop, 0),
 	}
 }
 
 func (s *service) EvaluateShipment(
 	ctx context.Context,
-	req *services.EvaluateShipmentServiceFailuresRequest,
-	actor *services.RequestActor,
-) (*services.ServiceFailureEvaluationResult, error) {
+	req *servicefailureports.EvaluateShipmentServiceFailuresRequest,
+	actor *permissionports.RequestActor,
+) (*servicefailureports.ServiceFailureEvaluationResult, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
 	}
@@ -68,9 +69,9 @@ func (s *service) EvaluateShipment(
 
 func (s *service) EvaluateStop(
 	ctx context.Context,
-	req *services.EvaluateStopServiceFailuresRequest,
-	actor *services.RequestActor,
-) (*services.ServiceFailureEvaluationResult, error) {
+	req *servicefailureports.EvaluateStopServiceFailuresRequest,
+	actor *permissionports.RequestActor,
+) (*servicefailureports.ServiceFailureEvaluationResult, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
 	}
@@ -92,9 +93,9 @@ func (s *service) EvaluateStop(
 
 func (s *service) BulkEvaluate(
 	ctx context.Context,
-	req *services.BulkEvaluateServiceFailuresRequest,
-	actor *services.RequestActor,
-) (*services.ServiceFailureEvaluationResult, error) {
+	req *servicefailureports.BulkEvaluateServiceFailuresRequest,
+	actor *permissionports.RequestActor,
+) (*servicefailureports.ServiceFailureEvaluationResult, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
 	}
@@ -108,7 +109,7 @@ func (s *service) BulkEvaluate(
 			})
 			continue
 		}
-		current, err := s.EvaluateShipment(ctx, &services.EvaluateShipmentServiceFailuresRequest{
+		current, err := s.EvaluateShipment(ctx, &servicefailureports.EvaluateShipmentServiceFailuresRequest{
 			TenantInfo: req.TenantInfo,
 			ShipmentID: shipmentID,
 			Force:      req.Force,
@@ -125,7 +126,7 @@ func (s *service) BulkEvaluate(
 func (s *service) evaluateShipment(
 	ctx context.Context,
 	params evaluateShipmentParams,
-) (*services.ServiceFailureEvaluationResult, error) {
+) (*servicefailureports.ServiceFailureEvaluationResult, error) {
 	plan, err := s.planDetection(ctx, params)
 	if err != nil {
 		return nil, err
@@ -206,7 +207,7 @@ func (s *service) qualifyingFailure(params qualifyingFailureParams) (*detectedAc
 func (s *service) createOrUpdateDetected(
 	ctx context.Context,
 	action *detectedAction,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*servicefailure.ServiceFailure, error) {
 	detected, err := s.planDetected(ctx, action.entity)
 	if err != nil {
@@ -217,7 +218,7 @@ func (s *service) createOrUpdateDetected(
 	return s.persistDetected(ctx, detected, actor)
 }
 
-func mergeEvaluationResult(target, source *services.ServiceFailureEvaluationResult) {
+func mergeEvaluationResult(target, source *servicefailureports.ServiceFailureEvaluationResult) {
 	if target == nil || source == nil {
 		return
 	}
@@ -230,7 +231,7 @@ func mergeEvaluationResult(target, source *services.ServiceFailureEvaluationResu
 }
 
 type addSkippedEvaluationParams struct {
-	result             *services.ServiceFailureEvaluationResult
+	result             *servicefailureports.ServiceFailureEvaluationResult
 	shipmentID         pulid.ID
 	shipmentMoveID     pulid.ID
 	stop               *shipment.Stop
@@ -246,7 +247,7 @@ func addSkippedEvaluation(params addSkippedEvaluationParams) {
 	params.result.SkippedStops = append(params.result.SkippedStops, skippedStopDetail(params))
 }
 
-func skippedStopDetail(params addSkippedEvaluationParams) services.ServiceFailureSkippedStop {
+func skippedStopDetail(params addSkippedEvaluationParams) servicefailureports.ServiceFailureSkippedStop {
 	detail := stopSummaryFromStop(
 		params.shipmentID,
 		params.shipmentMoveID,
@@ -260,12 +261,12 @@ func skippedStopDetail(params addSkippedEvaluationParams) services.ServiceFailur
 
 func serviceFailureStopSummary(
 	failure *servicefailure.ServiceFailure,
-) services.ServiceFailureEvaluatedStopSummary {
+) servicefailureports.ServiceFailureEvaluatedStopSummary {
 	if failure == nil {
-		return services.ServiceFailureEvaluatedStopSummary{}
+		return servicefailureports.ServiceFailureEvaluatedStopSummary{}
 	}
 
-	detail := services.ServiceFailureEvaluatedStopSummary{
+	detail := servicefailureports.ServiceFailureEvaluatedStopSummary{
 		ShipmentID:         failure.ShipmentID,
 		ShipmentMoveID:     failure.ShipmentMoveID,
 		StopID:             failure.StopID,
@@ -285,8 +286,8 @@ func stopSummaryFromStop(
 	shipmentMoveID pulid.ID,
 	stop *shipment.Stop,
 	gracePeriodMinutes int,
-) services.ServiceFailureEvaluatedStopSummary {
-	detail := services.ServiceFailureEvaluatedStopSummary{
+) servicefailureports.ServiceFailureEvaluatedStopSummary {
+	detail := servicefailureports.ServiceFailureEvaluatedStopSummary{
 		ShipmentID:         shipmentID,
 		ShipmentMoveID:     shipmentMoveID,
 		GracePeriodMinutes: gracePeriodMinutes,
@@ -318,7 +319,7 @@ func stopSummaryFromStop(
 }
 
 func applyStopContext(
-	detail *services.ServiceFailureEvaluatedStopSummary,
+	detail *servicefailureports.ServiceFailureEvaluatedStopSummary,
 	stop *shipment.Stop,
 ) {
 	if detail == nil || stop == nil {

@@ -4,8 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -15,7 +14,7 @@ const formsLookbackSeconds = int64(48 * 3600)
 func (s *Service) syncForms(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	provider services.TelematicsProvider,
+	provider telematicsports.TelematicsProvider,
 	drivers *sweepDrivers,
 	result *TenantSweepResult,
 ) error {
@@ -71,7 +70,7 @@ func (s *Service) formMappingsByTemplate(
 	tenantInfo pagination.TenantInfo,
 ) (map[string]*telematics.FormMapping, error) {
 	enabled := true
-	mappings, err := s.repo.ListFormMappings(ctx, &repositories.ListFormMappingsRequest{
+	mappings, err := s.repo.ListFormMappings(ctx, &telematicsports.ListFormMappingsRequest{
 		TenantInfo: tenantInfo,
 		Enabled:    &enabled,
 	})

@@ -1,12 +1,17 @@
 package shipmentservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/formulatemplateportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
@@ -23,18 +28,18 @@ func previewCreateService(
 	t *testing.T,
 	entity *shipment.Shipment,
 	control *tenant.ShipmentControl,
-) (*service, *mocks.MockShipmentRepository) {
+) (*service, *shipmentportsmock.MockShipmentRepository) {
 	t.Helper()
 
-	repo := mocks.NewMockShipmentRepository(t)
-	controlRepo := mocks.NewMockShipmentControlRepository(t)
-	controlRepo.EXPECT().Get(mock.Anything, repositories.GetShipmentControlRequest{
+	repo := shipmentportsmock.NewMockShipmentRepository(t)
+	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
+	controlRepo.EXPECT().Get(mock.Anything, tenantports.GetShipmentControlRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
 		},
 	}).Return(control, nil).Once()
-	formula := mocks.NewMockFormulaCalculator(t)
+	formula := formulatemplateportsmock.NewMockFormulaCalculator(t)
 	formula.EXPECT().
 		Calculate(mock.Anything, mock.AnythingOfType("*formulatemplatetypes.CalculateRequest")).
 		Return(&formulatemplatetypes.CalculateResponse{Amount: decimal.NewFromInt(1_250)}, nil).
@@ -47,17 +52,17 @@ func previewCreateService(
 		validator:   newTestValidator(t),
 		commercial: newTestCommercialCalculator(t,
 			formula,
-			mocks.NewMockAccessorialChargeRepository(t),
+			accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		),
 		coordinator: newStateCoordinator(),
 	}, repo
 }
 
-func previewActor(entity *shipment.Shipment) *services.RequestActor {
+func previewActor(entity *shipment.Shipment) *permissionports.RequestActor {
 	userID := pulid.MustNew("usr_")
 
-	return &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeUser,
+	return &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    userID,
 		UserID:         userID,
 		OrganizationID: entity.OrganizationID,
@@ -97,7 +102,7 @@ func TestPreviewCreate_RefusesADuplicateBOLTheWayCreateDoes(t *testing.T) {
 	})
 	repo.EXPECT().
 		CheckForDuplicateBOLs(mock.Anything, mock.Anything).
-		Return([]*repositories.DuplicateBOLResult{
+		Return([]*shipmentports.DuplicateBOLResult{
 			{ID: pulid.MustNew("shp_"), ProNumber: "PRO-500"},
 		}, nil).
 		Once()
@@ -128,19 +133,19 @@ func unpricedCreateService(
 ) *service {
 	t.Helper()
 
-	controlRepo := mocks.NewMockShipmentControlRepository(t)
+	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().Get(mock.Anything, mock.Anything).
 		Return(&tenant.ShipmentControl{}, nil).
 		Once()
 
 	return &service{
 		l:           zap.NewNop(),
-		repo:        mocks.NewMockShipmentRepository(t),
+		repo:        shipmentportsmock.NewMockShipmentRepository(t),
 		controlRepo: controlRepo,
 		validator:   rateCoverageValidator(t, billingControlWith(t, disposition)),
 		commercial: newTestCommercialCalculator(t,
-			mocks.NewMockFormulaCalculator(t),
-			mocks.NewMockAccessorialChargeRepository(t),
+			formulatemplateportsmock.NewMockFormulaCalculator(t),
+			accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		),
 		coordinator: newStateCoordinator(),
 	}

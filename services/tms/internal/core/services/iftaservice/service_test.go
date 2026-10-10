@@ -1,6 +1,9 @@
 package iftaservice_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tractorportsmock"
 	"context"
 	"errors"
 	"sort"
@@ -12,12 +15,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/editioninfo"
 	"github.com/emoss08/trenova/internal/core/services/iftaservice"
 	"github.com/emoss08/trenova/internal/core/services/referencedataguard"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -33,8 +38,8 @@ type fakeRepo struct {
 	entries       map[pulid.ID]*ifta.JurisdictionMileageEntry
 	returns       map[pulid.ID]*ifta.Return
 	lines         map[pulid.ID][]*ifta.ReturnLine
-	miles         *repositories.MileAccumulation
-	accumulateReq *repositories.AccumulateMilesRequest
+	miles         *iftaports.MileAccumulation
+	accumulateReq *iftaports.AccumulateMilesRequest
 }
 
 func newFakeRepo() *fakeRepo {
@@ -44,13 +49,13 @@ func newFakeRepo() *fakeRepo {
 		entries:       map[pulid.ID]*ifta.JurisdictionMileageEntry{},
 		returns:       map[pulid.ID]*ifta.Return{},
 		lines:         map[pulid.ID][]*ifta.ReturnLine{},
-		miles:         &repositories.MileAccumulation{},
+		miles:         &iftaports.MileAccumulation{},
 	}
 }
 
 func (f *fakeRepo) ListJurisdictions(
 	_ context.Context,
-	req *repositories.ListJurisdictionsRequest,
+	req *iftaports.ListJurisdictionsRequest,
 ) ([]*ifta.Jurisdiction, error) {
 	out := make([]*ifta.Jurisdiction, 0, len(f.jurisdictions))
 	for _, j := range f.jurisdictions {
@@ -113,7 +118,7 @@ func (f *fakeRepo) FindJurisdictionsByCodes(
 
 func (f *fakeRepo) ListTaxRates(
 	_ context.Context,
-	_ *repositories.ListTaxRatesRequest,
+	_ *iftaports.ListTaxRatesRequest,
 ) (*pagination.CursorListResult[*ifta.TaxRate], error) {
 	items := make([]*ifta.TaxRate, 0, len(f.rates))
 	for _, r := range f.rates {
@@ -167,7 +172,7 @@ func (f *fakeRepo) DeleteTaxRate(_ context.Context, id pulid.ID, _ int64) error 
 
 func (f *fakeRepo) ResolveRates(
 	_ context.Context,
-	req *repositories.ResolveRatesRequest,
+	req *iftaports.ResolveRatesRequest,
 ) (map[ifta.RateKey]*ifta.TaxRate, error) {
 	out := make(map[ifta.RateKey]*ifta.TaxRate, len(f.rates))
 	for _, r := range f.rates {
@@ -180,7 +185,7 @@ func (f *fakeRepo) ResolveRates(
 
 func (f *fakeRepo) ListMileageEntries(
 	_ context.Context,
-	_ *repositories.ListMileageEntriesRequest,
+	_ *iftaports.ListMileageEntriesRequest,
 ) (*pagination.CursorListResult[*ifta.JurisdictionMileageEntry], error) {
 	items := make([]*ifta.JurisdictionMileageEntry, 0, len(f.entries))
 	for _, e := range f.entries {
@@ -191,7 +196,7 @@ func (f *fakeRepo) ListMileageEntries(
 
 func (f *fakeRepo) GetMileageEntryByID(
 	_ context.Context,
-	req *repositories.GetMileageEntryByIDRequest,
+	req *iftaports.GetMileageEntryByIDRequest,
 ) (*ifta.JurisdictionMileageEntry, error) {
 	e, ok := f.entries[req.ID]
 	if !ok || e.OrganizationID != req.TenantInfo.OrgID {
@@ -222,7 +227,7 @@ func (f *fakeRepo) UpdateMileageEntry(
 
 func (f *fakeRepo) DeleteMileageEntry(
 	_ context.Context,
-	req *repositories.DeleteMileageEntryRequest,
+	req *iftaports.DeleteMileageEntryRequest,
 ) error {
 	delete(f.entries, req.ID)
 	return nil
@@ -230,7 +235,7 @@ func (f *fakeRepo) DeleteMileageEntry(
 
 func (f *fakeRepo) ListReturns(
 	_ context.Context,
-	_ *repositories.ListReturnsRequest,
+	_ *iftaports.ListReturnsRequest,
 ) (*pagination.CursorListResult[*ifta.Return], error) {
 	items := make([]*ifta.Return, 0, len(f.returns))
 	for _, r := range f.returns {
@@ -241,7 +246,7 @@ func (f *fakeRepo) ListReturns(
 
 func (f *fakeRepo) GetReturnByID(
 	_ context.Context,
-	req *repositories.GetReturnByIDRequest,
+	req *iftaports.GetReturnByIDRequest,
 ) (*ifta.Return, error) {
 	r, ok := f.returns[req.ID]
 	if !ok || r.OrganizationID != req.TenantInfo.OrgID {
@@ -256,7 +261,7 @@ func (f *fakeRepo) GetReturnByID(
 
 func (f *fakeRepo) GetReturnsByIDs(
 	_ context.Context,
-	req *repositories.GetReturnsByIDsRequest,
+	req *iftaports.GetReturnsByIDsRequest,
 ) ([]*ifta.Return, error) {
 	out := make([]*ifta.Return, 0, len(req.IDs))
 	for _, id := range req.IDs {
@@ -272,7 +277,7 @@ func (f *fakeRepo) GetReturnsByIDs(
 
 func (f *fakeRepo) GetOpenReturnForPeriod(
 	_ context.Context,
-	req *repositories.GetOpenReturnForPeriodRequest,
+	req *iftaports.GetOpenReturnForPeriodRequest,
 ) (*ifta.Return, error) {
 	for _, r := range f.returns {
 		if r.OrganizationID == req.TenantInfo.OrgID && r.Year == req.Year &&
@@ -286,7 +291,7 @@ func (f *fakeRepo) GetOpenReturnForPeriod(
 
 func (f *fakeRepo) GetLatestReturnForPeriod(
 	_ context.Context,
-	req *repositories.GetLatestReturnForPeriodRequest,
+	req *iftaports.GetLatestReturnForPeriodRequest,
 ) (*ifta.Return, error) {
 	var latest *ifta.Return
 	for _, r := range f.returns {
@@ -360,7 +365,7 @@ func (f *fakeRepo) ReplaceReturnLines(
 	return ret, nil
 }
 
-func (f *fakeRepo) DeleteReturn(_ context.Context, req *repositories.DeleteReturnRequest) error {
+func (f *fakeRepo) DeleteReturn(_ context.Context, req *iftaports.DeleteReturnRequest) error {
 	r, ok := f.returns[req.ID]
 	if !ok || r.OrganizationID != req.TenantInfo.OrgID {
 		return errortypes.NewNotFoundError("return not found")
@@ -372,21 +377,21 @@ func (f *fakeRepo) DeleteReturn(_ context.Context, req *repositories.DeleteRetur
 
 func (f *fakeRepo) AccumulateMiles(
 	_ context.Context,
-	req *repositories.AccumulateMilesRequest,
-) (*repositories.MileAccumulation, error) {
+	req *iftaports.AccumulateMilesRequest,
+) (*iftaports.MileAccumulation, error) {
 	f.accumulateReq = req
 	return f.miles, nil
 }
 
 type fakeFuel struct {
-	rows []*repositories.FuelAccumulationRow
-	req  *repositories.AccumulateFuelRequest
+	rows []*fuelpurchaseports.FuelAccumulationRow
+	req  *fuelpurchaseports.AccumulateFuelRequest
 }
 
 func (f *fakeFuel) AccumulateFuel(
 	_ context.Context,
-	req *repositories.AccumulateFuelRequest,
-) ([]*repositories.FuelAccumulationRow, error) {
+	req *fuelpurchaseports.AccumulateFuelRequest,
+) ([]*fuelpurchaseports.FuelAccumulationRow, error) {
 	f.req = req
 	return f.rows, nil
 }
@@ -405,7 +410,7 @@ type harness struct {
 	ops       []permission.Operation
 }
 
-func (h *harness) recordAudit(params *services.LogActionParams, _ ...services.LogOption) {
+func (h *harness) recordAudit(params *auditports.LogActionParams, _ ...auditports.LogOption) {
 	h.ops = append(h.ops, params.Operation)
 }
 
@@ -432,19 +437,19 @@ func newHarness(t *testing.T) *harness {
 	h.repo.jurisdictions[h.tx.ID] = h.tx
 	h.repo.jurisdictions[h.ok.ID] = h.ok
 
-	h.repo.miles = &repositories.MileAccumulation{
-		RouteRows: []*repositories.MileRow{{
+	h.repo.miles = &iftaports.MileAccumulation{
+		RouteRows: []*iftaports.MileRow{{
 			TractorID: h.tractorID, CountryCode: "US", JurisdictionCode: "TX",
 			JurisdictionID: h.tx.ID, Miles: dec("1000"), LoadedMiles: dec("1000"), MoveCount: 3,
 		}},
 	}
-	h.fuel.rows = []*repositories.FuelAccumulationRow{{
+	h.fuel.rows = []*fuelpurchaseports.FuelAccumulationRow{{
 		TractorID: h.tractorID, JurisdictionID: h.tx.ID, FuelType: diesel,
 		Gallons: dec("100"), TaxPaidGallons: dec("100"), PurchaseCount: 2,
 	}}
 	h.addRate(h.tx, "0.2000")
 
-	tractors := mocks.NewMockTractorRepository(t)
+	tractors := tractorportsmock.NewMockTractorRepository(t)
 	tractors.EXPECT().
 		GetByIDs(mock.Anything, mock.Anything).
 		Return([]*tractor.Tractor{{
@@ -459,11 +464,11 @@ func newHarness(t *testing.T) *harness {
 		}, nil).
 		Maybe()
 
-	orgs := mocks.NewMockOrganizationRepository(t)
+	orgs := tenantportsmock.NewMockOrganizationRepository(t)
 	orgs.EXPECT().
 		GetByID(
 			mock.Anything,
-			mock.MatchedBy(func(req repositories.GetOrganizationByIDRequest) bool {
+			mock.MatchedBy(func(req tenantports.GetOrganizationByIDRequest) bool {
 				return req.TenantInfo.OrgID == h.tenant.OrgID &&
 					req.TenantInfo.BuID == h.tenant.BuID
 			}),
@@ -471,7 +476,7 @@ func newHarness(t *testing.T) *harness {
 		Return(&tenant.Organization{ID: h.tenant.OrgID, Timezone: "America/Chicago"}, nil).
 		Maybe()
 
-	audit := mocks.NewMockAuditService(t)
+	audit := auditportsmock.NewMockAuditService(t)
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Run(h.recordAudit).Return(nil).Maybe()
 	audit.EXPECT().
 		LogAction(mock.Anything, mock.Anything, mock.Anything).
@@ -656,7 +661,7 @@ func TestFinalize_RefusesWhileARateIsMissing(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t)
 	ret := h.generate(t)
-	h.repo.miles.RouteRows = append(h.repo.miles.RouteRows, &repositories.MileRow{
+	h.repo.miles.RouteRows = append(h.repo.miles.RouteRows, &iftaports.MileRow{
 		TractorID: h.tractorID, CountryCode: "US", JurisdictionCode: "OK",
 		JurisdictionID: h.ok.ID, Miles: dec("200"), LoadedMiles: dec("200"), MoveCount: 1,
 	})

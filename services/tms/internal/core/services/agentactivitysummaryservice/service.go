@@ -3,8 +3,7 @@ package agentactivitysummaryservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -15,45 +14,45 @@ const secondsPerDay = int64(24 * 60 * 60)
 type Params struct {
 	fx.In
 
-	Repo repositories.AgentActivityRepository
+	Repo agentports.AgentActivityRepository
 }
 
 type Service struct {
-	repo repositories.AgentActivityRepository
+	repo agentports.AgentActivityRepository
 	now  func() int64
 }
 
-var _ services.AgentActivityService = (*Service)(nil)
+var _ agentports.AgentActivityService = (*Service)(nil)
 
-func New(p Params) services.AgentActivityService {
+func New(p Params) agentports.AgentActivityService {
 	return &Service{repo: p.Repo, now: timeutils.NowUnix}
 }
 
 func (s *Service) Summary(
 	ctx context.Context,
-	req *services.AgentActivitySummaryRequest,
-) (*services.AgentActivitySummary, error) {
+	req *agentports.AgentActivitySummaryRequest,
+) (*agentports.AgentActivitySummary, error) {
 	now := s.now()
-	if req.Since > now || req.Since < now-services.MaxAgentActivityWindowDays*secondsPerDay {
+	if req.Since > now || req.Since < now-agentports.MaxAgentActivityWindowDays*secondsPerDay {
 		return nil, errortypes.NewValidationError(
 			"since",
 			errortypes.ErrInvalid,
 			"Activity can be summarized from at most {0} days ago",
-			services.MaxAgentActivityWindowDays,
+			agentports.MaxAgentActivityWindowDays,
 		)
 	}
 
-	totals, err := s.repo.Totals(ctx, repositories.AgentActivityTotalsRequest{
+	totals, err := s.repo.Totals(ctx, agentports.AgentActivityTotalsRequest{
 		TenantInfo:     req.TenantInfo,
 		RunsSince:      req.Since,
-		DecisionsSince: now - services.AgentActivityDecisionWindowDays*secondsPerDay,
+		DecisionsSince: now - agentports.AgentActivityDecisionWindowDays*secondsPerDay,
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	decided := totals.DecisionsAccepted + totals.DecisionsModified + totals.DecisionsRejected
-	summary := &services.AgentActivitySummary{
+	summary := &agentports.AgentActivitySummary{
 		Since:              req.Since,
 		Runs:               totals.Runs,
 		RunsFailed:         totals.RunsFailed,
@@ -62,7 +61,7 @@ func (s *Service) Summary(
 		PendingProposals:   totals.PendingProposals,
 		OldestPendingAt:    totals.OldestPendingAt,
 		OpenExceptions:     totals.OpenExceptions,
-		DecisionWindowDays: services.AgentActivityDecisionWindowDays,
+		DecisionWindowDays: agentports.AgentActivityDecisionWindowDays,
 		Decided:            decided,
 	}
 	if decided > 0 {

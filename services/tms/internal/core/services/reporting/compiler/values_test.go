@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/stretchr/testify/assert"
@@ -120,7 +120,7 @@ func TestRelativePeriodOperators(t *testing.T) {
 
 	c := newTestCompiler(allowAllEngine())
 
-	compileWith := func(op dbtype.Operator) *services.CompiledReportQuery {
+	compileWith := func(op dbtype.Operator) *reportports.CompiledReportQuery {
 		compiled, cErr := c.Compile(t.Context(), newRequest(&report.Definition{
 			IRVersion: report.CurrentIRVersion,
 			Entity:    "shipment",
@@ -136,7 +136,7 @@ func TestRelativePeriodOperators(t *testing.T) {
 		return compiled
 	}
 
-	rangeBinds := func(compiled *services.CompiledReportQuery) (start, end int64) {
+	rangeBinds := func(compiled *reportports.CompiledReportQuery) (start, end int64) {
 		var bounds []int64
 		for _, arg := range compiled.Args {
 			if v, ok := arg.(int64); ok {

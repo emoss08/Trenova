@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/extractionrollout"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -31,7 +31,7 @@ type rolloutRepository struct {
 	l  *zap.Logger
 }
 
-func NewRollouts(p Params) repositories.ExtractionRolloutRepository {
+func NewRollouts(p Params) extractionrolloutports.ExtractionRolloutRepository {
 	return &rolloutRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.extractionrollout-repository"),

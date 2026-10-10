@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -22,7 +22,7 @@ import (
 // nor a failed one what an earlier run made.
 func (r *repository) RecordExecution(
 	ctx context.Context,
-	req repositories.RecordAgentProposalExecutionRequest,
+	req agentports.RecordAgentProposalExecutionRequest,
 ) (*agent.AgentProposal, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentProposal, error) {
 		log := r.l.With(
@@ -75,7 +75,7 @@ func (r *repository) RecordExecution(
 // with some other subject's id from matching.
 func (r *repository) ListByThread(
 	ctx context.Context,
-	req repositories.ListAgentProposalsByThreadRequest,
+	req agentports.ListAgentProposalsByThreadRequest,
 ) ([]*agent.AgentProposal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentProposal, error) {
 		log := r.l.With(
@@ -116,7 +116,7 @@ func (r *repository) ListByThread(
 // has been made and this is what came of it.
 func (r *repository) RecordSimulation(
 	ctx context.Context,
-	req repositories.RecordAgentProposalSimulationRequest,
+	req agentports.RecordAgentProposalSimulationRequest,
 ) (*agent.AgentProposal, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentProposal, error) {
 		entity := new(agent.AgentProposal)
@@ -161,7 +161,7 @@ func (r *repository) RecordSimulation(
 // instant, through the run that made each proposal.
 func (r *repository) CountExecutedTool(
 	ctx context.Context,
-	req repositories.CountExecutedToolRequest,
+	req agentports.CountExecutedToolRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		proposals := buncolgen.AgentProposalColumns

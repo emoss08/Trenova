@@ -4,7 +4,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -13,10 +14,10 @@ import (
 	"go.uber.org/zap"
 )
 
-func agentActor(tenantInfo pagination.TenantInfo) *services.RequestActor {
-	return &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeAgent,
-		PrincipalID:    services.AgentPrincipalID,
+func agentActor(tenantInfo pagination.TenantInfo) *permissionports.RequestActor {
+	return &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeAgent,
+		PrincipalID:    permissionports.AgentPrincipalID,
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
 	}
@@ -33,22 +34,22 @@ func TestUpdateStatus_AnAgentMayMoveAnItemWhereNoMoneyIsMade(t *testing.T) {
 	cases := []struct {
 		name string
 		from billingqueue.Status
-		req  services.UpdateBillingQueueStatusRequest
+		req  billingqueueports.UpdateBillingQueueStatusRequest
 	}{
 		{
 			name: "into review",
 			from: billingqueue.StatusOnHold,
-			req:  services.UpdateBillingQueueStatusRequest{NewStatus: billingqueue.StatusInReview},
+			req:  billingqueueports.UpdateBillingQueueStatusRequest{NewStatus: billingqueue.StatusInReview},
 		},
 		{
 			name: "on hold",
 			from: billingqueue.StatusReadyForReview,
-			req:  services.UpdateBillingQueueStatusRequest{NewStatus: billingqueue.StatusOnHold},
+			req:  billingqueueports.UpdateBillingQueueStatusRequest{NewStatus: billingqueue.StatusOnHold},
 		},
 		{
 			name: "into exception",
 			from: billingqueue.StatusInReview,
-			req: services.UpdateBillingQueueStatusRequest{
+			req: billingqueueports.UpdateBillingQueueStatusRequest{
 				NewStatus:           billingqueue.StatusException,
 				ExceptionReasonCode: &reason,
 				ExceptionNotes:      "The POD is missing",
@@ -96,7 +97,7 @@ func TestUpdateStatus_AnAgentStillCannotMakeAMoneyDecision(t *testing.T) {
 		t.Run(string(status), func(t *testing.T) {
 			t.Parallel()
 
-			item, err := svc.UpdateStatus(t.Context(), &services.UpdateBillingQueueStatusRequest{
+			item, err := svc.UpdateStatus(t.Context(), &billingqueueports.UpdateBillingQueueStatusRequest{
 				ItemID:     pulid.MustNew("bqi_"),
 				NewStatus:  status,
 				TenantInfo: tenantInfo,
@@ -122,7 +123,7 @@ func TestPlanStatusChange_FollowsTheSameRuleForAnAgent(t *testing.T) {
 	actor := agentActor(tenantInfo)
 
 	held := &billingqueue.BillingQueueItem{Status: billingqueue.StatusReadyForReview}
-	require.NoError(t, PlanStatusChange(held, &services.UpdateBillingQueueStatusRequest{
+	require.NoError(t, PlanStatusChange(held, &billingqueueports.UpdateBillingQueueStatusRequest{
 		NewStatus:   billingqueue.StatusOnHold,
 		ReviewNotes: "Waiting on the lumper receipt",
 	}, actor, 100))
@@ -130,7 +131,7 @@ func TestPlanStatusChange_FollowsTheSameRuleForAnAgent(t *testing.T) {
 	assert.Equal(t, "Waiting on the lumper receipt", held.ReviewNotes)
 
 	approved := &billingqueue.BillingQueueItem{Status: billingqueue.StatusInReview}
-	require.Error(t, PlanStatusChange(approved, &services.UpdateBillingQueueStatusRequest{
+	require.Error(t, PlanStatusChange(approved, &billingqueueports.UpdateBillingQueueStatusRequest{
 		NewStatus: billingqueue.StatusApproved,
 	}, actor, 100))
 	assert.Equal(t, billingqueue.StatusInReview, approved.Status, "a refused plan changes nothing")
@@ -143,10 +144,10 @@ func TestPlanTransition_PlansAPersonsDecision(t *testing.T) {
 
 	userID := pulid.MustNew("usr_")
 	item := &billingqueue.BillingQueueItem{Status: billingqueue.StatusInReview}
-	require.NoError(t, PlanTransition(item, &services.UpdateBillingQueueStatusRequest{
+	require.NoError(t, PlanTransition(item, &billingqueueports.UpdateBillingQueueStatusRequest{
 		NewStatus:    billingqueue.StatusCanceled,
 		CancelReason: "Duplicate of BQ-10",
-	}, &services.RequestActor{UserID: userID}, 100))
+	}, &permissionports.RequestActor{UserID: userID}, 100))
 
 	assert.Equal(t, billingqueue.StatusCanceled, item.Status)
 	assert.Equal(t, "Duplicate of BQ-10", item.CancelReason)

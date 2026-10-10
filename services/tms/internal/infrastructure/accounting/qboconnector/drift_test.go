@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/shared/quickbooks"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -46,10 +46,10 @@ func TestReadDocumentsReadsBillsAndVendorCreditsApartAndMarksWhatIsGone(t *testi
 	}}
 	conn := fake.connector(t)
 
-	states, err := conn.ReadDocuments(t.Context(), &services.ReadAccountingDocumentsRequest{
+	states, err := conn.ReadDocuments(t.Context(), &accountingsyncports.ReadAccountingDocumentsRequest{
 		Auth: auth(),
 		Kind: accountingsync.SyncObjectCarrierBill,
-		Targets: []services.AccountingDocumentTarget{
+		Targets: []accountingsyncports.AccountingDocumentTarget{
 			{ExternalID: "401", Refs: map[string]string{accountingsync.ExternalRefDocumentType: "Bill"}},
 			{ExternalID: "402", Refs: map[string]string{accountingsync.ExternalRefDocumentType: "VendorCredit"}},
 			{ExternalID: "403"},
@@ -98,10 +98,10 @@ func TestReadDocumentsMapsEachTrenovaKindToItsProviderEntity(t *testing.T) {
 			return `{"QueryResponse":{}}`
 		}}
 		conn := fake.connector(t)
-		states, err := conn.ReadDocuments(t.Context(), &services.ReadAccountingDocumentsRequest{
+		states, err := conn.ReadDocuments(t.Context(), &accountingsyncports.ReadAccountingDocumentsRequest{
 			Auth:    auth(),
 			Kind:    kind,
-			Targets: []services.AccountingDocumentTarget{{ExternalID: "7"}},
+			Targets: []accountingsyncports.AccountingDocumentTarget{{ExternalID: "7"}},
 		})
 		require.NoError(t, err, kind)
 		assert.Equal(t, "select * from "+entity+" where Id in ('7') maxresults 1", statement, kind)
@@ -110,10 +110,10 @@ func TestReadDocumentsMapsEachTrenovaKindToItsProviderEntity(t *testing.T) {
 	}
 
 	_, err := (&fakeChangeFeed{respond: func(changeCall) string { return `{}` }}).connector(t).
-		ReadDocuments(t.Context(), &services.ReadAccountingDocumentsRequest{
+		ReadDocuments(t.Context(), &accountingsyncports.ReadAccountingDocumentsRequest{
 			Auth:    auth(),
 			Kind:    accountingsync.SyncObjectCustomer,
-			Targets: []services.AccountingDocumentTarget{{ExternalID: "7"}},
+			Targets: []accountingsyncports.AccountingDocumentTarget{{ExternalID: "7"}},
 		})
 	require.ErrorIs(t, err, errDocumentKind)
 }
@@ -132,12 +132,12 @@ func TestReadDocumentsSplitsLargeReads(t *testing.T) {
 		return `{"QueryResponse":{"Invoice":[` + strings.Join(rows, ",") + `]}}`
 	}}
 	conn := fake.connector(t)
-	targets := make([]services.AccountingDocumentTarget, 0, quickbooks.MaxQueryIDs+5)
+	targets := make([]accountingsyncports.AccountingDocumentTarget, 0, quickbooks.MaxQueryIDs+5)
 	for i := range quickbooks.MaxQueryIDs + 5 {
-		targets = append(targets, services.AccountingDocumentTarget{ExternalID: strconv.Itoa(i + 1)})
+		targets = append(targets, accountingsyncports.AccountingDocumentTarget{ExternalID: strconv.Itoa(i + 1)})
 	}
 
-	states, err := conn.ReadDocuments(t.Context(), &services.ReadAccountingDocumentsRequest{
+	states, err := conn.ReadDocuments(t.Context(), &accountingsyncports.ReadAccountingDocumentsRequest{
 		Auth:    auth(),
 		Kind:    accountingsync.SyncObjectInvoice,
 		Targets: targets,
@@ -183,8 +183,8 @@ func TestUpdatesSendTrenovasDocumentOverTheProvidersOne(t *testing.T) {
 	}}
 	conn := documentConnector(t, fake)
 
-	sales := func(kind accountingsync.SyncObjectType, id string) *services.AccountingSalesDocument {
-		return &services.AccountingSalesDocument{
+	sales := func(kind accountingsync.SyncObjectType, id string) *accountingsyncports.AccountingSalesDocument {
+		return &accountingsyncports.AccountingSalesDocument{
 			Auth:               auth(),
 			RequestID:          docRequestID,
 			ExternalID:         id,
@@ -192,7 +192,7 @@ func TestUpdatesSendTrenovasDocumentOverTheProvidersOne(t *testing.T) {
 			CustomerExternalID: "58",
 			DocNumber:          "INV-1001",
 			PrivateNote:        "Trenova INV-1001",
-			Lines: []services.AccountingDocumentLine{
+			Lines: []accountingsyncports.AccountingDocumentLine{
 				{ItemExternalID: "21", Amount: decimal.NewFromInt(1500), Quantity: decimal.NewFromInt(1), UnitPrice: decimal.NewFromInt(1500)},
 			},
 			Refs: map[string]string{accountingsync.ExternalRefDocument: id},
@@ -206,20 +206,20 @@ func TestUpdatesSendTrenovasDocumentOverTheProvidersOne(t *testing.T) {
 	_, err = conn.UpdateSalesDocument(t.Context(), sales(accountingsync.SyncObjectCreditMemo, "160"))
 	require.NoError(t, err)
 
-	credit, err := conn.UpdatePurchaseDocument(t.Context(), &services.AccountingPurchaseDocument{
+	credit, err := conn.UpdatePurchaseDocument(t.Context(), &accountingsyncports.AccountingPurchaseDocument{
 		Auth:             auth(),
 		RequestID:        docRequestID,
 		ExternalID:       "402",
 		Kind:             accountingsync.SyncObjectCarrierBill,
 		VendorCredit:     true,
 		VendorExternalID: "77",
-		Lines:            []services.AccountingPurchaseLine{{AccountExternalID: "60", Amount: decimal.NewFromInt(40)}},
+		Lines:            []accountingsyncports.AccountingPurchaseLine{{AccountExternalID: "60", Amount: decimal.NewFromInt(40)}},
 	})
 	require.NoError(t, err)
 	assert.Equal(t, "VendorCredit", credit.Refs[accountingsync.ExternalRefDocumentType])
 	assert.Contains(t, credit.Refs[accountingsync.ExternalRefURL], "402")
 
-	_, err = conn.UpdateBillPayment(t.Context(), &services.AccountingBillPaymentDocument{
+	_, err = conn.UpdateBillPayment(t.Context(), &accountingsyncports.AccountingBillPaymentDocument{
 		Auth:                  auth(),
 		RequestID:             docRequestID,
 		ExternalID:            "501",
@@ -251,19 +251,19 @@ func TestUpdatesNeedTheProvidersDocumentAndTheRightKind(t *testing.T) {
 	fake := &fakeQBO{respond: func(recordedCall) (int, string) { return http.StatusOK, `{}` }}
 	conn := documentConnector(t, fake)
 
-	_, err := conn.UpdateSalesDocument(t.Context(), &services.AccountingSalesDocument{
+	_, err := conn.UpdateSalesDocument(t.Context(), &accountingsyncports.AccountingSalesDocument{
 		Auth: auth(), RequestID: docRequestID, Kind: accountingsync.SyncObjectInvoice,
 	})
 	require.ErrorIs(t, err, errExternalIDRequired)
-	_, err = conn.UpdateSalesDocument(t.Context(), &services.AccountingSalesDocument{
+	_, err = conn.UpdateSalesDocument(t.Context(), &accountingsyncports.AccountingSalesDocument{
 		Auth: auth(), RequestID: docRequestID, ExternalID: "1", Kind: accountingsync.SyncObjectCarrierBill,
 	})
 	require.ErrorIs(t, err, errDocumentKind)
-	_, err = conn.UpdatePurchaseDocument(t.Context(), &services.AccountingPurchaseDocument{
+	_, err = conn.UpdatePurchaseDocument(t.Context(), &accountingsyncports.AccountingPurchaseDocument{
 		Auth: auth(), RequestID: docRequestID, ExternalID: "1", Kind: accountingsync.SyncObjectInvoice,
 	})
 	require.ErrorIs(t, err, errDocumentKind)
-	_, err = conn.UpdateBillPayment(t.Context(), &services.AccountingBillPaymentDocument{
+	_, err = conn.UpdateBillPayment(t.Context(), &accountingsyncports.AccountingBillPaymentDocument{
 		Auth: auth(), RequestID: docRequestID, Kind: accountingsync.SyncObjectCarrierBillPay,
 	})
 	require.ErrorIs(t, err, errExternalIDRequired)
@@ -283,7 +283,7 @@ func TestReadChangesReportsChangedDocumentsWithTheirTrenovaKinds(t *testing.T) {
 	}}
 	conn := fake.connector(t)
 
-	page, err := conn.ReadChanges(t.Context(), &services.ReadAccountingChangesRequest{
+	page, err := conn.ReadChanges(t.Context(), &accountingsyncports.ReadAccountingChangesRequest{
 		Auth:      auth(),
 		Cursor:    conn.ChangeCursorAt(now.Add(-time.Hour)),
 		Now:       now,
@@ -301,16 +301,16 @@ func TestReadChangesReportsChangedDocumentsWithTheirTrenovaKinds(t *testing.T) {
 		accountingsync.SyncObjectInvoice,
 		accountingsync.SyncObjectDebitMemo,
 	}, invoice.ObjectTypes)
-	assert.Equal(t, services.AccountingChangeUpsert, invoice.Operation)
+	assert.Equal(t, accountingsyncports.AccountingChangeUpsert, invoice.Operation)
 	assert.Equal(t, "J Doe", invoice.ModifiedBy)
 
 	assert.Equal(t, []accountingsync.SyncObjectType{accountingsync.SyncObjectCreditMemo}, page.Documents[1].ObjectTypes)
-	assert.Equal(t, services.AccountingChangeDelete, page.Documents[1].Operation)
+	assert.Equal(t, accountingsyncports.AccountingChangeDelete, page.Documents[1].Operation)
 	assert.Equal(t, []accountingsync.SyncObjectType{
 		accountingsync.SyncObjectCarrierBill,
 		accountingsync.SyncObjectDriverBill,
 	}, page.Documents[2].ObjectTypes)
-	assert.Equal(t, services.AccountingChangeVoid, page.Documents[2].Operation)
+	assert.Equal(t, accountingsyncports.AccountingChangeVoid, page.Documents[2].Operation)
 	assert.Empty(t, page.Payments)
 }
 
@@ -338,8 +338,8 @@ func TestReadChangesPagesDocumentsThatFilledTheChangeFeed(t *testing.T) {
 		return `{"QueryResponse":{}}`
 	}}
 	conn := fake.connector(t)
-	request := func(cursor string) *services.ReadAccountingChangesRequest {
-		return &services.ReadAccountingChangesRequest{
+	request := func(cursor string) *accountingsyncports.ReadAccountingChangesRequest {
+		return &accountingsyncports.ReadAccountingChangesRequest{
 			Auth:      auth(),
 			Cursor:    cursor,
 			Now:       now,

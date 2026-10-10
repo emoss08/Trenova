@@ -10,8 +10,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/core/domain/extractionshadow"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -34,8 +37,8 @@ func testTenant() pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: testOrg, BuID: testBU, UserID: testUser}
 }
 
-func testActor() *services.RequestActor {
-	return &services.RequestActor{PrincipalType: services.PrincipalTypeUser, PrincipalID: testUser, UserID: testUser}
+func testActor() *permissionports.RequestActor {
+	return &permissionports.RequestActor{PrincipalType: permissionports.PrincipalTypeUser, PrincipalID: testUser, UserID: testUser}
 }
 
 type settingsStore struct {
@@ -106,7 +109,7 @@ func (f *resultStore) Create(
 
 func (f *resultStore) GetByID(
 	_ context.Context,
-	req repositories.GetExtractionShadowResultRequest,
+	req extractionshadowports.GetExtractionShadowResultRequest,
 ) (*extractionshadow.ShadowResult, error) {
 	if item := f.find(req.ID); item != nil {
 		copied := *item
@@ -117,7 +120,7 @@ func (f *resultStore) GetByID(
 
 func (f *resultStore) GetByExtraction(
 	_ context.Context,
-	req repositories.GetExtractionShadowResultByExtractionRequest,
+	req extractionshadowports.GetExtractionShadowResultByExtractionRequest,
 ) (*extractionshadow.ShadowResult, error) {
 	for _, item := range f.items {
 		if item.DocumentID == req.DocumentID && item.ExtractedAt == req.ExtractedAt {
@@ -165,7 +168,7 @@ func (f *resultStore) CountCreatedSince(
 
 func (f *resultStore) ListScored(
 	_ context.Context,
-	req *repositories.ListScoredExtractionShadowResultsRequest,
+	req *extractionshadowports.ListScoredExtractionShadowResultsRequest,
 ) ([]*extractionshadow.ShadowResult, error) {
 	out := make([]*extractionshadow.ShadowResult, 0, len(f.items))
 	for _, item := range f.items {
@@ -178,9 +181,9 @@ func (f *resultStore) ListScored(
 
 func (f *resultStore) TotalsByStatus(
 	_ context.Context,
-	req repositories.TotalExtractionShadowResultsRequest,
-) ([]repositories.ExtractionShadowStatusTotal, error) {
-	byStatus := map[extractionshadow.ResultStatus]*repositories.ExtractionShadowStatusTotal{}
+	req extractionshadowports.TotalExtractionShadowResultsRequest,
+) ([]extractionshadowports.ExtractionShadowStatusTotal, error) {
+	byStatus := map[extractionshadow.ResultStatus]*extractionshadowports.ExtractionShadowStatusTotal{}
 	order := make([]extractionshadow.ResultStatus, 0, len(extractionshadow.AllResultStatuses()))
 	for _, item := range f.items {
 		if item.ProviderID != req.ProviderID || item.CreatedAt < req.Since {
@@ -188,7 +191,7 @@ func (f *resultStore) TotalsByStatus(
 		}
 		total, ok := byStatus[item.Status]
 		if !ok {
-			total = &repositories.ExtractionShadowStatusTotal{Status: item.Status, CostUSD: decimal.Zero}
+			total = &extractionshadowports.ExtractionShadowStatusTotal{Status: item.Status, CostUSD: decimal.Zero}
 			byStatus[item.Status] = total
 			order = append(order, item.Status)
 		}
@@ -199,7 +202,7 @@ func (f *resultStore) TotalsByStatus(
 			total.Timed++
 		}
 	}
-	out := make([]repositories.ExtractionShadowStatusTotal, 0, len(order))
+	out := make([]extractionshadowports.ExtractionShadowStatusTotal, 0, len(order))
 	for _, status := range order {
 		out = append(out, *byStatus[status])
 	}
@@ -208,14 +211,14 @@ func (f *resultStore) TotalsByStatus(
 
 func (f *resultStore) ListConnection(
 	context.Context,
-	*repositories.ListExtractionShadowResultConnectionRequest,
+	*extractionshadowports.ListExtractionShadowResultConnectionRequest,
 ) (*pagination.CursorListResult[*extractionshadow.ShadowResult], error) {
 	return &pagination.CursorListResult[*extractionshadow.ShadowResult]{Items: f.items}, nil
 }
 
 func (f *resultStore) PurgeBefore(
 	_ context.Context,
-	req repositories.PurgeExtractionShadowResultsRequest,
+	req extractionshadowports.PurgeExtractionShadowResultsRequest,
 ) (int64, error) {
 	kept := f.items[:0]
 	var purged int64
@@ -231,13 +234,13 @@ func (f *resultStore) PurgeBefore(
 }
 
 type correctionStore struct {
-	repositories.AICorrectionRepository
+	aicorrectionports.AICorrectionRepository
 	items []*aicorrection.Correction
 }
 
 func (f *correctionStore) GetLatestByDocument(
 	_ context.Context,
-	req *repositories.GetLatestAICorrectionByDocumentRequest,
+	req *aicorrectionports.GetLatestAICorrectionByDocumentRequest,
 ) (*aicorrection.Correction, error) {
 	var latest *aicorrection.Correction
 	for _, item := range f.items {
@@ -271,14 +274,14 @@ func (f *contentStore) GetByDocumentID(
 }
 
 type providerStore struct {
-	repositories.AIProviderRepository
+	agentports.AIProviderRepository
 	providers map[pulid.ID]*aiprovider.Provider
 	err       error
 }
 
 func (f *providerStore) GetByID(
 	_ context.Context,
-	req repositories.GetAIProviderByIDRequest,
+	req agentports.GetAIProviderByIDRequest,
 ) (*aiprovider.Provider, error) {
 	if f.err != nil {
 		return nil, f.err
@@ -291,13 +294,13 @@ func (f *providerStore) GetByID(
 }
 
 type retentionStore struct {
-	repositories.DataRetentionRepository
+	tenantports.DataRetentionRepository
 	settings *tenant.DataRetention
 }
 
 func (f *retentionStore) Get(
 	context.Context,
-	repositories.GetDataRetentionRequest,
+	tenantports.GetDataRetentionRequest,
 ) (*tenant.DataRetention, error) {
 	if f.settings == nil {
 		return nil, errortypes.NewNotFoundError("data retention not found")
@@ -317,15 +320,15 @@ func (f *fakeBudget) CheckEvaluationBudget(
 }
 
 type fakePredictor struct {
-	prediction *services.ShadowDraftPrediction
+	prediction *extractionshadowports.ShadowDraftPrediction
 	err        error
-	requests   []*services.PredictShadowDraftRequest
+	requests   []*extractionshadowports.PredictShadowDraftRequest
 }
 
 func (f *fakePredictor) PredictShadowDraft(
 	_ context.Context,
-	req *services.PredictShadowDraftRequest,
-) (*services.ShadowDraftPrediction, error) {
+	req *extractionshadowports.PredictShadowDraftRequest,
+) (*extractionshadowports.ShadowDraftPrediction, error) {
 	f.requests = append(f.requests, req)
 	if f.err != nil {
 		return nil, f.err
@@ -334,13 +337,13 @@ func (f *fakePredictor) PredictShadowDraft(
 }
 
 type fakeStarter struct {
-	started []*services.ExtractionShadowStart
+	started []*extractionshadowports.ExtractionShadowStart
 	err     error
 }
 
 func (f *fakeStarter) StartExtractionShadow(
 	_ context.Context,
-	start *services.ExtractionShadowStart,
+	start *extractionshadowports.ExtractionShadowStart,
 ) (string, error) {
 	if f.err != nil {
 		return "", f.err

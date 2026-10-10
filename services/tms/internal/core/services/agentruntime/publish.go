@@ -5,7 +5,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -36,8 +37,8 @@ const publishArtifactDescription = "Publish a written document beside the conver
 // publishArtifactSpec is the third tool the runtime answers itself. It is
 // offered only where there is somewhere to publish to: a conversation with a
 // pane beside it.
-func publishArtifactSpec() serviceports.ToolSpec {
-	return serviceports.ToolSpec{
+func publishArtifactSpec() kernelports.ToolSpec {
+	return kernelports.ToolSpec{
 		Name:        publishArtifactName,
 		Description: publishArtifactDescription,
 		Parameters: map[string]any{
@@ -151,7 +152,7 @@ func publishOutcome(arguments map[string]any) toolOutcome {
 
 	return toolOutcome{
 		publishes: true,
-		data: serviceports.PublishedDocument{
+		data: agentports.PublishedDocument{
 			Title:      title,
 			Body:       body,
 			ArtifactID: revises,
@@ -164,7 +165,7 @@ func publishOutcome(arguments map[string]any) toolOutcome {
 
 // publishedSources reads the sources a document cites. A source without a
 // number or a label cannot be shown, and is a problem the model can fix.
-func publishedSources(raw any) ([]serviceports.PublishedSource, []string) {
+func publishedSources(raw any) ([]agentports.PublishedSource, []string) {
 	entries, ok := raw.([]any)
 	if !ok || len(entries) == 0 {
 		return nil, nil
@@ -173,7 +174,7 @@ func publishedSources(raw any) ([]serviceports.PublishedSource, []string) {
 		return nil, []string{fmt.Sprintf("at most %d sources", maxDocumentSources)}
 	}
 
-	sources := make([]serviceports.PublishedSource, 0, len(entries))
+	sources := make([]agentports.PublishedSource, 0, len(entries))
 	seen := map[int]bool{}
 	for _, entry := range entries {
 		fields, isObject := entry.(map[string]any)
@@ -194,7 +195,7 @@ func publishedSources(raw any) ([]serviceports.PublishedSource, []string) {
 			return nil, []string{fmt.Sprintf("source %d is listed twice", int(n))}
 		}
 		seen[int(n)] = true
-		source := serviceports.PublishedSource{
+		source := agentports.PublishedSource{
 			N:      int(n),
 			Tool:   clipRunes(stringArg(fields, "tool"), maxSourceTextRunes),
 			Label:  label,
@@ -219,7 +220,7 @@ func clipRunes(text string, most int) string {
 }
 
 // publishedContent is what the model reads after its document was kept.
-func publishedContent(shown *serviceports.ShownArtifact) string {
+func publishedContent(shown *agentports.ShownArtifact) string {
 	encoded := fmt.Sprintf(`{"artifactId":%q,"title":%q,"status":"published"}`,
 		shown.ID.String(), shown.Title)
 
@@ -236,7 +237,7 @@ func publishedContent(shown *serviceports.ShownArtifact) string {
 // again one by one. A ranking is pointed to however short it is: the Desk
 // rewrote five ranked drivers as its own table and linked nothing, and the
 // dispatcher lost the findings and the driver links the table carries.
-func shownNote(shown *serviceports.ShownArtifact) string {
+func shownNote(shown *agentports.ShownArtifact) string {
 	if tabular(shown.Kind) && shown.Opens {
 		return fmt.Sprintf("\n\n[This view is kept beside the conversation as %q, with how many "+
 			"rows it holds and the first few; the person opens it as the live table. Point to it "+

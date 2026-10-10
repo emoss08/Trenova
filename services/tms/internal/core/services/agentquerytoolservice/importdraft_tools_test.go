@@ -11,23 +11,24 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/pagedraft"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type fakeDraftLocations struct {
-	repositories.LocationRepository
+	locationports.LocationRepository
 
 	found     *location.Location
-	requested repositories.GetLocationByIDRequest
+	requested locationports.GetLocationByIDRequest
 }
 
 func (f *fakeDraftLocations) GetByID(
 	_ context.Context,
-	req repositories.GetLocationByIDRequest,
+	req locationports.GetLocationByIDRequest,
 ) (*location.Location, error) {
 	f.requested = req
 	if f.found == nil || f.found.ID != req.ID {
@@ -38,14 +39,14 @@ func (f *fakeDraftLocations) GetByID(
 }
 
 type fakeDraftCustomers struct {
-	repositories.CustomerRepository
+	customerports.CustomerRepository
 
 	found *customer.Customer
 }
 
 func (f *fakeDraftCustomers) GetByID(
 	_ context.Context,
-	req repositories.GetCustomerByIDRequest,
+	req customerports.GetCustomerByIDRequest,
 ) (*customer.Customer, error) {
 	if f.found == nil || f.found.ID != req.ID {
 		return nil, errors.New("customer not found")
@@ -67,7 +68,7 @@ func draftEditOf(t *testing.T, result any) pagedraft.Edit {
 func TestImportDraftTools_HandTheChangeToThePersonsOwnPage(t *testing.T) {
 	t.Parallel()
 
-	tools := []serviceports.AgentQueryTool{
+	tools := []agentports.AgentQueryTool{
 		newAcceptFieldTool(),
 		newAcceptAllConfidentTool(),
 		newSetFieldValueTool(),

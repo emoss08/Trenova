@@ -6,9 +6,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -51,7 +53,7 @@ func (s *Service) GrantOverride(
 		return nil, multiErr
 	}
 
-	if _, err := s.carrierRepo.GetByID(ctx, repositories.GetCarrierByIDRequest{
+	if _, err := s.carrierRepo.GetByID(ctx, carrierports.GetCarrierByIDRequest{
 		ID:         req.CarrierID,
 		TenantInfo: req.TenantInfo,
 	}); err != nil {
@@ -131,12 +133,12 @@ func (s *Service) auditOverride(
 	current, previous *carrierintel.CarrierIntelOverride,
 	comment string,
 ) {
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceCarrierIntelligence,
 		ResourceID:     current.ID.String(),
 		Operation:      permission.OpApprove,
 		UserID:         tenantInfo.UserID,
-		PrincipalType:  services.PrincipalTypeUser,
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    tenantInfo.UserID,
 		CurrentState:   jsonutils.MustToJSON(current),
 		OrganizationID: tenantInfo.OrgID,
@@ -157,7 +159,7 @@ func (s *Service) recordOverrideEvent(
 	override *carrierintel.CarrierIntelOverride,
 	summary string,
 ) {
-	snapshot, err := s.snapshotRepo.GetCurrent(ctx, tenantInfo, repositories.CarrierIntelSubjectRef{
+	snapshot, err := s.snapshotRepo.GetCurrent(ctx, tenantInfo, carrierintelports.CarrierIntelSubjectRef{
 		SubjectType: carrierintel.SubjectTypeCarrier,
 		SubjectID:   override.CarrierID.String(),
 	})
@@ -206,7 +208,7 @@ func (s *Service) refreshStoredEvaluation(
 	tenantInfo pagination.TenantInfo,
 	carrierID pulid.ID,
 ) {
-	snapshot, err := s.snapshotRepo.GetCurrent(ctx, tenantInfo, repositories.CarrierIntelSubjectRef{
+	snapshot, err := s.snapshotRepo.GetCurrent(ctx, tenantInfo, carrierintelports.CarrierIntelSubjectRef{
 		SubjectType: carrierintel.SubjectTypeCarrier,
 		SubjectID:   carrierID.String(),
 	})

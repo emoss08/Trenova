@@ -6,9 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/customfield"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/customfieldports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -23,18 +23,18 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.CustomFieldDefinitionRepository
-	ValueRepo    repositories.CustomFieldValueRepository
+	Repo         customfieldports.CustomFieldDefinitionRepository
+	ValueRepo    customfieldports.CustomFieldValueRepository
 	Validator    *Validator
-	AuditService services.AuditService
+	AuditService auditports.AuditService
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.CustomFieldDefinitionRepository
-	valueRepo    repositories.CustomFieldValueRepository
+	repo         customfieldports.CustomFieldDefinitionRepository
+	valueRepo    customfieldports.CustomFieldValueRepository
 	validator    *Validator
-	auditService services.AuditService
+	auditService auditports.AuditService
 }
 
 func New(p Params) *Service {
@@ -49,28 +49,28 @@ func New(p Params) *Service {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListCustomFieldDefinitionsRequest,
+	req *customfieldports.ListCustomFieldDefinitionsRequest,
 ) (*pagination.ListResult[*customfield.CustomFieldDefinition], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListCustomFieldDefinitionConnectionRequest,
+	req *customfieldports.ListCustomFieldDefinitionConnectionRequest,
 ) (*pagination.CursorListResult[*customfield.CustomFieldDefinition], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	req repositories.GetCustomFieldDefinitionByIDRequest,
+	req customfieldports.GetCustomFieldDefinitionByIDRequest,
 ) (*customfield.CustomFieldDefinition, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) GetActiveByResourceType(
 	ctx context.Context,
-	req repositories.GetActiveByResourceTypeRequest,
+	req customfieldports.GetActiveByResourceTypeRequest,
 ) ([]*customfield.CustomFieldDefinition, error) {
 	return s.repo.GetActiveByResourceType(ctx, req)
 }
@@ -84,7 +84,7 @@ func (s *Service) Create(
 	entity *customfield.CustomFieldDefinition,
 	userID pulid.ID,
 ) (*customfield.CustomFieldDefinition, error) {
-	count, err := s.repo.CountByResourceType(ctx, repositories.CountByResourceTypeRequest{
+	count, err := s.repo.CountByResourceType(ctx, customfieldports.CountByResourceTypeRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -113,7 +113,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceCustomFieldDefinition,
 		ResourceID:     createdEntity.GetID().String(),
 		Operation:      permission.OpCreate,
@@ -144,7 +144,7 @@ func (s *Service) Update(
 		BuID:  entity.GetBusinessUnitID(),
 	}
 
-	original, err := s.repo.GetByID(ctx, repositories.GetCustomFieldDefinitionByIDRequest{
+	original, err := s.repo.GetByID(ctx, customfieldports.GetCustomFieldDefinitionByIDRequest{
 		ID:         entity.GetID(),
 		TenantInfo: tenantInfo,
 	})
@@ -176,7 +176,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceCustomFieldDefinition,
 		ResourceID:     updatedEntity.GetID().String(),
 		Operation:      permission.OpUpdate,
@@ -197,7 +197,7 @@ func (s *Service) Update(
 
 func (s *Service) Delete(
 	ctx context.Context,
-	req repositories.GetCustomFieldDefinitionByIDRequest,
+	req customfieldports.GetCustomFieldDefinitionByIDRequest,
 	userID pulid.ID,
 ) error {
 	definition, err := s.repo.GetByID(ctx, req)
@@ -225,7 +225,7 @@ func (s *Service) Delete(
 		return err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceCustomFieldDefinition,
 		ResourceID:     definition.GetID().String(),
 		Operation:      permission.OpDelete,
@@ -247,7 +247,7 @@ func (s *Service) GetUsageStats(
 	definitionID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) (*customfield.DefinitionUsageStats, error) {
-	valueReq := &repositories.GetValuesByDefinitionRequest{
+	valueReq := &customfieldports.GetValuesByDefinitionRequest{
 		TenantInfo:   tenantInfo,
 		DefinitionID: definitionID,
 	}
@@ -281,7 +281,7 @@ func (s *Service) enrichWithOptionUsage(
 	definitionID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) {
-	definition, err := s.repo.GetByID(ctx, repositories.GetCustomFieldDefinitionByIDRequest{
+	definition, err := s.repo.GetByID(ctx, customfieldports.GetCustomFieldDefinitionByIDRequest{
 		ID:         definitionID,
 		TenantInfo: tenantInfo,
 	})
@@ -296,7 +296,7 @@ func (s *Service) enrichWithOptionUsage(
 
 	optionUsage, err := s.valueRepo.GetOptionUsageCounts(
 		ctx,
-		&repositories.GetOptionUsageRequest{
+		&customfieldports.GetOptionUsageRequest{
 			TenantInfo:   tenantInfo,
 			DefinitionID: definitionID,
 		},

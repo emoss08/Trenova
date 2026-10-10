@@ -12,8 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/fuelsurchargeservice"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -44,7 +44,7 @@ func (r *MutationResolver) UpdateFuelIndex(ctx context.Context, id string, input
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Invalid fuel index")
 	}
 
-	existing, err := r.FuelIndexRepo.GetByID(ctx, &repositories.GetFuelIndexByIDRequest{
+	existing, err := r.FuelIndexRepo.GetByID(ctx, &fuelsurchargeports.GetFuelIndexByIDRequest{
 		FuelIndexID: indexID,
 		TenantInfo:  base.TenantInfo(authCtx),
 	})
@@ -75,7 +75,7 @@ func (r *MutationResolver) DeleteFuelIndex(ctx context.Context, id string) (bool
 		return false, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Invalid fuel index")
 	}
 
-	if err = r.FuelSurchargeService.DeleteIndex(ctx, &repositories.GetFuelIndexByIDRequest{
+	if err = r.FuelSurchargeService.DeleteIndex(ctx, &fuelsurchargeports.GetFuelIndexByIDRequest{
 		FuelIndexID: indexID,
 		TenantInfo:  base.TenantInfo(authCtx),
 	}, authCtx.UserID); err != nil {
@@ -159,7 +159,7 @@ func (r *MutationResolver) DeleteFuelIndexPrice(ctx context.Context, id string) 
 		return false, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Invalid fuel price")
 	}
 
-	if err = r.FuelSurchargeService.DeleteManualPrice(ctx, &repositories.GetFuelIndexPriceByIDRequest{
+	if err = r.FuelSurchargeService.DeleteManualPrice(ctx, &fuelsurchargeports.GetFuelIndexPriceByIDRequest{
 		PriceID:    priceID,
 		TenantInfo: base.TenantInfo(authCtx),
 	}); err != nil {
@@ -202,7 +202,7 @@ func (r *MutationResolver) UpdateFuelSurchargeProgram(ctx context.Context, id st
 
 	existing, err := r.FuelSurchargeProgramRepo.GetByID(
 		ctx,
-		&repositories.GetFuelSurchargeProgramByIDRequest{
+		&fuelsurchargeports.GetFuelSurchargeProgramByIDRequest{
 			ProgramID:  programID,
 			TenantInfo: base.TenantInfo(authCtx),
 		},
@@ -240,7 +240,7 @@ func (r *MutationResolver) DeleteFuelSurchargeProgram(ctx context.Context, id st
 
 	if err = r.FuelSurchargeService.DeleteProgram(
 		ctx,
-		&repositories.GetFuelSurchargeProgramByIDRequest{
+		&fuelsurchargeports.GetFuelSurchargeProgramByIDRequest{
 			ProgramID:  programID,
 			TenantInfo: base.TenantInfo(authCtx),
 		},
@@ -265,7 +265,7 @@ func (r *QueryResolver) FuelIndexes(ctx context.Context, input gqlmodel.DataTabl
 
 	result, err := r.FuelIndexRepo.ListConnection(
 		ctx,
-		&repositories.ListFuelIndexConnectionRequest{
+		&fuelsurchargeports.ListFuelIndexConnectionRequest{
 			Filter: tableInput.Filter,
 			Cursor: tableInput.Cursor,
 		},
@@ -288,7 +288,7 @@ func (r *QueryResolver) FuelIndex(ctx context.Context, id string) (*gqlmodel.Fue
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Invalid fuel index")
 	}
 
-	entity, err := r.FuelIndexRepo.GetByID(ctx, &repositories.GetFuelIndexByIDRequest{
+	entity, err := r.FuelIndexRepo.GetByID(ctx, &fuelsurchargeports.GetFuelIndexByIDRequest{
 		FuelIndexID: indexID,
 		TenantInfo:  base.TenantInfo(authCtx),
 	})
@@ -311,7 +311,7 @@ func (r *QueryResolver) FuelIndexPriceHistory(ctx context.Context, indexID strin
 			"indexId", errortypes.ErrInvalid, "Invalid fuel index")
 	}
 
-	req := &repositories.ListFuelIndexPricesRequest{
+	req := &fuelsurchargeports.ListFuelIndexPricesRequest{
 		FuelIndexID: fuelIndexID,
 		TenantInfo:  base.TenantInfo(authCtx),
 		Limit:       104,
@@ -361,7 +361,7 @@ func (r *QueryResolver) FuelSurchargePrograms(ctx context.Context, input gqlmode
 
 	result, err := r.FuelSurchargeProgramRepo.ListConnection(
 		ctx,
-		&repositories.ListFuelSurchargeProgramConnectionRequest{
+		&fuelsurchargeports.ListFuelSurchargeProgramConnectionRequest{
 			Filter: tableInput.Filter,
 			Cursor: tableInput.Cursor,
 		},
@@ -387,7 +387,7 @@ func (r *QueryResolver) FuelSurchargeProgram(ctx context.Context, id string) (*g
 
 	entity, err := r.FuelSurchargeProgramRepo.GetByID(
 		ctx,
-		&repositories.GetFuelSurchargeProgramByIDRequest{
+		&fuelsurchargeports.GetFuelSurchargeProgramByIDRequest{
 			ProgramID:     programID,
 			TenantInfo:    base.TenantInfo(authCtx),
 			IncludeRows:   true,

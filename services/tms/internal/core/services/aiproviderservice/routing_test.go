@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -31,8 +31,8 @@ func TestRoutePreviewEditsTheStoredProvider(t *testing.T) {
 	stored.EmbeddingDimensions = &dims
 	svc.repo = &routingRepo{fakeProviderRepo: fakeProviderRepo{provider: stored}, enabled: []*aiprovider.Provider{stored}}
 
-	routes, err := svc.RoutePreview(t.Context(), &services.AIProviderRoutePreviewRequest{
-		Draft: services.AIProviderRoutingDraft{
+	routes, err := svc.RoutePreview(t.Context(), &agentports.AIProviderRoutePreviewRequest{
+		Draft: agentports.AIProviderRoutingDraft{
 			ID:      stored.ID,
 			Name:    stored.Name,
 			Kind:    stored.Kind,

@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/servicetype"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/servicetypeports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -38,7 +38,7 @@ func TestUpdateReturnsVersionMismatchForStaleEntity(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	firstCopy, err := repo.GetByID(ctx, repositories.GetServiceTypeByIDRequest{
+	firstCopy, err := repo.GetByID(ctx, servicetypeports.GetServiceTypeByIDRequest{
 		ID: created.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: data.Organization.ID,
@@ -47,7 +47,7 @@ func TestUpdateReturnsVersionMismatchForStaleEntity(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	secondCopy, err := repo.GetByID(ctx, repositories.GetServiceTypeByIDRequest{
+	secondCopy, err := repo.GetByID(ctx, servicetypeports.GetServiceTypeByIDRequest{
 		ID: created.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: data.Organization.ID,
@@ -96,7 +96,7 @@ func TestBulkUpdateStatusReturnsVersionMismatchWhenTenantDoesNotMatch(t *testing
 		OrgID: pulid.MustNew("org_"),
 		BuID:  pulid.MustNew("bu_"),
 	}
-	entities, err := repo.BulkUpdateStatus(ctx, &repositories.BulkUpdateServiceTypeStatusRequest{
+	entities, err := repo.BulkUpdateStatus(ctx, &servicetypeports.BulkUpdateServiceTypeStatusRequest{
 		TenantInfo:     otherTenant,
 		ServiceTypeIDs: []pulid.ID{created.ID},
 		Status:         domaintypes.StatusInactive,

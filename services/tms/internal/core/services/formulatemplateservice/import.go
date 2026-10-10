@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -88,7 +88,7 @@ func (s *Service) Import(
 	}
 
 	var created []*formulatemplate.FormulaTemplate
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		created = make([]*formulatemplate.FormulaTemplate, 0, len(entities))
 		for index, entity := range entities {
 			createdEntity, txErr := s.repo.Create(txCtx, entity)
@@ -204,7 +204,7 @@ func (s *Service) resolveImportNames(
 		}
 	}
 
-	existing, err := s.repo.FindByNames(ctx, repositories.GetFormulaTemplatesByNamesRequest{
+	existing, err := s.repo.FindByNames(ctx, formulatemplateports.GetFormulaTemplatesByNamesRequest{
 		TenantInfo: req.TenantInfo,
 		Names:      names,
 	})
@@ -274,7 +274,7 @@ func (s *Service) buildImportEntities(
 
 	resolvableSources := make(map[pulid.ID]struct{}, len(sourceIDs))
 	if len(sourceIDs) > 0 {
-		sources, err := s.repo.GetByIDs(ctx, repositories.GetFormulaTemplatesByIDsRequest{
+		sources, err := s.repo.GetByIDs(ctx, formulatemplateports.GetFormulaTemplatesByIDsRequest{
 			TenantInfo:  req.TenantInfo,
 			TemplateIDs: sourceIDs,
 		})

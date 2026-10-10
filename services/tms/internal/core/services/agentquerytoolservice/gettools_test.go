@@ -11,8 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -145,8 +146,8 @@ func TestGetTools_EveryRegisteredGetToolWithholdsNestedPeople(t *testing.T) {
 	engine := &fakePermissions{allowed: true}
 	supplied := map[reflect.Type]reflect.Value{
 		reflect.TypeFor[*filtercatalog.Catalog](): reflect.ValueOf(FilterCatalog()),
-		reflect.TypeFor[serviceports.PermissionEngine](): reflect.ValueOf(
-			serviceports.PermissionEngine(engine),
+		reflect.TypeFor[permissionports.PermissionEngine](): reflect.ValueOf(
+			permissionports.PermissionEngine(engine),
 		),
 	}
 
@@ -191,15 +192,15 @@ func TestGetTools_EveryRegisteredGetToolWithholdsNestedPeople(t *testing.T) {
 }
 
 type stubTractors struct {
-	repositories.TractorRepository
+	tractorports.TractorRepository
 
 	entity *tractor.Tractor
-	last   repositories.GetTractorByIDRequest
+	last   tractorports.GetTractorByIDRequest
 }
 
 func (s *stubTractors) GetByID(
 	_ context.Context,
-	req repositories.GetTractorByIDRequest,
+	req tractorports.GetTractorByIDRequest,
 ) (*tractor.Tractor, error) {
 	s.last = req
 
@@ -260,7 +261,7 @@ func queryTractor(
 	t *testing.T,
 	fixture tractorFixture,
 	permissions *fakePermissions,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) map[string]any {
 	t.Helper()
 

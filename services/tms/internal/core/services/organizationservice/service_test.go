@@ -9,10 +9,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -30,7 +29,7 @@ type mockOrganizationRepo struct {
 
 func (m *mockOrganizationRepo) GetByID(
 	ctx context.Context,
-	req repositories.GetOrganizationByIDRequest,
+	req tenantports.GetOrganizationByIDRequest,
 ) (*tenant.Organization, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
@@ -41,18 +40,18 @@ func (m *mockOrganizationRepo) GetByID(
 
 func (m *mockOrganizationRepo) GetCapabilities(
 	ctx context.Context,
-	req repositories.GetOrganizationCapabilitiesRequest,
-) (*repositories.OrganizationCapabilities, error) {
+	req tenantports.GetOrganizationCapabilitiesRequest,
+) (*tenantports.OrganizationCapabilities, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*repositories.OrganizationCapabilities), args.Error(1)
+	return args.Get(0).(*tenantports.OrganizationCapabilities), args.Error(1)
 }
 
 func (m *mockOrganizationRepo) GetByIDs(
 	ctx context.Context,
-	req repositories.GetOrganizationsByIDsRequest,
+	req tenantports.GetOrganizationsByIDsQuery,
 ) ([]*tenant.Organization, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
@@ -63,7 +62,7 @@ func (m *mockOrganizationRepo) GetByIDs(
 
 func (m *mockOrganizationRepo) SelectOptions(
 	ctx context.Context,
-	req *repositories.SelectOrganizationOptionsRequest,
+	req *tenantports.SelectOrganizationOptionsRequest,
 ) (*pagination.ListResult[*tenant.Organization], error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
@@ -120,23 +119,23 @@ func (m *mockOrganizationRepo) ClearLogoURL(
 func (m *mockOrganizationRepo) CountBrokerageDependencies(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*repositories.BrokerageDependencyCounts, error) {
+) (*tenantports.BrokerageDependencyCounts, error) {
 	args := m.Called(ctx, tenantInfo)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*repositories.BrokerageDependencyCounts), args.Error(1)
+	return args.Get(0).(*tenantports.BrokerageDependencyCounts), args.Error(1)
 }
 
 func (m *mockOrganizationRepo) CountAssetDependencies(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*repositories.AssetDependencyCounts, error) {
+) (*tenantports.AssetDependencyCounts, error) {
 	args := m.Called(ctx, tenantInfo)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*repositories.AssetDependencyCounts), args.Error(1)
+	return args.Get(0).(*tenantports.AssetDependencyCounts), args.Error(1)
 }
 
 type testDeps struct {
@@ -148,17 +147,17 @@ type noopStorageClient struct{}
 
 func (n *noopStorageClient) Upload(
 	_ context.Context,
-	params *storage.UploadParams,
-) (*storage.FileInfo, error) {
-	return &storage.FileInfo{
+	params *kernelports.UploadParams,
+) (*kernelports.FileInfo, error) {
+	return &kernelports.FileInfo{
 		Key:         params.Key,
 		Size:        params.Size,
 		ContentType: params.ContentType,
 	}, nil
 }
 
-func (n *noopStorageClient) Download(_ context.Context, _ string) (*storage.DownloadResult, error) {
-	return &storage.DownloadResult{Body: io.NopCloser(bytes.NewReader(nil))}, nil
+func (n *noopStorageClient) Download(_ context.Context, _ string) (*kernelports.DownloadResult, error) {
+	return &kernelports.DownloadResult{Body: io.NopCloser(bytes.NewReader(nil))}, nil
 }
 
 func (n *noopStorageClient) Delete(_ context.Context, _ string) error {
@@ -167,14 +166,14 @@ func (n *noopStorageClient) Delete(_ context.Context, _ string) error {
 
 func (n *noopStorageClient) DeleteObject(
 	_ context.Context,
-	_ *storage.DeleteObjectParams,
+	_ *kernelports.DeleteObjectParams,
 ) error {
 	return nil
 }
 
 func (n *noopStorageClient) GetPresignedURL(
 	_ context.Context,
-	_ *storage.PresignedURLParams,
+	_ *kernelports.PresignedURLParams,
 ) (string, error) {
 	return "https://example.test/logo.png", nil
 }
@@ -185,48 +184,48 @@ func (n *noopStorageClient) Exists(_ context.Context, _ string) (bool, error) {
 
 func (n *noopStorageClient) GetPresignedUploadURL(
 	_ context.Context,
-	_ *storage.PresignedUploadURLParams,
+	_ *kernelports.PresignedUploadURLParams,
 ) (string, error) {
 	return "https://example.test/upload", nil
 }
 
 func (n *noopStorageClient) InitiateMultipartUpload(
 	_ context.Context,
-	_ *storage.MultipartUploadParams,
+	_ *kernelports.MultipartUploadParams,
 ) (string, error) {
 	return "upload-id", nil
 }
 
 func (n *noopStorageClient) GetMultipartUploadPartURL(
 	_ context.Context,
-	_ *storage.MultipartUploadPartURLParams,
+	_ *kernelports.MultipartUploadPartURLParams,
 ) (string, error) {
 	return "https://example.test/part", nil
 }
 
 func (n *noopStorageClient) CompleteMultipartUpload(
 	_ context.Context,
-	_ *storage.CompleteMultipartUploadParams,
+	_ *kernelports.CompleteMultipartUploadParams,
 ) error {
 	return nil
 }
 
 func (n *noopStorageClient) AbortMultipartUpload(
 	_ context.Context,
-	_ *storage.AbortMultipartUploadParams,
+	_ *kernelports.AbortMultipartUploadParams,
 ) error {
 	return nil
 }
 
 func (n *noopStorageClient) ListMultipartUploadParts(
 	_ context.Context,
-	_ *storage.ListMultipartUploadPartsParams,
-) ([]storage.UploadedPart, error) {
+	_ *kernelports.ListMultipartUploadPartsParams,
+) ([]kernelports.UploadedPart, error) {
 	return nil, nil
 }
 
-func (n *noopStorageClient) GetFileInfo(_ context.Context, key string) (*storage.FileInfo, error) {
-	return &storage.FileInfo{Key: key}, nil
+func (n *noopStorageClient) GetFileInfo(_ context.Context, key string) (*kernelports.FileInfo, error) {
+	return &kernelports.FileInfo{Key: key}, nil
 }
 
 func setupTest(t *testing.T) *testDeps {
@@ -269,7 +268,7 @@ func TestGetByID_Success(t *testing.T) {
 	ctx := t.Context()
 	org := newTestOrganization()
 
-	req := repositories.GetOrganizationByIDRequest{
+	req := tenantports.GetOrganizationByIDRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: org.ID,
 			BuID:  org.BusinessUnitID,
@@ -292,7 +291,7 @@ func TestGetByID_NotFound(t *testing.T) {
 	deps := setupTest(t)
 	ctx := t.Context()
 
-	req := repositories.GetOrganizationByIDRequest{
+	req := tenantports.GetOrganizationByIDRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),
@@ -321,13 +320,13 @@ func TestGetByIDs_SkipsMissingOrganizations(t *testing.T) {
 		BuID:   firstOrg.BusinessUnitID,
 		UserID: pulid.MustNew("usr_"),
 	}
-	req := services.GetOrganizationsByIDsRequest{
+	req := tenantports.GetOrganizationsByIDsRequest{
 		TenantInfo:      tenantInfo,
 		OrganizationIDs: []pulid.ID{firstOrg.ID, missingOrgID, secondOrg.ID},
 		IncludeState:    true,
 		IncludeBU:       true,
 	}
-	repoReq := repositories.GetOrganizationsByIDsRequest{
+	repoReq := tenantports.GetOrganizationsByIDsQuery{
 		TenantInfo:      tenantInfo,
 		OrganizationIDs: req.OrganizationIDs,
 		IncludeState:    true,
@@ -356,11 +355,11 @@ func TestGetByIDs_ReturnsRepositoryError(t *testing.T) {
 		BuID:   pulid.MustNew("bu_"),
 		UserID: pulid.MustNew("usr_"),
 	}
-	req := services.GetOrganizationsByIDsRequest{
+	req := tenantports.GetOrganizationsByIDsRequest{
 		TenantInfo:      tenantInfo,
 		OrganizationIDs: []pulid.ID{orgID},
 	}
-	repoReq := repositories.GetOrganizationsByIDsRequest{
+	repoReq := tenantports.GetOrganizationsByIDsQuery{
 		TenantInfo:      tenantInfo,
 		OrganizationIDs: []pulid.ID{orgID},
 	}
@@ -515,7 +514,7 @@ func TestDeleteLogo_Success(t *testing.T) {
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(org, nil)
 	deps.repo.On("ClearLogoURL", mock.Anything, org.ID, org.Version).Return(cleared, nil)
 
-	result, err := deps.svc.DeleteLogo(ctx, services.DeleteLogoRequest{
+	result, err := deps.svc.DeleteLogo(ctx, tenantports.DeleteLogoRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: org.ID,
 			BuID:  org.BusinessUnitID,
@@ -544,7 +543,7 @@ func TestDeleteLogo_ExternalURL_Success(t *testing.T) {
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(org, nil)
 	deps.repo.On("ClearLogoURL", mock.Anything, org.ID, org.Version).Return(cleared, nil)
 
-	result, err := deps.svc.DeleteLogo(ctx, services.DeleteLogoRequest{
+	result, err := deps.svc.DeleteLogo(ctx, tenantports.DeleteLogoRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: org.ID,
 			BuID:  org.BusinessUnitID,

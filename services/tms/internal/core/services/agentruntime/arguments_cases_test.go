@@ -8,8 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -54,7 +54,7 @@ func loadArgumentCases(t *testing.T) argumentCases {
 	return cases
 }
 
-func toolMessages(result *serviceports.RunResult) []conversation.Message {
+func toolMessages(result *agentports.RunResult) []conversation.Message {
 	var out []conversation.Message
 	for idx := range result.Messages {
 		if result.Messages[idx].Role == conversation.RoleTool {
@@ -120,14 +120,14 @@ func TestArgumentCases_WhatAToolReceives(t *testing.T) {
 				Tier:     agent.TierAutoExecute,
 				Schema:   tc.Schema,
 			}
-			completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+			completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 				toolTurn(tool.ToolName, maps.Clone(tc.Args)),
 				textTurn("Done."),
 			}}
 			rt := newRuntime(completion, &stubQueryRegistry{},
-				&stubActionRegistry{Tools: []serviceports.AgentTool{tool}}, nil)
+				&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
 
-			result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+			result, err := rt.Run(t.Context(), &agentports.RunRequest{
 				Definition: autoDefinition(tool.ToolName),
 				Actor:      testActor(),
 				Input:      "Record it.",
@@ -166,9 +166,9 @@ func TestArgumentCases_MalformedArgumentsNeverRun(t *testing.T) {
 				ToolName: "record_case",
 				Tier:     agent.TierAutoExecute,
 			}
-			completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+			completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 				{
-					ToolCalls: []serviceports.ToolCall{{
+					ToolCalls: []agentports.ToolCall{{
 						ID:             "call_malformed",
 						Name:           tool.ToolName,
 						Arguments:      map[string]any{},
@@ -179,9 +179,9 @@ func TestArgumentCases_MalformedArgumentsNeverRun(t *testing.T) {
 				textTurn("I could not send it."),
 			}}
 			rt := newRuntime(completion, &stubQueryRegistry{},
-				&stubActionRegistry{Tools: []serviceports.AgentTool{tool}}, nil)
+				&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
 
-			result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+			result, err := rt.Run(t.Context(), &agentports.RunRequest{
 				Definition: autoDefinition(tool.ToolName),
 				Actor:      testActor(),
 				Input:      "Record it.",

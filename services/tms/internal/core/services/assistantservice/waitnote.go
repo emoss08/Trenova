@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentwait"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,7 +24,7 @@ func (s *Service) waitNote(
 	if s.waits == nil {
 		return "", errWaitsUnavailable
 	}
-	wait, err := s.waits.Get(ctx, &repositories.GetAgentWaitRequest{
+	wait, err := s.waits.Get(ctx, &agentwaitports.GetAgentWaitRequest{
 		ID:         waitID,
 		TenantInfo: pagination.TenantInfo{OrgID: tenant.OrgID, BuID: tenant.BuID},
 		ThreadID:   threadID,

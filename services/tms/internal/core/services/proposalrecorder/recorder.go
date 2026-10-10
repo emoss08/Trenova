@@ -9,10 +9,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -36,30 +37,30 @@ type ProposalStore interface {
 // Transactor runs the run, the plan and its proposals as one write, so a
 // failure part way leaves none of them behind.
 type Transactor interface {
-	WithTx(ctx context.Context, opts ports.TxOptions, fn func(context.Context, bun.Tx) error) error
+	WithTx(ctx context.Context, opts kernelports.TxOptions, fn func(context.Context, bun.Tx) error) error
 }
 
 type Params struct {
 	fx.In
 
 	Logger    *zap.Logger
-	DB        ports.DBConnection
-	Runs      repositories.AgentRunRepository
-	Proposals repositories.AgentProposalRepository
+	DB        kernelports.DBConnection
+	Runs      agentports.AgentRunRepository
+	Proposals agentports.AgentProposalRepository
 	// Trust learns from a tool that ran on its own and failed. Optional, so
 	// the recorder still stores proposals where no ledger is wired.
-	Trust serviceports.AgentTrustService `optional:"true"`
+	Trust agentports.AgentTrustService `optional:"true"`
 	// Notifier tells the people who can decide that a background run left
 	// something waiting. Optional for the same reason.
-	Notifier serviceports.AgentProposalNotifier `optional:"true"`
+	Notifier agentports.AgentProposalNotifier `optional:"true"`
 	// Plans groups a run's pending proposals into one decision. Without it
 	// every proposal stands on its own, which is how things worked before.
 	Plans PlanStore `optional:"true"`
 	// Activity tells connected clients a proposal or plan is waiting.
-	Activity serviceports.AgentActivityPublisher `optional:"true"`
+	Activity agentports.AgentActivityPublisher `optional:"true"`
 	// Watchtower puts what is waiting on a person onto the one feed they
 	// read; without it the decision still stands, unannounced.
-	Watchtower serviceports.WatchtowerProjector `optional:"true"`
+	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
 }
 
 // PlanStore is the one write the recorder makes on plans.
@@ -73,10 +74,10 @@ type Service struct {
 	runs       RunOpener
 	proposals  ProposalStore
 	plans      PlanStore
-	trust      serviceports.AgentTrustService
-	notifier   serviceports.AgentProposalNotifier
-	activity   serviceports.AgentActivityPublisher
-	watchtower serviceports.WatchtowerProjector
+	trust      agentports.AgentTrustService
+	notifier   agentports.AgentProposalNotifier
+	activity   agentports.AgentActivityPublisher
+	watchtower watchtowerports.WatchtowerProjector
 }
 
 func New(p Params) *Service {
@@ -136,15 +137,15 @@ type OpenRunRequest struct {
 	DelegateCallID   string
 }
 
-type EvidenceFunc func(action serviceports.PendingAction, sourceMessageID pulid.ID) []agent.EvidenceRef
+type EvidenceFunc func(action agentports.PendingAction, sourceMessageID pulid.ID) []agent.EvidenceRef
 
 type RecordRequest struct {
-	Actor      *serviceports.RequestActor
+	Actor      *permissionports.RequestActor
 	Definition *agentdefinition.Definition
 	// Run is the run the proposals belong to. When nil, one is opened from Open.
 	Run              *agent.AgentRun
 	Open             *OpenRunRequest
-	Actions          []serviceports.PendingAction
+	Actions          []agentports.PendingAction
 	SourceMessageIDs map[string]pulid.ID
 	Evidence         EvidenceFunc
 	// Taint is the outside content the run read. The run keeps it, and each
@@ -158,7 +159,7 @@ type RecordRequest struct {
 type DelegatedActions struct {
 	Definition *agentdefinition.Definition
 	Open       *OpenRunRequest
-	Actions    []serviceports.PendingAction
+	Actions    []agentports.PendingAction
 	Taint      *agent.RunTaint
 }
 
@@ -180,7 +181,7 @@ type runGroup struct {
 	definition *agentdefinition.Definition
 	run        *agent.AgentRun
 	open       *OpenRunRequest
-	actions    []serviceports.PendingAction
+	actions    []agentports.PendingAction
 	taint      *agent.RunTaint
 	delegated  bool
 	proposals  []*agent.AgentProposal
@@ -306,7 +307,7 @@ func (s *Service) inTx(ctx context.Context, fn func(context.Context) error) erro
 		return fn(ctx)
 	}
 
-	return s.tx.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	return s.tx.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		return fn(txCtx)
 	})
 }
@@ -382,7 +383,7 @@ func (s *Service) write(
 func (s *Service) proposalFor(
 	req *RecordRequest,
 	group *runGroup,
-	action *serviceports.PendingAction,
+	action *agentports.PendingAction,
 	now int64,
 ) *agent.AgentProposal {
 	sourceMessageID := req.SourceMessageIDs[action.ToolCallID]
@@ -447,7 +448,7 @@ func (s planStep) at(callOrder map[string]int) int {
 // conversation asked for them.
 func (s *Service) openPlan(
 	ctx context.Context,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 	groups []*runGroup,
 	steps []planStep,
 	now int64,
@@ -521,7 +522,7 @@ func (s *Service) notifyPending(
 		return
 	}
 
-	if err := s.notifier.NotifyPending(ctx, serviceports.PendingProposalsNotice{
+	if err := s.notifier.NotifyPending(ctx, agentports.PendingProposalsNotice{
 		Definition: definition,
 		Run:        run,
 		Proposals:  proposals,
@@ -535,7 +536,7 @@ func (s *Service) notifyPending(
 
 func (s *Service) openRun(
 	ctx context.Context,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 	group *runGroup,
 ) (*agent.AgentRun, error) {
 	open := group.open
@@ -592,7 +593,7 @@ func (s *Service) openRun(
 // the run read any is clean, though the run it belongs to is not.
 func applyTaint(
 	proposal *agent.AgentProposal,
-	action serviceports.PendingAction,
+	action agentports.PendingAction,
 	taint *agent.RunTaint,
 ) {
 	proposal.EgressClass = action.Egress
@@ -607,7 +608,7 @@ func applyTaint(
 	proposal.Taint = taint.Clone()
 }
 
-func applyExecution(proposal *agent.AgentProposal, action serviceports.PendingAction, now int64) {
+func applyExecution(proposal *agent.AgentProposal, action agentports.PendingAction, now int64) {
 	if action.Withdrawn {
 		proposal.Status = agent.ProposalStatusSuperseded
 
@@ -644,8 +645,8 @@ func applyExecution(proposal *agent.AgentProposal, action serviceports.PendingAc
 
 func applyExecutor(
 	proposal *agent.AgentProposal,
-	action *serviceports.PendingAction,
-	actor *serviceports.RequestActor,
+	action *agentports.PendingAction,
+	actor *permissionports.RequestActor,
 ) {
 	if !action.Executed && !action.Simulated {
 		return
@@ -694,7 +695,7 @@ func (s *Service) recordAutomaticFailure(ctx context.Context, proposal *agent.Ag
 // same screens.
 func (s *Service) announce(
 	ctx context.Context,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 	proposals []*agent.AgentProposal,
 	plan *agent.AgentPlan,
 ) {
@@ -704,10 +705,10 @@ func (s *Service) announce(
 
 	auditActor := actor.AuditActorOrSystem()
 	for _, proposal := range proposals {
-		s.activity.ProposalChanged(ctx, proposal, auditActor, serviceports.ActivityCreated)
+		s.activity.ProposalChanged(ctx, proposal, auditActor, agentports.ActivityCreated)
 	}
 	if plan != nil {
-		s.activity.PlanChanged(ctx, plan, auditActor, serviceports.ActivityCreated)
+		s.activity.PlanChanged(ctx, plan, auditActor, agentports.ActivityCreated)
 	}
 }
 

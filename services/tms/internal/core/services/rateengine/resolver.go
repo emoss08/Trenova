@@ -5,7 +5,8 @@ import (
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratezoneports"
 	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -57,7 +58,7 @@ func (s *Service) resolve(
 		return &Resolution{LaneKeysTried: laneKeys}, nil
 	}
 
-	fetched, err := s.agreementRepo.ResolveRules(ctx, &repositories.ResolveRateRulesRequest{
+	fetched, err := s.agreementRepo.ResolveRules(ctx, &rateagreementports.ResolveRateRulesRequest{
 		TenantInfo:           rateCtx.TenantInfo,
 		PartyType:            rateCtx.PartyType,
 		PartyIDs:             []pulid.ID{rateCtx.PartyID},
@@ -285,7 +286,7 @@ func agreementPriorityOf(rule *rateagreement.RateAgreementRule) int16 {
 func (s *Service) resolveZones(ctx context.Context, rateCtx *RateContext) error {
 	origin, err := s.zoneRepo.ResolveMembership(
 		ctx,
-		&repositories.ResolveZoneMembershipRequest{
+		&ratezoneports.ResolveZoneMembershipRequest{
 			TenantInfo: rateCtx.TenantInfo,
 			MatchKeys:  rateCtx.Origin.MatchKeys(),
 		},
@@ -296,7 +297,7 @@ func (s *Service) resolveZones(ctx context.Context, rateCtx *RateContext) error 
 
 	destination, err := s.zoneRepo.ResolveMembership(
 		ctx,
-		&repositories.ResolveZoneMembershipRequest{
+		&ratezoneports.ResolveZoneMembershipRequest{
 			TenantInfo: rateCtx.TenantInfo,
 			MatchKeys:  rateCtx.Destination.MatchKeys(),
 		},

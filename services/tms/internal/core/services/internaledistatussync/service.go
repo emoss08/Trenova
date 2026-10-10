@@ -10,10 +10,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
-	coreports "github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/internaledilifecycle"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -27,34 +30,34 @@ type Params struct {
 	fx.In
 
 	Logger             *zap.Logger
-	DB                 coreports.DBConnection
-	ShipmentRepo       repositories.ShipmentRepository
-	ShipmentEventRepo  repositories.ShipmentEventRepository
-	ShipmentLinkRepo   repositories.EDIShipmentLinkRepository
-	TransferChangeRepo repositories.EDITransferChangeRepository
-	Realtime           services.RealtimeService
-	Invalidator        services.ShipmentInvalidator
+	DB                 kernelports.DBConnection
+	ShipmentRepo       shipmentports.ShipmentRepository
+	ShipmentEventRepo  shipmenteventports.ShipmentEventRepository
+	ShipmentLinkRepo   ediports.EDIShipmentLinkRepository
+	TransferChangeRepo ediports.EDITransferChangeRepository
+	Realtime           agentports.RealtimeService
+	Invalidator        shipmentports.ShipmentInvalidator
 	Coordinator        *shipmentstate.Coordinator
-	OrderDerivation    services.OrderDerivationService
+	OrderDerivation    orderports.OrderDerivationService
 }
 
 type Observer struct {
 	l                  *zap.Logger
-	db                 coreports.DBConnection
+	db                 kernelports.DBConnection
 	shipmentRepo       shipmentRepository
 	shipmentEventRepo  shipmentEventRepository
 	shipmentLinkRepo   shipmentLinkRepository
 	transferChangeRepo transferChangeRepository
-	realtime           services.RealtimeService
-	invalidator        services.ShipmentInvalidator
-	orderDerivation    services.OrderDerivationService
+	realtime           agentports.RealtimeService
+	invalidator        shipmentports.ShipmentInvalidator
+	orderDerivation    orderports.OrderDerivationService
 	lifecycleApplier   *internaledilifecycle.Applier
 }
 
 type shipmentRepository interface {
 	GetByID(
 		ctx context.Context,
-		req *repositories.GetShipmentByIDRequest,
+		req *shipmentports.GetShipmentByIDRequest,
 	) (*shipment.Shipment, error)
 	UpdateOperationalLifecycle(
 		ctx context.Context,
@@ -62,9 +65,9 @@ type shipmentRepository interface {
 	) (*shipment.Shipment, error)
 	UpdateStatus(
 		ctx context.Context,
-		req *repositories.UpdateShipmentStatusRequest,
+		req *shipmentports.UpdateShipmentStatusRequest,
 	) (*shipment.Shipment, error)
-	Cancel(ctx context.Context, req *repositories.CancelShipmentRequest) (*shipment.Shipment, error)
+	Cancel(ctx context.Context, req *shipmentports.CancelShipmentRequest) (*shipment.Shipment, error)
 }
 
 type shipmentEventRepository interface {
@@ -74,7 +77,7 @@ type shipmentEventRepository interface {
 type shipmentLinkRepository interface {
 	GetShipmentLinksByShipmentID(
 		ctx context.Context,
-		req repositories.GetEDIShipmentLinksByShipmentIDRequest,
+		req ediports.GetEDIShipmentLinksByShipmentIDRequest,
 	) ([]*edi.ShipmentLink, error)
 }
 
@@ -82,7 +85,7 @@ type transferChangeRepository interface {
 	CreateTransferChangeIdempotent(
 		ctx context.Context,
 		entity *edi.TransferChange,
-	) (*repositories.CreateEDITransferChangeIdempotentResult, error)
+	) (*ediports.CreateEDITransferChangeIdempotentResult, error)
 }
 
 type side struct {
@@ -139,7 +142,7 @@ func (o *Observer) OnShipmentEvent(ctx context.Context, event *shipmentevent.Eve
 
 	links, err := o.shipmentLinkRepo.GetShipmentLinksByShipmentID(
 		ctx,
-		repositories.GetEDIShipmentLinksByShipmentIDRequest{
+		ediports.GetEDIShipmentLinksByShipmentIDRequest{
 			ShipmentID: event.ShipmentID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: event.OrganizationID,
@@ -171,7 +174,7 @@ func (o *Observer) handleLink(
 	}
 
 	var result syncContext
-	err := o.db.WithTx(ctx, coreports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := o.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		var txErr error
 		result, txErr = o.buildSyncContext(txCtx, event, link)
 		if txErr != nil || result.link == nil {
@@ -288,13 +291,13 @@ func (o *Observer) getLinkedShipments(
 	ctx context.Context,
 	link *edi.ShipmentLink,
 ) (*shipment.Shipment, *shipment.Shipment, error) {
-	source, err := o.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	source, err := o.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID: link.SourceShipmentID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: link.SourceOrganizationID,
 			BuID:  link.BusinessUnitID,
 		},
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -302,13 +305,13 @@ func (o *Observer) getLinkedShipments(
 		return nil, nil, err
 	}
 
-	target, err := o.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	target, err := o.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID: link.TargetShipmentID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: link.TargetOrganizationID,
 			BuID:  link.BusinessUnitID,
 		},
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -329,7 +332,7 @@ func (o *Observer) applyChange(
 	}
 
 	if result.changeType == edi.TransferChangeTypeShipmentCancel214 {
-		return o.shipmentRepo.Cancel(ctx, &repositories.CancelShipmentRequest{
+		return o.shipmentRepo.Cancel(ctx, &shipmentports.CancelShipmentRequest{
 			TenantInfo:      tenantInfo,
 			ShipmentID:      result.oppositeSide.shipmentID,
 			CanceledByID:    result.canceledByID,
@@ -345,7 +348,7 @@ func (o *Observer) applyChange(
 
 	return o.shipmentRepo.UpdateStatus(
 		ctx,
-		&repositories.UpdateShipmentStatusRequest{
+		&shipmentports.UpdateShipmentStatusRequest{
 			TenantInfo: tenantInfo,
 			ShipmentID: result.oppositeSide.shipmentID,
 			Status:     result.next,
@@ -356,7 +359,7 @@ func (o *Observer) applyChange(
 
 func (o *Observer) publishResult(ctx context.Context, result syncContext) {
 	if result.updated != nil {
-		services.InvalidateShipments(ctx, o.invalidator, &services.ShipmentInvalidation{
+		shipmentports.InvalidateShipments(ctx, o.invalidator, &shipmentports.ShipmentInvalidation{
 			OrganizationID: result.updated.OrganizationID,
 			BusinessUnitID: result.updated.BusinessUnitID,
 			Action:         "updated",

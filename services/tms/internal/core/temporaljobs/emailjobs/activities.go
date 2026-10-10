@@ -5,8 +5,7 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/core/temporaljobs/emailjobs/emailcontract"
-
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/activity"
@@ -17,12 +16,12 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	EmailService services.EmailService
+	EmailService emailports.EmailService
 	Logger       *zap.Logger
 }
 
 type Activities struct {
-	emailService services.EmailService
+	emailService emailports.EmailService
 	logger       *zap.Logger
 }
 
@@ -47,7 +46,7 @@ func (a *Activities) SendEmailActivity(
 
 	activity.RecordHeartbeat(ctx, "sending email")
 
-	msg, err := a.emailService.SendPersisted(ctx, &services.SendPersistedEmailRequest{
+	msg, err := a.emailService.SendPersisted(ctx, &emailports.SendPersistedEmailRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: payload.OrganizationID,
 			BuID:  payload.BusinessUnitID,
@@ -75,11 +74,11 @@ func (a *Activities) SendEmailActivity(
 }
 
 func classifySendError(err error) error {
-	if errors.Is(err, services.ErrRetryableEmailSend) {
+	if errors.Is(err, emailports.ErrRetryableEmailSend) {
 		return temporaltype.NewRetryableError("Email provider temporarily failed", err).
 			ToTemporalError()
 	}
-	if errors.Is(err, services.ErrNonRetryableEmailSend) {
+	if errors.Is(err, emailports.ErrNonRetryableEmailSend) {
 		return temporaltype.NewNonRetryableError("Email send failed permanently", err).
 			ToTemporalError()
 	}

@@ -1,13 +1,16 @@
 package shipmentservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/commodityportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/hazmatsegregationruleportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"testing"
-
-	"github.com/emoss08/trenova/internal/core/services/shipmentservice/shipmentservicetest"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/services/shipmentservice/shipmentservicetest"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,9 +25,9 @@ func TestValidatorValidateCreate_RejectsWeightAboveShipmentControlLimit(t *testi
 	weight := int64(1001)
 	entity.Weight = &weight
 
-	controlRepo := mocks.NewMockShipmentControlRepository(t)
+	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
-		Get(mock.Anything, repositories.GetShipmentControlRequest{
+		Get(mock.Anything, tenantports.GetShipmentControlRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
 				BuID:  entity.BusinessUnitID,
@@ -36,9 +39,9 @@ func TestValidatorValidateCreate_RejectsWeightAboveShipmentControlLimit(t *testi
 		validator: newValidatorBuilder(validatorDeps{
 			ControlRepo:    controlRepo,
 			CustomerRepo:   shipmentservicetest.NewCustomerRepository(t),
-			CommodityRepo:  mocks.NewMockCommodityRepository(t),
-			HazmatRuleRepo: mocks.NewMockHazmatSegregationRuleRepository(t),
-			ShipmentRepo:   mocks.NewMockShipmentRepository(t),
+			CommodityRepo:  commodityportsmock.NewMockCommodityRepository(t),
+			HazmatRuleRepo: hazmatsegregationruleportsmock.NewMockHazmatSegregationRuleRepository(t),
+			ShipmentRepo:   shipmentportsmock.NewMockShipmentRepository(t),
 		}).Build(),
 	}
 
@@ -64,9 +67,9 @@ func TestValidatorValidateUpdate_RejectsMoveRemovalWhenDisallowed(t *testing.T) 
 	entity := cloneShipment(original)
 	entity.Moves = []*shipment.ShipmentMove{cloneMoveForControlPolicy(original.Moves[0])}
 
-	controlRepo := mocks.NewMockShipmentControlRepository(t)
+	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
-		Get(mock.Anything, repositories.GetShipmentControlRequest{
+		Get(mock.Anything, tenantports.GetShipmentControlRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
 				BuID:  entity.BusinessUnitID,
@@ -76,7 +79,7 @@ func TestValidatorValidateUpdate_RejectsMoveRemovalWhenDisallowed(t *testing.T) 
 			AllowMoveRemovals: false,
 		}, nil)
 
-	shipmentRepo := mocks.NewMockShipmentRepository(t)
+	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
 		Return(cloneShipment(original), nil).
@@ -86,8 +89,8 @@ func TestValidatorValidateUpdate_RejectsMoveRemovalWhenDisallowed(t *testing.T) 
 		validator: newValidatorBuilder(validatorDeps{
 			ControlRepo:    controlRepo,
 			CustomerRepo:   shipmentservicetest.NewCustomerRepository(t),
-			CommodityRepo:  mocks.NewMockCommodityRepository(t),
-			HazmatRuleRepo: mocks.NewMockHazmatSegregationRuleRepository(t),
+			CommodityRepo:  commodityportsmock.NewMockCommodityRepository(t),
+			HazmatRuleRepo: hazmatsegregationruleportsmock.NewMockHazmatSegregationRuleRepository(t),
 			ShipmentRepo:   shipmentRepo,
 		}).Build(),
 	}

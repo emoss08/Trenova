@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/distanceoverride"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/distanceoverrideports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -30,7 +30,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.DistanceOverrideRepository {
+func New(p Params) distanceoverrideports.DistanceOverrideRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.distance-override-repository"),
@@ -39,7 +39,7 @@ func New(p Params) repositories.DistanceOverrideRepository {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListDistanceOverrideRequest,
+	req *distanceoverrideports.ListDistanceOverrideRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
@@ -59,7 +59,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListDistanceOverrideRequest,
+	req *distanceoverrideports.ListDistanceOverrideRequest,
 ) (*pagination.ListResult[*distanceoverride.DistanceOverride], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*distanceoverride.DistanceOverride], error) {
 		log := r.l.With(
@@ -91,7 +91,7 @@ func (r *repository) List(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListDistanceOverrideConnectionRequest,
+	req *distanceoverrideports.ListDistanceOverrideConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -104,7 +104,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListDistanceOverrideConnectionRequest,
+	req *distanceoverrideports.ListDistanceOverrideConnectionRequest,
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -116,7 +116,7 @@ func (r *repository) applyTotalCountFilters(
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListDistanceOverrideConnectionRequest,
+	req *distanceoverrideports.ListDistanceOverrideConnectionRequest,
 ) (*pagination.CursorListResult[*distanceoverride.DistanceOverride], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*distanceoverride.DistanceOverride], error) {
 		log := r.l.With(
@@ -176,7 +176,7 @@ func (r *repository) ListConnection(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetDistanceOverrideByIDRequest,
+	req distanceoverrideports.GetDistanceOverrideByIDRequest,
 ) (*distanceoverride.DistanceOverride, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*distanceoverride.DistanceOverride, error) {
 		log := r.l.With(
@@ -219,7 +219,7 @@ func (r *repository) Create(
 			zap.String("operation", "Create"),
 		)
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 			if _, insertErr := r.db.DBForContext(c).
 				NewInsert().
 				Model(entity).
@@ -266,7 +266,7 @@ func (r *repository) Update(
 		ov := entity.Version
 		entity.Version++
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 			results, updateErr := r.db.DBForContext(c).
 				NewUpdate().
 				Model(entity).
@@ -325,7 +325,7 @@ func (r *repository) Update(
 
 func (r *repository) Delete(
 	ctx context.Context,
-	req repositories.DeleteDistanceOverrideRequest,
+	req distanceoverrideports.DeleteDistanceOverrideRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		log := r.l.With(

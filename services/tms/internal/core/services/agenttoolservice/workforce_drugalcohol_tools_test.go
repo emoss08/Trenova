@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/workerdrugalcoholservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -207,12 +207,12 @@ func TestScheduleDOTTest_RecordsAnOrderAndNoResult(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, tests.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "No result is recorded")
-	require.NoError(t, tool.(serviceports.ToolValidator).Validate(t.Context(), params))
+	require.NoError(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
 
-	result, err := tool.(serviceports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	require.NotNil(t, tests.recorded)
 	assert.Equal(t, worker.DOTTestStatusScheduled, tests.recorded.Status)
@@ -227,9 +227,9 @@ func TestScheduleDOTTest_RecordsAnOrderAndNoResult(t *testing.T) {
 		paramDOTTestType: "PostAccident",
 		paramSubstance:   "Drug",
 	})
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), missingReason),
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), missingReason),
 		"validation runs the service's plan")
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 		executeParams(map[string]any{
 			paramWorkerID:    tests.test.WorkerID.String(),
 			paramDOTTestType: "Positive",
@@ -248,7 +248,7 @@ func TestCancelDOTTest_RefusesATestWithAResult(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, tests.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, string(worker.DOTTestStatusCancelled),
 		fieldByPath(t, previewChange(t, preview, 0), fieldStatus).After)
@@ -258,7 +258,7 @@ func TestCancelDOTTest_RefusesATestWithAResult(t *testing.T) {
 	assert.False(t, tool.Policy().Reversible)
 
 	tests.test.Result = worker.DOTResultNegative
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
 }
 
 func TestRunDOTRandomDraw_PreviewNamesNoOne(t *testing.T) {
@@ -269,7 +269,7 @@ func TestRunDOTRandomDraw_PreviewNamesNoOne(t *testing.T) {
 	params := executeParams(map[string]any{paramDrawDay: "2026-08-15"})
 
 	preview := previewWithoutWrites(t, draws.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "5 for drug testing and 1 for alcohol")
 	assert.Contains(t, preview.Summary, "decided when it is drawn")
@@ -278,7 +278,7 @@ func TestRunDOTRandomDraw_PreviewNamesNoOne(t *testing.T) {
 	require.NotNil(t, draws.drawn)
 	assert.Equal(t, int64(1_786_752_000), draws.drawn.At)
 	assert.Equal(t, permission.OpManage, tool.Policy().Operation)
-	_, reports := tool.(serviceports.ToolResultReporter)
+	_, reports := tool.(agentports.ToolResultReporter)
 	assert.False(t, reports, "a round has no record page to link")
 }
 
@@ -303,12 +303,12 @@ func TestUpdateDOTRandomSelection_AnExcuseSaysWhy(t *testing.T) {
 
 	draws := newFakeDrugAlcohol()
 	tool := newUpdateDOTRandomSelectionTool(draws)
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 		executeParams(map[string]any{
 			paramDrawEntryID:   draws.entry.ID.String(),
 			paramSelectionMove: "Excused",
 		})))
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 		executeParams(map[string]any{
 			paramDrawEntryID:   draws.entry.ID.String(),
 			paramSelectionMove: "Completed",
@@ -320,7 +320,7 @@ func TestUpdateDOTRandomSelection_AnExcuseSaysWhy(t *testing.T) {
 		paramExcuseReason:  "Extended medical leave",
 	})
 	preview := previewWithoutWrites(t, draws.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Excused")
 	require.NoError(t, tool.Execute(t.Context(), params))

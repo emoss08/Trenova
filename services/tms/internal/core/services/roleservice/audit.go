@@ -4,7 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -31,16 +32,16 @@ func (s *Service) recordChange(ctx context.Context, change *roleChange) {
 		return
 	}
 
-	var actor services.AuditActor
+	var actor kernelports.AuditActor
 	if change.actorID.IsNotNil() {
-		actor = services.UserActor(pagination.TenantInfo{
+		actor = permissionports.UserActor(pagination.TenantInfo{
 			OrgID:  change.organizationID,
 			BuID:   change.businessUnitID,
 			UserID: change.actorID,
 		}).AuditActor()
 	}
 
-	s.auditor.RecordChange(ctx, &services.SecurityChange{
+	s.auditor.RecordChange(ctx, &permissionports.SecurityChange{
 		Resource:       permission.ResourceRole,
 		ResourceID:     change.resourceID,
 		Operation:      change.operation,

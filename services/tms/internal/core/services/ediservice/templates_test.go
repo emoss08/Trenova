@@ -1,14 +1,15 @@
 package ediservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
 	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	editemplates "github.com/emoss08/trenova/internal/core/domain/edi/templates"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/edix12"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -259,9 +260,9 @@ func TestService_CertifyTemplateVersionRequiresCleanValidation(t *testing.T) {
 	tenantInfo := testTenantInfo()
 	version := validTemplateVersion(tenantInfo)
 	version.Segments = version.Segments[:2]
-	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo := ediportsmock.NewMockEDIDocumentRepository(t)
 	repo.EXPECT().
-		GetTemplateVersionByID(mock.Anything, repositories.GetEDITemplateVersionByIDRequest{
+		GetTemplateVersionByID(mock.Anything, ediports.GetEDITemplateVersionByIDRequest{
 			TemplateID: version.TemplateID,
 			VersionID:  version.ID,
 			TenantInfo: tenantInfo,
@@ -294,9 +295,9 @@ func TestService_CertifyTemplateVersionRequiresCleanValidation(t *testing.T) {
 func TestService_CertifyTemplateVersionMarksDraftCertified(t *testing.T) {
 	tenantInfo := testTenantInfo()
 	version := validTemplateVersion(tenantInfo)
-	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo := ediportsmock.NewMockEDIDocumentRepository(t)
 	repo.EXPECT().
-		GetTemplateVersionByID(mock.Anything, repositories.GetEDITemplateVersionByIDRequest{
+		GetTemplateVersionByID(mock.Anything, ediports.GetEDITemplateVersionByIDRequest{
 			TemplateID: version.TemplateID,
 			VersionID:  version.ID,
 			TenantInfo: tenantInfo,
@@ -338,7 +339,7 @@ func TestService_CertifyTemplateVersionMarksDraftCertified(t *testing.T) {
 func TestService_ActivateTemplateVersionRequiresCertified(t *testing.T) {
 	tenantInfo := testTenantInfo()
 	version := validTemplateVersion(tenantInfo)
-	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo := ediportsmock.NewMockEDIDocumentRepository(t)
 	repo.EXPECT().
 		GetTemplateVersionByID(mock.Anything, mock.Anything).
 		Return(version, nil)
@@ -373,13 +374,13 @@ func TestService_ActivateTemplateVersionPromotesCertified(t *testing.T) {
 	active := *version
 	active.Status = edi.TemplateStatusActive
 	active.IsActive = true
-	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo := ediportsmock.NewMockEDIDocumentRepository(t)
 	repo.EXPECT().
 		GetTemplateVersionByID(mock.Anything, mock.Anything).
 		Return(version, nil).
 		Times(2)
 	repo.EXPECT().
-		ActivateTemplateVersion(mock.Anything, mock.MatchedBy(func(req repositories.ActivateEDITemplateVersionRequest) bool {
+		ActivateTemplateVersion(mock.Anything, mock.MatchedBy(func(req ediports.ActivateEDITemplateVersionRequest) bool {
 			return req.VersionID == version.ID &&
 				req.TemplateID == version.TemplateID &&
 				!req.IsRollback
@@ -414,14 +415,14 @@ func TestService_ActivateTemplateVersionPromotesCertified(t *testing.T) {
 func TestService_ReplaceDraftScriptLibrariesReplacesAuthoritatively(t *testing.T) {
 	tenantInfo := testTenantInfo()
 	version := validTemplateVersion(tenantInfo)
-	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo := ediportsmock.NewMockEDIDocumentRepository(t)
 	repo.EXPECT().
 		GetTemplateVersionByID(mock.Anything, mock.Anything).
 		Return(version, nil)
 	repo.EXPECT().
 		ReplaceTemplateVersionScriptLibraries(
 			mock.Anything,
-			mock.MatchedBy(func(req repositories.ReplaceEDITemplateVersionScriptLibrariesRequest) bool {
+			mock.MatchedBy(func(req ediports.ReplaceEDITemplateVersionScriptLibrariesRequest) bool {
 				if req.Version.ID != version.ID || req.Version.Version != 7 {
 					return false
 				}
@@ -478,7 +479,7 @@ func TestService_ReplaceDraftScriptLibrariesRejectsNonDraft(t *testing.T) {
 	tenantInfo := testTenantInfo()
 	version := validTemplateVersion(tenantInfo)
 	version.Status = edi.TemplateStatusCertified
-	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo := ediportsmock.NewMockEDIDocumentRepository(t)
 	repo.EXPECT().
 		GetTemplateVersionByID(mock.Anything, mock.Anything).
 		Return(version, nil)
@@ -519,7 +520,7 @@ func TestService_CreateDraftVersionClonesScriptLibraries(t *testing.T) {
 			Status:   edi.TemplateStatusActive,
 		},
 	}
-	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo := ediportsmock.NewMockEDIDocumentRepository(t)
 	repo.EXPECT().
 		GetActiveTemplateVersion(mock.Anything, mock.Anything).
 		Return(source, nil)
@@ -529,7 +530,7 @@ func TestService_CreateDraftVersionClonesScriptLibraries(t *testing.T) {
 	repo.EXPECT().
 		CreateTemplateVersion(
 			mock.Anything,
-			mock.MatchedBy(func(req *repositories.CreateEDITemplateVersionRequest) bool {
+			mock.MatchedBy(func(req *ediports.CreateEDITemplateVersionRequest) bool {
 				if req.Version.Status != edi.TemplateStatusDraft || len(req.ScriptLibraries) != 1 {
 					return false
 				}
@@ -633,7 +634,7 @@ func TestService_CertifyTemplateVersionAcceptsValidScriptLibraries(t *testing.T)
 	}
 	version.Segments[8].Elements[1].Source = edi.TemplateElementSourceStarlark
 	version.Segments[8].Elements[1].StarlarkFunction = "ref"
-	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo := ediportsmock.NewMockEDIDocumentRepository(t)
 	repo.EXPECT().
 		GetTemplateVersionByID(mock.Anything, mock.Anything).
 		Return(version, nil)
@@ -667,16 +668,16 @@ func TestService_CertifyTemplateVersionAcceptsValidScriptLibraries(t *testing.T)
 func TestService_CreateTemplateAcceptsMatchingDocumentType(t *testing.T) {
 	tenantInfo := testTenantInfo()
 	documentTypeID := pulid.MustNew("edidt_")
-	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo := ediportsmock.NewMockEDIDocumentRepository(t)
 	repo.EXPECT().
-		ListDocumentTypes(mock.Anything, repositories.ListEDIDocumentTypesRequest{
+		ListDocumentTypes(mock.Anything, ediports.ListEDIDocumentTypesRequest{
 			Standard:       edi.EDIStandardX12,
 			TransactionSet: edi.TransactionSet204,
 			Direction:      edi.DocumentDirectionOutbound,
 		}).
 		Return([]*edi.EDIDocumentType{{ID: documentTypeID}}, nil)
 	repo.EXPECT().
-		CreateTemplate(mock.Anything, mock.MatchedBy(func(req *repositories.CreateEDITemplateRequest) bool {
+		CreateTemplate(mock.Anything, mock.MatchedBy(func(req *ediports.CreateEDITemplateRequest) bool {
 			return req.Template.DocumentTypeID == documentTypeID &&
 				req.Template.Status == edi.TemplateStatusDraft &&
 				req.Version.Status == edi.TemplateStatusDraft
@@ -728,9 +729,9 @@ func TestService_CreateTemplateAcceptsMatchingDocumentType(t *testing.T) {
 func TestService_CreateTemplateRejectsMismatchedDocumentType(t *testing.T) {
 	tenantInfo := testTenantInfo()
 	documentTypeID := pulid.MustNew("edidt_")
-	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo := ediportsmock.NewMockEDIDocumentRepository(t)
 	repo.EXPECT().
-		ListDocumentTypes(mock.Anything, repositories.ListEDIDocumentTypesRequest{
+		ListDocumentTypes(mock.Anything, ediports.ListEDIDocumentTypesRequest{
 			Standard:       edi.EDIStandardX12,
 			TransactionSet: edi.TransactionSet204,
 			Direction:      edi.DocumentDirectionOutbound,
@@ -766,7 +767,7 @@ func TestService_CreateTemplateRejectsMismatchedDocumentType(t *testing.T) {
 func TestService_CreateTemplateReturnsDraftWithoutActiveVersion(t *testing.T) {
 	tenantInfo := testTenantInfo()
 	documentTypeID := pulid.MustNew("edidt_")
-	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo := ediportsmock.NewMockEDIDocumentRepository(t)
 	repo.EXPECT().
 		ListDocumentTypes(mock.Anything, mock.Anything).
 		Return([]*edi.EDIDocumentType{{ID: documentTypeID}}, nil)
@@ -826,7 +827,7 @@ func TestService_CreateTemplateReturnsActiveVersionWhenRepositoryCreatesActiveVe
 		Status:         edi.TemplateStatusActive,
 		IsActive:       true,
 	}
-	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo := ediportsmock.NewMockEDIDocumentRepository(t)
 	repo.EXPECT().
 		ListDocumentTypes(mock.Anything, mock.Anything).
 		Return([]*edi.EDIDocumentType{{ID: documentTypeID}}, nil)
@@ -871,9 +872,9 @@ func TestService_CreateTemplateReturnsActiveVersionWhenRepositoryCreatesActiveVe
 func TestService_UpdateTemplateRejectsUnknownStatus(t *testing.T) {
 	tenantInfo := testTenantInfo()
 	templateID := pulid.MustNew("editpl_")
-	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo := ediportsmock.NewMockEDIDocumentRepository(t)
 	repo.EXPECT().
-		GetTemplateByID(mock.Anything, repositories.GetEDITemplateByIDRequest{
+		GetTemplateByID(mock.Anything, ediports.GetEDITemplateByIDRequest{
 			ID:         templateID,
 			TenantInfo: tenantInfo,
 		}).
@@ -910,9 +911,9 @@ func TestService_UpdateTemplateRejectsUnknownStatus(t *testing.T) {
 func TestService_UpdateTemplateRejectsArchivedTemplate(t *testing.T) {
 	tenantInfo := testTenantInfo()
 	templateID := pulid.MustNew("editpl_")
-	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo := ediportsmock.NewMockEDIDocumentRepository(t)
 	repo.EXPECT().
-		GetTemplateByID(mock.Anything, repositories.GetEDITemplateByIDRequest{
+		GetTemplateByID(mock.Anything, ediports.GetEDITemplateByIDRequest{
 			ID:         templateID,
 			TenantInfo: tenantInfo,
 		}).
@@ -1558,9 +1559,9 @@ func testTenantInfo() pagination.TenantInfo {
 	}
 }
 
-func testActor(tenantInfo pagination.TenantInfo) *services.RequestActor {
-	return &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeUser,
+func testActor(tenantInfo pagination.TenantInfo) *permissionports.RequestActor {
+	return &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    tenantInfo.UserID,
 		UserID:         tenantInfo.UserID,
 		BusinessUnitID: tenantInfo.BuID,

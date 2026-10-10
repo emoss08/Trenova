@@ -12,8 +12,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
@@ -31,13 +33,13 @@ const clockLineLayout = "Monday 2006-01-02 15:04"
 // never reads a clock, a database or the network, which is what lets it replay.
 type Turn struct {
 	s      *Service
-	req    *serviceports.RunRequest
+	req    *agentports.RunRequest
 	budget int
 	system string
 	// systemStable is how many leading bytes of system are the same on every
 	// turn of the agent for the person, which a provider can cache.
 	systemStable int
-	messages     []serviceports.Message
+	messages     []agentports.Message
 	// evidence is the figures of the tool results the replay shortened, which
 	// the grounding guard still counts as read.
 	evidence []string
@@ -56,14 +58,14 @@ type Turn struct {
 	// callIDs is every tool call id the conversation holds, so a provider
 	// that reuses one is given a fresh id rather than a clash.
 	callIDs map[string]struct{}
-	result  *serviceports.RunResult
+	result  *agentports.RunResult
 	// delegates are the agents the turn may hand a task to, taken when it
 	// opened, and delegations how many tasks it has handed out.
 	delegates   []agentdefinition.RuntimeDelegate
 	delegations int
 	// directed is a task the person handed straight to another agent, which
 	// the turn runs instead of asking its own model.
-	directed *serviceports.DirectedTask
+	directed *agentports.DirectedTask
 	// opened are the marks the turn's own subject, attachments and memories
 	// added when it opened, announced once the loop starts.
 	opened []agent.TaintMark
@@ -79,7 +81,7 @@ type Turn struct {
 	toolMemories map[string][]pulid.ID
 	// tables are the tables the turn put beside the conversation, in the
 	// order it did, which the pass over the final reply points a reprint to.
-	tables []serviceports.ShownArtifact
+	tables []agentports.ShownArtifact
 }
 
 // TurnEffects is everything a turn does outside itself.
@@ -87,16 +89,16 @@ type TurnEffects interface {
 	// Complete asks the model for the next step, streaming the reply as it
 	// arrives. Looped reports the reply fell into a repetition and was
 	// stopped; it is only meaningful when the error is nil.
-	Complete(t *Turn, req *serviceports.ChatCompletionRequest) (ModelReply, error)
+	Complete(t *Turn, req *agentports.ChatCompletionRequest) (ModelReply, error)
 	// Dispatch runs one tool call the loop has decided to make.
 	Dispatch(t *Turn, call DispatchCall) ToolOutcome
 	// Find answers find_tools and loads what it found into the turn.
 	Find(t *Turn, arguments map[string]any) FindAnswer
-	Emit(event serviceports.StreamEvent)
+	Emit(event kernelports.StreamEvent)
 	// Observe hands a finished call to whatever shows it to the person, and
 	// returns the outcome with what it showed folded into what the model
 	// reads. A published document is kept here.
-	Observe(t *Turn, call *serviceports.ToolCall, outcome ToolOutcome) ToolOutcome
+	Observe(t *Turn, call *agentports.ToolCall, outcome ToolOutcome) ToolOutcome
 	// NewCallID mints a tool call id, for a provider that gave none or reused
 	// one. Minting is random, so workflow code has it recorded.
 	NewCallID() string
@@ -117,15 +119,15 @@ type TurnEffects interface {
 
 // ModelReply is one completion as the loop sees it.
 type ModelReply struct {
-	Completion *serviceports.ChatCompletionResult `json:"completion"`
-	Looped     bool                               `json:"looped"`
+	Completion *agentports.ChatCompletionResult `json:"completion"`
+	Looped     bool                             `json:"looped"`
 	// InReasoning says the loop was in the model's thinking rather than its
 	// reply.
-	InReasoning bool                   `json:"inReasoning,omitempty"`
-	Usage       *serviceports.RunUsage `json:"usage,omitempty"`
+	InReasoning bool                 `json:"inReasoning,omitempty"`
+	Usage       *agentports.RunUsage `json:"usage,omitempty"`
 }
 
-func (r ModelReply) usage() *serviceports.RunUsage {
+func (r ModelReply) usage() *agentports.RunUsage {
 	if r.Usage != nil {
 		return r.Usage
 	}
@@ -133,7 +135,7 @@ func (r ModelReply) usage() *serviceports.RunUsage {
 		return nil
 	}
 
-	return &serviceports.RunUsage{
+	return &agentports.RunUsage{
 		ModelCalls:   1,
 		InputTokens:  int64(r.Completion.InputTokens),
 		OutputTokens: int64(r.Completion.OutputTokens),
@@ -143,9 +145,9 @@ func (r ModelReply) usage() *serviceports.RunUsage {
 
 // DispatchCall is one tool call the loop has decided to run.
 type DispatchCall struct {
-	Call           serviceports.ToolCall        `json:"call"`
-	CompletionText string                       `json:"completionText"`
-	ProposedSoFar  []serviceports.PendingAction `json:"proposedSoFar,omitempty"`
+	Call           agentports.ToolCall        `json:"call"`
+	CompletionText string                     `json:"completionText"`
+	ProposedSoFar  []agentports.PendingAction `json:"proposedSoFar,omitempty"`
 	// Ordinal numbers this exact call within the run, so the step key of a
 	// legitimately repeated call differs from the first one's.
 	Ordinal int `json:"ordinal"`
@@ -160,9 +162,9 @@ type DispatchCall struct {
 
 // ToolOutcome is what one tool call came to.
 type ToolOutcome struct {
-	Content string                      `json:"content"`
-	Failed  bool                        `json:"failed"`
-	Action  *serviceports.PendingAction `json:"action,omitempty"`
+	Content string                    `json:"content"`
+	Failed  bool                      `json:"failed"`
+	Action  *agentports.PendingAction `json:"action,omitempty"`
 	// Publishes marks a document still to be kept. What the model reads is
 	// written once it has been.
 	Publishes bool   `json:"publishes,omitempty"`
@@ -176,11 +178,11 @@ type ToolOutcome struct {
 	Verdict string            `json:"verdict,omitempty"`
 	// Memories are what a recall read back; SavedMemory is what a remember
 	// kept or offered to keep.
-	Memories    []pulid.ID                `json:"memories,omitempty"`
-	SavedMemory *serviceports.SavedMemory `json:"savedMemory,omitempty"`
+	Memories    []pulid.ID              `json:"memories,omitempty"`
+	SavedMemory *agentports.SavedMemory `json:"savedMemory,omitempty"`
 	// Shown is what the call put in front of the person, which the loop
 	// keeps when it is a table, for the pass over the final reply.
-	Shown *serviceports.ShownArtifact `json:"shown,omitempty"`
+	Shown *agentports.ShownArtifact `json:"shown,omitempty"`
 	// Data is what a query tool returned before it was encoded for the model.
 	// It never crosses a durable boundary: whatever needs it runs where the
 	// tool ran.
@@ -227,7 +229,7 @@ func (o ToolOutcome) internal() toolOutcome {
 
 // Request is what the turn was asked. Effects read it; the loop does not
 // change it.
-func (t *Turn) Request() *serviceports.RunRequest { return t.req }
+func (t *Turn) Request() *agentports.RunRequest { return t.req }
 
 // Definition is the agent the turn runs as.
 func (t *Turn) Definition() *agentdefinition.Definition { return t.req.Definition }
@@ -243,8 +245,8 @@ type TurnState struct {
 	System string `json:"system"`
 	// SystemStable is how much of System leads every turn unchanged. A state
 	// from before it was kept has none, and the whole prompt is cached as one.
-	SystemStable int                    `json:"systemStable,omitempty"`
-	Messages     []serviceports.Message `json:"messages"`
+	SystemStable int                  `json:"systemStable,omitempty"`
+	Messages     []agentports.Message `json:"messages"`
 	// Evidence is the figures of the tool results the replay shortened. A
 	// state from before it was kept has none, and its replay shortened the
 	// same results without them.
@@ -252,19 +254,19 @@ type TurnState struct {
 	Tools    ToolSetState `json:"tools"`
 	// Held is every tool the agent holds, as the turn opened. A state from
 	// before it was kept has none, and the turn works it out again.
-	Held      []string               `json:"held,omitempty"`
-	Failures  map[string]string      `json:"failures,omitempty"`
-	Ordinals  map[string]int         `json:"ordinals,omitempty"`
-	Questions []string               `json:"questions,omitempty"`
-	CallIDs   []string               `json:"callIds,omitempty"`
-	Result    serviceports.RunResult `json:"result"`
+	Held      []string             `json:"held,omitempty"`
+	Failures  map[string]string    `json:"failures,omitempty"`
+	Ordinals  map[string]int       `json:"ordinals,omitempty"`
+	Questions []string             `json:"questions,omitempty"`
+	CallIDs   []string             `json:"callIds,omitempty"`
+	Result    agentports.RunResult `json:"result"`
 	// Delegates are the agents the turn may hand a task to, and Delegations
 	// how many it has handed out.
 	Delegates   []agentdefinition.RuntimeDelegate `json:"delegates,omitempty"`
 	Delegations int                               `json:"delegations,omitempty"`
 	// Directed is a task the person handed straight to another agent. A
 	// state from before it was kept has none.
-	Directed *serviceports.DirectedTask `json:"directed,omitempty"`
+	Directed *agentports.DirectedTask `json:"directed,omitempty"`
 	// TaintOpened are the marks the turn's opening added, still to be
 	// announced. The turn's whole taint is Result.Taint.
 	TaintOpened []agent.TaintMark `json:"taintOpened,omitempty"`
@@ -282,11 +284,11 @@ type TurnState struct {
 // ToolSetState is a turn's tool set as data. Which tools are loaded follows
 // from Specs.
 type ToolSetState struct {
-	Specs      []serviceports.ToolSpec `json:"specs"`
-	Allowed    []string                `json:"allowed"`
-	Disclosed  bool                    `json:"disclosed"`
-	Unattended bool                    `json:"unattended"`
-	FindCalls  int                     `json:"findCalls"`
+	Specs      []kernelports.ToolSpec `json:"specs"`
+	Allowed    []string               `json:"allowed"`
+	Disclosed  bool                   `json:"disclosed"`
+	Unattended bool                   `json:"unattended"`
+	FindCalls  int                    `json:"findCalls"`
 	// Delegates are the agents the turn may ask, so a search that finds
 	// nothing the turn can call can name one that holds it.
 	Delegates []agentdefinition.RuntimeDelegate `json:"delegates,omitempty"`
@@ -337,7 +339,7 @@ func (t *Turn) LoadTools(names []string) {
 
 // RestoreTurn rebuilds a Turn from its state. The rebuilt tool set cannot check
 // permissions, so whatever answers its find_tools must: see TurnEffects.Find.
-func (s *Service) RestoreTurn(req *serviceports.RunRequest, state TurnState) *Turn {
+func (s *Service) RestoreTurn(req *agentports.RunRequest, state TurnState) *Turn {
 	result := state.Result
 	questions := make(map[string]struct{}, len(state.Questions))
 	for _, question := range state.Questions {
@@ -405,7 +407,7 @@ func cloneToolMemories(byTool map[string][]pulid.ID) map[string][]pulid.ID {
 
 func (t *toolSet) state() ToolSetState {
 	return ToolSetState{
-		Specs:      append([]serviceports.ToolSpec(nil), t.specs...),
+		Specs:      append([]kernelports.ToolSpec(nil), t.specs...),
 		Allowed:    append([]string(nil), t.allowed...),
 		Disclosed:  t.disclosed,
 		Unattended: t.unattended,
@@ -435,7 +437,7 @@ func restoreToolSet(state ToolSetState) *toolSet {
 // OpenTurn builds a turn: the tool set the actor may use, what earlier attempts
 // of the run already learned, and the prompt. It reads permissions and the
 // ledger, so it runs where those can be read: in process, or in an activity.
-func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *Turn {
+func (s *Service) OpenTurn(ctx context.Context, req *agentports.RunRequest) *Turn {
 	definition := req.Definition
 	budget := definition.MaxToolCalls
 	if budget <= 0 {
@@ -486,7 +488,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 		held:       held,
 		actor:      req.Actor,
 		input:      req.Input,
-		query:      serviceports.TurnQueryRequest(req),
+		query:      agentports.TurnQueryRequest(req),
 		history:    history,
 		unattended: req.Unattended,
 		delegated:  req.Delegation != nil,
@@ -536,8 +538,8 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 	if definition.HasContextProvider(agentdefinition.ContextClock) {
 		input = clockLine(now, runtimeContext.Timezone) + input
 	}
-	messages = append(messages, serviceports.Message{
-		Role:    serviceports.RoleUser,
+	messages = append(messages, agentports.Message{
+		Role:    agentports.RoleUser,
 		Content: input,
 	})
 	taint, opened := openTaint(req, &runtimeContext, now)
@@ -559,7 +561,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 		questions:    askedQuestions(history),
 		decisions:    make(map[pulid.ID]struct{}, 1),
 		callIDs:      usedCallIDs(req.History),
-		result: &serviceports.RunResult{
+		result: &agentports.RunResult{
 			Messages: []conversation.Message{{
 				Role:      conversation.RoleUser,
 				Content:   req.Input,
@@ -601,11 +603,11 @@ func clockLine(now int64, timezone string) string {
 
 // completionRequest is what the turn is ready to send the model now, with its
 // older tool results shortened when they would no longer fit the window.
-func (t *Turn) completionRequest() *serviceports.ChatCompletionRequest {
+func (t *Turn) completionRequest() *agentports.ChatCompletionRequest {
 	req := t.req
 	definition := req.Definition
 
-	completion := &serviceports.ChatCompletionRequest{
+	completion := &agentports.ChatCompletionRequest{
 		TenantInfo:          req.Actor.TenantInfo(),
 		System:              t.system,
 		SystemStable:        t.systemStable,
@@ -621,10 +623,10 @@ func (t *Turn) completionRequest() *serviceports.ChatCompletionRequest {
 	return completion
 }
 
-func turnAttribution(req *serviceports.RunRequest) serviceports.AIUsageAttribution {
+func turnAttribution(req *agentports.RunRequest) aiusageports.AIUsageAttribution {
 	definition := req.Definition
 	version := definition.Version
-	attribution := serviceports.AIUsageAttribution{
+	attribution := aiusageports.AIUsageAttribution{
 		UserID:            req.Actor.PersonUserID(),
 		AgentDefinitionID: definition.ID,
 		ThreadID:          req.ThreadID,
@@ -649,8 +651,8 @@ func turnAttribution(req *serviceports.RunRequest) serviceports.AIUsageAttributi
 type localEffects struct {
 	s        *Service
 	ctx      context.Context
-	emit     serviceports.AssistantStreamEmitter
-	observer serviceports.ToolObserver
+	emit     kernelports.AssistantStreamEmitter
+	observer agentports.ToolObserver
 }
 
 func (fx *localEffects) Supports(string) bool { return true }
@@ -659,7 +661,7 @@ func (*localEffects) Now() int64 { return timeutils.NowUnix() }
 
 func (fx *localEffects) Complete(
 	_ *Turn,
-	req *serviceports.ChatCompletionRequest,
+	req *agentports.ChatCompletionRequest,
 ) (ModelReply, error) {
 	return fx.s.StreamCompletion(fx.ctx, req, fx.Emit)
 }
@@ -674,8 +676,8 @@ func (fx *localEffects) Complete(
 // run's stream.
 func (s *Service) StreamCompletion(
 	ctx context.Context,
-	req *serviceports.ChatCompletionRequest,
-	emit serviceports.AssistantStreamEmitter,
+	req *agentports.ChatCompletionRequest,
+	emit kernelports.AssistantStreamEmitter,
 ) (ModelReply, error) {
 	ctx, tally := aitrace.WithCompletionTally(ctx)
 	reply, err := s.streamCompletion(ctx, req, emit)
@@ -684,13 +686,13 @@ func (s *Service) StreamCompletion(
 	return reply, err
 }
 
-func replyUsage(tally *aitrace.CompletionTally, reply ModelReply) *serviceports.RunUsage {
+func replyUsage(tally *aitrace.CompletionTally, reply ModelReply) *agentports.RunUsage {
 	totals := tally.Totals()
 	if totals.Attempts == 0 {
 		return reply.usage()
 	}
 
-	return &serviceports.RunUsage{
+	return &agentports.RunUsage{
 		ModelCalls:       totals.Attempts,
 		InputTokens:      totals.InputTokens,
 		OutputTokens:     totals.OutputTokens,
@@ -702,8 +704,8 @@ func replyUsage(tally *aitrace.CompletionTally, reply ModelReply) *serviceports.
 
 func (s *Service) streamCompletion(
 	ctx context.Context,
-	req *serviceports.ChatCompletionRequest,
-	emit serviceports.AssistantStreamEmitter,
+	req *agentports.ChatCompletionRequest,
+	emit kernelports.AssistantStreamEmitter,
 ) (ModelReply, error) {
 	origin := aitrace.CallOriginFrom(ctx)
 	ctx, span := aitrace.StartModelCall(ctx, &aitrace.ModelCallSpec{
@@ -729,7 +731,7 @@ func (s *Service) streamCompletion(
 			emit(reasoningEvent(delta))
 		}
 	}
-	req.RetrySink = func(notice serviceports.ChatRetryNotice) { emit(retryEvent(notice)) }
+	req.RetrySink = func(notice agentports.ChatRetryNotice) { emit(retryEvent(notice)) }
 
 	completion, err := s.completion.StreamChat(streamCtx, req, func(delta string) {
 		if guard.feed(delta) {
@@ -742,7 +744,7 @@ func (s *Service) streamCompletion(
 	// fine and is asked again.
 	if (guard.tripped || thinking.tripped) && ctx.Err() == nil {
 		if completion == nil {
-			completion = &serviceports.ChatCompletionResult{}
+			completion = &agentports.ChatCompletionResult{}
 		}
 		span.SetAttributes(aitrace.AILooped.Bool(true))
 
@@ -766,9 +768,9 @@ func completionErrorType(ctx context.Context, err error) string {
 		return "cancelled"
 	case errors.Is(err, context.DeadlineExceeded):
 		return "timeout"
-	case errors.Is(err, serviceports.ErrNoProviderConfigured):
+	case errors.Is(err, agentports.ErrNoProviderConfigured):
 		return "no_provider"
-	case errors.Is(err, serviceports.ErrProvidersResting):
+	case errors.Is(err, agentports.ErrProvidersResting):
 		return "providers_resting"
 	default:
 		return "provider_error"
@@ -786,11 +788,11 @@ func (fx *localEffects) Find(t *Turn, arguments map[string]any) FindAnswer {
 	return fx.s.resolveFind(fx.ctx, t.tools, t.req.Actor, arguments)
 }
 
-func (fx *localEffects) Emit(event serviceports.StreamEvent) { fx.emit(event) }
+func (fx *localEffects) Emit(event kernelports.StreamEvent) { fx.emit(event) }
 
 func (fx *localEffects) Observe(
 	t *Turn,
-	call *serviceports.ToolCall,
+	call *agentports.ToolCall,
 	outcome ToolOutcome,
 ) ToolOutcome {
 	return fx.s.observe(fx.observer, *call, outcome.internal(), t.earlier(call.Name)).exported()
@@ -802,7 +804,7 @@ func (fx *localEffects) Interject(t *Turn, check *WorldCheck) Interjections {
 	if check == nil || fx.s.changes == nil || t.req.Actor == nil {
 		return Interjections{}
 	}
-	found, err := fx.s.changes.Since(fx.ctx, &serviceports.RecordChangesRequest{
+	found, err := fx.s.changes.Since(fx.ctx, &agentports.RecordChangesRequest{
 		OrganizationID: t.req.Actor.OrganizationID,
 		BusinessUnitID: t.req.Actor.BusinessUnitID,
 		Cursor:         check.Cursor,
@@ -830,15 +832,15 @@ func (*localEffects) Delegate(_ *Turn, call DelegateCall) DelegateRun {
 // person into what the model reads. It is what a durable tool activity runs
 // after the call, where the call's raw result exists.
 func (s *Service) ObserveCall(
-	observe serviceports.ToolObserver,
-	call *serviceports.ToolCall,
+	observe agentports.ToolObserver,
+	call *agentports.ToolCall,
 	outcome ToolOutcome,
 ) ToolOutcome {
 	return s.observe(observe, *call, outcome.internal(), nil).exported()
 }
 
 func (s *Service) ObserveDispatch(
-	observe serviceports.ToolObserver,
+	observe agentports.ToolObserver,
 	call *DispatchCall,
 	outcome *ToolOutcome,
 ) ToolOutcome {
@@ -850,8 +852,8 @@ func (s *Service) ObserveDispatch(
 // read again from the call, because what the loop parsed stays in workflow
 // code.
 func (s *Service) PublishStep(
-	observe serviceports.ToolObserver,
-	call *serviceports.ToolCall,
+	observe agentports.ToolObserver,
+	call *agentports.ToolCall,
 ) ToolOutcome {
 	if call.Name == requestDecisionName {
 		return s.observe(observe, *call, decisionStepOutcome(call.Arguments), nil).exported()
@@ -860,24 +862,24 @@ func (s *Service) PublishStep(
 	return s.observe(observe, *call, publishOutcome(call.Arguments), nil).exported()
 }
 
-func deltaEvent(text string) serviceports.StreamEvent {
-	return serviceports.StreamEvent{
-		Event: serviceports.AssistantEventDelta,
-		Data:  serviceports.AssistantDeltaEvent{Text: text},
+func deltaEvent(text string) kernelports.StreamEvent {
+	return kernelports.StreamEvent{
+		Event: agentports.AssistantEventDelta,
+		Data:  agentports.AssistantDeltaEvent{Text: text},
 	}
 }
 
-func reasoningEvent(text string) serviceports.StreamEvent {
-	return serviceports.StreamEvent{
-		Event: serviceports.AssistantEventReasoning,
-		Data:  serviceports.AssistantReasoningEvent{Text: text},
+func reasoningEvent(text string) kernelports.StreamEvent {
+	return kernelports.StreamEvent{
+		Event: agentports.AssistantEventReasoning,
+		Data:  agentports.AssistantReasoningEvent{Text: text},
 	}
 }
 
-func retryEvent(notice serviceports.ChatRetryNotice) serviceports.StreamEvent {
-	return serviceports.StreamEvent{
-		Event: serviceports.AssistantEventRetrying,
-		Data: serviceports.AssistantRetryingEvent{
+func retryEvent(notice agentports.ChatRetryNotice) kernelports.StreamEvent {
+	return kernelports.StreamEvent{
+		Event: agentports.AssistantEventRetrying,
+		Data: agentports.AssistantRetryingEvent{
 			Attempt:     notice.Attempt,
 			Provider:    notice.Provider,
 			Reason:      notice.Reason,
@@ -894,7 +896,7 @@ func retryEvent(notice serviceports.ChatRetryNotice) serviceports.StreamEvent {
 // and the tools can be reached.
 func (s *Service) DispatchStep(
 	ctx context.Context,
-	req *serviceports.RunRequest,
+	req *agentports.RunRequest,
 	call DispatchCall,
 ) ToolOutcome {
 	outcome := s.guardedDispatch(ctx, &guardedDispatchParams{
@@ -917,7 +919,7 @@ func (s *Service) DispatchStep(
 // permission check, so this runs where permissions can be read.
 func (s *Service) FindFor(
 	ctx context.Context,
-	req *serviceports.RunRequest,
+	req *agentports.RunRequest,
 	state ToolSetState,
 	arguments map[string]any,
 ) FoundTools {
@@ -953,7 +955,7 @@ func (t *Turn) earlier(name string) []string {
 	return slices.Clone(t.shown[name])
 }
 
-func (t *Turn) noteShown(call *serviceports.ToolCall) {
+func (t *Turn) noteShown(call *agentports.ToolCall) {
 	if !strings.HasPrefix(call.Name, getToolPrefix) || call.ID == "" {
 		return
 	}

@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/editchange"
 	"github.com/emoss08/trenova/internal/core/domain/settingversion"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/settingversionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -62,7 +62,7 @@ type RecordRequest struct {
 // transaction, so a save and its version commit together.
 func Record(
 	ctx context.Context,
-	versions repositories.SettingVersionRepository,
+	versions settingversionports.SettingVersionRepository,
 	req *RecordRequest,
 ) error {
 	snapshot := make(map[string]any)
@@ -98,7 +98,7 @@ type ExplainRequest[T any] struct {
 // hiding the conflict.
 func Explain[T any](
 	ctx context.Context,
-	versions repositories.SettingVersionRepository,
+	versions settingversionports.SettingVersionRepository,
 	logger *zap.Logger,
 	req *ExplainRequest[T],
 ) error {
@@ -108,7 +108,7 @@ func Explain[T any](
 
 	detail := &Detail{Version: req.CurrentVersion, UpdatedAt: req.UpdatedAt}
 
-	latest, err := versions.LatestAt(ctx, &repositories.GetSettingVersionAtRequest{
+	latest, err := versions.LatestAt(ctx, &settingversionports.GetSettingVersionAtRequest{
 		TenantInfo: req.TenantInfo,
 		Kind:       req.Kind,
 		SubjectID:  req.SubjectID,
@@ -121,7 +121,7 @@ func Explain[T any](
 		detail.Author = latest.Author
 	}
 
-	loaded, err := versions.LatestAt(ctx, &repositories.GetSettingVersionAtRequest{
+	loaded, err := versions.LatestAt(ctx, &settingversionports.GetSettingVersionAtRequest{
 		TenantInfo: req.TenantInfo,
 		Kind:       req.Kind,
 		SubjectID:  req.SubjectID,

@@ -7,10 +7,9 @@ import (
 	"sort"
 
 	"github.com/emoss08/trenova/internal/core/domain/journalentry"
-
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -28,7 +27,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.JournalPostingRepository {
+func New(p Params) journalentryports.JournalPostingRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.journal-posting-repository")}
 }
 
@@ -70,7 +69,7 @@ type lineAggregate struct {
 //nolint:funlen // existing workflow or route registration is intentionally kept together
 func (r *repository) CreatePosting(
 	ctx context.Context,
-	params repositories.CreateJournalPostingParams,
+	params journalentryports.CreateJournalPostingParams,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		batch := &journalentry.JournalBatch{
@@ -212,7 +211,7 @@ type balanceTarget struct {
 func (r *repository) applyBalances(
 	ctx context.Context,
 	target balanceTarget,
-	lines []repositories.JournalPostingLine,
+	lines []journalentryports.JournalPostingLine,
 ) error {
 	for _, aggregate := range aggregateLinesByAccount(lines) {
 		if err := r.upsertPeriodBalance(ctx, target, aggregate); err != nil {
@@ -225,7 +224,7 @@ func (r *repository) applyBalances(
 	return nil
 }
 
-func aggregateLinesByAccount(lines []repositories.JournalPostingLine) []lineAggregate {
+func aggregateLinesByAccount(lines []journalentryports.JournalPostingLine) []lineAggregate {
 	byAccount := make(map[string]*lineAggregate, len(lines))
 	for _, line := range lines {
 		accountID := line.GLAccountID.String()

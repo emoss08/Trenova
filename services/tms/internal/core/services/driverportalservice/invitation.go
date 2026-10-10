@@ -10,9 +10,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -64,7 +67,7 @@ type AcceptInvitationResult struct {
 func (s *Service) InviteWorker(
 	ctx context.Context,
 	req *InviteWorkerRequest,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*InviteWorkerResult, error) {
 	if actor == nil || actor.UserID.IsNil() {
 		return nil, errortypes.NewAuthorizationError(
@@ -177,7 +180,7 @@ func (s *Service) ensureNoPendingInvitation(
 ) error {
 	existing, err := s.portalRepo.GetPendingInvitationForWorker(
 		ctx,
-		repositories.GetPendingPortalInvitationRequest{
+		workerports.GetPendingPortalInvitationRequest{
 			TenantInfo: req.TenantInfo,
 			WorkerID:   req.WorkerID,
 		},
@@ -202,7 +205,7 @@ func (s *Service) RevokeAccess(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) error {
 	if actor == nil || actor.UserID.IsNil() {
 		return errortypes.NewAuthorizationError("Portal revocation requires an authenticated user")
@@ -229,7 +232,7 @@ func (s *Service) RevokeOnTermination(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (bool, error) {
 	status, err := s.GetPortalStatus(ctx, tenantInfo, workerID)
 	if err != nil {
@@ -256,7 +259,7 @@ func (s *Service) GetPortalStatus(
 
 	invitations, err := s.portalRepo.ListInvitations(
 		ctx,
-		&repositories.ListPortalInvitationsRequest{
+		&workerports.ListPortalInvitationsRequest{
 			TenantInfo: tenantInfo,
 			WorkerID:   workerID,
 		},
@@ -357,7 +360,7 @@ func (s *Service) AcceptInvitation(
 	})
 	created, err := s.portalRepo.ActivatePortalAccess(
 		ctx,
-		&repositories.ActivatePortalAccessRequest{
+		&workerports.ActivatePortalAccessRequest{
 			Invitation:      invitation,
 			User:            user,
 			RoleName:        DriverRoleName,
@@ -448,7 +451,7 @@ func (s *Service) sendInvitationEmail(
 		return false
 	}
 
-	rendered, err := s.templates.RenderMessage(ctx, &serviceports.RenderMessageRequest{
+	rendered, err := s.templates.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
 		TenantInfo: p.TenantInfo,
 		Kind:       documenttemplate.KindDriverPortalInvitationEmail,
 		Data: invitationContext(
@@ -466,7 +469,7 @@ func (s *Service) sendInvitationEmail(
 		return false
 	}
 
-	if _, err = s.emailService.Send(ctx, &serviceports.SendEmailRequest{
+	if _, err = s.emailService.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo:     p.TenantInfo,
 		Purpose:        email.PurposeGeneral,
 		To:             []string{p.To},
@@ -513,7 +516,7 @@ func (s *Service) logPortalAudit(
 	comment string,
 	state any,
 ) {
-	params := &serviceports.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceDriverPortal,
 		ResourceID:     resourceID.String(),
 		Operation:      operation,

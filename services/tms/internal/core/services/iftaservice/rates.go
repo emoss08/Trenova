@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/ifta"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -29,7 +29,7 @@ type DeleteTaxRateRequest struct {
 
 func (s *Service) ListTaxRates(
 	ctx context.Context,
-	req *repositories.ListTaxRatesRequest,
+	req *iftaports.ListTaxRatesRequest,
 ) (*pagination.CursorListResult[*ifta.TaxRate], error) {
 	return s.repo.ListTaxRates(ctx, req)
 }

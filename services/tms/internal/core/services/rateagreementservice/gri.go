@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -302,7 +302,7 @@ func (s *Service) ApplyRateIncrease(
 			continue
 		}
 
-		if err = s.repo.AmendRules(ctx, &repositories.AmendRateAgreementRulesRequest{
+		if err = s.repo.AmendRules(ctx, &rateagreementports.AmendRateAgreementRulesRequest{
 			TenantInfo:      req.TenantInfo,
 			RateAgreementID: slice.agreement.ID,
 			EffectiveFrom:   slice.plan.AmendAt,
@@ -358,7 +358,7 @@ func (s *Service) planRateIncrease(
 		// have already been rated — nor before the contract itself began.
 		amendAt := max(req.EffectiveFrom, agreement.EffectiveFrom, now)
 
-		rules, listErr := s.repo.ListRules(ctx, &repositories.ListRateAgreementRulesRequest{
+		rules, listErr := s.repo.ListRules(ctx, &rateagreementports.ListRateAgreementRulesRequest{
 			TenantInfo:      req.TenantInfo,
 			RateAgreementID: agreement.ID,
 			AsOf:            amendAt,
@@ -395,7 +395,7 @@ func (s *Service) scopedAgreements(
 		agreements := make([]*rateagreement.RateAgreement, 0, len(req.AgreementIDs))
 
 		for _, agreementID := range req.AgreementIDs {
-			agreement, err := s.repo.GetByID(ctx, &repositories.GetRateAgreementByIDRequest{
+			agreement, err := s.repo.GetByID(ctx, &rateagreementports.GetRateAgreementByIDRequest{
 				RateAgreementID: agreementID,
 				TenantInfo:      req.TenantInfo,
 			})
@@ -423,7 +423,7 @@ func (s *Service) listActiveAgreements(
 	agreements := make([]*rateagreement.RateAgreement, 0)
 
 	for offset := 0; ; offset += pageSize {
-		page, err := s.repo.List(ctx, &repositories.ListRateAgreementRequest{
+		page, err := s.repo.List(ctx, &rateagreementports.ListRateAgreementRequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: req.TenantInfo,
 				Pagination: pagination.Info{Limit: pageSize, Offset: offset},

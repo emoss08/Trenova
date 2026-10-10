@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/bulkedit"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/bulkeditports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -49,7 +49,7 @@ func selectionFromInput(
 	}, nil
 }
 
-func fieldsToModel(fields []services.BulkEditField) []*gqlmodel.BulkEditField {
+func fieldsToModel(fields []bulkeditports.BulkEditField) []*gqlmodel.BulkEditField {
 	models := make([]*gqlmodel.BulkEditField, 0, len(fields))
 	for _, field := range fields {
 		options := make([]*gqlmodel.BulkEditOption, 0, len(field.Options))

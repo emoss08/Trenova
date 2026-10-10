@@ -1,12 +1,15 @@
 package workertrainingservice_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/workertrainingservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -39,12 +42,12 @@ func newBulkHarness(t *testing.T) *bulkHarness {
 		workers: map[pulid.ID]*worker.Worker{},
 	}
 
-	workerRepo := mocks.NewMockWorkerRepository(t)
+	workerRepo := workerportsmock.NewMockWorkerRepository(t)
 	workerRepo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
 		RunAndReturn(func(
 			_ context.Context,
-			req repositories.GetWorkerByIDRequest,
+			req workerports.GetWorkerByIDRequest,
 		) (*worker.Worker, error) {
 			wrk, ok := h.workers[req.ID]
 			if !ok {
@@ -58,14 +61,14 @@ func newBulkHarness(t *testing.T) *bulkHarness {
 		Return(nil).
 		Maybe()
 
-	audit := mocks.NewMockAuditService(t)
+	audit := auditportsmock.NewMockAuditService(t)
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Maybe()
 
 	h.svc = workertrainingservice.New(workertrainingservice.Params{
 		Logger:       zap.NewNop(),
 		Repo:         h.repo,
 		WorkerRepo:   workerRepo,
-		DocumentRepo: mocks.NewMockDocumentRepository(t),
+		DocumentRepo: documentportsmock.NewMockDocumentRepository(t),
 		AuditService: audit,
 	})
 	return h

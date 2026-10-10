@@ -1,6 +1,7 @@
 package thumbnailjobs
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
 	"bytes"
 	"context"
 	"image"
@@ -9,13 +10,12 @@ import (
 	"io"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs/thumbnailcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/document"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs/thumbnailcontract"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
@@ -33,8 +33,8 @@ type thumbnailStorage struct {
 
 func (s *thumbnailStorage) Upload(
 	_ context.Context,
-	params *storage.UploadParams,
-) (*storage.FileInfo, error) {
+	params *kernelports.UploadParams,
+) (*kernelports.FileInfo, error) {
 	body, err := io.ReadAll(params.Body)
 	if err != nil {
 		return nil, err
@@ -42,7 +42,7 @@ func (s *thumbnailStorage) Upload(
 	s.uploadKey = params.Key
 	s.uploadBody = body
 	s.metadata = params.Metadata
-	return &storage.FileInfo{
+	return &kernelports.FileInfo{
 		Key:         params.Key,
 		Size:        int64(len(body)),
 		ContentType: params.ContentType,
@@ -52,66 +52,66 @@ func (s *thumbnailStorage) Upload(
 func (s *thumbnailStorage) Download(
 	_ context.Context,
 	key string,
-) (*storage.DownloadResult, error) {
+) (*kernelports.DownloadResult, error) {
 	s.downloadKey = key
-	return &storage.DownloadResult{Body: io.NopCloser(bytes.NewReader(s.download))}, nil
+	return &kernelports.DownloadResult{Body: io.NopCloser(bytes.NewReader(s.download))}, nil
 }
 
 func (s *thumbnailStorage) Delete(context.Context, string) error { return nil }
-func (s *thumbnailStorage) DeleteObject(context.Context, *storage.DeleteObjectParams) error {
+func (s *thumbnailStorage) DeleteObject(context.Context, *kernelports.DeleteObjectParams) error {
 	return nil
 }
 
 func (s *thumbnailStorage) GetPresignedURL(
 	context.Context,
-	*storage.PresignedURLParams,
+	*kernelports.PresignedURLParams,
 ) (string, error) {
 	return "", nil
 }
 
 func (s *thumbnailStorage) GetPresignedUploadURL(
 	context.Context,
-	*storage.PresignedUploadURLParams,
+	*kernelports.PresignedUploadURLParams,
 ) (string, error) {
 	return "", nil
 }
 
 func (s *thumbnailStorage) InitiateMultipartUpload(
 	context.Context,
-	*storage.MultipartUploadParams,
+	*kernelports.MultipartUploadParams,
 ) (string, error) {
 	return "", nil
 }
 
 func (s *thumbnailStorage) GetMultipartUploadPartURL(
 	context.Context,
-	*storage.MultipartUploadPartURLParams,
+	*kernelports.MultipartUploadPartURLParams,
 ) (string, error) {
 	return "", nil
 }
 
 func (s *thumbnailStorage) CompleteMultipartUpload(
 	context.Context,
-	*storage.CompleteMultipartUploadParams,
+	*kernelports.CompleteMultipartUploadParams,
 ) error {
 	return nil
 }
 
 func (s *thumbnailStorage) AbortMultipartUpload(
 	context.Context,
-	*storage.AbortMultipartUploadParams,
+	*kernelports.AbortMultipartUploadParams,
 ) error {
 	return nil
 }
 
 func (s *thumbnailStorage) ListMultipartUploadParts(
 	context.Context,
-	*storage.ListMultipartUploadPartsParams,
-) ([]storage.UploadedPart, error) {
+	*kernelports.ListMultipartUploadPartsParams,
+) ([]kernelports.UploadedPart, error) {
 	return nil, nil
 }
 func (s *thumbnailStorage) Exists(context.Context, string) (bool, error) { return false, nil }
-func (s *thumbnailStorage) GetFileInfo(context.Context, string) (*storage.FileInfo, error) {
+func (s *thumbnailStorage) GetFileInfo(context.Context, string) (*kernelports.FileInfo, error) {
 	return nil, nil
 }
 
@@ -131,7 +131,7 @@ func TestGenerateThumbnailActivityDecryptsOriginalAndStoresEncryptedPreview(t *t
 	require.NoError(t, err)
 
 	storageClient := &thumbnailStorage{download: []byte(encrypted)}
-	repo := mocks.NewMockDocumentRepository(t)
+	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mockGetDocumentRequest(doc)).Return(doc, nil)
 	repo.EXPECT().
 		UpdatePreview(mock.Anything, mockUpdatePreviewRequest(doc)).
@@ -194,7 +194,7 @@ func thumbnailPayload(doc *document.Document) *thumbnailcontract.GenerateThumbna
 }
 
 func mockGetDocumentRequest(doc *document.Document) any {
-	return mock.MatchedBy(func(r repositories.GetDocumentByIDRequest) bool {
+	return mock.MatchedBy(func(r documentports.GetDocumentByIDRequest) bool {
 		return r.ID == doc.ID &&
 			r.TenantInfo.OrgID == doc.OrganizationID &&
 			r.TenantInfo.BuID == doc.BusinessUnitID
@@ -202,7 +202,7 @@ func mockGetDocumentRequest(doc *document.Document) any {
 }
 
 func mockUpdatePreviewRequest(doc *document.Document) any {
-	return mock.MatchedBy(func(r *repositories.UpdateDocumentPreviewRequest) bool {
+	return mock.MatchedBy(func(r *documentports.UpdateDocumentPreviewRequest) bool {
 		return r != nil &&
 			r.ID == doc.ID &&
 			r.TenantInfo.OrgID == doc.OrganizationID &&

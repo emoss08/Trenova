@@ -8,8 +8,8 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/captureservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -65,7 +65,7 @@ func (h *Handler) stream(c *gin.Context) {
 	tenantInfo := principal.TenantInfo()
 	ctx := c.Request.Context()
 
-	rt, err := h.gateway.Open(ctx, &services.OpenRealtimeStreamRequest{
+	rt, err := h.gateway.Open(ctx, &agentports.OpenRealtimeStreamRequest{
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
 		UserID:         tenantInfo.UserID,
@@ -103,7 +103,7 @@ func (h *Handler) pump(
 	ctx context.Context,
 	clientIP string,
 	principal *captureservice.DevicePrincipal,
-	rt services.RealtimeStream,
+	rt agentports.RealtimeStream,
 	stream *helpers.EventStream,
 ) {
 	rotate := time.NewTimer(timeutils.Jittered(h.lifetime()))
@@ -116,7 +116,7 @@ func (h *Handler) pump(
 		case <-ctx.Done():
 			return
 		case <-rotate.C:
-			h.emitClose(stream, services.RealtimeCloseRotate)
+			h.emitClose(stream, agentports.RealtimeCloseRotate)
 
 			return
 		case frame, ok := <-frames:
@@ -127,17 +127,17 @@ func (h *Handler) pump(
 			}
 
 			switch frame.Event {
-			case services.RealtimeEventHeartbeat:
+			case agentports.RealtimeEventHeartbeat:
 				h.service.Heartbeat(ctx, principal, clientIP)
 				stream.EmitRaw(frame.ID, frame.Event, frame.Data)
-			case services.RealtimeEventReset,
-				services.RealtimeEventClose,
-				services.RealtimeEventReady:
+			case agentports.RealtimeEventReset,
+				agentports.RealtimeEventClose,
+				agentports.RealtimeEventReady:
 				stream.EmitRaw(frame.ID, frame.Event, frame.Data)
-				if frame.Event == services.RealtimeEventClose {
+				if frame.Event == agentports.RealtimeEventClose {
 					return
 				}
-			case services.RealtimeEventInvalidation:
+			case agentports.RealtimeEventInvalidation:
 				if h.forward(stream, frame, deviceID) {
 					return
 				}
@@ -150,7 +150,7 @@ func (h *Handler) pump(
 // the stream must now end.
 func (h *Handler) forward(
 	stream *helpers.EventStream,
-	frame services.RealtimeFrame,
+	frame agentports.RealtimeFrame,
 	deviceID pulid.ID,
 ) bool {
 	relevant := false
@@ -195,8 +195,8 @@ func (h *Handler) forward(
 
 func (h *Handler) emitClose(stream *helpers.EventStream, reason string) {
 	if err := stream.Emit(
-		services.RealtimeEventClose,
-		services.RealtimeCloseEvent{Reason: reason},
+		agentports.RealtimeEventClose,
+		agentports.RealtimeCloseEvent{Reason: reason},
 	); err != nil {
 		h.l.Debug("could not send capture stream close notice", zap.Error(err))
 	}

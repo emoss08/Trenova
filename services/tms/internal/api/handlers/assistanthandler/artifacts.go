@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -52,7 +52,7 @@ func (h *Handler) listThreadArtifacts(c *gin.Context) {
 		return
 	}
 
-	page, err := h.service.ListThreadArtifacts(c.Request.Context(), req, serviceports.ListArtifactsOptions{
+	page, err := h.service.ListThreadArtifacts(c.Request.Context(), req, agentports.ListArtifactsOptions{
 		Limit:      query.Limit,
 		Cursor:     query.Cursor,
 		Query:      query.Query,
@@ -177,7 +177,7 @@ func (h *Handler) saveDocumentVersion(c *gin.Context) {
 		return
 	}
 
-	var body serviceports.SaveDocumentVersionRequest
+	var body agentports.SaveDocumentVersionRequest
 	if err = c.ShouldBindJSON(&body); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -225,7 +225,7 @@ func (h *Handler) rewriteDocument(c *gin.Context) {
 		return
 	}
 
-	var body serviceports.DocumentRewriteRequest
+	var body agentports.DocumentRewriteRequest
 	if err = c.ShouldBindJSON(&body); err != nil {
 		h.eh.HandleError(c, err)
 		return

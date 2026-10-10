@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -15,20 +15,20 @@ func (s *Service) ledgerRequirement(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	conn *accountingsync.AccountingConnection,
-	summary *services.AccountingMappingSummary,
+	summary *accountingsyncports.AccountingMappingSummary,
 ) error {
 	var since *int64
 	if conn.SyncStartDate != nil && !conn.SentOpeningBalances() {
 		since = conn.SyncStartDate
 	}
-	accounts, err := s.ledger.ListActiveAccounts(ctx, &repositories.ListLedgerAccountsRequest{
+	accounts, err := s.ledger.ListActiveAccounts(ctx, &journalentryports.ListLedgerAccountsRequest{
 		TenantInfo: tenantInfo,
 		Since:      since,
 	})
 	if err != nil {
 		return err
 	}
-	mappings, err := s.mappings.ListByConnection(ctx, &repositories.ListAccountingMappingsRequest{
+	mappings, err := s.mappings.ListByConnection(ctx, &accountingsyncports.ListAccountingMappingsQuery{
 		TenantInfo:   tenantInfo,
 		ConnectionID: conn.ID,
 		TargetTypes: []accountingsync.MappingTargetType{

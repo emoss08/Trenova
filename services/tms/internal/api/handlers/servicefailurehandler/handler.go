@@ -9,8 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,15 +22,15 @@ import (
 type Params struct {
 	fx.In
 
-	Service              services.ServiceFailureService
-	EDIService           services.EDIService
+	Service              servicefailureports.ServiceFailureService
+	EDIService           ediports.EDIService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	service    services.ServiceFailureService
-	ediService services.EDIService
+	service    servicefailureports.ServiceFailureService
+	ediService ediports.EDIService
 	eh         *helpers.ErrorHandler
 	pm         *middleware.PermissionMiddleware
 }
@@ -127,7 +128,7 @@ func (h *Handler) list(c *gin.Context) {
 		req,
 		h.eh,
 		func() (*pagination.ListResult[*servicefailure.ServiceFailure], error) {
-			return h.service.List(c.Request.Context(), &repositories.ListServiceFailuresRequest{
+			return h.service.List(c.Request.Context(), &servicefailureports.ListServiceFailuresRequest{
 				Filter:     req,
 				ShipmentID: shipmentID,
 			})
@@ -145,7 +146,7 @@ func (h *Handler) get(c *gin.Context) {
 
 	entity, err := h.service.GetByID(
 		c.Request.Context(),
-		&repositories.GetServiceFailureByIDRequest{
+		&servicefailureports.GetServiceFailureByIDRequest{
 			ID:         id,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
@@ -161,7 +162,7 @@ func (h *Handler) createManual(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	_, err := h.service.CreateManual(
 		c.Request.Context(),
-		&services.CreateManualServiceFailureRequest{
+		&servicefailureports.CreateManualServiceFailureRequest{
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
 		actorutil.FromAuthContext(authCtx),
@@ -181,7 +182,7 @@ func (h *Handler) evaluateShipment(c *gin.Context) {
 	}
 	result, err := h.service.EvaluateShipment(
 		c.Request.Context(),
-		&services.EvaluateShipmentServiceFailuresRequest{
+		&servicefailureports.EvaluateShipmentServiceFailuresRequest{
 			TenantInfo: pagination.FromAuth(authCtx),
 			ShipmentID: shipmentID,
 			Force:      c.Query("force") == "true",
@@ -210,7 +211,7 @@ func (h *Handler) evaluateStop(c *gin.Context) {
 	moveID, _ := pulid.MustParse(c.Query("shipmentMoveId"))
 	result, err := h.service.EvaluateStop(
 		c.Request.Context(),
-		&services.EvaluateStopServiceFailuresRequest{
+		&servicefailureports.EvaluateStopServiceFailuresRequest{
 			TenantInfo:     pagination.FromAuth(authCtx),
 			ShipmentID:     shipmentID,
 			ShipmentMoveID: moveID,
@@ -228,7 +229,7 @@ func (h *Handler) evaluateStop(c *gin.Context) {
 
 func (h *Handler) bulkEvaluate(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
-	req := new(services.BulkEvaluateServiceFailuresRequest)
+	req := new(servicefailureports.BulkEvaluateServiceFailuresRequest)
 	req.TenantInfo = pagination.TenantInfo{
 		OrgID: authCtx.OrganizationID,
 		BuID:  authCtx.BusinessUnitID,
@@ -256,7 +257,7 @@ func (h *Handler) update(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	req := new(services.UpdateServiceFailureRequest)
+	req := new(servicefailureports.UpdateServiceFailureRequest)
 	req.ID = id
 	req.TenantInfo = pagination.TenantInfo{
 		OrgID: authCtx.OrganizationID,
@@ -269,7 +270,7 @@ func (h *Handler) update(c *gin.Context) {
 	if req.ShipmentID.IsNil() {
 		current, getErr := h.service.GetByID(
 			c.Request.Context(),
-			&repositories.GetServiceFailureByIDRequest{
+			&servicefailureports.GetServiceFailureByIDRequest{
 				ID:         id,
 				TenantInfo: req.TenantInfo,
 			},
@@ -291,7 +292,7 @@ func (h *Handler) update(c *gin.Context) {
 func (h *Handler) review(c *gin.Context) {
 	h.lifecycle(
 		c,
-		func(ctx context.Context, req *services.ServiceFailureLifecycleRequest, actor *services.RequestActor) (*servicefailure.ServiceFailure, error) {
+		func(ctx context.Context, req *servicefailureports.ServiceFailureLifecycleRequest, actor *permissionports.RequestActor) (*servicefailure.ServiceFailure, error) {
 			return h.service.Review(ctx, req, actor)
 		},
 	)
@@ -300,7 +301,7 @@ func (h *Handler) review(c *gin.Context) {
 func (h *Handler) resolve(c *gin.Context) {
 	h.lifecycle(
 		c,
-		func(ctx context.Context, req *services.ServiceFailureLifecycleRequest, actor *services.RequestActor) (*servicefailure.ServiceFailure, error) {
+		func(ctx context.Context, req *servicefailureports.ServiceFailureLifecycleRequest, actor *permissionports.RequestActor) (*servicefailure.ServiceFailure, error) {
 			return h.service.Resolve(ctx, req, actor)
 		},
 	)
@@ -309,13 +310,13 @@ func (h *Handler) resolve(c *gin.Context) {
 func (h *Handler) void(c *gin.Context) {
 	h.lifecycle(
 		c,
-		func(ctx context.Context, req *services.ServiceFailureLifecycleRequest, actor *services.RequestActor) (*servicefailure.ServiceFailure, error) {
+		func(ctx context.Context, req *servicefailureports.ServiceFailureLifecycleRequest, actor *permissionports.RequestActor) (*servicefailure.ServiceFailure, error) {
 			return h.service.Void(ctx, req, actor)
 		},
 	)
 }
 
-type lifecycleFn func(context.Context, *services.ServiceFailureLifecycleRequest, *services.RequestActor) (*servicefailure.ServiceFailure, error)
+type lifecycleFn func(context.Context, *servicefailureports.ServiceFailureLifecycleRequest, *permissionports.RequestActor) (*servicefailure.ServiceFailure, error)
 
 func (h *Handler) lifecycle(c *gin.Context, fn lifecycleFn) {
 	authCtx := authctx.GetAuthContext(c)
@@ -324,7 +325,7 @@ func (h *Handler) lifecycle(c *gin.Context, fn lifecycleFn) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	req := new(services.ServiceFailureLifecycleRequest)
+	req := new(servicefailureports.ServiceFailureLifecycleRequest)
 	req.ID = id
 	req.TenantInfo = pagination.TenantInfo{
 		OrgID: authCtx.OrganizationID,
@@ -337,7 +338,7 @@ func (h *Handler) lifecycle(c *gin.Context, fn lifecycleFn) {
 	if req.ShipmentID.IsNil() {
 		current, getErr := h.service.GetByID(
 			c.Request.Context(),
-			&repositories.GetServiceFailureByIDRequest{
+			&servicefailureports.GetServiceFailureByIDRequest{
 				ID:         id,
 				TenantInfo: req.TenantInfo,
 			},
@@ -365,7 +366,7 @@ func (h *Handler) buildEDI214Payload(c *gin.Context) {
 	}
 	result, err := h.ediService.BuildShipmentStatusPayloadForServiceFailure(
 		c.Request.Context(),
-		&services.BuildServiceFailureEDIPayloadRequest{
+		&servicefailureports.BuildServiceFailureEDIPayloadRequest{
 			TenantInfo:       pagination.FromAuth(authCtx),
 			ServiceFailureID: id,
 		},
@@ -390,7 +391,7 @@ func (h *Handler) edi214Readiness(c *gin.Context) {
 	}
 	current, err := h.service.GetByID(
 		c.Request.Context(),
-		&repositories.GetServiceFailureByIDRequest{
+		&servicefailureports.GetServiceFailureByIDRequest{
 			ID:         id,
 			TenantInfo: tenantInfo,
 		},
@@ -404,7 +405,7 @@ func (h *Handler) edi214Readiness(c *gin.Context) {
 	preview.Status = nextStatus
 	result, err := h.ediService.PreviewServiceFailure214ForLifecycle(
 		c.Request.Context(),
-		&services.ServiceFailure214LifecycleRequest{
+		&ediports.ServiceFailure214LifecycleRequest{
 			TenantInfo:       tenantInfo,
 			ServiceFailureID: current.ID,
 			ShipmentID:       current.ShipmentID,
@@ -430,7 +431,7 @@ func (h *Handler) edi214Status(c *gin.Context) {
 	}
 	status, err := h.ediService.GetServiceFailure214Status(
 		c.Request.Context(),
-		repositories.GetServiceFailure214StatusRequest{
+		ediports.GetServiceFailure214StatusRequest{
 			TenantInfo:       pagination.FromAuth(authCtx),
 			ServiceFailureID: id,
 		},
@@ -445,16 +446,16 @@ func (h *Handler) edi214Status(c *gin.Context) {
 func readinessTrigger(
 	value string,
 	status servicefailure.Status,
-) (services.ServiceFailureEDITrigger, servicefailure.Status) {
+) (servicefailureports.ServiceFailureEDITrigger, servicefailure.Status) {
 	switch value {
-	case string(services.ServiceFailureEDITriggerResolved):
-		return services.ServiceFailureEDITriggerResolved, servicefailure.StatusResolved
-	case string(services.ServiceFailureEDITriggerReviewed):
-		return services.ServiceFailureEDITriggerReviewed, servicefailure.StatusReviewed
+	case string(servicefailureports.ServiceFailureEDITriggerResolved):
+		return servicefailureports.ServiceFailureEDITriggerResolved, servicefailure.StatusResolved
+	case string(servicefailureports.ServiceFailureEDITriggerReviewed):
+		return servicefailureports.ServiceFailureEDITriggerReviewed, servicefailure.StatusReviewed
 	default:
 		if status == servicefailure.StatusOpen {
-			return services.ServiceFailureEDITriggerReviewed, servicefailure.StatusReviewed
+			return servicefailureports.ServiceFailureEDITriggerReviewed, servicefailure.StatusReviewed
 		}
-		return services.ServiceFailureEDITriggerResolved, servicefailure.StatusResolved
+		return servicefailureports.ServiceFailureEDITriggerResolved, servicefailure.StatusResolved
 	}
 }

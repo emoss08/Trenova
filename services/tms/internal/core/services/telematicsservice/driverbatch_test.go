@@ -14,9 +14,8 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/telematics/samsaraprovider"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	sharedsamsara "github.com/emoss08/trenova/shared/samsara"
@@ -28,22 +27,22 @@ import (
 const driverBatchTemplateID = "8c0a7f4e-6d0b-4f7a-9d63-4f0d7a1b2c3d"
 
 type driverBatchRepo struct {
-	repositories.TelematicsRepository
-	mappings    []repositories.WorkerTelematicsMapping
-	syncs       []*repositories.SyncWorkerHOSLogsRequest
+	telematicsports.TelematicsRepository
+	mappings    []telematicsports.WorkerTelematicsMapping
+	syncs       []*telematicsports.SyncWorkerHOSLogsRequest
 	submissions []*telematics.FormSubmission
 }
 
 func (r *driverBatchRepo) ListWorkerMappings(
 	context.Context,
 	pagination.TenantInfo,
-) ([]repositories.WorkerTelematicsMapping, error) {
+) ([]telematicsports.WorkerTelematicsMapping, error) {
 	return r.mappings, nil
 }
 
 func (r *driverBatchRepo) SyncWorkerHOSLogs(
 	_ context.Context,
-	req *repositories.SyncWorkerHOSLogsRequest,
+	req *telematicsports.SyncWorkerHOSLogsRequest,
 ) (int, error) {
 	r.syncs = append(r.syncs, req)
 	return len(req.Logs), nil
@@ -51,7 +50,7 @@ func (r *driverBatchRepo) SyncWorkerHOSLogs(
 
 func (r *driverBatchRepo) ListFormMappings(
 	context.Context,
-	*repositories.ListFormMappingsRequest,
+	*telematicsports.ListFormMappingsRequest,
 ) ([]*telematics.FormMapping, error) {
 	return nil, nil
 }
@@ -65,11 +64,11 @@ func (r *driverBatchRepo) UpsertFormSubmission(
 }
 
 type driverBatchProvider struct {
-	services.TelematicsProvider
+	telematicsports.TelematicsProvider
 	hosLogCalls  [][]string
 	formCalls    [][]string
-	hosLogs      map[string][]services.ProviderHOSLogEntry
-	submissions  []services.ProviderFormSubmission
+	hosLogs      map[string][]telematicsports.ProviderHOSLogEntry
+	submissions  []telematicsports.ProviderFormSubmission
 	failedChunk  []string
 	totalFailure error
 }
@@ -80,7 +79,7 @@ func (p *driverBatchProvider) Type() integration.Type {
 
 func (p *driverBatchProvider) partialFailure() error {
 	if len(p.failedChunk) > 0 {
-		return &services.ProviderDriverBatchError{
+		return &telematicsports.ProviderDriverBatchError{
 			DriverIDs: p.failedChunk,
 			Err:       errors.New("upstream rejected the chunk"),
 		}
@@ -93,7 +92,7 @@ func (p *driverBatchProvider) ListHOSLogs(
 	driverIDs []string,
 	_ int64,
 	_ int64,
-) (map[string][]services.ProviderHOSLogEntry, error) {
+) (map[string][]telematicsports.ProviderHOSLogEntry, error) {
 	p.hosLogCalls = append(p.hosLogCalls, driverIDs)
 	if p.totalFailure != nil {
 		return nil, p.totalFailure
@@ -106,7 +105,7 @@ func (p *driverBatchProvider) ListFormSubmissions(
 	driverIDs []string,
 	_ int64,
 	_ int64,
-) ([]services.ProviderFormSubmission, error) {
+) ([]telematicsports.ProviderFormSubmission, error) {
 	p.formCalls = append(p.formCalls, driverIDs)
 	if p.totalFailure != nil {
 		return nil, p.totalFailure
@@ -120,7 +119,7 @@ type driverBatchFixture struct {
 	workerByDriver  map[string]pulid.ID
 	driverByWorker  map[pulid.ID]string
 	repo            *driverBatchRepo
-	workerMappings  []repositories.WorkerTelematicsMapping
+	workerMappings  []telematicsports.WorkerTelematicsMapping
 	expectedWorkers []pulid.ID
 }
 
@@ -133,7 +132,7 @@ func newDriverBatchFixture(n int) *driverBatchFixture {
 		externalIDs:     make([]string, 0, n),
 		workerByDriver:  make(map[string]pulid.ID, n),
 		driverByWorker:  make(map[pulid.ID]string, n),
-		workerMappings:  make([]repositories.WorkerTelematicsMapping, 0, n),
+		workerMappings:  make([]telematicsports.WorkerTelematicsMapping, 0, n),
 		expectedWorkers: make([]pulid.ID, 0, n),
 	}
 	for i := range n {
@@ -145,7 +144,7 @@ func newDriverBatchFixture(n int) *driverBatchFixture {
 		fixture.expectedWorkers = append(fixture.expectedWorkers, workerID)
 		fixture.workerMappings = append(
 			fixture.workerMappings,
-			repositories.WorkerTelematicsMapping{
+			telematicsports.WorkerTelematicsMapping{
 				WorkerID:   workerID,
 				ExternalID: externalID,
 				FirstName:  "Driver",
@@ -157,7 +156,7 @@ func newDriverBatchFixture(n int) *driverBatchFixture {
 	return fixture
 }
 
-func (f *driverBatchFixture) service(provider services.TelematicsProvider) *Service {
+func (f *driverBatchFixture) service(provider telematicsports.TelematicsProvider) *Service {
 	return &Service{
 		repo:             f.repo,
 		providerOverride: provider,
@@ -288,7 +287,7 @@ func TestSyncHOSLogsSyncsOnlyDriversOutsideFailedChunks(t *testing.T) {
 	failed := fixture.externalIDs[:2]
 	provider := &driverBatchProvider{
 		failedChunk: failed,
-		hosLogs: map[string][]services.ProviderHOSLogEntry{
+		hosLogs: map[string][]telematicsports.ProviderHOSLogEntry{
 			fixture.externalIDs[2]: {{HosStatusType: "driving", LogStartAt: 100}},
 			fixture.externalIDs[3]: {
 				{HosStatusType: "mystery", LogStartAt: 200},
@@ -411,7 +410,7 @@ func TestSyncFormsIngestsFetchedChunksAndReportsFailedChunk(t *testing.T) {
 	fixture := newDriverBatchFixture(4)
 	provider := &driverBatchProvider{
 		failedChunk: fixture.externalIDs[2:],
-		submissions: []services.ProviderFormSubmission{
+		submissions: []telematicsports.ProviderFormSubmission{
 			{ID: "sub-a", TemplateID: "tpl", DriverID: fixture.externalIDs[0]},
 			{ID: "sub-b", TemplateID: "tpl", DriverID: fixture.externalIDs[1]},
 		},
@@ -423,7 +422,7 @@ func TestSyncFormsIngestsFetchedChunksAndReportsFailedChunk(t *testing.T) {
 	result := new(TenantSweepResult)
 	err = svc.syncForms(t.Context(), fixture.tenant, provider, drivers, result)
 	require.Error(t, err)
-	batchErr, ok := errors.AsType[*services.ProviderDriverBatchError](err)
+	batchErr, ok := errors.AsType[*telematicsports.ProviderDriverBatchError](err)
 	require.True(t, ok)
 	assert.Equal(t, fixture.externalIDs[2:], batchErr.DriverIDs)
 
@@ -456,7 +455,7 @@ func TestGetHOSCertificationSummaryBatchesDailyLogRequests(t *testing.T) {
 	fixture := newDriverBatchFixture(150)
 	shared := fixture.externalIDs[5]
 	sharedWorker := pulid.MustNew("wrk_")
-	fixture.repo.mappings = append(fixture.repo.mappings, repositories.WorkerTelematicsMapping{
+	fixture.repo.mappings = append(fixture.repo.mappings, telematicsports.WorkerTelematicsMapping{
 		WorkerID:   sharedWorker,
 		ExternalID: shared,
 		FirstName:  "Second",
@@ -531,7 +530,7 @@ func TestGetWorkerHOSLogsRequestsOnlyThatDriver(t *testing.T) {
 	fixture := newDriverBatchFixture(3)
 	target := fixture.externalIDs[1]
 	provider := &driverBatchProvider{
-		hosLogs: map[string][]services.ProviderHOSLogEntry{
+		hosLogs: map[string][]telematicsports.ProviderHOSLogEntry{
 			target: {{HosStatusType: "driving", LogStartAt: 100}},
 		},
 	}

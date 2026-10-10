@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -28,7 +28,7 @@ func TestSummaryCountsChangesByAudienceAndNamesWhatRunsAndWhoIsOpen(t *testing.T
 	})
 	require.NoError(t, err)
 
-	assert.Equal(t, []services.AgentEgressCount{
+	assert.Equal(t, []agentports.AgentEgressCount{
 		{Egress: agent.EgressNone, Count: 1},
 		{Egress: agent.EgressPersonal, Count: 1},
 		{Egress: agent.EgressInternal, Count: 1},
@@ -90,9 +90,9 @@ func TestTheOrganizationsToolRulesShapeEverySafetyRead(t *testing.T) {
 	require.True(t, ok)
 	assert.NotContains(t, summary.UnattendedTools, assign.Title, "a tool held to proposals never runs alone")
 
-	page, err := svc.ListToolPolicies(t.Context(), &services.ListAgentToolPoliciesRequest{TenantInfo: tenantInfo})
+	page, err := svc.ListToolPolicies(t.Context(), &agentports.ListAgentToolPoliciesRequest{TenantInfo: tenantInfo})
 	require.NoError(t, err)
-	views := make(map[string]services.AgentToolPolicyView, len(page.Edges))
+	views := make(map[string]agentports.AgentToolPolicyView, len(page.Edges))
 	for _, edge := range page.Edges {
 		views[edge.View.Policy.Name] = edge.View
 	}
@@ -104,8 +104,8 @@ func TestTheOrganizationsToolRulesShapeEverySafetyRead(t *testing.T) {
 	assert.Equal(t, agent.TierAutoExecute, views["email_customer"].Policy.MaxTier)
 	assert.Nil(t, views["get_shipment"].Override)
 
-	assessed := svc.Assess(t.Context(), &services.AssessAgentSafetyRequest{
-		Subject: &services.AgentSafetySubject{Agent: desk, Control: &tenant.AgentControl{}},
+	assessed := svc.Assess(t.Context(), &agentports.AssessAgentSafetyRequest{
+		Subject: &agentports.AgentSafetySubject{Agent: desk, Control: &tenant.AgentControl{}},
 	})
 	for _, tool := range assessed {
 		if tool.PolicyName == "assign_move" {
@@ -115,11 +115,11 @@ func TestTheOrganizationsToolRulesShapeEverySafetyRead(t *testing.T) {
 		}
 	}
 
-	impacts, err := svc.RuleImpact(t.Context(), &services.RuleImpactRequest{
+	impacts, err := svc.RuleImpact(t.Context(), &agentports.RuleImpactRequest{
 		TenantInfo: tenantInfo,
 		ToolName:   "email_customer",
 		Before:     policy("email_customer", agent.ToolKindAction, agent.EgressExternalRecipient),
-		After: func() services.ToolPolicy {
+		After: func() agentports.ToolPolicy {
 			p := policy("email_customer", agent.ToolKindAction, agent.EgressExternalRecipient)
 			p.MaxTier, p.DefaultTier = agent.TierPropose, agent.TierPropose
 			return p

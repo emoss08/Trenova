@@ -6,23 +6,23 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 type lifecycleTransitionParams struct {
-	req     *services.ServiceFailureLifecycleRequest
-	actor   *services.RequestActor
+	req     *servicefailureports.ServiceFailureLifecycleRequest
+	actor   *permissionports.RequestActor
 	next    servicefailure.Status
 	comment string
 }
 
 func (s *service) Update(
 	ctx context.Context,
-	req *services.UpdateServiceFailureRequest,
-	actor *services.RequestActor,
+	req *servicefailureports.UpdateServiceFailureRequest,
+	actor *permissionports.RequestActor,
 ) (*servicefailure.ServiceFailure, error) {
 	original, planned, err := s.planUpdate(ctx, req)
 	if err != nil {
@@ -62,8 +62,8 @@ func (s *service) Update(
 
 func (s *service) Review(
 	ctx context.Context,
-	req *services.ServiceFailureLifecycleRequest,
-	actor *services.RequestActor,
+	req *servicefailureports.ServiceFailureLifecycleRequest,
+	actor *permissionports.RequestActor,
 ) (*servicefailure.ServiceFailure, error) {
 	return s.lifecycle(ctx, lifecycleTransitionParams{
 		req:     req,
@@ -75,8 +75,8 @@ func (s *service) Review(
 
 func (s *service) Resolve(
 	ctx context.Context,
-	req *services.ServiceFailureLifecycleRequest,
-	actor *services.RequestActor,
+	req *servicefailureports.ServiceFailureLifecycleRequest,
+	actor *permissionports.RequestActor,
 ) (*servicefailure.ServiceFailure, error) {
 	return s.lifecycle(ctx, lifecycleTransitionParams{
 		req:     req,
@@ -88,8 +88,8 @@ func (s *service) Resolve(
 
 func (s *service) Void(
 	ctx context.Context,
-	req *services.ServiceFailureLifecycleRequest,
-	actor *services.RequestActor,
+	req *servicefailureports.ServiceFailureLifecycleRequest,
+	actor *permissionports.RequestActor,
 ) (*servicefailure.ServiceFailure, error) {
 	return s.lifecycle(ctx, lifecycleTransitionParams{
 		req:     req,
@@ -151,13 +151,13 @@ func (s *service) lifecycle(
 
 func (s *service) planUpdate(
 	ctx context.Context,
-	req *services.UpdateServiceFailureRequest,
+	req *servicefailureports.UpdateServiceFailureRequest,
 ) (original, updated *servicefailure.ServiceFailure, err error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, nil, multiErr
 	}
 
-	original, err = s.repo.GetByShipment(ctx, &repositories.GetServiceFailureByShipmentRequest{
+	original, err = s.repo.GetByShipment(ctx, &servicefailureports.GetServiceFailureByShipmentRequest{
 		ID:         req.ID,
 		ShipmentID: req.ShipmentID,
 		TenantInfo: req.TenantInfo,

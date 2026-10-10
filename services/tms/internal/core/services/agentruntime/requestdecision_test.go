@@ -7,22 +7,22 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type decisionObserver struct {
-	seen  []serviceports.ToolObservation
+	seen  []agentports.ToolObservation
 	err   error
 	title string
 }
 
 func (o *decisionObserver) observe(
-	observation serviceports.ToolObservation,
-) (*serviceports.ShownArtifact, error) {
-	if _, requested := observation.Data.(serviceports.DecisionRequest); !requested {
+	observation agentports.ToolObservation,
+) (*agentports.ShownArtifact, error) {
+	if _, requested := observation.Data.(agentports.DecisionRequest); !requested {
 		return nil, nil
 	}
 	o.seen = append(o.seen, observation)
@@ -30,15 +30,15 @@ func (o *decisionObserver) observe(
 		return nil, o.err
 	}
 
-	return &serviceports.ShownArtifact{
+	return &agentports.ShownArtifact{
 		ID:    pulid.MustNew("art_"),
 		Kind:  "decision_request",
 		Title: o.title,
 	}, nil
 }
 
-func waitingOutcome(status agent.ProposalStatus) serviceports.ProposalOutcome {
-	return serviceports.ProposalOutcome{
+func waitingOutcome(status agent.ProposalStatus) agentports.ProposalOutcome {
+	return agentports.ProposalOutcome{
 		ProposalID: pulid.MustNew("aprop_"),
 		ToolName:   "create_shipment",
 		Rationale:  "Copy PRO-100 for Tuesday.",
@@ -47,16 +47,16 @@ func waitingOutcome(status agent.ProposalStatus) serviceports.ProposalOutcome {
 }
 
 type decisionRun struct {
-	result     *serviceports.RunResult
+	result     *agentports.RunResult
 	completion *scriptedCompletion
 	observer   *decisionObserver
 }
 
 func runDecision(
 	t *testing.T,
-	req *serviceports.RunRequest,
+	req *agentports.RunRequest,
 	observer *decisionObserver,
-	turns ...*serviceports.ChatCompletionResult,
+	turns ...*agentports.ChatCompletionResult,
 ) decisionRun {
 	t.Helper()
 
@@ -71,7 +71,7 @@ func runDecision(
 	return decisionRun{result: result, completion: completion, observer: observer}
 }
 
-func chatRequest(proposals ...serviceports.ProposalOutcome) *serviceports.RunRequest {
+func chatRequest(proposals ...agentports.ProposalOutcome) *agentports.RunRequest {
 	pending := make([]agentdefinition.PendingProposal, 0, len(proposals))
 	for _, proposal := range proposals {
 		if proposal.Pending() {
@@ -83,7 +83,7 @@ func chatRequest(proposals ...serviceports.ProposalOutcome) *serviceports.RunReq
 		}
 	}
 
-	return &serviceports.RunRequest{
+	return &agentports.RunRequest{
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Context:    agentdefinition.RuntimeContext{PendingProposals: pending},
@@ -94,11 +94,11 @@ func chatRequest(proposals ...serviceports.ProposalOutcome) *serviceports.RunReq
 	}
 }
 
-func decisionCall(id pulid.ID) *serviceports.ChatCompletionResult {
+func decisionCall(id pulid.ID) *agentports.ChatCompletionResult {
 	return toolTurn(requestDecisionName, map[string]any{"proposalId": id.String()})
 }
 
-func toolResult(result *serviceports.RunResult, name string) (string, bool) {
+func toolResult(result *agentports.RunResult, name string) (string, bool) {
 	for _, message := range result.Messages {
 		if message.ToolName == name {
 			return message.Content, message.ToolFailed
@@ -112,7 +112,7 @@ func TestRequestDecision_IsOfferedOnlyWhileAProposalWaitsInAConversation(t *test
 	t.Parallel()
 
 	waiting := waitingOutcome(agent.ProposalStatusPending)
-	offeredIn := func(req *serviceports.RunRequest) bool {
+	offeredIn := func(req *agentports.RunRequest) bool {
 		run := runDecision(t, req, nil, textTurn("Done."))
 
 		return slices.Contains(offered(run.completion.Requests[0]), requestDecisionName)
@@ -127,7 +127,7 @@ func TestRequestDecision_IsOfferedOnlyWhileAProposalWaitsInAConversation(t *test
 	assert.False(t, offeredIn(unattended), "nobody is there to decide")
 
 	delegated := chatRequest(waiting)
-	delegated.Delegation = &serviceports.Delegation{CallID: "call_parent", StepScope: "d1"}
+	delegated.Delegation = &agentports.Delegation{CallID: "call_parent", StepScope: "d1"}
 	assert.False(t, offeredIn(delegated), "a delegate is not talking to the person")
 
 	nowhere := chatRequest(waiting)
@@ -147,7 +147,7 @@ func TestRequestDecision_ShowsTheCardAgainAndSaysTypingDecidesNothing(t *testing
 	)
 
 	require.Len(t, observer.seen, 1)
-	assert.Equal(t, serviceports.DecisionRequest{
+	assert.Equal(t, agentports.DecisionRequest{
 		ProposalID: waiting.ProposalID,
 		ToolName:   "create_shipment",
 	}, observer.seen[0].Data)
@@ -169,7 +169,7 @@ func TestRequestDecision_RefusesWhatIsNotWaitingHere(t *testing.T) {
 
 	cases := []struct {
 		name     string
-		call     *serviceports.ChatCompletionResult
+		call     *agentports.ChatCompletionResult
 		contains string
 	}{
 		{
@@ -210,7 +210,7 @@ func TestRequestDecision_ShowsOneCardOncePerTurn(t *testing.T) {
 
 	waiting := waitingOutcome(agent.ProposalStatusPending)
 	observer := &decisionObserver{title: "Create shipment"}
-	twice := &serviceports.ChatCompletionResult{ToolCalls: []serviceports.ToolCall{
+	twice := &agentports.ChatCompletionResult{ToolCalls: []agentports.ToolCall{
 		{ID: "call_a", Name: requestDecisionName, Arguments: map[string]any{
 			"proposalId": waiting.ProposalID.String(),
 		}},
@@ -265,14 +265,14 @@ func TestPublishStep_ShowsTheCardADurableTurnAskedFor(t *testing.T) {
 	observer := &decisionObserver{title: "Create shipment"}
 	id := pulid.MustNew("aprop_")
 
-	outcome := rt.PublishStep(observer.observe, &serviceports.ToolCall{
+	outcome := rt.PublishStep(observer.observe, &agentports.ToolCall{
 		ID:        "call_decide",
 		Name:      requestDecisionName,
 		Arguments: map[string]any{"proposalId": id.String()},
 	})
 
 	require.Len(t, observer.seen, 1)
-	assert.Equal(t, serviceports.DecisionRequest{ProposalID: id}, observer.seen[0].Data)
+	assert.Equal(t, agentports.DecisionRequest{ProposalID: id}, observer.seen[0].Data)
 	assert.False(t, outcome.Failed)
 	assert.Contains(t, outcome.Content, "The approval box under the conversation now shows")
 	assert.Equal(t, "The approval box could not be opened just now. Tell the person the "+
@@ -280,7 +280,7 @@ func TestPublishStep_ShowsTheCardADurableTurnAskedFor(t *testing.T) {
 		"typing does not approve it.", UnkeptOutcome(requestDecisionName).Content)
 }
 
-func planStep(planID pulid.ID) serviceports.ProposalOutcome {
+func planStep(planID pulid.ID) agentports.ProposalOutcome {
 	step := waitingOutcome(agent.ProposalStatusPending)
 	step.ToolName = "post_invoice"
 	step.PlanID = planID
@@ -301,7 +301,7 @@ func TestRequestDecision_ShowsAPlanAsOneCard(t *testing.T) {
 	)
 
 	require.Len(t, observer.seen, 1)
-	assert.Equal(t, serviceports.DecisionRequest{
+	assert.Equal(t, agentports.DecisionRequest{
 		ProposalID:  first.ProposalID,
 		ProposalIDs: []pulid.ID{first.ProposalID, second.ProposalID},
 		PlanID:      planID,
@@ -327,7 +327,7 @@ func TestRequestDecision_ShowsSeveralProposalsOfOneToolAsOneCard(t *testing.T) {
 	)
 
 	require.Len(t, observer.seen, 1)
-	assert.Equal(t, serviceports.DecisionRequest{
+	assert.Equal(t, agentports.DecisionRequest{
 		ProposalID:  first.ProposalID,
 		ProposalIDs: []pulid.ID{first.ProposalID, second.ProposalID},
 		ToolName:    "create_shipment",
@@ -411,12 +411,12 @@ func TestPublishStep_ShowsAPlanADurableTurnAskedFor(t *testing.T) {
 	planID := pulid.MustNew("apl_")
 	ids := []pulid.ID{pulid.MustNew("aprop_"), pulid.MustNew("aprop_")}
 
-	rt.PublishStep(observer.observe, &serviceports.ToolCall{
+	rt.PublishStep(observer.observe, &agentports.ToolCall{
 		ID:        "call_plan",
 		Name:      requestDecisionName,
 		Arguments: map[string]any{"planId": planID.String()},
 	})
-	rt.PublishStep(observer.observe, &serviceports.ToolCall{
+	rt.PublishStep(observer.observe, &agentports.ToolCall{
 		ID:   "call_many",
 		Name: requestDecisionName,
 		Arguments: map[string]any{
@@ -425,7 +425,7 @@ func TestPublishStep_ShowsAPlanADurableTurnAskedFor(t *testing.T) {
 	})
 
 	require.Len(t, observer.seen, 2)
-	assert.Equal(t, serviceports.DecisionRequest{PlanID: planID}, observer.seen[0].Data)
-	assert.Equal(t, serviceports.DecisionRequest{ProposalID: ids[0], ProposalIDs: ids},
+	assert.Equal(t, agentports.DecisionRequest{PlanID: planID}, observer.seen[0].Data)
+	assert.Equal(t, agentports.DecisionRequest{ProposalID: ids[0], ProposalIDs: ids},
 		observer.seen[1].Data)
 }

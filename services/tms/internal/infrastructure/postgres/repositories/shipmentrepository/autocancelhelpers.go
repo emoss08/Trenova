@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -20,7 +20,7 @@ const autoCancelReason = "Automatically canceled by shipment control"
 
 func (r *repository) GetAutoCancelableShipments(
 	ctx context.Context,
-	req *repositories.GetAutoCancelableShipmentsRequest,
+	req *shipmentports.GetAutoCancelableShipmentsRequest,
 	thresholdDays int8,
 ) ([]*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*shipment.Shipment, error) {
@@ -37,14 +37,14 @@ func (r *repository) GetAutoCancelableShipments(
 
 func (r *repository) AutoCancelShipments(
 	ctx context.Context,
-	req *repositories.AutoCancelShipmentsRequest,
+	req *shipmentports.AutoCancelShipmentsRequest,
 	thresholdDays int8,
 ) ([]*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*shipment.Shipment, error) {
 		currentTime := timeutils.NowUnix()
 		entities := make([]*shipment.Shipment, 0)
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 			var err error
 			entities, err = r.getAutoCancelableShipments(
 				c,
@@ -101,7 +101,7 @@ func (r *repository) RunAutoCancelShipments(ctx context.Context) ([]*shipment.Sh
 		currentTime := timeutils.NowUnix()
 		entities := make([]*shipment.Shipment, 0)
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 			var err error
 			entities, err = r.getGloballyAutoCancelableShipments(c, tx, currentTime)
 			if err != nil || len(entities) == 0 {
@@ -197,7 +197,7 @@ func (r *repository) RunAutoCancelShipmentsForTenant(
 		currentTime := timeutils.NowUnix()
 		entities := make([]*shipment.Shipment, 0)
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 			var err error
 			entities, err = r.getAutoCancelableShipmentsForTenant(
 				c,

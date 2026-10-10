@@ -6,9 +6,9 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingtransfer"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingtransferports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -38,7 +38,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.BillingTransferRunRepository {
+func New(p Params) billingtransferports.BillingTransferRunRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.billing-transfer-run-repository"),
@@ -91,7 +91,7 @@ func (r *repository) Update(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req *repositories.GetBillingTransferRunRequest,
+	req *billingtransferports.GetBillingTransferRunRequest,
 ) (*billingtransfer.BillingTransferRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*billingtransfer.BillingTransferRun, error) {
 		entity := new(billingtransfer.BillingTransferRun)
@@ -116,7 +116,7 @@ func (r *repository) GetByID(
 // caller's dialog simply opens on the picker instead of reattaching.
 func (r *repository) GetActive(
 	ctx context.Context,
-	req *repositories.GetActiveBillingTransferRunRequest,
+	req *billingtransferports.GetActiveBillingTransferRunRequest,
 ) (*billingtransfer.BillingTransferRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*billingtransfer.BillingTransferRun, error) {
 		cols := buncolgen.BillingTransferRunColumns
@@ -150,7 +150,7 @@ func (r *repository) GetActive(
 // run somebody canceled in the meantime is not dragged back into Running.
 func (r *repository) MarkRunning(
 	ctx context.Context,
-	req *repositories.MarkBillingTransferRunRunningRequest,
+	req *billingtransferports.MarkBillingTransferRunRunningRequest,
 ) (*billingtransfer.BillingTransferRun, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*billingtransfer.BillingTransferRun, error) {
 		cols := buncolgen.BillingTransferRunColumns
@@ -195,7 +195,7 @@ func (r *repository) MarkRunning(
 // abandoned with its outcomes unwritten. COALESCE keeps the first asker.
 func (r *repository) RequestCancel(
 	ctx context.Context,
-	req *repositories.RequestBillingTransferRunCancelRequest,
+	req *billingtransferports.RequestBillingTransferRunCancelRequest,
 ) (*billingtransfer.BillingTransferRun, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*billingtransfer.BillingTransferRun, error) {
 		cols := buncolgen.BillingTransferRunColumns
@@ -231,7 +231,7 @@ func (r *repository) RequestCancel(
 
 func (r *repository) ListStale(
 	ctx context.Context,
-	req *repositories.ListStaleBillingTransferRunsRequest,
+	req *billingtransferports.ListStaleBillingTransferRunsRequest,
 ) ([]*billingtransfer.BillingTransferRun, error) {
 	ctx = dbscope.WithSystem(ctx, "list stalled billing transfer runs across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*billingtransfer.BillingTransferRun, error) {

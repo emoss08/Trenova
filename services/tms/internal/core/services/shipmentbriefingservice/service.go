@@ -9,11 +9,15 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentbrief"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/shipmentboardbrief"
 	"github.com/emoss08/trenova/internal/core/services/shipmentboardcache"
 	"github.com/emoss08/trenova/internal/core/services/shipmentnarration"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
@@ -43,46 +47,46 @@ var factFilters = [...]shipment.QuickFilter{
 type Params struct {
 	fx.In
 
-	Board         repositories.ShipmentBoardRepository
-	Briefing      repositories.ShipmentBriefingRepository
-	Briefs        repositories.ShipmentBriefRepository
-	QuickFilters  services.ShipmentQuickFilterBasisResolver
-	Organizations repositories.OrganizationRepository
-	Suggestions   services.ShipmentSuggestionCandidates
-	Completion    services.CompletionService
-	Cache         repositories.ShipmentBoardCache
+	Board         shipmentports.ShipmentBoardRepository
+	Briefing      shipmentports.ShipmentBriefingRepository
+	Briefs        shipmentbriefports.ShipmentBriefRepository
+	QuickFilters  shipmentports.ShipmentQuickFilterBasisResolver
+	Organizations tenantports.OrganizationRepository
+	Suggestions   shipmentbriefports.ShipmentSuggestionCandidates
+	Completion    agentports.CompletionService
+	Cache         shipmentports.ShipmentBoardCache
 	Logger        *zap.Logger
 }
 
 type Dependencies struct {
-	Board         repositories.ShipmentBoardRepository
-	Briefing      repositories.ShipmentBriefingRepository
-	Briefs        repositories.ShipmentBriefRepository
-	QuickFilters  services.ShipmentQuickFilterBasisResolver
-	Organizations repositories.OrganizationRepository
-	Suggestions   services.ShipmentSuggestionCandidates
-	Completion    services.CompletionService
-	Cache         repositories.ShipmentBoardCache
+	Board         shipmentports.ShipmentBoardRepository
+	Briefing      shipmentports.ShipmentBriefingRepository
+	Briefs        shipmentbriefports.ShipmentBriefRepository
+	QuickFilters  shipmentports.ShipmentQuickFilterBasisResolver
+	Organizations tenantports.OrganizationRepository
+	Suggestions   shipmentbriefports.ShipmentSuggestionCandidates
+	Completion    agentports.CompletionService
+	Cache         shipmentports.ShipmentBoardCache
 	Logger        *zap.Logger
 	Now           func() time.Time
 }
 
 type Service struct {
-	board         repositories.ShipmentBoardRepository
-	briefing      repositories.ShipmentBriefingRepository
-	briefs        repositories.ShipmentBriefRepository
-	quickFilters  services.ShipmentQuickFilterBasisResolver
-	organizations repositories.OrganizationRepository
-	suggestions   services.ShipmentSuggestionCandidates
-	completion    services.CompletionService
-	cache         repositories.ShipmentBoardCache
+	board         shipmentports.ShipmentBoardRepository
+	briefing      shipmentports.ShipmentBriefingRepository
+	briefs        shipmentbriefports.ShipmentBriefRepository
+	quickFilters  shipmentports.ShipmentQuickFilterBasisResolver
+	organizations tenantports.OrganizationRepository
+	suggestions   shipmentbriefports.ShipmentSuggestionCandidates
+	completion    agentports.CompletionService
+	cache         shipmentports.ShipmentBoardCache
 	l             *zap.Logger
 	now           func() time.Time
 }
 
 var (
-	_ services.ShipmentBriefingReader = (*Service)(nil)
-	_ services.ShipmentBriefWriter    = (*Service)(nil)
+	_ shipmentbriefports.ShipmentBriefingReader = (*Service)(nil)
+	_ shipmentbriefports.ShipmentBriefWriter    = (*Service)(nil)
 )
 
 //nolint:gocritic // dependency injection
@@ -116,15 +120,15 @@ func NewWithDependencies(d *Dependencies) *Service {
 	}
 }
 
-func NewReader(s *Service) services.ShipmentBriefingReader { return s }
+func NewReader(s *Service) shipmentbriefports.ShipmentBriefingReader { return s }
 
-func NewWriter(s *Service) services.ShipmentBriefWriter { return s }
+func NewWriter(s *Service) shipmentbriefports.ShipmentBriefWriter { return s }
 
 func (s *Service) Briefing(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	_ string,
-) (*services.ShipmentBriefing, error) {
+) (*shipmentbriefports.ShipmentBriefing, error) {
 	day, err := shipmentboardbrief.Today(ctx, s.organizations, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -149,7 +153,7 @@ func (s *Service) Briefing(
 
 func (s *Service) WriteBrief(
 	ctx context.Context,
-	req *services.WriteShipmentBriefRequest,
+	req *shipmentbriefports.WriteShipmentBriefRequest,
 ) (*shipmentbrief.Brief, error) {
 	day, err := shipmentboardbrief.Today(ctx, s.organizations, req.TenantInfo)
 	if err != nil {
@@ -200,7 +204,7 @@ func (s *Service) liveFacts(
 		s.cache,
 		s.l,
 		&shipmentboardcache.Request{
-			Section:    repositories.ShipmentBoardSectionBriefing,
+			Section:    shipmentports.ShipmentBoardSectionBriefing,
 			TenantInfo: tenantInfo,
 			Timezone:   timezone,
 			Variant:    liveFactsVariant,
@@ -263,10 +267,10 @@ func (s *Service) snapshot(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	timezone string,
-) (*Facts, []*services.ShipmentSuggestion, error) {
+) (*Facts, []*shipmentsuggestionports.ShipmentSuggestion, error) {
 	var (
 		facts      *Facts
-		candidates []*services.ShipmentSuggestion
+		candidates []*shipmentsuggestionports.ShipmentSuggestion
 	)
 	g, gctx := errgroup.WithContext(ctx)
 	g.Go(func() error {
@@ -288,7 +292,7 @@ func (s *Service) snapshot(
 	return facts, candidates, nil
 }
 
-func toStored(segments []services.ShipmentBriefingSegment) []shipmentbrief.Segment {
+func toStored(segments []shipmentbriefports.ShipmentBriefingSegment) []shipmentbrief.Segment {
 	out := make([]shipmentbrief.Segment, 0, len(segments))
 	for _, segment := range segments {
 		out = append(out, shipmentbrief.Segment{Text: segment.Text, Filter: segment.Filter})
@@ -296,16 +300,16 @@ func toStored(segments []services.ShipmentBriefingSegment) []shipmentbrief.Segme
 	return out
 }
 
-func toBriefing(brief *shipmentbrief.Brief) *services.ShipmentBriefing {
-	segments := make([]services.ShipmentBriefingSegment, 0, len(brief.Segments))
+func toBriefing(brief *shipmentbrief.Brief) *shipmentbriefports.ShipmentBriefing {
+	segments := make([]shipmentbriefports.ShipmentBriefingSegment, 0, len(brief.Segments))
 	for _, segment := range brief.Segments {
-		segments = append(segments, services.ShipmentBriefingSegment{
+		segments = append(segments, shipmentbriefports.ShipmentBriefingSegment{
 			Text:   segment.Text,
 			Filter: segment.Filter,
 		})
 	}
 
-	return &services.ShipmentBriefing{
+	return &shipmentbriefports.ShipmentBriefing{
 		Segments:    segments,
 		Narrated:    brief.Narrated,
 		GeneratedAt: brief.GeneratedAt,
@@ -324,7 +328,7 @@ func (s *Service) Facts(
 	}
 
 	margin, detention := shipment.QuickFiltersNeed(specs)
-	basis, err := s.quickFilters.Resolve(ctx, &services.ResolveShipmentQuickFilterBasisRequest{
+	basis, err := s.quickFilters.Resolve(ctx, &shipmentports.ResolveShipmentQuickFilterBasisRequest{
 		TenantInfo: tenantInfo,
 		Timezone:   timezone,
 		Margin:     margin,
@@ -339,10 +343,10 @@ func (s *Service) Facts(
 	g.Go(func() error {
 		totals, tErr := s.board.QuickFilterTotals(
 			gctx,
-			&repositories.CountShipmentQuickFiltersRequest{
-				Scope: &repositories.ShipmentBoardScope{
+			&shipmentports.CountShipmentQuickFiltersRequest{
+				Scope: &shipmentports.ShipmentBoardScope{
 					Filter:  &pagination.QueryOptions{TenantInfo: tenantInfo},
-					Options: repositories.ShipmentOptions{QuickFilterBasis: basis},
+					Options: shipmentports.ShipmentOptions{QuickFilterBasis: basis},
 				},
 				Filters: specs,
 			},
@@ -372,7 +376,7 @@ func (s *Service) Facts(
 	g.Go(func() error {
 		caps, cErr := s.organizations.GetCapabilities(
 			gctx,
-			repositories.GetOrganizationCapabilitiesRequest{TenantInfo: tenantInfo},
+			tenantports.GetOrganizationCapabilitiesRequest{TenantInfo: tenantInfo},
 		)
 		if cErr != nil {
 			return cErr
@@ -405,14 +409,14 @@ func (s *Service) narrate(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	facts *Facts,
-	plain []services.ShipmentBriefingSegment,
-) ([]services.ShipmentBriefingSegment, string, bool) {
+	plain []shipmentbriefports.ShipmentBriefingSegment,
+) ([]shipmentbriefports.ShipmentBriefingSegment, string, bool) {
 	allowed := facts.Filters()
 	narration, ok := shipmentnarration.Narrate[narrationDraft](
 		ctx,
 		s.completion,
 		s.l,
-		&services.StructuredCompletionRequest{
+		&agentports.StructuredCompletionRequest{
 			TenantInfo:   tenantInfo,
 			Task:         aiprovider.TaskDailyBriefing,
 			System:       systemPrompt,
@@ -420,7 +424,7 @@ func (s *Service) narrate(
 			OutputSchema: outputSchema(allowed),
 			SchemaName:   schemaName,
 			MaxTokens:    maxOutputTokens,
-			Attribution:  services.AIUsageAttribution{UserID: tenantInfo.UserID},
+			Attribution:  aiusageports.AIUsageAttribution{UserID: tenantInfo.UserID},
 		},
 	)
 	if !ok {
@@ -434,10 +438,10 @@ func (s *Service) narrate(
 	return segments, narration.Model, true
 }
 
-func (d *narrationDraft) toSegments() []services.ShipmentBriefingSegment {
-	out := make([]services.ShipmentBriefingSegment, 0, len(d.Segments))
+func (d *narrationDraft) toSegments() []shipmentbriefports.ShipmentBriefingSegment {
+	out := make([]shipmentbriefports.ShipmentBriefingSegment, 0, len(d.Segments))
 	for _, segment := range d.Segments {
-		item := services.ShipmentBriefingSegment{Text: segment.Text}
+		item := shipmentbriefports.ShipmentBriefingSegment{Text: segment.Text}
 		if segment.Filter != "" {
 			filter := shipment.QuickFilter(segment.Filter)
 			item.Filter = &filter
@@ -448,10 +452,10 @@ func (d *narrationDraft) toSegments() []services.ShipmentBriefingSegment {
 }
 
 func AcceptNarration(
-	segments []services.ShipmentBriefingSegment,
+	segments []shipmentbriefports.ShipmentBriefingSegment,
 	facts *Facts,
 	allowed []shipment.QuickFilter,
-) ([]services.ShipmentBriefingSegment, bool) {
+) ([]shipmentbriefports.ShipmentBriefingSegment, bool) {
 	if len(segments) == 0 || len(segments) > maxSegments {
 		return nil, false
 	}

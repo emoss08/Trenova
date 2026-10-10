@@ -5,10 +5,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/conversationschedule"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/conversationscheduleservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -125,13 +124,13 @@ type fakeTemporal struct {
 func (c *fakeTemporal) ScheduleClient() client.ScheduleClient { return c.schedules }
 
 type fakeRows struct {
-	repositories.ConversationScheduleRepository
+	conversationscheduleports.ConversationScheduleRepository
 	rows []*conversationschedule.Schedule
 }
 
 func (f *fakeRows) ListAcrossTenants(
 	_ context.Context,
-	req repositories.ListConversationSchedulesAcrossTenantsRequest,
+	req conversationscheduleports.ListConversationSchedulesAcrossTenantsRequest,
 ) ([]*conversationschedule.Schedule, error) {
 	if req.AfterID.IsNotNil() {
 		return nil, nil
@@ -249,15 +248,15 @@ func TestReconcile_MakesTheSchedulesMatchTheRows(t *testing.T) {
 }
 
 type fakeRunner struct {
-	result *serviceports.FireConversationScheduleResult
+	result *conversationscheduleports.FireConversationScheduleResult
 	err    error
-	asked  []serviceports.FireConversationScheduleRequest
+	asked  []conversationscheduleports.FireConversationScheduleRequest
 }
 
 func (f *fakeRunner) Fire(
 	_ context.Context,
-	req serviceports.FireConversationScheduleRequest,
-) (*serviceports.FireConversationScheduleResult, error) {
+	req conversationscheduleports.FireConversationScheduleRequest,
+) (*conversationscheduleports.FireConversationScheduleResult, error) {
 	f.asked = append(f.asked, req)
 
 	return f.result, f.err
@@ -278,7 +277,7 @@ func fireActivity(
 	runner *fakeRunner,
 	syncer *fakeSyncer,
 	input *FireInput,
-) (*serviceports.FireConversationScheduleResult, error) {
+) (*conversationscheduleports.FireConversationScheduleResult, error) {
 	t.Helper()
 
 	var suite testsuite.WorkflowTestSuite
@@ -290,7 +289,7 @@ func fireActivity(
 		return nil, err
 	}
 
-	var result serviceports.FireConversationScheduleResult
+	var result conversationscheduleports.FireConversationScheduleResult
 	require.NoError(t, value.Get(&result))
 
 	return &result, nil
@@ -304,7 +303,7 @@ func TestFireActivity_HandsTheSlotToTheService(t *testing.T) {
 	t.Parallel()
 
 	turnID := pulid.MustNew("atrn_")
-	runner := &fakeRunner{result: &serviceports.FireConversationScheduleResult{TurnID: turnID}}
+	runner := &fakeRunner{result: &conversationscheduleports.FireConversationScheduleResult{TurnID: turnID}}
 	syncer := &fakeSyncer{}
 	payload := &RunPayload{
 		BasePayload: temporaltype.BasePayload{
@@ -330,7 +329,7 @@ func TestFireActivity_HandsTheSlotToTheService(t *testing.T) {
 func TestFireActivity_RemovesTheScheduleOfADeletedRow(t *testing.T) {
 	t.Parallel()
 
-	runner := &fakeRunner{result: &serviceports.FireConversationScheduleResult{
+	runner := &fakeRunner{result: &conversationscheduleports.FireConversationScheduleResult{
 		Skipped: conversationscheduleservice.SkipGone,
 		Gone:    true,
 	}}

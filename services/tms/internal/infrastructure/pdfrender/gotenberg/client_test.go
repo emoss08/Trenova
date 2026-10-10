@@ -14,8 +14,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -92,7 +92,7 @@ func TestRenderSubmitsExpectedMultipartShape(t *testing.T) {
 
 	client := newTestClient(t, srv.URL, nil)
 
-	pdf, err := client.Render(t.Context(), &services.PDFRenderRequest{
+	pdf, err := client.Render(t.Context(), &documenttemplateports.PDFRenderRequest{
 		HTML:        "<p>body</p>",
 		HeaderHTML:  "<span>head</span>",
 		FooterHTML:  "<span>foot</span>",
@@ -132,7 +132,7 @@ func TestRenderOmitsEmptyHeaderAndFooter(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	_, err := newTestClient(t, srv.URL, nil).Render(t.Context(), &services.PDFRenderRequest{
+	_, err := newTestClient(t, srv.URL, nil).Render(t.Context(), &documenttemplateports.PDFRenderRequest{
 		HTML:       "<p>body</p>",
 		HeaderHTML: "   ",
 	})
@@ -222,7 +222,7 @@ func TestRenderPageGeometry(t *testing.T) {
 			)
 			defer srv.Close()
 
-			_, err := newTestClient(t, srv.URL, nil).Render(t.Context(), &services.PDFRenderRequest{
+			_, err := newTestClient(t, srv.URL, nil).Render(t.Context(), &documenttemplateports.PDFRenderRequest{
 				HTML:        "<p>x</p>",
 				PageSize:    tt.pageSize,
 				Orientation: tt.orientation,
@@ -244,7 +244,7 @@ func TestRenderInvalidMarginsFallBackToDefault(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	_, err := newTestClient(t, srv.URL, nil).Render(t.Context(), &services.PDFRenderRequest{
+	_, err := newTestClient(t, srv.URL, nil).Render(t.Context(), &documenttemplateports.PDFRenderRequest{
 		HTML:    "<p>x</p>",
 		Margins: documenttemplate.Margins{Top: -5, Bottom: 900},
 	})
@@ -262,10 +262,10 @@ func TestRenderRetryMatrix(t *testing.T) {
 		wantCalls int32
 		wantErrIs error
 	}{
-		{"429 retries", http.StatusTooManyRequests, 3, services.ErrPDFRendererUnavailable},
-		{"502 retries", http.StatusBadGateway, 3, services.ErrPDFRendererUnavailable},
-		{"503 retries", http.StatusServiceUnavailable, 3, services.ErrPDFRendererUnavailable},
-		{"504 retries", http.StatusGatewayTimeout, 3, services.ErrPDFRendererUnavailable},
+		{"429 retries", http.StatusTooManyRequests, 3, documenttemplateports.ErrPDFRendererUnavailable},
+		{"502 retries", http.StatusBadGateway, 3, documenttemplateports.ErrPDFRendererUnavailable},
+		{"503 retries", http.StatusServiceUnavailable, 3, documenttemplateports.ErrPDFRendererUnavailable},
+		{"504 retries", http.StatusGatewayTimeout, 3, documenttemplateports.ErrPDFRendererUnavailable},
 		// Bad markup cannot be fixed by asking again.
 		{"400 does not retry", http.StatusBadRequest, 1, errBadRequest},
 		{"409 does not retry", http.StatusConflict, 1, errBadRequest},
@@ -287,7 +287,7 @@ func TestRenderRetryMatrix(t *testing.T) {
 				c.MaxRetries = 3
 			})
 
-			_, err := client.Render(t.Context(), &services.PDFRenderRequest{HTML: "<p>x</p>"})
+			_, err := client.Render(t.Context(), &documenttemplateports.PDFRenderRequest{HTML: "<p>x</p>"})
 			require.Error(t, err)
 			assert.ErrorIs(t, err, tt.wantErrIs)
 			assert.Contains(t, err.Error(), "renderer detail")
@@ -308,7 +308,7 @@ func TestRenderSucceedsAfterRetry(t *testing.T) {
 	defer srv.Close()
 
 	pdf, err := newTestClient(t, srv.URL, nil).
-		Render(t.Context(), &services.PDFRenderRequest{HTML: "<p>x</p>"})
+		Render(t.Context(), &documenttemplateports.PDFRenderRequest{HTML: "<p>x</p>"})
 	require.NoError(t, err)
 	assert.Equal(t, "pdf-bytes", string(pdf))
 	assert.Equal(t, int32(2), calls.Load())
@@ -348,7 +348,7 @@ func TestRenderSemaphoreLimitsConcurrency(t *testing.T) {
 	var wg sync.WaitGroup
 	for range 8 {
 		wg.Go(func() {
-			_, err := client.Render(t.Context(), &services.PDFRenderRequest{HTML: "<p>x</p>"})
+			_, err := client.Render(t.Context(), &documenttemplateports.PDFRenderRequest{HTML: "<p>x</p>"})
 			assert.NoError(t, err)
 		})
 	}
@@ -369,7 +369,7 @@ func TestRenderRejectsOversizedPDF(t *testing.T) {
 		c.MaxPDFBytes = 64
 	})
 
-	_, err := client.Render(t.Context(), &services.PDFRenderRequest{HTML: "<p>x</p>"})
+	_, err := client.Render(t.Context(), &documenttemplateports.PDFRenderRequest{HTML: "<p>x</p>"})
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "exceeds the 64 byte limit")
 }
@@ -379,15 +379,15 @@ func TestDisabledRendererIsUnavailableNotAnError(t *testing.T) {
 
 	assert.False(t, client.Enabled())
 
-	_, err := client.Render(t.Context(), &services.PDFRenderRequest{HTML: "<p>x</p>"})
-	assert.ErrorIs(t, err, services.ErrPDFRendererUnavailable)
-	assert.ErrorIs(t, client.Healthy(t.Context()), services.ErrPDFRendererUnavailable)
+	_, err := client.Render(t.Context(), &documenttemplateports.PDFRenderRequest{HTML: "<p>x</p>"})
+	assert.ErrorIs(t, err, documenttemplateports.ErrPDFRendererUnavailable)
+	assert.ErrorIs(t, client.Healthy(t.Context()), documenttemplateports.ErrPDFRendererUnavailable)
 }
 
 func TestRenderRejectsEmptyHTML(t *testing.T) {
 	client := newTestClient(t, "http://renderer.invalid", nil)
 
-	_, err := client.Render(t.Context(), &services.PDFRenderRequest{HTML: "   "})
+	_, err := client.Render(t.Context(), &documenttemplateports.PDFRenderRequest{HTML: "   "})
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "no HTML")
 }
@@ -414,7 +414,7 @@ func TestHealthy(t *testing.T) {
 
 			err := newTestClient(t, srv.URL, nil).Healthy(t.Context())
 			if tt.wantErr {
-				assert.ErrorIs(t, err, services.ErrPDFRendererUnavailable)
+				assert.ErrorIs(t, err, documenttemplateports.ErrPDFRendererUnavailable)
 				return
 			}
 			assert.NoError(t, err)

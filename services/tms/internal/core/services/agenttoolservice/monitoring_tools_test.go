@@ -15,10 +15,15 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -30,50 +35,50 @@ import (
 
 type fakeFailureDecider struct {
 	existing      *servicefailure.ServiceFailure
-	evaluated     *serviceports.EvaluateShipmentServiceFailuresRequest
-	evaluatedStop *serviceports.EvaluateStopServiceFailuresRequest
-	bulk          *serviceports.BulkEvaluateServiceFailuresRequest
-	resolved      *serviceports.ServiceFailureLifecycleRequest
-	actor         *serviceports.RequestActor
-	plans         map[pulid.ID]*serviceports.ServiceFailureDetectionPlan
+	evaluated     *servicefailureports.EvaluateShipmentServiceFailuresRequest
+	evaluatedStop *servicefailureports.EvaluateStopServiceFailuresRequest
+	bulk          *servicefailureports.BulkEvaluateServiceFailuresRequest
+	resolved      *servicefailureports.ServiceFailureLifecycleRequest
+	actor         *permissionports.RequestActor
+	plans         map[pulid.ID]*servicefailureports.ServiceFailureDetectionPlan
 }
 
 func (f *fakeFailureDecider) EvaluateStop(
 	_ context.Context,
-	req *serviceports.EvaluateStopServiceFailuresRequest,
-	actor *serviceports.RequestActor,
-) (*serviceports.ServiceFailureEvaluationResult, error) {
+	req *servicefailureports.EvaluateStopServiceFailuresRequest,
+	actor *permissionports.RequestActor,
+) (*servicefailureports.ServiceFailureEvaluationResult, error) {
 	f.evaluatedStop = req
 	f.actor = actor
 
-	return &serviceports.ServiceFailureEvaluationResult{}, nil
+	return &servicefailureports.ServiceFailureEvaluationResult{}, nil
 }
 
 func (f *fakeFailureDecider) BulkEvaluate(
 	_ context.Context,
-	req *serviceports.BulkEvaluateServiceFailuresRequest,
-	actor *serviceports.RequestActor,
-) (*serviceports.ServiceFailureEvaluationResult, error) {
+	req *servicefailureports.BulkEvaluateServiceFailuresRequest,
+	actor *permissionports.RequestActor,
+) (*servicefailureports.ServiceFailureEvaluationResult, error) {
 	f.bulk = req
 	f.actor = actor
 
-	return &serviceports.ServiceFailureEvaluationResult{}, nil
+	return &servicefailureports.ServiceFailureEvaluationResult{}, nil
 }
 
 func (f *fakeFailureDecider) EvaluateShipment(
 	_ context.Context,
-	req *serviceports.EvaluateShipmentServiceFailuresRequest,
-	actor *serviceports.RequestActor,
-) (*serviceports.ServiceFailureEvaluationResult, error) {
+	req *servicefailureports.EvaluateShipmentServiceFailuresRequest,
+	actor *permissionports.RequestActor,
+) (*servicefailureports.ServiceFailureEvaluationResult, error) {
 	f.evaluated = req
 	f.actor = actor
 
-	return &serviceports.ServiceFailureEvaluationResult{}, nil
+	return &servicefailureports.ServiceFailureEvaluationResult{}, nil
 }
 
 func (f *fakeFailureDecider) GetByID(
 	_ context.Context,
-	req *repositories.GetServiceFailureByIDRequest,
+	req *servicefailureports.GetServiceFailureByIDRequest,
 ) (*servicefailure.ServiceFailure, error) {
 	if f.existing != nil && f.existing.ID == req.ID {
 		return f.existing, nil
@@ -84,8 +89,8 @@ func (f *fakeFailureDecider) GetByID(
 
 func (f *fakeFailureDecider) Resolve(
 	_ context.Context,
-	req *serviceports.ServiceFailureLifecycleRequest,
-	actor *serviceports.RequestActor,
+	req *servicefailureports.ServiceFailureLifecycleRequest,
+	actor *permissionports.RequestActor,
 ) (*servicefailure.ServiceFailure, error) {
 	f.resolved = req
 	f.actor = actor
@@ -95,13 +100,13 @@ func (f *fakeFailureDecider) Resolve(
 
 func (f *fakeFailureDecider) PreviewEvaluateShipment(
 	_ context.Context,
-	req *serviceports.EvaluateShipmentServiceFailuresRequest,
-) (*serviceports.ServiceFailureDetectionPlan, error) {
+	req *servicefailureports.EvaluateShipmentServiceFailuresRequest,
+) (*servicefailureports.ServiceFailureDetectionPlan, error) {
 	if plan, ok := f.plans[req.ShipmentID]; ok {
 		return plan, nil
 	}
 
-	return &serviceports.ServiceFailureDetectionPlan{}, nil
+	return &servicefailureports.ServiceFailureDetectionPlan{}, nil
 }
 
 func openFailure() *servicefailure.ServiceFailure {
@@ -285,15 +290,15 @@ func TestNotifyDriver_DefaultsThePriorityAndBoundsTheMessage(t *testing.T) {
 }
 
 type fakeCustomerRepo struct {
-	repositories.CustomerRepository
+	customerports.CustomerRepository
 
 	entity *customer.Customer
-	req    repositories.GetCustomerByIDRequest
+	req    customerports.GetCustomerByIDRequest
 }
 
 func (f *fakeCustomerRepo) GetByID(
 	_ context.Context,
-	req repositories.GetCustomerByIDRequest,
+	req customerports.GetCustomerByIDRequest,
 ) (*customer.Customer, error) {
 	f.req = req
 
@@ -301,26 +306,26 @@ func (f *fakeCustomerRepo) GetByID(
 }
 
 type fakeShipmentReader struct {
-	repositories.ShipmentRepository
+	shipmentports.ShipmentRepository
 
 	entity *shipment.Shipment
 }
 
 func (f *fakeShipmentReader) GetByID(
 	_ context.Context,
-	_ *repositories.GetShipmentByIDRequest,
+	_ *shipmentports.GetShipmentByIDRequest,
 ) (*shipment.Shipment, error) {
 	return f.entity, nil
 }
 
 type fakeMailer struct {
-	sent *serviceports.SendEmailRequest
+	sent *emailports.SendEmailRequest
 	err  error
 }
 
 func (f *fakeMailer) Send(
 	_ context.Context,
-	req *serviceports.SendEmailRequest,
+	req *emailports.SendEmailRequest,
 ) (*email.Message, error) {
 	f.sent = req
 	if f.err != nil {
@@ -332,24 +337,24 @@ func (f *fakeMailer) Send(
 
 func (f *fakeMailer) SendPersisted(
 	context.Context,
-	*serviceports.SendPersistedEmailRequest,
+	*emailports.SendPersistedEmailRequest,
 ) (*email.Message, error) {
 	return nil, nil
 }
 
 type fakeRenderer struct {
-	serviceports.DocumentTemplateResolver
+	documenttemplateports.DocumentTemplateResolver
 
-	req *serviceports.RenderMessageRequest
+	req *documenttemplateports.RenderMessageRequest
 }
 
 func (f *fakeRenderer) RenderMessage(
 	_ context.Context,
-	req *serviceports.RenderMessageRequest,
-) (*serviceports.RenderedMessage, error) {
+	req *documenttemplateports.RenderMessageRequest,
+) (*documenttemplateports.RenderedMessage, error) {
 	f.req = req
 
-	return &serviceports.RenderedMessage{
+	return &documenttemplateports.RenderedMessage{
 		Subject: "[Acme] " + req.Data.(documenttemplate.AgentEmailContext).AgentSubject,
 		HTML:    "<p>html</p>",
 		Text:    "text",
@@ -357,9 +362,9 @@ func (f *fakeRenderer) RenderMessage(
 }
 
 type fakeCommentWriter struct {
-	serviceports.ShipmentCommentService
+	shipmentports.ShipmentCommentService
 
-	created *serviceports.CreateSystemShipmentCommentRequest
+	created *shipmentports.CreateSystemShipmentCommentRequest
 	// existing is what the repeat guard reads back before a send. Empty
 	// means nothing has gone to this customer yet.
 	existing []*shipment.ShipmentComment
@@ -367,14 +372,14 @@ type fakeCommentWriter struct {
 
 func (f *fakeCommentWriter) ListByShipmentID(
 	context.Context,
-	*repositories.ListShipmentCommentsRequest,
+	*shipmentports.ListShipmentCommentsRequest,
 ) (*pagination.CursorListResult[*shipment.ShipmentComment], error) {
 	return &pagination.CursorListResult[*shipment.ShipmentComment]{Items: f.existing}, nil
 }
 
 func (f *fakeCommentWriter) CreateSystem(
 	_ context.Context,
-	req *serviceports.CreateSystemShipmentCommentRequest,
+	req *shipmentports.CreateSystemShipmentCommentRequest,
 ) (*shipment.ShipmentComment, error) {
 	f.created = req
 
@@ -506,21 +511,21 @@ func TestEmailCustomer_ReportsARecordFailureAfterTheSend(t *testing.T) {
 }
 
 type failingCommentWriter struct {
-	serviceports.ShipmentCommentService
+	shipmentports.ShipmentCommentService
 }
 
 // Nothing has gone to this customer yet; the failure under test is the
 // record after the send, not the guard before it.
 func (f *failingCommentWriter) ListByShipmentID(
 	context.Context,
-	*repositories.ListShipmentCommentsRequest,
+	*shipmentports.ListShipmentCommentsRequest,
 ) (*pagination.CursorListResult[*shipment.ShipmentComment], error) {
 	return &pagination.CursorListResult[*shipment.ShipmentComment]{}, nil
 }
 
 func (failingCommentWriter) CreateSystem(
 	context.Context,
-	*serviceports.CreateSystemShipmentCommentRequest,
+	*shipmentports.CreateSystemShipmentCommentRequest,
 ) (*shipment.ShipmentComment, error) {
 	return nil, errors.New("thread locked")
 }
@@ -670,7 +675,7 @@ func TestWaiveDetention_GivesUpRevenueOnlyOnceAPersonApproves(t *testing.T) {
 	assert.Equal(t, []agent.EgressClass{agent.EgressMoney}, policy.Egress)
 }
 
-func approvedParams(params map[string]any) serviceports.ToolExecuteParams {
+func approvedParams(params map[string]any) agentports.ToolExecuteParams {
 	execute := executeParams(params)
 	execute.ProposalID = pulid.MustNew("agp_")
 
@@ -681,7 +686,7 @@ func TestMonitoringActionTools_RejectAMismatchedActor(t *testing.T) {
 	t.Parallel()
 
 	tool, _, _, _, _ := customerEmailFixture()
-	for _, candidate := range []serviceports.AgentTool{
+	for _, candidate := range []agentports.AgentTool{
 		newEvaluateServiceFailuresTool(&fakeFailureDecider{}),
 		newResolveServiceFailureTool(&fakeFailureDecider{}),
 		newNotifyDriverTool(&fakeDriverNotifier{}),
@@ -710,7 +715,7 @@ func TestOutboundTools_AreGatedOnTheCommunicationTheySend(t *testing.T) {
 
 	customerTool, _, _, _, _ := customerEmailFixture()
 	tools := []struct {
-		tool     serviceports.AgentTool
+		tool     agentports.AgentTool
 		resource permission.Resource
 	}{
 		{newNotifyDriverTool(&fakeDriverNotifier{}), permission.ResourceDriverMessage},

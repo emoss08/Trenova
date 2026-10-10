@@ -1,13 +1,18 @@
 package workerservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customfieldportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/customfield"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -30,21 +35,21 @@ func newTestValidator() *Validator {
 }
 
 type testDeps struct {
-	repo      *mocks.MockWorkerRepository
-	audit     *mocks.MockAuditService
-	valueRepo *mocks.MockCustomFieldValueRepository
-	defRepo   *mocks.MockCustomFieldDefinitionRepository
-	cacheRepo *mocks.MockWorkerCacheRepository
+	repo      *workerportsmock.MockWorkerRepository
+	audit     *auditportsmock.MockAuditService
+	valueRepo *customfieldportsmock.MockCustomFieldValueRepository
+	defRepo   *customfieldportsmock.MockCustomFieldDefinitionRepository
+	cacheRepo *customerportsmock.MockWorkerCacheRepository
 	svc       *Service
 }
 
 func setupTest(t *testing.T) *testDeps {
 	t.Helper()
-	repo := mocks.NewMockWorkerRepository(t)
-	auditSvc := mocks.NewMockAuditService(t)
-	valueRepo := mocks.NewMockCustomFieldValueRepository(t)
-	defRepo := mocks.NewMockCustomFieldDefinitionRepository(t)
-	cacheRepo := mocks.NewMockWorkerCacheRepository(t)
+	repo := workerportsmock.NewMockWorkerRepository(t)
+	auditSvc := auditportsmock.NewMockAuditService(t)
+	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
+	defRepo := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
+	cacheRepo := customerportsmock.NewMockWorkerCacheRepository(t)
 
 	logger := zap.NewNop()
 
@@ -145,7 +150,7 @@ func TestList(t *testing.T) {
 			Items:      []*worker.Worker{newTestWorker(), newTestWorker()},
 			TotalCount: &total,
 		}
-		req := &repositories.ListWorkersRequest{
+		req := &workerports.ListWorkersRequest{
 			Filter: &pagination.QueryOptions{},
 		}
 
@@ -171,7 +176,7 @@ func TestList(t *testing.T) {
 			Items:      []*worker.Worker{},
 			TotalCount: &total,
 		}
-		req := &repositories.ListWorkersRequest{
+		req := &workerports.ListWorkersRequest{
 			Filter: &pagination.QueryOptions{},
 		}
 
@@ -190,7 +195,7 @@ func TestList(t *testing.T) {
 		t.Parallel()
 		deps := setupTest(t)
 
-		req := &repositories.ListWorkersRequest{
+		req := &workerports.ListWorkersRequest{
 			Filter: &pagination.QueryOptions{},
 		}
 		repoErr := errors.New("database connection failed")
@@ -208,7 +213,7 @@ func TestList(t *testing.T) {
 		t.Parallel()
 		deps := setupTest(t)
 
-		req := &repositories.ListWorkersRequest{
+		req := &workerports.ListWorkersRequest{
 			Filter: nil,
 		}
 		total := 0
@@ -234,7 +239,7 @@ func TestGet(t *testing.T) {
 		deps := setupTest(t)
 		entity := newTestWorker()
 
-		req := repositories.GetWorkerByIDRequest{
+		req := workerports.GetWorkerByIDRequest{
 			ID: entity.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
@@ -244,7 +249,7 @@ func TestGet(t *testing.T) {
 
 		deps.cacheRepo.EXPECT().
 			GetByID(mock.Anything, req).
-			Return(nil, repositories.ErrCacheMiss).
+			Return(nil, customerports.ErrCacheMiss).
 			Once()
 		deps.repo.On("GetByID", mock.Anything, req).Return(entity, nil)
 		deps.valueRepo.On("GetByResource", mock.Anything, mock.Anything).
@@ -264,7 +269,7 @@ func TestGet(t *testing.T) {
 		deps := setupTest(t)
 		entity := newTestWorker()
 
-		req := repositories.GetWorkerByIDRequest{
+		req := workerports.GetWorkerByIDRequest{
 			ID: entity.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
@@ -287,7 +292,7 @@ func TestGet(t *testing.T) {
 		t.Parallel()
 		deps := setupTest(t)
 
-		req := repositories.GetWorkerByIDRequest{
+		req := workerports.GetWorkerByIDRequest{
 			ID: pulid.MustNew("wrk_"),
 			TenantInfo: pagination.TenantInfo{
 				OrgID: pulid.MustNew("org_"),
@@ -298,7 +303,7 @@ func TestGet(t *testing.T) {
 		notFoundErr := errors.New("worker not found")
 		deps.cacheRepo.EXPECT().
 			GetByID(mock.Anything, req).
-			Return(nil, repositories.ErrCacheMiss).
+			Return(nil, customerports.ErrCacheMiss).
 			Once()
 		deps.repo.On("GetByID", mock.Anything, req).Return(nil, notFoundErr)
 
@@ -315,7 +320,7 @@ func TestGet(t *testing.T) {
 		deps := setupTest(t)
 		entity := newTestWorker()
 
-		req := repositories.GetWorkerByIDRequest{
+		req := workerports.GetWorkerByIDRequest{
 			ID: entity.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
@@ -326,7 +331,7 @@ func TestGet(t *testing.T) {
 
 		deps.cacheRepo.EXPECT().
 			GetByID(mock.Anything, req).
-			Return(nil, repositories.ErrCacheMiss).
+			Return(nil, customerports.ErrCacheMiss).
 			Once()
 		deps.repo.On("GetByID", mock.Anything, req).Return(entity, nil)
 		deps.valueRepo.On("GetByResource", mock.Anything, mock.Anything).
@@ -343,7 +348,7 @@ func TestGet(t *testing.T) {
 		t.Parallel()
 		deps := setupTest(t)
 
-		req := repositories.GetWorkerByIDRequest{
+		req := workerports.GetWorkerByIDRequest{
 			ID: pulid.MustNew("wrk_"),
 			TenantInfo: pagination.TenantInfo{
 				OrgID: pulid.MustNew("org_"),
@@ -354,7 +359,7 @@ func TestGet(t *testing.T) {
 		dbErr := errors.New("connection timeout")
 		deps.cacheRepo.EXPECT().
 			GetByID(mock.Anything, req).
-			Return(nil, repositories.ErrCacheMiss).
+			Return(nil, customerports.ErrCacheMiss).
 			Once()
 		deps.repo.On("GetByID", mock.Anything, req).Return(nil, dbErr)
 
@@ -370,7 +375,7 @@ func TestGet(t *testing.T) {
 		deps := setupTest(t)
 		entity := newTestWorker()
 
-		req := repositories.GetWorkerByIDRequest{
+		req := workerports.GetWorkerByIDRequest{
 			ID: entity.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
@@ -380,7 +385,7 @@ func TestGet(t *testing.T) {
 
 		deps.cacheRepo.EXPECT().
 			GetByID(mock.Anything, req).
-			Return(nil, repositories.ErrCacheMiss).
+			Return(nil, customerports.ErrCacheMiss).
 			Once()
 		deps.repo.On("GetByID", mock.Anything, req).Return(entity, nil)
 		deps.valueRepo.On("GetByResource", mock.Anything, mock.Anything).
@@ -870,13 +875,13 @@ func TestUpdate(t *testing.T) {
 func TestNew(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockWorkerRepository(t)
+	repo := workerportsmock.NewMockWorkerRepository(t)
 	validator := newTestValidator()
 
 	svc := New(Params{
 		Logger:    zap.NewNop(),
 		Repo:      repo,
-		CacheRepo: mocks.NewMockWorkerCacheRepository(t),
+		CacheRepo: customerportsmock.NewMockWorkerCacheRepository(t),
 		Validator: validator,
 		Realtime:  &mocks.NoopRealtimeService{},
 	})

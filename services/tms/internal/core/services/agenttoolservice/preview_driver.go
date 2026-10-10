@@ -9,17 +9,18 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 var (
-	_ serviceports.ToolPreviewer = (*notifyDriverTool)(nil)
-	_ serviceports.ToolPreviewer = (*rejectWorkerPTOTool)(nil)
-	_ serviceports.ToolPreviewer = (*cancelWorkerPTOTool)(nil)
-	_ serviceports.ToolPreviewer = (*requestCredentialRenewalTool)(nil)
+	_ agentports.ToolPreviewer = (*notifyDriverTool)(nil)
+	_ agentports.ToolPreviewer = (*rejectWorkerPTOTool)(nil)
+	_ agentports.ToolPreviewer = (*cancelWorkerPTOTool)(nil)
+	_ agentports.ToolPreviewer = (*requestCredentialRenewalTool)(nil)
 )
 
 // ptoTransitionPreviewer is what the driver-visible PTO decisions preview
@@ -27,12 +28,12 @@ var (
 type ptoTransitionPreviewer interface {
 	PreviewReject(
 		ctx context.Context,
-		req *repositories.UpdatePTOStatusRequest,
-	) (*serviceports.WorkerPTOTransitionPreview, error)
+		req *workerports.UpdatePTOStatusRequest,
+	) (*workerports.WorkerPTOTransitionPreview, error)
 	PreviewCancel(
 		ctx context.Context,
-		req *repositories.UpdatePTOStatusRequest,
-	) (*serviceports.WorkerPTOTransitionPreview, error)
+		req *workerports.UpdatePTOStatusRequest,
+	) (*workerports.WorkerPTOTransitionPreview, error)
 }
 
 type ptoRejecter interface {
@@ -42,7 +43,7 @@ type ptoRejecter interface {
 
 func (t *notifyDriverTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	request, err := t.request(&params)
 	if err != nil {
@@ -67,7 +68,7 @@ func (t *notifyDriverTool) Preview(
 
 func (t *rejectWorkerPTOTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	request, err := t.request(&params)
 	if err != nil {
@@ -88,7 +89,7 @@ func (t *rejectWorkerPTOTool) Preview(
 
 func (t *cancelWorkerPTOTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	request, err := t.request(&params)
 	if err != nil {
@@ -112,7 +113,7 @@ func (t *cancelWorkerPTOTool) Preview(
 
 func (t *requestCredentialRenewalTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	request, err := t.arguments(params)
 	if err != nil {
@@ -154,7 +155,7 @@ func ptoDecisionOptions() []toolpreview.Option {
 
 func ptoDecisionPreview(
 	summary string,
-	decision *serviceports.WorkerPTOTransitionPreview,
+	decision *workerports.WorkerPTOTransitionPreview,
 ) (*agent.ToolPreview, error) {
 	status, err := toolpreview.Changed(
 		toolpreview.Record{
@@ -200,7 +201,7 @@ func ptoDecisionPreview(
 
 // driverMessageSend is a Dash message to one driver, as the driver would
 // read it.
-func driverMessageSend(notice *serviceports.DriverNotificationPreview) *agent.RecordChange {
+func driverMessageSend(notice *notificationports.DriverNotificationPreview) *agent.RecordChange {
 	return toolpreview.Send(
 		toolpreview.Record{
 			Resource: permission.ResourceWorker,
@@ -218,7 +219,7 @@ func driverMessageSend(notice *serviceports.DriverNotificationPreview) *agent.Re
 
 func warnDriverUnreachable(
 	preview *agent.ToolPreview,
-	notice *serviceports.DriverNotificationPreview,
+	notice *notificationports.DriverNotificationPreview,
 ) {
 	if notice == nil || notice.Reachable {
 		return
@@ -229,7 +230,7 @@ func warnDriverUnreachable(
 		notice.WorkerID.String())
 }
 
-func driverName(notice *serviceports.DriverNotificationPreview) string {
+func driverName(notice *notificationports.DriverNotificationPreview) string {
 	if notice == nil || strings.TrimSpace(notice.WorkerName) == "" {
 		return "the driver"
 	}

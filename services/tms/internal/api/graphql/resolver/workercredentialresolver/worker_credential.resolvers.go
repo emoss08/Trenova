@@ -13,8 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/workercredentialservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -199,7 +199,7 @@ func (r *QueryResolver) WorkerCredentialTypes(ctx context.Context, input gqlmode
 	if input.Status != nil {
 		status = string(*input.Status)
 	}
-	result, err := r.WorkerCredentialService.ListTypes(ctx, &repositories.ListCredentialTypesRequest{
+	result, err := r.WorkerCredentialService.ListTypes(ctx, &workerports.ListCredentialTypesRequest{
 		Filter:   connection.Filter,
 		Cursor:   connection.Cursor,
 		Status:   status,
@@ -223,7 +223,7 @@ func (r *QueryResolver) WorkerCredentialType(ctx context.Context, id string) (*w
 		return nil, err
 	}
 
-	return r.WorkerCredentialService.GetType(ctx, &repositories.GetCredentialTypeByIDRequest{
+	return r.WorkerCredentialService.GetType(ctx, &workerports.GetCredentialTypeByIDRequest{
 		ID:         typeID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})

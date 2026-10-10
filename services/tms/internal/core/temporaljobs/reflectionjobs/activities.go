@@ -4,21 +4,21 @@ import (
 	"context"
 	"fmt"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"go.uber.org/fx"
 )
 
 type ActivitiesParams struct {
 	fx.In
 
-	Reflections serviceports.AgentReflectionService
-	Completion  serviceports.CompletionService
+	Reflections agentports.AgentReflectionService
+	Completion  agentports.CompletionService
 }
 
 type Activities struct {
-	reflections serviceports.AgentReflectionService
-	completion  serviceports.CompletionService
+	reflections agentports.AgentReflectionService
+	completion  agentports.CompletionService
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -30,8 +30,8 @@ func NewActivities(p ActivitiesParams) *Activities {
 
 func (a *Activities) PrepareThreadReflectionActivity(
 	ctx context.Context,
-	req *serviceports.ReflectOnThreadRequest,
-) (*serviceports.ReflectionPlan, error) {
+	req *agentports.ReflectOnThreadRequest,
+) (*agentports.ReflectionPlan, error) {
 	plan, err := a.reflections.PrepareThread(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("prepare a look back over the conversation: %w", err)
@@ -42,8 +42,8 @@ func (a *Activities) PrepareThreadReflectionActivity(
 
 func (a *Activities) PrepareRunReflectionActivity(
 	ctx context.Context,
-	req *serviceports.ReflectOnRunRequest,
-) (*serviceports.ReflectionPlan, error) {
+	req *agentports.ReflectOnRunRequest,
+) (*agentports.ReflectionPlan, error) {
 	plan, err := a.reflections.PrepareRun(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("prepare a look back over the run: %w", err)
@@ -54,8 +54,8 @@ func (a *Activities) PrepareRunReflectionActivity(
 
 func (a *Activities) ReflectionModelActivity(
 	ctx context.Context,
-	plan *serviceports.ReflectionPlan,
-) (*serviceports.StructuredCompletionResult, error) {
+	plan *agentports.ReflectionPlan,
+) (*agentports.StructuredCompletionResult, error) {
 	stop := modelcall.Heartbeat(ctx)
 	defer stop()
 
@@ -70,7 +70,7 @@ func (a *Activities) ReflectionModelActivity(
 func (a *Activities) FinishReflectionActivity(
 	ctx context.Context,
 	in *FinishReflectionInput,
-) (*serviceports.ReflectionOutcome, error) {
+) (*agentports.ReflectionOutcome, error) {
 	outcome, err := a.reflections.Finish(ctx, in.Plan, in.Result)
 	if err != nil {
 		return nil, fmt.Errorf("keep what the look back learned: %w", err)
@@ -81,7 +81,7 @@ func (a *Activities) FinishReflectionActivity(
 
 func (a *Activities) FailReflectionActivity(
 	ctx context.Context,
-	req *serviceports.FailReflectionRequest,
+	req *agentports.FailReflectionRequest,
 ) error {
 	if err := a.reflections.Fail(ctx, req); err != nil {
 		return fmt.Errorf("record a look back that failed: %w", err)

@@ -6,8 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -52,7 +51,7 @@ func (s *Service) PollChangeFeed(
 		return &PollResult{Skipped: true, Reason: "provider has no change feed"}, nil
 	}
 
-	key := repositories.CarrierIntelFeedStateKey{
+	key := carrierintelports.CarrierIntelFeedStateKey{
 		TenantInfo: tenantInfo,
 		Provider:   provider,
 		FeedType:   carrierintel.FeedTypeChangeFeed,
@@ -76,7 +75,7 @@ func (s *Service) PollChangeFeed(
 	if err != nil {
 		return nil, err
 	}
-	monitor, ok := bound.client.(services.CarrierIntelNativeMonitor)
+	monitor, ok := bound.client.(carrierintelports.CarrierIntelNativeMonitor)
 	if !ok {
 		return &PollResult{Skipped: true, Reason: "provider has no change feed"}, nil
 	}
@@ -87,12 +86,12 @@ func (s *Service) PollChangeFeed(
 	}
 
 	result := &PollResult{}
-	changedRefs := make(map[string]services.CarrierIntelChangedProfile, 64)
+	changedRefs := make(map[string]carrierintelports.CarrierIntelChangedProfile, 64)
 	for page := 1; page <= maxChangeFeedPages; page++ {
-		var feed *services.CarrierIntelChangeFeedPage
+		var feed *carrierintelports.CarrierIntelChangeFeedPage
 		listErr := s.withRateLimitWait(ctx, func() error {
 			var callErr error
-			feed, callErr = monitor.ListChanges(ctx, &services.CarrierIntelChangeFeedRequest{
+			feed, callErr = monitor.ListChanges(ctx, &carrierintelports.CarrierIntelChangeFeedRequest{
 				Since:    since,
 				Until:    now,
 				Page:     page,
@@ -228,12 +227,12 @@ func (s *Service) confirmUnchangedEnrollments(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	provider integration.Type,
-	changed map[string]services.CarrierIntelChangedProfile,
+	changed map[string]carrierintelports.CarrierIntelChangedProfile,
 	now int64,
 ) error {
 	afterID := pulid.Nil
 	for {
-		page, err := s.enrollmentRepo.ListActive(ctx, &repositories.ListActiveEnrollmentsRequest{
+		page, err := s.enrollmentRepo.ListActive(ctx, &carrierintelports.ListActiveEnrollmentsRequest{
 			TenantInfo: tenantInfo,
 			Provider:   provider,
 			Mode:       carrierintel.EnrollmentModeNative,
@@ -273,7 +272,7 @@ func (s *Service) confirmUnchangedEnrollments(
 			if err = s.snapshotRepo.TouchConfirmed(ctx, tenantInfo, snapIDs, now); err != nil {
 				return err
 			}
-			if err = s.enrollmentRepo.TouchConfirmed(ctx, &repositories.TouchEnrollmentsConfirmedRequest{
+			if err = s.enrollmentRepo.TouchConfirmed(ctx, &carrierintelports.TouchEnrollmentsConfirmedRequest{
 				TenantInfo:  tenantInfo,
 				Provider:    provider,
 				Mode:        carrierintel.EnrollmentModeNative,
@@ -307,7 +306,7 @@ func (s *Service) RefreshDueSnapshots(
 		return &PollResult{Skipped: true, Reason: "no provider"}, nil
 	}
 
-	key := repositories.CarrierIntelFeedStateKey{
+	key := carrierintelports.CarrierIntelFeedStateKey{
 		TenantInfo: tenantInfo,
 		Provider:   provider,
 		FeedType:   carrierintel.FeedTypeSnapshotRefresh,
@@ -325,7 +324,7 @@ func (s *Service) RefreshDueSnapshots(
 	}
 	now := s.now()
 	confirmedBefore := now - control.SnapshotTTLSeconds()
-	due, err := s.enrollmentRepo.ListActive(ctx, &repositories.ListActiveEnrollmentsRequest{
+	due, err := s.enrollmentRepo.ListActive(ctx, &carrierintelports.ListActiveEnrollmentsRequest{
 		TenantInfo:      tenantInfo,
 		Provider:        provider,
 		Mode:            carrierintel.EnrollmentModeSnapshotDiff,
@@ -386,7 +385,7 @@ func (s *Service) RefreshDueSnapshots(
 	}
 
 	if len(confirmed) > 0 {
-		if err = s.enrollmentRepo.TouchConfirmed(ctx, &repositories.TouchEnrollmentsConfirmedRequest{
+		if err = s.enrollmentRepo.TouchConfirmed(ctx, &carrierintelports.TouchEnrollmentsConfirmedRequest{
 			TenantInfo:  tenantInfo,
 			Provider:    provider,
 			Mode:        carrierintel.EnrollmentModeSnapshotDiff,
@@ -403,8 +402,8 @@ func (s *Service) resolveEnrollmentSubjects(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	enrollments []*carrierintel.CarrierMonitoringEnrollment,
-) ([]repositories.CarrierIntelSubject, error) {
-	subjects := make([]repositories.CarrierIntelSubject, 0, len(enrollments))
+) ([]carrierintelports.CarrierIntelSubject, error) {
+	subjects := make([]carrierintelports.CarrierIntelSubject, 0, len(enrollments))
 	carrierIDs := make([]pulid.ID, 0, len(enrollments))
 	for _, row := range enrollments {
 		switch row.SubjectType {
@@ -431,7 +430,7 @@ func (s *Service) resolveEnrollmentSubjects(
 				subjects = append(subjects, *customer)
 			}
 		case carrierintel.SubjectTypeProspect:
-			subjects = append(subjects, repositories.CarrierIntelSubject{
+			subjects = append(subjects, carrierintelports.CarrierIntelSubject{
 				SubjectType:  row.SubjectType,
 				SubjectID:    row.SubjectID,
 				Name:         row.SubjectName,
@@ -443,7 +442,7 @@ func (s *Service) resolveEnrollmentSubjects(
 	if len(carrierIDs) > 0 {
 		carriers, err := s.subjectRepo.ListCarrierSubjects(
 			ctx,
-			&repositories.ListCarrierIntelSubjectsRequest{
+			&carrierintelports.ListCarrierIntelSubjectsRequest{
 				TenantInfo: tenantInfo,
 				CarrierIDs: carrierIDs,
 				Limit:      len(carrierIDs),
@@ -481,7 +480,7 @@ func (s *Service) RecomputeStalePolicy(
 	for time.Now().Before(deadline) {
 		page, listErr := s.snapshotRepo.ListForRecompute(
 			ctx,
-			&repositories.ListSnapshotsForRecomputeRequest{
+			&carrierintelports.ListSnapshotsForRecomputeRequest{
 				TenantInfo:   tenantInfo,
 				BelowVersion: control.PolicyVersion,
 				AfterID:      afterID,
@@ -507,7 +506,7 @@ func (s *Service) RecomputeStalePolicy(
 				control: control,
 				subject: subject,
 				bound:   &boundProvider{provider: provider, tenant: tenantInfo},
-				result:  &services.CarrierIntelLookupResult{},
+				result:  &carrierintelports.CarrierIntelLookupResult{},
 				current: snap,
 				source:  carrierintel.EventSourceRuleEvaluation,
 				purpose: carrierintel.PurposeReconcile,
@@ -532,7 +531,7 @@ func (s *Service) recomputeFindings(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	control *carrierintel.CarrierIntelControl,
-	subject repositories.CarrierIntelSubject,
+	subject carrierintelports.CarrierIntelSubject,
 	snap *carrierintel.CarrierIntelSnapshot,
 ) []carrierintel.Finding {
 	findings, err := s.evaluateSubject(
@@ -553,19 +552,19 @@ func (s *Service) subjectForSnapshot(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	snap *carrierintel.CarrierIntelSnapshot,
-) (repositories.CarrierIntelSubject, error) {
+) (carrierintelports.CarrierIntelSubject, error) {
 	switch snap.SubjectType {
 	case carrierintel.SubjectTypeCarrier:
 		subjects, err := s.subjectRepo.ListCarrierSubjects(
 			ctx,
-			&repositories.ListCarrierIntelSubjectsRequest{
+			&carrierintelports.ListCarrierIntelSubjectsRequest{
 				TenantInfo: tenantInfo,
 				CarrierIDs: []pulid.ID{snap.CarrierID},
 				Limit:      1,
 			},
 		)
 		if err != nil {
-			return repositories.CarrierIntelSubject{}, err
+			return carrierintelports.CarrierIntelSubject{}, err
 		}
 		if len(subjects) == 1 {
 			return subjects[0], nil
@@ -573,7 +572,7 @@ func (s *Service) subjectForSnapshot(
 	case carrierintel.SubjectTypeOrganization:
 		org, err := s.subjectRepo.GetOrganizationSubject(ctx, tenantInfo)
 		if err != nil {
-			return repositories.CarrierIntelSubject{}, err
+			return carrierintelports.CarrierIntelSubject{}, err
 		}
 		if org != nil {
 			return *org, nil
@@ -587,7 +586,7 @@ func (s *Service) subjectForSnapshot(
 			}
 		}
 	}
-	return repositories.CarrierIntelSubject{
+	return carrierintelports.CarrierIntelSubject{
 		SubjectType:  snap.SubjectType,
 		SubjectID:    snap.SubjectID,
 		CarrierID:    snap.CarrierID,

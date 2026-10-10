@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,10 +23,10 @@ func failedSyncRecord(
 	return record
 }
 
-func retryPinner(t *testing.T, tool serviceports.AgentTool) serviceports.ToolProposalSelectionResolver {
+func retryPinner(t *testing.T, tool agentports.AgentTool) agentports.ToolProposalSelectionResolver {
 	t.Helper()
 
-	pinner, pins := tool.(serviceports.ToolProposalSelectionResolver)
+	pinner, pins := tool.(agentports.ToolProposalSelectionResolver)
 	require.True(t, pins, "a proposed retry pins the records its categories name")
 
 	return pinner
@@ -47,7 +47,7 @@ func pinnedIDs(t *testing.T, params map[string]any) []string {
 	return ids
 }
 
-func approvedFrom(params serviceports.ToolExecuteParams) serviceports.ToolExecuteParams {
+func approvedFrom(params agentports.ToolExecuteParams) agentports.ToolExecuteParams {
 	params.ProposalID = pulid.MustNew("ap_")
 	return params
 }
@@ -112,7 +112,7 @@ func TestRetryAccountingSync_PreviewShowsThePinnedRecordsAndRunsOnlyThose(t *tes
 	approved := approvedFrom(syncParams(pinned))
 
 	preview := previewWithoutWrites(t, &operator.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), approved)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), approved)
 	})
 	assert.Empty(t, preview.Warnings)
 	assert.False(t, preview.Partial, "every record that failed that way is pinned")
@@ -149,11 +149,11 @@ func TestRetryAccountingSync_CapsAPinnedSelectionAndSaysWhatIsLeft(t *testing.T)
 	)
 	require.NoError(t, err)
 	require.Len(t, pinnedIDs(t, pinned), maxSyncRetryIDs)
-	require.NoError(t, tool.(serviceports.ToolValidator).Validate(t.Context(), syncParams(pinned)),
+	require.NoError(t, tool.(agentports.ToolValidator).Validate(t.Context(), syncParams(pinned)),
 		"a pinned selection is a call the tool takes")
 
 	preview := previewWithoutWrites(t, &operator.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), syncParams(pinned))
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), syncParams(pinned))
 	})
 	assert.True(t, preview.Partial, "the selection was cut to what one retry takes")
 	assert.Contains(t, preview.Summary, "Would send 50 documents to QuickBooks Online again")
@@ -185,7 +185,7 @@ func TestRetryAccountingSync_LeavesNamedRecordsAndUnpinnableCallsAsTheyAre(t *te
 	operator := newSyncOperator(blocked)
 	tool := newRetryAccountingSyncTool(operator)
 	pinner := retryPinner(t, tool)
-	validator := tool.(serviceports.ToolValidator)
+	validator := tool.(agentports.ToolValidator)
 
 	for _, params := range []map[string]any{
 		{"system": "QuickBooksOnline", "syncRecordIds": []any{blocked.ID.String()}},
@@ -232,7 +232,7 @@ func TestRetryAccountingSync_AnApprovalRunsOnlyOnRecordsItNames(t *testing.T) {
 	assert.Contains(t, err.Error(), "propose it again")
 	assert.Nil(t, operator.retried)
 
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), unpinned)
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), unpinned)
 	require.NoError(t, err)
 	require.NotEmpty(t, preview.Warnings)
 	assert.Equal(t, agent.PreviewWarningWouldFail, preview.Warnings[0].Code)
@@ -252,7 +252,7 @@ func TestRetryAccountingSync_ANamedRecordThatNoLongerFailedThatWayIsNotShown(t *
 	})
 
 	preview := previewWithoutWrites(t, &operator.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	require.Len(t, preview.Changes, 1)
 	assert.Equal(t, transient.ID, preview.Changes[0].EntityID)
@@ -268,7 +268,7 @@ func TestRetryAccountingSync_DeclaresItsRecordsASubsetAPersonMayNarrow(t *testin
 	tool := newRetryAccountingSyncTool(newSyncOperator())
 	proposed := []any{pulid.MustNew("acctsr_").String(), pulid.MustNew("acctsr_").String()}
 
-	fields := serviceports.ProposalFields(tool, map[string]any{
+	fields := agentports.ProposalFields(tool, map[string]any{
 		"system":           "QuickBooksOnline",
 		paramSyncRecordIDs: proposed,
 	})

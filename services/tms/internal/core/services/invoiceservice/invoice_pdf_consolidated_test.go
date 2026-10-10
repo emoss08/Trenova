@@ -1,13 +1,14 @@
 package invoiceservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -88,7 +89,7 @@ func consolidatedProfile(entity *invoice.Invoice) *invoiceDeliveryProfile {
 	legs := entity.LegShipmentIDs()
 	return &invoiceDeliveryProfile{
 		Customer: entity.Customer,
-		Shipments: []*repositories.ShipmentSummary{
+		Shipments: []*shipmentports.ShipmentSummary{
 			{
 				ShipmentID:       legs[0],
 				ProNumber:        "PRO-1",
@@ -279,14 +280,14 @@ func TestResolveDeliveryProfileFindsFreightWithNoHeaderShipment(t *testing.T) {
 	require.True(t, entity.ShipmentID.IsNil(), "a consolidated invoice has no header shipment")
 
 	legs := entity.LegShipmentIDs()
-	shipmentRepo := mocks.NewMockShipmentRepository(t)
+	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
 		ListSummariesByIDs(mock.Anything, mock.MatchedBy(
-			func(req *repositories.ListShipmentSummariesRequest) bool {
+			func(req *shipmentports.ListShipmentSummariesRequest) bool {
 				return len(req.ShipmentIDs) == len(legs)
 			},
 		)).
-		Return([]*repositories.ShipmentSummary{
+		Return([]*shipmentports.ShipmentSummary{
 			{ShipmentID: legs[0], ProNumber: "PRO-1"},
 			{ShipmentID: legs[1], ProNumber: "PRO-2"},
 		}, nil)
@@ -315,7 +316,7 @@ func TestResolveDeliveryProfileLoadsTheWholeShipmentWhenThereIsOne(t *testing.T)
 		},
 	}
 
-	shipmentRepo := mocks.NewMockShipmentRepository(t)
+	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
 		Return(&shipment.Shipment{ID: shipmentID, BOL: "BOL-1"}, nil)

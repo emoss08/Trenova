@@ -4,8 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/settlementshared"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -452,7 +453,7 @@ func (s *Service) planRecalculate(
 func (s *Service) Perform(
 	ctx context.Context,
 	req *settlementshared.ActionRequest,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*carriersettlement.CarrierSettlement, error) {
 	switch req.Action {
 	case settlementshared.ActionSubmit:
@@ -464,7 +465,7 @@ func (s *Service) Perform(
 	case settlementshared.ActionPost:
 		return s.Post(ctx, req.TenantInfo, req.SettlementID, actor)
 	case settlementshared.ActionMarkPaid:
-		return s.MarkPaid(ctx, &serviceports.MarkSettlementPaidRequest{
+		return s.MarkPaid(ctx, &carriersettlementports.MarkSettlementPaidRequest{
 			TenantInfo:       req.TenantInfo,
 			SettlementID:     req.SettlementID,
 			PaymentMethod:    req.PaymentMethod,

@@ -4,13 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
-
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -18,7 +17,7 @@ import (
 )
 
 type threadAgentsRepo struct {
-	repositories.ConversationRepository
+	agentports.ConversationRepository
 
 	byID  map[pulid.ID]*conversation.Thread
 	reads int
@@ -26,7 +25,7 @@ type threadAgentsRepo struct {
 
 func (r *threadAgentsRepo) ListThreadAgentsByIDs(
 	_ context.Context,
-	req repositories.ListThreadAgentsByIDsRequest,
+	req agentports.ListThreadAgentsByIDsRequest,
 ) ([]*conversation.Thread, error) {
 	r.reads++
 	out := make([]*conversation.Thread, 0, len(req.IDs))

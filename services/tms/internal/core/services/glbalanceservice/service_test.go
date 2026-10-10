@@ -1,10 +1,11 @@
 package glbalanceservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/glbalanceportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/accounttype"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/glbalanceports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,10 +18,10 @@ func TestGetIncomeStatementAggregatesCategories(t *testing.T) {
 	t.Parallel()
 
 	periodID := pulid.MustNew("fp_")
-	repo := mocks.NewMockGLBalanceRepository(t)
+	repo := glbalanceportsmock.NewMockGLBalanceRepository(t)
 	repo.EXPECT().
 		ListTrialBalanceByPeriod(mock.Anything, mock.Anything).
-		Return([]*repositories.GLPeriodAccountBalance{
+		Return([]*glbalanceports.GLPeriodAccountBalance{
 			{
 				GLAccountID:       pulid.MustNew("gla_"),
 				AccountCode:       "4000",
@@ -60,12 +61,12 @@ func TestGetBalanceSheetIncludesCurrentYearEarnings(t *testing.T) {
 	t.Parallel()
 
 	periodID := pulid.MustNew("fp_")
-	repo := mocks.NewMockGLBalanceRepository(t)
+	repo := glbalanceportsmock.NewMockGLBalanceRepository(t)
 	// A balance sheet reads the cumulative position through the period, never a
 	// single period's movement.
 	repo.EXPECT().
 		ListCumulativeBalancesThroughPeriod(mock.Anything, mock.Anything).
-		Return([]*repositories.GLPeriodAccountBalance{
+		Return([]*glbalanceports.GLPeriodAccountBalance{
 			{
 				GLAccountID:      pulid.MustNew("gla_"),
 				AccountCode:      "1110",

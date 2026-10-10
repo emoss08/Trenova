@@ -7,10 +7,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -27,9 +26,9 @@ import (
 // that is not filed has no proposal for its baseline to belong to.
 func (s *Service) Baseline(
 	ctx context.Context,
-	req *services.ProposalBaselineRequest,
-) *services.ProposalBaselineResult {
-	result := &services.ProposalBaselineResult{}
+	req *agentports.ProposalBaselineRequest,
+) *agentports.ProposalBaselineResult {
+	result := &agentports.ProposalBaselineResult{}
 	if req == nil || req.Tool == nil {
 		return result
 	}
@@ -60,7 +59,7 @@ func (s *Service) Baseline(
 	}
 
 	if found.version != nil {
-		result.Target = &services.ProposalTarget{
+		result.Target = &agentports.ProposalTarget{
 			Resource: target.Resource,
 			ID:       target.ID,
 			Version:  *found.version,
@@ -104,8 +103,8 @@ func previewRecords(preview *agent.ToolPreview) int {
 
 func (s *Service) keepBaseline(
 	ctx context.Context,
-	req *services.ProposalBaselineRequest,
-	result *services.ProposalBaselineResult,
+	req *agentports.ProposalBaselineRequest,
+	result *agentports.ProposalBaselineResult,
 ) {
 	if s.baselines == nil || result.Preview == nil || req.ProposalID.IsNil() {
 		return
@@ -167,7 +166,7 @@ func (s *Service) markChangedSinceProposed(
 	for _, d := range drafts {
 		ids = append(ids, d.proposal.ID)
 	}
-	baselines, err := s.baselines.ListByProposals(ctx, repositories.ListProposalBaselinesRequest{
+	baselines, err := s.baselines.ListByProposals(ctx, agentports.ListProposalBaselinesRequest{
 		ProposalIDs: ids,
 		TenantInfo:  tenant,
 	})
@@ -258,7 +257,7 @@ func (s *Service) recordedFor(
 	if s.decisions != nil {
 		decisions, err := s.decisions.ListByProposals(
 			ctx,
-			repositories.ListAgentDecisionsByProposalsRequest{
+			agentports.ListAgentDecisionsByProposalsRequest{
 				ProposalIDs: []pulid.ID{proposal.ID},
 				TenantInfo:  tenantOf(proposal),
 			},
@@ -295,7 +294,7 @@ func (s *Service) unrecorded(
 			"the parameters it was proposed with are shown.",
 	}
 
-	if tool, ok := s.tools.Get(proposal.ToolName); ok && !services.IsSelfScoped(tool) {
+	if tool, ok := s.tools.Get(proposal.ToolName); ok && !agentports.IsSelfScoped(tool) {
 		params := toolpreview.Parameters(
 			proposal.ToolName,
 			tool.Policy().Resource,

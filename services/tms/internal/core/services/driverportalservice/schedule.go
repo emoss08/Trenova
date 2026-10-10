@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/schedulingservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -121,7 +121,7 @@ func (s *Service) MyAvailability(
 		return nil, err
 	}
 
-	return s.scheduling.ListPreferences(ctx, &repositories.ListAvailabilityPreferencesRequest{
+	return s.scheduling.ListPreferences(ctx, &workerports.ListAvailabilityPreferencesRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   wrk.ID,
 	})
@@ -193,7 +193,7 @@ func (s *Service) MyShiftSwaps(
 		return nil, err
 	}
 
-	swaps, err := s.scheduling.ListSwaps(ctx, &repositories.ListShiftSwapsRequest{
+	swaps, err := s.scheduling.ListSwaps(ctx, &workerports.ListShiftSwapsRequest{
 		TenantInfo:     tenantInfo,
 		WorkerID:       wrk.ID,
 		IncludeWorkers: true,
@@ -317,7 +317,7 @@ func (s *Service) scheduleVisible(
 
 	assignments, err := s.scheduling.ListAssignments(
 		ctx,
-		&repositories.ListShiftAssignmentsRequest{
+		&workerports.ListShiftAssignmentsRequest{
 			TenantInfo: tenantInfo,
 			WorkerID:   workerID,
 			ActiveAt:   timeutils.NowUnix(),

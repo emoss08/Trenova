@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -18,7 +18,7 @@ import (
 // the run's report is complete before the worker picks it up.
 func (r *repository) CreateApprovalRun(
 	ctx context.Context,
-	req *repositories.CreateApprovalRunRequest,
+	req *billingqueueports.CreateApprovalRunRequest,
 ) (*billingqueue.ApprovalRun, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*billingqueue.ApprovalRun, error) {
 		db := r.db.DBForContext(ctx)
@@ -51,7 +51,7 @@ func (r *repository) CreateApprovalRun(
 
 func (r *repository) GetApprovalRun(
 	ctx context.Context,
-	req *repositories.GetApprovalRunRequest,
+	req *billingqueueports.GetApprovalRunRequest,
 ) (*billingqueue.ApprovalRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*billingqueue.ApprovalRun, error) {
 		run := new(billingqueue.ApprovalRun)
@@ -100,7 +100,7 @@ func (r *repository) GetApprovalRunByKey(
 // every write or none.
 func (r *repository) MarkApprovalRunRunning(
 	ctx context.Context,
-	req *repositories.MarkApprovalRunRunningRequest,
+	req *billingqueueports.MarkApprovalRunRunningRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
 		now := timeutils.NowUnix()
@@ -129,7 +129,7 @@ func (r *repository) MarkApprovalRunRunning(
 
 func (r *repository) RequestApprovalRunUndo(
 	ctx context.Context,
-	req *repositories.RequestApprovalRunUndoRequest,
+	req *billingqueueports.RequestApprovalRunUndoRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
 		now := timeutils.NowUnix()
@@ -156,7 +156,7 @@ func (r *repository) RequestApprovalRunUndo(
 
 func (r *repository) SetApprovalRunWorkflow(
 	ctx context.Context,
-	req *repositories.MarkApprovalRunRunningRequest,
+	req *billingqueueports.MarkApprovalRunRunningRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		_, err := r.db.DBForContext(ctx).NewUpdate().
@@ -195,7 +195,7 @@ func (r *repository) ListPendingApprovalRunItems(
 
 func (r *repository) RecordApprovalRunItem(
 	ctx context.Context,
-	req *repositories.RecordApprovalRunItemRequest,
+	req *billingqueueports.RecordApprovalRunItemRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		item := req.Item
@@ -228,7 +228,7 @@ func (r *repository) RecordApprovalRunItem(
 // rows rather than carried, so a retried activity cannot count twice.
 func (r *repository) FinalizeApprovalRun(
 	ctx context.Context,
-	req *repositories.FinalizeApprovalRunRequest,
+	req *billingqueueports.FinalizeApprovalRunRequest,
 ) (*billingqueue.ApprovalRun, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*billingqueue.ApprovalRun, error) {
 		db := r.db.DBForContext(ctx)
@@ -285,7 +285,7 @@ func (r *repository) FinalizeApprovalRun(
 			return nil, fmt.Errorf("finalize approval run: %w", err)
 		}
 
-		return r.GetApprovalRun(ctx, &repositories.GetApprovalRunRequest{
+		return r.GetApprovalRun(ctx, &billingqueueports.GetApprovalRunRequest{
 			TenantInfo:   req.TenantInfo,
 			RunID:        req.RunID,
 			IncludeItems: true,

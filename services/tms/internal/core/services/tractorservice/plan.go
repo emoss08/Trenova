@@ -6,8 +6,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -33,12 +35,12 @@ func (s *Service) PlanCreate(
 func (s *Service) PlanUpdate(
 	ctx context.Context,
 	entity *tractor.Tractor,
-) (*services.RecordChange[tractor.Tractor], error) {
+) (*kernelports.RecordChange[tractor.Tractor], error) {
 	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetByID(ctx, repositories.GetTractorByIDRequest{
+	original, err := s.repo.GetByID(ctx, tractorports.GetTractorByIDRequest{
 		ID: entity.GetID(),
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.GetOrganizationID(),
@@ -49,12 +51,12 @@ func (s *Service) PlanUpdate(
 		return nil, err
 	}
 
-	return &services.RecordChange[tractor.Tractor]{Before: original, After: entity}, nil
+	return &kernelports.RecordChange[tractor.Tractor]{Before: original, After: entity}, nil
 }
 
 func (s *Service) PlanLocate(
 	ctx context.Context,
-	req *repositories.LocateTractorRequest,
+	req *tractorports.LocateTractorRequest,
 ) (*LocatePlan, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
@@ -65,9 +67,9 @@ func (s *Service) PlanLocate(
 
 func (s *Service) planLocate(
 	ctx context.Context,
-	req *repositories.LocateTractorRequest,
+	req *tractorports.LocateTractorRequest,
 ) (*LocatePlan, error) {
-	entity, err := s.repo.GetByID(ctx, repositories.GetTractorByIDRequest{
+	entity, err := s.repo.GetByID(ctx, tractorports.GetTractorByIDRequest{
 		ID:         req.TractorID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -75,7 +77,7 @@ func (s *Service) planLocate(
 		return nil, err
 	}
 
-	target, err := s.locationRepo.GetByID(ctx, repositories.GetLocationByIDRequest{
+	target, err := s.locationRepo.GetByID(ctx, locationports.GetLocationByIDRequest{
 		ID:         req.NewLocationID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -100,7 +102,7 @@ func (s *Service) planLocate(
 
 	current, err := s.continuityRepo.GetEffectiveCurrent(
 		ctx,
-		repositories.GetCurrentEquipmentContinuityRequest{
+		equipmentcontinuityports.GetCurrentEquipmentContinuityRequest{
 			TenantInfo:    req.TenantInfo,
 			EquipmentType: equipmentcontinuity.EquipmentTypeTractor,
 			EquipmentID:   req.TractorID,

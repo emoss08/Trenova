@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/uptrace/bun"
@@ -27,8 +27,8 @@ var unpaidDriverSettlementStatuses = []driversettlement.Status{
 func (r *repository) CountAssetDependencies(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*repositories.AssetDependencyCounts, error) {
-	counts := new(repositories.AssetDependencyCounts)
+) (*tenantports.AssetDependencyCounts, error) {
+	counts := new(tenantports.AssetDependencyCounts)
 
 	if err := r.countDependencies(ctx, assetDependencyCounts(tenantInfo, counts)); err != nil {
 		return nil, err
@@ -39,7 +39,7 @@ func (r *repository) CountAssetDependencies(
 
 func assetDependencyCounts(
 	tenantInfo pagination.TenantInfo,
-	counts *repositories.AssetDependencyCounts,
+	counts *tenantports.AssetDependencyCounts,
 ) []dependencyCount {
 	return []dependencyCount{
 		{

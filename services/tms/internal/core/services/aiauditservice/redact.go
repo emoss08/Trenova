@@ -11,8 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/fieldsensitivity"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -31,7 +32,7 @@ type Masker interface {
 
 // ToolPolicies names what a tool acts on, by its name.
 type ToolPolicies interface {
-	Get(name string) (serviceports.ToolPolicy, bool)
+	Get(name string) (agentports.ToolPolicy, bool)
 }
 
 // Redactor is what the trail keeps of an argument map: confidential fields
@@ -61,9 +62,9 @@ type RedactedArguments struct {
 }
 
 // Policy is a tool's policy, when the tool is still registered.
-func (r *Redactor) Policy(toolName string) (serviceports.ToolPolicy, bool) {
+func (r *Redactor) Policy(toolName string) (agentports.ToolPolicy, bool) {
 	if r.policies == nil || toolName == "" {
-		return serviceports.ToolPolicy{}, false
+		return agentports.ToolPolicy{}, false
 	}
 
 	return r.policies.Get(toolName)
@@ -122,8 +123,8 @@ func (r *Redactor) Arguments(toolName string, args map[string]any) (*RedactedArg
 // dropsParameter reports a parameter the runtime writes for itself rather
 // than the model: the owner a self-scoped call is about. An unknown tool's
 // is dropped too, since nothing can say it was the model's.
-func dropsParameter(policy *serviceports.ToolPolicy, known bool, key string) bool {
-	if key != serviceports.SelfScopeOwnerParam {
+func dropsParameter(policy *agentports.ToolPolicy, known bool, key string) bool {
+	if key != agentports.SelfScopeOwnerParam {
 		return false
 	}
 
@@ -301,7 +302,7 @@ func truncateRunes(value string, limit int) string {
 func ReaderArguments(
 	ctx context.Context,
 	event *aiaudit.AIAuditEvent,
-	ceilings serviceports.FieldCeilings,
+	ceilings aiauditports.FieldCeilings,
 ) map[string]any {
 	if event == nil {
 		return nil

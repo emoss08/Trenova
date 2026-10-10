@@ -9,9 +9,9 @@ import (
 	"unicode"
 
 	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/hazardousmaterialports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -36,7 +36,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.HazardousMaterialRepository {
+func New(p Params) hazardousmaterialports.HazardousMaterialRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.hazardousmaterial-repository"),
@@ -45,7 +45,7 @@ func New(p Params) repositories.HazardousMaterialRepository {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListHazardousMaterialsRequest,
+	req *hazardousmaterialports.ListHazardousMaterialsRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
@@ -59,7 +59,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListHazardousMaterialsRequest,
+	req *hazardousmaterialports.ListHazardousMaterialsRequest,
 ) (*pagination.ListResult[*hazardousmaterial.HazardousMaterial], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*hazardousmaterial.HazardousMaterial], error) {
 		log := r.l.With(
@@ -88,7 +88,7 @@ func (r *repository) List(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetHazardousMaterialByIDRequest,
+	req hazardousmaterialports.GetHazardousMaterialByIDRequest,
 ) (*hazardousmaterial.HazardousMaterial, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*hazardousmaterial.HazardousMaterial, error) {
 		log := r.l.With(
@@ -117,7 +117,7 @@ func (r *repository) GetByID(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListHazardousMaterialConnectionRequest,
+	req *hazardousmaterialports.ListHazardousMaterialConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -130,7 +130,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListHazardousMaterialConnectionRequest,
+	req *hazardousmaterialports.ListHazardousMaterialConnectionRequest,
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -153,7 +153,7 @@ func applyHazardousMaterialColumns(
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListHazardousMaterialConnectionRequest,
+	req *hazardousmaterialports.ListHazardousMaterialConnectionRequest,
 ) (*pagination.CursorListResult[*hazardousmaterial.HazardousMaterial], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*hazardousmaterial.HazardousMaterial], error) {
 		log := r.l.With(
@@ -274,7 +274,7 @@ func (r *repository) Update(
 
 func (r *repository) BulkUpdateStatus(
 	ctx context.Context,
-	req *repositories.BulkUpdateHazardousMaterialStatusRequest,
+	req *hazardousmaterialports.BulkUpdateHazardousMaterialStatusRequest,
 ) ([]*hazardousmaterial.HazardousMaterial, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*hazardousmaterial.HazardousMaterial, error) {
 		log := r.l.With(
@@ -313,7 +313,7 @@ func (r *repository) BulkUpdateStatus(
 
 func (r *repository) GetByIDs(
 	ctx context.Context,
-	req repositories.GetHazardousMaterialsByIDsRequest,
+	req hazardousmaterialports.GetHazardousMaterialsByIDsRequest,
 ) ([]*hazardousmaterial.HazardousMaterial, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*hazardousmaterial.HazardousMaterial, error) {
 		log := r.l.With(
@@ -342,7 +342,7 @@ func (r *repository) GetByIDs(
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
-	req *repositories.HazardousMaterialSelectOptionsRequest,
+	req *hazardousmaterialports.HazardousMaterialSelectOptionsRequest,
 ) (*pagination.ListResult[*hazardousmaterial.HazardousMaterial], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*hazardousmaterial.HazardousMaterial], error) {
 		return dbhelper.SelectOptions[*hazardousmaterial.HazardousMaterial](

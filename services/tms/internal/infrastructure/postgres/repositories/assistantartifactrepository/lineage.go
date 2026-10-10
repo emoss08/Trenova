@@ -10,8 +10,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -116,7 +116,7 @@ func escapeLike(text string) string {
 
 // matching restricts a read to the thread's artifacts that match the search.
 // A lineage matches when any of its versions does.
-func matching(q *bun.SelectQuery, req *repositories.ListArtifactsRequest) *bun.SelectQuery {
+func matching(q *bun.SelectQuery, req *assistantartifactports.ListArtifactsRequest) *bun.SelectQuery {
 	cols := buncolgen.ArtifactColumns
 
 	q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -144,8 +144,8 @@ type lineageRow struct {
 
 func (r *repository) ListPage(
 	ctx context.Context,
-	req repositories.ListArtifactsRequest,
-) (*repositories.ArtifactPage, error) {
+	req assistantartifactports.ListArtifactsRequest,
+) (*assistantartifactports.ArtifactPage, error) {
 	limit := req.Limit
 	if limit <= 0 {
 		limit = defaultListLimit
@@ -161,10 +161,10 @@ func (r *repository) ListPage(
 		cursor = &decoded
 	}
 
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.ArtifactPage, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*assistantartifactports.ArtifactPage, error) {
 		db := r.db.DBForContext(ctx)
-		page := &repositories.ArtifactPage{
-			Counts: repositories.ArtifactCounts{Families: map[assistantartifact.Family]int{}},
+		page := &assistantartifactports.ArtifactPage{
+			Counts: assistantartifactports.ArtifactCounts{Families: map[assistantartifact.Family]int{}},
 		}
 
 		lineages := lineageQuery(db, &req)
@@ -231,7 +231,7 @@ func (r *repository) ListPage(
 
 // lineageQuery is one row per lineage that matches the search: its root,
 // whether any version is pinned, when it was last added to, and its family.
-func lineageQuery(db bun.IDB, req *repositories.ListArtifactsRequest) *bun.SelectQuery {
+func lineageQuery(db bun.IDB, req *assistantartifactports.ListArtifactsRequest) *bun.SelectQuery {
 	lineages := db.NewSelect().
 		Model((*assistantartifact.Artifact)(nil)).
 		ColumnExpr(rootExpr + " AS root").
@@ -248,7 +248,7 @@ func lineageQuery(db bun.IDB, req *repositories.ListArtifactsRequest) *bun.Selec
 func pageQuery(
 	db bun.IDB,
 	lineages *bun.SelectQuery,
-	req *repositories.ListArtifactsRequest,
+	req *assistantartifactports.ListArtifactsRequest,
 	cursor *lineageCursor,
 	limit int,
 ) *bun.SelectQuery {
@@ -354,7 +354,7 @@ func (r *repository) rootOf(
 
 func (r *repository) ListLineage(
 	ctx context.Context,
-	req repositories.LineageRequest,
+	req assistantartifactports.LineageRequest,
 ) ([]*assistantartifact.Artifact, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*assistantartifact.Artifact, error) {
 		root, err := r.rootOf(ctx, req.TenantInfo, req.ThreadID, req.ID)
@@ -372,7 +372,7 @@ func (r *repository) ListLineage(
 
 func (r *repository) FindBySlug(
 	ctx context.Context,
-	req repositories.SlugRequest,
+	req assistantartifactports.SlugRequest,
 ) (*assistantartifact.Artifact, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*assistantartifact.Artifact, error) {
 		cols := buncolgen.ArtifactColumns

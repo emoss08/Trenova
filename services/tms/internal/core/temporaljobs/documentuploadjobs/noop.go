@@ -6,7 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/core/domain/documentshipmentdraft"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentsearchprojectionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/sdk/client"
@@ -82,7 +84,7 @@ func (noopWorkflowStarter) StartWorkflow(
 	any,
 	...any,
 ) (client.WorkflowRun, error) {
-	return nil, serviceports.ErrWorkflowStarterDisabled
+	return nil, kernelports.ErrWorkflowStarterDisabled
 }
 
 func (noopWorkflowStarter) CancelWorkflow(context.Context, string, string) error {
@@ -98,7 +100,7 @@ func (noopWorkflowStarter) Enabled() bool {
 }
 
 var (
-	_ serviceports.DocumentContentService          = noopDocumentContentService{}
-	_ serviceports.DocumentSearchProjectionService = noopDocumentSearchProjectionService{}
-	_ serviceports.WorkflowStarter                 = noopWorkflowStarter{}
+	_ documentports.DocumentContentService                          = noopDocumentContentService{}
+	_ documentsearchprojectionports.DocumentSearchProjectionService = noopDocumentSearchProjectionService{}
+	_ kernelports.WorkflowStarter                                   = noopWorkflowStarter{}
 )

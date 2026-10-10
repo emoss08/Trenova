@@ -21,9 +21,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -35,29 +37,29 @@ type Params struct {
 	fx.In
 
 	Logger      *zap.Logger
-	Definitions repositories.AgentDefinitionRepository
-	Agents      services.AgentDefinitionService
-	Tools       services.AgentToolRegistry
-	QueryTools  services.AgentQueryToolRegistry
-	Permissions services.PermissionEngine
-	Budgets     services.AgentBudgetService       `optional:"true"`
-	Providers   repositories.AIProviderRepository `optional:"true"`
-	Users       repositories.UserRepository       `optional:"true"`
+	Definitions agentdefinitionports.AgentDefinitionRepository
+	Agents      agentdefinitionports.AgentDefinitionService
+	Tools       agentports.AgentToolRegistry
+	QueryTools  agentports.AgentQueryToolRegistry
+	Permissions permissionports.PermissionEngine
+	Budgets     agentports.AgentBudgetService   `optional:"true"`
+	Providers   agentports.AIProviderRepository `optional:"true"`
+	Users       tenantports.UserRepository      `optional:"true"`
 }
 
 type Service struct {
 	l           *zap.Logger
-	definitions repositories.AgentDefinitionRepository
-	agents      services.AgentDefinitionService
-	tools       services.AgentToolRegistry
-	queryTools  services.AgentQueryToolRegistry
-	permissions services.PermissionEngine
-	budgets     services.AgentBudgetService
-	providers   repositories.AIProviderRepository
-	users       repositories.UserRepository
+	definitions agentdefinitionports.AgentDefinitionRepository
+	agents      agentdefinitionports.AgentDefinitionService
+	tools       agentports.AgentToolRegistry
+	queryTools  agentports.AgentQueryToolRegistry
+	permissions permissionports.PermissionEngine
+	budgets     agentports.AgentBudgetService
+	providers   agentports.AIProviderRepository
+	users       tenantports.UserRepository
 }
 
-func New(p Params) services.AgentCapabilityService {
+func New(p Params) agentports.AgentCapabilityService {
 	return &Service{
 		l:           p.Logger.Named("service.agent-capability"),
 		definitions: p.Definitions,
@@ -73,9 +75,9 @@ func New(p Params) services.AgentCapabilityService {
 
 func (s *Service) Get(
 	ctx context.Context,
-	req *services.GetAgentCapabilitiesRequest,
-	actor *services.RequestActor,
-) (*services.AgentCapabilities, error) {
+	req *agentports.GetAgentCapabilitiesRequest,
+	actor *permissionports.RequestActor,
+) (*agentports.AgentCapabilities, error) {
 	definition, err := s.readable(ctx, req.TenantInfo, req.AgentID, actor)
 	if err != nil {
 		return nil, err
@@ -86,9 +88,9 @@ func (s *Service) Get(
 
 func (s *Service) Update(
 	ctx context.Context,
-	req *services.UpdateAgentCapabilitiesRequest,
-	actor *services.RequestActor,
-) (*services.AgentCapabilities, error) {
+	req *agentports.UpdateAgentCapabilitiesRequest,
+	actor *permissionports.RequestActor,
+) (*agentports.AgentCapabilities, error) {
 	definition, err := s.readable(ctx, req.TenantInfo, req.AgentID, actor)
 	if err != nil {
 		return nil, err
@@ -113,7 +115,7 @@ func (s *Service) Update(
 		}
 	}
 
-	saved, err := s.agents.Patch(ctx, &services.PatchAgentDefinitionRequest{
+	saved, err := s.agents.Patch(ctx, &agentdefinitionports.PatchAgentDefinitionRequest{
 		ID:         definition.ID,
 		TenantInfo: req.TenantInfo,
 		Version:    req.Version,
@@ -136,9 +138,9 @@ func (s *Service) readable(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	agentID pulid.ID,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*agentdefinition.Definition, error) {
-	definition, err := s.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	definition, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         agentID,
 		TenantInfo: tenant,
 	})
@@ -168,12 +170,12 @@ func errWithheld(definition *agentdefinition.Definition) error {
 
 // mayEdit says whether the reader may change the agent: the same permission
 // the agent's own settings in AI Control need, so the page never widens it.
-func (s *Service) mayEdit(ctx context.Context, actor *services.RequestActor) (bool, error) {
+func (s *Service) mayEdit(ctx context.Context, actor *permissionports.RequestActor) (bool, error) {
 	if actor == nil || s.permissions == nil {
 		return false, nil
 	}
 
-	result, err := s.permissions.Check(ctx, &services.PermissionCheckRequest{
+	result, err := s.permissions.Check(ctx, &permissionports.PermissionCheckRequest{
 		PrincipalType:  actor.PrincipalType,
 		PrincipalID:    actor.PrincipalID,
 		UserID:         actor.UserID,
@@ -193,8 +195,8 @@ func (s *Service) mayEdit(ctx context.Context, actor *services.RequestActor) (bo
 func (s *Service) describe(
 	ctx context.Context,
 	definition *agentdefinition.Definition,
-	actor *services.RequestActor,
-) (*services.AgentCapabilities, error) {
+	actor *permissionports.RequestActor,
+) (*agentports.AgentCapabilities, error) {
 	tenant := pagination.TenantInfo{
 		OrgID: definition.OrganizationID,
 		BuID:  definition.BusinessUnitID,
@@ -204,7 +206,7 @@ func (s *Service) describe(
 		return nil, err
 	}
 
-	out := &services.AgentCapabilities{
+	out := &agentports.AgentCapabilities{
 		AgentID:     definition.ID,
 		Name:        definition.Name,
 		Description: definition.Description,
@@ -215,8 +217,8 @@ func (s *Service) describe(
 		Enabled:     definition.Enabled,
 		CanEdit:     editable,
 		Version:     definition.Version,
-		ReadTools:   []services.AgentCapabilityTool{},
-		WriteTools:  []services.AgentCapabilityTool{},
+		ReadTools:   []agentports.AgentCapabilityTool{},
+		WriteTools:  []agentports.AgentCapabilityTool{},
 		Model:       s.modelName(ctx, definition, tenant),
 		SetUpBy:     s.personName(ctx, definition.CreatedByID, tenant),
 	}
@@ -241,9 +243,9 @@ func (s *Service) describe(
 // rows are the tools the page lists: the ones the agent holds, in the order
 // they were chosen, then the ones switched off on the page. The tools every
 // agent holds are not listed, since none of them can be switched off.
-func (s *Service) rows(definition *agentdefinition.Definition) []services.AgentCapabilityTool {
+func (s *Service) rows(definition *agentdefinition.Definition) []agentports.AgentCapabilityTool {
 	prerequisites := s.prerequisiteReads(definition)
-	rows := make([]services.AgentCapabilityTool, 0,
+	rows := make([]agentports.AgentCapabilityTool, 0,
 		len(definition.ToolNames)+len(definition.DisabledToolNames))
 	seen := make(map[string]struct{})
 	add := func(name string, held bool) {
@@ -270,19 +272,19 @@ func (s *Service) row(
 	name string,
 	held bool,
 	prerequisites map[string]string,
-) (services.AgentCapabilityTool, bool) {
-	row := services.AgentCapabilityTool{Key: name, Label: Label(name)}
+) (agentports.AgentCapabilityTool, bool) {
+	row := agentports.AgentCapabilityTool{Key: name, Label: Label(name)}
 
 	if _, ok := s.queryTools.Get(name); ok {
-		row.Mode = services.AgentCapabilityAllowed
+		row.Mode = agentports.AgentCapabilityAllowed
 		if !held {
-			row.Mode = services.AgentCapabilityOff
+			row.Mode = agentports.AgentCapabilityOff
 		}
-		row.AllowedModes = []services.AgentCapabilityMode{
-			services.AgentCapabilityAllowed, services.AgentCapabilityOff,
+		row.AllowedModes = []agentports.AgentCapabilityMode{
+			agentports.AgentCapabilityAllowed, agentports.AgentCapabilityOff,
 		}
 		if needer, needed := prerequisites[name]; needed && held {
-			row.AllowedModes = []services.AgentCapabilityMode{services.AgentCapabilityAllowed}
+			row.AllowedModes = []agentports.AgentCapabilityMode{agentports.AgentCapabilityAllowed}
 			row.LockReason = "Always on · " + needer + " needs it"
 		}
 
@@ -299,7 +301,7 @@ func (s *Service) row(
 	row.Write = true
 	row.Mode = ModeForTier(agenttoolpolicy.StaticTier(definition, policy))
 	if !held {
-		row.Mode = services.AgentCapabilityOff
+		row.Mode = agentports.AgentCapabilityOff
 	}
 	row.AllowedModes, row.LockReason = WriteModes(definition, policy)
 
@@ -310,16 +312,16 @@ func (s *Service) row(
 // Allowed is not among them when it is not.
 func WriteModes(
 	definition *agentdefinition.Definition,
-	policy services.ToolPolicy,
-) ([]services.AgentCapabilityMode, string) {
-	all := []services.AgentCapabilityMode{
-		services.AgentCapabilityAllowed,
-		services.AgentCapabilityAskFirst,
-		services.AgentCapabilityOff,
+	policy agentports.ToolPolicy,
+) ([]agentports.AgentCapabilityMode, string) {
+	all := []agentports.AgentCapabilityMode{
+		agentports.AgentCapabilityAllowed,
+		agentports.AgentCapabilityAskFirst,
+		agentports.AgentCapabilityOff,
 	}
-	asks := []services.AgentCapabilityMode{
-		services.AgentCapabilityAskFirst,
-		services.AgentCapabilityOff,
+	asks := []agentports.AgentCapabilityMode{
+		agentports.AgentCapabilityAskFirst,
+		agentports.AgentCapabilityOff,
 	}
 
 	switch {
@@ -337,12 +339,12 @@ func WriteModes(
 }
 
 // ModeForTier is the page's word for a tier.
-func ModeForTier(tier agent.AutonomyTier) services.AgentCapabilityMode {
+func ModeForTier(tier agent.AutonomyTier) agentports.AgentCapabilityMode {
 	if tier == agent.TierAutoExecute {
-		return services.AgentCapabilityAllowed
+		return agentports.AgentCapabilityAllowed
 	}
 
-	return services.AgentCapabilityAskFirst
+	return agentports.AgentCapabilityAskFirst
 }
 
 // prerequisiteReads are the reads a held write takes its arguments from,
@@ -355,7 +357,7 @@ func (s *Service) prerequisiteReads(definition *agentdefinition.Definition) map[
 		if !ok {
 			continue
 		}
-		dependent, depends := tool.(services.PrerequisiteTool)
+		dependent, depends := tool.(agentports.PrerequisiteTool)
 		if !depends {
 			continue
 		}
@@ -369,13 +371,13 @@ func (s *Service) prerequisiteReads(definition *agentdefinition.Definition) map[
 	return needed
 }
 
-func checkChange(rows []services.AgentCapabilityTool, change services.AgentCapabilityToolChange) error {
+func checkChange(rows []agentports.AgentCapabilityTool, change agentports.AgentCapabilityToolChange) error {
 	if !change.Mode.IsValid() {
 		return errortypes.NewValidationError(
 			"tools", errortypes.ErrInvalid, "Mode must be Allowed, AskFirst or Off",
 		)
 	}
-	idx := slices.IndexFunc(rows, func(row services.AgentCapabilityTool) bool {
+	idx := slices.IndexFunc(rows, func(row agentports.AgentCapabilityTool) bool {
 		return row.Key == change.Key
 	})
 	if idx < 0 {
@@ -398,7 +400,7 @@ func checkChange(rows []services.AgentCapabilityTool, change services.AgentCapab
 }
 
 // applyUpdate makes the page's changes on a copy of the stored agent.
-func applyUpdate(d *agentdefinition.Definition, req *services.UpdateAgentCapabilitiesRequest) error {
+func applyUpdate(d *agentdefinition.Definition, req *agentports.UpdateAgentCapabilitiesRequest) error {
 	if req.Enabled != nil {
 		d.Enabled = *req.Enabled
 	}
@@ -454,12 +456,12 @@ func applyUpdate(d *agentdefinition.Definition, req *services.UpdateAgentCapabil
 	return nil
 }
 
-func applyMode(d *agentdefinition.Definition, change services.AgentCapabilityToolChange) {
+func applyMode(d *agentdefinition.Definition, change agentports.AgentCapabilityToolChange) {
 	switch change.Mode {
-	case services.AgentCapabilityOff:
+	case agentports.AgentCapabilityOff:
 		d.TurnToolOff(change.Key)
 		return
-	case services.AgentCapabilityAllowed, services.AgentCapabilityAskFirst:
+	case agentports.AgentCapabilityAllowed, agentports.AgentCapabilityAskFirst:
 		d.TurnToolOn(change.Key)
 	}
 
@@ -468,9 +470,9 @@ func applyMode(d *agentdefinition.Definition, change services.AgentCapabilityToo
 		tiers[name] = tier
 	}
 	switch change.Mode {
-	case services.AgentCapabilityAllowed:
+	case agentports.AgentCapabilityAllowed:
 		tiers[change.Key] = agent.TierAutoExecute
-	case services.AgentCapabilityAskFirst:
+	case agentports.AgentCapabilityAskFirst:
 		tiers[change.Key] = agent.TierActWithApproval
 	}
 	d.ToolTiers = tiers
@@ -487,7 +489,7 @@ func (s *Service) modelName(
 	if s.providers == nil {
 		return ""
 	}
-	providers, err := s.providers.ListForTask(ctx, repositories.ListAIProvidersForTaskRequest{
+	providers, err := s.providers.ListForTask(ctx, agentports.ListAIProvidersForTaskRequest{
 		Task:       aiprovider.TaskAssistantChat,
 		TenantInfo: tenant,
 	})
@@ -531,7 +533,7 @@ func (s *Service) personName(
 	if id == nil || id.IsNil() || s.users == nil {
 		return ""
 	}
-	user, err := s.users.GetByID(ctx, repositories.GetUserByIDRequest{
+	user, err := s.users.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo:   tenant,
 		LookupUserID: *id,
 	})
@@ -548,14 +550,14 @@ func (s *Service) handoffs(
 	ctx context.Context,
 	definition *agentdefinition.Definition,
 	tenant pagination.TenantInfo,
-	actor *services.RequestActor,
-) ([]services.AgentCapabilityHandoff, error) {
-	out := []services.AgentCapabilityHandoff{}
+	actor *permissionports.RequestActor,
+) ([]agentports.AgentCapabilityHandoff, error) {
+	out := []agentports.AgentCapabilityHandoff{}
 	if len(definition.DelegateIDs) == 0 {
 		return out, nil
 	}
 
-	delegates, err := s.definitions.ListByIDs(ctx, repositories.ListAgentDefinitionsByIDsRequest{
+	delegates, err := s.definitions.ListByIDs(ctx, agentdefinitionports.ListAgentDefinitionsByIDsRequest{
 		IDs:        definition.DelegateIDs,
 		TenantInfo: tenant,
 	})
@@ -580,7 +582,7 @@ func (s *Service) handoffs(
 		if topic == "" {
 			topic = delegate.Description
 		}
-		out = append(out, services.AgentCapabilityHandoff{
+		out = append(out, agentports.AgentCapabilityHandoff{
 			AgentID:     delegate.ID,
 			Name:        delegate.Name,
 			Description: delegate.Description,
@@ -597,8 +599,8 @@ func (s *Service) handoffs(
 func (s *Service) limits(
 	ctx context.Context,
 	definition *agentdefinition.Definition,
-) (services.AgentCapabilityLimits, error) {
-	limits := services.AgentCapabilityLimits{
+) (agentports.AgentCapabilityLimits, error) {
+	limits := agentports.AgentCapabilityLimits{
 		DailyRequestLimit:  definition.DailyRunLimit,
 		MaxChangeItems:     definition.ChangeLimit(),
 		BusinessHoursOnly:  definition.BusinessHoursOnly,

@@ -4,8 +4,8 @@ import (
 	"sync"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiaudit"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"go.uber.org/zap"
 )
 
@@ -61,7 +61,7 @@ func (k *Keyring) Key(id string) (*aiaudit.ChainKey, bool) {
 
 // Signer seals rows with the active key, or as unsigned links when none is
 // configured.
-func (k *Keyring) Signer() repositories.AIAuditSigner {
+func (k *Keyring) Signer() aiauditports.AIAuditSigner {
 	active := k.active
 	if active == nil {
 		k.warn.Do(func() {

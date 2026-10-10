@@ -8,13 +8,13 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/telematicsrepository"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -27,7 +27,7 @@ import (
 type stopReviewFixture struct {
 	ctx        context.Context
 	db         *bun.DB
-	repo       repositories.TelematicsRepository
+	repo       telematicsports.TelematicsRepository
 	tenantInfo pagination.TenantInfo
 	shipmentID pulid.ID
 	locationID pulid.ID
@@ -186,7 +186,7 @@ func TestListOpenStopReviews_Integration(t *testing.T) {
 		StopID:  unarrived.ID,
 	})
 
-	reviews, err := f.repo.ListOpenStopReviews(f.ctx, &repositories.ListOpenStopReviewsRequest{
+	reviews, err := f.repo.ListOpenStopReviews(f.ctx, &telematicsports.ListOpenStopReviewsRequest{
 		TenantInfo: f.tenantInfo,
 		Since:      2_000_000_000,
 		Limit:      50,

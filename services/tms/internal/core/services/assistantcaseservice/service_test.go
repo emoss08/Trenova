@@ -8,8 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentwait"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/deskcase"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,7 +23,7 @@ import (
 const testNow = int64(1_800_000_000)
 
 type fakeConversations struct {
-	repositories.ConversationRepository
+	agentports.ConversationRepository
 
 	thread  *conversation.Thread
 	updates int
@@ -29,7 +31,7 @@ type fakeConversations struct {
 
 func (f *fakeConversations) GetThread(
 	_ context.Context,
-	req repositories.GetThreadRequest,
+	req agentports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	if f.thread == nil || req.ID != f.thread.ID || req.UserID != f.thread.UserID {
 		return nil, errortypes.NewNotFoundError("Thread not found")
@@ -51,7 +53,7 @@ func (f *fakeConversations) UpdateThread(
 }
 
 type fakeCases struct {
-	repositories.AssistantCaseRepository
+	deskcaseports.AssistantCaseRepository
 
 	records map[pulid.ID]*deskcase.Record
 	parties []deskcase.Party
@@ -60,7 +62,7 @@ type fakeCases struct {
 
 func (f *fakeCases) ListRecords(
 	_ context.Context,
-	req *repositories.ListCaseRecordsRequest,
+	req *deskcaseports.ListCaseRecordsRequest,
 ) (map[pulid.ID]*deskcase.Record, error) {
 	f.queries++
 	out := make(map[pulid.ID]*deskcase.Record, len(req.Refs))
@@ -75,20 +77,20 @@ func (f *fakeCases) ListRecords(
 
 func (f *fakeCases) Parties(
 	context.Context,
-	*repositories.ListCasePartiesRequest,
+	*deskcaseports.ListCasePartiesRequest,
 ) ([]deskcase.Party, error) {
 	return f.parties, nil
 }
 
 type fakeWaitRepo struct {
-	repositories.AgentWaitRepository
+	agentwaitports.AgentWaitRepository
 
 	open map[pulid.ID][]*agentwait.Wait
 }
 
 func (f *fakeWaitRepo) ListOpenByThreads(
 	_ context.Context,
-	req *repositories.ListOpenWaitsByThreadsRequest,
+	req *agentwaitports.ListOpenWaitsByThreadsRequest,
 ) (map[pulid.ID][]*agentwait.Wait, error) {
 	out := make(map[pulid.ID][]*agentwait.Wait, len(req.ThreadIDs))
 	for _, id := range req.ThreadIDs {
@@ -101,37 +103,37 @@ func (f *fakeWaitRepo) ListOpenByThreads(
 }
 
 type fakeSubjects struct {
-	repositories.AgentSubjectRepository
+	agentports.AgentSubjectRepository
 
 	exists bool
 }
 
-func (f *fakeSubjects) Exists(context.Context, repositories.AgentSubjectExistsRequest) (bool, error) {
+func (f *fakeSubjects) Exists(context.Context, agentports.AgentSubjectExistsRequest) (bool, error) {
 	return f.exists, nil
 }
 
 type fakePermissions struct {
-	serviceports.PermissionEngine
+	permissionports.PermissionEngine
 
 	allowed bool
 }
 
 func (f *fakePermissions) Check(
 	context.Context,
-	*serviceports.PermissionCheckRequest,
-) (*serviceports.PermissionCheckResult, error) {
-	return &serviceports.PermissionCheckResult{Allowed: f.allowed}, nil
+	*permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
+	return &permissionports.PermissionCheckResult{Allowed: f.allowed}, nil
 }
 
 type fakeAgentWaits struct {
-	serviceports.AgentWaitService
+	agentwaitports.AgentWaitService
 
-	registered *serviceports.RegisterWaitRequest
+	registered *agentwaitports.RegisterWaitRequest
 }
 
 func (f *fakeAgentWaits) Register(
 	_ context.Context,
-	req *serviceports.RegisterWaitRequest,
+	req *agentwaitports.RegisterWaitRequest,
 ) (*agentwait.Wait, error) {
 	f.registered = req
 
@@ -139,17 +141,17 @@ func (f *fakeAgentWaits) Register(
 }
 
 type fakeChecklists struct {
-	repositories.CaseChecklistRepository
+	deskcaseports.CaseChecklistRepository
 
 	template *deskcase.ChecklistTemplate
 	asked    pulid.ID
 	ticked   *deskcase.ChecklistTick
-	unticked *repositories.UntickCaseChecklistItemRequest
+	unticked *deskcaseports.UntickCaseChecklistItemRequest
 }
 
 func (f *fakeChecklists) TemplateFor(
 	_ context.Context,
-	req *repositories.GetCaseChecklistTemplateForRequest,
+	req *deskcaseports.GetCaseChecklistTemplateForRequest,
 ) (*deskcase.ChecklistTemplate, error) {
 	f.asked = req.CustomerID
 
@@ -164,7 +166,7 @@ func (f *fakeChecklists) Tick(_ context.Context, entity *deskcase.ChecklistTick)
 
 func (f *fakeChecklists) Untick(
 	_ context.Context,
-	req *repositories.UntickCaseChecklistItemRequest,
+	req *deskcaseports.UntickCaseChecklistItemRequest,
 ) error {
 	f.unticked = req
 
@@ -181,7 +183,7 @@ type harness struct {
 	agentWaits    *fakeAgentWaits
 	checklists    *fakeChecklists
 	thread        *conversation.Thread
-	req           serviceports.CaseThreadRequest
+	req           deskcaseports.CaseThreadRequest
 }
 
 func newHarness(t *testing.T) *harness {
@@ -222,11 +224,11 @@ func newHarness(t *testing.T) *harness {
 		checklists:    h.checklists,
 		permissions:   h.permissions,
 	}
-	h.req = serviceports.CaseThreadRequest{
+	h.req = deskcaseports.CaseThreadRequest{
 		ThreadID:   thread.ID,
 		TenantInfo: tenant,
-		Actor: &serviceports.RequestActor{
-			PrincipalType:  serviceports.PrincipalTypeUser,
+		Actor: &permissionports.RequestActor{
+			PrincipalType:  permissionports.PrincipalTypeUser,
 			PrincipalID:    userID,
 			UserID:         userID,
 			OrganizationID: tenant.OrgID,
@@ -261,7 +263,7 @@ func TestBind_MakesTheConversationACase(t *testing.T) {
 	shipmentID := pulid.MustNew("shp_")
 	h.cases.records[shipmentID] = &deskcase.Record{Type: agent.SubjectShipment, ID: shipmentID}
 
-	thread, err := h.svc.Bind(t.Context(), &serviceports.BindCaseRequest{
+	thread, err := h.svc.Bind(t.Context(), &deskcaseports.BindCaseRequest{
 		CaseThreadRequest: h.req,
 		SubjectType:       agent.SubjectShipment,
 		SubjectID:         shipmentID,
@@ -277,49 +279,49 @@ func TestBind_MakesTheConversationACase(t *testing.T) {
 func TestBind_Refusals(t *testing.T) {
 	t.Parallel()
 
-	cases := map[string]func(h *harness) *serviceports.BindCaseRequest{
-		"not a case subject": func(h *harness) *serviceports.BindCaseRequest {
-			return &serviceports.BindCaseRequest{
+	cases := map[string]func(h *harness) *deskcaseports.BindCaseRequest{
+		"not a case subject": func(h *harness) *deskcaseports.BindCaseRequest {
+			return &deskcaseports.BindCaseRequest{
 				CaseThreadRequest: h.req,
 				SubjectType:       agent.SubjectWorker,
 				SubjectID:         pulid.MustNew("wrk_"),
 			}
 		},
-		"an id of another kind": func(h *harness) *serviceports.BindCaseRequest {
-			return &serviceports.BindCaseRequest{
+		"an id of another kind": func(h *harness) *deskcaseports.BindCaseRequest {
+			return &deskcaseports.BindCaseRequest{
 				CaseThreadRequest: h.req,
 				SubjectType:       agent.SubjectInvoice,
 				SubjectID:         pulid.MustNew("shp_"),
 			}
 		},
-		"a record the person may not read": func(h *harness) *serviceports.BindCaseRequest {
+		"a record the person may not read": func(h *harness) *deskcaseports.BindCaseRequest {
 			h.permissions.allowed = false
-			return &serviceports.BindCaseRequest{
+			return &deskcaseports.BindCaseRequest{
 				CaseThreadRequest: h.req,
 				SubjectType:       agent.SubjectInvoice,
 				SubjectID:         pulid.MustNew("inv_"),
 			}
 		},
-		"a record that is not the organization's": func(h *harness) *serviceports.BindCaseRequest {
+		"a record that is not the organization's": func(h *harness) *deskcaseports.BindCaseRequest {
 			h.subjects.exists = false
-			return &serviceports.BindCaseRequest{
+			return &deskcaseports.BindCaseRequest{
 				CaseThreadRequest: h.req,
 				SubjectType:       agent.SubjectInvoiceDispute,
 				SubjectID:         pulid.MustNew("idsp_"),
 			}
 		},
-		"a page-bound conversation": func(h *harness) *serviceports.BindCaseRequest {
+		"a page-bound conversation": func(h *harness) *deskcaseports.BindCaseRequest {
 			h.conversations.thread.Origin = conversation.ThreadOriginImport
-			return &serviceports.BindCaseRequest{
+			return &deskcaseports.BindCaseRequest{
 				CaseThreadRequest: h.req,
 				SubjectType:       agent.SubjectShipment,
 				SubjectID:         pulid.MustNew("shp_"),
 			}
 		},
-		"someone else's conversation": func(h *harness) *serviceports.BindCaseRequest {
+		"someone else's conversation": func(h *harness) *deskcaseports.BindCaseRequest {
 			req := h.req
-			req.Actor = &serviceports.RequestActor{UserID: pulid.MustNew("usr_")}
-			return &serviceports.BindCaseRequest{
+			req.Actor = &permissionports.RequestActor{UserID: pulid.MustNew("usr_")}
+			return &deskcaseports.BindCaseRequest{
 				CaseThreadRequest: req,
 				SubjectType:       agent.SubjectShipment,
 				SubjectID:         pulid.MustNew("shp_"),
@@ -349,7 +351,7 @@ func TestBind_MovingTheCaseDropsTheSnooze(t *testing.T) {
 	h.conversations.thread.SnoozeAnchor = deskcase.SnoozeTime
 
 	invoiceID := pulid.MustNew("inv_")
-	thread, err := h.svc.Bind(t.Context(), &serviceports.BindCaseRequest{
+	thread, err := h.svc.Bind(t.Context(), &deskcaseports.BindCaseRequest{
 		CaseThreadRequest: h.req,
 		SubjectType:       agent.SubjectInvoice,
 		SubjectID:         invoiceID,
@@ -366,12 +368,12 @@ func TestSnooze_Time(t *testing.T) {
 	h := newHarness(t)
 	h.bindShipment(t)
 
-	_, err := h.svc.Snooze(t.Context(), &serviceports.SnoozeCaseRequest{
+	_, err := h.svc.Snooze(t.Context(), &deskcaseports.SnoozeCaseRequest{
 		CaseThreadRequest: h.req, Anchor: deskcase.SnoozeTime, Until: testNow + 10,
 	})
 	require.Error(t, err, "a snooze ending before the Desk draws it is refused")
 
-	thread, err := h.svc.Snooze(t.Context(), &serviceports.SnoozeCaseRequest{
+	thread, err := h.svc.Snooze(t.Context(), &deskcaseports.SnoozeCaseRequest{
 		CaseThreadRequest: h.req, Anchor: deskcase.SnoozeTime, Until: testNow + 3600,
 	})
 	require.NoError(t, err)
@@ -384,7 +386,7 @@ func TestSnooze_AppointmentFollowsTheNextStop(t *testing.T) {
 	h := newHarness(t)
 	record := h.bindShipment(t)
 
-	_, err := h.svc.Snooze(t.Context(), &serviceports.SnoozeCaseRequest{
+	_, err := h.svc.Snooze(t.Context(), &deskcaseports.SnoozeCaseRequest{
 		CaseThreadRequest: h.req, Anchor: deskcase.SnoozeAppointment,
 	})
 	require.Error(t, err, "no stop ahead")
@@ -392,7 +394,7 @@ func TestSnooze_AppointmentFollowsTheNextStop(t *testing.T) {
 	record.NextStopID = pulid.MustNew("stp_")
 	appointment := testNow + 7200
 	record.NextAppointmentAt = &appointment
-	thread, err := h.svc.Snooze(t.Context(), &serviceports.SnoozeCaseRequest{
+	thread, err := h.svc.Snooze(t.Context(), &deskcaseports.SnoozeCaseRequest{
 		CaseThreadRequest: h.req, Anchor: deskcase.SnoozeAppointment,
 	})
 
@@ -407,7 +409,7 @@ func TestSnooze_RefusesASettledCase(t *testing.T) {
 	record := h.bindShipment(t)
 	record.Closed = true
 
-	_, err := h.svc.Snooze(t.Context(), &serviceports.SnoozeCaseRequest{
+	_, err := h.svc.Snooze(t.Context(), &deskcaseports.SnoozeCaseRequest{
 		CaseThreadRequest: h.req, Anchor: deskcase.SnoozeTime, Until: testNow + 3600,
 	})
 
@@ -424,7 +426,7 @@ func TestAwaitReply_RegistersAReplyWaitOnTheRecordsOwnParty(t *testing.T) {
 		{Kind: deskcase.WaitingOnCarrier, ID: record.CarrierIDs[0], Name: "Swift"},
 	}
 
-	_, err := h.svc.AwaitReply(t.Context(), &serviceports.AwaitCaseReplyRequest{
+	_, err := h.svc.AwaitReply(t.Context(), &deskcaseports.AwaitCaseReplyRequest{
 		CaseThreadRequest: h.req,
 		Party:             deskcase.WaitingOnCarrier,
 		PartyID:           pulid.MustNew("car_"),
@@ -432,7 +434,7 @@ func TestAwaitReply_RegistersAReplyWaitOnTheRecordsOwnParty(t *testing.T) {
 	require.Error(t, err, "a carrier not on the shipment is refused")
 	require.Nil(t, h.agentWaits.registered)
 
-	_, err = h.svc.AwaitReply(t.Context(), &serviceports.AwaitCaseReplyRequest{
+	_, err = h.svc.AwaitReply(t.Context(), &deskcaseports.AwaitCaseReplyRequest{
 		CaseThreadRequest: h.req,
 		Party:             deskcase.WaitingOnCarrier,
 		PartyID:           record.CarrierIDs[0],
@@ -498,7 +500,7 @@ func TestTick_OnlyAManualAddedStepOfTheTemplateThatApplies(t *testing.T) {
 		}),
 	}
 
-	_, err := h.svc.Tick(t.Context(), &serviceports.TickCaseItemRequest{
+	_, err := h.svc.Tick(t.Context(), &deskcaseports.TickCaseItemRequest{
 		CaseThreadRequest: h.req,
 		ItemKey:           deskcase.ItemPOD,
 		Ticked:            true,
@@ -507,7 +509,7 @@ func TestTick_OnlyAManualAddedStepOfTheTemplateThatApplies(t *testing.T) {
 	assert.Nil(t, h.checklists.ticked)
 	assert.Equal(t, record.BillToID, h.checklists.asked, "the bill-to customer's template applies")
 
-	_, err = h.svc.Tick(t.Context(), &serviceports.TickCaseItemRequest{
+	_, err = h.svc.Tick(t.Context(), &deskcaseports.TickCaseItemRequest{
 		CaseThreadRequest: h.req,
 		ItemKey:           deskcase.ItemKey("custom:notonit"),
 		Ticked:            true,
@@ -524,7 +526,7 @@ func TestTick_RefusesADisputesCase(t *testing.T) {
 	h.conversations.thread.SubjectType = agent.SubjectInvoiceDispute
 	h.conversations.thread.SubjectID = disputeID
 
-	_, err := h.svc.Tick(t.Context(), &serviceports.TickCaseItemRequest{
+	_, err := h.svc.Tick(t.Context(), &deskcaseports.TickCaseItemRequest{
 		CaseThreadRequest: h.req,
 		ItemKey:           deskcase.ItemKey("custom:callshipper"),
 		Ticked:            true,

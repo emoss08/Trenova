@@ -57,7 +57,7 @@ func RegisterProviders(p RegisterProvidersParams) {
 }
 ```
 
-1. **Add your page constant** in `internal/core/ports/services/analytics.go`:
+1. **Add your page constant** in `internal/modules/kernel/ports/kernelports/analytics.go`:
 
 ```go
 const (

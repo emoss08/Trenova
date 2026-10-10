@@ -5,9 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/accountingconnlookup"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
@@ -17,8 +16,8 @@ const summaryWindow = 7 * 24 * 60 * 60
 
 func (s *Service) Overview(
 	ctx context.Context,
-	req *services.AccountingDriftOverviewRequest,
-) (*services.AccountingDriftOverview, error) {
+	req *accountingsyncports.AccountingDriftOverviewRequest,
+) (*accountingsyncports.AccountingDriftOverview, error) {
 	conn, err := accountingconnlookup.ByType(
 		ctx,
 		s.connections,
@@ -35,8 +34,8 @@ func (s *Service) overviewOf(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	conn *accountingsync.AccountingConnection,
-) (*services.AccountingDriftOverview, error) {
-	summary, err := s.findings.Summarize(ctx, &repositories.SummarizeAccountingDriftRequest{
+) (*accountingsyncports.AccountingDriftOverview, error) {
+	summary, err := s.findings.Summarize(ctx, &accountingsyncports.SummarizeAccountingDriftRequest{
 		TenantInfo:    tenant,
 		ConnectionID:  conn.ID,
 		ResolvedSince: s.now().Unix() - summaryWindow,
@@ -48,7 +47,7 @@ func (s *Service) overviewOf(
 	if err != nil {
 		return nil, err
 	}
-	return &services.AccountingDriftOverview{
+	return &accountingsyncports.AccountingDriftOverview{
 		ConnectionID:   conn.ID,
 		ProviderName:   accountingsync.ProviderName(conn.IntegrationType),
 		CheckedAt:      conn.DriftCheckedAt,
@@ -61,7 +60,7 @@ func (s *Service) overviewOf(
 
 func (s *Service) List(
 	ctx context.Context,
-	req *services.ListAccountingDriftFindingsRequest,
+	req *accountingsyncports.ListAccountingDriftFindingsRequest,
 ) (*pagination.CursorListResult[*accountingsync.AccountingDriftFinding], error) {
 	conn, err := accountingconnlookup.ByType(
 		ctx,
@@ -79,7 +78,7 @@ func (s *Service) List(
 	filter.TenantInfo = req.TenantInfo
 	return s.findings.ListConnection(
 		ctx,
-		&repositories.ListAccountingDriftFindingsConnectionRequest{
+		&accountingsyncports.ListAccountingDriftFindingsConnectionRequest{
 			Filter:       filter,
 			Cursor:       req.Cursor,
 			ConnectionID: conn.ID,
@@ -94,7 +93,7 @@ func (s *Service) List(
 
 func (s *Service) Get(
 	ctx context.Context,
-	req *services.GetAccountingDriftFindingRequest,
+	req *accountingsyncports.GetAccountingDriftFindingRequest,
 ) (*accountingsync.AccountingDriftFinding, error) {
 	return s.findingByID(ctx, req.TenantInfo, req.ID, false)
 }
@@ -103,7 +102,7 @@ func (s *Service) CheckNow(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	integrationType integration.Type,
-) (*services.AccountingDriftOverview, error) {
+) (*accountingsyncports.AccountingDriftOverview, error) {
 	conn, err := accountingconnlookup.ByType(ctx, s.connections, tenantInfo, integrationType)
 	if err != nil {
 		return nil, err

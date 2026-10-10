@@ -1,11 +1,12 @@
 package assistantservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -17,17 +18,17 @@ func TestAssertWithinPlanRefusesOnceTheMonthsSpendIsGone(t *testing.T) {
 	t.Parallel()
 
 	tenant := plantest.Tenant()
-	guard := mocks.NewMockQuotaGuard(t)
-	guard.EXPECT().Check(mock.Anything, &serviceports.QuotaRequest{
+	guard := platformplanportsmock.NewMockQuotaGuard(t)
+	guard.EXPECT().Check(mock.Anything, &platformplanports.QuotaRequest{
 		TenantInfo: tenant,
 		Meter:      platformcatalog.MeterAIAssistantMessages,
 		Quantity:   0,
-	}).Return(&serviceports.QuotaDecision{Allowed: true}, nil)
-	guard.EXPECT().Check(mock.Anything, &serviceports.QuotaRequest{
+	}).Return(&platformplanports.QuotaDecision{Allowed: true}, nil)
+	guard.EXPECT().Check(mock.Anything, &platformplanports.QuotaRequest{
 		TenantInfo: tenant,
 		Meter:      platformcatalog.MeterAISpendCents,
 		Quantity:   1,
-	}).Return(&serviceports.QuotaDecision{
+	}).Return(&platformplanports.QuotaDecision{
 		Meter:   platformcatalog.MeterAISpendCents,
 		Plan:    platformplan.PlanKeyFreeDemo,
 		Limit:   150,
@@ -43,8 +44,8 @@ func TestAssertWithinPlanRefusesATurnPastTheMessageLimit(t *testing.T) {
 	t.Parallel()
 
 	tenant := plantest.Tenant()
-	guard := mocks.NewMockQuotaGuard(t)
-	guard.EXPECT().Check(mock.Anything, mock.Anything).Return(&serviceports.QuotaDecision{
+	guard := platformplanportsmock.NewMockQuotaGuard(t)
+	guard.EXPECT().Check(mock.Anything, mock.Anything).Return(&platformplanports.QuotaDecision{
 		Meter:   platformcatalog.MeterAIAssistantMessages,
 		Plan:    platformplan.PlanKeyFreeDemo,
 		Limit:   25,

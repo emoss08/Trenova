@@ -5,10 +5,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -21,21 +22,21 @@ import (
 
 func (s *Service) ListEscrowAccounts(
 	ctx context.Context,
-	req *repositories.ListEscrowAccountsRequest,
+	req *driverpayports.ListEscrowAccountsRequest,
 ) (*pagination.ListResult[*driverpay.EscrowAccount], error) {
 	return s.escrowRepo.List(ctx, req)
 }
 
 func (s *Service) ListEscrowAccountsConnection(
 	ctx context.Context,
-	req *repositories.ListEscrowAccountConnectionRequest,
+	req *driverpayports.ListEscrowAccountConnectionRequest,
 ) (*pagination.CursorListResult[*driverpay.EscrowAccount], error) {
 	return s.escrowRepo.ListConnection(ctx, req)
 }
 
 func (s *Service) GetEscrowAccount(
 	ctx context.Context,
-	req repositories.GetEscrowAccountByIDRequest,
+	req driverpayports.GetEscrowAccountByIDRequest,
 ) (*driverpay.EscrowAccount, error) {
 	return s.escrowRepo.GetByID(ctx, req)
 }
@@ -43,7 +44,7 @@ func (s *Service) GetEscrowAccount(
 func (s *Service) OpenEscrowAccount(
 	ctx context.Context,
 	entity *driverpay.EscrowAccount,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driverpay.EscrowAccount, error) {
 	if err := requireActor(actor, "Escrow account opening"); err != nil {
 		return nil, err
@@ -63,7 +64,7 @@ func (s *Service) OpenEscrowAccount(
 func (s *Service) UpdateEscrowAccount(
 	ctx context.Context,
 	entity *driverpay.EscrowAccount,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driverpay.EscrowAccount, error) {
 	if err := requireActor(actor, "Escrow account update"); err != nil {
 		return nil, err
@@ -93,7 +94,7 @@ type EscrowAdjustmentRequest struct {
 func (s *Service) AdjustEscrowAccount(
 	ctx context.Context,
 	req *EscrowAdjustmentRequest,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driverpay.EscrowAccount, error) {
 	if err := requireActor(actor, "Escrow adjustment"); err != nil {
 		return nil, err
@@ -106,8 +107,8 @@ func (s *Service) AdjustEscrowAccount(
 	}
 
 	var updated *driverpay.EscrowAccount
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		account, txErr := s.escrowRepo.GetByID(txCtx, repositories.GetEscrowAccountByIDRequest{
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		account, txErr := s.escrowRepo.GetByID(txCtx, driverpayports.GetEscrowAccountByIDRequest{
 			ID:         req.AccountID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -133,14 +134,14 @@ func (s *Service) CloseEscrowAccount(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	accountID pulid.ID,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driverpay.EscrowAccount, error) {
 	if err := requireActor(actor, "Escrow account closure"); err != nil {
 		return nil, err
 	}
 	var updated *driverpay.EscrowAccount
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		account, txErr := s.escrowRepo.GetByID(txCtx, repositories.GetEscrowAccountByIDRequest{
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		account, txErr := s.escrowRepo.GetByID(txCtx, driverpayports.GetEscrowAccountByIDRequest{
 			ID:         accountID,
 			TenantInfo: tenantInfo,
 		})
@@ -177,8 +178,8 @@ func (s *Service) AccrueEscrowInterest(
 	accountID pulid.ID,
 ) (*driverpay.EscrowAccount, error) {
 	var updated *driverpay.EscrowAccount
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		account, txErr := s.escrowRepo.GetByID(txCtx, repositories.GetEscrowAccountByIDRequest{
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		account, txErr := s.escrowRepo.GetByID(txCtx, driverpayports.GetEscrowAccountByIDRequest{
 			ID:         accountID,
 			TenantInfo: tenantInfo,
 		})
@@ -262,7 +263,7 @@ func (s *Service) logEscrowAudit(
 	operation permission.Operation,
 	comment string,
 ) {
-	params := &serviceports.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceEscrowAccount,
 		ResourceID:     current.ID.String(),
 		Operation:      operation,
@@ -271,7 +272,7 @@ func (s *Service) logEscrowAudit(
 		OrganizationID: current.OrganizationID,
 		BusinessUnitID: current.BusinessUnitID,
 	}
-	options := []serviceports.LogOption{auditservice.WithComment(comment)}
+	options := []auditports.LogOption{auditservice.WithComment(comment)}
 	if previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(previous)
 		options = append(options, auditservice.WithDiff(previous, current))

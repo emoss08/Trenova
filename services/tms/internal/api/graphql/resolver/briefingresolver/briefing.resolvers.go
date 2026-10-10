@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/briefing"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -91,7 +91,7 @@ func (r *QueryResolver) Briefings(ctx context.Context, input gqlmodel.ListBriefi
 		return nil, err
 	}
 
-	req := services.ListBriefingsRequest{TenantInfo: base.TenantInfo(authCtx)}
+	req := briefingports.ListBriefingsRequest{TenantInfo: base.TenantInfo(authCtx)}
 	if input.RoleKey != nil {
 		req.RoleKey = *input.RoleKey
 	}

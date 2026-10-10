@@ -5,16 +5,17 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 type (
-	ChecklistChange = services.RecordChange[worker.WorkerChecklist]
-	ItemChange      = services.RecordChange[worker.WorkerChecklistItem]
+	ChecklistChange = kernelports.RecordChange[worker.WorkerChecklist]
+	ItemChange      = kernelports.RecordChange[worker.WorkerChecklistItem]
 )
 
 type StartPlan struct {
@@ -29,7 +30,7 @@ type ItemPlan struct {
 }
 
 func (s *Service) PlanStart(ctx context.Context, req *StartRequest) (*StartPlan, error) {
-	template, err := s.repo.GetTemplateByID(ctx, &repositories.GetChecklistTemplateByIDRequest{
+	template, err := s.repo.GetTemplateByID(ctx, &workerports.GetChecklistTemplateByIDRequest{
 		ID:           req.TemplateID,
 		TenantInfo:   req.TenantInfo,
 		IncludeItems: true,
@@ -53,7 +54,7 @@ func (s *Service) PlanStart(ctx context.Context, req *StartRequest) (*StartPlan,
 		)
 	}
 
-	existing, err := s.repo.ListForWorker(ctx, &repositories.ListWorkerChecklistsRequest{
+	existing, err := s.repo.ListForWorker(ctx, &workerports.ListWorkerChecklistsRequest{
 		TenantInfo:    req.TenantInfo,
 		WorkerID:      req.WorkerID,
 		IncludeClosed: fromEvent,
@@ -72,7 +73,7 @@ func (s *Service) PlanStart(ctx context.Context, req *StartRequest) (*StartPlan,
 		}
 	}
 
-	if _, err = s.workerRepo.GetByID(ctx, repositories.GetWorkerByIDRequest{
+	if _, err = s.workerRepo.GetByID(ctx, workerports.GetWorkerByIDRequest{
 		ID:         req.WorkerID,
 		TenantInfo: req.TenantInfo,
 	}); err != nil {
@@ -134,7 +135,7 @@ func (s *Service) loadItem(
 	ctx context.Context,
 	req *ReopenItemRequest,
 ) (*worker.WorkerChecklistItem, *worker.WorkerChecklist, error) {
-	item, err := s.repo.GetItemByID(ctx, &repositories.GetWorkerChecklistItemByIDRequest{
+	item, err := s.repo.GetItemByID(ctx, &workerports.GetWorkerChecklistItemByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -148,7 +149,7 @@ func (s *Service) loadItem(
 			"Checklist item was changed by someone else. Reload and try again",
 		)
 	}
-	checklist, err := s.repo.GetByID(ctx, &repositories.GetWorkerChecklistByIDRequest{
+	checklist, err := s.repo.GetByID(ctx, &workerports.GetWorkerChecklistByIDRequest{
 		ID:         item.ChecklistID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -191,7 +192,7 @@ func (s *Service) planSettleItem(
 
 	item := *original
 	if !req.EvidenceDocumentID.IsNil() {
-		doc, docErr := s.documentRepo.GetByID(ctx, repositories.GetDocumentByIDRequest{
+		doc, docErr := s.documentRepo.GetByID(ctx, documentports.GetDocumentByIDRequest{
 			ID:         req.EvidenceDocumentID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -240,7 +241,7 @@ func (s *Service) PlanReopenItem(ctx context.Context, req *ReopenItemRequest) (*
 }
 
 func (s *Service) PlanCancel(ctx context.Context, req *CancelRequest) (*ChecklistChange, error) {
-	original, err := s.repo.GetByID(ctx, &repositories.GetWorkerChecklistByIDRequest{
+	original, err := s.repo.GetByID(ctx, &workerports.GetWorkerChecklistByIDRequest{
 		ID:           req.ID,
 		TenantInfo:   req.TenantInfo,
 		IncludeItems: true,

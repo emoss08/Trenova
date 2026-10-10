@@ -12,8 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/workersafetyservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -147,7 +147,7 @@ func (r *QueryResolver) WorkerSafetyViolations(ctx context.Context, safetyEventI
 
 	return r.WorkerSafetyService.ListViolations(
 		ctx,
-		&repositories.ListWorkerSafetyViolationsRequest{
+		&workerports.ListWorkerSafetyViolationsRequest{
 			TenantInfo:    base.TenantInfo(authCtx),
 			SafetyEventID: eventID,
 			WorkerID:      wrkID,

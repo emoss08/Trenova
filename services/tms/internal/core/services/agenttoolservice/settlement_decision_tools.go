@@ -9,9 +9,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/settlementshared"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -39,7 +40,7 @@ type settlementBook[E any] interface {
 	Perform(
 		ctx context.Context,
 		req *settlementshared.ActionRequest,
-		actor *serviceports.RequestActor,
+		actor *permissionports.RequestActor,
 	) (*E, error)
 }
 
@@ -128,8 +129,8 @@ func (t *settlementDecisionTool[E]) ParamSchema() map[string]any {
 	}
 }
 
-func (t *settlementDecisionTool[E]) Policy() serviceports.ToolPolicy {
-	policy := serviceports.ToolPolicy{
+func (t *settlementDecisionTool[E]) Policy() agentports.ToolPolicy {
+	policy := agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      t.ledger.resource,
@@ -147,10 +148,10 @@ func (t *settlementDecisionTool[E]) Policy() serviceports.ToolPolicy {
 		policy.Classify = classifyAsMoney
 	}
 	if t.decision.holdsWhenTainted {
-		policy.TaintHold = &serviceports.TaintHold{
+		policy.TaintHold = &agentports.TaintHold{
 			Description: "Its text is what payroll or the payee reads next, so a run that has " +
 				"read outside text proposes it rather than writing it.",
-			Applies: func(serviceports.ToolExecuteParams) bool { return true },
+			Applies: func(agentports.ToolExecuteParams) bool { return true },
 		}
 	}
 
@@ -158,17 +159,17 @@ func (t *settlementDecisionTool[E]) Policy() serviceports.ToolPolicy {
 }
 
 func classifyAsMoney(
-	serviceports.ToolExecuteParams,
-) serviceports.CallPolicy {
-	return serviceports.CallPolicy{Egress: agent.EgressMoney}
+	agentports.ToolExecuteParams,
+) agentports.CallPolicy {
+	return agentports.CallPolicy{Egress: agent.EgressMoney}
 }
 
-func (t *settlementDecisionTool[E]) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *settlementDecisionTool[E]) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, paramSettlementID, t.ledger.resource)
 }
 
 func (t *settlementDecisionTool[E]) request(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*settlementshared.ActionRequest, error) {
 	if err := guardPreview(t, params); err != nil {
 		return nil, err
@@ -195,7 +196,7 @@ func (t *settlementDecisionTool[E]) request(
 
 func (t *settlementDecisionTool[E]) plan(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*settlementshared.ActionPlan[*E], error) {
 	req, err := t.request(params)
 	if err != nil {
@@ -207,7 +208,7 @@ func (t *settlementDecisionTool[E]) plan(
 
 func (t *settlementDecisionTool[E]) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
@@ -219,7 +220,7 @@ func (t *settlementDecisionTool[E]) Validate(
 
 func (t *settlementDecisionTool[E]) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err

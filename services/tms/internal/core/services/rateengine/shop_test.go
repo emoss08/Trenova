@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -42,18 +42,18 @@ func expectBuyRules(d *deps, byCarrier map[pulid.ID]*rateagreement.RateAgreement
 	d.agreements.EXPECT().ResolveRules(mock.Anything, mock.Anything).
 		RunAndReturn(func(
 			_ context.Context,
-			req *repositories.ResolveRateRulesRequest,
-		) (*repositories.ResolveRateRulesResult, error) {
+			req *rateagreementports.ResolveRateRulesRequest,
+		) (*rateagreementports.ResolveRateRulesResult, error) {
 			for _, partyID := range req.PartyIDs {
 				if rule, ok := byCarrier[partyID]; ok {
-					return &repositories.ResolveRateRulesResult{
+					return &rateagreementports.ResolveRateRulesResult{
 						Rules: []*rateagreement.RateAgreementRule{rule},
 						Total: 1,
 					}, nil
 				}
 			}
 
-			return &repositories.ResolveRateRulesResult{}, nil
+			return &rateagreementports.ResolveRateRulesResult{}, nil
 		})
 
 	expectTemplates(d)
@@ -80,8 +80,8 @@ func guideEntry(carrierID pulid.ID, rank int16, ttl int32) *tender.RoutingGuideE
 	}
 }
 
-func shopRequest(strategy services.ShopStrategy) *services.ShopRequest {
-	return &services.ShopRequest{
+func shopRequest(strategy ratequoteports.ShopStrategy) *ratequoteports.ShopRequest {
+	return &ratequoteports.ShopRequest{
 		Shipment:   testShipment(),
 		TenantInfo: tenantInfo(),
 		Strategy:   strategy,
@@ -105,7 +105,7 @@ func TestShop_TakesItsCandidatesFromTheRoutingGuide(t *testing.T) {
 		pricyCarrier: buyRule(pricyCarrier, "1700"),
 	})
 
-	result, err := d.svc.Shop(t.Context(), shopRequest(services.ShopStrategyLeastCost))
+	result, err := d.svc.Shop(t.Context(), shopRequest(ratequoteports.ShopStrategyLeastCost))
 
 	require.NoError(t, err)
 	require.Len(t, result.Options, 2)
@@ -126,7 +126,7 @@ func TestShop_LeastCostPutsTheCheapestFirst(t *testing.T) {
 		pricyCarrier: buyRule(pricyCarrier, "1700"),
 	})
 
-	result, err := d.svc.Shop(t.Context(), shopRequest(services.ShopStrategyLeastCost))
+	result, err := d.svc.Shop(t.Context(), shopRequest(ratequoteports.ShopStrategyLeastCost))
 
 	require.NoError(t, err)
 	require.Len(t, result.Options, 2)
@@ -150,7 +150,7 @@ func TestShop_GuideRankKeepsTheGuidesOwnOrder(t *testing.T) {
 		pricyCarrier: buyRule(pricyCarrier, "1700"),
 	})
 
-	result, err := d.svc.Shop(t.Context(), shopRequest(services.ShopStrategyGuideRank))
+	result, err := d.svc.Shop(t.Context(), shopRequest(ratequoteports.ShopStrategyGuideRank))
 
 	require.NoError(t, err)
 	assert.Equal(t, pricyCarrier, result.Options[0].CarrierID)
@@ -170,7 +170,7 @@ func TestShop_FastestAcceptPutsTheShortestOfferFirst(t *testing.T) {
 		pricyCarrier: buyRule(pricyCarrier, "1700"),
 	})
 
-	result, err := d.svc.Shop(t.Context(), shopRequest(services.ShopStrategyFastestAccept))
+	result, err := d.svc.Shop(t.Context(), shopRequest(ratequoteports.ShopStrategyFastestAccept))
 
 	require.NoError(t, err)
 	assert.Equal(t, cheapCarrier, result.Options[0].CarrierID)
@@ -188,7 +188,7 @@ func TestShop_ReportsMarginAgainstTheSellPrice(t *testing.T) {
 		cheapCarrier: buyRule(cheapCarrier, "1400"),
 	})
 
-	result, err := d.svc.Shop(t.Context(), shopRequest(services.ShopStrategyBestMargin))
+	result, err := d.svc.Shop(t.Context(), shopRequest(ratequoteports.ShopStrategyBestMargin))
 
 	require.NoError(t, err)
 	require.Len(t, result.Options, 1)
@@ -211,7 +211,7 @@ func TestShop_BindsTheSellTotalIntoTheCarriersTemplate(t *testing.T) {
 		cheapCarrier: buyRule(cheapCarrier, "1400"),
 	})
 
-	_, err := d.svc.Shop(t.Context(), shopRequest(services.ShopStrategyLeastCost))
+	_, err := d.svc.Shop(t.Context(), shopRequest(ratequoteports.ShopStrategyLeastCost))
 
 	require.NoError(t, err)
 	require.Len(t, d.calcRequests, 1)
@@ -237,7 +237,7 @@ func TestShop_CarrierWithNoContractIsListedLastRatherThanDropped(t *testing.T) {
 		cheapCarrier: buyRule(cheapCarrier, "1400"),
 	})
 
-	result, err := d.svc.Shop(t.Context(), shopRequest(services.ShopStrategyLeastCost))
+	result, err := d.svc.Shop(t.Context(), shopRequest(ratequoteports.ShopStrategyLeastCost))
 
 	require.NoError(t, err)
 	require.Len(t, result.Options, 2)
@@ -258,7 +258,7 @@ func TestShop_LeastCostDoesNotTreatUnpricedAsFree(t *testing.T) {
 		pricyCarrier: buyRule(pricyCarrier, "1700"),
 	})
 
-	result, err := d.svc.Shop(t.Context(), shopRequest(services.ShopStrategyLeastCost))
+	result, err := d.svc.Shop(t.Context(), shopRequest(ratequoteports.ShopStrategyLeastCost))
 
 	require.NoError(t, err)
 	assert.Equal(t, pricyCarrier, result.Options[0].CarrierID)
@@ -274,7 +274,7 @@ func TestShop_ExplicitShortlistSkipsTheGuideEntirely(t *testing.T) {
 		cheapCarrier: buyRule(cheapCarrier, "1400"),
 	})
 
-	req := shopRequest(services.ShopStrategyLeastCost)
+	req := shopRequest(ratequoteports.ShopStrategyLeastCost)
 	req.CarrierIDs = []pulid.ID{cheapCarrier}
 
 	result, err := d.svc.Shop(t.Context(), req)
@@ -292,7 +292,7 @@ func TestShop_NoCandidatesReturnsAnEmptyResultWithAWarning(t *testing.T) {
 
 	d := setup(t)
 
-	result, err := d.svc.Shop(t.Context(), shopRequest(services.ShopStrategyLeastCost))
+	result, err := d.svc.Shop(t.Context(), shopRequest(ratequoteports.ShopStrategyLeastCost))
 
 	require.NoError(t, err)
 	assert.Empty(t, result.Options)
@@ -317,7 +317,7 @@ func TestShop_TiesAreBrokenTheSameWayWhateverOrderTheGuideIsIn(t *testing.T) {
 			pricyCarrier: buyRule(pricyCarrier, "1500"),
 		})
 
-		result, err := d.svc.Shop(t.Context(), shopRequest(services.ShopStrategyLeastCost))
+		result, err := d.svc.Shop(t.Context(), shopRequest(ratequoteports.ShopStrategyLeastCost))
 		require.NoError(t, err)
 		require.Len(t, result.Options, 2)
 
@@ -341,7 +341,7 @@ func TestShop_DoesNotPersistQuotesUnlessAsked(t *testing.T) {
 		cheapCarrier: buyRule(cheapCarrier, "1400"),
 	})
 
-	_, err := d.svc.Shop(t.Context(), shopRequest(services.ShopStrategyLeastCost))
+	_, err := d.svc.Shop(t.Context(), shopRequest(ratequoteports.ShopStrategyLeastCost))
 
 	require.NoError(t, err)
 	d.quotes.AssertNotCalled(t, "Create", mock.Anything, mock.Anything)
@@ -360,7 +360,7 @@ func TestShop_EveryOptionCarriesItsOwnQuoteAndTrace(t *testing.T) {
 		pricyCarrier: buyRule(pricyCarrier, "1700"),
 	})
 
-	result, err := d.svc.Shop(t.Context(), shopRequest(services.ShopStrategyLeastCost))
+	result, err := d.svc.Shop(t.Context(), shopRequest(ratequoteports.ShopStrategyLeastCost))
 
 	require.NoError(t, err)
 	for _, option := range result.Options {
@@ -386,7 +386,7 @@ func TestShop_LimitCapsTheOptionsReturned(t *testing.T) {
 		pricyCarrier: buyRule(pricyCarrier, "1700"),
 	})
 
-	req := shopRequest(services.ShopStrategyLeastCost)
+	req := shopRequest(ratequoteports.ShopStrategyLeastCost)
 	req.Limit = 1
 
 	result, err := d.svc.Shop(t.Context(), req)
@@ -409,7 +409,7 @@ func TestShop_OptionBelowTheMarginFloorIsShownAndFlagged(t *testing.T) {
 	rule.Agreement.MarginFloorPercent = decimal.NewNullDecimal(decimal.NewFromInt(15))
 	expectBuyRules(d, map[pulid.ID]*rateagreement.RateAgreementRule{pricyCarrier: rule})
 
-	result, err := d.svc.Shop(t.Context(), shopRequest(services.ShopStrategyBestMargin))
+	result, err := d.svc.Shop(t.Context(), shopRequest(ratequoteports.ShopStrategyBestMargin))
 
 	require.NoError(t, err)
 	require.Len(t, result.Options, 1)
@@ -434,6 +434,6 @@ func TestShop_UnsetStrategyDefaultsToLeastCost(t *testing.T) {
 	result, err := d.svc.Shop(t.Context(), req)
 
 	require.NoError(t, err)
-	assert.Equal(t, services.ShopStrategyLeastCost, result.Strategy)
+	assert.Equal(t, ratequoteports.ShopStrategyLeastCost, result.Strategy)
 	assert.Equal(t, cheapCarrier, result.Options[0].CarrierID)
 }

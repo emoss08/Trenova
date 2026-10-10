@@ -1,13 +1,17 @@
 package journalreversalservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/journalreversalportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalreversalports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -27,19 +31,19 @@ func TestPlanCreateShowsTheReversalWithoutRequestingIt(t *testing.T) {
 	periodID := pulid.MustNew("fp_")
 	tenantInfo := pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}
 
-	entryRepo := mocks.NewMockJournalEntryRepository(t)
+	entryRepo := journalentryportsmock.NewMockJournalEntryRepository(t)
 	entryRepo.EXPECT().
-		GetByID(mock.Anything, repositories.GetJournalEntryByIDRequest{
+		GetByID(mock.Anything, journalentryports.GetJournalEntryByIDRequest{
 			ID:         entryID,
 			TenantInfo: tenantInfo,
 		}).
 		Return(postedEntry(entryID, orgID, buID), nil)
-	accountingRepo := mocks.NewMockAccountingControlRepository(t)
+	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(&tenant.AccountingControl{
 		JournalReversalPolicy:   tenant.JournalReversalPolicyNextOpenPeriod,
 		RequireManualJEApproval: false,
 	}, nil)
-	fiscalRepo := mocks.NewMockFiscalPeriodRepository(t)
+	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
 		GetPeriodByDate(mock.Anything, mock.Anything).
 		Return(&fiscalperiod.FiscalPeriod{
@@ -47,7 +51,7 @@ func TestPlanCreateShowsTheReversalWithoutRequestingIt(t *testing.T) {
 			FiscalYearID: pulid.MustNew("fy_"),
 			Status:       fiscalperiod.StatusOpen,
 		}, nil)
-	reversalRepo := mocks.NewMockJournalReversalRepository(t)
+	reversalRepo := journalreversalportsmock.NewMockJournalReversalRepository(t)
 
 	svc := &Service{
 		journalEntryRepo:    entryRepo,
@@ -56,7 +60,7 @@ func TestPlanCreateShowsTheReversalWithoutRequestingIt(t *testing.T) {
 		validator:           &Validator{fiscalRepo: fiscalRepo},
 	}
 
-	change, err := svc.PlanCreate(t.Context(), &serviceports.CreateJournalReversalRequest{
+	change, err := svc.PlanCreate(t.Context(), &journalreversalports.CreateJournalReversalRequest{
 		OriginalJournalEntryID:  entryID,
 		RequestedAccountingDate: 1_700_000_000,
 		ReasonCode:              "ERR",
@@ -88,9 +92,9 @@ func TestPlanPostFlipsTheOriginalLinesWithoutBookingThem(t *testing.T) {
 	periodID := pulid.MustNew("fp_")
 	tenantInfo := pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}
 
-	reversalRepo := mocks.NewMockJournalReversalRepository(t)
+	reversalRepo := journalreversalportsmock.NewMockJournalReversalRepository(t)
 	reversalRepo.EXPECT().
-		GetByID(mock.Anything, repositories.GetJournalReversalByIDRequest{
+		GetByID(mock.Anything, journalreversalports.GetJournalReversalByIDRequest{
 			ID:         reversalID,
 			TenantInfo: tenantInfo,
 		}).
@@ -103,12 +107,12 @@ func TestPlanPostFlipsTheOriginalLinesWithoutBookingThem(t *testing.T) {
 			RequestedAccountingDate: 1_700_000_000,
 			ResolvedFiscalPeriodID:  periodID,
 		}, nil)
-	entryRepo := mocks.NewMockJournalEntryRepository(t)
+	entryRepo := journalentryportsmock.NewMockJournalEntryRepository(t)
 	entryRepo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
 		Return(postedEntry(entryID, orgID, buID), nil)
 
-	accountingRepo := mocks.NewMockAccountingControlRepository(t)
+	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
 		Return(&tenant.AccountingControl{FunctionalCurrencyCode: "CAD"}, nil)
@@ -119,7 +123,7 @@ func TestPlanPostFlipsTheOriginalLinesWithoutBookingThem(t *testing.T) {
 		accountingRepo:      accountingRepo,
 	}
 
-	change, err := svc.PlanPost(t.Context(), &serviceports.GetJournalReversalRequest{
+	change, err := svc.PlanPost(t.Context(), &journalreversalports.GetJournalReversalRequest{
 		ReversalID: reversalID,
 		TenantInfo: tenantInfo,
 	}, testutil.NewSessionActor(userID, orgID, buID))

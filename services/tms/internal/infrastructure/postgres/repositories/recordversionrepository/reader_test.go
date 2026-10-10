@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/rateimport"
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
@@ -90,8 +90,8 @@ func resourceNames(t *testing.T) map[string]permission.Resource {
 		out[match[1]] = permission.Resource(match[2])
 	}
 	require.NotEmpty(t, out)
-	out["RecordInvoiceAdjustment"] = services.RecordInvoiceAdjustment
-	out["RecordCreditMemoApplication"] = services.RecordCreditMemoApplication
+	out["RecordInvoiceAdjustment"] = agentports.RecordInvoiceAdjustment
+	out["RecordCreditMemoApplication"] = agentports.RecordCreditMemoApplication
 
 	return out
 }
@@ -148,7 +148,7 @@ func TestRecordsSharingAResourceAreToldApartByTheirIDs(t *testing.T) {
 		require.NoError(t, record.BeforeAppendModel(t.Context(), insert))
 	}
 
-	for name, target := range map[string]services.ToolTarget{
+	for name, target := range map[string]agentports.ToolTarget{
 		"fuel purchase":          {Resource: permission.ResourceFuelPurchase, ID: purchase.ID},
 		"fuel purchase import":   {Resource: permission.ResourceFuelPurchase, ID: fuelBatch.ID},
 		"fuel import to resolve": {Resource: permission.ResourceFuelPurchaseImport, ID: fuelBatch.ID},

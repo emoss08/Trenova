@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	portservices "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -18,15 +18,15 @@ func (s *Service) skipIneligibleOffer(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	offer *tender.TenderOffer,
-) (*portservices.TenderDispatchResult, error) {
+) (*tenderports.TenderDispatchResult, error) {
 	if s.intelGate == nil {
 		return nil, nil
 	}
 
-	carriers, err := s.carrierRepo.GetByIDs(ctx, repositories.GetCarriersByIDsRequest{
+	carriers, err := s.carrierRepo.GetByIDs(ctx, carrierports.GetCarriersByIDsRequest{
 		TenantInfo: tenantInfo,
 		CarrierIDs: []pulid.ID{offer.CarrierID},
-		CarrierFilterOptions: repositories.CarrierFilterOptions{
+		CarrierFilterOptions: carrierports.CarrierFilterOptions{
 			IncludeInsurancePolicies: true,
 		},
 	})
@@ -49,7 +49,7 @@ func (s *Service) skipIneligibleOffer(
 
 	reason := "Carrier became ineligible before the offer was sent: " +
 		strings.Join(eligibility.Blockers, "; ")
-	moved, err := s.repo.UpdateOfferStatus(ctx, &repositories.UpdateOfferStatusRequest{
+	moved, err := s.repo.UpdateOfferStatus(ctx, &tenderports.UpdateOfferStatusRequest{
 		TenantInfo:    tenantInfo,
 		OfferID:       offer.ID,
 		FromStatus:    []tender.OfferStatus{tender.OfferStatusPending},
@@ -65,7 +65,7 @@ func (s *Service) skipIneligibleOffer(
 			zap.String("carrierId", offer.CarrierID.String()))
 		s.publishTenderShipmentInvalidation(ctx, tenantInfo, offer, "tender_offer_skipped")
 	}
-	return &portservices.TenderDispatchResult{Delivered: false, Reason: reason}, nil
+	return &tenderports.TenderDispatchResult{Delivered: false, Reason: reason}, nil
 }
 
 func (s *Service) markCarriersUsed(

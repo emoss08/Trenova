@@ -8,9 +8,9 @@ import (
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/core/domain/pagedraft"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/formula"
 	"github.com/emoss08/trenova/internal/core/services/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -32,13 +32,13 @@ type Params struct {
 
 	FormulaService  *formula.Service
 	TemplateService *formulatemplateservice.Service
-	RateMatrixRepo  repositories.RateMatrixRepository
+	RateMatrixRepo  ratematrixports.RateMatrixRepository
 }
 
 type Service struct {
 	formulaService  *formula.Service
 	templateService *formulatemplateservice.Service
-	rateMatrixRepo  repositories.RateMatrixRepository
+	rateMatrixRepo  ratematrixports.RateMatrixRepository
 }
 
 func New(p Params) *Service { //nolint:gocritic // fx param structs are passed by value
@@ -139,7 +139,7 @@ func (s *Service) rateTables(
 ) ([]RateTable, error) {
 	data, err := s.rateMatrixRepo.GetLookupData(
 		ctx,
-		&repositories.GetRateMatrixLookupDataRequest{TenantInfo: tenant},
+		&ratematrixports.GetRateMatrixLookupDataRequest{TenantInfo: tenant},
 	)
 	if err != nil {
 		return nil, fmt.Errorf("read the rate tables a formula may look up: %w", err)

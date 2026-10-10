@@ -10,8 +10,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentbrief"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -19,7 +22,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func joined(segments []services.ShipmentBriefingSegment) string {
+func joined(segments []shipmentbriefports.ShipmentBriefingSegment) string {
 	var b strings.Builder
 	for _, segment := range segments {
 		b.WriteString(segment.Text)
@@ -105,7 +108,7 @@ func TestAcceptNarration(t *testing.T) {
 	late := shipment.QuickFilterLate
 	moving := shipment.QuickFilterMoving
 
-	good := []services.ShipmentBriefingSegment{
+	good := []shipmentbriefports.ShipmentBriefingSegment{
 		{Text: "32 late loads", Filter: &late},
 		{Text: " lead the day across 140 deliveries."},
 	}
@@ -113,13 +116,13 @@ func TestAcceptNarration(t *testing.T) {
 	require.True(t, ok)
 	assert.Len(t, accepted, 2)
 
-	invented := []services.ShipmentBriefingSegment{
+	invented := []shipmentbriefports.ShipmentBriefingSegment{
 		{Text: "Around 400 loads are late", Filter: &late},
 	}
 	_, ok = AcceptNarration(invented, facts, allowed)
 	assert.False(t, ok)
 
-	wrongFilter := []services.ShipmentBriefingSegment{{Text: "Loads are moving", Filter: &moving}}
+	wrongFilter := []shipmentbriefports.ShipmentBriefingSegment{{Text: "Loads are moving", Filter: &moving}}
 	_, ok = AcceptNarration(wrongFilter, facts, allowed)
 	assert.False(t, ok)
 
@@ -127,7 +130,7 @@ func TestAcceptNarration(t *testing.T) {
 	assert.False(t, ok)
 
 	_, ok = AcceptNarration(
-		[]services.ShipmentBriefingSegment{{Text: strings.Repeat("a", maxNarrationChars+1)}},
+		[]shipmentbriefports.ShipmentBriefingSegment{{Text: strings.Repeat("a", maxNarrationChars+1)}},
 		facts,
 		allowed,
 	)
@@ -135,35 +138,35 @@ func TestAcceptNarration(t *testing.T) {
 }
 
 type stubBasis struct {
-	requests []services.ResolveShipmentQuickFilterBasisRequest
+	requests []shipmentports.ResolveShipmentQuickFilterBasisRequest
 }
 
 func (b *stubBasis) Resolve(
 	_ context.Context,
-	req *services.ResolveShipmentQuickFilterBasisRequest,
-) (*repositories.ShipmentQuickFilterBasis, error) {
+	req *shipmentports.ResolveShipmentQuickFilterBasisRequest,
+) (*shipmentports.ShipmentQuickFilterBasis, error) {
 	b.requests = append(b.requests, *req)
-	return &repositories.ShipmentQuickFilterBasis{Now: time.Unix(0, 0), Location: time.UTC}, nil
+	return &shipmentports.ShipmentQuickFilterBasis{Now: time.Unix(0, 0), Location: time.UTC}, nil
 }
 
 func (*stubBasis) Prepare(
 	context.Context,
 	pagination.TenantInfo,
-	*repositories.ShipmentOptions,
+	*shipmentports.ShipmentOptions,
 ) error {
 	return nil
 }
 
 type stubBoard struct {
-	repositories.ShipmentBoardRepository
+	shipmentports.ShipmentBoardRepository
 	counts map[shipment.QuickFilter]int
 }
 
 func (b *stubBoard) QuickFilterTotals(
 	_ context.Context,
-	req *repositories.CountShipmentQuickFiltersRequest,
-) ([]repositories.ShipmentQuickFilterTotal, error) {
-	out := make([]repositories.ShipmentQuickFilterTotal, len(req.Filters))
+	req *shipmentports.CountShipmentQuickFiltersRequest,
+) ([]shipmentports.ShipmentQuickFilterTotal, error) {
+	out := make([]shipmentports.ShipmentQuickFilterTotal, len(req.Filters))
 	for i, spec := range req.Filters {
 		out[i].Count = b.counts[spec.Filter]
 	}
@@ -175,39 +178,39 @@ type stubReasons struct{}
 func (stubReasons) LeadingLateReason(
 	context.Context,
 	pagination.TenantInfo,
-) (*repositories.ShipmentLateReason, error) {
-	return &repositories.ShipmentLateReason{Label: "Weather", Count: 1}, nil
+) (*shipmentports.ShipmentLateReason, error) {
+	return &shipmentports.ShipmentLateReason{Label: "Weather", Count: 1}, nil
 }
 
 type stubOrgs struct {
-	repositories.OrganizationRepository
+	tenantports.OrganizationRepository
 	timezone string
 }
 
 func (o stubOrgs) GetByID(
 	context.Context,
-	repositories.GetOrganizationByIDRequest,
+	tenantports.GetOrganizationByIDRequest,
 ) (*tenant.Organization, error) {
 	return &tenant.Organization{Timezone: o.timezone}, nil
 }
 
 func (stubOrgs) GetCapabilities(
 	context.Context,
-	repositories.GetOrganizationCapabilitiesRequest,
-) (*repositories.OrganizationCapabilities, error) {
-	return &repositories.OrganizationCapabilities{AssetOperationsEnabled: true}, nil
+	tenantports.GetOrganizationCapabilitiesRequest,
+) (*tenantports.OrganizationCapabilities, error) {
+	return &tenantports.OrganizationCapabilities{AssetOperationsEnabled: true}, nil
 }
 
 type stubCandidates struct {
-	items []*services.ShipmentSuggestion
+	items []*shipmentsuggestionports.ShipmentSuggestion
 }
 
 func (c *stubCandidates) Candidates(
 	context.Context,
 	pagination.TenantInfo,
 	string,
-) ([]*services.ShipmentSuggestion, error) {
-	out := make([]*services.ShipmentSuggestion, 0, len(c.items))
+) ([]*shipmentsuggestionports.ShipmentSuggestion, error) {
+	out := make([]*shipmentsuggestionports.ShipmentSuggestion, 0, len(c.items))
 	for _, item := range c.items {
 		copied := *item
 		out = append(out, &copied)
@@ -221,7 +224,7 @@ type memoryBriefs struct {
 
 func (m *memoryBriefs) Latest(
 	_ context.Context,
-	req *repositories.GetLatestShipmentBriefRequest,
+	req *shipmentbriefports.GetLatestShipmentBriefRequest,
 ) (*shipmentbrief.Brief, error) {
 	var latest *shipmentbrief.Brief
 	for _, row := range m.rows {
@@ -242,7 +245,7 @@ func (m *memoryBriefs) Insert(
 	for _, row := range m.rows {
 		if row.BriefDate == brief.BriefDate && row.OrganizationID == brief.OrganizationID &&
 			row.Generation == brief.Generation {
-			return m.Latest(ctx, &repositories.GetLatestShipmentBriefRequest{
+			return m.Latest(ctx, &shipmentbriefports.GetLatestShipmentBriefRequest{
 				TenantInfo: pagination.TenantInfo{OrgID: brief.OrganizationID},
 				BriefDate:  brief.BriefDate,
 			})
@@ -254,13 +257,13 @@ func (m *memoryBriefs) Insert(
 
 func (m *memoryBriefs) DeleteBefore(
 	context.Context,
-	*repositories.DeleteShipmentBriefsBeforeRequest,
+	*shipmentbriefports.DeleteShipmentBriefsBeforeRequest,
 ) (int, error) {
 	return 0, nil
 }
 
 type stubCompletion struct {
-	services.CompletionService
+	agentports.CompletionService
 	text  string
 	err   error
 	calls *int
@@ -268,8 +271,8 @@ type stubCompletion struct {
 
 func (s stubCompletion) CompleteStructured(
 	_ context.Context,
-	req *services.StructuredCompletionRequest,
-) (*services.StructuredCompletionResult, error) {
+	req *agentports.StructuredCompletionRequest,
+) (*agentports.StructuredCompletionResult, error) {
 	if s.calls != nil {
 		*s.calls++
 	}
@@ -279,7 +282,7 @@ func (s stubCompletion) CompleteStructured(
 	if req.SchemaName != schemaName {
 		return nil, errors.New("no wording in this test")
 	}
-	return &services.StructuredCompletionResult{Text: s.text, ModelIdentifier: "test-model"}, nil
+	return &agentports.StructuredCompletionResult{Text: s.text, ModelIdentifier: "test-model"}, nil
 }
 
 type fixture struct {
@@ -299,7 +302,7 @@ func defaultCounts() map[shipment.QuickFilter]int {
 	}
 }
 
-func newFixture(completion services.CompletionService) *fixture {
+func newFixture(completion agentports.CompletionService) *fixture {
 	f := &fixture{
 		board:      &stubBoard{counts: defaultCounts()},
 		basis:      &stubBasis{},
@@ -320,7 +323,7 @@ func newFixture(completion services.CompletionService) *fixture {
 	return f
 }
 
-func newService(completion services.CompletionService) *Service {
+func newService(completion agentports.CompletionService) *Service {
 	return newFixture(completion).service
 }
 
@@ -331,7 +334,7 @@ func testTenant() pagination.TenantInfo {
 func TestFactsResolveTheBasisEveryFactFilterNeeds(t *testing.T) {
 	t.Parallel()
 
-	f := newFixture(stubCompletion{err: services.ErrNoProviderConfigured})
+	f := newFixture(stubCompletion{err: agentports.ErrNoProviderConfigured})
 	_, err := f.service.Facts(t.Context(), testTenant(), "America/Chicago")
 	require.NoError(t, err)
 
@@ -345,7 +348,7 @@ func TestFactsResolveTheBasisEveryFactFilterNeeds(t *testing.T) {
 func TestBriefingFallsBackWithoutAModel(t *testing.T) {
 	t.Parallel()
 
-	svc := newService(stubCompletion{err: services.ErrNoProviderConfigured})
+	svc := newService(stubCompletion{err: agentports.ErrNoProviderConfigured})
 	briefing, err := svc.Briefing(t.Context(), testTenant(), "UTC")
 	require.NoError(t, err)
 	assert.False(t, briefing.Narrated)
@@ -415,7 +418,7 @@ func TestBriefingIsWrittenOnceAndThenRead(t *testing.T) {
 func TestBriefingIsRewrittenWhenTheBoardIsCleared(t *testing.T) {
 	t.Parallel()
 
-	f := newFixture(stubCompletion{err: services.ErrNoProviderConfigured})
+	f := newFixture(stubCompletion{err: agentports.ErrNoProviderConfigured})
 	_, err := f.service.Briefing(t.Context(), testTenant(), "UTC")
 	require.NoError(t, err)
 	require.Len(t, f.briefs.rows, 1)
@@ -442,9 +445,9 @@ func TestBriefingIsRewrittenWhenTheBoardIsCleared(t *testing.T) {
 func TestBriefingCountsOpenSuggestionsAsIssues(t *testing.T) {
 	t.Parallel()
 
-	f := newFixture(stubCompletion{err: services.ErrNoProviderConfigured})
+	f := newFixture(stubCompletion{err: agentports.ErrNoProviderConfigured})
 	f.board.counts[shipment.QuickFilterUncovered] = 0
-	f.candidates.items = []*services.ShipmentSuggestion{{Key: "a", Title: "Approve detention"}}
+	f.candidates.items = []*shipmentsuggestionports.ShipmentSuggestion{{Key: "a", Title: "Approve detention"}}
 	_, err := f.service.Briefing(t.Context(), testTenant(), "UTC")
 	require.NoError(t, err)
 	require.Len(t, f.briefs.rows, 1)
@@ -460,7 +463,7 @@ func TestBriefingCountsOpenSuggestionsAsIssues(t *testing.T) {
 func TestBriefingStopsRewritingAfterTheDaysLimit(t *testing.T) {
 	t.Parallel()
 
-	f := newFixture(stubCompletion{err: services.ErrNoProviderConfigured})
+	f := newFixture(stubCompletion{err: agentports.ErrNoProviderConfigured})
 	_, err := f.service.Briefing(t.Context(), testTenant(), "UTC")
 	require.NoError(t, err)
 	f.briefs.rows[0].Generation = maxGenerationsPerDay
@@ -474,8 +477,8 @@ func TestBriefingStopsRewritingAfterTheDaysLimit(t *testing.T) {
 func TestWriteBriefForTheMorning(t *testing.T) {
 	t.Parallel()
 
-	f := newFixture(stubCompletion{err: services.ErrNoProviderConfigured})
-	req := &services.WriteShipmentBriefRequest{
+	f := newFixture(stubCompletion{err: agentports.ErrNoProviderConfigured})
+	req := &shipmentbriefports.WriteShipmentBriefRequest{
 		TenantInfo: testTenant(),
 		Trigger:    shipmentbrief.TriggerScheduled,
 	}
@@ -497,7 +500,7 @@ func TestWriteBriefForTheMorning(t *testing.T) {
 func TestWriteBriefStoresSuggestionWording(t *testing.T) {
 	t.Parallel()
 
-	item := &services.ShipmentSuggestion{
+	item := &shipmentsuggestionports.ShipmentSuggestion{
 		Key:    "tender:smv_1",
 		Title:  "Tender San Antonio → Dallas",
 		Reason: "Pickup closes at 13:30.",
@@ -506,9 +509,9 @@ func TestWriteBriefStoresSuggestionWording(t *testing.T) {
 	f := newFixture(wordingCompletion{
 		text: `{"items":[{"key":"tender:smv_1","title":"Send San Antonio out to tender","reason":"The $3590 load closes at 13:30."}]}`,
 	})
-	f.candidates.items = []*services.ShipmentSuggestion{item}
+	f.candidates.items = []*shipmentsuggestionports.ShipmentSuggestion{item}
 
-	written, err := f.service.WriteBrief(t.Context(), &services.WriteShipmentBriefRequest{
+	written, err := f.service.WriteBrief(t.Context(), &shipmentbriefports.WriteShipmentBriefRequest{
 		TenantInfo: testTenant(),
 		Trigger:    shipmentbrief.TriggerScheduled,
 	})
@@ -521,33 +524,33 @@ func TestWriteBriefStoresSuggestionWording(t *testing.T) {
 }
 
 type wordingCompletion struct {
-	services.CompletionService
+	agentports.CompletionService
 	text string
 }
 
 func (w wordingCompletion) CompleteStructured(
 	_ context.Context,
-	req *services.StructuredCompletionRequest,
-) (*services.StructuredCompletionResult, error) {
+	req *agentports.StructuredCompletionRequest,
+) (*agentports.StructuredCompletionResult, error) {
 	if req.SchemaName != wordingSchemaName {
-		return nil, services.ErrNoProviderConfigured
+		return nil, agentports.ErrNoProviderConfigured
 	}
-	return &services.StructuredCompletionResult{Text: w.text}, nil
+	return &agentports.StructuredCompletionResult{Text: w.text}, nil
 }
 
 func TestAcceptedWordingKeepsOnlyRewordingsThatInventNothing(t *testing.T) {
 	t.Parallel()
 
-	honest := &services.ShipmentSuggestion{
+	honest := &shipmentsuggestionports.ShipmentSuggestion{
 		Key: "a", Title: "Assign Gwen Grant to San Antonio → Dallas",
 		Reason: "5 mi out. Pickup closes at 13:30.", Impact: []string{"$3590"},
 	}
-	invented := &services.ShipmentSuggestion{
+	invented := &shipmentsuggestionports.ShipmentSuggestion{
 		Key: "b", Title: "Tender San Antonio → Dallas", Reason: "Pickup closes at 13:30.",
 		Impact: []string{"$3590"},
 	}
 
-	wording := acceptedWording([]*services.ShipmentSuggestion{honest, invented}, []narratedItem{
+	wording := acceptedWording([]*shipmentsuggestionports.ShipmentSuggestion{honest, invented}, []narratedItem{
 		{
 			Key:    "a",
 			Title:  "Put Gwen on the San Antonio run",

@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"strconv"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -44,7 +44,7 @@ type StepKeyParams struct {
 // An empty key means the arguments could not be encoded. The caller must treat
 // that as a step it cannot guard rather than as a key.
 func StepKey(p StepKeyParams) string {
-	base, ok := callKey(serviceports.ToolCall{Name: p.ToolName, Arguments: p.Args})
+	base, ok := callKey(agentports.ToolCall{Name: p.ToolName, Arguments: p.Args})
 	if !ok {
 		return ""
 	}

@@ -10,9 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/core/services/ptopolicyservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -419,7 +419,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.PTOBalanceSummary)
+					obj := o.(*workerports.PTOBalanceSummary)
 					return obj.WorkersTracked, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -429,7 +429,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.PTOBalanceSummary)
+					obj := o.(*workerports.PTOBalanceSummary)
 					return obj.WorkersUnassigned, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -441,7 +441,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.PTOBalanceSummary)
+					obj := o.(*workerports.PTOBalanceSummary)
 					return gqlexec.Resolver[resolverPTOBalanceSummary](ec, "PTOBalanceSummary").TotalBalanceDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -453,7 +453,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.PTOBalanceSummary)
+					obj := o.(*workerports.PTOBalanceSummary)
 					return gqlexec.Resolver[resolverPTOBalanceSummary](ec, "PTOBalanceSummary").TotalPendingDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -465,7 +465,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.PTOBalanceSummary)
+					obj := o.(*workerports.PTOBalanceSummary)
 					return gqlexec.Resolver[resolverPTOBalanceSummary](ec, "PTOBalanceSummary").AccruedYtdDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -477,7 +477,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.PTOBalanceSummary)
+					obj := o.(*workerports.PTOBalanceSummary)
 					return gqlexec.Resolver[resolverPTOBalanceSummary](ec, "PTOBalanceSummary").UsedYtdDays(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -1745,10 +1745,10 @@ type resolverPTOAvailability interface {
 }
 
 type resolverPTOBalanceSummary interface {
-	TotalBalanceDays(ctx context.Context, obj *repositories.PTOBalanceSummary) (string, error)
-	TotalPendingDays(ctx context.Context, obj *repositories.PTOBalanceSummary) (string, error)
-	AccruedYtdDays(ctx context.Context, obj *repositories.PTOBalanceSummary) (string, error)
-	UsedYtdDays(ctx context.Context, obj *repositories.PTOBalanceSummary) (string, error)
+	TotalBalanceDays(ctx context.Context, obj *workerports.PTOBalanceSummary) (string, error)
+	TotalPendingDays(ctx context.Context, obj *workerports.PTOBalanceSummary) (string, error)
+	AccruedYtdDays(ctx context.Context, obj *workerports.PTOBalanceSummary) (string, error)
+	UsedYtdDays(ctx context.Context, obj *workerports.PTOBalanceSummary) (string, error)
 }
 
 type resolverPTOLiabilityReport interface {
@@ -1787,7 +1787,7 @@ type resolverQuery interface {
 	WorkerPTOLedger(ctx context.Context, input gqlmodel.WorkerPTOLedgerInput) (*gqlmodel.WorkerPTOLedgerConnection, error)
 	WorkerPTOAvailability(ctx context.Context, input gqlmodel.PTOAvailabilityInput) (*ptoledgerservice.AvailabilityResult, error)
 	PreviewWorkerPTOAccrual(ctx context.Context, workerID string, asOf *int) ([]*ptoledgerservice.PlannedEntry, error)
-	PTOBalanceSummary(ctx context.Context) (*repositories.PTOBalanceSummary, error)
+	PTOBalanceSummary(ctx context.Context) (*workerports.PTOBalanceSummary, error)
 	PTOLiabilityReport(ctx context.Context, asOf *int) (*ptoledgerservice.LiabilityReport, error)
 }
 
@@ -3171,7 +3171,7 @@ func marshalNPTOAvailability2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋco
 	return ec.MarshalType(ctx, sel, "PTOAvailability", v)
 }
 
-func marshalNPTOBalanceSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐPTOBalanceSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *repositories.PTOBalanceSummary) graphql.Marshaler {
+func marshalNPTOBalanceSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐPTOBalanceSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerports.PTOBalanceSummary) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

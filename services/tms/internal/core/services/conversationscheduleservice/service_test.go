@@ -5,14 +5,16 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/conversationschedule"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -25,11 +27,11 @@ import (
 // fakeSchedules keeps schedules in memory, scoped the way the repository
 // scopes them.
 type fakeSchedules struct {
-	repositories.ConversationScheduleRepository
+	conversationscheduleports.ConversationScheduleRepository
 
 	rows     map[pulid.ID]*conversationschedule.Schedule
 	messages []conversation.Message
-	runs     []repositories.RecordConversationScheduleRunRequest
+	runs     []conversationscheduleports.RecordConversationScheduleRunRequest
 }
 
 func newFakeSchedules() *fakeSchedules {
@@ -38,7 +40,7 @@ func newFakeSchedules() *fakeSchedules {
 
 func (f *fakeSchedules) Create(
 	_ context.Context,
-	req repositories.CreateConversationScheduleRequest,
+	req conversationscheduleports.CreateConversationScheduleRequest,
 ) (*conversationschedule.Schedule, *conversation.Message, error) {
 	saved := *req.Schedule
 	saved.ID = pulid.MustNew("csch_")
@@ -54,7 +56,7 @@ func (f *fakeSchedules) Create(
 
 func (f *fakeSchedules) Get(
 	_ context.Context,
-	req repositories.GetConversationScheduleRequest,
+	req conversationscheduleports.GetConversationScheduleRequest,
 ) (*conversationschedule.Schedule, error) {
 	row, ok := f.rows[req.ID]
 	if !ok || (req.UserID.IsNotNil() && row.UserID != req.UserID) {
@@ -67,7 +69,7 @@ func (f *fakeSchedules) Get(
 
 func (f *fakeSchedules) Count(
 	_ context.Context,
-	req repositories.CountConversationSchedulesRequest,
+	req conversationscheduleports.CountConversationSchedulesRequest,
 ) (int, error) {
 	count := 0
 	for _, row := range f.rows {
@@ -92,7 +94,7 @@ func (f *fakeSchedules) UpdateState(
 
 func (f *fakeSchedules) RecordRun(
 	_ context.Context,
-	req repositories.RecordConversationScheduleRunRequest,
+	req conversationscheduleports.RecordConversationScheduleRunRequest,
 ) error {
 	f.runs = append(f.runs, req)
 	if row, ok := f.rows[req.ID]; ok {
@@ -106,7 +108,7 @@ func (f *fakeSchedules) RecordRun(
 
 func (f *fakeSchedules) Delete(
 	_ context.Context,
-	req repositories.GetConversationScheduleRequest,
+	req conversationscheduleports.GetConversationScheduleRequest,
 ) error {
 	delete(f.rows, req.ID)
 
@@ -119,7 +121,7 @@ type fakeThreads struct {
 
 func (f *fakeThreads) GetThread(
 	_ context.Context,
-	req repositories.GetThreadRequest,
+	req agentports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	if req.ID != f.thread.ID || req.UserID != f.thread.UserID {
 		return nil, errortypes.NewNotFoundError("Thread not found within your organization")
@@ -130,7 +132,7 @@ func (f *fakeThreads) GetThread(
 
 func (f *fakeThreads) GetThreadOwned(
 	_ context.Context,
-	req repositories.GetThreadOwnedRequest,
+	req agentports.GetThreadOwnedRequest,
 ) (*conversation.Thread, error) {
 	if req.ID != f.thread.ID {
 		return nil, errortypes.NewNotFoundError("Thread not found within your organization")
@@ -140,26 +142,26 @@ func (f *fakeThreads) GetThreadOwned(
 }
 
 type fakeDefinitions struct {
-	repositories.AgentDefinitionRepository
+	agentdefinitionports.AgentDefinitionRepository
 	definition *agentdefinition.Definition
 }
 
 func (f *fakeDefinitions) GetByID(
 	_ context.Context,
-	_ repositories.GetAgentDefinitionByIDRequest,
+	_ agentdefinitionports.GetAgentDefinitionByIDRequest,
 ) (*agentdefinition.Definition, error) {
 	return f.definition, nil
 }
 
 type fakePermissions struct {
-	serviceports.PermissionEngine
+	permissionports.PermissionEngine
 	denied bool
-	asked  []serviceports.RequestActor
+	asked  []permissionports.RequestActor
 }
 
 func (f *fakePermissions) MayUseAgent(
 	_ context.Context,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 	_ *agentdefinition.Definition,
 ) (bool, error) {
 	f.asked = append(f.asked, *actor)
@@ -194,13 +196,13 @@ func (f *fakeTurns) StartTurn(
 
 func (f *fakeTurns) Active(
 	_ context.Context,
-	_ repositories.ActiveAssistantTurnRequest,
+	_ agentports.ActiveAssistantTurnRequest,
 ) (*conversation.AssistantTurn, error) {
 	return f.active, nil
 }
 
 type fakeWorkflows struct {
-	serviceports.WorkflowStarter
+	kernelports.WorkflowStarter
 	payloads []*assistantcontract.AssistantTurnPayload
 }
 
@@ -236,12 +238,12 @@ func (f *fakeSyncer) Remove(_ context.Context, scheduleID pulid.ID) {
 }
 
 type fakeRealtime struct {
-	published []*serviceports.PublishResourceInvalidationRequest
+	published []*agentports.PublishResourceInvalidationRequest
 }
 
 func (f *fakeRealtime) PublishResourceInvalidation(
 	_ context.Context,
-	req *serviceports.PublishResourceInvalidationRequest,
+	req *agentports.PublishResourceInvalidationRequest,
 ) error {
 	f.published = append(f.published, req)
 
@@ -269,7 +271,7 @@ type fixture struct {
 	realtime    *fakeRealtime
 	permissions *fakePermissions
 	thread      *conversation.Thread
-	owner       serviceports.RequestActor
+	owner       permissionports.RequestActor
 	now         int64
 }
 
@@ -294,8 +296,8 @@ func newFixture() *fixture {
 		realtime:    &fakeRealtime{},
 		permissions: &fakePermissions{},
 		thread:      thread,
-		owner: serviceports.RequestActor{
-			PrincipalType:  serviceports.PrincipalTypeUser,
+		owner: permissionports.RequestActor{
+			PrincipalType:  permissionports.PrincipalTypeUser,
 			PrincipalID:    thread.UserID,
 			UserID:         thread.UserID,
 			OrganizationID: tenant.OrgID,
@@ -370,7 +372,7 @@ func TestCreate_KeepsTheScheduleItsCardAndItsTemporalSchedule(t *testing.T) {
 	assert.Equal(t, schedule.ID, f.syncer.synced[0].ID)
 	assert.Empty(t, f.turns.started, "creating a schedule asks nothing yet")
 	require.Len(t, f.realtime.published, 1)
-	assert.Equal(t, serviceports.ConversationSchedulesResource, f.realtime.published[0].Resource)
+	assert.Equal(t, conversationscheduleports.ConversationSchedulesResource, f.realtime.published[0].Resource)
 	assert.Equal(t, f.thread.UserID, f.realtime.published[0].AudienceUserID)
 }
 
@@ -497,7 +499,7 @@ func TestFire_AsksTheRequestInItsConversationAsTheOwner(t *testing.T) {
 	created := f.create(t, "every weekday at 7:30am, what's blocking the billing queue?").Schedule
 	f.now = 1791203400 // Monday 7:30 in Chicago.
 
-	result, err := f.service.Fire(t.Context(), serviceports.FireConversationScheduleRequest{
+	result, err := f.service.Fire(t.Context(), conversationscheduleports.FireConversationScheduleRequest{
 		ScheduleID: created.ID,
 		TenantInfo: pagination.TenantInfo{OrgID: created.OrganizationID, BuID: created.BusinessUnitID},
 		FiredAt:    f.now,
@@ -518,7 +520,7 @@ func TestFire_AsksTheRequestInItsConversationAsTheOwner(t *testing.T) {
 	payload := f.workflows.payloads[0]
 	assert.Equal(t, "What's blocking the billing queue?", payload.Content)
 	assert.Equal(t, f.thread.UserID, payload.Actor.UserID, "it runs as the owner")
-	assert.Equal(t, serviceports.PrincipalTypeUser, payload.Actor.PrincipalType)
+	assert.Equal(t, permissionports.PrincipalTypeUser, payload.Actor.PrincipalType)
 	require.Len(t, f.permissions.asked, 2, "access is checked again when it runs")
 
 	row := f.schedules.rows[created.ID]
@@ -529,7 +531,7 @@ func TestFire_AsksTheRequestInItsConversationAsTheOwner(t *testing.T) {
 	assert.Equal(t, f.now+24*60*60, *row.NextRunAt, "Tuesday at the same time")
 
 	// A retried attempt for the same slot starts no second turn.
-	again, err := f.service.Fire(t.Context(), serviceports.FireConversationScheduleRequest{
+	again, err := f.service.Fire(t.Context(), conversationscheduleports.FireConversationScheduleRequest{
 		ScheduleID: created.ID,
 		TenantInfo: pagination.TenantInfo{OrgID: created.OrganizationID, BuID: created.BusinessUnitID},
 		FiredAt:    f.now,
@@ -542,8 +544,8 @@ func TestFire_AsksTheRequestInItsConversationAsTheOwner(t *testing.T) {
 func TestFire_StartsNothingItShouldNot(t *testing.T) {
 	t.Parallel()
 
-	fire := func(f *fixture, id pulid.ID) (*serviceports.FireConversationScheduleResult, error) {
-		return f.service.Fire(context.Background(), serviceports.FireConversationScheduleRequest{
+	fire := func(f *fixture, id pulid.ID) (*conversationscheduleports.FireConversationScheduleResult, error) {
+		return f.service.Fire(context.Background(), conversationscheduleports.FireConversationScheduleRequest{
 			ScheduleID: id,
 			TenantInfo: pagination.TenantInfo{OrgID: f.thread.OrganizationID, BuID: f.thread.BusinessUnitID},
 			FiredAt:    f.now,

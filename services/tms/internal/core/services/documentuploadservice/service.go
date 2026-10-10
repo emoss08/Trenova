@@ -10,21 +10,24 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs/documentuploadcontract"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs/thumbnailcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentupload"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
 	"github.com/emoss08/trenova/internal/core/services/usageservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs/documentuploadcontract"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs/thumbnailcontract"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -51,32 +54,32 @@ type Params struct {
 	fx.In
 
 	Logger             *zap.Logger
-	SessionRepo        repositories.DocumentUploadSessionRepository
-	DocumentRepo       repositories.DocumentRepository
-	Storage            storage.Client
+	SessionRepo        documentuploadports.DocumentUploadSessionRepository
+	DocumentRepo       documentports.DocumentRepository
+	Storage            kernelports.Client
 	Validator          *documentservice.Validator
-	AuditService       services.AuditService
+	AuditService       auditports.AuditService
 	Config             *config.Config
 	ThumbnailGenerator *thumbnailservice.Generator
-	WorkflowStarter    services.WorkflowStarter
-	UsageProvider      services.UsageProvider `optional:"true"`
-	DocTypeRepo        repositories.DocumentTypeRepository
+	WorkflowStarter    kernelports.WorkflowStarter
+	UsageProvider      platformcatalogports.UsageProvider `optional:"true"`
+	DocTypeRepo        documenttypeports.DocumentTypeRepository
 	Redis              *goredis.Client `optional:"true"`
 	Encryption         *encryptionservice.Service
 }
 
 type Service struct {
 	l                  *zap.Logger
-	sessionRepo        repositories.DocumentUploadSessionRepository
-	documentRepo       repositories.DocumentRepository
-	storage            storage.Client
+	sessionRepo        documentuploadports.DocumentUploadSessionRepository
+	documentRepo       documentports.DocumentRepository
+	storage            kernelports.Client
 	validator          *documentservice.Validator
-	auditService       services.AuditService
+	auditService       auditports.AuditService
 	config             *config.StorageConfig
 	thumbnailGenerator *thumbnailservice.Generator
-	workflowStarter    services.WorkflowStarter
-	usageProvider      services.UsageProvider
-	docTypeRepo        repositories.DocumentTypeRepository
+	workflowStarter    kernelports.WorkflowStarter
+	usageProvider      platformcatalogports.UsageProvider
+	docTypeRepo        documenttypeports.DocumentTypeRepository
 	redis              *goredis.Client
 	encryption         *encryptionservice.Service
 }
@@ -102,7 +105,7 @@ func New(p Params) *Service {
 
 func (s *Service) CreateSession(
 	ctx context.Context,
-	req *services.CreateSessionRequest,
+	req *documentuploadports.CreateSessionRequest,
 ) (*documentupload.DocumentUploadSession, error) {
 	processingProfile, err := document.NormalizeProcessingProfile(req.ProcessingProfile)
 	if err != nil {
@@ -139,7 +142,7 @@ func (s *Service) CreateSession(
 		),
 		Description:    req.Description,
 		Tags:           tags,
-		UploadedParts:  make([]storage.UploadedPart, 0),
+		UploadedParts:  make([]kernelports.UploadedPart, 0),
 		ExpiresAt:      timeutils.NowAddDuration(sessionTTL),
 		LastActivityAt: timeutils.NowUnix(),
 	}
@@ -193,7 +196,7 @@ func (s *Service) CreateSession(
 
 	if session.DocumentTypeID == nil &&
 		processingProfile == document.ProcessingProfileRateConfirmationImport {
-		dt, dtErr := s.docTypeRepo.GetByCode(ctx, repositories.GetDocumentTypeByCodeRequest{
+		dt, dtErr := s.docTypeRepo.GetByCode(ctx, documenttypeports.GetDocumentTypeByCodeRequest{
 			Code:       "RATECONF",
 			TenantInfo: req.TenantInfo,
 		})
@@ -211,7 +214,7 @@ func (s *Service) CreateSession(
 
 func (s *Service) ListActive(
 	ctx context.Context,
-	req *repositories.ListActiveDocumentUploadSessionsRequest,
+	req *documentuploadports.ListActiveDocumentUploadSessionsRequest,
 ) ([]*documentupload.DocumentUploadSession, error) {
 	sessions, err := s.sessionRepo.ListActive(ctx, req)
 	if err != nil {
@@ -227,8 +230,8 @@ func (s *Service) ListActive(
 
 func (s *Service) GetSessionState(
 	ctx context.Context,
-	req repositories.GetDocumentUploadSessionByIDRequest,
-) (*services.SessionState, error) {
+	req documentuploadports.GetDocumentUploadSessionByIDRequest,
+) (*documentuploadports.SessionState, error) {
 	session, err := s.sessionRepo.GetByID(ctx, req)
 	if err != nil {
 		return nil, err
@@ -239,13 +242,13 @@ func (s *Service) GetSessionState(
 		return nil, err
 	}
 
-	session.UploadedParts = storage.ToDomainParts(parts)
+	session.UploadedParts = kernelports.ToDomainParts(parts)
 	normalizeSession(session)
 	if parts == nil {
-		parts = make([]storage.UploadedPart, 0)
+		parts = make([]kernelports.UploadedPart, 0)
 	}
 
-	return &services.SessionState{
+	return &documentuploadports.SessionState{
 		Session: session,
 		Parts:   parts,
 	}, nil
@@ -253,9 +256,9 @@ func (s *Service) GetSessionState(
 
 func (s *Service) GetPartUploadTargets(
 	ctx context.Context,
-	req *services.PartRequest,
-) ([]services.PartUploadTarget, error) {
-	session, err := s.sessionRepo.GetByID(ctx, repositories.GetDocumentUploadSessionByIDRequest{
+	req *documentuploadports.PartRequest,
+) ([]documentuploadports.PartUploadTarget, error) {
+	session, err := s.sessionRepo.GetByID(ctx, documentuploadports.GetDocumentUploadSessionByIDRequest{
 		ID:         req.SessionID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -281,9 +284,9 @@ func (s *Service) GetPartUploadTargets(
 func (s *Service) partUploadTargetsSingle(
 	ctx context.Context,
 	session *documentupload.DocumentUploadSession,
-) ([]services.PartUploadTarget, error) {
+) ([]documentuploadports.PartUploadTarget, error) {
 	_ = ctx
-	return []services.PartUploadTarget{{
+	return []documentuploadports.PartUploadTarget{{
 		PartNumber: 1,
 		URL:        uploadPartAPIPath(session.ID, 1),
 		Method:     "PUT",
@@ -293,10 +296,10 @@ func (s *Service) partUploadTargetsSingle(
 func (s *Service) partUploadTargetsMultipart(
 	session *documentupload.DocumentUploadSession,
 	partNumbers []int,
-) ([]services.PartUploadTarget, error) {
-	targets := make([]services.PartUploadTarget, 0, len(partNumbers))
+) ([]documentuploadports.PartUploadTarget, error) {
+	targets := make([]documentuploadports.PartUploadTarget, 0, len(partNumbers))
 	for _, partNumber := range partNumbers {
-		targets = append(targets, services.PartUploadTarget{
+		targets = append(targets, documentuploadports.PartUploadTarget{
 			PartNumber: partNumber,
 			URL:        uploadPartAPIPath(session.ID, partNumber),
 			Method:     "PUT",
@@ -307,7 +310,7 @@ func (s *Service) partUploadTargetsMultipart(
 
 func (s *Service) UploadPart(
 	ctx context.Context,
-	req *services.UploadPartRequest,
+	req *documentuploadports.UploadPartRequest,
 ) (*documentupload.DocumentUploadSession, error) {
 	if req.PartNumber != 1 {
 		return nil, errortypes.NewValidationError(
@@ -317,7 +320,7 @@ func (s *Service) UploadPart(
 		)
 	}
 
-	session, err := s.sessionRepo.GetByID(ctx, repositories.GetDocumentUploadSessionByIDRequest{
+	session, err := s.sessionRepo.GetByID(ctx, documentuploadports.GetDocumentUploadSessionByIDRequest{
 		ID:         req.SessionID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -358,7 +361,7 @@ func (s *Service) UploadPart(
 	cryptoMode := encryptionservice.CryptoModeForCiphertext(encrypted)
 	cryptoVersion := int16(1)
 
-	if _, err = s.storage.Upload(ctx, &storage.UploadParams{
+	if _, err = s.storage.Upload(ctx, &kernelports.UploadParams{
 		Key:         session.StoragePath,
 		ContentType: session.ContentType,
 		Size:        int64(len(uploadBody)),
@@ -377,7 +380,7 @@ func (s *Service) UploadPart(
 	session.ChecksumSHA256 = hashutils.SHA256BytesHex(plaintext)
 	session.CryptoMode = cryptoMode
 	session.CryptoVersion = cryptoVersion
-	session.UploadedParts = []storage.UploadedPart{{
+	session.UploadedParts = []kernelports.UploadedPart{{
 		PartNumber: 1,
 		Size:       session.FileSize,
 	}}
@@ -387,9 +390,9 @@ func (s *Service) UploadPart(
 
 func (s *Service) Complete(
 	ctx context.Context,
-	req *services.CompletionRequest,
+	req *documentuploadports.CompletionRequest,
 ) (*documentupload.DocumentUploadSession, error) {
-	session, err := s.sessionRepo.GetByID(ctx, repositories.GetDocumentUploadSessionByIDRequest{
+	session, err := s.sessionRepo.GetByID(ctx, documentuploadports.GetDocumentUploadSessionByIDRequest{
 		ID:         req.SessionID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -444,7 +447,7 @@ func (s *Service) Complete(
 			return nil, errortypes.NewConflictError("No uploaded parts were found for this session")
 		}
 
-		if storage.SumUploadedPartSizes(uploadedParts) != session.FileSize {
+		if kernelports.SumUploadedPartSizes(uploadedParts) != session.FileSize {
 			return nil, errortypes.NewConflictError(
 				"Uploaded file size does not match the original file",
 			)
@@ -452,7 +455,7 @@ func (s *Service) Complete(
 	}
 
 	session.Status = documentupload.StatusUploaded
-	session.UploadedParts = storage.ToDomainParts(uploadedParts)
+	session.UploadedParts = kernelports.ToDomainParts(uploadedParts)
 	session.FailureCode = ""
 	session.FailureMessage = ""
 	session.LastActivityAt = timeutils.NowUnix()
@@ -464,7 +467,7 @@ func (s *Service) Complete(
 		if _, err = s.runSynchronousFinalization(ctx, req, session); err != nil {
 			return nil, err
 		}
-		return s.sessionRepo.GetByID(ctx, repositories.GetDocumentUploadSessionByIDRequest{
+		return s.sessionRepo.GetByID(ctx, documentuploadports.GetDocumentUploadSessionByIDRequest{
 			ID:         req.SessionID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -488,8 +491,8 @@ func (s *Service) Complete(
 	return session, nil
 }
 
-func (s *Service) Cancel(ctx context.Context, req *services.CancelRequest) error {
-	session, err := s.sessionRepo.GetByID(ctx, repositories.GetDocumentUploadSessionByIDRequest{
+func (s *Service) Cancel(ctx context.Context, req *documentuploadports.CancelRequest) error {
+	session, err := s.sessionRepo.GetByID(ctx, documentuploadports.GetDocumentUploadSessionByIDRequest{
 		ID:         req.SessionID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -503,7 +506,7 @@ func (s *Service) Cancel(ctx context.Context, req *services.CancelRequest) error
 
 	if session.Strategy == documentupload.StrategyMultipart &&
 		session.StorageProviderUploadID != "" {
-		if err = s.storage.AbortMultipartUpload(ctx, &storage.AbortMultipartUploadParams{
+		if err = s.storage.AbortMultipartUpload(ctx, &kernelports.AbortMultipartUploadParams{
 			Key:      session.StoragePath,
 			UploadID: session.StorageProviderUploadID,
 		}); err != nil {
@@ -523,27 +526,27 @@ func (s *Service) Cancel(ctx context.Context, req *services.CancelRequest) error
 func (s *Service) getUploadedParts(
 	ctx context.Context,
 	session *documentupload.DocumentUploadSession,
-) ([]storage.UploadedPart, error) {
+) ([]kernelports.UploadedPart, error) {
 	if len(session.UploadedParts) > 0 {
-		return storage.ToDomainParts(session.UploadedParts), nil
+		return kernelports.ToDomainParts(session.UploadedParts), nil
 	}
 
 	if session.Strategy == documentupload.StrategySingle {
 		return s.uploadedPartsFromSingleObject(ctx, session.StoragePath)
 	}
 
-	parts, err := s.storage.ListMultipartUploadParts(ctx, &storage.ListMultipartUploadPartsParams{
+	parts, err := s.storage.ListMultipartUploadParts(ctx, &kernelports.ListMultipartUploadPartsParams{
 		Key:      session.StoragePath,
 		UploadID: session.StorageProviderUploadID,
 	})
 	if err == nil {
 		return parts, nil
 	}
-	if !storage.IsMissingMultipartUploadError(err) {
+	if !kernelports.IsMissingMultipartUploadError(err) {
 		return nil, err
 	}
 	if len(session.UploadedParts) > 0 {
-		return storage.ToDomainParts(session.UploadedParts), nil
+		return kernelports.ToDomainParts(session.UploadedParts), nil
 	}
 
 	return s.uploadedPartsFromSingleObject(ctx, session.StoragePath)
@@ -552,7 +555,7 @@ func (s *Service) getUploadedParts(
 func (s *Service) uploadedPartsFromSingleObject(
 	ctx context.Context,
 	storagePath string,
-) ([]storage.UploadedPart, error) {
+) ([]kernelports.UploadedPart, error) {
 	exists, err := s.storage.Exists(ctx, storagePath)
 	if err != nil {
 		return nil, err
@@ -566,7 +569,7 @@ func (s *Service) uploadedPartsFromSingleObject(
 		return nil, err
 	}
 
-	return []storage.UploadedPart{{
+	return []kernelports.UploadedPart{{
 		PartNumber: 1,
 		Size:       fileInfo.Size,
 	}}, nil
@@ -595,7 +598,7 @@ func normalizeSession(session *documentupload.DocumentUploadSession) {
 	}
 
 	if session.UploadedParts == nil {
-		session.UploadedParts = make([]storage.UploadedPart, 0)
+		session.UploadedParts = make([]kernelports.UploadedPart, 0)
 	}
 }
 
@@ -619,7 +622,7 @@ func (s *Service) acquireCompletionLease(ctx context.Context, sessionID string) 
 
 func (s *Service) startFinalizeWorkflowOrMarkFailed(
 	ctx context.Context,
-	req *services.CompletionRequest,
+	req *documentuploadports.CompletionRequest,
 	session *documentupload.DocumentUploadSession,
 ) error {
 	err := s.startFinalizeWorkflow(ctx, req, session)
@@ -643,7 +646,7 @@ func (s *Service) startFinalizeWorkflowOrMarkFailed(
 
 func (s *Service) startFinalizeWorkflow(
 	ctx context.Context,
-	req *services.CompletionRequest,
+	req *documentuploadports.CompletionRequest,
 	session *documentupload.DocumentUploadSession,
 ) error {
 	_, err := s.workflowStarter.StartWorkflow(
@@ -688,7 +691,7 @@ func (s *Service) startFinalizeWorkflow(
 
 func (s *Service) runSynchronousFinalization(
 	ctx context.Context,
-	req *services.CompletionRequest,
+	req *documentuploadports.CompletionRequest,
 	session *documentupload.DocumentUploadSession,
 ) (*document.Document, error) {
 	uploadedParts, err := s.getUploadedParts(ctx, session)
@@ -697,7 +700,7 @@ func (s *Service) runSynchronousFinalization(
 	}
 
 	if session.Strategy == documentupload.StrategyMultipart {
-		if err = s.storage.CompleteMultipartUpload(ctx, &storage.CompleteMultipartUploadParams{
+		if err = s.storage.CompleteMultipartUpload(ctx, &kernelports.CompleteMultipartUploadParams{
 			Key:      session.StoragePath,
 			UploadID: session.StorageProviderUploadID,
 			Parts:    uploadedParts,
@@ -757,13 +760,13 @@ func (s *Service) runSynchronousFinalization(
 
 	session.DocumentID = &createdDoc.ID
 	session.Status = documentupload.StatusAvailable
-	session.UploadedParts = storage.ToDomainParts(uploadedParts)
+	session.UploadedParts = kernelports.ToDomainParts(uploadedParts)
 	session.LastActivityAt = timeutils.NowUnix()
 	if _, err = s.sessionRepo.Update(ctx, session); err != nil {
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceDocument,
 		ResourceID:     createdDoc.GetID().String(),
 		Operation:      permission.OpCreate,
@@ -787,7 +790,7 @@ func (s *Service) recordDocumentUploadUsage(
 	ctx context.Context,
 	doc *document.Document,
 	tenantInfo pagination.TenantInfo,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) {
 	if _, err := usageservice.RecordDocumentUpload(
 		ctx,
@@ -855,7 +858,7 @@ func (s *Service) isSupersededByNewerVersion(
 
 	activeSessions, err := s.sessionRepo.ListActive(
 		ctx,
-		&repositories.ListActiveDocumentUploadSessionsRequest{
+		&documentuploadports.ListActiveDocumentUploadSessionsRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: session.OrganizationID,
 				BuID:  session.BusinessUnitID,
@@ -868,7 +871,7 @@ func (s *Service) isSupersededByNewerVersion(
 		return false, err
 	}
 
-	versions, err := s.documentRepo.ListVersions(ctx, repositories.ListDocumentVersionsRequest{
+	versions, err := s.documentRepo.ListVersions(ctx, documentports.ListDocumentVersionsRequest{
 		LineageID: *session.LineageID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: session.OrganizationID,
@@ -890,7 +893,7 @@ func (s *Service) startThumbnailWorkflow(ctx context.Context, doc *document.Docu
 	if doc.PreviewStatus != document.PreviewStatusPending || doc.PreviewStoragePath != "" {
 		doc.PreviewStatus = document.PreviewStatusPending
 		doc.PreviewStoragePath = ""
-		if err := s.documentRepo.UpdatePreview(ctx, &repositories.UpdateDocumentPreviewRequest{
+		if err := s.documentRepo.UpdatePreview(ctx, &documentports.UpdateDocumentPreviewRequest{
 			ID: doc.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: doc.OrganizationID,
@@ -942,7 +945,7 @@ func (s *Service) startThumbnailWorkflow(ctx context.Context, doc *document.Docu
 		if !errors.As(err, &alreadyStarted) {
 			if updateErr := s.documentRepo.UpdatePreview(
 				ctx,
-				&repositories.UpdateDocumentPreviewRequest{
+				&documentports.UpdateDocumentPreviewRequest{
 					ID: doc.ID,
 					TenantInfo: pagination.TenantInfo{
 						OrgID: doc.OrganizationID,
@@ -978,7 +981,7 @@ func (s *Service) ensureThumbnailForSession(
 		return
 	}
 
-	doc, err := s.documentRepo.GetByID(ctx, repositories.GetDocumentByIDRequest{
+	doc, err := s.documentRepo.GetByID(ctx, documentports.GetDocumentByIDRequest{
 		ID: *session.DocumentID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: session.OrganizationID,

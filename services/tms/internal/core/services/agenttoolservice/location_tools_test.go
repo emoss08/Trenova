@@ -10,8 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/locationcategory"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationcategoryports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -20,14 +21,14 @@ import (
 
 type fakeLocationCreator struct {
 	created *location.Location
-	actor   *serviceports.RequestActor
+	actor   *permissionports.RequestActor
 	guard   writeGuard
 }
 
 func (f *fakeLocationCreator) Create(
 	_ context.Context,
 	entity *location.Location,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*location.Location, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -56,12 +57,12 @@ func (f *fakeStates) GetByAbbreviation(
 
 type fakeLocationCategories struct {
 	category  *locationcategory.LocationCategory
-	requested repositories.GetLocationCategoryByIDRequest
+	requested locationcategoryports.GetLocationCategoryByIDRequest
 }
 
 func (f *fakeLocationCategories) GetByID(
 	_ context.Context,
-	req repositories.GetLocationCategoryByIDRequest,
+	req locationcategoryports.GetLocationCategoryByIDRequest,
 ) (*locationcategory.LocationCategory, error) {
 	f.requested = req
 	if f.category == nil || f.category.ID != req.ID {
@@ -76,7 +77,7 @@ type locationFixture struct {
 	categories *fakeLocationCategories
 	state      *usstate.UsState
 	category   *locationcategory.LocationCategory
-	tool       serviceports.AgentTool
+	tool       agentports.AgentTool
 }
 
 func newLocationFixture() *locationFixture {
@@ -95,7 +96,7 @@ func newLocationFixture() *locationFixture {
 	return fixture
 }
 
-func (f *locationFixture) params(overrides map[string]any) serviceports.ToolExecuteParams {
+func (f *locationFixture) params(overrides map[string]any) agentports.ToolExecuteParams {
 	values := map[string]any{
 		"name":               "Reno Cold Storage",
 		"addressLine1":       "1200 Commerce Way",
@@ -140,7 +141,7 @@ func TestCreateLocation_CreatesTheLocationInTheCallersTenant(t *testing.T) {
 	fixture := newLocationFixture()
 	params := fixture.params(nil)
 
-	reporter := fixture.tool.(serviceports.ToolResultReporter)
+	reporter := fixture.tool.(agentports.ToolResultReporter)
 	result, err := reporter.ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 
@@ -166,7 +167,7 @@ func TestCreateLocation_ValidatesBeforeTheProposalIsShown(t *testing.T) {
 	t.Parallel()
 
 	fixture := newLocationFixture()
-	validator := fixture.tool.(serviceports.ToolValidator)
+	validator := fixture.tool.(agentports.ToolValidator)
 
 	require.NoError(t, validator.Validate(t.Context(), fixture.params(nil)))
 

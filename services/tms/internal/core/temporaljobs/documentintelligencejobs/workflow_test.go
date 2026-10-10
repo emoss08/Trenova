@@ -5,7 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	services "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -49,7 +50,7 @@ func TestProcessDocumentAIExtractionWorkflow_PollsOnItsOwnTimerUntilAnswered(t *
 	polls := 0
 	answer := &AsyncAIExtractionCompletion{
 		ResponseID: "resp_1",
-		Status:     services.AIBackgroundExtractionStatusCompleted,
+		Status:     documentaiextractionports.AIBackgroundExtractionStatusCompleted,
 	}
 	env.OnActivity(a.PollDocumentAIExtractionActivity, mock.Anything, mock.Anything).
 		Return(func(_ context.Context, input *PollDocumentAIExtractionInput) (*AIExtractionProgress, error) {
@@ -90,7 +91,7 @@ func TestProcessDocumentAIExtractionWorkflow_AppliesAnInlineAnswerAtOnce(t *test
 	env.OnActivity(a.SubmitDocumentAIExtractionActivity, mock.Anything, mock.Anything).
 		Return(&AIExtractionProgress{Completion: &AsyncAIExtractionCompletion{
 			RawStatus: "inline",
-			Status:    services.AIBackgroundExtractionStatusCompleted,
+			Status:    documentaiextractionports.AIBackgroundExtractionStatusCompleted,
 		}}, nil).
 		Once()
 	env.OnActivity(a.ApplyDocumentAIExtractionResultActivity, mock.Anything, mock.Anything).
@@ -112,7 +113,7 @@ func TestProcessDocumentAIExtractionWorkflow_ConsidersAShadowAfterApplying(t *te
 	order := make([]string, 0, 2)
 	env.OnActivity(a.SubmitDocumentAIExtractionActivity, mock.Anything, mock.Anything).
 		Return(&AIExtractionProgress{Completion: &AsyncAIExtractionCompletion{
-			Status: services.AIBackgroundExtractionStatusCompleted,
+			Status: documentaiextractionports.AIBackgroundExtractionStatusCompleted,
 		}}, nil).
 		Once()
 	env.OnActivity(a.ApplyDocumentAIExtractionResultActivity, mock.Anything, mock.Anything).
@@ -124,10 +125,10 @@ func TestProcessDocumentAIExtractionWorkflow_ConsidersAShadowAfterApplying(t *te
 
 	var considered *ConsiderDocumentAIExtractionShadowInput
 	env.OnActivity(a.ConsiderDocumentAIExtractionShadowActivity, mock.Anything, mock.Anything).
-		Return(func(_ context.Context, input *ConsiderDocumentAIExtractionShadowInput) (*services.ExtractionShadowDecision, error) {
+		Return(func(_ context.Context, input *ConsiderDocumentAIExtractionShadowInput) (*extractionshadowports.ExtractionShadowDecision, error) {
 			order = append(order, "shadow")
 			considered = input
-			return &services.ExtractionShadowDecision{Sampled: true}, nil
+			return &extractionshadowports.ExtractionShadowDecision{Sampled: true}, nil
 		}).
 		Once()
 
@@ -152,7 +153,7 @@ func TestProcessDocumentAIExtractionWorkflow_AShadowThatFailsLeavesProductionAlo
 	var a *Activities
 	env.OnActivity(a.SubmitDocumentAIExtractionActivity, mock.Anything, mock.Anything).
 		Return(&AIExtractionProgress{Completion: &AsyncAIExtractionCompletion{
-			Status: services.AIBackgroundExtractionStatusCompleted,
+			Status: documentaiextractionports.AIBackgroundExtractionStatusCompleted,
 		}}, nil).
 		Once()
 	env.OnActivity(a.ApplyDocumentAIExtractionResultActivity, mock.Anything, mock.Anything).
@@ -192,7 +193,7 @@ func TestProcessDocumentAIExtractionWorkflow_GivesUpAtTheLongestWait(t *testing.
 			gaveUp = true
 
 			return &AIExtractionProgress{Completion: &AsyncAIExtractionCompletion{
-				Status:      services.AIBackgroundExtractionStatusFailed,
+				Status:      documentaiextractionports.AIBackgroundExtractionStatusFailed,
 				FailureCode: "ai_extract_timeout",
 			}}, nil
 		})

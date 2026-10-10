@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/extractionshadow"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/api/serviceerror"
@@ -14,7 +14,7 @@ import (
 	"go.uber.org/fx"
 )
 
-var _ services.ExtractionShadowStarter = (*Starter)(nil)
+var _ extractionshadowports.ExtractionShadowStarter = (*Starter)(nil)
 
 type StarterParams struct {
 	fx.In
@@ -32,7 +32,7 @@ func NewStarter(p StarterParams) *Starter {
 
 func (s *Starter) StartExtractionShadow(
 	ctx context.Context,
-	start *services.ExtractionShadowStart,
+	start *extractionshadowports.ExtractionShadowStart,
 ) (string, error) {
 	workflowID := extractionshadow.WorkflowID(start.ResultID)
 	_, err := s.client.ExecuteWorkflow(ctx, client.StartWorkflowOptions{

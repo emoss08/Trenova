@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/latecharge"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -14,14 +14,14 @@ import (
 type lateChargeAssessmentsBySourceInvoiceIDsLister interface {
 	ListBySourceInvoiceIDs(
 		ctx context.Context,
-		req *repositories.ListLateChargeAssessmentsByInvoiceIDsRequest,
+		req *latechargeports.ListLateChargeAssessmentsByInvoiceIDsRequest,
 	) (map[pulid.ID][]*latecharge.LateChargeAssessment, error)
 }
 
 type LateChargeAssessmentsByInvoiceIDLoaderFactoryParams struct {
 	fx.In
 
-	LateChargeRepo repositories.LateChargeRepository
+	LateChargeRepo latechargeports.LateChargeRepository
 }
 
 type LateChargeAssessmentsByInvoiceIDLoaderFactory struct {
@@ -47,7 +47,7 @@ func (f *LateChargeAssessmentsByInvoiceIDLoaderFactory) batchFunc(
 		func(ctx context.Context, ids []pulid.ID) (map[pulid.ID][]*latecharge.LateChargeAssessment, error) {
 			return f.assessments.ListBySourceInvoiceIDs(
 				ctx,
-				&repositories.ListLateChargeAssessmentsByInvoiceIDsRequest{
+				&latechargeports.ListLateChargeAssessmentsByInvoiceIDsRequest{
 					TenantInfo: tenantInfo,
 					InvoiceIDs: ids,
 				},

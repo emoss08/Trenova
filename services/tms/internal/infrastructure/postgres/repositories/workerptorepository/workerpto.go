@@ -7,9 +7,9 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -37,7 +37,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.WorkerPTORepository {
+func New(p Params) workerports.WorkerPTORepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.worker-pto-repository"),
@@ -46,7 +46,7 @@ func New(p Params) repositories.WorkerPTORepository {
 
 func (r *repository) applyListFiltersWithoutSort(
 	q *bun.SelectQuery,
-	req *repositories.ListPTORequest,
+	req *workerports.ListPTORequest,
 ) *bun.SelectQuery {
 	log := r.l.With(
 		zap.String("operation", "applyListFiltersWithoutSort"),
@@ -65,7 +65,7 @@ func (r *repository) applyListFiltersWithoutSort(
 
 func (r *repository) applyListPTOFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListPTORequest,
+	req *workerports.ListPTORequest,
 	log *zap.Logger,
 	includeWorkerRelation bool,
 ) *bun.SelectQuery {
@@ -116,7 +116,7 @@ func (r *repository) applyListPTOFilters(
 
 func (r *repository) cursorFilterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListPTORequest,
+	req *workerports.ListPTORequest,
 ) (*bun.SelectQuery, error) {
 	log := r.l.With(
 		zap.String("operation", "cursorFilterQuery"),
@@ -140,7 +140,7 @@ func (r *repository) cursorFilterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListPTORequest,
+	req *workerports.ListPTORequest,
 ) (*pagination.CursorListResult[*worker.WorkerPTO], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*worker.WorkerPTO], error) {
 		log := r.l.With(
@@ -189,7 +189,7 @@ func (r *repository) List(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req *repositories.GetPTOByIDRequest,
+	req *workerports.GetPTOByIDRequest,
 ) (*worker.WorkerPTO, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerPTO, error) {
 		log := r.l.With(
@@ -286,7 +286,7 @@ func (r *repository) Update(
 
 func (r *repository) GetByIDs(
 	ctx context.Context,
-	req *repositories.GetPTOsByIDsRequest,
+	req *workerports.GetPTOsByIDsRequest,
 ) ([]*worker.WorkerPTO, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerPTO, error) {
 		log := r.l.With(
@@ -320,7 +320,7 @@ func (r *repository) GetByIDs(
 
 func (r *repository) HasOverlap(
 	ctx context.Context,
-	req *repositories.PTOOverlapRequest,
+	req *workerports.PTOOverlapRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
 		log := r.l.With(
@@ -359,7 +359,7 @@ func (r *repository) HasOverlap(
 
 func (r *repository) SetBalanceAfter(
 	ctx context.Context,
-	req *repositories.SetPTOBalanceAfterRequest,
+	req *workerports.SetPTOBalanceAfterRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.WorkerPTOColumns
@@ -382,7 +382,7 @@ func (r *repository) SetBalanceAfter(
 
 func (r *repository) UpdateStatus(
 	ctx context.Context,
-	req *repositories.UpdatePTOStatusRequest,
+	req *workerports.UpdatePTOStatusRequest,
 ) (*worker.WorkerPTO, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerPTO, error) {
 		log := r.l.With(
@@ -451,10 +451,10 @@ func (r *repository) UpdateStatus(
 
 func (r *repository) explainStatusConflict(
 	ctx context.Context,
-	req *repositories.UpdatePTOStatusRequest,
+	req *workerports.UpdatePTOStatusRequest,
 	sources []worker.PTOStatus,
 ) error {
-	current, err := r.GetByID(ctx, &repositories.GetPTOByIDRequest{
+	current, err := r.GetByID(ctx, &workerports.GetPTOByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -482,7 +482,7 @@ func (r *repository) explainStatusConflict(
 }
 
 func (r *repository) upcomingPTODateBoundaries(
-	req *repositories.ListUpcomingPTORequest,
+	req *workerports.ListUpcomingPTORequest,
 	timezone string,
 	log *zap.Logger,
 ) (startFloor, endCeiling int64) {
@@ -526,7 +526,7 @@ type upcomingPTOFilterParsed struct {
 }
 
 func (r *repository) parseUpcomingPTOFilterParams(
-	req *repositories.ListUpcomingPTORequest,
+	req *workerports.ListUpcomingPTORequest,
 	log *zap.Logger,
 ) (*upcomingPTOFilterParsed, error) {
 	out := &upcomingPTOFilterParsed{}
@@ -572,7 +572,7 @@ func (r *repository) parseUpcomingPTOFilterParams(
 
 func (r *repository) applyUpcomingPTOWhereGroup(
 	q *bun.SelectQuery,
-	req *repositories.ListUpcomingPTORequest,
+	req *workerports.ListUpcomingPTORequest,
 	startFloor, endCeiling int64,
 	parsed *upcomingPTOFilterParsed,
 ) *bun.SelectQuery {
@@ -599,7 +599,7 @@ func (r *repository) applyUpcomingPTOWhereGroup(
 }
 
 func (r *repository) workerRelationApplyForUpcoming(
-	req *repositories.ListUpcomingPTORequest,
+	req *workerports.ListUpcomingPTORequest,
 	log *zap.Logger,
 ) func(*bun.SelectQuery) *bun.SelectQuery {
 	return func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -621,7 +621,7 @@ func (r *repository) workerRelationApplyForUpcoming(
 
 func (r *repository) filterUpcomingPTOQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListUpcomingPTORequest,
+	req *workerports.ListUpcomingPTORequest,
 ) *bun.SelectQuery {
 	log := r.l.With(
 		zap.String("operation", "filterUpcomingPTOQuery"),
@@ -640,7 +640,7 @@ func (r *repository) filterUpcomingPTOQuery(
 	})
 }
 
-func upcomingPTOCursorFilter(req *repositories.ListUpcomingPTORequest) *pagination.QueryOptions {
+func upcomingPTOCursorFilter(req *workerports.ListUpcomingPTORequest) *pagination.QueryOptions {
 	filter := *req.Filter
 	filter.Sort = []domaintypes.SortField{
 		{
@@ -657,7 +657,7 @@ func upcomingPTOCursorFilter(req *repositories.ListUpcomingPTORequest) *paginati
 
 func (r *repository) cursorUpcomingPTOQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListUpcomingPTORequest,
+	req *workerports.ListUpcomingPTORequest,
 ) (*bun.SelectQuery, error) {
 	q = r.filterUpcomingPTOQuery(q, req)
 	filter := upcomingPTOCursorFilter(req)
@@ -679,7 +679,7 @@ func (r *repository) cursorUpcomingPTOQuery(
 
 func (r *repository) ListUpcoming(
 	ctx context.Context,
-	req *repositories.ListUpcomingPTORequest,
+	req *workerports.ListUpcomingPTORequest,
 ) (*pagination.CursorListResult[*worker.WorkerPTO], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*worker.WorkerPTO], error) {
 		log := r.l.With(
@@ -734,46 +734,46 @@ type ptoAggregateRow struct {
 }
 
 type chartFieldSetter struct {
-	countSetter func(*repositories.PTOChartDataPoint, int)
+	countSetter func(*workerports.PTOChartDataPoint, int)
 	workerKey   string
 }
 
 var chartTypeSetters = map[worker.PTOType]chartFieldSetter{
 	worker.PTOTypeVacation: {
-		countSetter: func(dp *repositories.PTOChartDataPoint, count int) { dp.Vacation = count },
+		countSetter: func(dp *workerports.PTOChartDataPoint, count int) { dp.Vacation = count },
 		workerKey:   worker.PTOTypeVacation.String(),
 	},
 	worker.PTOTypeSick: {
-		countSetter: func(dp *repositories.PTOChartDataPoint, count int) { dp.Sick = count },
+		countSetter: func(dp *workerports.PTOChartDataPoint, count int) { dp.Sick = count },
 		workerKey:   worker.PTOTypeSick.String(),
 	},
 	worker.PTOTypeHoliday: {
-		countSetter: func(dp *repositories.PTOChartDataPoint, count int) { dp.Holiday = count },
+		countSetter: func(dp *workerports.PTOChartDataPoint, count int) { dp.Holiday = count },
 		workerKey:   worker.PTOTypeHoliday.String(),
 	},
 	worker.PTOTypeBereavement: {
-		countSetter: func(dp *repositories.PTOChartDataPoint, count int) { dp.Bereavement = count },
+		countSetter: func(dp *workerports.PTOChartDataPoint, count int) { dp.Bereavement = count },
 		workerKey:   worker.PTOTypeBereavement.String(),
 	},
 	worker.PTOTypeMaternity: {
-		countSetter: func(dp *repositories.PTOChartDataPoint, count int) { dp.Maternity = count },
+		countSetter: func(dp *workerports.PTOChartDataPoint, count int) { dp.Maternity = count },
 		workerKey:   worker.PTOTypeMaternity.String(),
 	},
 	worker.PTOTypePaternity: {
-		countSetter: func(dp *repositories.PTOChartDataPoint, count int) { dp.Paternity = count },
+		countSetter: func(dp *workerports.PTOChartDataPoint, count int) { dp.Paternity = count },
 		workerKey:   worker.PTOTypePaternity.String(),
 	},
 	worker.PTOTypePersonal: {
-		countSetter: func(dp *repositories.PTOChartDataPoint, count int) { dp.Personal = count },
+		countSetter: func(dp *workerports.PTOChartDataPoint, count int) { dp.Personal = count },
 		workerKey:   worker.PTOTypePersonal.String(),
 	},
 }
 
 func (r *repository) GetChartData(
 	ctx context.Context,
-	req *repositories.PTOChartRequest,
-) ([]*repositories.PTOChartDataPoint, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*repositories.PTOChartDataPoint, error) {
+	req *workerports.PTOChartRequest,
+) ([]*workerports.PTOChartDataPoint, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*workerports.PTOChartDataPoint, error) {
 		log := r.l.With(
 			zap.String("operation", "GetPTOChart"),
 			zap.Any("req", req),
@@ -807,7 +807,7 @@ func (r *repository) GetChartData(
 func (r *repository) generateDateSeries(
 	ctx context.Context,
 	db bun.IDB,
-	req *repositories.PTOChartRequest,
+	req *workerports.PTOChartRequest,
 	timezone string,
 	log *zap.Logger,
 ) ([]string, error) {
@@ -838,7 +838,7 @@ func (r *repository) generateDateSeries(
 func (r *repository) fetchPTOData(
 	ctx context.Context,
 	db bun.IDB,
-	req *repositories.PTOChartRequest,
+	req *workerports.PTOChartRequest,
 	fromDayStartUnix int64,
 	toDayEndUnix int64,
 	log *zap.Logger,
@@ -864,7 +864,7 @@ func (r *repository) fetchPTOData(
 
 func (r *repository) buildPTOQuery(
 	db bun.IDB,
-	req *repositories.PTOChartRequest,
+	req *workerports.PTOChartRequest,
 	fromDayStartUnix int64,
 	toDayEndUnix int64,
 ) *bun.SelectQuery {
@@ -910,7 +910,7 @@ func (r *repository) buildPTOQuery(
 }
 
 func (r *repository) calculateChartDateBoundaries(
-	req *repositories.PTOChartRequest,
+	req *workerports.PTOChartRequest,
 	timezone string,
 ) (fromDayStartUnix, toDayEndUnix int64, err error) {
 	fromDayStartUnix, err = timeutils.DayStartUnix(req.StartDateFrom, timezone)
@@ -926,7 +926,7 @@ func (r *repository) calculateChartDateBoundaries(
 
 func (r *repository) applyPTOFilters(
 	q *bun.SelectQuery,
-	req *repositories.PTOChartRequest,
+	req *workerports.PTOChartRequest,
 	log *zap.Logger,
 ) error {
 	if req.Type != "" && !strings.EqualFold(req.Type, "all") {
@@ -983,12 +983,12 @@ func (r *repository) buildPTOChartDataQuery(
 	dateSeries []string,
 	ptoMap map[string]map[string]ptoAggregateRow,
 	log *zap.Logger,
-) []*repositories.PTOChartDataPoint {
-	result := make([]*repositories.PTOChartDataPoint, 0, len(dateSeries))
+) []*workerports.PTOChartDataPoint {
+	result := make([]*workerports.PTOChartDataPoint, 0, len(dateSeries))
 	for _, date := range dateSeries {
-		dataPoint := &repositories.PTOChartDataPoint{
+		dataPoint := &workerports.PTOChartDataPoint{
 			Date:    date,
-			Workers: make(map[string][]repositories.PTOChartWorker),
+			Workers: make(map[string][]workerports.PTOChartWorker),
 		}
 		for _, ptoType := range []worker.PTOType{
 			worker.PTOTypeVacation,
@@ -999,12 +999,12 @@ func (r *repository) buildPTOChartDataQuery(
 			worker.PTOTypePaternity,
 			worker.PTOTypePersonal,
 		} {
-			dataPoint.Workers[ptoType.String()] = []repositories.PTOChartWorker{}
+			dataPoint.Workers[ptoType.String()] = []workerports.PTOChartWorker{}
 		}
 
 		if dayData, exists := ptoMap[date]; exists {
 			for rawType, row := range dayData {
-				var workers []repositories.PTOChartWorker
+				var workers []workerports.PTOChartWorker
 				if err := sonic.UnmarshalString(row.Workers, &workers); err != nil {
 					log.Error(
 						"failed to parse worker details",
@@ -1013,7 +1013,7 @@ func (r *repository) buildPTOChartDataQuery(
 						zap.String("type", rawType),
 					)
 
-					workers = []repositories.PTOChartWorker{}
+					workers = []workerports.PTOChartWorker{}
 				}
 
 				ptoType, err := worker.PTOTypeFromString(rawType)

@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/customfield"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/customfieldports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,7 +22,7 @@ type mockCustomFieldRepository struct {
 
 func (m *mockCustomFieldRepository) List(
 	ctx context.Context,
-	req *repositories.ListCustomFieldDefinitionsRequest,
+	req *customfieldports.ListCustomFieldDefinitionsRequest,
 ) (*pagination.ListResult[*customfield.CustomFieldDefinition], error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
@@ -33,7 +33,7 @@ func (m *mockCustomFieldRepository) List(
 
 func (m *mockCustomFieldRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListCustomFieldDefinitionConnectionRequest,
+	req *customfieldports.ListCustomFieldDefinitionConnectionRequest,
 ) (*pagination.CursorListResult[*customfield.CustomFieldDefinition], error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
@@ -46,7 +46,7 @@ func (m *mockCustomFieldRepository) ListConnection(
 
 func (m *mockCustomFieldRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetCustomFieldDefinitionByIDRequest,
+	req customfieldports.GetCustomFieldDefinitionByIDRequest,
 ) (*customfield.CustomFieldDefinition, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
@@ -57,7 +57,7 @@ func (m *mockCustomFieldRepository) GetByID(
 
 func (m *mockCustomFieldRepository) GetActiveByResourceType(
 	ctx context.Context,
-	req repositories.GetActiveByResourceTypeRequest,
+	req customfieldports.GetActiveByResourceTypeRequest,
 ) ([]*customfield.CustomFieldDefinition, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
@@ -90,7 +90,7 @@ func (m *mockCustomFieldRepository) Update(
 
 func (m *mockCustomFieldRepository) Delete(
 	ctx context.Context,
-	req repositories.GetCustomFieldDefinitionByIDRequest,
+	req customfieldports.GetCustomFieldDefinitionByIDRequest,
 ) error {
 	args := m.Called(ctx, req)
 	return args.Error(0)
@@ -98,13 +98,13 @@ func (m *mockCustomFieldRepository) Delete(
 
 func (m *mockCustomFieldRepository) CountByResourceType(
 	ctx context.Context,
-	req repositories.CountByResourceTypeRequest,
+	req customfieldports.CountByResourceTypeRequest,
 ) (int, error) {
 	args := m.Called(ctx, req)
 	return args.Int(0), args.Error(1)
 }
 
-func newTestValuesValidator(repo repositories.CustomFieldDefinitionRepository) *ValuesValidator {
+func newTestValuesValidator(repo customfieldports.CustomFieldDefinitionRepository) *ValuesValidator {
 	return &ValuesValidator{
 		l:    zap.NewNop(),
 		repo: repo,
@@ -125,7 +125,7 @@ func TestValidate_NoCustomFields_NoDefinitions(t *testing.T) {
 	validator := newTestValuesValidator(repo)
 	tenantInfo := newTenantInfo()
 
-	repo.On("GetActiveByResourceType", mock.Anything, repositories.GetActiveByResourceTypeRequest{
+	repo.On("GetActiveByResourceType", mock.Anything, customfieldports.GetActiveByResourceTypeRequest{
 		TenantInfo:   tenantInfo,
 		ResourceType: "trailer",
 	}).Return([]*customfield.CustomFieldDefinition{}, nil)
@@ -158,7 +158,7 @@ func TestValidate_RequiredFieldMissing(t *testing.T) {
 		},
 	}
 
-	repo.On("GetActiveByResourceType", mock.Anything, repositories.GetActiveByResourceTypeRequest{
+	repo.On("GetActiveByResourceType", mock.Anything, customfieldports.GetActiveByResourceTypeRequest{
 		TenantInfo:   tenantInfo,
 		ResourceType: "trailer",
 	}).Return(definitions, nil)
@@ -193,7 +193,7 @@ func TestValidate_RequiredFieldPresent(t *testing.T) {
 		},
 	}
 
-	repo.On("GetActiveByResourceType", mock.Anything, repositories.GetActiveByResourceTypeRequest{
+	repo.On("GetActiveByResourceType", mock.Anything, customfieldports.GetActiveByResourceTypeRequest{
 		TenantInfo:   tenantInfo,
 		ResourceType: "trailer",
 	}).Return(definitions, nil)
@@ -216,7 +216,7 @@ func TestValidate_UnknownFieldID(t *testing.T) {
 	validator := newTestValuesValidator(repo)
 	tenantInfo := newTenantInfo()
 
-	repo.On("GetActiveByResourceType", mock.Anything, repositories.GetActiveByResourceTypeRequest{
+	repo.On("GetActiveByResourceType", mock.Anything, customfieldports.GetActiveByResourceTypeRequest{
 		TenantInfo:   tenantInfo,
 		ResourceType: "trailer",
 	}).Return([]*customfield.CustomFieldDefinition{}, nil)
@@ -240,7 +240,7 @@ func TestValidate_RepositoryError(t *testing.T) {
 	validator := newTestValuesValidator(repo)
 	tenantInfo := newTenantInfo()
 
-	repo.On("GetActiveByResourceType", mock.Anything, repositories.GetActiveByResourceTypeRequest{
+	repo.On("GetActiveByResourceType", mock.Anything, customfieldports.GetActiveByResourceTypeRequest{
 		TenantInfo:   tenantInfo,
 		ResourceType: "trailer",
 	}).Return(nil, errors.New("database error"))

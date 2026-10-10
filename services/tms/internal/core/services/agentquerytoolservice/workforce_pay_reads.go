@@ -9,11 +9,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permit"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/timesheetservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -47,19 +50,19 @@ type wfPermitReader interface {
 type wfExpenseReader interface {
 	ListExpensesConnection(
 		ctx context.Context,
-		req *repositories.ListDriverExpenseConnectionRequest,
+		req *driverpayports.ListDriverExpenseConnectionRequest,
 	) (*pagination.CursorListResult[*driverpay.Expense], error)
 }
 
 type wfPayrollReader interface {
 	ListExports(
 		ctx context.Context,
-		req *repositories.ListPayrollExportsRequest,
+		req *workerports.ListPayrollExportsRequest,
 	) ([]*worker.PayrollExport, error)
 }
 
 var (
-	_ wfPermitReader  = serviceports.PermitService(nil)
+	_ wfPermitReader  = permitports.PermitService(nil)
 	_ wfExpenseReader = (*driversettlementservice.Service)(nil)
 	_ wfPayrollReader = (*timesheetservice.Service)(nil)
 )
@@ -106,8 +109,8 @@ func stateLabel(state *usstate.UsState) string {
 
 func newListShipmentPermitsTool(
 	permits wfPermitReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &workforceRead{
 		name: "list_shipment_permits",
 		description: "List an oversize or overweight shipment's state permit requirements " +
@@ -126,7 +129,7 @@ func newListShipmentPermitsTool(
 		access:   newFieldAccess(permissions),
 		run: func(
 			ctx context.Context,
-			params *serviceports.QueryToolParams,
+			params *agentports.QueryToolParams,
 			gate *fieldGate,
 		) (any, error) {
 			shipmentID, err := requirePulid(params.Params, paramShipmentID)
@@ -206,8 +209,8 @@ func (l *driverExpenseList) TaintedRecords() []agent.RecordRef { return l.outsid
 
 func newListDriverExpensesTool(
 	expenses wfExpenseReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &workforceRead{
 		name: "list_driver_expenses",
 		description: "List expenses drivers submitted for reimbursement, newest first. " +
@@ -226,7 +229,7 @@ func newListDriverExpensesTool(
 		access: newFieldAccess(permissions),
 		run: func(
 			ctx context.Context,
-			params *serviceports.QueryToolParams,
+			params *agentports.QueryToolParams,
 			gate *fieldGate,
 		) (any, error) {
 			workerID, err := optionalWorker(params.Params)
@@ -248,7 +251,7 @@ func newListDriverExpensesTool(
 			}
 			limit := receivableLimit(params.Params)
 			found, err := expenses.ListExpensesConnection(ctx,
-				&repositories.ListDriverExpenseConnectionRequest{
+				&driverpayports.ListDriverExpenseConnectionRequest{
 					Filter: &pagination.QueryOptions{
 						TenantInfo:   tenantOf(params),
 						Pagination:   pagination.Info{Limit: limit},
@@ -306,8 +309,8 @@ type payrollExportRow struct {
 
 func newListPayrollExportsTool(
 	exports wfPayrollReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &workforceRead{
 		name: "list_payroll_exports",
 		description: "List payroll runs, newest first. Each shows the pay period it " +
@@ -319,10 +322,10 @@ func newListPayrollExportsTool(
 		access:     newFieldAccess(permissions),
 		run: func(
 			ctx context.Context,
-			params *serviceports.QueryToolParams,
+			params *agentports.QueryToolParams,
 			gate *fieldGate,
 		) (any, error) {
-			runs, err := exports.ListExports(ctx, &repositories.ListPayrollExportsRequest{
+			runs, err := exports.ListExports(ctx, &workerports.ListPayrollExportsRequest{
 				TenantInfo: tenantOf(params),
 				Limit:      maxPayrollRunsShown,
 			})
@@ -351,22 +354,22 @@ func newListPayrollExportsTool(
 }
 
 func provideListShipmentPermitsTool(
-	permits serviceports.PermitService,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permits permitports.PermitService,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newListShipmentPermitsTool(permits, permissions)
 }
 
 func provideListDriverExpensesTool(
 	s *driversettlementservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newListDriverExpensesTool(s, permissions)
 }
 
 func provideListPayrollExportsTool(
 	s *timesheetservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newListPayrollExportsTool(s, permissions)
 }

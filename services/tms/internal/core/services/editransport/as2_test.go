@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/shared/as2"
 	"github.com/stretchr/testify/require"
 )
@@ -126,7 +126,7 @@ func TestAS2TransportDeliverSyncMDN(t *testing.T) {
 
 	profile, secrets := as2TestProfile(local, partner, server.URL, MDNModeSync)
 	transport := NewAS2Transport()
-	result, err := transport.Deliver(t.Context(), &services.EDITransportRequest{
+	result, err := transport.Deliver(t.Context(), &ediports.EDITransportRequest{
 		Profile:  profile,
 		Secrets:  secrets,
 		FileName: "shipment.edi",
@@ -153,7 +153,7 @@ func TestAS2TransportDeliverAsyncMDNIsPending(t *testing.T) {
 
 	profile, secrets := as2TestProfile(local, partner, server.URL, MDNModeAsync)
 	transport := NewAS2Transport()
-	result, err := transport.Deliver(t.Context(), &services.EDITransportRequest{
+	result, err := transport.Deliver(t.Context(), &ediports.EDITransportRequest{
 		Profile:  profile,
 		Secrets:  secrets,
 		FileName: "shipment.edi",
@@ -185,7 +185,7 @@ func TestAS2TransportDeliverFailsOnRejectedMDN(t *testing.T) {
 
 	profile, secrets := as2TestProfile(local, partner, server.URL, MDNModeSync)
 	transport := NewAS2Transport()
-	_, err := transport.Deliver(t.Context(), &services.EDITransportRequest{
+	_, err := transport.Deliver(t.Context(), &ediports.EDITransportRequest{
 		Profile:  profile,
 		Secrets:  secrets,
 		FileName: "shipment.edi",
@@ -208,7 +208,7 @@ func TestAS2TransportDeliverFailsOnHTTPRejection(t *testing.T) {
 
 	profile, secrets := as2TestProfile(local, partner, server.URL, MDNModeSync)
 	transport := NewAS2Transport()
-	_, err := transport.Deliver(t.Context(), &services.EDITransportRequest{
+	_, err := transport.Deliver(t.Context(), &ediports.EDITransportRequest{
 		Profile:  profile,
 		Secrets:  secrets,
 		FileName: "shipment.edi",

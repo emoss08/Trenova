@@ -14,11 +14,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -93,15 +96,15 @@ func settlementToolProviders() []any {
 type driverSettlementReader interface {
 	List(
 		ctx context.Context,
-		req *repositories.ListDriverSettlementsRequest,
+		req *driversettlementports.ListDriverSettlementsRequest,
 	) (*pagination.ListResult[*driversettlement.Settlement], error)
 	Get(
 		ctx context.Context,
-		req repositories.GetDriverSettlementByIDRequest,
+		req driversettlementports.GetDriverSettlementByIDRequest,
 	) (*driversettlement.Settlement, error)
 	ListPayEvents(
 		ctx context.Context,
-		req *repositories.ListPayEventsRequest,
+		req *driversettlementports.ListPayEventsRequest,
 	) (*pagination.ListResult[*driversettlement.PayEvent], error)
 	GetWorkerEarningsSummary(
 		ctx context.Context,
@@ -110,30 +113,30 @@ type driverSettlementReader interface {
 	) (*driversettlementservice.WorkerEarningsSummary, error)
 	GetDispute(
 		ctx context.Context,
-		req repositories.GetSettlementDisputeByIDRequest,
+		req driversettlementports.GetSettlementDisputeByIDRequest,
 	) (*driversettlement.Dispute, error)
 	ListDisputesForWorker(
 		ctx context.Context,
-		req *repositories.ListSettlementDisputesForWorkerRequest,
+		req *driversettlementports.ListSettlementDisputesForWorkerRequest,
 	) ([]*driversettlement.Dispute, error)
 }
 
 type carrierSettlementReader interface {
 	List(
 		ctx context.Context,
-		req *repositories.ListCarrierSettlementsRequest,
+		req *carriersettlementports.ListCarrierSettlementsRequest,
 	) (*pagination.ListResult[*carriersettlement.CarrierSettlement], error)
 	Get(
 		ctx context.Context,
-		req repositories.GetCarrierSettlementByIDRequest,
+		req carriersettlementports.GetCarrierSettlementByIDRequest,
 	) (*carriersettlement.CarrierSettlement, error)
 	ListInvoiceMatches(
 		ctx context.Context,
-		req *repositories.ListCarrierInvoiceMatchesRequest,
+		req *carriersettlementports.ListCarrierInvoiceMatchesRequest,
 	) (*pagination.ListResult[*carriersettlement.InvoiceMatch], error)
 	ListUnmatchedEDIInvoices(
 		ctx context.Context,
-		req *repositories.ListEDICarrierInvoicesRequest,
+		req *ediports.ListEDICarrierInvoicesRequest,
 	) (*pagination.ListResult[*edi.CarrierInvoice], error)
 	SuggestCarrierForInvoice(
 		ctx context.Context,
@@ -144,57 +147,57 @@ type carrierSettlementReader interface {
 
 func provideListDriverSettlementsTool(
 	settlements *driversettlementservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newListDriverSettlementsTool(settlements, permissions)
 }
 
 func provideGetDriverSettlementTool(
 	settlements *driversettlementservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newGetDriverSettlementTool(settlements, permissions)
 }
 
 func provideListDriverPayEventsTool(
 	settlements *driversettlementservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newListDriverPayEventsTool(settlements, permissions)
 }
 
 func provideGetWorkerEarningsSummaryTool(
 	settlements *driversettlementservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newGetWorkerEarningsSummaryTool(settlements, permissions)
 }
 
 func provideGetSettlementDisputeTool(
 	settlements *driversettlementservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newGetSettlementDisputeTool(settlements, permissions)
 }
 
 func provideListCarrierSettlementsTool(
 	settlements *carriersettlementservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newListCarrierSettlementsTool(settlements, permissions)
 }
 
 func provideGetCarrierSettlementTool(
 	settlements *carriersettlementservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newGetCarrierSettlementTool(settlements, permissions)
 }
 
 func provideListCarrierInvoiceMatchesTool(
 	settlements *carriersettlementservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newListCarrierInvoiceMatchesTool(settlements, permissions)
 }
 
@@ -264,8 +267,8 @@ type listDriverSettlementsTool struct {
 
 func newListDriverSettlementsTool(
 	settlements driverSettlementReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &listDriverSettlementsTool{settlements: settlements, access: newFieldAccess(permissions)}
 }
 
@@ -296,13 +299,13 @@ func (t *listDriverSettlementsTool) ParamSchema() map[string]any {
 	}, defaultListLimit, maxListLimit))
 }
 
-func (t *listDriverSettlementsTool) Policy() serviceports.ToolPolicy {
+func (t *listDriverSettlementsTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceDriverSettlement})
 }
 
 func (t *listDriverSettlementsTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -327,7 +330,7 @@ func (t *listDriverSettlementsTool) Query(
 	}
 	window := readPage(params.Params, defaultListLimit, maxListLimit)
 
-	req := &repositories.ListDriverSettlementsRequest{
+	req := &driversettlementports.ListDriverSettlementsRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenantOf(params),
 			Pagination: pagination.Info{Limit: window.fetch(), Offset: window.offset},
@@ -394,11 +397,11 @@ func onlyWithExceptions(params map[string]any) *bool {
 
 func (t *listDriverSettlementsTool) otherSettlements(
 	ctx context.Context,
-	req *repositories.ListDriverSettlementsRequest,
+	req *driversettlementports.ListDriverSettlementsRequest,
 	zone *time.Location,
 ) string {
 	statusNarrowed := req.Status != "" || len(req.Statuses) > 0 || req.HasExceptions != nil
-	broader := &repositories.ListDriverSettlementsRequest{
+	broader := &driversettlementports.ListDriverSettlementsRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: req.Filter.TenantInfo,
 			Pagination: pagination.Info{Limit: maxOtherSettlements},
@@ -457,8 +460,8 @@ type getDriverSettlementTool struct {
 
 func newGetDriverSettlementTool(
 	settlements driverSettlementReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &getDriverSettlementTool{settlements: settlements, access: newFieldAccess(permissions)}
 }
 
@@ -486,7 +489,7 @@ func (t *getDriverSettlementTool) ParamSchema() map[string]any {
 	)
 }
 
-func (t *getDriverSettlementTool) Policy() serviceports.ToolPolicy {
+func (t *getDriverSettlementTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceDriverSettlement})
 }
 
@@ -539,7 +542,7 @@ type driverSettlementView struct {
 
 func (t *getDriverSettlementTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -551,7 +554,7 @@ func (t *getDriverSettlementTool) Query(
 	}
 
 	tenant := tenantOf(params)
-	entity, err := t.settlements.Get(ctx, repositories.GetDriverSettlementByIDRequest{
+	entity, err := t.settlements.Get(ctx, driversettlementports.GetDriverSettlementByIDRequest{
 		ID:           id,
 		TenantInfo:   tenant,
 		IncludeLines: true,
@@ -561,7 +564,7 @@ func (t *getDriverSettlementTool) Query(
 	}
 
 	disputes, err := t.settlements.ListDisputesForWorker(ctx,
-		&repositories.ListSettlementDisputesForWorkerRequest{
+		&driversettlementports.ListSettlementDisputesForWorkerRequest{
 			TenantInfo: tenant,
 			WorkerID:   entity.WorkerID,
 			Statuses:   openDisputeStatuses,
@@ -686,8 +689,8 @@ type listDriverPayEventsTool struct {
 
 func newListDriverPayEventsTool(
 	settlements driverSettlementReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &listDriverPayEventsTool{settlements: settlements, access: newFieldAccess(permissions)}
 }
 
@@ -716,7 +719,7 @@ func (t *listDriverPayEventsTool) ParamSchema() map[string]any {
 	}, defaultListLimit, maxListLimit))
 }
 
-func (t *listDriverPayEventsTool) Policy() serviceports.ToolPolicy {
+func (t *listDriverPayEventsTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceDriverSettlement})
 }
 
@@ -738,7 +741,7 @@ type payEventRow struct {
 
 func (t *listDriverPayEventsTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -769,7 +772,7 @@ func (t *listDriverPayEventsTool) Query(
 		criteria.Field(paramStatus, status)
 	}
 
-	result, err := t.settlements.ListPayEvents(ctx, &repositories.ListPayEventsRequest{
+	result, err := t.settlements.ListPayEvents(ctx, &driversettlementports.ListPayEventsRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenantOf(params),
 			Pagination: pagination.Info{Limit: window.fetch(), Offset: window.offset},
@@ -827,8 +830,8 @@ type getWorkerEarningsSummaryTool struct {
 
 func newGetWorkerEarningsSummaryTool(
 	settlements driverSettlementReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &getWorkerEarningsSummaryTool{
 		settlements: settlements,
 		access:      newFieldAccess(permissions),
@@ -854,7 +857,7 @@ func (t *getWorkerEarningsSummaryTool) ParamSchema() map[string]any {
 	)
 }
 
-func (t *getWorkerEarningsSummaryTool) Policy() serviceports.ToolPolicy {
+func (t *getWorkerEarningsSummaryTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceDriverSettlement})
 }
 
@@ -869,7 +872,7 @@ type earningsSummaryView struct {
 
 func (t *getWorkerEarningsSummaryTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -911,8 +914,8 @@ type getSettlementDisputeTool struct {
 
 func newGetSettlementDisputeTool(
 	settlements driverSettlementReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &getSettlementDisputeTool{settlements: settlements, access: newFieldAccess(permissions)}
 }
 
@@ -940,7 +943,7 @@ func (t *getSettlementDisputeTool) ParamSchema() map[string]any {
 	)
 }
 
-func (t *getSettlementDisputeTool) Policy() serviceports.ToolPolicy {
+func (t *getSettlementDisputeTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceSettlementDispute,
 		reads:    agent.ExternalReadMarked,
@@ -974,7 +977,7 @@ func (v *settlementDisputeView) TaintedRecords() []agent.RecordRef { return v.ou
 
 func (t *getSettlementDisputeTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -985,7 +988,7 @@ func (t *getSettlementDisputeTool) Query(
 		return nil, err
 	}
 
-	dispute, err := t.settlements.GetDispute(ctx, repositories.GetSettlementDisputeByIDRequest{
+	dispute, err := t.settlements.GetDispute(ctx, driversettlementports.GetSettlementDisputeByIDRequest{
 		ID:               id,
 		TenantInfo:       tenantOf(params),
 		IncludeRelations: true,
@@ -1082,8 +1085,8 @@ type listCarrierSettlementsTool struct {
 
 func newListCarrierSettlementsTool(
 	settlements carrierSettlementReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &listCarrierSettlementsTool{
 		settlements: settlements,
 		access:      newFieldAccess(permissions),
@@ -1115,13 +1118,13 @@ func (t *listCarrierSettlementsTool) ParamSchema() map[string]any {
 	}, defaultListLimit, maxListLimit))
 }
 
-func (t *listCarrierSettlementsTool) Policy() serviceports.ToolPolicy {
+func (t *listCarrierSettlementsTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceCarrierSettlement})
 }
 
 func (t *listCarrierSettlementsTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -1137,7 +1140,7 @@ func (t *listCarrierSettlementsTool) Query(
 	}
 	window := readPage(params.Params, defaultListLimit, maxListLimit)
 
-	req := &repositories.ListCarrierSettlementsRequest{
+	req := &carriersettlementports.ListCarrierSettlementsRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenantOf(params),
 			Pagination: pagination.Info{Limit: window.fetch(), Offset: window.offset},
@@ -1182,8 +1185,8 @@ type getCarrierSettlementTool struct {
 
 func newGetCarrierSettlementTool(
 	settlements carrierSettlementReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &getCarrierSettlementTool{settlements: settlements, access: newFieldAccess(permissions)}
 }
 
@@ -1204,7 +1207,7 @@ func (t *getCarrierSettlementTool) ParamSchema() map[string]any {
 	))
 }
 
-func (t *getCarrierSettlementTool) Policy() serviceports.ToolPolicy {
+func (t *getCarrierSettlementTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceCarrierSettlement})
 }
 
@@ -1238,7 +1241,7 @@ type carrierSettlementView struct {
 
 func (t *getCarrierSettlementTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -1249,7 +1252,7 @@ func (t *getCarrierSettlementTool) Query(
 		return nil, err
 	}
 
-	entity, err := t.settlements.Get(ctx, repositories.GetCarrierSettlementByIDRequest{
+	entity, err := t.settlements.Get(ctx, carriersettlementports.GetCarrierSettlementByIDRequest{
 		ID:           id,
 		TenantInfo:   tenantOf(params),
 		IncludeLines: true,
@@ -1311,8 +1314,8 @@ type listCarrierInvoiceMatchesTool struct {
 
 func newListCarrierInvoiceMatchesTool(
 	settlements carrierSettlementReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &listCarrierInvoiceMatchesTool{
 		settlements: settlements,
 		access:      newFieldAccess(permissions),
@@ -1336,7 +1339,7 @@ func (t *listCarrierInvoiceMatchesTool) ParamSchema() map[string]any {
 	}, defaultListLimit, maxListLimit))
 }
 
-func (t *listCarrierInvoiceMatchesTool) Policy() serviceports.ToolPolicy {
+func (t *listCarrierInvoiceMatchesTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceCarrierSettlement,
 		reads:    agent.ExternalReadMarked,
@@ -1377,7 +1380,7 @@ func matchSource(match *carriersettlement.InvoiceMatch) string {
 
 func (t *listCarrierInvoiceMatchesTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -1402,7 +1405,7 @@ func (t *listCarrierInvoiceMatchesTool) Query(
 	}
 
 	result, err := t.settlements.ListInvoiceMatches(ctx,
-		&repositories.ListCarrierInvoiceMatchesRequest{
+		&carriersettlementports.ListCarrierInvoiceMatchesRequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: tenantOf(params),
 				Pagination: pagination.Info{Limit: window.fetch(), Offset: window.offset},
@@ -1471,8 +1474,8 @@ var ediCarrierInvoiceStatuses = agenttoolschema.Source(
 
 func provideListEDICarrierInvoicesTool(
 	settlements *carriersettlementservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newListEDICarrierInvoicesTool(settlements, permissions)
 }
 
@@ -1483,8 +1486,8 @@ type listEDICarrierInvoicesTool struct {
 
 func newListEDICarrierInvoicesTool(
 	settlements carrierSettlementReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &listEDICarrierInvoicesTool{
 		settlements: settlements,
 		access:      newFieldAccess(permissions),
@@ -1507,7 +1510,7 @@ func (t *listEDICarrierInvoicesTool) ParamSchema() map[string]any {
 	}, defaultListLimit, maxListLimit))
 }
 
-func (t *listEDICarrierInvoicesTool) Policy() serviceports.ToolPolicy {
+func (t *listEDICarrierInvoicesTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceCarrierInvoiceMatch,
 		reads:    agent.ExternalReadAlways,
@@ -1535,7 +1538,7 @@ type ediCarrierInvoiceRow struct {
 
 func (t *listEDICarrierInvoicesTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -1548,7 +1551,7 @@ func (t *listEDICarrierInvoicesTool) Query(
 	tenant := tenantOf(params)
 
 	result, err := t.settlements.ListUnmatchedEDIInvoices(ctx,
-		&repositories.ListEDICarrierInvoicesRequest{
+		&ediports.ListEDICarrierInvoicesRequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: tenant,
 				Pagination: pagination.Info{Limit: window.fetch(), Offset: window.offset},

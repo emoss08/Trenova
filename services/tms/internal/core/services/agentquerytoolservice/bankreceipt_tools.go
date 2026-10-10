@@ -10,9 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -30,7 +31,7 @@ const (
 type bankReceiptReader interface {
 	Get(
 		ctx context.Context,
-		req *serviceports.GetBankReceiptRequest,
+		req *bankreceiptports.GetBankReceiptRequest,
 	) (*bankreceipt.BankReceipt, error)
 	ListExceptions(
 		ctx context.Context,
@@ -38,8 +39,8 @@ type bankReceiptReader interface {
 	) ([]*bankreceipt.BankReceipt, error)
 	SuggestMatches(
 		ctx context.Context,
-		req *serviceports.GetBankReceiptRequest,
-	) ([]*serviceports.BankReceiptMatchSuggestion, error)
+		req *bankreceiptports.GetBankReceiptRequest,
+	) ([]*bankreceiptports.BankReceiptMatchSuggestion, error)
 }
 
 // workItemReader reads the reconciliation queue entry behind a receipt.
@@ -58,7 +59,7 @@ type workItemReader interface {
 type customerPaymentLister interface {
 	List(
 		ctx context.Context,
-		req *repositories.ListCustomerPaymentsRequest,
+		req *customerpaymentports.ListCustomerPaymentsRequest,
 	) (*pagination.ListResult[*customerpayment.Payment], error)
 }
 
@@ -154,7 +155,7 @@ type listBankReceiptExceptionsTool struct {
 func newListBankReceiptExceptionsTool(
 	receipts bankReceiptReader,
 	items workItemReader,
-) serviceports.AgentQueryTool {
+) agentports.AgentQueryTool {
 	return &listBankReceiptExceptionsTool{receipts: receipts, items: items}
 }
 
@@ -185,7 +186,7 @@ func (t *listBankReceiptExceptionsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listBankReceiptExceptionsTool) Policy() serviceports.ToolPolicy {
+func (t *listBankReceiptExceptionsTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceBankReceipt,
 		reads:    agent.ExternalReadAlways,
@@ -197,7 +198,7 @@ func (t *listBankReceiptExceptionsTool) Policy() serviceports.ToolPolicy {
 
 func (t *listBankReceiptExceptionsTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -285,7 +286,7 @@ type getBankReceiptTool struct {
 func newGetBankReceiptTool(
 	receipts bankReceiptReader,
 	items workItemReader,
-) serviceports.AgentQueryTool {
+) agentports.AgentQueryTool {
 	return &getBankReceiptTool{receipts: receipts, items: items}
 }
 
@@ -312,7 +313,7 @@ func (t *getBankReceiptTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *getBankReceiptTool) Policy() serviceports.ToolPolicy {
+func (t *getBankReceiptTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceBankReceipt,
 		reads:    agent.ExternalReadAlways,
@@ -324,7 +325,7 @@ func (t *getBankReceiptTool) Policy() serviceports.ToolPolicy {
 
 func (t *getBankReceiptTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -336,7 +337,7 @@ func (t *getBankReceiptTool) Query(
 	}
 
 	tenant := tenantOf(params)
-	req := &serviceports.GetBankReceiptRequest{ReceiptID: id, TenantInfo: tenant}
+	req := &bankreceiptports.GetBankReceiptRequest{ReceiptID: id, TenantInfo: tenant}
 	receipt, err := t.receipts.Get(ctx, req)
 	if err != nil {
 		return nil, err
@@ -455,7 +456,7 @@ type listCustomerPaymentsTool struct {
 	payments customerPaymentLister
 }
 
-func newListCustomerPaymentsTool(payments customerPaymentLister) serviceports.AgentQueryTool {
+func newListCustomerPaymentsTool(payments customerPaymentLister) agentports.AgentQueryTool {
 	return &listCustomerPaymentsTool{payments: payments}
 }
 
@@ -493,7 +494,7 @@ func (t *listCustomerPaymentsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listCustomerPaymentsTool) Policy() serviceports.ToolPolicy {
+func (t *listCustomerPaymentsTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceCustomerPayment,
 	})
@@ -501,7 +502,7 @@ func (t *listCustomerPaymentsTool) Policy() serviceports.ToolPolicy {
 
 func (t *listCustomerPaymentsTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -514,7 +515,7 @@ func (t *listCustomerPaymentsTool) Query(
 
 	criteria := filtercatalog.NewCriteria("customer payments").At(clockFor(params))
 
-	req := &repositories.ListCustomerPaymentsRequest{
+	req := &customerpaymentports.ListCustomerPaymentsRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenantOf(params),
 			Pagination: pagination.Info{Limit: limit},

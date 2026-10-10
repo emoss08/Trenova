@@ -10,9 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentwait"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -34,8 +35,8 @@ var errNoWaitService = errors.New("waits are not available here")
 // waitPolicy is the policy both wait tools share. A wait changes nothing in
 // the world: it parks the agent's own work and hands it back later, so it
 // runs on its own and leaves nothing for anyone outside the organization.
-func waitPolicy(name, rationale string) serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func waitPolicy(name, rationale string) agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          name,
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceAgentRun,
@@ -56,10 +57,10 @@ func waitPolicy(name, rationale string) serviceports.ToolPolicy {
 }
 
 type waitUntilTool struct {
-	waits serviceports.AgentWaitService
+	waits agentwaitports.AgentWaitService
 }
 
-func newWaitUntilTool(waits serviceports.AgentWaitService) serviceports.AgentTool {
+func newWaitUntilTool(waits agentwaitports.AgentWaitService) agentports.AgentTool {
 	return &waitUntilTool{waits: waits}
 }
 
@@ -134,14 +135,14 @@ func (t *waitUntilTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *waitUntilTool) Policy() serviceports.ToolPolicy {
+func (t *waitUntilTool) Policy() agentports.ToolPolicy {
 	return waitPolicy(t.Name(), "Parks the agent's own work until something happens and "+
 		"starts it again then; it changes no record and reaches nobody.")
 }
 
 func (t *waitUntilTool) Validate(
 	_ context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -153,7 +154,7 @@ func (t *waitUntilTool) Validate(
 
 func (t *waitUntilTool) Preview(
 	_ context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	if err := guardPreview(t, &params); err != nil {
 		return nil, err
@@ -179,7 +180,7 @@ func (t *waitUntilTool) Preview(
 
 func (t *waitUntilTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -188,7 +189,7 @@ func (t *waitUntilTool) Execute(
 
 func (t *waitUntilTool) ExecuteWithResult(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
 	if err := guardExecute(t, params); err != nil {
 		return nil, err
@@ -215,8 +216,8 @@ func (t *waitUntilTool) ExecuteWithResult(
 }
 
 func (t *waitUntilTool) request(
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.RegisterWaitRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*agentwaitports.RegisterWaitRequest, error) {
 	until, err := requireString(params.Params, "until")
 	if err != nil {
 		return nil, err
@@ -236,7 +237,7 @@ func (t *waitUntilTool) request(
 		return nil, err
 	}
 
-	return &serviceports.RegisterWaitRequest{
+	return &agentwaitports.RegisterWaitRequest{
 		Actor:           params.Actor,
 		DefinitionID:    params.DefinitionID,
 		ThreadID:        params.ThreadID,
@@ -263,7 +264,7 @@ func giveUpAfter(params map[string]any) int64 {
 // which are required; this only reads what was sent.
 func waitCondition(
 	kind agentwait.Kind,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (agentwait.Condition, error) {
 	var condition agentwait.Condition
 	ids := []struct {
@@ -305,10 +306,10 @@ func waitCondition(
 }
 
 type cancelWaitTool struct {
-	waits serviceports.AgentWaitService
+	waits agentwaitports.AgentWaitService
 }
 
-func newCancelWaitTool(waits serviceports.AgentWaitService) serviceports.AgentTool {
+func newCancelWaitTool(waits agentwaitports.AgentWaitService) agentports.AgentTool {
 	return &cancelWaitTool{waits: waits}
 }
 
@@ -333,14 +334,14 @@ func (t *cancelWaitTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *cancelWaitTool) Policy() serviceports.ToolPolicy {
+func (t *cancelWaitTool) Policy() agentports.ToolPolicy {
 	return waitPolicy(t.Name(), "Cancels a wait the agent set on its own work; it changes "+
 		"no record and reaches nobody.")
 }
 
 func (t *cancelWaitTool) Validate(
 	_ context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -352,7 +353,7 @@ func (t *cancelWaitTool) Validate(
 
 func (t *cancelWaitTool) Preview(
 	_ context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	if err := guardPreview(t, &params); err != nil {
 		return nil, err
@@ -367,7 +368,7 @@ func (t *cancelWaitTool) Preview(
 
 func (t *cancelWaitTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -380,7 +381,7 @@ func (t *cancelWaitTool) Execute(
 		return err
 	}
 
-	_, err = t.waits.Cancel(ctx, &serviceports.CancelWaitRequest{
+	_, err = t.waits.Cancel(ctx, &agentwaitports.CancelWaitRequest{
 		ID: id,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: params.OrganizationID,

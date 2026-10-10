@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -81,7 +81,7 @@ func (s *Service) resolveSSOUser(ctx context.Context, req *ssoUserLookup) (*tena
 		}
 	}
 
-	link, err := s.links.GetBySubject(ctx, repositories.GetSSOIdentityLinkBySubjectRequest{
+	link, err := s.links.GetBySubject(ctx, tenantports.GetSSOIdentityLinkBySubjectRequest{
 		SSOConfigID: req.Config.ID,
 		Issuer:      identity.Issuer,
 		Subject:     identity.Subject,
@@ -137,7 +137,7 @@ func (s *Service) linkSSOIdentity(ctx context.Context, req *ssoUserLookup) (*ten
 		)
 	}
 
-	existing, err := s.links.GetByUser(ctx, repositories.GetSSOIdentityLinkByUserRequest{
+	existing, err := s.links.GetByUser(ctx, tenantports.GetSSOIdentityLinkByUserRequest{
 		SSOConfigID: req.Config.ID,
 		Issuer:      identity.Issuer,
 		UserID:      usr.ID,
@@ -185,7 +185,7 @@ func (s *Service) resolveConcurrentLink(
 	req *ssoUserLookup,
 	usr *tenant.User,
 ) (*tenant.User, error) {
-	link, err := s.links.GetBySubject(ctx, repositories.GetSSOIdentityLinkBySubjectRequest{
+	link, err := s.links.GetBySubject(ctx, tenantports.GetSSOIdentityLinkBySubjectRequest{
 		SSOConfigID: req.Config.ID,
 		Issuer:      req.Identity.Issuer,
 		Subject:     req.Identity.Subject,

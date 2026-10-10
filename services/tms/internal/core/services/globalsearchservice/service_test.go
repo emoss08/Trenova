@@ -1,13 +1,16 @@
 package globalsearchservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"context"
 	"errors"
 	"testing"
 
-	repoports "github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,36 +20,36 @@ import (
 	"go.uber.org/zap/zaptest"
 )
 
-func allowAllPermissionsMock(t *testing.T) *mocks.MockPermissionEngine {
+func allowAllPermissionsMock(t *testing.T) *permissionportsmock.MockPermissionEngine {
 	t.Helper()
 
-	engine := mocks.NewMockPermissionEngine(t)
+	engine := permissionportsmock.NewMockPermissionEngine(t)
 	engine.EXPECT().
 		CheckBatch(mock.Anything, mock.Anything).
 		RunAndReturn(func(
 			_ context.Context,
-			req *serviceports.BatchPermissionCheckRequest,
-		) (*serviceports.BatchPermissionCheckResult, error) {
-			results := make([]serviceports.PermissionCheckResult, len(req.Checks))
+			req *permissionports.BatchPermissionCheckRequest,
+		) (*permissionports.BatchPermissionCheckResult, error) {
+			results := make([]permissionports.PermissionCheckResult, len(req.Checks))
 			for idx := range req.Checks {
-				results[idx] = serviceports.PermissionCheckResult{Allowed: true}
+				results[idx] = permissionports.PermissionCheckResult{Allowed: true}
 			}
-			return &serviceports.BatchPermissionCheckResult{Results: results}, nil
+			return &permissionports.BatchPermissionCheckResult{Results: results}, nil
 		})
 
 	return engine
 }
 
 func TestSearchReturnsEmptyForBlankQuery(t *testing.T) {
-	repo := mocks.NewMockSearchRepository(t)
+	repo := customerportsmock.NewMockSearchRepository(t)
 	svc := &Service{
 		logger:      zaptest.NewLogger(t),
 		config:      &config.SearchConfig{},
 		searchRepo:  repo,
-		permissions: mocks.NewMockPermissionEngine(t),
+		permissions: permissionportsmock.NewMockPermissionEngine(t),
 	}
 
-	result, err := svc.Search(context.Background(), &serviceports.GlobalSearchRequest{})
+	result, err := svc.Search(context.Background(), &kernelports.GlobalSearchRequest{})
 	require.NoError(t, err)
 	require.Equal(t, "", result.Query)
 	require.Empty(t, result.Groups)
@@ -56,12 +59,12 @@ func TestSearchFiltersByRequestedEntityTypesAndTenant(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
-	repo := mocks.NewMockSearchRepository(t)
-	var requests []repoports.SearchRequest
+	repo := customerportsmock.NewMockSearchRepository(t)
+	var requests []customerports.SearchRequest
 	repo.EXPECT().Enabled().Return(true).Once()
 	repo.EXPECT().
 		Search(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req repoports.SearchRequest) ([]map[string]any, error) {
+		RunAndReturn(func(_ context.Context, req customerports.SearchRequest) ([]map[string]any, error) {
 			requests = append(requests, req)
 			return []map[string]any{
 				{
@@ -93,7 +96,7 @@ func TestSearchFiltersByRequestedEntityTypesAndTenant(t *testing.T) {
 		permissions: allowAllPermissionsMock(t),
 	}
 
-	result, err := svc.Search(context.Background(), &serviceports.GlobalSearchRequest{
+	result, err := svc.Search(context.Background(), &kernelports.GlobalSearchRequest{
 		Query: "sam",
 		TenantInfo: pagination.TenantInfo{
 			OrgID: orgID,
@@ -124,12 +127,12 @@ func TestSearchClampsRequestedLimit(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
-	repo := mocks.NewMockSearchRepository(t)
-	var requests []repoports.SearchRequest
+	repo := customerportsmock.NewMockSearchRepository(t)
+	var requests []customerports.SearchRequest
 	repo.EXPECT().Enabled().Return(true).Once()
 	repo.EXPECT().
 		Search(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req repoports.SearchRequest) ([]map[string]any, error) {
+		RunAndReturn(func(_ context.Context, req customerports.SearchRequest) ([]map[string]any, error) {
 			requests = append(requests, req)
 			return nil, nil
 		}).
@@ -149,7 +152,7 @@ func TestSearchClampsRequestedLimit(t *testing.T) {
 		permissions: allowAllPermissionsMock(t),
 	}
 
-	_, err := svc.Search(context.Background(), &serviceports.GlobalSearchRequest{
+	_, err := svc.Search(context.Background(), &kernelports.GlobalSearchRequest{
 		Query: "sam",
 		TenantInfo: pagination.TenantInfo{
 			OrgID: orgID,
@@ -167,16 +170,16 @@ func TestSearchContinuesWhenOneIndexFails(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
-	repo := mocks.NewMockSearchRepository(t)
+	repo := customerportsmock.NewMockSearchRepository(t)
 	repo.EXPECT().Enabled().Return(true).Once()
 	repo.EXPECT().
-		Search(mock.Anything, mock.MatchedBy(func(req repoports.SearchRequest) bool {
+		Search(mock.Anything, mock.MatchedBy(func(req customerports.SearchRequest) bool {
 			return req.Index == "customers"
 		})).
 		Return(nil, errors.New("boom")).
 		Once()
 	repo.EXPECT().
-		Search(mock.Anything, mock.MatchedBy(func(req repoports.SearchRequest) bool {
+		Search(mock.Anything, mock.MatchedBy(func(req customerports.SearchRequest) bool {
 			return req.Index == "workers"
 		})).
 		Return([]map[string]any{
@@ -206,7 +209,7 @@ func TestSearchContinuesWhenOneIndexFails(t *testing.T) {
 		permissions: allowAllPermissionsMock(t),
 	}
 
-	result, err := svc.Search(context.Background(), &serviceports.GlobalSearchRequest{
+	result, err := svc.Search(context.Background(), &kernelports.GlobalSearchRequest{
 		Query: "sam",
 		TenantInfo: pagination.TenantInfo{
 			OrgID: orgID,

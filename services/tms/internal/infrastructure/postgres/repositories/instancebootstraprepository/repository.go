@@ -6,10 +6,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/instancebootstrap"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/instancebootstrapports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -34,23 +34,23 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.InstanceBootstrapRepository {
+func New(p Params) instancebootstrapports.InstanceBootstrapRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.instance-bootstrap-repository"),
 	}
 }
 
-func (r *repository) GetState(ctx context.Context) (*repositories.InstanceBootstrapState, error) {
+func (r *repository) GetState(ctx context.Context) (*instancebootstrapports.InstanceBootstrapState, error) {
 	ctx = dbscope.WithSystem(ctx, stateScopeReason)
 
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*repositories.InstanceBootstrapState, error) {
+		func(ctx context.Context) (*instancebootstrapports.InstanceBootstrapState, error) {
 			db := r.db.DBForContext(ctx)
 
-			state := new(repositories.InstanceBootstrapState)
+			state := new(instancebootstrapports.InstanceBootstrapState)
 			record := new(instancebootstrap.InstanceBootstrap)
 			err := db.NewSelect().
 				Model(record).
@@ -80,14 +80,14 @@ func (r *repository) GetState(ctx context.Context) (*repositories.InstanceBootst
 
 func (r *repository) Finalize(
 	ctx context.Context,
-	req *repositories.FinalizeInstanceBootstrapRequest,
-) (*repositories.FinalizeInstanceBootstrapResult, error) {
+	req *instancebootstrapports.FinalizeInstanceBootstrapRequest,
+) (*instancebootstrapports.FinalizeInstanceBootstrapResult, error) {
 	ctx = dbscope.WithSystem(ctx, finalizeScopeReason)
 
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*repositories.FinalizeInstanceBootstrapResult, error) {
+		func(ctx context.Context) (*instancebootstrapports.FinalizeInstanceBootstrapResult, error) {
 			db := r.db.DBForContext(ctx)
 			scope := tenantbootstrap.Scope{
 				OrganizationID: req.OrganizationID,
@@ -121,7 +121,7 @@ func (r *repository) Finalize(
 				return nil, fmt.Errorf("record instance bootstrap: %w", err)
 			}
 
-			return &repositories.FinalizeInstanceBootstrapResult{
+			return &instancebootstrapports.FinalizeInstanceBootstrapResult{
 				Record:            record,
 				SystemUserID:      systemUserID,
 				SystemUserCreated: created,

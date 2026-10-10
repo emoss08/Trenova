@@ -11,10 +11,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/typeutils"
@@ -42,7 +45,7 @@ type exportSource struct {
 
 func (s *Service) exportSourceOf(
 	ctx context.Context,
-	req repositories.GetThreadRequest,
+	req agentports.GetThreadRequest,
 	artifactID pulid.ID,
 ) (*exportSource, error) {
 	if _, err := s.conversations.GetThread(ctx, req); err != nil {
@@ -51,7 +54,7 @@ func (s *Service) exportSourceOf(
 	if s.artifacts == nil {
 		return nil, errortypes.NewNotFoundError("Artifact not found")
 	}
-	artifact, err := s.artifacts.GetByID(ctx, repositories.GetArtifactRequest{
+	artifact, err := s.artifacts.GetByID(ctx, assistantartifactports.GetArtifactRequest{
 		ID:         artifactID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -83,7 +86,7 @@ func (s *Service) exportSourceOf(
 // ArtifactCSVName is the file a table downloads as, named for its title.
 func (s *Service) ArtifactCSVName(
 	ctx context.Context,
-	req repositories.GetThreadRequest,
+	req agentports.GetThreadRequest,
 	artifactID pulid.ID,
 ) (string, error) {
 	source, err := s.exportSourceOf(ctx, req, artifactID)
@@ -99,7 +102,7 @@ func (s *Service) ArtifactCSVName(
 // from the source, so it holds every row the person may see.
 func (s *Service) ExportArtifactCSV(
 	ctx context.Context,
-	req repositories.GetThreadRequest,
+	req agentports.GetThreadRequest,
 	artifactID pulid.ID,
 	sink io.Writer,
 ) error {
@@ -107,7 +110,7 @@ func (s *Service) ExportArtifactCSV(
 	if err != nil {
 		return err
 	}
-	actor := services.UserActor(req.TenantInfo)
+	actor := permissionports.UserActor(req.TenantInfo)
 
 	if source.artifact.Kind == assistantartifact.KindReportPreview {
 		return s.exportReport(ctx, actor, source, sink)
@@ -118,7 +121,7 @@ func (s *Service) ExportArtifactCSV(
 
 func (s *Service) exportReport(
 	ctx context.Context,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	source *exportSource,
 	sink io.Writer,
 ) error {
@@ -144,8 +147,8 @@ func (s *Service) exportReport(
 // the arguments it was asked with and the person's own access.
 func (s *Service) exportTable(
 	ctx context.Context,
-	req repositories.GetThreadRequest,
-	actor *services.RequestActor,
+	req agentports.GetThreadRequest,
+	actor *permissionports.RequestActor,
 	source *exportSource,
 	sink io.Writer,
 ) error {
@@ -162,7 +165,7 @@ func (s *Service) exportTable(
 	}
 
 	entity := typeutils.StringOfTrimmed(source.artifact.Payload["entity"])
-	params := &services.QueryToolParams{
+	params := &agentports.QueryToolParams{
 		OrganizationID:    req.TenantInfo.OrgID,
 		BusinessUnitID:    req.TenantInfo.BuID,
 		Actor:             actor,
@@ -283,8 +286,8 @@ func csvCell(value any) string {
 // does before the agent runs it for them.
 func (s *Service) mayRead(
 	ctx context.Context,
-	actor *services.RequestActor,
-	policy services.ToolPolicy,
+	actor *permissionports.RequestActor,
+	policy agentports.ToolPolicy,
 ) error {
 	if policy.Resource == "" {
 		return nil
@@ -296,7 +299,7 @@ func (s *Service) mayRead(
 	if operation == "" {
 		operation = permission.OpRead
 	}
-	result, err := s.permissions.Check(ctx, &services.PermissionCheckRequest{
+	result, err := s.permissions.Check(ctx, &permissionports.PermissionCheckRequest{
 		PrincipalType:  actor.PrincipalType,
 		PrincipalID:    actor.PrincipalID,
 		UserID:         actor.UserID,
@@ -319,11 +322,11 @@ func (s *Service) mayRead(
 
 // timezoneOf is the person's own timezone, which is what "today" in the
 // arguments the agent passed was read in.
-func (s *Service) timezoneOf(ctx context.Context, req repositories.GetThreadRequest) string {
+func (s *Service) timezoneOf(ctx context.Context, req agentports.GetThreadRequest) string {
 	if s.users == nil {
 		return ""
 	}
-	user, err := s.users.GetByID(ctx, repositories.GetUserByIDRequest{
+	user, err := s.users.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo:   req.TenantInfo,
 		LookupUserID: req.UserID,
 	})
@@ -338,7 +341,7 @@ func (s *Service) timezoneOf(ctx context.Context, req repositories.GetThreadRequ
 // bounds what its table showed and so what its download may hold.
 func (s *Service) ceilingOf(
 	ctx context.Context,
-	req repositories.GetThreadRequest,
+	req agentports.GetThreadRequest,
 ) permission.FieldSensitivity {
 	definition := s.threadDefinition(ctx, req)
 	if definition == nil {
@@ -351,7 +354,7 @@ func (s *Service) ceilingOf(
 // threadDefinition is the agent the conversation is with, or nil.
 func (s *Service) threadDefinition(
 	ctx context.Context,
-	req repositories.GetThreadRequest,
+	req agentports.GetThreadRequest,
 ) *agentdefinition.Definition {
 	if s.definitions == nil {
 		return nil
@@ -360,7 +363,7 @@ func (s *Service) threadDefinition(
 	if err != nil || thread.AgentDefinitionID.IsNil() {
 		return nil
 	}
-	definition, err := s.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	definition, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         thread.AgentDefinitionID,
 		TenantInfo: req.TenantInfo,
 	})

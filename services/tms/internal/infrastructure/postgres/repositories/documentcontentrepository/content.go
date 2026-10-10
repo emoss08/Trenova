@@ -7,9 +7,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -34,7 +34,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.DocumentContentRepository {
+func New(p Params) documentcontentports.DocumentContentRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.document-content-repository"),
@@ -162,7 +162,7 @@ func (r *repository) ReplacePages(
 
 func (r *repository) ListPendingExtraction(
 	ctx context.Context,
-	req *repositories.ListPendingDocumentExtractionRequest,
+	req *documentcontentports.ListPendingDocumentExtractionRequest,
 ) ([]*document.Document, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*document.Document, error) {
 		limit := req.Limit
@@ -197,7 +197,7 @@ func (r *repository) ListPendingExtraction(
 
 func (r *repository) ListPendingExtractionTenants(
 	ctx context.Context,
-	req *repositories.ListPendingDocumentExtractionRequest,
+	req *documentcontentports.ListPendingDocumentExtractionRequest,
 ) ([]pagination.TenantInfo, error) {
 	ctx = dbscope.WithSystem(ctx, "list organizations with documents awaiting extraction")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
@@ -276,7 +276,7 @@ func applyPendingDocumentExtractionFilters(q *bun.SelectQuery) *bun.SelectQuery 
 
 func (r *repository) SearchByResource(
 	ctx context.Context,
-	req *repositories.DocumentContentSearchRequest,
+	req *documentcontentports.DocumentContentSearchRequest,
 ) ([]*document.Document, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*document.Document, error) {
 		items := make([]*document.Document, 0)

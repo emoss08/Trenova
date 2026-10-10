@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentsearchprojection"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentsearchprojectionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -17,7 +17,7 @@ import (
 )
 
 type fakeProjectionRepo struct {
-	repositories.DocumentSearchProjectionRepository
+	documentsearchprojectionports.DocumentSearchProjectionRepository
 
 	err      error
 	upserted []*documentsearchprojection.Projection

@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/fuelpurchaseservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
 )
@@ -16,9 +16,9 @@ import (
 func syncQueued(t *testing.T, h *harness, rows ...[]string) *fuelpurchaseservice.SyncFeedResult {
 	t.Helper()
 
-	installFeed(h, &services.FetchFuelTransactionsResult{
+	installFeed(h, &fuelpurchaseports.FetchFuelTransactionsResult{
 		Staged: stagedFrom(feedHeaders, rows...),
-		Cards: []services.ProviderCard{
+		Cards: []fuelpurchaseports.ProviderCard{
 			{LastFour: "4411", Provider: fuelpurchase.CardProviderComdata},
 		},
 	}, true)

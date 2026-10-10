@@ -6,8 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -19,12 +20,12 @@ import (
 
 type fakeRunList struct {
 	runs     []*agent.AgentRun
-	requests []*repositories.ListAgentRunRequest
+	requests []*agentports.ListAgentRunRequest
 }
 
 func (f *fakeRunList) List(
 	_ context.Context,
-	req *repositories.ListAgentRunRequest,
+	req *agentports.ListAgentRunRequest,
 ) (*pagination.ListResult[*agent.AgentRun], error) {
 	f.requests = append(f.requests, req)
 
@@ -58,8 +59,8 @@ func threadRun(threadID pulid.ID) *agent.AgentRun {
 
 func queryRuns(
 	t *testing.T,
-	tool serviceports.AgentQueryTool,
-	params *serviceports.QueryToolParams,
+	tool agentports.AgentQueryTool,
+	params *agentports.QueryToolParams,
 ) *agentRunsOutcome {
 	t.Helper()
 
@@ -101,7 +102,7 @@ var excludeThreads = domaintypes.FieldFilter{
 func TestListAgentRuns_HidesRunsOnAnotherPersonsConversation(t *testing.T) {
 	t.Parallel()
 
-	params := personParams(serviceports.PrincipalTypeUser)
+	params := personParams(permissionports.PrincipalTypeUser)
 	mine := pulid.MustNew("athr_")
 	theirs := pulid.MustNew("athr_")
 	orphaned := pulid.MustNew("athr_")
@@ -131,9 +132,9 @@ func TestListAgentRuns_HidesRunsOnAnotherPersonsConversation(t *testing.T) {
 func TestListAgentRuns_AnAgentNeverSeesConversationRuns(t *testing.T) {
 	t.Parallel()
 
-	for _, principal := range []serviceports.PrincipalType{
-		serviceports.PrincipalTypeAgent,
-		serviceports.PrincipalTypeAPIKey,
+	for _, principal := range []kernelports.PrincipalType{
+		permissionports.PrincipalTypeAgent,
+		permissionports.PrincipalTypeAPIKey,
 	} {
 		params := personParams(principal)
 		background := backgroundRun(false)
@@ -162,31 +163,31 @@ func TestListAgentRuns_MineDefaultsToTheCallingAgentWhenItRunsOnItsOwn(t *testin
 	other := pulid.MustNew("agdef_").String()
 
 	cases := map[string]struct {
-		principal serviceports.PrincipalType
+		principal kernelports.PrincipalType
 		params    map[string]any
 		scoped    bool
 	}{
 		"unattended by default": {
-			principal: serviceports.PrincipalTypeAgent,
+			principal: permissionports.PrincipalTypeAgent,
 			params:    map[string]any{},
 			scoped:    true,
 		},
 		"unattended, asked for everyone's": {
-			principal: serviceports.PrincipalTypeAgent,
+			principal: permissionports.PrincipalTypeAgent,
 			params:    map[string]any{paramMine: false},
 		},
 		"unattended, naming another agent": {
-			principal: serviceports.PrincipalTypeAgent,
+			principal: permissionports.PrincipalTypeAgent,
 			params: map[string]any{"filters": []any{map[string]any{
 				"field": agentRunFieldDefinition, "operator": "eq", "value": other,
 			}}},
 		},
 		"in a conversation by default": {
-			principal: serviceports.PrincipalTypeUser,
+			principal: permissionports.PrincipalTypeUser,
 			params:    map[string]any{},
 		},
 		"in a conversation, asked for its own": {
-			principal: serviceports.PrincipalTypeUser,
+			principal: permissionports.PrincipalTypeUser,
 			params:    map[string]any{paramMine: true},
 			scoped:    true,
 		},
@@ -209,7 +210,7 @@ func TestListAgentRuns_MineDefaultsToTheCallingAgentWhenItRunsOnItsOwn(t *testin
 func TestListAgentRuns_MineWithoutAnAgentIsRefused(t *testing.T) {
 	t.Parallel()
 
-	params := personParams(serviceports.PrincipalTypeUser)
+	params := personParams(permissionports.PrincipalTypeUser)
 	params.Params = map[string]any{paramMine: true}
 	runs := &fakeRunList{}
 
@@ -225,7 +226,7 @@ func TestListAgentRuns_MarksEachRunThatReadOutsideContent(t *testing.T) {
 	clean := backgroundRun(false)
 	dirty := backgroundRun(true)
 	runs := &fakeRunList{runs: []*agent.AgentRun{clean, dirty}}
-	params := personParams(serviceports.PrincipalTypeAgent)
+	params := personParams(permissionports.PrincipalTypeAgent)
 
 	outcome := queryRuns(t, newListAgentRunsTool(runs, &fakeThreadOwners{}), params)
 
@@ -248,7 +249,7 @@ func TestListAgentRuns_PagesAndBoundsTheList(t *testing.T) {
 		many = append(many, backgroundRun(false))
 	}
 	runs := &fakeRunList{runs: many}
-	params := personParams(serviceports.PrincipalTypeAgent)
+	params := personParams(permissionports.PrincipalTypeAgent)
 	params.Params = map[string]any{"limit": 500}
 
 	outcome := queryRuns(t, newListAgentRunsTool(runs, &fakeThreadOwners{}), params)
@@ -288,7 +289,7 @@ type fakeRunGetter struct {
 
 func (f *fakeRunGetter) GetByID(
 	_ context.Context,
-	req repositories.GetAgentRunByIDRequest,
+	req agentports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	if f.run == nil || f.run.ID != req.ID {
 		return nil, errortypes.NewNotFoundError("Agent run not found")
@@ -304,7 +305,7 @@ type fakeRunProposals struct {
 
 func (f *fakeRunProposals) ListByRun(
 	context.Context,
-	repositories.ListAgentProposalsByRunRequest,
+	agentports.ListAgentProposalsByRunRequest,
 ) ([]*agent.AgentProposal, error) {
 	f.calls++
 
@@ -314,7 +315,7 @@ func (f *fakeRunProposals) ListByRun(
 type fakeRunEvents struct {
 	next     int
 	events   []*agent.AgentRunEvent
-	requests []repositories.ListAgentRunEventsRequest
+	requests []agentports.ListAgentRunEventsRequest
 }
 
 func (f *fakeRunEvents) NextSequence(
@@ -328,7 +329,7 @@ func (f *fakeRunEvents) NextSequence(
 
 func (f *fakeRunEvents) List(
 	_ context.Context,
-	req repositories.ListAgentRunEventsRequest,
+	req agentports.ListAgentRunEventsRequest,
 ) ([]*agent.AgentRunEvent, error) {
 	f.requests = append(f.requests, req)
 
@@ -353,7 +354,7 @@ func newRunFixture(run *agent.AgentRun) *runFixture {
 	}
 }
 
-func (f *runFixture) tool() serviceports.AgentQueryTool {
+func (f *runFixture) tool() agentports.AgentQueryTool {
 	return &getAgentRunTool{
 		runs:      f.runs,
 		owners:    agentRunOwnership{threads: f.threads},
@@ -366,7 +367,7 @@ func (f *runFixture) tool() serviceports.AgentQueryTool {
 func getRun(
 	t *testing.T,
 	fixture *runFixture,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) *agentRunDetail {
 	t.Helper()
 
@@ -385,21 +386,21 @@ func TestGetAgentRun_ReadsAConversationRunOnlyForItsOwner(t *testing.T) {
 	run := threadRun(threadID)
 	fixture := newRunFixture(run)
 
-	owner := personParams(serviceports.PrincipalTypeUser)
+	owner := personParams(permissionports.PrincipalTypeUser)
 	owner.Params = map[string]any{paramRunID: run.ID.String()}
 	fixture.threads.owners[threadID] = owner.Actor.UserID
 	assert.Equal(t, run.ID.String(), getRun(t, fixture, owner).ID)
 
-	colleague := personParams(serviceports.PrincipalTypeUser)
+	colleague := personParams(permissionports.PrincipalTypeUser)
 	colleague.Params = map[string]any{paramRunID: run.ID.String()}
 	_, err := fixture.tool().Query(t.Context(), colleague)
 	require.Error(t, err)
 	assert.True(t, errortypes.IsNotFoundError(err),
 		"another person's conversation reads as missing, not as forbidden")
 
-	for _, principal := range []serviceports.PrincipalType{
-		serviceports.PrincipalTypeAgent,
-		serviceports.PrincipalTypeAPIKey,
+	for _, principal := range []kernelports.PrincipalType{
+		permissionports.PrincipalTypeAgent,
+		permissionports.PrincipalTypeAPIKey,
 	} {
 		params := personParams(principal)
 		params.Params = map[string]any{paramRunID: run.ID.String()}
@@ -418,7 +419,7 @@ func TestGetAgentRun_ReadsABackgroundRunAndMarksItsTaint(t *testing.T) {
 		{Source: agent.TaintSourceWeather},
 	}}
 	fixture := newRunFixture(run)
-	params := personParams(serviceports.PrincipalTypeAgent)
+	params := personParams(permissionports.PrincipalTypeAgent)
 	params.Params = map[string]any{paramRunID: run.ID.String()}
 
 	detail := getRun(t, fixture, params)
@@ -454,13 +455,13 @@ func TestGetAgentRun_AddsBoundedProposalsAndTheLastFiftySteps(t *testing.T) {
 	fixture.events.events = []*agent.AgentRunEvent{
 		{
 			Sequence: 71,
-			Kind:     serviceports.AssistantEventToolStarted,
+			Kind:     agentports.AssistantEventToolStarted,
 			CallID:   "call_1",
 			Payload:  map[string]any{"name": "get_shipment", "arguments": map[string]any{"x": 1}},
 		},
 		{
 			Sequence: 72,
-			Kind:     serviceports.AssistantEventToolFinished,
+			Kind:     agentports.AssistantEventToolFinished,
 			CallID:   "call_1",
 			Payload: map[string]any{
 				"name":    "get_shipment",
@@ -470,11 +471,11 @@ func TestGetAgentRun_AddsBoundedProposalsAndTheLastFiftySteps(t *testing.T) {
 		},
 		{
 			Sequence: 73,
-			Kind:     serviceports.AssistantEventRunTainted,
+			Kind:     agentports.AssistantEventRunTainted,
 			Payload:  map[string]any{"mark": map[string]any{"source": "record_note"}},
 		},
 	}
-	params := personParams(serviceports.PrincipalTypeUser)
+	params := personParams(permissionports.PrincipalTypeUser)
 	params.Params = map[string]any{
 		paramRunID:            run.ID.String(),
 		paramIncludeProposals: true,
@@ -492,7 +493,7 @@ func TestGetAgentRun_AddsBoundedProposalsAndTheLastFiftySteps(t *testing.T) {
 	request := fixture.events.requests[0]
 	assert.Equal(t, agentRunEventLimit, request.Limit)
 	assert.Equal(t, 70, request.After, "the last fifty of 120 steps start after 70")
-	assert.Equal(t, string(serviceports.RunStepOwnerAgentRun), request.OwnerKind)
+	assert.Equal(t, string(agentports.RunStepOwnerAgentRun), request.OwnerKind)
 	assert.Equal(t, run.ID, request.OwnerID)
 
 	require.Len(t, detail.Events, 3)
@@ -509,7 +510,7 @@ func TestGetAgentRun_AShortRunReadsFromItsFirstStep(t *testing.T) {
 	run := backgroundRun(false)
 	fixture := newRunFixture(run)
 	fixture.events.next = 8
-	params := personParams(serviceports.PrincipalTypeAgent)
+	params := personParams(permissionports.PrincipalTypeAgent)
 	params.Params = map[string]any{paramRunID: run.ID.String(), paramIncludeEvents: true}
 
 	getRun(t, fixture, params)
@@ -523,7 +524,7 @@ func TestGetAgentRun_WithholdsProposalsFromAReaderWhoMayNotReadThem(t *testing.T
 	run := backgroundRun(false)
 	fixture := newRunFixture(run)
 	fixture.perms = &fakePermissions{readable: readable(permission.ResourceAgentRun)}
-	params := personParams(serviceports.PrincipalTypeUser)
+	params := personParams(permissionports.PrincipalTypeUser)
 	params.Params = map[string]any{paramRunID: run.ID.String(), paramIncludeProposals: true}
 
 	detail := getRun(t, fixture, params)
@@ -552,7 +553,7 @@ func TestAgentRunEventView_CarriesTheVerdictOfAToolThatDidNotRun(t *testing.T) {
 
 	view := agentRunEventViewFrom(&agent.AgentRunEvent{
 		Sequence: 4,
-		Kind:     serviceports.AssistantEventToolFinished,
+		Kind:     agentports.AssistantEventToolFinished,
 		CallID:   "call_1",
 		Payload: map[string]any{
 			"name":    "update_worker",
@@ -567,7 +568,7 @@ func TestAgentRunEventView_CarriesTheVerdictOfAToolThatDidNotRun(t *testing.T) {
 	assert.Equal(t, "denied", view.Verdict)
 
 	ran := agentRunEventViewFrom(&agent.AgentRunEvent{
-		Kind:    serviceports.AssistantEventToolStarted,
+		Kind:    agentports.AssistantEventToolStarted,
 		Payload: map[string]any{"name": "get_shipment"},
 	})
 	assert.Empty(t, ran.Verdict, "a started call has no verdict yet")

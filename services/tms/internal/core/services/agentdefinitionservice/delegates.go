@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -29,7 +29,7 @@ func (s *Service) validateDelegates(
 		return nil
 	}
 
-	found, err := s.repo.ListByIDs(ctx, repositories.ListAgentDefinitionsByIDsRequest{
+	found, err := s.repo.ListByIDs(ctx, agentdefinitionports.ListAgentDefinitionsByIDsRequest{
 		IDs: definition.DelegateIDs,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: definition.OrganizationID,

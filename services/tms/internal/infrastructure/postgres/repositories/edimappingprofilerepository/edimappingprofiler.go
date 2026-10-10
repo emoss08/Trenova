@@ -5,9 +5,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -30,7 +30,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.EDIMappingProfileRepository {
+func New(p Params) ediports.EDIMappingProfileRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.edi-mapping-profile-repository"),
@@ -39,9 +39,9 @@ func New(p Params) repositories.EDIMappingProfileRepository {
 
 func (r *repository) GetMappingProfile(
 	ctx context.Context,
-	req repositories.GetMappingProfileRequest,
+	req ediports.GetMappingProfileRequest,
 ) (*edi.EDIMappingProfile, error) {
-	partner, err := r.getPartnerByID(ctx, repositories.GetEDIPartnerByIDRequest{
+	partner, err := r.getPartnerByID(ctx, ediports.GetEDIPartnerByIDRequest{
 		ID:         req.PartnerID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -54,7 +54,7 @@ func (r *repository) GetMappingProfile(
 
 func (r *repository) getPartnerByID(
 	ctx context.Context,
-	req repositories.GetEDIPartnerByIDRequest,
+	req ediports.GetEDIPartnerByIDRequest,
 ) (*edi.EDIPartner, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIPartner, error) {
 		entity := new(edi.EDIPartner)
@@ -80,7 +80,7 @@ func (r *repository) getPartnerByID(
 
 func (r *repository) ListMappingProfiles(
 	ctx context.Context,
-	req *repositories.ListEDIMappingProfilesRequest,
+	req *ediports.ListEDIMappingProfilesRequest,
 ) (*pagination.ListResult[*edi.EDIMappingProfile], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDIMappingProfile], error) {
 		entities := make([]*edi.EDIMappingProfile, 0, req.Filter.Pagination.SafeLimit())
@@ -110,7 +110,7 @@ func (r *repository) ListMappingProfiles(
 
 func (r *repository) ListMappingProfilesCursor(
 	ctx context.Context,
-	req *repositories.ListEDIMappingProfilesRequest,
+	req *ediports.ListEDIMappingProfilesRequest,
 ) (*pagination.CursorListResult[*edi.EDIMappingProfile], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*edi.EDIMappingProfile], error) {
 		dba := r.db.DBForContext(ctx)
@@ -167,7 +167,7 @@ func (r *repository) ListMappingProfilesCursor(
 
 func applyMappingProfileListFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListEDIMappingProfilesRequest,
+	req *ediports.ListEDIMappingProfilesRequest,
 ) *bun.SelectQuery {
 	if !req.PartnerID.IsNil() {
 		q = q.Where(buncolgen.EDIMappingProfileColumns.EDIPartnerID.Eq(), req.PartnerID)
@@ -177,7 +177,7 @@ func applyMappingProfileListFilters(
 
 func (r *repository) SelectMappingProfileOptions(
 	ctx context.Context,
-	req *repositories.EDIMappingProfileSelectOptionsRequest,
+	req *ediports.EDIMappingProfileSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDIMappingProfile], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDIMappingProfile], error) {
 		col := buncolgen.EDIMappingProfileColumns
@@ -214,7 +214,7 @@ func (r *repository) SelectMappingProfileOptions(
 
 func (r *repository) GetMappingProfileByID(
 	ctx context.Context,
-	req repositories.GetMappingProfileByIDRequest,
+	req ediports.GetMappingProfileByIDRequest,
 ) (*edi.EDIMappingProfile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIMappingProfile, error) {
 		profile := new(edi.EDIMappingProfile)
@@ -240,10 +240,10 @@ func (r *repository) GetMappingProfileByID(
 
 func (r *repository) SaveMappingItems(
 	ctx context.Context,
-	req *repositories.SaveMappingItemsRequest,
+	req *ediports.SaveMappingItemsRequest,
 ) ([]*edi.EDIMappingProfileItem, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*edi.EDIMappingProfileItem, error) {
-		partner, err := r.getPartnerByID(ctx, repositories.GetEDIPartnerByIDRequest{
+		partner, err := r.getPartnerByID(ctx, ediports.GetEDIPartnerByIDRequest{
 			ID:         req.PartnerID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -299,9 +299,9 @@ func (r *repository) SaveMappingItems(
 
 func (r *repository) SaveMappingProfileItems(
 	ctx context.Context,
-	req *repositories.SaveMappingProfileItemsRequest,
+	req *ediports.SaveMappingProfileItemsRequest,
 ) ([]*edi.EDIMappingProfileItem, error) {
-	profile, err := r.GetMappingProfileByID(ctx, repositories.GetMappingProfileByIDRequest{
+	profile, err := r.GetMappingProfileByID(ctx, ediports.GetMappingProfileByIDRequest{
 		ProfileID:  req.ProfileID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -309,7 +309,7 @@ func (r *repository) SaveMappingProfileItems(
 		return nil, err
 	}
 
-	return r.SaveMappingItems(ctx, &repositories.SaveMappingItemsRequest{
+	return r.SaveMappingItems(ctx, &ediports.SaveMappingItemsRequest{
 		PartnerID:  profile.EDIPartnerID,
 		TenantInfo: req.TenantInfo,
 		ActorID:    req.ActorID,
@@ -319,7 +319,7 @@ func (r *repository) SaveMappingProfileItems(
 
 func (r *repository) DeleteMappingItem(
 	ctx context.Context,
-	req repositories.DeleteMappingItemRequest,
+	req ediports.DeleteMappingItemRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		results, err := r.db.DBForContext(ctx).
@@ -342,7 +342,7 @@ func (r *repository) DeleteMappingItem(
 
 func (r *repository) DeleteMappingProfileItem(
 	ctx context.Context,
-	req repositories.DeleteMappingProfileItemRequest,
+	req ediports.DeleteMappingProfileItemRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		results, err := r.db.DBForContext(ctx).
@@ -365,7 +365,7 @@ func (r *repository) DeleteMappingProfileItem(
 
 func (r *repository) GetMappingItems(
 	ctx context.Context,
-	req repositories.GetMappingItemsRequest,
+	req ediports.GetMappingItemsRequest,
 ) ([]*edi.EDIMappingProfileItem, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDIMappingProfileItem, error) {
 		items := make([]*edi.EDIMappingProfileItem, 0, len(req.SourceIDs))

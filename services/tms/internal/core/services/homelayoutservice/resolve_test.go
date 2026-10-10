@@ -1,13 +1,16 @@
 package homelayoutservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/homelayoutportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/homelayout"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/homelayoutports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,23 +20,23 @@ import (
 	"go.uber.org/zap"
 )
 
-var _ repositories.HomeLayoutRepository = (*mocks.MockHomeLayoutRepository)(nil)
+var _ homelayoutports.HomeLayoutRepository = (*homelayoutportsmock.MockHomeLayoutRepository)(nil)
 
 type harness struct {
 	svc    *Service
-	repo   *mocks.MockHomeLayoutRepository
-	rbac   *mocks.MockRBACRepository
-	roles  *mocks.MockRoleRepository
-	engine *mocks.MockPermissionEngine
+	repo   *homelayoutportsmock.MockHomeLayoutRepository
+	rbac   *permissionportsmock.MockRBACRepository
+	roles  *permissionportsmock.MockRoleRepository
+	engine *permissionportsmock.MockPermissionEngine
 }
 
 func newHarness(t *testing.T) *harness {
 	t.Helper()
 
-	repo := mocks.NewMockHomeLayoutRepository(t)
-	rbac := mocks.NewMockRBACRepository(t)
-	roles := mocks.NewMockRoleRepository(t)
-	engine := mocks.NewMockPermissionEngine(t)
+	repo := homelayoutportsmock.NewMockHomeLayoutRepository(t)
+	rbac := permissionportsmock.NewMockRBACRepository(t)
+	roles := permissionportsmock.NewMockRoleRepository(t)
+	engine := permissionportsmock.NewMockPermissionEngine(t)
 
 	return &harness{
 		svc: New(Params{
@@ -58,12 +61,12 @@ func testRequest() *Request {
 			BuID:   pulid.MustNew("bu_"),
 			UserID: userID,
 		},
-		Principal: services.PrincipalInfo{UserID: userID},
+		Principal: kernelports.PrincipalInfo{UserID: userID},
 	}
 }
 
 // allowBatch answers every permission check, denying only the named resources.
-func allowBatch(engine *mocks.MockPermissionEngine, denied ...permission.Resource) {
+func allowBatch(engine *permissionportsmock.MockPermissionEngine, denied ...permission.Resource) {
 	deniedSet := make(map[string]struct{}, len(denied))
 	for _, resource := range denied {
 		deniedSet[resource.String()] = struct{}{}
@@ -73,14 +76,14 @@ func allowBatch(engine *mocks.MockPermissionEngine, denied ...permission.Resourc
 		CheckBatch(mock.Anything, mock.Anything).
 		RunAndReturn(func(
 			_ context.Context,
-			req *services.BatchPermissionCheckRequest,
-		) (*services.BatchPermissionCheckResult, error) {
-			results := make([]services.PermissionCheckResult, 0, len(req.Checks))
+			req *permissionports.BatchPermissionCheckRequest,
+		) (*permissionports.BatchPermissionCheckResult, error) {
+			results := make([]permissionports.PermissionCheckResult, 0, len(req.Checks))
 			for _, check := range req.Checks {
 				_, deny := deniedSet[check.Resource]
-				results = append(results, services.PermissionCheckResult{Allowed: !deny})
+				results = append(results, permissionports.PermissionCheckResult{Allowed: !deny})
 			}
-			return &services.BatchPermissionCheckResult{Results: results}, nil
+			return &permissionports.BatchPermissionCheckResult{Results: results}, nil
 		})
 }
 

@@ -6,10 +6,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -108,10 +109,10 @@ type settlementBulkTool[E any] struct {
 }
 
 var (
-	_ serviceports.ToolPreviewer      = (*settlementBulkTool[driversettlement.Settlement])(nil)
-	_ serviceports.ToolValidator      = (*settlementBulkTool[driversettlement.Settlement])(nil)
-	_ serviceports.ToolResultReporter = (*settlementBulkTool[driversettlement.Settlement])(nil)
-	_ serviceports.SearchableTool     = (*settlementBulkTool[driversettlement.Settlement])(nil)
+	_ agentports.ToolPreviewer      = (*settlementBulkTool[driversettlement.Settlement])(nil)
+	_ agentports.ToolValidator      = (*settlementBulkTool[driversettlement.Settlement])(nil)
+	_ agentports.ToolResultReporter = (*settlementBulkTool[driversettlement.Settlement])(nil)
+	_ agentports.SearchableTool     = (*settlementBulkTool[driversettlement.Settlement])(nil)
 )
 
 func bulkName(single string) string {
@@ -121,7 +122,7 @@ func bulkName(single string) string {
 func newSettlementBulkTool[E any](
 	spec settlementBulkSpec[E],
 	bulk *settlementBulk,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	single := &settlementDecisionTool[E]{
 		decision: *bulk.decision(spec.text),
 		ledger:   spec.ledger,
@@ -193,7 +194,7 @@ func (t *settlementBulkTool[E]) ParamSchema() map[string]any {
 		nil)
 }
 
-func (t *settlementBulkTool[E]) Policy() serviceports.ToolPolicy {
+func (t *settlementBulkTool[E]) Policy() agentports.ToolPolicy {
 	policy := t.single.Policy()
 	policy.Name = t.Name()
 	policy.Artifact = t.single.ledger.artifact
@@ -204,21 +205,21 @@ func (t *settlementBulkTool[E]) Policy() serviceports.ToolPolicy {
 
 func (t *settlementBulkTool[E]) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	return t.batch.Preview(ctx, t, &params)
 }
 
 func (t *settlementBulkTool[E]) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	return t.batch.Validate(ctx, t, &params)
 }
 
 func (t *settlementBulkTool[E]) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -227,7 +228,7 @@ func (t *settlementBulkTool[E]) Execute(
 
 func (t *settlementBulkTool[E]) ExecuteWithResult(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
 	return t.batch.Execute(ctx, t, &params, t.single.Execute)
 }
@@ -246,7 +247,7 @@ func driverBulkSpec(
 			tenant pagination.TenantInfo,
 			id pulid.ID,
 		) (*driversettlement.Settlement, error) {
-			return s.Get(ctx, repositories.GetDriverSettlementByIDRequest{
+			return s.Get(ctx, driversettlementports.GetDriverSettlementByIDRequest{
 				ID:         id,
 				TenantInfo: tenant,
 			})
@@ -270,7 +271,7 @@ func carrierBulkSpec(
 			tenant pagination.TenantInfo,
 			id pulid.ID,
 		) (*carriersettlement.CarrierSettlement, error) {
-			return s.Get(ctx, repositories.GetCarrierSettlementByIDRequest{
+			return s.Get(ctx, carriersettlementports.GetCarrierSettlementByIDRequest{
 				ID:         id,
 				TenantInfo: tenant,
 			})
@@ -282,23 +283,23 @@ func carrierBulkSpec(
 
 func provideApproveDriverSettlementsTool(
 	s *driversettlementservice.Service,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newSettlementBulkTool(driverBulkSpec(s), &approveSettlements)
 }
 
-func providePostDriverSettlementsTool(s *driversettlementservice.Service) serviceports.AgentTool {
+func providePostDriverSettlementsTool(s *driversettlementservice.Service) agentports.AgentTool {
 	return newSettlementBulkTool(driverBulkSpec(s), &postSettlements)
 }
 
 func provideApproveCarrierSettlementsTool(
 	s *carriersettlementservice.Service,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newSettlementBulkTool(carrierBulkSpec(s), &approveSettlements)
 }
 
 func providePostCarrierSettlementsTool(
 	s *carriersettlementservice.Service,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newSettlementBulkTool(carrierBulkSpec(s), &postSettlements)
 }
 

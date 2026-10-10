@@ -7,9 +7,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/settlementshared"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
@@ -188,7 +190,7 @@ func (s *Service) PlanMatchDecision(
 ) (*MatchDecisionPlan, error) {
 	match, err := s.invoiceMatchRepo.GetByID(
 		ctx,
-		repositories.GetCarrierInvoiceMatchByIDRequest{ID: req.MatchID, TenantInfo: req.TenantInfo},
+		carriersettlementports.GetCarrierInvoiceMatchByIDRequest{ID: req.MatchID, TenantInfo: req.TenantInfo},
 	)
 	if err != nil {
 		return nil, err
@@ -251,7 +253,7 @@ func (s *Service) planAcceptRefusal(
 func (s *Service) PerformMatchDecision(
 	ctx context.Context,
 	req *MatchDecisionRequest,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*carriersettlement.InvoiceMatch, error) {
 	switch req.Decision {
 	case MatchDecisionAccept:
@@ -280,7 +282,7 @@ func (s *Service) PlanLinkInvoice(
 	tenantInfo pagination.TenantInfo,
 	invoiceID, carrierID pulid.ID,
 ) (*LinkInvoicePlan, error) {
-	linked, err := s.carrierRepo.GetByID(ctx, repositories.GetCarrierByIDRequest{
+	linked, err := s.carrierRepo.GetByID(ctx, carrierports.GetCarrierByIDRequest{
 		ID:         carrierID,
 		TenantInfo: tenantInfo,
 	})
@@ -290,7 +292,7 @@ func (s *Service) PlanLinkInvoice(
 
 	invoice, err := s.ediInvoiceRepo.GetCarrierInvoiceByID(
 		ctx,
-		repositories.GetEDICarrierInvoiceByIDRequest{ID: invoiceID, TenantInfo: tenantInfo},
+		ediports.GetEDICarrierInvoiceByIDRequest{ID: invoiceID, TenantInfo: tenantInfo},
 	)
 	if err != nil {
 		return nil, err
@@ -348,7 +350,7 @@ func (s *Service) ediMatchSource(
 
 	invoice, err := s.ediInvoiceRepo.GetCarrierInvoiceByID(
 		ctx,
-		repositories.GetEDICarrierInvoiceByIDRequest{
+		ediports.GetEDICarrierInvoiceByIDRequest{
 			ID:         *req.EDICarrierInvoiceID,
 			TenantInfo: req.TenantInfo,
 		},

@@ -7,9 +7,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/insight"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
 
 const paramInsightID = "insightId"
@@ -17,27 +19,27 @@ const paramInsightID = "insightId"
 type insightRestorer interface {
 	GetDetail(
 		ctx context.Context,
-		req serviceports.GetInsightDetailRequest,
-	) (*serviceports.InsightDetail, error)
+		req insightports.GetInsightDetailRequest,
+	) (*insightports.InsightDetail, error)
 	PlanRestore(
 		ctx context.Context,
-		req serviceports.RestoreInsightRequest,
-	) (*serviceports.RecordChange[insight.Insight], error)
-	Restore(ctx context.Context, req serviceports.RestoreInsightRequest) (*insight.Insight, error)
+		req insightports.RestoreInsightRequest,
+	) (*kernelports.RecordChange[insight.Insight], error)
+	Restore(ctx context.Context, req insightports.RestoreInsightRequest) (*insight.Insight, error)
 }
 
 func restoreInsightRequest(
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.RestoreInsightRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*insightports.RestoreInsightRequest, error) {
 	id, err := requirePulid(params.Params, paramInsightID)
 	if err != nil {
 		return nil, err
 	}
 
-	return &serviceports.RestoreInsightRequest{ID: id, TenantInfo: tenantFrom(*params)}, nil
+	return &insightports.RestoreInsightRequest{ID: id, TenantInfo: tenantFrom(*params)}, nil
 }
 
-func newRestoreInsightTool(insights insightRestorer) serviceports.AgentTool {
+func newRestoreInsightTool(insights insightRestorer) agentports.AgentTool {
 	return newReceivableTool(&receivableSpec{
 		name: "restore_insight",
 		description: "Put a dismissed insight back on the list of findings to act on, when " +
@@ -57,17 +59,17 @@ func newRestoreInsightTool(insights insightRestorer) serviceports.AgentTool {
 		},
 		required:    []string{paramInsightID},
 		searchTerms: []string{"restore insight", "undismiss", "reopen finding"},
-		target: func(params map[string]any) (serviceports.ToolTarget, bool) {
+		target: func(params map[string]any) (agentports.ToolTarget, bool) {
 			return targetOf(params, paramInsightID, permission.ResourceInsight)
 		},
-	}, receivablePlan[*serviceports.RestoreInsightRequest, *serviceports.RecordChange[insight.Insight]]{
+	}, receivablePlan[*insightports.RestoreInsightRequest, *kernelports.RecordChange[insight.Insight]]{
 		request: restoreInsightRequest,
 		settle: func(
 			ctx context.Context,
-			req *serviceports.RestoreInsightRequest,
-			params *serviceports.ToolExecuteParams,
+			req *insightports.RestoreInsightRequest,
+			params *agentports.ToolExecuteParams,
 		) error {
-			_, err := insights.GetDetail(ctx, serviceports.GetInsightDetailRequest{
+			_, err := insights.GetDetail(ctx, insightports.GetInsightDetailRequest{
 				ID:         req.ID,
 				UserID:     params.Actor.UserID,
 				Actor:      params.Actor,
@@ -78,17 +80,17 @@ func newRestoreInsightTool(insights insightRestorer) serviceports.AgentTool {
 		},
 		plan: func(
 			ctx context.Context,
-			req *serviceports.RestoreInsightRequest,
-			_ *serviceports.ToolExecuteParams,
-		) (*serviceports.RecordChange[insight.Insight], error) {
+			req *insightports.RestoreInsightRequest,
+			_ *agentports.ToolExecuteParams,
+		) (*kernelports.RecordChange[insight.Insight], error) {
 			return insights.PlanRestore(ctx, *req)
 		},
-		refused: func(*serviceports.RestoreInsightRequest) string {
+		refused: func(*insightports.RestoreInsightRequest) string {
 			return "Would restore a dismissed insight."
 		},
 		render: func(
-			_ *serviceports.RestoreInsightRequest,
-			change *serviceports.RecordChange[insight.Insight],
+			_ *insightports.RestoreInsightRequest,
+			change *kernelports.RecordChange[insight.Insight],
 		) (*agent.ToolPreview, error) {
 			built, err := toolpreview.Changed(toolpreview.Record{
 				Resource: permission.ResourceInsight,
@@ -106,8 +108,8 @@ func newRestoreInsightTool(insights insightRestorer) serviceports.AgentTool {
 		},
 		run: func(
 			ctx context.Context,
-			req *serviceports.RestoreInsightRequest,
-			_ *serviceports.ToolExecuteParams,
+			req *insightports.RestoreInsightRequest,
+			_ *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			restored, err := insights.Restore(ctx, *req)
 			if err != nil {

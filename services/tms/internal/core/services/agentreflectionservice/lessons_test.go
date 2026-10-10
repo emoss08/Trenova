@@ -7,8 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -18,10 +18,10 @@ import (
 )
 
 type fakeMemories struct {
-	services.AgentMemoryService
+	agentports.AgentMemoryService
 	mode       agent.MemorySavingMode
 	roles      []pulid.ID
-	remembered []*services.RememberRequest
+	remembered []*agentports.RememberRequest
 	refuse     error
 }
 
@@ -47,8 +47,8 @@ func (f *fakeMemories) Reader(
 
 func (f *fakeMemories) Remember(
 	_ context.Context,
-	req *services.RememberRequest,
-	_ *services.RequestActor,
+	req *agentports.RememberRequest,
+	_ *permissionports.RequestActor,
 ) (*agent.Memory, error) {
 	if f.refuse != nil {
 		return nil, f.refuse
@@ -70,25 +70,25 @@ func (f *fakeMemories) Remember(
 }
 
 type fakePermissions struct {
-	services.PermissionEngine
+	permissionports.PermissionEngine
 	allowed bool
 }
 
 func (f *fakePermissions) Check(
 	context.Context,
-	*services.PermissionCheckRequest,
-) (*services.PermissionCheckResult, error) {
-	return &services.PermissionCheckResult{Allowed: f.allowed}, nil
+	*permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
+	return &permissionports.PermissionCheckResult{Allowed: f.allowed}, nil
 }
 
 type fakeReflections struct {
-	repositories.AgentReflectionRepository
+	agentports.AgentReflectionRepository
 	stored *agent.Reflection
 }
 
 func (f *fakeReflections) GetByID(
 	context.Context,
-	repositories.GetAgentReflectionRequest,
+	agentports.GetAgentReflectionRequest,
 ) (*agent.Reflection, error) {
 	return f.stored, nil
 }
@@ -103,13 +103,13 @@ func (f *fakeReflections) Update(
 }
 
 type fakeConversations struct {
-	repositories.ConversationRepository
-	added []repositories.AddSavedMemoriesRequest
+	agentports.ConversationRepository
+	added []agentports.AddSavedMemoriesRequest
 }
 
 func (f *fakeConversations) AddSavedMemories(
 	_ context.Context,
-	req repositories.AddSavedMemoriesRequest,
+	req agentports.AddSavedMemoriesRequest,
 ) error {
 	f.added = append(f.added, req)
 
@@ -125,8 +125,8 @@ func lessonService(memories *fakeMemories, allowed bool) *Service {
 	}
 }
 
-func threadPlan() *services.ReflectionPlan {
-	return &services.ReflectionPlan{
+func threadPlan() *agentports.ReflectionPlan {
+	return &agentports.ReflectionPlan{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),
@@ -144,7 +144,7 @@ func threadPlan() *services.ReflectionPlan {
 	}
 }
 
-func runPlan() *services.ReflectionPlan {
+func runPlan() *agentports.ReflectionPlan {
 	plan := threadPlan()
 	plan.Subject = agent.ReflectionSubjectRun
 	plan.ThreadID = pulid.Nil
@@ -171,7 +171,7 @@ func TestLessonRequest_RefusesWhatTheWorkCannotVouchFor(t *testing.T) {
 	svc := lessonService(&fakeMemories{}, true)
 	cases := []struct {
 		name   string
-		plan   *services.ReflectionPlan
+		plan   *agentports.ReflectionPlan
 		lesson *lesson
 		reason string
 	}{
@@ -347,7 +347,7 @@ func TestLessonRequest_ASubjectAndAReplacementTheWorkVouchesFor(t *testing.T) {
 	plan := threadPlan()
 	customer := pulid.MustNew("cus_")
 	known := pulid.MustNew("amem_")
-	plan.Subjects = []services.ReflectionSubjectRef{
+	plan.Subjects = []agentports.ReflectionSubjectRef{
 		{Type: agent.MemorySubjectCustomer, ID: customer},
 	}
 	plan.KnownMemoryIDs = []pulid.ID{known}
@@ -405,7 +405,7 @@ func TestFinish_KeepsLessonsRecordsThemAndShowsThemOnTheReply(t *testing.T) {
 	svc.repo = reflections
 	svc.conversations = conversations
 
-	outcome, err := svc.Finish(t.Context(), plan, &services.StructuredCompletionResult{
+	outcome, err := svc.Finish(t.Context(), plan, &agentports.StructuredCompletionResult{
 		Text: `{"lessons":[` +
 			`{"kind":"Procedure","content":"Pass the move id to assign_move.","audience":"me","subjectType":"","subjectId":"","toolName":"assign_move","replaces":"","evidence":"failed twice","why":"Avoids the failure."},` +
 			`{"kind":"Correction","content":"Nope","audience":"me","subjectType":"","subjectId":"","toolName":"","replaces":"","evidence":"","why":""}` +
@@ -457,7 +457,7 @@ func TestFinish_ARefusalFromTheMemoryServiceIsRecordedNotRetried(t *testing.T) {
 	svc.repo = reflections
 	svc.conversations = &fakeConversations{}
 
-	outcome, err := svc.Finish(t.Context(), plan, &services.StructuredCompletionResult{
+	outcome, err := svc.Finish(t.Context(), plan, &agentports.StructuredCompletionResult{
 		Text: `{"lessons":[{"kind":"Fact","content":"x","audience":"me","subjectType":"","subjectId":"","toolName":"","replaces":"","evidence":"","why":""}],"notes":""}`,
 	})
 	require.NoError(t, err)
@@ -476,7 +476,7 @@ func TestFinish_AnUnreadableAnswerFailsTheLookBack(t *testing.T) {
 	svc := lessonService(&fakeMemories{}, false)
 	svc.repo = reflections
 
-	outcome, err := svc.Finish(t.Context(), plan, &services.StructuredCompletionResult{Text: "{"})
+	outcome, err := svc.Finish(t.Context(), plan, &agentports.StructuredCompletionResult{Text: "{"})
 	require.NoError(t, err)
 	assert.Equal(t, agent.ReflectionStatusFailed, outcome.Status)
 	assert.NotEmpty(t, reflections.stored.ErrorMessage)

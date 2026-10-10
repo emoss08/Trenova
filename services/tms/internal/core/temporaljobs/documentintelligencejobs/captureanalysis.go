@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/shared/referenceutils"
 )
 
@@ -25,14 +25,14 @@ type CaptureAnalyzer struct {
 	activities *Activities
 }
 
-func NewCaptureAnalyzer(a *Activities) services.CaptureAnalyzer {
+func NewCaptureAnalyzer(a *Activities) captureports.CaptureAnalyzer {
 	return &CaptureAnalyzer{activities: a}
 }
 
 func (c *CaptureAnalyzer) Analyze(
 	ctx context.Context,
-	req *services.CaptureAnalysisRequest,
-) (*services.CaptureAnalysis, error) {
+	req *captureports.CaptureAnalysisRequest,
+) (*captureports.CaptureAnalysis, error) {
 	a := c.activities
 	control, err := a.getDocumentControl(ctx, req.TenantInfo.OrgID, req.TenantInfo.BuID)
 	if err != nil {
@@ -70,7 +70,7 @@ func (c *CaptureAnalyzer) Analyze(
 		intelligence,
 	)
 
-	analysis := &services.CaptureAnalysis{
+	analysis := &captureports.CaptureAnalysis{
 		Kind:       intelligence.Kind,
 		Confidence: intelligence.OverallConfidence,
 		References: captureReferences(intelligence, extracted.Text),

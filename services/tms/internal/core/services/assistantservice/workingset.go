@@ -8,9 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
 )
@@ -19,7 +19,7 @@ type workingTurn struct {
 	thread  *conversation.Thread
 	plan    *TurnPlan
 	saved   []conversation.Message
-	actions []services.PendingAction
+	actions []agentports.PendingAction
 	at      int64
 }
 
@@ -128,7 +128,7 @@ func (s *Service) keepWorkingSet(
 	}
 
 	next := conversation.Touch(turn.thread.WorkingSet, touched...)
-	if err := s.conversations.UpdateThreadContext(ctx, repositories.UpdateThreadContextRequest{
+	if err := s.conversations.UpdateThreadContext(ctx, agentports.UpdateThreadContextRequest{
 		ThreadID:   turn.thread.ID,
 		TenantInfo: tenant,
 		WorkingSet: &next,
@@ -146,7 +146,7 @@ type anchorScope struct {
 	thread   *conversation.Thread
 	page     *agent.PageContext
 	mentions []agent.EntityRef
-	actor    *services.RequestActor
+	actor    *permissionports.RequestActor
 	tenant   pagination.TenantInfo
 }
 
@@ -194,7 +194,7 @@ func (s *Service) anchorRecords(
 		return nil
 	}
 
-	return s.anchors.Anchor(ctx, &services.RecordAnchorRequest{
+	return s.anchors.Anchor(ctx, &agentports.RecordAnchorRequest{
 		TenantInfo: scope.tenant,
 		Actor:      scope.actor,
 		Records:    refs,

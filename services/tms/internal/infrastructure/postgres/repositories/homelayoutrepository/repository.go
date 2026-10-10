@@ -1,8 +1,8 @@
 package homelayoutrepository
 
 import (
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/homelayoutports"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -19,7 +19,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.HomeLayoutRepository {
+func New(p Params) homelayoutports.HomeLayoutRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.home-layout-repository"),

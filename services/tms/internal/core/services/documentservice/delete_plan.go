@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -40,7 +40,7 @@ func (s *Service) PlanDelete(ctx context.Context, req *BulkDeleteRequest) (*Dele
 		return &DeletePlan{Versions: map[pulid.ID][]*document.Document{}}, nil
 	}
 
-	docs, err := s.repo.GetByIDs(ctx, repositories.BulkDeleteDocumentRequest{
+	docs, err := s.repo.GetByIDs(ctx, documentports.BulkDeleteDocumentRequest{
 		IDs:        req.IDs,
 		TenantInfo: req.TenantInfo,
 	})
@@ -74,7 +74,7 @@ func (s *Service) PlanDelete(ctx context.Context, req *BulkDeleteRequest) (*Dele
 		if _, listed := plan.Versions[doc.LineageID]; listed {
 			continue
 		}
-		versions, versionErr := s.repo.ListVersions(ctx, repositories.ListDocumentVersionsRequest{
+		versions, versionErr := s.repo.ListVersions(ctx, documentports.ListDocumentVersionsRequest{
 			LineageID:  doc.LineageID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -92,7 +92,7 @@ func (s *Service) PlanRestoreVersion(
 	documentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) (*RestorePlan, error) {
-	target, err := s.repo.GetByID(ctx, repositories.GetDocumentByIDRequest{
+	target, err := s.repo.GetByID(ctx, documentports.GetDocumentByIDRequest{
 		ID:         documentID,
 		TenantInfo: tenantInfo,
 	})
@@ -100,7 +100,7 @@ func (s *Service) PlanRestoreVersion(
 		return nil, err
 	}
 
-	versions, err := s.repo.ListVersions(ctx, repositories.ListDocumentVersionsRequest{
+	versions, err := s.repo.ListVersions(ctx, documentports.ListDocumentVersionsRequest{
 		LineageID:  target.LineageID,
 		TenantInfo: tenantInfo,
 	})

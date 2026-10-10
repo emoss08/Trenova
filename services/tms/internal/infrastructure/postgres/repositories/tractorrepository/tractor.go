@@ -5,12 +5,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/quotaservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/quotatx"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -27,16 +27,16 @@ type Params struct {
 
 	DB     *postgres.Connection
 	Logger *zap.Logger
-	Quota  services.QuotaGuard `optional:"true"`
+	Quota  platformplanports.QuotaGuard `optional:"true"`
 }
 
 type repository struct {
 	db    *postgres.Connection
 	l     *zap.Logger
-	quota services.QuotaGuard
+	quota platformplanports.QuotaGuard
 }
 
-func New(p Params) repositories.TractorRepository {
+func New(p Params) tractorports.TractorRepository {
 	return &repository{
 		db:    p.DB,
 		l:     p.Logger.Named("postgres.tractor-repository"),
@@ -46,7 +46,7 @@ func New(p Params) repositories.TractorRepository {
 
 func (r *repository) applyListFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListTractorsRequest,
+	req *tractorports.ListTractorsRequest,
 ) (*bun.SelectQuery, error) {
 	q = applyTractorRelations(q, req.TractorRelationIncludes)
 
@@ -68,7 +68,7 @@ func (r *repository) applyListFilters(
 
 func (r *repository) applyListCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListTractorsRequest,
+	req *tractorports.ListTractorsRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -96,7 +96,7 @@ func (r *repository) applyStatusFilter(q *bun.SelectQuery, value string) *bun.Se
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListTractorsRequest,
+	req *tractorports.ListTractorsRequest,
 ) (*pagination.CursorListResult[*tractor.Tractor], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*tractor.Tractor], error) {
 		log := r.l.With(
@@ -170,7 +170,7 @@ func (r *repository) Create(
 			}
 
 			return nil
-		}, services.QuotaRequest{
+		}, platformplanports.QuotaRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
 				BuID:  entity.BusinessUnitID,
@@ -221,7 +221,7 @@ func (r *repository) Update(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetTractorByIDRequest,
+	req tractorports.GetTractorByIDRequest,
 ) (*tractor.Tractor, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tractor.Tractor, error) {
 		log := r.l.With(
@@ -258,7 +258,7 @@ func (r *repository) GetByID(
 
 func (r *repository) GetByIDs(
 	ctx context.Context,
-	req repositories.GetTractorsByIDsRequest,
+	req tractorports.GetTractorsByIDsRequest,
 ) ([]*tractor.Tractor, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*tractor.Tractor, error) {
 		log := r.l.With(
@@ -295,7 +295,7 @@ func (r *repository) GetByIDs(
 
 func (r *repository) BulkUpdateStatus(
 	ctx context.Context,
-	req *repositories.BulkUpdateTractorStatusRequest,
+	req *tractorports.BulkUpdateTractorStatusRequest,
 ) ([]*tractor.Tractor, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*tractor.Tractor, error) {
 		log := r.l.With(
@@ -329,7 +329,7 @@ func (r *repository) BulkUpdateStatus(
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
-	req *repositories.TractorSelectOptionsRequest,
+	req *tractorports.TractorSelectOptionsRequest,
 ) (*pagination.ListResult[*tractor.Tractor], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*tractor.Tractor], error) {
 		cols := buncolgen.TractorColumns
@@ -367,7 +367,7 @@ func (r *repository) SelectOptions(
 
 func applyTractorRelations(
 	q *bun.SelectQuery,
-	includes repositories.TractorRelationIncludes,
+	includes tractorports.TractorRelationIncludes,
 ) *bun.SelectQuery {
 	rel := buncolgen.TractorRelations
 	equipmentTypeRel := buncolgen.EquipmentTypeRelations
@@ -470,7 +470,7 @@ func applyTractorRelations(
 
 func applyTractorColumns(
 	q *bun.SelectQuery,
-	includes repositories.TractorRelationIncludes,
+	includes tractorports.TractorRelationIncludes,
 ) *bun.SelectQuery {
 	if len(includes.TractorColumns) == 0 {
 		return q.ColumnExpr(buncolgen.TractorTable.All())
@@ -481,7 +481,7 @@ func applyTractorColumns(
 
 func applyTractorLastKnownLocationJoin(
 	q *bun.SelectQuery,
-	includes repositories.TractorRelationIncludes,
+	includes tractorports.TractorRelationIncludes,
 ) *bun.SelectQuery {
 	if !includes.IncludeLastKnownLocation {
 		return q

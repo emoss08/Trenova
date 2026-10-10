@@ -2,30 +2,31 @@ package compiler
 
 import (
 	"context"
-	"github.com/emoss08/trenova/shared/i18n"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
+	"github.com/emoss08/trenova/shared/i18n"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
-var _ services.ReportCompiler = (*Compiler)(nil)
+var _ reportports.ReportCompiler = (*Compiler)(nil)
 
 type Params struct {
 	fx.In
 
 	Config           *config.Config
 	Logger           *zap.Logger
-	PermissionEngine services.PermissionEngine
+	PermissionEngine permissionports.PermissionEngine
 }
 
 type Compiler struct {
 	catalog            *reportcatalog.Catalog
-	permissionEngine   services.PermissionEngine
+	permissionEngine   permissionports.PermissionEngine
 	permissionRegistry *permission.Registry
 	limits             limits
 	l                  *zap.Logger
@@ -52,7 +53,7 @@ func New(p Params) *Compiler {
 
 func NewWithCatalog(
 	catalog *reportcatalog.Catalog,
-	engine services.PermissionEngine,
+	engine permissionports.PermissionEngine,
 	registry *permission.Registry,
 	reporting *config.ReportingConfig,
 	logger *zap.Logger,
@@ -75,14 +76,14 @@ func NewWithCatalog(
 
 func (c *Compiler) ValidateAndAuthorize(
 	ctx context.Context,
-	req *services.ReportCompileRequest,
-) (*services.ReportValidationResult, error) {
+	req *reportports.ReportCompileRequest,
+) (*reportports.ReportValidationResult, error) {
 	compiled, err := c.compile(ctx, req, false)
 	if err != nil {
 		return nil, err
 	}
 
-	return &services.ReportValidationResult{
+	return &reportports.ReportValidationResult{
 		ReferencedEntities: compiled.ReferencedEntities,
 		Columns:            compiled.Columns,
 		Complexity:         compiled.Complexity,
@@ -91,8 +92,8 @@ func (c *Compiler) ValidateAndAuthorize(
 
 func (c *Compiler) Compile(
 	ctx context.Context,
-	req *services.ReportCompileRequest,
-) (*services.CompiledReportQuery, error) {
+	req *reportports.ReportCompileRequest,
+) (*reportports.CompiledReportQuery, error) {
 	return c.compile(ctx, req, true)
 }
 
@@ -101,16 +102,16 @@ func (c *Compiler) Compile(
 // is not required.
 func (c *Compiler) CompileForPreview(
 	ctx context.Context,
-	req *services.ReportCompileRequest,
-) (*services.CompiledReportQuery, error) {
+	req *reportports.ReportCompileRequest,
+) (*reportports.CompiledReportQuery, error) {
 	return c.compile(ctx, req, false)
 }
 
 func (c *Compiler) compile(
 	ctx context.Context,
-	req *services.ReportCompileRequest,
+	req *reportports.ReportCompileRequest,
 	requireExport bool,
-) (*services.CompiledReportQuery, error) {
+) (*reportports.CompiledReportQuery, error) {
 	v, err := c.validate(req)
 	if err != nil {
 		return nil, err
@@ -129,7 +130,7 @@ func (c *Compiler) compile(
 	return c.emit(i18n.FromContext(ctx), req, v, plan, az)
 }
 
-func (c *Compiler) complexity(v *validatedDef, plan *joinPlan) services.ReportComplexity {
+func (c *Compiler) complexity(v *validatedDef, plan *joinPlan) reportports.ReportComplexity {
 	dims, measures := 0, 0
 	for i := range v.columns {
 		if v.columns[i].spec.Kind == report.ColumnKindDimension {
@@ -149,7 +150,7 @@ func (c *Compiler) complexity(v *validatedDef, plan *joinPlan) services.ReportCo
 
 	score := len(plan.joins) + 2*len(plan.laterals) + dims + pivotColumns/10
 
-	return services.ReportComplexity{
+	return reportports.ReportComplexity{
 		ToOneJoins:       len(plan.joins),
 		ToManySubqueries: len(plan.laterals),
 		Dimensions:       dims,

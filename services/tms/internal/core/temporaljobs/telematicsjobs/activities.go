@@ -4,10 +4,11 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/telematicsservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/sdk/activity"
@@ -48,15 +49,15 @@ type RetentionResult struct {
 type ActivitiesParams struct {
 	fx.In
 
-	IntegrationRepo repositories.IntegrationRepository
-	TelematicsRepo  repositories.TelematicsRepository
+	IntegrationRepo integrationports.IntegrationRepository
+	TelematicsRepo  telematicsports.TelematicsRepository
 	Service         *telematicsservice.Service
 	Logger          *zap.Logger
 }
 
 type Activities struct {
-	integrationRepo repositories.IntegrationRepository
-	telematicsRepo  repositories.TelematicsRepository
+	integrationRepo integrationports.IntegrationRepository
+	telematicsRepo  telematicsports.TelematicsRepository
 	service         *telematicsservice.Service
 	logger          *zap.Logger
 }

@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -15,7 +15,7 @@ const maxBatches = 100
 type Reader interface {
 	Get(
 		ctx context.Context,
-		req repositories.GetDataRetentionRequest,
+		req tenantports.GetDataRetentionRequest,
 	) (*tenant.DataRetention, error)
 }
 
@@ -29,7 +29,7 @@ type Sweep struct {
 
 func (s Sweep) Run(
 	ctx context.Context,
-	req services.PurgeExpiredAICorrectionsRequest,
+	req kernelports.PurgeExpiredAICorrectionsRequest,
 	purge PurgeFunc,
 ) (int64, error) {
 	before, err := s.cutoff(ctx, req)
@@ -54,9 +54,9 @@ func (s Sweep) Run(
 
 func (s Sweep) cutoff(
 	ctx context.Context,
-	req services.PurgeExpiredAICorrectionsRequest,
+	req kernelports.PurgeExpiredAICorrectionsRequest,
 ) (int64, error) {
-	settings, err := s.Retention.Get(ctx, repositories.GetDataRetentionRequest{
+	settings, err := s.Retention.Get(ctx, tenantports.GetDataRetentionRequest{
 		OrgID: req.TenantInfo.OrgID,
 		BuID:  req.TenantInfo.BuID,
 	})

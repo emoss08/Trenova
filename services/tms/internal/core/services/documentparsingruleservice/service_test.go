@@ -1,14 +1,15 @@
 package documentparsingruleservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/documentparsingrule"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentparsingruleports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -81,12 +82,12 @@ func TestEvaluateVersionExtractsFieldsAndStops(t *testing.T) {
 			},
 		},
 	}
-	input := &serviceports.DocumentParsingRuntimeInput{
+	input := &documentparsingruleports.DocumentParsingRuntimeInput{
 		DocumentKind:        "RateConfirmation",
 		FileName:            "rate_confirmation.pdf",
 		ProviderFingerprint: "GenericBroker",
 		Text:                "Rate Confirmation\nLine Haul: $1,250.00\nSHIPPER #1 Alpha Foods\n123 Market St\nDallas, TX 75201\nPickup Date: 04/10/2026\nRECEIVER #1 Beta Stores\n890 Harbor Rd\nAtlanta, GA 30301\nDelivery Date: 04/11/2026",
-		Pages: []serviceports.DocumentParsingPage{
+		Pages: []documentparsingruleports.DocumentParsingPage{
 			{
 				PageNumber: 1,
 				Text:       "Rate Confirmation\nLine Haul: $1,250.00\nSHIPPER #1 Alpha Foods\n123 Market St\nDallas, TX 75201\nPickup Date: 04/10/2026\nRECEIVER #1 Beta Stores\n890 Harbor Rd\nAtlanta, GA 30301\nDelivery Date: 04/11/2026",
@@ -106,25 +107,25 @@ func TestEvaluateVersionExtractsFieldsAndStops(t *testing.T) {
 }
 
 func TestMergeAnalysesPrefersCandidateWhenBaselineIsIncomplete(t *testing.T) {
-	baseline := &serviceports.DocumentParsingAnalysis{
-		Fields: map[string]serviceports.DocumentParsingField{
+	baseline := &documentparsingruleports.DocumentParsingAnalysis{
+		Fields: map[string]documentparsingruleports.DocumentParsingField{
 			"rate": {Key: "rate", Label: "Rate", Value: "", Confidence: 0.2, ReviewRequired: true},
 		},
-		Stops:             []serviceports.DocumentParsingStop{},
-		Conflicts:         []serviceports.DocumentParsingConflict{},
+		Stops:             []documentparsingruleports.DocumentParsingStop{},
+		Conflicts:         []documentparsingruleports.DocumentParsingConflict{},
 		MissingFields:     []string{"Rate", "Pickup Stop"},
 		Signals:           []string{"baseline"},
 		ReviewStatus:      "NeedsReview",
 		OverallConfidence: 0.55,
 	}
-	candidate := &serviceports.DocumentParsingAnalysis{
-		Fields: map[string]serviceports.DocumentParsingField{
+	candidate := &documentparsingruleports.DocumentParsingAnalysis{
+		Fields: map[string]documentparsingruleports.DocumentParsingField{
 			"rate": {Key: "rate", Label: "Rate", Value: "$800.00", Confidence: 0.9},
 		},
-		Stops: []serviceports.DocumentParsingStop{
+		Stops: []documentparsingruleports.DocumentParsingStop{
 			{Role: "pickup", Name: "Origin", Confidence: 0.91},
 		},
-		Conflicts:         []serviceports.DocumentParsingConflict{},
+		Conflicts:         []documentparsingruleports.DocumentParsingConflict{},
 		MissingFields:     []string{},
 		Signals:           []string{"candidate"},
 		ReviewStatus:      "Ready",
@@ -182,8 +183,8 @@ func TestValidateFixturesAgainstVersionFailsOnAssertionMismatch(t *testing.T) {
 }
 
 func TestValidateFixtureAssertionsSupportsPatternAndNotEmpty(t *testing.T) {
-	analysis := &serviceports.DocumentParsingAnalysis{
-		Fields: map[string]serviceports.DocumentParsingField{
+	analysis := &documentparsingruleports.DocumentParsingAnalysis{
+		Fields: map[string]documentparsingruleports.DocumentParsingField{
 			"referenceNumber": {
 				Key:   "referenceNumber",
 				Label: "Reference Number",
@@ -195,7 +196,7 @@ func TestValidateFixtureAssertionsSupportsPatternAndNotEmpty(t *testing.T) {
 				Value: "Van - Min L=53",
 			},
 		},
-		Stops: []serviceports.DocumentParsingStop{
+		Stops: []documentparsingruleports.DocumentParsingStop{
 			{Role: "pickup", Date: "7/13/21"},
 			{Role: "delivery", Date: "7/15/21"},
 		},
@@ -224,8 +225,8 @@ func TestValidateFixtureAssertionsSupportsPatternAndNotEmpty(t *testing.T) {
 }
 
 func TestValidateFixtureAssertionsFailsWhenPatternDoesNotMatch(t *testing.T) {
-	analysis := &serviceports.DocumentParsingAnalysis{
-		Fields: map[string]serviceports.DocumentParsingField{
+	analysis := &documentparsingruleports.DocumentParsingAnalysis{
+		Fields: map[string]documentparsingruleports.DocumentParsingField{
 			"referenceNumber": {
 				Key:   "referenceNumber",
 				Label: "Reference Number",
@@ -306,8 +307,8 @@ func TestServiceApplyPublishedSelectsMostSpecificRule(t *testing.T) {
 
 	svc := &Service{
 		repo: stubDocumentParsingRuleRepo{
-			listPublishedVersionsByDocumentKindFn: func(_ context.Context, _ pagination.TenantInfo, _ string) ([]*repositories.PublishedDocumentParsingRuleVersion, error) {
-				return []*repositories.PublishedDocumentParsingRuleVersion{
+			listPublishedVersionsByDocumentKindFn: func(_ context.Context, _ pagination.TenantInfo, _ string) ([]*documentparsingruleports.PublishedDocumentParsingRuleVersion, error) {
+				return []*documentparsingruleports.PublishedDocumentParsingRuleVersion{
 					{RuleSet: genericSet, Version: genericVersion},
 					{RuleSet: specificSet, Version: specificVersion},
 				}, nil
@@ -317,13 +318,13 @@ func TestServiceApplyPublishedSelectsMostSpecificRule(t *testing.T) {
 
 	result, err := svc.ApplyPublished(
 		context.Background(),
-		&serviceports.DocumentParsingRuntimeInput{
+		&documentparsingruleports.DocumentParsingRuntimeInput{
 			TenantInfo:          tenantInfo,
 			DocumentKind:        "RateConfirmation",
 			FileName:            "rate_confirmation.pdf",
 			Text:                "Rate Confirmation\nLine Haul: $500.00\nReference: REF-1",
 			ProviderFingerprint: "GenericBroker",
-			Pages: []serviceports.DocumentParsingPage{
+			Pages: []documentparsingruleports.DocumentParsingPage{
 				{PageNumber: 1, Text: "Rate Confirmation\nLine Haul: $500.00\nReference: REF-1"},
 			},
 		},
@@ -336,25 +337,25 @@ func TestServiceApplyPublishedSelectsMostSpecificRule(t *testing.T) {
 }
 
 type stubDocumentParsingRuleRepo struct {
-	getRuleSetFn                          func(context.Context, repositories.GetDocumentParsingRuleSetRequest) (*documentparsingrule.RuleSet, error)
+	getRuleSetFn                          func(context.Context, documentparsingruleports.GetDocumentParsingRuleSetRequest) (*documentparsingrule.RuleSet, error)
 	createRuleSetFn                       func(context.Context, *documentparsingrule.RuleSet) (*documentparsingrule.RuleSet, error)
 	updateRuleSetFn                       func(context.Context, *documentparsingrule.RuleSet) (*documentparsingrule.RuleSet, error)
-	listPublishedVersionsByDocumentKindFn func(context.Context, pagination.TenantInfo, string) ([]*repositories.PublishedDocumentParsingRuleVersion, error)
-	getFixtureFn                          func(context.Context, repositories.GetDocumentParsingRuleFixtureRequest) (*documentparsingrule.Fixture, error)
+	listPublishedVersionsByDocumentKindFn func(context.Context, pagination.TenantInfo, string) ([]*documentparsingruleports.PublishedDocumentParsingRuleVersion, error)
+	getFixtureFn                          func(context.Context, documentparsingruleports.GetDocumentParsingRuleFixtureRequest) (*documentparsingrule.Fixture, error)
 	createFixtureFn                       func(context.Context, *documentparsingrule.Fixture) (*documentparsingrule.Fixture, error)
 	updateFixtureFn                       func(context.Context, *documentparsingrule.Fixture) (*documentparsingrule.Fixture, error)
 }
 
 func (s stubDocumentParsingRuleRepo) ListRuleSets(
 	context.Context,
-	repositories.ListDocumentParsingRuleSetsRequest,
+	documentparsingruleports.ListDocumentParsingRuleSetsRequest,
 ) ([]*documentparsingrule.RuleSet, error) {
 	panic("not implemented")
 }
 
 func (s stubDocumentParsingRuleRepo) GetRuleSet(
 	ctx context.Context,
-	req repositories.GetDocumentParsingRuleSetRequest,
+	req documentparsingruleports.GetDocumentParsingRuleSetRequest,
 ) (*documentparsingrule.RuleSet, error) {
 	if s.getRuleSetFn == nil {
 		panic("not implemented")
@@ -384,28 +385,28 @@ func (s stubDocumentParsingRuleRepo) UpdateRuleSet(
 
 func (s stubDocumentParsingRuleRepo) DeleteRuleSet(
 	context.Context,
-	repositories.GetDocumentParsingRuleSetRequest,
+	documentparsingruleports.GetDocumentParsingRuleSetRequest,
 ) error {
 	panic("not implemented")
 }
 
 func (s stubDocumentParsingRuleRepo) ListVersions(
 	context.Context,
-	repositories.ListDocumentParsingRuleVersionsRequest,
+	documentparsingruleports.ListDocumentParsingRuleVersionsRequest,
 ) ([]*documentparsingrule.RuleVersion, error) {
 	panic("not implemented")
 }
 
 func (s stubDocumentParsingRuleRepo) GetVersion(
 	context.Context,
-	repositories.GetDocumentParsingRuleVersionRequest,
+	documentparsingruleports.GetDocumentParsingRuleVersionRequest,
 ) (*documentparsingrule.RuleVersion, error) {
 	panic("not implemented")
 }
 
 func (s stubDocumentParsingRuleRepo) GetVersionWithRuleSet(
 	context.Context,
-	repositories.GetDocumentParsingRuleVersionRequest,
+	documentparsingruleports.GetDocumentParsingRuleVersionRequest,
 ) (*documentparsingrule.RuleVersion, *documentparsingrule.RuleSet, error) {
 	panic("not implemented")
 }
@@ -456,20 +457,20 @@ func (s stubDocumentParsingRuleRepo) ListPublishedVersionsByDocumentKind(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	documentKind string,
-) ([]*repositories.PublishedDocumentParsingRuleVersion, error) {
+) ([]*documentparsingruleports.PublishedDocumentParsingRuleVersion, error) {
 	return s.listPublishedVersionsByDocumentKindFn(ctx, tenantInfo, documentKind)
 }
 
 func (s stubDocumentParsingRuleRepo) ListFixtures(
 	context.Context,
-	repositories.ListDocumentParsingRuleFixturesRequest,
+	documentparsingruleports.ListDocumentParsingRuleFixturesRequest,
 ) ([]*documentparsingrule.Fixture, error) {
 	panic("not implemented")
 }
 
 func (s stubDocumentParsingRuleRepo) GetFixture(
 	ctx context.Context,
-	req repositories.GetDocumentParsingRuleFixtureRequest,
+	req documentparsingruleports.GetDocumentParsingRuleFixtureRequest,
 ) (*documentparsingrule.Fixture, error) {
 	if s.getFixtureFn == nil {
 		panic("not implemented")
@@ -499,7 +500,7 @@ func (s stubDocumentParsingRuleRepo) UpdateFixture(
 
 func (s stubDocumentParsingRuleRepo) DeleteFixture(
 	context.Context,
-	repositories.GetDocumentParsingRuleFixtureRequest,
+	documentparsingruleports.GetDocumentParsingRuleFixtureRequest,
 ) error {
 	panic("not implemented")
 }
@@ -542,7 +543,7 @@ func TestUpdateRuleSetPreservesPublishedVersionID(t *testing.T) {
 	preservedVersionID := pulid.MustNew("dprv_")
 	svc := &Service{
 		repo: stubDocumentParsingRuleRepo{
-			getRuleSetFn: func(_ context.Context, _ repositories.GetDocumentParsingRuleSetRequest) (*documentparsingrule.RuleSet, error) {
+			getRuleSetFn: func(_ context.Context, _ documentparsingruleports.GetDocumentParsingRuleSetRequest) (*documentparsingrule.RuleSet, error) {
 				return &documentparsingrule.RuleSet{
 					ID:                 pulid.MustNew("dprs_"),
 					OrganizationID:     pulid.MustNew("org_"),
@@ -585,7 +586,7 @@ func TestSaveFixtureUpdateUsesStoredRuleSetIDBeforeValidation(t *testing.T) {
 	fixtureID := pulid.MustNew("dprf_")
 	svc := &Service{
 		repo: stubDocumentParsingRuleRepo{
-			getFixtureFn: func(_ context.Context, _ repositories.GetDocumentParsingRuleFixtureRequest) (*documentparsingrule.Fixture, error) {
+			getFixtureFn: func(_ context.Context, _ documentparsingruleports.GetDocumentParsingRuleFixtureRequest) (*documentparsingrule.Fixture, error) {
 				return &documentparsingrule.Fixture{
 					ID:             fixtureID,
 					RuleSetID:      ruleSetID,
@@ -619,40 +620,40 @@ func TestSaveFixtureUpdateUsesStoredRuleSetIDBeforeValidation(t *testing.T) {
 	require.Equal(t, ruleSetID, updated.RuleSetID)
 }
 
-type noopAuditService struct{ *mocks.MockAuditService }
+type noopAuditService struct{ *auditportsmock.MockAuditService }
 
 func (noopAuditService) List(
 	context.Context,
-	*repositories.ListAuditEntriesRequest,
+	*auditports.ListAuditEntriesRequest,
 ) (*pagination.ListResult[*audit.Entry], error) {
 	return nil, nil
 }
 
 func (noopAuditService) ListByResourceID(
 	context.Context,
-	*repositories.ListByResourceIDRequest,
+	*auditports.ListByResourceIDRequest,
 ) (*pagination.ListResult[*audit.Entry], error) {
 	return nil, nil
 }
 
 func (noopAuditService) GetByID(
 	context.Context,
-	repositories.GetAuditEntryByIDOptions,
+	auditports.GetAuditEntryByIDOptions,
 ) (*audit.Entry, error) {
 	return nil, nil
 }
 
-func (noopAuditService) LogAction(*serviceports.LogActionParams, ...serviceports.LogOption) error {
+func (noopAuditService) LogAction(*auditports.LogActionParams, ...auditports.LogOption) error {
 	return nil
 }
 
-func (noopAuditService) LogActions([]serviceports.BulkLogEntry) error {
+func (noopAuditService) LogActions([]auditports.BulkLogEntry) error {
 	return nil
 }
 
 func (noopAuditService) RegisterSensitiveFields(
 	permission.Resource,
-	[]serviceports.SensitiveField,
+	[]auditports.SensitiveField,
 ) error {
 	return nil
 }

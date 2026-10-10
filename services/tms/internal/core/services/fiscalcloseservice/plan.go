@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fiscalclose"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/glbalanceports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -42,7 +42,7 @@ type planInputs struct {
 	closingPeriod    periodTarget
 	openingPeriod    periodTarget
 	retainedEarnings retainedEarningsAccount
-	balances         []*repositories.GLPeriodAccountBalance
+	balances         []*glbalanceports.GLPeriodAccountBalance
 	revision         int
 	subledgerChecks  []*fiscalclose.SubledgerCheck
 	blockers         []*fiscalclose.Blocker
@@ -98,7 +98,7 @@ func buildPlan(in *planInputs) *fiscalclose.Plan {
 }
 
 func partitionBalances(
-	balances []*repositories.GLPeriodAccountBalance,
+	balances []*glbalanceports.GLPeriodAccountBalance,
 ) (income, balanceSheet []accountBalance) {
 	income = make([]accountBalance, 0, len(balances))
 	balanceSheet = make([]accountBalance, 0, len(balances))

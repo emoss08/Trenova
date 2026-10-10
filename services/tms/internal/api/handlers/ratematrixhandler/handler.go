@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/ratematrix"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/ratematrixservice"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -92,7 +92,7 @@ func (h *Handler) list(c *gin.Context) {
 		func() (*pagination.ListResult[*ratematrix.RateMatrix], error) {
 			return h.service.List(
 				c.Request.Context(),
-				&repositories.ListRateMatrixRequest{Filter: req},
+				&ratematrixports.ListRateMatrixRequest{Filter: req},
 			)
 		},
 	)
@@ -119,7 +119,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.GetByID(c.Request.Context(), &repositories.GetRateMatrixByIDRequest{
+	entity, err := h.service.GetByID(c.Request.Context(), &ratematrixports.GetRateMatrixByIDRequest{
 		RateMatrixID:      matrixID,
 		TenantInfo:        tenantOf(authCtx),
 		IncludeDimensions: true,
@@ -227,7 +227,7 @@ func (h *Handler) delete(c *gin.Context) {
 		return
 	}
 
-	if err = h.service.Delete(c.Request.Context(), &repositories.GetRateMatrixByIDRequest{
+	if err = h.service.Delete(c.Request.Context(), &ratematrixports.GetRateMatrixByIDRequest{
 		RateMatrixID: matrixID,
 		TenantInfo:   tenantOf(authCtx),
 	}, authCtx.UserID); err != nil {
@@ -268,7 +268,7 @@ func (h *Handler) listCells(c *gin.Context) {
 		func() (*pagination.ListResult[*ratematrix.RateMatrixCell], error) {
 			return h.service.ListCells(
 				c.Request.Context(),
-				&repositories.ListRateMatrixCellsRequest{
+				&ratematrixports.ListRateMatrixCellsRequest{
 					TenantInfo:   tenantOf(authCtx),
 					RateMatrixID: matrixID,
 					Filter:       req,
@@ -314,7 +314,7 @@ func (h *Handler) replaceCells(c *gin.Context) {
 
 	if err = h.service.ReplaceCells(
 		c.Request.Context(),
-		&repositories.ReplaceRateMatrixCellsRequest{
+		&ratematrixports.ReplaceRateMatrixCellsRequest{
 			TenantInfo:   tenantOf(authCtx),
 			RateMatrixID: matrixID,
 			Cells:        body.Cells,
@@ -351,7 +351,7 @@ func (h *Handler) listDensityScales(c *gin.Context) {
 		func() (*pagination.ListResult[*ratematrix.DensityScale], error) {
 			return h.service.ListDensityScales(
 				c.Request.Context(),
-				&repositories.ListRateMatrixRequest{Filter: req},
+				&ratematrixports.ListRateMatrixRequest{Filter: req},
 			)
 		},
 	)

@@ -5,7 +5,11 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/shipmenttypeports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -32,11 +36,11 @@ type partyMatch struct {
 }
 
 type shipmentPartySources struct {
-	customers   repositories.CustomerRepository
-	locations   repositories.LocationRepository
-	workers     repositories.WorkerRepository
-	commodities repositories.CommodityRepository
-	types       repositories.ShipmentTypeRepository
+	customers   customerports.CustomerRepository
+	locations   locationports.LocationRepository
+	workers     workerports.WorkerRepository
+	commodities commodityports.CommodityRepository
+	types       shipmenttypeports.ShipmentTypeRepository
 }
 
 func (s shipmentPartySources) none() bool {
@@ -178,7 +182,7 @@ func (t *searchShipmentsTool) resolveParties(
 		}
 
 		if t.parties.customers != nil {
-			found, err := t.parties.customers.List(ctx, &repositories.ListCustomerRequest{Filter: filter})
+			found, err := t.parties.customers.List(ctx, &customerports.ListCustomerRequest{Filter: filter})
 			if err != nil {
 				return nil, err
 			}
@@ -190,7 +194,7 @@ func (t *searchShipmentsTool) resolveParties(
 		}
 
 		if t.parties.locations != nil {
-			found, err := t.parties.locations.List(ctx, &repositories.ListLocationRequest{Filter: filter})
+			found, err := t.parties.locations.List(ctx, &locationports.ListLocationRequest{Filter: filter})
 			if err != nil {
 				return nil, err
 			}
@@ -202,7 +206,7 @@ func (t *searchShipmentsTool) resolveParties(
 		}
 
 		if t.parties.workers != nil {
-			found, err := t.parties.workers.List(ctx, &repositories.ListWorkersRequest{Filter: filter})
+			found, err := t.parties.workers.List(ctx, &workerports.ListWorkersRequest{Filter: filter})
 			if err != nil {
 				return nil, err
 			}
@@ -214,7 +218,7 @@ func (t *searchShipmentsTool) resolveParties(
 		}
 
 		if t.parties.commodities != nil {
-			found, err := t.parties.commodities.List(ctx, &repositories.ListCommodityRequest{Filter: filter})
+			found, err := t.parties.commodities.List(ctx, &commodityports.ListCommodityRequest{Filter: filter})
 			if err != nil {
 				return nil, err
 			}
@@ -226,7 +230,7 @@ func (t *searchShipmentsTool) resolveParties(
 		}
 
 		if t.parties.types != nil {
-			found, err := t.parties.types.List(ctx, &repositories.ListShipmentTypesRequest{Filter: filter})
+			found, err := t.parties.types.List(ctx, &shipmenttypeports.ListShipmentTypesRequest{Filter: filter})
 			if err != nil {
 				return nil, err
 			}

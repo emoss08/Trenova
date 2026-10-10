@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/customerupdateservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -31,7 +31,7 @@ var (
 	ErrMissingIdempotencyKey = errors.New("idempotency key is required for this tool")
 )
 
-func guardExecute(tool serviceports.AgentTool, params serviceports.ToolExecuteParams) error {
+func guardExecute(tool agentports.AgentTool, params agentports.ToolExecuteParams) error {
 	if err := guardPreview(tool, &params); err != nil {
 		return err
 	}
@@ -43,7 +43,7 @@ func guardExecute(tool serviceports.AgentTool, params serviceports.ToolExecutePa
 	return nil
 }
 
-func guardPreview(tool serviceports.AgentTool, params *serviceports.ToolExecuteParams) error {
+func guardPreview(tool agentports.AgentTool, params *agentports.ToolExecuteParams) error {
 	if params.Actor == nil {
 		return ErrMissingActor
 	}
@@ -143,7 +143,7 @@ func decodeParam(params map[string]any, key string, out any) error {
 // authenticated actor, never from the model's arguments. guardExecute has
 // already asserted that the actor and the params agree, so there is one place
 // a tool could get this wrong and it is not here.
-func tenantFrom(params serviceports.ToolExecuteParams) pagination.TenantInfo {
+func tenantFrom(params agentports.ToolExecuteParams) pagination.TenantInfo {
 	return pagination.TenantInfo{
 		OrgID:  params.OrganizationID,
 		BuID:   params.BusinessUnitID,
@@ -200,14 +200,14 @@ func targetOf(
 	params map[string]any,
 	key string,
 	resource permission.Resource,
-) (serviceports.ToolTarget, bool) {
+) (agentports.ToolTarget, bool) {
 	raw, _ := params[key].(string)
 	id, err := pulid.Parse(raw)
 	if err != nil || id.IsNil() {
-		return serviceports.ToolTarget{}, false
+		return agentports.ToolTarget{}, false
 	}
 
-	return serviceports.ToolTarget{Resource: resource, ID: id}, true
+	return agentports.ToolTarget{Resource: resource, ID: id}, true
 }
 
 // requireMoney reads an amount the model wrote as a decimal string or a
@@ -323,8 +323,8 @@ func optionalDay(params map[string]any, key string) (day int64, ok bool, err err
 // this way checks a call with exactly the code that decides its write.
 func previewValidates(
 	ctx context.Context,
-	previewer serviceports.ToolPreviewer,
-	params *serviceports.ToolExecuteParams,
+	previewer agentports.ToolPreviewer,
+	params *agentports.ToolExecuteParams,
 ) error {
 	preview, err := previewer.Preview(ctx, *params)
 	if err != nil {

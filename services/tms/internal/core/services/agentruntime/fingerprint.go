@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -60,7 +60,7 @@ type fingerprintToolSet struct {
 	Tools   []fingerprintTool `json:"tools"`
 }
 
-func projectPolicy(policy serviceports.ToolPolicy) *fingerprintPolicy {
+func projectPolicy(policy agentports.ToolPolicy) *fingerprintPolicy {
 	projected := &fingerprintPolicy{
 		Kind:                policy.Kind,
 		Resource:            policy.Resource,

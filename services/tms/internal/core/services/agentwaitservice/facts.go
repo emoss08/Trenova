@@ -6,13 +6,17 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentwaitjobs/agentwaitcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentwait"
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentwaitjobs/agentwaitcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,13 +25,13 @@ import (
 // facts reads the records a wait names, to refuse a wait on something already
 // true and to look again when a timed wait comes due.
 type facts struct {
-	moves       repositories.ShipmentMoveRepository
-	assignments repositories.AssignmentRepository
-	occurrences repositories.DetentionOccurrenceRepository
-	telematics  repositories.TelematicsRepository
-	carriers    repositories.CarrierRepository
-	customers   repositories.CustomerRepository
-	subjects    repositories.AgentSubjectRepository
+	moves       shipmentports.ShipmentMoveRepository
+	assignments shipmentports.AssignmentRepository
+	occurrences detentionports.DetentionOccurrenceRepository
+	telematics  telematicsports.TelematicsRepository
+	carriers    carrierports.CarrierRepository
+	customers   customerports.CustomerRepository
+	subjects    agentports.AgentSubjectRepository
 }
 
 // alreadyTrue refuses a wait on something that has happened: the agent is
@@ -102,7 +106,7 @@ func (f *facts) assess(ctx context.Context, wait *agentwait.Wait, now int64) (*i
 		return &due, nil
 
 	case agentwait.KindHOSDriveBelow:
-		state, err := f.telematics.GetWorkerHOSState(ctx, repositories.GetWorkerHOSStateRequest{
+		state, err := f.telematics.GetWorkerHOSState(ctx, telematicsports.GetWorkerHOSStateRequest{
 			TenantInfo: tenant,
 			WorkerID:   c.WorkerID,
 		})
@@ -166,7 +170,7 @@ func (f *facts) assessParty(
 ) error {
 	switch {
 	case c.ShipmentID.IsNotNil():
-		found, err := f.subjects.Exists(ctx, repositories.AgentSubjectExistsRequest{
+		found, err := f.subjects.Exists(ctx, agentports.AgentSubjectExistsRequest{
 			TenantInfo:  tenant,
 			SubjectType: agent.SubjectShipment,
 			SubjectID:   c.ShipmentID,
@@ -178,14 +182,14 @@ func (f *facts) assessParty(
 			return notFound("shipment")
 		}
 	case c.CarrierID.IsNotNil():
-		if _, err := f.carriers.GetByID(ctx, repositories.GetCarrierByIDRequest{
+		if _, err := f.carriers.GetByID(ctx, carrierports.GetCarrierByIDRequest{
 			ID:         c.CarrierID,
 			TenantInfo: tenant,
 		}); err != nil {
 			return missing(err, "carrier")
 		}
 	default:
-		if _, err := f.customers.GetByID(ctx, repositories.GetCustomerByIDRequest{
+		if _, err := f.customers.GetByID(ctx, customerports.GetCustomerByIDRequest{
 			ID:         c.CustomerID,
 			TenantInfo: tenant,
 		}); err != nil {
@@ -237,7 +241,7 @@ func (f *facts) recheck(
 		return met("Free time ends at %s.", stamp(occurrence.FreeTimeExpiresAt)), nil
 
 	case agentwait.KindHOSDriveBelow:
-		state, err := f.telematics.GetWorkerHOSState(ctx, repositories.GetWorkerHOSStateRequest{
+		state, err := f.telematics.GetWorkerHOSState(ctx, telematicsports.GetWorkerHOSStateRequest{
 			TenantInfo: tenant,
 			WorkerID:   c.WorkerID,
 		})
@@ -284,7 +288,7 @@ func (f *facts) move(
 	tenant pagination.TenantInfo,
 	moveID pulid.ID,
 ) (*shipment.ShipmentMove, error) {
-	move, err := f.moves.GetByID(ctx, &repositories.GetMoveByIDRequest{
+	move, err := f.moves.GetByID(ctx, &shipmentports.GetMoveByIDRequest{
 		MoveID:            moveID,
 		TenantInfo:        tenant,
 		ExpandMoveDetails: true,
@@ -318,7 +322,7 @@ func (f *facts) occurrence(
 	tenant pagination.TenantInfo,
 	id pulid.ID,
 ) (*detention.DetentionOccurrence, error) {
-	occurrence, err := f.occurrences.GetByID(ctx, &repositories.GetDetentionOccurrenceByIDRequest{
+	occurrence, err := f.occurrences.GetByID(ctx, &detentionports.GetDetentionOccurrenceByIDRequest{
 		OccurrenceID: id,
 		TenantInfo:   tenant,
 	})

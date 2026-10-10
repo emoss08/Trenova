@@ -6,9 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/deskcase"
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -35,7 +35,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.CaseChecklistRepository {
+func New(p Params) deskcaseports.CaseChecklistRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.case-checklist-repository")}
 }
 
@@ -51,9 +51,9 @@ func withCustomerName(sq *bun.SelectQuery) *bun.SelectQuery {
 	alias := buncolgen.CustomerTable.Alias
 
 	return sq.
-		ColumnExpr(buncolgen.ChecklistTemplateTable.Alias+".*").
-		ColumnExpr("COALESCE("+cus.Name.Qualified()+", '') AS customer_name").
-		Join("LEFT JOIN "+buncolgen.CustomerTable.Name+" AS "+alias).
+		ColumnExpr(buncolgen.ChecklistTemplateTable.Alias + ".*").
+		ColumnExpr("COALESCE(" + cus.Name.Qualified() + ", '') AS customer_name").
+		Join("LEFT JOIN " + buncolgen.CustomerTable.Name + " AS " + alias).
 		JoinOn(cus.ID.EqColumn(cols.CustomerID)).
 		JoinOn(cus.OrganizationID.EqColumn(cols.OrganizationID)).
 		JoinOn(cus.BusinessUnitID.EqColumn(cols.BusinessUnitID))
@@ -61,7 +61,7 @@ func withCustomerName(sq *bun.SelectQuery) *bun.SelectQuery {
 
 func (r *repository) ListTemplates(
 	ctx context.Context,
-	req *repositories.ListCaseChecklistTemplatesRequest,
+	req *deskcaseports.ListCaseChecklistTemplatesRequest,
 ) ([]*deskcase.ChecklistTemplate, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*deskcase.ChecklistTemplate, error) {
 		cols := buncolgen.ChecklistTemplateColumns
@@ -86,7 +86,7 @@ func (r *repository) ListTemplates(
 
 func (r *repository) TemplateFor(
 	ctx context.Context,
-	req *repositories.GetCaseChecklistTemplateForRequest,
+	req *deskcaseports.GetCaseChecklistTemplateForRequest,
 ) (*deskcase.ChecklistTemplate, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*deskcase.ChecklistTemplate, error) {
 		cols := buncolgen.ChecklistTemplateColumns
@@ -119,7 +119,7 @@ func (r *repository) TemplateFor(
 
 func (r *repository) GetTemplate(
 	ctx context.Context,
-	req *repositories.GetCaseChecklistTemplateRequest,
+	req *deskcaseports.GetCaseChecklistTemplateRequest,
 ) (*deskcase.ChecklistTemplate, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*deskcase.ChecklistTemplate, error) {
 		cols := buncolgen.ChecklistTemplateColumns
@@ -149,7 +149,7 @@ func (r *repository) SaveTemplate(
 			entity.Version = 0
 			if _, err := db.NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
 				if dberror.IsUniqueConstraintViolation(err) {
-					return nil, repositories.ErrCaseChecklistTemplateStale
+					return nil, deskcaseports.ErrCaseChecklistTemplateStale
 				}
 				return nil, fmt.Errorf("insert checklist template: %w", err)
 			}
@@ -180,7 +180,7 @@ func (r *repository) SaveTemplate(
 			return nil, fmt.Errorf("update checklist template: %w", err)
 		}
 		if affected == 0 {
-			return nil, repositories.ErrCaseChecklistTemplateStale
+			return nil, deskcaseports.ErrCaseChecklistTemplateStale
 		}
 
 		return entity, nil
@@ -189,7 +189,7 @@ func (r *repository) SaveTemplate(
 
 func (r *repository) DeleteTemplate(
 	ctx context.Context,
-	req *repositories.GetCaseChecklistTemplateRequest,
+	req *deskcaseports.GetCaseChecklistTemplateRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.ChecklistTemplateColumns
@@ -211,7 +211,7 @@ func (r *repository) DeleteTemplate(
 
 func (r *repository) CountDocumentTypes(
 	ctx context.Context,
-	req *repositories.CountCaseChecklistDocumentTypesRequest,
+	req *deskcaseports.CountCaseChecklistDocumentTypesRequest,
 ) (int, error) {
 	if len(req.IDs) == 0 {
 		return 0, nil
@@ -235,7 +235,7 @@ func (r *repository) CountDocumentTypes(
 
 func (r *repository) ListTicks(
 	ctx context.Context,
-	req *repositories.ListCaseChecklistTicksRequest,
+	req *deskcaseports.ListCaseChecklistTicksRequest,
 ) ([]*deskcase.ChecklistTick, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*deskcase.ChecklistTick, error) {
 		cols := buncolgen.ChecklistTickColumns
@@ -279,7 +279,7 @@ func (r *repository) Tick(ctx context.Context, entity *deskcase.ChecklistTick) e
 	})
 }
 
-func (r *repository) Untick(ctx context.Context, req *repositories.UntickCaseChecklistItemRequest) error {
+func (r *repository) Untick(ctx context.Context, req *deskcaseports.UntickCaseChecklistItemRequest) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.ChecklistTickColumns
 		_, err := r.db.DBForContext(ctx).

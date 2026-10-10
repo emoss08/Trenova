@@ -10,8 +10,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/core/domain/manualjournal"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalreversalports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/manualjournalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -27,7 +31,7 @@ type fakeLedgerAccounts struct{}
 
 func (fakeLedgerAccounts) GetByIDs(
 	_ context.Context,
-	req repositories.GetGLAccountsByIDsRequest,
+	req glaccountports.GetGLAccountsByIDsRequest,
 ) ([]*glaccount.GLAccount, error) {
 	names := map[pulid.ID][2]string{
 		fuelAccountID:    {"6100", "Fuel expense"},
@@ -47,10 +51,10 @@ type fakeManualJournals struct {
 	current   *manualjournal.Request
 	refusal   error
 	guard     *writeGuard
-	created   *serviceports.CreateManualJournalRequest
-	updated   *serviceports.UpdateManualJournalDraftRequest
+	created   *manualjournalports.CreateManualJournalRequest
+	updated   *manualjournalports.UpdateManualJournalDraftRequest
 	submitted bool
-	cancelled *serviceports.CancelManualJournalRequest
+	cancelled *manualjournalports.CancelManualJournalRequest
 	posted    bool
 	approves  bool
 }
@@ -79,17 +83,17 @@ func draftJournal() *manualjournal.Request {
 	return entity
 }
 
-func (f *fakeManualJournals) change(status manualjournal.Status) *serviceports.ManualJournalChange {
+func (f *fakeManualJournals) change(status manualjournal.Status) *manualjournalports.ManualJournalChange {
 	before := *f.current
 	after := *f.current
 	after.Status = status
 
-	return &serviceports.ManualJournalChange{Before: &before, After: &after}
+	return &manualjournalports.ManualJournalChange{Before: &before, After: &after}
 }
 
 func (f *fakeManualJournals) Get(
 	context.Context,
-	*serviceports.GetManualJournalRequest,
+	*manualjournalports.GetManualJournalRequest,
 ) (*manualjournal.Request, error) {
 	copied := *f.current
 
@@ -98,8 +102,8 @@ func (f *fakeManualJournals) Get(
 
 func (f *fakeManualJournals) PlanCreateDraft(
 	_ context.Context,
-	req *serviceports.CreateManualJournalRequest,
-	_ *serviceports.RequestActor,
+	req *manualjournalports.CreateManualJournalRequest,
+	_ *permissionports.RequestActor,
 ) (*manualjournal.Request, error) {
 	if f.refusal != nil {
 		return nil, f.refusal
@@ -125,8 +129,8 @@ func (f *fakeManualJournals) PlanCreateDraft(
 
 func (f *fakeManualJournals) CreateDraft(
 	ctx context.Context,
-	req *serviceports.CreateManualJournalRequest,
-	actor *serviceports.RequestActor,
+	req *manualjournalports.CreateManualJournalRequest,
+	actor *permissionports.RequestActor,
 ) (*manualjournal.Request, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -144,9 +148,9 @@ func (f *fakeManualJournals) CreateDraft(
 
 func (f *fakeManualJournals) PlanUpdateDraft(
 	_ context.Context,
-	req *serviceports.UpdateManualJournalDraftRequest,
-	_ *serviceports.RequestActor,
-) (*serviceports.ManualJournalChange, error) {
+	req *manualjournalports.UpdateManualJournalDraftRequest,
+	_ *permissionports.RequestActor,
+) (*manualjournalports.ManualJournalChange, error) {
 	change := f.change(manualjournal.StatusDraft)
 	change.After.Description = req.Description
 	change.After.Lines = nil
@@ -165,8 +169,8 @@ func (f *fakeManualJournals) PlanUpdateDraft(
 
 func (f *fakeManualJournals) UpdateDraft(
 	_ context.Context,
-	req *serviceports.UpdateManualJournalDraftRequest,
-	_ *serviceports.RequestActor,
+	req *manualjournalports.UpdateManualJournalDraftRequest,
+	_ *permissionports.RequestActor,
 ) (*manualjournal.Request, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -178,9 +182,9 @@ func (f *fakeManualJournals) UpdateDraft(
 
 func (f *fakeManualJournals) PlanSubmit(
 	context.Context,
-	*serviceports.GetManualJournalRequest,
-	*serviceports.RequestActor,
-) (*serviceports.ManualJournalChange, error) {
+	*manualjournalports.GetManualJournalRequest,
+	*permissionports.RequestActor,
+) (*manualjournalports.ManualJournalChange, error) {
 	if f.approves {
 		return f.change(manualjournal.StatusApproved), nil
 	}
@@ -190,8 +194,8 @@ func (f *fakeManualJournals) PlanSubmit(
 
 func (f *fakeManualJournals) Submit(
 	context.Context,
-	*serviceports.GetManualJournalRequest,
-	*serviceports.RequestActor,
+	*manualjournalports.GetManualJournalRequest,
+	*permissionports.RequestActor,
 ) (*manualjournal.Request, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -203,9 +207,9 @@ func (f *fakeManualJournals) Submit(
 
 func (f *fakeManualJournals) PlanCancel(
 	context.Context,
-	*serviceports.CancelManualJournalRequest,
-	*serviceports.RequestActor,
-) (*serviceports.ManualJournalChange, error) {
+	*manualjournalports.CancelManualJournalRequest,
+	*permissionports.RequestActor,
+) (*manualjournalports.ManualJournalChange, error) {
 	if f.refusal != nil {
 		return nil, f.refusal
 	}
@@ -215,8 +219,8 @@ func (f *fakeManualJournals) PlanCancel(
 
 func (f *fakeManualJournals) Cancel(
 	_ context.Context,
-	req *serviceports.CancelManualJournalRequest,
-	_ *serviceports.RequestActor,
+	req *manualjournalports.CancelManualJournalRequest,
+	_ *permissionports.RequestActor,
 ) (*manualjournal.Request, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -228,18 +232,18 @@ func (f *fakeManualJournals) Cancel(
 
 func (f *fakeManualJournals) PlanPost(
 	context.Context,
-	*serviceports.GetManualJournalRequest,
-	*serviceports.RequestActor,
-) (*serviceports.ManualJournalChange, error) {
+	*manualjournalports.GetManualJournalRequest,
+	*permissionports.RequestActor,
+) (*manualjournalports.ManualJournalChange, error) {
 	if f.refusal != nil {
 		return nil, f.refusal
 	}
 	change := f.change(manualjournal.StatusPosted)
-	change.Journal = &serviceports.JournalPreview{
+	change.Journal = &kernelports.JournalPreview{
 		AccountingDate: f.current.AccountingDate + 86_400,
 		FiscalPeriodID: pulid.MustNew("fp_"),
 		EntryStatus:    "Posted",
-		Lines: []serviceports.JournalLinePreview{
+		Lines: []kernelports.JournalLinePreview{
 			{GLAccountID: fuelAccountID, DebitMinor: 2500},
 			{GLAccountID: accruedAccountID, CreditMinor: 2500},
 		},
@@ -250,8 +254,8 @@ func (f *fakeManualJournals) PlanPost(
 
 func (f *fakeManualJournals) Post(
 	context.Context,
-	*serviceports.GetManualJournalRequest,
-	*serviceports.RequestActor,
+	*manualjournalports.GetManualJournalRequest,
+	*permissionports.RequestActor,
 ) (*manualjournal.Request, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -289,7 +293,7 @@ func TestDraftManualJournal_PreviewNamesTheAccountsAndDraftsWithoutPosting(t *te
 	params := executeParams(draftParams())
 
 	preview := previewWithoutWrites(t, journals.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 
 	assert.Contains(t, preview.Summary, "Would draft the manual journal \"Accrue September fuel\"")
@@ -303,7 +307,7 @@ func TestDraftManualJournal_PreviewNamesTheAccountsAndDraftsWithoutPosting(t *te
 	assert.Equal(t, "2100 Accrued liabilities (credit)", change.Money.Lines[1].Label)
 	assert.True(t, change.Money.TotalAfter.Decimal.IsZero())
 
-	result, err := tool.(serviceports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	require.NotNil(t, journals.created)
 	assert.Equal(t, int64(2500), journals.created.Lines[0].DebitAmount)
@@ -342,7 +346,7 @@ func TestDraftManualJournal_RefusesLinesItCannotBook(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			require.Error(t, tool.(serviceports.ToolValidator).Validate(
+			require.Error(t, tool.(agentports.ToolValidator).Validate(
 				t.Context(),
 				executeParams(raw),
 			))
@@ -361,13 +365,13 @@ func TestReviseManualJournalDraft_KeepsWhatItIsNotGiven(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, journals.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would revise draft manual journal MJR-7")
 	assert.Equal(t, "Accrue fuel for September",
 		fieldByPath(t, previewChange(t, preview, 0), "description").After)
 
-	_, err := tool.(serviceports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	_, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	require.NotNil(t, journals.updated)
 	assert.Equal(t, "Accrue fuel for September", journals.updated.Description)
@@ -375,7 +379,7 @@ func TestReviseManualJournalDraft_KeepsWhatItIsNotGiven(t *testing.T) {
 	require.Len(t, journals.updated.Lines, 2)
 	assert.Equal(t, fuelAccountID, journals.updated.Lines[0].GLAccountID)
 
-	target, ok := tool.(serviceports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, permission.ResourceManualJournal, target.Resource)
 }
@@ -390,7 +394,7 @@ func TestSubmitManualJournal_AnAgentNeverApprovesByTheBackDoor(t *testing.T) {
 	require.ErrorIs(t, tool.Execute(t.Context(), agentParamsFor(raw)), errAgentCannotApproveJournal)
 	assert.False(t, journals.submitted)
 
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), executeParams(raw))
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), executeParams(raw))
 	require.NoError(t, err)
 	assert.Contains(t, preview.Summary, "approval is turned off")
 
@@ -407,7 +411,7 @@ func TestSubmitManualJournal_AnAgentSubmitsForApproval(t *testing.T) {
 	params := agentParamsFor(map[string]any{paramManualJournalID: journals.current.ID.String()})
 
 	preview := previewWithoutWrites(t, journals.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would submit manual journal MJR-7 for approval")
 	assert.Equal(t, "PendingApproval", fieldByPath(t, previewChange(t, preview, 0), "status").After)
@@ -422,7 +426,7 @@ func TestCancelManualJournal_NeedsAReason(t *testing.T) {
 	journals := &fakeManualJournals{current: draftJournal(), guard: &writeGuard{}}
 	tool := newCancelManualJournalTool(journals, fakeLedgerAccounts{})
 
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), executeParams(
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), executeParams(
 		map[string]any{paramManualJournalID: journals.current.ID.String()},
 	)))
 
@@ -431,7 +435,7 @@ func TestCancelManualJournal_NeedsAReason(t *testing.T) {
 		paramReason:          "Entered twice",
 	})
 	preview := previewWithoutWrites(t, journals.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would cancel manual journal MJR-7 (now Draft)")
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -449,7 +453,7 @@ func TestPostManualJournal_OnlyAPersonPostsAndThePreviewShowsTheEntry(t *testing
 	params := executeParams(map[string]any{paramManualJournalID: approved.ID.String()})
 
 	preview := previewWithoutWrites(t, journals.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would post manual journal MJR-7 to the general ledger")
 	assert.Contains(t, preview.Summary, "falls in a closed period")
@@ -486,20 +490,20 @@ func TestPostManualJournal_ARefusalIsAWouldFail(t *testing.T) {
 	tool := newPostManualJournalTool(journals, fakeLedgerAccounts{})
 	params := executeParams(map[string]any{paramManualJournalID: journals.current.ID.String()})
 
-	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	requireWarning(t, preview, agent.PreviewWarningWouldFail)
 }
 
 type fakeJournalReversals struct {
-	change    *serviceports.JournalReversalChange
+	change    *journalreversalports.JournalReversalChange
 	guard     *writeGuard
-	created   *serviceports.CreateJournalReversalRequest
-	cancelled *serviceports.CancelJournalReversalRequest
+	created   *journalreversalports.CreateJournalReversalRequest
+	cancelled *journalreversalports.CancelJournalReversalRequest
 	posted    bool
 }
 
-func reversalChange(from, to journalreversal.Status) *serviceports.JournalReversalChange {
+func reversalChange(from, to journalreversal.Status) *journalreversalports.JournalReversalChange {
 	entry := &journalentry.JournalEntry{
 		ID:          pulid.MustNew("je_"),
 		EntryNumber: "JE-104",
@@ -519,16 +523,16 @@ func reversalChange(from, to journalreversal.Status) *serviceports.JournalRevers
 	after := *before
 	after.Status = to
 
-	return &serviceports.JournalReversalChange{
+	return &journalreversalports.JournalReversalChange{
 		Before:        before,
 		After:         &after,
 		OriginalEntry: entry,
 		CurrencyCode:  "USD",
-		Journal: &serviceports.JournalPreview{
+		Journal: &kernelports.JournalPreview{
 			AccountingDate: before.RequestedAccountingDate,
 			FiscalPeriodID: before.ResolvedFiscalPeriodID,
 			EntryStatus:    "Posted",
-			Lines: []serviceports.JournalLinePreview{
+			Lines: []kernelports.JournalLinePreview{
 				{GLAccountID: fuelAccountID, CreditMinor: 2500},
 				{GLAccountID: accruedAccountID, DebitMinor: 2500},
 			},
@@ -538,9 +542,9 @@ func reversalChange(from, to journalreversal.Status) *serviceports.JournalRevers
 
 func (f *fakeJournalReversals) PlanCreate(
 	context.Context,
-	*serviceports.CreateJournalReversalRequest,
-	*serviceports.RequestActor,
-) (*serviceports.JournalReversalChange, error) {
+	*journalreversalports.CreateJournalReversalRequest,
+	*permissionports.RequestActor,
+) (*journalreversalports.JournalReversalChange, error) {
 	change := *f.change
 	change.Before = nil
 	after := *f.change.After
@@ -552,8 +556,8 @@ func (f *fakeJournalReversals) PlanCreate(
 
 func (f *fakeJournalReversals) Create(
 	_ context.Context,
-	req *serviceports.CreateJournalReversalRequest,
-	_ *serviceports.RequestActor,
+	req *journalreversalports.CreateJournalReversalRequest,
+	_ *permissionports.RequestActor,
 ) (*journalreversal.Reversal, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -565,16 +569,16 @@ func (f *fakeJournalReversals) Create(
 
 func (f *fakeJournalReversals) PlanCancel(
 	context.Context,
-	*serviceports.CancelJournalReversalRequest,
-	*serviceports.RequestActor,
-) (*serviceports.JournalReversalChange, error) {
+	*journalreversalports.CancelJournalReversalRequest,
+	*permissionports.RequestActor,
+) (*journalreversalports.JournalReversalChange, error) {
 	return f.change, nil
 }
 
 func (f *fakeJournalReversals) Cancel(
 	_ context.Context,
-	req *serviceports.CancelJournalReversalRequest,
-	_ *serviceports.RequestActor,
+	req *journalreversalports.CancelJournalReversalRequest,
+	_ *permissionports.RequestActor,
 ) (*journalreversal.Reversal, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -586,16 +590,16 @@ func (f *fakeJournalReversals) Cancel(
 
 func (f *fakeJournalReversals) PlanPost(
 	context.Context,
-	*serviceports.GetJournalReversalRequest,
-	*serviceports.RequestActor,
-) (*serviceports.JournalReversalChange, error) {
+	*journalreversalports.GetJournalReversalRequest,
+	*permissionports.RequestActor,
+) (*journalreversalports.JournalReversalChange, error) {
 	return f.change, nil
 }
 
 func (f *fakeJournalReversals) Post(
 	context.Context,
-	*serviceports.GetJournalReversalRequest,
-	*serviceports.RequestActor,
+	*journalreversalports.GetJournalReversalRequest,
+	*permissionports.RequestActor,
 ) (*journalreversal.Reversal, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -621,7 +625,7 @@ func TestRequestJournalReversal_OnlyAPersonRequestsOne(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, reversals.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "Would request a reversal of journal entry JE-104")
 	assert.Contains(t, preview.Summary, "approved at once")
@@ -630,15 +634,15 @@ func TestRequestJournalReversal_OnlyAPersonRequestsOne(t *testing.T) {
 	require.NotNil(t, change.Money)
 	assert.Equal(t, "6100 Fuel expense (credit)", change.Money.Lines[0].Label)
 
-	_, err := tool.(serviceports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	_, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.ErrorIs(t, err, ErrNeedsAPersonsApproval)
 	params.ProposalID = pulid.MustNew("ap_")
-	result, err := tool.(serviceports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	require.NotNil(t, reversals.created)
 	assert.Equal(t, "requested", result.Action)
 
-	target, ok := tool.(serviceports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, permission.ResourceJournalEntry, target.Resource)
 	assert.Equal(t, permission.OpCreate, tool.Policy().Operation)
@@ -662,7 +666,7 @@ func TestCancelJournalReversal_KeepsTheOriginalEntry(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, reversals.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Contains(t, preview.Summary, "the original entry stands as posted")
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -683,7 +687,7 @@ func TestPostJournalReversal_ShowsTheEntryAndTheOriginalReversed(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, reversals.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	require.Len(t, preview.Changes, 3)
 	assert.Equal(t, permission.ResourceJournalEntry, previewChange(t, preview, 1).Resource)

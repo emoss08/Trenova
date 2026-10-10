@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
@@ -29,7 +29,7 @@ const outOfServiceCount = "COUNT(*) FILTER (WHERE wsev.out_of_service" +
 // disagree.
 func (r *repository) rosterScope(
 	ctx context.Context,
-	req *repositories.FleetSafetyRequest,
+	req *workerports.FleetSafetyRequest,
 ) *bun.SelectQuery {
 	q := r.db.DBForContext(ctx).
 		NewSelect().
@@ -51,7 +51,7 @@ func (r *repository) rosterScope(
 // in the requested terminal.
 func (r *repository) eventScope(
 	ctx context.Context,
-	req *repositories.FleetSafetyRequest,
+	req *workerports.FleetSafetyRequest,
 	since int64,
 ) *bun.SelectQuery {
 	q := r.db.DBForContext(ctx).
@@ -72,10 +72,10 @@ func (r *repository) eventScope(
 
 func (r *repository) FleetRatings(
 	ctx context.Context,
-	req *repositories.FleetSafetyRequest,
-) ([]repositories.FleetSafetyRatingRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.FleetSafetyRatingRow, error) {
-		rows := make([]repositories.FleetSafetyRatingRow, 0, 4)
+	req *workerports.FleetSafetyRequest,
+) ([]workerports.FleetSafetyRatingRow, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.FleetSafetyRatingRow, error) {
+		rows := make([]workerports.FleetSafetyRatingRow, 0, 4)
 		if err := r.rosterScope(ctx, req).
 			ColumnExpr("wrkp.safety_rating AS rating").
 			ColumnExpr("COUNT(*) AS workers").
@@ -91,10 +91,10 @@ func (r *repository) FleetRatings(
 
 func (r *repository) FleetTerminals(
 	ctx context.Context,
-	req *repositories.FleetSafetyRequest,
-) ([]repositories.FleetSafetyTerminalRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.FleetSafetyTerminalRow, error) {
-		rows := make([]repositories.FleetSafetyTerminalRow, 0, 8)
+	req *workerports.FleetSafetyRequest,
+) ([]workerports.FleetSafetyTerminalRow, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.FleetSafetyTerminalRow, error) {
+		rows := make([]workerports.FleetSafetyTerminalRow, 0, 8)
 		if err := r.rosterScope(ctx, req).
 			Join("LEFT JOIN fleet_codes AS fc").
 			JoinOn("fc.id = wrk.fleet_code_id").
@@ -120,11 +120,11 @@ func (r *repository) FleetTerminals(
 
 func (r *repository) FleetKinds(
 	ctx context.Context,
-	req *repositories.FleetSafetyRequest,
-) ([]repositories.FleetSafetyKindRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.FleetSafetyKindRow, error) {
+	req *workerports.FleetSafetyRequest,
+) ([]workerports.FleetSafetyKindRow, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.FleetSafetyKindRow, error) {
 		since := timeutils.AddMonthsUTC(req.Now, -req.WindowMonths)
-		rows := make([]repositories.FleetSafetyKindRow, 0, 5)
+		rows := make([]workerports.FleetSafetyKindRow, 0, 5)
 		if err := r.eventScope(ctx, req, since).
 			ColumnExpr("wsev.kind AS kind").
 			ColumnExpr("COUNT(*) AS events").
@@ -154,11 +154,11 @@ func csaBucketExpr(now int64) string {
 
 func (r *repository) FleetBasics(
 	ctx context.Context,
-	req *repositories.FleetSafetyRequest,
-) ([]repositories.FleetSafetyBasicRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.FleetSafetyBasicRow, error) {
+	req *workerports.FleetSafetyRequest,
+) ([]workerports.FleetSafetyBasicRow, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.FleetSafetyBasicRow, error) {
 		since := timeutils.AddMonthsUTC(req.Now, -worker.SafetyPointsRetentionMonths)
-		rows := make([]repositories.FleetSafetyBasicRow, 0, 16)
+		rows := make([]workerports.FleetSafetyBasicRow, 0, 16)
 		bucket := csaBucketExpr(req.Now)
 
 		if err := r.eventScope(ctx, req, since).
@@ -185,11 +185,11 @@ func (r *repository) FleetBasics(
 // blank scorecard, which is worse than an approximate one.
 func (r *repository) FleetEventBasics(
 	ctx context.Context,
-	req *repositories.FleetSafetyRequest,
-) ([]repositories.FleetSafetyEventBasicRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.FleetSafetyEventBasicRow, error) {
+	req *workerports.FleetSafetyRequest,
+) ([]workerports.FleetSafetyEventBasicRow, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.FleetSafetyEventBasicRow, error) {
 		since := timeutils.AddMonthsUTC(req.Now, -worker.SafetyPointsRetentionMonths)
-		rows := make([]repositories.FleetSafetyEventBasicRow, 0, 16)
+		rows := make([]workerports.FleetSafetyEventBasicRow, 0, 16)
 		bucket := csaBucketExpr(req.Now)
 
 		if err := r.eventScope(ctx, req, since).
@@ -218,11 +218,11 @@ func (r *repository) FleetEventBasics(
 
 func (r *repository) FleetTrend(
 	ctx context.Context,
-	req *repositories.FleetSafetyRequest,
-) ([]repositories.FleetSafetyTrendRow, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]repositories.FleetSafetyTrendRow, error) {
+	req *workerports.FleetSafetyRequest,
+) ([]workerports.FleetSafetyTrendRow, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]workerports.FleetSafetyTrendRow, error) {
 		since := timeutils.AddMonthsUTC(req.Now, -req.WindowMonths)
-		rows := make([]repositories.FleetSafetyTrendRow, 0, 24)
+		rows := make([]workerports.FleetSafetyTrendRow, 0, 24)
 
 		// Bucketing by UTC month in SQL keeps the trend a single scan. Months are
 		// what a safety meeting talks in, and the day boundary an org's timezone
@@ -253,11 +253,11 @@ func (r *repository) FleetTrend(
 
 func (r *repository) FleetRanking(
 	ctx context.Context,
-	req *repositories.FleetSafetyRequest,
-) ([]repositories.FleetSafetyRankRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.FleetSafetyRankRow, error) {
+	req *workerports.FleetSafetyRequest,
+) ([]workerports.FleetSafetyRankRow, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.FleetSafetyRankRow, error) {
 		since := timeutils.AddMonthsUTC(req.Now, -req.WindowMonths)
-		rows := make([]repositories.FleetSafetyRankRow, 0, 32)
+		rows := make([]workerports.FleetSafetyRankRow, 0, 32)
 
 		// Active points are not cached on the profile — they roll off on a date
 		// rather than on a write — so they are summed here, once, over the same

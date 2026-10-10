@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
@@ -123,7 +123,7 @@ func (a *Activities) CheckOrganizationExtractionDriftActivity(
 	}
 
 	tenant := input.TenantInfo()
-	notified, err := a.drift.CheckDrift(ctx, &services.ExtractionDriftCheckRequest{
+	notified, err := a.drift.CheckDrift(ctx, &extractionevalports.ExtractionDriftCheckRequest{
 		TenantInfo: tenant,
 		Now:        input.Now,
 	})

@@ -8,16 +8,17 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 var (
-	_ serviceports.ToolPreviewer = (*updateTractorStatusTool)(nil)
-	_ serviceports.ToolPreviewer = (*updateTrailerStatusTool)(nil)
+	_ agentports.ToolPreviewer = (*updateTractorStatusTool)(nil)
+	_ agentports.ToolPreviewer = (*updateTrailerStatusTool)(nil)
 )
 
 type equipmentKind[T any] struct {
@@ -109,7 +110,7 @@ func (k equipmentKind[T]) preview(
 
 func (t *updateTractorStatusTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	if err := guardPreview(t, &params); err != nil {
 		return nil, err
@@ -120,7 +121,7 @@ func (t *updateTractorStatusTool) Preview(
 		return nil, err
 	}
 
-	units, err := t.tractors.GetByIDs(ctx, repositories.GetTractorsByIDsRequest{
+	units, err := t.tractors.GetByIDs(ctx, tractorports.GetTractorsByIDsRequest{
 		TenantInfo: tenantFrom(params),
 		TractorIDs: ids,
 	})
@@ -133,7 +134,7 @@ func (t *updateTractorStatusTool) Preview(
 
 func (t *updateTrailerStatusTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	if err := guardPreview(t, &params); err != nil {
 		return nil, err
@@ -144,7 +145,7 @@ func (t *updateTrailerStatusTool) Preview(
 		return nil, err
 	}
 
-	units, err := t.trailers.GetByIDs(ctx, repositories.GetTrailersByIDsRequest{
+	units, err := t.trailers.GetByIDs(ctx, trailerports.GetTrailersByIDsRequest{
 		TenantInfo: tenantFrom(params),
 		TrailerIDs: ids,
 	})

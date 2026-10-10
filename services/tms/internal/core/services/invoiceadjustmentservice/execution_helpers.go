@@ -9,10 +9,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/invoiceledger"
 	"github.com/emoss08/trenova/internal/core/services/journalposting"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -27,7 +28,7 @@ func (s *Service) createReplacementDraftInvoice(
 	adjustment *invoiceadjustment.InvoiceAdjustment,
 	sourceInvoice *invoice.Invoice,
 	lines []*invoice.InvoiceLine,
-	preview *servicesports.InvoiceAdjustmentPreview,
+	preview *invoiceadjustmentports.InvoiceAdjustmentPreview,
 ) (*invoice.Invoice, error) {
 	entity := &invoice.Invoice{
 		OrganizationID:     sourceInvoice.OrganizationID,
@@ -90,8 +91,8 @@ func (s *Service) createWriteOffJournalEntry(
 	ctx context.Context,
 	adjustment *invoiceadjustment.InvoiceAdjustment,
 	sourceInvoice *invoice.Invoice,
-	preview *servicesports.InvoiceAdjustmentPreview,
-	actor *servicesports.RequestActor,
+	preview *invoiceadjustmentports.InvoiceAdjustmentPreview,
+	actor *permissionports.RequestActor,
 ) (pulid.ID, error) {
 	accountingControl, err := s.accountingRepo.GetByOrgID(ctx, adjustment.OrganizationID)
 	if err != nil {
@@ -203,7 +204,7 @@ func (s *Service) postCreditMemoLedger(
 	adjustment *invoiceadjustment.InvoiceAdjustment,
 	creditMemo *invoice.Invoice,
 	sourceInvoice *invoice.Invoice,
-	actor *servicesports.RequestActor,
+	actor *permissionports.RequestActor,
 ) error {
 	result, err := s.creditMemoLedger().Post(
 		ctx,

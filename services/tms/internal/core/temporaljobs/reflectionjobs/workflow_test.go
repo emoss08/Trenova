@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -31,12 +31,12 @@ func tenant() pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: pulid.ID("org_a"), BuID: pulid.ID("bu_a")}
 }
 
-func readyPlan() *serviceports.ReflectionPlan {
-	return &serviceports.ReflectionPlan{
+func readyPlan() *agentports.ReflectionPlan {
+	return &agentports.ReflectionPlan{
 		TenantInfo:   tenant(),
 		ReflectionID: pulid.ID("arfl_a"),
 		Subject:      agent.ReflectionSubjectThread,
-		Request:      &serviceports.StructuredCompletionRequest{TenantInfo: tenant()},
+		Request:      &agentports.StructuredCompletionRequest{TenantInfo: tenant()},
 	}
 }
 
@@ -52,16 +52,16 @@ func TestThreadReflectionWorkflow_WaitsForTheConversationToGoQuiet(t *testing.T)
 	}, 6*time.Minute)
 
 	env.OnActivity(a.PrepareThreadReflectionActivity, mock.Anything, mock.Anything).
-		Return(func(context.Context, *serviceports.ReflectOnThreadRequest) (*serviceports.ReflectionPlan, error) {
+		Return(func(context.Context, *agentports.ReflectOnThreadRequest) (*agentports.ReflectionPlan, error) {
 			preparedAt = env.Now()
 			return readyPlan(), nil
 		}).
 		Once()
 	env.OnActivity(a.ReflectionModelActivity, mock.Anything, mock.Anything).
-		Return(&serviceports.StructuredCompletionResult{Text: `{"lessons":[],"notes":""}`}, nil).
+		Return(&agentports.StructuredCompletionResult{Text: `{"lessons":[],"notes":""}`}, nil).
 		Once()
 	env.OnActivity(a.FinishReflectionActivity, mock.Anything, mock.Anything).
-		Return(&serviceports.ReflectionOutcome{Kept: 1}, nil).Once()
+		Return(&agentports.ReflectionOutcome{Kept: 1}, nil).Once()
 
 	started := env.Now()
 	env.ExecuteWorkflow(ThreadReflectionWorkflow, &ThreadReflectionInput{
@@ -95,11 +95,11 @@ func TestThreadReflectionWorkflow_ABusyConversationIsReadWithinTheLongestWait(t 
 	}
 
 	env.OnActivity(a.PrepareThreadReflectionActivity, mock.Anything, mock.Anything).
-		Return(func(context.Context, *serviceports.ReflectOnThreadRequest) (*serviceports.ReflectionPlan, error) {
+		Return(func(context.Context, *agentports.ReflectOnThreadRequest) (*agentports.ReflectionPlan, error) {
 			if preparedAt.IsZero() {
 				preparedAt = env.Now()
 			}
-			return &serviceports.ReflectionPlan{TenantInfo: tenant()}, nil
+			return &agentports.ReflectionPlan{TenantInfo: tenant()}, nil
 		})
 
 	started := env.Now()
@@ -124,7 +124,7 @@ func TestLookBack_AFailedModelCallIsRecordedAndNothingIsKept(t *testing.T) {
 	env.OnActivity(a.ReflectionModelActivity, mock.Anything, mock.Anything).
 		Return(nil, temporal.NewNonRetryableApplicationError("no provider", "ModelRefused", errors.New("no provider")))
 	env.OnActivity(a.FailReflectionActivity, mock.Anything, mock.MatchedBy(
-		func(req *serviceports.FailReflectionRequest) bool {
+		func(req *agentports.FailReflectionRequest) bool {
 			return req.Plan.ReflectionID == pulid.ID("arfl_a") && req.Message != ""
 		},
 	)).Return(nil).Once()
@@ -151,7 +151,7 @@ func TestLookBack_APlanWithNothingToAskSkipsTheModel(t *testing.T) {
 	var a *Activities
 
 	env.OnActivity(a.PrepareRunReflectionActivity, mock.Anything, mock.Anything).
-		Return(&serviceports.ReflectionPlan{TenantInfo: tenant(), ReflectionID: pulid.ID("arfl_a")}, nil).
+		Return(&agentports.ReflectionPlan{TenantInfo: tenant(), ReflectionID: pulid.ID("arfl_a")}, nil).
 		Once()
 
 	env.ExecuteWorkflow(RunReflectionWorkflow, &RunReflectionInput{

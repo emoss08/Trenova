@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/apikey"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -30,11 +30,11 @@ func (s *Service) recordChange(ctx context.Context, change *keyChange) {
 		actor.UserID = change.actorID
 	}
 
-	s.auditor.RecordChange(ctx, &services.SecurityChange{
+	s.auditor.RecordChange(ctx, &permissionports.SecurityChange{
 		Resource:       permission.ResourceAPIKey,
 		ResourceID:     change.key.ID.String(),
 		Operation:      change.operation,
-		Actor:          services.UserActor(actor).AuditActor(),
+		Actor:          permissionports.UserActor(actor).AuditActor(),
 		OrganizationID: change.key.OrganizationID,
 		BusinessUnitID: change.key.BusinessUnitID,
 		Before:         change.before,

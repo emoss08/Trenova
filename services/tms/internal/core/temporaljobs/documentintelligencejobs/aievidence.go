@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	services "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/shopspring/decimal"
@@ -18,14 +18,14 @@ const (
 var moneyNoise = strings.NewReplacer("$", "", ",", "", "%", "", " ", "", " ", "")
 
 func withFieldEvidence(
-	result *services.AIExtractResult,
-	pages []services.AIDocumentPage,
-) *services.AIExtractResult {
+	result *documentaiextractionports.AIExtractResult,
+	pages []documentaiextractionports.AIDocumentPage,
+) *documentaiextractionports.AIExtractResult {
 	if result == nil || len(pages) == 0 || len(result.Fields) == 0 {
 		return result
 	}
 
-	fields := make(map[string]services.AIDocumentField, len(result.Fields))
+	fields := make(map[string]documentaiextractionports.AIDocumentField, len(result.Fields))
 	for key, field := range result.Fields {
 		if strings.TrimSpace(field.EvidenceExcerpt) == "" {
 			page, excerpt := locateEvidence(field.Value, field.PageNumber, pages)
@@ -45,7 +45,7 @@ func withFieldEvidence(
 func locateEvidence(
 	value string,
 	preferredPage int,
-	pages []services.AIDocumentPage,
+	pages []documentaiextractionports.AIDocumentPage,
 ) (foundPage int, foundExcerpt string) {
 	needles := evidenceNeedles(value)
 	if len(needles) == 0 {
@@ -71,12 +71,12 @@ func locateEvidence(
 	return 0, ""
 }
 
-func pagesPreferring(pageNumber int, pages []services.AIDocumentPage) []services.AIDocumentPage {
+func pagesPreferring(pageNumber int, pages []documentaiextractionports.AIDocumentPage) []documentaiextractionports.AIDocumentPage {
 	if pageNumber <= 0 {
 		return pages
 	}
 
-	ordered := make([]services.AIDocumentPage, 0, len(pages))
+	ordered := make([]documentaiextractionports.AIDocumentPage, 0, len(pages))
 	for _, page := range pages {
 		if page.PageNumber == pageNumber {
 			ordered = append(ordered, page)

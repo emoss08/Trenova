@@ -10,10 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -35,7 +35,7 @@ type auditEntry struct {
 }
 
 func (s *Service) logAudit(entry *auditEntry) {
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       entry.resource,
 		ResourceID:     entry.resourceID.String(),
 		Operation:      permission.OpUpdate,
@@ -54,12 +54,12 @@ func (s *Service) Summary(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	integrationType integration.Type,
-) (*services.AccountingSyncSummary, error) {
-	summary := &services.AccountingSyncSummary{
+) (*accountingsyncports.AccountingSyncSummary, error) {
+	summary := &accountingsyncports.AccountingSyncSummary{
 		IntegrationType: integrationType,
 		ProviderName:    accountingsync.ProviderName(integrationType),
-		Counts:          []repositories.AccountingSyncStatusCount{},
-		Attention:       []repositories.AccountingSyncAttentionGroup{},
+		Counts:          []accountingsyncports.AccountingSyncStatusCount{},
+		Attention:       []accountingsyncports.AccountingSyncAttentionGroup{},
 	}
 	conn, err := s.connectionFor(ctx, tenantInfo, integrationType)
 	if err != nil {
@@ -69,7 +69,7 @@ func (s *Service) Summary(
 		return nil, err
 	}
 	summary.Connection = conn
-	ref := repositories.AccountingSyncConnectionRequest{
+	ref := accountingsyncports.AccountingSyncConnectionRequest{
 		TenantInfo:   tenantInfo,
 		ConnectionID: conn.ID,
 	}
@@ -79,7 +79,7 @@ func (s *Service) Summary(
 	}
 	if summary.Attention, err = s.records.ListAttention(
 		ctx,
-		repositories.ListAccountingSyncAttentionRequest{
+		accountingsyncports.ListAccountingSyncAttentionRequest{
 			TenantInfo:   tenantInfo,
 			ConnectionID: conn.ID,
 			Limit:        attentionGroups,
@@ -99,7 +99,7 @@ func (s *Service) Summary(
 
 func (s *Service) ListRecords(
 	ctx context.Context,
-	req *services.ListAccountingSyncRecordsRequest,
+	req *accountingsyncports.ListAccountingSyncRecordsRequest,
 ) (*pagination.CursorListResult[*accountingsync.AccountingSyncRecord], error) {
 	conn, err := s.connectionFor(ctx, req.TenantInfo, req.IntegrationType)
 	if err != nil {
@@ -110,7 +110,7 @@ func (s *Service) ListRecords(
 		filter = &pagination.QueryOptions{}
 	}
 	filter.TenantInfo = req.TenantInfo
-	return s.records.ListConnection(ctx, &repositories.ListAccountingSyncRecordsConnectionRequest{
+	return s.records.ListConnection(ctx, &accountingsyncports.ListAccountingSyncRecordsConnectionRequest{
 		Filter:          filter,
 		Cursor:          req.Cursor,
 		ConnectionID:    conn.ID,
@@ -127,7 +127,7 @@ func (s *Service) GetRecord(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*accountingsync.AccountingSyncRecord, error) {
-	return s.records.GetByID(ctx, repositories.GetAccountingSyncRecordRequest{
+	return s.records.GetByID(ctx, accountingsyncports.GetAccountingSyncRecordRequest{
 		TenantInfo: tenantInfo,
 		ID:         id,
 	})
@@ -141,7 +141,7 @@ func (s *Service) ListAttempts(
 	if _, err := s.GetRecord(ctx, tenantInfo, recordID); err != nil {
 		return nil, err
 	}
-	return s.records.ListAttempts(ctx, repositories.ListAccountingSyncAttemptsRequest{
+	return s.records.ListAttempts(ctx, accountingsyncports.ListAccountingSyncAttemptsRequest{
 		TenantInfo:   tenantInfo,
 		SyncRecordID: recordID,
 		Limit:        maxAttemptsListed,
@@ -177,8 +177,8 @@ func (s *Service) ObjectStates(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	objectIDs []pulid.ID,
-) (map[pulid.ID]*services.AccountingSyncObjectState, error) {
-	states := make(map[pulid.ID]*services.AccountingSyncObjectState, len(objectIDs))
+) (map[pulid.ID]*accountingsyncports.AccountingSyncObjectState, error) {
+	states := make(map[pulid.ID]*accountingsyncports.AccountingSyncObjectState, len(objectIDs))
 	if len(objectIDs) == 0 {
 		return states, nil
 	}
@@ -202,7 +202,7 @@ func (s *Service) ObjectStates(
 
 	records, err := s.records.ListByObjects(
 		ctx,
-		&repositories.ListAccountingSyncRecordsByObjectsRequest{
+		&accountingsyncports.ListAccountingSyncRecordsByObjectsRequest{
 			TenantInfo: tenantInfo,
 			ObjectIDs:  objectIDs,
 		},
@@ -219,7 +219,7 @@ func (s *Service) ObjectStates(
 		if seen && !outranks(record, current.Record) {
 			continue
 		}
-		states[record.ObjectID] = &services.AccountingSyncObjectState{
+		states[record.ObjectID] = &accountingsyncports.AccountingSyncObjectState{
 			ObjectType:   record.ObjectType,
 			ObjectID:     record.ObjectID,
 			ProviderName: provider,
@@ -238,7 +238,7 @@ func (s *Service) ListBackfills(
 	if err != nil {
 		return nil, err
 	}
-	return s.backfills.ListByConnection(ctx, repositories.ListAccountingBackfillsRequest{
+	return s.backfills.ListByConnection(ctx, accountingsyncports.ListAccountingBackfillsRequest{
 		TenantInfo:   tenantInfo,
 		ConnectionID: conn.ID,
 		Limit:        maxBackfillsListed,
@@ -247,7 +247,7 @@ func (s *Service) ListBackfills(
 
 func (s *Service) UpdateSettings(
 	ctx context.Context,
-	req *services.UpdateAccountingSyncSettingsRequest,
+	req *accountingsyncports.UpdateAccountingSyncSettingsRequest,
 ) (*accountingsync.AccountingConnection, error) {
 	conn, err := s.connectionFor(ctx, req.TenantInfo, req.IntegrationType)
 	if err != nil {
@@ -329,7 +329,7 @@ func inboundPolicyComment(provider string, policy accountingsync.InboundPaymentP
 
 func (s *Service) EnableSync(
 	ctx context.Context,
-	req *services.EnableAccountingSyncRequest,
+	req *accountingsyncports.EnableAccountingSyncRequest,
 ) (*accountingsync.AccountingConnection, error) {
 	conn, err := s.connectionFor(ctx, req.TenantInfo, req.IntegrationType)
 	if err != nil {
@@ -396,7 +396,7 @@ func (s *Service) EnableSync(
 	}
 
 	var updated *accountingsync.AccountingConnection
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		var txErr error
 		if updated, txErr = s.connections.Update(txCtx, conn); txErr != nil {
 			return txErr
@@ -422,11 +422,11 @@ func (s *Service) EnableSync(
 	s.publishInvalidation(ctx, req.TenantInfo, req.UserID, updated.ID)
 
 	if req.Backfill {
-		if _, err = s.RequestBackfill(ctx, &services.RequestAccountingBackfillRequest{
+		if _, err = s.RequestBackfill(ctx, &accountingsyncports.RequestAccountingBackfillRequest{
 			TenantInfo:      req.TenantInfo,
 			UserID:          req.UserID,
 			IntegrationType: req.IntegrationType,
-		}); err != nil && !errors.Is(err, repositories.ErrAccountingBackfillActive) {
+		}); err != nil && !errors.Is(err, accountingsyncports.ErrAccountingBackfillActive) {
 			return updated, err
 		}
 	}
@@ -435,7 +435,7 @@ func (s *Service) EnableSync(
 
 func (s *Service) Pause(
 	ctx context.Context,
-	req *services.PauseAccountingSyncRequest,
+	req *accountingsyncports.PauseAccountingSyncRequest,
 ) (*accountingsync.AccountingConnection, error) {
 	conn, err := s.syncingConnection(ctx, req.TenantInfo, req.IntegrationType)
 	if err != nil {
@@ -475,7 +475,7 @@ func (s *Service) Pause(
 
 func (s *Service) Resume(
 	ctx context.Context,
-	req *services.PauseAccountingSyncRequest,
+	req *accountingsyncports.PauseAccountingSyncRequest,
 ) (*accountingsync.AccountingConnection, error) {
 	conn, err := s.syncingConnection(ctx, req.TenantInfo, req.IntegrationType)
 	if err != nil {
@@ -538,7 +538,7 @@ func validateIDs(ids []pulid.ID) error {
 
 func (s *Service) Retry(
 	ctx context.Context,
-	req *services.RetryAccountingSyncRequest,
+	req *accountingsyncports.RetryAccountingSyncRequest,
 ) (int64, error) {
 	if err := validateIDs(req.IDs); err != nil {
 		return 0, err
@@ -558,7 +558,7 @@ func (s *Service) Retry(
 		return 0, err
 	}
 
-	requeued, err := s.records.Requeue(ctx, &repositories.RequeueAccountingSyncRecordsRequest{
+	requeued, err := s.records.Requeue(ctx, &accountingsyncports.RequeueAccountingSyncRecordsRequest{
 		TenantInfo:      req.TenantInfo,
 		ConnectionID:    conn.ID,
 		ErrorCategories: req.ErrorCategories,
@@ -588,7 +588,7 @@ func (s *Service) Retry(
 
 func (s *Service) Release(
 	ctx context.Context,
-	req *services.ReleaseAccountingSyncRequest,
+	req *accountingsyncports.ReleaseAccountingSyncRequest,
 ) (int64, error) {
 	if err := validateIDs(req.IDs); err != nil {
 		return 0, err
@@ -598,7 +598,7 @@ func (s *Service) Release(
 		return 0, err
 	}
 
-	released, err := s.records.Release(ctx, &repositories.ReleaseAccountingSyncRecordsRequest{
+	released, err := s.records.Release(ctx, &accountingsyncports.ReleaseAccountingSyncRecordsRequest{
 		TenantInfo:   req.TenantInfo,
 		ConnectionID: conn.ID,
 		IDs:          req.IDs,
@@ -627,8 +627,8 @@ func (s *Service) Release(
 
 func (s *Service) PlanRedate(
 	ctx context.Context,
-	req *services.RedateAccountingSyncRequest,
-) (*services.AccountingSyncRedatePlan, error) {
+	req *accountingsyncports.RedateAccountingSyncRequest,
+) (*accountingsyncports.AccountingSyncRedatePlan, error) {
 	record, err := s.GetRecord(ctx, req.TenantInfo, req.ID)
 	if err != nil {
 		return nil, err
@@ -676,7 +676,7 @@ func (s *Service) PlanRedate(
 			label,
 		).WithInternal(err)
 	}
-	return &services.AccountingSyncRedatePlan{
+	return &accountingsyncports.AccountingSyncRedatePlan{
 		Connection: conn,
 		Before:     record,
 		After:      &after,
@@ -687,7 +687,7 @@ func (s *Service) PlanRedate(
 
 func (s *Service) Redate(
 	ctx context.Context,
-	req *services.RedateAccountingSyncRequest,
+	req *accountingsyncports.RedateAccountingSyncRequest,
 ) (*accountingsync.AccountingSyncRecord, error) {
 	plan, err := s.PlanRedate(ctx, req)
 	if err != nil {
@@ -717,7 +717,7 @@ func (s *Service) Redate(
 
 func (s *Service) Skip(
 	ctx context.Context,
-	req *services.SkipAccountingSyncRequest,
+	req *accountingsyncports.SkipAccountingSyncRequest,
 ) (*accountingsync.AccountingSyncRecord, error) {
 	record, err := s.GetRecord(ctx, req.TenantInfo, req.ID)
 	if err != nil {
@@ -770,7 +770,7 @@ func (s *Service) Skip(
 
 func (s *Service) RequestBackfill(
 	ctx context.Context,
-	req *services.RequestAccountingBackfillRequest,
+	req *accountingsyncports.RequestAccountingBackfillRequest,
 ) (*accountingsync.AccountingBackfill, error) {
 	if s.dispatcher == nil {
 		return nil, errortypes.NewBusinessError(
@@ -821,7 +821,7 @@ func (s *Service) RequestBackfill(
 		}),
 	)
 	if err != nil {
-		if errors.Is(err, repositories.ErrAccountingBackfillActive) {
+		if errors.Is(err, accountingsyncports.ErrAccountingBackfillActive) {
 			return nil, errortypes.NewBusinessError(
 				"A backfill is already running for {0}; pause or cancel it first",
 				accountingsync.ProviderName(conn.IntegrationType),
@@ -899,9 +899,9 @@ func joinTypes(types []accountingsync.SyncObjectType) string {
 
 func (s *Service) ChangeBackfill(
 	ctx context.Context,
-	req *services.ChangeAccountingBackfillRequest,
+	req *accountingsyncports.ChangeAccountingBackfillRequest,
 ) (*accountingsync.AccountingBackfill, error) {
-	backfill, err := s.backfills.GetByID(ctx, repositories.GetAccountingBackfillRequest{
+	backfill, err := s.backfills.GetByID(ctx, accountingsyncports.GetAccountingBackfillRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.ID,
 	})
@@ -913,11 +913,11 @@ func (s *Service) ChangeBackfill(
 	var changed bool
 	var comment string
 	switch req.Action {
-	case services.AccountingBackfillPause:
+	case accountingsyncports.AccountingBackfillPause:
 		changed, comment = backfill.Pause(), "Paused the backfill"
-	case services.AccountingBackfillResume:
+	case accountingsyncports.AccountingBackfillResume:
 		changed, comment = backfill.Resume(), "Resumed the backfill"
-	case services.AccountingBackfillCancel:
+	case accountingsyncports.AccountingBackfillCancel:
 		changed, comment = backfill.Cancel(timeutils.NowUnix()), "Cancelled the backfill"
 	default:
 		return nil, errortypes.NewValidationError(
@@ -946,7 +946,7 @@ func (s *Service) ChangeBackfill(
 		previous:   before,
 		comment:    comment,
 	})
-	if req.Action == services.AccountingBackfillResume && s.dispatcher != nil {
+	if req.Action == accountingsyncports.AccountingBackfillResume && s.dispatcher != nil {
 		if err = s.dispatcher.StartBackfill(ctx, updated); err != nil {
 			return updated, err
 		}
@@ -956,7 +956,7 @@ func (s *Service) ChangeBackfill(
 
 func (s *Service) ChooseMode(
 	ctx context.Context,
-	req *services.ChooseAccountingSyncModeRequest,
+	req *accountingsyncports.ChooseAccountingSyncModeRequest,
 ) (*accountingsync.AccountingConnection, error) {
 	conn, err := s.connectionFor(ctx, req.TenantInfo, req.IntegrationType)
 	if err != nil {
@@ -1048,7 +1048,7 @@ func (s *Service) enqueueOpeningBalances(
 	}
 	start := *conn.SyncStartDate
 	dated := timeutils.PreviousDayStart(start, loc)
-	req := &services.AccountingSyncEnqueueRequest{
+	req := &accountingsyncports.AccountingSyncEnqueueRequest{
 		TenantInfo:   tenantOf(conn),
 		ObjectType:   accountingsync.SyncObjectJournalSummary,
 		ObjectID:     pulid.ID(accountingsync.JournalOpeningID(start, loc)),

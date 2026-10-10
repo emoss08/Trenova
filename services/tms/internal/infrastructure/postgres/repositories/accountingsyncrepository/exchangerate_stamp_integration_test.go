@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
@@ -19,6 +18,10 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/customerpaymentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoicerepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -110,17 +113,17 @@ func TestExchangeRateStamps_LandOnTheDocumentTheyName(t *testing.T) {
 	require.False(t, inv.ExchangeRate.Valid)
 
 	t.Run("invoice", func(t *testing.T) {
-		require.NoError(t, invoices.StampExchangeRate(ctx, &repositories.StampExchangeRateRequest{
+		require.NoError(t, invoices.StampExchangeRate(ctx, &kernelports.StampExchangeRateRequest{
 			TenantInfo: tenant, ID: inv.ID, Rate: rate, Date: dated,
 		}))
-		stored, getErr := invoices.GetByID(ctx, repositories.GetInvoiceByIDRequest{ID: inv.ID, TenantInfo: tenant})
+		stored, getErr := invoices.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{ID: inv.ID, TenantInfo: tenant})
 		require.NoError(t, getErr)
 		require.True(t, stored.ExchangeRate.Valid)
 		assert.True(t, rate.Equal(stored.ExchangeRate.Decimal))
 		require.NotNil(t, stored.ExchangeRateDate)
 		assert.Equal(t, dated, *stored.ExchangeRateDate)
 
-		err = invoices.StampExchangeRate(ctx, &repositories.StampExchangeRateRequest{
+		err = invoices.StampExchangeRate(ctx, &kernelports.StampExchangeRateRequest{
 			TenantInfo: other, ID: inv.ID, Rate: paidRate, Date: dated,
 		})
 		require.Error(t, err, "another tenant cannot stamp the invoice")
@@ -145,10 +148,10 @@ func TestExchangeRateStamps_LandOnTheDocumentTheyName(t *testing.T) {
 		_, insertErr := db.NewInsert().Model(payment).Exec(ctx)
 		require.NoError(t, insertErr)
 
-		require.NoError(t, payments.StampExchangeRate(ctx, &repositories.StampExchangeRateRequest{
+		require.NoError(t, payments.StampExchangeRate(ctx, &kernelports.StampExchangeRateRequest{
 			TenantInfo: tenant, ID: payment.ID, Rate: rate, Date: dated,
 		}))
-		stored, getErr := payments.GetByID(ctx, repositories.GetCustomerPaymentByIDRequest{
+		stored, getErr := payments.GetByID(ctx, customerpaymentports.GetCustomerPaymentByIDRequest{
 			ID: payment.ID, TenantInfo: tenant,
 		})
 		require.NoError(t, getErr)
@@ -157,7 +160,7 @@ func TestExchangeRateStamps_LandOnTheDocumentTheyName(t *testing.T) {
 		require.NotNil(t, stored.ExchangeRateDate)
 		assert.Equal(t, dated, *stored.ExchangeRateDate)
 
-		err = payments.StampExchangeRate(ctx, &repositories.StampExchangeRateRequest{
+		err = payments.StampExchangeRate(ctx, &kernelports.StampExchangeRateRequest{
 			TenantInfo: other, ID: payment.ID, Rate: paidRate, Date: dated,
 		})
 		require.Error(t, err)
@@ -184,15 +187,15 @@ func TestExchangeRateStamps_LandOnTheDocumentTheyName(t *testing.T) {
 		_, insertErr := db.NewInsert().Model(settlement).Exec(ctx)
 		require.NoError(t, insertErr)
 
-		require.NoError(t, payables.StampExchangeRate(ctx, &repositories.StampPayableExchangeRateRequest{
-			TenantInfo: tenant, Kind: repositories.PayableCarrier, ID: settlement.ID, Rate: rate, Date: dated,
+		require.NoError(t, payables.StampExchangeRate(ctx, &accountingsyncports.StampPayableExchangeRateRequest{
+			TenantInfo: tenant, Kind: accountingsyncports.PayableCarrier, ID: settlement.ID, Rate: rate, Date: dated,
 		}))
-		require.NoError(t, payables.StampExchangeRate(ctx, &repositories.StampPayableExchangeRateRequest{
-			TenantInfo: tenant, Kind: repositories.PayableCarrier, ID: settlement.ID, Paid: true,
+		require.NoError(t, payables.StampExchangeRate(ctx, &accountingsyncports.StampPayableExchangeRateRequest{
+			TenantInfo: tenant, Kind: accountingsyncports.PayableCarrier, ID: settlement.ID, Paid: true,
 			Rate: paidRate, Date: paidAt,
 		}))
-		stored, getErr := payables.GetSettlement(ctx, &repositories.GetPayableSettlementRequest{
-			TenantInfo: tenant, Kind: repositories.PayableCarrier, ID: settlement.ID,
+		stored, getErr := payables.GetSettlement(ctx, &accountingsyncports.GetPayableSettlementRequest{
+			TenantInfo: tenant, Kind: accountingsyncports.PayableCarrier, ID: settlement.ID,
 		})
 		require.NoError(t, getErr)
 		require.True(t, stored.ExchangeRate.Valid)
@@ -202,8 +205,8 @@ func TestExchangeRateStamps_LandOnTheDocumentTheyName(t *testing.T) {
 		assert.True(t, paidRate.Equal(stored.PaidExchangeRate.Decimal))
 		assert.Equal(t, paidAt, *stored.PaidExchangeRateDate)
 
-		err = payables.StampExchangeRate(ctx, &repositories.StampPayableExchangeRateRequest{
-			TenantInfo: tenant, Kind: repositories.PayableDriver, ID: settlement.ID, Rate: rate, Date: dated,
+		err = payables.StampExchangeRate(ctx, &accountingsyncports.StampPayableExchangeRateRequest{
+			TenantInfo: tenant, Kind: accountingsyncports.PayableDriver, ID: settlement.ID, Rate: rate, Date: dated,
 		})
 		require.Error(t, err, "a carrier settlement is not a driver settlement")
 		assert.True(t, errortypes.IsNotFoundError(err))
@@ -228,19 +231,19 @@ func TestExchangeRateStamps_LandOnTheDocumentTheyName(t *testing.T) {
 		_, insertErr := db.NewInsert().Model(settlement).Exec(ctx)
 		require.NoError(t, insertErr)
 
-		require.NoError(t, payables.StampExchangeRate(ctx, &repositories.StampPayableExchangeRateRequest{
-			TenantInfo: tenant, Kind: repositories.PayableDriver, ID: settlement.ID, Rate: rate, Date: dated,
+		require.NoError(t, payables.StampExchangeRate(ctx, &accountingsyncports.StampPayableExchangeRateRequest{
+			TenantInfo: tenant, Kind: accountingsyncports.PayableDriver, ID: settlement.ID, Rate: rate, Date: dated,
 		}))
-		stored, getErr := payables.GetSettlement(ctx, &repositories.GetPayableSettlementRequest{
-			TenantInfo: tenant, Kind: repositories.PayableDriver, ID: settlement.ID,
+		stored, getErr := payables.GetSettlement(ctx, &accountingsyncports.GetPayableSettlementRequest{
+			TenantInfo: tenant, Kind: accountingsyncports.PayableDriver, ID: settlement.ID,
 		})
 		require.NoError(t, getErr)
 		require.True(t, stored.ExchangeRate.Valid)
 		assert.True(t, rate.Equal(stored.ExchangeRate.Decimal))
 		assert.False(t, stored.PaidExchangeRate.Valid)
 
-		err = payables.StampExchangeRate(ctx, &repositories.StampPayableExchangeRateRequest{
-			TenantInfo: tenant, Kind: repositories.PayableKind("Vendor"), ID: settlement.ID, Rate: rate, Date: dated,
+		err = payables.StampExchangeRate(ctx, &accountingsyncports.StampPayableExchangeRateRequest{
+			TenantInfo: tenant, Kind: accountingsyncports.PayableKind("Vendor"), ID: settlement.ID, Rate: rate, Date: dated,
 		})
 		require.Error(t, err, "an unknown payable kind is refused")
 	})

@@ -5,9 +5,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/uptrace/bun"
@@ -27,7 +27,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.EDITransactionSetRepository {
+func New(p Params) ediports.EDITransactionSetRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.edi-transaction-set-repository"),
@@ -36,7 +36,7 @@ func New(p Params) repositories.EDITransactionSetRepository {
 
 func (r *repository) SelectTransactionSetOptions(
 	ctx context.Context,
-	req *repositories.EDITransactionSetSelectOptionsRequest,
+	req *ediports.EDITransactionSetSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDITransactionSet], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDITransactionSet], error) {
 		entities := make([]*edi.EDITransactionSet, 0, req.SelectQueryRequest.Pagination.SafeLimit())
@@ -77,7 +77,7 @@ func (r *repository) SelectTransactionSetOptions(
 
 func filterTransactionSetsQuery(
 	query *bun.SelectQuery,
-	req *repositories.EDITransactionSetSelectOptionsRequest,
+	req *ediports.EDITransactionSetSelectOptionsRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.EDITransactionSetColumns
 	if len(req.IDs) > 0 {

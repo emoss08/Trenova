@@ -10,8 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,13 +24,13 @@ import (
 
 type fakeBillingQueue struct {
 	items    []*billingqueue.BillingQueueItem
-	captured *repositories.ListBillingQueueItemsRequest
-	got      *repositories.GetBillingQueueItemByIDRequest
+	captured *billingqueueports.ListBillingQueueItemsRequest
+	got      *billingqueueports.GetBillingQueueItemByIDRequest
 }
 
 func (f *fakeBillingQueue) List(
 	_ context.Context,
-	req *repositories.ListBillingQueueItemsRequest,
+	req *billingqueueports.ListBillingQueueItemsRequest,
 ) (*pagination.ListResult[*billingqueue.BillingQueueItem], error) {
 	if f.captured == nil {
 		f.captured = req
@@ -43,7 +44,7 @@ func (f *fakeBillingQueue) List(
 
 func (f *fakeBillingQueue) GetByID(
 	_ context.Context,
-	req *repositories.GetBillingQueueItemByIDRequest,
+	req *billingqueueports.GetBillingQueueItemByIDRequest,
 ) (*billingqueue.BillingQueueItem, error) {
 	f.got = req
 	for _, item := range f.items {
@@ -56,14 +57,14 @@ func (f *fakeBillingQueue) GetByID(
 }
 
 type fakeReadiness struct {
-	readiness *serviceports.ShipmentBillingReadiness
+	readiness *shipmentports.ShipmentBillingReadiness
 }
 
 func (f *fakeReadiness) GetBillingReadiness(
 	context.Context,
 	pulid.ID,
 	pagination.TenantInfo,
-) (*serviceports.ShipmentBillingReadiness, error) {
+) (*shipmentports.ShipmentBillingReadiness, error) {
 	return f.readiness, nil
 }
 
@@ -73,7 +74,7 @@ type fakeQueueInvoices struct {
 
 func (f *fakeQueueInvoices) GetByBillingQueueItemID(
 	context.Context,
-	repositories.GetInvoiceByBillingQueueItemIDRequest,
+	invoiceports.GetInvoiceByBillingQueueItemIDRequest,
 ) (*invoice.Invoice, error) {
 	if f.invoice == nil {
 		return nil, errortypes.NewNotFoundError("Invoice not found")
@@ -188,8 +189,8 @@ func TestGetBillingQueueItem_SaysWhatBlocksApprovalAndWhatTheShipmentLacks(t *te
 	queue := &fakeBillingQueue{items: []*billingqueue.BillingQueueItem{item}}
 	tool := &getBillingQueueItemTool{
 		items: queue,
-		readiness: &fakeReadiness{readiness: &serviceports.ShipmentBillingReadiness{
-			MissingRequirements: []serviceports.ShipmentBillingRequirement{
+		readiness: &fakeReadiness{readiness: &shipmentports.ShipmentBillingReadiness{
+			MissingRequirements: []shipmentports.ShipmentBillingRequirement{
 				{DocumentTypeName: "Proof of Delivery"},
 			},
 		}},
@@ -243,15 +244,15 @@ func TestGetBillingQueueItem_NamesTheInvoiceApprovalMade(t *testing.T) {
 }
 
 type fakeCandidates struct {
-	captured  *serviceports.ListBillingTransferCandidatesRequest
-	result    *serviceports.BillingTransferCandidates
-	completed *serviceports.BillingTransferCandidates
+	captured  *shipmentports.ListBillingTransferCandidatesRequest
+	result    *shipmentports.BillingTransferCandidates
+	completed *shipmentports.BillingTransferCandidates
 }
 
 func (f *fakeCandidates) ListBillingTransferCandidates(
 	_ context.Context,
-	req *serviceports.ListBillingTransferCandidatesRequest,
-) (*serviceports.BillingTransferCandidates, error) {
+	req *shipmentports.ListBillingTransferCandidatesRequest,
+) (*shipmentports.BillingTransferCandidates, error) {
 	if f.captured == nil {
 		f.captured = req
 		return f.result, nil
@@ -260,7 +261,7 @@ func (f *fakeCandidates) ListBillingTransferCandidates(
 		return f.completed, nil
 	}
 
-	return &serviceports.BillingTransferCandidates{}, nil
+	return &shipmentports.BillingTransferCandidates{}, nil
 }
 
 func TestListBillingTransferCandidates_SaysWhatATransferWouldDoWithEachRow(t *testing.T) {
@@ -269,16 +270,16 @@ func TestListBillingTransferCandidates_SaysWhatATransferWouldDoWithEachRow(t *te
 	ready := pulid.MustNew("shp_")
 	blocked := pulid.MustNew("shp_")
 	customerID := pulid.MustNew("cus_")
-	candidates := &fakeCandidates{result: &serviceports.BillingTransferCandidates{
+	candidates := &fakeCandidates{result: &shipmentports.BillingTransferCandidates{
 		TotalCount: 7,
 		HasMore:    true,
-		Decisions: []serviceports.BillingTransferDecision{
+		Decisions: []shipmentports.BillingTransferDecision{
 			{
 				ShipmentID:   ready,
 				ProNumber:    "PRO-1",
 				Status:       shipment.StatusReadyToInvoice,
 				CustomerName: "Acme Foods",
-				Outcome:      serviceports.BillingTransferOutcomeTransfer,
+				Outcome:      shipmentports.BillingTransferOutcomeTransfer,
 				AutoApprove:  true,
 				TotalCharge:  decimal.NewNullDecimal(decimal.RequireFromString("900")),
 			},
@@ -286,13 +287,13 @@ func TestListBillingTransferCandidates_SaysWhatATransferWouldDoWithEachRow(t *te
 				ShipmentID:  blocked,
 				ProNumber:   "PRO-2",
 				Status:      shipment.StatusReadyToInvoice,
-				Outcome:     serviceports.BillingTransferOutcomeRefused,
-				FailureCode: serviceports.BillingTransferFailureRequirementsUnmet,
+				Outcome:     shipmentports.BillingTransferOutcomeRefused,
+				FailureCode: shipmentports.BillingTransferFailureRequirementsUnmet,
 				Reason:      "Shipment billing requirements must be resolved",
-				MissingRequirements: []serviceports.ShipmentBillingRequirement{
+				MissingRequirements: []shipmentports.ShipmentBillingRequirement{
 					{DocumentTypeName: "Proof of Delivery"},
 				},
-				ValidationFailures: []serviceports.ShipmentBillingValidation{
+				ValidationFailures: []shipmentports.ShipmentBillingValidation{
 					{Message: "BOL is required"},
 				},
 			},
@@ -345,10 +346,10 @@ func TestListBillingTransferCandidates_RefusesAStatusTheDialogDoesNotOffer(t *te
 }
 
 func candidateDecision(
-	outcome serviceports.BillingTransferOutcome,
+	outcome shipmentports.BillingTransferOutcome,
 	currency, amount string,
-) serviceports.BillingTransferDecision {
-	decision := serviceports.BillingTransferDecision{
+) shipmentports.BillingTransferDecision {
+	decision := shipmentports.BillingTransferDecision{
 		ShipmentID:   pulid.MustNew("shp_"),
 		Status:       shipment.StatusReadyToInvoice,
 		Outcome:      outcome,
@@ -364,15 +365,15 @@ func candidateDecision(
 func TestListBillingTransferCandidates_TotalsEachOutcomeByCurrency(t *testing.T) {
 	t.Parallel()
 
-	candidates := &fakeCandidates{result: &serviceports.BillingTransferCandidates{
+	candidates := &fakeCandidates{result: &shipmentports.BillingTransferCandidates{
 		TotalCount: 6,
-		Decisions: []serviceports.BillingTransferDecision{
-			candidateDecision(serviceports.BillingTransferOutcomeTransfer, "USD", "1200.10"),
-			candidateDecision(serviceports.BillingTransferOutcomeTransfer, "USD", "0.20"),
-			candidateDecision(serviceports.BillingTransferOutcomeTransfer, "CAD", "500"),
-			candidateDecision(serviceports.BillingTransferOutcomeMarkReadyAndTransfer, "USD", ""),
-			candidateDecision(serviceports.BillingTransferOutcomeRefused, "USD", "99.99"),
-			candidateDecision(serviceports.BillingTransferOutcomeReturnToOperations, "USD", "10"),
+		Decisions: []shipmentports.BillingTransferDecision{
+			candidateDecision(shipmentports.BillingTransferOutcomeTransfer, "USD", "1200.10"),
+			candidateDecision(shipmentports.BillingTransferOutcomeTransfer, "USD", "0.20"),
+			candidateDecision(shipmentports.BillingTransferOutcomeTransfer, "CAD", "500"),
+			candidateDecision(shipmentports.BillingTransferOutcomeMarkReadyAndTransfer, "USD", ""),
+			candidateDecision(shipmentports.BillingTransferOutcomeRefused, "USD", "99.99"),
+			candidateDecision(shipmentports.BillingTransferOutcomeReturnToOperations, "USD", "10"),
 		},
 	}}
 	tool := &listBillingTransferCandidatesTool{shipments: candidates}
@@ -397,11 +398,11 @@ func TestListBillingTransferCandidates_TotalsEachOutcomeByCurrency(t *testing.T)
 func TestListBillingTransferCandidates_SaysTheTotalsCoverOnlyThisPage(t *testing.T) {
 	t.Parallel()
 
-	candidates := &fakeCandidates{result: &serviceports.BillingTransferCandidates{
+	candidates := &fakeCandidates{result: &shipmentports.BillingTransferCandidates{
 		TotalCount: 30,
 		HasMore:    true,
-		Decisions: []serviceports.BillingTransferDecision{
-			candidateDecision(serviceports.BillingTransferOutcomeTransfer, "", "10"),
+		Decisions: []shipmentports.BillingTransferDecision{
+			candidateDecision(shipmentports.BillingTransferOutcomeTransfer, "", "10"),
 		},
 	}}
 	tool := &listBillingTransferCandidatesTool{shipments: candidates}
@@ -437,8 +438,8 @@ func TestGetBillingQueueItems_ReadsASetAndSaysWhatBlocksEach(t *testing.T) {
 	queue := &fakeBillingQueue{items: []*billingqueue.BillingQueueItem{waiting, ready, held}}
 	tool := &getBillingQueueItemsTool{
 		items: queue,
-		readiness: &fakeReadiness{readiness: &serviceports.ShipmentBillingReadiness{
-			MissingRequirements: []serviceports.ShipmentBillingRequirement{
+		readiness: &fakeReadiness{readiness: &shipmentports.ShipmentBillingReadiness{
+			MissingRequirements: []shipmentports.ShipmentBillingRequirement{
 				{DocumentTypeName: "Proof of Delivery"},
 			},
 		}},
@@ -541,8 +542,8 @@ func TestListBillingTransferCandidates_CountsTheCompletedOnesAReadyFilterLeavesO
 	t.Parallel()
 
 	shipments := &fakeCandidates{
-		result:    &serviceports.BillingTransferCandidates{},
-		completed: &serviceports.BillingTransferCandidates{TotalCount: 18},
+		result:    &shipmentports.BillingTransferCandidates{},
+		completed: &shipmentports.BillingTransferCandidates{TotalCount: 18},
 	}
 	tool := &listBillingTransferCandidatesTool{shipments: shipments}
 

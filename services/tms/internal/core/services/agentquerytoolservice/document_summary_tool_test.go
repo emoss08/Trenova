@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,14 +19,14 @@ import (
 )
 
 type stubDocumentRepo struct {
-	repositories.DocumentRepository
+	documentports.DocumentRepository
 
 	doc *document.Document
 }
 
 func (s *stubDocumentRepo) GetByID(
 	_ context.Context,
-	req repositories.GetDocumentByIDRequest,
+	req documentports.GetDocumentByIDRequest,
 ) (*document.Document, error) {
 	if s.doc == nil || s.doc.ID != req.ID {
 		return nil, errors.New("not found")
@@ -184,7 +184,7 @@ func TestGetDocumentSummary_RefusesADocumentOnARecordTheCallerCannotRead(t *test
 	doc := summaryDocument()
 	doc.ResourceType = "worker"
 	doc.ResourceID = pulid.MustNew("wrk_").String()
-	permissions := &fakePermissions{readable: map[string]*serviceports.ResourcePermissionDetail{
+	permissions := &fakePermissions{readable: map[string]*permissionports.ResourcePermissionDetail{
 		permission.ResourceDocument.String(): {
 			Resource:   permission.ResourceDocument.String(),
 			Operations: []permission.Operation{permission.OpRead},

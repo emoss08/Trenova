@@ -1,6 +1,7 @@
 package realtimeservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"strings"
 	"testing"
@@ -8,9 +9,9 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,11 +23,11 @@ import (
 
 type recordingPublisher struct {
 	full      bool
-	enqueued  []*services.RealtimeEnvelope
-	published []*services.RealtimeEnvelope
+	enqueued  []*agentports.RealtimeEnvelope
+	published []*agentports.RealtimeEnvelope
 }
 
-func (p *recordingPublisher) Enqueue(env *services.RealtimeEnvelope) bool {
+func (p *recordingPublisher) Enqueue(env *agentports.RealtimeEnvelope) bool {
 	if p.full {
 		return false
 	}
@@ -34,12 +35,12 @@ func (p *recordingPublisher) Enqueue(env *services.RealtimeEnvelope) bool {
 	return true
 }
 
-func (p *recordingPublisher) Publish(_ context.Context, env *services.RealtimeEnvelope) error {
+func (p *recordingPublisher) Publish(_ context.Context, env *agentports.RealtimeEnvelope) error {
 	p.published = append(p.published, env)
 	return nil
 }
 
-func newTestService(pub services.RealtimePublisher, maxEntityBytes int) *Service {
+func newTestService(pub agentports.RealtimePublisher, maxEntityBytes int) *Service {
 	return New(Params{
 		Logger:    zap.NewNop(),
 		Config:    &config.Config{Realtime: config.RealtimeConfig{MaxEntityBytes: maxEntityBytes}},
@@ -47,8 +48,8 @@ func newTestService(pub services.RealtimePublisher, maxEntityBytes int) *Service
 	}).(*Service)
 }
 
-func validRequest() *services.PublishResourceInvalidationRequest {
-	return &services.PublishResourceInvalidationRequest{
+func validRequest() *agentports.PublishResourceInvalidationRequest {
+	return &agentports.PublishResourceInvalidationRequest{
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
 		Resource:       "shipments",
@@ -60,9 +61,9 @@ func validRequest() *services.PublishResourceInvalidationRequest {
 	}
 }
 
-func decode(t *testing.T, payload []byte) services.ResourceInvalidationEvent {
+func decode(t *testing.T, payload []byte) agentports.ResourceInvalidationEvent {
 	t.Helper()
-	var event services.ResourceInvalidationEvent
+	var event agentports.ResourceInvalidationEvent
 	require.NoError(t, sonic.Unmarshal(payload, &event))
 	return event
 }
@@ -78,7 +79,7 @@ func TestPublishResourceInvalidation_EnqueuesFullAndRedactedPayloads(t *testing.
 	require.Len(t, pub.enqueued, 1)
 	env := pub.enqueued[0]
 
-	assert.Equal(t, services.RealtimeEventInvalidation, env.Event)
+	assert.Equal(t, agentports.RealtimeEventInvalidation, env.Event)
 	assert.Equal(t, req.OrganizationID, env.OrganizationID)
 	assert.False(t, env.Ephemeral)
 
@@ -150,38 +151,38 @@ func TestPublishResourceInvalidation_Validation(t *testing.T) {
 
 type stubBroker struct {
 	recordingPublisher
-	conn      *services.RealtimeConnection
+	conn      *agentports.RealtimeConnection
 	connErr   error
 	allow     bool
 	released  []string
 	throttled []string
 	joined    string
 	left      string
-	subscribe *services.RealtimeSubscribeRequest
+	subscribe *agentports.RealtimeSubscribeRequest
 }
 
 func (b *stubBroker) Subscribe(
 	_ context.Context,
-	req *services.RealtimeSubscribeRequest,
-) (services.RealtimeStream, error) {
+	req *agentports.RealtimeSubscribeRequest,
+) (agentports.RealtimeStream, error) {
 	b.subscribe = req
 	return nil, nil
 }
 
-func (b *stubBroker) Connection(context.Context, string) (*services.RealtimeConnection, error) {
+func (b *stubBroker) Connection(context.Context, string) (*agentports.RealtimeConnection, error) {
 	return b.conn, b.connErr
 }
 
 func (b *stubBroker) JoinPresence(
 	_ context.Context,
-	_ *services.RealtimeConnection,
+	_ *agentports.RealtimeConnection,
 	scope string,
-) (*services.RealtimePresenceSnapshot, error) {
+) (*agentports.RealtimePresenceSnapshot, error) {
 	b.joined = scope
-	return &services.RealtimePresenceSnapshot{Scope: scope}, nil
+	return &agentports.RealtimePresenceSnapshot{Scope: scope}, nil
 }
 
-func (b *stubBroker) LeavePresence(_ context.Context, _ *services.RealtimeConnection, scope string) error {
+func (b *stubBroker) LeavePresence(_ context.Context, _ *agentports.RealtimeConnection, scope string) error {
 	b.left = scope
 	return nil
 }
@@ -201,13 +202,13 @@ func (b *stubBroker) Drain() {}
 type gatewayFixture struct {
 	gateway *Gateway
 	broker  *stubBroker
-	conn    *services.RealtimeConnection
+	conn    *agentports.RealtimeConnection
 }
 
 func newGatewayFixture(t *testing.T) *gatewayFixture {
 	t.Helper()
 
-	conn := &services.RealtimeConnection{
+	conn := &agentports.RealtimeConnection{
 		ConnectionID:   pulid.MustNew("rtc_").String(),
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
@@ -215,7 +216,7 @@ func newGatewayFixture(t *testing.T) *gatewayFixture {
 		Name:           "Dana",
 	}
 	broker := &stubBroker{conn: conn, allow: true}
-	users := mocks.NewMockUserRepository(t)
+	users := tenantportsmock.NewMockUserRepository(t)
 
 	gateway := NewGateway(GatewayParams{
 		Logger:   zap.NewNop(),
@@ -227,8 +228,8 @@ func newGatewayFixture(t *testing.T) *gatewayFixture {
 	return &gatewayFixture{gateway: gateway, broker: broker, conn: conn}
 }
 
-func (f *gatewayFixture) scope(scope string) services.RealtimeScopeRequest {
-	return services.RealtimeScopeRequest{
+func (f *gatewayFixture) scope(scope string) agentports.RealtimeScopeRequest {
+	return agentports.RealtimeScopeRequest{
 		OrganizationID: f.conn.OrganizationID,
 		BusinessUnitID: f.conn.BusinessUnitID,
 		UserID:         f.conn.UserID,
@@ -241,9 +242,9 @@ func TestGateway_OpenResolvesTheReadersName(t *testing.T) {
 	t.Parallel()
 
 	broker := &stubBroker{}
-	users := mocks.NewMockUserRepository(t)
+	users := tenantportsmock.NewMockUserRepository(t)
 	userID := pulid.MustNew("usr_")
-	users.On("GetByID", mock.Anything, mock.MatchedBy(func(req repositories.GetUserByIDRequest) bool {
+	users.On("GetByID", mock.Anything, mock.MatchedBy(func(req tenantports.GetUserByIDRequest) bool {
 		return req.LookupUserID == userID
 	})).Return(&tenant.User{ID: userID, Name: "Dana"}, nil)
 
@@ -251,7 +252,7 @@ func TestGateway_OpenResolvesTheReadersName(t *testing.T) {
 		Logger: zap.NewNop(), Config: &config.Config{}, Broker: broker, UserRepo: users,
 	})
 
-	_, err := gateway.Open(t.Context(), &services.OpenRealtimeStreamRequest{
+	_, err := gateway.Open(t.Context(), &agentports.OpenRealtimeStreamRequest{
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
 		UserID:         userID,
@@ -297,7 +298,7 @@ func TestGateway_ValidatesScope(t *testing.T) {
 
 	for name, scope := range map[string]string{
 		"empty":    "",
-		"reserved": services.RealtimeScopeUsers,
+		"reserved": agentports.RealtimeScopeUsers,
 		"injected": "shipment-comments:x|y",
 		"spaces":   "shipment comments",
 		"too long": strings.Repeat("a", maxScopeLength+1),
@@ -330,29 +331,29 @@ func TestGateway_TypingIsThrottledAndStampedWithTheCaller(t *testing.T) {
 	f := newGatewayFixture(t)
 	scope := "shipment-comments:shp_01J00000000000000000000000"
 
-	require.NoError(t, f.gateway.SignalTyping(t.Context(), &services.RealtimeTypingRequest{
+	require.NoError(t, f.gateway.SignalTyping(t.Context(), &agentports.RealtimeTypingRequest{
 		RealtimeScopeRequest: f.scope(scope),
 	}))
 	require.Len(t, f.broker.enqueued, 1)
 	env := f.broker.enqueued[0]
-	assert.Equal(t, services.RealtimeEventTyping, env.Event)
+	assert.Equal(t, agentports.RealtimeEventTyping, env.Event)
 	assert.Equal(t, scope, env.Scope)
 	assert.True(t, env.Ephemeral)
 	assert.Nil(t, env.PortalPayload)
 
-	var event services.RealtimeTypingEvent
+	var event agentports.RealtimeTypingEvent
 	require.NoError(t, sonic.Unmarshal(env.Payload, &event))
 	assert.Equal(t, f.conn.UserID.String(), event.UserID)
 	assert.Equal(t, "Dana", event.Name)
 	assert.False(t, event.Stop)
 
 	f.broker.allow = false
-	require.NoError(t, f.gateway.SignalTyping(t.Context(), &services.RealtimeTypingRequest{
+	require.NoError(t, f.gateway.SignalTyping(t.Context(), &agentports.RealtimeTypingRequest{
 		RealtimeScopeRequest: f.scope(scope),
 	}))
 	assert.Len(t, f.broker.enqueued, 1, "a throttled signal is not sent")
 
-	require.NoError(t, f.gateway.SignalTyping(t.Context(), &services.RealtimeTypingRequest{
+	require.NoError(t, f.gateway.SignalTyping(t.Context(), &agentports.RealtimeTypingRequest{
 		RealtimeScopeRequest: f.scope(scope),
 		Stop:                 true,
 	}))

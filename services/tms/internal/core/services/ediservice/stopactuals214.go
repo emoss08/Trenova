@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -20,7 +20,7 @@ const (
 
 type stopActuals214Plan struct {
 	target          stopActualTarget
-	action          repositories.StopActualAction
+	action          shipmentports.StopActualAction
 	arriveIfMissing bool
 }
 
@@ -32,22 +32,22 @@ func stopActualsPlanForStatusCode(statusCode string) (stopActuals214Plan, bool) 
 	case "X3":
 		return stopActuals214Plan{
 			target: stopTargetOrigin,
-			action: repositories.StopActualActionArrive,
+			action: shipmentports.StopActualActionArrive,
 		}, true
 	case "AF":
 		return stopActuals214Plan{
 			target: stopTargetOrigin,
-			action: repositories.StopActualActionDepart,
+			action: shipmentports.StopActualActionDepart,
 		}, true
 	case "X1":
 		return stopActuals214Plan{
 			target: stopTargetDestination,
-			action: repositories.StopActualActionArrive,
+			action: shipmentports.StopActualActionArrive,
 		}, true
 	case "D1":
 		return stopActuals214Plan{
 			target:          stopTargetDestination,
-			action:          repositories.StopActualActionDepart,
+			action:          shipmentports.StopActualActionDepart,
 			arriveIfMissing: true,
 		}, true
 	default:
@@ -112,7 +112,7 @@ func (s *Service) applyTendered214StopActuals(
 			),
 		}, nil
 	}
-	move, err := s.shipmentMoveRepo.GetByID(ctx, &repositories.GetMoveByIDRequest{
+	move, err := s.shipmentMoveRepo.GetByID(ctx, &shipmentports.GetMoveByIDRequest{
 		MoveID:            moveID,
 		TenantInfo:        req.TenantInfo,
 		ExpandMoveDetails: true,
@@ -142,13 +142,13 @@ func (s *Service) applyTendered214StopActuals(
 		occurredAt = &eventAt
 	}
 
-	actions := make([]repositories.StopActualAction, 0, 2)
+	actions := make([]shipmentports.StopActualAction, 0, 2)
 	if plan.arriveIfMissing && stop.ActualArrival == nil {
-		actions = append(actions, repositories.StopActualActionArrive)
+		actions = append(actions, shipmentports.StopActualActionArrive)
 	}
 	actions = append(actions, plan.action)
 	for _, action := range actions {
-		if _, err = s.shipmentMoves.RecordStopActual(ctx, &repositories.RecordStopActualRequest{
+		if _, err = s.shipmentMoves.RecordStopActual(ctx, &shipmentports.RecordStopActualRequest{
 			TenantInfo: req.TenantInfo,
 			MoveID:     move.ID,
 			StopID:     stop.ID,

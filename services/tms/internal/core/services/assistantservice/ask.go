@@ -6,8 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -22,8 +23,8 @@ const askAgentPageLimit = 100
 // produced is saved there so "Open in Desk" has somewhere to go.
 func (s *Service) StartAsk(
 	ctx context.Context,
-	req *services.AskRequest,
-	actor *services.RequestActor,
+	req *agentports.AskRequest,
+	actor *permissionports.RequestActor,
 ) (*conversation.Thread, error) {
 	content := strings.TrimSpace(req.Content)
 	multiErr := errortypes.NewMultiError()
@@ -44,7 +45,7 @@ func (s *Service) StartAsk(
 		return nil, err
 	}
 
-	return s.StartThread(ctx, &services.StartThreadRequest{
+	return s.StartThread(ctx, &agentports.StartThreadRequest{
 		AgentDefinitionID: definition.ID,
 		Title:             truncateRunes(content, maxTitleRunes),
 		TenantInfo:        req.TenantInfo,
@@ -59,7 +60,7 @@ func (s *Service) StartAsk(
 func (s *Service) askAgent(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*agentdefinition.Definition, error) {
 	usable, err := s.usableAgents(ctx, actor)
 	if err != nil {
@@ -69,7 +70,7 @@ func (s *Service) askAgent(
 		return nil, errAgentsWithheld()
 	}
 
-	result, err := s.definitions.List(ctx, &repositories.ListAgentDefinitionRequest{
+	result, err := s.definitions.List(ctx, &agentdefinitionports.ListAgentDefinitionRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenant,
 			Pagination: pagination.Info{Limit: askAgentPageLimit},
@@ -104,7 +105,7 @@ func (s *Service) askAgent(
 // noAskAgent says why there is nobody to ask: no chat agent is enabled at
 // all, or none of the enabled ones is open to the person.
 func (s *Service) noAskAgent(ctx context.Context, tenant pagination.TenantInfo) error {
-	enabled, err := s.definitions.List(ctx, &repositories.ListAgentDefinitionRequest{
+	enabled, err := s.definitions.List(ctx, &agentdefinitionports.ListAgentDefinitionRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenant,
 			Pagination: pagination.Info{Limit: 1},

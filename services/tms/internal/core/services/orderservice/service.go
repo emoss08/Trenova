@@ -8,10 +8,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/seqgen"
@@ -28,28 +31,28 @@ type Params struct {
 	fx.In
 
 	Logger               *zap.Logger
-	DB                   ports.DBConnection
-	Repo                 repositories.OrderRepository
+	DB                   kernelports.DBConnection
+	Repo                 orderports.OrderRepository
 	Validator            *Validator
-	AuditService         services.AuditService
+	AuditService         auditports.AuditService
 	Generator            seqgen.Generator
-	OrderDerivation      services.OrderDerivationService
-	ShipmentService      services.ShipmentService
-	ChargeAllocationRepo repositories.ChargeAllocationRepository
-	CustomerRepo         repositories.CustomerRepository
+	OrderDerivation      orderports.OrderDerivationService
+	ShipmentService      shipmentports.ShipmentService
+	ChargeAllocationRepo shipmentports.ChargeAllocationRepository
+	CustomerRepo         customerports.CustomerRepository
 }
 
 type Service struct {
 	l                    *zap.Logger
-	db                   ports.DBConnection
-	repo                 repositories.OrderRepository
+	db                   kernelports.DBConnection
+	repo                 orderports.OrderRepository
 	validator            *Validator
-	auditService         services.AuditService
+	auditService         auditports.AuditService
 	generator            seqgen.Generator
-	orderDerivation      services.OrderDerivationService
-	shipmentService      services.ShipmentService
-	chargeAllocationRepo repositories.ChargeAllocationRepository
-	customerRepo         repositories.CustomerRepository
+	orderDerivation      orderports.OrderDerivationService
+	shipmentService      shipmentports.ShipmentService
+	chargeAllocationRepo shipmentports.ChargeAllocationRepository
+	customerRepo         customerports.CustomerRepository
 }
 
 //nolint:gocritic // fx constructor
@@ -82,35 +85,35 @@ func guardMembershipChange(ord *order.Order) error {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListOrdersRequest,
+	req *orderports.ListOrdersRequest,
 ) (*pagination.ListResult[*order.Order], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListOrdersConnectionRequest,
+	req *orderports.ListOrdersConnectionRequest,
 ) (*pagination.CursorListResult[*order.Order], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	req repositories.GetOrderByIDRequest,
+	req orderports.GetOrderByIDRequest,
 ) (*order.Order, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) SelectOptions(
 	ctx context.Context,
-	req *repositories.OrderSelectOptionsRequest,
+	req *orderports.OrderSelectOptionsRequest,
 ) (*pagination.ListResult[*order.Order], error) {
 	return s.repo.SelectOptions(ctx, req)
 }
 
 func (s *Service) GetByIDs(
 	ctx context.Context,
-	req repositories.GetOrdersByIDsRequest,
+	req orderports.GetOrdersByIDsRequest,
 ) ([]*order.Order, error) {
 	return s.repo.GetByIDs(ctx, req)
 }
@@ -118,7 +121,7 @@ func (s *Service) GetByIDs(
 func (s *Service) Create(
 	ctx context.Context,
 	entity *order.Order,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*order.Order, error) {
 	auditActor := actor.AuditActor()
 
@@ -151,7 +154,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceOrder,
 		ResourceID:     createdEntity.GetID().String(),
 		Operation:      permission.OpCreate,
@@ -176,11 +179,11 @@ func (s *Service) AttachShipments(
 	tenantInfo pagination.TenantInfo,
 	orderID pulid.ID,
 	shipmentIDs []pulid.ID,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*order.Order, error) {
 	var updated *order.Order
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		ord, txErr := s.repo.GetByID(txCtx, repositories.GetOrderByIDRequest{
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		ord, txErr := s.repo.GetByID(txCtx, orderports.GetOrderByIDRequest{
 			ID:         orderID,
 			TenantInfo: tenantInfo,
 		})
@@ -213,7 +216,7 @@ func (s *Service) AttachShipments(
 			}
 		}
 
-		updated, txErr = s.repo.GetByID(txCtx, repositories.GetOrderByIDRequest{
+		updated, txErr = s.repo.GetByID(txCtx, orderports.GetOrderByIDRequest{
 			ID:              orderID,
 			TenantInfo:      tenantInfo,
 			IncludeShipment: true,
@@ -335,7 +338,7 @@ func (s *Service) guardSourceOrders(
 	for id := range sourceOrderIDs {
 		ids = append(ids, id)
 	}
-	sources, err := s.repo.GetByIDs(ctx, repositories.GetOrdersByIDsRequest{
+	sources, err := s.repo.GetByIDs(ctx, orderports.GetOrdersByIDsRequest{
 		TenantInfo: tenantInfo,
 		OrderIDs:   ids,
 	})
@@ -377,7 +380,7 @@ func (s *Service) DetachShipment(
 	tenantInfo pagination.TenantInfo,
 	orderID pulid.ID,
 	shipmentID pulid.ID,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*order.Order, error) {
 	replacementNumber, err := s.generator.GenerateOrderNumber(
 		ctx,
@@ -392,8 +395,8 @@ func (s *Service) DetachShipment(
 	}
 
 	var updated *order.Order
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		ord, txErr := s.repo.GetByID(txCtx, repositories.GetOrderByIDRequest{
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		ord, txErr := s.repo.GetByID(txCtx, orderports.GetOrderByIDRequest{
 			ID:              orderID,
 			TenantInfo:      tenantInfo,
 			IncludeShipment: true,
@@ -447,7 +450,7 @@ func (s *Service) DetachShipment(
 			return txErr
 		}
 
-		updated, txErr = s.repo.GetByID(txCtx, repositories.GetOrderByIDRequest{
+		updated, txErr = s.repo.GetByID(txCtx, orderports.GetOrderByIDRequest{
 			ID:              orderID,
 			TenantInfo:      tenantInfo,
 			IncludeShipment: true,
@@ -499,7 +502,7 @@ func detachableLeg(ord *order.Order, shipmentID pulid.ID) (*shipment.Shipment, e
 
 func (s *Service) logMembershipChange(
 	updated *order.Order,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	comment string,
 ) {
 	if updated == nil {
@@ -507,7 +510,7 @@ func (s *Service) logMembershipChange(
 	}
 
 	auditActor := actor.AuditActor()
-	if err := s.auditService.LogAction(&services.LogActionParams{
+	if err := s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceOrder,
 		ResourceID:     updated.GetID().String(),
 		Operation:      permission.OpUpdate,
@@ -529,7 +532,7 @@ func (s *Service) AddCharge(
 	orderID pulid.ID,
 	description string,
 	amount decimal.Decimal,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*order.Order, error) {
 	return s.AddChargeWithAllocations(ctx, &AddChargeRequest{
 		TenantInfo:  tenantInfo,
@@ -559,7 +562,7 @@ type SetChargeAllocationsRequest struct {
 func (s *Service) AddChargeWithAllocations(
 	ctx context.Context,
 	req *AddChargeRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*order.Order, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
@@ -572,8 +575,8 @@ func (s *Service) AddChargeWithAllocations(
 	orderID := req.OrderID
 
 	var updated *order.Order
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
-		ord, txErr := s.repo.GetByID(txCtx, repositories.GetOrderByIDRequest{
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
+		ord, txErr := s.repo.GetByID(txCtx, orderports.GetOrderByIDRequest{
 			ID:         orderID,
 			TenantInfo: tenantInfo,
 		})
@@ -624,7 +627,7 @@ func (s *Service) AddChargeWithAllocations(
 			return txErr
 		}
 
-		updated, txErr = s.repo.GetByID(txCtx, repositories.GetOrderByIDRequest{
+		updated, txErr = s.repo.GetByID(txCtx, orderports.GetOrderByIDRequest{
 			ID:              orderID,
 			TenantInfo:      tenantInfo,
 			IncludeShipment: true,
@@ -644,11 +647,11 @@ func (s *Service) RemoveCharge(
 	tenantInfo pagination.TenantInfo,
 	orderID pulid.ID,
 	chargeID pulid.ID,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*order.Order, error) {
 	var updated *order.Order
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		ord, txErr := s.repo.GetByID(txCtx, repositories.GetOrderByIDRequest{
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		ord, txErr := s.repo.GetByID(txCtx, orderports.GetOrderByIDRequest{
 			ID:         orderID,
 			TenantInfo: tenantInfo,
 		})
@@ -659,7 +662,7 @@ func (s *Service) RemoveCharge(
 			return txErr
 		}
 
-		affected, txErr := s.repo.RemoveCharge(txCtx, &repositories.RemoveOrderChargeRequest{
+		affected, txErr := s.repo.RemoveCharge(txCtx, &orderports.RemoveOrderChargeRequest{
 			TenantInfo: tenantInfo,
 			OrderID:    orderID,
 			ChargeID:   chargeID,
@@ -678,7 +681,7 @@ func (s *Service) RemoveCharge(
 			return txErr
 		}
 
-		updated, txErr = s.repo.GetByID(txCtx, repositories.GetOrderByIDRequest{
+		updated, txErr = s.repo.GetByID(txCtx, orderports.GetOrderByIDRequest{
 			ID:              orderID,
 			TenantInfo:      tenantInfo,
 			IncludeShipment: true,
@@ -696,11 +699,11 @@ func (s *Service) RemoveCharge(
 func (s *Service) UpdateCharge(
 	ctx context.Context,
 	req *UpdateChargeRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*order.Order, error) {
 	var updated *order.Order
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
-		ord, txErr := s.repo.GetByID(txCtx, repositories.GetOrderByIDRequest{
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
+		ord, txErr := s.repo.GetByID(txCtx, orderports.GetOrderByIDRequest{
 			ID:         req.OrderID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -765,7 +768,7 @@ func (s *Service) UpdateCharge(
 			return txErr
 		}
 
-		updated, txErr = s.repo.GetByID(txCtx, repositories.GetOrderByIDRequest{
+		updated, txErr = s.repo.GetByID(txCtx, orderports.GetOrderByIDRequest{
 			ID:              req.OrderID,
 			TenantInfo:      req.TenantInfo,
 			IncludeShipment: true,
@@ -796,7 +799,7 @@ type UpdateChargeRequest struct {
 func (s *Service) SetChargeAllocations(
 	ctx context.Context,
 	req *SetChargeAllocationsRequest,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*order.Order, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
@@ -811,8 +814,8 @@ func (s *Service) SetChargeAllocations(
 	}
 
 	var updated *order.Order
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
-		ord, txErr := s.repo.GetByID(txCtx, repositories.GetOrderByIDRequest{
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
+		ord, txErr := s.repo.GetByID(txCtx, orderports.GetOrderByIDRequest{
 			ID:         req.OrderID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -863,7 +866,7 @@ func (s *Service) SetChargeAllocations(
 			return txErr
 		}
 
-		updated, txErr = s.repo.GetByID(txCtx, repositories.GetOrderByIDRequest{
+		updated, txErr = s.repo.GetByID(txCtx, orderports.GetOrderByIDRequest{
 			ID:              req.OrderID,
 			TenantInfo:      req.TenantInfo,
 			IncludeShipment: true,
@@ -918,7 +921,7 @@ func (s *Service) validateChargeAllocations(
 
 	customers := make(map[pulid.ID]*customer.Customer, len(payerIDs))
 	if len(payerIDs) > 0 && s.customerRepo != nil {
-		found, err := s.customerRepo.GetByIDs(ctx, repositories.GetCustomersByIDsRequest{
+		found, err := s.customerRepo.GetByIDs(ctx, customerports.GetCustomersByIDsRequest{
 			TenantInfo:  tenantInfo,
 			CustomerIDs: payerIDs,
 		})
@@ -1015,7 +1018,7 @@ func (s *Service) syncChargeAllocations(
 	return s.chargeAllocationRepo.SyncForOrderCharge(
 		ctx,
 		tx,
-		&repositories.SyncOrderChargeAllocationsRequest{
+		&shipmentports.SyncOrderChargeAllocationsRequest{
 			TenantInfo:    tenantInfo,
 			OrderID:       charge.OrderID,
 			OrderChargeID: charge.ID,
@@ -1038,7 +1041,7 @@ func (s *Service) Close(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	orderID pulid.ID,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*order.Order, error) {
 	plan, err := s.PlanClose(ctx, tenantInfo, orderID)
 	if err != nil {
@@ -1046,7 +1049,7 @@ func (s *Service) Close(
 	}
 	ord := plan.Before
 
-	updated, err := s.repo.UpdateStatus(ctx, &repositories.UpdateOrderStatusRequest{
+	updated, err := s.repo.UpdateStatus(ctx, &orderports.UpdateOrderStatusRequest{
 		TenantInfo: tenantInfo,
 		OrderID:    orderID,
 		Status:     order.StatusClosed,
@@ -1057,7 +1060,7 @@ func (s *Service) Close(
 	}
 
 	s.logMembershipChange(updated, actor, "Order closed")
-	return s.repo.GetByID(ctx, repositories.GetOrderByIDRequest{
+	return s.repo.GetByID(ctx, orderports.GetOrderByIDRequest{
 		ID:              orderID,
 		TenantInfo:      tenantInfo,
 		IncludeShipment: true,
@@ -1072,7 +1075,7 @@ func (s *Service) Cancel(
 	tenantInfo pagination.TenantInfo,
 	orderID pulid.ID,
 	cancelReason string,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*order.Order, error) {
 	plan, err := s.PlanCancel(ctx, tenantInfo, orderID)
 	if err != nil {
@@ -1081,7 +1084,7 @@ func (s *Service) Cancel(
 
 	now := timeutils.NowUnix()
 	for _, leg := range plan.Legs {
-		if _, err = s.shipmentService.Cancel(ctx, &repositories.CancelShipmentRequest{
+		if _, err = s.shipmentService.Cancel(ctx, &shipmentports.CancelShipmentRequest{
 			TenantInfo:   tenantInfo,
 			ShipmentID:   leg.ID,
 			CanceledByID: actor.AuditActor().UserID,
@@ -1096,7 +1099,7 @@ func (s *Service) Cancel(
 		return nil, err
 	}
 
-	updated, err := s.repo.GetByID(ctx, repositories.GetOrderByIDRequest{
+	updated, err := s.repo.GetByID(ctx, orderports.GetOrderByIDRequest{
 		ID:              orderID,
 		TenantInfo:      tenantInfo,
 		IncludeShipment: true,
@@ -1112,7 +1115,7 @@ func (s *Service) Cancel(
 func (s *Service) Update(
 	ctx context.Context,
 	entity *order.Order,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*order.Order, error) {
 	auditActor := actor.AuditActor()
 
@@ -1128,7 +1131,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceOrder,
 		ResourceID:     updatedEntity.GetID().String(),
 		Operation:      permission.OpUpdate,

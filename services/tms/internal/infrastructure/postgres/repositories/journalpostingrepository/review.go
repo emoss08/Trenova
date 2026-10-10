@@ -8,8 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/journalentry"
 	"github.com/emoss08/trenova/internal/core/domain/journalsource"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -22,13 +22,13 @@ import (
 	"github.com/uptrace/bun"
 )
 
-func NewReview(p Params) repositories.JournalReviewRepository {
+func NewReview(p Params) journalentryports.JournalReviewRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.journal-review-repository")}
 }
 
 func (r *repository) LockEntry(
 	ctx context.Context,
-	req repositories.LockJournalEntryRequest,
+	req journalentryports.LockJournalEntryRequest,
 ) (*journalentry.JournalEntry, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*journalentry.JournalEntry, error) {
 		entry := new(journalentry.JournalEntry)
@@ -66,7 +66,7 @@ func (r *repository) LockEntry(
 
 func (r *repository) ApproveEntry(
 	ctx context.Context,
-	params *repositories.ApproveJournalEntryParams,
+	params *journalentryports.ApproveJournalEntryParams,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.JournalEntryColumns
@@ -107,7 +107,7 @@ func (r *repository) ApproveEntry(
 
 func (r *repository) PostEntry(
 	ctx context.Context,
-	params *repositories.PostJournalEntryParams,
+	params *journalentryports.PostJournalEntryParams,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.JournalEntryColumns
@@ -246,7 +246,7 @@ var reviewStatuses = []journalentry.Status{
 
 func (r *repository) applyReviewFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListJournalReviewRequest,
+	req *journalentryports.ListJournalReviewQuery,
 ) *bun.SelectQuery {
 	cols := buncolgen.JournalEntryColumns
 	if req.Filter != nil {
@@ -271,7 +271,7 @@ func (r *repository) applyReviewFilters(
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListJournalReviewRequest,
+	req *journalentryports.ListJournalReviewQuery,
 ) (*pagination.CursorListResult[*journalentry.JournalEntry], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*journalentry.JournalEntry], error) {
 		if req.Filter != nil && len(req.Filter.Sort) == 0 {
@@ -338,10 +338,10 @@ func (r *repository) ListConnection(
 func (r *repository) Summarize(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*repositories.JournalReviewSummary, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.JournalReviewSummary, error) {
+) (*journalentryports.JournalReviewSummaryRow, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*journalentryports.JournalReviewSummaryRow, error) {
 		cols := buncolgen.JournalEntryColumns
-		summary := new(repositories.JournalReviewSummary)
+		summary := new(journalentryports.JournalReviewSummaryRow)
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*journalentry.JournalEntry)(nil)).

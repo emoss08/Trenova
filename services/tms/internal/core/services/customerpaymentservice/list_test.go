@@ -1,10 +1,11 @@
 package customerpaymentservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerpaymentportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/require"
@@ -13,9 +14,9 @@ import (
 func TestListDelegatesToRepository(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockCustomerPaymentRepository(t)
+	repo := customerpaymentportsmock.NewMockCustomerPaymentRepository(t)
 	svc := &Service{repo: repo}
-	req := &repositories.ListCustomerPaymentsRequest{
+	req := &customerpaymentports.ListCustomerPaymentsRequest{
 		Filter: &pagination.QueryOptions{Pagination: pagination.Info{Limit: 10}},
 	}
 	expected := &pagination.ListResult[*customerpayment.Payment]{

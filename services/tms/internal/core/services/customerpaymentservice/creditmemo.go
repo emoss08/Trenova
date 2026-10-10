@@ -4,13 +4,14 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
@@ -22,15 +23,15 @@ import (
 // goes down, and the application rows say which paid which.
 func (s *Service) ApplyCreditMemo(
 	ctx context.Context,
-	req *serviceports.ApplyCreditMemoRequest,
-	actor *serviceports.RequestActor,
+	req *customerpaymentports.ApplyCreditMemoRequest,
+	actor *permissionports.RequestActor,
 ) ([]*customerpayment.CreditMemoApplication, error) {
 	if err := s.checkCreditRequest(ctx, req, actor); err != nil {
 		return nil, err
 	}
 
 	var applied []*customerpayment.CreditMemoApplication
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		plan, txErr := s.planCreditApplication(txCtx, req, actor, s.invoiceRepo.LockForUpdate)
 		if txErr != nil {
 			return txErr
@@ -52,10 +53,10 @@ func (s *Service) ApplyCreditMemo(
 			return txErr
 		}
 		for _, app := range plan.applications {
-			if txErr = serviceports.EnqueueAccountingSync(
+			if txErr = accountingsyncports.EnqueueAccountingSync(
 				txCtx,
 				s.accountingSync,
-				serviceports.CreditApplicationSyncRequest(
+				accountingsyncports.CreditApplicationSyncRequest(
 					app,
 					plan.memo.Number,
 					accountingsync.SyncOperationCreate,
@@ -78,15 +79,15 @@ func (s *Service) ApplyCreditMemo(
 
 func (s *Service) UnapplyCreditMemoApplication(
 	ctx context.Context,
-	req *serviceports.UnapplyCreditMemoApplicationRequest,
-	actor *serviceports.RequestActor,
+	req *customerpaymentports.UnapplyCreditMemoApplicationRequest,
+	actor *permissionports.RequestActor,
 ) (*customerpayment.CreditMemoApplication, error) {
 	if err := checkUnapplyRequest(req, actor); err != nil {
 		return nil, err
 	}
 
 	var updated *customerpayment.CreditMemoApplication
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		plan, txErr := s.planUnapplyCredit(txCtx, req, actor, s.invoiceRepo.LockForUpdate)
 		if txErr != nil {
 			return txErr
@@ -104,10 +105,10 @@ func (s *Service) UnapplyCreditMemoApplication(
 		if txErr != nil {
 			return txErr
 		}
-		if txErr = serviceports.EnqueueAccountingSync(
+		if txErr = accountingsyncports.EnqueueAccountingSync(
 			txCtx,
 			s.accountingSync,
-			serviceports.CreditApplicationSyncRequest(
+			accountingsyncports.CreditApplicationSyncRequest(
 				updated,
 				plan.memo.Number,
 				accountingsync.SyncOperationVoid,
@@ -129,7 +130,7 @@ func (s *Service) UnapplyCreditMemoApplication(
 }
 
 func (s *Service) validateCreditApplications(
-	req *serviceports.ApplyCreditMemoRequest,
+	req *customerpaymentports.ApplyCreditMemoRequest,
 ) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	if req.CreditMemoID.IsNil() {

@@ -7,12 +7,12 @@ import (
 	"io"
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"go.uber.org/fx"
 )
 
-var _ services.ReportRenderer = (*CSVRenderer)(nil)
+var _ reportports.ReportRenderer = (*CSVRenderer)(nil)
 
 type CSVParams struct {
 	fx.In
@@ -38,8 +38,8 @@ func (r *CSVRenderer) Format() report.Format { return report.FormatCSV }
 
 func (r *CSVRenderer) Render(
 	ctx context.Context,
-	req *services.ReportRenderRequest,
-) (*services.ReportRenderStats, error) {
+	req *reportports.ReportRenderRequest,
+) (*reportports.ReportRenderStats, error) {
 	if r.includeBOM {
 		if _, err := req.Sink.Write([]byte{0xEF, 0xBB, 0xBF}); err != nil {
 			return nil, err
@@ -100,7 +100,7 @@ func (r *CSVRenderer) Render(
 		return nil, err
 	}
 
-	return &services.ReportRenderStats{
+	return &reportports.ReportRenderStats{
 		Rows:      req.Dataset.RowCount(),
 		Truncated: truncated,
 	}, nil

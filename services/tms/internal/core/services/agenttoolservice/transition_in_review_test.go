@@ -1,14 +1,15 @@
 package agenttoolservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
 	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -39,10 +40,10 @@ func TestTransitionToInReview_WaitsForAPersonWhileTheItemIsOnHold(t *testing.T) 
 
 			itemID := pulid.MustNew("bqi_")
 			params := deskParams(map[string]any{"billingQueueItemId": itemID.String()})
-			billing := mocks.NewMockBillingQueueService(t)
+			billing := billingqueueportsmock.NewMockBillingQueueService(t)
 			billing.EXPECT().
 				GetByID(mock.Anything, mock.MatchedBy(
-					func(req *repositories.GetBillingQueueItemByIDRequest) bool {
+					func(req *billingqueueports.GetBillingQueueItemByIDRequest) bool {
 						return req.ItemID == itemID &&
 							req.TenantInfo.OrgID == params.OrganizationID &&
 							req.TenantInfo.BuID == params.BusinessUnitID
@@ -61,7 +62,7 @@ func TestTransitionToInReview_WaitsForAPersonWhileTheItemIsOnHold(t *testing.T) 
 func TestTransitionToInReview_AnItemThatCannotBeReadIsAProposal(t *testing.T) {
 	t.Parallel()
 
-	billing := mocks.NewMockBillingQueueService(t)
+	billing := billingqueueportsmock.NewMockBillingQueueService(t)
 	billing.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
 		Return(nil, errors.New("item not found")).
@@ -80,7 +81,7 @@ func TestTransitionToInReview_AnAutomaticAgentStillProposesOffHold(t *testing.T)
 
 	itemID := pulid.MustNew("bqi_")
 	params := deskParams(map[string]any{"billingQueueItemId": itemID.String()})
-	billing := mocks.NewMockBillingQueueService(t)
+	billing := billingqueueportsmock.NewMockBillingQueueService(t)
 	billing.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
 		Return(&billingqueue.BillingQueueItem{ID: itemID, Status: billingqueue.StatusOnHold}, nil).

@@ -11,12 +11,19 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -51,33 +58,33 @@ type Params struct {
 	fx.In
 
 	Logger              *zap.Logger
-	Repo                repositories.ShipmentCommentRepository
-	ShipmentRepo        repositories.ShipmentRepository
-	UserRepo            repositories.UserRepository
-	DocumentRepo        repositories.DocumentRepository
+	Repo                shipmentports.ShipmentCommentRepository
+	ShipmentRepo        shipmentports.ShipmentRepository
+	UserRepo            tenantports.UserRepository
+	DocumentRepo        documentports.DocumentRepository
 	DocumentService     *documentservice.Service
-	Templates           services.DocumentTemplateResolver
-	AuditService        services.AuditService
-	EventService        services.ShipmentEventService
-	Realtime            services.RealtimeService
+	Templates           documenttemplateports.DocumentTemplateResolver
+	AuditService        auditports.AuditService
+	EventService        shipmenteventports.ShipmentEventService
+	Realtime            agentports.RealtimeService
 	NotificationService *notificationservice.Service
 }
 
 type service struct {
 	l                   *zap.Logger
-	repo                repositories.ShipmentCommentRepository
-	shipmentRepo        repositories.ShipmentRepository
-	userRepo            repositories.UserRepository
-	documentRepo        repositories.DocumentRepository
+	repo                shipmentports.ShipmentCommentRepository
+	shipmentRepo        shipmentports.ShipmentRepository
+	userRepo            tenantports.UserRepository
+	documentRepo        documentports.DocumentRepository
 	documentService     *documentservice.Service
-	templates           services.DocumentTemplateResolver
-	auditService        services.AuditService
-	eventService        services.ShipmentEventService
-	realtime            services.RealtimeService
+	templates           documenttemplateports.DocumentTemplateResolver
+	auditService        auditports.AuditService
+	eventService        shipmenteventports.ShipmentEventService
+	realtime            agentports.RealtimeService
 	notificationService *notificationservice.Service
 }
 
-func New(p Params) services.ShipmentCommentService {
+func New(p Params) shipmentports.ShipmentCommentService {
 	return &service{
 		l:                   p.Logger.Named("service.shipment-comment"),
 		repo:                p.Repo,
@@ -95,7 +102,7 @@ func New(p Params) services.ShipmentCommentService {
 
 func (s *service) ListByShipmentID(
 	ctx context.Context,
-	req *repositories.ListShipmentCommentsRequest,
+	req *shipmentports.ListShipmentCommentsRequest,
 ) (*pagination.CursorListResult[*shipment.ShipmentComment], error) {
 	if req == nil || req.Filter == nil {
 		return nil, errortypes.NewValidationError(
@@ -133,7 +140,7 @@ func (s *service) ListByShipmentID(
 
 func (s *service) GetCountByShipmentID(
 	ctx context.Context,
-	req *repositories.GetShipmentCommentCountRequest,
+	req *shipmentports.GetShipmentCommentCountRequest,
 ) (int, error) {
 	if req == nil {
 		return 0, errortypes.NewValidationError(
@@ -156,7 +163,7 @@ func (s *service) GetCountByShipmentID(
 func (s *service) Create(
 	ctx context.Context,
 	entity *shipment.ShipmentComment,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*shipment.ShipmentComment, error) {
 	if entity == nil {
 		return nil, errortypes.NewValidationError(
@@ -251,7 +258,7 @@ func (s *service) resolveParentComment(
 		return nil, nil //nolint:nilnil // top-level comments have no parent
 	}
 
-	parent, err := s.repo.GetByID(ctx, &repositories.GetShipmentCommentByIDRequest{
+	parent, err := s.repo.GetByID(ctx, &shipmentports.GetShipmentCommentByIDRequest{
 		CommentID:  *entity.ParentCommentID,
 		ShipmentID: entity.ShipmentID,
 		TenantInfo: pagination.TenantInfo{
@@ -282,7 +289,7 @@ func (s *service) resolveParentComment(
 
 func (s *service) CreateSystem(
 	ctx context.Context,
-	req *services.CreateSystemShipmentCommentRequest,
+	req *shipmentports.CreateSystemShipmentCommentRequest,
 ) (*shipment.ShipmentComment, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
@@ -324,7 +331,7 @@ func (s *service) CreateSystem(
 	}
 
 	normalizeCommentView(created)
-	auditActor := services.SystemAuditActor()
+	auditActor := permissionports.SystemAuditActor()
 	s.logCommentAction(
 		created,
 		auditActor,
@@ -348,8 +355,8 @@ func (s *service) CreateSystem(
 
 func (s *service) Update(
 	ctx context.Context,
-	req *services.UpdateShipmentCommentRequest,
-	actor *services.RequestActor,
+	req *shipmentports.UpdateShipmentCommentRequest,
+	actor *permissionports.RequestActor,
 ) (*shipment.ShipmentComment, error) {
 	original, entity, err := s.planUpdate(ctx, req, actor)
 	if err != nil {
@@ -411,15 +418,15 @@ func (s *service) Update(
 
 func (s *service) Delete(
 	ctx context.Context,
-	req *services.DeleteShipmentCommentRequest,
-	actor *services.RequestActor,
+	req *shipmentports.DeleteShipmentCommentRequest,
+	actor *permissionports.RequestActor,
 ) error {
 	original, replyCount, err := s.planDelete(ctx, req, actor)
 	if err != nil {
 		return err
 	}
 	userID := actor.UserID
-	repoReq := &repositories.DeleteShipmentCommentRequest{
+	repoReq := &shipmentports.DeleteShipmentCommentQuery{
 		TenantInfo: req.TenantInfo,
 		ShipmentID: req.ShipmentID,
 		CommentID:  req.CommentID,
@@ -489,13 +496,13 @@ func (s *service) prepareCommentUpdate(
 
 func (s *service) tombstoneComment(
 	ctx context.Context,
-	req *services.DeleteShipmentCommentRequest,
+	req *shipmentports.DeleteShipmentCommentRequest,
 	original *shipment.ShipmentComment,
 	userID pulid.ID,
-	auditActor services.AuditActor,
+	auditActor kernelports.AuditActor,
 	auditComment string,
 ) error {
-	tombstone, err := s.repo.SoftDelete(ctx, &repositories.SoftDeleteShipmentCommentRequest{
+	tombstone, err := s.repo.SoftDelete(ctx, &shipmentports.SoftDeleteShipmentCommentRequest{
 		TenantInfo: req.TenantInfo,
 		ShipmentID: req.ShipmentID,
 		CommentID:  req.CommentID,
@@ -543,7 +550,7 @@ func (s *service) getShipment(
 	shipmentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) (*shipment.Shipment, error) {
-	return s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	return s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         shipmentID,
 		TenantInfo: tenantInfo,
 	})
@@ -566,7 +573,7 @@ func (s *service) notifyMentions(
 		BuID:   comment.BusinessUnitID,
 		UserID: authorID,
 	}
-	if author, err := s.userRepo.GetByID(ctx, repositories.GetUserByIDRequest{
+	if author, err := s.userRepo.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo:   tenantInfo,
 		LookupUserID: authorID,
 	}); err == nil && author.Name != "" {
@@ -644,7 +651,7 @@ func (s *service) notifyReply(
 	}
 
 	authorName := "A teammate"
-	if author, err := s.userRepo.GetByID(ctx, repositories.GetUserByIDRequest{
+	if author, err := s.userRepo.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  reply.OrganizationID,
 			BuID:   reply.BusinessUnitID,
@@ -720,7 +727,7 @@ func (s *service) populateMentions(
 		return nil
 	}
 
-	users, err := s.userRepo.GetByIDs(ctx, repositories.GetUsersByIDsRequest{
+	users, err := s.userRepo.GetByIDs(ctx, tenantports.GetUsersByIDsRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -760,7 +767,7 @@ func (s *service) populateMentions(
 
 func (s *service) getEditableComment(
 	ctx context.Context,
-	req *repositories.GetShipmentCommentByIDRequest,
+	req *shipmentports.GetShipmentCommentByIDRequest,
 	userID pulid.ID,
 	asModerator bool,
 ) (*shipment.ShipmentComment, error) {
@@ -786,13 +793,13 @@ func (s *service) getEditableComment(
 
 func (s *service) logCommentAction(
 	entity *shipment.ShipmentComment,
-	actor services.AuditActor,
+	actor kernelports.AuditActor,
 	op permission.Operation,
 	previous any,
 	current any,
 	comment string,
 ) {
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceShipmentComment,
 		ResourceID:     entity.ID.String(),
 		Operation:      op,
@@ -810,7 +817,7 @@ func (s *service) logCommentAction(
 		params.PreviousState = jsonutils.MustToJSON(previous)
 	}
 
-	opts := []services.LogOption{
+	opts := []auditports.LogOption{
 		auditservice.WithComment(comment),
 		auditservice.WithMetadata(map[string]any{
 			dataKeyShipmentID: entity.ShipmentID.String(),
@@ -828,7 +835,7 @@ func (s *service) logCommentAction(
 
 func (s *service) recordCommentEvent(
 	ctx context.Context,
-	params *services.RecordShipmentEventParams,
+	params *shipmenteventports.RecordShipmentEventParams,
 ) {
 	if params == nil {
 		return
@@ -841,7 +848,7 @@ func (s *service) recordCommentEvent(
 func (s *service) publishCommentInvalidation(
 	ctx context.Context,
 	entity *shipment.ShipmentComment,
-	actor services.AuditActor,
+	actor kernelports.AuditActor,
 	action string,
 	payload any,
 ) {
@@ -922,7 +929,7 @@ func normalizeCommentView(entity *shipment.ShipmentComment) {
 	entity.MentionedUserIDs = uniqueMentionIDs(entity.MentionedUserIDs)
 }
 
-func requireCommentUser(actor *services.RequestActor) (pulid.ID, error) {
+func requireCommentUser(actor *permissionports.RequestActor) (pulid.ID, error) {
 	if actor == nil || actor.UserID.IsNil() {
 		return pulid.Nil, errortypes.NewAuthorizationError(
 			"Shipment comment actions require a user actor",
@@ -958,7 +965,7 @@ func (s *service) renderCommentNotification(
 		return commentNotificationWording{}, false
 	}
 
-	rendered, err := s.templates.RenderMessage(ctx, &services.RenderMessageRequest{
+	rendered, err := s.templates.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
 		TenantInfo:        tenantInfo,
 		Kind:              kind,
 		Data:              data,

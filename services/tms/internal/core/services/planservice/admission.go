@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -16,7 +16,7 @@ type AdmissionRequest struct {
 	ExpiredOK  bool
 }
 
-func Admit(ctx context.Context, plans services.PlanService, req *AdmissionRequest) error {
+func Admit(ctx context.Context, plans platformplanports.PlanService, req *AdmissionRequest) error {
 	if plans == nil || !plans.EnforcesPlans() {
 		return nil
 	}

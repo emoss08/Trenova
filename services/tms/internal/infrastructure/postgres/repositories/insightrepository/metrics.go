@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -38,7 +38,7 @@ type metricsRepository struct {
 	l  *zap.Logger
 }
 
-func NewMetrics(p MetricsParams) repositories.InsightMetricsRepository {
+func NewMetrics(p MetricsParams) insightports.InsightMetricsRepository {
 	return &metricsRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.insight-metrics-repository"),
@@ -59,16 +59,16 @@ const minOnTimeStops = 12
 
 func (r *metricsRepository) CustomerOnTimeComparison(
 	ctx context.Context,
-	req repositories.InsightWindowRequest,
-) ([]repositories.CustomerOnTimeRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.CustomerOnTimeRow, error) {
+	req insightports.InsightWindowRequest,
+) ([]insightports.CustomerOnTimeRow, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]insightports.CustomerOnTimeRow, error) {
 		log := r.l.With(zap.String("operation", "CustomerOnTimeComparison"))
 
 		// The prior period is the same length immediately before the window, so the
 		// two are comparable without a seasonality argument.
 		priorStart := req.WindowStart - (req.WindowEnd - req.WindowStart)
 
-		rows := make([]repositories.CustomerOnTimeRow, 0)
+		rows := make([]insightports.CustomerOnTimeRow, 0)
 
 		err := r.db.DBForContext(ctx).NewSelect().
 			TableExpr("stops AS stp").
@@ -123,12 +123,12 @@ func (r *metricsRepository) CustomerOnTimeComparison(
 
 func (r *metricsRepository) UnbilledDeliveredShipments(
 	ctx context.Context,
-	req repositories.UnbilledShipmentsRequest,
-) ([]repositories.UnbilledShipmentRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.UnbilledShipmentRow, error) {
+	req insightports.UnbilledShipmentsRequest,
+) ([]insightports.UnbilledShipmentRow, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]insightports.UnbilledShipmentRow, error) {
 		log := r.l.With(zap.String("operation", "UnbilledDeliveredShipments"))
 
-		rows := make([]repositories.UnbilledShipmentRow, 0)
+		rows := make([]insightports.UnbilledShipmentRow, 0)
 
 		err := r.db.DBForContext(ctx).NewSelect().
 			TableExpr("shipments AS sp").
@@ -161,12 +161,12 @@ func (r *metricsRepository) UnbilledDeliveredShipments(
 
 func (r *metricsRepository) UnbilledDetention(
 	ctx context.Context,
-	req repositories.InsightWindowRequest,
-) ([]repositories.UnbilledDetentionRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.UnbilledDetentionRow, error) {
+	req insightports.InsightWindowRequest,
+) ([]insightports.UnbilledDetentionRow, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]insightports.UnbilledDetentionRow, error) {
 		log := r.l.With(zap.String("operation", "UnbilledDetention"))
 
-		rows := make([]repositories.UnbilledDetentionRow, 0)
+		rows := make([]insightports.UnbilledDetentionRow, 0)
 
 		err := r.db.DBForContext(ctx).NewSelect().
 			TableExpr("detention_occurrences AS dto").
@@ -205,12 +205,12 @@ func (r *metricsRepository) UnbilledDetention(
 
 func (r *metricsRepository) CustomerEmptyMiles(
 	ctx context.Context,
-	req repositories.InsightWindowRequest,
-) ([]repositories.CustomerEmptyMilesRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.CustomerEmptyMilesRow, error) {
+	req insightports.InsightWindowRequest,
+) ([]insightports.CustomerEmptyMilesRow, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]insightports.CustomerEmptyMilesRow, error) {
 		log := r.l.With(zap.String("operation", "CustomerEmptyMiles"))
 
-		rows := make([]repositories.CustomerEmptyMilesRow, 0)
+		rows := make([]insightports.CustomerEmptyMilesRow, 0)
 
 		// The organization's own averages ride along on every row as a window
 		// function rather than a second query, so the customer and the baseline are
@@ -248,12 +248,12 @@ func (r *metricsRepository) CustomerEmptyMiles(
 
 func (r *metricsRepository) ExpiringCredentials(
 	ctx context.Context,
-	req repositories.ExpiringCredentialsRequest,
-) ([]repositories.ExpiringCredentialRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.ExpiringCredentialRow, error) {
+	req insightports.ExpiringCredentialsRequest,
+) ([]insightports.ExpiringCredentialRow, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]insightports.ExpiringCredentialRow, error) {
 		log := r.l.With(zap.String("operation", "ExpiringCredentials"))
 
-		rows := make([]repositories.ExpiringCredentialRow, 0)
+		rows := make([]insightports.ExpiringCredentialRow, 0)
 
 		err := r.db.DBForContext(ctx).NewSelect().
 			TableExpr("worker_credentials AS wcred").

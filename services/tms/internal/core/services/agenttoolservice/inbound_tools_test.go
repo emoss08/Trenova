@@ -7,10 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/core/services/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -23,12 +23,12 @@ type fakeInboundDesk struct {
 	checked   *inboundmessageservice.LinkRequest
 	linked    *inboundmessageservice.LinkRequest
 	reviewed  *inboundmessageservice.ReviewRequest
-	requested *repositories.GetInboundMessageByIDRequest
+	requested *inboundmessageports.GetInboundMessageByIDRequest
 }
 
 func (f *fakeInboundDesk) GetByID(
 	_ context.Context,
-	req repositories.GetInboundMessageByIDRequest,
+	req inboundmessageports.GetInboundMessageByIDRequest,
 ) (*inboundmessage.InboundMessage, error) {
 	f.requested = &req
 	if f.message == nil {
@@ -86,7 +86,7 @@ func TestLinkInboundMessage_ChecksBeforeProposingAndLinksInTheActorsTenant(t *te
 		"reason":     "The PRO in the subject is this load's.",
 	})
 
-	require.NoError(t, tool.(serviceports.ToolValidator).Validate(t.Context(), params))
+	require.NoError(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
 	require.NotNil(t, desk.checked)
 	assert.Equal(t, shipmentID, desk.checked.ShipmentID)
 
@@ -107,7 +107,7 @@ func TestLinkInboundMessage_RefusesARecordTheServiceCannotFind(t *testing.T) {
 	}
 	tool := newLinkInboundMessageTool(desk)
 
-	err := tool.(serviceports.ToolValidator).Validate(t.Context(), deskParams(map[string]any{
+	err := tool.(agentports.ToolValidator).Validate(t.Context(), deskParams(map[string]any{
 		"messageId":  desk.message.ID.String(),
 		"shipmentId": pulid.MustNew("shp_").String(),
 		"reason":     "Guessing.",
@@ -168,7 +168,7 @@ func TestMarkInboundMessage_Refuses(t *testing.T) {
 
 			require.Error(
 				t,
-				tool.(serviceports.ToolValidator).Validate(t.Context(), deskParams(tc.params)),
+				tool.(agentports.ToolValidator).Validate(t.Context(), deskParams(tc.params)),
 			)
 			require.Error(t, tool.Execute(t.Context(), deskParams(tc.params)))
 			assert.Nil(t, desk.reviewed)
@@ -180,7 +180,7 @@ func replyTool(
 	desk *fakeInboundDesk,
 	mailer *fakeMailer,
 	renderer *fakeRenderer,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return &replyToInboundMessageTool{
 		inbox: desk,
 		deps:  inboundReplier{email: mailer, templates: renderer},
@@ -281,7 +281,7 @@ func TestReplyToInboundMessage_Refuses(t *testing.T) {
 				"body":      "Answer.",
 			})
 
-			require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), params))
+			require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
 			require.Error(t, tool.Execute(t.Context(), params))
 			assert.Nil(t, mailer.sent, "nothing may be sent")
 			assert.Nil(t, desk.reviewed)
@@ -376,7 +376,7 @@ func TestInboundTools_AreOnlyAsAutonomousAsTheMailbox(t *testing.T) {
 			tc.mutate(desk.message)
 			params := deskParams(map[string]any{"messageId": desk.message.ID.String()})
 
-			for _, tool := range []serviceports.AgentTool{
+			for _, tool := range []agentports.AgentTool{
 				newLinkInboundMessageTool(desk),
 				newMarkInboundMessageTool(desk),
 				replyTool(desk, &fakeMailer{}, &fakeRenderer{}),

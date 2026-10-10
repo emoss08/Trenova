@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/ifta"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/iftaservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"
@@ -15,7 +15,7 @@ import (
 type returnsByIDsGetter interface {
 	GetReturnsByIDs(
 		ctx context.Context,
-		req *repositories.GetReturnsByIDsRequest,
+		req *iftaports.GetReturnsByIDsRequest,
 	) ([]*ifta.Return, error)
 }
 
@@ -47,7 +47,7 @@ func (f *IFTAReturnByIDLoaderFactory) batchFunc(
 	tenantInfo pagination.TenantInfo,
 ) batchFetchFunc[*ifta.Return] {
 	return batchByIDFunc(func(ctx context.Context, ids []pulid.ID) ([]*ifta.Return, error) {
-		return f.returns.GetReturnsByIDs(ctx, &repositories.GetReturnsByIDsRequest{
+		return f.returns.GetReturnsByIDs(ctx, &iftaports.GetReturnsByIDsRequest{
 			TenantInfo: tenantInfo,
 			IDs:        ids,
 		})

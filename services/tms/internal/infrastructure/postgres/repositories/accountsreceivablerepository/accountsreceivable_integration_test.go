@@ -14,8 +14,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/customerpaymentservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
@@ -29,6 +27,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fiscalyearrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoicerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/journalpostingrepository"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -272,7 +272,7 @@ func TestAccountsReceivableRepositoryReturnsLedgerAndAging(t *testing.T) {
 	)
 	_, err = paymentSvc.PostAndApply(
 		ctx,
-		&serviceports.PostCustomerPaymentRequest{
+		&customerpaymentports.PostCustomerPaymentRequest{
 			CustomerID:      shp.CustomerID,
 			PaymentDate:     now.Unix(),
 			AccountingDate:  now.Unix(),
@@ -280,7 +280,7 @@ func TestAccountsReceivableRepositoryReturnsLedgerAndAging(t *testing.T) {
 			PaymentMethod:   customerpayment.MethodACH,
 			ReferenceNumber: "PAY-AR",
 			CurrencyCode:    "USD",
-			Applications: []*serviceports.CustomerPaymentApplicationInput{
+			Applications: []*customerpaymentports.CustomerPaymentApplicationInput{
 				{InvoiceID: inv.ID, AppliedAmountMinor: 10000},
 			},
 			TenantInfo: pagination.TenantInfo{
@@ -295,7 +295,7 @@ func TestAccountsReceivableRepositoryReturnsLedgerAndAging(t *testing.T) {
 
 	ledger, err := repo.ListCustomerLedger(
 		ctx,
-		repositories.ListCustomerLedgerRequest{
+		customerledgerports.ListCustomerLedgerRequest{
 			TenantInfo: pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID},
 			CustomerID: shp.CustomerID,
 		},
@@ -308,7 +308,7 @@ func TestAccountsReceivableRepositoryReturnsLedgerAndAging(t *testing.T) {
 
 	aging, err := repo.ListARAging(
 		ctx,
-		repositories.ListARAgingRequest{
+		customerledgerports.ListARAgingRequest{
 			TenantInfo: pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID},
 			AsOfDate:   now.Unix(),
 		},
@@ -506,7 +506,7 @@ func TestAccountsReceivableRepositoryReturnsOpenItems(t *testing.T) {
 	)
 	_, err = paymentSvc.PostAndApply(
 		ctx,
-		&serviceports.PostCustomerPaymentRequest{
+		&customerpaymentports.PostCustomerPaymentRequest{
 			CustomerID:      shp.CustomerID,
 			PaymentDate:     now.Unix(),
 			AccountingDate:  now.Unix(),
@@ -514,7 +514,7 @@ func TestAccountsReceivableRepositoryReturnsOpenItems(t *testing.T) {
 			PaymentMethod:   customerpayment.MethodACH,
 			ReferenceNumber: "PAY-AR-OPEN",
 			CurrencyCode:    "USD",
-			Applications: []*serviceports.CustomerPaymentApplicationInput{
+			Applications: []*customerpaymentports.CustomerPaymentApplicationInput{
 				{InvoiceID: inv.ID, AppliedAmountMinor: 5000},
 			},
 			TenantInfo: pagination.TenantInfo{
@@ -529,7 +529,7 @@ func TestAccountsReceivableRepositoryReturnsOpenItems(t *testing.T) {
 
 	items, err := repo.ListOpenItems(
 		ctx,
-		repositories.ListAROpenItemsRequest{
+		customerledgerports.ListAROpenItemsRequest{
 			TenantInfo: pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID},
 			CustomerID: shp.CustomerID,
 			AsOfDate:   now.Unix(),
@@ -733,7 +733,7 @@ func TestAccountsReceivableRepositoryReturnsCustomerNameAndAging(t *testing.T) {
 	)
 	_, err = paymentSvc.PostAndApply(
 		ctx,
-		&serviceports.PostCustomerPaymentRequest{
+		&customerpaymentports.PostCustomerPaymentRequest{
 			CustomerID:      shp.CustomerID,
 			PaymentDate:     now.Unix(),
 			AccountingDate:  now.Unix(),
@@ -741,7 +741,7 @@ func TestAccountsReceivableRepositoryReturnsCustomerNameAndAging(t *testing.T) {
 			PaymentMethod:   customerpayment.MethodACH,
 			ReferenceNumber: "PAY-AR-STMT",
 			CurrencyCode:    "USD",
-			Applications: []*serviceports.CustomerPaymentApplicationInput{
+			Applications: []*customerpaymentports.CustomerPaymentApplicationInput{
 				{InvoiceID: inv.ID, AppliedAmountMinor: 2500},
 			},
 			TenantInfo: pagination.TenantInfo{
@@ -756,7 +756,7 @@ func TestAccountsReceivableRepositoryReturnsCustomerNameAndAging(t *testing.T) {
 
 	name, err := repo.GetCustomerName(
 		ctx,
-		repositories.GetARCustomerNameRequest{
+		customerledgerports.GetARCustomerNameRequest{
 			TenantInfo: pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID},
 			CustomerID: shp.CustomerID,
 		},
@@ -766,7 +766,7 @@ func TestAccountsReceivableRepositoryReturnsCustomerNameAndAging(t *testing.T) {
 
 	aging, err := repo.GetCustomerAging(
 		ctx,
-		repositories.GetARCustomerAgingRequest{
+		customerledgerports.GetARCustomerAgingRequest{
 			TenantInfo: pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID},
 			CustomerID: shp.CustomerID,
 			AsOfDate:   now.Unix(),

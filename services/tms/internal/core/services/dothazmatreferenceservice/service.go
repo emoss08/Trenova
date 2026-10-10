@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/dothazmatreference"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/dothazmatreferenceports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -14,12 +14,12 @@ type Params struct {
 	fx.In
 
 	Logger *zap.Logger
-	Repo   repositories.DotHazmatReferenceRepository
+	Repo   dothazmatreferenceports.DotHazmatReferenceRepository
 }
 
 type Service struct {
 	l    *zap.Logger
-	repo repositories.DotHazmatReferenceRepository
+	repo dothazmatreferenceports.DotHazmatReferenceRepository
 }
 
 func New(p Params) *Service {
@@ -31,7 +31,7 @@ func New(p Params) *Service {
 
 func (s *Service) Get(
 	ctx context.Context,
-	req repositories.GetDotHazmatReferenceByIDRequest,
+	req dothazmatreferenceports.GetDotHazmatReferenceByIDRequest,
 ) (*dothazmatreference.DotHazmatReference, error) {
 	return s.repo.GetByID(ctx, req)
 }

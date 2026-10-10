@@ -4,8 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -13,8 +14,8 @@ import (
 
 func (s *Service) startToolSpan(
 	ctx context.Context,
-	req *serviceports.RunRequest,
-	call *serviceports.ToolCall,
+	req *agentports.RunRequest,
+	call *agentports.ToolCall,
 	key string,
 ) (context.Context, trace.Span) {
 	spec := &aitrace.ToolSpec{
@@ -23,7 +24,7 @@ func (s *Service) startToolSpan(
 		CallID:   call.ID,
 		StepKey:  key,
 	}
-	if policy, ok := serviceports.PolicyOf(s.toolNamed(call.Name)); ok {
+	if policy, ok := agentports.PolicyOf(s.toolNamed(call.Name)); ok {
 		spec.Effect = string(policy.EffectiveEffect())
 		spec.Kind = string(policy.Kind)
 	}
@@ -40,21 +41,21 @@ func (s *Service) startToolSpan(
 	return aitrace.StartTool(ctx, spec)
 }
 
-func runAnchor(req *serviceports.RunRequest) aitrace.Anchor {
+func runAnchor(req *agentports.RunRequest) aitrace.Anchor {
 	if anchor := aitrace.ForRun(req.StepOwner, req.Delegation); anchor.IsValid() {
 		return anchor
 	}
 
-	return aitrace.ForAttribution(&serviceports.AIUsageAttribution{RunID: req.RunID})
+	return aitrace.ForAttribution(&aiusageports.AIUsageAttribution{RunID: req.RunID})
 }
 
-func stepState(state serviceports.StepState) string {
+func stepState(state agentports.StepState) string {
 	switch state {
-	case serviceports.StepFresh:
+	case agentports.StepFresh:
 		return aitrace.StepStateFresh
-	case serviceports.StepCompleted, serviceports.StepFailed:
+	case agentports.StepCompleted, agentports.StepFailed:
 		return aitrace.StepStateReplayed
-	case serviceports.StepUnknown:
+	case agentports.StepUnknown:
 		return aitrace.StepStateUnknown
 	default:
 		return ""
@@ -111,7 +112,7 @@ func (o *toolOutcome) verdictOrDerived() string {
 	return derivedVerdict(o.failed, o.action)
 }
 
-func derivedVerdict(failed bool, action *serviceports.PendingAction) string {
+func derivedVerdict(failed bool, action *agentports.PendingAction) string {
 	switch {
 	case action != nil && action.Simulated:
 		return aitrace.OutcomeSimulated
@@ -130,7 +131,7 @@ func derivedVerdict(failed bool, action *serviceports.PendingAction) string {
 
 func stampAction(
 	ctx context.Context,
-	action *serviceports.PendingAction,
+	action *agentports.PendingAction,
 	source agent.TierSource,
 	stepKey string,
 ) {

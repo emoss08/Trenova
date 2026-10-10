@@ -10,8 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -146,7 +146,7 @@ func (a *Activities) collectCredentialObligations(
 	for {
 		page, err := a.credentialRepo.ListExpiring(
 			ctx,
-			&repositories.ListExpiringWorkerCredentialsRequest{
+			&workerports.ListExpiringWorkerCredentialsRequest{
 				HorizonDays: sweepHorizonDays,
 				GraceDays:   sweepGraceDays,
 				AfterID:     after,
@@ -209,7 +209,7 @@ func (a *Activities) collectTrainingList(
 ) error {
 	var after pulid.ID
 	for {
-		page, err := list(ctx, &repositories.ListTrainingRemindersRequest{
+		page, err := list(ctx, &workerports.ListTrainingRemindersRequest{
 			HorizonDays: sweepHorizonDays,
 			GraceDays:   sweepGraceDays,
 			AfterID:     after,

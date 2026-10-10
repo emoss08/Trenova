@@ -6,8 +6,8 @@ import (
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -201,7 +201,7 @@ func (h *Handler) updateVersionEffectiveDate(c *gin.Context) {
 
 	version, err := h.service.UpdateVersionEffectiveDate(
 		c.Request.Context(),
-		&repositories.UpdateEffectiveDateRequest{
+		&formulatemplateports.UpdateEffectiveDateRequest{
 			TenantInfo:    pagination.FromAuthAsUser(authCtx),
 			TemplateID:    templateID,
 			VersionNumber: versionNumber,

@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -18,7 +18,7 @@ import (
 )
 
 type fakePolicyRepo struct {
-	repositories.PTOPolicyRepository
+	workerports.PTOPolicyRepository
 	policies   map[pulid.ID]*worker.PTOPolicy
 	codes      map[string]pulid.ID
 	openCounts map[pulid.ID]int
@@ -36,7 +36,7 @@ func newFakePolicyRepo() *fakePolicyRepo {
 
 func (f *fakePolicyRepo) GetByID(
 	_ context.Context,
-	req *repositories.GetPTOPolicyByIDRequest,
+	req *workerports.GetPTOPolicyByIDRequest,
 ) (*worker.PTOPolicy, error) {
 	policy, ok := f.policies[req.ID]
 	if !ok {
@@ -48,7 +48,7 @@ func (f *fakePolicyRepo) GetByID(
 
 func (f *fakePolicyRepo) CodeExists(
 	_ context.Context,
-	req *repositories.PTOPolicyCodeExistsRequest,
+	req *workerports.PTOPolicyCodeExistsRequest,
 ) (bool, error) {
 	id, ok := f.codes[req.Code]
 	return ok && id != req.ExcludeID, nil
@@ -77,19 +77,19 @@ func (f *fakePolicyRepo) Update(
 
 func (f *fakePolicyRepo) CountOpenAssignments(
 	_ context.Context,
-	req *repositories.CountOpenPTOAssignmentsRequest,
+	req *workerports.CountOpenPTOAssignmentsRequest,
 ) (int, error) {
 	return f.openCounts[req.PolicyID], nil
 }
 
 type fakeAudit struct {
-	serviceports.AuditService
+	auditports.AuditService
 	ops []permission.Operation
 }
 
 func (f *fakeAudit) LogAction(
-	params *serviceports.LogActionParams,
-	_ ...serviceports.LogOption,
+	params *auditports.LogActionParams,
+	_ ...auditports.LogOption,
 ) error {
 	f.ops = append(f.ops, params.Operation)
 	return nil

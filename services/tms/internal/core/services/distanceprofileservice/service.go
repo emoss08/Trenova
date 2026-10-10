@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/distanceprofile"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/places/ports/distanceprofileports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -20,16 +20,16 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.DistanceProfileRepository
+	Repo         distanceprofileports.DistanceProfileRepository
 	Validator    *Validator
-	AuditService services.AuditService
+	AuditService auditports.AuditService
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         repositories.DistanceProfileRepository
+	repo         distanceprofileports.DistanceProfileRepository
 	validator    *Validator
-	auditService services.AuditService
+	auditService auditports.AuditService
 }
 
 func New(p Params) *Service {
@@ -43,21 +43,21 @@ func New(p Params) *Service {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListDistanceProfileRequest,
+	req *distanceprofileports.ListDistanceProfileRequest,
 ) (*pagination.ListResult[*distanceprofile.DistanceProfile], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListDistanceProfileConnectionRequest,
+	req *distanceprofileports.ListDistanceProfileConnectionRequest,
 ) (*pagination.CursorListResult[*distanceprofile.DistanceProfile], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	req repositories.GetDistanceProfileByIDRequest,
+	req distanceprofileports.GetDistanceProfileByIDRequest,
 ) (*distanceprofile.DistanceProfile, error) {
 	return s.repo.GetByID(ctx, req)
 }
@@ -98,7 +98,7 @@ func (s *Service) Update(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetByID(ctx, repositories.GetDistanceProfileByIDRequest{
+	original, err := s.repo.GetByID(ctx, distanceprofileports.GetDistanceProfileByIDRequest{
 		ID: entity.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -120,10 +120,10 @@ func (s *Service) Update(
 
 func (s *Service) Delete(
 	ctx context.Context,
-	req repositories.DeleteDistanceProfileRequest,
+	req distanceprofileports.DeleteDistanceProfileRequest,
 	userID pulid.ID,
 ) error {
-	existing, err := s.repo.GetByID(ctx, repositories.GetDistanceProfileByIDRequest(req))
+	existing, err := s.repo.GetByID(ctx, distanceprofileports.GetDistanceProfileByIDRequest(req))
 	if err != nil {
 		return err
 	}
@@ -143,7 +143,7 @@ func (s *Service) Delete(
 
 func (s *Service) SetDefault(
 	ctx context.Context,
-	req repositories.GetDistanceProfileByIDRequest,
+	req distanceprofileports.GetDistanceProfileByIDRequest,
 	userID pulid.ID,
 ) (*distanceprofile.DistanceProfile, error) {
 	updated, err := s.repo.SetDefault(ctx, req)
@@ -156,7 +156,7 @@ func (s *Service) SetDefault(
 
 func (s *Service) SelectOptions(
 	ctx context.Context,
-	req *repositories.DistanceProfileSelectOptionsRequest,
+	req *distanceprofileports.DistanceProfileSelectOptionsRequest,
 ) (*pagination.ListResult[*distanceprofile.DistanceProfile], error) {
 	return s.repo.SelectOptions(ctx, req)
 }
@@ -171,7 +171,7 @@ func (s *Service) logAudit(
 	if current == nil {
 		return
 	}
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceDistanceProfile,
 		ResourceID:     current.ID.String(),
 		Operation:      op,
@@ -184,7 +184,7 @@ func (s *Service) logAudit(
 		params.PreviousState = jsonutils.MustToJSON(previous)
 	}
 
-	opts := []services.LogOption{auditservice.WithComment(comment)}
+	opts := []auditports.LogOption{auditservice.WithComment(comment)}
 	if previous != nil && op == permission.OpUpdate {
 		opts = append(opts, auditservice.WithDiff(previous, current))
 	}

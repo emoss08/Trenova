@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -67,7 +67,7 @@ func TestListPendingExtractionTenants_UsesQualifiedTenantGrouping(t *testing.T) 
 
 	tenants, err := repo.ListPendingExtractionTenants(
 		context.Background(),
-		&repositories.ListPendingDocumentExtractionRequest{
+		&documentcontentports.ListPendingDocumentExtractionRequest{
 			OlderThan: 1779222120,
 			Limit:     100,
 		},

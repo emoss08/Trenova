@@ -7,12 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/api/enums/v1"
@@ -56,7 +54,7 @@ type DefinitionSchedulesParams struct {
 	fx.In
 
 	Client      client.Client
-	Definitions repositories.AgentDefinitionRepository
+	Definitions agentdefinitionports.AgentDefinitionRepository
 	Logger      *zap.Logger
 }
 
@@ -69,11 +67,11 @@ type DefinitionSchedulesParams struct {
 // agent is disabled, and the Temporal UI shows each one with its next run.
 type DefinitionSchedules struct {
 	client      client.Client
-	definitions repositories.AgentDefinitionRepository
+	definitions agentdefinitionports.AgentDefinitionRepository
 	l           *zap.Logger
 }
 
-var _ serviceports.AgentDefinitionScheduler = (*DefinitionSchedules)(nil)
+var _ agentdefinitionports.AgentDefinitionScheduler = (*DefinitionSchedules)(nil)
 
 func NewDefinitionSchedules(p DefinitionSchedulesParams) *DefinitionSchedules {
 	return &DefinitionSchedules{
@@ -254,7 +252,7 @@ func (s *DefinitionSchedules) Reconcile(ctx context.Context) (*ReconcileResult, 
 	for {
 		page, err := s.definitions.ListScheduledAcrossTenants(
 			ctx,
-			repositories.ListScheduledAcrossTenantsRequest{
+			agentdefinitionports.ListScheduledAcrossTenantsRequest{
 				AfterID: after,
 				Limit:   reconcilePageSize,
 			},

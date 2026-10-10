@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/settingversion"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/settingversionports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -30,7 +30,7 @@ func (v *settingVersions) Create(_ context.Context, version *settingversion.Sett
 
 func (v *settingVersions) LatestAt(
 	_ context.Context,
-	req *repositories.GetSettingVersionAtRequest,
+	req *settingversionports.GetSettingVersionAtRequest,
 ) (*settingversion.SettingVersion, error) {
 	var best *settingversion.SettingVersion
 	for _, version := range v.created {
@@ -54,7 +54,7 @@ func TestSaveRecordsTheProviderWithoutItsKey(t *testing.T) {
 
 	saved, err := svc.save(t.Context(), func(context.Context) (*aiprovider.Provider, error) {
 		return provider, nil
-	}, &services.RequestActor{UserID: author})
+	}, &permissionports.RequestActor{UserID: author})
 
 	require.NoError(t, err)
 	assert.Same(t, provider, saved)

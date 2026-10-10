@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -52,7 +52,7 @@ func (r *FleetRequest) normalise() {
 func (s *Service) Fleet(ctx context.Context, req *FleetRequest) (*worker.FleetSafety, error) {
 	req.normalise()
 
-	base := &repositories.FleetSafetyRequest{
+	base := &workerports.FleetSafetyRequest{
 		TenantInfo:   req.TenantInfo,
 		WindowMonths: req.WindowMonths,
 		FleetCodeID:  req.FleetCodeID,
@@ -61,14 +61,14 @@ func (s *Service) Fleet(ctx context.Context, req *FleetRequest) (*worker.FleetSa
 	}
 
 	var (
-		ratings   []repositories.FleetSafetyRatingRow
-		terminals []repositories.FleetSafetyTerminalRow
-		kinds     []repositories.FleetSafetyKindRow
-		basics    []repositories.FleetSafetyBasicRow
-		inferred  []repositories.FleetSafetyEventBasicRow
-		trend     []repositories.FleetSafetyTrendRow
-		worst     []repositories.FleetSafetyRankRow
-		best      []repositories.FleetSafetyRankRow
+		ratings   []workerports.FleetSafetyRatingRow
+		terminals []workerports.FleetSafetyTerminalRow
+		kinds     []workerports.FleetSafetyKindRow
+		basics    []workerports.FleetSafetyBasicRow
+		inferred  []workerports.FleetSafetyEventBasicRow
+		trend     []workerports.FleetSafetyTrendRow
+		worst     []workerports.FleetSafetyRankRow
+		best      []workerports.FleetSafetyRankRow
 	)
 
 	group, groupCtx := errgroup.WithContext(ctx)
@@ -135,14 +135,14 @@ func (s *Service) Fleet(ctx context.Context, req *FleetRequest) (*worker.FleetSa
 
 type fleetInput struct {
 	req       *FleetRequest
-	ratings   []repositories.FleetSafetyRatingRow
-	terminals []repositories.FleetSafetyTerminalRow
-	kinds     []repositories.FleetSafetyKindRow
-	basics    []repositories.FleetSafetyBasicRow
-	inferred  []repositories.FleetSafetyEventBasicRow
-	trend     []repositories.FleetSafetyTrendRow
-	worst     []repositories.FleetSafetyRankRow
-	best      []repositories.FleetSafetyRankRow
+	ratings   []workerports.FleetSafetyRatingRow
+	terminals []workerports.FleetSafetyTerminalRow
+	kinds     []workerports.FleetSafetyKindRow
+	basics    []workerports.FleetSafetyBasicRow
+	inferred  []workerports.FleetSafetyEventBasicRow
+	trend     []workerports.FleetSafetyTrendRow
+	worst     []workerports.FleetSafetyRankRow
+	best      []workerports.FleetSafetyRankRow
 }
 
 func composeFleet(in *fleetInput) *worker.FleetSafety {
@@ -261,7 +261,7 @@ func composeFleet(in *fleetInput) *worker.FleetSafety {
 	return out
 }
 
-func toRanks(rows []repositories.FleetSafetyRankRow) []worker.FleetSafetyRank {
+func toRanks(rows []workerports.FleetSafetyRankRow) []worker.FleetSafetyRank {
 	ranks := make([]worker.FleetSafetyRank, 0, len(rows))
 	for _, row := range rows {
 		ranks = append(ranks, worker.FleetSafetyRank{

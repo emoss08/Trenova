@@ -3,7 +3,7 @@ package reflectionjobs
 import (
 	"time"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -33,8 +33,8 @@ type ThreadReflectionInput struct {
 	Rounds     int                   `json:"rounds"`
 }
 
-func (in *ThreadReflectionInput) request() *serviceports.ReflectOnThreadRequest {
-	return &serviceports.ReflectOnThreadRequest{
+func (in *ThreadReflectionInput) request() *agentports.ReflectOnThreadRequest {
+	return &agentports.ReflectOnThreadRequest{
 		TenantInfo: in.TenantInfo,
 		ThreadID:   in.ThreadID,
 		UserID:     in.UserID,
@@ -51,8 +51,8 @@ type TurnFinished struct {
 }
 
 type FinishReflectionInput struct {
-	Plan   *serviceports.ReflectionPlan             `json:"plan"`
-	Result *serviceports.StructuredCompletionResult `json:"result"`
+	Plan   *agentports.ReflectionPlan             `json:"plan"`
+	Result *agentports.StructuredCompletionResult `json:"result"`
 }
 
 type ReflectionResult struct {
@@ -64,7 +64,7 @@ type ReflectionResult struct {
 	Failed  int `json:"failed"`
 }
 
-func (r *ReflectionResult) absorb(outcome *serviceports.ReflectionOutcome) {
+func (r *ReflectionResult) absorb(outcome *agentports.ReflectionOutcome) {
 	if outcome == nil {
 		return
 	}

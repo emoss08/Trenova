@@ -1,6 +1,9 @@
 package invoiceledger
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"testing"
 
@@ -9,9 +12,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/journalposting"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -83,11 +87,11 @@ func poster(
 	t *testing.T,
 	control *tenant.AccountingControl,
 	periods journalposting.PeriodReader,
-	journals repositories.JournalPostingRepository,
+	journals journalentryports.JournalPostingRepository,
 	ledger *capturedLedger,
 ) *Poster {
 	t.Helper()
-	controls := mocks.NewMockAccountingControlRepository(t)
+	controls := tenantportsmock.NewMockAccountingControlRepository(t)
 	controls.EXPECT().GetByOrgID(mock.Anything, orgID).Return(control, nil).Maybe()
 	return &Poster{
 		Controls: controls,
@@ -112,18 +116,18 @@ func TestACreditMemoPostsRevenueAgainstARAndACreditLedgerLine(t *testing.T) {
 
 	entity := memo(billingqueue.BillTypeCreditMemo, -4_500)
 	related := pulid.MustNew("inv_")
-	periods := mocks.NewMockFiscalPeriodRepository(t)
+	periods := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	periods.EXPECT().
-		GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{
+		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{
 			OrgID: orgID, BuID: buID, Date: entity.InvoiceDate,
 		}).
 		Return(&fiscalperiod.FiscalPeriod{ID: pulid.MustNew("fp_"), Status: fiscalperiod.StatusOpen}, nil).
 		Once()
-	var written repositories.CreateJournalPostingParams
-	journals := mocks.NewMockJournalPostingRepository(t)
+	var written journalentryports.CreateJournalPostingParams
+	journals := journalentryportsmock.NewMockJournalPostingRepository(t)
 	journals.EXPECT().
 		CreatePosting(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, params repositories.CreateJournalPostingParams) error {
+		RunAndReturn(func(_ context.Context, params journalentryports.CreateJournalPostingParams) error {
 			written = params
 			return nil
 		}).
@@ -165,8 +169,8 @@ func TestLedgerOnlyRecordsTheLineWithoutAJournal(t *testing.T) {
 	result, err := poster(
 		t,
 		accrualControl(),
-		mocks.NewMockFiscalPeriodRepository(t),
-		mocks.NewMockJournalPostingRepository(t),
+		fiscalperiodportsmock.NewMockFiscalPeriodRepository(t),
+		journalentryportsmock.NewMockJournalPostingRepository(t),
 		ledger,
 	).Post(t.Context(), &Request{
 		Invoice:        entity,
@@ -191,8 +195,8 @@ func TestNothingIsPostedWhenRevenueIsNotRecognizedOnInvoicePost(t *testing.T) {
 	_, err := poster(
 		t,
 		control,
-		mocks.NewMockFiscalPeriodRepository(t),
-		mocks.NewMockJournalPostingRepository(t),
+		fiscalperiodportsmock.NewMockFiscalPeriodRepository(t),
+		journalentryportsmock.NewMockJournalPostingRepository(t),
 		ledger,
 	).Post(t.Context(), &Request{
 		Invoice: memo(billingqueue.BillTypeCreditMemo, -800),
@@ -209,8 +213,8 @@ func TestADebitMemoRaisesTheLedger(t *testing.T) {
 	_, err := poster(
 		t,
 		accrualControl(),
-		mocks.NewMockFiscalPeriodRepository(t),
-		mocks.NewMockJournalPostingRepository(t),
+		fiscalperiodportsmock.NewMockFiscalPeriodRepository(t),
+		journalentryportsmock.NewMockJournalPostingRepository(t),
 		ledger,
 	).Post(t.Context(), &Request{
 		Invoice:    memo(billingqueue.BillTypeDebitMemo, 300),

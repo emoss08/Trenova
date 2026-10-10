@@ -5,13 +5,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
-
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -20,12 +18,12 @@ import (
 )
 
 type filedProposals struct {
-	repositories.AgentProposalRepository
+	agentports.AgentProposalRepository
 }
 
 func (filedProposals) ListByRun(
 	_ context.Context,
-	req repositories.ListAgentProposalsByRunRequest,
+	req agentports.ListAgentProposalsByRunRequest,
 ) ([]*agent.AgentProposal, error) {
 	return []*agent.AgentProposal{{
 		ID:     pulid.MustNew("apr_"),
@@ -35,14 +33,14 @@ func (filedProposals) ListByRun(
 }
 
 type settledRuns struct {
-	repositories.AgentRunRepository
+	agentports.AgentRunRepository
 
 	updated []*agent.AgentRun
 }
 
 func (r *settledRuns) GetByID(
 	_ context.Context,
-	req repositories.GetAgentRunByIDRequest,
+	req agentports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	return &agent.AgentRun{ID: req.ID, Status: agent.RunStatusDiagnosing}, nil
 }
@@ -66,7 +64,7 @@ func settle(t *testing.T, messages []conversation.Message) *agent.AgentRun {
 			},
 			RunID: pulid.MustNew("arun_"),
 		},
-		Outcome: &serviceports.RunResult{Reply: "Filed.", Messages: messages},
+		Outcome: &agentports.RunResult{Reply: "Filed.", Messages: messages},
 	})
 	require.NoError(t, err)
 	require.Len(t, runs.updated, 1)

@@ -5,24 +5,24 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 func (s *service) PreviewCreate(
 	ctx context.Context,
-	req *repositories.CreateShipmentHoldRequest,
-	actor *services.RequestActor,
+	req *shipmentports.CreateShipmentHoldRequest,
+	actor *permissionports.RequestActor,
 ) (*shipment.ShipmentHold, error) {
 	return s.planCreate(ctx, req, actor)
 }
 
 func (s *service) PreviewRelease(
 	ctx context.Context,
-	req *repositories.ReleaseShipmentHoldRequest,
-	actor *services.RequestActor,
+	req *shipmentports.ReleaseShipmentHoldRequest,
+	actor *permissionports.RequestActor,
 ) (*shipment.ShipmentHold, error) {
 	_, toRelease, err := s.planRelease(ctx, req, actor)
 
@@ -31,8 +31,8 @@ func (s *service) PreviewRelease(
 
 func (s *service) PreviewUpdate(
 	ctx context.Context,
-	req *repositories.UpdateShipmentHoldRequest,
-	actor *services.RequestActor,
+	req *shipmentports.UpdateShipmentHoldRequest,
+	actor *permissionports.RequestActor,
 ) (*shipment.ShipmentHold, error) {
 	_, updated, err := s.planUpdate(ctx, req, actor)
 
@@ -41,8 +41,8 @@ func (s *service) PreviewUpdate(
 
 func (s *service) planUpdate(
 	ctx context.Context,
-	req *repositories.UpdateShipmentHoldRequest,
-	actor *services.RequestActor,
+	req *shipmentports.UpdateShipmentHoldRequest,
+	actor *permissionports.RequestActor,
 ) (original, updated *shipment.ShipmentHold, err error) {
 	if req == nil {
 		return nil, nil, errShipmentHoldRequestRequired()
@@ -55,7 +55,7 @@ func (s *service) planUpdate(
 		return nil, nil, err
 	}
 
-	original, err = s.repo.GetByID(ctx, &repositories.GetShipmentHoldByIDRequest{
+	original, err = s.repo.GetByID(ctx, &shipmentports.GetShipmentHoldByIDRequest{
 		HoldID:     req.HoldID,
 		ShipmentID: req.ShipmentID,
 		TenantInfo: req.TenantInfo,
@@ -87,8 +87,8 @@ func (s *service) planUpdate(
 
 func (s *service) planCreate(
 	ctx context.Context,
-	req *repositories.CreateShipmentHoldRequest,
-	actor *services.RequestActor,
+	req *shipmentports.CreateShipmentHoldRequest,
+	actor *permissionports.RequestActor,
 ) (*shipment.ShipmentHold, error) {
 	if req == nil {
 		return nil, errShipmentHoldRequestRequired()
@@ -144,8 +144,8 @@ func (s *service) planCreate(
 
 func (s *service) planRelease(
 	ctx context.Context,
-	req *repositories.ReleaseShipmentHoldRequest,
-	actor *services.RequestActor,
+	req *shipmentports.ReleaseShipmentHoldRequest,
+	actor *permissionports.RequestActor,
 ) (original, released *shipment.ShipmentHold, err error) {
 	if req == nil {
 		return nil, nil, errShipmentHoldRequestRequired()
@@ -159,7 +159,7 @@ func (s *service) planRelease(
 		return nil, nil, err
 	}
 
-	original, err = s.repo.GetByID(ctx, &repositories.GetShipmentHoldByIDRequest{
+	original, err = s.repo.GetByID(ctx, &shipmentports.GetShipmentHoldByIDRequest{
 		HoldID:     req.HoldID,
 		ShipmentID: req.ShipmentID,
 		TenantInfo: req.TenantInfo,

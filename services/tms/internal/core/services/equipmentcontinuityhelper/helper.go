@@ -5,14 +5,14 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
 func AdvanceForCompletedMove(
 	ctx context.Context,
-	continuityRepo repositories.EquipmentContinuityRepository,
+	continuityRepo equipmentcontinuityports.EquipmentContinuityRepository,
 	tenantInfo pagination.TenantInfo,
 	move *shipment.ShipmentMove,
 ) error {
@@ -27,7 +27,7 @@ func AdvanceForCompletedMove(
 	}
 
 	if move.Assignment.TractorID != nil {
-		if _, err := continuityRepo.Advance(ctx, repositories.CreateEquipmentContinuityRequest{
+		if _, err := continuityRepo.Advance(ctx, equipmentcontinuityports.CreateEquipmentContinuityRequest{
 			TenantInfo:           tenantInfo,
 			EquipmentType:        equipmentcontinuity.EquipmentTypeTractor,
 			EquipmentID:          *move.Assignment.TractorID,
@@ -45,7 +45,7 @@ func AdvanceForCompletedMove(
 		return nil
 	}
 
-	_, err := continuityRepo.Advance(ctx, repositories.CreateEquipmentContinuityRequest{
+	_, err := continuityRepo.Advance(ctx, equipmentcontinuityports.CreateEquipmentContinuityRequest{
 		TenantInfo:           tenantInfo,
 		EquipmentType:        equipmentcontinuity.EquipmentTypeTrailer,
 		EquipmentID:          *move.Assignment.TrailerID,

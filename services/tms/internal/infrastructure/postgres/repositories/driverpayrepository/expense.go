@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -23,7 +23,7 @@ type driverExpenseRepository struct {
 	l  *zap.Logger
 }
 
-func NewDriverExpense(p Params) repositories.DriverExpenseRepository {
+func NewDriverExpense(p Params) driverpayports.DriverExpenseRepository {
 	return &driverExpenseRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.driver-expense-repository"),
@@ -72,7 +72,7 @@ func (r *driverExpenseRepository) Update(
 
 func (r *driverExpenseRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetDriverExpenseByIDRequest,
+	req driverpayports.GetDriverExpenseByIDRequest,
 ) (*driverpay.Expense, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driverpay.Expense, error) {
 		cols := buncolgen.ExpenseColumns
@@ -97,7 +97,7 @@ func (r *driverExpenseRepository) GetByID(
 
 func (r *driverExpenseRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListDriverExpenseConnectionRequest,
+	req *driverpayports.ListDriverExpenseConnectionRequest,
 ) (*pagination.CursorListResult[*driverpay.Expense], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*driverpay.Expense], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -160,7 +160,7 @@ func (r *driverExpenseRepository) ListConnection(
 
 func (r *driverExpenseRepository) ListForWorker(
 	ctx context.Context,
-	req *repositories.ListDriverExpensesForWorkerRequest,
+	req *driverpayports.ListDriverExpensesForWorkerRequest,
 ) ([]*driverpay.Expense, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driverpay.Expense, error) {
 		cols := buncolgen.ExpenseColumns

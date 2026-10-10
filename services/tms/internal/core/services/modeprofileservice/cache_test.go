@@ -6,8 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/modeprofile"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/modeprofileports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -36,14 +35,14 @@ func (f *fakeProfileRepo) GetActiveProfiles(
 
 func (f *fakeProfileRepo) List(
 	_ context.Context,
-	_ *repositories.ListModeProfilesRequest,
+	_ *modeprofileports.ListModeProfilesRequest,
 ) (*pagination.ListResult[*modeprofile.Profile], error) {
 	return nil, nil
 }
 
 func (f *fakeProfileRepo) GetByID(
 	_ context.Context,
-	_ *repositories.GetModeProfileByIDRequest,
+	_ *modeprofileports.GetModeProfileByIDRequest,
 ) (*modeprofile.Profile, error) {
 	return nil, nil
 }
@@ -115,7 +114,7 @@ func TestResolve_CacheHitSkipsDatabase(t *testing.T) {
 
 	svc := newCachingService(repo, cache)
 
-	policy, err := svc.Resolve(t.Context(), &services.ResolveModeProfileRequest{})
+	policy, err := svc.Resolve(t.Context(), &modeprofileports.ResolveModeProfileRequest{})
 
 	require.NoError(t, err)
 	require.NotNil(t, policy)
@@ -131,7 +130,7 @@ func TestResolve_CacheMissLoadsFromDatabaseAndPopulatesCache(t *testing.T) {
 
 	svc := newCachingService(repo, cache)
 
-	policy, err := svc.Resolve(t.Context(), &services.ResolveModeProfileRequest{})
+	policy, err := svc.Resolve(t.Context(), &modeprofileports.ResolveModeProfileRequest{})
 
 	require.NoError(t, err)
 	require.NotNil(t, policy)
@@ -147,7 +146,7 @@ func TestResolve_CacheWriteFailureStillResolves(t *testing.T) {
 
 	svc := newCachingService(repo, cache)
 
-	policy, err := svc.Resolve(t.Context(), &services.ResolveModeProfileRequest{})
+	policy, err := svc.Resolve(t.Context(), &modeprofileports.ResolveModeProfileRequest{})
 
 	require.NoError(t, err)
 	require.NotNil(t, policy)
@@ -161,7 +160,7 @@ func TestResolve_DatabaseErrorPropagates(t *testing.T) {
 
 	svc := newCachingService(repo, cache)
 
-	policy, err := svc.Resolve(t.Context(), &services.ResolveModeProfileRequest{})
+	policy, err := svc.Resolve(t.Context(), &modeprofileports.ResolveModeProfileRequest{})
 
 	require.ErrorIs(t, err, dbErr)
 	assert.Nil(t, policy)
@@ -172,7 +171,7 @@ func TestResolve_WithoutCacheRepositoryFallsBackToDatabase(t *testing.T) {
 
 	svc := &service{profileRepo: repo, l: zap.NewNop()}
 
-	policy, err := svc.Resolve(t.Context(), &services.ResolveModeProfileRequest{})
+	policy, err := svc.Resolve(t.Context(), &modeprofileports.ResolveModeProfileRequest{})
 
 	require.NoError(t, err)
 	require.NotNil(t, policy)
@@ -188,9 +187,9 @@ func TestResolve_EmptyProfileSetReportsNothingConfigured(t *testing.T) {
 
 	svc := newCachingService(repo, cache)
 
-	policy, err := svc.Resolve(t.Context(), &services.ResolveModeProfileRequest{})
+	policy, err := svc.Resolve(t.Context(), &modeprofileports.ResolveModeProfileRequest{})
 
-	require.ErrorIs(t, err, services.ErrNoModeProfileConfigured)
+	require.ErrorIs(t, err, modeprofileports.ErrNoModeProfileConfigured)
 	assert.Nil(t, policy)
 }
 
@@ -246,7 +245,7 @@ func TestResolve_ReordersCachedProfilesBeforeSelecting(t *testing.T) {
 	cache := &fakeCacheRepo{profiles: []*modeprofile.Profile{orgDefault, scoped}}
 	svc := newCachingService(&fakeProfileRepo{}, cache)
 
-	policy, err := svc.Resolve(t.Context(), &services.ResolveModeProfileRequest{
+	policy, err := svc.Resolve(t.Context(), &modeprofileports.ResolveModeProfileRequest{
 		CustomerID: customerID,
 	})
 

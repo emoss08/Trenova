@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,7 +24,7 @@ const (
 type agentDefinitionReader interface {
 	GetByID(
 		ctx context.Context,
-		req repositories.GetAgentDefinitionByIDRequest,
+		req agentdefinitionports.GetAgentDefinitionByIDRequest,
 	) (*agentdefinition.Definition, error)
 }
 
@@ -53,7 +53,7 @@ func newAgentCredits(definitions agentDefinitionReader, logger *zap.Logger) *age
 }
 
 func (c *agentCredits) credit(entry *audit.Entry) {
-	if entry.PrincipalType != string(services.PrincipalTypeAgent) {
+	if entry.PrincipalType != string(permissionports.PrincipalTypeAgent) {
 		return
 	}
 
@@ -82,7 +82,7 @@ func (c *agentCredits) nameOf(entry *audit.Entry) string {
 		BusinessUnitID: entry.BusinessUnitID,
 	})
 
-	definition, err := c.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	definition, err := c.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID: entry.PrincipalID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entry.OrganizationID,

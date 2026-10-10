@@ -2,18 +2,17 @@ package extractionrolloutservice
 
 import (
 	"github.com/emoss08/trenova/internal/core/domain/extractionrollout"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
 )
 
 type tally struct {
-	candidate         services.ExtractionRolloutArmReport
-	control           services.ExtractionRolloutArmReport
+	candidate         extractionrolloutports.ExtractionRolloutArmReport
+	control           extractionrolloutports.ExtractionRolloutArmReport
 	candidateOutcomes extractionrollout.ArmOutcomes
 	controlOutcomes   extractionrollout.ArmOutcomes
 }
 
-func tallyAssignments(totals []repositories.RolloutAssignmentTotal) tally {
+func tallyAssignments(totals []extractionrolloutports.RolloutAssignmentTotal) tally {
 	var t tally
 	for _, total := range totals {
 		arm, outcomes := &t.control, &t.controlOutcomes
@@ -55,7 +54,7 @@ func tallyAssignments(totals []repositories.RolloutAssignmentTotal) tally {
 	return t
 }
 
-func counts(total repositories.RolloutAssignmentTotal) bool {
+func counts(total extractionrolloutports.RolloutAssignmentTotal) bool {
 	return total.Outcome != extractionrollout.OutcomePending &&
 		total.Outcome != extractionrollout.OutcomeSuperseded
 }

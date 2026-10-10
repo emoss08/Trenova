@@ -11,10 +11,15 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -54,7 +59,7 @@ var inboundReviewStatuses = agenttoolschema.Source(
 type inboundMessageDesk interface {
 	GetByID(
 		ctx context.Context,
-		req repositories.GetInboundMessageByIDRequest,
+		req inboundmessageports.GetInboundMessageByIDRequest,
 	) (*inboundmessage.InboundMessage, error)
 	CheckLink(ctx context.Context, req inboundmessageservice.LinkRequest) error
 	Link(
@@ -70,14 +75,14 @@ type inboundMessageDesk interface {
 func loadInboundMessage(
 	ctx context.Context,
 	desk inboundMessageDesk,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) (*inboundmessage.InboundMessage, error) {
 	messageID, err := requirePulid(params.Params, "messageId")
 	if err != nil {
 		return nil, err
 	}
 
-	return desk.GetByID(ctx, repositories.GetInboundMessageByIDRequest{
+	return desk.GetByID(ctx, inboundmessageports.GetInboundMessageByIDRequest{
 		ID:         messageID,
 		TenantInfo: tenantFrom(params),
 	})
@@ -91,7 +96,7 @@ func loadInboundMessage(
 func inboundTierLimit(
 	ctx context.Context,
 	desk inboundMessageDesk,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) agent.AutonomyTier {
 	message, err := loadInboundMessage(ctx, desk, params)
 	if err != nil || message.Mailbox == nil ||
@@ -103,14 +108,14 @@ func inboundTierLimit(
 	return agent.TierAutoExecute
 }
 
-func inboundCondition(desk inboundMessageDesk) *serviceports.TierCondition {
-	return &serviceports.TierCondition{
+func inboundCondition(desk inboundMessageDesk) *agentports.TierCondition {
+	return &agentports.TierCondition{
 		Description: "A call on an inbound message runs only as far as its mailbox allows: " +
 			"a classified message the mailbox handles without review may run on its own, " +
 			"and anything held, quarantined, settled or unreadable waits for a person.",
 		Limit: func(
 			ctx context.Context,
-			params serviceports.ToolExecuteParams,
+			params agentports.ToolExecuteParams,
 		) agent.AutonomyTier {
 			return inboundTierLimit(ctx, desk, params)
 		},
@@ -130,7 +135,7 @@ type linkInboundMessageTool struct {
 	inbox inboundMessageDesk
 }
 
-func newLinkInboundMessageTool(inbox inboundMessageDesk) serviceports.AgentTool {
+func newLinkInboundMessageTool(inbox inboundMessageDesk) agentports.AgentTool {
 	return &linkInboundMessageTool{inbox: inbox}
 }
 
@@ -173,8 +178,8 @@ func (t *linkInboundMessageTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *linkInboundMessageTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *linkInboundMessageTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceInboundMessage,
@@ -192,12 +197,12 @@ func (t *linkInboundMessageTool) Policy() serviceports.ToolPolicy {
 	}
 }
 
-func (t *linkInboundMessageTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *linkInboundMessageTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, "messageId", permission.ResourceInboundMessage)
 }
 
 func (t *linkInboundMessageTool) request(
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) (inboundmessageservice.LinkRequest, error) {
 	messageID, err := requirePulid(params.Params, "messageId")
 	if err != nil {
@@ -228,7 +233,7 @@ func (t *linkInboundMessageTool) request(
 
 func (t *linkInboundMessageTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	req, err := t.request(params)
 	if err != nil {
@@ -243,7 +248,7 @@ func (t *linkInboundMessageTool) Validate(
 
 func (t *linkInboundMessageTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -263,7 +268,7 @@ type markInboundMessageTool struct {
 	inbox inboundMessageDesk
 }
 
-func newMarkInboundMessageTool(inbox inboundMessageDesk) serviceports.AgentTool {
+func newMarkInboundMessageTool(inbox inboundMessageDesk) agentports.AgentTool {
 	return &markInboundMessageTool{inbox: inbox}
 }
 
@@ -307,8 +312,8 @@ func (t *markInboundMessageTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *markInboundMessageTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *markInboundMessageTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceInboundMessage,
@@ -325,12 +330,12 @@ func (t *markInboundMessageTool) Policy() serviceports.ToolPolicy {
 	}
 }
 
-func (t *markInboundMessageTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *markInboundMessageTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, "messageId", permission.ResourceInboundMessage)
 }
 
 func (t *markInboundMessageTool) arguments(
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) (inboundmessage.Status, string, error) {
 	status := inboundmessage.Status(optionalString(params.Params, "status"))
 	if status != inboundmessage.StatusActioned && status != inboundmessage.StatusIgnored {
@@ -354,7 +359,7 @@ func (t *markInboundMessageTool) arguments(
 
 func (t *markInboundMessageTool) settle(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) (*inboundmessage.InboundMessage, inboundmessage.Status, string, error) {
 	status, note, err := t.arguments(params)
 	if err != nil {
@@ -373,7 +378,7 @@ func (t *markInboundMessageTool) settle(
 
 func (t *markInboundMessageTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	_, _, _, err := t.settle(ctx, params)
 
@@ -382,7 +387,7 @@ func (t *markInboundMessageTool) Validate(
 
 func (t *markInboundMessageTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -399,7 +404,7 @@ func (t *markInboundMessageTool) Execute(
 }
 
 func reviewRequest(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 	message *inboundmessage.InboundMessage,
 	status inboundmessage.Status,
 	note string,
@@ -417,26 +422,26 @@ func reviewRequest(
 // template that dresses the prose, the organization for its letterhead, and
 // the matched records for the greeting and the reference line.
 type inboundReplier struct {
-	email     serviceports.EmailService
-	templates serviceports.DocumentTemplateResolver
-	orgRepo   repositories.OrganizationRepository
-	inliner   serviceports.AssetInliner
-	customers repositories.CustomerRepository
-	shipments repositories.ShipmentRepository
-	senders   serviceports.EmailSenderResolver
+	email     emailports.EmailService
+	templates documenttemplateports.DocumentTemplateResolver
+	orgRepo   tenantports.OrganizationRepository
+	inliner   documenttemplateports.AssetInliner
+	customers customerports.CustomerRepository
+	shipments shipmentports.ShipmentRepository
+	senders   emailports.EmailSenderResolver
 }
 
 type replyToInboundMessageParams struct {
 	fx.In
 
 	Inbox     *inboundmessageservice.Service
-	Email     serviceports.EmailService
-	Templates serviceports.DocumentTemplateResolver
-	OrgRepo   repositories.OrganizationRepository
-	Inliner   serviceports.AssetInliner
-	Customers repositories.CustomerRepository
-	Shipments repositories.ShipmentRepository
-	Senders   serviceports.EmailSenderResolver `optional:"true"`
+	Email     emailports.EmailService
+	Templates documenttemplateports.DocumentTemplateResolver
+	OrgRepo   tenantports.OrganizationRepository
+	Inliner   documenttemplateports.AssetInliner
+	Customers customerports.CustomerRepository
+	Shipments shipmentports.ShipmentRepository
+	Senders   emailports.EmailSenderResolver `optional:"true"`
 }
 
 type replyToInboundMessageTool struct {
@@ -444,7 +449,7 @@ type replyToInboundMessageTool struct {
 	deps  inboundReplier
 }
 
-func newReplyToInboundMessageTool(p replyToInboundMessageParams) serviceports.AgentTool {
+func newReplyToInboundMessageTool(p replyToInboundMessageParams) agentports.AgentTool {
 	return &replyToInboundMessageTool{
 		inbox: p.Inbox,
 		deps: inboundReplier{
@@ -505,8 +510,8 @@ func (t *replyToInboundMessageTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *replyToInboundMessageTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *replyToInboundMessageTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceCustomerCommunication,
@@ -523,7 +528,7 @@ func (t *replyToInboundMessageTool) Policy() serviceports.ToolPolicy {
 	}
 }
 
-func (t *replyToInboundMessageTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *replyToInboundMessageTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, "messageId", permission.ResourceInboundMessage)
 }
 
@@ -536,7 +541,7 @@ type inboundReply struct {
 
 func (t *replyToInboundMessageTool) prepare(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) (*inboundReply, error) {
 	profileID, err := optionalID(params.Params, "profileId")
 	if err != nil {
@@ -590,7 +595,7 @@ func replyable(message *inboundmessage.InboundMessage) error {
 
 func (t *replyToInboundMessageTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	_, err := t.prepare(ctx, params)
 
@@ -599,7 +604,7 @@ func (t *replyToInboundMessageTool) Validate(
 
 func (t *replyToInboundMessageTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	composed, err := t.compose(ctx, &params)
 	if err != nil {
@@ -648,7 +653,7 @@ func (t *replyToInboundMessageTool) describeMatch(
 	out *documenttemplate.AgentEmailContext,
 ) {
 	if !message.MatchedCustomerID.IsNil() && t.deps.customers != nil {
-		customer, err := t.deps.customers.GetByID(ctx, repositories.GetCustomerByIDRequest{
+		customer, err := t.deps.customers.GetByID(ctx, customerports.GetCustomerByIDRequest{
 			ID:         message.MatchedCustomerID,
 			TenantInfo: tenant,
 		})
@@ -660,7 +665,7 @@ func (t *replyToInboundMessageTool) describeMatch(
 	if !message.MatchedShipmentID.IsNil() && t.deps.shipments != nil {
 		summaries, err := t.deps.shipments.ListSummariesByIDs(
 			ctx,
-			&repositories.ListShipmentSummariesRequest{
+			&shipmentports.ListShipmentSummariesRequest{
 				TenantInfo:  tenant,
 				ShipmentIDs: []pulid.ID{message.MatchedShipmentID},
 			},

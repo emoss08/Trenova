@@ -9,9 +9,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -43,30 +46,30 @@ var (
 type lateChargeAssessor interface {
 	Assess(
 		ctx context.Context,
-		req *serviceports.LateChargeAssessmentRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.LateChargeAssessmentResult, error)
+		req *latechargeports.LateChargeAssessmentRequest,
+		actor *permissionports.RequestActor,
+	) (*latechargeports.LateChargeAssessmentResult, error)
 	PlanAssess(
 		ctx context.Context,
-		req *serviceports.LateChargeAssessmentRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.LateChargeAssessmentResult, error)
+		req *latechargeports.LateChargeAssessmentRequest,
+		actor *permissionports.RequestActor,
+	) (*latechargeports.LateChargeAssessmentResult, error)
 }
 
 type invoiceSharer interface {
 	Share(
 		ctx context.Context,
-		req *serviceports.ShareInvoiceRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.ShareInvoiceResult, error)
+		req *invoiceports.ShareInvoiceRequest,
+		actor *permissionports.RequestActor,
+	) (*invoiceports.ShareInvoiceResult, error)
 	PreviewShare(
 		ctx context.Context,
-		req *serviceports.ShareInvoiceRequest,
-		actor *serviceports.RequestActor,
-	) (*serviceports.InvoiceSharePreview, error)
+		req *invoiceports.ShareInvoiceRequest,
+		actor *permissionports.RequestActor,
+	) (*invoiceports.InvoiceSharePreview, error)
 }
 
-func newAssessLateChargesTool(charges lateChargeAssessor) serviceports.AgentTool {
+func newAssessLateChargesTool(charges lateChargeAssessor) agentports.AgentTool {
 	return newReceivableTool(&receivableSpec{
 		name:        "assess_late_charges",
 		searchTerms: []string{"late fees", "finance charge"},
@@ -94,13 +97,13 @@ func newAssessLateChargesTool(charges lateChargeAssessor) serviceports.AgentTool
 			)),
 		},
 		required: []string{paramAsOfDate},
-	}, receivablePlan[*serviceports.LateChargeAssessmentRequest, *serviceports.LateChargeAssessmentResult]{
+	}, receivablePlan[*latechargeports.LateChargeAssessmentRequest, *latechargeports.LateChargeAssessmentResult]{
 		request: lateChargeRequest,
 		plan: func(
 			ctx context.Context,
-			req *serviceports.LateChargeAssessmentRequest,
-			params *serviceports.ToolExecuteParams,
-		) (*serviceports.LateChargeAssessmentResult, error) {
+			req *latechargeports.LateChargeAssessmentRequest,
+			params *agentports.ToolExecuteParams,
+		) (*latechargeports.LateChargeAssessmentResult, error) {
 			result, err := charges.PlanAssess(ctx, req, params.Actor)
 			if err != nil {
 				return nil, err
@@ -110,14 +113,14 @@ func newAssessLateChargesTool(charges lateChargeAssessor) serviceports.AgentTool
 			}
 			return result, nil
 		},
-		refused: func(*serviceports.LateChargeAssessmentRequest) string {
+		refused: func(*latechargeports.LateChargeAssessmentRequest) string {
 			return "Would assess late charges."
 		},
 		render: renderLateCharges,
 		run: func(
 			ctx context.Context,
-			req *serviceports.LateChargeAssessmentRequest,
-			params *serviceports.ToolExecuteParams,
+			req *latechargeports.LateChargeAssessmentRequest,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := charges.Assess(ctx, req, params.Actor)
 			return nil, err
@@ -126,13 +129,13 @@ func newAssessLateChargesTool(charges lateChargeAssessor) serviceports.AgentTool
 }
 
 func lateChargeRequest(
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.LateChargeAssessmentRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*latechargeports.LateChargeAssessmentRequest, error) {
 	asOf, err := requireUTCDay(params.Params, paramAsOfDate)
 	if err != nil {
 		return nil, err
 	}
-	req := &serviceports.LateChargeAssessmentRequest{
+	req := &latechargeports.LateChargeAssessmentRequest{
 		TenantInfo: tenantFrom(*params),
 		AsOfDate:   asOf.Unix(),
 	}
@@ -154,8 +157,8 @@ type lateChargeMemoView struct {
 }
 
 func renderLateCharges(
-	_ *serviceports.LateChargeAssessmentRequest,
-	result *serviceports.LateChargeAssessmentResult,
+	_ *latechargeports.LateChargeAssessmentRequest,
+	result *latechargeports.LateChargeAssessmentResult,
 ) (*agent.ToolPreview, error) {
 	changes := make([]*agent.RecordChange, 0, len(result.Customers))
 	notes := make([]string, 0, len(result.Customers))
@@ -213,7 +216,7 @@ func renderLateCharges(
 	return toolpreview.Build(withNotes(summary, notes), changes...), nil
 }
 
-func newShareInvoiceTool(shares invoiceSharer) serviceports.AgentTool {
+func newShareInvoiceTool(shares invoiceSharer) agentports.AgentTool {
 	return newReceivableTool(&receivableSpec{
 		name:        "share_invoice",
 		recipe:      []string{"list_invoice_share_candidates", "share_invoice"},
@@ -245,24 +248,24 @@ func newShareInvoiceTool(shares invoiceSharer) serviceports.AgentTool {
 		},
 		required: []string{paramInvoiceID, paramUserIDs},
 		target:   targetInvoice,
-	}, receivablePlan[*serviceports.ShareInvoiceRequest, *serviceports.InvoiceSharePreview]{
+	}, receivablePlan[*invoiceports.ShareInvoiceRequest, *invoiceports.InvoiceSharePreview]{
 		request: shareRequest,
 		plan: func(
 			ctx context.Context,
-			req *serviceports.ShareInvoiceRequest,
-			params *serviceports.ToolExecuteParams,
-		) (*serviceports.InvoiceSharePreview, error) {
+			req *invoiceports.ShareInvoiceRequest,
+			params *agentports.ToolExecuteParams,
+		) (*invoiceports.InvoiceSharePreview, error) {
 			return shares.PreviewShare(ctx, req, params.Actor)
 		},
-		refused: func(req *serviceports.ShareInvoiceRequest) string {
+		refused: func(req *invoiceports.ShareInvoiceRequest) string {
 			return fmt.Sprintf("Would share the invoice with %s.",
 				countOf(len(req.UserIDs), "teammate"))
 		},
 		render: renderShare,
 		run: func(
 			ctx context.Context,
-			req *serviceports.ShareInvoiceRequest,
-			params *serviceports.ToolExecuteParams,
+			req *invoiceports.ShareInvoiceRequest,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := shares.Share(ctx, req, params.Actor)
 			return nil, err
@@ -271,8 +274,8 @@ func newShareInvoiceTool(shares invoiceSharer) serviceports.AgentTool {
 }
 
 func shareRequest(
-	params *serviceports.ToolExecuteParams,
-) (*serviceports.ShareInvoiceRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*invoiceports.ShareInvoiceRequest, error) {
 	invoiceID, err := requirePulid(params.Params, paramInvoiceID)
 	if err != nil {
 		return nil, err
@@ -290,7 +293,7 @@ func shareRequest(
 		return nil, err
 	}
 
-	return &serviceports.ShareInvoiceRequest{
+	return &invoiceports.ShareInvoiceRequest{
 		TenantInfo: tenantFrom(*params),
 		InvoiceID:  invoiceID,
 		UserIDs:    userIDs,
@@ -306,8 +309,8 @@ type shareView struct {
 }
 
 func renderShare(
-	_ *serviceports.ShareInvoiceRequest,
-	plan *serviceports.InvoiceSharePreview,
+	_ *invoiceports.ShareInvoiceRequest,
+	plan *invoiceports.InvoiceSharePreview,
 ) (*agent.ToolPreview, error) {
 	label := invoiceLabel(plan.Invoice)
 	changes := make([]*agent.RecordChange, 0, len(plan.Recipients))

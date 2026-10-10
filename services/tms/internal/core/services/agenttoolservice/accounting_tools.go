@@ -7,8 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
@@ -20,7 +21,7 @@ type accountingConnectionChecker interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		typ integration.Type,
-	) (*serviceports.AccountingSyncStatus, error)
+	) (*accountingsyncports.AccountingSyncStatus, error)
 	CheckHealth(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -34,13 +35,13 @@ type checkAccountingConnectionTool struct {
 
 func newCheckAccountingConnectionTool(
 	accounting accountingConnectionChecker,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return &checkAccountingConnectionTool{accounting: accounting}
 }
 
 func provideCheckAccountingConnectionTool(
-	accounting serviceports.AccountingConnectionService,
-) serviceports.AgentTool {
+	accounting accountingsyncports.AccountingConnectionService,
+) agentports.AgentTool {
 	return newCheckAccountingConnectionTool(accounting)
 }
 
@@ -68,8 +69,8 @@ func (t *checkAccountingConnectionTool) ParamSchema() map[string]any {
 	}, "system")
 }
 
-func (t *checkAccountingConnectionTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *checkAccountingConnectionTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceAccountingIntegration,
@@ -88,7 +89,7 @@ func (t *checkAccountingConnectionTool) Policy() serviceports.ToolPolicy {
 
 func (t *checkAccountingConnectionTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	_, err := t.connection(ctx, &params)
 	return err
@@ -96,7 +97,7 @@ func (t *checkAccountingConnectionTool) Validate(
 
 func (t *checkAccountingConnectionTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
 	conn, err := t.connection(ctx, &params)
 	if err != nil {
@@ -109,7 +110,7 @@ func (t *checkAccountingConnectionTool) Execute(
 
 func (t *checkAccountingConnectionTool) connection(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*accountingsync.AccountingConnection, error) {
 	if err := guardExecute(t, *params); err != nil {
 		return nil, err

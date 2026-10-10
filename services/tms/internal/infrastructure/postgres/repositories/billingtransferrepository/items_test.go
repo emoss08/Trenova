@@ -8,8 +8,8 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/billingtransfer"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingtransferports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -89,19 +89,19 @@ func expectRecordFlow(dbMock sqlmock.Sqlmock) {
 func recordOne(
 	t *testing.T,
 	repo *repository,
-	outcome repositories.BillingTransferItemOutcome,
+	outcome billingtransferports.BillingTransferItemOutcome,
 ) {
 	t.Helper()
 
 	_, err := repo.RecordItemOutcomes(
 		t.Context(),
-		&repositories.RecordBillingTransferOutcomesRequest{
+		&billingtransferports.RecordBillingTransferOutcomesRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: pulid.MustNew("org_"),
 				BuID:  pulid.MustNew("bu_"),
 			},
 			RunID:    pulid.MustNew("btr_"),
-			Outcomes: []repositories.BillingTransferItemOutcome{outcome},
+			Outcomes: []billingtransferports.BillingTransferItemOutcome{outcome},
 		},
 	)
 	require.NoError(t, err)
@@ -120,7 +120,7 @@ func TestRecordItemOutcomesWritesUnsetColumnsAsNull(t *testing.T) {
 	expectRecordFlow(dbMock)
 
 	// A shipment that transferred cleanly: no failure code, no error message.
-	recordOne(t, repo, repositories.BillingTransferItemOutcome{
+	recordOne(t, repo, billingtransferports.BillingTransferItemOutcome{
 		ShipmentID: pulid.MustNew("shp_"),
 		Status:     billingtransfer.ItemStatusTransferred,
 	})
@@ -146,7 +146,7 @@ func TestRecordItemOutcomesKeepsTheFailureReasonWithoutAQueueStatus(t *testing.T
 	repo, dbMock, matcher := newTestRepo(t)
 	expectRecordFlow(dbMock)
 
-	recordOne(t, repo, repositories.BillingTransferItemOutcome{
+	recordOne(t, repo, billingtransferports.BillingTransferItemOutcome{
 		ShipmentID:   pulid.MustNew("shp_"),
 		ProNumber:    "PRO-1",
 		Status:       billingtransfer.ItemStatusNotTransferred,
@@ -169,7 +169,7 @@ func TestRecordItemOutcomesWritesTheQueueItemWhenThereIsOne(t *testing.T) {
 	repo, dbMock, matcher := newTestRepo(t)
 	expectRecordFlow(dbMock)
 
-	recordOne(t, repo, repositories.BillingTransferItemOutcome{
+	recordOne(t, repo, billingtransferports.BillingTransferItemOutcome{
 		ShipmentID:         pulid.MustNew("shp_"),
 		ProNumber:          "PRO-1",
 		Status:             billingtransfer.ItemStatusTransferred,
@@ -194,7 +194,7 @@ func TestRecordItemOutcomesLeavesTheRowsIdentityAlone(t *testing.T) {
 	repo, dbMock, matcher := newTestRepo(t)
 	expectRecordFlow(dbMock)
 
-	recordOne(t, repo, repositories.BillingTransferItemOutcome{
+	recordOne(t, repo, billingtransferports.BillingTransferItemOutcome{
 		ShipmentID: pulid.MustNew("shp_"),
 		Status:     billingtransfer.ItemStatusTransferred,
 	})

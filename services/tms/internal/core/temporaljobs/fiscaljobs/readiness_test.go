@@ -1,6 +1,7 @@
 package fiscaljobs
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"strings"
 	"testing"
 	"time"
@@ -139,7 +140,7 @@ func TestISOWeekKeyIsStableWithinAWeek(t *testing.T) {
 func TestGetFiscalCalendarTenantsIgnoresTheScheduledCloseOptIn(t *testing.T) {
 	t.Parallel()
 
-	acRepo := mocks.NewMockAccountingControlRepository(t)
+	acRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	acRepo.EXPECT().ListAll(mock.Anything).Return([]*accountingcontrol.AccountingControl{
 		{OrganizationID: pulid.MustNew("org_"), BusinessUnitID: pulid.MustNew("bu_")},
 		{OrganizationID: pulid.MustNew("org_"), BusinessUnitID: pulid.MustNew("bu_")},

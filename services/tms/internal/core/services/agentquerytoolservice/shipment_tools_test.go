@@ -7,8 +7,6 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/shopspring/decimal"
-
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
@@ -25,25 +23,29 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/shipmenttypeports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type fakeShipmentRepo struct {
-	repositories.ShipmentRepository
+	shipmentports.ShipmentRepository
 
-	captured *repositories.ListShipmentsRequest
+	captured *shipmentports.ListShipmentsRequest
 	items    []*shipment.Shipment
 }
 
 func (f *fakeShipmentRepo) List(
 	_ context.Context,
-	req *repositories.ListShipmentsRequest,
+	req *shipmentports.ListShipmentsRequest,
 ) (*pagination.CursorListResult[*shipment.Shipment], error) {
 	if f.captured == nil {
 		f.captured = req
@@ -499,7 +501,7 @@ func queryShipment(
 	t *testing.T,
 	fixture shipmentFixture,
 	permissions *fakePermissions,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) map[string]any {
 	t.Helper()
 
@@ -830,14 +832,14 @@ func TestGetShipment_SummaryIsUnchangedByTheUsersOnTheRecord(t *testing.T) {
 }
 
 type recordingShipmentRepo struct {
-	repositories.ShipmentRepository
+	shipmentports.ShipmentRepository
 
-	requests []*repositories.ListShipmentsRequest
+	requests []*shipmentports.ListShipmentsRequest
 }
 
 func (f *recordingShipmentRepo) List(
 	_ context.Context,
-	req *repositories.ListShipmentsRequest,
+	req *shipmentports.ListShipmentsRequest,
 ) (*pagination.CursorListResult[*shipment.Shipment], error) {
 	f.requests = append(f.requests, req)
 
@@ -845,14 +847,14 @@ func (f *recordingShipmentRepo) List(
 }
 
 type namedCommodities struct {
-	repositories.CommodityRepository
+	commodityports.CommodityRepository
 
 	items []*commodity.Commodity
 }
 
 func (f *namedCommodities) List(
 	_ context.Context,
-	req *repositories.ListCommodityRequest,
+	req *commodityports.ListCommodityRequest,
 ) (*pagination.ListResult[*commodity.Commodity], error) {
 	matched := make([]*commodity.Commodity, 0, len(f.items))
 	for _, item := range f.items {
@@ -892,14 +894,14 @@ func TestSearchShipments_MatchesWhatALoadCarries(t *testing.T) {
 }
 
 type namedShipmentTypes struct {
-	repositories.ShipmentTypeRepository
+	shipmenttypeports.ShipmentTypeRepository
 
 	items []*shipmenttype.ShipmentType
 }
 
 func (f *namedShipmentTypes) List(
 	_ context.Context,
-	req *repositories.ListShipmentTypesRequest,
+	req *shipmenttypeports.ListShipmentTypesRequest,
 ) (*pagination.ListResult[*shipmenttype.ShipmentType], error) {
 	matched := make([]*shipmenttype.ShipmentType, 0, len(f.items))
 	for _, item := range f.items {
@@ -936,14 +938,14 @@ func TestSearchShipments_MatchesTheShipmentType(t *testing.T) {
 }
 
 type namedLocations struct {
-	repositories.LocationRepository
+	locationports.LocationRepository
 
 	items []*location.Location
 }
 
 func (f *namedLocations) List(
 	_ context.Context,
-	req *repositories.ListLocationRequest,
+	req *locationports.ListLocationRequest,
 ) (*pagination.ListResult[*location.Location], error) {
 	matched := make([]*location.Location, 0, len(f.items))
 	for _, item := range f.items {
@@ -989,14 +991,14 @@ func TestSearchShipments_RequiresAStopAtEachPlaceNamed(t *testing.T) {
 }
 
 type statusShipmentRepo struct {
-	repositories.ShipmentRepository
+	shipmentports.ShipmentRepository
 
 	items []*shipment.Shipment
 }
 
 func (f *statusShipmentRepo) List(
 	_ context.Context,
-	req *repositories.ListShipmentsRequest,
+	req *shipmentports.ListShipmentsRequest,
 ) (*pagination.CursorListResult[*shipment.Shipment], error) {
 	out := make([]*shipment.Shipment, 0, len(f.items))
 	for _, item := range f.items {

@@ -6,8 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 )
@@ -20,7 +19,7 @@ const (
 type LoaderParams struct {
 	fx.In
 
-	Repo repositories.AgentToolRuleOverrideRepository
+	Repo agentports.AgentToolRuleOverrideRepository
 }
 
 type cachedRules struct {
@@ -29,7 +28,7 @@ type cachedRules struct {
 }
 
 type Loader struct {
-	repo  repositories.AgentToolRuleOverrideRepository
+	repo  agentports.AgentToolRuleOverrideRepository
 	clock func() time.Time
 	ttl   time.Duration
 
@@ -37,13 +36,13 @@ type Loader struct {
 	cached map[pagination.TenantInfo]cachedRules
 }
 
-var _ services.ToolRuleOverrides = (*Loader)(nil)
+var _ agentports.ToolRuleOverrides = (*Loader)(nil)
 
 func NewLoader(p LoaderParams) *Loader {
 	return newLoader(p.Repo, time.Now)
 }
 
-func newLoader(repo repositories.AgentToolRuleOverrideRepository, clock func() time.Time) *Loader {
+func newLoader(repo agentports.AgentToolRuleOverrideRepository, clock func() time.Time) *Loader {
 	return &Loader{
 		repo:   repo,
 		clock:  clock,

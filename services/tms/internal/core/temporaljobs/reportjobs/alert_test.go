@@ -6,8 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
@@ -39,13 +38,13 @@ func (s *stubScheduleRepo) Create(
 }
 
 func (s *stubScheduleRepo) GetByID(
-	_ context.Context, _ *repositories.GetReportScheduleRequest,
+	_ context.Context, _ *reportports.GetReportScheduleRequest,
 ) (*report.ReportSchedule, error) {
 	return nil, nil //nolint:nilnil // unused by these tests
 }
 
 func (s *stubScheduleRepo) List(
-	_ context.Context, _ *repositories.ListReportSchedulesRequest,
+	_ context.Context, _ *reportports.ListReportSchedulesRequest,
 ) ([]*report.ReportSchedule, error) {
 	return nil, nil
 }
@@ -61,7 +60,7 @@ func (s *stubScheduleRepo) ListDue(
 }
 
 func (s *stubScheduleRepo) Delete(
-	_ context.Context, _ *repositories.GetReportScheduleRequest,
+	_ context.Context, _ *reportports.GetReportScheduleRequest,
 ) error {
 	return nil
 }
@@ -234,14 +233,14 @@ func TestAlertValidation(t *testing.T) {
 	assert.False(t, multiErr.HasErrors())
 }
 
-func measureDigest(columnID string, total any) *services.ReportDigest {
-	return &services.ReportDigest{
-		Columns: []services.ReportResultColumn{
+func measureDigest(columnID string, total any) *reportports.ReportDigest {
+	return &reportports.ReportDigest{
+		Columns: []reportports.ReportResultColumn{
 			textColumn("Customer"),
 			{ID: columnID, Label: "Revenue", Type: reportcatalog.FieldDecimal},
 		},
-		Rows:   []services.ReportRow{{"ACME", total}},
-		Totals: services.ReportRow{nil, total},
+		Rows:   []reportports.ReportRow{{"ACME", total}},
+		Totals: reportports.ReportRow{nil, total},
 	}
 }
 
@@ -305,12 +304,12 @@ func TestMeasureAlertDoesNotFireOnAMissingTotal(t *testing.T) {
 		Value:    &threshold,
 	}
 
-	for name, digest := range map[string]*services.ReportDigest{
+	for name, digest := range map[string]*reportports.ReportDigest{
 		"no digest at all": nil,
 		"column absent":    measureDigest("c_other", decimal.NewFromInt(5)),
 		"totals empty": {
-			Columns: []services.ReportResultColumn{textColumn("Customer")},
-			Rows:    []services.ReportRow{{"ACME"}},
+			Columns: []reportports.ReportResultColumn{textColumn("Customer")},
+			Rows:    []reportports.ReportRow{{"ACME"}},
 		},
 	} {
 		t.Run(name, func(t *testing.T) {

@@ -3,14 +3,14 @@ package shipmentservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/services/rateengine/rateenginetest"
-
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	portservices "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/rateengine/rateenginetest"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/services/shipmentinvalidation"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"go.uber.org/zap"
 )
 
@@ -20,8 +20,8 @@ func newStateCoordinator() *shipmentstate.Coordinator {
 
 func newTestCommercialCalculator(
 	t *testing.T,
-	formula portservices.FormulaCalculator,
-	accessorialRepo repositories.AccessorialChargeRepository,
+	formula formulatemplateports.FormulaCalculator,
+	accessorialRepo accessorialchargeports.AccessorialChargeRepository,
 ) *shipmentcommercial.Calculator {
 	t.Helper()
 
@@ -32,6 +32,6 @@ func newTestCommercialCalculator(
 	})
 }
 
-func newTestInvalidator(realtime services.RealtimeService) services.ShipmentInvalidator {
+func newTestInvalidator(realtime agentports.RealtimeService) shipmentports.ShipmentInvalidator {
 	return shipmentinvalidation.NewWithDependencies(realtime, nil, zap.NewNop())
 }

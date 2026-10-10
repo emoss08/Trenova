@@ -6,9 +6,9 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -35,7 +35,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.FormulaTemplateReviewRepository {
+func New(p Params) formulatemplateports.FormulaTemplateReviewRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.formula-template-review-repository"),
@@ -61,7 +61,7 @@ func (r *repository) Create(
 
 func (r *repository) ListByTemplate(
 	ctx context.Context,
-	req *repositories.ListTemplateReviewsRequest,
+	req *formulatemplateports.ListTemplateReviewsRequest,
 ) ([]*formulatemplate.Review, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*formulatemplate.Review, error) {
 		cols := buncolgen.ReviewColumns
@@ -126,7 +126,7 @@ func (r *repository) Latest(
 // whole process and hands each template back with its own tenant on the row.
 func (r *repository) ListStaleSubmissions(
 	ctx context.Context,
-	req *repositories.ListStaleSubmissionsRequest,
+	req *formulatemplateports.ListStaleSubmissionsRequest,
 ) ([]*formulatemplate.FormulaTemplate, error) {
 	ctx = dbscope.WithSystem(ctx, "list stale formula template submissions across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*formulatemplate.FormulaTemplate, error) {

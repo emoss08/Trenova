@@ -1,9 +1,9 @@
 package documentintelligencejobs
 
 import (
-	services "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
 	"go.uber.org/fx"
 )
 
@@ -12,7 +12,7 @@ var Module = fx.Module("document-intelligence-jobs",
 	fx.Provide(NewCaptureAnalyzer),
 	fx.Provide(
 		NewShadowPredictor,
-		func(p *ShadowPredictor) services.ExtractionShadowPredictor { return p },
+		func(p *ShadowPredictor) extractionshadowports.ExtractionShadowPredictor { return p },
 	),
 	fx.Provide(
 		fx.Annotate(

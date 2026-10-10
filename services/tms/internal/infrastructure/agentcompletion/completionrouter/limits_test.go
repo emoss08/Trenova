@@ -10,8 +10,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -55,7 +54,7 @@ func newFakeSlots() *fakeSlots {
 	}
 }
 
-func (f *fakeSlots) Acquire(_ context.Context, req repositories.AcquireProviderSlotRequest) (bool, error) {
+func (f *fakeSlots) Acquire(_ context.Context, req agentports.AcquireProviderSlotRequest) (bool, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.tries[req.ProviderID]++
@@ -67,11 +66,11 @@ func (f *fakeSlots) Acquire(_ context.Context, req repositories.AcquireProviderS
 	return true, nil
 }
 
-func (f *fakeSlots) Refresh(_ context.Context, _ repositories.ProviderSlotRequest) (bool, error) {
+func (f *fakeSlots) Refresh(_ context.Context, _ agentports.ProviderSlotRequest) (bool, error) {
 	return true, nil
 }
 
-func (f *fakeSlots) Release(_ context.Context, req repositories.ProviderSlotRequest) error {
+func (f *fakeSlots) Release(_ context.Context, req agentports.ProviderSlotRequest) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	delete(f.held, req.Token)
@@ -81,13 +80,13 @@ func (f *fakeSlots) Release(_ context.Context, req repositories.ProviderSlotRequ
 }
 
 type fakeKeys struct {
-	repositories.AIProviderKeyRepository
+	agentports.AIProviderKeyRepository
 
 	mu      sync.Mutex
 	touched []pulid.ID
 }
 
-func (f *fakeKeys) TouchUsed(_ context.Context, req repositories.TouchAIProviderKeyRequest) error {
+func (f *fakeKeys) TouchUsed(_ context.Context, req agentports.TouchAIProviderKeyRequest) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.touched = append(f.touched, req.ID)
@@ -139,7 +138,7 @@ func TestCap_StopsATaskAtAProviderSetToStop(t *testing.T) {
 	})
 
 	_, err := service.CompleteStructured(t.Context(), generalRequest())
-	require.ErrorIs(t, err, serviceports.ErrProviderCapReached)
+	require.ErrorIs(t, err, agentports.ErrProviderCapReached)
 	assert.Zero(t, firstCalls.Load())
 	assert.Zero(t, secondCalls.Load(), "a provider set to stop does not hand the task on")
 }

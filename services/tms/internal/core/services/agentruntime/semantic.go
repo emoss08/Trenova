@@ -6,8 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolcatalog"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/vectorutils"
@@ -33,7 +34,7 @@ type QueryVectorState struct {
 	Vector     []byte `json:"vector"`
 }
 
-func packQueryVector(query serviceports.QueryVector) *QueryVectorState {
+func packQueryVector(query agentports.QueryVector) *QueryVectorState {
 	if !query.Usable() {
 		return nil
 	}
@@ -45,17 +46,17 @@ func packQueryVector(query serviceports.QueryVector) *QueryVectorState {
 	}
 }
 
-func (q *QueryVectorState) unpack() serviceports.QueryVector {
+func (q *QueryVectorState) unpack() agentports.QueryVector {
 	if q == nil || q.ModelKey == "" || !airetrieval.IsAllowedDimension(q.Dimensions) {
-		return serviceports.QueryVector{}
+		return agentports.QueryVector{}
 	}
 
 	vector, err := vectorutils.Unpack(q.Vector)
 	if err != nil || len(vector) != q.Dimensions {
-		return serviceports.QueryVector{}
+		return agentports.QueryVector{}
 	}
 
-	return serviceports.QueryVector{
+	return agentports.QueryVector{
 		Available:  true,
 		Vector:     vector,
 		ModelKey:   q.ModelKey,
@@ -65,20 +66,20 @@ func (q *QueryVectorState) unpack() serviceports.QueryVector {
 
 func (s *Service) TurnQueryVector(
 	ctx context.Context,
-	req *serviceports.RunRequest,
-) serviceports.QueryVector {
-	query := serviceports.TurnQueryRequest(req)
+	req *agentports.RunRequest,
+) agentports.QueryVector {
+	query := agentports.TurnQueryRequest(req)
 
 	return s.vectorize(ctx, &query)
 }
 
 func (s *Service) vectorize(
 	ctx context.Context,
-	req *serviceports.QueryVectorRequest,
-) serviceports.QueryVector {
+	req *agentports.QueryVectorRequest,
+) agentports.QueryVector {
 	if s.vectorizer == nil || req == nil || strings.TrimSpace(req.Text) == "" ||
 		req.TenantInfo.OrgID.IsNil() || req.TenantInfo.BuID.IsNil() {
-		return serviceports.QueryVector{}
+		return agentports.QueryVector{}
 	}
 
 	query, err := s.vectorizer.Vectorize(ctx, req)
@@ -88,7 +89,7 @@ func (s *Service) vectorize(
 			zap.Error(err),
 		)
 
-		return serviceports.QueryVector{}
+		return agentports.QueryVector{}
 	}
 
 	return query
@@ -97,14 +98,14 @@ func (s *Service) vectorize(
 func (s *Service) toolSemantic(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	query serviceports.QueryVector,
+	query agentports.QueryVector,
 ) *agenttoolcatalog.Semantic {
 	if s.vectors == nil || s.catalog == nil || !query.Usable() ||
 		tenant.OrgID.IsNil() || tenant.BuID.IsNil() {
 		return nil
 	}
 
-	similarities, err := s.vectors.Similarities(ctx, &serviceports.CatalogSimilarityRequest{
+	similarities, err := s.vectors.Similarities(ctx, &agentports.CatalogSimilarityRequest{
 		TenantInfo: tenant,
 		Corpus:     airetrieval.CatalogCorpusTools,
 		Items:      s.catalog.Items(),
@@ -139,7 +140,7 @@ func foundByCall(history []conversation.Message) map[string][]string {
 	return found
 }
 
-func actorTenant(actor *serviceports.RequestActor) pagination.TenantInfo {
+func actorTenant(actor *permissionports.RequestActor) pagination.TenantInfo {
 	if actor == nil {
 		return pagination.TenantInfo{}
 	}

@@ -7,7 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,9 +27,9 @@ type recordDecider struct {
 
 func (d *recordDecider) DecideWithOutcome(
 	ctx context.Context,
-	req *services.DecideAgentProposalRequest,
-	actor *services.RequestActor,
-) (*services.DecisionOutcome, error) {
+	req *agentports.DecideAgentProposalRequest,
+	actor *permissionports.RequestActor,
+) (*agentports.DecisionOutcome, error) {
 	outcome, err := d.fakeDecider.DecideWithOutcome(ctx, req, actor)
 	if err != nil {
 		return nil, err

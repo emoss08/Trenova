@@ -5,7 +5,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -92,7 +92,7 @@ func TestGroupSummaryScansTheGroupsInsideTheBoardScope(t *testing.T) {
 			AddRow(4, "2400.25", "cus_1", "Acme Foods").
 			AddRow(1, "0", "cus_2", ""))
 
-	rows, err := repo.GroupSummary(t.Context(), &repositories.SummarizeShipmentBoardGroupsRequest{
+	rows, err := repo.GroupSummary(t.Context(), &shipmentports.SummarizeShipmentBoardGroupsQuery{
 		Scope:    testScope(),
 		GroupBy:  shipment.BoardGroupingCustomer,
 		Timezone: "UTC",

@@ -4,7 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/ratesimulation"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	simmath "github.com/emoss08/trenova/pkg/ratesimulation"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -17,7 +17,7 @@ import (
 // on the floor — and leaving it out would make the change look better than it is.
 func replayResult(
 	entity *shipment.Shipment,
-	rated *services.RatedShipment,
+	rated *ratequoteports.RatedShipment,
 	err error,
 ) *ratesimulation.RateSimulationResult {
 	result := &ratesimulation.RateSimulationResult{
@@ -66,7 +66,7 @@ func billedAmount(entity *shipment.Shipment) decimal.Decimal {
 // winningLaneKey reads the lane the simulated rate was found under, so the
 // result grid can group by lane without joining back to a rule that may since
 // have been amended.
-func winningLaneKey(rated *services.RatedShipment) string {
+func winningLaneKey(rated *ratequoteports.RatedShipment) string {
 	if rated.Quote == nil || rated.Quote.Trace == nil {
 		return ""
 	}

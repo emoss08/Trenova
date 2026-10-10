@@ -1,11 +1,12 @@
 package customerrepository
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -18,7 +19,7 @@ func TestCreateRefusesACustomerPastTheQuota(t *testing.T) {
 	t.Parallel()
 
 	repo, sqlMock := newTestRepository(t)
-	guard := mocks.NewMockQuotaGuard(t)
+	guard := platformplanportsmock.NewMockQuotaGuard(t)
 	repo.quota = guard
 	entity := &customer.Customer{
 		ID:             pulid.MustNew("cus_"),
@@ -27,7 +28,7 @@ func TestCreateRefusesACustomerPastTheQuota(t *testing.T) {
 		Code:           "CUST9",
 	}
 
-	guard.EXPECT().Enforce(mock.Anything, &services.QuotaRequest{
+	guard.EXPECT().Enforce(mock.Anything, &platformplanports.QuotaRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
 		Meter:      platformcatalog.MeterCustomersTotal,
 		Quantity:   1,

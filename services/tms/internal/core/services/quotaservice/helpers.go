@@ -3,11 +3,11 @@ package quotaservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
-func OrUnlimited(guard services.QuotaGuard) services.QuotaGuard {
+func OrUnlimited(guard platformplanports.QuotaGuard) platformplanports.QuotaGuard {
 	if guard == nil {
 		return NewUnlimited()
 	}
@@ -15,7 +15,7 @@ func OrUnlimited(guard services.QuotaGuard) services.QuotaGuard {
 	return guard
 }
 
-func Enforcing(guard services.QuotaGuard) bool {
+func Enforcing(guard platformplanports.QuotaGuard) bool {
 	if guard == nil {
 		return false
 	}
@@ -25,7 +25,7 @@ func Enforcing(guard services.QuotaGuard) bool {
 	return !unlimited
 }
 
-func DecisionError(decision *services.QuotaDecision) error {
+func DecisionError(decision *platformplanports.QuotaDecision) error {
 	if decision == nil || decision.Allowed {
 		return nil
 	}
@@ -38,7 +38,7 @@ func DecisionError(decision *services.QuotaDecision) error {
 	)
 }
 
-func Preflight(ctx context.Context, guard services.QuotaGuard, req *services.QuotaRequest) error {
+func Preflight(ctx context.Context, guard platformplanports.QuotaGuard, req *platformplanports.QuotaRequest) error {
 	if !Enforcing(guard) {
 		return nil
 	}
@@ -51,7 +51,7 @@ func Preflight(ctx context.Context, guard services.QuotaGuard, req *services.Quo
 	return DecisionError(decision)
 }
 
-func EnforceAll(ctx context.Context, guard services.QuotaGuard, reqs ...services.QuotaRequest) error {
+func EnforceAll(ctx context.Context, guard platformplanports.QuotaGuard, reqs ...platformplanports.QuotaRequest) error {
 	if !Enforcing(guard) {
 		return nil
 	}

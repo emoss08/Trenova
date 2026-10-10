@@ -1,6 +1,9 @@
 package fuelpurchaseservice_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tractorportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"bytes"
 	"context"
 	"io"
@@ -15,9 +18,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/fuelpurchaseservice"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -106,7 +112,7 @@ func (f *fakeRepo) feedState(provider fuelpurchase.CardProvider) *fuelpurchase.C
 
 func (f *fakeRepo) ListCards(
 	_ context.Context,
-	_ *repositories.ListFuelCardsRequest,
+	_ *fuelpurchaseports.ListFuelCardsRequest,
 ) (*pagination.CursorListResult[*fuelpurchase.FuelCard], error) {
 	out := make([]*fuelpurchase.FuelCard, 0, len(f.cards))
 	for _, card := range f.cards {
@@ -117,7 +123,7 @@ func (f *fakeRepo) ListCards(
 
 func (f *fakeRepo) GetCardByID(
 	_ context.Context,
-	req *repositories.GetFuelCardByIDRequest,
+	req *fuelpurchaseports.GetFuelCardByIDRequest,
 ) (*fuelpurchase.FuelCard, error) {
 	card, ok := f.cards[req.ID]
 	if !ok || !sameTenant(card.OrganizationID, card.BusinessUnitID, req.TenantInfo) {
@@ -129,7 +135,7 @@ func (f *fakeRepo) GetCardByID(
 
 func (f *fakeRepo) GetCardsByIDs(
 	_ context.Context,
-	req *repositories.GetFuelCardsByIDsRequest,
+	req *fuelpurchaseports.GetFuelCardsByIDsRequest,
 ) ([]*fuelpurchase.FuelCard, error) {
 	out := make([]*fuelpurchase.FuelCard, 0, len(req.IDs))
 	for _, id := range req.IDs {
@@ -142,7 +148,7 @@ func (f *fakeRepo) GetCardsByIDs(
 
 func (f *fakeRepo) FindCardByLastFour(
 	_ context.Context,
-	req *repositories.FindFuelCardByLastFourRequest,
+	req *fuelpurchaseports.FindFuelCardByLastFourRequest,
 ) (*fuelpurchase.FuelCard, error) {
 	for _, card := range f.cards {
 		if !sameTenant(card.OrganizationID, card.BusinessUnitID, req.TenantInfo) {
@@ -162,7 +168,7 @@ func (f *fakeRepo) FindCardByLastFour(
 
 func (f *fakeRepo) FindCardsByLastFour(
 	_ context.Context,
-	req *repositories.FindFuelCardsByLastFourRequest,
+	req *fuelpurchaseports.FindFuelCardsByLastFourRequest,
 ) (map[string]*fuelpurchase.FuelCard, error) {
 	wanted := make(map[string]struct{}, len(req.LastFours))
 	for _, lastFour := range req.LastFours {
@@ -189,7 +195,7 @@ func (f *fakeRepo) FindCardsByLastFour(
 
 func (f *fakeRepo) ListImportBatches(
 	_ context.Context,
-	req *repositories.ListImportBatchesRequest,
+	req *fuelpurchaseports.ListImportBatchesRequest,
 ) (*pagination.CursorListResult[*fuelpurchase.ImportBatch], error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -215,7 +221,7 @@ func (f *fakeRepo) ListImportBatches(
 
 func (f *fakeRepo) GetFeedState(
 	_ context.Context,
-	req *repositories.GetFuelFeedStateRequest,
+	req *fuelpurchaseports.GetFuelFeedStateRequest,
 ) (*fuelpurchase.CardFeedState, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -252,7 +258,7 @@ func feedStateKey(provider fuelpurchase.CardProvider, feedType fuelpurchase.Feed
 
 func (f *fakeRepo) ListActiveCards(
 	_ context.Context,
-	req *repositories.ListActiveFuelCardsRequest,
+	req *fuelpurchaseports.ListActiveFuelCardsRequest,
 ) ([]*fuelpurchase.FuelCard, error) {
 	out := make([]*fuelpurchase.FuelCard, 0, len(f.cards))
 	for _, card := range f.cards {
@@ -293,7 +299,7 @@ func (f *fakeRepo) UpdateCard(
 
 func (f *fakeRepo) ListPurchases(
 	_ context.Context,
-	_ *repositories.ListFuelPurchasesRequest,
+	_ *fuelpurchaseports.ListFuelPurchasesRequest,
 ) (*pagination.CursorListResult[*fuelpurchase.FuelPurchase], error) {
 	out := make([]*fuelpurchase.FuelPurchase, 0, len(f.purchases))
 	for _, purchase := range f.purchases {
@@ -304,7 +310,7 @@ func (f *fakeRepo) ListPurchases(
 
 func (f *fakeRepo) GetPurchaseByID(
 	_ context.Context,
-	req *repositories.GetFuelPurchaseByIDRequest,
+	req *fuelpurchaseports.GetFuelPurchaseByIDRequest,
 ) (*fuelpurchase.FuelPurchase, error) {
 	purchase, ok := f.purchases[req.ID]
 	if !ok || !sameTenant(purchase.OrganizationID, purchase.BusinessUnitID, req.TenantInfo) {
@@ -316,7 +322,7 @@ func (f *fakeRepo) GetPurchaseByID(
 
 func (f *fakeRepo) GetPurchasesByIDs(
 	_ context.Context,
-	req *repositories.GetFuelPurchasesByIDsRequest,
+	req *fuelpurchaseports.GetFuelPurchasesByIDsRequest,
 ) ([]*fuelpurchase.FuelPurchase, error) {
 	out := make([]*fuelpurchase.FuelPurchase, 0, len(req.IDs))
 	for _, id := range req.IDs {
@@ -329,7 +335,7 @@ func (f *fakeRepo) GetPurchasesByIDs(
 
 func (f *fakeRepo) FindReferences(
 	_ context.Context,
-	req *repositories.FindFuelPurchaseReferencesRequest,
+	req *fuelpurchaseports.FindFuelPurchaseReferencesRequest,
 ) (map[string]pulid.ID, error) {
 	wanted := make(map[string]struct{}, len(req.References))
 	for _, ref := range req.References {
@@ -401,7 +407,7 @@ func (f *fakeRepo) UpdatePurchase(
 
 func (f *fakeRepo) DeletePurchase(
 	_ context.Context,
-	req *repositories.DeleteFuelPurchaseRequest,
+	req *fuelpurchaseports.DeleteFuelPurchaseRequest,
 ) error {
 	purchase, ok := f.purchases[req.ID]
 	if !ok || !sameTenant(purchase.OrganizationID, purchase.BusinessUnitID, req.TenantInfo) {
@@ -413,14 +419,14 @@ func (f *fakeRepo) DeletePurchase(
 
 func (f *fakeRepo) AccumulateFuel(
 	_ context.Context,
-	_ *repositories.AccumulateFuelRequest,
-) ([]*repositories.FuelAccumulationRow, error) {
+	_ *fuelpurchaseports.AccumulateFuelRequest,
+) ([]*fuelpurchaseports.FuelAccumulationRow, error) {
 	return nil, nil
 }
 
 func (f *fakeRepo) GetImportBatchByID(
 	_ context.Context,
-	req *repositories.GetImportBatchByIDRequest,
+	req *fuelpurchaseports.GetImportBatchByIDRequest,
 ) (*fuelpurchase.ImportBatch, error) {
 	batch, ok := f.batches[req.ID]
 	if !ok || !sameTenant(batch.OrganizationID, batch.BusinessUnitID, req.TenantInfo) {
@@ -490,7 +496,7 @@ func (f *fakeRepo) ReplaceImportRows(
 
 func (f *fakeRepo) ListImportRows(
 	_ context.Context,
-	req *repositories.ListImportRowsRequest,
+	req *fuelpurchaseports.ListImportRowsRequest,
 ) (*pagination.CursorListResult[*fuelpurchase.ImportRow], error) {
 	rows := f.rows[req.BatchID]
 	out := make([]*fuelpurchase.ImportRow, 0, len(rows))
@@ -514,14 +520,14 @@ func (f *fakeRepo) ListImportRows(
 
 func (f *fakeRepo) CommitImport(
 	_ context.Context,
-	req *repositories.CommitImportRequest,
-) (*repositories.CommitImportResult, error) {
+	req *fuelpurchaseports.CommitImportRequest,
+) (*fuelpurchaseports.CommitImportResult, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
 	f.commits++
 	batch := req.Batch
-	result := &repositories.CommitImportResult{}
+	result := &fuelpurchaseports.CommitImportResult{}
 	rowsByID := make(map[pulid.ID]*fuelpurchase.ImportRow, len(f.rows[batch.ID]))
 	for _, row := range f.rows[batch.ID] {
 		rowsByID[row.ID] = row
@@ -669,7 +675,7 @@ func (f *fakeDocuments) add(
 
 func (f *fakeDocuments) Get(
 	_ context.Context,
-	req repositories.GetDocumentByIDRequest,
+	req documentports.GetDocumentByIDRequest,
 ) (*document.Document, error) {
 	doc, ok := f.docs[req.ID]
 	if !ok || !sameTenant(doc.OrganizationID, doc.BusinessUnitID, req.TenantInfo) {
@@ -680,14 +686,14 @@ func (f *fakeDocuments) Get(
 
 func (f *fakeDocuments) GetDownloadContent(
 	ctx context.Context,
-	req repositories.GetDocumentByIDRequest,
-) (*services.DocumentContent, error) {
+	req documentports.GetDocumentByIDRequest,
+) (*documentports.DocumentContent, error) {
 	doc, err := f.Get(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 	body := f.content[req.ID]
-	return &services.DocumentContent{
+	return &documentports.DocumentContent{
 		Document:      doc,
 		Body:          io.NopCloser(bytes.NewReader(body)),
 		ContentLength: int64(len(body)),
@@ -750,12 +756,12 @@ func newHarness(t *testing.T) *harness {
 		tractorB.Code: tractorB,
 	}
 
-	tractorRepo := mocks.NewMockTractorRepository(t)
+	tractorRepo := tractorportsmock.NewMockTractorRepository(t)
 	tractorRepo.EXPECT().
 		GetByCodes(mock.Anything, mock.Anything).
 		RunAndReturn(func(
 			_ context.Context,
-			req repositories.GetTractorsByCodesRequest,
+			req tractorports.GetTractorsByCodesRequest,
 		) (map[string]*tractor.Tractor, error) {
 			found := make(map[string]*tractor.Tractor, len(req.Codes))
 			if req.TenantInfo != tenant {
@@ -780,7 +786,7 @@ func newHarness(t *testing.T) *harness {
 		GetByID(mock.Anything, mock.Anything).
 		RunAndReturn(func(
 			_ context.Context,
-			req repositories.GetTractorByIDRequest,
+			req tractorports.GetTractorByIDRequest,
 		) (*tractor.Tractor, error) {
 			for _, entity := range byCode {
 				if entity.ID == req.ID && req.TenantInfo == tenant {
@@ -791,12 +797,12 @@ func newHarness(t *testing.T) *harness {
 		}).
 		Maybe()
 
-	workerRepo := mocks.NewMockWorkerRepository(t)
+	workerRepo := workerportsmock.NewMockWorkerRepository(t)
 	workerRepo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
 		RunAndReturn(func(
 			_ context.Context,
-			req repositories.GetWorkerByIDRequest,
+			req workerports.GetWorkerByIDRequest,
 		) (*worker.Worker, error) {
 			if req.ID == workerID && req.TenantInfo == tenant {
 				return &worker.Worker{
@@ -811,10 +817,10 @@ func newHarness(t *testing.T) *harness {
 
 	audits := make([]auditRecord, 0, 8)
 	auditLock := &sync.Mutex{}
-	auditService := mocks.NewMockAuditService(t)
+	auditService := auditportsmock.NewMockAuditService(t)
 	auditService.EXPECT().
 		LogAction(mock.Anything, mock.Anything).
-		RunAndReturn(func(params *services.LogActionParams, _ ...services.LogOption) error {
+		RunAndReturn(func(params *auditports.LogActionParams, _ ...auditports.LogOption) error {
 			auditLock.Lock()
 			defer auditLock.Unlock()
 			audits = append(audits, auditRecord{

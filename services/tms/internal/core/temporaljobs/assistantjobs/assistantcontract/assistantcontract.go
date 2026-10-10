@@ -8,10 +8,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -27,9 +29,9 @@ const CompactionWorkflowName = "ConversationCompactionWorkflow"
 type CompactionPayload struct {
 	temporaltype.BasePayload
 
-	TurnID   pulid.ID                  `json:"turnId"`
-	ThreadID pulid.ID                  `json:"threadId"`
-	Actor    serviceports.RequestActor `json:"actor"`
+	TurnID   pulid.ID                     `json:"turnId"`
+	ThreadID pulid.ID                     `json:"threadId"`
+	Actor    permissionports.RequestActor `json:"actor"`
 	// Auto says the conversation is compacting itself.
 	Auto bool `json:"auto"`
 }
@@ -45,9 +47,9 @@ func (p *CompactionPayload) TenantInfo() pagination.TenantInfo {
 // StartCompactionWorkflow hands a recorded compaction turn to a worker.
 func StartCompactionWorkflow(
 	ctx context.Context,
-	workflows serviceports.WorkflowStarter,
+	workflows kernelports.WorkflowStarter,
 	turn *conversation.AssistantTurn,
-	actor serviceports.RequestActor,
+	actor permissionports.RequestActor,
 	auto bool,
 ) (client.WorkflowRun, error) {
 	return workflows.StartWorkflow(ctx, client.StartWorkflowOptions{
@@ -78,7 +80,7 @@ func StartCompactionWorkflow(
 type StartCompactionRequest struct {
 	ThreadID   pulid.ID
 	TenantInfo pagination.TenantInfo
-	Actor      serviceports.RequestActor
+	Actor      permissionports.RequestActor
 	Auto       bool
 }
 
@@ -98,7 +100,7 @@ type CompactionTurns interface {
 func StartCompaction(
 	ctx context.Context,
 	turns CompactionTurns,
-	workflows serviceports.WorkflowStarter,
+	workflows kernelports.WorkflowStarter,
 	req StartCompactionRequest,
 ) (*conversation.AssistantTurn, error) {
 	if workflows == nil {
@@ -136,17 +138,17 @@ func DryRunWorkflowIDFor(runID pulid.ID) string {
 type AgentDryRunPayload struct {
 	temporaltype.BasePayload
 
-	RunID      pulid.ID                    `json:"runId"`
-	Actor      serviceports.RequestActor   `json:"actor"`
-	Definition *agentdefinition.Definition `json:"definition"`
-	Prompt     string                      `json:"prompt"`
+	RunID      pulid.ID                     `json:"runId"`
+	Actor      permissionports.RequestActor `json:"actor"`
+	Definition *agentdefinition.Definition  `json:"definition"`
+	Prompt     string                       `json:"prompt"`
 }
 
 // StartDryRunWorkflow starts a dry run on the chat queue, where somebody is
 // watching it arrive.
 func StartDryRunWorkflow(
 	ctx context.Context,
-	workflows serviceports.WorkflowStarter,
+	workflows kernelports.WorkflowStarter,
 	payload *AgentDryRunPayload,
 ) (client.WorkflowRun, error) {
 	return workflows.StartWorkflow(ctx, client.StartWorkflowOptions{
@@ -165,7 +167,7 @@ func StartDryRunWorkflow(
 
 // TurnStart is what a worker needs to answer one turn.
 type TurnStart struct {
-	Actor   serviceports.RequestActor
+	Actor   permissionports.RequestActor
 	Content string
 	Request AssistantTurnRequest
 }
@@ -178,7 +180,7 @@ type TurnStart struct {
 // handed over.
 func StartTurnWorkflow(
 	ctx context.Context,
-	workflows serviceports.WorkflowStarter,
+	workflows kernelports.WorkflowStarter,
 	turn *conversation.AssistantTurn,
 	start TurnStart,
 ) (client.WorkflowRun, error) {
@@ -234,11 +236,11 @@ func WorkflowIDFor(turnID pulid.ID) string {
 type AssistantTurnPayload struct {
 	temporaltype.BasePayload
 
-	TurnID   pulid.ID                  `json:"turnId"`
-	ThreadID pulid.ID                  `json:"threadId"`
-	Actor    serviceports.RequestActor `json:"actor"`
-	Content  string                    `json:"content"`
-	Request  AssistantTurnRequest      `json:"request"`
+	TurnID   pulid.ID                     `json:"turnId"`
+	ThreadID pulid.ID                     `json:"threadId"`
+	Actor    permissionports.RequestActor `json:"actor"`
+	Content  string                       `json:"content"`
+	Request  AssistantTurnRequest         `json:"request"`
 	// Origin is the W3C traceparent of the request that started the turn,
 	// so the turn's trace links back to it. Empty on a turn started before
 	// it was kept, or from outside any trace.
@@ -253,8 +255,8 @@ func (p *AssistantTurnPayload) TenantInfo() pagination.TenantInfo {
 	}
 }
 
-func (p *AssistantTurnPayload) SendRequest() *serviceports.SendMessageRequest {
-	return &serviceports.SendMessageRequest{
+func (p *AssistantTurnPayload) SendRequest() *agentports.SendMessageRequest {
+	return &agentports.SendMessageRequest{
 		ThreadID:              p.ThreadID,
 		Content:               p.Content,
 		Page:                  p.Request.Page,
@@ -311,6 +313,6 @@ type AssistantTurnResult struct {
 	Refused bool   `json:"refused"`
 	// Result is the saved turn, when it finished. A turn that failed or was
 	// stopped has Message instead, written for the person who asked.
-	Result  *serviceports.SendMessageResult `json:"result,omitempty"`
-	Message string                          `json:"message,omitempty"`
+	Result  *agentports.SendMessageResult `json:"result,omitempty"`
+	Message string                        `json:"message,omitempty"`
 }

@@ -5,8 +5,8 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/extractionshadow"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -28,10 +28,10 @@ const (
 
 func (s *Service) ConsiderExtraction(
 	ctx context.Context,
-	req *services.ConsiderExtractionShadowRequest,
-) (*services.ExtractionShadowDecision, error) {
+	req *extractionshadowports.ConsiderExtractionShadowRequest,
+) (*extractionshadowports.ExtractionShadowDecision, error) {
 	if s.starter == nil || s.predictor == nil {
-		return &services.ExtractionShadowDecision{Reason: ReasonUnavailable}, nil
+		return &extractionshadowports.ExtractionShadowDecision{Reason: ReasonUnavailable}, nil
 	}
 
 	settings, err := s.GetSettings(ctx, req.TenantInfo)
@@ -41,11 +41,11 @@ func (s *Service) ConsiderExtraction(
 	candidate := settings.CandidateID()
 	switch {
 	case candidate.IsNil():
-		return &services.ExtractionShadowDecision{Reason: ReasonDisabled}, nil
+		return &extractionshadowports.ExtractionShadowDecision{Reason: ReasonDisabled}, nil
 	case candidate == req.ProductionProviderID:
-		return &services.ExtractionShadowDecision{Reason: ReasonSameProvider}, nil
+		return &extractionshadowports.ExtractionShadowDecision{Reason: ReasonSameProvider}, nil
 	case !extractionshadow.Sampled(req.DocumentID, req.ExtractedAt, settings.SamplePercent):
-		return &services.ExtractionShadowDecision{Reason: ReasonNotSampled}, nil
+		return &extractionshadowports.ExtractionShadowDecision{Reason: ReasonNotSampled}, nil
 	}
 
 	current, err := s.isCurrentExtraction(ctx, req)
@@ -53,7 +53,7 @@ func (s *Service) ConsiderExtraction(
 		return nil, err
 	}
 	if !current {
-		return &services.ExtractionShadowDecision{Reason: ReasonSuperseded}, nil
+		return &extractionshadowports.ExtractionShadowDecision{Reason: ReasonSuperseded}, nil
 	}
 
 	started, err := s.results.CountCreatedSince(
@@ -63,10 +63,10 @@ func (s *Service) ConsiderExtraction(
 		return nil, err
 	}
 	if started >= settings.DailyLimit {
-		return &services.ExtractionShadowDecision{Reason: ReasonDailyLimit}, nil
+		return &extractionshadowports.ExtractionShadowDecision{Reason: ReasonDailyLimit}, nil
 	}
 
-	provider, err := s.providers.GetByID(ctx, repositories.GetAIProviderByIDRequest{
+	provider, err := s.providers.GetByID(ctx, agentports.GetAIProviderByIDRequest{
 		ID:         candidate,
 		TenantInfo: req.TenantInfo,
 	})
@@ -75,7 +75,7 @@ func (s *Service) ConsiderExtraction(
 			s.l.Warn("the shadow provider no longer exists",
 				zap.String("providerId", candidate.String()),
 			)
-			return &services.ExtractionShadowDecision{Reason: ReasonDisabled}, nil
+			return &extractionshadowports.ExtractionShadowDecision{Reason: ReasonDisabled}, nil
 		}
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func (s *Service) ConsiderExtraction(
 		return nil, err
 	}
 	if !created && (result.WorkflowID != "" || result.Status.IsSettled()) {
-		return &services.ExtractionShadowDecision{
+		return &extractionshadowports.ExtractionShadowDecision{
 			Sampled:    true,
 			ResultID:   result.ID,
 			WorkflowID: result.WorkflowID,
@@ -122,8 +122,8 @@ func (s *Service) ConsiderExtraction(
 func (s *Service) start(
 	ctx context.Context,
 	result *extractionshadow.ShadowResult,
-) (*services.ExtractionShadowDecision, error) {
-	workflowID, err := s.starter.StartExtractionShadow(ctx, &services.ExtractionShadowStart{
+) (*extractionshadowports.ExtractionShadowDecision, error) {
+	workflowID, err := s.starter.StartExtractionShadow(ctx, &extractionshadowports.ExtractionShadowStart{
 		TenantInfo: tenantOf(result),
 		ResultID:   result.ID,
 	})
@@ -137,7 +137,7 @@ func (s *Service) start(
 			return nil, errors.Join(err, saveErr)
 		}
 
-		return &services.ExtractionShadowDecision{
+		return &extractionshadowports.ExtractionShadowDecision{
 			Sampled:  true,
 			ResultID: result.ID,
 			Reason:   startFailedReason,
@@ -149,7 +149,7 @@ func (s *Service) start(
 		return nil, err
 	}
 
-	return &services.ExtractionShadowDecision{
+	return &extractionshadowports.ExtractionShadowDecision{
 		Sampled:    true,
 		ResultID:   result.ID,
 		WorkflowID: workflowID,
@@ -158,7 +158,7 @@ func (s *Service) start(
 
 func (s *Service) isCurrentExtraction(
 	ctx context.Context,
-	req *services.ConsiderExtractionShadowRequest,
+	req *extractionshadowports.ConsiderExtractionShadowRequest,
 ) (bool, error) {
 	content, err := s.contents.GetByDocumentID(ctx, req.DocumentID, req.TenantInfo)
 	if err != nil {

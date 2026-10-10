@@ -8,8 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,20 +22,20 @@ type Params struct {
 	fx.In
 
 	Logger             *zap.Logger
-	Repo               repositories.RateQuoteRepository
-	ShipmentRepo       repositories.ShipmentRepository
-	BillingControlRepo repositories.BillingControlRepository
-	Engine             services.RateEngine
-	Distances          services.DistanceCalculationService `optional:"true"`
+	Repo               ratequoteports.RateQuoteRepository
+	ShipmentRepo       shipmentports.ShipmentRepository
+	BillingControlRepo tenantports.BillingControlRepository
+	Engine             ratequoteports.RateEngine
+	Distances          shipmentports.DistanceCalculationService `optional:"true"`
 }
 
 type Service struct {
 	l                  *zap.Logger
-	repo               repositories.RateQuoteRepository
-	shipmentRepo       repositories.ShipmentRepository
-	billingControlRepo repositories.BillingControlRepository
-	engine             services.RateEngine
-	distances          services.DistanceCalculationService
+	repo               ratequoteports.RateQuoteRepository
+	shipmentRepo       shipmentports.ShipmentRepository
+	billingControlRepo tenantports.BillingControlRepository
+	engine             ratequoteports.RateEngine
+	distances          shipmentports.DistanceCalculationService
 }
 
 func New(p Params) *Service {
@@ -50,21 +51,21 @@ func New(p Params) *Service {
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListRateQuotesRequest,
+	req *ratequoteports.ListRateQuotesRequest,
 ) (*pagination.ListResult[*ratequote.RateQuote], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListRateQuoteConnectionRequest,
+	req *ratequoteports.ListRateQuoteConnectionRequest,
 ) (*pagination.CursorListResult[*ratequote.RateQuote], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) GetByID(
 	ctx context.Context,
-	req *repositories.GetRateQuoteByIDRequest,
+	req *ratequoteports.GetRateQuoteByIDRequest,
 ) (*ratequote.RateQuote, error) {
 	return s.repo.GetByID(ctx, req)
 }
@@ -75,7 +76,7 @@ func (s *Service) GetByID(
 // changes, so the history is how somebody sees that the rate moved and when.
 func (s *Service) ListForShipment(
 	ctx context.Context,
-	req *repositories.ListShipmentRateQuotesRequest,
+	req *ratequoteports.ListShipmentRateQuotesRequest,
 ) ([]*ratequote.RateQuote, error) {
 	return s.repo.ListForShipment(ctx, req)
 }
@@ -84,7 +85,7 @@ func (s *Service) ListForShipment(
 // is what the "why this rate" panel reads.
 func (s *Service) GetAppliedForShipment(
 	ctx context.Context,
-	req *repositories.GetShipmentRateQuoteRequest,
+	req *ratequoteports.GetShipmentRateQuoteRequest,
 ) (*ratequote.RateQuote, error) {
 	return s.repo.GetAppliedForShipment(ctx, req)
 }
@@ -110,16 +111,16 @@ type ExplainRequest struct {
 func (s *Service) Explain(
 	ctx context.Context,
 	req *ExplainRequest,
-) (*services.RatedShipment, error) {
+) (*ratequoteports.RatedShipment, error) {
 	log := s.l.With(
 		zap.String("operation", "Explain"),
 		zap.String("shipmentId", req.ShipmentID.String()),
 	)
 
-	entity, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	entity, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         req.ShipmentID,
 		TenantInfo: req.TenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -149,7 +150,7 @@ type QuoteRequest struct {
 func (s *Service) Quote(
 	ctx context.Context,
 	req *QuoteRequest,
-) (*services.RatedShipment, error) {
+) (*ratequoteports.RatedShipment, error) {
 	if req.Shipment == nil {
 		return nil, errortypes.NewValidationError(
 			"shipment",
@@ -201,13 +202,13 @@ func (s *Service) rate(
 	req *ExplainRequest,
 	purpose ratequote.Purpose,
 	persist bool,
-) (*services.RatedShipment, error) {
+) (*ratequoteports.RatedShipment, error) {
 	partyType := req.PartyType
 	if partyType == "" {
 		partyType = rateagreement.PartyTypeCustomer
 	}
 
-	return s.engine.RateShipment(ctx, &services.RateShipmentRequest{
+	return s.engine.RateShipment(ctx, &ratequoteports.RateShipmentRequest{
 		Shipment:       entity,
 		TenantInfo:     req.TenantInfo,
 		PartyType:      partyType,
@@ -236,7 +237,7 @@ func (s *Service) billingControl(ctx context.Context, orgID pulid.ID) *tenant.Bi
 type ShopRequest struct {
 	TenantInfo pagination.TenantInfo
 	ShipmentID pulid.ID
-	Strategy   services.ShopStrategy
+	Strategy   ratequoteports.ShopStrategy
 	// CarrierIDs is an explicit shortlist. Left empty, the shipment's routing
 	// guide supplies the candidates.
 	CarrierIDs []pulid.ID
@@ -256,16 +257,16 @@ type ShopRequest struct {
 func (s *Service) Shop(
 	ctx context.Context,
 	req *ShopRequest,
-) (*services.ShopResult, error) {
+) (*ratequoteports.ShopResult, error) {
 	log := s.l.With(
 		zap.String("operation", "Shop"),
 		zap.String("shipmentId", req.ShipmentID.String()),
 	)
 
-	entity, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	entity, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         req.ShipmentID,
 		TenantInfo: req.TenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
+		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
@@ -279,7 +280,7 @@ func (s *Service) Shop(
 		log.Warn("could not work out the shipment's distance for the shop", zap.Error(err))
 	}
 
-	result, err := s.engine.Shop(ctx, &services.ShopRequest{
+	result, err := s.engine.Shop(ctx, &ratequoteports.ShopRequest{
 		Shipment:       entity,
 		TenantInfo:     req.TenantInfo,
 		Strategy:       req.Strategy,

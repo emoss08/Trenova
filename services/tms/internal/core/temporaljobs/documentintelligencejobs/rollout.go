@@ -5,7 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/documentaiextraction"
 	"github.com/emoss08/trenova/internal/core/domain/extractionrollout"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -20,7 +21,7 @@ func (a *Activities) rolloutPreference(
 		return pulid.Nil
 	}
 
-	preferred, err := a.rollout.AssignExtraction(ctx, &services.AssignExtractionRolloutRequest{
+	preferred, err := a.rollout.AssignExtraction(ctx, &extractionrolloutports.AssignExtractionRolloutRequest{
 		TenantInfo:  tenantInfo,
 		DocumentID:  payload.DocumentID,
 		ExtractedAt: payload.ExtractedAt,
@@ -48,7 +49,7 @@ func (a *Activities) settleRollout(
 		return
 	}
 
-	req := &services.SettleExtractionRolloutRequest{
+	req := &extractionrolloutports.SettleExtractionRolloutRequest{
 		TenantInfo:  tenantInfo,
 		DocumentID:  payload.DocumentID,
 		ExtractedAt: payload.ExtractedAt,
@@ -73,7 +74,7 @@ func rolloutOutcome(
 	switch {
 	case acceptance == aiAcceptanceStatusAccepted:
 		return extractionrollout.OutcomeAccepted
-	case completion.Status == services.AIBackgroundExtractionStatusFailed:
+	case completion.Status == documentaiextractionports.AIBackgroundExtractionStatusFailed:
 		return extractionrollout.OutcomeFailed
 	default:
 		return extractionrollout.OutcomeRejected

@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/ratematrix"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -71,14 +71,14 @@ func TestGetLookupDataReturnsOnlyActiveIndexableMatrices(t *testing.T) {
 
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 
-	result, err := repo.GetLookupData(ctx, &repositories.GetRateMatrixLookupDataRequest{
+	result, err := repo.GetLookupData(ctx, &ratematrixports.GetRateMatrixLookupDataRequest{
 		TenantInfo: tenantInfo,
 	})
 	require.NoError(t, err)
 
 	require.Len(t, result, 2, "inactive and wider-than-two-axis matrices must not be returned")
 
-	byCode := make(map[string]*repositories.RateMatrixLookupData, len(result))
+	byCode := make(map[string]*ratematrixports.RateMatrixLookupData, len(result))
 	for _, item := range result {
 		byCode[item.Matrix.Code] = item
 	}
@@ -207,7 +207,7 @@ func TestGetLookupStampMovesWhenCellsAreReplaced(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, before, again, "nothing changed, so the stamp holds")
 
-	require.NoError(t, repo.ReplaceCells(ctx, &repositories.ReplaceRateMatrixCellsRequest{
+	require.NoError(t, repo.ReplaceCells(ctx, &ratematrixports.ReplaceRateMatrixCellsRequest{
 		RateMatrixID: matrixID,
 		TenantInfo:   tenantInfo,
 		Cells: []*ratematrix.RateMatrixCell{{

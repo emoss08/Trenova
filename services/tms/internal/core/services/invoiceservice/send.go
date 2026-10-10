@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs/billingcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs/billingcontract"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -22,9 +23,9 @@ import (
 
 func (s *Service) PlanSend(
 	ctx context.Context,
-	req *servicesports.InvoiceSendPlanRequest,
-) (*servicesports.InvoiceSendPlan, error) {
-	entity, err := s.repo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+	req *invoiceports.InvoiceSendPlanRequest,
+) (*invoiceports.InvoiceSendPlan, error) {
+	entity, err := s.repo.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         req.InvoiceID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -73,14 +74,14 @@ func (s *Service) PlanSend(
 	fromEmail, fromErr := resolveFromEmail(profile, deliveryProfile.Email)
 	headers := resolveDeliveryHeaders(fromEmail, deliveryProfile.Email)
 
-	plan := &servicesports.InvoiceSendPlan{
+	plan := &invoiceports.InvoiceSendPlan{
 		EDI:                s.ediPlanFor(ctx, entity, req.TenantInfo),
 		InvoiceID:          entity.ID,
 		ProviderLimitBytes: providerLimit(profile),
 		EstimatedBodyBytes: int64(
 			len(wording.Subject.Value)+len(body),
 		) + defaultBodyOverheadBytes,
-		Parts:                make([]*servicesports.InvoiceSendPlanPart, 0),
+		Parts:                make([]*invoiceports.InvoiceSendPlanPart, 0),
 		Warnings:             make([]string, 0),
 		Errors:               make([]string, 0),
 		Recipients:           recipients,
@@ -141,14 +142,14 @@ func (s *Service) PlanSend(
 		return plan, nil
 	}
 
-	firstPart := &servicesports.InvoiceSendPlanPart{
+	firstPart := &invoiceports.InvoiceSendPlanPart{
 		PartNumber:         1,
 		EstimatedSizeBytes: plan.EstimatedBodyBytes + pdfAttachment.EncodedBytes,
-		Attachments:        []*servicesports.InvoiceSendPlanAttachment{pdfAttachment},
+		Attachments:        []*invoiceports.InvoiceSendPlanAttachment{pdfAttachment},
 	}
 	plan.Parts = append(plan.Parts, firstPart)
 
-	attachments, err := s.repo.ListAttachments(ctx, repositories.ListInvoiceEmailAttemptsRequest{
+	attachments, err := s.repo.ListAttachments(ctx, invoiceports.ListInvoiceEmailAttemptsRequest{
 		InvoiceID:  entity.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -161,7 +162,7 @@ func (s *Service) PlanSend(
 		}
 		attachment := planAttachment(selected.Document, false)
 		if plan.EstimatedBodyBytes+attachment.EncodedBytes > plan.ProviderLimitBytes {
-			link := &servicesports.InvoiceSendPlanDocumentLink{
+			link := &invoiceports.InvoiceSendPlanDocumentLink{
 				DocumentID: selected.Document.ID,
 				FileName:   selected.Document.OriginalName,
 				SizeBytes:  selected.Document.FileSize,
@@ -174,7 +175,7 @@ func (s *Service) PlanSend(
 		}
 		current := plan.Parts[len(plan.Parts)-1]
 		if current.EstimatedSizeBytes+attachment.EncodedBytes > plan.ProviderLimitBytes {
-			current = &servicesports.InvoiceSendPlanPart{
+			current = &invoiceports.InvoiceSendPlanPart{
 				PartNumber:         len(plan.Parts) + 1,
 				EstimatedSizeBytes: plan.EstimatedBodyBytes,
 			}
@@ -188,17 +189,17 @@ func (s *Service) PlanSend(
 
 func (s *Service) Send(
 	ctx context.Context,
-	req *servicesports.InvoiceSendRequest,
-	actor *servicesports.RequestActor,
-) (*servicesports.InvoiceSendResult, error) {
+	req *invoiceports.InvoiceSendRequest,
+	actor *permissionports.RequestActor,
+) (*invoiceports.InvoiceSendResult, error) {
 	if s.documentService == nil {
 		return nil, errortypes.NewBusinessError("Invoice document delivery is not configured")
 	}
 	if !s.workflowStarter.Enabled() {
-		return nil, servicesports.ErrWorkflowStarterDisabled
+		return nil, kernelports.ErrWorkflowStarterDisabled
 	}
 
-	plan, err := s.PlanSend(ctx, &servicesports.InvoiceSendPlanRequest{
+	plan, err := s.PlanSend(ctx, &invoiceports.InvoiceSendPlanRequest{
 		InvoiceID:  req.InvoiceID,
 		TenantInfo: req.TenantInfo,
 		BaseURL:    req.BaseURL,
@@ -216,7 +217,7 @@ func (s *Service) Send(
 
 	entity, err := s.repo.GetByID(
 		ctx,
-		repositories.GetInvoiceByIDRequest{ID: req.InvoiceID, TenantInfo: req.TenantInfo},
+		invoiceports.GetInvoiceByIDRequest{ID: req.InvoiceID, TenantInfo: req.TenantInfo},
 	)
 	if err != nil {
 		return nil, err
@@ -246,14 +247,14 @@ func (s *Service) Send(
 		updated,
 		"Invoice email delivery queued",
 	)
-	return &servicesports.InvoiceSendResult{Invoice: updated, Plan: plan}, nil
+	return &invoiceports.InvoiceSendResult{Invoice: updated, Plan: plan}, nil
 }
 
 func (s *Service) SendFromWorkflow(
 	ctx context.Context,
-	req *servicesports.InvoiceSendRequest,
-	actor *servicesports.RequestActor,
-) (result *servicesports.InvoiceSendResult, err error) {
+	req *invoiceports.InvoiceSendRequest,
+	actor *permissionports.RequestActor,
+) (result *invoiceports.InvoiceSendResult, err error) {
 	defer func() {
 		if err != nil {
 			s.markInvoiceSendFailed(ctx, req, actor, err)
@@ -264,7 +265,7 @@ func (s *Service) SendFromWorkflow(
 		return nil, errortypes.NewBusinessError("Invoice email delivery is not configured")
 	}
 
-	plan, err := s.PlanSend(ctx, &servicesports.InvoiceSendPlanRequest{
+	plan, err := s.PlanSend(ctx, &invoiceports.InvoiceSendPlanRequest{
 		InvoiceID:  req.InvoiceID,
 		TenantInfo: req.TenantInfo,
 		BaseURL:    req.BaseURL,
@@ -289,7 +290,7 @@ func (s *Service) SendFromWorkflow(
 	}
 	entity, err := s.repo.GetByID(
 		ctx,
-		repositories.GetInvoiceByIDRequest{ID: req.InvoiceID, TenantInfo: req.TenantInfo},
+		invoiceports.GetInvoiceByIDRequest{ID: req.InvoiceID, TenantInfo: req.TenantInfo},
 	)
 	if err != nil {
 		return nil, err
@@ -333,7 +334,7 @@ func (s *Service) SendFromWorkflow(
 		var message *email.Message
 		var sendErr error
 		if linkErr == nil && attachmentErr == nil {
-			message, sendErr = s.emailService.Send(ctx, &servicesports.SendEmailRequest{
+			message, sendErr = s.emailService.Send(ctx, &emailports.SendEmailRequest{
 				TenantInfo:   req.TenantInfo,
 				ProfileID:    profile.ID,
 				Purpose:      email.PurposeBilling,
@@ -398,7 +399,7 @@ func (s *Service) SendFromWorkflow(
 
 	entity, err = s.repo.GetByID(
 		ctx,
-		repositories.GetInvoiceByIDRequest{ID: req.InvoiceID, TenantInfo: req.TenantInfo},
+		invoiceports.GetInvoiceByIDRequest{ID: req.InvoiceID, TenantInfo: req.TenantInfo},
 	)
 	if err != nil {
 		return nil, err
@@ -426,14 +427,14 @@ func (s *Service) SendFromWorkflow(
 		updated,
 		"Invoice email delivery attempted",
 	)
-	return &servicesports.InvoiceSendResult{Invoice: updated, Plan: plan, Attempts: attempts}, nil
+	return &invoiceports.InvoiceSendResult{Invoice: updated, Plan: plan, Attempts: attempts}, nil
 }
 
 func (s *Service) enqueueInvoiceSendWorkflow(
 	ctx context.Context,
 	entity *invoice.Invoice,
-	req *servicesports.InvoiceSendRequest,
-	actor *servicesports.RequestActor,
+	req *invoiceports.InvoiceSendRequest,
+	actor *permissionports.RequestActor,
 	now int64,
 ) error {
 	auditActor := actor.AuditActor()
@@ -472,14 +473,14 @@ func (s *Service) enqueueInvoiceSendWorkflow(
 
 func (s *Service) markInvoiceSendFailed(
 	ctx context.Context,
-	req *servicesports.InvoiceSendRequest,
-	actor *servicesports.RequestActor,
+	req *invoiceports.InvoiceSendRequest,
+	actor *permissionports.RequestActor,
 	sendErr error,
 ) {
 	if req == nil || sendErr == nil {
 		return
 	}
-	entity, err := s.repo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+	entity, err := s.repo.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         req.InvoiceID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -514,7 +515,7 @@ func (s *Service) markInvoiceSendFailed(
 // frozen copy would come back through the ad-hoc {number} engine rather than
 // html/template, losing the layout with it. What was actually sent is still
 // recoverable from the email message and the send attempts.
-func applySendSnapshot(entity *invoice.Invoice, plan *servicesports.InvoiceSendPlan) {
+func applySendSnapshot(entity *invoice.Invoice, plan *invoiceports.InvoiceSendPlan) {
 	entity.SendStatus = invoice.SendStatusSending
 	entity.LastSendError = ""
 	entity.LastSendWarning = strings.Join(plan.Warnings, "; ")
@@ -544,9 +545,9 @@ func applySendSnapshot(entity *invoice.Invoice, plan *servicesports.InvoiceSendP
 // payload.
 func (s *Service) splitSendProfile(
 	ctx context.Context,
-	req *servicesports.InvoiceSendRequest,
+	req *invoiceports.InvoiceSendRequest,
 	entity *invoice.Invoice,
-	plan *servicesports.InvoiceSendPlan,
+	plan *invoiceports.InvoiceSendPlan,
 ) (*invoiceDeliveryProfile, error) {
 	if !plan.FromTemplate || len(plan.Parts) <= 1 {
 		return nil, nil //nolint:nilnil // no profile is needed for a single message
@@ -591,14 +592,14 @@ func (s *Service) ediPlanFor(
 	ctx context.Context,
 	entity *invoice.Invoice,
 	tenantInfo pagination.TenantInfo,
-) *servicesports.InvoiceEDISendPlan {
-	plans, err := s.ResolveEDISendPlans(ctx, &servicesports.ResolveInvoiceEDISendPlansRequest{
+) *invoiceports.InvoiceEDISendPlan {
+	plans, err := s.ResolveEDISendPlans(ctx, &invoiceports.ResolveInvoiceEDISendPlansRequest{
 		TenantInfo: tenantInfo,
 		Invoices:   []*invoice.Invoice{entity},
 	})
 	if err != nil {
 		s.l.Warn("failed to resolve invoice EDI plan", zap.Error(err))
-		return &servicesports.InvoiceEDISendPlan{
+		return &invoiceports.InvoiceEDISendPlan{
 			InvoiceID: entity.ID,
 			Status:    entity.EDISendStatus,
 			Blockers:  []string{"EDI configuration could not be read: " + err.Error()},
@@ -608,5 +609,5 @@ func (s *Service) ediPlanFor(
 		return plan
 	}
 
-	return &servicesports.InvoiceEDISendPlan{InvoiceID: entity.ID, Status: entity.EDISendStatus}
+	return &invoiceports.InvoiceEDISendPlan{InvoiceID: entity.ID, Status: entity.EDISendStatus}
 }

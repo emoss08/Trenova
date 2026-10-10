@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -121,7 +121,7 @@ func (r *QueryResolver) PendingDecisions(ctx context.Context, input gqlmodel.Pen
 		return nil, err
 	}
 
-	req := services.ListPendingDecisionsRequest{
+	req := agentports.ListPendingDecisionsRequest{
 		TenantInfo:        base.TenantInfo(authCtx),
 		IncludeTotalCount: base.ConnectionFieldRequested(ctx, base.ConnectionTotalCountField),
 		Usable:            usable,
@@ -237,7 +237,7 @@ func (r *QueryResolver) RecentDecisions(ctx context.Context, since int, first *i
 		return nil, err
 	}
 
-	req := services.ListRecentDecisionsRequest{
+	req := agentports.ListRecentDecisionsRequest{
 		TenantInfo: base.TenantInfo(authCtx),
 		Since:      int64(since),
 		Usable:     usable,

@@ -8,8 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/pagedraft"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,12 +21,12 @@ import (
 
 type provisioner struct {
 	definitions map[string]*agentdefinition.Definition
-	asked       []serviceports.EnsureSystemAgentRequest
+	asked       []agentdefinitionports.EnsureSystemAgentRequest
 }
 
 func (p *provisioner) EnsureSystem(
 	_ context.Context,
-	req serviceports.EnsureSystemAgentRequest,
+	req agentdefinitionports.EnsureSystemAgentRequest,
 ) (*agentdefinition.Definition, error) {
 	p.asked = append(p.asked, req)
 	definition, ok := p.definitions[req.SystemKey]
@@ -39,13 +40,13 @@ func (p *provisioner) EnsureSystem(
 }
 
 type pageThreads struct {
-	live     map[repositories.PageThreadKey]*conversation.Thread
+	live     map[agentports.PageThreadKey]*conversation.Thread
 	claimed  []*conversation.Thread
-	archived []repositories.ArchiveSubjectThreadsRequest
+	archived []agentports.ArchiveSubjectThreadsRequest
 }
 
-func keyOf(thread *conversation.Thread) repositories.PageThreadKey {
-	return repositories.PageThreadKey{
+func keyOf(thread *conversation.Thread) agentports.PageThreadKey {
+	return agentports.PageThreadKey{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: thread.OrganizationID,
 			BuID:  thread.BusinessUnitID,
@@ -59,7 +60,7 @@ func keyOf(thread *conversation.Thread) repositories.PageThreadKey {
 
 func (p *pageThreads) GetPageThread(
 	_ context.Context,
-	key repositories.PageThreadKey,
+	key agentports.PageThreadKey,
 ) (*conversation.Thread, error) {
 	key.TenantInfo.UserID = pulid.Nil
 	if thread, ok := p.live[key]; ok {
@@ -86,7 +87,7 @@ func (p *pageThreads) ClaimPageThread(
 
 func (p *pageThreads) ArchiveSubjectThreads(
 	_ context.Context,
-	req repositories.ArchiveSubjectThreadsRequest,
+	req agentports.ArchiveSubjectThreadsRequest,
 ) (int, error) {
 	p.archived = append(p.archived, req)
 	closed := 0
@@ -107,7 +108,7 @@ type pageFixture struct {
 	threads       *pageThreads
 	conversations *creatingConversations
 	permissions   *subjectPermissions
-	actor         *serviceports.RequestActor
+	actor         *permissionports.RequestActor
 }
 
 func newPageFixture(allowed ...string) *pageFixture {
@@ -117,7 +118,7 @@ func newPageFixture(allowed ...string) *pageFixture {
 	}
 	fixture := &pageFixture{
 		provisioner:   &provisioner{definitions: map[string]*agentdefinition.Definition{}},
-		threads:       &pageThreads{live: map[repositories.PageThreadKey]*conversation.Thread{}},
+		threads:       &pageThreads{live: map[agentports.PageThreadKey]*conversation.Thread{}},
 		conversations: &creatingConversations{},
 		permissions:   permissions,
 		actor:         testActor(),
@@ -141,7 +142,7 @@ func (f *pageFixture) open(
 ) (*conversation.Thread, error) {
 	t.Helper()
 
-	opened, err := f.svc.OpenPageThread(t.Context(), &serviceports.OpenPageThreadRequest{
+	opened, err := f.svc.OpenPageThread(t.Context(), &agentports.OpenPageThreadRequest{
 		TenantInfo:  f.actor.TenantInfo(),
 		Origin:      origin,
 		SubjectType: subjectType,
@@ -158,7 +159,7 @@ func TestOpenPageThread_NamesTheAgentThePageTalksTo(t *testing.T) {
 	t.Parallel()
 
 	fixture := newPageFixture("formula_template:read")
-	opened, err := fixture.svc.OpenPageThread(t.Context(), &serviceports.OpenPageThreadRequest{
+	opened, err := fixture.svc.OpenPageThread(t.Context(), &agentports.OpenPageThreadRequest{
 		TenantInfo: fixture.actor.TenantInfo(),
 		Origin:     conversation.ThreadOriginFormula,
 	}, fixture.actor)

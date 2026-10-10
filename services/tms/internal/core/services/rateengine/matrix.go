@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/rategeo"
 	"github.com/emoss08/trenova/internal/core/domain/ratematrix"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/shopspring/decimal"
@@ -32,7 +32,7 @@ func (s *Service) matrixCharge(
 	rule *rateagreement.RateAgreementRule,
 	trace *ratetypes.Trace,
 ) (decimal.Decimal, error) {
-	matrix, err := s.matrixRepo.GetByID(ctx, &repositories.GetRateMatrixByIDRequest{
+	matrix, err := s.matrixRepo.GetByID(ctx, &ratematrixports.GetRateMatrixByIDRequest{
 		RateMatrixID:      *rule.RateMatrixID,
 		TenantInfo:        rateCtx.TenantInfo,
 		IncludeDimensions: true,
@@ -48,7 +48,7 @@ func (s *Service) matrixCharge(
 
 	values, axes := s.buildAxes(ctx, rateCtx, rule, dimensions, trace)
 
-	cells, err := s.matrixRepo.LookupCells(ctx, &repositories.LookupRateMatrixCellsRequest{
+	cells, err := s.matrixRepo.LookupCells(ctx, &ratematrixports.LookupRateMatrixCellsRequest{
 		TenantInfo:   rateCtx.TenantInfo,
 		RateMatrixID: matrix.ID,
 		Axes:         axes,
@@ -76,9 +76,9 @@ func (s *Service) buildAxes(
 	rule *rateagreement.RateAgreementRule,
 	dimensions []*ratematrix.RateMatrixDimension,
 	trace *ratetypes.Trace,
-) (ratematrix.LookupValues, []repositories.MatrixAxisQuery) {
+) (ratematrix.LookupValues, []ratematrixports.MatrixAxisQuery) {
 	var values ratematrix.LookupValues
-	axes := make([]repositories.MatrixAxisQuery, 0, len(dimensions))
+	axes := make([]ratematrixports.MatrixAxisQuery, 0, len(dimensions))
 
 	for _, dimension := range dimensions {
 		if dimension == nil {
@@ -88,7 +88,7 @@ func (s *Service) buildAxes(
 		value := s.axisValue(ctx, rateCtx, rule, dimension, trace)
 		values[dimension.Position] = value
 
-		axes = append(axes, repositories.MatrixAxisQuery{
+		axes = append(axes, ratematrixports.MatrixAxisQuery{
 			Position: dimension.Position,
 			Keys:     value.Keys,
 			Quantity: value.Quantity,
@@ -363,7 +363,7 @@ func (s *Service) loadDensityScale(
 	rule *rateagreement.RateAgreementRule,
 ) (*ratematrix.DensityScale, error) {
 	if rule.DensityScaleID != nil && !rule.DensityScaleID.IsNil() {
-		return s.densityRepo.GetByID(ctx, &repositories.GetDensityScaleRequest{
+		return s.densityRepo.GetByID(ctx, &ratematrixports.GetDensityScaleRequest{
 			DensityScaleID: *rule.DensityScaleID,
 			TenantInfo:     rateCtx.TenantInfo,
 		})

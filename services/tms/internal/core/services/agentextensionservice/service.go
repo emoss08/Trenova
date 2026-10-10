@@ -10,12 +10,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/configspec"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/planservice"
 	"github.com/emoss08/trenova/internal/core/services/secretconfig"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -30,30 +31,30 @@ const (
 )
 
 var (
-	_ serviceports.AgentExtensionGate = (*Service)(nil)
-	_ serviceports.WebResearcher      = (*Service)(nil)
+	_ agentextensionports.AgentExtensionGate = (*Service)(nil)
+	_ agentextensionports.WebResearcher      = (*Service)(nil)
 )
 
 type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.AgentExtensionRepository
-	Usage        repositories.AgentExtensionUsageRepository
+	Repo         agentextensionports.AgentExtensionRepository
+	Usage        agentextensionports.AgentExtensionUsageRepository
 	Encryption   *encryptionservice.Service
-	AuditService serviceports.AuditService
-	WebSearch    serviceports.WebSearchProvider
-	Plans        serviceports.PlanService `optional:"true"`
+	AuditService auditports.AuditService
+	WebSearch    agentextensionports.WebSearchProvider
+	Plans        platformplanports.PlanService `optional:"true"`
 }
 
 type Service struct {
 	l         *zap.Logger
-	repo      repositories.AgentExtensionRepository
-	usage     repositories.AgentExtensionUsageRepository
+	repo      agentextensionports.AgentExtensionRepository
+	usage     agentextensionports.AgentExtensionUsageRepository
 	secrets   secretconfig.Codec
-	audit     serviceports.AuditService
-	webSearch serviceports.WebSearchProvider
-	plans     serviceports.PlanService
+	audit     auditports.AuditService
+	webSearch agentextensionports.WebSearchProvider
+	plans     platformplanports.PlanService
 	now       func() int64
 }
 
@@ -95,7 +96,7 @@ func lookup(typ agentextension.Type) (agentextension.Spec, definition, error) {
 func (s *Service) ListCatalog(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*serviceports.AgentExtensionCatalogResponse, error) {
+) (*agentextensionports.AgentExtensionCatalogResponse, error) {
 	installed, err := s.repo.ListByTenant(ctx, tenantInfo)
 	if err != nil {
 		return nil, errortypes.NewBusinessError("failed to list extensions").WithInternal(err)
@@ -107,7 +108,7 @@ func (s *Service) ListCatalog(
 	}
 
 	now := s.now()
-	usage, err := s.usage.Summarize(ctx, repositories.SummarizeExtensionUsageParams{
+	usage, err := s.usage.Summarize(ctx, agentextensionports.SummarizeExtensionUsageParams{
 		TenantInfo: tenantInfo,
 		FromDay:    timeutils.DayKeyUTC(timeutils.MonthStartUTC(now)),
 		Today:      timeutils.DayKeyUTC(now),
@@ -117,7 +118,7 @@ func (s *Service) ListCatalog(
 		usage = map[agentextension.Type]agentextension.UsageSummary{}
 	}
 
-	items := make([]serviceports.AgentExtensionCatalogItem, 0, len(definitions))
+	items := make([]agentextensionports.AgentExtensionCatalogItem, 0, len(definitions))
 	for idx := range definitions {
 		def := &definitions[idx]
 		spec, ok := agentextension.SpecFor(def.Type)
@@ -134,7 +135,7 @@ func (s *Service) ListCatalog(
 		return items[i].SortOrder < items[j].SortOrder
 	})
 
-	return &serviceports.AgentExtensionCatalogResponse{
+	return &agentextensionports.AgentExtensionCatalogResponse{
 		Items:      items,
 		Categories: categoryOptions(),
 	}, nil
@@ -145,8 +146,8 @@ func catalogItem(
 	spec agentextension.Spec,
 	record *agentextension.Extension,
 	usage agentextension.UsageSummary,
-) serviceports.AgentExtensionCatalogItem {
-	item := serviceports.AgentExtensionCatalogItem{
+) agentextensionports.AgentExtensionCatalogItem {
+	item := agentextensionports.AgentExtensionCatalogItem{
 		Type:                def.Type,
 		Name:                def.Name,
 		Vendor:              def.Vendor,
@@ -201,7 +202,7 @@ func (s *Service) GetConfig(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	typ agentextension.Type,
-) (*serviceports.AgentExtensionConfigResponse, error) {
+) (*agentextensionports.AgentExtensionConfigResponse, error) {
 	spec, _, err := lookup(typ)
 	if err != nil {
 		return nil, err
@@ -212,7 +213,7 @@ func (s *Service) GetConfig(
 		return nil, err
 	}
 	if record == nil {
-		return &serviceports.AgentExtensionConfigResponse{
+		return &agentextensionports.AgentExtensionConfigResponse{
 			Type:         typ,
 			Availability: agentextension.AvailabilitySelectedAgents,
 			Fields:       configspec.Values(nil, spec.Fields),
@@ -226,8 +227,8 @@ func (s *Service) GetConfig(
 func configResponse(
 	record *agentextension.Extension,
 	spec agentextension.Spec,
-) *serviceports.AgentExtensionConfigResponse {
-	return &serviceports.AgentExtensionConfigResponse{
+) *agentextensionports.AgentExtensionConfigResponse {
+	return &agentextensionports.AgentExtensionConfigResponse{
 		Type:         record.Type,
 		Enabled:      record.Enabled,
 		Availability: record.Availability,
@@ -259,8 +260,8 @@ func (s *Service) find(
 func (s *Service) UpdateConfig(
 	ctx context.Context,
 	typ agentextension.Type,
-	req *serviceports.UpdateAgentExtensionRequest,
-) (*serviceports.AgentExtensionConfigResponse, error) {
+	req *agentextensionports.UpdateAgentExtensionRequest,
+) (*agentextensionports.AgentExtensionConfigResponse, error) {
 	spec, def, err := lookup(typ)
 	if err != nil {
 		return nil, err
@@ -424,7 +425,7 @@ func (s *Service) logChange(change auditChange) {
 	after := auditSnapshot(change.after, change.spec)
 	before := auditSnapshot(change.before, change.spec)
 
-	options := []serviceports.LogOption{
+	options := []auditports.LogOption{
 		auditservice.WithComment(change.name + " extension settings updated"),
 		auditservice.WithDiff(before, after),
 	}
@@ -437,7 +438,7 @@ func (s *Service) logChange(change auditChange) {
 		operation = permission.OpCreate
 	}
 
-	if err := s.audit.LogAction(&serviceports.LogActionParams{
+	if err := s.audit.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceAgentExtension,
 		ResourceID:     change.after.ID.String(),
 		Operation:      operation,
@@ -594,7 +595,7 @@ type meteredCall struct {
 func (s *Service) reserve(ctx context.Context, call meteredCall) (int, error) {
 	now := s.now()
 	day := timeutils.DayKeyUTC(now)
-	reserved, err := s.usage.Reserve(ctx, repositories.ReserveExtensionRequestParams{
+	reserved, err := s.usage.Reserve(ctx, agentextensionports.ReserveExtensionRequestParams{
 		TenantInfo: call.tenant,
 		Type:       call.typ,
 		Day:        day,
@@ -613,7 +614,7 @@ func (s *Service) reserve(ctx context.Context, call meteredCall) (int, error) {
 }
 
 func (s *Service) settle(ctx context.Context, call meteredCall, outcome settledCall) {
-	if err := s.usage.RecordOutcome(ctx, repositories.RecordExtensionOutcomeParams{
+	if err := s.usage.RecordOutcome(ctx, agentextensionports.RecordExtensionOutcomeParams{
 		TenantInfo: call.tenant,
 		Type:       call.typ,
 		Day:        outcome.day,

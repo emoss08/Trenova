@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -140,7 +140,7 @@ func TestPlanReportsWhyItCannotIndex(t *testing.T) {
 		t.Parallel()
 
 		svc := newTestService(activeSettings())
-		svc.embeddings.err = serviceports.ErrNoProviderConfigured
+		svc.embeddings.err = agentports.ErrNoProviderConfigured
 		plan, err := svc.Plan(t.Context(), testTenant)
 		require.NoError(t, err)
 		assert.Equal(t, airetrieval.UnavailableReasonNoProvider, plan.Reason)
@@ -227,7 +227,7 @@ func TestIndexBatchEmbedsOnlyChangedChunks(t *testing.T) {
 		Content: "Globex allows two hours of free time.",
 	}
 	svc.sources.memories = []*agent.Memory{memory, unchanged}
-	svc.repo.hashes[unchanged.ID] = []repositories.EmbeddingChunkHash{
+	svc.repo.hashes[unchanged.ID] = []agentports.EmbeddingChunkHash{
 		{ChunkIndex: 0, ContentHash: ChunkMemory(unchanged)[0].Hash},
 	}
 	svc.repo.claim = []*airetrieval.IndexEntry{
@@ -235,7 +235,7 @@ func TestIndexBatchEmbedsOnlyChangedChunks(t *testing.T) {
 		entry(airetrieval.SourceTypeMemory, unchanged.ID),
 	}
 
-	result, err := svc.IndexBatch(t.Context(), &serviceports.RetrievalIndexBatchRequest{
+	result, err := svc.IndexBatch(t.Context(), &agentports.RetrievalIndexBatchRequest{
 		TenantInfo: testTenant,
 		ModelKey:   activeKey,
 	})
@@ -246,7 +246,7 @@ func TestIndexBatchEmbedsOnlyChangedChunks(t *testing.T) {
 	assert.Equal(t, []string{ChunkMemory(memory)[0].Text}, svc.embeddings.inputs())
 
 	request := svc.embeddings.requests[0]
-	assert.Equal(t, serviceports.EmbeddingPurposeDocument, request.Purpose)
+	assert.Equal(t, aiusageports.EmbeddingPurposeDocument, request.Purpose)
 	assert.Equal(t, activeKey, request.ModelKey)
 	assert.Equal(t, "Indexing", string(request.Surface))
 
@@ -282,7 +282,7 @@ func TestIndexBatchSkipsWhatMayNotBeEmbedded(t *testing.T) {
 	unread := documentSource()
 
 	svc.sources.memories = []*agent.Memory{retired}
-	svc.sources.documents = []*repositories.RetrievalDocumentSource{
+	svc.sources.documents = []*agentports.RetrievalDocumentSource{
 		workerDoc, oldVersion, unknownOwner, unread,
 	}
 	missing := pulid.MustNew("imsg_")
@@ -295,7 +295,7 @@ func TestIndexBatchSkipsWhatMayNotBeEmbedded(t *testing.T) {
 		entry(airetrieval.SourceTypeInboundMessage, missing),
 	}
 
-	result, err := svc.IndexBatch(t.Context(), &serviceports.RetrievalIndexBatchRequest{
+	result, err := svc.IndexBatch(t.Context(), &agentports.RetrievalIndexBatchRequest{
 		TenantInfo: testTenant,
 		ModelKey:   activeKey,
 	})
@@ -331,14 +331,14 @@ func TestIndexBatchIndexesAShipmentDocumentAndMail(t *testing.T) {
 		Subject:     "Where is load 4471?",
 		TextBody:    "Please send an ETA.\n> quoted",
 	}
-	svc.sources.documents = []*repositories.RetrievalDocumentSource{doc}
+	svc.sources.documents = []*agentports.RetrievalDocumentSource{doc}
 	svc.sources.messages = []*inboundmessage.InboundMessage{message}
 	svc.repo.claim = []*airetrieval.IndexEntry{
 		entry(airetrieval.SourceTypeDocument, doc.Document.ID),
 		entry(airetrieval.SourceTypeInboundMessage, message.ID),
 	}
 
-	result, err := svc.IndexBatch(t.Context(), &serviceports.RetrievalIndexBatchRequest{
+	result, err := svc.IndexBatch(t.Context(), &agentports.RetrievalIndexBatchRequest{
 		TenantInfo: testTenant,
 		ModelKey:   activeKey,
 	})
@@ -363,7 +363,7 @@ func TestIndexBatchRecordsAnEmbeddingFailureForARetry(t *testing.T) {
 	svc.repo.claim = []*airetrieval.IndexEntry{entry(airetrieval.SourceTypeMemory, memory.ID)}
 	svc.embeddings.embedErr = errors.New("provider timed out")
 
-	result, err := svc.IndexBatch(t.Context(), &serviceports.RetrievalIndexBatchRequest{
+	result, err := svc.IndexBatch(t.Context(), &agentports.RetrievalIndexBatchRequest{
 		TenantInfo: testTenant,
 		ModelKey:   activeKey,
 	})
@@ -388,9 +388,9 @@ func TestIndexBatchFailsAConfigurationErrorForGood(t *testing.T) {
 	svc.sources.memories = []*agent.Memory{memory}
 	svc.repo.claim = []*airetrieval.IndexEntry{entry(airetrieval.SourceTypeMemory, memory.ID)}
 	svc.embeddings.embedErr = errortypes.NewBusinessError("the provider returned 512 dimensions").
-		WithInternal(serviceports.ErrEmbeddingDimensionMismatch)
+		WithInternal(aiusageports.ErrEmbeddingDimensionMismatch)
 
-	_, err := svc.IndexBatch(t.Context(), &serviceports.RetrievalIndexBatchRequest{
+	_, err := svc.IndexBatch(t.Context(), &agentports.RetrievalIndexBatchRequest{
 		TenantInfo: testTenant,
 		ModelKey:   activeKey,
 	})
@@ -413,7 +413,7 @@ func TestIndexBatchStopsAtTheBudget(t *testing.T) {
 	svc.sources.memories = []*agent.Memory{memory}
 	svc.repo.claim = []*airetrieval.IndexEntry{entry(airetrieval.SourceTypeMemory, memory.ID)}
 
-	result, err := svc.IndexBatch(t.Context(), &serviceports.RetrievalIndexBatchRequest{
+	result, err := svc.IndexBatch(t.Context(), &agentports.RetrievalIndexBatchRequest{
 		TenantInfo: testTenant,
 		ModelKey:   activeKey,
 	})
@@ -423,7 +423,7 @@ func TestIndexBatchStopsAtTheBudget(t *testing.T) {
 	require.Len(t, svc.repo.paused, 1)
 	assert.Equal(t, airetrieval.PauseReasonBudget, svc.repo.paused[0].Reason)
 
-	next, err := svc.IndexBatch(t.Context(), &serviceports.RetrievalIndexBatchRequest{
+	next, err := svc.IndexBatch(t.Context(), &agentports.RetrievalIndexBatchRequest{
 		TenantInfo: testTenant,
 		ModelKey:   activeKey,
 	})
@@ -439,7 +439,7 @@ func TestIndexBatchClaimsOnlyEnabledSources(t *testing.T) {
 	settings.DocumentsEnabled = false
 	svc := newTestService(settings)
 
-	_, err := svc.IndexBatch(t.Context(), &serviceports.RetrievalIndexBatchRequest{
+	_, err := svc.IndexBatch(t.Context(), &agentports.RetrievalIndexBatchRequest{
 		TenantInfo: testTenant,
 		ModelKey:   activeKey,
 	})
@@ -455,7 +455,7 @@ func TestIndexBatchIgnoresARetiredModelKey(t *testing.T) {
 	t.Parallel()
 
 	svc := newTestService(activeSettings())
-	result, err := svc.IndexBatch(t.Context(), &serviceports.RetrievalIndexBatchRequest{
+	result, err := svc.IndexBatch(t.Context(), &agentports.RetrievalIndexBatchRequest{
 		TenantInfo: testTenant,
 		ModelKey:   "old.example.com/embed@1536",
 	})
@@ -479,7 +479,7 @@ func TestCompleteModelChangeWaitsForTheWholeCorpus(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, result.Swapped, "a source not yet indexed under the new model holds the swap")
 
-	svc.repo.counts = []repositories.IndexEntryCount{
+	svc.repo.counts = []agentports.IndexEntryCount{
 		{
 			SourceType: airetrieval.SourceTypeMemory,
 			Status:     airetrieval.IndexStatusPending,
@@ -490,7 +490,7 @@ func TestCompleteModelChangeWaitsForTheWholeCorpus(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, result.Swapped, "pending entries hold the swap")
 
-	svc.repo.counts = []repositories.IndexEntryCount{
+	svc.repo.counts = []agentports.IndexEntryCount{
 		{
 			SourceType: airetrieval.SourceTypeMemory,
 			Status:     airetrieval.IndexStatusIndexed,
@@ -512,7 +512,7 @@ func TestPurgeRetiredModelRunsBatchesUntilDone(t *testing.T) {
 	t.Parallel()
 
 	svc := newTestService(activeSettings())
-	svc.repo.purges = []repositories.PurgeAIRetrievalModelResult{
+	svc.repo.purges = []agentports.PurgeAIRetrievalModelResult{
 		{Embeddings: 1000, IndexEntries: 400},
 		{Embeddings: 250},
 	}
@@ -583,7 +583,7 @@ func TestSweepMarksStaleSourcesAndCountsWaitingOnes(t *testing.T) {
 	svc := newTestService(activeSettings())
 	stale := []pulid.ID{pulid.MustNew("doc_"), pulid.MustNew("doc_")}
 	svc.repo.stale[string(airetrieval.SourceTypeDocument)+"|"+activeKey] = stale
-	svc.repo.counts = []repositories.IndexEntryCount{
+	svc.repo.counts = []agentports.IndexEntryCount{
 		{Status: airetrieval.IndexStatusPending, Count: 4},
 		{Status: airetrieval.IndexStatusIndexed, Count: 9},
 	}
@@ -602,7 +602,7 @@ func TestReindexPageMarksAPageAndSaysWhereToGoOn(t *testing.T) {
 	svc := newTestService(activeSettings())
 	svc.sources.ids = []pulid.ID{pulid.MustNew("doc_"), pulid.MustNew("doc_")}
 
-	page, err := svc.ReindexPage(t.Context(), &serviceports.RetrievalReindexPageRequest{
+	page, err := svc.ReindexPage(t.Context(), &agentports.RetrievalReindexPageRequest{
 		TenantInfo: testTenant,
 		SourceType: airetrieval.SourceTypeDocument,
 		Limit:      2,
@@ -613,7 +613,7 @@ func TestReindexPageMarksAPageAndSaysWhereToGoOn(t *testing.T) {
 	assert.Equal(t, svc.sources.ids[1], page.Next)
 	assert.Len(t, svc.signals.signals, 1)
 
-	page, err = svc.ReindexPage(t.Context(), &serviceports.RetrievalReindexPageRequest{
+	page, err = svc.ReindexPage(t.Context(), &agentports.RetrievalReindexPageRequest{
 		TenantInfo: testTenant,
 		SourceType: airetrieval.SourceTypeDocument,
 		AfterID:    page.Next,

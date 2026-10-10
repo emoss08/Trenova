@@ -6,7 +6,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/ifta"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -35,8 +36,8 @@ type ComputeInput struct {
 	Loc           *time.Location
 	Jurisdictions map[pulid.ID]*ifta.Jurisdiction
 	Tractors      map[pulid.ID]TractorProfile
-	Miles         *repositories.MileAccumulation
-	Fuel          []*repositories.FuelAccumulationRow
+	Miles         *iftaports.MileAccumulation
+	Fuel          []*fuelpurchaseports.FuelAccumulationRow
 	Rates         map[ifta.RateKey]*ifta.TaxRate
 }
 
@@ -56,8 +57,8 @@ type ComputeResult struct {
 	Totals              ReturnTotals
 	FleetMPG            []ifta.FleetMPG
 	Problems            []ifta.Problem
-	Unattributed        repositories.MoveAggregate
-	NoTractor           repositories.MoveAggregate
+	Unattributed        iftaports.MoveAggregate
+	NoTractor           iftaports.MoveAggregate
 	MismatchCount       int
 	NonQualifiedMiles   decimal.Decimal
 	NonQualifiedGallons decimal.Decimal
@@ -134,7 +135,7 @@ func (c *computation) totals(fuelType domaintypes.IFTAFuelType) *fuelTotals {
 	return t
 }
 
-func (c *computation) addMiles(rows []*repositories.MileRow, route bool) {
+func (c *computation) addMiles(rows []*iftaports.MileRow, route bool) {
 	for _, row := range rows {
 		if row == nil || !row.HasTractor() || !row.Miles.IsPositive() {
 			continue
@@ -165,7 +166,7 @@ func (c *computation) addMiles(rows []*repositories.MileRow, route bool) {
 	}
 }
 
-func (c *computation) addFuel(rows []*repositories.FuelAccumulationRow) {
+func (c *computation) addFuel(rows []*fuelpurchaseports.FuelAccumulationRow) {
 	for _, row := range rows {
 		if row == nil || !row.FuelType.CountsForIFTA() || !row.Gallons.IsPositive() {
 			continue

@@ -8,11 +8,11 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/shared/quickbooks"
 )
 
-var _ services.AccountingChangeReader = (*Connector)(nil)
+var _ accountingsyncports.AccountingChangeReader = (*Connector)(nil)
 
 const (
 	cursorSteady    = "t"
@@ -96,8 +96,8 @@ func parseChangeCursor(raw string, now time.Time) (changeCursor, error) {
 	}
 }
 
-func (c *Connector) ChangeFeedLimits() services.AccountingChangeFeedLimits {
-	return services.AccountingChangeFeedLimits{
+func (c *Connector) ChangeFeedLimits() accountingsyncports.AccountingChangeFeedLimits {
+	return accountingsyncports.AccountingChangeFeedLimits{
 		MaxLookback:    quickbooks.MaxChangeLookback,
 		ReportsDeletes: true,
 		MaxPerRead:     quickbooks.MaxChangesPerCall,
@@ -108,7 +108,7 @@ func (c *Connector) ChangeCursorAt(at time.Time) string {
 	return changeCursor{since: at.UTC()}.String()
 }
 
-func changeTargets(req *services.ReadAccountingChangesRequest) ([]quickbooks.ChangeEntity, error) {
+func changeTargets(req *accountingsyncports.ReadAccountingChangesRequest) ([]quickbooks.ChangeEntity, error) {
 	targets := make([]quickbooks.ChangeEntity, 0, len(req.ReferenceKinds)+2)
 	if req.Payments {
 		targets = append(targets, quickbooks.ChangePayment)
@@ -131,8 +131,8 @@ func changeTargets(req *services.ReadAccountingChangesRequest) ([]quickbooks.Cha
 
 func (c *Connector) ReadChanges(
 	ctx context.Context,
-	req *services.ReadAccountingChangesRequest,
-) (*services.AccountingChangePage, error) {
+	req *accountingsyncports.ReadAccountingChangesRequest,
+) (*accountingsyncports.AccountingChangePage, error) {
 	now := req.Now.UTC()
 	cursor, err := parseChangeCursor(req.Cursor, now)
 	if err != nil {
@@ -143,7 +143,7 @@ func (c *Connector) ReadChanges(
 		return nil, err
 	}
 	if len(targets) == 0 {
-		return &services.AccountingChangePage{NextCursor: cursor.String()}, nil
+		return &accountingsyncports.AccountingChangePage{NextCursor: cursor.String()}, nil
 	}
 	client, err := c.client(req.Auth)
 	if err != nil {
@@ -189,7 +189,7 @@ func (c *Connector) readPage(
 	client *quickbooks.Client,
 	cursor *changeCursor,
 	expired bool,
-) (*services.AccountingChangePage, error) {
+) (*accountingsyncports.AccountingChangePage, error) {
 	set, next, err := client.QueryChangedSince(
 		ctx,
 		cursor.targets[cursor.index],
@@ -230,14 +230,14 @@ func fullEntities(full []quickbooks.ChangeEntity) map[quickbooks.ChangeEntity]bo
 func pageOf(
 	set *quickbooks.ChangeSet,
 	skip map[quickbooks.ChangeEntity]bool,
-) *services.AccountingChangePage {
-	page := &services.AccountingChangePage{
+) *accountingsyncports.AccountingChangePage {
+	page := &accountingsyncports.AccountingChangePage{
 		Payments: make(
-			[]services.AccountingInboundPayment,
+			[]accountingsyncports.AccountingInboundPayment,
 			0,
 			len(set.Payments)+len(set.BillPayments),
 		),
-		References: make([]services.AccountingChangedReference, 0, len(set.References)),
+		References: make([]accountingsyncports.AccountingChangedReference, 0, len(set.References)),
 	}
 	if !skip[quickbooks.ChangePayment] {
 		for idx := range set.Payments {
@@ -249,7 +249,7 @@ func pageOf(
 			page.Payments = append(page.Payments, inboundBillPaymentOf(&set.BillPayments[idx]))
 		}
 	}
-	page.Documents = make([]services.AccountingChangedDocument, 0, len(set.Documents))
+	page.Documents = make([]accountingsyncports.AccountingChangedDocument, 0, len(set.Documents))
 	for idx := range set.Documents {
 		doc := &set.Documents[idx]
 		if skip[quickbooks.DocumentChangeEntity(doc.Kind)] {
@@ -266,7 +266,7 @@ func pageOf(
 		if !ok {
 			continue
 		}
-		page.References = append(page.References, services.AccountingChangedReference{
+		page.References = append(page.References, accountingsyncports.AccountingChangedReference{
 			Object:  referenceObjectOf(kind, &ref.ReferenceObject),
 			Deleted: ref.Deleted,
 		})
@@ -284,14 +284,14 @@ func referenceKindOf(kind quickbooks.ReferenceKind) (accountingsync.ReferenceKin
 	return "", false
 }
 
-func changeOperation(meta *quickbooks.ChangeMeta) services.AccountingChangeOperation {
+func changeOperation(meta *quickbooks.ChangeMeta) accountingsyncports.AccountingChangeOperation {
 	switch {
 	case meta.Deleted:
-		return services.AccountingChangeDelete
+		return accountingsyncports.AccountingChangeDelete
 	case meta.Voided:
-		return services.AccountingChangeVoid
+		return accountingsyncports.AccountingChangeVoid
 	default:
-		return services.AccountingChangeUpsert
+		return accountingsyncports.AccountingChangeUpsert
 	}
 }
 
@@ -312,10 +312,10 @@ func inboundDocumentKind(txnType string) accountingsync.InboundDocumentKind {
 	}
 }
 
-func inboundLines(links []quickbooks.ChangedLink) []services.AccountingInboundLine {
-	lines := make([]services.AccountingInboundLine, 0, len(links))
+func inboundLines(links []quickbooks.ChangedLink) []accountingsyncports.AccountingInboundLine {
+	lines := make([]accountingsyncports.AccountingInboundLine, 0, len(links))
 	for _, link := range links {
-		lines = append(lines, services.AccountingInboundLine{
+		lines = append(lines, accountingsyncports.AccountingInboundLine{
 			DocumentKind:       inboundDocumentKind(link.TxnType),
 			DocumentExternalID: link.TxnID,
 			Amount:             link.Amount,
@@ -324,8 +324,8 @@ func inboundLines(links []quickbooks.ChangedLink) []services.AccountingInboundLi
 	return lines
 }
 
-func inboundPaymentOf(payment *quickbooks.ChangedPayment) services.AccountingInboundPayment {
-	return services.AccountingInboundPayment{
+func inboundPaymentOf(payment *quickbooks.ChangedPayment) accountingsyncports.AccountingInboundPayment {
+	return accountingsyncports.AccountingInboundPayment{
 		Kind:              accountingsync.InboundCustomerPayment,
 		Operation:         changeOperation(&payment.ChangeMeta),
 		ExternalID:        payment.ID,
@@ -348,8 +348,8 @@ func inboundPaymentOf(payment *quickbooks.ChangedPayment) services.AccountingInb
 
 func inboundBillPaymentOf(
 	payment *quickbooks.ChangedBillPayment,
-) services.AccountingInboundPayment {
-	return services.AccountingInboundPayment{
+) accountingsyncports.AccountingInboundPayment {
+	return accountingsyncports.AccountingInboundPayment{
 		Kind:              accountingsync.InboundBillPayment,
 		Operation:         changeOperation(&payment.ChangeMeta),
 		ExternalID:        payment.ID,

@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/uptrace/bun"
@@ -26,7 +26,7 @@ type viewRepository struct {
 	l  *zap.Logger
 }
 
-func NewViewRepository(p ViewParams) repositories.ReportViewRepository {
+func NewViewRepository(p ViewParams) reportports.ReportViewRepository {
 	return &viewRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.report-view-repository"),
@@ -79,7 +79,7 @@ func (r *viewRepository) Update(
 
 func (r *viewRepository) GetByID(
 	ctx context.Context,
-	req *repositories.GetReportViewRequest,
+	req *reportports.GetReportViewRequest,
 ) (*report.ReportView, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*report.ReportView, error) {
 		entity := new(report.ReportView)
@@ -101,7 +101,7 @@ func (r *viewRepository) GetByID(
 
 func (r *viewRepository) List(
 	ctx context.Context,
-	req *repositories.ListReportViewsRequest,
+	req *reportports.ListReportViewsRequest,
 ) ([]*report.ReportView, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.ReportView, error) {
 		cols := buncolgen.ReportViewColumns
@@ -148,7 +148,7 @@ func (r *viewRepository) List(
 // usage counters of a run that just finished.
 func (r *viewRepository) RecordRun(
 	ctx context.Context,
-	req *repositories.RecordReportViewRunRequest,
+	req *reportports.RecordReportViewRunRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.ReportViewColumns
@@ -174,7 +174,7 @@ func (r *viewRepository) RecordRun(
 
 func (r *viewRepository) Delete(
 	ctx context.Context,
-	req *repositories.GetReportViewRequest,
+	req *reportports.GetReportViewRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		result, err := r.db.DBForContext(ctx).

@@ -1,13 +1,22 @@
 package shipmentservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/formulatemplateportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
@@ -22,10 +31,10 @@ import (
 func TestServiceTransferOwnership_SucceedsForCurrentOwner(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockShipmentRepository(t)
-	userRepo := mocks.NewMockUserRepository(t)
-	audit := mocks.NewMockAuditService(t)
-	realtime := mocks.NewMockRealtimeService(t)
+	repo := shipmentportsmock.NewMockShipmentRepository(t)
+	userRepo := tenantportsmock.NewMockUserRepository(t)
+	audit := auditportsmock.NewMockAuditService(t)
+	realtime := agentportsmock.NewMockRealtimeService(t)
 
 	shipmentID := pulid.MustNew("shp_")
 	orgID := pulid.MustNew("org_")
@@ -47,13 +56,13 @@ func TestServiceTransferOwnership_SucceedsForCurrentOwner(t *testing.T) {
 	}
 
 	repo.EXPECT().
-		GetByID(mock.Anything, mock.MatchedBy(func(req *repositories.GetShipmentByIDRequest) bool {
+		GetByID(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetShipmentByIDRequest) bool {
 			return req.ID == shipmentID && req.TenantInfo.OrgID == orgID &&
 				req.TenantInfo.BuID == buID
 		})).
 		Return(original, nil).
 		Once()
-	userRepo.EXPECT().GetByID(mock.Anything, repositories.GetUserByIDRequest{
+	userRepo.EXPECT().GetByID(mock.Anything, tenantports.GetUserByIDRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  orgID,
 			BuID:   buID,
@@ -61,14 +70,14 @@ func TestServiceTransferOwnership_SucceedsForCurrentOwner(t *testing.T) {
 		},
 	}).Return(&tenant.User{ID: newOwnerID}, nil).Once()
 	repo.EXPECT().
-		TransferOwnership(mock.Anything, mock.MatchedBy(func(req *repositories.TransferOwnershipRequest) bool {
+		TransferOwnership(mock.Anything, mock.MatchedBy(func(req *shipmentports.TransferOwnershipRequest) bool {
 			return req.ShipmentID == shipmentID && req.OwnerID == newOwnerID
 		})).
 		Return(updated, nil).
 		Once()
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 	realtime.EXPECT().
-		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *services.PublishResourceInvalidationRequest) bool {
+		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *agentports.PublishResourceInvalidationRequest) bool {
 			return req.Resource == "shipments" && req.Action == "ownership_transferred" &&
 				req.RecordID == shipmentID
 		})).
@@ -86,15 +95,15 @@ func TestServiceTransferOwnership_SucceedsForCurrentOwner(t *testing.T) {
 		coordinator:  newStateCoordinator(),
 	}
 
-	entity, err := svc.TransferOwnership(t.Context(), &repositories.TransferOwnershipRequest{
+	entity, err := svc.TransferOwnership(t.Context(), &shipmentports.TransferOwnershipRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: orgID,
 			BuID:  buID,
 		},
 		ShipmentID: shipmentID,
 		OwnerID:    newOwnerID,
-	}, &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeUser,
+	}, &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    currentOwnerID,
 		UserID:         currentOwnerID,
 		OrganizationID: orgID,
@@ -109,11 +118,11 @@ func TestServiceTransferOwnership_SucceedsForCurrentOwner(t *testing.T) {
 func TestServiceTransferOwnership_SucceedsForAdmin(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockShipmentRepository(t)
-	userRepo := mocks.NewMockUserRepository(t)
-	permissions := mocks.NewMockPermissionEngine(t)
-	audit := mocks.NewMockAuditService(t)
-	realtime := mocks.NewMockRealtimeService(t)
+	repo := shipmentportsmock.NewMockShipmentRepository(t)
+	userRepo := tenantportsmock.NewMockUserRepository(t)
+	permissions := permissionportsmock.NewMockPermissionEngine(t)
+	audit := auditportsmock.NewMockAuditService(t)
+	realtime := agentportsmock.NewMockRealtimeService(t)
 
 	shipmentID := pulid.MustNew("shp_")
 	orgID := pulid.MustNew("org_")
@@ -129,14 +138,14 @@ func TestServiceTransferOwnership_SucceedsForAdmin(t *testing.T) {
 		OwnerID:        currentOwnerID,
 	}, nil).Once()
 	permissions.EXPECT().
-		Check(mock.Anything, mock.MatchedBy(func(req *services.PermissionCheckRequest) bool {
+		Check(mock.Anything, mock.MatchedBy(func(req *permissionports.PermissionCheckRequest) bool {
 			return req.UserID == actorID &&
 				req.OrganizationID == orgID &&
 				req.BusinessUnitID == buID &&
 				req.Resource == permission.ResourceShipment.String() &&
 				req.Operation == permission.OpUpdate
 		})).
-		Return(&services.PermissionCheckResult{Allowed: true}, nil).
+		Return(&permissionports.PermissionCheckResult{Allowed: true}, nil).
 		Once()
 	userRepo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
@@ -163,12 +172,12 @@ func TestServiceTransferOwnership_SucceedsForAdmin(t *testing.T) {
 		coordinator:  newStateCoordinator(),
 	}
 
-	entity, err := svc.TransferOwnership(t.Context(), &repositories.TransferOwnershipRequest{
+	entity, err := svc.TransferOwnership(t.Context(), &shipmentports.TransferOwnershipRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		ShipmentID: shipmentID,
 		OwnerID:    newOwnerID,
-	}, &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeUser,
+	}, &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    actorID,
 		UserID:         actorID,
 		OrganizationID: orgID,
@@ -184,24 +193,24 @@ func TestServiceTransferOwnership_RejectsAPIKeyActor(t *testing.T) {
 
 	svc := &service{
 		l:            zap.NewNop(),
-		repo:         mocks.NewMockShipmentRepository(t),
-		userRepo:     mocks.NewMockUserRepository(t),
+		repo:         shipmentportsmock.NewMockShipmentRepository(t),
+		userRepo:     tenantportsmock.NewMockUserRepository(t),
 		validator:    newTestValidator(t),
-		auditService: mocks.NewMockAuditService(t),
-		invalidator:  newTestInvalidator(mocks.NewMockRealtimeService(t)),
+		auditService: auditportsmock.NewMockAuditService(t),
+		invalidator:  newTestInvalidator(agentportsmock.NewMockRealtimeService(t)),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
 
-	entity, err := svc.TransferOwnership(t.Context(), &repositories.TransferOwnershipRequest{
+	entity, err := svc.TransferOwnership(t.Context(), &shipmentports.TransferOwnershipRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),
 		},
 		ShipmentID: pulid.MustNew("shp_"),
 		OwnerID:    pulid.MustNew("usr_"),
-	}, &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeAPIKey,
+	}, &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeAPIKey,
 		PrincipalID:    pulid.MustNew("key_"),
 		APIKeyID:       pulid.MustNew("key_"),
 		OrganizationID: pulid.MustNew("org_"),
@@ -217,24 +226,24 @@ func TestServiceTransferOwnership_RejectsAnAgentCarryingTheSystemUser(t *testing
 
 	svc := &service{
 		l:            zap.NewNop(),
-		repo:         mocks.NewMockShipmentRepository(t),
-		userRepo:     mocks.NewMockUserRepository(t),
+		repo:         shipmentportsmock.NewMockShipmentRepository(t),
+		userRepo:     tenantportsmock.NewMockUserRepository(t),
 		validator:    newTestValidator(t),
-		auditService: mocks.NewMockAuditService(t),
-		invalidator:  newTestInvalidator(mocks.NewMockRealtimeService(t)),
+		auditService: auditportsmock.NewMockAuditService(t),
+		invalidator:  newTestInvalidator(agentportsmock.NewMockRealtimeService(t)),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
 
-	entity, err := svc.TransferOwnership(t.Context(), &repositories.TransferOwnershipRequest{
+	entity, err := svc.TransferOwnership(t.Context(), &shipmentports.TransferOwnershipRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),
 		},
 		ShipmentID: pulid.MustNew("shp_"),
 		OwnerID:    pulid.MustNew("usr_"),
-	}, &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeAgent,
+	}, &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeAgent,
 		PrincipalID:    pulid.MustNew("agdef_"),
 		UserID:         pulid.MustNew("usr_"),
 		OrganizationID: pulid.MustNew("org_"),
@@ -248,14 +257,14 @@ func TestServiceTransferOwnership_RejectsAnAgentCarryingTheSystemUser(t *testing
 func TestServiceCreate_RejectsDuplicateBOLBeforePersist(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockShipmentRepository(t)
-	controlRepo := mocks.NewMockShipmentControlRepository(t)
+	repo := shipmentportsmock.NewMockShipmentRepository(t)
+	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
 
 	entity := validShipmentForValidation()
 	entity.BOL = "BOL-DUP"
 	entity.FormulaTemplateID = pulid.MustNew("fmt_")
 
-	controlRepo.EXPECT().Get(mock.Anything, repositories.GetShipmentControlRequest{
+	controlRepo.EXPECT().Get(mock.Anything, tenantports.GetShipmentControlRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -265,14 +274,14 @@ func TestServiceCreate_RejectsDuplicateBOLBeforePersist(t *testing.T) {
 	}, nil).Once()
 	repo.EXPECT().
 		CheckForDuplicateBOLs(mock.Anything, mock.Anything).
-		Return([]*repositories.DuplicateBOLResult{
+		Return([]*shipmentports.DuplicateBOLResult{
 			{ID: pulid.MustNew("shp_"), ProNumber: "PRO-500"},
 		}, nil).
 		Once()
 	// A new shipment is priced twice: once to ask the contracts what they
 	// charge, and once to recalculate from whatever rating fields it ends up
 	// with. Both reach the formula engine through the fallback rate engine.
-	formula := mocks.NewMockFormulaCalculator(t)
+	formula := formulatemplateportsmock.NewMockFormulaCalculator(t)
 	formula.EXPECT().
 		Calculate(mock.Anything, mock.AnythingOfType("*formulatemplatetypes.CalculateRequest")).
 		Return(&formulatemplatetypes.CalculateResponse{}, nil).
@@ -283,18 +292,18 @@ func TestServiceCreate_RejectsDuplicateBOLBeforePersist(t *testing.T) {
 		repo:         repo,
 		controlRepo:  controlRepo,
 		validator:    newTestValidator(t),
-		auditService: mocks.NewMockAuditService(t),
+		auditService: auditportsmock.NewMockAuditService(t),
 		commercial: newTestCommercialCalculator(t,
 			formula,
-			mocks.NewMockAccessorialChargeRepository(t),
+			accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		),
-		invalidator:  newTestInvalidator(mocks.NewMockRealtimeService(t)),
+		invalidator:  newTestInvalidator(agentportsmock.NewMockRealtimeService(t)),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
 
-	created, err := svc.Create(t.Context(), entity, &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeUser,
+	created, err := svc.Create(t.Context(), entity, &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    pulid.MustNew("usr_"),
 		UserID:         pulid.MustNew("usr_"),
 		OrganizationID: entity.OrganizationID,

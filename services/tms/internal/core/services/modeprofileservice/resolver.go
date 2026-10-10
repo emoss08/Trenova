@@ -6,7 +6,7 @@ import (
 	"sort"
 
 	"github.com/emoss08/trenova/internal/core/domain/modeprofile"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/modeprofileports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -30,7 +30,7 @@ type matchResult struct {
 
 func evaluateMatch(
 	profile *modeprofile.Profile,
-	req *services.ResolveModeProfileRequest,
+	req *modeprofileports.ResolveModeProfileRequest,
 	at int64,
 ) matchResult {
 	if !profile.IsEffectiveAt(at) {
@@ -76,7 +76,7 @@ func evaluateMatch(
 
 func matchesEquipment(
 	equipmentTypeIDs []pulid.ID,
-	req *services.ResolveModeProfileRequest,
+	req *modeprofileports.ResolveModeProfileRequest,
 ) bool {
 	if req.TrailerTypeID.IsNotNil() && slices.Contains(equipmentTypeIDs, req.TrailerTypeID) {
 		return true
@@ -89,7 +89,7 @@ func matchesEquipment(
 
 func (s *service) resolveFromCandidates(
 	candidates []*modeprofile.Profile,
-	req *services.ResolveModeProfileRequest,
+	req *modeprofileports.ResolveModeProfileRequest,
 	at int64,
 ) *modeprofile.ResolvedPolicy {
 	explained := make([]modeprofile.ProfileCandidate, 0, len(candidates))
@@ -331,7 +331,7 @@ func (s *service) loadActiveProfiles(
 
 func (s *service) Resolve(
 	ctx context.Context,
-	req *services.ResolveModeProfileRequest,
+	req *modeprofileports.ResolveModeProfileRequest,
 ) (*modeprofile.ResolvedPolicy, error) {
 	at := req.At
 	if at == 0 {
@@ -344,7 +344,7 @@ func (s *service) Resolve(
 	}
 
 	if len(candidates) == 0 {
-		return nil, services.ErrNoModeProfileConfigured
+		return nil, modeprofileports.ErrNoModeProfileConfigured
 	}
 
 	sortCandidates(candidates)

@@ -8,15 +8,16 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type fakeCommentService struct {
-	serviceports.ShipmentCommentService
+	shipmentports.ShipmentCommentService
 
 	created *shipment.ShipmentComment
 	err     error
@@ -25,7 +26,7 @@ type fakeCommentService struct {
 func (f *fakeCommentService) Create(
 	_ context.Context,
 	entity *shipment.ShipmentComment,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*shipment.ShipmentComment, error) {
 	f.created = entity
 
@@ -33,17 +34,17 @@ func (f *fakeCommentService) Create(
 }
 
 type fakeHoldService struct {
-	serviceports.ShipmentHoldService
+	shipmentports.ShipmentHoldService
 
-	placed   *repositories.CreateShipmentHoldRequest
-	released *repositories.ReleaseShipmentHoldRequest
+	placed   *shipmentports.CreateShipmentHoldRequest
+	released *shipmentports.ReleaseShipmentHoldRequest
 	err      error
 }
 
 func (f *fakeHoldService) Create(
 	_ context.Context,
-	req *repositories.CreateShipmentHoldRequest,
-	_ *serviceports.RequestActor,
+	req *shipmentports.CreateShipmentHoldRequest,
+	_ *permissionports.RequestActor,
 ) (*shipment.ShipmentHold, error) {
 	f.placed = req
 
@@ -52,8 +53,8 @@ func (f *fakeHoldService) Create(
 
 func (f *fakeHoldService) Release(
 	_ context.Context,
-	req *repositories.ReleaseShipmentHoldRequest,
-	_ *serviceports.RequestActor,
+	req *shipmentports.ReleaseShipmentHoldRequest,
+	_ *permissionports.RequestActor,
 ) (*shipment.ShipmentHold, error) {
 	f.released = req
 
@@ -61,30 +62,30 @@ func (f *fakeHoldService) Release(
 }
 
 type fakeShipmentService struct {
-	serviceports.ShipmentService
+	shipmentports.ShipmentService
 
-	canceled *repositories.CancelShipmentRequest
+	canceled *shipmentports.CancelShipmentRequest
 	err      error
 }
 
 func (f *fakeShipmentService) Cancel(
 	_ context.Context,
-	req *repositories.CancelShipmentRequest,
-	_ *serviceports.RequestActor,
+	req *shipmentports.CancelShipmentRequest,
+	_ *permissionports.RequestActor,
 ) (*shipment.Shipment, error) {
 	f.canceled = req
 
 	return &shipment.Shipment{ID: req.ShipmentID}, f.err
 }
 
-func executeParams(params map[string]any) serviceports.ToolExecuteParams {
+func executeParams(params map[string]any) agentports.ToolExecuteParams {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
-	return serviceports.ToolExecuteParams{
+	return agentports.ToolExecuteParams{
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
-		Actor: &serviceports.RequestActor{
+		Actor: &permissionports.RequestActor{
 			UserID:         pulid.MustNew("usr_"),
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
@@ -326,7 +327,7 @@ func TestShipmentWriteTools_AuthorizeAgainstWhatTheyWrite(t *testing.T) {
 	t.Parallel()
 
 	for _, tc := range []struct {
-		tool      serviceports.AgentTool
+		tool      agentports.AgentTool
 		resource  permission.Resource
 		operation permission.Operation
 	}{

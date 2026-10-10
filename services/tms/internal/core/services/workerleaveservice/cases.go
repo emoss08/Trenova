@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,7 +16,7 @@ import (
 
 func (s *Service) ListCases(
 	ctx context.Context,
-	req *repositories.ListLeaveCasesRequest,
+	req *workerports.ListLeaveCasesRequest,
 ) ([]*worker.WorkerLeaveCase, error) {
 	return s.repo.ListCases(ctx, req)
 }
@@ -25,7 +25,7 @@ func (s *Service) ListCases(
 // number of outstanding certifications, not the cases themselves.
 func (s *Service) CountCases(
 	ctx context.Context,
-	req *repositories.ListLeaveCasesRequest,
+	req *workerports.ListLeaveCasesRequest,
 ) (int, error) {
 	return s.repo.CountCases(ctx, req)
 }
@@ -35,7 +35,7 @@ func (s *Service) GetCase(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*worker.WorkerLeaveCase, error) {
-	return s.repo.GetCaseByID(ctx, &repositories.GetLeaveCaseByIDRequest{
+	return s.repo.GetCaseByID(ctx, &workerports.GetLeaveCaseByIDRequest{
 		ID:              id,
 		TenantInfo:      tenantInfo,
 		IncludeDocument: true,
@@ -204,7 +204,7 @@ func (s *Service) DecideCase(
 	ctx context.Context,
 	req *DecideCaseRequest,
 ) (*worker.WorkerLeaveCase, error) {
-	entity, err := s.repo.GetCaseByID(ctx, &repositories.GetLeaveCaseByIDRequest{
+	entity, err := s.repo.GetCaseByID(ctx, &workerports.GetLeaveCaseByIDRequest{
 		ID:         req.CaseID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -350,7 +350,7 @@ func (s *Service) RecordCertification(
 	ctx context.Context,
 	req *RecordCertificationRequest,
 ) (*worker.WorkerLeaveCase, error) {
-	entity, err := s.repo.GetCaseByID(ctx, &repositories.GetLeaveCaseByIDRequest{
+	entity, err := s.repo.GetCaseByID(ctx, &workerports.GetLeaveCaseByIDRequest{
 		ID:         req.CaseID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -400,14 +400,14 @@ func (s *Service) RecordCertification(
 
 func (s *Service) ListEntries(
 	ctx context.Context,
-	req *repositories.ListLeaveEntriesRequest,
+	req *workerports.ListLeaveEntriesRequest,
 ) ([]*worker.WorkerLeaveEntry, error) {
 	return s.repo.ListEntries(ctx, req)
 }
 
 func (s *Service) ListEntriesByCaseIDs(
 	ctx context.Context,
-	req *repositories.ListLeaveEntriesByCaseIDsRequest,
+	req *workerports.ListLeaveEntriesByCaseIDsRequest,
 ) (map[pulid.ID][]*worker.WorkerLeaveEntry, error) {
 	return s.repo.ListEntriesByCaseIDs(ctx, req)
 }
@@ -509,7 +509,7 @@ func (s *Service) DeleteDay(
 		return err
 	}
 
-	if err = s.repo.DeleteEntry(ctx, &repositories.GetLeaveEntryByIDRequest{
+	if err = s.repo.DeleteEntry(ctx, &workerports.GetLeaveEntryByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	}); err != nil {

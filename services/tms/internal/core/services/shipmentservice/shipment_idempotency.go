@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -23,7 +23,7 @@ func (s *service) findIdempotentCreate(
 		OrgID: entity.OrganizationID,
 		BuID:  entity.BusinessUnitID,
 	}
-	id, err := s.repo.FindIDByIdempotencyKey(ctx, &repositories.IdempotencyKeyLookupRequest{
+	id, err := s.repo.FindIDByIdempotencyKey(ctx, &shipmentports.IdempotencyKeyLookupRequest{
 		TenantInfo:     tenantInfo,
 		IdempotencyKey: entity.IdempotencyKey,
 	})
@@ -31,10 +31,10 @@ func (s *service) findIdempotentCreate(
 		return nil, false, err
 	}
 
-	existing, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	existing, err := s.repo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:              id,
 		TenantInfo:      tenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{ExpandShipmentDetails: true},
+		ShipmentOptions: shipmentports.ShipmentOptions{ExpandShipmentDetails: true},
 	})
 	if err != nil {
 		return nil, false, err

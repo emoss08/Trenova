@@ -7,9 +7,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/core/domain/extractioneval"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -44,7 +44,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.AICorrectionRepository {
+func New(p Params) aicorrectionports.AICorrectionRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.aicorrection-repository"),
@@ -113,7 +113,7 @@ func (r *repository) Upsert(
 
 func (r *repository) PurgeBefore(
 	ctx context.Context,
-	req repositories.PurgeAICorrectionsRequest,
+	req aicorrectionports.PurgeAICorrectionsRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
 		cols := buncolgen.CorrectionColumns
@@ -160,7 +160,7 @@ func (r *repository) PurgeBefore(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetAICorrectionRequest,
+	req aicorrectionports.GetAICorrectionRequest,
 ) (*aicorrection.Correction, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*aicorrection.Correction, error) {
 		entity := new(aicorrection.Correction)
@@ -182,7 +182,7 @@ func (r *repository) GetByID(
 
 func (r *repository) GetLatestByDocument(
 	ctx context.Context,
-	req *repositories.GetLatestAICorrectionByDocumentRequest,
+	req *aicorrectionports.GetLatestAICorrectionByDocumentRequest,
 ) (*aicorrection.Correction, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*aicorrection.Correction, error) {
 		cols := buncolgen.CorrectionColumns
@@ -208,7 +208,7 @@ func (r *repository) GetLatestByDocument(
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListAICorrectionConnectionRequest,
+	req *aicorrectionports.ListAICorrectionConnectionRequest,
 ) (*pagination.CursorListResult[*aicorrection.Correction], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*aicorrection.Correction], error) {
 		dba := r.db.DBForContext(ctx)
@@ -270,11 +270,11 @@ func (r *repository) ListConnection(
 
 func (r *repository) TotalsByProvider(
 	ctx context.Context,
-	req *repositories.TotalAICorrectionsByProviderRequest,
-) ([]repositories.AICorrectionProviderTotal, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.AICorrectionProviderTotal, error) {
+	req *aicorrectionports.TotalAICorrectionsByProviderRequest,
+) ([]aicorrectionports.AICorrectionProviderTotal, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]aicorrectionports.AICorrectionProviderTotal, error) {
 		cols := buncolgen.CorrectionColumns
-		totals := make([]repositories.AICorrectionProviderTotal, 0, 2)
+		totals := make([]aicorrectionports.AICorrectionProviderTotal, 0, 2)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*aicorrection.Correction)(nil)).
@@ -306,7 +306,7 @@ const (
 
 func (r *repository) WeeklyTotalsByProvider(
 	ctx context.Context,
-	req *repositories.WeeklyAICorrectionTotalsRequest,
+	req *aicorrectionports.WeeklyAICorrectionTotalsRequest,
 ) ([]aicorrection.WeekTotal, error) {
 	return r.weeklyTotals(ctx, req.Task, req.Since, func(_ context.Context, sq *bun.SelectQuery) *bun.SelectQuery {
 		return buncolgen.CorrectionScopeTenant(sq, req.TenantInfo)
@@ -315,7 +315,7 @@ func (r *repository) WeeklyTotalsByProvider(
 
 func (r *repository) WeeklyTrainableTotalsByProvider(
 	ctx context.Context,
-	req *repositories.WeeklyTrainableAICorrectionTotalsRequest,
+	req *aicorrectionports.WeeklyTrainableAICorrectionTotalsRequest,
 ) ([]aicorrection.WeekTotal, error) {
 	return r.weeklyTotals(ctx, req.Task, req.Since, func(ctx context.Context, sq *bun.SelectQuery) *bun.SelectQuery {
 		return sq.Where("EXISTS (?)", r.trainingConsent(ctx))
@@ -399,7 +399,7 @@ func (r *repository) trainable(
 
 func (r *repository) CountTrainable(
 	ctx context.Context,
-	req *repositories.CountTrainableAICorrectionsRequest,
+	req *aicorrectionports.CountTrainableAICorrectionsRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		cols := buncolgen.CorrectionColumns
@@ -439,7 +439,7 @@ func (r *repository) CountTrainable(
 
 func (r *repository) ListForAccuracy(
 	ctx context.Context,
-	req repositories.ListAICorrectionsForAccuracyRequest,
+	req aicorrectionports.ListAICorrectionsForAccuracyRequest,
 ) ([]*aicorrection.Correction, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aicorrection.Correction, error) {
 		cols := buncolgen.CorrectionColumns
@@ -487,7 +487,7 @@ func (r *repository) ListForAccuracy(
 
 func (r *repository) ListForTraining(
 	ctx context.Context,
-	req *repositories.ListAICorrectionsForTrainingRequest,
+	req *aicorrectionports.ListAICorrectionsForTrainingRequest,
 ) ([]*aicorrection.Correction, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*aicorrection.Correction, error) {
 		cols := buncolgen.CorrectionColumns

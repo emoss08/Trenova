@@ -4,12 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace/aitracetest"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel"
@@ -84,7 +83,7 @@ func TestStartInline_RecordsTheTraceItRanIn(t *testing.T) {
 	}
 
 	ctx, span := otel.Tracer("agentrunservice-test").Start(t.Context(), "DispatchPlanActivity")
-	_, err := svc.StartInline(ctx, &serviceports.StartInlineAgentRunRequest{
+	_, err := svc.StartInline(ctx, &agentports.StartInlineAgentRunRequest{
 		AgentType:   agent.TypeDispatchAssignment,
 		SubjectType: agent.SubjectOrganization,
 		SubjectID:   testTenant.OrgID,

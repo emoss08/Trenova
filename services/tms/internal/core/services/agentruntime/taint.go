@@ -3,11 +3,12 @@ package agentruntime
 import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
 
 func openTaint(
-	req *serviceports.RunRequest,
+	req *agentports.RunRequest,
 	rc *agentdefinition.RuntimeContext,
 	now int64,
 ) (*agent.RunTaint, []agent.TaintMark) {
@@ -55,8 +56,8 @@ func contextTaint(rc *agentdefinition.RuntimeContext, now int64) []agent.TaintMa
 }
 
 func callTaint(
-	policy serviceports.ToolPolicy,
-	call serviceports.ToolCall,
+	policy agentports.ToolPolicy,
+	call agentports.ToolCall,
 	data any,
 	now int64,
 ) []agent.TaintMark {
@@ -84,7 +85,7 @@ func callTaint(
 	return marks
 }
 
-func carriedRefs(policy *serviceports.ToolPolicy, data any) []agent.SourcedRef {
+func carriedRefs(policy *agentports.ToolPolicy, data any) []agent.SourcedRef {
 	if carrier, ok := data.(agent.SourcedTaintCarrier); ok {
 		sourced := carrier.TaintedMarks()
 		refs := make([]agent.SourcedRef, 0, len(sourced))
@@ -112,7 +113,7 @@ func carriedRefs(policy *serviceports.ToolPolicy, data any) []agent.SourcedRef {
 }
 
 func callMark(
-	call serviceports.ToolCall,
+	call agentports.ToolCall,
 	source agent.TaintSource,
 	ref *agent.RecordRef,
 	now int64,
@@ -126,10 +127,10 @@ func callMark(
 	}
 }
 
-func taintedEvent(mark agent.TaintMark, marks int) serviceports.StreamEvent {
-	return serviceports.StreamEvent{
-		Event: serviceports.AssistantEventRunTainted,
-		Data:  serviceports.AssistantRunTaintedEvent{Mark: mark, Marks: marks},
+func taintedEvent(mark agent.TaintMark, marks int) kernelports.StreamEvent {
+	return kernelports.StreamEvent{
+		Event: agentports.AssistantEventRunTainted,
+		Data:  agentports.AssistantRunTaintedEvent{Mark: mark, Marks: marks},
 	}
 }
 
@@ -150,7 +151,7 @@ func (t *Turn) announceOpened(fx TurnEffects) {
 	}
 }
 
-func (t *Turn) inheritDelegateTaint(fx TurnEffects, result *serviceports.RunResult) {
+func (t *Turn) inheritDelegateTaint(fx TurnEffects, result *agentports.RunResult) {
 	if result == nil {
 		return
 	}

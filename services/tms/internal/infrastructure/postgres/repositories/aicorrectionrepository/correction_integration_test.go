@@ -9,12 +9,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -100,7 +100,7 @@ func TestProviderTotals_BucketCorrectionsByProviderAndWeek(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	weekly, err := repo.WeeklyTotalsByProvider(ctx, &repositories.WeeklyAICorrectionTotalsRequest{
+	weekly, err := repo.WeeklyTotalsByProvider(ctx, &aicorrectionports.WeeklyAICorrectionTotalsRequest{
 		TenantInfo: tenant,
 		Task:       aicorrection.TaskShipmentDraftExtraction,
 		Since:      monday,
@@ -122,14 +122,14 @@ func TestProviderTotals_BucketCorrectionsByProviderAndWeek(t *testing.T) {
 	assert.Equal(t, 5, byKey[key{candidate, nextMonday}].Scored)
 	assert.Equal(t, 40, byKey[key{production, monday}].Scored)
 
-	split, err := repo.TotalsByProvider(ctx, &repositories.TotalAICorrectionsByProviderRequest{
+	split, err := repo.TotalsByProvider(ctx, &aicorrectionports.TotalAICorrectionsByProviderRequest{
 		TenantInfo: tenant,
 		Task:       aicorrection.TaskShipmentDraftExtraction,
 		ProviderID: candidate,
 		Since:      monday,
 	})
 	require.NoError(t, err)
-	sides := make(map[bool]repositories.AICorrectionProviderTotal, len(split))
+	sides := make(map[bool]aicorrectionports.AICorrectionProviderTotal, len(split))
 	for _, side := range split {
 		sides[side.Candidate] = side
 	}
@@ -188,7 +188,7 @@ func TestTrainableCorrections_CountAndWeeklyTotalsFollowConsent(t *testing.T) {
 
 	count := func(capPerOrganization int) int {
 		t.Helper()
-		total, err := repo.CountTrainable(ctx, &repositories.CountTrainableAICorrectionsRequest{
+		total, err := repo.CountTrainable(ctx, &aicorrectionports.CountTrainableAICorrectionsRequest{
 			Task:               aicorrection.TaskShipmentDraftExtraction,
 			CapturedFrom:       from,
 			CapturedTo:         to,
@@ -201,7 +201,7 @@ func TestTrainableCorrections_CountAndWeeklyTotalsFollowConsent(t *testing.T) {
 		t.Helper()
 		totals, err := repo.WeeklyTrainableTotalsByProvider(
 			ctx,
-			&repositories.WeeklyTrainableAICorrectionTotalsRequest{
+			&aicorrectionports.WeeklyTrainableAICorrectionTotalsRequest{
 				Task:  aicorrection.TaskShipmentDraftExtraction,
 				Since: from,
 			},
@@ -235,7 +235,7 @@ func TestTrainableCorrections_CountAndWeeklyTotalsFollowConsent(t *testing.T) {
 	assert.Equal(t, 3, count(100),
 		"only scored corrections with a document, inside the window, are trainable")
 
-	first, err := repo.ListForTraining(ctx, &repositories.ListAICorrectionsForTrainingRequest{
+	first, err := repo.ListForTraining(ctx, &aicorrectionports.ListAICorrectionsForTrainingRequest{
 		TenantInfo:   tenantInfo,
 		Task:         aicorrection.TaskShipmentDraftExtraction,
 		CapturedFrom: from,
@@ -247,7 +247,7 @@ func TestTrainableCorrections_CountAndWeeklyTotalsFollowConsent(t *testing.T) {
 	assert.Equal(t, monday+3600, first[0].CapturedAt, "the newest correction comes first")
 	assert.Equal(t, monday, first[1].CapturedAt)
 
-	rest, err := repo.ListForTraining(ctx, &repositories.ListAICorrectionsForTrainingRequest{
+	rest, err := repo.ListForTraining(ctx, &aicorrectionports.ListAICorrectionsForTrainingRequest{
 		TenantInfo:       tenantInfo,
 		Task:             aicorrection.TaskShipmentDraftExtraction,
 		CapturedFrom:     from,
@@ -267,7 +267,7 @@ func TestTrainableCorrections_CountAndWeeklyTotalsFollowConsent(t *testing.T) {
 		ProviderID: provider, WeekStart: monday, Corrections: 2, Scored: 12, Correct: 12,
 	}, totals[0])
 
-	_, err = repo.CountTrainable(ctx, &repositories.CountTrainableAICorrectionsRequest{
+	_, err = repo.CountTrainable(ctx, &aicorrectionports.CountTrainableAICorrectionsRequest{
 		Task:         aicorrection.TaskShipmentDraftExtraction,
 		CapturedFrom: from,
 		CapturedTo:   to,

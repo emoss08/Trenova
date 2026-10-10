@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/insight"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/insightservice/detector"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/shopspring/decimal"
 )
 
@@ -37,10 +37,10 @@ var (
 // usually a scheduling or facility problem at one door, and the same shipper can
 // be fine at three sites and impossible at a fourth.
 type UnbilledDetention struct {
-	metrics repositories.InsightMetricsRepository
+	metrics insightports.InsightMetricsRepository
 }
 
-func NewUnbilledDetention(metrics repositories.InsightMetricsRepository) *UnbilledDetention {
+func NewUnbilledDetention(metrics insightports.InsightMetricsRepository) *UnbilledDetention {
 	return &UnbilledDetention{metrics: metrics}
 }
 
@@ -73,7 +73,7 @@ func (d *UnbilledDetention) Detect(
 	ctx context.Context,
 	params detector.Params,
 ) ([]detector.Finding, error) {
-	rows, err := d.metrics.UnbilledDetention(ctx, repositories.InsightWindowRequest{
+	rows, err := d.metrics.UnbilledDetention(ctx, insightports.InsightWindowRequest{
 		TenantInfo:  params.TenantInfo,
 		WindowStart: params.WindowStart,
 		WindowEnd:   params.WindowEnd,
@@ -93,7 +93,7 @@ func (d *UnbilledDetention) Detect(
 }
 
 func (d *UnbilledDetention) findingFor(
-	row repositories.UnbilledDetentionRow,
+	row insightports.UnbilledDetentionRow,
 	params detector.Params,
 ) (detector.Finding, bool) {
 	if row.OccurrenceCount < minDetentionOccurrences {
@@ -166,10 +166,10 @@ var (
 // EmptyMiles reports customers whose freight runs materially emptier than the
 // rest of the book.
 type EmptyMiles struct {
-	metrics repositories.InsightMetricsRepository
+	metrics insightports.InsightMetricsRepository
 }
 
-func NewEmptyMiles(metrics repositories.InsightMetricsRepository) *EmptyMiles {
+func NewEmptyMiles(metrics insightports.InsightMetricsRepository) *EmptyMiles {
 	return &EmptyMiles{metrics: metrics}
 }
 
@@ -202,7 +202,7 @@ func (d *EmptyMiles) Detect(
 	ctx context.Context,
 	params detector.Params,
 ) ([]detector.Finding, error) {
-	rows, err := d.metrics.CustomerEmptyMiles(ctx, repositories.InsightWindowRequest{
+	rows, err := d.metrics.CustomerEmptyMiles(ctx, insightports.InsightWindowRequest{
 		TenantInfo:  params.TenantInfo,
 		WindowStart: params.WindowStart,
 		WindowEnd:   params.WindowEnd,
@@ -222,7 +222,7 @@ func (d *EmptyMiles) Detect(
 }
 
 func (d *EmptyMiles) findingFor(
-	row repositories.CustomerEmptyMilesRow,
+	row insightports.CustomerEmptyMilesRow,
 	params detector.Params,
 ) (detector.Finding, bool) {
 	if row.MoveCount < minMovesForEmptyMiles {

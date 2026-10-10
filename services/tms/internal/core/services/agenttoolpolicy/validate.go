@@ -8,7 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/productguide"
 )
 
@@ -18,7 +18,7 @@ var permissionRegistry = sync.OnceValue(permission.NewRegistry)
 
 type Spec struct {
 	ToolName string
-	Policy   serviceports.ToolPolicy
+	Policy   agentports.ToolPolicy
 	Reports  bool
 }
 
@@ -99,7 +99,7 @@ func specProblems(spec *Spec) []string {
 	return problems
 }
 
-func egressProblems(policy serviceports.ToolPolicy) []string {
+func egressProblems(policy agentports.ToolPolicy) []string {
 	problems := make([]string, 0)
 	add := func(format string, args ...any) {
 		problems = append(problems, fmt.Sprintf(format, args...))
@@ -153,7 +153,7 @@ func egressProblems(policy serviceports.ToolPolicy) []string {
 	return problems
 }
 
-func tierProblems(policy serviceports.ToolPolicy) []string {
+func tierProblems(policy agentports.ToolPolicy) []string {
 	if !policy.DefaultTier.IsValid() || !policy.MaxTier.IsValid() || len(policy.Egress) == 0 {
 		return nil
 	}
@@ -172,7 +172,7 @@ func tierProblems(policy serviceports.ToolPolicy) []string {
 	return problems
 }
 
-func furtherSourceProblems(policy *serviceports.ToolPolicy) []string {
+func furtherSourceProblems(policy *agentports.ToolPolicy) []string {
 	if len(policy.Sources) == 0 {
 		return nil
 	}
@@ -197,7 +197,7 @@ func furtherSourceProblems(policy *serviceports.ToolPolicy) []string {
 	return problems
 }
 
-func externalReadProblems(policy serviceports.ToolPolicy) []string {
+func externalReadProblems(policy agentports.ToolPolicy) []string {
 	problems := make([]string, 0)
 	if !policy.ReadsExternal.IsValid() {
 		problems = append(problems,

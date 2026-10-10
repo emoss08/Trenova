@@ -7,8 +7,9 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/typeutils"
@@ -41,10 +42,10 @@ type bunchParts struct {
 }
 
 func (r *artifactRecorder) bunch(
-	observation *services.ToolObservation,
+	observation *agentports.ToolObservation,
 	card *assistantartifact.Artifact,
-) (*services.ShownArtifact, error) {
-	earlier, err := r.repo.ListByToolCalls(r.ctx, &repositories.ListArtifactsByToolCallsRequest{
+) (*agentports.ShownArtifact, error) {
+	earlier, err := r.repo.ListByToolCalls(r.ctx, &assistantartifactports.ListArtifactsByToolCallsRequest{
 		ThreadID:   r.thread.ID,
 		TenantInfo: r.tenant,
 		CallIDs:    observation.Earlier,
@@ -76,7 +77,7 @@ func (r *artifactRecorder) bunch(
 
 func (r *artifactRecorder) keep(
 	artifact *assistantartifact.Artifact,
-) (*services.ShownArtifact, error) {
+) (*agentports.ShownArtifact, error) {
 	saved, err := r.save(artifact)
 	if err != nil {
 		return nil, err
@@ -94,7 +95,7 @@ func (r *artifactRecorder) retire(cards []*assistantartifact.Artifact) {
 	for _, card := range cards {
 		ids = append(ids, card.ID)
 	}
-	if err := r.repo.Delete(r.ctx, &repositories.DeleteArtifactsRequest{
+	if err := r.repo.Delete(r.ctx, &assistantartifactports.DeleteArtifactsRequest{
 		ThreadID:   r.thread.ID,
 		TenantInfo: r.tenant,
 		IDs:        ids,
@@ -109,9 +110,9 @@ func (r *artifactRecorder) retire(cards []*assistantartifact.Artifact) {
 
 	for _, id := range ids {
 		r.forget(id)
-		r.emit(services.StreamEvent{
-			Event: services.AssistantEventArtifactRemoved,
-			Data:  services.AssistantArtifactRemovedEvent{ID: id},
+		r.emit(kernelports.StreamEvent{
+			Event: agentports.AssistantEventArtifactRemoved,
+			Data:  agentports.AssistantArtifactRemovedEvent{ID: id},
 		})
 	}
 }

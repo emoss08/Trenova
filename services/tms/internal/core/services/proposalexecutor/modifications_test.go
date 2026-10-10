@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -37,8 +37,8 @@ func (t *schemaTool) ParamSchema() map[string]any {
 		"additionalProperties": false,
 	}
 }
-func (t *schemaTool) Policy() services.ToolPolicy {
-	return services.ToolPolicy{
+func (t *schemaTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceDriverMessage,
@@ -52,12 +52,12 @@ func (t *schemaTool) Policy() services.ToolPolicy {
 		Rationale:     "A schema stub.",
 	}
 }
-func (t *schemaTool) Execute(_ context.Context, params services.ToolExecuteParams) error {
+func (t *schemaTool) Execute(_ context.Context, params agentports.ToolExecuteParams) error {
 	t.ran = params.Params
 
 	return nil
 }
-func (t *schemaTool) Validate(context.Context, services.ToolExecuteParams) error {
+func (t *schemaTool) Validate(context.Context, agentports.ToolExecuteParams) error {
 	return t.validateErr
 }
 
@@ -223,11 +223,11 @@ func TestCoerceParams_LeavesTheOwnerAsStored(t *testing.T) {
 
 	owner := pulid.MustNew("usr_").String()
 	params := CoerceParams(&schemaTool{}, map[string]any{
-		"workerId":                   "wrk_1",
-		"repeat":                     "4",
-		services.SelfScopeOwnerParam: owner,
+		"workerId":                     "wrk_1",
+		"repeat":                       "4",
+		agentports.SelfScopeOwnerParam: owner,
 	})
 
-	assert.Equal(t, owner, params[services.SelfScopeOwnerParam])
+	assert.Equal(t, owner, params[agentports.SelfScopeOwnerParam])
 	assert.InDelta(t, 4, params["repeat"], 0)
 }

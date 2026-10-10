@@ -3,12 +3,13 @@ package agentquerytoolservice
 import (
 	"context"
 	"fmt"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/services/billingtransfercriteria"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/typeutils"
@@ -22,8 +23,8 @@ const (
 type billingTransferCandidateLister interface {
 	ListBillingTransferCandidates(
 		ctx context.Context,
-		req *serviceports.ListBillingTransferCandidatesRequest,
-	) (*serviceports.BillingTransferCandidates, error)
+		req *shipmentports.ListBillingTransferCandidatesRequest,
+	) (*shipmentports.BillingTransferCandidates, error)
 }
 
 type listBillingTransferCandidatesTool struct {
@@ -31,8 +32,8 @@ type listBillingTransferCandidatesTool struct {
 }
 
 func newListBillingTransferCandidatesTool(
-	shipments serviceports.ShipmentService,
-) serviceports.AgentQueryTool {
+	shipments shipmentports.ShipmentService,
+) agentports.AgentQueryTool {
 	return &listBillingTransferCandidatesTool{shipments: shipments}
 }
 
@@ -62,7 +63,7 @@ func (t *listBillingTransferCandidatesTool) ParamSchema() map[string]any {
 	return objectSchema(withPaging(properties, defaultListLimit, maxListLimit))
 }
 
-func (t *listBillingTransferCandidatesTool) Policy() serviceports.ToolPolicy {
+func (t *listBillingTransferCandidatesTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceShipment})
 }
 
@@ -96,7 +97,7 @@ type billingTransferCandidatesResult struct {
 
 func (t *listBillingTransferCandidatesTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -114,7 +115,7 @@ func (t *listBillingTransferCandidatesTool) Query(
 
 	candidates, err := t.shipments.ListBillingTransferCandidates(
 		ctx,
-		&serviceports.ListBillingTransferCandidatesRequest{
+		&shipmentports.ListBillingTransferCandidatesRequest{
 			Filter: selection.QueryOptions(
 				tenantOf(params),
 				pagination.Info{Limit: window.limit, Offset: window.offset},
@@ -135,7 +136,7 @@ func (t *listBillingTransferCandidatesTool) Query(
 		switch {
 		case decision.Outcome.Transfers():
 			result.PageTransfer++
-		case decision.Outcome == serviceports.BillingTransferOutcomeReturnToOperations:
+		case decision.Outcome == shipmentports.BillingTransferOutcomeReturnToOperations:
 			result.PageReturned++
 		default:
 			result.PageRefused++
@@ -161,13 +162,13 @@ func (t *listBillingTransferCandidatesTool) Query(
 // and reported one load while eighteen more were waiting.
 func (t *listBillingTransferCandidatesTool) completedAlsoWaiting(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 	selection billingtransfercriteria.Criteria,
 ) string {
 	selection.Status = shipment.StatusCompleted
 	completed, err := t.shipments.ListBillingTransferCandidates(
 		ctx,
-		&serviceports.ListBillingTransferCandidatesRequest{
+		&shipmentports.ListBillingTransferCandidatesRequest{
 			Filter:                      selection.QueryOptions(tenantOf(params), pagination.Info{Limit: 1}),
 			Status:                      selection.Status,
 			MarkCompletedReadyToInvoice: true,
@@ -182,7 +183,7 @@ func (t *listBillingTransferCandidatesTool) completedAlsoWaiting(
 		"and count them when asked what is ready to bill.", completed.TotalCount)
 }
 
-func candidateRow(decision *serviceports.BillingTransferDecision) billingTransferCandidateRow {
+func candidateRow(decision *shipmentports.BillingTransferDecision) billingTransferCandidateRow {
 	row := billingTransferCandidateRow{
 		ID:            decision.ShipmentID.String(),
 		ProNumber:     decision.ProNumber,

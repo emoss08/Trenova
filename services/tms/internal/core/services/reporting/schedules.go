@@ -5,7 +5,8 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/cronutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -80,7 +81,7 @@ func (s *Service) validateNotifyUsers(ctx context.Context, req *SaveScheduleRequ
 		return nil
 	}
 
-	users, err := s.userRepo.GetByIDs(ctx, repositories.GetUsersByIDsRequest{
+	users, err := s.userRepo.GetByIDs(ctx, tenantports.GetUsersByIDsRequest{
 		TenantInfo: req.TenantInfo,
 		UserIDs:    notifyUserIDs,
 	})
@@ -150,7 +151,7 @@ func (s *Service) GetSchedule(
 	ctx context.Context,
 	req *GetScheduleRequest,
 ) (*report.ReportSchedule, error) {
-	return s.scheduleRepo.GetByID(ctx, &repositories.GetReportScheduleRequest{
+	return s.scheduleRepo.GetByID(ctx, &reportports.GetReportScheduleRequest{
 		TenantInfo: req.TenantInfo,
 		ScheduleID: req.ScheduleID,
 	})
@@ -169,7 +170,7 @@ func (s *Service) ListSchedules(
 	ctx context.Context,
 	req *ListSchedulesRequest,
 ) ([]*report.ReportSchedule, error) {
-	return s.scheduleRepo.List(ctx, &repositories.ListReportSchedulesRequest{
+	return s.scheduleRepo.List(ctx, &reportports.ListReportSchedulesRequest{
 		TenantInfo:   req.TenantInfo,
 		DefinitionID: req.DefinitionID,
 		EnabledOnly:  req.EnabledOnly,
@@ -183,7 +184,7 @@ func (s *Service) DeleteSchedule(ctx context.Context, req *GetScheduleRequest) e
 		return err
 	}
 
-	return s.scheduleRepo.Delete(ctx, &repositories.GetReportScheduleRequest{
+	return s.scheduleRepo.Delete(ctx, &reportports.GetReportScheduleRequest{
 		TenantInfo: req.TenantInfo,
 		ScheduleID: req.ScheduleID,
 	})

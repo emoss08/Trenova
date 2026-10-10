@@ -10,12 +10,15 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/planservice"
 	"github.com/emoss08/trenova/internal/core/services/secretconfig"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -29,32 +32,32 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         repositories.IntegrationRepository
+	Repo         integrationports.IntegrationRepository
 	Encryption   *encryptionservice.Service
-	AuditService services.AuditService
+	AuditService auditports.AuditService
 	Registry     *permission.Registry
 
-	FuelCardConnectors     []services.FuelCardProvider                `group:"fuelCardConnectors"`
-	CarrierIntelConnectors []services.CarrierIntelConnector           `group:"carrierIntelConnectors"`
-	CarrierIntelControls   repositories.CarrierIntelControlRepository `                               optional:"true"`
-	Plans                  services.PlanService                       `                               optional:"true"`
+	FuelCardConnectors     []fuelpurchaseports.FuelCardProvider            `group:"fuelCardConnectors"`
+	CarrierIntelConnectors []carrierintelports.CarrierIntelConnector       `group:"carrierIntelConnectors"`
+	CarrierIntelControls   carrierintelports.CarrierIntelControlRepository `                               optional:"true"`
+	Plans                  platformplanports.PlanService                   `                               optional:"true"`
 }
 
 type Service struct {
 	l                      *zap.Logger
-	repo                   repositories.IntegrationRepository
+	repo                   integrationports.IntegrationRepository
 	encryption             *encryptionservice.Service
 	secrets                secretconfig.Codec
-	auditService           services.AuditService
+	auditService           auditports.AuditService
 	registry               *permission.Registry
-	fuelCardConnectors     map[integration.Type]services.FuelCardProvider
-	carrierIntelConnectors map[integration.Type]services.CarrierIntelConnector
-	carrierIntelControls   repositories.CarrierIntelControlRepository
-	plans                  services.PlanService
+	fuelCardConnectors     map[integration.Type]fuelpurchaseports.FuelCardProvider
+	carrierIntelConnectors map[integration.Type]carrierintelports.CarrierIntelConnector
+	carrierIntelControls   carrierintelports.CarrierIntelControlRepository
+	plans                  platformplanports.PlanService
 }
 
 func New(p Params) *Service {
-	connectors := make(map[integration.Type]services.FuelCardProvider, len(p.FuelCardConnectors))
+	connectors := make(map[integration.Type]fuelpurchaseports.FuelCardProvider, len(p.FuelCardConnectors))
 	for _, connector := range p.FuelCardConnectors {
 		if connector != nil {
 			connectors[connector.IntegrationType()] = connector
@@ -62,7 +65,7 @@ func New(p Params) *Service {
 	}
 
 	intelConnectors := make(
-		map[integration.Type]services.CarrierIntelConnector,
+		map[integration.Type]carrierintelports.CarrierIntelConnector,
 		len(p.CarrierIntelConnectors),
 	)
 	for _, connector := range p.CarrierIntelConnectors {
@@ -88,7 +91,7 @@ func New(p Params) *Service {
 func (s *Service) ListCatalog(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*services.CatalogResponse, error) {
+) (*integrationports.CatalogResponse, error) {
 	installed, err := s.repo.ListByTenant(ctx, tenantInfo)
 	if err != nil {
 		return nil, errortypes.NewBusinessError(
@@ -102,15 +105,15 @@ func (s *Service) ListCatalog(
 		installedByType[record.Type] = record
 	}
 
-	items := make([]services.CatalogItem, 0, len(services.CatalogDefinitions))
-	for idx := range services.CatalogDefinitions {
-		def := services.CatalogDefinitions[idx]
+	items := make([]integrationports.CatalogItem, 0, len(integrationports.CatalogDefinitions))
+	for idx := range integrationports.CatalogDefinitions {
+		def := integrationports.CatalogDefinitions[idx]
 		installedRecord := installedByType[def.Type]
 
 		item := def
 		item.Enabled = false
 		item.Configured = false
-		item.Status = services.CatalogStatus{}
+		item.Status = integrationports.CatalogStatus{}
 
 		spec, hasSpec := integration.ConfigSpecs[def.Type]
 		if hasSpec {
@@ -131,25 +134,25 @@ func (s *Service) ListCatalog(
 	}
 
 	sortCatalogItems(items)
-	return &services.CatalogResponse{Items: items}, nil
+	return &integrationports.CatalogResponse{Items: items}, nil
 }
 
-func buildCatalogStatus(enabled, configured bool) services.CatalogStatus {
-	connection := services.CatalogConnectionStatusDisconnected
+func buildCatalogStatus(enabled, configured bool) integrationports.CatalogStatus {
+	connection := integrationports.CatalogConnectionStatusDisconnected
 	connectionLabel := "Disconnected"
 	if enabled {
-		connection = services.CatalogConnectionStatusConnected
+		connection = integrationports.CatalogConnectionStatusConnected
 		connectionLabel = "Connected"
 	}
 
-	configuration := services.CatalogConfigurationStatusNeedsSetup
+	configuration := integrationports.CatalogConfigurationStatusNeedsSetup
 	configurationLabel := "Needs Setup"
 	if configured {
-		configuration = services.CatalogConfigurationStatusConfigured
+		configuration = integrationports.CatalogConfigurationStatusConfigured
 		configurationLabel = "Configured"
 	}
 
-	return services.CatalogStatus{
+	return integrationports.CatalogStatus{
 		Connection:         connection,
 		ConnectionLabel:    connectionLabel,
 		Configuration:      configuration,
@@ -157,7 +160,7 @@ func buildCatalogStatus(enabled, configured bool) services.CatalogStatus {
 	}
 }
 
-func sortCatalogItems(items []services.CatalogItem) {
+func sortCatalogItems(items []integrationports.CatalogItem) {
 	sort.SliceStable(items, func(i, j int) bool {
 		if items[i].SortOrder == items[j].SortOrder {
 			return items[i].Name < items[j].Name
@@ -191,7 +194,7 @@ func (s *Service) GetConfig(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	typ integration.Type,
-) (*services.ConfigResponse, error) {
+) (*integrationports.ConfigResponse, error) {
 	spec, ok := integration.ConfigSpecs[typ]
 	if !ok {
 		return nil, errortypes.NewBusinessError("unsupported integration type")
@@ -200,7 +203,7 @@ func (s *Service) GetConfig(
 	record, err := s.repo.GetByType(ctx, tenantInfo, typ)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
-			return &services.ConfigResponse{
+			return &integrationports.ConfigResponse{
 				Type:    typ,
 				Enabled: false,
 				Fields:  configspec.Values(nil, spec.Fields),
@@ -213,7 +216,7 @@ func (s *Service) GetConfig(
 		).WithInternal(err)
 	}
 
-	return &services.ConfigResponse{
+	return &integrationports.ConfigResponse{
 		Type:      typ,
 		Enabled:   record.Enabled,
 		Fields:    configspec.Values(record.Configuration, spec.Fields),
@@ -226,9 +229,9 @@ func (s *Service) UpdateConfig(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	typ integration.Type,
-	req *services.UpdateConfigRequest,
+	req *integrationports.UpdateConfigRequest,
 	userID pulid.ID,
-) (*services.ConfigResponse, error) {
+) (*integrationports.ConfigResponse, error) {
 	log := s.l.With(zap.String("Operation", "UpdateConfig"), zap.String("Type", string(typ)))
 
 	spec, ok := integration.ConfigSpecs[typ]
@@ -309,7 +312,7 @@ func (s *Service) UpdateConfig(
 		).WithInternal(err)
 	}
 
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceIntegration,
 		ResourceID:     updated.ID.String(),
 		Operation:      permission.OpUpdate,
@@ -324,7 +327,7 @@ func (s *Service) UpdateConfig(
 		log.Error("failed to log audit actions", zap.Error(err))
 	}
 
-	return &services.ConfigResponse{
+	return &integrationports.ConfigResponse{
 		Type:      typ,
 		Enabled:   updated.Enabled,
 		Fields:    configspec.Values(updated.Configuration, spec.Fields),
@@ -338,7 +341,7 @@ func (s *Service) TestConnection(
 	tenantInfo pagination.TenantInfo,
 	typ integration.Type,
 	userID pulid.ID,
-) (*services.TestConnectionResponse, error) {
+) (*integrationports.TestConnectionResponse, error) {
 	log := s.l.With(zap.String("Operation", "TestConnection"), zap.String("Type", string(typ)))
 
 	spec, ok := integration.ConfigSpecs[typ]
@@ -389,7 +392,7 @@ func (s *Service) TestConnection(
 			ctx,
 			tenantInfo,
 			typ,
-			&services.UpdateConfigRequest{
+			&integrationports.UpdateConfigRequest{
 				TenantInfo:    tenantInfo,
 				Enabled:       true,
 				Configuration: preserved,
@@ -404,7 +407,7 @@ func (s *Service) TestConnection(
 		}
 	}
 
-	return &services.TestConnectionResponse{
+	return &integrationports.TestConnectionResponse{
 		Provider:  typ,
 		Success:   true,
 		CheckedAt: timeutils.NowUnix(),
@@ -615,11 +618,11 @@ func validateRequiredFields(
 	return nil
 }
 
-func findCatalogDefinition(typ integration.Type) services.CatalogItem {
-	for idx := range services.CatalogDefinitions {
-		if services.CatalogDefinitions[idx].Type == typ {
-			return services.CatalogDefinitions[idx]
+func findCatalogDefinition(typ integration.Type) integrationports.CatalogItem {
+	for idx := range integrationports.CatalogDefinitions {
+		if integrationports.CatalogDefinitions[idx].Type == typ {
+			return integrationports.CatalogDefinitions[idx]
 		}
 	}
-	return services.CatalogItem{Name: string(typ)}
+	return integrationports.CatalogItem{Name: string(typ)}
 }

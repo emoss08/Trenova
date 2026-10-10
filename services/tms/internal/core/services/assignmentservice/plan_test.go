@@ -1,17 +1,21 @@
 package assignmentservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/formulatemplateportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/services/rateengine/rateenginetest"
-
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/services/rateengine/rateenginetest"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/capabilitytest"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -47,7 +51,7 @@ func previewAssignmentServiceWith(
 	t.Helper()
 
 	moveID := original.Moves[0].ID
-	repo := mocks.NewMockAssignmentRepository(t)
+	repo := shipmentportsmock.NewMockAssignmentRepository(t)
 	repo.EXPECT().
 		GetMoveByID(mock.Anything, tenantInfo, moveID).
 		Return(&shipment.ShipmentMove{
@@ -75,23 +79,23 @@ func previewAssignmentServiceWith(
 			Once()
 	}
 
-	shipmentRepo := mocks.NewMockShipmentRepository(t)
+	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
 		RunAndReturn(func(
 			context.Context,
-			*repositories.GetShipmentByIDRequest,
+			*shipmentports.GetShipmentByIDRequest,
 		) (*shipment.Shipment, error) {
 			return shipment.CloneForUpdate(original), nil
 		}).
 		Once()
-	holdRepo := mocks.NewMockShipmentHoldRepository(t)
+	holdRepo := shipmentportsmock.NewMockShipmentHoldRepository(t)
 	holdRepo.EXPECT().HasActiveDispatchHold(mock.Anything, mock.Anything).Return(false, nil).Once()
 
 	svc := &service{
 		orgRepo: capabilitytest.OrgRepo(t, capabilitytest.OrgRepoParams{
 			TenantInfo:             tenantInfo,
-			Lock:                   repositories.CapabilityLockNone,
+			Lock:                   tenantports.CapabilityLockNone,
 			BrokerageEnabled:       true,
 			AssetOperationsEnabled: true,
 			Optional:               true,
@@ -108,12 +112,12 @@ func previewAssignmentServiceWith(
 		return svc
 	}
 
-	controlRepo := mocks.NewMockShipmentControlRepository(t)
+	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
-		Get(mock.Anything, repositories.GetShipmentControlRequest{TenantInfo: tenantInfo}).
+		Get(mock.Anything, tenantports.GetShipmentControlRequest{TenantInfo: tenantInfo}).
 		Return(&tenant.ShipmentControl{AutoDelayShipmentsThreshold: new(int16(30))}, nil).
 		Once()
-	formula := mocks.NewMockFormulaCalculator(t)
+	formula := formulatemplateportsmock.NewMockFormulaCalculator(t)
 	formula.EXPECT().
 		Calculate(mock.Anything, mock.AnythingOfType("*formulatemplatetypes.CalculateRequest")).
 		Return(&formulatemplatetypes.CalculateResponse{Amount: decimal.Zero}, nil).
@@ -122,7 +126,7 @@ func previewAssignmentServiceWith(
 	svc.commercial = shipmentcommercial.New(shipmentcommercial.Params{
 		Logger:          zap.NewNop(),
 		RateEngine:      rateenginetest.NewFallbackEngine(t, formula),
-		AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
+		AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 	})
 	svc.shipmentValidator = newTestShipmentValidator(t)
 
@@ -141,7 +145,7 @@ func TestPreviewAssignToMove_ProjectsTheAssignmentWithoutSavingIt(t *testing.T) 
 
 	svc := previewAssignmentService(t, tenantInfo, original, nil)
 
-	plan, err := svc.PreviewAssignToMove(t.Context(), &repositories.AssignShipmentMoveRequest{
+	plan, err := svc.PreviewAssignToMove(t.Context(), &shipmentports.AssignShipmentMoveRequest{
 		TenantInfo:      tenantInfo,
 		ShipmentMoveID:  moveID,
 		PrimaryWorkerID: workerID,
@@ -174,7 +178,7 @@ func TestPreviewAssignToMove_SaysWhenEquipmentIsOnAMoveInProgress(t *testing.T) 
 	svc := previewAssignmentServiceWith(t, tenantInfo, original, nil,
 		&shipment.Assignment{ShipmentMoveID: busyMove, TractorID: &tractorID})
 
-	plan, err := svc.PreviewAssignToMove(t.Context(), &repositories.AssignShipmentMoveRequest{
+	plan, err := svc.PreviewAssignToMove(t.Context(), &shipmentports.AssignShipmentMoveRequest{
 		TenantInfo:      tenantInfo,
 		ShipmentMoveID:  moveID,
 		PrimaryWorkerID: pulid.MustNew("wrk_"),
@@ -197,7 +201,7 @@ func TestPreviewAssignToMove_RefusesAMoveAlreadyAssigned(t *testing.T) {
 		ID: pulid.MustNew("asn_"),
 	})
 
-	_, err := svc.PreviewAssignToMove(t.Context(), &repositories.AssignShipmentMoveRequest{
+	_, err := svc.PreviewAssignToMove(t.Context(), &shipmentports.AssignShipmentMoveRequest{
 		TenantInfo:      tenantInfo,
 		ShipmentMoveID:  moveID,
 		PrimaryWorkerID: pulid.MustNew("wrk_"),

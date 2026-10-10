@@ -6,9 +6,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/iam"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/requestmeta"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -27,18 +26,18 @@ const (
 type Params struct {
 	fx.In
 
-	Repository repositories.AuthEventRepository
+	Repository iamports.AuthEventRepository
 	Metrics    *metrics.Registry
 	Logger     *zap.Logger
 }
 
 type Service struct {
-	repo    repositories.AuthEventRepository
+	repo    iamports.AuthEventRepository
 	metrics *metrics.Registry
 	l       *zap.Logger
 }
 
-func New(p Params) services.AuthEventRecorder {
+func New(p Params) iamports.AuthEventRecorder {
 	return &Service{
 		repo:    p.Repository,
 		metrics: p.Metrics,
@@ -46,7 +45,7 @@ func New(p Params) services.AuthEventRecorder {
 	}
 }
 
-func (s *Service) Record(ctx context.Context, rec *services.AuthEventRecord) {
+func (s *Service) Record(ctx context.Context, rec *iamports.AuthEventRecord) {
 	event := newAuthEvent(ctx, rec)
 
 	writeCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), writeTimeout)
@@ -87,7 +86,7 @@ func (s *Service) recordMetric(success bool) {
 	s.metrics.Audit.RecordSecurityEvent(securityEventKind, success)
 }
 
-func newAuthEvent(ctx context.Context, rec *services.AuthEventRecord) *iam.AuthEvent {
+func newAuthEvent(ctx context.Context, rec *iamports.AuthEventRecord) *iam.AuthEvent {
 	event := &iam.AuthEvent{
 		UserID:           rec.UserID,
 		Provider:         stringutils.TruncateRunes(rec.Provider, maxProviderLen),

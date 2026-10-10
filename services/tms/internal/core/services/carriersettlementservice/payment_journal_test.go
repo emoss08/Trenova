@@ -1,13 +1,16 @@
 package carriersettlementservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -52,9 +55,9 @@ func TestPaymentJournalIsDatedWhenThePaymentWasMade(t *testing.T) {
 		Status:       fiscalperiod.StatusOpen,
 	}
 
-	periods := mocks.NewMockFiscalPeriodRepository(t)
+	periods := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	periods.EXPECT().
-		GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{
+		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
 			Date:  paidAt,
@@ -62,18 +65,18 @@ func TestPaymentJournalIsDatedWhenThePaymentWasMade(t *testing.T) {
 		Return(period, nil).
 		Once()
 
-	var posted repositories.CreateJournalPostingParams
-	journals := mocks.NewMockJournalPostingRepository(t)
+	var posted journalentryports.CreateJournalPostingParams
+	journals := journalentryportsmock.NewMockJournalPostingRepository(t)
 	journals.EXPECT().
 		CreatePosting(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, params repositories.CreateJournalPostingParams) error {
+		RunAndReturn(func(_ context.Context, params journalentryports.CreateJournalPostingParams) error {
 			posted = params
 			return nil
 		}).
 		Once()
 
 	svc := &Service{journalRepo: journals, fiscalPeriodRepo: periods, generator: numberingOnly{}}
-	actor := &serviceports.RequestActor{UserID: pulid.MustNew("usr_")}
+	actor := &permissionports.RequestActor{UserID: pulid.MustNew("usr_")}
 	draft, err := svc.draftJournal(t.Context(), entity, actor.UserID, &createJournalPostingParams{
 		Control: &tenant.AccountingControl{},
 		Legs: []PostingLeg{

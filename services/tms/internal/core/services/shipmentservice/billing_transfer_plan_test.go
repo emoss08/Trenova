@@ -1,6 +1,7 @@
 package shipmentservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"slices"
 	"testing"
 
@@ -9,8 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -48,7 +50,7 @@ func (f *planFixture) expectSources(
 	docs []*document.Document,
 ) {
 	f.repo.EXPECT().
-		GetByIDs(mock.Anything, mock.MatchedBy(func(req *repositories.GetShipmentsByIDsRequest) bool {
+		GetByIDs(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetShipmentsByIDsRequest) bool {
 			return req.TenantInfo == f.tenant() && req.IncludeCharges
 		})).
 		Return(shipments, nil).
@@ -63,7 +65,7 @@ func (f *planFixture) expectSources(
 		})
 	}
 	f.customerRepo.EXPECT().
-		GetByIDs(mock.Anything, mock.MatchedBy(func(req repositories.GetCustomersByIDsRequest) bool {
+		GetByIDs(mock.Anything, mock.MatchedBy(func(req customerports.GetCustomersByIDsRequest) bool {
 			return req.IncludeBillingProfile && req.TenantInfo == f.tenant()
 		})).
 		Return(payers, nil).
@@ -71,7 +73,7 @@ func (f *planFixture) expectSources(
 	f.billingRepo.EXPECT().GetByOrgID(mock.Anything, f.orgID).Return(control, nil).Once()
 	f.documentRepo.EXPECT().
 		GetByResourceIDs(mock.Anything, mock.MatchedBy(
-			func(req *repositories.GetDocumentsByResourceIDsRequest) bool {
+			func(req *documentports.GetDocumentsByResourceIDsRequest) bool {
 				return req.ResourceType == "shipment" && req.TenantInfo == f.tenant()
 			},
 		)).
@@ -107,7 +109,7 @@ func TestPlanBillingTransfers_DecidesEachShipmentInRequestOrder(t *testing.T) {
 		[]*document.Document{f.podFor(clean), f.podFor(completed)},
 	)
 
-	plan, err := f.svc.PlanBillingTransfers(t.Context(), &services.PlanBillingTransfersRequest{
+	plan, err := f.svc.PlanBillingTransfers(t.Context(), &shipmentports.PlanBillingTransfersRequest{
 		TenantInfo:                  f.tenant(),
 		ShipmentIDs:                 []pulid.ID{clean.ID, completed.ID, missingPOD.ID, queued.ID, gone},
 		MarkCompletedReadyToInvoice: true,
@@ -119,20 +121,20 @@ func TestPlanBillingTransfers_DecidesEachShipmentInRequestOrder(t *testing.T) {
 	assert.Equal(t, 3, plan.Refused)
 	assert.Zero(t, plan.Returned)
 
-	assert.Equal(t, services.BillingTransferOutcomeTransfer, plan.Decisions[0].Outcome)
+	assert.Equal(t, shipmentports.BillingTransferOutcomeTransfer, plan.Decisions[0].Outcome)
 	assert.Equal(t, "PRO-1", plan.Decisions[0].ProNumber)
 	assert.Equal(t, "Acme Foods", plan.Decisions[0].CustomerName)
 
-	assert.Equal(t, services.BillingTransferOutcomeMarkReadyAndTransfer, plan.Decisions[1].Outcome)
+	assert.Equal(t, shipmentports.BillingTransferOutcomeMarkReadyAndTransfer, plan.Decisions[1].Outcome)
 
 	blocked := plan.Decisions[2]
-	assert.Equal(t, services.BillingTransferOutcomeRefused, blocked.Outcome)
-	assert.Equal(t, services.BillingTransferFailureRequirementsUnmet, blocked.FailureCode)
+	assert.Equal(t, shipmentports.BillingTransferOutcomeRefused, blocked.Outcome)
+	assert.Equal(t, shipmentports.BillingTransferFailureRequirementsUnmet, blocked.FailureCode)
 	require.Len(t, blocked.MissingRequirements, 1)
 	assert.Equal(t, "Proof of Delivery", blocked.MissingRequirements[0].DocumentTypeName)
 
-	assert.Equal(t, services.BillingTransferFailureAlreadyTransferred, plan.Decisions[3].FailureCode)
-	assert.Equal(t, services.BillingTransferFailureNotFound, plan.Decisions[4].FailureCode)
+	assert.Equal(t, shipmentports.BillingTransferFailureAlreadyTransferred, plan.Decisions[3].FailureCode)
+	assert.Equal(t, shipmentports.BillingTransferFailureNotFound, plan.Decisions[4].FailureCode)
 	assert.Equal(t, gone, plan.Decisions[4].ShipmentID)
 }
 
@@ -147,15 +149,15 @@ func TestPlanBillingTransfers_ReturnsAShipmentToOperationsWhenThePolicySaysSo(t 
 
 	f.expectSources([]*shipment.Shipment{missingPOD}, control, nil)
 
-	plan, err := f.svc.PlanBillingTransfers(t.Context(), &services.PlanBillingTransfersRequest{
+	plan, err := f.svc.PlanBillingTransfers(t.Context(), &shipmentports.PlanBillingTransfersRequest{
 		TenantInfo:  f.tenant(),
 		ShipmentIDs: []pulid.ID{missingPOD.ID},
 	})
 
 	require.NoError(t, err)
 	require.Len(t, plan.Decisions, 1)
-	assert.Equal(t, services.BillingTransferOutcomeReturnToOperations, plan.Decisions[0].Outcome)
-	assert.Equal(t, services.BillingTransferFailureReturnToOperations, plan.Decisions[0].FailureCode)
+	assert.Equal(t, shipmentports.BillingTransferOutcomeReturnToOperations, plan.Decisions[0].Outcome)
+	assert.Equal(t, shipmentports.BillingTransferFailureReturnToOperations, plan.Decisions[0].FailureCode)
 	assert.Equal(t, 1, plan.Returned)
 }
 
@@ -168,7 +170,7 @@ func TestPlanBillingTransfers_AgreesWithTheTransfer(t *testing.T) {
 	missingPOD := f.newShipment("PRO-5", shipment.StatusReadyToInvoice)
 	f.expectSources([]*shipment.Shipment{missingPOD}, manualBillingControl(), nil)
 
-	plan, err := f.svc.PlanBillingTransfers(t.Context(), &services.PlanBillingTransfersRequest{
+	plan, err := f.svc.PlanBillingTransfers(t.Context(), &shipmentports.PlanBillingTransfersRequest{
 		TenantInfo:  f.tenant(),
 		ShipmentIDs: []pulid.ID{missingPOD.ID},
 	})
@@ -181,7 +183,7 @@ func TestPlanBillingTransfers_AgreesWithTheTransfer(t *testing.T) {
 
 	response, err := transfer.svc.BulkTransferToBilling(
 		t.Context(),
-		&services.BulkTransferShipmentToBillingRequest{ShipmentIDs: []pulid.ID{missingPOD.ID}},
+		&shipmentports.BulkTransferShipmentToBillingRequest{ShipmentIDs: []pulid.ID{missingPOD.ID}},
 		transfer.actor(),
 	)
 	require.NoError(t, err)
@@ -195,16 +197,16 @@ func TestPlanBillingTransfers_RefusesAnEmptyOrOversizedRequest(t *testing.T) {
 
 	f := newPlanFixture(t)
 
-	_, err := f.svc.PlanBillingTransfers(t.Context(), &services.PlanBillingTransfersRequest{
+	_, err := f.svc.PlanBillingTransfers(t.Context(), &shipmentports.PlanBillingTransfersRequest{
 		TenantInfo: f.tenant(),
 	})
 	require.Error(t, err)
 
-	ids := make([]pulid.ID, services.MaxBillingTransferCandidateIDs+1)
+	ids := make([]pulid.ID, shipmentports.MaxBillingTransferCandidateIDs+1)
 	for i := range ids {
 		ids[i] = pulid.MustNew("shp_")
 	}
-	_, err = f.svc.PlanBillingTransfers(t.Context(), &services.PlanBillingTransfersRequest{
+	_, err = f.svc.PlanBillingTransfers(t.Context(), &shipmentports.PlanBillingTransfersRequest{
 		TenantInfo:  f.tenant(),
 		ShipmentIDs: ids,
 	})
@@ -223,11 +225,11 @@ func TestListBillingTransferCandidates_PlansOnlyThePage(t *testing.T) {
 
 	f.repo.EXPECT().
 		ListBillingTransferCandidateIDs(mock.Anything, mock.MatchedBy(
-			func(req *repositories.ListBillingTransferCandidateIDsRequest) bool {
+			func(req *shipmentports.ListBillingTransferCandidateIDsQuery) bool {
 				return req.Status == shipment.StatusReadyToInvoice && req.Limit == 4
 			},
 		)).
-		Return(&repositories.BillingTransferCandidateIDsResult{
+		Return(&shipmentports.BillingTransferCandidateIDsResult{
 			IDs:        []pulid.ID{first.ID, second.ID, third.ID},
 			TotalCount: 3,
 		}, nil).
@@ -240,7 +242,7 @@ func TestListBillingTransferCandidates_PlansOnlyThePage(t *testing.T) {
 
 	page, err := f.svc.ListBillingTransferCandidates(
 		t.Context(),
-		&services.ListBillingTransferCandidatesRequest{
+		&shipmentports.ListBillingTransferCandidatesRequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: f.tenant(),
 				Pagination: pagination.Info{Limit: 2, Offset: 1},
@@ -261,11 +263,11 @@ func TestListBillingTransferCandidates_RefusesAStatusTheDialogDoesNotOffer(t *te
 	t.Parallel()
 
 	f := newPlanFixture(t)
-	f.repo = mocks.NewMockShipmentRepository(t)
+	f.repo = shipmentportsmock.NewMockShipmentRepository(t)
 
 	_, err := f.svc.ListBillingTransferCandidates(
 		t.Context(),
-		&services.ListBillingTransferCandidatesRequest{
+		&shipmentports.ListBillingTransferCandidatesRequest{
 			Filter: &pagination.QueryOptions{TenantInfo: f.tenant()},
 			Status: shipment.StatusInTransit,
 		},
@@ -288,7 +290,7 @@ func TestPlanBillingTransfers_NamesTheCurrencyEachShipmentIsBilledIn(t *testing.
 		Return([]*shipment.Shipment{clean, queued}, nil).
 		Once()
 	f.customerRepo.EXPECT().
-		GetByIDs(mock.Anything, mock.MatchedBy(func(req repositories.GetCustomersByIDsRequest) bool {
+		GetByIDs(mock.Anything, mock.MatchedBy(func(req customerports.GetCustomersByIDsRequest) bool {
 			return req.IncludeBillingProfile && !slices.Contains(req.CustomerIDs, queued.CustomerID)
 		})).
 		Return([]*customer.Customer{{
@@ -298,7 +300,7 @@ func TestPlanBillingTransfers_NamesTheCurrencyEachShipmentIsBilledIn(t *testing.
 		}}, nil).
 		Once()
 	f.customerRepo.EXPECT().
-		GetByIDs(mock.Anything, mock.MatchedBy(func(req repositories.GetCustomersByIDsRequest) bool {
+		GetByIDs(mock.Anything, mock.MatchedBy(func(req customerports.GetCustomersByIDsRequest) bool {
 			return req.IncludeBillingProfile && len(req.CustomerIDs) == 1 &&
 				req.CustomerIDs[0] == queued.CustomerID
 		})).
@@ -313,15 +315,15 @@ func TestPlanBillingTransfers_NamesTheCurrencyEachShipmentIsBilledIn(t *testing.
 		Return([]*document.Document{f.podFor(clean)}, nil).
 		Once()
 
-	plan, err := f.svc.PlanBillingTransfers(t.Context(), &services.PlanBillingTransfersRequest{
+	plan, err := f.svc.PlanBillingTransfers(t.Context(), &shipmentports.PlanBillingTransfersRequest{
 		TenantInfo:  f.tenant(),
 		ShipmentIDs: []pulid.ID{clean.ID, queued.ID},
 	})
 
 	require.NoError(t, err)
 	require.Len(t, plan.Decisions, 2)
-	assert.Equal(t, services.BillingTransferOutcomeTransfer, plan.Decisions[0].Outcome)
+	assert.Equal(t, shipmentports.BillingTransferOutcomeTransfer, plan.Decisions[0].Outcome)
 	assert.Equal(t, "CAD", plan.Decisions[0].CurrencyCode)
-	assert.Equal(t, services.BillingTransferOutcomeRefused, plan.Decisions[1].Outcome)
+	assert.Equal(t, shipmentports.BillingTransferOutcomeRefused, plan.Decisions[1].Outcome)
 	assert.Equal(t, "EUR", plan.Decisions[1].CurrencyCode)
 }

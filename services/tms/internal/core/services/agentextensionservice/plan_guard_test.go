@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agentextension"
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
@@ -28,7 +28,7 @@ func TestUpdateConfigRefusesEnablingWebSearchThePlanRestricts(t *testing.T) {
 
 	svc := &Service{plans: plantest.Restricting(t, platformplan.CapabilityAgentWebSearch)}
 
-	resp, err := svc.UpdateConfig(t.Context(), agentextension.TypeExa, &serviceports.UpdateAgentExtensionRequest{
+	resp, err := svc.UpdateConfig(t.Context(), agentextension.TypeExa, &agentextensionports.UpdateAgentExtensionRequest{
 		TenantInfo: plantest.Tenant(),
 		Enabled:    true,
 	})

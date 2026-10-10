@@ -4,18 +4,19 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/domain/conversation"
-
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentwaitservice"
 	"github.com/emoss08/trenova/internal/core/services/assistantqueueservice"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
 	"github.com/emoss08/trenova/internal/core/services/conversationscheduleservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -28,28 +29,28 @@ import (
 type Params struct {
 	fx.In
 
-	Service              serviceports.AssistantService
+	Service              agentports.AssistantService
 	Turns                *assistantturnservice.Service
-	Workflows            serviceports.WorkflowStarter
+	Workflows            kernelports.WorkflowStarter
 	Schedules            *conversationscheduleservice.Service
-	Handoffs             serviceports.AssistantHandoffService `optional:"true"`
+	Handoffs             agentports.AssistantHandoffService `optional:"true"`
 	Queue                *assistantqueueservice.Service
 	Waits                *agentwaitservice.Service
-	Cases                serviceports.AssistantCaseService
+	Cases                deskcaseports.AssistantCaseService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 	Logger               *zap.Logger
 }
 
 type Handler struct {
-	service   serviceports.AssistantService
+	service   agentports.AssistantService
 	turns     *assistantturnservice.Service
-	workflows serviceports.WorkflowStarter
+	workflows kernelports.WorkflowStarter
 	schedules scheduleService
-	handoffs  serviceports.AssistantHandoffService
+	handoffs  agentports.AssistantHandoffService
 	queue     *assistantqueueservice.Service
 	waits     *agentwaitservice.Service
-	cases     serviceports.AssistantCaseService
+	cases     deskcaseports.AssistantCaseService
 	eh        *helpers.ErrorHandler
 	pm        *middleware.PermissionMiddleware
 	logger    *zap.Logger
@@ -231,9 +232,9 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	h.registerCaseRoutes(api, resource)
 }
 
-func requestActorFromAuthContext(authCtx *authctx.AuthContext) serviceports.RequestActor {
-	return serviceports.RequestActor{
-		PrincipalType:  serviceports.PrincipalType(authCtx.PrincipalType),
+func requestActorFromAuthContext(authCtx *authctx.AuthContext) permissionports.RequestActor {
+	return permissionports.RequestActor{
+		PrincipalType:  kernelports.PrincipalType(authCtx.PrincipalType),
 		PrincipalID:    authCtx.PrincipalID,
 		UserID:         authCtx.UserID,
 		APIKeyID:       authCtx.APIKeyID,
@@ -253,15 +254,15 @@ func tenantFromAuthContext(authCtx *authctx.AuthContext) pagination.TenantInfo {
 // threadRequest builds the per-user scoped read used by every thread route. The
 // user comes from the auth context rather than the path, so one person cannot
 // read another's conversation by guessing an id.
-func threadRequest(c *gin.Context) (repositories.GetThreadRequest, error) {
+func threadRequest(c *gin.Context) (agentports.GetThreadRequest, error) {
 	authCtx := authctx.GetAuthContext(c)
 
 	threadID, err := pulid.Parse(c.Param("threadID"))
 	if err != nil {
-		return repositories.GetThreadRequest{}, err
+		return agentports.GetThreadRequest{}, err
 	}
 
-	return repositories.GetThreadRequest{
+	return agentports.GetThreadRequest{
 		ID:         threadID,
 		UserID:     authCtx.UserID,
 		TenantInfo: tenantFromAuthContext(authCtx),
@@ -283,7 +284,7 @@ func (h *Handler) listThreads(c *gin.Context) {
 		return
 	}
 
-	result, err := h.service.ListThreads(c.Request.Context(), repositories.ListThreadsRequest{
+	result, err := h.service.ListThreads(c.Request.Context(), agentports.ListThreadsRequest{
 		UserID:     authCtx.UserID,
 		TenantInfo: tenantFromAuthContext(authCtx),
 		Limit:      query.Limit,
@@ -333,7 +334,7 @@ func (h *Handler) startThread(c *gin.Context) {
 	}
 
 	actor := requestActorFromAuthContext(authCtx)
-	thread, err := h.service.StartThread(c.Request.Context(), &serviceports.StartThreadRequest{
+	thread, err := h.service.StartThread(c.Request.Context(), &agentports.StartThreadRequest{
 		AgentDefinitionID: agentID,
 		Title:             body.Title,
 		TenantInfo:        tenantFromAuthContext(authCtx),
@@ -397,7 +398,7 @@ func (h *Handler) requestMore(c *gin.Context) {
 		return
 	}
 
-	result, err := h.service.RequestMore(c.Request.Context(), serviceports.RequestMoreRequest{
+	result, err := h.service.RequestMore(c.Request.Context(), agentports.RequestMoreRequest{
 		Thread: req,
 		Kind:   body.Kind,
 	})
@@ -449,7 +450,7 @@ func (h *Handler) updateThread(c *gin.Context) {
 	}
 
 	actor := requestActorFromAuthContext(authctx.GetAuthContext(c))
-	thread, err := h.service.UpdateThread(c.Request.Context(), &serviceports.UpdateThreadRequest{
+	thread, err := h.service.UpdateThread(c.Request.Context(), &agentports.UpdateThreadRequest{
 		ThreadID:    req.ID,
 		TenantInfo:  req.TenantInfo,
 		Title:       body.Title,
@@ -603,7 +604,7 @@ func (h *Handler) listMessages(c *gin.Context) {
 		return
 	}
 
-	page, err := h.service.ListMessages(c.Request.Context(), serviceports.ListThreadMessagesRequest{
+	page, err := h.service.ListMessages(c.Request.Context(), agentports.ListThreadMessagesRequest{
 		Thread:         req,
 		Limit:          query.Limit,
 		BeforeSequence: query.Before,
@@ -728,7 +729,7 @@ func (h *Handler) searchMentions(c *gin.Context) {
 		page, err := h.service.SearchMentionPage(
 			c.Request.Context(),
 			requestActorFromAuthContext(authCtx),
-			serviceports.MentionPageRequest{
+			agentports.MentionPageRequest{
 				Query:  query.Query,
 				Kind:   query.Kind,
 				Offset: query.Offset,
@@ -746,7 +747,7 @@ func (h *Handler) searchMentions(c *gin.Context) {
 	results, err := h.service.SearchMentions(
 		c.Request.Context(),
 		requestActorFromAuthContext(authCtx),
-		serviceports.MentionSearchRequest{Query: query.Query, Kind: query.Type},
+		agentports.MentionSearchRequest{Query: query.Query, Kind: query.Type},
 	)
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -773,7 +774,7 @@ func (h *Handler) searchDesk(c *gin.Context) {
 	results, err := h.service.SearchDesk(
 		c.Request.Context(),
 		requestActorFromAuthContext(authCtx),
-		serviceports.DeskSearchRequest{Query: query.Query, Kind: query.Kind},
+		agentports.DeskSearchRequest{Query: query.Query, Kind: query.Kind},
 	)
 	if err != nil {
 		h.eh.HandleError(c, err)

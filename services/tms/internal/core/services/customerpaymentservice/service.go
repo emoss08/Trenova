@@ -6,20 +6,25 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/emoss08/trenova/internal/core/services/journalposting"
-
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-
 	"github.com/emoss08/trenova/internal/core/domain/customerledger"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp"
+	"github.com/emoss08/trenova/internal/core/services/journalposting"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/pkg/seqgen"
@@ -35,34 +40,34 @@ type Params struct {
 	fx.In
 
 	Logger             *zap.Logger
-	DB                 ports.DBConnection
-	Repo               repositories.CustomerPaymentRepository
-	InvoiceRepo        repositories.InvoiceRepository
-	CustomerLedgerRepo repositories.CustomerLedgerProjectionRepository
-	AccountingRepo     repositories.AccountingControlRepository
+	DB                 kernelports.DBConnection
+	Repo               customerpaymentports.CustomerPaymentRepository
+	InvoiceRepo        invoiceports.InvoiceRepository
+	CustomerLedgerRepo customerledgerports.CustomerLedgerProjectionRepository
+	AccountingRepo     tenantports.AccountingControlRepository
 	Stamper            *exchangeratestamp.Stamper
-	JournalRepo        repositories.JournalPostingRepository
+	JournalRepo        journalentryports.JournalPostingRepository
 	Generator          seqgen.Generator
 	Validator          *Validator
-	AuditService       serviceports.AuditService
-	AccountingSync     serviceports.AccountingSyncEnqueuer `optional:"true"`
-	Realtime           serviceports.RealtimeService        `optional:"true"`
+	AuditService       auditports.AuditService
+	AccountingSync     accountingsyncports.AccountingSyncEnqueuer `optional:"true"`
+	Realtime           agentports.RealtimeService                 `optional:"true"`
 }
 
 type Service struct {
 	l                  *zap.Logger
-	db                 ports.DBConnection
-	repo               repositories.CustomerPaymentRepository
-	invoiceRepo        repositories.InvoiceRepository
-	customerLedgerRepo repositories.CustomerLedgerProjectionRepository
-	accountingRepo     repositories.AccountingControlRepository
+	db                 kernelports.DBConnection
+	repo               customerpaymentports.CustomerPaymentRepository
+	invoiceRepo        invoiceports.InvoiceRepository
+	customerLedgerRepo customerledgerports.CustomerLedgerProjectionRepository
+	accountingRepo     tenantports.AccountingControlRepository
 	stamper            *exchangeratestamp.Stamper
-	journalRepo        repositories.JournalPostingRepository
+	journalRepo        journalentryports.JournalPostingRepository
 	generator          seqgen.Generator
 	validator          *Validator
-	auditService       serviceports.AuditService
-	accountingSync     serviceports.AccountingSyncEnqueuer
-	realtime           serviceports.RealtimeService
+	auditService       auditports.AuditService
+	accountingSync     accountingsyncports.AccountingSyncEnqueuer
+	realtime           agentports.RealtimeService
 }
 
 func New(p Params) *Service { //nolint:gocritic // stable API shape
@@ -85,25 +90,25 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListCustomerPaymentsRequest,
+	req *customerpaymentports.ListCustomerPaymentsRequest,
 ) (*pagination.ListResult[*customerpayment.Payment], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	req *serviceports.GetCustomerPaymentRequest,
+	req *customerpaymentports.GetCustomerPaymentRequest,
 ) (*customerpayment.Payment, error) {
 	return s.repo.GetByID(
 		ctx,
-		repositories.GetCustomerPaymentByIDRequest{ID: req.PaymentID, TenantInfo: req.TenantInfo},
+		customerpaymentports.GetCustomerPaymentByIDRequest{ID: req.PaymentID, TenantInfo: req.TenantInfo},
 	)
 }
 
 func (s *Service) PostAndApply( //nolint:funlen,gocognit // legacy workflow
 	ctx context.Context,
-	req *serviceports.PostCustomerPaymentRequest,
-	actor *serviceports.RequestActor,
+	req *customerpaymentports.PostCustomerPaymentRequest,
+	actor *permissionports.RequestActor,
 ) (*customerpayment.Payment, error) {
 	plan, err := s.planPost(ctx, req, actor)
 	if err != nil {
@@ -140,7 +145,7 @@ func (s *Service) PostAndApply( //nolint:funlen,gocognit // legacy workflow
 	)
 	originalInvoices := cloneInvoices(invoices)
 	var created *customerpayment.Payment
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		var txErr error
 		created, txErr = s.repo.Create(txCtx, entity)
 		if txErr != nil {
@@ -166,10 +171,10 @@ func (s *Service) PostAndApply( //nolint:funlen,gocognit // legacy workflow
 			appliedCreditAccountID = control.DefaultRevenueAccountID
 			entryDescription = fmt.Sprintf("Customer cash receipt %s", created.DocumentLabel())
 		}
-		lines := make([]repositories.JournalPostingLine, 0, 2+len(created.Applications))
+		lines := make([]journalentryports.JournalPostingLine, 0, 2+len(created.Applications))
 		lines = append(
 			lines,
-			repositories.JournalPostingLine{
+			journalentryports.JournalPostingLine{
 				ID:          pulid.MustNew("jel_"),
 				GLAccountID: control.DefaultCashAccountID,
 				LineNumber:  1,
@@ -189,7 +194,7 @@ func (s *Service) PostAndApply( //nolint:funlen,gocognit // legacy workflow
 			if app.AppliedAmountMinor > 0 {
 				lines = append(
 					lines,
-					repositories.JournalPostingLine{
+					journalentryports.JournalPostingLine{
 						ID:           pulid.MustNew("jel_"),
 						GLAccountID:  appliedCreditAccountID,
 						LineNumber:   lineNumber,
@@ -204,7 +209,7 @@ func (s *Service) PostAndApply( //nolint:funlen,gocognit // legacy workflow
 			if app.ShortPayAmountMinor > 0 {
 				lines = append(
 					lines,
-					repositories.JournalPostingLine{
+					journalentryports.JournalPostingLine{
 						ID:           pulid.MustNew("jel_"),
 						GLAccountID:  control.DefaultARAccountID,
 						LineNumber:   lineNumber,
@@ -217,7 +222,7 @@ func (s *Service) PostAndApply( //nolint:funlen,gocognit // legacy workflow
 				lineNumber++
 				lines = append(
 					lines,
-					repositories.JournalPostingLine{
+					journalentryports.JournalPostingLine{
 						ID:          pulid.MustNew("jel_"),
 						GLAccountID: control.DefaultWriteOffAccountID,
 						LineNumber:  lineNumber,
@@ -233,7 +238,7 @@ func (s *Service) PostAndApply( //nolint:funlen,gocognit // legacy workflow
 		if created.UnappliedAmountMinor > 0 {
 			lines = append(
 				lines,
-				repositories.JournalPostingLine{
+				journalentryports.JournalPostingLine{
 					ID:           pulid.MustNew("jel_"),
 					GLAccountID:  control.DefaultUnappliedCashAccountID,
 					LineNumber:   lineNumber,
@@ -245,7 +250,7 @@ func (s *Service) PostAndApply( //nolint:funlen,gocognit // legacy workflow
 			)
 		}
 
-		if txErr = s.journalRepo.CreatePosting(txCtx, repositories.CreateJournalPostingParams{
+		if txErr = s.journalRepo.CreatePosting(txCtx, journalentryports.CreateJournalPostingParams{
 			BatchID:              batchID,
 			OrganizationID:       entity.OrganizationID,
 			BusinessUnitID:       entity.BusinessUnitID,
@@ -307,10 +312,10 @@ func (s *Service) PostAndApply( //nolint:funlen,gocognit // legacy workflow
 		if created, txErr = s.repo.Update(txCtx, created); txErr != nil {
 			return txErr
 		}
-		return serviceports.EnqueueAccountingSync(
+		return accountingsyncports.EnqueueAccountingSync(
 			txCtx,
 			s.accountingSync,
-			serviceports.PaymentSyncRequest(
+			accountingsyncports.PaymentSyncRequest(
 				created,
 				accountingsync.SyncOperationCreate,
 				accountingsync.SyncSourceCustomerPaymentPosted,
@@ -331,8 +336,8 @@ func (s *Service) PostAndApply( //nolint:funlen,gocognit // legacy workflow
 
 func (s *Service) ApplyUnapplied( //nolint:funlen // legacy workflow
 	ctx context.Context,
-	req *serviceports.ApplyCustomerPaymentRequest,
-	actor *serviceports.RequestActor,
+	req *customerpaymentports.ApplyCustomerPaymentRequest,
+	actor *permissionports.RequestActor,
 ) (*customerpayment.Payment, error) {
 	plan, err := s.planApplyUnapplied(ctx, req, actor)
 	if err != nil {
@@ -367,7 +372,7 @@ func (s *Service) ApplyUnapplied( //nolint:funlen // legacy workflow
 	)
 	originalPayment := *payment
 	originalInvoices := cloneInvoices(invoices)
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		payment.Applications = append(payment.Applications, applications...)
 		payment.UpdatedByID = actor.UserID
 		for idx, inv := range invoices {
@@ -392,7 +397,7 @@ func (s *Service) ApplyUnapplied( //nolint:funlen // legacy workflow
 		)
 		if txErr = s.journalRepo.CreatePosting(
 			txCtx,
-			repositories.CreateJournalPostingParams{
+			journalentryports.CreateJournalPostingParams{
 				BatchID:              pulid.MustNew("jb_"),
 				OrganizationID:       payment.OrganizationID,
 				BusinessUnitID:       payment.BusinessUnitID,
@@ -452,10 +457,10 @@ func (s *Service) ApplyUnapplied( //nolint:funlen // legacy workflow
 				return txErr
 			}
 		}
-		return serviceports.EnqueueAccountingSync(
+		return accountingsyncports.EnqueueAccountingSync(
 			txCtx,
 			s.accountingSync,
-			serviceports.PaymentSyncRequest(
+			accountingsyncports.PaymentSyncRequest(
 				payment,
 				accountingsync.SyncOperationUpdate,
 				accountingsync.SyncSourceCustomerPaymentApplied,
@@ -481,8 +486,8 @@ func (s *Service) ApplyUnapplied( //nolint:funlen // legacy workflow
 
 func (s *Service) Reverse( //nolint:funlen // legacy workflow
 	ctx context.Context,
-	req *serviceports.ReverseCustomerPaymentRequest,
-	actor *serviceports.RequestActor,
+	req *customerpaymentports.ReverseCustomerPaymentRequest,
+	actor *permissionports.RequestActor,
 ) (*customerpayment.Payment, error) {
 	plan, err := s.planReverse(ctx, req, actor)
 	if err != nil {
@@ -517,7 +522,7 @@ func (s *Service) Reverse( //nolint:funlen // legacy workflow
 	)
 	originalPayment := *payment
 	originalInvoices := cloneInvoices(invoices)
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		for idx, app := range payment.Applications {
 			if app == nil {
 				continue
@@ -534,7 +539,7 @@ func (s *Service) Reverse( //nolint:funlen // legacy workflow
 		batchID := pulid.MustNew("jb_")
 		if txErr := s.journalRepo.CreatePosting(
 			txCtx,
-			repositories.CreateJournalPostingParams{
+			journalentryports.CreateJournalPostingParams{
 				BatchID:              batchID,
 				OrganizationID:       payment.OrganizationID,
 				BusinessUnitID:       payment.BusinessUnitID,
@@ -616,10 +621,10 @@ func (s *Service) Reverse( //nolint:funlen // legacy workflow
 			return txErr
 		}
 		payment = updatedPayment
-		return serviceports.EnqueueAccountingSync(
+		return accountingsyncports.EnqueueAccountingSync(
 			txCtx,
 			s.accountingSync,
-			serviceports.PaymentSyncRequest(
+			accountingsyncports.PaymentSyncRequest(
 				payment,
 				accountingsync.SyncOperationVoid,
 				accountingsync.SyncSourceCustomerPaymentReversed,
@@ -644,7 +649,7 @@ func (s *Service) Reverse( //nolint:funlen // legacy workflow
 }
 
 func mapApplications(
-	inputs []*serviceports.CustomerPaymentApplicationInput,
+	inputs []*customerpaymentports.CustomerPaymentApplicationInput,
 ) []*customerpayment.Application {
 	apps := make([]*customerpayment.Application, 0, len(inputs))
 	for idx, input := range inputs {
@@ -695,7 +700,7 @@ func (s *Service) logAudit(
 	operation permission.Operation,
 	comment string,
 ) {
-	params := &serviceports.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceCustomerPayment,
 		ResourceID:     current.ID.String(),
 		Operation:      operation,
@@ -707,7 +712,7 @@ func (s *Service) logAudit(
 	if previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(previous)
 	}
-	options := []serviceports.LogOption{auditservice.WithComment(comment)}
+	options := []auditports.LogOption{auditservice.WithComment(comment)}
 	if previous != nil {
 		options = append(options, auditservice.WithDiff(previous, current))
 	}
@@ -726,7 +731,7 @@ func (s *Service) logAudit(
 func (s *Service) announceInvoice(
 	ctx context.Context,
 	inv *invoice.Invoice,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) {
 	if inv == nil || s.realtime == nil {
 		return
@@ -755,7 +760,7 @@ func (s *Service) logInvoiceAudit(
 	if previous == nil || current == nil {
 		return
 	}
-	params := &serviceports.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceInvoice,
 		ResourceID:     current.ID.String(),
 		Operation:      permission.OpUpdate,

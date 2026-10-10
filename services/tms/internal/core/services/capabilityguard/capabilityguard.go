@@ -3,7 +3,7 @@ package capabilityguard
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -11,18 +11,18 @@ import (
 
 func AssetOperationsEnabled(
 	ctx context.Context,
-	orgRepo repositories.OrganizationRepository,
+	orgRepo tenantports.OrganizationRepository,
 	tenantInfo pagination.TenantInfo,
 ) (bool, error) {
-	return assetOperationsEnabled(ctx, orgRepo, tenantInfo, repositories.CapabilityLockNone)
+	return assetOperationsEnabled(ctx, orgRepo, tenantInfo, tenantports.CapabilityLockNone)
 }
 
 func EnsureDriverAssignable(
 	ctx context.Context,
-	orgRepo repositories.OrganizationRepository,
+	orgRepo tenantports.OrganizationRepository,
 	tenantInfo pagination.TenantInfo,
 	moveID pulid.ID,
-	lock repositories.CapabilityLock,
+	lock tenantports.CapabilityLock,
 ) error {
 	enabled, err := assetOperationsEnabled(ctx, orgRepo, tenantInfo, lock)
 	if err != nil {
@@ -38,13 +38,13 @@ func EnsureDriverAssignable(
 
 func assetOperationsEnabled(
 	ctx context.Context,
-	orgRepo repositories.OrganizationRepository,
+	orgRepo tenantports.OrganizationRepository,
 	tenantInfo pagination.TenantInfo,
-	lock repositories.CapabilityLock,
+	lock tenantports.CapabilityLock,
 ) (bool, error) {
 	capabilities, err := orgRepo.GetCapabilities(
 		ctx,
-		repositories.GetOrganizationCapabilitiesRequest{
+		tenantports.GetOrganizationCapabilitiesRequest{
 			TenantInfo: tenantInfo,
 			Lock:       lock,
 		},

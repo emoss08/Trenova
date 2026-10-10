@@ -9,8 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/testutil/agenteventstest"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -62,11 +61,11 @@ func newHarness(t *testing.T) *harness {
 	}
 	h := &harness{
 		conns:    &fakeConnections{conn: conn},
-		reader:   &fakeReader{maxRead: 200, docs: map[string]*services.AccountingDocumentState{}, omit: map[string]bool{}},
+		reader:   &fakeReader{maxRead: 200, docs: map[string]*accountingsyncports.AccountingDocumentState{}, omit: map[string]bool{}},
 		records:  &fakeRecords{},
 		findings: &fakeFindings{},
 		source: &fakeSource{
-			states: map[pulid.ID]*repositories.AccountingDriftState{},
+			states: map[pulid.ID]*accountingsyncports.AccountingDriftState{},
 		},
 		events: &agenteventstest.Recorder{},
 		tenant: tenantInfo,
@@ -115,7 +114,7 @@ func newHarness(t *testing.T) *harness {
 
 type sent struct {
 	record *accountingsync.AccountingSyncRecord
-	state  *repositories.AccountingDriftState
+	state  *accountingsyncports.AccountingDriftState
 }
 
 func (h *harness) synced(
@@ -151,7 +150,7 @@ func (h *harness) synced(
 			return 0
 		}
 	})
-	state := &repositories.AccountingDriftState{
+	state := &accountingsyncports.AccountingDriftState{
 		ObjectID:     objectID,
 		Number:       "DOC-" + externalID,
 		PartyID:      pulid.MustNew("cus_"),
@@ -168,8 +167,8 @@ func (h *harness) synced(
 func (h *harness) provider(
 	objectType accountingsync.SyncObjectType,
 	externalID, total string,
-) *services.AccountingDocumentState {
-	state := &services.AccountingDocumentState{
+) *accountingsyncports.AccountingDocumentState {
+	state := &accountingsyncports.AccountingDocumentState{
 		ExternalID:   externalID,
 		Found:        true,
 		Total:        decimalOf(total),
@@ -181,9 +180,9 @@ func (h *harness) provider(
 	return state
 }
 
-func (h *harness) reconcile(t *testing.T) *services.AccountingDriftBatchResult {
+func (h *harness) reconcile(t *testing.T) *accountingsyncports.AccountingDriftBatchResult {
 	t.Helper()
-	result, err := h.svc.ReconcileBatch(t.Context(), &services.ReconcileAccountingDriftRequest{
+	result, err := h.svc.ReconcileBatch(t.Context(), &accountingsyncports.ReconcileAccountingDriftRequest{
 		TenantInfo:   h.tenant,
 		ConnectionID: h.conn.ID,
 		EventBudget:  20,

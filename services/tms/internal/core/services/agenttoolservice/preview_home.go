@@ -7,15 +7,15 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/homelayout"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/homelayoutservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 
 var (
-	_ serviceports.ToolPreviewer = (*addHomeWidgetTool)(nil)
-	_ serviceports.ToolPreviewer = (*removeHomeWidgetTool)(nil)
-	_ serviceports.ToolPreviewer = (*arrangeHomeLayoutTool)(nil)
+	_ agentports.ToolPreviewer = (*addHomeWidgetTool)(nil)
+	_ agentports.ToolPreviewer = (*removeHomeWidgetTool)(nil)
+	_ agentports.ToolPreviewer = (*arrangeHomeLayoutTool)(nil)
 )
 
 const homePageLabel = "Your home page"
@@ -67,7 +67,7 @@ func (p *homePlan) summary() string {
 
 func (e homeEditor) preview(
 	ctx context.Context,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 	edit homeEdit,
 ) (*agent.ToolPreview, error) {
 	plan, err := e.plan(ctx, *params, edit)
@@ -89,21 +89,21 @@ func (e homeEditor) preview(
 
 func (t *addHomeWidgetTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	return t.editor.preview(ctx, &params, t.edit(params))
 }
 
 func (t *removeHomeWidgetTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	return t.editor.preview(ctx, &params, t.edit(params))
 }
 
 func (t *arrangeHomeLayoutTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	return t.editor.preview(ctx, &params, t.edit(params))
 }

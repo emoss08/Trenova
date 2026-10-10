@@ -8,9 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/orderservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -74,7 +75,7 @@ func newFakeOrders() *fakeOrders {
 
 func (f *fakeOrders) write() error { return f.guard.write() }
 
-func (f *fakeOrders) Get(context.Context, repositories.GetOrderByIDRequest) (*order.Order, error) {
+func (f *fakeOrders) Get(context.Context, orderports.GetOrderByIDRequest) (*order.Order, error) {
 	copied := *f.current
 
 	return &copied, nil
@@ -83,7 +84,7 @@ func (f *fakeOrders) Get(context.Context, repositories.GetOrderByIDRequest) (*or
 func (f *fakeOrders) Create(
 	_ context.Context,
 	entity *order.Order,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*order.Order, error) {
 	if err := f.write(); err != nil {
 		return nil, err
@@ -107,7 +108,7 @@ func (f *fakeOrders) PlanCreate(
 func (f *fakeOrders) Update(
 	_ context.Context,
 	entity *order.Order,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*order.Order, error) {
 	if err := f.write(); err != nil {
 		return nil, err
@@ -131,7 +132,7 @@ func (f *fakeOrders) AttachShipments(
 	tenant pagination.TenantInfo,
 	_ pulid.ID,
 	ids []pulid.ID,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*order.Order, error) {
 	if err := f.write(); err != nil {
 		return nil, err
@@ -160,7 +161,7 @@ func (f *fakeOrders) DetachShipment(
 	_ pagination.TenantInfo,
 	_ pulid.ID,
 	shipmentID pulid.ID,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*order.Order, error) {
 	if err := f.write(); err != nil {
 		return nil, err
@@ -193,7 +194,7 @@ func (f *fakeOrders) Close(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	orderID pulid.ID,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*order.Order, error) {
 	if err := f.write(); err != nil {
 		return nil, err
@@ -223,7 +224,7 @@ func (f *fakeOrders) Cancel(
 	_ pagination.TenantInfo,
 	_ pulid.ID,
 	reason string,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*order.Order, error) {
 	if err := f.write(); err != nil {
 		return nil, err
@@ -252,7 +253,7 @@ func (f *fakeOrders) ListCharges(
 func (f *fakeOrders) AddChargeWithAllocations(
 	_ context.Context,
 	req *orderservice.AddChargeRequest,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*order.Order, error) {
 	if err := f.write(); err != nil {
 		return nil, err
@@ -276,7 +277,7 @@ func (f *fakeOrders) PlanAddCharge(
 func (f *fakeOrders) UpdateCharge(
 	_ context.Context,
 	req *orderservice.UpdateChargeRequest,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*order.Order, error) {
 	if err := f.write(); err != nil {
 		return nil, err
@@ -303,7 +304,7 @@ func (f *fakeOrders) PlanUpdateCharge(
 func (f *fakeOrders) SetChargeAllocations(
 	_ context.Context,
 	req *orderservice.SetChargeAllocationsRequest,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*order.Order, error) {
 	if err := f.write(); err != nil {
 		return nil, err
@@ -328,7 +329,7 @@ func (f *fakeOrders) RemoveCharge(
 	_ pagination.TenantInfo,
 	_ pulid.ID,
 	chargeID pulid.ID,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*order.Order, error) {
 	if err := f.write(); err != nil {
 		return nil, err
@@ -361,7 +362,7 @@ func TestCreateOrder_PreviewsTheDraftAndCreates(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, orders.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	change := previewChange(t, preview, 0)
 	assert.Equal(t, agent.PreviewOperationCreate, change.Operation)
@@ -394,7 +395,7 @@ func TestCreateOrder_RefusesBadArguments(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+			require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 				executeParams(raw)))
 		})
 	}
@@ -411,7 +412,7 @@ func TestUpdateOrder_ChangesOnlyWhatIsSentAndIsMoneyOnlyForAmounts(t *testing.T)
 	})
 
 	preview := previewWithoutWrites(t, orders.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	change := previewChange(t, preview, 0)
 	assert.Equal(t, "BOL-9", fieldByPath(t, change, fieldBol).After)
@@ -426,11 +427,11 @@ func TestUpdateOrder_ChangesOnlyWhatIsSentAndIsMoneyOnlyForAmounts(t *testing.T)
 	assert.Equal(t, agent.EgressMoney, policy.Classify(executeParams(map[string]any{
 		paramBaseAmount: "10",
 	})).Egress)
-	target, ok := tool.(serviceports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, permission.ResourceOrder, target.Resource)
 
-	require.ErrorIs(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+	require.ErrorIs(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 		executeParams(map[string]any{paramOrderID: orders.current.ID.String()})),
 		errNothingToChange)
 }
@@ -447,7 +448,7 @@ func TestAttachOrderShipments_ShowsOnlyTheShipmentsThatMove(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, orders.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	require.Len(t, preview.Changes, 1)
 	assert.Contains(t, preview.Summary, "1 named are already on it")
@@ -474,7 +475,7 @@ func TestDetachOrderShipment_ShowsTheOrderItMovesTo(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, orders.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, agent.PreviewOperationCreate, previewChange(t, preview, 0).Operation)
 	assert.Contains(t, preview.Summary, "PRO-9")
@@ -491,7 +492,7 @@ func TestCloseOrder_IsAPersonsAndRefusesAnOrderNotBilled(t *testing.T) {
 	params := executeParams(map[string]any{paramOrderID: orders.current.ID.String()})
 
 	preview := previewWithoutWrites(t, orders.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, string(order.StatusClosed), fieldByPath(t, previewChange(t, preview, 0),
 		fieldStatus).After)
@@ -505,10 +506,10 @@ func TestCloseOrder_IsAPersonsAndRefusesAnOrderNotBilled(t *testing.T) {
 	refused.refusal = errortypes.NewValidationError("orderId", errortypes.ErrInvalidOperation,
 		"Only a Billed order can be closed")
 	closer := newCloseOrderTool(refused)
-	refusedPreview, err := closer.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	refusedPreview, err := closer.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	requireWarning(t, refusedPreview, agent.PreviewWarningWouldFail)
-	require.Error(t, closer.(serviceports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, closer.(agentports.ToolValidator).Validate(t.Context(), params))
 }
 
 func TestCancelOrder_NamesEveryLiveShipmentAndNeedsAReason(t *testing.T) {
@@ -526,7 +527,7 @@ func TestCancelOrder_NamesEveryLiveShipmentAndNeedsAReason(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, orders.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	require.Len(t, preview.Changes, 2)
 	assert.Contains(t, preview.Summary, "2 live shipments")
@@ -535,7 +536,7 @@ func TestCancelOrder_NamesEveryLiveShipmentAndNeedsAReason(t *testing.T) {
 	assert.Equal(t, "Customer canceled the PO", orders.canceled)
 	assert.Equal(t, []agent.EgressClass{agent.EgressExternalRecipient}, tool.Policy().Egress)
 
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 		executeParams(map[string]any{paramOrderID: orders.current.ID.String()})))
 }
 
@@ -558,7 +559,7 @@ func TestAddOrderCharge_ShowsTheMoneyAndReadsTheSplit(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, orders.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	change := previewChange(t, preview, 0)
 	assert.Equal(t, agent.PreviewOperationCreate, change.Operation)
@@ -598,7 +599,7 @@ func TestAddOrderCharge_RefusesASplitThatDoesNotSayHow(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+			require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 				executeParams(raw)))
 		})
 	}
@@ -620,7 +621,7 @@ func TestUpdateOrderCharge_KeepsWhatIsNotSentAndThePayersRow(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, orders.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	require.NotNil(t, previewChange(t, preview, 0).Money)
 
@@ -633,7 +634,7 @@ func TestUpdateOrderCharge_KeepsWhatIsNotSentAndThePayersRow(t *testing.T) {
 	assert.Equal(t, orders.charge.Allocations[0].ID, orders.edited.Allocations[0].ID)
 	assert.Equal(t, int64(3), orders.edited.Allocations[0].Version)
 
-	require.ErrorIs(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+	require.ErrorIs(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 		executeParams(map[string]any{
 			paramOrderID:  orders.current.ID.String(),
 			paramChargeID: orders.charge.ID.String(),
@@ -652,7 +653,7 @@ func TestSetOrderChargeAllocations_AnEmptySplitBillsTheOrdersCustomer(t *testing
 	})
 
 	preview := previewWithoutWrites(t, orders.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, "Billed to the order's customer",
 		fieldByPath(t, previewChange(t, preview, 0), "split").After)
@@ -674,7 +675,7 @@ func TestRemoveOrderCharge_PreviewsTheDeletion(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, orders.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, agent.PreviewOperationDelete, previewChange(t, preview, 0).Operation)
 

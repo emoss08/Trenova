@@ -7,8 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -17,7 +19,7 @@ import (
 )
 
 type pricingShipments struct {
-	rating    *serviceports.ShipmentRatingOutcome
+	rating    *shipmentports.ShipmentRatingOutcome
 	duplicate bool
 	refusal   error
 	saved     *shipment.Shipment
@@ -47,19 +49,19 @@ func (f *pricingShipments) prepare(entity *shipment.Shipment) error {
 func (f *pricingShipments) PreviewCreate(
 	_ context.Context,
 	entity *shipment.Shipment,
-	_ *serviceports.RequestActor,
-) (*serviceports.ShipmentCreatePlan, error) {
+	_ *permissionports.RequestActor,
+) (*shipmentports.ShipmentCreatePlan, error) {
 	if err := f.prepare(entity); err != nil {
 		return nil, err
 	}
 
-	return &serviceports.ShipmentCreatePlan{Shipment: entity, Rating: f.rating}, nil
+	return &shipmentports.ShipmentCreatePlan{Shipment: entity, Rating: f.rating}, nil
 }
 
 func (f *pricingShipments) Create(
 	_ context.Context,
 	entity *shipment.Shipment,
-	_ *serviceports.RequestActor,
+	_ *permissionports.RequestActor,
 ) (*shipment.Shipment, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
@@ -74,7 +76,7 @@ func (f *pricingShipments) Create(
 	return entity, nil
 }
 
-func createShipmentParams() serviceports.ToolExecuteParams {
+func createShipmentParams() agentports.ToolExecuteParams {
 	params := executeParams(map[string]any{
 		"shipment": shipmentPayload(
 			pulid.MustNew("cust_"),
@@ -91,7 +93,7 @@ func createShipmentParams() serviceports.ToolExecuteParams {
 func TestCreateShipment_PreviewMatchesWhatIsSaved(t *testing.T) {
 	t.Parallel()
 
-	shipments := &pricingShipments{rating: &serviceports.ShipmentRatingOutcome{
+	shipments := &pricingShipments{rating: &shipmentports.ShipmentRatingOutcome{
 		Adopted:       true,
 		Amount:        decimal.NewFromInt(1_850),
 		Currency:      "USD",
@@ -139,7 +141,7 @@ func TestCreateShipment_PreviewMatchesWhatIsSaved(t *testing.T) {
 func TestCreateShipment_PreviewNamesADepartureFromTheContract(t *testing.T) {
 	t.Parallel()
 
-	shipments := &pricingShipments{rating: &serviceports.ShipmentRatingOutcome{
+	shipments := &pricingShipments{rating: &shipmentports.ShipmentRatingOutcome{
 		Amount:   decimal.NewFromInt(1_700),
 		Currency: "USD",
 	}}

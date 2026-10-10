@@ -5,9 +5,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -31,7 +31,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.InboundMessageRepository {
+func New(p Params) inboundmessageports.InboundMessageRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.inbound-message-repository"),
@@ -43,7 +43,7 @@ func New(p Params) repositories.InboundMessageRepository {
 // rows for the same lane.
 func narrow(
 	sq *bun.SelectQuery,
-	req *repositories.ListInboundMessagesRequest,
+	req *inboundmessageports.ListInboundMessagesRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.InboundMessageColumns
 
@@ -68,7 +68,7 @@ func narrow(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListInboundMessagesRequest,
+	req *inboundmessageports.ListInboundMessagesRequest,
 ) (*pagination.ListResult[*inboundmessage.InboundMessage], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*inboundmessage.InboundMessage], error) {
 		entities := make([]*inboundmessage.InboundMessage, 0, req.Filter.Pagination.SafeLimit())
@@ -99,7 +99,7 @@ func (r *repository) List(
 
 func (r *repository) ListCursor(
 	ctx context.Context,
-	req *repositories.ListInboundMessagesRequest,
+	req *inboundmessageports.ListInboundMessagesRequest,
 ) (*pagination.CursorListResult[*inboundmessage.InboundMessage], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*inboundmessage.InboundMessage], error) {
 		dba := r.db.DBForContext(ctx)
@@ -144,7 +144,7 @@ func (r *repository) ListCursor(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetInboundMessageByIDRequest,
+	req inboundmessageports.GetInboundMessageByIDRequest,
 ) (*inboundmessage.InboundMessage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*inboundmessage.InboundMessage, error) {
 		entity := new(inboundmessage.InboundMessage)
@@ -173,7 +173,7 @@ func (r *repository) GetByID(
 // unique index it rides on is `(mailbox_id, provider_message_id)`.
 func (r *repository) GetByProviderID(
 	ctx context.Context,
-	req repositories.GetInboundMessageByProviderIDRequest,
+	req inboundmessageports.GetInboundMessageByProviderIDRequest,
 ) (*inboundmessage.InboundMessage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*inboundmessage.InboundMessage, error) {
 		entity := new(inboundmessage.InboundMessage)
@@ -315,10 +315,10 @@ func (r *repository) ListAttachments(
 // other the way three separate queries run a moment apart could.
 func (r *repository) CountBreakdown(
 	ctx context.Context,
-	req repositories.CountInboundMessagesRequest,
-) ([]repositories.InboundMessageCount, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.InboundMessageCount, error) {
-		rows := make([]repositories.InboundMessageCount, 0, len(inboundmessage.AllStatuses()))
+	req inboundmessageports.CountInboundMessagesRequest,
+) ([]inboundmessageports.InboundMessageCount, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]inboundmessageports.InboundMessageCount, error) {
+		rows := make([]inboundmessageports.InboundMessageCount, 0, len(inboundmessage.AllStatuses()))
 
 		if err := countBreakdownQuery(r.db.DBForContext(ctx), req).Scan(ctx, &rows); err != nil {
 			return nil, err
@@ -330,7 +330,7 @@ func (r *repository) CountBreakdown(
 
 func countBreakdownQuery(
 	db bun.IDB,
-	req repositories.CountInboundMessagesRequest,
+	req inboundmessageports.CountInboundMessagesRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.InboundMessageColumns
 
@@ -358,7 +358,7 @@ func countBreakdownQuery(
 // one query, rather than one per row.
 func (r *repository) CountAttachmentsByMessageIDs(
 	ctx context.Context,
-	req repositories.CountInboundAttachmentsRequest,
+	req inboundmessageports.CountInboundAttachmentsRequest,
 ) (map[pulid.ID]int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]int, error) {
 		counts := make(map[pulid.ID]int, len(req.MessageIDs))
@@ -396,7 +396,7 @@ func (r *repository) CountAttachmentsByMessageIDs(
 // still waiting on a person.
 func (r *repository) ListRecentForReview(
 	ctx context.Context,
-	req repositories.ListRecentInboundMessagesForReviewRequest,
+	req inboundmessageports.ListRecentInboundMessagesForReviewRequest,
 ) ([]*inboundmessage.InboundMessage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*inboundmessage.InboundMessage, error) {
 		limit := req.Limit
@@ -431,7 +431,7 @@ func (r *repository) ListRecentForReview(
 // done yet, and retention is not the thing that should decide it never will be.
 func (r *repository) DeleteBefore(
 	ctx context.Context,
-	req repositories.DeleteInboundMessagesBeforeRequest,
+	req inboundmessageports.DeleteInboundMessagesBeforeRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
 		cols := buncolgen.InboundMessageColumns
@@ -466,7 +466,7 @@ func (r *repository) DeleteBefore(
 // index, returning only what retention needs: the id and the stored body key.
 func (r *repository) ListSettledBefore(
 	ctx context.Context,
-	req repositories.ListSettledInboundMessagesRequest,
+	req inboundmessageports.ListSettledInboundMessagesRequest,
 ) ([]*inboundmessage.InboundMessage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*inboundmessage.InboundMessage, error) {
 		entities := make([]*inboundmessage.InboundMessage, 0, req.Limit)
@@ -480,7 +480,7 @@ func (r *repository) ListSettledBefore(
 
 func settledBeforeQuery(
 	db bun.IDB,
-	req repositories.ListSettledInboundMessagesRequest,
+	req inboundmessageports.ListSettledInboundMessagesRequest,
 	entities *[]*inboundmessage.InboundMessage,
 ) *bun.SelectQuery {
 	cols := buncolgen.InboundMessageColumns
@@ -507,7 +507,7 @@ func settledBeforeQuery(
 // with them through the foreign key's cascade.
 func (r *repository) DeleteByIDs(
 	ctx context.Context,
-	req repositories.DeleteInboundMessagesRequest,
+	req inboundmessageports.DeleteInboundMessagesRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		if len(req.IDs) == 0 {
@@ -528,7 +528,7 @@ func (r *repository) DeleteByIDs(
 	})
 }
 
-func deleteByIDsQuery(db bun.IDB, req repositories.DeleteInboundMessagesRequest) *bun.DeleteQuery {
+func deleteByIDsQuery(db bun.IDB, req inboundmessageports.DeleteInboundMessagesRequest) *bun.DeleteQuery {
 	cols := buncolgen.InboundMessageColumns
 
 	return db.NewDelete().

@@ -5,8 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,7 +18,7 @@ func (s *Service) personAllowance(
 	userID pulid.ID,
 	tenant pagination.TenantInfo,
 	now time.Time,
-) (*services.PersonAllowance, error) {
+) (*agentports.PersonAllowance, error) {
 	if s.agentControls == nil || userID.IsNil() {
 		return nil, nil
 	}
@@ -32,7 +31,7 @@ func (s *Service) personAllowance(
 	}
 
 	monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
-	used, err := s.conversations.CountQuestionsSince(ctx, repositories.CountQuestionsSinceRequest{
+	used, err := s.conversations.CountQuestionsSince(ctx, agentports.CountQuestionsSinceRequest{
 		TenantInfo: tenant,
 		UserID:     userID,
 		Since:      monthStart.Unix(),
@@ -41,7 +40,7 @@ func (s *Service) personAllowance(
 		return nil, err
 	}
 
-	return &services.PersonAllowance{
+	return &agentports.PersonAllowance{
 		Used:     used,
 		Limit:    control.PersonMonthlyMessages,
 		ResetsAt: monthStart.AddDate(0, 1, 0).Unix(),

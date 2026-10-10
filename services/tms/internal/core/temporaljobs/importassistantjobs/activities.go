@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/shipmentimportassistantservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/activity"
@@ -20,13 +21,13 @@ type ActivitiesParams struct {
 	fx.In
 
 	Assistant  *shipmentimportassistantservice.Service
-	Completion serviceports.CompletionService
+	Completion agentports.CompletionService
 	Logger     *zap.Logger
 }
 
 type Activities struct {
 	assistant  *shipmentimportassistantservice.Service
-	completion serviceports.CompletionService
+	completion agentports.CompletionService
 	l          *zap.Logger
 }
 
@@ -67,7 +68,7 @@ func (a *Activities) PrepareImportTurnActivity(
 func (a *Activities) ImportModelCallActivity(
 	ctx context.Context,
 	in *ModelInput,
-) (*serviceports.ChatCompletionResult, error) {
+) (*agentports.ChatCompletionResult, error) {
 	stop := modelcall.Heartbeat(ctx)
 	defer stop()
 
@@ -95,8 +96,8 @@ func (a *Activities) ImportModelCallActivity(
 	if activity.GetInfo(ctx).Attempt > 1 {
 		startOver()
 	}
-	req.RetrySink = func(notice serviceports.ChatRetryNotice) {
-		if notice.Kind == serviceports.RetryKindRestart {
+	req.RetrySink = func(notice agentports.ChatRetryNotice) {
+		if notice.Kind == agentports.RetryKindRestart {
 			startOver()
 		}
 	}
@@ -129,7 +130,7 @@ func (a *Activities) ImportToolActivity(
 func (a *Activities) FinishImportTurnActivity(
 	ctx context.Context,
 	in *FinishInput,
-) (*serviceports.ShipmentImportChatResponse, error) {
+) (*shipmentports.ShipmentImportChatResponse, error) {
 	return a.assistant.FinishTurn(ctx, in.Payload.request(), in.Record)
 }
 

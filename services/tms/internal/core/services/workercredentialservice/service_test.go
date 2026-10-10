@@ -1,13 +1,16 @@
 package workercredentialservice_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/workercredentialservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -26,7 +29,7 @@ const day = int64(86400)
 type fakeRepo struct {
 	types       map[pulid.ID]*worker.WorkerCredentialType
 	credentials map[pulid.ID]*worker.WorkerCredential
-	createReqs  []*repositories.CreateWorkerCredentialRequest
+	createReqs  []*workerports.CreateWorkerCredentialRequest
 	ensured     int
 }
 
@@ -39,7 +42,7 @@ func newFakeRepo() *fakeRepo {
 
 func (f *fakeRepo) ListTypes(
 	context.Context,
-	*repositories.ListCredentialTypesRequest,
+	*workerports.ListCredentialTypesRequest,
 ) (*pagination.CursorListResult[*worker.WorkerCredentialType], error) {
 	return &pagination.CursorListResult[*worker.WorkerCredentialType]{}, nil
 }
@@ -59,7 +62,7 @@ func (f *fakeRepo) ListActiveTypes(
 
 func (f *fakeRepo) TypeSelectOptions(
 	_ context.Context,
-	_ *repositories.WorkerCredentialTypeSelectOptionsRequest,
+	_ *workerports.WorkerCredentialTypeSelectOptionsRequest,
 ) (*pagination.ListResult[*worker.WorkerCredentialType], error) {
 	out := make([]*worker.WorkerCredentialType, 0, len(f.types))
 	for _, typ := range f.types {
@@ -72,7 +75,7 @@ func (f *fakeRepo) TypeSelectOptions(
 
 func (f *fakeRepo) GetTypeByID(
 	_ context.Context,
-	req *repositories.GetCredentialTypeByIDRequest,
+	req *workerports.GetCredentialTypeByIDRequest,
 ) (*worker.WorkerCredentialType, error) {
 	typ, ok := f.types[req.ID]
 	if !ok {
@@ -83,7 +86,7 @@ func (f *fakeRepo) GetTypeByID(
 
 func (f *fakeRepo) TypeCodeExists(
 	context.Context,
-	*repositories.CredentialTypeCodeExistsRequest,
+	*workerports.CredentialTypeCodeExistsRequest,
 ) (bool, error) {
 	return false, nil
 }
@@ -117,7 +120,7 @@ func (f *fakeRepo) EnsureSystemTypes(
 
 func (f *fakeRepo) CountCredentialsByType(
 	_ context.Context,
-	req *repositories.CountCredentialsByTypeRequest,
+	req *workerports.CountCredentialsByTypeRequest,
 ) (int, error) {
 	count := 0
 	for _, cred := range f.credentials {
@@ -130,7 +133,7 @@ func (f *fakeRepo) CountCredentialsByType(
 
 func (f *fakeRepo) CountCredentialsByTypeIDs(
 	_ context.Context,
-	req *repositories.CountCredentialsByTypeIDsRequest,
+	req *workerports.CountCredentialsByTypeIDsRequest,
 ) (map[pulid.ID]int, error) {
 	counts := make(map[pulid.ID]int, len(req.TypeIDs))
 	for _, typeID := range req.TypeIDs {
@@ -145,7 +148,7 @@ func (f *fakeRepo) CountCredentialsByTypeIDs(
 
 func (f *fakeRepo) ListForWorker(
 	_ context.Context,
-	req *repositories.ListWorkerCredentialsRequest,
+	req *workerports.ListWorkerCredentialsRequest,
 ) ([]*worker.WorkerCredential, error) {
 	out := make([]*worker.WorkerCredential, 0, len(f.credentials))
 	for _, cred := range f.credentials {
@@ -165,7 +168,7 @@ func (f *fakeRepo) ListForWorker(
 
 func (f *fakeRepo) GetByID(
 	_ context.Context,
-	req *repositories.GetWorkerCredentialByIDRequest,
+	req *workerports.GetWorkerCredentialByIDRequest,
 ) (*worker.WorkerCredential, error) {
 	cred, ok := f.credentials[req.ID]
 	if !ok {
@@ -180,7 +183,7 @@ func (f *fakeRepo) GetByID(
 
 func (f *fakeRepo) Create(
 	_ context.Context,
-	req *repositories.CreateWorkerCredentialRequest,
+	req *workerports.CreateWorkerCredentialRequest,
 ) (*worker.WorkerCredential, error) {
 	f.createReqs = append(f.createReqs, req)
 	if req.SupersedeReason != "" {
@@ -218,7 +221,7 @@ func (f *fakeRepo) Update(
 
 func (f *fakeRepo) ListExpiring(
 	context.Context,
-	*repositories.ListExpiringWorkerCredentialsRequest,
+	*workerports.ListExpiringWorkerCredentialsRequest,
 ) ([]*worker.WorkerCredential, error) {
 	return nil, nil
 }
@@ -226,8 +229,8 @@ func (f *fakeRepo) ListExpiring(
 type harness struct {
 	svc        *workercredentialservice.Service
 	repo       *fakeRepo
-	workerRepo *mocks.MockWorkerRepository
-	docRepo    *mocks.MockDocumentRepository
+	workerRepo *workerportsmock.MockWorkerRepository
+	docRepo    *documentportsmock.MockDocumentRepository
 	tenant     pagination.TenantInfo
 	wrk        *worker.Worker
 	cdl        *worker.WorkerCredentialType
@@ -239,9 +242,9 @@ type harness struct {
 func newHarness(t *testing.T) *harness {
 	t.Helper()
 	repo := newFakeRepo()
-	workerRepo := mocks.NewMockWorkerRepository(t)
-	docRepo := mocks.NewMockDocumentRepository(t)
-	audit := mocks.NewMockAuditService(t)
+	workerRepo := workerportsmock.NewMockWorkerRepository(t)
+	docRepo := documentportsmock.NewMockDocumentRepository(t)
+	audit := auditportsmock.NewMockAuditService(t)
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Maybe()
 
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
@@ -320,18 +323,18 @@ func TestCreate_MirrorsProfileAndRefreshesCompliance(t *testing.T) {
 	h := newHarness(t)
 	expiry := int64(1_950_000_000)
 
-	var patched *repositories.PatchProfileCredentialFieldRequest
+	var patched *workerports.PatchProfileCredentialFieldRequest
 	h.workerRepo.EXPECT().
 		PatchProfileCredentialField(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req *repositories.PatchProfileCredentialFieldRequest) error {
+		RunAndReturn(func(_ context.Context, req *workerports.PatchProfileCredentialFieldRequest) error {
 			patched = req
 			return nil
 		}).
 		Once()
-	var compliance *repositories.UpdateProfileComplianceStatusRequest
+	var compliance *workerports.UpdateProfileComplianceStatusRequest
 	h.workerRepo.EXPECT().
 		UpdateProfileComplianceStatus(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req *repositories.UpdateProfileComplianceStatusRequest) error {
+		RunAndReturn(func(_ context.Context, req *workerports.UpdateProfileComplianceStatusRequest) error {
 			compliance = req
 			return nil
 		}).

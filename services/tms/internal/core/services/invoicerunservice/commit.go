@@ -8,9 +8,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoicerun"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/invoiceservice"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -30,9 +34,9 @@ import (
 // which is what stops a Temporal retry from billing the same freight twice.
 func (s *Service) Commit(
 	ctx context.Context,
-	req *servicesports.CommitInvoiceRunRequest,
-	actor *servicesports.RequestActor,
-) (*servicesports.CommitInvoiceRunResult, error) {
+	req *invoicerunports.CommitInvoiceRunRequest,
+	actor *permissionports.RequestActor,
+) (*invoicerunports.CommitInvoiceRunResult, error) {
 	if req == nil || actor == nil {
 		return nil, errortypes.NewValidationError(
 			"request",
@@ -41,7 +45,7 @@ func (s *Service) Commit(
 		)
 	}
 
-	run, err := s.repo.GetByID(ctx, repositories.GetInvoiceRunByIDRequest{
+	run, err := s.repo.GetByID(ctx, invoicerunports.GetInvoiceRunByIDRequest{
 		ID:            req.RunID,
 		TenantInfo:    req.TenantInfo,
 		IncludeGroups: true,
@@ -63,7 +67,7 @@ func (s *Service) Commit(
 		if run, err = s.repo.Update(ctx, run); err != nil {
 			return nil, err
 		}
-		if run, err = s.repo.GetByID(ctx, repositories.GetInvoiceRunByIDRequest{
+		if run, err = s.repo.GetByID(ctx, invoicerunports.GetInvoiceRunByIDRequest{
 			ID:            req.RunID,
 			TenantInfo:    req.TenantInfo,
 			IncludeGroups: true,
@@ -73,8 +77,8 @@ func (s *Service) Commit(
 		}
 	}
 
-	result := &servicesports.CommitInvoiceRunResult{
-		Results: make([]servicesports.CommitGroupResult, 0, len(run.Groups)),
+	result := &invoicerunports.CommitInvoiceRunResult{
+		Results: make([]invoicerunports.CommitGroupResult, 0, len(run.Groups)),
 	}
 
 	for _, group := range run.Groups {
@@ -91,9 +95,9 @@ func (s *Service) commitGroup(
 	ctx context.Context,
 	run *invoicerun.InvoiceRun,
 	group *invoicerun.InvoiceRunGroup,
-	actor *servicesports.RequestActor,
-) servicesports.CommitGroupResult {
-	outcome := servicesports.CommitGroupResult{
+	actor *permissionports.RequestActor,
+) invoicerunports.CommitGroupResult {
+	outcome := invoicerunports.CommitGroupResult{
 		GroupID:    group.ID,
 		GroupLabel: group.GroupLabel,
 	}
@@ -108,17 +112,17 @@ func (s *Service) commitGroup(
 		return s.failGroup(ctx, group, &outcome, err)
 	}
 	switch decision.plan.Outcome {
-	case servicesports.InvoiceRunGroupAlreadyCommitted:
+	case invoicerunports.InvoiceRunGroupAlreadyCommitted:
 		outcome.Success = true
 		outcome.InvoiceID = group.InvoiceID
 		return outcome
-	case servicesports.InvoiceRunGroupAlreadySkipped:
+	case invoicerunports.InvoiceRunGroupAlreadySkipped:
 		outcome.Skipped = true
 		outcome.Error = group.SkipReason
 		return outcome
-	case servicesports.InvoiceRunGroupSkips:
+	case invoicerunports.InvoiceRunGroupSkips:
 		return s.skipGroup(ctx, group, &outcome, decision.plan.Reason)
-	case servicesports.InvoiceRunGroupBills:
+	case invoicerunports.InvoiceRunGroupBills:
 	}
 	legs, queueItems := decision.legs, decision.queueItems
 
@@ -174,7 +178,7 @@ func (s *Service) resolveGroupLegs(
 	for _, item := range items {
 		queueItem, err := s.billingQueueRepo.GetByID(
 			ctx,
-			&repositories.GetBillingQueueItemByIDRequest{
+			&billingqueueports.GetBillingQueueItemByIDRequest{
 				ItemID:     item.BillingQueueItemID,
 				TenantInfo: tenantInfo,
 			},
@@ -192,10 +196,10 @@ func (s *Service) resolveGroupLegs(
 			return nil, nil, "Some shipments were re-allocated to another payer after this run was built", nil
 		}
 
-		shp, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+		shp, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 			ID:         item.ShipmentID,
 			TenantInfo: tenantInfo,
-			ShipmentOptions: repositories.ShipmentOptions{
+			ShipmentOptions: shipmentports.ShipmentOptions{
 				ExpandShipmentDetails: true,
 			},
 		})
@@ -238,7 +242,7 @@ func (s *Service) hasDetentionHolds(
 
 	holds, err := s.detentionBilling.HoldsForShipments(
 		ctx,
-		&servicesports.DetentionBillingHoldsRequest{
+		&detentionports.DetentionBillingHoldsRequest{
 			TenantInfo:  tenantInfo,
 			ShipmentIDs: shipmentIDs,
 		},
@@ -253,9 +257,9 @@ func (s *Service) hasDetentionHolds(
 func (s *Service) skipGroup(
 	ctx context.Context,
 	group *invoicerun.InvoiceRunGroup,
-	outcome *servicesports.CommitGroupResult,
+	outcome *invoicerunports.CommitGroupResult,
 	reason string,
-) servicesports.CommitGroupResult {
+) invoicerunports.CommitGroupResult {
 	group.Status = invoicerun.GroupStatusSkipped
 	group.SkipReason = reason
 	if _, err := s.repo.UpdateGroup(ctx, group); err != nil {
@@ -271,9 +275,9 @@ func (s *Service) skipGroup(
 func (s *Service) failGroup(
 	ctx context.Context,
 	group *invoicerun.InvoiceRunGroup,
-	outcome *servicesports.CommitGroupResult,
+	outcome *invoicerunports.CommitGroupResult,
 	cause error,
-) servicesports.CommitGroupResult {
+) invoicerunports.CommitGroupResult {
 	group.Status = invoicerun.GroupStatusFailed
 	group.SkipReason = cause.Error()
 	if _, err := s.repo.UpdateGroup(ctx, group); err != nil {
@@ -290,9 +294,9 @@ func (s *Service) failGroup(
 func (s *Service) finishRun(
 	ctx context.Context,
 	run *invoicerun.InvoiceRun,
-	result *servicesports.CommitInvoiceRunResult,
-	actor *servicesports.RequestActor,
-) (*servicesports.CommitInvoiceRunResult, error) {
+	result *invoicerunports.CommitInvoiceRunResult,
+	actor *permissionports.RequestActor,
+) (*invoicerunports.CommitInvoiceRunResult, error) {
 	for _, outcome := range result.Results {
 		result.TotalCount++
 		switch {
@@ -348,7 +352,7 @@ func (s *Service) advanceBillingWatermark(ctx context.Context, run *invoicerun.I
 
 		if err = s.customerRepo.AdvanceBilledPeriod(
 			ctx,
-			&repositories.AdvanceBilledPeriodRequest{
+			&customerports.AdvanceBilledPeriodRequest{
 				TenantInfo: pagination.TenantInfo{
 					OrgID: run.OrganizationID,
 					BuID:  run.BusinessUnitID,
@@ -364,17 +368,17 @@ func (s *Service) advanceBillingWatermark(ctx context.Context, run *invoicerun.I
 
 func (s *Service) resultFromRun(
 	run *invoicerun.InvoiceRun,
-) *servicesports.CommitInvoiceRunResult {
-	result := &servicesports.CommitInvoiceRunResult{
+) *invoicerunports.CommitInvoiceRunResult {
+	result := &invoicerunports.CommitInvoiceRunResult{
 		Run:     run,
-		Results: make([]servicesports.CommitGroupResult, 0, len(run.Groups)),
+		Results: make([]invoicerunports.CommitGroupResult, 0, len(run.Groups)),
 	}
 
 	for _, group := range run.Groups {
 		if group == nil {
 			continue
 		}
-		outcome := servicesports.CommitGroupResult{
+		outcome := invoicerunports.CommitGroupResult{
 			GroupID:    group.ID,
 			GroupLabel: group.GroupLabel,
 			InvoiceID:  group.InvoiceID,

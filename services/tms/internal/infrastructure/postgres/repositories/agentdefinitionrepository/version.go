@@ -7,9 +7,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/uptrace/bun"
@@ -29,7 +29,7 @@ type versionRepository struct {
 	l  *zap.Logger
 }
 
-func NewVersionRepository(p VersionParams) repositories.AgentDefinitionVersionRepository {
+func NewVersionRepository(p VersionParams) agentdefinitionports.AgentDefinitionVersionRepository {
 	return &versionRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.agentdefinition-version-repository"),
@@ -47,7 +47,7 @@ func (r *versionRepository) Create(ctx context.Context, version *agentdefinition
 
 func (r *versionRepository) List(
 	ctx context.Context,
-	req *repositories.ListAgentDefinitionVersionsRequest,
+	req *agentdefinitionports.ListAgentDefinitionVersionsRequest,
 ) ([]*agentdefinition.DefinitionVersion, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentdefinition.DefinitionVersion, error) {
 		cols := buncolgen.DefinitionVersionColumns
@@ -79,7 +79,7 @@ func (r *versionRepository) List(
 
 func (r *versionRepository) Get(
 	ctx context.Context,
-	req *repositories.GetAgentDefinitionVersionRequest,
+	req *agentdefinitionports.GetAgentDefinitionVersionRequest,
 ) (*agentdefinition.DefinitionVersion, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentdefinition.DefinitionVersion, error) {
 		cols := buncolgen.DefinitionVersionColumns
@@ -104,7 +104,7 @@ func (r *versionRepository) Get(
 
 func (r *versionRepository) LatestAt(
 	ctx context.Context,
-	req *repositories.GetAgentDefinitionVersionAtRequest,
+	req *agentdefinitionports.GetAgentDefinitionVersionAtRequest,
 ) (*agentdefinition.DefinitionVersion, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentdefinition.DefinitionVersion, error) {
 		cols := buncolgen.DefinitionVersionColumns

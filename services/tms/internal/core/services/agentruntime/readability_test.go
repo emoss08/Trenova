@@ -6,7 +6,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -155,7 +155,7 @@ func TestDistinctCallIDs_ReplacesAnIDTheConversationAlreadyUsed(t *testing.T) {
 		Role:      conversation.RoleAssistant,
 		ToolCalls: []conversation.ToolCallRecord{{ID: "call_0", Name: "search_shipments"}},
 	}})
-	completion := &serviceports.ChatCompletionResult{ToolCalls: []serviceports.ToolCall{
+	completion := &agentports.ChatCompletionResult{ToolCalls: []agentports.ToolCall{
 		{ID: "call_0", Name: "get_shipment"},
 		{ID: "", Name: "get_customer"},
 		{ID: "toolu_unique", Name: "get_worker"},
@@ -189,8 +189,8 @@ the change keeps the ids it was given, so its history still replays.
 func TestDistinctCallIDs_AlwaysReplacesASynthesizedID(t *testing.T) {
 	t.Parallel()
 
-	completion := func() *serviceports.ChatCompletionResult {
-		return &serviceports.ChatCompletionResult{ToolCalls: []serviceports.ToolCall{
+	completion := func() *agentports.ChatCompletionResult {
+		return &agentports.ChatCompletionResult{ToolCalls: []agentports.ToolCall{
 			{ID: "ollama_call_0_get_shipment", SynthesizedID: true, Name: "get_shipment"},
 			{ID: "ollama_call_1_get_customer", SynthesizedID: true, Name: "get_customer"},
 			{ID: "toolu_unique", Name: "get_worker"},
@@ -228,7 +228,7 @@ func TestDistinctCallIDs_AlwaysReplacesASynthesizedID(t *testing.T) {
 	})
 	assert.Equal(t, "ollama_call_0_get_shipment", before.ToolCalls[0].ID)
 
-	plain := &serviceports.ChatCompletionResult{ToolCalls: []serviceports.ToolCall{
+	plain := &agentports.ChatCompletionResult{ToolCalls: []agentports.ToolCall{
 		{ID: "toolu_1", Name: "get_worker"},
 	}}
 	distinctCallIDs(plain, map[string]struct{}{}, callIDMinter{
@@ -248,9 +248,9 @@ still its own in the transcript, and in what its artifacts are keyed on.
 func TestRun_GivesSynthesizedCallIDsOfEachTurnTheirOwnID(t *testing.T) {
 	t.Parallel()
 
-	synthesized := func() *serviceports.ChatCompletionResult {
-		return &serviceports.ChatCompletionResult{
-			ToolCalls: []serviceports.ToolCall{{
+	synthesized := func() *agentports.ChatCompletionResult {
+		return &agentports.ChatCompletionResult{
+			ToolCalls: []agentports.ToolCall{{
 				ID:            "ollama_call_0_search_worker",
 				SynthesizedID: true,
 				Name:          "search_worker",
@@ -260,20 +260,20 @@ func TestRun_GivesSynthesizedCallIDsOfEachTurnTheirOwnID(t *testing.T) {
 		}
 	}
 	tool := queryTool("search_worker", map[string]any{"results": []any{}}, nil)
-	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
 		synthesized(),
 		synthesized(),
 		textTurn("Nobody by that name."),
 	}}
-	rt := newRuntime(completion, &stubQueryRegistry{Tools: []serviceports.AgentQueryTool{tool}},
+	rt := newRuntime(completion, &stubQueryRegistry{Tools: []agentports.AgentQueryTool{tool}},
 		&stubActionRegistry{}, nil)
 
 	var observed []string
-	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+	result, err := rt.Run(t.Context(), &agentports.RunRequest{
 		Definition: testDefinition("search_worker"),
 		Actor:      testActor(),
 		Input:      "Who is Maria?",
-		ToolObserver: func(observation serviceports.ToolObservation) (*serviceports.ShownArtifact, error) {
+		ToolObserver: func(observation agentports.ToolObservation) (*agentports.ShownArtifact, error) {
 			observed = append(observed, observation.Call.ID)
 			return nil, nil
 		},

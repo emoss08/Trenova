@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -17,14 +17,14 @@ import (
 )
 
 type fakeCost struct {
-	cost  *repositories.AIUsageCost
+	cost  *aiusageports.AIUsageCost
 	since int64
 }
 
 func (f *fakeCost) CostByDefinition(
 	_ context.Context,
-	req repositories.AIUsageCostRequest,
-) (*repositories.AIUsageCost, error) {
+	req aiusageports.AIUsageCostRequest,
+) (*aiusageports.AIUsageCost, error) {
 	f.since = req.Since
 
 	return f.cost, nil
@@ -37,7 +37,7 @@ type fakeRuns struct {
 
 func (f *fakeRuns) CountSince(
 	_ context.Context,
-	req repositories.CountAgentRunsSinceRequest,
+	req agentports.CountAgentRunsSinceRequest,
 ) (int, error) {
 	f.since = req.Since
 
@@ -50,7 +50,7 @@ type fakeTools struct {
 
 func (f *fakeTools) CountExecutedTool(
 	_ context.Context,
-	req repositories.CountExecutedToolRequest,
+	req agentports.CountExecutedToolRequest,
 ) (int, error) {
 	return f.used[req.ToolName], nil
 }
@@ -108,7 +108,7 @@ func TestCheckRun_RefusesWhenTheMonthlyBudgetIsSpent(t *testing.T) {
 	t.Parallel()
 
 	cost := &fakeCost{
-		cost: &repositories.AIUsageCost{CostUSD: decimal.RequireFromString("25.50"), Calls: 40},
+		cost: &aiusageports.AIUsageCost{CostUSD: decimal.RequireFromString("25.50"), Calls: 40},
 	}
 	svc := newService(cost, &fakeRuns{}, &fakeTools{})
 	d := definition()
@@ -117,7 +117,7 @@ func TestCheckRun_RefusesWhenTheMonthlyBudgetIsSpent(t *testing.T) {
 	refusal, err := svc.CheckRun(t.Context(), d)
 	require.NoError(t, err)
 
-	assert.Equal(t, services.BudgetCapMonthly, refusal.Cap)
+	assert.Equal(t, agentports.BudgetCapMonthly, refusal.Cap)
 	assert.Equal(t, "25.50", refusal.Spent)
 	assert.Equal(t, "25.00", refusal.Limit)
 	assert.Contains(
@@ -131,7 +131,7 @@ func TestCheckRun_RefusesWhenTheMonthlyBudgetIsSpent(t *testing.T) {
 func TestCheckRun_AllowsUnderBudgetAndWithoutOne(t *testing.T) {
 	t.Parallel()
 
-	cost := &fakeCost{cost: &repositories.AIUsageCost{CostUSD: decimal.RequireFromString("3")}}
+	cost := &fakeCost{cost: &aiusageports.AIUsageCost{CostUSD: decimal.RequireFromString("3")}}
 	svc := newService(cost, &fakeRuns{started: 2}, &fakeTools{})
 	d := definition()
 	d.MonthlyBudgetUSD = money("25")
@@ -156,7 +156,7 @@ func TestCheckRun_RefusesTheRunPastTheDailyLimit(t *testing.T) {
 	refusal, err := svc.CheckRun(t.Context(), d)
 	require.NoError(t, err)
 
-	assert.Equal(t, services.BudgetCapDailyRuns, refusal.Cap)
+	assert.Equal(t, agentports.BudgetCapDailyRuns, refusal.Cap)
 	assert.Contains(t, refusal.Message("Night desk"), "started its 3 runs for today")
 }
 
@@ -167,12 +167,12 @@ func TestCheckTool_CountsOnlyToolsWithACap(t *testing.T) {
 	d := definition()
 	d.ToolDailyLimits = map[string]int{"assign_move": 5}
 
-	refusal, err := svc.CheckTool(t.Context(), services.CheckToolBudgetRequest{Definition: d, ToolName: "assign_move"})
+	refusal, err := svc.CheckTool(t.Context(), agentports.CheckToolBudgetRequest{Definition: d, ToolName: "assign_move"})
 	require.NoError(t, err)
-	assert.Equal(t, services.BudgetCapTool, refusal.Cap)
+	assert.Equal(t, agentports.BudgetCapTool, refusal.Cap)
 	assert.Equal(t, "assign_move", refusal.Tool)
 
-	refusal, err = svc.CheckTool(t.Context(), services.CheckToolBudgetRequest{Definition: d, ToolName: "cancel_shipment"})
+	refusal, err = svc.CheckTool(t.Context(), agentports.CheckToolBudgetRequest{Definition: d, ToolName: "cancel_shipment"})
 	require.NoError(t, err)
 	assert.False(t, refusal.Refused())
 }
@@ -186,24 +186,24 @@ func TestCheckTool_CountsWritesThisTurnHasNotRecordedYet(t *testing.T) {
 	d := definition()
 	d.ToolDailyLimits = map[string]int{"assign_move": 5}
 
-	refusal, err := svc.CheckTool(t.Context(), services.CheckToolBudgetRequest{
+	refusal, err := svc.CheckTool(t.Context(), agentports.CheckToolBudgetRequest{
 		Definition: d, ToolName: "assign_move", Unrecorded: 1,
 	})
 	require.NoError(t, err)
 	assert.False(t, refusal.Refused(), "four of five")
 
-	refusal, err = svc.CheckTool(t.Context(), services.CheckToolBudgetRequest{
+	refusal, err = svc.CheckTool(t.Context(), agentports.CheckToolBudgetRequest{
 		Definition: d, ToolName: "assign_move", Unrecorded: 2,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, services.BudgetCapTool, refusal.Cap)
+	assert.Equal(t, agentports.BudgetCapTool, refusal.Cap)
 	assert.Equal(t, "5", refusal.Spent)
 }
 
 func TestStatus_ReportsEveryCapAndTheUnpricedCalls(t *testing.T) {
 	t.Parallel()
 
-	cost := &fakeCost{cost: &repositories.AIUsageCost{
+	cost := &fakeCost{cost: &aiusageports.AIUsageCost{
 		CostUSD: decimal.RequireFromString("12.345"), Calls: 20, UnpricedCalls: 4,
 	}}
 	svc := newService(
@@ -226,7 +226,7 @@ func TestStatus_ReportsEveryCapAndTheUnpricedCalls(t *testing.T) {
 	assert.Equal(t, 1, status.RunsToday)
 	assert.Equal(
 		t,
-		[]services.ToolBudgetUse{{Tool: "assign_move", Used: 2, Limit: 8}},
+		[]agentports.ToolBudgetUse{{Tool: "assign_move", Used: 2, Limit: 8}},
 		status.Tools,
 	)
 	assert.True(t, status.SimulationMode)

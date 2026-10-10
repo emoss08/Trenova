@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -38,7 +38,7 @@ type meeting struct {
 }
 
 type meetingOrganizations struct {
-	repositories.OrganizationRepository
+	tenantports.OrganizationRepository
 
 	meeting *meeting
 	org     *tenant.Organization
@@ -46,7 +46,7 @@ type meetingOrganizations struct {
 
 func (m *meetingOrganizations) GetByID(
 	ctx context.Context,
-	_ repositories.GetOrganizationByIDRequest,
+	_ tenantports.GetOrganizationByIDRequest,
 ) (*tenant.Organization, error) {
 	close(m.meeting.orgStarted)
 	m.meeting.orgSawVector.Store(meet(ctx, m.meeting.vectorStarted))
@@ -55,19 +55,19 @@ func (m *meetingOrganizations) GetByID(
 }
 
 type meetingVectorizer struct {
-	serviceports.QueryVectorizer
+	agentports.QueryVectorizer
 
 	meeting *meeting
 }
 
 func (m *meetingVectorizer) Vectorize(
 	ctx context.Context,
-	_ *serviceports.QueryVectorRequest,
-) (serviceports.QueryVector, error) {
+	_ *agentports.QueryVectorRequest,
+) (agentports.QueryVector, error) {
 	close(m.meeting.vectorStarted)
 	m.meeting.vectorSawOrg.Store(meet(ctx, m.meeting.orgStarted))
 
-	return serviceports.QueryVector{}, nil
+	return agentports.QueryVector{}, nil
 }
 
 /*
@@ -81,7 +81,7 @@ func TestContextBuilder_ReadsTheOrganizationWhileTheQuestionIsEmbedded(t *testin
 	t.Parallel()
 
 	m := &meeting{orgStarted: make(chan struct{}), vectorStarted: make(chan struct{})}
-	memories := &fakeMemories{answer: &serviceports.MemoryContext{}}
+	memories := &fakeMemories{answer: &agentports.MemoryContext{}}
 	builder := &ContextBuilder{
 		logger: zap.NewNop(),
 		organizations: &meetingOrganizations{
@@ -105,11 +105,11 @@ func TestContextBuilder_ReadsTheOrganizationWhileTheQuestionIsEmbedded(t *testin
 		agentdefinition.ContextMemory,
 	}
 
-	rc, err := builder.Build(t.Context(), &serviceports.RuntimeContextRequest{
+	rc, err := builder.Build(t.Context(), &agentports.RuntimeContextRequest{
 		Definition: definition,
 		Actor:      actor,
 		Trigger:    agent.RunTriggerChat,
-		Query: serviceports.QueryVectorRequest{
+		Query: agentports.QueryVectorRequest{
 			TenantInfo: actor.TenantInfo(),
 			Text:       "where is S1",
 		},

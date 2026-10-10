@@ -19,12 +19,15 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -53,7 +56,7 @@ type notifier interface {
 }
 
 type actionLogger interface {
-	LogAction(params *services.LogActionParams, opts ...services.LogOption) error
+	LogAction(params *auditports.LogActionParams, opts ...auditports.LogOption) error
 }
 
 type Params struct {
@@ -62,13 +65,13 @@ type Params struct {
 	Logger *zap.Logger
 	// DB holds a tier change and the ledger's record of it in one
 	// transaction, so neither lands without the other.
-	DB           ports.DBConnection
-	Trust        repositories.AgentToolTrustRepository
-	Definitions  repositories.AgentDefinitionRepository
-	Controls     repositories.AgentControlRepository
-	Runs         repositories.AgentRunRepository
-	Tools        services.AgentToolRegistry
-	AuditService services.AuditService
+	DB           kernelports.DBConnection
+	Trust        agentports.AgentToolTrustRepository
+	Definitions  agentdefinitionports.AgentDefinitionRepository
+	Controls     tenantports.AgentControlRepository
+	Runs         agentports.AgentRunRepository
+	Tools        agentports.AgentToolRegistry
+	AuditService auditports.AuditService
 	// Notifications is optional so the ledger still counts where nothing can
 	// be told about a change; the audit line is the durable record either way.
 	Notifications *notificationservice.Service `optional:"true"`
@@ -76,17 +79,17 @@ type Params struct {
 
 type Service struct {
 	l             *zap.Logger
-	db            ports.DBConnection
-	trust         repositories.AgentToolTrustRepository
-	definitions   repositories.AgentDefinitionRepository
-	controls      repositories.AgentControlRepository
-	runs          repositories.AgentRunRepository
-	tools         services.AgentToolRegistry
+	db            kernelports.DBConnection
+	trust         agentports.AgentToolTrustRepository
+	definitions   agentdefinitionports.AgentDefinitionRepository
+	controls      tenantports.AgentControlRepository
+	runs          agentports.AgentRunRepository
+	tools         agentports.AgentToolRegistry
 	audit         actionLogger
 	notifications notifier
 }
 
-func New(p Params) services.AgentTrustService {
+func New(p Params) agentports.AgentTrustService {
 	svc := &Service{
 		l:           p.Logger.Named("service.agenttrust"),
 		db:          p.DB,
@@ -135,7 +138,7 @@ func (s *Service) RecordExecutionFailure(ctx context.Context, proposal *agent.Ag
 
 func (s *Service) ListForDefinition(
 	ctx context.Context,
-	req repositories.ListToolTrustRequest,
+	req agentports.ListToolTrustRequest,
 ) ([]*agent.ToolTrust, error) {
 	return s.trust.ListByDefinition(ctx, req)
 }
@@ -151,7 +154,7 @@ func (s *Service) record(
 		BuID:  proposal.BusinessUnitID,
 	}
 
-	run, err := s.runs.GetByID(ctx, repositories.GetAgentRunByIDRequest{
+	run, err := s.runs.GetByID(ctx, agentports.GetAgentRunByIDRequest{
 		ID:         proposal.RunID,
 		TenantInfo: &tenantInfo,
 	})
@@ -164,7 +167,7 @@ func (s *Service) record(
 	}
 
 	now := timeutils.NowUnix()
-	row, err := s.trust.Record(ctx, repositories.RecordToolTrustRequest{
+	row, err := s.trust.Record(ctx, agentports.RecordToolTrustRequest{
 		TenantInfo:        tenantInfo,
 		AgentDefinitionID: run.AgentDefinitionID,
 		ToolName:          proposal.ToolName,
@@ -175,7 +178,7 @@ func (s *Service) record(
 		return err
 	}
 
-	definition, err := s.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	definition, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         run.AgentDefinitionID,
 		TenantInfo: tenantInfo,
 	})
@@ -328,7 +331,7 @@ func (s *Service) moveTier(
 	to agent.AutonomyTier,
 	promoted bool,
 ) (bool, error) {
-	mark := repositories.MarkToolTierChangeRequest{
+	mark := agentports.MarkToolTierChangeRequest{
 		ID:         change.row.ID,
 		TenantInfo: change.tenant,
 		Version:    change.row.Version,
@@ -342,7 +345,7 @@ func (s *Service) moveTier(
 	}
 
 	moved := true
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		if _, err := s.trust.MarkTierChange(txCtx, mark); err != nil {
 			if errortypes.IsVersionMismatchError(err) {
 				moved = false
@@ -369,7 +372,7 @@ func (s *Service) moveTier(
 }
 
 func (s *Service) setTier(ctx context.Context, change tierChange, tier agent.AutonomyTier) error {
-	if err := s.definitions.SetToolTier(ctx, repositories.SetAgentDefinitionToolTierRequest{
+	if err := s.definitions.SetToolTier(ctx, agentdefinitionports.SetAgentDefinitionToolTierRequest{
 		ID:         change.definition.ID,
 		TenantInfo: change.tenant,
 		ToolName:   change.row.ToolName,
@@ -402,13 +405,13 @@ func (s *Service) promotable(toolName string) agent.AutonomyTier {
 	return agenttoolpolicy.Promotable(policy)
 }
 
-func (s *Service) policyOf(toolName string) (services.ToolPolicy, bool) {
+func (s *Service) policyOf(toolName string) (agentports.ToolPolicy, bool) {
 	if s.tools == nil {
-		return services.ToolPolicy{}, false
+		return agentports.ToolPolicy{}, false
 	}
 	tool, ok := s.tools.Get(toolName)
 	if !ok {
-		return services.ToolPolicy{}, false
+		return agentports.ToolPolicy{}, false
 	}
 
 	return tool.Policy(), true
@@ -419,16 +422,16 @@ func (s *Service) logTierChange(change tierChange, to agent.AutonomyTier, commen
 		return
 	}
 
-	actor := services.SystemAuditActor()
+	actor := permissionports.SystemAuditActor()
 	if change.decidedBy.IsNotNil() {
-		actor = services.AuditActor{
-			PrincipalType: services.PrincipalTypeUser,
+		actor = kernelports.AuditActor{
+			PrincipalType: permissionports.PrincipalTypeUser,
 			PrincipalID:   change.decidedBy,
 			UserID:        change.decidedBy,
 		}
 	}
 
-	if err := s.audit.LogAction(&services.LogActionParams{
+	if err := s.audit.LogAction(&auditports.LogActionParams{
 		Resource:      permission.ResourceAgentDefinition,
 		ResourceID:    change.definition.ID.String(),
 		Operation:     permission.OpUpdate,

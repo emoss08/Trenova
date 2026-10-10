@@ -3,8 +3,9 @@ package carrierassignmentservice
 import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,7 +27,7 @@ func (s *Service) logCarrierAssignmentAudit(p *carrierAssignmentAuditParams) {
 		return
 	}
 
-	params := &portservices.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceShipmentMove,
 		ResourceID:     p.MoveID.String(),
 		Operation:      p.Operation,
@@ -38,11 +39,11 @@ func (s *Service) logCarrierAssignmentAudit(p *carrierAssignmentAuditParams) {
 		params.CurrentState = jsonutils.MustToJSON(p.Current)
 	}
 	if p.UserID.IsNil() {
-		params.PrincipalType = portservices.PrincipalTypeSystem
-		params.PrincipalID = portservices.SystemPrincipalID
+		params.PrincipalType = permissionports.PrincipalTypeSystem
+		params.PrincipalID = permissionports.SystemPrincipalID
 	}
 
-	options := []portservices.LogOption{auditservice.WithComment(p.Comment)}
+	options := []auditports.LogOption{auditservice.WithComment(p.Comment)}
 	if p.Previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(p.Previous)
 		if p.Current != nil {

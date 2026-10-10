@@ -11,17 +11,19 @@ package ratesimulationservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/ratesimjobs/ratesimcontract"
-
-	"github.com/emoss08/trenova/internal/core/services/formula/contextvariablecache"
-
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/ratesimulation"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/formula/contextvariablecache"
 	"github.com/emoss08/trenova/internal/core/services/formula/effectiveversioncache"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/ratesimjobs/ratesimcontract"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratesimulationports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	simmath "github.com/emoss08/trenova/pkg/ratesimulation"
@@ -54,26 +56,26 @@ type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Repo          repositories.RateSimulationRepository
-	AgreementRepo repositories.RateAgreementRepository
-	ShipmentRepo  repositories.ShipmentRepository
-	RateEngine    services.RateEngine
-	AuditService  services.AuditService
-	Workflows     services.WorkflowStarter
+	Repo          ratesimulationports.RateSimulationRepository
+	AgreementRepo rateagreementports.RateAgreementRepository
+	ShipmentRepo  shipmentports.ShipmentRepository
+	RateEngine    ratequoteports.RateEngine
+	AuditService  auditports.AuditService
+	Workflows     kernelports.WorkflowStarter
 }
 
 type Service struct {
 	l             *zap.Logger
-	repo          repositories.RateSimulationRepository
-	agreementRepo repositories.RateAgreementRepository
-	shipmentRepo  repositories.ShipmentRepository
-	engine        services.RateEngine
-	audit         services.AuditService
-	workflows     services.WorkflowStarter
+	repo          ratesimulationports.RateSimulationRepository
+	agreementRepo rateagreementports.RateAgreementRepository
+	shipmentRepo  shipmentports.ShipmentRepository
+	engine        ratequoteports.RateEngine
+	audit         auditports.AuditService
+	workflows     kernelports.WorkflowStarter
 	now           func() int64
 }
 
-var _ services.RateSimulationRunner = (*Service)(nil)
+var _ ratesimulationports.RateSimulationRunner = (*Service)(nil)
 
 //nolint:gocritic // fx param structs are passed by value
 func New(p Params) *Service {
@@ -91,21 +93,21 @@ func New(p Params) *Service {
 
 func (s *Service) GetByID(
 	ctx context.Context,
-	req *repositories.GetRateSimulationByIDRequest,
+	req *ratesimulationports.GetRateSimulationByIDRequest,
 ) (*ratesimulation.RateSimulation, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListRateSimulationsRequest,
+	req *ratesimulationports.ListRateSimulationsRequest,
 ) (*pagination.ListResult[*ratesimulation.RateSimulation], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListResults(
 	ctx context.Context,
-	req *repositories.ListRateSimulationResultsRequest,
+	req *ratesimulationports.ListRateSimulationResultsRequest,
 ) (*pagination.ListResult[*ratesimulation.RateSimulationResult], error) {
 	return s.repo.ListResults(ctx, req)
 }
@@ -132,7 +134,7 @@ func (s *Service) PlanCreate(
 		return nil, multiErr
 	}
 
-	agreement, err := s.agreementRepo.GetByID(ctx, &repositories.GetRateAgreementByIDRequest{
+	agreement, err := s.agreementRepo.GetByID(ctx, &rateagreementports.GetRateAgreementByIDRequest{
 		RateAgreementID: planned.RateAgreementID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: planned.OrganizationID,
@@ -238,8 +240,8 @@ func idOrZero(id *pulid.ID) pulid.ID {
 // purpose quote and none are persisted. A failure part way through leaves the
 // run marked failed with whatever it managed to price, which is more useful
 // than an empty row that says only that something went wrong.
-func (s *Service) Run(ctx context.Context, req *services.RunRateSimulationRequest) error {
-	entity, err := s.repo.GetByID(ctx, &repositories.GetRateSimulationByIDRequest{
+func (s *Service) Run(ctx context.Context, req *ratesimulationports.RunRateSimulationRequest) error {
+	entity, err := s.repo.GetByID(ctx, &ratesimulationports.GetRateSimulationByIDRequest{
 		RateSimulationID: req.RateSimulationID,
 		TenantInfo:       req.TenantInfo,
 	})
@@ -281,7 +283,7 @@ func (s *Service) markRunning(
 // walk replays every shipment in the window, a page at a time.
 func (s *Service) walk(
 	ctx context.Context,
-	req *services.RunRateSimulationRequest,
+	req *ratesimulationports.RunRateSimulationRequest,
 	entity *ratesimulation.RateSimulation,
 ) (simmath.Summary, []*ratesimulation.RuleCoverage, error) {
 	rules, err := s.simulatedRules(ctx, entity)
@@ -303,7 +305,7 @@ func (s *Service) walk(
 	)
 
 	for {
-		page, pageErr := s.repo.ListShipments(ctx, &repositories.ListSimulationShipmentsRequest{
+		page, pageErr := s.repo.ListShipments(ctx, &ratesimulationports.ListSimulationShipmentsRequest{
 			TenantInfo: req.TenantInfo,
 			PartyType:  string(entity.PartyType),
 			From:       entity.SampleFrom,
@@ -377,10 +379,10 @@ func (s *Service) replayPage(
 	traces := make([]*ratetypes.Trace, 0, len(shipmentIDs))
 
 	for _, shipmentID := range shipmentIDs {
-		historical, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+		historical, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 			ID:         shipmentID,
 			TenantInfo: tenantInfo,
-			ShipmentOptions: repositories.ShipmentOptions{
+			ShipmentOptions: shipmentports.ShipmentOptions{
 				ExpandShipmentDetails: true,
 			},
 		})
@@ -393,7 +395,7 @@ func (s *Service) replayPage(
 			continue
 		}
 
-		rated, rateErr := s.engine.RateShipment(ctx, &services.RateShipmentRequest{
+		rated, rateErr := s.engine.RateShipment(ctx, &ratequoteports.RateShipmentRequest{
 			Shipment:   historical,
 			TenantInfo: tenantInfo,
 			PartyType:  entity.PartyType,
@@ -453,7 +455,7 @@ func (s *Service) simulatedRules(
 	ctx context.Context,
 	entity *ratesimulation.RateSimulation,
 ) ([]*rateagreement.RateAgreementRule, error) {
-	agreement, err := s.agreementRepo.GetByID(ctx, &repositories.GetRateAgreementByIDRequest{
+	agreement, err := s.agreementRepo.GetByID(ctx, &rateagreementports.GetRateAgreementByIDRequest{
 		RateAgreementID: entity.RateAgreementID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,

@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -31,7 +31,7 @@ type versionRepository struct {
 	l  *zap.Logger
 }
 
-func NewVersionRepository(p VersionParams) repositories.DocumentTemplateVersionRepository {
+func NewVersionRepository(p VersionParams) documenttemplateports.DocumentTemplateVersionRepository {
 	return &versionRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.document-template-version-repository"),
@@ -40,7 +40,7 @@ func NewVersionRepository(p VersionParams) repositories.DocumentTemplateVersionR
 
 func (r *versionRepository) GetByID(
 	ctx context.Context,
-	req *repositories.GetDocumentTemplateVersionByIDRequest,
+	req *documenttemplateports.GetDocumentTemplateVersionByIDRequest,
 ) (*documenttemplate.DocumentTemplateVersion, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*documenttemplate.DocumentTemplateVersion, error) {
 		log := r.l.With(
@@ -68,7 +68,7 @@ func (r *versionRepository) GetByID(
 
 func (r *versionRepository) List(
 	ctx context.Context,
-	req *repositories.ListDocumentTemplateVersionsRequest,
+	req *documenttemplateports.ListDocumentTemplateVersionsRequest,
 ) ([]*documenttemplate.DocumentTemplateVersion, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*documenttemplate.DocumentTemplateVersion, error) {
 		log := r.l.With(
@@ -134,7 +134,7 @@ func (r *versionRepository) copyContentFrom(
 	entity *documenttemplate.DocumentTemplateVersion,
 	sourceID pulid.ID,
 ) error {
-	source, err := r.GetByID(ctx, &repositories.GetDocumentTemplateVersionByIDRequest{
+	source, err := r.GetByID(ctx, &documenttemplateports.GetDocumentTemplateVersionByIDRequest{
 		VersionID: sourceID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -172,14 +172,14 @@ func (r *versionRepository) copyContentFrom(
 
 func (r *versionRepository) Create(
 	ctx context.Context,
-	req *repositories.CreateDocumentTemplateVersionRequest,
+	req *documenttemplateports.CreateDocumentTemplateVersionRequest,
 ) (*documenttemplate.DocumentTemplateVersion, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*documenttemplate.DocumentTemplateVersion, error) {
 		log := r.l.With(zap.String("operation", "Create"))
 
 		entity := req.Version
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			if req.SourceVersionID != nil && !req.SourceVersionID.IsNil() {
 				if cErr := r.copyContentFrom(c, entity, *req.SourceVersionID); cErr != nil {
 					return cErr
@@ -275,7 +275,7 @@ func (r *versionRepository) Update(
 // customer until the next statement lands.
 func (r *versionRepository) Publish(
 	ctx context.Context,
-	req *repositories.PublishDocumentTemplateVersionRequest,
+	req *documenttemplateports.PublishDocumentTemplateVersionRequest,
 ) (*documenttemplate.DocumentTemplateVersion, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*documenttemplate.DocumentTemplateVersion, error) {
 		log := r.l.With(
@@ -287,8 +287,8 @@ func (r *versionRepository) Publish(
 		tCols := buncolgen.DocumentTemplateColumns
 		entity := new(documenttemplate.DocumentTemplateVersion)
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-			incoming, gErr := r.GetByID(c, &repositories.GetDocumentTemplateVersionByIDRequest{
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+			incoming, gErr := r.GetByID(c, &documenttemplateports.GetDocumentTemplateVersionByIDRequest{
 				VersionID:  req.VersionID,
 				TenantInfo: req.TenantInfo,
 			})
@@ -383,7 +383,7 @@ func (r *versionRepository) Publish(
 // dangling reference the resolution query would silently skip.
 func (r *versionRepository) Archive(
 	ctx context.Context,
-	req *repositories.ArchiveDocumentTemplateVersionRequest,
+	req *documenttemplateports.ArchiveDocumentTemplateVersionRequest,
 ) (*documenttemplate.DocumentTemplateVersion, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*documenttemplate.DocumentTemplateVersion, error) {
 		log := r.l.With(
@@ -395,8 +395,8 @@ func (r *versionRepository) Archive(
 		tCols := buncolgen.DocumentTemplateColumns
 		entity := new(documenttemplate.DocumentTemplateVersion)
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-			existing, gErr := r.GetByID(c, &repositories.GetDocumentTemplateVersionByIDRequest{
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+			existing, gErr := r.GetByID(c, &documenttemplateports.GetDocumentTemplateVersionByIDRequest{
 				VersionID:  req.VersionID,
 				TenantInfo: req.TenantInfo,
 			})
@@ -465,7 +465,7 @@ func (r *versionRepository) Archive(
 // refusing here turns a foreign key error into an explanation.
 func (r *versionRepository) Delete(
 	ctx context.Context,
-	req *repositories.GetDocumentTemplateVersionByIDRequest,
+	req *documenttemplateports.GetDocumentTemplateVersionByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		log := r.l.With(

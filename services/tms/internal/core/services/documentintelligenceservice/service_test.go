@@ -1,17 +1,22 @@
 package documentintelligenceservice_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentcontentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentsearchprojectionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentshipmentdraftportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"testing"
-
-	"github.com/emoss08/trenova/internal/core/temporaljobs/documentintelligencejobs/documentintelligencecontract"
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/documentintelligenceservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/documentintelligencejobs/documentintelligencecontract"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -48,14 +53,14 @@ func TestReextractResetsStateAndRequeuesWorkflow(t *testing.T) {
 		ShipmentDraftStatus: document.ShipmentDraftStatusReady,
 	}
 
-	documentRepo := mocks.NewMockDocumentRepository(t)
-	documentRepo.EXPECT().GetByID(mock.Anything, repositories.GetDocumentByIDRequest{
+	documentRepo := documentportsmock.NewMockDocumentRepository(t)
+	documentRepo.EXPECT().GetByID(mock.Anything, documentports.GetDocumentByIDRequest{
 		ID:         documentID,
 		TenantInfo: tenantInfo,
 	}).Return(doc, nil)
 	documentRepo.EXPECT().UpdateIntelligence(
 		mock.Anything,
-		mock.MatchedBy(func(req *repositories.UpdateDocumentIntelligenceRequest) bool {
+		mock.MatchedBy(func(req *documentports.UpdateDocumentIntelligenceRequest) bool {
 			return req.ID == documentID &&
 				req.TenantInfo == tenantInfo &&
 				req.ContentStatus == document.ContentStatusPending &&
@@ -66,7 +71,7 @@ func TestReextractResetsStateAndRequeuesWorkflow(t *testing.T) {
 		}),
 	).Return(nil)
 
-	contentRepo := mocks.NewMockDocumentContentRepository(t)
+	contentRepo := documentcontentportsmock.NewMockDocumentContentRepository(t)
 	contentRepo.EXPECT().
 		Upsert(mock.Anything, mock.MatchedBy(func(content *documentcontent.Content) bool {
 			return content.DocumentID == documentID &&
@@ -83,17 +88,17 @@ func TestReextractResetsStateAndRequeuesWorkflow(t *testing.T) {
 		}, nil)
 	contentRepo.EXPECT().ReplacePages(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-	documentControlRepo := mocks.NewMockDocumentControlRepository(t)
+	documentControlRepo := tenantportsmock.NewMockDocumentControlRepository(t)
 	documentControlRepo.EXPECT().
 		GetOrCreate(mock.Anything, orgID, buID).
 		Return(&tenant.DocumentControl{
 			EnableDocumentIntelligence: true,
 		}, nil)
 
-	searchProjection := mocks.NewMockDocumentSearchProjectionService(t)
+	searchProjection := documentsearchprojectionportsmock.NewMockDocumentSearchProjectionService(t)
 	searchProjection.EXPECT().Upsert(mock.Anything, doc, "").Return(nil)
 
-	workflowStarter := mocks.NewMockWorkflowStarter(t)
+	workflowStarter := kernelportsmock.NewMockWorkflowStarter(t)
 	workflowStarter.EXPECT().Enabled().Return(true)
 	workflowStarter.EXPECT().
 		StartWorkflow(
@@ -117,7 +122,7 @@ func TestReextractResetsStateAndRequeuesWorkflow(t *testing.T) {
 		DocumentControlRepo: documentControlRepo,
 		DocumentRepo:        documentRepo,
 		ContentRepo:         contentRepo,
-		DraftRepo:           mocks.NewMockDocumentShipmentDraftRepository(t),
+		DraftRepo:           documentshipmentdraftportsmock.NewMockDocumentShipmentDraftRepository(t),
 		SearchProjection:    searchProjection,
 		WorkflowStarter:     workflowStarter,
 	})
@@ -140,14 +145,14 @@ func TestEnqueueExtractionSkipsWhenDocumentIntelligenceDisabled(t *testing.T) {
 	documentID := pulid.MustNew("doc_")
 	userID := pulid.MustNew("usr_")
 
-	documentControlRepo := mocks.NewMockDocumentControlRepository(t)
+	documentControlRepo := tenantportsmock.NewMockDocumentControlRepository(t)
 	documentControlRepo.EXPECT().
 		GetOrCreate(mock.Anything, orgID, buID).
 		Return(&tenant.DocumentControl{
 			EnableDocumentIntelligence: false,
 		}, nil)
 
-	workflowStarter := mocks.NewMockWorkflowStarter(t)
+	workflowStarter := kernelportsmock.NewMockWorkflowStarter(t)
 	workflowStarter.EXPECT().Enabled().Return(true)
 
 	service := documentintelligenceservice.New(documentintelligenceservice.Params{
@@ -155,9 +160,9 @@ func TestEnqueueExtractionSkipsWhenDocumentIntelligenceDisabled(t *testing.T) {
 		Config:              cfg,
 		Metrics:             metricRegistry,
 		DocumentControlRepo: documentControlRepo,
-		DocumentRepo:        mocks.NewMockDocumentRepository(t),
-		ContentRepo:         mocks.NewMockDocumentContentRepository(t),
-		DraftRepo:           mocks.NewMockDocumentShipmentDraftRepository(t),
+		DocumentRepo:        documentportsmock.NewMockDocumentRepository(t),
+		ContentRepo:         documentcontentportsmock.NewMockDocumentContentRepository(t),
+		DraftRepo:           documentshipmentdraftportsmock.NewMockDocumentShipmentDraftRepository(t),
 		WorkflowStarter:     workflowStarter,
 	})
 
@@ -183,11 +188,11 @@ func TestEnqueueExtractionSkipsWhenProcessingProfileIsNone(t *testing.T) {
 		Logger:              zap.NewNop(),
 		Config:              cfg,
 		Metrics:             metricRegistry,
-		DocumentControlRepo: mocks.NewMockDocumentControlRepository(t),
-		DocumentRepo:        mocks.NewMockDocumentRepository(t),
-		ContentRepo:         mocks.NewMockDocumentContentRepository(t),
-		DraftRepo:           mocks.NewMockDocumentShipmentDraftRepository(t),
-		WorkflowStarter:     mocks.NewMockWorkflowStarter(t),
+		DocumentControlRepo: tenantportsmock.NewMockDocumentControlRepository(t),
+		DocumentRepo:        documentportsmock.NewMockDocumentRepository(t),
+		ContentRepo:         documentcontentportsmock.NewMockDocumentContentRepository(t),
+		DraftRepo:           documentshipmentdraftportsmock.NewMockDocumentShipmentDraftRepository(t),
+		WorkflowStarter:     kernelportsmock.NewMockWorkflowStarter(t),
 	})
 
 	err = service.EnqueueExtraction(t.Context(), &document.Document{
@@ -214,8 +219,8 @@ func TestReextractRejectsDocumentsWithoutTargetedProcessing(t *testing.T) {
 	documentID := pulid.MustNew("doc_")
 	tenantInfo := pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}
 
-	documentRepo := mocks.NewMockDocumentRepository(t)
-	documentRepo.EXPECT().GetByID(mock.Anything, repositories.GetDocumentByIDRequest{
+	documentRepo := documentportsmock.NewMockDocumentRepository(t)
+	documentRepo.EXPECT().GetByID(mock.Anything, documentports.GetDocumentByIDRequest{
 		ID:         documentID,
 		TenantInfo: tenantInfo,
 	}).Return(&document.Document{
@@ -229,11 +234,11 @@ func TestReextractRejectsDocumentsWithoutTargetedProcessing(t *testing.T) {
 		Logger:              zap.NewNop(),
 		Config:              cfg,
 		Metrics:             metricRegistry,
-		DocumentControlRepo: mocks.NewMockDocumentControlRepository(t),
+		DocumentControlRepo: tenantportsmock.NewMockDocumentControlRepository(t),
 		DocumentRepo:        documentRepo,
-		ContentRepo:         mocks.NewMockDocumentContentRepository(t),
-		DraftRepo:           mocks.NewMockDocumentShipmentDraftRepository(t),
-		WorkflowStarter:     mocks.NewMockWorkflowStarter(t),
+		ContentRepo:         documentcontentportsmock.NewMockDocumentContentRepository(t),
+		DraftRepo:           documentshipmentdraftportsmock.NewMockDocumentShipmentDraftRepository(t),
+		WorkflowStarter:     kernelportsmock.NewMockWorkflowStarter(t),
 	})
 
 	err = service.Reextract(t.Context(), documentID, tenantInfo)

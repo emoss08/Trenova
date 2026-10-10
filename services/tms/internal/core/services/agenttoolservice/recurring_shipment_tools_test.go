@@ -9,9 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/recurringshipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/recurringshipmentservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/recurringshipmentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,8 +24,8 @@ type fakeSeries struct {
 
 	created   *recurringshipment.RecurringShipment
 	updated   *recurringshipment.RecurringShipment
-	status    *repositories.UpdateRecurringShipmentStatusRequest
-	generate  *repositories.GenerateRecurringShipmentRequest
+	status    *recurringshipmentports.UpdateRecurringShipmentStatusRequest
+	generate  *recurringshipmentports.GenerateRecurringShipmentRequest
 	createdBy pulid.ID
 }
 
@@ -48,7 +48,7 @@ func newFakeSeries() *fakeSeries {
 
 func (f *fakeSeries) Get(
 	context.Context,
-	*repositories.GetRecurringShipmentByIDRequest,
+	*recurringshipmentports.GetRecurringShipmentByIDRequest,
 ) (*recurringshipment.RecurringShipment, error) {
 	copied := *f.current
 
@@ -99,7 +99,7 @@ func (f *fakeSeries) PreviewUpdate(
 
 func (f *fakeSeries) UpdateStatus(
 	_ context.Context,
-	req *repositories.UpdateRecurringShipmentStatusRequest,
+	req *recurringshipmentports.UpdateRecurringShipmentStatusRequest,
 	_ pulid.ID,
 ) (*recurringshipment.RecurringShipment, error) {
 	if err := f.guard.write(); err != nil {
@@ -112,7 +112,7 @@ func (f *fakeSeries) UpdateStatus(
 
 func (f *fakeSeries) PreviewUpdateStatus(
 	_ context.Context,
-	req *repositories.UpdateRecurringShipmentStatusRequest,
+	req *recurringshipmentports.UpdateRecurringShipmentStatusRequest,
 ) (*recurringshipmentservice.SeriesChange, error) {
 	after := *f.current
 	after.Status = req.Status
@@ -122,14 +122,14 @@ func (f *fakeSeries) PreviewUpdateStatus(
 
 func (f *fakeSeries) Generate(
 	_ context.Context,
-	req *repositories.GenerateRecurringShipmentRequest,
-) (*repositories.GenerateRecurringShipmentResult, error) {
+	req *recurringshipmentports.GenerateRecurringShipmentRequest,
+) (*recurringshipmentports.GenerateRecurringShipmentResult, error) {
 	if err := f.guard.write(); err != nil {
 		return nil, err
 	}
 	f.generate = req
 
-	return &repositories.GenerateRecurringShipmentResult{
+	return &recurringshipmentports.GenerateRecurringShipmentResult{
 		Series:   f.current,
 		Shipment: &shipment.Shipment{ID: pulid.MustNew("shp_"), ProNumber: "PRO-55"},
 	}, nil
@@ -137,9 +137,9 @@ func (f *fakeSeries) Generate(
 
 func (f *fakeSeries) PreviewGenerate(
 	_ context.Context,
-	_ *repositories.GenerateRecurringShipmentRequest,
-) (*repositories.RecurringShipmentGenerationPlan, error) {
-	return &repositories.RecurringShipmentGenerationPlan{
+	_ *recurringshipmentports.GenerateRecurringShipmentRequest,
+) (*recurringshipmentports.RecurringShipmentGenerationPlan, error) {
+	return &recurringshipmentports.RecurringShipmentGenerationPlan{
 		Series:           f.current,
 		Occurrence:       &recurringshipment.Occurrence{At: 1_900_000_000},
 		AlreadyGenerated: f.generated,
@@ -172,7 +172,7 @@ func TestCreateRecurringShipment_ReadsDaysInTheSeriesTimezone(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, series.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	change := previewChange(t, preview, 0)
 	assert.Equal(t, agent.PreviewOperationCreate, change.Operation)
@@ -224,7 +224,7 @@ func TestCreateRecurringShipment_RefusesBadArguments(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+			require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 				executeParams(raw)))
 		})
 	}
@@ -241,7 +241,7 @@ func TestUpdateRecurringShipment_ChangesOnlyWhatIsSent(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, series.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, "0 6 * * 1-5",
 		fieldByPath(t, previewChange(t, preview, 0), paramCronExpression).After)
@@ -250,11 +250,11 @@ func TestUpdateRecurringShipment_ChangesOnlyWhatIsSent(t *testing.T) {
 	require.NotNil(t, series.updated)
 	assert.Equal(t, "Acme weekday run", series.updated.Name)
 	assert.Equal(t, int64(9), series.updated.Version)
-	target, ok := tool.(serviceports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, permission.ResourceRecurringShipment, target.Resource)
 
-	require.ErrorIs(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+	require.ErrorIs(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 		executeParams(map[string]any{paramRecurringShipmentID: series.current.ID.String()})),
 		errNothingToChange)
 }
@@ -270,7 +270,7 @@ func TestSetRecurringShipmentStatus_PausesAtTheCurrentVersion(t *testing.T) {
 	})
 
 	preview := previewWithoutWrites(t, series.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	assert.Equal(t, "Paused", fieldByPath(t, previewChange(t, preview, 0), fieldStatus).After)
 
@@ -279,7 +279,7 @@ func TestSetRecurringShipmentStatus_PausesAtTheCurrentVersion(t *testing.T) {
 	assert.Equal(t, recurringshipment.StatusPaused, series.status.Status)
 	assert.Equal(t, int64(9), series.status.Version)
 
-	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
 		executeParams(map[string]any{
 			paramRecurringShipmentID: series.current.ID.String(),
 			fieldStatus:              "Stopped",
@@ -297,13 +297,13 @@ func TestGenerateRecurringShipment_ShowsTheCopyAndSkipsAFilledSlot(t *testing.T)
 	})
 
 	preview := previewWithoutWrites(t, series.guard, func() (*agent.ToolPreview, error) {
-		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	})
 	created := previewChange(t, preview, 0)
 	assert.Equal(t, agent.PreviewOperationCreate, created.Operation)
 	assert.Equal(t, "BOL-2030", fieldByPath(t, created, fieldBol).After)
 
-	result, err := tool.(serviceports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	require.NotNil(t, series.generate)
 	require.NotNil(t, series.generate.OccurrenceAt)
@@ -314,7 +314,7 @@ func TestGenerateRecurringShipment_ShowsTheCopyAndSkipsAFilledSlot(t *testing.T)
 	assert.Equal(t, permission.OpDuplicate, tool.Policy().Operation)
 
 	series.generated = true
-	filled, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	filled, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	assert.Empty(t, filled.Changes)
 	assert.Contains(t, filled.Summary, "already has its shipment")

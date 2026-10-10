@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
@@ -102,7 +102,7 @@ func TestCountActiveUnderConcurrentEnqueue(t *testing.T) {
 	seedWG.Wait()
 
 	for _, tenant := range []pagination.TenantInfo{tenantA, tenantB} {
-		counts, countErr := repo.CountActive(ctx, &repositories.CountActiveReportRunsRequest{
+		counts, countErr := repo.CountActive(ctx, &reportports.CountActiveReportRunsRequest{
 			TenantInfo: tenant,
 		})
 		require.NoError(t, countErr)
@@ -151,7 +151,7 @@ func TestCountActiveIgnoresTerminalRuns(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	counts, err := repo.CountActive(ctx, &repositories.CountActiveReportRunsRequest{
+	counts, err := repo.CountActive(ctx, &reportports.CountActiveReportRunsRequest{
 		TenantInfo: tenant,
 	})
 	require.NoError(t, err)

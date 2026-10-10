@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/ratematrix"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -31,7 +31,7 @@ type densityScaleRepository struct {
 	l  *zap.Logger
 }
 
-func NewDensityScaleRepository(p DensityScaleParams) repositories.DensityScaleRepository {
+func NewDensityScaleRepository(p DensityScaleParams) ratematrixports.DensityScaleRepository {
 	return &densityScaleRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.densityscale-repository"),
@@ -44,7 +44,7 @@ func orderTiers(sq *bun.SelectQuery) *bun.SelectQuery {
 
 func (r *densityScaleRepository) List(
 	ctx context.Context,
-	req *repositories.ListRateMatrixRequest,
+	req *ratematrixports.ListRateMatrixRequest,
 ) (*pagination.ListResult[*ratematrix.DensityScale], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*ratematrix.DensityScale], error) {
 		log := r.l.With(zap.String("operation", "List"))
@@ -81,7 +81,7 @@ func (r *densityScaleRepository) List(
 
 func (r *densityScaleRepository) GetByID(
 	ctx context.Context,
-	req *repositories.GetDensityScaleRequest,
+	req *ratematrixports.GetDensityScaleRequest,
 ) (*ratematrix.DensityScale, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ratematrix.DensityScale, error) {
 		log := r.l.With(
@@ -154,7 +154,7 @@ func (r *densityScaleRepository) Create(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*ratematrix.DensityScale, error) {
 		log := r.l.With(zap.String("operation", "Create"), zap.String("code", entity.Code))
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			if _, iErr := r.db.DBForContext(c).
 				NewInsert().
 				Model(entity).
@@ -195,7 +195,7 @@ func (r *densityScaleRepository) Update(
 		cols := buncolgen.DensityScaleColumns
 		tierCols := buncolgen.DensityScaleTierColumns
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			results, uErr := r.db.DBForContext(c).
 				NewUpdate().
 				Model(entity).

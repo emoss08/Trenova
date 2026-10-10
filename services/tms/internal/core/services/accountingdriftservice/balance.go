@@ -4,9 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,10 +16,10 @@ type customerBalance struct {
 	id       pulid.ID
 	name     string
 	currency string
-	lines    []*repositories.AccountingDriftBalanceLine
+	lines    []*accountingsyncports.AccountingDriftBalanceLine
 }
 
-func groupByCustomer(lines []*repositories.AccountingDriftBalanceLine) []*customerBalance {
+func groupByCustomer(lines []*accountingsyncports.AccountingDriftBalanceLine) []*customerBalance {
 	out := make([]*customerBalance, 0, len(lines))
 	var current *customerBalance
 	for _, line := range lines {
@@ -41,9 +40,9 @@ func groupByCustomer(lines []*repositories.AccountingDriftBalanceLine) []*custom
 
 func (s *Service) ReconcileBalances(
 	ctx context.Context,
-	req *services.ReconcileAccountingDriftBalancesRequest,
-) (*services.AccountingDriftBalanceResult, error) {
-	result := &services.AccountingDriftBalanceResult{LastCustomerID: req.AfterCustomerID}
+	req *accountingsyncports.ReconcileAccountingDriftBalancesRequest,
+) (*accountingsyncports.AccountingDriftBalanceResult, error) {
+	result := &accountingsyncports.AccountingDriftBalanceResult{LastCustomerID: req.AfterCustomerID}
 	sess, held, err := s.startRead(ctx, req.TenantInfo, req.ConnectionID)
 	if err != nil || held {
 		result.Held = held
@@ -62,7 +61,7 @@ func (s *Service) ReconcileBalances(
 		limit = defaultCustomers
 	}
 	limit = intutils.Clamp(limit, 1, maxCustomers)
-	lines, err := s.source.ListBalances(ctx, &repositories.ListAccountingDriftBalancesRequest{
+	lines, err := s.source.ListBalances(ctx, &accountingsyncports.ListAccountingDriftBalancesRequest{
 		TenantInfo:      sess.tenant,
 		ConnectionID:    sess.conn.ID,
 		DatedFrom:       datedFrom,
@@ -109,7 +108,7 @@ func (s *Service) compareBalances(
 	}
 	pending, err := s.source.ListPendingCustomers(
 		ctx,
-		&repositories.ListAccountingDriftPendingCustomersRequest{
+		&accountingsyncports.ListAccountingDriftPendingCustomersRequest{
 			TenantInfo:   sess.tenant,
 			ConnectionID: sess.conn.ID,
 			CustomerIDs:  ids,
@@ -149,7 +148,7 @@ func (s *Service) compareBalances(
 		return tally, nil
 	}
 
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		return s.applyObservations(txCtx, sess, compared, observed, at, tally)
 	})
 	if err != nil {
@@ -162,7 +161,7 @@ func (s *Service) readBalances(
 	ctx context.Context,
 	sess *readSession,
 	customers []*customerBalance,
-) (map[string]*services.AccountingDocumentState, error) {
+) (map[string]*accountingsyncports.AccountingDocumentState, error) {
 	byType := make(map[accountingsync.SyncObjectType][]*accountingsync.AccountingSyncRecord, 2)
 	for _, customer := range customers {
 		for _, line := range customer.lines {
@@ -176,7 +175,7 @@ func (s *Service) readBalances(
 			)
 		}
 	}
-	out := make(map[string]*services.AccountingDocumentState, len(customers))
+	out := make(map[string]*accountingsyncports.AccountingDocumentState, len(customers))
 	for objectType, records := range byType {
 		states, err := s.readProvider(ctx, sess, objectType, records)
 		if err != nil {
@@ -192,7 +191,7 @@ func (s *Service) readBalances(
 func balanceObservation(
 	sess *readSession,
 	customer *customerBalance,
-	provider map[string]*services.AccountingDocumentState,
+	provider map[string]*accountingsyncports.AccountingDocumentState,
 	at int64,
 ) *accountingsync.DriftObservation {
 	var trenovaTotal, providerTotal int64

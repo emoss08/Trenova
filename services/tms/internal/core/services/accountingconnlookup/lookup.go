@@ -5,14 +5,14 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
 func ByType(
 	ctx context.Context,
-	connections repositories.AccountingConnectionRepository,
+	connections accountingsyncports.AccountingConnectionRepository,
 	tenantInfo pagination.TenantInfo,
 	typ integration.Type,
 ) (*accountingsync.AccountingConnection, error) {
@@ -24,7 +24,7 @@ func ByType(
 			string(typ),
 		)
 	}
-	conn, err := connections.GetByType(ctx, repositories.GetAccountingConnectionRequest{
+	conn, err := connections.GetByType(ctx, accountingsyncports.GetAccountingConnectionRequest{
 		TenantInfo:      tenantInfo,
 		IntegrationType: typ,
 	})

@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
@@ -65,9 +65,9 @@ type PreviewRequest struct {
 }
 
 type PreviewResult struct {
-	Columns   []services.ReportResultColumn
-	Rows      []services.ReportRow
-	Totals    services.ReportRow
+	Columns   []reportports.ReportResultColumn
+	Rows      []reportports.ReportRow
+	Totals    reportports.ReportRow
 	Truncated bool
 }
 
@@ -103,7 +103,7 @@ func (s *Service) runPreview(
 	ctx context.Context,
 	req *PreviewRequest,
 ) (*PreviewResult, error) {
-	compiled, err := s.compiler.CompileForPreview(ctx, &services.ReportCompileRequest{
+	compiled, err := s.compiler.CompileForPreview(ctx, &reportports.ReportCompileRequest{
 		Definition:  req.Definition,
 		Tenant:      req.TenantInfo,
 		Params:      req.Params,
@@ -118,7 +118,7 @@ func (s *Service) runPreview(
 	}
 
 	rowLimit := int64(s.cfg.GetPreviewRowLimit())
-	reader, err := s.executor.Open(ctx, &services.OpenReportDatasetRequest{
+	reader, err := s.executor.Open(ctx, &reportports.OpenReportDatasetRequest{
 		Compiled: compiled,
 		MaxRows:  rowLimit,
 		Timeout:  s.cfg.GetPreviewStatementTimeout(),
@@ -129,7 +129,7 @@ func (s *Service) runPreview(
 	}
 	defer reader.Close()
 
-	rows := make([]services.ReportRow, 0, rowLimit)
+	rows := make([]reportports.ReportRow, 0, rowLimit)
 	for {
 		row, nextErr := reader.Next(ctx)
 		if errors.Is(nextErr, io.EOF) {

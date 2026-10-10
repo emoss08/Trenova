@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/location"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -20,7 +20,7 @@ func TestLocationBatchFunc_PreservesOrderAndReportsMissingIDs(t *testing.T) {
 	secondID := pulid.MustNew("loc_")
 	missingID := pulid.MustNew("loc_")
 	repo := &stubLocationRepository{
-		getByIDs: func(_ context.Context, req repositories.GetLocationsByIDsRequest) ([]*location.Location, error) {
+		getByIDs: func(_ context.Context, req locationports.GetLocationsByIDsRequest) ([]*location.Location, error) {
 			assert.Equal(t, []pulid.ID{secondID, firstID, missingID}, req.LocationIDs)
 			return []*location.Location{
 				{ID: firstID, Name: "First"},
@@ -55,7 +55,7 @@ func TestLocationBatchFunc_RepositoryErrorFillsValidResults(t *testing.T) {
 	locationID := pulid.MustNew("loc_")
 	repoErr := errors.New("repository failed")
 	repo := &stubLocationRepository{
-		getByIDs: func(context.Context, repositories.GetLocationsByIDsRequest) ([]*location.Location, error) {
+		getByIDs: func(context.Context, locationports.GetLocationsByIDsRequest) ([]*location.Location, error) {
 			return nil, repoErr
 		},
 	}
@@ -72,33 +72,33 @@ func TestLocationBatchFunc_RepositoryErrorFillsValidResults(t *testing.T) {
 }
 
 type stubLocationRepository struct {
-	getByIDs func(context.Context, repositories.GetLocationsByIDsRequest) ([]*location.Location, error)
+	getByIDs func(context.Context, locationports.GetLocationsByIDsRequest) ([]*location.Location, error)
 }
 
 func (s *stubLocationRepository) List(
 	context.Context,
-	*repositories.ListLocationRequest,
+	*locationports.ListLocationRequest,
 ) (*pagination.ListResult[*location.Location], error) {
 	return nil, nil
 }
 
 func (s *stubLocationRepository) ListConnection(
 	context.Context,
-	*repositories.ListLocationConnectionRequest,
+	*locationports.ListLocationConnectionRequest,
 ) (*pagination.CursorListResult[*location.Location], error) {
 	return nil, nil
 }
 
 func (s *stubLocationRepository) GetByID(
 	context.Context,
-	repositories.GetLocationByIDRequest,
+	locationports.GetLocationByIDRequest,
 ) (*location.Location, error) {
 	return nil, nil
 }
 
 func (s *stubLocationRepository) GetByIDs(
 	ctx context.Context,
-	req repositories.GetLocationsByIDsRequest,
+	req locationports.GetLocationsByIDsRequest,
 ) ([]*location.Location, error) {
 	return s.getByIDs(ctx, req)
 }
@@ -119,14 +119,14 @@ func (s *stubLocationRepository) Update(
 
 func (s *stubLocationRepository) BulkUpdateStatus(
 	context.Context,
-	*repositories.BulkUpdateLocationStatusRequest,
+	*locationports.BulkUpdateLocationStatusRequest,
 ) ([]*location.Location, error) {
 	return nil, nil
 }
 
 func (s *stubLocationRepository) SelectOptions(
 	context.Context,
-	*repositories.LocationSelectOptionsRequest,
+	*locationports.LocationSelectOptionsRequest,
 ) (*pagination.ListResult[*location.Location], error) {
 	return nil, nil
 }

@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/homelayout"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -16,11 +16,11 @@ func TestHomeTools_PreviewMatchesWhatIsSaved(t *testing.T) {
 	t.Parallel()
 
 	cases := map[string]struct {
-		build func(homeEditor) serviceports.AgentTool
+		build func(homeEditor) agentports.AgentTool
 		args  map[string]any
 	}{
 		"add": {
-			build: func(editor homeEditor) serviceports.AgentTool {
+			build: func(editor homeEditor) agentports.AgentTool {
 				return &addHomeWidgetTool{homeToolBase{editor: editor}}
 			},
 			args: map[string]any{
@@ -31,13 +31,13 @@ func TestHomeTools_PreviewMatchesWhatIsSaved(t *testing.T) {
 			},
 		},
 		"remove": {
-			build: func(editor homeEditor) serviceports.AgentTool {
+			build: func(editor homeEditor) agentports.AgentTool {
 				return &removeHomeWidgetTool{homeToolBase{editor: editor}}
 			},
 			args: map[string]any{"version": float64(3), "widgetId": "widget_1"},
 		},
 		"arrange": {
-			build: func(editor homeEditor) serviceports.AgentTool {
+			build: func(editor homeEditor) agentports.AgentTool {
 				return &arrangeHomeLayoutTool{homeToolBase{editor: editor}}
 			},
 			args: map[string]any{
@@ -57,7 +57,7 @@ func TestHomeTools_PreviewMatchesWhatIsSaved(t *testing.T) {
 			before := homePageOf(layouts.effective.Layout)
 
 			preview := previewWithoutWrites(t, &layouts.guard, func() (*agent.ToolPreview, error) {
-				return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+				return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
 			})
 
 			change := previewChange(t, preview, 0)

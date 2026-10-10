@@ -3,9 +3,9 @@ package agentjobs
 import (
 	"context"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/fx"
@@ -29,7 +29,7 @@ var Module = fx.Module("agent-jobs",
 	fx.Provide(fx.Annotate(
 		NewDefinitionSchedules,
 		fx.As(fx.Self()),
-		fx.As(new(serviceports.AgentDefinitionScheduler)),
+		fx.As(new(agentdefinitionports.AgentDefinitionScheduler)),
 	)),
 	fx.Provide(schedule.AsProvider(NewScheduleProvider)),
 	fx.Provide(

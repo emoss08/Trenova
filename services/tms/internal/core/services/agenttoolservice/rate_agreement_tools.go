@@ -12,11 +12,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/rategeo"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/rateagreementservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/maputils"
@@ -119,7 +119,7 @@ var (
 type rateAgreementKeeper interface {
 	GetByID(
 		ctx context.Context,
-		req *repositories.GetRateAgreementByIDRequest,
+		req *rateagreementports.GetRateAgreementByIDRequest,
 	) (*rateagreement.RateAgreement, error)
 	PlanCreate(
 		ctx context.Context,
@@ -160,11 +160,11 @@ type rateAgreementKeeper interface {
 	) (*rateagreement.RateAgreement, error)
 	PlanAmendRules(
 		ctx context.Context,
-		req *repositories.AmendRateAgreementRulesRequest,
+		req *rateagreementports.AmendRateAgreementRulesRequest,
 	) (*rateagreementservice.AmendmentPlan, error)
 	AmendRules(
 		ctx context.Context,
-		req *repositories.AmendRateAgreementRulesRequest,
+		req *rateagreementports.AmendRateAgreementRulesRequest,
 		userID pulid.ID,
 	) (*rateagreement.RateAgreement, error)
 	PlanApplyRateIncrease(
@@ -184,7 +184,7 @@ type stateFinder interface {
 
 var _ rateAgreementKeeper = (*rateagreementservice.Service)(nil)
 
-func targetRateAgreement(params map[string]any) (serviceports.ToolTarget, bool) {
+func targetRateAgreement(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, paramRateAgreementID, permission.ResourceRateAgreement)
 }
 
@@ -800,7 +800,7 @@ func loadAgreement(
 	tenant pagination.TenantInfo,
 	id pulid.ID,
 ) (*rateagreement.RateAgreement, error) {
-	return agreements.GetByID(ctx, &repositories.GetRateAgreementByIDRequest{
+	return agreements.GetByID(ctx, &rateagreementports.GetRateAgreementByIDRequest{
 		RateAgreementID: id,
 		TenantInfo:      tenant,
 		IncludeChildren: true,
@@ -808,7 +808,7 @@ func loadAgreement(
 }
 
 type agreementDraft struct {
-	params *serviceports.ToolExecuteParams
+	params *agentports.ToolExecuteParams
 }
 
 func (d agreementDraft) build(
@@ -854,7 +854,7 @@ func (d agreementDraft) build(
 func newDraftRateAgreementTool(
 	agreements rateAgreementKeeper,
 	states stateFinder,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	properties := agreementHeaderProperties()
 	properties[paramPartyType] = agenttoolschema.Enum("Whether it prices what a customer is "+
 		"charged or what a carrier is paid.", partyTypes)
@@ -881,13 +881,13 @@ func newDraftRateAgreementTool(
 		},
 		searchTerms: []string{"tariff", "rate sheet", "quote", "pricing"},
 	}), receivablePlan[agreementDraft, *rateagreement.RateAgreement]{
-		request: func(params *serviceports.ToolExecuteParams) (agreementDraft, error) {
+		request: func(params *agentports.ToolExecuteParams) (agreementDraft, error) {
 			return agreementDraft{params: params}, nil
 		},
 		plan: func(
 			ctx context.Context,
 			draft agreementDraft,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*rateagreement.RateAgreement, error) {
 			entity, err := draft.build(ctx, lanes)
 			if err != nil {
@@ -920,7 +920,7 @@ func newDraftRateAgreementTool(
 		run: func(
 			ctx context.Context,
 			draft agreementDraft,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			entity, err := draft.build(ctx, lanes)
 			if err != nil {
@@ -950,7 +950,7 @@ func (r agreementRevision) build(
 	ctx context.Context,
 	agreements rateAgreementKeeper,
 	lanes laneReader,
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*rateagreement.RateAgreement, error) {
 	stored, err := loadAgreement(ctx, agreements, tenantFrom(*params), r.id)
 	if err != nil {
@@ -977,7 +977,7 @@ func (r agreementRevision) build(
 func newReviseRateAgreementDraftTool(
 	agreements rateAgreementKeeper,
 	states stateFinder,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	properties := agreementHeaderProperties()
 	properties[paramRateAgreementID] = rateAgreementIDProperty()
 	properties[paramLanes] = laneProperty(true)
@@ -1002,7 +1002,7 @@ func newReviseRateAgreementDraftTool(
 		required:   []string{paramRateAgreementID},
 		target:     targetRateAgreement,
 	}), receivablePlan[agreementRevision, *rateagreementservice.UpdatePlan]{
-		request: func(params *serviceports.ToolExecuteParams) (agreementRevision, error) {
+		request: func(params *agentports.ToolExecuteParams) (agreementRevision, error) {
 			id, err := requirePulid(params.Params, paramRateAgreementID)
 			if err != nil {
 				return agreementRevision{}, err
@@ -1022,7 +1022,7 @@ func newReviseRateAgreementDraftTool(
 		plan: func(
 			ctx context.Context,
 			revision agreementRevision,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*rateagreementservice.UpdatePlan, error) {
 			revised, err := revision.build(ctx, agreements, lanes, params)
 			if err != nil {
@@ -1059,7 +1059,7 @@ func newReviseRateAgreementDraftTool(
 		run: func(
 			ctx context.Context,
 			revision agreementRevision,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			revised, err := revision.build(ctx, agreements, lanes, params)
 			if err != nil {
@@ -1075,7 +1075,7 @@ func newReviseRateAgreementDraftTool(
 	})
 }
 
-func newDuplicateRateAgreementTool(agreements rateAgreementKeeper) serviceports.AgentTool {
+func newDuplicateRateAgreementTool(agreements rateAgreementKeeper) agentports.AgentTool {
 	return newReportingReceivableTool(rateDraftSpec(&receivableSpec{
 		name: "duplicate_rate_agreement",
 		description: "Copy a rate agreement with its lanes, weight breaks, accessorials and " +
@@ -1096,7 +1096,7 @@ func newDuplicateRateAgreementTool(agreements rateAgreementKeeper) serviceports.
 		target:   targetRateAgreement,
 	}), receivablePlan[*rateagreementservice.DuplicateRateAgreementRequest, *rateagreementservice.DuplicatePlan]{
 		request: func(
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*rateagreementservice.DuplicateRateAgreementRequest, error) {
 			id, err := requirePulid(params.Params, paramRateAgreementID)
 			if err != nil {
@@ -1121,7 +1121,7 @@ func newDuplicateRateAgreementTool(agreements rateAgreementKeeper) serviceports.
 		plan: func(
 			ctx context.Context,
 			req *rateagreementservice.DuplicateRateAgreementRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*rateagreementservice.DuplicatePlan, error) {
 			return agreements.PlanDuplicate(ctx, req)
 		},
@@ -1150,7 +1150,7 @@ func newDuplicateRateAgreementTool(agreements rateAgreementKeeper) serviceports.
 		run: func(
 			ctx context.Context,
 			req *rateagreementservice.DuplicateRateAgreementRequest,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			created, err := agreements.Duplicate(ctx, req, params.Actor.UserID)
 			if err != nil {
@@ -1206,7 +1206,7 @@ func (s *agreementReviewStep) spec() *receivableSpec {
 }
 
 func (s *agreementReviewStep) request(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*rateagreementservice.ApprovalActionRequest, error) {
 	id, err := requirePulid(params.Params, paramRateAgreementID)
 	if err != nil {
@@ -1231,7 +1231,7 @@ func (s *agreementReviewStep) request(
 func newAgreementReviewTool(
 	agreements rateAgreementKeeper,
 	step *agreementReviewStep,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	return newReceivableTool(
 		step.spec(),
 		receivablePlan[*rateagreementservice.ApprovalActionRequest, *rateagreementservice.AgreementChange]{
@@ -1239,7 +1239,7 @@ func newAgreementReviewTool(
 			plan: func(
 				ctx context.Context,
 				req *rateagreementservice.ApprovalActionRequest,
-				_ *serviceports.ToolExecuteParams,
+				_ *agentports.ToolExecuteParams,
 			) (*rateagreementservice.AgreementChange, error) {
 				return agreements.PlanReview(ctx, step.review, req)
 			},
@@ -1272,7 +1272,7 @@ func newAgreementReviewTool(
 			run: func(
 				ctx context.Context,
 				req *rateagreementservice.ApprovalActionRequest,
-				_ *serviceports.ToolExecuteParams,
+				_ *agentports.ToolExecuteParams,
 			) (*agent.ToolExecutionResult, error) {
 				_, err := agreements.Review(ctx, step.review, req)
 
@@ -1371,8 +1371,8 @@ func (a *ruleAmendment) request(
 	ctx context.Context,
 	agreements rateAgreementKeeper,
 	lanes laneReader,
-	params *serviceports.ToolExecuteParams,
-) (*repositories.AmendRateAgreementRulesRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*rateagreementports.AmendRateAgreementRulesRequest, error) {
 	agreement, err := loadAgreement(ctx, agreements, tenantFrom(*params), a.id)
 	if err != nil {
 		return nil, err
@@ -1391,7 +1391,7 @@ func (a *ruleAmendment) request(
 		rule.EffectiveTo = agreement.EffectiveTo
 	}
 
-	return &repositories.AmendRateAgreementRulesRequest{
+	return &rateagreementports.AmendRateAgreementRulesRequest{
 		TenantInfo:      tenantFrom(*params),
 		RateAgreementID: agreement.ID,
 		EffectiveFrom:   a.from,
@@ -1403,7 +1403,7 @@ func (a *ruleAmendment) request(
 func newAmendRateAgreementRulesTool(
 	agreements rateAgreementKeeper,
 	states stateFinder,
-) serviceports.AgentTool {
+) agentports.AgentTool {
 	lanes := laneReader{states: states}
 
 	return newReceivableTool(rateMoneySpec(&receivableSpec{
@@ -1427,7 +1427,7 @@ func newAmendRateAgreementRulesTool(
 		required: []string{paramRateAgreementID, paramEffectiveFrom},
 		target:   targetRateAgreement,
 	}), receivablePlan[*ruleAmendment, *rateagreementservice.AmendmentPlan]{
-		request: func(params *serviceports.ToolExecuteParams) (*ruleAmendment, error) {
+		request: func(params *agentports.ToolExecuteParams) (*ruleAmendment, error) {
 			id, err := requirePulid(params.Params, paramRateAgreementID)
 			if err != nil {
 				return nil, err
@@ -1450,7 +1450,7 @@ func newAmendRateAgreementRulesTool(
 		plan: func(
 			ctx context.Context,
 			amendment *ruleAmendment,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*rateagreementservice.AmendmentPlan, error) {
 			req, err := amendment.request(ctx, agreements, lanes, params)
 			if err != nil {
@@ -1466,7 +1466,7 @@ func newAmendRateAgreementRulesTool(
 		run: func(
 			ctx context.Context,
 			amendment *ruleAmendment,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			req, err := amendment.request(ctx, agreements, lanes, params)
 			if err != nil {
@@ -1518,7 +1518,7 @@ func renderRuleAmendment(
 }
 
 func rateIncreaseRequestFrom(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*rateagreementservice.RateIncreaseRequest, error) {
 	req := &rateagreementservice.RateIncreaseRequest{TenantInfo: tenantFrom(*params)}
 	var err error
@@ -1590,11 +1590,11 @@ type rateIncreaseTool struct {
 	*receivableTool[*rateagreementservice.RateIncreaseRequest, *rateagreementservice.RateIncreasePlan]
 }
 
-var _ serviceports.ToolSelectionResolver = rateIncreaseTool{}
+var _ agentports.ToolSelectionResolver = rateIncreaseTool{}
 
 func (t rateIncreaseTool) ResolveSelection(
 	_ context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolSelectionResolver interface passes params by value
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolSelectionResolver interface passes params by value
 ) (map[string]any, error) {
 	if _, named := params.Params[paramAgreementIDs]; !named {
 		return params.Params, nil
@@ -1645,7 +1645,7 @@ func renderRateIncrease(
 	return toolpreview.Build(summary), nil
 }
 
-func newApplyRateIncreaseTool(agreements rateAgreementKeeper) serviceports.AgentTool {
+func newApplyRateIncreaseTool(agreements rateAgreementKeeper) agentports.AgentTool {
 	return rateIncreaseTool{newReceivableTool(rateMoneySpec(&receivableSpec{
 		name: "apply_rate_increase",
 		description: "Propose a general rate increase or decrease on agreements' lane rates, " +
@@ -1686,7 +1686,7 @@ func newApplyRateIncreaseTool(agreements rateAgreementKeeper) serviceports.Agent
 		plan: func(
 			ctx context.Context,
 			req *rateagreementservice.RateIncreaseRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*rateagreementservice.RateIncreasePlan, error) {
 			return agreements.PlanApplyRateIncrease(ctx, req)
 		},
@@ -1697,7 +1697,7 @@ func newApplyRateIncreaseTool(agreements rateAgreementKeeper) serviceports.Agent
 		run: func(
 			ctx context.Context,
 			req *rateagreementservice.RateIncreaseRequest,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			_, err := agreements.ApplyRateIncrease(ctx, req, params.Actor.UserID)
 

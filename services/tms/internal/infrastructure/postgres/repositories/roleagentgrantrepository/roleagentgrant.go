@@ -6,9 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -30,7 +30,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.RoleAgentGrantRepository {
+func New(p Params) permissionports.RoleAgentGrantRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.roleagentgrant-repository"),
@@ -39,7 +39,7 @@ func New(p Params) repositories.RoleAgentGrantRepository {
 
 func (r *repository) ListGrantedAgentIDs(
 	ctx context.Context,
-	req repositories.ListGrantedAgentIDsRequest,
+	req permissionports.ListGrantedAgentIDsRequest,
 ) ([]pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
 		if len(req.RoleIDs) == 0 {
@@ -92,7 +92,7 @@ func (r *repository) listGrants(
 
 func (r *repository) ListRolesByAgents(
 	ctx context.Context,
-	req repositories.ListGrantsByAgentsRequest,
+	req permissionports.ListGrantsByAgentsRequest,
 ) (map[pulid.ID][]*permission.Role, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (map[pulid.ID][]*permission.Role, error) {
 		out := make(map[pulid.ID][]*permission.Role, len(req.AgentIDs))
@@ -151,7 +151,7 @@ func (r *repository) ListRolesByAgents(
 
 func (r *repository) ListAgentsByRoles(
 	ctx context.Context,
-	req repositories.ListGrantsByRolesRequest,
+	req permissionports.ListGrantsByRolesRequest,
 ) (map[pulid.ID][]*agentdefinition.Definition, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (map[pulid.ID][]*agentdefinition.Definition, error) {
 		out := make(map[pulid.ID][]*agentdefinition.Definition, len(req.RoleIDs))
@@ -210,7 +210,7 @@ func (r *repository) ListAgentsByRoles(
 
 func (r *repository) ListGrantableRoles(
 	ctx context.Context,
-	req repositories.ListGrantableRolesRequest,
+	req permissionports.ListGrantableRolesRequest,
 ) ([]*permission.Role, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*permission.Role, error) {
 		cols := buncolgen.RoleColumns
@@ -249,8 +249,8 @@ type replaceParams struct {
 func (r *repository) replace(
 	ctx context.Context,
 	p replaceParams,
-) (repositories.GrantChange, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (repositories.GrantChange, error) {
+) (permissionports.GrantChange, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (permissionports.GrantChange, error) {
 		db := r.db.DBForContext(ctx)
 
 		previous := make([]pulid.ID, 0, len(p.wanted))
@@ -264,11 +264,11 @@ func (r *repository) replace(
 			For("UPDATE").
 			Scan(ctx, &previous)
 		if err != nil {
-			return repositories.GrantChange{}, fmt.Errorf("read the current grants: %w", err)
+			return permissionports.GrantChange{}, fmt.Errorf("read the current grants: %w", err)
 		}
 
 		wanted := sliceutils.Dedupe(p.wanted)
-		change := repositories.GrantChange{
+		change := permissionports.GrantChange{
 			Previous: previous,
 			Added:    sliceutils.Difference(wanted, previous),
 			Removed:  sliceutils.Difference(previous, wanted),
@@ -284,7 +284,7 @@ func (r *repository) replace(
 				}).
 				Exec(ctx)
 			if err != nil {
-				return repositories.GrantChange{}, fmt.Errorf("remove grants: %w", err)
+				return permissionports.GrantChange{}, fmt.Errorf("remove grants: %w", err)
 			}
 		}
 
@@ -300,7 +300,7 @@ func (r *repository) replace(
 					") DO NOTHING").
 				Exec(ctx)
 			if err != nil {
-				return repositories.GrantChange{}, fmt.Errorf("add grants: %w", err)
+				return permissionports.GrantChange{}, fmt.Errorf("add grants: %w", err)
 			}
 		}
 
@@ -310,8 +310,8 @@ func (r *repository) replace(
 
 func (r *repository) ReplaceForAgent(
 	ctx context.Context,
-	req repositories.ReplaceAgentGrantsRequest,
-) (repositories.GrantChange, error) {
+	req permissionports.ReplaceAgentGrantsRequest,
+) (permissionports.GrantChange, error) {
 	cols := buncolgen.RoleAgentGrantColumns
 	change, err := r.replace(ctx, replaceParams{
 		tenant:  req.TenantInfo,
@@ -331,7 +331,7 @@ func (r *repository) ReplaceForAgent(
 	})
 	if err != nil {
 		r.l.Error("failed to replace the roles granted an agent", zap.Error(err))
-		return repositories.GrantChange{}, err
+		return permissionports.GrantChange{}, err
 	}
 
 	return change, nil
@@ -339,8 +339,8 @@ func (r *repository) ReplaceForAgent(
 
 func (r *repository) ReplaceForRole(
 	ctx context.Context,
-	req repositories.ReplaceRoleGrantsRequest,
-) (repositories.GrantChange, error) {
+	req permissionports.ReplaceRoleGrantsRequest,
+) (permissionports.GrantChange, error) {
 	cols := buncolgen.RoleAgentGrantColumns
 	change, err := r.replace(ctx, replaceParams{
 		tenant:  req.TenantInfo,
@@ -360,7 +360,7 @@ func (r *repository) ReplaceForRole(
 	})
 	if err != nil {
 		r.l.Error("failed to replace the agents granted a role", zap.Error(err))
-		return repositories.GrantChange{}, err
+		return permissionports.GrantChange{}, err
 	}
 
 	return change, nil

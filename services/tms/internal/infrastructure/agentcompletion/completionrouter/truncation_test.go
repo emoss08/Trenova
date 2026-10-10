@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -77,7 +77,7 @@ func TestStreamChat_KeepsWhatArrivedWhenTheStreamDies(t *testing.T) {
 	// looking at when the turn ends is only the last attempt's text.
 	var streamed strings.Builder
 	request := chatRequest(pulid.Nil)
-	request.RetrySink = func(serviceports.ChatRetryNotice) { streamed.Reset() }
+	request.RetrySink = func(agentports.ChatRetryNotice) { streamed.Reset() }
 	result, err := service.StreamChat(t.Context(), request, func(delta string) {
 		streamed.WriteString(delta)
 	})
@@ -153,9 +153,9 @@ func TestStreamChat_StartsOverOnTheNextProviderWhenAReplyDies(t *testing.T) {
 		chatProvider("finishes", good.URL, 20),
 	)
 
-	var notices []serviceports.ChatRetryNotice
+	var notices []agentports.ChatRetryNotice
 	request := chatRequest(pulid.Nil)
-	request.RetrySink = func(notice serviceports.ChatRetryNotice) { notices = append(notices, notice) }
+	request.RetrySink = func(notice agentports.ChatRetryNotice) { notices = append(notices, notice) }
 
 	var streamed strings.Builder
 	result, err := service.StreamChat(
@@ -188,7 +188,7 @@ func TestStreamChat_KeepsThePartialReplyOnceTheRetriesAreSpent(t *testing.T) {
 
 	retries := 0
 	request := chatRequest(pulid.Nil)
-	request.RetrySink = func(serviceports.ChatRetryNotice) { retries++ }
+	request.RetrySink = func(agentports.ChatRetryNotice) { retries++ }
 
 	result, err := service.StreamChat(t.Context(), request, func(string) {})
 	require.NoError(t, err)

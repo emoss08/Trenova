@@ -9,8 +9,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/document"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -31,7 +31,7 @@ type meetingConversations struct {
 
 func (m *meetingConversations) ListMessages(
 	ctx context.Context,
-	req repositories.ListMessagesRequest,
+	req agentports.ListMessagesRequest,
 ) ([]conversation.Message, error) {
 	close(m.listing)
 	m.listSawCount.Store(waitFor(ctx, m.counting))
@@ -41,7 +41,7 @@ func (m *meetingConversations) ListMessages(
 
 func (m *meetingConversations) CountMessages(
 	ctx context.Context,
-	req repositories.CountMessagesRequest,
+	req agentports.CountMessagesRequest,
 ) (int, error) {
 	close(m.counting)
 	m.countSawList.Store(waitFor(ctx, m.listing))
@@ -68,7 +68,7 @@ func TestPrepareTurn_ReadsTheHistoryWhileTheRoomIsCounted(t *testing.T) {
 	svc.conversations = meeting
 	actor := testActor()
 
-	plan, err := svc.PrepareTurn(t.Context(), &serviceports.SendMessageRequest{
+	plan, err := svc.PrepareTurn(t.Context(), &agentports.SendMessageRequest{
 		ThreadID:   conversations.thread.ID,
 		Content:    "Where is S1?",
 		TenantInfo: actor.TenantInfo(),
@@ -91,7 +91,7 @@ func TestPrepareTurn_ReportsTheFirstFailingCheckInItsOldOrder(t *testing.T) {
 	conversations.count = maxThreadMessages
 	actor := testActor()
 
-	_, err := svc.PrepareTurn(t.Context(), &serviceports.SendMessageRequest{
+	_, err := svc.PrepareTurn(t.Context(), &agentports.SendMessageRequest{
 		ThreadID:   conversations.thread.ID,
 		Content:    "Where is S1?",
 		TenantInfo: actor.TenantInfo(),
@@ -105,7 +105,7 @@ func TestPrepareTurn_ReportsTheFirstFailingCheckInItsOldOrder(t *testing.T) {
 // meetingDocuments holds each document read until every other expected read
 // has started, and counts how many found the rest already under way.
 type meetingDocuments struct {
-	repositories.DocumentRepository
+	documentports.DocumentRepository
 
 	docs    map[pulid.ID]*document.Document
 	arrived sync.WaitGroup
@@ -127,7 +127,7 @@ func newMeetingDocuments(docs map[pulid.ID]*document.Document) *meetingDocuments
 
 func (m *meetingDocuments) GetByID(
 	ctx context.Context,
-	req repositories.GetDocumentByIDRequest,
+	req documentports.GetDocumentByIDRequest,
 ) (*document.Document, error) {
 	m.arrived.Done()
 	if waitFor(ctx, m.all) {
@@ -157,7 +157,7 @@ func TestPrepareTurn_ReadsAttachedFilesTogether(t *testing.T) {
 	})
 	svc.documents = documents
 
-	plan, err := svc.PrepareTurn(t.Context(), &serviceports.SendMessageRequest{
+	plan, err := svc.PrepareTurn(t.Context(), &agentports.SendMessageRequest{
 		ThreadID:              conversations.thread.ID,
 		Content:               "Compare these",
 		TenantInfo:            actor.TenantInfo(),

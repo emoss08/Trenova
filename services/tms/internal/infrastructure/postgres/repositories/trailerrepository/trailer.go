@@ -5,12 +5,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/quotaservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/quotatx"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -27,16 +27,16 @@ type Params struct {
 
 	DB     *postgres.Connection
 	Logger *zap.Logger
-	Quota  services.QuotaGuard `optional:"true"`
+	Quota  platformplanports.QuotaGuard `optional:"true"`
 }
 
 type repository struct {
 	db    *postgres.Connection
 	l     *zap.Logger
-	quota services.QuotaGuard
+	quota platformplanports.QuotaGuard
 }
 
-func New(p Params) repositories.TrailerRepository {
+func New(p Params) trailerports.TrailerRepository {
 	return &repository{
 		db:    p.DB,
 		l:     p.Logger.Named("postgres.trailer-repository"),
@@ -46,7 +46,7 @@ func New(p Params) repositories.TrailerRepository {
 
 func (r *repository) applyListFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListTrailersRequest,
+	req *trailerports.ListTrailersRequest,
 ) (*bun.SelectQuery, error) {
 	q = applyTrailerRelations(q, req.TrailerRelationIncludes)
 
@@ -68,7 +68,7 @@ func (r *repository) applyListFilters(
 
 func (r *repository) applyListCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListTrailersRequest,
+	req *trailerports.ListTrailersRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -96,7 +96,7 @@ func (r *repository) applyStatusFilter(q *bun.SelectQuery, value string) *bun.Se
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListTrailersRequest,
+	req *trailerports.ListTrailersRequest,
 ) (*pagination.CursorListResult[*trailer.Trailer], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*trailer.Trailer], error) {
 		log := r.l.With(
@@ -170,7 +170,7 @@ func (r *repository) Create(
 			}
 
 			return nil
-		}, services.QuotaRequest{
+		}, platformplanports.QuotaRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
 				BuID:  entity.BusinessUnitID,
@@ -215,7 +215,7 @@ func (r *repository) Update(
 			return nil, err
 		}
 
-		return r.GetByID(ctx, repositories.GetTrailerByIDRequest{
+		return r.GetByID(ctx, trailerports.GetTrailerByIDRequest{
 			ID: entity.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
@@ -227,7 +227,7 @@ func (r *repository) Update(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetTrailerByIDRequest,
+	req trailerports.GetTrailerByIDRequest,
 ) (*trailer.Trailer, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*trailer.Trailer, error) {
 		log := r.l.With(
@@ -294,7 +294,7 @@ func (r *repository) SelectOptions(
 
 func (r *repository) GetByIDs(
 	ctx context.Context,
-	req repositories.GetTrailersByIDsRequest,
+	req trailerports.GetTrailersByIDsRequest,
 ) ([]*trailer.Trailer, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*trailer.Trailer, error) {
 		log := r.l.With(
@@ -331,7 +331,7 @@ func (r *repository) GetByIDs(
 
 func (r *repository) BulkUpdateStatus(
 	ctx context.Context,
-	req *repositories.BulkUpdateTrailerStatusRequest,
+	req *trailerports.BulkUpdateTrailerStatusRequest,
 ) ([]*trailer.Trailer, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*trailer.Trailer, error) {
 		log := r.l.With(
@@ -365,7 +365,7 @@ func (r *repository) BulkUpdateStatus(
 
 func applyTrailerRelations(
 	q *bun.SelectQuery,
-	includes repositories.TrailerRelationIncludes,
+	includes trailerports.TrailerRelationIncludes,
 ) *bun.SelectQuery {
 	rel := buncolgen.TrailerRelations
 	equipmentTypeRel := buncolgen.EquipmentTypeRelations
@@ -433,7 +433,7 @@ func applyTrailerRelations(
 
 func applyTrailerColumns(
 	q *bun.SelectQuery,
-	includes repositories.TrailerRelationIncludes,
+	includes trailerports.TrailerRelationIncludes,
 ) *bun.SelectQuery {
 	if len(includes.TrailerColumns) == 0 {
 		return q.ColumnExpr(buncolgen.TrailerTable.All())
@@ -444,7 +444,7 @@ func applyTrailerColumns(
 
 func applyLastKnownLocationJoin(
 	q *bun.SelectQuery,
-	includes repositories.TrailerRelationIncludes,
+	includes trailerports.TrailerRelationIncludes,
 ) *bun.SelectQuery {
 	if !includes.IncludeLastKnownLocation {
 		return q

@@ -10,7 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/fuelimport"
 	"github.com/emoss08/trenova/pkg/rateimport"
@@ -65,8 +65,8 @@ func NewWithClient(client *http.Client) *Connector {
 
 func (c *Connector) IntegrationType() integration.Type { return integration.TypeRampFuel }
 
-func (c *Connector) Capability() services.FuelFeedCapability {
-	return services.FuelFeedCapabilitySpendOnly
+func (c *Connector) Capability() fuelpurchaseports.FuelFeedCapability {
+	return fuelpurchaseports.FuelFeedCapabilitySpendOnly
 }
 
 func (c *Connector) TestConnection(ctx context.Context, config map[string]string) error {
@@ -82,8 +82,8 @@ func (c *Connector) TestConnection(ctx context.Context, config map[string]string
 
 func (c *Connector) FetchTransactions(
 	ctx context.Context,
-	req *services.FetchFuelTransactionsRequest,
-) (*services.FetchFuelTransactionsResult, error) {
+	req *fuelpurchaseports.FetchFuelTransactionsRequest,
+) (*fuelpurchaseports.FetchFuelTransactionsResult, error) {
 	settings, err := settingsFrom(req.Config)
 	if err != nil {
 		return nil, err
@@ -100,7 +100,7 @@ func (c *Connector) FetchTransactions(
 	}
 
 	if len(transactions) == 0 {
-		return &services.FetchFuelTransactionsResult{
+		return &fuelpurchaseports.FetchFuelTransactionsResult{
 			Staged: &fuelimport.StageResult{},
 			Format: fuelpurchase.SourceFormatAPI,
 		}, nil
@@ -121,7 +121,7 @@ func (c *Connector) FetchTransactions(
 		DefaultCurrency: settings.defaultCurrency,
 	})
 
-	return &services.FetchFuelTransactionsResult{
+	return &fuelpurchaseports.FetchFuelTransactionsResult{
 		Staged:    staged,
 		Reference: windowReference(req.Since, req.Until),
 		Format:    fuelpurchase.SourceFormatAPI,
@@ -129,9 +129,9 @@ func (c *Connector) FetchTransactions(
 	}, nil
 }
 
-func cardsFrom(transactions []transaction) []services.ProviderCard {
+func cardsFrom(transactions []transaction) []fuelpurchaseports.ProviderCard {
 	seen := make(map[string]struct{}, 8)
-	cards := make([]services.ProviderCard, 0, 8)
+	cards := make([]fuelpurchaseports.ProviderCard, 0, 8)
 
 	for _, item := range transactions {
 		lastFour := item.lastFour()
@@ -143,7 +143,7 @@ func cardsFrom(transactions []transaction) []services.ProviderCard {
 		}
 
 		seen[lastFour] = struct{}{}
-		cards = append(cards, services.ProviderCard{
+		cards = append(cards, fuelpurchaseports.ProviderCard{
 			LastFour:       lastFour,
 			ExternalCardID: item.CardID,
 			Provider:       fuelpurchase.CardProviderRamp,

@@ -7,11 +7,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -32,7 +32,7 @@ type documentKeeper interface {
 		ctx context.Context,
 		req *documentservice.BulkDeleteRequest,
 	) (*documentservice.DeletePlan, error)
-	Delete(ctx context.Context, req repositories.DeleteDocumentRequest, userID pulid.ID) error
+	Delete(ctx context.Context, req documentports.DeleteDocumentRequest, userID pulid.ID) error
 	BulkDelete(
 		ctx context.Context,
 		req *documentservice.BulkDeleteRequest,
@@ -83,7 +83,7 @@ func documentRecord(doc *document.Document) toolpreview.Record {
 }
 
 func deleteDocumentsRequest(
-	params *serviceports.ToolExecuteParams,
+	params *agentports.ToolExecuteParams,
 ) (*documentservice.BulkDeleteRequest, error) {
 	ids, err := requirePulidSlice(params.Params, paramDocumentIDs, maxDocumentsPerDelete)
 	if err != nil {
@@ -97,7 +97,7 @@ func deleteDocumentsRequest(
 	}, nil
 }
 
-func newDeleteDocumentsTool(documents documentKeeper) serviceports.AgentTool {
+func newDeleteDocumentsTool(documents documentKeeper) agentports.AgentTool {
 	return newReceivableTool(&receivableSpec{
 		name: "delete_documents",
 		description: "Delete documents that should not be on file, such as a duplicate " +
@@ -125,7 +125,7 @@ func newDeleteDocumentsTool(documents documentKeeper) serviceports.AgentTool {
 		plan: func(
 			ctx context.Context,
 			req *documentservice.BulkDeleteRequest,
-			_ *serviceports.ToolExecuteParams,
+			_ *agentports.ToolExecuteParams,
 		) (*documentservice.DeletePlan, error) {
 			return documents.PlanDelete(ctx, req)
 		},
@@ -153,10 +153,10 @@ func newDeleteDocumentsTool(documents documentKeeper) serviceports.AgentTool {
 		run: func(
 			ctx context.Context,
 			req *documentservice.BulkDeleteRequest,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			if len(req.IDs) == 1 {
-				if err := documents.Delete(ctx, repositories.DeleteDocumentRequest{
+				if err := documents.Delete(ctx, documentports.DeleteDocumentRequest{
 					ID: req.IDs[0],
 					TenantInfo: pagination.TenantInfo{
 						OrgID: req.TenantInfo.OrgID,
@@ -195,7 +195,7 @@ type restoreDocumentPlan struct {
 	plan *documentservice.RestorePlan
 }
 
-func restoreRequest(params *serviceports.ToolExecuteParams) (*documentRestore, error) {
+func restoreRequest(params *agentports.ToolExecuteParams) (*documentRestore, error) {
 	id, err := requirePulid(params.Params, paramDocumentID)
 	if err != nil {
 		return nil, err
@@ -228,7 +228,7 @@ func restoreTarget(
 		"This document has no version {0}", req.version)
 }
 
-func newRestoreDocumentVersionTool(documents documentKeeper) serviceports.AgentTool {
+func newRestoreDocumentVersionTool(documents documentKeeper) agentports.AgentTool {
 	return newReceivableTool(&receivableSpec{
 		name: "restore_document_version",
 		description: "Make an earlier version of a document the current one again, when " +
@@ -250,7 +250,7 @@ func newRestoreDocumentVersionTool(documents documentKeeper) serviceports.AgentT
 		},
 		required:    []string{paramDocumentID, paramVersionNumber},
 		searchTerms: []string{"restore document", "previous version", "undo upload"},
-		target: func(params map[string]any) (serviceports.ToolTarget, bool) {
+		target: func(params map[string]any) (agentports.ToolTarget, bool) {
 			return targetOf(params, paramDocumentID, permission.ResourceDocument)
 		},
 	}, receivablePlan[*documentRestore, *restoreDocumentPlan]{
@@ -258,7 +258,7 @@ func newRestoreDocumentVersionTool(documents documentKeeper) serviceports.AgentT
 		plan: func(
 			ctx context.Context,
 			req *documentRestore,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*restoreDocumentPlan, error) {
 			tenant := tenantFrom(*params)
 			targetID, err := restoreTarget(ctx, documents, req, tenant)
@@ -300,7 +300,7 @@ func newRestoreDocumentVersionTool(documents documentKeeper) serviceports.AgentT
 		run: func(
 			ctx context.Context,
 			req *documentRestore,
-			params *serviceports.ToolExecuteParams,
+			params *agentports.ToolExecuteParams,
 		) (*agent.ToolExecutionResult, error) {
 			tenant := tenantFrom(*params)
 			targetID, err := restoreTarget(ctx, documents, req, tenant)

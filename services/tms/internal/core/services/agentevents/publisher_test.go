@@ -7,9 +7,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentevents"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -17,22 +18,22 @@ import (
 )
 
 type fakeDefinitions struct {
-	repositories.AgentDefinitionRepository
+	agentdefinitionports.AgentDefinitionRepository
 	items   []*agentdefinition.Definition
-	lastReq repositories.ListAgentDefinitionsByTriggerRequest
+	lastReq agentdefinitionports.ListAgentDefinitionsByTriggerRequest
 }
 
 func (f *fakeDefinitions) ListEnabledByTrigger(
 	_ context.Context,
-	req repositories.ListAgentDefinitionsByTriggerRequest,
+	req agentdefinitionports.ListAgentDefinitionsByTriggerRequest,
 ) ([]*agentdefinition.Definition, error) {
 	f.lastReq = req
 	return f.items, nil
 }
 
 type fakeRunService struct {
-	serviceports.AgentRunService
-	started []*serviceports.StartAgentRunForDefinitionRequest
+	agentports.AgentRunService
+	started []*agentports.StartAgentRunForDefinitionRequest
 	err     error
 	// open are the definitions with a run already open, which the run
 	// service refuses to start again.
@@ -41,12 +42,12 @@ type fakeRunService struct {
 
 func (f *fakeRunService) StartForDefinition(
 	_ context.Context,
-	req *serviceports.StartAgentRunForDefinitionRequest,
-	_ *serviceports.RequestActor,
+	req *agentports.StartAgentRunForDefinitionRequest,
+	_ *permissionports.RequestActor,
 ) (*agent.AgentRun, error) {
 	f.started = append(f.started, req)
 	if f.open[req.DefinitionID] {
-		return nil, serviceports.ErrAgentRunAlreadyOpen
+		return nil, agentports.ErrAgentRunAlreadyOpen
 	}
 	if f.err != nil {
 		return nil, f.err
@@ -59,7 +60,7 @@ var tenantInfo = pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid
 type fixture struct {
 	definitions *fakeDefinitions
 	runService  *fakeRunService
-	publisher   serviceports.AgentEventPublisher
+	publisher   agentports.AgentEventPublisher
 }
 
 func newFixture(defs ...*agentdefinition.Definition) *fixture {
@@ -83,7 +84,7 @@ func TestPublish_StartsEachSubscribedDefinition(t *testing.T) {
 	f := newFixture(first, second)
 	subject := pulid.MustNew("bqi_")
 
-	f.publisher.Publish(t.Context(), serviceports.AgentEvent{
+	f.publisher.Publish(t.Context(), agentports.AgentEvent{
 		Kind:       agent.EventBillingQueueItemException,
 		SubjectID:  subject,
 		TenantInfo: tenantInfo,
@@ -112,7 +113,7 @@ func TestPublish_SkipsDefinitionWithOpenRunForSubject(t *testing.T) {
 	f := newFixture(busy, idle)
 	f.runService.open[busy.ID] = true
 
-	f.publisher.Publish(t.Context(), serviceports.AgentEvent{
+	f.publisher.Publish(t.Context(), agentports.AgentEvent{
 		Kind:       agent.EventShipmentMoveUnassigned,
 		SubjectID:  pulid.MustNew("smv_"),
 		TenantInfo: tenantInfo,
@@ -126,7 +127,7 @@ func TestPublish_IgnoresUnknownKind(t *testing.T) {
 
 	f := newFixture(&agentdefinition.Definition{ID: pulid.MustNew("agd_")})
 
-	f.publisher.Publish(t.Context(), serviceports.AgentEvent{
+	f.publisher.Publish(t.Context(), agentports.AgentEvent{
 		Kind:       agent.EventKind("not.a.kind"),
 		SubjectID:  pulid.MustNew("shp_"),
 		TenantInfo: tenantInfo,
@@ -140,11 +141,11 @@ func TestPublish_IgnoresMissingSubjectOrTenant(t *testing.T) {
 
 	f := newFixture(&agentdefinition.Definition{ID: pulid.MustNew("agd_")})
 
-	f.publisher.Publish(t.Context(), serviceports.AgentEvent{
+	f.publisher.Publish(t.Context(), agentports.AgentEvent{
 		Kind:       agent.EventShipmentCreated,
 		TenantInfo: tenantInfo,
 	})
-	f.publisher.Publish(t.Context(), serviceports.AgentEvent{
+	f.publisher.Publish(t.Context(), agentports.AgentEvent{
 		Kind:      agent.EventShipmentCreated,
 		SubjectID: pulid.MustNew("shp_"),
 	})
@@ -161,7 +162,7 @@ func TestPublish_StartFailureDoesNotPanicOrStopOthers(t *testing.T) {
 	)
 	f.runService.err = errors.New("temporal down")
 
-	f.publisher.Publish(t.Context(), serviceports.AgentEvent{
+	f.publisher.Publish(t.Context(), agentports.AgentEvent{
 		Kind:       agent.EventDocumentExtracted,
 		SubjectID:  pulid.MustNew("doc_"),
 		TenantInfo: tenantInfo,

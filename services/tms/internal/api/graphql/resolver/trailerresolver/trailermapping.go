@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -17,7 +17,7 @@ func trailerRelationIncludes(
 	nodePathPrefix string,
 	includeEquipmentDetails *bool,
 	includeFleetDetails *bool,
-) repositories.TrailerRelationIncludes {
+) trailerports.TrailerRelationIncludes {
 	return trailerRelationIncludesForFields(
 		func(path string) bool {
 			return graphql.FieldRequested(ctx, path)
@@ -33,7 +33,7 @@ func trailerRelationIncludesForFields(
 	nodePathPrefix string,
 	includeEquipmentDetails *bool,
 	includeFleetDetails *bool,
-) repositories.TrailerRelationIncludes {
+) trailerports.TrailerRelationIncludes {
 	equipmentDetailsAllowed := includeEquipmentDetails == nil || *includeEquipmentDetails
 	fleetDetailsAllowed := includeFleetDetails == nil || *includeFleetDetails
 	selection := projection.Select(
@@ -49,7 +49,7 @@ func trailerRelationIncludesForFields(
 	)
 	fleetCodeSelection, fleetCodeSelected := selection.Relations["fleetCode"]
 
-	includes := repositories.TrailerRelationIncludes{
+	includes := trailerports.TrailerRelationIncludes{
 		IncludeBusinessUnit:          selection.HasRelation("businessUnit"),
 		IncludeOrganization:          selection.HasRelation("organization"),
 		IncludeRegistrationState:     selection.HasRelation("registrationState"),

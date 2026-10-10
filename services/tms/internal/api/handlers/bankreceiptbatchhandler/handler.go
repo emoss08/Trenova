@@ -7,8 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptbatchports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -18,12 +17,12 @@ import (
 
 type Params struct {
 	fx.In
-	Service              serviceports.BankReceiptBatchService
+	Service              bankreceiptbatchports.BankReceiptBatchService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 type Handler struct {
-	service serviceports.BankReceiptBatchService
+	service bankreceiptbatchports.BankReceiptBatchService
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
 }
@@ -84,7 +83,7 @@ func (h *Handler) get(c *gin.Context) {
 	}
 	item, err := h.service.Get(
 		c.Request.Context(),
-		&serviceports.GetBankReceiptBatchRequest{
+		&bankreceiptbatchports.GetBankReceiptBatchRequest{
 			BatchID: id,
 			TenantInfo: pagination.TenantInfo{
 				OrgID:  auth.OrganizationID,
@@ -108,7 +107,7 @@ func (h *Handler) selectSources(c *gin.Context) {
 		c,
 		req,
 		h.eh,
-		func() (*pagination.ListResult[*repositories.BankReceiptBatchSourceOption], error) {
+		func() (*pagination.ListResult[*bankreceiptbatchports.BankReceiptBatchSourceOption], error) {
 			return h.service.DistinctSources(c.Request.Context(), req)
 		},
 	)
@@ -116,7 +115,7 @@ func (h *Handler) selectSources(c *gin.Context) {
 
 func (h *Handler) importBatch(c *gin.Context) {
 	auth := authctx.GetAuthContext(c)
-	req := new(serviceports.ImportBankReceiptBatchRequest)
+	req := new(bankreceiptbatchports.ImportBankReceiptBatchRequest)
 	if err := authctx.BindJSON(c, auth, req); err != nil {
 		h.eh.HandleError(c, err)
 		return

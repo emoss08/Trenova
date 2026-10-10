@@ -4,8 +4,14 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
@@ -16,36 +22,36 @@ type Params struct {
 	fx.In
 
 	Logger          *zap.Logger
-	Repo            repositories.ServiceFailureRepository
-	ReasonCodeRepo  repositories.ServiceFailureReasonCodeRepository
-	ShipmentRepo    repositories.ShipmentRepository
-	DispatchRepo    repositories.DispatchControlRepository
-	CommentService  services.ShipmentCommentService
-	AuditService    services.AuditService
-	Realtime        services.RealtimeService
-	OrderDerivation services.OrderDerivationService `optional:"true"`
-	Publisher       services.AgentEventPublisher    `optional:"true"`
+	Repo            servicefailureports.ServiceFailureRepository
+	ReasonCodeRepo  servicefailureports.ServiceFailureReasonCodeRepository
+	ShipmentRepo    shipmentports.ShipmentRepository
+	DispatchRepo    dispatchcontrolports.DispatchControlRepository
+	CommentService  shipmentports.ShipmentCommentService
+	AuditService    auditports.AuditService
+	Realtime        agentports.RealtimeService
+	OrderDerivation orderports.OrderDerivationService `optional:"true"`
+	Publisher       agentports.AgentEventPublisher    `optional:"true"`
 	// Watchtower puts an open failure on the feed a person reads.
-	Watchtower services.WatchtowerProjector `optional:"true"`
+	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
 }
 
 type EDIServiceSetter interface {
-	SetEDIService(service services.EDIService)
+	SetEDIService(service ediports.EDIService)
 }
 
 type service struct {
 	l              *zap.Logger
-	repo           repositories.ServiceFailureRepository
-	reasonCodeRepo repositories.ServiceFailureReasonCodeRepository
-	shipmentRepo   repositories.ShipmentRepository
-	dispatchRepo   repositories.DispatchControlRepository
-	commentService services.ShipmentCommentService
-	auditService   services.AuditService
-	realtime       services.RealtimeService
-	ediService     services.EDIService
+	repo           servicefailureports.ServiceFailureRepository
+	reasonCodeRepo servicefailureports.ServiceFailureReasonCodeRepository
+	shipmentRepo   shipmentports.ShipmentRepository
+	dispatchRepo   dispatchcontrolports.DispatchControlRepository
+	commentService shipmentports.ShipmentCommentService
+	auditService   auditports.AuditService
+	realtime       agentports.RealtimeService
+	ediService     ediports.EDIService
 	delayedMarker  delayedShipmentMarker
-	publisher      services.AgentEventPublisher
-	watchtower     services.WatchtowerProjector
+	publisher      agentports.AgentEventPublisher
+	watchtower     watchtowerports.WatchtowerProjector
 }
 
 func New(p Params) *service {
@@ -71,13 +77,13 @@ func New(p Params) *service {
 	return s
 }
 
-func (s *service) SetEDIService(service services.EDIService) {
+func (s *service) SetEDIService(service ediports.EDIService) {
 	s.ediService = service
 }
 
 func (s *service) List(
 	ctx context.Context,
-	req *repositories.ListServiceFailuresRequest,
+	req *servicefailureports.ListServiceFailuresRequest,
 ) (*pagination.ListResult[*servicefailure.ServiceFailure], error) {
 	if req == nil || req.Filter == nil {
 		return nil, errortypes.NewValidationError(
@@ -91,14 +97,14 @@ func (s *service) List(
 
 func (s *service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListServiceFailureConnectionRequest,
+	req *servicefailureports.ListServiceFailureConnectionRequest,
 ) (*pagination.CursorListResult[*servicefailure.ServiceFailure], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *service) GetByID(
 	ctx context.Context,
-	req *repositories.GetServiceFailureByIDRequest,
+	req *servicefailureports.GetServiceFailureByIDRequest,
 ) (*servicefailure.ServiceFailure, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
@@ -108,7 +114,7 @@ func (s *service) GetByID(
 
 func (s *service) GetByShipment(
 	ctx context.Context,
-	req *repositories.GetServiceFailureByShipmentRequest,
+	req *servicefailureports.GetServiceFailureByShipmentRequest,
 ) (*servicefailure.ServiceFailure, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
@@ -118,7 +124,7 @@ func (s *service) GetByShipment(
 
 func (s *service) CountUnresolved(
 	ctx context.Context,
-	req *repositories.CountUnresolvedServiceFailuresRequest,
+	req *servicefailureports.CountUnresolvedServiceFailuresRequest,
 ) (int, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return 0, multiErr

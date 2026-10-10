@@ -6,8 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
 )
@@ -42,12 +43,12 @@ func (s *Service) recordAccess(
 		return
 	}
 
-	actor := services.SystemAuditActor()
+	actor := permissionports.SystemAuditActor()
 	if tenantInfo.UserID.IsNotNil() {
-		actor = services.UserActor(tenantInfo).AuditActor()
+		actor = permissionports.UserActor(tenantInfo).AuditActor()
 	}
 
-	err := s.auditService.LogAction(&services.LogActionParams{
+	err := s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceDocument,
 		ResourceID:     doc.ID.String(),
 		Operation:      permission.OpRead,

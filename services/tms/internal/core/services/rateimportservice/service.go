@@ -14,8 +14,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/rateimport"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateimportports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	pkgrateimport "github.com/emoss08/trenova/pkg/rateimport"
@@ -36,18 +38,18 @@ type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Repo          repositories.RateImportRepository
-	AgreementRepo repositories.RateAgreementRepository
-	TemplateRepo  repositories.FormulaTemplateRepository
-	AuditService  services.AuditService
+	Repo          rateimportports.RateImportRepository
+	AgreementRepo rateagreementports.RateAgreementRepository
+	TemplateRepo  formulatemplateports.FormulaTemplateRepository
+	AuditService  auditports.AuditService
 }
 
 type Service struct {
 	l             *zap.Logger
-	repo          repositories.RateImportRepository
-	agreementRepo repositories.RateAgreementRepository
-	templateRepo  repositories.FormulaTemplateRepository
-	audit         services.AuditService
+	repo          rateimportports.RateImportRepository
+	agreementRepo rateagreementports.RateAgreementRepository
+	templateRepo  formulatemplateports.FormulaTemplateRepository
+	audit         auditports.AuditService
 	now           func() int64
 }
 
@@ -64,21 +66,21 @@ func New(p Params) *Service {
 
 func (s *Service) GetByID(
 	ctx context.Context,
-	req *repositories.GetRateImportBatchByIDRequest,
+	req *rateimportports.GetRateImportBatchByIDRequest,
 ) (*rateimport.RateImportBatch, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListRateImportBatchesRequest,
+	req *rateimportports.ListRateImportBatchesRequest,
 ) (*pagination.ListResult[*rateimport.RateImportBatch], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) ListRows(
 	ctx context.Context,
-	req *repositories.ListRateImportRowsRequest,
+	req *rateimportports.ListRateImportRowsRequest,
 ) (*pagination.ListResult[*rateimport.RateImportRow], error) {
 	return s.repo.ListRows(ctx, req)
 }
@@ -267,7 +269,7 @@ func (s *Service) templateResolver(
 
 	const pageSize = 100
 	for offset := 0; ; offset += pageSize {
-		page, err := s.templateRepo.List(ctx, &repositories.ListFormulaTemplatesRequest{
+		page, err := s.templateRepo.List(ctx, &formulatemplateports.ListFormulaTemplatesRequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: tenantInfo,
 				Pagination: pagination.Info{Limit: pageSize, Offset: offset},
@@ -303,7 +305,7 @@ func (s *Service) currentRules(
 	ctx context.Context,
 	req *UploadRequest,
 ) ([]*rateagreement.RateAgreementRule, error) {
-	agreement, err := s.agreementRepo.GetByID(ctx, &repositories.GetRateAgreementByIDRequest{
+	agreement, err := s.agreementRepo.GetByID(ctx, &rateagreementports.GetRateAgreementByIDRequest{
 		RateAgreementID: req.RateAgreementID,
 		TenantInfo:      req.TenantInfo,
 		IncludeChildren: true,
@@ -339,7 +341,7 @@ func (s *Service) Commit(
 	}
 	batch := plan.Batch
 
-	if err = s.agreementRepo.AmendRules(ctx, &repositories.AmendRateAgreementRulesRequest{
+	if err = s.agreementRepo.AmendRules(ctx, &rateagreementports.AmendRateAgreementRulesRequest{
 		TenantInfo:      req.TenantInfo,
 		RateAgreementID: batch.RateAgreementID,
 		EffectiveFrom:   batch.EffectiveFrom,
@@ -381,7 +383,7 @@ func (s *Service) rulesOf(
 	ctx context.Context,
 	batch *rateimport.RateImportBatch,
 ) ([]*rateagreement.RateAgreementRule, error) {
-	agreement, err := s.agreementRepo.GetByID(ctx, &repositories.GetRateAgreementByIDRequest{
+	agreement, err := s.agreementRepo.GetByID(ctx, &rateagreementports.GetRateAgreementByIDRequest{
 		RateAgreementID: batch.RateAgreementID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: batch.OrganizationID,
@@ -422,7 +424,7 @@ type BatchChange struct {
 
 func (s *Service) openBatch(
 	ctx context.Context,
-	req *repositories.GetRateImportBatchByIDRequest,
+	req *rateimportports.GetRateImportBatchByIDRequest,
 ) (*rateimport.RateImportBatch, error) {
 	batch, err := s.repo.GetByID(ctx, req)
 	if err != nil {
@@ -439,7 +441,7 @@ func (s *Service) openBatch(
 }
 
 func (s *Service) PlanCommit(ctx context.Context, req *CommitRequest) (*CommitPlan, error) {
-	batch, err := s.openBatch(ctx, &repositories.GetRateImportBatchByIDRequest{
+	batch, err := s.openBatch(ctx, &rateimportports.GetRateImportBatchByIDRequest{
 		RateImportBatchID: req.RateImportBatchID,
 		TenantInfo:        req.TenantInfo,
 		IncludeRows:       true,
@@ -481,7 +483,7 @@ func (s *Service) PlanCommit(ctx context.Context, req *CommitRequest) (*CommitPl
 }
 
 func (s *Service) PlanDiscard(ctx context.Context, req *CommitRequest) (*BatchChange, error) {
-	batch, err := s.openBatch(ctx, &repositories.GetRateImportBatchByIDRequest{
+	batch, err := s.openBatch(ctx, &rateimportports.GetRateImportBatchByIDRequest{
 		RateImportBatchID: req.RateImportBatchID,
 		TenantInfo:        req.TenantInfo,
 	})

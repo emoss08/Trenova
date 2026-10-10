@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,7 +21,7 @@ func TestInvoiceBatchFunc_PreservesOrderAndReportsMissingIDs(t *testing.T) {
 	secondID := pulid.MustNew("inv_")
 	missingID := pulid.MustNew("inv_")
 	getter := &stubInvoicesByIDsGetter{
-		getByIDs: func(_ context.Context, req repositories.GetInvoicesByIDsRequest) ([]*invoice.Invoice, error) {
+		getByIDs: func(_ context.Context, req invoiceports.GetInvoicesByIDsRequest) ([]*invoice.Invoice, error) {
 			assert.Equal(t, []pulid.ID{secondID, firstID, missingID}, req.InvoiceIDs)
 			return []*invoice.Invoice{
 				{ID: firstID, Number: "INV-1"},
@@ -57,7 +57,7 @@ func TestInvoiceBatchFunc_RepositoryErrorFillsValidResults(t *testing.T) {
 	invoiceID := pulid.MustNew("inv_")
 	repoErr := errors.New("repository failed")
 	getter := &stubInvoicesByIDsGetter{
-		getByIDs: func(context.Context, repositories.GetInvoicesByIDsRequest) ([]*invoice.Invoice, error) {
+		getByIDs: func(context.Context, invoiceports.GetInvoicesByIDsRequest) ([]*invoice.Invoice, error) {
 			return nil, repoErr
 		},
 	}
@@ -74,12 +74,12 @@ func TestInvoiceBatchFunc_RepositoryErrorFillsValidResults(t *testing.T) {
 }
 
 type stubInvoicesByIDsGetter struct {
-	getByIDs func(context.Context, repositories.GetInvoicesByIDsRequest) ([]*invoice.Invoice, error)
+	getByIDs func(context.Context, invoiceports.GetInvoicesByIDsRequest) ([]*invoice.Invoice, error)
 }
 
 func (s *stubInvoicesByIDsGetter) GetByIDs(
 	ctx context.Context,
-	req repositories.GetInvoicesByIDsRequest,
+	req invoiceports.GetInvoicesByIDsRequest,
 ) ([]*invoice.Invoice, error) {
 	return s.getByIDs(ctx, req)
 }

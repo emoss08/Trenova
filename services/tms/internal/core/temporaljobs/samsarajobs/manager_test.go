@@ -1,23 +1,15 @@
 package samsarajobs
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"context"
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/samsarajobs/samsaracontract"
-
-	commonpb "go.temporal.io/api/common/v1"
-	enumspb "go.temporal.io/api/enums/v1"
-	"go.temporal.io/api/serviceerror"
-	workflowpb "go.temporal.io/api/workflow/v1"
-	workflowservicepb "go.temporal.io/api/workflowservice/v1"
-	"go.temporal.io/sdk/client"
-	"google.golang.org/protobuf/types/known/timestamppb"
-
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/samsarasyncservice"
 	"github.com/emoss08/trenova/internal/core/services/workflowstarter"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/samsarajobs/samsaracontract"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -26,7 +18,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	commonpb "go.temporal.io/api/common/v1"
+	enumspb "go.temporal.io/api/enums/v1"
+	"go.temporal.io/api/serviceerror"
+	workflowpb "go.temporal.io/api/workflow/v1"
+	workflowservicepb "go.temporal.io/api/workflowservice/v1"
+	"go.temporal.io/sdk/client"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type fakeWorkflowRun struct {
@@ -95,9 +94,9 @@ func (f *fakeTemporalClient) GetWorkflow(
 func setupManager(
 	t *testing.T,
 	temporalClient client.Client,
-) (*samsaracontract.Manager, *mocks.MockWorkerRepository) {
+) (*samsaracontract.Manager, *workerportsmock.MockWorkerRepository) {
 	t.Helper()
-	repo := mocks.NewMockWorkerRepository(t)
+	repo := workerportsmock.NewMockWorkerRepository(t)
 	svc := samsarasyncservice.New(samsarasyncservice.Params{
 		Logger: zap.NewNop(),
 		Repo:   repo,
@@ -131,7 +130,7 @@ func TestManager_StartWorkersSyncWorkflow(t *testing.T) {
 		})
 
 		repo.On("GetWorkerSyncReadinessCounts", mock.Anything, tenantInfo).Return(
-			&repositories.WorkerSyncReadinessCounts{
+			&workerports.WorkerSyncReadinessCounts{
 				TotalWorkers:        10,
 				ActiveWorkers:       8,
 				SyncedActiveWorkers: 7,
@@ -157,7 +156,7 @@ func TestManager_StartWorkersSyncWorkflow(t *testing.T) {
 			},
 		})
 		repo.On("GetWorkerSyncReadinessCounts", mock.Anything, tenantInfo).Return(
-			&repositories.WorkerSyncReadinessCounts{
+			&workerports.WorkerSyncReadinessCounts{
 				TotalWorkers:        10,
 				ActiveWorkers:       8,
 				SyncedActiveWorkers: 7,
@@ -174,7 +173,7 @@ func TestManager_StartWorkersSyncWorkflow(t *testing.T) {
 		t.Parallel()
 		manager, repo := setupManager(t, nil)
 		repo.On("GetWorkerSyncReadinessCounts", mock.Anything, tenantInfo).Return(
-			&repositories.WorkerSyncReadinessCounts{
+			&workerports.WorkerSyncReadinessCounts{
 				TotalWorkers:        10,
 				ActiveWorkers:       8,
 				SyncedActiveWorkers: 7,

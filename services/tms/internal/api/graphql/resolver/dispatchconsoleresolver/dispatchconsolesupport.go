@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -114,7 +114,7 @@ func (r *MutationResolver) assignThroughService(
 ) (*assignmentResult, error) {
 	entity, err := r.AssignmentService.AssignToMove(
 		ctx,
-		&repositories.AssignShipmentMoveRequest{
+		&shipmentports.AssignShipmentMoveRequest{
 			TenantInfo:        args.TenantInfo,
 			ShipmentMoveID:    args.MoveID,
 			PrimaryWorkerID:   args.PrimaryWorkerID,
@@ -135,7 +135,7 @@ func (r *MutationResolver) reassignThroughService(
 ) (*assignmentResult, error) {
 	entity, err := r.AssignmentService.Reassign(
 		ctx,
-		&repositories.ReassignShipmentMoveRequest{
+		&shipmentports.ReassignShipmentMoveRequest{
 			TenantInfo:        args.TenantInfo,
 			ShipmentMoveID:    args.MoveID,
 			PrimaryWorkerID:   args.PrimaryWorkerID,

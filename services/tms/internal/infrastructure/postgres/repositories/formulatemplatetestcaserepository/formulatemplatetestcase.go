@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/uptrace/bun"
@@ -26,7 +26,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.FormulaTemplateTestCaseRepository {
+func New(p Params) formulatemplateports.FormulaTemplateTestCaseRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.formula-template-test-case-repository"),
@@ -96,7 +96,7 @@ func (r *repository) Update(
 
 func (r *repository) Delete(
 	ctx context.Context,
-	req repositories.GetTestCaseByIDRequest,
+	req formulatemplateports.GetTestCaseByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		log := r.l.With(
@@ -125,7 +125,7 @@ func (r *repository) Delete(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetTestCaseByIDRequest,
+	req formulatemplateports.GetTestCaseByIDRequest,
 ) (*formulatemplate.TestCase, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*formulatemplate.TestCase, error) {
 		log := r.l.With(
@@ -155,7 +155,7 @@ func (r *repository) GetByID(
 
 func (r *repository) ListByTemplate(
 	ctx context.Context,
-	req repositories.ListTestCasesRequest,
+	req formulatemplateports.ListTestCasesRequest,
 ) ([]*formulatemplate.TestCase, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*formulatemplate.TestCase, error) {
 		log := r.l.With(

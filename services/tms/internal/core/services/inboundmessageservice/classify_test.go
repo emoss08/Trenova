@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -16,22 +16,22 @@ import (
 )
 
 type stubCompletion struct {
-	services.CompletionService
+	agentports.CompletionService
 
 	reply string
 	err   error
-	got   *services.StructuredCompletionRequest
+	got   *agentports.StructuredCompletionRequest
 }
 
 func (s *stubCompletion) CompleteStructured(
-	_ context.Context, req *services.StructuredCompletionRequest,
-) (*services.StructuredCompletionResult, error) {
+	_ context.Context, req *agentports.StructuredCompletionRequest,
+) (*agentports.StructuredCompletionResult, error) {
 	s.got = req
 	if s.err != nil {
 		return nil, s.err
 	}
 
-	return &services.StructuredCompletionResult{
+	return &agentports.StructuredCompletionResult{
 		Text:            s.reply,
 		ModelIdentifier: "test-model",
 	}, nil

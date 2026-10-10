@@ -9,9 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/extractionrollout"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -72,7 +73,7 @@ func (s *Service) guardInput(
 	if err != nil {
 		return nil, err
 	}
-	totals, err := s.assignments.Totals(ctx, repositories.TotalRolloutAssignmentsRequest{
+	totals, err := s.assignments.Totals(ctx, extractionrolloutports.TotalRolloutAssignmentsRequest{
 		TenantInfo:          tenant,
 		CandidateProviderID: candidate,
 		Since:               *rollout.StartedAt,
@@ -102,7 +103,7 @@ func (s *Service) accuracy(
 ) (accuracySplit, error) {
 	totals, err := s.corrections.TotalsByProvider(
 		ctx,
-		&repositories.TotalAICorrectionsByProviderRequest{
+		&aicorrectionports.TotalAICorrectionsByProviderRequest{
 			TenantInfo: tenant,
 			Task:       aicorrection.TaskShipmentDraftExtraction,
 			ProviderID: *rollout.ProviderID,
@@ -171,7 +172,7 @@ func (s *Service) reportHalt(
 		zap.Float64("baselineRate", rollout.HaltBaselineRate),
 	)
 
-	s.logAction(nil, &services.LogActionParams{
+	s.logAction(nil, &auditports.LogActionParams{
 		Resource:       permission.ResourceAIProvider,
 		ResourceID:     rollout.ID.String(),
 		Operation:      permission.OpUpdate,
@@ -199,7 +200,7 @@ func (s *Service) reportHalt(
 		Now:         s.now(),
 		DedupeSince: *rollout.StartedAt,
 		Notification: notification.Notification{
-			EventType:     services.ExtractionRolloutHaltedEvent,
+			EventType:     extractionrolloutports.ExtractionRolloutHaltedEvent,
 			Priority:      notification.PriorityHigh,
 			Title:         title,
 			Message:       message,

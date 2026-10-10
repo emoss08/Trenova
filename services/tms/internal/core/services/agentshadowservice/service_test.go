@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/agentshadow"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,13 +16,13 @@ import (
 )
 
 type definitions struct {
-	repositories.AgentDefinitionRepository
+	agentdefinitionports.AgentDefinitionRepository
 	missing bool
 }
 
 func (d definitions) GetByID(
 	context.Context,
-	repositories.GetAgentDefinitionByIDRequest,
+	agentdefinitionports.GetAgentDefinitionByIDRequest,
 ) (*agentdefinition.Definition, error) {
 	if d.missing {
 		return nil, errortypes.NewNotFoundError("Agent")
@@ -33,13 +33,13 @@ func (d definitions) GetByID(
 type shadowRows struct {
 	proposals []agentshadow.Proposal
 	changes   []agentshadow.PersonChange
-	asked     *repositories.ListPersonChangesRequest
+	asked     *agentshadowports.ListPersonChangesRequest
 	since     int64
 }
 
 func (s *shadowRows) ListShadowProposals(
 	_ context.Context,
-	req *repositories.ListShadowProposalsRequest,
+	req *agentshadowports.ListShadowProposalsRequest,
 ) ([]agentshadow.Proposal, error) {
 	s.since = req.Since
 	return s.proposals, nil
@@ -47,7 +47,7 @@ func (s *shadowRows) ListShadowProposals(
 
 func (s *shadowRows) ListPersonChanges(
 	_ context.Context,
-	req *repositories.ListPersonChangesRequest,
+	req *agentshadowports.ListPersonChangesRequest,
 ) ([]agentshadow.PersonChange, error) {
 	s.asked = req
 	return s.changes, nil
@@ -68,7 +68,7 @@ func TestReportReadsEachRecordOnceOverTheClampedPeriod(t *testing.T) {
 	}
 	svc := &Service{definitions: definitions{}, shadow: rows, now: func() int64 { return 100 * 24 * 60 * 60 }}
 
-	report, err := svc.Report(t.Context(), &services.AgentShadowReportRequest{
+	report, err := svc.Report(t.Context(), &agentshadowports.AgentShadowReportRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 		AgentID:    pulid.MustNew("agdef_"),
 		Days:       365,
@@ -89,7 +89,7 @@ func TestReportOfAMissingAgentReadsNothing(t *testing.T) {
 	rows := &shadowRows{}
 	svc := &Service{definitions: definitions{missing: true}, shadow: rows, now: func() int64 { return 0 }}
 
-	_, err := svc.Report(t.Context(), &services.AgentShadowReportRequest{})
+	_, err := svc.Report(t.Context(), &agentshadowports.AgentShadowReportRequest{})
 
 	require.Error(t, err)
 	assert.Nil(t, rows.asked)

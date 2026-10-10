@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,7 +21,7 @@ func (r *openedRuns) Create(_ context.Context, run *agent.AgentRun) (*agent.Agen
 	return run, nil
 }
 
-func messageEvidence(serviceports.PendingAction, pulid.ID) []agent.EvidenceRef {
+func messageEvidence(agentports.PendingAction, pulid.ID) []agent.EvidenceRef {
 	return []agent.EvidenceRef{{Type: "message", ID: "amsg_1"}}
 }
 
@@ -41,8 +42,8 @@ func TestRecord_KeepsTheRunsTaintAndEachProposalsEgress(t *testing.T) {
 	store := &capturingStore{}
 	runs := &openedRuns{}
 	taint := readTaint()
-	actor := &serviceports.RequestActor{
-		PrincipalType:  serviceports.PrincipalTypeUser,
+	actor := &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    pulid.MustNew("usr_"),
 		UserID:         pulid.MustNew("usr_"),
 		OrganizationID: pulid.MustNew("org_"),
@@ -61,7 +62,7 @@ func TestRecord_KeepsTheRunsTaintAndEachProposalsEgress(t *testing.T) {
 			InputContextHash: "hash",
 		},
 		Taint: taint,
-		Actions: []serviceports.PendingAction{
+		Actions: []agentports.PendingAction{
 			{
 				ToolName:  "add_shipment_comment",
 				Arguments: map[string]any{},
@@ -109,7 +110,7 @@ func TestRecord_ACleanRunIsNotMarked(t *testing.T) {
 	runs := &openedRuns{}
 	_, err := NewWithStores(nil, runs, &capturingStore{}).Record(t.Context(), &RecordRequest{
 		Evidence: messageEvidence,
-		Actor: &serviceports.RequestActor{
+		Actor: &permissionports.RequestActor{
 			OrganizationID: pulid.MustNew("org_"),
 			BusinessUnitID: pulid.MustNew("bu_"),
 		},
@@ -121,7 +122,7 @@ func TestRecord_ACleanRunIsNotMarked(t *testing.T) {
 			InputContextHash: "hash",
 		},
 		Taint:   &agent.RunTaint{},
-		Actions: []serviceports.PendingAction{pendingAction("assign_move")},
+		Actions: []agentports.PendingAction{pendingAction("assign_move")},
 	})
 	require.NoError(t, err)
 

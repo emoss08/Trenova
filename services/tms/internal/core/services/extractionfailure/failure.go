@@ -4,16 +4,16 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
 func Retryable(err error) bool {
 	switch {
 	case errors.Is(err, context.Canceled),
-		errors.Is(err, services.ErrModelSchemaValidation),
-		errors.Is(err, services.ErrRequiredProviderUnavailable),
-		errors.Is(err, services.ErrNoProviderConfigured),
+		errors.Is(err, agentports.ErrModelSchemaValidation),
+		errors.Is(err, agentports.ErrRequiredProviderUnavailable),
+		errors.Is(err, agentports.ErrNoProviderConfigured),
 		errortypes.IsBusinessError(err),
 		errortypes.IsError(err),
 		errortypes.IsMultiError(err),
@@ -26,9 +26,9 @@ func Retryable(err error) bool {
 
 func Message(err error) string {
 	switch {
-	case errors.Is(err, services.ErrModelSchemaValidation):
+	case errors.Is(err, agentports.ErrModelSchemaValidation):
 		return "The model's answer did not match the extraction schema"
-	case errors.Is(err, services.ErrRequiredProviderUnavailable):
+	case errors.Is(err, agentports.ErrRequiredProviderUnavailable):
 		return "The provider being evaluated is no longer enabled for document extraction"
 	case errortypes.IsBusinessError(err):
 		return err.Error()

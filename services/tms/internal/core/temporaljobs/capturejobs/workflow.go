@@ -4,10 +4,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs/documentuploadcontract"
-
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs/documentuploadcontract"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
@@ -131,7 +130,7 @@ func FileCaptureItemWorkflow(ctx workflow.Context, payload *FileItemPayload) err
 		&documentuploadcontract.FinalizeUploadPayload{
 			BasePayload:   payload.BasePayload,
 			SessionID:     payload.SessionID,
-			PrincipalType: services.PrincipalTypeUser,
+			PrincipalType: permissionports.PrincipalTypeUser,
 			PrincipalID:   payload.UserID,
 		},
 	).Get(ctx, finalized)

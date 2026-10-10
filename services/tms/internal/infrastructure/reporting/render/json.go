@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/shopspring/decimal"
 )
 
-var _ services.ReportRenderer = (*JSONRenderer)(nil)
+var _ reportports.ReportRenderer = (*JSONRenderer)(nil)
 
 type JSONRenderer struct{}
 
@@ -21,8 +21,8 @@ func (r *JSONRenderer) Format() report.Format { return report.FormatJSON }
 
 func (r *JSONRenderer) Render(
 	ctx context.Context,
-	req *services.ReportRenderRequest,
-) (*services.ReportRenderStats, error) {
+	req *reportports.ReportRenderRequest,
+) (*reportports.ReportRenderStats, error) {
 	envelope := newRowsEnvelope(req.Sink, req.Dataset.Schema())
 	if err := envelope.WriteHead(&req.Meta); err != nil {
 		return nil, err
@@ -51,7 +51,7 @@ func (r *JSONRenderer) Render(
 		return nil, err
 	}
 
-	return &services.ReportRenderStats{
+	return &reportports.ReportRenderStats{
 		Rows:      req.Dataset.RowCount(),
 		Truncated: truncated,
 	}, nil

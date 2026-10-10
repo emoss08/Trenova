@@ -6,17 +6,17 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 // baselineCall is one write whose target is pinned as it is decided.
 type baselineCall struct {
-	req        *serviceports.RunRequest
-	tool       serviceports.AgentTool
-	call       serviceports.ToolCall
+	req        *agentports.RunRequest
+	tool       agentports.AgentTool
+	call       agentports.ToolCall
 	proposalID pulid.ID
 	persist    bool
 	// fileRefused files the write even when its preview says it would be
@@ -35,12 +35,12 @@ type baselineCall struct {
 func (s *Service) fileBaseline(
 	ctx context.Context,
 	b *baselineCall,
-) (*serviceports.ProposalTarget, *serviceports.ProposalBaselineResult) {
+) (*agentports.ProposalTarget, *agentports.ProposalBaselineResult) {
 	if s.previews == nil {
 		return s.snapshotTarget(ctx, b.req, b.tool, b.call), nil
 	}
 
-	result := s.previews.Baseline(ctx, &serviceports.ProposalBaselineRequest{
+	result := s.previews.Baseline(ctx, &agentports.ProposalBaselineRequest{
 		ProposalID:  b.proposalID,
 		Tool:        b.tool,
 		Params:      runToolParams(b.req, b.call.ID, b.call.Arguments),
@@ -60,11 +60,11 @@ func (s *Service) fileBaseline(
 // the earlier one changes, so the later one is filed as it stands and the
 // plan's preview says it depends on the earlier step.
 func dependsOnEarlierStep(
-	tool serviceports.AgentTool,
-	call *serviceports.ToolCall,
-	proposedSoFar []serviceports.PendingAction,
+	tool agentports.AgentTool,
+	call *agentports.ToolCall,
+	proposedSoFar []agentports.PendingAction,
 ) bool {
-	targeted, ok := tool.(serviceports.TargetedTool)
+	targeted, ok := tool.(agentports.TargetedTool)
 	if !ok {
 		return false
 	}

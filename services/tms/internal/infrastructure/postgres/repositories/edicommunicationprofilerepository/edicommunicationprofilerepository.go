@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -33,7 +33,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.EDICommunicationProfileRepository {
+func New(p Params) ediports.EDICommunicationProfileRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.edi-communication-profile-repository"),
@@ -42,7 +42,7 @@ func New(p Params) repositories.EDICommunicationProfileRepository {
 
 func (r *repository) ListProfiles(
 	ctx context.Context,
-	req *repositories.ListEDICommunicationProfilesRequest,
+	req *ediports.ListEDICommunicationProfilesRequest,
 ) (*pagination.ListResult[*edi.EDICommunicationProfile], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDICommunicationProfile], error) {
 		entities := make([]*edi.EDICommunicationProfile, 0, req.Filter.Pagination.SafeLimit())
@@ -78,7 +78,7 @@ func (r *repository) ListProfiles(
 
 func (r *repository) SelectProfileOptions(
 	ctx context.Context,
-	req *repositories.EDICommunicationProfileSelectOptionsRequest,
+	req *ediports.EDICommunicationProfileSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDICommunicationProfile], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDICommunicationProfile], error) {
 		entities := make(
@@ -133,7 +133,7 @@ func (r *repository) SelectProfileOptions(
 
 func (r *repository) GetProfileByID(
 	ctx context.Context,
-	req repositories.GetEDICommunicationProfileByIDRequest,
+	req ediports.GetEDICommunicationProfileByIDRequest,
 ) (*edi.EDICommunicationProfile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDICommunicationProfile, error) {
 		entity := new(edi.EDICommunicationProfile)
@@ -172,7 +172,7 @@ func applyCommunicationProfileSearch(query *bun.SelectQuery, search string) *bun
 
 func (r *repository) GetActiveProfileByPartner(
 	ctx context.Context,
-	req repositories.GetActiveEDICommunicationProfileByPartnerRequest,
+	req ediports.GetActiveEDICommunicationProfileByPartnerRequest,
 ) (*edi.EDICommunicationProfile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDICommunicationProfile, error) {
 		entity := new(edi.EDICommunicationProfile)
@@ -227,7 +227,7 @@ func (r *repository) ListInboundPollingProfiles(
 
 func (r *repository) RecordInboundPollOutcome(
 	ctx context.Context,
-	req repositories.RecordEDIProfilePollOutcomeRequest,
+	req ediports.RecordEDIProfilePollOutcomeRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.EDICommunicationProfileColumns
@@ -278,7 +278,7 @@ func (r *repository) CountStaleInboundPollingProfiles(
 
 func (r *repository) GetActiveAS2ProfileByIdentifiers(
 	ctx context.Context,
-	req repositories.GetActiveAS2ProfileByIdentifiersRequest,
+	req ediports.GetActiveAS2ProfileByIdentifiersRequest,
 ) (*edi.EDICommunicationProfile, error) {
 	ctx = dbscope.WithSystem(ctx, "resolve an inbound AS2 message's identifier pair before its tenant is known")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDICommunicationProfile, error) {
@@ -365,7 +365,7 @@ func (r *repository) UpdateProfile(
 
 func (r *repository) ListProfilesCursor(
 	ctx context.Context,
-	req *repositories.ListEDICommunicationProfilesRequest,
+	req *ediports.ListEDICommunicationProfilesRequest,
 ) (*pagination.CursorListResult[*edi.EDICommunicationProfile], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*edi.EDICommunicationProfile], error) {
 		dba := r.db.DBForContext(ctx)

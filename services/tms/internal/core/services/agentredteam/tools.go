@@ -7,11 +7,11 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentmemoryservice"
 	"github.com/emoss08/trenova/internal/core/services/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolservice"
 	"github.com/emoss08/trenova/internal/core/services/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/reflectutils"
@@ -23,7 +23,7 @@ var passthroughTools = []string{agentdefinition.CoreToolRemember}
 type toolDeps struct {
 	desk        *inboundDesk
 	inbox       *inboundmessageservice.Service
-	memories    serviceports.AgentMemoryService
+	memories    agentports.AgentMemoryService
 	shipments   *shipmentDesk
 	comments    *commentDesk
 	watchtower  *watchtowerDesk
@@ -64,8 +64,8 @@ func (d toolDeps) fakes() []reflect.Value {
 }
 
 type builtTools struct {
-	queries []serviceports.AgentQueryTool
-	actions []serviceports.AgentTool
+	queries []agentports.AgentQueryTool
+	actions []agentports.AgentTool
 }
 
 func buildTools(rec *recorder, responses map[string]map[string]any) (builtTools, error) {
@@ -76,8 +76,8 @@ func buildTools(rec *recorder, responses map[string]map[string]any) (builtTools,
 	)
 
 	built := builtTools{
-		queries: make([]serviceports.AgentQueryTool, 0, len(providers)),
-		actions: make([]serviceports.AgentTool, 0, len(providers)),
+		queries: make([]agentports.AgentQueryTool, 0, len(providers)),
+		actions: make([]agentports.AgentTool, 0, len(providers)),
 	}
 	for _, provider := range providers {
 		tool, err := reflectutils.Construct(provider, suppliedFor(provider, fakes))
@@ -86,13 +86,13 @@ func buildTools(rec *recorder, responses map[string]map[string]any) (builtTools,
 		}
 
 		switch typed := tool.(type) {
-		case serviceports.AgentQueryTool:
+		case agentports.AgentQueryTool:
 			built.queries = append(built.queries, &recordingQuery{
 				inner:    typed,
 				rec:      rec,
 				response: responses[typed.Name()],
 			})
-		case serviceports.AgentTool:
+		case agentports.AgentTool:
 			built.actions = append(built.actions, &recordingAction{inner: typed, rec: rec})
 		default:
 			return builtTools{}, fmt.Errorf("%T builds neither a query nor an action tool",
@@ -164,15 +164,15 @@ func paramsFor(in reflect.Type, fakes []reflect.Value) (reflect.Value, bool) {
 }
 
 type recordingQuery struct {
-	inner    serviceports.AgentQueryTool
+	inner    agentports.AgentQueryTool
 	rec      *recorder
 	response map[string]any
 }
 
-func (q *recordingQuery) Name() string                    { return q.inner.Name() }
-func (q *recordingQuery) Description() string             { return q.inner.Description() }
-func (q *recordingQuery) ParamSchema() map[string]any     { return q.inner.ParamSchema() }
-func (q *recordingQuery) Policy() serviceports.ToolPolicy { return q.inner.Policy() }
+func (q *recordingQuery) Name() string                  { return q.inner.Name() }
+func (q *recordingQuery) Description() string           { return q.inner.Description() }
+func (q *recordingQuery) ParamSchema() map[string]any   { return q.inner.ParamSchema() }
+func (q *recordingQuery) Policy() agentports.ToolPolicy { return q.inner.Policy() }
 
 func (q *recordingQuery) SearchTerms() []string { return searchTermsOf(q.inner) }
 
@@ -180,7 +180,7 @@ func (q *recordingQuery) Prerequisites() []string { return prerequisitesOf(q.inn
 
 func (q *recordingQuery) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	q.rec.read(ReadTool, q.Name(), pagination.TenantInfo{
 		OrgID: params.OrganizationID,
@@ -198,14 +198,14 @@ func (q *recordingQuery) Query(
 }
 
 type recordingAction struct {
-	inner serviceports.AgentTool
+	inner agentports.AgentTool
 	rec   *recorder
 }
 
-func (a *recordingAction) Name() string                    { return a.inner.Name() }
-func (a *recordingAction) Description() string             { return a.inner.Description() }
-func (a *recordingAction) ParamSchema() map[string]any     { return a.inner.ParamSchema() }
-func (a *recordingAction) Policy() serviceports.ToolPolicy { return a.inner.Policy() }
+func (a *recordingAction) Name() string                  { return a.inner.Name() }
+func (a *recordingAction) Description() string           { return a.inner.Description() }
+func (a *recordingAction) ParamSchema() map[string]any   { return a.inner.ParamSchema() }
+func (a *recordingAction) Policy() agentports.ToolPolicy { return a.inner.Policy() }
 
 func (a *recordingAction) SearchTerms() []string { return searchTermsOf(a.inner) }
 
@@ -213,7 +213,7 @@ func (a *recordingAction) Prerequisites() []string { return prerequisitesOf(a.in
 
 func (a *recordingAction) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	a.rec.executed(&ExecutionRecord{
 		Tool:   a.Name(),
@@ -229,7 +229,7 @@ func (a *recordingAction) Execute(
 }
 
 func searchTermsOf(tool any) []string {
-	if searchable, ok := tool.(serviceports.SearchableTool); ok {
+	if searchable, ok := tool.(agentports.SearchableTool); ok {
 		return searchable.SearchTerms()
 	}
 
@@ -237,7 +237,7 @@ func searchTermsOf(tool any) []string {
 }
 
 func prerequisitesOf(tool any) []string {
-	if dependent, ok := tool.(serviceports.PrerequisiteTool); ok {
+	if dependent, ok := tool.(agentports.PrerequisiteTool); ok {
 		return dependent.Prerequisites()
 	}
 

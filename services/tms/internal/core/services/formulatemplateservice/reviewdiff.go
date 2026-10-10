@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -50,7 +50,7 @@ func (s *Service) ReviewDiff(
 
 	approved, err := s.versionRepo.GetLatestByStatus(
 		ctx,
-		&repositories.GetLatestVersionByStatusRequest{
+		&formulatemplateports.GetLatestVersionByStatusRequest{
 			TenantInfo: req.TenantInfo,
 			TemplateID: req.TemplateID,
 			Status:     formulatemplate.StatusActive,

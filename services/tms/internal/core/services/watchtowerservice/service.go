@@ -8,8 +8,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -41,13 +44,13 @@ type Params struct {
 	fx.In
 
 	Logger      *zap.Logger
-	Repo        repositories.WatchtowerRepository
+	Repo        watchtowerports.WatchtowerRepository
 	Projector   *Projector
-	Permissions services.PermissionEngine
-	Definitions repositories.AgentDefinitionRepository
-	Runs        services.AgentRunService     `optional:"true"`
-	Events      services.AgentEventPublisher `optional:"true"`
-	Sources     []services.WatchtowerSource  `                group:"watchtower_sources"`
+	Permissions permissionports.PermissionEngine
+	Definitions agentdefinitionports.AgentDefinitionRepository
+	Runs        agentports.AgentRunService         `optional:"true"`
+	Events      agentports.AgentEventPublisher     `optional:"true"`
+	Sources     []watchtowerports.WatchtowerSource `                group:"watchtower_sources"`
 }
 
 // Service is the watchtower's read face: what a reader may see of it, where
@@ -58,20 +61,20 @@ type Params struct {
 // See the note there for why the two cannot be one constructor.
 type Service struct {
 	l           *zap.Logger
-	repo        repositories.WatchtowerRepository
+	repo        watchtowerports.WatchtowerRepository
 	projector   *Projector
-	permissions services.PermissionEngine
+	permissions permissionports.PermissionEngine
 	access      kindAccess
 	dismisser   *Dismisser
-	definitions repositories.AgentDefinitionRepository
-	runs        services.AgentRunService
-	events      services.AgentEventPublisher
-	sources     map[watchtower.SourceKind]services.WatchtowerSource
+	definitions agentdefinitionports.AgentDefinitionRepository
+	runs        agentports.AgentRunService
+	events      agentports.AgentEventPublisher
+	sources     map[watchtower.SourceKind]watchtowerports.WatchtowerSource
 	now         func() int64
 }
 
 func New(p Params) *Service {
-	sources := make(map[watchtower.SourceKind]services.WatchtowerSource, len(p.Sources))
+	sources := make(map[watchtower.SourceKind]watchtowerports.WatchtowerSource, len(p.Sources))
 	for _, source := range p.Sources {
 		if source != nil {
 			sources[source.Kind()] = source
@@ -103,13 +106,13 @@ func New(p Params) *Service {
 
 func (s *Service) clock() int64 { return s.now() }
 
-func AsService(s *Service) services.WatchtowerService { return s }
+func AsService(s *Service) watchtowerports.WatchtowerService { return s }
 
 func (s *Service) List(
 	ctx context.Context,
-	req services.ListWatchtowerItemsRequest,
-	actor *services.RequestActor,
-) (*services.WatchtowerPage, error) {
+	req watchtowerports.ListWatchtowerItemsRequest,
+	actor *permissionports.RequestActor,
+) (*watchtowerports.WatchtowerPage, error) {
 	kinds, err := s.access.visibleKinds(ctx, actor, req.Kinds)
 	if err != nil {
 		return nil, err
@@ -124,7 +127,7 @@ func (s *Service) List(
 		}
 	}
 
-	cursor, err := s.repo.GetCursor(ctx, repositories.GetWatchtowerCursorRequest{
+	cursor, err := s.repo.GetCursor(ctx, watchtowerports.GetWatchtowerCursorRequest{
 		UserID:     actor.UserID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -132,7 +135,7 @@ func (s *Service) List(
 		return nil, err
 	}
 
-	page := &services.WatchtowerPage{Items: []*watchtower.Item{}, SeenAt: cursor.SeenAt}
+	page := &watchtowerports.WatchtowerPage{Items: []*watchtower.Item{}, SeenAt: cursor.SeenAt}
 	if len(kinds) == 0 {
 		return page, nil
 	}
@@ -145,7 +148,7 @@ func (s *Service) List(
 		first = maxPageSize
 	}
 
-	listReq := repositories.ListWatchtowerItemsRequest{
+	listReq := watchtowerports.ListWatchtowerItemsQuery{
 		TenantInfo:     req.TenantInfo,
 		Kinds:          kinds,
 		Severities:     req.Severities,
@@ -195,13 +198,13 @@ func (s *Service) List(
 func (s *Service) Counts(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	actor *services.RequestActor,
-) (*services.WatchtowerCounts, error) {
+	actor *permissionports.RequestActor,
+) (*watchtowerports.WatchtowerCounts, error) {
 	kinds, err := s.access.visibleKinds(ctx, actor, nil)
 	if err != nil {
 		return nil, err
 	}
-	cursor, err := s.repo.GetCursor(ctx, repositories.GetWatchtowerCursorRequest{
+	cursor, err := s.repo.GetCursor(ctx, watchtowerports.GetWatchtowerCursorRequest{
 		UserID:     actor.UserID,
 		TenantInfo: tenant,
 	})
@@ -209,7 +212,7 @@ func (s *Service) Counts(
 		return nil, err
 	}
 
-	counts := &services.WatchtowerCounts{
+	counts := &watchtowerports.WatchtowerCounts{
 		ByKind: map[watchtower.SourceKind]int{},
 		SeenAt: cursor.SeenAt,
 	}
@@ -217,7 +220,7 @@ func (s *Service) Counts(
 		return counts, nil
 	}
 
-	stored, err := s.repo.Counts(ctx, repositories.CountWatchtowerItemsRequest{
+	stored, err := s.repo.Counts(ctx, watchtowerports.CountWatchtowerItemsRequest{
 		TenantInfo: tenant,
 		Kinds:      kinds,
 		SeenAt:     cursor.SeenAt,
@@ -241,9 +244,9 @@ func (s *Service) Counts(
 func (s *Service) MarkSeen(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 	seenAt int64,
-) (*services.WatchtowerCounts, error) {
+) (*watchtowerports.WatchtowerCounts, error) {
 	if !actor.IsUser() {
 		return nil, errortypes.NewBusinessError("Only a person has a place in the watchtower")
 	}
@@ -267,7 +270,7 @@ func (s *Service) Dismiss(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	id pulid.ID,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*watchtower.Item, error) {
 	return s.dismisser.Dismiss(ctx, tenant, id, actor)
 }
@@ -276,8 +279,8 @@ func (s *Service) PlanDismiss(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	id pulid.ID,
-	actor *services.RequestActor,
-) (*services.RecordChange[watchtower.Item], error) {
+	actor *permissionports.RequestActor,
+) (*kernelports.RecordChange[watchtower.Item], error) {
 	return s.dismisser.PlanDismiss(ctx, tenant, id, actor)
 }
 
@@ -287,12 +290,12 @@ func (s *Service) PlanDismiss(
 // so the person can pick rather than be told nothing happened.
 func (s *Service) HandOff(
 	ctx context.Context,
-	req services.HandOffWatchtowerItemRequest,
-	actor *services.RequestActor,
-) (*services.HandOffWatchtowerItemResult, error) {
+	req watchtowerports.HandOffWatchtowerItemRequest,
+	actor *permissionports.RequestActor,
+) (*watchtowerports.HandOffWatchtowerItemResult, error) {
 	item, err := s.repo.GetByID(
 		ctx,
-		repositories.GetWatchtowerItemRequest{ID: req.ItemID, TenantInfo: req.TenantInfo},
+		watchtowerports.GetWatchtowerItemRequest{ID: req.ItemID, TenantInfo: req.TenantInfo},
 	)
 	if err != nil {
 		return nil, err
@@ -310,7 +313,7 @@ func (s *Service) HandOff(
 		if s.runs == nil {
 			return nil, errortypes.NewBusinessError("Agents cannot be started on this deployment")
 		}
-		run, rErr := s.runs.StartForDefinition(ctx, &services.StartAgentRunForDefinitionRequest{
+		run, rErr := s.runs.StartForDefinition(ctx, &agentports.StartAgentRunForDefinitionRequest{
 			DefinitionID: req.AgentDefinitionID,
 			SubjectType:  item.SubjectType,
 			SubjectID:    item.SubjectID,
@@ -322,14 +325,14 @@ func (s *Service) HandOff(
 			return nil, rErr
 		}
 
-		return &services.HandOffWatchtowerItemResult{Item: item, Run: run}, nil
+		return &watchtowerports.HandOffWatchtowerItemResult{Item: item, Run: run}, nil
 	}
 
-	result := &services.HandOffWatchtowerItemResult{Item: item}
+	result := &watchtowerports.HandOffWatchtowerItemResult{Item: item}
 	if item.EventKind != "" {
 		subscribers, lErr := s.definitions.ListEnabledByTrigger(
 			ctx,
-			repositories.ListAgentDefinitionsByTriggerRequest{
+			agentdefinitionports.ListAgentDefinitionsByTriggerRequest{
 				TenantInfo: req.TenantInfo,
 				Mode:       agentdefinition.TriggerEvent,
 				EventKind:  item.EventKind,
@@ -339,7 +342,7 @@ func (s *Service) HandOff(
 			return nil, lErr
 		}
 		if len(subscribers) > 0 && s.events != nil {
-			services.PublishAgentEvent(ctx, s.events, services.AgentEvent{
+			agentports.PublishAgentEvent(ctx, s.events, agentports.AgentEvent{
 				Kind:       item.EventKind,
 				SubjectID:  item.SubjectID,
 				TenantInfo: req.TenantInfo,
@@ -357,7 +360,7 @@ func (s *Service) HandOff(
 		}
 	}
 
-	candidates, err := s.definitions.List(ctx, &repositories.ListAgentDefinitionRequest{
+	candidates, err := s.definitions.List(ctx, &agentdefinitionports.ListAgentDefinitionRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: req.TenantInfo,
 			Pagination: pagination.Info{Limit: 100},

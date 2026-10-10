@@ -5,10 +5,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -32,7 +32,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.FiscalYearRepository {
+func New(p Params) fiscalyearports.FiscalYearRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.fiscal-year-repository"),
@@ -41,7 +41,7 @@ func New(p Params) repositories.FiscalYearRepository {
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
-	req *repositories.ListFiscalYearsRequest,
+	req *fiscalyearports.ListFiscalYearsRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
@@ -59,7 +59,7 @@ func (r *repository) filterQuery(
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListFiscalYearsRequest,
+	req *fiscalyearports.ListFiscalYearsRequest,
 ) (*pagination.ListResult[*fiscalyear.FiscalYear], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*fiscalyear.FiscalYear], error) {
 		log := r.l.With(
@@ -88,7 +88,7 @@ func (r *repository) List(
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
-	req *repositories.FiscalYearSelectOptionsRequest,
+	req *fiscalyearports.FiscalYearSelectOptionsRequest,
 ) (*pagination.ListResult[*fiscalyear.FiscalYear], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*fiscalyear.FiscalYear], error) {
 		cols := buncolgen.FiscalYearColumns
@@ -121,7 +121,7 @@ func (r *repository) SelectOptions(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListFiscalYearConnectionRequest,
+	req *fiscalyearports.ListFiscalYearConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -134,7 +134,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListFiscalYearConnectionRequest,
+	req *fiscalyearports.ListFiscalYearConnectionRequest,
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -154,7 +154,7 @@ func applyFiscalYearColumns(q *bun.SelectQuery, columns []string) *bun.SelectQue
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListFiscalYearConnectionRequest,
+	req *fiscalyearports.ListFiscalYearConnectionRequest,
 ) (*pagination.CursorListResult[*fiscalyear.FiscalYear], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*fiscalyear.FiscalYear], error) {
 		log := r.l.With(
@@ -208,7 +208,7 @@ func (r *repository) ListConnection(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetFiscalYearByIDRequest,
+	req fiscalyearports.GetFiscalYearByIDRequest,
 ) (*fiscalyear.FiscalYear, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fiscalyear.FiscalYear, error) {
 		return r.getByID(ctx, r.db.DBForContext(ctx), req, false)
@@ -217,7 +217,7 @@ func (r *repository) GetByID(
 
 func (r *repository) GetByIDForUpdate(
 	ctx context.Context,
-	req repositories.GetFiscalYearByIDRequest,
+	req fiscalyearports.GetFiscalYearByIDRequest,
 ) (*fiscalyear.FiscalYear, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fiscalyear.FiscalYear, error) {
 		return r.getByID(ctx, r.db.DBForContext(ctx), req, true)
@@ -227,7 +227,7 @@ func (r *repository) GetByIDForUpdate(
 func (r *repository) getByID(
 	ctx context.Context,
 	db bun.IDB,
-	req repositories.GetFiscalYearByIDRequest,
+	req fiscalyearports.GetFiscalYearByIDRequest,
 	forUpdate bool,
 ) (*fiscalyear.FiscalYear, error) {
 	log := r.l.With(
@@ -262,7 +262,7 @@ func (r *repository) getByID(
 
 func (r *repository) GetCurrentFiscalYear(
 	ctx context.Context,
-	req repositories.GetCurrentFiscalYearRequest,
+	req fiscalyearports.GetCurrentFiscalYearRequest,
 ) (*fiscalyear.FiscalYear, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fiscalyear.FiscalYear, error) {
 		return r.getCurrentFiscalYear(ctx, r.db.DBForContext(ctx), req, false)
@@ -271,7 +271,7 @@ func (r *repository) GetCurrentFiscalYear(
 
 func (r *repository) GetCurrentFiscalYearForUpdate(
 	ctx context.Context,
-	req repositories.GetCurrentFiscalYearRequest,
+	req fiscalyearports.GetCurrentFiscalYearRequest,
 ) (*fiscalyear.FiscalYear, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fiscalyear.FiscalYear, error) {
 		return r.getCurrentFiscalYear(ctx, r.db.DBForContext(ctx), req, true)
@@ -281,7 +281,7 @@ func (r *repository) GetCurrentFiscalYearForUpdate(
 func (r *repository) getCurrentFiscalYear(
 	ctx context.Context,
 	db bun.IDB,
-	req repositories.GetCurrentFiscalYearRequest,
+	req fiscalyearports.GetCurrentFiscalYearRequest,
 	forUpdate bool,
 ) (*fiscalyear.FiscalYear, error) {
 	log := r.l.With(
@@ -316,7 +316,7 @@ func (r *repository) getCurrentFiscalYear(
 
 func (r *repository) CountByTenant(
 	ctx context.Context,
-	req repositories.CountFiscalYearsByTenantRequest,
+	req fiscalyearports.CountFiscalYearsByTenantRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		log := r.l.With(
@@ -408,7 +408,7 @@ func (r *repository) Update(
 
 func (r *repository) Delete(
 	ctx context.Context,
-	req repositories.DeleteFiscalYearRequest,
+	req fiscalyearports.DeleteFiscalYearRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		log := r.l.With(
@@ -436,7 +436,7 @@ func (r *repository) Delete(
 
 func (r *repository) Close(
 	ctx context.Context,
-	req repositories.CloseFiscalYearRequest,
+	req fiscalyearports.CloseFiscalYearRequest,
 ) (*fiscalyear.FiscalYear, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fiscalyear.FiscalYear, error) {
 		log := r.l.With(
@@ -475,7 +475,7 @@ func (r *repository) Close(
 
 func (r *repository) Reopen(
 	ctx context.Context,
-	req repositories.ReopenFiscalYearRequest,
+	req fiscalyearports.ReopenFiscalYearRequest,
 ) (*fiscalyear.FiscalYear, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fiscalyear.FiscalYear, error) {
 		log := r.l.With(
@@ -518,7 +518,7 @@ func (r *repository) Reopen(
 
 func (r *repository) GetNextFiscalYear(
 	ctx context.Context,
-	req repositories.GetNextFiscalYearRequest,
+	req fiscalyearports.GetNextFiscalYearRequest,
 ) (*fiscalyear.FiscalYear, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*fiscalyear.FiscalYear, error) {
 		log := r.l.With(
@@ -549,7 +549,7 @@ func (r *repository) GetNextFiscalYear(
 
 func (r *repository) GetExpiredOpenFiscalYears(
 	ctx context.Context,
-	req repositories.GetExpiredOpenFiscalYearsRequest,
+	req fiscalyearports.GetExpiredOpenFiscalYearsRequest,
 ) ([]*fiscalyear.FiscalYear, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*fiscalyear.FiscalYear, error) {
 		log := r.l.With(
@@ -580,7 +580,7 @@ func (r *repository) GetExpiredOpenFiscalYears(
 
 func (r *repository) Activate(
 	ctx context.Context,
-	req repositories.ActivateFiscalYearRequest,
+	req fiscalyearports.ActivateFiscalYearRequest,
 ) (*fiscalyear.FiscalYear, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fiscalyear.FiscalYear, error) {
 		log := r.l.With(
@@ -602,7 +602,7 @@ func (r *repository) Activate(
 			return entity, nil
 		}
 
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 			return r.activateInTx(c, tx, req, entity)
 		})
 		if err != nil {
@@ -620,7 +620,7 @@ func (r *repository) Activate(
 func (r *repository) activateInTx(
 	ctx context.Context,
 	tx bun.Tx,
-	req repositories.ActivateFiscalYearRequest,
+	req fiscalyearports.ActivateFiscalYearRequest,
 	entity *fiscalyear.FiscalYear,
 ) error {
 	err := func() error {

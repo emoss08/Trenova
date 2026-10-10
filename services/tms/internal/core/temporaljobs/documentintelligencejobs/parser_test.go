@@ -4,7 +4,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
-	services "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentparsingruleports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -201,7 +202,7 @@ func TestBuildStructuredDataIncludesParsingRuleMetadata(t *testing.T) {
 		Fields:        map[string]*ReviewField{},
 		Stops:         []*IntelligenceStop{},
 		Conflicts:     []*ReviewConflict{},
-		ParsingRuleMetadata: &services.DocumentParsingRuleMetadata{
+		ParsingRuleMetadata: &documentparsingruleports.DocumentParsingRuleMetadata{
 			RuleSetID:        pulid.MustNew("dprs_"),
 			RuleSetName:      "Generic",
 			RuleVersionID:    pulid.MustNew("dprv_"),
@@ -221,7 +222,7 @@ func TestBuildStructuredDataIncludesParsingRuleMetadata(t *testing.T) {
 
 	intelligenceMap, ok := data["intelligence"].(map[string]any)
 	require.True(t, ok)
-	metadata, ok := intelligenceMap["parsingRuleMetadata"].(*services.DocumentParsingRuleMetadata)
+	metadata, ok := intelligenceMap["parsingRuleMetadata"].(*documentparsingruleports.DocumentParsingRuleMetadata)
 	require.True(t, ok)
 	require.Equal(t, "Generic", metadata.RuleSetName)
 
@@ -282,11 +283,11 @@ func TestMergeAIAnalysis_NormalizesEquivalentAIExtractionShape(t *testing.T) {
 		Conflicts:            []*ReviewConflict{},
 	}
 
-	aiExtract := &services.AIExtractResult{
+	aiExtract := &documentaiextractionports.AIExtractResult{
 		DocumentKind:      "rate_confirmation",
 		OverallConfidence: 0.72,
 		ReviewStatus:      "REVIEW_REQUIRED",
-		Fields: map[string]services.AIDocumentField{
+		Fields: map[string]documentaiextractionports.AIDocumentField{
 			"totalRate": {
 				Label:           "Total Rate",
 				Value:           "4500.00",
@@ -296,7 +297,7 @@ func TestMergeAIAnalysis_NormalizesEquivalentAIExtractionShape(t *testing.T) {
 				Source:          "page-3",
 			},
 		},
-		Stops: []*services.AIDocumentStop{
+		Stops: []*documentaiextractionports.AIDocumentStop{
 			{
 				Sequence:        1,
 				Role:            "origin",

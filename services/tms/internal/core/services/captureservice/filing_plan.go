@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -33,7 +33,7 @@ type DiscardBatchPlan struct {
 func (s *Service) PlanFileItem(ctx context.Context, in *FileItemInput) (*FilePlan, error) {
 	item, err := s.items.GetByID(
 		ctx,
-		repositories.GetCaptureItemByIDRequest{ID: in.ItemID, TenantInfo: in.TenantInfo},
+		captureports.GetCaptureItemByIDRequest{ID: in.ItemID, TenantInfo: in.TenantInfo},
 	)
 	if err != nil {
 		return nil, err
@@ -43,7 +43,7 @@ func (s *Service) PlanFileItem(ctx context.Context, in *FileItemInput) (*FilePla
 		ctx,
 		in.TenantInfo,
 		permission.OpUpdate,
-		&repositories.GetCaptureBatchByIDRequest{
+		&captureports.GetCaptureBatchByIDRequest{
 			ID:           item.BatchID,
 			IncludePages: true,
 		},
@@ -80,7 +80,7 @@ func (s *Service) PlanDiscardItem(
 ) (*DiscardItemPlan, error) {
 	item, err := s.items.GetByID(
 		ctx,
-		repositories.GetCaptureItemByIDRequest{ID: in.ItemID, TenantInfo: in.TenantInfo},
+		captureports.GetCaptureItemByIDRequest{ID: in.ItemID, TenantInfo: in.TenantInfo},
 	)
 	if err != nil {
 		return nil, err
@@ -89,7 +89,7 @@ func (s *Service) PlanDiscardItem(
 		ctx,
 		in.TenantInfo,
 		permission.OpDelete,
-		&repositories.GetCaptureBatchByIDRequest{
+		&captureports.GetCaptureBatchByIDRequest{
 			ID: item.BatchID,
 		},
 	)
@@ -117,7 +117,7 @@ func (s *Service) PlanDiscardBatch(
 		ctx,
 		in.TenantInfo,
 		permission.OpDelete,
-		&repositories.GetCaptureBatchByIDRequest{
+		&captureports.GetCaptureBatchByIDRequest{
 			ID:           in.BatchID,
 			IncludeItems: true,
 		},
@@ -157,7 +157,7 @@ func (s *Service) GetItem(
 ) (*capture.CaptureItem, error) {
 	item, err := s.items.GetByID(
 		ctx,
-		repositories.GetCaptureItemByIDRequest{ID: itemID, TenantInfo: tenantInfo},
+		captureports.GetCaptureItemByIDRequest{ID: itemID, TenantInfo: tenantInfo},
 	)
 	if err != nil {
 		return nil, err
@@ -166,7 +166,7 @@ func (s *Service) GetItem(
 		ctx,
 		tenantInfo,
 		permission.OpRead,
-		&repositories.GetCaptureBatchByIDRequest{ID: item.BatchID},
+		&captureports.GetCaptureBatchByIDRequest{ID: item.BatchID},
 	); err != nil {
 		return nil, err
 	}

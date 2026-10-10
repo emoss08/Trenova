@@ -7,8 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,8 +21,8 @@ const autoAcceptResolutionNote = "Auto-accepted: within variance tolerance"
 
 func (s *Service) AutoMatchInboundInvoice(
 	ctx context.Context,
-	req *serviceports.AutoMatchInboundInvoiceRequest,
-) (*serviceports.AutoMatchInboundInvoiceResult, error) {
+	req *carrierports.AutoMatchInboundInvoiceRequest,
+) (*carrierports.AutoMatchInboundInvoiceResult, error) {
 	if req == nil || req.EDICarrierInvoiceID.IsNil() {
 		return nil, errortypes.NewValidationError(
 			"ediCarrierInvoiceId",
@@ -34,7 +35,7 @@ func (s *Service) AutoMatchInboundInvoice(
 		return nil, err
 	}
 	if !control.AutoMatchInboundInvoices {
-		return &serviceports.AutoMatchInboundInvoiceResult{}, nil
+		return &carrierports.AutoMatchInboundInvoiceResult{}, nil
 	}
 
 	existing, err := s.invoiceMatchRepo.GetOpenByEDIInvoiceID(
@@ -46,14 +47,14 @@ func (s *Service) AutoMatchInboundInvoice(
 		return nil, err
 	}
 	if existing != nil {
-		return &serviceports.AutoMatchInboundInvoiceResult{
+		return &carrierports.AutoMatchInboundInvoiceResult{
 			Status: string(existing.Status),
 		}, nil
 	}
 
 	invoice, err := s.ediInvoiceRepo.GetCarrierInvoiceByID(
 		ctx,
-		repositories.GetEDICarrierInvoiceByIDRequest{
+		ediports.GetEDICarrierInvoiceByIDRequest{
 			ID:         req.EDICarrierInvoiceID,
 			TenantInfo: req.TenantInfo,
 		},
@@ -76,7 +77,7 @@ func (s *Service) AutoMatchInboundInvoice(
 
 	assignment, err := s.assignmentRepo.FindForMatching(
 		ctx,
-		&repositories.FindCarrierAssignmentForMatchingRequest{
+		&shipmentports.FindCarrierAssignmentForMatchingRequest{
 			TenantInfo: req.TenantInfo,
 			CarrierID:  invoice.CarrierID,
 			ProNumber:  invoice.ProNumber,
@@ -136,7 +137,7 @@ func (s *Service) AutoMatchInboundInvoice(
 	s.logInvoiceMatchAudit(ctx, created, nil, pulid.Nil, permission.OpCreate,
 		"Carrier invoice auto-matched from inbound EDI 210")
 
-	result := &serviceports.AutoMatchInboundInvoiceResult{
+	result := &carrierports.AutoMatchInboundInvoiceResult{
 		Matched: true,
 		Status:  string(created.Status),
 	}
@@ -191,8 +192,8 @@ func (s *Service) autoAcceptMatch(
 func autoMatchSkipped(
 	invoice *edi.CarrierInvoice,
 	reason string,
-) *serviceports.AutoMatchInboundInvoiceResult {
-	return &serviceports.AutoMatchInboundInvoiceResult{
+) *carrierports.AutoMatchInboundInvoiceResult {
+	return &carrierports.AutoMatchInboundInvoiceResult{
 		Warnings: []string{fmt.Sprintf(
 			"carrier invoice %s was not auto-matched: %s",
 			invoice.InvoiceNumber,

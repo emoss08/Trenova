@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/dothazmatreference"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/dothazmatreferenceports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/uptrace/bun"
@@ -26,7 +26,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.DotHazmatReferenceRepository {
+func New(p Params) dothazmatreferenceports.DotHazmatReferenceRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.dot-hazmat-reference-repository"),
@@ -35,7 +35,7 @@ func New(p Params) repositories.DotHazmatReferenceRepository {
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetDotHazmatReferenceByIDRequest,
+	req dothazmatreferenceports.GetDotHazmatReferenceByIDRequest,
 ) (*dothazmatreference.DotHazmatReference, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*dothazmatreference.DotHazmatReference, error) {
 		log := r.l.With(

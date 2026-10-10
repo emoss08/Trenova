@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/optional"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -18,24 +18,24 @@ import (
 
 type sealingTester struct {
 	fakeTester
-	models *services.ProbeAIProviderModelsRequest
-	draft  *services.ProbeAIProviderDraftRequest
+	models *agentports.ProbeAIProviderModelsRequest
+	draft  *agentports.ProbeAIProviderDraftRequest
 }
 
 func (f *sealingTester) ListModels(
 	_ context.Context,
-	req *services.ProbeAIProviderModelsRequest,
-) ([]services.AIProviderModelOption, error) {
+	req *agentports.ProbeAIProviderModelsRequest,
+) ([]agentports.AIProviderModelOption, error) {
 	f.models = req
 	return nil, nil
 }
 
 func (f *sealingTester) TestDraft(
 	_ context.Context,
-	req *services.ProbeAIProviderDraftRequest,
-) (*services.AIProviderDraftTestResult, error) {
+	req *agentports.ProbeAIProviderDraftRequest,
+) (*agentports.AIProviderDraftTestResult, error) {
 	f.draft = req
-	return &services.AIProviderDraftTestResult{Success: true}, nil
+	return &agentports.AIProviderDraftTestResult{Success: true}, nil
 }
 
 func draftTenant(provider *aiprovider.Provider) pagination.TenantInfo {
@@ -45,14 +45,14 @@ func draftTenant(provider *aiprovider.Provider) pagination.TenantInfo {
 func TestTestDraft_HandsTheWorkerOnlyCiphertext(t *testing.T) {
 	t.Parallel()
 
-	prober := &fakeProber{result: &services.TestAIProviderResult{Success: true}}
+	prober := &fakeProber{result: &agentports.TestAIProviderResult{Success: true}}
 	svc := newTestService(&fakeProviderRepo{}, prober)
 	tester := &sealingTester{}
 	svc.tester = tester
 	typed := "sk-ant-api03-typed-into-the-editor"
 
-	_, err := svc.TestDraft(t.Context(), &services.TestAIProviderDraftRequest{
-		Endpoint: services.AIProviderEndpoint{
+	_, err := svc.TestDraft(t.Context(), &agentports.TestAIProviderDraftRequest{
+		Endpoint: agentports.AIProviderEndpoint{
 			Kind:   aiprovider.KindAnthropicMessages,
 			APIKey: &typed,
 		},
@@ -83,9 +83,9 @@ func TestListModels_UsesTheStoredKeyOnlyForItsOwnEndpoint(t *testing.T) {
 
 	ask := func(baseURL string) string {
 		t.Helper()
-		_, err := svc.ListModels(t.Context(), &services.ListAIProviderModelsRequest{
+		_, err := svc.ListModels(t.Context(), &agentports.ListAIProviderModelsRequest{
 			TenantInfo: draftTenant(repo.provider),
-			Endpoint: services.AIProviderEndpoint{
+			Endpoint: agentports.AIProviderEndpoint{
 				ProviderID: repo.provider.ID,
 				Kind:       aiprovider.KindOpenAIChat,
 				BaseURL:    baseURL,
@@ -107,8 +107,8 @@ func TestTestDraft_RefusesADraftWithoutAModel(t *testing.T) {
 	svc.tester = &sealingTester{}
 	timeout := 1
 
-	_, err := svc.TestDraft(t.Context(), &services.TestAIProviderDraftRequest{
-		Endpoint:       services.AIProviderEndpoint{Kind: aiprovider.KindOllama},
+	_, err := svc.TestDraft(t.Context(), &agentports.TestAIProviderDraftRequest{
+		Endpoint:       agentports.AIProviderEndpoint{Kind: aiprovider.KindOllama},
 		Tasks:          []aiprovider.Task{aiprovider.TaskAssistantChat},
 		TimeoutSeconds: &timeout,
 	})
@@ -120,8 +120,8 @@ func TestApply_KeepsTheReplacedKeyOnlyForTheSameEndpoint(t *testing.T) {
 	t.Parallel()
 
 	svc := newTestService(&fakeProviderRepo{}, &fakeProber{})
-	actor := &services.RequestActor{
-		PrincipalType: services.PrincipalTypeUser,
+	actor := &permissionports.RequestActor{
+		PrincipalType: permissionports.PrincipalTypeUser,
 		UserID:        pulid.MustNew("usr_"),
 	}
 	next := "sk-proj-AbCdEfGhIjKlMnOpQrStUvWx9876"
@@ -155,13 +155,13 @@ func TestPatchEdits_RefusesToClearARequiredSwitch(t *testing.T) {
 
 	svc := newTestService(&fakeProviderRepo{}, &fakeProber{})
 
-	_, err := svc.patchEdits(&services.PatchAIProviderRequest{
+	_, err := svc.patchEdits(&agentports.PatchAIProviderRequest{
 		Enabled: optional.Some[*bool](nil),
 	}, nil)
 	require.Error(t, err)
 
 	off := false
-	edits, err := svc.patchEdits(&services.PatchAIProviderRequest{
+	edits, err := svc.patchEdits(&agentports.PatchAIProviderRequest{
 		Enabled: optional.Some(&off),
 	}, nil)
 	require.NoError(t, err)
@@ -180,7 +180,7 @@ func TestPatch_AcceptsAProviderThatWasNeverEdited(t *testing.T) {
 	svc := newTestService(&fakeProviderRepo{getErr: notFound}, &fakeProber{})
 	on := true
 
-	_, err := svc.Patch(t.Context(), &services.PatchAIProviderRequest{
+	_, err := svc.Patch(t.Context(), &agentports.PatchAIProviderRequest{
 		ID:      pulid.MustNew("aiprv_"),
 		Version: 0,
 		Enabled: optional.Some(&on),
@@ -189,15 +189,15 @@ func TestPatch_AcceptsAProviderThatWasNeverEdited(t *testing.T) {
 }
 
 type recordingKeys struct {
-	repositories.AIProviderKeyRepository
+	agentports.AIProviderKeyRepository
 
-	fingerprints []repositories.RecordAIProviderKeyFingerprintRequest
+	fingerprints []agentports.RecordAIProviderKeyFingerprintRequest
 	cleared      int
 }
 
 func (f *recordingKeys) RecordFingerprint(
 	_ context.Context,
-	req repositories.RecordAIProviderKeyFingerprintRequest,
+	req agentports.RecordAIProviderKeyFingerprintRequest,
 ) error {
 	f.fingerprints = append(f.fingerprints, req)
 	return nil
@@ -205,7 +205,7 @@ func (f *recordingKeys) RecordFingerprint(
 
 func (f *recordingKeys) ClearExpiredPrevious(
 	_ context.Context,
-	_ repositories.ClearExpiredAIProviderKeysRequest,
+	_ agentports.ClearExpiredAIProviderKeysRequest,
 ) (int, error) {
 	f.cleared++
 	return 1, nil
@@ -215,7 +215,7 @@ func TestRunTest_RecordsTheEndsOfAnOlderKeyAndDropsAnExpiredOne(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeProviderRepo{}
-	prober := &fakeProber{result: &services.TestAIProviderResult{Success: true}}
+	prober := &fakeProber{result: &agentports.TestAIProviderResult{Success: true}}
 	svc := newTestService(repo, prober)
 	keys := &recordingKeys{}
 	svc.keys = keys
@@ -227,7 +227,7 @@ func TestRunTest_RecordsTheEndsOfAnOlderKeyAndDropsAnExpiredOne(t *testing.T) {
 	repo.provider.PreviousAPIKey = stored
 	repo.provider.RotationExpiresAt = &expired
 
-	_, err = svc.RunTest(t.Context(), repositories.GetAIProviderByIDRequest{
+	_, err = svc.RunTest(t.Context(), agentports.GetAIProviderByIDRequest{
 		ID:         repo.provider.ID,
 		TenantInfo: draftTenant(repo.provider),
 	})
@@ -248,7 +248,7 @@ func TestPatchEdits_SetsAndClearsCachePrices(t *testing.T) {
 	read := decimal.RequireFromString("0.3")
 	write := decimal.RequireFromString("3.75")
 
-	edits, err := svc.patchEdits(&services.PatchAIProviderRequest{
+	edits, err := svc.patchEdits(&agentports.PatchAIProviderRequest{
 		CacheReadCostPerMillion: optional.Some(&read),
 	}, nil)
 	require.NoError(t, err)
@@ -260,7 +260,7 @@ func TestPatchEdits_SetsAndClearsCachePrices(t *testing.T) {
 	assert.True(t, provider.CacheReadCostPerMillion.Equal(read))
 	assert.Equal(t, &write, provider.CacheWriteCostPerMillion, "a price left out is left alone")
 
-	edits, err = svc.patchEdits(&services.PatchAIProviderRequest{
+	edits, err = svc.patchEdits(&agentports.PatchAIProviderRequest{
 		CacheWriteCostPerMillion: optional.Some[*decimal.Decimal](nil),
 	}, nil)
 	require.NoError(t, err)

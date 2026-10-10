@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -27,7 +27,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.OrgHolidayRepository {
+func New(p Params) workerports.OrgHolidayRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.org-holiday-repository"),
@@ -36,7 +36,7 @@ func New(p Params) repositories.OrgHolidayRepository {
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListOrgHolidaysRequest,
+	req *workerports.ListOrgHolidaysRequest,
 ) ([]*worker.OrgHoliday, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.OrgHoliday, error) {
 		cols := buncolgen.OrgHolidayColumns
@@ -77,7 +77,7 @@ func (r *repository) List(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req *repositories.GetOrgHolidayByIDRequest,
+	req *workerports.GetOrgHolidayByIDRequest,
 ) (*worker.OrgHoliday, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.OrgHoliday, error) {
 		entity := new(worker.OrgHoliday)
@@ -156,7 +156,7 @@ func (r *repository) Update(
 	})
 }
 
-func (r *repository) Delete(ctx context.Context, req *repositories.GetOrgHolidayByIDRequest) error {
+func (r *repository) Delete(ctx context.Context, req *workerports.GetOrgHolidayByIDRequest) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		results, err := r.db.DBForContext(ctx).
 			NewDelete().

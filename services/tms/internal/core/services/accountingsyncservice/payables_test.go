@@ -5,8 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -45,8 +44,8 @@ func newPayableAccounts() payableAccounts {
 	}
 }
 
-func (a payableAccounts) defaults() repositories.PayableDefaultAccounts {
-	return repositories.PayableDefaultAccounts{
+func (a payableAccounts) defaults() accountingsyncports.PayableDefaultAccounts {
+	return accountingsyncports.PayableDefaultAccounts{
 		Payable:                 a.ap,
 		PurchasedTransportation: a.pt,
 		Cash:                    a.cash,
@@ -57,8 +56,8 @@ func glLine(
 	accountID pulid.ID,
 	code, name string,
 	debitMinor, creditMinor int64,
-) repositories.PayableJournalLine {
-	return repositories.PayableJournalLine{
+) accountingsyncports.PayableJournalLine {
+	return accountingsyncports.PayableJournalLine{
 		AccountID:   accountID,
 		AccountCode: code,
 		AccountName: name,
@@ -67,10 +66,10 @@ func glLine(
 	}
 }
 
-func (h *harness) carrierSettlement(accts payableAccounts) *repositories.PayableSettlement {
+func (h *harness) carrierSettlement(accts payableAccounts) *accountingsyncports.PayableSettlement {
 	posted := settledPosted
-	settlement := &repositories.PayableSettlement{
-		Kind:             repositories.PayableCarrier,
+	settlement := &accountingsyncports.PayableSettlement{
+		Kind:             accountingsyncports.PayableCarrier,
 		ID:               pulid.MustNew("carstl_"),
 		Number:           "CS-1042",
 		PartyID:          pulid.MustNew("car_"),
@@ -87,7 +86,7 @@ func (h *harness) carrierSettlement(accts payableAccounts) *repositories.Payable
 		PayableAccountID: accts.ap,
 		BankAccountID:    accts.cash,
 		Defaults:         accts.defaults(),
-		Lines: []repositories.PayableJournalLine{
+		Lines: []accountingsyncports.PayableJournalLine{
 			glLine(accts.pt, "5000", "Purchased transportation", 150000, 0),
 			glLine(accts.fuel, "5010", "Fuel surcharge expense", 20000, 0),
 			glLine(accts.escrow, "2150", "Escrow liability", 0, 5000),
@@ -99,10 +98,10 @@ func (h *harness) carrierSettlement(accts payableAccounts) *repositories.Payable
 	return settlement
 }
 
-func (h *harness) driverSettlement(accts payableAccounts) *repositories.PayableSettlement {
+func (h *harness) driverSettlement(accts payableAccounts) *accountingsyncports.PayableSettlement {
 	posted := settledPosted
-	settlement := &repositories.PayableSettlement{
-		Kind:             repositories.PayableDriver,
+	settlement := &accountingsyncports.PayableSettlement{
+		Kind:             accountingsyncports.PayableDriver,
 		ID:               pulid.MustNew("dstl_"),
 		Number:           "DS-2201",
 		PartyID:          pulid.MustNew("wrk_"),
@@ -120,7 +119,7 @@ func (h *harness) driverSettlement(accts payableAccounts) *repositories.PayableS
 		PayableAccountID: accts.settlementsPayable,
 		BankAccountID:    accts.cash,
 		Defaults:         accts.defaults(),
-		Lines: []repositories.PayableJournalLine{
+		Lines: []accountingsyncports.PayableJournalLine{
 			glLine(accts.driverPay, "5100", "Owner-operator pay", 250000, 0),
 			glLine(accts.advance, "1250", "Fuel advances", 0, 30000),
 			glLine(accts.escrow, "2150", "Escrow liability", 0, 10000),
@@ -177,7 +176,7 @@ func (h *harness) mapPayableRoles() payableMappings {
 
 func (h *harness) mapCarrierBill(
 	accts payableAccounts,
-	settlement *repositories.PayableSettlement,
+	settlement *accountingsyncports.PayableSettlement,
 ) payableMappings {
 	mapped := h.mapPayableRoles()
 	mapped.vendor = h.confirm(carrierVendorTarget(settlement.PartyID), "qb-vendor-swift")
@@ -211,9 +210,9 @@ func settlementRequest(
 	h *harness,
 	objectType accountingsync.SyncObjectType,
 	operation accountingsync.SyncOperation,
-	settlement *repositories.PayableSettlement,
-) *services.AccountingSyncEnqueueRequest {
-	return services.SettlementSync(&services.SettlementSyncRequest{
+	settlement *accountingsyncports.PayableSettlement,
+) *accountingsyncports.AccountingSyncEnqueueRequest {
+	return accountingsyncports.SettlementSync(&accountingsyncports.SettlementSyncRequest{
 		TenantInfo:  h.tenant,
 		ObjectType:  objectType,
 		ObjectID:    settlement.ID,
@@ -228,7 +227,7 @@ func (h *harness) enqueueSettlement(
 	t *testing.T,
 	objectType accountingsync.SyncObjectType,
 	operation accountingsync.SyncOperation,
-	settlement *repositories.PayableSettlement,
+	settlement *accountingsyncports.PayableSettlement,
 ) *accountingsync.AccountingSyncRecord {
 	t.Helper()
 	req := settlementRequest(h, objectType, operation, settlement)
@@ -239,7 +238,7 @@ func (h *harness) enqueueSettlement(
 
 func (h *harness) syncedSettlementRecord(
 	objectType accountingsync.SyncObjectType,
-	settlement *repositories.PayableSettlement,
+	settlement *accountingsyncports.PayableSettlement,
 	externalID string,
 	refs map[string]string,
 ) *accountingsync.AccountingSyncRecord {
@@ -260,30 +259,30 @@ func (h *harness) sendDriverSettlements(at int64) {
 	})
 }
 
-func purchaseDocs(t *testing.T, h *harness) []*services.AccountingPurchaseDocument {
+func purchaseDocs(t *testing.T, h *harness) []*accountingsyncports.AccountingPurchaseDocument {
 	t.Helper()
 	calls := h.writer.callsTo("CreatePurchaseDocument")
-	out := make([]*services.AccountingPurchaseDocument, 0, len(calls))
+	out := make([]*accountingsyncports.AccountingPurchaseDocument, 0, len(calls))
 	for _, call := range calls {
-		doc, ok := call.doc.(*services.AccountingPurchaseDocument)
+		doc, ok := call.doc.(*accountingsyncports.AccountingPurchaseDocument)
 		require.True(t, ok)
 		out = append(out, doc)
 	}
 	return out
 }
 
-func onlyPurchaseDoc(t *testing.T, h *harness) *services.AccountingPurchaseDocument {
+func onlyPurchaseDoc(t *testing.T, h *harness) *accountingsyncports.AccountingPurchaseDocument {
 	t.Helper()
 	docs := purchaseDocs(t, h)
 	require.Len(t, docs, 1)
 	return docs[0]
 }
 
-func onlyBillPayment(t *testing.T, h *harness) *services.AccountingBillPaymentDocument {
+func onlyBillPayment(t *testing.T, h *harness) *accountingsyncports.AccountingBillPaymentDocument {
 	t.Helper()
 	calls := h.writer.callsTo("CreateBillPayment")
 	require.Len(t, calls, 1)
-	doc, ok := calls[0].doc.(*services.AccountingBillPaymentDocument)
+	doc, ok := calls[0].doc.(*accountingsyncports.AccountingBillPaymentDocument)
 	require.True(t, ok)
 	return doc
 }
@@ -294,7 +293,7 @@ type purchaseLineWant struct {
 	description string
 }
 
-func assertPurchaseLines(t *testing.T, want []purchaseLineWant, got []services.AccountingPurchaseLine) {
+func assertPurchaseLines(t *testing.T, want []purchaseLineWant, got []accountingsyncports.AccountingPurchaseLine) {
 	t.Helper()
 	require.Len(t, got, len(want))
 	for idx := range want {
@@ -368,7 +367,7 @@ func TestCarrierBillIsBuiltFromTheJournalEntryWithoutThePayableLine(t *testing.T
 
 	for _, accountID := range []pulid.ID{accts.ap, accts.pt} {
 		row, err := fakeMappingRepo{store: h.mappings}.GetByTarget(t.Context(),
-			&repositories.GetAccountingMappingByTargetRequest{
+			&accountingsyncports.GetAccountingMappingByTargetRequest{
 				TenantInfo:      h.tenant,
 				ConnectionID:    h.conn.ID,
 				TargetType:      accountingsync.TargetGLAccount,
@@ -380,7 +379,7 @@ func TestCarrierBillIsBuiltFromTheJournalEntryWithoutThePayableLine(t *testing.T
 
 	requests := h.payables.requests()
 	require.NotEmpty(t, requests)
-	assert.Equal(t, repositories.PayableCarrier, requests[0].Kind)
+	assert.Equal(t, accountingsyncports.PayableCarrier, requests[0].Kind)
 	assert.Equal(t, settlement.ID, requests[0].ID)
 	assert.Equal(t, h.tenant, requests[0].TenantInfo)
 }
@@ -411,7 +410,7 @@ func TestNegativeNetCarrierSettlementIsAVendorCreditWithEverySignFlipped(t *test
 	accts := newPayableAccounts()
 	settlement := h.carrierSettlement(accts)
 	settlement.NetMinor = -20000
-	settlement.Lines = []repositories.PayableJournalLine{
+	settlement.Lines = []accountingsyncports.PayableJournalLine{
 		glLine(accts.pt, "5000", "Purchased transportation", 10000, 0),
 		glLine(accts.fuel, "5010", "Fuel surcharge expense", 2500, 0),
 		glLine(accts.escrow, "2150", "Escrow liability", 0, 32500),
@@ -445,7 +444,7 @@ func TestZeroNetSettlementStillCreatesTheBill(t *testing.T) {
 	accts := newPayableAccounts()
 	settlement := h.carrierSettlement(accts)
 	settlement.NetMinor = 0
-	settlement.Lines = []repositories.PayableJournalLine{
+	settlement.Lines = []accountingsyncports.PayableJournalLine{
 		glLine(accts.pt, "5000", "Purchased transportation", 40000, 0),
 		glLine(accts.escrow, "2150", "Escrow liability", 0, 40000),
 	}
@@ -554,12 +553,12 @@ func TestSettlementWithNothingToSend(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		mutate func(accts payableAccounts, s *repositories.PayableSettlement)
+		mutate func(accts payableAccounts, s *accountingsyncports.PayableSettlement)
 		reason string
 	}{
 		{
 			name: "no journal lines and no amount",
-			mutate: func(_ payableAccounts, s *repositories.PayableSettlement) {
+			mutate: func(_ payableAccounts, s *accountingsyncports.PayableSettlement) {
 				s.Lines = nil
 				s.NetMinor = 0
 			},
@@ -567,16 +566,16 @@ func TestSettlementWithNothingToSend(t *testing.T) {
 		},
 		{
 			name: "only the payable line",
-			mutate: func(accts payableAccounts, s *repositories.PayableSettlement) {
-				s.Lines = []repositories.PayableJournalLine{glLine(accts.ap, "2000", "Accounts payable", 0, 0)}
+			mutate: func(accts payableAccounts, s *accountingsyncports.PayableSettlement) {
+				s.Lines = []accountingsyncports.PayableJournalLine{glLine(accts.ap, "2000", "Accounts payable", 0, 0)}
 				s.NetMinor = 0
 			},
 			reason: "has no amounts",
 		},
 		{
 			name: "every line nets to zero",
-			mutate: func(accts payableAccounts, s *repositories.PayableSettlement) {
-				s.Lines = []repositories.PayableJournalLine{
+			mutate: func(accts payableAccounts, s *accountingsyncports.PayableSettlement) {
+				s.Lines = []accountingsyncports.PayableJournalLine{
 					glLine(accts.pt, "5000", "Purchased transportation", 5000, 5000),
 					glLine(accts.ap, "2000", "Accounts payable", 0, 0),
 				}
@@ -609,14 +608,14 @@ func TestSettlementThatCannotBeSentBlocks(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		mutate   func(s *repositories.PayableSettlement)
+		mutate   func(s *accountingsyncports.PayableSettlement)
 		remove   bool
 		category accountingsync.SyncErrorCategory
 		message  string
 	}{
 		{
 			name: "an amount but no journal entry",
-			mutate: func(s *repositories.PayableSettlement) {
+			mutate: func(s *accountingsyncports.PayableSettlement) {
 				s.Lines = nil
 			},
 			category: accountingsync.SyncErrorValidation,
@@ -624,7 +623,7 @@ func TestSettlementThatCannotBeSentBlocks(t *testing.T) {
 		},
 		{
 			name: "never posted",
-			mutate: func(s *repositories.PayableSettlement) {
+			mutate: func(s *accountingsyncports.PayableSettlement) {
 				s.PostedAt = nil
 			},
 			category: accountingsync.SyncErrorValidation,
@@ -632,7 +631,7 @@ func TestSettlementThatCannotBeSentBlocks(t *testing.T) {
 		},
 		{
 			name: "no payable account",
-			mutate: func(s *repositories.PayableSettlement) {
+			mutate: func(s *accountingsyncports.PayableSettlement) {
 				s.PayableAccountID = pulid.Nil
 			},
 			category: accountingsync.SyncErrorConfiguration,
@@ -646,7 +645,7 @@ func TestSettlementThatCannotBeSentBlocks(t *testing.T) {
 		},
 		{
 			name: "in a currency the books do not keep",
-			mutate: func(s *repositories.PayableSettlement) {
+			mutate: func(s *accountingsyncports.PayableSettlement) {
 				s.CurrencyCode = "CAD"
 			},
 			category: accountingsync.SyncErrorCurrency,
@@ -742,7 +741,7 @@ func TestUnmappedOverrideAccountBlocksNamingTheAccount(t *testing.T) {
 	assert.Equal(t, "Map GL account 2150 Escrow liability to a QuickBooks Online account", blocked.Resolution,
 		"an override account is never filed under a role silently")
 	escrow, err := fakeMappingRepo{store: h.mappings}.GetByTarget(t.Context(),
-		&repositories.GetAccountingMappingByTargetRequest{
+		&accountingsyncports.GetAccountingMappingByTargetRequest{
 			TenantInfo:      h.tenant,
 			ConnectionID:    h.conn.ID,
 			TargetType:      accountingsync.TargetGLAccount,
@@ -884,7 +883,7 @@ func TestVendorCreateThatFailsValidationBlocksAsValidation(t *testing.T) {
 	workerID := pulid.MustNew("wrk_")
 	h.mappings.set(h.conn, driverVendorTarget(workerID), accountingsync.MappingStateUnmatched, "")
 	h.mappings.createErr = errortypes.NewBusinessError("The driver has no legal name")
-	h.enqueue(t, &services.AccountingSyncEnqueueRequest{
+	h.enqueue(t, &accountingsyncports.AccountingSyncEnqueueRequest{
 		ObjectType:   accountingsync.SyncObjectDriverVendor,
 		ObjectID:     workerID,
 		ObjectNumber: "Dana Ortiz",
@@ -907,7 +906,7 @@ func TestVendorCreateWithAConfirmedMappingSendsNothing(t *testing.T) {
 	h := newHarness(t)
 	carrierID := pulid.MustNew("car_")
 	mapping := h.confirm(carrierVendorTarget(carrierID), "qb-vendor-swift")
-	h.enqueue(t, &services.AccountingSyncEnqueueRequest{
+	h.enqueue(t, &accountingsyncports.AccountingSyncEnqueueRequest{
 		ObjectType:  accountingsync.SyncObjectCarrierVendor,
 		ObjectID:    carrierID,
 		Operation:   accountingsync.SyncOperationCreate,
@@ -955,15 +954,15 @@ func TestVendorUpdatePushesThePartyToTheMappedVendor(t *testing.T) {
 			partyID := pulid.MustNew(tc.prefix)
 			target := tc.target(partyID)
 			mapping := h.confirm(target, "qb-vendor-77")
-			h.mappings.parties[partyID] = &services.AccountingPartyDraft{DisplayName: target.Label, City: "Reno"}
+			h.mappings.parties[partyID] = &accountingsyncports.AccountingPartyDraft{DisplayName: target.Label, City: "Reno"}
 			require.NoError(t, h.enqueuer.Enqueue(t.Context(),
-				services.VendorSyncRequest(h.tenant, tc.objectType, partyID, target.Label, 4)))
+				accountingsyncports.VendorSyncRequest(h.tenant, tc.objectType, partyID, target.Label, 4)))
 
 			h.drain(t)
 
 			calls := h.writer.callsTo("UpsertVendor")
 			require.Len(t, calls, 1)
-			doc, ok := calls[0].doc.(*services.AccountingVendorDocument)
+			doc, ok := calls[0].doc.(*accountingsyncports.AccountingVendorDocument)
 			require.True(t, ok)
 			assert.Equal(t, "qb-vendor-77", doc.ExternalID)
 			assert.Equal(t, "Reno", doc.Party.City)
@@ -986,7 +985,7 @@ func TestVendorUpdateWithoutAMappingSendsNothing(t *testing.T) {
 	h := newHarness(t)
 	carrierID := pulid.MustNew("car_")
 	h.confirm(carrierVendorTarget(carrierID), "qb-vendor-swift")
-	require.NoError(t, h.enqueuer.Enqueue(t.Context(), services.VendorSyncRequest(
+	require.NoError(t, h.enqueuer.Enqueue(t.Context(), accountingsyncports.VendorSyncRequest(
 		h.tenant, accountingsync.SyncObjectCarrierVendor, carrierID, "Swift Haulers", 2,
 	)))
 	record := h.only(t, accountingsync.SyncObjectCarrierVendor, carrierID, accountingsync.SyncOperationUpdate)
@@ -1032,7 +1031,7 @@ func TestOwnerOperatorBillUsesTheDriverVendorAndItsPayableAccount(t *testing.T) 
 	assert.Contains(t, synced.MappingIDs, vendor.ID.String())
 	requests := h.payables.requests()
 	require.NotEmpty(t, requests)
-	assert.Equal(t, repositories.PayableDriver, requests[0].Kind)
+	assert.Equal(t, accountingsyncports.PayableDriver, requests[0].Kind)
 }
 
 func TestUnmappedOwnerOperatorQueuesADriverVendorCreate(t *testing.T) {
@@ -1108,7 +1107,7 @@ func TestBillVoidOfASyncedBillDeletesThatDocument(t *testing.T) {
 
 	calls := h.writer.callsTo("VoidPurchaseDocument")
 	require.Len(t, calls, 1)
-	ref, ok := calls[0].doc.(*services.AccountingDocumentRef)
+	ref, ok := calls[0].doc.(*accountingsyncports.AccountingDocumentRef)
 	require.True(t, ok)
 	assert.Equal(t, "qb-vc-9", ref.ExternalID)
 	assert.Equal(t, accountingsync.SyncObjectCarrierBill, ref.Kind)
@@ -1180,7 +1179,7 @@ func TestBillVoidBeforeTheBillWasSent(t *testing.T) {
 	})
 }
 
-func (h *harness) paidCarrierSettlement(accts payableAccounts) *repositories.PayableSettlement {
+func (h *harness) paidCarrierSettlement(accts payableAccounts) *accountingsyncports.PayableSettlement {
 	settlement := h.carrierSettlement(accts)
 	paid := settledPaidAt
 	settlement.PaidAt = &paid
@@ -1244,7 +1243,7 @@ func TestBillPaymentFromANonDefaultBankAccountNeedsItsOwnMapping(t *testing.T) {
 	assert.Empty(t, h.writer.callsTo("CreateBillPayment"))
 
 	h.confirm(glTarget(operating, "GL account 1010 Operating checking"), "qb-operating")
-	_, err := h.svc.Retry(t.Context(), &services.RetryAccountingSyncRequest{
+	_, err := h.svc.Retry(t.Context(), &accountingsyncports.RetryAccountingSyncRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: h.conn.IntegrationType,
@@ -1298,7 +1297,7 @@ func TestBillPaymentWithoutABillRecordQueuesTheBill(t *testing.T) {
 	h.mapCarrierBill(accts, settlement)
 	record := h.enqueueSettlement(t, accountingsync.SyncObjectCarrierBillPay, accountingsync.SyncOperationCreate,
 		settlement)
-	_, err := h.svc.Release(t.Context(), &services.ReleaseAccountingSyncRequest{
+	_, err := h.svc.Release(t.Context(), &accountingsyncports.ReleaseAccountingSyncRequest{
 		TenantInfo:      h.tenant,
 		UserID:          h.userID,
 		IntegrationType: h.conn.IntegrationType,
@@ -1399,17 +1398,17 @@ func TestBillPaymentAmountRules(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		mutate func(*repositories.PayableSettlement)
+		mutate func(*accountingsyncports.PayableSettlement)
 		reason string
 	}{
 		{
 			name:   "a negative net was a vendor credit",
-			mutate: func(s *repositories.PayableSettlement) { s.NetMinor = -20000 },
+			mutate: func(s *accountingsyncports.PayableSettlement) { s.NetMinor = -20000 },
 			reason: "vendor credit",
 		},
 		{
 			name:   "a zero net has nothing to pay",
-			mutate: func(s *repositories.PayableSettlement) { s.NetMinor = 0 },
+			mutate: func(s *accountingsyncports.PayableSettlement) { s.NetMinor = 0 },
 			reason: "nothing to send",
 		},
 	}
@@ -1502,7 +1501,7 @@ func TestVendorCreditFollowsTheLinesSentNotTheNetField(t *testing.T) {
 	accts := newPayableAccounts()
 	settlement := h.carrierSettlement(accts)
 	settlement.NetMinor = 5000
-	settlement.Lines = []repositories.PayableJournalLine{
+	settlement.Lines = []accountingsyncports.PayableJournalLine{
 		glLine(accts.pt, "5000", "Purchased transportation", 10000, 0),
 		glLine(accts.escrow, "2150", "Escrow liability", 0, 15000),
 		glLine(accts.ap, "2000", "Accounts payable", 5000, 0),

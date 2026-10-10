@@ -5,8 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	portservices "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,12 +15,12 @@ import (
 type lateFilingTenderRepo struct {
 	readingTenderRepo
 
-	late []*repositories.RecordLateOfferResponseRequest
+	late []*tenderports.RecordLateOfferResponseRequest
 }
 
 func (r *lateFilingTenderRepo) RecordLateOfferResponse(
 	_ context.Context,
-	req *repositories.RecordLateOfferResponseRequest,
+	req *tenderports.RecordLateOfferResponseRequest,
 ) error {
 	r.late = append(r.late, req)
 	return nil
@@ -48,7 +47,7 @@ func TestRecordResponse_RefusesAnOfferPastItsExpiry(t *testing.T) {
 		l:            zap.NewNop(),
 	}
 
-	err := svc.RecordResponse(t.Context(), &portservices.TenderResponseRequest{
+	err := svc.RecordResponse(t.Context(), &tenderports.TenderResponseRequest{
 		TenantInfo: createTestTenant(),
 		OfferID:    entity.Offers[0].ID,
 		Action:     tender.ResponseActionAccept,
@@ -67,7 +66,7 @@ func TestPreviewResponse_RefusesAnOfferPastItsExpiry(t *testing.T) {
 	entity := expiredSentTender()
 	svc := managedService(entity, &fakeWorkflowStarter{})
 
-	_, err := svc.PreviewResponse(t.Context(), &portservices.TenderResponseRequest{
+	_, err := svc.PreviewResponse(t.Context(), &tenderports.TenderResponseRequest{
 		TenantInfo: createTestTenant(),
 		OfferID:    entity.Offers[0].ID,
 		Action:     tender.ResponseActionDecline,
@@ -84,7 +83,7 @@ func TestPreviewResponse_AcceptsAnOfferBeforeItsExpiry(t *testing.T) {
 	entity.Offers[0].ExpiresAt = &expiresAt
 	svc := managedService(entity, &fakeWorkflowStarter{})
 
-	preview, err := svc.PreviewResponse(t.Context(), &portservices.TenderResponseRequest{
+	preview, err := svc.PreviewResponse(t.Context(), &tenderports.TenderResponseRequest{
 		TenantInfo: createTestTenant(),
 		OfferID:    entity.Offers[0].ID,
 		Action:     tender.ResponseActionAccept,

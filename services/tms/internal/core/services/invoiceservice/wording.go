@@ -8,7 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -114,7 +115,7 @@ func (s *Service) renderInvoiceEmail(
 		customerID = &p.Profile.Customer.ID
 	}
 
-	rendered, err := s.templates.RenderMessage(ctx, &servicesports.RenderMessageRequest{
+	rendered, err := s.templates.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
 		TenantInfo: p.TenantInfo,
 		Kind:       documenttemplate.KindInvoiceEmail,
 		CustomerID: customerID,
@@ -186,7 +187,7 @@ func partSubject(subject string, part, total int) string {
 	return fmt.Sprintf("%s (%d of %d)", subject, part, total)
 }
 
-func partBodyBase(part *servicesports.InvoiceSendPlanPart) string {
+func partBodyBase(part *invoiceports.InvoiceSendPlanPart) string {
 	if len(part.Links) == 0 {
 		return ""
 	}

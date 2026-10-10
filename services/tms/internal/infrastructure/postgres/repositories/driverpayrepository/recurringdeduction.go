@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -23,7 +23,7 @@ type recurringDeductionRepository struct {
 	l  *zap.Logger
 }
 
-func NewRecurringDeduction(p Params) repositories.RecurringDeductionRepository {
+func NewRecurringDeduction(p Params) driverpayports.RecurringDeductionRepository {
 	return &recurringDeductionRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.recurring-deduction-repository"),
@@ -32,7 +32,7 @@ func NewRecurringDeduction(p Params) repositories.RecurringDeductionRepository {
 
 func (r *recurringDeductionRepository) List(
 	ctx context.Context,
-	req *repositories.ListRecurringDeductionsRequest,
+	req *driverpayports.ListRecurringDeductionsRequest,
 ) (*pagination.ListResult[*driverpay.RecurringDeduction], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*driverpay.RecurringDeduction], error) {
 		limit := req.Filter.Pagination.SafeLimit()
@@ -70,7 +70,7 @@ func (r *recurringDeductionRepository) List(
 
 func (r *recurringDeductionRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListRecurringDeductionConnectionRequest,
+	req *driverpayports.ListRecurringDeductionConnectionRequest,
 ) (*pagination.CursorListResult[*driverpay.RecurringDeduction], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*driverpay.RecurringDeduction], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -132,7 +132,7 @@ func (r *recurringDeductionRepository) ListConnection(
 
 func (r *recurringDeductionRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetRecurringDeductionByIDRequest,
+	req driverpayports.GetRecurringDeductionByIDRequest,
 ) (*driverpay.RecurringDeduction, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driverpay.RecurringDeduction, error) {
 		entity := new(driverpay.RecurringDeduction)
@@ -154,7 +154,7 @@ func (r *recurringDeductionRepository) GetByID(
 
 func (r *recurringDeductionRepository) ListActiveForWorker(
 	ctx context.Context,
-	req repositories.ListActiveDeductionsForWorkerRequest,
+	req driverpayports.ListActiveDeductionsForWorkerRequest,
 ) ([]*driverpay.RecurringDeduction, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driverpay.RecurringDeduction, error) {
 		items := make([]*driverpay.RecurringDeduction, 0)
@@ -191,7 +191,7 @@ func (r *recurringDeductionRepository) Create(
 		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
 			return nil, fmt.Errorf("create recurring deduction: %w", err)
 		}
-		return r.GetByID(ctx, repositories.GetRecurringDeductionByIDRequest{
+		return r.GetByID(ctx, driverpayports.GetRecurringDeductionByIDRequest{
 			ID: entity.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
@@ -231,7 +231,7 @@ func (r *recurringDeductionRepository) Update(
 		if err = dberror.CheckRowsAffected(res, "RecurringDeduction", entity.ID.String()); err != nil {
 			return nil, err
 		}
-		return r.GetByID(ctx, repositories.GetRecurringDeductionByIDRequest{
+		return r.GetByID(ctx, driverpayports.GetRecurringDeductionByIDRequest{
 			ID: entity.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,

@@ -3,10 +3,9 @@ package tenderjobs
 import (
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/tenderjobs/tendercontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/tenderjobs/tendercontract"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/sdk/temporal"
@@ -49,7 +48,7 @@ func CarrierTenderWorkflow(ctx workflow.Context, in *tendercontract.WorkflowInpu
 		TenderID:   in.TenderID,
 	}
 
-	var plan *serviceports.TenderPlan
+	var plan *tenderports.TenderPlan
 	if err := workflow.ExecuteActivity(
 		ctx, a.LoadPlanActivity, &base,
 	).Get(ctx, &plan); err != nil {
@@ -79,7 +78,7 @@ func runSequential(
 	ctx workflow.Context,
 	a *Activities,
 	base TenderActivityInput,
-	plan *serviceports.TenderPlan,
+	plan *tenderports.TenderPlan,
 	signals workflow.ReceiveChannel,
 ) error {
 	for _, offer := range plan.Offers {
@@ -111,7 +110,7 @@ func runBroadcast(
 	ctx workflow.Context,
 	a *Activities,
 	base TenderActivityInput,
-	plan *serviceports.TenderPlan,
+	plan *tenderports.TenderPlan,
 	signals workflow.ReceiveChannel,
 ) error {
 	type outstandingOffer struct {
@@ -203,7 +202,7 @@ func ensureDispatched(
 	ctx workflow.Context,
 	a *Activities,
 	base TenderActivityInput,
-	offer serviceports.TenderPlanOffer,
+	offer tenderports.TenderPlanOffer,
 ) (deadline int64, live bool, err error) {
 	if offer.Status == tender.OfferStatusSent {
 		if offer.ExpiresAt != nil {
@@ -214,7 +213,7 @@ func ensureDispatched(
 
 	in := base
 	in.OfferID = offer.OfferID
-	var result serviceports.TenderDispatchResult
+	var result tenderports.TenderDispatchResult
 	if err = workflow.ExecuteActivity(
 		ctx, a.DispatchOfferActivity, &in,
 	).Get(ctx, &result); err != nil {
@@ -361,7 +360,7 @@ func handleResponse(
 		}
 		return outcomeOfferClosed, nil
 	case tender.ResponseActionAccept:
-		var result serviceports.TenderAcceptResult
+		var result tenderports.TenderAcceptResult
 		if err := workflow.ExecuteActivity(
 			ctx, a.AcceptOfferActivity, &in,
 		).Get(ctx, &result); err != nil {

@@ -7,9 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate/starters"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -19,28 +19,28 @@ import (
 
 func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListDocumentTemplatesRequest,
+	req *documenttemplateports.ListDocumentTemplatesRequest,
 ) (*pagination.ListResult[*documenttemplate.DocumentTemplate], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	req *repositories.GetDocumentTemplateByIDRequest,
+	req *documenttemplateports.GetDocumentTemplateByIDRequest,
 ) (*documenttemplate.DocumentTemplate, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) ListVersions(
 	ctx context.Context,
-	req *repositories.ListDocumentTemplateVersionsRequest,
+	req *documenttemplateports.ListDocumentTemplateVersionsRequest,
 ) ([]*documenttemplate.DocumentTemplateVersion, error) {
 	return s.versionRepo.List(ctx, req)
 }
 
 func (s *Service) GetVersion(
 	ctx context.Context,
-	req *repositories.GetDocumentTemplateVersionByIDRequest,
+	req *documenttemplateports.GetDocumentTemplateVersionByIDRequest,
 ) (*documenttemplate.DocumentTemplateVersion, error) {
 	return s.versionRepo.GetByID(ctx, req)
 }
@@ -75,7 +75,7 @@ func (s *Service) UpdateTemplate(
 	entity *documenttemplate.DocumentTemplate,
 	userID pulid.ID,
 ) (*documenttemplate.DocumentTemplate, error) {
-	original, err := s.repo.GetByID(ctx, &repositories.GetDocumentTemplateByIDRequest{
+	original, err := s.repo.GetByID(ctx, &documenttemplateports.GetDocumentTemplateByIDRequest{
 		DocumentTemplateID: entity.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -110,7 +110,7 @@ func (s *Service) UpdateTemplate(
 
 func (s *Service) DeleteTemplate(
 	ctx context.Context,
-	req *repositories.GetDocumentTemplateByIDRequest,
+	req *documenttemplateports.GetDocumentTemplateByIDRequest,
 	userID pulid.ID,
 ) error {
 	original, err := s.repo.GetByID(ctx, req)
@@ -134,7 +134,7 @@ func (s *Service) CreateVersion(
 	sourceVersionID *pulid.ID,
 	userID pulid.ID,
 ) (*documenttemplate.DocumentTemplateVersion, error) {
-	template, err := s.repo.GetByID(ctx, &repositories.GetDocumentTemplateByIDRequest{
+	template, err := s.repo.GetByID(ctx, &documenttemplateports.GetDocumentTemplateByIDRequest{
 		DocumentTemplateID: entity.TemplateID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -159,7 +159,7 @@ func (s *Service) CreateVersion(
 		}
 	}
 
-	created, err := s.versionRepo.Create(ctx, &repositories.CreateDocumentTemplateVersionRequest{
+	created, err := s.versionRepo.Create(ctx, &documenttemplateports.CreateDocumentTemplateVersionRequest{
 		Version:         entity,
 		SourceVersionID: sourceVersionID,
 	})
@@ -186,7 +186,7 @@ func (s *Service) UpdateVersion(
 
 	original, err := s.versionRepo.GetByID(
 		ctx,
-		&repositories.GetDocumentTemplateVersionByIDRequest{
+		&documenttemplateports.GetDocumentTemplateVersionByIDRequest{
 			VersionID:  entity.ID,
 			TenantInfo: tenantInfo,
 		},
@@ -242,11 +242,11 @@ func (s *Service) UpdateVersion(
 // under two different approvals.
 func (s *Service) Rollback(
 	ctx context.Context,
-	req *services.PublishVersionRequest,
+	req *documenttemplateports.PublishVersionRequest,
 ) (*documenttemplate.DocumentTemplateVersion, error) {
 	target, err := s.versionRepo.GetByID(
 		ctx,
-		&repositories.GetDocumentTemplateVersionByIDRequest{
+		&documenttemplateports.GetDocumentTemplateVersionByIDRequest{
 			VersionID:  req.VersionID,
 			TenantInfo: req.TenantInfo,
 		},
@@ -273,7 +273,7 @@ func (s *Service) Rollback(
 		return nil, err
 	}
 
-	return s.PublishVersion(ctx, &services.PublishVersionRequest{
+	return s.PublishVersion(ctx, &documenttemplateports.PublishVersionRequest{
 		TenantInfo: req.TenantInfo,
 		VersionID:  created.ID,
 		UserID:     req.UserID,
@@ -285,11 +285,11 @@ func (s *Service) Rollback(
 
 func (s *Service) ArchiveVersion(
 	ctx context.Context,
-	req *repositories.ArchiveDocumentTemplateVersionRequest,
+	req *documenttemplateports.ArchiveDocumentTemplateVersionRequest,
 ) (*documenttemplate.DocumentTemplateVersion, error) {
 	original, err := s.versionRepo.GetByID(
 		ctx,
-		&repositories.GetDocumentTemplateVersionByIDRequest{
+		&documenttemplateports.GetDocumentTemplateVersionByIDRequest{
 			VersionID:  req.VersionID,
 			TenantInfo: req.TenantInfo,
 		},
@@ -317,7 +317,7 @@ func (s *Service) ArchiveVersion(
 
 func (s *Service) DeleteVersion(
 	ctx context.Context,
-	req *repositories.GetDocumentTemplateVersionByIDRequest,
+	req *documenttemplateports.GetDocumentTemplateVersionByIDRequest,
 	userID pulid.ID,
 ) error {
 	original, err := s.versionRepo.GetByID(ctx, req)
@@ -342,7 +342,7 @@ func (s *Service) Assign(
 	entity *documenttemplate.DocumentTemplateAssignment,
 	userID pulid.ID,
 ) (*documenttemplate.DocumentTemplateAssignment, error) {
-	template, err := s.repo.GetByID(ctx, &repositories.GetDocumentTemplateByIDRequest{
+	template, err := s.repo.GetByID(ctx, &documenttemplateports.GetDocumentTemplateByIDRequest{
 		DocumentTemplateID: entity.TemplateID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -375,7 +375,7 @@ func (s *Service) Assign(
 
 func (s *Service) Unassign(
 	ctx context.Context,
-	req *repositories.UnassignDocumentTemplateRequest,
+	req *documenttemplateports.UnassignDocumentTemplateRequest,
 	userID pulid.ID,
 ) error {
 	if err := s.assignmentRepo.Unassign(ctx, req); err != nil {
@@ -391,21 +391,21 @@ func (s *Service) Unassign(
 
 func (s *Service) ListAssignments(
 	ctx context.Context,
-	req *repositories.ListDocumentTemplateAssignmentsRequest,
+	req *documenttemplateports.ListDocumentTemplateAssignmentsRequest,
 ) (*pagination.ListResult[*documenttemplate.DocumentTemplateAssignment], error) {
 	return s.assignmentRepo.List(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *repositories.ListDocumentTemplateConnectionRequest,
+	req *documenttemplateports.ListDocumentTemplateConnectionRequest,
 ) (*pagination.CursorListResult[*documenttemplate.DocumentTemplate], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) ListAssignmentsConnection(
 	ctx context.Context,
-	req *repositories.ListDocumentTemplateAssignmentConnectionRequest,
+	req *documenttemplateports.ListDocumentTemplateAssignmentConnectionRequest,
 ) (*pagination.CursorListResult[*documenttemplate.DocumentTemplateAssignment], error) {
 	return s.assignmentRepo.ListConnection(ctx, req)
 }
@@ -425,7 +425,7 @@ func (s *Service) KindsByTemplateIDs(
 	tenantInfo pagination.TenantInfo,
 	templateIDs []pulid.ID,
 ) (map[pulid.ID]documenttemplate.Kind, error) {
-	templates, err := s.repo.GetByIDs(ctx, &repositories.GetDocumentTemplatesByIDsRequest{
+	templates, err := s.repo.GetByIDs(ctx, &documenttemplateports.GetDocumentTemplatesByIDsRequest{
 		TenantInfo:          tenantInfo,
 		DocumentTemplateIDs: templateIDs,
 	})
@@ -443,7 +443,7 @@ func (s *Service) KindsByTemplateIDs(
 
 func (s *Service) GetCustomerAssignments(
 	ctx context.Context,
-	req *repositories.GetCustomerAssignmentsRequest,
+	req *documenttemplateports.GetCustomerAssignmentsRequest,
 ) ([]*documenttemplate.DocumentTemplateAssignment, error) {
 	return s.assignmentRepo.GetForCustomer(ctx, req)
 }
@@ -466,7 +466,7 @@ func (s *Service) kindOf(
 		return version.Template.Kind
 	}
 
-	template, err := s.repo.GetByID(ctx, &repositories.GetDocumentTemplateByIDRequest{
+	template, err := s.repo.GetByID(ctx, &documenttemplateports.GetDocumentTemplateByIDRequest{
 		DocumentTemplateID: version.TemplateID,
 		TenantInfo:         tenantInfo,
 	})
@@ -506,7 +506,7 @@ func (s *Service) logAudit(
 	operation permission.Operation,
 	userID pulid.ID,
 	comment string,
-	extra ...services.LogOption,
+	extra ...auditports.LogOption,
 ) {
 	// A delete has no current state, so identity comes from what was removed.
 	subject := current
@@ -537,12 +537,12 @@ func (s *Service) logAudit(
 		previousState = jsonutils.MustToJSON(previous)
 	}
 
-	options := append([]services.LogOption{
+	options := append([]auditports.LogOption{
 		auditservice.WithComment(comment),
 		auditservice.WithDiff(previous, current),
 	}, extra...)
 
-	if err := s.auditService.LogAction(&services.LogActionParams{
+	if err := s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceDocumentTemplate,
 		ResourceID:     resourceID,
 		Operation:      operation,
@@ -565,7 +565,7 @@ func (s *Service) logAudit(
 // document nobody received is noise in that record.
 func (s *Service) RecordGeneratedDocument(
 	ctx context.Context,
-	req *services.RecordGeneratedDocumentRequest,
+	req *documenttemplateports.RecordGeneratedDocumentRequest,
 ) (*documenttemplate.GeneratedDocument, error) {
 	if req.Rendered == nil {
 		return nil, errortypes.NewValidationError(

@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/typeutils"
@@ -18,10 +18,10 @@ import (
 // data-access check, schedule and audit as a full update.
 func (s *Service) Patch(
 	ctx context.Context,
-	req *services.PatchAgentDefinitionRequest,
-	actor *services.RequestActor,
+	req *agentdefinitionports.PatchAgentDefinitionRequest,
+	actor *permissionports.RequestActor,
 ) (*agentdefinition.Definition, error) {
-	existing, err := s.repo.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+	existing, err := s.repo.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})

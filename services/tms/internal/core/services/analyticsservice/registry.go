@@ -3,28 +3,28 @@ package analyticsservice
 import (
 	"sync"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
 
 type Registry struct {
-	providers map[services.AnalyticsPage]services.AnalyticsPageProvider
+	providers map[kernelports.AnalyticsPage]kernelports.AnalyticsPageProvider
 	mu        sync.RWMutex
 }
 
-func NewRegistry() services.AnalyticsRegistry {
+func NewRegistry() kernelports.AnalyticsRegistry {
 	return &Registry{
-		providers: make(map[services.AnalyticsPage]services.AnalyticsPageProvider),
+		providers: make(map[kernelports.AnalyticsPage]kernelports.AnalyticsPageProvider),
 	}
 }
 
-func (r *Registry) RegisterProvider(provider services.AnalyticsPageProvider) {
+func (r *Registry) RegisterProvider(provider kernelports.AnalyticsPageProvider) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	r.providers[provider.GetPage()] = provider
 }
 
-func (r *Registry) GetProvider(page services.AnalyticsPage) (services.AnalyticsPageProvider, bool) {
+func (r *Registry) GetProvider(page kernelports.AnalyticsPage) (kernelports.AnalyticsPageProvider, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 

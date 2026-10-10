@@ -5,14 +5,15 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
 )
 
 func (s *Service) memoriesForPrompt(
 	ctx context.Context,
-	req *serviceports.RunRequest,
+	req *agentports.RunRequest,
 	rc *agentdefinition.RuntimeContext,
 ) agentdefinition.MemoryFit {
 	if !req.Definition.HasContextProvider(agentdefinition.ContextMemory) {
@@ -24,7 +25,7 @@ func (s *Service) memoriesForPrompt(
 		return fit
 	}
 
-	if err := s.memories.RecordUse(ctx, serviceports.RecordMemoryUseRequest{
+	if err := s.memories.RecordUse(ctx, agentports.RecordMemoryUseRequest{
 		TenantInfo: req.Actor.TenantInfo(),
 		IDs:        fit.Used,
 	}); err != nil {
@@ -67,8 +68,8 @@ func (t *Turn) noteMemories(fx TurnEffects, outcome *toolOutcome) {
 
 	if saved := outcome.saved; saved != nil && saved.ID.IsNotNil() {
 		t.result.SavedMemories = append(t.result.SavedMemories, *saved)
-		fx.Emit(serviceports.StreamEvent{
-			Event: serviceports.AssistantEventMemorySaved,
+		fx.Emit(kernelports.StreamEvent{
+			Event: agentports.AssistantEventMemorySaved,
 			Data:  *saved,
 		})
 	}
@@ -99,9 +100,9 @@ func (t *Turn) noteToolMemories(fx TurnEffects, tool string) {
 	}
 }
 
-func memoryUsedEvent(ids []pulid.ID) serviceports.StreamEvent {
-	return serviceports.StreamEvent{
-		Event: serviceports.AssistantEventMemoryUsed,
-		Data:  serviceports.AssistantMemoryUsedEvent{IDs: slices.Clone(ids)},
+func memoryUsedEvent(ids []pulid.ID) kernelports.StreamEvent {
+	return kernelports.StreamEvent{
+		Event: agentports.AssistantEventMemoryUsed,
+		Data:  agentports.AssistantMemoryUsedEvent{IDs: slices.Clone(ids)},
 	}
 }

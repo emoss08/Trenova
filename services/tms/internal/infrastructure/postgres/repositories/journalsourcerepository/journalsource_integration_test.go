@@ -9,7 +9,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
@@ -18,6 +17,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fiscalyearrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/journalpostingrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalsourceports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -67,7 +68,7 @@ func TestGetByObjectReturnsLatestJournalSource(t *testing.T) {
 		t,
 		postingRepo.CreatePosting(
 			ctx,
-			repositories.CreateJournalPostingParams{
+			journalentryports.CreateJournalPostingParams{
 				BatchID:              pulid.MustNew("jb_"),
 				OrganizationID:       orgID,
 				BusinessUnitID:       buID,
@@ -105,7 +106,7 @@ func TestGetByObjectReturnsLatestJournalSource(t *testing.T) {
 				SourceStatus:         "Posted",
 				SourceDocumentNumber: "INV-1",
 				SourceIdempotencyKey: "invoice-posted:test-src",
-				Lines: []repositories.JournalPostingLine{
+				Lines: []journalentryports.JournalPostingLine{
 					{
 						ID:          pulid.MustNew("jel_"),
 						GLAccountID: accountIDs[0],
@@ -129,7 +130,7 @@ func TestGetByObjectReturnsLatestJournalSource(t *testing.T) {
 
 	source, err := repo.GetByObject(
 		ctx,
-		repositories.GetJournalSourceByObjectRequest{
+		journalsourceports.GetJournalSourceByObjectRequest{
 			TenantInfo:       pagination.TenantInfo{OrgID: orgID, BuID: buID},
 			SourceObjectType: "Invoice",
 			SourceObjectID:   sourceObjectID,

@@ -11,8 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/benefitsservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -33,7 +33,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.BenefitCostRow)
+					obj := o.(*driverpayports.BenefitCostRow)
 					return obj.PlanID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -43,7 +43,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.BenefitCostRow)
+					obj := o.(*driverpayports.BenefitCostRow)
 					return obj.PlanName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -53,7 +53,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.BenefitCostRow)
+					obj := o.(*driverpayports.BenefitCostRow)
 					return obj.PlanType, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -63,7 +63,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.BenefitCostRow)
+					obj := o.(*driverpayports.BenefitCostRow)
 					return obj.Enrolled, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -73,7 +73,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.BenefitCostRow)
+					obj := o.(*driverpayports.BenefitCostRow)
 					return obj.Waived, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -83,7 +83,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.BenefitCostRow)
+					obj := o.(*driverpayports.BenefitCostRow)
 					return obj.EmployeeCostMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -93,7 +93,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.BenefitCostRow)
+					obj := o.(*driverpayports.BenefitCostRow)
 					return obj.EmployerCostMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -723,7 +723,7 @@ type resolverQuery interface {
 	BenefitPlan(ctx context.Context, id string) (*driverpay.BenefitPlan, error)
 	WorkerBenefitEnrollments(ctx context.Context, workerID string, openOnly *bool) ([]*driverpay.WorkerBenefitEnrollment, error)
 	BenefitEnrollments(ctx context.Context, planID *string, statuses []driverpay.BenefitEnrollmentStatus, openOnly *bool, limit *int) ([]*driverpay.WorkerBenefitEnrollment, error)
-	BenefitCosts(ctx context.Context, planYear *int) ([]*repositories.BenefitCostRow, error)
+	BenefitCosts(ctx context.Context, planYear *int) ([]*driverpayports.BenefitCostRow, error)
 	WorkerTotalCompensation(ctx context.Context, workerID string, planYear *int) (*benefitsservice.TotalCompensation, error)
 	MyTotalCompensation(ctx context.Context, planYear *int) (*benefitsservice.TotalCompensation, error)
 }
@@ -1405,15 +1405,15 @@ func unmarshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func marshalNBenefitCostRow2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐBenefitCostRowᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*repositories.BenefitCostRow) graphql.Marshaler {
-	return gqlexec.List[*repositories.BenefitCostRow]{
+func marshalNBenefitCostRow2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐBenefitCostRowᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driverpayports.BenefitCostRow) graphql.Marshaler {
+	return gqlexec.List[*driverpayports.BenefitCostRow]{
 		Elem:        marshalNBenefitCostRow2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐBenefitCostRow,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNBenefitCostRow2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐBenefitCostRow(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *repositories.BenefitCostRow) graphql.Marshaler {
+func marshalNBenefitCostRow2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐBenefitCostRow(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driverpayports.BenefitCostRow) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

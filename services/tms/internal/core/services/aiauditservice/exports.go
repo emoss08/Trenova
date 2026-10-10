@@ -9,13 +9,15 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/storage/uploadpipe"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/productguide"
@@ -48,16 +50,16 @@ type Notifier interface {
 
 // Exports asks for, writes, hands out and expires trail exports.
 type Exports struct {
-	ledger      repositories.AIAuditRepository
-	exports     repositories.AIAuditExportRepository
-	source      repositories.AIAuditSourceRepository
+	ledger      aiauditports.AIAuditRepository
+	exports     aiauditports.AIAuditExportRepository
+	source      aiauditports.AIAuditSourceRepository
 	exporter    *Exporter
-	storage     storage.Client
-	workflows   serviceports.WorkflowStarter
+	storage     kernelports.Client
+	workflows   kernelports.WorkflowStarter
 	notifier    Notifier
-	realtime    serviceports.RealtimeService
-	audit       serviceports.AuditService
-	permissions serviceports.PermissionEngine
+	realtime    agentports.RealtimeService
+	audit       auditports.AuditService
+	permissions permissionports.PermissionEngine
 	cfg         *config.AIAuditExportConfig
 	metrics     *metrics.AIAudit
 	now         func() time.Time
@@ -65,16 +67,16 @@ type Exports struct {
 }
 
 type ExportsParams struct {
-	Ledger      repositories.AIAuditRepository
-	Exports     repositories.AIAuditExportRepository
-	Source      repositories.AIAuditSourceRepository
+	Ledger      aiauditports.AIAuditRepository
+	Exports     aiauditports.AIAuditExportRepository
+	Source      aiauditports.AIAuditSourceRepository
 	Exporter    *Exporter
-	Storage     storage.Client
-	Workflows   serviceports.WorkflowStarter
+	Storage     kernelports.Client
+	Workflows   kernelports.WorkflowStarter
 	Notifier    Notifier
-	Realtime    serviceports.RealtimeService
-	Audit       serviceports.AuditService
-	Permissions serviceports.PermissionEngine
+	Realtime    agentports.RealtimeService
+	Audit       auditports.AuditService
+	Permissions permissionports.PermissionEngine
 	Config      *config.AIAuditExportConfig
 	Metrics     *metrics.AIAudit
 	Now         func() time.Time
@@ -109,8 +111,8 @@ func NewExports(p *ExportsParams) *Exports {
 	}
 }
 
-func scopeOf(export *aiaudit.AIAuditExport) *repositories.AIAuditEventScope {
-	return &repositories.AIAuditEventScope{
+func scopeOf(export *aiaudit.AIAuditExport) *aiauditports.AIAuditEventScope {
+	return &aiauditports.AIAuditEventScope{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: export.OrganizationID,
 			BuID:  export.BusinessUnitID,
@@ -127,7 +129,7 @@ func scopeOf(export *aiaudit.AIAuditExport) *repositories.AIAuditEventScope {
 // written.
 func (x *Exports) Request(
 	ctx context.Context,
-	req *serviceports.RequestAIAuditExportRequest,
+	req *aiauditports.RequestAIAuditExportRequest,
 ) (*aiaudit.AIAuditExport, error) {
 	actor := req.Actor
 	if actor == nil || actor.UserID.IsNil() {
@@ -202,8 +204,8 @@ func (x *Exports) start(
 			TaskQueue:             temporaltype.ReportTaskQueue,
 			WorkflowIDReusePolicy: enums.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE,
 		},
-		serviceports.AIAuditExportWorkflowName,
-		&serviceports.AIAuditExportPayload{
+		aiauditports.AIAuditExportWorkflowName,
+		&aiauditports.AIAuditExportPayload{
 			ExportID:       export.ID,
 			OrganizationID: export.OrganizationID,
 			BusinessUnitID: export.BusinessUnitID,
@@ -236,7 +238,7 @@ func (x *Exports) Run(
 	exportID pulid.ID,
 	heartbeat Heartbeat,
 ) (*aiaudit.AIAuditExport, error) {
-	export, err := x.exports.GetByID(ctx, repositories.GetAIAuditExportRequest{
+	export, err := x.exports.GetByID(ctx, aiauditports.GetAIAuditExportRequest{
 		TenantInfo: tenantInfo,
 		ID:         exportID,
 	})
@@ -354,8 +356,8 @@ func (x *Exports) mayReadAuditLog(ctx context.Context, export *aiaudit.AIAuditEx
 		return false
 	}
 
-	result, err := x.permissions.Check(ctx, &serviceports.PermissionCheckRequest{
-		PrincipalType:  serviceports.PrincipalTypeUser,
+	result, err := x.permissions.Check(ctx, &permissionports.PermissionCheckRequest{
+		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    export.RequestedByUserID,
 		UserID:         export.RequestedByUserID,
 		BusinessUnitID: export.BusinessUnitID,
@@ -392,8 +394,8 @@ func (x *Exports) fail(
 // for it. The file was written at their ceiling, so nobody else is handed it.
 func (x *Exports) Download(
 	ctx context.Context,
-	req *serviceports.GetAIAuditExportDownloadRequest,
-) (*serviceports.AIAuditExportDownload, error) {
+	req *aiauditports.GetAIAuditExportDownloadRequest,
+) (*aiauditports.AIAuditExportDownload, error) {
 	actor := req.Actor
 	if actor == nil || actor.UserID.IsNil() {
 		return nil, errortypes.NewAuthorizationError(
@@ -401,7 +403,7 @@ func (x *Exports) Download(
 		)
 	}
 
-	export, err := x.exports.GetByID(ctx, repositories.GetAIAuditExportRequest{
+	export, err := x.exports.GetByID(ctx, aiauditports.GetAIAuditExportRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: actor.OrganizationID, BuID: actor.BusinessUnitID},
 		ID:         req.ExportID,
 	})
@@ -424,7 +426,7 @@ func (x *Exports) Download(
 	}
 
 	fileName := export.FileName()
-	url, err := x.storage.GetPresignedURL(ctx, &storage.PresignedURLParams{
+	url, err := x.storage.GetPresignedURL(ctx, &kernelports.PresignedURLParams{
 		Key:                export.ArtifactKey,
 		Expiry:             downloadURLExpiry,
 		ContentDisposition: fmt.Sprintf("attachment; filename=%q", fileName),
@@ -440,7 +442,7 @@ func (x *Exports) Download(
 
 	x.auditExport(export, actor, "export_downloaded", export.RowCount)
 
-	return &serviceports.AIAuditExportDownload{
+	return &aiauditports.AIAuditExportDownload{
 		URL:       url,
 		FileName:  fileName,
 		ExpiresAt: now.Add(downloadURLExpiry).Unix(),
@@ -450,7 +452,7 @@ func (x *Exports) Download(
 
 func (x *Exports) auditExport(
 	export *aiaudit.AIAuditExport,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 	event string,
 	rows int64,
 ) {
@@ -458,7 +460,7 @@ func (x *Exports) auditExport(
 		return
 	}
 
-	if err := x.audit.LogAction(&serviceports.LogActionParams{
+	if err := x.audit.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceAIAuditTrail,
 		ResourceID:     export.ID.String(),
 		Operation:      permission.OpExport,
@@ -490,12 +492,12 @@ func (x *Exports) notify(ctx context.Context, export *aiaudit.AIAuditExport) {
 		return
 	}
 
-	eventType := serviceports.AIAuditExportReadyEvent
+	eventType := aiauditports.AIAuditExportReadyEvent
 	priority := notification.PriorityMedium
 	title := "Your AI audit trail export is ready"
 	message := "Open the audit trail's exports in AI Control to download it."
 	if export.Status == aiaudit.ExportStatusFailed {
-		eventType = serviceports.AIAuditExportFailedEvent
+		eventType = aiauditports.AIAuditExportFailedEvent
 		priority = notification.PriorityHigh
 		title = "Your AI audit trail export failed"
 		message = "The export could not be written. Open the audit trail's exports in AI Control to try again."
@@ -512,7 +514,7 @@ func (x *Exports) notify(ctx context.Context, export *aiaudit.AIAuditExport) {
 		"rowCount":      export.RowCount,
 	}
 	if path, ok := productguide.RecordPath(
-		serviceports.AIAuditExportRecordEntity,
+		aiauditports.AIAuditExportRecordEntity,
 		export.ID.String(),
 	); ok {
 		data["link"] = path
@@ -543,11 +545,11 @@ func (x *Exports) invalidate(ctx context.Context, export *aiaudit.AIAuditExport)
 	}
 
 	if err := x.realtime.PublishResourceInvalidation(ctx,
-		&serviceports.PublishResourceInvalidationRequest{
+		&agentports.PublishResourceInvalidationRequest{
 			OrganizationID: export.OrganizationID,
 			BusinessUnitID: export.BusinessUnitID,
 			AudienceUserID: export.RequestedByUserID,
-			Resource:       serviceports.AIAuditExportResource,
+			Resource:       aiauditports.AIAuditExportResource,
 			Action:         "updated",
 			RecordID:       export.ID,
 			EntityVersion:  export.Version,

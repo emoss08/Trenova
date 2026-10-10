@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentguard"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,7 +16,7 @@ import (
 // practice: it replies eventually, long after the person stopped reading
 // "Checking the question…".
 type slowCompletion struct {
-	serviceports.CompletionService
+	agentports.CompletionService
 
 	delay time.Duration
 	calls int
@@ -24,13 +24,13 @@ type slowCompletion struct {
 
 func (s *slowCompletion) CompleteStructured(
 	ctx context.Context,
-	_ *serviceports.StructuredCompletionRequest,
-) (*serviceports.StructuredCompletionResult, error) {
+	_ *agentports.StructuredCompletionRequest,
+) (*agentports.StructuredCompletionResult, error) {
 	s.calls++
 
 	select {
 	case <-time.After(s.delay):
-		return &serviceports.StructuredCompletionResult{
+		return &agentports.StructuredCompletionResult{
 			Text: `{"category":"transportation_operations","reasoning":"stub"}`,
 		}, nil
 	case <-ctx.Done():
@@ -86,7 +86,7 @@ func TestEvaluate_TheStricterPostureStillRefusesOnATimeout(t *testing.T) {
 }
 
 type hedgeRecorder struct {
-	serviceports.CompletionService
+	agentports.CompletionService
 
 	hedge     time.Duration
 	reasoning aiprovider.ReasoningEffort
@@ -94,12 +94,12 @@ type hedgeRecorder struct {
 
 func (h *hedgeRecorder) CompleteStructured(
 	_ context.Context,
-	req *serviceports.StructuredCompletionRequest,
-) (*serviceports.StructuredCompletionResult, error) {
+	req *agentports.StructuredCompletionRequest,
+) (*agentports.StructuredCompletionResult, error) {
 	h.hedge = req.HedgeAfter
 	h.reasoning = req.Reasoning
 
-	return &serviceports.StructuredCompletionResult{
+	return &agentports.StructuredCompletionResult{
 		Text: `{"category":"TransportationOperations","reasoning":"stub"}`,
 	}, nil
 }

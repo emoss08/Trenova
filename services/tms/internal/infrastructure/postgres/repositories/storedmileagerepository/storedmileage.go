@@ -5,9 +5,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/storedmileage"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/places/ports/storedmileageports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -33,7 +33,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.StoredMileageRepository {
+func New(p Params) storedmileageports.StoredMileageRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.stored-mileage-repository"),
@@ -42,7 +42,7 @@ func New(p Params) repositories.StoredMileageRepository {
 
 func (r *repository) List(
 	ctx context.Context,
-	req *repositories.ListStoredMileageRequest,
+	req *storedmileageports.ListStoredMileageRequest,
 ) (*pagination.ListResult[*storedmileage.StoredMileage], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*storedmileage.StoredMileage], error) {
 		entities := make([]*storedmileage.StoredMileage, 0, req.Filter.Pagination.SafeLimit())
@@ -72,7 +72,7 @@ func (r *repository) List(
 
 func (r *repository) applyCursorPageFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListStoredMileageConnectionRequest,
+	req *storedmileageports.ListStoredMileageConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
@@ -85,7 +85,7 @@ func (r *repository) applyCursorPageFilters(
 
 func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
-	req *repositories.ListStoredMileageConnectionRequest,
+	req *storedmileageports.ListStoredMileageConnectionRequest,
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
@@ -105,7 +105,7 @@ func applyStoredMileageColumns(q *bun.SelectQuery, columns []string) *bun.Select
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListStoredMileageConnectionRequest,
+	req *storedmileageports.ListStoredMileageConnectionRequest,
 ) (*pagination.CursorListResult[*storedmileage.StoredMileage], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*storedmileage.StoredMileage], error) {
 		log := r.l.With(
@@ -159,7 +159,7 @@ func (r *repository) ListConnection(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req repositories.GetStoredMileageByIDRequest,
+	req storedmileageports.GetStoredMileageByIDRequest,
 ) (*storedmileage.StoredMileage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*storedmileage.StoredMileage, error) {
 		entity := new(storedmileage.StoredMileage)
@@ -180,7 +180,7 @@ func (r *repository) GetByID(
 
 func (r *repository) Lookup(
 	ctx context.Context,
-	req repositories.StoredMileageLookupRequest,
+	req storedmileageports.StoredMileageLookupRequest,
 ) (*storedmileage.StoredMileage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*storedmileage.StoredMileage, error) {
 		entity := new(storedmileage.StoredMileage)
@@ -331,7 +331,7 @@ func (r *repository) IncrementHit(
 
 func (r *repository) Deactivate(
 	ctx context.Context,
-	req repositories.DeleteStoredMileageRequest,
+	req storedmileageports.DeleteStoredMileageRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		now := timeutils.NowUnix()

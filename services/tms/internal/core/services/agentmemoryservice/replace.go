@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -19,7 +19,7 @@ const fieldReplaces = "replacesMemoryId"
 
 func (s *Service) planReplacement(
 	ctx context.Context,
-	req *services.RememberRequest,
+	req *agentports.RememberRequest,
 	entity *agent.Memory,
 ) (*agent.Memory, bool, error) {
 	notVisible := errortypes.NewValidationError(
@@ -28,7 +28,7 @@ func (s *Service) planReplacement(
 		"No memory with that id is visible here",
 	)
 
-	replaced, err := s.repo.GetByID(ctx, repositories.GetAgentMemoryByIDRequest{
+	replaced, err := s.repo.GetByID(ctx, agentports.GetAgentMemoryByIDRequest{
 		ID:         req.Replaces,
 		TenantInfo: req.TenantInfo,
 	})
@@ -98,7 +98,7 @@ func ReplacedFreely(replaced *agent.Memory, personID pulid.ID, agentID *pulid.ID
 
 func (s *Service) replacementReads(
 	ctx context.Context,
-	req *services.RememberRequest,
+	req *agentports.RememberRequest,
 	entity *agent.Memory,
 	replaced *agent.Memory,
 ) bool {
@@ -139,14 +139,14 @@ func (s *Service) retireReplaced(
 	ctx context.Context,
 	replaced *agent.Memory,
 	replacement *agent.Memory,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) {
 	if !Replaceable(replaced.Status) || replaced.ID == replacement.ID {
 		return
 	}
 
 	tenant := pagination.TenantInfo{OrgID: replaced.OrganizationID, BuID: replaced.BusinessUnitID}
-	retired, err := s.repo.SetStatus(ctx, repositories.SetAgentMemoryStatusRequest{
+	retired, err := s.repo.SetStatus(ctx, agentports.SetAgentMemoryStatusQuery{
 		ID:         replaced.ID,
 		TenantInfo: tenant,
 		Status:     agent.MemoryStatusRetired,
@@ -170,13 +170,13 @@ func (s *Service) retireReplaced(
 func (s *Service) recordReplaced(
 	ctx context.Context,
 	replacement *agent.Memory,
-	actor *services.RequestActor,
+	actor *permissionports.RequestActor,
 ) {
 	if !replacement.Replaces() {
 		return
 	}
 
-	retired, err := s.repo.GetByID(ctx, repositories.GetAgentMemoryByIDRequest{
+	retired, err := s.repo.GetByID(ctx, agentports.GetAgentMemoryByIDRequest{
 		ID: *replacement.SupersedesID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: replacement.OrganizationID,

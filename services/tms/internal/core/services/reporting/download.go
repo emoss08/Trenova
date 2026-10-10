@@ -7,8 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/ports/storage"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/fileutils"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -47,7 +47,7 @@ func (s *Service) DownloadRun(ctx context.Context, req *GetRunRequest) (*RunDown
 
 	fileName := s.downloadFileName(ctx, req, run)
 
-	url, err := s.storage.GetPresignedURL(ctx, &storage.PresignedURLParams{
+	url, err := s.storage.GetPresignedURL(ctx, &kernelports.PresignedURLParams{
 		Key:                run.ArtifactKey,
 		Expiry:             downloadURLExpiry,
 		ContentDisposition: fmt.Sprintf("attachment; filename=%q", fileName),
@@ -98,7 +98,7 @@ func (s *Service) auditDownload(run *report.ReportRun) {
 	if s.audit == nil {
 		return
 	}
-	if err := s.audit.LogAction(&services.LogActionParams{
+	if err := s.audit.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceReport,
 		ResourceID:     run.ID.String(),
 		Operation:      permission.OpExport,

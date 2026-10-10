@@ -1,16 +1,17 @@
 package shipmentservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"context"
 	"testing"
-
-	"github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs/shipmentcontract"
 
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs/shipmentcontract"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -67,9 +68,9 @@ func (*fakeShipmentTemporalClient) SignalWorkflow(
 func TestServiceDuplicate_StartsShipmentDuplicateWorkflow(t *testing.T) {
 	t.Parallel()
 
-	repo := mocks.NewMockShipmentRepository(t)
-	audit := mocks.NewMockAuditService(t)
-	req := &repositories.BulkDuplicateShipmentRequest{
+	repo := shipmentportsmock.NewMockShipmentRepository(t)
+	audit := auditportsmock.NewMockAuditService(t)
+	req := &shipmentports.BulkDuplicateShipmentRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  pulid.MustNew("org_"),
 			BuID:   pulid.MustNew("bu_"),
@@ -80,7 +81,7 @@ func TestServiceDuplicate_StartsShipmentDuplicateWorkflow(t *testing.T) {
 		OverrideDates: true,
 	}
 
-	repo.EXPECT().PlanDuplicate(mock.Anything, req).Return(&repositories.ShipmentDuplicatePlan{
+	repo.EXPECT().PlanDuplicate(mock.Anything, req).Return(&shipmentports.ShipmentDuplicatePlan{
 		Source: &shipment.Shipment{
 			ID:                req.ShipmentID,
 			FormulaTemplateID: pulid.MustNew("fmt_"),
@@ -132,7 +133,7 @@ func TestServiceDuplicate_StartsShipmentDuplicateWorkflow(t *testing.T) {
 func TestServiceDuplicate_RefusesToCopyAnUnratedShipment(t *testing.T) {
 	t.Parallel()
 
-	req := &repositories.BulkDuplicateShipmentRequest{
+	req := &shipmentports.BulkDuplicateShipmentRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  pulid.MustNew("org_"),
 			BuID:   pulid.MustNew("bu_"),
@@ -147,7 +148,7 @@ func TestServiceDuplicate_RefusesToCopyAnUnratedShipment(t *testing.T) {
 		ProNumber:      "SEED-DET-009",
 		RatingDetail:   &shipment.RatingDetail{Source: string(ratequote.OutcomeNoRateFound)},
 	}
-	plan := &repositories.ShipmentDuplicatePlan{
+	plan := &shipmentports.ShipmentDuplicatePlan{
 		Source: source,
 		Copies: []*shipment.Shipment{{}},
 	}
@@ -164,7 +165,7 @@ func TestServiceDuplicate_RefusesToCopyAnUnratedShipment(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			repo := mocks.NewMockShipmentRepository(t)
+			repo := shipmentportsmock.NewMockShipmentRepository(t)
 			repo.EXPECT().PlanDuplicate(mock.Anything, req).Return(plan, nil)
 			started := false
 			svc := &service{
@@ -172,7 +173,7 @@ func TestServiceDuplicate_RefusesToCopyAnUnratedShipment(t *testing.T) {
 				repo:         repo,
 				billingRepo:  billingControlWith(t, tt.disposition),
 				validator:    newTestValidator(t),
-				auditService: mocks.NewMockAuditService(t),
+				auditService: auditportsmock.NewMockAuditService(t),
 				workflowStarter: &fakeShipmentTemporalClient{
 					startWorkflowFunc: func(
 						_ context.Context,
@@ -214,14 +215,14 @@ func TestServiceDuplicate_RejectsInvalidRequest(t *testing.T) {
 
 	svc := &service{
 		l:            zap.NewNop(),
-		repo:         mocks.NewMockShipmentRepository(t),
+		repo:         shipmentportsmock.NewMockShipmentRepository(t),
 		validator:    newTestValidator(t),
-		auditService: mocks.NewMockAuditService(t),
+		auditService: auditportsmock.NewMockAuditService(t),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
 
-	resp, err := svc.Duplicate(t.Context(), &repositories.BulkDuplicateShipmentRequest{})
+	resp, err := svc.Duplicate(t.Context(), &shipmentports.BulkDuplicateShipmentRequest{})
 	require.Nil(t, resp)
 	require.Error(t, err)
 
@@ -235,15 +236,15 @@ func TestServiceDuplicate_RejectsMissingTemporalClient(t *testing.T) {
 
 	svc := &service{
 		l:               zap.NewNop(),
-		repo:            mocks.NewMockShipmentRepository(t),
+		repo:            shipmentportsmock.NewMockShipmentRepository(t),
 		validator:       newTestValidator(t),
-		auditService:    mocks.NewMockAuditService(t),
+		auditService:    auditportsmock.NewMockAuditService(t),
 		eventService:    noopShipmentEventService{},
 		coordinator:     newStateCoordinator(),
 		workflowStarter: disabledWorkflowStarter{},
 	}
 
-	resp, err := svc.Duplicate(t.Context(), &repositories.BulkDuplicateShipmentRequest{
+	resp, err := svc.Duplicate(t.Context(), &shipmentports.BulkDuplicateShipmentRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  pulid.MustNew("org_"),
 			BuID:   pulid.MustNew("bu_"),
@@ -266,13 +267,13 @@ func (disabledWorkflowStarter) StartWorkflow(
 	any,
 	...any,
 ) (client.WorkflowRun, error) {
-	return nil, services.ErrWorkflowStarterDisabled
+	return nil, kernelports.ErrWorkflowStarterDisabled
 }
 
 func (disabledWorkflowStarter) Enabled() bool { return false }
 
 func (disabledWorkflowStarter) CancelWorkflow(context.Context, string, string) error {
-	return services.ErrWorkflowStarterDisabled
+	return kernelports.ErrWorkflowStarterDisabled
 }
 
 func (disabledWorkflowStarter) SignalWorkflow(
@@ -280,5 +281,5 @@ func (disabledWorkflowStarter) SignalWorkflow(
 	string, string, string,
 	any,
 ) error {
-	return services.ErrWorkflowStarterDisabled
+	return kernelports.ErrWorkflowStarterDisabled
 }

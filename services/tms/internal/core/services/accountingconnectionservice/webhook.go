@@ -5,8 +5,7 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -36,7 +35,7 @@ func errWebhookUnverified() error {
 
 func (s *Service) ReceiveWebhook(
 	ctx context.Context,
-	req *services.ReceiveAccountingWebhookRequest,
+	req *accountingsyncports.ReceiveAccountingWebhookRequest,
 ) error {
 	provider, err := s.provider(req.IntegrationType)
 	if err != nil {
@@ -60,7 +59,7 @@ func (s *Service) ReceiveWebhook(
 	}
 	holders, err := s.connections.ListHoldingRealm(
 		ctx,
-		repositories.ListAccountingConnectionsByRealmRequest{
+		accountingsyncports.ListAccountingConnectionsByRealmRequest{
 			IntegrationType: req.IntegrationType,
 			RealmIDs:        realms,
 		},
@@ -87,8 +86,8 @@ func (s *Service) ReceiveWebhook(
 
 func (s *Service) webhookSender(
 	ctx context.Context,
-	provider services.AccountingProvider,
-	req *services.ReceiveAccountingWebhookRequest,
+	provider accountingsyncports.AccountingProvider,
+	req *accountingsyncports.ReceiveAccountingWebhookRequest,
 ) (*webhookSender, error) {
 	if req.AppID != "" {
 		return s.tenantWebhookSender(ctx, provider, req)
@@ -110,8 +109,8 @@ func (s *Service) webhookSender(
 
 func (s *Service) tenantWebhookSender(
 	ctx context.Context,
-	provider services.AccountingProvider,
-	req *services.ReceiveAccountingWebhookRequest,
+	provider accountingsyncports.AccountingProvider,
+	req *accountingsyncports.ReceiveAccountingWebhookRequest,
 ) (*webhookSender, error) {
 	if !pulid.LooksLike(req.AppID) || pulid.ID(req.AppID).Prefix() != appCredentialPrefix {
 		return nil, errWebhookUnverified()
@@ -142,7 +141,7 @@ func (s *Service) tenantWebhookSender(
 	}, nil
 }
 
-func webhookRealms(provider services.AccountingProvider, body []byte) ([]string, error) {
+func webhookRealms(provider accountingsyncports.AccountingProvider, body []byte) ([]string, error) {
 	realms, err := provider.WebhookRealmIDs(body)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
@@ -156,8 +155,8 @@ func webhookRealms(provider services.AccountingProvider, body []byte) ([]string,
 
 func (s *Service) receiveLegacyWebhook(
 	ctx context.Context,
-	provider services.AccountingProvider,
-	req *services.ReceiveAccountingWebhookRequest,
+	provider accountingsyncports.AccountingProvider,
+	req *accountingsyncports.ReceiveAccountingWebhookRequest,
 ) error {
 	realms, err := webhookRealms(provider, req.Body)
 	if err != nil {
@@ -168,7 +167,7 @@ func (s *Service) receiveLegacyWebhook(
 	}
 	holders, err := s.connections.ListHoldingRealm(
 		ctx,
-		repositories.ListAccountingConnectionsByRealmRequest{
+		accountingsyncports.ListAccountingConnectionsByRealmRequest{
 			IntegrationType: req.IntegrationType,
 			RealmIDs:        realms,
 		},
@@ -186,13 +185,13 @@ func (s *Service) receiveLegacyWebhook(
 
 func (s *Service) recordWebhook(
 	ctx context.Context,
-	req *services.ReceiveAccountingWebhookRequest,
+	req *accountingsyncports.ReceiveAccountingWebhookRequest,
 	holders []*accountingsync.AccountingConnection,
 	verified []string,
 ) error {
 	if _, err := s.connections.MarkWebhookReceived(
 		ctx,
-		repositories.MarkAccountingWebhookRequest{
+		accountingsyncports.MarkAccountingWebhookRequest{
 			IntegrationType: req.IntegrationType,
 			RealmIDs:        verified,
 			ReceivedAt:      timeutils.NowUnix(),
@@ -237,9 +236,9 @@ func connectionScope(
 
 func (s *Service) verifiedRealms(
 	ctx context.Context,
-	provider services.AccountingProvider,
+	provider accountingsyncports.AccountingProvider,
 	holders []*accountingsync.AccountingConnection,
-	req *services.ReceiveAccountingWebhookRequest,
+	req *accountingsyncports.ReceiveAccountingWebhookRequest,
 ) []string {
 	byApp := make(map[string]bool, len(holders))
 	verified := make([]string, 0, len(holders))

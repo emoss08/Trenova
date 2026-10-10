@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/memtable"
 )
 
@@ -18,7 +18,7 @@ const (
 )
 
 type policyEntry struct {
-	view     services.AgentToolPolicyView
+	view     agentports.AgentToolPolicyView
 	resource string
 }
 
@@ -27,8 +27,8 @@ type toolRuleRow struct {
 	alone bool
 }
 
-func (s *Service) indexPolicies(views []services.AgentToolPolicyView) {
-	slices.SortStableFunc(views, func(a, b services.AgentToolPolicyView) int {
+func (s *Service) indexPolicies(views []agentports.AgentToolPolicyView) {
+	slices.SortStableFunc(views, func(a, b agentports.AgentToolPolicyView) int {
 		return cmp.Compare(a.Policy.Name, b.Policy.Name)
 	})
 
@@ -66,10 +66,10 @@ func (s *Service) indexPolicies(views []services.AgentToolPolicyView) {
 
 func (s *Service) ListToolPolicies(
 	ctx context.Context,
-	req *services.ListAgentToolPoliciesRequest,
-) (*services.AgentToolPolicyPage, error) {
+	req *agentports.ListAgentToolPoliciesRequest,
+) (*agentports.AgentToolPolicyPage, error) {
 	if req == nil {
-		req = &services.ListAgentToolPoliciesRequest{}
+		req = &agentports.ListAgentToolPoliciesRequest{}
 	}
 
 	rules, err := s.overridesFor(ctx, req.TenantInfo)
@@ -103,13 +103,13 @@ func (s *Service) ListToolPolicies(
 		return nil, err
 	}
 
-	out := &services.AgentToolPolicyPage{
-		Edges:       make([]services.AgentToolPolicyEdge, 0, len(page.Items)),
+	out := &agentports.AgentToolPolicyPage{
+		Edges:       make([]agentports.AgentToolPolicyEdge, 0, len(page.Items)),
 		HasNextPage: page.HasNextPage,
 		TotalCount:  page.TotalCount,
 	}
 	for idx, row := range page.Items {
-		edge := services.AgentToolPolicyEdge{
+		edge := agentports.AgentToolPolicyEdge{
 			View:   row.entry.view,
 			Cursor: page.Cursors[idx],
 		}
@@ -124,7 +124,7 @@ func (s *Service) ListToolPolicies(
 }
 
 func newToolRuleTable(resources []string) *memtable.Table[toolRuleRow] {
-	view := func(row *toolRuleRow) *services.AgentToolPolicyView { return &row.entry.view }
+	view := func(row *toolRuleRow) *agentports.AgentToolPolicyView { return &row.entry.view }
 
 	return memtable.New(memtable.Config[toolRuleRow]{
 		CursorScope: toolRuleCursorScope,
@@ -180,7 +180,7 @@ func newToolRuleTable(resources []string) *memtable.Table[toolRuleRow] {
 }
 
 func policyEgressField[T any](
-	view func(*T) *services.AgentToolPolicyView,
+	view func(*T) *agentports.AgentToolPolicyView,
 ) memtable.Field[T] {
 	return memtable.Field[T]{
 		Name:       "egress",
@@ -198,7 +198,7 @@ func policyEgressField[T any](
 }
 
 func policyTierField[T any](
-	view func(*T) *services.AgentToolPolicyView,
+	view func(*T) *agentports.AgentToolPolicyView,
 ) memtable.Field[T] {
 	return memtable.Field[T]{
 		Name: "maxTier",
@@ -218,7 +218,7 @@ func policyTierField[T any](
 }
 
 func policyKindField[T any](
-	view func(*T) *services.AgentToolPolicyView,
+	view func(*T) *agentports.AgentToolPolicyView,
 ) memtable.Field[T] {
 	return memtable.Field[T]{
 		Name: "kind",
@@ -235,7 +235,7 @@ func policyKindField[T any](
 }
 
 func policyExternalReadField[T any](
-	view func(*T) *services.AgentToolPolicyView,
+	view func(*T) *agentports.AgentToolPolicyView,
 ) memtable.Field[T] {
 	return memtable.Field[T]{
 		Name: "readsExternal",

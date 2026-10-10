@@ -3,7 +3,7 @@ package loaders
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/vikstrous/dataloadgen"
 	"go.uber.org/fx"
@@ -12,11 +12,11 @@ import (
 type ShipmentEtaLoaderFactoryParams struct {
 	fx.In
 
-	Etas services.ShipmentEtaReader
+	Etas shipmentports.ShipmentEtaReader
 }
 
 type ShipmentEtaLoaderFactory struct {
-	etas services.ShipmentEtaReader
+	etas shipmentports.ShipmentEtaReader
 }
 
 func NewShipmentEtaLoaderFactory(p ShipmentEtaLoaderFactoryParams) *ShipmentEtaLoaderFactory {
@@ -25,15 +25,15 @@ func NewShipmentEtaLoaderFactory(p ShipmentEtaLoaderFactoryParams) *ShipmentEtaL
 
 func (f *ShipmentEtaLoaderFactory) NewForTenant(
 	tenantInfo pagination.TenantInfo,
-) *dataloadgen.Loader[string, *services.ShipmentEta] {
+) *dataloadgen.Loader[string, *shipmentports.ShipmentEta] {
 	return newLoader(f.batchFunc(tenantInfo))
 }
 
 func (f *ShipmentEtaLoaderFactory) batchFunc(
 	tenantInfo pagination.TenantInfo,
-) batchFetchFunc[*services.ShipmentEta] {
-	return func(ctx context.Context, keys []string) ([]*services.ShipmentEta, []error) {
-		values := make([]*services.ShipmentEta, len(keys))
+) batchFetchFunc[*shipmentports.ShipmentEta] {
+	return func(ctx context.Context, keys []string) ([]*shipmentports.ShipmentEta, []error) {
+		values := make([]*shipmentports.ShipmentEta, len(keys))
 		errs := make([]error, len(keys))
 
 		ids, indexesByID := parseBatchKeys(keys, errs)

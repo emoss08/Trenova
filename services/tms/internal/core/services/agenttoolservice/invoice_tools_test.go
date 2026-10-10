@@ -10,8 +10,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/invoiceservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -23,14 +26,14 @@ var errPostedDuringPreview = errors.New("a preview posted an invoice")
 
 type fakeInvoicePoster struct {
 	preview *invoiceservice.PostPreview
-	posted  *serviceports.PostInvoiceRequest
+	posted  *invoiceports.PostInvoiceRequest
 	locked  bool
 }
 
 func (f *fakeInvoicePoster) Post(
 	_ context.Context,
-	req *serviceports.PostInvoiceRequest,
-	_ *serviceports.RequestActor,
+	req *invoiceports.PostInvoiceRequest,
+	_ *permissionports.RequestActor,
 ) (*invoice.Invoice, error) {
 	if f.locked {
 		return nil, errPostedDuringPreview
@@ -42,8 +45,8 @@ func (f *fakeInvoicePoster) Post(
 
 func (f *fakeInvoicePoster) PreviewPost(
 	context.Context,
-	*serviceports.PostInvoiceRequest,
-	*serviceports.RequestActor,
+	*invoiceports.PostInvoiceRequest,
+	*permissionports.RequestActor,
 ) (*invoiceservice.PostPreview, error) {
 	return f.preview, nil
 }
@@ -89,19 +92,19 @@ func postPreviewFixture() *invoiceservice.PostPreview {
 		Legs:        []invoiceservice.LegChange{{Before: leg, After: &invoicedLeg}},
 		QueueBefore: queueBefore,
 		QueueAfter:  &queueAfter,
-		Journal: &serviceports.JournalPreview{
+		Journal: &kernelports.JournalPreview{
 			AccountingDate: postedAt,
 			FiscalPeriodID: pulid.MustNew("fp_"),
 			EntryStatus:    "Posted",
-			Lines: []serviceports.JournalLinePreview{
+			Lines: []kernelports.JournalLinePreview{
 				{GLAccountID: pulid.MustNew("gla_"), DebitMinor: 210000},
 				{GLAccountID: pulid.MustNew("gla_"), CreditMinor: 210000},
 			},
 		},
-		AccountingSync: []serviceports.AccountingSyncDestination{
+		AccountingSync: []accountingsyncports.AccountingSyncDestination{
 			{Integration: "QuickBooksOnline", Company: "Acme Freight LLC"},
 		},
-		EDI: &serviceports.InvoiceEDISendPlan{
+		EDI: &invoiceports.InvoiceEDISendPlan{
 			Enabled: true, AutoSend: true, PartnerName: "Acme EDI",
 		},
 	}
@@ -195,40 +198,40 @@ func TestPostInvoice_PostsOnlyFromAPersonsApproval(t *testing.T) {
 }
 
 type fakeInvoiceSender struct {
-	plan *serviceports.InvoiceSendPlan
-	sent *serviceports.InvoiceSendRequest
+	plan *invoiceports.InvoiceSendPlan
+	sent *invoiceports.InvoiceSendRequest
 }
 
 func (f *fakeInvoiceSender) PlanSend(
 	context.Context,
-	*serviceports.InvoiceSendPlanRequest,
-) (*serviceports.InvoiceSendPlan, error) {
+	*invoiceports.InvoiceSendPlanRequest,
+) (*invoiceports.InvoiceSendPlan, error) {
 	return f.plan, nil
 }
 
 func (f *fakeInvoiceSender) Send(
 	_ context.Context,
-	req *serviceports.InvoiceSendRequest,
-	_ *serviceports.RequestActor,
-) (*serviceports.InvoiceSendResult, error) {
+	req *invoiceports.InvoiceSendRequest,
+	_ *permissionports.RequestActor,
+) (*invoiceports.InvoiceSendResult, error) {
 	f.sent = req
 
-	return &serviceports.InvoiceSendResult{}, nil
+	return &invoiceports.InvoiceSendResult{}, nil
 }
 
-func sendPlanFixture() *serviceports.InvoiceSendPlan {
-	return &serviceports.InvoiceSendPlan{
+func sendPlanFixture() *invoiceports.InvoiceSendPlan {
+	return &invoiceports.InvoiceSendPlan{
 		InvoiceID: pulid.MustNew("inv_"),
-		Recipients: serviceports.InvoiceSendRecipients{
+		Recipients: invoiceports.InvoiceSendRecipients{
 			To: []string{"ap@acmefoods.test"},
 			CC: []string{"billing@acmefoods.test"},
 		},
 		FromEmail: "billing@carrier.test",
 		Subject:   "Invoice INV-7001",
 		Body:      "Please find attached invoice INV-7001.",
-		Parts: []*serviceports.InvoiceSendPlanPart{{
+		Parts: []*invoiceports.InvoiceSendPlanPart{{
 			PartNumber: 1,
-			Attachments: []*serviceports.InvoiceSendPlanAttachment{
+			Attachments: []*invoiceports.InvoiceSendPlanAttachment{
 				{FileName: "INV-7001.pdf", InvoicePDF: true},
 				{FileName: "POD.pdf"},
 			},
@@ -267,9 +270,9 @@ func TestSendInvoice_RefusesASendThatCannotGo(t *testing.T) {
 	blocked := sendPlanFixture()
 	blocked.Errors = []string{"No invoice recipients are configured"}
 	linked := sendPlanFixture()
-	linked.Parts[0].Links = []*serviceports.InvoiceSendPlanDocumentLink{{FileName: "Scan.pdf"}}
+	linked.Parts[0].Links = []*invoiceports.InvoiceSendPlanDocumentLink{{FileName: "Scan.pdf"}}
 
-	for name, plan := range map[string]*serviceports.InvoiceSendPlan{
+	for name, plan := range map[string]*invoiceports.InvoiceSendPlan{
 		"a plan with errors":     blocked,
 		"attachments over limit": linked,
 	} {

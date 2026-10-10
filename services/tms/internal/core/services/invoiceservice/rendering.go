@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/fileutils"
 	"github.com/emoss08/trenova/shared/sliceutils"
@@ -246,11 +246,11 @@ func shipmentDetailBlock(entity *invoice.Invoice, shp *shipment.Shipment) string
 }
 
 type partBodyHTMLParams struct {
-	Request  *servicesports.InvoiceSendRequest
+	Request  *invoiceports.InvoiceSendRequest
 	Entity   *invoice.Invoice
 	Profile  *invoiceDeliveryProfile
-	Plan     *servicesports.InvoiceSendPlan
-	Part     *servicesports.InvoiceSendPlanPart
+	Plan     *invoiceports.InvoiceSendPlan
+	Part     *invoiceports.InvoiceSendPlanPart
 	PartBody string
 }
 

@@ -7,14 +7,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func actionPolicy(name string, egress ...agent.EgressClass) serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func actionPolicy(name string, egress ...agent.EgressClass) agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:        name,
 		Kind:        agent.ToolKindAction,
 		Scope:       agent.ToolScopeTenant,
@@ -49,7 +49,7 @@ func scheduledAgent(
 func assessBoth(
 	t *testing.T,
 	in agenttoolpolicy.AssessInput,
-) (serviceports.ToolAutonomy, serviceports.ToolAutonomy) {
+) (agentports.ToolAutonomy, agentports.ToolAutonomy) {
 	t.Helper()
 
 	in.Tainted = false
@@ -92,7 +92,7 @@ func TestAssess_WorkThatLeavesNeverRunsPastApproval(t *testing.T) {
 		}),
 	})
 
-	for _, autonomy := range []serviceports.ToolAutonomy{clean, tainted} {
+	for _, autonomy := range []agentports.ToolAutonomy{clean, tainted} {
 		assert.Equal(t, agent.AutonomyNeedsApproval, autonomy.Answer)
 		assert.Equal(t, agent.TierActWithApproval, autonomy.Tier)
 		assert.Contains(t, autonomy.HeldBy, agenttoolpolicy.HeldByEgressClass)
@@ -107,7 +107,7 @@ func TestAssess_TheAgentsCeilingHoldsEveryTool(t *testing.T) {
 		Definition: chatAgent(agent.TierPropose, nil),
 	})
 
-	for _, autonomy := range []serviceports.ToolAutonomy{clean, tainted} {
+	for _, autonomy := range []agentports.ToolAutonomy{clean, tainted} {
 		assert.Equal(t, agent.AutonomyProposeOnly, autonomy.Answer)
 		assert.Equal(t, agent.TierPropose, autonomy.Tier)
 		assert.Contains(t, autonomy.HeldBy, agenttoolpolicy.HeldByAgentCeiling)
@@ -125,8 +125,8 @@ func TestAssess_AClassifiedToolWithTheExemptionIsConditionalInChat(t *testing.T)
 	policy := actionPolicy("create_report", agent.EgressPersonal, agent.EgressInternal)
 	policy.DefaultTier = agent.TierPropose
 	policy.PersonalRunsUnasked = true
-	policy.Classify = func(serviceports.ToolExecuteParams) serviceports.CallPolicy {
-		return serviceports.CallPolicy{Egress: agent.EgressInternal}
+	policy.Classify = func(agentports.ToolExecuteParams) agentports.CallPolicy {
+		return agentports.CallPolicy{Egress: agent.EgressInternal}
 	}
 
 	clean, _ := assessBoth(t, agenttoolpolicy.AssessInput{
@@ -150,9 +150,9 @@ func TestAssess_AConditionMakesAnAutomaticToolConditional(t *testing.T) {
 	t.Parallel()
 
 	policy := actionPolicy("mark_inbound_message", agent.EgressInternal)
-	policy.Condition = &serviceports.TierCondition{
+	policy.Condition = &agentports.TierCondition{
 		Description: "Runs only as far as its mailbox allows.",
-		Limit: func(context.Context, serviceports.ToolExecuteParams) agent.AutonomyTier {
+		Limit: func(context.Context, agentports.ToolExecuteParams) agent.AutonomyTier {
 			panic("a representative call never reads a record")
 		},
 	}
@@ -162,7 +162,7 @@ func TestAssess_AConditionMakesAnAutomaticToolConditional(t *testing.T) {
 		Definition: chatAgent(agent.TierAutoExecute, nil),
 	})
 
-	for _, autonomy := range []serviceports.ToolAutonomy{clean, tainted} {
+	for _, autonomy := range []agentports.ToolAutonomy{clean, tainted} {
 		assert.Equal(t, agent.AutonomyConditional, autonomy.Answer)
 		assert.Equal(t, agent.TierAutoExecute, autonomy.Tier)
 		assert.Contains(t, autonomy.HeldBy, agenttoolpolicy.HeldByCondition)
@@ -202,7 +202,7 @@ func TestAssess_SimulationAndShadowPreviewEveryWrite(t *testing.T) {
 func TestAssess_AQueryIsNeverSimulated(t *testing.T) {
 	t.Parallel()
 
-	policy := serviceports.ToolPolicy{
+	policy := agentports.ToolPolicy{
 		Name:          "get_shipment",
 		Kind:          agent.ToolKindQuery,
 		DefaultTier:   agent.TierAutoExecute,
@@ -245,7 +245,7 @@ func TestAssess_EarnedTiersAndTheStreakToTheNext(t *testing.T) {
 		Control:    control,
 	})
 
-	for _, autonomy := range []serviceports.ToolAutonomy{clean, tainted} {
+	for _, autonomy := range []agentports.ToolAutonomy{clean, tainted} {
 		assert.Equal(t, agent.AutonomyNeedsApproval, autonomy.Answer)
 		assert.True(t, autonomy.Earned)
 		require.NotNil(t, autonomy.ApprovalsToNext)

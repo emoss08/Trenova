@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -27,13 +27,13 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.ShipmentTrackingRepository {
+func New(p Params) shipmentports.ShipmentTrackingRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.shipment-tracking-repository")}
 }
 
 func (r *repository) ListTrackingShipments(
 	ctx context.Context,
-	req *repositories.ListTrackingShipmentsRequest,
+	req *shipmentports.ListTrackingShipmentsRequest,
 ) ([]*shipment.Shipment, error) {
 	if len(req.ShipmentIDs) == 0 {
 		return []*shipment.Shipment{}, nil

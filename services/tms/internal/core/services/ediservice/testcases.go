@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -28,14 +28,14 @@ type SaveEDITestCaseRequest struct {
 
 func (s *Service) ListTestCasesCursor(
 	ctx context.Context,
-	req *repositories.ListEDITestCasesRequest,
+	req *ediports.ListEDITestCasesRequest,
 ) (*pagination.CursorListResult[*edi.EDITestCase], error) {
 	return s.testCaseRepo.ListTestCasesCursor(ctx, req)
 }
 
 func (s *Service) GetTestCase(
 	ctx context.Context,
-	req repositories.GetEDITestCaseByIDRequest,
+	req ediports.GetEDITestCaseByIDRequest,
 ) (*edi.EDITestCase, error) {
 	return s.testCaseRepo.GetTestCaseByID(ctx, req)
 }
@@ -75,7 +75,7 @@ func (s *Service) UpdateTestCase(
 	if err := s.validateTestCase(ctx, req); err != nil {
 		return nil, err
 	}
-	entity, err := s.testCaseRepo.GetTestCaseByID(ctx, repositories.GetEDITestCaseByIDRequest{
+	entity, err := s.testCaseRepo.GetTestCaseByID(ctx, ediports.GetEDITestCaseByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -96,7 +96,7 @@ func (s *Service) UpdateTestCase(
 
 func (s *Service) DeleteTestCase(
 	ctx context.Context,
-	req repositories.DeleteEDITestCaseRequest,
+	req ediports.DeleteEDITestCaseRequest,
 ) error {
 	return s.testCaseRepo.DeleteTestCase(ctx, req)
 }
@@ -143,7 +143,7 @@ func (s *Service) validateTestCase(ctx context.Context, req *SaveEDITestCaseRequ
 	}
 	if _, err := s.documentProfileRepo.GetPartnerDocumentProfileByID(
 		ctx,
-		repositories.GetEDIPartnerDocumentProfileByIDRequest{
+		ediports.GetEDIPartnerDocumentProfileByIDRequest{
 			ID:         req.PartnerDocumentProfileID,
 			TenantInfo: req.TenantInfo,
 		},

@@ -11,12 +11,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/quotaservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -37,16 +37,16 @@ type Params struct {
 
 	DB     *postgres.Connection
 	Logger *zap.Logger
-	Quota  services.QuotaGuard `optional:"true"`
+	Quota  platformplanports.QuotaGuard `optional:"true"`
 }
 
 type portalAccessRepository struct {
 	db    *postgres.Connection
 	l     *zap.Logger
-	quota services.QuotaGuard
+	quota platformplanports.QuotaGuard
 }
 
-func New(p Params) repositories.PortalAccessRepository {
+func New(p Params) workerports.PortalAccessRepository {
 	return &portalAccessRepository{
 		db:    p.DB,
 		l:     p.Logger.Named("postgres.driver-portal-repository"),
@@ -96,7 +96,7 @@ func (r *portalAccessRepository) UpdateInvitation(
 
 func (r *portalAccessRepository) GetInvitationByID(
 	ctx context.Context,
-	req repositories.GetPortalInvitationByIDRequest,
+	req workerports.GetPortalInvitationByIDRequest,
 ) (*worker.PortalInvitation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.PortalInvitation, error) {
 		cols := buncolgen.PortalInvitationColumns
@@ -145,7 +145,7 @@ func (r *portalAccessRepository) GetInvitationByTokenHash(
 
 func (r *portalAccessRepository) GetPendingInvitationForWorker(
 	ctx context.Context,
-	req repositories.GetPendingPortalInvitationRequest,
+	req workerports.GetPendingPortalInvitationRequest,
 ) (*worker.PortalInvitation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.PortalInvitation, error) {
 		cols := buncolgen.PortalInvitationColumns
@@ -170,7 +170,7 @@ func (r *portalAccessRepository) GetPendingInvitationForWorker(
 
 func (r *portalAccessRepository) ListInvitations(
 	ctx context.Context,
-	req *repositories.ListPortalInvitationsRequest,
+	req *workerports.ListPortalInvitationsRequest,
 ) ([]*worker.PortalInvitation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.PortalInvitation, error) {
 		cols := buncolgen.PortalInvitationColumns
@@ -273,18 +273,18 @@ func (r *portalAccessRepository) GetWorkerForPortalManagement(
 
 func (r *portalAccessRepository) ActivatePortalAccess(
 	ctx context.Context,
-	req *repositories.ActivatePortalAccessRequest,
+	req *workerports.ActivatePortalAccessRequest,
 ) (*tenant.User, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.User, error) {
 		var created *tenant.User
 		err := r.db.
-			WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
+			WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
 				invitation, err := r.lockInvitation(txCtx, tx, req.Invitation)
 				if err != nil {
 					return err
 				}
 
-				if err = quotaservice.EnforceAll(txCtx, r.quota, services.QuotaRequest{
+				if err = quotaservice.EnforceAll(txCtx, r.quota, platformplanports.QuotaRequest{
 					TenantInfo: pagination.TenantInfo{
 						OrgID: invitation.OrganizationID,
 						BuID:  invitation.BusinessUnitID,
@@ -456,7 +456,7 @@ func (r *portalAccessRepository) ensureDriverRole(
 	ctx context.Context,
 	tx bun.Tx,
 	invitation *worker.PortalInvitation,
-	req *repositories.ActivatePortalAccessRequest,
+	req *workerports.ActivatePortalAccessRequest,
 ) (*permission.Role, error) {
 	cols := buncolgen.RoleColumns
 	role := new(permission.Role)
@@ -772,7 +772,7 @@ func (r *portalAccessRepository) ListDriverShipmentComments(
 
 func (r *portalAccessRepository) ListWorkerLoads(
 	ctx context.Context,
-	req *repositories.ListWorkerLoadsRequest,
+	req *workerports.ListWorkerLoadsRequest,
 ) ([]*shipment.Assignment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipment.Assignment, error) {
 		acols := buncolgen.AssignmentColumns

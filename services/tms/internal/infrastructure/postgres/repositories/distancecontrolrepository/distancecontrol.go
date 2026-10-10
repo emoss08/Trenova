@@ -6,10 +6,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/distancecontrol"
 	"github.com/emoss08/trenova/internal/core/domain/distanceprofile"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/distancecontrolports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/distanceprofileports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -24,16 +25,16 @@ type Params struct {
 
 	DB                  *postgres.Connection
 	Logger              *zap.Logger
-	DistanceProfileRepo repositories.DistanceProfileRepository
+	DistanceProfileRepo distanceprofileports.DistanceProfileRepository
 }
 
 type repository struct {
 	db                  *postgres.Connection
 	l                   *zap.Logger
-	distanceProfileRepo repositories.DistanceProfileRepository
+	distanceProfileRepo distanceprofileports.DistanceProfileRepository
 }
 
-func New(p Params) repositories.DistanceControlRepository {
+func New(p Params) distancecontrolports.DistanceControlRepository {
 	return &repository{
 		db:                  p.DB,
 		l:                   p.Logger.Named("postgres.distance-control-repository"),
@@ -100,7 +101,7 @@ func (r *repository) Update(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*distancecontrol.DistanceControl, error) {
 		previousVersion := entity.Version
 		entity.Version++
-		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			result, err := r.db.DBForContext(c).NewUpdate().
 				Model(entity).
 				WherePK().

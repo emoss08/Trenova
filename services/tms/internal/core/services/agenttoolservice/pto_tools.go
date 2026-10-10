@@ -6,9 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 )
 
 // ptoDecider is the slice of the PTO service these tools need. The service
@@ -17,15 +17,15 @@ import (
 type ptoDecider interface {
 	Approve(
 		ctx context.Context,
-		req *repositories.UpdatePTOStatusRequest,
+		req *workerports.UpdatePTOStatusRequest,
 	) (*worker.WorkerPTO, error)
 	Reject(
 		ctx context.Context,
-		req *repositories.UpdatePTOStatusRequest,
+		req *workerports.UpdatePTOStatusRequest,
 	) (*worker.WorkerPTO, error)
 	Cancel(
 		ctx context.Context,
-		req *repositories.UpdatePTOStatusRequest,
+		req *workerports.UpdatePTOStatusRequest,
 	) (*worker.WorkerPTO, error)
 }
 
@@ -36,7 +36,7 @@ type approveWorkerPTOTool struct {
 	pto ptoApprover
 }
 
-func newApproveWorkerPTOTool(pto ptoApprover) serviceports.AgentTool {
+func newApproveWorkerPTOTool(pto ptoApprover) agentports.AgentTool {
 	return &approveWorkerPTOTool{pto: pto}
 }
 
@@ -75,8 +75,8 @@ func (t *approveWorkerPTOTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *approveWorkerPTOTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *approveWorkerPTOTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceWorkerPTO,
@@ -95,7 +95,7 @@ func (t *approveWorkerPTOTool) Policy() serviceports.ToolPolicy {
 
 func (t *approveWorkerPTOTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
@@ -115,7 +115,7 @@ type rejectWorkerPTOTool struct {
 	pto ptoRejecter
 }
 
-func newRejectWorkerPTOTool(pto ptoRejecter) serviceports.AgentTool {
+func newRejectWorkerPTOTool(pto ptoRejecter) agentports.AgentTool {
 	return &rejectWorkerPTOTool{pto: pto}
 }
 
@@ -147,8 +147,8 @@ func (t *rejectWorkerPTOTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *rejectWorkerPTOTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *rejectWorkerPTOTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceWorkerPTO,
@@ -165,7 +165,7 @@ func (t *rejectWorkerPTOTool) Policy() serviceports.ToolPolicy {
 
 func (t *rejectWorkerPTOTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	request, err := t.request(&params)
 	if err != nil {
@@ -178,8 +178,8 @@ func (t *rejectWorkerPTOTool) Execute(
 }
 
 func (t *rejectWorkerPTOTool) request(
-	params *serviceports.ToolExecuteParams,
-) (*repositories.UpdatePTOStatusRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*workerports.UpdatePTOStatusRequest, error) {
 	return ptoDecisionRequest(t, params)
 }
 
@@ -187,7 +187,7 @@ type cancelWorkerPTOTool struct {
 	pto ptoRejecter
 }
 
-func newCancelWorkerPTOTool(pto ptoRejecter) serviceports.AgentTool {
+func newCancelWorkerPTOTool(pto ptoRejecter) agentports.AgentTool {
 	return &cancelWorkerPTOTool{pto: pto}
 }
 
@@ -218,8 +218,8 @@ func (t *cancelWorkerPTOTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *cancelWorkerPTOTool) Policy() serviceports.ToolPolicy {
-	return serviceports.ToolPolicy{
+func (t *cancelWorkerPTOTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agent.ToolKindAction,
 		Resource:      permission.ResourceWorkerPTO,
@@ -237,7 +237,7 @@ func (t *cancelWorkerPTOTool) Policy() serviceports.ToolPolicy {
 
 func (t *cancelWorkerPTOTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) error {
 	request, err := t.request(&params)
 	if err != nil {
@@ -250,8 +250,8 @@ func (t *cancelWorkerPTOTool) Execute(
 }
 
 func (t *cancelWorkerPTOTool) request(
-	params *serviceports.ToolExecuteParams,
-) (*repositories.UpdatePTOStatusRequest, error) {
+	params *agentports.ToolExecuteParams,
+) (*workerports.UpdatePTOStatusRequest, error) {
 	return ptoDecisionRequest(t, params)
 }
 
@@ -259,9 +259,9 @@ func (t *cancelWorkerPTOTool) request(
 // service refuses an empty reason too; failing here names the parameter the
 // model left out, which is the correction it can act on.
 func ptoDecisionRequest(
-	tool serviceports.AgentTool,
-	params *serviceports.ToolExecuteParams,
-) (*repositories.UpdatePTOStatusRequest, error) {
+	tool agentports.AgentTool,
+	params *agentports.ToolExecuteParams,
+) (*workerports.UpdatePTOStatusRequest, error) {
 	if err := guardExecute(tool, *params); err != nil {
 		return nil, err
 	}
@@ -285,14 +285,14 @@ func ptoDecisionRequest(
 // to know a version. Leaving it out is the honest thing; inventing one would
 // defeat the concurrency check it exists to run.
 func ptoStatusRequest(
-	params serviceports.ToolExecuteParams,
-) (*repositories.UpdatePTOStatusRequest, error) {
+	params agentports.ToolExecuteParams,
+) (*workerports.UpdatePTOStatusRequest, error) {
 	id, err := requirePulid(params.Params, "ptoId")
 	if err != nil {
 		return nil, err
 	}
 
-	return &repositories.UpdatePTOStatusRequest{
+	return &workerports.UpdatePTOStatusRequest{
 		ID:         id,
 		TenantInfo: tenantFrom(params),
 		UserID:     params.Actor.UserID,
@@ -302,18 +302,18 @@ func ptoStatusRequest(
 
 // Target names the record this call would change, so a proposal to change it
 // can be checked against the record's version before it runs.
-func (t *approveWorkerPTOTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *approveWorkerPTOTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, "ptoId", permission.ResourceWorkerPTO)
 }
 
 // Target names the record this call would change, so a proposal to change it
 // can be checked against the record's version before it runs.
-func (t *rejectWorkerPTOTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *rejectWorkerPTOTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, "ptoId", permission.ResourceWorkerPTO)
 }
 
 // Target names the record this call would change, so a proposal to change it
 // can be checked against the record's version before it runs.
-func (t *cancelWorkerPTOTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+func (t *cancelWorkerPTOTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	return targetOf(params, "ptoId", permission.ResourceWorkerPTO)
 }

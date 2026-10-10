@@ -1,6 +1,8 @@
 package editioninfo
 
-import "github.com/emoss08/trenova/internal/core/ports/services"
+import (
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+)
 
 const SelfHostedName = "community"
 
@@ -9,13 +11,13 @@ type Static struct {
 	shared bool
 }
 
-var _ services.EditionInfo = Static{}
+var _ ediports.EditionInfo = Static{}
 
 func NewStatic(name string, sharedTenancy bool) Static {
 	return Static{name: name, shared: sharedTenancy}
 }
 
-func SelfHosted() services.EditionInfo {
+func SelfHosted() ediports.EditionInfo {
 	return NewStatic(SelfHostedName, false)
 }
 

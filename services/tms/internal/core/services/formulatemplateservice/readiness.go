@@ -6,10 +6,9 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/services/formula/contextvariablecache"
-
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/services/formula/contextvariablecache"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetablecache"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -240,7 +239,7 @@ func (s *Service) scenarioReadiness(
 ) (ReadinessCheck, error) {
 	check := ReadinessCheck{Key: ReadinessCheckScenarios, Label: "Scenarios"}
 
-	cases, err := s.testCaseRepo.ListByTemplate(ctx, repositories.ListTestCasesRequest{
+	cases, err := s.testCaseRepo.ListByTemplate(ctx, formulatemplateports.ListTestCasesRequest{
 		TenantInfo: tenantInfo,
 		TemplateID: template.ID,
 	})

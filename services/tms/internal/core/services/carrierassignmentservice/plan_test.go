@@ -1,6 +1,9 @@
 package carrierassignmentservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/carrierportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"testing"
 
@@ -9,7 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -26,7 +31,7 @@ import (
 // readOnlyRateCons answers the one read a preview makes; any write reaches
 // the nil repository it embeds and panics.
 type readOnlyRateCons struct {
-	repositories.RateConfirmationRepository
+	rateconfirmationports.RateConfirmationRepository
 
 	active map[pulid.ID]*rateconfirmation.RateConfirmation
 }
@@ -46,12 +51,12 @@ type planFixture struct {
 	tenantInfo  pagination.TenantInfo
 	moveID      pulid.ID
 	original    *shipment.Shipment
-	assignments *mocks.MockAssignmentRepository
-	repo        *mocks.MockCarrierAssignmentRepository
-	carriers    *mocks.MockCarrierRepository
-	shipments   *mocks.MockShipmentRepository
-	holds       *mocks.MockShipmentHoldRepository
-	controls    *mocks.MockShipmentControlRepository
+	assignments *shipmentportsmock.MockAssignmentRepository
+	repo        *shipmentportsmock.MockCarrierAssignmentRepository
+	carriers    *carrierportsmock.MockCarrierRepository
+	shipments   *shipmentportsmock.MockShipmentRepository
+	holds       *shipmentportsmock.MockShipmentHoldRepository
+	controls    *tenantportsmock.MockShipmentControlRepository
 	rateCons    *readOnlyRateCons
 	svc         *Service
 }
@@ -66,12 +71,12 @@ func newPlanFixture(t *testing.T, moveStatus shipment.MoveStatus) *planFixture {
 			UserID: pulid.MustNew("usr_"),
 		},
 		moveID:      pulid.MustNew("sm_"),
-		assignments: mocks.NewMockAssignmentRepository(t),
-		repo:        mocks.NewMockCarrierAssignmentRepository(t),
-		carriers:    mocks.NewMockCarrierRepository(t),
-		shipments:   mocks.NewMockShipmentRepository(t),
-		holds:       mocks.NewMockShipmentHoldRepository(t),
-		controls:    mocks.NewMockShipmentControlRepository(t),
+		assignments: shipmentportsmock.NewMockAssignmentRepository(t),
+		repo:        shipmentportsmock.NewMockCarrierAssignmentRepository(t),
+		carriers:    carrierportsmock.NewMockCarrierRepository(t),
+		shipments:   shipmentportsmock.NewMockShipmentRepository(t),
+		holds:       shipmentportsmock.NewMockShipmentHoldRepository(t),
+		controls:    tenantportsmock.NewMockShipmentControlRepository(t),
 		rateCons:    &readOnlyRateCons{active: map[pulid.ID]*rateconfirmation.RateConfirmation{}},
 	}
 	f.original = coverageShipment(pulid.MustNew("shp_"), f.moveID, f.tenantInfo)
@@ -108,13 +113,13 @@ func (f *planFixture) expectShipmentRead() {
 		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
 		RunAndReturn(func(
 			context.Context,
-			*repositories.GetShipmentByIDRequest,
+			*shipmentports.GetShipmentByIDRequest,
 		) (*shipment.Shipment, error) {
 			return shipment.CloneForUpdate(f.original), nil
 		}).
 		Once()
 	f.controls.EXPECT().
-		Get(mock.Anything, repositories.GetShipmentControlRequest{TenantInfo: f.tenantInfo}).
+		Get(mock.Anything, tenantports.GetShipmentControlRequest{TenantInfo: f.tenantInfo}).
 		Return(&tenant.ShipmentControl{}, nil).
 		Once()
 }
@@ -126,8 +131,8 @@ func (f *planFixture) expectCarrier(entity *carrier.Carrier) {
 		Once()
 }
 
-func (f *planFixture) assignRequest(carrierID pulid.ID) *repositories.AssignMoveToCarrierRequest {
-	return &repositories.AssignMoveToCarrierRequest{
+func (f *planFixture) assignRequest(carrierID pulid.ID) *shipmentports.AssignMoveToCarrierRequest {
+	return &shipmentports.AssignMoveToCarrierRequest{
 		TenantInfo:     f.tenantInfo,
 		ShipmentMoveID: f.moveID,
 		CarrierID:      carrierID,
@@ -266,7 +271,7 @@ func TestPreviewCancel_ProjectsTheMoveUncoveredAndTheRateConfirmationVoided(t *t
 	f.rateCons.active[existing.ID] = active
 	f.expectShipmentRead()
 
-	plan, err := f.svc.PreviewCancel(t.Context(), &repositories.CancelCarrierAssignmentRequest{
+	plan, err := f.svc.PreviewCancel(t.Context(), &shipmentports.CancelCarrierAssignmentRequest{
 		TenantInfo:     f.tenantInfo,
 		ShipmentMoveID: f.moveID,
 		Reason:         "Carrier fell off",
@@ -291,7 +296,7 @@ func TestPreviewCancel_RefusesWhatCancelRefuses(t *testing.T) {
 	f.repo.On("GetActiveByMoveID", mock.Anything, f.tenantInfo, f.moveID).
 		Return(&shipment.CarrierAssignment{ID: pulid.MustNew("casn_")}, nil).
 		Twice()
-	req := &repositories.CancelCarrierAssignmentRequest{
+	req := &shipmentports.CancelCarrierAssignmentRequest{
 		TenantInfo:     f.tenantInfo,
 		ShipmentMoveID: f.moveID,
 		Reason:         "Carrier fell off",

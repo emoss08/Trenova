@@ -5,10 +5,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -23,30 +25,30 @@ type Params struct {
 	fx.In
 
 	Logger            *zap.Logger
-	DB                ports.DBConnection
-	ProfileRepo       repositories.PayProfileRepository
-	AssignmentRepo    repositories.WorkerPayAssignmentRepository
-	DeductionRepo     repositories.RecurringDeductionRepository
-	PayCodeRepo       repositories.PayCodeRepository
-	EarningRepo       repositories.RecurringEarningRepository
-	AdvanceRepo       repositories.PayAdvanceRepository
-	EscrowRepo        repositories.EscrowAccountRepository
-	SettlementControl repositories.SettlementControlRepository
-	AuditService      serviceports.AuditService
+	DB                kernelports.DBConnection
+	ProfileRepo       driverpayports.PayProfileRepository
+	AssignmentRepo    driverpayports.WorkerPayAssignmentRepository
+	DeductionRepo     driverpayports.RecurringDeductionRepository
+	PayCodeRepo       driverpayports.PayCodeRepository
+	EarningRepo       driverpayports.RecurringEarningRepository
+	AdvanceRepo       driverpayports.PayAdvanceRepository
+	EscrowRepo        driverpayports.EscrowAccountRepository
+	SettlementControl tenantports.SettlementControlRepository
+	AuditService      auditports.AuditService
 }
 
 type Service struct {
 	l                 *zap.Logger
-	db                ports.DBConnection
-	profileRepo       repositories.PayProfileRepository
-	assignmentRepo    repositories.WorkerPayAssignmentRepository
-	deductionRepo     repositories.RecurringDeductionRepository
-	payCodeRepo       repositories.PayCodeRepository
-	earningRepo       repositories.RecurringEarningRepository
-	advanceRepo       repositories.PayAdvanceRepository
-	escrowRepo        repositories.EscrowAccountRepository
-	settlementControl repositories.SettlementControlRepository
-	auditService      serviceports.AuditService
+	db                kernelports.DBConnection
+	profileRepo       driverpayports.PayProfileRepository
+	assignmentRepo    driverpayports.WorkerPayAssignmentRepository
+	deductionRepo     driverpayports.RecurringDeductionRepository
+	payCodeRepo       driverpayports.PayCodeRepository
+	earningRepo       driverpayports.RecurringEarningRepository
+	advanceRepo       driverpayports.PayAdvanceRepository
+	escrowRepo        driverpayports.EscrowAccountRepository
+	settlementControl tenantports.SettlementControlRepository
+	auditService      auditports.AuditService
 }
 
 func New(p Params) *Service { //nolint:gocritic // stable API shape
@@ -65,7 +67,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 	}
 }
 
-func requireActor(actor *serviceports.RequestActor, operation string) error {
+func requireActor(actor *permissionports.RequestActor, operation string) error {
 	if actor == nil || actor.UserID.IsNil() {
 		return errortypes.NewAuthorizationError("{0} requires an authenticated user", operation)
 	}
@@ -74,28 +76,28 @@ func requireActor(actor *serviceports.RequestActor, operation string) error {
 
 func (s *Service) ListProfiles(
 	ctx context.Context,
-	req *repositories.ListPayProfilesRequest,
+	req *driverpayports.ListPayProfilesRequest,
 ) (*pagination.ListResult[*driverpay.PayProfile], error) {
 	return s.profileRepo.List(ctx, req)
 }
 
 func (s *Service) ListProfilesConnection(
 	ctx context.Context,
-	req *repositories.ListPayProfileConnectionRequest,
+	req *driverpayports.ListPayProfileConnectionRequest,
 ) (*pagination.CursorListResult[*driverpay.PayProfile], error) {
 	return s.profileRepo.ListConnection(ctx, req)
 }
 
 func (s *Service) GetProfile(
 	ctx context.Context,
-	req repositories.GetPayProfileByIDRequest,
+	req driverpayports.GetPayProfileByIDRequest,
 ) (*driverpay.PayProfile, error) {
 	return s.profileRepo.GetByID(ctx, req)
 }
 
 func (s *Service) ProfileSelectOptions(
 	ctx context.Context,
-	req *repositories.PayProfileSelectOptionsRequest,
+	req *driverpayports.PayProfileSelectOptionsRequest,
 ) (*pagination.ListResult[*driverpay.PayProfile], error) {
 	return s.profileRepo.SelectOptions(ctx, req)
 }
@@ -103,7 +105,7 @@ func (s *Service) ProfileSelectOptions(
 func (s *Service) CreateProfile(
 	ctx context.Context,
 	entity *driverpay.PayProfile,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driverpay.PayProfile, error) {
 	if err := requireActor(actor, "Pay profile creation"); err != nil {
 		return nil, err
@@ -125,7 +127,7 @@ func (s *Service) CreateProfile(
 func (s *Service) UpdateProfile(
 	ctx context.Context,
 	entity *driverpay.PayProfile,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driverpay.PayProfile, error) {
 	if err := requireActor(actor, "Pay profile update"); err != nil {
 		return nil, err
@@ -136,7 +138,7 @@ func (s *Service) UpdateProfile(
 		return nil, multiErr
 	}
 
-	previous, err := s.profileRepo.GetByID(ctx, repositories.GetPayProfileByIDRequest{
+	previous, err := s.profileRepo.GetByID(ctx, driverpayports.GetPayProfileByIDRequest{
 		ID: entity.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -158,7 +160,7 @@ func (s *Service) UpdateProfile(
 
 func (s *Service) ListWorkerAssignments(
 	ctx context.Context,
-	req repositories.ListWorkerPayAssignmentsRequest,
+	req driverpayports.ListWorkerPayAssignmentsRequest,
 ) ([]*driverpay.WorkerPayAssignment, error) {
 	return s.assignmentRepo.ListForWorker(ctx, req)
 }
@@ -173,7 +175,7 @@ func (s *Service) ListProfileAssignments(
 
 func (s *Service) GetEffectiveAssignment(
 	ctx context.Context,
-	req repositories.GetWorkerPayAssignmentRequest,
+	req driverpayports.GetWorkerPayAssignmentRequest,
 ) (*driverpay.WorkerPayAssignment, error) {
 	if req.AsOf == 0 {
 		req.AsOf = timeutils.NowUnix()
@@ -184,7 +186,7 @@ func (s *Service) GetEffectiveAssignment(
 func (s *Service) AssignProfileToWorker(
 	ctx context.Context,
 	entity *driverpay.WorkerPayAssignment,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driverpay.WorkerPayAssignment, error) {
 	if err := requireActor(actor, "Pay profile assignment"); err != nil {
 		return nil, err
@@ -195,7 +197,7 @@ func (s *Service) AssignProfileToWorker(
 	}
 
 	var created *driverpay.WorkerPayAssignment
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		if txErr := s.endOverlappingAssignments(txCtx, entity); txErr != nil {
 			return txErr
 		}
@@ -267,7 +269,7 @@ func (s *Service) EndAssignment(
 	tenantInfo pagination.TenantInfo,
 	assignmentID pulid.ID,
 	endDate int64,
-	actor *serviceports.RequestActor,
+	actor *permissionports.RequestActor,
 ) (*driverpay.WorkerPayAssignment, error) {
 	if err := requireActor(actor, "Pay assignment termination"); err != nil {
 		return nil, err
@@ -293,7 +295,7 @@ func (s *Service) logProfileAudit(
 	operation permission.Operation,
 	comment string,
 ) {
-	params := &serviceports.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceDriverPayProfile,
 		ResourceID:     current.ID.String(),
 		Operation:      operation,
@@ -302,7 +304,7 @@ func (s *Service) logProfileAudit(
 		OrganizationID: current.OrganizationID,
 		BusinessUnitID: current.BusinessUnitID,
 	}
-	options := []serviceports.LogOption{auditservice.WithComment(comment)}
+	options := []auditports.LogOption{auditservice.WithComment(comment)}
 	if previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(previous)
 		options = append(options, auditservice.WithDiff(previous, current))
@@ -318,7 +320,7 @@ func (s *Service) logAssignmentAudit(
 	operation permission.Operation,
 	comment string,
 ) {
-	params := &serviceports.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceDriverPayProfile,
 		ResourceID:     current.ID.String(),
 		Operation:      operation,

@@ -5,9 +5,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/location"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/statuschange"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -17,13 +17,13 @@ import (
 func (s *Service) PlanUpdate(
 	ctx context.Context,
 	entity *location.Location,
-) (*services.RecordChange[location.Location], error) {
+) (*kernelports.RecordChange[location.Location], error) {
 	if err := s.transformer.TransformLocation(ctx, entity); err != nil {
 		return nil, err
 	}
 	entity.NormalizeGeofence()
 
-	original, err := s.repo.GetByID(ctx, repositories.GetLocationByIDRequest{
+	original, err := s.repo.GetByID(ctx, locationports.GetLocationByIDRequest{
 		ID: entity.GetID(),
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.GetOrganizationID(),
@@ -49,14 +49,14 @@ func (s *Service) PlanUpdate(
 		return nil, multiErr
 	}
 
-	return &services.RecordChange[location.Location]{Before: original, After: entity}, nil
+	return &kernelports.RecordChange[location.Location]{Before: original, After: entity}, nil
 }
 
 func (s *Service) PlanBulkUpdateStatus(
 	ctx context.Context,
-	req *repositories.BulkUpdateLocationStatusRequest,
-) ([]services.RecordChange[location.Location], error) {
-	found, err := s.repo.GetByIDs(ctx, repositories.GetLocationsByIDsRequest{
+	req *locationports.BulkUpdateLocationStatusRequest,
+) ([]kernelports.RecordChange[location.Location], error) {
+	found, err := s.repo.GetByIDs(ctx, locationports.GetLocationsByIDsRequest{
 		TenantInfo:  req.TenantInfo,
 		LocationIDs: req.LocationIDs,
 	})

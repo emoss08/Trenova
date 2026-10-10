@@ -11,8 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/core/domain/extractioneval"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -461,7 +460,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionAccuracy)
+					obj := o.(*extractionevalports.ExtractionAccuracy)
 					return obj.WindowDays, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -471,7 +470,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionAccuracy)
+					obj := o.(*extractionevalports.ExtractionAccuracy)
 					return obj.Since, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -481,7 +480,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionAccuracy)
+					obj := o.(*extractionevalports.ExtractionAccuracy)
 					return obj.Corrections, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -491,7 +490,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionAccuracy)
+					obj := o.(*extractionevalports.ExtractionAccuracy)
 					return obj.Sampled, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -501,7 +500,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionAccuracy)
+					obj := o.(*extractionevalports.ExtractionAccuracy)
 					return obj.Scored, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -511,7 +510,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionAccuracy)
+					obj := o.(*extractionevalports.ExtractionAccuracy)
 					return obj.Correct, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -521,7 +520,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionAccuracy)
+					obj := o.(*extractionevalports.ExtractionAccuracy)
 					return obj.Corrected, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -531,7 +530,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionAccuracy)
+					obj := o.(*extractionevalports.ExtractionAccuracy)
 					return obj.Missed, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -541,7 +540,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionAccuracy)
+					obj := o.(*extractionevalports.ExtractionAccuracy)
 					return obj.Unconfirmed, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -551,7 +550,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionAccuracy)
+					obj := o.(*extractionevalports.ExtractionAccuracy)
 					return obj.Accuracy, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
@@ -562,7 +561,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "ExtractionAccuracyGroup",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionAccuracy)
+					obj := o.(*extractionevalports.ExtractionAccuracy)
 					return obj.ByModel, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNExtractionAccuracyGroup2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionAccuracyGroupᚄ),
@@ -573,7 +572,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "ExtractionAccuracyGroup",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionAccuracy)
+					obj := o.(*extractionevalports.ExtractionAccuracy)
 					return obj.ByKind, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNExtractionAccuracyGroup2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionAccuracyGroupᚄ),
@@ -584,7 +583,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "ExtractionFieldAccuracy",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionAccuracy)
+					obj := o.(*extractionevalports.ExtractionAccuracy)
 					return obj.Fields, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNExtractionFieldAccuracy2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaicorrectionᚐFieldAccuracyᚄ),
@@ -595,7 +594,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "ExtractionEvalCaseCounts",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionAccuracy)
+					obj := o.(*extractionevalports.ExtractionAccuracy)
 					return obj.Cases, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNExtractionEvalCaseCounts2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐExtractionEvalCaseCounts),
@@ -606,7 +605,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "ExtractionEvalRun",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionAccuracy)
+					obj := o.(*extractionevalports.ExtractionAccuracy)
 					return obj.RecentRuns, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNExtractionEvalRun2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋextractionevalᚐExtractionRunᚄ),
@@ -618,7 +617,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionAccuracyGroup)
+					obj := o.(*extractionevalports.ExtractionAccuracyGroup)
 					return obj.Key, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -628,7 +627,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionAccuracyGroup)
+					obj := o.(*extractionevalports.ExtractionAccuracyGroup)
 					return obj.Corrections, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -638,7 +637,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionAccuracyGroup)
+					obj := o.(*extractionevalports.ExtractionAccuracyGroup)
 					return obj.Scored, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -648,7 +647,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionAccuracyGroup)
+					obj := o.(*extractionevalports.ExtractionAccuracyGroup)
 					return obj.Correct, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -658,7 +657,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionAccuracyGroup)
+					obj := o.(*extractionevalports.ExtractionAccuracyGroup)
 					return obj.Accuracy, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
@@ -917,7 +916,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ExtractionEvalCaseCounts)
+					obj := o.(*extractionevalports.ExtractionEvalCaseCounts)
 					return obj.Candidate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -927,7 +926,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ExtractionEvalCaseCounts)
+					obj := o.(*extractionevalports.ExtractionEvalCaseCounts)
 					return obj.Active, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -937,7 +936,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*repositories.ExtractionEvalCaseCounts)
+					obj := o.(*extractionevalports.ExtractionEvalCaseCounts)
 					return obj.Retired, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1835,7 +1834,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionProviderTrend)
+					obj := o.(*extractionevalports.ExtractionProviderTrend)
 					return obj.ProviderID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1845,7 +1844,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionProviderTrend)
+					obj := o.(*extractionevalports.ExtractionProviderTrend)
 					return obj.ProviderName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1855,7 +1854,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionProviderTrend)
+					obj := o.(*extractionevalports.ExtractionProviderTrend)
 					return obj.Model, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1865,7 +1864,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionProviderTrend)
+					obj := o.(*extractionevalports.ExtractionProviderTrend)
 					return obj.ProviderRemoved, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1876,7 +1875,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "ExtractionWeekAccuracy",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionProviderTrend)
+					obj := o.(*extractionevalports.ExtractionProviderTrend)
 					return obj.Weeks, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNExtractionWeekAccuracy2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaicorrectionᚐWeekAccuracyᚄ),
@@ -1887,7 +1886,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "ExtractionWeekAccuracy",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionProviderTrend)
+					obj := o.(*extractionevalports.ExtractionProviderTrend)
 					return obj.Checked, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNExtractionWeekAccuracy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaicorrectionᚐWeekAccuracy),
@@ -1898,7 +1897,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "ExtractionWeekAccuracy",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionProviderTrend)
+					obj := o.(*extractionevalports.ExtractionProviderTrend)
 					return obj.Baseline, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNExtractionWeekAccuracy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaicorrectionᚐWeekAccuracy),
@@ -1908,7 +1907,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionProviderTrend)
+					obj := o.(*extractionevalports.ExtractionProviderTrend)
 					return obj.DropPoints, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
@@ -1918,7 +1917,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionProviderTrend)
+					obj := o.(*extractionevalports.ExtractionProviderTrend)
 					return obj.Comparable, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1928,7 +1927,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionProviderTrend)
+					obj := o.(*extractionevalports.ExtractionProviderTrend)
 					return obj.Drifting, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1940,7 +1939,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionProviderTrends)
+					obj := o.(*extractionevalports.ExtractionProviderTrends)
 					return obj.Weeks, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2ᚕint64ᚄ),
@@ -1950,7 +1949,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionProviderTrends)
+					obj := o.(*extractionevalports.ExtractionProviderTrends)
 					return obj.CheckedWeek, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1960,7 +1959,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionProviderTrends)
+					obj := o.(*extractionevalports.ExtractionProviderTrends)
 					return obj.BaselineStart, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1971,7 +1970,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "ExtractionProviderTrend",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionProviderTrends)
+					obj := o.(*extractionevalports.ExtractionProviderTrends)
 					return obj.Providers, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNExtractionProviderTrend2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionProviderTrendᚄ),
@@ -1981,7 +1980,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionProviderTrends)
+					obj := o.(*extractionevalports.ExtractionProviderTrends)
 					return obj.DriftPoints, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1991,7 +1990,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionProviderTrends)
+					obj := o.(*extractionevalports.ExtractionProviderTrends)
 					return obj.MinWeekFields, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -2001,7 +2000,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.ExtractionProviderTrends)
+					obj := o.(*extractionevalports.ExtractionProviderTrends)
 					return obj.MinBaselineFields, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -2490,8 +2489,8 @@ type resolverMutation interface {
 }
 
 type resolverQuery interface {
-	ExtractionAccuracy(ctx context.Context, windowDays *int) (*services.ExtractionAccuracy, error)
-	ExtractionProviderTrends(ctx context.Context) (*services.ExtractionProviderTrends, error)
+	ExtractionAccuracy(ctx context.Context, windowDays *int) (*extractionevalports.ExtractionAccuracy, error)
+	ExtractionProviderTrends(ctx context.Context) (*extractionevalports.ExtractionProviderTrends, error)
 	AiCorrections(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AICorrectionConnection, error)
 	AiCorrection(ctx context.Context, id string) (*aicorrection.Correction, error)
 	ExtractionEvalCases(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ExtractionEvalCaseConnection, error)
@@ -2981,7 +2980,7 @@ func marshalNDecimal2string(ctx context.Context, ec *gqlexec.Exec, sel ast.Selec
 	return res
 }
 
-func marshalNExtractionAccuracy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionAccuracy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.ExtractionAccuracy) graphql.Marshaler {
+func marshalNExtractionAccuracy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionAccuracy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *extractionevalports.ExtractionAccuracy) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2989,12 +2988,12 @@ func marshalNExtractionAccuracy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "ExtractionAccuracy", v)
 }
 
-func marshalNExtractionAccuracyGroup2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionAccuracyGroup(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v services.ExtractionAccuracyGroup) graphql.Marshaler {
+func marshalNExtractionAccuracyGroup2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionAccuracyGroup(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v extractionevalports.ExtractionAccuracyGroup) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "ExtractionAccuracyGroup", &v)
 }
 
-func marshalNExtractionAccuracyGroup2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionAccuracyGroupᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []services.ExtractionAccuracyGroup) graphql.Marshaler {
-	return gqlexec.List[services.ExtractionAccuracyGroup]{
+func marshalNExtractionAccuracyGroup2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionAccuracyGroupᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []extractionevalports.ExtractionAccuracyGroup) graphql.Marshaler {
+	return gqlexec.List[extractionevalports.ExtractionAccuracyGroup]{
 		Elem:        marshalNExtractionAccuracyGroup2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionAccuracyGroup,
 		NonNull:     true,
 		NonNullElem: true,
@@ -3017,7 +3016,7 @@ func marshalNExtractionEvalCaseConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋ
 	return ec.MarshalType(ctx, sel, "ExtractionEvalCaseConnection", v)
 }
 
-func marshalNExtractionEvalCaseCounts2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐExtractionEvalCaseCounts(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v repositories.ExtractionEvalCaseCounts) graphql.Marshaler {
+func marshalNExtractionEvalCaseCounts2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐExtractionEvalCaseCounts(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v extractionevalports.ExtractionEvalCaseCounts) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "ExtractionEvalCaseCounts", &v)
 }
 
@@ -3157,19 +3156,19 @@ func marshalNExtractionFieldAccuracy2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNExtractionProviderTrend2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionProviderTrend(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v services.ExtractionProviderTrend) graphql.Marshaler {
+func marshalNExtractionProviderTrend2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionProviderTrend(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v extractionevalports.ExtractionProviderTrend) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "ExtractionProviderTrend", &v)
 }
 
-func marshalNExtractionProviderTrend2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionProviderTrendᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []services.ExtractionProviderTrend) graphql.Marshaler {
-	return gqlexec.List[services.ExtractionProviderTrend]{
+func marshalNExtractionProviderTrend2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionProviderTrendᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []extractionevalports.ExtractionProviderTrend) graphql.Marshaler {
+	return gqlexec.List[extractionevalports.ExtractionProviderTrend]{
 		Elem:        marshalNExtractionProviderTrend2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionProviderTrend,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNExtractionProviderTrends2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionProviderTrends(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.ExtractionProviderTrends) graphql.Marshaler {
+func marshalNExtractionProviderTrends2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionProviderTrends(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *extractionevalports.ExtractionProviderTrends) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

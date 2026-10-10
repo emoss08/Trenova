@@ -1,6 +1,7 @@
 package documentintelligenceservice_test
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
@@ -25,7 +26,7 @@ func TestReextractRefusesWhenThePlanRestrictsDocumentIntelligence(t *testing.T) 
 	tenant := plantest.Tenant()
 	documentID := pulid.MustNew("doc_")
 
-	documentRepo := mocks.NewMockDocumentRepository(t)
+	documentRepo := documentportsmock.NewMockDocumentRepository(t)
 	documentRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(&document.Document{
 		ID:                documentID,
 		OrganizationID:    tenant.OrgID,

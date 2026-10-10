@@ -7,25 +7,25 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/journalentry"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 type fakeLedger struct {
 	mu       sync.Mutex
-	journals []*repositories.LedgerJournal
-	sums     []repositories.SumLedgerRequest
+	journals []*journalentryports.LedgerJournal
+	sums     []journalentryports.SumLedgerRequest
 }
 
-func (f *fakeLedger) add(journal *repositories.LedgerJournal) {
+func (f *fakeLedger) add(journal *journalentryports.LedgerJournal) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.journals = append(f.journals, journal)
 }
 
-func (f *fakeLedger) sumRequests() []repositories.SumLedgerRequest {
+func (f *fakeLedger) sumRequests() []journalentryports.SumLedgerRequest {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return slices.Clone(f.sums)
@@ -33,8 +33,8 @@ func (f *fakeLedger) sumRequests() []repositories.SumLedgerRequest {
 
 func (f *fakeLedger) GetJournal(
 	_ context.Context,
-	req *repositories.GetLedgerJournalRequest,
-) (*repositories.LedgerJournal, error) {
+	req *journalentryports.GetLedgerJournalRequest,
+) (*journalentryports.LedgerJournal, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	for _, journal := range f.journals {
@@ -47,7 +47,7 @@ func (f *fakeLedger) GetJournal(
 
 func (f *fakeLedger) GetEntryType(
 	ctx context.Context,
-	req *repositories.GetLedgerJournalRequest,
+	req *journalentryports.GetLedgerJournalRequest,
 ) (journalentry.EntryType, error) {
 	journal, err := f.GetJournal(ctx, req)
 	if err != nil {
@@ -56,7 +56,7 @@ func (f *fakeLedger) GetEntryType(
 	return journalentry.EntryType(journal.EntryType), nil
 }
 
-func counted(journal *repositories.LedgerJournal, includeClosing bool) bool {
+func counted(journal *journalentryports.LedgerJournal, includeClosing bool) bool {
 	entryType := journalentry.EntryType(journal.EntryType)
 	reverses := journalentry.EntryType(journal.ReversesEntryType)
 	if !includeClosing {
@@ -67,11 +67,11 @@ func counted(journal *repositories.LedgerJournal, includeClosing bool) bool {
 
 func (f *fakeLedger) ListJournals(
 	_ context.Context,
-	req *repositories.ListLedgerJournalsRequest,
-) ([]*repositories.LedgerJournal, error) {
+	req *journalentryports.ListLedgerJournalsRequest,
+) ([]*journalentryports.LedgerJournal, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	out := []*repositories.LedgerJournal{}
+	out := []*journalentryports.LedgerJournal{}
 	for _, journal := range f.journals {
 		if journal.AccountingDate < req.From || journal.AccountingDate >= req.Before ||
 			!counted(journal, false) {
@@ -84,17 +84,17 @@ func (f *fakeLedger) ListJournals(
 
 func (f *fakeLedger) SumLines(
 	_ context.Context,
-	req *repositories.SumLedgerRequest,
-) ([]repositories.LedgerAccountBalance, error) {
+	req *journalentryports.SumLedgerRequest,
+) ([]journalentryports.LedgerAccountBalance, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.sums = append(f.sums, *req)
 	type key struct {
 		account pulid.ID
-		party   repositories.LedgerParty
+		party   journalentryports.LedgerParty
 	}
 	positions := map[key]int{}
-	out := []repositories.LedgerAccountBalance{}
+	out := []journalentryports.LedgerAccountBalance{}
 	for _, journal := range f.journals {
 		if journal.AccountingDate >= req.Before ||
 			(req.From != nil && journal.AccountingDate < *req.From) ||
@@ -102,7 +102,7 @@ func (f *fakeLedger) SumLines(
 			continue
 		}
 		for _, line := range journal.Lines {
-			party := repositories.LedgerParty{}
+			party := journalentryports.LedgerParty{}
 			if slices.Contains(req.PartyAccountIDs, line.AccountID) {
 				party = line.Party
 				if party.IsZero() {
@@ -112,7 +112,7 @@ func (f *fakeLedger) SumLines(
 			k := key{account: line.AccountID, party: party}
 			pos, ok := positions[k]
 			if !ok {
-				out = append(out, repositories.LedgerAccountBalance{
+				out = append(out, journalentryports.LedgerAccountBalance{
 					AccountID:   line.AccountID,
 					AccountCode: line.AccountCode,
 					AccountName: line.AccountName,
@@ -130,13 +130,13 @@ func (f *fakeLedger) SumLines(
 
 func (f *fakeLedger) ListActiveAccounts(
 	context.Context,
-	*repositories.ListLedgerAccountsRequest,
-) ([]repositories.LedgerAccount, error) {
+	*journalentryports.ListLedgerAccountsRequest,
+) ([]journalentryports.LedgerAccount, error) {
 	return nil, nil
 }
 
 type fakeReferences struct {
-	repositories.AccountingReferenceObjectRepository
+	accountingsyncports.AccountingReferenceObjectRepository
 
 	mu   sync.Mutex
 	rows map[string]*accountingsync.AccountingReferenceObject
@@ -160,7 +160,7 @@ func (f *fakeReferences) account(externalID string, class accountingsync.Account
 
 func (f *fakeReferences) GetByExternalIDs(
 	_ context.Context,
-	req *repositories.GetAccountingReferenceObjectsRequest,
+	req *accountingsyncports.GetAccountingReferenceObjectsRequest,
 ) ([]*accountingsync.AccountingReferenceObject, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -175,8 +175,8 @@ func (f *fakeReferences) GetByExternalIDs(
 
 func (f *fakeWriter) CreateJournalEntry(
 	_ context.Context,
-	doc *services.AccountingJournalDocument,
-) (*services.AccountingDocumentResult, error) {
+	doc *accountingsyncports.AccountingJournalDocument,
+) (*accountingsyncports.AccountingDocumentResult, error) {
 	sent := *doc
 	sent.Lines = slices.Clone(doc.Lines)
 	return f.record("CreateJournalEntry", &sent)
@@ -184,8 +184,8 @@ func (f *fakeWriter) CreateJournalEntry(
 
 func (f *fakeWriter) UpdateJournalEntry(
 	_ context.Context,
-	doc *services.AccountingJournalDocument,
-) (*services.AccountingDocumentResult, error) {
+	doc *accountingsyncports.AccountingJournalDocument,
+) (*accountingsyncports.AccountingDocumentResult, error) {
 	sent := *doc
 	sent.Lines = slices.Clone(doc.Lines)
 	return f.record("UpdateJournalEntry", &sent)
@@ -193,7 +193,7 @@ func (f *fakeWriter) UpdateJournalEntry(
 
 func (f *fakeWriter) DeleteJournalEntry(
 	_ context.Context,
-	ref *services.AccountingDocumentRef,
-) (*services.AccountingDocumentResult, error) {
+	ref *accountingsyncports.AccountingDocumentRef,
+) (*accountingsyncports.AccountingDocumentResult, error) {
 	return f.record("DeleteJournalEntry", ref)
 }

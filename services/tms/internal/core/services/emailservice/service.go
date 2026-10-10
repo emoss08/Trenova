@@ -9,18 +9,19 @@ import (
 	"io"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/emailjobs/emailcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/integrationservice"
 	"github.com/emoss08/trenova/internal/core/services/planservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/emailjobs/emailcontract"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -39,29 +40,29 @@ type Params struct {
 	fx.In
 
 	Logger             *zap.Logger
-	Repo               repositories.EmailRepository
-	InvoiceRepo        repositories.InvoiceRepository
+	Repo               emailports.EmailRepository
+	InvoiceRepo        invoiceports.InvoiceRepository
 	Validator          *Validator
 	IntegrationService *integrationservice.Service
 	EncryptionService  *encryptionservice.Service
-	AuditService       services.AuditService
-	WorkflowStarter    services.WorkflowStarter
-	Storage            storage.Client
-	Plans              services.PlanService `optional:"true"`
+	AuditService       auditports.AuditService
+	WorkflowStarter    kernelports.WorkflowStarter
+	Storage            kernelports.Client
+	Plans              platformplanports.PlanService `optional:"true"`
 }
 
 type Service struct {
 	l                  *zap.Logger
-	repo               repositories.EmailRepository
-	invoiceRepo        repositories.InvoiceRepository
+	repo               emailports.EmailRepository
+	invoiceRepo        invoiceports.InvoiceRepository
 	validator          *Validator
 	integrationService *integrationservice.Service
 	encryptionService  *encryptionservice.Service
-	auditService       services.AuditService
+	auditService       auditports.AuditService
 	providerSenders    map[email.Provider]ProviderSender
-	workflowStarter    services.WorkflowStarter
-	storage            storage.Client
-	plans              services.PlanService
+	workflowStarter    kernelports.WorkflowStarter
+	storage            kernelports.Client
+	plans              platformplanports.PlanService
 }
 
 type HandleProviderEventParams struct {
@@ -92,28 +93,28 @@ func New(p Params) *Service {
 
 func (s *Service) ListProfiles(
 	ctx context.Context,
-	req *repositories.ListEmailProfilesRequest,
+	req *emailports.ListEmailProfilesRequest,
 ) (*pagination.ListResult[*email.Profile], error) {
 	return s.repo.ListProfiles(ctx, req)
 }
 
 func (s *Service) ListProfilesConnection(
 	ctx context.Context,
-	req *repositories.ListEmailProfileConnectionRequest,
+	req *emailports.ListEmailProfileConnectionRequest,
 ) (*pagination.CursorListResult[*email.Profile], error) {
 	return s.repo.ListProfilesConnection(ctx, req)
 }
 
 func (s *Service) SelectProfileOptions(
 	ctx context.Context,
-	req *repositories.EmailProfileSelectOptionsRequest,
+	req *emailports.EmailProfileSelectOptionsRequest,
 ) (*pagination.ListResult[*email.Profile], error) {
 	return s.repo.SelectProfileOptions(ctx, req)
 }
 
 func (s *Service) GetProfile(
 	ctx context.Context,
-	req repositories.GetEmailEntityRequest,
+	req emailports.GetEmailEntityRequest,
 ) (*email.Profile, error) {
 	return s.repo.GetProfile(ctx, req)
 }
@@ -147,7 +148,7 @@ func (s *Service) UpdateProfile(
 	if multiErr := s.validator.ValidateProfile(ctx, profile); multiErr != nil {
 		return nil, multiErr
 	}
-	original, err := s.repo.GetProfile(ctx, repositories.GetEmailEntityRequest{
+	original, err := s.repo.GetProfile(ctx, emailports.GetEmailEntityRequest{
 		ID: profile.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: profile.OrganizationID,
@@ -174,7 +175,7 @@ func (s *Service) UpdateProfile(
 
 func (s *Service) DeleteProfile(
 	ctx context.Context,
-	req repositories.GetEmailEntityRequest,
+	req emailports.GetEmailEntityRequest,
 	userID pulid.ID,
 ) error {
 	original, err := s.repo.GetProfile(ctx, req)
@@ -235,7 +236,7 @@ func (s *Service) UpsertAssignments(
 		}
 		seen[assignment.Purpose] = struct{}{}
 
-		profile, err := s.repo.GetProfile(ctx, repositories.GetEmailEntityRequest{
+		profile, err := s.repo.GetProfile(ctx, emailports.GetEmailEntityRequest{
 			ID:         assignment.ProfileID,
 			TenantInfo: tenantInfo,
 		})
@@ -254,7 +255,7 @@ func (s *Service) UpsertAssignments(
 	if err != nil {
 		return nil, err
 	}
-	if err = s.auditService.LogAction(&services.LogActionParams{
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceEmailProfile,
 		ResourceID:     tenantInfo.OrgID.String() + ":" + tenantInfo.BuID.String(),
 		Operation:      permission.OpUpdate,
@@ -270,7 +271,7 @@ func (s *Service) UpsertAssignments(
 
 func (s *Service) Send(
 	ctx context.Context,
-	req *services.SendEmailRequest,
+	req *emailports.SendEmailRequest,
 ) (*email.Message, error) {
 	if err := s.requireOutbound(ctx, req.TenantInfo, req.Purpose); err != nil {
 		return nil, err
@@ -361,7 +362,7 @@ func (s *Service) requireOutbound(
 
 func (s *Service) replaySend(
 	ctx context.Context,
-	req *services.SendEmailRequest,
+	req *emailports.SendEmailRequest,
 	requested *email.Message,
 	stored *email.Message,
 ) (*email.Message, error) {
@@ -403,11 +404,11 @@ func (s *Service) replaySend(
 
 func (s *Service) resendFailed(
 	ctx context.Context,
-	req *services.SendEmailRequest,
+	req *emailports.SendEmailRequest,
 	stored *email.Message,
 ) (*email.Message, error) {
 	if len(req.Attachments) > 0 {
-		existing, err := s.repo.ListAttachments(ctx, repositories.ListEmailAttachmentsRequest{
+		existing, err := s.repo.ListAttachments(ctx, emailports.ListEmailAttachmentsRequest{
 			MessageID:  stored.ID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -450,9 +451,9 @@ func (s *Service) TestSend(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	profileID pulid.ID,
-	req *services.TestEmailProfileRequest,
+	req *emailports.TestEmailProfileRequest,
 ) (*email.Message, error) {
-	return s.Send(ctx, &services.SendEmailRequest{
+	return s.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo:     tenantInfo,
 		ProfileID:      profileID,
 		Purpose:        email.PurposeGeneral,
@@ -466,7 +467,7 @@ func (s *Service) TestSend(
 
 func (s *Service) SendPersisted(
 	ctx context.Context,
-	req *services.SendPersistedEmailRequest,
+	req *emailports.SendPersistedEmailRequest,
 ) (*email.Message, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
@@ -475,7 +476,7 @@ func (s *Service) SendPersisted(
 			"Email send request is required",
 		)
 	}
-	msg, err := s.repo.GetMessage(ctx, repositories.GetEmailEntityRequest{
+	msg, err := s.repo.GetMessage(ctx, emailports.GetEmailEntityRequest{
 		ID:         req.MessageID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -555,7 +556,7 @@ func (s *Service) SendPersisted(
 func (s *Service) persistAttachments(
 	ctx context.Context,
 	msg *email.Message,
-	attachments []services.EmailAttachment,
+	attachments []emailports.EmailAttachment,
 ) error {
 	if len(attachments) == 0 {
 		return nil
@@ -579,7 +580,7 @@ func (s *Service) persistAttachments(
 func (s *Service) persistAttachment(
 	ctx context.Context,
 	msg *email.Message,
-	attachment services.EmailAttachment,
+	attachment emailports.EmailAttachment,
 ) (*email.Attachment, error) {
 	fileName := fileutils.SafeFilename(attachment.FileName)
 	if fileName == "" || fileName == "." || fileName == "/" {
@@ -602,7 +603,7 @@ func (s *Service) persistAttachment(
 			"email-attachments/"+msg.ID.String(),
 			fileName,
 		)
-		info, err := s.storage.Upload(ctx, &storage.UploadParams{
+		info, err := s.storage.Upload(ctx, &kernelports.UploadParams{
 			Key:         objectKey,
 			ContentType: contentType,
 			Size:        int64(len(attachment.Content)),
@@ -640,7 +641,7 @@ func (s *Service) providerAttachments(
 	tenantInfo pagination.TenantInfo,
 	messageID pulid.ID,
 ) ([]ProviderAttachment, error) {
-	attachments, err := s.repo.ListAttachments(ctx, repositories.ListEmailAttachmentsRequest{
+	attachments, err := s.repo.ListAttachments(ctx, emailports.ListEmailAttachmentsRequest{
 		MessageID:  messageID,
 		TenantInfo: tenantInfo,
 	})
@@ -679,7 +680,7 @@ func (s *Service) startSendWorkflow(
 	openTracking bool,
 ) error {
 	if !s.workflowStarter.Enabled() {
-		return services.ErrWorkflowStarterDisabled
+		return kernelports.ErrWorkflowStarterDisabled
 	}
 
 	workflowID := fmt.Sprintf(
@@ -723,7 +724,7 @@ func (s *Service) HandleProviderEvent(
 		if params.ProviderMessageID != "" {
 			msg, lookupErr := s.repo.GetMessageByProviderID(
 				ctx,
-				repositories.GetEmailMessageByProviderIDRequest{
+				emailports.GetEmailMessageByProviderIDRequest{
 					Provider:          event.Provider,
 					ProviderMessageID: params.ProviderMessageID,
 					TenantInfo:        tenantInfo,
@@ -744,7 +745,7 @@ func (s *Service) HandleProviderEvent(
 	if event.MessageID.IsNil() {
 		return nil
 	}
-	msg, err := s.repo.GetMessage(ctx, repositories.GetEmailEntityRequest{
+	msg, err := s.repo.GetMessage(ctx, emailports.GetEmailEntityRequest{
 		ID:         event.MessageID,
 		TenantInfo: tenantInfo,
 	})
@@ -789,21 +790,21 @@ func (s *Service) HandleProviderEvent(
 
 func (s *Service) ListMessages(
 	ctx context.Context,
-	req *repositories.ListEmailMessagesRequest,
+	req *emailports.ListEmailMessagesRequest,
 ) (*pagination.ListResult[*email.Message], error) {
 	return s.repo.ListMessages(ctx, req)
 }
 
 func (s *Service) GetMessage(
 	ctx context.Context,
-	req repositories.GetEmailEntityRequest,
+	req emailports.GetEmailEntityRequest,
 ) (*email.Message, error) {
 	return s.repo.GetMessage(ctx, req)
 }
 
 func (s *Service) ListSuppressions(
 	ctx context.Context,
-	req *repositories.ListEmailSuppressionsRequest,
+	req *emailports.ListEmailSuppressionsRequest,
 ) (*pagination.ListResult[*email.Suppression], error) {
 	return s.repo.ListSuppressions(ctx, req)
 }
@@ -827,7 +828,7 @@ func (s *Service) CreateSuppression(
 
 func (s *Service) DeleteSuppression(
 	ctx context.Context,
-	req repositories.GetEmailEntityRequest,
+	req emailports.GetEmailEntityRequest,
 ) error {
 	return s.repo.DeleteSuppression(ctx, req)
 }
@@ -844,7 +845,7 @@ func (s *Service) ResolveTenantByWebhookToken(
 			"Unsupported email provider",
 		)
 	}
-	cfg, err := s.repo.GetEmailWebhookConfig(ctx, repositories.GetEmailWebhookConfigRequest{
+	cfg, err := s.repo.GetEmailWebhookConfig(ctx, emailports.GetEmailWebhookConfigRequest{
 		IntegrationType: sender.IntegrationType(),
 		Token:           token,
 	})
@@ -871,7 +872,7 @@ func (s *Service) ResolveTenantByProviderWebhookToken(
 			"Unsupported email provider",
 		)
 	}
-	cfg, err := s.repo.GetEmailWebhookConfig(ctx, repositories.GetEmailWebhookConfigRequest{
+	cfg, err := s.repo.GetEmailWebhookConfig(ctx, emailports.GetEmailWebhookConfigRequest{
 		IntegrationType: sender.IntegrationType(),
 		Token:           token,
 	})
@@ -883,10 +884,10 @@ func (s *Service) ResolveTenantByProviderWebhookToken(
 
 func (s *Service) resolveProfile(
 	ctx context.Context,
-	req *services.SendEmailRequest,
+	req *emailports.SendEmailRequest,
 ) (*email.Profile, error) {
 	if !req.ProfileID.IsNil() {
-		return s.repo.GetProfile(ctx, repositories.GetEmailEntityRequest{
+		return s.repo.GetProfile(ctx, emailports.GetEmailEntityRequest{
 			ID:         req.ProfileID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -960,7 +961,7 @@ func (s *Service) logAudit(p emailProfileAuditParams) {
 	if p.Current == nil {
 		return
 	}
-	if err := s.auditService.LogAction(&services.LogActionParams{
+	if err := s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceEmailProfile,
 		ResourceID:     p.Current.ID.String(),
 		Operation:      p.Op,

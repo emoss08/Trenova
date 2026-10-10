@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/pagedraft"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/formulaassistantservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -67,23 +67,23 @@ func (f *fakeWorkbench) Propose(
 }
 
 type authorPermissions struct {
-	serviceports.PermissionEngine
+	permissionports.PermissionEngine
 
 	operations []permission.Operation
 }
 
 func (p *authorPermissions) Check(
 	_ context.Context,
-	req *serviceports.PermissionCheckRequest,
-) (*serviceports.PermissionCheckResult, error) {
+	req *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
 	for _, operation := range p.operations {
 		if req.Resource == permission.ResourceFormulaTemplate.String() &&
 			req.Operation == operation {
-			return &serviceports.PermissionCheckResult{Allowed: true}, nil
+			return &permissionports.PermissionCheckResult{Allowed: true}, nil
 		}
 	}
 
-	return &serviceports.PermissionCheckResult{Allowed: false, Reason: "not permitted"}, nil
+	return &permissionports.PermissionCheckResult{Allowed: false, Reason: "not permitted"}, nil
 }
 
 func TestFormulaTools_Policies(t *testing.T) {

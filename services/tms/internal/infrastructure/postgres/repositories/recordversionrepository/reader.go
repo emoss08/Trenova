@@ -49,12 +49,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/editenderchangerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/editransferchangerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/editransferrepository"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/uptrace/bun"
@@ -80,7 +80,7 @@ type Reader struct {
 	db *postgres.Connection
 }
 
-func New(p Params) services.RecordVersionReader {
+func New(p Params) agentports.RecordVersionReader {
 	return &Reader{db: p.DB}
 }
 
@@ -420,7 +420,7 @@ var lookups = map[permission.Resource]lookup{
 		idEq:    buncolgen.PaymentColumns.ID.Eq(),
 		version: versionOf(func(entity *customerpayment.Payment) int64 { return entity.Version }),
 	},
-	services.RecordInvoiceAdjustment: {
+	agentports.RecordInvoiceAdjustment: {
 		model: func() versioned { return new(invoiceadjustment.InvoiceAdjustment) },
 		scope: buncolgen.InvoiceAdjustmentScopeTenant,
 		idEq:  buncolgen.InvoiceAdjustmentColumns.ID.Eq(),
@@ -428,7 +428,7 @@ var lookups = map[permission.Resource]lookup{
 			func(entity *invoiceadjustment.InvoiceAdjustment) int64 { return entity.Version },
 		),
 	},
-	services.RecordCreditMemoApplication: {
+	agentports.RecordCreditMemoApplication: {
 		model: func() versioned { return new(customerpayment.CreditMemoApplication) },
 		scope: buncolgen.CreditMemoApplicationScopeTenant,
 		idEq:  buncolgen.CreditMemoApplicationColumns.ID.Eq(),
@@ -765,7 +765,7 @@ func versionOf[T any](read func(*T) int64) func(versioned) int64 {
 func (r *Reader) Version(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	target services.ToolTarget,
+	target agentports.ToolTarget,
 ) (int64, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int64, error) {
 		entry, ok := lookups[target.Resource]
@@ -773,7 +773,7 @@ func (r *Reader) Version(
 			entry, ok = entry.kinds[target.ID.Prefix()]
 		}
 		if !ok {
-			return 0, fmt.Errorf("%w: %s", services.ErrRecordVersionUnsupported, target.Resource)
+			return 0, fmt.Errorf("%w: %s", agentports.ErrRecordVersionUnsupported, target.Resource)
 		}
 
 		record := entry.model()

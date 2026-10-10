@@ -6,12 +6,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -52,7 +52,7 @@ func TestReviewApprovesAndPostsAPendingEntryIntoTheLedger(t *testing.T) {
 		Scan(ctx, &before))
 
 	batchID, entryID, sourceID := pulid.MustNew("jb_"), pulid.MustNew("je_"), pulid.MustNew("jsrc_")
-	require.NoError(t, postings.CreatePosting(ctx, repositories.CreateJournalPostingParams{
+	require.NoError(t, postings.CreatePosting(ctx, journalentryports.CreateJournalPostingParams{
 		BatchID:              batchID,
 		OrganizationID:       orgID,
 		BusinessUnitID:       buID,
@@ -84,7 +84,7 @@ func TestReviewApprovesAndPostsAPendingEntryIntoTheLedger(t *testing.T) {
 		SourceStatus:         "Pending",
 		SourceDocumentNumber: "INV-1",
 		SourceIdempotencyKey: "invoice-posted:review-1",
-		Lines: []repositories.JournalPostingLine{
+		Lines: []journalentryports.JournalPostingLine{
 			{ID: pulid.MustNew("jel_"), GLAccountID: accountIDs[0], LineNumber: 1, DebitAmount: 2500, NetAmount: 2500},
 			{ID: pulid.MustNew("jel_"), GLAccountID: accountIDs[1], LineNumber: 2, CreditAmount: 2500, NetAmount: -2500},
 		},
@@ -96,12 +96,12 @@ func TestReviewApprovesAndPostsAPendingEntryIntoTheLedger(t *testing.T) {
 	require.NotNil(t, summary.OldestAccountingDate)
 	assert.True(t, queueHolds(t, review, tenantInfo, entryID), "the pending entry waits for review")
 
-	locked, err := review.LockEntry(ctx, repositories.LockJournalEntryRequest{TenantInfo: tenantInfo, EntryID: entryID})
+	locked, err := review.LockEntry(ctx, journalentryports.LockJournalEntryRequest{TenantInfo: tenantInfo, EntryID: entryID})
 	require.NoError(t, err)
 	require.Len(t, locked.Lines, 2)
 	assert.Equal(t, int16(1), locked.Lines[0].LineNumber)
 
-	err = review.PostEntry(ctx, &repositories.PostJournalEntryParams{
+	err = review.PostEntry(ctx, &journalentryports.PostJournalEntryParams{
 		TenantInfo: tenantInfo, EntryID: entryID, BatchID: batchID, Version: locked.Version,
 		FiscalYearID: fiscalYearID, FiscalPeriodID: periodID, AccountingDate: accountingDate,
 		PostedByID: userID, PostedAt: accountingDate,
@@ -109,29 +109,29 @@ func TestReviewApprovesAndPostsAPendingEntryIntoTheLedger(t *testing.T) {
 	require.Error(t, err)
 	assert.True(t, errortypes.IsConflictError(err), "a pending entry must not post")
 
-	require.NoError(t, review.ApproveEntry(ctx, &repositories.ApproveJournalEntryParams{
+	require.NoError(t, review.ApproveEntry(ctx, &journalentryports.ApproveJournalEntryParams{
 		TenantInfo: tenantInfo, EntryID: entryID, BatchID: batchID, Version: locked.Version,
 		ApprovedByID: userID, ApprovedAt: accountingDate,
 	}))
-	err = review.ApproveEntry(ctx, &repositories.ApproveJournalEntryParams{
+	err = review.ApproveEntry(ctx, &journalentryports.ApproveJournalEntryParams{
 		TenantInfo: tenantInfo, EntryID: entryID, BatchID: batchID, Version: locked.Version,
 		ApprovedByID: userID, ApprovedAt: accountingDate,
 	})
 	require.Error(t, err)
 	assert.True(t, errortypes.IsConflictError(err), "a stale version must not approve twice")
 
-	approved, err := review.LockEntry(ctx, repositories.LockJournalEntryRequest{TenantInfo: tenantInfo, EntryID: entryID})
+	approved, err := review.LockEntry(ctx, journalentryports.LockJournalEntryRequest{TenantInfo: tenantInfo, EntryID: entryID})
 	require.NoError(t, err)
 	assert.Equal(t, "Approved", string(approved.Status))
 	assert.True(t, approved.IsApproved)
 	assert.Equal(t, locked.Version+1, approved.Version)
 
 	postedAt := accountingDate + 60
-	require.NoError(t, review.PostEntry(ctx, &repositories.PostJournalEntryParams{
+	require.NoError(t, review.PostEntry(ctx, &journalentryports.PostJournalEntryParams{
 		TenantInfo: tenantInfo, EntryID: entryID, BatchID: batchID, Version: approved.Version,
 		FiscalYearID: fiscalYearID, FiscalPeriodID: periodID, AccountingDate: accountingDate,
 		PostedByID: userID, PostedAt: postedAt,
-		Lines: []repositories.JournalPostingLine{
+		Lines: []journalentryports.JournalPostingLine{
 			{GLAccountID: accountIDs[0], DebitAmount: 2500, NetAmount: 2500},
 			{GLAccountID: accountIDs[1], CreditAmount: 2500, NetAmount: -2500},
 		},
@@ -197,7 +197,7 @@ func TestReviewApprovesAndPostsAPendingEntryIntoTheLedger(t *testing.T) {
 
 	assert.False(t, queueHolds(t, review, tenantInfo, entryID), "a posted entry leaves the queue")
 
-	err = review.PostEntry(ctx, &repositories.PostJournalEntryParams{
+	err = review.PostEntry(ctx, &journalentryports.PostJournalEntryParams{
 		TenantInfo: tenantInfo, EntryID: entryID, BatchID: batchID, Version: approved.Version + 1,
 		FiscalYearID: fiscalYearID, FiscalPeriodID: periodID, AccountingDate: accountingDate,
 		PostedByID: userID, PostedAt: postedAt,
@@ -205,7 +205,7 @@ func TestReviewApprovesAndPostsAPendingEntryIntoTheLedger(t *testing.T) {
 	require.Error(t, err)
 	assert.True(t, errortypes.IsConflictError(err), "a posted entry must not post twice")
 
-	_, err = review.LockEntry(ctx, repositories.LockJournalEntryRequest{
+	_, err = review.LockEntry(ctx, journalentryports.LockJournalEntryRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: buID},
 		EntryID:    entryID,
 	})
@@ -215,12 +215,12 @@ func TestReviewApprovesAndPostsAPendingEntryIntoTheLedger(t *testing.T) {
 
 func queueHolds(
 	t *testing.T,
-	review repositories.JournalReviewRepository,
+	review journalentryports.JournalReviewRepository,
 	tenantInfo pagination.TenantInfo,
 	entryID pulid.ID,
 ) bool {
 	t.Helper()
-	result, err := review.ListConnection(t.Context(), &repositories.ListJournalReviewRequest{
+	result, err := review.ListConnection(t.Context(), &journalentryports.ListJournalReviewQuery{
 		Filter: &pagination.QueryOptions{TenantInfo: tenantInfo},
 		Cursor: pagination.CursorInfo{Limit: 100},
 	})

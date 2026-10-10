@@ -5,13 +5,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
-
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/assistantservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -45,8 +45,8 @@ func (s *CompactionWorkflowTestSuite) SetupTest() {
 		},
 		TurnID:   pulid.MustNew("atrn_"),
 		ThreadID: pulid.MustNew("athr_"),
-		Actor: serviceports.RequestActor{
-			PrincipalType: serviceports.PrincipalTypeUser,
+		Actor: permissionports.RequestActor{
+			PrincipalType: permissionports.PrincipalTypeUser,
 			UserID:        pulid.MustNew("usr_"),
 		},
 		Auto: true,
@@ -74,7 +74,7 @@ func (s *CompactionWorkflowTestSuite) prepares(err error) {
 		Through:  39,
 		Before:   172_000,
 		After:    31_000,
-		Request:  &serviceports.ChatCompletionRequest{System: "Summarize."},
+		Request:  &agentports.ChatCompletionRequest{System: "Summarize."},
 	}
 	if err != nil {
 		plan = nil
@@ -108,7 +108,7 @@ func (s *CompactionWorkflowTestSuite) TestSavesTheSummaryAndClosesTheTurn() {
 			s.False(in.Stream, "nobody reads the summary as it is written")
 			s.Equal("Summarize.", in.Request.System)
 
-			return &agentruntime.ModelReply{Completion: &serviceports.ChatCompletionResult{
+			return &agentruntime.ModelReply{Completion: &agentports.ChatCompletionResult{
 				Text:            "- Customer 1 had 40 loads.",
 				ModelIdentifier: "test-model",
 			}}, nil
@@ -120,7 +120,7 @@ func (s *CompactionWorkflowTestSuite) TestSavesTheSummaryAndClosesTheTurn() {
 			s.saved = in
 
 			return &CompactionEnding{Event: temporaltype.StreamItem{
-				Event: serviceports.AssistantEventCompactionFinished,
+				Event: agentports.AssistantEventCompactionFinished,
 			}}, nil
 		},
 	).Once()
@@ -178,8 +178,8 @@ func TestCompactionEndingFor_TellsTheReaderHowItEnded(t *testing.T) {
 		Payload: payload,
 		Status:  conversation.AssistantTurnStatusStopped,
 	}, true)
-	assert.Equal(t, serviceports.AssistantEventCompactionCancelled, cancelled.Event.Event)
-	data, ok := cancelled.Event.Data.(serviceports.AssistantCompactionEvent)
+	assert.Equal(t, agentports.AssistantEventCompactionCancelled, cancelled.Event.Event)
+	data, ok := cancelled.Event.Data.(agentports.AssistantCompactionEvent)
 	assert.True(t, ok)
 	assert.True(t, data.AutoCompactOff, "the reader is told the conversation stopped compacting itself")
 
@@ -188,7 +188,7 @@ func TestCompactionEndingFor_TellsTheReaderHowItEnded(t *testing.T) {
 		Status:  conversation.AssistantTurnStatusFailed,
 		Message: compactionFailedMessage,
 	}, false)
-	assert.Equal(t, serviceports.AssistantEventError, failed.Event.Event)
+	assert.Equal(t, agentports.AssistantEventError, failed.Event.Event)
 }
 
 /*
@@ -204,8 +204,8 @@ func TestCompactionCue_IsSetOnlyByAnAnsweredTurnThatFilledTheConversation(t *tes
 		Compactable: 150_000, Window: 200_000,
 	}
 	roomy := &conversation.ContextUsage{Instructions: 6000, Messages: 20_000, Compactable: 15_000, Window: 200_000}
-	result := func(usage *conversation.ContextUsage, off bool) *serviceports.SendMessageResult {
-		return &serviceports.SendMessageResult{Thread: &conversation.Thread{
+	result := func(usage *conversation.ContextUsage, off bool) *agentports.SendMessageResult {
+		return &agentports.SendMessageResult{Thread: &conversation.Thread{
 			ContextUsage:   usage,
 			AutoCompactOff: off,
 		}}

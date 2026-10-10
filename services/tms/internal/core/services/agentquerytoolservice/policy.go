@@ -3,7 +3,7 @@ package agentquerytoolservice
 import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 
 const readRationale = "Reads records the caller may already open; it changes nothing and " +
@@ -18,8 +18,8 @@ type readSpec struct {
 	rationale string
 }
 
-func readPolicy(name string, spec readSpec) serviceports.ToolPolicy {
-	policy := serviceports.ToolPolicy{
+func readPolicy(name string, spec readSpec) agentports.ToolPolicy {
+	policy := agentports.ToolPolicy{
 		Name:          name,
 		Kind:          agent.ToolKindQuery,
 		Resource:      spec.resource,

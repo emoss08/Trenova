@@ -3,7 +3,7 @@ package statuschange
 import (
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -19,7 +19,7 @@ type Request[T any, S ~string] struct {
 	Set    func(*T, S)
 }
 
-func Plan[T any, S ~string](req *Request[T, S]) ([]services.RecordChange[T], error) {
+func Plan[T any, S ~string](req *Request[T, S]) ([]kernelports.RecordChange[T], error) {
 	multiErr := errortypes.NewMultiError()
 	if len(req.IDs) == 0 {
 		multiErr.Add(req.Field, errortypes.ErrRequired, "Name at least one {0}", req.Kind)
@@ -49,11 +49,11 @@ func Plan[T any, S ~string](req *Request[T, S]) ([]services.RecordChange[T], err
 		return nil, multiErr
 	}
 
-	changes := make([]services.RecordChange[T], 0, len(req.Found))
+	changes := make([]kernelports.RecordChange[T], 0, len(req.Found))
 	for _, entity := range req.Found {
 		after := *entity
 		req.Set(&after, req.Status)
-		changes = append(changes, services.RecordChange[T]{Before: entity, After: &after})
+		changes = append(changes, kernelports.RecordChange[T]{Before: entity, After: &after})
 	}
 
 	return changes, nil

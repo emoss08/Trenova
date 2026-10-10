@@ -15,9 +15,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -31,16 +31,16 @@ type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Repo          repositories.BenefitRepository
-	DeductionRepo repositories.RecurringDeductionRepository
-	AuditService  services.AuditService
+	Repo          driverpayports.BenefitRepository
+	DeductionRepo driverpayports.RecurringDeductionRepository
+	AuditService  auditports.AuditService
 }
 
 type Service struct {
 	l             *zap.Logger
-	repo          repositories.BenefitRepository
-	deductionRepo repositories.RecurringDeductionRepository
-	auditService  services.AuditService
+	repo          driverpayports.BenefitRepository
+	deductionRepo driverpayports.RecurringDeductionRepository
+	auditService  auditports.AuditService
 }
 
 func New(p Params) *Service {
@@ -55,9 +55,9 @@ func New(p Params) *Service {
 // Deps is the constructor shape tests use to swap in fakes.
 type Deps struct {
 	Logger        *zap.Logger
-	Repo          repositories.BenefitRepository
-	DeductionRepo repositories.RecurringDeductionRepository
-	AuditService  services.AuditService
+	Repo          driverpayports.BenefitRepository
+	DeductionRepo driverpayports.RecurringDeductionRepository
+	AuditService  auditports.AuditService
 }
 
 func NewWithDeps(d Deps) *Service {
@@ -84,7 +84,7 @@ func (s *Service) audit(
 	if s.auditService == nil || userID.IsNil() {
 		return
 	}
-	params := &services.LogActionParams{
+	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceBenefitPlan,
 		ResourceID:     resourceID,
 		Operation:      operation,
@@ -93,7 +93,7 @@ func (s *Service) audit(
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
 	}
-	opts := []services.LogOption{auditservice.WithComment(comment)}
+	opts := []auditports.LogOption{auditservice.WithComment(comment)}
 	if previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(previous)
 		opts = append(opts, auditservice.WithDiff(previous, current))
@@ -105,14 +105,14 @@ func (s *Service) audit(
 
 func (s *Service) ListPlans(
 	ctx context.Context,
-	req *repositories.ListBenefitPlansRequest,
+	req *driverpayports.ListBenefitPlansRequest,
 ) ([]*driverpay.BenefitPlan, error) {
 	return s.repo.ListPlans(ctx, req)
 }
 
 func (s *Service) PlanSelectOptions(
 	ctx context.Context,
-	req *repositories.BenefitPlanSelectOptionsRequest,
+	req *driverpayports.BenefitPlanSelectOptionsRequest,
 ) (*pagination.ListResult[*driverpay.BenefitPlan], error) {
 	return s.repo.PlanSelectOptions(ctx, req)
 }
@@ -122,7 +122,7 @@ func (s *Service) GetPlan(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*driverpay.BenefitPlan, error) {
-	return s.repo.GetPlanByID(ctx, &repositories.GetBenefitPlanByIDRequest{
+	return s.repo.GetPlanByID(ctx, &driverpayports.GetBenefitPlanByIDRequest{
 		ID:             id,
 		TenantInfo:     tenantInfo,
 		IncludePayCode: true,
@@ -163,7 +163,7 @@ func (s *Service) UpdatePlan(
 ) (*driverpay.BenefitPlan, error) {
 	tenantInfo := planTenant(entity)
 
-	original, err := s.repo.GetPlanByID(ctx, &repositories.GetBenefitPlanByIDRequest{
+	original, err := s.repo.GetPlanByID(ctx, &driverpayports.GetBenefitPlanByIDRequest{
 		ID:         entity.ID,
 		TenantInfo: tenantInfo,
 	})
@@ -218,7 +218,7 @@ func (s *Service) UpdatePlan(
 
 func (s *Service) ListEnrollments(
 	ctx context.Context,
-	req *repositories.ListBenefitEnrollmentsRequest,
+	req *driverpayports.ListBenefitEnrollmentsRequest,
 ) ([]*driverpay.WorkerBenefitEnrollment, error) {
 	return s.repo.ListEnrollments(ctx, req)
 }
@@ -227,7 +227,7 @@ func (s *Service) BenefitCosts(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	planYear int16,
-) ([]repositories.BenefitCostRow, error) {
+) ([]driverpayports.BenefitCostRow, error) {
 	return s.repo.BenefitCosts(ctx, tenantInfo, planYear)
 }
 

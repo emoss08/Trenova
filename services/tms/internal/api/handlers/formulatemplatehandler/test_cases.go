@@ -3,8 +3,8 @@ package formulatemplatehandler
 import (
 	"net/http"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -31,7 +31,7 @@ func (h *Handler) listTestCases(c *gin.Context) {
 		return
 	}
 
-	cases, err := h.service.ListTestCases(c.Request.Context(), repositories.ListTestCasesRequest{
+	cases, err := h.service.ListTestCases(c.Request.Context(), formulatemplateports.ListTestCasesRequest{
 		TenantInfo: pagination.FromAuthAsUser(authCtx),
 		TemplateID: templateID,
 	})
@@ -168,7 +168,7 @@ func (h *Handler) deleteTestCase(c *gin.Context) {
 		return
 	}
 
-	err = h.service.DeleteTestCase(c.Request.Context(), repositories.GetTestCaseByIDRequest{
+	err = h.service.DeleteTestCase(c.Request.Context(), formulatemplateports.GetTestCaseByIDRequest{
 		TenantInfo: pagination.FromAuthAsUser(authCtx),
 		TemplateID: templateID,
 		TestCaseID: testCaseID,

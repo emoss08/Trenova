@@ -8,9 +8,9 @@ import (
 	"database/sql"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/ports"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/uptrace/bun"
 )
 
@@ -21,7 +21,7 @@ import (
 func FromBaseline(
 	toolName string,
 	params map[string]any,
-	baseline *serviceports.ProposalBaselineResult,
+	baseline *agentports.ProposalBaselineResult,
 ) *agent.ToolSimulation {
 	if baseline == nil {
 		return Describe(toolName, params)
@@ -41,16 +41,16 @@ func FromBaseline(
 // database it is Simulate alone.
 func InSnapshot(
 	ctx context.Context,
-	db ports.DBConnection,
-	tool serviceports.AgentTool,
-	params *serviceports.ToolExecuteParams,
+	db kernelports.DBConnection,
+	tool agentports.AgentTool,
+	params *agentports.ToolExecuteParams,
 ) *agent.ToolSimulation {
 	if db == nil {
 		return Simulate(ctx, tool, params)
 	}
 
 	var simulation *agent.ToolSimulation
-	err := db.WithTx(ctx, ports.TxOptions{
+	err := db.WithTx(ctx, kernelports.TxOptions{
 		ReadOnly:  true,
 		Isolation: sql.LevelRepeatableRead,
 	}, func(txCtx context.Context, _ bun.Tx) error {
@@ -76,15 +76,15 @@ func InSnapshot(
 // more could be said.
 func Simulate(
 	ctx context.Context,
-	tool serviceports.AgentTool,
-	params *serviceports.ToolExecuteParams,
+	tool agentports.AgentTool,
+	params *agentports.ToolExecuteParams,
 ) *agent.ToolSimulation {
-	previewer, ok := tool.(serviceports.ToolPreviewer)
+	previewer, ok := tool.(agentports.ToolPreviewer)
 	if !ok {
 		return Describe(tool.Name(), params.Params)
 	}
 
-	preview, err := previewer.Preview(ports.WithReadOnly(ctx), *params)
+	preview, err := previewer.Preview(kernelports.WithReadOnly(ctx), *params)
 	if err != nil {
 		return failedPreview(tool.Name(), params.Params, err)
 	}

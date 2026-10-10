@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -40,11 +40,11 @@ var (
 
 func (r *repository) ListBoardDrivers(
 	ctx context.Context,
-	filter *repositories.DispatchBoardFilter,
-) ([]*repositories.BoardDriver, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.BoardDriver, error) {
+	filter *shipmentports.DispatchBoardFilter,
+) ([]*shipmentports.BoardDriver, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipmentports.BoardDriver, error) {
 		cols := buncolgen.WorkerColumns
-		entities := make([]*repositories.BoardDriver, 0, boardLimit(filter.Limit))
+		entities := make([]*shipmentports.BoardDriver, 0, boardLimit(filter.Limit))
 
 		const tractorLateral = `LEFT JOIN LATERAL (
 		SELECT trac.id,
@@ -115,16 +115,16 @@ func (r *repository) ListBoardDrivers(
 
 func (r *repository) ListWorkerCommitments(
 	ctx context.Context,
-	req *repositories.ListWorkerWindowsRequest,
-) ([]*repositories.WorkerCommitment, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.WorkerCommitment, error) {
+	req *shipmentports.ListWorkerWindowsRequest,
+) ([]*shipmentports.WorkerCommitment, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipmentports.WorkerCommitment, error) {
 		if len(req.WorkerIDs) == 0 {
-			return []*repositories.WorkerCommitment{}, nil
+			return []*shipmentports.WorkerCommitment{}, nil
 		}
 
 		asnCols := buncolgen.AssignmentColumns
 		moveCols := buncolgen.ShipmentMoveColumns
-		entities := make([]*repositories.WorkerCommitment, 0, len(req.WorkerIDs))
+		entities := make([]*shipmentports.WorkerCommitment, 0, len(req.WorkerIDs))
 
 		const windowLateral = `JOIN LATERAL (
 		SELECT MIN(stp.scheduled_window_start) AS window_start,
@@ -181,15 +181,15 @@ func (r *repository) ListWorkerCommitments(
 
 func (r *repository) ListWorkerTimeOff(
 	ctx context.Context,
-	req *repositories.ListWorkerWindowsRequest,
-) ([]*repositories.WorkerTimeOff, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.WorkerTimeOff, error) {
+	req *shipmentports.ListWorkerWindowsRequest,
+) ([]*shipmentports.WorkerTimeOff, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipmentports.WorkerTimeOff, error) {
 		if len(req.WorkerIDs) == 0 {
-			return []*repositories.WorkerTimeOff{}, nil
+			return []*shipmentports.WorkerTimeOff{}, nil
 		}
 
 		cols := buncolgen.WorkerPTOColumns
-		entities := make([]*repositories.WorkerTimeOff, 0, len(req.WorkerIDs))
+		entities := make([]*shipmentports.WorkerTimeOff, 0, len(req.WorkerIDs))
 
 		q := r.db.DBForContext(ctx).NewSelect().
 			Model((*worker.WorkerPTO)(nil)).
@@ -222,16 +222,16 @@ func (r *repository) ListWorkerTimeOff(
 
 func (r *repository) ListWorkerWorkload(
 	ctx context.Context,
-	req *repositories.ListWorkloadRequest,
-) ([]*repositories.WorkerWorkload, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.WorkerWorkload, error) {
+	req *shipmentports.ListWorkloadRequest,
+) ([]*shipmentports.WorkerWorkload, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipmentports.WorkerWorkload, error) {
 		if len(req.WorkerIDs) == 0 {
-			return []*repositories.WorkerWorkload{}, nil
+			return []*shipmentports.WorkerWorkload{}, nil
 		}
 
 		asnCols := buncolgen.AssignmentColumns
 		moveCols := buncolgen.ShipmentMoveColumns
-		entities := make([]*repositories.WorkerWorkload, 0, len(req.WorkerIDs))
+		entities := make([]*shipmentports.WorkerWorkload, 0, len(req.WorkerIDs))
 
 		const departureLateral = `LEFT JOIN LATERAL (
 		SELECT stp.actual_departure
@@ -288,16 +288,16 @@ func (r *repository) ListWorkerWorkload(
 
 func (r *repository) ListWorkerLaneExperience(
 	ctx context.Context,
-	req *repositories.ListLaneExperienceRequest,
-) ([]*repositories.WorkerLaneExperience, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.WorkerLaneExperience, error) {
+	req *shipmentports.ListLaneExperienceRequest,
+) ([]*shipmentports.WorkerLaneExperience, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipmentports.WorkerLaneExperience, error) {
 		if len(req.WorkerIDs) == 0 || len(req.CustomerIDs) == 0 {
-			return []*repositories.WorkerLaneExperience{}, nil
+			return []*shipmentports.WorkerLaneExperience{}, nil
 		}
 
 		asnCols := buncolgen.AssignmentColumns
 		shipCols := buncolgen.ShipmentColumns
-		entities := make([]*repositories.WorkerLaneExperience, 0, len(req.WorkerIDs))
+		entities := make([]*shipmentports.WorkerLaneExperience, 0, len(req.WorkerIDs))
 
 		q := r.db.DBForContext(ctx).NewSelect().
 			Model((*shipment.Assignment)(nil)).
@@ -356,7 +356,7 @@ func (r *repository) ListWorkersByIDs(
 
 func (r *repository) ListEquipmentByIDs(
 	ctx context.Context,
-	req *repositories.ListEquipmentByIDsRequest,
+	req *shipmentports.ListEquipmentByIDsRequest,
 ) ([]*tractor.Tractor, []*trailer.Trailer, error) {
 	return dbtx.Read2(ctx, r.db, func(ctx context.Context) ([]*tractor.Tractor, []*trailer.Trailer, error) {
 		tractors := make([]*tractor.Tractor, 0, len(req.TractorIDs))

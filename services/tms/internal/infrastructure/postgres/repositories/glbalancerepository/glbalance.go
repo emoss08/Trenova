@@ -3,9 +3,9 @@ package glbalancerepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/glbalanceports"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -22,16 +22,16 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) repositories.GLBalanceRepository {
+func New(p Params) glbalanceports.GLBalanceRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.gl-balance-repository")}
 }
 
 func (r *repository) ListTrialBalanceByPeriod(
 	ctx context.Context,
-	req repositories.ListTrialBalanceByPeriodRequest,
-) ([]*repositories.GLPeriodAccountBalance, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.GLPeriodAccountBalance, error) {
-		balances := make([]*repositories.GLPeriodAccountBalance, 0)
+	req glbalanceports.ListTrialBalanceByPeriodRequest,
+) ([]*glbalanceports.GLPeriodAccountBalance, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*glbalanceports.GLPeriodAccountBalance, error) {
+		balances := make([]*glbalanceports.GLPeriodAccountBalance, 0)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			TableExpr("gl_account_balances_by_period AS gb").
@@ -63,10 +63,10 @@ func (r *repository) ListTrialBalanceByPeriod(
 
 func (r *repository) ListYearToDateBalances(
 	ctx context.Context,
-	req repositories.ListYearToDateBalancesRequest,
-) ([]*repositories.GLPeriodAccountBalance, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.GLPeriodAccountBalance, error) {
-		balances := make([]*repositories.GLPeriodAccountBalance, 0)
+	req glbalanceports.ListYearToDateBalancesRequest,
+) ([]*glbalanceports.GLPeriodAccountBalance, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*glbalanceports.GLPeriodAccountBalance, error) {
+		balances := make([]*glbalanceports.GLPeriodAccountBalance, 0)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			TableExpr("gl_account_balances_by_period AS gb").
@@ -103,10 +103,10 @@ func (r *repository) ListYearToDateBalances(
 // for the adjusting period itself.
 func (r *repository) ListCumulativeBalancesThroughPeriod(
 	ctx context.Context,
-	req repositories.ListCumulativeBalancesThroughPeriodRequest,
-) ([]*repositories.GLPeriodAccountBalance, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.GLPeriodAccountBalance, error) {
-		balances := make([]*repositories.GLPeriodAccountBalance, 0)
+	req glbalanceports.ListCumulativeBalancesThroughPeriodRequest,
+) ([]*glbalanceports.GLPeriodAccountBalance, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*glbalanceports.GLPeriodAccountBalance, error) {
+		balances := make([]*glbalanceports.GLPeriodAccountBalance, 0)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			TableExpr("gl_account_balances_by_period AS gb").

@@ -1,15 +1,16 @@
 package tenderservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/notificationportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -21,28 +22,28 @@ import (
 )
 
 type offerReadingTenderRepo struct {
-	repositories.TenderRepository
+	tenderports.TenderRepository
 
 	offer *tender.TenderOffer
 }
 
 func (f *offerReadingTenderRepo) GetOfferByID(
 	_ context.Context,
-	_ repositories.GetTenderOfferByIDRequest,
+	_ tenderports.GetTenderOfferByIDRequest,
 ) (*tender.TenderOffer, error) {
 	return f.offer, nil
 }
 
 type stubRateConIssuer struct {
-	req    *portservices.IssueTenderRateConfirmationRequest
-	result *portservices.IssueTenderRateConfirmationResult
+	req    *rateconfirmationports.IssueTenderRateConfirmationRequest
+	result *rateconfirmationports.IssueTenderRateConfirmationResult
 	err    error
 }
 
 func (f *stubRateConIssuer) IssueForTenderAcceptance(
 	_ context.Context,
-	req *portservices.IssueTenderRateConfirmationRequest,
-) (*portservices.IssueTenderRateConfirmationResult, error) {
+	req *rateconfirmationports.IssueTenderRateConfirmationRequest,
+) (*rateconfirmationports.IssueTenderRateConfirmationResult, error) {
 	f.req = req
 	return f.result, f.err
 }
@@ -67,7 +68,7 @@ func acceptedOfferFixture() *tender.TenderOffer {
 
 type issueLifecycleDeps struct {
 	issuer    *stubRateConIssuer
-	notifRepo *mocks.MockNotificationRepository
+	notifRepo *notificationportsmock.MockNotificationRepository
 	svc       *Service
 }
 
@@ -76,7 +77,7 @@ func setupIssueLifecycleTest(t *testing.T, offer *tender.TenderOffer) *issueLife
 
 	deps := &issueLifecycleDeps{
 		issuer:    &stubRateConIssuer{},
-		notifRepo: mocks.NewMockNotificationRepository(t),
+		notifRepo: notificationportsmock.NewMockNotificationRepository(t),
 	}
 	deps.svc = &Service{
 		l:    zap.NewNop(),
@@ -101,7 +102,7 @@ func issueLifecycleTenant() pagination.TenantInfo {
 func TestIssueRateConfirmationBuildsRequestFromOffer(t *testing.T) {
 	offer := acceptedOfferFixture()
 	deps := setupIssueLifecycleTest(t, offer)
-	deps.issuer.result = &portservices.IssueTenderRateConfirmationResult{
+	deps.issuer.result = &rateconfirmationports.IssueTenderRateConfirmationResult{
 		RateConfirmationID: pulid.MustNew("ratecon_"),
 		Issued:             true,
 	}
@@ -148,7 +149,7 @@ func TestIssueRateConfirmationDeterministicFailureNotifiesDispatch(t *testing.T)
 func TestIssueRateConfirmationNotIssuedNotifiesDispatch(t *testing.T) {
 	offer := acceptedOfferFixture()
 	deps := setupIssueLifecycleTest(t, offer)
-	deps.issuer.result = &portservices.IssueTenderRateConfirmationResult{
+	deps.issuer.result = &rateconfirmationports.IssueTenderRateConfirmationResult{
 		Reason: "A dispatcher-managed rate confirmation already covers this move",
 	}
 

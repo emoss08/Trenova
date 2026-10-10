@@ -1,12 +1,13 @@
 package rateimportservice
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/rateagreementportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/rateimport"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateimportports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	pkgrateimport "github.com/emoss08/trenova/pkg/rateimport"
@@ -19,14 +20,14 @@ import (
 )
 
 type planImportRepo struct {
-	repositories.RateImportRepository
+	rateimportports.RateImportRepository
 	batch   *rateimport.RateImportBatch
 	updates int
 }
 
 func (r *planImportRepo) GetByID(
 	context.Context,
-	*repositories.GetRateImportBatchByIDRequest,
+	*rateimportports.GetRateImportBatchByIDRequest,
 ) (*rateimport.RateImportBatch, error) {
 	copied := *r.batch
 
@@ -73,7 +74,7 @@ func importFixture(t *testing.T, status rateimport.Status) (*Service, *planImpor
 		}},
 	}
 
-	agreements := mocks.NewMockRateAgreementRepository(t)
+	agreements := rateagreementportsmock.NewMockRateAgreementRepository(t)
 	agreements.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
 		Return(&rateagreement.RateAgreement{

@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -47,7 +47,7 @@ func TestGetByIDs_PreloadsHazardousMaterial(t *testing.T) {
 			hazmatID, orgID, buID, "UN1263", "Flammable liquid", "Class3", "II",
 		))
 
-	entities, err := repo.GetByIDs(t.Context(), repositories.GetCommoditiesByIDsRequest{
+	entities, err := repo.GetByIDs(t.Context(), commodityports.GetCommoditiesByIDsRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: orgID,
 			BuID:  buID,

@@ -12,7 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
 	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -496,7 +497,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityDetail)
+					obj := o.(*agentqualityports.AgentQualityDetail)
 					return obj.AgentDefinitionID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -506,7 +507,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityDetail)
+					obj := o.(*agentqualityports.AgentQualityDetail)
 					return obj.AgentName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -516,7 +517,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityDetail)
+					obj := o.(*agentqualityports.AgentQualityDetail)
 					return obj.Enabled, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -526,7 +527,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityDetail)
+					obj := o.(*agentqualityports.AgentQualityDetail)
 					return obj.WindowDays, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -536,7 +537,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityDetail)
+					obj := o.(*agentqualityports.AgentQualityDetail)
 					return obj.Since, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -546,7 +547,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityDetail)
+					obj := o.(*agentqualityports.AgentQualityDetail)
 					return obj.RatingsVisible, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -555,7 +556,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "satisfaction",
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityDetail)
+					obj := o.(*agentqualityports.AgentQualityDetail)
 					return obj.Satisfaction, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
@@ -565,7 +566,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityDetail)
+					obj := o.(*agentqualityports.AgentQualityDetail)
 					return obj.Ratings, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -576,7 +577,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "AgentFeedbackDay",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityDetail)
+					obj := o.(*agentqualityports.AgentQualityDetail)
 					return obj.SatisfactionPoints, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentFeedbackDay2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentFeedbackDayᚄ),
@@ -587,7 +588,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "AgentQualityPoint",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityDetail)
+					obj := o.(*agentqualityports.AgentQualityDetail)
 					return obj.QualityPoints, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentQualityPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentQualityPointᚄ),
@@ -598,7 +599,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "AgentWorstRatedAnswer",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityDetail)
+					obj := o.(*agentqualityports.AgentQualityDetail)
 					return obj.WorstRated, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentWorstRatedAnswer2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentWorstRatedAnswerᚄ),
@@ -608,7 +609,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "AgentSuiteRun",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityDetail)
+					obj := o.(*agentqualityports.AgentQualityDetail)
 					return obj.LastSuiteRun, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOAgentSuiteRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentqualityᚐSuiteRun),
@@ -618,7 +619,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityDetail)
+					obj := o.(*agentqualityports.AgentQualityDetail)
 					return obj.ActiveCases, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -632,7 +633,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityAgent)
+					obj := o.(*agentqualityports.AgentQualityAgent)
 					return gqlexec.Resolver[resolverAgentQualityAgent](ec, "AgentQualityAgent").ID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNID2string),
@@ -642,7 +643,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityAgent)
+					obj := o.(*agentqualityports.AgentQualityAgent)
 					return obj.AgentDefinitionID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -652,7 +653,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityAgent)
+					obj := o.(*agentqualityports.AgentQualityAgent)
 					return obj.Name, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -662,7 +663,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityAgent)
+					obj := o.(*agentqualityports.AgentQualityAgent)
 					return obj.Enabled, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -672,7 +673,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityAgent)
+					obj := o.(*agentqualityports.AgentQualityAgent)
 					return obj.RatingsVisible, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -681,7 +682,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "satisfaction",
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityAgent)
+					obj := o.(*agentqualityports.AgentQualityAgent)
 					return obj.Satisfaction, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
@@ -690,7 +691,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "satisfactionDelta",
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityAgent)
+					obj := o.(*agentqualityports.AgentQualityAgent)
 					return obj.SatisfactionDelta, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
@@ -700,7 +701,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityAgent)
+					obj := o.(*agentqualityports.AgentQualityAgent)
 					return obj.Ratings, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -709,7 +710,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "qualityScore",
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityAgent)
+					obj := o.(*agentqualityports.AgentQualityAgent)
 					return obj.QualityScore, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
@@ -720,7 +721,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "AgentQualityPoint",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityAgent)
+					obj := o.(*agentqualityports.AgentQualityAgent)
 					return obj.QualityPoints, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentQualityPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentQualityPointᚄ),
@@ -730,7 +731,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "AgentSuiteRun",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityAgent)
+					obj := o.(*agentqualityports.AgentQualityAgent)
 					return obj.LastSuiteRun, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOAgentSuiteRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentqualityᚐSuiteRun),
@@ -740,7 +741,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityAgent)
+					obj := o.(*agentqualityports.AgentQualityAgent)
 					return obj.OpenRegression, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -955,7 +956,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityOverview)
+					obj := o.(*agentqualityports.AgentQualityOverview)
 					return obj.WindowDays, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -965,7 +966,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityOverview)
+					obj := o.(*agentqualityports.AgentQualityOverview)
 					return obj.Since, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -975,7 +976,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityOverview)
+					obj := o.(*agentqualityports.AgentQualityOverview)
 					return obj.RatingsVisible, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -984,7 +985,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "satisfaction",
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityOverview)
+					obj := o.(*agentqualityports.AgentQualityOverview)
 					return obj.Satisfaction, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
@@ -994,7 +995,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityOverview)
+					obj := o.(*agentqualityports.AgentQualityOverview)
 					return obj.Ratings, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1003,7 +1004,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "qualityScore",
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityOverview)
+					obj := o.(*agentqualityports.AgentQualityOverview)
 					return obj.QualityScore, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
@@ -1013,7 +1014,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityOverview)
+					obj := o.(*agentqualityports.AgentQualityOverview)
 					return obj.AgentsScored, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1023,7 +1024,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityOverview)
+					obj := o.(*agentqualityports.AgentQualityOverview)
 					return obj.SuiteRuns, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1033,7 +1034,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityOverview)
+					obj := o.(*agentqualityports.AgentQualityOverview)
 					return obj.Regressions, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1043,7 +1044,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityOverview)
+					obj := o.(*agentqualityports.AgentQualityOverview)
 					return obj.OpenRegressions, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1053,7 +1054,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityOverview)
+					obj := o.(*agentqualityports.AgentQualityOverview)
 					return obj.EvalSpendMonthUSD, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -1063,7 +1064,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityOverview)
+					obj := o.(*agentqualityports.AgentQualityOverview)
 					return obj.EvalUnpricedCalls, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1073,7 +1074,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityOverview)
+					obj := o.(*agentqualityports.AgentQualityOverview)
 					return obj.MonthlyBudgetUSD, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -1083,7 +1084,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityOverview)
+					obj := o.(*agentqualityports.AgentQualityOverview)
 					return obj.MonthStartedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1093,7 +1094,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityOverview)
+					obj := o.(*agentqualityports.AgentQualityOverview)
 					return obj.SweepEnabled, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1103,7 +1104,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityOverview)
+					obj := o.(*agentqualityports.AgentQualityOverview)
 					return obj.NextSweepHourLocal, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1113,7 +1114,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityOverview)
+					obj := o.(*agentqualityports.AgentQualityOverview)
 					return obj.NextSweepTimezone, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1123,7 +1124,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityOverview)
+					obj := o.(*agentqualityports.AgentQualityOverview)
 					return obj.AgentsWithCases, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1133,7 +1134,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityOverview)
+					obj := o.(*agentqualityports.AgentQualityOverview)
 					return obj.JudgeEnabled, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1143,7 +1144,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityOverview)
+					obj := o.(*agentqualityports.AgentQualityOverview)
 					return obj.RegressionThreshold, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
@@ -1153,7 +1154,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "AgentSuiteRun",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityOverview)
+					obj := o.(*agentqualityports.AgentQualityOverview)
 					return obj.WorstRegression, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOAgentSuiteRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentqualityᚐSuiteRun),
@@ -1165,7 +1166,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityPoint)
+					obj := o.(*agentqualityports.AgentQualityPoint)
 					return obj.SuiteRunID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1175,7 +1176,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityPoint)
+					obj := o.(*agentqualityports.AgentQualityPoint)
 					return obj.At, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1185,7 +1186,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityPoint)
+					obj := o.(*agentqualityports.AgentQualityPoint)
 					return obj.QualityScore, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
@@ -1195,7 +1196,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityPoint)
+					obj := o.(*agentqualityports.AgentQualityPoint)
 					return obj.Status, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentSuiteRunStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentqualityᚐSuiteRunStatus),
@@ -1205,7 +1206,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentQualityPoint)
+					obj := o.(*agentqualityports.AgentQualityPoint)
 					return obj.Regression, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1656,7 +1657,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentWorstRatedAnswer)
+					obj := o.(*agentqualityports.AgentWorstRatedAnswer)
 					return gqlexec.Resolver[resolverAgentWorstRatedAnswer](ec, "AgentWorstRatedAnswer").ID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNID2string),
@@ -1666,7 +1667,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild13,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentWorstRatedAnswer)
+					obj := o.(*agentqualityports.AgentWorstRatedAnswer)
 					return obj.TargetType, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNAIFeedbackTargetType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaifeedbackᚐTargetType),
@@ -1676,7 +1677,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentWorstRatedAnswer)
+					obj := o.(*agentqualityports.AgentWorstRatedAnswer)
 					return obj.TargetID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1686,7 +1687,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentWorstRatedAnswer)
+					obj := o.(*agentqualityports.AgentWorstRatedAnswer)
 					return obj.TargetPart, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1696,7 +1697,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentWorstRatedAnswer)
+					obj := o.(*agentqualityports.AgentWorstRatedAnswer)
 					return obj.Positive, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1706,7 +1707,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentWorstRatedAnswer)
+					obj := o.(*agentqualityports.AgentWorstRatedAnswer)
 					return obj.Negative, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1716,7 +1717,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentWorstRatedAnswer)
+					obj := o.(*agentqualityports.AgentWorstRatedAnswer)
 					return obj.LastRatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1726,7 +1727,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "AIFeedback",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentWorstRatedAnswer)
+					obj := o.(*agentqualityports.AgentWorstRatedAnswer)
 					return obj.Sample, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOAIFeedback2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaifeedbackᚐFeedback),
@@ -1735,7 +1736,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "threadId",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentWorstRatedAnswer)
+					obj := o.(*agentqualityports.AgentWorstRatedAnswer)
 					return obj.ThreadID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1745,7 +1746,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentWorstRatedAnswer)
+					obj := o.(*agentqualityports.AgentWorstRatedAnswer)
 					return obj.CanOpenThread, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1754,7 +1755,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "agentDefinitionId",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentWorstRatedAnswer)
+					obj := o.(*agentqualityports.AgentWorstRatedAnswer)
 					return obj.AgentDefinitionID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1764,7 +1765,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*services.AgentWorstRatedAnswer)
+					obj := o.(*agentqualityports.AgentWorstRatedAnswer)
 					return obj.AgentName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2137,7 +2138,7 @@ type resolverAgentEvalCase interface {
 }
 
 type resolverAgentQualityAgent interface {
-	ID(ctx context.Context, obj *services.AgentQualityAgent) (string, error)
+	ID(ctx context.Context, obj *agentqualityports.AgentQualityAgent) (string, error)
 }
 
 type resolverAgentQualityControl interface {
@@ -2155,7 +2156,7 @@ type resolverAgentSuiteRun interface {
 }
 
 type resolverAgentWorstRatedAnswer interface {
-	ID(ctx context.Context, obj *services.AgentWorstRatedAnswer) (string, error)
+	ID(ctx context.Context, obj *agentqualityports.AgentWorstRatedAnswer) (string, error)
 }
 
 type resolverMutation interface {
@@ -2170,8 +2171,8 @@ type resolverMutation interface {
 type resolverQuery interface {
 	AgentEvalCases(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentEvalCaseConnection, error)
 	AgentEvalCase(ctx context.Context, id string) (*agentquality.EvalCase, error)
-	AgentQualityOverview(ctx context.Context, window *int) (*services.AgentQualityOverview, error)
-	AgentQuality(ctx context.Context, agentDefinitionID string, window *int) (*services.AgentQualityDetail, error)
+	AgentQualityOverview(ctx context.Context, window *int) (*agentqualityports.AgentQualityOverview, error)
+	AgentQuality(ctx context.Context, agentDefinitionID string, window *int) (*agentqualityports.AgentQualityDetail, error)
 	AgentQualityAgents(ctx context.Context, input gqlmodel.AgentQualityAgentsInput) (*gqlmodel.AgentQualityAgentConnection, error)
 	AgentQualityAgentConnection(ctx context.Context, window *int, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentQualityAgentConnection, error)
 	AgentWorstRatedAnswers(ctx context.Context, input gqlmodel.AgentWorstRatedAnswersInput) (*gqlmodel.AgentWorstRatedAnswerConnection, error)
@@ -3422,15 +3423,15 @@ func marshalNAgentEvaluation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋco
 	return ec.MarshalType(ctx, sel, "AgentEvaluation", v)
 }
 
-func marshalNAgentFeedbackDay2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentFeedbackDayᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*services.AgentFeedbackDay) graphql.Marshaler {
-	return gqlexec.List[*services.AgentFeedbackDay]{
+func marshalNAgentFeedbackDay2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentFeedbackDayᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*aifeedbackports.AgentFeedbackDay) graphql.Marshaler {
+	return gqlexec.List[*aifeedbackports.AgentFeedbackDay]{
 		Elem:        marshalNAgentFeedbackDay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentFeedbackDay,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAgentFeedbackDay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentFeedbackDay(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.AgentFeedbackDay) graphql.Marshaler {
+func marshalNAgentFeedbackDay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentFeedbackDay(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aifeedbackports.AgentFeedbackDay) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3454,7 +3455,7 @@ func marshalNAgentFingerprintChange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	return ec.MarshalType(ctx, sel, "AgentFingerprintChange", v)
 }
 
-func marshalNAgentQuality2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentQualityDetail(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.AgentQualityDetail) graphql.Marshaler {
+func marshalNAgentQuality2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentQualityDetail(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentqualityports.AgentQualityDetail) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3462,7 +3463,7 @@ func marshalNAgentQuality2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore�
 	return ec.MarshalType(ctx, sel, "AgentQuality", v)
 }
 
-func marshalNAgentQualityAgent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentQualityAgent(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.AgentQualityAgent) graphql.Marshaler {
+func marshalNAgentQualityAgent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentQualityAgent(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentqualityports.AgentQualityAgent) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3502,7 +3503,7 @@ func marshalNAgentQualityControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "AgentQualityControl", v)
 }
 
-func marshalNAgentQualityOverview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentQualityOverview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.AgentQualityOverview) graphql.Marshaler {
+func marshalNAgentQualityOverview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentQualityOverview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentqualityports.AgentQualityOverview) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3510,15 +3511,15 @@ func marshalNAgentQualityOverview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return ec.MarshalType(ctx, sel, "AgentQualityOverview", v)
 }
 
-func marshalNAgentQualityPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentQualityPointᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*services.AgentQualityPoint) graphql.Marshaler {
-	return gqlexec.List[*services.AgentQualityPoint]{
+func marshalNAgentQualityPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentQualityPointᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*agentqualityports.AgentQualityPoint) graphql.Marshaler {
+	return gqlexec.List[*agentqualityports.AgentQualityPoint]{
 		Elem:        marshalNAgentQualityPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentQualityPoint,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAgentQualityPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentQualityPoint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.AgentQualityPoint) graphql.Marshaler {
+func marshalNAgentQualityPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentQualityPoint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentqualityports.AgentQualityPoint) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3606,15 +3607,15 @@ func marshalNAgentSuiteRunTrigger2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return res
 }
 
-func marshalNAgentWorstRatedAnswer2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentWorstRatedAnswerᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*services.AgentWorstRatedAnswer) graphql.Marshaler {
-	return gqlexec.List[*services.AgentWorstRatedAnswer]{
+func marshalNAgentWorstRatedAnswer2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentWorstRatedAnswerᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*agentqualityports.AgentWorstRatedAnswer) graphql.Marshaler {
+	return gqlexec.List[*agentqualityports.AgentWorstRatedAnswer]{
 		Elem:        marshalNAgentWorstRatedAnswer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentWorstRatedAnswer,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAgentWorstRatedAnswer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentWorstRatedAnswer(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.AgentWorstRatedAnswer) graphql.Marshaler {
+func marshalNAgentWorstRatedAnswer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentWorstRatedAnswer(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentqualityports.AgentWorstRatedAnswer) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

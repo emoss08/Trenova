@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -32,7 +32,7 @@ type payProfileRepository struct {
 	l  *zap.Logger
 }
 
-func NewPayProfile(p Params) repositories.PayProfileRepository {
+func NewPayProfile(p Params) driverpayports.PayProfileRepository {
 	return &payProfileRepository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.pay-profile-repository"),
@@ -41,7 +41,7 @@ func NewPayProfile(p Params) repositories.PayProfileRepository {
 
 func (r *payProfileRepository) List(
 	ctx context.Context,
-	req *repositories.ListPayProfilesRequest,
+	req *driverpayports.ListPayProfilesRequest,
 ) (*pagination.ListResult[*driverpay.PayProfile], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*driverpay.PayProfile], error) {
 		limit := req.Filter.Pagination.SafeLimit()
@@ -81,7 +81,7 @@ func (r *payProfileRepository) List(
 
 func (r *payProfileRepository) ListConnection(
 	ctx context.Context,
-	req *repositories.ListPayProfileConnectionRequest,
+	req *driverpayports.ListPayProfileConnectionRequest,
 ) (*pagination.CursorListResult[*driverpay.PayProfile], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*driverpay.PayProfile], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
@@ -141,7 +141,7 @@ func (r *payProfileRepository) ListConnection(
 
 func (r *payProfileRepository) SelectOptions(
 	ctx context.Context,
-	req *repositories.PayProfileSelectOptionsRequest,
+	req *driverpayports.PayProfileSelectOptionsRequest,
 ) (*pagination.ListResult[*driverpay.PayProfile], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*driverpay.PayProfile], error) {
 		cols := buncolgen.PayProfileColumns
@@ -179,7 +179,7 @@ func (r *payProfileRepository) SelectOptions(
 
 func (r *payProfileRepository) GetByID(
 	ctx context.Context,
-	req repositories.GetPayProfileByIDRequest,
+	req driverpayports.GetPayProfileByIDRequest,
 ) (*driverpay.PayProfile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driverpay.PayProfile, error) {
 		entity := new(driverpay.PayProfile)
@@ -221,7 +221,7 @@ func (r *payProfileRepository) Create(
 				return nil, fmt.Errorf("create pay profile components: %w", err)
 			}
 		}
-		return r.GetByID(ctx, repositories.GetPayProfileByIDRequest{
+		return r.GetByID(ctx, driverpayports.GetPayProfileByIDRequest{
 			ID: entity.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
@@ -280,7 +280,7 @@ func (r *payProfileRepository) Update(
 				}
 			}
 		}
-		return r.GetByID(ctx, repositories.GetPayProfileByIDRequest{
+		return r.GetByID(ctx, driverpayports.GetPayProfileByIDRequest{
 			ID: entity.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
@@ -314,7 +314,7 @@ func (r *payProfileRepository) CountActiveAssignments(
 
 func (r *payProfileRepository) CountActiveAssignmentsByIDs(
 	ctx context.Context,
-	req repositories.CountActivePayAssignmentsRequest,
+	req driverpayports.CountActivePayAssignmentsRequest,
 ) (map[pulid.ID]int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (map[pulid.ID]int, error) {
 		if len(req.ProfileIDs) == 0 {

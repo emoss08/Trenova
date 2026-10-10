@@ -7,11 +7,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/ediinboundservice"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -73,29 +74,29 @@ func ediToolProviders() []any {
 type inboundFileReader interface {
 	ListInboundFiles(
 		ctx context.Context,
-		req *repositories.ListEDIInboundFilesRequest,
+		req *ediports.ListEDIInboundFilesRequest,
 	) (*pagination.ListResult[*edi.EDIInboundFile], error)
 	GetInboundFile(
 		ctx context.Context,
-		req repositories.GetEDIInboundFileByIDRequest,
+		req ediports.GetEDIInboundFileByIDRequest,
 	) (*edi.EDIInboundFile, error)
 }
 
 type ediTransferReader interface {
 	ListInboundTransfersCursor(
 		ctx context.Context,
-		req *repositories.ListEDITransfersRequest,
+		req *ediports.ListEDITransfersRequest,
 	) (*pagination.CursorListResult[*edi.EDITransfer], error)
 	ListOutboundTransfersCursor(
 		ctx context.Context,
-		req *repositories.ListEDITransfersRequest,
+		req *ediports.ListEDITransfersRequest,
 	) (*pagination.CursorListResult[*edi.EDITransfer], error)
 }
 
 type ediPartnerReader interface {
 	GetPartner(
 		ctx context.Context,
-		req repositories.GetEDIPartnerByIDRequest,
+		req ediports.GetEDIPartnerByIDRequest,
 	) (*edi.EDIPartner, error)
 	GetPartnerReadiness(
 		ctx context.Context,
@@ -105,25 +106,25 @@ type ediPartnerReader interface {
 
 func provideListEDIInboundFilesTool(
 	inbound *ediinboundservice.Service,
-) serviceports.AgentQueryTool {
+) agentports.AgentQueryTool {
 	return newListEDIInboundFilesTool(inbound)
 }
 
 func provideGetEDIInboundFileTool(
 	inbound *ediinboundservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newGetEDIInboundFileTool(inbound, permissions)
 }
 
-func provideListEDITransfersTool(ediSvc *ediservice.Service) serviceports.AgentQueryTool {
+func provideListEDITransfersTool(ediSvc *ediservice.Service) agentports.AgentQueryTool {
 	return newListEDITransfersTool(ediSvc)
 }
 
 func provideGetEDIPartnerTool(
 	ediSvc *ediservice.Service,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return newGetEDIPartnerTool(ediSvc, permissions)
 }
 
@@ -175,7 +176,7 @@ type listEDIInboundFilesTool struct {
 	inbound inboundFileReader
 }
 
-func newListEDIInboundFilesTool(inbound inboundFileReader) serviceports.AgentQueryTool {
+func newListEDIInboundFilesTool(inbound inboundFileReader) agentports.AgentQueryTool {
 	return &listEDIInboundFilesTool{inbound: inbound}
 }
 
@@ -197,7 +198,7 @@ func (t *listEDIInboundFilesTool) ParamSchema() map[string]any {
 	}, defaultListLimit, maxListLimit))
 }
 
-func (t *listEDIInboundFilesTool) Policy() serviceports.ToolPolicy {
+func (t *listEDIInboundFilesTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceEDI,
 		reads:    agent.ExternalReadAlways,
@@ -209,7 +210,7 @@ func (t *listEDIInboundFilesTool) Policy() serviceports.ToolPolicy {
 
 func (t *listEDIInboundFilesTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -225,7 +226,7 @@ func (t *listEDIInboundFilesTool) Query(
 	}
 	window := readPage(params.Params, defaultListLimit, maxListLimit)
 
-	req := &repositories.ListEDIInboundFilesRequest{
+	req := &ediports.ListEDIInboundFilesRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenantOf(params),
 			Pagination: pagination.Info{Limit: window.fetch(), Offset: window.offset},
@@ -272,8 +273,8 @@ type getEDIInboundFileTool struct {
 
 func newGetEDIInboundFileTool(
 	inbound inboundFileReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &getEDIInboundFileTool{inbound: inbound, access: newFieldAccess(permissions)}
 }
 
@@ -299,7 +300,7 @@ func (t *getEDIInboundFileTool) ParamSchema() map[string]any {
 	}, paramInboundFileID)
 }
 
-func (t *getEDIInboundFileTool) Policy() serviceports.ToolPolicy {
+func (t *getEDIInboundFileTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceEDI,
 		reads:    agent.ExternalReadAlways,
@@ -346,7 +347,7 @@ func (v *ediInboundFileView) TaintedRecords() []agent.RecordRef { return v.outsi
 
 func (t *getEDIInboundFileTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -358,7 +359,7 @@ func (t *getEDIInboundFileTool) Query(
 	}
 	includeRaw := optionalBool(params.Params, "includeRaw")
 
-	file, err := t.inbound.GetInboundFile(ctx, repositories.GetEDIInboundFileByIDRequest{
+	file, err := t.inbound.GetInboundFile(ctx, ediports.GetEDIInboundFileByIDRequest{
 		ID:              id,
 		TenantInfo:      tenantOf(params),
 		IncludeMessages: true,
@@ -439,7 +440,7 @@ type listEDITransfersTool struct {
 	transfers ediTransferReader
 }
 
-func newListEDITransfersTool(transfers ediTransferReader) serviceports.AgentQueryTool {
+func newListEDITransfersTool(transfers ediTransferReader) agentports.AgentQueryTool {
 	return &listEDITransfersTool{transfers: transfers}
 }
 
@@ -466,7 +467,7 @@ func (t *listEDITransfersTool) ParamSchema() map[string]any {
 	})
 }
 
-func (t *listEDITransfersTool) Policy() serviceports.ToolPolicy {
+func (t *listEDITransfersTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceEDI,
 		reads:    agent.ExternalReadAlways,
@@ -528,7 +529,7 @@ func ediTransferRowFrom(transfer *edi.EDITransfer) ediTransferRow {
 
 func (t *listEDITransfersTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -554,7 +555,7 @@ func (t *listEDITransfersTool) Query(
 		return nil, err
 	}
 
-	req := &repositories.ListEDITransfersRequest{
+	req := &ediports.ListEDITransfersRequest{
 		Filter:        &pagination.QueryOptions{TenantInfo: tenantOf(params)},
 		Cursor:        cursor,
 		InboundFileID: fileID,
@@ -606,8 +607,8 @@ type getEDIPartnerTool struct {
 
 func newGetEDIPartnerTool(
 	partners ediPartnerReader,
-	permissions serviceports.PermissionEngine,
-) serviceports.AgentQueryTool {
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
 	return &getEDIPartnerTool{partners: partners, access: newFieldAccess(permissions)}
 }
 
@@ -631,7 +632,7 @@ func (t *getEDIPartnerTool) ParamSchema() map[string]any {
 	)
 }
 
-func (t *getEDIPartnerTool) Policy() serviceports.ToolPolicy {
+func (t *getEDIPartnerTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceEDI})
 }
 
@@ -666,7 +667,7 @@ type ediPartnerView struct {
 
 func (t *getEDIPartnerTool) Query(
 	ctx context.Context,
-	params *serviceports.QueryToolParams,
+	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -678,7 +679,7 @@ func (t *getEDIPartnerTool) Query(
 	}
 
 	tenant := tenantOf(params)
-	partner, err := t.partners.GetPartner(ctx, repositories.GetEDIPartnerByIDRequest{
+	partner, err := t.partners.GetPartner(ctx, ediports.GetEDIPartnerByIDRequest{
 		ID:         id,
 		TenantInfo: tenant,
 	})

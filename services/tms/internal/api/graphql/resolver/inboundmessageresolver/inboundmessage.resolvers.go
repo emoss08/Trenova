@@ -15,8 +15,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -113,7 +114,7 @@ func (r *InboundMessageResolver) Preview(ctx context.Context, obj *inboundmessag
 
 // MatchedShipment is shown only to a reader who could open the shipment. A
 // match to a load somebody cannot see is left absent rather than leaked.
-func (r *InboundMessageResolver) MatchedShipment(ctx context.Context, obj *inboundmessage.InboundMessage) (*repositories.ShipmentSummary, error) {
+func (r *InboundMessageResolver) MatchedShipment(ctx context.Context, obj *inboundmessage.InboundMessage) (*shipmentports.ShipmentSummary, error) {
 	if obj.MatchedShipmentID.IsNil() {
 		return nil, nil
 	}
@@ -318,7 +319,7 @@ func (r *QueryResolver) InboundMessages(ctx context.Context, input gqlmodel.Inbo
 	cursor.IncludeTotalCount = base.ConnectionFieldRequested(ctx, base.ConnectionTotalCountField)
 
 	tenant := base.TenantInfo(authCtx)
-	req := &repositories.ListInboundMessagesRequest{
+	req := &inboundmessageports.ListInboundMessagesRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenant,
 			Cursor:     cursor,
@@ -362,7 +363,7 @@ func (r *QueryResolver) InboundMessage(ctx context.Context, id string) (*inbound
 		return nil, err
 	}
 
-	return r.InboundMessageService.GetByID(ctx, repositories.GetInboundMessageByIDRequest{
+	return r.InboundMessageService.GetByID(ctx, inboundmessageports.GetInboundMessageByIDRequest{
 		ID:                 messageID,
 		TenantInfo:         base.TenantInfo(authCtx),
 		IncludeAttachments: true,
@@ -393,7 +394,7 @@ func (r *QueryResolver) InboundMailboxes(ctx context.Context) ([]*inboundmessage
 
 	result, err := r.InboundMessageService.ListMailboxes(
 		ctx,
-		&repositories.ListMailboxesRequest{
+		&inboundmessageports.ListMailboxesRequest{
 			Filter: &pagination.QueryOptions{TenantInfo: base.TenantInfo(authCtx)},
 		},
 	)

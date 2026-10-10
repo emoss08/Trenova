@@ -9,10 +9,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -21,15 +21,15 @@ import (
 )
 
 type fakeDB struct {
-	ports.DBConnection
+	kernelports.DBConnection
 
 	mu   sync.Mutex
-	opts []ports.TxOptions
+	opts []kernelports.TxOptions
 }
 
 func (f *fakeDB) WithTx(
 	ctx context.Context,
-	opts ports.TxOptions,
+	opts kernelports.TxOptions,
 	fn func(context.Context, bun.Tx) error,
 ) error {
 	f.mu.Lock()
@@ -39,9 +39,9 @@ func (f *fakeDB) WithTx(
 	return fn(ctx, bun.Tx{})
 }
 
-type fakeRegistry struct{ tools []services.AgentTool }
+type fakeRegistry struct{ tools []agentports.AgentTool }
 
-func (r fakeRegistry) Get(name string) (services.AgentTool, bool) {
+func (r fakeRegistry) Get(name string) (agentports.AgentTool, bool) {
 	for _, tool := range r.tools {
 		if tool.Name() == name {
 			return tool, true
@@ -51,9 +51,9 @@ func (r fakeRegistry) Get(name string) (services.AgentTool, bool) {
 	return nil, false
 }
 
-func (r fakeRegistry) All() []services.AgentTool { return r.tools }
+func (r fakeRegistry) All() []agentports.AgentTool { return r.tools }
 
-func (r fakeRegistry) Descriptors() []services.AgentToolDescriptor { return nil }
+func (r fakeRegistry) Descriptors() []agentports.AgentToolDescriptor { return nil }
 
 type baseTool struct {
 	name     string
@@ -76,13 +76,13 @@ func (t *baseTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *baseTool) Policy() services.ToolPolicy {
+func (t *baseTool) Policy() agentports.ToolPolicy {
 	scope := t.scope
 	if scope == "" {
 		scope = agent.ToolScopeTenant
 	}
 
-	return services.ToolPolicy{
+	return agentports.ToolPolicy{
 		Name:          t.name,
 		Kind:          agent.ToolKindAction,
 		Resource:      t.resource,
@@ -97,18 +97,18 @@ func (t *baseTool) Policy() services.ToolPolicy {
 	}
 }
 
-func (t *baseTool) Execute(context.Context, services.ToolExecuteParams) error {
+func (t *baseTool) Execute(context.Context, agentports.ToolExecuteParams) error {
 	return fmt.Errorf("%s must never run in a preview", t.name)
 }
 
-func (t *baseTool) Target(params map[string]any) (services.ToolTarget, bool) {
+func (t *baseTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
 	raw, _ := params["shipmentId"].(string)
 	id, err := pulid.Parse(raw)
 	if err != nil {
-		return services.ToolTarget{}, false
+		return agentports.ToolTarget{}, false
 	}
 
-	return services.ToolTarget{Resource: permission.ResourceShipment, ID: id}, true
+	return agentports.ToolTarget{Resource: permission.ResourceShipment, ID: id}, true
 }
 
 // shipmentState is what the fake "database" holds for the previewing tool.
@@ -126,7 +126,7 @@ type previewingTool struct {
 
 	state   *shipmentState
 	block   bool
-	asked   []services.ToolExecuteParams
+	asked   []agentports.ToolExecuteParams
 	money   bool
 	failErr error
 	refusal error
@@ -134,7 +134,7 @@ type previewingTool struct {
 
 func (t *previewingTool) Preview(
 	ctx context.Context,
-	params services.ToolExecuteParams,
+	params agentports.ToolExecuteParams,
 ) (*agent.ToolPreview, error) {
 	t.asked = append(t.asked, params)
 	if t.block {
@@ -194,7 +194,7 @@ type validatingTool struct {
 	err error
 }
 
-func (t *validatingTool) Validate(context.Context, services.ToolExecuteParams) error {
+func (t *validatingTool) Validate(context.Context, agentports.ToolExecuteParams) error {
 	return t.err
 }
 
@@ -208,7 +208,7 @@ type fakeVersions struct {
 func (f *fakeVersions) Version(
 	_ context.Context,
 	_ pagination.TenantInfo,
-	target services.ToolTarget,
+	target agentports.ToolTarget,
 ) (int64, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -221,7 +221,7 @@ func (f *fakeVersions) Version(
 }
 
 type fakeLabeler struct {
-	labels services.RecordLabels
+	labels agentports.RecordLabels
 	asked  []map[permission.Resource][]pulid.ID
 }
 
@@ -229,7 +229,7 @@ func (f *fakeLabeler) Labels(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	refs map[permission.Resource][]pulid.ID,
-) (services.RecordLabels, error) {
+) (agentports.RecordLabels, error) {
 	f.asked = append(f.asked, refs)
 
 	return f.labels, nil
@@ -252,7 +252,7 @@ func (f *fakeBaselines) Create(_ context.Context, baseline *agent.ProposalBaseli
 
 func (f *fakeBaselines) ListByProposals(
 	_ context.Context,
-	req repositories.ListProposalBaselinesRequest,
+	req agentports.ListProposalBaselinesRequest,
 ) ([]*agent.ProposalBaseline, error) {
 	if f.listErr != nil {
 		return nil, f.listErr
@@ -275,7 +275,7 @@ type fakeDecisions struct {
 
 func (f *fakeDecisions) ListByProposals(
 	context.Context,
-	repositories.ListAgentDecisionsByProposalsRequest,
+	agentports.ListAgentDecisionsByProposalsRequest,
 ) ([]*agent.AgentDecision, error) {
 	return f.decisions, nil
 }
@@ -286,7 +286,7 @@ type fakeSteps struct {
 
 func (f *fakeSteps) ListByPlan(
 	context.Context,
-	repositories.ListAgentProposalsByPlanRequest,
+	agentports.ListAgentProposalsByPlanRequest,
 ) ([]*agent.AgentProposal, error) {
 	return f.steps, nil
 }
@@ -299,7 +299,7 @@ func (f *fakeChecker) CheckModifications(
 	_ context.Context,
 	proposal *agent.AgentProposal,
 	modifications map[string]any,
-	_ *services.RequestActor,
+	_ *permissionports.RequestActor,
 ) (map[string]any, error) {
 	if f.err != nil {
 		return nil, f.err
@@ -352,7 +352,7 @@ type fixture struct {
 	customer  pulid.ID
 }
 
-func newFixture(extra ...services.AgentTool) *fixture {
+func newFixture(extra ...agentports.AgentTool) *fixture {
 	f := &fixture{
 		db:        &fakeDB{},
 		versions:  &fakeVersions{versions: map[pulid.ID]int64{}, missing: map[pulid.ID]bool{}},
@@ -376,11 +376,11 @@ func newFixture(extra ...services.AgentTool) *fixture {
 		},
 	}
 	f.versions.versions[f.tool.state.ID] = 3
-	f.labeler = &fakeLabeler{labels: services.RecordLabels{
+	f.labeler = &fakeLabeler{labels: agentports.RecordLabels{
 		permission.ResourceCustomer: {f.customer: "Acme Foods"},
 	}}
 
-	tools := append([]services.AgentTool{f.tool}, extra...)
+	tools := append([]agentports.AgentTool{f.tool}, extra...)
 	f.svc = &Service{
 		l:           zap.NewNop(),
 		db:          f.db,
@@ -418,10 +418,10 @@ func (f *fixture) cancelParams() map[string]any {
 	return map[string]any{"shipmentId": f.tool.state.ID.String(), "status": "Cancelled"}
 }
 
-func (f *fixture) viewer() *services.PreviewViewer {
-	return &services.PreviewViewer{
-		Actor: &services.RequestActor{
-			PrincipalType:  services.PrincipalTypeUser,
+func (f *fixture) viewer() *agentports.PreviewViewer {
+	return &agentports.PreviewViewer{
+		Actor: &permissionports.RequestActor{
+			PrincipalType:  permissionports.PrincipalTypeUser,
 			PrincipalID:    pulid.MustNew("usr_"),
 			UserID:         pulid.MustNew("usr_"),
 			OrganizationID: f.org,
